@@ -1,0 +1,143 @@
+# Diff-bound commit acceptor for the Physics v2 inference-readiness gate.
+#
+# This PR binds the already-shipped Ricci–Kuramoto physics contracts into one
+# fail-closed inference-readiness contour. It adds NO new physics subsystem, NO
+# new Ricci/Kuramoto solver, and makes NO market/alpha claim — every new module
+# only wraps, validates, and content-addresses primitives that already exist
+# (core.indicators.ricci / gauss_bonnet, core.kuramoto.metrics / falsification /
+# capital_weighted, analytics.signals.claim_maturity, instrument_validation).
+#
+# What lands (7 tasks, one contour):
+#   * physics_contracts/manifold/builders.py
+#       Thin L2/order-flow → MarketCausalGraphSnapshot adapter; fail-closed on
+#       look-ahead, zero-hash/synthetic fingerprint, cutoff<floor, missing weight.
+#   * physics_contracts/manifold/ricci_trace.py
+#       RicciFlowTrace wrapping mean_ricci + exact Gauss–Bonnet residual; rejects
+#       κ>1, price-graph κ∉[−1,1], energy increase under non-increase verdict,
+#       nonzero ℚ residual.
+#   * physics_contracts/manifold/sync_frame.py
+#       SynchronizationManifoldFrame over order_parameter; rejects R∉[0,1],
+#       subcritical R>3/√N, supercritical R≤floor, future-L2, missing N/K_c.
+#   * physics_contracts/manifold/negative_controls.py
+#       Four canonical controls → one ComparisonReport; null failure or synthetic
+#       data downgrades the claim; n_null_draws recorded with an adequacy floor.
+#   * physics_contracts/manifold/evidence_binding.py
+#       PhysicsEvidenceCapsuleShape binding the four contracts into a deterministic
+#       capsule; rejects missing hash/replay/witness/falsifier and claim-tier-above-
+#       evidence (delegates the real-data-tier rule to EvidenceCapsuleShape).
+#   * scripts/ci/check_physics_law_witness_index.py + artifacts/physics_v2/law_witness_index.json
+#       Materialises the law→witness index by CONSUMING the existing catalog +
+#       @law registry + INVARIANTS; fails closed on a blocking law without a witness.
+#   * scripts/ci/check_physics_inference_readiness.py + artifacts/physics_v2/inference_readiness.json
+#       One gate emitting an honest tier (READY_SYNTHETIC_ONLY here — no licensed
+#       L2 present) and BLOCKED_* with an exact blocker path; strictly refuses
+#       synthetic→real promotion.
+#   * tests/physics_contracts/* and tests/ci/test_physics_inference_readiness.py
+#       54 deterministic fail-closed witnesses (one per falsifier).
+#
+# Strict non-claims (architecture doc §5): NO alpha, NO profitability, NO universal
+# market physics, NO B.wheel=0 claim, NO real-L2 validation (no dataset+replay
+# exists, and the capsule fails closed if a real-data tier is asserted without it).
+#
+# Locally verified:
+#   * pytest tests/physics_contracts + tests/ci readiness: 54 passed
+#   * ruff / black --check / mypy --strict: clean on every new file
+#   * law-witness index: 31/31 blocking laws witnessed; verify green
+#   * readiness gate: READY_SYNTHETIC_ONLY (honest tier); --write idempotent
+#   * INVENTORY sync regenerated for the two new scripts/ci entries
+
+id: physics-inference-readiness
+status: ACTIVE
+claim_type: governance
+promise: >-
+  After this PR lands, physics_contracts/manifold/ binds the existing
+  Ricci–Kuramoto contracts into a fail-closed inference contour:
+  build_causal_graph_snapshot rejects look-ahead, zero-hash, and synthetic-tagged
+  fingerprints with no synthetic fallback; RicciFlowTrace rejects κ>1, an
+  out-of-domain price-graph curvature, an energy increase under a non-increase
+  verdict, and a nonzero exact Gauss–Bonnet residual; SynchronizationManifoldFrame
+  rejects R outside [0,1], a subcritical order parameter above 3/√N, a
+  supercritical one at the floor, and future-L2 phase data; the negative-control
+  battery folds four controls into one ComparisonReport that can only downgrade a
+  claim and never lets synthetic data assert a real-data survival; PhysicsEvidence-
+  CapsuleShape binds the four contracts into a deterministic capsule that fails
+  closed on a missing dataset hash, replay command, witness, or falsifier and on a
+  claim tier above the evidence tier. check_physics_law_witness_index emits
+  law_witness_index.json and fails CI on a new blocking law without a witness;
+  check_physics_inference_readiness emits inference_readiness.json with an honest
+  tier (READY_SYNTHETIC_ONLY, since no licensed L2 dataset exists) and a BLOCKED_*
+  verdict with an exact blocker path otherwise. No new physics subsystem, no new
+  solver, no alpha, no profitability, no universal-market-physics, and no real-L2
+  claim is made.
+diff_scope:
+  changed_files:
+    - path: ".claude/commit_acceptors/physics-inference-readiness.yaml"
+    - path: "artifacts/physics_v2/inference_readiness.json"
+    - path: "artifacts/physics_v2/law_witness_index.json"
+    - path: "physics_contracts/manifold/builders.py"
+    - path: "physics_contracts/manifold/evidence_binding.py"
+    - path: "physics_contracts/manifold/negative_controls.py"
+    - path: "physics_contracts/manifold/ricci_trace.py"
+    - path: "physics_contracts/manifold/sync_frame.py"
+    - path: "scripts/ci/check_physics_inference_readiness.py"
+    - path: "scripts/ci/check_physics_law_witness_index.py"
+    - path: "tests/ci/test_physics_inference_readiness.py"
+    - path: "tests/physics_contracts/test_market_causal_graph_builder.py"
+    - path: "tests/physics_contracts/test_physics_evidence_binding.py"
+    - path: "tests/physics_contracts/test_physics_negative_controls.py"
+    - path: "tests/physics_contracts/test_ricci_flow_trace.py"
+    - path: "tests/physics_contracts/test_synchronization_manifold_frame.py"
+  forbidden_paths:
+    - "trading/"
+    - "execution/"
+    - "forecast/"
+    - "policy/"
+required_python_symbols:
+  - "tests/physics_contracts/test_market_causal_graph_builder.py::test_future_timestamp_edge_is_rejected"
+  - "tests/physics_contracts/test_market_causal_graph_builder.py::test_synthetic_fingerprint_has_no_fallback"
+  - "tests/physics_contracts/test_ricci_flow_trace.py::test_kappa_above_one_is_rejected"
+  - "tests/physics_contracts/test_ricci_flow_trace.py::test_nonzero_gauss_bonnet_residual_is_rejected"
+  - "tests/physics_contracts/test_synchronization_manifold_frame.py::test_subcritical_with_order_above_floor_is_rejected"
+  - "tests/physics_contracts/test_physics_negative_controls.py::test_synthetic_survival_is_downgraded"
+  - "tests/physics_contracts/test_physics_evidence_binding.py::test_real_data_tier_without_real_data_is_rejected"
+  - "tests/ci/test_physics_inference_readiness.py::test_realdata_tier_without_real_data_is_blocked_promotion"
+expected_signal: >-
+  pytest over tests/physics_contracts/ and tests/ci/test_physics_inference_readiness.py
+  passes (54 fail-closed witnesses); check_physics_law_witness_index reports 31/31
+  blocking laws witnessed and verifies green; check_physics_inference_readiness emits
+  verdict READY_SYNTHETIC_ONLY (no licensed L2 present) and exits 0.
+measurement_command: >-
+  bash -c 'python -m pytest -q tests/physics_contracts/test_market_causal_graph_builder.py
+  tests/physics_contracts/test_ricci_flow_trace.py
+  tests/physics_contracts/test_synchronization_manifold_frame.py
+  tests/physics_contracts/test_physics_negative_controls.py
+  tests/physics_contracts/test_physics_evidence_binding.py
+  tests/ci/test_physics_inference_readiness.py
+  && python scripts/ci/check_physics_law_witness_index.py
+  && python scripts/ci/check_physics_inference_readiness.py'
+signal_artifact: "tmp/physics_inference_readiness.log"
+falsifier:
+  command: |
+    python -c "import sys, contextlib
+    from physics_contracts.manifold.builders import OrderFlowFrame, build_causal_graph_snapshot
+    frame = OrderFlowFrame(0.0, 1.0, ('A','B'), ((0,1),), (0.5,), 0.1, 0.25,
+                           'synthetic:00000001', (0.5,))
+    accepted = True
+    with contextlib.suppress(Exception):
+        build_causal_graph_snapshot(frame); accepted = True
+    try:
+        build_causal_graph_snapshot(frame); accepted = True
+    except Exception:
+        accepted = False
+    sys.exit(0 if accepted else 1)"
+  description: >-
+    Feeds a synthetic-tagged dataset fingerprint to the real-data causal-graph
+    builder and exits 0 only if it is ACCEPTED (the regressed fail-open state).
+    On the correct tree require_licensed_l2 raises, so the command exits non-zero —
+    proving the no-synthetic-fallback guard is real, not decorative.
+rollback_command: "git revert --no-edit HEAD"
+rollback_verification_command: "git diff --exit-code physics_contracts/manifold/builders.py"
+memory_update_type: none
+ledger_path: ".claude/commit_acceptors/physics-inference-readiness.yaml"
+report_path: "docs/reports/diff_bound_commit_acceptor_layer.md"
+evidence: []

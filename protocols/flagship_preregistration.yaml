@@ -1,0 +1,209 @@
+# Copyright (c) 2023-2026 Yaroslav Vasylenko (neuron7xLab)
+# SPDX-License-Identifier: MIT
+#
+# FLAGSHIP PREREGISTRATION — companion to research/flagship/rq.yaml
+# (FLAGSHIP-RQ-001). This file FREEZES the analysis plan BEFORE any run, so the
+# plan is tamper-evident and deviations are appended, never overwritten.
+#
+# Boundary (inherited from FLAGSHIP-RQ-001, unchanged):
+#   RESEARCH_ALPHA_SYNTHETIC_ONLY_NO_DEPLOY. This preregisters an *infrastructure*
+#   question — wheel-contract reproducibility from repository/build artifacts.
+#   It makes NO empirical/market claim, asserts NO out-of-sample edge, and no
+#   empirical or market run is claimed here. tier: HYPOTHESIS.
+#
+# Tamper-evidence contract (verified by scripts/ci/check_preregistration.py):
+#   * `digest` = SHA-256 over the CANONICAL serialization of `protocol_body`
+#     (JSON, sorted keys, compact separators, UTF-8). Any change to a body value
+#     without re-deriving the digest fails the gate.
+#   * `deviations` is an APPEND-ONLY log OUTSIDE the hashed body: entries carry
+#     strictly-increasing contiguous `seq` from 1. Appending a deviation does not
+#     touch the frozen body or its digest.
+#   * `prereg_date` is a FIXED string (no wall-clock); the digest is reproducible.
+#
+# To re-derive the digest after an intentional, NEW-study body change:
+#   python -c "import yaml,scripts.ci.check_preregistration as g; \
+#     print(g.compute_digest(yaml.safe_load(open( \
+#     'protocols/flagship_preregistration.yaml'))['protocol_body']))"
+# A body change with the SAME prereg_id is forbidden: per the RQ scope-lock,
+# altering the frozen plan requires a NEW prereg_id + new study (see policy doc).
+
+prereg_id: FLAGSHIP-PREREG-001
+rq_ref: FLAGSHIP-RQ-001
+rq_source: research/flagship/rq.yaml
+prereg_date: "2026-07-19"          # FIXED; never datetime.now()
+digest_algo: sha256
+digest_canonicalization: json-sortkeys-compact-utf8
+# Digest over the canonical form of `protocol_body` below. Verified by the gate.
+digest: "f84f2a4d7c98ddb6e34dd85235ba6ae366acac2c224643ae8fea54c19e43abfa"
+
+# ---------------------------------------------------------------------------- #
+# FROZEN ANALYSIS PLAN — hashed into `digest`. Do not edit in place.           #
+# ---------------------------------------------------------------------------- #
+protocol_body:
+
+  # ---- Hypotheses --------------------------------------------------------- #
+  hypotheses:
+    tier: HYPOTHESIS
+    domain_kind: infrastructure
+    boundary: RESEARCH_ALPHA_SYNTHETIC_ONLY_NO_DEPLOY
+    H1_alternative: >-
+      On the frozen snapshot S (pinned commit), the clean-archive wheel-contract
+      check surfaces at least one latent first-party reproducibility defect
+      (an unpackaged-namespace import raising ModuleNotFoundError on clean
+      install, or a dead console_scripts entry point) that is NOT already flagged
+      by any pre-existing CI gate on the same snapshot. Marginal detection D >= 1.
+    H0_null: >-
+      The clean-archive wheel-contract check surfaces zero marginal defects on S:
+      every defect it reports is already flagged by a pre-existing gate, or it
+      reports none at all. D_marginal == 0.
+    directionality: one-sided (marginal detection count D >= 1)
+    unit_of_analysis: >-
+      A distinct first-party defect = one (module, import-target) pair that fails
+      to resolve on clean install, or one dead console_scripts entry point.
+
+  # ---- Primary outcome(s) ------------------------------------------------- #
+  primary_outcomes:
+    - name: D_marginal
+      definition: >-
+        Count of distinct latent first-party defects surfaced ONLY by the
+        clean-archive wheel contract on S and NOT flagged by any pre-existing gate.
+      type: integer
+      observable_from: artifacts/wheel_contract.json
+      decision_threshold: "D_marginal >= 1 supports H1; D_marginal == 0 supports H0"
+
+  # ---- Secondary outcome(s) ----------------------------------------------- #
+  secondary_outcomes:
+    - name: reproducibility
+      definition: >-
+        Whether the detected defect set is bit-for-bit identical across >= 2
+        independent reruns at the same pinned commit.
+      type: boolean
+      observable_from: artifacts/wheel_contract.json
+    - name: total_D
+      definition: >-
+        Total defects reported by the wheel contract (marginal + overlap with
+        pre-existing gates). Descriptive only; not a decision variable.
+      type: integer
+      observable_from: artifacts/wheel_contract.json
+
+  # ---- Dataset versions --------------------------------------------------- #
+  # No market data. The "dataset" is a frozen repository/build artifact.
+  dataset_versions:
+    kind: repository_build_artifact   # NOT market data; finite & enumerable
+    snapshot: S
+    pinned_commit_ref: HEAD@wave3-p0
+    pinned_commit_sha: RECORD_AT_RUN    # resolved to a concrete SHA in the run artifact
+    wheel_source: "git archive HEAD (clean archive; defeats stale build/ dir)"
+    population: >-
+      All first-party modules packaged into the wheel built from git archive HEAD
+      at the pinned commit, plus every console_scripts entry point in that wheel's
+      packaging metadata.
+    external_data: none
+    network: offline
+
+  # ---- Exclusions --------------------------------------------------------- #
+  exclusions:
+    - "Third-party / vendored modules (only FIRST-party modules are in scope)."
+    - "Optional-dependency imports guarded by try/except ImportError."
+    - "Test-only modules not packaged into the distributable wheel."
+    - "Namespace shims that are intentionally not shipped (documented as such)."
+    - "Any market/live/network data — out of scope by boundary."
+
+  # ---- Splits ------------------------------------------------------------- #
+  # No statistical train/test split: the population is a finite, fully enumerated
+  # repository artifact. The only 'split' is comparator vs. intervention on the
+  # SAME frozen snapshot, plus independent reruns for reproducibility.
+  splits:
+    design: within-snapshot comparator-vs-intervention (paired on identical S)
+    holdout: >-
+      None in the sampling sense. The commit is pinned and recorded BEFORE any
+      rerun/holdout reveal; no source edits between comparator and intervention.
+    reruns: ">= 2 independent reruns to test reproducibility of the defect set"
+
+  # ---- Nulls -------------------------------------------------------------- #
+  nulls:
+    primary_null: "H0: D_marginal == 0 (no marginal detection over pre-existing gates)"
+    null_reference: >-
+      The pre-existing CI gate suite (import-linter, unit tests, standard
+      release-gate probes) run on the SAME snapshot S. A defect counts as marginal
+      ONLY if this reference misses it.
+    negative_result_handling: >-
+      A confirmed null (D_marginal == 0) is preserved as NEGATIVE_EVIDENCE.yaml and
+      is NEVER rewritten into a partial success.
+
+  # ---- Baselines / comparator -------------------------------------------- #
+  baselines:
+    comparator: >-
+      Pre-existing CI gate suite on snapshot S: import-linter, unit tests, and the
+      standard release-gate probes. Does NOT build from a clean archive and does
+      NOT statically resolve packaged-wheel imports.
+    contrast: "clean-archive wheel contract  vs.  status-quo gate suite"
+    instrument: scripts/ci/check_wheel_contract.py
+
+  # ---- Metrics ------------------------------------------------------------ #
+  metrics:
+    definitions:
+      - name: D_marginal
+        formula: "count(defects surfaced by wheel contract AND not flagged by any pre-existing gate)"
+        scale: nonnegative integer
+      - name: reproducible
+        formula: "detected_defect_set(run_i) == detected_defect_set(run_j) for all reruns"
+        scale: boolean
+    note: >-
+      No returns, PnL, Sharpe, or edge metric appears or is admissible here — the
+      outcomes are integer/boolean repository observables only.
+
+  # ---- Multiple-testing corrections -------------------------------------- #
+  multiple_testing_corrections:
+    method: none_required
+    rationale: >-
+      Exactly ONE preregistered primary hypothesis (D_marginal >= 1) with a single
+      pre-specified decision threshold. No family of tests, no scan over thresholds
+      or subgroups, so no family-wise / FDR correction applies. Secondary outcomes
+      are descriptive and carry no inferential claim. Any post-hoc threshold scan
+      would invalidate the preregistration and require a new study id.
+
+  # ---- Stopping rules ----------------------------------------------------- #
+  stopping_rules:
+    data_collection: >-
+      The population is fully enumerated in a single deterministic pass; there is
+      no sequential sampling and thus no optional-stopping degree of freedom.
+    reruns: >-
+      Fixed at exactly the preregistered number of reruns (>= 2) decided in
+      advance; reruns are NOT extended until reproducibility is observed.
+    early_stop: >-
+      Terminate immediately and record HARD_FAIL if any rerun is non-deterministic
+      (defect set differs across reruns) — this is a preserved negative, not a
+      reason to re-run until agreement.
+    no_peeking: >-
+      Success/failure criteria are frozen at this pinned commit and are NOT
+      adjusted after any rerun/holdout reveal.
+
+  # ---- Promotion rules ---------------------------------------------------- #
+  promotion_rules:
+    hard_pass: >-
+      HARD_PASS iff ALL hold on the pinned snapshot: (1) D_marginal >= 1; (2) the
+      detected defect set is reproducible across >= 2 independent reruns; (3) at
+      least one detected defect is not flagged by any pre-existing gate.
+    hard_fail: >-
+      HARD_FAIL if ANY hold: (a) D_marginal == 0; (b) defect set non-reproducible;
+      (c) zero marginal detection. Recorded as NEGATIVE_EVIDENCE.yaml, never
+      rewritten into partial success.
+    on_pass_promote_to: HYPOTHESIS
+    promotion_requires: >-
+      A signed artifact per CLAIMS.md, adding FLAGSHIP-RQ-001 as a HYPOTHESIS row.
+      Promotion beyond HYPOTHESIS is NOT asserted here.
+    boundary_lock: >-
+      Promotion stays within RESEARCH_ALPHA_SYNTHETIC_ONLY_NO_DEPLOY. No market
+      claim, edge claim, or deploy authorization is conferred by any outcome.
+    scope_lock: >-
+      Scope, comparator, and criteria are frozen at pinned_commit. Any change
+      after a rerun/holdout reveal requires a NEW study with a NEW prereg_id.
+
+# ---------------------------------------------------------------------------- #
+# APPEND-ONLY DEVIATIONS LOG — OUTSIDE the hashed body.                         #
+# Never overwrite the frozen plan above. Record each deviation as a new entry   #
+# with the next contiguous seq (1, 2, 3, ...) and the keys: seq, date, reason,  #
+# decision. Deleting or reordering entries breaks the gate.                     #
+# ---------------------------------------------------------------------------- #
+deviations: []

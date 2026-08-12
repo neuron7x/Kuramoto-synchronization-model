@@ -1,0 +1,20 @@
+{
+  "$schema": "https://json-schema.org/draft/2020-12/schema",
+  "title": "ConsolidationReport",
+  "type": "object",
+  "required": ["status", "system_name", "modules_consolidated", "remaining_gaps", "production_readiness"],
+  "properties": {
+    "status": {"enum": ["CONSOLIDATED", "PARTIAL", "BLOCKED", "FAILED"]},
+    "system_name": {"type": "string"},
+    "repository_goal": {"type": "string"},
+    "modules_consolidated": {"type": "array", "items": {"type": "string"}},
+    "interfaces_unified": {"type": "array", "items": {"type": "string"}},
+    "schemas_created_or_updated": {"type": "array", "items": {"type": "string"}},
+    "prompts_created_or_updated": {"type": "array", "items": {"type": "string"}},
+    "tests_created_or_updated": {"type": "array", "items": {"type": "string"}},
+    "safety_boundaries": {"type": "array", "items": {"type": "string"}},
+    "validation_results": {"type": "array", "items": {"type": "string"}},
+    "remaining_gaps": {"type": "array", "items": {"type": "string"}},
+    "production_readiness": {"type": "object"}
+  }
+}

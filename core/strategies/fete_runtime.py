@@ -1,7 +1,9 @@
+# Copyright (c) 2023-2026 Yaroslav Vasylenko (neuron7xLab)
+# SPDX-License-Identifier: MIT
 """Operational pipeline utilities for running the FETE strategy.
 
 This module adapts the user-provided production trading scaffold to the
-TradePulse codebase.  It plugs the existing :class:`~core.strategies.fete.FETE`
+GeoSync codebase.  It plugs the existing :class:`~core.strategies.fete.FETE`
 engine into a lightweight execution simulator with guardrails that mirror what
 the CLI exposes.  The design goals are
 
@@ -138,15 +140,11 @@ class BinanceRESTFetcher:
             raise ValueError("limit must be in (0, 1000]")
 
         factory = self._session_factory
-        if (
-            factory is None
-        ):  # pragma: no cover - exercised via dependency injection in tests
+        if factory is None:  # pragma: no cover - exercised via dependency injection in tests
             try:
                 import aiohttp
             except ImportError as exc:  # pragma: no cover
-                raise RuntimeError(
-                    "aiohttp must be installed to use the default session"
-                ) from exc
+                raise RuntimeError("aiohttp must be installed to use the default session") from exc
 
             def _factory() -> AsyncContextManager[aiohttp.ClientSession]:
                 return aiohttp.ClientSession()
@@ -268,9 +266,7 @@ class PaperTradingAccount:
             else price * (1.0 - self.slippage)
         )
         transaction_multiplier = (
-            1.0 + self.transaction_cost
-            if side is OrderSide.BUY
-            else 1.0 - self.transaction_cost
+            1.0 + self.transaction_cost if side is OrderSide.BUY else 1.0 - self.transaction_cost
         )
 
         notional = quantity * fill_price
@@ -408,9 +404,7 @@ class RiskGuard:
             self.circuit_reason = message
             self._record_event(timestamp, "circuit", message)
 
-    def check_equity(
-        self, equity: float, *, timestamp: datetime
-    ) -> tuple[bool, str | None]:
+    def check_equity(self, equity: float, *, timestamp: datetime) -> tuple[bool, str | None]:
         if equity <= 0:
             self._trigger_circuit(timestamp, "Equity dropped to non-positive value")
             return False, "equity_non_positive"
@@ -418,15 +412,9 @@ class RiskGuard:
         if equity > self.peak_equity:
             self.peak_equity = float(equity)
 
-        drawdown = (
-            0.0
-            if self.peak_equity <= 0
-            else (self.peak_equity - equity) / self.peak_equity
-        )
+        drawdown = 0.0 if self.peak_equity <= 0 else (self.peak_equity - equity) / self.peak_equity
         self.current_drawdown = float(max(drawdown, 0.0))
-        self.max_observed_drawdown = max(
-            self.max_observed_drawdown, self.current_drawdown
-        )
+        self.max_observed_drawdown = max(self.max_observed_drawdown, self.current_drawdown)
 
         daily_loss = (self.start_equity - equity) / self.start_equity
         if daily_loss > self.max_daily_loss:
@@ -529,9 +517,7 @@ class BacktestReport:
             "win_rate": self.win_rate,
             "profit_factor": self.profit_factor,
             "audit": self.audit,
-            "equity_curve": [
-                (ts.isoformat(), value) for ts, value in self.equity_curve
-            ],
+            "equity_curve": [(ts.isoformat(), value) for ts, value in self.equity_curve],
             "trades": [trade.to_dict() for trade in self.trades],
             "risk_events": [event.__dict__ for event in self.risk_events],
             "portfolio": self.portfolio,
@@ -593,9 +579,7 @@ class FETEBacktestEngine:
 
         for idx, price in enumerate(price_array):
             ts = timestamps[idx]
-            equity_before = self._account.equity(
-                {symbol: float(price)}, timestamp=ts, record=False
-            )
+            equity_before = self._account.equity({symbol: float(price)}, timestamp=ts, record=False)
 
             realized_return = float(returns[idx]) if idx > 0 else None
             position_fraction, diag = self._fete.decide(
@@ -606,17 +590,13 @@ class FETEBacktestEngine:
             )
             diagnostics.append(diag)
 
-            ok_equity, equity_reason = self._risk.check_equity(
-                float(equity_before), timestamp=ts
-            )
+            ok_equity, equity_reason = self._risk.check_equity(float(equity_before), timestamp=ts)
             target_fraction = float(position_fraction)
 
             if not ok_equity or self._risk.circuit_breaker_active:
                 target_fraction = 0.0
                 if equity_reason is not None:
-                    self._risk._record_event(
-                        ts, equity_reason, "Circuit breaker engaged"
-                    )
+                    self._risk._record_event(ts, equity_reason, "Circuit breaker engaged")
 
             if not self._risk.circuit_breaker_active:
                 pos_value = abs(target_fraction) * float(equity_before)
@@ -654,9 +634,7 @@ class FETEBacktestEngine:
 
             self._account.equity({symbol: float(price)}, timestamp=ts, record=True)
 
-            equity_after = self._account.equity(
-                {symbol: float(price)}, timestamp=ts, record=False
-            )
+            equity_after = self._account.equity({symbol: float(price)}, timestamp=ts, record=False)
             self._risk.check_equity(float(equity_after), timestamp=ts)
 
             if trade is not None:
@@ -671,9 +649,7 @@ class FETEBacktestEngine:
             equity_returns = np.zeros(1, dtype=float)
 
         avg_return = float(np.mean(equity_returns)) if equity_returns.size else 0.0
-        volatility = (
-            float(np.std(equity_returns, ddof=1)) if equity_returns.size > 1 else 0.0
-        )
+        volatility = float(np.std(equity_returns, ddof=1)) if equity_returns.size > 1 else 0.0
         annual_return = avg_return * 252.0
         sharpe = 0.0
         if volatility > 0:
@@ -686,9 +662,7 @@ class FETEBacktestEngine:
         realized_pnls = [trade.realized_pnl for trade in trades]
         wins = [pnl for pnl in realized_pnls if pnl > 0]
         losses = [pnl for pnl in realized_pnls if pnl < 0]
-        profit_factor = (
-            sum(wins) / abs(sum(losses)) if losses else float("inf") if wins else 0.0
-        )
+        profit_factor = sum(wins) / abs(sum(losses)) if losses else float("inf") if wins else 0.0
 
         report = BacktestReport(
             symbol=symbol,
@@ -696,8 +670,7 @@ class FETEBacktestEngine:
             end=timestamps[-1],
             start_equity=float(initial_equity),
             final_equity=float(final_equity),
-            total_return=(float(final_equity) - float(initial_equity))
-            / float(initial_equity),
+            total_return=(float(final_equity) - float(initial_equity)) / float(initial_equity),
             annual_return=float(annual_return),
             volatility=volatility,
             sharpe=float(sharpe),
@@ -710,9 +683,7 @@ class FETEBacktestEngine:
             equity_curve=equity_curve,
             trades=trades,
             risk_events=list(self._risk.events),
-            portfolio=self._account.portfolio_snapshot(
-                {symbol: float(price_array[-1])}
-            ),
+            portfolio=self._account.portfolio_snapshot({symbol: float(price_array[-1])}),
         )
         return report
 

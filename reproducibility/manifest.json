@@ -1,0 +1,43 @@
+{
+  "schema_version": "2026.06.18",
+  "status": "MANIFEST_DRAFT_RUNTIME_PROOF_PENDING",
+  "branch": "physics-validation-v3",
+  "scope": "GeoSync canonical weighted Kuramoto physics validation lane",
+  "commands": [
+    "python tools/physics_score.py --write",
+    "python -m pytest tests/test_physics_score.py -q",
+    "python -m pytest tests/unit/physics/test_T1_kuramoto_ricci_boundary.py tests/physics -q",
+    "python -m pytest tests/physics/test_uq_smoke.py tests/physics/test_replication.py tests/physics/test_ricci_bridge.py -q"
+  ],
+  "expected_artifacts": [
+    "artifacts/physics_validation/baseline_score.json",
+    "artifacts/physics_validation/uq_summary.json",
+    "artifacts/physics_validation/replication_summary.json",
+    "artifacts/physics_validation/ricci_bridge_summary.json",
+    "VERDICT.md"
+  ],
+  "required_inputs": [
+    "core/kuramoto/kuramoto_ricci_engine.py",
+    "docs/physics/geosync_core.md",
+    "docs/audit/claim_ledger.md",
+    "docs/audit/file_inventory.md",
+    "schemas/physics_metrics.schema.json",
+    "reproducibility/reference_solvers/geosync_kuramoto_numpy.py"
+  ],
+  "reference_solvers": [
+    {
+      "id": "REF-GEO-KUR-NUMPY-001",
+      "path": "reproducibility/reference_solvers/geosync_kuramoto_numpy.py",
+      "runtime": "NumPy",
+      "compared_to": "core/kuramoto/kuramoto_ricci_engine.py::kuramoto_ricci_trajectory",
+      "test": "tests/physics/test_replication.py"
+    }
+  ],
+  "blockers": [
+    "new physics command execution not observed in connector session",
+    "CI result pending for new tests",
+    "Ricci bridge still lacks full market graph provenance audit",
+    "BN-Syn and MFN+ immutable source refs not attached"
+  ],
+  "decision": "reproducibility surface is stronger; final proof requires CI or local logs"
+}

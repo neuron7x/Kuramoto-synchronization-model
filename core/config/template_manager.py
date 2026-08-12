@@ -1,3 +1,5 @@
+# Copyright (c) 2023-2026 Yaroslav Vasylenko (neuron7xLab)
+# SPDX-License-Identifier: MIT
 """Utility helpers for loading and rendering CLI configuration templates."""
 
 from __future__ import annotations
@@ -17,9 +19,7 @@ class ConfigTemplateManager:
 
     def __init__(self, template_dir: Path) -> None:
         if not template_dir.exists():
-            raise FileNotFoundError(
-                f"Template directory '{template_dir}' does not exist"
-            )
+            raise FileNotFoundError(f"Template directory '{template_dir}' does not exist")
         self.template_dir = template_dir
         self._env = Environment(
             loader=FileSystemLoader(str(template_dir)),
@@ -43,9 +43,7 @@ class ConfigTemplateManager:
     def load_raw(self, path: Path) -> Dict[str, Any]:
         data = yaml.safe_load(path.read_text(encoding="utf-8"))
         if not isinstance(data, dict):
-            raise ValueError(
-                "Configuration files must define a mapping at the top level"
-            )
+            raise ValueError("Configuration files must define a mapping at the top level")
         return data
 
     def load_config(self, path: Path, model: Type[T]) -> T:

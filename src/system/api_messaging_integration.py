@@ -1,3 +1,5 @@
+# Copyright (c) 2023-2026 Yaroslav Vasylenko (neuron7xLab)
+# SPDX-License-Identifier: MIT
 """Integration layer bridging API gateway requests to the messaging backbone."""
 
 from __future__ import annotations
@@ -53,9 +55,7 @@ class GatewayRequest:
     def resolved_correlation_id(self) -> str | None:
         """Prefer explicit correlation identifiers when provided."""
 
-        header_value = self.get_header("x-correlation-id") or self.get_header(
-            "x-request-id"
-        )
+        header_value = self.get_header("x-correlation-id") or self.get_header("x-request-id")
         return self.correlation_id or header_value
 
 
@@ -118,9 +118,7 @@ def _default_header_builder(
     if match.groupdict():
         headers["x-gateway-path-params"] = json.dumps(match.groupdict())
     if request.query_params:
-        headers["x-gateway-query"] = json.dumps(
-            request.query_params, separators=(",", ":")
-        )
+        headers["x-gateway-query"] = json.dumps(request.query_params, separators=(",", ":"))
     return headers
 
 
@@ -136,7 +134,7 @@ def _default_partition_resolver(request: GatewayRequest, match: re.Match[str]) -
 
 @dataclass(slots=True)
 class IntegrationRouter:
-    """Routes API gateway requests onto the TradePulse messaging fabric."""
+    """Routes API gateway requests onto the GeoSync messaging fabric."""
 
     event_bus: BaseEventBus
     event_id_factory: Callable[[], str] = uuid.uuid4
@@ -154,9 +152,7 @@ class IntegrationRouter:
         methods: Iterable[str] | Mapping[str, Any],
         path_pattern: str | Pattern[str],
         topic: EventTopic,
-        partition_resolver: (
-            Callable[[GatewayRequest, re.Match[str]], str] | None
-        ) = None,
+        partition_resolver: Callable[[GatewayRequest, re.Match[str]], str] | None = None,
         payload_encoder: Callable[[GatewayRequest], bytes] | None = None,
         header_builder: (
             Callable[[GatewayRequest, re.Match[str]], MutableMapping[str, str]] | None
@@ -176,9 +172,7 @@ class IntegrationRouter:
 
         resolved_methods = _coerce_methods(methods)
         if not resolved_methods:
-            raise IntegrationRouteError(
-                f"Route '{name}' must define at least one HTTP method"
-            )
+            raise IntegrationRouteError(f"Route '{name}' must define at least one HTTP method")
 
         route = IntegrationRoute(
             name=name,
@@ -201,9 +195,7 @@ class IntegrationRouter:
 
         return list(self._ordered_routes)
 
-    def _match_route(
-        self, request: GatewayRequest
-    ) -> tuple[IntegrationRoute, re.Match[str]]:
+    def _match_route(self, request: GatewayRequest) -> tuple[IntegrationRoute, re.Match[str]]:
         method = request.normalized_method()
         for route in self._ordered_routes:
             if method not in route.methods:
@@ -221,9 +213,7 @@ class IntegrationRouter:
         route, match = self._match_route(request)
         partition_key = route.partition_resolver(request, match)
         if not partition_key:
-            raise IntegrationRouteError(
-                f"Resolved partition key for route '{route.name}' is empty"
-            )
+            raise IntegrationRouteError(f"Resolved partition key for route '{route.name}' is empty")
 
         payload = route.payload_encoder(request)
         if not isinstance(payload, (bytes, bytearray, memoryview)):

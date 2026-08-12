@@ -1,0 +1,34 @@
+id: pr-preflight-python-engine
+status: ACTIVE
+claim_type: governance
+promise: "Local PR preflight is extracted from shell behavior into a fail-closed Python evidence runner while preserving the existing user-facing shell command."
+diff_scope:
+  changed_files:
+    - path: ".claude/commit_acceptors/pr-preflight-python-engine.yaml"
+    - path: "scripts/test-pr-locally.sh"
+    - path: "tests/ci/test_pr_preflight_engine.py"
+    - path: "tests/ci/test_pr_preflight_gate.py"
+    - path: "tools/ci/__init__.py"
+    - path: "tools/ci/pr_preflight.py"
+  forbidden_paths:
+    - "trading/"
+    - "execution/"
+    - "forecast/"
+    - "policy/"
+required_python_symbols:
+  - "tools.ci.pr_preflight.CheckSpec"
+  - "tools.ci.pr_preflight.build_check_registry"
+  - "tools.ci.pr_preflight.run_preflight"
+  - "tools.ci.pr_preflight.main"
+expected_signal: "Behavioral preflight engine tests pass; shell wrapper delegates to Python; runner emits JSON and per-check logs."
+measurement_command: "python -m pytest tests/ci/test_pr_preflight_gate.py tests/ci/test_pr_preflight_engine.py -q && bash -n scripts/test-pr-locally.sh"
+signal_artifact: "artifacts/pr_preflight/preflight_report.json"
+falsifier:
+  command: "PATH=/nonexistent python tools/ci/pr_preflight.py --root . --report-dir artifacts/pr_preflight --skip-install"
+  description: "A missing critical tool path must produce BLOCKED/nonzero rather than PASS."
+rollback_command: "git checkout -- scripts/test-pr-locally.sh && git rm -f tools/ci/pr_preflight.py tools/ci/__init__.py tests/ci/test_pr_preflight_engine.py tests/ci/test_pr_preflight_gate.py .claude/commit_acceptors/pr-preflight-python-engine.yaml"
+rollback_verification_command: "git diff --exit-code -- scripts/test-pr-locally.sh tools/ci/pr_preflight.py tools/ci/__init__.py tests/ci/test_pr_preflight_engine.py tests/ci/test_pr_preflight_gate.py .claude/commit_acceptors/pr-preflight-python-engine.yaml"
+memory_update_type: none
+ledger_path: ".claude/commit_acceptors/pr-preflight-python-engine.yaml"
+report_path: "docs/reports/diff_bound_commit_acceptor_layer.md"
+evidence: []

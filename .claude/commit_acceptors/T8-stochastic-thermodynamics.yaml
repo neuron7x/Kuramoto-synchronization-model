@@ -1,0 +1,109 @@
+# Diff-bound acceptor for T8: stochastic thermodynamics — exact fluctuation
+# theorems on the overdamped Langevin in a harmonic well.
+#
+# Closes a genuine physics gap: the kernel had equilibrium free energy,
+# Landauer, and variational free energy but NO non-equilibrium fluctuation
+# theorem (grep: jarzynski=0, fluctuation-dissipation=0, langevin=0,
+# detailed-balance=0). This adds Jarzynski equality, equipartition /
+# Boltzmann stationary, and the second-law dissipation bound — all
+# closed-form, exactly testable, numerically verified.
+#
+# Pure statistical mechanics. NOT a market model, no market claim. The only
+# inputs are a stiffness schedule, a temperature, and a random seed.
+
+id: T8-stochastic-thermodynamics
+status: ACTIVE
+claim_type: correctness
+promise: >-
+  core.physics.stochastic_thermodynamics ships harmonic_free_energy
+  (F(k) = −(1/2β)·ln(2π/(βk))), delta_free_energy (ΔF = −(1/2β)·ln(ki/kf)),
+  langevin_ensemble_step (one vectorized Euler-Maruyama step in V=½kx²),
+  stiffness_ramp_work (ensemble WORK array for the linear stiffness-ramp
+  protocol in the Sekimoto convention dW = ½ x² dk), stationary_samples
+  (Boltzmann-stationary sampler), and jarzynski_average (⟨e^(−βW)⟩,
+  numerically stabilised). Adds three constitutional invariants:
+    INV-ST1 | statistical | equipartition Var(x) = kT/k for the stationary
+                            overdamped Langevin in V=½kx² (rel tol 0.10;
+                            measured ≈0.017).
+    INV-ST2 | statistical | Jarzynski equality ⟨e^(−βW)⟩ = e^(−βΔF) =
+                            sqrt(ki/kf) = 0.5 for the reference ramp
+                            ki=1→kf=4, kT=1 (rel tol 0.05; measured ≤0.004
+                            on seeds {1,7,42,123}).
+    INV-ST3 | statistical | second law ⟨W⟩ ≥ ΔF (Jensen on Jarzynski) AND
+                            dissipation monotonic in protocol speed —
+                            ⟨W⟩(τ=2.0) < ⟨W⟩(τ=0.5).
+  Pure NumPy, vectorized, deterministic per seed, mypy --strict clean.
+  Additive only — no runtime path, no existing module, and no trading
+  surface is touched. Count moves 98 → 101 across all synced surfaces
+  (INVARIANTS.yaml, CLAUDE.md header, README badge, BASELINE.md, the two
+  CI shell witnesses).
+diff_scope:
+  changed_files:
+    - path: ".claude/commit_acceptors/T8-stochastic-thermodynamics.yaml"
+    - path: ".claude/physics/INVARIANTS.yaml"
+    - path: "core/physics/stochastic_thermodynamics.py"
+    - path: "core/physics/__init__.py"
+    - path: "tests/unit/physics/test_T8_stochastic_thermodynamics.py"
+    - path: "docs/laws/T8_stochastic_thermodynamics.md"
+    - path: "CLAUDE.md"
+    - path: "BASELINE.md"
+    - path: "scripts/ci/prove_repo_integrity.sh"
+    - path: "scripts/ci/evidence_gate.sh"
+  forbidden_paths:
+    - "trading/"
+    - "execution/"
+    - "forecast/"
+    - "policy/"
+required_python_symbols:
+  - "harmonic_free_energy"
+  - "delta_free_energy"
+  - "langevin_ensemble_step"
+  - "stiffness_ramp_work"
+  - "stationary_samples"
+  - "jarzynski_average"
+expected_signal: >-
+  All 3 unit tests in tests/unit/physics/test_T8_stochastic_thermodynamics.py
+  pass under pytest (~3.3s incl slow); black, ruff, mypy --strict clean on
+  the changed Python; validate_tests.py reports 100% physics grounding with
+  L1/L2/L3/L4/L5 = 0; scripts/count_invariants.py prints 101 and
+  check_invariant_count_sync.py exits 0. Measured: ⟨e^(−βW)⟩ ∈ {0.5003,
+  0.4980, 0.4979, 0.4980} vs target 0.5000 (dev ≤0.4%); ⟨W⟩ ≈ 0.93 ≥
+  ΔF = 0.693; ⟨W⟩(τ=2.0)=0.84 < ⟨W⟩(τ=0.5)=1.08; Var(x) within ~1.7% of
+  kT/k for k ∈ {1,2,4}.
+measurement_command: >-
+  python -m pytest tests/unit/physics/test_T8_stochastic_thermodynamics.py -v
+signal_artifact: "tmp/T8_stochastic_thermodynamics_pytest.log"
+falsifier:
+  command: >-
+    python -c "import numpy as np;
+    from core.physics.stochastic_thermodynamics import stiffness_ramp_work,
+    jarzynski_average; import sys;
+    j=jarzynski_average(stiffness_ramp_work(42)); t=0.5;
+    dev=abs(j-t)/t; print('jarzynski', j, 'dev', dev);
+    sys.exit(1 if dev > 0.05 else 0)"
+  description: >-
+    Inverse probe for INV-ST2: recomputes ⟨e^(−βW)⟩ for the reference
+    ramp (seed 42) and exits non-zero iff the Jarzynski identity deviates
+    more than the registered 0.05 tolerance from the exact target
+    e^(−βΔF) = sqrt(ki/kf) = 0.5. Fires iff the Langevin integrator, the
+    Sekimoto work accumulation, or the free-energy formula is wrong —
+    distinguishing an implementation bug from a passing physics witness.
+rollback_command: >-
+  git checkout HEAD~1 --
+  core/physics/stochastic_thermodynamics.py
+  core/physics/__init__.py
+  tests/unit/physics/test_T8_stochastic_thermodynamics.py
+  docs/laws/T8_stochastic_thermodynamics.md
+  .claude/physics/INVARIANTS.yaml
+  CLAUDE.md
+  BASELINE.md
+  README.md
+  scripts/ci/prove_repo_integrity.sh
+  scripts/ci/evidence_gate.sh
+  .claude/commit_acceptors/T8-stochastic-thermodynamics.yaml
+rollback_verification_command: >-
+  git diff --exit-code core/physics/stochastic_thermodynamics.py
+memory_update_type: append
+ledger_path: ".claude/commit_acceptors/T8-stochastic-thermodynamics.yaml"
+report_path: "docs/laws/T8_stochastic_thermodynamics.md"
+evidence: []

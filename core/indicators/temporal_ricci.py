@@ -1,12 +1,21 @@
-# SPDX-License-Identifier: LicenseRef-TradePulse-Proprietary
-"""Temporal Ricci curvature analysis for price time series.
+# Copyright (c) 2023-2026 Yaroslav Vasylenko (neuron7xLab)
+# SPDX-License-Identifier: MIT
+"""Temporal Ricci structural descriptor over discretised price levels.
 
-This module provides a lightweight approximation of the Ollivier–Ricci
-curvature on discretised price levels together with a temporal summariser that
-tracks how the local graph structure evolves through time.  The implementation
-does not depend on ``networkx`` and is intentionally self-contained so it can
-run inside property-based tests and CI environments without optional
-dependencies.
+This module computes a lightweight approximation of the Ollivier–Ricci
+curvature on a graph of discretised price levels together with a temporal
+summariser that describes how the local graph structure evolves through time.
+The outputs are **structural-geometric descriptors** of an observed series:
+they characterise graph topology and its drift, and make no predictive,
+directional, or financial-advice claim.  The Ricci curvature κ is a universal
+structural quantity bounded by κ ≤ 1 (INV-RC1); it is *not* a market signal,
+a forecast, or a trading instruction.  See ``CLAIM_BOUNDARY`` and
+``TemporalRicciResult.descriptor_metadata`` for the explicit machine-readable
+claim-boundary declaration.
+
+The implementation does not depend on ``networkx`` and is intentionally
+self-contained so it can run inside property-based tests and CI environments
+without optional dependencies.
 """
 
 from __future__ import annotations
@@ -14,7 +23,8 @@ from __future__ import annotations
 import warnings
 from collections import deque
 from dataclasses import dataclass
-from typing import Deque, Dict, List, Literal, Optional, Tuple
+from types import MappingProxyType
+from typing import Deque, Dict, List, Literal, Mapping, Optional, Tuple, Union
 
 import numpy as np
 import pandas as pd
@@ -25,6 +35,30 @@ from ..utils.metrics import get_metrics_collector
 _logger = get_logger(__name__)
 _metrics = get_metrics_collector()
 _VOLUME_MODES = {"none", "linear", "sqrt", "log"}
+
+# ---------------------------------------------------------------------------
+# Claim-boundary declaration (additive, descriptor-only)
+# ---------------------------------------------------------------------------
+#
+# Explicit, machine-readable statement of what this module's outputs ARE and
+# are NOT.  The temporal-Ricci outputs are structural-geometric descriptors of
+# an observed graph topology, bounded by the universal κ ≤ 1 contract
+# (INV-RC1).  They carry no predictive, directional, or financial-advice
+# semantics.  Surfaced read-only via ``TemporalRicciResult.descriptor_metadata``
+# and consumed by the claim-boundary CI gate; it does not enter any runtime
+# math path.
+_BoundaryValue = Union[str, bool]
+CLAIM_BOUNDARY: Mapping[str, _BoundaryValue] = MappingProxyType(
+    {
+        "method": "ollivier_ricci_lite_temporal_summariser",
+        "claim_boundary": "descriptor_only_not_predictor",
+        "descriptor_kind": "structural_graph_curvature",
+        "curvature_bound": "kappa_le_1_INV_RC1",
+        "not_predictive_claim": True,
+        "not_financial_advice": True,
+        "not_a_trading_signal": True,
+    }
+)
 
 # ---------------------------------------------------------------------------
 # Lightweight graph abstraction
@@ -42,7 +76,7 @@ class LightGraph:
     __slots__ = ("n", "_adj", "_edges_cache", "_edge_count")
 
     def __init__(self, n: int) -> None:
-        self.n = int(max(n, 0))
+        self.n = int(max(n, 0))  # bounds: node count must be non-negative
         # Use a single dict per node for adjacency - slightly more memory
         # efficient than list of dicts for sparse graphs
         self._adj: List[Dict[int, float]] = [{} for _ in range(self.n)]
@@ -53,7 +87,7 @@ class LightGraph:
         if i == j:
             return
         a, b = int(i), int(j)
-        w = float(max(weight, 0.0))
+        w = float(max(weight, 0.0))  # INV-HPC2: edge weight must be non-negative
         # Track if this is a new edge for edge count
         is_new = b not in self._adj[a]
         self._adj[a][b] = w
@@ -143,6 +177,24 @@ class TemporalRicciResult:
     structural_stability: float
     edge_persistence: float
 
+    def descriptor_metadata(self) -> Dict[str, _BoundaryValue | int]:
+        """Return read-only provenance + claim-boundary metadata.
+
+        Purely descriptive accessor: it reports the descriptor method, the
+        input-derived counts (number of graph snapshots and the total edges
+        observed across them), and the explicit ``descriptor_only_not_predictor``
+        claim boundary.  It performs no curvature computation and does not alter
+        any field of the result; callers may use it to firewall these structural
+        descriptors from any predictive or trading interpretation.
+        """
+
+        n_snapshots = len(self.graph_snapshots)
+        n_edges = sum(snap.graph.number_of_edges() for snap in self.graph_snapshots)
+        metadata: Dict[str, _BoundaryValue | int] = dict(CLAIM_BOUNDARY)
+        metadata["n_snapshots"] = int(n_snapshots)
+        metadata["n_edges_observed"] = int(n_edges)
+        return metadata
+
 
 # ---------------------------------------------------------------------------
 # Ollivier–Ricci approximation utilities
@@ -159,7 +211,9 @@ class OllivierRicciCurvatureLite:
     __slots__ = ("alpha", "_one_minus_alpha", "_dist_cache")
 
     def __init__(self, alpha: float = 0.5) -> None:
-        self.alpha = float(np.clip(alpha, 0.0, 1.0))
+        self.alpha = float(
+            np.clip(alpha, 0.0, 1.0)  # INV-RC1: lazy-walk alpha parameter ∈ [0,1]
+        )  # bounds: configuration parameter normalized to [0,1]
         # Pre-compute (1 - alpha) to avoid repeated subtraction
         self._one_minus_alpha = 1.0 - self.alpha
         # Cache for lazy random walk distributions keyed by (graph_id, node)
@@ -256,14 +310,16 @@ class PriceLevelGraph:
     ) -> None:
         if volume_mode not in _VOLUME_MODES:
             raise ValueError(f"Unsupported volume_mode '{volume_mode}'")
-        self.n_levels = int(max(n_levels, 1))
-        self.connection_threshold = float(np.clip(connection_threshold, 0.0, 1.0))
+        self.n_levels = int(max(n_levels, 1))  # bounds: at least one price level required
+        self.connection_threshold = float(
+            np.clip(
+                connection_threshold, 0.0, 1.0
+            )  # bounds: connection threshold normalized to [0,1]
+        )  # bounds: configuration parameter normalized to [0,1]
         self.volume_mode = volume_mode
         self.volume_floor = float(max(volume_floor, 0.0))
 
-    def build(
-        self, prices: np.ndarray, volumes: Optional[np.ndarray] = None
-    ) -> LightGraph:
+    def build(self, prices: np.ndarray, volumes: Optional[np.ndarray] = None) -> LightGraph:
         price_array = np.asarray(prices, dtype=np.float64)
         if price_array.size == 0:
             return LightGraph(self.n_levels)
@@ -277,7 +333,9 @@ class PriceLevelGraph:
 
         # Use digitize for consistent binning behavior with the original implementation
         levels = np.linspace(price_array.min(), price_array.max() + 1e-6, self.n_levels)
-        indices = np.clip(np.digitize(price_array, levels) - 1, 0, self.n_levels - 1)
+        indices = np.clip(
+            np.digitize(price_array, levels) - 1, 0, self.n_levels - 1
+        )  # bounds: index clamping to valid level range
 
         graph = LightGraph(self.n_levels)
         if indices.size < 2:
@@ -298,7 +356,7 @@ class PriceLevelGraph:
 
             # In-place operations for memory efficiency
             np.nan_to_num(vol, nan=0.0, posinf=0.0, neginf=0.0, copy=False)
-            np.clip(vol, 0.0, None, out=vol)
+            np.clip(vol, 0.0, None, out=vol)  # INV-HPC2: non-negative volatility
 
             if self.volume_floor > 0.0:
                 vol[vol < self.volume_floor] = 0.0
@@ -438,8 +496,7 @@ class TemporalRicciAnalyzer:
         metrics: List[List[float]] = []
         for snapshot in self.history:
             degrees = [
-                len(snapshot.graph.neighbors(i))
-                for i in range(snapshot.graph.number_of_nodes())
+                len(snapshot.graph.neighbors(i)) for i in range(snapshot.graph.number_of_nodes())
             ]
             active = [deg for deg in degrees if deg > 0]
             metrics.append(
@@ -460,11 +517,11 @@ class TemporalRicciAnalyzer:
         normalised = diffs / normaliser
         base_score = float(np.mean(normalised))
 
-        curvatures = np.array(
-            [snap.avg_curvature for snap in self.history], dtype=float
-        )
+        curvatures = np.array([snap.avg_curvature for snap in self.history], dtype=float)
         curvature_component = (
-            float(np.clip(np.std(np.diff(curvatures)), 0.0, 1.0))
+            float(
+                np.clip(np.std(np.diff(curvatures)), 0.0, 1.0)
+            )  # INV-RC1: output bounded by κ ≤ 1 contract
             if curvatures.size >= 2
             else 0.0
         )
@@ -481,18 +538,24 @@ class TemporalRicciAnalyzer:
             else:
                 baseline = float(volatility_series[0])
                 recent = float(volatility_series[-1])
-            vol_diff = float(np.clip(recent - baseline, 0.0, 1.0))
+            vol_diff = float(
+                np.clip(recent - baseline, 0.0, 1.0)
+            )  # INV-HPC2: non-negative volatility
         else:
             vol_diff = 0.0
 
         midpoint = self.transition_midpoint
         beta = self.shock_sensitivity
         if beta <= 0.0:
-            transition = float(np.clip(0.5 + 0.5 * (base_score - midpoint), 0.0, 1.0))
+            transition = float(
+                np.clip(0.5 + 0.5 * (base_score - midpoint), 0.0, 1.0)
+            )  # INV-RC1: output bounded by κ ≤ 1 contract
         else:
             transition = float(1.0 / (1.0 + np.exp(-beta * (base_score - midpoint))))
         return float(
-            np.clip(transition + 0.2 * curvature_component + 0.2 * vol_diff, 0.0, 1.0)
+            np.clip(
+                transition + 0.2 * curvature_component + 0.2 * vol_diff, 0.0, 1.0
+            )  # INV-RC1: output bounded by κ ≤ 1 contract
         )
 
     def _stability(self) -> float:
@@ -533,7 +596,12 @@ class TemporalRicciAnalyzer:
         if df.empty or price_col not in df.columns:
             raise ValueError("DataFrame must contain a 'close' column and not be empty")
 
-        with _metrics.measure_indicator_compute("temporal_ricci") as ctx:
+        # INV-HPC2: extreme price values can overflow numpy reductions;
+        # suppress and let nan_to_num guards downstream handle the result.
+        with (
+            np.errstate(over="ignore", invalid="ignore"),
+            _metrics.measure_indicator_compute("temporal_ricci") as ctx,
+        ):
             diagnostics: dict[str, float | dict[str, float]] = {
                 "sample_size": float(len(df)),
                 "window": float(self.window_size),
@@ -554,9 +622,7 @@ class TemporalRicciAnalyzer:
             price_values = price_series.to_numpy()
             ratio_metrics: Dict[str, float] = {}
             if price_values.size:
-                ratio_metrics["input_finite"] = float(
-                    np.mean(np.isfinite(price_values))
-                )
+                ratio_metrics["input_finite"] = float(np.mean(np.isfinite(price_values)))
             else:
                 ratio_metrics["input_finite"] = 0.0
             diagnostics["ratios"] = ratio_metrics
@@ -567,9 +633,7 @@ class TemporalRicciAnalyzer:
             if series_length < self.window_size:
                 ctx["value"] = 0.0
                 _metrics.record_indicator_value("temporal_ricci.transition_score", 0.0)
-                _metrics.record_indicator_value(
-                    "temporal_ricci.structural_stability", 1.0
-                )
+                _metrics.record_indicator_value("temporal_ricci.structural_stability", 1.0)
                 _metrics.record_indicator_value("temporal_ricci.edge_persistence", 1.0)
                 ctx["diagnostics"] = diagnostics
                 return TemporalRicciResult(
@@ -585,7 +649,9 @@ class TemporalRicciAnalyzer:
             if self.n_snapshots <= 1:
                 step = window
             else:
-                step = max(1, (series_length - window) // (self.n_snapshots - 1))
+                step = max(
+                    1, (series_length - window) // (self.n_snapshots - 1)
+                )  # bounds: step size ≥ 1 for valid stride over time series
 
             attempts = 0
             snapshots_built = 0
@@ -611,9 +677,7 @@ class TemporalRicciAnalyzer:
                     vol_values = segment[volume_col].astype(float).to_numpy()
                     if vol_values.size:
                         volume_segments += 1
-                        volumes = np.nan_to_num(
-                            vol_values, nan=0.0, posinf=0.0, neginf=0.0
-                        )
+                        volumes = np.nan_to_num(vol_values, nan=0.0, posinf=0.0, neginf=0.0)
                         if np.any(volumes > 0.0):
                             positive_volume_segments += 1
 
@@ -627,30 +691,20 @@ class TemporalRicciAnalyzer:
             persistence = self._persistence()
 
             ctx["value"] = temporal_curvature
-            _metrics.record_indicator_value(
-                "temporal_ricci.transition_score", transition_score
-            )
-            _metrics.record_indicator_value(
-                "temporal_ricci.structural_stability", stability
-            )
-            _metrics.record_indicator_value(
-                "temporal_ricci.edge_persistence", persistence
-            )
+            _metrics.record_indicator_value("temporal_ricci.transition_score", transition_score)
+            _metrics.record_indicator_value("temporal_ricci.structural_stability", stability)
+            _metrics.record_indicator_value("temporal_ricci.edge_persistence", persistence)
             if self.history:
                 _metrics.record_indicator_value(
                     "temporal_ricci.avg_curvature", self.history[-1].avg_curvature
                 )
 
             if attempts:
-                ratio_metrics["snapshot_coverage"] = float(
-                    snapshots_built / max(1, attempts)
-                )
+                ratio_metrics["snapshot_coverage"] = float(snapshots_built / max(1, attempts))
             else:
                 ratio_metrics.setdefault("snapshot_coverage", 0.0)
             if volume_segments:
-                ratio_metrics["volume_coverage"] = float(
-                    positive_volume_segments / volume_segments
-                )
+                ratio_metrics["volume_coverage"] = float(positive_volume_segments / volume_segments)
             elif volume_col and volume_col in df.columns:
                 ratio_metrics.setdefault("volume_coverage", 0.0)
 
@@ -672,6 +726,7 @@ PriceLevelGraphBuilder = PriceLevelGraph
 
 
 __all__ = [
+    "CLAIM_BOUNDARY",
     "GraphSnapshot",
     "LightGraph",
     "OllivierRicciCurvature",

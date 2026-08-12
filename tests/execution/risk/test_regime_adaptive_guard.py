@@ -1,3 +1,5 @@
+# Copyright (c) 2023-2026 Yaroslav Vasylenko (neuron7xLab)
+# SPDX-License-Identifier: MIT
 """Tests for adaptive volatility-aware exposure guard."""
 
 from __future__ import annotations
@@ -42,24 +44,15 @@ def test_regime_guard_classification_and_cooldown() -> None:
     assert pytest.approx(guard.multiplier("BTC-USD"), rel=1e-9) == 1.2
 
     stressed_time = start + timedelta(seconds=1)
-    assert (
-        guard.observe("BTC-USD", 0.025, stressed_time.timestamp())
-        is VolatilityRegime.STRESSED
-    )
+    assert guard.observe("BTC-USD", 0.025, stressed_time.timestamp()) is VolatilityRegime.STRESSED
     assert pytest.approx(guard.multiplier("BTC-USD"), rel=1e-9) == 0.7
 
     critical_time = start + timedelta(seconds=2)
-    assert (
-        guard.observe("BTC-USD", 0.03, critical_time.timestamp())
-        is VolatilityRegime.CRITICAL
-    )
+    assert guard.observe("BTC-USD", 0.03, critical_time.timestamp()) is VolatilityRegime.CRITICAL
     assert pytest.approx(guard.multiplier("BTC-USD"), rel=1e-9) == 0.4
 
     cooldown_block = start + timedelta(seconds=5)
-    assert (
-        guard.observe("BTC-USD", 0.0001, cooldown_block.timestamp())
-        is VolatilityRegime.CRITICAL
-    )
+    assert guard.observe("BTC-USD", 0.0001, cooldown_block.timestamp()) is VolatilityRegime.CRITICAL
 
     cooldown_release = start + timedelta(seconds=20)
     assert guard.observe("BTC-USD", 0.0001, cooldown_release.timestamp()) in {
@@ -87,14 +80,10 @@ def test_advanced_controller_respects_regime_guard_multiplier() -> None:
         correlation_guard=CorrelationLimitGuard({}, max_exposure=10_000_000.0),
         drawdown_breaker=DrawdownBreaker(max_drawdown=0.5),
         exposure_tracker=TimeWeightedExposureTracker(half_life_seconds=10.0),
-        liquidation_guard=LiquidationCascadePreventer(
-            lambda _: 10_000_000.0, max_fraction=1.0
-        ),
+        liquidation_guard=LiquidationCascadePreventer(lambda _: 10_000_000.0, max_fraction=1.0),
         risk_metrics=RiskMetricsCalculator(confidence=0.95),
         kelly_sizer=KellyCriterionPositionSizer(max_leverage=1.0, drawdown_buffer=1.0),
-        vol_sizer=VolatilityAdjustedSizer(
-            target_volatility=0.5, floor=0.1, ceiling=10.0
-        ),
+        vol_sizer=VolatilityAdjustedSizer(target_volatility=0.5, floor=0.1, ceiling=10.0),
         regime_guard=guard,
     )
 

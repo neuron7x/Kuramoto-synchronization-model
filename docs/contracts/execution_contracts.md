@@ -1,10 +1,10 @@
 ---
-owner: execution-platform@tradepulse
+owner: execution-platform@geosync
 review_cadence: quarterly
 last_reviewed: 2026-01-01
 ---
 
-# TradePulse Execution Contracts
+# GeoSync Execution Contracts
 
 **Version:** 1.0.0  
 **Status:** Active  

@@ -1,0 +1,19 @@
+{
+  "contract": {
+    "claim_tier": "INSTRUMENTED",
+    "input_window_sec": 30,
+    "schema_version": "mfn.integration.v1",
+    "seed": 7
+  },
+  "decision": "OBSERVE",
+  "falsification_status": "BLOCKED",
+  "first_file_to_open": "manifest.json",
+  "schema_version": "mfn.integration.v1",
+  "sources": [
+    "forecast.json",
+    "compare.json"
+  ],
+  "stage": "report",
+  "status": "INSTRUMENTED",
+  "timestamp_utc": "2023-11-14T22:13:20Z"
+}

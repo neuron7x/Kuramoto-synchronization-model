@@ -1,4 +1,6 @@
-"""High-efficiency training utilities for TradePulse models.
+# Copyright (c) 2023-2026 Yaroslav Vasylenko (neuron7xLab)
+# SPDX-License-Identifier: MIT
+"""High-efficiency training utilities for GeoSync models.
 
 This module implements a flexible training loop that focuses on
 performance-sensitive workloads.  The design goals were:
@@ -79,9 +81,7 @@ class TrainingBatch:
             return self
 
         def _cast(value: Any) -> Any:
-            if isinstance(value, np.ndarray) and np.issubdtype(
-                value.dtype, np.floating
-            ):
+            if isinstance(value, np.ndarray) and np.issubdtype(value.dtype, np.floating):
                 return value.astype(dtype)
             if isinstance(value, (list, tuple)):
                 array = np.asarray(value)
@@ -222,9 +222,7 @@ class TrainingProfiler:
             yield
         finally:
             wall_time = (
-                (time.perf_counter() - wall_start)
-                if wall_start is not None
-                else float("nan")
+                (time.perf_counter() - wall_start) if wall_start is not None else float("nan")
             )
             memory_peak: int | None = None
             if self._profile_memory:
@@ -247,9 +245,7 @@ class TrainingProfiler:
         if not self._snapshots:
             return {"steps": 0}
 
-        wall_times = [
-            snap.wall_time for snap in self._snapshots if not math.isnan(snap.wall_time)
-        ]
+        wall_times = [snap.wall_time for snap in self._snapshots if not math.isnan(snap.wall_time)]
         memory_peaks = [
             snap.memory_peak_bytes for snap in self._snapshots if snap.memory_peak_bytes
         ]
@@ -258,9 +254,7 @@ class TrainingProfiler:
         return {
             "steps": len(self._snapshots),
             "wall_time_total": float(sum(wall_times)) if wall_times else None,
-            "wall_time_avg": (
-                float(sum(wall_times) / len(wall_times)) if wall_times else None
-            ),
+            "wall_time_avg": (float(sum(wall_times) / len(wall_times)) if wall_times else None),
             "memory_peak_max": int(max(memory_peaks)) if memory_peaks else None,
             "io_time_total": float(sum(io_times)) if self._profile_io else None,
         }
@@ -378,9 +372,7 @@ class _MaterialisedDataset:
         count = 0
         for item in self._dataset:
             sample = _normalise_sample(item)
-            if self._cache_enabled and (
-                self._cache_limit is None or count < self._cache_limit
-            ):
+            if self._cache_enabled and (self._cache_limit is None or count < self._cache_limit):
                 produced.append(_clone_sample(sample))
                 count += 1
             elif self._cache_enabled:
@@ -535,9 +527,7 @@ class AsyncDataLoader:
         batch_inputs = _stack(inputs)
         batch_targets = _stack(targets)
         metadata: dict[str, Any] = {"io_time": io_time, "size": len(samples)}
-        return TrainingBatch(
-            inputs=batch_inputs, targets=batch_targets, metadata=metadata
-        )
+        return TrainingBatch(inputs=batch_inputs, targets=batch_targets, metadata=metadata)
 
 
 # ---------------------------------------------------------------------------
@@ -555,9 +545,7 @@ class CheckpointManager:
         self._index_path = self._directory / "checkpoints.json"
         self._lock = threading.Lock()
         if not self._index_path.exists():
-            self._index_path.write_text(
-                json.dumps({"checkpoints": []}), encoding="utf-8"
-            )
+            self._index_path.write_text(json.dumps({"checkpoints": []}), encoding="utf-8")
 
     def _load_index(self) -> list[str]:
         payload = json.loads(self._index_path.read_text(encoding="utf-8"))
@@ -697,10 +685,7 @@ class TrainingEngine:
             self._component.zero_grad()
             batch_in_epoch = 0
             for batch in loader:
-                if (
-                    config.limit_batches is not None
-                    and batch_in_epoch >= config.limit_batches
-                ):
+                if config.limit_batches is not None and batch_in_epoch >= config.limit_batches:
                     break
                 global_step += 1
                 batch_in_epoch += 1
@@ -709,9 +694,7 @@ class TrainingEngine:
                     global_step,
                     io_time=float(batch.metadata.get("io_time", 0.0)),
                 ):
-                    result = self._component.forward_backward(
-                        cast_batch, self._precision
-                    )
+                    result = self._component.forward_backward(cast_batch, self._precision)
                 loss_history.append(float(result.loss))
                 metrics_history.append(dict(result.metrics))
 

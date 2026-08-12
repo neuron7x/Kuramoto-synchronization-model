@@ -1,3 +1,5 @@
+# Copyright (c) 2023-2026 Yaroslav Vasylenko (neuron7xLab)
+# SPDX-License-Identifier: MIT
 """Lightweight indicator helpers powering portfolio strategies."""
 
 from __future__ import annotations
@@ -35,9 +37,7 @@ _metrics = get_metrics_collector()
 _WEIGHTING_MODES = {"none", "linear", "sqrt", "log"}
 
 
-def _prepare_weight_series(
-    values: Iterable[float], *, expected_size: int, mode: str
-) -> np.ndarray:
+def _prepare_weight_series(values: Iterable[float], *, expected_size: int, mode: str) -> np.ndarray:
     series = np.array(values, dtype=float, copy=True)
     if series.ndim != 1:
         raise ValueError("volumes must be one-dimensional")
@@ -57,9 +57,7 @@ def _prepare_weight_series(
     return series
 
 
-def _apply_exponential_smoothing(
-    values: np.ndarray, valid: np.ndarray, alpha: float
-) -> np.ndarray:
+def _apply_exponential_smoothing(values: np.ndarray, valid: np.ndarray, alpha: float) -> np.ndarray:
     if not (0.0 < alpha < 1.0) or values.size == 0:
         return values
 
@@ -180,9 +178,7 @@ def _rolling_sum(
             device_out = cuda.device_array_like(device_values)
             threads = 256
             blocks = (array.size + threads - 1) // threads
-            _rolling_sum_cuda_kernel[blocks, threads](
-                device_values, int(window), device_out
-            )
+            _rolling_sum_cuda_kernel[blocks, threads](device_values, int(window), device_out)
             cuda.synchronize()
             return device_out.copy_to_host()
         except Exception:
@@ -400,9 +396,7 @@ class KuramotoIndicator:
             weight_series: np.ndarray | None = None
             if self.volume_weighting != "none":
                 if volumes is None:
-                    raise ValueError(
-                        "volumes must be provided when volume_weighting is enabled"
-                    )
+                    raise ValueError("volumes must be provided when volume_weighting is enabled")
                 weight_series = _prepare_weight_series(
                     volumes, expected_size=series.size, mode=self.volume_weighting
                 )
@@ -411,9 +405,7 @@ class KuramotoIndicator:
                 totals = _rolling_sum(
                     complex_phase * weight_series, self.window, backend=self.backend
                 )
-                denominators = _rolling_sum(
-                    weight_series, self.window, backend=self.backend
-                )
+                denominators = _rolling_sum(weight_series, self.window, backend=self.backend)
                 valid = base_mask & (denominators > 0.0)
                 result = np.zeros_like(series, dtype=float)
                 if valid.any():
@@ -463,9 +455,7 @@ class HurstIndicator:
     min_lag: int = 2
     max_lag: int | None = None
     backend: Literal["cpu", "auto", "numpy", "numba", "cuda", "gpu"] = "auto"
-    _buffers: _HurstBufferPool = field(
-        init=False, repr=False, default_factory=_HurstBufferPool
-    )
+    _buffers: _HurstBufferPool = field(init=False, repr=False, default_factory=_HurstBufferPool)
 
     def __post_init__(self) -> None:
         if self.window <= 0:
@@ -579,18 +569,10 @@ class VPINIndicator:
                 ctx["diagnostics"] = diagnostics
                 return np.empty(0, dtype=float)
             if array.ndim != 2 or array.shape[1] < 3:
-                raise ValueError(
-                    "volume_data must have columns [volume, buy_volume, sell_volume]"
-                )
-            total = np.clip(
-                np.nan_to_num(array[:, 0], nan=0.0, posinf=0.0, neginf=0.0), 0.0, None
-            )
-            buy = np.clip(
-                np.nan_to_num(array[:, 1], nan=0.0, posinf=0.0, neginf=0.0), 0.0, None
-            )
-            sell = np.clip(
-                np.nan_to_num(array[:, 2], nan=0.0, posinf=0.0, neginf=0.0), 0.0, None
-            )
+                raise ValueError("volume_data must have columns [volume, buy_volume, sell_volume]")
+            total = np.clip(np.nan_to_num(array[:, 0], nan=0.0, posinf=0.0, neginf=0.0), 0.0, None)
+            buy = np.clip(np.nan_to_num(array[:, 1], nan=0.0, posinf=0.0, neginf=0.0), 0.0, None)
+            sell = np.clip(np.nan_to_num(array[:, 2], nan=0.0, posinf=0.0, neginf=0.0), 0.0, None)
 
             if self.use_signed_imbalance:
                 imbalance = buy - sell
@@ -608,13 +590,9 @@ class VPINIndicator:
                     result[valid] = np.clip(computed_ratios, -1.0, 1.0)
                 else:
                     result[valid] = np.clip(np.abs(computed_ratios), 0.0, 1.0)
-            ratio_metrics["valid_windows"] = (
-                float(np.mean(valid)) if valid.size else 0.0
-            )
+            ratio_metrics["valid_windows"] = float(np.mean(valid)) if valid.size else 0.0
             if total.size:
-                ratio_metrics["positive_volume"] = float(
-                    np.mean(total > self.min_volume)
-                )
+                ratio_metrics["positive_volume"] = float(np.mean(total > self.min_volume))
 
             if self.smoothing > 0.0:
                 result = _apply_exponential_smoothing(result, valid, self.smoothing)

@@ -1,0 +1,88 @@
+{
+  "schema_version": "2026.06.25",
+  "issue": 1228,
+  "slice_id": "issue_1228_tasks_1_11_ricci_bridge_provenance",
+  "status": "ARTIFACT_ONLY_SLICE_VERDICT",
+  "score_credit_granted": false,
+  "final_validation_complete": false,
+  "target_interval_claimed": false,
+  "canonical_score_before_slice": 81.5,
+  "score_behavior": "unchanged; planning text and artifact-only linkage do not grant score credit",
+  "completed_tasks": [1, 2, 3, 4, 5, 6, 7, 8, 9, 10, 11],
+  "task_carriers": {
+    "1_ricci_source_inputs": {
+      "carrier_type": "artifact_field",
+      "path": "artifacts/physics_validation/ricci_bridge_summary.json",
+      "json_pointer": "/provenance_ledger/source_inputs"
+    },
+    "2_ricci_graph_rule": {
+      "carrier_type": "artifact_field",
+      "path": "artifacts/physics_validation/ricci_bridge_summary.json",
+      "json_pointer": "/provenance_ledger/graph_rule"
+    },
+    "3_curvature_estimator_name": {
+      "carrier_type": "artifact_field",
+      "path": "artifacts/physics_validation/ricci_bridge_summary.json",
+      "json_pointer": "/provenance_ledger/curvature_estimator_name"
+    },
+    "4_curvature_estimator_assumptions": {
+      "carrier_type": "artifact_field",
+      "path": "artifacts/physics_validation/ricci_bridge_summary.json",
+      "json_pointer": "/provenance_ledger/curvature_estimator_assumptions"
+    },
+    "5_curvature_to_weight_transform": {
+      "carrier_type": "code_path_reference",
+      "path": "core/kuramoto/kuramoto_ricci_engine.py::ricci_to_adjacency",
+      "artifact_path": "artifacts/physics_validation/ricci_bridge_summary.json",
+      "json_pointer": "/provenance_ledger/curvature_to_weight_transform"
+    },
+    "6_bridge_valid_domain": {
+      "carrier_type": "artifact_field",
+      "path": "artifacts/physics_validation/ricci_bridge_summary.json",
+      "json_pointer": "/provenance_ledger/bridge_valid_domain"
+    },
+    "7_bridge_excluded_domain": {
+      "carrier_type": "artifact_field",
+      "path": "artifacts/physics_validation/ricci_bridge_summary.json",
+      "json_pointer": "/provenance_ledger/bridge_excluded_domain"
+    },
+    "8_provenance_ledger": {
+      "carrier_type": "artifact_object",
+      "path": "artifacts/physics_validation/ricci_bridge_summary.json",
+      "json_pointer": "/provenance_ledger"
+    },
+    "9_ricci_test_link": {
+      "carrier_type": "test_path",
+      "path": "tests/physics/test_ricci_bridge.py",
+      "artifact_path": "artifacts/physics_validation/ricci_bridge_summary.json",
+      "json_pointer": "/provenance_ledger/ricci_test_link"
+    },
+    "10_bridge_completeness_metric": {
+      "carrier_type": "artifact_metric",
+      "path": "artifacts/physics_validation/ricci_bridge_summary.json",
+      "json_pointer": "/provenance_ledger/bridge_completeness_metric",
+      "required_fields": 11,
+      "present_fields": 11,
+      "ratio": 1.0
+    },
+    "11_bridge_non_core_flag": {
+      "carrier_type": "artifact_field",
+      "path": "artifacts/physics_validation/ricci_bridge_summary.json",
+      "json_pointer": "/bridge_non_core_flag",
+      "expected_value": true
+    }
+  },
+  "source_artifact": "artifacts/physics_validation/ricci_bridge_summary.json",
+  "test_link": "tests/physics/test_ricci_bridge.py",
+  "measurement_command": "python -m pytest tests/physics/test_ricci_bridge.py",
+  "bridge_verdict": "RICCI_BRIDGE_PROVENANCE_SURFACE_DEFINED_CANONICAL_PROMOTION_FORBIDDEN",
+  "non_claims": [
+    "Does not claim score increase beyond 81.5.",
+    "Does not claim final physics validation.",
+    "Does not claim target interval reached.",
+    "Does not promote Ricci bridge to canonical core.",
+    "Does not audit market-data graph construction."
+  ],
+  "next_open_tasks": [12, 13, 14, 15, 16, 17, 18],
+  "verdict": "TASKS_1_11_HAVE_DURABLE_CARRIERS_SCORE_UNCHANGED"
+}

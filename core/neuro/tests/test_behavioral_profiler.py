@@ -1,3 +1,5 @@
+# Copyright (c) 2023-2026 Yaroslav Vasylenko (neuron7xLab)
+# SPDX-License-Identifier: MIT
 """Tests for SerotoninController behavioral profiler."""
 
 from __future__ import annotations
@@ -10,8 +12,6 @@ from pathlib import Path
 import numpy as np
 import pytest
 
-# Add project root to path
-sys.path.insert(0, str(Path(__file__).parent.parent.parent.parent))
 
 # Direct import to avoid dependency issues in tests
 spec = importlib.util.spec_from_file_location(
@@ -141,25 +141,18 @@ def test_profile_stress_response(profiler):
     """Test profiling stress response across levels."""
     stress_levels = [0.5, 1.0, 1.5, 2.0, 2.5]
 
-    profile = profiler.profile_stress_response(
-        stress_levels=stress_levels, steps_per_level=20
-    )
+    profile = profiler.profile_stress_response(stress_levels=stress_levels, steps_per_level=20)
 
     assert profile is not None
     assert profile.statistics.total_steps == len(stress_levels) * 20
     assert profile.tonic_phasic.tonic_baseline >= 0
     assert profile.tonic_phasic.tonic_peak > profile.tonic_phasic.tonic_baseline
-    assert (
-        profile.veto_cooldown.veto_threshold
-        == profiler.controller.config["cooldown_threshold"]
-    )
+    assert profile.veto_cooldown.veto_threshold == profiler.controller.config["cooldown_threshold"]
 
 
 def test_profile_stress_ramp(profiler):
     """Test profiling with ramping stress."""
-    profile = profiler.profile_stress_ramp(
-        stress_min=0.0, stress_max=3.0, total_steps=200
-    )
+    profile = profiler.profile_stress_ramp(stress_min=0.0, stress_max=3.0, total_steps=200)
 
     assert profile is not None
     assert profile.statistics.total_steps == 200
@@ -220,9 +213,7 @@ def test_veto_cooldown_characteristics(profiler):
 def test_profile_statistics(profiler):
     """Test profile statistics are computed correctly."""
     stress_levels = [1.0, 2.0, 3.0]
-    profile = profiler.profile_stress_response(
-        stress_levels=stress_levels, steps_per_level=50
-    )
+    profile = profiler.profile_stress_response(stress_levels=stress_levels, steps_per_level=50)
 
     stats = profile.statistics
 
@@ -241,9 +232,7 @@ def test_profile_statistics(profiler):
 
 def test_profile_save_and_load(profiler, tmp_path):
     """Test saving and loading profiles."""
-    profile = profiler.profile_stress_response(
-        stress_levels=[0.5, 1.5, 2.5], steps_per_level=20
-    )
+    profile = profiler.profile_stress_response(stress_levels=[0.5, 1.5, 2.5], steps_per_level=20)
 
     profile_path = tmp_path / "test_profile.json"
     profile.save(str(profile_path))
@@ -254,14 +243,8 @@ def test_profile_save_and_load(profiler, tmp_path):
     loaded_profile = BehavioralProfile.load(str(profile_path))
 
     assert loaded_profile.statistics.total_steps == profile.statistics.total_steps
-    assert (
-        loaded_profile.tonic_phasic.tonic_baseline
-        == profile.tonic_phasic.tonic_baseline
-    )
-    assert (
-        loaded_profile.veto_cooldown.veto_threshold
-        == profile.veto_cooldown.veto_threshold
-    )
+    assert loaded_profile.tonic_phasic.tonic_baseline == profile.tonic_phasic.tonic_baseline
+    assert loaded_profile.veto_cooldown.veto_threshold == profile.veto_cooldown.veto_threshold
 
 
 def test_profile_to_dict(profiler):
@@ -283,9 +266,7 @@ def test_profile_to_dict(profiler):
 
 def test_profile_generate_report(profiler):
     """Test profile report generation."""
-    profile = profiler.profile_stress_response(
-        stress_levels=[1.0, 2.0], steps_per_level=30
-    )
+    profile = profiler.profile_stress_response(stress_levels=[1.0, 2.0], steps_per_level=30)
 
     report = profile.generate_report()
 
@@ -319,9 +300,7 @@ def test_profiler_tracks_cooldown_duration(profiler):
 
     # Check cooldown events tracked
     cooldown_durations = [
-        e.get("max_duration", 0)
-        for e in profiler._cooldown_events
-        if "max_duration" in e
+        e.get("max_duration", 0) for e in profiler._cooldown_events if "max_duration" in e
     ]
     if cooldown_durations:
         assert max(cooldown_durations) > 0
@@ -330,9 +309,7 @@ def test_profiler_tracks_cooldown_duration(profiler):
 def test_profile_detects_desensitization(profiler):
     """Test profile detects sensitivity reduction."""
     # Sustained high stress should trigger desensitization
-    profile = profiler.profile_stress_ramp(
-        stress_min=2.5, stress_max=3.0, total_steps=300
-    )
+    profile = profiler.profile_stress_ramp(stress_min=2.5, stress_max=3.0, total_steps=300)
 
     # Sensitivity floor should be lower than 1.0
     assert profile.tonic_phasic.sensitivity_floor < 1.0
@@ -398,14 +375,8 @@ def test_profile_consistency(profiler):
     profile2 = profiler.profile_stress_response([1.0, 2.0], steps_per_level=30)
 
     # Should get similar results
-    assert (
-        abs(profile1.statistics.serotonin_mean - profile2.statistics.serotonin_mean)
-        < 0.1
-    )
-    assert (
-        abs(profile1.tonic_phasic.tonic_baseline - profile2.tonic_phasic.tonic_baseline)
-        < 0.1
-    )
+    assert abs(profile1.statistics.serotonin_mean - profile2.statistics.serotonin_mean) < 0.1
+    assert abs(profile1.tonic_phasic.tonic_baseline - profile2.tonic_phasic.tonic_baseline) < 0.1
 
 
 def test_profile_config_snapshot(profiler):

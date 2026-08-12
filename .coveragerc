@@ -1,69 +1,54 @@
+; F02 closure — honest coverage configuration.
+;
+; The previous .coveragerc declared `source = core, backtest, execution`
+; while [run] omit re-excluded 13 sub-packages of core (accelerators,
+; agent, altdata, config, events, indicators, messaging, metrics, phase,
+; reporting, strategies, utils, data/adapters). The reported coverage
+; number therefore measured roughly two-thirds of the declared source —
+; the classic F02 false-confidence pattern.
+;
+; This file replaces that pattern. Source declares the surfaces this
+; profile observes. Omit excludes ONLY artefacts that are not source
+; (tests, generated stubs, empty package markers). When a sub-package
+; is intentionally not measured by this profile, that decision is
+; expressed by REMOVING it from `source`, not by smuggling it into omit.
+;
+; Subsystems not measured by this profile remain observable:
+; they will be added back to `source` when their dedicated profile / CI
+; job lands. Until then, the coverage number reflects only what is
+; actually instrumented — by design, lower than the previous lying
+; total, but truthful.
+;
+; Rule: every path under `omit` must NOT be a child of any path under
+; `source`. The regression test `tests/audit/test_coverage_honesty.py`
+; enforces this.
+
 [run]
+branch = True
 source =
     core
     backtest
     execution
 omit =
-    **/__init__.py
-    application/**
-    cli/**
-    analytics/**
-    markets/**
-    nfpro/**
     tests/**
-    domain/**
-    observability/**
-    apps/**
-    interfaces/**
-    libs/**
-    scripts/**
-    src/**
-    tools/**
     conftest.py
-    core/accelerators/**
-    core/agent/**
-    core/altdata/**
-    core/config/**
-    core/events/**
-    core/indicators/**
-    core/messaging/**
-    core/metrics/**
-    core/reporting/**
-    core/strategies/**
-    core/utils/**
-    core/phase/**
-    core/data/adapters/**
+    **/__init__.py
+    **/generated/**
+    **/_pb2.py
+    **/_pb2_grpc.py
 
 [report]
 show_missing = True
 precision = 2
+exclude_lines =
+    pragma: no cover
+    def __repr__
+    raise NotImplementedError
+    if TYPE_CHECKING:
 omit =
-    **/__init__.py
-    application/**
-    cli/**
-    analytics/**
-    markets/**
-    nfpro/**
     tests/**
-    domain/**
-    observability/**
-    apps/**
-    interfaces/**
-    libs/**
-    scripts/**
-    src/**
-    tools/**
     conftest.py
-    core/accelerators/**
-    core/agent/**
-    core/altdata/**
-    core/config/**
-    core/events/**
-    core/indicators/**
-    core/messaging/**
-    core/metrics/**
-    core/reporting/**
-    core/strategies/**
-    core/utils/**
-    core/phase/**
-    core/data/adapters/**
+    **/__init__.py
+    **/generated/**
+    **/_pb2.py
+    **/_pb2_grpc.py

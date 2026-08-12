@@ -1,8 +1,12 @@
+# Copyright (c) 2023-2026 Yaroslav Vasylenko (neuron7xLab)
+# SPDX-License-Identifier: MIT
+# mypy: ignore-errors
 """Unit tests for the FETE integration."""
 
 from __future__ import annotations
 
 import numpy as np
+import pytest
 
 from core.strategies import (
     FETE,
@@ -38,15 +42,14 @@ def test_sigma_controller_keeps_tau_in_bounds() -> None:
     assert {"brier", "ece", "entropy", "tau", "n_obs", "calibrated"} <= set(audit)
 
 
+@pytest.mark.filterwarnings("ignore::numpy.exceptions.RankWarning")
 def test_fete_backtest_output_shapes() -> None:
     rng = np.random.default_rng(0)
     n = 400
     log_returns = rng.normal(0.0005, 0.015, size=n)
     prices = np.cumprod(1.0 + log_returns)
     probs = (
-        0.5
-        + 0.15 * np.sin(np.arange(prices.size) / 50.0)
-        + rng.normal(0, 0.08, size=prices.size)
+        0.5 + 0.15 * np.sin(np.arange(prices.size) / 50.0) + rng.normal(0, 0.08, size=prices.size)
     )
     engine = FETE(FETEConfig())
     result = engine.backtest(prices, probs)

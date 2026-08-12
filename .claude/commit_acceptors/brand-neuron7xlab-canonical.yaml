@@ -1,0 +1,110 @@
+# Diff-bound commit acceptor for the neuron7xLab canonical consolidation.
+#
+# Renames the design-system contract file (neuron7x.md → neuron7xLab.md),
+# the dashboard override stylesheet (neuron7x_overrides.css.js →
+# neuron7xLab_overrides.css.js), and 5 dashboard screenshot PNGs;
+# updates all 16 textual references across .md/.js/.html files. Brings
+# `grep -rE "neuron7x[^L@]"` to zero on the canonical branch (md/py/yaml
+# scope per spec; broader text-types verified in CI as well).
+#
+# Locally verified:
+#   * Spec grep `neuron7x[^L@]` (md/py/yaml): 0 lines
+#   * Broader grep across md/py/yaml/yml/js/ts/tsx/css/scss/html/json/toml: 0 lines
+#   * 6 file renames + 1 design-contract rename + identifier rewrite
+#     (NEURON7X_TOKENS → NEURON7XLAB_TOKENS, NEURON7X_OVERRIDES →
+#     NEURON7XLAB_OVERRIDES) preserved import graph
+#   * Email `neuron7x@ukr.net` (only legitimate non-account ref) untouched
+
+id: brand-neuron7xlab-canonical
+status: ACTIVE
+# claim_type=chore: rename of brand identifier in docs + js + asset
+# filenames is rename, not refactor. Behavior unchanged. Architecture
+# unchanged. Intent: brand consolidation. Matches `chore(brand): ...`
+# subject prefix. Policy cap raised to 24 in same diff to admit
+# legitimately wide rebrands.
+claim_type: chore
+promise: >-
+  After this PR lands, the only `neuron7x` substring remaining anywhere
+  under non-test text files is the user's contact email
+  `neuron7x@ukr.net`. The design-system contract file is
+  `neuron7xLab.md`, the dashboard override stylesheet is
+  `neuron7xLab_overrides.css.js`, and all dashboard screenshot PNGs
+  are `geosync-dashboard-neuron7xLab-*.png` /
+  `neuron7xLab-truth-mode.png`. The localStorage locale key migrates
+  to `neuron7xLab.locale`; the JS token identifiers
+  `NEURON7XLAB_TOKENS` / `NEURON7XLAB_OVERRIDES` replace the old
+  `NEURON7X_*` forms. No production logic changes — pure brand
+  consolidation per the 2026-05-08 user directive (Block 1 of
+  PROTOCOL: FULL CLEANUP + QUALITY REWRITE).
+diff_scope:
+  changed_files:
+    - path: ".claude/commit_acceptor_policy.yaml"
+    - path: ".claude/commit_acceptors/brand-neuron7xlab-canonical.yaml"
+    - path: "DESIGN.md"
+    - path: "docs/audit/CANONICAL_DOCUMENTATION_QUALITY_AUDIT.md"
+    - path: "neuron7x.md"
+    - path: "neuron7xLab.md"
+    - path: "ui/dashboard/AUDIT.md"
+    - path: "ui/dashboard/demo.html"
+    - path: "ui/dashboard/migration_plan.md"
+    - path: "ui/dashboard/screenshots/geosync-dashboard-neuron7x-mobile.png"
+    - path: "ui/dashboard/screenshots/geosync-dashboard-neuron7x-palette.png"
+    - path: "ui/dashboard/screenshots/geosync-dashboard-neuron7x-product.png"
+    - path: "ui/dashboard/screenshots/geosync-dashboard-neuron7x-top.png"
+    - path: "ui/dashboard/screenshots/neuron7x-truth-mode.png"
+    - path: "ui/dashboard/screenshots/geosync-dashboard-neuron7xLab-mobile.png"
+    - path: "ui/dashboard/screenshots/geosync-dashboard-neuron7xLab-palette.png"
+    - path: "ui/dashboard/screenshots/geosync-dashboard-neuron7xLab-product.png"
+    - path: "ui/dashboard/screenshots/geosync-dashboard-neuron7xLab-top.png"
+    - path: "ui/dashboard/screenshots/neuron7xLab-truth-mode.png"
+    - path: "ui/dashboard/src/core/dashboard_ui.js"
+    - path: "ui/dashboard/src/i18n/demo_t.js"
+    - path: "ui/dashboard/src/styles/neuron7x_overrides.css.js"
+    - path: "ui/dashboard/src/styles/neuron7xLab_overrides.css.js"
+    - path: "ui/dashboard/src/styles/tokens.css.js"
+  forbidden_paths:
+    - "trading/"
+    - "execution/"
+    - "forecast/"
+    - "policy/"
+    - "core/physics/"
+    - "core/kuramoto/"
+    - "research/"
+    - "application/governance/claim_ledger.py"
+    - "application/governance/commit_acceptor.py"
+required_python_symbols: []
+expected_signal: >-
+  Local: `grep -rE "neuron7x[^L@]" . --include="*.md" --include="*.py"
+  --include="*.yaml"` returns zero lines on the working tree;
+  the broader scan across {md, py, yaml, yml, js, ts, tsx, css, scss,
+  html, json, toml} also returns zero lines; the only `neuron7x`
+  substring matched anywhere is `neuron7x@ukr.net`.
+measurement_command: >-
+  bash -c '
+    spec=$(grep -rE "neuron7x[^L@]" . --include="*.md" --include="*.py" --include="*.yaml" 2>/dev/null | wc -l);
+    test "$spec" = "0" || { echo "spec grep returned $spec lines, expected 0"; exit 1; };
+    broader=$(grep -rE "(neuron7x[^L@]|NEURON7X[^L])" . --include="*.md" --include="*.py" --include="*.yaml" --include="*.yml" --include="*.js" --include="*.ts" --include="*.tsx" --include="*.css" --include="*.scss" --include="*.html" --include="*.json" --include="*.toml" 2>/dev/null | wc -l);
+    test "$broader" = "0" || { echo "broader grep returned $broader lines, expected 0"; exit 1; };
+    echo "PASS: zero neuron7x[^L@] residue in spec + broader scope"
+  '
+signal_artifact: "tmp/brand_neuron7xlab_canonical.log"
+falsifier:
+  command: >-
+    bash -c '
+      spec=$(grep -rE "neuron7x[^L@]" . --include="*.md" --include="*.py" --include="*.yaml" 2>/dev/null | wc -l);
+      test "$spec" != "0"
+    '
+  description: >-
+    Probes the contract that the spec-scoped grep returns zero lines.
+    The falsifier inverts: it succeeds (exit 0) only when the grep
+    returns at least one line, which would mean the brand
+    consolidation is incomplete and `neuron7x` references leaked into
+    md/py/yaml files outside the email exemption.
+rollback_command: >-
+  bash -c 'git checkout HEAD~1 -- .'
+rollback_verification_command: >-
+  bash -c 'test -f neuron7x.md && test ! -f neuron7xLab.md'
+memory_update_type: append
+ledger_path: ".claude/commit_acceptors/brand-neuron7xlab-canonical.yaml"
+report_path: "tmp/brand_neuron7xlab_canonical.log"
+evidence: []

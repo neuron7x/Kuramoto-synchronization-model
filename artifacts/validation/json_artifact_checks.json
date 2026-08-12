@@ -1,0 +1,57 @@
+{
+  "results": [
+    {
+      "cmd": [
+        "/usr/bin/python3",
+        "tools/validate_json_artifact_contract.py",
+        "examples/json_artifact_contract.candidate.json"
+      ],
+      "code": 0,
+      "stderr": "",
+      "stdout": "{\n  \"errors\": [],\n  \"input\": \"examples/json_artifact_contract.candidate.json\",\n  \"schema_version\": \"json_artifact_contract_validator.v1\",\n  \"status\": \"OK\"\n}\n"
+    },
+    {
+      "cmd": [
+        "/usr/bin/python3",
+        "tools/check_json_contract_evidence_policy.py",
+        "examples/json_artifact_contract.candidate.json"
+      ],
+      "code": 0,
+      "stderr": "",
+      "stdout": "{\n  \"errors\": [],\n  \"input\": \"examples/json_artifact_contract.candidate.json\",\n  \"schema_version\": \"json_contract_evidence_policy.v1\",\n  \"status\": \"OK\"\n}\n"
+    },
+    {
+      "cmd": [
+        "/usr/bin/python3",
+        "tools/validate_json_artifact_contract.py",
+        "examples/json_artifact_contract.blocked.json"
+      ],
+      "code": 0,
+      "stderr": "",
+      "stdout": "{\n  \"errors\": [],\n  \"input\": \"examples/json_artifact_contract.blocked.json\",\n  \"schema_version\": \"json_artifact_contract_validator.v1\",\n  \"status\": \"OK\"\n}\n"
+    },
+    {
+      "cmd": [
+        "/usr/bin/python3",
+        "tools/check_json_contract_evidence_policy.py",
+        "examples/json_artifact_contract.blocked.json"
+      ],
+      "code": 0,
+      "stderr": "",
+      "stdout": "{\n  \"errors\": [],\n  \"input\": \"examples/json_artifact_contract.blocked.json\",\n  \"schema_version\": \"json_contract_evidence_policy.v1\",\n  \"status\": \"OK\"\n}\n"
+    },
+    {
+      "cmd": [
+        "/usr/bin/python3",
+        "tools/json_contract_receipt.py",
+        "--out",
+        "artifacts/validation/json_contract_receipt.json"
+      ],
+      "code": 0,
+      "stderr": "",
+      "stdout": "{\n  \"error_count\": 0,\n  \"item_count\": 2,\n  \"items\": [\n    {\n      \"bytes\": 2588,\n      \"errors\": [],\n      \"path\": \"examples/json_artifact_contract.candidate.json\",\n      \"sha256\": \"23efe750fc37754eefaf8279b6f9fab50e0d5fa51b6c576ac79dd2e6febc943f\",\n      \"status\": \"OK\"\n    },\n    {\n      \"bytes\": 3804,\n      \"errors\": [],\n      \"path\": \"examples/json_artifact_contract.blocked.json\",\n      \"sha256\": \"0616c41dba5dc78bd589d35dc1a806b5ee33717143ef8e7b9c0df87a745f438f\",\n      \"status\": \"OK\"\n    }\n  ],\n  \"ok_count\": 2,\n  \"schema_version\": \"json_contract_receipt.v1\",\n  \"status\": \"OK\"\n}\n"
+    }
+  ],
+  "schema_version": "json_artifact_checks.v1",
+  "status": "OK"
+}

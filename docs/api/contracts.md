@@ -1,10 +1,10 @@
 ---
-owner: platform@tradepulse.example
+owner: platform@geosync.example
 review_cadence: quarterly
 last_reviewed: 2026-01-01
 ---
 
-# TradePulse API & Contract Catalog
+# GeoSync API & Contract Catalog
 
 This catalog cross-checks the API docs in `docs/api/` against interface modules in
 `interfaces/` and schema definitions in `schemas/`. It also expands each contract
@@ -15,9 +15,9 @@ with inputs/outputs, DTOs, and concrete examples.
 | Contract | Primary docs | Interfaces | Schemas | Notes |
 | --- | --- | --- | --- | --- |
 | Public HTTP API (signals & predictions) | `docs/api/overview.md`, `docs/api/routes.json`, `docs/api/examples/` | — | `schemas/http/json/1.0.0/*` | `routes.json` documents `GET /v1/signals/{symbol}` + async `POST /v1/predictions`. OpenAPI currently omits `/v1/signals`. |
-| Feature extraction API | `schemas/openapi/tradepulse-online-inference-v1.json` | — | `schemas/http/json/1.0.0/feature_request.schema.json`, `feature_response.schema.json` | Present in OpenAPI (`/v1/features`) but missing from `docs/api/routes.json`. |
-| Prediction query API | `schemas/openapi/tradepulse-online-inference-v1.json` | — | `schemas/http/json/1.0.0/prediction_response.schema.json` | OpenAPI exposes a synchronous `POST /v1/predictions` returning `PredictionResponse`. `routes.json` instead describes async submission (`PredictionCreateResponse`). |
-| Admin remote control API | `docs/api/admin_remote_control_openapi.yaml` | — | Inline OpenAPI schemas | Matches OpenAPI in `schemas/openapi/tradepulse-online-inference-v1.json` under `/admin/kill-switch`. |
+| Feature extraction API | `schemas/openapi/geosync-online-inference-v1.json` | — | `schemas/http/json/1.0.0/feature_request.schema.json`, `feature_response.schema.json` | Present in OpenAPI (`/v1/features`) but missing from `docs/api/routes.json`. |
+| Prediction query API | `schemas/openapi/geosync-online-inference-v1.json` | — | `schemas/http/json/1.0.0/prediction_response.schema.json` | OpenAPI exposes a synchronous `POST /v1/predictions` returning `PredictionResponse`. `routes.json` instead describes async submission (`PredictionCreateResponse`). |
+| Admin remote control API | `docs/api/admin_remote_control_openapi.yaml` | — | Inline OpenAPI schemas | Matches OpenAPI in `schemas/openapi/geosync-online-inference-v1.json` under `/admin/kill-switch`. |
 | Webhooks | `docs/api/webhooks.md` | — | `schemas/events/json/1.0.0/*` | Covers `signal.published` + `prediction.completed`. |
 | CLI contract | `interfaces/README.md` | `interfaces/cli.py` | — | Structured JSON output for analyze/backtest/live commands. |
 | Python interface contracts | — | `interfaces/ingestion.py`, `interfaces/backtest.py`, `interfaces/execution/base.py` | `core.data.models` | Not previously documented in `docs/api/`. |
@@ -28,12 +28,12 @@ with inputs/outputs, DTOs, and concrete examples.
 
 ### Market signal (GET `/v1/signals/{symbol}`)
 
-**owner:** Platform Engineering (platform@tradepulse.example)  
+**owner:** Platform Engineering (platform@geosync.example)  
 **last_reviewed:** 2025-12-28
 
 **Inputs**
 - Path parameters: `symbol` (string, canonical symbol like `BTC-USD`).
-- Headers: `X-TradePulse-Signature` (ed25519, required), `X-Idempotency-Key` (optional).
+- Headers: `X-GeoSync-Signature` (ed25519, required), `X-Idempotency-Key` (optional).
 
 **Output**
 - **200** `MarketSignalResponse`
@@ -51,8 +51,8 @@ with inputs/outputs, DTOs, and concrete examples.
 
 _Request_
 ```bash
-curl -H "X-TradePulse-Signature: <sig>" \
-  https://api.tradepulse.example/v1/signals/BTC-USD
+curl -H "X-GeoSync-Signature: <sig>" \
+  https://api.geosync.example/v1/signals/BTC-USD
 ```
 
 _Response_
@@ -75,12 +75,12 @@ _Response_
 
 ### Prediction submission (async) (POST `/v1/predictions`)
 
-**owner:** Platform Engineering (platform@tradepulse.example)  
+**owner:** Platform Engineering (platform@geosync.example)  
 **last_reviewed:** 2025-12-28
 
 **Inputs**
 - Body: `PredictionCreateRequest` JSON.
-- Headers: `X-TradePulse-Signature` (required), `X-Idempotency-Key` (required).
+- Headers: `X-GeoSync-Signature` (required), `X-Idempotency-Key` (required).
 
 **Output**
 - **202** `PredictionCreateResponse` (acknowledges async processing).
@@ -124,8 +124,8 @@ _Response_
 {
   "estimated_completion_at": "2025-02-01T12:32:30Z",
   "links": {
-    "status": "https://api.tradepulse.example/v1/predictions/pred-20250201-001",
-    "webhook": "https://webhooks.tradepulse.example/predictions/pred-20250201-001"
+    "status": "https://api.geosync.example/v1/predictions/pred-20250201-001",
+    "webhook": "https://webhooks.geosync.example/predictions/pred-20250201-001"
   },
   "request_id": "pred-20250201-001",
   "status": "accepted",
@@ -137,7 +137,7 @@ _Response_
 
 ### Feature extraction (POST `/v1/features`)
 
-**owner:** Platform Engineering (platform@tradepulse.example)  
+**owner:** Platform Engineering (platform@geosync.example)  
 **last_reviewed:** 2025-12-28
 
 **Inputs**
@@ -222,7 +222,7 @@ _Response_
 
 ### Prediction query (sync) (POST `/v1/predictions`)
 
-**owner:** Platform Engineering (platform@tradepulse.example)  
+**owner:** Platform Engineering (platform@geosync.example)  
 **last_reviewed:** 2025-12-28
 
 **Inputs**
@@ -308,7 +308,7 @@ _Response_
 
 ### signal.published
 
-**owner:** Platform Engineering (platform@tradepulse.example)  
+**owner:** Platform Engineering (platform@geosync.example)  
 **last_reviewed:** 2025-12-28
 
 **Inputs**
@@ -349,7 +349,7 @@ _Response_
 
 ### prediction.completed
 
-**owner:** Platform Engineering (platform@tradepulse.example)  
+**owner:** Platform Engineering (platform@geosync.example)  
 **last_reviewed:** 2025-12-28
 
 **Inputs**
@@ -401,7 +401,7 @@ _Response_
 
 ### Kill-switch management (GET/POST/DELETE `/admin/kill-switch`)
 
-**owner:** Platform Engineering (platform@tradepulse.example)  
+**owner:** Platform Engineering (platform@geosync.example)  
 **last_reviewed:** 2025-12-28
 
 **Inputs**
@@ -443,11 +443,11 @@ _Response_
 
 ### CLI entry points (`interfaces/cli.py`)
 
-**owner:** Developer Experience (devex@tradepulse.example)  
+**owner:** Developer Experience (devex@geosync.example)  
 **last_reviewed:** 2025-12-28
 
 **Inputs**
-- Command-line flags for `tradepulse analyze`, `tradepulse backtest`, `tradepulse live`.
+- Command-line flags for `geosync analyze`, `geosync backtest`, `geosync live`.
 
 **Output**
 - JSON payloads on stdout, structured errors on stderr.
@@ -459,7 +459,7 @@ _Response_
 
 **Example**
 ```bash
-tradepulse analyze --csv prices.csv --window 100
+geosync analyze --csv prices.csv --window 100
 ```
 
 ```json
@@ -483,7 +483,7 @@ tradepulse analyze --csv prices.csv --window 100
 
 ### Data ingestion contracts (`interfaces/ingestion.py`)
 
-**owner:** Developer Experience (devex@tradepulse.example)  
+**owner:** Developer Experience (devex@geosync.example)  
 **last_reviewed:** 2025-12-28
 
 **Inputs**
@@ -513,7 +513,7 @@ class CsvIngestor(DataIngestionService):
 
 ### Backtest engine contract (`interfaces/backtest.py`)
 
-**owner:** Developer Experience (devex@tradepulse.example)  
+**owner:** Developer Experience (devex@geosync.example)  
 **last_reviewed:** 2025-12-28
 
 **Inputs**
@@ -535,7 +535,7 @@ class SimpleEngine(BacktestEngine[dict]):
 
 ### Execution & risk contracts (`interfaces/execution/base.py`)
 
-**owner:** Developer Experience (devex@tradepulse.example)  
+**owner:** Developer Experience (devex@geosync.example)  
 **last_reviewed:** 2025-12-28
 
 **Inputs**

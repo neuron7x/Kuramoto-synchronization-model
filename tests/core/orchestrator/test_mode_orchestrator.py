@@ -1,3 +1,5 @@
+# Copyright (c) 2023-2026 Yaroslav Vasylenko (neuron7xLab)
+# SPDX-License-Identifier: MIT
 """Property-style coverage for :mod:`core.orchestrator.mode_orchestrator`."""
 
 from __future__ import annotations
@@ -97,9 +99,7 @@ def test_action_timeout_transitions_to_cooldown(seed: int) -> None:
 
 
 @pytest.mark.parametrize("seed", range(128))
-@pytest.mark.parametrize(
-    "state", [ModeState.ACTION, ModeState.COOLDOWN, ModeState.REST]
-)
+@pytest.mark.parametrize("state", [ModeState.ACTION, ModeState.COOLDOWN, ModeState.REST])
 def test_hard_breach_forces_safe_exit(seed: int, state: ModeState) -> None:
     rng = random.Random(seed)
     snapshot = hard_breach_snapshot(rng)

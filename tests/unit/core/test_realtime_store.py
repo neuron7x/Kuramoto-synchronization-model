@@ -1,4 +1,5 @@
-# SPDX-License-Identifier: LicenseRef-TradePulse-Proprietary
+# Copyright (c) 2023-2026 Yaroslav Vasylenko (neuron7xLab)
+# SPDX-License-Identifier: MIT
 """Unit tests for core/features/realtime_store.py."""
 
 from __future__ import annotations
@@ -220,9 +221,7 @@ class TestFeatureRecord:
         assert record.event_ts == datetime(2024, 1, 15, 12, 0, 0, tzinfo=timezone.utc)
         assert record.lineage is None
 
-    def test_from_redis_payload_with_lineage(
-        self, descriptor: FeatureDescriptor
-    ) -> None:
+    def test_from_redis_payload_with_lineage(self, descriptor: FeatureDescriptor) -> None:
         """Verify from_redis_payload parses lineage correctly."""
         lineage_data = {
             "sources": ["src1"],
@@ -413,9 +412,7 @@ class TestRealTimeFeatureStore:
         )
 
     @pytest.mark.asyncio
-    async def test_store_initialization(
-        self, mock_redis: AsyncMock, mock_pool: AsyncMock
-    ) -> None:
+    async def test_store_initialization(self, mock_redis: AsyncMock, mock_pool: AsyncMock) -> None:
         """Verify store initializes correctly."""
         from core.features.realtime_store import RealTimeFeatureStore
 
@@ -436,9 +433,7 @@ class TestRealTimeFeatureStore:
         async def success_op() -> str:
             return "success"
 
-        result = await store._execute_with_retries(
-            success_op, attempts=3, op_name="test"
-        )
+        result = await store._execute_with_retries(success_op, attempts=3, op_name="test")
 
         assert result == "success"
 
@@ -496,9 +491,7 @@ class TestRealTimeFeatureStore:
             value={"cached": True},
             event_ts=datetime.now(timezone.utc),
         )
-        await store._microcache.set(
-            descriptor.cache_key("user123"), record, ttl_ms=5000
-        )
+        await store._microcache.set(descriptor.cache_key("user123"), record, ttl_ms=5000)
 
         result = await store.get_feature(descriptor, "user123")
 

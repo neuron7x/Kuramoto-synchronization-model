@@ -1,3 +1,5 @@
+# Copyright (c) 2023-2026 Yaroslav Vasylenko (neuron7xLab)
+# SPDX-License-Identifier: MIT
 """Tests for the unified SystemIntegrator."""
 
 from __future__ import annotations
@@ -26,7 +28,7 @@ class TestIntegrationConfig:
         assert config.enable_fractal_regulator is False
         assert config.auto_start_services is True
         assert config.health_check_interval == 30.0
-        assert config.component_tags == ["tradepulse"]
+        assert config.component_tags == ["geosync"]
         assert config.regulator_config == {}
 
     def test_custom_values(self) -> None:
@@ -230,6 +232,37 @@ class TestSystemIntegrator:
         assert health["components"]["total"] == 1
         assert "test_component" in health["component_health"]
 
+    def test_unified_health_counts_degraded_and_failed_by_exact_status(self) -> None:
+        """degraded/failed tallies key off the EXACT status, never its negation.
+
+        Registers one RUNNING, one DEGRADED and one FAILED component and pins the
+        per-status counts. Under `status == DEGRADED` -> `!= DEGRADED` (or the
+        FAILED equivalent) the tally would invert to count the other two, so the
+        exact-count assertions catch both comparison mutants; the derived
+        overall_status confirms the failed branch drives 'critical'.
+        """
+        config = IntegrationConfig(auto_start_services=False)
+        integrator = SystemIntegrator(config)
+        for name, status, ok in (
+            ("running_one", ComponentStatus.RUNNING, True),
+            ("degraded_one", ComponentStatus.DEGRADED, False),
+            ("failed_one", ComponentStatus.FAILED, False),
+        ):
+            integrator.register_custom_component(
+                name=name,
+                instance=MagicMock(),
+                health_hook=lambda s=status, h=ok: ComponentHealth(status=s, healthy=h),
+            )
+        integrator.bootstrap()
+        integrator.start_all()
+
+        health = integrator.get_unified_health()
+
+        assert health["components"]["total"] == 3
+        assert health["components"]["degraded"] == 1
+        assert health["components"]["failed"] == 1
+        assert health["overall_status"] == "critical"
+
     def test_is_system_healthy(self) -> None:
         """Test checking if system is healthy."""
         config = IntegrationConfig(auto_start_services=False)
@@ -354,12 +387,7 @@ class TestSystemIntegratorBuilder:
         mock_coordinator.get_coordination_summary.return_value = {"registered_agents": 0}
 
         builder = SystemIntegratorBuilder()
-        integrator = (
-            builder
-            .with_agent_coordinator(mock_coordinator)
-            .with_auto_start(False)
-            .build()
-        )
+        integrator = builder.with_agent_coordinator(mock_coordinator).with_auto_start(False).build()
 
         assert integrator.agent_coordinator is mock_coordinator
 
@@ -369,12 +397,7 @@ class TestSystemIntegratorBuilder:
         mock_registry.services.return_value = []
 
         builder = SystemIntegratorBuilder()
-        integrator = (
-            builder
-            .with_service_registry(mock_registry)
-            .with_auto_start(False)
-            .build()
-        )
+        integrator = builder.with_service_registry(mock_registry).with_auto_start(False).build()
 
         assert integrator.service_registry is mock_registry
 
@@ -390,11 +413,7 @@ class TestSystemIntegratorBuilder:
         """Test enabling fractal regulator."""
         builder = SystemIntegratorBuilder()
 
-        integrator = (
-            builder
-            .with_fractal_regulator(True, {"window_size": 150})
-            .build()
-        )
+        integrator = builder.with_fractal_regulator(True, {"window_size": 150}).build()
 
         assert integrator.config.enable_fractal_regulator is True
         assert integrator.config.regulator_config["window_size"] == 150
@@ -405,8 +424,7 @@ class TestSystemIntegratorBuilder:
         builder = SystemIntegratorBuilder()
 
         integrator = (
-            builder
-            .with_auto_start(False)
+            builder.with_auto_start(False)
             .add_custom_component("custom", mock_component, description="Test")
             .build()
         )
@@ -424,8 +442,7 @@ class TestSystemIntegratorBuilder:
 
         builder = SystemIntegratorBuilder()
         integrator = (
-            builder
-            .with_config(IntegrationConfig())
+            builder.with_config(IntegrationConfig())
             .with_service_registry(mock_registry)
             .with_agent_coordinator(mock_coordinator)
             .with_auto_start(False)

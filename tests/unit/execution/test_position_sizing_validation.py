@@ -1,4 +1,5 @@
-# SPDX-License-Identifier: LicenseRef-TradePulse-Proprietary
+# Copyright (c) 2023-2026 Yaroslav Vasylenko (neuron7xLab)
+# SPDX-License-Identifier: MIT
 """Comprehensive tests for position sizing input validation.
 
 This test module validates that position sizing functions properly
@@ -20,6 +21,7 @@ Test Organization:
 - TestPositionSizingPrecision: Numerical precision tests
 - TestPositionSizingEdgeCases: Boundary condition tests
 """
+
 from __future__ import annotations
 
 import math
@@ -80,9 +82,7 @@ class TestPositionSizingValidation:
         """Risk > 1.0 should be clamped to 1.0 for safety."""
         size_high = calculate_position_size(balance=1000.0, risk=2.0, price=100.0)
         size_normal = calculate_position_size(balance=1000.0, risk=1.0, price=100.0)
-        assert (
-            abs(size_high - size_normal) < 1e-9
-        ), "Risk > 1.0 should be clamped to 1.0"
+        assert abs(size_high - size_normal) < 1e-9, "Risk > 1.0 should be clamped to 1.0"
 
 
 class TestPositionSizingBehavior:
@@ -118,9 +118,7 @@ class TestPositionSizingBehavior:
         risk_budget = balance * risk
 
         # Allow tiny floating-point overshoot
-        assert (
-            cost <= risk_budget * 1.000001
-        ), f"Cost {cost} exceeds budget {risk_budget}"
+        assert cost <= risk_budget * 1.000001, f"Cost {cost} exceeds budget {risk_budget}"
 
     @pytest.mark.parametrize(
         "balance,risk,price,expected_within_budget",
@@ -142,9 +140,7 @@ class TestPositionSizingBehavior:
         risk_budget = balance * risk
 
         if expected_within_budget:
-            assert (
-                cost <= risk_budget * 1.01
-            ), f"Cost {cost} exceeds budget {risk_budget}"
+            assert cost <= risk_budget * 1.01, f"Cost {cost} exceeds budget {risk_budget}"
 
     def test_zero_size_when_balance_too_small(self) -> None:
         """Should return zero size when balance is too small for minimum position."""
@@ -215,37 +211,25 @@ class TestPositionSizingEdgeCases:
 
     def test_extremely_high_leverage(self) -> None:
         """Test with unreasonably high leverage values."""
-        size = calculate_position_size(
-            balance=1000.0, risk=0.1, price=100.0, max_leverage=100.0
-        )
+        size = calculate_position_size(balance=1000.0, risk=0.1, price=100.0, max_leverage=100.0)
         # Risk budget is 100, so max size is 1.0
-        assert (
-            size >= 0.0 and size <= 1.0 * 1.01
-        ), "Size should be bounded by risk budget"
+        assert size >= 0.0 and size <= 1.0 * 1.01, "Size should be bounded by risk budget"
 
     def test_leverage_exactly_one(self) -> None:
         """Test with leverage = 1.0 (no leverage)."""
-        size = calculate_position_size(
-            balance=1000.0, risk=0.5, price=100.0, max_leverage=1.0
-        )
+        size = calculate_position_size(balance=1000.0, risk=0.5, price=100.0, max_leverage=1.0)
         # With max_leverage=1, position is capped by balance/price
         max_size = 1000.0 / 100.0  # = 10
-        assert (
-            size <= max_size * 1.01
-        ), "Position should be capped by leverage constraint"
+        assert size <= max_size * 1.01, "Position should be capped by leverage constraint"
 
     def test_risk_exactly_one(self) -> None:
         """Test with risk = 1.0 (use entire balance)."""
         balance = 1000.0
         price = 100.0
-        size = calculate_position_size(
-            balance=balance, risk=1.0, price=price, max_leverage=5.0
-        )
+        size = calculate_position_size(balance=balance, risk=1.0, price=price, max_leverage=5.0)
         # With risk=1.0, can use entire balance
         max_size_by_balance = balance / price  # = 10
-        assert (
-            size <= max_size_by_balance * 1.01
-        ), "Size should not exceed what balance allows"
+        assert size <= max_size_by_balance * 1.01, "Size should not exceed what balance allows"
 
     def test_matching_risk_and_leverage(self) -> None:
         """Test when risk budget and leverage limit are equal."""

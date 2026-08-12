@@ -1,3 +1,5 @@
+# Copyright (c) 2023-2026 Yaroslav Vasylenko (neuron7xLab)
+# SPDX-License-Identifier: MIT
 """Facade for the redesigned knowledge search subsystem."""
 
 from __future__ import annotations

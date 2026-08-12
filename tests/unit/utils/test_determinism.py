@@ -1,3 +1,5 @@
+# Copyright (c) 2023-2026 Yaroslav Vasylenko (neuron7xLab)
+# SPDX-License-Identifier: MIT
 from core.utils.determinism import THREAD_BOUND_ENV_VARS, apply_thread_determinism
 
 

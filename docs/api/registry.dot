@@ -1,4 +1,4 @@
-digraph TradePulseAPI {
+digraph GeoSyncAPI {
     rankdir=LR;
     node [shape=box, style=rounded, fontname=Helvetica];
     "get-market-signal" [label="GET\n/v1/signals/{symbol}"];

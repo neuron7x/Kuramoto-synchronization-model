@@ -1,0 +1,181 @@
+# Diff-bound commit acceptor for the coupling-estimator strategy registry.
+#
+# Behavior-preserving, structure-only refactor of the last open
+# architectural debt from the fractal/dynamical audit (F4): the
+# symmetric-joint swing identification stack in
+# core/kuramoto/coupling_estimator.py was an open-loop universal sink —
+# every CALIB-GRID lineage bolted another estimation path
+# (estimate_swing_coupling R1, estimate_swing_coupling_integral
+# CALIB-GRID-002) onto the module with its global-design assembly
+# inlined, 521 -> 1322 LOC (+154 % over five lineages, monotonic),
+# unbounded mypy blast-radius, no strategy/boundary capping growth.
+# PR #759 extracted the shared solve tail (_solve_symmetric_joint);
+# this PR extracts the path-specific design assembly into registered
+# SwingDesignStrategy objects and turns the public functions into thin
+# dispatchers. NOT a feature, NOT a science change, NOT a gate/threshold
+# /seed/sigma/theta0 edit.
+#
+# HARD behavior-preserving invariants verified:
+#   * Every estimation path bit-identical: K-hat / omega-hat / P-hat /
+#     identifiability score / PE diagnostic / prox operators byte-for-
+#     byte equal to the parent-sha (65666072) golden vectors
+#     (test_golden_vectors_bit_identical pins all 25).
+#   * Zero importer edits: only core/kuramoto/coupling_estimator.py
+#     touched in production; public API + the private symbols
+#     dynamic_graph (_estimate_K_single) and the coupling test
+#     (_proximal_gradient_row) consume are unchanged.
+#   * Every sha-pinned calibration artifact byte-identical (RESULTS.json
+#     /.md, PREREGISTRATION*, THRESHOLD_PROVENANCE, SUPERSESSIONS,
+#     AMENDMENT_001); tests/research/calibration/test_grid_kuramoto.py
+#     git diff EMPTY; all drift/no-peek/bit-stability/reproduction tests
+#     green WITHOUT modification (calib + integral + identifiability +
+#     coupling + network_engine: full fast+slow green; no pre-existing
+#     test file touched).
+#   * mypy --strict / ruff / black clean on every touched file (fresh
+#     cache; the stale .mypy_cache `google` crash is environmental cache
+#     corruption, not a code defect).
+#
+# Forcing function (module-scale negative-feedback term, mirrors #762):
+# tests/unit/core/test_kuramoto_coupling_strategy_registry.py fails
+# closed if a new symmetric-joint estimation path is added OUTSIDE the
+# strategy registry (the set of dispatched registry keys must equal the
+# registered strategy set, and the dispatcher core must stay path-
+# independent). This structurally caps the monotonic accretion.
+#
+# Honest backlog: net LOC is +279 (1322 -> 1601). The strategy/registry
+# pattern is inherently additive (Protocol + registry + dispatcher + N
+# strategy objects; #762 itself added 436 lines). The literal LOC-flat-
+# or-down target is breached; the *crucial, emphasized* invariant —
+# bounded blast-radius, structurally enforced by the forcing function —
+# is satisfied. Documented literature-anchored physics derivations were
+# NOT gutted to hit a line count (CLAUDE.md: math notation must match
+# paper conventions; zero-tech-debt).
+
+id: coupling-estimator-strategy-registry
+status: ACTIVE
+claim_type: documentation
+promise: >-
+  After this PR lands, core.kuramoto.coupling_estimator exposes a frozen
+  SwingDesignStrategy Protocol + SwingDesign contract + a fail-closed
+  registry (swing_strategy_registry / _register_swing_strategy) and a
+  single path-independent dispatcher (_dispatch_swing). The two
+  symmetric-joint swing identifiers (differential R1 + weak/integral
+  CALIB-GRID-002) are registered strategies that encapsulate ONLY their
+  path-specific design/target assembly and delegate the shared
+  standardise -> PE -> solve -> unpack -> identifiability -> omega tail
+  to the #759 _solve_symmetric_joint. The public functions
+  estimate_swing_coupling / estimate_swing_coupling_integral are thin
+  dispatchers; the public API and all importer call sites are
+  unchanged. The change is byte-preserving: every estimation path is
+  bit-identical to the parent-sha golden vectors, every sha-pinned
+  calibration artifact is byte-identical, and every pre-existing drift /
+  no-peek / bit-stability / reproduction test stays green without
+  modification. A new symmetric-joint estimation path must register a
+  strategy — it cannot be wired by editing the dispatcher (enforced by
+  the added forcing-function test). No gate, threshold, seed, sigma,
+  theta0 or decision rule was touched; no science claim is promoted.
+diff_scope:
+  changed_files:
+    - path: ".claude/commit_acceptors/coupling-estimator-strategy-registry.yaml"
+    - path: "core/kuramoto/coupling_estimator.py"
+    - path: "tests/unit/core/test_kuramoto_coupling_strategy_registry.py"
+  forbidden_paths:
+    - "trading/"
+    - "execution/"
+    - "forecast/"
+    - "policy/"
+    - "core/physics/"
+    - "core/kuramoto/identifiability.py"
+    - "core/kuramoto/dynamic_graph.py"
+    - "core/kuramoto/network_engine.py"
+    - "core/kuramoto/__init__.py"
+    - "core/kuramoto/contracts.py"
+    - "research/calibration/grid_kuramoto/PREREGISTRATION.md"
+    - "research/calibration/grid_kuramoto/PREREGISTRATION_AMENDMENT_001.md"
+    - "research/calibration/grid_kuramoto/PREREGISTRATION_AMENDMENT_001.yaml"
+    - "research/calibration/grid_kuramoto/RESULTS.json"
+    - "research/calibration/grid_kuramoto/RESULTS.md"
+    - "research/calibration/grid_kuramoto/SUPERSESSIONS.md"
+    - "research/calibration/grid_kuramoto/SUPERSESSIONS.yaml"
+    - "research/calibration/grid_kuramoto/r1/"
+    - "research/calibration/grid_kuramoto/cg002/RESULTS.json"
+    - "research/calibration/grid_kuramoto/cg002/RESULTS.md"
+    - "research/calibration/grid_kuramoto/cg002/PREREGISTRATION_002.yaml"
+    - "research/calibration/grid_kuramoto/identifiability/RESULTS.json"
+    - "research/calibration/grid_kuramoto/identifiability/RESULTS.md"
+    - "research/calibration/grid_kuramoto/identifiability/THRESHOLD_PROVENANCE.md"
+    - "application/governance/claim_ledger.py"
+    - "application/governance/commit_acceptor.py"
+    - "tests/research/calibration/test_grid_kuramoto.py"
+    - "tests/unit/core/test_kuramoto_coupling_estimator.py"
+    - "tests/unit/core/test_kuramoto_integral_estimator.py"
+    - "tests/unit/core/test_kuramoto_identifiability.py"
+required_python_symbols:
+  - "core/kuramoto/coupling_estimator.py::SwingDesign"
+  - "core/kuramoto/coupling_estimator.py::SwingDesignStrategy"
+  - "core/kuramoto/coupling_estimator.py::swing_strategy_registry"
+  - "core/kuramoto/coupling_estimator.py::_dispatch_swing"
+  - "core/kuramoto/coupling_estimator.py::_register_swing_strategy"
+expected_signal: >-
+  `pytest tests/unit/core/test_kuramoto_coupling_strategy_registry.py
+  tests/unit/core/test_kuramoto_coupling_estimator.py
+  tests/unit/core/test_kuramoto_integral_estimator.py
+  tests/unit/core/test_kuramoto_identifiability.py
+  tests/unit/core/test_kuramoto_network_engine.py
+  tests/research/calibration/test_grid_kuramoto.py
+  tests/research/calibration/test_calib_substrate_consolidation.py
+  tests/research/calibration/test_calib_lineage_forcing_functions.py
+  -m "not slow"` is green; the @slow suite is green; mypy --strict /
+  ruff / black are clean on the diff; every estimation path reproduces
+  its parent-sha golden bytes; the sha-pinned calibration artifacts and
+  PREREGISTRATION docs are byte-unchanged; the protected
+  test_grid_kuramoto.py git diff is EMPTY.
+measurement_command: >-
+  bash -c '
+    rm -rf .mypy_cache &&
+    mypy --strict --follow-imports=silent
+      core/kuramoto/coupling_estimator.py
+      tests/unit/core/test_kuramoto_coupling_strategy_registry.py && ruff check core/kuramoto/coupling_estimator.py
+       tests/unit/core/test_kuramoto_coupling_strategy_registry.py && black --check core/kuramoto/coupling_estimator.py
+       tests/unit/core/test_kuramoto_coupling_strategy_registry.py && python -m pytest
+       tests/unit/core/test_kuramoto_coupling_strategy_registry.py
+       tests/unit/core/test_kuramoto_coupling_estimator.py
+       tests/unit/core/test_kuramoto_integral_estimator.py
+       tests/unit/core/test_kuramoto_identifiability.py
+       tests/unit/core/test_kuramoto_network_engine.py
+       tests/research/calibration/test_grid_kuramoto.py
+       tests/research/calibration/test_calib_substrate_consolidation.py
+       tests/research/calibration/test_calib_lineage_forcing_functions.py
+       -q -m "not slow"
+  '
+signal_artifact: "tmp/coupling_estimator_strategy_registry.log"
+falsifier:
+  command: >-
+    bash -c '
+      python -m pytest
+      "tests/unit/core/test_kuramoto_coupling_strategy_registry.py::test_golden_vectors_bit_identical"
+      "tests/unit/core/test_kuramoto_coupling_strategy_registry.py::test_every_symmetric_joint_path_dispatches_through_registry"
+      "tests/unit/core/test_kuramoto_integral_estimator.py::test_differential_paths_bit_identical_after_integral_added"
+      "tests/research/calibration/test_grid_kuramoto.py::test_r1_results_json_matches_committed_artifact"
+      -q >/tmp/_cesr_rails.log 2>&1 && ! grep -q "4 passed" /tmp/_cesr_rails.log
+    '
+  description: >-
+    Probes the load-bearing behavior-preserving rails: every estimation
+    path is bit-identical to the parent-sha golden vectors; every
+    symmetric-joint path dispatches through the registry (the structural
+    cap); the differential path is byte-unchanged; and the pre-existing
+    R1 sha-pinned-artifact reproduction test still passes unmodified.
+    The falsifier succeeds (exit 0) only when one of these rails fails —
+    i.e. the refactor stopped being byte-preserving or a path bypassed
+    the registry.
+rollback_command: >-
+  bash -c 'git checkout origin/main --
+    core/kuramoto/coupling_estimator.py && rm -f
+    tests/unit/core/test_kuramoto_coupling_strategy_registry.py
+    .claude/commit_acceptors/coupling-estimator-strategy-registry.yaml'
+rollback_verification_command: >-
+  bash -c '! grep -q _dispatch_swing core/kuramoto/coupling_estimator.py && ! test -f tests/unit/core/test_kuramoto_coupling_strategy_registry.py'
+memory_update_type: append
+ledger_path: ".claude/commit_acceptors/coupling-estimator-strategy-registry.yaml"
+report_path: "tmp/coupling_estimator_strategy_registry.log"
+evidence: []

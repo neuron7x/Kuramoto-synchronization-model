@@ -1,3 +1,5 @@
+# Copyright (c) 2023-2026 Yaroslav Vasylenko (neuron7xLab)
+# SPDX-License-Identifier: MIT
 """Memory-efficient telemetry manager for thermodynamics system.
 
 This module provides memory-optimized storage and management of telemetry data,
@@ -83,9 +85,7 @@ class TelemetryWindow:
 
     def get_memory_usage(self) -> Dict[str, int]:
         """Get memory usage statistics in bytes."""
-        uncompressed_size = sum(
-            len(json.dumps(record).encode("utf-8")) for record in self.data
-        )
+        uncompressed_size = sum(len(json.dumps(record).encode("utf-8")) for record in self.data)
         compressed_size = sum(len(archive) for archive in self.compressed_archives)
 
         return {
@@ -222,9 +222,7 @@ class OptimizedTelemetryManager:
         # Extract metrics
         F_values = [r.get("F", 0.0) for r in records]
         dF_dt_values = [r.get("dF_dt", 0.0) for r in records]
-        circuit_breaker_states = [
-            r.get("circuit_breaker_active", False) for r in records
-        ]
+        circuit_breaker_states = [r.get("circuit_breaker_active", False) for r in records]
         topology_changes = sum(len(r.get("topology_changes", [])) for r in records)
 
         # Compute statistics using NumPy for efficiency
@@ -240,9 +238,7 @@ class OptimizedTelemetryManager:
             "median_F": float(np.median(F_array)),
             "avg_dF_dt": float(np.mean(dF_dt_array)),
             "std_dF_dt": float(np.std(dF_dt_array)),
-            "circuit_breaker_activations": sum(
-                1 for active in circuit_breaker_states if active
-            ),
+            "circuit_breaker_activations": sum(1 for active in circuit_breaker_states if active),
             "topology_changes": topology_changes,
             "time_span": (
                 records[-1].get("timestamp", 0.0) - records[0].get("timestamp", 0.0)

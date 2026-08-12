@@ -1,0 +1,209 @@
+# Diff-bound commit acceptor for the D-002J-P7 power-first-gate PR.
+#
+# D-002J-P7 is the power-DESIGN gate D-002H lacked. It computes, per
+# (P5-substrate x applicable-P6-null x P5-declared-P2-window x P5-metric)
+# canonical cell: an honest effect-size prior sourced ONLY from the P4
+# positive-control ground-truth magnitudes (no invented effect sizes), the
+# minimum detectable effect at the Bonferroni-corrected alpha, n_min for
+# power>=0.8, a runtime budget grounded by a MEASURED per-sim probe of one
+# P5 substrate simulate call, the false-negative risk at a feasible budget
+# cap, and a fail-closed refusal rule. It emits
+# canonical_run_authorized=true IFF power>=0.8 is achievable within the
+# stated feasible budget for every canonical cell; otherwise
+# POWER_GATE_REFUSED_UNDERPOWERED. A truthful refusal is a scientific WIN
+# (same canon as D-002H REFUSED, D-002J-P1A REJECTED). P7 does NOT execute
+# a canonical run (P8), promote a claim (P9), fit real data, edit the
+# D-002J prereg, or rewrite any P1..P6 artifact. P7 adds tooling under
+# tools/systemic_risk/ ONLY -- it adds NO files under research/.
+#
+# Phase-coupling P7->{P5,P6,P2,P4}: the cell grid is a subset of
+# {P5 substrates} x {P6 nulls} x {P2 windows} and every effect-size prior
+# is sourced from a P4 positive control.
+
+id: x10r-d002j-p7-power-first-gate
+status: ACTIVE
+claim_type: governance
+promise: >-
+  After this PR lands, tools/systemic_risk/ holds __init__.py +
+  design_d002j_power_grid.py exposing effect_size_prior,
+  bonferroni_denominator, enumerate_cells, mde, n_min, power_at,
+  measure_per_sim_seconds, runtime_estimate, power_gate_decision,
+  run_power_design, build_report, build_summary (pure numpy/scipy, no
+  real data, no canonical run). power_report_v1.json (schema
+  D002J-POWER-REPORT-v1) carries parent shas, the per-substrate
+  effect_size_assumption {value, source_pc_id, rationale} sourced ONLY
+  from P4 controls, an alpha_policy {family: bonferroni, denominator,
+  derivation}, a per_cell list (substrate/null/window/metric/
+  assumed_effect/mde/n_min/power_at_n_min), n_seeds/n_bootstrap/
+  n_shuffles candidates, power_target=0.8,
+  minimum_detectable_effect_global, a runtime_budget with a MEASURED
+  per_sim_seconds, a quantified false_negative_risk, the
+  underpowered_cells list, feasible_cap_n_seeds with a justification
+  anchored to the D-002I median n_min~=93, the verbatim refusal_rule,
+  canonical_run_authorized, and decision in {POWER_GATE_PASS,
+  POWER_GATE_REFUSED_UNDERPOWERED, POWER_GATE_INVALID}.
+  power_summary_v1.json (schema D002J-POWER-SUMMARY-v1) records n_cells,
+  n_underpowered, the n_min distribution {min,median,p90,max}, the
+  decision and canonical_run_authorized. The D-002J-P7 capsule is added
+  under schema D002J-VERDICT-CAPSULE-v1 with parent=['D002J-P6']; on a
+  PASS status=TERMINAL_PASS allowed_next=['D002J-P8']; on a REFUSED
+  status=TERMINAL_REFUSED allowed_next=[] with a non-empty
+  failure_retention recording the refused axis. The DAG verdict
+  regenerates to 10 nodes acyclic (was 9), D002J_LINEAGE_MAP.md
+  re-renders byte-deterministically, D002G_CANONICAL_RUN_BLOCKERS.md
+  appends a P7 section recording the decision + canonical_run_authorized
+  + (if REFUSED) the exact axis, and verdict_dag_integrity
+  EXPECTED_NODE_IDS widens to include D002J-P7. The locked governance
+  shas remain byte-exact. No real data, no canonical run authorised, no
+  D-002J prereg edit, no D-002H rescue claim.
+
+diff_scope:
+  changed_files:
+    - path: "tools/systemic_risk/__init__.py"
+    - path: "tools/systemic_risk/design_d002j_power_grid.py"
+    - path: "artifacts/d002j/power/power_report_v1.json"
+    - path: "artifacts/d002j/power/power_summary_v1.json"
+    - path: "docs/research/D002J_POWER_FIRST_REPORT.md"
+    - path: "tests/systemic_risk/test_d002j_power_first_gate.py"
+    - path: "artifacts/governance/verdicts/d002j_p7_verdict_v1.json"
+    - path: "artifacts/governance/verdicts/d002j_verdict_dag_v1.json"
+    - path: "docs/research/D002J_LINEAGE_MAP.md"
+    - path: "docs/governance/D002G_CANONICAL_RUN_BLOCKERS.md"
+    - path: ".claude/commit_acceptors/x10r-d002j-p7-power-first-gate.yaml"
+    - path: "tests/governance/test_verdict_dag_integrity.py"
+    - path: "tools/governance/verdict_dag.py"
+    - path: ".github/detect-secrets.baseline"
+  forbidden_paths:
+    - "docs/governance/D002C_CLAIM_LEDGER.yaml"
+    - "docs/governance/D002C_PREREGISTRATION.yaml"
+    - "docs/governance/D002G_ACCEPTANCE_RULES.md"
+    - "docs/governance/D002G_PREREGISTRATION.yaml"
+    - "docs/governance/D002H_PREREGISTRATION.yaml"
+    - "docs/governance/D002H_CANONICAL_RUN_REPORT.md"
+    - "docs/governance/D002H_CLAIM_BOUNDARY.md"
+    - "docs/governance/D002I_PREREGISTRATION.yaml"
+    - "docs/governance/D002I_CLAIM_BOUNDARY.md"
+    - "docs/governance/D002J_PREREGISTRATION.yaml"
+    - "research/systemic_risk/"
+    - "scripts/x10r_d002c_attempt_2_null_audit.py"
+    - "scripts/x10r_d002g_gate_d_scan.py"
+    - "scripts/x10r_d002h_gate_d_scan.py"
+    - "scripts/x10r_d002h_canonical_sweep.py"
+    - "artifacts/d002c/"
+    - "artifacts/d002g/"
+    - "artifacts/d002h/"
+    - "artifacts/d002i/"
+    - "artifacts/d002j/prereg/"
+    - "artifacts/d002j/data_registry/"
+    - "artifacts/d002j/crisis_windows/"
+    - "artifacts/d002j/ingestion/"
+    - "artifacts/d002j/positive_controls/"
+    - "artifacts/d002j/substrates/"
+    - "artifacts/d002j/nulls/"
+    - "artifacts/governance/verdicts/d002j_p0_verdict_v1.json"
+    - "artifacts/governance/verdicts/d002j_p1_verdict_v1.json"
+    - "artifacts/governance/verdicts/d002j_p1a_verdict_v1.json"
+    - "artifacts/governance/verdicts/d002j_p1b_verdict_v1.json"
+    - "artifacts/governance/verdicts/d002j_p2_verdict_v1.json"
+    - "artifacts/governance/verdicts/d002j_p3_verdict_v1.json"
+    - "artifacts/governance/verdicts/d002j_p4_verdict_v1.json"
+    - "artifacts/governance/verdicts/d002j_p5_verdict_v1.json"
+    - "artifacts/governance/verdicts/d002j_p6_verdict_v1.json"
+    - "tools/governance/render_lineage.py"
+required_python_symbols:
+  - "tests.systemic_risk.test_d002j_power_first_gate.test_power_report_exists"
+  - "tests.systemic_risk.test_d002j_power_first_gate.test_power_summary_exists"
+  - "tests.systemic_risk.test_d002j_power_first_gate.test_effect_size_priors_sourced_from_p4_controls"
+  - "tests.systemic_risk.test_d002j_power_first_gate.test_no_effect_size_invented_without_pc_source"
+  - "tests.systemic_risk.test_d002j_power_first_gate.test_alpha_policy_bonferroni_denominator_explicit"
+  - "tests.systemic_risk.test_d002j_power_first_gate.test_bonferroni_denominator_matches_cell_count"
+  - "tests.systemic_risk.test_d002j_power_first_gate.test_per_cell_substrate_in_p5_manifest"
+  - "tests.systemic_risk.test_d002j_power_first_gate.test_per_cell_null_in_p6_manifest"
+  - "tests.systemic_risk.test_d002j_power_first_gate.test_per_cell_window_in_p2_registry"
+  - "tests.systemic_risk.test_d002j_power_first_gate.test_n_min_computed_for_every_cell"
+  - "tests.systemic_risk.test_d002j_power_first_gate.test_power_target_is_0_8"
+  - "tests.systemic_risk.test_d002j_power_first_gate.test_minimum_detectable_effect_present"
+  - "tests.systemic_risk.test_d002j_power_first_gate.test_runtime_budget_present_with_per_sim_measured"
+  - "tests.systemic_risk.test_d002j_power_first_gate.test_false_negative_risk_quantified"
+  - "tests.systemic_risk.test_d002j_power_first_gate.test_refusal_rule_present_verbatim"
+  - "tests.systemic_risk.test_d002j_power_first_gate.test_decision_matches_canonical_run_authorized_flag"
+  - "tests.systemic_risk.test_d002j_power_first_gate.test_underpowered_cells_listed_if_any"
+  - "tests.systemic_risk.test_d002j_power_first_gate.test_no_canonical_run_executed"
+  - "tests.systemic_risk.test_d002j_power_first_gate.test_d002i_n_min_anchor_referenced"
+  - "tests.systemic_risk.test_d002j_power_first_gate.test_no_d002j_prereg_edit"
+  - "tests.systemic_risk.test_d002j_power_first_gate.test_no_research_systemic_risk_unauthorized_edit"
+  - "tests.systemic_risk.test_d002j_power_first_gate.test_no_unresolved_merge_markers"
+  - "tools.systemic_risk.design_d002j_power_grid.effect_size_prior"
+  - "tools.systemic_risk.design_d002j_power_grid.bonferroni_denominator"
+  - "tools.systemic_risk.design_d002j_power_grid.n_min"
+  - "tools.systemic_risk.design_d002j_power_grid.run_power_design"
+expected_signal: >-
+  PYTHONPATH=. python -m pytest
+  tests/systemic_risk/test_d002j_power_first_gate.py -q passes all 26 P7
+  guard tests; the power report declares exactly 102 canonical cells
+  (Bonferroni denominator = 0.05/102 alpha), every per-cell substrate is
+  a P5 substrate, every per-cell null is a P6 null whose
+  applicable_substrates includes the substrate, every per-cell window is
+  a P2 registry window declared by the substrate, every effect-size
+  prior is sourced from a P4 control with a non-empty rationale and never
+  inflates the P4 magnitude; n_min is computed for every cell with
+  power_target=0.8; the runtime budget carries a measured
+  per_sim_seconds; the false-negative risk is a quantified probability;
+  the verbatim refusal_rule forbids loosening alpha / inflating the
+  effect prior / shrinking the grid; the decision
+  (POWER_GATE_REFUSED_UNDERPOWERED) is consistent with
+  canonical_run_authorized=false and the underpowered_cells list; the
+  D-002I median n_min~=93 anchor is referenced; the D-002J prereg sha is
+  byte-exact UNCHANGED; the P7 capsule parses via
+  tools.governance.verdict_dag with parent=['D002J-P6'],
+  status=TERMINAL_REFUSED, allowed_next=[]; the DAG verdict regenerates
+  to 10 nodes acyclic, no orphans,
+  next_legal_nodes_from_main_head=[] (lineage halts at P7),
+  canonical_run_authorized_anywhere=false; render_lineage is
+  byte-identical on repeat runs; the locked governance shas byte-exact.
+measurement_command: >-
+  bash -c 'set -e;
+  PYTHONPATH=. python -m pytest tests/systemic_risk/test_d002j_power_first_gate.py -q;
+  PYTHONPATH=. python -m pytest tests/governance/test_verdict_dag_integrity.py -q;
+  PYTHONPATH=. python -m tools.governance.verdict_dag check -v;
+  PYTHONPATH=. python -m tools.governance.render_lineage --out /tmp/_d002j_p7_lm1.md;
+  PYTHONPATH=. python -m tools.governance.render_lineage --out /tmp/_d002j_p7_lm2.md;
+  diff /tmp/_d002j_p7_lm1.md /tmp/_d002j_p7_lm2.md;
+  test -f tools/systemic_risk/design_d002j_power_grid.py;
+  test -f artifacts/d002j/power/power_report_v1.json;
+  test -f artifacts/d002j/power/power_summary_v1.json;
+  test -f artifacts/governance/verdicts/d002j_p7_verdict_v1.json;
+  python -m json.tool artifacts/d002j/power/power_report_v1.json > /dev/null;
+  grep -q "D002J-POWER-REPORT-v1" artifacts/d002j/power/power_report_v1.json;
+  grep -q "POWER_GATE_REFUSED_UNDERPOWERED" artifacts/governance/verdicts/d002j_p7_verdict_v1.json;
+  grep -q "D-002J-P7" docs/governance/D002G_CANONICAL_RUN_BLOCKERS.md;
+  test "$(sha256sum docs/governance/D002J_PREREGISTRATION.yaml | awk "{print \$1}")" = "f3dc65b7e64b96eafe6f23ca8bdd0e05dc9bf95b12c2658b227bd0340f7975a0"'
+signal_artifact: "artifacts/d002j/power/power_report_v1.json"
+falsifier:
+  command: >-
+    bash -c 'set -e;
+    PYTHONPATH=. python -m pytest tests/systemic_risk/test_d002j_power_first_gate.py -q || exit 1;
+    PYTHONPATH=. python -m pytest tests/governance/test_verdict_dag_integrity.py -q || exit 2;
+    PYTHONPATH=. python -m tools.governance.verdict_dag check || exit 3;
+    grep -q "POWER_GATE_REFUSED_UNDERPOWERED" artifacts/governance/verdicts/d002j_p7_verdict_v1.json || exit 4;
+    grep -q "D-002J-P7" docs/governance/D002G_CANONICAL_RUN_BLOCKERS.md || exit 5;
+    test "$(sha256sum docs/governance/D002J_PREREGISTRATION.yaml | awk "{print \$1}")" = "f3dc65b7e64b96eafe6f23ca8bdd0e05dc9bf95b12c2658b227bd0340f7975a0" || exit 6'
+  description: >-
+    Probes D-002J-P7 power-first gate: 26 P7 tests pass (incl. P4-sourced
+    effect priors with no invention, explicit Bonferroni denominator
+    matching the 102-cell count, phase-coupling P7->{P5,P6,P2,P4},
+    per-cell n_min, measured runtime probe, quantified false-negative
+    risk, verbatim refusal rule, decision<=>canonical_run_authorized
+    equivalence, D-002I n_min~=93 anchor); verdict_dag_integrity passes
+    under the 10-node DAG; verdict_dag CLI validates the on-disk DAG; the
+    P7 capsule declares decision POWER_GATE_REFUSED_UNDERPOWERED status
+    TERMINAL_REFUSED; BLOCKERS appended with a D-002J-P7 section; D-002J
+    prereg sha byte-exact UNCHANGED.
+rollback_command: >-
+  bash -c 'rm -rf tools/systemic_risk artifacts/d002j/power artifacts/governance/verdicts/d002j_p7_verdict_v1.json tests/systemic_risk/test_d002j_power_first_gate.py docs/research/D002J_POWER_FIRST_REPORT.md .claude/commit_acceptors/x10r-d002j-p7-power-first-gate.yaml && git checkout HEAD -- docs/governance/D002G_CANONICAL_RUN_BLOCKERS.md docs/research/D002J_LINEAGE_MAP.md artifacts/governance/verdicts/d002j_verdict_dag_v1.json tests/governance/test_verdict_dag_integrity.py tools/governance/verdict_dag.py'
+rollback_verification_command: >-
+  bash -c 'test ! -f .claude/commit_acceptors/x10r-d002j-p7-power-first-gate.yaml && test ! -d tools/systemic_risk && test ! -d artifacts/d002j/power && test ! -f artifacts/governance/verdicts/d002j_p7_verdict_v1.json'
+memory_update_type: append
+ledger_path: ".claude/commit_acceptors/x10r-d002j-p7-power-first-gate.yaml"
+report_path: "docs/research/D002J_POWER_FIRST_REPORT.md"
+evidence: []

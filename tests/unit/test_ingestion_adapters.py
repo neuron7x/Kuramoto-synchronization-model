@@ -1,3 +1,5 @@
+# Copyright (c) 2023-2026 Yaroslav Vasylenko (neuron7xLab)
+# SPDX-License-Identifier: MIT
 """Unit coverage for the ingestion adapters and fault tolerance stack."""
 
 from __future__ import annotations
@@ -158,7 +160,7 @@ async def test_parquet_adapter_fetch(tmp_path: Path) -> None:
 async def test_csv_adapter_stream(tmp_path: Path) -> None:
     csv_path = tmp_path / "ticks.csv"
     csv_path.write_text(
-        "ts,price,volume\n" "1719878400,100.5,10\n" "1719878460,101.0,5\n",
+        "ts,price,volume\n1719878400,100.5,10\n1719878460,101.0,5\n",
         encoding="utf-8",
     )
 
@@ -166,9 +168,7 @@ async def test_csv_adapter_stream(tmp_path: Path) -> None:
     stream = adapter.stream(path=csv_path, symbol="ETHUSD", venue="CSV")
     ticks = [tick async for tick in stream]
     assert len(ticks) == 2
-    assert float(ticks[1].price) == pytest.approx(
-        101.0, rel=FLOAT_REL_TOL, abs=FLOAT_ABS_TOL
-    )
+    assert float(ticks[1].price) == pytest.approx(101.0, rel=FLOAT_REL_TOL, abs=FLOAT_ABS_TOL)
 
 
 class _StubExchange:

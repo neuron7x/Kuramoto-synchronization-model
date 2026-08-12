@@ -1,0 +1,73 @@
+# Diff-bound commit acceptor: a mutation-probe tool that falsifies the verifier
+# (do the tests catch real bugs?) plus closure of the compliance-suite blind
+# spots it found. Infra/verification tooling, no physics, offline.
+
+id: mutation-probe-and-gap-closure
+status: ACTIVE
+claim_type: correctness
+promise: >-
+  After this PR lands, tools/mutation_probe.py adversarially mutates a module
+  one site at a time (comparison / boolean / arithmetic operator swaps,
+  constant perturbation), runs a test selector against each mutant, and reports
+  which mutations were killed (a test failed) vs survived (a behaviour change
+  the suite cannot detect). It restores the source on normal exit AND on
+  SIGTERM/SIGINT, so it never leaves the probed module corrupted. Run on
+  core/compliance/regulatory.py it found surviving mutations (test blind spots);
+  this PR closes the real ones with targeted boundary cases in the golden
+  corpus and helper assertions, raising the suite's mutation kill-rate. No
+  runtime behaviour or physics change.
+
+diff_scope:
+  changed_files:
+    - path: ".claude/commit_acceptors/mutation-probe-and-gap-closure.yaml"
+    - path: "tools/mutation_probe.py"
+    - path: "tests/unit/compliance/regulatory_validate_golden.json"
+    - path: "tests/unit/compliance/test_regulatory_compliance.py"
+  forbidden_paths:
+    - "trading/"
+    - "execution/"
+    - "forecast/"
+    - "policy/"
+    - "runtime/"
+    - "application/"
+    - "core/"
+
+required_python_symbols:
+  - "tools/mutation_probe.py::probe"
+  - "tools/mutation_probe.py::_apply"
+  - "tools/mutation_probe.py::main"
+
+expected_signal: >-
+  python tools/mutation_probe.py core/compliance/regulatory.py --tests
+  tests/unit/compliance/test_regulatory_validate_golden.py --max 2 exits 0 and
+  leaves the module byte-unchanged; the augmented compliance suite passes.
+
+measurement_command: >-
+  bash -c '
+    mkdir -p tmp &&
+    python -m pytest -q tests/unit/compliance/test_regulatory_validate_golden.py tests/unit/compliance/test_regulatory_compliance.py | tee tmp/mutation_probe.log
+  '
+
+signal_artifact: "tmp/mutation_probe.log"
+
+falsifier:
+  command: >-
+    bash -c 'before=$(sha256sum core/compliance/regulatory.py); python tools/mutation_probe.py core/compliance/regulatory.py --tests tests/unit/compliance/test_regulatory_validate_golden.py --max 2 >/dev/null 2>&1; rc=$?; after=$(sha256sum core/compliance/regulatory.py); test "$rc" -eq 0 -a "$before" = "$after"'
+  description: >-
+    Runs the probe over two mutants and asserts it exits 0 AND leaves the
+    probed module byte-identical (sha256 before == after). Succeeds only when
+    the tool is functional and non-destructive — the core safety property of a
+    verification instrument that rewrites source.
+
+rollback_command: >-
+  bash -c '
+    git checkout origin/main -- tests/unit/compliance/test_regulatory_compliance.py tests/unit/compliance/regulatory_validate_golden.json &&
+    git rm -f tools/mutation_probe.py .claude/commit_acceptors/mutation-probe-and-gap-closure.yaml
+  '
+
+rollback_verification_command: >-
+  bash -c 'test ! -e tools/mutation_probe.py'
+
+memory_update_type: append
+ledger_path: ".claude/commit_acceptors/mutation-probe-and-gap-closure.yaml"
+report_path: "tmp/mutation_probe.log"

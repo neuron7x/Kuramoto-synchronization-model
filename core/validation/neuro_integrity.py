@@ -1,3 +1,5 @@
+# Copyright (c) 2023-2026 Yaroslav Vasylenko (neuron7xLab)
+# SPDX-License-Identifier: MIT
 """Neural pathway integrity validation for neuroscience-inspired trading components.
 
 This module provides validators that ensure coherence and integrity of neural
@@ -386,10 +388,7 @@ class NeuroIntegrity:
         for i in range(1, len(states)):
             if timestamps_ms is not None:
                 dt = (timestamps_ms[i] - timestamps_ms[i - 1]) / 1000.0
-            elif (
-                states[i].timestamp_ms is not None
-                and states[i - 1].timestamp_ms is not None
-            ):
+            elif states[i].timestamp_ms is not None and states[i - 1].timestamp_ms is not None:
                 dt = (states[i].timestamp_ms - states[i - 1].timestamp_ms) / 1000.0
             else:
                 dt = 1.0
@@ -409,6 +408,35 @@ class NeuroIntegrity:
         report.metrics["std_coherence"] = float(np.std(coherences))
         report.metrics["min_coherence"] = float(np.min(coherences))
         report.metrics["max_coherence"] = float(np.max(coherences))
+
+        # Dopamine/serotonin inverse-correlation invariant (audit C-NEURO-003).
+        #
+        # config.dopamine_serotonin_correlation_min was declared but never
+        # enforced — a dead integrity invariant with no witness. Correlation is
+        # a property of a *trajectory*, never a single PathwayState, so the
+        # witness belongs here and cannot live in validate_state(). Healthy
+        # neuromodulation keeps reward-seeking (dopamine) and risk-aversion
+        # (serotonin) in antagonism: corr(dopamine, serotonin) must stay at or
+        # below config.dopamine_serotonin_correlation_min.
+        dopamine_series = np.array([s.dopamine for s in states], dtype=float)
+        serotonin_series = np.array([s.serotonin for s in states], dtype=float)
+        # No witness without variation: a flat channel cannot evidence a
+        # correlation. Record the gap (NaN) rather than silently pass an
+        # unfalsifiable input as healthy.
+        if np.std(dopamine_series) < 1e-9 or np.std(serotonin_series) < 1e-9:
+            report.metrics["dopamine_serotonin_correlation"] = float("nan")
+        else:
+            corr = compute_pathway_correlation(dopamine_series, serotonin_series)
+            report.metrics["dopamine_serotonin_correlation"] = corr
+            if corr > self.config.dopamine_serotonin_correlation_min:
+                report.add_violation(
+                    "C-NEURO-003 VIOLATED: dopamine/serotonin correlation "
+                    f"{corr:.4f} exceeds expected inverse threshold "
+                    f"{self.config.dopamine_serotonin_correlation_min:.4f} "
+                    "(corr must be <= threshold). Pathways co-vary instead of "
+                    f"antagonising over the {len(states)}-state trajectory; "
+                    "reward/risk balance lost."
+                )
 
         return report
 

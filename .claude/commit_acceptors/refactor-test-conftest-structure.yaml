@@ -1,0 +1,33 @@
+id: refactor-test-conftest-structure
+status: ACTIVE
+claim_type: refactor
+promise: "Refactor tests/conftest.py into smaller helpers while preserving pytest bootstrap, marker, environment, audit, and VCR semantics; make architecture debt ratchet compare PR debt against its base tree."
+diff_scope:
+  changed_files:
+    - path: "tests/conftest.py"
+    - path: ".github/workflows/architecture-debt-ratchet.yml"
+    - path: ".claude/commit_acceptors/refactor-test-conftest-structure.yaml"
+  forbidden_paths:
+    - "trading/"
+    - "execution/"
+    - "forecast/"
+    - "policy/"
+required_python_symbols:
+  - "_ensure_pandas_compatible"
+  - "_load_module_from_path"
+  - "_restore_environment"
+  - "_resolve_item_level"
+  - "scrub_request"
+  - "scrub_response"
+expected_signal: "PR Gate python-quality and python-fast-shard jobs pass; commit acceptor diff binding finds no unbound changed code file; Architecture Debt Ratchet fails only if the PR increases a ratcheted debt class above its base-ref count."
+measurement_command: "python tools/commit_acceptor/validate_commit_acceptor.py --base-ref origin/main --head-ref HEAD --require-acceptor-for-code-change --acceptor-id refactor-test-conftest-structure"
+signal_artifact: "tmp/commit_acceptor_validation.json"
+falsifier:
+  command: "python tools/commit_acceptor/validate_commit_acceptor.py --base-ref origin/main --head-ref HEAD --require-acceptor-for-code-change --acceptor-id missing-refactor-test-conftest-structure"
+  description: "A missing acceptor id must fail, proving the diff-bound acceptor gate is active rather than ceremonial."
+rollback_command: "git checkout -- tests/conftest.py .github/workflows/architecture-debt-ratchet.yml && git rm .claude/commit_acceptors/refactor-test-conftest-structure.yaml"
+rollback_verification_command: "git diff --exit-code -- tests/conftest.py .github/workflows/architecture-debt-ratchet.yml .claude/commit_acceptors/refactor-test-conftest-structure.yaml"
+memory_update_type: none
+ledger_path: ".claude/commit_acceptors/refactor-test-conftest-structure.yaml"
+report_path: "docs/reports/diff_bound_commit_acceptor_layer.md"
+evidence: []

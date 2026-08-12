@@ -1,0 +1,93 @@
+# Copyright (c) 2023-2026 Yaroslav Vasylenko (neuron7xLab)
+# SPDX-License-Identifier: MIT
+#
+# Machine-readable companion to research/flagship/RQ.md.
+# This is the AUTHORITATIVE source consumed by scripts/ci/check_flagship_rq.py.
+# RQ.md is the human-readable mirror; it MUST stay consistent with this file.
+#
+# Boundary: RESEARCH_ALPHA, synthetic-only, NO_DEPLOY. This is an *infrastructure*
+# research question answerable from repository evidence (files, wheel build,
+# CI runs, artifacts). It is NOT a market-performance / alpha / edge question.
+# See PRODUCT_CATEGORY.md and FORBIDDEN_CLAIMS.md.
+
+id: FLAGSHIP-RQ-001
+title: >-
+  Does a clean-archive wheel-contract check surface latent first-party
+  reproducibility defects that the pre-existing CI gate suite does not catch?
+status: PREREGISTERED
+tier: HYPOTHESIS            # per CLAIMS.md evidence tiers; promotion requires signed artifact
+boundary: RESEARCH_ALPHA_SYNTHETIC_ONLY_NO_DEPLOY
+domain_kind: infrastructure   # NOT market-performance; repository/build artifact only
+
+# ---- Preregistered scope lock -----------------------------------------------
+# Scope, comparator, and criteria below are frozen at the pinned commit. They
+# CANNOT change after any holdout / rerun reveal without opening a NEW study
+# with a new id. Adjusting thresholds post-hoc invalidates the preregistration.
+scope_frozen: true
+scope_change_requires_new_study: true
+pinned_commit: HEAD@wave3-p0   # resolve to a concrete SHA at run time and record in the artifact
+
+# ---- Required fields (checked by the gate) ----------------------------------
+estimand: >-
+  The count D of distinct latent first-party defects (unpackaged-namespace
+  imports that raise ModuleNotFoundError on clean install, plus dead
+  console_scripts entry points) that are surfaced ONLY by the clean-archive
+  wheel-contract check on the frozen snapshot S, and are NOT already flagged by
+  any pre-existing CI gate on the same snapshot. Marginal, not total, detection.
+
+population: >-
+  All first-party modules packaged into the wheel built from `git archive HEAD`
+  of GeoSync at the pinned commit, plus every console_scripts entry point
+  declared in the packaging metadata of that wheel. A finite, enumerable
+  repository artifact. No market data, no external universe, no sampling.
+
+intervention: >-
+  Build the distributable wheel from a clean `git archive HEAD` (defeating any
+  stale local build/ directory) and statically resolve each packaged module's
+  first-party imports and each declared console entry point, emitting
+  artifacts/wheel_contract.json. Instrument: scripts/ci/check_wheel_contract.py.
+
+comparator: >-
+  The pre-existing CI gate suite (import-linter, unit tests, and the standard
+  release-gate probes) executed against the SAME frozen snapshot S, which does
+  NOT build from a clean archive and does NOT statically resolve packaged-wheel
+  imports. The contrast is clean-archive wheel contract vs. status-quo gates.
+
+outcome: >-
+  Primary: D, the number of latent defects detected only by the wheel contract.
+  Secondary: reproducibility of the detected set across independent reruns
+  (identical defect set ⇒ reproducible). Both are integer/boolean observables
+  read from artifacts/wheel_contract.json; neither is a return, PnL, or edge.
+
+constraints: >-
+  Single machine, offline (no network, no market/live data). Deterministic:
+  fixed commit SHA, no wall-clock dependence, reruns must reproduce the defect
+  set bit-for-bit. Bounded runtime (single wheel build + static scan, minutes).
+  Commit pinned and recorded BEFORE any rerun/holdout reveal. No source edits to
+  the snapshot under test between comparator and intervention runs.
+
+success_criteria: >-
+  HARD_PASS iff ALL hold on the pinned snapshot: (1) D >= 1 latent defect is
+  detected by the wheel contract; (2) the detected defect set is reproducible
+  (identical across >= 2 independent reruns); and (3) at least one detected
+  defect is NOT flagged by any pre-existing gate (genuine marginal detection).
+
+failure_criteria: >-
+  HARD_FAIL if ANY hold: (a) D == 0 (wheel contract surfaces nothing); (b) the
+  detected defect set is non-reproducible across reruns; or (c) every "detected"
+  defect is already flagged by a pre-existing gate (zero marginal detection).
+  A HARD_FAIL is a preserved negative result (NEGATIVE_EVIDENCE.yaml), never
+  rewritten into partial success.
+
+# ---- Evidence surface (grounding; not a promotion) --------------------------
+evidence_surface:
+  instrument: scripts/ci/check_wheel_contract.py
+  artifact: artifacts/wheel_contract.json
+  prior_result_reference: docs/phd/01_research_questions.md  # RQ2 affirmative leg
+  claims_ledger_row: CLAIMS.md            # add FLAGSHIP-RQ-001 as HYPOTHESIS on promotion
+
+honesty_note: >-
+  This question stays entirely within the synthetic-only / NO_DEPLOY boundary.
+  It makes NO empirical market claim, asserts NO out-of-sample edge, and is
+  falsifiable purely from repository/build artifacts. Promotion beyond
+  HYPOTHESIS requires a signed artifact per CLAIMS.md; it is not asserted here.

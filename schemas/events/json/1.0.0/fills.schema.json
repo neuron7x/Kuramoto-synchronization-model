@@ -68,7 +68,7 @@
     }
   },
   "description": "Execution fill acknowledgment for an order.",
-  "$id": "tradepulse.events.execution.v1_0_0.FillEvent",
+  "$id": "geosync.events.execution.v1_0_0.FillEvent",
   "required": [
     "event_id",
     "schema_version",

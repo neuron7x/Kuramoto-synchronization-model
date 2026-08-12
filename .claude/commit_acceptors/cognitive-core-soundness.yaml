@@ -1,0 +1,49 @@
+# ci-heartbeat: cognitive-core-soundness
+id: cognitive-core-soundness
+status: ACTIVE
+claim_type: fail_closed
+promise: >-
+  Elevate the falsification core from completeness to SOUNDNESS: add the
+  cognitive_core_soundness meta-law proving the exact-law spine is a genuine
+  reality-detector. For each exact law (gauss_bonnet, landauer, kelly,
+  dro_ara_gamma, ott_antonsen) the law's own predicate accepts the real solver
+  output and FIRES (flips to violated) on a deterministic perturbation beyond
+  threshold; the soundness operator rejects rubber-stamp and always-reject
+  gates. Completeness (every law witnessed) plus soundness (every gate fires on
+  divergence) make the core provably convert reality-divergence into a fired
+  gate. All five solvers are reused; canonical catalog.yaml is untouched.
+diff_scope:
+  changed_files:
+    - path: ".claude/commit_acceptors/cognitive-core-soundness.yaml"
+    - path: "tests/physics/test_cognitive_core_soundness.py"
+  forbidden_paths:
+    - "trading/"
+    - "execution/"
+    - "forecast/"
+    - "policy/"
+required_python_symbols: []
+expected_signal: >-
+  tools/validate_physics_contracts.py reports 30 blocking laws fully witnessed
+  (was 29). The soundness witness proves >= 5 exact-law gates accept reality and
+  fire on a planted divergence; the negative control proves the soundness
+  operator rejects a vacuous always-True gate and an always-False gate. No
+  canonical catalog mutation, no trading/execution/forecast/policy change.
+measurement_command: >-
+  PYTHONPATH=. python tools/validate_physics_contracts.py && PYTHONPATH=.
+  python -m pytest tests/physics/test_cognitive_core_soundness.py -q
+signal_artifact: "tmp/cognitive_core_soundness.log"
+falsifier:
+  command: >-
+    PYTHONPATH=. python -m pytest tests/physics/test_cognitive_core_soundness.py -q
+  description: >-
+    Fails if any exact-law gate stops firing on a reality-divergence, or if the
+    soundness operator is fooled by a vacuous or always-reject gate.
+rollback_command: >-
+  git rm -f tests/physics/test_cognitive_core_soundness.py
+rollback_verification_command: >-
+  PYTHONPATH=. python tools/validate_physics_contracts.py
+memory_update_type: none
+ledger_path: ".claude/commit_acceptors/cognitive-core-soundness.yaml"
+report_path: ".claude/commit_acceptors/cognitive-core-soundness.yaml"
+evidence:
+  - path: "tests/physics/test_cognitive_core_soundness.py"

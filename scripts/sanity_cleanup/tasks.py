@@ -1,8 +1,10 @@
+# Copyright (c) 2023-2026 Yaroslav Vasylenko (neuron7xLab)
+# SPDX-License-Identifier: MIT
 """Individual tasks that make up the sanity cleanup workflow."""
 
 from __future__ import annotations
 
-# SPDX-License-Identifier: LicenseRef-TradePulse-Proprietary
+# SPDX-License-Identifier: MIT
 import ast
 import json
 import logging
@@ -206,9 +208,7 @@ def _extract_script_metadata(path: Path) -> dict[str, object]:
             LOGGER.debug("Unable to extract docstring from %s", path, exc_info=True)
     else:
         try:
-            first_line = path.read_text(encoding="utf-8", errors="ignore").splitlines()[
-                0
-            ]
+            first_line = path.read_text(encoding="utf-8", errors="ignore").splitlines()[0]
             if first_line.startswith("#!"):
                 metadata["shebang"] = first_line.strip()
         except IndexError:
@@ -322,9 +322,7 @@ _LINK_PATTERN = re.compile(r"\[[^\]]+\]\(([^)]+)\)")
 
 
 def _iter_link_candidates(path: Path) -> Iterator[str]:
-    for match in _LINK_PATTERN.finditer(
-        path.read_text(encoding="utf-8", errors="ignore")
-    ):
+    for match in _LINK_PATTERN.finditer(path.read_text(encoding="utf-8", errors="ignore")):
         yield match.group(1)
 
 
@@ -353,15 +351,9 @@ def check_links(context: TaskContext) -> TaskReport:
     )
     details = tuple(
         broken[:20]
-        + (
-            [f"… truncated list, {len(broken) - 20} additional links"]
-            if len(broken) > 20
-            else []
-        )
+        + ([f"… truncated list, {len(broken) - 20} additional links"] if len(broken) > 20 else [])
     )
-    return TaskReport(
-        name="check_links", status=status, summary=summary, details=details
-    )
+    return TaskReport(name="check_links", status=status, summary=summary, details=details)
 
 
 def verify_license_files(context: TaskContext) -> TaskReport:
@@ -486,9 +478,7 @@ def inventory_configurations(context: TaskContext) -> TaskReport:
             {
                 "path": format_path(path),
                 "size_bytes": stat.st_size,
-                "modified": datetime.fromtimestamp(stat.st_mtime).isoformat(
-                    timespec="seconds"
-                ),
+                "modified": datetime.fromtimestamp(stat.st_mtime).isoformat(timespec="seconds"),
             }
         )
 
@@ -552,9 +542,7 @@ def find_duplicate_files(context: TaskContext) -> TaskReport:
     for paths in list(duplicates.values())[:5]:
         details.append("; ".join(paths))
     if len(duplicates) > 5:
-        details.append(
-            f"… truncated list, {len(duplicates) - 5} additional duplicate groups"
-        )
+        details.append(f"… truncated list, {len(duplicates) - 5} additional duplicate groups")
 
     return TaskReport(
         name="find_duplicate_files",
@@ -579,9 +567,7 @@ def check_permissions(context: TaskContext) -> TaskReport:
 
     status = TaskStatus.SUCCESS if not flagged else TaskStatus.FAILED
     summary = (
-        "Permissions look sane"
-        if not flagged
-        else f"Found {len(flagged)} world-writable paths"
+        "Permissions look sane" if not flagged else f"Found {len(flagged)} world-writable paths"
     )
     details = tuple(
         flagged[:20]
@@ -591,9 +577,7 @@ def check_permissions(context: TaskContext) -> TaskReport:
             else []
         )
     )
-    return TaskReport(
-        name="check_permissions", status=status, summary=summary, details=details
-    )
+    return TaskReport(name="check_permissions", status=status, summary=summary, details=details)
 
 
 def directory_inventory(context: TaskContext) -> TaskReport:
@@ -634,9 +618,7 @@ def directory_inventory(context: TaskContext) -> TaskReport:
         )
 
     summary = f"Profiled {len(inventory)} top-level directories"
-    details = [
-        f"{item['directory']} ({item['files']} files)" for item in inventory[:10]
-    ]
+    details = [f"{item['directory']} ({item['files']} files)" for item in inventory[:10]]
     if len(inventory) > 10:
         details.append(f"… truncated list, {len(inventory) - 10} additional entries")
 
@@ -667,9 +649,7 @@ def archive_legacy_content(context: TaskContext) -> TaskReport:
         for candidate in candidates:
             relative = safe_relpath(candidate, context.root)
             slug = re.sub(r"[^a-zA-Z0-9_-]+", "-", relative)
-            archive_name = (
-                f"{slug}-{datetime.now(timezone.utc).strftime('%Y%m%d%H%M%S')}"
-            )
+            archive_name = f"{slug}-{datetime.now(timezone.utc).strftime('%Y%m%d%H%M%S')}"
             archive_path = archive_root / f"{archive_name}.tar.gz"
             with tarfile.open(archive_path, "w:gz") as tar:
                 tar.add(candidate, arcname=relative)

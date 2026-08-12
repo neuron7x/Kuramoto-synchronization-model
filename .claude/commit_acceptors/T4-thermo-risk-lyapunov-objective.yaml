@@ -1,0 +1,79 @@
+# Diff-bound acceptor for the T4 thermodynamic-risk correctness fix.
+#
+# Closes a genuine first-principles violation: the module docstring asserted
+# a "second-law analog (diversification increases entropy), dS/dt >= 0" and
+# framed F = U - T*S as a proven Lyapunov stability law. That is false for
+# portfolio weight entropy — a rebalance toward concentration gives dS < 0.
+# The gate never relied on dS >= 0 (it accepts arbitrary-sign dS); the claim
+# lived only as prose. This commit removes the false-law framing, reframes F
+# as a control Lyapunov candidate (objective the gate drives down, not a law
+# nature enforces), documents the nondimensional units (no k_B), and demotes
+# the provenance tier to EXTRAPOLATED. No executable logic changes.
+#
+# Pure correctness/truth-in-labeling. No runtime path, no trading surface,
+# no numeric output, and no gate verdict changes.
+
+id: T4-thermo-risk-lyapunov-objective
+status: ACTIVE
+claim_type: correctness
+promise: >-
+  core.physics.thermodynamic_risk no longer asserts a false "second-law
+  analog (dS >= 0)" or a proven Lyapunov stability law. The free-energy-
+  analog gate F = U - T_eff * S_q is documented as a control Lyapunov
+  candidate the gate drives down by rejecting updates with dF > 0; dS is
+  an arbitrary-sign free input penalised via the -T*dS term. Units are
+  documented as nondimensional control quantities (no k_B, no energy
+  scale). Provenance tier stated EXTRAPOLATED. The ThermodynamicRiskGate
+  public API and every numeric output are byte-identical — gate(),
+  gate_with_details(), free_energy(), ricci_temperature(),
+  shannon_entropy(), tsallis_entropy() are unchanged in behaviour. New
+  falsification tests (TestSecondLawDoesNotHold) pin that concentration
+  lowers entropy (dS < 0), that F rises under concentration, and that the
+  gate accepts negative dS as a free input — so the removed false claim
+  cannot silently return.
+diff_scope:
+  changed_files:
+    - path: ".claude/commit_acceptors/T4-thermo-risk-lyapunov-objective.yaml"
+    - path: "core/physics/thermodynamic_risk.py"
+    - path: "tests/unit/physics/test_T4_thermodynamic_risk.py"
+  forbidden_paths:
+    - "trading/"
+    - "execution/"
+    - "forecast/"
+    - "policy/"
+required_python_symbols:
+  - "ThermodynamicRiskGate"
+expected_signal: >-
+  All tests in tests/unit/physics/test_T4_thermodynamic_risk.py pass under
+  pytest (including the new TestSecondLawDoesNotHold class); black, ruff,
+  and mypy --strict are clean on the changed Python; no numeric assertion
+  in the pre-existing tests changes. validate_tests.py reports physics
+  grounding with no new L1-L5 violations.
+measurement_command: >-
+  python -m pytest tests/unit/physics/test_T4_thermodynamic_risk.py -v
+signal_artifact: "tmp/T4_thermo_risk_pytest.log"
+falsifier:
+  command: >-
+    python -c "import numpy as np;
+    from core.physics.thermodynamic_risk import ThermodynamicRiskGate as G;
+    g=G();
+    u=g.shannon_entropy(np.array([0.25,0.25,0.25,0.25]));
+    c=g.shannon_entropy(np.array([0.97,0.01,0.01,0.01]));
+    import sys; sys.exit(0 if (c-u) < 0 else 1)"
+  description: >-
+    Inverse probe for the corrected framing: recomputes dS for a
+    uniform -> concentrated rebalance and exits non-zero iff dS >= 0
+    (i.e. iff the discredited 'second law' actually held). On the green
+    path dS < 0, so the probe exits 0; if anyone re-introduces a
+    monotone-entropy assumption that makes dS >= 0, the probe fires.
+rollback_command: >-
+  git checkout HEAD~1 --
+  core/physics/thermodynamic_risk.py
+  tests/unit/physics/test_T4_thermodynamic_risk.py
+  .claude/commit_acceptors/T4-thermo-risk-lyapunov-objective.yaml
+rollback_verification_command: >-
+  git diff --exit-code core/physics/thermodynamic_risk.py
+memory_update_type: append
+ledger_path: ".claude/commit_acceptors/T4-thermo-risk-lyapunov-objective.yaml"
+report_path: "docs/reports/diff_bound_commit_acceptor_layer.md"
+evidence: []

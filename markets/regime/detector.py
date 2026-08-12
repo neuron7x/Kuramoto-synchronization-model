@@ -1,3 +1,5 @@
+# Copyright (c) 2023-2026 Yaroslav Vasylenko (neuron7xLab)
+# SPDX-License-Identifier: MIT
 """Adaptive market regime detection module."""
 
 from __future__ import annotations
@@ -123,9 +125,7 @@ class RegimeDetector:
             regime=str(last_row["regime"]),
             probabilities=probabilities,
             timestamp=timestamp,
-            features=last_row.filter(
-                regex="^(trend|momentum|volatility|volume_z)"
-            ).copy(),
+            features=last_row.filter(regex="^(trend|momentum|volatility|volume_z)").copy(),
         )
 
     def _prepare_features(
@@ -141,15 +141,9 @@ class RegimeDetector:
         log_returns = np.log(series.clip(lower=1e-12)).diff().fillna(0.0)
         momentum = series.pct_change(self.window).fillna(0.0)
 
-        volatility = log_returns.rolling(self.window, min_periods=self.window // 2).std(
-            ddof=0
-        )
+        volatility = log_returns.rolling(self.window, min_periods=self.window // 2).std(ddof=0)
         volatility = volatility.bfill().fillna(0.0)
-        trend = (
-            returns.rolling(self.window, min_periods=self.window // 2)
-            .mean()
-            .fillna(0.0)
-        )
+        trend = returns.rolling(self.window, min_periods=self.window // 2).mean().fillna(0.0)
 
         features = pd.DataFrame(
             {
@@ -162,13 +156,8 @@ class RegimeDetector:
 
         if volume_col and volume_col in data:
             volume = data[volume_col].astype(float)
-            volume_diff = (
-                volume
-                - volume.rolling(self.window, min_periods=self.window // 2).mean()
-            )
-            volume_std = volume.rolling(self.window, min_periods=self.window // 2).std(
-                ddof=0
-            )
+            volume_diff = volume - volume.rolling(self.window, min_periods=self.window // 2).mean()
+            volume_std = volume.rolling(self.window, min_periods=self.window // 2).std(ddof=0)
             with np.errstate(divide="ignore", invalid="ignore"):
                 volume_z = volume_diff / volume_std
             volume_z = volume_z.replace([np.inf, -np.inf], np.nan).fillna(0.0)
@@ -229,10 +218,7 @@ class RegimeDetector:
             labels.setdefault(idx, "range_bound")
 
         # Ensure deterministic ordering for downstream consumers.
-        return {
-            int(idx): label
-            for idx, label in sorted(labels.items(), key=lambda item: item[0])
-        }
+        return {int(idx): label for idx, label in sorted(labels.items(), key=lambda item: item[0])}
 
     def _build_detection_frame(
         self,
@@ -240,8 +226,7 @@ class RegimeDetector:
         probabilities: np.ndarray,
     ) -> pd.DataFrame:
         regime_columns = {
-            f"prob_{name}": probabilities[:, comp]
-            for comp, name in self._regime_labels.items()
+            f"prob_{name}": probabilities[:, comp] for comp, name in self._regime_labels.items()
         }
         dominant = np.argmax(probabilities, axis=1)
         regimes = [self._regime_labels.get(int(idx), "range_bound") for idx in dominant]

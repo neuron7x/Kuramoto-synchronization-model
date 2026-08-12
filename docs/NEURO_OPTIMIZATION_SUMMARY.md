@@ -2,12 +2,12 @@
 
 ## Executive Summary
 
-This document summarizes the neuroscience-grounded AI system enhancements implemented for TradePulse. The work delivers **practically complete iterations and optimizations** for the neuromodulator architecture, enabling autonomous parameter tuning and homeostatic balance maintenance.
+This document summarizes the neuroscience-grounded AI system enhancements implemented for GeoSync. The work delivers **practically complete iterations and optimizations** for the neuromodulator architecture, enabling autonomous parameter tuning and homeostatic balance maintenance.
 
 ## What Was Built
 
 ### 1. Adaptive Neuromodulator Calibration System
-**File:** `src/tradepulse/core/neuro/adaptive_calibrator.py`
+**File:** `src/geosync/core/neuro/adaptive_calibrator.py`
 
 A simulated annealing-based optimizer that automatically tunes neuromodulator parameters:
 
@@ -26,7 +26,7 @@ A simulated annealing-based optimizer that automatically tunes neuromodulator pa
 - 46.9% score improvement in 50 iterations
 
 ### 2. Cross-Neuromodulator Optimizer
-**File:** `src/tradepulse/core/neuro/neuro_optimizer.py`
+**File:** `src/geosync/core/neuro/neuro_optimizer.py`
 
 A homeostatic balance optimizer coordinating all neuromodulators:
 
@@ -277,7 +277,7 @@ requirements:
 - Integration patterns
 
 ### Module README
-**File:** `src/tradepulse/core/neuro/README_OPTIMIZATION.md` (9KB)
+**File:** `src/geosync/core/neuro/README_OPTIMIZATION.md` (9KB)
 
 - Quick start guide
 - Component overview
@@ -293,11 +293,11 @@ requirements:
 ## Usage Example
 
 ```python
-from tradepulse.core.neuro.adaptive_calibrator import (
+from geosync.core.neuro.adaptive_calibrator import (
     AdaptiveCalibrator,
     CalibrationMetrics,
 )
-from tradepulse.core.neuro.neuro_optimizer import (
+from geosync.core.neuro.neuro_optimizer import (
     NeuroOptimizer,
     OptimizationConfig,
 )

@@ -1,0 +1,59 @@
+# Diff-bound commit acceptor: X-10R RO-Crate 1.2 + Workflow Run RO-Crate
+# + OSF/AsPredicted prereg (epic #640, publication-readiness layer).
+#
+# This is PACKAGING, not method-validity. The crate and prereg templates
+# describe artifacts the validity layer already produced; they add no
+# scientific claim. Verified locally before push:
+#   * ruff format + ruff check + black --check: clean on the diff
+#   * mypy --strict: clean (zero new type:ignore / noqa)
+#   * pytest tests/reconstruction/test_ro_crate_and_prereg.py +
+#     test_x10r_d003_dov_dry_run.py: 23 passed
+#   * real dry-run on the synthetic positive-control path emits
+#     ro-crate-metadata.json + OSF + AsPredicted prereg next to capsule
+id: x10r-ro-crate-prereg
+status: ACTIVE
+claim_type: governance
+promise: >-
+  After this PR lands, research.reconstruction emits an RO-Crate 1.2 +
+  Workflow Run RO-Crate provenance manifest and OSF/AsPredicted prereg
+  templates alongside every X-10R capsule; the D-003 dry-run on the
+  synthetic path writes all four artifacts to disk. No science claim is
+  made or strengthened — the crate is descriptive provenance only.
+diff_scope:
+  changed_files:
+    - path: "research/reconstruction/ro_crate.py"
+    - path: "research/reconstruction/prereg.py"
+    - path: "research/reconstruction/__init__.py"
+    - path: "scripts/run_x10r_d003_dov_dry_run.py"
+    - path: "tests/reconstruction/test_ro_crate_and_prereg.py"
+    - path: ".claude/commit_acceptors/x10r-ro-crate-prereg.yaml"
+  forbidden_paths:
+    - "trading/"
+    - "execution/"
+    - "forecast/"
+    - "policy/"
+    - "research/reconstruction/cimini_squartini.py"
+    - "research/reconstruction/recovery_audit.py"
+    - "research/reconstruction/kuramoto_on_reconstruction.py"
+    - "research/reconstruction/reconstruction_capsule.py"
+required_python_symbols:
+  - "research.reconstruction.ro_crate:build_ro_crate_metadata"
+  - "research.reconstruction.ro_crate:emit_ro_crate"
+  - "research.reconstruction.prereg:emit_prereg"
+expected_signal: >-
+  RO-Crate metadata conforms to RO-Crate 1.2 + Workflow Run RO-Crate;
+  dry-run emits crate + both prereg templates next to the capsule.
+measurement_command: "python -m pytest tests/reconstruction/test_ro_crate_and_prereg.py -q"
+signal_artifact: "tmp/x10r_ro_crate_prereg_pytest.log"
+falsifier:
+  command: "python -c \"from research.reconstruction.ro_crate import build_ro_crate_metadata, RO_CRATE_PROFILE; m=build_ro_crate_metadata({'scoped_tier':'x','payload_sha256':'0'*64}); root=[e for e in m['@graph'] if e['@id']=='./'][0]; raise SystemExit(0 if (root['@type']=='Dataset' and any(c['@id']==RO_CRATE_PROFILE for c in root['conformsTo']) and sum(1 for e in m['@graph'] if e['@type']=='CreateAction')>=3 and any(e['@type']=='OrganizeAction' for e in m['@graph'])) else 1)\""
+  description: >-
+    Probe exits 0 only if the root is a Dataset conforming to RO-Crate
+    1.2 with >=3 CreateAction + an OrganizeAction (Workflow Run RO-Crate);
+    exits 1 if the crate stops being spec-shaped.
+rollback_command: "git checkout -- research/reconstruction/ro_crate.py research/reconstruction/prereg.py research/reconstruction/__init__.py scripts/run_x10r_d003_dov_dry_run.py tests/reconstruction/test_ro_crate_and_prereg.py"
+rollback_verification_command: "git diff --exit-code research/reconstruction/ro_crate.py research/reconstruction/prereg.py research/reconstruction/__init__.py scripts/run_x10r_d003_dov_dry_run.py tests/reconstruction/test_ro_crate_and_prereg.py"
+memory_update_type: none
+ledger_path: ".claude/commit_acceptors/x10r-ro-crate-prereg.yaml"
+report_path: ".claude/commit_acceptors/x10r-ro-crate-prereg.yaml"
+evidence: []

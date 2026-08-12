@@ -1,3 +1,5 @@
+# Copyright (c) 2023-2026 Yaroslav Vasylenko (neuron7xLab)
+# SPDX-License-Identifier: MIT
 """Render markdown reports into HTML and PDF formats."""
 
 from __future__ import annotations
@@ -18,7 +20,7 @@ def render_markdown_to_html(markdown: str, output_path: Path) -> None:
             '<html lang="en">',
             "<head>",
             '  <meta charset="utf-8">',
-            "  <title>TradePulse Report</title>",
+            "  <title>GeoSync Report</title>",
             "  <style>body{font-family:Arial, sans-serif;} pre{white-space:pre-wrap;}</style>",
             "</head>",
             "<body>",
@@ -53,11 +55,7 @@ def render_markdown_to_pdf(markdown: str, output_path: Path) -> None:
     stream = ("\n".join(stream_parts) + "\n").encode("utf-8")
 
     content = (
-        b"<< /Length "
-        + str(len(stream)).encode("ascii")
-        + b" >>\nstream\n"
-        + stream
-        + b"endstream"
+        b"<< /Length " + str(len(stream)).encode("ascii") + b" >>\nstream\n" + stream + b"endstream"
     )
     objects = [
         b"<< /Type /Catalog /Pages 2 0 R >>",

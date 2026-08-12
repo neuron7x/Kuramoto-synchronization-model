@@ -1,0 +1,18 @@
+#!/usr/bin/env bash
+# Opt-in whole-tree gate meta-ratchet on push. CI is quota-gated and the slim CI
+# image lacks the full dep set, so the reliable home for the whole-tree pass is
+# a local, full-environment pre-push run. Enable with: make install-hooks.
+# Skip a single push with: SKIP_GATES_ALL=1 git push   (or git push --no-verify).
+set -u
+if [[ "${SKIP_GATES_ALL:-0}" == "1" ]]; then
+  echo "pre-push: SKIP_GATES_ALL=1 — skipping whole-tree gate meta-ratchet."
+  exit 0
+fi
+ROOT="$(git rev-parse --show-toplevel)"
+echo "🌀 pre-push: whole-tree gate meta-ratchet (SKIP_GATES_ALL=1 to skip)…"
+if ! python3 "${ROOT}/scripts/ci/run_all_gates.py"; then
+  echo "pre-push: BLOCKED — a gate went red vs .github/gate_run_baseline.json." >&2
+  echo "  Fix it, or (if intentional) re-freeze with: python3 scripts/ci/run_all_gates.py --write" >&2
+  exit 1
+fi
+exit 0

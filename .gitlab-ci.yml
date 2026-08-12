@@ -1,0 +1,285 @@
+# GitLab CI for GeoSync.
+#
+# This pipeline intentionally mirrors only a SMALL, bounded, safe subset of
+# the project's real local tooling (see Makefile, pyproject.toml, mypy.ini,
+# pytest.ini). It does not attempt to reproduce the full internal gate suite
+# that previously ran under .github/workflows/ (100+ workflows covering
+# claim-boundary gates, coverage ratchets, mutation testing, etc.) — those
+# gates are repo-internal, some are long-running, and one class of them
+# (anything with "mutation"/"ratchet" in its name, e.g.
+# `tests/mutation/`, `tests/ci/test_mutation_kill_ratchet.py`,
+# `make *-mutation*`) rewrites source files in place and must never run
+# unattended or concurrently with anything else touching the tree.
+#
+# Scope here: install pinned deps, lint with the project's own configured
+# tools (ruff, mypy), and run a narrow, timeout-bounded slice of
+# tests/unit/utils/ only. Nothing here fabricates coverage or invents
+# commands that don't already exist in this repository.
+
+image: python:3.12-slim
+
+stages:
+  - install
+  - lint
+  - test
+  - integrity
+
+variables:
+  PIP_CACHE_DIR: "$CI_PROJECT_DIR/.cache/pip"
+
+cache:
+  key: "$CI_COMMIT_REF_SLUG"
+  paths:
+    - .cache/pip
+
+.install_deps: &install_deps
+  - python -m pip install --upgrade pip setuptools wheel
+  # requirements*.lock are fully pinned + sha256-hashed AND now also pin the
+  # build backends setuptools/pip/wheel via `pip-compile --allow-unsafe`
+  # (FUP-009). Every requirement — including the backends that ccxt/torch pull —
+  # therefore carries a hash, so `--require-hashes` install is clean; it is
+  # passed explicitly for clarity (a fully-hashed file already auto-enables it).
+  # The security floors are baked into the lock, so the previous
+  # `-c constraints/security.txt` (unpinned ranges, rejected in hash mode) stays
+  # dropped. See docs/DEPENDENCY_LOCK_POLICY.md.
+  - pip install --require-hashes -r requirements.lock
+  - pip install --require-hashes -r requirements-dev.lock
+
+lint:
+  stage: lint
+  timeout: 15m
+  before_script: *install_deps
+  script:
+    - python -m ruff check .
+    - python -m mypy --config-file=mypy.ini .
+  allow_failure: true
+
+test-fast-unit:
+  stage: test
+  timeout: 15m
+  before_script: *install_deps
+  script:
+    # Bounded to tests/unit/utils/ — a small, verified-safe, pure-logic
+    # subdirectory (no external I/O, no network, nowhere near
+    # tests/mutation/, tests/ci/, tests/physics/, tests/governance/,
+    # tests/tools/, where the source-rewriting mutation/ratchet probes
+    # live). Both a pytest-level per-test timeout and a job-level
+    # wall-clock timeout are set so this can never hang or run unbounded.
+    - python -m pytest tests/unit/utils --timeout=60 --maxfail=20 -q
+  allow_failure: true
+
+# Claim-falsifier node resolution (full deps: collecting the physics witness nodes
+# imports numpy/core, so this cannot live in the slim integrity image). Fail-closed
+# + BLOCKING: a claim whose falsifier.test_id does not resolve to a collectible pytest
+# node is a falsifier that cannot fire — previously unenforced on any running platform
+# (the claim gates lived only in suspended GitHub Actions).
+claim-falsifier-nodes:
+  stage: test
+  timeout: 15m
+  before_script: *install_deps
+  script:
+    - python scripts/ci/check_falsifier_nodes.py
+  allow_failure: false
+
+# Claim-driven audit engine (geosync.proof.audit), --resolve-only fail-closed pass: the
+# external-auditor gate that verdicts EVERY docs/CLAIMS.yaml claim without trusting the author.
+# resolve-only is the fast static tier — it collects every falsifier (catches DANGLING = a
+# named-but-uncollectible node) and scans FORBIDDEN_CLAIMS banned language, exiting 1 on any
+# REJECT-class finding, in seconds (no 27-test execution). Full deps: collecting the physics
+# witness nodes imports numpy. The executing tiers (default/--deep) run in the nightly lane.
+claim-audit-resolve:
+  stage: test
+  timeout: 15m
+  before_script: *install_deps
+  script:
+    - python -m geosync.proof.audit --resolve-only
+  allow_failure: false
+
+# Tier-promotion gate (RES-020): a claim's self-declared `tier` in docs/CLAIMS.yaml must
+# have EARNED the executed audit verdict its tier demands (ANCHORED requires SUPPORTED,
+# EXTRAPOLATED requires not-broken). "The right to assert ANCHORED is machine-earned." The
+# gate consumes an EXECUTED audit report, so this job runs the audit in DEFAULT mode first
+# (executes non-heavy falsifiers — resolve-only cannot prove SUPPORTED, and the gate
+# correctly refuses to let NOT_TESTED satisfy an ANCHORED floor). Fail-closed on any
+# over-promotion; the policy is pinned by sha256 in the gate output.
+claim-promotion:
+  stage: test
+  timeout: 20m
+  before_script: *install_deps
+  script:
+    - python -m geosync.proof.audit
+    - python scripts/ci/check_claim_promotion.py
+    # falsification-power weighting: fail-closed iff the audit would REJECT; publishes the
+    # epistemic-integrity measure (SUPPORTED calibrated by recorded logic-mutation kill-rate).
+    - python -m geosync.proof.weighting
+  allow_failure: false
+  artifacts:
+    when: always
+    paths:
+      - artifacts/geosync_proof/integrity.json
+    expire_in: 30 days
+
+# Ten-axis composition gate. Dozens of ratchets were enforced independently and nothing
+# composed them: every gate could be green while the artifact as a whole was never stated.
+# This job scores the ten axes (elegance..reproducibility) as `1 - frozen_debt/measured_
+# population` — no hand-assigned rating, unmeasured probes never floored to 1.0, weakest-link
+# aggregation at both levels. It runs no analysis of its own (stdlib AST + already-frozen
+# ledgers, seconds not minutes) and fails closed on three regressions: a score that falls, a
+# probe that vanishes, and a probe that goes MEASURED -> UNMEASURED. Baseline:
+# docs/TEN_AXES_BASELINE.json. Profile: docs/audit/TEN_AXES_COMPOSITION_2026-07-22.md.
+ten-axes-composition:
+  stage: test
+  timeout: 10m
+  before_script: *install_deps
+  # Full history: --against-ref reads the baseline as COMMITTED at another ref, which a shallow
+  # clone cannot resolve. Without this the historical check fails closed on every run.
+  variables:
+    GIT_DEPTH: "0"
+  script:
+    # --against-ref closes the delete-then-refreeze bypass: the working profile is also compared
+    # with the baseline committed at the reference point, so lowering the bar needs a history
+    # rewrite. The reference is the DEFAULT BRANCH, not the merge base: this project runs branch
+    # pipelines (there is no `workflow:`/`rules:` block, so CI_MERGE_REQUEST_DIFF_BASE_SHA is
+    # always empty and a merge-base variant would be dead code), and pinning to the default
+    # branch also denies an author the choice of an old, favourable base.
+    - git fetch --quiet origin "$CI_DEFAULT_BRANCH"
+    - python scripts/ci/check_ten_axes.py --against-ref "origin/$CI_DEFAULT_BRANCH"
+    - python -m pytest tests/test_ten_axes_gate.py -q
+  allow_failure: false
+
+# Whole-tree gate meta-ratchet. THE fix for the health-map's root-cause-above-the-
+# root-causes ("gates exist but do not run": CI was the only runner, `make verify` is
+# changeset-only, so ~90 check_* gates never ran against the full tree → every ratchet
+# silently slipped, every registry silently desynced). run_all_gates.py runs EVERY gate,
+# classifies GREEN/NEEDS_ARGS/RED, and fails closed on NEW red vs .github/gate_run_baseline.json
+# (allowlisting the documented red set). It runs check_* gates ONLY — never the source-
+# rewriting mutation/ratchet probes. Full deps: some gates import numpy/core. ~4min local.
+gates-all-meta:
+  stage: test
+  timeout: 20m
+  before_script: *install_deps
+  script:
+    - python scripts/ci/run_all_gates.py
+  allow_failure: false
+
+# False-confidence detector (tools/audit/, NOT a scripts/ci/check_* gate, so the
+# whole-tree meta-ratchet above does not pick it up). Its own C5 finding was that the
+# calibration-layer validators "ship UNWIRED — CI integration is the load-bearing
+# follow-up". This job is that follow-up. ADVISORY (allow_failure:true) per the
+# documented staged philosophy (TRACK first, ENFORCE once the live tree's RED bands
+# reach YELLOW): it RUNS the detector and publishes the report every pipeline, closing
+# the unwired hole, without gating yet. Flip to --exit-on-finding when RED→YELLOW.
+false-confidence-advisory:
+  stage: test
+  timeout: 10m
+  before_script:
+    - python -m pip install --quiet pyyaml
+  script:
+    - python tools/audit/false_confidence_detector.py --output reports/false-confidence.json || true
+    - python tools/audit/false_confidence_detector.py
+  allow_failure: true
+  artifacts:
+    when: always
+    paths:
+      - reports/false-confidence.json
+    expire_in: 30 days
+
+# Release/supply-chain integrity gates. These are fast, deterministic, and touch
+# NO source (no mutation/ratchet probes) — safe to enforce. They previously ran
+# only under .github/workflows/ and stopped after the platform move, letting the
+# root MANIFEST.sha256 and INVENTORY.json drift uncaught (tasks REL-001..REL-003,
+# GOV register). Unlike lint/test above, this job is fail-closed (no
+# allow_failure): drift blocks the pipeline.
+integrity-gates:
+  stage: integrity
+  timeout: 10m
+  before_script:
+    - apt-get update -qq && apt-get install -y -qq git >/dev/null
+    - python -m pip install --quiet pytest pyyaml jsonschema
+  script:
+    # --- release / supply-chain integrity (REL-001..003) ---
+    # G-ROOT-MANIFEST: byte-for-byte cold-verify of the root source manifest
+    - python scripts/ci/check_root_manifest.py
+    # G-ARTIFACT-MANIFESTS: distinct scope — artifact manifest.json digests only
+    - python scripts/ci/check_manifest_hashes.py
+    # INVENTORY managed-scope sync (tracked-managed delta must be 0)
+    - python scripts/ci/check_inventory_sync.py
+    # --- governance gates (GOV/REL wave-2) ---
+    # RACI ownership + two-signature/COI (GOV-002)
+    - python scripts/ci/check_raci.py
+    # fail-closed waiver protocol; --now makes it deterministic (GOV-004)
+    - python scripts/ci/check_waivers.py --now "$(date -u +%Y-%m-%d)"
+    # project state / claim-boundary ontology, structural validate (GOV-005)
+    - python scripts/ci/check_state_ontology.py --validate
+    # remediation ledger SSOT: schema-valid, closed⟹PASS, evidence present (DS-11/GOV-003)
+    - python scripts/ci/check_remediation_ledger.py
+    # physics law-witness index cold-verify, no stale (REL-004)
+    - python scripts/ci/check_physics_law_witness_index.py
+    # RTM traceability: each requirement's mapped Tests must import its mapped modules
+    # (stdlib-only AST scan; catches fictional test<->module links, e.g. NFR-001/002)
+    - python scripts/ci/check_rtm_traceability.py
+    # SEC-016 security-regression corpus: ratchets the SEC-010 baseline — no NEW
+    # os.system / unsafe yaml.load / shell=True / pickle-load in first-party (stdlib)
+    - python scripts/ci/check_security_regression.py
+    # ENV-011 golden-path ratchet: every documented `make <target>` must resolve to a
+    # real Makefile target; NEW dangling citation fails (37 legacy baselined) (stdlib)
+    - python scripts/ci/check_golden_paths.py
+    # version SSOT consistency across bound surfaces (REL-008)
+    - python scripts/ci/check_version_ssot.py
+    # flagship research question completeness + quarantine (RES-001)
+    - python scripts/ci/check_flagship_rq.py
+    # doc status marking; no current doc contradicts project_state (DOC-003)
+    - python scripts/ci/check_doc_status.py
+    # CITATION.cff forbidden-claim scan (REL-009)
+    - python scripts/ci/check_cff_claims.py
+    # flagship preregistration digest + sections (RES-002)
+    - python scripts/ci/check_preregistration.py
+    # CI workflow least-privilege permissions (SEC-011)
+    - python scripts/ci/check_ci_permissions.py
+    # every requirements*.lock line is version-pinned + sha256-hashed (ENV-003)
+    - python scripts/ci/check_lock_hashes.py
+    # Python support-matrix contract consistency (ENV-002)
+    - python scripts/ci/check_py_matrix.py
+    # flagship baseline hierarchy complete + verdict re-derived (RES-008)
+    - python scripts/ci/check_baselines.py
+    # every tracked non-ASCII path is NFC + archive-stable (REL-007)
+    - python scripts/ci/check_unicode_paths.py
+    # all internal markdown links resolve; outside-root allowlisted (DOC-001)
+    - python scripts/ci/check_links.py
+    # pip-audit toolchain pinned+hashed; offline→RED not false-GREEN (SEC-002)
+    - python scripts/ci/check_scan_toolchain.py
+    # flagship population frame: infra-modules, digest reproduces (RES-006)
+    - python scripts/ci/check_population_frame.py
+    # selection-bias/multiplicity control, primary==prereg (RES-007)
+    - python scripts/ci/check_selection_bias.py
+    # power/effect-size/UQ; no binary claim while underpowered (RES-010)
+    - python scripts/ci/check_power_uq.py
+    # operational-definitions ontology: mechanism≠metaphor, falsifiers present (RES-003)
+    - python scripts/ci/check_terminology.py --validate
+    # physics score is internal-rubric, never marketed as scientific validation (RES-005)
+    - python scripts/ci/check_physics_score.py
+    # hermetic container Dockerfile policy: digest-pinned/non-root/hashed (ENV-005)
+    - python scripts/ci/check_hermetic_image.py
+    # NOTE: preflight_environment.py (ENV-009) needs the full canonical dep set
+    # and check_dataset_manifests.py (DAT-001) is RED-by-design (real unlicensed
+    # data pending SEC-015 governance) — neither runs in this slim gate; their
+    # logic is covered by the falsification batteries below.
+    # NOTE: check_release_evidence.py (REL-011) is likewise RED-by-design — the
+    # release evidence bundle honestly reports release_readiness=NOT_READY while
+    # mandatory receipts (coverage/mutation/sbom/tests/wheel = TST-003/TST-010/…)
+    # are absent; the formal release verdict is REL-014's job. The bundle's
+    # integrity (digest-binding, determinism, schema, tamper-detection) is
+    # enforced by test_release_evidence.py below.
+    # NOTE: check_env_preflight (ENV-001), full-tree check_secret_boundary AND
+    # its test_secret_boundary (SEC-006) are NOT run here — the first needs the
+    # full canonical dep set (enforced in the ENV-005 container), the secret
+    # scanner needs gitleaks (absent in this slim image; its self-contained
+    # negative-fixture teeth are proven locally + in the security workflow).
+    # gate unit tests (manifest scope + governance + wave-3/4 falsification batteries)
+    # NOTE: scoped to tests/ci/ only — that dir carries tests/ci/pytest.ini which
+    # pins rootdir to tests/ci and avoids the repo-root conftest.py (it imports
+    # numpy, absent in this slim runner). tests/packaging/test_unicode_paths.py is
+    # NOT run here (it would pull the root conftest); its enforcement is the
+    # check_unicode_paths.py gate above.
+    - python -m pytest tests/ci/test_manifest_scope.py tests/ci/test_raci.py tests/ci/test_waivers.py tests/ci/test_state_ontology.py tests/ci/test_remediation_ledger.py tests/ci/test_release_policy.py tests/ci/test_version_ssot.py tests/ci/test_evidence_class.py tests/ci/test_flagship_rq.py tests/ci/test_doc_status.py tests/ci/test_cff_claims.py tests/ci/test_preregistration.py tests/ci/test_ci_permissions.py tests/ci/test_lock_hashes.py tests/ci/test_py_matrix.py tests/ci/test_baselines.py tests/ci/test_preflight_environment.py tests/ci/test_links.py tests/ci/test_scan_toolchain.py tests/ci/test_dataset_manifests.py tests/ci/test_data_lineage.py tests/ci/test_population_frame.py tests/ci/test_selection_bias.py tests/ci/test_power_uq.py tests/ci/test_terminology.py tests/ci/test_physics_score.py tests/ci/test_hermetic_image.py tests/ci/test_reproducible_archive.py tests/ci/test_release_evidence.py -q -p no:cacheprovider
+  allow_failure: false

@@ -1,0 +1,26 @@
+{
+  "$schema": "https://json-schema.org/draft/2020-12/schema",
+  "$id": "https://neuron7xlab.github.io/geosync/schemas/json_artifact_checks.schema.json",
+  "title": "JSON Artifact Checks Result",
+  "type": "object",
+  "additionalProperties": false,
+  "required": ["schema_version", "status", "results"],
+  "properties": {
+    "schema_version": {"const": "json_artifact_checks.v1"},
+    "status": {"enum": ["OK", "ERROR"]},
+    "results": {
+      "type": "array",
+      "items": {
+        "type": "object",
+        "additionalProperties": false,
+        "required": ["cmd", "code", "stdout", "stderr"],
+        "properties": {
+          "cmd": {"type": "array", "items": {"type": "string"}},
+          "code": {"type": "integer"},
+          "stdout": {"type": "string"},
+          "stderr": {"type": "string"}
+        }
+      }
+    }
+  }
+}

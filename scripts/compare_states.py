@@ -1,4 +1,6 @@
 #!/usr/bin/env python
+# Copyright (c) 2023-2026 Yaroslav Vasylenko (neuron7xLab)
+# SPDX-License-Identifier: MIT
 """Utility to compare two serialized state snapshots.
 
 The script loads two JSON files and reports any key/value differences. It exits

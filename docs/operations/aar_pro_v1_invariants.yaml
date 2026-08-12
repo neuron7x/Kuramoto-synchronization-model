@@ -1,0 +1,129 @@
+# AAR-PRO-V1 canonical invariant registry.
+# This file is machine-readable governance data, not prose. Human interpretation
+# lives in docs/operations/aar_pro_v1_operational_contract.md.
+schema_version: AAR-PRO-V1-INVARIANTS
+claim: >-
+  Action-result updates are admissible only when a sealed expected model,
+  observed afferentation, deterministic witness, and replayable chronology agree.
+problem_statement: >-
+  Remove post-factum prediction synthesis and make every model update depend on
+  fail-closed comparator evidence plus bounded DRO-ARA energy gates.
+falsifiable_hypothesis: >-
+  If a prediction is missing, sequence order is inverted, evidence is stale,
+  comparator precision is inverted, DRO-ARA chronology becomes synthetic, or
+  variational energy breaches the dynamic threshold, the system refuses normal
+  sanctioning and emits rollback, reduction, or context-expansion semantics.
+constants:
+  precision_epsilon: 1.0e-9
+  stable_runs_symbol: STABLE_RUNS
+  energy_floor_symbol: VARIATIONAL_ENERGY_FLOOR
+  energy_ceiling_symbol: VARIATIONAL_ENERGY_CEILING
+formulas:
+  precision_weighted_error: sqrt(sum((observed_i - expected_i)^2 / (variance_i + 1e-9)))
+  variational_energy_surrogate: 0.5*(log(2*pi*variance) + error^2/variance) + 0.5*((predicted-belief_mean)^2)/variance
+  chronology_hash: sha256(canonical_json({parent, phase, seq, payload}))
+invariants:
+  - id: AAR-PRO-SEQ-001
+    layer: comparator
+    statement: model_created_seq < action_started_seq < observed_seq
+    enforcement:
+      code:
+        - geosync_hpc/control/action_result_comparator.py
+        - geosync_hpc/control/control_episode.py
+      tests:
+        - tests/unit/control/test_action_result_comparator.py::test_02_model_seq_must_be_strictly_less_than_action_seq
+        - tests/unit/control/test_action_result_comparator.py::test_03_observed_seq_must_be_strictly_greater_than_action_seq
+    failure_mode: INVALID_INPUT with rollback_required=True
+  - id: AAR-PRO-NODEFAULT-002
+    layer: nak_controller
+    statement: outcomes require a prior sealed prediction; default prediction synthesis is forbidden
+    enforcement:
+      code:
+        - nak_controller/aar/memory.py
+      tests:
+        - nak_controller/tests/test_aar.py::TestAARTracker::test_outcome_without_prediction_fails_closed
+    failure_mode: ValueError; pending action remains unconsumed
+  - id: AAR-PRO-PRECISION-003
+    layer: comparator
+    statement: precision distance is unnormalised inverse-variance distance with epsilon guard
+    enforcement:
+      code:
+        - geosync_hpc/control/action_result_comparator.py
+      tests:
+        - tests/unit/control/test_action_result_comparator.py::test_14b_precision_inversion_is_falsifiable
+        - tests/unit/control/test_precision_extremes.py
+    failure_mode: rollback or failing falsifier on inverted/identity precision
+  - id: AAR-PRO-EVIDENCE-004
+    layer: evidence
+    statement: expected, observed, and witness payloads seal into deterministic SHA-256 evidence; stale witnesses are rejected
+    enforcement:
+      code:
+        - geosync_hpc/control/action_result_comparator.py
+      tests:
+        - tests/unit/control/test_action_result_comparator.py::test_01d_action_result_evidence_is_deterministic_and_tamper_evident
+        - tests/unit/control/test_action_result_comparator.py::test_01e_action_result_evidence_rejects_stale_or_forged_witness
+    failure_mode: EVIDENCE_WITNESS_MISMATCH
+  - id: AAR-PRO-CHRONOLOGY-005
+    layer: dro_ara
+    statement: internal DRO-ARA chronology is a monotone SHA-256 event chain, never synthetic 3*step_index arithmetic
+    enforcement:
+      code:
+        - core/dro_ara/engine.py
+      tests:
+        - tests/core/dro_ara/test_falsification.py::test_dro_ara_no_synthetic_step_index_chronology
+        - scripts/aar_pro_readiness.py
+    failure_mode: readiness/falsifier failure
+  - id: AAR-PRO-ENERGY-006
+    layer: dro_ara
+    statement: variational energy is finite, bounded by retained STABLE_RUNS buffers, and compared against a dynamic context threshold
+    enforcement:
+      code:
+        - core/dro_ara/engine.py
+      tests:
+        - tests/core/dro_ara/test_falsification.py::test_dro_ara_minimum_contract_length_has_finite_energy
+        - tests/core/dro_ara/test_falsification.py::test_dro_ara_ara_state_keeps_bounded_energy_window
+        - tests/core/dro_ara/test_falsification.py::test_free_energy_circuit_breaker_forces_invalid_reduce
+    failure_mode: INVALID/REDUCE/risk_scalar=0/REDUCE_RISK on breach
+  - id: AAR-PRO-SELFHEAL-007
+    layer: self_healing
+    statement: witnesses map deterministically to bounded recovery plans and block model updates unless explicitly allowed
+    enforcement:
+      code:
+        - geosync_hpc/control/self_healing.py
+      tests:
+        - tests/unit/control/test_self_healing.py
+        - tests/integration/control/test_aar_pro_smoke_script.py
+    failure_mode: recovery plan without ALLOW_MODEL_UPDATE blocks downstream weight updates
+  - id: AAR-PRO-FORMAL-008
+    layer: formal
+    statement: TLA+ contract binds chronology, fail-closed, and no-memory-without-decision invariants
+    enforcement:
+      code:
+        - formal/AAR_PRO_V1.tla
+        - formal/AAR_PRO_V1.cfg
+      tests:
+        - tests/formal/test_aar_pro_tla_spec.py
+    failure_mode: static formal contract test failure
+readiness_commands:
+  measurement: pytest -q -W ignore::DeprecationWarning nak_controller/tests/test_aar.py tests/unit/control/test_action_result_comparator.py tests/unit/control/test_control_episode.py tests/unit/control/test_precision_extremes.py tests/unit/control/test_self_healing.py tests/integration/control/test_action_result_comparator_integration.py tests/integration/control/test_aar_pro_smoke_script.py tests/integration/control/test_aar_pro_readiness_script.py tests/formal/test_aar_pro_tla_spec.py tests/formal/test_aar_pro_invariants_yaml.py tests/unit/commit_acceptor/test_validate_commit_acceptor.py::test_cli_acceptor_id_scopes_validation_warnings tests/unit/commit_acceptor/test_validate_commit_acceptor.py::test_cli_acceptor_id_returns_2_for_unknown_id tests/unit/commit_acceptor/test_validate_commit_acceptor.py::test_cli_acceptor_id_can_select_multiple_acceptors tests/core/dro_ara/test_invariants.py tests/core/dro_ara/test_falsification.py
+  falsifier: python -m pytest -q -W ignore::DeprecationWarning tests/unit/control/test_action_result_comparator.py::test_14b_precision_inversion_is_falsifiable tests/unit/control/test_precision_extremes.py tests/unit/control/test_action_result_comparator.py::test_01d_action_result_evidence_is_deterministic_and_tamper_evident tests/unit/control/test_action_result_comparator.py::test_01e_action_result_evidence_rejects_stale_or_forged_witness tests/unit/control/test_self_healing.py tests/integration/control/test_aar_pro_smoke_script.py tests/integration/control/test_aar_pro_readiness_script.py tests/formal/test_aar_pro_tla_spec.py tests/formal/test_aar_pro_invariants_yaml.py tests/unit/commit_acceptor/test_validate_commit_acceptor.py::test_cli_acceptor_id_scopes_validation_warnings tests/unit/commit_acceptor/test_validate_commit_acceptor.py::test_cli_acceptor_id_returns_2_for_unknown_id tests/unit/commit_acceptor/test_validate_commit_acceptor.py::test_cli_acceptor_id_can_select_multiple_acceptors tests/core/dro_ara/test_falsification.py::test_dro_ara_exposes_dynamic_belief_and_causal_chronology tests/core/dro_ara/test_falsification.py::test_dro_ara_no_synthetic_step_index_chronology tests/core/dro_ara/test_falsification.py::test_dro_ara_minimum_contract_length_has_finite_energy tests/core/dro_ara/test_falsification.py::test_dro_ara_ara_state_keeps_bounded_energy_window
+  smoke: python scripts/aar_pro_smoke.py
+  readiness: python scripts/aar_pro_readiness.py
+  scoped_acceptor_validation: python tools/commit_acceptor/validate_commit_acceptor.py .claude/commit_acceptors --acceptor-id canonical-action-result-comparator --acceptor-id aar-pro-verification-suite --acceptor-id aar-pro-operational-governance --summary-out tmp/commit_acceptor_validation_invariant_registry_scoped.json
+evidence:
+  - path: artifacts/aar_pro/action_result_comparator_pytest.txt
+    kind: pytest_progress
+  - path: artifacts/aar_pro/action_result_acceptor_audit.md
+    kind: human_audit
+  - path: docs/operations/aar_pro_v1_operational_contract.md
+    kind: operational_contract
+  - path: formal/AAR_PRO_V1.tla
+    kind: formal_spec
+  - path: formal/AAR_PRO_V1.cfg
+    kind: formal_config
+kill_switch:
+  hard_stop_if:
+    - rollback_required == true
+    - free_energy_circuit_breaker == true
+    - chain_verified == false
+    - recovery_action != ALLOW_MODEL_UPDATE

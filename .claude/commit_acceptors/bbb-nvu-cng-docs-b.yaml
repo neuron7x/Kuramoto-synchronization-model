@@ -1,0 +1,44 @@
+id: bbb-nvu-cng-docs-b
+status: ACTIVE
+claim_type: documentation
+promise: >-
+  Diff-bound documentation acceptor for the second BBB-NVU Cognitive Noise Gate
+  documentation surface. The bound files define risk-model, runtime, validation,
+  state-machine, and operational protocols as reproducible documentation, not
+  clinical authorization.
+diff_scope:
+  changed_files:
+    - path: ".claude/commit_acceptors/bbb-nvu-cng-docs-b.yaml"
+    - path: "BBB_NVU_Cognitive_Noise_Gate_2026/docs/risk_model.md"
+    - path: "BBB_NVU_Cognitive_Noise_Gate_2026/docs/runtime_boundary.md"
+    - path: "BBB_NVU_Cognitive_Noise_Gate_2026/docs/state_diagram.md"
+    - path: "BBB_NVU_Cognitive_Noise_Gate_2026/docs/traceability_matrix.csv"
+    - path: "BBB_NVU_Cognitive_Noise_Gate_2026/docs/validation_plan.md"
+    - path: "BBB_NVU_Cognitive_Noise_Gate_2026/protocols/P01_data_intake.md"
+    - path: "BBB_NVU_Cognitive_Noise_Gate_2026/protocols/P02_quality_control.md"
+    - path: "BBB_NVU_Cognitive_Noise_Gate_2026/protocols/P03_inference.md"
+    - path: "BBB_NVU_Cognitive_Noise_Gate_2026/protocols/P04_control_actions.md"
+    - path: "BBB_NVU_Cognitive_Noise_Gate_2026/protocols/P05_degradation_management.md"
+    - path: "BBB_NVU_Cognitive_Noise_Gate_2026/protocols/P06_verification_validation.md"
+  forbidden_paths:
+    - "trading/"
+    - "execution/"
+    - "forecast/"
+    - "policy/"
+required_python_symbols: []
+expected_signal: >-
+  Protocol and validation documentation remains machine-linked to the verifier
+  and preserves fail-closed, degradation-aware, human-review semantics.
+measurement_command: "python BBB_NVU_Cognitive_Noise_Gate_2026/tools/verify_artifact.py"
+signal_artifact: "tmp/bbb_nvu_cng_verify_artifact.json"
+falsifier:
+  command: "python BBB_NVU_Cognitive_Noise_Gate_2026/tools/verify_artifact.py --invalid-mode"
+  description: >-
+    Unknown verifier modes must fail instead of silently passing.
+rollback_command: >-
+  git checkout -- BBB_NVU_Cognitive_Noise_Gate_2026/docs BBB_NVU_Cognitive_Noise_Gate_2026/protocols .claude/commit_acceptors/bbb-nvu-cng-docs-b.yaml
+rollback_verification_command: "git diff --exit-code"
+memory_update_type: append
+ledger_path: ".claude/commit_acceptors/bbb-nvu-cng-docs-b.yaml"
+report_path: "tmp/bbb_nvu_cng_verify_artifact.json"
+evidence: []

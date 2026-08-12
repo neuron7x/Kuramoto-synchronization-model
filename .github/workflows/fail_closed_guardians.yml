@@ -1,0 +1,37 @@
+name: Fail-Closed Guardians
+
+concurrency:
+  group: ${{ github.workflow }}-${{ github.ref }}
+  cancel-in-progress: true
+
+on:
+  pull_request:
+  push:
+    branches: [main]
+
+permissions:
+  contents: read
+
+jobs:
+  guardian-suite:
+    runs-on: ubuntu-latest
+    timeout-minutes: 10
+    steps:
+      - uses: actions/checkout@9c091bb21b7c1c1d1991bb908d89e4e9dddfe3e0 # pragma: allowlist secret
+      - uses: actions/setup-python@ece7cb06caefa5fff74198d8649806c4678c61a1 # pragma: allowlist secret
+        with:
+          python-version: '3.12'
+      - name: Install minimal test deps
+        run: >-
+          python -m pip install --upgrade pip pytest pyyaml jsonschema
+          cryptography numpy pandas
+      - name: Single-command production readiness gate
+        run: python scripts/production_readiness_riee.py
+      - name: Additional contract/adversarial checks
+        run: >-
+          pytest -q
+          tests/tools/test_validate_financial_contract_script.py
+          tests/tools/test_validate_financial_contract_adversarial.py
+          tests/tools/test_verify_claim_hashes_duplicates.py
+          tests/tools/test_verify_guard_surface.py
+          tests/tools/test_production_readiness_riee.py

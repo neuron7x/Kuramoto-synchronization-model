@@ -1,0 +1,50 @@
+{
+  "schema_version": "D002H-CANONICAL-RUN-AUTHORISATION-v1",
+  "study_id": "D-002H",
+  "gate": "F",
+  "status": "AUTHORISED",
+  "canonical_run_authorized_at_gate_f": true,
+  "canonical_run_authorized_final": false,
+  "final_authorisation_pending_gate": "G",
+  "prior_gate_chain": [
+    {
+      "gate": "A",
+      "name": "D-002H prereg lock",
+      "anchor_sha": "1b59ce5326a8e8bd8aaaf9666a06075d34b4f6a5",
+      "verdict": "PASS"
+    },
+    {
+      "gate": "B",
+      "name": "ricci_flow M1/M3 eligibility reverification",
+      "anchor_sha": "b97daae8b554ab9960510564e19263adcc1fe71b",
+      "verdict": "PASS"
+    },
+    {
+      "gate": "C",
+      "name": "canonical parameter grid declaration",
+      "anchor_sha": "a9d852d34258861809325df81bd7cba6d0e557ec",
+      "verdict": "PASS"
+    },
+    {
+      "gate": "D",
+      "name": "forbidden-claim scanner",
+      "anchor_sha": "077073ee801c434840d64f911e7b1f39ce2ac0fa",
+      "verdict": "PASS"
+    },
+    {
+      "gate": "E",
+      "name": "locked-ledger verification",
+      "anchor_sha": "e1d3ae304274e8b8f509edeb83b0a9adfeb43a77",
+      "verdict": "PASS"
+    }
+  ],
+  "conjunction_required": "A AND B AND C AND D AND E AND F AND G",
+  "conjunction_satisfied_at_gate_f": "A AND B AND C AND D AND E AND F",
+  "conjunction_still_open": "G",
+  "scope": "ricci_flow only (per D-002H prereg)",
+  "d002c_ledger_byte_exact_at_gate_e": "f96ba9b5a2057d2e0bff84afc28578ab316cff73f6dc6673fb0d6d543b8bd6dd",
+  "d002h_prereg_byte_exact": "44b18b5a40ce9d188a9c3bd49339621f81a65a15f97a683247902450dd54acec",
+  "downstream_gates_remaining": ["G"],
+  "anchor_main_sha": "e1d3ae304274e8b8f509edeb83b0a9adfeb43a77",
+  "anchor_description": "Gate E merge - last main commit before Gate F branch off"
+}

@@ -1,0 +1,116 @@
+{
+  "$schema": "https://json-schema.org/draft/2020-12/schema",
+  "$id": "https://schemas.neuron7xlab.org/research/inference_transformer_contract.schema.json",
+  "title": "GeoSync Inference Transformer Contract",
+  "description": "Configuration-first contract for a deterministic GeoSync research pipeline that transforms immutable market observations into graph states, geometric encodings, regime certificates, falsification records, and canonical research artifacts. This is not a neural-transformer model contract; it is a transformer-style dataflow contract for mechanized research inference.",
+  "type": "object",
+  "additionalProperties": false,
+  "required": [
+    "schema_version",
+    "contract_id",
+    "research_line",
+    "claim_boundary",
+    "state_machine",
+    "data_model",
+    "blocks",
+    "gates",
+    "outputs",
+    "agent_handoff"
+  ],
+  "properties": {
+    "schema_version": {"type": "string", "pattern": "^[0-9]+\\.[0-9]+\\.[0-9]+$"},
+    "contract_id": {"type": "string", "pattern": "^[a-z][a-z0-9_.-]{2,127}$"},
+    "research_line": {"type": "string", "pattern": "^[a-z][a-z0-9_]{2,63}$"},
+    "claim_boundary": {
+      "type": "object",
+      "additionalProperties": false,
+      "required": ["tier", "forbidden_promotions", "allowed_language"],
+      "properties": {
+        "tier": {"type": "string", "enum": ["HYPOTHESIS", "INSTRUMENTED", "MEASURED_SINGLE", "MEASURED_MULTI", "LIMITED_EMPIRICAL", "REJECTED", "BLOCKED_COST_MODEL"]},
+        "forbidden_promotions": {"type": "array", "items": {"type": "string"}, "minItems": 1},
+        "allowed_language": {"type": "array", "items": {"type": "string"}, "minItems": 1}
+      }
+    },
+    "state_machine": {
+      "type": "object",
+      "additionalProperties": false,
+      "required": ["initial", "allowed", "terminal"],
+      "properties": {
+        "initial": {"type": "string"},
+        "allowed": {"type": "array", "items": {"type": "string"}, "minItems": 1},
+        "terminal": {"type": "array", "items": {"type": "string"}}
+      }
+    },
+    "data_model": {
+      "type": "object",
+      "additionalProperties": false,
+      "required": ["entities", "hash_fields", "certificate_fields"],
+      "properties": {
+        "entities": {"type": "array", "items": {"$ref": "#/$defs/entity"}, "minItems": 3},
+        "hash_fields": {"type": "array", "items": {"type": "string"}, "minItems": 1},
+        "certificate_fields": {"type": "array", "items": {"type": "string"}, "minItems": 1}
+      }
+    },
+    "blocks": {"type": "array", "items": {"$ref": "#/$defs/block"}, "minItems": 5},
+    "gates": {"type": "array", "items": {"$ref": "#/$defs/gate"}, "minItems": 3},
+    "outputs": {"type": "array", "items": {"$ref": "#/$defs/output"}, "minItems": 1},
+    "agent_handoff": {
+      "type": "object",
+      "additionalProperties": false,
+      "required": ["primary_agent", "entrypoint", "required_first_reads", "first_implementation_pr"],
+      "properties": {
+        "primary_agent": {"type": "string"},
+        "entrypoint": {"type": "string"},
+        "required_first_reads": {"type": "array", "items": {"type": "string"}, "minItems": 1},
+        "first_implementation_pr": {"type": "string"}
+      }
+    }
+  },
+  "$defs": {
+    "entity": {
+      "type": "object",
+      "additionalProperties": false,
+      "required": ["name", "role", "minimum_fields"],
+      "properties": {
+        "name": {"type": "string", "pattern": "^[a-z][a-z0-9_]{2,63}$"},
+        "role": {"type": "string", "minLength": 1},
+        "minimum_fields": {"type": "array", "items": {"type": "string"}, "minItems": 1}
+      }
+    },
+    "block": {
+      "type": "object",
+      "additionalProperties": false,
+      "required": ["id", "kind", "purpose", "inputs", "outputs", "invariants", "failure_mode"],
+      "properties": {
+        "id": {"type": "string", "pattern": "^[a-z][a-z0-9_]{2,63}$"},
+        "kind": {"type": "string", "enum": ["substrate_adapter", "graph_constructor", "geometry_encoder", "synchronization_encoder", "topology_encoder", "uncertainty_encoder", "causality_firewall", "falsification_matrix", "evidence_emitter", "agent_orchestrator"]},
+        "purpose": {"type": "string", "minLength": 1},
+        "inputs": {"type": "array", "items": {"type": "string"}},
+        "outputs": {"type": "array", "items": {"type": "string"}, "minItems": 1},
+        "invariants": {"type": "array", "items": {"type": "string"}},
+        "failure_mode": {"type": "string", "enum": ["fail_closed", "quarantine", "downgrade_to_hypothesis", "emit_blocked_certificate"]}
+      }
+    },
+    "gate": {
+      "type": "object",
+      "additionalProperties": false,
+      "required": ["id", "blocks", "command", "blocks_promotion"],
+      "properties": {
+        "id": {"type": "string", "pattern": "^[a-z][a-z0-9_.-]{2,127}$"},
+        "blocks": {"type": "array", "items": {"type": "string"}, "minItems": 1},
+        "command": {"type": "string", "minLength": 1},
+        "blocks_promotion": {"type": "boolean"}
+      }
+    },
+    "output": {
+      "type": "object",
+      "additionalProperties": false,
+      "required": ["path", "schema", "role"],
+      "properties": {
+        "path": {"type": "string", "minLength": 1},
+        "schema": {"type": "string", "minLength": 1},
+        "role": {"type": "string", "enum": ["contract", "config", "artifact", "report", "handoff"]}
+      }
+    }
+  }
+}

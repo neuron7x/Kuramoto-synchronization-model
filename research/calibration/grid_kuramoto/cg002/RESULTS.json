@@ -1,0 +1,192 @@
+{
+  "artifact": "CALIB-GRID-002",
+  "citation": "Anderson&Fouad-2003-Ex2.6 / Dorfler-Bullo-PNAS-2013-Fig1",
+  "config": {
+    "bump_order": 6,
+    "coupling_scale": 8.0,
+    "dt": 0.01,
+    "keep_frac": 0.6,
+    "n_windows": 400,
+    "noise_sigma": 0.02,
+    "seed": 42,
+    "steps": 8000,
+    "test_support": 120,
+    "theta0_perturb": 0.6,
+    "topology_rel_threshold": 0.1
+  },
+  "estimator": "core.kuramoto.coupling_estimator.estimate_swing_coupling_integral (weak/integral form, bump_order=6, test_support=120, n_windows=400, pe_guard at PE_HARD_FLOOR=sqrt(eps))",
+  "failed_gates": [
+    {
+      "localises_to": "regressor-level coupling SNR at the frozen sigma=0.02",
+      "metric_key": "frobenius_rel_error",
+      "name": "cg002.noisy.frobenius",
+      "observed": 0.9468209328123833,
+      "operator": "<=",
+      "passed": false,
+      "threshold": 0.25
+    },
+    {
+      "localises_to": "weak-form support stability under sigma",
+      "metric_key": "topology_f1",
+      "name": "cg002.noisy.topology_f1",
+      "observed": 0.8,
+      "operator": ">=",
+      "passed": false,
+      "threshold": 0.9
+    },
+    {
+      "localises_to": "Dorfler-Chertkov-Bullo DC-power-flow consistency of (K_hat, P_hat)",
+      "metric_key": "dcb_phase_cohesiveness_rel_error",
+      "name": "cg002.noiseless.dcb_consistency",
+      "observed": 0.4999992136202924,
+      "operator": "<=",
+      "passed": false,
+      "threshold": 0.15
+    },
+    {
+      "localises_to": "specificity of the weak-form edge support under nulls",
+      "metric_key": "empirical_fpr",
+      "name": "cg002.null_fpr",
+      "observed": 0.1,
+      "operator": "<=",
+      "passed": false,
+      "threshold": 0.05
+    },
+    {
+      "expectation": "ACCEPT",
+      "kind": "binary",
+      "localises_to": "identifiability front-gate under the integral estimator at sigma=0.02",
+      "name": "cg002.front_gate_accepts_noisy_integral",
+      "observed": "REFUSE",
+      "passed": false
+    }
+  ],
+  "frozen_preregistration_sha": "d170d48afa5066c13edeb40b2c1904b3fd708516",
+  "gates": [
+    {
+      "localises_to": "weak-form design conditioning on the over-damped transient",
+      "metric_key": "frobenius_rel_error",
+      "name": "cg002.noiseless.frobenius",
+      "observed": 0.03811769194240439,
+      "operator": "<=",
+      "passed": true,
+      "threshold": 0.1
+    },
+    {
+      "localises_to": "weak-form edge-support thresholding",
+      "metric_key": "topology_f1",
+      "name": "cg002.noiseless.topology_f1",
+      "observed": 1.0,
+      "operator": ">=",
+      "passed": true,
+      "threshold": 0.95
+    },
+    {
+      "localises_to": "regressor-level coupling SNR at the frozen sigma=0.02",
+      "metric_key": "frobenius_rel_error",
+      "name": "cg002.noisy.frobenius",
+      "observed": 0.9468209328123833,
+      "operator": "<=",
+      "passed": false,
+      "threshold": 0.25
+    },
+    {
+      "localises_to": "weak-form support stability under sigma",
+      "metric_key": "topology_f1",
+      "name": "cg002.noisy.topology_f1",
+      "observed": 0.8,
+      "operator": ">=",
+      "passed": false,
+      "threshold": 0.9
+    },
+    {
+      "localises_to": "Dorfler-Chertkov-Bullo DC-power-flow consistency of (K_hat, P_hat)",
+      "metric_key": "dcb_phase_cohesiveness_rel_error",
+      "name": "cg002.noiseless.dcb_consistency",
+      "observed": 0.4999992136202924,
+      "operator": "<=",
+      "passed": false,
+      "threshold": 0.15
+    },
+    {
+      "localises_to": "specificity of the weak-form edge support under nulls",
+      "metric_key": "empirical_fpr",
+      "name": "cg002.null_fpr",
+      "observed": 0.1,
+      "operator": "<=",
+      "passed": false,
+      "threshold": 0.05
+    },
+    {
+      "expectation": "ACCEPT",
+      "kind": "binary",
+      "localises_to": "identifiability front-gate under the integral estimator at sigma=0.02",
+      "name": "cg002.front_gate_accepts_noisy_integral",
+      "observed": "REFUSE",
+      "passed": false
+    }
+  ],
+  "is_hypothesis": false,
+  "is_science_claim": false,
+  "kind": "external-ground-truth-calibration",
+  "ledger_sha256": "d0f89e24341b099598e2e5cc9809772ee2c47627f77bf3354f957fab860819b1",
+  "lineage": "CALIB-GRID-002 (new pre-registered lineage, integral/weak-form)",
+  "literature_anchor": "Messenger & Bortz, Weak SINDy, J. Comput. Phys. 443 (2021) 110525; Dorfler-Chertkov-Bullo PNAS 110(6) (2013) 2005",
+  "metrics": {
+    "noiseless": {
+      "dcb_phase_cohesiveness_rel_error": 0.4999992136202924,
+      "extra": {
+        "fro_abs_error": 0.6933006719097919,
+        "fro_true": 18.18842213629737
+      },
+      "frobenius_rel_error": 0.03811769194240439,
+      "front_gate_r_squared": 0.999746244336831,
+      "front_gate_score": 0.9837864372847083,
+      "front_gate_verdict": "ACCEPT",
+      "n_nodes": 3,
+      "n_recovered_edges": 6,
+      "n_true_edges": 6,
+      "reciprocal_condition": 6.44433362475444e-05,
+      "regime": "noiseless",
+      "topology_f1": 1.0
+    },
+    "noisy": {
+      "dcb_phase_cohesiveness_rel_error": 0.5069903385055308,
+      "extra": {
+        "fro_abs_error": 17.221178813474477,
+        "fro_true": 18.18842213629737
+      },
+      "frobenius_rel_error": 0.9468209328123833,
+      "front_gate_r_squared": 0.018484562842161822,
+      "front_gate_score": 0.018484562842161822,
+      "front_gate_verdict": "REFUSE",
+      "n_nodes": 3,
+      "n_recovered_edges": 4,
+      "n_true_edges": 6,
+      "reciprocal_condition": 0.07943425689861146,
+      "regime": "noisy",
+      "topology_f1": 0.8
+    }
+  },
+  "null_battery": {
+    "empirical_fpr": 0.1,
+    "n_false_positives": 1,
+    "n_trials": 10,
+    "placebo_dispersion": 0.08896303205132883,
+    "placebo_null": "flat-coupling placebo (off-diagonal dispersion read-out)",
+    "shuffle_corr_fp_threshold": 0.8,
+    "shuffle_max_corr_with_true_K": 0.8289147229585476,
+    "shuffle_null": "topology-preserving payload shuffle (weight-pattern correlation)"
+  },
+  "pandapower_parity": "DEFERRED \u2014 pandapower not importable in env; not a runtime dependency; not on the WSCC-9 critical path; reproduction command in PROVENANCE_002.md \u00a7 4",
+  "parent_ledger_sha256": "ed8d409b7b222eb053572d6bf9ab6e98c5f4918be1cae384864733a2b4d72aaf",
+  "parent_lineages": [
+    "PR #749 (CALIB-GRID-001)",
+    "PR #751 (R1 differential swing)",
+    "PR #755 (identifiability front-gate)"
+  ],
+  "prereg_branch_base_sha": "a5e0d533b2201c999b31c792773e858f8da713bf",
+  "python": "3.12.3",
+  "system": "WSCC-9",
+  "verdict": "NEGATIVE"
+}

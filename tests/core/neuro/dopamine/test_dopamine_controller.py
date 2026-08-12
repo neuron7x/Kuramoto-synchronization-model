@@ -1,3 +1,5 @@
+# Copyright (c) 2023-2026 Yaroslav Vasylenko (neuron7xLab)
+# SPDX-License-Identifier: MIT
 from __future__ import annotations
 
 import math
@@ -6,8 +8,8 @@ from typing import Tuple
 
 import pytest
 
-from tradepulse.core.neuro.dopamine import DopamineController
-from tradepulse.core.neuro.dopamine.ddm_adapter import DDMThresholds
+from geosync.core.neuro.dopamine import DopamineController
+from geosync.core.neuro.dopamine.ddm_adapter import DDMThresholds
 
 CONFIG_PATH = Path("config/dopamine.yaml")
 

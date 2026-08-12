@@ -1,3 +1,5 @@
+# Copyright (c) 2023-2026 Yaroslav Vasylenko (neuron7xLab)
+# SPDX-License-Identifier: MIT
 """Comprehensive tests for formal cryptographic proof verification.
 
 This test module validates the mathematical proofs for cryptographic
@@ -187,9 +189,7 @@ class TestCryptographicProofReport:
         signature_results = report.get_by_category("signature")
         assert len(signature_results) == 1
 
-    def test_save_certificate(
-        self, prover: CryptographicProver, tmp_path: Path
-    ) -> None:
+    def test_save_certificate(self, prover: CryptographicProver, tmp_path: Path) -> None:
         """Test saving proof certificate to file."""
         cert_path = tmp_path / "CRYPTO_CERT.txt"
         prover.prove_all(output_path=cert_path)

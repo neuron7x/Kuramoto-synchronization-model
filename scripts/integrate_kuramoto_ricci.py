@@ -1,4 +1,6 @@
 #!/usr/bin/env python3
+# Copyright (c) 2023-2026 Yaroslav Vasylenko (neuron7xLab)
+# SPDX-License-Identifier: MIT
 """CLI utility for running the Kuramoto–Ricci composite integration pipeline."""
 
 from __future__ import annotations
@@ -14,9 +16,6 @@ import pandas as pd
 REPO_ROOT = Path(__file__).resolve().parents[1]
 DEFAULT_CONFIG_ENV = "KURAMOTO_RICCI_CONFIG"
 DEFAULT_OUTPUT_ENV = "KURAMOTO_RICCI_OUTPUT_DIR"
-
-if str(REPO_ROOT) not in sys.path:
-    sys.path.insert(0, str(REPO_ROOT))
 
 
 def _resolve_path(candidate: Path, *, allow_missing: bool = False) -> Path:
@@ -51,9 +50,7 @@ def parse_args(argv: Sequence[str] | None = None) -> argparse.Namespace:
     parser.add_argument(
         "--config",
         type=Path,
-        default=_path_default(
-            DEFAULT_CONFIG_ENV, Path("configs/kuramoto_ricci_composite.yaml")
-        ),
+        default=_path_default(DEFAULT_CONFIG_ENV, Path("configs/kuramoto_ricci_composite.yaml")),
         help=(
             "Configuration file for the composite engine. "
             f"Defaults to ${{{DEFAULT_CONFIG_ENV}}} or 'configs/kuramoto_ricci_composite.yaml'."
@@ -130,7 +127,7 @@ def run_integration(
     config_overrides: Sequence[str],
 ) -> None:
     from core.config import load_kuramoto_ricci_config, parse_cli_overrides
-    from core.indicators.kuramoto_ricci_composite import TradePulseCompositeEngine
+    from core.indicators.kuramoto_ricci_composite import GeoSyncCompositeEngine
 
     df = pd.read_csv(data_path, index_col=0, parse_dates=True)
     if "volume" not in df.columns:
@@ -138,7 +135,7 @@ def run_integration(
 
     overrides = parse_cli_overrides(config_overrides)
     cfg = load_kuramoto_ricci_config(config_path, cli_overrides=overrides)
-    engine = TradePulseCompositeEngine(**cfg.to_engine_kwargs())
+    engine = GeoSyncCompositeEngine(**cfg.to_engine_kwargs())
     sig = engine.analyze_market(df)
 
     # Save outputs
@@ -155,9 +152,7 @@ def run_integration(
         "Entry: "
         f"{sig.entry_signal:.3f} | Exit: {sig.exit_signal:.3f} | Risk: {sig.risk_multiplier:.3f}"
     )
-    print(
-        f"Kuramoto R: {sig.kuramoto_R:.3f}, Coherence: {sig.cross_scale_coherence:.3f}"
-    )
+    print(f"Kuramoto R: {sig.kuramoto_R:.3f}, Coherence: {sig.cross_scale_coherence:.3f}")
     print(
         "Static κ: "
         f"{sig.static_ricci:.4f}, Temporal κ_t: {sig.temporal_ricci:.4f}, "

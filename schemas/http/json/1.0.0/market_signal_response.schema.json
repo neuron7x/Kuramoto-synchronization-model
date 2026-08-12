@@ -1,6 +1,6 @@
 {
   "$schema": "https://json-schema.org/draft/2020-12/schema",
-  "$id": "tradepulse.http.market_signal_response.v1",
+  "$id": "geosync.http.market_signal_response.v1",
   "title": "MarketSignalResponse",
   "description": "Latest trading signal snapshot exposed by the public API.",
   "type": "object",

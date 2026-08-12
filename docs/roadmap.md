@@ -1,8 +1,8 @@
-# TradePulse Roadmap
+# GeoSync Roadmap
 
 The roadmap translates the long-term improvement plan into a time-phased delivery schedule. It highlights the initiatives
-required to keep TradePulse production-grade while enabling sustainable growth. Progress should be reviewed monthly and the
-roadmap updated after every major milestone. For a gap analysis of what is still missing for live trading, consult the
+required to keep GeoSync production-grade while enabling sustainable growth. Progress should be reviewed monthly and the
+roadmap updated after every major milestone. For a gap analysis of the execution-realism harness, consult the
 [Production Readiness Assessment](production-readiness.md) and keep the deliverables in that checklist aligned with the
 quarterly milestones captured here.
 
@@ -19,7 +19,7 @@ quarterly milestones captured here.
 | Quarter | Focus Areas | Status |
 | --- | --- | --- |
 | **Q1-Q2 2025** | Test Coverage, Documentation, Core Engine | ✅ **Completed**: 351 core tests (100% pass rate), 683 source files with zero type errors, 150+ markdown documents. |
-| **Q3 2025** | Live Trading Beta, Security Hardening | ✅ **Completed**: Zero critical vulnerabilities, CodeQL/Semgrep scanning, reliability tests (40+ scenarios). |
+| **Q3 2025** | Execution-Realism Harness, Security Hardening | ✅ **Completed**: Zero critical vulnerabilities, CodeQL/Semgrep scanning, reliability tests (40+ scenarios). |
 | **Q4 2025** | Pre-Production Beta, Dashboard Hardening | 🚧 **In Progress**: Coverage at ~71% (target 98%), dashboard hardening pending, release checklist in preparation. |
 
 ## Q1 2026 Roadmap
@@ -43,7 +43,7 @@ quarterly milestones captured here.
   troubleshooting dashboards.
 - **Secure Supply Chain**: Embed SBOM generation, SAST/DAST gates, and dependency hygiene automation in the release pipeline to
   guarantee <7 day turnaround on critical CVEs.
-- **Performance & Scalability**: Establish continuous profiling, benchmarking, and adaptive worker scaling so TradePulse meets
+- **Performance & Scalability**: Establish continuous profiling, benchmarking, and adaptive worker scaling so GeoSync meets
   latency targets under variable load.
 - **Engineering Excellence**: Keep documentation current (CHANGELOG, roadmap, architectural diagrams) and maintain contributor
   guidelines that facilitate external collaboration.
@@ -56,5 +56,5 @@ quarterly milestones captured here.
 4. **Revisit quarterly**: Review the improvement plan and adjust target quarters or milestones based on capacity and impact.
 5. **Document decisions**: Capture significant scope changes and rationale in `CHANGELOG.md` and link back to the roadmap.
 
-Maintaining this roadmap ensures the "development map" for TradePulse remains actionable, transparent, and aligned with the
+Maintaining this roadmap ensures the "development map" for GeoSync remains actionable, transparent, and aligned with the
 platform's strategic objectives.

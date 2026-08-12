@@ -1,3 +1,5 @@
+# Copyright (c) 2023-2026 Yaroslav Vasylenko (neuron7xLab)
+# SPDX-License-Identifier: MIT
 from __future__ import annotations
 
 from datetime import datetime, timedelta, timezone
@@ -8,6 +10,7 @@ import pytest
 from prometheus_client import CollectorRegistry
 
 from core.utils import metrics as metrics_module
+from observability import response_quality as response_quality_module
 from observability.response_quality import (
     GoldenDataset,
     GoldenRecord,
@@ -20,9 +23,7 @@ from observability.response_quality import (
 UTC = timezone.utc
 
 
-def _sample(
-    registry: CollectorRegistry, name: str, labels: Mapping[str, str]
-) -> float | None:
+def _sample(registry: CollectorRegistry, name: str, labels: Mapping[str, str]) -> float | None:
     return registry.get_sample_value(name, labels)
 
 
@@ -46,6 +47,7 @@ def metrics_registry(monkeypatch: pytest.MonkeyPatch) -> CollectorRegistry:
     registry = CollectorRegistry()
     collector = metrics_module.MetricsCollector(registry)
     monkeypatch.setattr(metrics_module, "_collector", collector, raising=False)
+    monkeypatch.setattr(response_quality_module, "get_metrics_collector", lambda: collector)
     yield registry
     monkeypatch.setattr(metrics_module, "_collector", None, raising=False)
 
@@ -114,7 +116,7 @@ def test_run_golden_checks_detects_regression(
 
     run_count = _sample(
         metrics_registry,
-        "tradepulse_response_quality_run_total",
+        "geosync_response_quality_run_total",
         {
             "model_name": "qa-model",
             "deployment": "prod",
@@ -127,7 +129,7 @@ def test_run_golden_checks_detects_regression(
 
     degradation_counter = _sample(
         metrics_registry,
-        "tradepulse_response_quality_degradation_events_total",
+        "geosync_response_quality_degradation_events_total",
         {
             "model_name": "qa-model",
             "deployment": "prod",
@@ -139,7 +141,7 @@ def test_run_golden_checks_detects_regression(
 
     pending_gauge = _sample(
         metrics_registry,
-        "tradepulse_response_quality_pending_reviews",
+        "geosync_response_quality_pending_reviews",
         {"model_name": "qa-model", "deployment": "prod"},
     )
     assert pending_gauge == len(reviews)
@@ -214,7 +216,7 @@ def test_partial_checks_and_contract_enforcement(
 
     violations = _sample(
         metrics_registry,
-        "tradepulse_response_quality_contract_violations_total",
+        "geosync_response_quality_contract_violations_total",
         {
             "model_name": "qa-model",
             "deployment": "prod",
@@ -232,7 +234,7 @@ def test_partial_checks_and_contract_enforcement(
 
     run_count = _sample(
         metrics_registry,
-        "tradepulse_response_quality_run_total",
+        "geosync_response_quality_run_total",
         {
             "model_name": "qa-model",
             "deployment": "prod",
@@ -257,9 +259,7 @@ def test_active_sampling_complaints_and_improvements(
         now=clock.now,
     )
 
-    orchestrator.record_live_response(
-        {"feature": 1}, {"prediction": 0.2, "confidence": 0.8}
-    )
+    orchestrator.record_live_response({"feature": 1}, {"prediction": 0.2, "confidence": 0.8})
     sample = orchestrator.record_live_response(
         {"feature": 2},
         {"prediction": 0.1, "confidence": 0.05},
@@ -269,9 +269,7 @@ def test_active_sampling_complaints_and_improvements(
     assert next_sample is not None and next_sample.identifier == sample.identifier
 
     orchestrator.register_complaint_route("bias", lambda category, metadata: "ethics")
-    complaint = orchestrator.route_complaint(
-        "bias", "potential drift", metadata={"ticket": 42}
-    )
+    complaint = orchestrator.route_complaint("bias", "potential drift", metadata={"ticket": 42})
     assert complaint.route == "ethics"
     assert complaint in orchestrator.complaints()
 
@@ -284,7 +282,7 @@ def test_active_sampling_complaints_and_improvements(
 
     complaint_metric = _sample(
         metrics_registry,
-        "tradepulse_response_quality_complaints_total",
+        "geosync_response_quality_complaints_total",
         {
             "model_name": "qa-model",
             "deployment": "prod",

@@ -1,3 +1,5 @@
+# Copyright (c) 2023-2026 Yaroslav Vasylenko (neuron7xLab)
+# SPDX-License-Identifier: MIT
 """Tests for cryptographic integrity verification."""
 
 import io
@@ -100,9 +102,7 @@ class TestIntegrityVerifier:
         expected_checksum = IntegrityVerifier.compute_file_checksum(test_file)
 
         # Test with uppercase checksum
-        assert IntegrityVerifier.verify_file_checksum(
-            test_file, expected_checksum.upper()
-        )
+        assert IntegrityVerifier.verify_file_checksum(test_file, expected_checksum.upper())
 
         # Test with mixed case
         mixed_case = expected_checksum[:16].upper() + expected_checksum[16:].lower()
@@ -381,7 +381,5 @@ class TestModelIntegrityChecker:
         model_file = tmp_path / "model.pkl"
         model_file.write_bytes(b"model data")
 
-        with pytest.raises(
-            ValueError, match="Either manifest_path or expected_checksum"
-        ):
+        with pytest.raises(ValueError, match="Either manifest_path or expected_checksum"):
             ModelIntegrityChecker.verify_model_file(model_file)

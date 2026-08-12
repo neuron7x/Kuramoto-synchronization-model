@@ -1,3 +1,5 @@
+# Copyright (c) 2023-2026 Yaroslav Vasylenko (neuron7xLab)
+# SPDX-License-Identifier: MIT
 from __future__ import annotations
 
 import hashlib
@@ -46,18 +48,14 @@ def test_session_snapshotter_persists_snapshot(tmp_path) -> None:
     risk_manager.register_fill("BTCUSDT", "buy", 0.5, 20_000.0)
 
     connector = StaticConnector()
-    snapshotter = SessionSnapshotter(
-        directory, mode=ExecutionMode.LIVE, risk_manager=risk_manager
-    )
+    snapshotter = SessionSnapshotter(directory, mode=ExecutionMode.LIVE, risk_manager=risk_manager)
 
     path = snapshotter.capture({"binance": connector})
 
     assert path.exists()
     payload = json.loads(path.read_text())
     assert payload["mode"] == "live"
-    assert payload["venues"][0]["balance"]["estimated_equity"] == pytest.approx(
-        10_000.0
-    )
+    assert payload["venues"][0]["balance"]["estimated_equity"] == pytest.approx(10_000.0)
     assert payload["venues"][0]["issues"] == []
     assert payload["risk_limits"]["max_position"] == 10.0
     assert payload["kill_switch"]["violation_threshold"] == 5

@@ -1,3 +1,5 @@
+# Copyright (c) 2023-2026 Yaroslav Vasylenko (neuron7xLab)
+# SPDX-License-Identifier: MIT
 """Neuro-inspired CNS stabiliser for the TACL control loop."""
 
 from __future__ import annotations
@@ -226,9 +228,7 @@ class CNSStabilizer:
 
         new_delta_f_proxy = self.compute_delta_f(filtered_states)
         tolerance = 1e-6
-        audit_status = (
-            "confirmed" if new_delta_f_proxy <= real_delta_f + tolerance else "violated"
-        )
+        audit_status = "confirmed" if new_delta_f_proxy <= real_delta_f + tolerance else "violated"
         self._last_audit_status = audit_status
         self.audit_log.append(
             (
@@ -249,9 +249,7 @@ class CNSStabilizer:
         if len(self.delta_f_variance) > 1:
             var = float(np.var(list(self.delta_f_variance)))
             self.safety_margin = 1.96 * np.sqrt(var)
-            self.threshold = float(
-                np.clip(self.threshold + self.safety_margin * 0.1, 0.1, 2.0)
-            )
+            self.threshold = float(np.clip(self.threshold + self.safety_margin * 0.1, 0.1, 2.0))
 
         integrity_ratio = self.get_integrity_ratio()
         mode = self._determine_mode(
@@ -349,16 +347,10 @@ class CNSStabilizer:
             return asyncio.run(self.process_signals(raw_signals, ga_phase=ga_phase))
         else:  # pragma: no cover - synchronous controller does not enter here
             if loop.is_running():
-                raise RuntimeError(
-                    "process_signals_sync cannot run inside an active event loop"
-                )
-            return loop.run_until_complete(
-                self.process_signals(raw_signals, ga_phase=ga_phase)
-            )
+                raise RuntimeError("process_signals_sync cannot run inside an active event loop")
+            return loop.run_until_complete(self.process_signals(raw_signals, ga_phase=ga_phase))
 
-    def _annotate_phase(
-        self, delta_f_now: float, gradient_source: Optional[float] = None
-    ) -> str:
+    def _annotate_phase(self, delta_f_now: float, gradient_source: Optional[float] = None) -> str:
         if gradient_source is None:
             if len(self.delta_f_history) > 0:
                 grad_arr = np.array(list(self.delta_f_history) + [delta_f_now])
@@ -482,13 +474,9 @@ class CNSStabilizer:
         except RuntimeError:
             loop = asyncio.new_event_loop()
             self._circadian_loop = loop
-            self._circadian_thread = threading.Thread(
-                target=loop.run_forever, daemon=True
-            )
+            self._circadian_thread = threading.Thread(target=loop.run_forever, daemon=True)
             self._circadian_thread.start()
-            self.reset_task = asyncio.run_coroutine_threadsafe(
-                self.circadian_reset(), loop
-            )
+            self.reset_task = asyncio.run_coroutine_threadsafe(self.circadian_reset(), loop)
         else:
             self._circadian_loop = loop
             self.reset_task = loop.create_task(self.circadian_reset())
@@ -603,9 +591,7 @@ class CNSStabilizer:
             allowed=False,
         )
 
-    def _extract_chunk(
-        self, filtered_states: np.ndarray, chunk_length: int
-    ) -> List[float]:
+    def _extract_chunk(self, filtered_states: np.ndarray, chunk_length: int) -> List[float]:
         if chunk_length == 0:
             return []
         if len(filtered_states) < chunk_length:
@@ -614,9 +600,7 @@ class CNSStabilizer:
             tail = filtered_states[-chunk_length:]
         if len(tail) < chunk_length:
             pad_value = float(tail[-1]) if len(tail) else 0.0
-            tail = np.pad(
-                tail, (chunk_length - len(tail), 0), constant_values=pad_value
-            )
+            tail = np.pad(tail, (chunk_length - len(tail), 0), constant_values=pad_value)
         return [float(x) for x in tail]
 
     def _align_to_raw_length(self, chunk: List[float], raw_length: int) -> List[float]:

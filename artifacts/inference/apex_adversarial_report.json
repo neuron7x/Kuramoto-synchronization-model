@@ -1,0 +1,49 @@
+{
+  "schema": "geosync.apex_adversarial_report.v1",
+  "boundary": "Bounded adversarial evidence over a named forgery family, not a formal soundness proof. The apex re-checks numeric homeostasis grounds (H1/H3), rejects report-only runs, and re-derives H4 from the substrate; substrate data artifacts are trusted-as-data (manifest-hash / commit-acceptor gated).",
+  "attacks": [
+    {
+      "id": "ADV-1",
+      "vector": "forge homeostasis allostatic load; apex ignores it (re-derives from real controllers)",
+      "target_ground": "H1",
+      "test": "tests/unit/neuro/test_apex_adversarial.py::test_forged_h1_numeric_is_ignored",
+      "defeated": true
+    },
+    {
+      "id": "ADV-2",
+      "vector": "forge homeostasis coherence; apex ignores it (re-derives from real controllers)",
+      "target_ground": "H3",
+      "test": "tests/unit/neuro/test_apex_adversarial.py::test_forged_h3_coherence_is_ignored",
+      "defeated": true
+    },
+    {
+      "id": "ADV-3",
+      "vector": "forge a report-only flag on the homeostasis artifact; defeated by H4 (aggregator rejects report-only)",
+      "target_ground": "H4",
+      "test": "tests/unit/neuro/test_apex_adversarial.py::test_report_only_homeostasis_is_still_defeated",
+      "defeated": true
+    },
+    {
+      "id": "ADV-4",
+      "vector": "forge the final verdict to PASS while a substrate is FAIL",
+      "target_ground": "H4",
+      "test": "tests/unit/neuro/test_apex_adversarial.py::test_forged_aggregate_is_defeated_by_rederivation",
+      "defeated": true
+    },
+    {
+      "id": "ADV-5",
+      "vector": "delete a substrate artifact to hide a gap",
+      "target_ground": "H4",
+      "test": "tests/unit/neuro/test_apex_adversarial.py::test_missing_substrate_is_defeated_by_rederivation",
+      "defeated": true
+    },
+    {
+      "id": "ADV-6",
+      "vector": "rename an unrelated file to masquerade as a substrate sub-verdict",
+      "target_ground": "H4",
+      "test": "tests/unit/neuro/test_apex_adversarial.py::test_wrong_schema_id_substrate_is_defeated",
+      "defeated": true
+    }
+  ],
+  "verdict": "PASS"
+}

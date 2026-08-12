@@ -1,0 +1,47 @@
+# SPDX-License-Identifier: MIT
+id: inference-legend-wp-coverage
+status: DRAFT
+claim_type: governance
+promise: >-
+  The Inference-Legend act is bound to the repository by a machine-checked
+  coverage ledger: docs/INFERENCE_LEGEND_WP_COVERAGE.md maps each WP-01..10 to
+  the existing artifacts that implement it (EXISTS/PARTIAL/GAP), and
+  tools/inference/check_wp_coverage.py fails closed when an EXISTS/PARTIAL
+  package cites a vanished artifact or a GAP package lists code. This records
+  that 6 packages already exist (claim-maturity ladder, null/baseline, OOS,
+  fused kernel, market-state contract) and 4 are real gaps, so the act binds to
+  reality rather than duplicating substrate. No scientific claim; predictive
+  rank unchanged.
+diff_scope:
+  changed_files:
+    - path: ".claude/commit_acceptors/inference-legend-wp-coverage.yaml"
+    - path: "docs/INFERENCE_LEGEND_WP_COVERAGE.md"
+    - path: "tools/inference/check_wp_coverage.py"
+    - path: "tests/tools/test_wp_coverage.py"
+  forbidden_paths:
+    - "trading/"
+    - "execution/"
+    - "forecast/"
+    - "policy/"
+required_python_symbols: []
+expected_signal: >-
+  python tools/inference/check_wp_coverage.py exits 0 ("10 packages, N artifacts
+  verified present"); pytest tests/tools/test_wp_coverage.py passes including
+  test_committed_ledger_is_consistent and the four drift-class negatives.
+measurement_command: >-
+  bash -c 'python tools/inference/check_wp_coverage.py && python -m pytest -q tests/tools/test_wp_coverage.py'
+signal_artifact: "tmp/wp_coverage.log"
+falsifier:
+  command: >-
+    python -c "import importlib.util,sys; s=importlib.util.spec_from_file_location('c','tools/inference/check_wp_coverage.py'); m=importlib.util.module_from_spec(s); sys.modules['c']=m; s.loader.exec_module(m); from pathlib import Path; r=m.evaluate({'work_packages':[{'id':f'WP-{i:02d}','title':'t','status':('EXISTS' if i==1 else 'GAP'),'artifacts':(['core/definitely_absent.py'] if i==1 else [])} for i in range(1,11)]}, Path('.')); sys.exit(1 if r.errors else 0)"
+  description: >-
+    Feeds the checker a ledger citing a missing artifact and exits 0 only if the
+    checker FAILS to flag it (the regressed, fail-open state). On the correct
+    tree the checker flags it, so the command exits non-zero — proving the gate
+    is falsifiable.
+rollback_command: "git revert --no-edit HEAD"
+rollback_verification_command: "git diff --exit-code tools/inference/check_wp_coverage.py"
+memory_update_type: none
+ledger_path: ".claude/commit_acceptors/inference-legend-wp-coverage.yaml"
+report_path: "docs/reports/diff_bound_commit_acceptor_layer.md"
+evidence: []

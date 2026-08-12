@@ -1,0 +1,988 @@
+# OLD REPO SALVAGE LEDGER
+#
+# Purpose:
+#   Map every artifact in the old Kuramoto/TradePulse repository against the
+#   current GeoSync repository and classify it as preserved, missing, partially
+#   migrated, overclaimed, or rejected. Recover buried signal — not nostalgia.
+#
+# Method:
+#   File-level set diff between
+#     /home/neuro7/Downloads/Kuramoto-synchronization-model-main (2)
+#   and
+#     <this repo>
+#   (430 paths exist in old but not in new — see
+#   docs/archive/old_repo_only_files.txt). Every flagged path was checked for
+#   in-place rename / relocation / mechanism preservation in the new repo
+#   before classification.
+#
+# Schema (validated by tools/archive/compare_old_repo_salvage.py):
+#   id                       — unique stable id, kebab-case
+#   old_path                 — relative path in the old repo
+#   new_path_candidate       — relative path in the new repo (or "MISSING")
+#   artifact_type            — CODE | TEST | DOC | CONFIG | IP | PRODUCT | CLI | WORKFLOW
+#   status                   — PRESENT_IN_NEW | MISSING | PARTIAL | RENAMED | OBSOLETE | OVERCLAIM | UNKNOWN
+#   importance               — CRITICAL | HIGH | MEDIUM | LOW
+#   uniqueness               — UNIQUE | COMMON | DERIVATIVE | UNKNOWN
+#   mechanism_summary        — what the artifact actually contains (one sentence)
+#   what_is_real             — the genuine mechanism / value
+#   what_is_overclaim        — the unsupported framing (if any)
+#   migration_action         — PORT | PORT_TESTS_ONLY | ARCHIVE | QUARANTINE | REWRITE | REJECT | KEEP_NEW
+#   required_non_claim       — text the migrated artifact must carry (or "")
+#   required_tests           — list of test paths that must accompany migration
+#   falsifier                — what would invalidate the migration (or "")
+#   owner_surface            — buyer / use-case / IP authorship surface
+#   reason                   — short rationale (one sentence)
+#
+# Validator failures (fail-closed, see tests/archive/test_old_repo_salvage_ledger.py):
+#   * CRITICAL/HIGH item with no migration_action.
+#   * CODE item with PORT and empty required_tests.
+#   * IP item without ARCHIVE or QUARANTINE.
+#   * OVERCLAIM item without required_non_claim.
+#   * PRODUCT item with empty owner_surface.
+#   * TEST item without owner_surface (linked module/reason).
+#   * MISSING item with no decision (KEEP_NEW or empty migration_action).
+#   * Duplicate id.
+#   * Unknown status / artifact_type / migration_action / importance / uniqueness.
+#   * Empty old_path.
+
+version: 1
+generated_at: 2026-04-27
+generator: tools/archive/compare_old_repo_salvage.py
+old_repo_root: /home/neuro7/Downloads/Kuramoto-synchronization-model-main (2)
+new_repo_head: e66946c
+file_diff_summary:
+  old_total: 2700
+  new_total: 21527
+  only_in_old: 430
+  only_in_new: 19257
+
+non_claim: |
+  This ledger does not preserve old artefacts because they are old. It
+  preserves only mechanisms, original intent, reproducible behaviour,
+  product framing or IP provenance that the rebrand to GeoSync did not
+  carry forward. Items classified PORT or PORT_TESTS_ONLY require the
+  same non-claim discipline as the rest of the repository: no biological
+  equivalence claims, no granted-patent claims, no trading-performance
+  claims without reproducible evidence.
+
+entries:
+
+  # ─────────────────── PRESERVED via rename — KEEP_NEW ──────────────────
+  # Mechanism is intact in the new repo under a renamed path; no salvage
+  # work is required beyond confirming non-claim coverage.
+
+  - id: tradepulse-v21-renamed-to-geosync-v21
+    old_path: analytics/regime/src/core/tradepulse_v21.py
+    new_path_candidate: analytics/regime/src/core/geosync_v21.py
+    artifact_type: CODE
+    status: RENAMED
+    importance: CRITICAL
+    uniqueness: UNIQUE
+    mechanism_summary: >-
+      Strict-causal early-warning pipeline (Kuramoto ΔR proxy, Forman-Ricci,
+      Betti, Granger fallback, logistic+isotonic calibration, conformal
+      uncertainty, HMM regime persistence, probability backtester).
+    what_is_real: >-
+      All four classes (StrictCausalFeatureBuilder, LogisticIsotonicTrainer,
+      RegimeHMMAdapter, ProbabilityBacktester) are present in the new path,
+      LOC delta is +2 (SPDX header) — pure rebrand, mechanism preserved.
+    what_is_overclaim: ""
+    migration_action: KEEP_NEW
+    required_non_claim: >-
+      Witness-only: outputs are probability witnesses, not trading signals.
+    required_tests:
+      - analytics/regime/tests/test_geosync_v21.py
+    falsifier: >-
+      Shuffling causal alignment in the test fixture must break the test.
+    owner_surface: regime / early-warning team
+    reason: Rename-only migration; mechanism is intact and tested.
+
+  - id: test-tradepulse-v21-renamed
+    old_path: analytics/regime/tests/test_tradepulse_v21.py
+    new_path_candidate: analytics/regime/tests/test_geosync_v21.py
+    artifact_type: TEST
+    status: RENAMED
+    importance: HIGH
+    uniqueness: UNIQUE
+    mechanism_summary: Behaviour tests for the strict-causal pipeline.
+    what_is_real: 263 → 265 lines, +2 SPDX; mechanism-level tests preserved.
+    what_is_overclaim: ""
+    migration_action: KEEP_NEW
+    required_non_claim: ""
+    required_tests:
+      - analytics/regime/tests/test_geosync_v21.py
+    falsifier: Mutation of feature builder must break the test.
+    owner_surface: regime / early-warning team
+    reason: Rename-only; tests preserved and runnable.
+
+  - id: tradepulse-cli-renamed
+    old_path: cli/tradepulse_cli.py
+    new_path_candidate: cli/geosync_cli.py
+    artifact_type: CLI
+    status: RENAMED
+    importance: HIGH
+    uniqueness: UNIQUE
+    mechanism_summary: >-
+      Unified CLI: ingest / backtest / optimize / exec / report with typed
+      exit errors, artefact hashing, parity check and Watchdog.
+    what_is_real: 1704 → 1706 lines, +2 SPDX; CLI surface preserved.
+    what_is_overclaim: ""
+    migration_action: KEEP_NEW
+    required_non_claim: ""
+    required_tests:
+      - tests/cli/test_geosync_cli.py
+    falsifier: Subcommand without deterministic artefact hash must fail.
+    owner_surface: ops / quants
+    reason: Rename-only; deterministic invariants assumed preserved.
+
+  - id: src-tradepulse-package-renamed
+    old_path: src/tradepulse/
+    new_path_candidate: src/geosync/
+    artifact_type: CODE
+    status: RENAMED
+    importance: CRITICAL
+    uniqueness: UNIQUE
+    mechanism_summary: >-
+      Top-level Python package: protocol, neuro, policy, runtime,
+      neuroeconomics, agents, OMS, etc. (109 → 112 files).
+    what_is_real: >-
+      Net delta of +3 modules; structurally a near-identical rename.
+      protocol/divconv.py, neuro/serotonin/, neuro/dopamine/, neuro/gaba/
+      all migrated.
+    what_is_overclaim: ""
+    migration_action: KEEP_NEW
+    required_non_claim: >-
+      Engineering analogue: no biological equivalence is claimed for the
+      neuromodulator package names.
+    required_tests:
+      - tests/unit/
+      - tests/integration/
+    falsifier: ""
+    owner_surface: core platform
+    reason: Confirmed as a structural rename — no salvage required.
+
+  - id: tradepulse-neural-controller-renamed
+    old_path: tradepulse/neural_controller/
+    new_path_candidate: geosync/neural_controller/
+    artifact_type: CODE
+    status: RENAMED
+    importance: HIGH
+    uniqueness: UNIQUE
+    mechanism_summary: >-
+      Neural controller package: belief/EKF estimation, homeostasis, EMH model,
+      sensory schema, temporal gater, prediction-error modulators (43 files).
+    what_is_real: 43 → 43 files; NeuralTACLBridge present at integration/bridge.py.
+    what_is_overclaim: ""
+    migration_action: KEEP_NEW
+    required_non_claim: >-
+      Bridge is an engineering analogue of the TACL substrate, not a
+      neuroscience replication.
+    required_tests:
+      - geosync/neural_controller/tests/test_integration.py
+    falsifier: ""
+    owner_surface: control / neural-controller
+    reason: 43-for-43 file rename; mechanism confirmed preserved.
+
+  - id: divconv-protocol-renamed
+    old_path: src/tradepulse/protocol/divconv.py
+    new_path_candidate: src/geosync/protocol/divconv.py
+    artifact_type: CODE
+    status: RENAMED
+    importance: HIGH
+    uniqueness: UNIQUE
+    mechanism_summary: >-
+      Div/Conv geometry primitives: ∇P_t, ∇F_t, angular metrics θ_t/κ_t,
+      divergence functional, quantile thresholds, portfolio aggregation.
+    what_is_real: >-
+      Module migrated in place; tests/protocol/test_divconv.py present.
+    what_is_overclaim: ""
+    migration_action: KEEP_NEW
+    required_non_claim: ""
+    required_tests:
+      - tests/protocol/test_divconv.py
+    falsifier: Scaling-invariance violation in property test ⇒ failure.
+    owner_surface: protocol / portfolio
+    reason: Renamed and tested; mechanism intact.
+
+  - id: export-tradepulse-schema-renamed
+    old_path: scripts/export_tradepulse_schema.py
+    new_path_candidate: scripts/export_geosync_schema.py
+    artifact_type: CODE
+    status: RENAMED
+    importance: MEDIUM
+    uniqueness: COMMON
+    mechanism_summary: Exports the configuration JSON schema.
+    what_is_real: Renamed; tests at scripts/tests/test_export_geosync_schema.py.
+    what_is_overclaim: ""
+    migration_action: KEEP_NEW
+    required_non_claim: ""
+    required_tests:
+      - scripts/tests/test_export_geosync_schema.py
+    falsifier: ""
+    owner_surface: ops
+    reason: Routine renamed utility.
+
+  - id: product-pain-solution-relocated
+    old_path: PRODUCT_PAIN_SOLUTION.md
+    new_path_candidate: docs/operations/PRODUCT_PAIN_SOLUTION.md
+    artifact_type: PRODUCT
+    status: RENAMED
+    importance: HIGH
+    uniqueness: UNIQUE
+    mechanism_summary: >-
+      Risk Guardian product framing: daily loss cap, drawdown kill-switch,
+      safe mode, saved capital, blocked catastrophic trades.
+    what_is_real: Buyer-facing problem→solution map; relocated, not deleted.
+    what_is_overclaim: >-
+      Numeric "saved capital" / "drawdown reduction" examples must remain
+      illustrative until backed by a reproducible money_proof artefact.
+    migration_action: KEEP_NEW
+    required_non_claim: >-
+      Unless the doc cites a deterministic backtest with seed and report,
+      treat all percentages as illustrative.
+    required_tests:
+      - apps/risk_guardian/tests/
+    falsifier: Marketing claim without reproducible report ⇒ reject.
+    owner_surface: prosumer trader / fund-ops buyer
+    reason: Doc relocated under docs/operations/; product code lives in apps/risk_guardian/.
+
+  - id: system-optimization-summary-relocated
+    old_path: SYSTEM_OPTIMIZATION_SUMMARY.md
+    new_path_candidate: docs/operations/SYSTEM_OPTIMIZATION_SUMMARY.md
+    artifact_type: DOC
+    status: RENAMED
+    importance: MEDIUM
+    uniqueness: UNIQUE
+    mechanism_summary: >-
+      Neuro/TACL optimisation map: adaptive_calibrator, neuro_optimizer,
+      NeuralTACLBridge, Kuramoto throttling, desync downscaling, CVaR gating.
+    what_is_real: Architectural overview; references modules that exist.
+    what_is_overclaim: >-
+      "Optimisation guarantees" in the original need explicit non-claim
+      anchored to falsifiable invariants.
+    migration_action: KEEP_NEW
+    required_non_claim: >-
+      Optimisation behaviour is bounded by INV-* invariants, not by
+      neuroscience guarantees.
+    required_tests: []
+    falsifier: ""
+    owner_surface: control architecture
+    reason: Doc preserved; cross-link to NEURO_OPERATIONALIZATION_LEDGER required.
+
+  - id: physics-implementation-summary-relocated
+    old_path: PHYSICS_IMPLEMENTATION_SUMMARY.md
+    new_path_candidate: docs/operations/PHYSICS_IMPLEMENTATION_SUMMARY.md
+    artifact_type: DOC
+    status: RENAMED
+    importance: MEDIUM
+    uniqueness: UNIQUE
+    mechanism_summary: Physics integration map (Newton/gravity/conservation/maxwell/relativity).
+    what_is_real: Catalogue of which physics modules exist and their contracts.
+    what_is_overclaim: >-
+      Universal physical-law claims and market-physics-equivalence framing
+      must be quarantined with explicit non-claims.
+    migration_action: QUARANTINE
+    required_non_claim: >-
+      Engineering analogue only; no claim of identifying real physical laws
+      in market microstructure.
+    required_tests: []
+    falsifier: ""
+    owner_surface: research
+    reason: Preserved doc — overclaim language must be neutralised.
+
+  - id: project-development-stage-relocated
+    old_path: PROJECT_DEVELOPMENT_STAGE.md
+    new_path_candidate: docs/operations/PROJECT_DEVELOPMENT_STAGE.md
+    artifact_type: DOC
+    status: RENAMED
+    importance: MEDIUM
+    uniqueness: UNIQUE
+    mechanism_summary: Original development-stage map and intent.
+    what_is_real: Historical narrative encoding original goals.
+    what_is_overclaim: ""
+    migration_action: KEEP_NEW
+    required_non_claim: ""
+    required_tests: []
+    falsifier: ""
+    owner_surface: research / history
+    reason: Relocated; intent preserved.
+
+  # ────────────────── PRESERVED with brand-aware new naming ─────────────
+
+  - id: risk-guardian-relocated-to-apps
+    old_path: PRODUCT_PAIN_SOLUTION.md
+    new_path_candidate: apps/risk_guardian/
+    artifact_type: PRODUCT
+    status: RENAMED
+    importance: HIGH
+    uniqueness: UNIQUE
+    mechanism_summary: >-
+      Risk Guardian product code (engine + CLI + config) is now an apps/
+      package; the original doc reads as the buyer-facing brief.
+    what_is_real: apps/risk_guardian/{engine,cli,config}.py exist.
+    what_is_overclaim: ""
+    migration_action: KEEP_NEW
+    required_non_claim: >-
+      Same as product-pain-solution-relocated.
+    required_tests:
+      - apps/risk_guardian/tests/
+    falsifier: ""
+    owner_surface: prosumer trader / fund-ops buyer
+    reason: Product-form preservation — code lives in apps/, doc in docs/.
+
+  # ─────────────────── MISSING — IP / PROVENANCE — ARCHIVE ──────────────
+
+  - id: patents-md-tacl-ip-skeleton
+    old_path: PATENTS.md
+    new_path_candidate: MISSING
+    artifact_type: IP
+    status: MISSING
+    importance: CRITICAL
+    uniqueness: UNIQUE
+    mechanism_summary: >-
+      TACL invention disclosure draft: free-energy functional F over
+      distributed graph, LinkActivator hot-swap with fallback hierarchy,
+      monotonic descent constraint F_new ≤ F_old + ε, RL crisis adaptation,
+      regulatory audit trail.
+    what_is_real: >-
+      Five concrete claims with formal safety constraint; novelty paragraph
+      cites Free Energy Principle. Author/origin provenance.
+    what_is_overclaim: >-
+      The doc reads as a granted-patent skeleton. It is an INVENTION
+      DISCLOSURE DRAFT, not a granted patent.
+    migration_action: ARCHIVE
+    required_non_claim: >-
+      "NOT A LEGAL PATENT CLAIM. Authorship / prior-art / invention-
+      disclosure draft only. Do not cite as granted patent."
+    required_tests: []
+    falsifier: >-
+      Any product page or marketing artefact citing this as a granted
+      patent must fail schema review.
+    owner_surface: IP / authorship (Yaroslav Vasylenko, neuron7xLab)
+    reason: >-
+      CRITICAL provenance lost in the rebrand; restore as
+      docs/ip/tacl_origin_disclosure.md with explicit non-claim.
+
+  - id: performance-regression-guide-missing
+    old_path: PERFORMANCE_REGRESSION_GUIDE.md
+    new_path_candidate: MISSING
+    artifact_type: DOC
+    status: MISSING
+    importance: HIGH
+    uniqueness: UNIQUE
+    mechanism_summary: Performance-regression methodology and harness usage.
+    what_is_real: Operational doc on benchmarks and acceptance bands.
+    what_is_overclaim: ""
+    migration_action: ARCHIVE
+    required_non_claim: ""
+    required_tests: []
+    falsifier: ""
+    owner_surface: perf / SRE
+    reason: Restore at docs/operations/performance_regression_guide.md.
+
+  # ─────────────── MISSING — runtime / config substrate — PORT ──────────
+
+  - id: hbunified-cross-domain-config
+    old_path: configs/hbunified.yaml
+    new_path_candidate: MISSING
+    artifact_type: CONFIG
+    status: MISSING
+    importance: HIGH
+    uniqueness: UNIQUE
+    mechanism_summary: >-
+      HydroBrain v2 unified profile: 8-station adjacency, 5 features (level,
+      flow, temp, turbidity, DO), GNN+LSTM+Transformer pool, physics block
+      (min_level/min_flow/max_flow), loss-weight mix flood/hydrology/
+      quality/physics 0.4/0.2/0.3/0.1, GB 3838-2002 quality target.
+    what_is_real: >-
+      Concrete cross-domain substrate config — early multi-physics thinking
+      with explicit physics-prior loss weighting.
+    what_is_overclaim: ""
+    migration_action: ARCHIVE
+    required_non_claim: >-
+      Cross-domain hydrology substrate; not part of the trading runtime
+      until explicitly wired into a substrate adapter.
+    required_tests: []
+    falsifier: >-
+      Importing this config into trading runtime without an explicit
+      hydrology→market adapter must fail schema validation.
+    owner_surface: research / cross-domain substrate
+    reason: >-
+      Archive at docs/archive/cross_domain_substrate_hbunified.md;
+      do not auto-import into runtime configs.
+
+  - id: hbunified-py-cli-pipeline
+    old_path: hbunified.py
+    new_path_candidate: MISSING
+    artifact_type: CODE
+    status: MISSING
+    importance: MEDIUM
+    uniqueness: UNIQUE
+    mechanism_summary: >-
+      HydroBrain v2 CLI/pipeline/API entrypoint (PyTorch-based GNN+LSTM,
+      synthetic Yangtze fallback dataset).
+    what_is_real: Executable cross-domain harness using configs/hbunified.yaml.
+    what_is_overclaim: ""
+    migration_action: ARCHIVE
+    required_non_claim: >-
+      Out-of-scope for trading runtime; archived for substrate provenance.
+    required_tests:
+      - tests/archive/test_hbunified_smoke.py
+    falsifier: ""
+    owner_surface: research / cross-domain substrate
+    reason: Archive alongside the YAML; do not port into runtime path.
+
+  - id: hydrobrain-unified-doc
+    old_path: docs/hydrobrain_unified_v2.md
+    new_path_candidate: MISSING
+    artifact_type: DOC
+    status: MISSING
+    importance: MEDIUM
+    uniqueness: UNIQUE
+    mechanism_summary: HydroBrain v2 design doc.
+    what_is_real: Cross-domain design rationale (flood / hydrology / quality / physics).
+    what_is_overclaim: ""
+    migration_action: ARCHIVE
+    required_non_claim: ""
+    required_tests: []
+    falsifier: ""
+    owner_surface: research / cross-domain substrate
+    reason: Archive together with the runtime artefacts above.
+
+  - id: tradepulse-protocol-md-doc
+    old_path: docs/tradepulse_protocol.md
+    new_path_candidate: MISSING
+    artifact_type: DOC
+    status: MISSING
+    importance: MEDIUM
+    uniqueness: UNIQUE
+    mechanism_summary: >-
+      Public spec for the TradePulse Div/Conv protocol (gradients, angular
+      metrics, divergence functional, quantile thresholds, portfolio rule).
+    what_is_real: >-
+      Code (src/geosync/protocol/divconv.py) and tests are present in new
+      repo, but the public-facing protocol spec doc is gone.
+    what_is_overclaim: ""
+    migration_action: REWRITE
+    required_non_claim: >-
+      Spec document only; binding contract is the test suite.
+    required_tests:
+      - tests/protocol/test_divconv.py
+    falsifier: >-
+      A doc claim that contradicts the test invariants must fail review.
+    owner_surface: protocol / portfolio
+    reason: Restore at docs/protocol/divconv_protocol.md (rebranded).
+
+  - id: tradepulse-cli-reference-doc
+    old_path: docs/tradepulse_cli_reference.md
+    new_path_candidate: MISSING
+    artifact_type: DOC
+    status: MISSING
+    importance: MEDIUM
+    uniqueness: UNIQUE
+    mechanism_summary: CLI reference page.
+    what_is_real: Subcommand reference for the unified CLI.
+    what_is_overclaim: ""
+    migration_action: REWRITE
+    required_non_claim: ""
+    required_tests:
+      - tests/cli/test_geosync_cli.py
+    falsifier: ""
+    owner_surface: ops
+    reason: Regenerate from cli/geosync_cli.py via --help dump.
+
+  - id: tradepulse-client-py
+    old_path: docs/api/clients/tradepulse_client.py
+    new_path_candidate: MISSING
+    artifact_type: CODE
+    status: MISSING
+    importance: MEDIUM
+    uniqueness: UNIQUE
+    mechanism_summary: Python client SDK for the TradePulse API.
+    what_is_real: Reference client used by external integrators.
+    what_is_overclaim: ""
+    migration_action: REWRITE
+    required_non_claim: ""
+    required_tests:
+      - tests/api/test_geosync_client.py
+    falsifier: Schema drift between server and client must break the test.
+    owner_surface: integrators / external SDK users
+    reason: Restore as docs/api/clients/geosync_client.py with regenerated tests.
+
+  # ──────────────── MISSING — domain packages — REWRITE / PORT ──────────
+
+  - id: tradepulse-fpma-package
+    old_path: analytics/fpma/tradepulse_fpma/__init__.py
+    new_path_candidate: MISSING
+    artifact_type: CODE
+    status: MISSING
+    importance: MEDIUM
+    uniqueness: UNIQUE
+    mechanism_summary: FPMA (Fractional Power Mean Aggregator) package shell.
+    what_is_real: Brand-bound import path; possibly a placeholder.
+    what_is_overclaim: ""
+    migration_action: REWRITE
+    required_non_claim: ""
+    required_tests:
+      - tests/unit/analytics/test_fpma.py
+    falsifier: ""
+    owner_surface: analytics
+    reason: Verify implementation depth; restore under analytics/fpma/ with brand-neutral name.
+
+  - id: tradepulse-orderbook-package
+    old_path: markets/orderbook/tradepulse_orderbook/__init__.py
+    new_path_candidate: MISSING
+    artifact_type: CODE
+    status: MISSING
+    importance: MEDIUM
+    uniqueness: UNIQUE
+    mechanism_summary: Order-book package shell.
+    what_is_real: Brand-bound import path; check whether content moved.
+    what_is_overclaim: ""
+    migration_action: REWRITE
+    required_non_claim: ""
+    required_tests:
+      - tests/unit/markets/test_orderbook.py
+    falsifier: ""
+    owner_surface: markets
+    reason: Restore under markets/orderbook/ with brand-neutral package name.
+
+  - id: tradepulse-neuro-adapter
+    old_path: core/neuro/adapters/tradepulse_adapter.py
+    new_path_candidate: MISSING
+    artifact_type: CODE
+    status: MISSING
+    importance: MEDIUM
+    uniqueness: UNIQUE
+    mechanism_summary: Adapter from neuro stack to TradePulse runtime.
+    what_is_real: >-
+      Bridge module; adapter pattern with explicit input/output contracts.
+    what_is_overclaim: ""
+    migration_action: REWRITE
+    required_non_claim: ""
+    required_tests:
+      - tests/unit/core/neuro/test_geosync_adapter.py
+    falsifier: ""
+    owner_surface: core platform
+    reason: Restore as core/neuro/adapters/geosync_adapter.py if not already covered.
+
+  - id: tradepulse-risk-subsystem
+    old_path: tradepulse/risk/
+    new_path_candidate: MISSING
+    artifact_type: CODE
+    status: MISSING
+    importance: HIGH
+    uniqueness: UNIQUE
+    mechanism_summary: 5-file risk subsystem under the old top-level package.
+    what_is_real: Risk-management modules outside src/tradepulse/.
+    what_is_overclaim: ""
+    migration_action: REWRITE
+    required_non_claim: ""
+    required_tests:
+      - tests/unit/risk/
+    falsifier: ""
+    owner_surface: risk
+    reason: Verify whether content moved into geosync/ or apps/risk_guardian/.
+
+  - id: tradepulse-analytics-subsystem
+    old_path: tradepulse/analytics/
+    new_path_candidate: MISSING
+    artifact_type: CODE
+    status: MISSING
+    importance: MEDIUM
+    uniqueness: UNIQUE
+    mechanism_summary: 2-file analytics subsystem outside src/.
+    what_is_real: Analytics modules under the legacy top-level package.
+    what_is_overclaim: ""
+    migration_action: REWRITE
+    required_non_claim: ""
+    required_tests:
+      - tests/unit/analytics/
+    falsifier: ""
+    owner_surface: analytics
+    reason: Audit content; rebrand if mechanism is unique.
+
+  - id: src-tradepulse-agent-subsystem
+    old_path: src/tradepulse_agent/
+    new_path_candidate: MISSING
+    artifact_type: CODE
+    status: MISSING
+    importance: HIGH
+    uniqueness: UNIQUE
+    mechanism_summary: 5-file agent subsystem (separate from src/tradepulse/).
+    what_is_real: Agent runtime distinct from the main package.
+    what_is_overclaim: ""
+    migration_action: REWRITE
+    required_non_claim: ""
+    required_tests:
+      - tests/unit/agent/
+    falsifier: ""
+    owner_surface: agent / orchestration
+    reason: Audit and either fold into agent/ or rebrand as src/geosync_agent/.
+
+  - id: neurotrade-pro-subsystem
+    old_path: neurotrade_pro/
+    new_path_candidate: MISSING
+    artifact_type: CODE
+    status: MISSING
+    importance: HIGH
+    uniqueness: UNIQUE
+    mechanism_summary: >-
+      Standalone backtest/calibrate/validate runner: cli/, estimation/,
+      risk/, policy/, models/, conf/, validate/, tests/ (~12 files).
+    what_is_real: >-
+      Independent runner; only nak_controller/tests reference it now.
+    what_is_overclaim: >-
+      Brand "NeuroTradePro" suggests a productised neuro stack — verify
+      whether the runner is unique value or a duplicate of geosync runners.
+    migration_action: REWRITE
+    required_non_claim: >-
+      If preserved: relabel as a thin runner wrapper around geosync core,
+      not as a parallel "pro" stack.
+    required_tests:
+      - tests/unit/runner/
+    falsifier: ""
+    owner_surface: ops / quants
+    reason: HIGH-importance audit — confirm uniqueness before deciding port vs reject.
+
+  - id: rust-tradepulse-accel
+    old_path: rust/tradepulse-accel/
+    new_path_candidate: MISSING
+    artifact_type: CODE
+    status: MISSING
+    importance: MEDIUM
+    uniqueness: UNIQUE
+    mechanism_summary: Rust acceleration crate (3 files).
+    what_is_real: Native-speed primitive(s) in Rust.
+    what_is_overclaim: ""
+    migration_action: REWRITE
+    required_non_claim: ""
+    required_tests:
+      - tests/integration/test_rust_accel_bridge.py
+    falsifier: Native and Python paths must produce bit-identical output.
+    owner_surface: HPC / perf
+    reason: Verify content; rebrand crate as geosync-accel if salvaged.
+
+  # ──────────────────── PARTIAL / OVERCLAIM — QUARANTINE ────────────────
+
+  - id: physics-implementation-summary-overclaim
+    old_path: PHYSICS_IMPLEMENTATION_SUMMARY.md
+    new_path_candidate: docs/operations/PHYSICS_IMPLEMENTATION_SUMMARY.md
+    artifact_type: DOC
+    status: OVERCLAIM
+    importance: MEDIUM
+    uniqueness: UNIQUE
+    mechanism_summary: Physics integration summary in the old root.
+    what_is_real: Catalogue of physics modules and contracts.
+    what_is_overclaim: >-
+      Universal physical-law / market-equivalence framing inherited from
+      the old doc.
+    migration_action: QUARANTINE
+    required_non_claim: >-
+      Engineering analogue only; no claim of identifying real physical laws
+      in market microstructure.
+    required_tests: []
+    falsifier: >-
+      Any sentence implying physics-validated edge without a falsifiable
+      INV-* witness must be marked as overclaim.
+    owner_surface: research
+    reason: Doc preserved but needs explicit non-claim retrofit.
+
+  - id: documentation-summary-overclaim
+    old_path: DOCUMENTATION_SUMMARY.md
+    new_path_candidate: docs/operations/DOCUMENTATION_SUMMARY.md
+    artifact_type: DOC
+    status: OVERCLAIM
+    importance: LOW
+    uniqueness: COMMON
+    mechanism_summary: Old umbrella documentation summary.
+    what_is_real: Index of docs.
+    what_is_overclaim: >-
+      Aspirational claims about "production readiness" must be backed by
+      explicit reproducible evidence per buyer-facing artefact.
+    migration_action: QUARANTINE
+    required_non_claim: >-
+      Production-readiness claims require explicit reality-validation gates.
+    required_tests: []
+    falsifier: ""
+    owner_surface: docs / ops
+    reason: Index-style doc; quarantine its claims, not its index value.
+
+  # ─────────────────────── LEGACY — KEEP_NEW (status quo) ───────────────
+
+  - id: legacy-code-folder
+    old_path: legacy/
+    new_path_candidate: MISSING
+    artifact_type: CODE
+    status: MISSING
+    importance: LOW
+    uniqueness: COMMON
+    mechanism_summary: >-
+      legacy/code/{fractal_sync,lyapunov,plot_filter}.py + 7 walk-forward /
+      backtest scripts + README.
+    what_is_real: Historical scripts predating the current core.
+    what_is_overclaim: ""
+    migration_action: ARCHIVE
+    required_non_claim: >-
+      Historical reference only; not on any runtime path.
+    required_tests: []
+    falsifier: ""
+    owner_surface: history / research
+    reason: >-
+      Restore as docs/archive/legacy_scripts/ for provenance only; do not
+      reimport into runtime.
+
+  # ────────────────────── REJECT — obsolete infra ───────────────────────
+
+  - id: old-github-workflows
+    old_path: .github/workflows/
+    new_path_candidate: MISSING
+    artifact_type: WORKFLOW
+    status: OBSOLETE
+    importance: LOW
+    uniqueness: DERIVATIVE
+    mechanism_summary: 61 old GH workflow definitions present only in old repo.
+    what_is_real: ""
+    what_is_overclaim: ""
+    migration_action: REJECT
+    required_non_claim: ""
+    required_tests: []
+    falsifier: ""
+    owner_surface: ops / CI
+    reason: New repo has its own CI; old workflows are not salvage targets.
+
+  - id: old-deploy-helm
+    old_path: deploy/helm/
+    new_path_candidate: MISSING
+    artifact_type: WORKFLOW
+    status: OBSOLETE
+    importance: LOW
+    uniqueness: DERIVATIVE
+    mechanism_summary: 25 old Helm chart files.
+    what_is_real: ""
+    what_is_overclaim: ""
+    migration_action: REJECT
+    required_non_claim: ""
+    required_tests: []
+    falsifier: ""
+    owner_surface: ops / k8s
+    reason: Re-evaluate only if a new Helm release is required.
+
+  - id: old-tests-unit-folder
+    old_path: tests/unit/
+    new_path_candidate: PARTIAL
+    artifact_type: TEST
+    status: PARTIAL
+    importance: MEDIUM
+    uniqueness: UNKNOWN
+    mechanism_summary: 43 old unit-test files present only in old repo.
+    what_is_real: Behavioural tests for legacy runtime paths.
+    what_is_overclaim: ""
+    migration_action: PORT_TESTS_ONLY
+    required_non_claim: ""
+    required_tests:
+      - tests/unit/
+    falsifier: >-
+      Any ported test must reference an existing module in the new repo;
+      no orphans.
+    owner_surface: regime / risk / agent test owners
+    reason: >-
+      One-by-one review — port only those whose target module survives in
+      new repo; skip the rest as obsolete.
+
+  # ─────────────────── PROVENANCE / OPERATIONAL DOCS — KEEP ─────────────
+
+  - id: audit-executive-summary-relocated
+    old_path: AUDIT_EXECUTIVE_SUMMARY.md
+    new_path_candidate: reports/AUDIT_EXECUTIVE_SUMMARY_2025_12_08.md
+    artifact_type: DOC
+    status: RENAMED
+    importance: LOW
+    uniqueness: UNIQUE
+    mechanism_summary: 2025-12-08 executive summary of an audit pass.
+    what_is_real: Historical audit narrative, date-stamped on relocation.
+    what_is_overclaim: ""
+    migration_action: KEEP_NEW
+    required_non_claim: ""
+    required_tests: []
+    falsifier: ""
+    owner_surface: audit / governance
+    reason: Already preserved with explicit date stamp.
+
+  - id: audit-report-relocated
+    old_path: AUDIT_REPORT.md
+    new_path_candidate: docs/operations/AUDIT_REPORT.md
+    artifact_type: DOC
+    status: RENAMED
+    importance: LOW
+    uniqueness: UNIQUE
+    mechanism_summary: Old audit report.
+    what_is_real: Historical audit content.
+    what_is_overclaim: ""
+    migration_action: KEEP_NEW
+    required_non_claim: ""
+    required_tests: []
+    falsifier: ""
+    owner_surface: audit / governance
+    reason: Relocated; no salvage required.
+
+  - id: remediation-summary-relocated
+    old_path: REMEDIATION_SUMMARY.md
+    new_path_candidate: docs/operations/REMEDIATION_SUMMARY.md
+    artifact_type: DOC
+    status: RENAMED
+    importance: LOW
+    uniqueness: UNIQUE
+    mechanism_summary: Old remediation summary.
+    what_is_real: Historical remediation log.
+    what_is_overclaim: ""
+    migration_action: KEEP_NEW
+    required_non_claim: ""
+    required_tests: []
+    falsifier: ""
+    owner_surface: audit / governance
+    reason: Relocated.
+
+  - id: deployment-md-partial
+    old_path: DEPLOYMENT.md
+    new_path_candidate: agent/deployment_gate.py
+    artifact_type: DOC
+    status: PARTIAL
+    importance: LOW
+    uniqueness: COMMON
+    mechanism_summary: Old root-level deployment doc.
+    what_is_real: Deployment gate concept survives as code (deployment_gate.py).
+    what_is_overclaim: ""
+    migration_action: REWRITE
+    required_non_claim: ""
+    required_tests:
+      - agent/tests/test_deployment_gate.py
+    falsifier: ""
+    owner_surface: ops / deploy
+    reason: Doc-form replaced by code form; restore a thin doc index pointing to it.
+
+  # ───────────────────── MISSING — narrative summary docs ───────────────
+
+  - id: setup-md-missing-root
+    old_path: SETUP.md
+    new_path_candidate: .github/INFRASTRUCTURE_SETUP.md
+    artifact_type: DOC
+    status: PARTIAL
+    importance: LOW
+    uniqueness: COMMON
+    mechanism_summary: Old root-level setup doc.
+    what_is_real: New repo has .github/INFRASTRUCTURE_SETUP.md.
+    what_is_overclaim: ""
+    migration_action: KEEP_NEW
+    required_non_claim: ""
+    required_tests: []
+    falsifier: ""
+    owner_surface: contributor / new dev
+    reason: Concept relocated; no further action.
+
+  - id: testing-md-missing-root
+    old_path: TESTING.md
+    new_path_candidate: .github/PR_TESTING_GUIDE.md
+    artifact_type: DOC
+    status: PARTIAL
+    importance: LOW
+    uniqueness: COMMON
+    mechanism_summary: Old root-level testing doc.
+    what_is_real: Concept now lives in .github/PR_TESTING_GUIDE.md.
+    what_is_overclaim: ""
+    migration_action: KEEP_NEW
+    required_non_claim: ""
+    required_tests: []
+    falsifier: ""
+    owner_surface: contributor / new dev
+    reason: Concept relocated; no further action.
+
+  - id: stan-rozvytku-projektu-md
+    old_path: СТАН_РОЗВИТКУ_ПРОЄКТУ.md
+    new_path_candidate: MISSING
+    artifact_type: DOC
+    status: MISSING
+    importance: LOW
+    uniqueness: UNIQUE
+    mechanism_summary: Ukrainian-language project-state document at the root.
+    what_is_real: Author's Ukrainian-language original-intent narrative.
+    what_is_overclaim: ""
+    migration_action: ARCHIVE
+    required_non_claim: ""
+    required_tests: []
+    falsifier: ""
+    owner_surface: history / authorship
+    reason: Restore at docs/archive/uk/СТАН_РОЗВИТКУ_ПРОЄКТУ.md for provenance.
+
+  # ──────────────────── PORT_TESTS_ONLY candidate examples ──────────────
+
+  - id: tests-neuropro-old-only
+    old_path: tests/neuropro/
+    new_path_candidate: MISSING
+    artifact_type: TEST
+    status: MISSING
+    importance: MEDIUM
+    uniqueness: UNIQUE
+    mechanism_summary: 7 old tests covering NeuroPro behaviours.
+    what_is_real: Behaviour tests; useful only if the targeted modules survive.
+    what_is_overclaim: ""
+    migration_action: PORT_TESTS_ONLY
+    required_non_claim: ""
+    required_tests:
+      - tests/neuropro/
+    falsifier: Orphan tests (no live target module) must be skipped.
+    owner_surface: neuropro / agent
+    reason: Pre-port audit — keep only tests with surviving targets.
+
+  - id: legacy-scripts-walkforward
+    old_path: legacy/scripts/run_walkforward.py
+    new_path_candidate: MISSING
+    artifact_type: CODE
+    status: MISSING
+    importance: LOW
+    uniqueness: UNIQUE
+    mechanism_summary: Walk-forward backtest script in legacy/.
+    what_is_real: Walk-forward harness predating the current backtest stack.
+    what_is_overclaim: ""
+    migration_action: ARCHIVE
+    required_non_claim: ""
+    required_tests: []
+    falsifier: ""
+    owner_surface: history / research
+    reason: Archive only; no runtime path.
+
+  - id: incidents-reports-old-only
+    old_path: reports/incidents/
+    new_path_candidate: MISSING
+    artifact_type: DOC
+    status: MISSING
+    importance: LOW
+    uniqueness: UNIQUE
+    mechanism_summary: 4 incident reports present only in the old repo.
+    what_is_real: Historical operational incidents.
+    what_is_overclaim: ""
+    migration_action: ARCHIVE
+    required_non_claim: ""
+    required_tests: []
+    falsifier: ""
+    owner_surface: ops / SRE / postmortem
+    reason: Archive for postmortem provenance.
+
+  # ──────────────────── DECORATIVE / REJECT examples ────────────────────
+
+  - id: tradepulse-init-old-package
+    old_path: tradepulse/__init__.py
+    new_path_candidate: MISSING
+    artifact_type: CODE
+    status: OBSOLETE
+    importance: LOW
+    uniqueness: COMMON
+    mechanism_summary: Empty/near-empty package init.
+    what_is_real: ""
+    what_is_overclaim: ""
+    migration_action: REJECT
+    required_non_claim: ""
+    required_tests: []
+    falsifier: ""
+    owner_surface: ""
+    reason: Brand-bound package init replaced by src/geosync/__init__.py.

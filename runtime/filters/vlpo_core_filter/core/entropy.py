@@ -1,3 +1,5 @@
+# Copyright (c) 2023-2026 Yaroslav Vasylenko (neuron7xLab)
+# SPDX-License-Identifier: MIT
 """Entropy helpers used by the VLPO-inspired filters."""
 
 from __future__ import annotations

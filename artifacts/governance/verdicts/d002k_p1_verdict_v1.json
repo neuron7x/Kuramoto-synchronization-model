@@ -1,0 +1,21 @@
+{
+  "schema_version": "D002J-VERDICT-CAPSULE-v1",
+  "node_id": "D002K-P1",
+  "phase": "P1",
+  "pr_number": 0,
+  "merge_sha": "0000000000000000000000000000000000000000",
+  "parent_nodes": ["D002K-P0"],
+  "decision": "D002K_SOURCE_OBSERVABLE_CONTRACT_READY",
+  "status": "TERMINAL_PASS",
+  "artifact_paths": [
+    "artifacts/d002k/observables/source_observable_contract_v1.json",
+    "artifacts/d002k/observables/source_observable_summary_v1.json",
+    "docs/research/D002K_SOURCE_OBSERVABLE_CONTRACT.md"
+  ],
+  "test_paths": ["tests/systemic_risk/test_d002k_source_observable_contract.py"],
+  "allowed_next_nodes": ["D002K-P2"],
+  "forbidden_next_nodes": ["D002K-P3", "D002K-P4", "D002K-P5"],
+  "claim_boundary": "Narrow funding-liquidity observable contract; every observable in P1B-surviving x {CW3,CW4,CW5}; point-in-time vintage discipline; no ingestion; no scoring; no canonical run; canonical_run_authorized=false; D-002K does not rescue D-002J; D-002J stays REFUSED; D-002K narrow by design not relaxed.",
+  "failure_retention": null,
+  "source_summary_path": "artifacts/d002k/observables/source_observable_summary_v1.json"
+}

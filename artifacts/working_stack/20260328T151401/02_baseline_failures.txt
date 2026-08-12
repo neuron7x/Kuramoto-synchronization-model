@@ -16,7 +16,7 @@
 - Most are flaky/timing-sensitive, not regressions
 
 ### Serotonin controller tests (~10)
-- tests/unit/tradepulse/core/neuro/serotonin/test_*.py
+- tests/unit/geosync/core/neuro/serotonin/test_*.py
 - Likely stale test expectations after code changes
 
 ### GABA inhibition gate tests (~15)

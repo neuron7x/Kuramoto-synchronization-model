@@ -1,4 +1,6 @@
-"""Concrete time-series warehouse integrations used by TradePulse."""
+# Copyright (c) 2023-2026 Yaroslav Vasylenko (neuron7xLab)
+# SPDX-License-Identifier: MIT
+"""Concrete time-series warehouse integrations used by GeoSync."""
 
 from .base import (
     BackupStep,

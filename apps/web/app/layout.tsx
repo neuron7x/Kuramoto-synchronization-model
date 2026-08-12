@@ -6,11 +6,12 @@ import './styles.css'
 import { AppRouterCacheProvider } from '@mui/material-nextjs/v14-appRouter'
 import { AppThemeProvider } from './providers'
 import { AuthProvider } from './auth/auth-provider'
+import { WebVitalsReporter } from './_components/web-vitals-reporter'
 
 export const metadata: Metadata = {
-  title: 'TradePulse Scenario Studio',
+  title: 'GeoSync Scenario Studio',
   description:
-    'Sanity-check strategy templates with guardrails before promoting them to production.',
+    'Validate and stress-test quantitative strategy scenarios with institutional guardrails before promoting to live execution.',
 }
 
 function LoadingFallback() {
@@ -33,6 +34,7 @@ export default function RootLayout({ children }: { children: ReactNode }) {
   return (
     <html lang="en">
       <body>
+        <WebVitalsReporter />
         <AppRouterCacheProvider>
           <AppThemeProvider>
             <Suspense fallback={<LoadingFallback />}>

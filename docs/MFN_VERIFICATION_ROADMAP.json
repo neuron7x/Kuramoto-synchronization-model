@@ -1,0 +1,167 @@
+{
+  "contract_type": "repository_repair_contract",
+  "objective": {
+    "target_state": "MFN gateway work is represented as schema-valid machine-readable repair and validation contract.",
+    "current_state": "MFN gateway is INSTRUMENTED; roadmap is planning metadata, not release evidence.",
+    "transformation": "Convert MFN roadmap intent into bounded executable validation tasks without claim-tier promotion.",
+    "action_vector": "earn -> exit -> build systems",
+    "optimization": {
+      "minimize": ["E_stress", "H_entropy", "epsilon_error", "token_cost", "ambiguity", "fake_validation"],
+      "maximize": ["V_system", "V_autonomy", "V_verified_progress"]
+    }
+  },
+  "inputs": {
+    "required": ["README.md", "PRODUCT_CATEGORY.md", "CLAIMS.md", "FORBIDDEN_CLAIMS.md", "docs/REPOSITORY_SYSTEM.md", "tools/mfn_surface_check.py", "geosync/mfn"],
+    "provided": ["MFN seven-surface task vector", "MFN seven-month repair queue"],
+    "missing": [],
+    "assumptions": ["No release evidence is emitted by this contract.", "MFN remains INSTRUMENTED until evidence bundles pass replay."]
+  },
+  "definitions": [
+    {
+      "term": "MFN gateway boundary",
+      "operational_definition": "Dependency-light path: simulate -> extract -> detect -> forecast -> compare -> report.",
+      "failure_condition": "Path order changes or requires dependency-heavy execution without contract update.",
+      "validation_method": "python tools/mfn_surface_check.py --root . --strict"
+    },
+    {
+      "term": "claim-tier impact",
+      "operational_definition": "This contract records work items only and does not promote any research claim.",
+      "failure_condition": "Any task claims measured, predictive, deployable, or release-complete status without evidence bundle.",
+      "validation_method": "python scripts/ci/check_claim_boundary.py"
+    }
+  ],
+  "execution_plan": [
+    {
+      "step_id": "MFN-01",
+      "action": "Complete boundary fail-closed behavior for strict risk_flag and malformed JSON.",
+      "input": "MFNContract, CLI args, API text/json surfaces",
+      "output": "Regression tests for strict boundary failures",
+      "tool_required": "pytest",
+      "failure_condition": "Invalid input produces traceback, silent coercion, or text/json drift."
+    },
+    {
+      "step_id": "MFN-02",
+      "action": "Document and enforce manifest validation codes and bundle schema.",
+      "input": "manifest.json, SHA256SUMS, runbook.md",
+      "output": "Stable validation-code contract",
+      "tool_required": "python",
+      "failure_condition": "Validation errors are unstable strings only or schema cannot reject malformed entries."
+    },
+    {
+      "step_id": "MFN-03",
+      "action": "Emit one clean-install final status with command, exit-code, and raw-log pointers.",
+      "input": "tools/verify_mfn_clean_install.py",
+      "output": "Machine-readable clean-install report",
+      "tool_required": "python",
+      "failure_condition": "Report lacks top-level status or cannot locate raw logs."
+    },
+    {
+      "step_id": "MFN-04",
+      "action": "Keep Makefile shortcut coverage aligned with geosync package coverage.",
+      "input": "Makefile",
+      "output": "MFN surface checker returns non-WARN coverage row",
+      "tool_required": "python",
+      "failure_condition": "Shortcut coverage omits --cov=geosync."
+    },
+    {
+      "step_id": "MFN-05",
+      "action": "Prove wheel, sdist, and console entrypoint smoke from temporary environment without path overrides.",
+      "input": "pyproject.toml, package build artifacts",
+      "output": "Package smoke report",
+      "tool_required": "python",
+      "failure_condition": "Entrypoint works only with repository-local import path."
+    },
+    {
+      "step_id": "MFN-06",
+      "action": "Record commands, Python version, package version, hashes, and replay directory in reproduction capsule.",
+      "input": "MFN bundle and replay command",
+      "output": "Replayable capsule metadata",
+      "tool_required": "python",
+      "failure_condition": "Replay cannot locate versions, hashes, commands, or replay directory."
+    },
+    {
+      "step_id": "MFN-07",
+      "action": "Expose one repository health JSON state using OK/WARN/RED/UNKNOWN semantics.",
+      "input": "tools/mfn_surface_check.py",
+      "output": "Machine-readable drift state",
+      "tool_required": "python",
+      "failure_condition": "Unknown, blocker, and debt states collapse into one status."
+    }
+  ],
+  "python_runner_contract": {
+    "required": true,
+    "entrypoint": "tools/mfn_surface_check.py",
+    "commands": [
+      "python tools/mfn_surface_check.py --root . --strict",
+      "pytest tests/ci/test_mfn_surface_check.py tests/ci/test_mfn_surface_payload_contract.py tests/ci/test_mfn_roadmap_contract.py tests/unit/mfn -q",
+      "python scripts/ci/check_claim_boundary.py",
+      "python scripts/ci/lint_forbidden_terms.py --paths README.md docs/REPOSITORY_SYSTEM.md docs/MFN_VERIFICATION_ROADMAP.json .github/claim_boundary_allow.json"
+    ],
+    "expected_artifacts": ["docs/MFN_VERIFICATION_ROADMAP.json", "schemas/mfn_verification_roadmap.schema.json"],
+    "timeout_seconds": 300,
+    "success_criteria": ["Surface checker exits 0.", "Roadmap JSON validates against schema.", "Claim-boundary checks pass."],
+    "failure_criteria": ["Any command exits nonzero.", "Roadmap asserts release evidence or claim-tier promotion."]
+  },
+  "validation_tests": [
+    {
+      "test_id": "roadmap_schema",
+      "test_type": "schema",
+      "input": "docs/MFN_VERIFICATION_ROADMAP.json",
+      "expected_output": "schema-valid repository_repair_contract",
+      "runner": "pytest",
+      "pass_criteria": "jsonschema validator accepts the roadmap.",
+      "fail_criteria": "Missing required contract field or forbidden validation status."
+    },
+    {
+      "test_id": "mfn_surface_strict",
+      "test_type": "repository",
+      "input": "repository root",
+      "expected_output": "status OK or WARN with no RED/UNKNOWN",
+      "runner": "python",
+      "pass_criteria": "python tools/mfn_surface_check.py --root . --strict exits 0.",
+      "fail_criteria": "Strict mode exits nonzero."
+    }
+  ],
+  "failure_register": [
+    {
+      "failure": "SELF_VALIDATION_LOOP",
+      "cause": "Roadmap claims validation without external runner evidence.",
+      "impact": "False release confidence.",
+      "detection": "evidence_status.status is not CANDIDATE_NOT_VALIDATED while no evidence artifact is attached.",
+      "mitigation": "Require external runner logs before status upgrade.",
+      "severity": "HIGH"
+    },
+    {
+      "failure": "CLAIM_TIER_DRIFT",
+      "cause": "Planning text implies measured or deployable MFN status.",
+      "impact": "Claim-boundary violation.",
+      "detection": "claim-boundary and forbidden-term gates.",
+      "mitigation": "Keep claim_tier_impact as none and status as INSTRUMENTED.",
+      "severity": "HIGH"
+    }
+  ],
+  "evidence_status": {
+    "external_evidence_available": false,
+    "evidence_source": "unavailable",
+    "tests_executed": [],
+    "tests_not_executed": ["python tools/mfn_surface_check.py --root . --strict", "pytest tests/ci/test_mfn_surface_check.py tests/ci/test_mfn_surface_payload_contract.py tests/ci/test_mfn_roadmap_contract.py tests/unit/mfn -q"],
+    "score": null,
+    "confidence": 0.65,
+    "status": "CANDIDATE_NOT_VALIDATED"
+  },
+  "output_constraints": {
+    "json_only": true,
+    "no_markdown": true,
+    "no_prose": true,
+    "no_self_scoring": true,
+    "no_simulated_tests": true,
+    "no_validation_without_evidence": true,
+    "minimize_tokens": true
+  },
+  "next_deterministic_action": "Run the python_runner_contract.commands list from repository root and attach logs before any status upgrade.",
+  "final_verdict": {
+    "status": "CANDIDATE_NOT_VALIDATED",
+    "reason": "This roadmap is a machine-readable repair contract, not release evidence.",
+    "evidence_required": ["external runner logs", "schema validation result", "surface checker output", "claim-boundary output"]
+  }
+}

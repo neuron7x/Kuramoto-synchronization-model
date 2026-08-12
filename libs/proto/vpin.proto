@@ -1,15 +1,15 @@
 syntax = "proto3";
 
-package tradepulse.vpin.v1;
+package geosync.vpin.v1;
 
-option go_package = "github.com/TradePulse/TradePulse/libs/proto/gen/go/vpin;vpinpb";
+option go_package = "github.com/GeoSync/GeoSync/libs/proto/gen/go/vpin;vpinpb";
 
 import "google/protobuf/timestamp.proto";
 import "libs/proto/market_data.proto";
 
 message CalculateVPINRequest {
   string symbol = 1;
-  repeated tradepulse.market.v1.Trade trades = 2;
+  repeated geosync.market.v1.Trade trades = 2;
   VPINConfig config = 3;
 }
 

@@ -1,4 +1,6 @@
-from neuropro.conformal import ConformalCQR
+# Copyright (c) 2023-2026 Yaroslav Vasylenko (neuron7xLab)
+# SPDX-License-Identifier: MIT
+from geosync_hpc.conformal import ConformalCQR
 
 
 def test_online_updates_qhat():

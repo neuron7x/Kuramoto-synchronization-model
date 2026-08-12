@@ -1,0 +1,112 @@
+# Diff-bound commit acceptor for the deterministic descriptor scenario harness.
+#
+# Adds analytics/signals/descriptor_scenarios.py and the runner
+# scripts/run_descriptor_scenarios.py. run_scenario / run_all_scenarios drive
+# the integrated descriptor capsule across six seeded structural regimes —
+# nominal, noisy, boundary, degenerate, invalid, null_baseline — so the
+# descriptor modules are exercised reproducibly over their whole input
+# manifold. Each scenario deterministically generates an observed series from
+# its seed and reports the manifest digest, invalid-state count, normalized
+# entropy, JS divergence vs null, and percentile.
+#
+# There are NO trading or predictive semantics: scenarios are structural input
+# regimes and every emitted manifest carries
+# claim_boundary="descriptor_only_not_predictor". Identical seeds reproduce a
+# byte-identical report. Imports and modifies NO existing instrument; adds NO
+# dependency (numpy only).
+#
+# Also widens descriptor_capsule (finite-only located statistic so a partially
+# invalid series is described, not rejected) and clamps the information-quality
+# JS divergence into its analytic [0,1] bound — both reinforce existing
+# contracts; their bound-tests still pass.
+#
+# Locally verified on origin/main fork base:
+#   * pytest tests/unit/analytics/test_descriptor_scenarios.py: 9 passed
+#   * pytest test_descriptor_capsule.py / test_descriptor_information_quality.py:
+#     10 / 19 passed (unchanged after the widening + clamp)
+#   * ruff check / ruff format --check / black --check: clean
+#   * mypy --strict on the new + touched sources: no issues
+#   * python scripts/ci/check_claim_boundary.py: PASS
+#   * zero suppression-comment tokens; detect-secrets (baseline): clean
+id: descriptor-scenarios
+status: ACTIVE
+claim_type: governance
+promise: >-
+  analytics.signals.descriptor_scenarios exposes SCENARIOS (exactly the six
+  regimes nominal, noisy, boundary, degenerate, invalid, null_baseline),
+  run_scenario(name, *, seed) and run_all_scenarios(*, seed) that drive
+  analytics.signals.descriptor_capsule deterministically over each regime and
+  return a report with the manifest digest, invalid_count, normalized_entropy
+  in [0, 1], js_divergence_bits in [0, 1], percentile in [0, 100] and
+  claim_boundary="descriptor_only_not_predictor". Equal seeds reproduce an
+  equal report; the degenerate regime drives normalized_entropy to 0, the
+  invalid regime yields invalid_count > 0, the null_baseline regime yields a
+  near-zero JS divergence, distinct seeds give distinct nominal digests, and an
+  unknown scenario name raises ValueError. descriptor_capsule locates its
+  statistic over the finite observations (all-invalid fails closed) and the
+  information-quality JS divergence is clamped to [0, 1]. No claim tier is
+  promoted; no runtime behaviour changes; no existing file is touched; every
+  output is a structural descriptor, not a significance, predictive, or
+  financial claim.
+diff_scope:
+  changed_files:
+    - path: ".claude/commit_acceptors/descriptor-scenarios.yaml"
+    - path: "analytics/signals/descriptor_scenarios.py"
+    - path: "scripts/run_descriptor_scenarios.py"
+    - path: "tests/unit/analytics/test_descriptor_scenarios.py"
+    - path: "analytics/signals/descriptor_capsule.py"
+    - path: "analytics/signals/descriptor_information_quality.py"
+  forbidden_paths:
+    - "trading/"
+    - "execution/"
+    - "forecast/"
+    - "core/"
+    - "src/"
+required_python_symbols:
+  - "analytics/signals/descriptor_scenarios.py::run_scenario"
+  - "analytics/signals/descriptor_scenarios.py::run_all_scenarios"
+expected_signal: >-
+  `python -m pytest tests/unit/analytics/test_descriptor_scenarios.py` reports
+  9 passed; the harness runs all six regimes reproducibly, the degenerate
+  regime collapses entropy to 0, the invalid regime counts invalid states, the
+  null_baseline regime shows JS divergence < 0.05, distinct seeds give distinct
+  nominal digests, and an unknown scenario fails closed.
+measurement_command: >-
+  bash -c 'mkdir -p tmp && python -m pytest
+  tests/unit/analytics/test_descriptor_scenarios.py -v --no-header -o addopts=""
+  -p no:cacheprovider 2>&1 | grep -E "PASSED|FAILED|ERROR"
+  | sed -E "s/ +\[[0-9 ]+%\]//" > tmp/descriptor_scenarios_pytest.log
+  && test "$(grep -c PASSED tmp/descriptor_scenarios_pytest.log)" = "9"'
+signal_artifact: "tmp/descriptor_scenarios_pytest.log"
+falsifier:
+  command: >-
+    python -c 'import sys;
+    from analytics.signals.descriptor_scenarios import run_scenario, run_all_scenarios;
+    det = run_all_scenarios(seed=11) == run_all_scenarios(seed=11);
+    degen = run_scenario("degenerate", seed=3)["normalized_entropy"] == 0.0;
+    inval = run_scenario("invalid", seed=3)["invalid_count"] > 0;
+    import subprocess;
+    bad = subprocess.run([sys.executable, "-c",
+    "from analytics.signals.descriptor_scenarios import run_scenario;
+    run_scenario(\"nope\", seed=1)"]).returncode != 0;
+    sys.exit(0 if (not det or not degen or not inval or not bad) else 1)'
+  description: >-
+    Inverse probe of the scenario-harness contract. It exits 0 (fires) iff the
+    harness stops being deterministic for an equal seed, OR the degenerate
+    regime stops collapsing entropy to 0, OR the invalid regime stops counting
+    invalid states, OR an unknown scenario is accepted instead of failing
+    closed. While the contract holds the probe exits 1.
+rollback_command: >-
+  bash -c 'git rm -f analytics/signals/descriptor_scenarios.py
+  scripts/run_descriptor_scenarios.py
+  tests/unit/analytics/test_descriptor_scenarios.py
+  .claude/commit_acceptors/descriptor-scenarios.yaml'
+rollback_verification_command: >-
+  bash -c 'test ! -f analytics/signals/descriptor_scenarios.py
+  && test ! -f scripts/run_descriptor_scenarios.py'
+memory_update_type: none
+ledger_path: ".claude/commit_acceptors/descriptor-scenarios.yaml"
+report_path: "tmp/descriptor_scenarios_pytest.log"
+evidence:
+  - path: "tmp/descriptor_scenarios_pytest.log"
+    sha256: "9c97aae634857d9634e908c369a46654d4e599b1b1c8b01a7832d103d9adc9f0"  # pragma: allowlist secret

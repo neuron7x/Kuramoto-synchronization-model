@@ -10,8 +10,8 @@
     }
   },
   "nav": {
-    "brand": "TradePulse",
-    "title": "TradePulse",
+    "brand": "GeoSync",
+    "title": "GeoSync",
     "badges": {
       "live": "ライブ"
     },
@@ -146,7 +146,7 @@
     }
   },
   "header": {
-    "title": "TradePulseモニタリングハブ",
+    "title": "GeoSyncモニタリングハブ",
     "subtitle": "執行・リスク・テレメトリを一元管理。",
     "tags": [
       "マルチアセット",
@@ -395,7 +395,7 @@
       "hero": {
         "eyebrow": "コミュニティエンゲージメント",
         "title": "世界中のコントリビューターと勢いを築く",
-        "subtitle": "TradePulseエコシステムでメンタリング・スポンサーシップ・知識共有を調整。",
+        "subtitle": "GeoSyncエコシステムでメンタリング・スポンサーシップ・知識共有を調整。",
         "cta": "貢献ガイドを開く",
         "secondaryCta": "コミュニティチャットに参加",
         "fallbackChannel": "コミュニティチャンネル"

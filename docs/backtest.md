@@ -1,6 +1,6 @@
 # Backtesting
 
-TradePulse ships with a deterministic, vectorised walk-forward engine designed
+GeoSync ships with a deterministic, vectorised walk-forward engine designed
 for rapid iteration over strategy parameter sets. This guide explains the data
 contract, scoring outputs, and extension hooks for more advanced simulations. Evidence: [@LopezDePrado2018AFML]
 
@@ -93,7 +93,7 @@ custom fee schedules (maker/taker, tiered pricing, rebates). 【F:backtest/engin
 
 ## Latency, Queueing & Partial Fills
 
-Beyond vectorised backtests, TradePulse offers a deterministic matching engine
+Beyond vectorised backtests, GeoSync offers a deterministic matching engine
 that honours latency pipelines, price-time priority, and incremental fills.
 Orders experience configurable delays (`signal → order → execution`), are queued
 by availability time, and interact with resting liquidity according to their

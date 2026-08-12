@@ -1,0 +1,7 @@
+physics_contracts/law.py:31: error: Unused "type: ignore" comment  [unused-ignore]
+core/kuramoto/jax_engine.py:68: error: Returning Any from function declared to return "Array"  [no-any-return]
+core/kuramoto/jax_engine.py:45: error: Unused "type: ignore" comment  [unused-ignore]
+core/kuramoto/jax_engine.py:56: error: Unused "type: ignore" comment  [unused-ignore]
+core/kuramoto/jax_engine.py:70: error: Unused "type: ignore" comment  [unused-ignore]
+core/kuramoto/jax_engine.py:115: error: Unused "type: ignore" comment  [unused-ignore]
+Found 6 errors in 2 files (checked 138 source files)

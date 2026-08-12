@@ -1,0 +1,75 @@
+# Diff-bound commit acceptor — Ott-Antonsen first-principles analytical anchor.
+#
+# Elevates INV-OA2 from a 1e-3 consistency witness to a machine-precision,
+# universality-class anchor of the Kuramoto synchronization transition:
+#   * exact bifurcation normal form R_∞² = 1 − K_c/K held to < 1e-10 (RK4),
+#   * mean-field critical exponent β = 1/2 recovered from numerical integration,
+#   * N-body Lorentzian ensemble converges to the mean field within 3/√N.
+# No physics is invented; no runtime code changes. New tests + a tightened
+# INV-OA2 statement that the existing implementation already satisfies.
+#
+# Locally verified on origin/main base:
+#   * pytest tests/unit/physics/test_T23b_ott_antonsen_analytical.py: 5 passed
+#   * validate_tests.py: physics grounding 5/5 (100%), L1/L2/L3 = 0
+#   * count_invariants.py: 97 (unchanged — INV-OA2 enriched, not a new invariant)
+#   * check_claims.py / check_claim_boundary.py / check_inventory_sync.py: exit 0
+id: ott-antonsen-analytical-anchor
+status: ACTIVE
+claim_type: governance
+promise: >-
+  After this PR lands, INV-OA2 is anchored to first principles: the RK4
+  Ott-Antonsen steady state meets the exact normal form R_∞² = 1 − K_c/K to
+  < 1e-10, the numerically integrated order parameter reproduces the mean-field
+  critical exponent β = 1/2 of the synchronization transition over a converged
+  window, and a microscopic N-body Lorentzian ensemble converges to the mean
+  field within 3/√N. No runtime code changes; no new physics; the invariant
+  count stays 97.
+diff_scope:
+  changed_files:
+    - path: ".claude/commit_acceptors/ott-antonsen-analytical-anchor.yaml"
+    - path: "tests/unit/physics/test_T23b_ott_antonsen_analytical.py"
+    - path: ".claude/physics/INVARIANTS.yaml"
+  forbidden_paths:
+    - "trading/"
+    - "execution/"
+    - "forecast/"
+    - "policy/"
+    - "application/"
+    - "core/"
+    - "src/"
+required_python_symbols: []
+expected_signal: >-
+  `pytest tests/unit/physics/test_T23b_ott_antonsen_analytical.py -q` reports
+  5 passed; the steady-state residual |R² − (1 − K_c/K)| < 1e-10 and the fitted
+  β satisfies |β − 0.5| < 0.06.
+measurement_command: >-
+  bash -c 'mkdir -p tmp && python -m pytest
+  tests/unit/physics/test_T23b_ott_antonsen_analytical.py --no-header -rN
+  > tmp/ott_antonsen_analytical_anchor.log 2>&1
+  && grep -qE "5 passed" tmp/ott_antonsen_analytical_anchor.log'
+signal_artifact: "tmp/ott_antonsen_analytical_anchor.log"
+falsifier:
+  command: |-
+    bash -c 'python -c "
+    import numpy as np;
+    from core.kuramoto.ott_antonsen import OttAntonsenEngine;
+    d=0.5; Kc=2*d;
+    res=OttAntonsenEngine(K=4.0,delta=d).integrate(T=400.0,dt=0.01,R0=0.01);
+    R=float(np.mean(res.R[-200:]));
+    import sys; sys.exit(0 if abs(R*R-(1-Kc/4.0))>1e-10 else 1)"'
+  description: >-
+    Inverse probe of the machine-precision normal form. Exits 0 (fires) iff the
+    integrated steady state at K=4Δ deviates from the exact R² = 1 − K_c/K by
+    more than 1e-10 — i.e. the OA reduction is no longer exact. While the
+    implementation is exact (~1e-14) the probe exits 1. If it ever fires, the
+    reduction or integrator regressed and must be fixed, not the tolerance.
+rollback_command: >-
+  git checkout origin/main -- .claude/physics/INVARIANTS.yaml
+  && git rm -f tests/unit/physics/test_T23b_ott_antonsen_analytical.py
+  .claude/commit_acceptors/ott-antonsen-analytical-anchor.yaml
+rollback_verification_command: >-
+  bash -c 'test ! -f tests/unit/physics/test_T23b_ott_antonsen_analytical.py'
+memory_update_type: none
+ledger_path: ".claude/commit_acceptors/ott-antonsen-analytical-anchor.yaml"
+report_path: "tmp/ott_antonsen_analytical_anchor.log"
+evidence: []

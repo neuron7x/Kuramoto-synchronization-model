@@ -1,0 +1,18 @@
+{
+  "fraction_above_0p05": 0.625,
+  "fraction_below_minus_0p05": 0.10714285714285714,
+  "fraction_permutation_significant": 0.8214285714285714,
+  "fraction_positive": 0.8214285714285714,
+  "ic_max": 0.3775791564464014,
+  "ic_mean": 0.09604089233731752,
+  "ic_median": 0.07938380756200147,
+  "ic_min": -0.1725829880447817,
+  "ic_q25": 0.014871146174375172,
+  "ic_q75": 0.18310785861986242,
+  "ic_std": 0.120045740020437,
+  "n_valid": 56,
+  "n_windows": 56,
+  "step_sec": 300,
+  "verdict": "STABLE_POSITIVE",
+  "window_sec": 2400
+}

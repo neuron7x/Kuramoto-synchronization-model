@@ -1,6 +1,6 @@
-# Scaling TradePulse
+# Scaling GeoSync
 
-This guide outlines the architectural and operational changes required to prepare TradePulse for higher throughput and large scale workloads. It complements the existing performance and monitoring guides by describing a phased roadmap that balances immediate wins with long term platform investments.
+This guide outlines the architectural and operational changes required to prepare GeoSync for higher throughput and large scale workloads. It complements the existing performance and monitoring guides by describing a phased roadmap that balances immediate wins with long term platform investments.
 
 ## 1. Profile and Optimise Critical Paths
 
@@ -22,7 +22,7 @@ Before making invasive changes, establish a clear baseline.
 
 ## 2. Introduce Concurrency and Parallelism
 
-TradePulse workloads mix CPU-bound calculations with network and disk I/O. Apply the appropriate concurrency primitives per workload type.
+GeoSync workloads mix CPU-bound calculations with network and disk I/O. Apply the appropriate concurrency primitives per workload type.
 
 - **I/O-bound** (`core/data` ingestion, REST/WebSocket APIs): migrate synchronous flows to `asyncio` using FastAPI/Starlette and async database drivers. Run under `uvicorn` with workers sized to CPU cores.
 - **CPU-bound** (`core/indicators`, heavy simulations): offload to multiprocessing pools or job queues. Provide a worker abstraction that can execute multiple strategies concurrently.
@@ -120,4 +120,4 @@ Adopt a queue-based architecture so that scale-out is limited only by available 
 - [ ] Disaster recovery plan documented (backups, restore drills).
 - [ ] On-call runbooks and escalation procedures defined.
 
-By following this plan, TradePulse will evolve from a monolithic backtesting toolkit into a scalable, resilient trading platform capable of handling high-throughput workloads and production-grade execution.
+By following this plan, GeoSync will evolve from a monolithic backtesting toolkit into a scalable, resilient trading platform capable of handling high-throughput workloads and production-grade execution.

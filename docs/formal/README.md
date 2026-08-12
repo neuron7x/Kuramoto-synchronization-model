@@ -1,5 +1,5 @@
 ---
-owner: docs@tradepulse
+owner: docs@geosync
 review_cadence: quarterly
 last_reviewed: 2026-01-01
 ---
@@ -12,7 +12,7 @@ last_reviewed: 2026-01-01
 
 ## Purpose
 
-This directory contains formal specifications, proofs, and verification artifacts for TradePulse platform. Formal methods ensure correctness, safety, and reliability of critical system properties.
+This directory contains formal specifications, proofs, and verification artifacts for GeoSync platform. Formal methods ensure correctness, safety, and reliability of critical system properties.
 
 ## Directory Structure
 
@@ -129,7 +129,7 @@ Formal documentation of architectural decisions:
 
 #### Type Checking
 ```bash
-mypy tradepulse/
+mypy geosync/
 ```
 
 **Coverage Target:** 100% for critical paths
@@ -140,8 +140,8 @@ mypy tradepulse/
 
 #### Linting and Style
 ```bash
-ruff check tradepulse/
-black --check tradepulse/
+ruff check geosync/
+black --check geosync/
 ```
 
 ---
@@ -307,7 +307,7 @@ jobs:
         run: python formal/proof_invariant.py
 
       - name: Type Check
-        run: mypy tradepulse/
+        run: mypy geosync/
 
       - name: Property Tests
         run: pytest tests/property/ --hypothesis-seed=0

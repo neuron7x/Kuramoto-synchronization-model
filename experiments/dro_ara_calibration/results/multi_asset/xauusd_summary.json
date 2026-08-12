@@ -1,0 +1,71 @@
+{
+  "top5": [
+    {
+      "H": 0.3,
+      "rs": 0.1,
+      "mean_sharpe": 0.0050730735642065036,
+      "std_sharpe": 0.08579345873040295,
+      "worst_fold_sharpe": 0.0,
+      "worst_drawdown": 0.03690251228125108,
+      "mean_trades": 0.05244755244755245,
+      "gate_on_folds": 1,
+      "passes_filters": false
+    },
+    {
+      "H": 0.3,
+      "rs": 0.15,
+      "mean_sharpe": 0.0050730735642065036,
+      "std_sharpe": 0.08579345873040295,
+      "worst_fold_sharpe": 0.0,
+      "worst_drawdown": 0.03690251228125108,
+      "mean_trades": 0.05244755244755245,
+      "gate_on_folds": 1,
+      "passes_filters": false
+    },
+    {
+      "H": 0.3,
+      "rs": 0.2,
+      "mean_sharpe": 0.0050730735642065036,
+      "std_sharpe": 0.08579345873040295,
+      "worst_fold_sharpe": 0.0,
+      "worst_drawdown": 0.03690251228125108,
+      "mean_trades": 0.05244755244755245,
+      "gate_on_folds": 1,
+      "passes_filters": false
+    },
+    {
+      "H": 0.3,
+      "rs": 0.25,
+      "mean_sharpe": 0.0050730735642065036,
+      "std_sharpe": 0.08579345873040295,
+      "worst_fold_sharpe": 0.0,
+      "worst_drawdown": 0.03690251228125108,
+      "mean_trades": 0.05244755244755245,
+      "gate_on_folds": 1,
+      "passes_filters": false
+    },
+    {
+      "H": 0.3,
+      "rs": 0.3,
+      "mean_sharpe": 0.0050730735642065036,
+      "std_sharpe": 0.08579345873040295,
+      "worst_fold_sharpe": 0.0,
+      "worst_drawdown": 0.03690251228125108,
+      "mean_trades": 0.05244755244755245,
+      "gate_on_folds": 1,
+      "passes_filters": false
+    }
+  ],
+  "current": {
+    "H": 0.45,
+    "rs": 0.33
+  },
+  "optimal": {
+    "H": 0.3,
+    "rs": 0.1,
+    "mean_sharpe": 0.0050730735642065036,
+    "std_sharpe": 0.08579345873040295,
+    "worst_fold_sharpe": 0.0,
+    "passes_filters": false
+  }
+}

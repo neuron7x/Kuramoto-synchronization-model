@@ -1,0 +1,52 @@
+id: riee-runtime-kernel
+status: ACTIVE
+claim_type: refactor
+promise: >-
+  RIEE runtime kernel enforces gamma drift checks, SDK enablement, telemetry,
+  quarantine snapshots, runtime cost profiling, and package identity support with
+  focused tests.
+diff_scope:
+  changed_files:
+    - path: ".claude/commit_acceptors/riee-runtime-kernel.yaml"
+    - path: "metrics/__init__.py"
+    - path: "metrics/performance_profiler.py"
+    - path: "runtime/riee/engine.py"
+    - path: "runtime/riee/sdk.py"
+    - path: "runtime/riee/telemetry.py"
+    - path: "scripts/production_readiness_riee.py"
+    - path: "scripts/riee/chaos_engine.py"
+    - path: "scripts/riee/operational_modes.py"
+    - path: "tests/riee/test_riee_kernel.py"
+    - path: "tests/riee/test_riee_sdk_modes.py"
+    - path: "tests/riee/test_riee_telemetry.py"
+    - path: "tests/tools/test_runtime_cost_profiler.py"
+  forbidden_paths:
+    - "trading/"
+    - "execution/"
+    - "forecast/"
+    - "policy/"
+required_python_symbols:
+  - "KernelPanic"
+  - "PrefrontalCortexEngine"
+  - "load_claim_gamma"
+  - "riee_guard"
+  - "profile_validation_cycle"
+expected_signal: >-
+  RIEE tests pass, runtime enforcement raises on invalid epistemic state, and
+  metrics profiler resolves as a stable package module.
+measurement_command: >-
+  python scripts/production_readiness_riee.py && python -m mypy metrics/performance_profiler.py
+signal_artifact: "tmp/riee_runtime_kernel.log"
+falsifier:
+  command: >-
+    python -m pytest -q tests/riee/test_riee_kernel.py tests/riee/test_riee_sdk_modes.py tests/riee/test_riee_telemetry.py
+  description: >-
+    Runtime drift and SDK guard tests must fail if panic/quarantine semantics break.
+rollback_command: >-
+  git checkout HEAD~1 -- runtime/riee metrics/__init__.py metrics/performance_profiler.py scripts/production_readiness_riee.py scripts/riee tests/riee tests/tools/test_runtime_cost_profiler.py
+rollback_verification_command: >-
+  python tools/commit_acceptor/validate_commit_acceptor.py
+memory_update_type: append
+ledger_path: ".claude/commit_acceptors/riee-runtime-kernel.yaml"
+report_path: "docs/architecture/RIEE_OPERATIONAL_READINESS_2026-05-26.md"
+evidence: []

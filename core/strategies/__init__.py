@@ -1,5 +1,16 @@
+# Copyright (c) 2023-2026 Yaroslav Vasylenko (neuron7xLab)
+# SPDX-License-Identifier: MIT
 """Strategy helpers exposed for CLI integrations."""
 
+from .btc_intel import (
+    DEFAULT_BTC_RULE_CONFIG,
+    BTCMarketSnapshot,
+    BTCRule,
+    BTCRuleConfig,
+    BTCRuleResult,
+    BTCSignal,
+    evaluate_btc_rules,
+)
 from .dsl import (
     ComponentParameters,
     ParameterField,
@@ -62,6 +73,15 @@ from .trading import (
     TradingStrategy,
     register_strategies,
 )
+from .trading_composer import (
+    DEFAULT_TRADING_COMPOSER_CONFIG,
+    CompositeDecision,
+    CompositeSignal,
+    TradingComposer,
+    TradingComposerConfig,
+    TradingSnapshot,
+    compose_decision,
+)
 
 __all__ = [
     "moving_average_signal",
@@ -117,4 +137,18 @@ __all__ = [
     "AcceptAllRiskPolicy",
     "IOContract",
     "InvalidModeTransition",
+    "BTCMarketSnapshot",
+    "BTCRule",
+    "BTCRuleConfig",
+    "BTCRuleResult",
+    "BTCSignal",
+    "DEFAULT_BTC_RULE_CONFIG",
+    "evaluate_btc_rules",
+    "CompositeDecision",
+    "CompositeSignal",
+    "TradingComposer",
+    "TradingComposerConfig",
+    "TradingSnapshot",
+    "DEFAULT_TRADING_COMPOSER_CONFIG",
+    "compose_decision",
 ]

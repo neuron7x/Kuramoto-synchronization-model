@@ -1,0 +1,24 @@
+{
+  "$schema": "https://json-schema.org/draft/2020-12/schema",
+  "title": "RiskState",
+  "type": "object",
+  "required": ["risk_state", "confidence", "domain_indices", "explanations", "degradations"],
+  "properties": {
+    "risk_state": {"type": "string", "enum": ["GREEN_STABLE", "YELLOW_WATCH", "ORANGE_RISK", "RED_CRITICAL", "BLACK_INVALID"]},
+    "confidence": {"type": "number", "minimum": 0, "maximum": 1},
+    "domain_indices": {
+      "type": "object",
+      "properties": {
+        "BSI": {"type": "number", "minimum": 0, "maximum": 100},
+        "NRI": {"type": "number", "minimum": 0, "maximum": 100},
+        "VML": {"type": "number", "minimum": 0, "maximum": 100},
+        "GRS": {"type": "number", "minimum": 0, "maximum": 100},
+        "CNI": {"type": "number", "minimum": 0, "maximum": 100}
+      },
+      "additionalProperties": false
+    },
+    "explanations": {"type": "array", "items": {"type": "string"}},
+    "degradations": {"type": "array", "items": {"type": "string"}}
+  },
+  "additionalProperties": false
+}

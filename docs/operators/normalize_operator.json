@@ -1,0 +1,48 @@
+{
+  "operator_id": "CME-OP-NORMALIZE-0001",
+  "name": "normalize",
+  "ukrainian_name": "нормалізувати",
+  "repository": "neuron7xLab/GeoSync",
+  "status_tags": ["S0_REPO_FACT", "S5_PROXY"],
+  "definition": "Transform heterogeneous data, scores, units, labels, or state fields into a shared scale or canonical representation while preserving provenance and reversibility constraints.",
+  "operator_form": "raw_values + scale_contract + provenance_record -> normalization_operation -> normalized_values + normalization_metadata + loss_report",
+  "inputs": [
+    "raw_values",
+    "source_units_or_domains",
+    "scale_contract",
+    "allowed_range",
+    "missing_value_policy",
+    "provenance_record",
+    "reversibility_or_loss_policy"
+  ],
+  "outputs": [
+    "normalized_values",
+    "normalization_metadata",
+    "range_report",
+    "loss_report",
+    "provenance_link",
+    "validation_ready_state"
+  ],
+  "acceptance_gates": [
+    "No normalization without declaring the target scale.",
+    "No cross-source comparison without provenance.",
+    "No silent clipping.",
+    "No missing-value coercion without policy.",
+    "No irreversible transform without loss report.",
+    "No normalized metric promoted as physical measurement unless independently validated."
+  ],
+  "failure_modes": [
+    "Different units are mixed as if equivalent.",
+    "Scores are scaled without preserving source meaning.",
+    "Outliers are clipped silently.",
+    "Missing values become false zeros.",
+    "Normalization hides uncertainty.",
+    "Normalized proxy is treated as ground truth."
+  ],
+  "validation_commands": [
+    "python tools/research/validate_operator_contract.py docs/operators/normalize_operator.json",
+    "python -m pytest tests/research/test_validate_normalize_operator_contracts.py -q"
+  ],
+  "next_target": "Bind raw_gate_scores -> shared 0..1 scale plus provenance plus loss report -> benchmark-ready metric set.",
+  "evidence_policy": "Remain S0_REPO_FACT plus S5_PROXY until validation commands run and evidence is persisted."
+}

@@ -1,3 +1,5 @@
+# Copyright (c) 2023-2026 Yaroslav Vasylenko (neuron7xLab)
+# SPDX-License-Identifier: MIT
 """Tests for formal protocol verification.
 
 This test module validates the protocol verification system for
@@ -114,9 +116,7 @@ class TestProtocolVerificationReport:
         }
         assert properties_verified == expected_properties
 
-    def test_save_certificate(
-        self, verifier: TLSProtocolVerifier, tmp_path: Path
-    ) -> None:
+    def test_save_certificate(self, verifier: TLSProtocolVerifier, tmp_path: Path) -> None:
         """Test saving protocol verification certificate."""
         cert_path = tmp_path / "PROTOCOL_CERT.txt"
         verifier.verify_all(output_path=cert_path)

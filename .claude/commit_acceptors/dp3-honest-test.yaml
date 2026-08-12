@@ -1,0 +1,84 @@
+# Diff-bound acceptor for FIX-3: honest DP3 (snapshot-staleness) recovery test.
+#
+# The earlier informal claim was: "manual tick refreshed paper-state →
+# Sharpe rose from −6.82 → −4.68; therefore DP3 staleness explains 31 %
+# of the deficit." That claim conflated a *causal* recovery with a
+# *mechanical* small-n effect: at n=14 returns, simply appending one
+# positive bar moves the annualised Sharpe by O(1/sqrt(N)) regardless
+# of whether the new bar carries any signal about staleness.
+#
+# This module installs a registered protocol: the observed Δ Sharpe
+# from bar N−1 to bar N is compared against the mechanical small-n
+# distribution produced by appending a random draw from the prior
+# return distribution (999 permutations). Verdict is BINARY:
+# REJECT if |Δ| < 2 × std(mechanical null), else CONFIRMED with
+# p-value. AMBIGUOUS / PARTIAL labels are explicitly forbidden by spec.
+
+id: dp3-honest-test
+status: ACTIVE
+claim_type: correctness
+promise: >-
+  `python -m geosync.dp3_test --honest [--bar N]` reads paper-state
+  equity.csv, computes annualised Sharpe at bars N-1 and N, runs a
+  999-path mechanical-null permutation (append a random draw from the
+  prior return distribution and recompute the Δ), and emits a strictly
+  binary REJECT / CONFIRMED label plus the two-sided p-value over the
+  null. The acceptance band is BAND_K=2.0 standard deviations of the
+  mechanical null. Tested invariants: (i) zero-novel-signal data
+  (last bar = prior mean) yields REJECT; (ii) large-n prior + extreme
+  outlier yields CONFIRMED with p<0.05; (iii) label is strictly
+  REJECT|CONFIRMED, never AMBIGUOUS; (iv) bar<3 raises ValueError;
+  (v) missing paper-state raises FileNotFoundError. The earlier
+  informal "31 %% recovery" claim is hereby retracted as
+  NULL_PENDING_TEST until the live trajectory accumulates enough
+  bars for this protocol to fire CONFIRMED.
+diff_scope:
+  changed_files:
+    - path: ".claude/commit_acceptors/dp3-honest-test.yaml"
+    - path: "INVENTORY.json"
+    - path: "geosync/dp3_test.py"
+    - path: "tests/scripts/test_dp3_test.py"
+  forbidden_paths:
+    - "trading/"
+    - "execution/"
+    - "forecast/"
+    - "policy/"
+    - "core/physics/"
+    - "scripts/evaluate_cross_asset_kuramoto_shadow.py"
+required_python_symbols:
+  - "geosync/dp3_test.py::evaluate"
+  - "geosync/dp3_test.py::DP3Result"
+  - "geosync/dp3_test.py::BAND_K"
+expected_signal: >-
+  Locally on bar 15 of the live shadow trajectory:
+  `python -m geosync.dp3_test --honest` →
+  "DP3 BAR 15 | Sharpe(N-1)=-5.8895 → Sharpe(N)=-3.9154 |
+  Δ=+1.9741 | band(2σ)=2.0469 | p=0.0741 | LABEL REJECT |
+  n_returns=14". Confirms that the +1.97 ΔSharpe between bars 14
+  and 15 is INSIDE the mechanical small-n null at this sample size —
+  the earlier "31 %% recovery" attribution was a false positive on
+  n=1 anecdotal evidence.
+measurement_command: >-
+  bash -c 'python -m geosync.dp3_test --honest --json | python -c "import json,sys; d=json.loads(sys.stdin.read()); print(d[\"label\"]); sys.exit(0 if d[\"label\"] in {\"REJECT\",\"CONFIRMED\"} else 1)"'
+signal_artifact: "tmp/dp3_honest_test.log"
+falsifier:
+  command: >-
+    bash -c 'python -m geosync.dp3_test 2>&1 | grep -q -- "--honest" && exit 0 || exit 1'
+  description: >-
+    Probe runs the module without the --honest flag. If the module
+    silently accepts the call and emits a verdict, the contract is
+    broken — callers can re-emit the informal claim without explicitly
+    acknowledging the protocol replacement. The --honest flag must be
+    required.
+rollback_command: >-
+  git checkout HEAD~1 --
+  geosync/dp3_test.py
+  tests/scripts/test_dp3_test.py
+  .claude/commit_acceptors/dp3-honest-test.yaml
+  INVENTORY.json
+rollback_verification_command: >-
+  git diff --exit-code geosync/dp3_test.py
+memory_update_type: append
+ledger_path: ".claude/commit_acceptors/dp3-honest-test.yaml"
+report_path: "geosync/dp3_test.py"
+evidence: []

@@ -1,3 +1,5 @@
+# Copyright (c) 2023-2026 Yaroslav Vasylenko (neuron7xLab)
+# SPDX-License-Identifier: MIT
 """Comprehensive performance profiling and bottleneck detection tests.
 
 This module implements systematic profiling to identify performance bottlenecks
@@ -400,9 +402,7 @@ class TestPerformanceRegression:
         regression = (current_latency - baseline_latency) / baseline_latency
 
         # Check if within acceptable range
-        assert (
-            regression <= threshold
-        ), f"Performance regression detected: {regression:.1%}"
+        assert regression <= threshold, f"Performance regression detected: {regression:.1%}"
 
     def test_throughput_regression(self):
         """Test throughput regression detection."""

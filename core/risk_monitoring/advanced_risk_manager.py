@@ -1,4 +1,5 @@
-# SPDX-License-Identifier: LicenseRef-TradePulse-Proprietary
+# Copyright (c) 2023-2026 Yaroslav Vasylenko (neuron7xLab)
+# SPDX-License-Identifier: MIT
 """High-Precision Advanced Risk Management Module.
 
 This module implements a comprehensive risk management system for AI-powered
@@ -442,21 +443,13 @@ class AdvancedRiskConfig:
         if not 0 < self.imbalance_stress_threshold <= 1:
             raise ValueError("imbalance_stress_threshold must be in (0, 1]")
         if not 0 < self.drawdown_elevated_threshold < self.drawdown_stressed_threshold:
-            raise ValueError(
-                "drawdown thresholds must be: 0 < elevated < stressed < critical"
-            )
+            raise ValueError("drawdown thresholds must be: 0 < elevated < stressed < critical")
         if not self.drawdown_stressed_threshold < self.drawdown_critical_threshold <= 1:
-            raise ValueError(
-                "drawdown thresholds must be: 0 < elevated < stressed < critical <= 1"
-            )
+            raise ValueError("drawdown thresholds must be: 0 < elevated < stressed < critical <= 1")
         if not 1 < self.volatility_elevated_ratio < self.volatility_stressed_ratio:
-            raise ValueError(
-                "volatility ratios must be: 1 < elevated < stressed < critical"
-            )
+            raise ValueError("volatility ratios must be: 1 < elevated < stressed < critical")
         if not self.volatility_stressed_ratio < self.volatility_critical_ratio:
-            raise ValueError(
-                "volatility ratios must be: 1 < elevated < stressed < critical"
-            )
+            raise ValueError("volatility ratios must be: 1 < elevated < stressed < critical")
         if not 0 < self.fe_learning_rate <= 1:
             raise ValueError("fe_learning_rate must be in (0, 1]")
         if self.fe_precision_base <= 0:
@@ -535,15 +528,9 @@ class AdvancedRiskManager:
         self._position_multiplier = 1.0
 
         # Historical data for analysis
-        self._returns_history: deque[float] = deque(
-            maxlen=self._config.volatility_lookback * 5
-        )
-        self._volatility_history: deque[float] = deque(
-            maxlen=self._config.volatility_lookback
-        )
-        self._drawdown_history: deque[float] = deque(
-            maxlen=self._config.volatility_lookback
-        )
+        self._returns_history: deque[float] = deque(maxlen=self._config.volatility_lookback * 5)
+        self._volatility_history: deque[float] = deque(maxlen=self._config.volatility_lookback)
+        self._drawdown_history: deque[float] = deque(maxlen=self._config.volatility_lookback)
 
         # Free energy state
         self._fe_state = FreeEnergyState()
@@ -555,9 +542,7 @@ class AdvancedRiskManager:
         self._current_equity = 0.0
 
         # Audit trail
-        self._audit_trail: deque[RiskAuditEntry] = deque(
-            maxlen=self._config.audit_log_max_entries
-        )
+        self._audit_trail: deque[RiskAuditEntry] = deque(maxlen=self._config.audit_log_max_entries)
         self._audit_counter = 0
 
         # Fault tolerance state
@@ -614,18 +599,14 @@ class AdvancedRiskManager:
             try:
                 # Calculate bid depth
                 bid_depth = 0.0
-                bid_levels = min(
-                    len(market_depth.bids), self._config.liquidity_depth_levels
-                )
+                bid_levels = min(len(market_depth.bids), self._config.liquidity_depth_levels)
                 for price, qty in market_depth.bids[:bid_levels]:
                     if price > 0 and qty > 0:
                         bid_depth += price * qty
 
                 # Calculate ask depth
                 ask_depth = 0.0
-                ask_levels = min(
-                    len(market_depth.asks), self._config.liquidity_depth_levels
-                )
+                ask_levels = min(len(market_depth.asks), self._config.liquidity_depth_levels)
                 for price, qty in market_depth.asks[:ask_levels]:
                     if price > 0 and qty > 0:
                         ask_depth += price * qty
@@ -709,9 +690,7 @@ class AdvancedRiskManager:
                 )
 
             # Update baseline if not set
-            if self._baseline_volatility is None or not math.isfinite(
-                self._baseline_volatility
-            ):
+            if self._baseline_volatility is None or not math.isfinite(self._baseline_volatility):
                 self._baseline_volatility = max(0.001, observed_volatility)
 
             expected = (
@@ -743,10 +722,7 @@ class AdvancedRiskManager:
 
             # Compute entropy from drawdown and volatility
             # Higher uncertainty = higher entropy
-            entropy = (
-                0.5 * math.log(max(1e-6, observed_volatility))
-                + 0.5 * safe_drawdown
-            )
+            entropy = 0.5 * math.log(max(1e-6, observed_volatility)) + 0.5 * safe_drawdown
 
             # Free energy: F = precision * prediction_error^2 / 2 + entropy
             new_fe = (precision * prediction_error * prediction_error / 2.0) + entropy
@@ -755,9 +731,7 @@ class AdvancedRiskManager:
 
             # Check monotonicity
             previous_fe = self._fe_state.current_free_energy
-            is_monotonic = (
-                new_fe <= previous_fe + self._config.fe_monotonicity_epsilon
-            )
+            is_monotonic = new_fe <= previous_fe + self._config.fe_monotonicity_epsilon
 
             # If violating monotonicity, apply correction
             if not is_monotonic and len(self._fe_history) > 0:
@@ -766,9 +740,7 @@ class AdvancedRiskManager:
 
             # Compute descent rate
             if len(self._fe_history) >= 2:
-                descent_rate = (
-                    self._fe_history[-1] - new_fe
-                ) / max(1, len(self._fe_history))
+                descent_rate = (self._fe_history[-1] - new_fe) / max(1, len(self._fe_history))
             else:
                 descent_rate = 0.0
 
@@ -862,11 +834,7 @@ class AdvancedRiskManager:
                         self._peak_equity = equity
 
                 # Calculate drawdown
-                if (
-                    current_price is not None
-                    and peak_price is not None
-                    and peak_price > 0
-                ):
+                if current_price is not None and peak_price is not None and peak_price > 0:
                     drawdown = max(0.0, (peak_price - current_price) / peak_price)
                 elif self._peak_equity > 0:
                     drawdown = max(
@@ -892,11 +860,7 @@ class AdvancedRiskManager:
                 dd_risk = self._assess_drawdown_risk(drawdown)
 
                 # Composite risk score (weighted average)
-                risk_score = (
-                    0.35 * vol_risk
-                    + 0.25 * liq_risk
-                    + 0.40 * dd_risk
-                )
+                risk_score = 0.35 * vol_risk + 0.25 * liq_risk + 0.40 * dd_risk
 
                 # Factor in free energy stability
                 if self._fe_state.stability_metric < 0.5:
@@ -999,9 +963,7 @@ class AdvancedRiskManager:
             if current_idx < len(protocol_order) - 1:
                 new_protocol = protocol_order[current_idx + 1]
                 self._current_protocol = new_protocol
-                self._position_multiplier = self._calculate_position_multiplier(
-                    new_protocol
-                )
+                self._position_multiplier = self._calculate_position_multiplier(new_protocol)
 
                 self._record_audit_entry(
                     action_type="protocol_escalation",
@@ -1045,9 +1007,7 @@ class AdvancedRiskManager:
             if current_idx > 0:
                 new_protocol = protocol_order[current_idx - 1]
                 self._current_protocol = new_protocol
-                self._position_multiplier = self._calculate_position_multiplier(
-                    new_protocol
-                )
+                self._position_multiplier = self._calculate_position_multiplier(new_protocol)
 
                 self._record_audit_entry(
                     action_type="protocol_deescalation",
@@ -1221,9 +1181,7 @@ class AdvancedRiskManager:
             if self._audit_trail:
                 action_counts: dict[str, int] = {}
                 for entry in self._audit_trail:
-                    action_counts[entry.action_type] = (
-                        action_counts.get(entry.action_type, 0) + 1
-                    )
+                    action_counts[entry.action_type] = action_counts.get(entry.action_type, 0) + 1
                 stats["audit_stats"] = {
                     "total_entries": len(self._audit_trail),
                     "action_counts": action_counts,
@@ -1264,24 +1222,20 @@ class AdvancedRiskManager:
             return 1.0
         elif vol_ratio >= self._config.volatility_stressed_ratio:
             normalized = (vol_ratio - self._config.volatility_stressed_ratio) / (
-                self._config.volatility_critical_ratio
-                - self._config.volatility_stressed_ratio
+                self._config.volatility_critical_ratio - self._config.volatility_stressed_ratio
             )
             return 0.6 + 0.4 * normalized
         elif vol_ratio >= self._config.volatility_elevated_ratio:
             normalized = (vol_ratio - self._config.volatility_elevated_ratio) / (
-                self._config.volatility_stressed_ratio
-                - self._config.volatility_elevated_ratio
+                self._config.volatility_stressed_ratio - self._config.volatility_elevated_ratio
             )
             return 0.3 + 0.3 * normalized
         else:
-            return max(0.0, (vol_ratio - 1.0) / (
-                self._config.volatility_elevated_ratio - 1.0
-            ) * 0.3)
+            return max(
+                0.0, (vol_ratio - 1.0) / (self._config.volatility_elevated_ratio - 1.0) * 0.3
+            )
 
-    def _assess_liquidity_risk(
-        self, liquidity: LiquidityMetrics | None
-    ) -> float:
+    def _assess_liquidity_risk(self, liquidity: LiquidityMetrics | None) -> float:
         """Assess risk contribution from liquidity."""
         if liquidity is None:
             return 0.3  # Default moderate risk when no data
@@ -1298,9 +1252,9 @@ class AdvancedRiskManager:
         # Imbalance risk
         imbalance = abs(liquidity.imbalance_ratio)
         if imbalance > self._config.imbalance_stress_threshold:
-            imbalance_excess = (
-                imbalance - self._config.imbalance_stress_threshold
-            ) / (1.0 - self._config.imbalance_stress_threshold)
+            imbalance_excess = (imbalance - self._config.imbalance_stress_threshold) / (
+                1.0 - self._config.imbalance_stress_threshold
+            )
             risk = max(risk, min(1.0, imbalance_excess))
 
         # Low liquidity score risk
@@ -1315,14 +1269,12 @@ class AdvancedRiskManager:
             return 1.0
         elif drawdown >= self._config.drawdown_stressed_threshold:
             normalized = (drawdown - self._config.drawdown_stressed_threshold) / (
-                self._config.drawdown_critical_threshold
-                - self._config.drawdown_stressed_threshold
+                self._config.drawdown_critical_threshold - self._config.drawdown_stressed_threshold
             )
             return 0.6 + 0.4 * normalized
         elif drawdown >= self._config.drawdown_elevated_threshold:
             normalized = (drawdown - self._config.drawdown_elevated_threshold) / (
-                self._config.drawdown_stressed_threshold
-                - self._config.drawdown_elevated_threshold
+                self._config.drawdown_stressed_threshold - self._config.drawdown_elevated_threshold
             )
             return 0.3 + 0.3 * normalized
         else:
@@ -1369,9 +1321,7 @@ class AdvancedRiskManager:
 
         return new_protocol
 
-    def _calculate_position_multiplier(
-        self, protocol: StressResponseProtocol
-    ) -> float:
+    def _calculate_position_multiplier(self, protocol: StressResponseProtocol) -> float:
         """Calculate position size multiplier for protocol."""
         multipliers = {
             StressResponseProtocol.NORMAL: 1.0,
@@ -1394,9 +1344,7 @@ class AdvancedRiskManager:
         recommendations: list[str] = []
 
         if risk_state == RiskState.CRITICAL:
-            recommendations.append(
-                "CRITICAL: Immediate risk reduction required. Halt new trades."
-            )
+            recommendations.append("CRITICAL: Immediate risk reduction required. Halt new trades.")
 
         if vol_risk >= 0.6:
             recommendations.append(
@@ -1423,9 +1371,7 @@ class AdvancedRiskManager:
                 "PROTECTIVE MODE: Only essential trades, prepare exit strategies"
             )
         elif protocol == StressResponseProtocol.HALT:
-            recommendations.append(
-                "TRADING HALTED: Monitor conditions for recovery"
-            )
+            recommendations.append("TRADING HALTED: Monitor conditions for recovery")
 
         return recommendations
 
@@ -1465,9 +1411,7 @@ class AdvancedRiskManager:
             base = self._last_successful_assessment
             # Use custom comparison operators for proper severity ordering
             fallback_risk_state = (
-                base.risk_state
-                if base.risk_state >= RiskState.ELEVATED
-                else RiskState.ELEVATED
+                base.risk_state if base.risk_state >= RiskState.ELEVATED else RiskState.ELEVATED
             )
             return AdvancedRiskAssessment(
                 timestamp=self._time(),

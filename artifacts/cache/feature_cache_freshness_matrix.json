@@ -1,0 +1,55 @@
+{
+  "schema": "geosync.feature_cache_freshness_matrix.v1",
+  "component": "core.features.realtime_store",
+  "verdict": "PASS",
+  "invariants": [
+    {
+      "id": "FRESH-1",
+      "statement": "cache write requires an event timestamp; equal ts resolves deterministically (last wins)",
+      "test": "tests/unit/core/test_realtime_store_freshness_contract.py::test_equal_timestamp_write_is_deterministic_last_wins",
+      "verdict": "PASS"
+    },
+    {
+      "id": "FRESH-2",
+      "statement": "Redis CAS and local CAS agree: an older event_ts is rejected on both tiers",
+      "test": "tests/unit/core/test_realtime_store_freshness_contract.py::test_redis_and_local_cas_parity_reject_older",
+      "verdict": "PASS"
+    },
+    {
+      "id": "FRESH-3",
+      "statement": "DB fallback is authoritative and ordered (event_ts DESC), so a stale row cannot be served",
+      "test": "tests/unit/core/test_realtime_store_freshness_contract.py::test_db_fallback_selects_newest_event_ts",
+      "verdict": "PASS"
+    },
+    {
+      "id": "FRESH-4",
+      "statement": "timestamps are normalised to UTC on read regardless of source offset",
+      "test": "tests/unit/core/test_realtime_store_freshness_contract.py::test_timestamp_normalised_to_utc_on_read",
+      "verdict": "PASS"
+    },
+    {
+      "id": "FRESH-5",
+      "statement": "a malformed timestamp is rejected, never silently coerced",
+      "test": "tests/unit/core/test_realtime_store_freshness_contract.py::test_malformed_timestamp_rejected",
+      "verdict": "PASS"
+    },
+    {
+      "id": "FRESH-6",
+      "statement": "a missing timestamp is rejected",
+      "test": "tests/unit/core/test_realtime_store_freshness_contract.py::test_missing_timestamp_rejected",
+      "verdict": "PASS"
+    },
+    {
+      "id": "FRESH-7",
+      "statement": "serialization round-trip preserves microsecond precision",
+      "test": "tests/unit/core/test_realtime_store_freshness_contract.py::test_serialization_preserves_microseconds",
+      "verdict": "PASS"
+    },
+    {
+      "id": "FRESH-8",
+      "statement": "a newer cached value short-circuits the slower tiers (never beaten by a stale DB read)",
+      "test": "tests/unit/core/test_realtime_store_freshness_contract.py::test_newer_cache_short_circuits_db",
+      "verdict": "PASS"
+    }
+  ]
+}

@@ -1,0 +1,122 @@
+# Diff-bound commit acceptor for X-10R-1 PR #7 (FINAL) —
+# end-to-end bank-level forward-signal pipeline. Closes the
+# X-10R-1 epic foundation.
+#
+# What lands:
+#   * research/reconstruction/allocator/forward_signal.py
+#       BankLevelForwardSignalCertificate dataclass +
+#       assert_real_data_input_not_validated_here +
+#       composed_status_admits + emit_bank_level_forward_signal
+#   * tests/reconstruction/allocator/test_forward_signal.py
+#       10 new tests pinning admissibility ≠ validation, fail-closed
+#       on real-data path, helper semantics, E2E synthetic happy
+#       path, fail-closed direction (low coverage), shape contract,
+#       too-few-banks NO_SIGNAL guard.
+#
+# Locally verified (on top of merged PRs #642–#646):
+#   * pytest tests/reconstruction/allocator/: 138/138 passed
+#   * mypy --strict + ruff + black:           clean
+#
+# DOES NOT lift INV-IDENTIFICATION-1
+# ===================================
+# The pipeline emits a *certificate* with two distinct flags:
+#     is_admissible_for_downstream_bank_level_test   (necessary)
+#     is_scientifically_validated_bank_level_result  (sufficient)
+# Sufficiency requires Gate 6 PASS with a SIGNED precursor
+# direction. On the canonical 25-bank synthetic substrate
+# at default density the validation flag is False (CI overlaps
+# zero band) — this is HONEST OUTPUT: admissibility True,
+# validation False. INV-IDENTIFICATION-1 stays in force.
+# Validating real bank-level networks requires a separate
+# substrate where the precursor signal is strong enough to
+# clear Gate 6, AND real BIS data ingestion (out-of-epic).
+
+id: x10r-1-e2e-forward-signal
+status: ACTIVE
+claim_type: chore
+promise: >-
+  After this PR lands, research/reconstruction/allocator/ exposes
+  emit_bank_level_forward_signal() — the closing pipeline of the
+  X-10R-1 epic. Wires CountryToBankAllocator + SizeWeightedPrior
+  + Cimini-Squartini fit + Bernoulli + IPF + Gate 6 R(∞)
+  precursor + composed DoV gate into one deterministic function
+  that returns BankLevelForwardSignalCertificate. The cert
+  carries TWO distinct flags: is_admissible_for_downstream_bank_
+  level_test (necessary, True iff composed DoV is BOTH_WITHIN)
+  AND is_scientifically_validated_bank_level_result (sufficient,
+  True iff admissible AND Gate 6 PASS AND precursor direction is
+  SIGNED, NOT NO_SIGNAL). assert_real_data_input_not_validated_
+  here forbids the validation flag from leaking onto real data
+  (INV-RECONSTRUCTION-2 + INV-IDENTIFICATION-1 enforcement).
+  10 new tests pin: real-data input contract, composed_status_
+  admits semantics, E2E synthetic happy path on the frozen MFI
+  demo fixture, validated⇒admissible+signed implication,
+  admissible-without-validated gap, fail-closed direction (low
+  coverage), shape contract, too-few-banks NO_SIGNAL guard.
+diff_scope:
+  changed_files:
+    - path: ".claude/commit_acceptors/x10r-1-e2e-forward-signal.yaml"
+    - path: "research/reconstruction/allocator/__init__.py"
+    - path: "research/reconstruction/allocator/forward_signal.py"
+    - path: "tests/reconstruction/allocator/test_forward_signal.py"
+  forbidden_paths:
+    - "trading/"
+    - "execution/"
+    - "forecast/"
+    - "policy/"
+    - "core/physics/"
+    - "core/kuramoto/"
+    - "application/governance/claim_ledger.py"
+    - "application/governance/commit_acceptor.py"
+required_python_symbols:
+  - "research/reconstruction/allocator/forward_signal.py::BankLevelForwardSignalCertificate"
+  - "research/reconstruction/allocator/forward_signal.py::emit_bank_level_forward_signal"
+  - "research/reconstruction/allocator/forward_signal.py::assert_real_data_input_not_validated_here"
+  - "research/reconstruction/allocator/forward_signal.py::composed_status_admits"
+expected_signal: >-
+  Local: `pytest tests/reconstruction/allocator/ -q` reports
+  "138 passed"; `mypy --strict` is clean on every file under
+  research/reconstruction/allocator/ and
+  tests/reconstruction/allocator/; `ruff check` and
+  `black --check` both pass on those paths.
+measurement_command: >-
+  bash -c 'mypy --strict --follow-imports=silent
+  research/reconstruction/allocator/ tests/reconstruction/allocator/
+  && ruff check research/reconstruction/allocator/ tests/reconstruction/allocator/
+  && black --check research/reconstruction/allocator/ tests/reconstruction/allocator/
+  && pytest tests/reconstruction/allocator/ -q'
+signal_artifact: "tmp/x10r_1_e2e_forward_signal.log"
+falsifier:
+  command: |-
+    bash -c 'python -c "
+    from research.reconstruction.allocator import (
+        assert_real_data_input_not_validated_here,
+    )
+    raised = False
+    try:
+        assert_real_data_input_not_validated_here(False)
+    except ValueError as e:
+        if \"INV-RECONSTRUCTION-2\" in str(e):
+            raised = True
+    assert raised, \"real-data path must raise INV-RECONSTRUCTION-2\"
+    "'
+  description: >-
+    Probes the fail-closed contract: the validation flag has no
+    meaning on real data. Calling the pipeline with
+    is_synthetic_ground_truth=False MUST raise with INV-
+    RECONSTRUCTION-2 + INV-IDENTIFICATION-1 named. If the
+    contract is loose, the validation flag could leak onto real
+    BIS data — a category error this gate exists to prevent.
+rollback_command: >-
+  bash -c 'git checkout HEAD~1 --
+  && rm -f research/reconstruction/allocator/forward_signal.py
+  tests/reconstruction/allocator/test_forward_signal.py
+  .claude/commit_acceptors/x10r-1-e2e-forward-signal.yaml'
+rollback_verification_command: >-
+  bash -c 'test ! -f research/reconstruction/allocator/forward_signal.py
+  && test ! -f tests/reconstruction/allocator/test_forward_signal.py
+  && test ! -f .claude/commit_acceptors/x10r-1-e2e-forward-signal.yaml'
+memory_update_type: append
+ledger_path: ".claude/commit_acceptors/x10r-1-e2e-forward-signal.yaml"
+report_path: "tmp/x10r_1_e2e_forward_signal.log"
+evidence: []

@@ -1,0 +1,29 @@
+# Diff-bound commit acceptor: parallelise python-fast-tests to fit the cap.
+id: fast-suite-timeout-budget
+status: ACTIVE
+claim_type: governance
+promise: "The fast lane is sharded across 4 parallel CI jobs by a plugin-free deterministic crc32 partition of collected node ids (pytest-split needs pytest<9; xdist breaks caplog — both rejected), each a serial process, keeping wall time well under the unchanged 1200s cap WITHOUT removing any test from the fast gate and WITHOUT raising/masking the timeout. A stable aggregator job preserves the required-check name `python-fast-tests`."
+diff_scope:
+  changed_files:
+    - path: ".github/workflows/pr-gate.yml"
+    - path: "INVENTORY.json"
+    - path: ".claude/commit_acceptors/fast-suite-timeout-budget.yaml"
+  forbidden_paths:
+    - "trading/"
+    - "execution/"
+    - "forecast/"
+    - "policy/"
+    - "tests/"
+required_python_symbols: []
+expected_signal: "python-fast-tests completes inside 1200s on the CI runner with all selected tests still executed"
+measurement_command: "python -c \"import binascii; print('crc32 shard partition available')\""
+signal_artifact: "tmp/fast_suite_shard_probe.log"
+falsifier:
+  command: "grep -q 'crc32' .github/workflows/pr-gate.yml && grep -q -- '--collect-only -q' .github/workflows/pr-gate.yml && grep -q 'timeout 1200s' .github/workflows/pr-gate.yml && ! grep -q -- '-n auto' .github/workflows/pr-gate.yml && ! grep -q -- '--splits' .github/workflows/pr-gate.yml"
+  description: "Asserts the plugin-free crc32 shard is present, the 1200s cap is NOT raised/masked, AND neither xdist (-n auto, breaks caplog) nor the pytest<9 pytest-split (--splits) is used. Fails if any invariant is violated."
+rollback_command: "git checkout -- .github/workflows/pr-gate.yml"
+rollback_verification_command: "git diff --exit-code .github/workflows/pr-gate.yml"
+memory_update_type: none
+ledger_path: ".claude/commit_acceptors/fast-suite-timeout-budget.yaml"
+report_path: ".claude/commit_acceptors/fast-suite-timeout-budget.yaml"
+evidence: []

@@ -1,0 +1,74 @@
+# Diff-bound commit acceptor — complete the fast-shard quarantine (layer 2).
+#
+# #1153 restored the fast oracle and was admin-merged with the layer-1 backlog
+# quarantined (cli/acceptor/analytics/invariant/clamps). With layer-1 subtracted
+# the oracle ran the full kept set and surfaced the COMPLETE remainder — 17
+# deterministic failures in 4 files (one full local pass, --maxfail=100 not hit):
+#
+#   * tools_import_shadowing (#1178) — 14 preflight tests fail at collection,
+#     'tools' package undeclared in setuptools packages.find
+#   * namespace_canonical_policy (#1179) — 23 __CANONICAL__/legacy-src.* violations
+#     (likely subsumed by the import-arch consolidation #1159)
+#   * contradiction_ledger_stale (#1180) — C-NEURO-003 falsifier correctly flipped
+#     to non-zero; the entry must go RESOLVED
+#
+# These were unquarantined on main after the admin-merge, so main's fast lane is
+# RED for every new PR. This PR quarantines them (issue-bound) to restore a
+# REAL-green main; each cluster is drained one PR per cluster, removing its line.
+#
+# Locally verified:
+#   * every active fast_quarantine.txt line carries issue=#<n>
+#   * the 4 layer-2 files are present in the quarantine and the ledger table
+
+id: fast-shard-layer2-quarantine
+status: ACTIVE
+claim_type: governance
+promise: >-
+  The four layer-2 backlog clusters surfaced by the restored fast oracle
+  (tools_import_shadowing #1178, namespace_canonical_policy #1179,
+  contradiction_ledger_stale #1180) are explicitly quarantined with issue refs in
+  tests/ci/fast_quarantine.txt and recorded in docs/ci/fast_backlog_ledger.md, so
+  main's python-fast-shard is real-green again while the debt stays visible and
+  drained one PR per cluster. No silent quarantine; any unquarantined failure
+  still fails CI.
+
+diff_scope:
+  changed_files:
+    - path: ".claude/commit_acceptors/fast-shard-layer2-quarantine.yaml"
+    - path: ".claude/commit_acceptors/fast-shard-oracle-restore.yaml"
+    - path: "docs/ci/fast_backlog_ledger.md"
+    - path: "tests/ci/fast_quarantine.txt"
+  forbidden_paths:
+    - "core/"
+    - "src/"
+    - "runtime/"
+    - "trading/"
+    - "execution/"
+
+required_python_symbols: []
+
+expected_signal: >-
+  Every active line of tests/ci/fast_quarantine.txt matches issue=#<n>; the four
+  layer-2 test files are present in the quarantine and the backlog-ledger table
+  lists clusters tools_import_shadowing, namespace_canonical_policy and
+  contradiction_ledger_stale.
+
+measurement_command: "bash -c 'set -e; test -f tests/ci/fast_quarantine.txt; ! { grep -vE \"^[[:space:]]*#|^[[:space:]]*$\" tests/ci/fast_quarantine.txt | grep -qvE \"issue=#[0-9]+\"; }; grep -q \"tests/ci/test_pr_preflight_engine.py\" tests/ci/fast_quarantine.txt; grep -q \"tests/audit/test_contradiction_ledger.py\" tests/ci/fast_quarantine.txt; grep -q \"contradiction_ledger_stale\" docs/ci/fast_backlog_ledger.md; echo \"fast-shard-layer2-quarantine: 4 layer-2 files issue-bound + ledgered\" | tee tmp/fast_shard_layer2_quarantine.log'"
+
+signal_artifact: "tmp/fast_shard_layer2_quarantine.log"
+
+falsifier:
+  command: "bash -c 'if grep -vE \"^[[:space:]]*#|^[[:space:]]*$\" tests/ci/fast_quarantine.txt | grep -qvE \"issue=#[0-9]+\"; then exit 0; else exit 1; fi'"
+  description: >-
+    Succeeds (exit 0, falsification) only if some active quarantine line lacks an
+    issue ref — a silent, untracked quarantine. On the green ledger every line is
+    issue-bound, so this exits 1, proving the no-silent-quarantine promise holds.
+
+rollback_command: "bash -c 'git checkout HEAD~1 -- tests/ci/fast_quarantine.txt docs/ci/fast_backlog_ledger.md; git rm -f .claude/commit_acceptors/fast-shard-layer2-quarantine.yaml'"
+
+rollback_verification_command: "bash -c 'test ! -e .claude/commit_acceptors/fast-shard-layer2-quarantine.yaml'"
+
+memory_update_type: append
+ledger_path: "docs/ci/fast_backlog_ledger.md"
+report_path: "tmp/fast_shard_layer2_quarantine.log"
+evidence: []

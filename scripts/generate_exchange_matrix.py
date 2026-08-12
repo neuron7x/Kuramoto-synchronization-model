@@ -1,5 +1,6 @@
 #!/usr/bin/env python3
-# SPDX-License-Identifier: LicenseRef-TradePulse-Proprietary
+# Copyright (c) 2023-2026 Yaroslav Vasylenko (neuron7xLab)
+# SPDX-License-Identifier: MIT
 import argparse
 import importlib
 import logging
@@ -7,7 +8,7 @@ import pkgutil
 from typing import Any, Dict, List
 
 ADAPTERS_PKG = "execution.adapters"
-LOGGER = logging.getLogger("tradepulse.scripts.generate_exchange_matrix")
+LOGGER = logging.getLogger("geosync.scripts.generate_exchange_matrix")
 
 
 def discover_adapters() -> List[str]:
@@ -54,16 +55,12 @@ def adapter_capabilities(mod_name: str) -> Dict[str, bool]:
         return {}
     funcs = {k for k, v in vars(mod).items() if callable(v)}
     caps = {
-        "time": any(
-            n in funcs for n in ("get_server_time", "server_time_ms", "time", "now_ms")
-        ),
+        "time": any(n in funcs for n in ("get_server_time", "server_time_ms", "time", "now_ms")),
         "exchangeInfo_or_symbols": any(
-            n in funcs
-            for n in ("get_exchange_info", "exchange_info", "symbols", "list_symbols")
+            n in funcs for n in ("get_exchange_info", "exchange_info", "symbols", "list_symbols")
         ),
         "balance": any(
-            n in funcs
-            for n in ("get_balance", "balances", "account_balances", "spot_balance")
+            n in funcs for n in ("get_balance", "balances", "account_balances", "spot_balance")
         ),
     }
     return caps

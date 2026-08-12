@@ -1,0 +1,174 @@
+# Diff-bound commit acceptor for the D-002G BLOCKERS orphan-marker hygiene PR.
+#
+# PR #692 (D-002H ledger append) hand-resolved a merge conflict against
+# docs/governance/D002G_CANONICAL_RUN_BLOCKERS.md and left an orphan
+# ``<<<<<<< HEAD`` line at line 254 with no matching ``=======`` /
+# ``>>>>>>>``. Text content around the marker is otherwise correct
+# (D-002H REFUSED section + D-002I lineage section in the right order).
+# Only the literal marker line was orphaned.
+#
+# This PR is a precondition for merging D-002J prereg + D-002J-P1 data
+# registry per the §15 execution order: every governance reader assumes
+# the BLOCKERS file is internally well-formed.
+#
+# Scope: byte-exact removal of one orphan marker line + a permanent
+# guard test that scans docs/governance/, docs/research/, and
+# .claude/commit_acceptors/ for unresolved merge-conflict markers
+# (<<<<<<<, =======, >>>>>>>, |||||||). The guard includes a
+# drift-sentinel self-test that the scanner correctly detects fake
+# markers in a synthetic file.
+#
+# Locked-governance shas (D-002C ledger, D-002G prereg/acceptance,
+# D-002H prereg, D-002I prereg) are byte-exact preserved.
+# NO source-code edit, NO canonical sweep, NO D-002* prereg edit.
+
+id: x10r-hygiene-d002g-blockers-orphan-marker-cleanup
+status: ACTIVE
+claim_type: chore
+promise: >-
+  After this PR lands,
+  docs/governance/D002G_CANONICAL_RUN_BLOCKERS.md no longer contains
+  any unresolved merge-conflict marker line — the orphan
+  ``<<<<<<< HEAD`` at line 254 introduced by PR #692 conflict
+  resolution is removed, byte-exact everywhere else.
+
+  tests/governance/test_no_unresolved_merge_markers.py carries 4
+  guard tests (test_governance_docs_have_no_unresolved_merge_markers,
+  test_research_docs_have_no_unresolved_merge_markers,
+  test_commit_acceptors_have_no_unresolved_merge_markers,
+  test_scanner_finds_markers_when_present) that fail-close the suite
+  on any future unresolved marker under docs/governance/,
+  docs/research/, or .claude/commit_acceptors/. The drift-sentinel
+  self-test asserts the scanner detects all four canonical markers
+  in a synthetic file with correct 1-based line numbers.
+
+  Locked-governance sha256 anchors byte-exact preserved:
+    D-002C claim ledger
+    eb0b7151d76e5409e6dc9bb4a023551de5e0704673d5ac9f726319ef84a32387;
+    D-002G acceptance rules
+    875b1e3eb031b8e5333dc8b455454f0a30419ead1ebe787aa01d5882e7d6ad31;
+    D-002G preregistration
+    1ab91f09370e4705a8b0849467bc1f56df2e58d58d5623d3b6d905cbd110bb04;
+    D-002H preregistration
+    44b18b5a40ce9d188a9c3bd49339621f81a65a15f97a683247902450dd54acec;
+    D-002I preregistration
+    b646989c032dc0e29f9b791e0b68209ff22b40f4757737712badc8656cf2db5f.
+
+  Pure hygiene: NO source code, NO canonical sweep, NO D-002* prereg
+  edit, NO ledger touch. Precondition for merging D-002J prereg
+  (PR #694) and D-002J-P1 data registry (PR #695).
+
+diff_scope:
+  changed_files:
+    - path: "docs/governance/D002G_CANONICAL_RUN_BLOCKERS.md"
+    - path: "tests/governance/test_no_unresolved_merge_markers.py"
+    - path: ".claude/commit_acceptors/x10r-hygiene-d002g-blockers-orphan-marker-cleanup.yaml"
+  forbidden_paths:
+    - "docs/governance/D002C_CLAIM_LEDGER.yaml"
+    - "docs/governance/D002C_PREREGISTRATION.yaml"
+    - "docs/governance/D002C_CANONICAL_RUN_REPORT.md"
+    - "docs/governance/D002C_ATTEMPT_2_NULL_AUDIT_FALSIFICATION_REPORT.md"
+    - "docs/governance/D002G_ACCEPTANCE_RULES.md"
+    - "docs/governance/D002G_PREREGISTRATION.yaml"
+    - "docs/governance/D002G_NONDEGENERATE_NULL_DESIGN.md"
+    - "docs/governance/D002G_P3_M3_PREREGISTRATION.md"
+    - "docs/governance/D002G_STRUCTURAL_CLOSURE_REPORT.md"
+    - "docs/governance/D002G_NEGATIVE_SPACE_MAP.md"
+    - "docs/governance/D002G_M3_ELIGIBILITY_MATRIX.md"
+    - "docs/governance/D002H_PREREGISTRATION.yaml"
+    - "docs/governance/D002H_SCOPE_RATIONALE.md"
+    - "docs/governance/D002H_CLAIM_BOUNDARY.md"
+    - "docs/governance/D002H_CANONICAL_RUN_AUTHORIZATION_GATES.md"
+    - "docs/governance/D002H_GATE_B_REPORT.md"
+    - "docs/governance/D002H_GATE_C_CANONICAL_GRID.md"
+    - "docs/governance/D002H_GATE_D_FORBIDDEN_CLAIM_SCAN.md"
+    - "docs/governance/D002H_GATE_E_LOCKED_FILE_REPORT.md"
+    - "docs/governance/D002H_GATE_F_AUTHORIZATION_REPORT.md"
+    - "docs/governance/D002H_GATE_G_CI_LOCK_REPORT.md"
+    - "docs/governance/D002H_R2B_INAPPLICABILITY_NOTE.md"
+    - "docs/governance/D002H_CANONICAL_RUN_REPORT.md"
+    - "docs/governance/D002I_PREREGISTRATION.yaml"
+    - "docs/governance/D002I_INVESTIGATION_RATIONALE.md"
+    - "docs/governance/D002I_CLAIM_BOUNDARY.md"
+    - "docs/governance/D002J_PREREGISTRATION.yaml"
+    - "artifacts/d002c/"
+    - "artifacts/d002d/"
+    - "artifacts/d002e/"
+    - "artifacts/d002f/"
+    - "artifacts/d002g/"
+    - "artifacts/d002h/"
+    - "artifacts/d002i/"
+    - "artifacts/d002j/"
+    - "research/systemic_risk/"
+    - "scripts/x10r_d002c.py"
+    - "scripts/x10r_d002d.py"
+    - "scripts/x10r_d002e.py"
+    - "scripts/x10r_d002f.py"
+    - "scripts/x10r_d002g.py"
+    - "scripts/x10r_d002h_gate_d_scan.py"
+    - "scripts/x10r_d002i.py"
+    - "scripts/x10r_d002j.py"
+required_python_symbols:
+  - "test_governance_docs_have_no_unresolved_merge_markers"
+  - "test_research_docs_have_no_unresolved_merge_markers"
+  - "test_commit_acceptors_have_no_unresolved_merge_markers"
+  - "test_scanner_finds_markers_when_present"
+expected_signal: >-
+  `PYTHONPATH=. python -m pytest
+  tests/governance/test_no_unresolved_merge_markers.py -v` reports
+  "4 passed"; `grep -nE
+  "^(<<<<<<<|=======|>>>>>>>|\|\|\|\|\|\|\|)"
+  docs/governance/D002G_CANONICAL_RUN_BLOCKERS.md` returns empty
+  (exit 1); D-002C claim ledger sha256 byte-exact at
+  eb0b7151d76e5409e6dc9bb4a023551de5e0704673d5ac9f726319ef84a32387;
+  D-002G acceptance rules sha256 byte-exact at
+  875b1e3eb031b8e5333dc8b455454f0a30419ead1ebe787aa01d5882e7d6ad31;
+  D-002G preregistration sha256 byte-exact at
+  1ab91f09370e4705a8b0849467bc1f56df2e58d58d5623d3b6d905cbd110bb04;
+  D-002H preregistration sha256 byte-exact at
+  44b18b5a40ce9d188a9c3bd49339621f81a65a15f97a683247902450dd54acec;
+  D-002I preregistration sha256 byte-exact at
+  b646989c032dc0e29f9b791e0b68209ff22b40f4757737712badc8656cf2db5f.
+measurement_command: >-
+  bash -c 'set -e;
+  PYTHONPATH=. python -m pytest tests/governance/test_no_unresolved_merge_markers.py -v;
+  ! grep -nE "^(<<<<<<<|=======|>>>>>>>|\|\|\|\|\|\|\|)" docs/governance/D002G_CANONICAL_RUN_BLOCKERS.md;
+  test "$(sha256sum docs/governance/D002C_CLAIM_LEDGER.yaml | awk "{print \$1}")" = "eb0b7151d76e5409e6dc9bb4a023551de5e0704673d5ac9f726319ef84a32387";
+  test "$(sha256sum docs/governance/D002G_ACCEPTANCE_RULES.md | awk "{print \$1}")" = "875b1e3eb031b8e5333dc8b455454f0a30419ead1ebe787aa01d5882e7d6ad31";
+  test "$(sha256sum docs/governance/D002G_PREREGISTRATION.yaml | awk "{print \$1}")" = "1ab91f09370e4705a8b0849467bc1f56df2e58d58d5623d3b6d905cbd110bb04";
+  test "$(sha256sum docs/governance/D002H_PREREGISTRATION.yaml | awk "{print \$1}")" = "44b18b5a40ce9d188a9c3bd49339621f81a65a15f97a683247902450dd54acec";
+  test "$(sha256sum docs/governance/D002I_PREREGISTRATION.yaml | awk "{print \$1}")" = "b646989c032dc0e29f9b791e0b68209ff22b40f4757737712badc8656cf2db5f"'
+signal_artifact: "tests/governance/test_no_unresolved_merge_markers.py"
+falsifier:
+  command: >-
+    bash -c 'set -e;
+    PYTHONPATH=. python -m pytest tests/governance/test_no_unresolved_merge_markers.py -v || exit 1;
+    test -f tests/governance/test_no_unresolved_merge_markers.py || exit 2;
+    test -f .claude/commit_acceptors/x10r-hygiene-d002g-blockers-orphan-marker-cleanup.yaml || exit 3;
+    if grep -nE "^(<<<<<<<|=======|>>>>>>>|\|\|\|\|\|\|\|)" docs/governance/D002G_CANONICAL_RUN_BLOCKERS.md; then exit 4; fi;
+    test "$(sha256sum docs/governance/D002C_CLAIM_LEDGER.yaml | awk "{print \$1}")" = "eb0b7151d76e5409e6dc9bb4a023551de5e0704673d5ac9f726319ef84a32387" || exit 5;
+    test "$(sha256sum docs/governance/D002G_ACCEPTANCE_RULES.md | awk "{print \$1}")" = "875b1e3eb031b8e5333dc8b455454f0a30419ead1ebe787aa01d5882e7d6ad31" || exit 6;
+    test "$(sha256sum docs/governance/D002G_PREREGISTRATION.yaml | awk "{print \$1}")" = "1ab91f09370e4705a8b0849467bc1f56df2e58d58d5623d3b6d905cbd110bb04" || exit 7;
+    test "$(sha256sum docs/governance/D002H_PREREGISTRATION.yaml | awk "{print \$1}")" = "44b18b5a40ce9d188a9c3bd49339621f81a65a15f97a683247902450dd54acec" || exit 8;
+    test "$(sha256sum docs/governance/D002I_PREREGISTRATION.yaml | awk "{print \$1}")" = "b646989c032dc0e29f9b791e0b68209ff22b40f4757737712badc8656cf2db5f" || exit 9'
+  description: >-
+    Probes the D-002G BLOCKERS orphan-marker hygiene contract: the
+    new guard test module exists and passes 4/4; the orphan marker
+    line is gone from BLOCKERS.md (grep finds zero merge markers);
+    the commit acceptor file exists; D-002C claim ledger, D-002G
+    acceptance rules, D-002G prereg, and D-002H prereg all sha256
+    byte-exact at their locked anchors. Regression on any -> hygiene
+    contract broken or locked governance file silently mutated.
+rollback_command: >-
+  bash -c 'rm -f
+  tests/governance/test_no_unresolved_merge_markers.py
+  .claude/commit_acceptors/x10r-hygiene-d002g-blockers-orphan-marker-cleanup.yaml
+  && git checkout HEAD~1 -- docs/governance/D002G_CANONICAL_RUN_BLOCKERS.md'
+rollback_verification_command: >-
+  bash -c 'test ! -f tests/governance/test_no_unresolved_merge_markers.py
+  && test ! -f .claude/commit_acceptors/x10r-hygiene-d002g-blockers-orphan-marker-cleanup.yaml
+  && grep -q "<<<<<<< HEAD" docs/governance/D002G_CANONICAL_RUN_BLOCKERS.md'
+memory_update_type: append
+ledger_path: ".claude/commit_acceptors/x10r-hygiene-d002g-blockers-orphan-marker-cleanup.yaml"
+report_path: "tests/governance/test_no_unresolved_merge_markers.py"
+evidence: []

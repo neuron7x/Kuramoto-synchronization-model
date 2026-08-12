@@ -1,9 +1,9 @@
 apiVersion: apps/v1
 kind: Deployment
 metadata:
-  name: tradepulse-api
+  name: geosync-api
   labels:
-    app.kubernetes.io/name: tradepulse-api
+    app.kubernetes.io/name: geosync-api
 spec:
   replicas: 3
   revisionHistoryLimit: 5
@@ -14,17 +14,17 @@ spec:
       maxUnavailable: 1
   selector:
     matchLabels:
-      app.kubernetes.io/name: tradepulse-api
+      app.kubernetes.io/name: geosync-api
   template:
     metadata:
       annotations:
         seccomp.security.alpha.kubernetes.io/pod: runtime/default
         co.elastic.logs/enabled: "true"
-        co.elastic.logs/module: tradepulse-api
+        co.elastic.logs/module: geosync-api
       labels:
-        app.kubernetes.io/name: tradepulse-api
+        app.kubernetes.io/name: geosync-api
     spec:
-      serviceAccountName: tradepulse-api
+      serviceAccountName: geosync-api
       automountServiceAccountToken: false
       terminationGracePeriodSeconds: 30
       securityContext:
@@ -39,10 +39,10 @@ spec:
           whenUnsatisfiable: DoNotSchedule
           labelSelector:
             matchLabels:
-              app.kubernetes.io/name: tradepulse-api
+              app.kubernetes.io/name: geosync-api
       containers:
-        - name: tradepulse-api
-          image: ghcr.io/neuron7x/tradepulse:latest
+        - name: geosync-api
+          image: ghcr.io/neuron7xLab/GeoSync:latest
           imagePullPolicy: IfNotPresent
           securityContext:
             allowPrivilegeEscalation: false
@@ -58,30 +58,30 @@ spec:
               cpu: "1"
               memory: 1Gi
           env:
-            - name: TRADEPULSE_AUDIT_SECRET
+            - name: GEOSYNC_AUDIT_SECRET
               valueFrom:
                 secretKeyRef:
-                  name: tradepulse-secrets
+                  name: geosync-secrets
                   key: audit-secret
-            - name: TRADEPULSE_OAUTH2_ISSUER
+            - name: GEOSYNC_OAUTH2_ISSUER
               valueFrom:
                 secretKeyRef:
-                  name: tradepulse-secrets
+                  name: geosync-secrets
                   key: oauth2-issuer
-            - name: TRADEPULSE_OAUTH2_AUDIENCE
+            - name: GEOSYNC_OAUTH2_AUDIENCE
               valueFrom:
                 secretKeyRef:
-                  name: tradepulse-secrets
+                  name: geosync-secrets
                   key: oauth2-audience
-            - name: TRADEPULSE_OAUTH2_JWKS_URI
+            - name: GEOSYNC_OAUTH2_JWKS_URI
               valueFrom:
                 secretKeyRef:
-                  name: tradepulse-secrets
+                  name: geosync-secrets
                   key: oauth2-jwks-uri
-            - name: TRADEPULSE_MTLS_TRUSTED_CA_PATH
-              value: /etc/tradepulse/tls/client-ca.pem
-            - name: TRADEPULSE_MTLS_REVOCATION_LIST_PATH
-              value: /etc/tradepulse/tls/client.crl
+            - name: GEOSYNC_MTLS_TRUSTED_CA_PATH
+              value: /etc/geosync/tls/client-ca.pem
+            - name: GEOSYNC_MTLS_REVOCATION_LIST_PATH
+              value: /etc/geosync/tls/client.crl
           ports:
             - containerPort: 8000
               name: http
@@ -113,7 +113,7 @@ spec:
             failureThreshold: 12
           volumeMounts:
             - name: tls-client-ca
-              mountPath: /etc/tradepulse/tls
+              mountPath: /etc/geosync/tls
               readOnly: true
             - name: tmp
               mountPath: /tmp
@@ -126,12 +126,12 @@ spec:
               podAffinityTerm:
                 labelSelector:
                   matchLabels:
-                    app.kubernetes.io/name: tradepulse-api
+                    app.kubernetes.io/name: geosync-api
                 topologyKey: kubernetes.io/hostname
       volumes:
         - name: tls-client-ca
           secret:
-            secretName: tradepulse-mtls-client
+            secretName: geosync-mtls-client
         - name: tmp
           emptyDir: {}
         - name: state-data

@@ -1,3 +1,5 @@
+# Copyright (c) 2023-2026 Yaroslav Vasylenko (neuron7xLab)
+# SPDX-License-Identifier: MIT
 """Tests for MLSDM CLI functionality."""
 
 from __future__ import annotations
@@ -8,7 +10,7 @@ from unittest.mock import MagicMock, patch
 
 import pytest
 
-from tradepulse.sdk.mlsdm.__main__ import (
+from geosync.sdk.mlsdm.__main__ import (
     JSONFormatter,
     build_arg_parser,
     configure_logging,
@@ -140,7 +142,7 @@ class TestBuildArgParser:
         assert args.config == "config/default_config.yaml"
         assert args.steps == 100
         assert args.api is False
-        assert args.host == "0.0.0.0"
+        assert args.host == "127.0.0.1"  # safe-by-default loopback (Bandit B104)
         assert args.port == 8000
 
     def test_parser_custom_config(self) -> None:
@@ -175,13 +177,19 @@ class TestBuildArgParser:
     def test_parser_all_args(self) -> None:
         """Test parser with all arguments."""
         parser = build_arg_parser()
-        args = parser.parse_args([
-            "--config", "test.yaml",
-            "--steps", "200",
-            "--api",
-            "--host", "localhost",
-            "--port", "3000",
-        ])
+        args = parser.parse_args(
+            [
+                "--config",
+                "test.yaml",
+                "--steps",
+                "200",
+                "--api",
+                "--host",
+                "localhost",
+                "--port",
+                "3000",
+            ]
+        )
 
         assert args.config == "test.yaml"
         assert args.steps == 200
@@ -193,13 +201,13 @@ class TestBuildArgParser:
 class TestMainFunction:
     """Tests for main function."""
 
-    @patch("tradepulse.sdk.mlsdm.__main__.ConfigLoader.load_config")
-    @patch("tradepulse.sdk.mlsdm.__main__.MemoryManager")
+    @patch("geosync.sdk.mlsdm.__main__.ConfigLoader.load_config")
+    @patch("geosync.sdk.mlsdm.__main__.MemoryManager")
     def test_main_simulation_success(
         self, mock_manager_class: MagicMock, mock_load_config: MagicMock
     ) -> None:
         """Test main function with successful simulation."""
-        from tradepulse.sdk.mlsdm.__main__ import main
+        from geosync.sdk.mlsdm.__main__ import main
 
         mock_load_config.return_value = {"fhmc": {}}
         mock_manager = MagicMock()
@@ -211,10 +219,10 @@ class TestMainFunction:
         mock_load_config.assert_called_once()
         mock_manager.run_simulation.assert_called_once_with(10)
 
-    @patch("tradepulse.sdk.mlsdm.__main__.ConfigLoader.load_config")
+    @patch("geosync.sdk.mlsdm.__main__.ConfigLoader.load_config")
     def test_main_config_load_failure(self, mock_load_config: MagicMock) -> None:
         """Test main function with config load failure."""
-        from tradepulse.sdk.mlsdm.__main__ import main
+        from geosync.sdk.mlsdm.__main__ import main
 
         mock_load_config.side_effect = FileNotFoundError("Config not found")
 
@@ -223,13 +231,13 @@ class TestMainFunction:
                 main()
             assert exc_info.value.code == 1
 
-    @patch("tradepulse.sdk.mlsdm.__main__.ConfigLoader.load_config")
-    @patch("tradepulse.sdk.mlsdm.__main__.MemoryManager")
+    @patch("geosync.sdk.mlsdm.__main__.ConfigLoader.load_config")
+    @patch("geosync.sdk.mlsdm.__main__.MemoryManager")
     def test_main_simulation_failure(
         self, mock_manager_class: MagicMock, mock_load_config: MagicMock
     ) -> None:
         """Test main function with simulation failure."""
-        from tradepulse.sdk.mlsdm.__main__ import main
+        from geosync.sdk.mlsdm.__main__ import main
 
         mock_load_config.return_value = {"fhmc": {}}
         mock_manager = MagicMock()
@@ -245,7 +253,7 @@ class TestMainFunction:
         """Test main function in API mode."""
         import sys
 
-        from tradepulse.sdk.mlsdm.__main__ import main
+        from geosync.sdk.mlsdm.__main__ import main
 
         # Create a mock uvicorn module and inject it
         mock_uvicorn = MagicMock()
@@ -256,7 +264,7 @@ class TestMainFunction:
 
         try:
             with patch("sys.argv", ["mlsdm", "--api", "--host", "localhost", "--port", "9000"]):
-                with patch("tradepulse.sdk.mlsdm.api.app.app", mock_app):
+                with patch("geosync.sdk.mlsdm.api.app.app", mock_app):
                     main()
 
             # Verify uvicorn.run was called with correct parameters

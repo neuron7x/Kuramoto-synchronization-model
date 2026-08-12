@@ -1,0 +1,62 @@
+id: opponency-lyapunov-stability
+status: ACTIVE
+claim_type: correctness
+promise: >-
+  N5: a Lyapunov stability certificate proves the DA/5-HT opponent-process ODE is
+  globally asymptotically stable. The system matrix is verified against the real
+  AllostaticRegulator Jacobian, it is Hurwitz, a positive-definite P solves
+  A^T P + P A = -Q, and V(x)=x^T P x contracts from a grid of initial conditions.
+  The allostatic clamp is a safety margin, not the only guard against divergence.
+diff_scope:
+  changed_files:
+    - path: ".claude/commit_acceptors/opponency-lyapunov-stability.yaml"
+    - path: "tools/audit_opponency_lyapunov.py"
+    - path: "scripts/ci/validate_inference_artifacts.py"
+    - path: "tests/unit/neuro/test_opponency_lyapunov.py"
+    - path: "tests/ci/test_opponency_lyapunov_certificate.py"
+    - path: "artifacts/neuro/opponency_lyapunov.json"
+    - path: "audit/schema/opponency_lyapunov.schema.json"
+  forbidden_paths:
+    - "execution/"
+    - "core/neuro/"
+required_python_symbols:
+  - "tools/audit_opponency_lyapunov.py::build_certificate"
+  - "tools/audit_opponency_lyapunov.py::_measured_jacobian"
+expected_signal: >-
+  `python -m pytest --import-mode=importlib tests/unit/neuro/test_opponency_lyapunov.py
+  tests/ci/test_opponency_lyapunov_certificate.py -q` passes; the certificate is
+  STABLE with a Hurwitz matrix matching the real ODE and a positive-definite P.
+measurement_command: >-
+  bash -c '
+    python -m pytest --import-mode=importlib -p no:cacheprovider
+      tests/unit/neuro/test_opponency_lyapunov.py
+      tests/ci/test_opponency_lyapunov_certificate.py -q
+  '
+signal_artifact: "tmp/opponency_lyapunov_stability.log"
+falsifier:
+  command: |-
+    bash -c '
+      python -c "
+    import importlib.util
+    import numpy as np
+    spec = importlib.util.spec_from_file_location(\"ly\", \"tools/audit_opponency_lyapunov.py\")
+    ly = importlib.util.module_from_spec(spec); spec.loader.exec_module(ly)
+    rep = ly.build_certificate()
+    ok = rep[\"gate\"] == \"STABLE\" and all(c[\"holds\"] for c in rep[\"checks\"])
+    ok = ok and np.allclose(ly._A, ly._measured_jacobian(), atol=1e-5)
+    ok = ok and ly._empirical_contraction(-np.eye(3)) is False
+    raise SystemExit(0 if ok else \"opponency not certified stable or contraction check unsound\")
+    "
+    '
+  description: >-
+    Builds the certificate, checks it is STABLE with a matrix matching the real
+    ODE, and confirms the contraction check rejects a non-Lyapunov P (negative
+    control). Exits 0 when the opponency is certified stable; non-zero otherwise.
+rollback_command: >-
+  bash -c 'git rm -f .claude/commit_acceptors/opponency-lyapunov-stability.yaml'
+rollback_verification_command: >-
+  bash -c 'test ! -f .claude/commit_acceptors/opponency-lyapunov-stability.yaml'
+memory_update_type: append
+ledger_path: ".claude/commit_acceptors/opponency-lyapunov-stability.yaml"
+report_path: "tmp/opponency_lyapunov_stability.log"
+evidence: []

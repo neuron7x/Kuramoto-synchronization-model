@@ -17,34 +17,34 @@
 
 | Модель | Каталог | Standalone package | Призначення |
 | --- | --- | --- | --- |
-| FPMA | `analytics/fpma/` | `tradepulse-fpma` | Фрактальна фазово-режимна модель для allocation/regime-aware portfolio logic. |
-| Regime | `analytics/regime/` | `tradepulse-regime` | Багатовимірний аналіз режимів ринку, EWS і consensus routing. |
-| Order Book | `markets/orderbook/` | `tradepulse-orderbook` | Симуляція LOB, інжест снапшотів/діфів і мікроструктурні події. |
-| NaK Controller | `nak_controller/` | `tradepulse-nak` | Нейроенергетичний лімітер для risk/exposure/frequency control. |
-| NeuroTrade Pro | `neurotrade_pro/` | `neurotrade-pro` | EMH-inspired state-space controller з EKF, MPC і CVaR gate. |
+| FPMA | `analytics/fpma/` | `geosync-fpma` | Фрактальна фазово-режимна модель для allocation/regime-aware portfolio logic. |
+| Regime | `analytics/regime/` | `geosync-regime` | Багатовимірний аналіз режимів ринку, EWS і consensus routing. |
+| Order Book | `markets/orderbook/` | `geosync-orderbook` | Симуляція LOB, інжест снапшотів/діфів і мікроструктурні події. |
+| NaK Controller | `nak_controller/` | `geosync-nak` | Нейроенергетичний лімітер для risk/exposure/frequency control. |
+| GeoSync Pro | `geosync_pro/` | `geosync-pro` | EMH-inspired state-space controller з EKF, MPC і CVaR gate. |
 
 ## Правила меж
 
 ### 1. FPMA
 - Залежить лише від власного `src/` та числового стеку.
-- Публічний standalone API експортується через `tradepulse_fpma`.
+- Публічний standalone API експортується через `geosync_fpma`.
 - Для відокремлення не потребує решти торгового контуру.
 
 ### 2. Regime
 - Ядро (`src/core`) є самодостатнім.
 - Consensus layer лишається опційним інтеграційним контуром.
-- Standalone API експортується через `tradepulse_regime`.
+- Standalone API експортується через `geosync_regime`.
 
 ### 3. Order Book
 - Має повністю локальне ядро `src/core` та локальний ingest у `src/ingest`.
-- Standalone API експортується через `tradepulse_orderbook`.
+- Standalone API експортується через `geosync_orderbook`.
 - Може служити окремим сервісом симуляції або тестовим harness для execution.
 
 ### 4. NaK Controller
 - Уже мав локальний `pyproject.toml` і майже повну автономність.
 - Залишається окремою моделлю контролю, яку можна підключати через hook.
 
-### 5. NeuroTrade Pro
+### 5. GeoSync Pro
 - Має завершений внутрішній цикл: модель → оцінювання → policy → risk → validate.
 - Додано локальний `pyproject.toml` для повністю автономного пакування.
 
@@ -57,7 +57,7 @@ cd analytics/regime && python -m pip install -e .[test]
 cd analytics/fpma && python -m pip install -e .[test]
 cd markets/orderbook && python -m pip install -e .[test]
 cd nak_controller && python -m pip install -e .
-cd neurotrade_pro && python -m pip install -e .[test]
+cd geosync_pro && python -m pip install -e .[test]
 ```
 
 ### Критерії “справді незалежної” моделі

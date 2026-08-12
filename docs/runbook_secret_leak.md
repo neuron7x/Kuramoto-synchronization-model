@@ -3,7 +3,7 @@
 ## Purpose
 
 Provide a deterministic response plan for suspected or confirmed secret leaks
-impacting TradePulse. The goal is to contain exposure, rotate credentials,
+impacting GeoSync. The goal is to contain exposure, rotate credentials,
 restore trust in the environment, and capture forensic evidence.
 
 ## Scope

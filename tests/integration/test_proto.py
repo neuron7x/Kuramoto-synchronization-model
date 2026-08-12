@@ -1,4 +1,5 @@
-# SPDX-License-Identifier: LicenseRef-TradePulse-Proprietary
+# Copyright (c) 2023-2026 Yaroslav Vasylenko (neuron7xLab)
+# SPDX-License-Identifier: MIT
 from __future__ import annotations
 
 import pathlib
@@ -21,7 +22,7 @@ def test_dynamic_proto_roundtrip(tmp_path) -> None:
 
     file_desc = descriptor_pb2.FileDescriptorProto()
     file_desc.name = "market_data.proto"
-    file_desc.package = "tradepulse.market.v1"
+    file_desc.package = "geosync.market.v1"
 
     trade = file_desc.message_type.add()
     trade.name = "Trade"
@@ -46,7 +47,7 @@ def test_dynamic_proto_roundtrip(tmp_path) -> None:
 
     pool = descriptor_pool.DescriptorPool()
     pool.Add(file_desc)
-    trade_descriptor = pool.FindMessageTypeByName("tradepulse.market.v1.Trade")
+    trade_descriptor = pool.FindMessageTypeByName("geosync.market.v1.Trade")
 
     get_message_class = getattr(message_factory, "GetMessageClass", None)
     if get_message_class is not None:

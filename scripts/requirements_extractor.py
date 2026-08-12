@@ -1,4 +1,6 @@
-"""Requirement extraction utility for TradePulse.
+# Copyright (c) 2023-2026 Yaroslav Vasylenko (neuron7xLab)
+# SPDX-License-Identifier: MIT
+"""Requirement extraction utility for GeoSync.
 
 This script parses a markdown specification (default: ``docs/requirements/product_specification.md``) and
 derives a structured backlog. It focuses on Ukrainian key phrases that signal
@@ -225,9 +227,7 @@ class RequirementExtractor:
         if not requirements:
             gaps.append("У документі не знайдено жодної фрази з ключовими словами")
 
-        duplicates = {
-            text: ids for text, ids in normalized_index.items() if len(ids) > 1
-        }
+        duplicates = {text: ids for text, ids in normalized_index.items() if len(ids) > 1}
         for ids in duplicates.values():
             for req in requirements:
                 if req.identifier in ids and "дублікат" not in req.flags:
@@ -333,9 +333,7 @@ class RequirementExtractor:
         return flags
 
 
-def write_csv(
-    path: Path, rows: Iterable[dict[str, str]], headers: Sequence[str]
-) -> None:
+def write_csv(path: Path, rows: Iterable[dict[str, str]], headers: Sequence[str]) -> None:
     with path.open("w", encoding="utf-8", newline="") as handle:
         writer = csv.DictWriter(handle, fieldnames=headers)
         writer.writeheader()

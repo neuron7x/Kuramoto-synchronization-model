@@ -1,3 +1,5 @@
+# Copyright (c) 2023-2026 Yaroslav Vasylenko (neuron7xLab)
+# SPDX-License-Identifier: MIT
 """Aggregation utilities for AAR (Acceptor of Action Result).
 
 This module provides aggregation mechanisms for error signals:
@@ -112,9 +114,7 @@ class SlidingWindowAggregator:
         positive = sum(1 for s in signs_list if s > 0)
         negative = sum(1 for s in signs_list if s < 0)
 
-        catastrophic = sum(
-            1 for ae in abs_errors_list if ae > self.catastrophic_threshold
-        )
+        catastrophic = sum(1 for ae in abs_errors_list if ae > self.catastrophic_threshold)
         catastrophic_rate = catastrophic / n if n > 0 else 0.0
 
         return AggregateStats(

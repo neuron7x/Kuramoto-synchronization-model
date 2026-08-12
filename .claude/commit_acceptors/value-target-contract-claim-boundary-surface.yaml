@@ -1,0 +1,49 @@
+id: value-target-contract-claim-boundary-surface
+status: ACTIVE
+claim_type: governance
+promise: >-
+  The new value-target-contract module is registered as a claim-bearing code
+  surface so the product-category claim-boundary firewall scans its prose. The
+  change is purely additive to CODE_SURFACE_FILES in
+  scripts/ci/check_claim_boundary.py; it adds no boundary-sensitive phrase,
+  weakens no existing pattern, and the gate continues to pass with one more
+  scanned surface. This makes the module's no-forecast / no-predictive-rank
+  boundary load-bearing in CI rather than aspirational.
+diff_scope:
+  changed_files:
+    - path: "scripts/ci/check_claim_boundary.py"
+    - path: ".claude/commit_acceptors/value-target-contract-claim-boundary-surface.yaml"
+  forbidden_paths:
+    - "trading/"
+    - "execution/"
+    - "forecast/"
+    - "policy/"
+required_python_symbols:
+  - "CODE_SURFACE_FILES"
+expected_signal: >-
+  scripts/ci/check_claim_boundary.py exits 0 and reports the value-target
+  contract module among the scanned claim-bearing code surfaces; the prose
+  firewall test in the contract test module confirms no product / forecast /
+  predictive-rank prose is present.
+measurement_command: >-
+  python scripts/ci/check_claim_boundary.py
+signal_artifact: "scripts/ci/check_claim_boundary.py"
+falsifier:
+  command: >-
+    python -m pytest -q
+    tests/unit/indicators/test_value_target_contract.py::test_no_forbidden_product_prose
+  description: >-
+    Inverse falsifier probe. Introduce product-category / forecast prose
+    (e.g. "trading signal", "predictor", "predictive rank") into
+    core/indicators/value_target_contract.py. Because the module is now a
+    registered claim-bearing surface, the prose-firewall test must return
+    non-zero rather than silently passing, proving the surface registration is
+    load-bearing.
+rollback_command: >-
+  git checkout HEAD~1 -- scripts/ci/check_claim_boundary.py
+rollback_verification_command: >-
+  python tools/commit_acceptor/validate_commit_acceptor.py
+memory_update_type: none
+ledger_path: ".claude/commit_acceptors/value-target-contract-claim-boundary-surface.yaml"
+report_path: ".claude/commit_acceptors/value-target-contract-claim-boundary-surface.yaml"
+evidence: []

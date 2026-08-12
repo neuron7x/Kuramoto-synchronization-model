@@ -2,11 +2,11 @@
 
 ## Огляд
 
-`ModuleInteractionOrchestrator` — це централізований механізм для керування послідовністю взаємодій між модулями TradePulse. Він забезпечує правильний порядок виконання модулів на основі їх залежностей та фаз, надаючи уніфікований спосіб координації роботи всього пайплайну.
+`ModuleInteractionOrchestrator` — це централізований механізм для керування послідовністю взаємодій між модулями GeoSync. Він забезпечує правильний порядок виконання модулів на основі їх залежностей та фаз, надаючи уніфікований спосіб координації роботи всього пайплайну.
 
 ## Overview
 
-The `ModuleInteractionOrchestrator` is a centralized mechanism for managing the sequence of interactions between TradePulse modules. It ensures correct execution order based on dependencies and phases, providing a unified way to coordinate the entire pipeline.
+The `ModuleInteractionOrchestrator` is a centralized mechanism for managing the sequence of interactions between GeoSync modules. It ensures correct execution order based on dependencies and phases, providing a unified way to coordinate the entire pipeline.
 
 ## Основні можливості / Key Features
 
@@ -143,19 +143,19 @@ orchestrator.remove_module("unused_module")
 ingestion_modules = orchestrator.list_modules_by_phase(ModulePhase.INGESTION)
 ```
 
-## Інтеграція з TradePulse / Integration with TradePulse
+## Інтеграція з GeoSync / Integration with GeoSync
 
-Оркестратор інтегрується з існуючою системою TradePulse для керування повним циклом торгівлі:
+Оркестратор інтегрується з існуючою системою GeoSync для керування повним циклом торгівлі:
 
-The orchestrator integrates with the existing TradePulse system to manage the full trading cycle:
+The orchestrator integrates with the existing GeoSync system to manage the full trading cycle:
 
 ```python
-from application.system_orchestrator import TradePulseOrchestrator, build_tradepulse_system
+from application.system_orchestrator import GeoSyncOrchestrator, build_geosync_system
 from core.orchestrator import ModuleInteractionOrchestrator, ModuleDefinition, ModulePhase
 
-# Створення системи TradePulse / Create TradePulse system
-system = build_tradepulse_system()
-tp_orchestrator = TradePulseOrchestrator(system)
+# Створення системи GeoSync / Create GeoSync system
+system = build_geosync_system()
+tp_orchestrator = GeoSyncOrchestrator(system)
 
 # Створення оркестратора взаємодій / Create interaction orchestrator
 module_orchestrator = ModuleInteractionOrchestrator()
@@ -347,7 +347,7 @@ python examples/module_interaction_orchestrator_demo.py
 
 ## Див. також / See Also
 
-- [TradePulseOrchestrator](../application/system_orchestrator.py) — Головний оркестратор системи
+- [GeoSyncOrchestrator](../application/system_orchestrator.py) — Головний оркестратор системи
 - [ModeOrchestrator](../core/orchestrator/mode_orchestrator.py) — Керування режимами торгівлі
 - [StrategyOrchestrator](../core/agent/orchestrator.py) — Координація паралельних стратегій
 - [Conceptual Architecture](./architecture/CONCEPTUAL_ARCHITECTURE.md) — Архітектура системи

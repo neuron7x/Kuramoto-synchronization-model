@@ -1,8 +1,10 @@
+# Copyright (c) 2023-2026 Yaroslav Vasylenko (neuron7xLab)
+# SPDX-License-Identifier: MIT
 """Regenerate protobuf artefacts consistently across platforms."""
 
 from __future__ import annotations
 
-# SPDX-License-Identifier: LicenseRef-TradePulse-Proprietary
+# SPDX-License-Identifier: MIT
 import logging
 from argparse import _SubParsersAction
 
@@ -12,14 +14,12 @@ LOGGER = logging.getLogger(__name__)
 
 
 def build_parser(subparsers: _SubParsersAction[object]) -> None:
-    parser = subparsers.add_parser(
-        "gen-proto", help="Regenerate protobuf artefacts via buf"
-    )
+    parser = subparsers.add_parser("gen-proto", help="Regenerate protobuf artefacts via buf")
     parser.set_defaults(command="gen-proto", handler=handle)
 
 
 @register("gen-proto")
-def handle(args: object) -> int:  # noqa: ARG001 - required signature
+def handle(args: object) -> int:
     from shutil import which
 
     if which("buf") is None:

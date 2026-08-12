@@ -9,7 +9,7 @@ Accepted
 
 ## Context
 
-TradePulse spans multiple bounded domains (research, execution, runtime control) that evolve independently. Without formalized contracts, interface drift leads to:
+GeoSync spans multiple bounded domains (research, execution, runtime control) that evolve independently. Without formalized contracts, interface drift leads to:
 - Integration failures across `core/`, `execution/`, and `runtime/`.
 - Undetected schema changes in strategy inputs/outputs.
 - Higher onboarding time due to implicit coupling.

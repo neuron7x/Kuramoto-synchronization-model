@@ -1,0 +1,15 @@
+{
+  "task": "WP3 proof-carrying action gateway",
+  "cases": {
+    "valid_authorized": true,
+    "replay_denied": true,
+    "arg_mutation_denied": true,
+    "wrong_destination_denied": true,
+    "expired_denied": true,
+    "revoked_authority_denied": true,
+    "forged_unsigned_cert_denied": true
+  },
+  "certificate_bypass_rate": 0.0,
+  "deny_side_effect_rate": 0.0,
+  "verdict": "ACTION_CERTIFICATE_PASS"
+}

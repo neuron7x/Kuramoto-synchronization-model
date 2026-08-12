@@ -1,3 +1,5 @@
+# Copyright (c) 2023-2026 Yaroslav Vasylenko (neuron7xLab)
+# SPDX-License-Identifier: MIT
 """High-level data ingestion services and helpers."""
 
 from src.data.backlog_watermark import (

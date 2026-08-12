@@ -1,0 +1,33 @@
+# SPDX-License-Identifier: MIT
+id: pip-audit-high-gate-failclosed
+status: DRAFT
+claim_type: fail_closed
+promise: "The pip-audit HIGH/CRITICAL gate fails closed: it derives each advisory's severity from the CVSS vector (pip-audit JSON carries no severity field) instead of reading the always-absent vuln['severity'], so a HIGH/CRITICAL advisory now fails the gate and an un-rateable advisory is treated as CRITICAL; ledgered, non-expired advisories are exempt."
+diff_scope:
+  changed_files:
+    - path: ".github/scripts/pip_audit_high_gate.py"
+    - path: "tests/security/test_pip_audit_high_gate.py"
+    - path: ".claude/commit_acceptors/pip-audit-high-gate-failclosed.yaml"
+  forbidden_paths:
+    - "trading/"
+    - "execution/"
+    - "forecast/"
+    - "policy/"
+required_python_symbols:
+  - "cvss3_base_score"
+  - "classify"
+  - "evaluate"
+  - "blocking_findings"
+  - "load_active_exceptions"
+expected_signal: "The gate regression suite passes, including test_high_finding_blocks, which asserts a synthetic HIGH advisory yields exit 1 (it would have passed silently against the vacuous implementation)."
+measurement_command: "python -m pytest -q tests/security/test_pip_audit_high_gate.py"
+signal_artifact: "tmp/pip_audit_high_gate_tests.log"
+falsifier:
+  command: "python -c \"import importlib.util,sys; s=importlib.util.spec_from_file_location('g','.github/scripts/pip_audit_high_gate.py'); g=importlib.util.module_from_spec(s); s.loader.exec_module(g); f=g.evaluate([{'dependencies':[{'name':'x','version':'1','vulns':[{'id':'X','aliases':[]}]}]}], resolver=lambda a,al:'HIGH', active_exceptions=set()); sys.exit(0 if not g.blocking_findings(f) else 1)\""
+  description: "Feeds a synthetic HIGH advisory through the gate and exits 0 only if it is NOT blocked (the old vacuous behaviour). On the fixed tree the finding is blocked, so the command exits non-zero — proving the promise is falsifiable."
+rollback_command: "git revert --no-edit HEAD"
+rollback_verification_command: "git diff --exit-code .github/scripts/pip_audit_high_gate.py"
+memory_update_type: none
+ledger_path: ".claude/commit_acceptors/pip-audit-high-gate-failclosed.yaml"
+report_path: "docs/reports/diff_bound_commit_acceptor_layer.md"
+evidence: []

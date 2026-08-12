@@ -16,16 +16,16 @@ Initiate this runbook when any of the following conditions occur:
 
 - **SLO breach** for model inference latency or availability (see
   [`docs/reliability.md`](reliability.md#service-level-objectives)).
-- **Alerting**: `tradepulse_model_inference_error_ratio` above threshold or
+- **Alerting**: `geosync_model_inference_error_ratio` above threshold or
   sustained p95 latency regression in
-  `tradepulse_model_inference_latency_quantiles_seconds`.
-- **Quality regression**: `tradepulse_model_quality_degradation_events_total`
+  `geosync_model_inference_latency_quantiles_seconds`.
+- **Quality regression**: `geosync_model_quality_degradation_events_total`
   increases or model-score distribution shifts on the model monitoring dashboard.
 
 ## Required Dashboards & Logs
 
-- Grafana: `observability/dashboards/tradepulse-production-operations.json`
-- Grafana: `observability/dashboards/tradepulse-latency-insights.json`
+- Grafana: `observability/dashboards/geosync-production-operations.json`
+- Grafana: `observability/dashboards/geosync-latency-insights.json`
 - Model monitoring jobs in `observability/model_monitoring.py`
 - Drift monitors in `observability/drift.py`
 
@@ -38,8 +38,8 @@ Initiate this runbook when any of the following conditions occur:
    - Feature store freshness and ingestion lag.
    - Queue depth/backpressure (if inference is async).
 3. **Check resource saturation**
-   - GPU/CPU utilization metrics (`tradepulse_model_gpu_percent`,
-     `tradepulse_model_cpu_percent`).
+   - GPU/CPU utilization metrics (`geosync_model_gpu_percent`,
+     `geosync_model_cpu_percent`).
 4. **Inspect recent changes**
    - Last deploy, config changes, feature flag toggles, or canary rollouts.
 

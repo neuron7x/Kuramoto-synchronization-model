@@ -1,3 +1,5 @@
+# Copyright (c) 2023-2026 Yaroslav Vasylenko (neuron7xLab)
+# SPDX-License-Identifier: MIT
 from __future__ import annotations
 
 import importlib
@@ -17,14 +19,10 @@ def test_numeric_module_imports_without_numpy() -> None:
         assert not numeric._NUMPY_AVAILABLE
         assert not numeric._RUST_ACCEL_AVAILABLE
 
-        windows = numeric.sliding_windows(
-            [1, 2, 3, 4], window=2, step=1, use_rust=False
-        )
+        windows = numeric.sliding_windows([1, 2, 3, 4], window=2, step=1, use_rust=False)
         assert windows == [[1.0, 2.0], [2.0, 3.0], [3.0, 4.0]]
 
-        quantile_values = numeric.quantiles(
-            [1, 2, 3, 4], [0.25, 0.5, 0.75], use_rust=False
-        )
+        quantile_values = numeric.quantiles([1, 2, 3, 4], [0.25, 0.5, 0.75], use_rust=False)
         assert quantile_values == [1.75, 2.5, 3.25]
 
         convolution = numeric.convolve([1, 2, 3], [1, 1], mode="valid", use_rust=False)

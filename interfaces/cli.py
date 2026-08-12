@@ -1,4 +1,5 @@
-# SPDX-License-Identifier: LicenseRef-TradePulse-Proprietary
+# Copyright (c) 2023-2026 Yaroslav Vasylenko (neuron7xLab)
+# SPDX-License-Identifier: MIT
 """Command-line interface orchestrating research and operations workflows.
 
 The CLI glues together ingestion, indicator computation, backtesting, and live
@@ -109,9 +110,7 @@ def signal_from_indicators(
             else:
                 futures = {
                     "entropy": executor.submit(entropy, window_prices),
-                    "delta_entropy": executor.submit(
-                        delta_entropy, prefix, window=window
-                    ),
+                    "delta_entropy": executor.submit(delta_entropy, prefix, window=window),
                     "ricci": executor.submit(_compute_ricci, window_prices),
                 }
                 H = futures["entropy"].result()
@@ -342,11 +341,7 @@ def cmd_analyze(args):
     try:
         from core.indicators.kuramoto import compute_phase_gpu
 
-        phases = (
-            compute_phase_gpu(prices)
-            if getattr(args, "gpu", False)
-            else compute_phase(prices)
-        )
+        phases = compute_phase_gpu(prices) if getattr(args, "gpu", False) else compute_phase(prices)
         R = kuramoto_order(phases[-args.window :])
         H = entropy(prices[-args.window :], bins=args.bins)
         dH = delta_entropy(prices, window=args.window, bins_range=(10, 50))
@@ -584,31 +579,29 @@ def _run_with_trace_context(cmd_name: str, args: argparse.Namespace) -> None:
         This helper ensures every CLI invocation participates in distributed
         tracing as outlined in ``docs/monitoring.md``.
     """
-    tracer = get_tracer("tradepulse.cli")
-    inbound = getattr(args, "traceparent", None) or os.environ.get(
-        "TRADEPULSE_TRACEPARENT"
-    )
+    tracer = get_tracer("geosync.cli")
+    inbound = getattr(args, "traceparent", None) or os.environ.get("GEOSYNC_TRACEPARENT")
     with activate_traceparent(inbound):
         with tracer.start_as_current_span(
             f"cli.{cmd_name}",
             attributes={"cli.command": cmd_name},
         ):
             outbound = current_traceparent()
-            previous = os.environ.get("TRADEPULSE_TRACEPARENT")
+            previous = os.environ.get("GEOSYNC_TRACEPARENT")
             if outbound:
-                os.environ["TRADEPULSE_TRACEPARENT"] = outbound
+                os.environ["GEOSYNC_TRACEPARENT"] = outbound
             try:
                 args.func(args)
             finally:
                 if outbound:
                     if previous is None:
-                        os.environ.pop("TRADEPULSE_TRACEPARENT", None)
+                        os.environ.pop("GEOSYNC_TRACEPARENT", None)
                     else:
-                        os.environ["TRADEPULSE_TRACEPARENT"] = previous
+                        os.environ["GEOSYNC_TRACEPARENT"] = previous
 
 
 def main():
-    """Main entry point for the TradePulse CLI.
+    """Main entry point for the GeoSync CLI.
 
     Provides three main commands:
     - analyze: Compute market indicators from price data
@@ -616,29 +609,27 @@ def main():
     - live: Launch live trading with risk management
     """
     p = argparse.ArgumentParser(
-        prog="tradepulse",
-        description="TradePulse - Advanced Algorithmic Trading Framework with Geometric Market Indicators",
+        prog="geosync",
+        description="GeoSync - Advanced Algorithmic Trading Framework with Geometric Market Indicators",
         epilog="""
 Examples:
   # Analyze a CSV file with default settings
-  tradepulse analyze --csv prices.csv
+  geosync analyze --csv prices.csv
 
   # Analyze with custom window and column
-  tradepulse analyze --csv data.csv --price-col close --window 100
+  geosync analyze --csv data.csv --price-col close --window 100
 
   # Run a backtest on historical data
-  tradepulse backtest --csv historical.csv --fee 0.001
+  geosync backtest --csv historical.csv --fee 0.001
 
   # Launch live trading (requires configuration)
-  tradepulse live --config configs/live/binance.toml
+  geosync live --config configs/live/binance.toml
 
-For detailed documentation, visit: https://github.com/neuron7x/TradePulse
+For detailed documentation, visit: https://github.com/neuron7xLab/GeoSync
 """,
         formatter_class=argparse.RawDescriptionHelpFormatter,
     )
-    sub = p.add_subparsers(
-        dest="cmd", required=True, help="Available commands", metavar="COMMAND"
-    )
+    sub = p.add_subparsers(dest="cmd", required=True, help="Available commands", metavar="COMMAND")
 
     trace_arg_help = "W3C traceparent header used to join an existing distributed trace"
 
@@ -647,7 +638,7 @@ For detailed documentation, visit: https://github.com/neuron7x/TradePulse
         "analyze",
         help="Compute geometric and technical indicators from price data",
         description="""
-Analyze market data using TradePulse's suite of geometric indicators including:
+Analyze market data using GeoSync's suite of geometric indicators including:
 - Kuramoto Order Parameter (phase synchronization)
 - Shannon Entropy (information content)
 - Hurst Exponent (long-term memory)
@@ -658,16 +649,16 @@ Outputs comprehensive JSON analysis suitable for pipelines and auditing.
         epilog="""
 Examples:
   # Basic analysis with default settings
-  tradepulse analyze --csv prices.csv
+  geosync analyze --csv prices.csv
 
   # Use a custom price column and window size
-  tradepulse analyze --csv data.csv --price-col close --window 100
+  geosync analyze --csv data.csv --price-col close --window 100
 
   # Enable GPU acceleration for faster processing
-  tradepulse analyze --csv large_dataset.csv --gpu
+  geosync analyze --csv large_dataset.csv --gpu
 
   # Use configuration from YAML file
-  tradepulse analyze --csv prices.csv --config settings.yaml
+  geosync analyze --csv prices.csv --config settings.yaml
 
 Output is JSON-formatted and includes:
   - R: Kuramoto order parameter (0-1, higher = more synchronized)
@@ -705,9 +696,7 @@ Output is JSON-formatted and includes:
         default=0.005,
         help="Step size for Ricci curvature calculation (default: 0.005)",
     )
-    pa.add_argument(
-        "--config", help="Path to YAML configuration file (optional)", default=None
-    )
+    pa.add_argument("--config", help="Path to YAML configuration file (optional)", default=None)
     pa.add_argument(
         "--gpu",
         action="store_true",
@@ -730,13 +719,13 @@ Outputs performance metrics including PnL, max drawdown, and trade count.
         epilog="""
 Examples:
   # Run backtest with default settings
-  tradepulse backtest --csv historical.csv
+  geosync backtest --csv historical.csv
 
   # Specify custom fee and window
-  tradepulse backtest --csv data.csv --fee 0.001 --window 150
+  geosync backtest --csv data.csv --fee 0.001 --window 150
 
   # Use custom price column from OHLCV data
-  tradepulse backtest --csv ohlcv.csv --price-col close
+  geosync backtest --csv ohlcv.csv --price-col close
 
 Output metrics:
   - pnl: Total profit/loss
@@ -769,12 +758,8 @@ Output metrics:
         default=0.0005,
         help="Transaction fee as a fraction (default: 0.0005 = 0.05%%)",
     )
-    pb.add_argument(
-        "--config", help="Path to YAML configuration file (optional)", default=None
-    )
-    pb.add_argument(
-        "--gpu", action="store_true", help="Enable GPU acceleration (requires CUDA)"
-    )
+    pb.add_argument("--config", help="Path to YAML configuration file (optional)", default=None)
+    pb.add_argument("--gpu", action="store_true", help="Enable GPU acceleration (requires CUDA)")
     pb.add_argument("--traceparent", default=None, help=trace_arg_help)
     pb.set_defaults(func=cmd_backtest)
 
@@ -794,19 +779,19 @@ Requires proper configuration including venue credentials and risk parameters.
         epilog="""
 Examples:
   # Start with default configuration
-  tradepulse live
+  geosync live
 
   # Use custom configuration file
-  tradepulse live --config configs/live/binance.toml
+  geosync live --config configs/live/binance.toml
 
   # Restrict to specific venues
-  tradepulse live --venue binance --venue coinbase
+  geosync live --venue binance --venue coinbase
 
   # Cold start (skip position reconciliation)
-  tradepulse live --config prod.toml --cold-start
+  geosync live --config prod.toml --cold-start
 
   # Expose Prometheus metrics
-  tradepulse live --metrics-port 9090
+  geosync live --metrics-port 9090
 
 IMPORTANT: Always test with paper trading before using real funds.
 Configure risk limits appropriately in your TOML configuration file.
@@ -856,7 +841,7 @@ Configure risk limits appropriately in your TOML configuration file.
                 {
                     "error": type(e).__name__,
                     "message": str(e),
-                    "suggestion": "Run 'tradepulse COMMAND --help' for usage information.",
+                    "suggestion": "Run 'geosync COMMAND --help' for usage information.",
                 },
                 indent=2,
             ),

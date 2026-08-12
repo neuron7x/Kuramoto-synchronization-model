@@ -1,0 +1,60 @@
+# Diff-bound acceptor: validate the first-order KuramotoEngine RK4 integrator
+# to its defining global order p = 4 (analogue of INV-K9/K10 for Verlet).
+#
+# INV-K9 established the convergence order (2) of the second-order Verlet
+# integrator and INV-K10 its symplecticity. The first-order KuramotoEngine uses
+# classical RK4 (_rk4_step), whose global error is O(dt^4). This adds a
+# self-convergence test recovering that order (slope ≈ 4) against a fine
+# reference — extending the "integrator validated to its defining order"
+# program to the other major integrator. No invariant added or changed.
+
+id: rk4-convergence-order
+status: ACTIVE
+claim_type: correctness
+promise: >-
+  Adds TestRK4ConvergenceOrder to tests/unit/core/test_kuramoto_modules.py: the
+  first-order KuramotoEngine (RK4) global error of the complex order parameter
+  z(T) is measured against a fine reference over a geometric dt-ladder, and the
+  recovered log-log slope is asserted in (3.5, 4.5) — confirming the integrator
+  runs at its full RK4 order 4 (global error O(dt^4)). The smooth z(T) avoids
+  phase-wrapping artefacts. No invariant added or changed; zero production-code
+  change.
+diff_scope:
+  changed_files:
+    - path: ".claude/commit_acceptors/rk4-convergence-order.yaml"
+    - path: "tests/unit/core/test_kuramoto_modules.py"
+  forbidden_paths:
+    - "trading/"
+    - "execution/"
+    - "forecast/"
+    - "policy/"
+required_python_symbols:
+  - "KuramotoEngine"
+expected_signal: >-
+  The full tests/unit/core/test_kuramoto_modules.py suite passes including the
+  new RK4 convergence-order test; mypy --strict, ruff clean. Calibration:
+  errors {4.48e-11, 2.78e-12, 1.71e-13} at dt {0.02, 0.01, 0.005}, log-log
+  slope 4.04 ≈ 4.
+measurement_command: >-
+  PYTHONPATH=. python -m pytest tests/unit/core/test_kuramoto_modules.py
+  -k RK4 -v
+signal_artifact: "tmp/rk4_convergence_order_pytest.log"
+falsifier:
+  command: >-
+    PYTHONPATH=. python -m pytest tests/unit/core/test_kuramoto_modules.py
+    -v -k "rk4_global_error_is_fourth_order"
+  description: >-
+    Measures the first-order engine's global error vs dt against a fine
+    reference and asserts the recovered order is ≈ 4. A degraded integrator
+    (e.g. Euler -> order 1) collapses the slope and fails; the smooth complex
+    order parameter z(T) avoids phase-wrapping artefacts in the error metric.
+rollback_command: >-
+  git checkout HEAD~1 --
+  tests/unit/core/test_kuramoto_modules.py
+  .claude/commit_acceptors/rk4-convergence-order.yaml
+rollback_verification_command: >-
+  git diff --exit-code tests/unit/core/test_kuramoto_modules.py
+memory_update_type: none
+ledger_path: ".claude/commit_acceptors/rk4-convergence-order.yaml"
+report_path: "docs/reports/diff_bound_commit_acceptor_layer.md"
+evidence: []

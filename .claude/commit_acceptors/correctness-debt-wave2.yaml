@@ -1,0 +1,72 @@
+# Diff-bound acceptor for correctness-debt wave 2 (CodeQL board, PR #2).
+#
+# Resolves the high-confidence real defects left after the security-board
+# triage: a latent TypeError in the HPC-AI strategy's signal emission, file
+# handles leaked by config loaders, and two defensive catches that swallowed
+# KeyboardInterrupt/SystemExit. Pure correctness; touches no
+# execution/forecast/policy/trading code.
+
+id: correctness-debt-wave2
+status: ACTIVE
+claim_type: correctness
+promise: >-
+  geosync_hpc.HPCAIStrategy.on_market_data emitted backtest.events.SignalEvent
+  with signal_type/strength/price kwargs that only exist on the simplified mock
+  class; whenever the backtest package was importable the call raised TypeError.
+  A dedicated StrategySignal dataclass decouples the strategy↔SimplifiedBacktest
+  contract from the event-driven SignalEvent, so the BUY/SELL path no longer
+  crashes (verified for both BACKTEST_AVAILABLE branches). scripts/validate.py
+  and scripts/run_backtest.py now load YAML through a context manager (no leaked
+  descriptors). core/agent evaluator and orchestrator re-raise KeyboardInterrupt
+  and SystemExit instead of capturing them into a result/error map, so an
+  interrupt aborts cleanly; ordinary exceptions are still recorded exactly as
+  before. No behaviour change for non-interrupt error paths.
+diff_scope:
+  changed_files:
+    - path: ".claude/commit_acceptors/correctness-debt-wave2.yaml"
+    - path: "geosync_hpc/hpc_real_data_backtest.py"
+    - path: "scripts/validate.py"
+    - path: "scripts/run_backtest.py"
+    - path: "core/agent/evaluator.py"
+    - path: "core/agent/orchestrator.py"
+    - path: "tests/geosync_hpc/test_strategy_signal_decoupling.py"
+    - path: "docs/reports/correctness_debt_wave2.md"
+  forbidden_paths:
+    - "trading/"
+    - "execution/"
+    - "forecast/"
+    - "policy/"
+required_python_symbols:
+  - "StrategySignal"
+  - "HPCAIStrategy"
+expected_signal: >-
+  HPCAIStrategy.on_market_data returns a StrategySignal on BUY/SELL and None on
+  HOLD without raising, regardless of BACKTEST_AVAILABLE; the three new
+  regression tests pass; ruff / black / mypy --strict clean on every changed
+  module; core/agent test suite stays green.
+measurement_command: >-
+  PYTHONPATH=. python -m pytest tests/geosync_hpc/test_strategy_signal_decoupling.py
+  -q
+signal_artifact: "tmp/correctness_debt_wave2_pytest.log"
+falsifier:
+  command: >-
+    PYTHONPATH=. python -c "import inspect, geosync_hpc.hpc_real_data_backtest as m;
+    src=inspect.getsource(m.HPCAIStrategy.on_market_data);
+    assert 'StrategySignal(' in src and 'SignalEvent(' not in src,
+    'strategy still constructs the wrong signal type'"
+  description: >-
+    Probes the inverse: if on_market_data still constructed backtest.events
+    .SignalEvent (the crashing path) instead of StrategySignal, this exits
+    nonzero. It passes only when the decoupling is actually in place.
+rollback_command: >-
+  git checkout origin/main -- geosync_hpc/hpc_real_data_backtest.py
+  scripts/validate.py scripts/run_backtest.py core/agent/evaluator.py
+  core/agent/orchestrator.py
+rollback_verification_command: >-
+  git diff --exit-code origin/main -- geosync_hpc/hpc_real_data_backtest.py
+  scripts/validate.py scripts/run_backtest.py core/agent/evaluator.py
+  core/agent/orchestrator.py
+memory_update_type: none
+ledger_path: ".claude/commit_acceptors/correctness-debt-wave2.yaml"
+report_path: "docs/reports/correctness_debt_wave2.md"
+evidence: []

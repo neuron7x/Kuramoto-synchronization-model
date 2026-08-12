@@ -1,3 +1,5 @@
+# Copyright (c) 2023-2026 Yaroslav Vasylenko (neuron7xLab)
+# SPDX-License-Identifier: MIT
 from __future__ import annotations
 
 import json
@@ -12,8 +14,8 @@ from jsonschema import Draft202012Validator
 from jsonschema.exceptions import ValidationError as JsonSchemaValidationError
 from pydantic import ValidationError as PydanticValidationError
 
-os.environ.setdefault("TRADEPULSE_ADMIN_TOKEN", "import-admin-token")
-os.environ.setdefault("TRADEPULSE_AUDIT_SECRET", "import-audit-secret")
+os.environ.setdefault("GEOSYNC_ADMIN_TOKEN", "import-admin-token")
+os.environ.setdefault("GEOSYNC_AUDIT_SECRET", "import-audit-secret")
 
 from application.api.service import (  # noqa: E402  - environment variables must be set before import
     FeatureRequest,
@@ -117,12 +119,8 @@ def test_json_schema_contract_versions_are_semantic() -> None:
     versions = _iter_schema_versions()
     assert versions, "No JSON schema contract versions discovered"
     parsed_versions = [version for version, _ in versions]
-    assert len(parsed_versions) == len(
-        set(parsed_versions)
-    ), "Duplicate schema versions found"
-    assert parsed_versions == sorted(
-        parsed_versions
-    ), "Schema versions must increase monotonically"
+    assert len(parsed_versions) == len(set(parsed_versions)), "Duplicate schema versions found"
+    assert parsed_versions == sorted(parsed_versions), "Schema versions must increase monotonically"
 
 
 def test_json_schema_backward_and_forward_compatibility() -> None:
@@ -133,9 +131,7 @@ def test_json_schema_backward_and_forward_compatibility() -> None:
     version_schemas: list[tuple[SemanticVersion, dict[str, dict[str, Any]]]] = []
     for version, path in versions:
         files = {
-            file.name: _load_schema(file)
-            for file in path.glob("*.schema.json")
-            if file.is_file()
+            file.name: _load_schema(file) for file in path.glob("*.schema.json") if file.is_file()
         }
         version_schemas.append((version, files))
 

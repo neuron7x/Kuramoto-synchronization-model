@@ -1,0 +1,70 @@
+# Diff-bound commit acceptor for PR #1374.
+#
+# Scope: experimental dopamine RPE helpers + expectile value learner research
+# surface. State: STRUCTURAL only. Non-production. No market claim. No claim
+# registry promotion. Evaluation harness and generated result artifacts belong to
+# the follow-up PR, not this one.
+id: dopamine-rpe-extension-surface
+status: ACTIVE
+claim_type: governance
+promise: >-
+  After this PR lands, the repository contains a bounded STRUCTURAL research
+  surface for dopamine-inspired TD(0) helpers and a deterministic expectile value
+  learner. experimental_rpe.py remains stateless algebraic probes only;
+  expectile_value.py remains a stateful online distributional value learner only.
+  Neither module routes into trading, execution, forecast, policy, application,
+  or DopamineController production paths. The PR promotes no market claim and
+  does not add evaluation artifacts; the evaluation harness is required in the
+  next PR.
+diff_scope:
+  changed_files:
+    - path: ".claude/commit_acceptors/dopamine-expectile-ensemble-value.yaml"
+    - path: ".claude/commit_acceptors/dopamine-rpe-extension-surface.yaml"
+    - path: "docs/research/dopamine_rpe_extension_surface.md"
+    - path: "src/geosync/core/neuro/dopamine/expectile_value.py"
+    - path: "src/geosync/core/neuro/dopamine/experimental_rpe.py"
+    - path: "tests/core/neuro/dopamine/test_expectile_value.py"
+    - path: "tests/core/neuro/dopamine/test_experimental_rpe.py"
+  forbidden_paths:
+    - "trading/"
+    - "execution/"
+    - "forecast/"
+    - "policy/"
+    - "application/"
+    - "geosync_hpc/"
+    - "physics_contracts/catalog.yaml"
+    - "claim_registry/"
+    - "claims/"
+    - "results/dopamine_rpe_extension/"
+    - "scripts/evaluate_dopamine_rpe_extension.py"
+required_python_symbols:
+  - "RPEExtensionConfig"
+  - "RPEExtensionSurface"
+  - "canonical_td_error"
+  - "risk_adjusted_reward"
+  - "distributional_td_error"
+  - "asymmetric_value_update"
+  - "average_reward_vigor"
+  - "compute_rpe_extension_surface"
+expected_signal: >-
+  `python -m pytest tests/core/neuro/dopamine/test_experimental_rpe.py`
+  reports all passed; ruff check on the source and test files is clean; mypy
+  --strict on the source file exits 0 with no issues. The PR body and docs say
+  STRUCTURAL only, NON_PRODUCTION, NO_MARKET_CLAIM, and
+  STRUCTURAL_NEUROSCIENCE_TRANSFER_ONLY.
+measurement_command: >-
+  python -m pytest tests/core/neuro/dopamine/test_experimental_rpe.py -q
+signal_artifact: "tmp/dopamine_rpe_extension_surface.log"
+falsifier:
+  command: >-
+    python -m pytest tests/core/neuro/dopamine/test_experimental_rpe.py -q
+  description: >-
+    The test suite must reject non-finite post-arithmetic outputs and preserve
+    the canonical TD(0) identity. If the canonical anchor changes or finite
+    guards are removed, this acceptor must fail.
+rollback_command: "manual revert of this acceptor-bound PR scope"
+rollback_verification_command: "manual verification: listed research files absent or reverted"
+memory_update_type: none
+ledger_path: ".claude/commit_acceptors/dopamine-rpe-extension-surface.yaml"
+report_path: "tmp/dopamine_rpe_extension_surface.log"
+evidence: []

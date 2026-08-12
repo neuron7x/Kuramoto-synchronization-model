@@ -1,0 +1,53 @@
+id: synthetic-plumbing-proof
+status: ACTIVE
+claim_type: governance
+promise: >-
+  Smallest honest FORWARD proof of the integrity pipeline. A deterministic
+  generator builds a closed-form synthetic return panel, computes a real score
+  (mean |off-diagonal corr|) and a real cyclic-shift null baseline, and emits a
+  fully-attributed artifact: real data hash, computed score, replay command,
+  git sha, method version. It is INSTRUMENTED / NOT_APPLICABLE on synthetic data
+  and makes NO empirical claim. Adds falsification_status NOT_APPLICABLE
+  (computed-but-not-evidence) — the smallest schema extension needed — without
+  weakening any gate.
+diff_scope:
+  changed_files:
+  - path: scripts/research/generate_synthetic_plumbing_artifact.py
+  - path: research_lines/synthetic_plumbing_v1/contract.yaml
+  - path: artifacts/runs/synthetic_plumbing_v1/artifact.json
+  - path: tests/ci/test_synthetic_plumbing_artifact.py
+  - path: schemas/research/research_inference_artifact.schema.json
+  - path: scripts/ci/check_research_artifact_truth.py
+  - path: tools/research/validate_ricci_artifact_schema.py
+  - path: .claude/commit_acceptors/synthetic-plumbing-proof.yaml
+  forbidden_paths: []
+required_python_symbols: []
+expected_signal: >-
+  The synthetic artifact passes the schema, semantic, truth, and claim-artifact
+  graph gates; replay reproduces its data hash exactly and score within 1e-9; an
+  empirical-tier overclaim or a PASS on the synthetic line is rejected
+  fail-closed. prove_repo_integrity.sh stays exit 0, MANIFEST_PROOF: NOT_PROVEN.
+measurement_command: >-
+  python -m pytest tests/ci/test_synthetic_plumbing_artifact.py -q
+signal_artifact: artifacts/runs/synthetic_plumbing_v1/artifact.json
+falsifier:
+  command: python scripts/ci/check_research_artifact_truth.py && python scripts/ci/check_claim_artifact_graph.py
+  description: >-
+    Must fail if the synthetic artifact gains an empirical claim_tier, flips to
+    PASS, loses its computed score_source, or its data hash stops matching the
+    committed synthetic panel — i.e. if synthetic plumbing could masquerade as
+    empirical evidence.
+rollback_command: >-
+  git checkout origin/main -- schemas/research/research_inference_artifact.schema.json
+  scripts/ci/check_research_artifact_truth.py tools/research/validate_ricci_artifact_schema.py &&
+  git rm -rf research_lines/synthetic_plumbing_v1 artifacts/runs/synthetic_plumbing_v1
+  scripts/research/generate_synthetic_plumbing_artifact.py
+  tests/ci/test_synthetic_plumbing_artifact.py
+  .claude/commit_acceptors/synthetic-plumbing-proof.yaml
+rollback_verification_command: >-
+  test ! -d artifacts/runs/synthetic_plumbing_v1
+memory_update_type: append
+ledger_path: .claude/commit_acceptors/synthetic-plumbing-proof.yaml
+report_path: artifacts/runs/synthetic_plumbing_v1/artifact.json
+evidence:
+- path: artifacts/runs/synthetic_plumbing_v1/artifact.json

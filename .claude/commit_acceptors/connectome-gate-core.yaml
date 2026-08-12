@@ -1,0 +1,63 @@
+id: connectome-gate-core
+status: ACTIVE
+claim_type: refactor
+promise: >-
+  Diff-bound governance acceptor for the architectural connectome gate. The
+  change introduces a machine-checkable domain-boundary contract, AST import
+  validator, executable selftest runner, canonical contract shape tests,
+  edge-case controls, and a CI gate that emits executable evidence for static
+  import-topology compliance. It does not promote runtime, market, biological,
+  or causal-safety claims.
+
+diff_scope:
+  changed_files:
+    - path: ".claude/commit_acceptors/connectome-gate-core.yaml"
+    - path: ".github/workflows/README.md"
+    - path: ".github/workflows/connectome-gate.yml"
+    - path: "docs/architecture/connectome.schema.json"
+    - path: "docs/architecture/connectome.yaml"
+    - path: "tests/tools/architecture/test_check_connectome.py"
+    - path: "tests/tools/architecture/test_check_connectome_edge_cases.py"
+    - path: "tests/tools/architecture/test_connectome_contract_shape.py"
+    - path: "tests/tools/architecture/test_connectome_selftest.py"
+    - path: "tools/architecture/check_connectome.py"
+    - path: "tools/architecture/connectome_selftest.py"
+  forbidden_paths:
+    - "application/"
+    - "backtest/"
+    - "core/"
+    - "markets/"
+    - "modules/"
+
+required_python_symbols:
+  - "tools.architecture.check_connectome.Domain"
+  - "tools.architecture.check_connectome.Violation"
+  - "tools.architecture.check_connectome.validate_repository"
+
+expected_signal: >-
+  Pull requests receive a dedicated architectural connectome check that fails
+  closed when governed Python modules violate the declared domain import
+  topology or when the canonical connectome contract shape regresses.
+
+measurement_command: >-
+  python tools/architecture/check_connectome.py && python tools/architecture/check_connectome.py --format json && python tools/architecture/connectome_selftest.py && python -m pytest --noconftest tests/tools/architecture/test_check_connectome.py tests/tools/architecture/test_connectome_selftest.py tests/tools/architecture/test_check_connectome_edge_cases.py tests/tools/architecture/test_connectome_contract_shape.py -q
+
+signal_artifact: "build/connectome/manifest.json"
+
+falsifier:
+  command: >-
+    python tools/architecture/check_connectome.py
+  description: >-
+    The gate must reject forbidden or unlisted cross-domain import edges instead
+    of allowing silent architecture leakage.
+
+rollback_command: >-
+  git checkout -- .github/workflows/connectome-gate.yml .github/workflows/README.md docs/architecture/connectome.yaml docs/architecture/connectome.schema.json tests/tools/architecture tools/architecture/check_connectome.py tools/architecture/connectome_selftest.py .claude/commit_acceptors/connectome-gate-core.yaml
+
+rollback_verification_command: >-
+  git diff --exit-code
+
+memory_update_type: append
+ledger_path: ".claude/commit_acceptors/connectome-gate-core.yaml"
+report_path: "build/connectome/manifest.json"
+evidence: []

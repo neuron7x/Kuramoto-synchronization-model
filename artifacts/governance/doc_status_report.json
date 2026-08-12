@@ -1,0 +1,108 @@
+{
+  "contradiction_count": 0,
+  "counts_by_status": {
+    "aspirational": 1,
+    "current": 3,
+    "historical": 2
+  },
+  "current_state": "RESEARCH_ALPHA",
+  "doc_count": 6,
+  "docs": [
+    {
+      "authoritative_for": [
+        "physics_invariant_counts",
+        "physics_grounding_baseline"
+      ],
+      "contradictions": [],
+      "defines_claim_vocabulary": false,
+      "generated_by": null,
+      "mention_exemptions": 0,
+      "path": "BASELINE.md",
+      "scanned": true,
+      "status": "current",
+      "superseded_by": null,
+      "valid_from": "2026-04-30",
+      "valid_to": null
+    },
+    {
+      "authoritative_for": [
+        "pre_final_delivery_snapshot"
+      ],
+      "contradictions": [],
+      "defines_claim_vocabulary": false,
+      "generated_by": null,
+      "mention_exemptions": 0,
+      "path": "DELIVERY.md",
+      "scanned": false,
+      "status": "historical",
+      "superseded_by": "governance/project_state.yaml",
+      "valid_from": "2026-05-05",
+      "valid_to": "2026-07-16"
+    },
+    {
+      "authoritative_for": [
+        "strategic_roadmap"
+      ],
+      "contradictions": [],
+      "defines_claim_vocabulary": false,
+      "generated_by": null,
+      "mention_exemptions": 0,
+      "path": "ROADMAP.md",
+      "scanned": false,
+      "status": "aspirational",
+      "superseded_by": null,
+      "valid_from": "2026-07-19",
+      "valid_to": null
+    },
+    {
+      "authoritative_for": [
+        "project_maturity_state",
+        "claim_word_firewall"
+      ],
+      "contradictions": [],
+      "defines_claim_vocabulary": true,
+      "generated_by": null,
+      "mention_exemptions": 0,
+      "path": "docs/PROJECT_STATE_ONTOLOGY.md",
+      "scanned": false,
+      "status": "current",
+      "superseded_by": null,
+      "valid_from": "2026-07-16",
+      "valid_to": null
+    },
+    {
+      "authoritative_for": [
+        "release_gate_requirements"
+      ],
+      "contradictions": [],
+      "defines_claim_vocabulary": false,
+      "generated_by": null,
+      "mention_exemptions": 0,
+      "path": "docs/RELEASE_GATES.md",
+      "scanned": true,
+      "status": "current",
+      "superseded_by": null,
+      "valid_from": "2026-07-19",
+      "valid_to": null
+    },
+    {
+      "authoritative_for": [
+        "release_readiness_snapshot"
+      ],
+      "contradictions": [],
+      "defines_claim_vocabulary": false,
+      "generated_by": null,
+      "mention_exemptions": 0,
+      "path": "docs/project-status.md",
+      "scanned": false,
+      "status": "historical",
+      "superseded_by": "governance/project_state.yaml",
+      "valid_from": "2025-12-19",
+      "valid_to": "2026-07-16"
+    }
+  ],
+  "flagged_docs": [],
+  "gate": "check_doc_status",
+  "project_version": "1.1.0",
+  "status": "PASS"
+}

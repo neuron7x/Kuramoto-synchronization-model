@@ -1,6 +1,6 @@
 {
   "dashboard": {
-    "title": "TradePulse Risk Controls",
+    "title": "GeoSync Risk Controls",
     "tags": ["risk", "compliance", "trading"],
     "timezone": "utc",
     "schemaVersion": 16,
@@ -19,7 +19,7 @@
         },
         "targets": [
           {
-            "expr": "tradepulse_risk_kill_switch{env=\"prod\"}",
+            "expr": "geosync_risk_kill_switch{env=\"prod\"}",
             "refId": "A",
             "legendFormat": "Kill Switch"
           }
@@ -74,17 +74,17 @@
         },
         "targets": [
           {
-            "expr": "tradepulse_risk_circuit_state{state=\"open\"}",
+            "expr": "geosync_risk_circuit_state{state=\"open\"}",
             "refId": "A",
             "legendFormat": "Open"
           },
           {
-            "expr": "tradepulse_risk_circuit_state{state=\"half_open\"}",
+            "expr": "geosync_risk_circuit_state{state=\"half_open\"}",
             "refId": "B",
             "legendFormat": "Half-Open"
           },
           {
-            "expr": "tradepulse_risk_circuit_state{state=\"closed\"}",
+            "expr": "geosync_risk_circuit_state{state=\"closed\"}",
             "refId": "C",
             "legendFormat": "Closed"
           }
@@ -174,7 +174,7 @@
         },
         "targets": [
           {
-            "expr": "tradepulse_risk_gross_exposure{env=\"prod\"}",
+            "expr": "geosync_risk_gross_exposure{env=\"prod\"}",
             "refId": "A",
             "legendFormat": "Gross Exposure"
           }
@@ -204,7 +204,7 @@
         },
         "targets": [
           {
-            "expr": "tradepulse_risk_daily_drawdown{env=\"prod\", mode=\"percent\"}",
+            "expr": "geosync_risk_daily_drawdown{env=\"prod\", mode=\"percent\"}",
             "refId": "A",
             "legendFormat": "Drawdown ({{mode}})"
           }
@@ -234,7 +234,7 @@
         },
         "targets": [
           {
-            "expr": "sum by (reason) (increase(tradepulse_risk_rejections_total[1h]))",
+            "expr": "sum by (reason) (increase(geosync_risk_rejections_total[1h]))",
             "refId": "A",
             "legendFormat": "{{reason}}",
             "instant": false,
@@ -283,7 +283,7 @@
         },
         "targets": [
           {
-            "expr": "sum by (reason) (increase(tradepulse_risk_circuit_trips_total[1h]))",
+            "expr": "sum by (reason) (increase(geosync_risk_circuit_trips_total[1h]))",
             "refId": "A",
             "legendFormat": "{{reason}}"
           }
@@ -313,7 +313,7 @@
         },
         "targets": [
           {
-            "expr": "tradepulse_risk_open_orders{env=\"prod\"}",
+            "expr": "geosync_risk_open_orders{env=\"prod\"}",
             "refId": "A",
             "legendFormat": "Open Orders"
           }
@@ -343,7 +343,7 @@
         },
         "options": {
           "mode": "markdown",
-          "content": "**Last Trip Reason:**\n\nQuery `/admin/risk/state` endpoint to view the last trip reason and timestamp.\n\nExample:\n```\ncurl -H 'Authorization: Bearer $TOKEN' https://api.tradepulse.example.com/admin/risk/state\n```"
+          "content": "**Last Trip Reason:**\n\nQuery `/admin/risk/state` endpoint to view the last trip reason and timestamp.\n\nExample:\n```\ncurl -H 'Authorization: Bearer $TOKEN' https://api.geosync.example.com/admin/risk/state\n```"
         }
       }
     ]

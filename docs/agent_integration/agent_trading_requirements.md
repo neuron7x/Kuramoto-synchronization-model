@@ -51,7 +51,7 @@
 - **Orchestration**: Ray for distributed RL training, DVC/MLflow for experiment tracking.
 
 ## 7. Project Tooling Preparation
-- **Repository structure**: Modular Python package in `src/tradepulse_agent`, tests in `tests/agent`, docs under `docs/agent_integration`.
+- **Repository structure**: Modular Python package in `src/geosync_agent`, tests in `tests/agent`, docs under `docs/agent_integration`.
 - **Environment**: Python 3.11 with `poetry` or `pip-tools` lockfiles; base dependencies include `pandas`, `numpy`, `torch`, `gymnasium`, `stable-baselines3`, `ccxt`, `mlflow`.
 - **Dockerfile**: Multi-stage build (builder installs deps, runtime minimal). Use `uv` or `pip install --no-cache-dir` with layer caching, enable non-root user.
 - **CI/CD**: GitHub Actions with lint (ruff), type checks (mypy/pyright), tests (pytest), security scans (bandit, trivy), and docker build.

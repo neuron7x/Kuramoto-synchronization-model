@@ -1,3 +1,5 @@
+# Copyright (c) 2023-2026 Yaroslav Vasylenko (neuron7xLab)
+# SPDX-License-Identifier: MIT
 from unittest.mock import MagicMock
 
 import pytest
@@ -21,30 +23,24 @@ class TestNormaliseRoles:
         assert _normalise_roles(roles) == ("admin", "operator")
 
     def test_raises_value_error_when_no_valid_roles(self) -> None:
-        with pytest.raises(
-            ValueError, match="At least one non-empty role must be provided"
-        ):
+        with pytest.raises(ValueError, match="At least one non-empty role must be provided"):
             _normalise_roles(["   ", "\t\n"])  # only whitespace entries
 
 
 class TestResolveAuditSecret:
     def test_raises_when_secret_missing(self, monkeypatch: pytest.MonkeyPatch) -> None:
-        monkeypatch.delenv("TRADEPULSE_RBAC_AUDIT_SECRET", raising=False)
+        monkeypatch.delenv("GEOSYNC_RBAC_AUDIT_SECRET", raising=False)
 
-        with pytest.raises(
-            RuntimeError, match="TRADEPULSE_RBAC_AUDIT_SECRET must be set"
-        ):
+        with pytest.raises(RuntimeError, match="GEOSYNC_RBAC_AUDIT_SECRET must be set"):
             _resolve_audit_secret()
 
     def test_strips_and_validates_secret(self, monkeypatch: pytest.MonkeyPatch) -> None:
-        monkeypatch.setenv(
-            "TRADEPULSE_RBAC_AUDIT_SECRET", "  integration-rbac-secret  "
-        )
+        monkeypatch.setenv("GEOSYNC_RBAC_AUDIT_SECRET", "  integration-rbac-secret  ")
 
         assert _resolve_audit_secret() == "integration-rbac-secret"
 
     def test_rejects_short_secret(self, monkeypatch: pytest.MonkeyPatch) -> None:
-        monkeypatch.setenv("TRADEPULSE_RBAC_AUDIT_SECRET", "short-secret")
+        monkeypatch.setenv("GEOSYNC_RBAC_AUDIT_SECRET", "short-secret")
 
         with pytest.raises(ValueError, match="must be at least 16 characters"):
             _resolve_audit_secret()
@@ -169,3 +165,37 @@ async def test_require_permission_propagates_http_errors() -> None:
         await dependency(request, identity, gateway)
 
     gateway.enforce.assert_called_once()
+
+
+class TestIdentityDependencyInjection:
+    """The `identity_dependency or verify_request_identity()` fallbacks at authorization.py:56/132.
+
+    Both are RBAC dependency wiring: a caller may inject a custom identity dependency (a test
+    double, an alternate auth scheme), otherwise the production verifier is used. Under
+    `Or -> And` the injected dependency is IGNORED and the production verifier is wired in its
+    place — so a route that meant to authenticate one way silently authenticates another.
+    Nothing read which dependency was wired, so both mutants survived. Here the injected
+    callable is recovered from the returned dependency's `Depends` marker and asserted identity.
+    """
+
+    @staticmethod
+    async def _sentinel() -> object:  # pragma: no cover - identity only, never called
+        raise AssertionError("sentinel dependency should not be invoked during wiring")
+
+    def test_require_roles_wires_the_injected_identity_dependency(self) -> None:
+        import inspect
+
+        from application.api.authorization import require_roles
+
+        dependency = require_roles(["Admin"], identity_dependency=self._sentinel)
+        wired = inspect.signature(dependency).parameters["identity"].default.dependency
+        assert wired is self._sentinel, "require_roles ignored the injected identity dependency"
+
+    def test_require_permission_wires_the_injected_identity_dependency(self) -> None:
+        import inspect
+
+        from application.api.authorization import require_permission
+
+        dependency = require_permission("resource", "action", identity_dependency=self._sentinel)
+        wired = inspect.signature(dependency).parameters["identity"].default.dependency
+        assert wired is self._sentinel, "require_permission ignored the injected identity dependency"

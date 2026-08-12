@@ -1,3 +1,5 @@
+# Copyright (c) 2023-2026 Yaroslav Vasylenko (neuron7xLab)
+# SPDX-License-Identifier: MIT
 import json
 from datetime import datetime, timezone
 
@@ -113,4 +115,4 @@ async def test_pipeline_integrates_message_broker(tmp_path) -> None:
     message = broker.published[0]
     payload = json.loads(message.payload.decode("utf-8"))
     assert payload["event_type"] == "data.tick_batch.persisted"
-    assert message.topic == "tradepulse.data.tick_batch.persisted"
+    assert message.topic == "geosync.data.tick_batch.persisted"

@@ -1,0 +1,242 @@
+# Diff-bound commit acceptor for the D-002K-P0 pre-registration PR.
+#
+# D-002K opens a FRESH pre-registered lineage AFTER the D-002J-P7
+# POWER_GATE_REFUSED_UNDERPOWERED terminal verdict (PR #705, merge sha
+# c5c4158bed639014ec35ab8f53ec70d98be660a2). D-002K inherits the
+# effect_too_small refusal axis as a documented PARENT FAILURE and is
+# explicitly designed against it by narrowing SCOPE (3 windows x 1
+# mechanism x 1 primary metric), NOT by loosening the STATISTICS at a
+# fixed hypothesis count. D-002K is NOT a D-002J rescue, mutation, or
+# P8. D-002J remains terminally REFUSED and byte-exact frozen.
+#
+# Pure pre-registration: zero data, zero scoring, zero model run. NO
+# source-code edit, NO mechanism change, NO canonical run, NO D-002C
+# ledger touch, NO D-002G/H/I/J prereg edit, NO D-002J artifact edit.
+# D-002K does NOT claim the D-002J-P7 REFUSED verdict was wrong.
+
+id: x10r-d002k-p0-prereg-funding-liquidity
+status: ACTIVE
+claim_type: governance
+promise: >-
+  After this PR lands, docs/governance/D002K_PREREGISTRATION.yaml
+  exists (schema D002K-PREREG-v1, study_id D-002K) locking: central
+  claim, parent_lineage D-002J / parent_status TERMINAL_REFUSED /
+  parent_refusal_pr 705 / parent_refusal_merge_sha
+  c5c4158bed639014ec35ab8f53ec70d98be660a2,
+  inherited_failure_axis effect_too_small, is_rescue false, a non-empty
+  no_rescue_boundary, primary_mechanism funding_liquidity_rollover,
+  primary_windows exactly [CW3_US_REPO_SPIKE_2019,
+  CW4_COVID_DASH_FOR_CASH_2020, CW5_UK_GILT_LDI_2022], six observable
+  families, the ONE locked primary_metric
+  pre_post_standardized_mean_shift, six secondary_metrics marked
+  exploratory_only, a matched_placebo_policy with
+  locked_before_scoring true and a deterministic pre-registered
+  selection algorithm, a power_gate_policy with
+  must_run_before_any_scoring true / power_target 0.8 / a bonferroni
+  alpha_policy whose denominator_rule is "n_windows *
+  n_primary_metrics" (narrow BY DESIGN, NOT relaxed),
+  canonical_run_authorized false, benchmark_only true,
+  requires_power_first_approval true, eight forbidden_claims (incl.
+  "D-002K rescues D-002J", "D-002K reverses D-002J-P7 REFUSED",
+  "relaxed alpha is justified by D-002J refusal"), four allowed_claims,
+  three stop_conditions, prereg_lock.locked_at_merge true.
+
+  docs/research/D002K_DESIGN_RATIONALE.md carries the SS0-SS7 rationale
+  (why not a D-002J resurrection, narrowing strategy, mechanism /
+  window choice, matched-placebo discipline, power-first-before-
+  scoring, forbidden interpretations + no-rescue boundary, lineage
+  relationship, and the render_lineage extension judgment call).
+
+  artifacts/d002k/prereg/d002k_failure_axis_inheritance_v1.json
+  (schema D002K-FAILURE-AXIS-INHERITANCE-v1) pins parent_lineage
+  D-002J, parent_refusal_pr 705, parent_refusal_merge_sha
+  c5c4158..., inherited_failure_axis effect_too_small,
+  d002j_p7_n_min_distribution {min:150,median:235,max:417},
+  d002j_bonferroni_denominator 102, the d002k_design_response
+  narrowing rationale, is_rescue false, canonical_run_authorized false.
+
+  artifacts/d002k/prereg/d002k_primary_metric_contract_v1.json
+  (schema D002K-PRIMARY-METRIC-CONTRACT-v1) pins the ONE primary
+  metric exact definition, input observable family, computation
+  steps, decision-threshold semantics (value deferred to power gate),
+  secondary metrics exploratory_only, locked_before_any_run true.
+
+  artifacts/governance/verdicts/d002k_p0_verdict_v1.json (schema
+  D002J-VERDICT-CAPSULE-v1, node_id D002K-P0, parent_nodes
+  ["D002J-P7"], decision D002K_PREREG_LOCKED, status TERMINAL_PASS,
+  allowed_next_nodes ["D002K-P1"], forbidden_next_nodes ["D002J-P8"],
+  failure_retention null).
+
+  artifacts/governance/verdicts/d002j_verdict_dag_v1.json regenerates
+  to 11 nodes (was 10) acyclic, D002K-P0 appended after D002J-P7,
+  next_legal_nodes_from_main_head ["D002K-P1"],
+  rejected_nodes_retained ["D002J-P1A","D002J-P7"],
+  canonical_run_authorized_anywhere false, lineage_transitions
+  ["D002J-P7"] {status TERMINAL_REFUSED, successor_lineage D-002K,
+  successor_root D002K-P0, is_rescue false}, locked governance shas
+  byte-exact.
+
+  docs/research/D002J_LINEAGE_MAP.md re-renders byte-deterministically
+  spanning the connected D-002J / D-002K lineages.
+
+  docs/governance/D002G_CANONICAL_RUN_BLOCKERS.md gains an append-only
+  D-002K-P0 section recording the fresh-prereg decision, the
+  no-rescue boundary, and canonical_run_authorized false.
+
+  tests/systemic_risk/test_d002k_preregistration.py carries >=18
+  guard tests; tests/governance/test_verdict_dag_integrity.py widens
+  EXPECTED_NODE_IDS to include D002K-P0 and asserts D002J-P7 stays
+  TERMINAL_REFUSED retained; tools/governance/verdict_dag.py and
+  tools/governance/render_lineage.py widen the capsule glob to
+  d002[jk]_p*_verdict_v1.json and emit lineage_transitions.
+
+  D-002J prereg byte-exact
+  f3dc65b7e64b96eafe6f23ca8bdd0e05dc9bf95b12c2658b227bd0340f7975a0;
+  all artifacts/d002j/** byte-exact frozen. Pure pre-registration:
+  zero data, zero scoring, zero model run. D-002J REFUSED remains the
+  truthful terminal verdict.
+
+diff_scope:
+  changed_files:
+    - path: "docs/governance/D002K_PREREGISTRATION.yaml"
+    - path: "docs/research/D002K_DESIGN_RATIONALE.md"
+    - path: "artifacts/d002k/prereg/d002k_failure_axis_inheritance_v1.json"
+    - path: "artifacts/d002k/prereg/d002k_primary_metric_contract_v1.json"
+    - path: "tests/systemic_risk/test_d002k_preregistration.py"
+    - path: "artifacts/governance/verdicts/d002k_p0_verdict_v1.json"
+    - path: "artifacts/governance/verdicts/d002j_verdict_dag_v1.json"
+    - path: "docs/research/D002J_LINEAGE_MAP.md"
+    - path: ".claude/commit_acceptors/x10r-d002k-p0-prereg-funding-liquidity.yaml"
+    - path: "docs/governance/D002G_CANONICAL_RUN_BLOCKERS.md"
+    - path: "tests/governance/test_verdict_dag_integrity.py"
+    - path: "tools/governance/verdict_dag.py"
+    - path: "tools/governance/render_lineage.py"
+    - path: ".github/detect-secrets.baseline"
+  forbidden_paths:
+    - "docs/governance/D002C_CLAIM_LEDGER.yaml"
+    - "docs/governance/D002C_PREREGISTRATION.yaml"
+    - "docs/governance/D002G_ACCEPTANCE_RULES.md"
+    - "docs/governance/D002G_PREREGISTRATION.yaml"
+    - "docs/governance/D002H_PREREGISTRATION.yaml"
+    - "docs/governance/D002H_CANONICAL_RUN_REPORT.md"
+    - "docs/governance/D002H_CLAIM_BOUNDARY.md"
+    - "docs/governance/D002I_PREREGISTRATION.yaml"
+    - "docs/governance/D002I_CLAIM_BOUNDARY.md"
+    - "docs/governance/D002J_PREREGISTRATION.yaml"
+    - "research/systemic_risk/"
+    - "scripts/x10r_d002c_attempt_2_null_audit.py"
+    - "scripts/x10r_d002g_gate_d_scan.py"
+    - "scripts/x10r_d002h_gate_d_scan.py"
+    - "scripts/x10r_d002h_canonical_sweep.py"
+    - "artifacts/d002c/"
+    - "artifacts/d002d/"
+    - "artifacts/d002g/"
+    - "artifacts/d002h/"
+    - "artifacts/d002i/"
+    - "artifacts/d002j/"
+    - "artifacts/governance/verdicts/d002j_p0_verdict_v1.json"
+    - "artifacts/governance/verdicts/d002j_p1_verdict_v1.json"
+    - "artifacts/governance/verdicts/d002j_p1a_verdict_v1.json"
+    - "artifacts/governance/verdicts/d002j_p1b_verdict_v1.json"
+    - "artifacts/governance/verdicts/d002j_p2_verdict_v1.json"
+    - "artifacts/governance/verdicts/d002j_p3_verdict_v1.json"
+    - "artifacts/governance/verdicts/d002j_p4_verdict_v1.json"
+    - "artifacts/governance/verdicts/d002j_p5_verdict_v1.json"
+    - "artifacts/governance/verdicts/d002j_p6_verdict_v1.json"
+    - "artifacts/governance/verdicts/d002j_p7_verdict_v1.json"
+required_python_symbols:
+  - "tests.systemic_risk.test_d002k_preregistration.test_d002k_prereg_exists"
+  - "tests.systemic_risk.test_d002k_preregistration.test_d002k_prereg_schema_version"
+  - "tests.systemic_risk.test_d002k_preregistration.test_parent_lineage_is_d002j"
+  - "tests.systemic_risk.test_d002k_preregistration.test_parent_status_terminal_refused"
+  - "tests.systemic_risk.test_d002k_preregistration.test_inherited_failure_axis_is_effect_too_small"
+  - "tests.systemic_risk.test_d002k_preregistration.test_is_rescue_false"
+  - "tests.systemic_risk.test_d002k_preregistration.test_no_rescue_boundary_nonempty"
+  - "tests.systemic_risk.test_d002k_preregistration.test_primary_mechanism_is_funding_liquidity_rollover"
+  - "tests.systemic_risk.test_d002k_preregistration.test_primary_windows_exactly_cw3_cw4_cw5"
+  - "tests.systemic_risk.test_d002k_preregistration.test_primary_metric_locked_single"
+  - "tests.systemic_risk.test_d002k_preregistration.test_secondary_metrics_marked_exploratory"
+  - "tests.systemic_risk.test_d002k_preregistration.test_matched_placebo_policy_locked_before_scoring"
+  - "tests.systemic_risk.test_d002k_preregistration.test_power_gate_policy_must_run_before_scoring"
+  - "tests.systemic_risk.test_d002k_preregistration.test_alpha_policy_not_relaxed_vs_d002j"
+  - "tests.systemic_risk.test_d002k_preregistration.test_canonical_run_authorized_false"
+  - "tests.systemic_risk.test_d002k_preregistration.test_no_canonical_run_authorized"
+  - "tests.systemic_risk.test_d002k_preregistration.test_forbidden_claims_include_no_d002j_rescue"
+  - "tests.systemic_risk.test_d002k_preregistration.test_forbidden_claims_include_no_relaxed_alpha"
+  - "tests.systemic_risk.test_d002k_preregistration.test_failure_axis_inheritance_json_pins_d002j_p7_sha"
+  - "tests.systemic_risk.test_d002k_preregistration.test_primary_metric_contract_json_valid"
+  - "tests.systemic_risk.test_d002k_preregistration.test_d002j_artifacts_byte_exact_unchanged"
+  - "tests.systemic_risk.test_d002k_preregistration.test_locked_governance_shas_byte_exact"
+  - "tests.systemic_risk.test_d002k_preregistration.test_d002k_p0_verdict_capsule_locked"
+  - "tests.systemic_risk.test_d002k_preregistration.test_dag_has_d002k_p0_and_d002j_p7_still_refused"
+  - "tests.systemic_risk.test_d002k_preregistration.test_stop_conditions_locked"
+  - "tests.systemic_risk.test_d002k_preregistration.test_no_unresolved_merge_markers"
+  - "tests.governance.test_verdict_dag_integrity.test_all_phases_p0_p2_have_verdict_capsules"
+expected_signal: >-
+  PYTHONPATH=. python -m pytest
+  tests/systemic_risk/test_d002k_preregistration.py -q passes all >=18
+  D-002K guard tests; the D-002K prereg locks the central claim,
+  parent D-002J TERMINAL_REFUSED, inherited_failure_axis
+  effect_too_small, is_rescue false, primary_mechanism
+  funding_liquidity_rollover, primary_windows exactly CW3/CW4/CW5, the
+  ONE primary metric pre_post_standardized_mean_shift, secondary
+  metrics exploratory_only, matched-placebo locked before scoring,
+  power-gate-before-scoring, a bonferroni alpha_policy with
+  denominator_rule "n_windows * n_primary_metrics" (narrow BY DESIGN,
+  not relaxed), canonical_run_authorized false; the failure-axis JSON
+  pins the D-002J-P7 sha c5c4158 + n_min {150,235,417} + denominator
+  102; the P0 capsule parses via tools.governance.verdict_dag with
+  parent ["D002J-P7"], status TERMINAL_PASS, decision
+  D002K_PREREG_LOCKED, allowed_next ["D002K-P1"], forbidden_next
+  ["D002J-P8"]; the DAG regenerates to 11 nodes acyclic, D002J-P7
+  still TERMINAL_REFUSED retained, next_legal ["D002K-P1"],
+  canonical_run_authorized_anywhere false, lineage_transitions
+  D002J-P7 is_rescue false; render_lineage byte-identical on repeat;
+  the D-002J prereg sha + all artifacts/d002j/** byte-exact UNCHANGED;
+  the 6 locked governance shas byte-exact.
+measurement_command: >-
+  bash -c 'set -e;
+  PYTHONPATH=. python -m pytest tests/systemic_risk/test_d002k_preregistration.py -q;
+  PYTHONPATH=. python -m pytest tests/governance/test_verdict_dag_integrity.py -q;
+  PYTHONPATH=. python -m tools.governance.verdict_dag check -v;
+  PYTHONPATH=. python -m tools.governance.render_lineage --out /tmp/_d002k_p0_lm1.md;
+  PYTHONPATH=. python -m tools.governance.render_lineage --out /tmp/_d002k_p0_lm2.md;
+  diff /tmp/_d002k_p0_lm1.md /tmp/_d002k_p0_lm2.md;
+  test -f docs/governance/D002K_PREREGISTRATION.yaml;
+  test -f artifacts/d002k/prereg/d002k_failure_axis_inheritance_v1.json;
+  test -f artifacts/d002k/prereg/d002k_primary_metric_contract_v1.json;
+  test -f artifacts/governance/verdicts/d002k_p0_verdict_v1.json;
+  python -m json.tool artifacts/d002k/prereg/d002k_failure_axis_inheritance_v1.json > /dev/null;
+  python -m json.tool artifacts/d002k/prereg/d002k_primary_metric_contract_v1.json > /dev/null;
+  grep -q "D002K_PREREG_LOCKED" artifacts/governance/verdicts/d002k_p0_verdict_v1.json;
+  grep -q "D-002K-P0" docs/governance/D002G_CANONICAL_RUN_BLOCKERS.md;
+  test "$(sha256sum docs/governance/D002J_PREREGISTRATION.yaml | awk "{print \$1}")" = "f3dc65b7e64b96eafe6f23ca8bdd0e05dc9bf95b12c2658b227bd0340f7975a0"'
+signal_artifact: "artifacts/d002k/prereg/d002k_failure_axis_inheritance_v1.json"
+falsifier:
+  command: >-
+    bash -c 'set -e;
+    PYTHONPATH=. python -m pytest tests/systemic_risk/test_d002k_preregistration.py -q || exit 1;
+    PYTHONPATH=. python -m pytest tests/governance/test_verdict_dag_integrity.py -q || exit 2;
+    PYTHONPATH=. python -m tools.governance.verdict_dag check || exit 3;
+    grep -q "D002K_PREREG_LOCKED" artifacts/governance/verdicts/d002k_p0_verdict_v1.json || exit 4;
+    grep -q "D-002K-P0" docs/governance/D002G_CANONICAL_RUN_BLOCKERS.md || exit 5;
+    test "$(sha256sum docs/governance/D002J_PREREGISTRATION.yaml | awk "{print \$1}")" = "f3dc65b7e64b96eafe6f23ca8bdd0e05dc9bf95b12c2658b227bd0340f7975a0" || exit 6'
+  description: >-
+    Probes D-002K-P0 fresh pre-registration: >=18 D-002K guard tests
+    pass (schema, parent D-002J TERMINAL_REFUSED, inherited
+    effect_too_small, is_rescue false, single mechanism / 3 windows /
+    1 primary metric locked, matched-placebo + power-gate-before-
+    scoring locked, alpha narrow-not-relaxed, D-002J byte-exact
+    frozen, no D-002J rescue / no relaxed-alpha forbidden claims);
+    verdict_dag_integrity passes under the 11-node DAG; verdict_dag
+    CLI validates the on-disk DAG; the P0 capsule declares decision
+    D002K_PREREG_LOCKED status TERMINAL_PASS; BLOCKERS appended with a
+    D-002K-P0 section; D-002J prereg sha byte-exact UNCHANGED.
+rollback_command: >-
+  bash -c 'rm -rf artifacts/d002k docs/governance/D002K_PREREGISTRATION.yaml docs/research/D002K_DESIGN_RATIONALE.md artifacts/governance/verdicts/d002k_p0_verdict_v1.json tests/systemic_risk/test_d002k_preregistration.py .claude/commit_acceptors/x10r-d002k-p0-prereg-funding-liquidity.yaml && git checkout HEAD -- docs/governance/D002G_CANONICAL_RUN_BLOCKERS.md docs/research/D002J_LINEAGE_MAP.md artifacts/governance/verdicts/d002j_verdict_dag_v1.json tests/governance/test_verdict_dag_integrity.py tools/governance/verdict_dag.py tools/governance/render_lineage.py'
+rollback_verification_command: >-
+  bash -c 'test ! -f .claude/commit_acceptors/x10r-d002k-p0-prereg-funding-liquidity.yaml && test ! -d artifacts/d002k && test ! -f docs/governance/D002K_PREREGISTRATION.yaml && test ! -f artifacts/governance/verdicts/d002k_p0_verdict_v1.json'
+memory_update_type: append
+ledger_path: ".claude/commit_acceptors/x10r-d002k-p0-prereg-funding-liquidity.yaml"
+report_path: "docs/research/D002K_DESIGN_RATIONALE.md"
+evidence: []

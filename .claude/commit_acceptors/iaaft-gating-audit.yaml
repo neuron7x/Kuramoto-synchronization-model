@@ -1,0 +1,104 @@
+# Diff-bound commit acceptor: fail-closed positive-control audit that decides
+# whether the L2 Ricci IAAFT linear-spectral null may be promoted from advisory
+# to a gating null.
+#
+# PR #1240 wired the IAAFT surrogate null into run_killtest as ADVISORY only,
+# stating that promotion to gating "requires the separate fail-closed
+# positive-control audit (does it still recover a known edge?)". This PR is that
+# audit: research.microstructure.iaaft_audit runs the DEPLOYED killtest
+# _iaaft_pvalue over many seeded synthetic replications and measures its
+# operating characteristics — power (positive control: signal predicts target
+# through phase alignment IAAFT destroys) and false-positive rate (negative
+# control: signal independent of target). Eligibility is fail-closed:
+# power >= floor AND fpr <= ceiling. run_killtest now resolves IAAFT gating from
+# the committed verdict artifact (fail-closed) instead of a hand-set flag.
+#
+# The canonical audit reports power=1.0 but fpr=0.25 on the autocorrelated
+# regime (over-fires ~5x nominal alpha) → INELIGIBLE → IAAFT stays advisory and
+# the published PROCEED/KILL verdict is bit-identical to pre-PR behaviour.
+
+id: iaaft-gating-audit
+status: ACTIVE
+claim_type: correctness
+promise: >-
+  After this PR lands, research.microstructure.iaaft_audit.run_iaaft_gating_audit
+  certifies the deployed killtest._iaaft_pvalue null by measuring power (fraction
+  of positive-control replications with p<alpha) and fpr (fraction of
+  negative-control replications with p<alpha), and returns eligible=True only if
+  power>=power_floor AND fpr<=fpr_ceiling with enough finite replications;
+  otherwise eligible=False with a recorded reason (fail-closed). The committed
+  results/L2_IAAFT_GATING_AUDIT.json verdict is eligible=False (power=1.0,
+  fpr=0.25 > ceiling=0.10). run_killtest consults this artifact via
+  iaaft_is_gating_eligible (fail-closed on missing/malformed/ineligible) so the
+  IAAFT null stays advisory and the binary verdict is unchanged. The audit is
+  deterministic: same config -> bit-identical verdict.
+
+diff_scope:
+  changed_files:
+    - path: ".claude/commit_acceptors/iaaft-gating-audit.yaml"
+    - path: "research/microstructure/iaaft_audit.py"
+    - path: "research/microstructure/killtest.py"
+    - path: "tests/test_iaaft_gating_audit.py"
+    - path: "results/L2_IAAFT_GATING_AUDIT.json"
+    - path: "research/microstructure/CHANGELOG.L2.md"
+  forbidden_paths:
+    - "trading/"
+    - "execution/"
+    - "forecast/"
+    - "policy/"
+
+required_python_symbols:
+  - "research/microstructure/iaaft_audit.py::run_iaaft_gating_audit"
+  - "research/microstructure/iaaft_audit.py::iaaft_is_gating_eligible"
+  - "research/microstructure/killtest.py::run_killtest"
+
+expected_signal: >-
+  pytest tests/test_iaaft_gating_audit.py reports all tests passed; they confirm
+  verdict well-formedness, power strictly exceeding fpr (>=0.8 power on a strong
+  edge), determinism, fail-closed on too-few replications, a fail-closed
+  eligibility reader (missing/malformed/wrong-schema/ineligible -> False), the
+  frozen canonical artifact being ineligible (power=1.0, fpr>ceiling), and that
+  run_killtest keeps IAAFT advisory by default while honouring a forced gating
+  override.
+
+measurement_command: >-
+  bash -c '
+    python -m pytest tests/test_iaaft_gating_audit.py -q -p no:cacheprovider
+  '
+
+signal_artifact: "tmp/iaaft_gating_audit.log"
+
+falsifier:
+  command: >-
+    bash -c 'python -c "import sys, json, tempfile, os;
+    from research.microstructure.iaaft_audit import iaaft_is_gating_eligible, AUDIT_SCHEMA_VERSION;
+    d = tempfile.mkdtemp(); p = os.path.join(d, \"v.json\");
+    open(p, \"w\").write(json.dumps({\"eligible\": True, \"schema_version\": AUDIT_SCHEMA_VERSION}));
+    ok_true = iaaft_is_gating_eligible(p) is True;
+    ok_missing = iaaft_is_gating_eligible(os.path.join(d, \"nope.json\")) is False;
+    sys.exit(0 if (ok_true and ok_missing) else 1)"'
+  description: >-
+    Pins the eligibility reader contract: it must return True on a well-formed
+    eligible+matching-schema artifact and False (fail-closed) on a missing file.
+    Exits 0 only when both hold; any regression that makes the reader fail-open
+    or blind to a valid verdict flips this to exit 1.
+
+rollback_command: >-
+  bash -c '
+    git checkout origin/main -- research/microstructure/killtest.py
+    && git rm -f research/microstructure/iaaft_audit.py
+      tests/test_iaaft_gating_audit.py
+      results/L2_IAAFT_GATING_AUDIT.json
+      .claude/commit_acceptors/iaaft-gating-audit.yaml
+  '
+
+rollback_verification_command: >-
+  bash -c '
+    test ! -e research/microstructure/iaaft_audit.py
+    && test ! -e .claude/commit_acceptors/iaaft-gating-audit.yaml
+    && ! grep -q "iaaft_is_gating_eligible" research/microstructure/killtest.py
+  '
+
+memory_update_type: none
+ledger_path: ".claude/commit_acceptors/iaaft-gating-audit.yaml"
+report_path: "research/microstructure/CHANGELOG.L2.md"

@@ -1,0 +1,88 @@
+{
+  "artifact_sha256": "610b0eb4fee7dc1e9a611035cede494db97a435abd43c9f5984d4a6072ba671c",
+  "gate": "E.clean_clone",
+  "git_dirty": true,
+  "git_sha": "9846a5501e4f8a2c4b583f159feae6c1c6e82df6",
+  "schema_version": "1.0",
+  "stages": [
+    {
+      "detail": "tar bytes=140728320",
+      "ok": true,
+      "stage": "git_archive"
+    },
+    {
+      "detail": "geosync-0.1.0-py3-none-any.whl",
+      "ok": true,
+      "stage": "wheel_build"
+    },
+    {
+      "advisory": true,
+      "detail": "top-level packages=['analytics', 'application', 'backtest', 'cli', 'core', 'domain', 'execution', 'geosync', 'geosync_pro', 'interfaces', 'libs', 'markets', 'modules', 'observability', 'sandbox', 'scripts', 'src', 'tools']; non_geosync=['analytics', 'application', 'backtest', 'cli', 'core', 'domain', 'execution', 'interfaces', 'libs', 'markets', 'modules', 'observability', 'sandbox', 'scripts', 'src', 'tools'] (purity gated separately by B.wheel)",
+      "non_geosync_packages": [
+        "analytics",
+        "application",
+        "backtest",
+        "cli",
+        "core",
+        "domain",
+        "execution",
+        "interfaces",
+        "libs",
+        "markets",
+        "modules",
+        "observability",
+        "sandbox",
+        "scripts",
+        "src",
+        "tools"
+      ],
+      "ok": true,
+      "stage": "wheel_contents",
+      "wheel_sha256": "5d3de9c0d184d82bf1ab808b880ac99b2aa02c65a3ceb68eae437987b941a6c2"
+    },
+    {
+      "detail": "installed",
+      "ok": true,
+      "stage": "wheel_install"
+    },
+    {
+      "detail": "resolved=/tmp/tmpaodjgfc5/venv/lib/python3.12/site-packages/geosync/__init__.py",
+      "ok": true,
+      "stage": "import_geosync"
+    },
+    {
+      "entrypoints": [
+        {
+          "advisory": true,
+          "detail": "wired ok; third-party dep 'yaml' absent under --no-deps (gated by C.dep_truth)",
+          "entrypoint": "geosync-scripts",
+          "ok": true
+        },
+        {
+          "detail": "--help exit 0",
+          "entrypoint": "geosync-release-gate",
+          "ok": true
+        },
+        {
+          "detail": "--help exit 0",
+          "entrypoint": "geosync-import-architecture",
+          "ok": true
+        },
+        {
+          "advisory": true,
+          "detail": "wired ok; third-party dep 'numpy' absent under --no-deps (gated by C.dep_truth)",
+          "entrypoint": "tp-kuramoto",
+          "ok": true
+        },
+        {
+          "detail": "--help exit 0",
+          "entrypoint": "mfn",
+          "ok": true
+        }
+      ],
+      "ok": true,
+      "stage": "entrypoint_smoke"
+    }
+  ],
+  "status": "PASS"
+}

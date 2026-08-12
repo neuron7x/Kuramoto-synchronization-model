@@ -1,0 +1,76 @@
+# Diff-bound commit acceptor for the PNCC no-bio-claim gate witness.
+#
+# Adds ONE test module binding the previously-unwitnessed catalog law
+# pncc.no_bio_claim to its EXISTING checker tacl.evidence_ledger.scan_source_for_bio_claims
+# (no new scanner invented). Promotes no claim, changes no runtime behavior,
+# touches no schema/guard, uses no real data.
+#
+#   pncc.no_bio_claim — cognitive-performance language is flagged unless paired
+#                       with a same-line disclaimer or an evidence reference in
+#                       window; test paths exempt (INV-NO-BIO-CLAIM).
+#
+# Locally verified on origin/main base:
+#   * pytest tests/physics_contracts/test_pncc_no_bio_claim_witness.py: 1 passed
+#   * .claude/physics/validate_tests.py <file>: 0 issues (L1..L5), EXIT 0
+#   * ruff / mypy --strict clean ; zero new `# type: ignore`
+id: pncc-no-bio-claim-witness
+status: ACTIVE
+claim_type: governance
+promise: >-
+  After this PR lands, tests/physics_contracts/test_pncc_no_bio_claim_witness.py
+  binds pncc.no_bio_claim to the existing scan_source_for_bio_claims checker and
+  asserts its contract on synthetic source: an unpaired cognitive claim raises a
+  violation; a same-line disclaimer or an in-window evidence token clears it;
+  clean source and test paths raise none (INV-NO-BIO-CLAIM). It passes
+  validate_tests with zero issues and invents no new scanner. No market claim; no
+  runtime, schema, or guard change.
+diff_scope:
+  changed_files:
+    - path: ".claude/commit_acceptors/pncc-no-bio-claim-witness.yaml"
+    - path: "tests/physics_contracts/test_pncc_no_bio_claim_witness.py"
+  forbidden_paths:
+    - "trading/"
+    - "execution/"
+    - "forecast/"
+    - "policy/"
+    - "application/"
+    - "core/"
+    - "src/"
+    - "geosync_hpc/"
+    - "physics_contracts/catalog.yaml"
+    - ".claude/physics/INVARIANTS.yaml"
+required_python_symbols: []
+expected_signal: >-
+  pytest reports 1 passed; validate_tests exits 0 with no L1..L5 issues; ruff and
+  mypy --strict clean.
+measurement_command: >-
+  bash -c 'mkdir -p tmp && python -m pytest
+  tests/physics_contracts/test_pncc_no_bio_claim_witness.py
+  > tmp/pncc_no_bio_claim_witness.log 2>&1
+  && grep -q "1 passed" tmp/pncc_no_bio_claim_witness.log'
+signal_artifact: "tmp/pncc_no_bio_claim_witness.log"
+falsifier:
+  command: |-
+    bash -c 'python -c "
+    import tempfile, pathlib
+    from tacl.evidence_ledger import scan_source_for_bio_claims
+    d = pathlib.Path(tempfile.mkdtemp())
+    f = d / \"x.py\"; f.write_text(\"# this supplement improves memory and focus\n\")
+    hits = len(scan_source_for_bio_claims([f]))
+    import sys; sys.exit(0 if hits == 0 else 1)"'
+  description: >-
+    Inverse probe of the bio-claim gate. It exits 0 (fires) iff an unpaired
+    cognitive-performance claim is NOT flagged by the scanner -- i.e. the gate
+    went blind to a violation. While the gate flags unpaired claims the probe
+    exits 1. If it ever exits 0, the witness is no longer truthful and the change
+    must be reverted, not patched green.
+rollback_command: >-
+  git rm -f
+  tests/physics_contracts/test_pncc_no_bio_claim_witness.py
+  .claude/commit_acceptors/pncc-no-bio-claim-witness.yaml
+rollback_verification_command: >-
+  bash -c 'test ! -f tests/physics_contracts/test_pncc_no_bio_claim_witness.py'
+memory_update_type: none
+ledger_path: ".claude/commit_acceptors/pncc-no-bio-claim-witness.yaml"
+report_path: "tmp/pncc_no_bio_claim_witness.log"
+evidence: []

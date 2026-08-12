@@ -1,3 +1,5 @@
+# Copyright (c) 2023-2026 Yaroslav Vasylenko (neuron7xLab)
+# SPDX-License-Identifier: MIT
 """Tests for the replay pipeline harness.
 
 These tests verify deterministic behavior of the replay harness
@@ -27,7 +29,7 @@ def _load_module_directly(module_name: str, file_path: str):
 # Load the canonical and pipeline_result modules first (they're needed by replay_pipeline)
 test_dir = Path(__file__).parent
 scripts_dir = test_dir.parent.parent.parent / "scripts" / "eval"
-src_dir = test_dir.parent.parent.parent / "src" / "tradepulse" / "sdk" / "mlsdm" / "core"
+src_dir = test_dir.parent.parent.parent / "src" / "geosync" / "sdk" / "mlsdm" / "core"
 
 # Preload core modules
 if "mlsdm_core_canonical" not in sys.modules:

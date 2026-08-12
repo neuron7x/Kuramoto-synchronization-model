@@ -1,6 +1,6 @@
 {
   "$schema": "https://json-schema.org/draft/2020-12/schema",
-  "$id": "https://tradepulse.example.com/schemas/localization/translation.schema.json",
+  "$id": "https://geosync.example.com/schemas/localization/translation.schema.json",
   "type": "object",
   "required": ["locale", "nav", "header", "views"],
   "properties": {

@@ -1,7 +1,7 @@
 # Metric Governance and Experimentation Discipline
 
 > **Purpose.** Institute a repeatable, audit-ready metrics discipline that links
-> TradePulse's strategic outcomes to measurable signals, experiment controls, and
+> GeoSync's strategic outcomes to measurable signals, experiment controls, and
 > escalation procedures. This playbook defines how we author goal trees,
 > implement leading/lagging indicators, and operationalise SLOs so trading,
 > research, and platform squads share a single source of truth.

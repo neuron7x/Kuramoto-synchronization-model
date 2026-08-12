@@ -1,4 +1,5 @@
-# SPDX-License-Identifier: LicenseRef-TradePulse-Proprietary
+# Copyright (c) 2023-2026 Yaroslav Vasylenko (neuron7xLab)
+# SPDX-License-Identifier: MIT
 """Unit tests for core/maintenance/backups.py."""
 
 from __future__ import annotations
@@ -25,9 +26,7 @@ from core.maintenance.backups import (
 class TestDefaultRunner:
     """Tests for _default_runner function."""
 
-    def test_default_runner_executes_command(
-        self, monkeypatch: pytest.MonkeyPatch
-    ) -> None:
+    def test_default_runner_executes_command(self, monkeypatch: pytest.MonkeyPatch) -> None:
         mock_run = MagicMock(return_value=subprocess.CompletedProcess([], 0))
         monkeypatch.setattr(subprocess, "run", mock_run)
 
@@ -44,9 +43,7 @@ class TestDefaultRunner:
         result = _default_runner(["echo", "test"], env)
 
         assert result.returncode == 0
-        mock_run.assert_called_once_with(
-            ["echo", "test"], env={"FOO": "bar"}, check=True
-        )
+        mock_run.assert_called_once_with(["echo", "test"], env={"FOO": "bar"}, check=True)
 
 
 class TestDefaultClock:
@@ -105,9 +102,7 @@ class TestBackupConfig:
             )
 
     def test_archive_after_exceeds_retention_raises(self, tmp_path: Path) -> None:
-        with pytest.raises(
-            ValueError, match="archive_after_days cannot exceed retention_days"
-        ):
+        with pytest.raises(ValueError, match="archive_after_days cannot exceed retention_days"):
             BackupConfig(
                 database_url="postgres://localhost:5432/test",
                 backup_dir=tmp_path,
@@ -134,6 +129,20 @@ class TestBackupConfig:
         )
 
         assert config.archive_dir == archive_dir
+
+    def test_custom_pg_dump_binary_is_preserved(self, tmp_path: Path) -> None:
+        """`self.pg_dump_binary or "pg_dump"` keeps a caller-supplied binary.
+
+        The `or` is a fallback for an empty value only. Under `Or->And` a
+        truthy custom path collapses to the literal "pg_dump" (``x and "pg_dump"``
+        returns the last operand), silently discarding the operator's choice.
+        """
+        config = BackupConfig(
+            database_url="postgres://localhost:5432/test",
+            backup_dir=tmp_path / "backups",
+            pg_dump_binary="/opt/pg16/bin/pg_dump",
+        )
+        assert config.pg_dump_binary == "/opt/pg16/bin/pg_dump"
 
 
 class TestBackupResult:
@@ -195,6 +204,26 @@ class TestDatabaseBackupManager:
         assert backup_dir.exists()
         assert (backup_dir / "archive").exists()
 
+    def test_manager_honours_custom_archive_dir(self, tmp_path: Path) -> None:
+        """`config.archive_dir or (backup_dir / "archive")` uses the configured dir.
+
+        The config always resolves archive_dir to a truthy Path, so the `or`
+        must pass it straight through. Under `Or->And` the expression collapses
+        to the default ``backup_dir/"archive"`` (``truthy and default``), routing
+        archives to the wrong tree whenever a custom archive_dir was set.
+        """
+        backup_dir = tmp_path / "backups"
+        archive_dir = tmp_path / "custom_archive"
+        config = BackupConfig(
+            database_url="postgres://localhost:5432/test",
+            backup_dir=backup_dir,
+            archive_dir=archive_dir,
+        )
+        manager = DatabaseBackupManager(config=config, dry_run=True)
+
+        assert manager._archive_dir == archive_dir
+        assert manager._archive_dir != backup_dir / "archive"
+
     def test_create_backup_dry_run(self, manager: DatabaseBackupManager) -> None:
         manager.dry_run = True
 
@@ -225,9 +254,7 @@ class TestDatabaseBackupManager:
 
         assert "incremental" in result.backup_path.name
 
-    def test_create_backup_uncompressed(
-        self, tmp_path: Path, mock_runner: MagicMock
-    ) -> None:
+    def test_create_backup_uncompressed(self, tmp_path: Path, mock_runner: MagicMock) -> None:
         backup_dir = tmp_path / "backups"
         config = BackupConfig(
             database_url="postgres://localhost:5432/test",
@@ -261,9 +288,7 @@ class TestDatabaseBackupManager:
 
         assert result.archived == ()
 
-    def test_archive_stale_backups(
-        self, tmp_path: Path, mock_runner: MagicMock
-    ) -> None:
+    def test_archive_stale_backups(self, tmp_path: Path, mock_runner: MagicMock) -> None:
         backup_dir = tmp_path / "backups"
         backup_dir.mkdir(parents=True, exist_ok=True)
 
@@ -311,9 +336,7 @@ class TestDatabaseBackupManager:
         assert len(result.pruned) == 1
         assert not old_archive.exists()
 
-    def test_prune_archives_dry_run(
-        self, tmp_path: Path, mock_runner: MagicMock
-    ) -> None:
+    def test_prune_archives_dry_run(self, tmp_path: Path, mock_runner: MagicMock) -> None:
         backup_dir = tmp_path / "backups"
         archive_dir = backup_dir / "archive"
         archive_dir.mkdir(parents=True, exist_ok=True)
@@ -331,9 +354,7 @@ class TestDatabaseBackupManager:
             backup_dir=backup_dir,
             retention_days=35,
         )
-        manager = DatabaseBackupManager(
-            config=config, command_runner=mock_runner, dry_run=True
-        )
+        manager = DatabaseBackupManager(config=config, command_runner=mock_runner, dry_run=True)
 
         result = manager.run_backup_cycle()
 
@@ -341,9 +362,7 @@ class TestDatabaseBackupManager:
         # In dry run, archive should still exist
         assert old_archive.exists()
 
-    def test_manager_with_custom_env(
-        self, tmp_path: Path, mock_runner: MagicMock
-    ) -> None:
+    def test_manager_with_custom_env(self, tmp_path: Path, mock_runner: MagicMock) -> None:
         backup_dir = tmp_path / "backups"
         config = BackupConfig(
             database_url="postgres://localhost:5432/test",

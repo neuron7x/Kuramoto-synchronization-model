@@ -1,0 +1,92 @@
+# Diff-bound commit acceptor (2 of 3) for PR #1242 ricci_microstructure_v1.
+#
+# Scope: the GOVERNANCE / scaffolding surface of the lane — the three split
+# acceptor specs, the CI gate workflow, the frozen config + L2 manifest, the
+# artifact JSON Schema, the reproducibility capsule, the claim-boundary
+# allowlist, the claim-hash registry, and the package __init__ files. These are
+# the deterministic contracts the kernel executes against; they are bound here
+# (governance cap 16) rather than to the correctness acceptor so each acceptor
+# stays under its claim-type file cap.
+
+id: ricci-microstructure-v1-scaffolding
+status: ACTIVE
+claim_type: governance
+promise: >-
+  The lane scaffolding fails closed and never promotes admissibility to a market
+  claim: the artifact JSON Schema rejects forbidden statuses
+  (ALPHA_FOUND / MARKET_SIGNAL_PROVEN / PRODUCTION_READY / PHYSICS_CONFIRMED) and
+  requires forbidden_claims_absent==true; the frozen config pins n_surrogates>=1000
+  and a kernel-consuming null; the L2 manifest declares an allowed honest source
+  (BINANCE_FUTURES_DEPTH, never relabelled LOBSTER); the CI gate verifies a
+  committed, clean-tree (dirty_git==false) artifact with a T3 claim_tier and a
+  data_sha256 that matches the committed raw CSV. The claim-boundary allowlist and
+  claim-hash registry stay in sync with CLAIMS.md.
+
+diff_scope:
+  changed_files:
+    - path: ".claude/commit_acceptors/ricci-microstructure-v1-kernel.yaml"
+    - path: ".claude/commit_acceptors/ricci-microstructure-v1-scaffolding.yaml"
+    - path: ".claude/commit_acceptors/ricci-microstructure-v1-docs.yaml"
+    - path: ".github/workflows/ricci-microstructure-gate.yml"
+    - path: ".github/workflows/repo-integrity-gate.yml"
+    - path: ".github/workflows/research-integrity-gate.yml"
+    - path: ".github/claim_boundary_allow.json"
+    - path: "configs/research/ricci_microstructure_v1.json"
+    - path: "data/l2_manifest.json"
+    - path: "schemas/research/ricci_microstructure_artifact.schema.json"
+    - path: "geosync_research/lines/ricci_microstructure_v1/REPRODUCIBILITY_CAPSULE.sh"
+    - path: "geosync_research/lines/ricci_microstructure_v1/canonical/artifact.json"
+    - path: "artifacts/claims_hashes.json"
+    - path: "geosync_research/__init__.py"
+    - path: "geosync_research/lines/__init__.py"
+    - path: "geosync_research/lines/ricci_microstructure_v1/__init__.py"
+  forbidden_paths:
+    - "trading/"
+    - "execution/"
+    - "forecast/"
+    - "policy/"
+
+required_python_symbols:
+  - "geosync_research/lines/ricci_microstructure_v1/artifact.py::validate_artifact_payload"
+
+expected_signal: >-
+  pytest -k 'artifact_schema or hardened or forbidden_claims or dirty_git'
+  tests/research_lines/test_ricci_microstructure_v1.py passes: the schema admits
+  a HYPOTHESIS_NOT_SUPPORTED T3 payload and rejects ALPHA_FOUND / dirty_git /
+  forbidden_claims_absent==false.
+
+measurement_command: |-
+  bash -c 'PYTHONPATH=. python -m pytest tests/research_lines/test_ricci_microstructure_v1.py -q -p no:cacheprovider -k "artifact_schema or hardened or forbidden_claims or dirty_git or source_class or substrate"'
+
+signal_artifact: "tmp/ricci_microstructure_v1_scaffolding.log"
+
+falsifier:
+  # Extracted to a committed single-purpose script (reflow-proof; see the
+  # commit-acceptor command-syntax gate).
+  command: |-
+    bash -c 'PYTHONPATH=. python scripts/ci/ricci_microstructure_scaffolding_falsifier.py'
+  description: >-
+    Inverts the no-overclaim contract: the artifact schema MUST reject a payload
+    whose falsification_status is ALPHA_FOUND (a forbidden market-mythology
+    status). If the schema were weakened to admit it, validate_artifact_payload
+    returns no errors and this command exits non-zero.
+
+rollback_command: >-
+  bash -c '
+    git rm -f .github/workflows/ricci-microstructure-gate.yml
+      data/l2_manifest.json configs/research/ricci_microstructure_v1.json
+      schemas/research/ricci_microstructure_artifact.schema.json
+      geosync_research/lines/ricci_microstructure_v1/REPRODUCIBILITY_CAPSULE.sh
+      .claude/commit_acceptors/ricci-microstructure-v1-scaffolding.yaml
+    && git checkout origin/main -- .github/claim_boundary_allow.json artifacts/claims_hashes.json
+  '
+
+rollback_verification_command: >-
+  bash -c '
+    test ! -e .github/workflows/ricci-microstructure-gate.yml
+    && test ! -e schemas/research/ricci_microstructure_artifact.schema.json
+  '
+
+memory_update_type: none
+ledger_path: ".claude/commit_acceptors/ricci-microstructure-v1-scaffolding.yaml"
+report_path: "docs/RICCI_MICROSTRUCTURE.md"

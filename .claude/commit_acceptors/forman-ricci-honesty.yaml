@@ -1,0 +1,116 @@
+# Diff-bound commit acceptor for the Forman-Ricci representation-honesty fix.
+#
+# core/physics/forman_ricci.py advertised "Forman-Ricci curvature for weighted
+# graphs (Sreejith et al. 2016)" but computes the UNWEIGHTED combinatorial form
+# κ_F(i,j) = 4 − d_i − d_j + 3·T_ij over a BINARY graph built by |ρ_ij| >
+# threshold. Edge-weight magnitude and correlation sign never enter the
+# computation, so the "weighted" headline overstated the method and the sign
+# erasure was undeclared. This change makes the module honest WITHOUT changing
+# any numeric output:
+#   * the module + class docstrings now state plainly that the implemented
+#     method is the unweighted combinatorial Forman-Ricci on a |ρ|-thresholded
+#     graph, with the weighted Sreejith form retained only as a cited reference;
+#   * FormanRicciResult gains machine-readable provenance fields
+#     (representation="graph", weighted=False, signed=False,
+#     information_loss=("edge_weight_magnitude","correlation_sign")) so the
+#     projection's information loss is auditable, not docstring-only.
+#
+# Bit-for-bit numeric behaviour (edge_curvatures, kappa_min/mean/max,
+# herding_index) is unchanged; the new dataclass fields have defaults, so every
+# existing constructor and every downstream consumer (research/askar/*,
+# analytics/regime/*) is unaffected. Adds metamorphic tests that LOCK the
+# declared semantics: weight-insensitivity is asserted-and-declared, sign
+# erasure is recorded, and the provenance fields are present on every result.
+#
+# Promotes NO claim tier, adds NO invariant, changes NO numeric runtime
+# behaviour, adds NO dependency. This is a descriptor honesty / representation-
+# conservation fix on a Layer-B structural descriptor; it asserts no predictive
+# or financial claim.
+#
+# Locally verified on origin/main fork base (53f21b3b):
+#   * python -m compileall: clean
+#   * pytest tests/unit/physics/test_T3_forman_ricci.py: 17 passed
+#   * ruff check / ruff format --check / black --check: clean
+#   * mypy --strict core/physics/forman_ricci.py: no issues
+#   * .claude/physics/validate_tests.py --audit-code: no clamp/bounds issues
+#   * zero noqa / type: ignore across both changed files
+id: forman-ricci-honesty
+status: ACTIVE
+claim_type: governance
+promise: >-
+  core.physics.forman_ricci computes the unweighted combinatorial Forman-Ricci
+  curvature κ_F = 4 − d_i − d_j + 3·T_ij over a binary graph built by
+  |ρ_ij| > threshold, and now declares that honestly: the module and class
+  docstrings no longer advertise a weighted Sreejith curvature as the computed
+  method, and FormanRicciResult carries provenance fields representation="graph",
+  weighted=False, signed=False, and information_loss recording
+  ("edge_weight_magnitude", "correlation_sign"). Numeric output
+  (edge_curvatures, kappa_min/mean/max, herding_index) is byte-unchanged; the
+  new dataclass fields are defaulted so no existing constructor or downstream
+  consumer breaks. Metamorphic tests lock the semantics: two correlation
+  matrices with identical above-threshold topology but different magnitudes
+  produce identical curvature (weight-insensitivity, declared not hidden), a
+  sign-flipped correlation yields identical output with signed=False and the
+  loss recorded, and every result exposes the provenance fields. No claim tier
+  is promoted; no invariant is added; the descriptor asserts no predictive or
+  financial meaning.
+diff_scope:
+  changed_files:
+    - path: ".claude/commit_acceptors/forman-ricci-honesty.yaml"
+    - path: "core/physics/forman_ricci.py"
+    - path: "tests/unit/physics/test_T3_forman_ricci.py"
+  forbidden_paths:
+    - "trading/"
+    - "execution/"
+    - "forecast/"
+    - "src/"
+required_python_symbols:
+  - "core/physics/forman_ricci.py::FormanRicciResult"
+  - "core/physics/forman_ricci.py::FormanRicciCurvature"
+expected_signal: >-
+  `python -m pytest tests/unit/physics/test_T3_forman_ricci.py` reports
+  17 passed; the result declares weighted=False / signed=False with the
+  information_loss tokens, weight-insensitivity and sign-erasure are asserted,
+  and numeric curvature output is unchanged.
+measurement_command: >-
+  bash -c 'mkdir -p tmp && python -m pytest
+  tests/unit/physics/test_T3_forman_ricci.py -v
+  > tmp/forman_ricci_pytest.log 2>&1
+  && grep -qE "17 passed" tmp/forman_ricci_pytest.log'
+signal_artifact: "tmp/forman_ricci_pytest.log"
+falsifier:
+  command: >-
+    python -c 'import sys, numpy as np;
+    from core.physics.forman_ricci import FormanRicciCurvature;
+    frc = FormanRicciCurvature(threshold=0.3);
+    n = 4;
+    weak = np.full((n, n), 0.4); np.fill_diagonal(weak, 1.0);
+    strong = np.full((n, n), 0.95); np.fill_diagonal(strong, 1.0);
+    rw = frc.compute_from_correlation(weak);
+    rs = frc.compute_from_correlation(strong);
+    weight_invariant = rw.edge_curvatures == rs.edge_curvatures;
+    declares_unweighted = (rw.weighted is False and rw.signed is False
+    and "edge_weight_magnitude" in rw.information_loss
+    and "correlation_sign" in rw.information_loss);
+    sys.exit(0 if (not weight_invariant or not declares_unweighted) else 1)'
+  description: >-
+    Inverse probe of the representation-honesty contract. It exits 0 (fires) iff
+    the curvature stops being invariant to above-threshold edge magnitude (i.e.
+    the method silently became weight-sensitive while still computing the
+    unweighted formula), OR the result stops declaring weighted=False /
+    signed=False / the information_loss tokens. While the contract holds the
+    probe exits 1. An exit 0 means the module has drifted into an undeclared
+    weighting/sign claim and must be repaired (deliver the weighted method or
+    re-declare the loss), not patched green.
+rollback_command: >-
+  bash -c 'git checkout origin/main -- core/physics/forman_ricci.py
+  tests/unit/physics/test_T3_forman_ricci.py
+  && git rm -f .claude/commit_acceptors/forman-ricci-honesty.yaml'
+rollback_verification_command: >-
+  bash -c 'test ! -f .claude/commit_acceptors/forman-ricci-honesty.yaml'
+memory_update_type: none
+ledger_path: ".claude/commit_acceptors/forman-ricci-honesty.yaml"
+report_path: "tmp/forman_ricci_pytest.log"
+evidence:
+  - path: "tmp/forman_ricci_pytest.log"
+    sha256: "ec02243e7821f382399d2bfca7b50b35c51764a4f673a4fa9b075cb86d406d8c"  # pragma: allowlist secret

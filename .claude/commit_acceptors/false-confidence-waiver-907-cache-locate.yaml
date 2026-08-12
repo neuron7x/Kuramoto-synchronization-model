@@ -1,0 +1,37 @@
+id: false-confidence-waiver-907-cache-locate
+status: ACTIVE
+claim_type: governance
+promise: >-
+  Two C3 false-confidence findings introduced by the JSON-cache allowlist
+  security fix (PR 907, tests/unit/indicators/test_cache_locate_allowlist.py)
+  are documented waivers, not new debt. They are well-formed parametrized
+  security tests (rejecting os/subprocess/builtins imports); the C3 assert-count
+  heuristic miscounts parametrized bodies. The waiver clears a latent red the
+  detector would otherwise raise on every PR.
+diff_scope:
+  changed_files:
+  - path: .claude/audit/false_confidence_exemptions.yaml
+  - path: .claude/commit_acceptors/false-confidence-waiver-907-cache-locate.yaml
+  forbidden_paths: []
+required_python_symbols: []
+expected_signal: >-
+  false_confidence_detector reports 0 findings under the default exemption
+  manifest; the regression gate exits 0.
+measurement_command: python tools/audit/false_confidence_detector.py --exit-on-finding
+signal_artifact: .claude/audit/false_confidence_exemptions.yaml
+falsifier:
+  command: python tools/audit/false_confidence_detector.py --exit-on-finding
+  description: >-
+    Must fail if a NEW (unwaived) false-confidence finding crosses the
+    threshold, or if these two finding ids stop matching real test functions.
+rollback_command: >-
+  git checkout -- .claude/audit/false_confidence_exemptions.yaml
+  .claude/commit_acceptors/false-confidence-waiver-907-cache-locate.yaml
+rollback_verification_command: >-
+  git diff --exit-code .claude/audit/false_confidence_exemptions.yaml
+  .claude/commit_acceptors/false-confidence-waiver-907-cache-locate.yaml
+memory_update_type: append
+ledger_path: .claude/commit_acceptors/false-confidence-waiver-907-cache-locate.yaml
+report_path: .claude/audit/false_confidence_exemptions.yaml
+evidence:
+- path: .claude/audit/false_confidence_exemptions.yaml

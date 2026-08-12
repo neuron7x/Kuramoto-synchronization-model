@@ -1,0 +1,54 @@
+# SPDX-License-Identifier: MIT
+#
+# Physics Release Scorecard Gate (WP-03) — readiness is computed, not asserted.
+#
+# A scorecard without enforcement decays into a decorative badge. This gate
+# recomputes release-readiness from the per-dimension states and fails closed if
+# `claimed_ready` is true while any required dimension is below CI_VERIFIED
+# (PARTIAL != READY), or if a verified state carries no evidence. Runs the
+# detector against physics_release_scorecard.yml plus the deterministic suite.
+name: Physics Release Scorecard Gate
+
+on:
+  pull_request:
+    branches: [main]
+    paths:
+      - 'physics_release_scorecard.yml'
+      - 'tools/release/check_physics_release_scorecard.py'
+      - 'tests/release/test_physics_release_scorecard.py'
+      - '.github/workflows/physics-release-scorecard-gate.yml'
+  merge_group:
+  push:
+    branches: [main]
+
+permissions:
+  contents: read
+
+concurrency:
+  group: physics-release-scorecard-gate-${{ github.event.pull_request.number || github.sha }}
+  cancel-in-progress: true
+
+jobs:
+  physics-release-scorecard-gate:
+    name: physics-release-scorecard-gate
+    runs-on: ubuntu-latest
+    timeout-minutes: 5
+    steps:
+      - name: Checkout
+        uses: actions/checkout@9c091bb21b7c1c1d1991bb908d89e4e9dddfe3e0 # v7.0.0
+
+      - name: Set up Python
+        uses: actions/setup-python@ece7cb06caefa5fff74198d8649806c4678c61a1 # v6
+        with:
+          python-version: '3.11'
+
+      - name: Install dependencies
+        run: python -m pip install --upgrade pyyaml pytest
+
+      - name: Scorecard gate (readiness recomputed, fail-closed on PARTIAL-as-READY)
+        run: python tools/release/check_physics_release_scorecard.py
+
+      - name: Scorecard guard suite
+        # --noconftest: the scorecard test uses no repo fixtures; keeps this gate
+        # independent of the full stack (repo conftests pull numpy/pandas).
+        run: PYTHONPATH=. python -m pytest tests/release/test_physics_release_scorecard.py -q --noconftest -p no:cacheprovider

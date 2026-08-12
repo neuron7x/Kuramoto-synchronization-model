@@ -1,8 +1,10 @@
+# Copyright (c) 2023-2026 Yaroslav Vasylenko (neuron7xLab)
+# SPDX-License-Identifier: MIT
 """Core runtime helpers shared across the ``scripts`` package."""
 
 from __future__ import annotations
 
-# SPDX-License-Identifier: LicenseRef-TradePulse-Proprietary
+# SPDX-License-Identifier: MIT
 import locale
 import logging
 import os
@@ -24,7 +26,7 @@ class UTCFormatter(logging.Formatter):
 
     def formatTime(
         self, record: logging.LogRecord, datefmt: str | None = None
-    ) -> str:  # noqa: N802
+    ) -> str:
         dt = datetime.fromtimestamp(record.created, tz=timezone.utc)
         if datefmt:
             return dt.strftime(datefmt)
@@ -45,9 +47,7 @@ def configure_deterministic_runtime(
     """Apply deterministic defaults for random seed and locale."""
 
     resolved_seed = (
-        seed
-        if seed is not None
-        else int(os.getenv("SCRIPTS_RANDOM_SEED", DEFAULT_SEED))
+        seed if seed is not None else int(os.getenv("SCRIPTS_RANDOM_SEED", DEFAULT_SEED))
     )
     resolved_locale = locale_name or os.getenv("SCRIPTS_LOCALE", DEFAULT_LOCALE)
 

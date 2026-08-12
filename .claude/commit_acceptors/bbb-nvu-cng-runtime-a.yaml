@@ -1,0 +1,32 @@
+id: bbb-nvu-cng-runtime-a
+status: ACTIVE
+claim_type: correctness
+promise: "Diff-bound acceptor for BBB NVU runtime Python files."
+diff_scope:
+  changed_files:
+    - path: ".claude/commit_acceptors/bbb-nvu-cng-runtime-a.yaml"
+    - path: "BBB_NVU_Cognitive_Noise_Gate_2026/__init__.py"
+    - path: "BBB_NVU_Cognitive_Noise_Gate_2026/src/__init__.py"
+    - path: "BBB_NVU_Cognitive_Noise_Gate_2026/src/deterministic_engine.py"
+    - path: "BBB_NVU_Cognitive_Noise_Gate_2026/src/runtime_boundary.py"
+    - path: "BBB_NVU_Cognitive_Noise_Gate_2026/src/audit.py"
+    - path: "BBB_NVU_Cognitive_Noise_Gate_2026/src/observability.py"
+    - path: "BBB_NVU_Cognitive_Noise_Gate_2026/src/operational_kernel.py"
+  forbidden_paths:
+    - "trading/"
+    - "execution/"
+    - "forecast/"
+    - "policy/"
+required_python_symbols: []
+expected_signal: "The focused verifier completes for runtime files."
+measurement_command: "python BBB_NVU_Cognitive_Noise_Gate_2026/tools/verify_artifact.py"
+signal_artifact: "tmp/bbb_nvu_cng_verify_artifact.json"
+falsifier:
+  command: "python BBB_NVU_Cognitive_Noise_Gate_2026/tools/verify_artifact.py --invalid-mode"
+  description: "Unknown verifier modes must fail."
+rollback_command: "git diff --exit-code"
+rollback_verification_command: "git diff --exit-code"
+memory_update_type: append
+ledger_path: ".claude/commit_acceptors/bbb-nvu-cng-runtime-a.yaml"
+report_path: "tmp/bbb_nvu_cng_verify_artifact.json"
+evidence: []

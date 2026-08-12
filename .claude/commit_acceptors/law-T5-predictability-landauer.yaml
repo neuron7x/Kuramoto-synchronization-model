@@ -1,0 +1,92 @@
+# Diff-bound acceptor for Law T5: Landauer-budgeted predictability horizon.
+#
+# Constitutional law T5 of seven (CLAUDE.md GeoSync Physics Law Act).
+# Standalone — λ_1 is a scalar input, no JAX dependency at runtime.
+
+id: law-T5-predictability-landauer
+status: ACTIVE
+claim_type: correctness
+promise: >-
+  core.physics.predictability_horizon ships pure-functional, side-
+  effect-free building blocks for Lorenz (1969) predictability and the
+  Landauer (1961) information-cost floor on initial-condition precision:
+  predictability_horizon (algebraic τ from λ_1, δ_0, δ_tol),
+  landauer_min_initialisation_energy (k_B·T·ln(Δ/δ_0)),
+  landauer_min_initial_precision (its inverse), and the master
+  predictability_horizon_under_budget which clamps τ by a hard energy
+  budget. Returns HorizonReport(tau, delta_0, delta_0_min_landauer,
+  energy_required_J, saturated_budget). Adds three constitutional
+  invariants:
+    INV-TAU1 | algebraic    | τ = (1/λ_1)·ln(δ_tol/δ_0) to 1e-12 on
+                              closed-form cases; τ = +∞ for λ_1 ≤ 0.
+                              Halves under doubling λ_1; grows
+                              logarithmically with finer δ_0.
+    INV-TAU2 | conservation | E_min(δ_0) = k_B·T·ln(Δ/δ_0) is exact;
+                              round-trip δ_0_min(E_min(δ_0)) recovers
+                              δ_0 within 1e-10 in the float64-
+                              representable regime (E ≪ 700·k_B·T ≈
+                              2.9e-18 J at 300 K). Requesting δ_0
+                              below the budget floor raises with
+                              "physically unaffordable".
+    INV-TAU3 | universal    | every contract violation (NaN/inf λ_1,
+                              δ_0 ≤ 0, δ_tol ≤ 0, δ_0 ≥ δ_tol,
+                              dynamic_range ≤ 0, dynamic_range ≤
+                              δ_tol, E_budget < 0, T_kelvin ≤ 0,
+                              budget too small for tolerance) raises
+                              ValueError; fail-closed.
+  Determinism: pure functions; identical inputs ⇒ identical outputs
+  to float precision (INV-HPC1 compat).
+diff_scope:
+  changed_files:
+    - path: ".claude/commit_acceptors/law-T5-predictability-landauer.yaml"
+    - path: "core/physics/predictability_horizon.py"
+    - path: "tests/unit/physics/test_T5_predictability_landauer.py"
+    - path: "docs/laws/T5_predictability_landauer.md"
+    - path: "newsfragments/law-T5-predictability-landauer.feature.md"
+    - path: "CLAUDE.md"
+  forbidden_paths:
+    - "trading/"
+    - "execution/"
+    - "forecast/"
+    - "policy/"
+required_python_symbols:
+  - "HorizonReport"
+  - "K_BOLTZMANN"
+  - "ROOM_TEMPERATURE"
+  - "landauer_min_initial_precision"
+  - "landauer_min_initialisation_energy"
+  - "predictability_horizon"
+  - "predictability_horizon_under_budget"
+expected_signal: >-
+  All 27 unit tests pass under pytest; black, ruff, mypy --strict clean;
+  Lorenz-69 horizon formula recovered to 1e-12; round-trip Landauer
+  inverse to 1e-10 in 5 representable energies; modest E=1e-19 J at
+  T=300K gives τ > 20 Lyapunov-times for Lorenz-63 λ_1=0.9056.
+measurement_command: >-
+  python -m pytest tests/unit/physics/test_T5_predictability_landauer.py -v
+signal_artifact: "tmp/law_T5_predictability_landauer_pytest.log"
+falsifier:
+  command: >-
+    python -m pytest tests/unit/physics/test_T5_predictability_landauer.py
+    -v -k "INV_TAU1 or INV_TAU2 or INV_TAU3 or use_case or HPC1"
+  description: >-
+    Probe filters to the load-bearing tests:
+    INV-TAU1 (Lorenz inequality recovers exactly; halving under
+    doubled λ_1 — 1-D scaling falsifier);
+    INV-TAU2 (Landauer round-trip exact; over-budget rejected);
+    INV-TAU3 (every contract violation raises);
+    use_case (room-temperature realistic budget yields finite τ);
+    HPC1 (pure-function determinism).
+rollback_command: >-
+  git checkout HEAD~1 -- core/physics/predictability_horizon.py
+  tests/unit/physics/test_T5_predictability_landauer.py
+  .claude/commit_acceptors/law-T5-predictability-landauer.yaml
+  docs/laws/T5_predictability_landauer.md
+  newsfragments/law-T5-predictability-landauer.feature.md
+  CLAUDE.md
+rollback_verification_command: >-
+  git diff --exit-code core/physics/predictability_horizon.py
+memory_update_type: append
+ledger_path: ".claude/commit_acceptors/law-T5-predictability-landauer.yaml"
+report_path: "docs/laws/T5_predictability_landauer.md"
+evidence: []

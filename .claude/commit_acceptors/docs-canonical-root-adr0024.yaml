@@ -1,0 +1,95 @@
+# Diff-bound commit acceptor: reconcile the canonical-root documentation to
+# ADR 0024 and add a fail-closed docs-consistency gate (P0-ARCH-001).
+#
+# The repo carried a real contradiction: ADR 0024 (Accepted 2026-06-09) makes
+# top-level `geosync/` the single canonical install root and retires the
+# `src/geosync/` fork, but several docs still asserted `src/geosync` IS canonical
+# (`Root: src/geosync`, "the canonical tree"), and ADR 0017 — which originally
+# made src/geosync canonical — was never marked superseded.
+#
+# This PR aligns the prose to the accepted decision and makes the alignment
+# durable with a stdlib-only, fail-closed gate. Scope is documentation +
+# enforcement only; the `__CANONICAL__` flag flip and the src/geosync code
+# collapse remain the staged, test-gated migration ADR 0024 prescribes.
+#
+# Locally verified:
+#   * python scripts/ci/check_docs_consistency.py -> green (no doc reasserts
+#     src/geosync as canonical)
+#   * python -m pytest tests/ci/test_docs_consistency.py -q -> 6 passed
+#   * black --check + ruff check + mypy --strict clean on the new .py files
+#   * no new `src.*` imports / `sys.path` mutations (import-architecture ratchet)
+
+id: docs-canonical-root-adr0024
+status: ACTIVE
+claim_type: documentation
+promise: >-
+  After this PR lands, no documentation file reasserts `src/geosync` as the
+  canonical root: ARCHITECTURE_MAP/STRUCTURE/WORKING_STACK/KNOWN_LIMITATIONS state
+  top-level `geosync/` as canonical and `src/geosync/` as the retired fork (per
+  ADR 0024), ADR 0017 is marked Superseded by ADR 0024, and the new fail-closed
+  gate `scripts/ci/check_docs_consistency.py` fails CI on any future doc that
+  reasserts src/geosync as canonical. No code behavior changes.
+diff_scope:
+  changed_files:
+    - path: ".claude/commit_acceptors/docs-canonical-root-adr0024.yaml"
+    - path: ".github/docs_consistency_allow.json"
+    - path: ".github/workflows/docs-consistency-gate.yml"
+    - path: "docs/ARCHITECTURE_MAP.md"
+    - path: "docs/KNOWN_LIMITATIONS.md"
+    - path: "docs/STRUCTURE.md"
+    - path: "docs/WORKING_STACK.md"
+    - path: "docs/adr/0017-core-to-src-migration.md"
+    - path: "scripts/ci/check_docs_consistency.py"
+    - path: "tests/ci/test_docs_consistency.py"
+  forbidden_paths:
+    - "trading/"
+    - "execution/"
+    - "forecast/"
+    - "policy/"
+    - "core/physics/"
+    - "core/kuramoto/"
+    - "src/geosync/"
+required_python_symbols: []
+expected_signal: >-
+  `python scripts/ci/check_docs_consistency.py` exits 0 ("Docs-consistency gate
+  held: no doc reasserts `src/geosync` as canonical."), and
+  `python -m pytest tests/ci/test_docs_consistency.py -q` passes (6 tests),
+  including the live-repo invariant that the scan returns no violations.
+measurement_command: >-
+  bash -c '
+    python scripts/ci/check_docs_consistency.py && python -m pytest tests/ci/test_docs_consistency.py -q
+  '
+signal_artifact: "tmp/docs_consistency.log"
+falsifier:
+  command: >-
+    bash -c '
+      printf "Root: src/geosync is the canonical package\n" > docs/_falsify_canonical_root.md
+      python scripts/ci/check_docs_consistency.py >/dev/null 2>&1
+      rc=$?
+      rm -f docs/_falsify_canonical_root.md
+      test "$rc" -eq 0
+    '
+  description: >-
+    Plants a doc line reasserting `src/geosync` as the canonical Root, then runs
+    the gate. The falsifier succeeds (exit 0) only if the gate PASSES despite the
+    violating line — i.e. only if check_docs_consistency.py stops catching the
+    contradiction. With the gate working it exits 1 (fails the build on the
+    planted line), so the falsifier fails, confirming enforcement is live.
+rollback_command: >-
+  bash -c 'git checkout origin/main --
+    docs/ARCHITECTURE_MAP.md
+    docs/KNOWN_LIMITATIONS.md
+    docs/STRUCTURE.md
+    docs/WORKING_STACK.md
+    docs/adr/0017-core-to-src-migration.md && rm -f
+    scripts/ci/check_docs_consistency.py
+    tests/ci/test_docs_consistency.py
+    .github/docs_consistency_allow.json
+    .github/workflows/docs-consistency-gate.yml
+    .claude/commit_acceptors/docs-canonical-root-adr0024.yaml'
+rollback_verification_command: >-
+  bash -c '! test -f .claude/commit_acceptors/docs-canonical-root-adr0024.yaml && ! test -f scripts/ci/check_docs_consistency.py'
+memory_update_type: append
+ledger_path: ".claude/commit_acceptors/docs-canonical-root-adr0024.yaml"
+report_path: "tmp/docs_consistency.log"
+evidence: []

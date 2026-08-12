@@ -162,7 +162,7 @@ The framework will be implemented in `core/indicators/fractal/` with:
 ## References
 - [Fractal Design Patterns in Financial Analysis](https://example.com/fractal-patterns)
 - REQ-001: Fractal composition requirement from docs/requirements/product_specification.md
-- [Feature Engineering Best Practices](docs/feature_engineering.md)
+- [Feature Engineering Best Practices](../feature_catalog.md)
 
 ## Notes
 

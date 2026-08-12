@@ -1,3 +1,5 @@
+# Copyright (c) 2023-2026 Yaroslav Vasylenko (neuron7xLab)
+# SPDX-License-Identifier: MIT
 """
 HPC-AI v4 Demonstration: Complete Integration Example
 
@@ -5,15 +7,15 @@ This example demonstrates the full pipeline of the Hierarchical Predictive Codin
 with Active Inference (HPC-AI v4) module for adaptive trading.
 """
 
-from neuropro.hpc_active_inference_v4 import HPCActiveInferenceModuleV4
-from neuropro.hpc_validation import (
+from core.utils.determinism import DEFAULT_SEED
+from geosync_hpc.hpc_active_inference_v4 import HPCActiveInferenceModuleV4
+from geosync_hpc.hpc_validation import (
     calibrate_perturbation_scale,
     format_validation_report,
     generate_synthetic_data,
     simple_backtest,
     validate_hpc_ai,
 )
-from core.utils.determinism import DEFAULT_SEED
 
 
 def main():

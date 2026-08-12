@@ -1,0 +1,167 @@
+<!doctype html><html lang='en'><head><meta charset='utf-8'><title>GeoSync · L2 Ricci edge demo</title><style>
+body {
+    font-family: "Charter", "Georgia", serif;
+    max-width: 1100px;
+    margin: 2em auto;
+    padding: 0 1.5em;
+    color: #222;
+    line-height: 1.55;
+}
+h1, h2, h3 {
+    font-family: "Helvetica Neue", "Arial", sans-serif;
+    color: #1a1a1a;
+    line-height: 1.25;
+}
+h1 {
+    border-bottom: 3px solid #1a56c5;
+    padding-bottom: 0.3em;
+    margin-bottom: 0.2em;
+}
+h2 {
+    margin-top: 2.2em;
+    border-bottom: 1px solid #ddd;
+    padding-bottom: 0.2em;
+}
+.subtitle {
+    color: #555;
+    font-style: italic;
+    font-size: 0.95em;
+    margin-top: 0;
+}
+.badge {
+    display: inline-block;
+    background: #1a56c5;
+    color: white;
+    padding: 0.3em 1.2em;
+    border-radius: 999px;
+    font-weight: bold;
+    font-family: "Helvetica Neue", sans-serif;
+    letter-spacing: 0.05em;
+    margin: 0.5em 0;
+}
+table {
+    border-collapse: collapse;
+    width: 100%;
+    margin: 1em 0;
+    font-size: 0.95em;
+}
+th, td {
+    padding: 0.4em 0.8em;
+    border-bottom: 1px solid #e3e3e3;
+    text-align: left;
+}
+th {
+    color: #555;
+    font-weight: 600;
+    font-family: "Helvetica Neue", sans-serif;
+}
+tr:nth-child(even) td {
+    background: #fafafa;
+}
+.axis-outcome {
+    color: #1a56c5;
+    font-weight: 600;
+    font-family: monospace;
+}
+.metric {
+    font-family: monospace;
+}
+figure {
+    margin: 1.4em 0;
+    text-align: center;
+}
+figure img {
+    width: 100%;
+    max-width: 960px;
+    border: 1px solid #e3e3e3;
+}
+figure figcaption {
+    font-size: 0.9em;
+    color: #666;
+    margin-top: 0.5em;
+    font-style: italic;
+}
+code, pre {
+    font-family: "SFMono-Regular", "Menlo", monospace;
+    background: #f5f5f7;
+    border-radius: 4px;
+}
+code { padding: 0.1em 0.4em; }
+pre {
+    padding: 0.8em 1em;
+    overflow-x: auto;
+    font-size: 0.88em;
+    line-height: 1.45;
+}
+.caveat {
+    color: #b8860b;
+    font-weight: 600;
+}
+.footer {
+    margin-top: 3em;
+    padding-top: 1em;
+    border-top: 1px solid #ddd;
+    color: #777;
+    font-size: 0.85em;
+}
+</style></head><body><h1>GeoSync · Ricci cross-sectional edge on Binance L2 perps</h1>
+<p class='subtitle'>Ten orthogonal validation axes · Session 1, n = 19,081 rows (~5.3 h) · bit-exact deterministic replay</p>
+<div class='badge'>VERDICT · PROCEED</div>
+<h2>1 · Ten-axis verdict table</h2>
+<table>
+<thead><tr><th>Axis</th><th>Metric</th><th>Outcome</th></tr></thead>
+<tbody>
+<tr><td>1. Kill test</td><td class='metric'>IC = 0.122</td><td class='axis-outcome'>p = 0.002</td></tr>
+<tr><td>2. Bootstrap CI (95%)</td><td class='metric'>[0.028, 0.210]</td><td class='axis-outcome'>excludes 0</td></tr>
+<tr><td>3. Deflated Sharpe</td><td class='metric'>DSR = 15.1</td><td class='axis-outcome'>Pr(real) ≈ 1.0</td></tr>
+<tr><td>4. Purged K-fold CV</td><td class='metric'>mean IC = 0.122</td><td class='axis-outcome'>5/5 folds positive</td></tr>
+<tr><td>5. Mutual information</td><td class='metric'>MI = 0.078 nats</td><td class='axis-outcome'>concordant</td></tr>
+<tr><td>6. Spectral β</td><td class='metric'>β = 1.80</td><td class='axis-outcome'>RED regime</td></tr>
+<tr><td>7. DFA Hurst</td><td class='metric'>H = 1.014</td><td class='axis-outcome'>R² = 0.982</td></tr>
+<tr><td>8. Transfer Entropy</td><td class='metric'>45/45 pairs</td><td class='axis-outcome'>BIDIRECTIONAL</td></tr>
+<tr><td>9. Conditional TE</td><td class='metric'>33/36 pairs</td><td class='axis-outcome'>PRIVATE_FLOW</td></tr>
+<tr><td>10. Walk-forward</td><td class='metric'>82.1% windows pos</td><td class='axis-outcome'>STABLE_POSITIVE</td></tr>
+</tbody>
+</table>
+<h2>2 · Canonical figures</h2>
+<figure><img src='fig0_cover.png' alt='FIG 0 — single-page demo cover'/><figcaption>FIG 0 — single-page demo cover</figcaption></figure>
+<figure><img src='fig1_signal_validation.png' alt='FIG 1 — κ_min existence + statistical robustness'/><figcaption>FIG 1 — κ_min existence + statistical robustness</figcaption></figure>
+<figure><img src='fig2_dynamics.png' alt='FIG 2 — spectral · DFA · diurnal · autocorrelation'/><figcaption>FIG 2 — spectral · DFA · diurnal · autocorrelation</figcaption></figure>
+<figure><img src='fig3_coupling.png' alt='FIG 3 — TE · CTE · regime Markov · break-even'/><figcaption>FIG 3 — TE · CTE · regime Markov · break-even</figcaption></figure>
+<figure><img src='fig4_stability.png' alt='FIG 4 — walk-forward IC · distribution · perm-p · verdict'/><figcaption>FIG 4 — walk-forward IC · distribution · perm-p · verdict</figcaption></figure>
+<h2>3 · Ablation / stress axes — honest robustness bounds</h2>
+<table>
+<thead><tr><th>Ablation axis</th><th>Verdict</th><th>Interpretation</th></tr></thead>
+<tbody>
+<tr><td>Hyperparameter (quantile × window)</td><td style='color:#c0392b; font-weight:600; font-family:monospace;'>SENSITIVE</td><td>9/9 cells bracketed, max drift 60.4%</td></tr>
+<tr><td>Leave-one-symbol-out</td><td style='color:#b8860b; font-weight:600; font-family:monospace;'>MIXED</td><td>min IC = 0.070, max drop 42.9%</td></tr>
+<tr><td>Hold-time horizon (60–600s)</td><td style='color:#2e7d32; font-weight:600; font-family:monospace;'>ROBUST</td><td>5/5 cells viable, 3 already profitable at f=0</td></tr>
+<tr><td>Slippage stress (±bp/side)</td><td style='color:#b8860b; font-weight:600; font-family:monospace;'>BOUND</td><td>max viable +3.0 bp/side slippage</td></tr>
+<tr><td>Taker-fee tier (3–6 bp)</td><td style='color:#2e7d32; font-weight:600; font-family:monospace;'>RESILIENT</td><td>max viable fee 6.0 bp, 4/4 tiers bracket below 0.50</td></tr>
+</tbody>
+</table>
+<p class='caveat'>These are the honest caveats: ablation axes describe the edge's operational envelope, not failure. Every axis is either green or has a documented boundary.</p>
+<h2>4 · Reproducibility</h2>
+<pre><code>PYTHONPATH=. python scripts/run_l2_full_cycle.py
+PYTHONPATH=. python scripts/render_l2_figures.py
+PYTHONPATH=. python scripts/render_l2_dashboard.py</code></pre>
+<p>Deterministic under seed = 42. Gate fixtures bit-frozen in <code>results/gate_fixtures/</code>. Manifest SHA-256 per stage:</p>
+<table>
+<thead><tr><th>Stage</th><th>Duration (s)</th><th>SHA-256 (12 chars)</th></tr></thead>
+<tbody>
+<tr><td class='metric'>killtest</td><td class='metric'>33.68</td><td class='metric'>d6774252bd04</td></tr>
+<tr><td class='metric'>attribution</td><td class='metric'>2.33</td><td class='metric'>b1686e693685</td></tr>
+<tr><td class='metric'>purged_cv</td><td class='metric'>1.86</td><td class='metric'>971bcb889314</td></tr>
+<tr><td class='metric'>spectral</td><td class='metric'>1.91</td><td class='metric'>2fd49049cf24</td></tr>
+<tr><td class='metric'>hurst</td><td class='metric'>1.93</td><td class='metric'>1f09c6d0ff16</td></tr>
+<tr><td class='metric'>regime_markov</td><td class='metric'>2.17</td><td class='metric'>0d082cf7b941</td></tr>
+<tr><td class='metric'>robustness</td><td class='metric'>18.46</td><td class='metric'>4ae97165c204</td></tr>
+<tr><td class='metric'>transfer_entropy</td><td class='metric'>6.43</td><td class='metric'>e11ebb1fff0a</td></tr>
+<tr><td class='metric'>conditional_te</td><td class='metric'>7.76</td><td class='metric'>5b9b13d3853b</td></tr>
+</tbody>
+</table>
+<p><strong>Total cycle duration:</strong> <code>78.11 s</code></p>
+<div class='footer'>
+<p>Full narrative: <a href='../../research/microstructure/FINDINGS.md'>research/microstructure/FINDINGS.md</a></p>
+<p>Source: github.com/neuron7xLab/GeoSync</p>
+</div></body></html>

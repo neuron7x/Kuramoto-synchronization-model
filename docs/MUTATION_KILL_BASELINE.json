@@ -1,0 +1,702 @@
+{
+  "_doc": "Mutation-kill ratchet for claim-critical modules — the falsification loop's K operator as ENFORCED infrastructure, not a one-off measurement. floor = the logic (compare/boolop) mutation kill-rate the module's tests currently achieve. scripts/ci/check_mutation_kill_ratchet.py RE-PROBES a module (tools/mutation_probe.py --only-logic) whenever its source or its tests change, and FAILS if the kill-rate drops below floor — so a PR that weakens the tests for these modules cannot merge. floors may only RISE (monotone-up): closing a survivor and raising the floor is the only sanctioned direction. See docs/meta/FALSIFICATION_LOOP.md. RECURSION (K applied to K): the ratchet's own verifier scripts/ci/check_mutation_kill_ratchet.py is enrolled here too, so changing it re-probes it with its own test suite — the output of the gate is fed back as the gate's input. Its lone surviving mutant (the cosmetic 'ok'/'REGRESSED' status label, printed but never asserted) is a proven-equivalent mutant; floor 0.88 = 8/9 non-equivalent sites killed.",
+  "schema_version": "1.0",
+  "modules": {
+    "application/api/authorization.py": {
+      "floor": 1.0,
+      "killed": 5,
+      "total": 5,
+      "tests": "tests/api/test_authorization.py"
+    },
+    "application/api/middleware/prometheus.py": {
+      "floor": 1.0,
+      "killed": 2,
+      "total": 2,
+      "tests": "tests/unit/application/api/middleware/test_prometheus_middleware.py"
+    },
+    "application/governance/claim_ledger.py": {
+      "floor": 1.0,
+      "killed": 1,
+      "total": 1,
+      "tests": "tests/governance/test_typed_models.py"
+    },
+    "application/risk/risk_manager.py": {
+      "floor": 1.0,
+      "killed": 3,
+      "total": 3,
+      "tests": "tests/unit/test_risk_manager_facade.py"
+    },
+    "application/secrets/rotation.py": {
+      "floor": 1.0,
+      "killed": 5,
+      "total": 5,
+      "tests": "tests/security/test_secret_vault.py"
+    },
+    "application/secrets/secure_channel.py": {
+      "floor": 1.0,
+      "killed": 1,
+      "total": 1,
+      "tests": "tests/security/test_secret_vault.py"
+    },
+    "application/security/access_control.py": {
+      "floor": 1.0,
+      "killed": 9,
+      "total": 9,
+      "tests": "tests/unit/security/test_access_control.py"
+    },
+    "coherence_bridge/kafka_producer.py": {
+      "floor": 1.0,
+      "killed": 1,
+      "total": 1,
+      "tests": "tests/test_kafka_producer.py"
+    },
+    "coherence_bridge/live_feed.py": {
+      "floor": 1.0,
+      "killed": 1,
+      "total": 1,
+      "tests": "tests/test_live_feed.py"
+    },
+    "coherence_bridge/metrics.py": {
+      "floor": 1.0,
+      "killed": 3,
+      "total": 3,
+      "tests": "tests/test_metrics.py"
+    },
+    "coherence_bridge/questdb_writer.py": {
+      "floor": 1.0,
+      "killed": 2,
+      "total": 2,
+      "tests": "tests/test_questdb_writer.py"
+    },
+    "core/altdata/drift.py": {
+      "floor": 1.0,
+      "killed": 15,
+      "total": 15,
+      "tests": "tests/unit/altdata/test_altdata_modules.py"
+    },
+    "core/architecture_integrator/adapters.py": {
+      "floor": 1.0,
+      "killed": 2,
+      "total": 2,
+      "tests": "tests/unit/architecture_integrator/test_adapters.py"
+    },
+    "core/architecture_integrator/integrator.py": {
+      "floor": 1.0,
+      "killed": 4,
+      "total": 4,
+      "tests": "tests/unit/architecture_integrator/test_integrator.py"
+    },
+    "core/architecture_integrator/validator.py": {
+      "floor": 1.0,
+      "killed": 6,
+      "total": 6,
+      "tests": "tests/unit/architecture_integrator/test_validator.py"
+    },
+    "core/config/hydra_profiles.py": {
+      "floor": 1.0,
+      "killed": 4,
+      "total": 4,
+      "tests": "tests/unit/test_hydra_profiles.py"
+    },
+    "core/config/postgres.py": {
+      "floor": 1.0,
+      "killed": 1,
+      "total": 1,
+      "tests": "tests/unit/libs/test_db_config_contracts.py"
+    },
+    "core/config/registry.py": {
+      "floor": 1.0,
+      "killed": 15,
+      "total": 15,
+      "tests": "tests/unit/config/test_registry.py"
+    },
+    "core/cross_asset_kuramoto/invariants.py": {
+      "floor": 1.0,
+      "killed": 10,
+      "total": 10,
+      "tests": "tests/core/cross_asset_kuramoto/test_invariants.py"
+    },
+    "core/data/adapters/unified.py": {
+      "floor": 1.0,
+      "killed": 16,
+      "total": 16,
+      "tests": "tests/unit/data/test_unified_adapters.py"
+    },
+    "core/data/asset_catalog.py": {
+      "floor": 0.92,
+      "killed": 12,
+      "total": 13,
+      "tests": "tests/unit/data/test_asset_catalog.py"
+    },
+    "core/data/feature_catalog.py": {
+      "floor": 1.0,
+      "killed": 4,
+      "total": 4,
+      "tests": "tests/unit/data/test_feature_catalog.py"
+    },
+    "core/data/gap_validator.py": {
+      "floor": 1.0,
+      "killed": 7,
+      "total": 7,
+      "tests": "tests/unit/data/test_gap_validator.py"
+    },
+    "core/data/leakage.py": {
+      "floor": 0.85,
+      "killed": 6,
+      "total": 7,
+      "tests": "tests/data/test_leakage.py"
+    },
+    "core/data/market_feed_generator.py": {
+      "floor": 1.0,
+      "killed": 11,
+      "total": 11,
+      "tests": "tests/unit/data/test_market_feed_generator.py"
+    },
+    "core/data/market_feed_storage.py": {
+      "floor": 1.0,
+      "killed": 5,
+      "total": 5,
+      "tests": "tests/unit/data/test_market_feed_storage.py"
+    },
+    "core/data/normalization_pipeline.py": {
+      "floor": 0.77,
+      "killed": 7,
+      "total": 9,
+      "tests": "tests/unit/data/test_normalization_pipeline.py"
+    },
+    "core/engine/energy.py": {
+      "floor": 1.0,
+      "killed": 5,
+      "total": 5,
+      "tests": "tests/unit/core/test_energy_model.py"
+    },
+    "core/indicators/abstraction_contract.py": {
+      "floor": 1.0,
+      "killed": 10,
+      "total": 10,
+      "tests": "tests/unit/indicators/test_abstraction_contract.py"
+    },
+    "core/indicators/aggregation_contract.py": {
+      "floor": 1.0,
+      "killed": 9,
+      "total": 9,
+      "tests": "tests/unit/indicators/test_aggregation_contract.py"
+    },
+    "core/indicators/flow_metrics.py": {
+      "floor": 1.0,
+      "killed": 14,
+      "total": 14,
+      "tests": "tests/core/indicators/test_flow_metrics.py"
+    },
+    "core/indicators/gauss_bonnet.py": {
+      "floor": 1.0,
+      "killed": 3,
+      "total": 3,
+      "tests": "tests/physics/test_gauss_bonnet.py"
+    },
+    "core/indicators/normalization_contract.py": {
+      "floor": 1.0,
+      "killed": 10,
+      "total": 10,
+      "tests": "tests/unit/indicators/test_normalization_contract.py"
+    },
+    "core/indicators/phase_entry_gate.py": {
+      "floor": 1.0,
+      "killed": 16,
+      "total": 16,
+      "tests": "tests/unit/indicators/test_phase_entry_gate.py"
+    },
+    "core/indicators/value_inference_pipeline.py": {
+      "floor": 1.0,
+      "killed": 14,
+      "total": 14,
+      "tests": "tests/unit/indicators/test_value_inference_pipeline.py"
+    },
+    "core/indicators/value_target_contract.py": {
+      "floor": 1.0,
+      "killed": 5,
+      "total": 5,
+      "tests": "tests/unit/indicators/test_value_target_contract.py"
+    },
+    "core/integration/adapters.py": {
+      "floor": 1.0,
+      "killed": 3,
+      "total": 3,
+      "tests": "tests/unit/integration/test_adapters.py"
+    },
+    "core/integration/system_integrator.py": {
+      "floor": 1.0,
+      "killed": 8,
+      "total": 8,
+      "tests": "tests/unit/integration/test_system_integrator.py"
+    },
+    "core/interfaces.py": {
+      "floor": 1.0,
+      "killed": 1,
+      "total": 1,
+      "tests": "tests/unit/core/test_interfaces.py"
+    },
+    "core/kuramoto/cli.py": {
+      "floor": 1.0,
+      "killed": 3,
+      "total": 3,
+      "tests": "tests/unit/core/test_kuramoto_cli.py"
+    },
+    "core/kuramoto/dynamic_graph.py": {
+      "floor": 1.0,
+      "killed": 8,
+      "total": 8,
+      "tests": "tests/unit/core/test_kuramoto_network_engine.py"
+    },
+    "core/kuramoto/early_stopping.py": {
+      "floor": 1.0,
+      "killed": 5,
+      "total": 5,
+      "tests": "tests/unit/kuramoto/test_early_stopping.py"
+    },
+    "core/kuramoto/io.py": {
+      "floor": 1.0,
+      "killed": 14,
+      "total": 14,
+      "tests": "tests/unit/core/test_kuramoto_cli.py"
+    },
+    "core/kuramoto/natural_frequency.py": {
+      "floor": 1.0,
+      "killed": 9,
+      "total": 9,
+      "tests": "tests/unit/core/test_kuramoto_identification.py"
+    },
+    "core/kuramoto/phase_correction.py": {
+      "floor": 1.0,
+      "killed": 13,
+      "total": 13,
+      "tests": "tests/unit/physics/test_kuramoto_phase_correction.py"
+    },
+    "core/kuramoto/second_order.py": {
+      "floor": 0.76,
+      "killed": 16,
+      "total": 21,
+      "tests": "tests/unit/physics/test_T18b_second_order_stability_guard.py tests/unit/physics/test_second_order_stability_audit.py"
+    },
+    "core/maintenance/backups.py": {
+      "floor": 1.0,
+      "killed": 12,
+      "total": 12,
+      "tests": "tests/unit/core/test_maintenance_backups.py"
+    },
+    "core/metrics/direction_index.py": {
+      "floor": 1.0,
+      "killed": 3,
+      "total": 3,
+      "tests": "tests/unit/test_metrics.py"
+    },
+    "core/metrics/fractal_dimension.py": {
+      "floor": 1.0,
+      "killed": 1,
+      "total": 1,
+      "tests": "tests/unit/metrics/test_fractal_dimension.py"
+    },
+    "core/metrics/ism.py": {
+      "floor": 1.0,
+      "killed": 1,
+      "total": 1,
+      "tests": "tests/unit/test_metrics.py"
+    },
+    "core/neuro/adapters/geosync_adapter.py": {
+      "floor": 1.0,
+      "killed": 1,
+      "total": 1,
+      "tests": "tests/neuro/advanced/test_geosync_adapter.py"
+    },
+    "core/neuro/fractal.py": {
+      "floor": 1.0,
+      "killed": 15,
+      "total": 15,
+      "tests": "tests/unit/neuro/test_fractal_metrics.py"
+    },
+    "core/physics/causality.py": {
+      "floor": 1.0,
+      "killed": 10,
+      "total": 10,
+      "tests": "tests/physics/test_causality.py"
+    },
+    "core/physics/cognitive_core.py": {
+      "floor": 1.0,
+      "killed": 12,
+      "total": 12,
+      "tests": "tests/physics/test_cognitive_core_admissibility.py tests/physics/test_cognitive_core_runtime_gate.py"
+    },
+    "core/physics/coulomb.py": {
+      "floor": 1.0,
+      "killed": 7,
+      "total": 7,
+      "tests": "tests/unit/physics/test_T5_coulomb.py"
+    },
+    "core/physics/forman_ricci.py": {
+      "floor": 1.0,
+      "killed": 12,
+      "total": 12,
+      "tests": "tests/unit/physics/test_T3_forman_ricci.py"
+    },
+    "core/physics/free_energy_variational.py": {
+      "floor": 1.0,
+      "killed": 6,
+      "total": 6,
+      "tests": "tests/unit/physics/test_free_energy_variational.py"
+    },
+    "core/physics/gravitational_coupling.py": {
+      "floor": 1.0,
+      "killed": 8,
+      "total": 8,
+      "tests": "tests/unit/physics/test_T1_gravitational_coupling.py"
+    },
+    "core/physics/gravity.py": {
+      "floor": 1.0,
+      "killed": 5,
+      "total": 5,
+      "tests": "tests/unit/physics/test_gravity.py"
+    },
+    "core/physics/maxwell.py": {
+      "floor": 1.0,
+      "killed": 6,
+      "total": 6,
+      "tests": "tests/unit/physics/test_maxwell.py"
+    },
+    "core/physics/metric_consistency.py": {
+      "floor": 1.0,
+      "killed": 15,
+      "total": 15,
+      "tests": "tests/physics/test_metric_consistency.py"
+    },
+    "core/physics/newton.py": {
+      "floor": 1.0,
+      "killed": 4,
+      "total": 4,
+      "tests": "tests/unit/physics/test_newton.py"
+    },
+    "core/physics/newtonian_dynamics.py": {
+      "floor": 1.0,
+      "killed": 6,
+      "total": 6,
+      "tests": "tests/unit/physics/test_T2_newtonian_dynamics.py"
+    },
+    "core/physics/precision.py": {
+      "floor": 1.0,
+      "killed": 8,
+      "total": 8,
+      "tests": "tests/physics/test_precision.py"
+    },
+    "core/physics/relativity.py": {
+      "floor": 1.0,
+      "killed": 1,
+      "total": 1,
+      "tests": "tests/unit/physics/test_relativity.py"
+    },
+    "core/physics/stuart_landau_es.py": {
+      "floor": 1.0,
+      "killed": 26,
+      "total": 26,
+      "tests": "tests/unit/physics/test_T2b_stuart_landau_es.py"
+    },
+    "core/physics/thermodynamic_risk.py": {
+      "floor": 1.0,
+      "killed": 8,
+      "total": 8,
+      "tests": "tests/unit/physics/test_T4_thermodynamic_risk.py"
+    },
+    "core/physics/uncertainty.py": {
+      "floor": 1.0,
+      "killed": 11,
+      "total": 11,
+      "tests": "tests/unit/physics/test_uncertainty.py"
+    },
+    "core/strategies/dro_ara_filter.py": {
+      "floor": 1.0,
+      "killed": 4,
+      "total": 4,
+      "tests": "tests/core/strategies/test_dro_ara_filter.py"
+    },
+    "core/strategies/objectives.py": {
+      "floor": 1.0,
+      "killed": 2,
+      "total": 2,
+      "tests": "tests/unit/strategies/test_objectives.py"
+    },
+    "core/strategies/signals.py": {
+      "floor": 1.0,
+      "killed": 4,
+      "total": 4,
+      "tests": "tests/unit/strategies/test_signals.py"
+    },
+    "core/strategies/trading.py": {
+      "floor": 1.0,
+      "killed": 10,
+      "total": 10,
+      "tests": "tests/unit/strategies/test_trading_strategies.py"
+    },
+    "core/utils/logging.py": {
+      "floor": 1.0,
+      "killed": 5,
+      "total": 5,
+      "tests": "tests/unit/test_utils_logging.py"
+    },
+    "core/utils/numeric_constants.py": {
+      "floor": 1.0,
+      "killed": 2,
+      "total": 2,
+      "tests": "tests/unit/utils/test_numeric_constants.py"
+    },
+    "core/utils/path_validation.py": {
+      "floor": 1.0,
+      "killed": 3,
+      "total": 3,
+      "tests": "tests/unit/utils/test_path_validation.py"
+    },
+    "core/utils/secure_errors.py": {
+      "floor": 1.0,
+      "killed": 7,
+      "total": 7,
+      "tests": "tests/coverage_batch_a/test_secure_errors.py"
+    },
+    "core/versioning.py": {
+      "floor": 1.0,
+      "killed": 4,
+      "total": 4,
+      "tests": "tests/unit/core/test_versioning.py"
+    },
+    "execution/algorithms.py": {
+      "floor": 1.0,
+      "killed": 8,
+      "total": 8,
+      "tests": "tests/unit/test_execution_system.py"
+    },
+    "execution/amm_runner.py": {
+      "floor": 1.0,
+      "killed": 1,
+      "total": 1,
+      "tests": "tests/unit/execution/test_amm_runner.py"
+    },
+    "execution/arbitrage/capital.py": {
+      "floor": 1.0,
+      "killed": 4,
+      "total": 4,
+      "tests": "tests/execution/test_arbitrage.py"
+    },
+    "execution/arbitrage/liquidity.py": {
+      "floor": 1.0,
+      "killed": 20,
+      "total": 20,
+      "tests": "tests/execution/test_inventory_manager.py"
+    },
+    "execution/workflows.py": {
+      "floor": 1.0,
+      "killed": 1,
+      "total": 1,
+      "tests": "tests/unit/execution/test_shadow_router_workflows.py"
+    },
+    "geosync/cli/amm_cli.py": {
+      "floor": 1.0,
+      "killed": 8,
+      "total": 8,
+      "tests": "tests/unit/cli/test_amm_cli.py"
+    },
+    "geosync/dp3_test.py": {
+      "floor": 0.9,
+      "killed": 10,
+      "total": 11,
+      "tests": "tests/scripts/test_dp3_test.py"
+    },
+    "geosync/estimators/augmented_ricci.py": {
+      "floor": 1.0,
+      "killed": 14,
+      "total": 14,
+      "tests": "tests/test_augmented_ricci.py"
+    },
+    "geosync/estimators/gamma_estimator.py": {
+      "floor": 0.85,
+      "killed": 13,
+      "total": 15,
+      "tests": "tests/test_gamma_estimator.py"
+    },
+    "geosync/neuroeconomics/context_memory.py": {
+      "floor": 1.0,
+      "killed": 3,
+      "total": 3,
+      "tests": "tests/test_neuroeconomics_loop.py"
+    },
+    "geosync/neuroeconomics/control_value.py": {
+      "floor": 1.0,
+      "killed": 2,
+      "total": 2,
+      "tests": "tests/test_neuroeconomics_loop.py"
+    },
+    "geosync/neuroeconomics/decision_currency.py": {
+      "floor": 1.0,
+      "killed": 3,
+      "total": 3,
+      "tests": "tests/test_neuroeconomics_loop.py"
+    },
+    "geosync/neuroeconomics/dislocation_detector.py": {
+      "floor": 1.0,
+      "killed": 7,
+      "total": 7,
+      "tests": "tests/test_value_functions.py"
+    },
+    "geosync/neuroeconomics/ergodicity_correction.py": {
+      "floor": 1.0,
+      "killed": 5,
+      "total": 5,
+      "tests": "tests/test_ergodicity_correction.py"
+    },
+    "geosync/neuroeconomics/flow_controller.py": {
+      "floor": 1.0,
+      "killed": 9,
+      "total": 9,
+      "tests": "tests/test_flow_controller.py"
+    },
+    "geosync/neuroeconomics/metacognition.py": {
+      "floor": 0.85,
+      "killed": 17,
+      "total": 20,
+      "tests": "tests/test_metacognition.py"
+    },
+    "geosync/neuroeconomics/pnl_attribution.py": {
+      "floor": 1.0,
+      "killed": 7,
+      "total": 7,
+      "tests": "tests/test_value_functions.py"
+    },
+    "geosync/neuroeconomics/prior_integration.py": {
+      "floor": 1.0,
+      "killed": 7,
+      "total": 7,
+      "tests": "tests/test_neuroeconomics_loop.py"
+    },
+    "geosync/neuroeconomics/reset_wave_distributed.py": {
+      "floor": 1.0,
+      "killed": 10,
+      "total": 10,
+      "tests": "tests/test_reset_wave_distributed_resilience.py"
+    },
+    "geosync/pipeline_status_check.py": {
+      "floor": 1.0,
+      "killed": 8,
+      "total": 8,
+      "tests": "tests/scripts/test_pipeline_status_check.py"
+    },
+    "geosync/risk/automated_testing.py": {
+      "floor": 1.0,
+      "killed": 21,
+      "total": 21,
+      "tests": "tests/unit/geosync/risk/test_automated_testing.py"
+    },
+    "geosync/risk/config.py": {
+      "floor": 1.0,
+      "killed": 11,
+      "total": 11,
+      "tests": "tests/test_safety_flow.py"
+    },
+    "geosync/risk/environment.py": {
+      "floor": 1.0,
+      "killed": 6,
+      "total": 6,
+      "tests": "tests/test_safety_flow.py"
+    },
+    "geosync/risk/risk_core.py": {
+      "floor": 1.0,
+      "killed": 5,
+      "total": 5,
+      "tests": "tests/unit/geosync/risk/test_risk_core.py"
+    },
+    "geosync/verdict.py": {
+      "floor": 1.0,
+      "killed": 13,
+      "total": 13,
+      "tests": "tests/scripts/test_verdict.py"
+    },
+    "physics_contracts/manifold/builders.py": {
+      "floor": 1.0,
+      "killed": 4,
+      "total": 4,
+      "tests": "tests/physics_contracts/test_market_causal_graph_builder.py"
+    },
+    "physics_contracts/manifold/evidence_binding.py": {
+      "floor": 1.0,
+      "killed": 2,
+      "total": 2,
+      "tests": "tests/physics_contracts/test_physics_evidence_binding.py"
+    },
+    "physics_contracts/manifold/fixtures.py": {
+      "floor": 1.0,
+      "killed": 1,
+      "total": 1,
+      "tests": "tests/physics_contracts/test_physics_v2_manifold_contracts.py"
+    },
+    "physics_contracts/manifold/negative_controls.py": {
+      "floor": 1.0,
+      "killed": 6,
+      "total": 6,
+      "tests": "tests/physics_contracts/test_physics_negative_controls.py"
+    },
+    "physics_contracts/manifold/ricci_trace.py": {
+      "floor": 1.0,
+      "killed": 13,
+      "total": 13,
+      "tests": "tests/physics_contracts/test_ricci_flow_trace.py"
+    },
+    "runtime/cognitive_bridge/cycle.py": {
+      "floor": 1.0,
+      "killed": 4,
+      "total": 4,
+      "tests": "tests/runtime/cognitive_bridge/test_cycle.py"
+    },
+    "runtime/filters/vlpo_core_filter/data/sensory_calibrator.py": {
+      "floor": 1.0,
+      "killed": 5,
+      "total": 5,
+      "tests": "tests/runtime/test_sensory_calibrator.py"
+    },
+    "runtime/inference_promotion_brake.py": {
+      "floor": 1.0,
+      "killed": 1,
+      "total": 1,
+      "tests": "tests/unit/runtime/test_inference_promotion_brake.py"
+    },
+    "runtime/link_activator.py": {
+      "floor": 1.0,
+      "killed": 1,
+      "total": 1,
+      "tests": "tests/test_link_activator.py"
+    },
+    "runtime/riee/sdk.py": {
+      "floor": 1.0,
+      "killed": 1,
+      "total": 1,
+      "tests": "tests/riee/test_riee_sdk_modes.py"
+    },
+    "runtime/thermo_cache.py": {
+      "floor": 1.0,
+      "killed": 9,
+      "total": 9,
+      "tests": "tests/test_thermo_optimizations.py"
+    },
+    "runtime/thermo_performance.py": {
+      "floor": 1.0,
+      "killed": 7,
+      "total": 7,
+      "tests": "tests/test_thermo_optimizations.py"
+    },
+    "scripts/ci/check_mutation_kill_ratchet.py": {
+      "floor": 1.0,
+      "killed": 13,
+      "total": 13,
+      "tests": "tests/ci/test_mutation_kill_ratchet.py"
+    },
+    "scripts/ci/emit_metric_signals.py": {
+      "floor": 1.0,
+      "killed": 15,
+      "total": 15,
+      "tests": "tests/ci/test_emit_metric_signals.py"
+    }
+  }
+}

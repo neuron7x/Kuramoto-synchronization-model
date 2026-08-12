@@ -1,0 +1,56 @@
+{
+  "substrate": {
+    "source": "data/askar_full/panel_hourly_extended.parquet",
+    "n_assets_extended": 57,
+    "n_bars_extended": 23870,
+    "core_cols": [
+      "USA_500_Index",
+      "XAUUSD",
+      "SPDR_S_P_500_ETF"
+    ],
+    "wide_cols": [
+      "USA_500_Index",
+      "XAUUSD",
+      "SPDR_S_P_500_ETF",
+      "iPath_S_P_500_VIX_ST_Futures_ETN",
+      "SPDR_Barclays_Capital_High_Yield_Bond_ETF",
+      "iShares_7_10_Year_Treasury_Bond_ETF",
+      "US_Dollar_Index"
+    ],
+    "n_core_bars": 23869,
+    "n_wide_bars": 23869,
+    "first_ts": "2018-02-01 16:00:00",
+    "last_ts": "2026-02-23 00:00:00"
+  },
+  "gate": {
+    "corr_vix": 0.003028,
+    "corr_hyg": -0.011999,
+    "gate_threshold": 0.3,
+    "gate_passed": true
+  },
+  "window": 60,
+  "threshold": 0.3,
+  "permutations": 500,
+  "IC": -0.006669,
+  "permutation_ic": -0.006669,
+  "p_value": 0.86,
+  "permutation_sigma": -1.0521,
+  "corr_momentum": -0.009766,
+  "corr_vol": -0.219975,
+  "stress_detector": {
+    "ic_stress_vs_future_drawdown": -0.043846107662670185,
+    "corr_stress_vol": -0.1594024422100547,
+    "corr_stress_momentum": 0.03588861714293715,
+    "lead_capture_rate": 0.0,
+    "alert_rate": 0.0013825463990950605,
+    "contradictions": [
+      "stress_signal_leaks_volatility"
+    ],
+    "passed": false
+  },
+  "lead_capture": 0.0,
+  "DETECT": "FAIL",
+  "DISCRIMINATE": "FAIL",
+  "DELIVER": "FAIL",
+  "FINAL": "REJECT"
+}

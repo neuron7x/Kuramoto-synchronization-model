@@ -1,0 +1,43 @@
+# SPDX-License-Identifier: MIT
+id: physics-invariant-binding-gate
+status: ACTIVE
+claim_type: governance
+promise: >-
+  Diff-bound governance acceptor for the invariant source/test binding gate. The
+  gate is a read-only typed-binding integrity check over the physics invariant
+  registry (.claude/physics/INVARIANTS.yaml): it verifies every declared source:
+  / tests: path exists and that any file::symbol is actually defined. It does NOT
+  modify, run, or change any physics, solver, kernel, or runtime behavior, and
+  makes no market/alpha/profitability claim (Rule Zero safe).
+diff_scope:
+  changed_files:
+    - path: ".claude/commit_acceptors/physics-invariant-binding-gate.yaml"
+    - path: "scripts/ci/check_invariant_source_binding.py"
+    - path: "tests/ci/test_invariant_source_binding.py"
+    - path: "artifacts/invariant_source_binding.json"
+    - path: ".github/workflows/physics-invariants.yml"
+    - path: "INVENTORY.json"
+  forbidden_paths:
+    - "trading/"
+    - "execution/"
+    - "forecast/"
+    - "policy/"
+    - "core/kuramoto/"
+    - "core/physics/"
+required_python_symbols: []
+expected_signal: >-
+  check_invariant_source_binding.py exits 0 — every declared invariant source/
+  tests binding resolves to an existing file (and ::symbol when present).
+measurement_command: "python scripts/ci/check_invariant_source_binding.py"
+signal_artifact: "artifacts/invariant_source_binding.json"
+falsifier:
+  command: "python -c \"import subprocess,sys; r=subprocess.run([sys.executable,'scripts/ci/check_invariant_source_binding.py']); sys.exit(0 if r.returncode!=0 else 1)\""
+  description: >-
+    Asserts the binding gate is RED; on the green path this probe exits non-zero,
+    proving the promise is falsifiable rather than vacuous.
+rollback_command: "git revert --no-edit HEAD"
+rollback_verification_command: "python scripts/ci/check_invariant_source_binding.py"
+memory_update_type: none
+ledger_path: "artifacts/invariant_source_binding.json"
+report_path: ".claude/physics/INVARIANTS.yaml"
+evidence: []

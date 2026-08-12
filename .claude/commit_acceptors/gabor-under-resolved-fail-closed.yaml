@@ -1,0 +1,112 @@
+# Diff-bound acceptor: fail-close the Gabor estimator on under-resolved windows
+# and repair the downstream consumers left inconsistent by the #1197 rewrite.
+#
+# Three genuine correctness defects surfaced by post-merge review of #1197:
+#   1. core/physics/uncertainty.time_frequency_spread accepted any non-constant
+#      ≥2-sample signal and could RETURN a sub-bound product (e.g. [0,1] → 0.0).
+#      The Gabor limit Δt·Δf ≥ 1/(4π) is a THEOREM, so a discrete product below
+#      it can only mean an under-resolved / near-Nyquist window — never a
+#      measurement. Returning ~0 lets a short-window caller (position sizing)
+#      misread a degenerate window as maximal time-frequency confidence. Now
+#      fail-closed (ValueError) with a tolerance (1e-2) that admits Gaussian
+#      saturation (ratio ≥ 0.99987) yet rejects degenerate windows (ratio ≤ 0.75).
+#   2. examples/physics_inspired_strategies.physics_uncertainty_analysis still
+#      indexed the removed metadata keys position_uncertainty / momentum_uncertainty
+#      and the discredited "Heisenberg" framing, so it raised KeyError after the
+#      rename to time_spread / freq_spread. Rewritten to the Gabor framing,
+#      handling the degenerate flag and the correct "near-bound = compact"
+#      interpretation (there is no sub-bound "low uncertainty" region).
+#   3. CLAUDE.md's INV-GABOR1 falsifier over-claimed ("Δt·Δf < 1/(4π) for any
+#      finite-energy signal"), contradicting INVARIANTS.yaml which scopes the
+#      bound to WELL-RESOLVED signals. Aligned to the registry wording.
+#
+# Pure signal-processing / Fourier analysis. No market claim, no runtime trading
+# path touched. Invariant count unchanged (107); INV-GABOR1 text tightened in
+# both CLAUDE.md and INVARIANTS.yaml to match the new fail-closed behavior.
+
+id: gabor-under-resolved-fail-closed
+status: ACTIVE
+claim_type: correctness
+promise: >-
+  core.physics.uncertainty.time_frequency_spread fail-closes (ValueError) on
+  under-resolved / near-Nyquist windows whose discrete product Δt·Δf would land
+  below 1/(4π)·(1−1e-2), so it NEVER returns a sub-bound product; the threshold
+  admits Gaussian saturation (measured ratio ≥ 0.99987) and rejects degenerate
+  windows (ratio ≤ 0.75). The downstream consumer
+  UncertaintyQuantificationIndicator surfaces such windows via its existing
+  degenerate=True path (value 0.0, no time_spread/freq_spread keys) instead of
+  reporting a misleading "maximally compact" value. The example
+  physics_uncertainty_analysis is rewritten from the removed Heisenberg keys
+  (position_uncertainty / momentum_uncertainty) to the Gabor framing
+  (time_spread / freq_spread + degenerate handling) so it runs without
+  KeyError. CLAUDE.md and INVARIANTS.yaml INV-GABOR1 text is tightened to the
+  well-resolved scope and the new fail-closed contract. Invariant count stays
+  107 across all synced surfaces. mypy --strict clean on the two changed
+  production modules; ruff + black clean.
+diff_scope:
+  changed_files:
+    - path: ".claude/commit_acceptors/gabor-under-resolved-fail-closed.yaml"
+    - path: ".claude/physics/INVARIANTS.yaml"
+    - path: "CLAUDE.md"
+    - path: "core/physics/uncertainty.py"
+    - path: "core/indicators/physics.py"
+    - path: "examples/physics_inspired_strategies.py"
+    - path: "tests/unit/physics/test_uncertainty.py"
+    - path: "tests/unit/test_indicators_physics.py"
+  forbidden_paths:
+    - "trading/"
+    - "execution/"
+    - "forecast/"
+    - "policy/"
+required_python_symbols:
+  - "GABOR_LIMIT"
+  - "gabor_lower_bound"
+  - "time_frequency_spread"
+  - "check_gabor_limit"
+expected_signal: >-
+  pytest tests/unit/physics/test_uncertainty.py tests/unit/test_indicators_physics.py
+  is fully green (including the new under-resolved fail-closed test and the new
+  indicator degenerate-flag test); the Gaussian saturation and well-resolved
+  sweep tests still pass (the 1e-2 rejection tolerance sits ~100× below the
+  saturation dip and ~well above degenerate windows); examples/
+  physics_inspired_strategies.py runs to completion (exit 0) with no KeyError;
+  ruff + black clean on the changed Python; mypy --strict clean on
+  core/physics/uncertainty.py and core/indicators/physics.py;
+  scripts.check_invariant_count_sync exits 0 with 107 invariants;
+  validate_tests.py --audit-code reports 0 clamp/bounds issues on uncertainty.py.
+measurement_command: >-
+  python -m pytest tests/unit/physics/test_uncertainty.py
+  tests/unit/test_indicators_physics.py -v
+signal_artifact: "tmp/gabor_under_resolved_pytest.log"
+falsifier:
+  command: >-
+    python -c "import numpy as np, sys;
+    from core.physics.uncertainty import time_frequency_spread;
+    raised = False;
+    exec('try:\n time_frequency_spread(np.array([0.0, 1.0]))\nexcept ValueError as e:\n raised = (\"1/(4\\u03c0)\" in str(e))');
+    print('under-resolved window raised sub-bound ValueError:', raised);
+    sys.exit(0 if raised else 1)"
+  description: >-
+    Inverse probe for the under-resolution guard: a two-sample step [0,1] is a
+    non-constant signal whose power collapses into one time sample, giving a
+    discrete Δt·Δf = 0 < 1/(4π). The probe exits non-zero iff
+    time_frequency_spread FAILS to raise the sub-bound ValueError — i.e. iff the
+    guard is removed or weakened so a degenerate window is reported as a valid
+    (and dangerously zero / "maximally compact") product. Distinguishes the
+    fail-closed fix from the pre-fix silent-sub-bound behavior.
+rollback_command: >-
+  git checkout HEAD~1 --
+  core/physics/uncertainty.py
+  core/indicators/physics.py
+  examples/physics_inspired_strategies.py
+  tests/unit/physics/test_uncertainty.py
+  tests/unit/test_indicators_physics.py
+  .claude/physics/INVARIANTS.yaml
+  CLAUDE.md
+  .claude/commit_acceptors/gabor-under-resolved-fail-closed.yaml
+rollback_verification_command: >-
+  git diff --exit-code core/physics/uncertainty.py
+memory_update_type: append
+ledger_path: ".claude/commit_acceptors/gabor-under-resolved-fail-closed.yaml"
+report_path: ".claude/commit_acceptors/gabor-under-resolved-fail-closed.yaml"
+evidence: []

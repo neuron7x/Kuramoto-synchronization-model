@@ -1,0 +1,47 @@
+{
+  "operator_id": "CME-OP-VALIDATE-0001",
+  "name": "validate",
+  "ukrainian_name": "валідувати",
+  "repository": "neuron7xLab/GeoSync",
+  "status_tags": ["S0_REPO_FACT", "S5_PROXY"],
+  "definition": "Check whether an artifact, state transition, output, schema, claim, or runtime result matches explicit expectations before it can be promoted.",
+  "operator_form": "candidate_result + expected_contract + validation_method -> validation_operation -> pass_fail_decision + evidence_record + next_action",
+  "inputs": [
+    "candidate_result",
+    "expected_contract",
+    "acceptance_criteria",
+    "validation_method",
+    "failure_policy",
+    "evidence_destination"
+  ],
+  "outputs": [
+    "validation_report",
+    "pass_fail_decision",
+    "error_list",
+    "evidence_record",
+    "promotion_or_rejection",
+    "next_action"
+  ],
+  "acceptance_gates": [
+    "No validation without explicit expectations.",
+    "No PASS without a command, schema, threshold, or reviewed verdict.",
+    "No schema validation without reporting failed fields.",
+    "No benchmark validation without baseline or threshold.",
+    "No claim validation without status tag.",
+    "No S1_TESTED status without persisted evidence."
+  ],
+  "failure_modes": [
+    "Expectations are implicit.",
+    "Validator only checks file existence.",
+    "LLM judgement is treated as final truth.",
+    "Proxy score is promoted as physical measurement.",
+    "Failed validation produces no next action.",
+    "PASS is written without evidence."
+  ],
+  "validation_commands": [
+    "python tools/research/validate_operator_contract.py docs/operators/validate_operator.json",
+    "python -m pytest tests/research/test_validate_normalize_operator_contracts.py -q"
+  ],
+  "next_target": "Bind trajectory_trace_json -> schema plus semantic validator -> validation_report -> evidence_bundle -> VERDICT.",
+  "evidence_policy": "Remain S0_REPO_FACT plus S5_PROXY until validation commands run and evidence is persisted."
+}

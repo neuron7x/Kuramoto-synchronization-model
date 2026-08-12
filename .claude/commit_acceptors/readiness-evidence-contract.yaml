@@ -1,0 +1,48 @@
+id: readiness-evidence-contract
+status: ACTIVE
+claim_type: governance
+promise: >-
+  Diff-bound governance acceptor for the readiness evidence contract. The change
+  strengthens the readiness checker and tests so readiness entries use structured
+  evidence artifact records with kind, path, sha256, and verification command.
+  It does not promote repository readiness claims.
+
+diff_scope:
+  changed_files:
+    - path: "tools/check_readiness_register.py"
+    - path: "tests/governance/test_readiness_register.py"
+    - path: ".claude/commit_acceptors/readiness-evidence-contract.yaml"
+  forbidden_paths:
+    - "application/"
+    - "backtest/"
+    - "core/"
+    - "markets/"
+    - "modules/"
+
+required_python_symbols: []
+
+expected_signal: >-
+  Readiness evidence artifact records remain structured and carry a digest plus
+  a verification command.
+
+measurement_command: >-
+  python tools/check_readiness_register.py && python -m pytest -q tests/governance/test_readiness_register.py --confcutdir=tests/governance
+
+signal_artifact: "governance/readiness_register.json"
+
+falsifier:
+  command: >-
+    python tools/check_readiness_register.py
+  description: >-
+    The checker must expose malformed readiness evidence artifact records.
+
+rollback_command: >-
+  git checkout -- tools/check_readiness_register.py tests/governance/test_readiness_register.py .claude/commit_acceptors/readiness-evidence-contract.yaml
+
+rollback_verification_command: >-
+  git diff --exit-code
+
+memory_update_type: append
+ledger_path: ".claude/commit_acceptors/readiness-evidence-contract.yaml"
+report_path: "governance/readiness_register.json"
+evidence: []

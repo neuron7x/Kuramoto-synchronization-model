@@ -1,0 +1,12 @@
+ M docs/METRICS_CONTRACT.md
+ M docs/testing/canonical_commands.md
+ M go.work.sum
+ M reports/test_audit/current_state_20260522.md
+ M reports/test_audit/evidence_index.json
+ M tools/claims/validate_claims_have_evidence.py
+?? reports/test_audit/baseline_run_20260522T145446Z/
+?? reports/test_audit/baseline_run_20260522T145520Z/
+?? reports/test_audit/baseline_run_20260522T145545Z/
+?? scripts/test_audit/
+?? tests/tools/test_validate_claims_have_evidence.py
+?? tools/coverage/write_coverage_summary.py

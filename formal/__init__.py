@@ -1,4 +1,6 @@
-"""Formal verification modules for TradePulse.
+# Copyright (c) 2023-2026 Yaroslav Vasylenko (neuron7xLab)
+# SPDX-License-Identifier: MIT
+"""Formal verification modules for GeoSync.
 
 This package provides mathematically rigorous formal verification for:
 - Cryptographic primitives (hash functions, HMAC, signatures)

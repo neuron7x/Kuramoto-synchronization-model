@@ -55,7 +55,7 @@ Internally-scoped helpers are prefixed with `_` and are not part of the compatib
 ## Configuration
 
 Default parameters live in `configs/serotonin.yaml`. The controller first
-attempts to load the given path, then `TRADEPULSE_CONFIG_DIR/serotonin.yaml`, and
+attempts to load the given path, then `GEOSYNC_CONFIG_DIR/serotonin.yaml`, and
 finally the deprecated `config/serotonin.yaml`, emitting a warning when
 falling back. Configuration is validated through `SerotoninConfig`
 (`pydantic`), which also exposes a JSON Schema and Markdown table for
@@ -114,7 +114,7 @@ for traceability.
 import logging
 from core.neuro.serotonin import SerotoninController
 
-logger = logging.getLogger("tradepulse.serotonin")
+logger = logging.getLogger("geosync.serotonin")
 
 def tacl_guard(name: str, payload: dict[str, float]) -> bool:
     """Return ``True`` to accept serotonin proposals (stub for demo)."""
@@ -333,7 +333,7 @@ python -m core.neuro.serotonin.profiler.cli \
 ## Migration Notes (v2.3.1)
 
 - `gate_veto` and `phasic_veto` replace hard-coded thresholds for HOLD vetoes.
-- The configuration loader now supports `TRADEPULSE_CONFIG_DIR`; the legacy
+- The configuration loader now supports `GEOSYNC_CONFIG_DIR`; the legacy
   `config/` path remains functional but is deprecated.
 - Config persistence is atomic and mirrored into `configs/audit/` for TACL’s
   seven-year retention requirement.

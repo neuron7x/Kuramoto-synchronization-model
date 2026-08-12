@@ -1,0 +1,57 @@
+id: runtime-failure-matrix
+status: ACTIVE
+claim_type: governance
+promise: >-
+  After this PR, artifacts/runtime_failure_matrix/runtime_failure_matrix.json is a
+  schema-bound evidence artifact mapping each plausible runtime failure class
+  (secret leakage, future leakage, NaN/Infinity, empty input, wrong hash, unknown
+  enum/status, threshold boundary, non-atomic commit, stale artifact, duplicate
+  id, resource wedge, missing dependency) to a REAL fail-closed test.
+  tests/ci/test_runtime_failure_matrix.py enforces that every referenced test node
+  exists, every row asserts fail_closed->fail_closed->PASS, and the critical
+  failure classes are covered.
+diff_scope:
+  changed_files:
+    - path: ".claude/commit_acceptors/runtime-failure-matrix.yaml"
+    - path: "artifacts/runtime_failure_matrix/runtime_failure_matrix.json"
+    - path: "audit/schema/runtime_failure_matrix.schema.json"
+    - path: "tests/ci/test_runtime_failure_matrix.py"
+    - path: "data/testing/component_test_matrix.json"
+  forbidden_paths:
+    - "core/physics/"
+    - "core/kuramoto/"
+    - "execution/oms.py"
+required_python_symbols: []
+expected_signal: >-
+  `python -m pytest --import-mode=importlib
+  tests/ci/test_runtime_failure_matrix.py -q` reports 4 passed: schema-valid, every
+  referenced test node exists, every row fail_closed/PASS, critical classes covered.
+measurement_command: >-
+  bash -c '
+    python -m pytest --import-mode=importlib -p no:cacheprovider
+      tests/ci/test_runtime_failure_matrix.py -q
+  '
+signal_artifact: "tmp/runtime_failure_matrix.log"
+falsifier:
+  command: |-
+    bash -c '
+      python -c "
+    import json
+    m = json.load(open(\"artifacts/runtime_failure_matrix/runtime_failure_matrix.json\"))
+    classes = {r[\"failure_class\"] for r in m[\"rows\"]}
+    assert {\"secret leakage\", \"future leakage\", \"wrong hash\", \"non-atomic commit\"} <= classes
+    assert all(r[\"observed_behavior\"] == \"fail_closed\" for r in m[\"rows\"])
+    "
+    '
+  description: >-
+    Asserts the matrix covers the load-bearing failure classes and every row is
+    fail_closed. Exits 0 on the correct tree (run_evidence green-state contract),
+    non-zero if the matrix is gutted.
+rollback_command: >-
+  bash -c 'git rm -f .claude/commit_acceptors/runtime-failure-matrix.yaml'
+rollback_verification_command: >-
+  bash -c 'test ! -f .claude/commit_acceptors/runtime-failure-matrix.yaml'
+memory_update_type: append
+ledger_path: ".claude/commit_acceptors/runtime-failure-matrix.yaml"
+report_path: "tmp/runtime_failure_matrix.log"
+evidence: []

@@ -1,0 +1,58 @@
+# SPDX-License-Identifier: MIT
+#
+# Governance Schema Export Sync.
+#
+# Re-runs `python scripts/export_governance_schemas.py --check` on every
+# PR that touches the typed governance models or the published JSON
+# Schema artefacts. Fails closed if the on-disk schema differs from
+# the live Pydantic model in `application/governance/`. Mirrors the
+# invariant-count-sync gate pattern: external auditors and IDE tooling
+# pin against the on-disk artefact, so silent drift between the model
+# and the schema would invalidate downstream contracts.
+name: Governance Schema Export Sync
+
+on:
+  pull_request:
+    branches: [main]
+    paths:
+      - 'application/governance/**'
+      - 'docs/schemas/governance/**'
+      - 'scripts/export_governance_schemas.py'
+      - 'tests/scripts/test_export_governance_schemas.py'
+      - '.github/workflows/governance-schema-export-sync.yml'
+  merge_group:
+  push:
+    branches: [main]
+
+permissions:
+  contents: read
+
+concurrency:
+  group: governance-schema-export-sync-${{ github.event.pull_request.number || github.sha }}
+  cancel-in-progress: true
+
+jobs:
+  governance-schema-export-sync:
+    name: governance-schema-export-sync
+    runs-on: ubuntu-latest
+    timeout-minutes: 5
+    steps:
+      - name: Checkout
+        uses: actions/checkout@9c091bb21b7c1c1d1991bb908d89e4e9dddfe3e0 # v7.0.0
+
+      - name: Set up Python
+        uses: actions/setup-python@ece7cb06caefa5fff74198d8649806c4678c61a1 # v6
+        with:
+          python-version: '3.12'
+          cache: 'pip'
+
+      - name: Install minimal deps
+        run: |
+          set -euo pipefail
+          python -m pip install --upgrade pip
+          # Pydantic + PyYAML are the only runtime deps the exporter
+          # needs. Avoid `pip install -e .` to keep this gate fast.
+          pip install 'pydantic>=2,<3' pyyaml typing_extensions
+
+      - name: Verify on-disk JSON Schema matches the live Pydantic model
+        run: PYTHONPATH=. python scripts/export_governance_schemas.py --check

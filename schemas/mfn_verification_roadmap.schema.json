@@ -1,0 +1,109 @@
+{
+  "$schema": "https://json-schema.org/draft/2020-12/schema",
+  "$id": "https://geosync.local/schemas/mfn_verification_roadmap.schema.json",
+  "title": "MFN Verification Roadmap Contract",
+  "type": "object",
+  "additionalProperties": false,
+  "required": [
+    "contract_type",
+    "objective",
+    "inputs",
+    "definitions",
+    "execution_plan",
+    "python_runner_contract",
+    "validation_tests",
+    "failure_register",
+    "evidence_status",
+    "output_constraints",
+    "next_deterministic_action",
+    "final_verdict"
+  ],
+  "properties": {
+    "contract_type": {"const": "repository_repair_contract"},
+    "objective": {"$ref": "#/$defs/objective"},
+    "inputs": {"$ref": "#/$defs/inputs"},
+    "definitions": {"type": "array", "minItems": 1, "items": {"$ref": "#/$defs/definition"}},
+    "execution_plan": {"type": "array", "minItems": 1, "items": {"$ref": "#/$defs/execution_step"}},
+    "python_runner_contract": {"$ref": "#/$defs/python_runner_contract"},
+    "validation_tests": {"type": "array", "minItems": 1, "items": {"$ref": "#/$defs/validation_test"}},
+    "failure_register": {"type": "array", "minItems": 1, "items": {"$ref": "#/$defs/failure"}},
+    "evidence_status": {"$ref": "#/$defs/evidence_status"},
+    "output_constraints": {"$ref": "#/$defs/output_constraints"},
+    "next_deterministic_action": {"type": "string", "minLength": 1},
+    "final_verdict": {"$ref": "#/$defs/final_verdict"}
+  },
+  "$defs": {
+    "string_list": {"type": "array", "items": {"type": "string"}},
+    "objective": {
+      "type": "object",
+      "additionalProperties": false,
+      "required": ["target_state", "current_state", "transformation", "action_vector", "optimization"],
+      "properties": {
+        "target_state": {"type": "string"},
+        "current_state": {"type": "string"},
+        "transformation": {"type": "string"},
+        "action_vector": {"const": "earn -> exit -> build systems"},
+        "optimization": {
+          "type": "object",
+          "additionalProperties": false,
+          "required": ["minimize", "maximize"],
+          "properties": {"minimize": {"$ref": "#/$defs/string_list"}, "maximize": {"$ref": "#/$defs/string_list"}}
+        }
+      }
+    },
+    "inputs": {
+      "type": "object",
+      "additionalProperties": false,
+      "required": ["required", "provided", "missing", "assumptions"],
+      "properties": {"required": {"$ref": "#/$defs/string_list"}, "provided": {"$ref": "#/$defs/string_list"}, "missing": {"$ref": "#/$defs/string_list"}, "assumptions": {"$ref": "#/$defs/string_list"}}
+    },
+    "definition": {
+      "type": "object",
+      "additionalProperties": false,
+      "required": ["term", "operational_definition", "failure_condition", "validation_method"],
+      "properties": {"term": {"type": "string"}, "operational_definition": {"type": "string"}, "failure_condition": {"type": "string"}, "validation_method": {"type": "string"}}
+    },
+    "execution_step": {
+      "type": "object",
+      "additionalProperties": false,
+      "required": ["step_id", "action", "input", "output", "tool_required", "failure_condition"],
+      "properties": {"step_id": {"type": "string"}, "action": {"type": "string"}, "input": {"type": "string"}, "output": {"type": "string"}, "tool_required": {"type": "string"}, "failure_condition": {"type": "string"}}
+    },
+    "python_runner_contract": {
+      "type": "object",
+      "additionalProperties": false,
+      "required": ["required", "entrypoint", "commands", "expected_artifacts", "timeout_seconds", "success_criteria", "failure_criteria"],
+      "properties": {"required": {"const": true}, "entrypoint": {"type": "string"}, "commands": {"$ref": "#/$defs/string_list"}, "expected_artifacts": {"$ref": "#/$defs/string_list"}, "timeout_seconds": {"type": "integer", "minimum": 1}, "success_criteria": {"$ref": "#/$defs/string_list"}, "failure_criteria": {"$ref": "#/$defs/string_list"}}
+    },
+    "validation_test": {
+      "type": "object",
+      "additionalProperties": false,
+      "required": ["test_id", "test_type", "input", "expected_output", "runner", "pass_criteria", "fail_criteria"],
+      "properties": {"test_id": {"type": "string"}, "test_type": {"enum": ["schema", "unit", "integration", "regression", "parser", "repository", "security", "artifact", "behavioral"]}, "input": {"type": "string"}, "expected_output": {"type": "string"}, "runner": {"enum": ["python", "pytest", "jsonschema", "ruff", "mypy", "shell", "ci", "human_review"]}, "pass_criteria": {"type": "string"}, "fail_criteria": {"type": "string"}}
+    },
+    "failure": {
+      "type": "object",
+      "additionalProperties": false,
+      "required": ["failure", "cause", "impact", "detection", "mitigation", "severity"],
+      "properties": {"failure": {"type": "string"}, "cause": {"type": "string"}, "impact": {"type": "string"}, "detection": {"type": "string"}, "mitigation": {"type": "string"}, "severity": {"enum": ["CRITICAL", "HIGH", "MEDIUM", "LOW"]}}
+    },
+    "evidence_status": {
+      "type": "object",
+      "additionalProperties": false,
+      "required": ["external_evidence_available", "evidence_source", "tests_executed", "tests_not_executed", "score", "confidence", "status"],
+      "properties": {"external_evidence_available": {"const": false}, "evidence_source": {"const": "unavailable"}, "tests_executed": {"maxItems": 0, "$ref": "#/$defs/string_list"}, "tests_not_executed": {"$ref": "#/$defs/string_list"}, "score": {"type": "null"}, "confidence": {"type": "number", "maximum": 0.65}, "status": {"const": "CANDIDATE_NOT_VALIDATED"}}
+    },
+    "output_constraints": {
+      "type": "object",
+      "additionalProperties": false,
+      "required": ["json_only", "no_markdown", "no_prose", "no_self_scoring", "no_simulated_tests", "no_validation_without_evidence", "minimize_tokens"],
+      "properties": {"json_only": {"const": true}, "no_markdown": {"const": true}, "no_prose": {"const": true}, "no_self_scoring": {"const": true}, "no_simulated_tests": {"const": true}, "no_validation_without_evidence": {"const": true}, "minimize_tokens": {"const": true}}
+    },
+    "final_verdict": {
+      "type": "object",
+      "additionalProperties": false,
+      "required": ["status", "reason", "evidence_required"],
+      "properties": {"status": {"const": "CANDIDATE_NOT_VALIDATED"}, "reason": {"type": "string"}, "evidence_required": {"$ref": "#/$defs/string_list"}}
+    }
+  }
+}

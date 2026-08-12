@@ -1,0 +1,102 @@
+# Diff-bound commit acceptor for the evidence-grade capsule governance bundle
+# (TASKS 930-933 + 936): schema contract, secret-boundary validator, negative
+# reproduction tests, external clean-clone CI, and the unified evidence gate.
+#
+# Builds on PR #929 (which closed MANIFEST_PROOF with the first reproducible
+# capsule). This advances the capsule from a positive-path proof into a
+# schema-constrained, fail-closed, structurally-validated artifact, and adds the
+# single `make evidence-gate` command that composes every integrity/capsule/
+# claim/coverage layer. No empirical claim is promoted: the capsule remains
+# is_empirical_evidence=false, evidence_class=REPRODUCIBLE_INFRASTRUCTURE_PROOF.
+
+id: evidence-grade-capsule-governance
+status: ACTIVE
+claim_type: governance
+promise: >-
+  After this PR lands, a reproducible capsule cannot be malformed silently: its
+  manifest validates against schemas/reproducible_capsule.schema.json, its bundle
+  regenerates bit-for-bit (with named fail-closed negative tests), its tree is
+  structurally secret-scanned, an external clean-clone workflow proves it outside
+  the working tree, and `make evidence-gate-core` composes layers 1-11 green.
+
+diff_scope:
+  changed_files:
+    - path: ".claude/commit_acceptors/evidence-grade-capsule-governance.yaml"
+    - path: "schemas/reproducible_capsule.schema.json"
+    - path: "scripts/reproduce/mfn_capsule.py"
+    - path: "scripts/ci/check_capsule_schema.py"
+    - path: "scripts/ci/capsule_verification_report.py"
+    - path: "scripts/ci/evidence_gate.sh"
+    - path: "tools/security/validate_capsule_secret_boundary.py"
+    - path: "tests/reproducible/test_capsule_schema.py"
+    - path: "tests/reproduce/test_mfn_capsule_negative.py"
+    - path: "tests/security/test_capsule_secret_boundary.py"
+    - path: ".github/workflows/reproducible-capsule.yml"
+    - path: ".github/workflows/security-deep.yml"
+    - path: ".github/workflows/mfn-capsule-reproducibility.yml"
+    - path: "artifacts/reproducible_capsules/mfn_integration_seed7_p256/manifest.json"
+    - path: "Makefile"
+    - path: "docs/REPRODUCIBLE_CAPSULE_CONTRACT.md"
+  forbidden_paths:
+    - "trading/"
+    - "execution/"
+    - "forecast/"
+    - "policy/"
+    - "core/"
+    - "runtime/"
+    - "application/"
+
+required_python_symbols:
+  - "scripts/reproduce/mfn_capsule.py::_validate_manifest_structure"
+  - "tools/security/validate_capsule_secret_boundary.py::validate_capsule_root"
+  - "scripts/ci/check_capsule_schema.py::main"
+
+expected_signal: >-
+  `make evidence-gate-core` prints EVIDENCE_GATE: PASS over layers 01-11;
+  `python scripts/ci/check_capsule_schema.py`, `python
+  scripts/reproduce/mfn_capsule.py --verify`, and `python
+  tools/security/validate_capsule_secret_boundary.py` all exit 0; the schema,
+  negative-reproduction, and secret-boundary test suites pass.
+
+measurement_command: >-
+  bash -c '
+    bash scripts/ci/evidence_gate.sh --skip-coverage && python -m pytest tests/reproducible tests/reproduce
+       tests/security/test_capsule_secret_boundary.py -q -p no:cacheprovider
+  '
+
+signal_artifact: "tmp/evidence_grade_capsule.log"
+
+falsifier:
+  command: >-
+    bash -c '
+      python scripts/ci/check_capsule_schema.py >/dev/null 2>&1 && python scripts/reproduce/mfn_capsule.py --verify >/dev/null 2>&1 && python tools/security/validate_capsule_secret_boundary.py >/dev/null 2>&1 && exit 1 || exit 0
+    '
+  description: >-
+    Inverts the three capsule gates: it succeeds (exit 0) only when schema
+    validation, reproduction, or the secret boundary fails — i.e. the capsule
+    governance rolled back or the capsule rotted.
+
+rollback_command: >-
+  bash -c '
+    git rm -rf
+      schemas/reproducible_capsule.schema.json
+      scripts/ci/check_capsule_schema.py
+      scripts/ci/capsule_verification_report.py
+      scripts/ci/evidence_gate.sh
+      tools/security/validate_capsule_secret_boundary.py
+      tests/reproducible tests/reproduce/test_mfn_capsule_negative.py
+      tests/security/test_capsule_secret_boundary.py
+      .github/workflows/reproducible-capsule.yml
+      docs/REPRODUCIBLE_CAPSULE_CONTRACT.md
+      .claude/commit_acceptors/evidence-grade-capsule-governance.yaml
+  '
+
+rollback_verification_command: >-
+  bash -c '
+    test ! -e schemas/reproducible_capsule.schema.json
+  '
+
+memory_update_type: append
+ledger_path: ".claude/commit_acceptors/evidence-grade-capsule-governance.yaml"
+report_path: "tmp/evidence_grade_capsule.log"
+evidence: []

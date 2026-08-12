@@ -125,7 +125,7 @@ from core.data.market_feed_storage import MarketFeedStorage
 
 # Initialize storage backend
 storage = MarketFeedStorage(
-    bucket="tradepulse-market-feeds",
+    bucket="geosync-market-feeds",
     prefix="recordings",
     region="us-east-1",
 )
@@ -188,7 +188,7 @@ The recordings are designed for testing TD(0) RPE, DDM, and Go/No-Go systems:
 
 ```python
 from core.data.market_feed import MarketFeedRecording
-from tradepulse.core.neuro.dopamine import adapt_ddm_parameters
+from geosync.core.neuro.dopamine import adapt_ddm_parameters
 
 # Load recording
 recording = MarketFeedRecording.read_jsonl("tests/fixtures/recordings/volatile_btcusd_150ticks.jsonl")
@@ -351,4 +351,4 @@ pytest tests/unit/data/test_market_feed*.py --cov=core.data.market_feed --cov-re
 For issues or questions:
 - Check existing tests for usage examples
 - Review validation warnings for data quality issues
-- Contact the TradePulse team for production deployment
+- Contact the GeoSync team for production deployment

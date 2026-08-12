@@ -1,25 +1,25 @@
 ---
-owner: dx@tradepulse
+owner: dx@geosync
 review_cadence: quarterly
 last_reviewed: 2026-01-01
 ---
 
 # SDK Integration Flow
 
-This example outlines a minimal client SDK that wraps TradePulse public API
+This example outlines a minimal client SDK that wraps GeoSync public API
 requests and aligns with `docs/api/contracts.md` and `docs/api/authentication.md`.
 
 ## Prerequisites
 
 - HTTP client with TLS 1.2+ support.
-- ed25519 signing library for `X-TradePulse-Signature`.
+- ed25519 signing library for `X-GeoSync-Signature`.
 - Persistent store for `X-Idempotency-Key` values (required for predictions).
 - Optional webhook endpoint for async completion events.
 
 ## Suggested SDK Shape
 
 ```python
-class TradePulseClient:
+class GeoSyncClient:
     def __init__(self, base_url, signer, idempotency_store):
         self.base_url = base_url
         self.signer = signer

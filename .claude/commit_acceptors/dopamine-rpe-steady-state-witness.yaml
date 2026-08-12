@@ -1,0 +1,76 @@
+# Diff-bound commit acceptor for the dopamine RPE steady-state witness.
+#
+# Adds ONE test module binding the previously-unwitnessed catalog law
+# dopamine.rpe_zero_steady_state to an executable @law witness. Promotes no
+# claim, changes no runtime behavior, touches no schema/guard, uses no real data.
+#
+#   dopamine.rpe_zero_steady_state — E[delta] -> 0 in a stationary reward
+#                                    environment symmetric about the prediction
+#                                    (INV-DA5).
+#
+# Locally verified on origin/main base:
+#   * pytest tests/physics_contracts/test_dopamine_rpe_steady_state_witness.py: 1 passed
+#   * .claude/physics/validate_tests.py <file>: 0 issues (L1..L5), EXIT 0
+#   * ruff / mypy --strict clean ; zero new `# type: ignore`
+id: dopamine-rpe-steady-state-witness
+status: ACTIVE
+claim_type: governance
+promise: >-
+  After this PR lands, tests/physics_contracts/test_dopamine_rpe_steady_state_witness.py
+  binds dopamine.rpe_zero_steady_state to an @law witness asserting the ensemble
+  mean of DopamineExecutionAdapter.compute_rpe over stationary symmetric reward
+  environments lies within three standard errors of zero (INV-DA5), and passes
+  validate_tests with zero issues. No market claim; no runtime, schema, or guard
+  change.
+diff_scope:
+  changed_files:
+    - path: ".claude/commit_acceptors/dopamine-rpe-steady-state-witness.yaml"
+    - path: "tests/physics_contracts/test_dopamine_rpe_steady_state_witness.py"
+  forbidden_paths:
+    - "trading/"
+    - "execution/"
+    - "forecast/"
+    - "policy/"
+    - "application/"
+    - "core/"
+    - "src/"
+    - "geosync_hpc/"
+    - "physics_contracts/catalog.yaml"
+    - ".claude/physics/INVARIANTS.yaml"
+required_python_symbols: []
+expected_signal: >-
+  pytest reports 1 passed; validate_tests exits 0 with no L1..L5 issues; ruff and
+  mypy --strict clean.
+measurement_command: >-
+  bash -c 'mkdir -p tmp && python -m pytest
+  tests/physics_contracts/test_dopamine_rpe_steady_state_witness.py
+  > tmp/dopamine_rpe_steady_state_witness.log 2>&1
+  && grep -q "1 passed" tmp/dopamine_rpe_steady_state_witness.log'
+signal_artifact: "tmp/dopamine_rpe_steady_state_witness.log"
+falsifier:
+  command: |-
+    bash -c 'python -c "
+    import numpy as np
+    from core.neuro.signal_bus import NeuroSignalBus
+    from core.neuro.dopamine_execution_adapter import DopamineExecutionAdapter
+    da = DopamineExecutionAdapter(NeuroSignalBus()); rng = np.random.default_rng(0)
+    d = np.array([da.compute_rpe(realized_pnl=float(rng.normal(0.0, 0.01)), predicted_return=0.0) for _ in range(20000)])
+    se = float(d.std()/np.sqrt(len(d)))
+    import sys; sys.exit(0 if abs(float(d.mean())) > 3*se else 1)"'
+  description: >-
+    Inverse probe of RPE unbiasedness. It exits 0 (fires) iff the ensemble mean of
+    delta is more than three standard errors from zero in a stationary symmetric
+    environment -- i.e. the reward-prediction error is biased at the fixed point,
+    breaking INV-DA5. While E[delta] is consistent with zero the probe exits 1. If
+    it ever exits 0, the witness is no longer truthful and the change must be
+    reverted, not patched green.
+rollback_command: >-
+  git rm -f
+  tests/physics_contracts/test_dopamine_rpe_steady_state_witness.py
+  .claude/commit_acceptors/dopamine-rpe-steady-state-witness.yaml
+rollback_verification_command: >-
+  bash -c 'test ! -f tests/physics_contracts/test_dopamine_rpe_steady_state_witness.py'
+memory_update_type: none
+ledger_path: ".claude/commit_acceptors/dopamine-rpe-steady-state-witness.yaml"
+report_path: "tmp/dopamine_rpe_steady_state_witness.log"
+evidence: []

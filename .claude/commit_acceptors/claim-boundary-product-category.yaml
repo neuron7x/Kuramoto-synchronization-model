@@ -1,0 +1,80 @@
+# Diff-bound acceptor for the product-category claim-boundary gate (P0 #1).
+#
+# README declares a verification-first research platform — "not a live
+# execution platform, not an alpha product" — yet ~30 downstream docs sold
+# "live trading" / "trading signal generation" and CLAUDE.md's Identity
+# called it "a physics system that happens to trade". FORBIDDEN_CLAIMS.md
+# firewalled *status* wording but nothing enforced the *product-category*
+# boundary. This change adds a stdlib, fail-closed gate over the canonical
+# doc surface, a reasoned allowlist (mechanism != claim), the canonical
+# PRODUCT_CATEGORY.md statement, and reframes genuine product-category
+# claims in nine positioning docs. No execution/forecast/policy code is
+# touched; no scanner is weakened.
+
+id: claim-boundary-product-category
+status: ACTIVE
+claim_type: documentation
+promise: >-
+  scripts/ci/check_claim_boundary.py fails closed on any unreviewed
+  product-category claim (live-trading / trading-signal / alpha-engine /
+  signal-generation) on the canonical doc surface (top-level *.md +
+  docs/, excluding archive/audit/adr/releases records). Every legitimate
+  occurrence is either reworded to the research boundary or carries a
+  categorised entry (mechanism / ops-runbook / research-disclaimer /
+  honest-negation) in .github/claim_boundary_allow.json; a stale entry
+  that no longer matches also fails. The gate normalises whitespace,
+  unicode dashes, and case so wrapping or typographic dashes cannot
+  smuggle a claim. PRODUCT_CATEGORY.md is the single canonical is/is-not
+  statement; FORBIDDEN_CLAIMS.md cross-links it.
+diff_scope:
+  changed_files:
+    - path: ".claude/commit_acceptors/claim-boundary-product-category.yaml"
+    - path: "scripts/ci/check_claim_boundary.py"
+    - path: "tests/scripts/test_check_claim_boundary.py"
+    - path: ".github/workflows/claim-boundary-gate.yml"
+    - path: ".github/claim_boundary_allow.json"
+    - path: "PRODUCT_CATEGORY.md"
+    - path: "CHANGELOG.md"
+    - path: "ROADMAP.md"
+    - path: "docs/operations/INSTITUTIONAL_OVERVIEW.md"
+    - path: "docs/operations/PROJECT_DEVELOPMENT_STAGE.md"
+    - path: "docs/operations/СТАН_РОЗВИТКУ_ПРОЄКТУ.md"
+    - path: "docs/project-status.md"
+    - path: "docs/quickstart.md"
+    - path: "docs/roadmap.md"
+    - path: "docs/roadmap/platform_initiatives.md"
+  forbidden_paths:
+    - "trading/"
+    - "execution/"
+    - "forecast/"
+    - "policy/"
+required_python_symbols:
+  - "main"
+  - "_scan"
+  - "_normalise"
+expected_signal: >-
+  check_claim_boundary.py exits 0 ("Claim-boundary gate passed: N
+  canonical docs scanned, M reviewed mechanism/record references"); the
+  5-test mirror passes; ruff / black / mypy --strict are clean on the
+  gate and its test.
+measurement_command: >-
+  python scripts/ci/check_claim_boundary.py &&
+  python -m pytest tests/scripts/test_check_claim_boundary.py -q
+signal_artifact: "tmp/claim_boundary_gate.log"
+falsifier:
+  command: "bash -c '! python scripts/ci/check_claim_boundary.py'"
+  description: >-
+    On the green path the gate exits 0, so the negated probe exits
+    non-zero — proving the promise is falsifiable: if any unreviewed
+    product-category claim were present the gate would exit 1 and the
+    probe would pass, surfacing the broken boundary.
+rollback_command: >-
+  git checkout origin/main -- scripts/ci/check_claim_boundary.py
+  .github/workflows/claim-boundary-gate.yml .github/claim_boundary_allow.json
+  PRODUCT_CATEGORY.md
+rollback_verification_command: >-
+  git diff --exit-code origin/main -- scripts/ci/check_claim_boundary.py
+memory_update_type: append
+ledger_path: ".claude/commit_acceptors/claim-boundary-product-category.yaml"
+report_path: "PRODUCT_CATEGORY.md"
+evidence: []

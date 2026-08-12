@@ -1,4 +1,4 @@
-# TradePulse — Engineering Technical Audit
+# GeoSync — Engineering Technical Audit
 
 ## 1. Environment
 
@@ -413,4 +413,4 @@ mutmut results
 
 **Overall Health Score: 92/100** ⭐⭐⭐⭐
 
-The TradePulse codebase is in **excellent technical health** with strong test coverage, good performance characteristics, and minimal security concerns. The identified issues are primarily configuration and style-related, with no critical functional defects.
+The GeoSync codebase is in **excellent technical health** with strong test coverage, good performance characteristics, and minimal security concerns. The identified issues are primarily configuration and style-related, with no critical functional defects.

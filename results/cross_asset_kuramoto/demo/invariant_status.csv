@@ -1,0 +1,9 @@
+invariant_id,description,status
+INV-CAK1,Parameter freeze,PASS
+INV-CAK2,Universe freeze,PASS
+INV-CAK3,Deterministic output (tested),PASS
+INV-CAK4,No future leak in strictly-causal chain (tested),PASS
+INV-CAK5,Cost model required,PASS
+INV-CAK6,Fail-closed (CAKInvariantError is ValueError subclass),PASS
+INV-CAK7,Rank-order invariance (tested),PASS
+INV-CAK8,Turnover bounded,PASS

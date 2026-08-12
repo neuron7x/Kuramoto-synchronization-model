@@ -1,0 +1,35 @@
+id: instrument-hardening-metric-split
+status: ACTIVE
+claim_type: correctness
+promise: "Cross-system hardening: the C5 orientation fold is extracted into a separate _discriminability() so the raw _auc stays direction-sensitive (anti-correlated discriminators read AUC≈0, a real failure signal). Pure refactor — C5 OOS AUC stays byte-identical 0.9629629629629629 and verdict C5_ESTIMATOR_QUALITY_GAP unchanged. This acceptor also demonstrates the populated evidence-ledger pattern (report take #3)."
+diff_scope:
+  changed_files:
+    - path: "research/ctc_falsify/c5/oracle.py"
+    - path: "tests/research/ctc_falsify/test_ctc_falsify_c5.py"
+    - path: "tests/research/ctc_falsify/test_c5_metric_policy_split.py"
+    - path: ".claude/commit_acceptors/instrument-hardening-metric-split.yaml"
+  forbidden_paths:
+    - "trading/"
+    - "execution/"
+    - "forecast/"
+    - "policy/"
+    - "research/ctc_falsify/c5/config_c5.py"
+    - "research/ctc_falsify/c5/evidence/ctc_falsify_c5_result.json"
+required_python_symbols:
+  - "_auc"
+  - "_discriminability"
+  - "run_oracle"
+expected_signal: "metric/policy split tests pass; C5 rerun byte-identical (AUC 0.9629629629629629, verdict unchanged) — claim-neutral"
+measurement_command: "python -m pytest tests/research/ctc_falsify/test_c5_metric_policy_split.py -q"
+signal_artifact: "tmp/c5_metric_split_pytest.log"
+falsifier:
+  command: "python -c \"import numpy as np; from research.ctc_falsify.c5.oracle import _auc, _discriminability; raise SystemExit(0 if _auc(np.array([1.,2.,3.,4.]), np.array([1.,1.,0.,0.]))==0.0 and _discriminability(0.0)==1.0 else 1)\""
+  description: "Asserts the raw metric is NOT sign-folded (anti-separation → 0.0) while the fold lives only in _discriminability. Exits 1 if the fold is ever collapsed back into _auc — making the hardening falsifiable."
+rollback_command: "git checkout -- research/ctc_falsify/c5/oracle.py tests/research/ctc_falsify/test_ctc_falsify_c5.py && git rm -f tests/research/ctc_falsify/test_c5_metric_policy_split.py"
+rollback_verification_command: "git diff --exit-code research/ctc_falsify/c5/oracle.py"
+memory_update_type: none
+ledger_path: ".claude/commit_acceptors/instrument-hardening-metric-split.yaml"
+report_path: "research/ctc_falsify/RESULTS.md"
+evidence:
+  - path: "research/ctc_falsify/c5/evidence/ctc_falsify_c5_result.json"
+    sha256: "419632fabd97296037bbecda892c083b056927cea178896ad8af8b98b8d39b6b"

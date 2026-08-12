@@ -1,0 +1,45 @@
+id: ctc-open-data-acquisition-gate
+status: ACTIVE
+claim_type: governance
+promise: "Tier-0 metadata-only open-data acquisition + A-gate binding stage for C-real. Pure admissibility logic (no network) classifies DANDI-shaped candidates against the FROZEN C-real prereg: paired spikes+LFP, >=2 areas, trial structure, an INDEPENDENT routing label, session-disjoint capacity, public reproducible access, env size bound. Fail-closed by construction: any None on a required field stays UNKNOWN_NEEDS_MANUAL_REVIEW (never ADMISSIBLE); no self-derived label is treated as independent; no arrays downloaded; no CTC-theory claim. Committed canonical artifact is the deterministic --offline run (terminal INADMISSIBLE_TOO_LARGE_FOR_ENVIRONMENT); the live network finding (terminal INADMISSIBLE_NO_INDEPENDENT_ROUTING_LABEL) is recorded in the report only, not committed as a manifest."
+diff_scope:
+  changed_files:
+    - path: "research/ctc_falsify/c_real/open_data/__init__.py"
+    - path: "research/ctc_falsify/c_real/open_data/candidate.py"
+    - path: "research/ctc_falsify/c_real/open_data/discovery.py"
+    - path: "research/ctc_falsify/c_real/open_data/schema/open_data_manifest.schema.json"
+    - path: "research/ctc_falsify/c_real/open_data/open_data_candidates.yaml"
+    - path: "research/ctc_falsify/c_real/open_data/evidence/a_gate_open_data_binding.json"
+    - path: "research/ctc_falsify/c_real/open_data/OPEN_DATA_REPORT.md"
+    - path: "research/ctc_falsify/c_real/open_data/OPEN_DATA_RUN_REPORT.md"
+    - path: "tests/research/ctc_falsify/test_open_data_admissibility.py"
+    - path: "tests/research/ctc_falsify/test_open_data_manifest.py"
+    - path: ".github/detect-secrets.baseline"
+    - path: ".claude/commit_acceptors/ctc-open-data-acquisition-gate.yaml"
+  forbidden_paths:
+    - "trading/"
+    - "execution/"
+    - "forecast/"
+    - "policy/"
+    - "research/ctc_falsify/config.py"
+    - "research/ctc_falsify/c_real/gate.py"
+    - "research/ctc_falsify/c_real/config_c_real.py"
+required_python_symbols:
+  - "classify_candidate"
+  - "has_minimal_c_real_requirements"
+  - "terminal_verdict"
+  - "explain_candidate_blockers"
+expected_signal: "metadata-only discovery never yields ADMISSIBLE_BINDABLE from coarse metadata; UNKNOWN never promoted; offline canonical terminal is a fail-closed INADMISSIBLE_*"
+measurement_command: "python -m pytest tests/research/ctc_falsify/test_open_data_admissibility.py tests/research/ctc_falsify/test_open_data_manifest.py -q"
+signal_artifact: "tmp/ctc_open_data_pytest.log"
+falsifier:
+  command: "python -c \"from research.ctc_falsify.c_real.open_data.candidate import OpenDataCandidate as C, classify_candidate as cc, terminal_verdict as tv; k=dict(dataset_id='x',source='s',source_url='https://x',license_or_access_status='public',data_format='NWB',estimated_size_bytes=1024,access_method='m',candidate_routing_label_name=None,sessions_count_estimate=12,subject_count_estimate=12,access_reproducible=True,checked_at_utc='1970-01-01T00:00:00+00:00'); u=C(has_spikes=True,has_lfp=True,has_two_or_more_areas=None,has_trials=None,has_independent_routing_label=None,**k); raise SystemExit(0 if cc(u)=='UNKNOWN_NEEDS_MANUAL_REVIEW' and tv([cc(u)],binding_tooling_present=True)=='INADMISSIBLE_NO_INDEPENDENT_ROUTING_LABEL' else 1)\""
+  description: "Probe asserts a spikes+LFP candidate with unknown areas/trials/label stays UNKNOWN (never admissible) and rolls up to the fail-closed INADMISSIBLE_NO_INDEPENDENT_ROUTING_LABEL terminal. Exits 1 if UNKNOWN is ever promoted or the mandatory independent-label gate is weakened."
+rollback_command: "git rm -rf research/ctc_falsify/c_real/open_data tests/research/ctc_falsify/test_open_data_admissibility.py tests/research/ctc_falsify/test_open_data_manifest.py && git checkout -- .github/detect-secrets.baseline"
+rollback_verification_command: "test ! -d research/ctc_falsify/c_real/open_data"
+memory_update_type: append
+ledger_path: ".claude/commit_acceptors/ctc-open-data-acquisition-gate.yaml"
+report_path: "research/ctc_falsify/c_real/open_data/OPEN_DATA_REPORT.md"
+evidence:
+  - path: "research/ctc_falsify/c_real/open_data/evidence/a_gate_open_data_binding.json"
+    sha256: "34046ff088cf1bb37093b99b0345eef6172c5438dd11912f0673abd7b2f476e5"

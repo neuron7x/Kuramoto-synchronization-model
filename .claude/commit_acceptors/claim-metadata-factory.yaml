@@ -1,0 +1,108 @@
+# Diff-bound commit acceptor for the claim-safe descriptor-metadata factory.
+#
+# Adds ONE pure stdlib factory + its contract tests. Promotes no market
+# claim, changes no runtime behavior of any existing module, touches no
+# schema/guard/inventory, uses no real data, imports nothing forbidden.
+#
+#   analytics/signals/descriptor_metadata.build_descriptor_metadata
+#     — always stamps claim_boundary="descriptor_only_not_predictor",
+#       not_predictive_claim=True, not_financial_advice=True;
+#     — fails closed (ValueError) on any forbidden trading/forecast token in
+#       method/source/extra, on non-finite/negative/non-int counts, on
+#       invalid_count>input_count, and on an extra collision with a mandatory key.
+#
+# Locally verified on origin/main base (abd5068e):
+#   * pytest tests/unit/analytics/test_descriptor_metadata.py: 48 passed
+#   * ruff check / ruff format --check / black --check: clean
+#   * mypy --strict (module + tests): Success, zero issues
+#   * zero noqa / type-ignore literals anywhere in the two files
+#   * scripts/ci/check_claim_boundary.py: PASS (exit 0); check_claims.py: PASS
+#   * .github/claim_boundary_allow.json NOT touched (denylist is list-literal
+#     data, off the gate's prose scan surface)
+id: claim-metadata-factory
+status: ACTIVE
+claim_type: governance
+promise: >-
+  After this PR lands, analytics/signals/descriptor_metadata.py exposes a pure
+  stdlib build_descriptor_metadata(*, method, source, input_count,
+  invalid_count=0, extra=None) -> dict that ALWAYS stamps
+  claim_boundary="descriptor_only_not_predictor", not_predictive_claim=True and
+  not_financial_advice=True, and fails closed with ValueError on any forbidden
+  trading/forecast token in method/source/extra, on a non-finite/negative/non-int
+  count, on invalid_count exceeding input_count, or on an extra mapping that
+  collides with a mandatory key. tests/unit/analytics/test_descriptor_metadata.py
+  binds these properties with 48 passing tests. No market claim; no runtime,
+  schema, guard, or inventory change; no dependency beyond the standard library.
+diff_scope:
+  changed_files:
+    - path: ".claude/commit_acceptors/claim-metadata-factory.yaml"
+    - path: "analytics/signals/descriptor_metadata.py"
+    - path: "tests/unit/analytics/test_descriptor_metadata.py"
+  forbidden_paths:
+    - "trading/"
+    - "execution/"
+    - "forecast/"
+    - "policy/"
+    - "core/"
+    - "src/"
+    - "physics_contracts/catalog.yaml"
+    - "INVENTORY.json"
+    - "INVARIANTS.yaml"
+required_python_symbols:
+  - "analytics.signals.descriptor_metadata.build_descriptor_metadata"
+  - "analytics.signals.descriptor_metadata.FORBIDDEN_DESCRIPTOR_TERMS"
+  - "analytics.signals.descriptor_metadata.CLAIM_BOUNDARY"
+expected_signal: >-
+  `python -m pytest tests/unit/analytics/test_descriptor_metadata.py` reports
+  48 passed; `mypy --strict` and `ruff` on both files are clean;
+  `scripts/ci/check_claim_boundary.py` and `scripts/ci/check_claims.py` exit 0.
+measurement_command: >-
+  bash -c 'mkdir -p tmp && python -m pytest
+  tests/unit/analytics/test_descriptor_metadata.py
+  > tmp/claim_metadata_factory.log 2>&1
+  && grep -q "48 passed" tmp/claim_metadata_factory.log'
+signal_artifact: "tmp/claim_metadata_factory.log"
+falsifier:
+  command: |-
+    bash -c 'python -c "
+    from analytics.signals.descriptor_metadata import build_descriptor_metadata
+    broken = False
+    # 1. mandatory claim stamp must always be present and exact.
+    m = build_descriptor_metadata(method=\"hurst_rs\", source=\"ohlcv\", input_count=10)
+    if m.get(\"claim_boundary\") != \"descriptor_only_not_predictor\":
+        broken = True
+    if m.get(\"not_predictive_claim\") is not True or m.get(\"not_financial_advice\") is not True:
+        broken = True
+    # 2. a forbidden token MUST be rejected; if it is accepted, the boundary leaked.
+    try:
+        build_descriptor_metadata(method=\"alpha edge\", source=\"ohlcv\", input_count=1)
+        broken = True
+    except ValueError:
+        pass
+    # 3. a negative count MUST be rejected.
+    try:
+        build_descriptor_metadata(method=\"hurst_rs\", source=\"ohlcv\", input_count=-1)
+        broken = True
+    except ValueError:
+        pass
+    import sys; sys.exit(0 if broken else 1)"'
+  description: >-
+    Inverse probe of the construction invariant. It exits 0 (fires) iff the
+    factory ever drops/changes a mandatory claim field, or accepts a forbidden
+    trading/forecast token, or accepts a negative count -- i.e. the descriptor-
+    only boundary is broken in real code. While the boundary holds the probe
+    exits 1. If it ever exits 0, the factory is no longer truthful and the
+    change must be reverted, not patched green.
+rollback_command: >-
+  git rm -f
+  analytics/signals/descriptor_metadata.py
+  tests/unit/analytics/test_descriptor_metadata.py
+  .claude/commit_acceptors/claim-metadata-factory.yaml
+rollback_verification_command: >-
+  bash -c 'test ! -f analytics/signals/descriptor_metadata.py'
+memory_update_type: none
+ledger_path: ".claude/commit_acceptors/claim-metadata-factory.yaml"
+report_path: "tmp/claim_metadata_factory.log"
+evidence:
+  - path: "tmp/claim_metadata_factory.log"
+    sha256: "9f98ca0a8abd7593ebc3dec946489fcc63585fe0bb748cd53172c2276c43438a"  # pragma: allowlist secret

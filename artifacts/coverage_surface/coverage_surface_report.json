@@ -1,0 +1,113 @@
+{
+  "allowlisted": [
+    {
+      "note": "Research-only modules; not production runtime. Excluded from release coverage denominator by design.",
+      "reason": "research",
+      "root": "geosync_research"
+    }
+  ],
+  "coverage_sources": [
+    "analytics",
+    "application",
+    "backtest",
+    "cli",
+    "core",
+    "domain",
+    "execution",
+    "geosync",
+    "geosync_pro",
+    "interfaces",
+    "libs",
+    "markets",
+    "modules",
+    "observability",
+    "scripts",
+    "src",
+    "tools"
+  ],
+  "coverage_sources_by_profile": {
+    ".coveragerc": [
+      "backtest",
+      "core",
+      "execution"
+    ],
+    "audit/rvg.coveragerc": [],
+    "configs/quality/critical_surface.coveragerc": [
+      "backtest",
+      "core",
+      "execution"
+    ],
+    "configs/quality/governance_tools.coveragerc": [
+      "scripts",
+      "tools"
+    ],
+    "configs/quality/release_90.coveragerc": [
+      "analytics",
+      "application",
+      "backtest",
+      "cli",
+      "core",
+      "domain",
+      "execution",
+      "geosync",
+      "geosync_pro",
+      "interfaces",
+      "libs",
+      "markets",
+      "modules",
+      "observability",
+      "src"
+    ],
+    "pyproject": [
+      "analytics",
+      "backtest",
+      "core",
+      "execution",
+      "geosync",
+      "src"
+    ]
+  },
+  "forbidden_gaps": [],
+  "invalid_allowlist_entries": [],
+  "measured": [
+    "analytics",
+    "application",
+    "backtest",
+    "core",
+    "domain",
+    "execution",
+    "geosync",
+    "geosync_pro",
+    "interfaces",
+    "libs",
+    "modules",
+    "observability",
+    "scripts",
+    "src",
+    "tools"
+  ],
+  "missing_from_coverage": [
+    "geosync_research"
+  ],
+  "packaged_roots": [
+    "analytics",
+    "application",
+    "backtest",
+    "core",
+    "domain",
+    "execution",
+    "geosync",
+    "geosync_pro",
+    "geosync_research",
+    "interfaces",
+    "libs",
+    "modules",
+    "observability",
+    "scripts",
+    "src",
+    "tools"
+  ],
+  "schema": "geosync.coverage_surface_report.v1",
+  "stale_packaging_roots": [],
+  "verdict": "PASS"
+}

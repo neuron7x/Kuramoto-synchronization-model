@@ -1,0 +1,96 @@
+{
+  "schema": "geosync.concurrency_matrix.v1",
+  "verdict": "PASS",
+  "rows": [
+    {
+      "component": "execution.risk.core",
+      "failure_class": "lost update",
+      "shared_state": "RiskManager._positions",
+      "concurrency_guard": "threading.RLock (_state_lock) via @_synchronized",
+      "deterministic": true,
+      "test": "tests/unit/execution/test_risk_manager_concurrency.py::test_register_fill_lost_update_is_prevented",
+      "verdict": "PASS"
+    },
+    {
+      "component": "execution.risk.core",
+      "failure_class": "torn read",
+      "shared_state": "RiskManager._positions/_last_notional",
+      "concurrency_guard": "threading.RLock (_state_lock) via @_synchronized",
+      "deterministic": true,
+      "test": "tests/unit/execution/test_risk_manager_concurrency.py::test_exposure_snapshot_matches_position_after_concurrent_fills",
+      "verdict": "PASS"
+    },
+    {
+      "component": "execution.risk.core",
+      "failure_class": "duplicate fill",
+      "shared_state": "RiskManager pending reservations",
+      "concurrency_guard": "atomic reserve-in-validate under the state lock",
+      "deterministic": true,
+      "test": "tests/concurrency/test_risk_reservation_race.py::test_two_concurrent_orders_below_cap_but_combined_above_cannot_both_pass",
+      "verdict": "PASS"
+    },
+    {
+      "component": "execution.risk.core",
+      "failure_class": "deadlock",
+      "shared_state": "RiskManager reentrant lock",
+      "concurrency_guard": "reentrant RLock so a guarded method may call another",
+      "deterministic": true,
+      "test": "tests/unit/execution/test_risk_manager_concurrency.py::test_validate_and_register_do_not_deadlock_or_corrupt",
+      "verdict": "PASS"
+    },
+    {
+      "component": "core.messaging.event_bus",
+      "failure_class": "orphaned task",
+      "shared_state": "KafkaEventBus._consumer_tasks",
+      "concurrency_guard": "every subscribe appends a tracked task; none is orphaned",
+      "deterministic": true,
+      "test": "tests/unit/messaging/test_event_bus_extended.py::test_kafka_repeated_subscribe_does_not_orphan_the_earlier_consumer",
+      "verdict": "PASS"
+    },
+    {
+      "component": "core.messaging.event_bus",
+      "failure_class": "missed cancellation",
+      "shared_state": "KafkaEventBus._consumer_tasks",
+      "concurrency_guard": "stop() cancels every tracked task and clears the map",
+      "deterministic": true,
+      "test": "tests/concurrency/test_runtime_concurrency_matrix.py::test_kafka_stop_cancels_every_consumer_task",
+      "verdict": "PASS"
+    },
+    {
+      "component": "modules.strategy_scheduler",
+      "failure_class": "double submit",
+      "shared_state": "StrategyScheduler._task_counter/_tasks",
+      "concurrency_guard": "threading.Lock around id issuance and registration",
+      "deterministic": true,
+      "test": "tests/concurrency/test_runtime_concurrency_matrix.py::test_strategy_scheduler_concurrent_registration_yields_unique_ids",
+      "verdict": "PASS"
+    },
+    {
+      "component": "core.features.realtime_store",
+      "failure_class": "stale cache write",
+      "shared_state": "RealTimeFeatureStore feature cache",
+      "concurrency_guard": "event_ts compare-and-set (microcache + Redis Lua)",
+      "deterministic": true,
+      "test": "tests/unit/core/test_realtime_store_event_ts_cas.py::test_microcache_rejects_older_event_ts",
+      "verdict": "PASS"
+    },
+    {
+      "component": "application.api.rate_limit",
+      "failure_class": "lost update",
+      "shared_state": "InMemorySlidingWindowBackend._records",
+      "concurrency_guard": "asyncio.Lock around the sliding-window bucket",
+      "deterministic": true,
+      "test": "tests/concurrency/test_runtime_concurrency_matrix.py::test_rate_limiter_counts_every_concurrent_hit",
+      "verdict": "PASS"
+    },
+    {
+      "component": "libs.db.session",
+      "failure_class": "timeout path",
+      "shared_state": "SessionManager per-call Session",
+      "concurrency_guard": "finally: session.close() closes on every exception path",
+      "deterministic": true,
+      "test": "tests/concurrency/test_runtime_concurrency_matrix.py::test_db_session_closed_on_exception_under_concurrency",
+      "verdict": "PASS"
+    }
+  ]
+}

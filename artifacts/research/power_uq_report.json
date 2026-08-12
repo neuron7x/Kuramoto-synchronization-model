@@ -1,0 +1,183 @@
+{
+  "schema": "research.power_uq_report/v1",
+  "task": "RES-010",
+  "rq_id": "FLAGSHIP-RQ-001",
+  "prereg_id": "FLAGSHIP-PREREG-001",
+  "domain_kind": "infrastructure",
+  "outcome_type": "integer_defect_count",
+  "decision_variable": "D_marginal",
+  "boundary": "RESEARCH_ALPHA_SYNTHETIC_ONLY_NO_DEPLOY",
+  "not_a_market_claim": true,
+  "market_metrics_absent": ["sharpe", "pnl", "edge", "return"],
+  "snapshot": {
+    "wheel_sha256": "9943ce620b11e83f19d855d97e9a387bbed05dc68d9b67e0e4138fd600536616",
+    "evidence_surface": "artifacts/wheel_contract.json",
+    "candidate_defect_rows": 70,
+    "distinct_defect_modules": 66,
+    "defect_clusters": 11
+  },
+
+  "sesoi": {
+    "quantity": "D_marginal (defects surfaced ONLY by the clean-archive wheel contract)",
+    "value": 1,
+    "direction": "at_least",
+    "definition": "The smallest effect of interest is ONE genuinely-missed first-party defect: a single unpackaged-namespace import that raises ModuleNotFoundError on clean install and that no pre-existing CI gate flags on the same snapshot. Below D_marginal=1 the flagship RQ adds nothing.",
+    "rationale": "SESOI is pinned to the preregistered margin (prereg_margin=1 in benchmarks/flagship_baselines/comparison_report.json). It is a substantive, pre-committed threshold, not a post-hoc p<0.05 line.",
+    "source": "protocols/flagship_preregistration.yaml / comparison_report.json:prereg_margin"
+  },
+
+  "effect_size": {
+    "primary_estimator": "D_marginal (count of marginally-detected defects)",
+    "point_estimate": 70,
+    "distinct_modules": 66,
+    "defect_clusters": 11,
+    "unit": "defect rows (module x unpackaged-import target)",
+    "detection_rate": {
+      "definition": "per-module Bernoulli detection: fraction of packaged first-party modules the clean-archive check flags as failing",
+      "x_rows": 70,
+      "x_distinct_modules": 66,
+      "n_packaged_modules_approx": 1517,
+      "p_hat_rows": 0.0461,
+      "p_hat_distinct": 0.0435,
+      "n_note": "N is an approximate census denominator: count of .py modules under the packaged top-level namespaces. It bounds the detection rate; the PRIMARY effect size is the count D, which needs no denominator."
+    },
+    "comparator_effect": {
+      "existing_ci_suite_D": 0,
+      "ablated_no_clean_archive_D": 0,
+      "shuffled_null_D": 0,
+      "naive_trust_green_D": 0,
+      "note": "Every baseline catches 0 on snapshot S; the entire 70 is marginal detection."
+    }
+  },
+
+  "intervals": [
+    {
+      "quantity": "D (defect rows)",
+      "method": "exact_poisson_garwood",
+      "level": 0.95,
+      "lower": 54.57,
+      "upper": 88.44,
+      "role": "PRIMARY",
+      "note": "Treats D as a Poisson count. Excludes the SESOI-null (D<1) by a wide margin."
+    },
+    {
+      "quantity": "D (independent defect clusters)",
+      "method": "exact_poisson_garwood",
+      "level": 0.95,
+      "lower": 5.49,
+      "upper": 19.68,
+      "role": "PRIMARY_cluster_adjusted",
+      "note": "Counts the 11 distinct unpackaged-import roots as the independent units (see dependence_caveat). Even the cluster-collapsed count is >> SESOI."
+    },
+    {
+      "quantity": "D (defect rows)",
+      "method": "cluster_bootstrap_percentile",
+      "level": 0.95,
+      "lower": 16.0,
+      "upper": 154.0,
+      "seed": 20260719,
+      "resamples": 20000,
+      "resampled_unit": "the 11 root-clusters (sizes 41,13,5,3,2,1,1,1,1,1,1 = 70 rows)",
+      "role": "dependence_robust",
+      "note": "Resamples whole clusters with replacement; the wide interval reflects the heavy imbalance (one 'research' cluster = 41 rows). Lower bound still >> SESOI."
+    },
+    {
+      "quantity": "detection rate p (distinct modules)",
+      "method": "clopper_pearson_exact_binomial",
+      "level": 0.95,
+      "lower": 0.0338,
+      "upper": 0.0550,
+      "x": 66,
+      "n": 1517,
+      "role": "detection_rate",
+      "note": "Exact binomial CI on p under an independent-Bernoulli-per-module assumption (violated; see dependence_caveat). Interval excludes p=0."
+    }
+  ],
+  "primary_report": {
+    "statement": "Effect size D_marginal = 70 (66 distinct modules, 11 independent defect roots), exact-Poisson 95% CI [54.57, 88.44]; cluster-adjusted 95% CI [5.49, 19.68]. This effect-size-plus-interval is the primary result. No bare p-value is reported.",
+    "bare_p_value": null
+  },
+
+  "dependence_caveat": {
+    "independent_bernoulli_assumption_holds": false,
+    "structure": "block/cluster",
+    "explanation": "The 70 module-level failures are NOT independent trials. They cluster on 11 distinct unpackaged-import ROOTS (research=41, runtime=13, geosync_hpc=5, instrument_validation=3, rl=2, cortex_service/tacl/envs/governance/tests/physics_contracts=1 each). A single missing top-level package fails every module that imports it simultaneously, so the effective number of independent defects is ~11, not 70.",
+    "effective_independent_units": 11,
+    "consequence": "Row-level intervals (Poisson on 70, Clopper-Pearson on 66/1517) UNDERSTATE uncertainty because they treat correlated rows as independent. The cluster-adjusted Poisson (on 11) and the cluster bootstrap are the honest-uncertainty framings and are carried as PRIMARY_cluster_adjusted / dependence_robust."
+  },
+
+  "census_vs_sample": {
+    "is_census": true,
+    "sampling_uncertainty": "none",
+    "explanation": "The population is finite and fully enumerated: every first-party module packaged into the wheel is scanned, not a random sample from a larger universe. For snapshot S, D_marginal = 70 is EXACT. A census carries no design-based sampling error. The Poisson / binomial / bootstrap intervals above are therefore SUPERPOPULATION / illustrative devices (answering 'if this snapshot were one draw from a hypothetical repo-generating process, what count range is consistent'), NOT sampling CIs on the census total.",
+    "genuine_residual_uncertainty": "measurement / reproducibility, not sampling"
+  },
+
+  "power_adequacy": {
+    "sesoi": 1,
+    "null_hypothesis": "D_marginal < 1 (no genuinely-missed defect)",
+    "adequate": true,
+    "underpowered": false,
+    "power_gate": "PASS",
+    "method": "The census + every interval places the lower confidence bound far above the SESOI (min lower bound = 5.49 clusters / 16 rows >> 1). Power to detect D>=1 is effectively 1; the count analysis is NOT sampling-underpowered.",
+    "note": "Adequate STATISTICAL power does NOT license a binary flagship verdict: adequacy here is about the count magnitude, while the binary verdict is gated separately by reproducibility (see reproducibility_caveat)."
+  },
+
+  "underpowered_refusal": {
+    "rule": "REFUSE any binary SUPPORTED/REJECTED claim if (i) any primary interval includes the SESOI-null 'no marginal defect' (lower bound < 1), OR (ii) the census/sample is too small to resolve the SESOI, OR (iii) the same-snapshot reproducibility leg is unverified.",
+    "condition_i_interval_includes_no_defect": false,
+    "condition_ii_too_small": false,
+    "condition_iii_reproducibility_unverified": true,
+    "triggered_by_power": false,
+    "triggered_by_reproducibility": true,
+    "binary_claim_emitted": false,
+    "decision": "BINARY_CLAIM_WITHHELD",
+    "decision_reason": "The effect is large and well-bounded (NOT underpowered), but the RES-008 same-snapshot reproducibility leg (reproducibility_verified_at_S=false) is unmet, so the binary 'flagship proven' verdict is withheld. This matches RES-008's INSUFFICIENT_EVIDENCE."
+  },
+
+  "binary_verdict": null,
+  "verdict": "INSUFFICIENT_EVIDENCE",
+  "verdict_is_binary": false,
+
+  "reproducibility_caveat": {
+    "reproducibility_verified_at_S": false,
+    "instrument_determinism_demonstrated": true,
+    "detail": "Two independent reruns at current HEAD gave a bit-identical defect set (74==74). But the committed snapshot-S artifact reports 70 defects under a different wheel_sha (stale-vs-HEAD), and no same-S rerun was executed. Prereg criterion (2) reproducibility-at-S is therefore NOT verified. Source: benchmarks/flagship_baselines/comparison_report.json.",
+    "consistent_with": "RES-008 (comparison_report.json verdict=INSUFFICIENT_EVIDENCE)"
+  },
+
+  "sensitivity": [
+    {
+      "assumption": "dependence structure (independent rows vs clustered roots)",
+      "scenarios": {
+        "independent_rows_D70": "95% CI [54.57, 88.44]",
+        "clustered_roots_D11": "95% CI [5.49, 19.68]",
+        "cluster_bootstrap_D": "95% CI [16.0, 154.0]"
+      },
+      "conclusion_robust": true,
+      "finding": "Under EVERY dependence assumption the lower bound stays far above SESOI=1. The qualitative conclusion 'marginal detection >> SESOI' is INSENSITIVE to whether we count rows, distinct modules, or independent roots."
+    },
+    {
+      "assumption": "snapshot choice (committed S vs current HEAD)",
+      "scenarios": {"S": 70, "HEAD": 74},
+      "drift_abs": 4,
+      "drift_rel_pct": 5.7,
+      "conclusion_robust": true,
+      "finding": "Both snapshot counts are >> SESOI; the marginal-detection conclusion is insensitive to snapshot choice. The 4-defect drift is a REPRODUCIBILITY/measurement issue (drives the withheld binary verdict), not a magnitude issue."
+    },
+    {
+      "assumption": "detection-rate denominator N (packaged-module count)",
+      "scenarios": {"N_1517": "p in [0.0338, 0.0550]", "N_halved_760": "p roughly doubles but stays > 0"},
+      "conclusion_robust": true,
+      "finding": "The detection rate's lower bound stays strictly above 0 across plausible N; the count-based effect size (which needs no N) is the primary result and is unaffected."
+    }
+  ],
+
+  "honesty_note": "The effect size is real and large (D_marginal=70, tight lower bounds), but this report deliberately does NOT convert it into a binary 'flagship proven' / SUPPORTED claim. Consistent with RES-008, the same-snapshot reproducibility gap keeps the verdict at INSUFFICIENT_EVIDENCE. This is a CENSUS (no sampling uncertainty) with a residual measurement/reproducibility caveat, not a sampling study. No p-value is the headline; the effect size and its interval are.",
+  "generated_by": "RES-010 power/effect-size/uncertainty analysis (manual, deterministic; scipy 1.18.0)",
+  "computation_notes": {
+    "poisson_exact": "Garwood: lower=chi2.ppf(a/2, 2k)/2, upper=chi2.ppf(1-a/2, 2k+2)/2, a=0.05",
+    "clopper_pearson": "beta.ppf tails on (x, n-x+1) and (x+1, n-x)",
+    "cluster_bootstrap": "20000 resamples of the 11 root-clusters with replacement, seed 20260719, 2.5/97.5 percentiles"
+  }
+}

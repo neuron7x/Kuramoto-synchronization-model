@@ -1,4 +1,5 @@
-# SPDX-License-Identifier: LicenseRef-TradePulse-Proprietary
+# Copyright (c) 2023-2026 Yaroslav Vasylenko (neuron7xLab)
+# SPDX-License-Identifier: MIT
 """Regulatory Compliance for Risk Monitoring.
 
 This module provides compliance support for global trading regulations:
@@ -175,7 +176,7 @@ class DoddFrankReporter:
         self,
         *,
         storage_path: Path | str,
-        entity_id: str = "TRADEPULSE",
+        entity_id: str = "GEOSYNC",
         retention_days: int = 2557,  # ~7 years (includes leap years: 7*365 + 2)
     ) -> None:
         """Initialize Dodd-Frank reporter.
@@ -370,9 +371,9 @@ class DoddFrankReporter:
         for artefact in self._storage_path.glob("dodd-frank-*.json"):
             try:
                 timestamp_str = artefact.stem.split("-", 2)[-1]
-                timestamp = datetime.strptime(
-                    timestamp_str, "%Y%m%dT%H%M%SZ"
-                ).replace(tzinfo=timezone.utc)
+                timestamp = datetime.strptime(timestamp_str, "%Y%m%dT%H%M%SZ").replace(
+                    tzinfo=timezone.utc
+                )
             except ValueError:
                 continue
             if timestamp < cutoff:
@@ -390,7 +391,7 @@ class ComplianceManager:
         self,
         *,
         storage_path: Path | str,
-        entity_id: str = "TRADEPULSE",
+        entity_id: str = "GEOSYNC",
     ) -> None:
         """Initialize compliance manager.
 
@@ -531,9 +532,7 @@ class ComplianceManager:
 
             return violation
 
-    def resolve_violation(
-        self, violation_id: str, resolution_notes: str
-    ) -> bool:
+    def resolve_violation(self, violation_id: str, resolution_notes: str) -> bool:
         """Mark a violation as resolved.
 
         Args:
@@ -678,9 +677,7 @@ class ComplianceManager:
                 "dodd_frank_status": self._dodd_frank.generate_summary(),
             }
 
-    def _calculate_risk_metrics(
-        self, entries: Sequence[AuditTrailEntry]
-    ) -> dict[str, Any]:
+    def _calculate_risk_metrics(self, entries: Sequence[AuditTrailEntry]) -> dict[str, Any]:
         """Calculate risk metrics from audit entries."""
         risk_decisions = [e for e in entries if e.risk_decision]
         return {
@@ -690,9 +687,7 @@ class ComplianceManager:
         }
 
     @staticmethod
-    def _count_by_field(
-        entries: Sequence[AuditTrailEntry], field: str
-    ) -> dict[str, int]:
+    def _count_by_field(entries: Sequence[AuditTrailEntry], field: str) -> dict[str, int]:
         """Count entries by field value."""
         counts: dict[str, int] = {}
         for entry in entries:
@@ -721,10 +716,12 @@ class ComplianceManager:
         ]
 
         if critical:
-            summary_lines.extend([
-                "",
-                "CRITICAL ISSUES REQUIRING IMMEDIATE ATTENTION:",
-                *[f"  - {v.rule}: {v.description}" for v in critical[:5]],
-            ])
+            summary_lines.extend(
+                [
+                    "",
+                    "CRITICAL ISSUES REQUIRING IMMEDIATE ATTENTION:",
+                    *[f"  - {v.rule}: {v.description}" for v in critical[:5]],
+                ]
+            )
 
         return "\n".join(summary_lines)

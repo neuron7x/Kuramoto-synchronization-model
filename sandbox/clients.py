@@ -1,3 +1,5 @@
+# Copyright (c) 2023-2026 Yaroslav Vasylenko (neuron7xLab)
+# SPDX-License-Identifier: MIT
 """HTTP clients used across sandbox services."""
 
 from __future__ import annotations
@@ -26,9 +28,7 @@ class SandboxHttpClient:
 
     @asynccontextmanager
     async def client(self) -> AsyncIterator[httpx.AsyncClient]:
-        async with httpx.AsyncClient(
-            base_url=self._base_url, timeout=self._timeout
-        ) as session:
+        async with httpx.AsyncClient(base_url=self._base_url, timeout=self._timeout) as session:
             yield session
 
 

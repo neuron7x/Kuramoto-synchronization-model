@@ -10,8 +10,8 @@
     }
   },
   "nav": {
-    "brand": "TradePulse",
-    "title": "TradePulse",
+    "brand": "GeoSync",
+    "title": "GeoSync",
     "badges": {
       "live": "实时"
     },
@@ -146,7 +146,7 @@
     }
   },
   "header": {
-    "title": "TradePulse 监控中心",
+    "title": "GeoSync 监控中心",
     "subtitle": "统一掌控执行、风险与遥测数据。",
     "tags": [
       "多资产",
@@ -360,7 +360,7 @@
       "hero": {
         "eyebrow": "社区赋能",
         "title": "与全球贡献者共建势能",
-        "subtitle": "在 TradePulse 生态中协调导师计划、赞助与知识共享。",
+        "subtitle": "在 GeoSync 生态中协调导师计划、赞助与知识共享。",
         "cta": "打开贡献指南",
         "secondaryCta": "加入社区聊天",
         "fallbackChannel": "社区频道"

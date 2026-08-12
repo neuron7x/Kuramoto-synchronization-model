@@ -1,0 +1,29 @@
+{
+  "allowed_next_nodes": [
+    "D002J-P2.5",
+    "D002J-P3"
+  ],
+  "artifact_paths": [
+    "artifacts/d002j/crisis_windows/crisis_window_registry_v1.json",
+    "artifacts/d002j/crisis_windows/crisis_window_summary_v1.json",
+    "docs/research/D002J_CRISIS_WINDOW_REGISTRY.md",
+    "docs/research/D002J_CRISIS_WINDOW_SELECTION_RATIONALE.md"
+  ],
+  "claim_boundary": "6 crisis windows; every source_id is in P1B audit-surviving set (26 sources used; 0 illegal references); cross-asset coherence is not a proof of interbank funding network (Brunetti e-MID scope reminder); no prediction claim; no bank-level validation; no canonical run.",
+  "decision": "CRISIS_WINDOW_REGISTRY_READY",
+  "failure_retention": null,
+  "forbidden_next_nodes": [],
+  "merge_sha": "055783785571f68a4e0b07206e08c72a8c928e7c",
+  "node_id": "D002J-P2",
+  "parent_nodes": [
+    "D002J-P1B"
+  ],
+  "phase": "P2",
+  "pr_number": 699,
+  "schema_version": "D002J-VERDICT-CAPSULE-v1",
+  "source_summary_path": "artifacts/d002j/crisis_windows/crisis_window_summary_v1.json",
+  "status": "TERMINAL_PASS",
+  "test_paths": [
+    "tests/systemic_risk/test_d002j_crisis_window_registry.py"
+  ]
+}

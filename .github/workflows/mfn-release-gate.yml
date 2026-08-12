@@ -1,0 +1,84 @@
+name: MFN Release Gate
+
+on:
+  pull_request:
+    branches: [main]
+    paths:
+      - ".github/workflows/mfn-release-gate.yml"
+      - "geosync/mfn/**"
+      - "tools/mfn_surface_check.py"
+      - "tools/verify_mfn_clean_install.py"
+      - "tests/ci/test_mfn_surface_check.py"
+      - "tests/ci/test_mfn_surface_payload_contract.py"
+      - "tests/unit/mfn/**"
+      - "pyproject.toml"
+      - "Makefile"
+  push:
+    branches: [main]
+    paths:
+      - ".github/workflows/mfn-release-gate.yml"
+      - "geosync/mfn/**"
+      - "tools/mfn_surface_check.py"
+      - "tools/verify_mfn_clean_install.py"
+      - "tests/ci/test_mfn_surface_check.py"
+      - "tests/ci/test_mfn_surface_payload_contract.py"
+      - "tests/unit/mfn/**"
+      - "pyproject.toml"
+      - "Makefile"
+
+permissions:
+  contents: read
+
+env:
+  FORCE_JAVASCRIPT_ACTIONS_TO_NODE24: 'true'
+  SOURCE_DATE_EPOCH: '1700000000'
+
+concurrency:
+  group: mfn-release-gate-${{ github.event.pull_request.number || github.sha }}
+  cancel-in-progress: true
+
+jobs:
+  mfn-clean-install:
+    name: mfn-clean-install / python-${{ matrix.python-version }}
+    runs-on: ubuntu-latest
+    timeout-minutes: 10
+    strategy:
+      fail-fast: false
+      matrix:
+        python-version: ["3.11", "3.12"]
+    steps:
+      - name: Checkout
+        uses: actions/checkout@9c091bb21b7c1c1d1991bb908d89e4e9dddfe3e0
+        with:
+          fetch-depth: 0
+      - name: Setup Python
+        uses: actions/setup-python@ece7cb06caefa5fff74198d8649806c4678c61a1
+        with:
+          python-version: ${{ matrix.python-version }}
+      - name: Surface contract check
+        if: matrix.python-version == '3.12'
+        run: |
+          python tools/mfn_surface_check.py --strict
+      - name: Clean-venv entrypoint smoke
+        run: |
+          python tools/verify_mfn_clean_install.py \
+            --python python \
+            --report "$RUNNER_TEMP/product_state.json"
+          cat "$RUNNER_TEMP/product_state.json"
+      - name: MFN unit tests
+        if: matrix.python-version == '3.12'
+        run: |
+          python -m pip install -e . pytest
+          python -m pytest -q --noconftest -p no:cacheprovider tests/unit/mfn
+      - name: Byte-reproducibility of the bundle
+        if: matrix.python-version == '3.12'
+        run: |
+          python -m geosync.mfn.cli --out "$RUNNER_TEMP/b1" run >/dev/null
+          python -m geosync.mfn.cli --out "$RUNNER_TEMP/b2" run >/dev/null
+          for artifact in SHA256SUMS manifest.json runbook.md; do
+            if ! diff -q "$RUNNER_TEMP/b1/$artifact" "$RUNNER_TEMP/b2/$artifact" >/dev/null; then
+              echo "::error::MFN bundle artifact is not byte-reproducible: $artifact"
+              exit 1
+            fi
+          done
+          echo "reproducible_bundle=ok"

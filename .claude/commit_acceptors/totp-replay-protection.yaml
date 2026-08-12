@@ -1,0 +1,79 @@
+# Diff-bound commit acceptor: close a HIGH admin-2FA replay window.
+#
+# `verify_totp_code` is a pure RFC-6238 check with NO used-code tracking, so an
+# accepted code stays valid across `2*drift+1` time steps — a captured code is
+# replayable for up to period*(2*drift+1) seconds (~90 s at 30 s/±1). The bearer
+# JWT lives far longer than that, so the 2FA leg gave no real replay defence.
+#
+# Fix: expose the matched counter (`find_totp_counter`) and add `TotpReplayGuard`,
+# an in-process single-use ledger keyed on `(subject, counter)` with TTL pruning.
+# `require_two_factor` records each accepted code and rejects reuse with a 401.
+# Process-local by design (closes the single-instance window); a multi-host
+# deployment must back it with a shared store — documented, out of scope.
+#
+# Locally verified:
+#   * python -m pytest tests/security/test_totp_replay.py -q -> 7 passed
+#   * python -m pytest tests/api/test_security_dependency.py -q -> 27 passed (no regression)
+#   * black + ruff + mypy --strict clean; detect-secrets clean (public seed pragma)
+
+id: totp-replay-protection
+status: ACTIVE
+claim_type: security
+promise: >-
+  After this PR lands, an accepted admin TOTP code is single-use: require_two_
+  factor records each accepted (subject, counter) via TotpReplayGuard and returns
+  401 "already been used" on a replay within the code's validity window, while
+  distinct codes in later windows still authenticate. verify_totp_code keeps its
+  bool contract via the new find_totp_counter.
+diff_scope:
+  changed_files:
+    - path: ".claude/commit_acceptors/totp-replay-protection.yaml"
+    - path: "application/security/two_factor.py"
+    - path: "application/api/security.py"
+    - path: "tests/security/test_totp_replay.py"
+  forbidden_paths:
+    - "trading/"
+    - "execution/"
+    - "forecast/"
+    - "policy/"
+    - "core/physics/"
+    - "core/kuramoto/"
+required_python_symbols:
+  - "application/security/two_factor.py::TotpReplayGuard"
+  - "application/security/two_factor.py::find_totp_counter"
+expected_signal: >-
+  `python -m pytest tests/security/test_totp_replay.py -q` passes (7 tests): the
+  guard accepts a (subject, counter) once then rejects the replay, is per-subject,
+  prunes after the validity window, and the require_two_factor dependency accepts
+  a code once and returns HTTP 401 on the second use of the same code. The
+  existing tests/api/test_security_dependency.py suite still passes.
+measurement_command: >-
+  bash -c '
+    python -m pytest tests/security/test_totp_replay.py -q && python -m pytest tests/api/test_security_dependency.py -q
+  '
+signal_artifact: "tmp/totp_replay.log"
+falsifier:
+  command: >-
+    bash -c '
+      python -m pytest -q
+        tests/security/test_totp_replay.py::test_dependency_accepts_once_then_rejects_replay
+        >/dev/null 2>&1
+      test "$?" -ne 0
+    '
+  description: >-
+    Runs the end-to-end replay-rejection assertion. The falsifier succeeds (exit
+    0) only if that test FAILS — i.e. only if a replayed code is accepted again,
+    re-opening the window. With the guard in place the test passes (exit 0), so
+    `test $? -ne 0` exits 1 and the falsifier fails, confirming single-use.
+rollback_command: >-
+  bash -c 'git checkout origin/main --
+    application/security/two_factor.py
+    application/api/security.py && rm -f
+    tests/security/test_totp_replay.py
+    .claude/commit_acceptors/totp-replay-protection.yaml'
+rollback_verification_command: >-
+  bash -c '! test -f .claude/commit_acceptors/totp-replay-protection.yaml && ! test -f tests/security/test_totp_replay.py'
+memory_update_type: append
+ledger_path: ".claude/commit_acceptors/totp-replay-protection.yaml"
+report_path: "tmp/totp_replay.log"
+evidence: []

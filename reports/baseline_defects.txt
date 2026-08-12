@@ -1,0 +1,13 @@
+# Baseline defects — 2026-04-18T20:54:26Z
+
+## Direct datetime.now() in prod (core/ src/ cortex_service/ execution/ observability/ application/)
+201
+
+## Direct timezone.utc / datetime.UTC usage (prod)
+311
+
+## sys.modules mutation in tests
+39
+
+## os.environ mutation in tests
+48

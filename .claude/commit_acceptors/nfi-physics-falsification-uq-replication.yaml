@@ -1,0 +1,31 @@
+id: nfi-physics-falsification-uq-replication
+status: DRAFT
+claim_type: correctness
+promise: "NFI falsification, UQ smoke, Ricci bridge, and independent replication surfaces are bound to executable tests and static artifacts."
+diff_scope:
+  changed_files:
+    - path: ".claude/commit_acceptors/nfi-physics-falsification-uq-replication.yaml"
+    - path: "tests/physics/test_geosync_nulls.py"
+    - path: "tests/physics/test_uq_smoke.py"
+    - path: "tests/physics/test_replication.py"
+    - path: "tests/physics/test_ricci_bridge.py"
+    - path: "reproducibility/reference_solvers/geosync_kuramoto_numpy.py"
+  forbidden_paths:
+    - "trading/"
+    - "execution/"
+    - "forecast/"
+    - "policy/"
+required_python_symbols:
+  - "kuramoto_numpy_trajectory"
+expected_signal: "null, UQ, Ricci bridge, and replication tests execute without promoting Ricci to canonical status"
+measurement_command: "python -m pytest tests/physics/test_geosync_nulls.py tests/physics/test_uq_smoke.py tests/physics/test_replication.py tests/physics/test_ricci_bridge.py"
+signal_artifact: "artifacts/physics_validation/replication_summary.json"
+falsifier:
+  command: "python -m pytest tests/physics/test_replication.py --collect-only"
+  description: "Collection probe proving the independent replication test is discoverable."
+rollback_command: "git checkout -- tests/physics/test_geosync_nulls.py tests/physics/test_uq_smoke.py tests/physics/test_replication.py tests/physics/test_ricci_bridge.py reproducibility/reference_solvers/geosync_kuramoto_numpy.py .claude/commit_acceptors/nfi-physics-falsification-uq-replication.yaml"
+rollback_verification_command: "git diff --exit-code tests/physics/test_geosync_nulls.py tests/physics/test_uq_smoke.py tests/physics/test_replication.py tests/physics/test_ricci_bridge.py reproducibility/reference_solvers/geosync_kuramoto_numpy.py .claude/commit_acceptors/nfi-physics-falsification-uq-replication.yaml"
+memory_update_type: none
+ledger_path: ".claude/commit_acceptors/nfi-physics-falsification-uq-replication.yaml"
+report_path: "docs/physics/ricci_experimental.md"
+evidence: []

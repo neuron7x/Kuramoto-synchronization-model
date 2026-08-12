@@ -1,3 +1,5 @@
+# Copyright (c) 2023-2026 Yaroslav Vasylenko (neuron7xLab)
+# SPDX-License-Identifier: MIT
 """Context-managed SQLAlchemy session orchestration with read/write routing."""
 
 from __future__ import annotations
@@ -78,9 +80,7 @@ class SessionManager:
         finally:
             session.close()
 
-    def warmup(
-        self, *, writer_connections: int = 0, reader_connections: int = 0
-    ) -> None:
+    def warmup(self, *, writer_connections: int = 0, reader_connections: int = 0) -> None:
         """Pre-open connections so latency-sensitive workloads do not pay the initial cost."""
 
         warm_pool(self._writer_engine, target_size=writer_connections)

@@ -1,4 +1,5 @@
-# SPDX-License-Identifier: LicenseRef-TradePulse-Proprietary
+# Copyright (c) 2023-2026 Yaroslav Vasylenko (neuron7xLab)
+# SPDX-License-Identifier: MIT
 """Plugin infrastructure for execution adapters.
 
 Provides a lightweight registry capable of dynamically loading broker/exchange
@@ -65,22 +66,14 @@ class AdapterContract:
         if not self.identifier:
             raise ValueError("AdapterContract.identifier must be non-empty")
         if "." not in self.identifier:
-            raise ValueError(
-                "AdapterContract.identifier should be namespaced, e.g. 'binance.spot'"
-            )
+            raise ValueError("AdapterContract.identifier should be namespaced, e.g. 'binance.spot'")
         if not self.version:
             raise ValueError("AdapterContract.version must be provided")
         # Materialize tuples for credential collections for immutability
-        object.__setattr__(
-            self, "required_credentials", tuple(self.required_credentials)
-        )
-        object.__setattr__(
-            self, "optional_credentials", tuple(self.optional_credentials)
-        )
+        object.__setattr__(self, "required_credentials", tuple(self.required_credentials))
+        object.__setattr__(self, "optional_credentials", tuple(self.optional_credentials))
         object.__setattr__(self, "transports", MappingProxyType(dict(self.transports)))
-        object.__setattr__(
-            self, "capabilities", MappingProxyType(dict(self.capabilities))
-        )
+        object.__setattr__(self, "capabilities", MappingProxyType(dict(self.capabilities)))
         object.__setattr__(self, "metadata", MappingProxyType(dict(self.metadata)))
 
 
@@ -167,11 +160,7 @@ class AdapterPlugin:
             )
             return AdapterDiagnostic(
                 adapter_id=self.contract.identifier,
-                checks=(
-                    AdapterCheckResult(
-                        name="self-test", status="failed", detail=str(exc)
-                    ),
-                ),
+                checks=(AdapterCheckResult(name="self-test", status="failed", detail=str(exc)),),
             )
         if result.adapter_id != self.contract.identifier:
             result = replace(result, adapter_id=self.contract.identifier)
@@ -222,9 +211,7 @@ class AdapterRegistry:
     # -- helper APIs ------------------------------------------------------
     def contracts(self) -> Mapping[str, AdapterContract]:
         with self._lock:
-            return MappingProxyType(
-                {key: plugin.contract for key, plugin in self._plugins.items()}
-            )
+            return MappingProxyType({key: plugin.contract for key, plugin in self._plugins.items()})
 
     def identifiers(self) -> Iterable[str]:
         with self._lock:
@@ -248,14 +235,11 @@ class AdapterRegistry:
     def self_test_all(self) -> Mapping[str, AdapterDiagnostic]:
         with self._lock:
             return {
-                identifier: plugin.run_self_test()
-                for identifier, plugin in self._plugins.items()
+                identifier: plugin.run_self_test() for identifier, plugin in self._plugins.items()
             }
 
     # -- discovery --------------------------------------------------------
-    def discover(
-        self, group: str = "tradepulse.execution.adapters", *, reload: bool = False
-    ) -> None:
+    def discover(self, group: str = "geosync.execution.adapters", *, reload: bool = False) -> None:
         """Discover adapters via ``importlib.metadata`` entry points."""
 
         if not reload and group in self._discovered_groups:
@@ -271,17 +255,13 @@ class AdapterRegistry:
         if hasattr(entry_points, "select"):
             selected = entry_points.select(group=group)
         else:  # pragma: no cover - compatibility path
-            selected = [
-                ep for ep in entry_points if getattr(ep, "group", None) == group
-            ]
+            selected = [ep for ep in entry_points if getattr(ep, "group", None) == group]
 
         for entry_point in selected:
             try:
                 plugin = entry_point.load()
             except Exception as exc:  # pragma: no cover - defensive guard
-                logger.warning(
-                    "Failed to load adapter entry point %s", entry_point, exc_info=exc
-                )
+                logger.warning("Failed to load adapter entry point %s", entry_point, exc_info=exc)
                 continue
             if not isinstance(plugin, AdapterPlugin):
                 logger.warning(
@@ -316,9 +296,7 @@ class AdapterRegistry:
         if not callable(factory):
             raise LookupError(f"Resolved attribute '{dotted_path}' is not callable")
         connector = factory(**kwargs)
-        if not isinstance(
-            connector, ExecutionConnector
-        ):  # pragma: no cover - defensive guard
+        if not isinstance(connector, ExecutionConnector):  # pragma: no cover - defensive guard
             raise TypeError(
                 f"Factory '{dotted_path}' did not return an ExecutionConnector instance"
             )

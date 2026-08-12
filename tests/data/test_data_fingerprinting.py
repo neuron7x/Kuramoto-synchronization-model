@@ -1,8 +1,10 @@
+# Copyright (c) 2023-2026 Yaroslav Vasylenko (neuron7xLab)
+# SPDX-License-Identifier: MIT
 import json
 import os
 from pathlib import Path
 
-os.environ.setdefault("TRADEPULSE_LIGHT_DATA_IMPORT", "1")
+os.environ.setdefault("GEOSYNC_LIGHT_DATA_IMPORT", "1")
 
 from core.data import fingerprint
 from core.data.dataset_contracts import contract_by_id

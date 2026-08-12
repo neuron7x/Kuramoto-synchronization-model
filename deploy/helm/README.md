@@ -1,11 +1,11 @@
-# TradePulse Helm Charts
+# GeoSync Helm Charts
 
-This directory contains Helm charts for deploying TradePulse to Kubernetes.
+This directory contains Helm charts for deploying GeoSync to Kubernetes.
 
 ## Structure
 
 ```
-deploy/helm/tradepulse/
+deploy/helm/geosync/
 ├── Chart.yaml              # Umbrella chart definition
 ├── values.yaml             # Default configuration values
 └── charts/
@@ -31,23 +31,23 @@ helm repo add prometheus-community https://prometheus-community.github.io/helm-c
 helm repo update
 
 # Create namespace with Pod Security labels
-kubectl create namespace tradepulse
-kubectl label namespace tradepulse \
+kubectl create namespace geosync
+kubectl label namespace geosync \
   pod-security.kubernetes.io/enforce=baseline \
   pod-security.kubernetes.io/audit=restricted \
   pod-security.kubernetes.io/warn=restricted
 
-# Install TradePulse
-helm install tradepulse ./deploy/helm/tradepulse \
-  --namespace tradepulse \
-  --values ./deploy/helm/tradepulse/values.yaml
+# Install GeoSync
+helm install geosync ./deploy/helm/geosync \
+  --namespace geosync \
+  --values ./deploy/helm/geosync/values.yaml
 ```
 
 ### Install with custom values
 
 ```bash
-helm install tradepulse ./deploy/helm/tradepulse \
-  --namespace tradepulse \
+helm install geosync ./deploy/helm/geosync \
+  --namespace geosync \
   --set sandbox.replicaCount=3 \
   --set sandbox.resources.limits.memory=2Gi \
   --set global.otel.enabled=true
@@ -56,9 +56,9 @@ helm install tradepulse ./deploy/helm/tradepulse \
 ### Upgrade existing deployment
 
 ```bash
-helm upgrade tradepulse ./deploy/helm/tradepulse \
-  --namespace tradepulse \
-  --values ./deploy/helm/tradepulse/values.yaml
+helm upgrade geosync ./deploy/helm/geosync \
+  --namespace geosync \
+  --values ./deploy/helm/geosync/values.yaml
 ```
 
 ## Configuration
@@ -177,13 +177,13 @@ slo:
 ### Lint Charts
 
 ```bash
-helm lint deploy/helm/tradepulse
+helm lint deploy/helm/geosync
 ```
 
 ### Template and Validate
 
 ```bash
-helm template tradepulse deploy/helm/tradepulse --output-dir /tmp/helm-output
+helm template geosync deploy/helm/geosync --output-dir /tmp/helm-output
 kubeval --strict /tmp/helm-output/**/*.yaml
 ```
 
@@ -191,23 +191,23 @@ kubeval --strict /tmp/helm-output/**/*.yaml
 
 ```bash
 # Create kind cluster
-kind create cluster --name tradepulse-test
+kind create cluster --name geosync-test
 
 # Install
-helm install tradepulse ./deploy/helm/tradepulse \
-  --namespace tradepulse \
+helm install geosync ./deploy/helm/geosync \
+  --namespace geosync \
   --create-namespace \
   --set observability.enabled=false
 
 # Verify
-kubectl get all -n tradepulse
+kubectl get all -n geosync
 ```
 
 ## Uninstall
 
 ```bash
-helm uninstall tradepulse --namespace tradepulse
-kubectl delete namespace tradepulse
+helm uninstall geosync --namespace geosync
+kubectl delete namespace geosync
 ```
 
 ## CI/CD Integration
@@ -228,8 +228,8 @@ See `.github/workflows/helm.yml` for details.
 Check pod security context:
 
 ```bash
-kubectl describe pod <pod-name> -n tradepulse
-kubectl logs <pod-name> -n tradepulse
+kubectl describe pod <pod-name> -n geosync
+kubectl logs <pod-name> -n geosync
 ```
 
 ### Network connectivity issues
@@ -237,8 +237,8 @@ kubectl logs <pod-name> -n tradepulse
 Check network policies:
 
 ```bash
-kubectl get networkpolicies -n tradepulse
-kubectl describe networkpolicy <policy-name> -n tradepulse
+kubectl get networkpolicies -n geosync
+kubectl describe networkpolicy <policy-name> -n geosync
 ```
 
 ### Resource limits
@@ -246,7 +246,7 @@ kubectl describe networkpolicy <policy-name> -n tradepulse
 Check if pods are being OOMKilled:
 
 ```bash
-kubectl get events -n tradepulse --sort-by='.lastTimestamp'
+kubectl get events -n geosync --sort-by='.lastTimestamp'
 ```
 
 ## Contributing

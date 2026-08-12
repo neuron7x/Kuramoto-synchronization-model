@@ -1,3 +1,5 @@
+# Copyright (c) 2023-2026 Yaroslav Vasylenko (neuron7xLab)
+# SPDX-License-Identifier: MIT
 """Policy deployment utilities with rollback and shadow routing."""
 
 from __future__ import annotations
@@ -9,7 +11,6 @@ from dataclasses import dataclass, field
 from typing import Any, Callable, Dict, List, Mapping, Optional
 
 from runtime.model_registry import ModelMetadata
-
 
 PolicyHandler = Callable[..., Any]
 
@@ -154,9 +155,7 @@ class PolicyDeploymentManager:
                         result = future.result(timeout=timeout)
                     except concurrent.futures.TimeoutError as exc:
                         future.cancel()
-                        raise TimeoutError(
-                            f"policy_infer exceeded {timeout:.3f}s timeout"
-                        ) from exc
+                        raise TimeoutError(f"policy_infer exceeded {timeout:.3f}s timeout") from exc
         except Exception:
             safe_handler = fallback_handler or self._safe_mode_handler
             return safe_handler(*args, **kwargs)

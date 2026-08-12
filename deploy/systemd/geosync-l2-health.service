@@ -1,0 +1,15 @@
+[Unit]
+Description=GeoSync — one-shot health check over L2 collector log tail
+Documentation=https://github.com/neuron7xLab/GeoSync
+
+[Service]
+Type=oneshot
+User=%i
+WorkingDirectory=/opt/geosync
+Environment=PYTHONPATH=/opt/geosync
+
+# Exit codes: 0 HEALTHY, 1 DEGRADED, 2 STALE, 3 UNREACHABLE.
+# Non-zero exit triggers systemd's OnFailure chain if configured.
+ExecStart=/opt/geosync/.venv/bin/python /opt/geosync/scripts/check_l2_collector_health.py \
+    --log /opt/geosync/logs/collector_longrun.log \
+    --output /opt/geosync/logs/collector_health_history.jsonl

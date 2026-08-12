@@ -1,0 +1,68 @@
+# Diff-bound acceptor: fail-closed guards in the Kuramoto→Kelly sizing adapter.
+#
+# A computational audit found that KuramotoKellyAdapter.compute_kelly_fraction
+# divided by `prices[:-1]` with no guard: a zero or non-finite price produced a
+# NaN that propagated as the position multiplier, while the signal bus masked
+# it as a healthy R=1.0 (`max(0, min(1, nan)) == 1.0`) — the fault hid at the
+# observability layer. Separately, __init__ accepted a degenerate (R_low ==
+# R_high → ZeroDivisionError) or inverted (R_low > R_high → silent response
+# inversion) normalisation band. Both violate the CLAUDE.md fail-closed
+# doctrine. No invariant added or changed.
+
+id: kuramoto-kelly-failclosed
+status: ACTIVE
+claim_type: correctness
+promise: >-
+  Adds fail-closed contracts to core/neuro/kuramoto_kelly.py:
+  compute_kelly_fraction rejects non-1-D / <3-element / non-finite /
+  non-positive price series and non-finite kelly_base (so a NaN can never reach
+  position sizing), and __init__ rejects a degenerate or inverted band
+  (requires 0 <= floor <= ceil and 0 <= R_low < R_high <= 1, all finite) so the
+  R-normalisation cannot divide by zero or silently invert mid-trade. No
+  invariant added or changed; six reproduction tests added (5 fail-closed + 1
+  regression); existing Kelly/sizing suites stay green.
+diff_scope:
+  changed_files:
+    - path: ".claude/commit_acceptors/kuramoto-kelly-failclosed.yaml"
+    - path: "core/neuro/kuramoto_kelly.py"
+    - path: "tests/unit/core/neuro/test_kuramoto_kelly.py"
+  forbidden_paths:
+    - "trading/"
+    - "execution/"
+    - "forecast/"
+    - "policy/"
+required_python_symbols:
+  - "KuramotoKellyAdapter"
+expected_signal: >-
+  All tests in tests/unit/core/neuro/test_kuramoto_kelly.py pass, including the
+  new TestKellyFailClosed class (5 fail-closed + 1 regression); existing Kelly
+  pipeline / witness / T8 suites stay green (no regression); mypy --strict,
+  ruff, black, physics-code-audit clean on the changed module. Reproduced
+  before/after: prices [100,0,102,103] returned NaN as the Kelly multiplier
+  (bus masked as R=1.0) -> now raises ValueError; R_low==R_high raised
+  ZeroDivisionError mid-trade -> now raises ValueError at construction.
+measurement_command: >-
+  PYTHONPATH=. python -m pytest tests/unit/core/neuro/test_kuramoto_kelly.py
+  -k FailClosed -v
+signal_artifact: "tmp/kuramoto_kelly_failclosed_pytest.log"
+falsifier:
+  command: >-
+    PYTHONPATH=. python -m pytest tests/unit/core/neuro/test_kuramoto_kelly.py
+    -v -k "FailClosed"
+  description: >-
+    Filters to the fail-closed reproduction tests: zero / non-finite / too-short
+    price and degenerate / inverted band must each raise, plus a regression test
+    confirming a clean positive price series still sizes finitely within
+    [0, kelly_base]. Reverting any guard re-introduces the NaN-into-sizing leak
+    or the mid-trade ZeroDivisionError and fails the corresponding test.
+rollback_command: >-
+  git checkout HEAD~1 --
+  core/neuro/kuramoto_kelly.py
+  tests/unit/core/neuro/test_kuramoto_kelly.py
+  .claude/commit_acceptors/kuramoto-kelly-failclosed.yaml
+rollback_verification_command: >-
+  git diff --exit-code core/neuro/kuramoto_kelly.py
+memory_update_type: none
+ledger_path: ".claude/commit_acceptors/kuramoto-kelly-failclosed.yaml"
+report_path: "docs/reports/diff_bound_commit_acceptor_layer.md"
+evidence: []

@@ -1,3 +1,5 @@
+# Copyright (c) 2023-2026 Yaroslav Vasylenko (neuron7xLab)
+# SPDX-License-Identifier: MIT
 from __future__ import annotations
 
 import copy
@@ -19,9 +21,7 @@ from nak_controller.core.metrics import (
 from nak_controller.runtime.controller import NaKController
 
 CONFIG_PATH = Path("nak_controller/conf/nak.yaml")
-RAW_CONFIG: Dict[str, Any] = yaml.safe_load(CONFIG_PATH.read_text(encoding="utf-8"))[
-    "nak"
-]
+RAW_CONFIG: Dict[str, Any] = yaml.safe_load(CONFIG_PATH.read_text(encoding="utf-8"))["nak"]
 
 
 def _make_config(**overrides: Any) -> Dict[str, Any]:
@@ -125,8 +125,6 @@ def test_metric_normalizations(func: MetricFunc, value: float, expected: float) 
         (slippage_norm, {"slippage": 0.0, "threshold": 0.0}),
     ],
 )
-def test_metric_validations(
-    func: Callable[..., float], kwargs: Mapping[str, float]
-) -> None:
+def test_metric_validations(func: Callable[..., float], kwargs: Mapping[str, float]) -> None:
     with pytest.raises(ValueError):
         func(**kwargs)

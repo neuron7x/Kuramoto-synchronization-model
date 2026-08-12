@@ -1,0 +1,35 @@
+{
+  "arithmetic": "exact rational (fractions.Fraction)",
+  "families": {
+    "complete_5": {
+      "chi": 1,
+      "residual": "0"
+    },
+    "cycle_6": {
+      "chi": 0,
+      "residual": "0"
+    },
+    "path_8": {
+      "chi": 1,
+      "residual": "0"
+    },
+    "star_7": {
+      "chi": 1,
+      "residual": "0"
+    },
+    "triangle": {
+      "chi": 1,
+      "residual": "0"
+    },
+    "two_edges": {
+      "chi": 2,
+      "residual": "0"
+    },
+    "watts_strogatz_12_seed7": {
+      "chi": -3,
+      "residual": "0"
+    }
+  },
+  "identity": "sum_x K(x) == chi(G)",
+  "law": "ricci.gauss_bonnet"
+}

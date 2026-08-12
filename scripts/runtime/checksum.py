@@ -1,8 +1,10 @@
+# Copyright (c) 2023-2026 Yaroslav Vasylenko (neuron7xLab)
+# SPDX-License-Identifier: MIT
 """Checksum helpers for verifying downloaded artefacts."""
 
 from __future__ import annotations
 
-# SPDX-License-Identifier: LicenseRef-TradePulse-Proprietary
+# SPDX-License-Identifier: MIT
 import hashlib
 from pathlib import Path
 
@@ -26,9 +28,7 @@ def compute_checksum(path: Path | str, *, algorithm: str = "sha256") -> str:
     return hasher.hexdigest()
 
 
-def verify_checksum(
-    path: Path | str, expected: str, *, algorithm: str = "sha256"
-) -> None:
+def verify_checksum(path: Path | str, expected: str, *, algorithm: str = "sha256") -> None:
     """Raise :class:`ChecksumMismatchError` if the checksum differs from *expected*."""
 
     actual = compute_checksum(path, algorithm=algorithm)

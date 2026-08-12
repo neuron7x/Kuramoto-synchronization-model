@@ -1,0 +1,19 @@
+{
+  "boundary": "Scoped, in-silico, hypothesis-level, on the existing generative GT. A near-oracle UPPER BOUND, not a real estimator and not a CTC-theory verdict. Decisive only for THIS regime/observables.",
+  "claim": "Decide the C4 OPEN: is the standard-estimand blindness an identifiability limit of these observables at this regime, or an estimator-quality gap? Measured by the best out-of-sample linear discriminant over the full gamma cross-spectral representation (magnitude + phase), with train/test seed-disjoint (no leakage).",
+  "config_hash": "2fd1e7b7fd3465cb315a3fb8109ece2c627f2fd2cf99c04087f477d6a37814e6",
+  "experiment_id": "CTC-FALSIFY-001-C5",
+  "oracle": {
+    "n_features": 8,
+    "n_test": 96,
+    "n_train": 96,
+    "oos_auc": 0.9629629629629629,
+    "train_test_disjoint": true
+  },
+  "repro_hash": "d64ad1f826792296e807a2e966472ce067c56d12a77a25ec8dc3fb1ce1b8c0d8",
+  "thresholds": {
+    "auc_chance_hi": 0.6,
+    "auc_separable": 0.9
+  },
+  "verdict": "C5_ESTIMATOR_QUALITY_GAP"
+}

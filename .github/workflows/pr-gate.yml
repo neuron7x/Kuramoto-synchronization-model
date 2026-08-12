@@ -1,0 +1,839 @@
+# SPDX-License-Identifier: MIT
+#
+# PR Gate — synchronous merge contract for `main`.
+# Required jobs are fail-closed and content-aware. The fast pytest lane is
+# deterministic-sharded to avoid timeout collapse without reducing test surface.
+name: PR Gate
+
+on:
+  pull_request:
+    branches: [main]
+  merge_group:
+
+permissions:
+  contents: read
+
+env:
+  FORCE_JAVASCRIPT_ACTIONS_TO_NODE24: 'true'
+
+concurrency:
+  group: pr-gate-${{ github.event.pull_request.number || github.sha }}
+  cancel-in-progress: true
+
+jobs:
+  repo-policy:
+    name: repo-policy
+    runs-on: ubuntu-latest
+    continue-on-error: false
+    timeout-minutes: 10
+    steps:
+      - name: Checkout
+        uses: actions/checkout@9c091bb21b7c1c1d1991bb908d89e4e9dddfe3e0 # v7.0.0
+        with:
+          fetch-depth: 0
+
+      - name: Validate workflow policy invariants
+        run: |
+          set -euo pipefail
+          for wf in .github/workflows/*.yml; do
+            grep -Eq '^permissions:' "$wf" || { echo "ERROR: $wf missing permissions"; exit 1; }
+            if grep -Eq '^\s*pull_request_target:' "$wf"; then
+              echo "ERROR: $wf uses forbidden pull_request_target"
+              exit 1
+            fi
+          done
+
+      - name: Enforce pinned actions policy
+        run: |
+          set -euo pipefail
+          python - <<'PY'
+          import re
+          from pathlib import Path
+
+          pattern = re.compile(r'^\s*uses:\s*([^\s#]+)')
+          violations = []
+          for wf in sorted(Path('.github/workflows').glob('*.yml')):
+              for lineno, line in enumerate(wf.read_text(encoding='utf-8').splitlines(), start=1):
+                  m = pattern.search(line)
+                  if not m:
+                      continue
+                  ref = m.group(1)
+                  if ref.startswith('./') or ref.startswith('docker://'):
+                      continue
+                  if not re.search(r'@[a-f0-9]{40}$', ref):
+                      violations.append(f"{wf}:{lineno}: unpinned action reference: {ref}")
+
+          if violations:
+              print('\n'.join(violations))
+              raise SystemExit(1)
+          print('Pinned action policy passed.')
+          PY
+
+      - name: Validate GitHub Actions syntax
+        run: |
+          set -euo pipefail
+          python scripts/ci/run_actionlint.py
+
+      - name: Validate PR gate contract
+        run: |
+          set -euo pipefail
+          python scripts/ci/check_pr_gate_contract.py
+
+      - name: Inventory and manifest integrity checks
+        run: |
+          set -euo pipefail
+          python scripts/ci/check_inventory_sync.py
+          python scripts/ci/check_manifest_hashes.py
+
+  constraints-lock-sync:
+    name: constraints-lock-sync
+    runs-on: ubuntu-latest
+    continue-on-error: false
+    timeout-minutes: 5
+    steps:
+      - name: Checkout
+        uses: actions/checkout@9c091bb21b7c1c1d1991bb908d89e4e9dddfe3e0 # v7.0.0
+        with:
+          fetch-depth: 0
+
+      - name: Set up Python
+        uses: actions/setup-python@ece7cb06caefa5fff74198d8649806c4678c61a1 # v6
+        with:
+          python-version: '3.12'
+
+      - name: Install minimal deps
+        run: |
+          set -euo pipefail
+          python -m pip install --upgrade pip
+          python -m pip install 'PyYAML>=6.0.3' 'tomli>=2'
+
+      - name: Detect relevant changes
+        id: changed
+        run: |
+          set -euo pipefail
+          if [[ "${GITHUB_EVENT_NAME}" == "pull_request" ]]; then
+            git fetch --no-tags origin "${{ github.base_ref }}"
+            base_ref="origin/${{ github.base_ref }}"
+            changed_files=$(git diff --name-only "$base_ref...$GITHUB_SHA")
+          else
+            changed_files=$(git diff-tree --no-commit-id --name-only -r "$GITHUB_SHA")
+          fi
+          if printf '%s\n' "$changed_files" | grep -Eq '^(constraints/security\.txt|requirements(-dev|-scan)?\.lock)$'; then
+            echo "relevant=true" >> "$GITHUB_OUTPUT"
+          else
+            echo "relevant=false" >> "$GITHUB_OUTPUT"
+            echo "No constraints/lock surface changed; D8 gate passes."
+          fi
+
+      - name: Fail-closed on constraint/lock divergence (D8)
+        if: steps.changed.outputs.relevant == 'true'
+        run: |
+          set -euo pipefail
+          python tools/deps/validate_dependency_truth.py >/tmp/dependency-truth.json
+          python - <<'PY'
+          import json
+          import sys
+
+          report = json.load(open('/tmp/dependency-truth.json', encoding='utf-8'))
+          d8 = [d for d in report['drifts'] if d['drift_class'] == 'D8']
+          if d8:
+              print('FAIL: constraint/lock divergence (D8):')
+              for d in d8:
+                  print(f"  [{d['priority']}] {d['package']}: {d['detail']}")
+                  print(f"        fix: {d['fix']}")
+              sys.exit(1)
+          print('constraints/security.txt and requirements*.lock are in sync (no D8 drift).')
+          PY
+
+  python-quality:
+    name: python-quality
+    runs-on: ubuntu-latest
+    continue-on-error: false
+    timeout-minutes: 15
+    steps:
+      - name: Checkout
+        uses: actions/checkout@9c091bb21b7c1c1d1991bb908d89e4e9dddfe3e0 # v7.0.0
+        with:
+          fetch-depth: 0
+
+      - name: Setup Python environment
+        uses: ./.github/actions/setup-geosync
+        with:
+          python-version: '3.11'
+          cache-prefix: pr-quality
+
+      - name: Verify pip executable and Python contract
+        run: |
+          set -euo pipefail
+          .venv/bin/python -m pip --version
+          .venv/bin/python -m pip check
+          .venv/bin/python - <<'PY'
+          import tomllib
+          from pathlib import Path
+
+          requires = tomllib.loads(Path('pyproject.toml').read_text(encoding='utf-8'))['project']['requires-python']
+          if requires != '>=3.11,<3.13':
+              raise SystemExit(f'Unexpected requires-python: {requires}')
+          print(f'requires-python validated: {requires}')
+          PY
+
+      - name: Run lint/type gate on changed Python files
+        run: |
+          set -euo pipefail
+          if [[ "${GITHUB_EVENT_NAME}" == "pull_request" ]]; then
+            git fetch --no-tags origin "${{ github.base_ref }}"
+            base_ref="origin/${{ github.base_ref }}"
+            changed_files=$(git diff --name-only "$base_ref...$GITHUB_SHA")
+          else
+            changed_files=$(git diff-tree --no-commit-id --name-only -r "$GITHUB_SHA")
+          fi
+
+          mapfile -t py_files < <(
+            printf '%s\n' "$changed_files" \
+            | awk '/\.py$/' \
+            | while IFS= read -r f; do
+                [[ -f "$f" ]] && printf '%s\n' "$f"
+              done
+          )
+          if [[ ${#py_files[@]} -eq 0 ]]; then
+            echo "No Python file changes detected; python-quality passes."
+            exit 0
+          fi
+
+          .venv/bin/ruff check "${py_files[@]}"
+          .venv/bin/black --check "${py_files[@]}"
+          .venv/bin/mypy "${py_files[@]}"
+
+  python-fast-shard:
+    name: python-fast-shard
+    runs-on: ubuntu-latest
+    needs: python-quality
+    continue-on-error: false
+    strategy:
+      fail-fast: false
+      matrix:
+        group: [1, 2, 3, 4, 5, 6, 7, 8]
+    timeout-minutes: 25
+    env:
+      SHARD_COUNT: '8'
+    steps:
+      - name: Checkout
+        uses: actions/checkout@9c091bb21b7c1c1d1991bb908d89e4e9dddfe3e0 # v7.0.0
+        with:
+          fetch-depth: 0
+
+      - name: Setup Python environment
+        uses: ./.github/actions/setup-geosync
+        with:
+          python-version: '3.11'
+          cache-prefix: pr-fast-tests
+
+      - name: Verify pip executable
+        run: .venv/bin/python -m pip --version
+
+      - name: Verify test-level classification (fail-fast)
+        run: |
+          set -euo pipefail
+          [[ -x .venv/bin/pytest ]] || { echo ".venv/bin/pytest missing"; exit 1; }
+          .venv/bin/pytest --collect-only -q \
+            tests/connectors/test_fail_closed_connectors.py \
+            tests/connectors/test_polygon_adapter_reproducible.py \
+            scripts/tests/test_generate_stakeholder_assets.py
+
+      - name: Run fast deterministic pytest gate
+        run: |
+          set -euo pipefail
+          if [[ "${GITHUB_EVENT_NAME}" == "pull_request" ]]; then
+            git fetch --no-tags origin "${{ github.base_ref }}"
+            base_ref="origin/${{ github.base_ref }}"
+            changed_files=$(git diff --name-only "$base_ref...$GITHUB_SHA")
+          else
+            changed_files=$(git diff-tree --no-commit-id --name-only -r "$GITHUB_SHA")
+          fi
+
+          if ! printf '%s\n' "$changed_files" | awk '
+            /^tests\// || /^core\// || /^backtest\// || /^execution\// || /^src\// ||
+            /^scripts\// || /^pyproject\.toml$/ || /^requirements(-dev)?\.(txt|lock)$/ ||
+            /^pytest\.ini$/ || /^\.github\/workflows\/pr-gate\.yml$/ || /^\.pre-commit-config\.yaml$/ {
+              found=1; exit
+            }
+            END { exit !found }
+          '; then
+            echo "No Python runtime/test surface changes detected; shard passes."
+            exit 0
+          fi
+
+          [[ -x .venv/bin/pytest ]] || { echo ".venv/bin/pytest missing"; exit 1; }
+          export PYTHONUTF8=1
+          export PYTHONIOENCODING=utf-8
+          MARK="not slow and not heavy_math and not nightly and not flaky"
+          .venv/bin/pytest tests/ -m "$MARK" --collect-only 2>/tmp/collect_stderr.log \
+            | grep -E '^tests/.*::' > /tmp/all_nodeids.txt || true
+
+          QUARANTINE="tests/ci/fast_quarantine.txt"
+          if [[ -f "$QUARANTINE" ]]; then
+            if grep -vE '^\s*#|^\s*$' "$QUARANTINE" | grep -qvE 'issue=#[0-9]+'; then
+              echo "FATAL: a fast_quarantine.txt entry has no issue=#<n> ref." >&2
+              grep -vE '^\s*#|^\s*$' "$QUARANTINE" | grep -vE 'issue=#[0-9]+' >&2
+              exit 1
+            fi
+            grep -vE '^\s*#|^\s*$' "$QUARANTINE" | awk '{print $1}' > /tmp/quarantine_paths.txt || true
+            before=$(wc -l < /tmp/all_nodeids.txt | tr -d ' ')
+            grep -vFf /tmp/quarantine_paths.txt /tmp/all_nodeids.txt > /tmp/all_nodeids.kept || true
+            mv /tmp/all_nodeids.kept /tmp/all_nodeids.txt
+            after=$(wc -l < /tmp/all_nodeids.txt | tr -d ' ')
+            echo "quarantine: subtracted $((before - after)) node ids ($(wc -l < /tmp/quarantine_paths.txt | tr -d ' ') quarantined files)"
+          fi
+
+          total_ids=$(wc -l < /tmp/all_nodeids.txt | tr -d ' ')
+          echo "[gate-probe] collected total_ids=$total_ids (post-quarantine)" >&2
+          if [[ "$total_ids" -eq 0 ]]; then
+            echo "FATAL: test-surface changed but 0 fast tests collected (after quarantine)." >&2
+            echo "Collection is broken; refusing to pass vacuously." >&2
+            echo "---- captured collection stderr (last 80 lines) ----" >&2
+            tail -n 80 /tmp/collect_stderr.log >&2 2>/dev/null || echo "(no collection stderr was captured)" >&2
+            echo "---- end collection stderr ----" >&2
+            exit 1
+          fi
+
+          .venv/bin/python - <<'PY'
+          import binascii
+          import os
+          from pathlib import Path
+
+          ids = [line.strip() for line in Path('/tmp/all_nodeids.txt').read_text(encoding='utf-8').splitlines() if line.strip()]
+          shard_count = int(os.environ['SHARD_COUNT'])
+          group = int(os.environ['MATRIX_GROUP']) - 1
+          shard = [nodeid for nodeid in ids if binascii.crc32(nodeid.encode()) % shard_count == group]
+          Path('/tmp/shard_nodeids.txt').write_text('\n'.join(shard), encoding='utf-8')
+          print(f'shard {group + 1}/{shard_count}: {len(shard)}/{len(ids)} selected tests')
+          PY
+        env:
+          MATRIX_GROUP: ${{ matrix.group }}
+
+      - name: Execute selected fast shard
+        run: |
+          set -euo pipefail
+          if [[ ! -s /tmp/shard_nodeids.txt ]]; then
+            echo "empty shard (no ids in this crc32 bucket) — shard passes"
+            exit 0
+          fi
+          mapfile -t SHARD_IDS < /tmp/shard_nodeids.txt
+          echo "[gate-probe] launching pytest on ${#SHARD_IDS[@]} node ids" >&2
+          MARK="not slow and not heavy_math and not nightly and not flaky"
+          set +e
+          timeout 1200s .venv/bin/pytest \
+            -m "$MARK" \
+            "${SHARD_IDS[@]}" \
+            --maxfail=3 \
+            -rA -q | tee /tmp/shard_run.log
+          rc=${PIPESTATUS[0]}
+          set -e
+          echo "[gate-probe] pytest rc=$rc" >&2
+          if [[ "$rc" -ne 0 ]]; then
+            echo "---- shard FAILED (rc=$rc); failing node ids ----" >&2
+            grep -aE '^(FAILED|ERROR)' /tmp/shard_run.log >&2 \
+              || { echo "(no FAILED/ERROR lines — pytest may have aborted before running; last 40 lines:)" >&2; tail -n 40 /tmp/shard_run.log >&2; }
+            echo "---- end shard summary ----" >&2
+            exit "$rc"
+          fi
+
+      - name: Run mandatory connector hygiene tests
+        run: |
+          set -euo pipefail
+          [[ -x .venv/bin/pytest ]] || { echo ".venv/bin/pytest missing"; exit 1; }
+          timeout 300s .venv/bin/pytest \
+            tests/connectors/test_fail_closed_connectors.py \
+            tests/connectors/test_polygon_adapter_reproducible.py \
+            scripts/tests/test_generate_stakeholder_assets.py \
+            --maxfail=1 \
+            -q
+
+      - name: Run formal verification gate
+        run: |
+          set -euo pipefail
+          if [[ "${GITHUB_EVENT_NAME}" == "pull_request" ]]; then
+            git fetch --no-tags origin "${{ github.base_ref }}"
+            base_ref="origin/${{ github.base_ref }}"
+            changed_files=$(git diff --name-only "$base_ref...$GITHUB_SHA")
+          else
+            changed_files=$(git diff-tree --no-commit-id --name-only -r "$GITHUB_SHA")
+          fi
+
+          if ! printf '%s\n' "$changed_files" | awk '
+            /^formal\// || /^cortex_service\// || /^src\// || /^tests\// ||
+            /^Makefile$/ || /^requirements(-dev)?\.(txt|lock)$/ {
+              found=1; exit
+            }
+            END { exit !found }
+          '; then
+            echo "No formal-sensitive changes detected; skipping formal-verify."
+            exit 0
+          fi
+
+          make formal-verify
+
+  python-fast-tests:
+    name: python-fast-tests
+    runs-on: ubuntu-latest
+    needs: python-fast-shard
+    continue-on-error: false
+    timeout-minutes: 5
+    steps:
+      - name: All fast shards green
+        run: echo "python-fast-shard matrix fully green — fast gate satisfied"
+
+  # ---------------------------------------------------------------------------
+  # python-heavy-shard — heavy compute lane (slow ∨ heavy_math ∨ nightly).
+  # Deterministic-sharded across parallel CI jobs, mirroring python-fast-shard
+  # (#754, commit d123b8ea). The heavy suite outgrew the single-process
+  # `timeout 1200s` cap (~183 tests, ~24 min CPU-serial → exit 124 on the
+  # 2-core runner); bumping the timeout was rejected — it silently masks a
+  # growing backlog. In-process xdist was rejected repo-wide because it
+  # breaks caplog/log-propagation. Each shard is a normal serial pytest
+  # process over ~1/N of the collected node ids (crc32-partitioned), so
+  # caplog and every physics bound are preserved unchanged; NO test is
+  # skipped or weakened. The aggregator below keeps the stable required
+  # check name `python-heavy-tests`.
+  python-heavy-shard:
+    name: python-heavy-shard
+    runs-on: ubuntu-latest
+    needs: python-fast-tests
+    continue-on-error: false
+    strategy:
+      fail-fast: false
+      matrix:
+        group: [1, 2, 3, 4]
+    timeout-minutes: 30
+    env:
+      HEAVY_SHARD_COUNT: '4'
+    steps:
+      - name: Checkout
+        uses: actions/checkout@9c091bb21b7c1c1d1991bb908d89e4e9dddfe3e0 # v7.0.0
+        with:
+          fetch-depth: 0
+
+      - name: Setup Python environment
+        uses: ./.github/actions/setup-geosync
+        with:
+          python-version: '3.11'
+          cache-prefix: pr-heavy-tests
+
+      - name: Select heavy shard
+        run: |
+          set -euo pipefail
+          if [[ "${GITHUB_EVENT_NAME}" == "pull_request" ]]; then
+            git fetch --no-tags origin "${{ github.base_ref }}"
+            base_ref="origin/${{ github.base_ref }}"
+            changed_files=$(git diff --name-only "$base_ref...$GITHUB_SHA")
+          else
+            changed_files=$(git diff-tree --no-commit-id --name-only -r "$GITHUB_SHA")
+          fi
+
+          if ! printf '%s\n' "$changed_files" | awk '
+            /^formal\// || /^cortex_service\// || /^src\// || /^tests\// ||
+            /^scripts\// || /^Makefile$/ || /^core\// {
+              found=1; exit
+            }
+            END { exit !found }
+          '; then
+            echo "No heavy-test-sensitive changes detected; skipping test-heavy."
+            exit 0
+          fi
+
+          [[ -x .venv/bin/pytest ]] || { echo ".venv/bin/pytest missing"; exit 1; }
+          MARK="slow or heavy_math or nightly"
+          .venv/bin/pytest tests/ -m "$MARK" --collect-only 2>/tmp/heavy_collect_stderr.log \
+            | grep -E '^tests/.*::' > /tmp/heavy_all_nodeids.txt || true
+
+          total_ids=$(wc -l < /tmp/heavy_all_nodeids.txt | tr -d ' ')
+          echo "[gate-probe] heavy collected total_ids=$total_ids" >&2
+          if [[ "$total_ids" -eq 0 ]]; then
+            echo "FATAL: heavy-test-surface changed but 0 heavy tests collected." >&2
+            echo "Collection is broken; refusing to pass vacuously." >&2
+            echo "---- captured collection stderr (last 80 lines) ----" >&2
+            tail -n 80 /tmp/heavy_collect_stderr.log >&2 2>/dev/null || echo "(no collection stderr was captured)" >&2
+            echo "---- end collection stderr ----" >&2
+            exit 1
+          fi
+
+          .venv/bin/python - <<'PY'
+          import binascii
+          import os
+          from pathlib import Path
+
+          ids = [line.strip() for line in Path('/tmp/heavy_all_nodeids.txt').read_text(encoding='utf-8').splitlines() if line.strip()]
+          shard_count = int(os.environ['HEAVY_SHARD_COUNT'])
+          group = int(os.environ['MATRIX_GROUP']) - 1
+          shard = [nodeid for nodeid in ids if binascii.crc32(nodeid.encode()) % shard_count == group]
+          Path('/tmp/heavy_shard_nodeids.txt').write_text('\n'.join(shard), encoding='utf-8')
+          print(f'heavy shard {group + 1}/{shard_count}: {len(shard)}/{len(ids)} selected tests')
+          PY
+        env:
+          MATRIX_GROUP: ${{ matrix.group }}
+
+      - name: Execute selected heavy shard
+        run: |
+          set -euo pipefail
+          if [[ ! -s /tmp/heavy_shard_nodeids.txt ]]; then
+            echo "empty heavy shard (no ids in this crc32 bucket, or gate skipped) — shard passes"
+            exit 0
+          fi
+          mapfile -t SHARD_IDS < /tmp/heavy_shard_nodeids.txt
+          echo "[gate-probe] launching heavy pytest on ${#SHARD_IDS[@]} node ids" >&2
+          MARK="slow or heavy_math or nightly"
+          set +e
+          timeout 1200s .venv/bin/pytest \
+            -m "$MARK" \
+            "${SHARD_IDS[@]}" \
+            --maxfail=3 \
+            -rA -q | tee /tmp/heavy_shard_run.log
+          rc=${PIPESTATUS[0]}
+          set -e
+          echo "[gate-probe] heavy pytest rc=$rc" >&2
+          if [[ "$rc" -ne 0 ]]; then
+            echo "---- heavy shard FAILED (rc=$rc); failing node ids ----" >&2
+            grep -aE '^(FAILED|ERROR)' /tmp/heavy_shard_run.log >&2 \
+              || { echo "(no FAILED/ERROR lines — pytest may have aborted before running; last 40 lines:)" >&2; tail -n 40 /tmp/heavy_shard_run.log >&2; }
+            echo "---- end heavy shard summary ----" >&2
+            exit "$rc"
+          fi
+
+  # ---------------------------------------------------------------------------
+  # python-heavy-tests — stable aggregator over the sharded heavy lane.
+  # Keeps the exact required-check name + `needs:` semantics unchanged while
+  # the actual work fans out across python-heavy-shard. Green iff every shard
+  # is green (fail-fast:false surfaces all shard failures first).
+  # ---------------------------------------------------------------------------
+  python-heavy-tests:
+    name: python-heavy-tests
+    runs-on: ubuntu-latest
+    needs: python-heavy-shard
+    continue-on-error: false
+    timeout-minutes: 5
+    steps:
+      - name: All heavy shards green
+        run: echo "python-heavy-shard matrix fully green — heavy gate satisfied"
+
+  frontend-gate:
+    name: frontend-gate
+    runs-on: ubuntu-latest
+    continue-on-error: false
+    timeout-minutes: 15
+    steps:
+      - name: Checkout
+        uses: actions/checkout@9c091bb21b7c1c1d1991bb908d89e4e9dddfe3e0 # v7.0.0
+        with:
+          fetch-depth: 0
+
+      - name: Determine if frontend gate applies
+        id: changes
+        run: |
+          set -euo pipefail
+          if [[ "${GITHUB_EVENT_NAME}" == "pull_request" ]]; then
+            git fetch --no-tags origin "${{ github.base_ref }}"
+            base_ref="origin/${{ github.base_ref }}"
+            changed_files=$(git diff --name-only "$base_ref...$GITHUB_SHA")
+          else
+            changed_files=$(git diff-tree --no-commit-id --name-only -r "$GITHUB_SHA")
+          fi
+
+          if printf '%s\n' "$changed_files" | awk '
+            /^apps\/web\// || /^package\.json$/ || /^package-lock\.json$/ { found=1; exit }
+            END { exit !found }
+          '; then
+            echo "frontend_changed=true" >> "$GITHUB_OUTPUT"
+          else
+            echo "frontend_changed=false" >> "$GITHUB_OUTPUT"
+          fi
+
+      - name: Verify frontend lockfile
+        if: steps.changes.outputs.frontend_changed == 'true'
+        run: test -f apps/web/package-lock.json
+
+      - name: Setup Node.js
+        if: steps.changes.outputs.frontend_changed == 'true'
+        uses: actions/setup-node@48b55a011bda9f5d6aeb4c2d9c7362e8dae4041e # v6.4.0
+        with:
+          node-version: '24'
+          cache: npm
+          cache-dependency-path: apps/web/package-lock.json
+
+      - name: Run frontend quality and tests
+        if: steps.changes.outputs.frontend_changed == 'true'
+        working-directory: apps/web
+        run: |
+          npm ci
+          npm run format:check
+          npm run lint
+          npm run typecheck
+          npm run test -- --ci
+
+      - name: Frontend gate not applicable
+        if: steps.changes.outputs.frontend_changed != 'true'
+        run: echo 'No frontend changes detected; frontend gate passed deterministically.'
+
+  rust-accel-gate:
+    name: rust-accel-gate
+    runs-on: ubuntu-latest
+    continue-on-error: false
+    timeout-minutes: 25
+    steps:
+      - name: Checkout
+        uses: actions/checkout@9c091bb21b7c1c1d1991bb908d89e4e9dddfe3e0 # v7.0.0
+        with:
+          fetch-depth: 0
+
+      - name: Detect Rust accelerator changes
+        id: rust-changes
+        env:
+          PR_BASE_REF: ${{ github.base_ref }}
+          MERGE_GROUP_BASE_SHA: ${{ github.event.merge_group.base_sha }}
+          MERGE_GROUP_HEAD_SHA: ${{ github.event.merge_group.head_sha }}
+          BEFORE_SHA: ${{ github.event.before }}
+        run: |
+          set -euo pipefail
+          if [[ "${GITHUB_EVENT_NAME}" == "pull_request" ]]; then
+            git fetch --no-tags origin "$PR_BASE_REF"
+            changed=$(git diff --name-only "origin/${PR_BASE_REF}...$GITHUB_SHA")
+          elif [[ "${GITHUB_EVENT_NAME}" == "merge_group" ]]; then
+            changed=$(git diff --name-only "${MERGE_GROUP_BASE_SHA}...${MERGE_GROUP_HEAD_SHA}")
+          elif [[ -n "${BEFORE_SHA}" && "${BEFORE_SHA}" != "0000000000000000000000000000000000000000" ]]; then
+            changed=$(git diff --name-only "${BEFORE_SHA}...${GITHUB_SHA}")
+          else
+            changed=$(git diff-tree --no-commit-id --name-only -r "$GITHUB_SHA")
+          fi
+          if printf '%s\n' "$changed" | grep -qE '^(rust/geosync-accel/|Cargo\.(toml|lock)$|.*\.rs$)'; then
+            echo "applicable=true" >> "$GITHUB_OUTPUT"
+          else
+            echo "applicable=false" >> "$GITHUB_OUTPUT"
+          fi
+
+      - name: Set up Python for PyO3
+        if: steps.rust-changes.outputs.applicable == 'true'
+        uses: actions/setup-python@ece7cb06caefa5fff74198d8649806c4678c61a1 # v6
+        with:
+          python-version: '3.12'
+
+      - name: Install pinned Rust toolchain with Clippy
+        if: steps.rust-changes.outputs.applicable == 'true'
+        run: |
+          set -euo pipefail
+          rustup toolchain install 1.95.0 --profile minimal --component clippy
+          rustup default 1.95.0
+          rustc --version
+          cargo --version
+          cargo clippy --version
+          python --version
+
+      - name: Restore Cargo cache
+        if: steps.rust-changes.outputs.applicable == 'true'
+        uses: actions/cache@55cc8345863c7cc4c66a329aec7e433d2d1c52a9 # v4.2.4
+        with:
+          path: |
+            ~/.cargo/registry
+            ~/.cargo/git
+            rust/geosync-accel/target
+          key: ${{ runner.os }}-rust-accel-${{ hashFiles('rust-toolchain.toml', 'rust/geosync-accel/Cargo.lock', 'rust/geosync-accel/Cargo.toml') }}
+          restore-keys: |
+            ${{ runner.os }}-rust-accel-
+
+      - name: Prefetch Rust dependencies
+        if: steps.rust-changes.outputs.applicable == 'true'
+        run: |
+          set -euo pipefail
+          cargo fetch --locked --manifest-path rust/geosync-accel/Cargo.toml
+
+      - name: Install Python runtime dependency for PyO3 tests
+        if: steps.rust-changes.outputs.applicable == 'true'
+        run: |
+          set -euo pipefail
+          python -m pip install numpy==2.3.3
+
+      - name: Resolve PyO3 test linker environment
+        if: steps.rust-changes.outputs.applicable == 'true'
+        run: |
+          set -euo pipefail
+          python scripts/ci/emit_pyo3_env.py
+
+      - name: cargo clippy (warnings denied)
+        if: steps.rust-changes.outputs.applicable == 'true'
+        run: |
+          set -euo pipefail
+          cargo clippy --locked --manifest-path rust/geosync-accel/Cargo.toml --all-targets --all-features -- -D warnings
+
+      - name: cargo test (all features)
+        if: steps.rust-changes.outputs.applicable == 'true'
+        run: |
+          set -euo pipefail
+          cargo test --locked --manifest-path rust/geosync-accel/Cargo.toml --all-features
+
+      - name: cargo bench smoke (criterion)
+        if: steps.rust-changes.outputs.applicable == 'true'
+        run: |
+          set -euo pipefail
+          cargo bench --locked --manifest-path rust/geosync-accel/Cargo.toml --bench numeric -- --sample-size 10 --warm-up-time 1 --measurement-time 2
+
+      - name: Skip (no Rust accelerator changes)
+        if: steps.rust-changes.outputs.applicable != 'true'
+        run: echo "No Rust accelerator changes — rust-accel-gate passes."
+
+  dependency-review:
+    name: dependency-review
+    runs-on: ubuntu-latest
+    continue-on-error: false
+    timeout-minutes: 15
+    permissions:
+      contents: read
+      pull-requests: write
+    steps:
+      - name: Checkout
+        uses: actions/checkout@9c091bb21b7c1c1d1991bb908d89e4e9dddfe3e0 # v7.0.0
+
+      - name: GitHub dependency review
+        if: github.event_name == 'pull_request'
+        uses: actions/dependency-review-action@a1d282b36b6f3519aa1f3fc636f609c47dddb294 # v5.0.0
+        with:
+          fail-on-severity: high
+          deny-licenses: GPL-2.0, GPL-3.0, AGPL-3.0
+          comment-summary-in-pr: on-failure
+
+      - name: Merge-group deterministic pass
+        if: github.event_name == 'merge_group'
+        run: echo "dependency-review is pull_request-only; merge_group emits deterministic pass."
+
+  secrets-supply-chain:
+    name: secrets-supply-chain
+    runs-on: ubuntu-latest
+    continue-on-error: false
+    timeout-minutes: 15
+    steps:
+      - name: Checkout
+        uses: actions/checkout@9c091bb21b7c1c1d1991bb908d89e4e9dddfe3e0 # v7.0.0
+        with:
+          fetch-depth: 0
+
+      - name: Setup Python environment
+        uses: ./.github/actions/setup-geosync
+        with:
+          python-version: '3.11'
+          cache-prefix: pr-security
+
+      - name: Verify pip executable
+        run: .venv/bin/python -m pip --version
+
+      - name: Ensure security tooling
+        run: |
+          set -euo pipefail
+          missing=()
+          .venv/bin/python -m pip show bandit >/dev/null 2>&1 || missing+=(bandit)
+          .venv/bin/python -m pip show detect-secrets >/dev/null 2>&1 || missing+=(detect-secrets)
+          if [[ ${#missing[@]} -gt 0 ]]; then
+            .venv/bin/python -m pip install -c constraints/security.txt "${missing[@]}"
+          fi
+
+      - name: Collect changed files
+        run: |
+          set -euo pipefail
+          if [[ "${GITHUB_EVENT_NAME}" == "pull_request" ]]; then
+            git fetch --no-tags origin "${{ github.base_ref }}"
+            base_ref="origin/${{ github.base_ref }}"
+            git diff --name-only "$base_ref...$GITHUB_SHA" > /tmp/changed-files.txt
+          else
+            git diff-tree --no-commit-id --name-only -r "$GITHUB_SHA" > /tmp/changed-files.txt
+          fi
+          cat /tmp/changed-files.txt
+
+      - name: Bandit on changed security-critical Python files
+        run: |
+          set -euo pipefail
+          mapfile -t bandit_targets < <(awk '/^(core|backtest|execution|src)\/.*\.py$/' /tmp/changed-files.txt)
+          if [[ ${#bandit_targets[@]} -eq 0 ]]; then
+            echo "No security-critical Python changes detected; Bandit gate passes."
+          else
+            .venv/bin/bandit -ll "${bandit_targets[@]}"
+          fi
+
+      - name: Detect-secrets using baseline
+        run: |
+          set -euo pipefail
+          mapfile -t existing_changed_files < <(
+            while IFS= read -r f; do
+              [[ -f "$f" ]] && echo "$f"
+            done < /tmp/changed-files.txt
+          )
+          if [[ ${#existing_changed_files[@]} -eq 0 ]]; then
+            echo "No file additions/modifications to scan; secrets gate passes."
+            exit 0
+          fi
+
+          .venv/bin/detect-secrets-hook \
+            --baseline .github/detect-secrets.baseline \
+            --exclude-files '^(INVENTORY\.json|\.github/detect-secrets\.baseline|artifacts/wheel_contract\.json|artifacts/\.manifest\.json|artifacts/manifest\.json|artifacts/provenance/inference_provenance\.json|figures/disha_ba_correlation/repro_capsule/.*|artifacts/runs/synthetic_plumbing_v1/.*|artifacts/runs/ricci_microstructure_v1/.*|geosync_research/lines/ricci_microstructure_v1/canonical/.*|artifacts/reproducible_capsules/.*|artifacts/release_gate/.*|artifacts/falsification/.*|artifacts/execution/.*|artifacts/benchmarks/.*|artifacts/evidence/.*|artifacts/replication/.*)$' \
+            "${existing_changed_files[@]}"
+
+  go-workspace-integrity:
+    name: go-workspace-integrity
+    runs-on: ubuntu-latest
+    continue-on-error: false
+    timeout-minutes: 10
+    steps:
+      - name: Checkout
+        uses: actions/checkout@9c091bb21b7c1c1d1991bb908d89e4e9dddfe3e0 # v7.0.0
+        with:
+          fetch-depth: 0
+
+      - name: Detect Go changes
+        id: go-changes
+        run: |
+          set -euo pipefail
+          if [[ "${GITHUB_EVENT_NAME}" == "pull_request" ]]; then
+            git fetch --no-tags origin "${{ github.base_ref }}"
+            changed=$(git diff --name-only "origin/${{ github.base_ref }}...$GITHUB_SHA")
+          else
+            changed=$(git diff-tree --no-commit-id --name-only -r "$GITHUB_SHA")
+          fi
+          printf '%s\n' "$changed" | grep -qE '(go\.work|go\.mod|go\.sum|\.go$)' \
+            && echo "applicable=true" >> "$GITHUB_OUTPUT" \
+            || echo "applicable=false" >> "$GITHUB_OUTPUT"
+
+      - name: Set up Go
+        if: steps.go-changes.outputs.applicable == 'true'
+        uses: actions/setup-go@924ae3a1cded613372ab5595356fb5720e22ba16 # v5
+        with:
+          go-version-file: 'go.work'
+          cache: false
+
+      - name: go work sync check
+        if: steps.go-changes.outputs.applicable == 'true'
+        run: |
+          set -euo pipefail
+          go work sync
+          git diff --exit-code go.work || {
+            echo "go.work out of sync — run 'go work sync' locally"
+            exit 1
+          }
+
+      - name: go vet + build (workspace modules only)
+        if: steps.go-changes.outputs.applicable == 'true'
+        run: |
+          set -euo pipefail
+          cd examples/go-client
+          go mod tidy
+          git diff --exit-code go.mod || {
+            echo "go.mod out of sync — run 'cd examples/go-client && go mod tidy' locally"
+            exit 1
+          }
+          go vet ./...
+          go build ./...
+
+      - name: go test (workspace modules only)
+        if: steps.go-changes.outputs.applicable == 'true'
+        run: |
+          set -euo pipefail
+          cd examples/go-client
+          go test -race -count=1 ./...
+
+      - name: Skip (no Go changes)
+        if: steps.go-changes.outputs.applicable != 'true'
+        run: echo "No Go manifest changes — go-workspace-integrity passes."

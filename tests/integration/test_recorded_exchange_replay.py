@@ -1,3 +1,5 @@
+# Copyright (c) 2023-2026 Yaroslav Vasylenko (neuron7xLab)
+# SPDX-License-Identifier: MIT
 from __future__ import annotations
 
 import json
@@ -16,10 +18,7 @@ from execution import (
 from observability.release_gates import ReleaseGateEvaluator
 
 DATASET = (
-    Path(__file__).resolve().parent.parent
-    / "fixtures"
-    / "recordings"
-    / "coinbase_btcusd.jsonl"
+    Path(__file__).resolve().parent.parent / "fixtures" / "recordings" / "coinbase_btcusd.jsonl"
 )
 
 
@@ -28,12 +27,9 @@ def _parse(ts: str) -> datetime:
 
 
 def test_recorded_exchange_replay_validates_release_gates() -> None:
-    raw_records = [
-        json.loads(line) for line in DATASET.read_text(encoding="utf-8").splitlines()
-    ]
+    raw_records = [json.loads(line) for line in DATASET.read_text(encoding="utf-8").splitlines()]
     latencies = [
-        (_parse(record["ingest_ts"]) - _parse(record["exchange_ts"])).total_seconds()
-        * 1000.0
+        (_parse(record["ingest_ts"]) - _parse(record["exchange_ts"])).total_seconds() * 1000.0
         for record in raw_records
     ]
 
@@ -81,9 +77,7 @@ def test_recorded_exchange_replay_validates_release_gates() -> None:
     checklist_result = evaluator.evaluate_checklist_from_path(
         Path("configs/production_readiness.json")
     )
-    aggregate = evaluator.aggregate_results(
-        [latency_result, compliance_result, checklist_result]
-    )
+    aggregate = evaluator.aggregate_results([latency_result, compliance_result, checklist_result])
 
     assert latency_result.passed is True
     assert compliance_result.passed is True

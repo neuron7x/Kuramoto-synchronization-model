@@ -1,14 +1,14 @@
 ---
-owner: docs@tradepulse
+owner: docs@geosync
 review_cadence: quarterly
 last_reviewed: 2026-01-01
 ---
 
 # Архітектурні діаграми / Architecture Diagrams
 
-Цей каталог містить вихідні файли Mermaid (`.mmd`) та згенеровані SVG діаграми для візуалізації архітектури TradePulse.
+Цей каталог містить вихідні файли Mermaid (`.mmd`) та згенеровані SVG діаграми для візуалізації архітектури GeoSync.
 
-This directory contains Mermaid source files (`.mmd`) and generated SVG diagrams for TradePulse architecture visualization.
+This directory contains Mermaid source files (`.mmd`) and generated SVG diagrams for GeoSync architecture visualization.
 
 ## Концептуальні діаграми / Conceptual Diagrams
 
@@ -85,7 +85,7 @@ This directory contains Mermaid source files (`.mmd`) and generated SVG diagrams
 
 ### System Overview
 - **Файл / File**: `system_overview.mmd` → `system_overview.svg`
-- **Опис / Description**: Контекстна діаграма системи TradePulse (2025 ревізія)
+- **Опис / Description**: Контекстна діаграма системи GeoSync (2025 ревізія)
 
 ### Service Interactions
 - **Файл / File**: `service_interactions.mmd` → `service_interactions.svg`
@@ -201,4 +201,4 @@ For questions about architectural diagrams, contact the Architecture Review Boar
 
 **Версія / Version**: 1.0.0  
 **Дата оновлення / Last Updated**: 2025-11-17  
-**Автори / Authors**: TradePulse Architecture Team
+**Автори / Authors**: GeoSync Architecture Team

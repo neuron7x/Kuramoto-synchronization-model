@@ -1,10 +1,10 @@
 # Security Testing Standards - 2025
 
-> **Comprehensive Security Testing Framework for TradePulse**
+> **Comprehensive Security Testing Framework for GeoSync**
 
 ## Overview
 
-This document outlines the security testing standards and practices implemented in TradePulse, aligned with industry-leading frameworks including OWASP, NIST SSDF, SLSA, and OSSF best practices.
+This document outlines the security testing standards and practices implemented in GeoSync, aligned with industry-leading frameworks including OWASP, NIST SSDF, SLSA, and OSSF best practices.
 
 ## Table of Contents
 1. [Security Testing Layers](#security-testing-layers)
@@ -181,7 +181,7 @@ jobs:
 - OWASP Top 10
 - CWE Top 25
 - Language-specific security patterns
-- Custom TradePulse rules
+- Custom GeoSync rules
 
 ### Workflow: CodeQL (`security.yml`)
 
@@ -215,7 +215,7 @@ jobs:
 # Verify SLSA provenance
 slsa-verifier verify-artifact \
   --provenance-path provenance.json \
-  --source-uri github.com/neuron7x/TradePulse
+  --source-uri github.com/neuron7xLab/GeoSync
 ```
 
 ### OSSF Scorecard
@@ -520,8 +520,8 @@ All PRs must pass:
 
 ## Contact
 
-**Security Team**: security@tradepulse.local
-**Bug Bounty**: [GitHub Security Advisory](https://github.com/neuron7x/TradePulse/security/advisories/new)
+**Security Team**: security@geosync.local
+**Bug Bounty**: [GitHub Security Advisory](https://github.com/neuron7xLab/GeoSync/security/advisories/new)
 **General Questions**: Open an issue with `security` label
 
 ---

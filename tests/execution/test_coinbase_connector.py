@@ -1,3 +1,5 @@
+# Copyright (c) 2023-2026 Yaroslav Vasylenko (neuron7xLab)
+# SPDX-License-Identifier: MIT
 from __future__ import annotations
 
 import base64
@@ -19,14 +21,10 @@ def _freeze_time(monkeypatch: pytest.MonkeyPatch) -> None:
     monkeypatch.setattr("interfaces.execution.coinbase.time.time", lambda: fixed)
 
 
-def _signature_for(
-    payload: dict[str, Any], timestamp: int, method: str, path: str
-) -> str:
+def _signature_for(payload: dict[str, Any], timestamp: int, method: str, path: str) -> str:
     body = json.dumps(payload, separators=(",", ":"))
     message = f"{timestamp}{method}{path}{body}".encode()
-    return base64.b64encode(
-        hmac.new(b"coinbase-secret", message, hashlib.sha256).digest()
-    ).decode()
+    return base64.b64encode(hmac.new(b"coinbase-secret", message, hashlib.sha256).digest()).decode()
 
 
 def test_coinbase_signature_and_idempotency(monkeypatch: pytest.MonkeyPatch) -> None:
@@ -44,9 +42,7 @@ def test_coinbase_signature_and_idempotency(monkeypatch: pytest.MonkeyPatch) -> 
             call_counts["post"] += 1
             timestamp = request.headers["CB-ACCESS-TIMESTAMP"]
             assert request.headers["CB-ACCESS-KEY"] == "coinbase-key"
-            expected = _signature_for(
-                order_body, int(timestamp), request.method, request.url.path
-            )
+            expected = _signature_for(order_body, int(timestamp), request.method, request.url.path)
             assert request.headers["CB-ACCESS-SIGN"] == expected
             assert request.headers["CB-ACCESS-PASSPHRASE"] == "coinbase-pass"
             return httpx.Response(200, json={"order_id": "order-1", "status": "OPEN"})
@@ -80,9 +76,7 @@ def test_coinbase_signature_and_idempotency(monkeypatch: pytest.MonkeyPatch) -> 
         }
     )
 
-    order = Order(
-        symbol="BTC-USD", side="buy", quantity=1.0, order_type=OrderType.MARKET
-    )
+    order = Order(symbol="BTC-USD", side="buy", quantity=1.0, order_type=OrderType.MARKET)
     first = connector.place_order(order, idempotency_key="idem-coin")
     second = connector.place_order(order, idempotency_key="idem-coin")
 
@@ -121,9 +115,7 @@ def test_coinbase_rate_limit_retries(monkeypatch: pytest.MonkeyPatch) -> None:
         }
     )
 
-    order = Order(
-        symbol="BTC-USD", side="buy", quantity=1.0, order_type=OrderType.MARKET
-    )
+    order = Order(symbol="BTC-USD", side="buy", quantity=1.0, order_type=OrderType.MARKET)
     response = connector.place_order(order)
 
     assert response.order_id == "order-2"

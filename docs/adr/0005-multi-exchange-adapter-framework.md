@@ -9,7 +9,7 @@ Accepted
 
 ## Context
 
-TradePulse must execute across multiple broker and exchange venues with differing APIs, credentials, rate limits, and transport modes. A monolithic execution layer risks:
+GeoSync must execute across multiple broker and exchange venues with differing APIs, credentials, rate limits, and transport modes. A monolithic execution layer risks:
 - Tight coupling between execution logic and exchange specifics.
 - High regression risk when adding new venues.
 - Inconsistent capabilities and diagnostics across adapters.

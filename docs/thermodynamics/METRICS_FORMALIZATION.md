@@ -2,7 +2,7 @@
 
 ## Overview
 
-This document formalizes the mathematical foundations and computational procedures for the Thermodynamic Autonomic Control Layer (TACL) metrics system in TradePulse.
+This document formalizes the mathematical foundations and computational procedures for the Thermodynamic Autonomic Control Layer (TACL) metrics system in GeoSync.
 
 ## Helmholtz Free Energy
 
@@ -15,7 +15,7 @@ F = U - T·S
 Where:
 - **F**: Free energy (dimensionless, target: F ≤ 1.35)
 - **U**: Internal energy (system inefficiency penalties)
-- **T**: Control temperature (fixed at 0.60 for TradePulse)
+- **T**: Control temperature (fixed at 0.60 for GeoSync)
 - **S**: Stability (entropy proportional to available headroom)
 
 ### Physical Interpretation
@@ -387,7 +387,7 @@ The system is considered falsified if:
 
 - Friston, K. (2010). The free-energy principle: a unified brain theory?
 - Helmholtz, H. (1882). Die Thermodynamik chemischer Vorgänge
-- TradePulse TACL specification: `docs/TACL.md`
+- GeoSync TACL specification: `docs/TACL.md`
 - Energy validator implementation: `runtime/energy_validator.py`
 - Controller implementation: `runtime/thermo_controller.py`
 

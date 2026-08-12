@@ -1,3 +1,5 @@
+# Copyright (c) 2023-2026 Yaroslav Vasylenko (neuron7xLab)
+# SPDX-License-Identifier: MIT
 """Causality diagnostics for divergence-aware neuroeconomic routines."""
 
 from __future__ import annotations
@@ -33,9 +35,7 @@ def _lag_matrix(values: np.ndarray, lag: int) -> np.ndarray:
     return np.column_stack([values[(lag - k - 1) : n - (k + 1)] for k in range(lag)])
 
 
-def _f_statistic(
-    rss_restricted: float, rss_full: float, lag: int, samples: int
-) -> float:
+def _f_statistic(rss_restricted: float, rss_full: float, lag: int, samples: int) -> float:
     if rss_full <= 0.0 or samples <= 0:
         return 0.0
     numerator = max(rss_restricted - rss_full, 0.0) / float(lag)

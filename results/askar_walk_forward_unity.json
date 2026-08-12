@@ -1,0 +1,73 @@
+{
+  "folds": [
+    {
+      "fold": 1,
+      "test_start": "2018-10-11 00:00:00",
+      "test_end": "2020-03-25 00:00:00",
+      "IC_train": 0.0518,
+      "IC_test": 0.0087,
+      "sign": 1.0,
+      "n_train": 437,
+      "n_test": 437
+    },
+    {
+      "fold": 2,
+      "test_start": "2020-03-26 00:00:00",
+      "test_end": "2021-09-12 00:00:00",
+      "IC_train": 0.0283,
+      "IC_test": 0.0462,
+      "sign": 1.0,
+      "n_train": 874,
+      "n_test": 437
+    },
+    {
+      "fold": 3,
+      "test_start": "2021-09-13 00:00:00",
+      "test_end": "2023-03-02 00:00:00",
+      "IC_train": 0.0412,
+      "IC_test": 0.0104,
+      "sign": 1.0,
+      "n_train": 1311,
+      "n_test": 437
+    },
+    {
+      "fold": 4,
+      "test_start": "2023-03-03 00:00:00",
+      "test_end": "2024-08-23 00:00:00",
+      "IC_train": 0.01,
+      "IC_test": 0.054,
+      "sign": 1.0,
+      "n_train": 1748,
+      "n_test": 437
+    },
+    {
+      "fold": 5,
+      "test_start": "2024-08-25 00:00:00",
+      "test_end": "2026-02-15 00:00:00",
+      "IC_train": 0.0114,
+      "IC_test": 0.0377,
+      "sign": 1.0,
+      "n_train": 2185,
+      "n_test": 437
+    }
+  ],
+  "fold_ics": [
+    0.0087,
+    0.0462,
+    0.0104,
+    0.054,
+    0.0377
+  ],
+  "fold_signs": [
+    1.0,
+    1.0,
+    1.0,
+    1.0,
+    1.0
+  ],
+  "positive_count": 5,
+  "pass_rate": 1.0,
+  "sign_consistent": true,
+  "last_fold_positive": true,
+  "promoted": true
+}

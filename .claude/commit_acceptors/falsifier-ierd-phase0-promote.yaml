@@ -1,0 +1,134 @@
+# Diff-bound commit acceptor for the re-promotion of
+# `ierd-phase0-yana-response` from EXTRAPOLATED back to ANCHORED.
+#
+# Yesterday's PR #559 honestly downgraded two claims to EXTRAPOLATED
+# because they had no programmatic falsifier-block under the ADR 0021
+# v3 shape:
+#   ricci-microstructure-ten-axis-falsification
+#   ierd-phase0-yana-response
+#
+# Today this PR closes the second one — the claim has a clean
+# documentation-coverage falsifier surface (Q1..Q7 headings + Tier
+# markers + ADR Decision section + lint warn-mode runnability) that
+# CAN be expressed as a single pytest node. Promote ANCHORED.
+#
+# `ricci-microstructure-ten-axis-falsification` stays EXTRAPOLATED
+# because re-promoting it would require actually running the 10-axis
+# battery from a single pytest node — that is research-debt, not
+# governance-debt, and out of scope for this PR.
+#
+# After this PR:
+#   ANCHORED:     19 → 20
+#   EXTRAPOLATED:  8 →  7
+#   Falsifier coverage: 19/19 → 20/20
+#   Registry:    95 → 96 (INV-IERD-PHASE0 added)
+#
+# Locally verified:
+#   * pytest tests/governance/test_ierd_phase0_yana_response_coverage.py: 4/4
+#   * python scripts/count_invariants.py: 96
+#   * python scripts/check_invariant_count_sync.py: OK at 96
+#   * python .claude/physics/validate_tests.py --self-check: PASSED
+#   * python scripts/ci/check_claims.py:
+#       falsifier coverage: 20/20 ANCHORED
+#       tier distribution: ANCHORED=20, EXTRAPOLATED=7
+#   * python scripts/export_governance_schemas.py --check: PASS
+
+id: falsifier-ierd-phase0-promote
+status: ACTIVE
+claim_type: governance
+promise: >-
+  After this PR lands, `docs/CLAIMS.yaml` claim
+  `ierd-phase0-yana-response` is tier=ANCHORED with a v3
+  falsifier-block citing INV-IERD-PHASE0 and the canonical pytest
+  node id `tests/governance/test_ierd_phase0_yana_response_coverage.py
+  ::test_yana_response_covers_q1_through_q7`. The new test asserts
+  four contract surfaces from a single pytest node: Q1..Q7
+  headings present in yana-response.md; per-question Tier marker;
+  ADR 0020 has substantive Decision section; lint_forbidden_terms.py
+  exists and exits 0 in warn mode. INV-IERD-PHASE0 is added to
+  .claude/physics/INVARIANTS.yaml with Popper (1959) +
+  Lakatos (1970) references and the IERD directive itself as the
+  third reference. Registry count: 95 → 96, all four documentation
+  surfaces resynced. Falsifier coverage: 19/19 → 20/20 ANCHORED.
+diff_scope:
+  changed_files:
+    - path: ".claude/commit_acceptors/falsifier-ierd-phase0-promote.yaml"
+    - path: ".claude/physics/INVARIANTS.yaml"
+    - path: "BASELINE.md"
+    - path: "CLAUDE.md"
+    - path: "README.md"
+    - path: "docs/CLAIMS.yaml"
+    - path: "tests/governance/test_ierd_phase0_yana_response_coverage.py"
+  forbidden_paths:
+    - "trading/"
+    - "execution/"
+    - "forecast/"
+    - "policy/"
+    - "core/physics/"
+    - "core/kuramoto/"
+    - "core/neuro/"
+    - "application/"
+    - "src/"
+    - "geosync_hpc/"
+    - "research/"
+    - "docs/yana-response.md"
+    - "docs/governance/IERD-PAI-FPS-UX-001.md"
+    - "docs/adr/0020-ierd-adoption.md"
+    - "scripts/ci/lint_forbidden_terms.py"
+    - "tools/commit_acceptor/"
+    - "scripts/ci/check_claims.py"
+    - "scripts/check_invariant_count_sync.py"
+    - "scripts/count_invariants.py"
+required_python_symbols:
+  - "tests/governance/test_ierd_phase0_yana_response_coverage.py::test_yana_response_covers_q1_through_q7"
+  - "tests/governance/test_ierd_phase0_yana_response_coverage.py::test_each_question_carries_a_tier_label"
+  - "tests/governance/test_ierd_phase0_yana_response_coverage.py::test_directive_published_and_adr_0020_decides_adoption"
+  - "tests/governance/test_ierd_phase0_yana_response_coverage.py::test_forbidden_terms_lint_script_runs_warn_only"
+expected_signal: >-
+  `pytest tests/governance/test_ierd_phase0_yana_response_coverage.py
+  -q` exits 0 with "4 passed";
+  `python scripts/count_invariants.py` returns 96;
+  `python scripts/check_invariant_count_sync.py` reports
+  "OK: 96 invariants, all documentation surfaces in sync.";
+  `python .claude/physics/validate_tests.py --self-check`
+  reports "Self-check PASSED";
+  `python scripts/ci/check_claims.py` reports
+  "tier distribution: ANCHORED=20, EXTRAPOLATED=7,
+  SPECULATIVE=0, UNKNOWN=0" with
+  "falsifier coverage: 20/20 ANCHORED" and no `WARN(v3):` line.
+measurement_command: >-
+  bash -c 'python -m pytest tests/governance/test_ierd_phase0_yana_response_coverage.py -q
+  && python scripts/count_invariants.py | grep -q "^96$"
+  && PYTHONPATH=scripts python scripts/check_invariant_count_sync.py
+  && python .claude/physics/validate_tests.py --self-check
+  && python scripts/ci/check_claims.py 2>&1 | grep -q "20/20 ANCHORED"
+  && ! python scripts/ci/check_claims.py 2>&1 | grep -q "WARN(v3):"
+  && python scripts/export_governance_schemas.py --check'
+signal_artifact: "tmp/falsifier_ierd_phase0_promote.log"
+falsifier:
+  command: >-
+    bash -c 'python scripts/ci/check_claims.py 2>&1
+    | grep -q "ierd-phase0-yana-response"'
+  description: >-
+    Probes the missing-falsifier WARN list for the
+    ierd-phase0-yana-response id. After this PR, that id MUST NOT
+    appear (the claim is ANCHORED with a falsifier-block). If a
+    future change strips the falsifier-block or re-downgrades the
+    claim to EXTRAPOLATED without restoring the test, the
+    falsifier exits 0 (regression) and CI reports the broken
+    invariant.
+rollback_command: >-
+  git checkout HEAD~1 --
+  .claude/physics/INVARIANTS.yaml
+  README.md
+  BASELINE.md
+  CLAUDE.md
+  docs/CLAIMS.yaml
+  tests/governance/test_ierd_phase0_yana_response_coverage.py
+  .claude/commit_acceptors/falsifier-ierd-phase0-promote.yaml
+rollback_verification_command: >-
+  bash -c 'python scripts/count_invariants.py | grep -q "^95$"'
+memory_update_type: append
+ledger_path: ".claude/commit_acceptors/falsifier-ierd-phase0-promote.yaml"
+report_path: "tmp/falsifier_ierd_phase0_promote.log"
+evidence: []

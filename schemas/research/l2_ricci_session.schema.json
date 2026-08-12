@@ -1,0 +1,128 @@
+{
+  "$schema": "https://json-schema.org/draft/2020-12/schema",
+  "$id": "https://schemas.neuron7xlab.org/research/l2_ricci_session.schema.json",
+  "title": "L2 Ricci Evidence-Bearing Session Artifact",
+  "description": "Promotion-path contract for a single L2 order-book (depth-5) Ricci microstructure session. The README pins L2 Ricci at HYPOTHESIS-tier and explicitly forbids promotion until a real depth-5 session with a real data hash, replay, baseline, null model, falsifier, and negative evidence is recorded. This schema is the machine-checkable counterpart of docs/research/l2_ricci_evidence_protocol.md: every field it requires is a precondition for any L2 Ricci claim to move beyond HYPOTHESIS. It is line-specific (depth_level is pinned to 5) and complements the line-agnostic research_inference_artifact envelope; it does not replace it. Anchored on W3C PROV-DM (provenance), RO-Crate 1.1 (conformsTo), SLSA Provenance v1 (builder/inputs), and the pre-registration discipline used by ricci_microstructure_v1.",
+  "type": "object",
+  "additionalProperties": false,
+  "required": [
+    "git_sha",
+    "data_sha256",
+    "config_sha256",
+    "venue",
+    "symbol",
+    "depth_level",
+    "session_start_utc",
+    "session_end_utc",
+    "baseline_id",
+    "null_model_id",
+    "falsifier_id",
+    "replay_command",
+    "negative_evidence",
+    "semantic_validation_status"
+  ],
+  "properties": {
+    "conforms_to": {
+      "const": "https://schemas.neuron7xlab.org/research/l2_ricci_session.schema.json",
+      "description": "RO-Crate 1.1 conformsTo: the resolvable $id of the schema this session artifact pledges to. Optional, but when present must match this schema's $id so a machine can fetch the exact contract it was validated against."
+    },
+    "git_sha": {
+      "type": "string",
+      "pattern": "^[0-9a-f]{40}$",
+      "description": "40-hex git commit the session was produced at. PROV-DM wasGeneratedBy; pins the code that computed the session."
+    },
+    "data_sha256": {
+      "type": "string",
+      "pattern": "^[0-9a-f]{64}$",
+      "description": "sha256 over the canonical L2 depth-5 order-book session capture. A zero hash is schema-valid but is a HYPOTHESIS-tier placeholder; the semantic-truth gate (semantic_validation_status) bars a zero hash from claiming evidence. There is no real depth-5 Ricci result until this hashes real captured data."
+    },
+    "config_sha256": {
+      "type": "string",
+      "pattern": "^[0-9a-f]{64}$",
+      "description": "sha256 over the pinned run configuration (window, metric, null specification, cost model) that the session was computed under."
+    },
+    "venue": {
+      "type": "string",
+      "pattern": "^[a-z][a-z0-9_.:-]{1,63}$",
+      "description": "Lowercase venue/exchange identifier the depth-5 book was captured from (e.g. 'binance', 'cme')."
+    },
+    "symbol": {
+      "type": "string",
+      "pattern": "^[A-Z0-9][A-Z0-9._:/-]{0,31}$",
+      "description": "Instrument symbol for the captured book (e.g. 'BTCUSDT')."
+    },
+    "depth_level": {
+      "const": 5,
+      "description": "L2 order-book depth. Pinned to 5: this contract is exclusively for the depth-5 microstructure session that the README names as the gate to leave HYPOTHESIS. Any other depth is a different (uncontracted) experiment and is rejected."
+    },
+    "session_start_utc": {
+      "type": "string",
+      "format": "date-time",
+      "pattern": "Z$",
+      "description": "UTC start of the capture session (RFC 3339, trailing 'Z')."
+    },
+    "session_end_utc": {
+      "type": "string",
+      "format": "date-time",
+      "pattern": "Z$",
+      "description": "UTC end of the capture session (RFC 3339, trailing 'Z'). Must be at or after session_start_utc; that ordering is enforced by the validator (a schema alone cannot compare two field values)."
+    },
+    "baseline_id": {
+      "type": "string",
+      "pattern": "^[a-z][a-z0-9_]{2,63}$",
+      "description": "Identifier of the reference baseline the session score is judged against. A result with no baseline is asserted, not falsified; required for promotion."
+    },
+    "null_model_id": {
+      "type": "string",
+      "pattern": "^[a-z][a-z0-9_]{2,63}$",
+      "description": "Identifier of the registered null model (e.g. 'permutation_null') the session is tested against. Required for promotion: a signal that does not beat a null is not evidence."
+    },
+    "falsifier_id": {
+      "type": "string",
+      "pattern": "^[a-z][a-z0-9_]{2,63}$",
+      "description": "Identifier of the executable falsifier that could have killed the hypothesis. Required for promotion: an unfalsifiable claim cannot be promoted."
+    },
+    "replay_command": {
+      "type": "string",
+      "minLength": 1,
+      "description": "Exact shell command that recomputes this session from committed inputs (data_sha256, config_sha256, git_sha). Claims recomputation, not cross-environment bit-equality (the repo's CALIB-GRID F3 result shows cross-BLAS bit-identity is not guaranteed). For an evidence session the command must be executable (begin with 'python ' or 'python3 '); for a placeholder/pending session it must be honestly marked as not-yet-runnable by setting replay_blocked: true. A silently-non-runnable command (neither executable nor blocked) is rejected by the validator. Required for promotion: a result that cannot be replayed is not evidence."
+    },
+    "replay_blocked": {
+      "type": "boolean",
+      "description": "Honest flag that the replay_command cannot yet be run (e.g. no real depth-5 capture exists, so the recompute would have nothing to recompute). When true, the session is barred from any evidence status: a blocked replay is not a replay. When absent or false, the validator requires replay_command to be an executable 'python'/'python3' invocation. Default false."
+    },
+    "negative_evidence": {
+      "type": "array",
+      "minItems": 1,
+      "uniqueItems": true,
+      "items": {
+        "type": "object",
+        "additionalProperties": false,
+        "required": ["claim", "outcome", "detail"],
+        "properties": {
+          "claim": {
+            "type": "string",
+            "minLength": 1,
+            "description": "The specific sub-claim the falsification attempt targeted (e.g. 'depth-5 Ricci IC survives a permutation null')."
+          },
+          "outcome": {
+            "type": "string",
+            "enum": ["SURVIVED", "KILLED", "BLOCKED"],
+            "description": "Result of the attempt. SURVIVED = the claim was not killed by this attack (information). KILLED = the claim was falsified. BLOCKED = the attempt could not run (e.g. placeholder data)."
+          },
+          "detail": {
+            "type": "string",
+            "minLength": 1,
+            "description": "What was attempted and what was observed, in enough detail to reproduce the reasoning."
+          }
+        }
+      },
+      "description": "Recorded falsification attempts (survival paths and kills), not victories. A session with zero negative-evidence entries has not been adversarially tested and cannot be promoted. At least one entry is required by schema; the validator additionally requires that no required falsification axis is silently omitted."
+    },
+    "semantic_validation_status": {
+      "type": "string",
+      "enum": ["PLACEHOLDER", "PENDING", "PASS", "FAIL", "BLOCKED"],
+      "description": "Honest self-label of the session's evidentiary state. PLACEHOLDER = schema-shaped skeleton with no real data (zero hashes); never evidence. PENDING = real inputs declared, falsification not yet adjudicated. PASS/FAIL/BLOCKED = the semantic-truth + falsification battery ran with that verdict. Only PASS, with real (non-zero) hashes and complete provenance, authorises promotion beyond HYPOTHESIS."
+    }
+  }
+}

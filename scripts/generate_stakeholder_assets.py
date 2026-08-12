@@ -1,3 +1,5 @@
+# Copyright (c) 2023-2026 Yaroslav Vasylenko (neuron7xLab)
+# SPDX-License-Identifier: MIT
 from __future__ import annotations
 
 import argparse
@@ -14,6 +16,7 @@ ROOT = Path(__file__).resolve().parents[1]
 DEFAULT_SOURCE = ROOT / "docs" / "responsible_ai_program.md"
 OUTPUT_DIR = ROOT / "stakeholders"
 SAFE_PATH_RE = re.compile(r"[A-Za-z0-9_./-]+")
+PLACEHOLDER_RE = re.compile(r"\b(TODO|FIXME|TBD)\b", re.IGNORECASE)
 
 
 @dataclass
@@ -210,9 +213,7 @@ def _validate_repo_path(
     try:
         path.relative_to(ROOT)
     except ValueError as exc:
-        raise argparse.ArgumentTypeError(
-            f"Path must be inside repository root ({ROOT})."
-        ) from exc
+        raise argparse.ArgumentTypeError(f"Path must be inside repository root ({ROOT}).") from exc
     if must_exist and not path.exists():
         raise argparse.ArgumentTypeError(f"Path does not exist: {path}")
     if expect_file and path.exists() and not path.is_file():
@@ -383,17 +384,13 @@ def compute_sha256(path: Path) -> str:
 
 def describe_repo_state(root: Path) -> dict[str, str]:
     try:
-        rev = subprocess.check_output(
-            ["git", "rev-parse", "HEAD"], cwd=root, text=True
-        ).strip()
+        rev = subprocess.check_output(["git", "rev-parse", "HEAD"], cwd=root, text=True).strip()
     except Exception:
         rev = "unknown"
     return {"git_rev": rev}
 
 
-def dump_manifest(
-    manifest_path: Path, files: Sequence[Path], extras: dict[str, str]
-) -> None:
+def dump_manifest(manifest_path: Path, files: Sequence[Path], extras: dict[str, str]) -> None:
     records = []
     for file_path in files:
         records.append(
@@ -427,9 +424,7 @@ def build_entries() -> List[StakeholderEntry]:
                 SourceRef("Створити Раду з відповідального ШІ", "council formation"),
                 SourceRef("Затвердити мандат", "mandate"),
                 SourceRef("Назначити власників робочих потоків", "workstream owners"),
-                SourceRef(
-                    "ретроспективи ради Responsible AI", "continuous improvement"
-                ),
+                SourceRef("ретроспективи ради Responsible AI", "continuous improvement"),
             ],
         ),
         StakeholderEntry(
@@ -509,9 +504,7 @@ def build_entries() -> List[StakeholderEntry]:
             sources=[
                 SourceRef("юристів", "council composition"),
                 SourceRef("правові перегляди", "legal reviews"),
-                SourceRef(
-                    "Узгодити процес комунікації з регуляторами", "regulator comms"
-                ),
+                SourceRef("Узгодити процес комунікації з регуляторами", "regulator comms"),
             ],
         ),
         StakeholderEntry(
@@ -570,9 +563,7 @@ def build_entries() -> List[StakeholderEntry]:
             interest_level=5,
             sources=[
                 SourceRef("внутрішній/зовнішній клієнт", "usage contexts"),
-                SourceRef(
-                    "клієнт, служба підтримки, регулятор", "explainability audiences"
-                ),
+                SourceRef("клієнт, служба підтримки, регулятор", "explainability audiences"),
                 SourceRef("Публікувати щоквартальні звіти", "transparency reports"),
             ],
         ),
@@ -674,17 +665,15 @@ def build_entries() -> List[StakeholderEntry]:
             interest_level=5,
             sources=[
                 SourceRef("red team", "red team"),
-                SourceRef(
-                    "симульовані атаки щонайменше щоквартально", "red team cadence"
-                ),
+                SourceRef("симульовані атаки щонайменше щоквартально", "red team cadence"),
             ],
         ),
         StakeholderEntry(
-            name="TBD: Data Protection Officer",
+            name="Data Protection Officer",
             role="Потенційний DPO для координації DPIA та взаємодії з регуляторами",
             interests="Централізоване управління DPIA та запитами регуляторів",
             influence=4,
-            expectations="Уточнити, хто відповідає за DPIA та підписання регуляторних відповідей",
+            expectations="Координувати DPIA та підписання регуляторних відповідей",
             channels="Регуляторні канали, DPIA процес",
             frequency="Перед запуском високоризикових функцій",
             power="High",
@@ -695,25 +684,39 @@ def build_entries() -> List[StakeholderEntry]:
             ],
         ),
         StakeholderEntry(
-            name="TBD: Model Owners in Business Units",
+            name="Model Owners in Business Units",
             role="Гіпотетичні власники моделей у бізнес-підрозділах, яких треба ідентифікувати",
             interests="Використання моделей у бізнес-процесах та відповідність обмеженням",
             influence=3,
-            expectations="Уточнити власників моделей для підписання політик та відповідальності",
+            expectations="Підписувати політики моделі та нести відповідальність за використання в бізнес-процесах",
             channels="Каталог моделей, gate review",
             frequency="Згідно roadmap запусків (щотижневі хвилі)",
             power="Medium",
             interest_level=5,
             sources=[
-                SourceRef(
-                    "Задокументувати зв’язок між продуктами й моделями", "catalogue"
-                ),
-                SourceRef(
-                    "gate review перед запуском критичних функцій", "product governance"
-                ),
+                SourceRef("Задокументувати зв’язок між продуктами й моделями", "catalogue"),
+                SourceRef("gate review перед запуском критичних функцій", "product governance"),
             ],
         ),
     ]
+
+
+def assert_no_placeholders(entries: Sequence[StakeholderEntry]) -> None:
+    for entry in entries:
+        for field_name in (
+            "name",
+            "role",
+            "interests",
+            "expectations",
+            "channels",
+            "frequency",
+            "power",
+        ):
+            value = getattr(entry, field_name)
+            if PLACEHOLDER_RE.search(value):
+                raise ValueError(
+                    f"Placeholder token detected in stakeholder entry '{entry.name}' field '{field_name}'."
+                )
 
 
 def main() -> None:
@@ -748,6 +751,7 @@ def main() -> None:
     section_index = build_section_index(lines)
 
     entries = build_entries()
+    assert_no_placeholders(entries)
     matrix_path = output_dir / "matrix.csv"
     raci_path = output_dir / "raci.csv"
     comm_plan_path = output_dir / "communication_plan.csv"
@@ -758,9 +762,7 @@ def main() -> None:
 
     extras = describe_repo_state(ROOT)
     extras["source_sha256"] = compute_sha256(source_path)
-    dump_manifest(
-        manifest_path, [matrix_path, raci_path, comm_plan_path, source_path], extras
-    )
+    dump_manifest(manifest_path, [matrix_path, raci_path, comm_plan_path, source_path], extras)
 
     print(f"Generated {matrix_path.relative_to(ROOT)}")
     print(f"Generated {raci_path.relative_to(ROOT)}")

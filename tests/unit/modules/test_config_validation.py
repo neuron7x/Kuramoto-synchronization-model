@@ -1,8 +1,9 @@
-# SPDX-License-Identifier: LicenseRef-TradePulse-Proprietary
+# Copyright (c) 2023-2026 Yaroslav Vasylenko (neuron7xLab)
+# SPDX-License-Identifier: MIT
 """Comprehensive configuration validation tests for module and controller configurations.
 
 This module provides enhanced testing of configuration validation across
-the TradePulse system, ensuring robust parameter validation and error handling.
+the GeoSync system, ensuring robust parameter validation and error handling.
 
 Test Coverage:
 - Configuration boundary conditions

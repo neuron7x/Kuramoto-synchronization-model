@@ -1,0 +1,64 @@
+# Diff-bound commit acceptor: make the Main Validation gate's post-merge
+# full-suite job actually COMPLETE and enforce its coverage guardrail.
+#
+# Problem (provable from CI history):
+#   The `python-full-validation` job (post-merge, push:[main]) was killed at its
+#   60-min job cap on most pushes to main (e.g. run 27870261022:
+#   python-full-validation ran 60m15s, was cancelled mid-suite, and the
+#   "Enforce coverage guardrail" step never ran; conclusion `cancelled`).
+#   The broader post-merge validation + critical-surface coverage guardrail had
+#   not enforced on most merges — a silent non-enforcement, the same vacuum
+#   class as the Coverage Intelligence Gate (fix/coverage-gate-failclosed-completion).
+#   Root cause: `pytest tests/` runs ~18k tests under coverage SERIALLY,
+#   exceeding the 60-min budget.
+#
+# What lands:
+#   * .github/workflows/main-validation.yml: parallelize the post-merge suite
+#     (-n auto --dist loadscope) so wall-time is ~CPU/cores and the job
+#     completes well under the 60-min cap. pytest-cov combines per-worker data,
+#     so the measured core/backtest/execution surface and the critical-surface
+#     coverage guardrail are UNCHANGED.
+#
+# Strict scope: pytest-xdist is already in requirements-dev.lock; no new
+# dependency. No per-test --timeout (pytest-timeout is NOT in the lock); a total
+# hang still fails closed via the job-level timeout-minutes backstop. No change
+# to critical_surface.coveragerc, critical_surface.toml, or the guardrail tool.
+
+id: main-validation-failclosed-completion
+status: ACTIVE
+claim_type: fail_closed
+promise: >-
+  After this PR lands, the Main Validation gate's `python-full-validation` job
+  runs to completion within its 60-min cap and executes the "Enforce coverage
+  guardrail" step instead of being killed mid-suite. The post-merge suite is
+  parallelized (-n auto --dist loadscope); pytest-cov combines per-worker data,
+  so the measured core/backtest/execution surface and the critical-surface
+  guardrail threshold are unchanged.
+diff_scope:
+  changed_files:
+    - path: ".claude/commit_acceptors/main-validation-failclosed-completion.yaml"
+    - path: ".github/workflows/main-validation.yml"
+  forbidden_paths:
+    - "configs/quality/critical_surface.coveragerc"
+    - "configs/quality/critical_surface.toml"
+    - "tools/coverage/"
+required_python_symbols: []
+expected_signal: >-
+  The `python-full-validation` job's "Enforce coverage guardrail" step runs (it
+  is no longer skipped) and the job concludes success or failure — never a
+  silent `cancelled` from hitting the 60-min job cap.
+measurement_command: "echo see CI run conclusion for Main Validation on main"
+signal_artifact: "coverage.xml"
+falsifier:
+  command: "echo inspect python-full-validation job conclusion and step list"
+  description: >-
+    Fails if the `python-full-validation` job is killed at the 60-min cap before
+    the "Enforce coverage guardrail" step runs (conclusion `cancelled`), or if
+    the parallel run drops part of the core/backtest/execution surface so the
+    guardrail number differs from the serial measurement.
+rollback_command: "git revert --no-edit HEAD"
+rollback_verification_command: "python tools/commit_acceptor/validate_commit_acceptor.py"
+memory_update_type: append
+ledger_path: ".claude/commit_acceptors/main-validation-failclosed-completion.yaml"
+report_path: ".claude/commit_acceptors/main-validation-failclosed-completion.yaml"
+evidence: []

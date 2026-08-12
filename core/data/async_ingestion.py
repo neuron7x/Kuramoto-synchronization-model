@@ -1,5 +1,6 @@
-# SPDX-License-Identifier: LicenseRef-TradePulse-Proprietary
-"""Async data ingestion APIs for TradePulse with strict path validation."""
+# Copyright (c) 2023-2026 Yaroslav Vasylenko (neuron7xLab)
+# SPDX-License-Identifier: MIT
+"""Async data ingestion APIs for GeoSync with strict path validation."""
 from __future__ import annotations
 
 import asyncio

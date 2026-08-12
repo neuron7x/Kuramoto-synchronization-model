@@ -1,3 +1,5 @@
+# Copyright (c) 2023-2026 Yaroslav Vasylenko (neuron7xLab)
+# SPDX-License-Identifier: MIT
 """Performance artifact generation for CI/CD pipelines.
 
 This module generates JSON reports, visualizations, and GitHub issue templates
@@ -138,9 +140,7 @@ class PerformanceArtifactGenerator:
         output_path = self.output_dir / "performance_summary.md"
 
         lines = ["# Performance Test Results\n"]
-        lines.append(
-            f"Generated: {report.generated_at.strftime('%Y-%m-%d %H:%M:%S UTC')}\n"
-        )
+        lines.append(f"Generated: {report.generated_at.strftime('%Y-%m-%d %H:%M:%S UTC')}\n")
 
         # Summary statistics
         if report.summary:
@@ -165,24 +165,16 @@ class PerformanceArtifactGenerator:
 
             if run.budget:
                 status_lat_med = (
-                    "✅"
-                    if run.metrics.latency_median_ms <= run.budget.latency_median_ms
-                    else "❌"
+                    "✅" if run.metrics.latency_median_ms <= run.budget.latency_median_ms else "❌"
                 )
                 status_lat_p95 = (
-                    "✅"
-                    if run.metrics.latency_p95_ms <= run.budget.latency_p95_ms
-                    else "❌"
+                    "✅" if run.metrics.latency_p95_ms <= run.budget.latency_p95_ms else "❌"
                 )
                 status_lat_max = (
-                    "✅"
-                    if run.metrics.latency_max_ms <= run.budget.latency_max_ms
-                    else "❌"
+                    "✅" if run.metrics.latency_max_ms <= run.budget.latency_max_ms else "❌"
                 )
                 status_throughput = (
-                    "✅"
-                    if run.metrics.throughput_tps >= run.budget.throughput_min_tps
-                    else "❌"
+                    "✅" if run.metrics.throughput_tps >= run.budget.throughput_min_tps else "❌"
                 )
                 status_slip_med = (
                     "✅"
@@ -190,9 +182,7 @@ class PerformanceArtifactGenerator:
                     else "❌"
                 )
                 status_slip_p95 = (
-                    "✅"
-                    if run.metrics.slippage_p95_bps <= run.budget.slippage_p95_bps
-                    else "❌"
+                    "✅" if run.metrics.slippage_p95_bps <= run.budget.slippage_p95_bps else "❌"
                 )
 
                 lines.append(
@@ -217,15 +207,9 @@ class PerformanceArtifactGenerator:
                 lines.append(
                     f"| Latency (median) | {run.metrics.latency_median_ms:.2f}ms | - | - |\n"
                 )
-                lines.append(
-                    f"| Latency (p95) | {run.metrics.latency_p95_ms:.2f}ms | - | - |\n"
-                )
-                lines.append(
-                    f"| Latency (max) | {run.metrics.latency_max_ms:.2f}ms | - | - |\n"
-                )
-                lines.append(
-                    f"| Throughput | {run.metrics.throughput_tps:.2f} tps | - | - |\n"
-                )
+                lines.append(f"| Latency (p95) | {run.metrics.latency_p95_ms:.2f}ms | - | - |\n")
+                lines.append(f"| Latency (max) | {run.metrics.latency_max_ms:.2f}ms | - | - |\n")
+                lines.append(f"| Throughput | {run.metrics.throughput_tps:.2f} tps | - | - |\n")
                 lines.append(
                     f"| Slippage (median) | {run.metrics.slippage_median_bps:.2f}bps | - | - |\n"
                 )
@@ -394,9 +378,7 @@ class PerformanceArtifactGenerator:
         x = range(len(run_names))
         width = 0.35
 
-        ax.bar(
-            [i - width / 2 for i in x], medians, width, label="Median", color="#00BCD4"
-        )
+        ax.bar([i - width / 2 for i in x], medians, width, label="Median", color="#00BCD4")
         ax.bar([i + width / 2 for i in x], p95s, width, label="P95", color="#FF9800")
 
         # Add budget lines if available
@@ -433,9 +415,7 @@ class PerformanceArtifactGenerator:
 
         return output_path
 
-    def generate_issue_template(
-        self, run: PerformanceRun, component: str = "performance"
-    ) -> Path:
+    def generate_issue_template(self, run: PerformanceRun, component: str = "performance") -> Path:
         """Generate GitHub issue template for regression.
 
         Args:
@@ -466,9 +446,7 @@ class PerformanceArtifactGenerator:
         lines.append(f"| Latency (p95) | {run.metrics.latency_p95_ms:.2f}ms |\n")
         lines.append(f"| Latency (max) | {run.metrics.latency_max_ms:.2f}ms |\n")
         lines.append(f"| Throughput | {run.metrics.throughput_tps:.2f} tps |\n")
-        lines.append(
-            f"| Slippage (median) | {run.metrics.slippage_median_bps:.2f}bps |\n"
-        )
+        lines.append(f"| Slippage (median) | {run.metrics.slippage_median_bps:.2f}bps |\n")
         lines.append(f"| Slippage (p95) | {run.metrics.slippage_p95_bps:.2f}bps |\n")
         lines.append("\n")
 

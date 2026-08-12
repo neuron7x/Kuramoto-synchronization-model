@@ -1,0 +1,142 @@
+# Diff-bound commit acceptor for the D-002J-P1B source-registry
+# provenance repair PR.
+#
+# D-002J-P1B is the repair gate following the merged P1A audit
+# (sha 4b64faf67f4c1bec48a66d20eeddbdf6931e762d) which landed as
+# `SOURCE_REGISTRY_REJECTED`. P1B is registry repair only: adds one
+# new source (PHILLY_FED_RTDSM) to satisfy the information_constraint
+# mechanism-family floor (>= 2 verified/partial), repairs 5 listed
+# broken URL pins (ECB_CBD, ICAP_MOVE, BIS_QR_NETWORK, FED_TIMELINE,
+# BOE_LDI_REVIEW) via HEAD-verified canonical URLs, and incidentally
+# repairs FDIC_SVB_POSTMORTEM (legacy path 404; repinned to FDIC OIG
+# agency root). The decision flips from SOURCE_REGISTRY_REJECTED to
+# SOURCE_REGISTRY_PARTIALLY_VERIFIED.
+
+id: x10r-d002j-p1b-source-registry-provenance-repair
+status: ACTIVE
+claim_type: governance
+promise: >-
+  After this PR lands, artifacts/d002j/data_registry/source_registry_v1.json
+  carries 26 sources (P1A 25 + 1 new PHILLY_FED_RTDSM), pr_lineage
+  D-002J-P1B, with 5 listed URLs repaired plus 1 incidental
+  FDIC_SVB_POSTMORTEM repair.
+  artifacts/d002j/data_registry/source_provenance_audit_v1.json declares
+  audit_decision SOURCE_REGISTRY_PARTIALLY_VERIFIED.
+  The six locked governance shas remain byte-exact. P1A
+  SOURCE_REGISTRY_REJECTED verdict remains banked verbatim in
+  docs/research/D002J_SOURCE_DOWNGRADE_LOG.md. No source-code, prereg,
+  ledger, ingestion, or canonical-run change.
+
+diff_scope:
+  changed_files:
+    - path: "artifacts/d002j/data_registry/source_registry_v1.json"
+    - path: "artifacts/d002j/data_registry/source_registry_summary_v1.json"
+    - path: "artifacts/d002j/data_registry/source_provenance_audit_v1.json"
+    - path: "artifacts/d002j/data_registry/source_access_smoke_v1.json"
+    - path: "artifacts/d002j/data_registry/source_evidence_lock_v1.json"
+    - path: "artifacts/d002j/data_registry/source_registry_audit_summary_v1.json"
+    - path: "docs/research/D002J_SOURCE_DOWNGRADE_LOG.md"
+    - path: "docs/research/D002J_SOURCE_PROVENANCE_AUDIT.md"
+    - path: "docs/research/D002J_DATA_SOURCE_CARD.md"
+    - path: "docs/research/D002J_SOURCE_SELECTION_RATIONALE.md"
+    - path: "docs/research/D002J_DATA_SOURCE_MATRIX.md"
+    - path: "docs/governance/D002G_CANONICAL_RUN_BLOCKERS.md"
+    - path: "tests/systemic_risk/test_d002j_source_provenance_audit.py"
+    - path: ".claude/commit_acceptors/x10r-d002j-p1b-source-registry-provenance-repair.yaml"
+  forbidden_paths:
+    - "docs/governance/D002C_CLAIM_LEDGER.yaml"
+    - "docs/governance/D002C_PREREGISTRATION.yaml"
+    - "docs/governance/D002G_ACCEPTANCE_RULES.md"
+    - "docs/governance/D002G_PREREGISTRATION.yaml"
+    - "docs/governance/D002H_PREREGISTRATION.yaml"
+    - "docs/governance/D002I_PREREGISTRATION.yaml"
+    - "docs/governance/D002J_PREREGISTRATION.yaml"
+    - "artifacts/d002c/"
+    - "artifacts/d002g/"
+    - "artifacts/d002h/"
+    - "artifacts/d002i/"
+    - "artifacts/d002j/prereg/"
+    - "research/systemic_risk/"
+    - "scripts/x10r_d002c_attempt_2_null_audit.py"
+    - "scripts/x10r_d002g_gate_d_scan.py"
+    - "scripts/x10r_d002h_gate_d_scan.py"
+    - "scripts/x10r_d002h_canonical_sweep.py"
+required_python_symbols:
+  - "tests.systemic_risk.test_d002j_source_provenance_audit.test_p1_registry_exists"
+  - "tests.systemic_risk.test_d002j_source_provenance_audit.test_audit_json_exists"
+  - "tests.systemic_risk.test_d002j_source_provenance_audit.test_access_smoke_json_exists"
+  - "tests.systemic_risk.test_d002j_source_provenance_audit.test_evidence_lock_json_exists"
+  - "tests.systemic_risk.test_d002j_source_provenance_audit.test_audit_schema_version"
+  - "tests.systemic_risk.test_d002j_source_provenance_audit.test_all_registry_sources_are_audited"
+  - "tests.systemic_risk.test_d002j_source_provenance_audit.test_source_ids_match_registry"
+  - "tests.systemic_risk.test_d002j_source_provenance_audit.test_no_private_or_internship_data"
+  - "tests.systemic_risk.test_d002j_source_provenance_audit.test_no_large_downloads"
+  - "tests.systemic_risk.test_d002j_source_provenance_audit.test_each_source_has_audit_status"
+  - "tests.systemic_risk.test_d002j_source_provenance_audit.test_each_verified_source_has_evidence_ref"
+  - "tests.systemic_risk.test_d002j_source_provenance_audit.test_each_verified_source_has_license_boundary"
+  - "tests.systemic_risk.test_d002j_source_provenance_audit.test_each_verified_source_has_forbidden_use"
+  - "tests.systemic_risk.test_d002j_source_provenance_audit.test_crisis_windows_retain_verified_sources"
+  - "tests.systemic_risk.test_d002j_source_provenance_audit.test_mechanisms_retain_verified_sources"
+  - "tests.systemic_risk.test_d002j_source_provenance_audit.test_downgrade_log_exists"
+  - "tests.systemic_risk.test_d002j_source_provenance_audit.test_audit_summary_counts_match_audit"
+  - "tests.systemic_risk.test_d002j_source_provenance_audit.test_audit_does_not_authorize_canonical_run"
+  - "tests.systemic_risk.test_d002j_source_provenance_audit.test_d002j_prereg_not_modified"
+  - "tests.systemic_risk.test_d002j_source_provenance_audit.test_d002c_ledger_not_modified"
+  - "tests.systemic_risk.test_d002j_source_provenance_audit.test_systemic_risk_source_code_not_modified"
+  - "tests.systemic_risk.test_d002j_source_provenance_audit.test_no_unresolved_merge_markers"
+  - "tests.systemic_risk.test_d002j_source_provenance_audit.test_information_constraint_has_minimum_two_verified_or_partial_sources"
+  - "tests.systemic_risk.test_d002j_source_provenance_audit.test_all_downgraded_sources_have_repair_outcome"
+  - "tests.systemic_risk.test_d002j_source_provenance_audit.test_no_dead_url_counts_as_verified"
+  - "tests.systemic_risk.test_d002j_source_provenance_audit.test_no_dead_url_counts_as_usable_now"
+  - "tests.systemic_risk.test_d002j_source_provenance_audit.test_repaired_sources_have_evidence_lock_entries"
+  - "tests.systemic_risk.test_d002j_source_provenance_audit.test_repaired_sources_have_access_smoke_entries"
+  - "tests.systemic_risk.test_d002j_source_provenance_audit.test_audit_decision_not_rejected_after_repair"
+  - "tests.systemic_risk.test_d002j_source_provenance_audit.test_previous_rejected_audit_retained_in_downgrade_log"
+  - "tests.systemic_risk.test_d002j_source_provenance_audit.test_no_prereg_floor_weakened"
+  - "tests.systemic_risk.test_d002j_source_provenance_audit.test_no_taxonomy_collapse"
+  - "tests.systemic_risk.test_d002j_source_provenance_audit.test_no_canonical_run_authorized"
+  - "tests.systemic_risk.test_d002j_source_provenance_audit.test_no_ingestion"
+  - "tests.systemic_risk.test_d002j_source_provenance_audit.test_no_systemic_risk_source_code_changed"
+  - "tests.systemic_risk.test_d002j_source_provenance_audit.test_no_unresolved_merge_markers_p1b"
+expected_signal: >-
+  PYTHONPATH=. python -m pytest
+  tests/systemic_risk/test_d002j_source_provenance_audit.py -q passes
+  all 36 cases (22 P1A-updated + 14 P1B); six registry/audit JSON
+  artifacts validate with pinned schema_version strings; decision
+  flips to SOURCE_REGISTRY_PARTIALLY_VERIFIED; six locked governance
+  shas all byte-exact.
+measurement_command: >-
+  bash -c 'set -e;
+  PYTHONPATH=. python -m pytest tests/systemic_risk/test_d002j_source_provenance_audit.py -q;
+  test -f artifacts/d002j/data_registry/source_registry_v1.json;
+  test -f artifacts/d002j/data_registry/source_provenance_audit_v1.json;
+  test -f artifacts/d002j/data_registry/source_access_smoke_v1.json;
+  test -f artifacts/d002j/data_registry/source_evidence_lock_v1.json;
+  test -f artifacts/d002j/data_registry/source_registry_audit_summary_v1.json;
+  python -m json.tool artifacts/d002j/data_registry/source_registry_v1.json > /dev/null;
+  python -m json.tool artifacts/d002j/data_registry/source_provenance_audit_v1.json > /dev/null;
+  grep -q "SOURCE_REGISTRY_PARTIALLY_VERIFIED" artifacts/d002j/data_registry/source_provenance_audit_v1.json;
+  grep -q "PHILLY_FED_RTDSM" artifacts/d002j/data_registry/source_registry_v1.json;
+  grep -q "D-002J-P1B" docs/governance/D002G_CANONICAL_RUN_BLOCKERS.md;
+  test "$(sha256sum docs/governance/D002J_PREREGISTRATION.yaml | awk "{print \$1}")" = "f3dc65b7e64b96eafe6f23ca8bdd0e05dc9bf95b12c2658b227bd0340f7975a0"'
+signal_artifact: "artifacts/d002j/data_registry/source_provenance_audit_v1.json"
+falsifier:
+  command: >-
+    bash -c 'set -e;
+    PYTHONPATH=. python -m pytest tests/systemic_risk/test_d002j_source_provenance_audit.py -q || exit 1;
+    grep -q "SOURCE_REGISTRY_PARTIALLY_VERIFIED" artifacts/d002j/data_registry/source_provenance_audit_v1.json || exit 2;
+    grep -q "PHILLY_FED_RTDSM" artifacts/d002j/data_registry/source_registry_v1.json || exit 3;
+    grep -q "P1A" docs/research/D002J_SOURCE_DOWNGRADE_LOG.md || exit 4;
+    test "$(sha256sum docs/governance/D002J_PREREGISTRATION.yaml | awk "{print \$1}")" = "f3dc65b7e64b96eafe6f23ca8bdd0e05dc9bf95b12c2658b227bd0340f7975a0" || exit 5'
+  description: >-
+    Probes D-002J-P1B repair: 36 tests pass; audit JSON declares
+    PARTIALLY_VERIFIED; PHILLY_FED_RTDSM in registry; P1A historical
+    section preserved in downgrade log; D-002J prereg sha byte-exact.
+rollback_command: >-
+  bash -c 'git checkout HEAD -- artifacts/d002j/data_registry/ docs/research/D002J_SOURCE_PROVENANCE_AUDIT.md docs/research/D002J_SOURCE_DOWNGRADE_LOG.md docs/research/D002J_DATA_SOURCE_CARD.md docs/research/D002J_SOURCE_SELECTION_RATIONALE.md docs/research/D002J_DATA_SOURCE_MATRIX.md docs/governance/D002G_CANONICAL_RUN_BLOCKERS.md tests/systemic_risk/test_d002j_source_provenance_audit.py && rm -f .claude/commit_acceptors/x10r-d002j-p1b-source-registry-provenance-repair.yaml'
+rollback_verification_command: >-
+  bash -c 'test ! -f .claude/commit_acceptors/x10r-d002j-p1b-source-registry-provenance-repair.yaml'
+memory_update_type: append
+ledger_path: ".claude/commit_acceptors/x10r-d002j-p1b-source-registry-provenance-repair.yaml"
+report_path: "docs/research/D002J_SOURCE_PROVENANCE_AUDIT.md"
+evidence: []

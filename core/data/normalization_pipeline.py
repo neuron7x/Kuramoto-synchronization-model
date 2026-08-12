@@ -1,3 +1,5 @@
+# Copyright (c) 2023-2026 Yaroslav Vasylenko (neuron7xLab)
+# SPDX-License-Identifier: MIT
 """Robust market data normalisation pipelines for ticks and OHLCV bars.
 
 The helpers in this module build upon the existing resampling utilities and

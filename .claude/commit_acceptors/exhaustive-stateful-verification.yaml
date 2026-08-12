@@ -1,0 +1,54 @@
+# ci-heartbeat: exhaustive-stateful-verification
+id: exhaustive-stateful-verification
+status: ACTIVE
+claim_type: fail_closed
+promise: >-
+  Two verification layers above sampling. EXHAUSTIVE: discrete Gauss-Bonnet
+  Sum_x K(x)==chi(G) is proven EXACTLY (over Q) for EVERY non-isomorphic graph on
+  up to 7 nodes (all ~1252 networkx Graph Atlas graphs) — a finite proof, not a
+  sample. STATEFUL (model-based): a Hypothesis RuleBasedStateMachine drives the
+  cognitive core through arbitrary mutation sequences and asserts the verdict
+  always equals an independent model. Two new blocking laws, each with a
+  discriminating negative control. No canonical catalog mutation, no
+  trading/execution/forecast/policy change.
+diff_scope:
+  changed_files:
+    - path: ".claude/commit_acceptors/exhaustive-stateful-verification.yaml"
+    - path: "tests/physics/test_exhaustive_gauss_bonnet_atlas.py"
+    - path: "tests/physics/test_stateful_cognitive_core.py"
+  forbidden_paths:
+    - "trading/"
+    - "execution/"
+    - "forecast/"
+    - "policy/"
+required_python_symbols: []
+expected_signal: >-
+  tools/validate_physics_contracts.py reports 45 blocking laws fully witnessed
+  (was 43). The exhaustive proof checks >= 1200 atlas graphs with residual == 0
+  and >= 5 distinct Euler characteristics; the stateful machine matches the model
+  over 120 examples x 24 steps; both negative controls discriminate. No
+  trading/execution/forecast/policy change.
+measurement_command: >-
+  PYTHONPATH=. python tools/validate_physics_contracts.py && PYTHONPATH=.
+  python -m pytest tests/physics/test_exhaustive_gauss_bonnet_atlas.py
+  tests/physics/test_stateful_cognitive_core.py -q
+signal_artifact: "tmp/exhaustive_stateful_verification.log"
+falsifier:
+  command: >-
+    PYTHONPATH=. python -m pytest
+    tests/physics/test_exhaustive_gauss_bonnet_atlas.py
+    tests/physics/test_stateful_cognitive_core.py -q
+  description: >-
+    Fails if any atlas graph breaks Gauss-Bonnet, or the cognitive core verdict
+    diverges from the model over a mutation sequence.
+rollback_command: >-
+  git rm -f tests/physics/test_exhaustive_gauss_bonnet_atlas.py
+  tests/physics/test_stateful_cognitive_core.py
+rollback_verification_command: >-
+  PYTHONPATH=. python tools/validate_physics_contracts.py
+memory_update_type: none
+ledger_path: ".claude/commit_acceptors/exhaustive-stateful-verification.yaml"
+report_path: ".claude/commit_acceptors/exhaustive-stateful-verification.yaml"
+evidence:
+  - path: "tests/physics/test_exhaustive_gauss_bonnet_atlas.py"
+  - path: "tests/physics/test_stateful_cognitive_core.py"

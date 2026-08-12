@@ -1,3 +1,5 @@
+# Copyright (c) 2023-2026 Yaroslav Vasylenko (neuron7xLab)
+# SPDX-License-Identifier: MIT
 """FastAPI middleware emitting Prometheus metrics for HTTP requests."""
 
 from __future__ import annotations
@@ -11,7 +13,7 @@ from starlette.types import ASGIApp
 
 from core.utils.metrics import MetricsCollector, get_metrics_collector
 
-LOGGER = logging.getLogger("tradepulse.api.metrics")
+LOGGER = logging.getLogger("geosync.api.metrics")
 
 
 class PrometheusMetricsMiddleware(BaseHTTPMiddleware):

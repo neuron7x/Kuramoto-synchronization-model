@@ -1,3 +1,5 @@
+# Copyright (c) 2023-2026 Yaroslav Vasylenko (neuron7xLab)
+# SPDX-License-Identifier: MIT
 """Send consolidated pipeline status notifications to Slack and Teams."""
 
 from __future__ import annotations
@@ -48,7 +50,7 @@ STAGE_LABELS = {
     "deploy": "Deployment",
 }
 
-LOGGER = logging.getLogger("tradepulse.notify_status")
+LOGGER = logging.getLogger("geosync.notify_status")
 
 
 @dataclass(slots=True)
@@ -107,9 +109,7 @@ def _build_parser() -> argparse.ArgumentParser:
     parser.add_argument("--branch", help="Git reference name associated with the run.")
     parser.add_argument("--commit", help="Commit SHA associated with the run.")
     parser.add_argument("--actor", help="GitHub actor that triggered the run.")
-    parser.add_argument(
-        "--environment", help="Target environment for deployment notifications."
-    )
+    parser.add_argument("--environment", help="Target environment for deployment notifications.")
     parser.add_argument(
         "--field",
         dest="fields",
@@ -129,7 +129,7 @@ def _build_parser() -> argparse.ArgumentParser:
     )
     parser.add_argument(
         "--slack-username",
-        default=os.environ.get("SLACK_USERNAME", "TradePulse CI Bot"),
+        default=os.environ.get("SLACK_USERNAME", "GeoSync CI Bot"),
         help="Display name for Slack notifications.",
     )
     parser.add_argument(
@@ -243,9 +243,7 @@ def _prepare_arguments(namespace: argparse.Namespace) -> NotificationArguments:
         slack_channel=namespace.slack_channel,
         slack_username=namespace.slack_username,
         teams_webhook=namespace.teams_webhook,
-        teams_theme_color=_normalise_color(
-            namespace.status, namespace.teams_theme_color
-        ),
+        teams_theme_color=_normalise_color(namespace.status, namespace.teams_theme_color),
         timeout=namespace.timeout,
         dry_run=bool(namespace.dry_run),
     )
@@ -292,9 +290,7 @@ async def _send_notifications(args: NotificationArguments) -> None:
 
 
 def main() -> int:
-    logging.basicConfig(
-        level=logging.INFO, format="%(asctime)s %(levelname)s %(message)s"
-    )
+    logging.basicConfig(level=logging.INFO, format="%(asctime)s %(levelname)s %(message)s")
     parser = _build_parser()
     namespace = parser.parse_args()
     args = _prepare_arguments(namespace)

@@ -1,3 +1,5 @@
+# Copyright (c) 2023-2026 Yaroslav Vasylenko (neuron7xLab)
+# SPDX-License-Identifier: MIT
 from __future__ import annotations
 
 from collections import deque
@@ -20,9 +22,7 @@ class DummyAMM:
         self.use_internal_entropy = use_internal_entropy
         self.calls: list[tuple[float, float, float, float | None]] = []
 
-    def update(
-        self, x_t: float, R_t: float, kappa_t: float, H_t: float | None = None
-    ) -> dict:
+    def update(self, x_t: float, R_t: float, kappa_t: float, H_t: float | None = None) -> dict:
         self.calls.append((x_t, R_t, kappa_t, H_t))
         if self.outputs:
             return self.outputs.popleft()

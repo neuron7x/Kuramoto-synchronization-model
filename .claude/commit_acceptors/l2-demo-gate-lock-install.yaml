@@ -1,0 +1,30 @@
+id: l2-demo-gate-lock-install
+status: ACTIVE
+claim_type: fail_closed
+promise: >-
+  The L2 demo gate installs dependencies from the exact-pinned lockfiles
+  (constraints/security.txt + requirements*.lock), matching the shared
+  setup-geosync action, so pip's backtracker no longer explodes with
+  "resolution-too-deep". Workflow logic otherwise unchanged.
+diff_scope:
+  changed_files:
+    - path: ".github/workflows/l2-demo-gate.yml"
+    - path: ".claude/commit_acceptors/l2-demo-gate-lock-install.yaml"
+  forbidden_paths:
+    - "core/"
+    - "src/"
+    - "requirements.txt"
+    - "requirements-dev.txt"
+required_python_symbols: []
+expected_signal: "l2-demo-gate installs from requirements.lock under constraints/security.txt; no unpinned requirements*.txt resolve remains."
+measurement_command: "grep -q 'constraints/security.txt -r requirements.lock' .github/workflows/l2-demo-gate.yml"
+signal_artifact: ".github/workflows/l2-demo-gate.yml"
+falsifier:
+  command: "grep -q 'pip install -r requirements.txt' .github/workflows/l2-demo-gate.yml"
+  description: "Exits 0 (fails the acceptor) iff the unpinned requirements.txt install — the resolution-too-deep trigger — is still present; healthy state has it removed."
+rollback_command: "git checkout -- .github/workflows/l2-demo-gate.yml"
+rollback_verification_command: "git diff --exit-code .github/workflows/l2-demo-gate.yml"
+memory_update_type: append
+ledger_path: ".claude/commit_acceptors/l2-demo-gate-lock-install.yaml"
+report_path: ".github/workflows/l2-demo-gate.yml"
+evidence: []

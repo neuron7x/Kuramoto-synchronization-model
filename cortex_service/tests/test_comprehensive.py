@@ -1,10 +1,12 @@
+# Copyright (c) 2023-2026 Yaroslav Vasylenko (neuron7xLab)
+# SPDX-License-Identifier: MIT
 """Comprehensive tests for cortex service refactor."""
 
 from __future__ import annotations
 
 import os
-import time
-from datetime import UTC, datetime
+import threading
+from datetime import datetime, timezone
 
 import pytest
 from fastapi.testclient import TestClient
@@ -13,7 +15,7 @@ from sqlalchemy import create_engine
 from sqlalchemy.exc import OperationalError
 from sqlalchemy.pool import StaticPool
 
-os.environ.setdefault("CORTEX__DATABASE__URL", "'sqlite+pysqlite:///:memory:'")
+os.environ.setdefault("CORTEX__DATABASE__URL", "sqlite+pysqlite:///:memory:")
 os.environ.setdefault("CORTEX__DATABASE__POOL_SIZE", "1")
 os.environ.setdefault("CORTEX__DATABASE__POOL_TIMEOUT", "30")
 
@@ -33,7 +35,14 @@ from cortex_service.app.errors import (
     DatabaseError,
 )
 from cortex_service.app.ethics.risk import compute_risk
-from cortex_service.app.services.regime_service import RegimeCache
+from cortex_service.app.services.regime_service import (
+    BayesianShadowSampler,
+    CacheCoherenceStatus,
+    HybridLogicalClock,
+    HybridLogicalTimestamp,
+    RegimeCache,
+    RegimeService,
+)
 
 
 def _test_settings() -> CortexSettings:
@@ -53,9 +62,7 @@ def _test_settings() -> CortexSettings:
             var_confidence=0.95,
             stress_scenarios=(0.8, 0.5),
         ),
-        regime=RegimeSettings(
-            decay=0.2, min_valence=-1.0, max_valence=1.0, confidence_floor=0.1
-        ),
+        regime=RegimeSettings(decay=0.2, min_valence=-1.0, max_valence=1.0, confidence_floor=0.1),
     )
 
 
@@ -242,42 +249,227 @@ class TestRegimeCache:
     """Test regime caching."""
 
     def test_cache_miss_returns_none(self):
-        cache = RegimeCache(ttl_seconds=1.0)
+        cache = RegimeCache()
         assert cache.get() is None
 
     def test_cache_hit_returns_state(self):
         from cortex_service.app.modulation.regime import RegimeState
 
-        cache = RegimeCache(ttl_seconds=1.0)
+        cache = RegimeCache()
         state = RegimeState(
-            label="bullish", valence=0.7, confidence=0.8, as_of=datetime.now(UTC)
+            label="bullish", valence=0.7, confidence=0.8, as_of=datetime.now(timezone.utc)
         )
-        cache.set(state)
+        cache.write_through(state, version=10)
         retrieved = cache.get()
         assert retrieved is not None
-        assert retrieved.label == "bullish"
+        assert retrieved.state.label == "bullish"
+        assert retrieved.version == 10
 
-    def test_cache_expires_after_ttl(self):
+    def test_cache_miss_for_insufficient_version(self):
         from cortex_service.app.modulation.regime import RegimeState
 
-        cache = RegimeCache(ttl_seconds=0.05)  # Very short TTL
+        cache = RegimeCache()
         state = RegimeState(
-            label="bullish", valence=0.7, confidence=0.8, as_of=datetime.now(UTC)
+            label="bullish", valence=0.7, confidence=0.8, as_of=datetime.now(timezone.utc)
         )
-        cache.set(state)
-        time.sleep(0.1)  # Wait for expiration
-        assert cache.get() is None
+        cache.write_through(state, version=3)
+        assert cache.get(min_version=4) is None
 
     def test_cache_invalidate(self):
         from cortex_service.app.modulation.regime import RegimeState
 
-        cache = RegimeCache(ttl_seconds=10.0)
+        cache = RegimeCache()
         state = RegimeState(
-            label="bullish", valence=0.7, confidence=0.8, as_of=datetime.now(UTC)
+            label="bullish", valence=0.7, confidence=0.8, as_of=datetime.now(timezone.utc)
         )
-        cache.set(state)
+        cache.write_through(state, version=5)
         cache.invalidate()
         assert cache.get() is None
+
+    def test_write_through_restores_coherent_status(self):
+        from cortex_service.app.modulation.regime import RegimeState
+
+        cache = RegimeCache()
+        cache.mark_divergent()
+        assert cache.status is CacheCoherenceStatus.DIVERGENT
+
+        state = RegimeState(
+            label="neutral", valence=0.0, confidence=0.9, as_of=datetime.now(timezone.utc)
+        )
+        cache.write_through(state, version=6)
+        assert cache.status is CacheCoherenceStatus.COHERENT
+
+    def test_hlc_receive_is_monotonic(self):
+        clock = HybridLogicalClock(wall_clock_ms=lambda: 1_000)
+        first = clock.send()
+        second = clock.receive(HybridLogicalTimestamp(wall_time_ms=2_000, logical=4))
+        assert second.wall_time_ms >= first.wall_time_ms
+        assert second.to_version() > first.to_version()
+
+    def test_bayesian_sampler_escalates_rate_on_divergence(self):
+        sampler = BayesianShadowSampler(base_rate=0.05)
+        initial_rate = sampler.sample_rate()
+        for _ in range(6):
+            sampler.observe(divergent=True)
+        assert sampler.sample_rate() > initial_rate
+
+    def test_coherence_entropy_signal_scales_with_volatility(self):
+        service = RegimeService(RegimeSettings())
+        low = service._coherence_entropy_signal(volatility=0.1)  # noqa: SLF001
+        high = service._coherence_entropy_signal(volatility=0.9)  # noqa: SLF001
+        assert high >= low
+
+    def test_hlc_backwards_drift_marks_cache_critical(self):
+        service = RegimeService(
+            RegimeSettings(),
+            max_hlc_backwards_drift_ms=1,
+        )
+
+        class _FakeHlc:
+            @property
+            def last_wall_time_ms(self):
+                return 10_000
+
+            def wall_now_ms(self):
+                return 0
+
+            def receive(self, remote):
+                return remote
+
+        service._hlc = _FakeHlc()  # noqa: SLF001
+        _ = service._compute_version(datetime.now(timezone.utc))  # noqa: SLF001
+        assert service._cache.status is CacheCoherenceStatus.CRITICAL_DIVERGENT  # noqa: SLF001
+
+    def test_rcu_snapshot_stress_readers_and_writer(self):
+        from cortex_service.app.modulation.regime import RegimeState
+
+        cache = RegimeCache()
+        stop = threading.Event()
+        failures: list[str] = []
+
+        def writer() -> None:
+            for idx in range(2_000):
+                state = RegimeState(
+                    label="neutral" if idx % 2 == 0 else "bullish",
+                    valence=float(idx % 10) / 10.0,
+                    confidence=0.9,
+                    as_of=datetime.now(timezone.utc),
+                )
+                cache.write_through(state, version=idx + 1)
+            stop.set()
+
+        def reader() -> None:
+            while not stop.is_set():
+                entry = cache.get()
+                if entry is None:
+                    continue
+                try:
+                    assert isinstance(entry.state.label, str)
+                    assert isinstance(entry.version, int)
+                    assert entry.version >= 1
+                except AssertionError as exc:  # pragma: no cover - defensive capture
+                    failures.append(str(exc))
+                    stop.set()
+
+        threads = [threading.Thread(target=reader) for _ in range(10)]
+        writer_thread = threading.Thread(target=writer)
+        for thread in threads:
+            thread.start()
+        writer_thread.start()
+        writer_thread.join(timeout=10)
+        stop.set()
+        for thread in threads:
+            thread.join(timeout=10)
+
+        assert not failures
+
+    def test_state_compare_epsilon_handles_rounding_noise(self):
+        from cortex_service.app.modulation.regime import RegimeState
+
+        service = RegimeService(RegimeSettings(), state_compare_epsilon=1e-9)
+        left = RegimeState(
+            label="neutral",
+            valence=1.0,
+            confidence=0.9999999991,
+            as_of=datetime.now(timezone.utc),
+        )
+        right = RegimeState(
+            label="neutral",
+            valence=0.9999999992,
+            confidence=1.0,
+            as_of=left.as_of,
+        )
+
+        assert service._state_equals(left, right)  # noqa: SLF001
+
+    def test_entropy_driven_sampling_increases_with_injected_drift(self):
+        sampler = BayesianShadowSampler(base_rate=0.05)
+        baseline_rate = sampler.sample_rate()
+
+        for _ in range(20):
+            sampler.observe(divergent=True)
+        drifted_rate = sampler.sample_rate()
+
+        assert drifted_rate > baseline_rate
+
+    def test_bayesian_sampler_decay_preserves_adaptivity(self):
+        sampler = BayesianShadowSampler(base_rate=0.05, decay=0.99, decay_interval=10)
+        for _ in range(200):
+            sampler.observe(divergent=True)
+        high_rate = sampler.sample_rate()
+        for _ in range(200):
+            sampler.observe(divergent=False)
+        cooled_rate = sampler.sample_rate()
+        assert 0.01 <= cooled_rate <= 1.0
+        assert cooled_rate < high_rate
+
+    def test_hlc_send_monotonic_under_backwards_clock_fuzz(self):
+        timeline = [10_000, 9_000, 8_000, 12_000, 11_000, 20_000]
+        index = {"i": 0}
+
+        def _wall() -> int:
+            i = min(index["i"], len(timeline) - 1)
+            value = timeline[i]
+            index["i"] += 1
+            return value
+
+        clock = HybridLogicalClock(wall_clock_ms=_wall)
+        last_version = clock.send().to_version()
+        for _ in range(10):
+            current = clock.send().to_version()
+            assert current > last_version
+            last_version = current
+
+    def test_get_current_regime_uses_cache_fast_path(self):
+        from cortex_service.app.modulation.regime import RegimeState
+
+        service = RegimeService(RegimeSettings())
+        state = RegimeState(
+            label="neutral",
+            valence=0.2,
+            confidence=0.9,
+            as_of=datetime.now(timezone.utc),
+        )
+        service._cache.write_through(state, version=1)  # noqa: SLF001
+
+        class _Repo:
+            def latest_regime(self):
+                return None
+
+        resolved = service.get_current_regime(_Repo())  # type: ignore[arg-type]
+        assert resolved.label == state.label
+
+    def test_get_current_regime_raises_on_empty_repository(self):
+        from cortex_service.app.errors import ValidationError as CortexValidationError
+
+        service = RegimeService(RegimeSettings())
+
+        class _Repo:
+            def latest_regime(self):
+                return None
+
+        with pytest.raises(CortexValidationError, match="No regime state found"):
+            service.get_current_regime(_Repo())  # type: ignore[arg-type]
 
 
 class TestRegimeExtreme:
@@ -295,7 +487,7 @@ class TestRegimeExtreme:
             json={
                 "feedback": 0.5,
                 "volatility": 0.99,  # Extreme volatility
-                "as_of": datetime.now(tz=UTC).isoformat(),
+                "as_of": datetime.now(tz=timezone.utc).isoformat(),
             },
         )
         assert response.status_code == 200
@@ -310,10 +502,10 @@ class TestRegimeExtreme:
         modulator = RegimeModulator(settings)
 
         previous = RegimeState(
-            label="bearish", valence=-0.8, confidence=0.9, as_of=datetime.now(UTC)
+            label="bearish", valence=-0.8, confidence=0.9, as_of=datetime.now(timezone.utc)
         )
         # Apply strong positive feedback
-        updated = modulator.update(previous, 0.9, 0.1, datetime.now(UTC))
+        updated = modulator.update(previous, 0.9, 0.1, datetime.now(timezone.utc))
         # With high decay, new feedback should dominate
         assert updated.valence > 0.5
 
@@ -343,7 +535,7 @@ class TestServiceMethods:
             json={
                 "feedback": 0.5,
                 "volatility": -0.1,  # Negative volatility
-                "as_of": datetime.now(tz=UTC).isoformat(),
+                "as_of": datetime.now(tz=timezone.utc).isoformat(),
             },
         )
         # Should be rejected by Pydantic validation
@@ -360,7 +552,7 @@ class TestRepositoryBehaviors:
         client = TestClient(app)
 
         # Store initial exposures
-        as_of = datetime.now(tz=UTC).isoformat()
+        as_of = datetime.now(tz=timezone.utc).isoformat()
         response1 = client.post(
             "/memory",
             json={
@@ -444,7 +636,7 @@ class TestInputValidation:
         response = client.post(
             "/signals",
             json={
-                "as_of": datetime.now(tz=UTC).isoformat(),
+                "as_of": datetime.now(tz=timezone.utc).isoformat(),
                 "features": [
                     {
                         "instrument": very_long_instrument,

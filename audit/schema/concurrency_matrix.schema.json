@@ -1,0 +1,53 @@
+{
+  "$schema": "http://json-schema.org/draft-07/schema#",
+  "$id": "geosync.concurrency_matrix.v1",
+  "title": "GeoSync Runtime Concurrency Matrix",
+  "description": "Binds each runtime concurrency failure class (lost update, torn read, orphaned task, double submit, duplicate fill, stale cache write, missed cancellation, deadlock, timeout path) to the deterministic test that proves the owning component is safe. No probabilistic stress loops: every bound test must be deterministic or carry a deterministic falsifier.",
+  "type": "object",
+  "additionalProperties": false,
+  "required": ["schema", "rows", "verdict"],
+  "properties": {
+    "schema": { "const": "geosync.concurrency_matrix.v1" },
+    "verdict": { "enum": ["PASS", "FAIL"] },
+    "rows": {
+      "type": "array",
+      "minItems": 1,
+      "items": {
+        "type": "object",
+        "additionalProperties": false,
+        "required": [
+          "component",
+          "failure_class",
+          "shared_state",
+          "concurrency_guard",
+          "deterministic",
+          "test",
+          "verdict"
+        ],
+        "properties": {
+          "component": { "type": "string", "minLength": 1 },
+          "failure_class": {
+            "type": "string",
+            "enum": [
+              "lost update",
+              "torn read",
+              "orphaned task",
+              "double submit",
+              "duplicate fill",
+              "stale cache write",
+              "missed cancellation",
+              "lock inversion",
+              "deadlock",
+              "timeout path"
+            ]
+          },
+          "shared_state": { "type": "string", "minLength": 1 },
+          "concurrency_guard": { "type": "string", "minLength": 1 },
+          "deterministic": { "type": "boolean" },
+          "test": { "type": "string", "minLength": 1 },
+          "verdict": { "enum": ["PASS", "FAIL"] }
+        }
+      }
+    }
+  }
+}

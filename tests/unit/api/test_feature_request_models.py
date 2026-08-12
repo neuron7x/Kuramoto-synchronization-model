@@ -1,3 +1,5 @@
+# Copyright (c) 2023-2026 Yaroslav Vasylenko (neuron7xLab)
+# SPDX-License-Identifier: MIT
 from __future__ import annotations
 
 import os
@@ -5,8 +7,8 @@ from datetime import datetime, timedelta, timezone
 
 import pandas as pd
 
-os.environ.setdefault("TRADEPULSE_ADMIN_TOKEN", "test-token")
-os.environ.setdefault("TRADEPULSE_AUDIT_SECRET", "test-secret-value")
+os.environ.setdefault("GEOSYNC_ADMIN_TOKEN", "test-token")
+os.environ.setdefault("GEOSYNC_AUDIT_SECRET", "test-secret-value")
 
 from application.api.service import FeatureRequest, MarketBar
 
@@ -101,8 +103,7 @@ def test_feature_request_to_frame_sorts_and_sets_utc_index() -> None:
     frame = request.to_frame()
 
     expected_order = [
-        pd.Timestamp(bar.timestamp)
-        for bar in sorted(bars, key=lambda bar: bar.timestamp)
+        pd.Timestamp(bar.timestamp) for bar in sorted(bars, key=lambda bar: bar.timestamp)
     ]
 
     assert list(frame.index) == expected_order

@@ -1,4 +1,5 @@
-# SPDX-License-Identifier: LicenseRef-TradePulse-Proprietary
+# Copyright (c) 2023-2026 Yaroslav Vasylenko (neuron7xLab)
+# SPDX-License-Identifier: MIT
 """Local adapter implementations for FPM-A ports.
 
 This module provides concrete implementations of FPM-A port interfaces for
@@ -348,9 +349,7 @@ class LocalOptimizer(OptimizationPort):
         # Posterior calculations
         tau_sigma = tau * covariance
         M = np.linalg.inv(np.linalg.inv(tau_sigma) + P.T @ np.linalg.inv(omega) @ P)
-        posterior_returns = M @ (
-            np.linalg.inv(tau_sigma) @ pi + P.T @ np.linalg.inv(omega) @ Q
-        )
+        posterior_returns = M @ (np.linalg.inv(tau_sigma) @ pi + P.T @ np.linalg.inv(omega) @ Q)
 
         return posterior_returns
 

@@ -1,3 +1,5 @@
+# Copyright (c) 2023-2026 Yaroslav Vasylenko (neuron7xLab)
+# SPDX-License-Identifier: MIT
 from __future__ import annotations
 
 import numpy as np
@@ -50,9 +52,7 @@ def test_hasbrouck_information_impulse_handles_signed_root() -> None:
         np.dot(transformed, centered_returns)
         / (np.linalg.norm(transformed) * np.linalg.norm(centered_returns))
     )
-    assert hasbrouck_information_impulse(returns, signed_volume) == pytest.approx(
-        expected
-    )
+    assert hasbrouck_information_impulse(returns, signed_volume) == pytest.approx(expected)
 
 
 def test_hasbrouck_information_impulse_zero_when_no_information() -> None:

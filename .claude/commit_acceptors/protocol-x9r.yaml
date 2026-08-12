@@ -1,0 +1,113 @@
+# Diff-bound commit acceptor for Protocol X-9R/1.0-RUN.
+#
+# Implements the deterministic empirical-falsification machine
+# specified in the Protocol X-9R prompt:
+#
+#   * 9-gate sequential state machine, fail-closed
+#   * three terminal verdicts: PASS / FAIL / BLOCKED_BY_DATA_ACCESS
+#   * three max_claim_tier values: OBSERVED_IN_DATASET / HYPOTHESIS / REJECTED
+#   * full capsule on disk: capsule.json + gate_results.json
+#     + metrics.json + null_audit.json + leakage_report.json
+#     + evidence_ledger.jsonl + death_conditions.json + rerun.sh
+#     + logs/ + figures/ + figure_sources/
+#   * CLI subcommands `run` and `rerun`
+#
+# All nine gates emit the canonical GateResult contract (no boolean
+# gates, no silent failure, no warning instead of failure).
+#
+# Locally verified:
+#   * pytest tests/research/systemic_risk/test_protocol_x9r.py: 30/30 pass
+#   * pytest tests/research/systemic_risk/: 562/562 pass
+#   * mypy --strict on protocol_x9r + tests: 0 errors
+#   * ruff + black: clean
+#   * Smoke run: synthetic dataset → PASS / OBSERVED_IN_DATASET / 9 gates
+#   * rerun.sh on capsule reproduces PASS
+
+id: protocol-x9r
+status: ACTIVE
+claim_type: governance
+promise: >-
+  After this PR lands, ``research.systemic_risk.protocol_x9r`` ships
+  the X-9R deterministic empirical-falsification machine: nine
+  fail-closed gates, three terminal verdicts, full capsule + rerun
+  contract, and a CLI exposing ``run`` and ``rerun``.
+
+diff_scope:
+  changed_files:
+    - path: ".claude/commit_acceptors/protocol-x9r.yaml"
+    - path: "research/systemic_risk/protocol_x9r.py"
+    - path: "tests/research/systemic_risk/test_protocol_x9r.py"
+  forbidden_paths:
+    - "trading/"
+    - "execution/"
+    - "forecast/"
+    - "policy/"
+    - "core/"
+    - "runtime/"
+    - "application/"
+
+required_python_symbols:
+  - "research/systemic_risk/protocol_x9r.py::run_protocol_x9r"
+  - "research/systemic_risk/protocol_x9r.py::rerun_capsule"
+  - "research/systemic_risk/protocol_x9r.py::ProtocolCapsule"
+  - "research/systemic_risk/protocol_x9r.py::GateName"
+  - "research/systemic_risk/protocol_x9r.py::ProtocolVerdict"
+  - "tests/research/systemic_risk/test_protocol_x9r.py::TestHappyPath"
+  - "tests/research/systemic_risk/test_protocol_x9r.py::TestRerunCheck"
+
+expected_signal: >-
+  ``pytest tests/research/systemic_risk/test_protocol_x9r.py -q``
+  reports 30 passed; before this PR the test file does not exist.
+
+measurement_command: >-
+  bash -c '
+    mypy --strict
+      research/systemic_risk/protocol_x9r.py
+      tests/research/systemic_risk/test_protocol_x9r.py && python -m pytest tests/research/systemic_risk/test_protocol_x9r.py -q
+  '
+
+signal_artifact: "tmp/protocol_x9r.log"
+
+falsifier:
+  command: |-
+    bash -c '
+      python -c "
+    from research.systemic_risk.protocol_x9r import (
+        GateName, ProtocolVerdict, MaxClaimTier, run_protocol_x9r, rerun_capsule
+    )
+    assert len(list(GateName)) == 9
+    assert ProtocolVerdict.PASS.value == 'PASS'
+    assert ProtocolVerdict.FAIL.value == 'FAIL'
+    assert ProtocolVerdict.BLOCKED_BY_DATA_ACCESS.value == 'BLOCKED_BY_DATA_ACCESS'
+      " 2>/dev/null && exit 1 || exit 0
+    '
+  description: >-
+    Probes the 9-gate roster + 3-verdict alphabet are exposed.
+    Falsifier inverts: it succeeds (exit 0) only when the import or
+    one of the assertions fails, which would mean Protocol X-9R
+    rolled back.
+
+rollback_command: >-
+  bash -c '
+    git rm -f
+      research/systemic_risk/protocol_x9r.py
+      tests/research/systemic_risk/test_protocol_x9r.py
+      .claude/commit_acceptors/protocol-x9r.yaml
+  '
+
+rollback_verification_command: |-
+  bash -c '
+    python -c "
+  try:
+      from research.systemic_risk.protocol_x9r import run_protocol_x9r
+  except ImportError:
+      pass
+  else:
+      raise SystemExit(1)
+    "
+  '
+
+memory_update_type: append
+ledger_path: ".claude/commit_acceptors/protocol-x9r.yaml"
+report_path: "tmp/protocol_x9r.log"
+evidence: []

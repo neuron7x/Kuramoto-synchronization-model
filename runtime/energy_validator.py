@@ -1,7 +1,9 @@
+# Copyright (c) 2023-2026 Yaroslav Vasylenko (neuron7xLab)
+# SPDX-License-Identifier: MIT
 """Energy Validator Module for TACL
 
 This module implements the thermodynamic energy validation described in docs/TACL.md.
-It validates that the TradePulse execution graph operates within safe energy envelope
+It validates that the GeoSync execution graph operates within safe energy envelope
 before a rollout progresses beyond the laboratory environment.
 
 The validator computes Helmholtz free energy:
@@ -9,7 +11,7 @@ The validator computes Helmholtz free energy:
 
 where:
     U = internal energy (weighted penalties from latency, coherency, resource metrics)
-    T = control temperature (fixed at 0.60 for TradePulse)
+    T = control temperature (fixed at 0.60 for GeoSync)
     S = stability term (proportional to headroom relative to thresholds)
 """
 
@@ -46,23 +48,13 @@ class EnergyConfig:
     # Metric thresholds as specified in docs/TACL.md
     metrics: Tuple[MetricThreshold, ...] = field(
         default_factory=lambda: (
-            MetricThreshold(
-                "latency_p95", "95th percentile end-to-end latency", 85.0, 1.6, "ms"
-            ),
-            MetricThreshold(
-                "latency_p99", "99th percentile end-to-end latency", 120.0, 1.9, "ms"
-            ),
-            MetricThreshold(
-                "coherency_drift", "Fractional drift of shared state", 0.08, 1.2, ""
-            ),
+            MetricThreshold("latency_p95", "95th percentile end-to-end latency", 85.0, 1.6, "ms"),
+            MetricThreshold("latency_p99", "99th percentile end-to-end latency", 120.0, 1.9, "ms"),
+            MetricThreshold("coherency_drift", "Fractional drift of shared state", 0.08, 1.2, ""),
             MetricThreshold("cpu_burn", "CPU utilisation ratio", 0.75, 0.9, ""),
             MetricThreshold("mem_cost", "Memory footprint per node", 6.5, 0.8, "GiB"),
-            MetricThreshold(
-                "queue_depth", "Queue length at activator ingress", 32.0, 0.7, ""
-            ),
-            MetricThreshold(
-                "packet_loss", "Control-plane packet loss ratio", 0.005, 1.4, ""
-            ),
+            MetricThreshold("queue_depth", "Queue length at activator ingress", 32.0, 0.7, ""),
+            MetricThreshold("packet_loss", "Control-plane packet loss ratio", 0.005, 1.4, ""),
         )
     )
 
@@ -280,9 +272,24 @@ class EnergyValidator:
         temperature = self.config.control_temperature
         free_energy = internal_energy - temperature * stability
 
+        # Fail-closed coverage guard: an absent required metric is NOT evidence
+        # of safety. Because compute_internal_energy scores only the metrics that
+        # are present (skipping unknowns) and compute_stability({}) returns 0.0,
+        # a partial/empty dict yields free_energy=0.0 and would PASS on NO
+        # evidence. Require every configured metric to be present; missing
+        # coverage fails closed regardless of the (under-informed) free energy.
+        required = {m.name for m in self.config.metrics}
+        missing = required - set(metrics)
+        coverage_complete = not missing
+        if missing:
+            logger.warning(
+                "Energy validation coverage incomplete; missing required metrics: %s",
+                sorted(missing),
+            )
+
         # Check if validation passes
         threshold = self.config.max_acceptable_energy
-        passed = free_energy <= threshold
+        passed = coverage_complete and (free_energy <= threshold)
         margin = threshold - free_energy
 
         result = EnergyValidationResult(
@@ -349,9 +356,7 @@ class EnergyValidator:
                     for m in self.config.metrics
                 ],
             },
-            "validation_history": [
-                result.to_dict() for result in self.validation_history
-            ],
+            "validation_history": [result.to_dict() for result in self.validation_history],
             "summary": {
                 "total_validations": len(self.validation_history),
                 "passed": sum(1 for r in self.validation_history if r.passed),

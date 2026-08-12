@@ -1,0 +1,87 @@
+{
+  "schema_version": "D002J-PREREG-v1",
+  "study_id": "D-002J",
+  "lineage_type": "fresh_preregistration",
+  "parent_lineage": "D-002H",
+  "parent_canonical_run_merge_sha": "250d8069d16ecabdb49b5a20b7cf1d622eddc925",
+  "parent_canonical_run_verdict": "REFUSED_NULL_AUDIT_FAIL_D002H",
+  "parent_investigation_lineage": "D-002I",
+  "parent_investigation_prereg_sha": "44b18b5a40ce9d188a9c3bd49339621f81a65a15f97a683247902450dd54acec",
+  "parent_investigation_lineage_open_sha": "2e55b73a191503e577fb828c6fcb6616127e41f9",
+  "parent_lineage_prereg_sha": "44b18b5a40ce9d188a9c3bd49339621f81a65a15f97a683247902450dd54acec",
+  "benchmark_only": true,
+  "canonical_run_authorized": false,
+  "requires_power_first_approval": true,
+  "locked_at_merge": true,
+  "edit_policy": "fresh_pre_registration_only",
+  "edit_constitutes": "D002K pre-registration (or successor letter)",
+  "research_questions": [
+    {"id": "RQ1", "question": "Can financially motivated substrates yield stronger signal/null separation than ricci_flow?"},
+    {"id": "RQ2", "question": "Does detectable precursor signal emerge before real crisis windows?"},
+    {"id": "RQ3", "question": "Which null models best kill false signal?"},
+    {"id": "RQ4", "question": "What minimum sample/seed/bootstrap/shuffle budget yields power >= 0.8?"},
+    {"id": "RQ5", "question": "Can we build a reproducible benchmark where negative results carry equal value to positive ones?"}
+  ],
+  "workstreams": [
+    {"id": "W1", "name": "Data Source Matrix", "plan_section": "§6", "scaffold_doc": "docs/research/D002J_DATA_SOURCE_MATRIX.md"},
+    {"id": "W2", "name": "Crisis Window Registry", "plan_section": "§7", "scaffold_doc": "docs/research/D002J_CRISIS_WINDOW_REGISTRY.md"},
+    {"id": "W3", "name": "Synthetic Positive Controls", "plan_section": "§8", "scaffold_doc": null},
+    {"id": "W4", "name": "Financial Mechanistic Substrates", "plan_section": "§9", "scaffold_doc": null},
+    {"id": "W5", "name": "Null Model Hierarchy", "plan_section": "§10", "scaffold_doc": "docs/research/D002J_NULL_MODEL_HIERARCHY.md"},
+    {"id": "W6", "name": "Power-First Canonical Design", "plan_section": "§11", "scaffold_doc": "docs/research/D002J_POWER_FIRST_PROTOCOL.md"},
+    {"id": "W7", "name": "Benchmark Package", "plan_section": "§12", "scaffold_doc": null}
+  ],
+  "crisis_windows": [
+    {"id": "CW1", "name": "GFC", "start_year": 2007, "end_year": 2009},
+    {"id": "CW2", "name": "Eurozone Sovereign", "start_year": 2011, "end_year": 2012},
+    {"id": "CW3", "name": "US Repo Spike", "start_year": 2019, "end_year": 2019},
+    {"id": "CW4", "name": "COVID Dash-for-Cash", "start_year": 2020, "end_year": 2020},
+    {"id": "CW5", "name": "UK Gilt LDI", "start_year": 2022, "end_year": 2022},
+    {"id": "CW6", "name": "Regional Banking Stress", "start_year": 2023, "end_year": 2023}
+  ],
+  "forbidden_claims": [
+    "D-002J rescues D-002H",
+    "D-002J invalidates D-002H REFUSED",
+    "D-002J proves systemic-risk prediction",
+    "D-002J claims real-bank validation without real-bank data",
+    "D-002J generalises across substrates without evidence",
+    "D-002J promotes positive controls as real-world proof",
+    "D-002J allows post-hoc parameter tuning"
+  ],
+  "allowed_claims": [
+    "D-002J builds a financial-mechanistic benchmark lineage",
+    "D-002J tests whether financially motivated substrates improve signal/null separation",
+    "D-002J uses crisis windows as external stress anchors",
+    "D-002J requires positive controls before real-data interpretation",
+    "D-002J requires power-first design before canonical sweep",
+    "D-002J treats negative results as retained evidence"
+  ],
+  "success_criteria": [
+    "source registry assembled",
+    "crisis-window registry created",
+    "known-positive controls created",
+    ">= 2 financial-mechanistic substrates implemented",
+    "null hierarchy implemented",
+    "power-first design executed",
+    "canonical run only after power approval",
+    "all results -> append-only ledger",
+    "benchmark reproducible by one command",
+    "external reader sees research-grade system, not chaos of PRs"
+  ],
+  "failure_criteria": [
+    "positive controls undetected",
+    "null models trivial / no-op",
+    "majority of grid cells underpowered",
+    "signal survives only after post-hoc tuning",
+    "crisis-window labels ambiguous",
+    "data provenance incomplete",
+    "claims exceed boundary",
+    "negative results hidden / off-ledger"
+  ],
+  "locked_anchors": {
+    "d002g_preregistration_sha256": "1ab91f09370e4705a8b0849467bc1f56df2e58d58d5623d3b6d905cbd110bb04",
+    "d002g_acceptance_rules_sha256": "875b1e3eb031b8e5333dc8b455454f0a30419ead1ebe787aa01d5882e7d6ad31",
+    "d002h_preregistration_sha256": "44b18b5a40ce9d188a9c3bd49339621f81a65a15f97a683247902450dd54acec",
+    "d002c_claim_ledger_sha256_at_d002j_prereg": "eb0b7151d76e5409e6dc9bb4a023551de5e0704673d5ac9f726319ef84a32387"
+  }
+}

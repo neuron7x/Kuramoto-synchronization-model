@@ -1,3 +1,5 @@
+# Copyright (c) 2023-2026 Yaroslav Vasylenko (neuron7xLab)
+# SPDX-License-Identifier: MIT
 """Simple data generator replay utility used in FHMC tests."""
 
 from __future__ import annotations
@@ -16,8 +18,6 @@ class SimpleDGR:
             state = np.random.randn(self.dim_state).astype(np.float32)
             action = np.random.randn(self.dim_action).astype(np.float32)
             reward = float(np.random.randn() * 0.01)
-            next_state = state + 0.01 * np.random.randn(self.dim_state).astype(
-                np.float32
-            )
+            next_state = state + 0.01 * np.random.randn(self.dim_state).astype(np.float32)
             batch.append((state, action, reward, next_state))
         return batch

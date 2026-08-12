@@ -1,4 +1,6 @@
-"""Offline safe-mode simulation runner for TradePulse.
+# Copyright (c) 2023-2026 Yaroslav Vasylenko (neuron7xLab)
+# SPDX-License-Identifier: MIT
+"""Offline safe-mode simulation runner for GeoSync.
 
 This module assembles a minimal-yet-representative trading loop that can be
 executed without touching external exchanges, credentials, or networks.  The
@@ -30,7 +32,7 @@ import pandas as pd
 
 from core.indicators.kuramoto_ricci_composite import (
     CompositeSignal,
-    TradePulseCompositeEngine,
+    GeoSyncCompositeEngine,
 )
 from domain import Order, OrderSide, OrderType, Signal, SignalAction
 from execution.audit import ExecutionAuditLogger, get_execution_audit_logger
@@ -48,7 +50,7 @@ from execution.risk import (
     RiskManager,
 )
 
-LOGGER = logging.getLogger("tradepulse.local_sim")
+LOGGER = logging.getLogger("geosync.local_sim")
 
 
 @dataclass(slots=True, frozen=True)
@@ -167,19 +169,15 @@ def _load_prices(config: SimulationConfig) -> pd.DataFrame:
     shocks = rng.normal(loc=drift, scale=volatility, size=length)
     log_prices = np.log(config.initial_price) + np.cumsum(shocks)
     prices = np.exp(log_prices)
-    volume = rng.lognormal(
-        mean=config.volume_mean, sigma=config.volume_sigma, size=length
-    )
+    volume = rng.lognormal(mean=config.volume_mean, sigma=config.volume_sigma, size=length)
     mock = pd.DataFrame({"close": prices, "volume": volume}, index=index)
     if not df.empty:
         mock = pd.concat([df, mock]).tail(config.history_length)
     return mock
 
 
-def _build_signal(
-    df: pd.DataFrame, config: SimulationConfig
-) -> tuple[CompositeSignal, Signal]:
-    engine = TradePulseCompositeEngine()
+def _build_signal(df: pd.DataFrame, config: SimulationConfig) -> tuple[CompositeSignal, Signal]:
+    engine = GeoSyncCompositeEngine()
     composite = engine.analyze_market(df)
     entry = float(composite.entry_signal)
     exit_level = float(composite.exit_signal)
@@ -214,9 +212,7 @@ def _build_signal(
     return composite, signal
 
 
-def _derive_order_quantity(
-    signal: Signal, config: SimulationConfig, price: float
-) -> float:
+def _derive_order_quantity(signal: Signal, config: SimulationConfig, price: float) -> float:
     magnitude = abs(float(signal.metadata.get("entry_signal", 0.0)))
     risk_multiplier = float(signal.metadata.get("risk_multiplier", 1.0))
     scaled = config.base_order_size * max(magnitude, config.entry_threshold)
@@ -240,9 +236,7 @@ def run_local_sim(config: SimulationConfig | None = None) -> SimulationResult:
     LOGGER.info("Starting offline simulation", extra={"event": "sim.start"})
 
     prices = _load_prices(cfg)
-    LOGGER.info(
-        "Loaded price series", extra={"event": "sim.prices_loaded", "rows": len(prices)}
-    )
+    LOGGER.info("Loaded price series", extra={"event": "sim.prices_loaded", "rows": len(prices)})
 
     composite, signal = _build_signal(prices, cfg)
     LOGGER.info(
@@ -274,9 +268,7 @@ def run_local_sim(config: SimulationConfig | None = None) -> SimulationResult:
             order_type=OrderType.MARKET,
         )
         try:
-            risk_manager.validate_order(
-                order.symbol, order.side.value, order.quantity, last_price
-            )
+            risk_manager.validate_order(order.symbol, order.side.value, order.quantity, last_price)
         except (LimitViolation, OrderRateExceeded) as exc:
             LOGGER.warning(
                 "Risk check rejected order",
@@ -297,9 +289,7 @@ def run_local_sim(config: SimulationConfig | None = None) -> SimulationResult:
             risk_result = RiskCheckResult(status="passed", kill_switch_engaged=False)
             engine = PaperTradingEngine(
                 SimulatedExchangeConnector(),
-                latency_model=DeterministicLatencyModel(
-                    ack_delay=0.05, fill_delay=0.15
-                ),
+                latency_model=DeterministicLatencyModel(ack_delay=0.05, fill_delay=0.15),
             )
             execution_report = engine.execute_order(
                 order,
@@ -307,9 +297,7 @@ def run_local_sim(config: SimulationConfig | None = None) -> SimulationResult:
                 metadata={"simulation": True, "phase": signal.metadata.get("phase")},
             )
             fill_side = "buy" if order.side is OrderSide.BUY else "sell"
-            risk_manager.register_fill(
-                order.symbol, fill_side, order.quantity, last_price
-            )
+            risk_manager.register_fill(order.symbol, fill_side, order.quantity, last_price)
             LOGGER.info(
                 "Executed simulated order",
                 extra={
@@ -347,9 +335,7 @@ def run_local_sim(config: SimulationConfig | None = None) -> SimulationResult:
 
 
 if __name__ == "__main__":  # pragma: no cover - manual execution helper
-    logging.basicConfig(
-        level=logging.INFO, format="%(asctime)s %(levelname)s %(message)s"
-    )
+    logging.basicConfig(level=logging.INFO, format="%(asctime)s %(levelname)s %(message)s")
     result = run_local_sim()
     for key, value in result.summary().items():
         LOGGER.info("%s: %s", key, value)

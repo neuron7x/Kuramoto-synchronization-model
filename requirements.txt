@@ -4,7 +4,7 @@ scipy>=1.16.2
 pandas>=2.3.3
 networkx>=3.5
 deap>=1.4.1
-torch>=2.1.0
+torch>=2.11.0
 scikit-learn>=1.3.0
 joblib>=1.4.2
 SQLAlchemy>=2.0.36
@@ -14,7 +14,7 @@ numba>=0.60.0
 # Data validation
 pydantic>=2.12.4,<3.0.0
 pydantic-settings>=2.12.0,<3.0.0
-pandera>=0.20.4,<0.27
+pandera>=0.20.4,<1.0.0
 exchange-calendars>=4.11.1
 
 # Configuration & instrumentation
@@ -33,12 +33,12 @@ websockets>=15.0.1
 ccxt>=4.5.12
 tenacity>=9.1.2
 aiolimiter>=1.2.1
-fastapi>=0.120.0,<1.0.0
-strawberry-graphql[fastapi]>=0.214.0
+fastapi>=0.139.0,<1.0.0
+strawberry-graphql[fastapi]>=0.312.3
 alembic>=1.14.0
 psycopg[binary]>=3.2.3
 
-# Optional feature store backends are available via `pip install tradepulse[feature_store]`
+# Optional feature store backends are available via `pip install geosync[feature_store]`
 
 # Templates & packaging helpers
 click>=8.3.0
@@ -50,6 +50,14 @@ streamlit>=1.31.0
 streamlit-authenticator>=0.3.1
 
 # Security: security-critical transitive dependencies are pinned via constraints/security.txt
-PyJWT[crypto]>=2.9.0
-cryptography>=46.0.3
+# Direct floors below are raised to patched versions so the dependency graph
+# (Dependabot resolves the manifest, NOT constraints/security.txt) cannot select a
+# vulnerable release. Mirrors constraints/security.txt.
+PyJWT[crypto]>=2.13.0          # GHSA-xgmm-8j9v-c9wx + key-confusion series; <2.13.0 vulnerable
+cryptography>=49.0.0           # GHSA-537c-gmf6-5ccf; <48.0.1 vulnerable
 requests>=2.32.5
+# Transitive HTTP/ASGI stack pinned to patched floors (enter via fastapi/streamlit/strawberry):
+aiohttp>=3.14.1                # GHSA-xcgm-r5h9-7989 et al. (parsing/DoS); <=3.14.0 vulnerable
+starlette>=1.3.1               # CVE-2025-52316 FileResponse Range-header DoS; <1.3.1 vulnerable
+tornado>=6.5.7                 # GHSA-pw6j-qg29-8w7f; <=6.5.6 vulnerable
+python-multipart>=0.0.32       # GHSA DoS series; <0.0.30/0.0.31 vulnerable

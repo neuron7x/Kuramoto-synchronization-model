@@ -1,3 +1,5 @@
+# Copyright (c) 2023-2026 Yaroslav Vasylenko (neuron7xLab)
+# SPDX-License-Identifier: MIT
 """Test quality validation tool.
 
 Validates test quality metrics including:
@@ -97,9 +99,7 @@ class TestQualityAnalyzer(ast.NodeVisitor):
 
         # Check for fixture usage
         if any(
-            dec.id == "pytest.fixture"
-            for dec in node.decorator_list
-            if isinstance(dec, ast.Name)
+            dec.id == "pytest.fixture" for dec in node.decorator_list if isinstance(dec, ast.Name)
         ):
             self.metrics.has_fixtures = True
 
@@ -117,9 +117,7 @@ class TestQualityAnalyzer(ast.NodeVisitor):
         # Smell 1: Too many assertions (indicates test doing too much)
         assertions = [n for n in ast.walk(node) if isinstance(n, ast.Assert)]
         if len(assertions) > 10:
-            self.metrics.test_smells.append(
-                f"{node.name}: Too many assertions ({len(assertions)})"
-            )
+            self.metrics.test_smells.append(f"{node.name}: Too many assertions ({len(assertions)})")
 
         # Smell 2: No assertions at all
         if len(assertions) == 0:
@@ -132,9 +130,7 @@ class TestQualityAnalyzer(ast.NodeVisitor):
         prints = [
             n
             for n in ast.walk(node)
-            if isinstance(n, ast.Call)
-            and isinstance(n.func, ast.Name)
-            and n.func.id == "print"
+            if isinstance(n, ast.Call) and isinstance(n.func, ast.Name) and n.func.id == "print"
         ]
         if prints:
             self.metrics.test_smells.append(
@@ -150,16 +146,12 @@ class TestQualityAnalyzer(ast.NodeVisitor):
             and n.func.attr == "sleep"
         ]
         if sleeps:
-            self.metrics.test_smells.append(
-                f"{node.name}: Contains sleep calls ({len(sleeps)})"
-            )
+            self.metrics.test_smells.append(f"{node.name}: Contains sleep calls ({len(sleeps)})")
 
         # Smell 5: Hardcoded values that should be parametrized
         # Check for similar test names (indication that tests should be parametrized)
         if "_1" in node.name or "_2" in node.name or "_test1" in node.name:
-            self.metrics.test_smells.append(
-                f"{node.name}: Might benefit from parametrization"
-            )
+            self.metrics.test_smells.append(f"{node.name}: Might benefit from parametrization")
 
 
 class TestQualityValidator:
@@ -215,18 +207,14 @@ class TestQualityValidator:
 
         # Find problematic files
         low_quality_files = [m for m in self.file_metrics if m.quality_score < 60]
-        undocumented_files = [
-            m for m in self.file_metrics if m.documentation_rate < 0.5
-        ]
+        undocumented_files = [m for m in self.file_metrics if m.documentation_rate < 0.5]
 
         report = {
             "summary": {
                 "total_test_files": len(self.file_metrics),
                 "total_tests": total_tests,
                 "documented_tests": total_documented,
-                "documentation_rate": (
-                    total_documented / total_tests if total_tests > 0 else 0
-                ),
+                "documentation_rate": (total_documented / total_tests if total_tests > 0 else 0),
                 "total_smells": total_smells,
                 "avg_quality_score": avg_quality_score,
             },
@@ -286,9 +274,7 @@ class TestQualityValidator:
         elif summary["avg_quality_score"] >= 60:
             print("\n⚠️  GOOD - Test suite quality is acceptable but can be improved")
         else:
-            print(
-                "\n❌ NEEDS IMPROVEMENT - Test suite quality is below acceptable standards"
-            )
+            print("\n❌ NEEDS IMPROVEMENT - Test suite quality is below acceptable standards")
 
         # Show problematic files
         if report["problematic_files"]["low_quality"]:
@@ -351,9 +337,7 @@ def main(argv: list[str] | None = None) -> int:
     # Check threshold
     avg_score = report["summary"]["avg_quality_score"]
     if args.fail_under and avg_score < args.threshold:
-        print(
-            f"\n❌ Quality score {avg_score:.1f} is below threshold {args.threshold:.1f}"
-        )
+        print(f"\n❌ Quality score {avg_score:.1f} is below threshold {args.threshold:.1f}")
         return 1
 
     return 0

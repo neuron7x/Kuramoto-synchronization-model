@@ -1,0 +1,63 @@
+# SPDX-License-Identifier: MIT
+id: null-adequacy-audit
+status: DRAFT
+claim_type: governance
+promise: >-
+  Tasks 01-03 of the validation-hardening act. (01) A machine-checked null-path
+  inventory maps every null generator by structure-preservation class and every
+  claim-bearing path by null adequacy; the checker fails closed if a listed file
+  vanishes. (02) An empirical audit shows i.i.d. Gaussian null retains ~0 lag-1
+  autocorrelation (~0.008) versus an autocorrelated AR(1) reference (~0.810), so
+  it is inadequate for autocorrelated phase/order-parameter series; the evidence
+  is committed. (03) A fail-closed primitive refuses an i.i.d. null for an
+  autocorrelated series, requiring a structure-preserving null. No predictive or
+  market claim; statistical-adequacy infrastructure only.
+diff_scope:
+  changed_files:
+    - path: ".claude/commit_acceptors/null-adequacy-audit.yaml"
+    - path: "tools/validation/audit_gaussian_null_sufficiency.py"
+    - path: "tools/validation/null_adequacy.py"
+    - path: "tools/validation/check_null_path_inventory.py"
+    - path: "docs/validation/NULL_PATH_INVENTORY.md"
+    - path: "docs/validation/evidence/gaussian_null_sufficiency.json"
+    - path: "tests/validation/test_gaussian_null_sufficiency.py"
+    - path: "tests/validation/test_null_adequacy.py"
+    - path: "tests/tools/test_null_path_inventory.py"
+  forbidden_paths:
+    - "trading/"
+    - "execution/"
+    - "forecast/"
+    - "policy/"
+required_python_symbols: []
+expected_signal: >-
+  audit_gaussian_null_sufficiency reports inadequate=True (iid lag1 < threshold <
+  ar1 lag1); require_structure_preserving_null refuses an i.i.d. null on an
+  autocorrelated series and accepts a structure-preserving one; the inventory
+  checker passes; pytest tests/validation tests/tools/test_null_path_inventory.py
+  all pass.
+measurement_command: >-
+  bash -c 'python -m pytest -q tests/validation/test_gaussian_null_sufficiency.py tests/validation/test_null_adequacy.py tests/tools/test_null_path_inventory.py && python tools/validation/check_null_path_inventory.py'
+signal_artifact: "tmp/null_adequacy.log"
+falsifier:
+  command: |
+    python -c "import importlib.util, sys, contextlib
+    import numpy as np
+    s = importlib.util.spec_from_file_location('na', 'tools/validation/null_adequacy.py')
+    na = importlib.util.module_from_spec(s); sys.modules['na'] = na; s.loader.exec_module(na)
+    rng = np.random.default_rng(1); x = np.empty(2048); x[0] = rng.standard_normal()
+    for t in range(1, 2048): x[t] = 0.8 * x[t-1] + rng.standard_normal()
+    raised = True
+    with contextlib.suppress(ValueError):
+        na.require_structure_preserving_null(x, 'gaussian'); raised = False
+    sys.exit(1 if raised else 0)"
+  description: >-
+    Challenges an autocorrelated AR(1) series with an i.i.d. Gaussian null and
+    exits 0 only if the gate ALLOWS it (the regressed fail-open state). On the
+    correct tree the gate refuses it, so the command exits non-zero — proving
+    the null-adequacy enforcement is real, not decorative.
+rollback_command: "git revert --no-edit HEAD"
+rollback_verification_command: "git diff --exit-code tools/validation/null_adequacy.py"
+memory_update_type: none
+ledger_path: ".claude/commit_acceptors/null-adequacy-audit.yaml"
+report_path: "docs/reports/diff_bound_commit_acceptor_layer.md"
+evidence: []

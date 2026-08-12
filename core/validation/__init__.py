@@ -1,4 +1,6 @@
-"""Core validation modules for TradePulse system integrity.
+# Copyright (c) 2023-2026 Yaroslav Vasylenko (neuron7xLab)
+# SPDX-License-Identifier: MIT
+"""Core validation modules for GeoSync system integrity.
 
 This package provides comprehensive validation components built on three foundational
 pillars as specified in the architecture:
@@ -12,7 +14,7 @@ These validators ensure the system operates within physically plausible bounds,
 maintains neurologically-inspired coherence, and enforces mathematical rigor
 across all data transformations.
 
-For more information, see the documentation at https://docs.tradepulse.io/validation
+For more information, see the documentation at https://docs.geosync.io/validation
 """
 
 from .mathematical_logic import (

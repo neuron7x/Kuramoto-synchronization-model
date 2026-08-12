@@ -1,3 +1,5 @@
+# Copyright (c) 2023-2026 Yaroslav Vasylenko (neuron7xLab)
+# SPDX-License-Identifier: MIT
 from __future__ import annotations
 
 from dataclasses import dataclass
@@ -83,9 +85,7 @@ def test_in_memory_cache_promotes_hot_entries() -> None:
 
 def test_adaptive_ttl_increases_for_hot_keys() -> None:
     metrics = CacheMetrics()
-    ttl_strategy = AdaptiveTTLStrategy(
-        base_ttl=10.0, max_ttl=100.0, hot_hit_threshold=2
-    )
+    ttl_strategy = AdaptiveTTLStrategy(base_ttl=10.0, max_ttl=100.0, hot_hit_threshold=2)
     layer = InMemoryCacheLayer(
         "layer",
         max_entries=5,
@@ -110,9 +110,7 @@ def test_vector_index_returns_ranked_matches() -> None:
     cache = build_default_cache_system()
     vector = np.array([1.0, 0.0], dtype=np.float32)
     cache.vector_index.add("prompt:1", vector, {"prompt": "alpha"})
-    cache.vector_index.add(
-        "prompt:2", np.array([0.0, 1.0], dtype=np.float32), {"prompt": "beta"}
-    )
+    cache.vector_index.add("prompt:2", np.array([0.0, 1.0], dtype=np.float32), {"prompt": "beta"})
 
     results = cache.vector_index.query(np.array([0.9, 0.1], dtype=np.float32), top_k=1)
     assert results
@@ -164,9 +162,7 @@ def test_control_cold_regions_flags_low_hit_rate() -> None:
     def remediation(region: str) -> None:
         cold_regions.append(region)
 
-    flagged = cache.control_cold_regions(
-        threshold=0.5, min_requests=2, remediate=remediation
-    )
+    flagged = cache.control_cold_regions(threshold=0.5, min_requests=2, remediate=remediation)
     assert flagged == ["prompts"]
     assert cold_regions == ["prompts"]
 

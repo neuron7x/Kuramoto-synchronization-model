@@ -1,3 +1,5 @@
+# Copyright (c) 2023-2026 Yaroslav Vasylenko (neuron7xLab)
+# SPDX-License-Identifier: MIT
 """Generate strongly-typed models and JSON Schema documents from Avro schemas."""
 
 from __future__ import annotations
@@ -243,11 +245,7 @@ class AvroSchemaCollector:
             elif field.default_value is not None:
                 fragment.setdefault("default", field.default_value)
             schema["properties"][field.name] = fragment
-            if (
-                not field.optional
-                and field.default is None
-                and field.default_factory is None
-            ):
+            if not field.optional and field.default is None and field.default_factory is None:
                 required.append(field.name)
 
         if required:
@@ -267,9 +265,7 @@ class AvroSchemaCollector:
             elif candidate in self.records:
                 definition = _render_record_definition(self.records[candidate])
                 defs[candidate] = definition
-                nested_refs = _collect_references(
-                    definition.get("properties", {}).values()
-                )
+                nested_refs = _collect_references(definition.get("properties", {}).values())
                 queue.extend(nested_refs)
         if defs:
             schema["$defs"] = defs
@@ -381,11 +377,7 @@ def _render_record_definition(record: RecordDefinition) -> Dict[str, Any]:
         elif field.default_value is not None:
             fragment.setdefault("default", field.default_value)
         properties[field.name] = fragment
-        if (
-            not field.optional
-            and field.default is None
-            and field.default_factory is None
-        ):
+        if not field.optional and field.default is None and field.default_factory is None:
             required.append(field.name)
     schema: Dict[str, Any] = {"type": "object", "properties": properties}
     if required:
@@ -432,9 +424,7 @@ def _is_null_type(value) -> bool:
 
 
 def main() -> None:
-    parser = argparse.ArgumentParser(
-        description="Generate event types from Avro schemas"
-    )
+    parser = argparse.ArgumentParser(description="Generate event types from Avro schemas")
     parser.add_argument(
         "--registry", default="schemas/events", help="Path to schema registry directory"
     )

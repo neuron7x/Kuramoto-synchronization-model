@@ -38,11 +38,11 @@ type AuthContextValue = {
   refresh: () => Promise<void>
 }
 
-const PUBLIC_ROUTES = ['/signin']
-const AUTH_BROADCAST_CHANNEL = 'tp.auth:channel'
+const PUBLIC_ROUTES = ['/signin', '/edge-probe']
+const AUTH_BROADCAST_CHANNEL = 'gs.auth:channel'
 const REFRESH_THRESHOLD_MS = 60_000
-const CSRF_COOKIE_NAME = 'tp.csrfToken'
-const CSRF_HEADER_NAME = 'x-tradepulse-csrf'
+const CSRF_COOKIE_NAME = 'gs.csrfToken'
+const CSRF_HEADER_NAME = 'x-geosync-csrf'
 
 function readCookie(name: string): string | null {
   if (typeof document === 'undefined') {

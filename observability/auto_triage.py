@@ -1,3 +1,5 @@
+# Copyright (c) 2023-2026 Yaroslav Vasylenko (neuron7xLab)
+# SPDX-License-Identifier: MIT
 """Automated incident triage orchestration utilities.
 
 This module provides a high-level orchestrator that automates the
@@ -19,7 +21,7 @@ import json
 import shutil
 import subprocess
 
-# SPDX-License-Identifier: LicenseRef-TradePulse-Proprietary
+# SPDX-License-Identifier: MIT
 from dataclasses import dataclass, field
 from datetime import datetime, timezone
 from pathlib import Path
@@ -97,7 +99,7 @@ class AutoTriageConfig:
     runbook_links: Sequence[str] = field(default_factory=tuple)
     dashboard_links: Sequence[str] = field(default_factory=tuple)
     owner_routes: Mapping[str, str] = field(default_factory=dict)
-    default_owner: str = "sre@tradepulse.io"
+    default_owner: str = "sre@geosync.io"
     ticket_project: str = "INC"
     ticket_template: str = "model-degradation-triage"
     severity_map: Mapping[str, str] = field(
@@ -157,9 +159,7 @@ class AutoTriageOrchestrator:
         now: Callable[[], datetime] | None = None,
     ) -> None:
         self._config = config
-        self._incident_manager = incident_manager or IncidentManager(
-            config.incident_root
-        )
+        self._incident_manager = incident_manager or IncidentManager(config.incident_root)
         self._now: Callable[[], datetime] = now or (lambda: datetime.now(timezone.utc))
 
     # ------------------------------------------------------------------
@@ -229,9 +229,7 @@ class AutoTriageOrchestrator:
         steps.append(self._collect_logs(triage_dir))
         steps.append(self._collect_traffic(triage_dir))
 
-        ticket_path = self._create_ticket(
-            triage_dir, incident, detection, owner, context
-        )
+        ticket_path = self._create_ticket(triage_dir, incident, detection, owner, context)
         steps.append(
             TriageStepReport(
                 name="ticketing",
@@ -244,9 +242,7 @@ class AutoTriageOrchestrator:
         resources_step = self._write_resources(triage_dir, context)
         steps.append(resources_step)
 
-        steps.append(
-            self._write_postmortem(triage_dir, incident, detection, owner, context)
-        )
+        steps.append(self._write_postmortem(triage_dir, incident, detection, owner, context))
 
         steps.append(self._write_recovery_plan(triage_dir))
 
@@ -321,9 +317,7 @@ class AutoTriageOrchestrator:
             if self._SEVERITY_ORDER[severity] > self._SEVERITY_ORDER[highest_severity]:
                 highest_severity = severity
 
-            reasons.append(
-                f"{threshold.name} {value:.4g} vs {boundary:.4g} ({severity})"
-            )
+            reasons.append(f"{threshold.name} {value:.4g} vs {boundary:.4g} ({severity})")
 
         if not violations:
             return DetectionResult(
@@ -346,11 +340,7 @@ class AutoTriageOrchestrator:
         context: Mapping[str, Any],
     ) -> IncidentRecord:
         severity = self._config.severity_map.get(detection.severity, "major")
-        title = (
-            context.get("incident_title")
-            or context.get("service")
-            or "Automated degradation"
-        )
+        title = context.get("incident_title") or context.get("service") or "Automated degradation"
         description_parts = [
             "Automated triage executed due to metric degradation.",
             f"Detected violations: {detection.reason}.",
@@ -373,9 +363,7 @@ class AutoTriageOrchestrator:
         )
 
     def _resolve_owner(self, context: Mapping[str, Any]) -> str:
-        service = (
-            str(context.get("service")) if context.get("service") is not None else None
-        )
+        service = str(context.get("service")) if context.get("service") is not None else None
         if service and service in self._config.owner_routes:
             return self._config.owner_routes[service]
         return self._config.default_owner
@@ -439,9 +427,7 @@ class AutoTriageOrchestrator:
                     check=False,
                     env=None,
                 )
-            except (
-                FileNotFoundError
-            ) as exc:  # pragma: no cover - depends on environment
+            except FileNotFoundError as exc:  # pragma: no cover - depends on environment
                 error_payload: dict[str, Any] = {
                     "command": serialized_command,
                     "error": str(exc),
@@ -556,12 +542,8 @@ class AutoTriageOrchestrator:
             "owner": owner,
             "context": dict(context),
             "created_at": self._now().isoformat(),
-            "escalation_contacts": list(
-                self._config.escalation_policy.get(detection.severity, ())
-            ),
-            "communication_template": self._config.communication_templates.get(
-                detection.severity
-            ),
+            "escalation_contacts": list(self._config.escalation_policy.get(detection.severity, ())),
+            "communication_template": self._config.communication_templates.get(detection.severity),
         }
         ticket_path = ticket_dir / f"{ticket_id}.json"
         ticket_path.write_text(
@@ -581,9 +563,7 @@ class AutoTriageOrchestrator:
             "training_schedule": list(self._config.training_schedule),
         }
         path = triage_dir / "resources.json"
-        path.write_text(
-            json.dumps(resources, indent=2, sort_keys=True), encoding="utf-8"
-        )
+        path.write_text(json.dumps(resources, indent=2, sort_keys=True), encoding="utf-8")
         return TriageStepReport(
             name="knowledge",
             status="completed",
@@ -681,9 +661,7 @@ class AutoTriageOrchestrator:
             "context": dict(context),
             "assigned_at": self._now().isoformat(),
         }
-        owner_path.write_text(
-            json.dumps(payload, indent=2, sort_keys=True), encoding="utf-8"
-        )
+        owner_path.write_text(json.dumps(payload, indent=2, sort_keys=True), encoding="utf-8")
 
     def _write_summary(
         self,
@@ -697,9 +675,7 @@ class AutoTriageOrchestrator:
     ) -> Path:
         summary_root = self._config.incident_root / "automation_runs"
         summary_root.mkdir(parents=True, exist_ok=True)
-        summary_path = (
-            summary_root / f"auto_triage_{started_at.strftime('%Y%m%dT%H%M%S')}.json"
-        )
+        summary_path = summary_root / f"auto_triage_{started_at.strftime('%Y%m%dT%H%M%S')}.json"
 
         payload = {
             "started_at": started_at.isoformat(),
@@ -732,9 +708,7 @@ class AutoTriageOrchestrator:
                 "summary_path": str(incident.summary_path),
             }
 
-        summary_path.write_text(
-            json.dumps(payload, indent=2, sort_keys=True), encoding="utf-8"
-        )
+        summary_path.write_text(json.dumps(payload, indent=2, sort_keys=True), encoding="utf-8")
         return summary_path
 
     def _enforce_archive_budget(self) -> None:

@@ -1,3 +1,5 @@
+# Copyright (c) 2023-2026 Yaroslav Vasylenko (neuron7xLab)
+# SPDX-License-Identifier: MIT
 """
 ThermoController HPC-AI Integration Example
 
@@ -7,8 +9,8 @@ for thermodynamic-aware adaptive trading.
 
 import networkx as nx
 
-from neuropro.hpc_validation import generate_synthetic_data
 from core.utils.determinism import DEFAULT_SEED
+from geosync_hpc.hpc_validation import generate_synthetic_data
 from runtime.thermo_controller import ThermoController
 
 
@@ -87,9 +89,7 @@ def main():
     print("-" * 80)
     market_data = generate_synthetic_data(n_days=500, seed=DEFAULT_SEED)
     print(f"Generated {len(market_data)} days of market data")
-    print(
-        f"Price range: ${market_data['close'].min():.2f} - ${market_data['close'].max():.2f}"
-    )
+    print(f"Price range: ${market_data['close'].min():.2f} - ${market_data['close'].max():.2f}")
     print()
 
     # Step 4: Run combined control loop
@@ -163,9 +163,9 @@ def main():
         action_counts[action] += 1
 
     total_actions = len(actions)
-    print(f"  HOLD: {action_counts[0]:2d} ({action_counts[0]/total_actions:5.1%})")
-    print(f"  BUY:  {action_counts[1]:2d} ({action_counts[1]/total_actions:5.1%})")
-    print(f"  SELL: {action_counts[2]:2d} ({action_counts[2]/total_actions:5.1%})")
+    print(f"  HOLD: {action_counts[0]:2d} ({action_counts[0] / total_actions:5.1%})")
+    print(f"  BUY:  {action_counts[1]:2d} ({action_counts[1] / total_actions:5.1%})")
+    print(f"  SELL: {action_counts[2]:2d} ({action_counts[2] / total_actions:5.1%})")
     print()
 
     print("Circuit Breaker Status:")

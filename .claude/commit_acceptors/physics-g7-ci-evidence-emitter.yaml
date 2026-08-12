@@ -1,0 +1,85 @@
+# Diff-bound acceptor: G7 CI-evidence emitter (issue #1228).
+#
+# tools/physics_score.py::ci_status() flips physics_runtime_green only when the
+# five required physics workflows recorded a completed/success run whose
+# head_sha equals the scored commit (BLOCK-CI-001). A *validator*
+# (tools/physics_ci_evidence.py) already existed, but there was no *emitter*:
+# artifacts/physics_validation/ci_evidence_summary.json was hand-maintained and
+# stale-bound to an earlier PR's merge SHA, so the live computed score sat at
+# the fail-closed tier (78.0) while the persisted artifact still showed 81.5.
+#
+# This change adds tools/physics/emit_ci_evidence.py, which records ONLY
+# completed/success runs whose head_sha equals the scored commit from the real
+# GitHub Actions run ledger, plus a CI workflow that makes the commit-binding a
+# required, exercised contract. It changes NO scoring logic in physics_score.py;
+# the score moves only on real same-SHA green CI. Copied (stale head_sha)
+# evidence is dropped fail-closed and can never raise the score.
+
+id: physics-g7-ci-evidence-emitter
+status: ACTIVE
+claim_type: fail_closed
+promise: >-
+  Adds tools/physics/emit_ci_evidence.py: a same-SHA-bound emitter for
+  artifacts/physics_validation/ci_evidence_summary.json. build_evidence_summary
+  records only completed/success workflow runs whose head_sha equals the scored
+  commit (git rev-parse HEAD / $GITHUB_SHA); runs bound to a different commit
+  are dropped fail-closed. Adds tests/test_emit_ci_evidence.py (acceptance:
+  same-SHA green flips physics_runtime_green and raises the computed score from
+  the 78.0 fail-closed tier to the 81.5 runtime-green tier; falsifier: stale-SHA
+  evidence keeps BLOCK-CI-001 and holds the score at 78.0). Adds the Physics CI
+  Evidence Emitter workflow that runs the acceptance/falsifier suite fail-closed
+  and emits/uploads the same-SHA evidence + computed score. No scoring logic in
+  tools/physics_score.py is changed; no baseline_score.json is hand-edited; the
+  required_physics workflow set is not relaxed. ruff/black/mypy --strict clean;
+  no type:ignore / noqa added.
+diff_scope:
+  changed_files:
+    - path: ".claude/commit_acceptors/physics-g7-ci-evidence-emitter.yaml"
+    - path: "tools/physics/emit_ci_evidence.py"
+    - path: "tests/test_emit_ci_evidence.py"
+    - path: ".github/workflows/physics-ci-evidence-emitter.yml"
+  forbidden_paths:
+    - "trading/"
+    - "execution/"
+    - "forecast/"
+    - "policy/"
+required_python_symbols:
+  - "build_evidence_summary"
+  - "fetch_runs"
+  - "scored_commit_sha"
+  - "write_summary"
+  - "main"
+expected_signal: >-
+  PYTHONPATH=. pytest tests/test_emit_ci_evidence.py is green (5 cases);
+  same-SHA green evidence clears BLOCK-CI-001 and yields S_total == 81.5;
+  stale-SHA evidence keeps BLOCK-CI-001 and holds S_total == 78.0;
+  mypy --strict clean on tools/physics/emit_ci_evidence.py; ruff + black clean.
+measurement_command: >-
+  PYTHONPATH=. python -m pytest tests/test_emit_ci_evidence.py -q
+signal_artifact: "tmp/physics_g7_ci_evidence_pytest.log"
+falsifier:
+  command: >-
+    python -c "import importlib.util, sys;
+    spec=importlib.util.spec_from_file_location('e','tools/physics/emit_ci_evidence.py');
+    m=importlib.util.module_from_spec(spec); sys.modules['e']=m; spec.loader.exec_module(m);
+    scored='a'*40; stale='b'*40;
+    green=[{'name':n,'status':'completed','conclusion':'success','headSha':stale} for n in m.REQUIRED_PHYSICS_WORKFLOWS];
+    s=m.build_evidence_summary(green, scored);
+    sys.exit(0 if (s['workflow_runs']==[] and s['score_implication']['may_upgrade_runtime_status'] is False) else 1)"
+  description: >-
+    Inverse probe for the BLOCK-CI-001 binding: feeds an all-green run ledger
+    bound to a STALE commit (stale head_sha) while scoring a DIFFERENT commit,
+    and exits non-zero unless every stale run is dropped (workflow_runs empty)
+    and may_upgrade_runtime_status is False. Fires iff the same-SHA binding is
+    weakened so copied evidence could strip the physics CI blocker — the exact
+    Goodhart attack the emitter exists to prevent.
+rollback_command: >-
+  git rm -f tools/physics/emit_ci_evidence.py tests/test_emit_ci_evidence.py
+  .github/workflows/physics-ci-evidence-emitter.yml
+  .claude/commit_acceptors/physics-g7-ci-evidence-emitter.yaml
+rollback_verification_command: >-
+  test ! -f tools/physics/emit_ci_evidence.py
+memory_update_type: append
+ledger_path: ".claude/commit_acceptors/physics-g7-ci-evidence-emitter.yaml"
+report_path: ".claude/commit_acceptors/physics-g7-ci-evidence-emitter.yaml"
+evidence: []

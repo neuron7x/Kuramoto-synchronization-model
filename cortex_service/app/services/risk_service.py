@@ -1,3 +1,5 @@
+# Copyright (c) 2023-2026 Yaroslav Vasylenko (neuron7xLab)
+# SPDX-License-Identifier: MIT
 """Service for risk assessment business logic."""
 
 from __future__ import annotations
@@ -56,9 +58,7 @@ class RiskService:
 
             return assessment
         except ValueError as exc:
-            raise ValidationError(
-                f"Invalid exposures for risk computation: {exc}"
-            ) from exc
+            raise ValidationError(f"Invalid exposures for risk computation: {exc}") from exc
 
 
 __all__ = ["RiskService"]

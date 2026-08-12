@@ -1,0 +1,128 @@
+# GeoSync research-line registry
+# Purpose: machine-readable record of research lines and their terminal status.
+# Any line with status != OPEN is immutable and may NOT be revived on the same
+# substrate / family without starting a new line_id.
+#
+# Schema:
+#   lines:
+#     <line_id>:
+#       signal_family:                   string  (the signal the line tests)
+#       substrate:                       string  (data substrate key)
+#       universe:                        list[string]
+#       status:                          OPEN | REJECTED | SUPERSEDED
+#       verdict:                         PASS | FAIL | INCONCLUSIVE | null
+#       wave2_authorized:                bool
+#       parameter_rescue_allowed:        bool
+#       same_family_same_substrate_retest_allowed: bool
+#       allowed_next_action:             string (enum)
+#       evidence_path:                   string (repo-relative dir)
+#       lock_sha:                        string (git SHA at preregistration lock)
+#       complete_sha:                    string (git SHA at run completion)
+#       canonical_fail_note:             string (path to FAIL note, if any)
+#
+# Registry consumers:
+#   tests/test_research_line_registry.py — enforces rejected lines stay dead.
+
+schema_version: 1
+
+# Allowed next-action vocabulary (closed set, referenced by validator)
+allowed_next_actions:
+  - none
+  - continue_same_line
+  - new_fx_native_prereg_only
+  - new_equity_native_prereg_only
+  - new_substrate_prereg_only
+  - manual_review_required
+
+lines:
+
+  combo_v1_fx_wave1:
+    signal_family: combo_v1
+    signal_source: "research.askar.full_validation.build_signal"
+    signal_parameters:
+      window: 120
+      threshold: 0.30
+      col: combo
+    substrate: 8fx_daily_close_2100utc
+    universe:
+      - EURUSD
+      - GBPUSD
+      - USDJPY
+      - AUDUSD
+      - USDCAD
+      - USDCHF
+      - EURGBP
+      - EURJPY
+    oos_window:
+      start: "2008-01-02"
+      end: "2026-02-09"
+    oos_bars: 4704
+    folds: 222
+    position_rule:
+      type: cross_sectional_long_short
+      top_k: 2
+      bottom_k: 2
+      weight_per_leg: 0.5
+      lag_bars: 1
+      rebalance_utc: "21:00"
+    costs_bps_run_b:
+      EURUSD: 1.0
+      GBPUSD: 1.0
+      AUDUSD: 1.0
+      USDJPY: 1.5
+      USDCAD: 1.5
+      USDCHF: 1.5
+      EURGBP: 1.5
+      EURJPY: 1.5
+    status: REJECTED
+    verdict: FAIL
+    wave2_authorized: false
+    parameter_rescue_allowed: false
+    same_family_same_substrate_retest_allowed: false
+    allowed_next_action: new_fx_native_prereg_only
+    evidence_path: results/wave1_fx/
+    lock_sha: ef0b774bc4aeb093b843d9494d3b13612ab63e59
+    complete_sha: 3214612f59b56059c7b9a668baec047e1f0c793a
+    geosync_sha_at_lock: 8b68156df48f1d8ec7566a8db57fb71a66cf8622
+    canonical_fail_note: results/wave1_fx/CANONICAL_FAIL_NOTE.md
+    closed_on_utc: "2026-04-21"
+    # Metrics of record (Run B, verdict run)
+    metrics_of_record:
+      primary_median_fold_median_sharpe: -0.0457
+      primary_floor: 0.80
+      positive_folds_frac: 0.4324
+      positive_folds_floor: 0.60
+      median_2022_fold_sharpe: 0.1964
+      max_drawdown_oos: 0.4488
+      max_drawdown_ceil: 0.20
+      gates_passed_out_of_4: 1
+    # Diagnostic only — not verdict
+    metrics_run_a_gross:
+      primary_median_fold_median_sharpe: -0.0046
+      positive_folds_frac: 0.4595
+      max_drawdown_oos: 0.4061
+    baselines_run_b:
+      buy_and_hold_eq_weight_sharpe: -0.0427
+      buy_and_hold_eq_weight_maxdd: 0.1618
+      combo_two_bar_lag_sharpe: -0.1529
+      combo_two_bar_lag_maxdd: 0.4230
+
+# Future lines go below with status: OPEN.
+# Rejected lines MUST NOT be re-opened; any revival requires a new line_id.
+
+  ctc_falsify_001:
+    signal_family: ctc_falsify
+    signal_source: "research.ctc_falsify.run.run"
+    substrate: kuramoto_two_population_generative
+    universe:
+      - synthetic_sakaguchi_kuramoto
+    status: OPEN
+    verdict: null
+    wave2_authorized: false
+    parameter_rescue_allowed: false
+    same_family_same_substrate_retest_allowed: false
+    allowed_next_action: continue_same_line
+    evidence_path: research/ctc_falsify/evidence
+    lock_sha: null
+    complete_sha: null
+    canonical_fail_note: null

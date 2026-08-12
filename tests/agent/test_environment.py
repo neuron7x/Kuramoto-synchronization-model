@@ -1,3 +1,5 @@
+# Copyright (c) 2023-2026 Yaroslav Vasylenko (neuron7xLab)
+# SPDX-License-Identifier: MIT
 from __future__ import annotations
 
 from pathlib import Path
@@ -5,7 +7,7 @@ from pathlib import Path
 import numpy as np
 import pytest
 
-from tradepulse_agent import (
+from geosync_agent import (
     AgentAction,
     AgentDataFeedConfig,
     AgentDataLoader,

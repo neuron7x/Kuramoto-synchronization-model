@@ -1,6 +1,6 @@
-# TradePulse Cortex Service
+# GeoSync Cortex Service
 
-Enterprise-grade cognitive signal orchestration microservice for TradePulse portfolios.
+Enterprise-grade cognitive signal orchestration microservice for GeoSync portfolios.
 
 ## Overview
 
@@ -275,7 +275,7 @@ Override with: `CORTEX_CONFIG_PATH=/path/to/config.yaml`
 #### Service Settings
 ```yaml
 service:
-  name: TradePulse Cortex Service
+  name: GeoSync Cortex Service
   version: 1.0.0
   description: Cognitive signal orchestration
   metrics_path: /metrics

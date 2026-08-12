@@ -1,6 +1,6 @@
-# TradePulse Engineering Enablement Program
+# GeoSync Engineering Enablement Program
 
-This playbook defines the structured learning program for TradePulse engineering. It is designed to accelerate mastery of our trading platform while ensuring consistent, safe delivery in production. Each pillar is owned, resourced, and instrumented with measurable outcomes so the program remains accountable and adaptive.
+This playbook defines the structured learning program for GeoSync engineering. It is designed to accelerate mastery of our trading platform while ensuring consistent, safe delivery in production. Each pillar is owned, resourced, and instrumented with measurable outcomes so the program remains accountable and adaptive.
 
 ## 1. Role Tracks and Competency Framework
 

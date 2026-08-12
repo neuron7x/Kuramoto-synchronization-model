@@ -1,3 +1,5 @@
+# Copyright (c) 2023-2026 Yaroslav Vasylenko (neuron7xLab)
+# SPDX-License-Identifier: MIT
 """Financial news sentiment analysis pipeline.
 
 This module implements a maintainable pipeline for collecting financial news,
@@ -47,9 +49,7 @@ class NewsArticle:
 
     def __post_init__(self) -> None:  # pragma: no cover - defensive guard
         if not isinstance(self.published_at, pd.Timestamp):
-            object.__setattr__(
-                self, "published_at", ensure_utc_timestamp(self.published_at)
-            )
+            object.__setattr__(self, "published_at", ensure_utc_timestamp(self.published_at))
 
 
 @dataclass(frozen=True, slots=True)
@@ -189,9 +189,7 @@ class FinBERTSentimentModel:
                 best_label = SentimentLabel.NEUTRAL
                 best_score = 0.0
             predictions.append(
-                SentimentPrediction(
-                    label=best_label, score=best_score, probabilities=dict(mapped)
-                )
+                SentimentPrediction(label=best_label, score=best_score, probabilities=dict(mapped))
             )
         return predictions
 
@@ -256,9 +254,7 @@ class NewsSentimentPipeline:
             if existing is None or published_at >= existing.published_at:
                 unique_articles[article_id] = normalised
 
-        deduplicated_articles = sorted(
-            unique_articles.values(), key=lambda item: item.published_at
-        )
+        deduplicated_articles = sorted(unique_articles.values(), key=lambda item: item.published_at)
         if not deduplicated_articles:
             _LOGGER.info(
                 "No valid news articles available after deduplication",
@@ -286,9 +282,7 @@ class NewsSentimentPipeline:
             prepared.append((article, text))
 
         if not prepared:
-            _LOGGER.warning(
-                "Filtered out all news articles due to insufficient text length"
-            )
+            _LOGGER.warning("Filtered out all news articles due to insufficient text length")
             return pd.DataFrame(
                 columns=[
                     "article_id",
@@ -331,15 +325,9 @@ class NewsSentimentPipeline:
                 "source": article.source,
                 "label": prediction.label.value,
                 "sentiment_score": prediction.score,
-                "prob_negative": prediction.probabilities.get(
-                    SentimentLabel.NEGATIVE, 0.0
-                ),
-                "prob_neutral": prediction.probabilities.get(
-                    SentimentLabel.NEUTRAL, 0.0
-                ),
-                "prob_positive": prediction.probabilities.get(
-                    SentimentLabel.POSITIVE, 0.0
-                ),
+                "prob_negative": prediction.probabilities.get(SentimentLabel.NEGATIVE, 0.0),
+                "prob_neutral": prediction.probabilities.get(SentimentLabel.NEUTRAL, 0.0),
+                "prob_positive": prediction.probabilities.get(SentimentLabel.POSITIVE, 0.0),
             }
             tickers = article.tickers or (None,)
             for symbol in tickers:
@@ -385,25 +373,17 @@ def aggregate_sentiment(
     """
 
     if scored_articles.empty:
-        return pd.DataFrame(
-            columns=["symbol", "timestamp", "sentiment_signal", "article_count"]
-        )
+        return pd.DataFrame(columns=["symbol", "timestamp", "sentiment_signal", "article_count"])
 
     frame = scored_articles.copy()
     frame = frame.dropna(subset=["symbol"])
     if frame.empty:
-        return pd.DataFrame(
-            columns=["symbol", "timestamp", "sentiment_signal", "article_count"]
-        )
+        return pd.DataFrame(columns=["symbol", "timestamp", "sentiment_signal", "article_count"])
 
-    frame["published_at"] = pd.to_datetime(
-        frame["published_at"], utc=True, errors="coerce"
-    )
+    frame["published_at"] = pd.to_datetime(frame["published_at"], utc=True, errors="coerce")
     frame = frame.dropna(subset=["published_at"])
     if frame.empty:
-        return pd.DataFrame(
-            columns=["symbol", "timestamp", "sentiment_signal", "article_count"]
-        )
+        return pd.DataFrame(columns=["symbol", "timestamp", "sentiment_signal", "article_count"])
 
     if "article_id" in frame.columns:
         frame = frame.dropna(subset=["article_id"])
@@ -419,17 +399,9 @@ def aggregate_sentiment(
 
     frame = frame.set_index("published_at")
     aggregated = (
-        frame.groupby("symbol")["weighted_score"]
-        .resample(freq)
-        .mean()
-        .rename("sentiment_signal")
+        frame.groupby("symbol")["weighted_score"].resample(freq).mean().rename("sentiment_signal")
     )
-    counts = (
-        frame.groupby("symbol")["weighted_score"]
-        .resample(freq)
-        .size()
-        .rename("article_count")
-    )
+    counts = frame.groupby("symbol")["weighted_score"].resample(freq).size().rename("article_count")
 
     result = pd.concat([aggregated, counts], axis=1).reset_index()
     result = result[result["article_count"] >= min_articles]

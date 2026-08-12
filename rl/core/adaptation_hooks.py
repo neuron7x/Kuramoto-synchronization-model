@@ -1,3 +1,5 @@
+# Copyright (c) 2023-2026 Yaroslav Vasylenko (neuron7xLab)
+# SPDX-License-Identifier: MIT
 """Catalog of adaptation hooks used by the RL stack."""
 
 from __future__ import annotations
@@ -27,7 +29,7 @@ def list_adaptation_hooks() -> tuple[AdaptationHook, ...]:
         ),
         AdaptationHook(
             name="fractional_update",
-            location="neuropro.multifractal_opt.fractional_update",
+            location="geosync_hpc.multifractal_opt.fractional_update",
             trigger="when applying gradients to policy/value parameters",
             description="Levy-stable fractional update used for adaptive parameter shifts.",
         ),

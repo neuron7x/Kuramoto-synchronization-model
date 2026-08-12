@@ -1,0 +1,56 @@
+{
+  "schema": "autonomous_agent_execution_protocol_contract@v1",
+  "source": "docs/governance/AUTONOMOUS_AGENT_EXECUTION_PROTOCOL.md",
+  "note": "Single semantic contract for the autonomous-agent execution protocol. Section ORDINALS may change (sections may be inserted or renumbered); the SEMANTIC contract below may not. The governance test DERIVES its expectations from this manifest (number-agnostic heading regexes + required links/clauses/perturbation-axes/disclosure-fields), not from hardcoded ordinals. A section may be added freely; removing a required_section, required clause, perturbation axis, or disclosure field is a governance change that must update this manifest with a migration note, never a silent drift.",
+  "required_sections": [
+    { "id": "ROLE", "heading_regex": "^##\\s+\\d+\\.\\s+Role\\s*$" },
+    { "id": "DELEGATED_AUTHORITY", "heading_regex": "^##\\s+\\d+\\.\\s+Delegated Execution Authority\\s*$" },
+    { "id": "AUTHORITY_BOUNDARY", "heading_regex": "^##\\s+\\d+\\.\\s+Authority Boundary \\(MUST NOT\\)\\s*$" },
+    { "id": "RED_PR_BLOCKED", "heading_regex": "^##\\s+\\d+\\.\\s+Red Pull Request Stays Blocked\\s*$" },
+    { "id": "PERTURBATION_MANDATE", "heading_regex": "^##\\s+\\d+\\.\\s+Green Is Not Enough .*Perturbation Is Mandatory\\s*$" },
+    { "id": "PR_DISCLOSURE", "heading_regex": "^##\\s+\\d+\\.\\s+Required Pull Request Disclosure\\s*$" },
+    { "id": "STOP_CONDITION", "heading_regex": "^##\\s+\\d+\\.\\s+Stop Condition\\s*$" },
+    { "id": "GOVERNANCE_RELATIONSHIP", "heading_regex": "^##\\s+\\d+\\.\\s+Relationship to the Governance Surface\\s*$" }
+  ],
+  "required_links": [
+    "PRODUCT_CATEGORY.md",
+    "CLAIMS.md",
+    "FORBIDDEN_CLAIMS.md",
+    "AGENTS.md",
+    "REPOSITORY_SYSTEM.md"
+  ],
+  "required_clauses": [
+    "autonomous execution unit",
+    "not a report-only assistant",
+    "MUST NOT  push directly to main",
+    "Merge authority is owner-only",
+    "MUST NOT  rewrite, recompute, or overwrite frozen artifacts",
+    "MUST NOT  weaken a threshold",
+    "keep a red or pending PR in draft / blocked state",
+    "MUST STOP"
+  ],
+  "required_perturbation_axes": [
+    "perturb seed",
+    "perturb horizon",
+    "perturb window",
+    "perturb scale",
+    "inject missing data",
+    "inject malformed metadata",
+    "null / baseline bypass",
+    "cost NOT_RUN",
+    "replay mismatch"
+  ],
+  "required_pr_disclosure_fields": [
+    "scope",
+    "claim boundary",
+    "changed files",
+    "commands",
+    "results",
+    "stress checks",
+    "evidence artifacts",
+    "frozen-artifact status",
+    "limitations",
+    "next failure surface"
+  ],
+  "required_verbs": ["perturb", "falsifiable", "replay"]
+}

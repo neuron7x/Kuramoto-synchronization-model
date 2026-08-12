@@ -1,0 +1,115 @@
+# Diff-bound commit acceptor for the coupling-estimator median-contract fix.
+#
+# Confirmed contract violation: complementary_pairs_stability in
+# core/kuramoto/coupling_estimator.py returned K_median as the arithmetic
+# MEAN of the active per-edge coupling estimates (weight_sum / weight_n)
+# pooled over every bootstrap half AND every lambda in the grid, while its
+# docstring, the K_median variable name, and the consuming
+# CouplingEstimator.estimate docstring all state it is the MEDIAN of the
+# non-zero edge estimates. That value flows into CouplingMatrix.K via
+# K = np.where(stability >= threshold, K_median, 0.0), so identified
+# couplings were wrong-by-contract and outlier-biased (an edge whose
+# selected fits are {0.1, 0.1, 0.1, 5.0} yields contracted median 0.1 but
+# the code returned mean ~= 1.325).
+#
+# FIX (code -> contract, never contract -> buggy code): accumulate the
+# active signed estimates into a per-edge pool and take the true np.median
+# (0.0 when the pool is empty), preserving fail-closed behaviour and the
+# surrounding standardize/back-transform. No INV-* bound was loosened; the
+# selection-probability path (stability scores) is untouched.
+#
+# The two golden vectors that ENCODED the mean bug
+# (first_order_stab_K and cps_K_median in
+# test_kuramoto_coupling_strategy_registry.py) were re-frozen to the
+# contracted median statistic and the change is documented inline; the
+# stability-score goldens are byte-unchanged because selection probability
+# never depended on the weight aggregation.
+
+id: coupling-estimator-median-contract
+status: ACTIVE
+claim_type: correctness
+promise: >-
+  After this PR lands, core.kuramoto.coupling_estimator.complementary_pairs_stability
+  returns K_median as the true MEDIAN of the pooled non-zero per-edge
+  coupling estimates (0.0 for never-selected edges), matching its
+  docstring, the K_median variable name, and the CouplingEstimator.estimate
+  contract. A crafted edge pool {0.1, 0.1, 0.1, 5.0} yields 0.1 (median),
+  not ~1.325 (the outlier-biased mean the code previously returned), and a
+  single large outlier can no longer drag the estimate above the central
+  order statistic. The selection-probability (stability) path is unchanged.
+  Regression tests in tests/unit/core/test_kuramoto_coupling_estimator.py
+  (TestComplementaryPairsMedianContract) pin the exact median value on
+  deterministic stubbed pools, and the two strategy-registry golden vectors
+  that encoded the mean bug are re-frozen to the median statistic.
+diff_scope:
+  changed_files:
+    - path: ".claude/commit_acceptors/coupling-estimator-median-contract.yaml"
+    - path: "core/kuramoto/coupling_estimator.py"
+    - path: "tests/unit/core/test_kuramoto_coupling_estimator.py"
+    - path: "tests/unit/core/test_kuramoto_coupling_strategy_registry.py"
+  forbidden_paths:
+    - "trading/"
+    - "execution/"
+    - "forecast/"
+    - "policy/"
+    - "core/physics/"
+    - "core/kuramoto/identifiability.py"
+    - "core/kuramoto/network_engine.py"
+    - "core/kuramoto/contracts.py"
+    - "core/kuramoto/__init__.py"
+required_python_symbols:
+  - "core/kuramoto/coupling_estimator.py::complementary_pairs_stability"
+  - "core/kuramoto/coupling_estimator.py::CouplingEstimator"
+  - "tests/unit/core/test_kuramoto_coupling_estimator.py::TestComplementaryPairsMedianContract"
+expected_signal: >-
+  `python -m pytest
+  tests/unit/core/test_kuramoto_coupling_estimator.py
+  tests/unit/core/test_kuramoto_coupling_strategy_registry.py
+  tests/unit/core/test_kuramoto_coupling_spec.py
+  tests/unit/core/test_kuramoto_identifiability.py
+  tests/unit/core/test_kuramoto_integral_estimator.py
+  tests/unit/core/test_kuramoto_network_engine.py
+  tests/research/calibration/test_grid_kuramoto.py
+  --import-mode=importlib -q` is green;
+  TestComplementaryPairsMedianContract asserts the median (0.1) on the
+  crafted {0.1, 0.1, 0.1, 5.0} pool; the re-frozen first_order_stab_K /
+  cps_K_median goldens reproduce within the strategy-registry tolerance
+  band; mypy --strict / ruff / black are clean on the diff.
+measurement_command: >-
+  bash -c '
+    python -m ruff check core/kuramoto/coupling_estimator.py tests/unit/core/test_kuramoto_coupling_estimator.py tests/unit/core/test_kuramoto_coupling_strategy_registry.py &&
+    python -m black --check core/kuramoto/coupling_estimator.py tests/unit/core/test_kuramoto_coupling_estimator.py tests/unit/core/test_kuramoto_coupling_strategy_registry.py &&
+    python -m mypy --strict core/kuramoto/coupling_estimator.py &&
+    python -m pytest tests/unit/core/test_kuramoto_coupling_estimator.py tests/unit/core/test_kuramoto_coupling_strategy_registry.py tests/unit/core/test_kuramoto_coupling_spec.py tests/unit/core/test_kuramoto_identifiability.py tests/unit/core/test_kuramoto_integral_estimator.py tests/unit/core/test_kuramoto_network_engine.py tests/research/calibration/test_grid_kuramoto.py --import-mode=importlib -q
+  '
+signal_artifact: "tmp/coupling_estimator_median_contract.log"
+falsifier:
+  command: >-
+    bash -c '
+      python -m pytest
+      "tests/unit/core/test_kuramoto_coupling_estimator.py::TestComplementaryPairsMedianContract::test_median_not_mean_on_crafted_pool"
+      "tests/unit/core/test_kuramoto_coupling_estimator.py::TestComplementaryPairsMedianContract::test_median_even_pool_averages_two_central"
+      --import-mode=importlib >/tmp/_cemc_rails.log 2>&1;
+      rc=$?; cat /tmp/_cemc_rails.log; test "$rc" -ne 0
+    '
+  description: >-
+    Probes the load-bearing median-contract rails: a crafted per-edge pool
+    {0.1, 0.1, 0.1, 5.0} must return the median 0.1 (not the mean ~1.325),
+    and an even pool {1, 2, 3, 100} must return the mean of the two central
+    order statistics (2.5). The falsifier inverts on pytest's exit code: it
+    succeeds (exit 0) only when the rails do NOT pass — i.e. only if the
+    mean bug regressed (the median assertions fail) or the fix / regression
+    test was rolled back (collection error). While the fix is in place the
+    rails pass and the falsifier fails closed (non-zero), as required.
+rollback_command: >-
+  bash -c 'git checkout origin/main --
+    core/kuramoto/coupling_estimator.py
+    tests/unit/core/test_kuramoto_coupling_estimator.py
+    tests/unit/core/test_kuramoto_coupling_strategy_registry.py && rm -f
+    .claude/commit_acceptors/coupling-estimator-median-contract.yaml'
+rollback_verification_command: >-
+  bash -c '! grep -q "estimates\[i\]\[j\].append" core/kuramoto/coupling_estimator.py && ! test -f .claude/commit_acceptors/coupling-estimator-median-contract.yaml'
+memory_update_type: append
+ledger_path: ".claude/commit_acceptors/coupling-estimator-median-contract.yaml"
+report_path: "tmp/coupling_estimator_median_contract.log"
+evidence: []

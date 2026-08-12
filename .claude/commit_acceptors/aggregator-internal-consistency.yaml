@@ -1,0 +1,62 @@
+id: aggregator-internal-consistency
+status: ACTIVE
+claim_type: correctness
+promise: >-
+  R3: the Phase-4 aggregator (build_verdict) now checks the INTERNAL CONSISTENCY of
+  every substrate artifact — a headline verdict of PASS with a nested row /
+  invariant / check / ground / attack that is FAIL/not-passed is rejected. An
+  adversary can no longer forge a substrate's top-level verdict to hide an internal
+  failure; the aggregate re-reads the nested items.
+diff_scope:
+  changed_files:
+    - path: ".claude/commit_acceptors/aggregator-internal-consistency.yaml"
+    - path: "tools/audit_final_inference_verdict.py"
+    - path: "tests/tools/test_final_verdict_adversarial.py"
+  forbidden_paths:
+    - "execution/"
+    - "core/"
+required_python_symbols:
+  - "tools/audit_final_inference_verdict.py::_internally_consistent"
+  - "tools/audit_final_inference_verdict.py::_item_passes"
+  - "tools/audit_final_inference_verdict.py::build_verdict"
+expected_signal: >-
+  `python -m pytest --import-mode=importlib tests/tools/test_final_verdict_adversarial.py
+  tests/tools/test_final_inference_verdict.py -q` passes; a forged PASS artifact
+  hiding an internal FAIL is caught, honest artifacts still PASS.
+measurement_command: >-
+  bash -c '
+    python -m pytest --import-mode=importlib -p no:cacheprovider
+      tests/tools/test_final_verdict_adversarial.py
+      tests/tools/test_final_inference_verdict.py -q
+  '
+signal_artifact: "tmp/aggregator_internal_consistency.log"
+falsifier:
+  command: |-
+    bash -c '
+      python -c "
+    import importlib.util, json, tempfile, os, pathlib
+    spec = importlib.util.spec_from_file_location(\"afiv\", \"tools/audit_final_inference_verdict.py\")
+    afiv = importlib.util.module_from_spec(spec); spec.loader.exec_module(afiv)
+    root = pathlib.Path(tempfile.mkdtemp())
+    sub = [s for s in afiv.INPUTS if s[\"tier\"] == \"substrate\"]
+    for s in sub:
+        p = root / s[\"path\"]; p.parent.mkdir(parents=True, exist_ok=True)
+        p.write_text(json.dumps({\"schema\": afiv._SCHEMA_IDS[s[\"name\"]], \"verdict\": \"PASS\"}))
+    t = root / sub[2][\"path\"]
+    t.write_text(json.dumps({\"schema\": afiv._SCHEMA_IDS[sub[2][\"name\"]], \"verdict\": \"PASS\", \"rows\": [{\"verdict\": \"FAIL\"}]}))
+    forged = afiv.build_verdict(root, release=False)[\"verdict\"]
+    raise SystemExit(0 if forged == \"FAIL\" else \"forged PASS with hidden FAIL row slipped through\")
+    "
+    '
+  description: >-
+    Forges a substrate with a PASS headline hiding a FAIL row and asserts the
+    aggregate is FAIL. Exits 0 when the internal-consistency check catches it;
+    non-zero if the forgery passes.
+rollback_command: >-
+  bash -c 'git rm -f .claude/commit_acceptors/aggregator-internal-consistency.yaml'
+rollback_verification_command: >-
+  bash -c 'test ! -f .claude/commit_acceptors/aggregator-internal-consistency.yaml'
+memory_update_type: append
+ledger_path: ".claude/commit_acceptors/aggregator-internal-consistency.yaml"
+report_path: "tmp/aggregator_internal_consistency.log"
+evidence: []

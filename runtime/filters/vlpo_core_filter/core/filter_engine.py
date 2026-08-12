@@ -1,3 +1,5 @@
+# Copyright (c) 2023-2026 Yaroslav Vasylenko (neuron7xLab)
+# SPDX-License-Identifier: MIT
 """VLPO-inspired denoising pipeline for telemetry data."""
 
 from __future__ import annotations
@@ -7,9 +9,9 @@ from dataclasses import dataclass
 import numpy as np
 import pandas as pd
 
+from ..data.sensory_calibrator import SensoryCalibrationConfig, SensoryCalibrator
 from .correlation import forget_low_correlation
 from .entropy import downscale_low_entropy
-from ..data.sensory_calibrator import SensoryCalibrator, SensoryCalibrationConfig
 
 
 @dataclass(slots=True)
@@ -64,12 +66,8 @@ class VLPOCoreFilter:
     def _ensure_calibrator(self, feature_columns: list[str]) -> None:
         if not feature_columns:
             return
-        if self._calibrator is None or self._calibrator.channels != tuple(
-            feature_columns
-        ):
-            self._calibrator = SensoryCalibrator(
-                feature_columns, config=self._calibration_config
-            )
+        if self._calibrator is None or self._calibrator.channels != tuple(feature_columns):
+            self._calibrator = SensoryCalibrator(feature_columns, config=self._calibration_config)
 
     @staticmethod
     def _glymphatic_clearance(data: pd.DataFrame) -> pd.DataFrame:
@@ -115,12 +113,8 @@ class VLPOCoreFilter:
 
             entropy_before = float(np.nan_to_num(self._entropy(signal)))
             entropy_after = float(np.nan_to_num(self._entropy(filtered_signal)))
-            corr_before = float(
-                np.nan_to_num(self._correlation(signal, cleaned_target))
-            )
-            corr_after = float(
-                np.nan_to_num(self._correlation(filtered_signal, cleaned_target))
-            )
+            corr_before = float(np.nan_to_num(self._correlation(signal, cleaned_target)))
+            corr_after = float(np.nan_to_num(self._correlation(filtered_signal, cleaned_target)))
 
             filtered_columns[column] = filtered_signal
             stats[column] = FilterStats(

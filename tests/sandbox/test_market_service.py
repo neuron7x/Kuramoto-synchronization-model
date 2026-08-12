@@ -1,3 +1,5 @@
+# Copyright (c) 2023-2026 Yaroslav Vasylenko (neuron7xLab)
+# SPDX-License-Identifier: MIT
 from fastapi.testclient import TestClient
 
 from sandbox.market.app import MarketService, create_app

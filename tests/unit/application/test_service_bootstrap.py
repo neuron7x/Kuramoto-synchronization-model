@@ -1,3 +1,5 @@
+# Copyright (c) 2023-2026 Yaroslav Vasylenko (neuron7xLab)
+# SPDX-License-Identifier: MIT
 """Unit tests for bootstrap helpers in application.api.service."""
 
 from __future__ import annotations
@@ -15,7 +17,7 @@ MODULE_PATH = "application.api.service"
 def _reload_service_module(monkeypatch: pytest.MonkeyPatch) -> object:
     """Reload the service module with lazy bootstrap enabled."""
 
-    monkeypatch.setenv("TRADEPULSE_BOOTSTRAP_STRATEGY", "lazy")
+    monkeypatch.setenv("GEOSYNC_BOOTSTRAP_STRATEGY", "lazy")
     module = importlib.import_module(MODULE_PATH)
     importlib.reload(module)
     return module
@@ -49,7 +51,7 @@ def test_bootstrap_lazy_strategy_skips_application_construction(
 
     assert isinstance(app, FastAPI)
     assert getattr(app.state, "degraded_reason") == (
-        "Bootstrap disabled via TRADEPULSE_BOOTSTRAP_STRATEGY=lazy."
+        "Bootstrap disabled via GEOSYNC_BOOTSTRAP_STRATEGY=lazy."
     )
     assert not called, "create_app was invoked despite lazy strategy"
 
@@ -65,7 +67,7 @@ def test_bootstrap_degraded_falls_back_on_failure(
         raise RuntimeError("secret missing")
 
     monkeypatch.setattr(service, "create_app", _boom)
-    monkeypatch.setenv("TRADEPULSE_BOOTSTRAP_STRATEGY", "degraded")
+    monkeypatch.setenv("GEOSYNC_BOOTSTRAP_STRATEGY", "degraded")
 
     app = service.bootstrap_application()
 

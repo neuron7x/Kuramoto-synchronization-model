@@ -1,0 +1,74 @@
+# ci-heartbeat: executable-falsification-laws-batch2
+id: executable-falsification-laws-batch2
+status: ACTIVE
+claim_type: fail_closed
+promise: >-
+  Second batch transforming declaration-only canonical physics laws into
+  executable falsification contracts: ricci.gauss_bonnet (exact discrete
+  Gauss-Bonnet Sum K = chi over Q), kuramoto_ricci.semantics_split (signed
+  Ricci never silently destroyed, INV-KR4), thermo.second_law_closed (closed
+  subsystem entropy non-decreasing), thermo.free_energy_descent (unforced
+  F = U - T*S non-increasing, INV-FE1), thermo.landauer_bound (per-bit erasure
+  floor k_B*T*ln2, INV-TAU2), and ecs.lyapunov_descent (ECS regulator Lyapunov
+  V non-increasing). Each reuses the REAL core solver (no reimplemented physics)
+  and gains a positive witness plus a discriminating negative control. Adds the
+  `thermodynamics` value to the falsification schema domain enum so the four
+  thermodynamic laws validate. Canonical catalog.yaml declarations are untouched.
+diff_scope:
+  changed_files:
+    - path: ".claude/commit_acceptors/executable-falsification-laws-batch2.yaml"
+    - path: "physics_contracts/falsification_schema.json"
+    - path: "MANIFEST.sha256"
+    - path: "tests/physics/test_gauss_bonnet.py"
+    - path: "tests/physics/test_ricci_semantics_split.py"
+    - path: "tests/physics/test_second_law_closed.py"
+    - path: "tests/physics/test_free_energy_descent.py"
+    - path: "tests/physics/test_landauer_bit_floor.py"
+    - path: "tests/physics/test_ecs_lyapunov_descent.py"
+  forbidden_paths:
+    - "trading/"
+    - "execution/"
+    - "forecast/"
+    - "policy/"
+required_python_symbols: []
+expected_signal: >-
+  tools/validate_physics_contracts.py reports 21 blocking laws fully witnessed
+  (was 15) with every positive witness and negative control collected. Each new
+  witness test passes: positive witnesses confirm the law against the real
+  Gauss-Bonnet / Ricci-engine / stochastic-thermodynamics / free-energy-gate /
+  Landauer / ECS-Lyapunov solver, and negative controls refute a planted
+  violation or fail closed. The schema accepts the new `thermodynamics` domain.
+  No canonical catalog mutation, no trading/execution/forecast/policy change.
+measurement_command: >-
+  PYTHONPATH=. python tools/validate_physics_contracts.py && PYTHONPATH=.
+  python -m pytest tests/physics/test_gauss_bonnet.py
+  tests/physics/test_ricci_semantics_split.py
+  tests/physics/test_second_law_closed.py
+  tests/physics/test_free_energy_descent.py
+  tests/physics/test_landauer_bit_floor.py
+  tests/physics/test_ecs_lyapunov_descent.py -q
+signal_artifact: "tmp/executable_falsification_laws_batch2.log"
+falsifier:
+  command: >-
+    PYTHONPATH=. python -m pytest tests/physics/test_gauss_bonnet.py
+    tests/physics/test_landauer_bit_floor.py
+    tests/physics/test_free_energy_descent.py -q
+  description: >-
+    Fails if any new law's positive witness stops confirming the law against
+    its real solver, or if a negative control stops refuting its planted
+    violation.
+rollback_command: >-
+  git checkout origin/main -- physics_contracts/falsification_schema.json
+  MANIFEST.sha256
+rollback_verification_command: >-
+  PYTHONPATH=. python tools/validate_physics_contracts.py
+memory_update_type: none
+ledger_path: ".claude/commit_acceptors/executable-falsification-laws-batch2.yaml"
+report_path: ".claude/commit_acceptors/executable-falsification-laws-batch2.yaml"
+evidence:
+  - path: "tests/physics/test_gauss_bonnet.py"
+  - path: "tests/physics/test_ricci_semantics_split.py"
+  - path: "tests/physics/test_second_law_closed.py"
+  - path: "tests/physics/test_free_energy_descent.py"
+  - path: "tests/physics/test_landauer_bit_floor.py"
+  - path: "tests/physics/test_ecs_lyapunov_descent.py"

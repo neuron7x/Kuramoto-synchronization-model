@@ -1,3 +1,5 @@
+# Copyright (c) 2023-2026 Yaroslav Vasylenko (neuron7xLab)
+# SPDX-License-Identifier: MIT
 """Structured audit logging utilities for administrative actions."""
 
 from __future__ import annotations
@@ -49,9 +51,7 @@ def _canonical_json(payload: Mapping[str, Any]) -> str:
         payload,
         sort_keys=True,
         separators=(",", ":"),
-        default=lambda value: (
-            value.isoformat() if isinstance(value, datetime) else value
-        ),
+        default=lambda value: (value.isoformat() if isinstance(value, datetime) else value),
     )
 
 
@@ -91,9 +91,7 @@ class AuditRecord(BaseModel):
     details: dict[str, Any] = Field(
         default_factory=dict, description="Additional structured context for the event."
     )
-    signature: str = Field(
-        ..., description="HMAC-SHA256 signature of the event payload."
-    )
+    signature: str = Field(..., description="HMAC-SHA256 signature of the event payload.")
 
     model_config = ConfigDict(frozen=True)
 
@@ -132,7 +130,7 @@ class AuditLogger:
                 return provided
 
         self._secret_provider: Callable[[], str] = provider
-        resolved_logger = logger or logging.getLogger("tradepulse.audit")
+        resolved_logger = logger or logging.getLogger("geosync.audit")
         # Ensure audit events are emitted even when the application relies on the
         # default logging configuration (root logger at WARNING).  Without this
         # guard the audit logger would inherit the root level and drop ``INFO``
@@ -154,8 +152,7 @@ class AuditLogger:
             # only ``NullHandler`` instances as effectively "unconfigured" and
             # re-enable propagation so the audit events can be captured.
             has_real_handler = any(
-                not isinstance(handler, logging.NullHandler)
-                for handler in resolved_logger.handlers
+                not isinstance(handler, logging.NullHandler) for handler in resolved_logger.handlers
             )
             if not has_real_handler and not resolved_logger.propagate:
                 resolved_logger.propagate = True
@@ -252,7 +249,7 @@ class HttpAuditSink:
         self._endpoint = endpoint
         self._client = http_client
         self._timeout = timeout
-        self._logger = logger or logging.getLogger("tradepulse.audit.http_sink")
+        self._logger = logger or logging.getLogger("geosync.audit.http_sink")
 
     def __call__(self, record: AuditRecord) -> None:
         payload = record.model_dump(mode="json")
@@ -313,7 +310,7 @@ class SiemAuditSink:
         self._spool_dir.mkdir(parents=True, exist_ok=True)
         self._dead_letter_dir = dead_letter_dir or (self._spool_dir / "dead-letter")
         self._dead_letter_dir.mkdir(parents=True, exist_ok=True)
-        self._logger = logger or logging.getLogger("tradepulse.audit.siem_sink")
+        self._logger = logger or logging.getLogger("geosync.audit.siem_sink")
         self._timeout = timeout
         self._max_retries = max(0, max_retries)
         self._base_backoff = max(0.0, base_backoff_seconds)
@@ -433,9 +430,7 @@ class SiemAuditSink:
         payload = record.model_dump(mode="json")
         response: httpx.Response | None = None
         try:
-            response = self._client.post(
-                self._endpoint, json=payload, timeout=self._timeout
-            )
+            response = self._client.post(self._endpoint, json=payload, timeout=self._timeout)
             response.raise_for_status()
         except Exception as exc:
             status_code = None
@@ -478,9 +473,7 @@ class SiemAuditSink:
         )
         pending_path = self._restore_pending_path(original_path, inflight_path)
         if attempts > self._max_retries:
-            self._move_to_dead_letter(
-                pending_path, reason="max-retries", envelope=updated
-            )
+            self._move_to_dead_letter(pending_path, reason="max-retries", envelope=updated)
             return
         retry_delay = self._compute_backoff(attempts)
         self._rewrite_envelope(pending_path, updated)

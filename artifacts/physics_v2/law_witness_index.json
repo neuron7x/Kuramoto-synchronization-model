@@ -1,0 +1,1996 @@
+{
+  "catalog_laws": [
+    {
+      "falsifier": "An observation violating '|DA(t)| ≤ DA_max' beyond the declared tolerance ('strict') in the validity domain 'all inputs'.",
+      "formula": "|DA(t)| ≤ DA_max",
+      "law_id": "dopamine.bounded_signal",
+      "ledger_reason": "",
+      "module": "dopamine",
+      "severity": "block",
+      "source": "core/neuro/dopamine_execution_adapter.py",
+      "status": "COVERED",
+      "test_witnesses": [
+        "tests/physics_contracts/test_dopamine_adapter_bound_witness.py::test_adapter_signal_is_bounded_and_finite"
+      ],
+      "tolerance": "strict",
+      "tolerance_derivation": "Tolerance derived from the law formula '|DA(t)| ≤ DA_max' and the catalog tolerance clause 'strict'.",
+      "validity_domain": "all inputs"
+    },
+    {
+      "falsifier": "An observation violating 'E[δ_t] → 0  where  δ_t = r_t − V(s_t)' beyond the declared tolerance ('|mean(δ) over last N/4 steps| ≤ 0.02 after N ≥ 500 updates') in the validity domain 'stationary reward distribution, learning rate α satisfying Robbins–Monro'.",
+      "formula": "E[δ_t] → 0  where  δ_t = r_t − V(s_t)",
+      "law_id": "dopamine.rpe_zero_steady_state",
+      "ledger_reason": "",
+      "module": "dopamine",
+      "severity": "block",
+      "source": "Schultz Dayan Montague 1997; core/neuro/dopamine_execution_adapter.py",
+      "status": "COVERED",
+      "test_witnesses": [
+        "tests/physics_contracts/test_dopamine_rpe_steady_state_witness.py::test_expected_rpe_converges_to_zero_in_stationary_environment"
+      ],
+      "tolerance": "|mean(δ) over last N/4 steps| ≤ 0.02 after N ≥ 500 updates",
+      "tolerance_derivation": "Tolerance derived from the law formula 'E[δ_t] → 0  where  δ_t = r_t − V(s_t)' and the catalog tolerance clause '|mean(δ) over last N/4 steps| ≤ 0.02 after N ≥ 500 updates'.",
+      "validity_domain": "stationary reward distribution, learning rate α satisfying Robbins–Monro"
+    },
+    {
+      "falsifier": "An observation violating 'NaN ∨ Inf ∨ constant ∨ rank != 1 ∨ len < window+step  ⇒  raise ValueError' beyond the declared tolerance ('exact exception type; no fall-through to numeric path') in the validity domain 'all inputs to geosync_observe'.",
+      "formula": "NaN ∨ Inf ∨ constant ∨ rank != 1 ∨ len < window+step  ⇒  raise ValueError",
+      "law_id": "dro_ara.fail_closed_input",
+      "ledger_reason": "",
+      "module": "dro_ara",
+      "severity": "block",
+      "source": "core/dro_ara/engine.py::_validate",
+      "status": "COVERED",
+      "test_witnesses": [
+        "tests/physics_contracts/test_dro_ara_regime_witnesses.py::test_degenerate_input_fails_closed"
+      ],
+      "tolerance": "exact exception type; no fall-through to numeric path",
+      "tolerance_derivation": "Tolerance derived from the law formula 'NaN ∨ Inf ∨ constant ∨ rank != 1 ∨ len < window+step  ⇒  raise ValueError' and the catalog tolerance clause 'exact exception type; no fall-through to numeric path'.",
+      "validity_domain": "all inputs to geosync_observe"
+    },
+    {
+      "falsifier": "An observation violating 'γ = 2·H + 1' beyond the declared tolerance ('|γ − (2·H + 1)| < 1e-5 for all admissible inputs') in the validity domain '1-D finite non-constant price array, length ≥ window+step'.",
+      "formula": "γ = 2·H + 1",
+      "law_id": "dro_ara.gamma_derivation",
+      "ledger_reason": "",
+      "module": "dro_ara",
+      "severity": "block",
+      "source": "Peng et al. 1994; core/dro_ara/engine.py::derive_gamma",
+      "status": "COVERED",
+      "test_witnesses": [
+        "tests/physics_contracts/test_dro_ara_regime_witnesses.py::test_gamma_is_derived_as_two_hurst_plus_one"
+      ],
+      "tolerance": "|γ − (2·H + 1)| < 1e-5 for all admissible inputs",
+      "tolerance_derivation": "Tolerance derived from the law formula 'γ = 2·H + 1' and the catalog tolerance clause '|γ − (2·H + 1)| < 1e-5 for all admissible inputs'.",
+      "validity_domain": "1-D finite non-constant price array, length ≥ window+step"
+    },
+    {
+      "falsifier": "An observation violating 'regime == INVALID ⇔ (!stationary ∨ r2 < R2_MIN)' beyond the declared tolerance ('strict; no tolerance relaxation') in the validity domain 'admissible non-constant finite 1-D input'.",
+      "formula": "regime == INVALID ⇔ (!stationary ∨ r2 < R2_MIN)",
+      "law_id": "dro_ara.invalid_regime_gate",
+      "ledger_reason": "",
+      "module": "dro_ara",
+      "severity": "block",
+      "source": "Dickey-Fuller 1979; Ng-Perron 2001; core/dro_ara/engine.py::classify",
+      "status": "COVERED",
+      "test_witnesses": [
+        "tests/physics_contracts/test_dro_ara_regime_gate_witness.py::test_invalid_regime_iff_nonstationary_or_low_r2"
+      ],
+      "tolerance": "strict; no tolerance relaxation",
+      "tolerance_derivation": "Tolerance derived from the law formula 'regime == INVALID ⇔ (!stationary ∨ r2 < R2_MIN)' and the catalog tolerance clause 'strict; no tolerance relaxation'.",
+      "validity_domain": "admissible non-constant finite 1-D input"
+    },
+    {
+      "falsifier": "An observation violating 'signal == LONG  =>  regime == CRITICAL AND rs > RS_LONG_THRESH AND trend in (CONVERGING, STABLE)' beyond the declared tolerance ('strict logical conjunction; all three must hold') in the validity domain 'geosync_observe output dict'.",
+      "formula": "signal == LONG  =>  regime == CRITICAL AND rs > RS_LONG_THRESH AND trend in (CONVERGING, STABLE)",
+      "law_id": "dro_ara.long_signal_gate",
+      "ledger_reason": "",
+      "module": "dro_ara",
+      "severity": "block",
+      "source": "core/dro_ara/engine.py::geosync_observe",
+      "status": "COVERED",
+      "test_witnesses": [
+        "tests/physics_contracts/test_dro_ara_long_signal_witness.py::test_long_signal_implies_critical_high_rs_settled_trend"
+      ],
+      "tolerance": "strict logical conjunction; all three must hold",
+      "tolerance_derivation": "Tolerance derived from the law formula 'signal == LONG  =>  regime == CRITICAL AND rs > RS_LONG_THRESH AND trend in (CONVERGING, STABLE)' and the catalog tolerance clause 'strict logical conjunction; all three must hold'.",
+      "validity_domain": "geosync_observe output dict"
+    },
+    {
+      "falsifier": "An observation violating 'rs(γ) = max(0, 1 − |γ − 1|)' beyond the declared tolerance ('strict; violation is a bug, not a numerical artefact') in the validity domain 'all real γ'.",
+      "formula": "rs(γ) = max(0, 1 − |γ − 1|)",
+      "law_id": "dro_ara.risk_scalar_bounds",
+      "ledger_reason": "",
+      "module": "dro_ara",
+      "severity": "block",
+      "source": "core/dro_ara/engine.py::risk_scalar",
+      "status": "COVERED",
+      "test_witnesses": [
+        "tests/physics_contracts/test_dro_ara_regime_witnesses.py::test_risk_scalar_is_bounded_and_lipschitz"
+      ],
+      "tolerance": "strict; violation is a bug, not a numerical artefact",
+      "tolerance_derivation": "Tolerance derived from the law formula 'rs(γ) = max(0, 1 − |γ − 1|)' and the catalog tolerance clause 'strict; violation is a bug, not a numerical artefact'.",
+      "validity_domain": "all real γ"
+    },
+    {
+      "falsifier": "An observation violating 'dV/dt = ∂V/∂x · f(x)  ≤  0  for all x in the operating set' beyond the declared tolerance ('V(x_{t+1}) ≤ V(x_t) + ε, ε bounded by integrator order (O(Δt²) for RK4)') in the validity domain 'no exogenous shocks; bounded input'.",
+      "formula": "dV/dt = ∂V/∂x · f(x)  ≤  0  for all x in the operating set",
+      "law_id": "ecs.lyapunov_descent",
+      "ledger_reason": "",
+      "module": "ecs",
+      "severity": "block",
+      "source": "core/neuro/ecs_lyapunov.py",
+      "status": "COVERED",
+      "test_witnesses": [
+        "tests/physics_contracts/test_ecs_lyapunov_descent_witness.py::test_ecs_descent_holds_above_floor_and_floor_excluded"
+      ],
+      "tolerance": "V(x_{t+1}) ≤ V(x_t) + ε, ε bounded by integrator order (O(Δt²) for RK4)",
+      "tolerance_derivation": "Tolerance derived from the law formula 'dV/dt = ∂V/∂x · f(x)  ≤  0  for all x in the operating set' and the catalog tolerance clause 'V(x_{t+1}) ≤ V(x_t) + ε, ε bounded by integrator order (O(Δt²) for RK4)'.",
+      "validity_domain": "no exogenous shocks; bounded input"
+    },
+    {
+      "falsifier": "An observation violating '0 ≤ gate(inhibition) ≤ 1' beyond the declared tolerance ('strict') in the validity domain 'all inhibition ∈ [0, ∞)'.",
+      "formula": "0 ≤ gate(inhibition) ≤ 1",
+      "law_id": "gaba.gate_bounds",
+      "ledger_reason": "",
+      "module": "gaba",
+      "severity": "block",
+      "source": "core/neuro/gaba_position_gate.py",
+      "status": "COVERED",
+      "test_witnesses": [
+        "tests/physics_contracts/test_gaba_gate_witnesses.py::test_gate_multiplier_lies_in_unit_interval"
+      ],
+      "tolerance": "strict",
+      "tolerance_derivation": "Tolerance derived from the law formula '0 ≤ gate(inhibition) ≤ 1' and the catalog tolerance clause 'strict'.",
+      "validity_domain": "all inhibition ∈ [0, ∞)"
+    },
+    {
+      "falsifier": "An observation violating 'gate(i_1) ≥ gate(i_2)  ∀ i_1 ≤ i_2' beyond the declared tolerance ('strict') in the validity domain 'held-fixed other inputs'.",
+      "formula": "gate(i_1) ≥ gate(i_2)  ∀ i_1 ≤ i_2",
+      "law_id": "gaba.monotone_inhibition",
+      "ledger_reason": "",
+      "module": "gaba",
+      "severity": "block",
+      "source": "Mink 1996; core/neuro/gaba_position_gate.py",
+      "status": "COVERED",
+      "test_witnesses": [
+        "tests/physics_contracts/test_gaba_gate_witnesses.py::test_gate_is_monotone_non_increasing_in_inhibition"
+      ],
+      "tolerance": "strict",
+      "tolerance_derivation": "Tolerance derived from the law formula 'gate(i_1) ≥ gate(i_2)  ∀ i_1 ≤ i_2' and the catalog tolerance clause 'strict'.",
+      "validity_domain": "held-fixed other inputs"
+    },
+    {
+      "falsifier": "An observation violating 'x finite  ⇒  kernel(x) finite;  cond(A) ≤ κ_max' beyond the declared tolerance ('no NaN, no Inf; κ(A) ≤ κ_max') in the validity domain 'inputs within documented range'.",
+      "formula": "x finite  ⇒  kernel(x) finite;  cond(A) ≤ κ_max",
+      "law_id": "hpc.numerical_stability",
+      "ledger_reason": "",
+      "module": "hpc",
+      "severity": "block",
+      "source": "geosync_hpc/*.py",
+      "status": "COVERED",
+      "test_witnesses": [
+        "tests/physics_contracts/test_hpc_numerical_stability_witness.py::test_kernels_keep_finite_inputs_finite"
+      ],
+      "tolerance": "no NaN, no Inf; κ(A) ≤ κ_max",
+      "tolerance_derivation": "Tolerance derived from the law formula 'x finite  ⇒  kernel(x) finite;  cond(A) ≤ κ_max' and the catalog tolerance clause 'no NaN, no Inf; κ(A) ≤ κ_max'.",
+      "validity_domain": "inputs within documented range"
+    },
+    {
+      "falsifier": "An observation violating 'kernel(seed, x, dtype) == kernel(seed, x, dtype)' beyond the declared tolerance ('bit-for-bit on fixed hardware; 1 ULP across ISA') in the validity domain 'same CPU/GPU ISA; no nondet reductions enabled'.",
+      "formula": "kernel(seed, x, dtype) == kernel(seed, x, dtype)",
+      "law_id": "hpc.seeded_reproducibility",
+      "ledger_reason": "",
+      "module": "hpc",
+      "severity": "block",
+      "source": "geosync_hpc/*.py",
+      "status": "COVERED",
+      "test_witnesses": [
+        "tests/physics_contracts/test_hpc_seeded_reproducibility_witness.py::test_indexed_rng_is_bit_identical_and_content_addressable"
+      ],
+      "tolerance": "bit-for-bit on fixed hardware; 1 ULP across ISA",
+      "tolerance_derivation": "Tolerance derived from the law formula 'kernel(seed, x, dtype) == kernel(seed, x, dtype)' and the catalog tolerance clause 'bit-for-bit on fixed hardware; 1 ULP across ISA'.",
+      "validity_domain": "same CPU/GPU ISA; no nondet reductions enabled"
+    },
+    {
+      "falsifier": "An observation violating 'f_applied = min(f*, f_max)' beyond the declared tolerance ('strict') in the validity domain 'all inputs'.",
+      "formula": "f_applied = min(f*, f_max)",
+      "law_id": "kelly.fraction_cap",
+      "ledger_reason": "",
+      "module": "kelly",
+      "severity": "block",
+      "source": "half-Kelly literature; internal risk ADR",
+      "status": "COVERED",
+      "test_witnesses": [
+        "tests/physics_contracts/test_kelly_sizing_witnesses.py::test_kelly_applied_fraction_respects_cap"
+      ],
+      "tolerance": "strict",
+      "tolerance_derivation": "Tolerance derived from the law formula 'f_applied = min(f*, f_max)' and the catalog tolerance clause 'strict'.",
+      "validity_domain": "all inputs"
+    },
+    {
+      "falsifier": "An observation violating 'E[log(1 + f*·X)] ≥ E[log(1 + f'·X)]  ∀ f' ∈ [0,1]' beyond the declared tolerance ('witness MC with ≥ 1e5 samples, gap > 3·SE') in the validity domain 'bounded returns, f' sampled on a grid'.",
+      "formula": "E[log(1 + f*·X)] ≥ E[log(1 + f'·X)]  ∀ f' ∈ [0,1]",
+      "law_id": "kelly.log_growth_optimality",
+      "ledger_reason": "",
+      "module": "kelly",
+      "severity": "warn",
+      "source": "Kelly 1956; Thorp 2006",
+      "status": "WARN_ONLY",
+      "test_witnesses": [
+        "tests/physics_contracts/test_kelly_sizing_witnesses.py::test_kelly_fraction_maximizes_log_growth"
+      ],
+      "tolerance": "witness MC with ≥ 1e5 samples, gap > 3·SE",
+      "tolerance_derivation": "Tolerance derived from the law formula 'E[log(1 + f*·X)] ≥ E[log(1 + f'·X)]  ∀ f' ∈ [0,1]' and the catalog tolerance clause 'witness MC with ≥ 1e5 samples, gap > 3·SE'.",
+      "validity_domain": "bounded returns, f' sampled on a grid"
+    },
+    {
+      "falsifier": "An observation violating 'f* = μ / σ²' beyond the declared tolerance ('|f_computed − μ/σ²| ≤ 1e-8 on synthetic inputs with known μ, σ') in the validity domain 'i.i.d. returns, no leverage cap binding, small-edge limit'.",
+      "formula": "f* = μ / σ²",
+      "law_id": "kelly.optimal_fraction_formula",
+      "ledger_reason": "",
+      "module": "kelly",
+      "severity": "block",
+      "source": "Kelly 1956; Thorp 2006; core/neuro/kuramoto_kelly.py",
+      "status": "COVERED",
+      "test_witnesses": [
+        "tests/physics_contracts/test_witness_examples.py::test_kelly_optimal_fraction_matches_mu_over_sigma_squared"
+      ],
+      "tolerance": "|f_computed − μ/σ²| ≤ 1e-8 on synthetic inputs with known μ, σ",
+      "tolerance_derivation": "Tolerance derived from the law formula 'f* = μ / σ²' and the catalog tolerance clause '|f_computed − μ/σ²| ≤ 1e-8 on synthetic inputs with known μ, σ'.",
+      "validity_domain": "i.i.d. returns, no leverage cap binding, small-edge limit"
+    },
+    {
+      "falsifier": "An observation violating 'r ∝ sqrt((K − K_c) / K)  for K → K_c⁺' beyond the declared tolerance ('log-log fit slope within 0.5 ± 0.05 over K ∈ [K_c, 1.3·K_c]') in the validity domain 'thermodynamic-limit proxy (N ≥ 1024), unimodal symmetric ω distribution'.",
+      "formula": "r ∝ sqrt((K − K_c) / K)  for K → K_c⁺",
+      "law_id": "kuramoto.critical_scaling",
+      "ledger_reason": "",
+      "module": "kuramoto",
+      "severity": "block",
+      "source": "Kuramoto 1984; Strogatz Physica D 2000 §2.3",
+      "status": "COVERED",
+      "test_witnesses": [
+        "tests/physics_contracts/test_kuramoto_transition_witnesses.py::test_critical_scaling_exponent_is_one_half"
+      ],
+      "tolerance": "log-log fit slope within 0.5 ± 0.05 over K ∈ [K_c, 1.3·K_c]",
+      "tolerance_derivation": "Tolerance derived from the law formula 'r ∝ sqrt((K − K_c) / K)  for K → K_c⁺' and the catalog tolerance clause 'log-log fit slope within 0.5 ± 0.05 over K ∈ [K_c, 1.3·K_c]'.",
+      "validity_domain": "thermodynamic-limit proxy (N ≥ 1024), unimodal symmetric ω distribution"
+    },
+    {
+      "falsifier": "An observation violating 'ε_effective = √(N_total / N_coupled) · (c / √N_total),  N_coupled ≤ N_total' beyond the declared tolerance ('DRAFT — to be derived from N and the Lorentzian half-width once a solver exists') in the validity domain 'DRAFT — witness deferred to a later PR; extends kuramoto.subcritical_finite_size under a causal-cutoff constraint'.",
+      "formula": "ε_effective = √(N_total / N_coupled) · (c / √N_total),  N_coupled ≤ N_total",
+      "law_id": "kuramoto.finite_size_scaling_with_causal_cutoff",
+      "ledger_reason": "",
+      "module": "manifold",
+      "severity": "warn",
+      "source": "Physics v2 handoff §1, §2 P4; extends Strogatz 2000 / Hong et al. PRE 2007 under causal cutoff",
+      "status": "WARN_ONLY",
+      "test_witnesses": [],
+      "tolerance": "DRAFT — to be derived from N and the Lorentzian half-width once a solver exists",
+      "tolerance_derivation": "Tolerance derived from the law formula 'ε_effective = √(N_total / N_coupled) · (c / √N_total),  N_coupled ≤ N_total' and the catalog tolerance clause 'DRAFT — to be derived from N and the Lorentzian half-width once a solver exists'.",
+      "validity_domain": "DRAFT — witness deferred to a later PR; extends kuramoto.subcritical_finite_size under a causal-cutoff constraint"
+    },
+    {
+      "falsifier": "An observation violating 'K > K_c  ⇒  ∃ Ω : |⟨dθ_j/dt⟩_t − Ω| → 0 for j in locked set' beyond the declared tolerance ('std(locked frequencies) ≤ 0.05·⟨|ω_j|⟩ for K ≥ 1.5·K_c') in the validity domain 'N ≥ 256, integration time > 50/γ'.",
+      "formula": "K > K_c  ⇒  ∃ Ω : |⟨dθ_j/dt⟩_t − Ω| → 0 for j in locked set",
+      "law_id": "kuramoto.frequency_entrainment",
+      "ledger_reason": "",
+      "module": "kuramoto",
+      "severity": "block",
+      "source": "Acebrón et al., Rev. Mod. Phys. 77 (2005)",
+      "status": "COVERED",
+      "test_witnesses": [
+        "tests/physics_contracts/test_kuramoto_entrainment_witness.py::test_locked_cluster_shares_a_common_frequency_above_kc"
+      ],
+      "tolerance": "std(locked frequencies) ≤ 0.05·⟨|ω_j|⟩ for K ≥ 1.5·K_c",
+      "tolerance_derivation": "Tolerance derived from the law formula 'K > K_c  ⇒  ∃ Ω : |⟨dθ_j/dt⟩_t − Ω| → 0 for j in locked set' and the catalog tolerance clause 'std(locked frequencies) ≤ 0.05·⟨|ω_j|⟩ for K ≥ 1.5·K_c'.",
+      "validity_domain": "N ≥ 256, integration time > 50/γ"
+    },
+    {
+      "falsifier": "An observation violating 'r(t) = |(1/N) Σ_j exp(i θ_j(t))|  ⇒  0 ≤ r(t) ≤ 1' beyond the declared tolerance ('strict — violation of either bound is a bug, not a numerical artefact') in the validity domain 'all K, all N ≥ 1, real phases'.",
+      "formula": "r(t) = |(1/N) Σ_j exp(i θ_j(t))|  ⇒  0 ≤ r(t) ≤ 1",
+      "law_id": "kuramoto.order_parameter_bounds",
+      "ledger_reason": "",
+      "module": "kuramoto",
+      "severity": "block",
+      "source": "Kuramoto (1975); core/kuramoto/metrics.py",
+      "status": "COVERED",
+      "test_witnesses": [
+        "tests/physics_contracts/test_kuramoto_transition_witnesses.py::test_order_parameter_is_bounded_in_unit_interval",
+        "tests/physics_contracts/test_witness_examples.py::test_order_parameter_is_bounded"
+      ],
+      "tolerance": "strict — violation of either bound is a bug, not a numerical artefact",
+      "tolerance_derivation": "Tolerance derived from the law formula 'r(t) = |(1/N) Σ_j exp(i θ_j(t))|  ⇒  0 ≤ r(t) ≤ 1' and the catalog tolerance clause 'strict — violation of either bound is a bug, not a numerical artefact'.",
+      "validity_domain": "all K, all N ≥ 1, real phases"
+    },
+    {
+      "falsifier": "An observation violating 'K < K_c  ⇒  ⟨r⟩ ≈ c / √N  with c ≈ √(π/2) for Lorentzian ω' beyond the declared tolerance ('witness must assert r < 3 / √N with p ≥ 0.99 over M ≥ 200 trials') in the validity domain 'K ≤ 0.8·K_c, N ≥ 256, equilibration time t > 20/γ (γ = Lorentzian half-width)'.",
+      "formula": "K < K_c  ⇒  ⟨r⟩ ≈ c / √N  with c ≈ √(π/2) for Lorentzian ω",
+      "law_id": "kuramoto.subcritical_finite_size",
+      "ledger_reason": "",
+      "module": "kuramoto",
+      "severity": "block",
+      "source": "Strogatz 2000; Daido 1990; Hong et al. PRE 2007",
+      "status": "COVERED",
+      "test_witnesses": [
+        "tests/physics_contracts/test_kuramoto_subcritical_floor_witness.py::test_subcritical_order_parameter_sits_at_finite_size_floor",
+        "tests/physics_contracts/test_witness_examples.py::test_subcritical_order_parameter_scales_as_inverse_sqrt_n"
+      ],
+      "tolerance": "witness must assert r < 3 / √N with p ≥ 0.99 over M ≥ 200 trials",
+      "tolerance_derivation": "Tolerance derived from the law formula 'K < K_c  ⇒  ⟨r⟩ ≈ c / √N  with c ≈ √(π/2) for Lorentzian ω' and the catalog tolerance clause 'witness must assert r < 3 / √N with p ≥ 0.99 over M ≥ 200 trials'.",
+      "validity_domain": "K ≤ 0.8·K_c, N ≥ 256, equilibration time t > 20/γ (γ = Lorentzian half-width)"
+    },
+    {
+      "falsifier": "An observation violating 'A_pos = max(½(κ+κᵀ), 0), zero diag  (roh_compatible, clipped_for_threshold = (#neg>0));  C_signed = ½(κ+κᵀ), zero diag  (sign preserved, NOT roh_compatible);  assert_roh_compatible(A): any A_ij < 0 ⇒ ValueError' beyond the declared tolerance ('structural/exact: the positive path's clipped_for_threshold bit equals (#negative_edges > 0); the signed path retains every κ_ij < 0 bit-for-bit (atol 1e-12); a signed matrix raises ValueError at the boundary — no numeric slack, the contract is a fail-closed predicate not a measured quantity') in the validity domain 'square (N×N) curvature matrices; the ROH onset claim is valid only on the non-negative (positive-path) adjacency; the signed path carries no onset-threshold claim by construction'.",
+      "formula": "A_pos = max(½(κ+κᵀ), 0), zero diag  (roh_compatible, clipped_for_threshold = (#neg>0));  C_signed = ½(κ+κᵀ), zero diag  (sign preserved, NOT roh_compatible);  assert_roh_compatible(A): any A_ij < 0 ⇒ ValueError",
+      "law_id": "kuramoto_ricci.semantics_split",
+      "ledger_reason": "",
+      "module": "ricci",
+      "severity": "block",
+      "source": "Restrepo, Ott, Hunt PRE 2005 (Φ threshold); Ollivier J. Funct. Anal. 2009 (signed κ); .claude/physics/INVARIANTS.yaml kuramoto_ricci_semantics (INV-KR4); core/kuramoto/kuramoto_ricci_engine.py",
+      "status": "COVERED",
+      "test_witnesses": [
+        "tests/physics_contracts/test_kuramoto_ricci_semantics_split_witness.py::test_positive_path_clips_only_with_audit",
+        "tests/physics_contracts/test_kuramoto_ricci_semantics_split_witness.py::test_signed_matrix_rejected_at_onset_boundary",
+        "tests/physics_contracts/test_kuramoto_ricci_semantics_split_witness.py::test_signed_path_preserves_every_negative_bit"
+      ],
+      "tolerance": "structural/exact: the positive path's clipped_for_threshold bit equals (#negative_edges > 0); the signed path retains every κ_ij < 0 bit-for-bit (atol 1e-12); a signed matrix raises ValueError at the boundary — no numeric slack, the contract is a fail-closed predicate not a measured quantity",
+      "tolerance_derivation": "Tolerance derived from the law formula 'A_pos = max(½(κ+κᵀ), 0), zero diag  (roh_compatible, clipped_for_threshold = (#neg>0));  C_signed = ½(κ+κᵀ), zero diag  (sign preserved, NOT roh_compatible);  assert_roh_compatible(A): any A_ij < 0 ⇒ ValueError' and the catalog tolerance clause 'structural/exact: the positive path's clipped_for_threshold bit equals (#negative_edges > 0); the signed path retains every κ_ij < 0 bit-for-bit (atol 1e-12); a signed matrix raises ValueError at the boundary — no numeric slack, the contract is a fail-closed predicate not a measured quantity'.",
+      "validity_domain": "square (N×N) curvature matrices; the ROH onset claim is valid only on the non-negative (positive-path) adjacency; the signed path carries no onset-threshold claim by construction"
+    },
+    {
+      "falsifier": "An observation violating 'causal_cutoff_seconds ≥ latency_floor_seconds ≥ 0 ∧ ∀ t_event: t_event ≤ timestamp_end' beyond the declared tolerance ('strict — negative latency, cutoff below floor, or look-ahead event raises ValueError') in the validity domain 'relativistic-INSPIRED causal cutoff only; NOT a relativistic market law (architecture doc §5)'.",
+      "formula": "causal_cutoff_seconds ≥ latency_floor_seconds ≥ 0 ∧ ∀ t_event: t_event ≤ timestamp_end",
+      "law_id": "manifold.causal_cutoff",
+      "ledger_reason": "",
+      "module": "manifold",
+      "severity": "warn",
+      "source": "Physics v2 handoff §2 P2, §5; physics_contracts/manifold/contracts.py::MarketCausalGraphSnapshot.assert_no_lookahead",
+      "status": "WARN_ONLY",
+      "test_witnesses": [
+        "tests/physics_contracts/test_physics_v2_manifold_contracts.py::test_no_lookahead_accepts_past_events",
+        "tests/physics_contracts/test_physics_v2_manifold_contracts.py::test_no_lookahead_rejects_future_event",
+        "tests/physics_contracts/test_physics_v2_manifold_contracts.py::test_require_licensed_l2_fails_closed_on_missing_data",
+        "tests/physics_contracts/test_physics_v2_manifold_contracts.py::test_require_licensed_l2_passes_real_fingerprint_through",
+        "tests/physics_contracts/test_physics_v2_manifold_contracts.py::test_require_licensed_l2_rejects_synthetic_fingerprint"
+      ],
+      "tolerance": "strict — negative latency, cutoff below floor, or look-ahead event raises ValueError",
+      "tolerance_derivation": "Tolerance derived from the law formula 'causal_cutoff_seconds ≥ latency_floor_seconds ≥ 0 ∧ ∀ t_event: t_event ≤ timestamp_end' and the catalog tolerance clause 'strict — negative latency, cutoff below floor, or look-ahead event raises ValueError'.",
+      "validity_domain": "relativistic-INSPIRED causal cutoff only; NOT a relativistic market law (architecture doc §5)"
+    },
+    {
+      "falsifier": "An observation violating '∀ edge weight wᵢ: 0 ≤ wᵢ < ∞' beyond the declared tolerance ('strict — a negative or non-finite weight raises ValueError') in the validity domain 'structural precondition for any later curvature-flow layer; no market claim'.",
+      "formula": "∀ edge weight wᵢ: 0 ≤ wᵢ < ∞",
+      "law_id": "manifold.curvature_transport_balance",
+      "ledger_reason": "",
+      "module": "manifold",
+      "severity": "warn",
+      "source": "Physics v2 handoff §2 P2/P3; physics_contracts/manifold/contracts.py::MarketCausalGraphSnapshot",
+      "status": "WARN_ONLY",
+      "test_witnesses": [],
+      "tolerance": "strict — a negative or non-finite weight raises ValueError",
+      "tolerance_derivation": "Tolerance derived from the law formula '∀ edge weight wᵢ: 0 ≤ wᵢ < ∞' and the catalog tolerance clause 'strict — a negative or non-finite weight raises ValueError'.",
+      "validity_domain": "structural precondition for any later curvature-flow layer; no market claim"
+    },
+    {
+      "falsifier": "An observation violating 'timestamp_end ≥ timestamp_start ∧ ∀(u,v)∈E: 0≤u,v<|V| ∧ u≠v ∧ |E|=|w| ∧ ∀wᵢ: 0≤wᵢ<∞' beyond the declared tolerance ('strict — any schema violation raises ValueError; no silent repair') in the validity domain 'every MarketCausalGraphSnapshot construction; structural only, no market claim'.",
+      "formula": "timestamp_end ≥ timestamp_start ∧ ∀(u,v)∈E: 0≤u,v<|V| ∧ u≠v ∧ |E|=|w| ∧ ∀wᵢ: 0≤wᵢ<∞",
+      "law_id": "manifold.metric_snapshot_schema",
+      "ledger_reason": "",
+      "module": "manifold",
+      "severity": "warn",
+      "source": "Physics v2 handoff §2 P2; physics_contracts/manifold/contracts.py::MarketCausalGraphSnapshot",
+      "status": "WARN_ONLY",
+      "test_witnesses": [
+        "tests/physics_contracts/test_physics_v2_manifold_contracts.py::test_non_monotonic_interval_fails_closed",
+        "tests/physics_contracts/test_physics_v2_manifold_contracts.py::test_synthetic_snapshot_is_well_formed"
+      ],
+      "tolerance": "strict — any schema violation raises ValueError; no silent repair",
+      "tolerance_derivation": "Tolerance derived from the law formula 'timestamp_end ≥ timestamp_start ∧ ∀(u,v)∈E: 0≤u,v<|V| ∧ u≠v ∧ |E|=|w| ∧ ∀wᵢ: 0≤wᵢ<∞' and the catalog tolerance clause 'strict — any schema violation raises ValueError; no silent repair'.",
+      "validity_domain": "every MarketCausalGraphSnapshot construction; structural only, no market claim"
+    },
+    {
+      "falsifier": "An observation violating 'snapshot_id = SHA256(canonical_json(fields)) ∧ run_id = SHA256(canonical_json(config_hash, dataset_fingerprint, code_commit))' beyond the declared tolerance ('byte-identical digest under replay; empty provenance field raises ValueError') in the validity domain 'all manifold contracts; same interpreter (digest is canonical-JSON stable)'.",
+      "formula": "snapshot_id = SHA256(canonical_json(fields)) ∧ run_id = SHA256(canonical_json(config_hash, dataset_fingerprint, code_commit))",
+      "law_id": "manifold.provenance_replay_identity",
+      "ledger_reason": "",
+      "module": "manifold",
+      "severity": "warn",
+      "source": "Physics v2 handoff §2 P6; physics_contracts/manifold/contracts.py::canonical_digest",
+      "status": "WARN_ONLY",
+      "test_witnesses": [
+        "tests/physics_contracts/test_physics_v2_manifold_contracts.py::test_capsule_blocks_real_maturity_without_data",
+        "tests/physics_contracts/test_physics_v2_manifold_contracts.py::test_capsule_digest_is_deterministic",
+        "tests/physics_contracts/test_physics_v2_manifold_contracts.py::test_comparison_report_digest_is_deterministic",
+        "tests/physics_contracts/test_physics_v2_manifold_contracts.py::test_distinct_seeds_yield_distinct_snapshot_ids",
+        "tests/physics_contracts/test_physics_v2_manifold_contracts.py::test_run_id_is_deterministic_function_of_provenance",
+        "tests/physics_contracts/test_physics_v2_manifold_contracts.py::test_run_id_rejects_empty_provenance",
+        "tests/physics_contracts/test_physics_v2_manifold_contracts.py::test_snapshot_id_is_deterministic"
+      ],
+      "tolerance": "byte-identical digest under replay; empty provenance field raises ValueError",
+      "tolerance_derivation": "Tolerance derived from the law formula 'snapshot_id = SHA256(canonical_json(fields)) ∧ run_id = SHA256(canonical_json(config_hash, dataset_fingerprint, code_commit))' and the catalog tolerance clause 'byte-identical digest under replay; empty provenance field raises ValueError'.",
+      "validity_domain": "all manifold contracts; same interpreter (digest is canonical-JSON stable)"
+    },
+    {
+      "falsifier": "An observation violating 't_{k+1} ≥ t_k  per (instrument, venue)' beyond the declared tolerance ('strict') in the validity domain 'single venue; clock skew handled upstream'.",
+      "formula": "t_{k+1} ≥ t_k  per (instrument, venue)",
+      "law_id": "oms.causal_order",
+      "ledger_reason": "",
+      "module": "oms",
+      "severity": "block",
+      "source": "execution/oms.py",
+      "status": "COVERED",
+      "test_witnesses": [
+        "tests/physics_contracts/test_oms_idempotency_causal_witnesses.py::test_episode_event_log_is_causally_ordered"
+      ],
+      "tolerance": "strict",
+      "tolerance_derivation": "Tolerance derived from the law formula 't_{k+1} ≥ t_k  per (instrument, venue)' and the catalog tolerance clause 'strict'.",
+      "validity_domain": "single venue; clock skew handled upstream"
+    },
+    {
+      "falsifier": "An observation violating 'apply(order, order) ≡ apply(order)' beyond the declared tolerance ('state equality after N replays, N ≥ 5') in the validity domain 'same client_order_id, deterministic clock'.",
+      "formula": "apply(order, order) ≡ apply(order)",
+      "law_id": "oms.idempotency",
+      "ledger_reason": "",
+      "module": "oms",
+      "severity": "block",
+      "source": "execution/oms.py",
+      "status": "COVERED",
+      "test_witnesses": [
+        "tests/physics_contracts/test_oms_idempotency_causal_witnesses.py::test_duplicate_operation_key_applies_exactly_once"
+      ],
+      "tolerance": "state equality after N replays, N ≥ 5",
+      "tolerance_derivation": "Tolerance derived from the law formula 'apply(order, order) ≡ apply(order)' and the catalog tolerance clause 'state equality after N replays, N ≥ 5'.",
+      "validity_domain": "same client_order_id, deterministic clock"
+    },
+    {
+      "falsifier": "An observation violating 'Σ_i (Δpos_i · price_i) + Δcash = 0  per fill, modulo fees' beyond the declared tolerance ('|residual − fees| ≤ 1e-8 · notional') in the validity domain 'single fill event, accounting currency fixed'.",
+      "formula": "Σ_i (Δpos_i · price_i) + Δcash = 0  per fill, modulo fees",
+      "law_id": "oms.position_conservation",
+      "ledger_reason": "",
+      "module": "oms",
+      "severity": "block",
+      "source": "execution/oms.py; core/physics/portfolio_conservation.py",
+      "status": "COVERED",
+      "test_witnesses": [
+        "tests/physics_contracts/test_oms_ledger_conservation_witness.py::test_conservation_holds_on_every_fill",
+        "tests/physics_contracts/test_oms_ledger_conservation_witness.py::test_independent_fills_commute"
+      ],
+      "tolerance": "|residual − fees| ≤ 1e-8 · notional",
+      "tolerance_derivation": "Tolerance derived from the law formula 'Σ_i (Δpos_i · price_i) + Δcash = 0  per fill, modulo fees' and the catalog tolerance clause '|residual − fees| ≤ 1e-8 · notional'.",
+      "validity_domain": "single fill event, accounting currency fixed"
+    },
+    {
+      "falsifier": "An observation violating 'C_irr ≥ C_rev,  with C_irr > C_rev iff irreversibility_score > 0' beyond the declared tolerance ('strict — any reversible/irreversible pair with identical (token, latency, entropy) and irreversibility_score > 0 must satisfy C_irr > C_rev exactly; equality only when irreversibility_score == 0') in the validity domain 'pure functional path: aggregate_entry → total_cost → reversible_alternative_cost; no global state, no RNG, no time call'.",
+      "formula": "C_irr ≥ C_rev,  with C_irr > C_rev iff irreversibility_score > 0",
+      "law_id": "pncc.landauer_proxy_dominance",
+      "ledger_reason": "",
+      "module": "pncc",
+      "severity": "warn",
+      "source": "Landauer 1961; core/physics/thermodynamic_budget.py; tests/unit/physics/test_thermodynamic_budget.py",
+      "status": "WARN_ONLY",
+      "test_witnesses": [
+        "tests/physics_contracts/test_pncc_thermodynamic_law_witnesses.py::test_irreversible_cost_dominates_reversible_alternative"
+      ],
+      "tolerance": "strict — any reversible/irreversible pair with identical (token, latency, entropy) and irreversibility_score > 0 must satisfy C_irr > C_rev exactly; equality only when irreversibility_score == 0",
+      "tolerance_derivation": "Tolerance derived from the law formula 'C_irr ≥ C_rev,  with C_irr > C_rev iff irreversibility_score > 0' and the catalog tolerance clause 'strict — any reversible/irreversible pair with identical (token, latency, entropy) and irreversibility_score > 0 must satisfy C_irr > C_rev exactly; equality only when irreversibility_score == 0'.",
+      "validity_domain": "pure functional path: aggregate_entry → total_cost → reversible_alternative_cost; no global state, no RNG, no time call"
+    },
+    {
+      "falsifier": "An observation violating 'for every match m of DEFAULT_FORBIDDEN_PATTERNS in non-test source: ∃ EvidenceClaim_registered(m) ∨ ∃ phrase ∈ allowed_disclaimer_phrases within scope(m)' beyond the declared tolerance ('strict — zero naked violations across core/, tacl/, runtime/, geosync/ in non-test source') in the validity domain 'AST-grep + runtime guard via tacl.evidence_ledger.scan_source_for_bio_claims; test files (tests/**) and explicit disclaimer paragraphs are excluded by construction'.",
+      "formula": "for every match m of DEFAULT_FORBIDDEN_PATTERNS in non-test source: ∃ EvidenceClaim_registered(m) ∨ ∃ phrase ∈ allowed_disclaimer_phrases within scope(m)",
+      "law_id": "pncc.no_bio_claim",
+      "ledger_reason": "",
+      "module": "tacl",
+      "severity": "warn",
+      "source": "GeoSync PNCC CANONS §INV-NO-BIO-CLAIM; tacl/evidence_ledger.py; tests/tacl/test_evidence_ledger.py",
+      "status": "WARN_ONLY",
+      "test_witnesses": [
+        "tests/physics_contracts/test_pncc_no_bio_claim_witness.py::test_bio_claim_gate_fires_and_clears_correctly"
+      ],
+      "tolerance": "strict — zero naked violations across core/, tacl/, runtime/, geosync/ in non-test source",
+      "tolerance_derivation": "Tolerance derived from the law formula 'for every match m of DEFAULT_FORBIDDEN_PATTERNS in non-test source: ∃ EvidenceClaim_registered(m) ∨ ∃ phrase ∈ allowed_disclaimer_phrases within scope(m)' and the catalog tolerance clause 'strict — zero naked violations across core/, tacl/, runtime/, geosync/ in non-test source'.",
+      "validity_domain": "AST-grep + runtime guard via tacl.evidence_ledger.scan_source_for_bio_claims; test files (tests/**) and explicit disclaimer paragraphs are excluded by construction"
+    },
+    {
+      "falsifier": "An observation violating 'irreversibility_score(action) ≤ cfg.irreversibility_threshold  ⇒  gate.rollback(trace.audit_hash).state_bytes == pre_state' beyond the declared tolerance ('strict bit-equality of pre_state and rollback output across 1000 random reversible actions') in the validity domain 'rollback called with the trace.audit_hash issued by the same gate instance; action classified reversible'.",
+      "formula": "irreversibility_score(action) ≤ cfg.irreversibility_threshold  ⇒  gate.rollback(trace.audit_hash).state_bytes == pre_state",
+      "law_id": "pncc.reversible_gate_byte_exact",
+      "ledger_reason": "",
+      "module": "pncc",
+      "severity": "warn",
+      "source": "Bennett 1973; core/physics/reversible_gate.py; tests/unit/physics/test_reversible_gate.py",
+      "status": "WARN_ONLY",
+      "test_witnesses": [
+        "tests/physics_contracts/test_pncc_thermodynamic_law_witnesses.py::test_reversible_action_rollback_recovers_byte_exact_pre_state"
+      ],
+      "tolerance": "strict bit-equality of pre_state and rollback output across 1000 random reversible actions",
+      "tolerance_derivation": "Tolerance derived from the law formula 'irreversibility_score(action) ≤ cfg.irreversibility_threshold  ⇒  gate.rollback(trace.audit_hash).state_bytes == pre_state' and the catalog tolerance clause 'strict bit-equality of pre_state and rollback output across 1000 random reversible actions'.",
+      "validity_domain": "rollback called with the trace.audit_hash issued by the same gate instance; action classified reversible"
+    },
+    {
+      "falsifier": "An observation violating 'dF/dt ≤ 0 within declared domain, F = Σ_e κ_e² (static graph, no surgery)' beyond the declared tolerance ('to be derived from the solver step size in a later PR; declared-domain only, NOT universal') in the validity domain 'DRAFT — witness deferred until the curvature-flow solver lands (architecture doc §2 P3). Discrete graph domain only; no Ricci-flow theorem claim beyond it (§5).'.",
+      "formula": "dF/dt ≤ 0 within declared domain, F = Σ_e κ_e² (static graph, no surgery)",
+      "law_id": "ricci.flow_energy_nonincrease_declared_domain",
+      "ledger_reason": "",
+      "module": "manifold",
+      "severity": "warn",
+      "source": "Physics v2 handoff §1, §2 P3; cf. existing core/kuramoto/ricci_flow.py (Hamilton 1982; Chow & Luo 2003)",
+      "status": "WARN_ONLY",
+      "test_witnesses": [],
+      "tolerance": "to be derived from the solver step size in a later PR; declared-domain only, NOT universal",
+      "tolerance_derivation": "Tolerance derived from the law formula 'dF/dt ≤ 0 within declared domain, F = Σ_e κ_e² (static graph, no surgery)' and the catalog tolerance clause 'to be derived from the solver step size in a later PR; declared-domain only, NOT universal'.",
+      "validity_domain": "DRAFT — witness deferred until the curvature-flow solver lands (architecture doc §2 P3). Discrete graph domain only; no Ricci-flow theorem claim beyond it (§5)."
+    },
+    {
+      "falsifier": "An observation violating 'dF/dt ≤ 0  where  F = Σ_e κ_e² · w_e' beyond the declared tolerance ('F(t+1) ≤ F(t) · (1 + 1e-9) — numerical slack only') in the validity domain 'closed graph, no external rewiring during the flow step, and positive Ricci curvature on active edges. Negative-curvature rewiring is an out-of-domain energy-injection regime and must be rejected by the executable witness, not counted as a valid monotonicity case.'.",
+      "formula": "dF/dt ≤ 0  where  F = Σ_e κ_e² · w_e",
+      "law_id": "ricci.flow_monotonicity",
+      "ledger_reason": "",
+      "module": "ricci",
+      "severity": "block",
+      "source": "Perelman 2002; Ni–Lin–Luo 2019; core/kuramoto/ricci_flow.py::discrete_ricci_flow_step",
+      "status": "COVERED",
+      "test_witnesses": [
+        "tests/physics_contracts/test_ricci_geometry_witnesses.py::test_ricci_flow_F_functional_is_non_increasing"
+      ],
+      "tolerance": "F(t+1) ≤ F(t) · (1 + 1e-9) — numerical slack only",
+      "tolerance_derivation": "Tolerance derived from the law formula 'dF/dt ≤ 0  where  F = Σ_e κ_e² · w_e' and the catalog tolerance clause 'F(t+1) ≤ F(t) · (1 + 1e-9) — numerical slack only'.",
+      "validity_domain": "closed graph, no external rewiring during the flow step, and positive Ricci curvature on active edges. Negative-curvature rewiring is an out-of-domain energy-injection regime and must be rejected by the executable witness, not counted as a valid monotonicity case."
+    },
+    {
+      "falsifier": "An observation violating 'Σ_{x∈V} K(x) = χ(G);  K(x) = Σ_k (−1)^k V_k(x)/(k+1);  χ(G) = Σ_k (−1)^k v_k  ⇒  residual = Σ_x K(x) − χ(G) = 0 exactly (over ℚ)' beyond the declared tolerance ('exact: residual == 0 over the rationals; no floating-point slack admitted (curvature carried as fractions.Fraction)') in the validity domain 'finite simple undirected graph (no self-loops, no multi/directed edges); the clique complex is taken to the graph's clique number. Out-of-domain inputs are refused, not coerced.'.",
+      "formula": "Σ_{x∈V} K(x) = χ(G);  K(x) = Σ_k (−1)^k V_k(x)/(k+1);  χ(G) = Σ_k (−1)^k v_k  ⇒  residual = Σ_x K(x) − χ(G) = 0 exactly (over ℚ)",
+      "law_id": "ricci.gauss_bonnet",
+      "ledger_reason": "",
+      "module": "ricci",
+      "severity": "block",
+      "source": "Knill O., 'A graph theoretical Gauss-Bonnet theorem', arXiv:1111.5395 (2011); core/indicators/gauss_bonnet.py",
+      "status": "COVERED",
+      "test_witnesses": [
+        "tests/physics_contracts/test_gauss_bonnet_witness.py::test_gauss_bonnet_identity_is_exact_and_fails_closed"
+      ],
+      "tolerance": "exact: residual == 0 over the rationals; no floating-point slack admitted (curvature carried as fractions.Fraction)",
+      "tolerance_derivation": "Tolerance derived from the law formula 'Σ_{x∈V} K(x) = χ(G);  K(x) = Σ_k (−1)^k V_k(x)/(k+1);  χ(G) = Σ_k (−1)^k v_k  ⇒  residual = Σ_x K(x) − χ(G) = 0 exactly (over ℚ)' and the catalog tolerance clause 'exact: residual == 0 over the rationals; no floating-point slack admitted (curvature carried as fractions.Fraction)'.",
+      "validity_domain": "finite simple undirected graph (no self-loops, no multi/directed edges); the clique complex is taken to the graph's clique number. Out-of-domain inputs are refused, not coerced."
+    },
+    {
+      "falsifier": "An observation violating 'κ(x,y) = 1 − W_1(m_x, m_y) / d(x,y)  ⇒  κ ≤ 1 always (W_1 ≥ 0). κ ≥ −1 holds only when the embedding distance matches the combinatorial metric (build_price_graph: consecutive integer node IDs).' beyond the declared tolerance ('strict on the universal upper bound κ ≤ 1; the lower bound −1 is conditional on build_price_graph output') in the validity domain 'Universal upper bound κ ≤ 1: any connected graph, positive edge weights (INV-RC1, P0). Symmetric band κ ∈ [−1, 1]: build_price_graph output only — consecutive integer node IDs so the 1-D positional embedding equals the combinatorial distance (INV-RC3, P1). The implementation in core/indicators/ricci.py uses a 1-D positional embedding (offset/scale from graph attrs) with α = 1/(deg+1); under that embedding κ can descend below −1 for non-price-graph topologies with large positional spread (e.g. a 12-node cycle gives κ = −2 on the wrap-around edge whose endpoints are 11 apart in the integer embedding but graph-distance 1).'.",
+      "formula": "κ(x,y) = 1 − W_1(m_x, m_y) / d(x,y)  ⇒  κ ≤ 1 always (W_1 ≥ 0). κ ≥ −1 holds only when the embedding distance matches the combinatorial metric (build_price_graph: consecutive integer node IDs).",
+      "law_id": "ricci.ollivier_bounds",
+      "ledger_reason": "",
+      "module": "ricci",
+      "severity": "block",
+      "source": "Ollivier J. Funct. Anal. 2009; .claude/physics/INVARIANTS.yaml ricci.curvature_bounds (INV-RC1) and ricci.price_graph_bounds (INV-RC3); core/indicators/ricci.py ricci_curvature_edge docstring",
+      "status": "COVERED",
+      "test_witnesses": [
+        "tests/physics_contracts/test_ricci_geometry_witnesses.py::test_ollivier_ricci_curvature_is_bounded",
+        "tests/physics_contracts/test_ricci_ollivier_identity_boundary.py::test_lower_bound_is_wasserstein_to_geodesic_ratio_condition",
+        "tests/physics_contracts/test_ricci_ollivier_identity_boundary.py::test_ollivier_curvature_equals_wasserstein_geodesic_formula"
+      ],
+      "tolerance": "strict on the universal upper bound κ ≤ 1; the lower bound −1 is conditional on build_price_graph output",
+      "tolerance_derivation": "Tolerance derived from the law formula 'κ(x,y) = 1 − W_1(m_x, m_y) / d(x,y)  ⇒  κ ≤ 1 always (W_1 ≥ 0). κ ≥ −1 holds only when the embedding distance matches the combinatorial metric (build_price_graph: consecutive integer node IDs).' and the catalog tolerance clause 'strict on the universal upper bound κ ≤ 1; the lower bound −1 is conditional on build_price_graph output'.",
+      "validity_domain": "Universal upper bound κ ≤ 1: any connected graph, positive edge weights (INV-RC1, P0). Symmetric band κ ∈ [−1, 1]: build_price_graph output only — consecutive integer node IDs so the 1-D positional embedding equals the combinatorial distance (INV-RC3, P1). The implementation in core/indicators/ricci.py uses a 1-D positional embedding (offset/scale from graph attrs) with α = 1/(deg+1); under that embedding κ can descend below −1 for non-price-graph topologies with large positional spread (e.g. a 12-node cycle gives κ = −2 on the wrap-around edge whose endpoints are 11 apart in the integer embedding but graph-distance 1)."
+    },
+    {
+      "falsifier": "An observation violating '0 ≤ level(t) ≤ 1' beyond the declared tolerance ('strict; integrator must clip or prove invariance') in the validity domain 'all inputs, all t ≥ 0'.",
+      "formula": "0 ≤ level(t) ≤ 1",
+      "law_id": "serotonin.level_bounds",
+      "ledger_reason": "",
+      "module": "serotonin",
+      "severity": "block",
+      "source": "core/neuro/serotonin_ode.py docstring",
+      "status": "COVERED",
+      "test_witnesses": [
+        "tests/physics_contracts/test_serotonin_homeostasis_witnesses.py::test_serotonin_level_stays_bounded"
+      ],
+      "tolerance": "strict; integrator must clip or prove invariance",
+      "tolerance_derivation": "Tolerance derived from the law formula '0 ≤ level(t) ≤ 1' and the catalog tolerance clause 'strict; integrator must clip or prove invariance'.",
+      "validity_domain": "all inputs, all t ≥ 0"
+    },
+    {
+      "falsifier": "An observation violating 'V(l,d) = ½(l − target)² + λ d²;  dV/dt ≤ 0  with zero input' beyond the declared tolerance ('V(t+1) − V(t) ≤ 1e-9 with stress=0 input') in the validity domain 'zero exogenous stress, bounded initial state'.",
+      "formula": "V(l,d) = ½(l − target)² + λ d²;  dV/dt ≤ 0  with zero input",
+      "law_id": "serotonin.lyapunov_stability",
+      "ledger_reason": "",
+      "module": "serotonin",
+      "severity": "block",
+      "source": "core/neuro/serotonin_ode.py",
+      "status": "COVERED",
+      "test_witnesses": [
+        "tests/physics_contracts/test_serotonin_homeostasis_witnesses.py::test_serotonin_lyapunov_is_non_increasing"
+      ],
+      "tolerance": "V(t+1) − V(t) ≤ 1e-9 with stress=0 input",
+      "tolerance_derivation": "Tolerance derived from the law formula 'V(l,d) = ½(l − target)² + λ d²;  dV/dt ≤ 0  with zero input' and the catalog tolerance clause 'V(t+1) − V(t) ≤ 1e-9 with stress=0 input'.",
+      "validity_domain": "zero exogenous stress, bounded initial state"
+    },
+    {
+      "falsifier": "An observation violating '∄ cycle in (nodes=signals, edges=produces→consumes)  per tick' beyond the declared tolerance ('strict') in the validity domain 'single tick; cross-tick feedback allowed and tracked separately'.",
+      "formula": "∄ cycle in (nodes=signals, edges=produces→consumes)  per tick",
+      "law_id": "signalbus.acyclic_fanout",
+      "ledger_reason": "",
+      "module": "signalbus",
+      "severity": "block",
+      "source": "core/neuro/signal_bus.py",
+      "status": "COVERED",
+      "test_witnesses": [
+        "tests/physics_contracts/test_signalbus_fanout_witnesses.py::test_fanout_fires_each_subscriber_exactly_once_per_publish"
+      ],
+      "tolerance": "strict",
+      "tolerance_derivation": "Tolerance derived from the law formula '∄ cycle in (nodes=signals, edges=produces→consumes)  per tick' and the catalog tolerance clause 'strict'.",
+      "validity_domain": "single tick; cross-tick feedback allowed and tracked separately"
+    },
+    {
+      "falsifier": "An observation violating 'replay(seed, inputs) == replay(seed, inputs)' beyond the declared tolerance ('bit-for-bit equality of emitted event hashes') in the validity domain 'all subscribers pure or seeded'.",
+      "formula": "replay(seed, inputs) == replay(seed, inputs)",
+      "law_id": "signalbus.deterministic_fanout",
+      "ledger_reason": "",
+      "module": "signalbus",
+      "severity": "block",
+      "source": "core/neuro/signal_bus.py",
+      "status": "COVERED",
+      "test_witnesses": [
+        "tests/physics_contracts/test_signalbus_fanout_witnesses.py::test_replay_produces_identical_signal_payload"
+      ],
+      "tolerance": "bit-for-bit equality of emitted event hashes",
+      "tolerance_derivation": "Tolerance derived from the law formula 'replay(seed, inputs) == replay(seed, inputs)' and the catalog tolerance clause 'bit-for-bit equality of emitted event hashes'.",
+      "validity_domain": "all subscribers pure or seeded"
+    },
+    {
+      "falsifier": "An observation violating 'dF/dt ≤ 0   where  F = U − T·S' beyond the declared tolerance ('monotone within 1e-10 relative') in the validity domain 'no exogenous regime shift within window; constant T'.",
+      "formula": "dF/dt ≤ 0   where  F = U − T·S",
+      "law_id": "thermo.free_energy_descent",
+      "ledger_reason": "",
+      "module": "ecs",
+      "severity": "block",
+      "source": "core/physics/free_energy_trading_gate.py",
+      "status": "COVERED",
+      "test_witnesses": [
+        "tests/physics_contracts/test_thermodynamics_witnesses.py::test_free_energy_gate_admits_only_descent"
+      ],
+      "tolerance": "monotone within 1e-10 relative",
+      "tolerance_derivation": "Tolerance derived from the law formula 'dF/dt ≤ 0   where  F = U − T·S' and the catalog tolerance clause 'monotone within 1e-10 relative'.",
+      "validity_domain": "no exogenous regime shift within window; constant T"
+    },
+    {
+      "falsifier": "An observation violating 'ΔF_erase ≥ k_B · T · ln 2' beyond the declared tolerance ('strict (physical lower bound)') in the validity domain 'quasi-static erasure, thermalised reservoir'.",
+      "formula": "ΔF_erase ≥ k_B · T · ln 2",
+      "law_id": "thermo.landauer_bound",
+      "ledger_reason": "",
+      "module": "ecs",
+      "severity": "block",
+      "source": "Landauer 1961; core/physics/landauer.py",
+      "status": "COVERED",
+      "test_witnesses": [
+        "tests/physics_contracts/test_thermo_landauer_floor_witness.py::test_landauer_per_bit_identity_and_additive_floor"
+      ],
+      "tolerance": "strict (physical lower bound)",
+      "tolerance_derivation": "Tolerance derived from the law formula 'ΔF_erase ≥ k_B · T · ln 2' and the catalog tolerance clause 'strict (physical lower bound)'.",
+      "validity_domain": "quasi-static erasure, thermalised reservoir"
+    },
+    {
+      "falsifier": "An observation violating 'dS/dt ≥ 0  for a closed subsystem with no external work' beyond the declared tolerance ('S(t+1) − S(t) ≥ −1e-12 — bit-level numerical slack only') in the validity domain 'isolated subsystem, ergodic assumption, coarse-graining scale fixed'.",
+      "formula": "dS/dt ≥ 0  for a closed subsystem with no external work",
+      "law_id": "thermo.second_law_closed",
+      "ledger_reason": "",
+      "module": "ecs",
+      "severity": "block",
+      "source": "Clausius; core/physics/thermodynamics.py; ECS regulator ADR",
+      "status": "COVERED",
+      "test_witnesses": [
+        "tests/physics_contracts/test_thermodynamics_witnesses.py::test_entropy_non_decreasing_under_mixing"
+      ],
+      "tolerance": "S(t+1) − S(t) ≥ −1e-12 — bit-level numerical slack only",
+      "tolerance_derivation": "Tolerance derived from the law formula 'dS/dt ≥ 0  for a closed subsystem with no external work' and the catalog tolerance clause 'S(t+1) − S(t) ≥ −1e-12 — bit-level numerical slack only'.",
+      "validity_domain": "isolated subsystem, ergodic assumption, coarse-graining scale fixed"
+    }
+  ],
+  "generated_by": "scripts/ci/check_physics_law_witness_index.py",
+  "invariants": [
+    {
+      "falsifier": "V(t+dt) > V(t) + numerical_tolerance",
+      "id": "INV-5HT1",
+      "priority": "P0",
+      "provenance": "UNSPECIFIED",
+      "source_module": "",
+      "status": "WARN_ONLY",
+      "test_witnesses": []
+    },
+    {
+      "falsifier": "",
+      "id": "INV-5HT2",
+      "priority": "P0",
+      "provenance": "UNSPECIFIED",
+      "source_module": "",
+      "status": "WARN_ONLY",
+      "test_witnesses": []
+    },
+    {
+      "falsifier": "",
+      "id": "INV-5HT3",
+      "priority": "P1",
+      "provenance": "UNSPECIFIED",
+      "source_module": "",
+      "status": "WARN_ONLY",
+      "test_witnesses": []
+    },
+    {
+      "falsifier": "sensitivity outside [0.1, 1.0] after any step sequence",
+      "id": "INV-5HT4",
+      "priority": "P0",
+      "provenance": "UNSPECIFIED",
+      "source_module": "",
+      "status": "WARN_ONLY",
+      "test_witnesses": []
+    },
+    {
+      "falsifier": "",
+      "id": "INV-5HT5",
+      "priority": "P1",
+      "provenance": "UNSPECIFIED",
+      "source_module": "",
+      "status": "WARN_ONLY",
+      "test_witnesses": []
+    },
+    {
+      "falsifier": "tonic_level → ∞ or NaN under finite inputs",
+      "id": "INV-5HT6",
+      "priority": "P0",
+      "provenance": "UNSPECIFIED",
+      "source_module": "",
+      "status": "WARN_ONLY",
+      "test_witnesses": []
+    },
+    {
+      "falsifier": "veto = False when stress ≥ 1.0 or |drawdown| ≥ 0.5",
+      "id": "INV-5HT7",
+      "priority": "P0",
+      "provenance": "UNSPECIFIED",
+      "source_module": "",
+      "status": "WARN_ONLY",
+      "test_witnesses": []
+    },
+    {
+      "falsifier": "should_isolate_node returns False for κ_node < κ_critical, OR isolates a node with κ_node ≥ κ_critical; OR a non-finite/singular input is silently admitted instead of isolated; OR aggregate_excluding_isolated returns a value when every node is isolated.",
+      "id": "INV-AC1-rev",
+      "priority": "P0",
+      "provenance": "ANCHORED",
+      "source_module": "geosync/estimators/dfa_gamma_estimator.py::AdaptiveCriticalityGate",
+      "status": "COVERED",
+      "test_witnesses": [
+        "tests/unit/physics/test_adaptive_criticality_kappa.py"
+      ]
+    },
+    {
+      "falsifier": "A substrate where both ingredient invariants pass independently but the composite gate reports inadmissible, OR where one ingredient fails but the composite reports admissible. Composition must be the AND of the two ANCHORED axes.",
+      "id": "INV-ANCHORED-SUBSTRATE-GATE",
+      "priority": "P0",
+      "provenance": "ANCHORED",
+      "source_module": "core/physics/anchored_substrate_gate.py",
+      "status": "COVERED",
+      "test_witnesses": [
+        "tests/unit/physics/test_anchored_substrate_gate.py"
+      ]
+    },
+    {
+      "falsifier": "Any response from `create_app()` whose status code, body, Content-Type, or headers diverge from the declared OpenAPI 3.1 contract; OR any schema-violating request silently accepted. Schemathesis emits a structured FailureGroup naming one of: UndefinedStatusCode, JsonSchemaError, MalformedMediaType, MissingHeaders, AcceptedNegativeData, ServerError.",
+      "id": "INV-API-CONTRACT",
+      "priority": "P1",
+      "provenance": "ANCHORED",
+      "source_module": "application/api/service.py",
+      "status": "COVERED",
+      "test_witnesses": [
+        "tests/api/test_schemathesis_contract.py"
+      ]
+    },
+    {
+      "falsifier": "Any observed sequence of (ΔS_system, ΔI_observer) with ΔS_system + ΔI_observer < 0 in any contiguous window.",
+      "id": "INV-ARROW-OF-TIME",
+      "priority": "P0",
+      "provenance": "ANCHORED",
+      "source_module": "core/physics/arrow_of_time.py",
+      "status": "COVERED",
+      "test_witnesses": [
+        "tests/unit/physics/test_arrow_of_time.py"
+      ]
+    },
+    {
+      "falsifier": "Any physical system that stably stores or processes I > 2π·E·R/(ℏ·c·ln 2) bits without forming an event horizon, OR an experimental violation of the holographic principle in the high-energy regime.",
+      "id": "INV-BEKENSTEIN-COGNITIVE",
+      "priority": "P0",
+      "provenance": "ANCHORED",
+      "source_module": "core/physics/thermodynamic_budget.py",
+      "status": "COVERED",
+      "test_witnesses": [
+        "tests/unit/physics/test_thermodynamic_budget.py"
+      ]
+    },
+    {
+      "falsifier": "A feasible target reports CONVERGED with residual > tolerance, OR the K_truth→λ→K* round-trip recovers λ to worse than 1e-12 on the documented synthetic input.",
+      "id": "INV-CAL1",
+      "priority": "P0",
+      "provenance": "ANCHORED",
+      "source_module": "core/kuramoto/lyapunov_calibration.py",
+      "status": "COVERED",
+      "test_witnesses": [
+        "tests/unit/physics/test_T3_lyapunov_calibration.py"
+      ]
+    },
+    {
+      "falsifier": "A target known to be out of reach returns status CONVERGED with a fabricated K* instead of INFEASIBLE.",
+      "id": "INV-CAL2",
+      "priority": "P0",
+      "provenance": "ANCHORED",
+      "source_module": "core/kuramoto/lyapunov_calibration.py",
+      "status": "COVERED",
+      "test_witnesses": [
+        "tests/unit/physics/test_T3_lyapunov_calibration.py"
+      ]
+    },
+    {
+      "falsifier": "The calibrator returns K* ≤ 0, OR admits any enumerated contract violation instead of raising ValueError.",
+      "id": "INV-CAL3",
+      "priority": "P0",
+      "provenance": "ANCHORED",
+      "source_module": "core/kuramoto/lyapunov_calibration.py",
+      "status": "COVERED",
+      "test_witnesses": [
+        "tests/unit/physics/test_T3_lyapunov_calibration.py"
+      ]
+    },
+    {
+      "falsifier": "CryptobiosisController in DORMANT state returns multiplier != 0.0",
+      "id": "INV-CB1",
+      "priority": "P0",
+      "provenance": "UNSPECIFIED",
+      "source_module": "",
+      "status": "WARN_ONLY",
+      "test_witnesses": []
+    },
+    {
+      "falsifier": "System remains in VITRIFYING for more than 1 tick after entry",
+      "id": "INV-CB2",
+      "priority": "P0",
+      "provenance": "UNSPECIFIED",
+      "source_module": "",
+      "status": "WARN_ONLY",
+      "test_witnesses": []
+    },
+    {
+      "falsifier": "snapshot is None while in DORMANT state",
+      "id": "INV-CB3",
+      "priority": "P1",
+      "provenance": "UNSPECIFIED",
+      "source_module": "",
+      "status": "WARN_ONLY",
+      "test_witnesses": []
+    },
+    {
+      "falsifier": "rehydration_stage decreases between consecutive ticks with T < entry_threshold",
+      "id": "INV-CB4",
+      "priority": "P0",
+      "provenance": "UNSPECIFIED",
+      "source_module": "",
+      "status": "WARN_ONLY",
+      "test_witnesses": []
+    },
+    {
+      "falsifier": "entry_threshold ≤ any individual module's crisis threshold",
+      "id": "INV-CB5",
+      "priority": "P1",
+      "provenance": "UNSPECIFIED",
+      "source_module": "",
+      "status": "WARN_ONLY",
+      "test_witnesses": []
+    },
+    {
+      "falsifier": "T outside [0, 1] after any update call",
+      "id": "INV-CB6",
+      "priority": "P0",
+      "provenance": "UNSPECIFIED",
+      "source_module": "",
+      "status": "WARN_ONLY",
+      "test_witnesses": []
+    },
+    {
+      "falsifier": "CryptobiosisConfig accepts exit >= entry without raising ValueError",
+      "id": "INV-CB7",
+      "priority": "P0",
+      "provenance": "UNSPECIFIED",
+      "source_module": "",
+      "status": "WARN_ONLY",
+      "test_witnesses": []
+    },
+    {
+      "falsifier": "System stays in REHYDRATING after receiving T ≥ entry_threshold",
+      "id": "INV-CB8",
+      "priority": "P0",
+      "provenance": "UNSPECIFIED",
+      "source_module": "",
+      "status": "WARN_ONLY",
+      "test_witnesses": []
+    },
+    {
+      "falsifier": "validate_physics_contract returns VALID for a signal with R∉[0,1], a negative/non-finite gamma, or an Ollivier κ>1+ε; OR it returns INVALID for an augmented-Forman value >1 whose R, gamma and Ollivier κ are all in-band; OR an INVALID verdict carries a non-zero safe_risk_scalar.",
+      "id": "INV-CBR1",
+      "priority": "P0",
+      "provenance": "ANCHORED",
+      "source_module": "coherence_bridge/physics_contract.py::validate_physics_contract",
+      "status": "COVERED",
+      "test_witnesses": [
+        "tests/integration/test_coherence_bridge_invariants.py"
+      ]
+    },
+    {
+      "falsifier": "A reproducible measurement of useful quantum computation inside a causal diamond exceeding the holographic ceiling A / (4 · ℓ_p² · ln 2).",
+      "id": "INV-COSMOLOGICAL-COMPUTE",
+      "priority": "P1",
+      "provenance": "EXTRAPOLATED",
+      "source_module": "core/physics/cosmological_compute_bound.py",
+      "status": "COVERED",
+      "test_witnesses": [
+        "tests/unit/physics/test_cosmological_compute_bound.py"
+      ]
+    },
+    {
+      "falsifier": "Any non-DORMANT decision registered with substrate_criticality_at_decision outside [1−ε, 1+ε] AND criticality_window_confirmed=False",
+      "id": "INV-CRITICALITY",
+      "priority": "P0",
+      "provenance": "UNSPECIFIED",
+      "source_module": "tacl/evidence_ledger.py",
+      "status": "COVERED",
+      "test_witnesses": [
+        "tests/tacl/test_evidence_ledger.py"
+      ]
+    },
+    {
+      "falsifier": "",
+      "id": "INV-DA1",
+      "priority": "P0",
+      "provenance": "UNSPECIFIED",
+      "source_module": "",
+      "status": "WARN_ONLY",
+      "test_witnesses": []
+    },
+    {
+      "falsifier": "",
+      "id": "INV-DA2",
+      "priority": "P1",
+      "provenance": "UNSPECIFIED",
+      "source_module": "",
+      "status": "WARN_ONLY",
+      "test_witnesses": []
+    },
+    {
+      "falsifier": "γ outside (0,1] accepted without error",
+      "id": "INV-DA3",
+      "priority": "P0",
+      "provenance": "UNSPECIFIED",
+      "source_module": "",
+      "status": "WARN_ONLY",
+      "test_witnesses": []
+    },
+    {
+      "falsifier": "",
+      "id": "INV-DA4",
+      "priority": "P1",
+      "provenance": "UNSPECIFIED",
+      "source_module": "",
+      "status": "WARN_ONLY",
+      "test_witnesses": []
+    },
+    {
+      "falsifier": "",
+      "id": "INV-DA5",
+      "priority": "P1",
+      "provenance": "UNSPECIFIED",
+      "source_module": "",
+      "status": "WARN_ONLY",
+      "test_witnesses": []
+    },
+    {
+      "falsifier": "",
+      "id": "INV-DA6",
+      "priority": "P2",
+      "provenance": "UNSPECIFIED",
+      "source_module": "",
+      "status": "WARN_ONLY",
+      "test_witnesses": []
+    },
+    {
+      "falsifier": "δ(r₂) - δ(r₁) ≠ r₂ - r₁ for fixed V, V', γ",
+      "id": "INV-DA7",
+      "priority": "P0",
+      "provenance": "UNSPECIFIED",
+      "source_module": "",
+      "status": "WARN_ONLY",
+      "test_witnesses": []
+    },
+    {
+      "falsifier": "DopamineExecutionAdapter.compute_rpe returns |δ| > 1, or a non-finite δ, for some finite (realized_pnl, predicted_return, slippage) input.",
+      "id": "INV-DA8",
+      "priority": "P0",
+      "provenance": "ANCHORED",
+      "source_module": "core/neuro/dopamine_execution_adapter.py",
+      "status": "COVERED",
+      "test_witnesses": [
+        "tests/unit/physics/test_dopamine_execution_adapter_bounds.py"
+      ]
+    },
+    {
+      "falsifier": "Two numerically-identical canonical inputs (differing only in NaN payload, signed zero, or subnormal representation) produce different hashes.",
+      "id": "INV-DET1",
+      "priority": "P0",
+      "provenance": "ANCHORED",
+      "source_module": "core/physics/determinism_kit.py",
+      "status": "COVERED",
+      "test_witnesses": [
+        "tests/unit/physics/test_T6_determinism_kit.py"
+      ]
+    },
+    {
+      "falsifier": "A 1-ULP perturbation, a dtype/shape change, or a trajectory reordering produces the same hash as the unperturbed input.",
+      "id": "INV-DET2",
+      "priority": "P0",
+      "provenance": "ANCHORED",
+      "source_module": "core/physics/determinism_kit.py",
+      "status": "COVERED",
+      "test_witnesses": [
+        "tests/unit/physics/test_T6_determinism_kit.py"
+      ]
+    },
+    {
+      "falsifier": "Any unsupported or non-canonicalisable input is hashed instead of raising ValueError.",
+      "id": "INV-DET3",
+      "priority": "P0",
+      "provenance": "ANCHORED",
+      "source_module": "core/physics/determinism_kit.py",
+      "status": "COVERED",
+      "test_witnesses": [
+        "tests/unit/physics/test_T6_determinism_kit.py"
+      ]
+    },
+    {
+      "falsifier": "derive_gamma returns γ, H with |γ − (2·H + 1)| ≥ 1e-5",
+      "id": "INV-DRO1",
+      "priority": "P0",
+      "provenance": "UNSPECIFIED",
+      "source_module": "",
+      "status": "WARN_ONLY",
+      "test_witnesses": []
+    },
+    {
+      "falsifier": "risk_scalar returns value < 0 or > 1 for any γ",
+      "id": "INV-DRO2",
+      "priority": "P0",
+      "provenance": "UNSPECIFIED",
+      "source_module": "",
+      "status": "WARN_ONLY",
+      "test_witnesses": []
+    },
+    {
+      "falsifier": "classify(gamma, r2<0.90, stationary=True) != INVALID, or classify(gamma, r2, False) != INVALID",
+      "id": "INV-DRO3",
+      "priority": "P0",
+      "provenance": "UNSPECIFIED",
+      "source_module": "",
+      "status": "WARN_ONLY",
+      "test_witnesses": []
+    },
+    {
+      "falsifier": "geosync_observe emits LONG with any of the three conjuncts false",
+      "id": "INV-DRO4",
+      "priority": "P0",
+      "provenance": "UNSPECIFIED",
+      "source_module": "",
+      "status": "WARN_ONLY",
+      "test_witnesses": []
+    },
+    {
+      "falsifier": "geosync_observe returns silently on any degenerate input above",
+      "id": "INV-DRO5",
+      "priority": "P0",
+      "provenance": "UNSPECIFIED",
+      "source_module": "",
+      "status": "WARN_ONLY",
+      "test_witnesses": []
+    },
+    {
+      "falsifier": "Negative hysteresis width",
+      "id": "INV-ES1",
+      "priority": "P0",
+      "provenance": "UNSPECIFIED",
+      "source_module": "",
+      "status": "WARN_ONLY",
+      "test_witnesses": []
+    },
+    {
+      "falsifier": "R grows continuously through transition with ES-prone topology",
+      "id": "INV-ES2",
+      "priority": "P1",
+      "provenance": "UNSPECIFIED",
+      "source_module": "",
+      "status": "WARN_ONLY",
+      "test_witnesses": []
+    },
+    {
+      "falsifier": "F_robust < F_nominal; nonzero ambiguity yields F_robust = F_nominal trivially; increasing a radius decreases F_robust; unknown/negative radii silently accepted; base model output changes after a DR-FREE call",
+      "id": "INV-FE-ROBUST",
+      "priority": "P0",
+      "provenance": "UNSPECIFIED",
+      "source_module": "",
+      "status": "WARN_ONLY",
+      "test_witnesses": []
+    },
+    {
+      "falsifier": "F(t+1) > F(t) + ε where ε accounts for numerical precision",
+      "id": "INV-FE1",
+      "priority": "P0",
+      "provenance": "UNSPECIFIED",
+      "source_module": "",
+      "status": "WARN_ONLY",
+      "test_witnesses": []
+    },
+    {
+      "falsifier": "core.physics.free_energy_trading_gate.FreeEnergyTradingGate.check returns U_before or U_after < 0, or T_LOB < 0, or S_q_before or S_q_after < 0 on any valid input",
+      "id": "INV-FE2",
+      "priority": "P0",
+      "provenance": "UNSPECIFIED",
+      "source_module": "",
+      "status": "WARN_ONLY",
+      "test_witnesses": []
+    },
+    {
+      "falsifier": "For any step taken from a state with V_before > 1e-12, V_after > V_before — i.e. the post-hoc binary-search correction (core/neuro/ecs_lyapunov.py) failed to enforce descent or the α=0 no-move fallback.",
+      "id": "INV-FE3",
+      "priority": "P0",
+      "provenance": "UNSPECIFIED",
+      "source_module": "",
+      "status": "WARN_ONLY",
+      "test_witnesses": []
+    },
+    {
+      "falsifier": "",
+      "id": "INV-GABA1",
+      "priority": "P0",
+      "provenance": "UNSPECIFIED",
+      "source_module": "",
+      "status": "WARN_ONLY",
+      "test_witnesses": []
+    },
+    {
+      "falsifier": "",
+      "id": "INV-GABA2",
+      "priority": "P0",
+      "provenance": "UNSPECIFIED",
+      "source_module": "",
+      "status": "WARN_ONLY",
+      "test_witnesses": []
+    },
+    {
+      "falsifier": "effective_position > raw_position for any volatility",
+      "id": "INV-GABA3",
+      "priority": "P0",
+      "provenance": "UNSPECIFIED",
+      "source_module": "",
+      "status": "WARN_ONLY",
+      "test_witnesses": []
+    },
+    {
+      "falsifier": "",
+      "id": "INV-GABA4",
+      "priority": "P1",
+      "provenance": "UNSPECIFIED",
+      "source_module": "",
+      "status": "WARN_ONLY",
+      "test_witnesses": []
+    },
+    {
+      "falsifier": "",
+      "id": "INV-GABA5",
+      "priority": "P1",
+      "provenance": "UNSPECIFIED",
+      "source_module": "",
+      "status": "WARN_ONLY",
+      "test_witnesses": []
+    },
+    {
+      "falsifier": "time_frequency_spread returns Δt·Δf < 1/(4π) for any WELL-RESOLVED signal, OR a Gaussian envelope fails to saturate to 1/(4π) within tolerance, OR a degenerate / under-resolved / constant input fails to raise ValueError.",
+      "id": "INV-GABOR1",
+      "priority": "P0",
+      "provenance": "ANCHORED",
+      "source_module": "core/physics/uncertainty.py",
+      "status": "COVERED",
+      "test_witnesses": [
+        "tests/unit/physics/test_uncertainty.py"
+      ]
+    },
+    {
+      "falsifier": "R outside [0,1]; sigma2=0 produces nonzero triadic RHS; sparse triangle count differs from dense; identical inputs produce different outputs; peak heap exceeds the c·n_triangles ceiling for sparse graphs",
+      "id": "INV-HO-SPARSE",
+      "priority": "P0",
+      "provenance": "UNSPECIFIED",
+      "source_module": "",
+      "status": "WARN_ONLY",
+      "test_witnesses": []
+    },
+    {
+      "falsifier": "re_adaptation_to_baseline returns post_reset_energy > pre_reset_energy + ε for a common-mode error within max_phase_error; OR a contract violation does not raise; OR an over-threshold error does not safety_lock.",
+      "id": "INV-HOM1",
+      "priority": "P1",
+      "provenance": "ANCHORED",
+      "source_module": "geosync/neuroeconomics/homeostatic_stabilizer.py::NeuroHomeostaticStabilizer",
+      "status": "COVERED",
+      "test_witnesses": [
+        "tests/unit/neuro/test_homeostatic_stabilizer_setpoint.py"
+      ]
+    },
+    {
+      "falsifier": "two identical invocations on the same hardware differ by any ULP",
+      "id": "INV-HPC1",
+      "priority": "P0",
+      "provenance": "UNSPECIFIED",
+      "source_module": "",
+      "status": "WARN_ONLY",
+      "test_witnesses": []
+    },
+    {
+      "falsifier": "any finite input within spec yields NaN/Inf or cond(A) > kappa_max",
+      "id": "INV-HPC2",
+      "priority": "P0",
+      "provenance": "UNSPECIFIED",
+      "source_module": "",
+      "status": "WARN_ONLY",
+      "test_witnesses": []
+    },
+    {
+      "falsifier": "Any (fill, qty, fee, mark) sequence within the int64 envelope where conservation_holds() returns False, OR where sequential apply_fill is non-commutative under permutation of independent fills.",
+      "id": "INV-HPC3",
+      "priority": "P0",
+      "provenance": "ANCHORED",
+      "source_module": "geosync_hpc/ledger.py",
+      "status": "COVERED",
+      "test_witnesses": [
+        "tests/geosync_hpc/test_ledger.py"
+      ]
+    },
+    {
+      "falsifier": "A tampered payload that loads without raising; a non-canonical serialisation where two semantically identical payloads produce different checksums; a load that returns silently after schema_version mismatch; a non-finite payload value (NaN/Inf) accepted into the envelope.",
+      "id": "INV-HPC4",
+      "priority": "P0",
+      "provenance": "ANCHORED",
+      "source_module": "geosync_hpc/runtime_state.py",
+      "status": "COVERED",
+      "test_witnesses": [
+        "tests/geosync_hpc/test_runtime_state.py"
+      ]
+    },
+    {
+      "falsifier": "An (state, action) pair that produces a successor state not in the declared states-set; a terminal state with at least one outgoing transition; an InvalidTransitionError that fires AFTER a side effect; a serialise/deserialise round-trip that loses or mutates the FSM state.",
+      "id": "INV-HPC5",
+      "priority": "P1",
+      "provenance": "ANCHORED",
+      "source_module": "geosync_hpc/session_fsm.py",
+      "status": "COVERED",
+      "test_witnesses": [
+        "tests/geosync_hpc/test_session_fsm.py"
+      ]
+    },
+    {
+      "falsifier": "yana-response.md missing or any of Q1..Q7 sections absent; OR any Q-section without a Tier marker; OR ADR 0020 missing or below substantive length without a Decision section; OR lint_forbidden_terms.py missing OR exiting non-zero in warn mode.",
+      "id": "INV-IERD-PHASE0",
+      "priority": "P1",
+      "provenance": "ANCHORED",
+      "source_module": "scripts/ci/lint_forbidden_terms.py",
+      "status": "COVERED",
+      "test_witnesses": [
+        "tests/governance/test_ierd_phase0_yana_response_coverage.py"
+      ]
+    },
+    {
+      "falsifier": "A measured local context where δQ = T·dS holds (Einstein gravity confirmed) but the proposed c is non-zero above tolerance, OR δQ ≠ T·dS at a scale where Einstein gravity is independently confirmed.",
+      "id": "INV-JACOBSON-OBSERVER",
+      "priority": "P1",
+      "provenance": "EXTRAPOLATED",
+      "source_module": "core/physics/jacobson_observer_coherence.py",
+      "status": "COVERED",
+      "test_witnesses": [
+        "tests/unit/physics/test_jacobson_observer_coherence.py"
+      ]
+    },
+    {
+      "falsifier": "R outside [0,1] for ANY input",
+      "id": "INV-K1",
+      "priority": "P0",
+      "provenance": "UNSPECIFIED",
+      "source_module": "",
+      "status": "WARN_ONLY",
+      "test_witnesses": []
+    },
+    {
+      "falsifier": "A non-symplectic step (explicit Euler) gives an O(dt²) ≈ 1e-4 symplectic-form residual |MᵀJM − J| and det(M) ≠ 1, versus the velocity-Verlet machine-ε ≈ 2e-16 — a 12-order separation. Verified residual 2.22e-16, det(M) = 1.000000000000000; undamped OA-analogue linear-stability and damped Liouville contraction (det = exp(−(Σd/m)dt) to O(dt²)) cross-checked. Symplecticity is strictly more fundamental than the energy-drift signatures it implies.",
+      "id": "INV-K10",
+      "priority": "P1",
+      "provenance": "UNSPECIFIED",
+      "source_module": "core/kuramoto/second_order.py",
+      "status": "COVERED",
+      "test_witnesses": [
+        "tests/unit/physics/test_T18_kuramoto_p1.py"
+      ]
+    },
+    {
+      "falsifier": "R stays above 3/√N after 10⁴ steps with K = 0.1·K_c and N > 100",
+      "id": "INV-K2",
+      "priority": "P0",
+      "provenance": "UNSPECIFIED",
+      "source_module": "",
+      "status": "WARN_ONLY",
+      "test_witnesses": []
+    },
+    {
+      "falsifier": "R → 0 with K = 2·K_c after sufficient time",
+      "id": "INV-K3",
+      "priority": "P0",
+      "provenance": "UNSPECIFIED",
+      "source_module": "",
+      "status": "WARN_ONLY",
+      "test_witnesses": []
+    },
+    {
+      "falsifier": "",
+      "id": "INV-K4",
+      "priority": "P1",
+      "provenance": "UNSPECIFIED",
+      "source_module": "",
+      "status": "WARN_ONLY",
+      "test_witnesses": []
+    },
+    {
+      "falsifier": "",
+      "id": "INV-K5",
+      "priority": "P1",
+      "provenance": "UNSPECIFIED",
+      "source_module": "",
+      "status": "WARN_ONLY",
+      "test_witnesses": []
+    },
+    {
+      "falsifier": "",
+      "id": "INV-K6",
+      "priority": "P2",
+      "provenance": "UNSPECIFIED",
+      "source_module": "",
+      "status": "WARN_ONLY",
+      "test_witnesses": []
+    },
+    {
+      "falsifier": "",
+      "id": "INV-K7",
+      "priority": "P1",
+      "provenance": "UNSPECIFIED",
+      "source_module": "",
+      "status": "WARN_ONLY",
+      "test_witnesses": []
+    },
+    {
+      "falsifier": "Replacing Störmer–Verlet with non-symplectic Euler injects secular energy growth (observed bounded-drift range/E_scale ≈ 0.39 vs Verlet ≈ 3e-5, a 4-order gap); flipping the damping sign (−d·θ̇ → +d·θ̇) converts dissipation into energy injection (E diverges by ~10⁶ over the same horizon). Both regressions survive every prior second-order assertion (R∈[0,1], finiteness, shapes) — the docstring claim 'symplectic, energy-conserving' had zero falsifiable backing before INV-K8. Same blind-manifold class as the Ott–Antonsen z̄ ω₀=0 conjugate defect (PR #745).",
+      "id": "INV-K8",
+      "priority": "P1",
+      "provenance": "UNSPECIFIED",
+      "source_module": "core/kuramoto/second_order.py",
+      "status": "COVERED",
+      "test_witnesses": [
+        "tests/unit/physics/test_T18_kuramoto_p1.py"
+      ]
+    },
+    {
+      "falsifier": "Replacing Störmer–Verlet with explicit Euler collapses the recovered order from ≈2.01 to ≈0.81 and turns bounded drift into secular growth (|ΔE| larger by ~4 orders at equal dt). A fixed-dt amplitude test (INV-K8) can miss a subtle order degradation that still has small drift at the tested dt; INV-K9 measures the order directly and is strictly stronger. Theory: Hairer–Lubich–Wanner, Geometric Numerical Integration; Benettin–Giorgilli long-time energy bounds.",
+      "id": "INV-K9",
+      "priority": "P1",
+      "provenance": "UNSPECIFIED",
+      "source_module": "core/kuramoto/second_order.py",
+      "status": "COVERED",
+      "test_witnesses": [
+        "tests/unit/physics/test_T18_kuramoto_p1.py"
+      ]
+    },
+    {
+      "falsifier": "K_ij contains NaN/Inf, becomes negative, loses symmetry, has nonzero diagonal, β leaves [beta_min, beta_max], or differs after multiplying all bid/ask sizes by c>0",
+      "id": "INV-KBETA",
+      "priority": "P0",
+      "provenance": "UNSPECIFIED",
+      "source_module": "",
+      "status": "WARN_ONLY",
+      "test_witnesses": []
+    },
+    {
+      "falsifier": "computed f* deviates from μ/σ² by more than one grid step on analytic inputs",
+      "id": "INV-KELLY1",
+      "priority": "P0",
+      "provenance": "UNSPECIFIED",
+      "source_module": "",
+      "status": "WARN_ONLY",
+      "test_witnesses": []
+    },
+    {
+      "falsifier": "engine returns f_applied > f_max for any input",
+      "id": "INV-KELLY2",
+      "priority": "P0",
+      "provenance": "UNSPECIFIED",
+      "source_module": "",
+      "status": "WARN_ONLY",
+      "test_witnesses": []
+    },
+    {
+      "falsifier": "argmax of empirical E[log(1+fX)] differs from μ/σ² by more than grid_step + one MC sigma",
+      "id": "INV-KELLY3",
+      "priority": "P1",
+      "provenance": "UNSPECIFIED",
+      "source_module": "",
+      "status": "WARN_ONLY",
+      "test_witnesses": []
+    },
+    {
+      "falsifier": "A subcritical ensemble (Φ < 0) settles to ⟨R⟩ > 1.5·3/√N, or a supercritical ensemble (Φ > 0) fails to reach ⟨R⟩ > 0.5, at the documented N and γ.",
+      "id": "INV-KR1",
+      "priority": "P0",
+      "provenance": "ANCHORED",
+      "source_module": "core/kuramoto/kuramoto_ricci_engine.py",
+      "status": "COVERED",
+      "test_witnesses": [
+        "tests/unit/physics/test_T1_kuramoto_ricci_boundary.py"
+      ]
+    },
+    {
+      "falsifier": "The sign of the variational MLE does not change across Φ = 0 over a coupling sweep bracketing the onset, contradicting the INV-KR1 regime split.",
+      "id": "INV-KR2",
+      "priority": "P0",
+      "provenance": "ANCHORED",
+      "source_module": "core/kuramoto/kuramoto_ricci_engine.py",
+      "status": "COVERED",
+      "test_witnesses": [
+        "tests/unit/physics/test_T1_kuramoto_ricci_boundary.py"
+      ]
+    },
+    {
+      "falsifier": "A run with ω_i = 0 shows dV/dt > 1e-9 at any midpoint step, i.e. the coupling potential increases along the gradient flow.",
+      "id": "INV-KR3",
+      "priority": "P0",
+      "provenance": "ANCHORED",
+      "source_module": "core/kuramoto/kuramoto_ricci_engine.py",
+      "status": "COVERED",
+      "test_witnesses": [
+        "tests/unit/physics/test_T1_kuramoto_ricci_boundary.py"
+      ]
+    },
+    {
+      "falsifier": "ricci_to_signed_coupling drops a negative κ; ricci_to_positive_adjacency clips without clipped_for_threshold=True or with negative_mass=0 while negatives were present; an all-positive κ trips clipped_for_threshold=True; a signed matrix passes assert_roh_compatible or yields a finite Φ from phase_transition_boundary; or any audit claims both roh_compatible and signed_dynamics_compatible.",
+      "id": "INV-KR4",
+      "priority": "P0",
+      "provenance": "UNSPECIFIED",
+      "source_module": "",
+      "status": "WARN_ONLY",
+      "test_witnesses": []
+    },
+    {
+      "falsifier": "Any pair of irreversible/reversible actions with identical (token, latency, entropy) where C_irr < C_rev",
+      "id": "INV-LANDAUER-PROXY",
+      "priority": "P0",
+      "provenance": "UNSPECIFIED",
+      "source_module": "core/physics/thermodynamic_budget.py",
+      "status": "COVERED",
+      "test_witnesses": [
+        "tests/unit/physics/test_thermodynamic_budget.py"
+      ]
+    },
+    {
+      "falsifier": "maximal_lyapunov_exponent returns NaN/Inf on finite input",
+      "id": "INV-LE1",
+      "priority": "P0",
+      "provenance": "UNSPECIFIED",
+      "source_module": "",
+      "status": "WARN_ONLY",
+      "test_witnesses": []
+    },
+    {
+      "falsifier": "sign of MLE disagrees with known dynamical regime",
+      "id": "INV-LE2",
+      "priority": "P0",
+      "provenance": "UNSPECIFIED",
+      "source_module": "",
+      "status": "WARN_ONLY",
+      "test_witnesses": []
+    },
+    {
+      "falsifier": "maximal_lyapunov_exponent returns a non-zero λ for an input whose log-divergence fit has R² < R2_MIN (a confident slope from a non-linear, non-scaling region)",
+      "id": "INV-LE3",
+      "priority": "P0",
+      "provenance": "UNSPECIFIED",
+      "source_module": "",
+      "status": "WARN_ONLY",
+      "test_witnesses": []
+    },
+    {
+      "falsifier": "sort_desc(spectrum) deviates from sort_desc(Re(eigvals(A))) by more than 1e-3 for a linear flow integrated to T = 50.",
+      "id": "INV-LY1",
+      "priority": "P0",
+      "provenance": "ANCHORED",
+      "source_module": "core/physics/lyapunov_spectrum.py",
+      "status": "COVERED",
+      "test_witnesses": [
+        "tests/unit/physics/test_T2_lyapunov_full_spectrum.py"
+      ]
+    },
+    {
+      "falsifier": "A time-resolved Hamiltonian flow yields |Σ λ_k| > 1e-3, OR the breakdown of the sum away from resolution does not scale as the fourth power of ω·dt.",
+      "id": "INV-LY2",
+      "priority": "P0",
+      "provenance": "ANCHORED",
+      "source_module": "core/physics/lyapunov_spectrum.py",
+      "status": "COVERED",
+      "test_witnesses": [
+        "tests/unit/physics/test_T2_lyapunov_full_spectrum.py"
+      ]
+    },
+    {
+      "falsifier": "Any of the enumerated contract violations returns a spectrum (or a repaired result) instead of raising ValueError.",
+      "id": "INV-LY3",
+      "priority": "P0",
+      "provenance": "ANCHORED",
+      "source_module": "core/physics/lyapunov_spectrum.py",
+      "status": "COVERED",
+      "test_witnesses": [
+        "tests/unit/physics/test_T2_lyapunov_full_spectrum.py"
+      ]
+    },
+    {
+      "falsifier": "A rank-collapsing or blow-up-dt run returns a floored finite spectrum instead of raising FloatingPointError tagged INV-LY4, OR a well-conditioned run's accumulated log is altered by the guard.",
+      "id": "INV-LY4",
+      "priority": "P0",
+      "provenance": "ANCHORED",
+      "source_module": "core/physics/lyapunov_spectrum.py",
+      "status": "COVERED",
+      "test_witnesses": [
+        "tests/unit/physics/test_T2_lyapunov_full_spectrum.py"
+      ]
+    },
+    {
+      "falsifier": "AST-grep over core/, tacl/, runtime/, geosync/ returns >=1 naked violation in non-test source",
+      "id": "INV-NO-BIO-CLAIM",
+      "priority": "P0",
+      "provenance": "UNSPECIFIED",
+      "source_module": "tacl/evidence_ledger.py",
+      "status": "COVERED",
+      "test_witnesses": [
+        "tests/tacl/test_evidence_ledger.py"
+      ]
+    },
+    {
+      "falsifier": "OttAntonsenEngine.integrate returns |z| > 1 at any step",
+      "id": "INV-OA1",
+      "priority": "P0",
+      "provenance": "UNSPECIFIED",
+      "source_module": "",
+      "status": "WARN_ONLY",
+      "test_witnesses": []
+    },
+    {
+      "falsifier": "|R_numerical² - (1 − K_c/K)| > 1e-10, OR fitted β deviates from 1/2 by > 0.06, OR N-body R deviates from mean-field by > 3/√N",
+      "id": "INV-OA2",
+      "priority": "P0",
+      "provenance": "UNSPECIFIED",
+      "source_module": "core/kuramoto/ott_antonsen.py",
+      "status": "MISSING",
+      "test_witnesses": [
+        "['tests/unit/physics/test_T23_ott_antonsen_chimera.py',",
+        "'tests/unit/physics/test_T23b_ott_antonsen_analytical.py']"
+      ]
+    },
+    {
+      "falsifier": "R stays above 1e-4 after T=100 with K ≤ 0.8·K_c",
+      "id": "INV-OA3",
+      "priority": "P0",
+      "provenance": "UNSPECIFIED",
+      "source_module": "",
+      "status": "WARN_ONLY",
+      "test_witnesses": []
+    },
+    {
+      "falsifier": "A measured observer-system pair where Γ > Σ̇ in well-isolated conditions, with the observer's bandwidth independently characterized.",
+      "id": "INV-OBSERVER-BANDWIDTH",
+      "priority": "P2",
+      "provenance": "SPECULATIVE",
+      "source_module": "core/physics/observer_bandwidth.py",
+      "status": "COVERED",
+      "test_witnesses": [
+        "tests/unit/physics/test_observer_bandwidth.py"
+      ]
+    },
+    {
+      "falsifier": "PortfolioEnergyConservation.compute_kinetic returns a negative value on any (positions, returns) pair",
+      "id": "INV-OMS1",
+      "priority": "P0",
+      "provenance": "UNSPECIFIED",
+      "source_module": "",
+      "status": "WARN_ONLY",
+      "test_witnesses": []
+    },
+    {
+      "falsifier": "second submission of the same client_order_id changes book state",
+      "id": "INV-OMS2",
+      "priority": "P0",
+      "provenance": "UNSPECIFIED",
+      "source_module": "",
+      "status": "WARN_ONLY",
+      "test_witnesses": []
+    },
+    {
+      "falsifier": "t_{k+1} < t_k observed in lifecycle.history(order_id) sequence",
+      "id": "INV-OMS3",
+      "priority": "P0",
+      "provenance": "UNSPECIFIED",
+      "source_module": "",
+      "status": "WARN_ONLY",
+      "test_witnesses": []
+    },
+    {
+      "falsifier": "A returned set P reports success while λ_2(L + Γ_P) ≤ ε_pin, or an uncontrollable configuration returns success instead of INSUFFICIENT.",
+      "id": "INV-PIN1",
+      "priority": "P0",
+      "provenance": "ANCHORED",
+      "source_module": "runtime/pinning_control.py",
+      "status": "COVERED",
+      "test_witnesses": [
+        "tests/unit/physics/test_T7_pinning_control.py"
+      ]
+    },
+    {
+      "falsifier": "A step taken with dt < 2/λ_max(L + Γ_P) under the stated conditions fails to contract the error toward the pinned target.",
+      "id": "INV-PIN2",
+      "priority": "P0",
+      "provenance": "ANCHORED",
+      "source_module": "runtime/pinning_control.py",
+      "status": "COVERED",
+      "test_witnesses": [
+        "tests/unit/physics/test_T7_pinning_control.py"
+      ]
+    },
+    {
+      "falsifier": "Any pinning call mutates the input adjacency A (an edge is added, removed, or reweighted).",
+      "id": "INV-PIN3",
+      "priority": "P0",
+      "provenance": "ANCHORED",
+      "source_module": "runtime/pinning_control.py",
+      "status": "COVERED",
+      "test_witnesses": [
+        "tests/unit/physics/test_T7_pinning_control.py"
+      ]
+    },
+    {
+      "falsifier": "Any enumerated contract violation returns a pinning result instead of raising ValueError.",
+      "id": "INV-PIN4",
+      "priority": "P0",
+      "provenance": "ANCHORED",
+      "source_module": "runtime/pinning_control.py",
+      "status": "COVERED",
+      "test_witnesses": [
+        "tests/unit/physics/test_T7_pinning_control.py"
+      ]
+    },
+    {
+      "falsifier": "Any AR(1) fixture with ρ > 0 yielding n_eff ≥ n; OR ρ = 0 yielding n_eff ≠ n; OR ρ < 0 yielding n_eff ≤ n; OR an auto-bandwidth output that is negative or non-integer.",
+      "id": "INV-PSR-HAC",
+      "priority": "P1",
+      "provenance": "ANCHORED",
+      "source_module": "research/robustness/cpcv.py",
+      "status": "COVERED",
+      "test_witnesses": [
+        "tests/research/robustness/test_hac_psr.py"
+      ]
+    },
+    {
+      "falsifier": "Post-step weights are non-finite, negative, asymmetric, have nonzero diagonal; bridge edge removed under preserve_connectedness=True; surgery removes more than the cap",
+      "id": "INV-RC-FLOW",
+      "priority": "P0",
+      "provenance": "UNSPECIFIED",
+      "source_module": "",
+      "status": "WARN_ONLY",
+      "test_witnesses": []
+    },
+    {
+      "falsifier": "ricci_curvature_edge returns κ > 1 for any edge of any connected graph",
+      "id": "INV-RC1",
+      "priority": "P0",
+      "provenance": "UNSPECIFIED",
+      "source_module": "",
+      "status": "WARN_ONLY",
+      "test_witnesses": []
+    },
+    {
+      "falsifier": "",
+      "id": "INV-RC2",
+      "priority": "P2",
+      "provenance": "UNSPECIFIED",
+      "source_module": "",
+      "status": "WARN_ONLY",
+      "test_witnesses": []
+    },
+    {
+      "falsifier": "κ outside [−1, 1] on an edge of a build_price_graph() output WITHIN the declared path-like / commensurate-metric regime. Out-of-regime κ < −1 (jumpy/volatile series, large δ) is the EXPECTED, witnessed behavior, not a falsification.",
+      "id": "INV-RC3",
+      "priority": "P1",
+      "provenance": "UNSPECIFIED",
+      "source_module": "",
+      "status": "WARN_ONLY",
+      "test_witnesses": []
+    },
+    {
+      "falsifier": "can_activate() returns True for parent_nominal=False, non-real coherence, bool coherence, or coherence<threshold; OR activate() accepts unreadable/malformed prior mapping entries",
+      "id": "INV-REBUS-1",
+      "priority": "P0",
+      "provenance": "UNSPECIFIED",
+      "source_module": "",
+      "status": "WARN_ONLY",
+      "test_witnesses": []
+    },
+    {
+      "falsifier": "entropy ceiling breach does not set REINTEGRATION or step() continues afterward",
+      "id": "INV-REBUS-3",
+      "priority": "P0",
+      "provenance": "UNSPECIFIED",
+      "source_module": "",
+      "status": "WARN_ONLY",
+      "test_witnesses": []
+    },
+    {
+      "falsifier": "duration cap reached but phase remains non-REINTEGRATION",
+      "id": "INV-REBUS-4",
+      "priority": "P0",
+      "provenance": "UNSPECIFIED",
+      "source_module": "",
+      "status": "WARN_ONLY",
+      "test_witnesses": []
+    },
+    {
+      "falsifier": "gate transitions to INACTIVE without reintegrate() or emergency_exit()",
+      "id": "INV-REBUS-5",
+      "priority": "P0",
+      "provenance": "UNSPECIFIED",
+      "source_module": "",
+      "status": "WARN_ONLY",
+      "test_witnesses": []
+    },
+    {
+      "falsifier": "terminal callback applies priors that differ from stored backup",
+      "id": "INV-REBUS-6",
+      "priority": "P0",
+      "provenance": "UNSPECIFIED",
+      "source_module": "",
+      "status": "WARN_ONLY",
+      "test_witnesses": []
+    },
+    {
+      "falsifier": "external safety signal leaves gate active",
+      "id": "INV-REBUS-7",
+      "priority": "P0",
+      "provenance": "UNSPECIFIED",
+      "source_module": "",
+      "status": "WARN_ONLY",
+      "test_witnesses": []
+    },
+    {
+      "falsifier": "1000 random reversible actions where rollback(trace.audit_hash).state_bytes != pre_state",
+      "id": "INV-REVERSIBLE-GATE",
+      "priority": "P0",
+      "provenance": "UNSPECIFIED",
+      "source_module": "core/physics/reversible_gate.py",
+      "status": "COVERED",
+      "test_witnesses": [
+        "tests/unit/physics/test_reversible_gate.py"
+      ]
+    },
+    {
+      "falsifier": "Observed collective frequency matches the sign-flipped law ω₀ + (N−1)·κ·sin(α) instead of the canonical minus-α form, i.e. |Ω − (ω₀ − (N−1)·κ·sin(α))| above integrator tolerance for any α ≠ 0. Registered because the absence of any frustration-sign invariant is precisely why no test mandated α ≠ 0 coverage — the blind manifold that hid the analogous Ott–Antonsen conjugate defect (PR #745).",
+      "id": "INV-SAK1",
+      "priority": "P0",
+      "provenance": "UNSPECIFIED",
+      "source_module": "core/kuramoto/synthetic.py",
+      "status": "COVERED",
+      "test_witnesses": [
+        "tests/unit/physics/test_sakaguchi_frustration_alpha.py"
+      ]
+    },
+    {
+      "falsifier": "any subscriber in a DAG-wired chain fires zero or more than once on a single root publish",
+      "id": "INV-SB1",
+      "priority": "P0",
+      "provenance": "UNSPECIFIED",
+      "source_module": "",
+      "status": "WARN_ONLY",
+      "test_witnesses": []
+    },
+    {
+      "falsifier": "two fresh bus instances receiving the same publish sequence yield different snapshot values",
+      "id": "INV-SB2",
+      "priority": "P0",
+      "provenance": "UNSPECIFIED",
+      "source_module": "",
+      "status": "WARN_ONLY",
+      "test_witnesses": []
+    },
+    {
+      "falsifier": "spectral_gap returns negative value on any adjacency matrix",
+      "id": "INV-SG1",
+      "priority": "P0",
+      "provenance": "UNSPECIFIED",
+      "source_module": "",
+      "status": "WARN_ONLY",
+      "test_witnesses": []
+    },
+    {
+      "falsifier": "λ₂ > 0 for a disconnected graph, or λ₂ = 0 for a connected graph",
+      "id": "INV-SG2",
+      "priority": "P0",
+      "provenance": "UNSPECIFIED",
+      "source_module": "",
+      "status": "WARN_ONLY",
+      "test_witnesses": []
+    },
+    {
+      "falsifier": "Any positive detection at or above a registered signature's threshold without independent corroboration is rejected; a productive ladder must have at least one entry with a published null bound (NOT_OBSERVED) within current instrument reach.",
+      "id": "INV-SIMULATION-FALSIFICATION",
+      "priority": "P1",
+      "provenance": "UNSPECIFIED",
+      "source_module": "core/physics/simulation_falsification.py",
+      "status": "COVERED",
+      "test_witnesses": [
+        "tests/unit/physics/test_simulation_falsification.py"
+      ]
+    },
+    {
+      "falsifier": "Any A_i < 0 in fitted Stuart-Landau ensemble",
+      "id": "INV-SL1",
+      "priority": "P0",
+      "provenance": "UNSPECIFIED",
+      "source_module": "core/physics/stuart_landau_es.py",
+      "status": "COVERED",
+      "test_witnesses": [
+        "tests/unit/physics/test_T2b_stuart_landau_es.py"
+      ]
+    },
+    {
+      "falsifier": "es_proximity outside [0, 1] for any input",
+      "id": "INV-SL2",
+      "priority": "P0",
+      "provenance": "UNSPECIFIED",
+      "source_module": "core/physics/stuart_landau_es.py",
+      "status": "COVERED",
+      "test_witnesses": [
+        "tests/unit/physics/test_T2b_stuart_landau_es.py"
+      ]
+    },
+    {
+      "falsifier": "|Var(x) − kT/k| / (kT/k) > 0.10 for any tested stiffness after relaxation to the stationary distribution.",
+      "id": "INV-ST1",
+      "priority": "P0",
+      "provenance": "ANCHORED",
+      "source_module": "core/physics/stochastic_thermodynamics.py",
+      "status": "COVERED",
+      "test_witnesses": [
+        "tests/unit/physics/test_T8_stochastic_thermodynamics.py"
+      ]
+    },
+    {
+      "falsifier": "|⟨e^(−βW)⟩ − e^(−βΔF)| / e^(−βΔF) > 0.05 for the reference ramp on any tested seed.",
+      "id": "INV-ST2",
+      "priority": "P0",
+      "provenance": "ANCHORED",
+      "source_module": "core/physics/stochastic_thermodynamics.py",
+      "status": "COVERED",
+      "test_witnesses": [
+        "tests/unit/physics/test_T8_stochastic_thermodynamics.py"
+      ]
+    },
+    {
+      "falsifier": "⟨W⟩ < ΔF on the reference ramp, OR ⟨W⟩(tau=2.0) ≥ ⟨W⟩(tau=0.5) (dissipation not monotonic in protocol speed).",
+      "id": "INV-ST3",
+      "priority": "P1",
+      "provenance": "ANCHORED",
+      "source_module": "core/physics/stochastic_thermodynamics.py",
+      "status": "COVERED",
+      "test_witnesses": [
+        "tests/unit/physics/test_T8_stochastic_thermodynamics.py"
+      ]
+    },
+    {
+      "falsifier": "REFUTED on the pre-registered 2026-04-10 OOS window: the criterion leads_rate < 0.6 OR p_value > 0.05 FIRED (p_value = 0.765 > 0.05). Claim is REJECTED_DO_NOT_PROMOTE; re-promotion requires a new pre-registration and independent OOS evidence.",
+      "id": "INV-T2b",
+      "priority": "P1",
+      "provenance": "UNSPECIFIED",
+      "source_module": "core/physics/stuart_landau_es.py",
+      "status": "COVERED",
+      "test_witnesses": [
+        "tests/unit/physics/test_T2b_stuart_landau_es.py"
+      ]
+    },
+    {
+      "falsifier": "τ deviates from (1/λ_1)·ln(δ_tol/δ_0) on analytic inputs, fails to return +∞ for λ_1 ≤ 0, or does not halve when λ_1 is doubled.",
+      "id": "INV-TAU1",
+      "priority": "P0",
+      "provenance": "ANCHORED",
+      "source_module": "core/physics/predictability_horizon.py",
+      "status": "COVERED",
+      "test_witnesses": [
+        "tests/unit/physics/test_T5_predictability_landauer.py"
+      ]
+    },
+    {
+      "falsifier": "A precision request whose E_min exceeds the supplied energy budget is silently honoured instead of raising ValueError, OR the computed floor deviates from k_B·T·ln(Δ/δ_0).",
+      "id": "INV-TAU2",
+      "priority": "P0",
+      "provenance": "ANCHORED",
+      "source_module": "core/physics/predictability_horizon.py",
+      "status": "COVERED",
+      "test_witnesses": [
+        "tests/unit/physics/test_T5_predictability_landauer.py"
+      ]
+    },
+    {
+      "falsifier": "Any enumerated contract violation returns a finite-or-NaN horizon instead of raising ValueError.",
+      "id": "INV-TAU3",
+      "priority": "P0",
+      "provenance": "ANCHORED",
+      "source_module": "core/physics/predictability_horizon.py",
+      "status": "COVERED",
+      "test_witnesses": [
+        "tests/unit/physics/test_T5_predictability_landauer.py"
+      ]
+    },
+    {
+      "falsifier": "",
+      "id": "INV-TH1",
+      "priority": "P1",
+      "provenance": "UNSPECIFIED",
+      "source_module": "",
+      "status": "WARN_ONLY",
+      "test_witnesses": []
+    },
+    {
+      "falsifier": "",
+      "id": "INV-TH2",
+      "priority": "P1",
+      "provenance": "UNSPECIFIED",
+      "source_module": "",
+      "status": "WARN_ONLY",
+      "test_witnesses": []
+    },
+    {
+      "falsifier": "core.physics.landauer.LandauerInferenceProfiler.landauer_per_bit ≠ k_B·T·ln 2 to float precision, or minimum_energy(N) < N·k_B·T·ln 2 for some integer N ≥ 0.",
+      "id": "INV-TH3",
+      "priority": "P0",
+      "provenance": "UNSPECIFIED",
+      "source_module": "",
+      "status": "WARN_ONLY",
+      "test_witnesses": []
+    },
+    {
+      "falsifier": "Any operating window in which ΔV ≤ 0 OR dΔV/dt ≡ 0 over a non-empty interval while the system claims live cognitive computation.",
+      "id": "INV-YV1",
+      "priority": "P0",
+      "provenance": "ANCHORED",
+      "source_module": "core/neuro/gradient_vital_signs.py",
+      "status": "COVERED",
+      "test_witnesses": [
+        "tests/integration/test_neurostack_integration.py"
+      ]
+    }
+  ],
+  "schema_version": 1,
+  "summary": {
+    "blocking_covered": 32,
+    "blocking_laws": 32,
+    "catalog_laws": 42,
+    "invariants": 132,
+    "invariants_covered": 53
+  }
+}

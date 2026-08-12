@@ -1,0 +1,82 @@
+# Diff-bound commit acceptor for the API UnicodeDecodeError → 400 fix.
+#
+# After PR #566 (adversarial ladder) merged into main, the
+# Schemathesis Contract workflow began failing on `POST /api/v1/predictions`
+# because the body-parser middleware caught only `JSONDecodeError`, while
+# `json.loads(body)` raises `UnicodeDecodeError` for non-utf-8 bytes. The
+# uncaught exception bubbled up to the cache-headers middleware and surfaced
+# as a 500 — schemathesis correctly flagged this as a contract violation.
+#
+# Fix: extend the except clause to `(JSONDecodeError, UnicodeDecodeError)`.
+# Both are 400-class client errors and must produce the structured
+# Malformed-JSON envelope.
+#
+# Locally verified:
+#   * pytest tests/api/test_service.py::test_invalid_utf8_body_returns_400_not_500: 4/4 pass
+#   * mypy --strict application/api/service.py: 0 errors
+#   * ruff + black on changed files: clean
+
+id: api-utf8-decode-guard
+status: ACTIVE
+claim_type: correctness
+promise: >-
+  After this PR lands, posting non-utf-8 bytes to any JSON endpoint of
+  the FastAPI service yields a structured 400 BAD_REQUEST envelope with
+  ``ERR_BAD_REQUEST`` code, never an uncaught 500. The schemathesis
+  contract test for ``POST /api/v1/predictions`` returns to green.
+
+diff_scope:
+  changed_files:
+    - path: ".claude/commit_acceptors/api-utf8-decode-guard.yaml"
+    - path: "application/api/service.py"
+    - path: "tests/api/test_service.py"
+  forbidden_paths:
+    - "trading/"
+    - "execution/"
+    - "forecast/"
+    - "policy/"
+    - "core/"
+    - "research/"
+
+required_python_symbols:
+  - "application/api/service.py::create_app"
+  - "tests/api/test_service.py::test_invalid_utf8_body_returns_400_not_500"
+
+expected_signal: >-
+  ``pytest tests/api/test_service.py::test_invalid_utf8_body_returns_400_not_500
+  -q`` reports 4 passed (4 parametrized cases). Before this PR the
+  middleware crashed with UnicodeDecodeError and the cases would have
+  surfaced as 500.
+
+measurement_command: >-
+  bash -c '
+    mypy --strict application/api/service.py && python -m pytest
+      tests/api/test_service.py::test_invalid_utf8_body_returns_400_not_500 -q
+  '
+
+signal_artifact: "tmp/api_utf8_decode_guard.log"
+
+falsifier:
+  command: >-
+    bash -c '
+      grep -q "(JSONDecodeError, UnicodeDecodeError)" application/api/service.py 2>/dev/null && exit 1 || exit 0
+    '
+  description: >-
+    Probes that the except clause in the body-parser middleware catches
+    UnicodeDecodeError. The falsifier inverts: it succeeds (exit 0) only
+    when the joint clause is missing, which would mean the fix rolled back.
+
+rollback_command: >-
+  bash -c '
+    git checkout HEAD~1 -- application/api/service.py tests/api/test_service.py && git rm -f .claude/commit_acceptors/api-utf8-decode-guard.yaml
+  '
+
+rollback_verification_command: >-
+  bash -c '
+    grep -q "(JSONDecodeError, UnicodeDecodeError)" application/api/service.py && exit 1 || exit 0
+  '
+
+memory_update_type: append
+ledger_path: ".claude/commit_acceptors/api-utf8-decode-guard.yaml"
+report_path: "tmp/api_utf8_decode_guard.log"
+evidence: []

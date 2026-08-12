@@ -1,7 +1,9 @@
-"""Architecture Integrator for TradePulse.
+# Copyright (c) 2023-2026 Yaroslav Vasylenko (neuron7xLab)
+# SPDX-License-Identifier: MIT
+"""Architecture Integrator for GeoSync.
 
 This module provides centralized coordination and integration of architectural
-components across the TradePulse system. The Architecture Integrator serves as
+components across the GeoSync system. The Architecture Integrator serves as
 a unified orchestration layer that manages component lifecycles, validates
 architectural constraints, and ensures proper integration between subsystems.
 

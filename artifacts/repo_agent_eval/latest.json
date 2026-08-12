@@ -1,0 +1,69 @@
+{
+  "schema": "repo_agent_eval@v1",
+  "case_count": 10,
+  "pass_count": 10,
+  "fail_count": 0,
+  "all_passed": true,
+  "verdicts": [
+    {
+      "id": "repo-category",
+      "passed": true,
+      "missing": [],
+      "forbidden_hits": []
+    },
+    {
+      "id": "forbidden-claims",
+      "passed": true,
+      "missing": [],
+      "forbidden_hits": []
+    },
+    {
+      "id": "runtime-gate-file",
+      "passed": true,
+      "missing": [],
+      "forbidden_hits": []
+    },
+    {
+      "id": "raw-risk-forbidden",
+      "passed": true,
+      "missing": [],
+      "forbidden_hits": []
+    },
+    {
+      "id": "fail-closed-negative-gamma",
+      "passed": true,
+      "missing": [],
+      "forbidden_hits": []
+    },
+    {
+      "id": "adaptive-criticality-not-runtime-enforced",
+      "passed": true,
+      "missing": [],
+      "forbidden_hits": []
+    },
+    {
+      "id": "evidence-freshness-command",
+      "passed": true,
+      "missing": [],
+      "forbidden_hits": []
+    },
+    {
+      "id": "deterministic-artifacts",
+      "passed": true,
+      "missing": [],
+      "forbidden_hits": []
+    },
+    {
+      "id": "invariant-authority",
+      "passed": true,
+      "missing": [],
+      "forbidden_hits": []
+    },
+    {
+      "id": "production-fail-open",
+      "passed": true,
+      "missing": [],
+      "forbidden_hits": []
+    }
+  ]
+}

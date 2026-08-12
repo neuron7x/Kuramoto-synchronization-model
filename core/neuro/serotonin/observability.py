@@ -1,3 +1,5 @@
+# Copyright (c) 2023-2026 Yaroslav Vasylenko (neuron7xLab)
+# SPDX-License-Identifier: MIT
 """SRE Observability utilities for Serotonin Controller.
 
 This module provides SLI/SLO definitions, metrics collection,
@@ -430,12 +432,8 @@ def create_grafana_dashboard_json() -> dict:
                     "title": "SLO Compliance",
                     "type": "table",
                     "targets": [
-                        {
-                            "expr": "histogram_quantile(0.95, serotonin_step_duration_seconds)"
-                        },
-                        {
-                            "expr": "rate(serotonin_state_validation_total{result='failure'}[30d])"
-                        },
+                        {"expr": "histogram_quantile(0.95, serotonin_step_duration_seconds)"},
+                        {"expr": "rate(serotonin_state_validation_total{result='failure'}[30d])"},
                     ],
                 },
                 {

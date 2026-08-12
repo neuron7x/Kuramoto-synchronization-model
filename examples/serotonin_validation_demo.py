@@ -1,4 +1,6 @@
 #!/usr/bin/env python
+# Copyright (c) 2023-2026 Yaroslav Vasylenko (neuron7xLab)
+# SPDX-License-Identifier: MIT
 """
 Serotonin Controller v2.4.0 - Practical Validation Demo
 
@@ -30,11 +32,7 @@ builtins.Optional = Optional
 
 spec = importlib.util.spec_from_file_location(
     "serotonin_controller",
-    Path(__file__).parent.parent
-    / "core"
-    / "neuro"
-    / "serotonin"
-    / "serotonin_controller.py",
+    Path(__file__).parent.parent / "core" / "neuro" / "serotonin" / "serotonin_controller.py",
 )
 serotonin_module = importlib.util.module_from_spec(spec)
 spec.loader.exec_module(serotonin_module)
@@ -106,9 +104,7 @@ def scenario_2_high_stress():
         hold, veto, cooldown_s, level = controller.step(
             stress=stress, drawdown=drawdown, novelty=novelty
         )
-        results.append(
-            {"hold": hold, "level": level, "cooldown": cooldown_s, "step": i}
-        )
+        results.append({"hold": hold, "level": level, "cooldown": cooldown_s, "step": i})
 
     # Find when HOLD was first triggered
     hold_triggered = [r for r in results if r["hold"]]
@@ -415,21 +411,11 @@ def generate_summary_report(results: dict):
 def main():
     """Run all validation scenarios."""
     print("\n")
-    print(
-        "╔════════════════════════════════════════════════════════════════════════════╗"
-    )
-    print(
-        "║                                                                            ║"
-    )
-    print(
-        "║          Serotonin Controller v2.4.0 - Practical Validation Demo          ║"
-    )
-    print(
-        "║                                                                            ║"
-    )
-    print(
-        "╚════════════════════════════════════════════════════════════════════════════╝"
-    )
+    print("╔════════════════════════════════════════════════════════════════════════════╗")
+    print("║                                                                            ║")
+    print("║          Serotonin Controller v2.4.0 - Practical Validation Demo          ║")
+    print("║                                                                            ║")
+    print("╚════════════════════════════════════════════════════════════════════════════╝")
 
     results = {}
 

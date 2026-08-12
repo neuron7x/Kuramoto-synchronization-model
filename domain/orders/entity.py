@@ -1,3 +1,5 @@
+# Copyright (c) 2023-2026 Yaroslav Vasylenko (neuron7xLab)
+# SPDX-License-Identifier: MIT
 """Aggregate root representing a trading order."""
 
 from __future__ import annotations
@@ -33,9 +35,7 @@ class Order:
         self.side = OrderSide(self.side)
         self.order_type = OrderType(self.order_type)
         self.status = OrderStatus(self.status)
-        if self.broker_order_id is not None and not isinstance(
-            self.broker_order_id, str
-        ):
+        if self.broker_order_id is not None and not isinstance(self.broker_order_id, str):
             raise TypeError("broker_order_id must be a string when provided")
         if self.order_id and self.broker_order_id is None:
             self.broker_order_id = self.order_id
@@ -68,9 +68,7 @@ class Order:
         if self.filled_quantity > self.quantity:
             raise ValueError("filled_quantity cannot exceed order quantity")
 
-    def mark_submitted(
-        self, order_id: str, *, broker_order_id: str | None = None
-    ) -> None:
+    def mark_submitted(self, order_id: str, *, broker_order_id: str | None = None) -> None:
         """Assign an identifier after handing the order to an execution venue."""
 
         if not order_id:
@@ -98,9 +96,9 @@ class Order:
         if self.average_price is None:
             blended_price = price
         else:
-            blended_price = (
-                self.average_price * weight_existing + price * weight_new
-            ) / (weight_existing + weight_new)
+            blended_price = (self.average_price * weight_existing + price * weight_new) / (
+                weight_existing + weight_new
+            )
 
         self.average_price = blended_price
         self.filled_quantity += quantity
@@ -149,13 +147,9 @@ class Order:
         # Types are converted in __post_init__, but mypy sees the union types
         side_value = self.side.value if isinstance(self.side, OrderSide) else self.side
         order_type_value = (
-            self.order_type.value
-            if isinstance(self.order_type, OrderType)
-            else self.order_type
+            self.order_type.value if isinstance(self.order_type, OrderType) else self.order_type
         )
-        status_value = (
-            self.status.value if isinstance(self.status, OrderStatus) else self.status
-        )
+        status_value = self.status.value if isinstance(self.status, OrderStatus) else self.status
 
         return {
             "symbol": self.symbol,

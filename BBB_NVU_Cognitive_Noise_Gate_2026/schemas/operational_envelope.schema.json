@@ -1,0 +1,59 @@
+{
+  "$schema": "https://json-schema.org/draft/2020-12/schema",
+  "title": "OperationalEnvelope",
+  "type": "object",
+  "required": [
+    "envelope_version",
+    "created_at",
+    "request_count",
+    "outputs",
+    "audit_events",
+    "replay_bundles",
+    "metrics_snapshot",
+    "incidents",
+    "manifest",
+    "envelope_hash"
+  ],
+  "properties": {
+    "envelope_version": {"type": "string"},
+    "created_at": {"type": "string", "format": "date-time"},
+    "request_count": {"type": "integer", "minimum": 0},
+    "outputs": {"type": "array", "items": {"$ref": "inference_run.schema.json"}},
+    "audit_events": {"type": "array", "items": {"type": "object"}},
+    "replay_bundles": {"type": "array", "items": {"type": "object"}},
+    "metrics_snapshot": {"$ref": "metrics_snapshot.schema.json"},
+    "incidents": {"type": "array", "items": {"$ref": "incident_record.schema.json"}},
+    "manifest": {
+      "type": "object",
+      "required": [
+        "manifest_version",
+        "created_at",
+        "rules_version",
+        "engine_version",
+        "request_count",
+        "output_hashes",
+        "audit_event_hashes",
+        "replay_bundle_hashes",
+        "metrics_snapshot_id",
+        "incident_ids",
+        "replay_verified"
+      ],
+      "properties": {
+        "manifest_version": {"type": "string"},
+        "created_at": {"type": "string", "format": "date-time"},
+        "rules_version": {"type": "string"},
+        "engine_version": {"type": "string"},
+        "request_count": {"type": "integer", "minimum": 0},
+        "output_hashes": {"type": "array", "items": {"type": "string"}},
+        "audit_event_hashes": {"type": "array", "items": {"type": "string"}},
+        "replay_bundle_hashes": {"type": "array", "items": {"type": "string"}},
+        "metrics_snapshot_id": {"type": "string"},
+        "incident_ids": {"type": "array", "items": {"type": "string"}},
+        "replay_verified": {"type": "array", "items": {"type": "boolean"}}
+      },
+      "additionalProperties": false
+    },
+    "envelope_hash": {"type": "string"}
+  },
+  "additionalProperties": false
+}

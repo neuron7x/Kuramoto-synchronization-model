@@ -1,4 +1,5 @@
-# SPDX-License-Identifier: LicenseRef-TradePulse-Proprietary
+# Copyright (c) 2023-2026 Yaroslav Vasylenko (neuron7xLab)
+# SPDX-License-Identifier: MIT
 import json
 from pathlib import Path
 
@@ -69,9 +70,7 @@ def add_fu(
         (fu_root / "src" / "ports" / "__init__.py").write_text("", encoding="utf-8")
         (fu_root / "src" / "ports" / "ports.py").write_text(PY_PORTS, encoding="utf-8")
         (fu_root / "src" / "adapters" / "__init__.py").write_text("", encoding="utf-8")
-        (fu_root / "src" / "adapters" / "local.py").write_text(
-            PY_ADAPTER, encoding="utf-8"
-        )
+        (fu_root / "src" / "adapters" / "local.py").write_text(PY_ADAPTER, encoding="utf-8")
         (fu_root / "tests" / "test_core.py").write_text(PY_TEST, encoding="utf-8")
         (fu_root / "config" / "README.md").write_text(
             "Use environment variables. See .env.example", encoding="utf-8"
@@ -80,17 +79,13 @@ def add_fu(
     else:
         (fu_root / "src" / "core").mkdir(parents=True, exist_ok=True)
         (fu_root / "tests").mkdir(parents=True, exist_ok=True)
-        (fu_root / "package.json").write_text(
-            NODE_PKG % {"name": name}, encoding="utf-8"
-        )
+        (fu_root / "package.json").write_text(NODE_PKG % {"name": name}, encoding="utf-8")
         (fu_root / "src" / "core" / "index.js").write_text(NODE_CORE, encoding="utf-8")
         (fu_root / "tests" / "test.js").write_text(NODE_TEST, encoding="utf-8")
         (fu_root / ".env.example").write_text("EXAMPLE=1\n", encoding="utf-8")
     if with_openapi:
         (fu_root / "api").mkdir(parents=True, exist_ok=True)
-        (fu_root / "api" / "openapi.yaml").write_text(
-            OPENAPI % {"name": name}, encoding="utf-8"
-        )
+        (fu_root / "api" / "openapi.yaml").write_text(OPENAPI % {"name": name}, encoding="utf-8")
     (fu_root / ".fpma.json").write_text(
         json.dumps({"language": lang, "name": name}, indent=2), encoding="utf-8"
     )

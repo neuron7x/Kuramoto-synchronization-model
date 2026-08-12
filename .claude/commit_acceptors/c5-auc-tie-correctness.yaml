@@ -1,0 +1,31 @@
+id: c5-auc-tie-correctness
+status: ACTIVE
+claim_type: correctness
+promise: "C5 _auc is replaced with a tie-correct Mann–Whitney (mid-ranks) equal to the definitional AUC; the prior ordinal-rank version returned a false perfect separation on tied/constant scores. Pinned by a brute-force regression suite. C5 reruns byte-identical (OOS AUC 0.9630) — verdict strengthened, not retracted; closure now unconditional."
+diff_scope:
+  changed_files:
+    - path: "research/ctc_falsify/c5/oracle.py"
+    - path: "tests/research/ctc_falsify/test_c5_auc.py"
+    - path: "research/ctc_falsify/RESULTS.md"
+    - path: ".claude/commit_acceptors/c5-auc-tie-correctness.yaml"
+  forbidden_paths:
+    - "trading/"
+    - "execution/"
+    - "forecast/"
+    - "policy/"
+    - "research/ctc_falsify/c5/config_c5.py"
+required_python_symbols:
+  - "_auc"
+  - "run_oracle"
+expected_signal: "AUC regression suite passes; C5 OOS AUC unchanged (0.9630), verdict still C5_ESTIMATOR_QUALITY_GAP"
+measurement_command: "python -m pytest tests/research/ctc_falsify/test_c5_auc.py -q"
+signal_artifact: "tmp/c5_auc_pytest.log"
+falsifier:
+  command: "python -c \"import numpy as np; from research.ctc_falsify.c5.oracle import _auc; raise SystemExit(0 if _auc(np.full(6,0.7), np.array([1.,1.,1.,0.,0.,0.]))==0.5 and abs(_auc(np.array([1.,1.,1.,1.]),np.array([1.,0.,1.,0.]))-0.5)<1e-12 else 1)\""
+  description: "Probe asserts constant scores AND all-tied subsets give chance AUC 0.5 (exits 0). It exits 1 if the buggy ordinal-rank metric (false perfect separation on ties) is ever reinstated — making the regression falsifiable."
+rollback_command: "git checkout -- research/ctc_falsify/c5/oracle.py tests/research/ctc_falsify/test_c5_auc.py research/ctc_falsify/RESULTS.md"
+rollback_verification_command: "git diff --exit-code research/ctc_falsify/c5/oracle.py"
+memory_update_type: none
+ledger_path: ".claude/commit_acceptors/c5-auc-tie-correctness.yaml"
+report_path: "research/ctc_falsify/RESULTS.md"
+evidence: []

@@ -2,7 +2,7 @@
 
 ## Overview
 
-The `core.agent` module provides a comprehensive framework for managing, evaluating, and orchestrating trading strategies in the TradePulse platform. It includes multi-armed bandits, strategy evaluation, memory systems, orchestration, scheduling, and prompt management capabilities.
+The `core.agent` module provides a comprehensive framework for managing, evaluating, and orchestrating trading strategies in the GeoSync platform. It includes multi-armed bandits, strategy evaluation, memory systems, orchestration, scheduling, and prompt management capabilities.
 
 ## Module Structure
 
@@ -405,4 +405,4 @@ When adding new functionality to the agent module:
 
 ## License
 
-SPDX-License-Identifier: LicenseRef-TradePulse-Proprietary
+SPDX-License-Identifier: MIT

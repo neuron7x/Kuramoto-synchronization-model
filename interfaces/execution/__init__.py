@@ -1,3 +1,5 @@
+# Copyright (c) 2023-2026 Yaroslav Vasylenko (neuron7xLab)
+# SPDX-License-Identifier: MIT
 """Execution interface exports and venue-specific connectors."""
 
 from .base import PortfolioRiskAnalyzer, PositionSizer, RiskController

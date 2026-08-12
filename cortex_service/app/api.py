@@ -1,3 +1,5 @@
+# Copyright (c) 2023-2026 Yaroslav Vasylenko (neuron7xLab)
+# SPDX-License-Identifier: MIT
 """FastAPI application exposing the cortex microservice."""
 
 from __future__ import annotations
@@ -61,9 +63,7 @@ def _create_error_response(request_id: str, error: CortexError) -> ErrorResponse
     """
     details = None
     if error.details:
-        details = [
-            ErrorDetail(field=k, message=str(v)) for k, v in error.details.items()
-        ]
+        details = [ErrorDetail(field=k, message=str(v)) for k, v in error.details.items()]
 
     return ErrorResponse(
         error=error.code,
@@ -73,9 +73,7 @@ def _create_error_response(request_id: str, error: CortexError) -> ErrorResponse
     )
 
 
-def _instrument_latency(
-    endpoint: str, method: str, status_code: int, start: float
-) -> None:
+def _instrument_latency(endpoint: str, method: str, status_code: int, start: float) -> None:
     """Record request latency metrics.
 
     Args:
@@ -84,9 +82,9 @@ def _instrument_latency(
         status_code: HTTP status code
         start: Start time (from time.perf_counter())
     """
-    REQUEST_LATENCY.labels(
-        endpoint=endpoint, method=method, status=status_code
-    ).observe(time.perf_counter() - start)
+    REQUEST_LATENCY.labels(endpoint=endpoint, method=method, status=status_code).observe(
+        time.perf_counter() - start
+    )
 
 
 def _build_feature_observations(
@@ -114,9 +112,7 @@ def _build_feature_observations(
     ]
 
 
-def create_app(
-    settings: CortexSettings | None = None, engine: Engine | None = None
-) -> FastAPI:
+def create_app(settings: CortexSettings | None = None, engine: Engine | None = None) -> FastAPI:
     """Create and configure the FastAPI application.
 
     Args:
@@ -166,14 +162,10 @@ def create_app(
         )
 
     @app.exception_handler(RequestValidationError)
-    async def validation_error_handler(
-        request: Request, exc: RequestValidationError
-    ) -> Response:
+    async def validation_error_handler(request: Request, exc: RequestValidationError) -> Response:
         """Handle Pydantic validation errors."""
         ERROR_COUNT.labels(code="VALIDATION_ERROR").inc()
-        error = ValidationError(
-            "Request validation failed", details={"errors": str(exc.errors())}
-        )
+        error = ValidationError("Request validation failed", details={"errors": str(exc.errors())})
         error_response = _create_error_response(get_request_id(), error)
         return Response(
             content=error_response.model_dump_json(),
@@ -182,9 +174,7 @@ def create_app(
         )
 
     @app.exception_handler(SQLAlchemyError)
-    async def sqlalchemy_error_handler(
-        request: Request, exc: SQLAlchemyError
-    ) -> Response:
+    async def sqlalchemy_error_handler(request: Request, exc: SQLAlchemyError) -> Response:
         """Handle SQLAlchemy errors."""
         ERROR_COUNT.labels(code="DATABASE_ERROR").inc()
         from .errors import DatabaseError
@@ -283,9 +273,7 @@ def create_app(
                 for item in payload.features
             ]
 
-            signals, ensemble_strength, synchrony = signal_service.compute_signals(
-                features
-            )
+            signals, ensemble_strength, synchrony = signal_service.compute_signals(features)
 
             signal_payloads = [SignalPayload(**asdict(signal)) for signal in signals]
             return SignalsResponse(

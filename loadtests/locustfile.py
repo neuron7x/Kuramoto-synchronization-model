@@ -1,3 +1,5 @@
+# Copyright (c) 2023-2026 Yaroslav Vasylenko (neuron7xLab)
+# SPDX-License-Identifier: MIT
 """Locust scenarios exercising HTTP and gRPC facades under sustained load."""
 
 from __future__ import annotations
@@ -14,9 +16,7 @@ from loadtests.scenario import MarketScenario
 from loadtests.security import mint_loadtest_token
 
 RECORDING_PATH = Path(
-    os.environ.get(
-        "LOADTEST_MARKET_RECORDING", "tests/fixtures/recordings/coinbase_btcusd.jsonl"
-    )
+    os.environ.get("LOADTEST_MARKET_RECORDING", "tests/fixtures/recordings/coinbase_btcusd.jsonl")
 )
 HTTP_SCENARIO_TEMPLATE = MarketScenario.from_recording(RECORDING_PATH)
 GRPC_SCENARIO_TEMPLATE = MarketScenario.from_recording(RECORDING_PATH)

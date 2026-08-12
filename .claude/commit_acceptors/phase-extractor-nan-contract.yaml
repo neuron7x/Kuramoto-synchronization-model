@@ -1,0 +1,66 @@
+# Diff-bound acceptor: deliver the advertised NaN tolerance in phase extraction.
+#
+# extract_phases_hilbert advertised a `max_nan_fraction` tolerance, but the Q3
+# NaN gate ran AFTER zero-phase filtfilt/Hilbert — which smear a single NaN
+# across the entire column (100% loss). The tolerance was therefore
+# unenforceable. This repairs short non-finite gaps (≤ tolerance) by linear
+# interpolation BEFORE filtering, leaving larger gaps NaN for Q3 to flag, and
+# keeping clean input bit-identical. No invariant added or changed.
+
+id: phase-extractor-nan-contract
+status: ACTIVE
+claim_type: correctness
+promise: >-
+  core.kuramoto.phase_extractor.extract_phases_hilbert now repairs short
+  non-finite gaps before filtering via _fill_short_nan_gaps: per column, a
+  non-finite fraction in (0, max_nan_fraction] with ≥2 finite anchors is
+  linearly interpolated so it does not smear across the column under
+  filtfilt/Hilbert; columns above the tolerance are left NaN and surface via
+  the Q3 diagnostic (no silent whole-matrix repair); clean input is returned
+  bit-identical. This delivers the previously-unenforceable max_nan_fraction
+  contract. No invariant added or changed; three reproduction tests added.
+diff_scope:
+  changed_files:
+    - path: ".claude/commit_acceptors/phase-extractor-nan-contract.yaml"
+    - path: "core/kuramoto/phase_extractor.py"
+    - path: "tests/unit/core/test_kuramoto_phase_extractor.py"
+  forbidden_paths:
+    - "trading/"
+    - "execution/"
+    - "forecast/"
+    - "policy/"
+required_python_symbols:
+  - "extract_phases_hilbert"
+expected_signal: >-
+  All tests in tests/unit/core/test_kuramoto_phase_extractor.py pass, including
+  the new TestNanGapTolerance class (3 tests); existing extraction/quality
+  suites stay green (no regression — clean input is bit-identical); mypy
+  --strict, ruff, black, physics-code-audit clean on the changed module.
+  Reproduced before/after: a 2.5%-NaN column previously produced all-NaN phase
+  (100% loss) -> now finite; a 20%-NaN column stays NaN (Q3-flagged) while a
+  clean neighbour column is unaffected.
+measurement_command: >-
+  PYTHONPATH=. python -m pytest tests/unit/core/test_kuramoto_phase_extractor.py
+  -k NanGap -v
+signal_artifact: "tmp/phase_extractor_nan_contract_pytest.log"
+falsifier:
+  command: >-
+    PYTHONPATH=. python -m pytest tests/unit/core/test_kuramoto_phase_extractor.py
+    -v -k "NanGap"
+  description: >-
+    Filters to the NaN-tolerance contract tests: clean input must be
+    bit-identical, a ≤max_nan_fraction gap must yield finite phase (was all-NaN),
+    and a >max_nan_fraction gap must stay NaN (Q3-flagged) without poisoning a
+    clean neighbour column. Reverting the pre-filter gap repair re-introduces
+    the 100%-column-loss and fails the small-gap test.
+rollback_command: >-
+  git checkout HEAD~1 --
+  core/kuramoto/phase_extractor.py
+  tests/unit/core/test_kuramoto_phase_extractor.py
+  .claude/commit_acceptors/phase-extractor-nan-contract.yaml
+rollback_verification_command: >-
+  git diff --exit-code core/kuramoto/phase_extractor.py
+memory_update_type: none
+ledger_path: ".claude/commit_acceptors/phase-extractor-nan-contract.yaml"
+report_path: "docs/reports/diff_bound_commit_acceptor_layer.md"
+evidence: []

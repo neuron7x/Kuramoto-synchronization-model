@@ -1,4 +1,5 @@
-# SPDX-License-Identifier: LicenseRef-TradePulse-Proprietary
+# Copyright (c) 2023-2026 Yaroslav Vasylenko (neuron7xLab)
+# SPDX-License-Identifier: MIT
 import importlib
 import pathlib
 import sys
@@ -98,9 +99,7 @@ def test_correlation_decoupled_triggers_diversification():
     rng = np.random.default_rng(42)
     matrix = rng.standard_normal((180, 3))
     q, _ = np.linalg.qr(matrix)
-    returns = pd.DataFrame(
-        q * 0.01, columns=["asset_a", "asset_b", "asset_c"], index=index
-    )
+    returns = pd.DataFrame(q * 0.01, columns=["asset_a", "asset_b", "asset_c"], index=index)
     prices = 100 * (1 + returns).cumprod()
 
     volumes = pd.DataFrame(

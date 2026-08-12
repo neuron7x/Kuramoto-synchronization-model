@@ -1,0 +1,80 @@
+# Diff-bound commit acceptor for the serotonin-homeostasis physical-law witnesses.
+#
+# Adds ONE test module binding two previously-unwitnessed catalog laws to
+# executable @law witnesses, raising physics_contracts physical-law-coverage.
+# Promotes no claim, changes no runtime behavior, touches no schema/guard, uses
+# no real data.
+#
+#   serotonin.level_bounds       — 5-HT level ∈ [0, 1] for all t (INV-5HT2).
+#   serotonin.lyapunov_stability — V = ½(l−target)² + λd² non-increasing under
+#                                  zero stress (INV-5HT1).
+#
+# Locally verified on origin/main base (2253a6a):
+#   * pytest tests/physics_contracts/test_serotonin_homeostasis_witnesses.py: 2 passed
+#   * .claude/physics/validate_tests.py <file>: 0 issues (L1..L5), EXIT 0
+#   * both laws register in physics_contracts.law.WITNESS_REGISTRY
+#   * ruff / mypy --strict clean ; zero new `# type: ignore`
+id: serotonin-homeostasis-law-witnesses
+status: ACTIVE
+claim_type: governance
+promise: >-
+  After this PR lands, tests/physics_contracts/test_serotonin_homeostasis_witnesses.py
+  binds the catalog laws serotonin.level_bounds and serotonin.lyapunov_stability
+  to @law-decorated witnesses that pass .claude/physics/validate_tests with zero
+  issues. The level witness sweeps stress trajectories asserting the SerotoninODE
+  level stays in [0, 1] (INV-5HT2); the Lyapunov witness asserts V is
+  non-increasing under zero exogenous stress within the catalog's 1e-9 slack
+  (INV-5HT1). No market claim; no runtime, schema, or guard change.
+diff_scope:
+  changed_files:
+    - path: ".claude/commit_acceptors/serotonin-homeostasis-law-witnesses.yaml"
+    - path: "tests/physics_contracts/test_serotonin_homeostasis_witnesses.py"
+  forbidden_paths:
+    - "trading/"
+    - "execution/"
+    - "forecast/"
+    - "policy/"
+    - "application/"
+    - "core/"
+    - "src/"
+    - "geosync_hpc/"
+    - "physics_contracts/catalog.yaml"
+required_python_symbols: []
+expected_signal: >-
+  `python -m pytest tests/physics_contracts/test_serotonin_homeostasis_witnesses.py`
+  reports 2 passed; `python .claude/physics/validate_tests.py
+  tests/physics_contracts/test_serotonin_homeostasis_witnesses.py` exits 0 with
+  no L1..L5 issues; ruff and mypy --strict on the file are clean.
+measurement_command: >-
+  bash -c 'mkdir -p tmp && python -m pytest
+  tests/physics_contracts/test_serotonin_homeostasis_witnesses.py
+  > tmp/serotonin_homeostasis_law_witnesses.log 2>&1
+  && grep -q "2 passed" tmp/serotonin_homeostasis_law_witnesses.log'
+signal_artifact: "tmp/serotonin_homeostasis_law_witnesses.log"
+falsifier:
+  command: |-
+    bash -c 'python -c "
+    from core.neuro.serotonin_ode import SerotoninODE, SerotoninODEParams
+    ode = SerotoninODE(SerotoninODEParams(), level=1.0)
+    breached = False
+    for _ in range(200):
+        ode.step(3.0, dt=1.0)
+        if ode.level < -1e-9 or ode.level > 1.0 + 1e-9:
+            breached = True
+    import sys; sys.exit(0 if breached else 1)"'
+  description: >-
+    Inverse probe of the 5-HT level bound. It exits 0 (fires) iff the integrator
+    drives ``level`` outside [0, 1] beyond tolerance under sustained extreme
+    stress — i.e. the definitional bound is broken in real code. While the bound
+    holds the probe exits 1. If it ever exits 0, the homeostasis witness is no
+    longer truthful and the change must be reverted, not patched green.
+rollback_command: >-
+  git rm -f
+  tests/physics_contracts/test_serotonin_homeostasis_witnesses.py
+  .claude/commit_acceptors/serotonin-homeostasis-law-witnesses.yaml
+rollback_verification_command: >-
+  bash -c 'test ! -f tests/physics_contracts/test_serotonin_homeostasis_witnesses.py'
+memory_update_type: none
+ledger_path: ".claude/commit_acceptors/serotonin-homeostasis-law-witnesses.yaml"
+report_path: "tmp/serotonin_homeostasis_law_witnesses.log"
+evidence: []

@@ -1,3 +1,5 @@
+# Copyright (c) 2023-2026 Yaroslav Vasylenko (neuron7xLab)
+# SPDX-License-Identifier: MIT
 from __future__ import annotations
 
 import numpy as np
@@ -14,9 +16,7 @@ def test_provider_compute_from_frame() -> None:
     frame = pd.DataFrame({"close": price}, index=index)
     provider = IGSFeatureProvider({"window": 200, "n_states": 5, "min_counts": 60})
     features = provider.compute_from_frame(frame)
-    assert set(["epr", "flux_index", "tra", "pe", "regime_score"]).issubset(
-        features.columns
-    )
+    assert set(["epr", "flux_index", "tra", "pe", "regime_score"]).issubset(features.columns)
     assert features.index.equals(frame.index)
 
 

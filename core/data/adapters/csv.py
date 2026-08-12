@@ -1,3 +1,5 @@
+# Copyright (c) 2023-2026 Yaroslav Vasylenko (neuron7xLab)
+# SPDX-License-Identifier: MIT
 """CSV ingestion adapter built on the shared ingestion abstractions."""
 
 from __future__ import annotations

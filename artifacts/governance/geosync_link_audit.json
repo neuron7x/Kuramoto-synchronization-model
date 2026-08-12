@@ -1,0 +1,1218 @@
+{
+  "after_broken": [],
+  "after_outside_root_unallowed": [],
+  "after_per_file": {},
+  "before_broken": [
+    {
+      "file": ".github/PR_TESTING_GUIDE.md",
+      "resolved": "TESTING.md",
+      "target": "../TESTING.md"
+    },
+    {
+      "file": ".github/agents/ARCHITECTURE.md",
+      "resolved": ".github/docs/DOC_PR_COPILOT_GUIDE.md",
+      "target": "../docs/DOC_PR_COPILOT_GUIDE.md"
+    },
+    {
+      "file": ".github/agents/IMPLEMENTATION_SUMMARY.md",
+      "resolved": ".github/agents/.github/agents/README.md",
+      "target": ".github/agents/README.md"
+    },
+    {
+      "file": ".github/agents/IMPLEMENTATION_SUMMARY.md",
+      "resolved": ".github/docs/DOC_PR_COPILOT_GUIDE.md",
+      "target": "../docs/DOC_PR_COPILOT_GUIDE.md"
+    },
+    {
+      "file": ".github/agents/IMPLEMENTATION_SUMMARY.md",
+      "resolved": ".github/agents/.github/agents/INTEGRATION.md",
+      "target": ".github/agents/INTEGRATION.md"
+    },
+    {
+      "file": ".github/agents/IMPLEMENTATION_SUMMARY.md",
+      "resolved": ".github/agents/.github/agents/4C-PRINCIPLES.md",
+      "target": ".github/agents/4C-PRINCIPLES.md"
+    },
+    {
+      "file": ".github/agents/IMPLEMENTATION_SUMMARY.md",
+      "resolved": ".github/agents/.github/agents/example-output.md",
+      "target": ".github/agents/example-output.md"
+    },
+    {
+      "file": ".github/workflows/README.md",
+      "resolved": ".github/architecture/CONNECTOME_GATE.md",
+      "target": "../architecture/CONNECTOME_GATE.md"
+    },
+    {
+      "file": ".github/workflows/README.md",
+      "resolved": ".github/renovate.json",
+      "target": "../renovate.json"
+    },
+    {
+      "file": "CONTRIBUTING.md",
+      "resolved": "TESTING.md",
+      "target": "TESTING.md"
+    },
+    {
+      "file": "CONTRIBUTING.md",
+      "resolved": "TESTING.md",
+      "target": "TESTING.md"
+    },
+    {
+      "file": "SECURITY.md",
+      "resolved": "SECURITY_CONSTRAINT_POLICY.md",
+      "target": "SECURITY_CONSTRAINT_POLICY.md"
+    },
+    {
+      "file": "SECURITY.md",
+      "resolved": "SECURITY_HALL_OF_FAME.md",
+      "target": "SECURITY_HALL_OF_FAME.md"
+    },
+    {
+      "file": "analytics/fpma/README.md",
+      "resolved": "docs/roadmap/regime_strategies.md",
+      "target": "../../docs/roadmap/regime_strategies.md"
+    },
+    {
+      "file": "audit/README.md",
+      "resolved": "AUDIT_REPORT.md",
+      "target": "../AUDIT_REPORT.md"
+    },
+    {
+      "file": "core/events/README.md",
+      "resolved": "docs/schemas/README.md",
+      "target": "../../docs/schemas/README.md"
+    },
+    {
+      "file": "core/events/README.md",
+      "resolved": "docs/schemas/README.md",
+      "target": "../../docs/schemas/README.md"
+    },
+    {
+      "file": "core/events/README.md",
+      "resolved": "docs/testing/event_driven.md",
+      "target": "../../docs/testing/event_driven.md"
+    },
+    {
+      "file": "data/README.md",
+      "resolved": "TESTING.md",
+      "target": "../TESTING.md"
+    },
+    {
+      "file": "docs/ARCHITECTURE.md",
+      "resolved": "DOCUMENTATION_SUMMARY.md",
+      "target": "../DOCUMENTATION_SUMMARY.md"
+    },
+    {
+      "file": "docs/ARCHITECTURE.md",
+      "resolved": "DOCUMENTATION_SUMMARY.md",
+      "target": "../DOCUMENTATION_SUMMARY.md"
+    },
+    {
+      "file": "docs/CALIBRATION_GUIDE.md",
+      "resolved": "docs/dopamine_v1_enhancements.md",
+      "target": "dopamine_v1_enhancements.md"
+    },
+    {
+      "file": "docs/CALIBRATION_QUICK_START.md",
+      "resolved": "TROUBLESHOOTING.md",
+      "target": "../TROUBLESHOOTING.md"
+    },
+    {
+      "file": "docs/CONCEPTUAL_ARCHITECTURE_UA.md",
+      "resolved": "docs/docs/neuromodulators",
+      "target": "docs/neuromodulators/"
+    },
+    {
+      "file": "docs/CONCEPTUAL_ARCHITECTURE_UA.md",
+      "resolved": "docs/core/indicators/README.md",
+      "target": "core/indicators/README.md"
+    },
+    {
+      "file": "docs/CONCEPTUAL_ARCHITECTURE_UA.md",
+      "resolved": "docs/core/strategies/README.md",
+      "target": "core/strategies/README.md"
+    },
+    {
+      "file": "docs/DOCUMENTATION_ARCHITECTURE.md",
+      "resolved": "DOCUMENTATION_SUMMARY.md",
+      "target": "../DOCUMENTATION_SUMMARY.md"
+    },
+    {
+      "file": "docs/DOCUMENTATION_ARCHITECTURE.md",
+      "resolved": "DOCUMENTATION_SUMMARY.md",
+      "target": "../DOCUMENTATION_SUMMARY.md"
+    },
+    {
+      "file": "docs/FORMALIZATION_INDEX.md",
+      "resolved": "docs/tutorials/fractal-indicators.md",
+      "target": "tutorials/fractal-indicators.md"
+    },
+    {
+      "file": "docs/FORMALIZATION_INDEX.md",
+      "resolved": "docs/data/quality-control.md",
+      "target": "data/quality-control.md"
+    },
+    {
+      "file": "docs/FORMALIZATION_INDEX.md",
+      "resolved": "docs/data/synchronization-guide.md",
+      "target": "data/synchronization-guide.md"
+    },
+    {
+      "file": "docs/FORMALIZATION_INDEX.md",
+      "resolved": "docs/backtest/incremental-execution.md",
+      "target": "backtest/incremental-execution.md"
+    },
+    {
+      "file": "docs/FORMALIZATION_INDEX.md",
+      "resolved": "docs/execution/fault-tolerant-orders.md",
+      "target": "execution/fault-tolerant-orders.md"
+    },
+    {
+      "file": "docs/FORMALIZATION_INDEX.md",
+      "resolved": "docs/backtest/determinism-guide.md",
+      "target": "backtest/determinism-guide.md"
+    },
+    {
+      "file": "docs/FORMALIZATION_INDEX.md",
+      "resolved": "docs/execution/risk-management.md",
+      "target": "execution/risk-management.md"
+    },
+    {
+      "file": "docs/FORMALIZATION_INDEX.md",
+      "resolved": "SECURITY_FRAMEWORK_SUMMARY.md",
+      "target": "../SECURITY_FRAMEWORK_SUMMARY.md"
+    },
+    {
+      "file": "docs/FORMALIZATION_INDEX.md",
+      "resolved": "TESTING.md",
+      "target": "../TESTING.md"
+    },
+    {
+      "file": "docs/OPERATIONAL_ARTIFACTS_INDEX.md",
+      "resolved": "reports/incidents/incident_report_template.md",
+      "target": "../reports/incidents/incident_report_template.md"
+    },
+    {
+      "file": "docs/OPERATIONAL_ARTIFACTS_INDEX.md",
+      "resolved": "reports/incidents/postmortem_template.md",
+      "target": "../reports/incidents/postmortem_template.md"
+    },
+    {
+      "file": "docs/OPERATIONAL_ARTIFACTS_INDEX.md",
+      "resolved": "reports/incidents/action_item_register.md",
+      "target": "../reports/incidents/action_item_register.md"
+    },
+    {
+      "file": "docs/OPERATIONAL_ARTIFACTS_INDEX.md",
+      "resolved": "TESTING.md",
+      "target": "../TESTING.md"
+    },
+    {
+      "file": "docs/TEST_ARCHITECTURE.md",
+      "resolved": "TESTING.md",
+      "target": "../TESTING.md"
+    },
+    {
+      "file": "docs/TEST_QUALITY_IMPROVEMENTS.md",
+      "resolved": "TESTING.md",
+      "target": "../TESTING.md"
+    },
+    {
+      "file": "docs/adr/0001-fractal-indicator-composition-architecture.md",
+      "resolved": "docs/adr/docs/feature_engineering.md",
+      "target": "docs/feature_engineering.md"
+    },
+    {
+      "file": "docs/adr/0017-core-to-src-migration.md",
+      "resolved": "reports/CORE_MIGRATION_PROGRESS.md",
+      "target": "../../reports/CORE_MIGRATION_PROGRESS.md"
+    },
+    {
+      "file": "docs/api/API_REFERENCE.md",
+      "resolved": "docs/CORE_ARCHITECTURE_IMPLEMENTATION.md",
+      "target": "../CORE_ARCHITECTURE_IMPLEMENTATION.md"
+    },
+    {
+      "file": "docs/api/API_REFERENCE.md",
+      "resolved": "docs/docs/neurodecision_stack.md",
+      "target": "../docs/neurodecision_stack.md"
+    },
+    {
+      "file": "docs/api/API_REFERENCE.md",
+      "resolved": "docs/scripts/run_fhmc_demo.py",
+      "target": "../scripts/run_fhmc_demo.py"
+    },
+    {
+      "file": "docs/api/API_REFERENCE.md",
+      "resolved": "docs/docs/geosync_cli_reference.md",
+      "target": "../docs/geosync_cli_reference.md"
+    },
+    {
+      "file": "docs/api_examples.md",
+      "resolved": "docs/risk_management.md",
+      "target": "./risk_management.md"
+    },
+    {
+      "file": "docs/architecture/REPOSITORY_STRUCTURE.md",
+      "resolved": "DOCUMENTATION_SUMMARY.md",
+      "target": "../../DOCUMENTATION_SUMMARY.md"
+    },
+    {
+      "file": "docs/architecture/packaging.md",
+      "resolved": "SETUP.md",
+      "target": "../../SETUP.md"
+    },
+    {
+      "file": "docs/archive/README.md",
+      "resolved": "TESTING.md",
+      "target": "../../TESTING.md"
+    },
+    {
+      "file": "docs/data/README.md",
+      "resolved": "TESTING.md",
+      "target": "../../TESTING.md"
+    },
+    {
+      "file": "docs/data/cns_stabilizer_artifacts.md",
+      "resolved": "THERMODYNAMICS_IMPLEMENTATION_SUMMARY.md",
+      "target": "../../THERMODYNAMICS_IMPLEMENTATION_SUMMARY.md"
+    },
+    {
+      "file": "docs/data/cns_stabilizer_artifacts.md",
+      "resolved": "NEUROMODULATOR_IMPLEMENTATION_REPORT.md",
+      "target": "../../NEUROMODULATOR_IMPLEMENTATION_REPORT.md"
+    },
+    {
+      "file": "docs/data/cns_stabilizer_artifacts.md",
+      "resolved": "core/neuro/cns_stabilizer.py",
+      "target": "../../core/neuro/cns_stabilizer.py"
+    },
+    {
+      "file": "docs/data/exchange_configurations.md",
+      "resolved": "SECURITY_FRAMEWORK_SUMMARY.md",
+      "target": "../../SECURITY_FRAMEWORK_SUMMARY.md"
+    },
+    {
+      "file": "docs/data/extended_market_sample.md",
+      "resolved": "TESTING.md",
+      "target": "../../TESTING.md"
+    },
+    {
+      "file": "docs/data/orchestrator_configs.md",
+      "resolved": "NEURO_ORCHESTRATOR_IMPLEMENTATION.md",
+      "target": "../../NEURO_ORCHESTRATOR_IMPLEMENTATION.md"
+    },
+    {
+      "file": "docs/data/orchestrator_configs.md",
+      "resolved": "DOPAMINE_LOOP_IMPLEMENTATION.md",
+      "target": "../../DOPAMINE_LOOP_IMPLEMENTATION.md"
+    },
+    {
+      "file": "docs/data/orchestrator_configs.md",
+      "resolved": "core/risk",
+      "target": "../../core/risk/"
+    },
+    {
+      "file": "docs/data/sample_market_data.md",
+      "resolved": "MARKET_FEED_IMPLEMENTATION_SUMMARY.md",
+      "target": "../../MARKET_FEED_IMPLEMENTATION_SUMMARY.md"
+    },
+    {
+      "file": "docs/data/sample_market_data.md",
+      "resolved": "TESTING.md",
+      "target": "../../TESTING.md"
+    },
+    {
+      "file": "docs/documentation_governance.md",
+      "resolved": "DOCUMENTATION_SUMMARY.md",
+      "target": "../DOCUMENTATION_SUMMARY.md"
+    },
+    {
+      "file": "docs/documentation_governance.md",
+      "resolved": "DOCUMENTATION_SUMMARY.md",
+      "target": "../DOCUMENTATION_SUMMARY.md#issue-tracking"
+    },
+    {
+      "file": "docs/documentation_information_architecture.md",
+      "resolved": "DOCUMENTATION_SUMMARY.md",
+      "target": "../DOCUMENTATION_SUMMARY.md"
+    },
+    {
+      "file": "docs/documentation_standardisation_playbook.md",
+      "resolved": "DOCUMENTATION_SUMMARY.md",
+      "target": "../DOCUMENTATION_SUMMARY.md"
+    },
+    {
+      "file": "docs/exocortex/GLOSSARY.md",
+      "resolved": "src/geosync/neural_controller",
+      "target": "../../src/geosync/neural_controller/"
+    },
+    {
+      "file": "docs/faq.md",
+      "resolved": "TESTING.md",
+      "target": "../TESTING.md"
+    },
+    {
+      "file": "docs/incident_coordination_procedures.md",
+      "resolved": "reports/incidents/action_item_register.md",
+      "target": "../reports/incidents/action_item_register.md"
+    },
+    {
+      "file": "docs/incident_coordination_procedures.md",
+      "resolved": "reports/incidents/postmortem_template.md",
+      "target": "../reports/incidents/postmortem_template.md"
+    },
+    {
+      "file": "docs/incident_coordination_procedures.md",
+      "resolved": "reports/incidents/action_item_register.md",
+      "target": "../reports/incidents/action_item_register.md"
+    },
+    {
+      "file": "docs/integration-api.md",
+      "resolved": "examples/integrations",
+      "target": "../examples/integrations/"
+    },
+    {
+      "file": "docs/operational_handbook.md",
+      "resolved": ".github/workflows/tests.yml",
+      "target": "../.github/workflows/tests.yml"
+    },
+    {
+      "file": "docs/operational_handbook.md",
+      "resolved": "TESTING.md",
+      "target": "../TESTING.md"
+    },
+    {
+      "file": "docs/operational_handbook.md",
+      "resolved": ".github/workflows/tests.yml",
+      "target": "../.github/workflows/tests.yml"
+    },
+    {
+      "file": "docs/operational_handbook.md",
+      "resolved": ".github/workflows/build-wheels.yml",
+      "target": "../.github/workflows/build-wheels.yml"
+    },
+    {
+      "file": "docs/operational_readiness_runbooks.md",
+      "resolved": "TESTING_SUMMARY.md",
+      "target": "../TESTING_SUMMARY.md"
+    },
+    {
+      "file": "docs/operations/AUDIT_EXECUTIVE_SUMMARY.md",
+      "resolved": "docs/operations/audit/findings.json",
+      "target": "audit/findings.json"
+    },
+    {
+      "file": "docs/operations/AUDIT_EXECUTIVE_SUMMARY.md",
+      "resolved": "docs/operations/audit/artifacts",
+      "target": "audit/artifacts/"
+    },
+    {
+      "file": "docs/operations/AUDIT_EXECUTIVE_SUMMARY.md",
+      "resolved": "docs/operations/audit/README.md",
+      "target": "audit/README.md"
+    },
+    {
+      "file": "docs/operations/DEPLOYMENT.md",
+      "resolved": "docs/operations/docs/architecture/system_overview.md",
+      "target": "docs/architecture/system_overview.md"
+    },
+    {
+      "file": "docs/operations/DEPLOYMENT.md",
+      "resolved": "docs/operations/docs/architecture/feature_store.md",
+      "target": "docs/architecture/feature_store.md"
+    },
+    {
+      "file": "docs/operations/DEPLOYMENT.md",
+      "resolved": "docs/operations/SECURITY_CONSTRAINT_POLICY.md",
+      "target": "SECURITY_CONSTRAINT_POLICY.md"
+    },
+    {
+      "file": "docs/operations/DEPLOYMENT.md",
+      "resolved": "docs/operations/docs/SECURITY_DEPENDENCIES.md",
+      "target": "docs/SECURITY_DEPENDENCIES.md"
+    },
+    {
+      "file": "docs/operations/DOCUMENTATION_SUMMARY.md",
+      "resolved": "docs/operations/docs/requirements/traceability_matrix.md",
+      "target": "docs/requirements/traceability_matrix.md"
+    },
+    {
+      "file": "docs/operations/DOCUMENTATION_SUMMARY.md",
+      "resolved": "docs/operations/docs/adr/0001-fractal-indicator-composition-architecture.md",
+      "target": "docs/adr/0001-fractal-indicator-composition-architecture.md"
+    },
+    {
+      "file": "docs/operations/DOCUMENTATION_SUMMARY.md",
+      "resolved": "docs/operations/docs/adr/0001-security-compliance-automation.md",
+      "target": "docs/adr/0001-security-compliance-automation.md"
+    },
+    {
+      "file": "docs/operations/DOCUMENTATION_SUMMARY.md",
+      "resolved": "docs/operations/docs/adr/0002-versioned-market-data-storage.md",
+      "target": "docs/adr/0002-versioned-market-data-storage.md"
+    },
+    {
+      "file": "docs/operations/DOCUMENTATION_SUMMARY.md",
+      "resolved": "docs/operations/docs/adr/0002-serotonin-controller-architecture.md",
+      "target": "docs/adr/0002-serotonin-controller-architecture.md"
+    },
+    {
+      "file": "docs/operations/DOCUMENTATION_SUMMARY.md",
+      "resolved": "docs/operations/docs/adr/0003-automated-data-quality-framework.md",
+      "target": "docs/adr/0003-automated-data-quality-framework.md"
+    },
+    {
+      "file": "docs/operations/DOCUMENTATION_SUMMARY.md",
+      "resolved": "docs/operations/docs/adr/0003-principal-architect-security-framework.md",
+      "target": "docs/adr/0003-principal-architect-security-framework.md"
+    },
+    {
+      "file": "docs/operations/DOCUMENTATION_SUMMARY.md",
+      "resolved": "docs/operations/docs/adr/0004-contract-first-modular-architecture.md",
+      "target": "docs/adr/0004-contract-first-modular-architecture.md"
+    },
+    {
+      "file": "docs/operations/DOCUMENTATION_SUMMARY.md",
+      "resolved": "docs/operations/docs/adr/0005-multi-exchange-adapter-framework.md",
+      "target": "docs/adr/0005-multi-exchange-adapter-framework.md"
+    },
+    {
+      "file": "docs/operations/DOCUMENTATION_SUMMARY.md",
+      "resolved": "docs/operations/docs/adr/0006-tacl-thermo-control-layer.md",
+      "target": "docs/adr/0006-tacl-thermo-control-layer.md"
+    },
+    {
+      "file": "docs/operations/DOCUMENTATION_SUMMARY.md",
+      "resolved": "docs/operations/docs/adr/0007-core-state-lattice-canonical-features.md",
+      "target": "docs/adr/0007-core-state-lattice-canonical-features.md"
+    },
+    {
+      "file": "docs/operations/DOCUMENTATION_SUMMARY.md",
+      "resolved": "docs/operations/docs/adr/0008-execution-risk-aware-order-router.md",
+      "target": "docs/adr/0008-execution-risk-aware-order-router.md"
+    },
+    {
+      "file": "docs/operations/DOCUMENTATION_SUMMARY.md",
+      "resolved": "docs/operations/docs/adr/0009-runtime-deterministic-scheduler.md",
+      "target": "docs/adr/0009-runtime-deterministic-scheduler.md"
+    },
+    {
+      "file": "docs/operations/DOCUMENTATION_SUMMARY.md",
+      "resolved": "docs/operations/docs/adr/0010-observability-unified-telemetry-fabric.md",
+      "target": "docs/adr/0010-observability-unified-telemetry-fabric.md"
+    },
+    {
+      "file": "docs/operations/DOCUMENTATION_SUMMARY.md",
+      "resolved": "docs/operations/docs/adr/0011-tacl-adaptive-thermal-governor.md",
+      "target": "docs/adr/0011-tacl-adaptive-thermal-governor.md"
+    },
+    {
+      "file": "docs/operations/DOCUMENTATION_SUMMARY.md",
+      "resolved": "docs/operations/docs/adr/0012-contract-boundaries-control-plane.md",
+      "target": "docs/adr/0012-contract-boundaries-control-plane.md"
+    },
+    {
+      "file": "docs/operations/DOCUMENTATION_SUMMARY.md",
+      "resolved": "docs/operations/docs/adr/0013-failure-mode-drills-and-fallbacks.md",
+      "target": "docs/adr/0013-failure-mode-drills-and-fallbacks.md"
+    },
+    {
+      "file": "docs/operations/DOCUMENTATION_SUMMARY.md",
+      "resolved": "docs/operations/docs/documentation_governance.md",
+      "target": "docs/documentation_governance.md"
+    },
+    {
+      "file": "docs/operations/DOCUMENTATION_SUMMARY.md",
+      "resolved": "docs/operations/docs/documentation_standardisation_playbook.md",
+      "target": "docs/documentation_standardisation_playbook.md"
+    },
+    {
+      "file": "docs/operations/DOCUMENTATION_SUMMARY.md",
+      "resolved": "docs/operations/docs/documentation_quality_metrics.md",
+      "target": "docs/documentation_quality_metrics.md"
+    },
+    {
+      "file": "docs/operations/DOCUMENTATION_SUMMARY.md",
+      "resolved": "docs/operations/docs/FORMALIZATION_INDEX.md",
+      "target": "docs/FORMALIZATION_INDEX.md"
+    },
+    {
+      "file": "docs/operations/DOCUMENTATION_SUMMARY.md",
+      "resolved": "docs/operations/docs/templates/README.md",
+      "target": "docs/templates/README.md"
+    },
+    {
+      "file": "docs/operations/INSTITUTIONAL_OVERVIEW.md",
+      "resolved": "docs/operations/docs/BIBLIOGRAPHY.md",
+      "target": "docs/BIBLIOGRAPHY.md"
+    },
+    {
+      "file": "docs/operations/INSTITUTIONAL_OVERVIEW.md",
+      "resolved": "docs/operations/docs/CITATION_MAP.md",
+      "target": "docs/CITATION_MAP.md"
+    },
+    {
+      "file": "docs/operations/INSTITUTIONAL_OVERVIEW.md",
+      "resolved": "docs/operations/docs/BIBLIOGRAPHY.md",
+      "target": "docs/BIBLIOGRAPHY.md"
+    },
+    {
+      "file": "docs/operations/INSTITUTIONAL_OVERVIEW.md",
+      "resolved": "docs/operations/docs/CITATION_POLICY.md",
+      "target": "docs/CITATION_POLICY.md"
+    },
+    {
+      "file": "docs/operations/INSTITUTIONAL_OVERVIEW.md",
+      "resolved": "docs/operations/docs/adr",
+      "target": "docs/adr/"
+    },
+    {
+      "file": "docs/operations/INSTITUTIONAL_OVERVIEW.md",
+      "resolved": "docs/operations/docs/security",
+      "target": "docs/security/"
+    },
+    {
+      "file": "docs/operations/INSTITUTIONAL_OVERVIEW.md",
+      "resolved": "docs/operations/SECURITY.md",
+      "target": "SECURITY.md"
+    },
+    {
+      "file": "docs/operations/INSTITUTIONAL_OVERVIEW.md",
+      "resolved": "docs/operations/docs",
+      "target": "docs/"
+    },
+    {
+      "file": "docs/operations/INSTITUTIONAL_OVERVIEW.md",
+      "resolved": "docs/operations/README.md",
+      "target": "README.md"
+    },
+    {
+      "file": "docs/operations/SETUP.md",
+      "resolved": "docs/operations/docs/troubleshooting.md",
+      "target": "docs/troubleshooting.md"
+    },
+    {
+      "file": "docs/performance_testing.md",
+      "resolved": "docs/testing.md",
+      "target": "./testing.md"
+    },
+    {
+      "file": "docs/performance_testing.md",
+      "resolved": "docs/data_formats.md",
+      "target": "./data_formats.md"
+    },
+    {
+      "file": "docs/project-status.md",
+      "resolved": "DOCUMENTATION_SUMMARY.md",
+      "target": "../DOCUMENTATION_SUMMARY.md"
+    },
+    {
+      "file": "docs/prompts/doc_pr_copilot_guide.md",
+      "resolved": "docs/prompts/.github/agents/README.md",
+      "target": ".github/agents/README.md"
+    },
+    {
+      "file": "docs/prompts/doc_pr_copilot_guide.md",
+      "resolved": "docs/prompts/.github/agents/INTEGRATION.md",
+      "target": ".github/agents/INTEGRATION.md"
+    },
+    {
+      "file": "docs/prompts/doc_pr_copilot_guide.md",
+      "resolved": "docs/prompts/.github/agents/4C-PRINCIPLES.md",
+      "target": ".github/agents/4C-PRINCIPLES.md"
+    },
+    {
+      "file": "docs/prompts/doc_pr_copilot_guide.md",
+      "resolved": "docs/prompts/.github/agents/example-output.md",
+      "target": ".github/agents/example-output.md"
+    },
+    {
+      "file": "docs/prompts/doc_pr_copilot_guide.md",
+      "resolved": "docs/prompts/.github/agents/4C-PRINCIPLES.md",
+      "target": ".github/agents/4C-PRINCIPLES.md"
+    },
+    {
+      "file": "docs/prompts/doc_pr_copilot_guide.md",
+      "resolved": "docs/prompts/.github/agents/INTEGRATION.md",
+      "target": ".github/agents/INTEGRATION.md"
+    },
+    {
+      "file": "docs/prompts/doc_pr_copilot_guide.md",
+      "resolved": "docs/prompts/.github/agents/example-output.md",
+      "target": ".github/agents/example-output.md"
+    },
+    {
+      "file": "docs/prompts/doc_pr_copilot_guide.md",
+      "resolved": "docs/prompts/.github/agents/README.md",
+      "target": ".github/agents/README.md"
+    },
+    {
+      "file": "docs/risk_controls.md",
+      "resolved": "DOCUMENTATION_SUMMARY.md",
+      "target": "../DOCUMENTATION_SUMMARY.md#execution-layer"
+    },
+    {
+      "file": "docs/runbook_data_incident.md",
+      "resolved": "reports/incidents/incident_report_template.md",
+      "target": "../reports/incidents/incident_report_template.md"
+    },
+    {
+      "file": "docs/runbook_data_incident.md",
+      "resolved": "reports/incidents/postmortem_template.md",
+      "target": "../reports/incidents/postmortem_template.md"
+    },
+    {
+      "file": "docs/scenarios.md",
+      "resolved": "TESTING.md",
+      "target": "../TESTING.md"
+    },
+    {
+      "file": "docs/sla_alert_playbooks.md",
+      "resolved": "reports/incidents/postmortem_template.md",
+      "target": "../reports/incidents/postmortem_template.md"
+    },
+    {
+      "file": "docs/thermodynamics/INDEX.md",
+      "resolved": "HPC_AI_FINAL_REPORT.md",
+      "target": "../../HPC_AI_FINAL_REPORT.md"
+    },
+    {
+      "file": "docs/thermodynamics/INDEX.md",
+      "resolved": "SYSTEM_OPTIMIZATION_SUMMARY.md",
+      "target": "../../SYSTEM_OPTIMIZATION_SUMMARY.md"
+    },
+    {
+      "file": "docs/thermodynamics/INDEX.md",
+      "resolved": "docs/.github/workflows/thermo-evolution.yml",
+      "target": "../.github/workflows/thermo-evolution.yml"
+    },
+    {
+      "file": "docs/thermodynamics/OPERATIONAL_RUNBOOK.md",
+      "resolved": "docs/thermodynamics/TACL.md",
+      "target": "./TACL.md"
+    },
+    {
+      "file": "docs/thermodynamics/README.md",
+      "resolved": "HPC_AI_FINAL_REPORT.md",
+      "target": "../../HPC_AI_FINAL_REPORT.md"
+    },
+    {
+      "file": "infra/terraform/modules/terraform-aws-vpc/README.md",
+      "resolved": "infra/terraform/modules/terraform-aws-vpc/.github/contributing.md",
+      "target": ".github/contributing.md"
+    },
+    {
+      "file": "infra/terraform/modules/terraform-aws-vpc/modules/vpc-endpoints/README.md",
+      "resolved": "infra/terraform/modules/terraform-aws-vpc/examples",
+      "target": "../../examples"
+    },
+    {
+      "file": "infra/terraform/modules/terraform-aws-vpc/modules/vpc-endpoints/README.md",
+      "resolved": "infra/terraform/modules/terraform-aws-vpc/examples/complete",
+      "target": "../../examples/complete"
+    }
+  ],
+  "before_outside_root_unallowed": [
+    {
+      "file": "docs/adr/0002-serotonin-controller-architecture.md",
+      "target": "/SEROTONIN_V2.4.0_SUMMARY.md"
+    },
+    {
+      "file": "docs/adr/0002-serotonin-controller-architecture.md",
+      "target": "/docs/SEROTONIN_PRACTICAL_GUIDE.md"
+    },
+    {
+      "file": "docs/adr/0002-serotonin-controller-architecture.md",
+      "target": "/docs/SEROTONIN_DEPLOYMENT_GUIDE.md"
+    },
+    {
+      "file": "docs/neuromodulators/serotonin.md",
+      "target": "/docs/adr/0002-serotonin-controller-architecture.md"
+    },
+    {
+      "file": "docs/neuromodulators/serotonin.md",
+      "target": "/docs/SEROTONIN_PRACTICAL_GUIDE.md"
+    },
+    {
+      "file": "docs/neuromodulators/serotonin.md",
+      "target": "/docs/SEROTONIN_DEPLOYMENT_GUIDE.md"
+    },
+    {
+      "file": "docs/neuromodulators/serotonin.md",
+      "target": "/docs/neuromodulators/dopamine.md"
+    }
+  ],
+  "before_per_file": {
+    ".github/PR_TESTING_GUIDE.md": {
+      "broken": [
+        "../TESTING.md"
+      ],
+      "outside_root_unallowed": []
+    },
+    ".github/agents/ARCHITECTURE.md": {
+      "broken": [
+        "../docs/DOC_PR_COPILOT_GUIDE.md"
+      ],
+      "outside_root_unallowed": []
+    },
+    ".github/agents/IMPLEMENTATION_SUMMARY.md": {
+      "broken": [
+        ".github/agents/README.md",
+        "../docs/DOC_PR_COPILOT_GUIDE.md",
+        ".github/agents/INTEGRATION.md",
+        ".github/agents/4C-PRINCIPLES.md",
+        ".github/agents/example-output.md"
+      ],
+      "outside_root_unallowed": []
+    },
+    ".github/workflows/README.md": {
+      "broken": [
+        "../architecture/CONNECTOME_GATE.md",
+        "../renovate.json"
+      ],
+      "outside_root_unallowed": []
+    },
+    "CONTRIBUTING.md": {
+      "broken": [
+        "TESTING.md",
+        "TESTING.md"
+      ],
+      "outside_root_unallowed": []
+    },
+    "SECURITY.md": {
+      "broken": [
+        "SECURITY_CONSTRAINT_POLICY.md",
+        "SECURITY_HALL_OF_FAME.md"
+      ],
+      "outside_root_unallowed": []
+    },
+    "analytics/fpma/README.md": {
+      "broken": [
+        "../../docs/roadmap/regime_strategies.md"
+      ],
+      "outside_root_unallowed": []
+    },
+    "audit/README.md": {
+      "broken": [
+        "../AUDIT_REPORT.md"
+      ],
+      "outside_root_unallowed": []
+    },
+    "core/events/README.md": {
+      "broken": [
+        "../../docs/schemas/README.md",
+        "../../docs/schemas/README.md",
+        "../../docs/testing/event_driven.md"
+      ],
+      "outside_root_unallowed": []
+    },
+    "data/README.md": {
+      "broken": [
+        "../TESTING.md"
+      ],
+      "outside_root_unallowed": []
+    },
+    "docs/ARCHITECTURE.md": {
+      "broken": [
+        "../DOCUMENTATION_SUMMARY.md",
+        "../DOCUMENTATION_SUMMARY.md"
+      ],
+      "outside_root_unallowed": []
+    },
+    "docs/CALIBRATION_GUIDE.md": {
+      "broken": [
+        "dopamine_v1_enhancements.md"
+      ],
+      "outside_root_unallowed": []
+    },
+    "docs/CALIBRATION_QUICK_START.md": {
+      "broken": [
+        "../TROUBLESHOOTING.md"
+      ],
+      "outside_root_unallowed": []
+    },
+    "docs/CONCEPTUAL_ARCHITECTURE_UA.md": {
+      "broken": [
+        "docs/neuromodulators/",
+        "core/indicators/README.md",
+        "core/strategies/README.md"
+      ],
+      "outside_root_unallowed": []
+    },
+    "docs/DOCUMENTATION_ARCHITECTURE.md": {
+      "broken": [
+        "../DOCUMENTATION_SUMMARY.md",
+        "../DOCUMENTATION_SUMMARY.md"
+      ],
+      "outside_root_unallowed": []
+    },
+    "docs/FORMALIZATION_INDEX.md": {
+      "broken": [
+        "tutorials/fractal-indicators.md",
+        "data/quality-control.md",
+        "data/synchronization-guide.md",
+        "backtest/incremental-execution.md",
+        "execution/fault-tolerant-orders.md",
+        "backtest/determinism-guide.md",
+        "execution/risk-management.md",
+        "../SECURITY_FRAMEWORK_SUMMARY.md",
+        "../TESTING.md"
+      ],
+      "outside_root_unallowed": []
+    },
+    "docs/OPERATIONAL_ARTIFACTS_INDEX.md": {
+      "broken": [
+        "../reports/incidents/incident_report_template.md",
+        "../reports/incidents/postmortem_template.md",
+        "../reports/incidents/action_item_register.md",
+        "../TESTING.md"
+      ],
+      "outside_root_unallowed": []
+    },
+    "docs/TEST_ARCHITECTURE.md": {
+      "broken": [
+        "../TESTING.md"
+      ],
+      "outside_root_unallowed": []
+    },
+    "docs/TEST_QUALITY_IMPROVEMENTS.md": {
+      "broken": [
+        "../TESTING.md"
+      ],
+      "outside_root_unallowed": []
+    },
+    "docs/adr/0001-fractal-indicator-composition-architecture.md": {
+      "broken": [
+        "docs/feature_engineering.md"
+      ],
+      "outside_root_unallowed": []
+    },
+    "docs/adr/0002-serotonin-controller-architecture.md": {
+      "broken": [],
+      "outside_root_unallowed": [
+        "/SEROTONIN_V2.4.0_SUMMARY.md",
+        "/docs/SEROTONIN_PRACTICAL_GUIDE.md",
+        "/docs/SEROTONIN_DEPLOYMENT_GUIDE.md"
+      ]
+    },
+    "docs/adr/0017-core-to-src-migration.md": {
+      "broken": [
+        "../../reports/CORE_MIGRATION_PROGRESS.md"
+      ],
+      "outside_root_unallowed": []
+    },
+    "docs/api/API_REFERENCE.md": {
+      "broken": [
+        "../CORE_ARCHITECTURE_IMPLEMENTATION.md",
+        "../docs/neurodecision_stack.md",
+        "../scripts/run_fhmc_demo.py",
+        "../docs/geosync_cli_reference.md"
+      ],
+      "outside_root_unallowed": []
+    },
+    "docs/api_examples.md": {
+      "broken": [
+        "./risk_management.md"
+      ],
+      "outside_root_unallowed": []
+    },
+    "docs/architecture/REPOSITORY_STRUCTURE.md": {
+      "broken": [
+        "../../DOCUMENTATION_SUMMARY.md"
+      ],
+      "outside_root_unallowed": []
+    },
+    "docs/architecture/packaging.md": {
+      "broken": [
+        "../../SETUP.md"
+      ],
+      "outside_root_unallowed": []
+    },
+    "docs/archive/README.md": {
+      "broken": [
+        "../../TESTING.md"
+      ],
+      "outside_root_unallowed": []
+    },
+    "docs/data/README.md": {
+      "broken": [
+        "../../TESTING.md"
+      ],
+      "outside_root_unallowed": []
+    },
+    "docs/data/cns_stabilizer_artifacts.md": {
+      "broken": [
+        "../../THERMODYNAMICS_IMPLEMENTATION_SUMMARY.md",
+        "../../NEUROMODULATOR_IMPLEMENTATION_REPORT.md",
+        "../../core/neuro/cns_stabilizer.py"
+      ],
+      "outside_root_unallowed": []
+    },
+    "docs/data/exchange_configurations.md": {
+      "broken": [
+        "../../SECURITY_FRAMEWORK_SUMMARY.md"
+      ],
+      "outside_root_unallowed": []
+    },
+    "docs/data/extended_market_sample.md": {
+      "broken": [
+        "../../TESTING.md"
+      ],
+      "outside_root_unallowed": []
+    },
+    "docs/data/orchestrator_configs.md": {
+      "broken": [
+        "../../NEURO_ORCHESTRATOR_IMPLEMENTATION.md",
+        "../../DOPAMINE_LOOP_IMPLEMENTATION.md",
+        "../../core/risk/"
+      ],
+      "outside_root_unallowed": []
+    },
+    "docs/data/sample_market_data.md": {
+      "broken": [
+        "../../MARKET_FEED_IMPLEMENTATION_SUMMARY.md",
+        "../../TESTING.md"
+      ],
+      "outside_root_unallowed": []
+    },
+    "docs/documentation_governance.md": {
+      "broken": [
+        "../DOCUMENTATION_SUMMARY.md",
+        "../DOCUMENTATION_SUMMARY.md#issue-tracking"
+      ],
+      "outside_root_unallowed": []
+    },
+    "docs/documentation_information_architecture.md": {
+      "broken": [
+        "../DOCUMENTATION_SUMMARY.md"
+      ],
+      "outside_root_unallowed": []
+    },
+    "docs/documentation_standardisation_playbook.md": {
+      "broken": [
+        "../DOCUMENTATION_SUMMARY.md"
+      ],
+      "outside_root_unallowed": []
+    },
+    "docs/exocortex/GLOSSARY.md": {
+      "broken": [
+        "../../src/geosync/neural_controller/"
+      ],
+      "outside_root_unallowed": []
+    },
+    "docs/faq.md": {
+      "broken": [
+        "../TESTING.md"
+      ],
+      "outside_root_unallowed": []
+    },
+    "docs/incident_coordination_procedures.md": {
+      "broken": [
+        "../reports/incidents/action_item_register.md",
+        "../reports/incidents/postmortem_template.md",
+        "../reports/incidents/action_item_register.md"
+      ],
+      "outside_root_unallowed": []
+    },
+    "docs/integration-api.md": {
+      "broken": [
+        "../examples/integrations/"
+      ],
+      "outside_root_unallowed": []
+    },
+    "docs/neuromodulators/serotonin.md": {
+      "broken": [],
+      "outside_root_unallowed": [
+        "/docs/adr/0002-serotonin-controller-architecture.md",
+        "/docs/SEROTONIN_PRACTICAL_GUIDE.md",
+        "/docs/SEROTONIN_DEPLOYMENT_GUIDE.md",
+        "/docs/neuromodulators/dopamine.md"
+      ]
+    },
+    "docs/operational_handbook.md": {
+      "broken": [
+        "../.github/workflows/tests.yml",
+        "../TESTING.md",
+        "../.github/workflows/tests.yml",
+        "../.github/workflows/build-wheels.yml"
+      ],
+      "outside_root_unallowed": []
+    },
+    "docs/operational_readiness_runbooks.md": {
+      "broken": [
+        "../TESTING_SUMMARY.md"
+      ],
+      "outside_root_unallowed": []
+    },
+    "docs/operations/AUDIT_EXECUTIVE_SUMMARY.md": {
+      "broken": [
+        "audit/findings.json",
+        "audit/artifacts/",
+        "audit/README.md"
+      ],
+      "outside_root_unallowed": []
+    },
+    "docs/operations/DEPLOYMENT.md": {
+      "broken": [
+        "docs/architecture/system_overview.md",
+        "docs/architecture/feature_store.md",
+        "SECURITY_CONSTRAINT_POLICY.md",
+        "docs/SECURITY_DEPENDENCIES.md"
+      ],
+      "outside_root_unallowed": []
+    },
+    "docs/operations/DOCUMENTATION_SUMMARY.md": {
+      "broken": [
+        "docs/requirements/traceability_matrix.md",
+        "docs/adr/0001-fractal-indicator-composition-architecture.md",
+        "docs/adr/0001-security-compliance-automation.md",
+        "docs/adr/0002-versioned-market-data-storage.md",
+        "docs/adr/0002-serotonin-controller-architecture.md",
+        "docs/adr/0003-automated-data-quality-framework.md",
+        "docs/adr/0003-principal-architect-security-framework.md",
+        "docs/adr/0004-contract-first-modular-architecture.md",
+        "docs/adr/0005-multi-exchange-adapter-framework.md",
+        "docs/adr/0006-tacl-thermo-control-layer.md",
+        "docs/adr/0007-core-state-lattice-canonical-features.md",
+        "docs/adr/0008-execution-risk-aware-order-router.md",
+        "docs/adr/0009-runtime-deterministic-scheduler.md",
+        "docs/adr/0010-observability-unified-telemetry-fabric.md",
+        "docs/adr/0011-tacl-adaptive-thermal-governor.md",
+        "docs/adr/0012-contract-boundaries-control-plane.md",
+        "docs/adr/0013-failure-mode-drills-and-fallbacks.md",
+        "docs/documentation_governance.md",
+        "docs/documentation_standardisation_playbook.md",
+        "docs/documentation_quality_metrics.md",
+        "docs/FORMALIZATION_INDEX.md",
+        "docs/templates/README.md"
+      ],
+      "outside_root_unallowed": []
+    },
+    "docs/operations/INSTITUTIONAL_OVERVIEW.md": {
+      "broken": [
+        "docs/BIBLIOGRAPHY.md",
+        "docs/CITATION_MAP.md",
+        "docs/BIBLIOGRAPHY.md",
+        "docs/CITATION_POLICY.md",
+        "docs/adr/",
+        "docs/security/",
+        "SECURITY.md",
+        "docs/",
+        "README.md"
+      ],
+      "outside_root_unallowed": []
+    },
+    "docs/operations/SETUP.md": {
+      "broken": [
+        "docs/troubleshooting.md"
+      ],
+      "outside_root_unallowed": []
+    },
+    "docs/performance_testing.md": {
+      "broken": [
+        "./testing.md",
+        "./data_formats.md"
+      ],
+      "outside_root_unallowed": []
+    },
+    "docs/project-status.md": {
+      "broken": [
+        "../DOCUMENTATION_SUMMARY.md"
+      ],
+      "outside_root_unallowed": []
+    },
+    "docs/prompts/doc_pr_copilot_guide.md": {
+      "broken": [
+        ".github/agents/README.md",
+        ".github/agents/INTEGRATION.md",
+        ".github/agents/4C-PRINCIPLES.md",
+        ".github/agents/example-output.md",
+        ".github/agents/4C-PRINCIPLES.md",
+        ".github/agents/INTEGRATION.md",
+        ".github/agents/example-output.md",
+        ".github/agents/README.md"
+      ],
+      "outside_root_unallowed": []
+    },
+    "docs/risk_controls.md": {
+      "broken": [
+        "../DOCUMENTATION_SUMMARY.md#execution-layer"
+      ],
+      "outside_root_unallowed": []
+    },
+    "docs/runbook_data_incident.md": {
+      "broken": [
+        "../reports/incidents/incident_report_template.md",
+        "../reports/incidents/postmortem_template.md"
+      ],
+      "outside_root_unallowed": []
+    },
+    "docs/scenarios.md": {
+      "broken": [
+        "../TESTING.md"
+      ],
+      "outside_root_unallowed": []
+    },
+    "docs/sla_alert_playbooks.md": {
+      "broken": [
+        "../reports/incidents/postmortem_template.md"
+      ],
+      "outside_root_unallowed": []
+    },
+    "docs/thermodynamics/INDEX.md": {
+      "broken": [
+        "../../HPC_AI_FINAL_REPORT.md",
+        "../../SYSTEM_OPTIMIZATION_SUMMARY.md",
+        "../.github/workflows/thermo-evolution.yml"
+      ],
+      "outside_root_unallowed": []
+    },
+    "docs/thermodynamics/OPERATIONAL_RUNBOOK.md": {
+      "broken": [
+        "./TACL.md"
+      ],
+      "outside_root_unallowed": []
+    },
+    "docs/thermodynamics/README.md": {
+      "broken": [
+        "../../HPC_AI_FINAL_REPORT.md"
+      ],
+      "outside_root_unallowed": []
+    },
+    "infra/terraform/modules/terraform-aws-vpc/README.md": {
+      "broken": [
+        ".github/contributing.md"
+      ],
+      "outside_root_unallowed": []
+    },
+    "infra/terraform/modules/terraform-aws-vpc/modules/vpc-endpoints/README.md": {
+      "broken": [
+        "../../examples",
+        "../../examples/complete"
+      ],
+      "outside_root_unallowed": []
+    }
+  },
+  "description": "Markdown internal-link integrity remediation for GeoSync (branch remediation/wave6).",
+  "generator": "scripts/ci/check_links.py",
+  "summary": {
+    "after": {
+      "files_with_issues": 0,
+      "internal_broken": 0,
+      "outside_root_unallowed": 0
+    },
+    "anchor": 1207,
+    "before": {
+      "files_with_issues": 60,
+      "internal_broken": 142,
+      "outside_root_unallowed": 7
+    },
+    "external": 470,
+    "files_scanned": 1097,
+    "links_total": 3095,
+    "resolved": 1418
+  },
+  "task": "DOC-001"
+}

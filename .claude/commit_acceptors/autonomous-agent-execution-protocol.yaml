@@ -1,0 +1,65 @@
+# Diff-bound commit acceptor for the Autonomous Agent Execution Protocol (issue #1294).
+#
+# Adds a governance protocol document for research-engineering agents plus a
+# machine-checkable companion contract and a surface-contract test that binds the
+# document to it. This is governance documentation + an enforcement test; it adds
+# NO runtime behaviour, NO dependency, NO type-checker or lint suppression, and
+# promotes NO claim tier. The protocol is subordinate to PRODUCT_CATEGORY.md,
+# CLAIMS.md, FORBIDDEN_CLAIMS.md, AGENTS.md, and docs/REPOSITORY_SYSTEM.md.
+id: autonomous-agent-execution-protocol
+status: ACTIVE
+claim_type: governance
+promise: >-
+  docs/governance/AUTONOMOUS_AGENT_EXECUTION_PROTOCOL.md declares the autonomous
+  agent execution contract (role as execution unit not report-only; delegated
+  branch/commit/PR authority; no direct main push; owner-only merge; no rewrite
+  of frozen artifacts; no threshold weakening; red PR stays blocked; mandatory
+  perturbation matrix beyond green tests; required PR disclosure fields; a STOP
+  condition). Its companion contract JSON pins every required section, governance
+  link, normative clause, perturbation axis, and PR-disclosure field, and
+  tests/ci/test_autonomous_agent_execution_protocol_contract.py is the falsifier:
+  deleting or weakening any pinned clause, axis, or field fails the test closed.
+diff_scope:
+  changed_files:
+    - path: ".claude/commit_acceptors/autonomous-agent-execution-protocol.yaml"
+    - path: "AGENTS.md"
+    - path: "docs/governance/AUTONOMOUS_AGENT_EXECUTION_PROTOCOL.contract.json"
+    - path: "tests/ci/test_autonomous_agent_execution_protocol_contract.py"
+  forbidden_paths:
+    - "trading/"
+    - "execution/"
+    - "forecast/"
+    - "core/"
+    - "src/"
+required_python_symbols: []
+expected_signal: >-
+  pytest tests/ci/test_autonomous_agent_execution_protocol_contract.py exits 0:
+  the protocol document carries every required section, governance link,
+  normative clause, perturbation axis, and PR-disclosure field declared in
+  docs/governance/AUTONOMOUS_AGENT_EXECUTION_PROTOCOL.contract.json.
+measurement_command: "bash -c 'mkdir -p tmp && python -m pytest -q tests/ci/test_autonomous_agent_execution_protocol_contract.py > tmp/autonomous_agent_protocol.log 2>&1'"
+signal_artifact: "tmp/autonomous_agent_protocol.log"
+falsifier:
+  command: "bash -c 'mkdir -p tmp && python -c \"import json,pathlib,re; root=pathlib.Path.cwd(); c=json.loads((root/\\\"docs/governance/AUTONOMOUS_AGENT_EXECUTION_PROTOCOL.contract.json\\\").read_text()); doc=(root/c[\\\"source\\\"]).read_text(); missing=[x for x in c[\\\"required_clauses\\\"] if x not in doc]+[a for a in c[\\\"required_perturbation_axes\\\"] if a not in doc]+[f for f in c[\\\"required_pr_disclosure_fields\\\"] if f not in doc]; print(\\\"MISSING\\\",missing); raise SystemExit(1 if missing else 0)\" > tmp/autonomous_agent_protocol_falsifier.log 2>&1'"
+  description: >-
+    Falsifier evidence is written to tmp/autonomous_agent_protocol_falsifier.log.
+    Fail-closed teeth probe (exit 0 == green-state precondition holds): it
+    independently re-derives the required clauses, perturbation axes, and
+    PR-disclosure fields from the contract JSON and asserts each is present in
+    the protocol document. If any pinned clause/axis/field is removed or reworded
+    out of the document, the probe exits 1, proving the contract is falsifiable
+    and the document cannot silently drop a required guarantee.
+rollback_command: >-
+  bash -c 'git rm -f
+  docs/governance/AUTONOMOUS_AGENT_EXECUTION_PROTOCOL.md
+  docs/governance/AUTONOMOUS_AGENT_EXECUTION_PROTOCOL.contract.json
+  tests/ci/test_autonomous_agent_execution_protocol_contract.py
+  .claude/commit_acceptors/autonomous-agent-execution-protocol.yaml
+  && git checkout origin/main -- AGENTS.md README.md'
+rollback_verification_command: >-
+  bash -c 'test ! -f docs/governance/AUTONOMOUS_AGENT_EXECUTION_PROTOCOL.md
+  && ! grep -q AUTONOMOUS_AGENT_EXECUTION_PROTOCOL AGENTS.md'
+memory_update_type: none
+ledger_path: ".claude/commit_acceptors/autonomous-agent-execution-protocol.yaml"
+report_path: "docs/reports/diff_bound_commit_acceptor_layer.md"
+evidence: []

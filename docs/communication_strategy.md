@@ -1,10 +1,10 @@
 # Communication Strategy System
 
-This playbook defines a phased, system-level communication strategy for TradePulse. It ensures critical trading infrastructure teams deliver a unified narrative, predictable information flow, and trusted sources of truth across internal and external stakeholders.
+This playbook defines a phased, system-level communication strategy for GeoSync. It ensures critical trading infrastructure teams deliver a unified narrative, predictable information flow, and trusted sources of truth across internal and external stakeholders.
 
 ## Guiding Principles
 
-1. **Single narrative** – Storytelling begins from the product vision and maps to execution artifacts so every update reinforces why TradePulse exists and how it evolves.
+1. **Single narrative** – Storytelling begins from the product vision and maps to execution artifacts so every update reinforces why GeoSync exists and how it evolves.
 2. **Safety and compliance first** – Communication timelines never compromise incident response, customer protection, or regulatory obligations.
 3. **Instrumented transparency** – Every channel has a defined owner, cadence, logging, and service-level metrics.
 4. **Elastic depth** – Content scales from executive summaries to engineering deep dives without duplicating effort; canonical artifacts power downstream formats.
@@ -29,7 +29,7 @@ This playbook defines a phased, system-level communication strategy for TradePul
    - Map `single source of truth (SSOT)` repositories: code (Git), docs (MkDocs), runbooks (docs/runbooks), status page (observability/status).
    - Configure permissions: read access for all employees, restricted write access by role.
 3. **Calendar baseline**
-   - Stand up shared calendar `TradePulse Comms` with time zones, mandatory invites, and RSVP policy.
+   - Stand up shared calendar `GeoSync Comms` with time zones, mandatory invites, and RSVP policy.
    - Pre-populate key cadences (see below) through the next quarter.
 4. **Create narrative brief**
    - Facilitate leadership workshop to align on 12-month product vision, customer value pillars, and risk posture.
@@ -56,7 +56,7 @@ This playbook defines a phased, system-level communication strategy for TradePul
    - Biweekly live demos with rotating feature squads. Mandatory format: 5-minute context, 7-minute demo, 3-minute Q&A, 5-minute feedback loop.
    - Record sessions, store in knowledge base with transcript and linked artifacts.
 2. **Internal newsletter**
-   - Weekly `TradePulse Pulse` newsletter. Sections: lead story (vision tie-in), operational status, metrics snapshot, risks/blockers, kudos, upcoming demos.
+   - Weekly `GeoSync Pulse` newsletter. Sections: lead story (vision tie-in), operational status, metrics snapshot, risks/blockers, kudos, upcoming demos.
    - Automate draft generation using release notes + analytics; final review by Communications lead.
 3. **Public release notes**
    - Align release pipeline to auto-generate changelog entries with semantic categories (Features, Fixes, Risk Controls, Infrastructure).
@@ -101,12 +101,11 @@ This playbook defines a phased, system-level communication strategy for TradePul
 | ------- | -------- | --------- | ------ | ----- | ---------------- |
 | Vision Manifesto | Internal leadership | Quarterly | Narrative brief + deck | Product Strategy | Knowledge base (`docs/vision/manifesto.md`) |
 | Biweekly Demos | All staff + invited clients | Biweekly | Live call + recording | Program Management | Demo backlog in project management tool |
-| `TradePulse Pulse` Newsletter | All employees | Weekly | Markdown email, posted to intranet | Communications Lead | Newsletter repo (`communications/newsletter/`) |
+| `GeoSync Pulse` Newsletter | All employees | Weekly | Markdown email, posted to intranet | Communications Lead | Newsletter repo (`communications/newsletter/`) |
 | Release Notes | Customers & partners | Every release | Markdown → docs site & RSS | Release Engineering | `docs/release-notes/` (auto-generated) |
 | Status Page | Customers | Real time | Web status page, JSON feed | SRE | `observability/status/` service |
 | Incident Confidential Channel | Incident response team | On demand | Encrypted chat + hotline | Security Incident Commander | `security/incident_comms/` playbook |
 | Knowledge Base | Internal | Continuous | MkDocs site | Documentation Guild | `docs/` repository |
-| Stakeholder Briefings | Executives, regulators | Monthly | Slide deck + talking points | Chief of Staff | `stakeholders/briefings/` |
 | Public Release Notes Digest | Public | Monthly | Blog post | Marketing | `newsfragments/` aggregate |
 
 ## Mandatory Formats & Governance
@@ -130,4 +129,4 @@ This playbook defines a phased, system-level communication strategy for TradePul
 - **Quarterly review board**: Communications, Product, Engineering, Security, Compliance evaluate metrics, approve roadmap adjustments, and publish public-facing communication commitments.
 - **Continuous feedback**: Surveys embedded in newsletters, demo polls, and status page CSAT feed into backlog prioritisation.
 
-This strategy institutionalizes communication as a disciplined, auditable system that scales with TradePulse’s mission-critical trading operations.
+This strategy institutionalizes communication as a disciplined, auditable system that scales with GeoSync’s mission-critical trading operations.

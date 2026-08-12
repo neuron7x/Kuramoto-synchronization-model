@@ -1,3 +1,5 @@
+# Copyright (c) 2023-2026 Yaroslav Vasylenko (neuron7xLab)
+# SPDX-License-Identifier: MIT
 """CI gate ensuring thermodynamic monotonicity invariants hold."""
 
 from __future__ import annotations
@@ -61,9 +63,7 @@ def _degrade_topology(
 def _validate_monotonic_acceptance() -> bool:
     controller = ThermoController(_build_reference_graph())
     F_old = controller._compute_free_energy(snapshot=controller._latest_snapshot)
-    new_topology, F_new, _ = controller.crisis_ga.evolve(
-        controller.current_topology, F_old
-    )
+    new_topology, F_new, _ = controller.crisis_ga.evolve(controller.current_topology, F_old)
     epsilon_spike = _compute_epsilon_spike(controller, F_old)
 
     tolerance = controller._check_monotonic_with_tolerance(F_old, F_new)

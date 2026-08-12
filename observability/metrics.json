@@ -20,6 +20,47 @@
       "subsystem": "error"
     },
     {
+      "name": "cortex_regime_cache_age_seconds",
+      "type": "histogram",
+      "description": "Age of cached regime state at read time",
+      "labels": [],
+      "subsystem": "cache"
+    },
+    {
+      "name": "cortex_regime_cache_coherence_entropy",
+      "type": "histogram",
+      "description": "Bayesian divergence entropy of cache coherence state",
+      "labels": [],
+      "subsystem": "cache"
+    },
+    {
+      "name": "cortex_regime_cache_events_total",
+      "type": "counter",
+      "description": "Cache lifecycle events for deterministic coherence",
+      "labels": [
+        "event"
+      ],
+      "subsystem": "cache"
+    },
+    {
+      "name": "cortex_regime_cache_shadow_reads_total",
+      "type": "counter",
+      "description": "Outcome of probabilistic cache shadow reads",
+      "labels": [
+        "result"
+      ],
+      "subsystem": "cache"
+    },
+    {
+      "name": "cortex_regime_cache_stale_hits_total",
+      "type": "counter",
+      "description": "Number of stale cache detections",
+      "labels": [
+        "reason"
+      ],
+      "subsystem": "cache"
+    },
+    {
       "name": "cortex_regime_transition_total",
       "type": "counter",
       "description": "Number of regime transitions",
@@ -80,7 +121,7 @@
       "subsystem": "signals"
     },
     {
-      "name": "tradepulse_api_queue_depth",
+      "name": "geosync_api_queue_depth",
       "type": "gauge",
       "description": "Depth of internal queues servicing the API",
       "labels": [
@@ -89,7 +130,7 @@
       "subsystem": "api"
     },
     {
-      "name": "tradepulse_api_queue_latency_seconds",
+      "name": "geosync_api_queue_latency_seconds",
       "type": "histogram",
       "description": "Observed latency experienced by API servicing queues",
       "labels": [
@@ -98,7 +139,7 @@
       "subsystem": "api"
     },
     {
-      "name": "tradepulse_api_request_latency_seconds",
+      "name": "geosync_api_request_latency_seconds",
       "type": "histogram",
       "description": "Latency observed for HTTP API requests",
       "labels": [
@@ -108,7 +149,7 @@
       "subsystem": "api"
     },
     {
-      "name": "tradepulse_api_requests_in_flight",
+      "name": "geosync_api_requests_in_flight",
       "type": "gauge",
       "description": "Number of HTTP API requests currently being processed",
       "labels": [
@@ -118,7 +159,7 @@
       "subsystem": "api"
     },
     {
-      "name": "tradepulse_api_requests_total",
+      "name": "geosync_api_requests_total",
       "type": "counter",
       "description": "Total number of HTTP API requests grouped by status",
       "labels": [
@@ -129,7 +170,7 @@
       "subsystem": "api"
     },
     {
-      "name": "tradepulse_backtest_duration_seconds",
+      "name": "geosync_backtest_duration_seconds",
       "type": "histogram",
       "description": "Time spent running backtests",
       "labels": [
@@ -138,7 +179,7 @@
       "subsystem": "backtest"
     },
     {
-      "name": "tradepulse_backtest_equity_curve",
+      "name": "geosync_backtest_equity_curve",
       "type": "gauge",
       "description": "Equity curve samples for backtests",
       "labels": [
@@ -148,7 +189,7 @@
       "subsystem": "backtest"
     },
     {
-      "name": "tradepulse_backtest_max_drawdown",
+      "name": "geosync_backtest_max_drawdown",
       "type": "gauge",
       "description": "Backtest maximum drawdown",
       "labels": [
@@ -157,7 +198,7 @@
       "subsystem": "backtest"
     },
     {
-      "name": "tradepulse_backtest_pnl",
+      "name": "geosync_backtest_pnl",
       "type": "gauge",
       "description": "Backtest profit and loss",
       "labels": [
@@ -166,7 +207,7 @@
       "subsystem": "backtest"
     },
     {
-      "name": "tradepulse_backtest_total",
+      "name": "geosync_backtest_total",
       "type": "counter",
       "description": "Total number of backtests run",
       "labels": [
@@ -176,7 +217,7 @@
       "subsystem": "backtest"
     },
     {
-      "name": "tradepulse_backtest_trades",
+      "name": "geosync_backtest_trades",
       "type": "gauge",
       "description": "Number of trades in backtest",
       "labels": [
@@ -185,7 +226,7 @@
       "subsystem": "backtest"
     },
     {
-      "name": "tradepulse_cache_cold_latency_seconds",
+      "name": "geosync_cache_cold_latency_seconds",
       "type": "histogram",
       "description": "Latency observed when serving cold cache requests",
       "labels": [
@@ -194,7 +235,7 @@
       "subsystem": "cache"
     },
     {
-      "name": "tradepulse_cache_cold_requests_total",
+      "name": "geosync_cache_cold_requests_total",
       "type": "counter",
       "description": "Count of cold cache requests grouped by outcome",
       "labels": [
@@ -204,7 +245,7 @@
       "subsystem": "cache"
     },
     {
-      "name": "tradepulse_cache_degradation_events_total",
+      "name": "geosync_cache_degradation_events_total",
       "type": "counter",
       "description": "Number of cache degradation signals emitted grouped by reason",
       "labels": [
@@ -214,7 +255,7 @@
       "subsystem": "cache"
     },
     {
-      "name": "tradepulse_cache_hit_rate",
+      "name": "geosync_cache_hit_rate",
       "type": "gauge",
       "description": "Rolling hit rate observed for caches",
       "labels": [
@@ -223,7 +264,7 @@
       "subsystem": "cache"
     },
     {
-      "name": "tradepulse_cache_readiness_status",
+      "name": "geosync_cache_readiness_status",
       "type": "gauge",
       "description": "Readiness state of managed caches (1=ready, 0=not ready)",
       "labels": [
@@ -232,7 +273,7 @@
       "subsystem": "cache"
     },
     {
-      "name": "tradepulse_cache_warmup_duration_seconds",
+      "name": "geosync_cache_warmup_duration_seconds",
       "type": "histogram",
       "description": "Latency of cache warm-up executions",
       "labels": [
@@ -242,7 +283,7 @@
       "subsystem": "cache"
     },
     {
-      "name": "tradepulse_cache_warmup_rows",
+      "name": "geosync_cache_warmup_rows",
       "type": "gauge",
       "description": "Number of rows materialised during cache warm-up",
       "labels": [
@@ -252,7 +293,7 @@
       "subsystem": "cache"
     },
     {
-      "name": "tradepulse_compliance_checks_total",
+      "name": "geosync_compliance_checks_total",
       "type": "counter",
       "description": "Compliance check outcomes",
       "labels": [
@@ -262,7 +303,7 @@
       "subsystem": "compliance"
     },
     {
-      "name": "tradepulse_compliance_violations_total",
+      "name": "geosync_compliance_violations_total",
       "type": "counter",
       "description": "Compliance violations by type",
       "labels": [
@@ -272,7 +313,7 @@
       "subsystem": "compliance"
     },
     {
-      "name": "tradepulse_data_ingestion_duration_seconds",
+      "name": "geosync_data_ingestion_duration_seconds",
       "type": "histogram",
       "description": "Time spent ingesting data",
       "labels": [
@@ -282,7 +323,7 @@
       "subsystem": "data"
     },
     {
-      "name": "tradepulse_data_ingestion_latency_quantiles_seconds",
+      "name": "geosync_data_ingestion_latency_quantiles_seconds",
       "type": "gauge",
       "description": "Data ingestion latency quantiles",
       "labels": [
@@ -293,7 +334,7 @@
       "subsystem": "data"
     },
     {
-      "name": "tradepulse_data_ingestion_throughput_ticks_per_second",
+      "name": "geosync_data_ingestion_throughput_ticks_per_second",
       "type": "gauge",
       "description": "Instantaneous ingestion throughput expressed as ticks per second",
       "labels": [
@@ -303,7 +344,7 @@
       "subsystem": "data"
     },
     {
-      "name": "tradepulse_data_ingestion_total",
+      "name": "geosync_data_ingestion_total",
       "type": "counter",
       "description": "Total number of data ingestion operations",
       "labels": [
@@ -314,7 +355,7 @@
       "subsystem": "data"
     },
     {
-      "name": "tradepulse_database_query_latency_seconds",
+      "name": "geosync_database_query_latency_seconds",
       "type": "histogram",
       "description": "Latency observed for database queries",
       "labels": [
@@ -326,7 +367,7 @@
       "subsystem": "database"
     },
     {
-      "name": "tradepulse_database_query_total",
+      "name": "geosync_database_query_total",
       "type": "counter",
       "description": "Total database queries executed grouped by outcome",
       "labels": [
@@ -338,7 +379,7 @@
       "subsystem": "database"
     },
     {
-      "name": "tradepulse_database_size_bytes",
+      "name": "geosync_database_size_bytes",
       "type": "gauge",
       "description": "Current size of the database in bytes",
       "labels": [
@@ -348,7 +389,7 @@
       "subsystem": "database"
     },
     {
-      "name": "tradepulse_database_size_growth_bytes",
+      "name": "geosync_database_size_growth_bytes",
       "type": "gauge",
       "description": "Growth in database size since the previous measurement",
       "labels": [
@@ -358,14 +399,14 @@
       "subsystem": "database"
     },
     {
-      "name": "tradepulse_drawdown_percent",
+      "name": "geosync_drawdown_percent",
       "type": "gauge",
       "description": "Current portfolio drawdown expressed as a percentage",
       "labels": [],
       "subsystem": "risk"
     },
     {
-      "name": "tradepulse_environment_parity_checks_total",
+      "name": "geosync_environment_parity_checks_total",
       "type": "counter",
       "description": "Total number of environment parity evaluations grouped by status",
       "labels": [
@@ -375,7 +416,7 @@
       "subsystem": "operations"
     },
     {
-      "name": "tradepulse_environment_parity_metric_deviation",
+      "name": "geosync_environment_parity_metric_deviation",
       "type": "gauge",
       "description": "Absolute deviation observed between environment metric pairs",
       "labels": [
@@ -387,7 +428,7 @@
       "subsystem": "operations"
     },
     {
-      "name": "tradepulse_feature_transform_duration_seconds",
+      "name": "geosync_feature_transform_duration_seconds",
       "type": "histogram",
       "description": "Time spent computing feature transformations",
       "labels": [
@@ -397,7 +438,7 @@
       "subsystem": "features"
     },
     {
-      "name": "tradepulse_feature_transform_total",
+      "name": "geosync_feature_transform_total",
       "type": "counter",
       "description": "Total number of feature transformations",
       "labels": [
@@ -408,7 +449,7 @@
       "subsystem": "features"
     },
     {
-      "name": "tradepulse_feature_value",
+      "name": "geosync_feature_value",
       "type": "gauge",
       "description": "Current feature value",
       "labels": [
@@ -417,7 +458,7 @@
       "subsystem": "features"
     },
     {
-      "name": "tradepulse_health_check_latency_seconds",
+      "name": "geosync_health_check_latency_seconds",
       "type": "histogram",
       "description": "Latency of periodic system health probes",
       "labels": [
@@ -426,7 +467,7 @@
       "subsystem": "observability"
     },
     {
-      "name": "tradepulse_health_check_status",
+      "name": "geosync_health_check_status",
       "type": "gauge",
       "description": "Outcome of the latest health probe (1=healthy, 0=unhealthy)",
       "labels": [
@@ -435,7 +476,7 @@
       "subsystem": "observability"
     },
     {
-      "name": "tradepulse_incident_ack_latency_seconds",
+      "name": "geosync_incident_ack_latency_seconds",
       "type": "histogram",
       "description": "Time between alert trigger and acknowledgement",
       "labels": [
@@ -444,7 +485,7 @@
       "subsystem": "incident"
     },
     {
-      "name": "tradepulse_incident_resolution_latency_seconds",
+      "name": "geosync_incident_resolution_latency_seconds",
       "type": "histogram",
       "description": "Time between incident declaration and resolution",
       "labels": [
@@ -453,7 +494,7 @@
       "subsystem": "incident"
     },
     {
-      "name": "tradepulse_incidents_open",
+      "name": "geosync_incidents_open",
       "type": "gauge",
       "description": "Number of open incidents grouped by severity",
       "labels": [
@@ -462,7 +503,7 @@
       "subsystem": "incidents"
     },
     {
-      "name": "tradepulse_indicator_compute_duration_seconds",
+      "name": "geosync_indicator_compute_duration_seconds",
       "type": "histogram",
       "description": "Time spent computing indicator values",
       "labels": [
@@ -471,7 +512,7 @@
       "subsystem": "indicators"
     },
     {
-      "name": "tradepulse_indicator_compute_total",
+      "name": "geosync_indicator_compute_total",
       "type": "counter",
       "description": "Total number of indicator computations",
       "labels": [
@@ -481,7 +522,7 @@
       "subsystem": "indicators"
     },
     {
-      "name": "tradepulse_indicator_quality_ratio",
+      "name": "geosync_indicator_quality_ratio",
       "type": "gauge",
       "description": "Quality ratios emitted by indicators (e.g. finite input share, valid coverage)",
       "labels": [
@@ -491,7 +532,7 @@
       "subsystem": "indicators"
     },
     {
-      "name": "tradepulse_indicator_sample_size",
+      "name": "geosync_indicator_sample_size",
       "type": "gauge",
       "description": "Number of samples processed during the last indicator computation",
       "labels": [
@@ -500,7 +541,7 @@
       "subsystem": "indicators"
     },
     {
-      "name": "tradepulse_indicator_value",
+      "name": "geosync_indicator_value",
       "type": "gauge",
       "description": "Latest computed value for an indicator",
       "labels": [
@@ -509,7 +550,7 @@
       "subsystem": "indicators"
     },
     {
-      "name": "tradepulse_indicator_window_size",
+      "name": "geosync_indicator_window_size",
       "type": "gauge",
       "description": "Sliding window or bucket span configured for the indicator",
       "labels": [
@@ -518,7 +559,7 @@
       "subsystem": "indicators"
     },
     {
-      "name": "tradepulse_kill_switch_triggers_total",
+      "name": "geosync_kill_switch_triggers_total",
       "type": "counter",
       "description": "Kill switch triggers grouped by reason",
       "labels": [
@@ -527,7 +568,7 @@
       "subsystem": "kill"
     },
     {
-      "name": "tradepulse_lifecycle_checkpoint_status",
+      "name": "geosync_lifecycle_checkpoint_status",
       "type": "gauge",
       "description": "Lifecycle checkpoint status (1 when checkpoint is in the given status)",
       "labels": [
@@ -537,7 +578,7 @@
       "subsystem": "lifecycle"
     },
     {
-      "name": "tradepulse_lifecycle_phase_state",
+      "name": "geosync_lifecycle_phase_state",
       "type": "gauge",
       "description": "Lifecycle phase state (1 when phase is in the given state)",
       "labels": [
@@ -547,7 +588,7 @@
       "subsystem": "lifecycle"
     },
     {
-      "name": "tradepulse_lifecycle_transition_total",
+      "name": "geosync_lifecycle_transition_total",
       "type": "counter",
       "description": "Lifecycle transitions grouped by from/to phase and outcome",
       "labels": [
@@ -558,7 +599,7 @@
       "subsystem": "lifecycle"
     },
     {
-      "name": "tradepulse_model_cache_entries",
+      "name": "geosync_model_cache_entries",
       "type": "gauge",
       "description": "Number of live entries stored in model caches",
       "labels": [
@@ -569,7 +610,7 @@
       "subsystem": "observability"
     },
     {
-      "name": "tradepulse_model_cache_evictions_total",
+      "name": "geosync_model_cache_evictions_total",
       "type": "counter",
       "description": "Total number of cache evictions triggered for model caches",
       "labels": [
@@ -580,7 +621,7 @@
       "subsystem": "observability"
     },
     {
-      "name": "tradepulse_model_cache_hit_ratio",
+      "name": "geosync_model_cache_hit_ratio",
       "type": "gauge",
       "description": "Hit ratio observed for model-specific caches",
       "labels": [
@@ -591,7 +632,7 @@
       "subsystem": "observability"
     },
     {
-      "name": "tradepulse_model_cpu_percent",
+      "name": "geosync_model_cpu_percent",
       "type": "gauge",
       "description": "Process CPU utilisation percent for model serving",
       "labels": [
@@ -601,7 +642,7 @@
       "subsystem": "observability"
     },
     {
-      "name": "tradepulse_model_gpu_percent",
+      "name": "geosync_model_gpu_percent",
       "type": "gauge",
       "description": "GPU utilisation percent for model serving workloads",
       "labels": [
@@ -611,7 +652,7 @@
       "subsystem": "observability"
     },
     {
-      "name": "tradepulse_model_inference_error_ratio",
+      "name": "geosync_model_inference_error_ratio",
       "type": "gauge",
       "description": "Observed error ratio for model inference requests",
       "labels": [
@@ -621,7 +662,7 @@
       "subsystem": "observability"
     },
     {
-      "name": "tradepulse_model_inference_latency_quantiles_seconds",
+      "name": "geosync_model_inference_latency_quantiles_seconds",
       "type": "gauge",
       "description": "Latency quantiles for model inference requests",
       "labels": [
@@ -632,7 +673,7 @@
       "subsystem": "observability"
     },
     {
-      "name": "tradepulse_model_inference_latency_seconds",
+      "name": "geosync_model_inference_latency_seconds",
       "type": "histogram",
       "description": "Latency observed for model inference requests",
       "labels": [
@@ -642,7 +683,7 @@
       "subsystem": "observability"
     },
     {
-      "name": "tradepulse_model_inference_throughput_per_second",
+      "name": "geosync_model_inference_throughput_per_second",
       "type": "gauge",
       "description": "Rolling throughput of model inference requests",
       "labels": [
@@ -652,7 +693,7 @@
       "subsystem": "observability"
     },
     {
-      "name": "tradepulse_model_inference_total",
+      "name": "geosync_model_inference_total",
       "type": "counter",
       "description": "Total number of model inference requests grouped by outcome",
       "labels": [
@@ -663,7 +704,7 @@
       "subsystem": "observability"
     },
     {
-      "name": "tradepulse_model_memory_bytes",
+      "name": "geosync_model_memory_bytes",
       "type": "gauge",
       "description": "Resident memory footprint of the model serving process",
       "labels": [
@@ -673,7 +714,7 @@
       "subsystem": "observability"
     },
     {
-      "name": "tradepulse_model_memory_percent",
+      "name": "geosync_model_memory_percent",
       "type": "gauge",
       "description": "Memory utilisation percent for the model serving process",
       "labels": [
@@ -683,7 +724,7 @@
       "subsystem": "observability"
     },
     {
-      "name": "tradepulse_model_metric_correlation",
+      "name": "geosync_model_metric_correlation",
       "type": "gauge",
       "description": "Pearson correlation coefficient between pairs of model metrics",
       "labels": [
@@ -695,7 +736,7 @@
       "subsystem": "observability"
     },
     {
-      "name": "tradepulse_model_quality_degradation_events_total",
+      "name": "geosync_model_quality_degradation_events_total",
       "type": "counter",
       "description": "Number of quality degradation signals emitted for a model",
       "labels": [
@@ -707,7 +748,7 @@
       "subsystem": "observability"
     },
     {
-      "name": "tradepulse_model_quality_interval_lower",
+      "name": "geosync_model_quality_interval_lower",
       "type": "gauge",
       "description": "Lower bound of quality metric confidence interval",
       "labels": [
@@ -719,7 +760,7 @@
       "subsystem": "observability"
     },
     {
-      "name": "tradepulse_model_quality_interval_mean",
+      "name": "geosync_model_quality_interval_mean",
       "type": "gauge",
       "description": "Mean value for quality metric confidence interval",
       "labels": [
@@ -731,7 +772,7 @@
       "subsystem": "observability"
     },
     {
-      "name": "tradepulse_model_quality_interval_upper",
+      "name": "geosync_model_quality_interval_upper",
       "type": "gauge",
       "description": "Upper bound of quality metric confidence interval",
       "labels": [
@@ -743,7 +784,7 @@
       "subsystem": "observability"
     },
     {
-      "name": "tradepulse_model_quality_interval_width",
+      "name": "geosync_model_quality_interval_width",
       "type": "gauge",
       "description": "Width of the quality metric confidence interval",
       "labels": [
@@ -755,7 +796,7 @@
       "subsystem": "observability"
     },
     {
-      "name": "tradepulse_model_saturation",
+      "name": "geosync_model_saturation",
       "type": "gauge",
       "description": "Saturation level of model serving infrastructure",
       "labels": [
@@ -765,55 +806,7 @@
       "subsystem": "observability"
     },
     {
-      "name": "tradepulse_rl_grad_norm",
-      "type": "gauge",
-      "description": "Gradient norm observed during RL updates",
-      "labels": [
-        "agent",
-        "component"
-      ],
-      "subsystem": "rl"
-    },
-    {
-      "name": "tradepulse_rl_policy_drift",
-      "type": "gauge",
-      "description": "Relative parameter drift from the last stable checkpoint",
-      "labels": [
-        "agent"
-      ],
-      "subsystem": "rl"
-    },
-    {
-      "name": "tradepulse_rl_policy_kl",
-      "type": "gauge",
-      "description": "Observed KL divergence between successive policy updates",
-      "labels": [
-        "agent"
-      ],
-      "subsystem": "rl"
-    },
-    {
-      "name": "tradepulse_rl_rollback_total",
-      "type": "counter",
-      "description": "Total number of RL policy rollbacks",
-      "labels": [
-        "agent",
-        "reason"
-      ],
-      "subsystem": "rl"
-    },
-    {
-      "name": "tradepulse_rl_update_scale",
-      "type": "gauge",
-      "description": "Applied scaling factor for RL parameter updates",
-      "labels": [
-        "agent",
-        "component"
-      ],
-      "subsystem": "rl"
-    },
-    {
-      "name": "tradepulse_model_triage_total",
+      "name": "geosync_model_triage_total",
       "type": "counter",
       "description": "Number of automated triage workflows launched for model incidents",
       "labels": [
@@ -825,7 +818,7 @@
       "subsystem": "observability"
     },
     {
-      "name": "tradepulse_open_positions",
+      "name": "geosync_open_positions",
       "type": "gauge",
       "description": "Number of open positions",
       "labels": [
@@ -835,7 +828,7 @@
       "subsystem": "open"
     },
     {
-      "name": "tradepulse_optimization_duration_seconds",
+      "name": "geosync_optimization_duration_seconds",
       "type": "histogram",
       "description": "Time spent on strategy optimization",
       "labels": [
@@ -844,7 +837,7 @@
       "subsystem": "optimization"
     },
     {
-      "name": "tradepulse_optimization_iterations_total",
+      "name": "geosync_optimization_iterations_total",
       "type": "counter",
       "description": "Total number of optimization iterations",
       "labels": [
@@ -853,7 +846,7 @@
       "subsystem": "optimization"
     },
     {
-      "name": "tradepulse_order_ack_latency_quantiles_seconds",
+      "name": "geosync_order_ack_latency_quantiles_seconds",
       "type": "gauge",
       "description": "Latency between order submission and broker acknowledgement",
       "labels": [
@@ -864,7 +857,7 @@
       "subsystem": "execution"
     },
     {
-      "name": "tradepulse_order_fill_latency_quantiles_seconds",
+      "name": "geosync_order_fill_latency_quantiles_seconds",
       "type": "gauge",
       "description": "Order fill latency quantiles",
       "labels": [
@@ -875,7 +868,7 @@
       "subsystem": "execution"
     },
     {
-      "name": "tradepulse_order_placement_duration_seconds",
+      "name": "geosync_order_placement_duration_seconds",
       "type": "histogram",
       "description": "Time spent placing orders",
       "labels": [
@@ -885,7 +878,7 @@
       "subsystem": "execution"
     },
     {
-      "name": "tradepulse_order_submission_latency_quantiles_seconds",
+      "name": "geosync_order_submission_latency_quantiles_seconds",
       "type": "gauge",
       "description": "Order submission latency quantiles",
       "labels": [
@@ -896,7 +889,7 @@
       "subsystem": "execution"
     },
     {
-      "name": "tradepulse_orders_placed_total",
+      "name": "geosync_orders_placed_total",
       "type": "counter",
       "description": "Total number of orders placed",
       "labels": [
@@ -908,7 +901,7 @@
       "subsystem": "execution"
     },
     {
-      "name": "tradepulse_process_cpu_percent",
+      "name": "geosync_process_cpu_percent",
       "type": "gauge",
       "description": "CPU utilisation percent for the serving process",
       "labels": [
@@ -917,7 +910,7 @@
       "subsystem": "observability"
     },
     {
-      "name": "tradepulse_process_memory_bytes",
+      "name": "geosync_process_memory_bytes",
       "type": "gauge",
       "description": "Resident memory footprint of the serving process in bytes",
       "labels": [
@@ -926,7 +919,7 @@
       "subsystem": "observability"
     },
     {
-      "name": "tradepulse_process_memory_percent",
+      "name": "geosync_process_memory_percent",
       "type": "gauge",
       "description": "Memory utilisation percent for the serving process",
       "labels": [
@@ -935,7 +928,7 @@
       "subsystem": "observability"
     },
     {
-      "name": "tradepulse_regression_metric",
+      "name": "geosync_regression_metric",
       "type": "gauge",
       "description": "Regression quality metrics (e.g. MAE, RMSE, R2)",
       "labels": [
@@ -945,7 +938,7 @@
       "subsystem": "observability"
     },
     {
-      "name": "tradepulse_response_quality_complaints_total",
+      "name": "geosync_response_quality_complaints_total",
       "type": "counter",
       "description": "Number of complaints routed for response quality",
       "labels": [
@@ -957,7 +950,7 @@
       "subsystem": "observability"
     },
     {
-      "name": "tradepulse_response_quality_contract_violations_total",
+      "name": "geosync_response_quality_contract_violations_total",
       "type": "counter",
       "description": "Number of response quality contract violations observed",
       "labels": [
@@ -969,7 +962,7 @@
       "subsystem": "observability"
     },
     {
-      "name": "tradepulse_response_quality_degradation_events_total",
+      "name": "geosync_response_quality_degradation_events_total",
       "type": "counter",
       "description": "Number of response quality degradations emitted",
       "labels": [
@@ -981,7 +974,7 @@
       "subsystem": "observability"
     },
     {
-      "name": "tradepulse_response_quality_pending_reviews",
+      "name": "geosync_response_quality_pending_reviews",
       "type": "gauge",
       "description": "Number of pending human reviews for response quality",
       "labels": [
@@ -991,7 +984,7 @@
       "subsystem": "observability"
     },
     {
-      "name": "tradepulse_response_quality_reason_total",
+      "name": "geosync_response_quality_reason_total",
       "type": "counter",
       "description": "Count of reasons identified during response quality assurance",
       "labels": [
@@ -1002,7 +995,7 @@
       "subsystem": "observability"
     },
     {
-      "name": "tradepulse_response_quality_run_duration_seconds",
+      "name": "geosync_response_quality_run_duration_seconds",
       "type": "histogram",
       "description": "Duration of response quality verification runs",
       "labels": [
@@ -1014,7 +1007,7 @@
       "subsystem": "observability"
     },
     {
-      "name": "tradepulse_response_quality_run_total",
+      "name": "geosync_response_quality_run_total",
       "type": "counter",
       "description": "Total number of response quality verification runs",
       "labels": [
@@ -1027,7 +1020,7 @@
       "subsystem": "observability"
     },
     {
-      "name": "tradepulse_risk_circuit_state",
+      "name": "geosync_risk_circuit_state",
       "type": "gauge",
       "description": "Circuit breaker state (0=closed, 1=open, 2=half_open)",
       "labels": [
@@ -1036,7 +1029,7 @@
       "subsystem": "risk"
     },
     {
-      "name": "tradepulse_risk_circuit_trips_total",
+      "name": "geosync_risk_circuit_trips_total",
       "type": "counter",
       "description": "Total number of circuit breaker trips",
       "labels": [
@@ -1045,7 +1038,7 @@
       "subsystem": "risk"
     },
     {
-      "name": "tradepulse_risk_daily_drawdown",
+      "name": "geosync_risk_daily_drawdown",
       "type": "gauge",
       "description": "Current daily drawdown (percentage or notional)",
       "labels": [
@@ -1055,7 +1048,7 @@
       "subsystem": "risk"
     },
     {
-      "name": "tradepulse_risk_gross_exposure",
+      "name": "geosync_risk_gross_exposure",
       "type": "gauge",
       "description": "Current gross exposure in notional terms",
       "labels": [
@@ -1064,7 +1057,7 @@
       "subsystem": "risk"
     },
     {
-      "name": "tradepulse_risk_kill_switch",
+      "name": "geosync_risk_kill_switch",
       "type": "gauge",
       "description": "Global kill switch state (1=enabled, 0=disabled)",
       "labels": [
@@ -1073,7 +1066,7 @@
       "subsystem": "risk"
     },
     {
-      "name": "tradepulse_risk_open_orders",
+      "name": "geosync_risk_open_orders",
       "type": "gauge",
       "description": "Current number of open orders",
       "labels": [
@@ -1082,7 +1075,7 @@
       "subsystem": "risk"
     },
     {
-      "name": "tradepulse_risk_rejections_total",
+      "name": "geosync_risk_rejections_total",
       "type": "counter",
       "description": "Total number of orders rejected by risk checks",
       "labels": [
@@ -1091,7 +1084,7 @@
       "subsystem": "risk"
     },
     {
-      "name": "tradepulse_risk_validations_total",
+      "name": "geosync_risk_validations_total",
       "type": "counter",
       "description": "Total risk validation outcomes",
       "labels": [
@@ -1101,7 +1094,86 @@
       "subsystem": "risk"
     },
     {
-      "name": "tradepulse_runbook_executions_total",
+      "name": "geosync_rl_grad_norm",
+      "type": "gauge",
+      "description": "Gradient norm observed during RL updates",
+      "labels": [
+        "agent",
+        "component"
+      ],
+      "subsystem": "rl"
+    },
+    {
+      "name": "geosync_rl_modulation_arousal",
+      "type": "gauge",
+      "description": "Arousal boost component for RL modulation controllers",
+      "labels": [
+        "agent",
+        "signal"
+      ],
+      "subsystem": "rl"
+    },
+    {
+      "name": "geosync_rl_modulation_risk",
+      "type": "gauge",
+      "description": "Risk score derived for RL modulation controllers",
+      "labels": [
+        "agent",
+        "signal"
+      ],
+      "subsystem": "rl"
+    },
+    {
+      "name": "geosync_rl_modulation_scale",
+      "type": "gauge",
+      "description": "Effective modulation scale applied to RL updates",
+      "labels": [
+        "agent",
+        "component",
+        "signal"
+      ],
+      "subsystem": "rl"
+    },
+    {
+      "name": "geosync_rl_policy_drift",
+      "type": "gauge",
+      "description": "Relative parameter drift from the last stable checkpoint",
+      "labels": [
+        "agent"
+      ],
+      "subsystem": "rl"
+    },
+    {
+      "name": "geosync_rl_policy_kl",
+      "type": "gauge",
+      "description": "Observed KL divergence between successive policy updates",
+      "labels": [
+        "agent"
+      ],
+      "subsystem": "rl"
+    },
+    {
+      "name": "geosync_rl_rollback_total",
+      "type": "counter",
+      "description": "Total number of RL policy rollbacks",
+      "labels": [
+        "agent",
+        "reason"
+      ],
+      "subsystem": "rl"
+    },
+    {
+      "name": "geosync_rl_update_scale",
+      "type": "gauge",
+      "description": "Applied scaling factor for RL parameter updates",
+      "labels": [
+        "agent",
+        "component"
+      ],
+      "subsystem": "rl"
+    },
+    {
+      "name": "geosync_runbook_executions_total",
       "type": "counter",
       "description": "Runbook executions grouped by outcome",
       "labels": [
@@ -1111,7 +1183,7 @@
       "subsystem": "runbook"
     },
     {
-      "name": "tradepulse_signal_generation_latency_quantiles_seconds",
+      "name": "geosync_signal_generation_latency_quantiles_seconds",
       "type": "gauge",
       "description": "Signal generation latency quantiles",
       "labels": [
@@ -1121,7 +1193,7 @@
       "subsystem": "signals"
     },
     {
-      "name": "tradepulse_signal_generation_total",
+      "name": "geosync_signal_generation_total",
       "type": "counter",
       "description": "Total number of signal generation calls",
       "labels": [
@@ -1131,7 +1203,7 @@
       "subsystem": "signals"
     },
     {
-      "name": "tradepulse_signal_to_fill_latency_quantiles_seconds",
+      "name": "geosync_signal_to_fill_latency_quantiles_seconds",
       "type": "gauge",
       "description": "Aggregate latency from signal emission to final fill",
       "labels": [
@@ -1143,14 +1215,14 @@
       "subsystem": "signals"
     },
     {
-      "name": "tradepulse_strategy_memory_size",
+      "name": "geosync_strategy_memory_size",
       "type": "gauge",
       "description": "Number of strategies in memory",
       "labels": [],
       "subsystem": "strategy"
     },
     {
-      "name": "tradepulse_strategy_score",
+      "name": "geosync_strategy_score",
       "type": "gauge",
       "description": "Strategy performance score",
       "labels": [
@@ -1159,7 +1231,7 @@
       "subsystem": "strategy"
     },
     {
-      "name": "tradepulse_ticks_processed_total",
+      "name": "geosync_ticks_processed_total",
       "type": "counter",
       "description": "Total number of ticks processed",
       "labels": [
@@ -1169,7 +1241,7 @@
       "subsystem": "data"
     },
     {
-      "name": "tradepulse_trading_mode",
+      "name": "geosync_trading_mode",
       "type": "gauge",
       "description": "Current trading mode (1 when active for that mode label)",
       "labels": [
@@ -1178,7 +1250,7 @@
       "subsystem": "trading"
     },
     {
-      "name": "tradepulse_trading_mode_duration_seconds",
+      "name": "geosync_trading_mode_duration_seconds",
       "type": "gauge",
       "description": "Time spent in current trading mode",
       "labels": [
@@ -1187,7 +1259,7 @@
       "subsystem": "trading"
     },
     {
-      "name": "tradepulse_trading_mode_transition_latency_seconds",
+      "name": "geosync_trading_mode_transition_latency_seconds",
       "type": "histogram",
       "description": "Latency of mode transitions",
       "labels": [
@@ -1197,7 +1269,7 @@
       "subsystem": "trading"
     },
     {
-      "name": "tradepulse_trading_mode_transitions_total",
+      "name": "geosync_trading_mode_transitions_total",
       "type": "counter",
       "description": "Total number of trading mode transitions",
       "labels": [
@@ -1208,7 +1280,7 @@
       "subsystem": "trading"
     },
     {
-      "name": "tradepulse_watchdog_last_heartbeat_timestamp",
+      "name": "geosync_watchdog_last_heartbeat_timestamp",
       "type": "gauge",
       "description": "Unix timestamp of the last watchdog heartbeat publish",
       "labels": [
@@ -1217,7 +1289,7 @@
       "subsystem": "operations"
     },
     {
-      "name": "tradepulse_watchdog_live_probe_status",
+      "name": "geosync_watchdog_live_probe_status",
       "type": "gauge",
       "description": "Outcome of the most recent watchdog live probe (1=healthy, 0=unhealthy)",
       "labels": [
@@ -1226,7 +1298,7 @@
       "subsystem": "operations"
     },
     {
-      "name": "tradepulse_watchdog_worker_restarts_total",
+      "name": "geosync_watchdog_worker_restarts_total",
       "type": "counter",
       "description": "Total number of worker restarts triggered by watchdog supervision",
       "labels": [

@@ -1,0 +1,67 @@
+{
+  "alpha_policy": {
+    "alpha_per": 0.016666666666666666,
+    "denominator": 3,
+    "denominator_derives_from": "K-P0-locked pre-registered hypothesis count: 1 mechanism (funding_liquidity_rollover) \u00d7 3 windows (CW3/CW4/CW5) \u00d7 1 primary metric (pre_post_standardized_mean_shift) = 3 hypotheses. The smaller denominator vs D-002J-P7's 102 is the legitimate consequence of FEWER pre-registered hypotheses, NOT a relaxation of D-002J-P7's \u03b1=4.9e-4 at a fixed hypothesis count.",
+    "derivation": "0.05/(3\u00d71)",
+    "family": "bonferroni",
+    "n_primary_metrics": 1,
+    "n_windows": 3
+  },
+  "canonical_run_authorized": false,
+  "claim_boundary": "Power design only; no data scoring; alpha NOT relaxed vs D-002J-P7 (narrowing is K-P0-locked scope, not loosened stats); effect prior conservative not inflated; D-002J + K-P0..P3 frozen.",
+  "comparison_to_d002j_p7": {
+    "d002j_alpha_per_cell": 0.0004901960784313725,
+    "d002j_bonferroni": 102,
+    "d002j_refused_axis": "effect_too_small",
+    "d002k_alpha_per": 0.016666666666666666,
+    "d002k_bonferroni": 3,
+    "narrowing_is_scope_not_alpha_relaxation": true,
+    "note": "D-002J-P7 was correctly REFUSED at Bonferroni denominator 102 (alpha = 0.05/102 = 4.9e-4) on axis effect_too_small and stays TERMINAL_REFUSED and retained. D-002K-P4's Bonferroni denominator is 3 because K-P0 PRE-REGISTERED only 1 mechanism x 3 windows x 1 primary metric = 3 hypotheses. The smaller denominator is the legitimate consequence of fewer pre-registered hypotheses, NOT a loosening of D-002J-P7's alpha at a fixed hypothesis count. Narrowing scope is not relaxing statistics. D-002K does not un-refuse D-002J."
+  },
+  "decision": "POWER_GATE_REFUSED_UNDERPOWERED",
+  "effect_size_assumption": {
+    "cohen_d": 0.8,
+    "conservative_bound": "d = 0.80 is the conventional lower threshold of a 'large' Cohen's d (Cohen 1988). The funding-liquidity literature point estimates are multiples of baseline sigma (substantially larger); 0.80 is the smallest defensible bound and is used precisely because it cannot manufacture a PASS. Any value the literature would actually support is larger; using the floor is the conservative, anti-inflation choice mandated by the K-P0 effect_prior_source rule.",
+    "justification": "K-P0 effect_prior_source rule forbids inflation. The funding-liquidity literature would justify a much larger d; the conservative lower edge d=0.80 is used by rule. A smaller, conservative prior can only push the honest gate toward REFUSED, never toward a manufactured PASS.",
+    "not_inflated": true,
+    "provenance": "Funding-liquidity literature on SOFR/repo-spread dislocations in CW3/CW4/CW5-class events (Copeland-Duffie-Yang 2021 'Reserves Were Not So Ample'; Avalos-Ehlers-Eren BIS Quarterly Review Dec-2019; Bank of England 'The Bank's response to the gilt market crisis' Dec-2022) reports pre/post standardised funding-stress shifts of many baseline sigmas, i.e. large-to-extreme standardised effects for the pre_post_standardized_mean_shift metric family. The prior is pinned to the CONSERVATIVE lower edge -- Cohen's d = 0.80, the conventional 'large' floor (Cohen 1988) -- NOT the literature point estimate. Smaller end chosen by rule; can only push toward REFUSED."
+  },
+  "false_negative_risk": {
+    "at_feasible_n": 0.951912,
+    "interpretation": "Type-II error of the crisis-vs-placebo-reference contrast at the feasible event-conditioned sample (n1=1, n2=5) at the K-P0 Bonferroni alpha for the conservative effect prior."
+  },
+  "feasible_n_cap": {
+    "crisis_side_n1_per_window": 1,
+    "d002j_p7_anchor_reference": "D-002J-P7's feasible cap was n_seeds=100 because its substrates were SYNTHETIC and re-runnable. D-002K is real-public-data event-conditioned, so the cap is the irreducible n1=1 per crisis window. The cap is NOT inflated to manufacture a PASS; it is the most generous value physically available (one realisation per event).",
+    "justification": "CW3 (US repo spike 2019), CW4 (COVID dash-for-cash 2020) and CW5 (UK gilt LDI 2022) are UNIQUE historical events scored on point-in-time public observables. Each crisis window has exactly ONE realisation in recorded history; it cannot be re-run, re-seeded or resampled. The crisis-side replication count is therefore physically capped at n1=1 per window. This is a hard data-availability bound of an event-conditioned design, not a budget guess; runtime is trivial (the binding constraint is effect detectability, not compute).",
+    "reference_arm_n2_per_window": 5
+  },
+  "generated_at": "2026-05-15T00:00:00Z",
+  "minimum_detectable_effect_at_feasible_n": 3.5444233461510186,
+  "n_min": 20,
+  "no_data_scoring_performed": true,
+  "no_model_run_performed": true,
+  "no_real_data": true,
+  "node_id": "D002K-P4",
+  "parent_kp0_prereg_path": "docs/governance/D002K_PREREGISTRATION.yaml",
+  "parent_kp0_prereg_sha256": "2cd923810bf64547cd86ecb403bfd3f12a799cb16c3d10ebc07bc05865fee43f",
+  "parent_kp0_primary_metric_contract_path": "artifacts/d002k/prereg/d002k_primary_metric_contract_v1.json",
+  "parent_kp0_primary_metric_contract_sha256": "7effc088810ba5933850618312fcad369fdac0386b4a3cab6f14455feeb5a569",
+  "parent_kp1_observable_contract_path": "artifacts/d002k/observables/source_observable_contract_v1.json",
+  "parent_kp1_observable_contract_sha256": "952739cbfe4aa16a54eb5684be4bbd653e820eaf92113418e379a3bf8a2a71c3",
+  "parent_kp2_placebo_registry_path": "artifacts/d002k/placebo/matched_placebo_registry_v1.json",
+  "parent_kp2_placebo_registry_sha256": "435d41df868859f25811236fa4675d01f202682c693d06208922c263ace09413",
+  "parent_kp3_metric_contract_path": "artifacts/d002k/metrics/event_metric_contract_v1.json",
+  "parent_kp3_metric_contract_sha256": "9c2ce60b6fbcb52e969d71e2137d8345c35f2f71ff9dcc1d64b9ad759d2480ce",
+  "phase": "P4",
+  "power_at_feasible_n": 0.048087892009101095,
+  "power_target": 0.8,
+  "primary_metric": "pre_post_standardized_mean_shift",
+  "refusal_reason": "At the K-P0-locked Bonferroni alpha_per=0.016667 (0.05/3) the conservative honest effect prior d=0.8 reaches power 0.0481 at the feasible event-conditioned sample (crisis-side n1=1 per window because CW3/CW4/CW5 are unique unrepeatable historical events; reference arm n2=5 K-P2 matched placebos) -- far below the K-P0 power target 0.8. The design-transparency n_min for power>=0.8 is 20 crisis-side replicates per window, which an event-conditioned design CANNOT supply (a crisis window happens once). This is the SAME class of honest refusal as D-002J-P7 (effect_too_small at alpha=0.05/102). Loosening alpha at fixed scope, inflating the effect prior, shrinking below the K-P0 3-cell lock or swapping the primary metric to force a PASS is forbidden. Lineage halts at P4; next legal node is a fresh D-002L pre-registration designed against this axis. D-002J stays REFUSED.",
+  "refusal_rule": "POWER-FIRST FAIL-CLOSED RULE (K-P0 power_gate_policy): canonical_run_authorized is True IFF, at the K-P0-locked Bonferroni alpha = 0.05 / (n_windows * n_primary_metrics) = 0.05/3 = 0.016667, the conservative honestly-sourced effect prior reaches power >= 0.8 at the feasible event-conditioned sample (crisis-side n1 <= 1 per window because CW3/CW4/CW5 are unique unrepeatable historical events; reference arm n2 = 5 K-P2 matched placebos per window). The effect prior is the conservative lower edge of the funding-liquidity literature (NOT the point estimate, NOT inflated); the Bonferroni denominator is the K-P0-locked pre-registered hypothesis count 3 (NOT a relaxation of D-002J-P7's 0.05/102 at a fixed hypothesis count); the scope is the K-P0 3-cell lock (no shrink, no primary swap). If power < 0.8 at the feasible sample the gate emits POWER_GATE_REFUSED_UNDERPOWERED, status TERMINAL_REFUSED, canonical_run_authorized False, halts the lineage at P4 (next legal = a fresh D-002L pre-registration; NOT P5, NOT a D-002J resurrection) and retains this design as a truthful negative artifact. The gate NEVER loosens alpha at fixed scope, inflates the effect prior, shrinks below the K-P0 3-cell lock or swaps the primary metric to manufacture a PASS -- that is the exact self-deception D-002J-P7 was correctly refused for.",
+  "refused_axis": "effect_too_small_event_conditioned",
+  "schema_version": "D002K-POWER-DESIGN-v1",
+  "study_id": "D-002K-P4",
+  "test_family": "Crisis-vs-matched-placebo-reference contrast (K-P3): Delta = metric_crisis - mean(metric over 5 K-P2 matched placebos) per crisis window. Two-independent-group standardised-mean comparison, arm sizes n_crisis (crisis side) vs n_placebo_ref=5 (reference). Power via the two-sided normal approximation Phi(ncp - z_{1-alpha/2}) with ncp = d / sqrt(1/n_crisis + 1/n_placebo_ref); the exact small-n non-central-t power is strictly lower, so this normal bound is optimistic and a REFUSE under it is conservative."
+}

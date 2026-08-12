@@ -1,7 +1,7 @@
 import { randomBytes } from 'crypto';
 
 const TRACE_HEADER = 'traceparent';
-const TELEMETRY_EVENT = 'tradepulse:telemetry';
+const TELEMETRY_EVENT = 'geosync:telemetry';
 const listeners = new Set();
 
 function randomHex(bytes) {

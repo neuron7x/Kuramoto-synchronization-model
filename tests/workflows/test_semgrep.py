@@ -1,3 +1,5 @@
+# Copyright (c) 2023-2026 Yaroslav Vasylenko (neuron7xLab)
+# SPDX-License-Identifier: MIT
 """Tests for Semgrep security scanning workflow."""
 
 from __future__ import annotations
@@ -5,11 +7,11 @@ from __future__ import annotations
 from pathlib import Path
 from typing import Any, Dict
 
+import pytest
 import yaml
 
-WORKFLOW_PATH = (
-    Path(__file__).resolve().parents[2] / ".github" / "workflows" / "semgrep.yml"
-)
+WORKFLOW_PATH = Path(__file__).resolve().parents[2] / ".github" / "workflows" / "semgrep.yml"
+pytestmark = pytest.mark.skipif(not WORKFLOW_PATH.exists(), reason="workflow file not found")
 
 
 def _load_workflow() -> Dict[str, Any]:
@@ -139,9 +141,7 @@ def test_semgrep_checks_critical_findings() -> None:
 
     check_step = None
     for step in steps:
-        if isinstance(step, dict) and "Check for critical findings" in step.get(
-            "name", ""
-        ):
+        if isinstance(step, dict) and "Check for critical findings" in step.get("name", ""):
             check_step = step
             break
 

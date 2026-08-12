@@ -1,0 +1,91 @@
+# Diff-bound acceptor: numerical-stability + fail-closed test hardening of the
+# Kuramoto RK4 integrator (core/kuramoto/engine.py). Tests-only — no runtime
+# change (engine.py is restored byte-identical after the mutation probes).
+#
+# Closes three risk-relevant decision paths that statement coverage hid on the
+# CRITICAL integrator (baseline 91.19% branch):
+#   1. RK4 4th-order convergence: the integrator lines execute every simulation
+#      but no test verified order p=4; a silent Euler regression keeps every
+#      existing test green. Pinned via a Richardson dt-halving metamorphic test
+#      (measured p=4.02; band [3.5,4.5]).
+#   2. INV-K1 NaN-leak: a NaN order parameter slips past the [0,1] range check
+#      (NaN comparisons are False), so the dedicated finiteness guard is the
+#      ONLY barrier — and it was untested. Pinned + a mutation-resistance witness.
+#   3. fail-closed finiteness on the time axis and the RHS overflow guard.
+#
+# Mutation testing (manual): 3/3 hand-applied engine mutants killed (RK4→Euler;
+# drop order-parameter guard; drop RHS guard). Evidence under artifacts/audit/.
+
+id: kuramoto-rk4-numerical-hardening
+status: ACTIVE
+claim_type: correctness
+promise: >-
+  Adds tests/unit/core/test_kuramoto_engine_numerical_hardening.py (11
+  deterministic cases) hardening core/kuramoto/engine.py: a Richardson
+  dt-halving test pinning RK4 4th-order convergence (order band [3.5,4.5]); a
+  rotation-equivariance metamorphic test for the ω=0 coupling RHS; fail-closed
+  negative tests for non-finite order_parameter (engine.py:83), non-finite time
+  (engine.py:85) and a non-finite RHS overflow (engine.py:271); and a
+  mutation-resistance witness proving the [0,1] range check cannot catch NaN.
+  No runtime code changes — engine.py is untouched (restored byte-identical
+  after mutation probes). engine.py branch coverage rises 91.19% → 94.97%; the
+  remaining 4 lines are defence-in-depth unreachable via the validated
+  KuramotoConfig contract. Evidence reports live under artifacts/audit/.
+diff_scope:
+  changed_files:
+    - path: ".claude/commit_acceptors/kuramoto-rk4-numerical-hardening.yaml"
+    - path: "tests/unit/core/test_kuramoto_engine_numerical_hardening.py"
+    - path: "artifacts/audit/COVERAGE_BASELINE.md"
+    - path: "artifacts/audit/UNCOVERED_SYMBOL_MAP.md"
+    - path: "artifacts/audit/NEW_TESTS_MATRIX.md"
+    - path: "artifacts/audit/DEFERRED_COVERAGE.md"
+    - path: "artifacts/audit/COMMAND_LOG.md"
+    - path: "artifacts/audit/TEST_COVERAGE_HARDENING_REPORT.md"
+  forbidden_paths:
+    - "trading/"
+    - "execution/"
+    - "forecast/"
+    - "policy/"
+required_python_symbols:
+  - "KuramotoConfig"
+  - "KuramotoResult"
+expected_signal: >-
+  pytest tests/unit/core/test_kuramoto_engine_numerical_hardening.py is fully
+  green (11 cases, deterministic, ~1s); the measured RK4 convergence order is
+  4.02 (band [3.5,4.5]); the existing tests/unit/core/test_kuramoto_engine.py
+  remains green (no runtime change); mypy --strict clean on the new test file;
+  ruff + black clean (tests are formatter-excluded in pyproject, verified
+  off-exclude). engine.py branch coverage 91.19% → 94.97%.
+measurement_command: >-
+  python -m pytest tests/unit/core/test_kuramoto_engine_numerical_hardening.py
+  tests/unit/core/test_kuramoto_engine.py -v
+signal_artifact: "tmp/kuramoto_rk4_hardening_pytest.log"
+falsifier:
+  command: >-
+    python -c "import numpy as np, sys;
+    from core.kuramoto.engine import _rk4_step;
+    omega=np.array([0.3,-0.2]); adj=np.array([[0.0,1.0],[1.0,0.0]]);
+    K=0.8; ns={'omega':omega,'adj':adj,'K':K,'_rk4_step':_rk4_step,'np':np};
+    exec('def integ(dt):\n th=np.array([0.4,1.7])\n for _ in range(int(round(1.0/dt))):\n  th=_rk4_step(th, omega, adj, dt, K=K)\n return th', ns);
+    integ=ns['integ'];
+    y1=integ(0.04); y2=integ(0.02); y4=integ(0.01);
+    ratio=float(np.linalg.norm(y1-y2)/np.linalg.norm(y2-y4));
+    p=float(np.log2(ratio));
+    print('observed RK4 order p=', p);
+    sys.exit(0 if 3.5 <= p <= 4.5 else 1)"
+  description: >-
+    Inverse probe for RK4 4th-order convergence: Richardson extrapolation on a
+    two-oscillator nonlinear flow. Exits non-zero iff the observed convergence
+    order leaves [3.5,4.5] — i.e. iff the integrator silently regresses to a
+    lower-order (e.g. Euler, p≈1) scheme. Proves the integrator order is real
+    and that the convergence test would catch a regression existing tests miss.
+rollback_command: >-
+  git rm -f
+  tests/unit/core/test_kuramoto_engine_numerical_hardening.py
+  .claude/commit_acceptors/kuramoto-rk4-numerical-hardening.yaml
+rollback_verification_command: >-
+  test ! -f tests/unit/core/test_kuramoto_engine_numerical_hardening.py
+memory_update_type: append
+ledger_path: ".claude/commit_acceptors/kuramoto-rk4-numerical-hardening.yaml"
+report_path: "artifacts/audit/TEST_COVERAGE_HARDENING_REPORT.md"
+evidence: []

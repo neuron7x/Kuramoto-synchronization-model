@@ -1,0 +1,11 @@
+{
+  "schema_version": "ricci_microstructure_v1.dataset.v1",
+  "venue_class": "crypto_perps",
+  "data_type": "depth5_order_book_100ms_resampled_to_1s",
+  "immutability_required": true,
+  "hash_algorithm": "sha256",
+  "data_sha256": "0000000000000000000000000000000000000000000000000000000000000000",
+  "min_data_depth_sec": 0,
+  "observation_window_utc": {"start": "2026-01-01T00:00:00Z", "end": "2026-01-01T00:00:00Z"},
+  "is_synthetic": true
+}

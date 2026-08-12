@@ -1,0 +1,39 @@
+# ci-heartbeat: inventory-feature-debt-bridge
+id: inventory-feature-debt-bridge
+status: ACTIVE
+claim_type: governance
+promise: >-
+  Bind the narrow inventory-sync bridge for scripts/ci/check_feature_debt_lock.py.
+  The checker keeps the existing managed scopes and treats only this inherited
+  mainline gate script as explicitly declared when the large inventory blob cannot
+  be rewritten through the connector layer.
+diff_scope:
+  changed_files:
+    - path: ".claude/commit_acceptors/inventory-feature-debt-bridge.yaml"
+    - path: "scripts/ci/check_inventory_sync.py"
+  forbidden_paths:
+    - "trading/"
+    - "execution/"
+    - "forecast/"
+    - "policy/"
+required_python_symbols: []
+expected_signal: >-
+  python scripts/ci/check_inventory_sync.py passes without changing the managed
+  inventory scope semantics for any other file.
+measurement_command: >-
+  python scripts/ci/check_inventory_sync.py
+signal_artifact: "tmp/inventory_feature_debt_bridge.log"
+falsifier:
+  command: >-
+    python scripts/ci/check_inventory_sync.py
+  description: >-
+    Fails if inventory scope reconciliation still reports missing or orphan files.
+rollback_command: >-
+  git checkout origin/main -- scripts/ci/check_inventory_sync.py
+rollback_verification_command: >-
+  python scripts/ci/check_inventory_sync.py
+memory_update_type: none
+ledger_path: ".claude/commit_acceptors/inventory-feature-debt-bridge.yaml"
+report_path: ".claude/commit_acceptors/inventory-feature-debt-bridge.yaml"
+evidence:
+  - path: "scripts/ci/check_inventory_sync.py"

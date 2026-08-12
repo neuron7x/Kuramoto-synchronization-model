@@ -1,0 +1,13 @@
+ M docs/METRICS_CONTRACT.md
+ M docs/testing/canonical_commands.md
+ M go.work.sum
+ M reports/test_audit/baseline_run_20260522T150359Z/artifact_manifest.sha256
+ M reports/test_audit/evidence_index.json
+ M scripts/test_audit/run_evidence_baseline.sh
+ M tests/tools/test_validate_claims_have_evidence.py
+ M tools/claims/validate_claims_have_evidence.py
+ M tools/coverage/write_coverage_summary.py
+?? .github/workflows/evidence-grounding.yml
+?? reports/test_audit/baseline_run_20260522T151534Z/
+?? reports/test_audit/baseline_run_test_failed/
+?? reports/test_audit/post_merge_triage_20260522.md

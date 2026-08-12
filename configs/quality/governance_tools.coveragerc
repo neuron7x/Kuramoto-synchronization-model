@@ -1,0 +1,28 @@
+# SPDX-License-Identifier: MIT
+# ============================================================================
+# Governance-tooling coverage profile.
+#
+# tools/ and scripts/ are CI / release / governance / audit code — not the
+# shipped-library release surface, so they stay OUT of the release_90 denominator
+# (release coverage measures the product). But "outside the release denominator"
+# must not mean "outside all measurement": this dedicated profile measures the
+# governance tooling so a regression in a gate/verifier/auditor is observable.
+#
+# Invariant (mirrors release_90.coveragerc): no path under [run] omit may be a
+# child of any path under [run] source. If a sub-tree should not be measured,
+# REMOVE it from source — never hide it in omit.
+# ============================================================================
+
+[run]
+branch = True
+source =
+    tools
+    scripts
+
+[report]
+show_missing = True
+precision = 2
+omit =
+    tests/**
+    **/__init__.py
+    **/generated/**

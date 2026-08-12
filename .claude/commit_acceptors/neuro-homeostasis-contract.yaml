@@ -1,0 +1,64 @@
+id: neuro-homeostasis-contract
+status: ACTIVE
+claim_type: correctness
+promise: >-
+  The dopamine/serotonin opponent-process drive is bound by a fail-closed
+  homeostasis contract driving the REAL controllers: AllostaticRegulator load
+  stays in [-1,1] under an adversarial trajectory, dopamine/serotonin parameter
+  invariants reject out-of-bound params, and Kuramoto phase coherence locks for
+  synchronised phases. The No-Ungrounded-Act gate returns GO only when all hold.
+  The contract is wired into final_inference_verdict as a substrate strand, so
+  affect becomes a sub-verdict of system truth.
+diff_scope:
+  changed_files:
+    - path: ".claude/commit_acceptors/neuro-homeostasis-contract.yaml"
+    - path: "tools/audit_homeostasis_contract.py"
+    - path: "tools/audit_final_inference_verdict.py"
+    - path: "scripts/ci/validate_inference_artifacts.py"
+    - path: "tests/ci/test_homeostasis_contract.py"
+    - path: "artifacts/neuro/homeostasis_contract.json"
+    - path: "audit/schema/homeostasis_contract.schema.json"
+    - path: "artifacts/inference/final_inference_verdict.json"
+  forbidden_paths:
+    - "execution/"
+    - "core/neuro/"
+    - "core/kuramoto/"
+required_python_symbols:
+  - "tools/audit_homeostasis_contract.py::no_ungrounded_act"
+  - "tools/audit_homeostasis_contract.py::build_contract"
+expected_signal: >-
+  `python -m pytest --import-mode=importlib tests/ci/test_homeostasis_contract.py
+  tests/tools/test_final_inference_verdict.py -q` passes; the homeostasis contract
+  is PASS/gate=GO on the real controllers and enters the final verdict.
+measurement_command: >-
+  bash -c '
+    python -m pytest --import-mode=importlib -p no:cacheprovider
+      tests/ci/test_homeostasis_contract.py
+      tests/tools/test_final_inference_verdict.py -q
+  '
+signal_artifact: "tmp/neuro_homeostasis_contract.log"
+falsifier:
+  command: |-
+    bash -c '
+      python -c "
+    import importlib.util
+    spec = importlib.util.spec_from_file_location(\"hc\", \"tools/audit_homeostasis_contract.py\")
+    hc = importlib.util.module_from_spec(spec); spec.loader.exec_module(hc)
+    rep = hc.build_contract()
+    ok = rep[\"verdict\"] == \"PASS\" and rep[\"gate\"] == \"GO\" and all(i[\"passed\"] for i in rep[\"invariants\"])
+    ok = ok and hc.no_ungrounded_act(allostatic_bounded=True, params_admissible=True, coherence=0.5, r_min=0.9) == \"NO-GO\"
+    raise SystemExit(0 if ok else \"homeostasis contract not admissible or gate not fail-closed\")
+    "
+    '
+  description: >-
+    Drives the real controllers and asserts the contract is PASS/GO and that the
+    gate returns NO-GO when coherence is below threshold. Exits 0 when the drive
+    is homeostatic and the gate fails closed; non-zero otherwise.
+rollback_command: >-
+  bash -c 'git rm -f .claude/commit_acceptors/neuro-homeostasis-contract.yaml'
+rollback_verification_command: >-
+  bash -c 'test ! -f .claude/commit_acceptors/neuro-homeostasis-contract.yaml'
+memory_update_type: append
+ledger_path: ".claude/commit_acceptors/neuro-homeostasis-contract.yaml"
+report_path: "tmp/neuro_homeostasis_contract.log"
+evidence: []

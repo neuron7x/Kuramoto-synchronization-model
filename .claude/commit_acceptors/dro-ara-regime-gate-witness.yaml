@@ -1,0 +1,77 @@
+# Diff-bound commit acceptor for the DRO-ARA invalid-regime-gate witness.
+#
+# Adds ONE test module binding the previously-unwitnessed catalog law
+# dro_ara.invalid_regime_gate to an executable @law witness. Promotes no claim,
+# changes no runtime behavior, touches no schema/guard, uses no real data.
+#
+#   dro_ara.invalid_regime_gate — regime == INVALID iff (not stationary or
+#                                 r2 < R2_MIN), bidirectional (INV-DRO3).
+#
+# Locally verified on origin/main base:
+#   * pytest tests/physics_contracts/test_dro_ara_regime_gate_witness.py: 1 passed
+#   * .claude/physics/validate_tests.py <file>: 0 issues (L1..L5), EXIT 0
+#   * ruff / mypy --strict clean ; zero new `# type: ignore`
+id: dro-ara-regime-gate-witness
+status: ACTIVE
+claim_type: governance
+promise: >-
+  After this PR lands, tests/physics_contracts/test_dro_ara_regime_gate_witness.py
+  binds dro_ara.invalid_regime_gate to an @law witness that asserts geosync_observe
+  declares the INVALID regime iff the series is non-stationary or its DFA r2 is
+  below R2_MIN, over a sweep producing both outcomes (non-vacuous), and passes
+  validate_tests with zero issues. No market claim; no runtime, schema, or guard
+  change.
+diff_scope:
+  changed_files:
+    - path: ".claude/commit_acceptors/dro-ara-regime-gate-witness.yaml"
+    - path: "tests/physics_contracts/test_dro_ara_regime_gate_witness.py"
+  forbidden_paths:
+    - "trading/"
+    - "execution/"
+    - "forecast/"
+    - "policy/"
+    - "application/"
+    - "core/"
+    - "src/"
+    - "geosync_hpc/"
+    - "physics_contracts/catalog.yaml"
+    - ".claude/physics/INVARIANTS.yaml"
+required_python_symbols: []
+expected_signal: >-
+  pytest reports 1 passed; validate_tests exits 0 with no L1..L5 issues; ruff and
+  mypy --strict clean.
+measurement_command: >-
+  bash -c 'mkdir -p tmp && python -m pytest
+  tests/physics_contracts/test_dro_ara_regime_gate_witness.py
+  > tmp/dro_ara_regime_gate_witness.log 2>&1
+  && grep -q "1 passed" tmp/dro_ara_regime_gate_witness.log'
+signal_artifact: "tmp/dro_ara_regime_gate_witness.log"
+falsifier:
+  command: |-
+    bash -c 'python -c "
+    import numpy as np, warnings; warnings.filterwarnings(\"ignore\")
+    from core.dro_ara.engine import R2_MIN, Regime, geosync_observe
+    rng = np.random.default_rng(0); broken = False
+    for i in range(40):
+        p = 100*np.exp(np.cumsum(rng.normal(0,0.01,600)))
+        o = geosync_observe(p)
+        inv = o[\"regime\"] == Regime.INVALID.value
+        cond = (not o[\"stationary\"]) or (o[\"r2_dfa\"] < R2_MIN)
+        if inv != cond: broken = True
+    import sys; sys.exit(0 if broken else 1)"'
+  description: >-
+    Inverse probe of the INVALID-regime equivalence. It exits 0 (fires) iff the
+    classifier ever declares INVALID without the gate condition (or vice versa) —
+    i.e. the iff is broken in real code. While the equivalence holds the probe
+    exits 1. If it ever exits 0, the witness is no longer truthful and the change
+    must be reverted, not patched green.
+rollback_command: >-
+  git rm -f
+  tests/physics_contracts/test_dro_ara_regime_gate_witness.py
+  .claude/commit_acceptors/dro-ara-regime-gate-witness.yaml
+rollback_verification_command: >-
+  bash -c 'test ! -f tests/physics_contracts/test_dro_ara_regime_gate_witness.py'
+memory_update_type: none
+ledger_path: ".claude/commit_acceptors/dro-ara-regime-gate-witness.yaml"
+report_path: "tmp/dro_ara_regime_gate_witness.log"
+evidence: []

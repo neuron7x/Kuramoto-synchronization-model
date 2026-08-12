@@ -1,7 +1,7 @@
 # Core Engine v1
 
 The **Core Engine v1** package delivers the minimum executable pipeline required
-for TradePulse deployments. It is intentionally small, dependency-light, and
+for GeoSync deployments. It is intentionally small, dependency-light, and
 focused on five sequential responsibilities:
 
 1. **Data** – pull normalized `MarketData` instances from an upstream `DataFeed`.

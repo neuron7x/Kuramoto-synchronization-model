@@ -1,3 +1,5 @@
+# Copyright (c) 2023-2026 Yaroslav Vasylenko (neuron7xLab)
+# SPDX-License-Identifier: MIT
 """Command line helpers for the data annotation toolkit."""
 
 from __future__ import annotations
@@ -44,9 +46,7 @@ def build_arg_parser() -> argparse.ArgumentParser:
     parser = argparse.ArgumentParser(description="Data annotation workflow utilities")
     sub = parser.add_subparsers(dest="command", required=True)
 
-    metrics = sub.add_parser(
-        "metrics", help="Build a metrics report from annotation records"
-    )
+    metrics = sub.add_parser("metrics", help="Build a metrics report from annotation records")
     metrics.add_argument(
         "records", type=Path, help="Path to JSON records exported from the interface"
     )
@@ -67,9 +67,7 @@ def build_arg_parser() -> argparse.ArgumentParser:
     anonymize.add_argument("input", type=Path, help="Input JSON file")
 
     active = sub.add_parser("active-learning", help="Select items for active learning")
-    active.add_argument(
-        "scores", type=Path, help="JSON file with items and class probabilities"
-    )
+    active.add_argument("scores", type=Path, help="JSON file with items and class probabilities")
     active.add_argument("batch_size", type=int, help="Number of items to sample")
     active.add_argument(
         "--strategy",
@@ -117,9 +115,7 @@ def handle_anonymize(args: argparse.Namespace) -> None:
     importer = DataImporter()
     data: Dict[str, Any] | Any = importer.import_json(args.input)
     anonymizer = DataAnonymizer()
-    privacy = PrivacyController(
-        anonymizer, {"drop_free_text": True, "max_text_length": 128}
-    )
+    privacy = PrivacyController(anonymizer, {"drop_free_text": True, "max_text_length": 128})
     if isinstance(data, list):
         processed = [privacy.enforce(entry) for entry in data]
     elif isinstance(data, dict):

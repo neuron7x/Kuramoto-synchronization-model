@@ -1,17 +1,20 @@
+# Copyright (c) 2023-2026 Yaroslav Vasylenko (neuron7xLab)
+# SPDX-License-Identifier: MIT
 """Actor-critic agent specialised for coupling with the FHMC controller."""
 
 from __future__ import annotations
 
 import logging
 import math
+from typing import Mapping
+
 import numpy as np
 import torch
 import torch.nn as nn
 import torch.nn.functional as F
-from typing import Mapping
 
 from core.utils.metrics import get_metrics_collector
-from neuropro.multifractal_opt import fractional_update
+from geosync_hpc.multifractal_opt import fractional_update
 from rl.core.habit_head import HabitHead, ape_update
 from rl.core.interfaces import PolicyContract, ValueContract
 from rl.core.modulation_signal import ModulationSignalController
@@ -151,9 +154,7 @@ class ActorCriticFHMC:
         return kl.sum(dim=-1).mean()
 
     @staticmethod
-    def _parameter_drift(
-        module: nn.Module, checkpoint: Mapping[str, torch.Tensor]
-    ) -> float:
+    def _parameter_drift(module: nn.Module, checkpoint: Mapping[str, torch.Tensor]) -> float:
         deltas = []
         norms = []
         for name, param in module.state_dict().items():
@@ -174,9 +175,7 @@ class ActorCriticFHMC:
         return np.zeros(self.state_dim, dtype=np.float32)
 
     def act(self, state_np: np.ndarray) -> np.ndarray:
-        state = torch.as_tensor(
-            state_np, dtype=torch.float32, device=self.device
-        ).unsqueeze(0)
+        state = torch.as_tensor(state_np, dtype=torch.float32, device=self.device).unsqueeze(0)
         orexin = self.fhmc.orexin_value()
         threat = self.fhmc.threat_value()
         beta = self.beta0 + 0.8 * orexin - 0.6 * threat
@@ -203,15 +202,9 @@ class ActorCriticFHMC:
         done: bool,
     ) -> None:
         s = torch.as_tensor(state, dtype=torch.float32, device=self.device).unsqueeze(0)
-        a = torch.as_tensor(action, dtype=torch.float32, device=self.device).unsqueeze(
-            0
-        )
-        r = torch.as_tensor(reward, dtype=torch.float32, device=self.device).unsqueeze(
-            0
-        )
-        s_next = torch.as_tensor(
-            next_state, dtype=torch.float32, device=self.device
-        ).unsqueeze(0)
+        a = torch.as_tensor(action, dtype=torch.float32, device=self.device).unsqueeze(0)
+        r = torch.as_tensor(reward, dtype=torch.float32, device=self.device).unsqueeze(0)
+        s_next = torch.as_tensor(next_state, dtype=torch.float32, device=self.device).unsqueeze(0)
 
         v = self.value(s)
         v_next = self.value(s_next).detach()
@@ -241,8 +234,7 @@ class ActorCriticFHMC:
         ]
         grads_value, value_grad_norm, _ = self._clip_grads(grads_value)
         grads_value = [
-            grad * modulation_scale if grad is not None else None
-            for grad in grads_value
+            grad * modulation_scale if grad is not None else None for grad in grads_value
         ]
         fractional_update(
             list(self.value.parameters()),
@@ -284,8 +276,7 @@ class ActorCriticFHMC:
         ]
         grads_policy, policy_grad_norm, _ = self._clip_grads(grads_policy)
         grads_policy = [
-            grad * modulation_scale if grad is not None else None
-            for grad in grads_policy
+            grad * modulation_scale if grad is not None else None for grad in grads_policy
         ]
         fractional_update(
             list(self.policy.parameters()),
@@ -312,8 +303,7 @@ class ActorCriticFHMC:
             )
             self._restore_params(self.policy, policy_snapshot)
             trusted_grads = [
-                grad * trust_scale if grad is not None else None
-                for grad in grads_policy
+                grad * trust_scale if grad is not None else None for grad in grads_policy
             ]
             fractional_update(
                 list(self.policy.parameters()),
@@ -327,9 +317,7 @@ class ActorCriticFHMC:
             mu_new, log_std_new = self.policy(s)
             mu_new = mu_new * beta
             policy_kl = float(
-                self._policy_kl(
-                    mu_old, log_std_old, mu_new.detach(), log_std_new.detach()
-                )
+                self._policy_kl(mu_old, log_std_old, mu_new.detach(), log_std_new.detach())
             )
 
         policy_drift = self._parameter_drift(self.policy, self._policy_checkpoint)
@@ -359,12 +347,12 @@ class ActorCriticFHMC:
 
         if self._metrics.enabled:
             agent_label = "fhmc_actor_critic"
-            self._metrics.rl_update_scale.labels(
-                agent=agent_label, component="value"
-            ).set(gate_decision.scale)
-            self._metrics.rl_update_scale.labels(
-                agent=agent_label, component="policy"
-            ).set(gate_decision.scale)
+            self._metrics.rl_update_scale.labels(agent=agent_label, component="value").set(
+                gate_decision.scale
+            )
+            self._metrics.rl_update_scale.labels(agent=agent_label, component="policy").set(
+                gate_decision.scale
+            )
             self._metrics.rl_modulation_scale.labels(
                 agent=agent_label, component="value", signal="risk_weighted_lr"
             ).set(modulation_scale)
@@ -377,12 +365,12 @@ class ActorCriticFHMC:
             self._metrics.rl_modulation_arousal.labels(
                 agent=agent_label, signal="risk_weighted_lr"
             ).set(modulation_decision.arousal_boost)
-            self._metrics.rl_grad_norm.labels(
-                agent=agent_label, component="value"
-            ).set(value_grad_norm)
-            self._metrics.rl_grad_norm.labels(
-                agent=agent_label, component="policy"
-            ).set(policy_grad_norm)
+            self._metrics.rl_grad_norm.labels(agent=agent_label, component="value").set(
+                value_grad_norm
+            )
+            self._metrics.rl_grad_norm.labels(agent=agent_label, component="policy").set(
+                policy_grad_norm
+            )
             self._metrics.rl_policy_kl.labels(agent=agent_label).set(policy_kl)
             self._metrics.rl_policy_drift.labels(agent=agent_label).set(policy_drift)
             if rolled_back and rollback_reason:

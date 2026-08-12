@@ -1,0 +1,69 @@
+id: event-bus-lifecycle-integrity
+status: ACTIVE
+claim_type: correctness
+promise: >-
+  KafkaEventBus.stop() now drops the producer handle, so stop is idempotent and a
+  publish after stop fails closed (RuntimeError) instead of driving a stopped
+  producer. artifacts/messaging/event_bus_lifecycle_matrix.json binds all 8
+  lifecycle invariants (subscribe tracks a task, stop cancels all, dup-no-orphan,
+  poison->DLQ, handler-exception recorded, idempotent delivery, idempotent stop,
+  publish-after-stop fail-closed) to real PASS tests.
+diff_scope:
+  changed_files:
+    - path: ".claude/commit_acceptors/event-bus-lifecycle-integrity.yaml"
+    - path: "core/messaging/event_bus.py"
+    - path: "tests/unit/messaging/test_event_bus_lifecycle_integrity.py"
+    - path: "tests/ci/test_event_bus_lifecycle_matrix.py"
+    - path: "artifacts/messaging/event_bus_lifecycle_matrix.json"
+    - path: "audit/schema/event_bus_lifecycle_matrix.schema.json"
+  forbidden_paths:
+    - "execution/"
+    - "core/physics/"
+required_python_symbols:
+  - "core/messaging/event_bus.py::KafkaEventBus"
+expected_signal: >-
+  `python -m pytest --import-mode=importlib
+  tests/unit/messaging/test_event_bus_lifecycle_integrity.py
+  tests/ci/test_event_bus_lifecycle_matrix.py -q` passes; publish after stop raises
+  and stop is idempotent.
+measurement_command: >-
+  bash -c '
+    python -m pytest --import-mode=importlib -p no:cacheprovider
+      tests/unit/messaging/test_event_bus_lifecycle_integrity.py
+      tests/ci/test_event_bus_lifecycle_matrix.py -q
+  '
+signal_artifact: "tmp/event_bus_lifecycle_integrity.log"
+falsifier:
+  command: |-
+    bash -c '
+      python -c "
+    import asyncio
+    from core.messaging.event_bus import EventBusBackend, EventBusConfig, EventEnvelope, EventTopic, KafkaEventBus
+    class _P:
+        async def stop(self): pass
+        async def send_and_wait(self, *a, **k): pass
+    async def main():
+        bus = KafkaEventBus(EventBusConfig(backend=EventBusBackend.KAFKA, bootstrap_servers=\"x\"))
+        bus._producer = _P()
+        await bus.stop()
+        env = EventEnvelope(event_type=\"t\", partition_key=\"k\", event_id=\"e\", payload=b\"{}\", content_type=\"application/json\", schema_version=\"1\")
+        try:
+            await bus.publish(EventTopic.MARKET_TICKS, env)
+        except RuntimeError:
+            return 0
+        return 1
+    raise SystemExit(asyncio.run(main()))
+    "
+    '
+  description: >-
+    Stops the bus then publishes. Exits 0 when publish-after-stop fails closed
+    (RuntimeError); non-zero if the producer handle survives stop and the publish
+    proceeds.
+rollback_command: >-
+  bash -c 'git rm -f .claude/commit_acceptors/event-bus-lifecycle-integrity.yaml'
+rollback_verification_command: >-
+  bash -c 'test ! -f .claude/commit_acceptors/event-bus-lifecycle-integrity.yaml'
+memory_update_type: append
+ledger_path: ".claude/commit_acceptors/event-bus-lifecycle-integrity.yaml"
+report_path: "tmp/event_bus_lifecycle_integrity.log"
+evidence: []

@@ -1,7 +1,9 @@
+# Copyright (c) 2023-2026 Yaroslav Vasylenko (neuron7xLab)
+# SPDX-License-Identifier: MIT
 """High-assurance data pipeline orchestration primitives.
 
 The goal of this module is to provide an opinionated yet extensible
-orchestrator that codifies the battle-tested practices used across TradePulse
+orchestrator that codifies the battle-tested practices used across GeoSync
 for preparing market and alternative data.  The orchestration layer stitches
 existing building blocks together (schema validation, quality gates, drift
 monitoring, backfill tooling, offline/online materialisation) and guarantees
@@ -71,9 +73,7 @@ class OfflineWriter(Protocol):
 class OnlineWriter(Protocol):
     """Protocol abstraction mirroring ``OnlineFeatureStore.sync`` semantics."""
 
-    def __call__(
-        self, feature_view: str, frame: pd.DataFrame, *, mode: str = "append"
-    ) -> None: ...
+    def __call__(self, feature_view: str, frame: pd.DataFrame, *, mode: str = "append") -> None: ...
 
 
 @dataclass(frozen=True, slots=True)
@@ -272,9 +272,7 @@ class DataPipeline:
 
     def __init__(self, config: DataPipelineConfig) -> None:
         if not config.sources:
-            raise PipelineConfigurationError(
-                "At least one source of truth must be configured"
-            )
+            raise PipelineConfigurationError("At least one source of truth must be configured")
         self._config = config
         self._rng = np.random.default_rng(config.random_seed)
 
@@ -349,9 +347,7 @@ class DataPipeline:
     # ------------------------------------------------------------------
     # Loading and validation
     # ------------------------------------------------------------------
-    def _load_source(
-        self, dataset: str, context: PipelineContext
-    ) -> tuple[pd.DataFrame, str]:
+    def _load_source(self, dataset: str, context: PipelineContext) -> tuple[pd.DataFrame, str]:
         candidates = sorted(self._config.sources, key=lambda spec: spec.priority)
         for spec in candidates:
             if not spec.supports(dataset):
@@ -359,13 +355,9 @@ class DataPipeline:
             frame = spec.loader(context)
             if frame is not None and not frame.empty:
                 return frame.copy(), spec.name
-        raise PipelineExecutionError(
-            f"No non-empty sources yielded data for dataset '{dataset}'"
-        )
+        raise PipelineExecutionError(f"No non-empty sources yielded data for dataset '{dataset}'")
 
-    def _validate(
-        self, frame: pd.DataFrame, schema: TimeSeriesValidationConfig
-    ) -> pd.DataFrame:
+    def _validate(self, frame: pd.DataFrame, schema: TimeSeriesValidationConfig) -> pd.DataFrame:
         timestamp_col = schema.timestamp_column
         if timestamp_col not in frame.columns:
             raise PipelineExecutionError(
@@ -434,17 +426,11 @@ class DataPipeline:
             )
 
         clean = report.clean
-        clean = clean.drop_duplicates(
-            subset=gate.validation_schema.timestamp_column, keep="last"
-        )
+        clean = clean.drop_duplicates(subset=gate.validation_schema.timestamp_column, keep="last")
         summary = report.summarise(gate)
-        return DataPipeline._QualityOutcome(
-            clean.reset_index(drop=True), quarantined, summary
-        )
+        return DataPipeline._QualityOutcome(clean.reset_index(drop=True), quarantined, summary)
 
-    def _apply_toxicity_filter(
-        self, frame: pd.DataFrame
-    ) -> tuple[pd.DataFrame, pd.DataFrame]:
+    def _apply_toxicity_filter(self, frame: pd.DataFrame) -> tuple[pd.DataFrame, pd.DataFrame]:
         cfg = self._config.toxicity_filter
         if cfg is None or cfg.column not in frame.columns:
             empty = frame.iloc[0:0].copy()
@@ -495,9 +481,7 @@ class DataPipeline:
             random_state=int(self._rng.integers(0, np.iinfo(np.int32).max)),
         ).reset_index(drop=True)
 
-    def _build_stratified_splits(
-        self, frame: pd.DataFrame
-    ) -> Mapping[str, pd.DataFrame]:
+    def _build_stratified_splits(self, frame: pd.DataFrame) -> Mapping[str, pd.DataFrame]:
         cfg = self._config.stratified_split
         if cfg is None or frame.empty or cfg.column not in frame.columns:
             return {"full": frame.reset_index(drop=True)}
@@ -505,9 +489,7 @@ class DataPipeline:
         splits = tuple(cfg.normalised_splits().items())
         empty_template = frame.iloc[0:0].copy()
 
-        collected_indices: dict[str, list[np.ndarray]] = {
-            name: [] for name, _ in splits
-        }
+        collected_indices: dict[str, list[np.ndarray]] = {name: [] for name, _ in splits}
         remainder_indices: list[np.ndarray] = []
 
         column = frame[cfg.column]
@@ -521,7 +503,11 @@ class DataPipeline:
             if group.empty:
                 continue
 
-            indices = group.index.to_numpy()
+            # pandas 3 Copy-on-Write returns read-only ndarrays from
+            # ``Index.to_numpy``; ``Generator.shuffle`` mutates in place
+            # and rejects read-only buffers. Force ``copy=True`` so we own
+            # a writable buffer regardless of pandas version.
+            indices = group.index.to_numpy(copy=True)
             if cfg.shuffle:
                 self._rng.shuffle(indices)
 
@@ -565,9 +551,7 @@ class DataPipeline:
 
         return results
 
-    def _augment_with_synthetic(
-        self, frame: pd.DataFrame
-    ) -> tuple[pd.DataFrame, pd.DataFrame]:
+    def _augment_with_synthetic(self, frame: pd.DataFrame) -> tuple[pd.DataFrame, pd.DataFrame]:
         cfg = self._config.synthetic
         if frame.empty or cfg.samples <= 0:
             return frame, frame.iloc[0:0].copy()
@@ -579,9 +563,7 @@ class DataPipeline:
             replace=True,
             random_state=self._rng.integers(0, np.iinfo(np.int32).max),
         ).reset_index(drop=True)
-        noise = self._rng.normal(
-            0.0, cfg.noise_scale, size=(len(sample), len(numeric_cols))
-        )
+        noise = self._rng.normal(0.0, cfg.noise_scale, size=(len(sample), len(numeric_cols)))
         synthetic = sample.copy()
         synthetic.loc[:, numeric_cols] = sample.loc[:, numeric_cols] + noise
         synthetic["synthetic"] = True
@@ -641,9 +623,7 @@ class DataPipeline:
                 f"Timestamp column '{timestamp_col}' missing from frame during backfill"
             )
 
-        def loader(
-            key: CacheKey, start: pd.Timestamp, end: pd.Timestamp
-        ) -> pd.DataFrame:
+        def loader(key: CacheKey, start: pd.Timestamp, end: pd.Timestamp) -> pd.DataFrame:
             del key  # loader may not need the cache key in simple setups
             mask = (frame[timestamp_col] >= start) & (frame[timestamp_col] < end)
             subset = frame.loc[mask]
@@ -662,9 +642,7 @@ class DataPipeline:
     # ------------------------------------------------------------------
     # Persistence
     # ------------------------------------------------------------------
-    def _persist(
-        self, dataset: str, frame: pd.DataFrame, context: PipelineContext
-    ) -> None:
+    def _persist(self, dataset: str, frame: pd.DataFrame, context: PipelineContext) -> None:
         offline = self._config.offline_writer
         if offline is not None:
             offline_dataset = context.offline_dataset or dataset

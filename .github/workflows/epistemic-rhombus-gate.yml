@@ -1,0 +1,97 @@
+# SPDX-License-Identifier: MIT
+#
+# Epistemic Rhombus Gate.
+#
+# Fails closed when the repository-level governance manifest drifts away from
+# its JSON schema, loses exactly-once axis coverage, drops a record identity,
+# points at an unsafe external enforcement target, or loses its threat model.
+
+name: Epistemic Rhombus Gate
+
+on:
+  pull_request:
+    branches: [main]
+    paths:
+      - "CLAIMS.md"
+      - "docs/governance/epistemic_rhombus_manifest.md"
+      - "governance/epistemic_rhombus_manifest.jsonl"
+      - "schemas/governance/epistemic_rhombus_manifest.schema.json"
+      - "scripts/validate_epistemic_rhombus_manifest.py"
+      - "tests/scripts/test_validate_epistemic_rhombus_manifest.py"
+      - ".github/workflows/epistemic-rhombus-gate.yml"
+  merge_group:
+  push:
+    branches: [main]
+    paths:
+      - "CLAIMS.md"
+      - "docs/governance/epistemic_rhombus_manifest.md"
+      - "governance/epistemic_rhombus_manifest.jsonl"
+      - "schemas/governance/epistemic_rhombus_manifest.schema.json"
+      - "scripts/validate_epistemic_rhombus_manifest.py"
+      - "tests/scripts/test_validate_epistemic_rhombus_manifest.py"
+      - ".github/workflows/epistemic-rhombus-gate.yml"
+  workflow_dispatch:
+
+permissions:
+  contents: read
+
+concurrency:
+  group: epistemic-rhombus-gate-${{ github.event.pull_request.number || github.sha }}
+  cancel-in-progress: true
+
+jobs:
+  validate:
+    name: Validate Rhombus manifest / Python ${{ matrix.python-version }}
+    runs-on: ubuntu-latest
+    timeout-minutes: 10
+    strategy:
+      fail-fast: false
+      matrix:
+        python-version: ["3.11", "3.12"]
+    steps:
+      - name: Checkout
+        uses: actions/checkout@9c091bb21b7c1c1d1991bb908d89e4e9dddfe3e0 # v7.0.0
+
+      - name: Set up Python
+        uses: actions/setup-python@ece7cb06caefa5fff74198d8649806c4678c61a1 # v6
+        with:
+          python-version: ${{ matrix.python-version }}
+
+      - name: Install validator dependencies
+        run: |
+          set -euo pipefail
+          python -m pip install --upgrade pip
+          python -m pip install jsonschema numpy pytest
+
+      - name: Validate live manifest and write audit report
+        run: |
+          set -euo pipefail
+          mkdir -p reports/governance
+          python scripts/validate_epistemic_rhombus_manifest.py \
+            --report reports/governance/epistemic_rhombus_manifest.validation.json
+
+      - name: Upload Rhombus validation report
+        if: always()
+        uses: actions/upload-artifact@043fb46d1a93c77aae656e7c1c64a875d1fc6a0a # v7.0.1
+        with:
+          name: epistemic-rhombus-report-py${{ matrix.python-version }}
+          path: reports/governance/epistemic_rhombus_manifest.validation.json
+          if-no-files-found: error
+
+      - name: Run validator negative-control tests
+        run: |
+          set -euo pipefail
+          mkdir -p reports/governance
+          python -m pytest tests/scripts/test_validate_epistemic_rhombus_manifest.py \
+            -q --tb=short --junitxml=reports/governance/epistemic_rhombus_tests.xml \
+            2>&1 | tee reports/governance/epistemic_rhombus_pytest.log
+
+      - name: Upload Rhombus test report
+        if: always()
+        uses: actions/upload-artifact@043fb46d1a93c77aae656e7c1c64a875d1fc6a0a # v7.0.1
+        with:
+          name: epistemic-rhombus-tests-py${{ matrix.python-version }}
+          path: |
+            reports/governance/epistemic_rhombus_tests.xml
+            reports/governance/epistemic_rhombus_pytest.log
+          if-no-files-found: warn

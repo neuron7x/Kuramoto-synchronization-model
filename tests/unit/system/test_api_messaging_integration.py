@@ -1,3 +1,5 @@
+# Copyright (c) 2023-2026 Yaroslav Vasylenko (neuron7xLab)
+# SPDX-License-Identifier: MIT
 from __future__ import annotations
 
 import json
@@ -152,9 +154,7 @@ def test_default_partition_resolver_uses_symbol_path_parameter() -> None:
     result = router.route_request(GatewayRequest(path="/stream/ETHUSD", method="GET"))
 
     assert result.envelope.partition_key == "ETHUSD"
-    assert json.loads(result.envelope.headers["x-gateway-path-params"]) == {
-        "symbol": "ETHUSD"
-    }
+    assert json.loads(result.envelope.headers["x-gateway-path-params"]) == {"symbol": "ETHUSD"}
 
 
 def test_default_partition_resolver_falls_back_to_request_path() -> None:
@@ -272,9 +272,7 @@ def test_default_payload_encoder_serialises_dataclasses_and_datetimes() -> None:
         topic=EventTopic.ORDERS,
     )
 
-    payload = Payload(
-        symbol="BTC-USD", created_at=datetime(2024, 1, 2, tzinfo=timezone.utc)
-    )
+    payload = Payload(symbol="BTC-USD", created_at=datetime(2024, 1, 2, tzinfo=timezone.utc))
     request = GatewayRequest(path="/orders", method="POST", payload=payload)
 
     result = router.route_request(request)

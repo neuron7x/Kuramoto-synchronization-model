@@ -3,7 +3,7 @@
 ## Stepping/loop overview
 
 The per-step loop is driven by `NeuroOptimizer.optimize` in
-`src/tradepulse/core/neuro/neuro_optimizer.py`. Each step performs:
+`src/geosync/core/neuro/neuro_optimizer.py`. Each step performs:
 
 1. `_calculate_balance_metrics` (updates 5 neuromodulator ratios/coherence).
 2. `_calculate_objective` (combines performance + balance + stability).

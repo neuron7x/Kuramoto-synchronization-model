@@ -248,7 +248,7 @@ module "vpc_cidr_from_ipam" {
 
 Report issues/questions/feature requests on in the [issues](https://github.com/terraform-aws-modules/terraform-aws-vpc/issues/new) section.
 
-Full contributing [guidelines are covered here](.github/contributing.md).
+Full contributing [guidelines are covered here](../../../../CONTRIBUTING.md).
 
 <!-- BEGINNING OF PRE-COMMIT-TERRAFORM DOCS HOOK -->
 ## Requirements

@@ -1,0 +1,128 @@
+{
+  "horizon_sec": 180,
+  "hour_buckets": {
+    "10": {
+      "hour_utc": 10,
+      "ic_signal": 0.12788186750845498,
+      "n_rows": 36000,
+      "permutation_p": 0.001996007984031936,
+      "session_source": [
+        "binance_l2_perp"
+      ]
+    },
+    "11": {
+      "hour_utc": 11,
+      "ic_signal": -0.03602656215552008,
+      "n_rows": 36000,
+      "permutation_p": 0.001996007984031936,
+      "session_source": [
+        "binance_l2_perp"
+      ]
+    },
+    "12": {
+      "hour_utc": 12,
+      "ic_signal": 0.055568414466883216,
+      "n_rows": 36000,
+      "permutation_p": 0.001996007984031936,
+      "session_source": [
+        "binance_l2_perp"
+      ]
+    },
+    "13": {
+      "hour_utc": 13,
+      "ic_signal": 0.3553520103222682,
+      "n_rows": 18690,
+      "permutation_p": 0.001996007984031936,
+      "session_source": [
+        "binance_l2_perp"
+      ]
+    },
+    "20": {
+      "hour_utc": 20,
+      "ic_signal": 0.0008355850294975288,
+      "n_rows": 7410,
+      "permutation_p": 0.9540918163672655,
+      "session_source": [
+        "binance_l2_perp_v2"
+      ]
+    },
+    "21": {
+      "hour_utc": 21,
+      "ic_signal": -0.07151446331101755,
+      "n_rows": 36000,
+      "permutation_p": 0.001996007984031936,
+      "session_source": [
+        "binance_l2_perp_v2"
+      ]
+    },
+    "22": {
+      "hour_utc": 22,
+      "ic_signal": -0.19885204817888597,
+      "n_rows": 23780,
+      "permutation_p": 0.001996007984031936,
+      "session_source": [
+        "binance_l2_perp_v2"
+      ]
+    },
+    "5": {
+      "hour_utc": 5,
+      "ic_signal": null,
+      "n_rows": 0,
+      "permutation_p": null,
+      "session_source": [
+        "binance_l2_perp_v3"
+      ]
+    },
+    "6": {
+      "hour_utc": 6,
+      "ic_signal": -0.06192958248831549,
+      "n_rows": 35570,
+      "permutation_p": 0.001996007984031936,
+      "session_source": [
+        "binance_l2_perp_v3"
+      ]
+    },
+    "7": {
+      "hour_utc": 7,
+      "ic_signal": -0.11938733486106858,
+      "n_rows": 36000,
+      "permutation_p": 0.001996007984031936,
+      "session_source": [
+        "binance_l2_perp_v3"
+      ]
+    },
+    "8": {
+      "hour_utc": 8,
+      "ic_signal": 0.00858251502943826,
+      "n_rows": 59320,
+      "permutation_p": 0.03592814371257485,
+      "session_source": [
+        "binance_l2_perp",
+        "binance_l2_perp_v3"
+      ]
+    },
+    "9": {
+      "hour_utc": 9,
+      "ic_signal": 0.019113498286097236,
+      "n_rows": 67630,
+      "permutation_p": 0.001996007984031936,
+      "session_source": [
+        "binance_l2_perp",
+        "binance_l2_perp_v3"
+      ]
+    }
+  },
+  "min_rows_per_hour": 300,
+  "n_significant_negative": 5,
+  "n_significant_positive": 5,
+  "pvalue_gate": 0.05,
+  "reasons": [
+    "5 positive + 5 negative hours significant at p<0.05"
+  ],
+  "sessions_used": [
+    "binance_l2_perp",
+    "binance_l2_perp_v2",
+    "binance_l2_perp_v3"
+  ],
+  "verdict": "SIGN_FLIP_CONFIRMED"
+}

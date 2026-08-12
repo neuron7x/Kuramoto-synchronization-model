@@ -1,0 +1,54 @@
+{
+  "schema_version": "2026.06.25",
+  "issue": 1228,
+  "tracking_issue": 1356,
+  "slice_id": "issue_1228_tasks_18_22_unit_contract",
+  "status": "ARTIFACT_ONLY_UNIT_CONTRACT_VERDICT",
+  "score_credit_granted": false,
+  "final_validation_complete": false,
+  "target_interval_claimed": false,
+  "canonical_score_before_slice": 81.5,
+  "score_behavior": "unchanged; unit contract carriers do not grant score credit",
+  "completed_tasks": [18, 19, 20, 21, 22],
+  "task_carriers": {
+    "18_dt_unit_row": {
+      "carrier_type": "documentation_row",
+      "path": "docs/physics/units_table.md",
+      "symbol": "dt",
+      "meaning": "time step / simulation increment",
+      "dimension": "time",
+      "implementation_carrier": "dt",
+      "guard": "positive finite when used by an integrator"
+    },
+    "19_unit_contract_artifact": {
+      "carrier_type": "artifact_json",
+      "path": "artifacts/physics_validation/issue_1228_slice3_unit_contract_verdict.json"
+    },
+    "20_unit_contract_smoke_test": {
+      "carrier_type": "test_path",
+      "path": "tests/physics/test_dimensional_homogeneity.py",
+      "test_node": "test_unit_state_contract_is_complete"
+    },
+    "21_homogeneity_test_link": {
+      "carrier_type": "test_path",
+      "path": "tests/physics/test_dimensional_homogeneity.py",
+      "test_node": "test_equation_unit_contract_is_complete"
+    },
+    "22_unit_pass_fail_summary": {
+      "carrier_type": "artifact_field",
+      "path": "artifacts/physics_validation/issue_1228_slice3_unit_contract_verdict.json",
+      "json_pointer": "/verdict"
+    }
+  },
+  "measurement_command": "python -m json.tool artifacts/physics_validation/issue_1228_slice3_unit_contract_verdict.json && grep -q '| `dt` |' docs/physics/units_table.md && python -m pytest tests/physics/test_dimensional_homogeneity.py -q",
+  "expected_unit_state_keys": ["theta", "omega", "K", "A", "R", "Phi", "dt"],
+  "non_claims": [
+    "Does not claim score increase beyond 81.5.",
+    "Does not claim final physics validation.",
+    "Does not claim target interval reached.",
+    "Does not treat static unit labels as physics-invariant witnesses.",
+    "Does not replace later claim-null, replay, UQ, or release-verdict tasks."
+  ],
+  "next_open_tasks": [23, 24, 25, 26, 27, 28, 29, 30, 31, 32, 33],
+  "verdict": "TASKS_18_22_HAVE_UNIT_CONTRACT_CARRIERS_SCORE_UNCHANGED"
+}

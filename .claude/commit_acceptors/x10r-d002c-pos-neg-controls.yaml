@@ -1,0 +1,292 @@
+# Diff-bound commit acceptor for D-002C C2.4-B (issue #654) —
+# Positive-control + negative-control pre-flight gates for the
+# Signal Amplification Sweep.
+#
+# What lands:
+#   * research/systemic_risk/d002c_pos_control.py
+#       Positive-control gate. For each (substrate, metric) at the
+#       upper grid corner (N=400, λ=1.0, the strongest precursor),
+#       draws n_seeds=50 independent realisations and asserts
+#           signal_ci_ratio = |mean(diffs)| / (std(diffs) / √n_seeds)
+#       exceeds the locked C2.4 threshold of 2.0. Cells that fail
+#       are EXCLUDED from the downstream sweep — not silently
+#       patched. The verdict's excluded_combos list is the gate
+#       output the sweep runner consumes. Right-censoring is
+#       handled honestly via the d002c_metrics.signal_mean helper
+#       (KM RMST fallback when any cohort observation is censored).
+#       Atomic JSON capsule (tmp + fsync + os.replace) mirrors the
+#       d002c_crn_validator pattern.
+#   * research/systemic_risk/d002c_neg_control.py
+#       Negative-control gate. For each (substrate, metric, N)
+#       at λ=0 (no precursor anywhere), draws n_seeds=50 null
+#       realisations on K_baseline with two independent integrator
+#       seeds, and checks that the empirical false-positive rate
+#       does not exceed
+#           α_bonferroni + tolerance  (default 2.31e-4 + 1e-3)
+#       where α_b = 0.05 / 216 is the Bonferroni correction for
+#       the full sweep's 216 cells. The z-test critical value is
+#       computed via Acklam's probit (Φ^{-1}). Cells that exceed
+#       the FPR bound are EXCLUDED — the sweep runner consumes
+#       excluded_cells. Atomic JSON capsule, same discipline.
+#   * tests/research/systemic_risk/test_d002c_pos_control.py
+#       28 fast tests covering:
+#         - signal_ci_ratio arithmetic (t-stat formula, degenerate
+#           variance branch)
+#         - real-pipeline PASS/EXCLUDE on block × sync_auc
+#         - sha256 determinism + threshold-driven divergence
+#         - input validation (n_seeds<2, threshold nan/0/neg,
+#           N<2, lambda<0)
+#         - right-censoring path (KM RMST aggregator engaged)
+#         - run_pos_control_all: atomic capsule write, no orphan
+#           .tmp, excluded_combos population, empty-substrate /
+#           empty-metric rejection
+#         - frozen dataclasses (cell + verdict)
+#         - default-constants sanity (DEFAULT_POS_N=400,
+#           DEFAULT_POS_LAMBDA=1.0, DEFAULT_POS_N_SEEDS=50,
+#           DEFAULT_POS_THRESHOLD=2.0)
+#         - atomic-write orphan-tmp cleanup on serialisation
+#           failure, parent-dir creation, overwrite-existing
+#   * tests/research/systemic_risk/test_d002c_neg_control.py
+#       30 fast tests covering:
+#         - Acklam probit at canonical quantiles
+#         - Bonferroni critical value monotone in α
+#         - stub-metric FPR arithmetic (constant → 0, Gaussian →
+#           within α_b + tolerance)
+#         - real-pipeline PASS at λ=0 on block × sync_auc
+#         - EXCLUDE branch when tolerance=0 + forced-FP α
+#         - sha256 determinism + α-driven divergence
+#         - input validation (n_seeds<2, N<2, tolerance<0,
+#           α∉(0,1))
+#         - run_neg_control_all: 3×N_grid cell count, atomic
+#           capsule write, no orphan .tmp, excluded_cells
+#           triples, empty input rejection
+#         - frozen dataclasses
+#         - default-constants sanity (DEFAULT_NEG_N_SEEDS=50,
+#           DEFAULT_NEG_LAMBDA=0.0, DEFAULT_NEG_ALPHA_BONFERRONI=
+#           2.31e-4, DEFAULT_NEG_TOLERANCE=1e-3,
+#           DEFAULT_NEG_N_GRID=(50,100,200))
+#         - atomic-write orphan-tmp cleanup, parent-dir creation,
+#           overwrite-existing
+#         - large-n FPR convergence under a controlled Gaussian null
+#
+# Strict scope:
+#   Pre-flight GATE emission ONLY. No sweep launch. No claim layer.
+#   No promotion of a verdict into a tier — C2.4-A (sweep runner)
+#   reads the capsules and skips EXCLUDEd cells. The gates emit
+#   no claim of their own. Exclusion semantics: a failed combo
+#   is EXCLUDED from the downstream sweep, NOT silently fixed.
+#
+# Co-existence with Session A (C2.4-A) and Session C (C2.4-C):
+#   This PR is independent. The forbidden_paths below cover Session
+#   A's d002c_sweep_runner.py and Session C's d002c_null_audit.py /
+#   d002c_smoke_test.py so a stray edit cannot cross session
+#   boundaries.
+
+id: x10r-d002c-pos-neg-controls
+status: ACTIVE
+claim_type: correctness
+promise: >-
+  After this PR lands, research/systemic_risk/d002c_pos_control
+  exposes run_pos_control_cell(...) and run_pos_control_all(...),
+  and research/systemic_risk/d002c_neg_control exposes
+  run_neg_control_cell(...) and run_neg_control_all(...). Both
+  are pre-flight gates for the D-002C Signal Amplification Sweep:
+
+    * POS:  For each (substrate, metric) at N=400, λ=1.0 over 50
+            seeds, requires signal_ci_ratio > 2.0 (locked C2.4
+            threshold). Cells that fail are EXCLUDED from the
+            downstream sweep. Right-censoring is handled via
+            d002c_metrics.signal_mean (KM RMST fallback).
+
+    * NEG:  For each (substrate, metric, N) at λ=0 over 50 seeds,
+            requires empirical FPR ≤ α_bonferroni + tolerance
+            (default 2.31e-4 + 1e-3 = 1.231e-3). Cells that exceed
+            the FPR bound are EXCLUDED.
+
+  Both write atomic JSON capsules (tmp + fsync + os.replace) with
+  canonical-sha256 over the result payload. The capsules are the
+  gating artefact the sweep runner reads. Exclusion semantics:
+  a failed combo is EXCLUDED from the sweep, never silently
+  patched.
+
+  Strict scope: pre-flight gates only. No sweep execution. No
+  claim layer. No promotion of a verdict into any tier.
+
+diff_scope:
+  changed_files:
+    - path: ".claude/commit_acceptors/x10r-d002c-pos-neg-controls.yaml"
+    - path: "research/systemic_risk/d002c_pos_control.py"
+    - path: "research/systemic_risk/d002c_neg_control.py"
+    - path: "tests/research/systemic_risk/test_d002c_pos_control.py"
+    - path: "tests/research/systemic_risk/test_d002c_neg_control.py"
+  forbidden_paths:
+    - "trading/"
+    - "execution/"
+    - "forecast/"
+    - "policy/"
+    - "core/physics/"
+    - "core/kuramoto/"
+    - "research/reconstruction/"
+    - "research/systemic_risk/sweep_checkpoint.py"
+    - "research/systemic_risk/d002c_preregistration.py"
+    - "research/systemic_risk/d002c_substrates.py"
+    - "research/systemic_risk/d002c_metrics.py"
+    - "research/systemic_risk/d002c_kuramoto.py"
+    - "research/systemic_risk/d002c_crn_validator.py"
+    - "research/systemic_risk/d002c_sweep_runner.py"
+    - "research/systemic_risk/d002c_null_audit.py"
+    - "research/systemic_risk/d002c_smoke_test.py"
+    - "scripts/run_x10r_"
+    - "application/governance/claim_ledger.py"
+    - "application/governance/commit_acceptor.py"
+
+required_python_symbols:
+  - "research/systemic_risk/d002c_pos_control.py::PosControlCellResult"
+  - "research/systemic_risk/d002c_pos_control.py::PosControlVerdict"
+  - "research/systemic_risk/d002c_pos_control.py::PosControlInvalid"
+  - "research/systemic_risk/d002c_pos_control.py::run_pos_control_cell"
+  - "research/systemic_risk/d002c_pos_control.py::run_pos_control_all"
+  - "research/systemic_risk/d002c_neg_control.py::NegControlCellResult"
+  - "research/systemic_risk/d002c_neg_control.py::NegControlVerdict"
+  - "research/systemic_risk/d002c_neg_control.py::NegControlInvalid"
+  - "research/systemic_risk/d002c_neg_control.py::run_neg_control_cell"
+  - "research/systemic_risk/d002c_neg_control.py::run_neg_control_all"
+  - "tests/research/systemic_risk/test_d002c_pos_control.py::test_real_pipeline_block_sync_auc_pass_at_lambda_one"
+  - "tests/research/systemic_risk/test_d002c_pos_control.py::test_real_pipeline_verdict_exclude_at_tight_threshold"
+  - "tests/research/systemic_risk/test_d002c_pos_control.py::test_sha256_deterministic_across_calls"
+  - "tests/research/systemic_risk/test_d002c_pos_control.py::test_run_all_writes_atomic_capsule"
+  - "tests/research/systemic_risk/test_d002c_pos_control.py::test_run_all_excluded_combos_populated_correctly"
+  - "tests/research/systemic_risk/test_d002c_neg_control.py::test_real_pipeline_block_sync_auc_passes_at_lambda_zero"
+  - "tests/research/systemic_risk/test_d002c_neg_control.py::test_sha256_deterministic_across_calls"
+  - "tests/research/systemic_risk/test_d002c_neg_control.py::test_run_all_writes_atomic_capsule"
+  - "tests/research/systemic_risk/test_d002c_neg_control.py::test_run_all_excluded_cells_lists_triples"
+
+expected_signal: >-
+  Local: `pytest tests/research/systemic_risk/test_d002c_pos_control.py
+  tests/research/systemic_risk/test_d002c_neg_control.py -q` reports
+  "58 passed"; `mypy --strict --follow-imports=silent` clean on the
+  four new Python files; `ruff check` and `black --check` both pass
+  on the four files.
+
+measurement_command: >-
+  bash -c 'mypy --strict --follow-imports=silent
+  research/systemic_risk/d002c_pos_control.py
+  research/systemic_risk/d002c_neg_control.py
+  tests/research/systemic_risk/test_d002c_pos_control.py
+  tests/research/systemic_risk/test_d002c_neg_control.py
+  && ruff check
+  research/systemic_risk/d002c_pos_control.py
+  research/systemic_risk/d002c_neg_control.py
+  tests/research/systemic_risk/test_d002c_pos_control.py
+  tests/research/systemic_risk/test_d002c_neg_control.py
+  && black --check
+  research/systemic_risk/d002c_pos_control.py
+  research/systemic_risk/d002c_neg_control.py
+  tests/research/systemic_risk/test_d002c_pos_control.py
+  tests/research/systemic_risk/test_d002c_neg_control.py
+  && pytest tests/research/systemic_risk/test_d002c_pos_control.py
+  tests/research/systemic_risk/test_d002c_neg_control.py -q'
+
+signal_artifact: "tests/research/systemic_risk/test_d002c_pos_control.py"
+
+falsifier:
+  command: |-
+    bash -c 'PYTHONPATH=. python -c "
+    import math, json, tempfile
+    from pathlib import Path
+    from research.systemic_risk.d002c_pos_control import (
+        DEFAULT_POS_N, DEFAULT_POS_LAMBDA, DEFAULT_POS_N_SEEDS, DEFAULT_POS_THRESHOLD,
+        PosControlInvalid, run_pos_control_cell, run_pos_control_all,
+    )
+    from research.systemic_risk.d002c_neg_control import (
+        DEFAULT_NEG_N_SEEDS, DEFAULT_NEG_LAMBDA, DEFAULT_NEG_ALPHA_BONFERRONI, DEFAULT_NEG_TOLERANCE,
+        NegControlInvalid, run_neg_control_cell, run_neg_control_all,
+    )
+    from research.systemic_risk.d002c_substrates import BlockStructuredSubstrate
+    from research.systemic_risk.d002c_metrics import AucPreEventMetric
+    # POS: defaults are locked
+    assert DEFAULT_POS_N == 400, DEFAULT_POS_N
+    assert DEFAULT_POS_LAMBDA == 1.0, DEFAULT_POS_LAMBDA
+    assert DEFAULT_POS_N_SEEDS == 50, DEFAULT_POS_N_SEEDS
+    assert DEFAULT_POS_THRESHOLD == 2.0, DEFAULT_POS_THRESHOLD
+    # POS: known-strong signal PASSes at loose threshold
+    a = run_pos_control_cell(BlockStructuredSubstrate(), AucPreEventMetric(), N=20, lambda_=1.0, n_seeds=6, threshold=0.01, steps_per_quarter=4)
+    assert a.verdict == '"'"'PASS'"'"', a.verdict
+    # POS: sha deterministic
+    b = run_pos_control_cell(BlockStructuredSubstrate(), AucPreEventMetric(), N=20, lambda_=1.0, n_seeds=6, threshold=0.01, steps_per_quarter=4)
+    assert a.sha256 == b.sha256, '"'"'pos sha unstable'"'"'
+    # POS: tampered (impossibly tight) threshold yields EXCLUDE
+    c = run_pos_control_cell(BlockStructuredSubstrate(), AucPreEventMetric(), N=20, lambda_=1.0, n_seeds=6, threshold=1e30, steps_per_quarter=4)
+    assert c.verdict == '"'"'EXCLUDE'"'"', c.verdict
+    # POS: invalid n_seeds raises
+    try:
+        run_pos_control_cell(BlockStructuredSubstrate(), AucPreEventMetric(), N=20, lambda_=1.0, n_seeds=1, steps_per_quarter=4)
+        raise AssertionError('"'"'pos: should have raised'"'"')
+    except PosControlInvalid:
+        pass
+    # POS: capsule writes JSON-parseable file
+    with tempfile.TemporaryDirectory() as td:
+        cap = Path(td) / '"'"'pos.json'"'"'
+        v = run_pos_control_all((BlockStructuredSubstrate(),), (AucPreEventMetric(),), N=20, lambda_=1.0, n_seeds=4, threshold=0.01, steps_per_quarter=4, output_path=cap)
+        data = json.loads(cap.read_text(encoding='"'"'utf-8'"'"'))
+        assert data['"'"'sha256'"'"'] == v.sha256
+        assert data['"'"'kind'"'"'] == '"'"'d002c_pos_control_capsule_v1'"'"'
+    # NEG: defaults are locked
+    assert DEFAULT_NEG_N_SEEDS == 50
+    assert DEFAULT_NEG_LAMBDA == 0.0
+    assert DEFAULT_NEG_ALPHA_BONFERRONI == 2.31e-4
+    assert DEFAULT_NEG_TOLERANCE == 1e-3
+    # NEG: λ=0 null PASSes
+    r = run_neg_control_cell(BlockStructuredSubstrate(), AucPreEventMetric(), N=20, n_seeds=10, steps_per_quarter=4)
+    assert r.lambda_ == 0.0
+    assert r.verdict == '"'"'PASS'"'"', (r.verdict, r.fpr)
+    # NEG: sha deterministic
+    r2 = run_neg_control_cell(BlockStructuredSubstrate(), AucPreEventMetric(), N=20, n_seeds=10, steps_per_quarter=4)
+    assert r.sha256 == r2.sha256, '"'"'neg sha unstable'"'"'
+    # NEG: invalid α raises
+    try:
+        run_neg_control_cell(BlockStructuredSubstrate(), AucPreEventMetric(), N=20, n_seeds=8, alpha_bonferroni=0.0, steps_per_quarter=4)
+        raise AssertionError('"'"'neg: should have raised'"'"')
+    except NegControlInvalid:
+        pass
+    # NEG: capsule writes JSON-parseable file
+    with tempfile.TemporaryDirectory() as td:
+        cap = Path(td) / '"'"'neg.json'"'"'
+        v = run_neg_control_all((BlockStructuredSubstrate(),), (AucPreEventMetric(),), N_grid=(20,), n_seeds=8, steps_per_quarter=4, output_path=cap)
+        data = json.loads(cap.read_text(encoding='"'"'utf-8'"'"'))
+        assert data['"'"'sha256'"'"'] == v.sha256
+        assert data['"'"'kind'"'"'] == '"'"'d002c_neg_control_capsule_v1'"'"'
+    "'
+  description: >-
+    Probes the D-002C C2.4-B contract. POS branch: default
+    constants locked at their C2.4 values; a known-strong-signal
+    cell PASSes at a loose threshold; same inputs produce same
+    sha256; an impossibly-tight threshold (1e30) forces EXCLUDE
+    (never silent rescue); invalid n_seeds<2 raises
+    PosControlInvalid; atomic capsule emits a JSON-parseable file
+    with the matching sha256. NEG branch: default constants
+    locked; λ=0 null PASSes at default α + tolerance; sha
+    deterministic; α=0 raises NegControlInvalid; capsule writes
+    JSON-parseable file. If any of these regress, the pre-flight
+    gate semantics break — the sweep would launch on blind
+    detectors or on cells generating false alarms.
+
+rollback_command: >-
+  bash -c 'git checkout HEAD~1 --
+  && rm -f research/systemic_risk/d002c_pos_control.py
+  research/systemic_risk/d002c_neg_control.py
+  tests/research/systemic_risk/test_d002c_pos_control.py
+  tests/research/systemic_risk/test_d002c_neg_control.py
+  .claude/commit_acceptors/x10r-d002c-pos-neg-controls.yaml'
+
+rollback_verification_command: >-
+  bash -c 'test ! -f research/systemic_risk/d002c_pos_control.py
+  && test ! -f research/systemic_risk/d002c_neg_control.py
+  && test ! -f tests/research/systemic_risk/test_d002c_pos_control.py
+  && test ! -f tests/research/systemic_risk/test_d002c_neg_control.py
+  && test ! -f .claude/commit_acceptors/x10r-d002c-pos-neg-controls.yaml'
+
+memory_update_type: append
+ledger_path: ".claude/commit_acceptors/x10r-d002c-pos-neg-controls.yaml"
+report_path: "tests/research/systemic_risk/test_d002c_pos_control.py"
+evidence: []

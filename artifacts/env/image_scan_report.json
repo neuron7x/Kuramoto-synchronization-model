@@ -1,0 +1,220 @@
+{
+  "acceptance_policy": "0 critical/high UNACCEPTED. A CVE is ACCEPTED iff no upstream fix exists (empty FixedVersion; Debian status affected/fix_deferred). These are inherited from the pinned python:3.12-slim (debian trixie) base and are not reachable through the pure-Python integrity gate (no perl/shell/ncurses in the gate path); the container runs non-root, read-only, offline. Any CVE that GAINS a fix becomes actionable and fails this gate. Re-pin the base digest to remediate.",
+  "accepted_unfixable": [
+    {
+      "fixed_version": null,
+      "id": "CVE-2026-53615",
+      "installed": "1:2.41-5",
+      "pkg": "bsdutils",
+      "severity": "HIGH",
+      "status": "affected",
+      "target": "geosync-hermetic:repro (debian 13.5)"
+    },
+    {
+      "fixed_version": null,
+      "id": "CVE-2026-41992",
+      "installed": "1.13-1",
+      "pkg": "gzip",
+      "severity": "HIGH",
+      "status": "affected",
+      "target": "geosync-hermetic:repro (debian 13.5)"
+    },
+    {
+      "fixed_version": null,
+      "id": "CVE-2026-54369",
+      "installed": "2.3.2-2+b1",
+      "pkg": "libacl1",
+      "severity": "HIGH",
+      "status": "affected",
+      "target": "geosync-hermetic:repro (debian 13.5)"
+    },
+    {
+      "fixed_version": null,
+      "id": "CVE-2026-53615",
+      "installed": "2.41-5",
+      "pkg": "libblkid1",
+      "severity": "HIGH",
+      "status": "affected",
+      "target": "geosync-hermetic:repro (debian 13.5)"
+    },
+    {
+      "fixed_version": null,
+      "id": "CVE-2026-53615",
+      "installed": "2.41-5",
+      "pkg": "liblastlog2-2",
+      "severity": "HIGH",
+      "status": "affected",
+      "target": "geosync-hermetic:repro (debian 13.5)"
+    },
+    {
+      "fixed_version": null,
+      "id": "CVE-2026-53615",
+      "installed": "2.41-5",
+      "pkg": "libmount1",
+      "severity": "HIGH",
+      "status": "affected",
+      "target": "geosync-hermetic:repro (debian 13.5)"
+    },
+    {
+      "fixed_version": null,
+      "id": "CVE-2025-69720",
+      "installed": "6.5+20250216-2",
+      "pkg": "libncursesw6",
+      "severity": "HIGH",
+      "status": "affected",
+      "target": "geosync-hermetic:repro (debian 13.5)"
+    },
+    {
+      "fixed_version": null,
+      "id": "CVE-2026-53615",
+      "installed": "2.41-5",
+      "pkg": "libsmartcols1",
+      "severity": "HIGH",
+      "status": "affected",
+      "target": "geosync-hermetic:repro (debian 13.5)"
+    },
+    {
+      "fixed_version": null,
+      "id": "CVE-2025-69720",
+      "installed": "6.5+20250216-2",
+      "pkg": "libtinfo6",
+      "severity": "HIGH",
+      "status": "affected",
+      "target": "geosync-hermetic:repro (debian 13.5)"
+    },
+    {
+      "fixed_version": null,
+      "id": "CVE-2026-53615",
+      "installed": "2.41-5",
+      "pkg": "libuuid1",
+      "severity": "HIGH",
+      "status": "affected",
+      "target": "geosync-hermetic:repro (debian 13.5)"
+    },
+    {
+      "fixed_version": null,
+      "id": "CVE-2026-53615",
+      "installed": "1:4.16.0-2+really2.41-5",
+      "pkg": "login",
+      "severity": "HIGH",
+      "status": "affected",
+      "target": "geosync-hermetic:repro (debian 13.5)"
+    },
+    {
+      "fixed_version": null,
+      "id": "CVE-2026-53615",
+      "installed": "2.41-5",
+      "pkg": "mount",
+      "severity": "HIGH",
+      "status": "affected",
+      "target": "geosync-hermetic:repro (debian 13.5)"
+    },
+    {
+      "fixed_version": null,
+      "id": "CVE-2025-69720",
+      "installed": "6.5+20250216-2",
+      "pkg": "ncurses-base",
+      "severity": "HIGH",
+      "status": "affected",
+      "target": "geosync-hermetic:repro (debian 13.5)"
+    },
+    {
+      "fixed_version": null,
+      "id": "CVE-2025-69720",
+      "installed": "6.5+20250216-2",
+      "pkg": "ncurses-bin",
+      "severity": "HIGH",
+      "status": "affected",
+      "target": "geosync-hermetic:repro (debian 13.5)"
+    },
+    {
+      "fixed_version": null,
+      "id": "CVE-2026-13221",
+      "installed": "5.40.1-6",
+      "pkg": "perl-base",
+      "severity": "CRITICAL",
+      "status": "affected",
+      "target": "geosync-hermetic:repro (debian 13.5)"
+    },
+    {
+      "fixed_version": null,
+      "id": "CVE-2026-42496",
+      "installed": "5.40.1-6",
+      "pkg": "perl-base",
+      "severity": "CRITICAL",
+      "status": "fix_deferred",
+      "target": "geosync-hermetic:repro (debian 13.5)"
+    },
+    {
+      "fixed_version": null,
+      "id": "CVE-2026-8376",
+      "installed": "5.40.1-6",
+      "pkg": "perl-base",
+      "severity": "CRITICAL",
+      "status": "affected",
+      "target": "geosync-hermetic:repro (debian 13.5)"
+    },
+    {
+      "fixed_version": null,
+      "id": "CVE-2026-42497",
+      "installed": "5.40.1-6",
+      "pkg": "perl-base",
+      "severity": "HIGH",
+      "status": "fix_deferred",
+      "target": "geosync-hermetic:repro (debian 13.5)"
+    },
+    {
+      "fixed_version": null,
+      "id": "CVE-2026-48962",
+      "installed": "5.40.1-6",
+      "pkg": "perl-base",
+      "severity": "HIGH",
+      "status": "affected",
+      "target": "geosync-hermetic:repro (debian 13.5)"
+    },
+    {
+      "fixed_version": null,
+      "id": "CVE-2026-57432",
+      "installed": "5.40.1-6",
+      "pkg": "perl-base",
+      "severity": "HIGH",
+      "status": "affected",
+      "target": "geosync-hermetic:repro (debian 13.5)"
+    },
+    {
+      "fixed_version": null,
+      "id": "CVE-2026-9538",
+      "installed": "5.40.1-6",
+      "pkg": "perl-base",
+      "severity": "HIGH",
+      "status": "fix_deferred",
+      "target": "geosync-hermetic:repro (debian 13.5)"
+    },
+    {
+      "fixed_version": null,
+      "id": "CVE-2026-53615",
+      "installed": "2.41-5",
+      "pkg": "util-linux",
+      "severity": "HIGH",
+      "status": "affected",
+      "target": "geosync-hermetic:repro (debian 13.5)"
+    }
+  ],
+  "actionable_unaccepted": [],
+  "generated_utc": "2026-07-19T19:15:49Z",
+  "image_tag": "geosync-hermetic:repro",
+  "scanner": "trivy",
+  "scanner_version": "0.70.0",
+  "schema": "geosync.env.image_scan/v1",
+  "severity_filter": [
+    "CRITICAL",
+    "HIGH"
+  ],
+  "task": "ENV-005",
+  "totals": {
+    "accepted_unfixable": 22,
+    "actionable_fixable": 0,
+    "critical_high": 22
+  },
+  "verdict": "PASS"
+}

@@ -1,4 +1,6 @@
-"""GraphQL schema exposing analytics insights for TradePulse."""
+# Copyright (c) 2023-2026 Yaroslav Vasylenko (neuron7xLab)
+# SPDX-License-Identifier: MIT
+"""GraphQL schema exposing analytics insights for GeoSync."""
 
 from __future__ import annotations
 

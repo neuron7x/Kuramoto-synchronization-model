@@ -4,7 +4,7 @@ metadata:
   name: timescale-backups
   labels:
     app.kubernetes.io/name: timescale-backups
-    app.kubernetes.io/part-of: tradepulse
+    app.kubernetes.io/part-of: geosync
 spec:
   accessModes:
     - ReadWriteOnce

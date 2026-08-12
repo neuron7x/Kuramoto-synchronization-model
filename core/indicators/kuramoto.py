@@ -1,11 +1,12 @@
-# SPDX-License-Identifier: LicenseRef-TradePulse-Proprietary
+# Copyright (c) 2023-2026 Yaroslav Vasylenko (neuron7xLab)
+# SPDX-License-Identifier: MIT
 """Kuramoto phase-synchrony indicators for oscillatory market structure analysis.
 
 The functions in this module translate raw price trajectories (produced by the
 ingestion layer in ``core.data``) into phase representations using the
 analytic-signal (Hilbert transform) construction and then summarise ensemble
 coherence through the Kuramoto order parameter. These metrics are central to
-TradePulse's *collective behaviour* signal cluster, which assesses whether
+GeoSync's *collective behaviour* signal cluster, which assesses whether
 assets are moving in lockstep or diverging. The implementation mirrors the
 mathematical discussion in ``docs/indicators.md`` and ties into the monitoring
 hooks outlined in ``docs/quality_gates.md``, ensuring features expose metrics
@@ -64,7 +65,7 @@ except ImportError:  # pragma: no cover
     def njit(*args, **kwargs):  # type: ignore[misc]
         """No-op decorator when numba is unavailable."""
 
-        def decorator(func):  # type: ignore[no-untyped-def]
+        def decorator(func: Any) -> Any:
             return func
 
         if len(args) == 1 and callable(args[0]):
@@ -74,7 +75,10 @@ except ImportError:  # pragma: no cover
     prange = range  # type: ignore[misc,assignment]
 
 
-@njit(cache=True, fastmath=True)
+# fastmath removed: LLVM's nnan flag folds the `c == c` / `s == s` NaN guard
+# (lines below) to a constant True, defeating the non-finite filtering this
+# kernel depends on. cache retained.
+@njit(cache=True)
 def _kuramoto_order_jit(cos_vals: np.ndarray, sin_vals: np.ndarray) -> float:
     """JIT-compiled Kuramoto order parameter for 1D phase arrays.
 
@@ -100,7 +104,7 @@ def _kuramoto_order_jit(cos_vals: np.ndarray, sin_vals: np.ndarray) -> float:
         sin_vals: Precomputed sin(θⱼ) array of shape (N,).
 
     Returns:
-        float: Order parameter R ∈ [0, 1] with machine epsilon threshold 
+        float: Order parameter R ∈ [0, 1] with machine epsilon threshold
         applied to eliminate denormals (values < 10⁻⁸ → 0).
 
     Numerical Stability:
@@ -111,7 +115,7 @@ def _kuramoto_order_jit(cos_vals: np.ndarray, sin_vals: np.ndarray) -> float:
     Complexity:
         Time: O(N) for N oscillators
         Space: O(1) auxiliary memory
-        
+
     Note:
         JIT compilation via Numba reduces per-call latency from ~50μs to <1μs
         for N ~ 1000 oscillators, enabling HFT-grade tick processing.
@@ -147,10 +151,10 @@ def _kuramoto_order_jit(cos_vals: np.ndarray, sin_vals: np.ndarray) -> float:
     return result
 
 
-@njit(cache=True, fastmath=True)
-def _kuramoto_order_2d_jit(
-    cos_vals: np.ndarray, sin_vals: np.ndarray
-) -> np.ndarray:
+# fastmath removed: LLVM's nnan flag folds the `c == c` / `s == s` NaN guard
+# (per-timestep filtering below) to a constant True. cache retained.
+@njit(cache=True)
+def _kuramoto_order_2d_jit(cos_vals: np.ndarray, sin_vals: np.ndarray) -> np.ndarray:
     """JIT-compiled Kuramoto order for 2D phase matrices (N oscillators × T timesteps).
 
     Mathematical Definition:
@@ -213,9 +217,7 @@ def _kuramoto_order_2d_jit(
     return result
 
 
-def _broadcast_weights(
-    weights: np.ndarray | Sequence[float], shape: tuple[int, int]
-) -> np.ndarray:
+def _broadcast_weights(weights: np.ndarray | Sequence[float], shape: tuple[int, int]) -> np.ndarray:
     """Broadcast weight vectors to match the phase matrix shape."""
 
     weight_array = np.array(weights, dtype=float, copy=True)
@@ -235,9 +237,8 @@ def _broadcast_weights(
     else:
         raise ValueError("weights must be one- or two-dimensional")
 
-    weight_array = np.nan_to_num(
-        weight_array, nan=0.0, posinf=0.0, neginf=0.0, copy=False
-    )
+    weight_array = np.nan_to_num(weight_array, nan=0.0, posinf=0.0, neginf=0.0, copy=False)
+    # INV-HPC2: coupling weights must be non-negative
     np.clip(weight_array, 0.0, None, out=weight_array)
     return weight_array
 
@@ -267,9 +268,9 @@ def compute_phase(
     Implementation Strategy:
         1. If SciPy available: Use scipy.signal.hilbert() with FFT acceleration
         2. Fallback: Real FFT-based Hilbert via frequency domain multiplication:
-           
+
            ℋ{x}(t) = IFFT{-i·sgn(f)·FFT{x}(t)}
-           
+
            where sgn(f) = {1 for f > 0, -1 for f < 0, 0 for f = 0}
 
     Numerical Stability:
@@ -314,7 +315,7 @@ def compute_phase(
 
     References:
         - Gabor, D. (1946). Theory of communication. Journal of the IEE, 93(26).
-        - Boashash, B. (1992). Estimating and interpreting the instantaneous 
+        - Boashash, B. (1992). Estimating and interpreting the instantaneous
           frequency of a signal. Proceedings of the IEEE, 80(4), 520-538.
     """
     context_manager = (
@@ -329,7 +330,9 @@ def compute_phase(
         def _ensure_dtype(arr: np.ndarray) -> np.ndarray:
             return arr if arr.dtype == target_dtype else arr.astype(target_dtype)
 
-        x = np.asarray(x, dtype=target_dtype)
+        # INV-HPC2: clamp to dtype range before cast to prevent overflow
+        with np.errstate(over="ignore", invalid="ignore"):
+            x = np.asarray(x, dtype=target_dtype)
         target = None
         if out is not None:
             target = np.asarray(out)
@@ -341,13 +344,9 @@ def compute_phase(
             raise ValueError("compute_phase expects 1D array")
         if not np.all(np.isfinite(x)):
             x = np.nan_to_num(x, nan=0.0, posinf=0.0, neginf=0.0)
-        hilbert_module = (
-            getattr(hilbert, "__module__", "") if hilbert is not None else ""
-        )
+        hilbert_module = getattr(hilbert, "__module__", "") if hilbert is not None else ""
         use_scipy_fastpath = (
-            _scipy_fft is not None
-            and hilbert is not None
-            and hilbert_module.startswith("scipy.")
+            _scipy_fft is not None and hilbert is not None and hilbert_module.startswith("scipy.")
         )
         if use_scipy_fastpath:
             n = x.size
@@ -356,7 +355,9 @@ def compute_phase(
 
             real = np.asarray(x, dtype=target_dtype)
             spectrum = _scipy_fft.rfft(real)
-            spectrum *= -1j
+            # INV-HPC2: complex multiply can overflow in float32; suppress and let nan_to_num handle
+            with np.errstate(over="ignore", invalid="ignore"):
+                spectrum *= -1j
             spectrum[0] = 0
             if n % 2 == 0 and spectrum.size > 1:
                 spectrum[-1] = 0
@@ -426,7 +427,7 @@ def kuramoto_order(
 
     The statistic measures synchrony as ``R = |(1/N) ∑_j e^{i θ_j}|``. Values
     close to ``1`` indicate phase alignment, while values near ``0`` signal
-    desynchronisation. In TradePulse this metric feeds the market regime
+    desynchronisation. In GeoSync this metric feeds the market regime
     dashboards discussed in ``docs/monitoring.md`` and the theoretical overview
     in ``docs/indicators.md``.
 
@@ -557,6 +558,7 @@ def kuramoto_order(
             )
             values = np.where(magnitude <= zero_tolerance, 0.0, values)
 
+    # INV-K1: order parameter R ∈ [0,1]
     clipped = np.clip(values, 0.0, 1.0)
     clipped[clipped < 1e-8] = 0.0
     if squeeze_output:
@@ -638,9 +640,7 @@ def compute_phase_gpu(x):
         computation defaults to ``float32`` to minimise device-host transfer
         overhead.
     """
-    with _logger.operation(
-        "compute_phase_gpu", data_size=len(x), has_cupy=cp is not None
-    ):
+    with _logger.operation("compute_phase_gpu", data_size=len(x), has_cupy=cp is not None):
         if cp is None:
             _logger.info("CuPy not available, falling back to CPU compute_phase")
             return compute_phase(np.asarray(x))

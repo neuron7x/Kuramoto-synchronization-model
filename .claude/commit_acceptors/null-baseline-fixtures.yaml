@@ -1,0 +1,104 @@
+# Diff-bound commit acceptor for the deterministic null-baseline descriptor fixtures.
+#
+# Adds analytics/signals/null_baseline.py: a pure, deterministic null /
+# surrogate generator for descriptor testing. Three generators
+# (make_gaussian_null, make_constant_null, make_phase_shuffled_surrogate)
+# each return (float64 array, immutable metadata) where the metadata pins
+# the method, seed, length, and an explicit boundary disclaimer
+# (claim_boundary="descriptor_only_not_predictor", not_predictive_claim).
+# All randomness flows through numpy.random.default_rng keyed on an explicit
+# seed, so a fixed seed is byte-deterministic; no non-finite value is ever
+# emitted; n<=0 and invalid seeds fail closed. Adds the matching contract
+# test suite.
+#
+# Promotes NO claim tier, adds NO invariant, changes NO existing runtime
+# behaviour, adds NO dependency (numpy only). Descriptor-only: the null
+# series reference no outcome/return and carry no predictive or financial
+# meaning. They are research-only baselines for comparing a descriptor
+# against a structureless null.
+#
+# Locally verified on origin/main fork base:
+#   * pytest tests/unit/analytics/test_null_baseline.py: 19 passed
+#   * ruff check / ruff format --check / black --check: clean
+#   * mypy --strict analytics/signals/null_baseline.py: no issues
+#   * mypy --strict tests/unit/analytics/test_null_baseline.py: no issues
+#   * python scripts/ci/check_claim_boundary.py: PASS
+#   * python scripts/ci/check_claims.py: PASS
+#   * detect-secrets-hook (baseline): clean
+#   * zero `noqa` / `type: ignore` suppressions across both new files
+id: null-baseline-fixtures
+status: ACTIVE
+claim_type: governance
+promise: >-
+  analytics.signals.null_baseline exposes three deterministic null
+  generators (make_gaussian_null, make_constant_null,
+  make_phase_shuffled_surrogate) that each return a finite float64 array
+  and an immutable metadata mapping pinning method, seed, length, and the
+  boundary disclaimer claim_boundary="descriptor_only_not_predictor" with
+  not_predictive_claim=True. Randomness flows only through
+  numpy.random.default_rng keyed on an explicit seed, so a fixed seed is
+  byte-identical across calls and a different seed differs; no NaN or
+  infinity is ever emitted; n<=0, a negative or boolean seed, a non-finite
+  constant value, and a non-finite/empty surrogate input all fail closed
+  with ValueError. No claim tier is promoted; no runtime behaviour changes;
+  the series are structural descriptor baselines, not predictive or
+  financial signals.
+diff_scope:
+  changed_files:
+    - path: ".claude/commit_acceptors/null-baseline-fixtures.yaml"
+    - path: "analytics/signals/null_baseline.py"
+    - path: "tests/unit/analytics/test_null_baseline.py"
+  forbidden_paths:
+    - "trading/"
+    - "execution/"
+    - "forecast/"
+    - "core/"
+    - "src/"
+required_python_symbols:
+  - "analytics/signals/null_baseline.py::make_gaussian_null"
+  - "analytics/signals/null_baseline.py::make_constant_null"
+  - "analytics/signals/null_baseline.py::make_phase_shuffled_surrogate"
+expected_signal: >-
+  `python -m pytest tests/unit/analytics/test_null_baseline.py` reports
+  19 passed; the generators are deterministic for a fixed seed, never emit
+  a non-finite value, declare the descriptor-only boundary in metadata, and
+  reject malformed requests with ValueError.
+measurement_command: >-
+  bash -c 'mkdir -p tmp && python -m pytest
+  tests/unit/analytics/test_null_baseline.py -v
+  > tmp/null_baseline_pytest.log 2>&1
+  && grep -qE "19 passed" tmp/null_baseline_pytest.log'
+signal_artifact: "tmp/null_baseline_pytest.log"
+falsifier:
+  command: >-
+    python -c 'import sys, subprocess, numpy as np;
+    from analytics.signals.null_baseline import make_gaussian_null;
+    det = np.array_equal(make_gaussian_null(n=32, seed=5)[0],
+    make_gaussian_null(n=32, seed=5)[0]);
+    boundary_ok = make_gaussian_null(n=4, seed=5)[1].get("claim_boundary")
+    == "descriptor_only_not_predictor";
+    n_fails_closed = subprocess.run([sys.executable, "-c",
+    "from analytics.signals.null_baseline import make_gaussian_null;
+    make_gaussian_null(n=0, seed=5)"]).returncode != 0;
+    sys.exit(0 if (not det or not boundary_ok or not n_fails_closed) else 1)'
+  description: >-
+    Inverse probe of the null-baseline contract. It exits 0 (fires) iff a
+    fixed seed stops being byte-deterministic, OR an n<=0 request is
+    accepted instead of failing closed, OR the descriptor-only boundary
+    disappears from the metadata. While the contract holds, the probe exits
+    1. An exit 0 means the null generator has lost determinism, its
+    fail-closed guarantee, or its boundary disclaimer and must be repaired,
+    not patched green.
+rollback_command: >-
+  bash -c 'git rm -f analytics/signals/null_baseline.py
+  tests/unit/analytics/test_null_baseline.py
+  .claude/commit_acceptors/null-baseline-fixtures.yaml'
+rollback_verification_command: >-
+  bash -c 'test ! -f analytics/signals/null_baseline.py
+  && test ! -f tests/unit/analytics/test_null_baseline.py'
+memory_update_type: none
+ledger_path: ".claude/commit_acceptors/null-baseline-fixtures.yaml"
+report_path: "tmp/null_baseline_pytest.log"
+evidence:
+  - path: "tmp/null_baseline_pytest.log"
+    sha256: "e8dc5a65c4d4cbb43fdd357196b4d09eeb8fa2f004494612e24bdf457fad8c10"  # pragma: allowlist secret

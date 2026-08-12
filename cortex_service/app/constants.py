@@ -1,3 +1,5 @@
+# Copyright (c) 2023-2026 Yaroslav Vasylenko (neuron7xLab)
+# SPDX-License-Identifier: MIT
 """Centralized constants for the cortex service."""
 
 from __future__ import annotations
@@ -34,9 +36,6 @@ DEFAULT_FEATURE_WEIGHT = 1.0
 MIN_WEIGHT = 0.0
 MAX_EXPOSURE_LIMIT = 10.0
 
-# Cache constants
-REGIME_CACHE_TTL_SECONDS = 5
-
 # Retry constants
 MAX_RETRY_ATTEMPTS = 3
 RETRY_INITIAL_DELAY = 0.1
@@ -66,7 +65,6 @@ __all__ = [
     "DEFAULT_FEATURE_WEIGHT",
     "MIN_WEIGHT",
     "MAX_EXPOSURE_LIMIT",
-    "REGIME_CACHE_TTL_SECONDS",
     "MAX_RETRY_ATTEMPTS",
     "RETRY_INITIAL_DELAY",
     "RETRY_MAX_DELAY",

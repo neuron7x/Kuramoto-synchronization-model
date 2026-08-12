@@ -1,0 +1,5 @@
+{
+  "version": 1,
+  "_doc": "Reviewed exceptions to the descriptor-to-physics promotion firewall (tools/claims/check_descriptor_promotion.py). Each entry is a line that pattern-matches a forbidden promotion but is in fact MECHANISM or QUOTATION (a code symbol, an honest negation that the negation guard did not catch, or prose that quotes a banned promotion as the thing it warns against) — not an actual descriptor->physics/prediction/trading promotion. New unreviewed promotions fail CI. See docs/claims/descriptor_promotion_policy.md.",
+  "allow": []
+}

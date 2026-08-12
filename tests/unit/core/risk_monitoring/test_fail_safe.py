@@ -1,4 +1,5 @@
-# SPDX-License-Identifier: LicenseRef-TradePulse-Proprietary
+# Copyright (c) 2023-2026 Yaroslav Vasylenko (neuron7xLab)
+# SPDX-License-Identifier: MIT
 """Comprehensive tests for FailSafe Controller.
 
 These tests cover:
@@ -172,6 +173,7 @@ class TestFailSafeControllerBasic:
 
     def test_callback_exception_handled(self) -> None:
         """Test that callback exceptions are handled gracefully."""
+
         def bad_callback(state: FailSafeState) -> None:
             raise ValueError("Callback error")
 

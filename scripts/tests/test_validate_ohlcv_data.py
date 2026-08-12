@@ -1,8 +1,10 @@
+# Copyright (c) 2023-2026 Yaroslav Vasylenko (neuron7xLab)
+# SPDX-License-Identifier: MIT
 """Tests for validate_ohlcv_data.py script."""
 
 from __future__ import annotations
 
-# SPDX-License-Identifier: LicenseRef-TradePulse-Proprietary
+# SPDX-License-Identifier: MIT
 from pathlib import Path
 
 from scripts import validate_ohlcv_data
@@ -55,7 +57,9 @@ def test_validate_ohlcv_file_empty(tmp_path: Path) -> None:
 def test_validate_ohlcv_file_missing_close_column(tmp_path: Path) -> None:
     """Test validation fails when close column is missing."""
     csv_file = tmp_path / "no_close.csv"
-    csv_file.write_text("timestamp,open,high,low,volume\n2024-01-01,100,105,98,1000\n", encoding="utf-8")
+    csv_file.write_text(
+        "timestamp,open,high,low,volume\n2024-01-01,100,105,98,1000\n", encoding="utf-8"
+    )
 
     report = validate_ohlcv_data.validate_ohlcv_file(csv_file)
 
@@ -76,9 +80,8 @@ def test_validate_ohlcv_file_nan_values(tmp_path: Path) -> None:
     report = validate_ohlcv_data.validate_ohlcv_file(csv_file)
 
     # Missing values should be detected - check for warnings about NaN
-    has_nan_issue = (
-        any("NaN" in e for e in report.errors)
-        or any("NaN" in w for w in report.warnings)
+    has_nan_issue = any("NaN" in e for e in report.errors) or any(
+        "NaN" in w for w in report.warnings
     )
     assert has_nan_issue, "Expected NaN detection in errors or warnings"
 
@@ -87,8 +90,7 @@ def test_validate_ohlcv_file_non_positive_prices(tmp_path: Path) -> None:
     """Test validation detects non-positive prices."""
     csv_file = tmp_path / "negative_prices.csv"
     csv_file.write_text(
-        "timestamp,symbol,open,high,low,close,volume\n"
-        "2024-01-01,BTC,-100,105,98,102,1000\n",
+        "timestamp,symbol,open,high,low,close,volume\n2024-01-01,BTC,-100,105,98,102,1000\n",
         encoding="utf-8",
     )
 
@@ -102,8 +104,7 @@ def test_validate_ohlcv_file_high_less_than_low(tmp_path: Path) -> None:
     """Test validation detects high < low violations."""
     csv_file = tmp_path / "bad_ohlc.csv"
     csv_file.write_text(
-        "timestamp,symbol,open,high,low,close,volume\n"
-        "2024-01-01,BTC,100,95,105,102,1000\n",
+        "timestamp,symbol,open,high,low,close,volume\n2024-01-01,BTC,100,95,105,102,1000\n",
         encoding="utf-8",
     )
 
@@ -117,8 +118,7 @@ def test_validate_ohlcv_file_negative_volume(tmp_path: Path) -> None:
     """Test validation detects negative volume."""
     csv_file = tmp_path / "negative_volume.csv"
     csv_file.write_text(
-        "timestamp,symbol,open,high,low,close,volume\n"
-        "2024-01-01,BTC,100,105,98,102,-1000\n",
+        "timestamp,symbol,open,high,low,close,volume\n2024-01-01,BTC,100,105,98,102,-1000\n",
         encoding="utf-8",
     )
 
@@ -221,15 +221,19 @@ def test_parse_args_defaults() -> None:
 
 def test_parse_args_custom_values() -> None:
     """Test parse_args with custom values."""
-    args = validate_ohlcv_data.parse_args([
-        "file1.csv",
-        "file2.csv",
-        "--format", "json",
-        "--close-col", "price",
-        "--no-ohlc",
-        "--strict",
-        "-v",
-    ])
+    args = validate_ohlcv_data.parse_args(
+        [
+            "file1.csv",
+            "file2.csv",
+            "--format",
+            "json",
+            "--close-col",
+            "price",
+            "--no-ohlc",
+            "--strict",
+            "-v",
+        ]
+    )
 
     assert len(args.files) == 2
     assert args.format == "json"
@@ -300,9 +304,7 @@ def test_main_no_ohlc_mode(tmp_path: Path) -> None:
     """Test main with --no-ohlc skips OHLC validation."""
     csv_file = tmp_path / "price_only.csv"
     csv_file.write_text(
-        "timestamp,symbol,close,volume\n"
-        "2024-01-01,BTC,100,1000\n"
-        "2024-01-02,BTC,102,1100\n",
+        "timestamp,symbol,close,volume\n2024-01-01,BTC,100,1000\n2024-01-02,BTC,102,1100\n",
         encoding="utf-8",
     )
 
@@ -315,8 +317,7 @@ def test_validate_ohlcv_file_invalid_timestamps(tmp_path: Path) -> None:
     """Test validation handles invalid timestamp values."""
     csv_file = tmp_path / "bad_timestamps.csv"
     csv_file.write_text(
-        "timestamp,symbol,open,high,low,close,volume\n"
-        "not-a-date,BTC,100,105,98,102,1000\n",
+        "timestamp,symbol,open,high,low,close,volume\nnot-a-date,BTC,100,105,98,102,1000\n",
         encoding="utf-8",
     )
 
@@ -327,6 +328,6 @@ def test_validate_ohlcv_file_invalid_timestamps(tmp_path: Path) -> None:
     has_timestamp_warning = any("timestamp" in w.lower() for w in report.warnings)
     # If the date is unparseable, the date_range will be empty
     has_empty_date_range = report.date_range == ""
-    assert has_timestamp_warning or has_empty_date_range, (
-        "Expected timestamp warning or empty date range for invalid timestamp"
-    )
+    assert (
+        has_timestamp_warning or has_empty_date_range
+    ), "Expected timestamp warning or empty date range for invalid timestamp"

@@ -1,3 +1,5 @@
+# Copyright (c) 2023-2026 Yaroslav Vasylenko (neuron7xLab)
+# SPDX-License-Identifier: MIT
 """Guardrail enforcing minimum mutation kill rates in CI."""
 
 from __future__ import annotations
@@ -70,17 +72,13 @@ def _collect_summary() -> MutationSummary:
     counted = total - sum(counts[status] for status in _EXCLUDED_STATUSES)
     killed = counts.get("killed", 0)
 
-    return MutationSummary(
-        total=total, counted=counted, killed=killed, status_counts=counts
-    )
+    return MutationSummary(total=total, counted=counted, killed=killed, status_counts=counts)
 
 
 def _render_summary(summary: MutationSummary) -> str:
     ordered_statuses = sorted(summary.status_counts.items())
     status_fragments = [f"{name}={count}" for name, count in ordered_statuses if count]
-    status_section = (
-        ", ".join(status_fragments) if status_fragments else "no mutants discovered"
-    )
+    status_section = ", ".join(status_fragments) if status_fragments else "no mutants discovered"
     kill_percentage = summary.kill_rate * 100.0
     return (
         "Mutation summary: "
@@ -89,9 +87,7 @@ def _render_summary(summary: MutationSummary) -> str:
     )
 
 
-def _write_summary(
-    summary: MutationSummary, *, destination: Path | None, threshold: float
-) -> None:
+def _write_summary(summary: MutationSummary, *, destination: Path | None, threshold: float) -> None:
     if destination is None:
         return
     payload = {
@@ -102,9 +98,7 @@ def _write_summary(
         "threshold": threshold,
         "status_counts": dict(summary.status_counts),
     }
-    destination.write_text(
-        json.dumps(payload, indent=2, sort_keys=True) + "\n", encoding="utf-8"
-    )
+    destination.write_text(json.dumps(payload, indent=2, sort_keys=True) + "\n", encoding="utf-8")
 
 
 def _validate_threshold(value: str) -> float:

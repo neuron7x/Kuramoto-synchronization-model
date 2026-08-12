@@ -1,6 +1,6 @@
-# TradePulse Operational Artifacts - Complete Index
+# GeoSync Operational Artifacts - Complete Index
 
-This document serves as the master index for all operational artifacts in TradePulse, providing a comprehensive navigation guide for production operations, incident management, monitoring, and system lifecycle procedures.
+This document serves as the master index for all operational artifacts in GeoSync, providing a comprehensive navigation guide for production operations, incident management, monitoring, and system lifecycle procedures.
 
 ## 🎯 Quick Navigation
 
@@ -18,7 +18,7 @@ Daily operational reference:
 
 ### 🎛️ **Monitoring & Dashboards**
 Access monitoring and observability:
-1. Production Operations Dashboard - [`../observability/dashboards/tradepulse-production-operations.json`](../observability/dashboards/tradepulse-production-operations.json)
+1. Production Operations Dashboard - [`../observability/dashboards/geosync-production-operations.json`](../observability/dashboards/geosync-production-operations.json)
 2. SLO Policies - [`../observability/slo_policies.json`](../observability/slo_policies.json)
 3. Alert Definitions - [`../observability/alerts.json`](../observability/alerts.json)
 
@@ -106,14 +106,14 @@ Access monitoring and observability:
   - Quick reference matrix (alert → SLA → response time)
   - SLA definitions (API latency, ingestion, signal pipeline)
   - Alert response procedures for each alert:
-    - TradePulseOrderErrorRate
-    - TradePulseOrderLatency
-    - TradePulseOrderAckLatency
-    - TradePulseSignalToFillLatency
-    - TradePulseDataIngestionFailures
-    - TradePulseDataFreshness
-    - TradePulseBacktestFailures
-    - TradePulseOptimizationSlow
+    - GeoSyncOrderErrorRate
+    - GeoSyncOrderLatency
+    - GeoSyncOrderAckLatency
+    - GeoSyncSignalToFillLatency
+    - GeoSyncDataIngestionFailures
+    - GeoSyncDataFreshness
+    - GeoSyncBacktestFailures
+    - GeoSyncOptimizationSlow
   - Escalation matrix
   - SLA breach procedures
   - Communication templates
@@ -132,15 +132,15 @@ Access monitoring and observability:
 
 #### B. Incident Templates and Tracking
 
-**8. Incident Report Template** [`../reports/incidents/incident_report_template.md`](../reports/incidents/incident_report_template.md)
+**8. Incident Report Template** [`../reports/incidents/incident_report_template.md`](templates/incident_playbook.md)
 - **Purpose**: Operational template for active incidents
 - **Use When**: Declaring an incident
 
-**9. Postmortem Template** [`../reports/incidents/postmortem_template.md`](../reports/incidents/postmortem_template.md)
+**9. Postmortem Template** [`../reports/incidents/postmortem_template.md`](POSTMORTEM_TEMPLATE.md)
 - **Purpose**: Detailed postmortem structure
 - **Use When**: Within 24-72 hours after incident resolution
 
-**10. Action Item Register** [`../reports/incidents/action_item_register.md`](../reports/incidents/action_item_register.md)
+**10. Action Item Register** [`../reports/incidents/action_item_register.md`](INCIDENT_RUNBOOK.md)
 - **Purpose**: Centralized CAPA tracking
 - **Use When**: Recording and tracking corrective actions
 
@@ -228,7 +228,7 @@ Access monitoring and observability:
 
 #### A. Dashboards
 
-**20. Production Operations Dashboard** [`../observability/dashboards/tradepulse-production-operations.json`](../observability/dashboards/tradepulse-production-operations.json)
+**20. Production Operations Dashboard** [`../observability/dashboards/geosync-production-operations.json`](../observability/dashboards/geosync-production-operations.json)
 - **Purpose**: Comprehensive production monitoring
 - **Features**:
   - System health status indicator
@@ -244,19 +244,19 @@ Access monitoring and observability:
 - **Refresh**: 10 seconds
 - **Links**: Direct links to incident and SLA playbooks
 
-**21. Overview Dashboard** [`../observability/dashboards/tradepulse-overview.json`](../observability/dashboards/tradepulse-overview.json)
+**21. Overview Dashboard** [`../observability/dashboards/geosync-overview.json`](../observability/dashboards/geosync-overview.json)
 - **Purpose**: General system overview
 - **Features**: Order throughput, error rates, basic metrics
 
-**22. Latency Insights Dashboard** [`../observability/dashboards/tradepulse-latency-insights.json`](../observability/dashboards/tradepulse-latency-insights.json)
+**22. Latency Insights Dashboard** [`../observability/dashboards/geosync-latency-insights.json`](../observability/dashboards/geosync-latency-insights.json)
 - **Purpose**: Detailed latency analysis
 - **Features**: P50/P95/P99 latencies, breakdown by component
 
-**23. Queue Operations Dashboard** [`../observability/dashboards/tradepulse-queue-operations.json`](../observability/dashboards/tradepulse-queue-operations.json)
+**23. Queue Operations Dashboard** [`../observability/dashboards/geosync-queue-operations.json`](../observability/dashboards/geosync-queue-operations.json)
 - **Purpose**: Queue health monitoring
 - **Features**: Queue depths, processing rates, backlog
 
-**24. Resource Utilization Dashboard** [`../observability/dashboards/tradepulse-resource-utilization.json`](../observability/dashboards/tradepulse-resource-utilization.json)
+**24. Resource Utilization Dashboard** [`../observability/dashboards/geosync-resource-utilization.json`](../observability/dashboards/geosync-resource-utilization.json)
 - **Purpose**: Infrastructure resource monitoring
 - **Features**: CPU, memory, disk, network utilization
 
@@ -483,7 +483,7 @@ Update operational artifacts after:
 
 ### Operational Questions
 - Ask in: `#operations`
-- On-call: PagerDuty "TradePulse-SRE"
+- On-call: PagerDuty "GeoSync-SRE"
 
 ### Incident Support
 - Critical: Page via PagerDuty
@@ -495,7 +495,7 @@ Update operational artifacts after:
 ## 📖 Related Documentation
 
 **Architecture**: [`ARCHITECTURE.md`](ARCHITECTURE.md)
-**Testing**: [`TESTING.md`](../TESTING.md), [`TEST_ARCHITECTURE.md`](TEST_ARCHITECTURE.md)
+**Testing**: [`TESTING.md`](operations/TESTING.md), [`TEST_ARCHITECTURE.md`](TEST_ARCHITECTURE.md)
 **Security**: [`../SECURITY.md`](../SECURITY.md), [`security/`](security/)
 **Development**: [`../CONTRIBUTING.md`](../CONTRIBUTING.md)
 **API**: [`api.md`](api.md), [`api/`](api/)
@@ -504,7 +504,7 @@ Update operational artifacts after:
 
 ## ✅ Completeness Checklist
 
-This index represents the complete operational artifact suite for TradePulse:
+This index represents the complete operational artifact suite for GeoSync:
 
 - ✅ **Production Dashboard**: Comprehensive monitoring with system health, alerts, SLOs
 - ✅ **SLA/Alert Playbooks**: Alert-specific response procedures with escalation paths

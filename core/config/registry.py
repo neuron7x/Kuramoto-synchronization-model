@@ -1,3 +1,5 @@
+# Copyright (c) 2023-2026 Yaroslav Vasylenko (neuron7xLab)
+# SPDX-License-Identifier: MIT
 """Centralized configuration registry with versioning and governance controls."""
 
 from __future__ import annotations
@@ -125,9 +127,7 @@ class ProfileHistory:
     def clone(self) -> "ProfileHistory":
         return ProfileHistory(
             name=self.name,
-            versions={
-                version: record.clone() for version, record in self.versions.items()
-            },
+            versions={version: record.clone() for version, record in self.versions.items()},
             published=dict(self.published),
             audit_log=list(self.audit_log),
         )
@@ -206,9 +206,7 @@ def _ensure_mapping(payload: Mapping[str, Any]) -> Mapping[str, Any]:
 
 
 def _stable_checksum(payload: Mapping[str, Any]) -> str:
-    normalized = json.dumps(
-        payload, sort_keys=True, separators=(",", ":"), ensure_ascii=False
-    )
+    normalized = json.dumps(payload, sort_keys=True, separators=(",", ":"), ensure_ascii=False)
     return hashlib.sha256(normalized.encode("utf-8")).hexdigest()
 
 
@@ -253,9 +251,7 @@ class ConfigRegistry:
         with self._lock:
             history = self._load_history(profile_name)
             if version_obj in history.versions:
-                msg = (
-                    f"Version {version_obj} already exists for profile '{profile_name}'"
-                )
+                msg = f"Version {version_obj} already exists for profile '{profile_name}'"
                 raise ConfigVersionError(msg)
 
             self._ensure_version_is_newer(history, version_obj)
@@ -301,9 +297,7 @@ class ConfigRegistry:
                 msg = f"Version {version_obj} of '{profile_name}' does not require approvals"
                 raise ConfigApprovalError(msg)
             if record.has_approval_from(approver):
-                msg = (
-                    f"Approver '{approver}' has already approved version {version_obj}"
-                )
+                msg = f"Approver '{approver}' has already approved version {version_obj}"
                 raise ConfigApprovalError(msg)
             approval = ConfigApproval(
                 approver=approver,
@@ -375,11 +369,7 @@ class ConfigRegistry:
     ) -> None:
         """Rollback an environment to a previously registered configuration version."""
 
-        env = (
-            environment
-            if isinstance(environment, Environment)
-            else Environment(environment)
-        )
+        env = environment if isinstance(environment, Environment) else Environment(environment)
         version_obj = self._parse_version(target_version)
 
         with self._lock:
@@ -407,11 +397,7 @@ class ConfigRegistry:
     def get_active_version(
         self, profile_name: str, environment: Environment | str
     ) -> Version | None:
-        env = (
-            environment
-            if isinstance(environment, Environment)
-            else Environment(environment)
-        )
+        env = environment if isinstance(environment, Environment) else Environment(environment)
         history = self._storage.read(profile_name)
         if history is None:
             return None
@@ -420,11 +406,7 @@ class ConfigRegistry:
     def get_active_payload(
         self, profile_name: str, environment: Environment | str
     ) -> Mapping[str, Any] | None:
-        env = (
-            environment
-            if isinstance(environment, Environment)
-            else Environment(environment)
-        )
+        env = environment if isinstance(environment, Environment) else Environment(environment)
         history = self._storage.read(profile_name)
         if history is None:
             return None
@@ -450,9 +432,7 @@ class ConfigRegistry:
         version_obj = self._parse_version(version)
         history = self._storage.read(profile_name)
         if history is None:
-            raise ConfigVersionError(
-                f"Profile '{profile_name}' has no registered versions"
-            )
+            raise ConfigVersionError(f"Profile '{profile_name}' has no registered versions")
         record = history.versions.get(version_obj)
         if record is None:
             raise ConfigVersionError(
@@ -479,18 +459,14 @@ class ConfigRegistry:
             msg = f"Invalid version identifier '{version}'"
             raise ConfigVersionError(msg) from exc
 
-    def _get_version_record(
-        self, history: ProfileHistory, version: Version
-    ) -> ConfigVersionRecord:
+    def _get_version_record(self, history: ProfileHistory, version: Version) -> ConfigVersionRecord:
         record = history.versions.get(version)
         if record is None:
             msg = f"Version {version} is not registered for profile '{history.name}'"
             raise ConfigVersionError(msg)
         return record
 
-    def _ensure_version_is_newer(
-        self, history: ProfileHistory, version: Version
-    ) -> None:
+    def _ensure_version_is_newer(self, history: ProfileHistory, version: Version) -> None:
         if not history.versions:
             return
         latest = max(history.versions)
@@ -498,9 +474,7 @@ class ConfigRegistry:
             msg = f"Version {version} must be greater than existing latest version {latest}"
             raise ConfigVersionError(msg)
 
-    def _ensure_approvals_satisfied(
-        self, profile_name: str, record: ConfigVersionRecord
-    ) -> None:
+    def _ensure_approvals_satisfied(self, profile_name: str, record: ConfigVersionRecord) -> None:
         required = record.required_approvals
         if required == 0:
             return
@@ -518,34 +492,26 @@ class ConfigRegistry:
                 validator(profile_name, payload)
             except ConfigValidationError:
                 raise
-            except (
-                Exception
-            ) as exc:  # noqa: BLE001 - propagate wrapped validation errors
+            except Exception as exc:
                 msg = f"Validator {validator!r} rejected payload for profile '{profile_name}'"
                 raise ConfigValidationError(msg) from exc
 
-    def _run_compatibility(
-        self, profile_name: str, record: ConfigVersionRecord
-    ) -> None:
+    def _run_compatibility(self, profile_name: str, record: ConfigVersionRecord) -> None:
         for policy in self._compatibility_policies:
             try:
                 policy.ensure(profile_name, record.version, record.payload)
             except ConfigCompatibilityError:
                 raise
-            except Exception as exc:  # noqa: BLE001
-                msg = (
-                    f"Compatibility policy {policy!r} rejected version {record.version}"
-                )
+            except Exception as exc:
+                msg = f"Compatibility policy {policy!r} rejected version {record.version}"
                 raise ConfigCompatibilityError(msg) from exc
 
-    def _run_release_checks(
-        self, profile_name: str, record: ConfigVersionRecord
-    ) -> None:
+    def _run_release_checks(self, profile_name: str, record: ConfigVersionRecord) -> None:
         for check in self._release_checks:
             try:
                 check(profile_name, record.version, record.payload)
             except ConfigPublicationError:
                 raise
-            except Exception as exc:  # noqa: BLE001
+            except Exception as exc:
                 msg = f"Release check {check!r} failed for version {record.version}"
                 raise ConfigPublicationError(msg) from exc

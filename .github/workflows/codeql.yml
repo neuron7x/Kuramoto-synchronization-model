@@ -1,0 +1,63 @@
+# SPDX-License-Identifier: MIT
+#
+# CodeQL — static application security testing (SAST).
+#
+# Runs on every push to `main` and weekly. Intentionally decoupled from the
+# synchronous PR gate so SARIF uploads and long-running analysis do not block
+# fast-path merges. Findings surface in the Security tab.
+name: CodeQL
+
+on:
+  push:
+    branches: [main]
+  schedule:
+    # Every Monday at 02:23 UTC — off-peak, staggered against other scans.
+    - cron: '23 2 * * 1'
+  workflow_dispatch:
+
+permissions:
+  contents: read
+  security-events: write
+
+env:
+  FORCE_JAVASCRIPT_ACTIONS_TO_NODE24: 'true'
+
+concurrency:
+  group: codeql-${{ github.ref }}
+  cancel-in-progress: true
+
+jobs:
+  analyze:
+    name: codeql-${{ matrix.language }}
+    runs-on: ubuntu-latest
+    timeout-minutes: 45
+    strategy:
+      fail-fast: false
+      matrix:
+        language: [python, javascript, go]
+
+    steps:
+      - name: Checkout
+        uses: actions/checkout@9c091bb21b7c1c1d1991bb908d89e4e9dddfe3e0 # v7.0.0
+
+      - name: Initialize CodeQL
+        uses: github/codeql-action/init@54f647b7e1bb85c95cddabcd46b0c578ec92bc1a # v3
+        with:
+          languages: ${{ matrix.language }}
+          queries: security-and-quality
+
+
+      - name: Set up Go
+        if: matrix.language == 'go'
+        uses: actions/setup-go@924ae3a1cded613372ab5595356fb5720e22ba16 # v5
+        with:
+          go-version-file: 'go.work'
+          cache: false
+
+      - name: Autobuild
+        uses: github/codeql-action/autobuild@54f647b7e1bb85c95cddabcd46b0c578ec92bc1a # v3
+
+      - name: Analyze
+        uses: github/codeql-action/analyze@54f647b7e1bb85c95cddabcd46b0c578ec92bc1a # v3
+        with:
+          category: '/language:${{ matrix.language }}'

@@ -1,5 +1,6 @@
-# SPDX-License-Identifier: LicenseRef-TradePulse-Proprietary
-"""Golden Path Integration Tests for TradePulse Backtest Engine.
+# Copyright (c) 2023-2026 Yaroslav Vasylenko (neuron7xLab)
+# SPDX-License-Identifier: MIT
+"""Golden Path Integration Tests for GeoSync Backtest Engine.
 
 This module provides deterministic, reproducible integration tests for the core
 backtest workflow: data ingestion → signal generation → backtest execution → PnL/metrics.
@@ -15,6 +16,7 @@ The tests are designed to:
 
 These tests protect the "golden path" scenario from regressions.
 """
+
 from __future__ import annotations
 
 import math
@@ -96,7 +98,7 @@ def mean_reverting_price_data() -> np.ndarray:
 
     for i in range(1, n_bars):
         innovation = np.random.normal(0, 2)
-        prices[i] = prices[i-1] + reversion_speed * (mean_price - prices[i-1]) + innovation
+        prices[i] = prices[i - 1] + reversion_speed * (mean_price - prices[i - 1]) + innovation
 
     return np.maximum(prices, 50.0)
 
@@ -106,7 +108,7 @@ def momentum_signal(prices: np.ndarray, lookback: int = 10) -> np.ndarray:
     signal = np.zeros_like(prices)
 
     for i in range(lookback, len(prices)):
-        ma = np.mean(prices[i-lookback:i])
+        ma = np.mean(prices[i - lookback : i])
         if prices[i] > ma:
             signal[i] = 1.0
         elif prices[i] < ma:
@@ -115,12 +117,14 @@ def momentum_signal(prices: np.ndarray, lookback: int = 10) -> np.ndarray:
     return signal
 
 
-def mean_reversion_signal(prices: np.ndarray, lookback: int = 20, threshold: float = 1.5) -> np.ndarray:
+def mean_reversion_signal(
+    prices: np.ndarray, lookback: int = 20, threshold: float = 1.5
+) -> np.ndarray:
     """Mean reversion strategy: sell when above mean, buy when below."""
     signal = np.zeros_like(prices)
 
     for i in range(lookback, len(prices)):
-        window = prices[i-lookback:i]
+        window = prices[i - lookback : i]
         mean = np.mean(window)
         std = np.std(window)
 
@@ -129,7 +133,7 @@ def mean_reversion_signal(prices: np.ndarray, lookback: int = 20, threshold: flo
             if z_score > threshold:
                 signal[i] = -1.0  # Sell
             elif z_score < -threshold:
-                signal[i] = 1.0   # Buy
+                signal[i] = 1.0  # Buy
 
     return signal
 
@@ -189,6 +193,7 @@ class TestGoldenPathBasic:
 
     def test_zero_signal_zero_pnl(self, synthetic_price_data: np.ndarray) -> None:
         """Test that zero signal produces zero PnL."""
+
         def zero_signal(p: np.ndarray) -> np.ndarray:
             return np.zeros_like(p)
 
@@ -235,7 +240,9 @@ class TestGoldenPathStrategies:
         assert result.pnl > 0, "Buy-and-hold should profit in uptrend"
         assert result.trades == 1
 
-    def test_mean_reversion_on_mean_reverting_data(self, mean_reverting_price_data: np.ndarray) -> None:
+    def test_mean_reversion_on_mean_reverting_data(
+        self, mean_reverting_price_data: np.ndarray
+    ) -> None:
         """Test mean reversion strategy runs without errors."""
         result = walk_forward(
             mean_reverting_price_data,
@@ -351,6 +358,7 @@ class TestGoldenPathConstraints:
 
     def test_position_limits_enforced(self, synthetic_price_data: np.ndarray) -> None:
         """Test that position limits are respected."""
+
         def large_signal(p: np.ndarray) -> np.ndarray:
             # Signal with magnitude > 1
             return np.full_like(p, 5.0)
@@ -518,6 +526,7 @@ class TestGoldenPathEdgeCases:
 
     def test_alternating_signal(self, synthetic_price_data: np.ndarray) -> None:
         """Test with rapidly alternating signal (high turnover)."""
+
         def alternating_signal(p: np.ndarray) -> np.ndarray:
             signal = np.zeros_like(p)
             signal[::2] = 1.0

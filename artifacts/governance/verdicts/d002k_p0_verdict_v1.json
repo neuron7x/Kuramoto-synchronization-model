@@ -1,0 +1,22 @@
+{
+  "schema_version": "D002J-VERDICT-CAPSULE-v1",
+  "node_id": "D002K-P0",
+  "phase": "P0",
+  "pr_number": 0,
+  "merge_sha": "0000000000000000000000000000000000000000",
+  "parent_nodes": ["D002J-P7"],
+  "decision": "D002K_PREREG_LOCKED",
+  "status": "TERMINAL_PASS",
+  "artifact_paths": [
+    "docs/governance/D002K_PREREGISTRATION.yaml",
+    "docs/research/D002K_DESIGN_RATIONALE.md",
+    "artifacts/d002k/prereg/d002k_failure_axis_inheritance_v1.json",
+    "artifacts/d002k/prereg/d002k_primary_metric_contract_v1.json"
+  ],
+  "test_paths": ["tests/systemic_risk/test_d002k_preregistration.py"],
+  "allowed_next_nodes": ["D002K-P1"],
+  "forbidden_next_nodes": ["D002J-P8"],
+  "claim_boundary": "D-002K-P0 locks a fresh pre-registration ONLY: central claim, inherited failure axis effect_too_small, single primary mechanism funding_liquidity_rollover, three primary windows CW3/CW4/CW5, observable families, ONE locked primary metric pre_post_standardized_mean_shift with secondary metrics marked exploratory, deterministic matched-placebo policy locked before scoring, power-gate-before-scoring as a prereg law, forbidden/allowed claims, stop conditions, and a structural no-rescue boundary. Zero data, zero scoring, zero model run. canonical_run_authorized=false. D-002K does NOT rescue, mutate, or reopen D-002J: D-002J remains terminally REFUSED at P7 (POWER_GATE_REFUSED_UNDERPOWERED). D-002K does NOT reverse the D-002J-P7 REFUSED verdict and does NOT authorise any D-002J P8. Alpha is NOT relaxed and the effect prior is NOT inflated; the Bonferroni denominator (n_windows * n_primary_metrics = 3) is legitimately smaller because the pre-registered hypothesis count is honestly smaller, not because the statistics were loosened at fixed scope. This pre-registration does NOT authorise any canonical run.",
+  "failure_retention": null,
+  "source_summary_path": "artifacts/d002k/prereg/d002k_failure_axis_inheritance_v1.json"
+}

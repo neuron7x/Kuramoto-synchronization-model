@@ -1,3 +1,5 @@
+# Copyright (c) 2023-2026 Yaroslav Vasylenko (neuron7xLab)
+# SPDX-License-Identifier: MIT
 """Structured configuration for Kuramoto–Ricci composite workflows."""
 
 from __future__ import annotations
@@ -330,9 +332,7 @@ class KuramotoRicciIntegrationConfig(BaseModel):
     composite: CompositeConfig = Field(default_factory=CompositeConfig)
 
     @classmethod
-    def from_mapping(
-        cls, data: Mapping[str, Any] | None
-    ) -> "KuramotoRicciIntegrationConfig":
+    def from_mapping(cls, data: Mapping[str, Any] | None) -> "KuramotoRicciIntegrationConfig":
         try:
             return cls.model_validate(data or {})
         except ValidationError as exc:  # pragma: no cover - error propagation
@@ -377,9 +377,7 @@ class YamlSettingsSource(PydanticBaseSettingsSource):
         self._env_source = env_source
         self._dotenv_source = dotenv_source
 
-    def __call__(
-        self, settings_cls: type[BaseSettings] | None = None
-    ) -> dict[str, Any]:
+    def __call__(self, settings_cls: type[BaseSettings] | None = None) -> dict[str, Any]:
         if settings_cls is not None:
             self.settings_cls = settings_cls
         config_path = self._resolve_path()
@@ -396,14 +394,10 @@ class YamlSettingsSource(PydanticBaseSettingsSource):
                 f"failed to parse YAML configuration at {config_path}: {exc}"
             ) from exc
         if not isinstance(payload, Mapping):
-            raise SettingsError(
-                f"configuration file {config_path} must define a mapping"
-            )
+            raise SettingsError(f"configuration file {config_path} must define a mapping")
         return dict(payload)
 
-    def get_field_value(
-        self, field: FieldInfo, field_name: str
-    ) -> tuple[Any, str, bool]:
+    def get_field_value(self, field: FieldInfo, field_name: str) -> tuple[Any, str, bool]:
         return None, field_name, False
 
     def _resolve_path(self) -> Path | None:
@@ -430,11 +424,11 @@ class YamlSettingsSource(PydanticBaseSettingsSource):
         return None
 
 
-class TradePulseSettings(BaseSettings):
+class GeoSyncSettings(BaseSettings):
     """Application-wide configuration powered by ``pydantic-settings``."""
 
     model_config = SettingsConfigDict(
-        env_prefix="TRADEPULSE_",
+        env_prefix="GEOSYNC_",
         env_nested_delimiter="__",
         env_file=".env",
         env_file_encoding="utf8",
@@ -460,9 +454,7 @@ class TradePulseSettings(BaseSettings):
         dotenv_settings: PydanticBaseSettingsSource,
         file_secret_settings: PydanticBaseSettingsSource,
     ) -> tuple[PydanticBaseSettingsSource, ...]:
-        yaml_source = YamlSettingsSource(
-            settings_cls, init_settings, env_settings, dotenv_settings
-        )
+        yaml_source = YamlSettingsSource(settings_cls, init_settings, env_settings, dotenv_settings)
         return (
             init_settings,
             env_settings,
@@ -479,19 +471,19 @@ class TradePulseSettings(BaseSettings):
         )
 
 
-def export_tradepulse_settings_schema(
+def export_geosync_settings_schema(
     destination: str | Path | None = None,
     *,
     indent: int = 2,
 ) -> dict[str, Any]:
-    """Return the JSON schema for :class:`TradePulseSettings`.
+    """Return the JSON schema for :class:`GeoSyncSettings`.
 
     When ``destination`` is provided the schema is written to the given path on
     disk using UTF-8 encoding. The resulting schema dictionary is always
     returned which allows callers to inspect or further post-process it.
     """
 
-    schema = TradePulseSettings.model_json_schema()
+    schema = GeoSyncSettings.model_json_schema()
     if destination is not None:
         path = Path(destination)
         payload = json.dumps(schema, indent=indent, sort_keys=True)
@@ -542,7 +534,7 @@ def load_kuramoto_ricci_config(
     overrides = dict(cli_overrides or {})
     if path is not None:
         overrides.setdefault("config_file", Path(path))
-    settings = TradePulseSettings(**overrides)
+    settings = GeoSyncSettings(**overrides)
     return settings.as_kuramoto_ricci_config()
 
 
@@ -556,9 +548,9 @@ __all__ = [
     "RicciConfig",
     "RicciGraphConfig",
     "RicciTemporalConfig",
-    "TradePulseSettings",
+    "GeoSyncSettings",
     "YamlSettingsSource",
-    "export_tradepulse_settings_schema",
+    "export_geosync_settings_schema",
     "load_kuramoto_ricci_config",
     "parse_cli_overrides",
 ]

@@ -1,3 +1,5 @@
+# Copyright (c) 2023-2026 Yaroslav Vasylenko (neuron7xLab)
+# SPDX-License-Identifier: MIT
 """Compositional helpers for caching ticks while forming and sending TickBatchPersistedEvent notifications."""
 
 from __future__ import annotations
@@ -124,7 +126,7 @@ class StreamingIngestionPipeline:
         lag_handler: LagHandler | None = None,
         message_broker: MessageBroker | None = None,
         tick_event_publisher: TickEventPublisher | None = None,
-        tick_event_topic: str = "tradepulse.data.tick_batch.persisted",
+        tick_event_topic: str = "geosync.data.tick_batch.persisted",
         tick_header_factory: "HeaderFactory" | None = None,
         kafka_service_factory: (
             Callable[[KafkaIngestionConfig], KafkaIngestionService]

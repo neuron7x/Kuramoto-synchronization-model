@@ -1,0 +1,104 @@
+# Diff-bound acceptor — resolve the cli/ vs scripts.cli import-shadowing
+# quarantine cluster (#1158) by RE-HOMING the package under geosync.* (ADR-0024),
+# the fix the package-boundary gate itself prescribes.
+#
+# Root cause: the repo-root `cli/` package (amm_cli.py / geosync_cli.py) was not
+# declared in [tool.setuptools.packages.find], while `scripts`/`scripts.*` was.
+# Under the CI editable install, top-level `cli` resolved to `scripts/cli.py`
+# (`scripts.cli`) and four CLI test modules ImportError'd.
+#
+# Why not declare `cli` in packages.find: that adds `cli` as a NEW non-geosync
+# top-level package in the distributable wheel, which BOTH the package-boundary
+# ratchet (.github/package_boundary_baseline.json,
+# tests/ci/test_package_boundary.py) and the wheel-contract ratchet
+# (.github/bwheel_baseline.json) forbid — the non-geosync leak set may only
+# shrink. Growing those baselines would weaken the gate.
+#
+# Fix: `cli/` -> `geosync/cli/`. As `geosync.cli` it is packaged by the existing
+# `geosync`/`geosync.*` find entry with ZERO new package-boundary debt, and the
+# public import path `geosync.cli` cannot be shadowed by `scripts.cli`. All
+# importers updated (4 quarantined tests + e2e pipeline test + CLI-docs
+# generator); the four modules are un-quarantined and collect + pass. No physics
+# / runtime behaviour change; no sys.path mutation (import-architecture ratchet
+# held). The moved modules' own first-party imports (analytics/core/execution)
+# are already shipped, so no latent broken import is introduced.
+
+id: cli-rehome-geosync-namespace
+status: ACTIVE
+claim_type: refactor
+promise: >-
+  The cli_import_shadowing cluster (#1158) is resolved by re-homing the repo-root
+  `cli/` package into the canonical wheel namespace as `geosync/cli/`. As
+  `geosync.cli` it is packaged by the existing `geosync.*` packages.find entry
+  with zero new package-boundary debt and cannot be shadowed by `scripts.cli`.
+  All importers are updated to `from geosync.cli[.geosync_cli] import ...`
+  (tests/unit/cli/*, tests/unit/test_geosync_cli.py, tests/e2e/test_full_pipeline.py,
+  devtools/docs/generate_geosync_cli_docs.py). The four formerly-quarantined
+  modules are removed from tests/ci/fast_quarantine.txt and collect + pass; the
+  cluster is marked resolved in docs/ci/fast_backlog_ledger.md. Every remaining
+  quarantine entry still carries an issue ref and the post-subtraction fast
+  collection stays non-empty. No production runtime or physics behaviour change
+  and no sys.path mutation — a package move + import-path update.
+diff_scope:
+  changed_files:
+    - path: ".claude/commit_acceptors/cli-rehome-geosync-namespace.yaml"
+    - path: "geosync/cli/__init__.py"
+    - path: "geosync/cli/amm_cli.py"
+    - path: "geosync/cli/geosync_cli.py"
+    - path: "cli/__init__.py"
+    - path: "cli/amm_cli.py"
+    - path: "cli/geosync_cli.py"
+    - path: "tests/unit/cli/test_amm_cli.py"
+    - path: "tests/unit/cli/test_cli_golden.py"
+    - path: "tests/unit/cli/test_fete_backtest_cli.py"
+    - path: "tests/unit/test_geosync_cli.py"
+    - path: "tests/e2e/test_full_pipeline.py"
+    - path: "devtools/docs/generate_geosync_cli_docs.py"
+    - path: "scripts/check_single_entrypoint.py"
+    - path: "tests/ci/fast_quarantine.txt"
+    - path: "docs/ci/fast_backlog_ledger.md"
+    - path: "docs/STRUCTURE.md"
+    - path: "docs/USER_INTERACTION_GUIDE.md"
+    - path: "docs/scenarios.md"
+    - path: "docs/stress_playbooks.md"
+  forbidden_paths:
+    - "trading/"
+    - "forecast/"
+    - "policy/"
+required_python_symbols: []
+expected_signal: >-
+  pytest passes for tests/unit/cli/test_amm_cli.py, tests/unit/cli/test_cli_golden.py,
+  tests/unit/cli/test_fete_backtest_cli.py and tests/unit/test_geosync_cli.py;
+  cli_import_shadowing is absent from the active tests/ci/fast_quarantine.txt
+  entries; the repo-root cli/ package no longer exists and geosync/cli/ does.
+measurement_command: >-
+  bash -c 'set -e; mkdir -p tmp;
+  python -m pytest tests/unit/cli/test_amm_cli.py tests/unit/cli/test_cli_golden.py
+  tests/unit/cli/test_fete_backtest_cli.py tests/unit/test_geosync_cli.py -q
+  | tee tmp/cli_rehome.log;
+  test -f geosync/cli/geosync_cli.py;
+  test ! -e cli/geosync_cli.py;
+  ! grep -qE "cli_import_shadowing" <(grep -vE "^[[:space:]]*#|^[[:space:]]*$" tests/ci/fast_quarantine.txt);
+  ! grep -E "^tests/" tests/ci/fast_quarantine.txt | grep -qvE "issue=#[0-9]+";
+  echo cli-rehome-ok | tee -a tmp/cli_rehome.log'
+signal_artifact: "tmp/cli_rehome.log"
+falsifier:
+  command: >-
+    bash -c 'if [ -e cli/geosync_cli.py ] || grep -vE "^[[:space:]]*#|^[[:space:]]*$" tests/ci/fast_quarantine.txt | grep -qE "cli_import_shadowing"; then exit 0; else exit 1; fi'
+  description: >-
+    Exits 0 (falsification) iff the repo-root cli/ package still exists OR
+    cli_import_shadowing is still an ACTIVE quarantine entry — i.e. the re-home
+    or the drain did not happen. On the green path both are absent so this exits
+    1, proving the resolution is real and falsifiable.
+rollback_command: >-
+  bash -c 'git checkout HEAD~1 -- cli geosync/cli tests/unit/cli
+  tests/unit/test_geosync_cli.py tests/e2e/test_full_pipeline.py
+  devtools/docs/generate_geosync_cli_docs.py tests/ci/fast_quarantine.txt
+  docs/ci/fast_backlog_ledger.md docs/STRUCTURE.md docs/USER_INTERACTION_GUIDE.md
+  docs/scenarios.md docs/stress_playbooks.md
+  .claude/commit_acceptors/cli-rehome-geosync-namespace.yaml 2>/dev/null || true'
+rollback_verification_command: "git diff --exit-code tests/ci/fast_quarantine.txt"
+memory_update_type: append
+ledger_path: "docs/ci/fast_backlog_ledger.md"
+report_path: "docs/ci/fast_backlog_ledger.md"
+evidence: []

@@ -1,0 +1,29 @@
+# Diff-bound commit acceptor: CTC-FALSIFY-001 consolidated result doc.
+id: ctc-falsify-results
+status: ACTIVE
+claim_type: documentation
+promise: "RESULTS.md consolidates the in-silico L1->L2->C3 arc into one scoped, provenance-pinned, hypothesis-level negative; it adds no code and asserts explicitly it is NOT a CTC-theory verdict and NOT real data."
+diff_scope:
+  changed_files:
+    - path: "research/ctc_falsify/RESULTS.md"
+    - path: ".claude/commit_acceptors/ctc-falsify-results.yaml"
+  forbidden_paths:
+    - "trading/"
+    - "execution/"
+    - "forecast/"
+    - "policy/"
+    - "research/ctc_falsify/config.py"
+    - "research/ctc_falsify/l2/config_l2.py"
+required_python_symbols: []
+expected_signal: "RESULTS.md present, references the three merged SHAs, and states the OPEN line + non-verdict scope"
+measurement_command: "grep -c 'INADMISSIBLE_NPLUS_INSITU_BLIND' research/ctc_falsify/RESULTS.md"
+signal_artifact: "tmp/ctc_results_grep.log"
+falsifier:
+  command: "grep -qF 'verdict on the Communication-through-Coherence (CTC) theory' research/ctc_falsify/RESULTS.md && grep -qF 'stays **OPEN**' research/ctc_falsify/RESULTS.md && grep -qF '5ba34fd7' research/ctc_falsify/RESULTS.md"
+  description: "Asserts the artifact keeps its honest scope (explicit non-verdict, OPEN line, pinned C3 SHA). Fails if the document is silently promoted into a theory claim or de-provenanced."
+rollback_command: "git rm -f research/ctc_falsify/RESULTS.md"
+rollback_verification_command: "test ! -e research/ctc_falsify/RESULTS.md"
+memory_update_type: none
+ledger_path: ".claude/commit_acceptors/ctc-falsify-results.yaml"
+report_path: "research/ctc_falsify/RESULTS.md"
+evidence: []

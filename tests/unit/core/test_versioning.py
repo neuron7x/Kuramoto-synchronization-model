@@ -1,4 +1,5 @@
-# SPDX-License-Identifier: LicenseRef-TradePulse-Proprietary
+# Copyright (c) 2023-2026 Yaroslav Vasylenko (neuron7xLab)
+# SPDX-License-Identifier: MIT
 """Tests for core.versioning module - build metadata and config provenance."""
 
 from __future__ import annotations
@@ -149,7 +150,7 @@ class TestGetGitInfo:
 
     def test_in_git_repo(self) -> None:
         """get_git_info should return info when in a git repo."""
-        # We're in the TradePulse repo, so this should work
+        # We're in the GeoSync repo, so this should work
         info = get_git_info()
         if info is not None:
             assert len(info.commit) >= 7
@@ -345,3 +346,31 @@ class TestVerifyConfigHash:
         expected = compute_config_hash(original)
         modified = {"key": "different"}
         assert verify_config_hash(modified, expected) is False
+
+
+def test_detached_head_branch_is_none(monkeypatch) -> None:
+    """`if branch == "HEAD": branch = None` -- a detached HEAD has no branch NAME.
+
+    `git rev-parse --abbrev-ref HEAD` returns the literal "HEAD" when detached; that sentinel
+    must become None. Under `Eq -> NotEq` the mapping inverts: a detached checkout keeps the
+    fake "HEAD" branch and a real branch is nulled to None. Both directions pinned by stubbing
+    the git call.
+    """
+    import core.versioning as versioning
+
+    def _fake(args, cwd):
+        if args[:2] == ["rev-parse", "--abbrev-ref"]:
+            return "HEAD"
+        return "abcdef1234567890"
+
+    monkeypatch.setattr(versioning, "_run_git_command", _fake)
+    info = versioning.get_git_info()
+    assert info is not None and info.branch is None
+
+    def _fake_branch(args, cwd):
+        if args[:2] == ["rev-parse", "--abbrev-ref"]:
+            return "feature/x"
+        return "abcdef1234567890"
+
+    monkeypatch.setattr(versioning, "_run_git_command", _fake_branch)
+    assert versioning.get_git_info().branch == "feature/x"

@@ -1,0 +1,33 @@
+{
+  "boundary": "Scoped strictly to: a two-population Sakaguchi-Kuramoto generative ground truth and the naive PLV+coherence pipeline emulated here. NOT a claim about the CTC theory; NOT a claim on real neural data. KILLED_SCOPED / SURVIVED_INITIAL require a bound real electrophysiology dataset (L2).",
+  "canonical_thresholds": {
+    "coherence": 0.2,
+    "plv": 0.3
+  },
+  "claim": "The standard CTC analysis pipeline (gamma-band PLV + coherence) distinguishes a true phase-gated inter-population communication channel from confound-only signals (common drive / rate / SNR) at the canonical effect size.",
+  "config_hash": "f15eb7fef2b602fd4940dae900e53239e9c56e2880a949ccb2ccc110e75f1a5f",
+  "confound_diagnostic": {
+    "mean_null_plv": {
+      "N1_COMMON_DRIVE": 0.27957013740703396,
+      "N2_RATE": 0.27836932646532003,
+      "N3_SNR": 0.2767080135152789
+    },
+    "n1_common_drive_false_positive_rate": 0.08333333333333333,
+    "n2_rate_false_positive_rate": 0.20833333333333334,
+    "n3_snr_false_positive_rate": 0.041666666666666664
+  },
+  "experiment_id": "CTC-FALSIFY-001",
+  "generative_groundtruth": "two-population Sakaguchi-Kuramoto, toggleable A->B channel",
+  "n_seeds": 24,
+  "positive_control": {
+    "mean_nplus_plv": 0.7781435944773835,
+    "nplus_min_required": 0.9,
+    "nplus_recovery_rate": 0.9166666666666666,
+    "recovered": true
+  },
+  "readout_independent_of_groundtruth": true,
+  "real_data_bound": false,
+  "repro_hash": "bc0c3c2fff86b5c786ba46bbdd10865eeb871002ec019067061adbf20e14a3a8",
+  "standard_pipeline": "gamma band-pass -> Hilbert PLV + magnitude-squared coherence",
+  "verdict": "INADMISSIBLE_NO_REAL_DATA"
+}

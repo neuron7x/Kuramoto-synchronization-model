@@ -1,0 +1,29 @@
+id: methodology-stack-contract
+status: ACTIVE
+claim_type: governance
+promise: "Methodology stack contract is guarded by a fail-closed targeted test."
+diff_scope:
+  changed_files:
+    - path: "docs/governance/methodology_stack_contract.md"
+    - path: "tests/ci/test_methodology_stack_contract.py"
+    - path: ".claude/commit_acceptors/methodology-stack-contract.yaml"
+  forbidden_paths:
+    - "core/"
+    - "runtime/"
+    - "trading/"
+    - "execution/"
+    - "forecast/"
+required_python_symbols:
+  - "validate_contract_text"
+expected_signal: "methodology stack contract test passes"
+measurement_command: "python -m pytest tests/ci/test_methodology_stack_contract.py -q"
+signal_artifact: "tmp/methodology_stack_contract_pytest.log"
+falsifier:
+  command: "python -m pytest tests/ci/test_methodology_stack_contract.py::test_methodology_stack_contract_fails_closed_on_missing_control -q"
+  description: "Detects removal of a required control token."
+rollback_command: "git rm docs/governance/methodology_stack_contract.md tests/ci/test_methodology_stack_contract.py .claude/commit_acceptors/methodology-stack-contract.yaml"
+rollback_verification_command: "git diff --exit-code -- docs/governance/methodology_stack_contract.md tests/ci/test_methodology_stack_contract.py .claude/commit_acceptors/methodology-stack-contract.yaml"
+memory_update_type: none
+ledger_path: ".claude/commit_acceptors/methodology-stack-contract.yaml"
+report_path: "docs/governance/methodology_stack_contract.md"
+evidence: []

@@ -1,4 +1,6 @@
-from neuropro.policy import Policy
+# Copyright (c) 2023-2026 Yaroslav Vasylenko (neuron7xLab)
+# SPDX-License-Identifier: MIT
+from geosync_hpc.policy import Policy
 
 
 def test_dyn_cap_reacts_to_tail():

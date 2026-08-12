@@ -1,0 +1,651 @@
+{
+  "version": 1,
+  "_doc": "Reviewed exceptions to the product-category claim-boundary gate. Each entry is a boundary-sensitive phrase that is MECHANISM (code symbols, ops runbooks, research disclaimers, honest negations) — not a claim that GeoSync IS a live-trading/alpha product. New unreviewed occurrences fail scripts/ci/check_claim_boundary.py. See PRODUCT_CATEGORY.md.",
+  "allow": [
+    {
+      "file": "docs/RICCI_MICROSTRUCTURE.md",
+      "match": "This is not validated alpha, not a production trading signal, and not confirmed market physics.",
+      "reason": "honest-negation: T3 research disclaimer explicitly denying alpha/production/physics claims, not a product-category claim"
+    },
+    {
+      "file": "CONTRIBUTING.md",
+      "match": "threshold: optional threshold for signal generation",
+      "reason": "mechanism: internal engineering reference, not product-category positioning"
+    },
+    {
+      "file": "README.md",
+      "match": "**geosync is not an alpha product.**",
+      "reason": "honest-negation: explicit README product-category boundary, not an alpha-product claim"
+    },
+    {
+      "file": "ROADMAP.md",
+      "match": "live-trading product.",
+      "reason": "mechanism: internal engineering reference, not product-category positioning"
+    },
+    {
+      "file": "docs/API.md",
+      "match": "\"min_confidence\": 0.5 # minimum confidence for signal generation",
+      "reason": "mechanism: internal engineering reference, not product-category positioning"
+    },
+    {
+      "file": "docs/API.md",
+      "match": "analyze market regime and generate trading signals.",
+      "reason": "mechanism: internal engineering reference, not product-category positioning"
+    },
+    {
+      "file": "docs/API.md",
+      "match": "launch live trading with risk management and monitoring.",
+      "reason": "mechanism: internal engineering reference, not product-category positioning"
+    },
+    {
+      "file": "docs/API.md",
+      "match": "the geosync cli provides operational commands for analysis, backtesting, and live trading.",
+      "reason": "mechanism: internal engineering reference, not product-category positioning"
+    },
+    {
+      "file": "docs/ARCHITECTURE.md",
+      "match": "geosync orchestrates quantitative research, signal generation, and execution services under a contracts-first",
+      "reason": "mechanism: internal engineering reference, not product-category positioning"
+    },
+    {
+      "file": "docs/CALIBRATION_GUIDE.md",
+      "match": "**note**: always test configuration changes in backtest and paper trading modes before deploying to live trading. improper calibration can lead to significant losses.",
+      "reason": "mechanism: internal engineering reference, not product-category positioning"
+    },
+    {
+      "file": "docs/CALIBRATION_GUIDE.md",
+      "match": "- monitor for at least 2 weeks before live trading",
+      "reason": "mechanism: internal engineering reference, not product-category positioning"
+    },
+    {
+      "file": "docs/CONCEPTUAL_ARCHITECTURE_UA.md",
+      "match": "sig[signal generation]",
+      "reason": "mechanism: internal engineering reference, not product-category positioning"
+    },
+    {
+      "file": "docs/DATA_MODEL.md",
+      "match": "1. **single source of truth** - all strategies, backtests, and live trading systems use the same data schemas",
+      "reason": "mechanism: internal engineering reference, not product-category positioning"
+    },
+    {
+      "file": "docs/DATA_MODEL.md",
+      "match": "│ • websocket │ │ │ │ • live trading │",
+      "reason": "mechanism: internal engineering reference, not product-category positioning"
+    },
+    {
+      "file": "docs/FORMALIZATION_INDEX.md",
+      "match": "- **signal generation** - deterministic signal production",
+      "reason": "mechanism: internal engineering reference, not product-category positioning"
+    },
+    {
+      "file": "docs/FORMALIZATION_INDEX.md",
+      "match": "| signal generation | `strategies/base.py` | `tests/contracts/test_signals.py` | - |",
+      "reason": "mechanism: internal engineering reference, not product-category positioning"
+    },
+    {
+      "file": "docs/INCIDENT_RUNBOOK.md",
+      "match": "- signal generation slow?",
+      "reason": "mechanism: internal engineering reference, not product-category positioning"
+    },
+    {
+      "file": "docs/INCIDENT_RUNBOOK.md",
+      "match": "3. **перевір signal generation:**",
+      "reason": "mechanism: internal engineering reference, not product-category positioning"
+    },
+    {
+      "file": "docs/KNOWN_LIMITATIONS.md",
+      "match": "for the *platform*; it is **not** a live trading track record.",
+      "reason": "mechanism: internal engineering reference, not product-category positioning"
+    },
+    {
+      "file": "docs/METRICS_CONTRACT.md",
+      "match": "| other_live_beta | other | live trading in beta | n/a | readme.md | proven | explicitly stated as beta |",
+      "reason": "mechanism: internal engineering reference, not product-category positioning"
+    },
+    {
+      "file": "docs/METRICS_CONTRACT.md",
+      "match": "| perf_200mb_memory | performance | ~200mb steady-state memory for live trading | memory profiling | n/a | goal | not automated |",
+      "reason": "mechanism: internal engineering reference, not product-category positioning"
+    },
+    {
+      "file": "docs/METRICS_CONTRACT.md",
+      "match": "| perf_sub1ms_signal | performance | sub-1ms signal generation with cached indicators | `pytest tests/performance/test_indicator_benchmarks.py --benchmark-enable` | `reports/perf/` | partial | benchmark exists but not enforced in ci |",
+      "reason": "mechanism: internal engineering reference, not product-category positioning"
+    },
+    {
+      "file": "docs/METRICS_CONTRACT.md",
+      "match": "| perf_sub5ms_order | performance | sub-5ms order latency (exchange dependent) | live trading benchmark | n/a | goal | depends on exchange latency, needs live testing |",
+      "reason": "mechanism: internal engineering reference, not product-category positioning"
+    },
+    {
+      "file": "docs/METRICS_CONTRACT.md",
+      "match": "| rel_production_grade | reliability | production-grade algorithmic trading platform | n/a | readme.md | goal | live trading in beta status |",
+      "reason": "mechanism: internal engineering reference, not product-category positioning"
+    },
+    {
+      "file": "docs/OPERATIONAL_ARTIFACTS_INDEX.md",
+      "match": "**11. live trading runbook** [`runbook_live_trading.md`](runbook_live_trading.md)",
+      "reason": "mechanism: internal engineering reference, not product-category positioning"
+    },
+    {
+      "file": "docs/OPERATIONAL_ARTIFACTS_INDEX.md",
+      "match": "- **use when**: operating live trading systems",
+      "reason": "mechanism: internal engineering reference, not product-category positioning"
+    },
+    {
+      "file": "docs/OPERATIONS.md",
+      "match": "2. **execute** a controlled cutover using the live trading runbook but swap the",
+      "reason": "mechanism: internal engineering reference, not product-category positioning"
+    },
+    {
+      "file": "docs/PERFORMANCE_LEDGER.md",
+      "match": "live-trading history; see [`known_limitations.md`](known_limitations.md#l-1--execution-surface-is-paper-trading-only).",
+      "reason": "mechanism: internal engineering reference, not product-category positioning"
+    },
+    {
+      "file": "docs/RELIABILITY_SCENARIOS.md",
+      "match": "> **purpose**: document canonical failure scenarios for geosync's golden path (backtest workflow and minimal live trading cycle) with explicit reproduction steps and expected behavior.",
+      "reason": "mechanism: internal engineering reference, not product-category positioning"
+    },
+    {
+      "file": "docs/SEROTONIN_PRACTICAL_SUITABILITY_ASSESSMENT.md",
+      "match": "> \"module-level integration-readiness\", not as live-trading",
+      "reason": "mechanism: internal engineering reference, not product-category positioning"
+    },
+    {
+      "file": "docs/TEST_OPTIMIZATION_RECOMMENDATIONS.md",
+      "match": "- real-time data stream → signal generation → execution",
+      "reason": "mechanism: internal engineering reference, not product-category positioning"
+    },
+    {
+      "file": "docs/TEST_QUALITY_IMPROVEMENTS.md",
+      "match": "- dopamine signal generation",
+      "reason": "mechanism: internal engineering reference, not product-category positioning"
+    },
+    {
+      "file": "docs/USER_INTERACTION_GUIDE.md",
+      "match": "# generate trading signal",
+      "reason": "mechanism: internal engineering reference, not product-category positioning"
+    },
+    {
+      "file": "docs/USER_INTERACTION_GUIDE.md",
+      "match": "| **programmatic api** | custom integrations, live trading | `application/api/`, `geosync/sdk/` |",
+      "reason": "mechanism: internal engineering reference, not product-category positioning"
+    },
+    {
+      "file": "docs/USER_INTERACTION_GUIDE.md",
+      "match": "| `/api/v1/signals` | post | generate trading signals |",
+      "reason": "mechanism: internal engineering reference, not product-category positioning"
+    },
+    {
+      "file": "docs/USER_INTERACTION_GUIDE.md",
+      "match": "| `exec` / `serve` | evaluate and persist trading signals |",
+      "reason": "mechanism: internal engineering reference, not product-category positioning"
+    },
+    {
+      "file": "docs/USER_INTERACTION_GUIDE.md",
+      "match": "| `live` | launch live trading with risk management |",
+      "reason": "mechanism: internal engineering reference, not product-category positioning"
+    },
+    {
+      "file": "docs/WORKING_STACK.md",
+      "match": "5. **no live trading validation**: execution layer is well-structured but no live exchange connectivity tested.",
+      "reason": "honest-negation: explicit boundary disclaimer, not a product claim"
+    },
+    {
+      "file": "docs/api/API_REFERENCE.md",
+      "match": "\"\"\"derive a trading signal for the supplied market state.",
+      "reason": "mechanism: API/type docstring describing the execution-realism harness surface"
+    },
+    {
+      "file": "docs/api/API_REFERENCE.md",
+      "match": "1. **trading sdk**: core trading operations including signal generation,",
+      "reason": "mechanism: API/type docstring describing the execution-realism harness surface"
+    },
+    {
+      "file": "docs/api/API_REFERENCE.md",
+      "match": "signal: trading signal to convert to order.",
+      "reason": "mechanism: API/type docstring describing the execution-realism harness surface"
+    },
+    {
+      "file": "docs/api/API_REFERENCE.md",
+      "match": "| `/api/v1/signals` | post | generate trading signals |",
+      "reason": "mechanism: API/type docstring describing the execution-realism harness surface"
+    },
+    {
+      "file": "docs/api/authentication.md",
+      "match": "geosync api requests must be authenticated before any trading signal or",
+      "reason": "mechanism: API/type docstring describing the execution-realism harness surface"
+    },
+    {
+      "file": "docs/api/webhooks.md",
+      "match": "emitted whenever a new trading signal is available.",
+      "reason": "mechanism: API/type docstring describing the execution-realism harness surface"
+    },
+    {
+      "file": "docs/api_examples.md",
+      "match": "## live trading",
+      "reason": "mechanism: internal engineering reference, not product-category positioning"
+    },
+    {
+      "file": "docs/api_examples.md",
+      "match": "- [live trading](#live-trading)",
+      "reason": "mechanism: internal engineering reference, not product-category positioning"
+    },
+    {
+      "file": "docs/architecture/CONCEPTUAL_ARCHITECTURE.md",
+      "match": "- **analytics layer**: indicators → feature engineering → signal generation",
+      "reason": "mechanism: internal engineering reference, not product-category positioning"
+    },
+    {
+      "file": "docs/architecture/CONCEPTUAL_ARCHITECTURE.md",
+      "match": "3. **signal generation**: kuramoto, ricci, entropy signals → composite signal",
+      "reason": "mechanism: internal engineering reference, not product-category positioning"
+    },
+    {
+      "file": "docs/architecture/CONCEPTUAL_ARCHITECTURE.md",
+      "match": "5. strategy signal generation",
+      "reason": "mechanism: internal engineering reference, not product-category positioning"
+    },
+    {
+      "file": "docs/architecture/CONCEPTUAL_ARCHITECTURE.md",
+      "match": "sequence diagram showing the complete cycle from signal generation to execution:",
+      "reason": "mechanism: internal engineering reference, not product-category positioning"
+    },
+    {
+      "file": "docs/architecture/REPOSITORY_STRUCTURE.md",
+      "match": "- **`analytics/`** - market regime detection, signal generation, statistical analysis",
+      "reason": "mechanism: internal engineering reference, not product-category positioning"
+    },
+    {
+      "file": "docs/architecture/REPOSITORY_STRUCTURE.md",
+      "match": "- `live/` - live trading components",
+      "reason": "mechanism: internal engineering reference, not product-category positioning"
+    },
+    {
+      "file": "docs/architecture/REPOSITORY_STRUCTURE.md",
+      "match": "- `signals/` - signal generation",
+      "reason": "mechanism: internal engineering reference, not product-category positioning"
+    },
+    {
+      "file": "docs/architecture/REPOSITORY_STRUCTURE.md",
+      "match": "├── analytics/ # market analytics and signal generation",
+      "reason": "mechanism: internal engineering reference, not product-category positioning"
+    },
+    {
+      "file": "docs/architecture/architecture_review_program.md",
+      "match": "| **observability & diagnostics** | can we detect anomalies quickly with actionable signals? | alert coverage, tracing spans, logging depth | monitoring backlog, instrumentation tasks |",
+      "reason": "mechanism: internal engineering reference, not product-category positioning"
+    },
+    {
+      "file": "docs/architecture/configuration_structure.md",
+      "match": "- `live/` - live trading configurations",
+      "reason": "mechanism: internal engineering reference, not product-category positioning"
+    },
+    {
+      "file": "docs/architecture/configuration_structure.md",
+      "match": "- `signals/` - signal generation configs",
+      "reason": "mechanism: internal engineering reference, not product-category positioning"
+    },
+    {
+      "file": "docs/architecture/module_interaction_orchestration.md",
+      "match": "4. **signal generation** → generate trading signals",
+      "reason": "mechanism: internal engineering reference, not product-category positioning"
+    },
+    {
+      "file": "docs/architecture/serving_resilience.md",
+      "match": "the geosync online serving stack must deliver deterministic, low-latency forecasts for live trading while resisting network faults, dependency outages, or regional failures. this blueprint redefines the serving architecture around asynchronous boundaries, fault-containment zones, and observability-driven guardrails. it enumerates the critical request paths, highlights failure and saturation points, and prescribes queueing, pooling, timeout, retry, idempotency, circuit-breaking, rate limiting, and backpressure controls. the guidance aligns with the fastapi surface defined in [`application/api/service.py`](../../application/api/service.py) and the supporting rate-limit and idempotency subsystems in [`application/api/rate_limit.py`](../../application/api/rate_limit.py) and [`application/api/idempotency.py`](../../application/api/idempotency.py).",
+      "reason": "mechanism: internal engineering reference, not product-category positioning"
+    },
+    {
+      "file": "docs/architecture/serving_resilience.md",
+      "match": "this blueprint provides the systematic guardrails needed to harden geosync serving against load spikes, dependency regressions, and regional failures while preserving deterministic trading signals.",
+      "reason": "mechanism: internal engineering reference, not product-category positioning"
+    },
+    {
+      "file": "docs/configuration.md",
+      "match": "the live trading connectors under `execution.adapters` consume venue credentials from the",
+      "reason": "mechanism: internal engineering reference, not product-category positioning"
+    },
+    {
+      "file": "docs/contracts/interface-contracts.md",
+      "match": "\"\"\"contract for strategy signal generation.\"\"\"",
+      "reason": "mechanism: internal engineering reference, not product-category positioning"
+    },
+    {
+      "file": "docs/contracts/interface-contracts.md",
+      "match": "\"\"\"trading signal generated by strategy.\"\"\"",
+      "reason": "mechanism: internal engineering reference, not product-category positioning"
+    },
+    {
+      "file": "docs/contracts/interface-contracts.md",
+      "match": "### 3.1 signal generation contract",
+      "reason": "mechanism: internal engineering reference, not product-category positioning"
+    },
+    {
+      "file": "docs/contracts/interface-contracts.md",
+      "match": "3. **strategy contracts:** signal generation, backtesting, optimization",
+      "reason": "mechanism: internal engineering reference, not product-category positioning"
+    },
+    {
+      "file": "docs/contracts/interface-contracts.md",
+      "match": "generate trading signal from market state.",
+      "reason": "mechanism: internal engineering reference, not product-category positioning"
+    },
+    {
+      "file": "docs/cookbook_backtest_live.md",
+      "match": "moving from research backtests into controlled live trading.",
+      "reason": "mechanism: internal engineering reference, not product-category positioning"
+    },
+    {
+      "file": "docs/core_engine_v1.md",
+      "match": "2. **signal** - transform market inputs into actionable `signal` objects via a",
+      "reason": "mechanism: internal engineering reference, not product-category positioning"
+    },
+    {
+      "file": "docs/data/orchestrator_configs.md",
+      "match": "- **paper trading**: safe configuration for simulated live trading",
+      "reason": "mechanism: internal engineering reference, not product-category positioning"
+    },
+    {
+      "file": "docs/data/orchestrator_configs.md",
+      "match": "- **production ready**: can be used directly in live trading (with appropriate risk controls)",
+      "reason": "mechanism: internal engineering reference, not product-category positioning"
+    },
+    {
+      "file": "docs/data/orchestrator_configs.md",
+      "match": "- **production template**: starting point for live trading configurations",
+      "reason": "mechanism: internal engineering reference, not product-category positioning"
+    },
+    {
+      "file": "docs/deployment.md",
+      "match": "## configuring the live trading runner",
+      "reason": "mechanism: internal engineering reference, not product-category positioning"
+    },
+    {
+      "file": "docs/deployment.md",
+      "match": "2. **rotation** - align key rotation policies with venue requirements. the live trading loop supports hot credential reloads when files in the `state_dir` change.",
+      "reason": "mechanism: internal engineering reference, not product-category positioning"
+    },
+    {
+      "file": "docs/deployment.md",
+      "match": "this guide outlines the production deployment requirements for geosync, including infrastructure, secret management, and operation of the live trading runner. it complements the [production cutover readiness checklist](../reports/prod_cutover_readiness_checklist.md).",
+      "reason": "mechanism: internal engineering reference, not product-category positioning"
+    },
+    {
+      "file": "docs/deployment.md",
+      "match": "| **prometheus + alertmanager** | scrapes metrics from geosync services, including the live trading loop heartbeat. | dedicated metrics namespace with 15 s scrape interval and long-term storage via thanos or cortex. |",
+      "reason": "mechanism: internal engineering reference, not product-category positioning"
+    },
+    {
+      "file": "docs/digital_governance_framework.md",
+      "match": "- `signals` - trading signals",
+      "reason": "mechanism: internal engineering reference, not product-category positioning"
+    },
+    {
+      "file": "docs/documentation_standardisation_playbook.md",
+      "match": "- **scope**: one playbook per incident class (e.g., live trading halt, data",
+      "reason": "mechanism: internal engineering reference, not product-category positioning"
+    },
+    {
+      "file": "docs/examples/README.md",
+      "match": "\"\"\"generate trading signal.\"\"\"",
+      "reason": "mechanism: internal engineering reference, not product-category positioning"
+    },
+    {
+      "file": "docs/examples/README.md",
+      "match": "| real-time style snapshot (signal generation) | `python examples/neuro_geosync_snapshot.py` | `numpy==2.3.3`, `pandas==2.3.3` |",
+      "reason": "mechanism: internal engineering reference, not product-category positioning"
+    },
+    {
+      "file": "docs/examples/quickstart_signal_fetch.md",
+      "match": "fetch the latest trading signal using the public http api (`get /v1/signals/{symbol}`),",
+      "reason": "mechanism: internal engineering reference, not product-category positioning"
+    },
+    {
+      "file": "docs/extending.md",
+      "match": "\"\"\"generate trading signal.",
+      "reason": "mechanism: internal engineering reference, not product-category positioning"
+    },
+    {
+      "file": "docs/extending.md",
+      "match": "\"\"\"trading signal.\"\"\"",
+      "reason": "mechanism: internal engineering reference, not product-category positioning"
+    },
+    {
+      "file": "docs/extending.md",
+      "match": "- **strategies**: trading logic and signal generation",
+      "reason": "mechanism: internal engineering reference, not product-category positioning"
+    },
+    {
+      "file": "docs/extending.md",
+      "match": "trading signal with action and confidence",
+      "reason": "mechanism: internal engineering reference, not product-category positioning"
+    },
+    {
+      "file": "docs/faq.md",
+      "match": "### can i use geosync for live trading?",
+      "reason": "mechanism: internal engineering reference, not product-category positioning"
+    },
+    {
+      "file": "docs/faq.md",
+      "match": "- live trading: 50-200 mb",
+      "reason": "mechanism: internal engineering reference, not product-category positioning"
+    },
+    {
+      "file": "docs/faq.md",
+      "match": "- signal generation: <50ms",
+      "reason": "mechanism: internal engineering reference, not product-category positioning"
+    },
+    {
+      "file": "docs/feature_store_sync_and_registry.md",
+      "match": "| **signal shadowing** | compare live trading signals vs. offline replay predictions for current market window. | deploy shadow service subscribing to production inputs and writing signals to `signals.shadow` topic. offline job replays same inputs with current model artifacts. | mean absolute percentage difference (mapd) ≤ 1% over rolling 1-hour windows. |",
+      "reason": "mechanism: internal engineering reference, not product-category positioning"
+    },
+    {
+      "file": "docs/formal/README.md",
+      "match": "- signal generation",
+      "reason": "mechanism: internal engineering reference, not product-category positioning"
+    },
+    {
+      "file": "docs/improvement_plan.md",
+      "match": "- build integration fixtures that run ingestion → signal generation → order placement → settlement on sample data.",
+      "reason": "mechanism: internal pipeline-stage / test-matrix description (ingest->signal->execution)"
+    },
+    {
+      "file": "docs/integration-api.md",
+      "match": "\"\"\"generate trading signal.",
+      "reason": "mechanism: API/type docstring describing the execution-realism harness surface"
+    },
+    {
+      "file": "docs/integration-api.md",
+      "match": "\"\"\"trading signal.",
+      "reason": "mechanism: API/type docstring describing the execution-realism harness surface"
+    },
+    {
+      "file": "docs/integration-api.md",
+      "match": "6. **testing**: test with paper trading before live trading",
+      "reason": "mechanism: API/type docstring describing the execution-realism harness surface"
+    },
+    {
+      "file": "docs/integration-api.md",
+      "match": "trading signal with action and confidence",
+      "reason": "mechanism: API/type docstring describing the execution-realism harness surface"
+    },
+    {
+      "file": "docs/operational_readiness_runbooks.md",
+      "match": "required to declare geosync production-ready for a live trading session. use",
+      "reason": "mechanism: operational runbook for the internal execution/OMS harness"
+    },
+    {
+      "file": "docs/operational_readiness_runbooks.md",
+      "match": "session. failure modes and escalation paths are defined in the live trading",
+      "reason": "mechanism: operational runbook for the internal execution/OMS harness"
+    },
+    {
+      "file": "docs/operations/CANONICAL_OBJECT.md",
+      "match": "| live trading | ❌ not attempted |",
+      "reason": "honest-negation: explicit boundary disclaimer, not a product claim"
+    },
+    {
+      "file": "docs/operations/DEPLOYMENT.md",
+      "match": "- `deploy/kustomize/overlays/production` introduces a high-priority class, strict topology distribution, and rate limiting tuned for live trading traffic in the `geosync-production` namespace.【f:deploy/kustomize/overlays/production/kustomization.yaml†l1-l14】【f:deploy/kustomize/overlays/production/patches/deployment-high-availability.yaml†l1-l43】",
+      "reason": "mechanism: deployment path/code-symbol reference (configs/live, execution/)"
+    },
+    {
+      "file": "docs/operations/INSTITUTIONAL_OVERVIEW.md",
+      "match": "geosync is a verification-first quantitative research platform for falsifiable market-structure hypotheses, paired with an execution-realism harness, risk instrumentation, and observability. the research-observable layer is built on mathematical mechanisms sourced from peer-reviewed scientific literature - kuramoto phase synchronization, ricci curvature flow on graph manifolds, and thermodynamic free-energy principles - studied as structural market-microstructure descriptors. geosync is not a live-trading product, asserts no out-of-sample edge, and promotes no claim beyond its declared evidence tier (see `readme.md`, `product_category.md`).",
+      "reason": "honest-negation: explicit boundary disclaimer, not a product claim"
+    },
+    {
+      "file": "docs/operations/PHYSICS_IMPLEMENTATION_SUMMARY.md",
+      "match": "- signal generation logic",
+      "reason": "mechanism: internal engineering reference, not product-category positioning"
+    },
+    {
+      "file": "docs/operations/SETUP.md",
+      "match": "#### exchange api keys (for live trading)",
+      "reason": "mechanism: internal engineering reference, not product-category positioning"
+    },
+    {
+      "file": "docs/physics/dro_ara_invariants.md",
+      "match": "trading signal through a bounded action result acceptor (ara) loop.",
+      "reason": "research-disclaimer: module doc explicitly denies signal/edge status"
+    },
+    {
+      "file": "docs/production-readiness.md",
+      "match": "- establish an end-to-end test matrix covering ingestion → signal generation → execution on recorded datasets.",
+      "reason": "mechanism: internal pipeline-stage / test-matrix description (ingest->signal->execution)"
+    },
+    {
+      "file": "docs/production-readiness.md",
+      "match": "- prioritise live trading loop, exchange connectors, and risk gates.",
+      "reason": "mechanism: internal pipeline-stage / test-matrix description (ingest->signal->execution)"
+    },
+    {
+      "file": "docs/production-readiness.md",
+      "match": "- ❌ **production readiness**: live trading is not yet safe; operational guardrails, integrations, and verification workflows are incomplete.",
+      "reason": "honest-negation: explicit boundary disclaimer, not a product claim"
+    },
+    {
+      "file": "docs/production-readiness.md",
+      "match": "1. **live trading execution**",
+      "reason": "mechanism: internal pipeline-stage / test-matrix description (ingest->signal->execution)"
+    },
+    {
+      "file": "docs/production-readiness.md",
+      "match": "geosync is feature-rich for research and backtesting workflows, but several critical capabilities are still missing before the platform can be considered production-grade. this document captures the current gaps and the work required to close them. treat it as a living checklist that should be reviewed before promising live-trading availability to stakeholders.",
+      "reason": "honest-negation: explicit boundary disclaimer, not a product claim"
+    },
+    {
+      "file": "docs/research/capital_weighted_kuramoto.md",
+      "match": "this module is a research primitive that re-shapes the coupling matrix in response to l2 depth concentration. it does not constitute a trading signal nor a claim of out-of-sample edge.",
+      "reason": "honest-negation: explicit boundary disclaimer, not a product claim"
+    },
+    {
+      "file": "docs/research/dr_free_tacl.md",
+      "match": "this is a controller-level robustness primitive. it does not constitute a trading signal nor a claim of out-of-sample edge.",
+      "reason": "honest-negation: explicit boundary disclaimer, not a product claim"
+    },
+    {
+      "file": "docs/runbook_data_incident.md",
+      "match": "feeds. notify the live-trading team to evaluate kill-switch posture.",
+      "reason": "mechanism: operational runbook for the internal execution/OMS harness"
+    },
+    {
+      "file": "docs/runbook_inference_incident.md",
+      "match": "scoring pipelines used by live trading and downstream strategy runtime.",
+      "reason": "mechanism: operational runbook for the internal execution/OMS harness"
+    },
+    {
+      "file": "docs/runbook_kill_switch_failover.md",
+      "match": "the guidance complements the live trading runbook and should be used during",
+      "reason": "mechanism: operational runbook for the internal execution/OMS harness"
+    },
+    {
+      "file": "docs/runbook_latency_degradation.md",
+      "match": "signal generation, or model inference pipelines.",
+      "reason": "mechanism: operational runbook for the internal execution/OMS harness"
+    },
+    {
+      "file": "docs/runbook_live_trading.md",
+      "match": "# live trading runbook",
+      "reason": "mechanism: operational runbook for the internal execution/OMS harness"
+    },
+    {
+      "file": "docs/scenarios.md",
+      "match": "\"\"\"generate trading signal.\"\"\"",
+      "reason": "mechanism: API/type docstring describing the execution-realism harness surface"
+    },
+    {
+      "file": "docs/security/zero_trust_runbook.md",
+      "match": "- `execution` → live trading runners and oms integrations under `execution/` with runtime configs in [`configs/live/default.toml`](../../configs/live/default.toml).",
+      "reason": "mechanism: operational runbook for the internal execution/OMS harness"
+    },
+    {
+      "file": "docs/sla_alert_playbooks.md",
+      "match": "- identify latency bottleneck (signal generation, order placement, broker fill)",
+      "reason": "mechanism: operational runbook for the internal execution/OMS harness"
+    },
+    {
+      "file": "docs/sla_alert_playbooks.md",
+      "match": "4. **throttle** new signal generation if overload detected",
+      "reason": "mechanism: operational runbook for the internal execution/OMS harness"
+    },
+    {
+      "file": "docs/system_lifecycle_operations.md",
+      "match": "# disable live trading completely",
+      "reason": "mechanism: operational runbook for the internal execution/OMS harness"
+    },
+    {
+      "file": "docs/system_lifecycle_operations.md",
+      "match": "**enable live trading**:",
+      "reason": "mechanism: operational runbook for the internal execution/OMS harness"
+    },
+    {
+      "file": "docs/system_lifecycle_operations.md",
+      "match": "✅ production start: geosync live trading active",
+      "reason": "mechanism: operational runbook for the internal execution/OMS harness"
+    },
+    {
+      "file": "docs/testing/pr_validation_matrix.md",
+      "match": "| end-to-end regressions | `tests/e2e/**`, `tests/smoke/**` | pytest | synthetic full pipeline runs, live trading cycle simulations, smoke orchestration | l4 |",
+      "reason": "mechanism: internal pipeline-stage / test-matrix description (ingest->signal->execution)"
+    },
+    {
+      "file": "docs/testing/pr_validation_matrix.md",
+      "match": "| portfolio + execution pipeline | full ingest → signal → execution cycle | synthetic cli-driven pipeline builds artifacts end-to-end, validating reporting exports and idempotent writes【f:tests/e2e/test_full_pipeline.py†l1-l78】; live trading cycle simulation asserts oms state, connector responses, and pnl accounting【f:tests/e2e/test_trading_cycle.py†l1-l117】 | extend coverage for cross-venue hedging and partial fill recovery, currently modelled only for single-venue binance sandbox |",
+      "reason": "mechanism: internal pipeline-stage / test-matrix description (ingest->signal->execution)"
+    },
+    {
+      "file": "docs/PHYSICS_BOUNDARY_AUDIT.md",
+      "match": "the readme blocks trading-bot, alpha-product, and physical-law proof interpretations",
+      "reason": "honest-negation: restates the README product-category boundary (the README *blocks* alpha-product interpretation), not an alpha-product claim"
+    },
+    {
+      "file": "docs/architecture/physics_v2_positioning.md",
+      "match": "geosync is not an alpha engine",
+      "reason": "honest-negation: explicit research-boundary statement (GeoSync is NOT an alpha engine; it is a claim-validation engine), mirrors the README 'not an alpha product' allowlist precedent"
+    },
+    {
+      "file": "DISHA_SAFE_120_WORDS_v2.md",
+      "match": "the validated findings ledger",
+      "reason": "mechanism: 'validated findings ledger' names an audit record (a ledger of validated findings), not a validated-alpha market claim"
+    },
+    {
+      "file": "docs/PHYSICS_RANK_EXTRAPOLATION_WORK_ACT.md",
+      "match": "discovered market law",
+      "reason": "forbidden-enumeration: item inside the 'GeoSync must not claim:' blocked-claims list — quotes the banned phrasing to prohibit it"
+    },
+    {
+      "file": "docs/claims/descriptor_promotion_policy.md",
+      "match": "excess return, or a profitable strategy",
+      "reason": "forbidden-enumeration: defines the banned feature-to-alpha claim ('Forbidden:' example) per the promotion policy, not an asserted profitable strategy"
+    },
+    {
+      "file": "docs/research/OPERATIONAL_DEFINITIONS.md",
+      "match": "not a live-trading or alpha product.",
+      "reason": "honest-negation: cross-reference to PRODUCT_CATEGORY.md explicitly denying live-trading/alpha framing (verification-first research platform), not a product-category claim"
+    }
+  ]
+}

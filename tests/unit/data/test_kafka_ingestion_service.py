@@ -1,3 +1,5 @@
+# Copyright (c) 2023-2026 Yaroslav Vasylenko (neuron7xLab)
+# SPDX-License-Identifier: MIT
 from __future__ import annotations
 
 import asyncio
@@ -166,7 +168,7 @@ def _build_message(
 
 @pytest.mark.asyncio
 async def test_ingestion_deduplicates_events() -> None:
-    tp = TopicPartition("tradepulse.market.ticks", 0)
+    tp = TopicPartition("geosync.market.ticks", 0)
     messages = [
         _build_message(tp, offset=0, event_id="evt-shared"),
         _build_message(tp, offset=1, event_id="evt-shared"),
@@ -176,7 +178,7 @@ async def test_ingestion_deduplicates_events() -> None:
     config = KafkaIngestionConfig(
         topic=tp.topic,
         bootstrap_servers="kafka:9092",
-        group_id="tradepulse-test",
+        group_id="geosync-test",
         lag_report_interval_seconds=10.0,
     )
     processed_prices: list[float] = []
@@ -203,14 +205,14 @@ async def test_ingestion_deduplicates_events() -> None:
 
 @pytest.mark.asyncio
 async def test_hot_symbol_cache_tracks_recent_ticks() -> None:
-    tp = TopicPartition("tradepulse.market.ticks", 0)
+    tp = TopicPartition("geosync.market.ticks", 0)
     messages = [_build_message(tp, offset=i) for i in range(3)]
     consumer = StubConsumer({tp: messages})
     producer = StubProducer(consumer)
     config = KafkaIngestionConfig(
         topic=tp.topic,
         bootstrap_servers="kafka:9092",
-        group_id="tradepulse-test",
+        group_id="geosync-test",
         hot_cache_flush_size=10,
         lag_report_interval_seconds=10.0,
     )
@@ -228,7 +230,7 @@ async def test_hot_symbol_cache_tracks_recent_ticks() -> None:
 
 @pytest.mark.asyncio
 async def test_gap_detection_triggers_seek_and_lag_report() -> None:
-    tp = TopicPartition("tradepulse.market.ticks", 0)
+    tp = TopicPartition("geosync.market.ticks", 0)
     messages = [
         _build_message(tp, offset=0),
         _build_message(tp, offset=2),
@@ -249,7 +251,7 @@ async def test_gap_detection_triggers_seek_and_lag_report() -> None:
     config = KafkaIngestionConfig(
         topic=tp.topic,
         bootstrap_servers="kafka:9092",
-        group_id="tradepulse-test",
+        group_id="geosync-test",
         lag_detection_threshold=1,
         lag_report_interval_seconds=10.0,
         reconcile_seek_on_gap=True,
@@ -281,9 +283,9 @@ async def test_gap_detection_triggers_seek_and_lag_report() -> None:
 def test_build_security_kwargs_requires_existing_cafile(tmp_path: Path) -> None:
     missing_cafile = tmp_path / "missing.pem"
     config = KafkaIngestionConfig(
-        topic="tradepulse.market.ticks",
+        topic="geosync.market.ticks",
         bootstrap_servers="kafka:9092",
-        group_id="tradepulse-test",
+        group_id="geosync-test",
         ssl_cafile=str(missing_cafile),
     )
     service = KafkaIngestionService(config)
@@ -304,9 +306,9 @@ def test_build_security_kwargs_validates_cert_and_key_files(tmp_path: Path) -> N
     keyfile = tmp_path / "key.pem"
     keyfile.write_text("key")
     config = KafkaIngestionConfig(
-        topic="tradepulse.market.ticks",
+        topic="geosync.market.ticks",
         bootstrap_servers="kafka:9092",
-        group_id="tradepulse-test",
+        group_id="geosync-test",
         ssl_cafile=str(cafile),
         ssl_certfile=str(missing_cert),
         ssl_keyfile=str(keyfile),

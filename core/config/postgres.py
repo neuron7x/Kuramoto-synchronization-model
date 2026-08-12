@@ -1,3 +1,5 @@
+# Copyright (c) 2023-2026 Yaroslav Vasylenko (neuron7xLab)
+# SPDX-License-Identifier: MIT
 """PostgreSQL configuration helpers with TLS validation."""
 
 from __future__ import annotations
@@ -45,7 +47,9 @@ def ensure_secure_postgres_uri(uri: str) -> str:
         raise ValueError(msg)
 
     if sslmode not in ALLOWED_POSTGRES_SSLMODES:
-        msg = f"sslmode '{sslmode}' is not permitted; use one of {sorted(ALLOWED_POSTGRES_SSLMODES)}"
+        msg = (
+            f"sslmode '{sslmode}' is not permitted; use one of {sorted(ALLOWED_POSTGRES_SSLMODES)}"
+        )
         raise ValueError(msg)
 
     return uri

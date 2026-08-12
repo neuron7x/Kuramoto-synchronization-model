@@ -1,0 +1,100 @@
+# Diff-bound commit acceptor for the deterministic threshold-calibration contract.
+#
+# Adds analytics/signals/threshold_calibration.py: a pure, deterministic
+# calibration instrument that selects one scalar decision threshold from an
+# explicit candidate grid under a declared, leakage-free objective (nearest
+# calibration upper-share to a declared target), with a separated
+# calibration/validation split, a recorded per-candidate sensitivity sweep,
+# complete provenance metadata, and fail-closed behaviour on a malformed
+# protocol. Adds the matching contract test suite.
+#
+# Promotes NO claim tier, adds NO invariant, changes NO existing runtime
+# behaviour, adds NO dependency. Descriptor-only: the calibrated threshold
+# references no outcome/return and carries no predictive or financial meaning.
+# The validation split is reported but never used to select the threshold.
+#
+# Locally verified on origin/main fork base:
+#   * pytest tests/unit/analytics/test_threshold_calibration.py: 17 passed
+#   * ruff check / ruff format --check / black --check: clean
+#   * mypy --strict analytics/signals/threshold_calibration.py: no issues
+#   * python scripts/ci/check_claim_boundary.py: PASS
+#   * detect-secrets-hook (baseline): clean
+id: calibration-contract
+status: ACTIVE
+claim_type: governance
+promise: >-
+  analytics.signals.threshold_calibration.calibrate_threshold deterministically
+  selects one threshold from an explicit candidate grid as the candidate whose
+  calibration upper-share is nearest a declared target (ties -> smallest
+  candidate), records a per-candidate sensitivity sweep, separates the
+  calibration sample (which drives selection) from the validation sample
+  (which is only reported, never used to select), counts non-finite
+  observations instead of dropping them silently, and fails closed on an
+  empty/non-finite/non-distinct candidate grid, an out-of-range target, or an
+  empty calibration sample. No claim tier is promoted; no runtime behaviour
+  changes; the calibrated threshold is a structural descriptor parameter, not
+  a predictive or financial signal.
+diff_scope:
+  changed_files:
+    - path: ".claude/commit_acceptors/calibration-contract.yaml"
+    - path: "analytics/signals/threshold_calibration.py"
+    - path: "tests/unit/analytics/test_threshold_calibration.py"
+  forbidden_paths:
+    - "trading/"
+    - "execution/"
+    - "forecast/"
+    - "core/"
+    - "src/"
+required_python_symbols:
+  - "analytics/signals/threshold_calibration.py::calibrate_threshold"
+  - "analytics/signals/threshold_calibration.py::ThresholdCalibrationResult"
+expected_signal: >-
+  `python -m pytest tests/unit/analytics/test_threshold_calibration.py` reports
+  17 passed; calibrate_threshold is deterministic, selects only from the
+  candidate grid, records a complete sensitivity sweep, and rejects malformed
+  protocols with ValueError.
+measurement_command: >-
+  bash -c 'mkdir -p tmp && python -m pytest
+  tests/unit/analytics/test_threshold_calibration.py -v
+  > tmp/threshold_calibration_pytest.log 2>&1
+  && grep -qE "17 passed" tmp/threshold_calibration_pytest.log'
+signal_artifact: "tmp/threshold_calibration_pytest.log"
+falsifier:
+  command: |-
+    bash -c 'python -c "
+    from analytics.signals.threshold_calibration import calibrate_threshold
+    import sys
+    toothless = False
+    # 1) validation data must NOT influence selection (leakage discipline)
+    a = calibrate_threshold([float(i) for i in range(10)], [0.0]*10,
+        candidates=[2.0,4.0,6.0,8.0], target_upper_share=0.3).selected_value
+    b = calibrate_threshold([float(i) for i in range(10)], [1e9,-1e9,0.0],
+        candidates=[2.0,4.0,6.0,8.0], target_upper_share=0.3).selected_value
+    if a != b: toothless = True
+    # 2) an empty calibration sample must fail closed
+    try:
+        calibrate_threshold([], [1.0], candidates=[1.0], target_upper_share=0.3)
+        toothless = True
+    except ValueError:
+        pass
+    sys.exit(0 if toothless else 1)"'
+  description: >-
+    Inverse probe of the calibration contract. It exits 0 (fires) iff the
+    selected threshold depends on the validation sample (a leakage defect) or
+    an empty calibration sample is accepted instead of failing closed. While
+    the contract holds, the probe exits 1. An exit 0 means calibration has lost
+    its leakage discipline or fail-closed guarantee and must be repaired, not
+    patched green.
+rollback_command: >-
+  bash -c 'git rm -f analytics/signals/threshold_calibration.py
+  tests/unit/analytics/test_threshold_calibration.py
+  .claude/commit_acceptors/calibration-contract.yaml'
+rollback_verification_command: >-
+  bash -c 'test ! -f analytics/signals/threshold_calibration.py
+  && test ! -f tests/unit/analytics/test_threshold_calibration.py'
+memory_update_type: none
+ledger_path: ".claude/commit_acceptors/calibration-contract.yaml"
+report_path: "tmp/threshold_calibration_pytest.log"
+evidence:
+  - path: "tmp/threshold_calibration_pytest.log"
+    sha256: "16519ec6a104515b30c63299fbab938913d5ee5732097176d0c65485a45663e4"  # pragma: allowlist secret

@@ -1,0 +1,71 @@
+# Diff-bound acceptor — close the import-shadowing quarantine clusters
+# cli (#1158), analytics (#1171), tools (#1178) WITHOUT a CI-foundation change.
+#
+# Root cause: the repo is not editable-installed in the fast lane; in-process
+# imports resolve via pytest's rootdir, but that does NOT propagate to a child
+# process — so a test that shells out (analytics' run_descriptor_capsule.py)
+# fails with ModuleNotFoundError only in CI. cli was additionally an implicit
+# namespace package (no __init__) not declared in packages.find.
+#
+# Fix (narrow, reversible, no setup-geosync change):
+#  - analytics #1171: the test passes the repo root via PYTHONPATH to the
+#    subprocess (install-mode-independent), so the child can import analytics.
+#  - cli #1158: add cli/__init__.py (real package, no namespace/scripts.cli
+#    ambiguity) + declare cli/cli.* in [tool.setuptools.packages.find].
+#  - tools #1178: already in packages.find; in-process collection import.
+# Drains the three clusters from the quarantine + ledger. Import-architecture
+# ratchet is untouched (no src.* import, no sys.path mutation in source).
+
+id: editable-install-import-architecture
+status: ACTIVE
+claim_type: governance
+promise: >-
+  The cli (#1158), analytics (#1171) and tools (#1178) import-shadowing
+  quarantine clusters are removed from tests/ci/fast_quarantine.txt and marked
+  drained in docs/ci/fast_backlog_ledger.md, because their tests now pass under
+  CI-faithful resolution: analytics' subprocess test exports the repo root via
+  PYTHONPATH; cli is a declared package (cli/__init__.py + packages.find);
+  tools resolves in-process. No setup-geosync / CI-foundation change and no
+  sys.path mutation (import-architecture ratchet held).
+diff_scope:
+  changed_files:
+    - path: ".claude/commit_acceptors/editable-install-import-architecture.yaml"
+    - path: "cli/__init__.py"
+    - path: "scripts/check_single_entrypoint.py"
+    - path: "application/governance/commit_acceptor.py"
+    - path: "docs/schemas/governance/commit_acceptor.schema.json"
+    - path: "tests/unit/analytics/test_descriptor_capsule.py"
+    - path: "tests/ci/fast_quarantine.txt"
+    - path: "docs/ci/fast_backlog_ledger.md"
+  forbidden_paths:
+    - "trading/"
+    - "execution/"
+    - "forecast/"
+    - "policy/"
+required_python_symbols: []
+expected_signal: >-
+  pytest passes for tests/ci/test_pr_preflight_engine.py, tests/unit/cli/*,
+  tests/unit/test_geosync_cli.py and tests/unit/analytics/test_descriptor_capsule.py
+  (incl. the subprocess CLI smoke); cli/analytics/tools absent from the
+  quarantine list; import-architecture ratchet held.
+measurement_command: >-
+  bash -c 'set -e; mkdir -p tmp; python -m pytest tests/ci/test_pr_preflight_engine.py
+  tests/unit/cli/test_amm_cli.py tests/unit/test_geosync_cli.py
+  tests/unit/analytics/test_descriptor_capsule.py -q | tee tmp/import_arch_keystone.log'
+signal_artifact: "tmp/import_arch_keystone.log"
+falsifier:
+  command: >-
+    bash -c 'if grep -qE "cli_import_shadowing|analytics_import_shadowing|tools_import_shadowing" tests/ci/fast_quarantine.txt; then exit 0; else exit 1; fi'
+  description: >-
+    Exits 0 (falsification) iff any of the three clusters is still quarantined —
+    i.e. the drain did not happen. On the green path all three are absent so this
+    exits 1.
+rollback_command: >-
+  git checkout HEAD~1 -- cli/__init__.py scripts/check_single_entrypoint.py tests/unit/analytics/test_descriptor_capsule.py
+  tests/ci/fast_quarantine.txt docs/ci/fast_backlog_ledger.md pyproject.toml
+  .claude/commit_acceptors/editable-install-import-architecture.yaml
+rollback_verification_command: "git diff --exit-code tests/ci/fast_quarantine.txt"
+memory_update_type: append
+ledger_path: "docs/ci/fast_backlog_ledger.md"
+report_path: "docs/ci/fast_backlog_ledger.md"
+evidence: []

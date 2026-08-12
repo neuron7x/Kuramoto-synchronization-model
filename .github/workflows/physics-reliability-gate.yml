@@ -1,0 +1,63 @@
+# SPDX-License-Identifier: MIT
+#
+# Physics Reliability Gate — Well-Architected reliability discipline for physics.
+#
+# A green test is not a reliability claim. This gate enforces that every module
+# DECLARED in governance/PHYSICS_RELIABILITY.yaml publishes a grounded
+# failure_mode / blast_radius / degradation_mode / recovery_command, that each
+# bound invariant is literally present in the module source, and that the
+# covered-module ratchet never regresses. Uncovered INV-bearing modules are
+# reported by name as the explicit backlog (the contract names its own gap).
+#
+# Fail-closed on the declared entries and the ratchet; repo-wide coverage of the
+# backlog is tracked by raising coverage_floor as modules are added.
+name: Physics Reliability Gate
+
+on:
+  pull_request:
+    branches: [main]
+    paths:
+      - 'core/**'
+      - 'governance/PHYSICS_RELIABILITY.yaml'
+      - 'schemas/physics/**'
+      - 'tools/physics/**'
+      - 'tests/physics/**'
+      - '.github/workflows/physics-reliability-gate.yml'
+  merge_group:
+  push:
+    branches: [main]
+
+permissions:
+  contents: read
+
+concurrency:
+  group: physics-reliability-gate-${{ github.event.pull_request.number || github.sha }}
+  cancel-in-progress: true
+
+jobs:
+  physics-reliability-gate:
+    name: physics-reliability-gate
+    runs-on: ubuntu-latest
+    timeout-minutes: 5
+    steps:
+      - name: Checkout
+        uses: actions/checkout@9c091bb21b7c1c1d1991bb908d89e4e9dddfe3e0 # v7.0.0
+
+      - name: Set up Python
+        uses: actions/setup-python@ece7cb06caefa5fff74198d8649806c4678c61a1 # v6
+        with:
+          python-version: '3.11'
+
+      - name: Install contract dependencies
+        # The contract code + its tests depend only on pyyaml + jsonschema. The
+        # heavy repo conftests (numpy/pandas) are intentionally bypassed below so
+        # this gate stays hermetic and fast.
+        run: python -m pip install --upgrade pyyaml jsonschema pytest
+
+      - name: Reliability contract gate (fail-closed on declared entries + ratchet)
+        run: python tools/physics/check_physics_reliability.py
+
+      - name: Contract guard tests
+        # --noconftest: the contract test uses no repo fixtures; bypassing the
+        # repo conftests keeps this gate independent of the full physics stack.
+        run: PYTHONPATH=. python -m pytest tests/physics/test_physics_reliability_contract.py -q --noconftest -p no:cacheprovider

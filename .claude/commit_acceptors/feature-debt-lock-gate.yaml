@@ -1,0 +1,56 @@
+# ci-heartbeat: feature-debt-lock-gate
+id: feature-debt-lock-gate
+status: ACTIVE
+claim_type: fail_closed
+promise: >-
+  Add a process-level Fail-Closed gate (TD-023 enforcement):
+  scripts/ci/check_feature_debt_lock.py blocks any PR that adds more than 25
+  net production lines to a tracked surface while paying down zero test lines for
+  the deficit surfaces (backtest/, analytics/) and declaring no audited
+  Debt-Exempt trailer. The decision is a pure function of the git diff (no
+  coverage run). Wired as an advisory pull_request workflow
+  (feature-debt-lock.yml), promotable to an absolute block via branch-protection
+  required-checks. No product behaviour, no trading/execution/forecast/policy
+  change.
+diff_scope:
+  changed_files:
+    - path: ".claude/commit_acceptors/feature-debt-lock-gate.yaml"
+    - path: "scripts/ci/check_feature_debt_lock.py"
+    - path: "tests/ci/test_feature_debt_lock.py"
+    - path: ".github/workflows/feature-debt-lock.yml"
+    - path: "INVENTORY.json"
+  forbidden_paths:
+    - "trading/"
+    - "execution/"
+    - "forecast/"
+    - "policy/"
+required_python_symbols:
+  - "decide"
+  - "evaluate"
+expected_signal: >-
+  scripts/ci/check_feature_debt_lock.py exits 0 on a PR that adds no feature
+  surface or pays down a deficit surface or is exempt, and exits 1 (BLOCK) on a
+  feature PR that ignores the deficit. tests/ci/test_feature_debt_lock.py proves
+  block / paydown / exemption / sub-threshold / tests-only / wrong-surface cases.
+  No trading/execution/forecast/policy change.
+measurement_command: >-
+  PYTHONPATH=. python -m pytest tests/ci/test_feature_debt_lock.py -q &&
+  PYTHONPATH=. python scripts/ci/check_feature_debt_lock.py --base-ref origin/main
+signal_artifact: "tmp/feature_debt_lock.log"
+falsifier:
+  command: >-
+    PYTHONPATH=. python -m pytest tests/ci/test_feature_debt_lock.py -q
+  description: >-
+    Fails if the gate stops blocking an unpaid feature PR, or starts blocking a
+    paid-down / exempt / tests-only PR.
+rollback_command: >-
+  git rm -f scripts/ci/check_feature_debt_lock.py
+  tests/ci/test_feature_debt_lock.py .github/workflows/feature-debt-lock.yml
+rollback_verification_command: >-
+  PYTHONPATH=. python -m pytest tests/ci/test_feature_debt_lock.py -q || true
+memory_update_type: none
+ledger_path: ".claude/commit_acceptors/feature-debt-lock-gate.yaml"
+report_path: "reports/TECH_DEBT_REGISTRY.md"
+evidence:
+  - path: "scripts/ci/check_feature_debt_lock.py"
+  - path: "tests/ci/test_feature_debt_lock.py"

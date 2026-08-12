@@ -1,0 +1,14 @@
+[extend]
+useDefault = true
+
+[[allowlists]]
+description = "Allow deterministic checksum fields in managed manifests."
+paths = [
+  '''^INVENTORY\.json$''',
+  '''^artifacts/provenance/inference_provenance\.json$''',
+]
+regexes = [
+  '''"sha256"\s*:\s*"[0-9a-f]{64}"''',
+  '''"source_sha256"\s*:\s*"[0-9a-f]{64}"''',
+  '''"git_rev"\s*:\s*"[0-9a-f]{40}"''',
+]

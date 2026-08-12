@@ -1,5 +1,5 @@
 ---
-owner: dx@tradepulse
+owner: dx@geosync
 review_cadence: quarterly
 last_reviewed: 2025-12-28
 links:
@@ -28,13 +28,13 @@ Describe what the user will accomplish and the prerequisites.
 
 - Python 3.11 environment prepared
 - Datasets downloaded (`sample.csv`, etc.)
-- Environment variables set (`TRADEPULSE_ENV=dev`)
+- Environment variables set (`GEOSYNC_ENV=dev`)
 
 ## Steps
 
 ```bash
 # Step 1
-tradepulse cli command
+geosync cli command
 ```
 
 ```bash

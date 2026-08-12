@@ -1,0 +1,93 @@
+# Diff-bound commit acceptor for Instrument B — the composite
+# claim-boundary firewall (audit finding M7, CRITICAL).
+#
+# core/indicators/kuramoto_ricci_composite.py carried product-category
+# prose ("generate actionable trading signals", "trading signals",
+# "stronger long", "position-scaling multiplier") that sold the module as
+# a trading product, while the canonical boundary (PRODUCT_CATEGORY.md /
+# FORBIDDEN_CLAIMS.md) says GeoSync is verification-first research, not a
+# live-execution or alpha product. The claim-boundary scanner
+# (scripts/ci/check_claim_boundary.py) previously gated ONLY markdown, so
+# nothing stopped that wording from living — or reappearing — in code
+# docstrings. This change is docstrings/comments only: it rewrites the
+# product-category prose into bounded structural-state descriptor language,
+# folds the two claim-bearing indicator modules into the scanner's surface
+# under the identical normalise+allowlist+stale machinery, and adds three
+# regression tests so the forbidden phrasing cannot silently return.
+#
+# No runtime/math change, no public-API change: the fields entry_signal /
+# exit_signal / risk_multiplier and the analyzer behavior are byte-for-byte
+# preserved (only their documentation is corrected to call them bounded
+# structural descriptors clamped to [-1,1] / [0,1] / [0.1,2.0]). Identifier
+# names do not match the phrase patterns, so the gate cannot touch the API.
+
+id: composite-claim-boundary-firewall
+status: ACTIVE
+claim_type: documentation
+promise: >-
+  After this PR lands, scripts/ci/check_claim_boundary.py scans the
+  claim-bearing indicator modules
+  (core/indicators/kuramoto_ricci_composite.py and
+  core/indicators/market_state_contract.py) as part of its canonical
+  surface — not only the markdown docs — using the identical normalise +
+  allowlist + stale machinery, and exits 0 with the message naming
+  "canonical surfaces (docs + claim-bearing code)". The composite module
+  carries no unreviewed product-category phrasing on its prose surface:
+  "generate actionable trading signals" / "trading signals" / "stronger
+  long" / "position-scaling multiplier" are replaced by bounded
+  structural-state descriptor language, and CompositeSignal documents
+  entry_signal / exit_signal / risk_multiplier as bounded structural
+  descriptors (clamped to [-1,1] / [0,1] / [0.1,2.0]) retained for
+  backward compatibility, NOT orders, sizing, or directional market calls.
+  An injected banned phrase in any scanned code surface makes main() exit
+  1. Runtime behavior and public fields are unchanged.
+diff_scope:
+  changed_files:
+    - path: ".claude/commit_acceptors/composite-claim-boundary-firewall.yaml"
+    - path: "core/indicators/kuramoto_ricci_composite.py"
+    - path: "scripts/ci/check_claim_boundary.py"
+    - path: "tests/scripts/test_check_claim_boundary.py"
+  forbidden_paths:
+    - "trading/"
+    - "execution/"
+    - "forecast/"
+    - "policy/"
+    - "core/strategies/"
+required_python_symbols:
+  - "main"
+  - "_iter_surface"
+  - "_normalise"
+  - "_load_allowlist"
+expected_signal: >-
+  check_claim_boundary.py exits 0 ("Claim-boundary gate passed: N
+  canonical surfaces (docs + claim-bearing code) scanned, M reviewed
+  mechanism/record references"); the claim-boundary test mirror passes
+  (8 tests incl. the 3 new code-surface regressions); the composite
+  public-API / market-state suites stay green; ruff / black / mypy
+  --strict are clean on the changed gate and indicator modules.
+measurement_command: >-
+  bash -c 'set -e;
+  python scripts/ci/check_claim_boundary.py;
+  python -m pytest tests/scripts/test_check_claim_boundary.py -q;
+  PYTHONPATH=. python -m pytest tests/unit/test_kuramoto_ricci_composite.py tests/unit/test_market_state_contract.py tests/test_composite.py -q'
+signal_artifact: "tmp/claim_boundary_gate.log"
+falsifier:
+  command: "bash -c '! python scripts/ci/check_claim_boundary.py'"
+  description: >-
+    On the green path the gate exits 0, so the negated probe exits
+    non-zero — proving the promise is falsifiable: if any unreviewed
+    product-category claim were present on the doc OR the newly-gated code
+    surfaces, the gate would exit 1 and the negated probe would pass,
+    surfacing the broken boundary.
+rollback_command: >-
+  bash -c 'rm -f .claude/commit_acceptors/composite-claim-boundary-firewall.yaml
+  && git checkout origin/main -- core/indicators/kuramoto_ricci_composite.py
+  scripts/ci/check_claim_boundary.py tests/scripts/test_check_claim_boundary.py'
+rollback_verification_command: >-
+  bash -c 'test ! -f .claude/commit_acceptors/composite-claim-boundary-firewall.yaml
+  && git diff --exit-code origin/main -- core/indicators/kuramoto_ricci_composite.py
+  scripts/ci/check_claim_boundary.py tests/scripts/test_check_claim_boundary.py'
+memory_update_type: append
+ledger_path: ".claude/commit_acceptors/composite-claim-boundary-firewall.yaml"
+report_path: "PRODUCT_CATEGORY.md"
+evidence: []

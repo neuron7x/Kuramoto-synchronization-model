@@ -68,7 +68,7 @@ Instances of abusive, harassing, or otherwise unacceptable behavior may be repor
 
 Випадки образливої, агресивної або іншої неприйнятної поведінки можуть бути повідомлені лідерам спільноти, відповідальним за виконання:
 
-📧 **Email:** conduct@tradepulse.local
+📧 **Email:** conduct@geosync.local
 
 All complaints will be reviewed and investigated promptly and fairly. All community leaders are obligated to respect the privacy and security of the reporter of any incident.
 
@@ -102,4 +102,4 @@ Community Impact Guidelines were inspired by [Mozilla's code of conduct enforcem
 
 ---
 
-*This document is licensed under the TradePulse Proprietary License Agreement (TPLA).*
+*This document is licensed under the MIT License.*

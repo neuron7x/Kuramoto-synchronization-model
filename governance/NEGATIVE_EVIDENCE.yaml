@@ -1,0 +1,66 @@
+# Copyright (c) 2023-2026 Yaroslav Vasylenko (neuron7xLab)
+# SPDX-License-Identifier: MIT
+#
+# Authoritative registry of negative evidence across the four operational
+# categories — failed_null_comparison, invalid_input, calibration_miss,
+# replay_mismatch. A negative result is information, not failure to hide: it
+# must be preserved (its artifact stays in the tree, sha-anchored), it must
+# not be rewritten, and it must NEVER be converted into a "partial success"
+# — we are not a marketing department.
+#
+# scripts/ci/check_negative_evidence.py fails closed unless every entry:
+#   * declares one of the four allowed categories;
+#   * carries a negative-class verdict (never a positive/promotion verdict);
+#   * has a non-empty description free of promotion language
+#     ("partial success", "validated", "unblocked", "passed", ...);
+#   * sha-anchors a 40-hex commit; and
+#   * references an in-repo artifact that still EXISTS (preservation — the
+#     negative record cannot silently evaporate).
+#
+# Seeded with four real, preserved negatives mirrored from the tombstone
+# ledger, one per category.
+schema_version: 1
+entries:
+  - id: systemic-risk-interbank-null
+    category: failed_null_comparison
+    verdict: "NULL"
+    sha: "a1543247e0954a90d3b71d3e2551ad89326b013a"  # pragma: allowlist secret
+    artifact: "research/systemic_risk/VALIDATION.md"
+    recorded_utc: "2026-05-08"
+    description: >-
+      Pre-registered interbank Kuramoto phase-locking comparison returned no
+      admissible signal on the available data; the hypothesis is untested on
+      real e-MID/BIS data and remains a null, not a result.
+
+  - id: calib-grid-noisy-infeasible
+    category: invalid_input
+    verdict: INFEASIBLE
+    sha: "65666072003ec51b14a1322944d2ec9508615b6e"  # pragma: allowlist secret
+    artifact: "research/calibration/grid_kuramoto/PREREGISTRATION_AMENDMENT_001.md"
+    recorded_utc: "2026-04-30"
+    description: >-
+      The noisy regime is structurally infeasible by construction for the grid
+      estimator: the inputs do not admit identifiable recovery, so no estimate
+      can be honestly reported.
+
+  - id: calib-grid-001-miss
+    category: calibration_miss
+    verdict: FALSIFIED
+    sha: "64ce6f55ca5fd39b2ae895be2c2ece2824b9eb4c"  # pragma: allowlist secret
+    artifact: "research/calibration/grid_kuramoto/RESULTS.md"
+    recorded_utc: "2026-04-28"
+    description: >-
+      A first-order identifier applied to second-order data produced relative
+      error 1.0 on the signed weights, omega, and s_crit — the calibration
+      missed entirely and the causal claim is falsified.
+
+  - id: calib-f3-replay-infeasible
+    category: replay_mismatch
+    verdict: INFEASIBLE
+    sha: "afd667470b7b21e4a3e4c3b62b5853e19580cb4c"  # pragma: allowlist secret
+    artifact: "research/calibration/grid_kuramoto/_deterministic.py"
+    recorded_utc: "2026-05-01"
+    description: >-
+      Bit-exact cross-runner reproduction was proven infeasible: replay digests
+      diverge across BLAS thread orders on ill-conditioned metrics, so a
+      byte-identical replay guarantee cannot be made.

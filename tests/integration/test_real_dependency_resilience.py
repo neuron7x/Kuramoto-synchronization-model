@@ -1,4 +1,6 @@
-"""Integration tests exercising real dependency interactions for TradePulse."""
+# Copyright (c) 2023-2026 Yaroslav Vasylenko (neuron7xLab)
+# SPDX-License-Identifier: MIT
+"""Integration tests exercising real dependency interactions for GeoSync."""
 
 from __future__ import annotations
 
@@ -42,9 +44,7 @@ from src.data.pipeline import (
 class _FlakyKillSwitchStateRepository(KillSwitchStateRepository):
     """Repository that fails once to exercise retry/backoff logic."""
 
-    def __init__(
-        self, session_manager: SessionManager, *, retry_policy: RetryPolicy
-    ) -> None:
+    def __init__(self, session_manager: SessionManager, *, retry_policy: RetryPolicy) -> None:
         super().__init__(
             session_manager,
             retry_policy=retry_policy,
@@ -95,12 +95,8 @@ def test_postgres_kill_switch_store_handles_transient_failures(tmp_path: Path) -
     base_repo.ensure_schema()
     base_repo.upsert(engaged=False, reason="seed state")
 
-    retry_policy = RetryPolicy(
-        attempts=3, initial_backoff=0.01, max_backoff=0.05, max_jitter=0.01
-    )
-    flaky_repo = _FlakyKillSwitchStateRepository(
-        session_manager, retry_policy=retry_policy
-    )
+    retry_policy = RetryPolicy(attempts=3, initial_backoff=0.01, max_backoff=0.05, max_jitter=0.01)
+    flaky_repo = _FlakyKillSwitchStateRepository(session_manager, retry_policy=retry_policy)
     store = PostgresKillSwitchStateStore(
         "postgresql://integration",
         session_manager=session_manager,
@@ -226,9 +222,7 @@ class _FakeKafkaConsumer:
     def assignment(self) -> set[_TopicPartition]:
         return set(self._assignment)
 
-    async def end_offsets(
-        self, partitions: list[_TopicPartition]
-    ) -> dict[_TopicPartition, int]:
+    async def end_offsets(self, partitions: list[_TopicPartition]) -> dict[_TopicPartition, int]:
         return {tp: self._end_offsets.get(tp, 0) for tp in partitions}
 
     async def seek(self, tp: _TopicPartition, offset: int) -> None:
@@ -259,7 +253,7 @@ async def test_streaming_pipeline_processes_kafka_batches_and_updates_cache(
             offset=offset, value=json.dumps(payload).encode("utf-8"), headers=headers
         )
 
-    topic_partition = _TopicPartition(topic="tradepulse.market.ticks", partition=0)
+    topic_partition = _TopicPartition(topic="geosync.market.ticks", partition=0)
     batches: deque[dict[_TopicPartition, list[_FakeMessage]]] = deque(
         [
             {
@@ -286,9 +280,9 @@ async def test_streaming_pipeline_processes_kafka_batches_and_updates_cache(
 
     cache_service = DataIngestionCacheService()
     config = KafkaIngestionConfig(
-        topic="tradepulse.market.ticks",
+        topic="geosync.market.ticks",
         bootstrap_servers="kafka:9092",
-        group_id="tradepulse-test",
+        group_id="geosync-test",
         lag_report_interval_seconds=0.05,
         lag_detection_threshold=0,
         reconcile_seek_on_gap=False,
@@ -311,9 +305,7 @@ async def test_streaming_pipeline_processes_kafka_batches_and_updates_cache(
     pipeline = StreamingIngestionPipeline(
         kafka_config=config,
         cache_service=cache_service,
-        routing_strategy=StaticTickRoutingStrategy(
-            CacheRoute(layer="raw", timeframe="1min")
-        ),
+        routing_strategy=StaticTickRoutingStrategy(CacheRoute(layer="raw", timeframe="1min")),
         lag_handler=lag_handler,
         kafka_service_factory=factory,
     )
@@ -364,7 +356,7 @@ async def test_streaming_pipeline_processes_kafka_batches_and_updates_cache(
     assert pipeline.kafka_service._idempotency.was_processed("evt-1") is True
     assert producer.offset_commits
     last_offsets, group = producer.offset_commits[-1]
-    assert group == "tradepulse-test"
+    assert group == "geosync-test"
     assert last_offsets.get(topic_partition) == 4
 
 
@@ -390,7 +382,7 @@ def test_siem_audit_sink_retries_and_drains_spool(tmp_path: Path) -> None:
     client = httpx.Client(transport=httpx.MockTransport(handler))
     spool_dir = tmp_path / "spool"
     sink = SiemAuditSink(
-        "https://audit.tradepulse.test",
+        "https://audit.geosync.test",
         spool_dir,
         http_client=client,
         max_retries=5,
@@ -408,9 +400,7 @@ def test_siem_audit_sink_retries_and_drains_spool(tmp_path: Path) -> None:
     assert record.signature
 
     def _spool_empty() -> bool:
-        return not list(spool_dir.glob("*.json")) and not list(
-            spool_dir.glob("*.json.inflight")
-        )
+        return not list(spool_dir.glob("*.json")) and not list(spool_dir.glob("*.json.inflight"))
 
     _wait_for(lambda: attempts >= 3 and _spool_empty(), timeout=2.0)
 

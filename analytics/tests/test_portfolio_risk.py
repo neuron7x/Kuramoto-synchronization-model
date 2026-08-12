@@ -1,3 +1,5 @@
+# Copyright (c) 2023-2026 Yaroslav Vasylenko (neuron7xLab)
+# SPDX-License-Identifier: MIT
 from __future__ import annotations
 
 from datetime import datetime, timezone
@@ -20,9 +22,7 @@ def _build_returns_frame(rows: int = 260) -> pd.DataFrame:
     asset_a = 0.01 * np.sin(angles)
     asset_b = 0.012 * np.cos(angles)
     asset_c = 0.008 * np.sin(angles * 1.5)
-    return pd.DataFrame(
-        {"AssetA": asset_a, "AssetB": asset_b, "AssetC": asset_c}, index=index
-    )
+    return pd.DataFrame({"AssetA": asset_a, "AssetB": asset_b, "AssetC": asset_c}, index=index)
 
 
 def test_stress_tester_generates_comprehensive_report() -> None:
@@ -62,9 +62,7 @@ def test_stress_tester_generates_comprehensive_report() -> None:
     assert report.risk_metrics.expected_shortfall >= report.risk_metrics.var
     assert report.scenario_results[0].name == "Covid-19 FX Shock"
     assert pytest.approx(report.scenario_results[0].pnl, rel=1e-6) == (
-        exposures["AssetA"] * -0.05
-        + exposures["AssetB"] * -0.07
-        + exposures["AssetC"] * -0.04
+        exposures["AssetA"] * -0.05 + exposures["AssetB"] * -0.07 + exposures["AssetC"] * -0.04
     )
 
     vol_result = report.volatility_results[0]
@@ -88,9 +86,7 @@ def test_stress_tester_rejects_insufficient_history() -> None:
     returns = _build_returns_frame(rows=50)
     exposures = {"AssetA": 1_000_000.0}
     with pytest.raises(ValueError, match="insufficient history"):
-        PortfolioStressTester(
-            returns, exposures, portfolio_value=1_500_000.0, min_history=60
-        )
+        PortfolioStressTester(returns, exposures, portfolio_value=1_500_000.0, min_history=60)
 
 
 def test_volatility_scenario_requires_positive_multiplier() -> None:

@@ -1,8 +1,10 @@
-"""Static lint checks for TradePulse documentation assets."""
+# Copyright (c) 2023-2026 Yaroslav Vasylenko (neuron7xLab)
+# SPDX-License-Identifier: MIT
+"""Static lint checks for GeoSync documentation assets."""
 
 from __future__ import annotations
 
-# SPDX-License-Identifier: LicenseRef-TradePulse-Proprietary
+# SPDX-License-Identifier: MIT
 import argparse
 import os
 import re
@@ -256,9 +258,7 @@ def main(argv: Sequence[str] | None = None) -> int:
             missing.append(candidate)
 
     if missing and not args.allow_missing:
-        parser.error(
-            f"Path '{missing[0]}' does not exist. Use --allow-missing to skip."
-        )
+        parser.error(f"Path '{missing[0]}' does not exist. Use --allow-missing to skip.")
 
     if not targets:
         if args.allow_missing:

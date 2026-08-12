@@ -1,0 +1,6 @@
+python: 3.12.3 (main, Mar  3 2026, 12:15:18) [GCC 13.3.0]
+numpy: 2.4.3
+pandas: 2.3.3
+networkx: 2.6.3
+matplotlib: 3.10.8
+scipy: 1.17.1

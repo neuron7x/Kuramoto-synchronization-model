@@ -1,0 +1,27 @@
+id: calib-cg002-determinism
+status: ACTIVE
+claim_type: determinism
+promise: "_deep_close tolerance widened to rel 1e-6 / abs 1e-9 with explicit cause (CI BLAS thread-order nondeterminism on ill-conditioned CG-002 front-gate metrics; verified reproducible locally, divergent only on CI) so the post-data-edit detector stops flaking while still catching real edits (which shift metrics by orders of magnitude more). Calib science and committed artifacts untouched."
+diff_scope:
+  changed_files:
+    - path: "tests/research/calibration/test_grid_kuramoto.py"
+    - path: ".claude/commit_acceptors/calib-cg002-determinism.yaml"
+  forbidden_paths:
+    - "trading/"
+    - "execution/"
+    - "forecast/"
+    - "policy/"
+    - "research/calibration/grid_kuramoto/r1/RESULTS.json"
+required_python_symbols: []
+expected_signal: "the cg001+cg002 committed-artifact reproduction tests pass deterministically across BLAS thread orders"
+measurement_command: "python -m pytest tests/research/calibration/test_grid_kuramoto.py -q -k results_json_matches_committed_artifact"
+signal_artifact: "tmp/calib_cg002_determinism_pytest.log"
+falsifier:
+  command: "python -c \"from tests.research.calibration.test_grid_kuramoto import _deep_close; raise SystemExit(0 if not _deep_close({'m': 1.0}, {'m': 1.001}) else 1)\""
+  description: "Probe asserts the widened comparator still REJECTS a 0.1% edit (exits 0); it would exit 1 if rel=1e-6 had been loosened so far it masks real post-data edits."
+rollback_command: "git checkout -- tests/research/calibration/test_grid_kuramoto.py"
+rollback_verification_command: "git diff --exit-code tests/research/calibration/test_grid_kuramoto.py"
+memory_update_type: none
+ledger_path: ".claude/commit_acceptors/calib-cg002-determinism.yaml"
+report_path: ".claude/commit_acceptors/calib-cg002-determinism.yaml"
+evidence: []

@@ -1,0 +1,10 @@
+fastapi==0.139.0
+grpcio==1.80.0
+grpcio-health-checking==1.80.0
+kafka-python==2.2.15
+numpy==2.4.6
+prometheus-client==0.25.0
+pydantic==2.13.4
+python-dotenv==1.2.2
+questdb==4.1.0
+uvicorn==0.50.0

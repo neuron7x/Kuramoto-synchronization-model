@@ -1,6 +1,6 @@
 # Environment Charter
 
-This charter defines the deterministic, secure, and reproducible environment rules for TradePulse. All dependency, configuration, and data changes must conform to these guardrails.
+This charter defines the deterministic, secure, and reproducible environment rules for GeoSync. All dependency, configuration, and data changes must conform to these guardrails.
 
 ## Toolchain & Runtimes
 - Supported Python versions: **3.11** and **3.12** (CI matrix). Prefer 3.12 for local development.
@@ -18,7 +18,7 @@ This charter defines the deterministic, secure, and reproducible environment rul
 
 ## Configuration & Secrets Policy
 - No secrets in source control. All sensitive values must be provided via environment variables or a secrets manager.
-- `.env.example` documents required settings (including `TRADEPULSE_TWO_FACTOR_SECRET` and `TRADEPULSE_BOOTSTRAP_STRATEGY`). Copy it to `.env` locally; never commit the populated file.
+- `.env.example` documents required settings (including `GEOSYNC_TWO_FACTOR_SECRET` and `GEOSYNC_BOOTSTRAP_STRATEGY`). Copy it to `.env` locally; never commit the populated file.
 - Service configuration defaults reside under `configs/` and application settings modules. Avoid “magic” parameters—add named config values with documented defaults.
 - When adding new configuration flags, document them in `.env.example` and ensure safe defaults.
 

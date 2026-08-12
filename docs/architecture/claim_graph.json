@@ -1,0 +1,65 @@
+{
+  "generated_at_utc": "2026-05-26T00:00:00Z",
+  "nodes": [
+    {
+      "id": "C-INV-COUNT",
+      "tier": "FACT",
+      "claim": "132 invariants in `.claude/physics/INVARIANTS.yaml`",
+      "evidence": [
+        "`python scripts/count_invariants.py`"
+      ]
+    },
+    {
+      "id": "C-PHYS-KERNEL",
+      "tier": "MEASURED",
+      "claim": "Physics-inspired research platform with partially machine-checkable invariant layer",
+      "evidence": [
+        "`physics-kernel-gate.yml`, `BASELINE.md`"
+      ]
+    },
+    {
+      "id": "C-TLA-PROOF",
+      "tier": "FACT",
+      "claim": "Four-barrier admission gate model-checked in TLA\u207a with 3 invariants",
+      "evidence": [
+        "`formal/tla/AdmissionGate.tla`, `formal-verification.yml`"
+      ]
+    },
+    {
+      "id": "C-SYSRISK-PHASE",
+      "tier": "HYPOTHESIS",
+      "claim": "Interbank phase-locking precedes banking-crisis events",
+      "evidence": [
+        "`research/systemic_risk/falsification.py` v2: pre-registered Mann-Whitney AUC with stratified percentile-bootstrap CI (n=10000) + one-sided permutation p + Bonferroni FWER. `HARD_PASS` requires `auc_ci_low` \u2265 0.70 AND `p_BONF` \u2264 0.01 on \u2265 2 crises; `HARD_FAIL` if any AUC \u2264 0.55 OR any `auc_ci_low` \u2264 0.5. Asymmetric directed coupling via `coupling_from_exposures`; BA null calibrated by MLE per `fit_barabasi_albert` (Clauset-Shalizi-Newman 2009, *SIAM Rev.* 51: 661). `research/systemic_risk/README.md`"
+      ]
+    },
+    {
+      "id": "C-EPI-RHOMBUS",
+      "tier": "FACT",
+      "claim": "Epistemic Rhombus manifest maps 4 governance criteria to schema-validated external gates",
+      "evidence": [
+        "`python scripts/validate_epistemic_rhombus_manifest.py`, `.github/workflows/epistemic-rhombus-gate.yml`, and `tests/scripts/test_validate_epistemic_rhombus_manifest.py` validate `governance/epistemic_rhombus_manifest.jsonl` against `schemas/governance/epistemic_rhombus_manifest.schema.json`."
+      ]
+    },
+    {
+      "id": "C-RICCI-MICROSTRUCTURE-V1",
+      "tier": "HYPOTHESIS",
+      "claim": "Ollivier-Ricci curvature on real L2 order-book microstructure may contain falsifiable signal beyond null baselines",
+      "evidence": [
+        "`ricci_microstructure_v1`; T3 / NOVEL / EXPLORATORY / FALSIFIABLE \u2014 it is NOT alpha, NOT a production system, NOT proven market physics, NOT a trading signal; it is only a falsification lane. Source is recorded honestly in `data_manifest.json` from the `ALLOWED_SOURCES` allowlist (`BINANCE_FUTURES_DEPTH` public REST depth, or `LOBSTER_LICENSED_L2`) and is NEVER relabelled; the committed substrate is real Binance USD-M depth. Falsifier is `p_value >= 0.01 OR abs(cliffs_delta) < 0.147 OR invalid schema/provenance`; allowed falsification_status values are `SUPPORTED`, `HYPOTHESIS_NOT_SUPPORTED`, `INVALID`; the canonical run is `HYPOTHESIS_NOT_SUPPORTED` and that negative result must be preserved."
+      ]
+    }
+  ],
+  "edges": [
+    {
+      "from": "C-PHYS-KERNEL",
+      "to": "C-INV-COUNT",
+      "type": "depends_on"
+    }
+  ],
+  "constraints": {
+    "dangling_nodes": 0,
+    "isolated_nodes": 4,
+    "max_derived_depth": 3
+  }
+}

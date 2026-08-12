@@ -1,3 +1,5 @@
+# Copyright (c) 2023-2026 Yaroslav Vasylenko (neuron7xLab)
+# SPDX-License-Identifier: MIT
 """Run a NeuroTrade PRO SABRE CAL backtest."""
 
 from __future__ import annotations
@@ -6,15 +8,16 @@ import argparse
 
 import yaml
 
-from neuropro.backtest import BacktesterCAL
-from neuropro.data import read_ticks_csv
+from geosync_hpc.backtest import BacktesterCAL
+from geosync_hpc.data import read_ticks_csv
 
 
 def main() -> None:
     parser = argparse.ArgumentParser()
     parser.add_argument("--config", required=True)
     args = parser.parse_args()
-    cfg = yaml.safe_load(open(args.config))
+    with open(args.config, encoding="utf-8") as fh:
+        cfg = yaml.safe_load(fh)
     df = read_ticks_csv(cfg["data"]["path"], cfg["data"]["time_col"])
     feat_cols = ["ret1", "ret5", "ret20", "vol10", "vol50", "spread", "regime"]
     y_col = "y"

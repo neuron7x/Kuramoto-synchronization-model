@@ -1,3 +1,5 @@
+# Copyright (c) 2023-2026 Yaroslav Vasylenko (neuron7xLab)
+# SPDX-License-Identifier: MIT
 """
 Compare benchmark results against a baseline and fail on regressions.
 """
@@ -15,7 +17,9 @@ def _load(path: str) -> dict[str, Any]:
         return json.load(handle)
 
 
-def compare_benchmarks(baseline_file: str, current_file: str, threshold: float) -> list[dict[str, Any]]:
+def compare_benchmarks(
+    baseline_file: str, current_file: str, threshold: float
+) -> list[dict[str, Any]]:
     baseline = _load(baseline_file)
     current = _load(current_file)
 
@@ -49,7 +53,9 @@ def main(argv: list[str]) -> int:
     parser = argparse.ArgumentParser()
     parser.add_argument("--baseline", required=True, help="Path to baseline benchmark JSON")
     parser.add_argument("--current", required=True, help="Path to current benchmark JSON")
-    parser.add_argument("--threshold", type=float, default=0.20, help="Allowed relative regression (0.20 = 20%)")
+    parser.add_argument(
+        "--threshold", type=float, default=0.20, help="Allowed relative regression (0.20 = 20%)"
+    )
     args = parser.parse_args(argv)
 
     regressions = compare_benchmarks(args.baseline, args.current, args.threshold)

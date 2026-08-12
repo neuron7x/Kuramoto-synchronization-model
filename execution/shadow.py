@@ -1,3 +1,5 @@
+# Copyright (c) 2023-2026 Yaroslav Vasylenko (neuron7xLab)
+# SPDX-License-Identifier: MIT
 """Shadow deployment controller for live strategy experimentation.
 
 This module implements a traffic mirroring pipeline that evaluates candidate
@@ -291,8 +293,7 @@ class ShadowDeploymentOrchestrator:
             deviation = SignalDeviation(
                 action_mismatch=candidate_signal.action != baseline_signal.action,
                 confidence_delta=abs(
-                    float(candidate_signal.confidence)
-                    - float(baseline_signal.confidence)
+                    float(candidate_signal.confidence) - float(baseline_signal.confidence)
                 ),
                 action_delta=abs(
                     _action_to_numeric(candidate_signal.action)

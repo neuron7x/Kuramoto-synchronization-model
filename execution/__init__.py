@@ -1,3 +1,5 @@
+# Copyright (c) 2023-2026 Yaroslav Vasylenko (neuron7xLab)
+# SPDX-License-Identifier: MIT
 """Execution connectors, order management, and risk tooling."""
 
 from .canary import CanaryConfig, CanaryController, CanaryDecision, MetricThreshold

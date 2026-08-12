@@ -1,0 +1,88 @@
+# Copyright (c) 2023-2026 Yaroslav Vasylenko (neuron7xLab)
+# SPDX-License-Identifier: MIT
+#
+# Authoritative, machine-readable ledger of EXECUTABLE falsifiers — the nulls
+# and kill-tests that a research claim must survive before it may be promoted.
+# A falsifier is admissible here ONLY if it is real, runnable code (not a prose
+# placeholder): an implementation symbol that exists in the tree and a test that
+# exercises it. Decorative falsifiers are forbidden — a falsifier you cannot
+# execute cannot kill anything.
+#
+# scripts/ci/check_falsifier_ledger.py fails closed unless EVERY entry:
+#   * declares one of the allowed falsifier kinds;
+#   * names an impl_file that EXISTS and contains its declared `symbol`;
+#   * names a test_file that EXISTS (the executable witness); and
+#   * carries a non-empty description.
+# The release gate consumes this ledger through probe H.falsification: any
+# missing/renamed symbol, vanished file, or absent witness turns H RED and
+# blocks the release — a falsifier that silently rots can no longer pass as
+# "controls present".
+#
+# This ledger does not assert that any signal SURVIVED these falsifiers — only
+# that the kill-tests themselves are real and runnable. Survival is recorded
+# per-claim in the research-line contracts and in governance/NEGATIVE_EVIDENCE.yaml.
+schema_version: 1
+falsifiers:
+  - id: permutation_null
+    kind: null_model
+    impl_file: research/askar/ricci_spread.py
+    symbol: permutation_test
+    test_file: tests/askar/test_ricci_spread.py
+    blocks_promotion: true
+    description: >-
+      Block/label permutation null: destroys lead-lag while preserving
+      marginals; the observed statistic must exceed the permutation
+      distribution to claim signal.
+
+  - id: phase_randomized_null
+    kind: null_model
+    impl_file: core/kuramoto/falsification.py
+    symbol: iaaft_surrogate
+    test_file: tests/unit/physics/test_T25_falsification_surrogates.py
+    blocks_promotion: true
+    description: >-
+      IAAFT phase-randomized surrogate: preserves amplitude distribution and
+      power spectrum, destroys phase relations; deterministic under seed.
+
+  - id: topology_preserving_null
+    kind: null_model
+    impl_file: research/systemic_risk/d002g_null_mechanisms.py
+    symbol: topology_matched_resample
+    test_file: tests/systemic_risk/test_d002g_m2_topology_preserving_shuffle.py
+    blocks_promotion: true
+    description: >-
+      Topology-matched resample: shuffles edge weights while holding the graph
+      support/topology fixed, isolating structure from weight.
+
+  - id: cost_model_falsifier
+    kind: falsifier
+    impl_file: tools/research/ricci_preregistration_guard.py
+    symbol: evaluate_promotion
+    test_file: tests/research_lines/test_ricci_microstructure_preregistration.py
+    blocks_promotion: true
+    description: >-
+      Cost-model falsifier: re-evaluates under real spread/impact; a negative
+      net-of-cost result blocks promotion (evaluate_promotion appends the
+      "negative net-of-cost result" blocker and returns allowed=False).
+
+  - id: lookahead_leakage_detector
+    kind: falsifier
+    impl_file: tests/research_lines/test_ricci_lookahead_leak_falsifier.py
+    symbol: test_injected_lookahead_leak_is_flagged
+    test_file: tests/research_lines/test_ricci_lookahead_leak_falsifier.py
+    blocks_promotion: true
+    description: >-
+      Lookahead/leakage detector with positive and negative controls: an
+      injected future-information leak must be flagged; a clean causal feature
+      must not be. Detector lives in and is exercised by its own test module.
+
+  - id: timestamp_integrity_check
+    kind: integrity
+    impl_file: core/data/validation.py
+    symbol: _check_monotonic
+    test_file: tests/test_monotonic.py
+    blocks_promotion: true
+    description: >-
+      Timestamp integrity: a pandera Check enforces strictly increasing
+      timestamps on ingested series; out-of-order/duplicate timestamps fail
+      validation before any feature is computed.

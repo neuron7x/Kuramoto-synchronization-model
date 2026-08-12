@@ -1,0 +1,138 @@
+{
+  "splits": [
+    {
+      "fold_id": 1,
+      "test_start": "2020-01-01",
+      "test_end": "2021-01-01",
+      "n_days": 262,
+      "strategy_sharpe": 2.582349431815023,
+      "strategy_ann_return": 0.5456748592489983,
+      "strategy_ann_vol": 0.21130945817253968,
+      "strategy_max_dd": -0.14638533403817405,
+      "strategy_calmar": 3.7276607170681344,
+      "btc_sharpe": 1.695232364103273,
+      "btc_max_dd": -0.5347677719933293,
+      "turnover_sum": 32.94337672207503,
+      "turnover_mean": 0.12573807909188942
+    },
+    {
+      "fold_id": 2,
+      "test_start": "2021-01-01",
+      "test_end": "2022-01-01",
+      "n_days": 261,
+      "strategy_sharpe": 1.010713547457039,
+      "strategy_ann_return": 0.17839271705525342,
+      "strategy_ann_vol": 0.17650175710426608,
+      "strategy_max_dd": -0.10348428323595828,
+      "strategy_calmar": 1.7238629043648463,
+      "btc_sharpe": 0.5762501317120251,
+      "btc_max_dd": -0.5314140778607943,
+      "turnover_sum": 20.861401859386902,
+      "turnover_mean": 0.07992874275627165
+    },
+    {
+      "fold_id": 3,
+      "test_start": "2022-01-01",
+      "test_end": "2023-01-01",
+      "n_days": 260,
+      "strategy_sharpe": -1.1464388925987887,
+      "strategy_ann_return": -0.2261880159517009,
+      "strategy_ann_vol": 0.19729618160368742,
+      "strategy_max_dd": -0.306703369471967,
+      "strategy_calmar": -0.7374813532082004,
+      "btc_sharpe": -1.5328243396109564,
+      "btc_max_dd": -0.6673056490171776,
+      "turnover_sum": 17.181938746440913,
+      "turnover_mean": 0.06608437979400351
+    },
+    {
+      "fold_id": 4,
+      "test_start": "2023-01-01",
+      "test_end": "2024-01-01",
+      "n_days": 260,
+      "strategy_sharpe": 0.9419904058657054,
+      "strategy_ann_return": 0.1878426854982564,
+      "strategy_ann_vol": 0.19941040198347426,
+      "strategy_max_dd": -0.2091865663943878,
+      "strategy_calmar": 0.8979672487386645,
+      "btc_sharpe": 1.987737359690969,
+      "btc_max_dd": -0.20002746848357134,
+      "turnover_sum": 17.652411396696607,
+      "turnover_mean": 0.06789388998729465
+    },
+    {
+      "fold_id": 5,
+      "test_start": "2024-01-01",
+      "test_end": "2026-05-01",
+      "n_days": 595,
+      "strategy_sharpe": 0.8506875340257918,
+      "strategy_ann_return": 0.15104358511217458,
+      "strategy_ann_vol": 0.17755471788492805,
+      "strategy_max_dd": -0.16761375765312453,
+      "strategy_calmar": 0.901140737055476,
+      "btc_sharpe": 0.48122137279698146,
+      "btc_max_dd": -0.49534255735708116,
+      "turnover_sum": 54.50650302046571,
+      "turnover_mean": 0.09160756810162304
+    }
+  ],
+  "n_splits": 5,
+  "median_sharpe": 0.9419904058657054,
+  "n_positive_sharpe": 4,
+  "n_beats_btc_sharpe": 4,
+  "n_reduces_mdd_vs_btc": 4,
+  "robust": true,
+  "spike_comparison": [
+    {
+      "fold_id": 1,
+      "integrated_sharpe": 2.582349431815023,
+      "spike_sharpe": 2.582349431815023,
+      "delta_sharpe": 0.0,
+      "sign_match": true,
+      "integrated_mdd": -0.14638533403817405,
+      "spike_mdd": -0.14638533403817405,
+      "delta_mdd": 0.0
+    },
+    {
+      "fold_id": 2,
+      "integrated_sharpe": 1.010713547457039,
+      "spike_sharpe": 1.010713547457039,
+      "delta_sharpe": 0.0,
+      "sign_match": true,
+      "integrated_mdd": -0.10348428323595828,
+      "spike_mdd": -0.10348428323595828,
+      "delta_mdd": 0.0
+    },
+    {
+      "fold_id": 3,
+      "integrated_sharpe": -1.1464388925987887,
+      "spike_sharpe": -1.1464388925987887,
+      "delta_sharpe": 0.0,
+      "sign_match": true,
+      "integrated_mdd": -0.306703369471967,
+      "spike_mdd": -0.306703369471967,
+      "delta_mdd": 0.0
+    },
+    {
+      "fold_id": 4,
+      "integrated_sharpe": 0.9419904058657054,
+      "spike_sharpe": 0.9419904058657054,
+      "delta_sharpe": 0.0,
+      "sign_match": true,
+      "integrated_mdd": -0.2091865663943878,
+      "spike_mdd": -0.2091865663943878,
+      "delta_mdd": 0.0
+    },
+    {
+      "fold_id": 5,
+      "integrated_sharpe": 0.8506875340257918,
+      "spike_sharpe": 0.8506875340257918,
+      "delta_sharpe": 0.0,
+      "sign_match": true,
+      "integrated_mdd": -0.16761375765312453,
+      "spike_mdd": -0.16761375765312453,
+      "delta_mdd": 0.0
+    }
+  ],
+  "max_abs_fold_sharpe_delta": 0.0
+}

@@ -1,0 +1,31 @@
+id: preflight-inference-ledger
+status: ACTIVE
+claim_type: governance
+promise: "PR preflight now appends a machine-readable inference ledger entry after report generation without weakening fail-closed preflight semantics."
+diff_scope:
+  changed_files:
+    - path: ".claude/commit_acceptors/preflight-inference-ledger.yaml"
+    - path: "scripts/test-pr-locally.sh"
+    - path: "tools/ci/preflight_ledger.py"
+    - path: "tests/ci/test_preflight_ledger.py"
+  forbidden_paths:
+    - "trading/"
+    - "execution/"
+    - "forecast/"
+    - "policy/"
+required_python_symbols:
+  - "tools.ci.preflight_ledger.append_ledger"
+  - "tools.ci.preflight_ledger.build_ledger_entry"
+  - "tools.ci.preflight_ledger.validate_ledger_entry"
+expected_signal: "The shell wrapper preserves runner exit semantics while appending artifacts/pr_preflight/inference_ledger.jsonl from the generated preflight report."
+measurement_command: "python -m pytest tests/ci/test_preflight_ledger.py tests/ci/test_pr_preflight_engine.py tests/ci/test_pr_preflight_gate.py -q && bash -n scripts/test-pr-locally.sh"
+signal_artifact: "artifacts/pr_preflight/inference_ledger.jsonl"
+falsifier:
+  command: "python -m pytest tests/ci/test_preflight_ledger.py -q"
+  description: "A malformed preflight report must be rejected instead of becoming a trusted ledger entry."
+rollback_command: "git checkout -- scripts/test-pr-locally.sh && git rm -f tools/ci/preflight_ledger.py tests/ci/test_preflight_ledger.py .claude/commit_acceptors/preflight-inference-ledger.yaml"
+rollback_verification_command: "git diff --exit-code -- scripts/test-pr-locally.sh tools/ci/preflight_ledger.py tests/ci/test_preflight_ledger.py .claude/commit_acceptors/preflight-inference-ledger.yaml"
+memory_update_type: none
+ledger_path: ".claude/commit_acceptors/preflight-inference-ledger.yaml"
+report_path: "docs/reports/diff_bound_commit_acceptor_layer.md"
+evidence: []

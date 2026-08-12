@@ -1,3 +1,5 @@
+# Copyright (c) 2023-2026 Yaroslav Vasylenko (neuron7xLab)
+# SPDX-License-Identifier: MIT
 from __future__ import annotations
 
 import json
@@ -39,9 +41,7 @@ def _orders_drained(loop: LiveExecutionLoop, venue: str) -> bool:
     return not any(order.is_active for order in context.oms.outstanding())
 
 
-def run_backtest_and_export_signals(
-    config: Mapping[str, Any], out_path: Path
-) -> dict[str, Any]:
+def run_backtest_and_export_signals(config: Mapping[str, Any], out_path: Path) -> dict[str, Any]:
     data_path = Path(config["data_path"])
     if not data_path.exists():
         raise FileNotFoundError(f"data source missing: {data_path}")
@@ -109,9 +109,7 @@ def run_backtest_and_export_signals(
         for idx in range(len(signals))
     ]
 
-    equity_curve = (
-        result.equity_curve.tolist() if result.equity_curve is not None else None
-    )
+    equity_curve = result.equity_curve.tolist() if result.equity_curve is not None else None
     report = {
         "pnl": float(result.pnl),
         "max_drawdown": float(result.max_dd),
@@ -265,16 +263,12 @@ def run_live_runner_with_fake_exchange(
             positions_for_pnl = positions_np[1:]
             pnl_steps = positions_for_pnl * price_moves
         equity_curve = (
-            np.concatenate(([0.0], np.cumsum(pnl_steps)))
-            if pnl_steps.size
-            else np.array([0.0])
+            np.concatenate(([0.0], np.cumsum(pnl_steps))) if pnl_steps.size else np.array([0.0])
         )
         pnl_total = float(pnl_steps.sum()) if pnl_steps.size else 0.0
         drawdowns = equity_curve - np.maximum.accumulate(equity_curve)
         max_drawdown = float(drawdowns.min()) if drawdowns.size else 0.0
-        max_position_observed = (
-            float(np.max(np.abs(positions_np))) if positions_np.size else 0.0
-        )
+        max_position_observed = float(np.max(np.abs(positions_np))) if positions_np.size else 0.0
 
         risk_summary = {
             "kill_switch_engaged": risk_manager.kill_switch.is_triggered(),

@@ -12,7 +12,7 @@ incident response, planned maintenance, or disaster recovery exercises.
 - The `kill_switch_state` table has been deployed using the migrations in
   `migrations/postgres/`.
 - Application nodes are configured with the PostgreSQL-backed
-  `PostgresKillSwitchStateStore` via the `TRADEPULSE_KILL_SWITCH_POSTGRES__*`
+  `PostgresKillSwitchStateStore` via the `GEOSYNC_KILL_SWITCH_POSTGRES__*`
   environment variables.
 - Replica instances are in sync and accept read/write traffic for the
   `kill_switch_state` table.
@@ -46,8 +46,8 @@ incident response, planned maintenance, or disaster recovery exercises.
 
 4. **Update application configuration**
    - Point the application to the new primary by updating the
-     `TRADEPULSE_KILL_SWITCH_POSTGRES__DSN` secret or config map. Ensure the TLS
-     material referenced by `TRADEPULSE_KILL_SWITCH_POSTGRES__TLS__*` matches the
+     `GEOSYNC_KILL_SWITCH_POSTGRES__DSN` secret or config map. Ensure the TLS
+     material referenced by `GEOSYNC_KILL_SWITCH_POSTGRES__TLS__*` matches the
      promoted node.
    - Restart the API pods or trigger a rolling restart so that the connection
      pool reconnects to the new primary.

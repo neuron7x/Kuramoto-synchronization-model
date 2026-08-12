@@ -1,4 +1,5 @@
-# SPDX-License-Identifier: LicenseRef-TradePulse-Proprietary
+# Copyright (c) 2023-2026 Yaroslav Vasylenko (neuron7xLab)
+# SPDX-License-Identifier: MIT
 """High-level time series validation helpers built on ``pydantic`` and ``pandera``.
 
 The validation pipeline is split into two layers:
@@ -38,12 +39,15 @@ from core.data.timeutils import get_timezone
 
 try:  # pragma: no cover - exercised when pandera is installed
     import pandera.pandas as pa
-    from pandera.errors import SchemaError
+    from pandera.errors import SchemaError, SchemaErrors
 except ModuleNotFoundError:  # pragma: no cover - fallback used in lightweight test envs
     pa = None  # type: ignore[assignment]
 
     class SchemaError(ValueError):
         """Lightweight substitute for ``pandera.errors.SchemaError``."""
+
+    class SchemaErrors(ValueError):
+        """Lightweight substitute for ``pandera.errors.SchemaErrors`` (lazy mode)."""
 
     class Check:
         def __init__(self, func, error: str | None = None):
@@ -57,9 +61,7 @@ except ModuleNotFoundError:  # pragma: no cover - fallback used in lightweight t
             return bool(result)
 
     class Column:
-        def __init__(
-            self, dtype, nullable: bool = False, unique: bool = False, checks=None
-        ):
+        def __init__(self, dtype, nullable: bool = False, unique: bool = False, checks=None):
             self.dtype = dtype
             self.nullable = nullable
             self.unique = unique
@@ -86,9 +88,7 @@ except ModuleNotFoundError:  # pragma: no cover - fallback used in lightweight t
                     raise SchemaError(f"{name} contains duplicate values")
                 for check in column.checks:
                     if not check(series):
-                        raise SchemaError(
-                            getattr(check, "error", f"Check failed for {name}")
-                        )
+                        raise SchemaError(getattr(check, "error", f"Check failed for {name}"))
             return frame
 
 else:  # pragma: no cover - alias for typing convenience when pandera is present
@@ -205,6 +205,17 @@ def validate_ohlcv(
             raise TimeSeriesValidationError(f"Required column '{price_col}' not found")
         return result
 
+    _check_price_series(df, price_col, result)
+    _check_ohlc_relationships(df, open_col, high_col, low_col, price_col, result)
+    _check_volume(df, volume_col, result)
+
+    if raise_on_error and not result.valid:
+        raise TimeSeriesValidationError("; ".join(result.issues))
+
+    return result
+
+
+def _check_price_series(df: pd.DataFrame, price_col: str, result: OHLCVValidationResult) -> None:
     # Validate price column
     price_series = df[price_col]
     nan_count = price_series.isna().sum()
@@ -214,9 +225,7 @@ def validate_ohlcv(
         nan_ratio = nan_count / len(df)
         if nan_ratio > 0.05:
             result.valid = False
-            result.issues.append(
-                f"{nan_count} NaN values in {price_col} ({nan_ratio:.1%})"
-            )
+            result.issues.append(f"{nan_count} NaN values in {price_col} ({nan_ratio:.1%})")
         else:
             result.warnings.append(f"{nan_count} NaN values in {price_col}")
 
@@ -234,44 +243,61 @@ def validate_ohlcv(
         result.valid = False
         result.issues.append(f"All values in {price_col} are identical")
 
-    # Validate OHLC relationships if all columns present
+
+def _check_ohlc_relationships(
+    df: pd.DataFrame,
+    open_col: str | None,
+    high_col: str | None,
+    low_col: str | None,
+    price_col: str,
+    result: OHLCVValidationResult,
+) -> None:
     ohlc_cols = [
         (open_col, "open"),
         (high_col, "high"),
         (low_col, "low"),
         (price_col, "close"),
     ]
-    available_cols = {
-        name: label for name, label in ohlc_cols if name and name in df.columns
-    }
+    available_cols = {name: label for name, label in ohlc_cols if name and name in df.columns}
 
     if len(available_cols) == 4 and high_col and low_col:
-        # Check high >= low
         violations = (df[high_col] < df[low_col]).sum()
         if violations > 0:
             result.valid = False
             result.issues.append(f"{violations} rows where high < low")
+        _check_ohlc_bands(df, open_col, high_col, low_col, price_col, result)
 
-        # Check high >= close, open
-        if open_col and open_col in df.columns:
-            high_open_violations = (df[high_col] < df[open_col]).sum()
-            if high_open_violations > 0:
-                result.warnings.append(f"{high_open_violations} rows where high < open")
 
-        high_close_violations = (df[high_col] < df[price_col]).sum()
-        if high_close_violations > 0:
-            result.warnings.append(f"{high_close_violations} rows where high < close")
+def _check_ohlc_bands(
+    df: pd.DataFrame,
+    open_col: str | None,
+    high_col: str,
+    low_col: str,
+    price_col: str,
+    result: OHLCVValidationResult,
+) -> None:
+    # Check high >= close, open
+    if open_col and open_col in df.columns:
+        high_open_violations = (df[high_col] < df[open_col]).sum()
+        if high_open_violations > 0:
+            result.warnings.append(f"{high_open_violations} rows where high < open")
 
-        # Check low <= close, open
-        if open_col and open_col in df.columns:
-            low_open_violations = (df[low_col] > df[open_col]).sum()
-            if low_open_violations > 0:
-                result.warnings.append(f"{low_open_violations} rows where low > open")
+    high_close_violations = (df[high_col] < df[price_col]).sum()
+    if high_close_violations > 0:
+        result.warnings.append(f"{high_close_violations} rows where high < close")
 
-        low_close_violations = (df[low_col] > df[price_col]).sum()
-        if low_close_violations > 0:
-            result.warnings.append(f"{low_close_violations} rows where low > close")
+    # Check low <= close, open
+    if open_col and open_col in df.columns:
+        low_open_violations = (df[low_col] > df[open_col]).sum()
+        if low_open_violations > 0:
+            result.warnings.append(f"{low_open_violations} rows where low > open")
 
+    low_close_violations = (df[low_col] > df[price_col]).sum()
+    if low_close_violations > 0:
+        result.warnings.append(f"{low_close_violations} rows where low > close")
+
+
+def _check_volume(df: pd.DataFrame, volume_col: str | None, result: OHLCVValidationResult) -> None:
     # Validate volume if present
     if volume_col and volume_col in df.columns:
         vol_series = df[volume_col]
@@ -280,20 +306,13 @@ def validate_ohlcv(
             result.valid = False
             result.issues.append(f"{neg_volume} negative volume values")
 
-    if raise_on_error and not result.valid:
-        raise TimeSeriesValidationError("; ".join(result.issues))
-
-    return result
-
 
 class ValueColumnConfig(BaseModel):
     """Declarative schema for value columns in a time series payload."""
 
     model_config = ConfigDict(arbitrary_types_allowed=True, frozen=True, strict=True)
 
-    name: StrictStr = Field(
-        ..., min_length=1, description="Column name in the dataframe"
-    )
+    name: StrictStr = Field(..., min_length=1, description="Column name in the dataframe")
     dtype: Optional[StrictStr] = Field(
         default=None,
         description="Optional pandas-compatible dtype string enforced by pandera.",
@@ -475,8 +494,7 @@ def build_timeseries_schema(config: TimeSeriesValidationConfig) -> DataFrameSche
         Check(
             _check_timezone,
             error=(
-                f"expected series '{config.timestamp_column}' to be timezone-aware "
-                f"({timezone_key})"
+                f"expected series '{config.timestamp_column}' to be timezone-aware ({timezone_key})"
             ),
         )
     )
@@ -516,9 +534,7 @@ def validate_timeseries_frame(
 
     timestamp_col = config.timestamp_column
     if timestamp_col not in frame.columns:
-        raise TimeSeriesValidationError(
-            f"expected series '{timestamp_col}' to exist in payload"
-        )
+        raise TimeSeriesValidationError(f"expected series '{timestamp_col}' to exist in payload")
 
     raw_series = frame[timestamp_col]
     if not pd.api.types.is_datetime64_any_dtype(raw_series):
@@ -541,10 +557,19 @@ def validate_timeseries_frame(
         )
 
     normalized = frame.copy()
-    normalized[timestamp_col] = raw_series.dt.tz_convert("UTC")
+    # pandas 3 defaults DatetimeIndex to microsecond resolution while the
+    # schema and downstream contract assume nanoseconds. Pin the unit at
+    # the validation boundary so callers do not need to track resolution
+    # changes between pandas major versions.
+    normalized[timestamp_col] = raw_series.dt.tz_convert("UTC").astype(
+        f"datetime64[ns, {required_key}]"
+    )
 
     schema = build_timeseries_schema(config)
     try:
         return schema.validate(normalized, lazy=False)
-    except SchemaError as exc:  # pragma: no cover - exercised in unit tests
+    except (SchemaError, SchemaErrors) as exc:  # pragma: no cover - exercised in unit tests
+        # pandera 0.31+ raises SchemaErrors (plural) for strict-mode extra-column
+        # violations even when lazy=False; the older SchemaError is preserved
+        # for backward compatibility with 0.26.x.
         raise TimeSeriesValidationError(str(exc)) from exc

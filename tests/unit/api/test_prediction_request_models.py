@@ -1,3 +1,5 @@
+# Copyright (c) 2023-2026 Yaroslav Vasylenko (neuron7xLab)
+# SPDX-License-Identifier: MIT
 from __future__ import annotations
 
 import os
@@ -7,8 +9,8 @@ import pytest
 from pydantic import ValidationError
 
 # Prevent FastAPI application startup side-effects when importing models.
-os.environ.setdefault("TRADEPULSE_ADMIN_TOKEN", "test-admin-token")
-os.environ.setdefault("TRADEPULSE_AUDIT_SECRET", "test-audit-secret")
+os.environ.setdefault("GEOSYNC_ADMIN_TOKEN", "test-admin-token")
+os.environ.setdefault("GEOSYNC_AUDIT_SECRET", "test-audit-secret")
 
 from application.api.service import MarketBar, PredictionRequest
 
@@ -48,9 +50,7 @@ def test_prediction_request_defaults_to_five_minute_horizon() -> None:
 
 @pytest.mark.parametrize("horizon", [60, 600, 3600])
 def test_prediction_request_accepts_horizon_within_bounds(horizon: int) -> None:
-    request = PredictionRequest(
-        symbol="ETH-USD", bars=_sample_bars(), horizon_seconds=horizon
-    )
+    request = PredictionRequest(symbol="ETH-USD", bars=_sample_bars(), horizon_seconds=horizon)
 
     assert request.horizon_seconds == horizon
 
@@ -58,6 +58,4 @@ def test_prediction_request_accepts_horizon_within_bounds(horizon: int) -> None:
 @pytest.mark.parametrize("horizon", [1, 30, 59, 3601, 7200])
 def test_prediction_request_rejects_out_of_bounds_horizon(horizon: int) -> None:
     with pytest.raises(ValidationError):
-        PredictionRequest(
-            symbol="SOL-USD", bars=_sample_bars(), horizon_seconds=horizon
-        )
+        PredictionRequest(symbol="SOL-USD", bars=_sample_bars(), horizon_seconds=horizon)

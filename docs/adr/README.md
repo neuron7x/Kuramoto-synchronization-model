@@ -1,5 +1,5 @@
 ---
-owner: docs@tradepulse
+owner: docs@geosync
 review_cadence: quarterly
 last_reviewed: 2026-01-01
 ---
@@ -11,7 +11,7 @@ last_reviewed: 2026-01-01
 
 ## About ADRs
 
-Architecture Decision Records document significant architectural decisions made during the development of TradePulse. Each ADR captures:
+Architecture Decision Records document significant architectural decisions made during the development of GeoSync. Each ADR captures:
 - The context and problem being addressed
 - The decision made and its rationale
 - Consequences (positive, negative, and neutral)

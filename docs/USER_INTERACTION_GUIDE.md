@@ -1,14 +1,14 @@
 ---
-owner: dx@tradepulse
+owner: dx@geosync
 review_cadence: quarterly
 last_reviewed: 2026-01-01
 ---
 
-# TradePulse User Interaction Guide
+# GeoSync User Interaction Guide
 
-> **Comprehensive documentation for all TradePulse interaction methods**
+> **Comprehensive documentation for all GeoSync interaction methods**
 
-This guide provides detailed documentation and practical examples for interacting with TradePulse through various interfaces: Command-Line Interface (CLI), Streamlit Dashboard, Web Application, and Programmatic API.
+This guide provides detailed documentation and practical examples for interacting with GeoSync through various interfaces: Command-Line Interface (CLI), Streamlit Dashboard, Web Application, and Programmatic API.
 
 ---
 
@@ -40,14 +40,14 @@ This guide provides detailed documentation and practical examples for interactin
 
 ## Overview
 
-TradePulse provides multiple interaction methods to suit different use cases:
+GeoSync provides multiple interaction methods to suit different use cases:
 
 | Interface | Best For | Location |
 |-----------|----------|----------|
 | **CLI** | Automation, scripting, batch processing | `cli/`, `interfaces/cli.py` |
 | **Streamlit Dashboard** | Interactive analysis, visualization | `interfaces/dashboard_streamlit.py` |
 | **Web Application** | Production UI, team collaboration | `apps/web/` |
-| **Programmatic API** | Custom integrations, live trading | `application/api/`, `tradepulse/sdk/` |
+| **Programmatic API** | Custom integrations, live trading | `application/api/`, `geosync/sdk/` |
 
 ---
 
@@ -74,17 +74,17 @@ python -c "from core.indicators.kuramoto import compute_phase; import numpy as n
 
 ## Command-Line Interface (CLI)
 
-The TradePulse CLI provides two main entry points:
+The GeoSync CLI provides two main entry points:
 
 1. **Research CLI** (`interfaces/cli.py`) - For analysis and backtesting
-2. **Orchestration CLI** (`cli/tradepulse_cli.py`) - For production workflows
+2. **Orchestration CLI** (`geosync/cli/geosync_cli.py`) - For production workflows
 
 ### CLI Installation & Setup
 
 ```bash
-# Clone and install TradePulse
-git clone https://github.com/neuron7x/TradePulse.git
-cd TradePulse
+# Clone and install GeoSync
+git clone https://github.com/neuron7xLab/GeoSync.git
+cd GeoSync
 
 # Create virtual environment
 python -m venv .venv
@@ -107,7 +107,7 @@ python -m interfaces.cli --help
 | `backtest` | Run walk-forward backtesting with indicator signals |
 | `live` | Launch live trading with risk management |
 
-#### Orchestration CLI (`cli/tradepulse_cli.py`)
+#### Orchestration CLI (`geosync/cli/geosync_cli.py`)
 
 | Command | Description |
 |---------|-------------|
@@ -182,22 +182,22 @@ python -m interfaces.cli backtest \
 
 ```bash
 # Generate configuration template
-python cli/tradepulse_cli.py backtest \
+python geosync/cli/geosync_cli.py backtest \
     --generate-config \
     --template-output configs/my_backtest.yaml
 
 # Run backtest with configuration
-python cli/tradepulse_cli.py backtest \
+python geosync/cli/geosync_cli.py backtest \
     --config configs/my_backtest.yaml \
     --output jsonl
 
 # Run parameter optimization
-python cli/tradepulse_cli.py optimize \
+python geosync/cli/geosync_cli.py optimize \
     --config configs/optimize.yaml \
     --output table
 
 # Execute FETE backtest
-python cli/tradepulse_cli.py fete-backtest \
+python geosync/cli/geosync_cli.py fete-backtest \
     --csv prices.csv \
     --price-col close \
     --out equity_curve.csv
@@ -237,7 +237,7 @@ import sys
 from pathlib import Path
 
 def analyze_market_data(csv_path: str, window: int = 200) -> dict:
-    """Run TradePulse analysis and return results.
+    """Run GeoSync analysis and return results.
     
     Args:
         csv_path: Path to CSV file (validated for safety)
@@ -439,7 +439,7 @@ timestamp,price,volume
 # .env file for dashboard configuration
 DASHBOARD_ADMIN_USERNAME=admin
 DASHBOARD_ADMIN_PASSWORD_HASH=$2b$12$EixZaYVK1fsbw1ZfbX3OXe.RKjKWbFUZYWbAKpKnvGmcPNW3OL2K6
-DASHBOARD_COOKIE_NAME=tradepulse_auth
+DASHBOARD_COOKIE_NAME=geosync_auth
 DASHBOARD_COOKIE_KEY=your-secure-random-key-here
 DASHBOARD_COOKIE_EXPIRY_DAYS=30
 ```
@@ -498,7 +498,7 @@ npm run type-check
 
 ## Programmatic API
 
-For custom integrations and advanced use cases, TradePulse provides a comprehensive Python SDK and REST API.
+For custom integrations and advanced use cases, GeoSync provides a comprehensive Python SDK and REST API.
 
 ### Python SDK
 
@@ -540,7 +540,7 @@ print(f"Hurst Exponent: {Hs:.4f}")
 
 ```python
 import pandas as pd
-from core.indicators.kuramoto_ricci_composite import TradePulseCompositeEngine
+from core.indicators.kuramoto_ricci_composite import GeoSyncCompositeEngine
 
 # Prepare data with DatetimeIndex
 df = pd.read_csv('prices.csv')
@@ -548,7 +548,7 @@ df['timestamp'] = pd.to_datetime(df['timestamp'])
 df = df.set_index('timestamp')
 
 # Initialize engine
-engine = TradePulseCompositeEngine()
+engine = GeoSyncCompositeEngine()
 
 # Analyze market
 snapshot = engine.analyze_market(df)
@@ -603,8 +603,8 @@ print(f"Trades: {result.trades}")
 #### Trading SDK Usage
 
 ```python
-from tradepulse.sdk import TradePulseSDK, MarketState, SDKConfig
-from application.system import TradePulseSystem
+from geosync.sdk import GeoSyncSDK, MarketState, SDKConfig
+from application.system import GeoSyncSystem
 from hydra import compose, initialize
 
 # Load configuration using Hydra
@@ -613,7 +613,7 @@ with initialize(version_base=None, config_path="../configs"):
     config = compose(config_name="config")
 
 # Initialize system with configuration
-system = TradePulseSystem(config)
+system = GeoSyncSystem(config)
 
 # Configure SDK
 sdk_config = SDKConfig(
@@ -623,7 +623,7 @@ sdk_config = SDKConfig(
 )
 
 # Create SDK instance
-sdk = TradePulseSDK(system, sdk_config)
+sdk = GeoSyncSDK(system, sdk_config)
 
 # Generate trading signal
 state = MarketState(
@@ -647,7 +647,7 @@ if signal.action not in ["HOLD", "EXIT"]:
 
 ### HTTP REST API
 
-TradePulse exposes a FastAPI-based REST API for HTTP integrations.
+GeoSync exposes a FastAPI-based REST API for HTTP integrations.
 
 #### Starting the API Server
 
@@ -731,14 +731,14 @@ curl -X POST http://localhost:8000/api/v1/signals \
 # In a Jupyter notebook cell
 import pandas as pd
 import numpy as np
-from core.indicators.kuramoto_ricci_composite import TradePulseCompositeEngine
+from core.indicators.kuramoto_ricci_composite import GeoSyncCompositeEngine
 import matplotlib.pyplot as plt
 
 # Load and prepare data
 df = pd.read_csv('btc_hourly.csv', parse_dates=['timestamp'], index_col='timestamp')
 
 # Initialize engine
-engine = TradePulseCompositeEngine()
+engine = GeoSyncCompositeEngine()
 
 # Analyze multiple timepoints
 results = []
@@ -791,7 +791,7 @@ try:
 except ImportError:
     raise ImportError("This example requires 'schedule'. Install with: pip install schedule")
 
-from core.indicators.kuramoto_ricci_composite import TradePulseCompositeEngine
+from core.indicators.kuramoto_ricci_composite import GeoSyncCompositeEngine
 
 
 def load_latest_market_data() -> pd.DataFrame:
@@ -829,7 +829,7 @@ def run_analysis():
     """Run periodic market analysis."""
     df = load_latest_market_data()
     
-    engine = TradePulseCompositeEngine()
+    engine = GeoSyncCompositeEngine()
     snapshot = engine.analyze_market(df)
     
     result = {
@@ -969,7 +969,7 @@ app.add_middleware(
 - **Full Documentation**: [docs/index.md](index.md)
 - **API Reference**: [docs/api/API_REFERENCE.md](api/API_REFERENCE.md)
 - **Examples Directory**: [examples/](../examples/)
-- **CLI Reference**: [docs/tradepulse_cli_reference.md](tradepulse_cli_reference.md)
+- **CLI Reference**: [docs/geosync_cli_reference.md](geosync_cli_reference.md)
 - **Quickstart Guide**: [docs/quickstart.md](quickstart.md)
 - **Architecture Overview**: [docs/ARCHITECTURE.md](ARCHITECTURE.md)
 
@@ -982,4 +982,4 @@ app.add_middleware(
 
 ---
 
-**Questions?** Open an issue on [GitHub](https://github.com/neuron7x/TradePulse/issues) or join our [Discord community](https://discord.gg/tradepulse).
+**Questions?** Open an issue on [GitHub](https://github.com/neuron7xLab/GeoSync/issues) or join our [Discord community](https://discord.gg/geosync).

@@ -1,3 +1,5 @@
+# Copyright (c) 2023-2026 Yaroslav Vasylenko (neuron7xLab)
+# SPDX-License-Identifier: MIT
 """Kafka ingestion tooling with best-effort exactly-once guarantees and hot symbol caching.
 
 The service coordinates Kafka transactions with an idempotency store to avoid
@@ -64,8 +66,8 @@ class KafkaIngestionConfig:
     topic: str
     bootstrap_servers: str
     group_id: str
-    client_id: str = "tradepulse-kafka-ingestor"
-    transactional_id: str = "tradepulse-kafka-ingestor"
+    client_id: str = "geosync-kafka-ingestor"
+    transactional_id: str = "geosync-kafka-ingestor"
     poll_timeout_ms: int = 1000
     max_batch_size: int = 500
     linger_ms: int = 5

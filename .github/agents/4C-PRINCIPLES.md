@@ -45,7 +45,7 @@ The system processes data using three mechanisms: streaming, batch, and real-tim
 ❌ **Verbose:**
 ```
 In order to start the application, you will need to execute the following command 
-in your terminal or command line interface: `tradepulse run`. This command will 
+in your terminal or command line interface: `geosync run`. This command will 
 initiate the trading system and begin processing market data.
 ```
 
@@ -53,7 +53,7 @@ initiate the trading system and begin processing market data.
 ```
 Start the application:
 ```bash
-tradepulse run
+geosync run
 ```
 This initiates the trading system and processes market data.
 ```
@@ -169,9 +169,9 @@ The agent will:
 ### Before 4C (Original Documentation)
 
 ```markdown
-## Getting Started with TradePulse
+## Getting Started with GeoSync
 
-So, you want to get started with TradePulse? Great! TradePulse is this really 
+So, you want to get started with GeoSync? Great! GeoSync is this really 
 cool trading platform that's super powerful and flexible. It can do all sorts 
 of amazing things with market data. Basically, it's like having a trading 
 assistant that works 24/7 for you!
@@ -186,10 +186,10 @@ or maybe conda, or possibly even build from source if you're feeling adventurous
 ```markdown
 ## Quick Start
 
-Install TradePulse:
+Install GeoSync:
 
 ```bash
-pip install tradepulse
+pip install geosync
 ```
 
 Create a configuration file:
@@ -203,7 +203,7 @@ api_key: your-key-here
 Run the trading system:
 
 ```bash
-tradepulse run --config config.yaml
+geosync run --config config.yaml
 ```
 
 See [Installation Guide](docs/installation.md) for detailed setup options.

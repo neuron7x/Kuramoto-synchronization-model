@@ -1,0 +1,215 @@
+# Diff-bound commit acceptor for the D-002H Gate E locked-ledger
+# verification PR.
+#
+# Pure declaration + byte-exact verification. Emits a machine-readable
+# artifact at artifacts/d002h/locks/d002h_locked_file_pins.json
+# (schema D002H-GATE-E-v1) and a human-readable report at
+# docs/governance/D002H_GATE_E_LOCKED_FILE_REPORT.md. The 16 pinned
+# sha256 values were computed from a clean checkout of the Gate D
+# merge anchor (077073ee801c434840d64f911e7b1f39ce2ac0fa) and the
+# tests verify byte-exact equality with the on-disk bytes.
+#
+# Strict scope (per the operating law):
+#   * NO canonical run. NO sweep. NO results.
+#   * NO new mechanism family. NO new verdict literal. NO new salt.
+#   * NO D-002G prereg edit. NO D-002H prereg edit. NO locked-file edit.
+#   * NO D002C_CLAIM_LEDGER.yaml mutation (sha pinned byte-exact at
+#     f96ba9b5a2057d2e0bff84afc28578ab316cff73f6dc6673fb0d6d543b8bd6dd).
+#   * NO substrate code edit. NO mechanism code edit.
+#   * NO claim "Gate E PASS -> canonical run authorised"; the 7-gate
+#     conjunction A AND B AND C AND D AND E AND F AND G is the contract.
+
+id: x10r-d002h-gate-e-locked-files
+status: ACTIVE
+claim_type: governance
+promise: >-
+  After this PR lands,
+  artifacts/d002h/locks/d002h_locked_file_pins.json carries
+  schema_version "D002H-GATE-E-v1" with study_id "D-002H", gate "E",
+  gate_e_verdict "PASS", n_pinned_files == 16,
+  canonical_run_authorized == false, downstream_gates_remaining ==
+  ["F","G"], and the 16 pinned sha256 values for the locked D-002C +
+  D-002G + D-002H governance docs + source-code modules (D-002C
+  substrates + D-002G null mechanisms). The artifact also records
+  prior_gate_anchors for Gates A, B, C, D.
+
+  docs/governance/D002H_GATE_E_LOCKED_FILE_REPORT.md carries the
+  8-section report (scope, pinned-file table, anchor commit,
+  drift-detection method, verdict, claim boundary verbatim, forbidden
+  interpretations, reproduce).
+
+  tests/systemic_risk/test_d002h_gate_e_locked_files.py carries 10
+  fast JSON / sha-byte-exact tests with the exact names required by
+  the Gate E brief: test_gate_e_artifact_exists,
+  test_gate_e_pinned_count_is_16,
+  test_gate_e_all_pinned_shas_byte_exact,
+  test_gate_e_d002c_ledger_pinned,
+  test_gate_e_d002h_prereg_pinned,
+  test_gate_e_substrate_code_pinned,
+  test_gate_e_mechanism_code_pinned,
+  test_gate_e_no_drift_in_any_pin,
+  test_gate_e_prior_gate_anchors_recorded,
+  test_gate_e_gate_e_verdict_is_pass.
+
+  docs/governance/D002G_CANONICAL_RUN_BLOCKERS.md gains an append-only
+  "D-002H Gate E" section after the Gate D section.
+
+  Gate E is pure declaration + read-only sha verification: NO
+  canonical run, NO sweep, NO results. NO new mechanism. NO new
+  verdict literal. NO substrate / mechanism / locked governance edit.
+  NO D-002C ledger mutation. NO D-002H prereg edit. NO canonical
+  D-002H run authorisation - this PR addresses Gate E alone; Gates F,
+  G remain open and the 7-gate conjunction is the contract.
+
+diff_scope:
+  changed_files:
+    - path: ".claude/commit_acceptors/x10r-d002h-gate-e-locked-files.yaml"
+    - path: "tests/systemic_risk/test_d002h_gate_e_locked_files.py"
+    - path: "docs/governance/D002H_GATE_E_LOCKED_FILE_REPORT.md"
+    - path: "artifacts/d002h/locks/d002h_locked_file_pins.json"
+    - path: "docs/governance/D002G_CANONICAL_RUN_BLOCKERS.md"
+    - path: ".github/detect-secrets.baseline"
+  forbidden_paths:
+    - "docs/governance/D002C_CLAIM_LEDGER.yaml"
+    - "docs/governance/D002C_PREREGISTRATION.yaml"
+    - "docs/governance/D002C_CANONICAL_RUN_REPORT.md"
+    - "docs/governance/D002C_ATTEMPT_2_NULL_AUDIT_FALSIFICATION_REPORT.md"
+    - "docs/governance/D002G_PREREGISTRATION.yaml"
+    - "docs/governance/D002G_NONDEGENERATE_NULL_DESIGN.md"
+    - "docs/governance/D002G_ACCEPTANCE_RULES.md"
+    - "docs/governance/D002G_P3_M3_PREREGISTRATION.md"
+    - "docs/governance/D002G_STRUCTURAL_CLOSURE_REPORT.md"
+    - "docs/governance/D002G_NEGATIVE_SPACE_MAP.md"
+    - "docs/governance/D002G_M3_ELIGIBILITY_MATRIX.md"
+    - "docs/governance/D002H_PREREGISTRATION.yaml"
+    - "docs/governance/D002H_SCOPE_RATIONALE.md"
+    - "docs/governance/D002H_CLAIM_BOUNDARY.md"
+    - "docs/governance/D002H_CANONICAL_RUN_AUTHORIZATION_GATES.md"
+    - "docs/governance/D002H_GATE_B_REPORT.md"
+    - "docs/governance/D002H_GATE_C_CANONICAL_GRID.md"
+    - "docs/governance/D002H_GATE_D_FORBIDDEN_CLAIM_SCAN.md"
+    - "artifacts/d002h/prereg/d002h_preregistration_lock.json"
+    - "artifacts/d002h/eligibility/d002h_ricci_eligibility.json"
+    - "artifacts/d002h/canonical/d002h_canonical_grid.json"
+    - "artifacts/d002h/scans/d002h_forbidden_claim_scan.json"
+    - "scripts/x10r_d002h_gate_b_eligibility.py"
+    - "scripts/x10r_d002h_gate_d_scan.py"
+    - "tests/systemic_risk/test_d002h_gate_b_eligibility.py"
+    - "tests/systemic_risk/test_d002h_gate_c_grid.py"
+    - "tests/systemic_risk/test_d002h_gate_d_forbidden_claims.py"
+    - "tests/systemic_risk/test_d002h_preregistration.py"
+    - ".claude/commit_acceptors/x10r-d002h-ricci-flow-prereg.yaml"
+    - ".claude/commit_acceptors/x10r-d002h-gate-b-eligibility.yaml"
+    - ".claude/commit_acceptors/x10r-d002h-gate-c-canonical-grid.yaml"
+    - ".claude/commit_acceptors/x10r-d002h-gate-d-forbidden-claim-scan.yaml"
+    - "research/systemic_risk/d002c_substrates.py"
+    - "research/systemic_risk/d002g_null_mechanisms.py"
+    - "artifacts/d002g/closure/"
+    - "artifacts/d002g/m3/"
+    - "artifacts/d002g/p3/"
+    - "artifacts/d002g/canonical/"
+    - "artifacts/d002h/canonical/results/"
+    - "artifacts/d002h/authorization/"
+required_python_symbols: []
+expected_signal: >-
+  `PYTHONPATH=. python -m pytest
+  tests/systemic_risk/test_d002h_gate_e_locked_files.py -q` passes all
+  25 tests (10 base contract tests + 15 additional parametrised pin
+  cases under test_gate_e_no_drift_in_any_pin); the artifact JSON
+  parses and satisfies the schema / verdict / counters / pin-list
+  asserts; the D-002C claim ledger sha256 stays byte-exact at
+  f96ba9b5a2057d2e0bff84afc28578ab316cff73f6dc6673fb0d6d543b8bd6dd;
+  the D-002H prereg sha256 stays byte-exact at
+  44b18b5a40ce9d188a9c3bd49339621f81a65a15f97a683247902450dd54acec;
+  the substrate module sha256 stays byte-exact at
+  4b2e5d65c104a5be5a207951cd3c4ae099f31ce83b3f2c0766a160d8c9e80eca;
+  the mechanism module sha256 stays byte-exact at
+  c7e275191454e1e961d5a079a21b6e1dbfcbc1661d48ddf14d0d0c39a426f257;
+  BLOCKERS.md gains the "D-002H Gate E - locked-ledger verification"
+  append-only section after the Gate D section.
+measurement_command: >-
+  bash -c 'set -e;
+  PYTHONPATH=. python -m pytest tests/systemic_risk/test_d002h_gate_e_locked_files.py -q;
+  python -c "import json;
+  d=json.load(open(\"artifacts/d002h/locks/d002h_locked_file_pins.json\"));
+  assert d[\"schema_version\"]==\"D002H-GATE-E-v1\";
+  assert d[\"study_id\"]==\"D-002H\";
+  assert d[\"gate\"]==\"E\";
+  assert d[\"gate_e_verdict\"]==\"PASS\";
+  assert d[\"n_pinned_files\"]==16;
+  assert len(d[\"pinned_files\"])==16;
+  assert d[\"canonical_run_authorized\"] is False;
+  assert d[\"downstream_gates_remaining\"]==[\"F\",\"G\"];
+  assert d[\"anchor_main_sha\"]==\"077073ee801c434840d64f911e7b1f39ce2ac0fa\";
+  assert set(d[\"prior_gate_anchors\"].keys())=={\"gate_a\",\"gate_b\",\"gate_c\",\"gate_d\"}";
+  grep -q "D-002H Gate E" docs/governance/D002G_CANONICAL_RUN_BLOCKERS.md;
+  grep -q "D002H-GATE-E-v1" docs/governance/D002H_GATE_E_LOCKED_FILE_REPORT.md;
+  test ! -d artifacts/d002h/canonical/results;
+  test ! -d artifacts/d002h/authorization;
+  test "$(sha256sum docs/governance/D002C_CLAIM_LEDGER.yaml | awk "{print \$1}")" = "f96ba9b5a2057d2e0bff84afc28578ab316cff73f6dc6673fb0d6d543b8bd6dd";
+  test "$(sha256sum docs/governance/D002H_PREREGISTRATION.yaml | awk "{print \$1}")" = "44b18b5a40ce9d188a9c3bd49339621f81a65a15f97a683247902450dd54acec";
+  test "$(sha256sum docs/governance/D002H_CANONICAL_RUN_AUTHORIZATION_GATES.md | awk "{print \$1}")" = "75becc5c0d57eab9505ab00fe36e35ce1513126f8415d510f1c65dd7643bc0e6";
+  test "$(sha256sum research/systemic_risk/d002c_substrates.py | awk "{print \$1}")" = "4b2e5d65c104a5be5a207951cd3c4ae099f31ce83b3f2c0766a160d8c9e80eca";
+  test "$(sha256sum research/systemic_risk/d002g_null_mechanisms.py | awk "{print \$1}")" = "c7e275191454e1e961d5a079a21b6e1dbfcbc1661d48ddf14d0d0c39a426f257"'
+signal_artifact: "artifacts/d002h/locks/d002h_locked_file_pins.json"
+falsifier:
+  command: >-
+    bash -c 'set -e;
+    PYTHONPATH=. python -m pytest tests/systemic_risk/test_d002h_gate_e_locked_files.py -q || exit 1;
+    test -f artifacts/d002h/locks/d002h_locked_file_pins.json || exit 2;
+    test -f docs/governance/D002H_GATE_E_LOCKED_FILE_REPORT.md || exit 3;
+    test -f tests/systemic_risk/test_d002h_gate_e_locked_files.py || exit 4;
+    python -c "import json;
+    d=json.load(open(\"artifacts/d002h/locks/d002h_locked_file_pins.json\"));
+    assert d[\"schema_version\"]==\"D002H-GATE-E-v1\";
+    assert d[\"gate_e_verdict\"]==\"PASS\";
+    assert d[\"n_pinned_files\"]==16;
+    assert len(d[\"pinned_files\"])==16;
+    assert d[\"canonical_run_authorized\"] is False;
+    assert d[\"downstream_gates_remaining\"]==[\"F\",\"G\"];
+    assert \"results\" not in d;
+    assert \"sweep\" not in d" || exit 5;
+    grep -q "D-002H Gate E" docs/governance/D002G_CANONICAL_RUN_BLOCKERS.md || exit 6;
+    test "$(sha256sum docs/governance/D002C_CLAIM_LEDGER.yaml | awk "{print \$1}")" = "f96ba9b5a2057d2e0bff84afc28578ab316cff73f6dc6673fb0d6d543b8bd6dd" || exit 7;
+    test "$(sha256sum docs/governance/D002H_PREREGISTRATION.yaml | awk "{print \$1}")" = "44b18b5a40ce9d188a9c3bd49339621f81a65a15f97a683247902450dd54acec" || exit 8;
+    test "$(sha256sum research/systemic_risk/d002c_substrates.py | awk "{print \$1}")" = "4b2e5d65c104a5be5a207951cd3c4ae099f31ce83b3f2c0766a160d8c9e80eca" || exit 9;
+    test "$(sha256sum research/systemic_risk/d002g_null_mechanisms.py | awk "{print \$1}")" = "c7e275191454e1e961d5a079a21b6e1dbfcbc1661d48ddf14d0d0c39a426f257" || exit 10;
+    test ! -d artifacts/d002h/canonical/results || exit 11;
+    test ! -d artifacts/d002h/authorization || exit 12;
+    if grep -rE "canonical run authorised|canonical run authorized|Gate E authorises|D-002G rescued|D-002C rescued|cross-substrate robustness|general topology robustness|scientific PASS achieved|sweep complete|sweep result" docs/governance/D002H_GATE_E_LOCKED_FILE_REPORT.md | grep -vE "forbidden|NOT|never|cannot|does not|do not|out of scope|MUST NOT|alone does NOT|alone is one term|prohibited|disallowed|requires|impossible|deny|denied|reject|REJECT|attempt|FAIL|after explicit authorisation|after.*all.*7.*gates|will pin|excluded|blocked|BLOCKED"; then
+      echo "forbidden promotional phrase leaked outside denial context"; exit 13;
+    fi'
+  description: >-
+    Probes the D-002H Gate E pin-verification artifact: 25 Gate E
+    tests pass (10 base + 15 parametrised pin cases); 4 new files
+    exist on disk (test + report + JSON artifact + acceptor); artifact
+    JSON has the locked schema_version D002H-GATE-E-v1,
+    gate_e_verdict PASS, n_pinned_files 16, list len 16,
+    canonical_run_authorized False, downstream_gates_remaining [F,G],
+    no ``results`` or ``sweep`` field; BLOCKERS.md carries the new
+    Gate E append-only section; D-002C claim ledger byte-exact at the
+    anchor sha; D-002H prereg sha byte-exact at PR #683 anchor;
+    D002H_CANONICAL_RUN_AUTHORIZATION_GATES sha byte-exact; substrate
+    + mechanism module shas byte-exact unchanged; no
+    artifacts/d002h/canonical/results/ directory exists; no
+    artifacts/d002h/authorization/ directory exists; no forbidden
+    promotional phrase leaks outside denial context inside the report.
+    Regression on any -> Gate E contract broken.
+rollback_command: >-
+  bash -c 'rm -f
+  tests/systemic_risk/test_d002h_gate_e_locked_files.py
+  docs/governance/D002H_GATE_E_LOCKED_FILE_REPORT.md
+  artifacts/d002h/locks/d002h_locked_file_pins.json
+  .claude/commit_acceptors/x10r-d002h-gate-e-locked-files.yaml
+  && rmdir artifacts/d002h/locks 2>/dev/null || true
+  && git checkout HEAD~1 -- docs/governance/D002G_CANONICAL_RUN_BLOCKERS.md'
+rollback_verification_command: >-
+  bash -c 'test ! -f tests/systemic_risk/test_d002h_gate_e_locked_files.py
+  && test ! -f docs/governance/D002H_GATE_E_LOCKED_FILE_REPORT.md
+  && test ! -f artifacts/d002h/locks/d002h_locked_file_pins.json
+  && test ! -f .claude/commit_acceptors/x10r-d002h-gate-e-locked-files.yaml
+  && ! grep -q "D-002H Gate E" docs/governance/D002G_CANONICAL_RUN_BLOCKERS.md'
+memory_update_type: append
+ledger_path: ".claude/commit_acceptors/x10r-d002h-gate-e-locked-files.yaml"
+report_path: "docs/governance/D002H_GATE_E_LOCKED_FILE_REPORT.md"
+evidence: []

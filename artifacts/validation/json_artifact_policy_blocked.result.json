@@ -1,0 +1,6 @@
+{
+  "errors": [],
+  "input": "examples/json_artifact_contract.blocked.json",
+  "schema_version": "json_contract_evidence_policy.v1",
+  "status": "OK"
+}

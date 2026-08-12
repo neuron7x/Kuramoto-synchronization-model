@@ -1,3 +1,5 @@
+# Copyright (c) 2023-2026 Yaroslav Vasylenko (neuron7xLab)
+# SPDX-License-Identifier: MIT
 """Strategy execution engine with modular contracts and risk-aware routing."""
 
 from __future__ import annotations
@@ -105,9 +107,7 @@ class IOContract:
         missing = [field for field in self.required if field not in payload]
         if missing:
             joined = ", ".join(sorted(missing))
-            raise ValueError(
-                f"Missing required inputs for {contract_name!r}: [{joined}]"
-            )
+            raise ValueError(f"Missing required inputs for {contract_name!r}: [{joined}]")
 
         for field_name, expected in self.required.items():
             if expected is None:
@@ -261,18 +261,14 @@ class RiskAssessment:
 class RiskPolicy(Protocol):
     """Contract for evaluating signals prior to OMS routing."""
 
-    def assess(
-        self, signal: StrategySignal, *, mode: StrategyEngineMode
-    ) -> RiskAssessment:
+    def assess(self, signal: StrategySignal, *, mode: StrategyEngineMode) -> RiskAssessment:
         """Return the risk assessment for ``signal``."""
 
 
 class AcceptAllRiskPolicy:
     """Default risk policy that approves every signal."""
 
-    def assess(
-        self, signal: StrategySignal, *, mode: StrategyEngineMode
-    ) -> RiskAssessment:
+    def assess(self, signal: StrategySignal, *, mode: StrategyEngineMode) -> RiskAssessment:
         return RiskAssessment(approved=True)
 
 
@@ -370,9 +366,7 @@ class StrategyEngine:
         """Transition the engine into ``mode`` if permitted."""
 
         if mode not in self._ALLOWED_TRANSITIONS[self._mode]:
-            raise InvalidModeTransition(
-                f"Cannot transition from {self._mode} to {mode}"
-            )
+            raise InvalidModeTransition(f"Cannot transition from {self._mode} to {mode}")
         self._mode = mode
         if mode is not StrategyEngineMode.PAUSED:
             self._last_active_mode = mode
@@ -417,9 +411,7 @@ class StrategyEngine:
     # ---------------------------------------------------------------------
     # Internal helpers
 
-    def _handle_event(
-        self, event: StrategyEngineEvent
-    ) -> tuple[StrategyEngineEvent, ...]:
+    def _handle_event(self, event: StrategyEngineEvent) -> tuple[StrategyEngineEvent, ...]:
         self._validate_event(event)
         self._validate_output_contract(event)
         if event.type is StrategyEventType.SIGNAL:
@@ -434,9 +426,7 @@ class StrategyEngine:
             return (event,)
         return ()
 
-    def _handle_signal(
-        self, event: StrategyEngineEvent
-    ) -> tuple[StrategyEngineEvent, ...]:
+    def _handle_signal(self, event: StrategyEngineEvent) -> tuple[StrategyEngineEvent, ...]:
         signal_payload = event.payload
         if not isinstance(signal_payload, StrategySignal):
             msg = "Signal events must carry StrategySignal payloads"
@@ -491,13 +481,9 @@ class StrategyEngine:
         return tuple(dispatched)
 
     def _validate_event(self, event: StrategyEngineEvent) -> None:
-        if event.type is StrategyEventType.SIGNAL and not isinstance(
-            event.payload, StrategySignal
-        ):
+        if event.type is StrategyEventType.SIGNAL and not isinstance(event.payload, StrategySignal):
             raise TypeError("Signal events must carry StrategySignal payloads")
-        if event.type is StrategyEventType.CANCEL and not isinstance(
-            event.payload, StrategyCancel
-        ):
+        if event.type is StrategyEventType.CANCEL and not isinstance(event.payload, StrategyCancel):
             raise TypeError("Cancel events must carry StrategyCancel payloads")
         if event.type is StrategyEventType.RISK_ADVICE and not isinstance(
             event.payload, RiskAdvice
@@ -507,9 +493,7 @@ class StrategyEngine:
     def _validate_output_contract(self, event: StrategyEngineEvent) -> None:
         module = self._modules.get(event.module)
         if module is None:
-            raise StrategyEngineError(
-                f"Event references unknown strategy module {event.module!r}"
-            )
+            raise StrategyEngineError(f"Event references unknown strategy module {event.module!r}")
         contract = module.output_contract
         if not contract.required and not contract.optional:
             return

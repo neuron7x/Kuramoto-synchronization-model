@@ -1,3 +1,5 @@
+# Copyright (c) 2023-2026 Yaroslav Vasylenko (neuron7xLab)
+# SPDX-License-Identifier: MIT
 """Append-only persistence primitives for audit records."""
 
 from __future__ import annotations
@@ -135,7 +137,7 @@ class JsonLinesAuditStore:
         previous_chain = _GENESIS_HASH
         expected_sequence = 0
         if not self._path.exists():
-            return []
+            return
         with self._path.open("r", encoding="utf-8") as handle:
             for line_number, line in enumerate(handle, start=1):
                 line = line.strip()
@@ -196,9 +198,7 @@ class JsonLinesAuditStore:
 
 
 def _hash_payload(payload: dict[str, object]) -> str:
-    canonical = json.dumps(
-        payload, sort_keys=True, separators=(",", ":"), ensure_ascii=False
-    )
+    canonical = json.dumps(payload, sort_keys=True, separators=(",", ":"), ensure_ascii=False)
     return hashlib.sha256(canonical.encode("utf-8")).hexdigest()
 
 

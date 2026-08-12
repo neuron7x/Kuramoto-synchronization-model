@@ -1,0 +1,171 @@
+# Diff-bound commit acceptor for X-10R-1 D-002C C2.6 — capsule writer
+# sha alignment with the preflight validator (GH PR #654 chain hold).
+#
+# What lands:
+#   * research/systemic_risk/d002c_pos_control.py   — sha over FULL capsule
+#   * research/systemic_risk/d002c_neg_control.py   — sha over FULL capsule
+#   * research/systemic_risk/d002c_smoke_test.py    — sha over FULL capsule
+#   * tests/research/systemic_risk/test_d002c_writer_sha_alignment.py (NEW)
+#   * tests/research/systemic_risk/test_d002c_smoke_test.py — round-trip
+#   * .claude/commit_acceptors/x10r-d002c-writer-sha-alignment.yaml
+#
+# Bug
+# ===
+# C2.4-A/B/C writers hashed a small surrogate dict (3-7 fields) and
+# stored that sha in a FULL capsule (~16 fields). The C2.4-D preflight
+# validator recomputes sha over the FULL capsule body via
+# canonical_preflight_json — so the recomputed sha never matched and
+# the validator refused launch with capsule_sha256_mismatch on every
+# freshly-written capsule.
+#
+# Fix
+# ===
+# Writers now build the full capsule body FIRST, sha it via the
+# validator's exact canonical form (canonical_preflight_json), and
+# store the matching sha in both the dataclass and on-disk capsule.
+# The _sha256 / _canonical_json helpers were deleted in favour of a
+# single _capsule_sha256 helper that defers to canonical_preflight_json.
+
+id: x10r-d002c-writer-sha-alignment
+status: ACTIVE
+claim_type: correctness
+promise: >-
+  After this PR lands, the d002c_pos_control / d002c_neg_control /
+  d002c_smoke_test writers emit capsules whose sha256 round-trips
+  cleanly through the d002c_preflight validator's
+  canonical_preflight_json recompute. The preflight validator can
+  load every freshly-written capsule without triggering
+  capsule_sha256_mismatch refusal. Per-cell shas also use the same
+  canonical form, so any future non-finite per-cell field
+  (e.g. signal_ci_ratio=inf in degenerate-variance branches) is
+  hashed consistently on both sides via the validator's stable
+  string-sentinel substitution.
+diff_scope:
+  changed_files:
+    - path: ".claude/commit_acceptors/x10r-d002c-writer-sha-alignment.yaml"
+    - path: "research/systemic_risk/d002c_pos_control.py"
+    - path: "research/systemic_risk/d002c_neg_control.py"
+    - path: "research/systemic_risk/d002c_smoke_test.py"
+    - path: "tests/research/systemic_risk/test_d002c_smoke_test.py"
+    - path: "tests/research/systemic_risk/test_d002c_writer_sha_alignment.py"
+  forbidden_paths:
+    - "research/systemic_risk/d002c_preflight.py"
+    - "research/systemic_risk/d002c_null_audit.py"
+    - "research/systemic_risk/d002c_sweep_runner.py"
+    - "research/systemic_risk/d002c_verdict.py"
+    - "research/systemic_risk/d002c_preregistration.py"
+    - "docs/governance/D002C_PREREGISTRATION.yaml"
+    - "trading/"
+    - "execution/"
+    - "forecast/"
+    - "policy/"
+    - "core/physics/"
+    - "core/kuramoto/"
+    - "application/governance/claim_ledger.py"
+    - "application/governance/commit_acceptor.py"
+required_python_symbols:
+  - "research/systemic_risk/d002c_pos_control.py::run_pos_control_all"
+  - "research/systemic_risk/d002c_pos_control.py::run_pos_control_cell"
+  - "research/systemic_risk/d002c_pos_control.py::PosControlVerdict"
+  - "research/systemic_risk/d002c_pos_control.py::PosControlCellResult"
+  - "research/systemic_risk/d002c_neg_control.py::run_neg_control_all"
+  - "research/systemic_risk/d002c_neg_control.py::run_neg_control_cell"
+  - "research/systemic_risk/d002c_neg_control.py::NegControlVerdict"
+  - "research/systemic_risk/d002c_neg_control.py::NegControlCellResult"
+  - "research/systemic_risk/d002c_smoke_test.py::run_smoke_test"
+  - "research/systemic_risk/d002c_smoke_test.py::SmokeTestResult"
+  - "research/systemic_risk/d002c_smoke_test.py::SmokeCellResult"
+expected_signal: >-
+  Local: `pytest tests/research/systemic_risk/test_d002c_pos_control.py
+  tests/research/systemic_risk/test_d002c_neg_control.py
+  tests/research/systemic_risk/test_d002c_smoke_test.py
+  tests/research/systemic_risk/test_d002c_writer_sha_alignment.py
+  tests/research/systemic_risk/test_d002c_preflight.py
+  tests/research/systemic_risk/test_d002c_sweep_runner_preflight_integration.py
+  -q` reports all passed. `mypy --strict`, `ruff check`, and
+  `black --check` all clean on the three writers + the new
+  alignment test.
+measurement_command: >-
+  bash -c 'mypy --strict --follow-imports=silent
+  research/systemic_risk/d002c_pos_control.py
+  research/systemic_risk/d002c_neg_control.py
+  research/systemic_risk/d002c_smoke_test.py
+  tests/research/systemic_risk/test_d002c_writer_sha_alignment.py
+  && ruff check
+  research/systemic_risk/d002c_pos_control.py
+  research/systemic_risk/d002c_neg_control.py
+  research/systemic_risk/d002c_smoke_test.py
+  tests/research/systemic_risk/test_d002c_writer_sha_alignment.py
+  && black --check
+  research/systemic_risk/d002c_pos_control.py
+  research/systemic_risk/d002c_neg_control.py
+  research/systemic_risk/d002c_smoke_test.py
+  tests/research/systemic_risk/test_d002c_writer_sha_alignment.py
+  && pytest
+  tests/research/systemic_risk/test_d002c_pos_control.py
+  tests/research/systemic_risk/test_d002c_neg_control.py
+  tests/research/systemic_risk/test_d002c_smoke_test.py
+  tests/research/systemic_risk/test_d002c_writer_sha_alignment.py
+  tests/research/systemic_risk/test_d002c_preflight.py
+  tests/research/systemic_risk/test_d002c_sweep_runner_preflight_integration.py
+  -q'
+signal_artifact: "tmp/x10r_d002c_writer_sha_alignment.log"
+falsifier:
+  command: |-
+    bash -c 'python -c "
+    from pathlib import Path
+    import hashlib, json, tempfile
+    from research.systemic_risk.d002c_pos_control import run_pos_control_all
+    from research.systemic_risk.d002c_neg_control import run_neg_control_all
+    from research.systemic_risk.d002c_smoke_test import run_smoke_test
+    from research.systemic_risk.d002c_substrates import BlockStructuredSubstrate
+    from research.systemic_risk.d002c_metrics import AucPreEventMetric
+    from research.systemic_risk.d002c_preflight import (
+        NULL_AUDIT_KIND, PreflightCapsulePaths, canonical_preflight_json,
+        load_and_validate_preflight_capsules,
+    )
+    tmp = Path(tempfile.mkdtemp())
+    pos = tmp / \"pos.json\"; neg = tmp / \"neg.json\"
+    smoke = tmp / \"smoke.json\"; null_ = tmp / \"null.json\"
+    run_pos_control_all((BlockStructuredSubstrate(),), (AucPreEventMetric(),),
+        N=20, lambda_=1.0, n_seeds=4, threshold=0.01, steps_per_quarter=3,
+        output_path=pos)
+    run_neg_control_all((BlockStructuredSubstrate(),), (AucPreEventMetric(),),
+        N_grid=(50,), n_seeds=4, steps_per_quarter=3, output_path=neg)
+    run_smoke_test(substrates=(BlockStructuredSubstrate(),),
+        metrics=(AucPreEventMetric(),), N_grid=(20,), lambda_grid=(0.0,),
+        n_seeds=2, steps_per_quarter=3, max_wallclock_seconds=120.0,
+        output_path=smoke)
+    body = {\"kind\": NULL_AUDIT_KIND, \"aggregate_only\": True,
+            \"results\": [], \"generated_at\": \"2026-05-11T12:00:00Z\"}
+    body[\"sha256\"] = hashlib.sha256(
+        canonical_preflight_json(body).encode(\"utf-8\")).hexdigest()
+    null_.write_text(json.dumps(body, sort_keys=True, indent=2))
+    decision = load_and_validate_preflight_capsules(
+        PreflightCapsulePaths(pos_control=pos, neg_control=neg,
+                              null_audit=null_, smoke_test=smoke))
+    assert decision.launch_allowed, \
+        f\"falsifier FAILED: refusal_reasons={list(decision.refusal_reasons)}\"
+    "'
+  description: >-
+    Emits pos+neg+smoke capsules via the actual writers and a stub
+    aggregate-only null-audit capsule, then runs
+    load_and_validate_preflight_capsules. Verifies
+    decision.launch_allowed is True — i.e. NO capsule_sha256_mismatch
+    refusal. This is the exact contract the C2.4-D preflight enforces;
+    if writers regress, this assertion fails immediately.
+rollback_command: >-
+  bash -c 'git checkout HEAD~1 --
+  research/systemic_risk/d002c_pos_control.py
+  research/systemic_risk/d002c_neg_control.py
+  research/systemic_risk/d002c_smoke_test.py
+  tests/research/systemic_risk/test_d002c_smoke_test.py
+  && rm -f tests/research/systemic_risk/test_d002c_writer_sha_alignment.py
+  .claude/commit_acceptors/x10r-d002c-writer-sha-alignment.yaml'
+rollback_verification_command: >-
+  bash -c 'test ! -f tests/research/systemic_risk/test_d002c_writer_sha_alignment.py
+  && test ! -f .claude/commit_acceptors/x10r-d002c-writer-sha-alignment.yaml'
+memory_update_type: append
+ledger_path: ".claude/commit_acceptors/x10r-d002c-writer-sha-alignment.yaml"
+report_path: "tmp/x10r_d002c_writer_sha_alignment.log"
+evidence: []

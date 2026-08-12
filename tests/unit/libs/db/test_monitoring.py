@@ -1,3 +1,5 @@
+# Copyright (c) 2023-2026 Yaroslav Vasylenko (neuron7xLab)
+# SPDX-License-Identifier: MIT
 import importlib.util
 import sys
 from pathlib import Path
@@ -10,14 +12,12 @@ from core.utils import metrics as metrics_module
 from core.utils.metrics import MetricsCollector
 
 _MODULE_PATH = Path(__file__).resolve().parents[4] / "libs" / "db" / "monitoring.py"
-_SPEC = importlib.util.spec_from_file_location(
-    "tradepulse.test.db_monitoring", _MODULE_PATH
-)
+_SPEC = importlib.util.spec_from_file_location("geosync.test.db_monitoring", _MODULE_PATH)
 if _SPEC is None or _SPEC.loader is None:  # pragma: no cover - defensive guard
     raise RuntimeError("Unable to load database monitoring module for testing")
 db_monitoring = importlib.util.module_from_spec(_SPEC)
 _SPEC.loader.exec_module(db_monitoring)
-sys.modules.setdefault("tradepulse.test.db_monitoring", db_monitoring)
+sys.modules.setdefault("geosync.test.db_monitoring", db_monitoring)
 DatabaseMonitor = db_monitoring.DatabaseMonitor
 instrument_engine_metrics = db_monitoring.instrument_engine_metrics
 
@@ -28,6 +28,7 @@ def test_instrument_engine_metrics_records_queries(
     registry = CollectorRegistry()
     collector = MetricsCollector(registry)
     monkeypatch.setattr(metrics_module, "_collector", collector, raising=False)
+    monkeypatch.setattr(db_monitoring, "get_metrics_collector", lambda: collector)
 
     engine = create_engine("sqlite+pysqlite:///:memory:", future=True)
     try:
@@ -48,19 +49,19 @@ def test_instrument_engine_metrics_records_queries(
     error_labels = {**success_labels, "status": "error"}
 
     success_count = registry.get_sample_value(
-        "tradepulse_database_query_latency_seconds_count",
+        "geosync_database_query_latency_seconds_count",
         success_labels,
     )
     error_count = registry.get_sample_value(
-        "tradepulse_database_query_latency_seconds_count",
+        "geosync_database_query_latency_seconds_count",
         error_labels,
     )
     success_total = registry.get_sample_value(
-        "tradepulse_database_query_total",
+        "geosync_database_query_total",
         success_labels,
     )
     error_total = registry.get_sample_value(
-        "tradepulse_database_query_total",
+        "geosync_database_query_total",
         error_labels,
     )
 
@@ -76,8 +77,9 @@ def test_database_monitor_collects_sqlite_size(
     registry = CollectorRegistry()
     collector = MetricsCollector(registry)
     monkeypatch.setattr(metrics_module, "_collector", collector, raising=False)
+    monkeypatch.setattr(db_monitoring, "get_metrics_collector", lambda: collector)
 
-    db_path = tmp_path / "tradepulse.sqlite"
+    db_path = tmp_path / "geosync.sqlite"
     engine = create_engine(f"sqlite+pysqlite:///{db_path}", future=True)
     try:
         with engine.begin() as connection:
@@ -92,10 +94,8 @@ def test_database_monitor_collects_sqlite_size(
         engine.dispose()
 
     labels = {"database": db_path.name, "host": "local"}
-    size_value = registry.get_sample_value("tradepulse_database_size_bytes", labels)
-    growth_value = registry.get_sample_value(
-        "tradepulse_database_size_growth_bytes", labels
-    )
+    size_value = registry.get_sample_value("geosync_database_size_bytes", labels)
+    growth_value = registry.get_sample_value("geosync_database_size_growth_bytes", labels)
 
     assert size_value is not None and size_value > 0
     assert growth_value == 0.0

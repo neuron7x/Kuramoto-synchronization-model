@@ -1,3 +1,5 @@
+# Copyright (c) 2023-2026 Yaroslav Vasylenko (neuron7xLab)
+# SPDX-License-Identifier: MIT
 """Signal computation primitives."""
 
 from __future__ import annotations
@@ -68,9 +70,7 @@ def _rescale(value: float, settings: SignalSettings) -> float:
     """
     span = settings.rescale_max - settings.rescale_min
     midpoint = settings.rescale_min + span / 2
-    scaled = max(
-        settings.rescale_min, min(settings.rescale_max, midpoint + value * (span / 2))
-    )
+    scaled = max(settings.rescale_min, min(settings.rescale_max, midpoint + value * (span / 2)))
     return scaled
 
 

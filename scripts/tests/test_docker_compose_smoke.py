@@ -1,3 +1,5 @@
+# Copyright (c) 2023-2026 Yaroslav Vasylenko (neuron7xLab)
+# SPDX-License-Identifier: MIT
 from __future__ import annotations
 
 import subprocess
@@ -27,7 +29,9 @@ def _args(tmp_path: Path) -> types.SimpleNamespace:
 def test_smoke_builds_expected_commands(monkeypatch, tmp_path: Path) -> None:
     calls: list[list[str]] = []
 
-    def fake_run(cmd, check=True, text=True, capture_output=False, env=None, stdout=None, stderr=None):
+    def fake_run(
+        cmd, check=True, text=True, capture_output=False, env=None, stdout=None, stderr=None
+    ):
         calls.append(list(cmd))
         return subprocess.CompletedProcess(cmd, 0, stdout="ok", stderr="")
 
@@ -35,7 +39,9 @@ def test_smoke_builds_expected_commands(monkeypatch, tmp_path: Path) -> None:
     monkeypatch.setattr(smoke, "_wait_for_service", lambda *a, **k: None)
     monkeypatch.setattr(smoke, "_fetch_json", lambda *a, **k: {"status": "ok"})
     monkeypatch.setattr(smoke, "_fetch_text", lambda *a, **k: "metrics")
-    monkeypatch.setattr(smoke, "_run", lambda cmd, capture_output=False: types.SimpleNamespace(stdout="list"))
+    monkeypatch.setattr(
+        smoke, "_run", lambda cmd, capture_output=False: types.SimpleNamespace(stdout="list")
+    )
 
     smoke.run_smoke_test(_args(tmp_path))
 

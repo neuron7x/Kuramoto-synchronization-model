@@ -1,3 +1,5 @@
+# Copyright (c) 2023-2026 Yaroslav Vasylenko (neuron7xLab)
+# SPDX-License-Identifier: MIT
 import hashlib
 import json
 import math
@@ -133,9 +135,10 @@ def test_hash_chain_breaks_on_tamper():
         ensure_ascii=False,
     )
     recomputed_hash = regulator._canonical_json({k: tampered[k] for k in tampered})
-    assert tampered["event_hash"] != hashlib.sha256(
-        (tampered["prev_hash"] + canonical).encode("utf-8")
-    ).hexdigest()
+    assert (
+        tampered["event_hash"]
+        != hashlib.sha256((tampered["prev_hash"] + canonical).encode("utf-8")).hexdigest()
+    )
     assert recomputed_hash != canonical
 
 

@@ -1,0 +1,69 @@
+# Diff-bound commit acceptor: make the Coverage Intelligence Gate's release
+# lane actually COMPLETE and enforce.
+#
+# Problem (provable from CI history):
+#   The release-coverage-90 job was killed at its 50-min job cap on EVERY push
+#   to main for days (e.g. run 27866729780: the "Measure full production
+#   surface" step ran 09:18:53Z -> 10:06:44Z = 47m51s and was cancelled by the
+#   timeout; the "Enforce release gate" step was SKIPPED; conclusion
+#   `cancelled`). The 90% release gate had not enforced in days — the exact
+#   "covered everywhere that never ran" vacuum this gate exists to prevent.
+#   Root cause: the full surface (~18k tests) is ~94 min of serial CPU under
+#   coverage+branch instrumentation, which no longer fits the budget.
+#
+# What lands:
+#   * Makefile (coverage-baseline): parallel measurement (-n auto
+#     --dist loadscope) so wall-time is ~CPU/cores instead of ~94 min serial;
+#     pytest-cov combines per-worker data so the measured surface and the 90%
+#     threshold are UNCHANGED. A total hang still fails closed via the CI
+#     job-level timeout-minutes backstop.
+#   * .github/workflows/coverage-intelligence.yml: recalibrate the release job
+#     timeout (50 -> 60 min) with headroom over the parallel run.
+#
+# Strict scope: no change to release_90.coveragerc, coverage_targets.toml, or
+# the coverage tool — the measured surface and threshold are preserved.
+
+id: coverage-gate-failclosed-completion
+status: ACTIVE
+claim_type: fail_closed
+promise: >-
+  After this PR lands, the Coverage Intelligence Gate's release-coverage-90 job
+  runs to completion within its timeout and executes the "Enforce release gate
+  + critical surface" step instead of being killed mid-measurement. The
+  full-surface measurement is parallelized (Makefile: -n auto --dist loadscope)
+  so wall-time fits the recalibrated 60-min cap; the measured surface
+  (release_90.coveragerc) and the 90%
+  release threshold are unchanged.
+diff_scope:
+  changed_files:
+    - path: ".claude/commit_acceptors/coverage-gate-failclosed-completion.yaml"
+    - path: ".github/workflows/coverage-intelligence.yml"
+    - path: "Makefile"
+  forbidden_paths:
+    - "configs/quality/release_90.coveragerc"
+    - "configs/quality/coverage_targets.toml"
+    - "configs/quality/critical_surface.toml"
+    - "tools/coverage/"
+required_python_symbols: []
+expected_signal: >-
+  The release-coverage-90 job's "Enforce release gate + critical surface" step
+  runs (it is no longer skipped) and the job concludes success or failure —
+  never a silent `cancelled` from hitting the job timeout cap. Locally,
+  `make coverage-baseline` runs the full suite in parallel and emits
+  reports/coverage/coverage.xml.
+measurement_command: "make coverage-90"
+signal_artifact: "reports/coverage/coverage_summary.json"
+falsifier:
+  command: "make coverage-90"
+  description: >-
+    Fails if the release-coverage-90 measurement is killed at the job timeout
+    before the enforce step runs (conclusion `cancelled`), or if the parallel
+    run drops part of the surface so the measured full-surface coverage number
+    differs from the serial measurement. Either outcome means the gate is not
+    honestly enforcing the 90% release threshold over the full surface.
+rollback_command: "git revert --no-edit HEAD"
+rollback_verification_command: "python tools/commit_acceptor/validate_commit_acceptor.py"
+memory_update_type: append
+ledger_path: ".claude/commit_acceptors/coverage-gate-failclosed-completion.yaml"
+report_path: ".claude/commit_acceptors/coverage-gate-failclosed-completion.yaml"
+evidence: []

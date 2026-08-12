@@ -1,0 +1,60 @@
+id: mutable-state-registry
+status: ACTIVE
+claim_type: governance
+promise: >-
+  artifacts/state/mutable_state_registry.json declares every mutable runtime state
+  surface (owner, key, ordering field, write/read/conflict/staleness rules,
+  concurrency guard) bound to real source + tests. The gate fails closed if any
+  entry is schema-invalid, points to a missing source/test, is concurrent without
+  a real guard, is a cache without a stale-read policy, or if a known-mutable
+  surface is unregistered.
+diff_scope:
+  changed_files:
+    - path: ".claude/commit_acceptors/mutable-state-registry.yaml"
+    - path: "artifacts/state/mutable_state_registry.json"
+    - path: "audit/schema/mutable_state_registry.schema.json"
+    - path: "tests/ci/test_mutable_state_registry.py"
+  forbidden_paths:
+    - "execution/"
+    - "core/"
+required_python_symbols: []
+expected_signal: >-
+  `python -m pytest --import-mode=importlib tests/ci/test_mutable_state_registry.py
+  -q` passes (8 tests): schema-valid, every source/test exists, concurrent surfaces
+  name a guard, caches name a stale policy, all required surfaces registered.
+measurement_command: >-
+  bash -c '
+    python -m pytest --import-mode=importlib -p no:cacheprovider
+      tests/ci/test_mutable_state_registry.py -q
+  '
+signal_artifact: "tmp/mutable_state_registry.log"
+falsifier:
+  command: |-
+    bash -c '
+      python -c "
+    import json
+    reg = json.load(open(\"artifacts/state/mutable_state_registry.json\"))
+    required = {
+        \"core/features/realtime_store.py\", \"execution/risk/core.py\",
+        \"core/messaging/event_bus.py\", \"execution/order_ledger.py\",
+        \"core/idempotency/keys.py\", \"libs/db/session.py\",
+        \"libs/db/repository.py\", \"modules/data_quality_monitor.py\",
+        \"modules/strategy_scheduler.py\",
+    }
+    have = {c[\"source\"] for c in reg[\"components\"]}
+    missing = required - have
+    raise SystemExit(0 if not missing and reg[\"verdict\"] == \"BOUND\" else f\"unregistered: {missing}\")
+    "
+    '
+  description: >-
+    Asserts every known mutable surface is registered and the registry verdict is
+    BOUND. Exits 0 on the bound registry; non-zero if a surface is dropped or the
+    verdict regresses.
+rollback_command: >-
+  bash -c 'git rm -f .claude/commit_acceptors/mutable-state-registry.yaml'
+rollback_verification_command: >-
+  bash -c 'test ! -f .claude/commit_acceptors/mutable-state-registry.yaml'
+memory_update_type: append
+ledger_path: ".claude/commit_acceptors/mutable-state-registry.yaml"
+report_path: "tmp/mutable_state_registry.log"
+evidence: []

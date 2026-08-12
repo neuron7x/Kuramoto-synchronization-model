@@ -1,3 +1,5 @@
+# Copyright (c) 2023-2026 Yaroslav Vasylenko (neuron7xLab)
+# SPDX-License-Identifier: MIT
 """Schema and semantic validation for repository datasets."""
 
 from __future__ import annotations
@@ -5,16 +7,13 @@ from __future__ import annotations
 import argparse
 import csv
 import os
-import sys
 from datetime import datetime
-from pathlib import Path
 from typing import List
 
-os.environ.setdefault("TRADEPULSE_LIGHT_DATA_IMPORT", "1")
-
-ROOT = Path(__file__).resolve().parents[1]
-if str(ROOT) not in sys.path:
-    sys.path.insert(0, str(ROOT))
+# Resolve the canonical light-import flag before pulling in core.data so the
+# dataset contract loader stays cheap. The module imports as a packaged target
+# (``scripts.validate_dataset_schema``) — no repo-root sys.path mutation (#945).
+os.environ.setdefault("GEOSYNC_LIGHT_DATA_IMPORT", "1")
 
 from core.data.dataset_contracts import DatasetContract, iter_contracts
 
@@ -68,9 +67,7 @@ def _validate_row_semantics(
                         f"{contract.path}: row {row_number} has negative value for {field}"
                     )
             except ValueError:
-                errors.append(
-                    f"{contract.path}: row {row_number} non-numeric value for {field}"
-                )
+                errors.append(f"{contract.path}: row {row_number} non-numeric value for {field}")
 
     for field in rules.get("positive_fields", []):
         if field in name_to_value:
@@ -80,9 +77,7 @@ def _validate_row_semantics(
                         f"{contract.path}: row {row_number} expected positive value for {field}"
                     )
             except ValueError:
-                errors.append(
-                    f"{contract.path}: row {row_number} non-numeric value for {field}"
-                )
+                errors.append(f"{contract.path}: row {row_number} non-numeric value for {field}")
 
     ohlc = rules.get("ohlc_fields")
     if ohlc:
@@ -133,7 +128,9 @@ def validate_contract(contract: DatasetContract) -> list[str]:
 
             for idx, value in enumerate(row):
                 dtype = _infer_dtype(value)
-                inferred[idx] = dtype if inferred[idx] is None else _merge_type(inferred[idx], dtype)
+                inferred[idx] = (
+                    dtype if inferred[idx] is None else _merge_type(inferred[idx], dtype)
+                )
 
             name_to_value = dict(zip(header, row))
 
@@ -141,7 +138,11 @@ def validate_contract(contract: DatasetContract) -> list[str]:
                 ts_value = row[header.index(timestamp_column)]
                 try:
                     current_ts = _parse_timestamp(ts_value)
-                    key = tuple(name_to_value[k] for k in partition_keys) if partition_keys else ("_all",)
+                    key = (
+                        tuple(name_to_value[k] for k in partition_keys)
+                        if partition_keys
+                        else ("_all",)
+                    )
                     last_ts = previous_ts.get(key)
                     if last_ts is not None and current_ts < last_ts:
                         errors.append(

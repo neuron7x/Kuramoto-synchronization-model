@@ -1,0 +1,132 @@
+# Diff-bound commit acceptor: fail-closed hardening of six CI/governance gates.
+#
+# Six confirmed fail-OPEN defects are closed so each gate now BLOCKS the bad
+# input it exists to catch (a gate that passed when it must fail):
+#
+#   1. scripts/ci/release_gate.py — `_regenerate` discarded the generator return
+#      code, so a crashed generator let probes E/H/K/M read a STALE committed
+#      artifact and go GREEN. `_regenerate` now returns the return code and each
+#      probe refuses the stale artifact (RED) when regeneration fails.
+#   2. tools/governance/verdict_dag.py — `check` never verified
+#      LOCKED_GOVERNANCE_SHAS; a tampered/missing pinned anchor still PASSed. It
+#      now sha256-compares every anchor and returns 2 on mismatch/missing.
+#   3. tools/governance/quantize_claim_state.py — a FAILED command (non-zero
+#      exit_code) promoted a claim to LOCAL_VERIFIED because only key PRESENCE
+#      was required. It now rejects any exit_code != 0.
+#   4. scripts/ci/check_evidence_integrity.py — unquoted `runtime_path: YES`
+#      coerces to Python True, defeating the DECORATIVE-on-runtime quarantine
+#      compare (`== "YES"`). The boolean is normalized back to the string.
+#   5. scripts/ci/check_artifact_freshness.py — a deterministic artifact with no
+#      generator was never regenerated yet its snapshot-vs-committed compare
+#      trivially passed ("fresh"). `check()` now errors when a deterministic
+#      spec declares no generator (freshness cannot be proven).
+#   6. tools/commit_acceptor/acceptor_corpus_schema_falsifier.py — exit-code
+#      polarity was INVERTED vs the run_evidence.py runner contract (exit 0 ==
+#      correct/green). It returned 0 when REGRESSED. Swapped: clean -> 0,
+#      regressed -> 1; the acceptor-corpus-schema-repair.yaml polarity note is
+#      corrected in the same change.
+#
+# Governance-hygiene scope only: no runtime, physics, market, or trading surface
+# is touched; no claim tier is promoted; no numeric behaviour changes.
+#
+# Locally verified:
+#   * each of the 6 regression tests FAILS on origin/main sources and PASSES on
+#     the fix (proving the gate now blocks the bad input);
+#   * each modified gate still passes on the clean tree (no false-positive);
+#   * validate_commit_acceptor.py exits 0; ruff/black/mypy --strict clean.
+id: governance-gates-fail-closed
+status: ACTIVE
+claim_type: governance
+promise: >-
+  After this PR lands, six previously fail-OPEN CI/governance gates fail CLOSED
+  on their crafted bad input: (1) release_gate probes E/H/K/M return RED when a
+  generator crashes instead of reading a stale artifact; (2) verdict_dag `check`
+  returns 2 on any tampered/missing LOCKED_GOVERNANCE_SHAS anchor; (3)
+  quantize_claim_state does not promote a claim with a non-zero-exit command to
+  LOCAL_VERIFIED; (4) check_evidence_integrity flags a DECORATIVE runtime entry
+  whose `runtime_path` deserialized to boolean True; (5) check_artifact_freshness
+  errors when a deterministic artifact declares no generator; (6) the
+  acceptor-corpus schema falsifier exits 0 only on a clean corpus and 1 on
+  regression, matching the run_evidence.py runner contract. Governance-hygiene
+  only; no runtime, physics, market, or trading claim is asserted.
+diff_scope:
+  changed_files:
+    - path: ".claude/commit_acceptors/governance-gates-fail-closed.yaml"
+    - path: ".claude/commit_acceptors/acceptor-corpus-schema-repair.yaml"
+    - path: "scripts/ci/release_gate.py"
+    - path: "tools/governance/verdict_dag.py"
+    - path: "tools/governance/quantize_claim_state.py"
+    - path: "scripts/ci/check_evidence_integrity.py"
+    - path: "scripts/ci/check_artifact_freshness.py"
+    - path: "tools/commit_acceptor/acceptor_corpus_schema_falsifier.py"
+    - path: "data/testing/component_test_matrix.json"
+    - path: "tests/ci/test_release_gate_regen_fail_closed.py"
+    - path: "tests/governance/test_verdict_dag_locked_shas.py"
+    - path: "tests/governance/test_quantize_claim_exit_code.py"
+    - path: "tests/ci/test_evidence_integrity_runtime_bool.py"
+    - path: "tests/ci/test_artifact_freshness_no_generator.py"
+    - path: "tests/ci/test_acceptor_corpus_falsifier_polarity.py"
+  forbidden_paths:
+    - "trading/"
+    - "execution/"
+    - "forecast/"
+    - "policy/"
+    - "core/"
+    - "runtime/"
+required_python_symbols:
+  - "scripts/ci/release_gate.py::_regenerate"
+  - "scripts/ci/release_gate.py::probe_h_falsification"
+  - "tools/governance/verdict_dag.py::_cmd_check"
+  - "tools/governance/quantize_claim_state.py::_commands_have_recorded_output"
+  - "scripts/ci/check_evidence_integrity.py::integrity_errors"
+  - "scripts/ci/check_artifact_freshness.py::check"
+  - "tools/commit_acceptor/acceptor_corpus_schema_falsifier.py::main"
+  - "tests/ci/test_release_gate_regen_fail_closed.py::test_regenerate_returns_int"
+  - "tests/governance/test_verdict_dag_locked_shas.py::test_tampered_anchor_is_rejected"
+  - "tests/governance/test_quantize_claim_exit_code.py::test_failed_command_does_not_promote_to_local_verified"
+  - "tests/ci/test_evidence_integrity_runtime_bool.py::test_decorative_runtime_bool_true_without_quarantine_is_rejected"
+  - "tests/ci/test_artifact_freshness_no_generator.py::test_deterministic_spec_without_generator_is_flagged"
+  - "tests/ci/test_acceptor_corpus_falsifier_polarity.py::test_regressed_corpus_returns_one"
+expected_signal: >-
+  `python -m pytest -o addopts= tests/ci/test_release_gate_regen_fail_closed.py
+  tests/governance/test_verdict_dag_locked_shas.py
+  tests/governance/test_quantize_claim_exit_code.py
+  tests/ci/test_evidence_integrity_runtime_bool.py
+  tests/ci/test_artifact_freshness_no_generator.py
+  tests/ci/test_acceptor_corpus_falsifier_polarity.py -q --import-mode=importlib`
+  reports all passed; each test FAILS when its source file is reverted to
+  origin/main (the fix has teeth); each modified gate still exits 0 on the clean
+  tree; `python tools/commit_acceptor/validate_commit_acceptor.py
+  --base-ref origin/main --head-ref HEAD --require-acceptor-for-code-change`
+  exits 0.
+measurement_command: >-
+  bash -c 'mkdir -p tmp &&
+  python -m ruff check scripts/ci/release_gate.py tools/governance/verdict_dag.py
+  tools/governance/quantize_claim_state.py scripts/ci/check_evidence_integrity.py
+  scripts/ci/check_artifact_freshness.py
+  tools/commit_acceptor/acceptor_corpus_schema_falsifier.py > tmp/governance_gates_fail_closed.log 2>&1 &&
+  python -m pytest -o addopts= tests/ci/test_release_gate_regen_fail_closed.py
+  tests/governance/test_verdict_dag_locked_shas.py
+  tests/governance/test_quantize_claim_exit_code.py
+  tests/ci/test_evidence_integrity_runtime_bool.py
+  tests/ci/test_artifact_freshness_no_generator.py
+  tests/ci/test_acceptor_corpus_falsifier_polarity.py -q --import-mode=importlib
+  >> tmp/governance_gates_fail_closed.log 2>&1; echo "pytest_exit=$?"
+  >> tmp/governance_gates_fail_closed.log'
+signal_artifact: "tmp/governance_gates_fail_closed.log"
+falsifier:
+  command: >-
+    bash -c 'test -f .claude/commit_acceptors/governance-gates-fail-closed.yaml'
+  description: >-
+    Green-state probe matching the run_evidence acceptor-runner polarity
+    (exit 0 == green precondition). It exits 0 while this acceptor file is
+    PRESENT (the fail-closed hardening in force) and non-zero if it is removed.
+    The six code fixes it binds are AST-verified via required_python_symbols.
+rollback_command: >-
+  bash -c 'git rm -f .claude/commit_acceptors/governance-gates-fail-closed.yaml'
+rollback_verification_command: >-
+  bash -c 'test ! -f .claude/commit_acceptors/governance-gates-fail-closed.yaml'
+memory_update_type: none
+ledger_path: ".claude/commit_acceptors/governance-gates-fail-closed.yaml"
+report_path: "tmp/governance_gates_fail_closed.log"
+evidence: []

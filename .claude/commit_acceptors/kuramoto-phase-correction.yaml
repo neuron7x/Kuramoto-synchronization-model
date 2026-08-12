@@ -1,0 +1,72 @@
+# Diff-bound acceptor for the forced-Kuramoto phase correction primitive.
+#
+# Replaces the pseudo "decentralized reset wave" idea with a proper
+# physics primitive: forced Kuramoto with a phase reference. Modular
+# arithmetic (wrap_to_pi), honest energy (Kuramoto potential), honest
+# velocity (sync term), derived (not asserted) verdict, no decorative
+# names.
+
+id: kuramoto-phase-correction
+status: ACTIVE
+claim_type: correctness
+promise: >-
+  core.kuramoto.phase_correction implements forced-Kuramoto
+  dθ/dt = K·sin(θ_ref − θ) as pure NumPy. Output phases lie in
+  [-π, π] (INV-K-CORR1); the Kuramoto potential
+  V = Σ(1 − cos(θ_ref − θ)) is non-increasing under the stability
+  bound K·dt < 2 (INV-K-CORR2); under that bound max phase error
+  decays to zero exponentially (INV-K-CORR3). Negative control
+  pushes past the bound to verify the bound is falsifiable, not
+  vacuous.
+diff_scope:
+  changed_files:
+    - path: ".claude/commit_acceptors/kuramoto-phase-correction.yaml"
+    - path: "core/kuramoto/phase_correction.py"
+    - path: "docs/reports/kuramoto_phase_correction.md"
+    - path: "newsfragments/kuramoto-phase-correction.feature.md"
+    - path: "tests/unit/physics/test_kuramoto_phase_correction.py"
+  forbidden_paths:
+    - "trading/"
+    - "execution/"
+    - "forecast/"
+    - "policy/"
+required_python_symbols:
+  - "KuramotoCorrectionReport"
+  - "KuramotoResetTrajectory"
+  - "circular_phase_distance"
+  - "kuramoto_correction_step"
+  - "reset_to_baseline"
+  - "wrap_to_pi"
+expected_signal: >-
+  All 18 unit tests pass under pytest; black, ruff, mypy --strict
+  clean on 2 source files; smoke physics shows V monotone
+  non-increasing across a 76-iter convergence run from random
+  initial misalignment.
+measurement_command: >-
+  python -m pytest tests/unit/physics/test_kuramoto_phase_correction.py -v
+signal_artifact: "tmp/kuramoto_phase_correction_pytest.log"
+falsifier:
+  command: >-
+    python -m pytest tests/unit/physics/test_kuramoto_phase_correction.py
+    -v -k "monotonically_non_increasing or unstable_bound_can_break or
+    converges_under_stability_bound or handles_wrap_correctly"
+  description: >-
+    Probe filters to the four physics-load-bearing tests:
+    INV-K-CORR2 monotone V under the stability bound; the
+    NEGATIVE control showing V can rise past the stability bound
+    (so the bound itself is falsifiable, not vacuous);
+    INV-K-CORR3 convergence; circular distance correctness on
+    near-2π wrap (the bug the original diff had). If any fails,
+    the primitive has drifted from forced-Kuramoto physics.
+rollback_command: >-
+  git checkout HEAD~1 -- core/kuramoto/phase_correction.py
+  tests/unit/physics/test_kuramoto_phase_correction.py
+  .claude/commit_acceptors/kuramoto-phase-correction.yaml
+  docs/reports/kuramoto_phase_correction.md
+  newsfragments/kuramoto-phase-correction.feature.md
+rollback_verification_command: >-
+  git diff --exit-code core/kuramoto/phase_correction.py
+memory_update_type: append
+ledger_path: ".claude/commit_acceptors/kuramoto-phase-correction.yaml"
+report_path: "docs/reports/kuramoto_phase_correction.md"
+evidence: []

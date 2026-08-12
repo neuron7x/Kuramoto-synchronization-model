@@ -1,0 +1,18 @@
+{
+  "claim_tier": "INSTRUMENTED",
+  "contract": {
+    "claim_tier": "INSTRUMENTED",
+    "input_window_sec": 30,
+    "schema_version": "mfn.integration.v1",
+    "seed": 7
+  },
+  "decision": "OBSERVE",
+  "predicted_next_price": 98.631753,
+  "schema_version": "mfn.integration.v1",
+  "sources": [
+    "extract.json",
+    "detect.json"
+  ],
+  "stage": "forecast",
+  "timestamp_utc": "2023-11-14T22:13:20Z"
+}

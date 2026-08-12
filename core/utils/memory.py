@@ -1,4 +1,5 @@
-# SPDX-License-Identifier: LicenseRef-TradePulse-Proprietary
+# Copyright (c) 2023-2026 Yaroslav Vasylenko (neuron7xLab)
+# SPDX-License-Identifier: MIT
 """Lightweight memory pooling utilities used by performance critical paths."""
 
 from __future__ import annotations
@@ -16,13 +17,11 @@ class ArrayPool:
 
     def __init__(self, dtype: np.dtype | str = np.float32) -> None:
         self.dtype = np.dtype(dtype)
-        self._pool: MutableMapping[
-            tuple[tuple[int, ...], np.dtype], list[np.ndarray]
-        ] = defaultdict(list)
+        self._pool: MutableMapping[tuple[tuple[int, ...], np.dtype], list[np.ndarray]] = (
+            defaultdict(list)
+        )
 
-    def acquire(
-        self, shape: Iterable[int], *, dtype: np.dtype | str | None = None
-    ) -> np.ndarray:
+    def acquire(self, shape: Iterable[int], *, dtype: np.dtype | str | None = None) -> np.ndarray:
         requested_dtype = np.dtype(dtype) if dtype is not None else self.dtype
         key = (tuple(int(s) for s in shape), requested_dtype)
         bucket = self._pool.get(key)

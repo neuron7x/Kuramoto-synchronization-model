@@ -1,0 +1,91 @@
+{
+  "$schema": "https://json-schema.org/draft/2020-12/schema",
+  "$id": "https://schemas.neuron7xlab.org/research/ricci_microstructure_v1_config.schema.json",
+  "title": "Ricci Microstructure v1 — Run Config Contract",
+  "description": "Preregistered run configuration for the ricci_microstructure_v1 research line. Encodes the determinism, null-baseline, cost-model, and replay requirements a run must declare before it may be considered for promotion. Unknown fields fail validation.",
+  "type": "object",
+  "additionalProperties": false,
+  "required": [
+    "schema_version",
+    "line_id",
+    "deterministic",
+    "seed",
+    "input_window_sec",
+    "observation_window_sec",
+    "primary_metric",
+    "null_baselines",
+    "failure_threshold",
+    "cost_model",
+    "replay_command",
+    "data_source",
+    "artifact_schema",
+    "promotion_criteria",
+    "rejection_criteria"
+  ],
+  "properties": {
+    "schema_version": {"const": "ricci_microstructure_v1.config.v1"},
+    "line_id": {"const": "ricci_microstructure_v1"},
+    "deterministic": {"const": true, "description": "Runs must be deterministic."},
+    "seed": {"type": "integer", "minimum": 0, "maximum": 4294967295},
+    "input_window_sec": {"type": "integer", "minimum": 1, "maximum": 86400},
+    "observation_window_sec": {"type": "integer", "minimum": 1, "maximum": 604800},
+    "primary_metric": {"const": "information_coefficient"},
+    "null_baselines": {
+      "type": "array",
+      "uniqueItems": true,
+      "minItems": 4,
+      "items": {
+        "enum": [
+          "permutation_null",
+          "lag_sweep_no_future_data",
+          "cost_model",
+          "multi_session_replay"
+        ]
+      },
+      "description": "All four pre-registered nulls are required; a missing null blocks promotion."
+    },
+    "failure_threshold": {
+      "type": "object",
+      "additionalProperties": false,
+      "required": ["oos_ic_min"],
+      "properties": {
+        "oos_ic_min": {"type": "number", "minimum": 0.0, "maximum": 1.0}
+      }
+    },
+    "cost_model": {
+      "type": "object",
+      "additionalProperties": false,
+      "required": ["taker_fee_bps", "maker_fee_bps", "slippage_model"],
+      "properties": {
+        "taker_fee_bps": {"type": "number", "minimum": 0.0},
+        "maker_fee_bps": {"type": "number"},
+        "slippage_model": {"type": "string", "minLength": 1}
+      }
+    },
+    "replay_command": {"type": "string", "minLength": 1},
+    "data_source": {"enum": ["synthetic", "real_single", "real_multi"]},
+    "artifact_schema": {
+      "const": "schemas/research/research_inference_artifact.schema.json"
+    },
+    "promotion_criteria": {
+      "type": "object",
+      "additionalProperties": false,
+      "required": ["min_data_depth_sec", "require_all_nulls_beaten", "require_positive_net_pnl"],
+      "properties": {
+        "min_data_depth_sec": {"type": "integer", "minimum": 3600},
+        "require_all_nulls_beaten": {"const": true},
+        "require_positive_net_pnl": {"const": true}
+      }
+    },
+    "rejection_criteria": {
+      "type": "object",
+      "additionalProperties": false,
+      "required": ["null_matches_signal", "ic_below_threshold", "negative_net_pnl"],
+      "properties": {
+        "null_matches_signal": {"const": true},
+        "ic_below_threshold": {"const": true},
+        "negative_net_pnl": {"const": true}
+      }
+    }
+  }
+}

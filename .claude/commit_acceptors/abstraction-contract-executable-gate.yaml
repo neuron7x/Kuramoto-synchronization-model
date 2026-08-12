@@ -1,0 +1,74 @@
+id: abstraction-contract-executable-gate
+status: ACTIVE
+claim_type: correctness
+promise: >-
+  The abstraction value-inference gate is executable, not documentation. Each
+  reduction step declares a typed AbstractionArtifact (source/abstracted
+  dimensions, retained-information fraction, fidelity floor, a known method,
+  and a provenance hash); validate_abstraction fails closed on missing
+  provenance, unknown methods, non-positive dimensions, and out-of-range
+  fractions; compute_abstraction_gain computes a compression ratio and marks a
+  step worth its cost only when it strictly compresses AND clears its fidelity
+  floor; the aggregate status DEMOTES to NO_COMPRESSION when a step fails to
+  reduce cost, to FIDELITY_LOSS when a step drops below its floor, to PARTIAL
+  on any per-step violation, and to NOT_RUN on an empty set, and promotes
+  ABSTRACTED only when every step compresses and clears its floor;
+  abstraction_state_hash is deterministic and order-independent; and
+  guard_abstraction_claim demotes every blocking status. No predictor claim is
+  asserted.
+diff_scope:
+  changed_files:
+    - path: "core/indicators/abstraction_contract.py"
+    - path: "tests/unit/indicators/test_abstraction_contract.py"
+    - path: ".claude/commit_acceptors/abstraction-contract-executable-gate.yaml"
+  forbidden_paths:
+    - "trading/"
+    - "execution/"
+    - "forecast/"
+    - "policy/"
+required_python_symbols:
+  - "AbstractionArtifact"
+  - "AbstractionGain"
+  - "AbstractionStatus"
+  - "compute_abstraction_gain"
+  - "validate_abstraction"
+  - "abstraction_state_hash"
+  - "guard_abstraction_claim"
+  - "ABSTRACTION_CLAIM_BOUNDARY"
+  - "BLOCKING_ABSTRACTION_STATUSES"
+expected_signal: >-
+  The abstraction-contract test module passes (25 tests): a clean set whose
+  steps compress and clear their floors validates ABSTRACTED, a step whose
+  source and abstracted dimensions are equal (or that expands) demotes to
+  NO_COMPRESSION, a step below its fidelity floor demotes to FIDELITY_LOSS,
+  any per-step violation demotes to PARTIAL and short-circuits gain
+  computation, an empty set is NOT_RUN, NO_COMPRESSION takes priority over a
+  simultaneous fidelity loss, the content hash is order-independent and
+  provenance-sensitive, and the evidence bundle carries the claim boundary.
+measurement_command: >-
+  python -m pytest -q tests/unit/indicators/test_abstraction_contract.py
+signal_artifact: "tests/unit/indicators/test_abstraction_contract.py"
+falsifier:
+  command: >-
+    python -m pytest -q
+    tests/unit/indicators/test_abstraction_contract.py::test_no_compression_demotes
+    tests/unit/indicators/test_abstraction_contract.py::test_below_fidelity_floor_demotes
+    tests/unit/indicators/test_abstraction_contract.py::test_one_bad_step_demotes_whole_set
+  description: >-
+    Inverse falsifier probe. Relax validate_abstraction to promote a step
+    whose compression ratio is ≤ 1, or whose retained_information is below its
+    fidelity floor, or to ignore a single bad step in a set. The
+    no-compression, below-floor, and one-bad-step demotion tests must return
+    non-zero rather than silently passing, proving the claim-demotion logic is
+    load-bearing.
+rollback_command: >-
+  git checkout HEAD~1 -- core/indicators/abstraction_contract.py
+  tests/unit/indicators/test_abstraction_contract.py
+rollback_verification_command: >-
+  python tools/commit_acceptor/validate_commit_acceptor.py
+memory_update_type: none
+ledger_path: ".claude/commit_acceptors/abstraction-contract-executable-gate.yaml"
+report_path: ".claude/commit_acceptors/abstraction-contract-executable-gate.yaml"
+evidence:
+  - path: "tests/unit/indicators/test_abstraction_contract.py"
+    sha256: "8928c3b095cfd464926904a79ffde370111fd643f514da52627de85821db72d5"  # pragma: allowlist secret

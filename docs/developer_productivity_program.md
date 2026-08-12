@@ -1,6 +1,6 @@
 # Developer Productivity Acceleration Program
 
-This programme establishes a systematic, measurable approach to improving the TradePulse engineer experience while protecting production-grade reliability. Each initiative is anchored in actionable playbooks, shared tooling, and telemetry so that velocity gains are durable and auditable.
+This programme establishes a systematic, measurable approach to improving the GeoSync engineer experience while protecting production-grade reliability. Each initiative is anchored in actionable playbooks, shared tooling, and telemetry so that velocity gains are durable and auditable.
 
 ## Vision & Objectives
 
@@ -92,7 +92,7 @@ This programme establishes a systematic, measurable approach to improving the Tr
 
 1. **Ephemeral Environment Orchestrator**
    - Use Terraform + Helm or Pulumi to spin per-PR namespaces with isolated data fixtures.
-   - Provision via `tradepulsectl preview create` CLI, integrated with CI for automatic creation and tear-down (ttl < 48h).
+   - Provision via `geosyncctl preview create` CLI, integrated with CI for automatic creation and tear-down (ttl < 48h).
 
 2. **Preview Diagnostics**
    - Include synthetic monitoring, log aggregation (Loki/OpenSearch), and feature flags to toggle new functionality.
@@ -152,7 +152,7 @@ This programme establishes a systematic, measurable approach to improving the Tr
 
 3. **Health APIs**
    - Implement `/healthz` and `/readyz` endpoints for internal services with dependency checks (databases, cache, secrets).
-   - Provide CLI `tradepulsectl doctor` that runs local diagnostics (version mismatch, missing credentials, disk space) and suggests remediation.
+   - Provide CLI `geosyncctl doctor` that runs local diagnostics (version mismatch, missing credentials, disk space) and suggests remediation.
 
 **KPIs**
 

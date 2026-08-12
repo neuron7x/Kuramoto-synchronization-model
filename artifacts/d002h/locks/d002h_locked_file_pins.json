@@ -1,0 +1,99 @@
+{
+  "schema_version": "D002H-GATE-E-v1",
+  "study_id": "D-002H",
+  "gate": "E",
+  "anchor_main_sha": "077073ee801c434840d64f911e7b1f39ce2ac0fa",
+  "anchor_description": "Gate D merge (PR #686) - last main commit before Gate E branch off",
+  "pinned_files": [
+    {
+      "path": "docs/governance/D002C_CLAIM_LEDGER.yaml",
+      "sha256": "f96ba9b5a2057d2e0bff84afc28578ab316cff73f6dc6673fb0d6d543b8bd6dd",
+      "category": "d002c_anchor"
+    },
+    {
+      "path": "docs/governance/D002C_PREREGISTRATION.yaml",
+      "sha256": "b1561ddde08a60a8eed416f2103655e0f3ee1ecd4e2b2037f4e7193c424a154e",
+      "category": "d002c_anchor"
+    },
+    {
+      "path": "docs/governance/D002C_CANONICAL_RUN_REPORT.md",
+      "sha256": "f03ed1c6e96f62dc7ff061b48fc44a6dce0679a13ca6bf449e3785f0a4833ed0",
+      "category": "d002c_anchor"
+    },
+    {
+      "path": "docs/governance/D002C_ATTEMPT_2_NULL_AUDIT_FALSIFICATION_REPORT.md",
+      "sha256": "83164744e223f236a49111c6411630ff54332285ab871896bfc8921fcd4b0b34",
+      "category": "d002c_anchor"
+    },
+    {
+      "path": "docs/governance/D002G_PREREGISTRATION.yaml",
+      "sha256": "1ab91f09370e4705a8b0849467bc1f56df2e58d58d5623d3b6d905cbd110bb04",
+      "category": "d002g_anchor"
+    },
+    {
+      "path": "docs/governance/D002G_NONDEGENERATE_NULL_DESIGN.md",
+      "sha256": "9cef2db7f5d1f90eb9ec71524193c079efff024c35de0ea9758e4f6c747bd8bb",
+      "category": "d002g_anchor"
+    },
+    {
+      "path": "docs/governance/D002G_ACCEPTANCE_RULES.md",
+      "sha256": "875b1e3eb031b8e5333dc8b455454f0a30419ead1ebe787aa01d5882e7d6ad31",
+      "category": "d002g_anchor"
+    },
+    {
+      "path": "docs/governance/D002G_P3_M3_PREREGISTRATION.md",
+      "sha256": "0f11a0c890374c35e4dedecc66caec52ae867f49a8f8b3be2374f1464712c1f8",
+      "category": "d002g_anchor"
+    },
+    {
+      "path": "docs/governance/D002G_STRUCTURAL_CLOSURE_REPORT.md",
+      "sha256": "557078c4eeff7d78e6e1b924d1a72f36b5333aafaebd84d6b0e2b22ad3e04698",
+      "category": "d002g_anchor"
+    },
+    {
+      "path": "docs/governance/D002G_NEGATIVE_SPACE_MAP.md",
+      "sha256": "bd6378a8544b603bca217cb4bc69da9168f4c1cc71fcda7e247c40281fb5a2c5",
+      "category": "d002g_anchor"
+    },
+    {
+      "path": "docs/governance/D002H_PREREGISTRATION.yaml",
+      "sha256": "44b18b5a40ce9d188a9c3bd49339621f81a65a15f97a683247902450dd54acec",
+      "category": "d002h_anchor"
+    },
+    {
+      "path": "docs/governance/D002H_SCOPE_RATIONALE.md",
+      "sha256": "a852fed8c9404e5590b92003ebda6899978c117c8f99a7598d9d40acdc6093f6",
+      "category": "d002h_anchor"
+    },
+    {
+      "path": "docs/governance/D002H_CLAIM_BOUNDARY.md",
+      "sha256": "1f10d444058b156c1f5746eaf3474aee8bcb07e0b8d382c51de904576bd38b8a",
+      "category": "d002h_anchor"
+    },
+    {
+      "path": "docs/governance/D002H_CANONICAL_RUN_AUTHORIZATION_GATES.md",
+      "sha256": "75becc5c0d57eab9505ab00fe36e35ce1513126f8415d510f1c65dd7643bc0e6",
+      "category": "d002h_anchor"
+    },
+    {
+      "path": "research/systemic_risk/d002c_substrates.py",
+      "sha256": "4b2e5d65c104a5be5a207951cd3c4ae099f31ce83b3f2c0766a160d8c9e80eca",
+      "category": "source_code"
+    },
+    {
+      "path": "research/systemic_risk/d002g_null_mechanisms.py",
+      "sha256": "c7e275191454e1e961d5a079a21b6e1dbfcbc1661d48ddf14d0d0c39a426f257",
+      "category": "source_code"
+    }
+  ],
+  "n_pinned_files": 16,
+  "gate_e_verdict": "PASS",
+  "canonical_run_authorized": false,
+  "downstream_gates_remaining": ["F", "G"],
+  "prior_gate_anchors": {
+    "gate_a": "1b59ce5326a8e8bd8aaaf9666a06075d34b4f6a5",
+    "gate_b": "b97daae8b554ab9960510564e19263adcc1fe71b",
+    "gate_c": "a9d852d34258861809325df81bd7cba6d0e557ec",
+    "gate_d": "077073ee801c434840d64f911e7b1f39ce2ac0fa"
+  }
+}

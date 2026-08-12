@@ -1,0 +1,173 @@
+# CITATION.cff — Citation metadata for academic / professional reference
+# https://citation-file-format.github.io/
+cff-version: 1.2.0
+message: >-
+  If you use GeoSync in academic research, industry reports, or derivative
+  work, please cite it using the metadata below.
+title: "GeoSync: Verification-First Quantitative Market-Structure Research Platform"
+abstract: >-
+  GeoSync is a verification-first quantitative research platform for
+  falsifiable market-structure hypotheses. It provides physics- and
+  neuroscience-inspired instrumentation — Kuramoto phase synchronization,
+  Ollivier-Ricci curvature, fractal/DFA dynamics, and free-energy-based
+  neuro-symbolic risk control — studied as market-microstructure
+  descriptors and exposed through a deterministic event-driven backtester
+  and an execution-realism (paper / replay) harness. Every quantitative
+  claim is admissible only when bound to an explicit invariant, data
+  contract, falsifier, and reproducible artifact, and is promoted no
+  further than its declared evidence tier (FACT / MEASURED / SIMULATION /
+  HYPOTHESIS; see CLAIMS.md). Project maturity: RESEARCH_ALPHA — live
+  market-structure claims rest on synthetic or single-session evidence
+  only (governance/project_state.yaml). Limitations: GeoSync is not a
+  live-trading system, alpha engine, or investment-advice product, and
+  asserts no out-of-sample market edge; it verifies invariants of its own
+  computation, not laws of markets (PRODUCT_CATEGORY.md, FORBIDDEN_CLAIMS.md).
+type: software
+authors:
+  - family-names: Vasylenko
+    given-names: Yaroslav
+    affiliation: "neuron7xLab (independent researcher)"
+    # orcid: "https://orcid.org/XXXX-XXXX-XXXX-XXXX"  # add after registration
+repository-code: "https://gitlab.com/neuron7x/GeoSync"
+url: "https://gitlab.com/neuron7x/GeoSync"
+license: MIT
+version: 1.1.0
+date-released: "2026-04-06"
+keywords:
+  - quantitative-finance-research
+  - market-structure-research
+  - falsifiable-hypotheses
+  - verification-first
+  - evidence-tiered-claims
+  - kuramoto-synchronization
+  - ricci-curvature
+  - differential-geometry
+  - fractal-analysis
+  - market-microstructure-descriptors
+  - signal-processing
+  - python
+  - fastapi
+  - nextjs
+  - neuromodulatory-risk-instrumentation
+  - free-energy-principle
+  - active-inference
+  - cryptobiosis
+  - metastability
+  - phase-transition
+preferred-citation:
+  type: software
+  title: "GeoSync: Verification-First Quantitative Market-Structure Research Platform"
+  authors:
+    - family-names: Vasylenko
+      given-names: Yaroslav
+  year: 2026
+  version: "1.1.0"
+  url: "https://gitlab.com/neuron7x/GeoSync"
+  license: MIT
+references:
+  - type: article
+    title: "From Kuramoto to Crawford: exploring the onset of synchronization in populations of coupled oscillators"
+    authors:
+      - family-names: Strogatz
+        given-names: Steven H.
+    journal: "Physica D: Nonlinear Phenomena"
+    volume: 143
+    issue: 1-4
+    year: 2000
+    doi: 10.1016/S0167-2789(00)00094-4
+  - type: article
+    title: "Ricci curvature of the internet topology"
+    authors:
+      - family-names: Ni
+        given-names: Chien-Chun
+      - family-names: Lin
+        given-names: Yu-Yao
+      - family-names: Gao
+        given-names: Jie
+      - family-names: Gu
+        given-names: Xianfeng David
+      - family-names: Saucan
+        given-names: Emil
+    year: 2015
+    doi: 10.1109/INFOCOM.2015.7218668
+  - type: article
+    title: "A mathematical theory of communication"
+    authors:
+      - family-names: Shannon
+        given-names: Claude E.
+    journal: "Bell System Technical Journal"
+    volume: 27
+    issue: 3
+    year: 1948
+    doi: 10.1002/j.1538-7305.1948.tb01338.x
+  - type: article
+    title: "The free-energy principle: a unified brain theory?"
+    authors:
+      - family-names: Friston
+        given-names: Karl
+    journal: "Nature Reviews Neuroscience"
+    volume: 11
+    issue: 2
+    year: 2010
+    doi: 10.1038/nrn2787
+  - type: article
+    title: "Neuronal avalanches in neocortical circuits"
+    authors:
+      - family-names: Beggs
+        given-names: John M.
+      - family-names: Plenz
+        given-names: Dietmar
+    journal: "Journal of Neuroscience"
+    volume: 23
+    issue: 35
+    year: 2003
+    doi: 10.1523/JNEUROSCI.23-35-11167.2003
+  - type: article
+    title: "A neural substrate of prediction and reward"
+    authors:
+      - family-names: Schultz
+        given-names: Wolfram
+      - family-names: Dayan
+        given-names: Peter
+      - family-names: Montague
+        given-names: P. Read
+    journal: "Science"
+    volume: 275
+    issue: 5306
+    year: 1997
+    doi: 10.1126/science.275.5306.1593
+  - type: article
+    title: "A practical method for calculating largest Lyapunov exponents from small data sets"
+    authors:
+      - family-names: Rosenstein
+        given-names: Michael T.
+      - family-names: Collins
+        given-names: James J.
+      - family-names: De Luca
+        given-names: Carlo J.
+    journal: "Physica D: Nonlinear Phenomena"
+    volume: 65
+    issue: 1-2
+    year: 1993
+    doi: 10.1016/0167-2789(93)90009-P
+  - type: article
+    title: "Ricci curvature of Markov chains on metric spaces"
+    authors:
+      - family-names: Ollivier
+        given-names: Yann
+    journal: "Journal of Functional Analysis"
+    volume: 256
+    issue: 3
+    year: 2009
+    doi: 10.1016/j.jfa.2008.11.001
+  - type: article
+    title: "Optimal gambling systems for favorable games"
+    authors:
+      - family-names: Kelly
+        given-names: John L.
+        suffix: Jr.
+    journal: "Bell System Technical Journal"
+    volume: 35
+    issue: 4
+    year: 1956
+    doi: 10.1002/j.1538-7305.1956.tb03809.x

@@ -1,0 +1,40 @@
+id: stuart-landau-mu-growthrate
+status: ACTIVE
+claim_type: correctness
+promise: >-
+  The Stuart-Landau bifurcation parameter μ is the derived linear growth rate
+  (OLS slope of the log analytic-amplitude envelope), not the fabricated
+  tanh(variance/var_max − 0.5) aesthetic map. μ < 0 for a stable focus
+  (decaying envelope), μ > 0 for a limit cycle (growing envelope), μ = 0 is the
+  genuine Hopf threshold. INV-SL1 (amplitude≥0) and INV-SL2 (es_proximity∈[0,1])
+  remain enforced.
+diff_scope:
+  changed_files:
+    - path: ".claude/commit_acceptors/stuart-landau-mu-growthrate.yaml"
+    - path: "core/physics/stuart_landau_es.py"
+    - path: "tests/unit/physics/test_T2b_stuart_landau_es.py"
+    - path: "scripts/physics/falsify_sl_mu_growthrate.py"
+  forbidden_paths:
+    - "trading/"
+    - "execution/"
+    - "forecast/"
+    - "policy/"
+required_python_symbols:
+  - _estimate_growth_rate
+expected_signal: >-
+  A known stable (exponentially decaying) synthetic oscillator yields μ < 0 on
+  every asset, and the T2b physics suite (INV-SL1/SL2 property tests + the new
+  stable→μ<0 / growing→μ>0 / μ-clamp tests) passes.
+measurement_command: "python -m pytest tests/unit/physics/test_T2b_stuart_landau_es.py -q"
+signal_artifact: "tmp/sl_mu_growthrate_falsifier.txt"
+falsifier:
+  command: "python -m scripts.physics.falsify_sl_mu_growthrate"
+  description: >-
+    Feeds a known stable decaying-envelope oscillator and exits non-zero iff
+    μ ≥ 0 — proving μ now tracks a real growth rate, not a variance cosmetic.
+rollback_command: "git checkout -- core/physics/stuart_landau_es.py tests/unit/physics/test_T2b_stuart_landau_es.py scripts/physics/falsify_sl_mu_growthrate.py .claude/commit_acceptors/stuart-landau-mu-growthrate.yaml"
+rollback_verification_command: "git diff --exit-code core/physics/stuart_landau_es.py tests/unit/physics/test_T2b_stuart_landau_es.py scripts/physics/falsify_sl_mu_growthrate.py .claude/commit_acceptors/stuart-landau-mu-growthrate.yaml"
+memory_update_type: append
+ledger_path: ".claude/commit_acceptors/stuart-landau-mu-growthrate.yaml"
+report_path: "tmp/sl_mu_growthrate_falsifier.txt"
+evidence: []

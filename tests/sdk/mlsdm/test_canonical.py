@@ -1,3 +1,5 @@
+# Copyright (c) 2023-2026 Yaroslav Vasylenko (neuron7xLab)
+# SPDX-License-Identifier: MIT
 """Tests for canonical request and cache key computation.
 
 These tests verify deterministic behavior of the canonicalization
@@ -26,7 +28,7 @@ def _load_module_directly(module_name: str, file_path: str):
 
 # Try to import normally first, fall back to direct load
 try:
-    from tradepulse.sdk.mlsdm.core.canonical import (
+    from geosync.sdk.mlsdm.core.canonical import (
         CacheKeyFields,
         CanonicalRequest,
         canonical_request,
@@ -39,7 +41,7 @@ except ImportError:
     canonical_path = (
         test_dir.parent.parent.parent
         / "src"
-        / "tradepulse"
+        / "geosync"
         / "sdk"
         / "mlsdm"
         / "core"

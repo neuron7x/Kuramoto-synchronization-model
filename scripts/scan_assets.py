@@ -1,4 +1,6 @@
-"""Utility to build a registry of AI related assets in the TradePulse codebase.
+# Copyright (c) 2023-2026 Yaroslav Vasylenko (neuron7xLab)
+# SPDX-License-Identifier: MIT
+"""Utility to build a registry of AI related assets in the GeoSync codebase.
 
 The script scans one or more repository roots for trained model artefacts,
 training scripts and dataset definitions, then exports a JSON file that
@@ -126,7 +128,7 @@ def _build_parser() -> argparse.ArgumentParser:
             "analytics",
             "application",
             "core",
-            "neuropro",
+            "geosync_hpc",
             "strategies",
             "observability",
         ],

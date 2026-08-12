@@ -1,0 +1,43 @@
+id: imports-945-packaged-entrypoint-drain
+status: ACTIVE
+claim_type: refactor
+promise: >-
+  Migrate self-contained scripts/ and tools/ entrypoints off repo-root
+  sys.path mutation onto canonical packaged imports, draining the
+  import-architecture ratchet (issue #945) without changing behavior.
+diff_scope:
+  changed_files:
+    - path: "scripts/generate_openapi.py"
+    - path: "scripts/calibrate_controllers.py"
+    - path: "scripts/check_invariant_count_sync.py"
+    - path: "scripts/build_verification_report.py"
+    - path: "tools/reset_wave_offline_benchmark.py"
+    - path: ".claude/commit_acceptors/imports-945-packaged-entrypoint-drain.yaml"
+  forbidden_paths:
+    - "trading/"
+    - "execution/"
+    - "backtest/"
+    - "core/"
+    - "analytics/"
+    - "ingestion/"
+    - "risk/"
+required_python_symbols:
+  - "main"
+  - "create_app"
+  - "collect_invariant_ids"
+  - "run_reset_wave"
+expected_signal: "migrated entrypoints import by canonical dotted path with no sys.path mutation"
+measurement_command: "python -m pytest tests/scripts/test_packaging_smoke.py -q"
+signal_artifact: "tmp/imports_945_packaged_drain.log"
+falsifier:
+  command: "python scripts/ci/check_import_architecture.py"
+  description: >-
+    The import-architecture ratchet fails if any migrated module reintroduces a
+    sys.path insert/append (a new path-hack) or if the baseline ledger is stale
+    relative to the actual tree, proving the debt set only shrinks.
+rollback_command: "git checkout -- scripts/generate_openapi.py scripts/calibrate_controllers.py scripts/check_invariant_count_sync.py scripts/build_verification_report.py tools/reset_wave_offline_benchmark.py .claude/commit_acceptors/imports-945-packaged-entrypoint-drain.yaml"
+rollback_verification_command: "git diff --exit-code"
+memory_update_type: append
+ledger_path: ".claude/commit_acceptors/imports-945-packaged-entrypoint-drain.yaml"
+report_path: ".github/import_architecture_baseline.json"
+evidence: []

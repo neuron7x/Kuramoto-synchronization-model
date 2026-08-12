@@ -22,7 +22,7 @@ This document captures the execution blueprint for the next wave of platform cap
   - Extend backtest runner to hydrate from snapshot bundles and reproduce execution flows.
 - **Milestones:**
   1. Define snapshot schema and storage layout (metadata index + binary payloads).
-  2. Implement capture agents for live trading services with minimal latency overhead.
+  2. Implement capture agents for the execution-realism harness services with minimal latency overhead.
   3. Enhance backtest CLI/API to load snapshots, execute replays, and emit comparison metrics.
 - **Validation:** Replay parity tests (P&L, fills, latency) within tolerance bands, plus performance benchmarks on snapshot serialization/deserialization.
 

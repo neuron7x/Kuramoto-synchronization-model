@@ -1,26 +1,26 @@
 # SLA/ALERT Response Playbooks
 
-This document provides comprehensive response procedures for every alert defined in TradePulse, mapping alerts to SLAs, escalation paths, and resolution playbooks. Use this as the primary reference when alerts fire in production.
+This document provides comprehensive response procedures for every alert defined in GeoSync, mapping alerts to SLAs, escalation paths, and resolution playbooks. Use this as the primary reference when alerts fire in production.
 
 ## Quick Reference Matrix
 
 | Alert Name | Severity | SLA Impact | Response Time | Playbook Section |
 |------------|----------|------------|---------------|------------------|
-| TradePulseOrderErrorRate | Critical | High | < 5 min | [Order Error Rate](#order-error-rate-alert) |
-| TradePulseOrderLatency | Warning | Medium | < 15 min | [Order Latency](#order-latency-alert) |
-| TradePulseOrderAckLatency | Warning | Medium | < 15 min | [Order Acknowledgement Latency](#order-acknowledgement-latency-alert) |
-| TradePulseSignalToFillLatency | Critical | High | < 5 min | [Signal to Fill Latency](#signal-to-fill-latency-alert) |
-| TradePulseDataIngestionFailures | Critical | High | < 5 min | [Data Ingestion Failures](#data-ingestion-failures-alert) |
-| TradePulseDataFreshness | Warning | Medium | < 15 min | [Data Freshness](#data-freshness-alert) |
-| TradePulseVenueDivergence | Critical | High | < 5 min | [Venue Divergence](#venue-divergence-alert) |
-| TradePulseFeatureStoreLag | Warning | Medium | < 15 min | [Feature Store Lag](#feature-store-lag-alert) |
-| TradePulseReconciliationDrift | Critical | High | < 10 min | [Reconciliation Drift](#reconciliation-drift-alert) |
-| TradePulseBacktestFailures | Warning | Low | < 30 min | [Backtest Failures](#backtest-failures-alert) |
-| TradePulseOptimizationSlow | Info | Low | < 1 hour | [Optimization Slow](#optimization-slow-alert) |
-| TradePulseCriticalIncidentOpen | Critical | High | Immediate | [Critical Incident Open](#critical-incident-open-alert) |
-| TradePulseIncidentAckSLA | Warning | Medium | < 10 min | [Incident Acknowledgement SLA](#incident-acknowledgement-sla-alert) |
-| TradePulseLifecycleCheckpointBlocked | Critical | High | < 5 min | [Lifecycle Checkpoint Blocked](#lifecycle-checkpoint-blocked-alert) |
-| TradePulseRunbookFailures | Warning | Medium | < 15 min | [Runbook Execution Failures](#runbook-execution-failures-alert) |
+| GeoSyncOrderErrorRate | Critical | High | < 5 min | [Order Error Rate](#order-error-rate-alert) |
+| GeoSyncOrderLatency | Warning | Medium | < 15 min | [Order Latency](#order-latency-alert) |
+| GeoSyncOrderAckLatency | Warning | Medium | < 15 min | [Order Acknowledgement Latency](#order-acknowledgement-latency-alert) |
+| GeoSyncSignalToFillLatency | Critical | High | < 5 min | [Signal to Fill Latency](#signal-to-fill-latency-alert) |
+| GeoSyncDataIngestionFailures | Critical | High | < 5 min | [Data Ingestion Failures](#data-ingestion-failures-alert) |
+| GeoSyncDataFreshness | Warning | Medium | < 15 min | [Data Freshness](#data-freshness-alert) |
+| GeoSyncVenueDivergence | Critical | High | < 5 min | [Venue Divergence](#venue-divergence-alert) |
+| GeoSyncFeatureStoreLag | Warning | Medium | < 15 min | [Feature Store Lag](#feature-store-lag-alert) |
+| GeoSyncReconciliationDrift | Critical | High | < 10 min | [Reconciliation Drift](#reconciliation-drift-alert) |
+| GeoSyncBacktestFailures | Warning | Low | < 30 min | [Backtest Failures](#backtest-failures-alert) |
+| GeoSyncOptimizationSlow | Info | Low | < 1 hour | [Optimization Slow](#optimization-slow-alert) |
+| GeoSyncCriticalIncidentOpen | Critical | High | Immediate | [Critical Incident Open](#critical-incident-open-alert) |
+| GeoSyncIncidentAckSLA | Warning | Medium | < 10 min | [Incident Acknowledgement SLA](#incident-acknowledgement-sla-alert) |
+| GeoSyncLifecycleCheckpointBlocked | Critical | High | < 5 min | [Lifecycle Checkpoint Blocked](#lifecycle-checkpoint-blocked-alert) |
+| GeoSyncRunbookFailures | Warning | Medium | < 15 min | [Runbook Execution Failures](#runbook-execution-failures-alert) |
 
 ## SLA Definitions
 
@@ -51,7 +51,7 @@ This document provides comprehensive response procedures for every alert defined
 ### Market Data Delivery SLA
 - **Target**: Venue freshness skew < 45 seconds between primary and secondary feeds
 - **Error Budget**: 1% of intervals breaching target over 30 days
-- **Measurement**: 1-minute rolling window using `tradepulse_market_data_freshness_seconds`
+- **Measurement**: 1-minute rolling window using `geosync_market_data_freshness_seconds`
 - **Burn Rate Thresholds**:
   - Rapid burn: Max freshness > 90 seconds for 3 consecutive minutes → Page data steward and SRE on-call
   - Slow burn: Median freshness > 60 seconds for 20 minutes → Create incident and initiate venue drill
@@ -59,7 +59,7 @@ This document provides comprehensive response procedures for every alert defined
 ### Feature Store Synchronisation SLA
 - **Target**: Derived feature batches land within 4 minutes of raw ingestion
 - **Error Budget**: 3% of batches exceeding 4 minutes over 30 days
-- **Measurement**: 5-minute rolling window using `tradepulse_feature_store_sync_delay_seconds`
+- **Measurement**: 5-minute rolling window using `geosync_feature_store_sync_delay_seconds`
 - **Burn Rate Thresholds**:
   - Rapid burn: P90 delay > 8 minutes for 10 minutes → Page platform on-call
   - Slow burn: P75 delay > 6 minutes for 30 minutes → Notify data engineering lead
@@ -67,7 +67,7 @@ This document provides comprehensive response procedures for every alert defined
 ### Portfolio Reconciliation SLA
 - **Target**: Absolute drift between broker and internal positions < 0.35%
 - **Error Budget**: 0.5% of reconciliation windows breaching threshold over 30 days
-- **Measurement**: 15-minute rolling window using `tradepulse_position_drift_ratio`
+- **Measurement**: 15-minute rolling window using `geosync_position_drift_ratio`
 - **Burn Rate Thresholds**:
   - Rapid burn: Drift > 1% for 5 minutes → Trigger reconciliation drill and page risk officer
   - Slow burn: Drift > 0.6% for 45 minutes → Escalate to duty manager and schedule near-term retro
@@ -75,7 +75,7 @@ This document provides comprehensive response procedures for every alert defined
 ### Incident Acknowledgement SLA
 - **Target**: Median acknowledgement < 5 minutes
 - **Error Budget**: 2% of incidents exceeding 5 minutes over 30 days
-- **Measurement**: 5-minute rolling window on `tradepulse_incident_ack_latency_seconds` histogram
+- **Measurement**: 5-minute rolling window on `geosync_incident_ack_latency_seconds` histogram
 - **Burn Rate Thresholds**:
   - Rapid burn: Median acknowledgement > 5 minutes for 10 minutes → Page platform on-call
   - Slow burn: Median acknowledgement > 4 minutes for 1 hour → Escalate to incident commander
@@ -83,7 +83,7 @@ This document provides comprehensive response procedures for every alert defined
 ### Incident Resolution SLA
 - **Target**: Median resolution < 30 minutes for Sev1/Sev2 incidents
 - **Error Budget**: 5% of incidents exceeding 30 minutes over 30 days
-- **Measurement**: 15-minute rolling window on `tradepulse_incident_resolution_latency_seconds` histogram
+- **Measurement**: 15-minute rolling window on `geosync_incident_resolution_latency_seconds` histogram
 - **Burn Rate Thresholds**:
   - Rapid burn: Median resolution > 45 minutes for 15 minutes → Page duty manager
   - Slow burn: Median resolution > 35 minutes for 2 hours → Trigger problem management review
@@ -105,10 +105,10 @@ This document provides comprehensive response procedures for every alert defined
 4. **Execute** initial triage:
    ```bash
    # Check recent order errors
-   tradepulse-cli orders list --status error --since 5m --output jsonl | jq '.rejection_reason' | sort | uniq -c
+   geosync-cli orders list --status error --since 5m --output jsonl | jq '.rejection_reason' | sort | uniq -c
    
    # Check broker adapter health
-   tradepulse-cli health check --service broker-adapter
+   geosync-cli health check --service broker-adapter
    ```
 
 **Diagnostics (5-15 minutes)**:
@@ -153,10 +153,10 @@ This document provides comprehensive response procedures for every alert defined
 4. **Execute** quick diagnostics:
    ```bash
    # Check current latency distribution
-   tradepulse-cli metrics query 'histogram_quantile(0.95, tradepulse_order_placement_duration_seconds_bucket[5m])'
+   geosync-cli metrics query 'histogram_quantile(0.95, geosync_order_placement_duration_seconds_bucket[5m])'
    
    # Check queue depths
-   tradepulse-cli metrics query 'tradepulse_queue_depth{queue="orders"}'
+   geosync-cli metrics query 'geosync_queue_depth{queue="orders"}'
    ```
 
 **Diagnostics (15-30 minutes)**:
@@ -230,10 +230,10 @@ This document provides comprehensive response procedures for every alert defined
 3. **Execute** emergency diagnostics:
    ```bash
    # Check end-to-end latency breakdown
-   tradepulse-cli trace latency --metric signal_to_fill --window 5m
+   geosync-cli trace latency --metric signal_to_fill --window 5m
    
    # Check execution worker status
-   tradepulse-cli health check --service execution-worker --verbose
+   geosync-cli health check --service execution-worker --verbose
    ```
 
 **Diagnostics (5-10 minutes)**:
@@ -274,10 +274,10 @@ This document provides comprehensive response procedures for every alert defined
 2. **Identify** failing ingestion jobs:
    ```bash
    # List recent failed ingestions
-   tradepulse-cli ingest status --status error --since 10m
+   geosync-cli ingest status --status error --since 10m
    
    # Check specific job logs
-   tradepulse-cli logs ingestion-worker --level error --since 10m
+   geosync-cli logs ingestion-worker --level error --since 10m
    ```
 3. **Assess** impact on downstream systems
 
@@ -304,7 +304,7 @@ This document provides comprehensive response procedures for every alert defined
 - Verify successful ingestion for 3 consecutive runs
 - Backfill any data gaps using:
   ```bash
-  tradepulse-cli ingest backfill --source <feed> --start <time> --end <time>
+  geosync-cli ingest backfill --source <feed> --start <time> --end <time>
   ```
 - Document gap duration and root cause
 
@@ -323,7 +323,7 @@ This document provides comprehensive response procedures for every alert defined
 **Immediate Response (< 15 minutes)**:
 1. **Check** current data lag:
    ```bash
-   tradepulse-cli metrics query 'time() - tradepulse_data_last_ingestion_timestamp'
+   geosync-cli metrics query 'time() - geosync_data_last_ingestion_timestamp'
    ```
 2. **Review** ingestion job performance
 3. **Assess** if trending toward critical
@@ -361,20 +361,20 @@ This document provides comprehensive response procedures for every alert defined
 2. **Query** divergence metrics:
 
    ```bash
-   tradepulse-cli metrics query 'tradepulse_market_data_divergence_bps{pair="BTC-USD"}'
+   geosync-cli metrics query 'geosync_market_data_divergence_bps{pair="BTC-USD"}'
    ```
 
 3. **Check** network telemetry for packet loss towards the affected venue using the NOC portal
 
 **Diagnostics (5-15 minutes)**:
-- Review ticker parity via `tradepulse-cli market compare --venues primary,secondary --since 10m`
+- Review ticker parity via `geosync-cli market compare --venues primary,secondary --since 10m`
 - Confirm price bands with broker reference feed
 - Inspect ingestion logs under `observability/logs/ingestion/*.log`
 
 **Mitigation Steps**:
 1. Disable the drifting venue via the feature flag API (`ingestion.<venue>.enabled=false`)
 2. Trigger the clean-room rebuild of the last 15 minutes of features
-3. Re-route strategies configured for dual venue to backup venue using `tradepulse-cli strategy reroute`
+3. Re-route strategies configured for dual venue to backup venue using `geosync-cli strategy reroute`
 
 **Communication**:
 - Update `#inc-trading` every 10 minutes and include divergence graph
@@ -392,13 +392,13 @@ This document provides comprehensive response procedures for every alert defined
 
 ### Feature Store Lag Alert
 
-**Alert Definition**: `tradepulse_feature_store_sync_delay_seconds` p95 > 8 minutes for 3 windows
+**Alert Definition**: `geosync_feature_store_sync_delay_seconds` p95 > 8 minutes for 3 windows
 
 **SLA Impact**: Consumes Feature Store Synchronisation SLA error budget
 
 **Immediate Response (< 15 minutes)**:
 1. Acknowledge the alert in PagerDuty
-2. Inspect the orchestrator job queue length via `tradepulse-cli feature-store status`
+2. Inspect the orchestrator job queue length via `geosync-cli feature-store status`
 3. Check the latest Spark/Flake logs stored in `observability/logs/feature-store/`
 
 **Diagnostics (15-30 minutes)**:
@@ -407,8 +407,8 @@ This document provides comprehensive response procedures for every alert defined
 - Confirm there is sufficient executor capacity in the compute pool
 
 **Mitigation Steps**:
-1. Scale the transformation workers with `tradepulse-cli feature-store scale --replicas +3`
-2. Re-run the stuck batch `tradepulse-cli feature-store replay --batch <id>`
+1. Scale the transformation workers with `geosync-cli feature-store scale --replicas +3`
+2. Re-run the stuck batch `geosync-cli feature-store replay --batch <id>`
 3. Pause low-priority backfills until lag recovers
 
 **Communication**:
@@ -426,7 +426,7 @@ This document provides comprehensive response procedures for every alert defined
 
 ### Reconciliation Drift Alert
 
-**Alert Definition**: `tradepulse_position_drift_ratio` exceeds 0.8% for 2 consecutive windows
+**Alert Definition**: `geosync_position_drift_ratio` exceeds 0.8% for 2 consecutive windows
 
 **SLA Impact**: Consumes Portfolio Reconciliation SLA error budget
 
@@ -435,15 +435,15 @@ This document provides comprehensive response procedures for every alert defined
 2. Pull the latest reconciliation diff:
 
    ```bash
-   tradepulse-cli reconciliation diff --window 5m --output /tmp/recon.json
+   geosync-cli reconciliation diff --window 5m --output /tmp/recon.json
    jq '.summary' /tmp/recon.json
    ```
 
-3. Verify order state with `tradepulse-cli orders list --since 10m --status open`
+3. Verify order state with `geosync-cli orders list --since 10m --status open`
 
 **Diagnostics (10-20 minutes)**:
 - Check for stale fills in broker API logs
-- Ensure settlement jobs completed (`tradepulse-cli settlements status`)
+- Ensure settlement jobs completed (`geosync-cli settlements status`)
 - Confirm corporate action feeds did not adjust quantities unexpectedly
 
 **Mitigation Steps**:
@@ -474,7 +474,7 @@ This document provides comprehensive response procedures for every alert defined
 **Immediate Response (< 30 minutes)**:
 1. **Check** failed backtest details:
    ```bash
-   tradepulse-cli backtest list --status error --since 30m
+   geosync-cli backtest list --status error --since 30m
    ```
 2. **Review** error messages and stack traces
 
@@ -535,7 +535,7 @@ This document provides comprehensive response procedures for every alert defined
 
 ### Critical Incident Open Alert
 
-**Alert Definition**: `TradePulseCriticalIncidentOpen` fires when `tradepulse_incidents_open{severity="critical"}` is non-zero, indicating at least one unresolved Sev1 incident.
+**Alert Definition**: `GeoSyncCriticalIncidentOpen` fires when `geosync_incidents_open{severity="critical"}` is non-zero, indicating at least one unresolved Sev1 incident.
 
 **SLA Impact**: Blocks API, data, and lifecycle SLAs until the incident is resolved.
 
@@ -545,7 +545,7 @@ This document provides comprehensive response procedures for every alert defined
 3. **Review** the Production Operations Dashboard panels: `System Health Status`, `Open Incidents by Severity`, and `Incident Response Durations`.
 4. **Pull** the latest incident list:
    ```bash
-   tradepulse-cli incidents list --severity critical --status open --since 1h
+   geosync-cli incidents list --severity critical --status open --since 1h
    ```
 
 **Diagnostics (0-10 minutes)**:
@@ -566,20 +566,20 @@ This document provides comprehensive response procedures for every alert defined
 - **Escalation**: Notify VP Engineering if the incident persists beyond 30 minutes or if customer funds are at risk.
 
 **Resolution**:
-- Confirm `tradepulse_incidents_open{severity="critical"}` returns to zero.
+- Confirm `geosync_incidents_open{severity="critical"}` returns to zero.
 - Capture post-incident actions and transition to postmortem workflow.
 - Update lifecycle checkpoint `production-restoration` to `passed` in [`docs/system_lifecycle_operations.md`](system_lifecycle_operations.md).
 
 **Related Documents**:
 - [`docs/incident_coordination_procedures.md`](incident_coordination_procedures.md)
-- [`observability/dashboards/tradepulse-production-operations.json`](../observability/dashboards/tradepulse-production-operations.json)
+- [`observability/dashboards/geosync-production-operations.json`](../observability/dashboards/geosync-production-operations.json)
 - [`docs/system_lifecycle_operations.md`](system_lifecycle_operations.md)
 
 ---
 
 ### Incident Acknowledgement SLA Alert
 
-**Alert Definition**: `TradePulseIncidentAckSLA` triggers when the median acknowledgement time exceeds 5 minutes (`tradepulse_incident_ack_latency_seconds`).
+**Alert Definition**: `GeoSyncIncidentAckSLA` triggers when the median acknowledgement time exceeds 5 minutes (`geosync_incident_ack_latency_seconds`).
 
 **SLA Impact**: Consumes incident response error budget and risks breaching regulatory response targets.
 
@@ -589,7 +589,7 @@ This document provides comprehensive response procedures for every alert defined
 3. **Ensure** the on-call engineer is reachable; escalate if acknowledgement remains pending.
 4. **Audit** recent pages:
    ```bash
-   tradepulse-cli incidents audit --window 15m --fields severity,ack_time,responder
+   geosync-cli incidents audit --window 15m --fields severity,ack_time,responder
    ```
 
 **Diagnostics (10-20 minutes)**:
@@ -617,13 +617,13 @@ This document provides comprehensive response procedures for every alert defined
 **Related Documents**:
 - [`docs/incident_coordination_procedures.md`](incident_coordination_procedures.md)
 - [`docs/system_lifecycle_operations.md`](system_lifecycle_operations.md)
-- [`observability/dashboards/tradepulse-production-operations.json`](../observability/dashboards/tradepulse-production-operations.json)
+- [`observability/dashboards/geosync-production-operations.json`](../observability/dashboards/geosync-production-operations.json)
 
 ---
 
 ### Lifecycle Checkpoint Blocked Alert
 
-**Alert Definition**: `TradePulseLifecycleCheckpointBlocked` fires when `tradepulse_lifecycle_checkpoint_status{status="blocked"}` equals 1 for any checkpoint.
+**Alert Definition**: `GeoSyncLifecycleCheckpointBlocked` fires when `geosync_lifecycle_checkpoint_status{status="blocked"}` equals 1 for any checkpoint.
 
 **SLA Impact**: Prevents lifecycle progression (startup, settlement, maintenance) and risks operational gaps.
 
@@ -657,13 +657,13 @@ This document provides comprehensive response procedures for every alert defined
 **Related Documents**:
 - [`docs/system_lifecycle_operations.md`](system_lifecycle_operations.md)
 - [`docs/OPERATIONAL_ARTIFACTS_INDEX.md`](OPERATIONAL_ARTIFACTS_INDEX.md)
-- [`observability/dashboards/tradepulse-production-operations.json`](../observability/dashboards/tradepulse-production-operations.json)
+- [`observability/dashboards/geosync-production-operations.json`](../observability/dashboards/geosync-production-operations.json)
 
 ---
 
 ### Runbook Execution Failures Alert
 
-**Alert Definition**: `TradePulseRunbookFailures` fires when `increase(tradepulse_runbook_executions_total{outcome="failed"}[15m]) > 0`.
+**Alert Definition**: `GeoSyncRunbookFailures` fires when `increase(geosync_runbook_executions_total{outcome="failed"}[15m]) > 0`.
 
 **SLA Impact**: Signals degraded automation, risking delayed recovery or lifecycle tasks.
 
@@ -671,7 +671,7 @@ This document provides comprehensive response procedures for every alert defined
 1. **Inspect** the `Runbook Execution Outcomes` panel for failing runbooks and outcomes.
 2. **Retrieve** detailed execution logs:
    ```bash
-   tradepulse-cli runbooks history --runbook <name> --since 30m
+   geosync-cli runbooks history --runbook <name> --since 30m
    ```
 3. **Contact** the runbook owner (see [`docs/OPERATIONAL_ARTIFACTS_INDEX.md`](OPERATIONAL_ARTIFACTS_INDEX.md) for ownership).
 
@@ -700,13 +700,13 @@ This document provides comprehensive response procedures for every alert defined
 **Related Documents**:
 - [`docs/runbook_live_trading.md`](runbook_live_trading.md)
 - [`docs/OPERATIONAL_ARTIFACTS_INDEX.md`](OPERATIONAL_ARTIFACTS_INDEX.md)
-- [`observability/dashboards/tradepulse-production-operations.json`](../observability/dashboards/tradepulse-production-operations.json)
+- [`observability/dashboards/geosync-production-operations.json`](../observability/dashboards/geosync-production-operations.json)
 
 ---
 
 ### Critical Incident Open Alert
 
-**Alert Definition**: `TradePulseCriticalIncidentOpen` fires when `tradepulse_incidents_open{severity="critical"}` is non-zero, indicating at least one unresolved Sev1 incident.
+**Alert Definition**: `GeoSyncCriticalIncidentOpen` fires when `geosync_incidents_open{severity="critical"}` is non-zero, indicating at least one unresolved Sev1 incident.
 
 **SLA Impact**: Blocks API, data, and lifecycle SLAs until the incident is resolved.
 
@@ -716,7 +716,7 @@ This document provides comprehensive response procedures for every alert defined
 3. **Review** the Production Operations Dashboard panels: `System Health Status`, `Open Incidents by Severity`, and `Incident Response Durations`.
 4. **Pull** the latest incident list:
    ```bash
-   tradepulse-cli incidents list --severity critical --status open --since 1h
+   geosync-cli incidents list --severity critical --status open --since 1h
    ```
 
 **Diagnostics (0-10 minutes)**:
@@ -737,20 +737,20 @@ This document provides comprehensive response procedures for every alert defined
 - **Escalation**: Notify VP Engineering if the incident persists beyond 30 minutes or if customer funds are at risk.
 
 **Resolution**:
-- Confirm `tradepulse_incidents_open{severity="critical"}` returns to zero.
+- Confirm `geosync_incidents_open{severity="critical"}` returns to zero.
 - Capture post-incident actions and transition to postmortem workflow.
 - Update lifecycle checkpoint `production-restoration` to `passed` in [`docs/system_lifecycle_operations.md`](system_lifecycle_operations.md).
 
 **Related Documents**:
 - [`docs/incident_coordination_procedures.md`](incident_coordination_procedures.md)
-- [`observability/dashboards/tradepulse-production-operations.json`](../observability/dashboards/tradepulse-production-operations.json)
+- [`observability/dashboards/geosync-production-operations.json`](../observability/dashboards/geosync-production-operations.json)
 - [`docs/system_lifecycle_operations.md`](system_lifecycle_operations.md)
 
 ---
 
 ### Incident Acknowledgement SLA Alert
 
-**Alert Definition**: `TradePulseIncidentAckSLA` triggers when the median acknowledgement time exceeds 5 minutes (`tradepulse_incident_ack_latency_seconds`).
+**Alert Definition**: `GeoSyncIncidentAckSLA` triggers when the median acknowledgement time exceeds 5 minutes (`geosync_incident_ack_latency_seconds`).
 
 **SLA Impact**: Consumes incident response error budget and risks breaching regulatory response targets.
 
@@ -760,7 +760,7 @@ This document provides comprehensive response procedures for every alert defined
 3. **Ensure** the on-call engineer is reachable; escalate if acknowledgement remains pending.
 4. **Audit** recent pages:
    ```bash
-   tradepulse-cli incidents audit --window 15m --fields severity,ack_time,responder
+   geosync-cli incidents audit --window 15m --fields severity,ack_time,responder
    ```
 
 **Diagnostics (10-20 minutes)**:
@@ -788,13 +788,13 @@ This document provides comprehensive response procedures for every alert defined
 **Related Documents**:
 - [`docs/incident_coordination_procedures.md`](incident_coordination_procedures.md)
 - [`docs/system_lifecycle_operations.md`](system_lifecycle_operations.md)
-- [`observability/dashboards/tradepulse-production-operations.json`](../observability/dashboards/tradepulse-production-operations.json)
+- [`observability/dashboards/geosync-production-operations.json`](../observability/dashboards/geosync-production-operations.json)
 
 ---
 
 ### Lifecycle Checkpoint Blocked Alert
 
-**Alert Definition**: `TradePulseLifecycleCheckpointBlocked` fires when `tradepulse_lifecycle_checkpoint_status{status="blocked"}` equals 1 for any checkpoint.
+**Alert Definition**: `GeoSyncLifecycleCheckpointBlocked` fires when `geosync_lifecycle_checkpoint_status{status="blocked"}` equals 1 for any checkpoint.
 
 **SLA Impact**: Prevents lifecycle progression (startup, settlement, maintenance) and risks operational gaps.
 
@@ -828,13 +828,13 @@ This document provides comprehensive response procedures for every alert defined
 **Related Documents**:
 - [`docs/system_lifecycle_operations.md`](system_lifecycle_operations.md)
 - [`docs/OPERATIONAL_ARTIFACTS_INDEX.md`](OPERATIONAL_ARTIFACTS_INDEX.md)
-- [`observability/dashboards/tradepulse-production-operations.json`](../observability/dashboards/tradepulse-production-operations.json)
+- [`observability/dashboards/geosync-production-operations.json`](../observability/dashboards/geosync-production-operations.json)
 
 ---
 
 ### Runbook Execution Failures Alert
 
-**Alert Definition**: `TradePulseRunbookFailures` fires when `increase(tradepulse_runbook_executions_total{outcome="failed"}[15m]) > 0`.
+**Alert Definition**: `GeoSyncRunbookFailures` fires when `increase(geosync_runbook_executions_total{outcome="failed"}[15m]) > 0`.
 
 **SLA Impact**: Signals degraded automation, risking delayed recovery or lifecycle tasks.
 
@@ -842,7 +842,7 @@ This document provides comprehensive response procedures for every alert defined
 1. **Inspect** the `Runbook Execution Outcomes` panel for failing runbooks and outcomes.
 2. **Retrieve** detailed execution logs:
    ```bash
-   tradepulse-cli runbooks history --runbook <name> --since 30m
+   geosync-cli runbooks history --runbook <name> --since 30m
    ```
 3. **Contact** the runbook owner (see [`docs/OPERATIONAL_ARTIFACTS_INDEX.md`](OPERATIONAL_ARTIFACTS_INDEX.md) for ownership).
 
@@ -871,7 +871,7 @@ This document provides comprehensive response procedures for every alert defined
 **Related Documents**:
 - [`docs/runbook_live_trading.md`](runbook_live_trading.md)
 - [`docs/OPERATIONAL_ARTIFACTS_INDEX.md`](OPERATIONAL_ARTIFACTS_INDEX.md)
-- [`observability/dashboards/tradepulse-production-operations.json`](../observability/dashboards/tradepulse-production-operations.json)
+- [`observability/dashboards/geosync-production-operations.json`](../observability/dashboards/geosync-production-operations.json)
 
 ---
 
@@ -967,7 +967,7 @@ Follow-up: Postmortem in [reports/incidents/YYYY/incident-XXX/]
 
 ### Storage
 - File in `reports/incidents/YYYY/incident-XXX/`
-- Use template from [`reports/incidents/postmortem_template.md`](../reports/incidents/postmortem_template.md)
+- Use template from [`reports/incidents/postmortem_template.md`](POSTMORTEM_TEMPLATE.md)
 - Link to relevant alert definitions and playbooks
 
 ---

@@ -1,1 +1,5 @@
 tsconfig.tsbuildinfo
+# Lighthouse CI run artifacts (IERD-Q6 network_TTFB budget gate) — the
+# workflow uploads these as a build artifact; never commit local runs.
+.lighthouseci/
+lighthouserc.falsifier.json

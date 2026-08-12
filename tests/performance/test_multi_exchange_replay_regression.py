@@ -1,3 +1,5 @@
+# Copyright (c) 2023-2026 Yaroslav Vasylenko (neuron7xLab)
+# SPDX-License-Identifier: MIT
 """Regression tests for multi-exchange replay with performance budgets.
 
 This test suite exercises multi-exchange replay recordings and validates
@@ -50,9 +52,7 @@ def git_info() -> dict[str, str]:
 
     try:
         commit = (
-            subprocess.check_output(
-                ["git", "rev-parse", "HEAD"], stderr=subprocess.DEVNULL
-            )
+            subprocess.check_output(["git", "rev-parse", "HEAD"], stderr=subprocess.DEVNULL)
             .decode()
             .strip()
         )
@@ -130,9 +130,7 @@ def test_all_recordings_regression_suite(
 
         try:
             # Load and process recording
-            ticks, metadata = load_replay_recording(
-                recording_path, exchange=exchange_name
-            )
+            ticks, metadata = load_replay_recording(recording_path, exchange=exchange_name)
             metrics = compute_performance_metrics(ticks)
 
             # Check against budget
@@ -167,11 +165,7 @@ def test_all_recordings_regression_suite(
     report.summary = {
         "total_runs": len(report.runs),
         "passed": len(
-            [
-                r
-                for r in report.runs
-                if r.regression_result and r.regression_result.passed
-            ]
+            [r for r in report.runs if r.regression_result and r.regression_result.passed]
         ),
         "failed": len(failed_runs),
         "git_commit": git_info["commit"][:8],
@@ -195,15 +189,12 @@ def test_all_recordings_regression_suite(
     for run in report.runs:
         if run.regression_result and not run.regression_result.passed:
             issue_path = generator.generate_issue_template(run, component="backtest")
-            assert (
-                issue_path.exists()
-            ), f"Issue template should be generated for {run.name}"
+            assert issue_path.exists(), f"Issue template should be generated for {run.name}"
 
     # Assert no regressions
     if failed_runs:
         pytest.fail(
-            f"Performance regressions detected in {len(failed_runs)} runs: "
-            f"{', '.join(failed_runs)}"
+            f"Performance regressions detected in {len(failed_runs)} runs: {', '.join(failed_runs)}"
         )
 
 
@@ -294,9 +285,7 @@ def test_throughput_stress_test(recordings_dir: Path) -> None:
     processing_rate = iterations / elapsed
 
     # Should process at least 10 replays per second
-    assert (
-        processing_rate >= 10.0
-    ), f"Processing rate too low: {processing_rate:.2f} replays/s"
+    assert processing_rate >= 10.0, f"Processing rate too low: {processing_rate:.2f} replays/s"
 
 
 @pytest.mark.heavy_math

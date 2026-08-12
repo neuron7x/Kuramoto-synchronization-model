@@ -1,3 +1,5 @@
+# Copyright (c) 2023-2026 Yaroslav Vasylenko (neuron7xLab)
+# SPDX-License-Identifier: MIT
 from datetime import datetime, timezone
 
 import pytest
@@ -109,3 +111,55 @@ def test_asset_catalog_historical_ambiguity_raises() -> None:
 
     with pytest.raises(LookupError):
         catalog.resolve("AAaUsd")
+
+
+def test_conflicting_symbol_across_assets_is_rejected() -> None:
+    """`existing is not None and existing != asset.asset_id` -- a symbol owned by
+    ANOTHER asset must be rejected.
+
+    Under NotEq->Eq the guard inverts: a symbol already bound to a different
+    asset would be silently re-bound, corrupting the symbol->asset index.
+    """
+    catalog = AssetCatalog()
+    catalog.create_asset(asset_id="a", name="A", primary_symbol="btcusdt")
+    with pytest.raises(ValueError, match="already registered"):
+        catalog.create_asset(asset_id="b", name="B", primary_symbol="btcusdt")
+
+
+def test_update_primary_symbol_honours_explicit_instrument_hint() -> None:
+    """`instrument_type_hint or asset.instrument_type` -- an explicit hint wins.
+
+    SPOT normalises to `BTC/USDT`, FUTURES to `BTC-USDT`. Re-symboling a SPOT
+    asset with a FUTURES hint must use the FUTURES form. Under Or->And the hint
+    collapses to the asset's own SPOT type and the wrong separator is written.
+    """
+    catalog = AssetCatalog()
+    catalog.create_asset(
+        asset_id="a", name="A", primary_symbol="btcusdt", instrument_type=InstrumentType.SPOT
+    )
+    updated = catalog.update_primary_symbol(
+        "a", "ethusdt", instrument_type_hint=InstrumentType.FUTURES
+    )
+    assert updated.primary_symbol == "ETH-USDT"  # futures separator, from the hint
+
+
+def test_assets_filter_yields_only_the_requested_status() -> None:
+    """`status is None or asset.status == status` -- filter yields the match set.
+
+    Kills both survivors on the line: Or->And would yield nothing when a filter
+    is given; Eq->NotEq would yield the complement. A None filter yields all.
+    """
+    catalog = AssetCatalog()
+    catalog.create_asset(asset_id="a", name="A", primary_symbol="btcusdt")
+    catalog.create_asset(asset_id="b", name="B", primary_symbol="ethusdt")
+    catalog.mark_delisted("b")
+
+    active = list(catalog.assets(status=AssetStatus.ACTIVE))
+    assert [a.asset_id for a in active] == ["a"]
+    assert all(a.status is AssetStatus.ACTIVE for a in active)
+
+    delisted = list(catalog.assets(status=AssetStatus.DELISTED))
+    assert [a.asset_id for a in delisted] == ["b"]
+
+    # Negative control: no filter yields both.
+    assert {a.asset_id for a in catalog.assets()} == {"a", "b"}

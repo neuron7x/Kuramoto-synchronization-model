@@ -1,0 +1,86 @@
+# Diff-bound commit acceptor: Ott-Antonsen RHS conjugate-defect fix.
+#
+# Before: core/kuramoto/ott_antonsen.py::_dz_dt used the conjugate on
+# the linear coupling gain — `(K/2)·(z̄ − z·|z|²)` instead of the
+# Ott&Antonsen 2008 Eq.2.13 form `(K/2)·(z − z·|z|²)`. For any ω₀≠0
+# the z̄ driving counter-rotates against z and the system collapses to
+# z=0; independent RK4 at K=4·K_c, ω₀=2.0 returned |z|→0.000000 where
+# physics requires √(1−2Δ/K)=0.866025. The defect was invisible to
+# every prior INV-OA2/OA3 test because they all fixed ω₀=0 and probed
+# only the real axis, where z̄≡z makes the forms bit-identical.
+#
+# After: the linear coupling term is `z`; the cubic is unchanged
+# (already correct: z·|z|² ≡ z̄·z²). The blind manifold is closed by
+# two added ω₀≠0 falsifiers in test_T23_ott_antonsen_algebraic.py
+# (rotating-fixed-point rigid-rotation invariant + ω₀≠0 integration
+# lock), which FALSIFY the old z̄ RHS (residual ~1.58) and PASS the
+# fix (≤2.2e-16).
+#
+# Locally verified: physics validator 6/6 grounding; mypy --strict /
+# black / ruff clean; 122 tests pass (OA algebraic incl new ω₀≠0 +
+# chimera + all core/kuramoto).
+
+id: ott-antonsen-rhs-fix
+status: ACTIVE
+claim_type: correctness
+promise: >-
+  core/kuramoto/ott_antonsen.py::_dz_dt implements the Ott&Antonsen
+  2008 Eq.2.13 order-parameter ODE with the linear coupling gain
+  +(K/2)·z (NOT the conjugate z̄) and the saturating cubic
+  −(K/2)·z·|z|². tests/unit/physics/test_T23_ott_antonsen_algebraic.py
+  asserts, for ω₀≠0 and arbitrary phase φ, that
+  _dz_dt(R_∞·e^{iφ}) == −iω₀·z to machine precision (rigid rotation,
+  zero radial drift) and that RK4 integration with ω₀≠0 locks to
+  √(1−2Δ/K) rather than collapsing to 0.
+diff_scope:
+  changed_files:
+    - path: ".claude/commit_acceptors/ott-antonsen-rhs-fix.yaml"
+    - path: "core/kuramoto/ott_antonsen.py"
+    - path: "tests/unit/physics/test_T23_ott_antonsen_algebraic.py"
+  forbidden_paths:
+    - "trading/"
+    - "execution/"
+    - "forecast/"
+    - "policy/"
+    - "application/api/"
+    - "schemas/openapi/"
+required_python_symbols:
+  - "core/kuramoto/ott_antonsen.py::OttAntonsenEngine"
+  - "tests/unit/physics/test_T23_ott_antonsen_algebraic.py::test_inv_oa2_rotating_fixed_point_is_rigid_rotation"
+  - "tests/unit/physics/test_T23_ott_antonsen_algebraic.py::test_inv_oa2_omega0_integration_locks_at_R_inf"
+expected_signal: >-
+  Local: `python .claude/physics/validate_tests.py
+  tests/unit/physics/test_T23_ott_antonsen_algebraic.py` reports 6/6
+  physics grounding; `mypy --strict --follow-imports=silent
+  core/kuramoto/ott_antonsen.py` reports "Success: no issues found";
+  `black --check` and `ruff check` clean; `pytest
+  tests/unit/physics/test_T23_ott_antonsen_algebraic.py
+  tests/unit/physics/test_T23_ott_antonsen_chimera.py core/kuramoto/
+  -q` reports 122 passed.
+measurement_command: >-
+  bash -c 'mypy --strict --follow-imports=silent core/kuramoto/ott_antonsen.py
+  && black --check core/kuramoto/ott_antonsen.py tests/unit/physics/test_T23_ott_antonsen_algebraic.py
+  && ruff check core/kuramoto/ott_antonsen.py tests/unit/physics/test_T23_ott_antonsen_algebraic.py
+  && python -m pytest tests/unit/physics/test_T23_ott_antonsen_algebraic.py -q'
+signal_artifact: "tmp/ott_antonsen_rhs_fix.log"
+falsifier:
+  command: >-
+    bash -c 'python -c "import re,sys; src=open(\"core/kuramoto/ott_antonsen.py\").read(); m=re.search(r\"def _dz_dt.*?return[^\\n]*\", src, re.S); body=m.group(0) if m else \"\"; sys.exit(0 if (\"z_conj\" not in body and \"conjugate\" not in body) else 1)"'
+  description: >-
+    Asserts the conjugate defect cannot reappear: the `_dz_dt` method
+    body must not reference `z_conj` / `conjugate()`. The OA linear
+    coupling gain is linear in z; any reintroduction of the conjugate
+    on the RHS (the original bug) flips this falsifier non-zero,
+    blocking the regression that was invisible to the ω₀=0 test
+    battery for its entire prior history.
+rollback_command: >-
+  git checkout HEAD~1 --
+  .claude/commit_acceptors/ott-antonsen-rhs-fix.yaml
+  core/kuramoto/ott_antonsen.py
+  tests/unit/physics/test_T23_ott_antonsen_algebraic.py
+rollback_verification_command: >-
+  git diff --exit-code core/kuramoto/ott_antonsen.py
+memory_update_type: append
+ledger_path: ".claude/commit_acceptors/ott-antonsen-rhs-fix.yaml"
+report_path: "tmp/ott_antonsen_rhs_fix.log"
+evidence: []

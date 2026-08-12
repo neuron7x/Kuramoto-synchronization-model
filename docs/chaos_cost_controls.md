@@ -76,7 +76,7 @@ GameDay, CI, and FinOps cadences.
 - Maintain budget specs in `configs/budgets/*.yaml` with keys:
   ```yaml
   name: research-cluster
-  owner: research@tradepulse
+  owner: research@geosync
   monthly_cpu_hours: 1800
   monthly_memory_gb_hours: 5400
   alert_thresholds:
@@ -121,7 +121,7 @@ GameDay, CI, and FinOps cadences.
    - Annotate backtest configurations with `workload_tier` (e.g., `interactive`,
      `batch`, `nightly`). Store in `configs/backtest/*.yaml` and enforce via
      schema validator.
-   - Extend `tradepulse_cli backtest` to reject `workload_tier: heavy` submissions
+   - Extend `geosync_cli backtest` to reject `workload_tier: heavy` submissions
      outside scheduled windows unless override flag `--force-heavy` is provided
      by authorised users.
 2. **Scheduler Integration**
@@ -134,7 +134,7 @@ GameDay, CI, and FinOps cadences.
 
 - **Benchmark caching**: persist benchmark artefacts (e.g., `pytest-benchmark`
   JSON, profiling flamegraphs) under `bench/artifacts/` keyed by git SHA. Provide
-  CLI command `tradepulse_cli bench --use-cache` to reuse results when code
+  CLI command `geosync_cli bench --use-cache` to reuse results when code
   paths are unchanged.
 - **Feature store caching**: integrate with the Feature Catalog so feature
   computations store hashed inputs/output metadata. When identical parameters are

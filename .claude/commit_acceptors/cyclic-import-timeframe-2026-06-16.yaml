@@ -1,0 +1,54 @@
+# Diff-bound acceptor: break the multiscale_kuramoto <-> cache import cycle
+# at its root (CodeQL py/unsafe-cyclic-import, alerts #893/#894).
+#
+# The cycle was multiscale_kuramoto -> cache (runtime) and cache ->
+# multiscale_kuramoto (TYPE_CHECKING, for the TimeFrame annotation). The prior
+# lazy-import patch only moved the fractal_gcl edge and left this cycle intact.
+# Fix: extract the self-contained TimeFrame enum into a leaf module
+# (core/indicators/timeframe.py) that imports nothing from the package; both
+# multiscale_kuramoto (re-export, public API preserved) and cache now depend on
+# the leaf, so neither depends on the other. Behaviour-preserving.
+
+id: cyclic-import-timeframe-2026-06-16
+status: ACTIVE
+claim_type: refactor
+promise: >-
+  TimeFrame is relocated to the leaf module core.indicators.timeframe with
+  identical members and behaviour; multiscale_kuramoto re-exports it so every
+  existing import path (core.indicators, core.indicators.multiscale_kuramoto)
+  still resolves to the same object, and cache imports it from the leaf — fully
+  removing the multiscale_kuramoto<->cache import cycle with no runtime change.
+diff_scope:
+  changed_files:
+    - path: ".claude/commit_acceptors/cyclic-import-timeframe-2026-06-16.yaml"
+    - path: "core/indicators/timeframe.py"
+    - path: "core/indicators/multiscale_kuramoto.py"
+    - path: "core/indicators/cache.py"
+  forbidden_paths:
+    - "trading/"
+    - "execution/"
+    - "forecast/"
+    - "policy/"
+required_python_symbols:
+  - "TimeFrame"
+expected_signal: >-
+  ruff/black/mypy --strict clean on the three modules; import-architecture gate
+  holds; TimeFrame identity is preserved across all three import paths; and the
+  multiscale/kuramoto-ricci-config unit suites stay green.
+measurement_command: >-
+  python -m mypy --strict core/indicators/timeframe.py
+  core/indicators/multiscale_kuramoto.py core/indicators/cache.py
+  && python scripts/ci/check_import_architecture.py
+  | tee tmp/cyclic_import_timeframe_2026_06_16.log
+signal_artifact: "tmp/cyclic_import_timeframe_2026_06_16.log"
+falsifier:
+  command: "git grep -n 'from .multiscale_kuramoto import TimeFrame' core/indicators/cache.py"
+  description: >-
+    A match means cache still imports TimeFrame from multiscale_kuramoto, i.e.
+    the cycle was reintroduced; the green path must produce no match.
+rollback_command: "git revert --no-edit HEAD"
+rollback_verification_command: "git diff --exit-code origin/main -- core/indicators/timeframe.py"
+memory_update_type: none
+ledger_path: ".claude/commit_acceptors/cyclic-import-timeframe-2026-06-16.yaml"
+report_path: "docs/reports/diff_bound_commit_acceptor_layer.md"
+evidence: []

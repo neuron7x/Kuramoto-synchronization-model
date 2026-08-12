@@ -1,7 +1,9 @@
+# Copyright (c) 2023-2026 Yaroslav Vasylenko (neuron7xLab)
+# SPDX-License-Identifier: MIT
 """Shared utilities for position sizing across execution components.
 
 This module provides the core position sizing calculation used throughout
-TradePulse for determining trade quantities based on risk budgets and
+GeoSync for determining trade quantities based on risk budgets and
 leverage constraints. The implementation ensures:
 
 1. Risk-based capital allocation (fractional kelly)
@@ -31,7 +33,7 @@ def calculate_position_size(
 ) -> float:
     """Return the position quantity that satisfies the risk budget.
 
-    The helper implements the canonical TradePulse sizing equation used by both
+    The helper implements the canonical GeoSync sizing equation used by both
     :class:`execution.order.RiskAwarePositionSizer` and auxiliary utilities.
     ``risk`` is interpreted as a fraction of the available ``balance`` and is
     clipped to the inclusive range ``[0, 1]`` for safety.
@@ -48,6 +50,13 @@ def calculate_position_size(
     Raises:
         ValueError: If balance is negative or price is non-positive.
     """
+    # Fail-closed on non-finite balance/price. balance=+inf otherwise propagates
+    # to an infinite quantity, and balance=NaN only collapses to 0.0 by accident
+    # of the trailing max(); both are unknown inputs, not tradable sizes. Collapse
+    # to a flat position, mirroring the risk=NaN handling below.
+    if not math.isfinite(balance) or not math.isfinite(price):
+        return 0.0
+
     # Fast path validation - single condition check
     if balance < 0 or price <= 0:
         if balance < 0:
@@ -57,6 +66,11 @@ def calculate_position_size(
     # Clip risk to valid range [0, 1]
     clipped_risk = max(0.0, min(risk, 1.0))
     notional = balance * clipped_risk
+
+    # Early fail-closed: a non-finite notional (e.g. NaN risk laundered through
+    # arithmetic) is not a legal size. Flat instead of NaN quantity.
+    if not math.isfinite(notional):
+        return 0.0
 
     # Early exit for zero notional
     if notional <= 0.0:

@@ -1,3 +1,5 @@
+# Copyright (c) 2023-2026 Yaroslav Vasylenko (neuron7xLab)
+# SPDX-License-Identifier: MIT
 from __future__ import annotations
 
 import json
@@ -36,9 +38,7 @@ class _FakeBroker:
 
 
 class _CapturingKafkaService:
-    def __init__(
-        self, config: KafkaIngestionConfig, *, tick_handler, lag_handler=None
-    ) -> None:
+    def __init__(self, config: KafkaIngestionConfig, *, tick_handler, lag_handler=None) -> None:
         self.config = config
         self.tick_handler = tick_handler
         self.lag_handler = lag_handler
@@ -99,6 +99,28 @@ class _FakeRedis:
 
     def pipeline(self, *, transaction: bool = False) -> _FakeRedisPipeline:
         return _FakeRedisPipeline(self)
+
+    def register_script(self, script: str) -> Any:
+        """Model the feature-cache event_ts compare-and-set Lua script.
+
+        Mirrors ``core.features.realtime_store._CACHE_CAS_LUA``: keep a companion
+        ``<key>:ets`` holding the ISO-8601 event timestamp and reject a write whose
+        timestamp is older than the stored one (lexicographic string compare, which
+        matches event-time order for UTC-microsecond ISO timestamps).
+        """
+
+        async def _run(*, keys: list[str], args: list[Any]) -> int:
+            cache_key = keys[0]
+            ets_key = f"{cache_key}:ets"
+            payload, new_ets = args[0], str(args[1])
+            current = self.store.get(ets_key)
+            if current is not None and current > new_ets:
+                return 0
+            self.store[cache_key] = payload
+            self.store[ets_key] = new_ets
+            return 1
+
+        return _run
 
     async def get(self, key: str) -> str | None:
         return self.store.get(key)
@@ -220,10 +242,7 @@ class _FakeConnection:
 
     async def fetchrow(self, query: str, *args: Any) -> dict[str, Any] | None:
         normalized = " ".join(query.strip().split()).lower()
-        if (
-            "from feature_values" in normalized
-            and "order by event_ts desc" in normalized
-        ):
+        if "from feature_values" in normalized and "order by event_ts desc" in normalized:
             name, version, entity_id = args[:3]
             cutoff: datetime | None = None
             if "event_ts <= $4" in normalized:
@@ -236,9 +255,7 @@ class _FakeConnection:
                 and record.entity_id == entity_id
             ]
             if cutoff is not None:
-                candidates = [
-                    record for record in candidates if record.event_ts <= cutoff
-                ]
+                candidates = [record for record in candidates if record.event_ts <= cutoff]
             if not candidates:
                 return None
             latest = max(candidates, key=lambda record: record.event_ts)
@@ -317,13 +334,13 @@ async def test_streaming_pipeline_emits_broker_events_on_tick_batches() -> None:
 
     pipeline = StreamingIngestionPipeline(
         kafka_config=KafkaIngestionConfig(
-            topic="tradepulse.market.ticks",
+            topic="geosync.market.ticks",
             bootstrap_servers="kafka:9092",
             group_id="integration",
         ),
         message_broker=broker,
         kafka_service_factory=factory,
-        tick_event_topic="tradepulse.data.tick_batch.persisted",
+        tick_event_topic="geosync.data.tick_batch.persisted",
     )
 
     assert captured_service is not None
@@ -348,7 +365,7 @@ async def test_streaming_pipeline_emits_broker_events_on_tick_batches() -> None:
     assert payload["event_type"] == "data.tick_batch.persisted"
     assert payload["symbol"] == "BTC/USD"
     assert payload["venue"] == "BINANCE"
-    assert message.topic == "tradepulse.data.tick_batch.persisted"
+    assert message.topic == "geosync.data.tick_batch.persisted"
     assert message.headers == {
         "event_type": "data.tick_batch.persisted",
         "symbol": "BTC/USD",
@@ -400,10 +417,7 @@ async def test_polygon_adapter_fetches_data_with_authorised_requests() -> None:
 
     assert requests
     request = requests[0]
-    assert (
-        request.url.path
-        == "/v2/aggs/ticker/BTCUSD/range/1/minute/2024-01-01/2024-01-02"
-    )
+    assert request.url.path == "/v2/aggs/ticker/BTCUSD/range/1/minute/2024-01-01/2024-01-02"
     assert len(ticks) == 1
     tick = ticks[0]
     assert isinstance(tick, PriceTick)

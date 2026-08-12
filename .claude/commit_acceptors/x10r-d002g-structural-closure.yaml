@@ -1,0 +1,210 @@
+# Diff-bound commit acceptor for the D-002G structural closure PR.
+#
+# Lands the negative-result retention artifact that pins the
+# structural impossibility of the locked 3-substrate
+# null-admissibility path under PRs #677 (M1) / #679 (M2 edge-weight)
+# / #680 (M2 node-payload + injection-sequence) / #681 (M3
+# topology-conditioned). The bottom-turtle fact is encoded in
+# research/systemic_risk/d002c_substrates.py:401 (BlockStructuredSubstrate
+# discards its seed by construction); TemporalKtSubstrate inherits the
+# discard via delegation at lines 481-483.
+#
+# Strict scope:
+#   * NO D-002G scientific PASS claim.
+#   * NO canonical D-002G run authorisation.
+#   * NO D-002C ledger update (sha pinned byte-exact).
+#   * NO substrate code edit.
+#   * NO prereg edit (D002G_PREREGISTRATION.yaml + D002G_P3_M3_PREREGISTRATION.md byte-exact).
+#   * NO M4 implementation. NO M4 pre-registration.
+#   * NO B2 closure.
+#   * NO removal / weakening of any P1 / P2 / P3 / M3 verdict / test / invariant.
+#   * NO edit to prior PR reports (sha-locked by their merge commits).
+#
+# The closure verdict is SCOPED to the conjunction
+# (D-002G prereg substrates x locked marginal set x M1/M2/M3
+# mechanism families). It does NOT claim D-002G globally falsified,
+# does NOT impugn ricci_flow, does NOT claim universal invalidity of
+# null mechanisms. Resolution requires a FRESH D-002H pre-registration
+# (scope narrowing OR substrate redesign OR negative-retention) in a
+# separate PR; the operator decides among the three legal paths.
+
+id: x10r-d002g-structural-closure
+status: ACTIVE
+claim_type: documentation
+promise: >-
+  After this PR lands, docs/governance/D002G_STRUCTURAL_CLOSURE_REPORT.md
+  carries the 7-section scoped-closure artifact;
+  docs/governance/D002G_NEGATIVE_SPACE_MAP.md enumerates the five
+  exhausted null-mechanism families (M1 / M2 edge-weight /
+  M2 node-payload / M2 injection-sequence / M3 topology-conditioned)
+  with rule-out lessons; artifacts/d002g/closure/d002g_structural_closure.json
+  carries the schema_version "D002G-STRUCTURAL-CLOSURE-v1" payload
+  with merge_chain of 4 PRs (#677 / #679 / #680 / #681), all four
+  boolean claim-boundary flags false (canonical_run_authorized,
+  scientific_pass_claimed, d002g_globally_falsified_claimed,
+  ricci_flow_invalid_claimed) plus d002c_ledger_touched false,
+  b1_status starting with OPEN_STRUCTURALLY_BLOCKED, and exactly 3
+  legal_next_paths (D002H_SCOPE_NARROWING, D002H_SUBSTRATE_REDESIGN,
+  D002G_NEGATIVE_ARTIFACT_RETENTION).
+
+  docs/governance/D002G_CANONICAL_RUN_BLOCKERS.md gains an append-only
+  B1.closure subsection inside the B1 block (before B2), citing the
+  PR #681 merge sha cced6e60 and the structural-closure report.
+
+  tests/systemic_risk/test_d002g_structural_closure.py adds 10 tests
+  pinning the closure invariants: closure_report_exists,
+  closure_json_schema_keys, closure_forbids_canonical_run,
+  closure_forbids_scientific_pass, closure_preserves_d002c_ledger,
+  negative_space_map_mentions_all_four_prs,
+  bottom_turtle_seed_ignored_fact_present, no_m4_implementation_claim,
+  legal_next_paths_are_fresh_prereg_only,
+  blocker_doc_appended_not_rewritten.
+
+  Strict scope: closure artifact + tests + acceptor + BLOCKERS append
+  only. This PR does NOT modify substrate code, does NOT touch the
+  D-002C ledger, does NOT touch any prior PR report, does NOT
+  pre-register M4, does NOT authorise a canonical run, does NOT
+  claim D-002G globally falsified, does NOT impugn ricci_flow.
+
+diff_scope:
+  changed_files:
+    - path: ".claude/commit_acceptors/x10r-d002g-structural-closure.yaml"
+    - path: "docs/governance/D002G_STRUCTURAL_CLOSURE_REPORT.md"
+    - path: "docs/governance/D002G_NEGATIVE_SPACE_MAP.md"
+    - path: "docs/governance/D002G_CANONICAL_RUN_BLOCKERS.md"
+    - path: "artifacts/d002g/closure/d002g_structural_closure.json"
+    - path: "tests/systemic_risk/test_d002g_structural_closure.py"
+  forbidden_paths:
+    # D-002G locked governance + prior PR reports
+    - "docs/governance/D002G_PREREGISTRATION.yaml"
+    - "docs/governance/D002G_NONDEGENERATE_NULL_DESIGN.md"
+    - "docs/governance/D002G_ACCEPTANCE_RULES.md"
+    - "docs/governance/D002G_P3_M3_PREREGISTRATION.md"
+    - "docs/governance/D002G_P1_IMPLEMENTATION_REPORT.md"
+    - "docs/governance/D002G_P1_DESIGN_ADVERSARIAL_AUDIT.md"
+    - "docs/governance/D002G_P2_M2_IMPLEMENTATION_REPORT.md"
+    - "docs/governance/D002G_M2_TOPOLOGY_PRESERVING_NULL.md"
+    - "docs/governance/D002G_P3_DISCOVERY_REPORT.md"
+    - "docs/governance/D002G_P3_NULL_DOMAIN_CONTRACTS.md"
+    - "docs/governance/D002G_P3_ELIGIBILITY_MATRIX.md"
+    - "docs/governance/D002G_P3_IMPLEMENTATION_REPORT.md"
+    - "docs/governance/D002G_M3_IMPLEMENTATION_REPORT.md"
+    - "docs/governance/D002G_M3_ELIGIBILITY_MATRIX.md"
+    # D-002C locked governance
+    - "docs/governance/D002C_PREREGISTRATION.yaml"
+    - "docs/governance/D002C_CLAIM_LEDGER.yaml"
+    - "docs/governance/D002C_CANONICAL_RUN_REPORT.md"
+    - "docs/governance/D002C_ATTEMPT_2_NULL_AUDIT_FALSIFICATION_REPORT.md"
+    # All prior commit acceptors
+    - ".claude/commit_acceptors/x10r-d002g-nondegenerate-null-redesign.yaml"
+    - ".claude/commit_acceptors/x10r-d002g-p1-implementation.yaml"
+    - ".claude/commit_acceptors/x10r-d002g-p1-strike-scaffolding.yaml"
+    - ".claude/commit_acceptors/x10r-d002g-p2-m2-topology-preserving-shuffle.yaml"
+    - ".claude/commit_acceptors/x10r-d002g-p3-constant-payload-null-recovery.yaml"
+    - ".claude/commit_acceptors/x10r-d002g-m3-topology-conditioned-null.yaml"
+    # Substrate code + null mechanism module
+    - "research/systemic_risk/d002c_substrates.py"
+    - "research/systemic_risk/d002g_null_mechanisms.py"
+    # Canonical-run artifact tree
+    - "artifacts/d002g/canonical/"
+required_python_symbols: []
+expected_signal: >-
+  `pytest tests/systemic_risk/test_d002g_structural_closure.py -q`
+  passes all 10 closure tests; `python -c "import json;
+  d=json.load(open('artifacts/d002g/closure/d002g_structural_closure.json'));
+  assert d['schema_version']=='D002G-STRUCTURAL-CLOSURE-v1'; assert
+  len(d['merge_chain'])==4; assert d['canonical_run_authorized'] is False;
+  assert d['scientific_pass_claimed'] is False; assert
+  d['d002c_ledger_touched'] is False"` succeeds; the closure report
+  contains the verbatim "STRUCTURAL CLOSURE" verdict block; the
+  D002C_CLAIM_LEDGER.yaml sha256 stays byte-exact at the locked pin
+  (f96ba9b5a2057d2e0bff84afc28578ab316cff73f6dc6673fb0d6d543b8bd6dd);
+  D002G_P3_M3_PREREGISTRATION.md sha256 stays byte-exact at the #680
+  merge-anchor pin (0f11a0c890374c35e4dedecc66caec52ae867f49a8f8b3be2374f1464712c1f8);
+  the BLOCKERS.md gains a B1.closure subsection citing cced6e60 and
+  the structural closure report; the negative-space map enumerates
+  all five mechanism rows.
+measurement_command: >-
+  bash -c 'set -e;
+  PYTHONPATH=. python -m pytest tests/systemic_risk/test_d002g_structural_closure.py -q;
+  python -c "import json;
+  d=json.load(open(\"artifacts/d002g/closure/d002g_structural_closure.json\"));
+  assert d[\"schema_version\"]==\"D002G-STRUCTURAL-CLOSURE-v1\";
+  assert len(d[\"merge_chain\"])==4;
+  assert d[\"canonical_run_authorized\"] is False;
+  assert d[\"scientific_pass_claimed\"] is False;
+  assert d[\"d002c_ledger_touched\"] is False;
+  assert d[\"d002g_globally_falsified_claimed\"] is False;
+  assert d[\"ricci_flow_invalid_claimed\"] is False;
+  assert len(d[\"legal_next_paths\"])==3";
+  grep -q "STRUCTURAL CLOSURE" docs/governance/D002G_STRUCTURAL_CLOSURE_REPORT.md;
+  grep -q "STRUCTURALLY BLOCKED" docs/governance/D002G_STRUCTURAL_CLOSURE_REPORT.md;
+  grep -q "Canonical run remains BLOCKED" docs/governance/D002G_STRUCTURAL_CLOSURE_REPORT.md;
+  grep -q "B1.closure" docs/governance/D002G_CANONICAL_RUN_BLOCKERS.md;
+  grep -q "cced6e60" docs/governance/D002G_CANONICAL_RUN_BLOCKERS.md;
+  grep -q "M3 topology-conditioned independent realisation" docs/governance/D002G_NEGATIVE_SPACE_MAP.md;
+  test "$(sha256sum docs/governance/D002C_CLAIM_LEDGER.yaml | cut -d\ -f1)" = "f96ba9b5a2057d2e0bff84afc28578ab316cff73f6dc6673fb0d6d543b8bd6dd";
+  test "$(sha256sum docs/governance/D002G_P3_M3_PREREGISTRATION.md | cut -d\ -f1)" = "0f11a0c890374c35e4dedecc66caec52ae867f49a8f8b3be2374f1464712c1f8"'
+signal_artifact: "docs/governance/D002G_STRUCTURAL_CLOSURE_REPORT.md"
+falsifier:
+  command: >-
+    bash -c 'set -e;
+    PYTHONPATH=. python -m pytest tests/systemic_risk/test_d002g_structural_closure.py -q || exit 1;
+    test -f docs/governance/D002G_STRUCTURAL_CLOSURE_REPORT.md || exit 2;
+    test -f docs/governance/D002G_NEGATIVE_SPACE_MAP.md || exit 3;
+    test -f artifacts/d002g/closure/d002g_structural_closure.json || exit 4;
+    python -c "import json;
+    d=json.load(open(\"artifacts/d002g/closure/d002g_structural_closure.json\"));
+    assert d[\"schema_version\"]==\"D002G-STRUCTURAL-CLOSURE-v1\";
+    assert len(d[\"merge_chain\"])==4;
+    assert d[\"canonical_run_authorized\"] is False;
+    assert d[\"scientific_pass_claimed\"] is False;
+    assert d[\"d002c_ledger_touched\"] is False;
+    ids=[p[\"id\"] for p in d[\"legal_next_paths\"]];
+    assert set(ids)=={\"D002H_SCOPE_NARROWING\",\"D002H_SUBSTRATE_REDESIGN\",\"D002G_NEGATIVE_ARTIFACT_RETENTION\"}" || exit 5;
+    grep -q "B1.closure" docs/governance/D002G_CANONICAL_RUN_BLOCKERS.md || exit 6;
+    grep -q "cced6e60" docs/governance/D002G_CANONICAL_RUN_BLOCKERS.md || exit 7;
+    grep -q "_ = seed" docs/governance/D002G_STRUCTURAL_CLOSURE_REPORT.md || exit 8;
+    grep -q "research/systemic_risk/d002c_substrates.py" docs/governance/D002G_STRUCTURAL_CLOSURE_REPORT.md || exit 9;
+    test "$(sha256sum docs/governance/D002C_CLAIM_LEDGER.yaml | cut -d\ -f1)" = "f96ba9b5a2057d2e0bff84afc28578ab316cff73f6dc6673fb0d6d543b8bd6dd" || exit 10;
+    test "$(sha256sum docs/governance/D002G_P3_M3_PREREGISTRATION.md | cut -d\ -f1)" = "0f11a0c890374c35e4dedecc66caec52ae867f49a8f8b3be2374f1464712c1f8" || exit 11;
+    if grep -E "D-002G validated|canonical run authoriz|canonical run authorised|D-002C rescued|M4 implementation in this PR|M4 will fix this" docs/governance/D002G_STRUCTURAL_CLOSURE_REPORT.md docs/governance/D002G_NEGATIVE_SPACE_MAP.md | grep -vE "forbidden|NOT|never|cannot|does not|do not|out of scope|out-of-scope"; then
+      echo "forbidden promotional phrase leaked outside denial context"; exit 12;
+    fi'
+  description: >-
+    Probes the D-002G structural closure artifact:
+    (a) the 10 closure tests all pass;
+    (b) all 3 new artifact files exist on disk;
+    (c) the closure JSON carries schema v1 + 4-entry merge_chain
+        + 5 false claim-boundary flags + 3 legal_next_paths with
+        the exact expected id set;
+    (d) BLOCKERS.md carries the new B1.closure subsection citing
+        the PR #681 merge sha cced6e60;
+    (e) the closure report carries the bottom-turtle ``_ = seed``
+        quote AND the substrate file-path citation;
+    (f) D002C_CLAIM_LEDGER.yaml is byte-exact unchanged;
+    (g) D002G_P3_M3_PREREGISTRATION.md is byte-exact unchanged at
+        the #680 merge-anchor sha;
+    (h) no forbidden D-002G PASS / D-002C rescue / canonical-run
+        authorisation / M4-in-D002G string leaks outside denial
+        context.
+    If any of these regress, the closure contract is broken.
+rollback_command: >-
+  bash -c 'rm -f
+  docs/governance/D002G_STRUCTURAL_CLOSURE_REPORT.md
+  docs/governance/D002G_NEGATIVE_SPACE_MAP.md
+  artifacts/d002g/closure/d002g_structural_closure.json
+  tests/systemic_risk/test_d002g_structural_closure.py
+  .claude/commit_acceptors/x10r-d002g-structural-closure.yaml
+  && git checkout HEAD~1 -- docs/governance/D002G_CANONICAL_RUN_BLOCKERS.md'
+rollback_verification_command: >-
+  bash -c 'test ! -f docs/governance/D002G_STRUCTURAL_CLOSURE_REPORT.md
+  && test ! -f docs/governance/D002G_NEGATIVE_SPACE_MAP.md
+  && test ! -f artifacts/d002g/closure/d002g_structural_closure.json
+  && test ! -f tests/systemic_risk/test_d002g_structural_closure.py
+  && test ! -f .claude/commit_acceptors/x10r-d002g-structural-closure.yaml
+  && ! grep -q "B1.closure" docs/governance/D002G_CANONICAL_RUN_BLOCKERS.md'
+memory_update_type: append
+ledger_path: ".claude/commit_acceptors/x10r-d002g-structural-closure.yaml"
+report_path: "docs/governance/D002G_STRUCTURAL_CLOSURE_REPORT.md"
+evidence: []

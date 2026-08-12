@@ -1,0 +1,58 @@
+{
+  "$schema": "https://json-schema.org/draft/2020-12/schema",
+  "title": "InferenceRun",
+  "type": "object",
+  "required": [
+    "run_id",
+    "created_at",
+    "engine_version",
+    "rules_version",
+    "input_hash",
+    "rules_hash",
+    "engine_hash",
+    "run_hash",
+    "risk",
+    "actions",
+    "provenance"
+  ],
+  "properties": {
+    "run_id": {
+      "type": "string"
+    },
+    "created_at": {
+      "type": "string",
+      "format": "date-time"
+    },
+    "engine_version": {
+      "type": "string"
+    },
+    "rules_version": {
+      "type": "string"
+    },
+    "input_hash": {
+      "type": "string"
+    },
+    "rules_hash": {
+      "type": "string"
+    },
+    "engine_hash": {
+      "type": "string"
+    },
+    "run_hash": {
+      "type": "string"
+    },
+    "risk": {
+      "$ref": "risk_state.schema.json"
+    },
+    "actions": {
+      "type": "array",
+      "items": {
+        "$ref": "control_action.schema.json"
+      }
+    },
+    "provenance": {
+      "$ref": "provenance.schema.json"
+    }
+  },
+  "additionalProperties": false
+}

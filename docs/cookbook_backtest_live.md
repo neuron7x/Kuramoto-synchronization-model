@@ -9,8 +9,8 @@ remains deterministic end-to-end.
 
 1. **Clone the repository and install dependencies**
    ```bash
-   git clone https://github.com/neuron7x/TradePulse.git
-   cd TradePulse
+   git clone https://github.com/neuron7xLab/GeoSync.git
+   cd GeoSync
    pip install -c constraints/security.txt -r requirements.txt
    ```
 2. **Materialise starter seeds** using the provided fixtures:
@@ -20,7 +20,7 @@ remains deterministic end-to-end.
 3. **Verify tooling versions** (pin exact versions for deterministic runs):
    ```bash
    python --version   # >=3.10
-   tradepulse-cli --version
+   geosync-cli --version
    jq --version       # optional but recommended for JSONL post-processing
    ```
 
@@ -33,9 +33,9 @@ Use the CLI template renderer to scaffold canonical configs. Templates are
 rendered once then tracked in Git.
 
 ```bash
-tradepulse-cli ingest --generate-config --template-output configs/runbook/ingest.yaml
-tradepulse-cli backtest --generate-config --template-output configs/runbook/backtest.yaml
-tradepulse-cli exec --generate-config --template-output configs/runbook/exec.yaml
+geosync-cli ingest --generate-config --template-output configs/runbook/ingest.yaml
+geosync-cli backtest --generate-config --template-output configs/runbook/backtest.yaml
+geosync-cli exec --generate-config --template-output configs/runbook/exec.yaml
 ```
 
 Update the generated YAML files with project specific values. Recommended
@@ -97,7 +97,7 @@ metadata:
 - [ ] Register the artifact ID in the feature catalog for traceability.
 
 ```bash
-tradepulse-cli ingest --config configs/runbook/ingest.yaml
+geosync-cli ingest --config configs/runbook/ingest.yaml
 ```
 
 Use the CLI step logs to confirm idempotency; repeated runs should report the
@@ -109,14 +109,14 @@ artifact as unchanged once committed.
 - [ ] Validate the strategy entrypoint is importable locally.
 - [ ] Execute the backtest with JSONL output for quick sanity checks:
   ```bash
-  tradepulse-cli backtest \
+  geosync-cli backtest \
     --config configs/runbook/backtest.yaml \
     --output jsonl | jq '."metric"? // .' # sample jq integration
   ```
 - [ ] Persist generated signals/returns to Parquet if downstream notebooks need
       columnar access:
   ```bash
-  tradepulse-cli backtest --config configs/runbook/backtest.yaml --output parquet
+  geosync-cli backtest --config configs/runbook/backtest.yaml --output parquet
   ```
 - [ ] Capture the CLI-emitted SHA256 digest and add it to the experiment log.
 
@@ -137,7 +137,7 @@ Before promoting the strategy to canary live execution:
 2. Switch the data source to a paper-trading feed or delayed mirror.
 3. Run a dry execution to ensure idempotency and logging:
    ```bash
-   tradepulse-cli exec --config configs/runbook/exec.yaml --output table
+   geosync-cli exec --config configs/runbook/exec.yaml --output table
    ```
 4. Confirm the latest signal is registered in the catalog and the emitted hash
    matches prior dry runs.

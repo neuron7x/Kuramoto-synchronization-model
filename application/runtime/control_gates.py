@@ -1,3 +1,5 @@
+# Copyright (c) 2023-2026 Yaroslav Vasylenko (neuron7xLab)
+# SPDX-License-Identifier: MIT
 """Canonical control-gate pipeline combining serotonin and thermo controllers."""
 
 from __future__ import annotations
@@ -14,7 +16,7 @@ from application.runtime.decision_telemetry import (
     emit_decision_event,
 )
 
-LOGGER = logging.getLogger("tradepulse.control_gates")
+LOGGER = logging.getLogger("geosync.control_gates")
 
 DEFAULT_DRAWDOWN = -0.01
 THERMO_EPSILON_FLOOR = 0.05
@@ -92,7 +94,9 @@ def evaluate_control_gates(
     controllers_required = bool(getattr(effective_config, "controllers_required", True))
 
     default_decision = str(gate_defaults.get("default_decision", "ALLOW")).upper()
-    decision = Decision[default_decision] if default_decision in Decision.__members__ else Decision.ALLOW
+    decision = (
+        Decision[default_decision] if default_decision in Decision.__members__ else Decision.ALLOW
+    )
     reasons_seed = ["DEFAULT_POLICY"] if decision in (Decision.THROTTLE, Decision.DENY) else []
     if decision is Decision.DENY:
         position_multiplier = _clamp_multiplier(
@@ -124,7 +128,10 @@ def evaluate_control_gates(
             )
 
     def _apply(
-        new_decision: Decision, new_multiplier: float, new_reasons: list[str], new_throttle_ms: int = 0
+        new_decision: Decision,
+        new_multiplier: float,
+        new_reasons: list[str],
+        new_throttle_ms: int = 0,
     ) -> None:
         nonlocal decision, position_multiplier, throttle_ms, reasons
         if not new_reasons and new_decision in (Decision.THROTTLE, Decision.DENY):
@@ -187,10 +194,16 @@ def evaluate_control_gates(
                 cooldown_s = float(metrics.get("cooldown_s", 0.0))
             except (TypeError, ValueError):
                 cooldown_s = 0.0
-            _apply(Decision.THROTTLE, serotonin_multiplier, throttle_reasons, int(cooldown_s * 1000))
+            _apply(
+                Decision.THROTTLE, serotonin_multiplier, throttle_reasons, int(cooldown_s * 1000)
+            )
         else:
             if serotonin_multiplier < position_multiplier:
-                _apply(Decision.THROTTLE, serotonin_multiplier, serotonin_reasons or ["SEROTONIN_BUDGET"])
+                _apply(
+                    Decision.THROTTLE,
+                    serotonin_multiplier,
+                    serotonin_reasons or ["SEROTONIN_BUDGET"],
+                )
 
     thermo_ctrl = controllers.get("thermo")
     if thermo_ctrl is not None:
@@ -223,7 +236,9 @@ def evaluate_control_gates(
                 thermo_reasons.append("THERMO_BUDGET_EXCEEDED")
                 _apply(
                     Decision.THROTTLE,
-                    _clamp_multiplier(gate_defaults.get("min_position_multiplier", 0.0), gate_defaults),
+                    _clamp_multiplier(
+                        gate_defaults.get("min_position_multiplier", 0.0), gate_defaults
+                    ),
                     thermo_reasons,
                 )
 

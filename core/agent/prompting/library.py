@@ -1,3 +1,5 @@
+# Copyright (c) 2023-2026 Yaroslav Vasylenko (neuron7xLab)
+# SPDX-License-Identifier: MIT
 """Prompt template library with experiment and rollback capabilities."""
 
 from __future__ import annotations
@@ -215,11 +217,7 @@ class PromptTemplateLibrary:
 
     def start_experiment(self, family: str, experiment: PromptExperiment) -> None:
         suite = self._require_suite(family)
-        missing = [
-            variant
-            for variant in experiment.allocations
-            if variant not in suite.templates
-        ]
+        missing = [variant for variant in experiment.allocations if variant not in suite.templates]
         if missing:
             raise PromptExperimentError(
                 f"Experiment variants not registered: {', '.join(sorted(missing))}"
@@ -236,9 +234,7 @@ class PromptTemplateLibrary:
         suite = self._require_suite(family)
         suite.rollback_to_control(reason)
 
-    def select_template(
-        self, family: str, *, assignment: float | None = None
-    ) -> PromptTemplate:
+    def select_template(self, family: str, *, assignment: float | None = None) -> PromptTemplate:
         suite = self._require_suite(family)
         variant = suite.select_variant(assignment)
         return suite.get_variant(variant)

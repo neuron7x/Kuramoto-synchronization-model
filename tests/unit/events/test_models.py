@@ -1,3 +1,5 @@
+# Copyright (c) 2023-2026 Yaroslav Vasylenko (neuron7xLab)
+# SPDX-License-Identifier: MIT
 from __future__ import annotations
 
 from core.events.models import (
@@ -82,9 +84,7 @@ def test_event_dataclasses_support_expected_fields() -> None:
         ask_price=100.5,
         last_price=100.2,
         volume=1,
-        microstructure=TickMicrostructure(
-            bid_size=10, ask_size=12, trade_condition="@"
-        ),
+        microstructure=TickMicrostructure(bid_size=10, ask_size=12, trade_condition="@"),
     )
 
     assert bar.vwap == 1.2

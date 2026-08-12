@@ -1,4 +1,5 @@
-# SPDX-License-Identifier: LicenseRef-TradePulse-Proprietary
+# Copyright (c) 2023-2026 Yaroslav Vasylenko (neuron7xLab)
+# SPDX-License-Identifier: MIT
 """Tests for Risk Guardian."""
 
 from __future__ import annotations
@@ -199,9 +200,7 @@ class TestRiskGuardian:
         df = pd.DataFrame({"close": simple_prices})
 
         guardian = RiskGuardian()
-        result = guardian.simulate_from_dataframe(
-            df, price_col="close", signal_fn=momentum_signal
-        )
+        result = guardian.simulate_from_dataframe(df, price_col="close", signal_fn=momentum_signal)
 
         assert isinstance(result, SimulationResult)
         assert result.total_periods == len(simple_prices)
@@ -214,9 +213,7 @@ class TestRiskGuardian:
         df = pd.DataFrame({"close": simple_prices, "signal": signals})
 
         guardian = RiskGuardian()
-        result = guardian.simulate_from_dataframe(
-            df, price_col="close", signal_col="signal"
-        )
+        result = guardian.simulate_from_dataframe(df, price_col="close", signal_col="signal")
 
         assert isinstance(result, SimulationResult)
 
@@ -238,9 +235,7 @@ class TestRiskGuardian:
         with pytest.raises(ValueError, match="same length"):
             guardian.simulate_from_prices(simple_prices, bad_signal_fn)
 
-    def test_result_to_dict(
-        self, simple_prices: np.ndarray, momentum_signal: callable
-    ) -> None:
+    def test_result_to_dict(self, simple_prices: np.ndarray, momentum_signal: callable) -> None:
         """Test result serialization."""
         guardian = RiskGuardian()
         result = guardian.simulate_from_prices(simple_prices, momentum_signal)

@@ -1,27 +1,27 @@
-# TradePulse Log Shipping
+# GeoSync Log Shipping
 
-This directory contains configuration required to forward structured TradePulse
+This directory contains configuration required to forward structured GeoSync
 logs into the Elastic Stack when running via `docker-compose`.
 
 ## Components
 
 * **Filebeat** autodiscovers containers labelled with
   `co.elastic.logs/enabled=true` and streams their JSON logs to Logstash.
-* **Logstash** normalises the payload, moves TradePulse metadata to stable
+* **Logstash** normalises the payload, moves GeoSync metadata to stable
   fields, and writes the events to Elasticsearch.
-* **Elasticsearch** stores the log indices (`tradepulse-logs-*`).
+* **Elasticsearch** stores the log indices (`geosync-logs-*`).
 * **Kibana** exposes the data for analysis and dashboarding.
 
 ## Usage
 
 ```bash
-docker compose up tradepulse prometheus elasticsearch logstash kibana filebeat
+docker compose up geosync prometheus elasticsearch logstash kibana filebeat
 ```
 
 The default pipeline expects the application to emit JSON logs to stdout (the
 existing `core.utils.logging` module already provides that). Kibana will be
 available on <http://localhost:5601> with an index pattern of
-`tradepulse-logs-*`.
+`geosync-logs-*`.
 
 ### Kubernetes deployment
 
@@ -40,15 +40,15 @@ managed Elastic cluster set the following variables on the Logstash Deployment
 prior to apply:
 
 ```bash
-kubectl -n tradepulse-staging set env deploy/logstash \
+kubectl -n geosync-staging set env deploy/logstash \
   ELASTICSEARCH_HOSTS=https://elastic.example.com:9200 \
-  ELASTICSEARCH_USERNAME=tradepulse \
+  ELASTICSEARCH_USERNAME=geosync \
   ELASTICSEARCH_PASSWORD='••••••••'
 ```
 
 If your Elasticsearch instance uses API keys, set `ELASTICSEARCH_API_KEY` and
 omit the username/password pair instead. The Filebeat DaemonSet can be tuned via
-the `tradepulse-filebeat-config` ConfigMap generated from
+the `geosync-filebeat-config` ConfigMap generated from
 `observability/logging/filebeat.kubernetes.yml`.
 
 ## Customisation

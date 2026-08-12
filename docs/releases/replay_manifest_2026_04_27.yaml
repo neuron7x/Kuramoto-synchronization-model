@@ -1,0 +1,82 @@
+# Copyright (c) 2023-2026 Yaroslav Vasylenko (neuron7xLab)
+# SPDX-License-Identifier: MIT
+#
+# Replay manifest for the 2026-04-27 reality-validation cycle close.
+# Companion to docs/releases/geosync-reality-validation-cycle-2026-04-27.md.
+#
+# Lie blocked: "historical closure cannot be reproduced".
+#
+# Run:
+#   python tools/governance/replay_release_ledger.py \
+#     --manifest docs/releases/replay_manifest_2026_04_27.yaml
+#
+# A REPLAY_PASS verdict means every validator and test command exited
+# as expected against the current main. REPLAY_PARTIAL is allowed only
+# for commands listed under known_exceptions.
+
+schema_version: 1
+
+main_sha: "bb381a8"
+documented_at: "2026-04-27"
+
+# Cycle PRs that produced the canonical state at main: bb381a8.
+pr_list:
+  - 445
+  - 447
+  - 448
+  - 449
+  - 450
+  - 451
+  - 452
+  - 453
+  - 455
+  - 461
+  - 462
+  - 463
+  - 464
+  - 465
+  - 466
+  - 467
+  - 468
+  - 469
+  - 470
+  - 471
+  - 472
+  - 473
+  - 474
+
+# Validators that must exit 0 to certify the canonical state.
+validators:
+  - "python tools/research/validate_physics_2026_sources.py"
+  - "python tools/research/validate_physics_2026_translation.py"
+  - "python tools/audit/false_confidence_detector.py --exit-on-finding"
+  - "python .claude/claims/validate_claims.py"
+  - "python .claude/evidence/validate_evidence.py"
+  - "python tools/deps/validate_dependency_truth.py"
+
+# Per-pattern unit tests + the integration chain.
+test_commands:
+  - "python -m pytest tests/research -q"
+  - "python -m pytest tests/unit/regimes -q"
+  - "python -m pytest tests/unit/nulls -q"
+  - "python -m pytest tests/unit/coherence -q"
+  - "python -m pytest tests/unit/dynamics -q"
+  - "python -m pytest tests/unit/inference -q"
+  - "python -m pytest tests/integration/test_physics_2026_reality_chain.py -q"
+  - "python -m pytest tests/governance -q"
+
+# Default expected exit is 0; commands that legitimately exit non-zero
+# at this state would be listed here.
+expected_exits: {}
+
+# Known exceptions: commands that may exit unexpectedly without
+# falsifying the replay (e.g. environment-dependent helpers). Empty
+# for this canonical state; any drift means the cycle SHOULD be
+# investigated, not silently accepted.
+known_exceptions: []
+
+artifacts:
+  release_ledger: "docs/releases/geosync-reality-validation-cycle-2026-04-27.md"
+  exemption_manifest: ".claude/audit/false_confidence_exemptions.yaml"
+  translation_matrix: ".claude/research/PHYSICS_2026_TRANSLATION.yaml"
+  source_pack: "docs/research/physics_2026/source_pack.yaml"

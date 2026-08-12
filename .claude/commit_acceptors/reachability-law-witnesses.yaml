@@ -1,0 +1,106 @@
+# Diff-bound commit acceptor for the two reachability-unblocked law witnesses.
+#
+# Two catalog laws that were previously deemed "blocked / vacuous" are resolved by
+# COMPUTATION: the blocking condition was an input-construction problem, not an
+# architectural one. Each binds to an executable @law witness citing an EXISTING
+# registry invariant (no new invariant, no count change, no doc-surface edit).
+#
+#   dro_ara.long_signal_gate  — LONG is REACHABLE: an anti-persistent (low-Hurst)
+#                               price series with >= window+step samples enters
+#                               CRITICAL with rs > 0.33 and a STABLE trend, firing
+#                               LONG. The implication INV-DRO4 is witnessed
+#                               non-vacuously (>=1 LONG observed). The earlier
+#                               "vacuous" verdict was a too-short fixture (300 <
+#                               576 samples), not a dead gate.
+#   hpc.seeded_reproducibility — the seeded kernel EXISTS: IndexedRNG is a
+#                               content-addressable deterministic RNG. Same
+#                               (seed, stream, event, index) -> bit-identical draw,
+#                               seed-sensitive, order-independent (INV-HPC1).
+#
+# Locally verified on origin/main base (count 103, unchanged by this PR):
+#   * pytest <both witnesses>: 2 passed
+#   * .claude/physics/validate_tests.py <each>: 0 issues (L1..L5), EXIT 0
+#   * ruff / black --check / mypy --strict clean ; zero new `# type: ignore`
+id: reachability-law-witnesses
+status: ACTIVE
+claim_type: governance
+promise: >-
+  After this PR lands, tests/physics_contracts/test_dro_ara_long_signal_witness.py
+  and tests/physics_contracts/test_hpc_seeded_reproducibility_witness.py bind the
+  catalog laws dro_ara.long_signal_gate and hpc.seeded_reproducibility to
+  @law-decorated witnesses that pass .claude/physics/validate_tests with zero
+  issues. The DRO-ARA witness asserts every LONG signal implies CRITICAL ∧
+  rs > RS_LONG_THRESH ∧ trend ∈ {CONVERGING, STABLE} and that at least one LONG is
+  reachable (INV-DRO4); the HPC witness asserts IndexedRNG gives bit-identical,
+  seed-sensitive, content-addressable draws (INV-HPC1). Both cite existing
+  invariants — the registry count is unchanged. No market claim; no runtime,
+  schema, or guard change.
+diff_scope:
+  changed_files:
+    - path: ".claude/commit_acceptors/reachability-law-witnesses.yaml"
+    - path: "tests/physics_contracts/test_dro_ara_long_signal_witness.py"
+    - path: "tests/physics_contracts/test_hpc_seeded_reproducibility_witness.py"
+  forbidden_paths:
+    - "trading/"
+    - "execution/"
+    - "forecast/"
+    - "policy/"
+    - "application/"
+    - "core/"
+    - "src/"
+    - "geosync_hpc/"
+    - "physics_contracts/catalog.yaml"
+    - ".claude/physics/INVARIANTS.yaml"
+required_python_symbols: []
+expected_signal: >-
+  `python -m pytest tests/physics_contracts/test_dro_ara_long_signal_witness.py
+  tests/physics_contracts/test_hpc_seeded_reproducibility_witness.py` reports
+  2 passed; `python .claude/physics/validate_tests.py <each>` exits 0 with no
+  L1..L5 issues; ruff, black --check and mypy --strict on both files are clean.
+measurement_command: >-
+  bash -c 'mkdir -p tmp && python -m pytest
+  tests/physics_contracts/test_dro_ara_long_signal_witness.py
+  tests/physics_contracts/test_hpc_seeded_reproducibility_witness.py
+  > tmp/reachability_law_witnesses.log 2>&1
+  && grep -q "2 passed" tmp/reachability_law_witnesses.log'
+signal_artifact: "tmp/reachability_law_witnesses.log"
+falsifier:
+  command: |-
+    bash -c 'python -c "
+    import numpy as np, sys
+    from core.dro_ara.engine import RS_LONG_THRESH, Regime, Signal, geosync_observe
+    from geosync_hpc.indexed_rng import IndexedRNG
+    broken = False
+    def prices(seed):
+        rng = np.random.default_rng(seed); inc = np.zeros(2500)
+        for t in range(1, 2500): inc[t] = -0.6*inc[t-1] + rng.normal(0, 0.01)
+        return 100.0*np.exp(np.cumsum(inc))
+    n_long = 0
+    for s in range(24):
+        o = geosync_observe(prices(s))
+        if o[\"signal\"] == Signal.LONG.value:
+            n_long += 1
+            if not (o[\"regime\"] == Regime.CRITICAL.value and o[\"risk_scalar\"] > RS_LONG_THRESH
+                    and o[\"trend\"] in (\"CONVERGING\", \"STABLE\")): broken = True
+    if n_long == 0: broken = True
+    a = IndexedRNG(seed=42, stream_id=\"s\"); b = IndexedRNG(seed=42, stream_id=\"s\")
+    if any(a.normal(\"e\", i) != b.normal(\"e\", i) for i in range(500)): broken = True
+    sys.exit(0 if broken else 1)"'
+  description: >-
+    Inverse probe of the two witnessed laws in real code. It exits 0 (fires) iff
+    either holds false: a LONG signal violates the INV-DRO4 antecedent, OR LONG is
+    unreachable over the sweep (vacuous gate), OR IndexedRNG draws diverge for
+    identical coordinates. While both hold the probe exits 1. If it ever exits 0,
+    INV-DRO4 or INV-HPC1 is no longer truthful and the witness must be corrected or
+    reverted, not patched green.
+rollback_command: >-
+  git rm -f
+  tests/physics_contracts/test_dro_ara_long_signal_witness.py
+  tests/physics_contracts/test_hpc_seeded_reproducibility_witness.py
+  .claude/commit_acceptors/reachability-law-witnesses.yaml
+rollback_verification_command: >-
+  bash -c 'test ! -f tests/physics_contracts/test_dro_ara_long_signal_witness.py'
+memory_update_type: none
+ledger_path: ".claude/commit_acceptors/reachability-law-witnesses.yaml"
+report_path: "tmp/reachability_law_witnesses.log"
+evidence: []

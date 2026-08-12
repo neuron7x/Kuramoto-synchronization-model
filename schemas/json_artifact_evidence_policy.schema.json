@@ -1,0 +1,76 @@
+{
+  "$schema": "https://json-schema.org/draft/2020-12/schema",
+  "$id": "https://github.com/neuron7xLab/GeoSync/schemas/json_artifact_evidence_policy.schema.json",
+  "title": "JSON Artifact Evidence Policy Overlay",
+  "type": "object",
+  "required": ["contract_type", "inputs", "evidence_status", "final_verdict"],
+  "properties": {
+    "contract_type": {
+      "type": "string",
+      "enum": ["executable_task_contract", "external_validation_contract", "system_prompt_contract", "repository_repair_contract", "scoring_contract", "blocked_contract"]
+    },
+    "inputs": {
+      "type": "object",
+      "required": ["missing"],
+      "properties": {"missing": {"type": "array"}}
+    },
+    "evidence_status": {
+      "type": "object",
+      "required": ["external_evidence_available", "evidence_source", "tests_executed", "score", "confidence", "status"],
+      "properties": {
+        "external_evidence_available": {"type": "boolean"},
+        "evidence_source": {"type": "string"},
+        "tests_executed": {"type": "array"},
+        "score": {"type": ["number", "null"]},
+        "confidence": {"type": "number", "minimum": 0, "maximum": 1},
+        "status": {"type": "string"}
+      }
+    },
+    "final_verdict": {
+      "type": "object",
+      "required": ["status"],
+      "properties": {"status": {"type": "string"}}
+    }
+  },
+  "allOf": [
+    {
+      "if": {"properties": {"contract_type": {"const": "blocked_contract"}}},
+      "then": {
+        "properties": {
+          "inputs": {"properties": {"missing": {"minItems": 1}}},
+          "evidence_status": {
+            "properties": {
+              "external_evidence_available": {"const": false},
+              "evidence_source": {"const": "unavailable"},
+              "tests_executed": {"maxItems": 0},
+              "score": {"type": "null"},
+              "confidence": {"maximum": 0.65},
+              "status": {"const": "BLOCKED"}
+            }
+          },
+          "final_verdict": {"properties": {"status": {"const": "BLOCKED"}}}
+        }
+      }
+    },
+    {
+      "if": {
+        "not": {"properties": {"contract_type": {"const": "blocked_contract"}}},
+        "properties": {"evidence_status": {"properties": {"external_evidence_available": {"const": false}}}}
+      },
+      "then": {
+        "properties": {
+          "evidence_status": {
+            "properties": {
+              "evidence_source": {"const": "unavailable"},
+              "tests_executed": {"maxItems": 0},
+              "score": {"type": "null"},
+              "confidence": {"maximum": 0.65},
+              "status": {"const": "CANDIDATE_NOT_VALIDATED"}
+            }
+          },
+          "final_verdict": {"properties": {"status": {"const": "CANDIDATE_NOT_VALIDATED"}}}
+        }
+      }
+    }
+  ]
+}

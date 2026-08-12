@@ -2,7 +2,7 @@
 
 ## Overview
 
-This document outlines the secure architecture design for TradePulse, implementing defense-in-depth principles, network segmentation, least privilege access, and security roles and responsibilities.
+This document outlines the secure architecture design for GeoSync, implementing defense-in-depth principles, network segmentation, least privilege access, and security roles and responsibilities.
 
 ## 1. Security Architecture Principles
 

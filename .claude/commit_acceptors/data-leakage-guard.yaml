@@ -1,0 +1,73 @@
+# Diff-bound acceptor: fail-closed temporal-leakage guard at the data-contract
+# layer (Phase 5 / CHECKPOINT-2 — "no dirty data reaches the graph layer").
+#
+# GeoSync handles leakage only in narrow contexts today: Combinatorial Purged CV
+# (research/robustness/cpcv.py) purges/embargoes for cross-validation, and
+# assert_cak4_no_future_leak (core/cross_asset_kuramoto/invariants.py) checks
+# truncation-invariance for one estimator. There is no general, reusable,
+# context-free data-contract primitive that fail-closes on train/test overlap
+# or future-label leakage before data reaches the feature/graph layer. This adds
+# exactly that — a hard LeakageError, no silent repair.
+
+id: data-leakage-guard
+status: ACTIVE
+claim_type: fail_closed
+promise: >-
+  Adds core/data/leakage.py with two fail-closed temporal-leakage primitives on
+  a monotonic numeric time coordinate (bar index / epoch seconds):
+  assert_no_train_test_leakage(train_times, test_times, *, embargo=0.0) raises
+  LeakageError when max(train) ≥ min(test) − embargo (overlap / insufficient
+  embargo), and assert_no_future_label_leakage(decision_times, label_times)
+  raises element-wise unless every label strictly post-dates its decision. Both
+  fail-close on empty / non-1-D / non-finite input and negative embargo, with no
+  silent numeric repair. Pure NumPy, total/typed, mypy --strict clean, no
+  type:ignore / noqa. tests/data/test_leakage.py adds 16 cases (clean-split and
+  strictly-after pass; overlap, adjacency, insufficient-embargo, label==decision,
+  label<decision, shape-mismatch, malformed-input all fail-closed). No runtime
+  trading path touched; core/data is outside the INVENTORY scope.
+diff_scope:
+  changed_files:
+    - path: ".claude/commit_acceptors/data-leakage-guard.yaml"
+    - path: "core/data/leakage.py"
+    - path: "tests/data/test_leakage.py"
+  forbidden_paths:
+    - "trading/"
+    - "execution/"
+    - "forecast/"
+    - "policy/"
+required_python_symbols:
+  - "LeakageError"
+  - "assert_no_train_test_leakage"
+  - "assert_no_future_label_leakage"
+expected_signal: >-
+  pytest tests/data/test_leakage.py is green (16 cases, ~1s); a clean split and
+  strictly-after labels pass; an overlapping split and a label at/before its
+  decision both raise LeakageError; mypy --strict clean on core/data/leakage.py;
+  ruff + black clean; no INVENTORY change (core/data is out of scope).
+measurement_command: >-
+  python -m pytest tests/data/test_leakage.py -v
+signal_artifact: "tmp/data_leakage_guard_pytest.log"
+falsifier:
+  command: >-
+    python -c "import sys;
+    from core.data.leakage import assert_no_train_test_leakage, assert_no_future_label_leakage, LeakageError;
+    a = False; b = False;
+    exec('try:\n assert_no_train_test_leakage([0, 1, 5], [5, 6])\nexcept LeakageError:\n a = True');
+    exec('try:\n assert_no_future_label_leakage([0, 1, 2], [1, 2, 2])\nexcept LeakageError:\n b = True');
+    print('train/test leak rejected:', a, '| future-label leak rejected:', b);
+    sys.exit(0 if (a and b) else 1)"
+  description: >-
+    Inverse probe for both guards: feeds a train/test split whose train max
+    equals the test min (overlap) and a label equal to its decision time, and
+    exits non-zero unless BOTH raise LeakageError. Fires iff either guard is
+    weakened to admit an overlapping split or a non-future label — the exact
+    leakage the data-contract layer exists to reject.
+rollback_command: >-
+  git rm -f core/data/leakage.py tests/data/test_leakage.py
+  .claude/commit_acceptors/data-leakage-guard.yaml
+rollback_verification_command: >-
+  test ! -f core/data/leakage.py
+memory_update_type: append
+ledger_path: ".claude/commit_acceptors/data-leakage-guard.yaml"
+report_path: ".claude/commit_acceptors/data-leakage-guard.yaml"
+evidence: []

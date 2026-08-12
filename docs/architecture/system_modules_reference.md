@@ -1,14 +1,14 @@
 ---
-owner: docs@tradepulse
+owner: docs@geosync
 review_cadence: quarterly
 last_reviewed: 2026-01-01
-title: TradePulse System Modules Reference
+title: GeoSync System Modules Reference
 ---
 
-# TradePulse System Modules Reference
+# GeoSync System Modules Reference
 
 ## Purpose
-This reference formalises the major functional modules that make up the TradePulse platform.
+This reference formalises the major functional modules that make up the GeoSync platform.
 It is written for engineers, quantitative researchers, site reliability teams, product owners,
 and governance stakeholders who need a shared, auditable vocabulary for the system. Each
 module description clarifies what the module does, who depends on it, and the operational
@@ -27,7 +27,7 @@ align on the same mental model.
 
 ## Data Fabric (`core/data`)
 **What it is.** The data fabric is the foundation for every market and research signal ingested
-into TradePulse. Modules such as `core/data/ingestion.py` provide exchange adapters and secure
+into GeoSync. Modules such as `core/data/ingestion.py` provide exchange adapters and secure
 filesystem guards for historical and live feeds, while `core/data/quality_control.py` and
 `core/data/validation.py` codify declarative quality gates, temporal contracts, and error
 classes for resilient pipelines. The lineage of every generated artefact is tracked via the
@@ -50,9 +50,9 @@ research outputs down to the exact snapshot.
   model approvals.
 
 ## Market Intelligence Engine (`core/indicators`, `core/metrics`)
-**What it is.** TradePulse’s intelligence stack couples multi-scale synchronisation analytics,
+**What it is.** GeoSync’s intelligence stack couples multi-scale synchronisation analytics,
 Ricci curvature diagnostics, and entropy measures to produce regime-aware signals. The
-`TradePulseCompositeEngine` in `core/indicators/kuramoto_ricci_composite.py` fuses Kuramoto
+`GeoSyncCompositeEngine` in `core/indicators/kuramoto_ricci_composite.py` fuses Kuramoto
 oscillator consensus with temporal Ricci flow and topology transition scores to emit
 risk-calibrated entry, exit, and confidence guidance. Supporting modules—`core/indicators/cache.py`,
 `core/indicators/pipeline.py`, and microstructure utilities in `core/metrics/__init__.py`—sustain
@@ -166,6 +166,6 @@ and histograms so SLOs in the operational runbooks remain actionable.
 
 ---
 By grounding module responsibilities in audited code paths and repeatable interfaces, the
-TradePulse platform enables teams to scale research, execution, and governance activities with
+GeoSync platform enables teams to scale research, execution, and governance activities with
 confidence. Use this reference as the canonical baseline when scoping new integrations,
 performing readiness reviews, or onboarding stakeholders into the system.

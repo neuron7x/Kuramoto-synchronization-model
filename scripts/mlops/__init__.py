@@ -1,3 +1,5 @@
+# Copyright (c) 2023-2026 Yaroslav Vasylenko (neuron7xLab)
+# SPDX-License-Identifier: MIT
 """Automation helpers used by GitHub Actions orchestrated MLOps flows."""
 
 from .github_actions_pipeline import PipelineConfig, orchestrate_pipeline

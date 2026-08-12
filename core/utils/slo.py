@@ -1,4 +1,5 @@
-# SPDX-License-Identifier: LicenseRef-TradePulse-Proprietary
+# Copyright (c) 2023-2026 Yaroslav Vasylenko (neuron7xLab)
+# SPDX-License-Identifier: MIT
 """SLO guardrails and automated rollback helpers."""
 
 from __future__ import annotations
@@ -188,9 +189,7 @@ class AutoRollbackGuard:
         summary: Dict[str, float] = {
             "error_rate": float(error_rate),
             "latency_p95_ms": float(latency_p95_ms),
-            "total_requests": (
-                float(total_requests) if total_requests is not None else math.nan
-            ),
+            "total_requests": (float(total_requests) if total_requests is not None else math.nan),
             "window_seconds": self.config.evaluation_period.total_seconds(),
             "error_budget": self.config.error_rate_threshold,
         }
@@ -327,9 +326,7 @@ class AutoRollbackGuard:
                 total, errors, _ = self._aggregate_window(now, rule.window)
             label = rule.identifier
             minimum = (
-                rule.min_requests
-                if rule.min_requests is not None
-                else self.config.min_requests
+                rule.min_requests if rule.min_requests is not None else self.config.min_requests
             )
             summary[f"requests[{label}]"] = float(total)
             if total < minimum:

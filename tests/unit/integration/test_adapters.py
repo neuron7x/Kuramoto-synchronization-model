@@ -1,3 +1,5 @@
+# Copyright (c) 2023-2026 Yaroslav Vasylenko (neuron7xLab)
+# SPDX-License-Identifier: MIT
 """Tests for the unified system integration adapters."""
 
 from __future__ import annotations
@@ -86,6 +88,7 @@ class TestServiceRegistryAdapter:
 
         # Import ServiceState at runtime (same as adapter to avoid circular imports)
         from application.microservices.base import ServiceState
+
         mock_service1.state = ServiceState.RUNNING
 
         mock_registry.services.return_value = [mock_service1]
@@ -291,9 +294,7 @@ class TestAgentCoordinatorAdapter:
     def test_get_agent_count(self) -> None:
         """Test getting agent count."""
         mock_coordinator = MagicMock()
-        mock_coordinator.get_coordination_summary.return_value = {
-            "registered_agents": 5
-        }
+        mock_coordinator.get_coordination_summary.return_value = {"registered_agents": 5}
 
         adapter = AgentCoordinatorAdapter(mock_coordinator)
         count = adapter.get_agent_count()

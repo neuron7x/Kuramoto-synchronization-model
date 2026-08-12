@@ -1,0 +1,126 @@
+# Diff-bound commit acceptor for the Rosenstein MLE fail-closed finite-output
+# guard (INV-LE1).
+#
+# core/physics/lyapunov_exponent.py::maximal_lyapunov_exponent implements the
+# Rosenstein (1993) nearest-neighbor divergence estimator. The historic code
+# SILENTLY RETURNED 0.0 on every degenerate input — constant / zero-variance /
+# all-zeros / two-value-collapsed series (whose Theiler-excluded neighbors all
+# sit at distance 0, so ln(distance) = −∞ and the slope fit is undefined,
+# Rosenstein 1993 §2.2) — and even returned a bogus finite MLE for a series
+# carrying ±Inf. A spurious λ=0 reads downstream (Kelly sizing, risk gating)
+# as a "stable regime"; a frozen or corrupt series is NOT a stable regime, it
+# is an absence of measurable dynamics. This was a masking bug, not a contract.
+#
+# This change makes the estimator FAIL CLOSED:
+#   * non-finite input (NaN/±Inf) ⇒ ValueError(INV-LE1 ...);
+#   * series too short to delay-embed (two-point degenerate) ⇒ ValueError;
+#   * zero measurable divergence (no nearest-neighbor pair has a positive
+#     distance — constant / zero-variance / all-zeros / two-value-collapsed)
+#     ⇒ ValueError naming the likely cause;
+#   * a residual non-finite slope / collapsed fit denominator ⇒ ValueError.
+# log(0) is explicitly guarded (only finite strictly-positive pair distances
+# enter the accumulator). The estimator NEVER returns NaN/±Inf and NEVER masks
+# a degenerate input as λ=0.
+#
+# Valid dynamics are preserved bit-compatibly: logistic-map chaos still yields
+# λ>0, the damped oscillator λ<0, white noise λ≈0, and a low-SNR variance sweep
+# σ²∈[1e-12,1e-3] stays finite and O(1)-bounded. The single live caller
+# (core/neuro/gradient_vital_signs.py) catches the new ValueError and maps a
+# degenerate R-window (R frozen at full synchronization) to the maximally
+# stable health value, so no live path crashes.
+#
+# Two pre-existing T22 tests asserted the OLD silent-0.0 contract on
+# zero-divergence inputs (constant; ±-alternating two-value series). Those
+# assertions locked the masking bug; they are corrected to assert the
+# fail-closed raise, with the rationale documented in-test.
+#
+# claim_type: fail_closed. Adds NO predictive/financial claim, NO dependency,
+# NO new noqa/type:ignore. Hardens INV-LE1 from "finite for any input
+# (silently 0.0)" to "finite for non-degenerate input, fail-closed otherwise".
+#
+# Locally verified on origin/main fork base (b146a1d):
+#   * ruff check / ruff format --check / black --check: clean on changed .py
+#   * mypy --strict on changed .py: no issues
+#   * pytest tests/unit/physics/test_mle_finite_guard.py: 19 passed
+#   * pytest tests -k "lyapunov_exponent or T22 or mle or spectral": green
+#   * zero new noqa / type: ignore across changed files
+id: mle-finite-guard
+status: ACTIVE
+claim_type: fail_closed
+promise: >-
+  core.physics.lyapunov_exponent.maximal_lyapunov_exponent fails closed on
+  every degenerate input rather than masking it as a finite MLE. A non-finite
+  input (NaN/±Inf), a two-point/too-short series, a constant / zero-variance /
+  all-zeros / two-value-collapsed series (zero measurable nearest-neighbor
+  divergence, Rosenstein 1993 §2.2), or a residual non-finite slope each raises
+  ValueError naming "INV-LE1" and the likely cause. log(0) is guarded: only
+  finite strictly-positive pair distances enter the log-divergence accumulator.
+  The estimator never returns NaN/±Inf and never reports a spurious λ=0 for a
+  series with no divergence to measure. Valid dynamics are preserved: logistic
+  chaos λ>0, damped oscillator λ<0, white noise λ≈0, and a low-SNR variance
+  sweep stays finite and bounded. The single live caller
+  (core/neuro/gradient_vital_signs.py) catches the raise and maps a degenerate
+  R-window to the maximally stable health value. No claim tier beyond
+  fail_closed is asserted; no predictive or financial meaning is added.
+diff_scope:
+  changed_files:
+    - path: ".claude/commit_acceptors/mle-finite-guard.yaml"
+    - path: "core/physics/lyapunov_exponent.py"
+    - path: "core/neuro/gradient_vital_signs.py"
+    - path: "tests/unit/physics/test_mle_finite_guard.py"
+    - path: "tests/unit/physics/test_T22_lyapunov_spectral.py"
+    - path: "tests/unit/physics/test_T22_lyapunov_robustness.py"
+  forbidden_paths:
+    - "trading/"
+    - "execution/"
+    - "forecast/"
+    - "src/"
+required_python_symbols:
+  - "core/physics/lyapunov_exponent.py::maximal_lyapunov_exponent"
+expected_signal: >-
+  `python -m pytest tests/unit/physics/test_mle_finite_guard.py` reports
+  19 passed: logistic chaos λ>0 and damped λ<0 (INV-LE2 anchors survive); the
+  dirty-data inputs (constant, zero-variance, all-zeros, two-point degenerate,
+  two-value-collapsed, NaN/±Inf embedded) each raise ValueError naming INV-LE1;
+  the low-SNR white-noise variance sweep stays finite and |MLE|<10.
+measurement_command: >-
+  bash -c 'mkdir -p tmp && python -m pytest
+  tests/unit/physics/test_mle_finite_guard.py -v
+  > tmp/mle_finite_guard_pytest.log 2>&1
+  && grep -qE "19 passed" tmp/mle_finite_guard_pytest.log'
+signal_artifact: "tmp/mle_finite_guard_pytest.log"
+falsifier:
+  command: >-
+    python -c 'exec("import sys, math\nimport numpy as np\nfrom
+    core.physics.lyapunov_exponent import maximal_lyapunov_exponent as
+    m\ndef raises(fn):\n  try:\n    fn()\n    return False\n  except
+    ValueError:\n    return True\nconst_fails = raises(lambda:
+    m(np.full(600, 42.0), dim=3, tau=1))\ns = np.random.default_rng(1).normal(0.0,
+    1.0, 600)\ns[10] = np.nan\nnan_fails = raises(lambda: m(s, dim=3,
+    tau=1))\nlog = np.empty(2000)\nlog[0] = 0.1\nfor i in range(1, 2000):\n
+    log[i] = 4.0 * log[i - 1] * (1.0 - log[i - 1])\nchaos = m(log, dim=2, tau=1,
+    max_divergence_steps=20)\nchaos_ok = math.isfinite(chaos) and chaos >
+    0.0\ncontract_holds = const_fails and nan_fails and
+    chaos_ok\nsys.exit(0 if not contract_holds else 1)\n")'
+  description: >-
+    Green-state probe of the fail-closed finite-output contract. It exits 0
+    (fires) iff the contract has DRIFTED: a constant series stops raising
+    ValueError (silent-0.0 masking bug reintroduced), OR a NaN-embedded series
+    stops raising, OR the logistic-map chaos MLE stops being finite-and-positive
+    (the guard began suppressing valid divergence). While all three legs hold —
+    degenerate inputs fail closed AND valid chaos stays λ>0 — the probe exits 1.
+    An exit 0 means the estimator has regressed to masking degeneracy or has
+    broken valid dynamics, and must be repaired, not patched green.
+rollback_command: >-
+  bash -c 'git checkout origin/main -- core/physics/lyapunov_exponent.py
+  core/neuro/gradient_vital_signs.py
+  tests/unit/physics/test_T22_lyapunov_spectral.py
+  tests/unit/physics/test_T22_lyapunov_robustness.py
+  && git rm -f tests/unit/physics/test_mle_finite_guard.py
+  .claude/commit_acceptors/mle-finite-guard.yaml'
+rollback_verification_command: >-
+  bash -c 'test ! -f .claude/commit_acceptors/mle-finite-guard.yaml
+  && test ! -f tests/unit/physics/test_mle_finite_guard.py'
+memory_update_type: none
+ledger_path: ".claude/commit_acceptors/mle-finite-guard.yaml"
+report_path: "tmp/mle_finite_guard_pytest.log"

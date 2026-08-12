@@ -1,0 +1,133 @@
+# Diff-bound commit acceptor for D-002A — Gate 6 sensitivity
+# surface / MDE map (pilot + infrastructure, NOT certification).
+#
+# What lands:
+#   * research/reconstruction/sensitivity_surface.py
+#       SensitivityCell / SensitivitySurface dataclasses +
+#       mix_substrate_with_null + compute_sensitivity_surface.
+#   * tests/reconstruction/test_gate6_sensitivity_surface.py
+#       14 tests:
+#         - 5 fast on the mixing helper (λ edge cases, contract
+#           rejection)
+#         - 6 fast on the dataclass contract (power property,
+#           dominant direction, cell lookup, to_dict inf→None
+#           serialisation, finite MDE serialisation) — direct
+#           construction via _stub_cell, no Kuramoto sims
+#         - 1 slow smoke (smallest contract-compliant grid;
+#           n_bootstrap=4)
+#         - 1 slow sub-MDE honesty test (surface computes for
+#           λ∈{0,1}, fpr_estimate finite, MDE allowed to be None,
+#           JSON-safe inf→None coercion, no certification claim)
+#         - 1 slow FPR pilot bound test (FPR ≤ 0.30 envelope at
+#           N=50, n_seeds=5, n_bootstrap=4)
+#       All slow tests combined ≤ 90 s on uncontended local CPU.
+#   * X10R_GATE6_SENSITIVITY_SURFACE.md
+#       Empirical pilot ledger + reproduction recipe + explicit
+#       "What this PR does NOT do" section.
+#
+# Strict scope:
+#   No real data. Synthetic only. NO Gate 6 real-data verdict.
+#   NO bank-level inference claim. NO INV-IDENTIFICATION-1 lift.
+#   NO power certification claim — power certification is the
+#   D-002B contract (issue #652), NOT this PR.
+#
+# Tier emitted:
+#   D002A_PILOT_INFRASTRUCTURE_MERGED on merge.
+#   Forbidden tiers: SYNTHETIC_GATE6_CERTIFIED, REAL_DOV_READY,
+#   VALIDATED_REAL_BANK_LEVEL_RESULT.
+
+id: x10r-gate6-sensitivity-surface
+status: ACTIVE
+claim_type: chore
+promise: >-
+  After this PR lands, research/reconstruction/sensitivity_surface.py
+  exposes the missing MDE-mapping infrastructure flagged by D-002 (P0),
+  scoped as the pilot (D-002A) — pilot + infrastructure ONLY, NOT
+  certification. compute_sensitivity_surface walks an (N × λ) grid,
+  lambda-mixing a core-periphery substrate with its topology-randomised
+  null at each λ to control true precursor strength. For each cell we
+  record n_pass / power / signed-direction histogram / median ΔR /
+  median CI width. The surface exposes fpr_estimate (= average power
+  at λ=0) and mde_lambda_per_n (smallest λ where power ≥ 0.80 per N,
+  inf when no cell clears the threshold — the honest sub-MDE state).
+  Closes the discriminative-ambiguity gap surfaced by the X-10R-1
+  E2E NO_SIGNAL verdict by INSTRUMENTING the question; it does NOT
+  answer the power question (that is D-002B).
+  Tests pin: (a) infrastructure (surface computes, dataclass
+  contract, JSON inf→None serialisation), (b) fail-closed FPR
+  bound at the pilot budget (≤ 0.30, relaxed from the 0.05 production
+  target which stays for D-002B), (c) honest sub-MDE representation
+  (MDE may be None without claiming certification).
+  Empirical pilot finding (canonical seed=42, n_bootstrap=4,
+  n_seeds=5): FPR=0.000 across the grid, MDE unreached at all N
+  — gate is sub-MDE at this budget, fail-closed. The NO_SIGNAL
+  verdict from PR #648 is therefore HONEST ambiguity, not evidence
+  of absence.
+  NO real-data verdict, NO bank-level claim, NO
+  source-side change to the existing Gate 6 helper, NO power
+  certification claim.
+diff_scope:
+  changed_files:
+    - path: ".claude/commit_acceptors/x10r-gate6-sensitivity-surface.yaml"
+    - path: "research/reconstruction/sensitivity_surface.py"
+    - path: "tests/reconstruction/test_gate6_sensitivity_surface.py"
+    - path: "X10R_GATE6_SENSITIVITY_SURFACE.md"
+    - path: "scripts/ci/gate6_sensitivity_surface_falsifier.py"
+  forbidden_paths:
+    - "trading/"
+    - "execution/"
+    - "forecast/"
+    - "policy/"
+    - "core/physics/"
+    - "core/kuramoto/"
+    - "research/reconstruction/kuramoto_on_reconstruction.py"  # NO source change
+    - "research/reconstruction/allocator/"  # D-002A is reconstruction-side
+    - "application/governance/claim_ledger.py"
+    - "application/governance/commit_acceptor.py"
+required_python_symbols:
+  - "research/reconstruction/sensitivity_surface.py::SensitivityCell"
+  - "research/reconstruction/sensitivity_surface.py::SensitivitySurface"
+  - "research/reconstruction/sensitivity_surface.py::compute_sensitivity_surface"
+  - "research/reconstruction/sensitivity_surface.py::mix_substrate_with_null"
+expected_signal: >-
+  Local: `pytest tests/reconstruction/test_gate6_sensitivity_surface.py -m "not slow" -q`
+  reports "11 passed"; with "-m slow" reports "3 passed in ≤90s";
+  full file reports "14 passed"; `mypy --strict --follow-imports=silent`
+  clean on the new files; `ruff check` and `black --check` both
+  pass on those paths.
+measurement_command: >-
+  bash -c 'mypy --strict --follow-imports=silent
+  research/reconstruction/sensitivity_surface.py
+  tests/reconstruction/test_gate6_sensitivity_surface.py && ruff check research/reconstruction/sensitivity_surface.py tests/reconstruction/test_gate6_sensitivity_surface.py && black --check research/reconstruction/sensitivity_surface.py tests/reconstruction/test_gate6_sensitivity_surface.py && pytest tests/reconstruction/test_gate6_sensitivity_surface.py -q'
+signal_artifact: "tmp/x10r_gate6_sensitivity_surface.json"
+falsifier:
+  # NOTE: this probe was extracted from an inline ``python -c`` payload to a
+  # committed single-purpose script (scripts/ci/gate6_sensitivity_surface_falsifier.py).
+  # The inline form could not survive the acceptor YAML round-trip: a folded
+  # block scalar collapsed its newlines, and its single-quoted Python string
+  # literals lived inside the outer ``bash -c '...'`` wrapper and broke it.
+  # A script invoked by name is round-trip-stable (cf. gauss_bonnet_evidence.py).
+  command: |-
+    bash -c 'PYTHONPATH=. python scripts/ci/gate6_sensitivity_surface_falsifier.py'
+  description: >-
+    Probes the D-002A pilot contract empirically: at the pilot
+    budget (N=50, n_seeds=5, n_bootstrap=4) the surface must (a)
+    compute end-to-end for λ∈{0,1}, (b) report a finite
+    fpr_estimate ≤ 0.30 (fail-closed), (c) populate the MDE
+    dict (with None/inf permitted as the honest sub-MDE state),
+    (d) survive JSON inf→None serialisation. NO power assertion
+    is made — power certification is the D-002B contract
+    (issue #652), not this PR. If the falsifier exits non-zero,
+    the D-002A infrastructure or fail-closed pilot envelope
+    regressed.
+rollback_command: >-
+  bash -c 'git checkout HEAD~1 -- && rm -f research/reconstruction/sensitivity_surface.py
+  tests/reconstruction/test_gate6_sensitivity_surface.py
+  X10R_GATE6_SENSITIVITY_SURFACE.md
+  .claude/commit_acceptors/x10r-gate6-sensitivity-surface.yaml'
+rollback_verification_command: >-
+  bash -c 'test ! -f research/reconstruction/sensitivity_surface.py && test ! -f tests/reconstruction/test_gate6_sensitivity_surface.py && test ! -f X10R_GATE6_SENSITIVITY_SURFACE.md && test ! -f .claude/commit_acceptors/x10r-gate6-sensitivity-surface.yaml'
+memory_update_type: append
+ledger_path: ".claude/commit_acceptors/x10r-gate6-sensitivity-surface.yaml"
+report_path: "tmp/x10r_gate6_sensitivity_surface.json"
+evidence: []

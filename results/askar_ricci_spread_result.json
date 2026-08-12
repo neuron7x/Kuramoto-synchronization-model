@@ -1,0 +1,69 @@
+{
+  "primary_SPY_vs_GOLD": {
+    "tag": "SPY-GOLD",
+    "data_source": "Askar OTS Capital \u2014 L2 hourly",
+    "assets": [
+      "SPY",
+      "GOLD",
+      "USA500"
+    ],
+    "target": "SPY 1h forward return",
+    "counterpart": "GOLD",
+    "window_hours": 120,
+    "threshold": 0.3,
+    "cost_bps": 5,
+    "n_aligned_bars": 15841,
+    "n_signal_bars": 15720,
+    "n_train_bars": 11004,
+    "n_test_bars": 4716,
+    "IC_train": -0.0042,
+    "IC_test": -0.0123,
+    "IC_baseline_no_spread": 0.0194,
+    "IC_delta_vs_baseline": -0.0317,
+    "IC_permutation": -0.0123,
+    "train_sharpe": -0.053,
+    "test_sharpe": -1.222,
+    "test_maxdd": -0.3294,
+    "permutation_p": 0.798,
+    "overfit_ratio": 23.269,
+    "date_range": [
+      "2017-02-16 17:00:00",
+      "2026-02-20 21:00:00"
+    ],
+    "verdict": "NO_SPREAD_EDGE"
+  },
+  "alt_SPY_vs_USA500": {
+    "tag": "SPY-USA500",
+    "data_source": "Askar OTS Capital \u2014 L2 hourly",
+    "assets": [
+      "SPY",
+      "GOLD",
+      "USA500"
+    ],
+    "target": "SPY 1h forward return",
+    "counterpart": "USA500",
+    "window_hours": 120,
+    "threshold": 0.3,
+    "cost_bps": 5,
+    "n_aligned_bars": 15841,
+    "n_signal_bars": 15720,
+    "n_train_bars": 11004,
+    "n_test_bars": 4716,
+    "IC_train": 0.0083,
+    "IC_test": 0.0194,
+    "IC_baseline_no_spread": 0.0194,
+    "IC_delta_vs_baseline": 0.0,
+    "IC_permutation": 0.0194,
+    "train_sharpe": 0.102,
+    "test_sharpe": 0.711,
+    "test_maxdd": -0.153,
+    "permutation_p": 0.084,
+    "overfit_ratio": 6.995,
+    "date_range": [
+      "2017-02-16 17:00:00",
+      "2026-02-20 21:00:00"
+    ],
+    "verdict": "NO_SPREAD_EDGE"
+  },
+  "equity_curve_png": "results/askar_ricci_spread_equity.png"
+}

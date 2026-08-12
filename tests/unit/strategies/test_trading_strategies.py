@@ -1,3 +1,5 @@
+# Copyright (c) 2023-2026 Yaroslav Vasylenko (neuron7xLab)
+# SPDX-License-Identifier: MIT
 """Unit tests for trading strategies built on lightweight indicators."""
 
 from __future__ import annotations
@@ -47,9 +49,7 @@ def test_kuramoto_strategy_sell_confidence_when_threshold_one(
 
     closes = [100.0, 100.5, 101.0]
     data = _frame_from_closes(closes)
-    strategy = KuramotoStrategy(
-        symbol="XYZ", params={"window": 1, "sync_threshold": 1.0}
-    )
+    strategy = KuramotoStrategy(symbol="XYZ", params={"window": 1, "sync_threshold": 1.0})
 
     def fake_compute(self: KuramotoIndicator, _: np.ndarray) -> np.ndarray:
         return np.array([0.0, 0.0, 1.0])
@@ -98,15 +98,9 @@ def test_hurst_vpin_strategy_branch_logic(monkeypatch: pytest.MonkeyPatch) -> No
     signals = strategy.generate_signals(data)
 
     assert list(signals["signal"]) == ["Buy", "Sell", "Hold"]
-    assert signals.loc[signals["signal"] == "Buy", "confidence"].iloc[
-        0
-    ] == pytest.approx(0.8)
-    assert signals.loc[signals["signal"] == "Sell", "confidence"].iloc[
-        0
-    ] == pytest.approx(0.8)
-    assert signals.loc[signals["signal"] == "Hold", "confidence"].iloc[
-        0
-    ] == pytest.approx(0.5)
+    assert signals.loc[signals["signal"] == "Buy", "confidence"].iloc[0] == pytest.approx(0.8)
+    assert signals.loc[signals["signal"] == "Sell", "confidence"].iloc[0] == pytest.approx(0.8)
+    assert signals.loc[signals["signal"] == "Hold", "confidence"].iloc[0] == pytest.approx(0.5)
 
 
 def test_hurst_vpin_strategy_symbol_and_index(monkeypatch: pytest.MonkeyPatch) -> None:

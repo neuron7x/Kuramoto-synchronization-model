@@ -1,0 +1,8 @@
+{
+  "FINAL": "REJECT",
+  "IC_normal": 0.003,
+  "IC_stress": -0.0045,
+  "p_normal": 0.5349,
+  "p_stress": 0.7924,
+  "regime_lift": -0.0076
+}

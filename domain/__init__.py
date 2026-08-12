@@ -1,3 +1,5 @@
+# Copyright (c) 2023-2026 Yaroslav Vasylenko (neuron7xLab)
+# SPDX-License-Identifier: MIT
 """Domain layer containing core bounded contexts.
 
 The package is organised according to domain-driven design (DDD) principles

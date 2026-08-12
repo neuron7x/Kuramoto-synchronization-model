@@ -1,6 +1,6 @@
 # API Examples
 
-Practical code examples for common TradePulse use cases.
+Practical code examples for common GeoSync use cases.
 
 ## Table of Contents
 
@@ -63,7 +63,7 @@ print(f"Metadata: {result.metadata}")
 ### Composite Indicators
 
 ```python
-from core.indicators.kuramoto_ricci_composite import TradePulseCompositeEngine
+from core.indicators.kuramoto_ricci_composite import GeoSyncCompositeEngine
 import pandas as pd
 
 # Prepare data
@@ -73,7 +73,7 @@ bars = pd.DataFrame({
 }, index=pd.date_range('2024-01-01', periods=len(prices), freq='1H'))
 
 # Analyze market regime
-engine = TradePulseCompositeEngine()
+engine = GeoSyncCompositeEngine()
 snapshot = engine.analyze_market(bars)
 
 print(f"Phase: {snapshot.phase.value}")
@@ -679,5 +679,5 @@ with initialize(version_base=None, config_path="../conf"):
 
 - [Indicator Guide](./indicators.md) - Detailed indicator documentation
 - [Architecture](./ARCHITECTURE.md) - System design overview
-- [Risk Management](./risk_management.md) - Risk control mechanisms
+- [Risk Management](./risk_controls.md) - Risk control mechanisms
 - [Backtesting](./backtest.md) - Backtesting framework guide

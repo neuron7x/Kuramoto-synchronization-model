@@ -1,8 +1,10 @@
+# Copyright (c) 2023-2026 Yaroslav Vasylenko (neuron7xLab)
+# SPDX-License-Identifier: MIT
 """Thin wrappers around the existing FPM-A integration tooling."""
 
 from __future__ import annotations
 
-# SPDX-License-Identifier: LicenseRef-TradePulse-Proprietary
+# SPDX-License-Identifier: MIT
 import logging
 import sys
 from argparse import _SubParsersAction
@@ -27,12 +29,12 @@ def build_parser(subparsers: _SubParsersAction[object]) -> None:
 
 
 @register("fpma-graph")
-def handle_graph(args: object) -> int:  # noqa: ARG001 - required signature
+def handle_graph(args: object) -> int:
     return _invoke_runner("graph")
 
 
 @register("fpma-check")
-def handle_check(args: object) -> int:  # noqa: ARG001 - required signature
+def handle_check(args: object) -> int:
     return _invoke_runner("check")
 
 

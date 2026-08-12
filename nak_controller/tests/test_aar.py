@@ -1,3 +1,5 @@
+# Copyright (c) 2023-2026 Yaroslav Vasylenko (neuron7xLab)
+# SPDX-License-Identifier: MIT
 """Tests for AAR (Acceptor of Action Result) module.
 
 This module tests the core AAR functionality:
@@ -477,18 +479,17 @@ class TestAARTracker:
         with pytest.raises(ValueError, match="No pending action"):
             tracker.record_outcome(out)
 
-    def test_outcome_without_prediction_uses_default(self) -> None:
+    def test_outcome_without_prediction_fails_closed(self) -> None:
         tracker = AARTracker()
         action = create_action_event("trade", "strat1")
         tracker.record_action(action)
 
-        # Skip prediction
         out = Outcome(action_id=action.action_id, actual_pnl=50.0)
-        entry = tracker.record_outcome(out)
+        with pytest.raises(ValueError, match="Missing prediction.*default prediction.*forbidden"):
+            tracker.record_outcome(out)
 
-        assert entry is not None
-        assert entry.prediction.expected_pnl == 0.0  # Default
-        assert entry.prediction.confidence == 0.0  # Default
+        assert tracker.pending_count() == 1
+        assert tracker.entry_count() == 0
 
     def test_get_recent_entries(self) -> None:
         tracker = AARTracker()
@@ -510,6 +511,7 @@ class TestAARTracker:
         for i in range(3):
             action = create_action_event("trade", f"strat{i % 2}", action_id=str(i))
             tracker.record_action(action)
+            tracker.record_prediction(Prediction(action_id=str(i)))
             tracker.record_outcome(Outcome(action_id=str(i)))
 
         strat0_entries = tracker.get_entries_by_strategy("strat0")
@@ -527,6 +529,7 @@ class TestAARTracker:
 
         assert tracker.pending_count() == 3
 
+        tracker.record_prediction(Prediction(action_id="0"))
         tracker.record_outcome(Outcome(action_id="0"))
         assert tracker.pending_count() == 2
 
@@ -545,6 +548,7 @@ class TestAARTracker:
 
         action = create_action_event("trade", "strat")
         tracker.record_action(action)
+        tracker.record_prediction(Prediction(action_id=action.action_id))
         tracker.record_outcome(Outcome(action_id=action.action_id))
 
         tracker.clear()
@@ -648,13 +652,9 @@ class TestAARIntegration:
         for i in range(10):
             action = create_action_event("trade", "good_strat", action_id=f"good-{i}")
             tracker.record_action(action)
-            tracker.record_prediction(
-                Prediction(action_id=action.action_id, expected_pnl=100.0)
-            )
+            tracker.record_prediction(Prediction(action_id=action.action_id, expected_pnl=100.0))
             # Outcome better than expected
-            tracker.record_outcome(
-                Outcome(action_id=action.action_id, actual_pnl=120.0)
-            )
+            tracker.record_outcome(Outcome(action_id=action.action_id, actual_pnl=120.0))
 
         stats = tracker.get_strategy_stats("good_strat")
         assert stats.positive_count == 10
@@ -669,9 +669,7 @@ class TestAARIntegration:
         for i in range(10):
             action = create_action_event("trade", "bad_strat", action_id=f"bad-{i}")
             tracker.record_action(action)
-            tracker.record_prediction(
-                Prediction(action_id=action.action_id, expected_pnl=100.0)
-            )
+            tracker.record_prediction(Prediction(action_id=action.action_id, expected_pnl=100.0))
             # Outcome worse than expected
             tracker.record_outcome(Outcome(action_id=action.action_id, actual_pnl=50.0))
 
@@ -731,9 +729,7 @@ class TestAARSerotoninModulation:
         assert result == 0.0
 
     def test_catastrophic_rate_increases_serotonin(self) -> None:
-        stats = AggregateStats(
-            count=20, mean=-0.1, catastrophic_rate=0.2, negative_count=10
-        )
+        stats = AggregateStats(count=20, mean=-0.1, catastrophic_rate=0.2, negative_count=10)
         config = AARAdaptationConfig()
         result = aar_serotonin_modulation(stats, config)
         assert result > 0
@@ -904,12 +900,8 @@ class TestAARControllerIntegration:
         for i in range(10):
             action = create_action_event("trade", "strat1", action_id=f"pos-{i}")
             tracker.record_action(action)
-            tracker.record_prediction(
-                Prediction(action_id=action.action_id, expected_pnl=100.0)
-            )
-            tracker.record_outcome(
-                Outcome(action_id=action.action_id, actual_pnl=120.0)
-            )
+            tracker.record_prediction(Prediction(action_id=action.action_id, expected_pnl=100.0))
+            tracker.record_outcome(Outcome(action_id=action.action_id, actual_pnl=120.0))
 
         # Get stats and compute adaptation
         stats = tracker.get_strategy_stats("strat1")
@@ -934,9 +926,7 @@ class TestAARControllerIntegration:
         for i in range(10):
             action = create_action_event("trade", "strat2", action_id=f"neg-{i}")
             tracker.record_action(action)
-            tracker.record_prediction(
-                Prediction(action_id=action.action_id, expected_pnl=100.0)
-            )
+            tracker.record_prediction(Prediction(action_id=action.action_id, expected_pnl=100.0))
             tracker.record_outcome(Outcome(action_id=action.action_id, actual_pnl=50.0))
 
         stats = tracker.get_strategy_stats("strat2")

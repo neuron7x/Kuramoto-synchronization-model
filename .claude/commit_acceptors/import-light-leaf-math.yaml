@@ -1,0 +1,44 @@
+id: import-light-leaf-math
+status: ACTIVE
+claim_type: refactor
+promise: >-
+  Leaf numerical modules import without the data/IO heavy stack. core.indicators
+  and observability package __init__ files are made lazy (PEP 562 __getattr__);
+  cryptography (feature_store) and httpx (notifications) are imported lazily at
+  their call sites. Behavior-preserving: re-exports resolve unchanged via
+  __getattr__. Enforced by .importlinter Contract 6
+  (core.indicators does not import core.data.feature_store).
+diff_scope:
+  changed_files:
+  - path: core/indicators/__init__.py
+  - path: core/data/feature_store.py
+  - path: observability/__init__.py
+  - path: observability/notifications.py
+  - path: .claude/commit_acceptors/import-light-leaf-math.yaml
+  forbidden_paths: []
+required_python_symbols: []
+expected_signal: >-
+  In a venv with only numpy/scipy/pandas/networkx,
+  `import core.indicators.temporal_ricci, core.indicators.ricci` exits 0, and
+  import-linter reports all contracts kept (0 broken).
+measurement_command: lint-imports --config .importlinter
+signal_artifact: .importlinter
+falsifier:
+  command: lint-imports --config .importlinter
+  description: >-
+    Must fail if core.indicators regains a static import of
+    core.data.feature_store (or any forbidden cross-layer dependency),
+    re-coupling leaf math to the heavy data/IO stack.
+rollback_command: >-
+  git checkout -- core/indicators/__init__.py core/data/feature_store.py
+  observability/__init__.py observability/notifications.py
+  .claude/commit_acceptors/import-light-leaf-math.yaml
+rollback_verification_command: >-
+  git diff --exit-code core/indicators/__init__.py core/data/feature_store.py
+  observability/__init__.py observability/notifications.py
+  .claude/commit_acceptors/import-light-leaf-math.yaml
+memory_update_type: append
+ledger_path: .claude/commit_acceptors/import-light-leaf-math.yaml
+report_path: .importlinter
+evidence:
+- path: .importlinter

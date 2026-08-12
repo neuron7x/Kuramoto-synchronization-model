@@ -1,0 +1,50 @@
+id: evidence-grade-lineage
+status: ACTIVE
+claim_type: governance
+promise: >-
+  Evidence-grade lineage for PASS artifacts (multi-agent benchmark ranks 3-5,8).
+  A PASS must now pin its environment (env_sha256), fix the exact output it
+  reproduces (output_sha256), and name its responsible agent (agent), and the
+  claim_tier<->falsification_status cross-product must be self-consistent. All
+  rules are PASS/tier-conditional, so the two existing honest non-PASS artifacts
+  (NOT_RUN placeholder, NOT_APPLICABLE instrumented) are unaffected; the
+  fail-closed posture only tightens. tools/provenance/env_digest.py computes the
+  deterministic environment digest so the replay claim is portable.
+diff_scope:
+  changed_files:
+  - path: tools/provenance/env_digest.py
+  - path: tools/provenance/__init__.py
+  - path: tests/tools/test_env_digest.py
+  - path: schemas/research/research_inference_artifact.schema.json
+  - path: scripts/ci/check_research_artifact_truth.py
+  - path: tests/ci/test_research_artifact_truth.py
+  - path: tests/ci/test_claim_artifact_graph.py
+  - path: .claude/commit_acceptors/evidence-grade-lineage.yaml
+  forbidden_paths: []
+required_python_symbols:
+  - "tools/provenance/env_digest.py::env_sha256"
+expected_signal: >-
+  env_digest.env_sha256 is a deterministic 64-hex digest; a PASS artifact missing
+  env_sha256 / output_sha256 / agent is rejected; an INSTRUMENTED or REJECTED tier
+  with an incompatible status is rejected; the two non-PASS artifacts still pass.
+measurement_command: python -m pytest tests/ci/test_research_artifact_truth.py tests/tools/test_env_digest.py -q
+signal_artifact: scripts/ci/check_research_artifact_truth.py
+falsifier:
+  command: python scripts/ci/check_research_artifact_truth.py && python -m pytest tests/tools/test_env_digest.py -q
+  description: >-
+    Must fail if a PASS artifact is admitted without a pinned environment,
+    output digest, or agent attribution, or if the tier<->status matrix stops
+    rejecting an INSTRUMENTED/REJECTED artifact carrying an incompatible status.
+rollback_command: >-
+  git checkout origin/main -- schemas/research/research_inference_artifact.schema.json
+  scripts/ci/check_research_artifact_truth.py tests/ci/test_research_artifact_truth.py
+  tests/ci/test_claim_artifact_graph.py &&
+  git rm -rf tools/provenance tests/tools/test_env_digest.py
+  .claude/commit_acceptors/evidence-grade-lineage.yaml
+rollback_verification_command: >-
+  test ! -f tools/provenance/env_digest.py
+memory_update_type: append
+ledger_path: .claude/commit_acceptors/evidence-grade-lineage.yaml
+report_path: scripts/ci/check_research_artifact_truth.py
+evidence:
+- path: tools/provenance/env_digest.py

@@ -1,0 +1,92 @@
+# Diff-bound commit acceptor for the spectral-radius candidate-score
+# extension to Protocol X-9R.
+#
+# Adds a third opt-in candidate-score method
+# (``spectral_radius_of_coupling``) implementing the Gai-Kapadia
+# (2010) linearised contagion bound: per-snapshot ρ(K) = max
+# |eigenvalue| of the directed exposure matrix. Selectable per-run
+# via ``manifest.config["candidate_score_method"]`` alongside the
+# existing ``trailing_mean_density`` (default) and
+# ``kuramoto_R_per_snapshot``.
+#
+# Also includes a fix to the research-integrity-gate workflow
+# (mypy/ruff/black were invoked but never installed) and a typed
+# rewrite of the shuffled-time-labels permutation so the file
+# type-checks under mypy --strict.
+
+id: x9r-spectral-radius-score
+status: ACTIVE
+claim_type: governance
+promise: >-
+  After this PR lands, ``research.systemic_risk.protocol_x9r``
+  exposes a third opt-in candidate-score method,
+  ``spectral_radius_of_coupling``, computing per-snapshot ρ(K)
+  on the directed exposure matrix. The method is selectable via
+  ``manifest.config["candidate_score_method"]`` and is backward-
+  compatible: callers that don't pass the key get the existing
+  ``trailing_mean_density`` default.
+
+diff_scope:
+  changed_files:
+    - path: ".claude/commit_acceptors/x9r-spectral-radius-score.yaml"
+    - path: "research/systemic_risk/protocol_x9r.py"
+    - path: ".github/workflows/research-integrity-gate.yml"
+  forbidden_paths:
+    - "trading/"
+    - "execution/"
+    - "forecast/"
+    - "policy/"
+    - "core/"
+    - "runtime/"
+    - "application/"
+
+required_python_symbols:
+  - "research/systemic_risk/protocol_x9r.py::_spectral_radius_per_snapshot"
+  - "research/systemic_risk/protocol_x9r.py::_candidate_score"
+  - "research/systemic_risk/protocol_x9r.py::_resolve_candidate_score_method"
+
+expected_signal: >-
+  ``pytest tests/research/systemic_risk/`` reports 583 passed; the
+  pre-existing X-9R suite still passes because the new method is
+  opt-in via manifest config and the synthetic fixtures keep using
+  the default ``trailing_mean_density``.
+
+measurement_command: >-
+  bash -c '
+    mypy --strict research/systemic_risk/protocol_x9r.py && python -m pytest tests/research/systemic_risk/ -q
+  '
+
+signal_artifact: "tmp/x9r_spectral_radius.log"
+
+falsifier:
+  command: |-
+    bash -c '
+      python -c "
+    from research.systemic_risk.protocol_x9r import (
+        _CANDIDATE_SCORE_METHOD_SPECTRAL_RADIUS,
+        _spectral_radius_per_snapshot,
+    )
+    assert _CANDIDATE_SCORE_METHOD_SPECTRAL_RADIUS == 'spectral_radius_of_coupling'
+    assert callable(_spectral_radius_per_snapshot)
+      " 2>/dev/null && exit 1 || exit 0
+    '
+  description: >-
+    Probes the spectral-radius constant + function are exposed at
+    the documented names. Falsifier inverts: it succeeds (exit 0)
+    only when the import or assertion fails, which would mean the
+    extension rolled back.
+
+rollback_command: >-
+  bash -c '
+    git rm -f .claude/commit_acceptors/x9r-spectral-radius-score.yaml
+  '
+
+rollback_verification_command: >-
+  bash -c '
+    test ! -f .claude/commit_acceptors/x9r-spectral-radius-score.yaml
+  '
+
+memory_update_type: append
+ledger_path: ".claude/commit_acceptors/x9r-spectral-radius-score.yaml"
+report_path: "tmp/x9r_spectral_radius.log"
+evidence: []

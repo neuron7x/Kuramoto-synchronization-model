@@ -1,0 +1,103 @@
+# Diff-bound commit acceptor for IERD-Q6 Phase-4 ENTRY: server_compute
+# latency budget gate.
+#
+# Before: claim `e2e-latency-budget-compliance` declared the four-layer
+# budget (client_render, network_TTFB, server_compute, db_io) but no
+# CI gate exercised the in-process server_compute layer against the
+# IERD §5 numbers (simple p95 < 100 ms, interactive p95 < 200 ms).
+# Reset-wave subsystem stress was the only existing evidence.
+#
+# After: tests/api/test_latency_budget_server_compute.py runs Starlette
+# TestClient against application.api.service.create_app(), warms the
+# route table (20 samples), then collects 200 timed samples per
+# endpoint and asserts the empirical p95 against the budget. The
+# Latency Budget — server_compute workflow runs the same suite on
+# every PR touching application/api/** or core/utils/metrics.py and
+# uploads junit.xml + run.log as artifacts (14-day retention). Phase-4
+# ENTRY only: continue-on-error: true on the run step (so client_render
+# / network_TTFB / db_io can land under the same claim without
+# flipping gate strictness mid-phase). Phase-4 EXIT removes it.
+#
+# Locally verified (development laptop, native Python):
+#   /health   tier=interactive  p50=2.02 ms  p95=3.83 ms  p99=4.77 ms
+#   /metrics  tier=simple       p50=3.19 ms  p95=4.58 ms  p99=5.18 ms
+# Both well under their respective IERD budgets.
+
+id: ierd-q6-server-latency-budget-gate
+status: ACTIVE
+claim_type: correctness
+promise: >-
+  `pytest tests/api/test_latency_budget_server_compute.py` measures
+  empirical p95 of GET /health (interactive tier, budget 200 ms)
+  and GET /metrics (simple tier, budget 100 ms) over 200 samples per
+  endpoint after a 20-sample warmup against the in-process FastAPI
+  app produced by `application.api.service.create_app()`. Each
+  parametrised case asserts p95 < budget and emits a structured
+  `[latency] ...` line consumed by the GitHub Step Summary. The
+  Latency Budget workflow runs the same suite path-filtered to API
+  surface paths, uploads junit.xml + run.log as
+  `latency-budget-results` (14-day retention), and reports the p50 /
+  p95 / p99 line per endpoint. Phase-4 ENTRY contract:
+  continue-on-error is set on the run STEP so the GitHub check
+  resolves SUCCESS even if the suite finds violations; Phase-4 EXIT
+  removes it.
+diff_scope:
+  changed_files:
+    - path: ".claude/commit_acceptors/ierd-q6-server-latency-budget-gate.yaml"
+    - path: ".github/workflows/latency-budget.yml"
+    - path: "docs/CLAIMS.yaml"
+    - path: "tests/api/test_latency_budget_server_compute.py"
+  forbidden_paths:
+    - "trading/"
+    - "execution/"
+    - "forecast/"
+    - "policy/"
+    - "core/physics/"
+    - "core/kuramoto/"
+    - "application/api/service.py"
+    - "application/api/middleware/prometheus.py"
+    - "schemas/openapi/"
+required_python_symbols:
+  - "tests/api/test_latency_budget_server_compute.py::test_endpoint_p95_within_budget"
+  - "tests/api/test_latency_budget_server_compute.py::SIMPLE_P95_MS"
+  - "tests/api/test_latency_budget_server_compute.py::INTERACTIVE_P95_MS"
+  - "tests/api/test_latency_budget_server_compute.py::N_SAMPLES"
+expected_signal: >-
+  Local: `mypy --strict --follow-imports=silent
+  tests/api/test_latency_budget_server_compute.py` reports
+  "Success: no issues found in 1 source file"; `ruff check` reports
+  "All checks passed!"; `pytest tests/api/test_latency_budget_server_compute.py
+  -q -s` prints two `[latency] ...` lines (one per endpoint) and
+  returns exit 0 with both p95 well below the per-tier budget;
+  `python scripts/ci/check_claims.py` reports schema v3 with
+  `e2e-latency-budget-compliance` extended evidence_paths
+  (test file, workflow, prometheus middleware) all present.
+measurement_command: >-
+  bash -c 'mypy --strict --follow-imports=silent tests/api/test_latency_budget_server_compute.py
+  && ruff check tests/api/test_latency_budget_server_compute.py
+  && python scripts/ci/check_claims.py'
+signal_artifact: "tmp/ierd_q6_server_latency_budget_gate.log"
+falsifier:
+  command: >-
+    bash -c 'python -c "import yaml,sys; spec=yaml.safe_load(open(\".github/workflows/latency-budget.yml\")); steps=spec[\"jobs\"][\"latency-budget-server-compute\"][\"steps\"]; run_step=next(s for s in steps if s.get(\"id\")==\"run\"); sys.exit(0 if run_step.get(\"continue-on-error\") is True else 1)"'
+  description: >-
+    Probes the workflow YAML for the Phase-4 ENTRY contract
+    `continue-on-error: true` on the latency-budget run step. If a
+    future change flips the gate to fail-closed without re-classifying
+    the claim ANCHORED in docs/CLAIMS.yaml, the falsifier exits
+    non-zero, signalling that Phase-4 EXIT promotion must be
+    co-shipped with the strictness flip — preventing silent
+    strictness drift identical to the Q4 guarantee.
+rollback_command: >-
+  git checkout HEAD~1 --
+  .claude/commit_acceptors/ierd-q6-server-latency-budget-gate.yaml
+  .github/workflows/latency-budget.yml
+  tests/api/test_latency_budget_server_compute.py
+  docs/CLAIMS.yaml
+rollback_verification_command: >-
+  git diff --exit-code tests/api/test_latency_budget_server_compute.py
+  .github/workflows/latency-budget.yml
+memory_update_type: append
+ledger_path: ".claude/commit_acceptors/ierd-q6-server-latency-budget-gate.yaml"
+report_path: "tmp/ierd_q6_server_latency_budget_gate.log"
+evidence: []

@@ -1,0 +1,67 @@
+# Diff-bound acceptor: enforce INV-FE2 (T ≥ 0) in the free-energy trading gate.
+#
+# INV-FE2 requires the free-energy components to be non-negative (U≥0, T≥0,
+# S_q≥0). FreeEnergyTradingGate.check accepted a caller-supplied negative
+# T_LOB silently, and compute_T_LOB squared a negative realized_volatility and
+# floored a negative-mass kinetic temperature to 1e-6 — masking unphysical
+# input. A negative temperature inverts the ΔF entropy term. This makes the
+# temperature path fail closed.
+
+id: free-energy-fe2-temperature-guard
+status: ACTIVE
+claim_type: correctness
+promise: >-
+  FreeEnergyTradingGate now enforces INV-FE2 (T ≥ 0) on the temperature path:
+  check raises on a non-finite or negative T_LOB (whether passed or computed);
+  compute_T_LOB rejects a negative/non-finite realized_volatility and negative
+  or non-finite order-book masses instead of squaring or flooring them. The
+  1e-6 kinetic-temperature floor is now annotated as the INV-FE2 physical
+  lower bound. No invariant added or changed; five reproduction tests added
+  (4 fail-closed + 1 regression); the STRICT INV-FE2 component suite (T13)
+  stays green.
+diff_scope:
+  changed_files:
+    - path: ".claude/commit_acceptors/free-energy-fe2-temperature-guard.yaml"
+    - path: "core/physics/free_energy_trading_gate.py"
+    - path: "tests/unit/physics/test_T6_free_energy_gate.py"
+  forbidden_paths:
+    - "trading/"
+    - "execution/"
+    - "forecast/"
+    - "policy/"
+required_python_symbols:
+  - "FreeEnergyTradingGate"
+expected_signal: >-
+  All tests in tests/unit/physics/test_T6_free_energy_gate.py pass, including
+  the new TestFE2TemperatureNonNegative class (4 fail-closed + 1 regression);
+  the STRICT INV-FE2 component suites (test_T13_free_energy_components.py,
+  test_T13_free_energy_monotonicity.py) stay green and validator-clean; mypy
+  --strict, ruff, black, physics-code-audit clean on the changed module.
+  Reproduced before/after: check(..., T_LOB=-5.0) was accepted (decision carried
+  T_LOB=-5.0) -> now raises ValueError; compute_T_LOB(order_book_sizes=[-5,-5])
+  was floored to 1e-6 -> now raises ValueError.
+measurement_command: >-
+  PYTHONPATH=. python -m pytest tests/unit/physics/test_T6_free_energy_gate.py
+  -k FE2 -v
+signal_artifact: "tmp/free_energy_fe2_pytest.log"
+falsifier:
+  command: >-
+    PYTHONPATH=. python -m pytest tests/unit/physics/test_T6_free_energy_gate.py
+    -v -k "FE2"
+  description: >-
+    Filters to the INV-FE2 temperature guards: a negative/non-finite T_LOB, a
+    negative realized_volatility, and negative order-book masses must each
+    raise, plus a regression test confirming a valid non-negative T_LOB passes
+    through unchanged. Reverting any guard re-admits an unphysical negative
+    temperature and fails the corresponding test.
+rollback_command: >-
+  git checkout HEAD~1 --
+  core/physics/free_energy_trading_gate.py
+  tests/unit/physics/test_T6_free_energy_gate.py
+  .claude/commit_acceptors/free-energy-fe2-temperature-guard.yaml
+rollback_verification_command: >-
+  git diff --exit-code core/physics/free_energy_trading_gate.py
+memory_update_type: none
+ledger_path: ".claude/commit_acceptors/free-energy-fe2-temperature-guard.yaml"
+report_path: "docs/reports/diff_bound_commit_acceptor_layer.md"
+evidence: []

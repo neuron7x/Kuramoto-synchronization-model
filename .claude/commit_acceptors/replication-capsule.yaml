@@ -1,0 +1,101 @@
+# Diff-bound commit acceptor for the replication capsule (pillar 6).
+#
+# Adds the comparator that operationalises pillar 6 of the Canonical
+# Seven: a frozen, fail-closed function that compares two RunManifest
+# records (primary vs rerun) and returns a ReplicationOutcome whose
+# `matched` field is the contract surface consumed by
+# death_conditions.trigger_replication_mismatch (KILL on divergence).
+#
+# Pure-function, no I/O, mypy --strict / ruff / black clean.
+#
+# Three pre-registered tolerance classes:
+#   - bit_identical              tolerance = 0.0
+#   - deterministic_with_drift   tolerance = 1e-12
+#   - stochastic_seeded          tolerance = caller-supplied (REQUIRED)
+#
+# Six-stage fail-closed pipeline (first-failure wins for `reason`):
+#   1. tolerance >= 0
+#   2. primary_metric finite
+#   3. secondary_metric finite
+#   4. config_hash match
+#   5. seed match
+#   6. abs(primary - secondary) <= tolerance
+#
+# Locally verified:
+#   * pytest tests/research/systemic_risk/test_replication_capsule.py: 17/17 pass
+#   * mypy --strict on capsule + test file: 0 errors
+#   * ruff + black on changed files: clean
+
+id: replication-capsule
+status: ACTIVE
+claim_type: governance
+promise: >-
+  After this PR lands, ``research.systemic_risk`` exposes
+  ``compare_run_outputs`` plus ``ReplicationOutcome``,
+  ``ReplicationToleranceClass``, ``MismatchReason``, and
+  ``manifest_replication_sha``. Frozen-dataclass outcome's ``matched``
+  field is structurally compatible with the existing
+  ``ReplicationResultLike`` protocol consumed by
+  ``trigger_replication_mismatch``.
+
+diff_scope:
+  changed_files:
+    - path: ".claude/commit_acceptors/replication-capsule.yaml"
+    - path: "research/systemic_risk/__init__.py"
+    - path: "research/systemic_risk/replication_capsule.py"
+    - path: "tests/research/systemic_risk/test_replication_capsule.py"
+  forbidden_paths:
+    - "trading/"
+    - "execution/"
+    - "forecast/"
+    - "policy/"
+    - "core/"
+    - "runtime/"
+    - "application/"
+
+required_python_symbols:
+  - "research/systemic_risk/replication_capsule.py::compare_run_outputs"
+  - "research/systemic_risk/replication_capsule.py::ReplicationOutcome"
+  - "research/systemic_risk/replication_capsule.py::manifest_replication_sha"
+  - "tests/research/systemic_risk/test_replication_capsule.py::TestProtocolCompatibility"
+
+expected_signal: >-
+  ``pytest tests/research/systemic_risk/test_replication_capsule.py -q``
+  reports 17 passed; before this PR the same command fails with
+  ModuleNotFoundError on ``research.systemic_risk.replication_capsule``.
+
+measurement_command: >-
+  bash -c '
+    mypy --strict
+      research/systemic_risk/replication_capsule.py
+      tests/research/systemic_risk/test_replication_capsule.py && python -m pytest tests/research/systemic_risk/test_replication_capsule.py -q
+  '
+
+signal_artifact: "tmp/replication_capsule.log"
+
+falsifier:
+  command: |-
+    bash -c '
+      python -c "from research.systemic_risk import compare_run_outputs, ReplicationOutcome; assert compare_run_outputs is not None and ReplicationOutcome is not None" 2>/dev/null && exit 1 || exit 0
+    '
+  description: >-
+    Probes that the capsule comparator and outcome are exposed on the
+    public package surface. The falsifier inverts: it succeeds (exit 0)
+    only when one of the imports fails, which would mean pillar 6
+    rolled back.
+
+rollback_command: >-
+  bash -c '
+    git rm -f
+      research/systemic_risk/replication_capsule.py
+      tests/research/systemic_risk/test_replication_capsule.py
+      .claude/commit_acceptors/replication-capsule.yaml && git checkout HEAD~1 -- research/systemic_risk/__init__.py
+  '
+
+rollback_verification_command: |-
+  python -c "import importlib.util,importlib,sys; _p=lambda m: all(importlib.util.find_spec('.'.join(m.split('.')[:i+1])) for i in range(len(m.split('.')))); present=_p('research.systemic_risk') and hasattr(importlib.import_module('research.systemic_risk'),'compare_run_outputs'); sys.exit(1 if present else 0)"
+
+memory_update_type: append
+ledger_path: ".claude/commit_acceptors/replication-capsule.yaml"
+report_path: "tmp/replication_capsule.log"
+evidence: []

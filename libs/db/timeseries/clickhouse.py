@@ -1,3 +1,5 @@
+# Copyright (c) 2023-2026 Yaroslav Vasylenko (neuron7xLab)
+# SPDX-License-Identifier: MIT
 """ClickHouse integration helpers for market data time-series."""
 
 from __future__ import annotations
@@ -126,18 +128,14 @@ class ClickHouseSchemaManager:
         columns = ["bucket DateTime64(6, 'UTC')"]
         columns.extend(column.ddl() for column in self.schema.dimensions)
         columns.extend(
-            f"{aggregation.alias} {aggregation.data_type}"
-            for aggregation in rollup.aggregations
+            f"{aggregation.alias} {aggregation.data_type}" for aggregation in rollup.aggregations
         )
         order_by_columns = [
             "bucket",
             *(dimension.name for dimension in self.schema.dimensions),
         ]
         ttl_horizon = (
-            self.retention.drop
-            or self.retention.cold
-            or self.retention.warm
-            or self.retention.hot
+            self.retention.drop or self.retention.cold or self.retention.warm or self.retention.hot
         )
         parts = [
             f"CREATE TABLE IF NOT EXISTS {target}",
@@ -267,15 +265,11 @@ class ClickHouseQueryBuilder:
             if rollup is None
             else self._qualified_rollup_name(rollup.name)
         )
-        timeframe = _format_interval(
-            rollup.interval if rollup else timedelta(minutes=1)
-        )
+        timeframe = _format_interval(rollup.interval if rollup else timedelta(minutes=1))
         dims = [dimension.name for dimension in self._schema.dimensions]
         filters = filters or {}
         prewhere_clauses = [f"{key} = %({key})s" for key in filters]
-        prewhere = (
-            "\nPREWHERE " + " AND ".join(prewhere_clauses) if prewhere_clauses else ""
-        )
+        prewhere = "\nPREWHERE " + " AND ".join(prewhere_clauses) if prewhere_clauses else ""
         timestamp_column = self._schema.timestamp_column
         price_column = self._resolve_measure("price", "last_price", "close")
         volume_column = self._try_resolve_measure("volume", "qty", "quantity")
@@ -300,8 +294,7 @@ class ClickHouseQueryBuilder:
 
         query = ["SELECT", ",\n".join(select_lines), f"FROM {table}{prewhere}"]
         query.append(
-            "WHERE "
-            f"{timestamp_column} >= %(start_ts)s AND {timestamp_column} < %(end_ts)s"
+            f"WHERE {timestamp_column} >= %(start_ts)s AND {timestamp_column} < %(end_ts)s"
         )
         query.append(f"GROUP BY {group_by_clause}")
         query.append("ORDER BY bucket ASC")
@@ -352,8 +345,7 @@ class ClickHouseBackupPlanner:
 
     def full_backup_command(self) -> str:
         return (
-            "clickhouse-backup create --tables "
-            f"{self.schema.fully_qualified_name} market-data-full"
+            f"clickhouse-backup create --tables {self.schema.fully_qualified_name} market-data-full"
         )
 
     def incremental_backup_command(self) -> str:

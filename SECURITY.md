@@ -1,6 +1,6 @@
 # Security Policy
 
-> ⚠️ **No External Audit**: TradePulse has not undergone external security audit, penetration testing,
+> ⚠️ **No External Audit**: GeoSync has not undergone external security audit, penetration testing,
 > SOC 2 examination, or formal compliance certification. All security claims refer to design patterns only.
 >
 > 📊 **Full claims mapping**: [docs/METRICS_CONTRACT.md](docs/METRICS_CONTRACT.md)
@@ -24,14 +24,14 @@ For a cross-functional "digital risk" playbook that consolidates confidentiality
 **Compliance Alignment**: Controls designed to align with SEC, FINRA, EU AI Act, SOC 2, ISO 27001 (status: `design_aligned`, no external audit)
 
 ### Core Function
-TACL treats the entire TradePulse topology as a thermodynamic system, measuring free energy F (composite of latency, coherency degradation, resource utilization). Upon detecting stress or inefficiency, it evolutionarily reconfigures inter-service bonds using genetic algorithms (GA), reinforcement learning (RL), and protocol activators (LinkActivator) to perform zero-downtime hot-swaps between communication protocols (RDMA, CRDT, shared memory, gRPC, gossip).
+TACL treats the entire GeoSync topology as a thermodynamic system, measuring free energy F (composite of latency, coherency degradation, resource utilization). Upon detecting stress or inefficiency, it evolutionarily reconfigures inter-service bonds using genetic algorithms (GA), reinforcement learning (RL), and protocol activators (LinkActivator) to perform zero-downtime hot-swaps between communication protocols (RDMA, CRDT, shared memory, gRPC, gossip).
 
 ### Safety Guarantee
-**Monotonic Free Energy Descent Constraint**: The controller automatically blocks any mutation that would increase free energy beyond ε_spike and demands an authorised human override before the change can proceed. Every deviation is appended to `/var/log/tradepulse/thermo_audit.jsonl`, with rotation and archival designed for ≥7 years of retention (configuration present, production validation pending).
+**Monotonic Free Energy Descent Constraint**: The controller automatically blocks any mutation that would increase free energy beyond ε_spike and demands an authorised human override before the change can proceed. Every deviation is appended to `/var/log/geosync/thermo_audit.jsonl`, with rotation and archival designed for ≥7 years of retention (configuration present, production validation pending).
 
 ### Audit & Compliance
 - Telemetry: Real-time metrics via REST API
-- Audit Trail: `/var/log/tradepulse/thermo_audit.jsonl` with automated rotation (designed for 7-year retention)
+- Audit Trail: `/var/log/geosync/thermo_audit.jsonl` with automated rotation (designed for 7-year retention)
 - CI Gates: Automated safety checks in deployment pipeline
 - Human Oversight: Hardware circuit breaker halts topology evolution until an authorised manual override clears the halt state
 
@@ -49,7 +49,7 @@ TACL treats the entire TradePulse topology as a thermodynamic system, measuring 
 - `Jinja2` - CVE-2024-34064 (XSS vulnerability)
 - `PyJWT` - CVE-2022-29217 (key confusion attack)
 
-**Resolution**: Enhanced security constraints now cover ALL security-critical packages with exact version pinning. See [SECURITY_CONSTRAINT_POLICY.md](SECURITY_CONSTRAINT_POLICY.md) for complete details.
+**Resolution**: Enhanced security constraints now cover ALL security-critical packages with exact version pinning. See [SECURITY_CONSTRAINT_POLICY.md](docs/security/dependency_policy.md) for complete details.
 
 ### Mandatory Constraint Enforcement
 
@@ -79,8 +79,8 @@ We actively support the following versions with security updates:
 
 We strongly encourage responsible disclosure and commit to working with researchers to promptly address reported issues.
 
-- **Primary contact**: `security@tradepulse.local`
-- **Backup contact**: Direct message the maintainers via the [GitHub Security Advisory](https://github.com/neuron7x/TradePulse/security/advisories/new) form.
+- **Primary contact**: `security@geosync.local`
+- **Backup contact**: Direct message the maintainers via the [GitHub Security Advisory](https://github.com/neuron7xLab/GeoSync/security/advisories/new) form.
 - **SLA overview**:
   - Acknowledge receipt within **48 hours**.
   - Provide an initial assessment within **5 business days**.
@@ -89,7 +89,7 @@ We strongly encourage responsible disclosure and commit to working with research
 
 ### Disclosure Process
 
-1. **Report**: Send details to **security@tradepulse.local** or via [GitHub Security Advisories](https://github.com/neuron7x/TradePulse/security/advisories/new)
+1. **Report**: Send details to **security@geosync.local** or via [GitHub Security Advisories](https://github.com/neuron7xLab/GeoSync/security/advisories/new)
    - Include description of vulnerability
    - Steps to reproduce
    - Potential impact
@@ -154,7 +154,7 @@ We currently do not offer monetary rewards for security findings. However, we re
 
 ### Hall of Fame
 
-We maintain a [Security Hall of Fame](SECURITY_HALL_OF_FAME.md) recognizing security researchers who have responsibly disclosed vulnerabilities.
+We maintain a [Security Hall of Fame](docs/security/SECURITY_FRAMEWORK_INDEX.md) recognizing security researchers who have responsibly disclosed vulnerabilities.
 
 ---
 
@@ -396,7 +396,7 @@ Container images built from the root `Dockerfile` are scanned on every push, pul
 #### 7. TLS regression scanning
 ```bash
 # Validate edge TLS posture
-poetry run sslyze edge.tradepulse.local --regular
+poetry run sslyze edge.geosync.local --regular
 ```
 The scheduled job exits non-zero if protocols below TLS 1.2 or non-approved cipher suites are presented.
 
@@ -561,7 +561,7 @@ In case of a security incident:
 
 1. **Contain**: Isolate affected systems
 2. **Assess**: Determine scope and impact
-3. **Notify**: Contact security@tradepulse.local
+3. **Notify**: Contact security@geosync.local
 4. **Remediate**: Apply fixes and patches
 5. **Review**: Post-mortem and lessons learned
 6. **Disclose**: Responsible disclosure to users
@@ -571,7 +571,7 @@ In case of a security incident:
 ## Compliance Controls Status
 
 > **⚠️ IMPORTANT DISCLAIMER**: This table documents internal design intentions only.
-> TradePulse has **NOT** undergone external security audit, penetration testing,
+> GeoSync has **NOT** undergone external security audit, penetration testing,
 > SOC 2 examination, or formal compliance certification.
 
 All controls below have status `design_aligned` unless otherwise noted. See [docs/METRICS_CONTRACT.md](docs/METRICS_CONTRACT.md) for status definitions.
@@ -593,7 +593,7 @@ All controls below have status `design_aligned` unless otherwise noted. See [doc
 
 ### What This Table Does NOT Mean
 
-- ❌ Does NOT mean TradePulse is "compliant" with any standard
+- ❌ Does NOT mean GeoSync is "compliant" with any standard
 - ❌ Does NOT replace the need for a proper security audit
 - ❌ Does NOT constitute a security guarantee
 - ❌ Does NOT imply readiness for production use with sensitive data
@@ -665,8 +665,8 @@ review.
 
 ## Contact
 
-- **Security Issues**: security@tradepulse.local
-- **General Issues**: [GitHub Issues](https://github.com/neuron7x/TradePulse/issues)
+- **Security Issues**: security@geosync.local
+- **General Issues**: [GitHub Issues](https://github.com/neuron7xLab/GeoSync/issues)
 
 ---
 

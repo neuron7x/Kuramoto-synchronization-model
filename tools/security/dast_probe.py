@@ -1,4 +1,6 @@
-"""Dynamic application security smoke tests for the TradePulse API."""
+# Copyright (c) 2023-2026 Yaroslav Vasylenko (neuron7xLab)
+# SPDX-License-Identifier: MIT
+"""Dynamic application security smoke tests for the GeoSync API."""
 
 from __future__ import annotations
 
@@ -50,7 +52,7 @@ def _parse_args(argv: Sequence[str]) -> argparse.Namespace:
     )
     parser.add_argument(
         "--host-header",
-        default="attacker.tradepulse.invalid",
+        default="attacker.geosync.invalid",
         help="Host header used to verify trusted host middleware.",
     )
     return parser.parse_args(argv)
@@ -82,7 +84,7 @@ def _silence_expected_warnings() -> None:
 
 
 def _build_silent_logger() -> logging.Logger:
-    logger = logging.getLogger("tradepulse.audit.dast")
+    logger = logging.getLogger("geosync.audit.dast")
     logger.handlers = []
     logger.addHandler(logging.NullHandler())
     logger.setLevel(logging.CRITICAL)
@@ -141,14 +143,10 @@ async def _check_health(client: httpx.AsyncClient, report: dict[str, Any]) -> No
         raise AssertionError("Risk manager metrics missing kill_switch_engaged flag")
     cache_control = response.headers.get("cache-control", "")
     if not cache_control.startswith("private"):
-        raise AssertionError(
-            "Cache-Control header should be private for health endpoint"
-        )
+        raise AssertionError("Cache-Control header should be private for health endpoint")
 
 
-async def _check_unauthorised_features(
-    client: httpx.AsyncClient, report: dict[str, Any]
-) -> None:
+async def _check_unauthorised_features(client: httpx.AsyncClient, report: dict[str, Any]) -> None:
     now = datetime.now(timezone.utc).isoformat()
     payload = {
         "symbol": "BTC-USD",
@@ -169,9 +167,7 @@ async def _check_unauthorised_features(
         "body": response.json(),
     }
     if response.status_code != 401:
-        raise AssertionError(
-            "Unauthenticated feature request must be rejected with 401"
-        )
+        raise AssertionError("Unauthenticated feature request must be rejected with 401")
     error = response.json().get("error", {})
     if error.get("code") != "ERR_AUTH_REQUIRED":
         raise AssertionError("Unexpected error code for unauthorised feature request")
@@ -186,15 +182,13 @@ async def _check_trusted_host(
         "body": response.text,
     }
     if response.status_code != 400:
-        raise AssertionError(
-            "Requests with an untrusted host header should be rejected"
-        )
+        raise AssertionError("Requests with an untrusted host header should be rejected")
 
 
 async def _run_checks(host_header: str) -> dict[str, Any]:
     with _suppress_audit_logging():
         app = _create_app()
-    audit_logger = logging.getLogger("tradepulse.audit")
+    audit_logger = logging.getLogger("geosync.audit")
     audit_logger.handlers = [logging.NullHandler()]
     audit_logger.propagate = False
     audit_logger.disabled = True
@@ -239,9 +233,7 @@ def main(argv: Sequence[str] | None = None) -> int:
         print(f"DAST checks failed: {exc}")
         return 1
 
-    report_path.write_text(
-        json.dumps(report, indent=2, sort_keys=True) + "\n", encoding="utf-8"
-    )
+    report_path.write_text(json.dumps(report, indent=2, sort_keys=True) + "\n", encoding="utf-8")
     print("DAST checks passed:", json.dumps(report, indent=2, sort_keys=True))
     return 0
 

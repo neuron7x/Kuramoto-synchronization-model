@@ -1,8 +1,10 @@
-"""Adapters for integrating with existing TradePulse orchestration systems.
+# Copyright (c) 2023-2026 Yaroslav Vasylenko (neuron7xLab)
+# SPDX-License-Identifier: MIT
+"""Adapters for integrating with existing GeoSync orchestration systems.
 
 This module provides adapter classes that bridge the Architecture Integrator
-with existing orchestration components like TradePulseSystem and
-TradePulseOrchestrator.
+with existing orchestration components like GeoSyncSystem and
+GeoSyncOrchestrator.
 """
 
 from __future__ import annotations
@@ -12,37 +14,37 @@ from typing import TYPE_CHECKING
 from core.architecture_integrator.component import ComponentHealth, ComponentStatus
 
 if TYPE_CHECKING:
-    from application.system import TradePulseSystem
-    from application.system_orchestrator import TradePulseOrchestrator
+    from application.system import GeoSyncSystem
+    from application.system_orchestrator import GeoSyncOrchestrator
 
 
-class TradePulseSystemAdapter:
-    """Adapter for TradePulseSystem to work with Architecture Integrator."""
+class GeoSyncSystemAdapter:
+    """Adapter for GeoSyncSystem to work with Architecture Integrator."""
 
-    def __init__(self, system: TradePulseSystem) -> None:
-        """Initialize adapter with a TradePulseSystem instance.
+    def __init__(self, system: GeoSyncSystem) -> None:
+        """Initialize adapter with a GeoSyncSystem instance.
 
         Args:
-            system: TradePulseSystem instance to adapt
+            system: GeoSyncSystem instance to adapt
         """
         self._system = system
         self._initialized = False
         self._started = False
 
     def initialize(self) -> None:
-        """Initialize the TradePulse system."""
-        # TradePulseSystem is initialized on construction
+        """Initialize the GeoSync system."""
+        # GeoSyncSystem is initialized on construction
         self._initialized = True
 
     def start(self) -> None:
-        """Start the TradePulse system services."""
+        """Start the GeoSync system services."""
         # Ensure live loop is initialized if needed
         if hasattr(self._system, "ensure_live_loop"):
             self._system.ensure_live_loop()
         self._started = True
 
     def stop(self) -> None:
-        """Stop the TradePulse system services."""
+        """Stop the GeoSync system services."""
         # Stop live loop if it exists
         if hasattr(self._system, "live_loop") and self._system.live_loop:
             # Live loop cleanup would go here
@@ -50,7 +52,7 @@ class TradePulseSystemAdapter:
         self._started = False
 
     def health_check(self) -> ComponentHealth:
-        """Check health of the TradePulse system.
+        """Check health of the GeoSync system.
 
         Returns:
             ComponentHealth with system status
@@ -92,19 +94,19 @@ class TradePulseSystemAdapter:
         )
 
     @property
-    def system(self) -> TradePulseSystem:
-        """Access the underlying TradePulseSystem."""
+    def system(self) -> GeoSyncSystem:
+        """Access the underlying GeoSyncSystem."""
         return self._system
 
 
-class TradePulseOrchestratorAdapter:
-    """Adapter for TradePulseOrchestrator to work with Architecture Integrator."""
+class GeoSyncOrchestratorAdapter:
+    """Adapter for GeoSyncOrchestrator to work with Architecture Integrator."""
 
-    def __init__(self, orchestrator: TradePulseOrchestrator) -> None:
-        """Initialize adapter with a TradePulseOrchestrator instance.
+    def __init__(self, orchestrator: GeoSyncOrchestrator) -> None:
+        """Initialize adapter with a GeoSyncOrchestrator instance.
 
         Args:
-            orchestrator: TradePulseOrchestrator instance to adapt
+            orchestrator: GeoSyncOrchestrator instance to adapt
         """
         self._orchestrator = orchestrator
         self._initialized = False
@@ -175,34 +177,34 @@ class TradePulseOrchestratorAdapter:
         )
 
     @property
-    def orchestrator(self) -> TradePulseOrchestrator:
-        """Access the underlying TradePulseOrchestrator."""
+    def orchestrator(self) -> GeoSyncOrchestrator:
+        """Access the underlying GeoSyncOrchestrator."""
         return self._orchestrator
 
 
 def create_system_component_adapter(
-    system: TradePulseSystem,
-) -> TradePulseSystemAdapter:
-    """Create an adapter for TradePulseSystem.
+    system: GeoSyncSystem,
+) -> GeoSyncSystemAdapter:
+    """Create an adapter for GeoSyncSystem.
 
     Args:
-        system: TradePulseSystem instance to adapt
+        system: GeoSyncSystem instance to adapt
 
     Returns:
         Adapter that implements component protocol
     """
-    return TradePulseSystemAdapter(system)
+    return GeoSyncSystemAdapter(system)
 
 
 def create_orchestrator_component_adapter(
-    orchestrator: TradePulseOrchestrator,
-) -> TradePulseOrchestratorAdapter:
-    """Create an adapter for TradePulseOrchestrator.
+    orchestrator: GeoSyncOrchestrator,
+) -> GeoSyncOrchestratorAdapter:
+    """Create an adapter for GeoSyncOrchestrator.
 
     Args:
-        orchestrator: TradePulseOrchestrator instance to adapt
+        orchestrator: GeoSyncOrchestrator instance to adapt
 
     Returns:
         Adapter that implements component protocol
     """
-    return TradePulseOrchestratorAdapter(orchestrator)
+    return GeoSyncOrchestratorAdapter(orchestrator)

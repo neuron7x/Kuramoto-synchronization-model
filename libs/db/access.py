@@ -1,3 +1,5 @@
+# Copyright (c) 2023-2026 Yaroslav Vasylenko (neuron7xLab)
+# SPDX-License-Identifier: MIT
 """Generic data access layer for relational databases.
 
 This module provides a small abstraction for executing SQL queries in a

@@ -1,0 +1,100 @@
+name: RVG Repository Verification Gate
+
+# BOOTSTRAP POSTURE (audit/RVG_PROTOCOL.md P1-4, Option B).
+# This job proves INSTRUMENT INTEGRITY, not a repository PASS verdict. The full
+# repo cannot yet meet the RVG thresholds, so the verdict may be FAIL — but the
+# verdict artifact must be sound: schema-valid, arithmetic-recomputed, hash-bound
+# to real files, and free of placeholder evidence. `rvg_assert_verdict.py
+# --mode bootstrap` is the single, explicit blocking gate. To flip this to an
+# enforcing gate later, switch that step to `--mode enforce` (verdict must PASS
+# and mutation must be a real run).
+
+on:
+  pull_request:
+  push:
+    branches: [main]
+  workflow_dispatch:
+
+concurrency:
+  group: rvg-${{ github.ref }}
+  cancel-in-progress: true
+
+permissions:
+  contents: read
+
+jobs:
+  rvg:
+    name: RVG Bootstrap Audit Report (instrument integrity)
+    runs-on: ubuntu-latest
+    timeout-minutes: 30
+    steps:
+      - uses: actions/checkout@9c091bb21b7c1c1d1991bb908d89e4e9dddfe3e0 # v4
+
+      - uses: actions/setup-python@a309ff8b426b58ec0e2a45f0f869d46889d02405 # v5
+        with:
+          python-version: "3.11"
+
+      - name: Install dev deps
+        run: |
+          python -m pip install --upgrade pip
+          pip install -e ".[dev]" || pip install \
+            pytest pytest-cov coverage ruff mypy mutmut cyclonedx-bom jsonschema
+          # No RVG evidence step may silently degrade because a tool is missing:
+          # pin the auditor + SBOM generator explicitly (fail-closed downstream).
+          pip install pip-audit cyclonedx-bom jsonschema
+
+      # BLOCKING: the harness must prove itself before its verdict means anything.
+      - name: RVG self-verification (harness proves itself)
+        run: python -m pytest -o addopts= tests/tools/test_rvg_audit.py tests/tools/test_rvg_artifact_verifier.py -q
+
+      # Compute + publish the verdict. Mutation runs in BOOTSTRAP mode: explicit,
+      # non-enforcing evidence (no fabricated score). The verdict may surface FAIL
+      # (coverage/threshold gaps); that is reported, not the job's pass/fail
+      # signal — the assert step below decides. `make rvg` exits non-zero on a
+      # FAIL verdict, so this step is allowed to continue past it.
+      - name: RVG audit (verdict reported)
+        continue-on-error: true
+        run: make rvg RVG_MUTATION_MODE=bootstrap
+
+      # BLOCKING GATE: prove the instrument produced a SOUND, hash-bound,
+      # schema-valid, recompute-checked, placeholder-free verdict. A FAIL verdict
+      # is permitted in bootstrap mode; an unsound or placeholder artifact is not.
+      - name: Assert verdict (bootstrap — instrument integrity is blocking)
+        run: python tools/rvg_assert_verdict.py artifacts/rvg/RVG_VERDICT.json --mode bootstrap
+
+      # BLOCKING: determinism — a second run must be byte-identical modulo the
+      # timestamp/commit/python-version fields.
+      - name: Assert verdict reproducibility
+        run: |
+          cp artifacts/rvg/RVG_VERDICT.json /tmp/rvg_run1.json
+          make rvg-mutation rvg-verify RVG_MUTATION_MODE=bootstrap || true
+          python - <<'PY'
+          import json, sys
+          sys.path.insert(0, "tools")
+          import rvg_verify_artifacts as v
+          a = json.load(open("/tmp/rvg_run1.json"))
+          b = json.load(open("artifacts/rvg/RVG_VERDICT.json"))
+          diffs = v.diff_reproducibility(a, b)
+          if diffs:
+              print(f"NON-DETERMINISTIC verdict fields: {diffs}")
+              sys.exit(1)
+          print("RVG verdict reproducible ✓")
+          PY
+
+      - name: Publish verdict to job summary
+        if: always()
+        run: |
+          if [ -f artifacts/rvg/RVG_VERDICT.md ]; then
+            {
+              echo "> **RVG bootstrap posture:** instrument integrity PASS; repository verdict below is REPORTED, not enforced."
+              echo ""
+              cat artifacts/rvg/RVG_VERDICT.md
+            } >> "$GITHUB_STEP_SUMMARY"
+          fi
+
+      - name: Upload audit artifacts
+        if: always()
+        uses: actions/upload-artifact@043fb46d1a93c77aae656e7c1c64a875d1fc6a0a # v4
+        with:
+          name: rvg-audit-artifacts
+          path: artifacts/rvg/

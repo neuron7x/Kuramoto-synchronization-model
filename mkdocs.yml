@@ -1,11 +1,11 @@
-# SPDX-License-Identifier: LicenseRef-TradePulse-Proprietary
-site_name: TradePulse
+# SPDX-License-Identifier: MIT
+site_name: GeoSync
 site_description: Advanced algorithmic trading framework with geometric market indicators
-site_author: TradePulse Contributors
-site_url: https://tradepulse.github.io
+site_author: GeoSync Contributors
+site_url: https://geosync.github.io
 
-repo_name: neuron7x/TradePulse
-repo_url: https://github.com/neuron7x/TradePulse
+repo_name: neuron7xLab/GeoSync
+repo_url: https://github.com/neuron7xLab/GeoSync
 
 theme:
   name: material
@@ -61,7 +61,7 @@ nav:
       - FPM-A Framework: FPM-A.md
       - NeuroEcon Package: neuroecon.md
   - Developer Guides:
-      - Extending TradePulse: extending.md
+      - Extending GeoSync: extending.md
       - Integration API: integration-api.md
       - Configuration: configuration.md
       - Developer Productivity Program: developer_productivity_program.md
@@ -154,9 +154,9 @@ plugins:
 extra:
   social:
     - icon: fontawesome/brands/github
-      link: https://github.com/neuron7x/TradePulse
+      link: https://github.com/neuron7xLab/GeoSync
     - icon: fontawesome/brands/python
-      link: https://pypi.org/project/tradepulse/
+      link: https://pypi.org/project/geosync/
   version:
     provider: mike
 
@@ -166,4 +166,4 @@ extra_css:
 extra_javascript:
   - javascripts/animations.js
 
-copyright: Copyright &copy; 2024 TradePulse Contributors
+copyright: Copyright &copy; 2024 GeoSync Contributors

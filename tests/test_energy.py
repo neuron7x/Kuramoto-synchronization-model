@@ -1,3 +1,5 @@
+# Copyright (c) 2023-2026 Yaroslav Vasylenko (neuron7xLab)
+# SPDX-License-Identifier: MIT
 import logging
 import time
 import types
@@ -33,9 +35,7 @@ def test_dFdt_is_small_under_controller():
     graph.add_node("risk", cpu_norm=0.5)
     graph.add_node("broker", cpu_norm=0.3)
 
-    graph.add_edge(
-        "ingest", "matcher", type="covalent", latency_norm=0.4, coherency=0.9
-    )
+    graph.add_edge("ingest", "matcher", type="covalent", latency_norm=0.4, coherency=0.9)
     graph.add_edge("matcher", "risk", type="ionic", latency_norm=0.8, coherency=0.7)
     graph.add_edge("risk", "broker", type="metallic", latency_norm=0.2, coherency=0.85)
     graph.add_edge("broker", "ingest", type="hydrogen", latency_norm=1.1, coherency=0.6)
@@ -83,9 +83,7 @@ def test_bond_internal_energy_matches_system_component():
     bonds = {("ingest", "matcher"): "ionic"}
 
     per_bond = bond_internal_energy("ingest", "matcher", "ionic", latencies, coherency)
-    total = system_free_energy(
-        bonds, latencies, coherency, resource_usage=0.0, entropy=0.0
-    )
+    total = system_free_energy(bonds, latencies, coherency, resource_usage=0.0, entropy=0.0)
 
     assert total == pytest.approx(per_bond * ENERGY_SCALE)
 
@@ -112,9 +110,7 @@ def test_gradient_descent_step_avoids_recomputing_total_energy(monkeypatch):
         call_count["total"] += 1
         return original(*args, **kwargs)
 
-    monkeypatch.setattr(
-        thermo_module, "system_free_energy", counting_system_free_energy
-    )
+    monkeypatch.setattr(thermo_module, "system_free_energy", counting_system_free_energy)
 
     before_types = {(u, v): data["type"] for u, v, data in graph.edges(data=True)}
 
@@ -194,8 +190,7 @@ def test_gradient_descent_step_preserves_best_local_improvement():
     )
 
     best_single_edge_energy = min(
-        energy({**bonds_before, ("node_a", "node_b"): candidate})
-        for candidate in bond_types
+        energy({**bonds_before, ("node_a", "node_b"): candidate}) for candidate in bond_types
     )
 
     changed = thermo_module.gradient_descent_step(graph, snapshot)
@@ -259,11 +254,9 @@ def test_circuit_breaker_blocks_unbounded_spike(caplog):
     def update_stub(self, state, action, reward, next_state):  # type: ignore[unused-argument]
         call_counts["update"] += 1
 
-    controller.recovery_agent.update = types.MethodType(
-        update_stub, controller.recovery_agent
-    )
+    controller.recovery_agent.update = types.MethodType(update_stub, controller.recovery_agent)
 
-    with caplog.at_level(logging.INFO, logger="tradepulse.audit"):
+    with caplog.at_level(logging.INFO, logger="geosync.audit"):
         controller.control_step()
 
     assert controller.circuit_breaker_active is True
@@ -276,7 +269,7 @@ def test_circuit_breaker_blocks_unbounded_spike(caplog):
 
     caplog.clear()
 
-    with caplog.at_level(logging.INFO, logger="tradepulse.audit"):
+    with caplog.at_level(logging.INFO, logger="geosync.audit"):
         controller.control_step()
 
     assert call_counts["ga"] == 1
@@ -324,7 +317,7 @@ def test_sustained_rise_triggers_critical_halt(monkeypatch, caplog):
     initial_topology = list(controller.current_topology)
     initial_edges = list(controller.graph.edges(data=True))
 
-    with caplog.at_level(logging.CRITICAL, logger="tradepulse.audit"):
+    with caplog.at_level(logging.CRITICAL, logger="geosync.audit"):
         for _ in range(7):
             controller.previous_t = time.time() - 1.0
             controller.control_step()

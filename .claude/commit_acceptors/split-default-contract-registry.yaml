@@ -1,0 +1,79 @@
+# Diff-bound commit acceptor: decompose the default_contract_registry god
+# function (audit P0-CODE-03 / D-03) into per-category register helpers,
+# behaviour-preserving, locked by a golden snapshot. First real god-module
+# split paying down the now-ENFORCED code-hygiene baseline. Application layer,
+# no physics (CLAUDE.md: application/ -> No physics).
+
+id: split-default-contract-registry
+status: ACTIVE
+claim_type: refactor
+promise: >-
+  After this PR lands, application/microservices/contracts.py's
+  default_contract_registry (was 353 LOC, a god function) is decomposed into
+  seven <=80-LOC register helpers plus a ~47-LOC orchestrator, with NO new god
+  function created. The registry it produces is structurally identical: the
+  digest-stripped snapshot matches the frozen JSON fixture (golden test). The
+  code-hygiene god_function baseline shrinks 162 -> 161 and
+  the meta-gate confirms the decrease. No behaviour, physics, or contract
+  change — pure structural decomposition.
+
+diff_scope:
+  changed_files:
+    - path: ".claude/commit_acceptors/split-default-contract-registry.yaml"
+    - path: "application/microservices/contracts.py"
+    - path: "docs/CODE_DEBT_BASELINE.json"
+    - path: "tests/unit/application/contract_registry_golden.json"
+    - path: "tests/unit/application/test_contract_registry_golden.py"
+  forbidden_paths:
+    - "trading/"
+    - "execution/"
+    - "forecast/"
+    - "policy/"
+    - "core/"
+    - "runtime/"
+
+required_python_symbols:
+  - "application/microservices/contracts.py::default_contract_registry"
+  - "application/microservices/contracts.py::_register_api_contracts"
+  - "application/microservices/contracts.py::_register_execution_service_contracts"
+
+expected_signal: >-
+  python -m pytest tests/unit/application/test_contract_registry_golden.py
+  tests/unit/application/test_contract_registry.py reports all passed; the
+  digest-stripped registry snapshot matches the golden fixture; python scripts/ci/check_code_hygiene.py
+  no longer flags default_contract_registry and exits 0.
+
+measurement_command: >-
+  bash -c '
+    mkdir -p tmp &&
+    python -m pytest -q tests/unit/application/test_contract_registry_golden.py tests/unit/application/test_contract_registry.py | tee tmp/split_contract_registry.log &&
+    python scripts/ci/check_code_hygiene.py | tee -a tmp/split_contract_registry.log
+  '
+
+signal_artifact: "tmp/split_contract_registry.log"
+
+falsifier:
+  command: >-
+    bash -c 'python -m pytest -q tests/unit/application/test_contract_registry_golden.py::test_registry_matches_golden_snapshot'
+  description: >-
+    Runs the golden snapshot lock. Succeeds (exit 0) only when
+    default_contract_registry() still produces the frozen registry snapshot — if the
+    decomposition changed any registered contract, the fixture comparison
+    diverges and this fails. Proves the refactor is behaviour-preserving.
+
+rollback_command: >-
+  bash -c '
+    git checkout origin/main -- application/microservices/contracts.py docs/CODE_DEBT_BASELINE.json &&
+    git rm -f
+      tests/unit/application/test_contract_registry_golden.py
+      .claude/commit_acceptors/split-default-contract-registry.yaml
+  '
+
+rollback_verification_command: >-
+  bash -c '
+    ! grep -q "_register_api_contracts" application/microservices/contracts.py
+  '
+
+memory_update_type: append
+ledger_path: ".claude/commit_acceptors/split-default-contract-registry.yaml"
+report_path: "tmp/split_contract_registry.log"

@@ -1,4 +1,6 @@
-"""Практичні приклади оптимізацій для TradePulse.
+# Copyright (c) 2023-2026 Yaroslav Vasylenko (neuron7xLab)
+# SPDX-License-Identifier: MIT
+"""Практичні приклади оптимізацій для GeoSync.
 
 Цей модуль демонструє конкретні оптимізації, описані в SYSTEM_OPTIMIZATION_ANALYSIS_UA.md.
 """
@@ -191,9 +193,7 @@ class AdaptivePoller:
 
         # Поступово збільшуємо інтервал при idle
         if self._idle_cycles >= self.config.ramp_up_threshold:
-            self._current_interval = min(
-                self._current_interval * 1.5, self.config.max_interval
-            )
+            self._current_interval = min(self._current_interval * 1.5, self.config.max_interval)
 
     def _update_avg_interval(self):
         """Оновлює середній інтервал для метрик."""
@@ -206,9 +206,7 @@ class AdaptivePoller:
         """Статистика для моніторингу."""
         stats = self._stats.copy()
         stats["current_interval"] = self._current_interval
-        stats["idle_ratio"] = self._stats["idle_polls"] / max(
-            self._stats["total_polls"], 1
-        )
+        stats["idle_ratio"] = self._stats["idle_polls"] / max(self._stats["total_polls"], 1)
         return stats
 
 
@@ -225,9 +223,7 @@ class IndicatorCache:
     повторних обчислень на тих самих даних.
     """
 
-    def __init__(
-        self, max_size: int = 1000, ttl_seconds: float = 60.0, enable_stats: bool = True
-    ):
+    def __init__(self, max_size: int = 1000, ttl_seconds: float = 60.0, enable_stats: bool = True):
         self._cache: Dict[str, Tuple[Any, float]] = {}
         self._access_order: deque = deque()  # For LRU
         self._max_size = max_size
@@ -299,9 +295,7 @@ class IndicatorCache:
 
             return value
 
-    def _make_cache_key(
-        self, key: str, data: np.ndarray, params: Optional[Dict]
-    ) -> str:
+    def _make_cache_key(self, key: str, data: np.ndarray, params: Optional[Dict]) -> str:
         """Створює ключ кешу з даних та параметрів."""
         # Hash даних (швидкий для numpy)
         data_hash = hashlib.blake2b(data.tobytes(), digest_size=16).hexdigest()
@@ -355,9 +349,7 @@ class IndicatorCache:
 
         with self._lock:
             total_requests = self._stats["hits"] + self._stats["misses"]
-            hit_rate = (
-                self._stats["hits"] / total_requests if total_requests > 0 else 0.0
-            )
+            hit_rate = self._stats["hits"] / total_requests if total_requests > 0 else 0.0
 
             return {
                 **self._stats,
@@ -397,9 +389,7 @@ class AsyncMetricsWriter:
         self._flush_interval = flush_interval
         self._worker_thread: Optional[Thread] = None
         self._running = False
-        self._prometheus_gauges: Dict[str, Any] = (
-            {}
-        )  # Initialize Prometheus gauges dict
+        self._prometheus_gauges: Dict[str, Any] = {}  # Initialize Prometheus gauges dict
 
         self._stats = {
             "total_recorded": 0,
@@ -425,9 +415,7 @@ class AsyncMetricsWriter:
             self._worker_thread.join(timeout=5.0)
         logger.info("AsyncMetricsWriter stopped")
 
-    def record(
-        self, metric_name: str, value: float, labels: Optional[Dict[str, str]] = None
-    ):
+    def record(self, metric_name: str, value: float, labels: Optional[Dict[str, str]] = None):
         """
         Додає метрику в чергу для асинхронного запису.
 
@@ -439,12 +427,10 @@ class AsyncMetricsWriter:
         try:
             self._queue.put_nowait((metric_name, value, labels or {}, time.time()))
             self._stats["total_recorded"] += 1
-        except Exception:  # noqa: BLE001 - intentionally catch all for queue operations
+        except Exception:
             # Queue full - краще drop ніж blocking
             self._stats["total_dropped"] += 1
-            logger.warning(
-                "Metrics queue full, dropping metric", extra={"metric": metric_name}
-            )
+            logger.warning("Metrics queue full, dropping metric", extra={"metric": metric_name})
 
     def _worker(self):
         """Worker thread для батчевого запису."""
@@ -530,9 +516,7 @@ class AsyncMetricsWriter:
             self._stats["total_flushed"] += len(batch)
             self._stats["flush_count"] += 1
 
-            logger.debug(
-                f"Flushed {len(batch)} metrics", extra={"batch_size": len(batch)}
-            )
+            logger.debug(f"Flushed {len(batch)} metrics", extra={"batch_size": len(batch)})
         except Exception as e:
             logger.error(f"Failed to flush metrics batch: {e}", exc_info=True)
 
@@ -540,9 +524,7 @@ class AsyncMetricsWriter:
         """Статистика writer."""
         stats = self._stats.copy()
         stats["queue_size"] = self._queue.qsize()
-        stats["drop_rate"] = self._stats["total_dropped"] / max(
-            self._stats["total_recorded"], 1
-        )
+        stats["drop_rate"] = self._stats["total_dropped"] / max(self._stats["total_recorded"], 1)
         return stats
 
 
@@ -583,9 +565,7 @@ def monitor_performance(metric_name: str, enable_profiling: bool = False):
                 duration = time.time() - start_time
 
                 # Запис метрики успіху
-                _record_metric(
-                    f"{metric_name}_duration_seconds", duration, {"status": "success"}
-                )
+                _record_metric(f"{metric_name}_duration_seconds", duration, {"status": "success"})
 
                 return result
 
@@ -608,9 +588,7 @@ def monitor_performance(metric_name: str, enable_profiling: bool = False):
                     import pstats
 
                     stats = pstats.Stats(profiler)
-                    stats.dump_stats(
-                        f"/tmp/profile_{metric_name}_{int(time.time())}.prof"
-                    )
+                    stats.dump_stats(f"/tmp/profile_{metric_name}_{int(time.time())}.prof")
 
         return wrapper
 
@@ -659,18 +637,14 @@ def example_streaming_replay():
     replayer = StreamingEventReplayer(batch_size=1000)
 
     # Обробка подій батчами
-    for batch in replayer.replay_events_streaming(
-        aggregate_id="order-123", aggregate_type="Order"
-    ):
+    for batch in replayer.replay_events_streaming(aggregate_id="order-123", aggregate_type="Order"):
         # Обробити батч
         for event in batch:
             process_event(event)
 
     # Статистика
     stats = replayer.get_stats()
-    print(
-        f"Processed {stats['total_events']} events in {stats['batches_processed']} batches"
-    )
+    print(f"Processed {stats['total_events']} events in {stats['batches_processed']} batches")
 
 
 def example_adaptive_polling():
@@ -733,9 +707,7 @@ def example_async_metrics():
     try:
         # Запис метрик
         for i in range(1000):
-            writer.record(
-                "order_latency_ms", np.random.exponential(10.0), {"exchange": "binance"}
-            )
+            writer.record("order_latency_ms", np.random.exponential(10.0), {"exchange": "binance"})
 
         # Дочекатися flush
         time.sleep(2.0)
@@ -763,7 +735,7 @@ def process_orders():
 
 if __name__ == "__main__":
     seed_numpy(SEED)
-    print("=== TradePulse Optimization Examples ===\n")
+    print("=== GeoSync Optimization Examples ===\n")
 
     print("1. Streaming Event Replay")
     example_streaming_replay()

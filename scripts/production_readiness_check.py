@@ -1,6 +1,7 @@
 #!/usr/bin/env python
-# SPDX-License-Identifier: LicenseRef-TradePulse-Proprietary
-"""Production readiness verification script for TradePulse modules.
+# Copyright (c) 2023-2026 Yaroslav Vasylenko (neuron7xLab)
+# SPDX-License-Identifier: MIT
+"""Production readiness verification script for GeoSync modules.
 
 This script performs comprehensive validation checks to ensure all core
 modules are production-ready. Run this before deployment to verify system
@@ -12,8 +13,8 @@ Usage:
     python scripts/production_readiness_check.py --json-output report.json
 
 Environment Variables Required:
-    TRADEPULSE_TWO_FACTOR_SECRET - Two-factor authentication secret
-    TRADEPULSE_AUDIT_SECRET - Audit logging secret (min 16 chars)
+    GEOSYNC_TWO_FACTOR_SECRET - Two-factor authentication secret
+    GEOSYNC_AUDIT_SECRET - Audit logging secret (min 16 chars)
 """
 
 from __future__ import annotations
@@ -110,7 +111,7 @@ def check_class_instantiation(
     start = time.perf_counter()
     try:
         module = importlib.import_module(module_path)
-        _cls = getattr(module, class_name)  # noqa: F841 - verify class is accessible
+        _cls = getattr(module, class_name)
         # Try to get the class signature to understand requirements
         duration = (time.perf_counter() - start) * 1000
         return CheckResult(
@@ -307,7 +308,7 @@ def run_production_checks(verbose: bool = False) -> ReadinessReport:
     # Key classes availability
     key_classes = [
         ("core.indicators", "KuramotoIndicator"),
-        ("core.indicators.kuramoto_ricci_composite", "TradePulseCompositeEngine"),
+        ("core.indicators.kuramoto_ricci_composite", "GeoSyncCompositeEngine"),
         ("backtest.event_driven", "EventDrivenBacktestEngine"),
         ("execution.risk", "RiskManager"),
         ("execution.risk", "KillSwitch"),
@@ -333,12 +334,8 @@ def run_production_checks(verbose: bool = False) -> ReadinessReport:
 
 def main() -> int:
     """Main entry point for production readiness checks."""
-    parser = argparse.ArgumentParser(
-        description="TradePulse Production Readiness Verification"
-    )
-    parser.add_argument(
-        "--verbose", "-v", action="store_true", help="Enable verbose output"
-    )
+    parser = argparse.ArgumentParser(description="GeoSync Production Readiness Verification")
+    parser.add_argument("--verbose", "-v", action="store_true", help="Enable verbose output")
     parser.add_argument(
         "--json-output",
         "-o",
@@ -349,7 +346,7 @@ def main() -> int:
     args = parser.parse_args()
 
     print("=" * 70)
-    print("TRADEPULSE PRODUCTION READINESS CHECK")
+    print("GEOSYNC PRODUCTION READINESS CHECK")
     print("=" * 70)
     print()
 

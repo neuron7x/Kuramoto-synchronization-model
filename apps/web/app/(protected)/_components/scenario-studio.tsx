@@ -27,7 +27,7 @@ import AssignmentIcon from '@mui/icons-material/Assignment'
 import CheckCircleIcon from '@mui/icons-material/CheckCircle'
 import ContentCopyIcon from '@mui/icons-material/ContentCopy'
 import DownloadIcon from '@mui/icons-material/Download'
-import ErrorOutlineIcon from '@mui/icons-material/ErrorOutline'
+import ErrorOutlineIcon from '@mui/icons-material/ErrorOutlined'
 import RestartAltIcon from '@mui/icons-material/RestartAlt'
 import WarningAmberIcon from '@mui/icons-material/WarningAmber'
 
@@ -639,7 +639,7 @@ export function ScenarioStudio() {
       <Container maxWidth="xl" data-testid="scenario-container">
         <Stack spacing={{ xs: 4, md: 5 }}>
           <Stack spacing={2} data-testid="onboarding-hero">
-            <Typography variant="h3" component="h1" fontWeight={700}>
+            <Typography variant="h3" component="h1" sx={{ fontWeight: 700 }}>
               Scenario Studio
             </Typography>
             <Typography variant="body1" color="text.secondary" sx={{ maxWidth: 800 }}>
@@ -650,7 +650,7 @@ export function ScenarioStudio() {
           </Stack>
 
           <Grid container spacing={{ xs: 3, md: 4 }}>
-            <Grid item xs={12} lg={7}>
+            <Grid size={{ xs: 12, lg: 7 }}>
               <Card
                 component="section"
                 variant="outlined"
@@ -664,9 +664,11 @@ export function ScenarioStudio() {
               >
                 <CardHeader
                   title="Strategy Configuration"
-                  titleTypographyProps={{ variant: 'h5', fontWeight: 600 }}
+                  slotProps={{
+                    title: { variant: 'h5', sx: { fontWeight: 600 } },
+                    subheader: { sx: { mt: 0.5 } },
+                  }}
                   subheader="Choose a template and configure risk parameters to generate a validated strategy blueprint."
-                  subheaderTypographyProps={{ sx: { mt: 0.5 } }}
                 />
                 <CardContent>
                   <Stack spacing={4}>
@@ -686,10 +688,12 @@ export function ScenarioStudio() {
                             setDraft(toDraft(template.defaults))
                           }
                         }}
-                        SelectProps={{ native: true }}
-                        inputProps={{
-                          'data-testid': 'template-select',
-                          'aria-describedby': templateHelperId,
+                        slotProps={{
+                          select: { native: true },
+                          htmlInput: {
+                            'data-testid': 'template-select',
+                            'aria-describedby': templateHelperId,
+                          },
                         }}
                       >
                         {SCENARIO_TEMPLATES.map((template) => (
@@ -717,7 +721,7 @@ export function ScenarioStudio() {
                             </ListItemIcon>
                             <ListItemText
                               primary={note}
-                              primaryTypographyProps={{ variant: 'body2' }}
+                              slotProps={{ primary: { variant: 'body2' } }}
                             />
                           </ListItem>
                         ))}
@@ -731,7 +735,10 @@ export function ScenarioStudio() {
                         const fieldTestId = `input-${fieldKey}`
                         const helperTextTestId = error ? `error-${fieldKey}` : undefined
                         return (
-                          <Grid key={fieldKey} item xs={12} md={fieldKey === 'timeframe' ? 12 : 6}>
+                          <Grid
+                            key={fieldKey}
+                            size={{ xs: 12, md: fieldKey === 'timeframe' ? 12 : 6 }}
+                          >
                             <TextField
                               fullWidth
                               id={fieldKey}
@@ -744,8 +751,8 @@ export function ScenarioStudio() {
                               type={meta.type}
                               helperText={error ?? meta.helper}
                               error={Boolean(error)}
-                              inputProps={{ 'data-testid': fieldTestId }}
                               slotProps={{
+                                htmlInput: { 'data-testid': fieldTestId },
                                 formHelperText: helperTextTestId
                                   ? ({
                                       'data-testid': helperTextTestId,
@@ -803,7 +810,7 @@ export function ScenarioStudio() {
               </Card>
             </Grid>
 
-            <Grid item xs={12} lg={5}>
+            <Grid size={{ xs: 12, lg: 5 }}>
               <Stack spacing={3}>
                 <Card
                   component="section"
@@ -817,9 +824,11 @@ export function ScenarioStudio() {
                 >
                   <CardHeader
                     title="Health Snapshot"
-                    titleTypographyProps={{ variant: 'h5', fontWeight: 600 }}
+                    slotProps={{
+                      title: { variant: 'h5', sx: { fontWeight: 600 } },
+                      subheader: { sx: { mt: 0.5 } },
+                    }}
                     subheader="Real-time assessment of risk concentration, leverage, and operational hygiene."
-                    subheaderTypographyProps={{ sx: { mt: 0.5 } }}
                   />
                   <CardContent>
                     <Stack spacing={3}>
@@ -843,7 +852,7 @@ export function ScenarioStudio() {
                         }}
                       >
                         <Stack spacing={2}>
-                          <Stack direction="row" alignItems="center" spacing={2}>
+                          <Stack direction="row" spacing={2} sx={{ alignItems: 'center' }}>
                             <Chip
                               icon={<StatusIcon />}
                               label={scenarioHealth.status}
@@ -853,7 +862,7 @@ export function ScenarioStudio() {
                               sx={{ fontWeight: 600 }}
                             />
                           </Stack>
-                          <Stack direction="row" alignItems="baseline" spacing={1}>
+                          <Stack direction="row" spacing={1} sx={{ alignItems: 'baseline' }}>
                             <Typography
                               variant="h4"
                               component="p"
@@ -917,7 +926,7 @@ export function ScenarioStudio() {
                               <CheckCircleIcon color="success" fontSize="small" />
                             </ListItemIcon>
                             <ListItemText
-                              primaryTypographyProps={{ variant: 'body2' }}
+                              slotProps={{ primary: { variant: 'body2' } }}
                               primary={item}
                             />
                           </ListItem>
@@ -939,9 +948,11 @@ export function ScenarioStudio() {
                 >
                   <CardHeader
                     title="Timeframe Insights"
-                    titleTypographyProps={{ variant: 'h6', fontWeight: 600 }}
+                    slotProps={{
+                      title: { variant: 'h6', sx: { fontWeight: 600 } },
+                      subheader: { sx: { mt: 0.5 } },
+                    }}
                     subheader="Operational considerations based on your execution interval."
-                    subheaderTypographyProps={{ sx: { mt: 0.5 } }}
                   />
                   <CardContent>
                     {timeframeInsights.length === 0 ? (
@@ -956,7 +967,7 @@ export function ScenarioStudio() {
                               <WarningAmberIcon color="warning" fontSize="small" />
                             </ListItemIcon>
                             <ListItemText
-                              primaryTypographyProps={{ variant: 'body2' }}
+                              slotProps={{ primary: { variant: 'body2' } }}
                               primary={insight}
                             />
                           </ListItem>
@@ -985,7 +996,7 @@ export function ScenarioStudio() {
                       bgcolor: 'grey.50',
                     }}
                   >
-                    <Typography variant="h6" component="h2" fontWeight={600}>
+                    <Typography variant="h6" component="h2" sx={{ fontWeight: 600 }}>
                       JSON Preview
                     </Typography>
                   </Box>
@@ -1032,7 +1043,7 @@ export function ScenarioStudio() {
 export function ScenarioStudioFallback() {
   return (
     <Box component="main" sx={{ minHeight: '100vh', display: 'grid', placeItems: 'center', p: 4 }}>
-      <Stack spacing={2} alignItems="center">
+      <Stack spacing={2} sx={{ alignItems: 'center' }}>
         <LinearProgress sx={{ width: 240, maxWidth: '60vw' }} />
         <Typography variant="body2" color="text.secondary">
           Preparing the Scenario Studio…

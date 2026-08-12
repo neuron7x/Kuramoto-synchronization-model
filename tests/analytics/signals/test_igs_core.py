@@ -1,3 +1,5 @@
+# Copyright (c) 2023-2026 Yaroslav Vasylenko (neuron7xLab)
+# SPDX-License-Identifier: MIT
 from __future__ import annotations
 
 import math
@@ -60,9 +62,7 @@ def test_igs_config_enforces_n_state_bounds(
     kwargs.update({"n_states": n_states, "k_min": k_min, "k_max": k_max})
 
     if expect_error:
-        with pytest.raises(
-            ValueError, match="n_states must satisfy k_min <= n_states <= k_max"
-        ):
+        with pytest.raises(ValueError, match="n_states must satisfy k_min <= n_states <= k_max"):
             IGSConfig(**kwargs)
     else:
         cfg = IGSConfig(**kwargs)
@@ -91,9 +91,7 @@ def test_entropy_production_small_for_iid_noise() -> None:
 @pytest.mark.parametrize("quantize_mode", ["zscore", "rank"])
 def test_streaming_matches_batch_tail_window(quantize_mode: str) -> None:
     series = _random_walk(seed=3, length=1600)
-    config = IGSConfig(
-        window=200, n_states=5, min_counts=80, quantize_mode=quantize_mode
-    )
+    config = IGSConfig(window=200, n_states=5, min_counts=80, quantize_mode=quantize_mode)
     features = compute_igs_features(series, config)
     engine = StreamingIGS(config)
     metric = None
@@ -117,9 +115,7 @@ def test_streaming_resets_on_invalid_prices() -> None:
     recovery_ts = recovery_candidates.index[0]
     recovery_start = series.index.get_loc(recovery_ts)
     config = IGSConfig(window=120, n_states=5, min_counts=60, quantize_mode="rank")
-    features = compute_igs_features(series.iloc[recovery_start:], config).reindex(
-        series.index
-    )
+    features = compute_igs_features(series.iloc[recovery_start:], config).reindex(series.index)
     engine = StreamingIGS(config)
     metrics_by_ts: Dict[pd.Timestamp, Optional[igs.IGSMetrics]] = {}
     first_after_gap: Optional[pd.Timestamp] = None
@@ -216,12 +212,8 @@ def test_rank_quantization_walk_forward_consistency() -> None:
 def test_transition_matrix_stationary_distribution_matches_linear_solution() -> None:
     states = np.array([0, 1, 1, 1, 0, 0, 0, 1, 1, 1, 1, 1])
     eps = 1e-9
-    P_emp, pi_empirical = _transition_matrix(
-        states, n_states=2, eps=eps, pi_method="empirical"
-    )
-    P_sta, pi_stationary = _transition_matrix(
-        states, n_states=2, eps=eps, pi_method="stationary"
-    )
+    P_emp, pi_empirical = _transition_matrix(states, n_states=2, eps=eps, pi_method="empirical")
+    P_sta, pi_stationary = _transition_matrix(states, n_states=2, eps=eps, pi_method="stationary")
 
     assert np.allclose(P_emp, P_sta)
 
@@ -238,12 +230,8 @@ def test_transition_matrix_stationary_distribution_matches_linear_solution() -> 
 def test_entropy_production_differs_between_pi_methods() -> None:
     states = np.array([0, 1, 1, 1, 0, 0, 0, 1, 1, 1, 1, 1])
     eps = 1e-9
-    P, pi_empirical = _transition_matrix(
-        states, n_states=2, eps=eps, pi_method="empirical"
-    )
-    _, pi_stationary = _transition_matrix(
-        states, n_states=2, eps=eps, pi_method="stationary"
-    )
+    P, pi_empirical = _transition_matrix(states, n_states=2, eps=eps, pi_method="empirical")
+    _, pi_stationary = _transition_matrix(states, n_states=2, eps=eps, pi_method="stationary")
 
     epr_empirical, _ = _entropy_production(P, pi_empirical, eps)
     epr_stationary, _ = _entropy_production(P, pi_stationary, eps)
@@ -267,19 +255,11 @@ def test_regime_score_respects_weights_in_batch(monkeypatch) -> None:
     monkeypatch.setattr(igs, "_permutation_entropy_arr", lambda arr, m, tau, eps: 0.2)
     monkeypatch.setattr(igs.RollingPermutationEntropy, "update", lambda self, x: 0.2)
 
-    cfg_equal = IGSConfig(
-        window=10, n_states=4, min_counts=1, regime_weights=(1.0, 1.0, 1.0)
-    )
-    cfg_fluxless = IGSConfig(
-        window=10, n_states=4, min_counts=1, regime_weights=(1.0, 0.0, 1.0)
-    )
+    cfg_equal = IGSConfig(window=10, n_states=4, min_counts=1, regime_weights=(1.0, 1.0, 1.0))
+    cfg_fluxless = IGSConfig(window=10, n_states=4, min_counts=1, regime_weights=(1.0, 0.0, 1.0))
 
-    expected_equal = igs._weighted_regime_score(
-        (0.3, 0.9, 0.8), cfg_equal.regime_weights
-    )
-    expected_fluxless = igs._weighted_regime_score(
-        (0.3, 0.9, 0.8), cfg_fluxless.regime_weights
-    )
+    expected_equal = igs._weighted_regime_score((0.3, 0.9, 0.8), cfg_equal.regime_weights)
+    expected_fluxless = igs._weighted_regime_score((0.3, 0.9, 0.8), cfg_fluxless.regime_weights)
 
     features_equal = compute_igs_features(series, cfg_equal).dropna()
     features_fluxless = compute_igs_features(series, cfg_fluxless).dropna()
@@ -307,19 +287,11 @@ def test_regime_score_respects_weights_streaming(monkeypatch) -> None:
     monkeypatch.setattr(igs, "_net_flux_index", lambda J, normalize: 0.9)
     monkeypatch.setattr(igs.RollingPermutationEntropy, "update", lambda self, x: 0.2)
 
-    cfg_equal = IGSConfig(
-        window=10, n_states=4, min_counts=1, regime_weights=(1.0, 1.0, 1.0)
-    )
-    cfg_fluxless = IGSConfig(
-        window=10, n_states=4, min_counts=1, regime_weights=(1.0, 0.0, 1.0)
-    )
+    cfg_equal = IGSConfig(window=10, n_states=4, min_counts=1, regime_weights=(1.0, 1.0, 1.0))
+    cfg_fluxless = IGSConfig(window=10, n_states=4, min_counts=1, regime_weights=(1.0, 0.0, 1.0))
 
-    expected_equal = igs._weighted_regime_score(
-        (0.3, 0.9, 0.8), cfg_equal.regime_weights
-    )
-    expected_fluxless = igs._weighted_regime_score(
-        (0.3, 0.9, 0.8), cfg_fluxless.regime_weights
-    )
+    expected_equal = igs._weighted_regime_score((0.3, 0.9, 0.8), cfg_equal.regime_weights)
+    expected_fluxless = igs._weighted_regime_score((0.3, 0.9, 0.8), cfg_fluxless.regime_weights)
 
     engine_equal = StreamingIGS(cfg_equal)
     metric_equal = None
@@ -333,9 +305,7 @@ def test_regime_score_respects_weights_streaming(monkeypatch) -> None:
         metric_fluxless = engine_fluxless.update(timestamp, float(price))
     assert metric_fluxless is not None
 
-    assert math.isclose(
-        metric_equal.regime_score, expected_equal, rel_tol=1e-12, abs_tol=1e-12
-    )
+    assert math.isclose(metric_equal.regime_score, expected_equal, rel_tol=1e-12, abs_tol=1e-12)
     assert math.isclose(
         metric_fluxless.regime_score, expected_fluxless, rel_tol=1e-12, abs_tol=1e-12
     )

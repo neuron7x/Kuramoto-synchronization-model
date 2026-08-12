@@ -1,0 +1,135 @@
+# Repo Consistency Audit — 2026-05-03
+
+## Scope
+
+Five-axis audit of the `main` branch as of 2026-05-03 (commit
+26c30f7 *feat(governance): diff-bound commit acceptor layer #491*):
+
+* **A1** — invariant catalog ↔ test coverage
+* **A2** — orphan INV-* IDs (in code, not in canonical catalog)
+* **A3** — stale path references in `CLAUDE.md`
+* **A4** — dead exports in `core.neuro.__all__`
+* **A5** — broken imports / missing declared dependencies
+
+## Headline result
+
+Most of the repo is consistent. Three real P0 gaps and one
+documentation-architecture observation. **One real bug found and
+fixed in this PR** (INV-DRO5 was documented but not enforced).
+
+## A1 — Test coverage gaps (P0 invariants with zero test refs in main)
+
+| Invariant | Status before this PR | Status after |
+|---|---|---|
+| **INV-DRO2** (`rs ∈ [0, 1]`, Lipschitz-1) | 0 tests | ✅ 13 cases in `test_inv_dro2_risk_scalar.py` (parametrize + 2 Hypothesis properties) |
+| **INV-DRO5** (NaN/Inf/constant/short → ValueError) | **VIOLATED** in code | ✅ Fixed in `core/dro_ara/engine.py` (one-line `_validate` call) + 7 cases in `test_inv_dro5_fail_closed.py` |
+| **INV-AC1-rev** (`κ_critical = -ln(ΔH_max/ε)/(λ_local + δ)`) | 0 tests | ⚠️ Deferred — see "Open" below |
+| **INV-DRO1** (`γ = 2H + 1`) | 0 tests | ✅ Closed by separate PR #517 (algebraic test) |
+| INV-AC1 (deprecated by INV-AC1-rev per CLAUDE.md) | 0 tests | OK — deprecated, no fix needed |
+
+## A2 — Orphan INV-* IDs
+
+40+ INV-* IDs reside in test code but not in `CLAUDE.md` ▸
+INVARIANT REGISTRY. Notable groups:
+
+* **INV-CAK1..INV-CAK8** — Capital-Asset Kuramoto (separate
+  subsystem)
+* **INV-REBUS-1..INV-REBUS-7** — RebusGate exploration primitive
+* **INV-COSMOLOGICAL, INV-JACOBSON, INV-LANDAUER, INV-OBSERVER,
+  INV-REVERSIBLE, INV-ARROW, INV-BEKENSTEIN** — physics-extension
+  invariants from peer-reviewed literature
+* **INV-ARCH-1/2/3, INV-LATENCY, INV-CRITICALITY, INV-SIMULATION**
+  — architecture / runtime invariants
+
+These IDs **do exist** in `.claude/physics/INVARIANTS.yaml` (87
+entries — the broader extension catalog). Per memory
+`feedback_geosync_physics_layers` this two-catalog architecture
+is by design (`keep both, don't mass-delete`). The audit's only
+recommendation: a single sentence in `CLAUDE.md` cross-referencing
+the extension catalog so a developer reading the prime directive
+knows where to find INV-CAK*, INV-REBUS-*, etc.
+
+This PR does **not** edit `CLAUDE.md` — the prime-directive
+document; the recommendation stays as a documentation backlog
+item under user discretion.
+
+## A3 — Stale path references in CLAUDE.md
+
+✅ **Zero stale paths.** Every `core/...py` path mentioned in
+CLAUDE.md exists on `main` as of 2026-05-03.
+
+## A4 — Dead exports
+
+✅ **All 56 entries** in `core.neuro.__all__` resolve via the
+lazy-import `__getattr__`. No dead exports.
+
+## A5 — Broken imports / dependency drift
+
+* `core/kuramoto/jax_engine.py` imports `jax`, which is **not**
+  in `pyproject.toml`. ✅ Properly guarded by
+  `try / except ImportError` with `JAX_AVAILABLE = False`
+  fallback. Not broken on a fresh install.
+* No other import-without-dep mismatches surfaced by spot
+  checks.
+
+## Open after this PR
+
+* **INV-AC1-rev** — the formula `κ_critical = -ln(ΔH_max/ε)/(λ_local + δ)`
+  is documented in `CLAUDE.md` as a P0 active gate, but the
+  `kappa_critical` quantity is not computed anywhere in
+  `core/`, `geosync/`, or `runtime/`. Resolving this requires
+  a design decision (where does `κ_critical` live, what
+  calls it, what's the isolation hook?) — not a bug fix. Left
+  for the user.
+* **Two-catalog cross-reference** — recommend adding one
+  sentence to `CLAUDE.md` linking to
+  `.claude/physics/INVARIANTS.yaml` for the 20+ extension
+  invariants. User-owned doc, not autonomous.
+* `.claude/worktrees/` — 344 MB of agent state. Cleanup is
+  user-side; not part of repo consistency.
+
+## What this PR ships
+
+| File | Purpose | Lines added |
+|---|---|---|
+| `core/dro_ara/engine.py` | One-line `_validate` enforcement of INV-DRO5 + docstring | +9 |
+| `tests/unit/physics/test_inv_dro2_risk_scalar.py` | 13 cases on INV-DRO2 (parametrize + Hypothesis) | +109 |
+| `tests/unit/physics/test_inv_dro5_fail_closed.py` | 7 cases on INV-DRO5 (NaN/Inf/const/short/2D + happy-path inverse) | +85 |
+| `docs/reports/repo_consistency_audit_2026_05_03.md` | This file | — |
+| `.claude/commit_acceptors/repo-audit-close-p0-gaps.yaml` | Diff-bound acceptor | — |
+| `newsfragments/repo-audit-close-p0-gaps.feature.md` | Towncrier entry | — |
+
+## Quality gates
+
+| Gate | Status |
+|---|---|
+| `black --check` (3 source files) | clean |
+| `ruff check` (3 source files) | clean |
+| `mypy --strict` (3 source files) | clean |
+| `pytest tests/unit/physics/test_inv_dro2_risk_scalar.py tests/unit/physics/test_inv_dro5_fail_closed.py` | 20/20 passed |
+| Full DRO regression: `pytest tests/core/dro_ara/ tests/test_dfa_gamma_estimator.py` | 46/46 passed (no regressions from the `_validate` insertion) |
+
+## Reproducibility
+
+This audit was generated by direct `grep` / `find` / `python -c`
+checks against `main` (commit 26c30f7); the steps are:
+
+```sh
+# A1: catalog vs tests
+grep -oE "INV-[A-Z0-9]+-?[a-z0-9]*" CLAUDE.md | sort -u
+# then for each ID, count refs in tests/
+
+# A2: orphan IDs
+grep -roE "INV-[A-Z0-9]+-?[a-z0-9]*" tests/ core/ --include="*.py" \
+  | grep -v worktree | sort -u | comm -23 - catalog_ids
+
+# A3: stale paths
+grep -oE "core/[a-z_/]*\.py" CLAUDE.md | while read p; do [ -e "$p" ] || echo "$p"; done
+
+# A4: dead exports
+python -c "from core.neuro import __all__ as A; import core.neuro as m; \
+  print([n for n in A if not hasattr(m, n)])"
+```
+
+The same commands re-run on a future revision will surface
+re-emerging drift.

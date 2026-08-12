@@ -1,4 +1,5 @@
-# SPDX-License-Identifier: LicenseRef-TradePulse-Proprietary
+# Copyright (c) 2023-2026 Yaroslav Vasylenko (neuron7xLab)
+# SPDX-License-Identifier: MIT
 """Fail-Safe Mechanisms for Risk Monitoring.
 
 This module provides fail-safe controls including:
@@ -7,7 +8,7 @@ This module provides fail-safe controls including:
 - Automatic recovery procedures
 - Multi-level escalation
 
-Integrates with existing tradepulse/risk/kill_switch.py for unified control.
+Integrates with existing geosync/risk/kill_switch.py for unified control.
 """
 
 from __future__ import annotations
@@ -163,7 +164,9 @@ class FailSafeConfig:
             "restricted_position_multiplier": self.restricted_position_multiplier,
             "auto_recover_delay_minutes": self.auto_recover_delay_minutes,
             "escalation_threshold_seconds": self.escalation_threshold_seconds,
-            "require_manual_recovery_levels": [level.value for level in self.require_manual_recovery_levels],
+            "require_manual_recovery_levels": [
+                level.value for level in self.require_manual_recovery_levels
+            ],
             "enable_emergency_liquidation": self.enable_emergency_liquidation,
         }
 
@@ -545,9 +548,7 @@ class FailSafeController:
         # Determine auto-recovery time
         auto_recover_at: datetime | None = None
         if level not in self._config.require_manual_recovery_levels and active:
-            auto_recover_at = now + timedelta(
-                minutes=self._config.auto_recover_delay_minutes
-            )
+            auto_recover_at = now + timedelta(minutes=self._config.auto_recover_delay_minutes)
 
         # Update state
         self._state = FailSafeState(

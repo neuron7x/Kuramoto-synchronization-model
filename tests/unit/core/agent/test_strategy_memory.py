@@ -1,4 +1,5 @@
-# SPDX-License-Identifier: LicenseRef-TradePulse-Proprietary
+# Copyright (c) 2023-2026 Yaroslav Vasylenko (neuron7xLab)
+# SPDX-License-Identifier: MIT
 """Unit tests for StrategyMemory serialization and validation.
 
 This module contains comprehensive tests for the StrategyMemory class,
@@ -36,12 +37,24 @@ class TestStrategySignature:
     def test_reject_nan_in_signature(self) -> None:
         """NaN values should be rejected."""
         with pytest.raises(InvariantError, match="must be finite"):
-            StrategySignature(R=float("nan"), delta_H=0.05, kappa_mean=0.3, entropy=2.1, instability=0.1)
+            StrategySignature(
+                R=float("nan"),
+                delta_H=0.05,
+                kappa_mean=0.3,
+                entropy=2.1,
+                instability=0.1,
+            )
 
     def test_reject_inf_in_signature(self) -> None:
         """Infinity values should be rejected."""
         with pytest.raises(InvariantError, match="must be finite"):
-            StrategySignature(R=float("inf"), delta_H=0.05, kappa_mean=0.3, entropy=2.1, instability=0.1)
+            StrategySignature(
+                R=float("inf"),
+                delta_H=0.05,
+                kappa_mean=0.3,
+                entropy=2.1,
+                instability=0.1,
+            )
 
     def test_to_dict_roundtrip(self) -> None:
         """Serialization and deserialization should preserve values."""
@@ -52,7 +65,9 @@ class TestStrategySignature:
 
     def test_key_method(self) -> None:
         """Key method should return rounded tuple."""
-        sig = StrategySignature(R=0.12345, delta_H=0.05, kappa_mean=0.3, entropy=2.1, instability=0.1)
+        sig = StrategySignature(
+            R=0.12345, delta_H=0.05, kappa_mean=0.3, entropy=2.1, instability=0.1
+        )
         key = sig.key(precision=4)
         assert key == (0.1235, 0.05, 0.3, 2.1, 0.1)
 
@@ -90,7 +105,12 @@ class TestStrategyRecord:
     def test_reject_negative_timestamp(self) -> None:
         """Negative timestamp should be rejected."""
         with pytest.raises(InvariantError, match="ts must be non-negative"):
-            StrategyRecord(name="test", signature=(0.95, 0.05, 0.3, 2.1, 0.1), score=0.85, ts=-100.0)
+            StrategyRecord(
+                name="test",
+                signature=(0.95, 0.05, 0.3, 2.1, 0.1),
+                score=0.85,
+                ts=-100.0,
+            )
 
     def test_to_dict_roundtrip(self) -> None:
         """Serialization and deserialization should preserve values."""
@@ -218,6 +238,7 @@ class TestStrategyMemory:
         with pytest.raises(InvariantError):
             StrategyMemory.from_dict(state, strict=True)
 
+    @pytest.mark.filterwarnings("ignore::RuntimeWarning")
     def test_recovery_mode_quarantines_corrupted_records(self) -> None:
         """Recovery mode should quarantine corrupted records."""
         memory = StrategyMemory()
@@ -301,7 +322,7 @@ class TestPropertyBased:
                 memory.add(f"strategy_{rng.integers(1000)}", tuple(sig_values), score=score)
             elif op == "topk":
                 k = rng.integers(1, 20)
-                _ = memory.topk(k)
+                _ = memory.topk(int(k))
             elif op == "cleanup":
                 min_score = rng.random() * 0.5
                 memory.cleanup(min_score)

@@ -1,0 +1,33 @@
+{
+  "$schema": "http://json-schema.org/draft-07/schema#",
+  "$id": "geosync.opponency_lyapunov.v1",
+  "title": "GeoSync DA/5-HT Opponency Lyapunov Stability Certificate",
+  "description": "Proves the dopamine/serotonin opponent-process ODE is globally asymptotically stable: the real system matrix is Hurwitz, a positive-definite Lyapunov function V(x)=x^T P x solves A^T P + P A = -Q, and V contracts from a grid of initial conditions. The allostatic clamp is therefore a safety margin, not the only thing preventing divergence.",
+  "type": "object",
+  "additionalProperties": false,
+  "required": ["schema", "component", "system_matrix", "eigenvalues_real", "checks", "gate", "verdict"],
+  "properties": {
+    "schema": { "const": "geosync.opponency_lyapunov.v1" },
+    "component": { "type": "string", "minLength": 1 },
+    "system_matrix": { "type": "array", "items": { "type": "array", "items": { "type": "number" } } },
+    "eigenvalues_real": { "type": "array", "items": { "type": "number" }, "minItems": 1 },
+    "p_min_eigenvalue": { "type": "number" },
+    "gate": { "enum": ["STABLE", "UNSTABLE"] },
+    "report_only": { "type": "boolean" },
+    "verdict": { "enum": ["PASS", "FAIL"] },
+    "checks": {
+      "type": "array",
+      "minItems": 5,
+      "items": {
+        "type": "object",
+        "additionalProperties": false,
+        "required": ["id", "name", "holds"],
+        "properties": {
+          "id": { "type": "string", "minLength": 1 },
+          "name": { "type": "string", "minLength": 1 },
+          "holds": { "type": "boolean" }
+        }
+      }
+    }
+  }
+}

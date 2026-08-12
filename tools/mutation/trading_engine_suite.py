@@ -1,3 +1,5 @@
+# Copyright (c) 2023-2026 Yaroslav Vasylenko (neuron7xLab)
+# SPDX-License-Identifier: MIT
 """Targeted mutation testing harness for the trading engine."""
 
 from __future__ import annotations
@@ -56,9 +58,7 @@ def _mutmut_results(*, destination: Path, env: dict[str, str]) -> None:
         raise RuntimeError("mutmut results command failed; see output for details")
 
 
-def _enforce_threshold(
-    *, threshold: float, summary_path: Path, env: dict[str, str]
-) -> None:
+def _enforce_threshold(*, threshold: float, summary_path: Path, env: dict[str, str]) -> None:
     command = [
         sys.executable,
         "-m",

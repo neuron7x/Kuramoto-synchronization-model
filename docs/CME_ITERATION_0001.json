@@ -1,0 +1,75 @@
+{
+  "iteration_id": "CME-GEOSYNC-0001",
+  "repository": "neuron7xLab/GeoSync",
+  "status_tags": ["S0_REPO_FACT", "S5_PROXY"],
+  "intent": "Convert the CME orchestration prompt into a repository-bound, machine-checkable first iteration for GeoSync without promoting any research claim.",
+  "final_state": "GeoSync has a validated CME iteration contract that an implementation agent can execute as the first step toward code, docs, tests, benchmarks, evidence, bibliography, and release verdicts.",
+  "first_missing_condition": "A single machine-readable CME iteration contract must exist before recursive multi-agent improvement can be treated as operational engineering.",
+  "agent_plan": [
+    {"agent": "Principal Architect", "why": "Bind the loop to existing canonical repository surfaces and prevent doctrine drift."},
+    {"agent": "Physics Anchor", "why": "Translate SciML and physics-grade practices into software gates while blocking unsupported status language."},
+    {"agent": "Reverse Inference Planner", "why": "Derive one first missing condition and one next action from the desired final state."},
+    {"agent": "Implementation Agent", "why": "Create only the minimal documentation, contract, validator, and test needed for this iteration."},
+    {"agent": "Verifier", "why": "Reject the iteration if the JSON contract, status tags, or claim guard fails."},
+    {"agent": "Red Team", "why": "Attack claim language, scope boundaries, replay paths, and false success reporting."},
+    {"agent": "Benchmark Agent", "why": "Define proxy comparisons for future runs without pretending real human evaluation occurred."},
+    {"agent": "Productization Agent", "why": "Preserve one-command validation and future onboarding path."},
+    {"agent": "Release Manager", "why": "Keep the verdict honest and prevent release language before evidence exists."}
+  ],
+  "files_to_create_modify": [
+    "docs/CME_PHYSICS_RND_LOOP.md",
+    "docs/CME_ITERATION_0001.json",
+    "tools/research/validate_cme_iteration_contract.py",
+    "tests/research/test_cme_iteration_contract.py"
+  ],
+  "implementation_tasks": [
+    "Create the CME loop contract as repository documentation, not a claim promotion surface.",
+    "Create a machine-readable iteration JSON with the eleven required iteration fields.",
+    "Create a dependency-free validator that checks required fields, status tags, one first missing condition, validation commands, and claim-guard phrases.",
+    "Create a pytest wrapper that exercises the validator against the committed iteration contract.",
+    "Do not mark the iteration S1_TESTED until commands run and evidence is captured."
+  ],
+  "validation_commands": [
+    "python tools/research/validate_cme_iteration_contract.py docs/CME_ITERATION_0001.json",
+    "python -m pytest tests/research/test_cme_iteration_contract.py -q",
+    "python -m pytest -q",
+    "mypy --strict",
+    "ruff check ."
+  ],
+  "benchmark_ablation": {
+    "status": "S5_PROXY",
+    "future_measurement": "Compare baseline agent output versus CME contract-bound output on claim safety, artifact completeness, validation command coverage, failure-mode detection, rollback clarity, and human-review load.",
+    "ablations": [
+      "without status tags",
+      "without verifier",
+      "without claim guard",
+      "without benchmark field",
+      "without release verdict criteria"
+    ],
+    "forbidden": "Do not report proxy scoring as real human evaluation."
+  },
+  "failure_modes": [
+    "The validator passes while the repository remains untested because local gates were not executed.",
+    "The loop becomes decorative documentation instead of changing validation behavior.",
+    "A future agent promotes hypothesis-tier work by language rather than evidence.",
+    "The benchmark reports proxy quality as real usefulness.",
+    "The release manager reports success without raw logs, exit codes, and manifest evidence."
+  ],
+  "verdict_criteria": [
+    "PASS only if the JSON validator exits zero.",
+    "PASS only if pytest for the validator exits zero in a local or CI run.",
+    "PASS only if no blocked claim phrase appears in the iteration contract.",
+    "PASS only if the iteration remains S0_REPO_FACT plus S5_PROXY until commands are actually run.",
+    "FAIL if any validation command fails or cannot be reproduced."
+  ],
+  "next_cycle": "Implement CME evidence-bundle generation for iteration outputs: raw logs, exit codes, checksums, validation report, failed gates, rollback plan, and VERDICT.md.",
+  "claim_governance": {
+    "allowed_claims": [
+      "CME uses physics-grade engineering principles as methodological imports.",
+      "CME implements proxy metrics for workflow quality.",
+      "CME can improve artifact stability only if validation gates pass.",
+      "GeoSync remains research software until evidence-bearing gates promote specific claims."
+    ],
+    "blocked_claim_phrase_policy": "The validator rejects predeclared status-inflation phrases rather than storing the phrases here."
+  }
+}

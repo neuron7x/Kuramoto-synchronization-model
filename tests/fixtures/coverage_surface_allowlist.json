@@ -1,0 +1,6 @@
+{
+  "geosync_research": {
+    "reason": "research",
+    "note": "Research-only modules; not production runtime. Excluded from release coverage denominator by design."
+  }
+}

@@ -1,4 +1,5 @@
-# SPDX-License-Identifier: LicenseRef-TradePulse-Proprietary
+# Copyright (c) 2023-2026 Yaroslav Vasylenko (neuron7xLab)
+# SPDX-License-Identifier: MIT
 """Tests for authenticated REST/WebSocket execution connectors."""
 
 from __future__ import annotations
@@ -32,9 +33,7 @@ class QueueWebSocketFactory:
     def __init__(self) -> None:
         self.queue: asyncio.Queue[str] = asyncio.Queue()
 
-    def __call__(
-        self, url: str
-    ):  # pragma: no cover - exercised in integration behaviour
+    def __call__(self, url: str):  # pragma: no cover - exercised in integration behaviour
         factory = self
 
         class _QueueWebSocket:
@@ -217,12 +216,8 @@ def test_binance_rest_connector_signs_and_streams(
         raise AssertionError(f"Unhandled request {request.method} {path}")
 
     transport = httpx.MockTransport(handler)
-    client = httpx.Client(
-        base_url="https://testnet.binance.vision", transport=transport
-    )
-    connector = BinanceRESTConnector(
-        sandbox=True, http_client=client, ws_factory=ws_factory
-    )
+    client = httpx.Client(base_url="https://testnet.binance.vision", transport=transport)
+    connector = BinanceRESTConnector(sandbox=True, http_client=client, ws_factory=ws_factory)
     monkeypatch.setattr("execution.adapters.binance.time.time", lambda: 1_700_000_000.0)
 
     connector.connect({"api_key": "key", "api_secret": "secret"})
@@ -271,9 +266,7 @@ def test_binance_rest_connector_signs_and_streams(
     assert open_orders[0].order_type is OrderType.LIMIT
 
     positions = connector.get_positions()
-    assert any(
-        pos["symbol"] == "BTC" and pos["qty"] == pytest.approx(0.5) for pos in positions
-    )
+    assert any(pos["symbol"] == "BTC" and pos["qty"] == pytest.approx(0.5) for pos in positions)
 
     assert connector.cancel_order("100") is True
 
@@ -363,12 +356,8 @@ def test_binance_cancel_replace(
         raise AssertionError(f"Unhandled request {request.method} {path}")
 
     transport = httpx.MockTransport(handler)
-    client = httpx.Client(
-        base_url="https://testnet.binance.vision", transport=transport
-    )
-    connector = BinanceRESTConnector(
-        sandbox=True, http_client=client, ws_factory=ws_factory
-    )
+    client = httpx.Client(base_url="https://testnet.binance.vision", transport=transport)
+    connector = BinanceRESTConnector(sandbox=True, http_client=client, ws_factory=ws_factory)
     monkeypatch.setattr("execution.adapters.binance.time.time", lambda: 1_700_000_000.0)
 
     connector.connect({"api_key": "key", "api_secret": "secret"})
@@ -391,9 +380,7 @@ def test_binance_cancel_replace(
         stop_price=19900.0,
         order_type=OrderType.STOP_LIMIT,
     )
-    updated = connector.cancel_replace_order(
-        "100", replacement, idempotency_key="replace"
-    )
+    updated = connector.cancel_replace_order("100", replacement, idempotency_key="replace")
     assert updated.order_id == "200"
     assert updated.order_type is OrderType.STOP_LIMIT
 
@@ -484,9 +471,7 @@ def test_coinbase_rest_connector_handles_auth_and_stream(
         base_url="https://api-public.sandbox.exchange.coinbase.com/api/v3/brokerage",
         transport=transport,
     )
-    connector = CoinbaseRESTConnector(
-        sandbox=True, http_client=client, ws_factory=ws_factory
-    )
+    connector = CoinbaseRESTConnector(sandbox=True, http_client=client, ws_factory=ws_factory)
     monkeypatch.setattr("execution.adapters.coinbase.time.time", lambda: 1_700_000_000)
 
     connector.connect(
@@ -534,14 +519,11 @@ def test_coinbase_rest_connector_handles_auth_and_stream(
     open_orders = connector.open_orders()
     assert any(order.order_id == "cb-2" for order in open_orders)
     assert any(
-        order.order_id == "cb-2" and order.order_type is OrderType.LIMIT
-        for order in open_orders
+        order.order_id == "cb-2" and order.order_type is OrderType.LIMIT for order in open_orders
     )
 
     positions = connector.get_positions()
-    assert any(
-        pos["symbol"] == "BTC" and pos["qty"] == pytest.approx(0.4) for pos in positions
-    )
+    assert any(pos["symbol"] == "BTC" and pos["qty"] == pytest.approx(0.4) for pos in positions)
 
     assert connector.cancel_order("cb-1") is True
 
@@ -607,9 +589,7 @@ def test_coinbase_cancel_replace(
         base_url="https://api-public.sandbox.exchange.coinbase.com/api/v3/brokerage",
         transport=transport,
     )
-    connector = CoinbaseRESTConnector(
-        sandbox=True, http_client=client, ws_factory=ws_factory
-    )
+    connector = CoinbaseRESTConnector(sandbox=True, http_client=client, ws_factory=ws_factory)
     monkeypatch.setattr("execution.adapters.coinbase.time.time", lambda: 1_700_000_000)
 
     connector.connect(
@@ -634,9 +614,7 @@ def test_coinbase_cancel_replace(
         stop_price=20500.0,
         order_type=OrderType.STOP_LIMIT,
     )
-    updated = connector.cancel_replace_order(
-        "cb-1", replacement, idempotency_key="replace"
-    )
+    updated = connector.cancel_replace_order("cb-1", replacement, idempotency_key="replace")
     assert updated.order_id == "cb-2"
     assert updated.order_type is OrderType.STOP_LIMIT
 
@@ -755,12 +733,8 @@ def test_kraken_rest_connector_signs_and_streams(
         raise AssertionError(f"Unhandled Kraken request {request.method} {path}")
 
     transport = httpx.MockTransport(handler)
-    client = httpx.Client(
-        base_url="https://api.sandbox.kraken.com", transport=transport
-    )
-    connector = KrakenRESTConnector(
-        sandbox=True, http_client=client, ws_factory=ws_factory
-    )
+    client = httpx.Client(base_url="https://api.sandbox.kraken.com", transport=transport)
+    connector = KrakenRESTConnector(sandbox=True, http_client=client, ws_factory=ws_factory)
     monkeypatch.setattr("execution.adapters.kraken.time.time", lambda: 1_700_000_000.0)
 
     connector.connect({"api_key": "key", "api_secret": api_secret, "otp": "000000"})

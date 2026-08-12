@@ -1,0 +1,2 @@
+incident_ts,incident_type,severity,affected_run_date,description,resolved_yes_no,resolution_ts,changed_artifacts_yes_no
+2026-04-21T22:47:24Z,manual_tick,LOW,2026-04-21,Manual paper_trader.py --tick at user direction to refresh stale snapshot; network call to Binance+yfinance succeeded; day 9/90 appended to paper_state (hash 9dcd19d835a52d54).,yes,2026-04-21T22:47:24Z,yes (spike paper_state/*.csv/.jsonl/.txt appended read-only; integrated module untouched)

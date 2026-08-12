@@ -1,0 +1,51 @@
+# SPDX-License-Identifier: MIT
+id: d002h-authorization-grant-rootlock
+status: DRAFT
+claim_type: fail_closed
+promise: >-
+  Extends the D-002H root-hash contour to the canonical-run authorisation grants
+  themselves. Gate E byte-locks 16 governance files and Gate G byte-locks the
+  D-002C ledger and D-002H prereg, but the two grant artifacts that AUTHORISE the
+  canonical run (Gate F authorisation + Gate G terminal final-lock) were only
+  field-verified, not byte-exact. A new fail-closed test pins each grant's
+  on-disk sha256, so any mutation — including a non-asserted field or a forged
+  authorized_final flip — fails. It does NOT grant, weaken, or re-verify
+  authorisation; it freezes the grant bytes (tamper-tripwire, like Gate E).
+diff_scope:
+  changed_files:
+    - path: ".claude/commit_acceptors/d002h-authorization-grant-rootlock.yaml"
+    - path: "tests/systemic_risk/test_d002h_authorization_artifacts_locked.py"
+  forbidden_paths:
+    - "trading/"
+    - "execution/"
+    - "forecast/"
+    - "policy/"
+required_python_symbols:
+  - "tests/systemic_risk/test_d002h_authorization_artifacts_locked.py::test_final_lock_grant_byte_exact"
+expected_signal: >-
+  the two canonical-run grant artifacts' on-disk sha256 match their pins; a
+  spurious field or a forged authorized_final flip on either grant fails the
+  byte-exact lock; pytest tests/systemic_risk/test_d002h_authorization_artifacts_locked.py
+  passes on the committed tree.
+measurement_command: >-
+  bash -c 'python -m pytest -q tests/systemic_risk/test_d002h_authorization_artifacts_locked.py'
+signal_artifact: "tmp/d002h_grant_rootlock.log"
+falsifier:
+  command: |
+    python -c "import importlib.util, sys, hashlib
+    s = importlib.util.spec_from_file_location('t', 'tests/systemic_risk/test_d002h_authorization_artifacts_locked.py')
+    t = importlib.util.module_from_spec(s); sys.modules['t'] = t; s.loader.exec_module(t)
+    name = 'd002h_canonical_run_final_lock.json'
+    disk = hashlib.sha256((t.AUTH_DIR / name).read_bytes()).hexdigest()
+    sys.exit(1 if disk == t.GRANT_PINS[name] else 0)"
+  description: >-
+    Recomputes the terminal grant's on-disk sha256 and exits 0 only if it does
+    NOT equal the pin (the vacuous-lock state where the pin is disconnected from
+    the bytes). On the correct tree disk == pin, so the command exits non-zero —
+    proving the byte-lock is bound to the real grant bytes, not decorative.
+rollback_command: "git revert --no-edit HEAD"
+rollback_verification_command: "git diff --exit-code tests/systemic_risk/test_d002h_authorization_artifacts_locked.py"
+memory_update_type: none
+ledger_path: ".claude/commit_acceptors/d002h-authorization-grant-rootlock.yaml"
+report_path: "docs/reports/diff_bound_commit_acceptor_layer.md"
+evidence: []

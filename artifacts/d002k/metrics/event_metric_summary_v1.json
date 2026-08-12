@@ -1,0 +1,26 @@
+{
+  "schema_version": "D002K-EVENT-METRIC-SUMMARY-v1",
+  "study_id": "D-002K",
+  "node_id": "D002K-P3",
+  "generated_at": "2026-05-15T00:00:00Z",
+  "parent_contract_path": "artifacts/d002k/metrics/event_metric_contract_v1.json",
+  "primary_metric": "pre_post_standardized_mean_shift",
+  "counts": {
+    "total": 7,
+    "primary": 1,
+    "secondary_exploratory": 6,
+    "by_observable_family": {
+      "level_shift": 4,
+      "spread_widening": 1,
+      "volatility_burst": 4,
+      "recovery_time": 2,
+      "transition_steepness": 3,
+      "stress_persistence": 4
+    }
+  },
+  "threshold_deferred_all": true,
+  "determinism_verified": true,
+  "no_scoring_on_real_data": true,
+  "canonical_run_authorized": false,
+  "decision": "D002K_EVENT_METRICS_READY"
+}

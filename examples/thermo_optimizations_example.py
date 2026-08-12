@@ -1,4 +1,6 @@
-"""Example: Using thermodynamics optimizations in TradePulse.
+# Copyright (c) 2023-2026 Yaroslav Vasylenko (neuron7xLab)
+# SPDX-License-Identifier: MIT
+"""Example: Using thermodynamics optimizations in GeoSync.
 
 This example demonstrates how to integrate the new optimization modules
 (caching, memory management, performance monitoring) with the existing
@@ -125,9 +127,7 @@ def example_2_vectorized_operations():
 
     # Method 2: Vectorized
     start = time.perf_counter()
-    mean_vectorized = VectorizedOperations.compute_coherency_mean_vectorized(
-        coherency_values
-    )
+    mean_vectorized = VectorizedOperations.compute_coherency_mean_vectorized(coherency_values)
     duration_vectorized = (time.perf_counter() - start) * 1000
 
     print(f"\nPython mean: {mean_python:.6f} ({duration_python:.3f} ms)")

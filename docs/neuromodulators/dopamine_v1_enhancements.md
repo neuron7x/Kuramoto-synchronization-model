@@ -8,7 +8,7 @@ This document summarizes the production-grade enhancements made to the dopamine 
 
 ### 1. Numerical Safety & Invariants
 
-**Module:** `src/tradepulse/core/neuro/dopamine/_invariants.py`
+**Module:** `src/geosync/core/neuro/dopamine/_invariants.py`
 
 **Added Utilities:**
 - `assert_no_nan_inf()` - Global NaN/Inf checker with context dumping
@@ -124,7 +124,7 @@ self._cache_temp_k
 ### 6. Testing Infrastructure
 
 **Test Coverage:**
-- 54 tests passing (20 controller + 34 invariants)
+- 54+ tests passing
 - Property-based tests using Hypothesis
 - Edge case coverage (NaN/Inf, boundaries, monotonic violations)
 
@@ -254,7 +254,7 @@ pytest tests/core/neuro/dopamine/ -v
 
 ### Coverage
 ```bash
-pytest tests/core/neuro/dopamine/ --cov=tradepulse.core.neuro.dopamine
+pytest tests/core/neuro/dopamine/ --cov=geosync.core.neuro.dopamine
 # Target: ≥95% (current: ~92%)
 ```
 

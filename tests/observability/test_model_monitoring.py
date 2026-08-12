@@ -1,3 +1,5 @@
+# Copyright (c) 2023-2026 Yaroslav Vasylenko (neuron7xLab)
+# SPDX-License-Identifier: MIT
 from __future__ import annotations
 
 from datetime import datetime, timedelta, timezone
@@ -6,6 +8,7 @@ import pytest
 from prometheus_client import CollectorRegistry
 
 from core.utils import metrics as metrics_module
+from observability import model_monitoring as model_monitoring_module
 from observability.model_monitoring import (
     ModelObservabilityConfig,
     ModelObservabilityOrchestrator,
@@ -40,19 +43,18 @@ def metrics_registry(monkeypatch: pytest.MonkeyPatch) -> CollectorRegistry:
     registry = CollectorRegistry()
     collector = metrics_module.MetricsCollector(registry)
     monkeypatch.setattr(metrics_module, "_collector", collector, raising=False)
+    monkeypatch.setattr(
+        model_monitoring_module, "get_metrics_collector", lambda registry=None: collector
+    )
     yield registry
     monkeypatch.setattr(metrics_module, "_collector", None, raising=False)
 
 
-def _sample(
-    registry: CollectorRegistry, name: str, labels: dict[str, str]
-) -> float | None:
+def _sample(registry: CollectorRegistry, name: str, labels: dict[str, str]) -> float | None:
     return registry.get_sample_value(name, labels)
 
 
-def test_trace_inference_records_metrics(
-    metrics_registry: CollectorRegistry, tmp_path
-) -> None:
+def test_trace_inference_records_metrics(metrics_registry: CollectorRegistry, tmp_path) -> None:
     clock = FakeClock()
     config = ModelObservabilityConfig(
         model_name="alpha",
@@ -87,42 +89,42 @@ def test_trace_inference_records_metrics(
 
     latency_count = _sample(
         metrics_registry,
-        "tradepulse_model_inference_latency_seconds_count",
+        "geosync_model_inference_latency_seconds_count",
         {"model_name": "alpha", "deployment": "prod"},
     )
     throughput = _sample(
         metrics_registry,
-        "tradepulse_model_inference_throughput_per_second",
+        "geosync_model_inference_throughput_per_second",
         {"model_name": "alpha", "deployment": "prod"},
     )
     error_ratio = _sample(
         metrics_registry,
-        "tradepulse_model_inference_error_ratio",
+        "geosync_model_inference_error_ratio",
         {"model_name": "alpha", "deployment": "prod"},
     )
     saturation = _sample(
         metrics_registry,
-        "tradepulse_model_saturation",
+        "geosync_model_saturation",
         {"model_name": "alpha", "deployment": "prod"},
     )
     cpu_percent = _sample(
         metrics_registry,
-        "tradepulse_model_cpu_percent",
+        "geosync_model_cpu_percent",
         {"model_name": "alpha", "deployment": "prod"},
     )
     memory_percent = _sample(
         metrics_registry,
-        "tradepulse_model_memory_percent",
+        "geosync_model_memory_percent",
         {"model_name": "alpha", "deployment": "prod"},
     )
     cache_hits = _sample(
         metrics_registry,
-        "tradepulse_model_cache_hit_ratio",
+        "geosync_model_cache_hit_ratio",
         {"model_name": "alpha", "deployment": "prod", "cache_name": "embeddings"},
     )
     evictions = _sample(
         metrics_registry,
-        "tradepulse_model_cache_evictions_total",
+        "geosync_model_cache_evictions_total",
         {"model_name": "alpha", "deployment": "prod", "cache_name": "embeddings"},
     )
 
@@ -149,9 +151,7 @@ def test_trace_inference_records_metrics(
     assert latency_event.severity == pytest.approx(1.5, rel=1e-6)
 
 
-def test_quality_interval_and_degradation(
-    metrics_registry: CollectorRegistry, tmp_path
-) -> None:
+def test_quality_interval_and_degradation(metrics_registry: CollectorRegistry, tmp_path) -> None:
     clock = FakeClock()
     config = ModelObservabilityConfig(
         model_name="beta",
@@ -165,9 +165,7 @@ def test_quality_interval_and_degradation(
         monotonic=clock.monotonic,
         now=clock.now,
     )
-    orchestrator.configure_quality_baseline(
-        "accuracy", target=0.9, tolerance=0.02, min_samples=5
-    )
+    orchestrator.configure_quality_baseline("accuracy", target=0.9, tolerance=0.02, min_samples=5)
 
     values = [0.91, 0.9, 0.86, 0.84, 0.83]
     interval = None
@@ -187,15 +185,13 @@ def test_quality_interval_and_degradation(
     }
     mean_gauge = _sample(
         metrics_registry,
-        "tradepulse_model_quality_interval_mean",
+        "geosync_model_quality_interval_mean",
         metric_labels,
     )
     assert mean_gauge == pytest.approx(interval.mean)
 
     degradation_events = [
-        event
-        for event in orchestrator.latest_degradations
-        if event.metric == "accuracy"
+        event for event in orchestrator.latest_degradations if event.metric == "accuracy"
     ]
     assert degradation_events, "quality baseline breach should emit degradation"
     assert degradation_events[-1].incident is not None
@@ -226,9 +222,7 @@ def test_error_rate_degradation_severity_handles_zero_threshold(
             raise RuntimeError("boom")
 
     degradation_events = [
-        event
-        for event in orchestrator.latest_degradations
-        if event.metric == "error_rate"
+        event for event in orchestrator.latest_degradations if event.metric == "error_rate"
     ]
     assert degradation_events, "error threshold breach should emit degradation"
     assert degradation_events[-1].severity == pytest.approx(1.0, rel=1e-6)
@@ -267,7 +261,7 @@ def test_correlation_metrics(metrics_registry: CollectorRegistry, tmp_path) -> N
 
     gauge_value = _sample(
         metrics_registry,
-        "tradepulse_model_metric_correlation",
+        "geosync_model_metric_correlation",
         {
             "model_name": "gamma",
             "deployment": "prod",
@@ -295,17 +289,13 @@ def test_postmortem_template_contains_timeline(
         now=clock.now,
     )
     orchestrator.label_event("initialised", {"build": "2024.01"})
-    orchestrator.configure_quality_baseline(
-        "f1_score", target=0.7, tolerance=0.05, min_samples=3
-    )
+    orchestrator.configure_quality_baseline("f1_score", target=0.7, tolerance=0.05, min_samples=3)
 
     for value in (0.71, 0.7, 0.5):
         clock.advance(0.3)
         orchestrator.record_quality_metric("f1_score", value)
 
-    event = next(
-        evt for evt in orchestrator.latest_degradations if evt.metric == "f1_score"
-    )
+    event = next(evt for evt in orchestrator.latest_degradations if evt.metric == "f1_score")
     template = orchestrator.generate_postmortem_template(event)
     rendered = template.render()
 

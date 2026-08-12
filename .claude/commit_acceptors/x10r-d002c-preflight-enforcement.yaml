@@ -1,0 +1,310 @@
+# Diff-bound commit acceptor for D-002C C2.4-D (issue #654) —
+# pre-flight enforcement (truth-binding integration layer).
+#
+# What lands:
+#   * research/systemic_risk/d002c_preflight.py
+#       Frozen-dataclass preflight enforcement layer.
+#       PreflightCapsulePaths, PreflightDecision, SkippedCell,
+#       RunnableCell + load_and_validate_preflight_capsules /
+#       apply_preflight_to_grid / assert_preflight_launch_allowed /
+#       canonical_preflight_json / verify_capsule_sha256.
+#       Every capsule MUST exist, parse, declare its emitted kind
+#       (pos_control: d002c_pos_control_capsule_v1; neg_control:
+#       d002c_neg_control_capsule_v1; null_audit:
+#       d002c_null_audit_capsule_v1; smoke_test: structural — the
+#       writer module emits no `kind`, so identified by the required
+#       field set), and pass canonical-JSON sha256 recomputation.
+#       Validation is accumulating (never short-circuits) so a
+#       single re-run fixes every refusal at once.
+#   * research/systemic_risk/d002c_sweep_runner.py
+#       run_sweep gains preflight_capsules + require_preflight (default
+#       True). The runner now refuses launch unless every preflight
+#       gate passes, reduces the execution grid by POS excluded_combos
+#       and NEG excluded_cells, persists SKIPPED_BY_PREFLIGHT entries
+#       (CellResult variant) to the D-002D checkpoint, and folds the
+#       preflight decision sha into the aggregate sweep sha (capsule
+#       tampering between runs ⇒ different sweep sha). Legacy
+#       behaviour is preserved behind require_preflight=False.
+#   * tests/research/systemic_risk/test_d002c_preflight.py
+#       33 unit tests covering missing/bad-json/bad-kind/bad-sha
+#       capsules, smoke/null FAIL refusals, POS/NEG exclusion grid
+#       reduction, unknown-substrate/metric/N refusals, deterministic
+#       decision sha, frozen-dataclass invariance, canonical-JSON
+#       non-finite sentinel handling, capsule-sha recompute matches
+#       emitter, accumulated refusal reasons.
+#   * tests/research/systemic_risk/test_d002c_sweep_runner_preflight_integration.py
+#       15 integration tests pinning the run_sweep × preflight
+#       contract: strict-mode refusal, valid-preflight grid reduction,
+#       skipped cells in checkpoint, instrumented run_one_cell proves
+#       SKIPPED cells are not computed, resume preserves skipped
+#       cells, aggregate sha includes preflight decision sha, sha
+#       tampering refuses, smoke-PASS-but-null-FAIL refuses,
+#       unknown-cell refuses, excluded cell cannot reappear as
+#       computed on resume.
+#   * docs/governance/D002C_PREFLIGHT_CONTRACT.md
+#       Governance document: capsule schemas, launch refusal matrix,
+#       grid exclusion semantics, checkpoint skipped-cell semantics,
+#       deterministic hashing rules, required tests, CI requirements,
+#       rollback command, known limitations, claim boundary.
+#   * .claude/commit_acceptors/x10r-d002c-preflight-enforcement.yaml
+#       This file.
+#
+# Legacy-shim edits (documented in PR body):
+#   * tests/research/systemic_risk/test_d002c_sweep_runner.py
+#       Each pre-C2.4-D run_sweep call site grew a single
+#       `require_preflight=False,  # legacy-shim — pre-C2.4-D test`
+#       kwarg. No existing assertion was relaxed.
+#
+# Strict scope:
+#   Truth-binding integration ONLY. NO claim layer. NO sweep launch.
+#   NO threshold tuning. NO post-hoc relaxation. The preflight emits
+#   no claim of its own — it only refuses launch or reduces the
+#   execution grid based on the gate verdicts.
+
+id: x10r-d002c-preflight-enforcement
+status: ACTIVE
+claim_type: correctness
+promise: >-
+  After this PR lands, research/systemic_risk/d002c_preflight exposes a
+  frozen-dataclass preflight enforcement layer
+  (PreflightCapsulePaths, PreflightDecision, SkippedCell,
+  RunnableCell) plus load_and_validate_preflight_capsules,
+  apply_preflight_to_grid, and assert_preflight_launch_allowed.
+
+  research/systemic_risk/d002c_sweep_runner.run_sweep gains two new
+  keyword arguments — preflight_capsules and require_preflight — and
+  in strict mode (default) refuses to launch unless every preflight
+  gate passes, reduces the execution grid by POS excluded_combos and
+  NEG excluded_cells, persists SKIPPED_BY_PREFLIGHT entries to the
+  D-002D checkpoint, and folds the preflight decision sha into the
+  aggregate sweep sha. Capsule tampering between runs changes the
+  sweep sha by construction.
+
+  Legacy callers (pre-C2.4-D unit tests of run_one_cell plumbing)
+  retain their old behaviour behind require_preflight=False. No
+  existing assertion in tests/research/systemic_risk/test_d002c_sweep_runner.py
+  was relaxed — each affected call site grew a single legacy-shim
+  kwarg.
+
+  Strict scope: integration / truth-binding layer only. No claim
+  layer. No threshold tuning. The preflight refuses launch or
+  reduces the grid; it emits no claim of its own.
+diff_scope:
+  changed_files:
+    - path: ".claude/commit_acceptors/x10r-d002c-preflight-enforcement.yaml"
+    - path: "research/systemic_risk/d002c_preflight.py"
+    - path: "research/systemic_risk/d002c_sweep_runner.py"
+    - path: "tests/research/systemic_risk/test_d002c_preflight.py"
+    - path: "tests/research/systemic_risk/test_d002c_sweep_runner_preflight_integration.py"
+    - path: "tests/research/systemic_risk/test_d002c_sweep_runner.py"
+    - path: "docs/governance/D002C_PREFLIGHT_CONTRACT.md"
+  forbidden_paths:
+    - "trading/"
+    - "execution/"
+    - "forecast/"
+    - "policy/"
+    - "core/physics/"
+    - "core/kuramoto/"
+    - "research/reconstruction/"
+    - "scripts/run_x10r_"
+    - "application/governance/claim_ledger.py"
+    - "application/governance/commit_acceptor.py"
+    - "research/systemic_risk/sweep_checkpoint.py"
+    - "research/systemic_risk/d002c_preregistration.py"
+    - "research/systemic_risk/d002c_substrates.py"
+    - "research/systemic_risk/d002c_metrics.py"
+    - "research/systemic_risk/d002c_kuramoto.py"
+    - "research/systemic_risk/d002c_crn_validator.py"
+    - "research/systemic_risk/d002c_pos_control.py"
+    - "research/systemic_risk/d002c_neg_control.py"
+    - "research/systemic_risk/d002c_null_audit.py"
+    - "research/systemic_risk/d002c_smoke_test.py"
+required_python_symbols:
+  - "research/systemic_risk/d002c_preflight.py::PreflightCapsulePaths"
+  - "research/systemic_risk/d002c_preflight.py::PreflightDecision"
+  - "research/systemic_risk/d002c_preflight.py::SkippedCell"
+  - "research/systemic_risk/d002c_preflight.py::RunnableCell"
+  - "research/systemic_risk/d002c_preflight.py::PreflightLaunchRefused"
+  - "research/systemic_risk/d002c_preflight.py::CapsuleShaMismatch"
+  - "research/systemic_risk/d002c_preflight.py::load_and_validate_preflight_capsules"
+  - "research/systemic_risk/d002c_preflight.py::apply_preflight_to_grid"
+  - "research/systemic_risk/d002c_preflight.py::assert_preflight_launch_allowed"
+  - "research/systemic_risk/d002c_preflight.py::canonical_preflight_json"
+  - "research/systemic_risk/d002c_preflight.py::verify_capsule_sha256"
+  - "tests/research/systemic_risk/test_d002c_preflight.py::test_missing_pos_capsule_refuses_launch"
+  - "tests/research/systemic_risk/test_d002c_preflight.py::test_smoke_fail_refuses_launch"
+  - "tests/research/systemic_risk/test_d002c_preflight.py::test_null_fail_refuses_launch"
+  - "tests/research/systemic_risk/test_d002c_preflight.py::test_pos_excluded_combo_removes_all_matching_cells"
+  - "tests/research/systemic_risk/test_d002c_preflight.py::test_neg_excluded_cell_removes_exact_cell_only"
+  - "tests/research/systemic_risk/test_d002c_preflight.py::test_preflight_decision_sha_is_deterministic"
+  - "tests/research/systemic_risk/test_d002c_preflight.py::test_capsule_sha_recompute_matches_emitter"
+  - "tests/research/systemic_risk/test_d002c_sweep_runner_preflight_integration.py::test_run_sweep_requires_preflight_when_enabled"
+  - "tests/research/systemic_risk/test_d002c_sweep_runner_preflight_integration.py::test_run_sweep_with_valid_preflight_runs_reduced_grid"
+  - "tests/research/systemic_risk/test_d002c_sweep_runner_preflight_integration.py::test_run_sweep_records_skipped_cells_in_checkpoint"
+  - "tests/research/systemic_risk/test_d002c_sweep_runner_preflight_integration.py::test_run_sweep_does_not_compute_skipped_cells"
+  - "tests/research/systemic_risk/test_d002c_sweep_runner_preflight_integration.py::test_aggregate_sha_includes_preflight_decision_sha"
+  - "tests/research/systemic_risk/test_d002c_sweep_runner_preflight_integration.py::test_tampered_pos_capsule_sha_refuses"
+expected_signal: >-
+  Local: `pytest tests/research/systemic_risk/test_d002c_preflight.py
+  tests/research/systemic_risk/test_d002c_sweep_runner_preflight_integration.py
+  tests/research/systemic_risk/test_d002c_sweep_runner.py -q` reports
+  "85 passed"; `mypy --strict --follow-imports=silent` clean on the
+  4 new/edited Python files; `ruff check` and `black --check` both
+  pass.
+measurement_command: >-
+  bash -c 'mypy --strict --follow-imports=silent
+  research/systemic_risk/d002c_preflight.py
+  research/systemic_risk/d002c_sweep_runner.py
+  tests/research/systemic_risk/test_d002c_preflight.py
+  tests/research/systemic_risk/test_d002c_sweep_runner_preflight_integration.py
+  && ruff check
+  research/systemic_risk/d002c_preflight.py
+  research/systemic_risk/d002c_sweep_runner.py
+  tests/research/systemic_risk/test_d002c_preflight.py
+  tests/research/systemic_risk/test_d002c_sweep_runner_preflight_integration.py
+  && black --check
+  research/systemic_risk/d002c_preflight.py
+  research/systemic_risk/d002c_sweep_runner.py
+  tests/research/systemic_risk/test_d002c_preflight.py
+  tests/research/systemic_risk/test_d002c_sweep_runner_preflight_integration.py
+  && pytest tests/research/systemic_risk/test_d002c_preflight.py
+  tests/research/systemic_risk/test_d002c_sweep_runner_preflight_integration.py
+  tests/research/systemic_risk/test_d002c_sweep_runner.py -q'
+signal_artifact: "tests/research/systemic_risk/test_d002c_sweep_runner_preflight_integration.py"
+falsifier:
+  command: |-
+    bash -c 'PYTHONPATH=. python -c "
+    import hashlib, json
+    from pathlib import Path
+    import tempfile
+    from research.systemic_risk.d002c_preflight import (
+        POS_CONTROL_KIND, NEG_CONTROL_KIND, NULL_AUDIT_KIND,
+        PreflightCapsulePaths, PreflightLaunchRefused,
+        canonical_preflight_json,
+        load_and_validate_preflight_capsules, apply_preflight_to_grid,
+        assert_preflight_launch_allowed,
+    )
+
+    def seal(body):
+        sha = hashlib.sha256(canonical_preflight_json(body).encode()).hexdigest()
+        out = dict(body); out['"'"'sha256'"'"'] = sha; return out
+
+    def pos(combos=None):
+        b = {'"'"'kind'"'"': POS_CONTROL_KIND, '"'"'all_pass'"'"': not combos,
+             '"'"'excluded_combos'"'"': combos or [], '"'"'results'"'"': [],
+             '"'"'generated_at'"'"': '"'"'2026-05-11T12:00:00Z'"'"'}
+        return seal(b)
+
+    def neg(cells=None):
+        b = {'"'"'kind'"'"': NEG_CONTROL_KIND, '"'"'all_pass'"'"': not cells,
+             '"'"'excluded_cells'"'"': cells or [], '"'"'results'"'"': [],
+             '"'"'generated_at'"'"': '"'"'2026-05-11T12:01:00Z'"'"'}
+        return seal(b)
+
+    def nullc(verdicts):
+        rs = [{'"'"'verdict'"'"': v, '"'"'p_value_empirical'"'"': 0.01,
+               '"'"'n_seeds'"'"': 20, '"'"'n_shuffles'"'"': 100,
+               '"'"'unshuffled_abs_signal'"'"': 0.5,
+               '"'"'shuffled_abs_signal_median'"'"': 0.05,
+               '"'"'shuffled_abs_signal_p95'"'"': 0.1,
+               '"'"'unshuffled_greater_than_median'"'"': True,
+               '"'"'rng_seed'"'"': 42, '"'"'p_value_threshold'"'"': 0.05,
+               '"'"'sha256'"'"': '"'"'0'"'"'*64} for v in verdicts]
+        return seal({'"'"'kind'"'"': NULL_AUDIT_KIND, '"'"'results'"'"': rs,
+                     '"'"'all_pass'"'"': all(v == '"'"'PASS'"'"' for v in verdicts),
+                     '"'"'n_cells_audited'"'"': len(rs),
+                     '"'"'generated_at'"'"': '"'"'2026-05-11T12:02:00Z'"'"'})
+
+    def smoke(verdict='"'"'PASS'"'"', failed=0):
+        b = {'"'"'verdict'"'"': verdict, '"'"'grid_N'"'"': [50],
+             '"'"'grid_lambda'"'"': [0.0], '"'"'n_seeds'"'"': 1,
+             '"'"'n_cells_total'"'"': 9, '"'"'n_cells_ok'"'"': 9-failed,
+             '"'"'n_cells_failed'"'"': failed, '"'"'cells'"'"': [],
+             '"'"'generated_at'"'"': '"'"'2026-05-11T12:03:00Z'"'"'}
+        return seal(b)
+
+    def write(p, payload):
+        Path(p).write_text(json.dumps(payload, sort_keys=True, indent=2))
+
+    with tempfile.TemporaryDirectory() as td:
+        td = Path(td)
+        pp, np_, nu, sm = td/'"'"'pos.json'"'"', td/'"'"'neg.json'"'"', td/'"'"'null.json'"'"', td/'"'"'smoke.json'"'"'
+
+        # (1) missing capsule refuses
+        write(pp, pos()); write(np_, neg()); write(nu, nullc(['"'"'PASS'"'"'])); write(sm, smoke())
+        pp.unlink()
+        d = load_and_validate_preflight_capsules(PreflightCapsulePaths(pp, np_, nu, sm))
+        assert not d.launch_allowed, '"'"'missing capsule should refuse'"'"'
+
+        # (2) smoke FAIL refuses
+        write(pp, pos()); write(sm, smoke('"'"'FAIL'"'"', failed=1))
+        d = load_and_validate_preflight_capsules(PreflightCapsulePaths(pp, np_, nu, sm))
+        assert not d.launch_allowed, '"'"'smoke FAIL should refuse'"'"'
+
+        # (3) null FAIL refuses
+        write(sm, smoke()); write(nu, nullc(['"'"'PASS'"'"', '"'"'FAIL'"'"']))
+        d = load_and_validate_preflight_capsules(PreflightCapsulePaths(pp, np_, nu, sm))
+        assert not d.launch_allowed, '"'"'null FAIL should refuse'"'"'
+
+        # (4) POS exclusion removes cell from grid
+        write(nu, nullc(['"'"'PASS'"'"']))
+        write(pp, pos([['"'"'block_structured'"'"', '"'"'tau_onset'"'"']]))
+        d = load_and_validate_preflight_capsules(PreflightCapsulePaths(pp, np_, nu, sm))
+        assert d.launch_allowed
+        grid = [(50, 0.4, '"'"'block_structured'"'"', '"'"'tau_onset'"'"'), (50, 0.4, '"'"'ricci_flow'"'"', '"'"'sync_auc'"'"')]
+        runnable, skipped = apply_preflight_to_grid(grid, d)
+        assert len(runnable) == 1, '"'"'pos exclusion should keep 1'"'"'
+        assert len(skipped) == 1 and skipped[0].reason == '"'"'POS_EXCLUDED_COMBO'"'"'
+
+        # (5) NEG exclusion removes exact cell only
+        write(pp, pos())
+        write(np_, neg([['"'"'block_structured'"'"', '"'"'tau_onset'"'"', 50]]))
+        d = load_and_validate_preflight_capsules(PreflightCapsulePaths(pp, np_, nu, sm))
+        assert d.launch_allowed
+        grid = [(50, 0.4, '"'"'block_structured'"'"', '"'"'tau_onset'"'"'), (100, 0.4, '"'"'block_structured'"'"', '"'"'tau_onset'"'"')]
+        runnable, skipped = apply_preflight_to_grid(grid, d)
+        assert len(runnable) == 1 and runnable[0].N == 100
+        assert len(skipped) == 1 and skipped[0].reason == '"'"'NEG_EXCLUDED_CELL'"'"'
+
+        # (6) sha tampering refuses
+        write(np_, neg())
+        raw = json.loads(pp.read_text())
+        raw['"'"'sha256'"'"'] = '"'"'0'"'"'*64
+        pp.write_text(json.dumps(raw, sort_keys=True, indent=2))
+        d = load_and_validate_preflight_capsules(PreflightCapsulePaths(pp, np_, nu, sm))
+        assert not d.launch_allowed
+        try:
+            assert_preflight_launch_allowed(d)
+            raise AssertionError('"'"'should have raised'"'"')
+        except PreflightLaunchRefused:
+            pass
+
+    print('"'"'falsifier PASS'"'"')
+    "'
+  description: >-
+    Probes the D-002C C2.4-D preflight contract: (1) missing capsule
+    refuses launch; (2) smoke FAIL refuses; (3) null FAIL refuses;
+    (4) POS exclusion removes the (substrate, metric) cell from the
+    grid; (5) NEG exclusion removes the exact (substrate, metric, N)
+    cell only — siblings with different N survive; (6) sha tampering
+    on any capsule refuses launch and assert_preflight_launch_allowed
+    raises PreflightLaunchRefused. If any of these regress, the
+    truth-binding integration is broken — the sweep would launch on
+    a stale or tampered preflight verdict.
+rollback_command: >-
+  bash -c 'git checkout HEAD~1 --
+  && rm -f research/systemic_risk/d002c_preflight.py
+  tests/research/systemic_risk/test_d002c_preflight.py
+  tests/research/systemic_risk/test_d002c_sweep_runner_preflight_integration.py
+  docs/governance/D002C_PREFLIGHT_CONTRACT.md
+  .claude/commit_acceptors/x10r-d002c-preflight-enforcement.yaml'
+rollback_verification_command: >-
+  bash -c 'test ! -f research/systemic_risk/d002c_preflight.py
+  && test ! -f tests/research/systemic_risk/test_d002c_preflight.py
+  && test ! -f tests/research/systemic_risk/test_d002c_sweep_runner_preflight_integration.py
+  && test ! -f docs/governance/D002C_PREFLIGHT_CONTRACT.md
+  && test ! -f .claude/commit_acceptors/x10r-d002c-preflight-enforcement.yaml'
+memory_update_type: append
+ledger_path: ".claude/commit_acceptors/x10r-d002c-preflight-enforcement.yaml"
+report_path: "tests/research/systemic_risk/test_d002c_sweep_runner_preflight_integration.py"
+evidence: []

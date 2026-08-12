@@ -1,0 +1,7 @@
+feat(prior-attenuation): finalize PR #333 with mandatory integration witnesses and physics self-check
+
+- enforce mandatory indicator integration tests (removed optional importorskip path)
+- run and record physics kernel self-check via `.claude/physics/validate_tests.py --self-check`
+- update CI validation artifact with real gate run, canonical-vs-supporting split, and invariant-witness mapping
+- include concise + detailed professional PR description artifacts
+- preserve exactly six canonical invariants (INV-REBUS-1/3/4/5/6/7) with direct witness coverage

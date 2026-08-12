@@ -1,0 +1,58 @@
+#!/bin/bash
+# .claude/hooks/pre-commit-physics
+# Install: cp .claude/hooks/pre-commit-physics .git/hooks/pre-commit && chmod +x .git/hooks/pre-commit
+#
+# Validates that any modified physics test file properly references invariants.
+# Blocks commit if P0-level physics tests lack INV-* references.
+
+set -e
+
+PHYSICS_VALIDATOR=".claude/physics/validate_tests.py"
+
+if [ ! -f "$PHYSICS_VALIDATOR" ]; then
+    echo "⚠️  Physics validator not found at $PHYSICS_VALIDATOR"
+    echo "   Skipping physics test validation."
+    exit 0
+fi
+
+# Get staged Python test files
+STAGED_FILES=$(git diff --cached --name-only --diff-filter=ACM | grep -E "test_.*\.py$" || true)
+
+if [ -z "$STAGED_FILES" ]; then
+    exit 0
+fi
+
+# Check if any staged files are physics-related
+PHYSICS_KEYWORDS="physics|kuramoto|sync|serotonin|dopamine|gaba|energy|thermo|lyapunov|ricci|regime"
+PHYSICS_FILES=$(echo "$STAGED_FILES" | grep -iE "$PHYSICS_KEYWORDS" || true)
+
+if [ -z "$PHYSICS_FILES" ]; then
+    exit 0
+fi
+
+echo "🔬 Physics test validation..."
+echo "   Checking $(echo "$PHYSICS_FILES" | wc -l) physics test file(s)..."
+
+FAILED=0
+for f in $PHYSICS_FILES; do
+    OUTPUT=$(python "$PHYSICS_VALIDATOR" "$f" 2>&1)
+    if [ $? -ne 0 ]; then
+        echo ""
+        echo "$OUTPUT"
+        FAILED=1
+    fi
+done
+
+if [ $FAILED -ne 0 ]; then
+    echo ""
+    echo "❌ Physics test validation FAILED."
+    echo "   Fix: add INV-* references to test docstrings."
+    echo "   See: .claude/physics/TEST_TAXONOMY.md for examples."
+    echo "   See: .claude/physics/EXAMPLES.md for before/after."
+    echo ""
+    echo "   To bypass (NOT recommended): git commit --no-verify"
+    exit 1
+fi
+
+echo "✅ Physics tests properly reference invariants."
+exit 0

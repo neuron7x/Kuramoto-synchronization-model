@@ -1,4 +1,5 @@
-# SPDX-License-Identifier: LicenseRef-TradePulse-Proprietary
+# Copyright (c) 2023-2026 Yaroslav Vasylenko (neuron7xLab)
+# SPDX-License-Identifier: MIT
 from __future__ import annotations
 
 import math
@@ -79,9 +80,7 @@ def test_compute_phase_normalises_non_finite_values(
         ),
     ],
 )
-def test_kuramoto_order_handles_nan_and_multidimensional(
-    phases: np.ndarray, expected
-) -> None:
+def test_kuramoto_order_handles_nan_and_multidimensional(phases: np.ndarray, expected) -> None:
     value = kuramoto.kuramoto_order(phases)
     if isinstance(expected, np.ndarray):
         np.testing.assert_allclose(value, expected)

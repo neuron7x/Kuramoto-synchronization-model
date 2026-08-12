@@ -1,0 +1,26 @@
+id: ci-governance-lane-989
+status: ACTIVE
+claim_type: documentation
+promise: "Document the CI governance remediation lane without changing runtime behavior."
+diff_scope:
+  changed_files:
+    - path: "docs/reports/ci_governance_lane_989.md"
+    - path: ".claude/commit_acceptors/ci-governance-lane-989.yaml"
+  forbidden_paths:
+    - "trading/"
+    - "execution/"
+    - "forecast/"
+    - "policy/"
+required_python_symbols: []
+expected_signal: "commit acceptor schema and diff binding validate for the documentation lane"
+measurement_command: "python tools/commit_acceptor/validate_commit_acceptor.py"
+signal_artifact: "tmp/commit_acceptor_validation.json"
+falsifier:
+  command: "python -c \"raise SystemExit(1)\""
+  description: "Always-failing probe to confirm the validation lane surfaces failures."
+rollback_command: "git checkout -- docs/reports/ci_governance_lane_989.md .claude/commit_acceptors/ci-governance-lane-989.yaml"
+rollback_verification_command: "git diff --exit-code docs/reports/ci_governance_lane_989.md .claude/commit_acceptors/ci-governance-lane-989.yaml"
+memory_update_type: append
+ledger_path: ".claude/commit_acceptors/ci-governance-lane-989.yaml"
+report_path: "docs/reports/ci_governance_lane_989.md"
+evidence: []

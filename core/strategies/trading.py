@@ -1,3 +1,5 @@
+# Copyright (c) 2023-2026 Yaroslav Vasylenko (neuron7xLab)
+# SPDX-License-Identifier: MIT
 """Algorithmic trading strategy implementations."""
 
 from __future__ import annotations
@@ -103,9 +105,7 @@ class HurstVPINStrategy(TradingStrategy):
             bucket_size=int(self.params.get("vpin_bucket_size", 50)),
             threshold=float(self.params.get("vpin_threshold", 0.8)),
         )
-        self._hurst_trend_threshold = float(
-            self.params.get("hurst_trend_threshold", 0.6)
-        )
+        self._hurst_trend_threshold = float(self.params.get("hurst_trend_threshold", 0.6))
         self._vpin_safe_threshold = float(self.params.get("vpin_safe_threshold", 0.5))
 
     def generate_signals(self, data: pd.DataFrame) -> pd.DataFrame:
@@ -127,10 +127,7 @@ class HurstVPINStrategy(TradingStrategy):
         for idx in range(size):
             hurst_value = float(np.clip(hurst_values[idx], 0.0, 1.0))
             vpin_value = float(np.clip(vpin_values[idx], 0.0, 1.0))
-            if (
-                hurst_value > self._hurst_trend_threshold
-                and vpin_value < self._vpin_safe_threshold
-            ):
+            if hurst_value > self._hurst_trend_threshold and vpin_value < self._vpin_safe_threshold:
                 signals[idx] = "Buy"
                 confidence[idx] = max(min(hurst_value, 1.0 - vpin_value), 0.0)
             elif vpin_value > self._vpin_safe_threshold:

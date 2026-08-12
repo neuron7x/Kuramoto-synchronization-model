@@ -1,0 +1,92 @@
+# Diff-bound commit acceptor for the Ricci commensurate-metric RUNTIME gate.
+#
+# INV-RC3 (κ ∈ [−1, 1]) is CONDITIONAL on the commensurate-metric regime:
+# Ollivier (J. Funct. Anal. 2009) defines κ = 1 − W₁/d and the lower bound
+# κ ≥ −1 assumes the graph-distance metric. core/indicators/ricci.py measures W₁
+# in the 1-D positional (price-level) embedding but d in the |Δp|+1 weighted
+# geodesic; on a jumpy/gapped/volatile series the two diverge, W₁/d exceeds 2,
+# and κ descends below −1 (≈ −6 at δ=0.05). A previous PR (#1023) corrected the
+# INVARIANTS.yaml TEXT to a conditional claim, but the RUNTIME still silently
+# emitted that out-of-regime κ with no signal the tight band no longer applied —
+# the dirty-data attack: a gapped price series yields κ < −1 presented as valid.
+#
+# This change closes the runtime gap. core/indicators/ricci.py gains
+# assert_ricci_regime(G) -> RicciRegimeCertificate, a fail-closed gate run BEFORE
+# the tight INV-RC3 band is claimable. It downgrades the asserted tier
+# INV-RC3 → INV-RC1 (universal κ ≤ 1 only) and records the deviation whenever
+# the regime is broken, so an out-of-regime κ is NEVER labelled INV-RC3-valid.
+# This matches the module's existing declarative claim-boundary design (downgrade
+# + record, like the conditional-correction lineage), with an opt-in
+# raise_on_violation flag for callers that want hard failure.
+#
+# The gate has two legs, both fail-closed: (1) STRUCTURAL necessary condition —
+# max inter-level price step ≤ the documented unit-step multiple; (2) EXACT
+# binding condition — every finite edge satisfies κ ≥ −1 (≡ W₁/d ≤ 2), catching
+# level-revisiting series the structural pre-filter misses. Degenerate inputs
+# (empty / single node / NaN prices) fail-closed to INV-RC1.
+#
+# This adds a NEW public symbol and an adversarial test; it changes NO existing
+# numeric output (mean_ricci / ricci_curvature_edge are untouched) and promotes
+# NO claim tier — it makes the conditional INV-RC3 boundary checkable at runtime.
+#
+# Locally verified on origin/main base (b146a1d):
+#   * pytest tests/unit/physics/test_ricci_commensurate_gate.py: 12 passed
+#   * pytest tests -k "ricci or forman": 580 passed, 2 skipped
+#   * ruff check / black --check: clean
+#   * mypy --strict core/indicators/ricci.py + the test: no issues
+#   * zero new noqa / type: ignore across both changed files
+id: ricci-commensurate-gate
+status: ACTIVE
+claim_type: governance
+promise: >-
+  core.indicators.ricci exposes assert_ricci_regime(G) -> RicciRegimeCertificate,
+  a fail-closed runtime gate that validates the commensurate-metric regime before
+  the tight INV-RC3 band κ ∈ [−1, 1] is assertable. On a jumpy/gapped/bimodal
+  build_price_graph output (where W₁/d > 2 and κ < −1) the certificate downgrades
+  the asserted tier INV-RC3 → INV-RC1 (universal κ ≤ 1 only) and records the
+  deviation, so an out-of-regime κ is never presented as INV-RC3-valid; with
+  raise_on_violation it raises instead. A commensurate unit-step path verifies
+  tier INV-RC3 with κ ∈ [−1, 1]; degenerate inputs (empty / single node / NaN
+  prices) fail-closed to INV-RC1. No existing numeric output changes and no claim
+  tier is promoted; the conditional INV-RC3 boundary (Ollivier 2009) becomes
+  checkable at runtime.
+diff_scope:
+  changed_files:
+    - path: ".claude/commit_acceptors/ricci-commensurate-gate.yaml"
+    - path: "core/indicators/ricci.py"
+    - path: "tests/unit/physics/test_ricci_commensurate_gate.py"
+  forbidden_paths:
+    - "trading/"
+    - "execution/"
+    - "forecast/"
+    - "src/"
+required_python_symbols:
+  - "core/indicators/ricci.py::assert_ricci_regime"
+  - "core/indicators/ricci.py::RicciRegimeCertificate"
+expected_signal: >-
+  `python -m pytest tests/unit/physics/test_ricci_commensurate_gate.py` reports
+  12 passed; a commensurate unit-step path certifies tier INV-RC3, a jumpy series
+  downgrades to INV-RC1 with κ_min < −1 recorded, and degenerate inputs
+  fail-closed to INV-RC1.
+measurement_command: >-
+  bash -c 'mkdir -p tmp && python -m pytest tests/unit/physics/test_ricci_commensurate_gate.py -v > tmp/ricci_commensurate_gate_pytest.log 2>&1 && grep -qE "12 passed" tmp/ricci_commensurate_gate_pytest.log'
+signal_artifact: "tmp/ricci_commensurate_gate_pytest.log"
+falsifier:
+  command: >-
+    python -c 'import sys, numpy as np; from core.indicators.ricci import build_price_graph, assert_ricci_regime; rng = np.random.default_rng(7); jumpy = build_price_graph(100.0 * np.exp(np.cumsum(rng.normal(0.0, 0.05, size=128))), delta=0.05); cert = jumpy and assert_ricci_regime(jumpy); good = build_price_graph(np.array([100.0, 100.5, 101.0, 101.5, 102.0, 102.5]), delta=0.005); ok = assert_ricci_regime(good); broken = (cert.asserted_tier != "INV-RC1") or (cert.kappa_min >= -1.0) or (ok.asserted_tier != "INV-RC3"); sys.exit(0 if broken else 1)'
+  description: >-
+    Inverse probe of the commensurate-metric gate. It exits 0 (FIRES) iff the
+    gate stops downgrading a provably out-of-regime jumpy series to INV-RC1, OR
+    stops recording its κ_min < −1, OR stops certifying a commensurate unit-step
+    path as INV-RC3. While the gate holds it exits 1. An exit 0 means an
+    out-of-regime κ can again be silently presented as INV-RC3-valid (or the
+    in-regime band stopped being recognised) and must be repaired, not patched
+    green.
+rollback_command: >-
+  bash -c 'git checkout origin/main -- core/indicators/ricci.py && git rm -f tests/unit/physics/test_ricci_commensurate_gate.py .claude/commit_acceptors/ricci-commensurate-gate.yaml'
+rollback_verification_command: >-
+  bash -c 'test ! -f .claude/commit_acceptors/ricci-commensurate-gate.yaml'
+memory_update_type: none
+ledger_path: ".claude/commit_acceptors/ricci-commensurate-gate.yaml"
+report_path: "tmp/ricci_commensurate_gate_pytest.log"
+evidence: []

@@ -1,0 +1,9 @@
+invariant_id,status
+INV-CAK1,PASS
+INV-CAK2,PASS
+INV-CAK3,PASS (enforced by test suite)
+INV-CAK4,PASS (enforced by test suite)
+INV-CAK6,PASS (enforced by test suite)
+INV-CAK7,PASS (enforced by test suite)
+INV-CAK5,PASS
+INV-CAK8,PASS

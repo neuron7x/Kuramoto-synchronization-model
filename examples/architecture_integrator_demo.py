@@ -1,3 +1,5 @@
+# Copyright (c) 2023-2026 Yaroslav Vasylenko (neuron7xLab)
+# SPDX-License-Identifier: MIT
 """Demonstration of the Architecture Integrator.
 
 This example shows how to use the Architecture Integrator to manage
@@ -32,7 +34,7 @@ class ConfigurationService:
         """Load configuration."""
         print("ConfigurationService: Loading configuration...")
         self.config = {
-            "database_url": "postgresql://localhost/tradepulse",
+            "database_url": "postgresql://localhost/geosync",
             "cache_ttl": 300,
             "max_connections": 100,
         }
@@ -139,9 +141,7 @@ class DataIngestionService:
         """Stop ingestion."""
         print("DataIngestionService: Stopping ingestion...")
         self.running = False
-        print(
-            f"DataIngestionService: Stopped (ingested {self.records_ingested} records)"
-        )
+        print(f"DataIngestionService: Stopped (ingested {self.records_ingested} records)")
 
     def health_check(self):
         """Check ingestion health."""

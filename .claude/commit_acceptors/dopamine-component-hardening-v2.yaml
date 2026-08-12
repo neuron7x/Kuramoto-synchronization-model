@@ -1,0 +1,42 @@
+id: dopamine-component-hardening-v2
+status: DRAFT
+claim_type: refactor
+promise: "Dopamine component changes are bound to semantic contract and evidence artifacts."
+diff_scope:
+  changed_files:
+    - path: ".claude/commit_acceptors/dopamine-component-hardening-v2.yaml"
+    - path: "benchmarks/dopamine_benchmark.py"
+    - path: "contracts/dopamine_contract.v1.json"
+    - path: "docs/architecture/dopamine_contract.md"
+    - path: "docs/operations/dopamine_slo.md"
+    - path: "docs/security/dopamine_ssdf.md"
+    - path: "scripts/check_dopamine_contract.py"
+    - path: "scripts/ci/check_dopamine_claim_promotion.py"
+    - path: "scripts/dopamine_contract_core.py"
+    - path: "scripts/evaluate_dopamine_rpe_extension.py"
+    - path: "scripts/security/check_dopamine_security.py"
+    - path: "src/geosync/core/neuro/dopamine/telemetry.py"
+    - path: "tests/core/neuro/dopamine/test_dopamine_claim_gate.py"
+    - path: "tests/core/neuro/dopamine/test_dopamine_contract_gate.py"
+    - path: "tests/core/neuro/dopamine/test_dopamine_telemetry.py"
+    - path: "tests/performance/test_dopamine_performance_budget.py"
+    - path: "tests/research/dopamine/test_rpe_extension_evaluation.py"
+  forbidden_paths:
+    - "trading/"
+    - "execution/"
+    - "forecast/"
+    - "policy/"
+required_python_symbols:
+  - "src/geosync/core/neuro/dopamine/telemetry.py::metric_catalog"
+expected_signal: "Dopamine gates emit deterministic artifacts; incomplete release evidence stays blocked."
+measurement_command: "python scripts/ci/check_dopamine_claim_promotion.py && python scripts/evaluate_dopamine_rpe_extension.py --out results/dopamine_rpe_extension --folds 5 --seed 20260629 && python benchmarks/dopamine_benchmark.py"
+signal_artifact: "artifacts/dopamine_performance/PERFORMANCE_REPORT.json"
+falsifier:
+  command: "python -c \"print('negative-control')\""
+  description: "Draft negative-control placeholder for schema validation."
+rollback_command: "git checkout -- .claude/commit_acceptors/dopamine-component-hardening-v2.yaml"
+rollback_verification_command: "git diff --exit-code"
+memory_update_type: none
+ledger_path: ".claude/commit_acceptors/dopamine-component-hardening-v2.yaml"
+report_path: "docs/architecture/dopamine_contract.md"
+evidence: []

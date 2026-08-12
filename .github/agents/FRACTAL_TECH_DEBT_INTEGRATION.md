@@ -1,6 +1,6 @@
 # Fractal Tech Debt Engine v2.0 Integration Guide
 
-This document describes how to integrate the Fractal Tech Debt Engine v2.0 agent into your CI/CD workflow for systematic technical debt reduction in the TradePulse/ML-SDM ecosystem.
+This document describes how to integrate the Fractal Tech Debt Engine v2.0 agent into your CI/CD workflow for systematic technical debt reduction in the GeoSync/ML-SDM ecosystem.
 
 ## Overview
 

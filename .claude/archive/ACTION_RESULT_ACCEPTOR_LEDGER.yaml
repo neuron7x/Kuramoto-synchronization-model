@@ -1,0 +1,662 @@
+# ACTION RESULT ACCEPTOR LEDGER
+#
+# Final law:
+#   action without result acceptance is just execution;
+#   result without error signal is just logging;
+#   error without update or rollback is just analytics.
+#
+# Every OPERATIONAL entry in this ledger MUST satisfy the chain:
+#   action → expected result → observed result → error signal →
+#   update / rollback → memory effect → falsifier → tests.
+#
+# The validator (tools/archive/validate_action_result_acceptor.py) fails
+# closed if any link in this chain is missing, classifications are
+# unknown, ids duplicate, or the migration_action contradicts the status.
+#
+# Schema (validated; see tools/archive/validate_action_result_acceptor.py):
+#   id, old_path, new_path, mechanism_type, status, importance,
+#   action_source, expected_result, observed_result, error_signal,
+#   update_rule, rollback_rule, memory_effect, existing_tests,
+#   missing_tests, falsifier, migration_action, reason.
+#
+# Repository scope:
+#   OLD: /home/neuro7/Downloads/Kuramoto-synchronization-model-main (2)
+#   NEW: this repo (HEAD e66946c at audit time).
+# Inventory totals (acceptor vocabulary, regex over .py/.md/.yaml):
+#   OLD hits = 1902; NEW hits = 2213.
+
+version: 1
+generated_at: 2026-04-27
+generator: tools/archive/validate_action_result_acceptor.py
+old_repo_root: /home/neuro7/Downloads/Kuramoto-synchronization-model-main (2)
+new_repo_head: e66946c
+
+non_claim: |
+  Engineering analogue only. No biological-equivalence claim is made for
+  any "neuro" / "dopamine" / "RPE" naming below; all such names are
+  shorthand for the bounded mathematical mechanism described in
+  action_source / observed_result / error_signal / update_rule.
+
+entries:
+
+  # ────────────── EXECUTION_RESULT_ACCEPTOR — canonical loop ────────────
+  # The canonical Acceptor-of-Action-Result already exists in the new repo
+  # under nak_controller/aar/. The PR-2 step in the protocol therefore
+  # becomes a verify-and-link step, not a build step.
+
+  - id: nak-aar-action-event
+    old_path: tradepulse/neural_controller/aar/types.py
+    new_path: nak_controller/aar/types.py
+    mechanism_type: EXECUTION_RESULT_ACCEPTOR
+    status: OPERATIONAL
+    importance: CRITICAL
+    action_source: >-
+      ActionEvent dataclass (types.py:19) carrying action_id, action_type,
+      timestamp_ns, context.
+    expected_result: >-
+      Prediction(expected_pnl, expected_latency_ms, expected_slippage)
+      (types.py:41).
+    observed_result: >-
+      Outcome(actual_pnl, actual_latency_ms, actual_slippage, success)
+      (types.py:65).
+    error_signal: >-
+      ErrorSignal (types.py:89) computed by compute_error in core.py:134-276:
+      absolute_error on PnL (line 185); relative_error on latency (197-199)
+      and slippage (208-210); normalised sign ∈ {-1, 0, +1} (247-253).
+    update_rule: >-
+      EMA-weighted aggregation per ModeAggregator / StrategyAggregator
+      (memory.py:176-177); neuro-controller adapts via
+      aar_dopamine_modulation / aar_serotonin_modulation downstream.
+    rollback_rule: >-
+      Pending-buffer eviction (memory.py:81-86) when len(_pending_actions)
+      exceeds max_pending — degraded actions are purged, not silently kept.
+    memory_effect: >-
+      AAREntry deque (memory.py:163-164, max 10 000); _entries_by_action_id
+      lookup for replay.
+    existing_tests:
+      - nak_controller/tests/test_aar.py
+    missing_tests:
+      - tests/unit/control/test_action_result_acceptor.py
+    falsifier: >-
+      compute_error(pred, outcome) returning sign 0 when actual_pnl >
+      expected_pnl ⇒ acceptor is broken.
+    migration_action: KEEP_NEW
+    reason: >-
+      Canonical loop already implemented; only external linkage to the new
+      ActionResultAcceptor contract (PR-2) is missing.
+
+  - id: nak-aar-tracker-loop
+    old_path: tradepulse/neural_controller/aar/core.py
+    new_path: nak_controller/aar/core.py
+    mechanism_type: EXECUTION_RESULT_ACCEPTOR
+    status: OPERATIONAL
+    importance: CRITICAL
+    action_source: AARTracker.record_action(ActionEvent) (memory.py:63-89).
+    expected_result: Prediction provided at record_action time.
+    observed_result: Outcome provided at record_outcome time.
+    error_signal: ErrorSignal returned by compute_error (core.py:134-276).
+    update_rule: EMA learning per agent / mode (memory.py:176-177).
+    rollback_rule: pending eviction on overflow (memory.py:81-86).
+    memory_effect: deque _entries; lookup _entries_by_action_id.
+    existing_tests:
+      - nak_controller/tests/test_aar.py
+    missing_tests: []
+    falsifier: >-
+      Stripping the EMA update path leaves the deque growing without
+      learning — strategy_aggregator.weight stays constant. Test must fail.
+    migration_action: KEEP_NEW
+    reason: >-
+      Tracker drives the canonical action→outcome→error→update loop.
+
+  - id: canonical-action-result-comparator
+    old_path: ""
+    new_path: geosync_hpc/control/action_result_comparator.py
+    mechanism_type: EXECUTION_RESULT_ACCEPTOR
+    status: OPERATIONAL
+    importance: CRITICAL
+    action_source: >-
+      ExpectedResultModel supplied with explicit lifecycle ordering evidence:
+      model_created_seq < action_started_seq.
+    expected_result: >-
+      expected_result tuple plus optional expected variance, value, action
+      signature, and timing signature.
+    observed_result: >-
+      ObservedActionResult with reverse_afferentation_present=True,
+      observed_result tuple, and observed_seq > action_started_seq.
+    error_signal: >-
+      Deterministic raw OPE, optional precision-weighted OPE using 1/variance,
+      plus optional RPE/APE/TPE.
+    update_rule: >-
+      UPDATE_REQUIRED when comparator_error exceeds error_threshold but remains
+      below rollback_threshold.
+    rollback_rule: >-
+      ROLLBACK_REQUIRED when comparator_error breaches rollback_threshold.
+    memory_effect: >-
+      None inside this module; it returns an immutable witness and leaves
+      persistence/re-entry/adaptive thresholding to higher-level callers.
+    existing_tests:
+      - tests/unit/control/test_action_result_comparator.py
+      - tests/integration/control/test_action_result_comparator_integration.py
+    missing_tests: []
+    falsifier: >-
+      Remove sequence ordering validation, accept missing expected model,
+      replace precision weighting with confidence scaling, or accept success=True
+      without comparison; tests must fail.
+    migration_action: KEEP_NEW
+    reason: >-
+      Pure deterministic action-result comparator added as a strict engineering
+      contract. It avoids fake chronology booleans, pseudo-precision confidence,
+      internal adaptive-threshold magic, and biological equivalence claims.
+
+  - id: canonical-control-episode-chain
+    old_path: ""
+    new_path: geosync_hpc/control/control_episode.py
+    mechanism_type: EXECUTION_RESULT_ACCEPTOR
+    status: OPERATIONAL
+    importance: CRITICAL
+    action_source: >-
+      Caller drives the seven-phase chain (intent, model, action, afferentation,
+      error, decision, memory) supplying explicit monotonic sequence numbers
+      matched against ExpectedResultModel.model_created_seq /
+      ExpectedResultModel.action_started_seq / ObservedActionResult.observed_seq.
+    expected_result: >-
+      ExpectedResultModel sealed at MODEL_SEALED phase; identity captured by
+      sha256 payload digest and bound into the chain hash.
+    observed_result: >-
+      ObservedActionResult ingested at AFFERENTATION_RECEIVED phase; identity
+      captured by sha256 payload digest and bound into the chain hash.
+    error_signal: >-
+      ActionResultWitness produced exclusively at ERROR_COMPUTED phase by
+      invoking accept_action_result on the sealed expected and observed; status
+      is cross-bound into DECISION_RENDERED via identical payload digest.
+    update_rule: >-
+      UPDATE_REQUIRED witness states are surfaced unchanged from the comparator;
+      the chain neither weakens nor strengthens the comparator verdict.
+    rollback_rule: >-
+      ROLLBACK_REQUIRED witness states are surfaced unchanged from the comparator
+      and remain auditable via the immutable chain history.
+    memory_effect: >-
+      MEMORY_ANCHORED phase closes the episode and emits a payload digest equal
+      to sha256 of the prior chain hash; physical persistence is the caller's
+      responsibility.
+    existing_tests:
+      - tests/unit/control/test_control_episode.py
+      - tests/integration/control/test_control_episode_integration.py
+    missing_tests: []
+    falsifier: >-
+      Remove state-machine ordering, weaken seq strict-increment, drop the
+      sha256 chain hash, allow phase replay on a closed episode, or accept a
+      forged episode whose verify_chain returns False; tests must fail.
+    migration_action: KEEP_NEW
+    reason: >-
+      Adds tamper-evident chronology proof around the deterministic comparator
+      so that intent, model, action, afferentation, error, decision, and memory
+      occur in provable strict order. No biological equivalence; pure stdlib.
+
+  # ──────────── PROMPT_OUTCOME_ACCEPTOR — needs measurement ─────────────
+
+  - id: prompt-outcome-record
+    old_path: core/agent/prompting/models.py
+    new_path: core/agent/prompting/models.py
+    mechanism_type: PROMPT_OUTCOME_ACCEPTOR
+    status: PARTIAL
+    importance: HIGH
+    action_source: PromptManager.render() (manager.py:183-189).
+    expected_result: PromptOutcome(success, effect) supplied by caller.
+    observed_result: >-
+      PromptVariantMetrics.record_outcome(outcome) (library.py:34-41) —
+      tallies successes / failures.
+    error_signal: failure_rate = failures / renders (library.py:44-47).
+    update_rule: >-
+      stop_experiment() (library.py:178-182) called when failure_rate >=
+      failure_threshold (default 0.35, line 64).
+    rollback_rule: >-
+      _PromptSuite.rollback_to_control(reason) — variant reverts to control.
+    memory_effect: PromptVariantMetrics dict tracks renders, successes, effect_sum.
+    existing_tests: []
+    missing_tests:
+      - tests/unit/agent/prompting/test_prompt_outcome_acceptor.py
+    falsifier: >-
+      Caller forwarding success=True for clearly-failed downstream task ⇒
+      acceptor cannot self-correct. Add a ground-truth measurement test.
+    migration_action: REWRITE
+    reason: >-
+      Loop is partial — relies on caller-supplied success boolean with no
+      ground-truth measurement of prompt effect.
+
+  - id: prompt-execution-record
+    old_path: core/agent/prompting/models.py
+    new_path: core/agent/prompting/models.py
+    mechanism_type: PROMPT_OUTCOME_ACCEPTOR
+    status: PRESENT_IN_NEW
+    importance: MEDIUM
+    action_source: PromptManager.render() emits PromptExecutionRecord.
+    expected_result: implicit baseline (variant control).
+    observed_result: PromptExecutionRecord fields (template_id, variant_id, timestamp).
+    error_signal: ""
+    update_rule: ""
+    rollback_rule: ""
+    memory_effect: per-variant tally.
+    existing_tests: []
+    missing_tests:
+      - tests/unit/agent/prompting/test_prompt_execution_record.py
+    falsifier: >-
+      No falsifier required — the record is a logging artefact, not an
+      acceptor in itself. NON-CLAIM: this record alone does NOT close the
+      loop.
+    migration_action: KEEP_NEW
+    reason: Pure record; downstream acceptor (record_outcome) closes the loop.
+
+  - id: prompt-experiment-rollback
+    old_path: core/agent/prompting/library.py
+    new_path: core/agent/prompting/library.py
+    mechanism_type: PROMPT_OUTCOME_ACCEPTOR
+    status: PARTIAL
+    importance: HIGH
+    action_source: PromptExperiment.observe(outcome) at line 113-128.
+    expected_result: variant baseline metric (control) at line 248-250.
+    observed_result: PromptVariantMetrics.failure_rate after observe.
+    error_signal: failure_rate >= threshold (line 120-121).
+    update_rule: stop() called on the experiment.
+    rollback_rule: suite.rollback_to_control(reason) (line 178-182).
+    memory_effect: experiment record marked stopped + reason archived.
+    existing_tests: []
+    missing_tests:
+      - tests/unit/agent/prompting/test_prompt_experiment_rollback.py
+    falsifier: >-
+      Mutate the threshold check to `<=` instead of `>=` — rollback should
+      now fire on every healthy variant; test must catch.
+    migration_action: REWRITE
+    reason: >-
+      Rollback rule itself is well-formed but unprotected — there is no
+      existing test for the rollback path. Loop is therefore PARTIAL until
+      tests/unit/agent/prompting/test_prompt_experiment_rollback.py lands.
+
+  # ─────────── CONSENSUS_FEEDBACK_ACCEPTOR — HNCM weight learning ───────
+
+  - id: hncm-adapter-update-feedback
+    old_path: analytics/regime/src/consensus/hncm_adapter.py
+    new_path: analytics/regime/src/consensus/hncm_adapter.py
+    mechanism_type: CONSENSUS_FEEDBACK_ACCEPTOR
+    status: OPERATIONAL
+    importance: HIGH
+    action_source: >-
+      HNCMConsensusAdapter.aggregate(votes) (line 197-218) — produces a
+      consensus decision over Iterable[AgentVote].
+    expected_result: >-
+      Each AgentVote.score ∈ [-1, 1] (line 42-45, 57-61) is the agent's
+      stated prediction.
+    observed_result: >-
+      realized ∈ [-1, 1] supplied to update_feedback(realized, agent_scores)
+      (line 239-253).
+    error_signal: >-
+      Implicit RPE: new_r = ema(prev, realized * clamped_score, alpha)
+      (line 250).
+    update_rule: >-
+      learned_weights() maps reward to [0.05, 1.0] via exponential weighting
+      (line 255-258); per-agent EMA persisted.
+    rollback_rule: >-
+      Energy-budget cap on total weight delta prevents runaway updates.
+    memory_effect: JSON _StateStore persisting reward_ema, agent_weights (line 59-110).
+    existing_tests:
+      - analytics/regime/tests/test_hncm_consensus.py
+    missing_tests: []
+    falsifier: >-
+      Repeat update_feedback() with the same realized=1 and agent_scores;
+      learned_weights() must change between calls — if identical across
+      ten iterations, learning is disabled.
+    migration_action: KEEP_NEW
+    reason: HNCMAdapter consensus loop — full operational loop with persistent memory.
+
+  - id: hncm-neuro-eligibility-metaplasticity
+    old_path: analytics/regime/src/consensus/hncm_neuro.py
+    new_path: analytics/regime/src/consensus/hncm_neuro.py
+    mechanism_type: CONSENSUS_FEEDBACK_ACCEPTOR
+    status: OPERATIONAL
+    importance: HIGH
+    action_source: NeuroConsensusAdapter.aggregate(votes) (line 198-222).
+    expected_result: AgentVote.score per agent.
+    observed_result: realized supplied to update_feedback (line 239-253).
+    error_signal: >-
+      Eligibility trace e_prev = λ·e_prev + score (line 250); Page-Hinkley
+      change detection drives adaptive α (line 268-278).
+    update_rule: >-
+      Metaplasticity gain g = 1.0 + 1.5·max(0, |score| - θ) (line 238)
+      multiplies the EMA step.
+    rollback_rule: Energy budget cap (line 287-302).
+    memory_effect: >-
+      JSON _State persists reward_ema, weights, eligibility, consolidation.
+    existing_tests:
+      - analytics/regime/tests/test_hncm_neuro.py
+    missing_tests: []
+    falsifier: >-
+      Force λ = 0 — eligibility trace must collapse; weight learning slows
+      to instantaneous; test must observe the difference.
+    migration_action: KEEP_NEW
+    reason: >-
+      HNCMNeuro engineering analogue of metaplasticity / eligibility —
+      bounded and tested.
+
+  - id: hncm-learned-weights
+    old_path: analytics/regime/src/consensus/hncm_adapter.py
+    new_path: analytics/regime/src/consensus/hncm_adapter.py
+    mechanism_type: CONSENSUS_FEEDBACK_ACCEPTOR
+    status: OPERATIONAL
+    importance: MEDIUM
+    action_source: HNCMConsensusAdapter.aggregate output drives the call.
+    expected_result: agent_scores from previous step.
+    observed_result: realized.
+    error_signal: realized * clamped_score (line 250).
+    update_rule: weights[i] = ema(prev, exp(realized*score), alpha).
+    rollback_rule: clamp [0.05, 1.0] (line 255-258).
+    memory_effect: agent_weights map persisted in JSON state.
+    existing_tests:
+      - analytics/regime/tests/test_hncm_consensus.py
+    missing_tests: []
+    falsifier: >-
+      Apply realized=0 with non-zero scores — weights must remain unchanged
+      from EMA prior; if they drift, error path is wrong.
+    migration_action: KEEP_NEW
+    reason: Bounded weight update; clamp prevents runaway.
+
+  # ─────────── STRATEGY_MEMORY_ACCEPTOR — partial: no feedback ──────────
+
+  - id: strategy-record
+    old_path: core/agent/memory.py
+    new_path: core/agent/memory.py
+    mechanism_type: STRATEGY_MEMORY_ACCEPTOR
+    status: PARTIAL
+    importance: HIGH
+    action_source: StrategyMemory.add(name, signature, score) (line 246-284).
+    expected_result: >-
+      implicit baseline = "strategies that worked before" tagged by
+      StrategySignature(R, delta_H, kappa_mean, entropy, instability)
+      (line 54-102).
+    observed_result: "score:float passed at add time."
+    error_signal: >-
+      decay invariant: decayed_score ≤ original_score (line 242-244) —
+      violations raise InvariantError.
+    update_rule: >-
+      replace record on new_score > old_score (line 281-282); evict on
+      _records overflow (line 283-284).
+    rollback_rule: cleanup(min_score) drops sub-threshold records (line 298+).
+    memory_effect: >-
+      _records list of StrategyRecord; serialised via to_dict / from_dict
+      with checksum (line 149-182).
+    existing_tests:
+      - tests/unit/core/agent/test_strategy_memory.py
+    missing_tests:
+      - tests/unit/core/agent/test_strategy_memory_feedback_loop.py
+    falsifier: >-
+      Store strategy with score 0.8; one hour later topk() returns
+      decayed_score > 0.8 ⇒ INV violation.
+    migration_action: REWRITE
+    reason: >-
+      Stores past performance but does NOT update on subsequent realized
+      outcomes — only time-decays. Closing the loop requires a feedback
+      adapter, not a memory rewrite.
+
+  - id: strategy-memory-decay
+    old_path: core/agent/memory.py
+    new_path: core/agent/memory.py
+    mechanism_type: STRATEGY_MEMORY_ACCEPTOR
+    status: OPERATIONAL
+    importance: MEDIUM
+    action_source: topk() / cleanup() / age-based decay.
+    expected_result: original score at insertion time.
+    observed_result: _decayed_score(record, now) (line 229-244).
+    error_signal: decayed - original ≤ 0 invariant.
+    update_rule: store-only (no in-place mutation; recomputed on read).
+    rollback_rule: cleanup() removes records below threshold.
+    memory_effect: ordering of returned topk changes with age.
+    existing_tests:
+      - tests/unit/core/agent/test_strategy_memory.py
+    missing_tests: []
+    falsifier: Replace exp(-λ·age) with exp(+λ·age) — invariant must trip.
+    migration_action: KEEP_NEW
+    reason: Decay rule itself is operational and tested.
+
+  - id: evaluation-result-strategy
+    old_path: core/agent/evaluator.py
+    new_path: core/agent/evaluator.py
+    mechanism_type: STRATEGY_MEMORY_ACCEPTOR
+    status: OPERATIONAL
+    importance: MEDIUM
+    action_source: >-
+      Strategy.evaluate(dataset) invoked by the evaluator harness.
+    expected_result: >-
+      Strategy contract: returns float score or raises BaseException.
+    observed_result: >-
+      EvaluationResult(strategy, score, duration, error) at evaluator.py:56.
+    error_signal: >-
+      EvaluationResult.error not None OR score is None — exposed via
+      .succeeded property.
+    update_rule: >-
+      Evaluator pipeline filters succeeded results upstream;
+      StrategyEvaluationError aggregates failures.
+    rollback_rule: >-
+      Failing strategies do not propagate score downstream; aggregated
+      error is raised once all strategies finish.
+    memory_effect: failures list retained on the raised exception.
+    existing_tests:
+      - tests/unit/core/agent/
+    missing_tests:
+      - tests/unit/core/agent/test_evaluator_partial_failure.py
+    falsifier: >-
+      A strategy that raises must NOT contribute score; if any failed
+      result is used by downstream aggregator, contract is broken.
+    migration_action: KEEP_NEW
+    reason: Frozen dataclass with explicit success/failure invariant.
+
+  # ──────────── EXECUTION_RESULT_ACCEPTOR — TradePulse / CLI ────────────
+
+  - id: tradepulse-v21-probability-backtester
+    old_path: analytics/regime/src/core/tradepulse_v21.py
+    new_path: analytics/regime/src/core/geosync_v21.py
+    mechanism_type: EXECUTION_RESULT_ACCEPTOR
+    status: OPERATIONAL
+    importance: HIGH
+    action_source: >-
+      ProbabilityBacktester.run(prices, signal_fn) — emits decisions per
+      bar.
+    expected_result: >-
+      Calibrated probability from LogisticIsotonicTrainer + conformal
+      uncertainty band.
+    observed_result: realized PnL after holding period.
+    error_signal: >-
+      Calibration error: empirical-frequency vs predicted-probability
+      mismatch on the test fold.
+    update_rule: >-
+      Out-of-sample folds rebalance positions per RegimeHMMAdapter
+      regime-persistence policy.
+    rollback_rule: >-
+      Block-bootstrap stress test fails ⇒ run rejected; report flagged.
+    memory_effect: trade-by-trade ledger + per-fold report.
+    existing_tests:
+      - analytics/regime/tests/test_geosync_v21.py
+    missing_tests: []
+    falsifier: >-
+      Shuffle the causal alignment in StrictCausalFeatureBuilder ⇒
+      backtest score must collapse to the random baseline.
+    migration_action: KEEP_NEW
+    reason: >-
+      TradePulseV21 strict-causal pipeline preserved through the rebrand
+      (now geosync_v21.py); loop is closed and tested.
+
+  - id: cli-artifact-result-handler
+    old_path: cli/tradepulse_cli.py
+    new_path: cli/geosync_cli.py
+    mechanism_type: EXECUTION_RESULT_ACCEPTOR
+    status: OPERATIONAL
+    importance: HIGH
+    action_source: >-
+      Click subcommands (ingest / backtest / optimize / exec / report).
+    expected_result: >-
+      typed exit code + deterministic artefact destination.
+    observed_result: >-
+      sha256 digest of the produced artefact (line 112) emitted on every
+      completed subcommand (lines 128, 131, 629, 778, 932, 1059, 1218).
+    error_signal: >-
+      Watchdog (line 67, 608) plus FeatureParity check (line 326-1098) —
+      mismatch raises typed error.
+    update_rule: >-
+      "destination unchanged (sha256=…)" branch when digest matches the
+      previous run — idempotent skip.
+    rollback_rule: >-
+      Watchdog timeout aborts the subcommand with a typed exit error.
+    memory_effect: artefact + manifest persisted with sha256 tag.
+    existing_tests:
+      - tests/cli/
+    missing_tests:
+      - tests/cli/test_geosync_cli_artifact_hash_round_trip.py
+    falsifier: >-
+      Mutate one byte of the output artefact; sha256 must change; idempotent
+      re-run must rewrite, not skip.
+    migration_action: KEEP_NEW
+    reason: >-
+      sha256 digest + Watchdog + parity check together close the
+      action-result loop at the CLI boundary.
+
+  # ───────────── RISK_GUARDIAN_ACCEPTOR — veto-only loop ────────────────
+
+  - id: risk-guardian-kill-switch
+    old_path: PRODUCT_PAIN_SOLUTION.md
+    new_path: apps/risk_guardian/engine.py
+    mechanism_type: RISK_GUARDIAN_ACCEPTOR
+    status: OPERATIONAL
+    importance: CRITICAL
+    action_source: >-
+      RiskGuardian.simulate_from_prices(prices, signal_fn) (line 78-109).
+    expected_result: >-
+      RiskState.peak_equity (line 38) plus thresholds daily_loss_limit_pct
+      and max_drawdown_pct (line 58-62).
+    observed_result: >-
+      current_equity, daily_pnl and drawdown computed per bar in
+      _run_simulation (line 156-235).
+    error_signal: >-
+      drawdown ≥ max_drawdown_pct · peak_equity (line 196-197) OR daily
+      loss trigger (line 203).
+    update_rule: ""
+    rollback_rule: >-
+      kill-switch sets is_halted = True (line 226); safe-mode reduces
+      sizing (line 227); both fail-closed.
+    memory_effect: >-
+      RiskState snapshot; risk_events counter (kill_switch, safe_mode).
+    existing_tests:
+      - apps/risk_guardian/tests/
+    missing_tests:
+      - apps/risk_guardian/tests/test_risk_guardian_kill_switch_veto.py
+    falsifier: >-
+      kill_switch_activations > 0 but protected_max_drawdown ≥
+      max_drawdown_pct ⇒ veto failed.
+    migration_action: KEEP_NEW
+    reason: >-
+      Veto-only acceptor: no learning, but the rollback rule fully
+      satisfies the action→result→decision contract.
+
+  - id: risk-guardian-safe-mode
+    old_path: PRODUCT_PAIN_SOLUTION.md
+    new_path: apps/risk_guardian/engine.py
+    mechanism_type: RISK_GUARDIAN_ACCEPTOR
+    status: OPERATIONAL
+    importance: HIGH
+    action_source: simulate_from_prices() per-bar evaluation.
+    expected_result: nominal-mode position sizing.
+    observed_result: realized drawdown trajectory.
+    error_signal: drawdown ≥ safe_mode_threshold (config).
+    update_rule: ""
+    rollback_rule: position size scaled down (line 227).
+    memory_effect: is_safe_mode flag + risk_events counter.
+    existing_tests:
+      - apps/risk_guardian/tests/
+    missing_tests: []
+    falsifier: >-
+      Safe-mode entered without drawdown threshold breach ⇒ trigger logic
+      wrong; mutation test must catch.
+    migration_action: KEEP_NEW
+    reason: Sizing brake distinct from full halt; fail-closed.
+
+  # ─────────────────── CLAIM_RESULT_ACCEPTOR — claims gate ──────────────
+
+  - id: claim-falsifier-validator
+    old_path: ""
+    new_path: .claude/claims/validate_claims.py
+    mechanism_type: CLAIM_RESULT_ACCEPTOR
+    status: OPERATIONAL
+    importance: HIGH
+    action_source: >-
+      Engineer adds / modifies an entry in .claude/claims/CLAIMS.yaml.
+    expected_result: claim text + mandatory falsifier text.
+    observed_result: >-
+      validate_claims.py parses the YAML and checks each entry's required
+      fields, including non-empty falsifier and test-path linkage.
+    error_signal: NO_FALSIFIER, NO_TEST_PATH, DUPLICATE_ID, etc.
+    update_rule: ""
+    rollback_rule: validator exits 1 ⇒ PR cannot merge (CI gate).
+    memory_effect: append-only ledger CLAIMS.yaml.
+    existing_tests:
+      - tests/unit/claims/test_validate_claims.py
+    missing_tests: []
+    falsifier: >-
+      Inject a claim with empty falsifier; validator must exit 1 with
+      NO_FALSIFIER rule. (This same falsifier is encoded in the live test
+      tests/unit/claims/test_validate_claims.py::test_inject_no_falsifier_fails.)
+    migration_action: KEEP_NEW
+    reason: >-
+      The repository's own claim/falsifier loop is itself a
+      result-acceptor: a claim without a falsifier is rejected.
+
+  # ─────────────── DECORATIVE_LABEL — no acceptor, naming only ──────────
+
+  - id: agent-orchestrator-loop-naming
+    old_path: core/agent/orchestrator.py
+    new_path: core/agent/orchestrator.py
+    mechanism_type: DECORATIVE_LABEL
+    status: DECORATIVE
+    importance: LOW
+    action_source: orchestrator.run() (high-level driver).
+    expected_result: implicit (runs evaluation, stores in memory).
+    observed_result: not directly compared — evaluator handles it.
+    error_signal: ""
+    update_rule: ""
+    rollback_rule: ""
+    memory_effect: delegates to StrategyMemory.
+    existing_tests: []
+    missing_tests: []
+    falsifier: >-
+      NON-CLAIM: orchestrator is a wiring layer, not an acceptor; it must
+      not be referenced as one by downstream tests. If a test asserts
+      orchestrator-level error correction, that test belongs on the
+      evaluator or the memory acceptor.
+    migration_action: KEEP_NEW
+    reason: >-
+      The loop verbiage in this file is structural composition, not error-
+      driven adaptation. Downgraded to DECORATIVE; the real acceptors live
+      in the evaluator and the memory.
+
+  # ─────────────────────── INVESTIGATE — open questions ─────────────────
+
+  - id: neuro-optimization-bench-loop
+    old_path: benchmarks/neuro_optimization_bench.py
+    new_path: benchmarks/neuro_optimization_bench.py
+    mechanism_type: EXECUTION_RESULT_ACCEPTOR
+    status: UNKNOWN
+    importance: MEDIUM
+    action_source: ""
+    expected_result: ""
+    observed_result: ""
+    error_signal: ""
+    update_rule: ""
+    rollback_rule: ""
+    memory_effect: ""
+    existing_tests: []
+    missing_tests:
+      - benchmarks/tests/test_neuro_optimization_bench_acceptor.py
+    falsifier: >-
+      Pre-audit only: confirm whether the benchmark drives an actual
+      acceptor loop (action → outcome → score → tune) or is a fixed
+      micro-benchmark. Treat as DECORATIVE until inspected.
+    migration_action: INVESTIGATE
+    reason: >-
+      Bench file exists in both repos with identical LOC; deeper inspection
+      required before classifying.

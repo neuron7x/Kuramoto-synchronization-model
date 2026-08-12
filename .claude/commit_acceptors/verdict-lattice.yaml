@@ -1,0 +1,102 @@
+# Diff-bound commit acceptor for the verdict-lattice algebraic refactor.
+#
+# Replaces the imperative `_PRECEDENCE: dict + scan loop` in
+# DeathConditionsRegistry.evaluate with a totally-ordered lattice
+# `TierLattice` and `reduce(join, ..., NONE)` algebraic aggregation.
+#
+# Net delta:
+#   - 1 new module (verdict_lattice.py) with formal lattice algebra
+#   - 1 new test file with Hypothesis property-tests of all four
+#     lattice axioms (idempotence, commutativity, associativity,
+#     identity) plus distributivity and absorption
+#   - death_conditions.py: dict + 5-line imperative scan replaced
+#     by single-line algebraic reduction
+#
+# Total LoC: roughly net-zero (slightly positive for clarity),
+# but boilerplate-to-content ratio drops by a factor of ~4.
+#
+# Locally verified:
+#   * pytest tests/research/systemic_risk/test_verdict_lattice.py: 25/25 pass
+#   * pytest tests/research/systemic_risk/test_death_conditions.py: 18/18 pass
+#   * pytest tests/research/systemic_risk/: 413/413 pass
+#   * mypy --strict on lattice + death_conditions + tests: 0 errors
+#   * ruff + black: clean
+
+id: verdict-lattice
+status: ACTIVE
+claim_type: refactor
+promise: >-
+  After this PR lands, ``research.systemic_risk.verdict_lattice`` ships
+  the canonical TierLattice algebra with ``join``, ``meet``, and
+  ``aggregate_actions``; ``death_conditions.evaluate`` consumes the
+  algebra rather than the legacy ``_PRECEDENCE`` dict. All four
+  lattice axioms (idempotence / commutativity / associativity /
+  identity) are property-tested under Hypothesis.
+
+diff_scope:
+  changed_files:
+    - path: ".claude/commit_acceptors/verdict-lattice.yaml"
+    - path: "research/systemic_risk/__init__.py"
+    - path: "research/systemic_risk/death_conditions.py"
+    - path: "research/systemic_risk/verdict_lattice.py"
+    - path: "tests/research/systemic_risk/test_verdict_lattice.py"
+  forbidden_paths:
+    - "trading/"
+    - "execution/"
+    - "forecast/"
+    - "policy/"
+    - "core/"
+    - "runtime/"
+    - "application/"
+
+required_python_symbols:
+  - "research/systemic_risk/verdict_lattice.py::TierLattice"
+  - "research/systemic_risk/verdict_lattice.py::aggregate_actions"
+  - "research/systemic_risk/verdict_lattice.py::join"
+  - "research/systemic_risk/verdict_lattice.py::meet"
+  - "tests/research/systemic_risk/test_verdict_lattice.py::TestLatticeAxioms"
+
+expected_signal: >-
+  ``pytest tests/research/systemic_risk/test_verdict_lattice.py -q``
+  reports 25 passed; ``grep -c _PRECEDENCE
+  research/systemic_risk/death_conditions.py`` reports 0 (the legacy
+  dict has been removed).
+
+measurement_command: >-
+  bash -c '
+    mypy --strict
+      research/systemic_risk/verdict_lattice.py
+      research/systemic_risk/death_conditions.py
+      tests/research/systemic_risk/test_verdict_lattice.py && python -m pytest tests/research/systemic_risk/test_verdict_lattice.py -q && python -m pytest tests/research/systemic_risk/test_death_conditions.py -q
+  '
+
+signal_artifact: "tmp/verdict_lattice.log"
+
+falsifier:
+  command: |-
+    bash -c '
+      python -c "from research.systemic_risk.verdict_lattice import TierLattice, join; assert join(TierLattice.KILL, TierLattice.DEMOTE) == TierLattice.KILL" 2>/dev/null && exit 1 || exit 0
+    '
+  description: >-
+    Probes that the lattice ``join`` returns the more destructive
+    element (KILL ⊔ DEMOTE = KILL). Falsifier inverts: it succeeds
+    (exit 0) only when the import or the join semantics fails, which
+    would mean the algebraic refactor rolled back.
+
+rollback_command: >-
+  bash -c '
+    git rm -f
+      research/systemic_risk/verdict_lattice.py
+      tests/research/systemic_risk/test_verdict_lattice.py
+      .claude/commit_acceptors/verdict-lattice.yaml && git checkout HEAD~1 --
+      research/systemic_risk/__init__.py
+      research/systemic_risk/death_conditions.py
+  '
+
+rollback_verification_command: |-
+  python -c "import importlib.util,importlib,sys; _p=lambda m: all(importlib.util.find_spec('.'.join(m.split('.')[:i+1])) for i in range(len(m.split('.')))); present=_p('research.systemic_risk.verdict_lattice') and hasattr(importlib.import_module('research.systemic_risk.verdict_lattice'),'TierLattice'); sys.exit(1 if present else 0)"
+
+memory_update_type: append
+ledger_path: ".claude/commit_acceptors/verdict-lattice.yaml"
+report_path: "tmp/verdict_lattice.log"
+evidence: []

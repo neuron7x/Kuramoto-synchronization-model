@@ -1,0 +1,29 @@
+id: fix-kuramoto-registry-test-utf8
+status: ACTIVE
+claim_type: governance
+promise: "Two coupled, locale/CI-robustness test fixes; no production code, no physics, no assertion logic, no relaxed guard. (1) tests/unit/core/test_kuramoto_coupling_strategy_registry.py read core/kuramoto/coupling_estimator.py via Path.read_text() with no encoding; that module carries β/θ/λ/κ glyphs, so under an ASCII CI locale the read raised UnicodeDecodeError (byte 0xce = UTF-8 θ) — the sole Main Validation / python-full-validation failure (1/16030). Fix pins encoding='utf-8' (locale-immune by construction). (2) That file is in #772's _FROZEN_PATHS; the guard-efficacy byte-stability proof in tests/meta/test_feedback_guards_are_live.py diffed origin/main, so a SANCTIONED committed change to a frozen path was flagged as a leaked injection — python-heavy-tests was SUCCESS on #768/#770/#772/#773 and deterministically RED only on #774 (first post-#772 PR to touch a frozen path: chicken-and-egg). The proof's true obligation is 'the isolated injection subprocess left no UNCOMMITTED change in a frozen path' = `git diff HEAD`; switched origin/main→HEAD. Reference-point correctness fix, NOT a relaxation: all 10 adversarial guards still FIRE (verified) and an uncommitted leak is still caught (negative control verified)."
+diff_scope:
+  changed_files:
+    - path: "tests/unit/core/test_kuramoto_coupling_strategy_registry.py"
+    - path: "tests/meta/test_feedback_guards_are_live.py"
+    - path: ".claude/commit_acceptors/fix-kuramoto-registry-test-utf8.yaml"
+  forbidden_paths:
+    - "trading/"
+    - "execution/"
+    - "forecast/"
+    - "policy/"
+    - "core/kuramoto/coupling_estimator.py"
+    - "core/kuramoto/coupling_strategy_registry.py"
+required_python_symbols: []
+expected_signal: "the registry-dispatch test passes regardless of the process locale's preferred encoding (no UnicodeDecodeError on the AST source read)"
+measurement_command: "python -m pytest tests/unit/core/test_kuramoto_coupling_strategy_registry.py -q"
+signal_artifact: "/tmp/kuramoto_registry_pytest.log"
+falsifier:
+  command: "python -c \"import pathlib,sys; a=pathlib.Path('tests/unit/core/test_kuramoto_coupling_strategy_registry.py').read_text(encoding='utf-8'); b=pathlib.Path('tests/meta/test_feedback_guards_are_live.py').read_text(encoding='utf-8'); ok = 'read_text(encoding=\\\"utf-8\\\")' in a and 'read_text()' not in a.replace('read_text(encoding=\\\"utf-8\\\")','') and '\\\"HEAD\\\", \\\"--\\\", *(_FROZEN_PATHS)' in b and '\\\"origin/main\\\", \\\"--\\\", *(_FROZEN_PATHS)' not in b; raise SystemExit(0 if ok else 1)\""
+  description: "Exits 0 iff (a) the coupling_estimator source read is explicitly utf-8 with no bare read_text() left, AND (b) the byte-stability proof diffs HEAD (not origin/main). Exits 1 if the encoding pin is removed/reverted OR the byte-stability reference regresses to origin/main (reintroducing the chicken-and-egg that blocks any sanctioned frozen-path change)."
+rollback_command: "git checkout origin/main -- tests/unit/core/test_kuramoto_coupling_strategy_registry.py && git rm -f .claude/commit_acceptors/fix-kuramoto-registry-test-utf8.yaml"
+rollback_verification_command: "git diff --quiet origin/main -- tests/unit/core/test_kuramoto_coupling_strategy_registry.py"
+memory_update_type: none
+ledger_path: ".claude/commit_acceptors/fix-kuramoto-registry-test-utf8.yaml"
+report_path: "tests/unit/core/test_kuramoto_coupling_strategy_registry.py"
+evidence: []

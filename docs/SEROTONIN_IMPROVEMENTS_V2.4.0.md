@@ -289,4 +289,4 @@ Potential areas for v2.5.0:
 
 Serotonin Controller v2.4.0 represents a significant advancement in neurologically-plausible risk control. The improvements enhance accuracy, stability, and biological realism while maintaining perfect backward compatibility. Users can upgrade with confidence, knowing their existing configurations and code will work without modification.
 
-For questions or issues, contact the TradePulse neuro-control team.
+For questions or issues, contact the GeoSync neuro-control team.

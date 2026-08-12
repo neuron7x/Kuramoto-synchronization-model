@@ -1,0 +1,30 @@
+{
+  "allowed_next_nodes": [
+    "D002J-P1A"
+  ],
+  "artifact_paths": [
+    "artifacts/d002j/data_registry/source_registry_v1.json",
+    "artifacts/d002j/data_registry/source_registry_summary_v1.json",
+    "docs/research/D002J_DATA_SOURCE_REGISTRY.md",
+    "docs/research/D002J_SOURCE_DOWNGRADE_LOG.md",
+    "docs/research/D002J_INFORMATION_CONSTRAINT_NOTE.md",
+    "docs/research/D002J_DATA_SOURCE_REGISTRY_REVIEW.md"
+  ],
+  "claim_boundary": "Registry-only; 25 sources documented (23 USABLE_NOW, 2 CANDIDATE_REQUIRES_LICENSE_REVIEW); no ingestion; no canonical run authorization; no real-bank validation claim.",
+  "decision": "DATA_REGISTRY_READY",
+  "failure_retention": null,
+  "forbidden_next_nodes": [],
+  "merge_sha": "5b07ee33ed41713312eb2510e89729991dc70786",
+  "node_id": "D002J-P1",
+  "parent_nodes": [
+    "D002J-P0"
+  ],
+  "phase": "P1",
+  "pr_number": 695,
+  "schema_version": "D002J-VERDICT-CAPSULE-v1",
+  "source_summary_path": "artifacts/d002j/data_registry/source_registry_summary_v1.json",
+  "status": "TERMINAL_PASS",
+  "test_paths": [
+    "tests/systemic_risk/test_d002j_data_source_registry.py"
+  ]
+}

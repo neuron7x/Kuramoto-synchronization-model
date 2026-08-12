@@ -1,0 +1,102 @@
+{
+  "$schema": "https://json-schema.org/draft/2020-12/schema",
+  "$id": "https://geosync.local/schemas/connectome.schema.json",
+  "title": "GeoSync Architectural Connectome Contract",
+  "type": "object",
+  "additionalProperties": false,
+  "required": ["version", "system_name", "domains"],
+  "properties": {
+    "version": {
+      "type": "string",
+      "minLength": 1
+    },
+    "system_name": {
+      "type": "string",
+      "minLength": 1
+    },
+    "scan_roots": {
+      "type": "array",
+      "items": {
+        "type": "string",
+        "minLength": 1
+      },
+      "uniqueItems": true
+    },
+    "domains": {
+      "type": "object",
+      "minProperties": 1,
+      "additionalProperties": {
+        "$ref": "#/$defs/domain"
+      }
+    }
+  },
+  "$defs": {
+    "domain_state": {
+      "type": "string",
+      "enum": ["active", "reserved"]
+    },
+    "path_list": {
+      "type": "array",
+      "items": {
+        "type": "string",
+        "minLength": 1
+      },
+      "minItems": 1,
+      "uniqueItems": true
+    },
+    "prefix_list": {
+      "type": "array",
+      "items": {
+        "type": "string",
+        "minLength": 1,
+        "not": {
+          "pattern": "^\\s*$"
+        }
+      },
+      "uniqueItems": true
+    },
+    "domain": {
+      "type": "object",
+      "additionalProperties": false,
+      "required": [
+        "state",
+        "owner",
+        "paths",
+        "import_roots",
+        "role",
+        "allowed_imports",
+        "forbidden_imports"
+      ],
+      "properties": {
+        "state": {
+          "$ref": "#/$defs/domain_state"
+        },
+        "owner": {
+          "type": "string",
+          "pattern": "^[^@\\s]+@[^@\\s]+$"
+        },
+        "paths": {
+          "$ref": "#/$defs/path_list"
+        },
+        "path": {
+          "type": "string",
+          "minLength": 1,
+          "deprecated": true
+        },
+        "import_roots": {
+          "$ref": "#/$defs/prefix_list"
+        },
+        "role": {
+          "type": "string",
+          "minLength": 1
+        },
+        "allowed_imports": {
+          "$ref": "#/$defs/prefix_list"
+        },
+        "forbidden_imports": {
+          "$ref": "#/$defs/prefix_list"
+        }
+      }
+    }
+  }
+}

@@ -1,0 +1,23 @@
+{
+  "schema_version": "D002J-VERDICT-CAPSULE-v1",
+  "node_id": "D002J-P7",
+  "phase": "P7",
+  "pr_number": 0,
+  "merge_sha": "0000000000000000000000000000000000000000",
+  "parent_nodes": ["D002J-P6"],
+  "decision": "POWER_GATE_REFUSED_UNDERPOWERED",
+  "status": "TERMINAL_REFUSED",
+  "artifact_paths": [
+    "tools/systemic_risk/__init__.py",
+    "tools/systemic_risk/design_d002j_power_grid.py",
+    "artifacts/d002j/power/power_report_v1.json",
+    "artifacts/d002j/power/power_summary_v1.json",
+    "docs/research/D002J_POWER_FIRST_REPORT.md"
+  ],
+  "test_paths": ["tests/systemic_risk/test_d002j_power_first_gate.py"],
+  "allowed_next_nodes": [],
+  "forbidden_next_nodes": ["D002J-P8", "D002J-P9"],
+  "claim_boundary": "P7 power-first gate computed honestly: 102 canonical cells (Bonferroni denominator), alpha=0.05/102=4.90e-4 (same correction class as D-002H alpha=0.05/216=2.31e-4). Effect-size priors sourced ONLY from P4 positive controls (PC1->0.5, PC2->0.3, PC4->0.4, shrink-only attenuation). All 102 cells have n_min in {150,235,417} > feasible_cap_n_seeds=100. POWER_GATE_REFUSED_UNDERPOWERED is the truthful terminal verdict; no canonical run authorised; canonical_run_authorized=false; lineage halts at P7; alpha was NOT loosened, the effect prior was NOT inflated, the grid was NOT shrunk to manufacture a PASS. This does NOT rescue D-002H and does NOT authorise any canonical run.",
+  "failure_retention": "REFUSED on axis 'effect_too_small'. With the explicit Bonferroni denominator of 102 canonical cells (alpha=4.90e-4) and the honest P4-sourced effect-size priors (Cohen's d in {0.30, 0.40, 0.50}), n_min in {150, 235, 417} per cell -- every one above the most-generous runtime-affordable feasible cap of 100 seeds (set just above the D-002I median anchor n_min~=93 and 5x the D-002H budget of 20). Runtime is NOT the binding constraint (measured per-sim ~4e-5 s; projected local sweep < 0.1 h): the binding constraint is purely that the realistic per-cell substrate-vs-null separation, sourced honestly from the P4 ground-truth magnitudes, is too small to reach power>=0.8 at the Bonferroni-corrected alpha within a feasible per-cell seed budget. This is the SAME failure mode D-002I diagnosed for D-002H (sub-threshold signal + insufficient grid power). The full per-cell power table, the explicit Bonferroni derivation, the measured runtime probe and the false-negative-risk quantification are retained in artifacts/d002j/power/power_report_v1.json as a truthful negative artifact. Forward motion is NOT P8: it requires a fresh D-002K pre-registration designed against the effect-too-small axis (e.g. a higher-SNR observable, a window-conditioned statistic, or a substantively re-derived effect-size prior with new ground truth -- NOT a relaxed alpha or an inflated prior).",
+  "source_summary_path": "artifacts/d002j/power/power_summary_v1.json"
+}

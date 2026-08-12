@@ -1,0 +1,9 @@
+{
+  "gate": "ic_test_q75",
+  "value": 0.23638402111955653,
+  "tolerance": 1.0e-3,
+  "source": "scripts/l2_regime_oos.py --data-dir data/binance_l2_perp",
+  "source_record": ".results[] | select(.name | startswith(\"TEST_q75\"))",
+  "frozen_at_utc": "2026-04-18T09:57:27Z",
+  "frozen_from_sha": "f04624295de74844f6b0c9e7595c5719e8a2ed5a"
+}

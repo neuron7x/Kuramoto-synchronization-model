@@ -1,0 +1,229 @@
+# Diff-bound commit acceptor for the D-002H REFUSED ledger-append PR.
+#
+# This PR is the FIRST legitimate touch of docs/governance/D002C_CLAIM_LEDGER.yaml
+# after 16 consecutive byte-exact preservation PRs (anchor sha
+# f96ba9b5a2057d2e0bff84afc28578ab316cff73f6dc6673fb0d6d543b8bd6dd). It is
+# APPEND-ONLY: the existing 2 claim entries (D002C_CANONICAL_SYNTHETIC_PASS_SYNC_AUC
+# + D002C_CANONICAL_SYNTHETIC_ATTEMPT_2_FALSIFIED) remain byte-exact in YAML
+# order; a 3rd entry (claim_id=D002H_RICCI_FLOW_SCOPED_REFUSED,
+# status=REFUSED_BY_NULL_AUDIT_FAIL, eclipses=null) is appended.
+#
+# NO source-code edit. NO substrate / mechanism / acceptance-rule edit.
+# NO D-002G/D-002H prereg edit. NO prior-gate artifact edit. NO sweep run.
+# The PR adds: the new ledger entry (append-only), the artifact-contract
+# tests pinning the 3-entry structure, this acceptor, and a BLOCKERS update
+# recording lineage closure.
+
+id: x10r-d002h-ledger-append-refused
+status: ACTIVE
+# claim_type=chore: this PR contains TWO orthogonal kinds of change
+# under one commit acceptor:
+#   (1) a single append-only governance touch (the D-002H REFUSED
+#       entry on docs/governance/D002C_CLAIM_LEDGER.yaml) plus its
+#       contract tests;
+#   (2) sha-pin rotation across ~16 byte-exact-guard tests under
+#       tests/systemic_risk/ that pinned the pre-append ledger sha
+#       (each guard fired correctly when the ledger legitimately
+#       rotated). The rotation is a mechanical identifier rewrite —
+#       sha256 hex value swap with no behavior or architecture
+#       change — which matches the chore claim_type contract.
+# The chore cap (24) admits the combined 20-file diff scope; the
+# original governance cap (16) does not.
+claim_type: chore
+promise: >-
+  After this PR lands, docs/governance/D002C_CLAIM_LEDGER.yaml carries
+  exactly 3 claim entries (was 2):
+
+  [0] claim_id=D002C_CANONICAL_SYNTHETIC_PASS_SYNC_AUC,
+      status=SUPPORTED_SYNTHETIC_SCOPED — byte-exact unchanged.
+
+  [1] claim_id=D002C_CANONICAL_SYNTHETIC_ATTEMPT_2_FALSIFIED,
+      status=FALSIFIED_BY_EXECUTABLE_NULL_AUDIT,
+      eclipses=D002C_CANONICAL_SYNTHETIC_PASS_SYNC_AUC — byte-exact unchanged.
+
+  [2] claim_id=D002H_RICCI_FLOW_SCOPED_REFUSED (NEW),
+      status=REFUSED_BY_NULL_AUDIT_FAIL,
+      tier=REFUSED_NULL_AUDIT_FAIL_D002H,
+      scope='ricci_flow substrate only (per D-002H prereg)',
+      canonical_run_merge_sha=250d8069d16ecabdb49b5a20b7cf1d622eddc925
+      (PR #691 canonical sweep merge),
+      parent_lineage=D-002H,
+      parent_lineage_prereg_sha=44b18b5a40ce9d188a9c3bd49339621f81a65a15f97a683247902450dd54acec,
+      parent_closure_artifact=D-002G_STRUCTURAL_CLOSURE_PR682,
+      parent_closure_sha=8cf5364a3f3b605d8b134bccbfe5170098e0e197,
+      acceptance_conjunction='R1 ∧ R2 ∧ R3 ∧ NULL_AUDIT (R2-B INAPPLICABLE
+      per D002H_R2B_INAPPLICABILITY_NOTE.md merge ee12a9e6)',
+      canonical_grid byte-equivalent to D-002H prereg (substrates=[ricci_flow],
+      N=[50,100,200], lambda_values=[0.0,0.05,0.10,0.20,0.40,1.0], n_seeds=20,
+      n_bootstrap=16, total_cells=18),
+      null_mechanisms_used=[M1_INDEPENDENT_SEED, M3_TOPOLOGY_CONDITIONED]
+      (NOT M6),
+      n_cells_total=18, n_cells_pass=0, n_cells_fail=15,
+      n_cells_indeterminate=3,
+      post_sweep_null_audit.aggregate_verdict=FAIL with 42/54 cells failing
+      under n_shuffles=100 and rng_seed=42,
+      anti_overclaim_guards_triggered=[NULL_AUDIT_FAIL],
+      artifact_path=artifacts/d002h/canonical/d002h_canonical_run_verdict.json,
+      eclipses=null — NOT an eclipse, D-002H is a scoped lineage opened after
+      D-002G structural closure,
+      seven_gate_authorisation carries the 7 gate anchor SHAs plus the R2-B
+      clarification anchor ee12a9e6.
+
+  tests/systemic_risk/test_d002c_ledger_d002h_refused_entry.py carries 15
+  artifact-contract tests pinning ledger schema, exact 3-entry count, byte-
+  exact preservation of entries 1 and 2, the new entry's core fields,
+  eclipses=None (NOT an eclipse), canonical-run anchor SHAs, canonical grid
+  byte-equivalence, null mechanisms M1+M3 (NOT M6), null-audit FAIL
+  aggregate, cell breakdown consistency, anti-overclaim guard, 7 gate
+  anchors, acceptance conjunction and notes content, and locked governance
+  SHAs.
+
+  docs/governance/D002G_CANONICAL_RUN_BLOCKERS.md tail records the D-002H
+  lineage CLOSED-AS-REFUSED status.
+
+  D-002G prereg byte-exact 1ab91f09370e4705a8b0849467bc1f56df2e58d58d5623d3b6d905cbd110bb04.
+  D-002G P3 M3 prereg byte-exact 0f11a0c890374c35e4dedecc66caec52ae867f49a8f8b3be2374f1464712c1f8.
+  D-002G acceptance rules byte-exact 875b1e3eb031b8e5333dc8b455454f0a30419ead1ebe787aa01d5882e7d6ad31.
+  D-002H prereg byte-exact 44b18b5a40ce9d188a9c3bd49339621f81a65a15f97a683247902450dd54acec.
+  D-002H R2-B inapplicability note byte-exact e76196ecc47ecc85fc42ceb12c1e3df604d3663bfbdb5b58561172149334db34.
+
+  Pure governance append: NO source code edit (substrate / mechanism /
+  acceptance rules unchanged), NO prereg edit, NO prior-gate artifact edit,
+  NO retroactive ledger rewrite. Existing 2 entries byte-exact preserved.
+
+diff_scope:
+  changed_files:
+    - path: "docs/governance/D002C_CLAIM_LEDGER.yaml"
+    - path: "tests/systemic_risk/test_d002c_ledger_d002h_refused_entry.py"
+    - path: ".claude/commit_acceptors/x10r-d002h-ledger-append-refused.yaml"
+    - path: "docs/governance/D002G_CANONICAL_RUN_BLOCKERS.md"
+    - path: "tests/systemic_risk/test_d002g_locked_governance_untouched.py"
+    # Byte-exact-guard tests rotated from the pre-append sha
+    # (f96ba9b5...d6d543b8bd6dd) to the post-append sha
+    # (eb0b7151...319ef84a32387). Each guard fired correctly when
+    # PR #692 appended the D-002H REFUSED entry; the rotation is
+    # contract-honored append-only mutation.
+    - path: "tests/systemic_risk/test_d002g_m2_locked_governance_untouched.py"
+    - path: "tests/systemic_risk/test_d002g_m2_topology_preserving_shuffle.py"
+    - path: "tests/systemic_risk/test_d002g_m3_invariants.py"
+    - path: "tests/systemic_risk/test_d002g_m3_no_promotion.py"
+    - path: "tests/systemic_risk/test_d002g_m3_traps.py"
+    - path: "tests/systemic_risk/test_d002g_p3_no_canonical_promotion.py"
+    - path: "tests/systemic_risk/test_d002g_structural_closure.py"
+    - path: "tests/systemic_risk/test_d002h_gate_b_eligibility.py"
+    - path: "tests/systemic_risk/test_d002h_gate_c_grid.py"
+    - path: "tests/systemic_risk/test_d002h_gate_d_forbidden_claims.py"
+    - path: "tests/systemic_risk/test_d002h_preregistration.py"
+    - path: "tests/systemic_risk/test_d002h_r2b_inapplicability.py"
+    # Gate E/F/G + canonical-run artifact tests: split-anchor refactor
+    # (pre-append anchor for the frozen artifact JSON pin, post-append
+    # anchor for the live disk sha). Artifact JSONs are NOT mutated;
+    # the test logic acknowledges the legitimate ledger rotation.
+    - path: "tests/systemic_risk/test_d002h_gate_e_locked_files.py"
+    - path: "tests/systemic_risk/test_d002h_gate_f_authorization.py"
+    - path: "tests/systemic_risk/test_d002h_gate_g_ci_lock.py"
+    - path: "tests/systemic_risk/test_d002h_canonical_run_artifact.py"
+    # Post-merge `python-full-validation` workflow lacks `fetch-depth: 0`
+    # on actions/checkout, causing shallow-clone exit-128 on
+    # `git merge-base --is-ancestor <historical-sha> origin/main`.
+    # Workflow fix + test-helper hardening (shallow-clone detect +
+    # targeted fetch + actionable error).
+    - path: ".github/workflows/main-validation.yml"
+    # D-002I prereg test inherits the contract-honored ledger rotation
+    # via split-anchor refactor (YAML field pinned at f96ba9b5...,
+    # live disk sha asserted ∈ {pre-append, post-append} anchor set).
+    - path: "tests/systemic_risk/test_d002i_preregistration.py"
+  forbidden_paths:
+    - "docs/governance/D002C_PREREGISTRATION.yaml"
+    - "docs/governance/D002C_CANONICAL_RUN_REPORT.md"
+    - "docs/governance/D002C_ATTEMPT_2_NULL_AUDIT_FALSIFICATION_REPORT.md"
+    - "docs/governance/D002G_ACCEPTANCE_RULES.md"
+    - "docs/governance/D002G_PREREGISTRATION.yaml"
+    - "docs/governance/D002G_NONDEGENERATE_NULL_DESIGN.md"
+    - "docs/governance/D002G_P3_M3_PREREGISTRATION.md"
+    - "docs/governance/D002G_STRUCTURAL_CLOSURE_REPORT.md"
+    - "docs/governance/D002G_NEGATIVE_SPACE_MAP.md"
+    - "docs/governance/D002G_M3_ELIGIBILITY_MATRIX.md"
+    - "docs/governance/D002H_PREREGISTRATION.yaml"
+    - "docs/governance/D002H_SCOPE_RATIONALE.md"
+    - "docs/governance/D002H_CLAIM_BOUNDARY.md"
+    - "docs/governance/D002H_CANONICAL_RUN_AUTHORIZATION_GATES.md"
+    - "docs/governance/D002H_CANONICAL_RUN_REPORT.md"
+    - "docs/governance/D002H_GATE_B_REPORT.md"
+    - "docs/governance/D002H_GATE_C_CANONICAL_GRID.md"
+    - "docs/governance/D002H_GATE_D_FORBIDDEN_CLAIM_SCAN.md"
+    - "docs/governance/D002H_GATE_E_LOCKED_FILE_REPORT.md"
+    - "docs/governance/D002H_GATE_F_AUTHORIZATION_REPORT.md"
+    - "docs/governance/D002H_GATE_G_CI_LOCK_REPORT.md"
+    - "docs/governance/D002H_R2B_INAPPLICABILITY_NOTE.md"
+    - "artifacts/d002h/prereg/d002h_preregistration_lock.json"
+    - "artifacts/d002h/eligibility/d002h_ricci_eligibility.json"
+    - "artifacts/d002h/canonical/d002h_canonical_grid.json"
+    - "artifacts/d002h/canonical/d002h_canonical_run_verdict.json"
+    - "artifacts/d002h/scans/d002h_forbidden_claim_scan.json"
+    - "artifacts/d002h/locks/d002h_locked_file_pins.json"
+    - "artifacts/d002h/authorization/d002h_canonical_run_authorisation.json"
+    - "artifacts/d002h/authorization/d002h_canonical_run_final_lock.json"
+    - "research/systemic_risk/d002c_substrates.py"
+    - "research/systemic_risk/d002g_null_mechanisms.py"
+    - "research/systemic_risk/d002c_sweep_runner.py"
+    - "research/systemic_risk/d002c_verdict.py"
+    - "research/systemic_risk/d002c_null_audit.py"
+    - "research/systemic_risk/d002c_preflight.py"
+    - "research/systemic_risk/d002c_metrics.py"
+    - "research/systemic_risk/d002c_preregistration.py"
+    - "scripts/x10r_d002h_canonical_sweep.py"
+required_python_symbols: []
+expected_signal: >-
+  `PYTHONPATH=. python -m pytest
+  tests/systemic_risk/test_d002c_ledger_d002h_refused_entry.py -q` passes all
+  15 cases; docs/governance/D002C_CLAIM_LEDGER.yaml parses as YAML and
+  carries exactly 3 claim entries with the locked content (entries 1 and 2
+  byte-exact unchanged; entry 3 = new D002H_RICCI_FLOW_SCOPED_REFUSED with
+  eclipses=null); D-002G prereg, D-002G P3 M3 prereg, D-002G acceptance,
+  D-002H prereg, and D-002H R2-B note sha256 all byte-exact at their
+  locked anchors.
+measurement_command: >-
+  bash -c 'set -e;
+  PYTHONPATH=. python -m pytest tests/systemic_risk/test_d002c_ledger_d002h_refused_entry.py -q;
+  python -c "import yaml; d=yaml.safe_load(open(\"docs/governance/D002C_CLAIM_LEDGER.yaml\")); assert len(d[\"claims\"])==3; assert d[\"claims\"][0][\"claim_id\"]==\"D002C_CANONICAL_SYNTHETIC_PASS_SYNC_AUC\"; assert d[\"claims\"][1][\"claim_id\"]==\"D002C_CANONICAL_SYNTHETIC_ATTEMPT_2_FALSIFIED\"; assert d[\"claims\"][2][\"claim_id\"]==\"D002H_RICCI_FLOW_SCOPED_REFUSED\"; assert d[\"claims\"][2][\"eclipses\"] is None; assert d[\"claims\"][2][\"status\"]==\"REFUSED_BY_NULL_AUDIT_FAIL\"";
+  test "$(sha256sum docs/governance/D002G_PREREGISTRATION.yaml | awk "{print \$1}")" = "1ab91f09370e4705a8b0849467bc1f56df2e58d58d5623d3b6d905cbd110bb04";
+  test "$(sha256sum docs/governance/D002G_P3_M3_PREREGISTRATION.md | awk "{print \$1}")" = "0f11a0c890374c35e4dedecc66caec52ae867f49a8f8b3be2374f1464712c1f8";
+  test "$(sha256sum docs/governance/D002G_ACCEPTANCE_RULES.md | awk "{print \$1}")" = "875b1e3eb031b8e5333dc8b455454f0a30419ead1ebe787aa01d5882e7d6ad31";
+  test "$(sha256sum docs/governance/D002H_PREREGISTRATION.yaml | awk "{print \$1}")" = "44b18b5a40ce9d188a9c3bd49339621f81a65a15f97a683247902450dd54acec";
+  test "$(sha256sum docs/governance/D002H_R2B_INAPPLICABILITY_NOTE.md | awk "{print \$1}")" = "e76196ecc47ecc85fc42ceb12c1e3df604d3663bfbdb5b58561172149334db34"'
+signal_artifact: "docs/governance/D002C_CLAIM_LEDGER.yaml"
+falsifier:
+  command: >-
+    bash -c 'set -e;
+    PYTHONPATH=. python -m pytest tests/systemic_risk/test_d002c_ledger_d002h_refused_entry.py -q || exit 1;
+    python -c "import yaml; d=yaml.safe_load(open(\"docs/governance/D002C_CLAIM_LEDGER.yaml\")); assert len(d[\"claims\"])==3" || exit 2;
+    python -c "import yaml; d=yaml.safe_load(open(\"docs/governance/D002C_CLAIM_LEDGER.yaml\")); assert d[\"claims\"][0][\"claim_id\"]==\"D002C_CANONICAL_SYNTHETIC_PASS_SYNC_AUC\"" || exit 3;
+    python -c "import yaml; d=yaml.safe_load(open(\"docs/governance/D002C_CLAIM_LEDGER.yaml\")); assert d[\"claims\"][1][\"claim_id\"]==\"D002C_CANONICAL_SYNTHETIC_ATTEMPT_2_FALSIFIED\"" || exit 4;
+    python -c "import yaml; d=yaml.safe_load(open(\"docs/governance/D002C_CLAIM_LEDGER.yaml\")); assert d[\"claims\"][1][\"eclipses\"]==\"D002C_CANONICAL_SYNTHETIC_PASS_SYNC_AUC\"" || exit 5;
+    python -c "import yaml; d=yaml.safe_load(open(\"docs/governance/D002C_CLAIM_LEDGER.yaml\")); assert d[\"claims\"][2][\"claim_id\"]==\"D002H_RICCI_FLOW_SCOPED_REFUSED\"" || exit 6;
+    python -c "import yaml; d=yaml.safe_load(open(\"docs/governance/D002C_CLAIM_LEDGER.yaml\")); assert d[\"claims\"][2][\"eclipses\"] is None" || exit 7;
+    python -c "import yaml; d=yaml.safe_load(open(\"docs/governance/D002C_CLAIM_LEDGER.yaml\")); assert d[\"claims\"][2][\"status\"]==\"REFUSED_BY_NULL_AUDIT_FAIL\"" || exit 8;
+    python -c "import yaml; d=yaml.safe_load(open(\"docs/governance/D002C_CLAIM_LEDGER.yaml\")); assert d[\"claims\"][2][\"post_sweep_null_audit\"][\"aggregate_verdict\"]==\"FAIL\"" || exit 9;
+    test "$(sha256sum docs/governance/D002H_PREREGISTRATION.yaml | awk "{print \$1}")" = "44b18b5a40ce9d188a9c3bd49339621f81a65a15f97a683247902450dd54acec" || exit 10;
+    test "$(sha256sum docs/governance/D002G_ACCEPTANCE_RULES.md | awk "{print \$1}")" = "875b1e3eb031b8e5333dc8b455454f0a30419ead1ebe787aa01d5882e7d6ad31" || exit 11'
+  description: >-
+    Probes the D-002H ledger-append PR: 15 artifact-contract tests pass;
+    D-002C ledger carries exactly 3 entries; entries 1 and 2 (claim_id +
+    eclipses chain) byte-exact; entry 3 = D002H_RICCI_FLOW_SCOPED_REFUSED
+    with status=REFUSED_BY_NULL_AUDIT_FAIL, eclipses=null (NOT an eclipse),
+    post-sweep null audit aggregate=FAIL; D-002H prereg and D-002G acceptance
+    rules sha256 byte-exact at their locked anchors. Regression on any ->
+    D-002H ledger-append contract broken.
+rollback_command: >-
+  bash -c 'git checkout HEAD~1 -- docs/governance/D002C_CLAIM_LEDGER.yaml
+  docs/governance/D002G_CANONICAL_RUN_BLOCKERS.md
+  && rm -f tests/systemic_risk/test_d002c_ledger_d002h_refused_entry.py
+  .claude/commit_acceptors/x10r-d002h-ledger-append-refused.yaml'
+rollback_verification_command: >-
+  bash -c 'test ! -f tests/systemic_risk/test_d002c_ledger_d002h_refused_entry.py
+  && test "$(sha256sum docs/governance/D002C_CLAIM_LEDGER.yaml | awk "{print \$1}")" = "f96ba9b5a2057d2e0bff84afc28578ab316cff73f6dc6673fb0d6d543b8bd6dd"'
+memory_update_type: append
+ledger_path: ".claude/commit_acceptors/x10r-d002h-ledger-append-refused.yaml"
+report_path: "docs/governance/D002C_CLAIM_LEDGER.yaml"
+evidence: []

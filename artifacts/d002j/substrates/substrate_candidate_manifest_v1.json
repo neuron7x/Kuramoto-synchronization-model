@@ -1,0 +1,153 @@
+{
+  "schema_version": "D002J-SUBSTRATE-CANDIDATE-MANIFEST-v1",
+  "study_id": "D-002J",
+  "phase": "P5",
+  "generated_at": "2026-05-15T00:00:00Z",
+  "parent_phase": "D002J-P4",
+  "pr_lineage": "D-002J prereg #694 -> P1 #695 -> P1A #697 REJECTED -> P1B #698 -> P2 #699 -> P2.5 #700 -> P3 #701 -> P4 #702 -> P5 (this)",
+  "selection_criterion": "operator-locked: EXACTLY 3 substrates; >=1 contagion-class (PC2/PC3); >=1 funding/liquidity-class (PC1); >=1 market/information-class (PC4/PC5); the 3 collectively cover >=4 of 6 P2 crisis windows; NO substrate may require real interbank transaction microdata (D-002J public-source only; cross-asset coherence != interbank funding network per Brunetti e-MID).",
+  "total_substrates": 3,
+  "substrates": [
+    {
+      "substrate_id": "funding_liquidity_rollover",
+      "mechanism_family": "liquidity_funding",
+      "substrate_class": "funding_liquidity",
+      "implementation_path": "research/systemic_risk/substrates/d002j/funding_liquidity_rollover.py:FundingLiquidityRolloverSubstrate",
+      "input_observables": [
+        "NYFED_SOFR:SOFR_rate",
+        "OFR_REPO_DATA:tri_party_repo_volumes_by_collateral_class",
+        "FED_H15:EFFR_OBFR_TGCR_BGCR_SOFR_post_2014"
+      ],
+      "source_ids": ["NYFED_SOFR", "OFR_REPO_DATA", "FED_H15"],
+      "p3_adapter_ids": ["adapter_ofr_repo_dashboard_v1", "adapter_fred_h15_treasury_v1"],
+      "crisis_windows": [
+        "CW3_US_REPO_SPIKE_2019",
+        "CW4_COVID_DASH_FOR_CASH_2020",
+        "CW5_UK_GILT_LDI_2022"
+      ],
+      "positive_control_analogues": ["PC1_LIQUIDITY_SHOCK_INJECTION"],
+      "state_variables": ["funding_gap", "rollover_ratio"],
+      "update_rule": "Maturing short-term funding is rolled over each period at the prevailing market funding rate; rollover ratio degrades as the funding rate rises above baseline, and the funding gap accumulates whenever rollover falls below the solvency-feasible floor.",
+      "shock_channel": "exogenous funding-rate stress jump (public SOFR/Treasury-spread spike) that decays exponentially, raising the cost of rolling over short-term liabilities.",
+      "observable_outputs": ["funding_stress_index", "rollover_failure_count"],
+      "expected_observable_signature": "On a true funding-stress window the funding_stress_index steps up at onset and rollover_failure_count accelerates monotonically while broader equity/credit panic stays muted (CW3 'narrow funding signature without market panic' constraint).",
+      "interpretable_parameters": {
+        "base_rollover_ratio": "calm-state fraction of maturing funding successfully rolled over",
+        "rollover_solvency_floor": "rollover ratio below which the institution accrues an unmet funding gap",
+        "funding_rate_baseline": "calm-state market funding rate (e.g. ~SOFR/IORB level)",
+        "funding_rate_stress_jump": "size of the exogenous funding-rate spike at onset",
+        "stress_decay": "exponential decay rate of the funding-rate spike (policy-backstop relief speed)"
+      },
+      "required_null_families": [
+        "phase_shuffled_funding_rate_null",
+        "block_bootstrap_rollover_null"
+      ],
+      "non_identifiability_boundary": "Cannot distinguish a genuine rollover-stress episode from an exogenous policy-rate hike of equal magnitude using the rate path alone; only the joint funding_gap accumulation under a constant solvency floor separates them, and that separation is unidentifiable from public aggregates if the floor itself moved.",
+      "power_feasibility_path": "Effect is a step + accumulating-count signature; qualitatively detectable at moderate horizon (>= ~60 periods) and stress-jump >= ~1x baseline-spread; P7 computes n_min and minimum detectable stress_jump.",
+      "requires_real_interbank_transaction_data": false,
+      "forbidden_claims": [
+        "cross-asset coherence proves interbank contagion",
+        "this substrate validates real-bank systemic risk",
+        "public funding-rate spread proves a physical interbank funding network",
+        "passing this substrate authorises a canonical run"
+      ]
+    },
+    {
+      "substrate_id": "cross_exposure_contagion_proxy",
+      "mechanism_family": "contagion",
+      "substrate_class": "contagion",
+      "implementation_path": "research/systemic_risk/substrates/d002j/cross_exposure_contagion_proxy.py:CrossExposureContagionProxySubstrate",
+      "input_observables": [
+        "LIT_NETWORK_RECON:max_entropy_reconstruction_parameters",
+        "LIT_INTERBANK_CONTAGION:debtrank_cascade_parameters",
+        "BIS_QR_NETWORK:aggregate_cross_border_exposure_intensities"
+      ],
+      "source_ids": ["LIT_NETWORK_RECON", "LIT_INTERBANK_CONTAGION", "BIS_QR_NETWORK"],
+      "p3_adapter_ids": ["adapter_lit_network_recon_v1", "adapter_lit_interbank_contagion_v1"],
+      "crisis_windows": [
+        "CW1_GFC_2007_2009",
+        "CW2_EUROZONE_2011_2012",
+        "CW6_REGIONAL_BANKING_2023"
+      ],
+      "positive_control_analogues": ["PC2_CONTAGION_CASCADE_INJECTION"],
+      "state_variables": ["equity_loss_fraction", "impaired_indicator"],
+      "update_rule": "A DebtRank-style impact cascade propagates a seed balance-sheet shock across a max-entropy-reconstructed exposure network in damped rounds, with each node's equity loss driven by the impact-weighted losses of its counterparties until the cascade saturates.",
+      "shock_channel": "seed impairment of the most-connected nodes (fraction seed_shock_fraction at magnitude seed_shock_magnitude) propagated through reconstructed exposure weights.",
+      "observable_outputs": ["cascade_impaired_fraction", "systemic_loss_index"],
+      "expected_observable_signature": "On a true contagion window the cascade_impaired_fraction rises in a damped-sigmoid shape from the seed set and the systemic_loss_index saturates well above the no-default null floor.",
+      "interpretable_parameters": {
+        "exposure_intensity": "aggregate public exposure intensity scaling the reconstructed impact weights",
+        "recovery_rate": "fraction of a defaulted counterparty's exposure recovered (loss-given-default = 1 - recovery_rate)",
+        "seed_shock_fraction": "fraction of nodes initially impaired",
+        "seed_shock_magnitude": "initial equity-loss fraction on seed nodes",
+        "damping": "round-to-round attenuation of further loss propagation"
+      },
+      "required_null_families": [
+        "degree_preserving_rewired_network_null",
+        "constant_payload_no_cascade_null"
+      ],
+      "non_identifiability_boundary": "Cannot distinguish true bilateral contagion from common-exposure co-movement: the reconstructed network is a max-entropy guess from public aggregates, so a cascade pattern is observationally equivalent to a shared-asset shock and does NOT identify the true interbank topology.",
+      "power_feasibility_path": "Cascade saturation gap vs no-default null is large for exposure_intensity above the percolation threshold; qualitatively detectable with n_nodes >= ~20; P7 computes n_min and the minimum detectable exposure_intensity.",
+      "requires_real_interbank_transaction_data": false,
+      "forbidden_claims": [
+        "cross-asset coherence proves interbank contagion",
+        "this substrate validates real-bank systemic risk",
+        "a reconstructed-network cascade proves the true interbank exposure topology",
+        "passing this substrate authorises a canonical run"
+      ]
+    },
+    {
+      "substrate_id": "volatility_credit_spread_regime",
+      "mechanism_family": "market_wide_stress",
+      "substrate_class": "market_information",
+      "implementation_path": "research/systemic_risk/substrates/d002j/volatility_credit_spread_regime.py:VolatilityCreditSpreadRegimeSubstrate",
+      "input_observables": [
+        "CBOE_VIX:vix_close",
+        "STLFSI:stlfsi_composite",
+        "OFR_FSI:ofr_fsi_us"
+      ],
+      "source_ids": ["CBOE_VIX", "STLFSI", "OFR_FSI"],
+      "p3_adapter_ids": ["adapter_fred_vixcls_v1", "adapter_fred_stlfsi_v1", "adapter_fred_ofr_fsi_v1"],
+      "crisis_windows": [
+        "CW1_GFC_2007_2009",
+        "CW4_COVID_DASH_FOR_CASH_2020"
+      ],
+      "positive_control_analogues": ["PC4_MARKET_WIDE_VOLATILITY_REGIME_SWITCH"],
+      "state_variables": ["regime_indicator", "credit_spread_level"],
+      "update_rule": "A sticky latent two-regime (calm vs stressed) process governs the conditional variance of a market-wide stress index and the mean-reverting target of a composite credit-spread level, so a regime switch jointly lifts realised volatility and widens the spread.",
+      "shock_channel": "latent regime switch at onset (persistence-controlled) that simultaneously raises conditional volatility and the credit-spread reversion target.",
+      "observable_outputs": ["realised_volatility", "credit_spread_level"],
+      "expected_observable_signature": "On a true market-wide stress window realised_volatility steps from calm to stress level and credit_spread_level mean-reverts upward to the stressed target, jointly and persistently.",
+      "interpretable_parameters": {
+        "calm_vol": "calm-regime conditional volatility of the market-wide index",
+        "stress_vol": "stressed-regime conditional volatility",
+        "calm_spread": "calm-regime composite credit-spread level",
+        "stress_spread": "stressed-regime composite credit-spread level",
+        "regime_persistence": "probability the stressed regime persists period-to-period (stickiness)"
+      },
+      "required_null_families": [
+        "single_regime_constant_variance_null",
+        "iid_shuffled_spread_null"
+      ],
+      "non_identifiability_boundary": "Cannot attribute a joint vol/spread regime shift to any specific underlying cause (funding, contagion, or pure risk-aversion); it detects the market-wide regime state, not its mechanism, and cannot localise stress to any institution.",
+      "power_feasibility_path": "Two-regime separation is large when stress_vol/calm_vol >= ~3 and stress_spread/calm_spread >= ~3; qualitatively detectable at horizon >= ~80 periods; P7 computes n_min and the minimum detectable vol/spread ratio.",
+      "requires_real_interbank_transaction_data": false,
+      "forbidden_claims": [
+        "cross-asset coherence proves interbank contagion",
+        "this substrate validates real-bank systemic risk",
+        "a market-wide vol/spread regime proves institution-level distress",
+        "passing this substrate authorises a canonical run"
+      ]
+    }
+  ],
+  "cross_asset_interbank_scope_guard": {
+    "interbank_transaction_microdata_forbidden": true,
+    "statement": "Per Brunetti et al. (e-MID) the physical interbank funding network CONTRACTS in crisis while cross-asset correlation networks EXPAND; therefore cross-asset coherence does NOT prove interbank funding contagion and NO admitted substrate may require real interbank transaction microdata.",
+    "forbidden_phrases": [
+      "cross-asset interbank validated",
+      "cross-asset interbank proves",
+      "cross-asset interbank confirms"
+    ]
+  },
+  "claim_boundary": "3 financial-mechanistic substrate candidates admitted; each is P1B-source-bound (>=2 VERIFIED/PARTIAL sources), P2-window-bound, P3-adapter-bound, P4-control-compatible. Substrates are GENERATIVE models, NOT real-data fits. Cross-asset coherence != interbank funding proof (Brunetti e-MID). No real-bank validation; no canonical run authorised."
+}

@@ -1,0 +1,86 @@
+# Diff-bound acceptor for the budget-bounded epistemic validator.
+#
+# Binds the files introduced under PR feat/neuro-epistemic-validator
+# and pins the fail-closed promise: the Layer 2 sustainer halts
+# deterministically on budget exhaustion or weight collapse below
+# the configured floor; halt is sticky; lineage integrity is
+# guaranteed by a SHA-256 chain over a pinned 65-byte packing.
+
+id: epistemic-validation-fail-closed
+status: ACTIVE
+claim_type: fail_closed
+promise: >-
+  core.neuro.epistemic_validation halts deterministically on budget
+  exhaustion or weight collapse below the configured floor; halt is
+  sticky (no in-module recovery); state lineage is SHA-256-chained
+  over a pinned 65-byte packing format; INV-FE2/HPC1/HPC2 are
+  enforced at every public entry point.
+diff_scope:
+  changed_files:
+    - path: ".claude/commit_acceptors/epistemic-validation-fail-closed.yaml"
+    - path: "core/neuro/__init__.py"
+    - path: "core/neuro/epistemic_audit.py"
+    - path: "core/neuro/epistemic_validation.py"
+    - path: "docs/reports/epistemic_validation_fail_closed.md"
+    - path: "newsfragments/495.feature.md"
+    - path: "tests/integration/test_epistemic_rebus_integration.py"
+    - path: "tests/unit/neuro/test_epistemic_audit.py"
+    - path: "tests/unit/neuro/test_epistemic_validation.py"
+  forbidden_paths:
+    - "trading/"
+    - "execution/"
+    - "forecast/"
+    - "policy/"
+required_python_symbols:
+  - "AUDIT_SCHEMA_VERSION"
+  - "EpistemicAuditEntry"
+  - "EpistemicConfig"
+  - "EpistemicError"
+  - "EpistemicPhase"
+  - "EpistemicState"
+  - "HaltMargin"
+  - "RebusBridge"
+  - "advance_entry"
+  - "halt_margin"
+  - "initial_state"
+  - "reset_entry"
+  - "reset_with_external_proof"
+  - "update"
+  - "verify_stream"
+expected_signal: >-
+  All 49 unit tests in tests/unit/neuro/test_epistemic_validation.py
+  pass under pytest, including 4 Hypothesis property tests on budget
+  non-negativity, weight bounds, seq monotonicity, and halt
+  stickiness.
+measurement_command: >-
+  python -m pytest tests/unit/neuro/test_epistemic_validation.py -v
+signal_artifact: "tmp/epistemic_validation_pytest.log"
+falsifier:
+  command: >-
+    python -m pytest tests/unit/neuro/test_epistemic_validation.py
+    -v -k "sticky_halt or budget_exhaustion or weight_collapse or
+    property_halt_is_sticky"
+  description: >-
+    Probe filters to the four tests that directly assert the
+    fail-closed contract. Sticky halt asserts that any post-halt
+    update returns the same state by identity; budget-exhaustion
+    routes halt_reason to "budget_exhausted"; weight-collapse routes
+    halt_reason to "weight_collapse"; the Hypothesis property
+    asserts stickiness across randomised post-halt streams. If any
+    of these tests passes while the implementation is broken, the
+    promise is unfalsifiable; the filter therefore acts as a
+    coverage probe over the four halt-related axes.
+rollback_command: >-
+  git checkout HEAD~1 -- core/neuro/epistemic_validation.py
+  core/neuro/__init__.py
+  tests/unit/neuro/test_epistemic_validation.py
+  .claude/commit_acceptors/epistemic-validation-fail-closed.yaml
+  docs/reports/epistemic_validation_fail_closed.md
+rollback_verification_command: >-
+  git diff --exit-code core/neuro/epistemic_validation.py
+  core/neuro/__init__.py
+  tests/unit/neuro/test_epistemic_validation.py
+memory_update_type: append
+ledger_path: ".claude/commit_acceptors/epistemic-validation-fail-closed.yaml"
+report_path: "docs/reports/epistemic_validation_fail_closed.md"
+evidence: []

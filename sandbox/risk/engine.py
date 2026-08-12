@@ -1,3 +1,5 @@
+# Copyright (c) 2023-2026 Yaroslav Vasylenko (neuron7xLab)
+# SPDX-License-Identifier: MIT
 """Risk evaluation logic for the sandbox."""
 
 from __future__ import annotations
@@ -23,9 +25,7 @@ class KillSwitchProviderProtocol:
 
 
 class AuditLoggerProtocol:
-    async def emit(
-        self, event: AuditEvent
-    ) -> None:  # pragma: no cover - protocol definition
+    async def emit(self, event: AuditEvent) -> None:  # pragma: no cover - protocol definition
         raise NotImplementedError
 
 
@@ -72,9 +72,7 @@ class RiskEngine:
             return decision
 
         if signal.direction is SignalDirection.HOLD:
-            decision = RiskDecision(
-                approved=False, reason="neutral_signal", limit_consumption=0.0
-            )
+            decision = RiskDecision(approved=False, reason="neutral_signal", limit_consumption=0.0)
             await self._audit.emit(
                 AuditEvent(
                     source="risk-engine",
@@ -86,11 +84,8 @@ class RiskEngine:
             )
             return decision
 
-        if (
-            signal.direction is SignalDirection.BUY and order.side is not OrderSide.BUY
-        ) or (
-            signal.direction is SignalDirection.SELL
-            and order.side is not OrderSide.SELL
+        if (signal.direction is SignalDirection.BUY and order.side is not OrderSide.BUY) or (
+            signal.direction is SignalDirection.SELL and order.side is not OrderSide.SELL
         ):
             decision = RiskDecision(
                 approved=False,
@@ -108,9 +103,7 @@ class RiskEngine:
             )
             return decision
 
-        signed_quantity = (
-            order.quantity if order.side is OrderSide.BUY else -order.quantity
-        )
+        signed_quantity = order.quantity if order.side is OrderSide.BUY else -order.quantity
         notional = order.quantity * signal.reference_price
 
         with self._lock:
@@ -119,10 +112,7 @@ class RiskEngine:
             position_consumption = min(abs(proposed) / self._limits.max_position, 1.0)
             notional_consumption = min(notional / self._limits.max_notional, 1.0)
             limit_consumption = max(position_consumption, notional_consumption)
-            if (
-                abs(proposed) > self._limits.max_position
-                or notional > self._limits.max_notional
-            ):
+            if abs(proposed) > self._limits.max_position or notional > self._limits.max_notional:
                 decision = RiskDecision(
                     approved=False,
                     reason="limits_exceeded",

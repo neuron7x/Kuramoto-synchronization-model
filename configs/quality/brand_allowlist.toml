@@ -1,0 +1,229 @@
+# SPDX-License-Identifier: MIT
+#
+# Brand-consistency allowlist.
+#
+# Each [[allow]] entry grandfathers a single (path, token) pair that must
+# remain in the repo for a documented reason. Entries are matched
+# exactly by tools/quality/brand_consistency.py.
+#
+# Adding a new entry requires a human-readable reason. Removing an entry
+# requires the corresponding residue to be cleaned up from the source.
+#
+# Schema:
+#   [[allow]]
+#   path = "relative/path/to/file.ext"
+#   token = "LegacyToken"
+#   reason = "one-line justification"
+#
+# ---------------------------------------------------------------------------
+# The brand-consistency guard itself must enumerate the forbidden tokens
+# as source-level constants and must exercise them in its tests. Those
+# self-references are the only legitimate legacy-token occurrences in
+# the tracked source tree.
+# ---------------------------------------------------------------------------
+
+[[allow]]
+path = "tools/quality/brand_consistency.py"
+token = "TradePulse"
+reason = "Listed in the FORBIDDEN_TOKENS constant that drives the scan."
+
+[[allow]]
+path = "tools/quality/brand_consistency.py"
+token = "tradepulse"
+reason = "Listed in the FORBIDDEN_TOKENS constant that drives the scan."
+
+[[allow]]
+path = "tools/quality/brand_consistency.py"
+token = "trade_pulse"
+reason = "Listed in the FORBIDDEN_TOKENS constant that drives the scan."
+
+[[allow]]
+path = "tools/quality/brand_consistency.py"
+token = "TRADEPULSE"
+reason = "Listed in the FORBIDDEN_TOKENS constant that drives the scan."
+
+[[allow]]
+path = "tools/quality/brand_consistency.py"
+token = "HydroBrain"
+reason = "Listed in the FORBIDDEN_TOKENS constant that drives the scan."
+
+[[allow]]
+path = "tools/quality/brand_consistency.py"
+token = "hydrobrain"
+reason = "Listed in the FORBIDDEN_TOKENS constant that drives the scan."
+
+[[allow]]
+path = "tools/quality/brand_consistency.py"
+token = "hydro_brain"
+reason = "Listed in the FORBIDDEN_TOKENS constant that drives the scan."
+
+[[allow]]
+path = "tools/quality/brand_consistency.py"
+token = "HYDROBRAIN"
+reason = "Listed in the FORBIDDEN_TOKENS constant that drives the scan."
+
+[[allow]]
+path = "tools/quality/brand_consistency.py"
+token = "HydroFlow"
+reason = "Listed in the FORBIDDEN_TOKENS constant that drives the scan."
+
+[[allow]]
+path = "tools/quality/brand_consistency.py"
+token = "NeurotradePro"
+reason = "Listed in the FORBIDDEN_TOKENS constant that drives the scan."
+
+[[allow]]
+path = "tools/quality/brand_consistency.py"
+token = "neurotradepro"
+reason = "Listed in the FORBIDDEN_TOKENS constant that drives the scan."
+
+[[allow]]
+path = "tools/quality/brand_consistency.py"
+token = "neurotrade_pro"
+reason = "Listed in the FORBIDDEN_TOKENS constant that drives the scan."
+
+[[allow]]
+path = "tools/quality/brand_consistency.py"
+token = "NeuroTrade"
+reason = "Listed in the FORBIDDEN_TOKENS constant that drives the scan."
+
+[[allow]]
+path = "tools/quality/brand_consistency.py"
+token = "NeuroPro"
+reason = "Listed in the FORBIDDEN_TOKENS constant that drives the scan + used in docstring to explain word-boundary behaviour."
+
+[[allow]]
+path = "tools/quality/tests/test_brand_consistency.py"
+token = "TradePulse"
+reason = "Test fixture uses legacy tokens as synthetic input to exercise the scanner."
+
+[[allow]]
+path = "tools/quality/tests/test_brand_consistency.py"
+token = "tradepulse"
+reason = "Test fixture uses legacy tokens as synthetic input."
+
+[[allow]]
+path = "tools/quality/tests/test_brand_consistency.py"
+token = "tradePULSE"
+reason = "Test fixture exercises case-insensitive matching."
+
+[[allow]]
+path = "tools/quality/tests/test_brand_consistency.py"
+token = "NeuroTrade"
+reason = "Test fixture uses legacy tokens as synthetic input."
+
+[[allow]]
+path = "tools/quality/tests/test_brand_consistency.py"
+token = "NeuroPro"
+reason = "Test fixture asserts word-boundary prevents false positives on NeuroProductivity."
+
+[[allow]]
+path = "tools/quality/tests/test_brand_consistency.py"
+token = "trade_pulse"
+reason = "Test fixture constructs synthetic residue filenames to exercise the scanner."
+
+[[allow]]
+path = "tools/quality/tests/test_brand_consistency.py"
+token = "hydrobrain"
+reason = "Test fixture constructs synthetic residue directory names."
+
+# ---------------------------------------------------------------------------
+# The allowlist file literally spells out every legacy token to grandfather
+# self-references from the scanner and tests above. Those token strings
+# re-enter the scan when the file itself is scanned.
+# ---------------------------------------------------------------------------
+
+[[allow]]
+path = "configs/quality/brand_allowlist.toml"
+token = "TradePulse"
+reason = "Allowlist enumerates grandfathered tokens verbatim."
+
+[[allow]]
+path = "configs/quality/brand_allowlist.toml"
+token = "tradepulse"
+reason = "Allowlist enumerates grandfathered tokens verbatim."
+
+[[allow]]
+path = "configs/quality/brand_allowlist.toml"
+token = "trade_pulse"
+reason = "Allowlist enumerates grandfathered tokens verbatim."
+
+[[allow]]
+path = "configs/quality/brand_allowlist.toml"
+token = "TRADEPULSE"
+reason = "Allowlist enumerates grandfathered tokens verbatim."
+
+[[allow]]
+path = "configs/quality/brand_allowlist.toml"
+token = "HydroBrain"
+reason = "Allowlist enumerates grandfathered tokens verbatim."
+
+[[allow]]
+path = "configs/quality/brand_allowlist.toml"
+token = "hydrobrain"
+reason = "Allowlist enumerates grandfathered tokens verbatim."
+
+[[allow]]
+path = "configs/quality/brand_allowlist.toml"
+token = "hydro_brain"
+reason = "Allowlist enumerates grandfathered tokens verbatim."
+
+[[allow]]
+path = "configs/quality/brand_allowlist.toml"
+token = "HYDROBRAIN"
+reason = "Allowlist enumerates grandfathered tokens verbatim."
+
+[[allow]]
+path = "configs/quality/brand_allowlist.toml"
+token = "HydroFlow"
+reason = "Allowlist enumerates grandfathered tokens verbatim."
+
+[[allow]]
+path = "configs/quality/brand_allowlist.toml"
+token = "NeurotradePro"
+reason = "Allowlist enumerates grandfathered tokens verbatim."
+
+[[allow]]
+path = "configs/quality/brand_allowlist.toml"
+token = "neurotradepro"
+reason = "Allowlist enumerates grandfathered tokens verbatim."
+
+[[allow]]
+path = "configs/quality/brand_allowlist.toml"
+token = "neurotrade_pro"
+reason = "Allowlist enumerates grandfathered tokens verbatim."
+
+[[allow]]
+path = "configs/quality/brand_allowlist.toml"
+token = "NeuroTrade"
+reason = "Allowlist enumerates grandfathered tokens verbatim."
+
+[[allow]]
+path = "configs/quality/brand_allowlist.toml"
+token = "NeuroPro"
+reason = "Allowlist enumerates grandfathered tokens verbatim."
+
+[[allow]]
+path = "configs/quality/brand_allowlist.toml"
+token = "tradePULSE"
+reason = "Allowlist enumerates grandfathered tokens verbatim."
+
+# ---------------------------------------------------------------------------
+# Legacy docstrings in two scripts/ helpers that transitively pull the
+# scripts.cli module through the TYPE_CHECKING-style guard in
+# scripts/__init__.py. Editing these files causes the python-quality CI
+# job to walk 272+ pre-existing mypy errors in scripts/api_management/
+# which are outside the scope of the rebrand cleanup. The rebrand for
+# these two files is scheduled for a follow-up PR that also fixes
+# scripts/api_management/ typing.
+# ---------------------------------------------------------------------------
+
+[[allow]]
+path = "scripts/run_backtest.py"
+token = "NeuroTrade"
+reason = "Touching this file triggers cascading mypy failures from scripts/api_management/ (pre-existing). Rebrand scheduled for a follow-up that also fixes those types."
+
+[[allow]]
+path = "scripts/validate.py"
+token = "NeuroTrade"
+reason = "Touching this file triggers cascading mypy failures from scripts/api_management/ (pre-existing). Rebrand scheduled for a follow-up that also fixes those types."

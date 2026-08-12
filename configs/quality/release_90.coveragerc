@@ -1,0 +1,75 @@
+; ============================================================================
+; release_90.coveragerc — the ONE canonical coverage authority.
+;
+; Why this file exists
+; --------------------
+; Before this file, four configs disagreed about what "coverage" measures:
+;
+;   .coveragerc                         source = core, backtest, execution
+;   pyproject.toml [tool.coverage.run]  source = core, backtest, execution,
+;                                                 analytics, src; fail_under=98
+;   Makefile test-coverage              --cov=core --cov=backtest --cov=execution
+;   configs/quality/coverage_targets    release gate 90, aspirational 98
+;
+; Four surfaces => four different numbers => no number means anything. This
+; file is the single source of truth for the RELEASE gate (90%). It observes
+; the full declared production surface — not a convenient two-thirds of it.
+;
+; Relationship to the 98 gate
+; ---------------------------
+; 98 is the ASPIRATIONAL gate (coverage_targets.toml::final_aspirational_gate,
+; mirrored by pyproject fail_under and coverage_baseline.json). 90 is the
+; RELEASE gate this profile enforces. The two are NOT in conflict: they are
+; named, distinct gates. tests/test_coverage_threshold_sync.py asserts the
+; aspirational gate stays synchronized; tests/audit/test_coverage_honesty.py
+; asserts this file does not lie by smuggling source into omit.
+;
+; The honesty rule (enforced by test)
+; -----------------------------------
+; Every path under [run] omit MUST NOT be a child of any path under
+; [run] source. If a sub-package should not be measured, REMOVE it from
+; `source` — never hide it in `omit`. A lower honest number beats a higher
+; lying one.
+; ============================================================================
+
+[run]
+branch = True
+source =
+    core
+    backtest
+    execution
+    analytics
+    application
+    domain
+    interfaces
+    geosync
+    markets
+    modules
+    observability
+    src
+    cli
+    geosync_pro
+    libs
+omit =
+    tests/**
+    conftest.py
+    **/__init__.py
+    **/generated/**
+    **/_pb2.py
+    **/_pb2_grpc.py
+
+[report]
+show_missing = True
+precision = 2
+exclude_lines =
+    pragma: no cover
+    def __repr__
+    raise NotImplementedError
+    if TYPE_CHECKING:
+omit =
+    tests/**
+    conftest.py
+    **/__init__.py
+    **/generated/**
+    **/_pb2.py
+    **/_pb2_grpc.py

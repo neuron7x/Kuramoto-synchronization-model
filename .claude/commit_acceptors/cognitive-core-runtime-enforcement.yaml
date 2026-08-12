@@ -1,0 +1,63 @@
+# ci-heartbeat: cognitive-core-runtime-enforcement
+id: cognitive-core-runtime-enforcement
+status: ACTIVE
+claim_type: fail_closed
+promise: >-
+  Give the cognitive core runtime teeth and AST mutation-hardness. Adds
+  require_admissible + InadmissibleStateError to core/physics/cognitive_core.py:
+  actuation paths call it and may only proceed inside the invariant manifold;
+  any NO_GO (violated / empty / non-finite snapshot) raises fail-closed with the
+  binding constraint surfaced, and a passed custom core is honoured. The
+  core's own source is registered in docs/MUTATION_KILL_BASELINE.json at a 100%
+  logic kill-rate (12/12), so the REQUIRED mutation-kill ratchet permanently
+  forbids the cognitive core regressing below full witness coverage. No
+  canonical catalog mutation, no trading/execution/forecast/policy change.
+diff_scope:
+  changed_files:
+    - path: ".claude/commit_acceptors/cognitive-core-runtime-enforcement.yaml"
+    - path: "core/physics/cognitive_core.py"
+    - path: "tests/physics/test_cognitive_core_admissibility.py"
+    - path: "tests/physics/test_cognitive_core_runtime_gate.py"
+    - path: "docs/MUTATION_KILL_BASELINE.json"
+    - path: ".github/workflows/mutation-kill-gate.yml"
+  forbidden_paths:
+    - "trading/"
+    - "execution/"
+    - "forecast/"
+    - "policy/"
+required_python_symbols:
+  - "require_admissible"
+  - "InadmissibleStateError"
+expected_signal: >-
+  tools/validate_physics_contracts.py reports 33 blocking laws fully witnessed
+  (was 32). require_admissible passes an in-manifold snapshot and raises
+  InadmissibleStateError on violated/empty/non-finite snapshots with the binding
+  constraint named; a restricted custom core is honoured over the default.
+  check_mutation_kill_ratchet.py probes core/physics/cognitive_core.py at 100%
+  logic kill-rate (12/12), meeting its floor. No trading/execution/forecast/
+  policy change.
+measurement_command: >-
+  PYTHONPATH=. python tools/validate_physics_contracts.py && PYTHONPATH=.
+  python -m pytest tests/physics/test_cognitive_core_runtime_gate.py
+  tests/physics/test_cognitive_core_admissibility.py -q && PYTHONPATH=. python
+  scripts/ci/check_mutation_kill_ratchet.py --base-ref origin/main
+signal_artifact: "tmp/cognitive_core_runtime_enforcement.log"
+falsifier:
+  command: >-
+    PYTHONPATH=. python -m pytest
+    tests/physics/test_cognitive_core_runtime_gate.py -q
+  description: >-
+    Fails if actuation is allowed outside the invariant manifold, the runtime
+    gate stops failing closed, or the core source drops below its mutation-kill
+    floor.
+rollback_command: >-
+  git checkout origin/main -- docs/MUTATION_KILL_BASELINE.json
+rollback_verification_command: >-
+  PYTHONPATH=. python tools/validate_physics_contracts.py
+memory_update_type: none
+ledger_path: ".claude/commit_acceptors/cognitive-core-runtime-enforcement.yaml"
+report_path: ".claude/commit_acceptors/cognitive-core-runtime-enforcement.yaml"
+evidence:
+  - path: "core/physics/cognitive_core.py"
+  - path: "tests/physics/test_cognitive_core_runtime_gate.py"
+  - path: "docs/MUTATION_KILL_BASELINE.json"

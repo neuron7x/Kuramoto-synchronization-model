@@ -1,0 +1,64 @@
+id: component-strength-report
+status: ACTIVE
+claim_type: governance
+promise: >-
+  After this PR, tools/audit_component_strength.py emits a per-component
+  coverage+mutation strength report validated by
+  audit/schema/component_strength_report.schema.json: line/branch coverage from
+  raw counts, mutation_score = killed/(killed+survived)*100, oracle_gap =
+  branch-mutation, verified_test_strength = min(branch, mutation). A component is
+  MUTATION_VERIFIED / COVERAGE_ONLY / UNMEASURED; strength is never PASS from
+  coverage alone; zero-valid-mutant or oracle-gap-over-bound or unmeasured
+  packaged roots fail closed.
+diff_scope:
+  changed_files:
+    - path: ".claude/commit_acceptors/component-strength-report.yaml"
+    - path: "tools/audit_component_strength.py"
+    - path: "audit/schema/component_strength_report.schema.json"
+    - path: "tests/tools/test_component_strength_report.py"
+    - path: "data/testing/component_test_matrix.json"
+  forbidden_paths:
+    - "core/physics/"
+    - "core/kuramoto/"
+    - "execution/oms.py"
+required_python_symbols:
+  - "tools/audit_component_strength.py::build_component"
+  - "tools/audit_component_strength.py::build_report"
+expected_signal: >-
+  `python -m pytest --import-mode=importlib
+  tests/tools/test_component_strength_report.py -q` reports 6 passed: formulas
+  recompute, coverage-only is not a PASS, zero valid mutants fail closed, an
+  unmeasured component is a forbidden gap, oracle-gap-over-bound fails, and the
+  report validates against its schema.
+measurement_command: >-
+  bash -c '
+    python -m pytest --import-mode=importlib -p no:cacheprovider
+      tests/tools/test_component_strength_report.py -q
+  '
+signal_artifact: "tmp/component_strength_report.log"
+falsifier:
+  command: |-
+    bash -c '
+      python -c "
+    import importlib.util, pathlib
+    spec = importlib.util.spec_from_file_location(\"acs\", \"tools/audit_component_strength.py\")
+    m = importlib.util.module_from_spec(spec); spec.loader.exec_module(m)
+    cov = {\"files\": {\"libs/x.py\": {\"summary\": {\"covered_lines\": 90, \"num_statements\": 100, \"covered_branches\": 42, \"num_branches\": 50}}}}
+    import tempfile; d = pathlib.Path(tempfile.mkdtemp())
+    (d / \"mutation.libs.json\").write_text(__import__(\"json\").dumps({\"tool\": \"mutmut\", \"killed\": 80, \"survived\": 20, \"valid_mutants\": 100}))
+    c = m.build_component(\"libs\", \"p\", cov, d)
+    assert c[\"verified_test_strength\"] == 80.0 and c[\"oracle_gap\"] == 4.0
+    "
+    '
+  description: >-
+    Recomputes verified_test_strength=min(branch,mutation) and oracle_gap for a
+    known input. Exits 0 on the correct tree (run_evidence green-state contract),
+    non-zero if the strength formulas regress.
+rollback_command: >-
+  bash -c 'git rm -f .claude/commit_acceptors/component-strength-report.yaml'
+rollback_verification_command: >-
+  bash -c 'test ! -f .claude/commit_acceptors/component-strength-report.yaml'
+memory_update_type: append
+ledger_path: ".claude/commit_acceptors/component-strength-report.yaml"
+report_path: "tmp/component_strength_report.log"
+evidence: []

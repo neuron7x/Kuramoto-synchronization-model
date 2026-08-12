@@ -1,0 +1,38 @@
+{
+  "schema_version": "D002J-CRISIS-WINDOW-SUMMARY-v1",
+  "generated_at": "2026-05-15T00:00:00Z",
+  "study_id": "D-002J",
+  "parent_registry_path": "artifacts/d002j/data_registry/source_registry_v1.json",
+  "parent_registry_sha256": "f1899b7a882b4b3efbebb54e3dc942c079839f77f981273e2dd09757973b14ec",
+  "registry_artifact_path": "artifacts/d002j/crisis_windows/crisis_window_registry_v1.json",
+  "total_windows": 6,
+  "by_event_type": {
+    "systemic_banking_crisis": 1,
+    "sovereign_debt_crisis": 1,
+    "repo_market_dysfunction": 1,
+    "liquidity_crisis": 1,
+    "gilt_dysfunction": 1,
+    "regional_banking_crisis": 1
+  },
+  "by_primary_mechanism_family": {
+    "liquidity_funding": 3,
+    "contagion": 1,
+    "market_wide_stress": 1,
+    "balance_sheet": 1
+  },
+  "by_data_availability_status": {
+    "strong": 4,
+    "partial": 2
+  },
+  "sources_used_total": 26,
+  "sources_used_by_window": {
+    "CW1_GFC_2007_2009": 21,
+    "CW2_EUROZONE_2011_2012": 16,
+    "CW3_US_REPO_SPIKE_2019": 17,
+    "CW4_COVID_DASH_FOR_CASH_2020": 19,
+    "CW5_UK_GILT_LDI_2022": 12,
+    "CW6_REGIONAL_BANKING_2023": 16
+  },
+  "decision": "CRISIS_WINDOW_REGISTRY_READY",
+  "decision_rationale": "All 6 windows assembled with byte-exact date bounds and 18 schema fields each. Every source_id referenced across the 6 windows is a P1B-surviving source (audit_status VERIFIED or PARTIAL); no DOWNGRADED or REJECTED sources promoted. Minimum 3 P1B-surviving sources per window enforced (actual: 12-21). Registry is registry-only; no ingestion, no modeling, no null execution, no canonical run, no prediction claim, no bank-level validation, no cross-asset/interbank overclaim. Parent registry sha256 pinned. Six locked governance shas verified byte-exact."
+}

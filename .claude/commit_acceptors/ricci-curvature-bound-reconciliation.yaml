@@ -1,0 +1,105 @@
+# Diff-bound commit acceptor for the Ricci curvature-bound reconciliation
+# (audit task T4).
+#
+# This change reconciles the THREE physics-contract surfaces that described the
+# Ollivier-Ricci edge-curvature bound inconsistently, so they all agree with the
+# invariant registry:
+#   * physics_contracts/catalog.yaml (ricci.ollivier_bounds) previously stated
+#     κ ∈ [−1, 1] as if universal.
+#   * core/indicators/ricci.py docstring stated κ ∈ (−∞, 1], "typically [−2, 1]".
+#   * tests/unit/test_indicators_ricci.py only checked [−1, 1] on a price fixture.
+#
+# Reconciled statement (matches .claude/physics/INVARIANTS.yaml):
+#   * INV-RC1 (P0, universal): κ ≤ 1 for every edge of every connected graph
+#     (κ = 1 − W₁/d, W₁ ≥ 0). Topology-independent upper bound.
+#   * INV-RC3 (P1): κ ∈ [−1, 1] holds ONLY for build_price_graph output
+#     (consecutive integer node IDs ⇒ the 1-D positional embedding equals the
+#     combinatorial distance). The lower bound −1 is construction-conditional.
+#
+# Runtime behavior: NONE. No math change — the code already produced the correct
+# values (a 12-node cycle yields κ = −2 on its wrap-around edge). Only docstring
+# wording, the catalog law text, and the test coverage were corrected to match
+# the proven behavior. No silent clipping added. No new physics. No predictive
+# or market claim added.
+#
+# Locally verified on origin/main base (9510a87):
+#   * pytest tests/unit/test_indicators_ricci.py -q: 23 passed
+#   * .claude/physics/validate_tests.py: no new regression (L4 stays 0,
+#     total 21 == baseline; grounding 0 -> 2 tests)
+#   * ruff check + black --check on core/indicators/ricci.py clean
+#     (tests/ are force-excluded from ruff/black by pyproject.toml)
+#   * mypy --strict core/indicators/ricci.py: success
+#   * scripts/ci/check_claims.py and scripts/ci/check_claim_boundary.py: exit 0
+id: ricci-curvature-bound-reconciliation
+status: ACTIVE
+claim_type: governance
+promise: >-
+  After this PR lands, the universal Ollivier-Ricci curvature upper bound κ ≤ 1
+  (INV-RC1, P0) and the construction-conditional symmetric band κ ∈ [−1, 1] for
+  build_price_graph output only (INV-RC3, P1) are stated consistently across all
+  three contract surfaces: physics_contracts/catalog.yaml (ricci.ollivier_bounds),
+  the core/indicators/ricci.py ricci_curvature_edge docstring, and
+  tests/unit/test_indicators_ricci.py. The test suite proves on a non-price-graph
+  topology (a 12-node cycle) that κ ≤ 1 always holds while κ < −1 is legitimately
+  produced, and that the [−1, 1] band still holds for build_price_graph output.
+  No runtime math is changed; no silent clipping is added; no new physics or
+  market claim is introduced.
+diff_scope:
+  changed_files:
+    - path: ".claude/commit_acceptors/ricci-curvature-bound-reconciliation.yaml"
+    - path: "physics_contracts/catalog.yaml"
+    - path: "core/indicators/ricci.py"
+    - path: "tests/unit/test_indicators_ricci.py"
+  forbidden_paths:
+    - "trading/"
+    - "execution/"
+    - "forecast/"
+    - "policy/"
+    - "application/"
+    - "core/physics/"
+    - "core/kuramoto/"
+    - "src/"
+    - "geosync_hpc/"
+required_python_symbols: []
+expected_signal: >-
+  `python -m pytest tests/unit/test_indicators_ricci.py -q` reports 23 passed,
+  including test_ricci_universal_upper_bound_holds_on_non_price_topology (INV-RC1)
+  and test_ricci_lower_bound_band_conditional_on_price_graph (INV-RC3); the
+  12-node cycle yields min κ = −2 (< −1) while every edge satisfies κ ≤ 1.
+measurement_command: >-
+  bash -c 'mkdir -p tmp && python -m pytest
+  tests/unit/test_indicators_ricci.py --no-header -rN
+  > tmp/ricci_curvature_bound_reconciliation.log 2>&1
+  && grep -qE "23 passed" tmp/ricci_curvature_bound_reconciliation.log'
+signal_artifact: "tmp/ricci_curvature_bound_reconciliation.log"
+falsifier:
+  command: |-
+    bash -c 'python -c "
+    import networkx as nx;
+    from core.indicators.ricci import ricci_curvature_edge;
+    G = nx.cycle_graph(12);
+    ks = [ricci_curvature_edge(G, int(u), int(v)) for u, v in G.edges()];
+    import sys;
+    sys.exit(0 if any(k > 1.0 + 1e-9 for k in ks) else 1)"'
+  description: >-
+    Inverse probe of the universal INV-RC1 upper bound. It exits 0 (fires) iff
+    any edge of a non-price 12-node cycle graph reports κ > 1 — i.e. the
+    definitional upper bound κ = 1 − W₁/d (W₁ ≥ 0) was violated. While the
+    implementation correctly keeps every κ ≤ 1 the probe exits 1. If it ever
+    exits 0, the universal upper bound is broken and the change must be reverted,
+    not patched green. (The lower bound is intentionally NOT probed here: κ < −1
+    on non-price topologies is the EXPECTED, construction-conditional behavior
+    that this reconciliation documents.)
+rollback_command: >-
+  git checkout origin/main --
+  physics_contracts/catalog.yaml
+  core/indicators/ricci.py
+  tests/unit/test_indicators_ricci.py
+  && git rm -f
+  .claude/commit_acceptors/ricci-curvature-bound-reconciliation.yaml
+rollback_verification_command: >-
+  bash -c 'test ! -f .claude/commit_acceptors/ricci-curvature-bound-reconciliation.yaml'
+memory_update_type: none
+ledger_path: ".claude/commit_acceptors/ricci-curvature-bound-reconciliation.yaml"
+report_path: "tmp/ricci_curvature_bound_reconciliation.log"
+evidence: []

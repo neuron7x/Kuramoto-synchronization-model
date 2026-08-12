@@ -1,4 +1,6 @@
-"""Shared typing aliases for TradePulse modules."""
+# Copyright (c) 2023-2026 Yaroslav Vasylenko (neuron7xLab)
+# SPDX-License-Identifier: MIT
+"""Shared typing aliases for GeoSync modules."""
 
 from __future__ import annotations
 

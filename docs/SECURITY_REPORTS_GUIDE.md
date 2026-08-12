@@ -1,10 +1,10 @@
 ---
-owner: security@tradepulse
+owner: security@geosync
 review_cadence: quarterly
 last_reviewed: 2026-01-01
 ---
 
-# Security Reports Guide — TradePulse
+# Security Reports Guide — GeoSync
 
 > How to read and respond to security reports in CI.
 
@@ -154,13 +154,13 @@ Container scans find vulnerabilities in base images and installed packages.
 ### Running Locally
 ```bash
 # Build image
-docker build -t tradepulse:scan .
+docker build -t geosync:scan .
 
 # Scan with Trivy
-trivy image tradepulse:scan --severity CRITICAL,HIGH
+trivy image geosync:scan --severity CRITICAL,HIGH
 
 # Scan with Grype
-grype tradepulse:scan --fail-on critical
+grype geosync:scan --fail-on critical
 ```
 
 ---
@@ -268,8 +268,8 @@ python scripts/dependency_audit.py --requirement requirements.txt
 detect-secrets scan core backtest execution src application
 
 # Container scan (after build)
-docker build -t tradepulse:scan .
-trivy image tradepulse:scan
+docker build -t geosync:scan .
+trivy image geosync:scan
 ```
 
 ---

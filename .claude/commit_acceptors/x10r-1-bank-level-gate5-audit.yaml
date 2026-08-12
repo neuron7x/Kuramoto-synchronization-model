@@ -1,0 +1,109 @@
+# Diff-bound commit acceptor for X-10R-1 PR #3 — allocator-side
+# Gate-5-style multi-metric recovery audit on bank-level marginals.
+#
+# What lands:
+#   * research/reconstruction/allocator/bank_level_audit.py
+#       BankLevelRecoveryReport + audit_bank_level_recovery
+#   * tests/reconstruction/allocator/test_bank_level_audit.py
+#       13 new tests pinning every metric, threshold defaults,
+#       per-country argmax reporting, threshold customisation,
+#       and the falsification anchor (UniformPrior on lognormal
+#       substrate fails total_l1).
+#
+# Locally verified:
+#   * pytest tests/reconstruction/allocator/: 85/85 passed
+#   * mypy --strict + ruff + black:           clean
+
+id: x10r-1-bank-level-gate5-audit
+status: ACTIVE
+claim_type: chore
+promise: >-
+  After this PR lands, research/reconstruction/allocator/ exposes
+  a Gate-5-style multi-metric recovery audit on bank-level
+  marginals: BankLevelRecoveryReport carries
+  total_relative_l1, top_k_bank_jaccard (k = N//5), per-country
+  relative L1 with argmax country, and conservation_total_relative
+  _error. audit_bank_level_recovery enforces four thresholds
+  (0.20 / 0.60 / 0.05 / 1e-9) by default; each metric is
+  independently testable. 13 tests pin: defaults, perfect-recovery
+  passes all, end-to-end aligned-SizeWeightedPrior passes,
+  UniformPrior on lognormal fails total_l1, per_country_l1
+  catches local distortions the aggregate misses, top_k_jaccard
+  fails on inversion, conservation surfaces separately, input
+  contract (shape mismatch / map length / non-finite),
+  threshold + k_top customisation, argmax country reporting.
+diff_scope:
+  changed_files:
+    - path: ".claude/commit_acceptors/x10r-1-bank-level-gate5-audit.yaml"
+    - path: "research/reconstruction/allocator/__init__.py"
+    - path: "research/reconstruction/allocator/bank_level_audit.py"
+    - path: "tests/reconstruction/allocator/test_bank_level_audit.py"
+  forbidden_paths:
+    - "trading/"
+    - "execution/"
+    - "forecast/"
+    - "policy/"
+    - "core/physics/"
+    - "core/kuramoto/"
+    - "application/governance/claim_ledger.py"
+    - "application/governance/commit_acceptor.py"
+required_python_symbols:
+  - "research/reconstruction/allocator/bank_level_audit.py::BankLevelRecoveryReport"
+  - "research/reconstruction/allocator/bank_level_audit.py::audit_bank_level_recovery"
+expected_signal: >-
+  Local: `pytest tests/reconstruction/allocator/ -q` reports
+  "85 passed"; `mypy --strict` is clean on every file under
+  research/reconstruction/allocator/ and
+  tests/reconstruction/allocator/; `ruff check` and
+  `black --check` both pass on those paths.
+measurement_command: >-
+  bash -c 'mypy --strict --follow-imports=silent
+  research/reconstruction/allocator/ tests/reconstruction/allocator/
+  && ruff check research/reconstruction/allocator/ tests/reconstruction/allocator/
+  && black --check research/reconstruction/allocator/ tests/reconstruction/allocator/
+  && pytest tests/reconstruction/allocator/ -q'
+signal_artifact: "tmp/x10r_1_bank_level_audit.log"
+falsifier:
+  command: |-
+    bash -c 'python -c "
+    import numpy as np
+    from research.reconstruction.allocator import (
+        CountryToBankAllocator, UniformPrior,
+        audit_bank_level_recovery, synthetic_country_aggregates,
+    )
+    agg_in, agg_out, gt_in, gt_out, bcm = synthetic_country_aggregates(
+        n_countries=4, n_banks_per_country=8,
+        share_distribution=\"lognormal\", seed=42,
+    )
+    cert = CountryToBankAllocator(
+        prior=UniformPrior(bank_country_map=bcm)
+    ).allocate(agg_in, agg_out, bank_country_map=bcm)
+    rep = audit_bank_level_recovery(
+        ground_truth_s_in=gt_in, ground_truth_s_out=gt_out,
+        allocated_s_in=cert.s_in, allocated_s_out=cert.s_out,
+        bank_country_map=bcm,
+    )
+    assert rep.passed is False, \"audit must fail UniformPrior on lognormal\"
+    assert any(\"total_relative_l1\" in r for r in rep.failure_reasons), (
+        f\"audit must surface total_relative_l1 failure; got {rep.failure_reasons}\"
+    )
+    "'
+  description: >-
+    Probes the falsification anchor: UniformPrior on lognormal-
+    share substrate at N=32 banks must produce an audit that fails
+    on total_relative_l1. If the audit passes, either the metric
+    is computed wrong or the substrate is somehow not lognormal —
+    either way, downstream concrete priors have nothing to beat.
+rollback_command: >-
+  bash -c 'git checkout HEAD~1 --
+  && rm -f research/reconstruction/allocator/bank_level_audit.py
+  tests/reconstruction/allocator/test_bank_level_audit.py
+  .claude/commit_acceptors/x10r-1-bank-level-gate5-audit.yaml'
+rollback_verification_command: >-
+  bash -c 'test ! -f research/reconstruction/allocator/bank_level_audit.py
+  && test ! -f tests/reconstruction/allocator/test_bank_level_audit.py
+  && test ! -f .claude/commit_acceptors/x10r-1-bank-level-gate5-audit.yaml'
+memory_update_type: append
+ledger_path: ".claude/commit_acceptors/x10r-1-bank-level-gate5-audit.yaml"
+report_path: "tmp/x10r_1_bank_level_audit.log"
+evidence: []

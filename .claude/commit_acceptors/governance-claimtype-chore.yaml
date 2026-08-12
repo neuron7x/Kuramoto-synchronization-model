@@ -1,0 +1,77 @@
+# Diff-bound commit acceptor for the governance ClaimType=chore schema fix.
+#
+# PR #561 (chore brand consolidation) introduced `chore: 24` into
+# `.claude/commit_acceptor_policy.yaml` but did NOT mirror the new
+# value into the typed-Pydantic-model `ClaimType` enum at
+# `application/governance/commit_acceptor.py:55`. The corpus parse
+# test (`tests/governance/test_typed_models.py::
+# test_canonical_acceptor_corpus_parses`) consequently fails on every
+# subsequent PR — including the v2 systemic-risk rewrite (#562) which
+# inherited the broken main.
+#
+# This 1-line addition closes the YAML-vs-Pydantic drift: the enum now
+# accepts `chore` as a legitimate claim_type alongside the eight
+# pre-existing values.
+#
+# Locally verified:
+#   * pytest tests/governance/test_typed_models.py: 12/12 pass
+#   * mypy --strict on application/governance/commit_acceptor.py: clean
+#   * The brand-neuron7xlab-canonical.yaml acceptor (already on main,
+#     claim_type=chore) now parses through the typed model.
+
+id: governance-claimtype-chore
+status: ACTIVE
+claim_type: governance
+promise: >-
+  After this PR lands, `application.governance.commit_acceptor.ClaimType`
+  exposes the `CHORE = "chore"` enum value, restoring parity with the
+  YAML policy `chore: 24` that PR #561 introduced. The corpus parse
+  test on the canonical acceptor set passes again, unblocking every
+  subsequent PR.
+diff_scope:
+  changed_files:
+    - path: ".claude/commit_acceptors/governance-claimtype-chore.yaml"
+    - path: "application/governance/commit_acceptor.py"
+    - path: "docs/schemas/governance/commit_acceptor.schema.json"
+  forbidden_paths:
+    - "trading/"
+    - "execution/"
+    - "forecast/"
+    - "policy/"
+    - "core/"
+    - "research/"
+    - "tools/commit_acceptor/validate_commit_acceptor.py"
+required_python_symbols:
+  - "application/governance/commit_acceptor.py::ClaimType"
+expected_signal: >-
+  `pytest tests/governance/test_typed_models.py -q` reports "12 passed"
+  on the diff branch; before this PR the same command fails on
+  test_canonical_acceptor_corpus_parses with a Pydantic enum
+  ValidationError citing input_value='chore'.
+measurement_command: >-
+  bash -c '
+    mypy --strict application/governance/commit_acceptor.py && python -m pytest tests/governance/test_typed_models.py -q
+  '
+signal_artifact: "tmp/governance_claimtype_chore.log"
+falsifier:
+  command: |-
+    bash -c '
+      python -c "from application.governance.commit_acceptor import ClaimType; assert ClaimType.CHORE.value == \"chore\"" 2>/dev/null && exit 1 || exit 0
+    '
+  description: >-
+    Probes that ClaimType.CHORE exists and equals "chore". The
+    falsifier inverts: it succeeds (exit 0) only when importing
+    ClaimType.CHORE fails or returns the wrong value, which would
+    mean the enum addition rolled back.
+rollback_command: >-
+  bash -c 'git checkout HEAD~1 --
+    application/governance/commit_acceptor.py
+    .claude/commit_acceptors/governance-claimtype-chore.yaml'
+rollback_verification_command: |-
+  bash -c '
+    python -c "from application.governance.commit_acceptor import ClaimType; assert not hasattr(ClaimType, \"CHORE\")"
+  '
+memory_update_type: append
+ledger_path: ".claude/commit_acceptors/governance-claimtype-chore.yaml"
+report_path: "tmp/governance_claimtype_chore.log"
+evidence: []

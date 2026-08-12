@@ -1,0 +1,358 @@
+{
+  "prime_architect_version": "vX",
+  "target": "ASKAR / OTS CAPITAL",
+  "narrow": {
+    "substrate": {
+      "source": "data/askar/*.parquet  (OHLC only)",
+      "n_assets": 3,
+      "n_bars": 15848,
+      "missing_inputs": [
+        "order_book_depth",
+        "trade_tape",
+        "information_viscosity_I03",
+        "depth_freeze_out_rate"
+      ],
+      "l2_full_depth_available": false
+    },
+    "find_stage": {
+      "n_bars": 15788,
+      "median": 0.0,
+      "p05": 0.0,
+      "p95": 3.0,
+      "fraction_below_1e-8": 0.539207,
+      "freeze_out_detected": true
+    },
+    "prove_stage": {
+      "permutation_ic": 0.001297,
+      "permutation_p": 0.449,
+      "permutation_sigma": 0.121,
+      "permutation_n_shuffles": 1000,
+      "jitter_plus_ic": 0.002302,
+      "jitter_minus_ic": -0.001583,
+      "micro_noise_ic": -0.000352,
+      "clean_ic": 0.001297
+    },
+    "measure_stage": {
+      "r2_momentum": 0.000968,
+      "r2_volatility": 0.002403,
+      "r2_mean_reversion": 0.000157,
+      "r2_max_vs_factors": 0.002403,
+      "gamma_psd": 1.3948,
+      "gamma_target": 1.0,
+      "gamma_tol": 0.05
+    },
+    "reproduce_stage": {
+      "ic_train": -0.001203,
+      "ic_test": 0.00763,
+      "sharpe_test": 0.9737,
+      "maxdd_test": -0.134689,
+      "ann_return_test": 0.155874,
+      "crr_test": 1.1573
+    },
+    "reproduce_stage_regime_gated": {
+      "gate_threshold_lambda2": 0.0,
+      "n_train_active": 5242,
+      "n_test_active": 2032,
+      "ic_train": NaN,
+      "ic_test": NaN,
+      "sharpe_test": 1.6511,
+      "maxdd_test": -0.085253,
+      "ann_return_test": 0.182333,
+      "crr_test": 2.1387,
+      "insufficient_active_bars": false,
+      "permutation_p_active": null,
+      "permutation_sigma_active": null
+    },
+    "gates": [
+      {
+        "name": "permutation_p",
+        "value": 0.449,
+        "threshold": 0.01,
+        "direction": "less_than",
+        "passed": false,
+        "details": {
+          "sigma": 0.121,
+          "n_shuffles": 1000
+        }
+      },
+      {
+        "name": "r2_max_vs_factors",
+        "value": 0.002403,
+        "threshold": 0.05,
+        "direction": "less_than",
+        "passed": true,
+        "details": {
+          "r2_momentum": 0.000968,
+          "r2_volatility": 0.002403,
+          "r2_mean_reversion": 0.000157
+        }
+      },
+      {
+        "name": "gamma_psd",
+        "value": 1.3948,
+        "threshold": 1.0,
+        "direction": "equal_to",
+        "passed": false,
+        "details": {
+          "tolerance": 0.05
+        }
+      },
+      {
+        "name": "ic_test",
+        "value": 0.00763,
+        "threshold": 0.12,
+        "direction": "greater_than",
+        "passed": false,
+        "details": {
+          "ic_train": -0.001203
+        }
+      },
+      {
+        "name": "sharpe_test",
+        "value": 0.9737,
+        "threshold": 1.7,
+        "direction": "greater_than",
+        "passed": false,
+        "details": {
+          "ann_return": 0.155874
+        }
+      },
+      {
+        "name": "crr_test",
+        "value": 1.1573,
+        "threshold": 2.5,
+        "direction": "greater_than",
+        "passed": false,
+        "details": {
+          "maxdd": -0.134689
+        }
+      }
+    ],
+    "gated_gates": [
+      {
+        "name": "gated_permutation_p",
+        "value": null,
+        "threshold": 0.01,
+        "direction": "less_than",
+        "passed": false,
+        "details": {
+          "sigma": null,
+          "n_active_test": 2032
+        }
+      },
+      {
+        "name": "gated_ic_test",
+        "value": null,
+        "threshold": 0.12,
+        "direction": "greater_than",
+        "passed": false,
+        "details": {
+          "ic_train": NaN
+        }
+      },
+      {
+        "name": "gated_sharpe_test",
+        "value": 1.6511,
+        "threshold": 1.7,
+        "direction": "greater_than",
+        "passed": false,
+        "details": {
+          "ann_return": 0.182333
+        }
+      },
+      {
+        "name": "gated_crr_test",
+        "value": 2.1387,
+        "threshold": 2.5,
+        "direction": "greater_than",
+        "passed": false,
+        "details": {
+          "maxdd": -0.085253
+        }
+      }
+    ],
+    "prime_architect_pass": false,
+    "prime_architect_pass_regime_gated": false
+  },
+  "wide": {
+    "substrate": {
+      "source": "data/askar_full/panel_hourly.parquet  (53 assets, hourly)",
+      "n_assets": 53,
+      "n_bars": 26930,
+      "first_ts": "2017-02-16 17:00:00",
+      "last_ts": "2026-02-23 00:00:00",
+      "target": "XAUUSD",
+      "counter_asset": "SPDR_S_P_500_ETF",
+      "missing_inputs": [
+        "order_book_depth",
+        "trade_tape",
+        "information_viscosity_I03",
+        "depth_freeze_out_rate"
+      ],
+      "l2_full_depth_available": false
+    },
+    "find_stage": {
+      "n_bars": 26870,
+      "median": 7.159833,
+      "p05": 1.869848,
+      "p95": 12.429725,
+      "fraction_below_1e-8": 0.016115,
+      "freeze_out_detected": true
+    },
+    "prove_stage": {
+      "permutation_ic": 0.004631,
+      "permutation_p": 0.22,
+      "permutation_sigma": 0.752,
+      "permutation_n_shuffles": 1000,
+      "jitter_plus_ic": 0.00643,
+      "jitter_minus_ic": 0.006512,
+      "micro_noise_ic": 0.004632,
+      "clean_ic": 0.004631
+    },
+    "measure_stage": {
+      "r2_momentum": 0.000676,
+      "r2_volatility": 0.002968,
+      "r2_mean_reversion": 0.000269,
+      "r2_max_vs_factors": 0.002968,
+      "gamma_psd": 1.6403,
+      "gamma_target": 1.0,
+      "gamma_tol": 0.05
+    },
+    "reproduce_stage": {
+      "ic_train": -0.004039,
+      "ic_test": 0.025219,
+      "sharpe_test": 0.5238,
+      "maxdd_test": -0.141824,
+      "ann_return_test": 0.052761,
+      "crr_test": 0.372
+    },
+    "reproduce_stage_regime_gated": {
+      "gate_threshold_lambda2": 7.205277,
+      "n_train_active": 9395,
+      "n_test_active": 3959,
+      "ic_train": 0.009857,
+      "ic_test": 0.026608,
+      "sharpe_test": 0.565,
+      "maxdd_test": -0.094598,
+      "ann_return_test": 0.034542,
+      "crr_test": 0.3651,
+      "insufficient_active_bars": false,
+      "permutation_p_active": 0.043,
+      "permutation_sigma_active": 1.647
+    },
+    "gates": [
+      {
+        "name": "permutation_p",
+        "value": 0.22,
+        "threshold": 0.01,
+        "direction": "less_than",
+        "passed": false,
+        "details": {
+          "sigma": 0.752,
+          "n_shuffles": 1000
+        }
+      },
+      {
+        "name": "r2_max_vs_factors",
+        "value": 0.002968,
+        "threshold": 0.05,
+        "direction": "less_than",
+        "passed": true,
+        "details": {
+          "r2_momentum": 0.000676,
+          "r2_volatility": 0.002968,
+          "r2_mean_reversion": 0.000269
+        }
+      },
+      {
+        "name": "gamma_psd",
+        "value": 1.6403,
+        "threshold": 1.0,
+        "direction": "equal_to",
+        "passed": false,
+        "details": {
+          "tolerance": 0.05
+        }
+      },
+      {
+        "name": "ic_test",
+        "value": 0.025219,
+        "threshold": 0.12,
+        "direction": "greater_than",
+        "passed": false,
+        "details": {
+          "ic_train": -0.004039
+        }
+      },
+      {
+        "name": "sharpe_test",
+        "value": 0.5238,
+        "threshold": 1.7,
+        "direction": "greater_than",
+        "passed": false,
+        "details": {
+          "ann_return": 0.052761
+        }
+      },
+      {
+        "name": "crr_test",
+        "value": 0.372,
+        "threshold": 2.5,
+        "direction": "greater_than",
+        "passed": false,
+        "details": {
+          "maxdd": -0.141824
+        }
+      }
+    ],
+    "gated_gates": [
+      {
+        "name": "gated_permutation_p",
+        "value": 0.043,
+        "threshold": 0.01,
+        "direction": "less_than",
+        "passed": false,
+        "details": {
+          "sigma": 1.647,
+          "n_active_test": 3959
+        }
+      },
+      {
+        "name": "gated_ic_test",
+        "value": 0.026608,
+        "threshold": 0.12,
+        "direction": "greater_than",
+        "passed": false,
+        "details": {
+          "ic_train": 0.009857
+        }
+      },
+      {
+        "name": "gated_sharpe_test",
+        "value": 0.565,
+        "threshold": 1.7,
+        "direction": "greater_than",
+        "passed": false,
+        "details": {
+          "ann_return": 0.034542
+        }
+      },
+      {
+        "name": "gated_crr_test",
+        "value": 0.3651,
+        "threshold": 2.5,
+        "direction": "greater_than",
+        "passed": false,
+        "details": {
+          "maxdd": -0.094598
+        }
+      }
+    ],
+    "prime_architect_pass": false,
+    "prime_architect_pass_regime_gated": false
+  },
+  "prime_architect_pass_any": false,
+  "tradable_configurations": [],
+  "related_pr_194_baseline_ic": 0.0197,
+  "related_pr_194_baseline_sharpe": 0.672
+}

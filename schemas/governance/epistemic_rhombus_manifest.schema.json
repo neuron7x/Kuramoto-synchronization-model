@@ -1,0 +1,106 @@
+{
+  "$schema": "https://json-schema.org/draft/2020-12/schema",
+  "$id": "https://geosync.local/schemas/governance/epistemic_rhombus_manifest.schema.json",
+  "title": "GeoSync Epistemic Rhombus Manifest Record",
+  "type": "object",
+  "additionalProperties": false,
+  "required": [
+    "record_id",
+    "axis",
+    "criterion",
+    "invariant_or_contract",
+    "validation_gate",
+    "fail_closed_condition",
+    "evidence_required",
+    "control_gates",
+    "enforcement",
+    "provenance",
+    "threat_model"
+  ],
+  "properties": {
+    "record_id": {"type": "string", "pattern": "^ER-[1-9][0-9]*$"},
+    "axis": {
+      "type": "string",
+      "enum": [
+        "axiomatic_basis",
+        "structural_integrity",
+        "operational_determinism",
+        "provenance_governance"
+      ]
+    },
+    "criterion": {"type": "string", "minLength": 1},
+    "invariant_or_contract": {"type": "string", "minLength": 1},
+    "validation_gate": {"type": "string", "minLength": 1},
+    "fail_closed_condition": {"type": "string", "minLength": 1},
+    "evidence_required": {
+      "type": "array",
+      "items": {"type": "string", "minLength": 1},
+      "minItems": 1,
+      "uniqueItems": true
+    },
+    "control_gates": {
+      "type": "array",
+      "items": {"type": "string", "pattern": "^G[1-9][0-9]*$"},
+      "minItems": 1,
+      "uniqueItems": true
+    },
+    "enforcement": {
+      "type": "object",
+      "additionalProperties": false,
+      "required": ["mode", "command", "blocks_on_failure"],
+      "properties": {
+        "mode": {"type": "string", "enum": ["metadata_validation", "external_gate"]},
+        "command": {
+          "type": "array",
+          "items": {"type": "string", "minLength": 1},
+          "minItems": 1
+        },
+        "blocks_on_failure": {"type": "boolean", "const": true}
+      }
+    },
+    "provenance": {
+      "type": "object",
+      "additionalProperties": false,
+      "required": ["identity_required", "accepted_identity", "tamper_boundary"],
+      "properties": {
+        "identity_required": {"type": "boolean", "const": true},
+        "accepted_identity": {
+          "type": "array",
+          "items": {
+            "type": "string",
+            "enum": ["signed_git_commit", "signed_git_tag", "gpg_attestation", "kms_attestation", "hsm_attestation"]
+          },
+          "minItems": 1,
+          "uniqueItems": true
+        },
+        "tamper_boundary": {
+          "type": "string",
+          "enum": ["repository_history_and_external_signature"]
+        }
+      }
+    },
+    "threat_model": {
+      "type": "object",
+      "additionalProperties": false,
+      "required": ["failure_modes", "negative_controls", "residual_risk"],
+      "properties": {
+        "failure_modes": {
+          "type": "array",
+          "items": {"type": "string", "minLength": 1},
+          "minItems": 1,
+          "uniqueItems": true
+        },
+        "negative_controls": {
+          "type": "array",
+          "items": {"type": "string", "minLength": 1},
+          "minItems": 1,
+          "uniqueItems": true
+        },
+        "residual_risk": {
+          "type": "string",
+          "enum": ["low", "medium", "high", "unknown"]
+        }
+      }
+    }
+  }
+}

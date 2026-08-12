@@ -1,6 +1,8 @@
+# Copyright (c) 2023-2026 Yaroslav Vasylenko (neuron7xLab)
+# SPDX-License-Identifier: MIT
 """Behavioral contract enforcement for the TACL energy model.
 
-The controller driving TradePulse automation must never drift outside of the
+The controller driving GeoSync automation must never drift outside of the
 mandate granted by human operators.  In practice this means three invariants:
 
 * Free energy must keep trending down (Monotonic Free Energy Descent).
@@ -115,10 +117,7 @@ class BehavioralContract:
                     )
                 )
 
-            if (
-                previous_energy is not None
-                and energy - previous_energy > self.monotonic_tolerance
-            ):
+            if previous_energy is not None and energy - previous_energy > self.monotonic_tolerance:
                 breaches.append(
                     ContractBreach(
                         kind="monotonicity",
@@ -135,9 +134,7 @@ class BehavioralContract:
             previous_energy = energy
 
         compliant = not breaches
-        overrides_applied = bool(breaches) and self.required_approvals.issubset(
-            approvals_set
-        )
+        overrides_applied = bool(breaches) and self.required_approvals.issubset(approvals_set)
 
         report = BehavioralContractReport(
             compliant=compliant,

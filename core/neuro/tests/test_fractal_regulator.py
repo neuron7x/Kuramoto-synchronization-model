@@ -1,3 +1,5 @@
+# Copyright (c) 2023-2026 Yaroslav Vasylenko (neuron7xLab)
+# SPDX-License-Identifier: MIT
 """Unit tests for the EEPFractalRegulator."""
 
 from __future__ import annotations
@@ -45,9 +47,7 @@ class TestEEPFractalRegulatorInit:
 
     def test_invalid_crisis_threshold(self) -> None:
         """Test that invalid threshold is rejected."""
-        with pytest.raises(
-            ValueError, match="crisis_threshold must be between 0 and 1"
-        ):
+        with pytest.raises(ValueError, match="crisis_threshold must be between 0 and 1"):
             EEPFractalRegulator(crisis_threshold=1.5)
 
     def test_invalid_energy_damping(self) -> None:

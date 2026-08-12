@@ -1,0 +1,19 @@
+{
+  "$schema": "http://json-schema.org/draft-07/schema#",
+  "title": "coverage.py JSON (relevant subset)",
+  "type": "object",
+  "required": ["totals"],
+  "properties": {
+    "totals": {
+      "type": "object",
+      "required": ["covered_lines", "num_statements", "num_branches", "covered_branches"],
+      "properties": {
+        "covered_lines": { "type": "integer", "minimum": 0 },
+        "num_statements": { "type": "integer", "minimum": 0 },
+        "num_branches": { "type": "integer", "minimum": 0 },
+        "covered_branches": { "type": "integer", "minimum": 0 },
+        "percent_covered": { "type": "number" }
+      }
+    }
+  }
+}

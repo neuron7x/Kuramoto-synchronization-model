@@ -1,3 +1,5 @@
+# Copyright (c) 2023-2026 Yaroslav Vasylenko (neuron7xLab)
+# SPDX-License-Identifier: MIT
 """
 Tests for Market Regime Analyzer Module
 """
@@ -48,9 +50,7 @@ class TestMarketRegimeAnalyzer:
         prices[0] = 100
         for i in range(1, 100):
             # Stronger mean reversion coefficient
-            prices[i] = (
-                prices[i - 1] + np.random.normal(0, 0.5) - 0.8 * (prices[i - 1] - 100)
-            )
+            prices[i] = prices[i - 1] + np.random.normal(0, 0.5) - 0.8 * (prices[i - 1] - 100)
 
         hurst = analyzer.calculate_hurst_exponent(prices)
 

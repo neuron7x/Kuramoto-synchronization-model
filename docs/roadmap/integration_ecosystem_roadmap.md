@@ -1,7 +1,7 @@
 # Integration Ecosystem Roadmap
 
 ## Vision and Objectives
-- Deliver a unified integration platform that enables partners and clients to extend TradePulse across trading workflows with minimal friction.
+- Deliver a unified integration platform that enables partners and clients to extend GeoSync across trading workflows with minimal friction.
 - Ensure every integration surface (plugins, connectors, webhooks, SDKs, event schemas, partner catalog, certifications, demos, code samples, developer programs, community, feedback) has clear ownership, SLAs, and measurable KPIs.
 - Build a resilient, secure, and scalable integration ecosystem aligned with regulatory requirements and institutional-grade reliability.
 

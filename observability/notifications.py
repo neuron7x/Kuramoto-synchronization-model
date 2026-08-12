@@ -1,3 +1,5 @@
+# Copyright (c) 2023-2026 Yaroslav Vasylenko (neuron7xLab)
+# SPDX-License-Identifier: MIT
 """Notification helpers for email and Slack integrations."""
 
 from __future__ import annotations
@@ -7,9 +9,18 @@ import logging
 import smtplib
 import ssl
 from email.message import EmailMessage
-from typing import Any, Mapping
+from typing import TYPE_CHECKING, Any, Mapping
 
-import httpx
+if TYPE_CHECKING:  # heavy HTTP dep — imported lazily so leaf importers stay light
+    import httpx
+
+
+def _new_async_client(timeout: float) -> httpx.AsyncClient:
+    """Construct an ``httpx.AsyncClient`` lazily, importing httpx on demand."""
+    import httpx
+
+    return httpx.AsyncClient(timeout=timeout)
+
 
 __all__ = [
     "EmailSender",
@@ -62,9 +73,7 @@ class EmailSender:
         email["To"] = ", ".join(self._recipients)
         body = message
         if metadata:
-            details = "\n".join(
-                f"- {key}: {value}" for key, value in sorted(metadata.items())
-            )
+            details = "\n".join(f"- {key}: {value}" for key, value in sorted(metadata.items()))
             body = f"{message}\n\nDetails:\n{details}"
         email.set_content(body)
         await asyncio.to_thread(self._deliver, email)
@@ -110,7 +119,7 @@ class SlackNotifier:
         self._channel = channel
         self._username = username
         self._timeout = timeout
-        self._client = client or httpx.AsyncClient(timeout=timeout)
+        self._client = client or _new_async_client(timeout)
         self._owns_client = client is None
 
     async def send(
@@ -122,18 +131,14 @@ class SlackNotifier:
     ) -> None:
         text = f"*{subject}*\n{message}" if subject else message
         if metadata:
-            details = "\n".join(
-                f"• {key}: `{value}`" for key, value in sorted(metadata.items())
-            )
+            details = "\n".join(f"• {key}: `{value}`" for key, value in sorted(metadata.items()))
             text = f"{text}\n{details}"
         payload: dict[str, Any] = {"text": text}
         if self._channel:
             payload["channel"] = self._channel
         if self._username:
             payload["username"] = self._username
-        response = await self._client.post(
-            self._webhook_url, json=payload, timeout=self._timeout
-        )
+        response = await self._client.post(self._webhook_url, json=payload, timeout=self._timeout)
         response.raise_for_status()
 
     async def aclose(self) -> None:
@@ -155,7 +160,7 @@ class TeamsNotifier:
         self._webhook_url = webhook_url
         self._theme_color = theme_color.upper() if theme_color else None
         self._timeout = timeout
-        self._client = client or httpx.AsyncClient(timeout=timeout)
+        self._client = client or _new_async_client(timeout)
         self._owns_client = client is None
 
     async def send(
@@ -185,9 +190,7 @@ class TeamsNotifier:
                     "markdown": True,
                 }
             )
-        response = await self._client.post(
-            self._webhook_url, json=payload, timeout=self._timeout
-        )
+        response = await self._client.post(self._webhook_url, json=payload, timeout=self._timeout)
         response.raise_for_status()
 
     async def aclose(self) -> None:
@@ -209,7 +212,7 @@ class NotificationDispatcher:
         self._email_sender = email_sender
         self._slack_notifier = slack_notifier
         self._teams_notifier = teams_notifier
-        self._logger = logger or logging.getLogger("tradepulse.notifications")
+        self._logger = logger or logging.getLogger("geosync.notifications")
 
     async def dispatch(
         self,

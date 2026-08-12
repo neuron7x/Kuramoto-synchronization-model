@@ -1,0 +1,58 @@
+# Diff-bound acceptor for PR #883: release-evidence harness + research CLI.
+# Adds tools/release_evidence_harness.py (release-time evidence collector),
+# tools/research/research_cli.py (research-line CLI), and validate_ricci_
+# artifact_schema.py + tests. conftest.py is the shared pytest config that
+# this PR augments for the new tests.
+
+id: release-evidence-harness-and-research-cli
+status: ACTIVE
+claim_type: governance
+promise: >-
+  Introduces a release-time evidence harness (tools/release_evidence_harness.py)
+  that collects deterministic environment + dependency + git + test metadata
+  for release artifact pinning, plus a research CLI (tools/research/research_cli.py)
+  and a Ricci-artifact schema validator (tools/research/validate_ricci_artifact_schema.py)
+  with unit tests under tests/tools/ and tests/research_lines/. conftest.py
+  is extended with discovery roots for the new test surfaces.
+diff_scope:
+  changed_files:
+    - path: ".claude/commit_acceptors/release-evidence-harness-and-research-cli.yaml"
+    - path: "README.md"
+    - path: "conftest.py"
+    - path: "go.work.sum"
+    - path: "pyproject.toml"
+    - path: "tests/research_lines/test_ricci_artifact_schema.py"
+    - path: "tests/tools/test_release_evidence_harness.py"
+    - path: "tests/tools/test_research_cli.py"
+    - path: "tools/release_evidence_harness.py"
+    - path: "tools/research/research_cli.py"
+    - path: "tools/research/validate_ricci_artifact_schema.py"
+  forbidden_paths:
+    - "trading/"
+    - "execution/"
+    - "forecast/"
+    - "policy/"
+required_python_symbols: []
+expected_signal: >-
+  tests/tools/test_release_evidence_harness.py and tests/tools/test_research_cli.py
+  pass under pytest; tools/research/validate_ricci_artifact_schema.py exits 0
+  for a well-formed artifact and non-zero for malformed input.
+measurement_command: >-
+  bash -c ".venv/bin/python -m pytest tests/tools/test_release_evidence_harness.py
+  tests/tools/test_research_cli.py tests/research_lines/test_ricci_artifact_schema.py -q"
+signal_artifact: "tmp/release_evidence_harness_and_research_cli_pytest.log"
+falsifier:
+  command: >-
+    bash -c ".venv/bin/python tools/research/validate_ricci_artifact_schema.py
+    --no-such-file >/dev/null 2>&1 && exit 1 || exit 0"
+  description: >-
+    Probe verifies the schema validator fails-closed (non-zero exit) on a
+    missing or malformed artifact path.
+rollback_command: >-
+  git revert --no-edit HEAD
+rollback_verification_command: >-
+  git diff --exit-code tools/ tests/
+memory_update_type: append
+ledger_path: ".claude/commit_acceptors/release-evidence-harness-and-research-cli.yaml"
+report_path: ".claude/commit_acceptors/release-evidence-harness-and-research-cli.yaml"
+evidence: []

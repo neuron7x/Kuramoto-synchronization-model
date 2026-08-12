@@ -1,0 +1,131 @@
+# Diff-bound commit acceptor for the executable claim-maturity ladder.
+#
+# Adds analytics/signals/claim_maturity.py: a pure, deterministic,
+# fail-closed fourteen-rung claim-maturity state machine
+# (UNOBSERVED .. BOUNDED_CLAIM_ALLOWED). evaluate_promotion(current, target,
+# evidence) returns an immutable PromotionVerdict that allows a promotion
+# only when target is strictly above current and EVERY intermediate rung's
+# evidence requirement is satisfied — no rung may be skipped. Unmet
+# (state, token) requirements are preserved as negative evidence in
+# missing_evidence even when the promotion is refused. The three hard
+# governance rules are encoded: no real-data rung without a real-data
+# artifact and provenance, no ALTERNATIVES_ELIMINATED without both a null
+# comparison and a simpler-baseline comparison, and no BOUNDED_CLAIM_ALLOWED
+# without the explicit replay/provenance/falsifier/negative-evidence
+# conjunction. An unknown state, a non-upward target, or an unrecognised
+# evidence token fails closed with ValueError. Adds the matching contract
+# test suite.
+#
+# Promotes NO claim tier, adds NO invariant, changes NO existing runtime
+# behaviour, adds NO dependency (stdlib only — no numpy). Descriptor-only:
+# a BOUNDED_CLAIM_ALLOWED verdict states only that a descriptor claim has
+# cleared its evidence ladder; it carries no predictive, significance, or
+# financial meaning, and every verdict declares
+# claim_boundary="descriptor_only_not_predictor".
+#
+# Locally verified on origin/main fork base (9775c580):
+#   * pytest tests/unit/analytics/test_claim_maturity.py: 19 passed
+#   * python -m compileall: clean
+#   * ruff check / ruff format --check / black --check: clean
+#   * mypy --strict analytics/signals/claim_maturity.py: no issues
+#   * mypy --strict tests/unit/analytics/test_claim_maturity.py: no issues
+#   * python scripts/ci/check_claim_boundary.py: PASS
+#   * python scripts/ci/check_claims.py: PASS
+#   * zero `noqa` / `type: ignore` suppressions across both new files
+id: claim-maturity-contract
+status: ACTIVE
+claim_type: governance
+promise: >-
+  analytics.signals.claim_maturity exposes a single pure entry point,
+  evaluate_promotion(current_state, target_state, evidence), over a
+  fourteen-rung ascending ladder (UNOBSERVED .. BOUNDED_CLAIM_ALLOWED). It
+  returns an immutable PromotionVerdict whose allowed flag is True only when
+  target_state is strictly above current_state and every rung in
+  (current_state, target_state] has all of its EVIDENCE_REQUIREMENTS
+  satisfied — no rung may be skipped. missing_evidence is the sorted tuple
+  of unmet (state, token) pairs, preserved as negative evidence when the
+  promotion is refused; blocked_at names the lowest unmet rung. The three
+  hard rules hold: REAL_DATA_SINGLE_SESSION requires real_data_artifact and
+  provenance, ALTERNATIVES_ELIMINATED requires null_comparison and
+  simpler_baseline_comparison, and BOUNDED_CLAIM_ALLOWED requires the
+  conjunction of replay_digest, provenance, falsifier_executed, and
+  negative_evidence_path. An unknown state, a non-upward target, or an
+  unrecognised evidence token fails closed with ValueError. The verdict is a
+  byte-deterministic function of its arguments; every verdict declares
+  claim_boundary="descriptor_only_not_predictor"; no claim tier is promoted;
+  no existing runtime behaviour changes; the verdict is a governance gate,
+  not a predictive or financial signal.
+diff_scope:
+  changed_files:
+    - path: ".claude/commit_acceptors/claim-maturity-contract.yaml"
+    - path: "analytics/signals/claim_maturity.py"
+    - path: "tests/unit/analytics/test_claim_maturity.py"
+  forbidden_paths:
+    - "trading/"
+    - "execution/"
+    - "forecast/"
+    - "core/"
+    - "src/"
+required_python_symbols:
+  - "analytics/signals/claim_maturity.py::evaluate_promotion"
+  - "analytics/signals/claim_maturity.py::PromotionVerdict"
+expected_signal: >-
+  `python -m pytest tests/unit/analytics/test_claim_maturity.py` reports
+  19 passed; promotion is deterministic, allowed only when no rung is
+  skipped and every rung's evidence is satisfied, preserves blocked
+  (state, token) pairs as negative evidence, enforces the three hard
+  governance rules, declares the descriptor-only boundary on every verdict,
+  and rejects unknown states / non-upward targets / unknown evidence tokens
+  with ValueError.
+measurement_command: >-
+  bash -c 'mkdir -p tmp && python -m pytest
+  tests/unit/analytics/test_claim_maturity.py -v
+  > tmp/claim_maturity_pytest.log 2>&1
+  && grep -qE "19 passed" tmp/claim_maturity_pytest.log'
+signal_artifact: "tmp/claim_maturity_pytest.log"
+falsifier:
+  command: >-
+    python -c 'import sys, subprocess;
+    from analytics.signals.claim_maturity import evaluate_promotion;
+    full = ["observability", "synthetic_measurement",
+    "alternatives_enumerated", "discriminating_test", "falsifier_executed",
+    "calibration_record", "integration_proof", "replay_digest",
+    "real_data_artifact", "provenance", "real_data_multi_session",
+    "null_comparison", "simpler_baseline_comparison",
+    "negative_evidence_path"];
+    top = evaluate_promotion("UNOBSERVED", "BOUNDED_CLAIM_ALLOWED", full).allowed;
+    det = evaluate_promotion("UNOBSERVED", "OBSERVABLE", ["observability"])
+    == evaluate_promotion("UNOBSERVED", "OBSERVABLE", ["observability"]);
+    skip_blocked = not evaluate_promotion("UNOBSERVED",
+    "BOUNDED_CLAIM_ALLOWED", []).allowed;
+    boundary_ok = evaluate_promotion("UNOBSERVED", "OBSERVABLE",
+    ["observability"]).claim_boundary == "descriptor_only_not_predictor";
+    bad_token_fails = subprocess.run([sys.executable, "-c",
+    "from analytics.signals.claim_maturity import evaluate_promotion;"
+    "evaluate_promotion(\"UNOBSERVED\", \"OBSERVABLE\", [\"nope\"])"]).returncode
+    != 0;
+    sys.exit(0 if (not top or not det or not skip_blocked or not boundary_ok
+    or not bad_token_fails) else 1)'
+  description: >-
+    Inverse probe of the claim-maturity contract. It exits 0 (fires) iff a
+    fully-evidenced full-ladder promotion stops being allowed, OR the verdict
+    stops being deterministic, OR a no-evidence promotion to the top rung
+    stops being blocked (a skip leaks through), OR the descriptor-only
+    boundary disappears, OR an unknown evidence token is accepted instead of
+    failing closed. While the contract holds, the probe exits 1. An exit 0
+    means the ladder has lost its no-skip discipline, determinism, boundary
+    disclaimer, or fail-closed guarantee and must be repaired, not patched
+    green.
+rollback_command: >-
+  bash -c 'git rm -f analytics/signals/claim_maturity.py
+  tests/unit/analytics/test_claim_maturity.py
+  .claude/commit_acceptors/claim-maturity-contract.yaml'
+rollback_verification_command: >-
+  bash -c 'test ! -f analytics/signals/claim_maturity.py
+  && test ! -f tests/unit/analytics/test_claim_maturity.py'
+memory_update_type: none
+ledger_path: ".claude/commit_acceptors/claim-maturity-contract.yaml"
+report_path: "tmp/claim_maturity_pytest.log"
+evidence:
+  - path: "tmp/claim_maturity_pytest.log"
+    sha256: "d4bf9b05b33db4de987874d160696e4383dd4441831061731d91f73ab8335295"  # pragma: allowlist secret

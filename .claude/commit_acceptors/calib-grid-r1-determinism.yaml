@@ -1,0 +1,28 @@
+# Diff-bound commit acceptor: CALIB-GRID-001 R1 determinism-test de-flake.
+id: calib-grid-r1-determinism
+status: ACTIVE
+claim_type: determinism
+promise: "test_r1_results_json_matches_committed_artifact compares the committed R1 artifact with numeric tolerance (rel 1e-9) instead of exact ==, removing BLAS float-order flakiness while still detecting real post-data edits; calib scientific logic and the artifact are untouched."
+diff_scope:
+  changed_files:
+    - path: "tests/research/calibration/test_grid_kuramoto.py"
+    - path: ".claude/commit_acceptors/calib-grid-r1-determinism.yaml"
+  forbidden_paths:
+    - "trading/"
+    - "execution/"
+    - "forecast/"
+    - "policy/"
+    - "research/calibration/grid_kuramoto/r1/RESULTS.json"
+required_python_symbols: []
+expected_signal: "the R1 determinism test passes deterministically across BLAS thread orders"
+measurement_command: "python -m pytest tests/research/calibration/test_grid_kuramoto.py::test_r1_results_json_matches_committed_artifact -q"
+signal_artifact: "tmp/calib_grid_r1_determinism_pytest.log"
+falsifier:
+  command: "python -c \"from tests.research.calibration.test_grid_kuramoto import _deep_close; raise SystemExit(0 if not _deep_close([{'x':1.0}],[{'x':1.05}]) else 1)\""
+  description: "Probe asserts the tolerant comparator still REJECTS a 5% edit (exits 0); it would exit 1 if the tolerance were so wide it masked real post-data edits."
+rollback_command: "git checkout -- tests/research/calibration/test_grid_kuramoto.py"
+rollback_verification_command: "git diff --exit-code tests/research/calibration/test_grid_kuramoto.py"
+memory_update_type: none
+ledger_path: ".claude/commit_acceptors/calib-grid-r1-determinism.yaml"
+report_path: ".claude/commit_acceptors/calib-grid-r1-determinism.yaml"
+evidence: []

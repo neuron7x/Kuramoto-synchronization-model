@@ -1,0 +1,54 @@
+id: component-strength-enforcing-exit-code
+status: ACTIVE
+claim_type: fail_closed
+promise: >-
+  tools/audit_component_strength.py now exits non-zero on a FAIL verdict unless
+  run with --report-only, which exits 0 but stamps report_only=true on the
+  artifact. A strength report can no longer say FAIL while the process exits 0.
+diff_scope:
+  changed_files:
+    - path: ".claude/commit_acceptors/component-strength-enforcing-exit-code.yaml"
+    - path: "tools/audit_component_strength.py"
+    - path: "tests/tools/test_component_strength_report.py"
+    - path: "audit/schema/component_strength_report.schema.json"
+  forbidden_paths:
+    - "execution/"
+    - "core/physics/"
+required_python_symbols:
+  - "tools/audit_component_strength.py::exit_code"
+  - "tools/audit_component_strength.py::main"
+expected_signal: >-
+  `python -m pytest --import-mode=importlib
+  tests/tools/test_component_strength_report.py -q` passes; main() returns 1 on a
+  FAIL verdict and 0 under --report-only with report_only=true on the artifact.
+measurement_command: >-
+  bash -c '
+    python -m pytest --import-mode=importlib -p no:cacheprovider
+      tests/tools/test_component_strength_report.py -q
+  '
+signal_artifact: "tmp/component_strength_enforcing_exit.log"
+falsifier:
+  command: |-
+    bash -c '
+      python -c "
+    import importlib.util, json, tempfile, os
+    spec = importlib.util.spec_from_file_location(\"acs\", \"tools/audit_component_strength.py\")
+    acs = importlib.util.module_from_spec(spec); spec.loader.exec_module(acs)
+    d = tempfile.mkdtemp(); cov = os.path.join(d, \"c.json\")
+    open(cov, \"w\").write(json.dumps({\"files\": {}}))
+    rc = acs.main([\"--coverage\", cov, \"--mutation-dir\", d, \"--out\", os.path.join(d, \"r.json\")])
+    raise SystemExit(0 if rc == 1 else \"FAIL verdict did not exit non-zero\")
+    "
+    '
+  description: >-
+    Runs the generator over an all-UNMEASURED surface (FAIL verdict) and asserts
+    main() returns 1. Exits 0 when enforcement is live; non-zero if a FAIL report
+    exits 0 again.
+rollback_command: >-
+  bash -c 'git rm -f .claude/commit_acceptors/component-strength-enforcing-exit-code.yaml'
+rollback_verification_command: >-
+  bash -c 'test ! -f .claude/commit_acceptors/component-strength-enforcing-exit-code.yaml'
+memory_update_type: append
+ledger_path: ".claude/commit_acceptors/component-strength-enforcing-exit-code.yaml"
+report_path: "tmp/component_strength_enforcing_exit.log"
+evidence: []

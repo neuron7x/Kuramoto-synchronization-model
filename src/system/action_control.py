@@ -1,3 +1,5 @@
+# Copyright (c) 2023-2026 Yaroslav Vasylenko (neuron7xLab)
+# SPDX-License-Identifier: MIT
 """Action safety controls enforcing TACL stability and mandate policies."""
 
 from __future__ import annotations
@@ -57,10 +59,7 @@ class TaclGate:
         if forecast.projected < 0 or forecast.current < 0:
             raise ValueError("Free energy values must be non-negative")
 
-        if (
-            self._max_free_energy is not None
-            and forecast.projected > self._max_free_energy
-        ):
+        if self._max_free_energy is not None and forecast.projected > self._max_free_energy:
             return TaclDecision(
                 allowed=False,
                 reason=(
@@ -89,9 +88,7 @@ class TaclGate:
 
         return TaclDecision(
             allowed=False,
-            reason=(
-                "projected free energy increases without a guaranteed recovery path"
-            ),
+            reason=("projected free energy increases without a guaranteed recovery path"),
         )
 
 
@@ -125,9 +122,7 @@ class Mandate:
     module: str
     allowed_classes: frozenset[ActionClass]
     object_scope: frozenset[str] = frozenset()
-    state_permissions: Mapping[SystemState, StatePermission] = field(
-        default_factory=dict
-    )
+    state_permissions: Mapping[SystemState, StatePermission] = field(default_factory=dict)
 
     def __post_init__(self) -> None:
         if not self.module or not self.module.strip():
@@ -146,9 +141,7 @@ class Mandate:
                 engaged_corridor=False,
             )
 
-        if self.object_scope and (
-            intent.target is None or intent.target not in self.object_scope
-        ):
+        if self.object_scope and (intent.target is None or intent.target not in self.object_scope):
             return MandateDecision(
                 allowed=False,
                 reason="target outside module object scope",
@@ -166,16 +159,12 @@ class Mandate:
         if intent.action_class not in permission.allowed_classes:
             return MandateDecision(
                 allowed=False,
-                reason=(
-                    f"action class {intent.action_class.value} not permitted in state"
-                ),
+                reason=(f"action class {intent.action_class.value} not permitted in state"),
                 engaged_corridor=False,
             )
 
         allowed_targets = permission.allowed_targets or self.object_scope
-        if allowed_targets and (
-            intent.target is None or intent.target not in allowed_targets
-        ):
+        if allowed_targets and (intent.target is None or intent.target not in allowed_targets):
             return MandateDecision(
                 allowed=False,
                 reason="target not permitted for state",
@@ -193,9 +182,7 @@ class Mandate:
                     engaged_corridor=False,
                 )
 
-        return MandateDecision(
-            allowed=True, reason=None, engaged_corridor=engaged_corridor
-        )
+        return MandateDecision(allowed=True, reason=None, engaged_corridor=engaged_corridor)
 
 
 @dataclass(frozen=True, slots=True)
@@ -250,9 +237,7 @@ class AuditLoggerActionSink:
         self._audit_logger = audit_logger
         self._ip_address = ip_address
 
-    def record(
-        self, decision: ActionDecision
-    ) -> None:  # pragma: no cover - thin wrapper
+    def record(self, decision: ActionDecision) -> None:  # pragma: no cover - thin wrapper
         forecast = decision.forecast
         tacl = decision.tacl
         intent = decision.intent
@@ -343,9 +328,7 @@ class ActionGovernor:
                 reason = mandate_decision.reason
             else:
                 if forecast is None:
-                    raise ValueError(
-                        "Free energy forecast required for non-passive actions"
-                    )
+                    raise ValueError("Free energy forecast required for non-passive actions")
                 tacl_decision = self._tacl_gate.evaluate(forecast)
                 if tacl_decision.allowed:
                     allowed = True

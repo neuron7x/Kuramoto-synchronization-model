@@ -1,8 +1,10 @@
-"""Namespace policy enforcement for canonical TradePulse imports.
+# Copyright (c) 2023-2026 Yaroslav Vasylenko (neuron7xLab)
+# SPDX-License-Identifier: MIT
+"""Namespace policy enforcement for canonical GeoSync imports.
 
 Rules
 -----
-- Canonical public namespace: ``tradepulse.*``
+- Canonical public namespace: ``geosync.*``
 - Legacy namespace ``src.*`` is internal-only and should not be imported from
   production code outside a curated legacy allowlist.
 """
@@ -15,7 +17,7 @@ from dataclasses import dataclass
 from pathlib import Path
 from typing import Iterable
 
-CANONICAL_NAMESPACE = "tradepulse"
+CANONICAL_NAMESPACE = "geosync"
 LEGACY_NAMESPACE = "src"
 
 # Temporary allowlist for legacy modules that still depend on the ``src`` shim.
@@ -39,7 +41,7 @@ LEGACY_ALLOWLIST = {
     Path("src/system/integration.py"),
     Path("src/system/module_orchestrator.py"),
     Path("tools/security/dast_probe.py"),
-    Path("tradepulse/risk/__init__.py"),
+    Path("geosync/risk/__init__.py"),
 }
 
 EXCLUDED_DIR_NAMES = {
@@ -100,7 +102,9 @@ def _resolve_allowlist(root: Path, allowlist: set[Path] | None) -> set[Path]:
     return {(root / p).resolve() for p in entries}
 
 
-def find_namespace_violations(base_dir: Path, allowlist: set[Path] | None = None) -> list[Violation]:
+def find_namespace_violations(
+    base_dir: Path, allowlist: set[Path] | None = None
+) -> list[Violation]:
     root = base_dir.resolve()
     violations: list[Violation] = []
     normalized_allowlist = _resolve_allowlist(root, allowlist)

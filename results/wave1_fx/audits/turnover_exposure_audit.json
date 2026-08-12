@@ -1,0 +1,289 @@
+{
+  "generated_utc": "2026-04-21T21:09:14Z",
+  "oos": {
+    "first_ts": "2008-01-02 21:00:00",
+    "last_ts": "2026-02-09 21:00:00",
+    "n_bars": 4704
+  },
+  "exposure_stats": {
+    "gross_mean": 2.0,
+    "gross_median": 2.0,
+    "gross_min": 2.0,
+    "gross_max": 2.0,
+    "gross_frac_at_2": 1.0,
+    "net_mean": 0.0,
+    "net_median": 0.0,
+    "net_abs_max": 0.0,
+    "net_frac_at_0": 1.0,
+    "n_zero_exposure_bars": 0
+  },
+  "turnover_stats": {
+    "median_per_bar": 0.0,
+    "mean_per_bar": 0.4037,
+    "p95_per_bar": 2.0,
+    "p99_per_bar": 3.0,
+    "frac_bars_with_zero_turnover": 0.777,
+    "frac_bars_with_max_turnover_4.0": 0.0066
+  },
+  "sign_flip_per_asset": [
+    {
+      "asset": "EURUSD",
+      "n_oos_bars": 4704,
+      "frac_long": 0.254,
+      "frac_short": 0.2411,
+      "frac_flat": 0.5049,
+      "n_sign_flips": 16,
+      "sign_flip_rate_per_bar": 0.0034
+    },
+    {
+      "asset": "GBPUSD",
+      "n_oos_bars": 4704,
+      "frac_long": 0.1956,
+      "frac_short": 0.2474,
+      "frac_flat": 0.557,
+      "n_sign_flips": 29,
+      "sign_flip_rate_per_bar": 0.0062
+    },
+    {
+      "asset": "USDJPY",
+      "n_oos_bars": 4704,
+      "frac_long": 0.2747,
+      "frac_short": 0.2572,
+      "frac_flat": 0.4681,
+      "n_sign_flips": 28,
+      "sign_flip_rate_per_bar": 0.006
+    },
+    {
+      "asset": "AUDUSD",
+      "n_oos_bars": 4704,
+      "frac_long": 0.2273,
+      "frac_short": 0.2207,
+      "frac_flat": 0.5521,
+      "n_sign_flips": 21,
+      "sign_flip_rate_per_bar": 0.0045
+    },
+    {
+      "asset": "USDCAD",
+      "n_oos_bars": 4704,
+      "frac_long": 0.203,
+      "frac_short": 0.2766,
+      "frac_flat": 0.5204,
+      "n_sign_flips": 20,
+      "sign_flip_rate_per_bar": 0.0043
+    },
+    {
+      "asset": "USDCHF",
+      "n_oos_bars": 4704,
+      "frac_long": 0.2315,
+      "frac_short": 0.216,
+      "frac_flat": 0.5525,
+      "n_sign_flips": 24,
+      "sign_flip_rate_per_bar": 0.0051
+    },
+    {
+      "asset": "EURGBP",
+      "n_oos_bars": 4704,
+      "frac_long": 0.2957,
+      "frac_short": 0.29,
+      "frac_flat": 0.4143,
+      "n_sign_flips": 30,
+      "sign_flip_rate_per_bar": 0.0064
+    },
+    {
+      "asset": "EURJPY",
+      "n_oos_bars": 4704,
+      "frac_long": 0.3182,
+      "frac_short": 0.2511,
+      "frac_flat": 0.4307,
+      "n_sign_flips": 14,
+      "sign_flip_rate_per_bar": 0.003
+    }
+  ],
+  "per_asset_pnl_oos": [
+    {
+      "asset": "EURUSD",
+      "total_net_log_return": -0.0683,
+      "total_gross_log_return": -0.044,
+      "total_cost_log_return": -0.0243,
+      "pct_of_portfolio_net": 0.2282
+    },
+    {
+      "asset": "GBPUSD",
+      "total_net_log_return": 0.0077,
+      "total_gross_log_return": 0.0333,
+      "total_cost_log_return": -0.0256,
+      "pct_of_portfolio_net": -0.0258
+    },
+    {
+      "asset": "USDJPY",
+      "total_net_log_return": 0.1793,
+      "total_gross_log_return": 0.2159,
+      "total_cost_log_return": -0.0366,
+      "pct_of_portfolio_net": -0.5992
+    },
+    {
+      "asset": "AUDUSD",
+      "total_net_log_return": 0.1808,
+      "total_gross_log_return": 0.2046,
+      "total_cost_log_return": -0.0238,
+      "pct_of_portfolio_net": -0.6045
+    },
+    {
+      "asset": "USDCAD",
+      "total_net_log_return": -0.1452,
+      "total_gross_log_return": -0.1134,
+      "total_cost_log_return": -0.0319,
+      "pct_of_portfolio_net": 0.4855
+    },
+    {
+      "asset": "USDCHF",
+      "total_net_log_return": -0.3746,
+      "total_gross_log_return": -0.3413,
+      "total_cost_log_return": -0.0333,
+      "pct_of_portfolio_net": 1.2521
+    },
+    {
+      "asset": "EURGBP",
+      "total_net_log_return": -0.0772,
+      "total_gross_log_return": -0.0397,
+      "total_cost_log_return": -0.0374,
+      "pct_of_portfolio_net": 0.2579
+    },
+    {
+      "asset": "EURJPY",
+      "total_net_log_return": -0.0017,
+      "total_gross_log_return": 0.0335,
+      "total_cost_log_return": -0.0352,
+      "pct_of_portfolio_net": 0.0058
+    }
+  ],
+  "pnl_concentration": {
+    "top2_share_of_abs_contribution": 0.5367,
+    "top3_share_of_abs_contribution": 0.71
+  },
+  "max_dd_oos": 0.4297,
+  "max_dd_peak_date": "2008-12-11 21:00:00",
+  "max_dd_trough_date": "2015-01-16 21:00:00",
+  "dd_asset_breakdown": [
+    {
+      "asset": "USDCHF",
+      "log_return_in_dd_window": -0.2583
+    },
+    {
+      "asset": "USDCAD",
+      "log_return_in_dd_window": -0.1074
+    },
+    {
+      "asset": "AUDUSD",
+      "log_return_in_dd_window": -0.0632
+    },
+    {
+      "asset": "GBPUSD",
+      "log_return_in_dd_window": -0.0533
+    },
+    {
+      "asset": "EURUSD",
+      "log_return_in_dd_window": -0.0455
+    },
+    {
+      "asset": "EURGBP",
+      "log_return_in_dd_window": -0.0434
+    },
+    {
+      "asset": "EURJPY",
+      "log_return_in_dd_window": -0.0004
+    },
+    {
+      "asset": "USDJPY",
+      "log_return_in_dd_window": 0.0198
+    }
+  ],
+  "dd_window_total_log_ret": -0.5516,
+  "dd_single_worst_asset": "USDCHF",
+  "dd_single_worst_asset_loss": -0.2583,
+  "dd_single_asset_share_of_window_loss": 0.4683,
+  "worst_5_folds_by_cum_log_return": [
+    {
+      "fold_id": 33,
+      "test_start_ts": "2010-08-11",
+      "test_end_ts": "2010-11-05",
+      "in_2022": false,
+      "portfolio_sharpe": -3.7239,
+      "portfolio_cum_log_return": -0.1183
+    },
+    {
+      "fold_id": 210,
+      "test_start_ts": "2024-11-22",
+      "test_end_ts": "2025-02-19",
+      "in_2022": false,
+      "portfolio_sharpe": -5.8797,
+      "portfolio_cum_log_return": -0.1118
+    },
+    {
+      "fold_id": 85,
+      "test_start_ts": "2014-10-21",
+      "test_end_ts": "2015-01-16",
+      "in_2022": false,
+      "portfolio_sharpe": -2.3433,
+      "portfolio_cum_log_return": -0.1046
+    },
+    {
+      "fold_id": 21,
+      "test_start_ts": "2009-08-20",
+      "test_end_ts": "2009-11-16",
+      "in_2022": false,
+      "portfolio_sharpe": -3.6861,
+      "portfolio_cum_log_return": -0.099
+    },
+    {
+      "fold_id": 19,
+      "test_start_ts": "2009-06-23",
+      "test_end_ts": "2009-09-17",
+      "in_2022": false,
+      "portfolio_sharpe": -3.8295,
+      "portfolio_cum_log_return": -0.0984
+    }
+  ],
+  "best_5_folds_by_cum_log_return": [
+    {
+      "fold_id": 10,
+      "test_start_ts": "2008-09-23",
+      "test_end_ts": "2008-12-18",
+      "in_2022": false,
+      "portfolio_sharpe": 4.1898,
+      "portfolio_cum_log_return": 0.2182
+    },
+    {
+      "fold_id": 9,
+      "test_start_ts": "2008-08-25",
+      "test_end_ts": "2008-11-19",
+      "in_2022": false,
+      "portfolio_sharpe": 3.2805,
+      "portfolio_cum_log_return": 0.1765
+    },
+    {
+      "fold_id": 110,
+      "test_start_ts": "2016-10-27",
+      "test_end_ts": "2017-01-23",
+      "in_2022": false,
+      "portfolio_sharpe": 6.3469,
+      "portfolio_cum_log_return": 0.1354
+    },
+    {
+      "fold_id": 109,
+      "test_start_ts": "2016-09-28",
+      "test_end_ts": "2016-12-23",
+      "in_2022": false,
+      "portfolio_sharpe": 5.0058,
+      "portfolio_cum_log_return": 0.1115
+    },
+    {
+      "fold_id": 88,
+      "test_start_ts": "2015-01-19",
+      "test_end_ts": "2015-04-15",
+      "in_2022": false,
+      "portfolio_sharpe": 2.525,
+      "portfolio_cum_log_return": 0.0936
+    }
+  ]
+}

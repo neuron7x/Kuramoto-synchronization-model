@@ -1,0 +1,96 @@
+# Diff-bound commit acceptor: bind the Neuron7X verification-protocol kernel to runtime.
+#
+# data/governance/neuron7x_verification_protocol_v2026_8.json declared a complete
+# scoring pipeline (score_function, thresholds, conformance_states,
+# weakest_link_rule) but NOTHING in the codebase loaded or executed it — pure
+# policy-theater. This change adds the runtime that honours the artifact:
+#   * governance/verification_protocol.py loads the kernel and executes its
+#     DECLARED weighted score (weights parsed from the artifact's own formula,
+#     not hardcoded), quantizes K into the declared conformance band, and
+#     enforces the declared weakest-link clamp. Fail-closed on every contract
+#     violation (bad subscore, malformed kernel, threshold gap, weights ≠ 1).
+#   * schemas/governance/neuron7x_verification_protocol.schema.json pins the
+#     artifact shape so it cannot silently drift back into an unexecutable form.
+#   * scripts/ci/check_governance_kernel_binding.py fails closed if the kernel
+#     stops being schema-valid OR the engine can no longer load/execute it.
+#   * tests/unit/governance/test_verification_protocol.py locks the score
+#     formula, every threshold-band boundary, the weakest-link clamp, schema
+#     validity, and the fail-closed paths.
+#
+# Boundary: governance conformance only. No runtime/physics/market/trading claim
+# is verified — mirrors the kernel's own `boundary`. No claim tier is promoted.
+#
+# Locally verified on origin/main fork base (d0469e9c):
+#   * pytest tests/unit/governance/test_verification_protocol.py: 24 passed
+#   * PYTHONPATH=. python scripts/ci/check_governance_kernel_binding.py: PASS
+#   * ruff check / black --check / mypy --strict: clean; 0 noqa / type: ignore
+id: governance-verification-protocol-binding
+status: ACTIVE
+claim_type: governance
+promise: >-
+  The Neuron7X verification-protocol governance kernel
+  (data/governance/neuron7x_verification_protocol_v2026_8.json) is bound to
+  runtime: governance.verification_protocol.VerificationProtocol.load reads the
+  declared score weights from the artifact's formula, computes K = Σ wᵢ·sᵢ,
+  quantizes K into the declared conformance state via the declared thresholds,
+  and enforces the weakest-link clamp, all fail-closed. The kernel is
+  schema-valid against schemas/governance/neuron7x_verification_protocol.schema.json
+  and scripts/ci/check_governance_kernel_binding.py fails closed if either the
+  schema or the executable binding regresses. Governance-conformance scope only;
+  no runtime, physics, market, or trading claim is asserted.
+diff_scope:
+  changed_files:
+    - path: ".claude/commit_acceptors/governance-verification-protocol-binding.yaml"
+    - path: "governance/verification_protocol.py"
+    - path: "schemas/governance/neuron7x_verification_protocol.schema.json"
+    - path: "scripts/ci/check_governance_kernel_binding.py"
+    - path: "tests/unit/governance/test_verification_protocol.py"
+    - path: "INVENTORY.json"
+  forbidden_paths:
+    - "trading/"
+    - "execution/"
+    - "forecast/"
+    - "policy/"
+    - "core/"
+    - "src/"
+required_python_symbols:
+  - "governance/verification_protocol.py::VerificationProtocol"
+expected_signal: >-
+  `python -m pytest tests/unit/governance/test_verification_protocol.py` reports
+  24 passed; `PYTHONPATH=. python scripts/ci/check_governance_kernel_binding.py`
+  prints PASS and exits 0; ruff + black + mypy --strict clean.
+measurement_command: >-
+  bash -c 'mkdir -p tmp && python -m pytest
+  tests/unit/governance/test_verification_protocol.py
+  > tmp/governance_verification_binding.log 2>&1
+  && PYTHONPATH=. python scripts/ci/check_governance_kernel_binding.py
+  >> tmp/governance_verification_binding.log 2>&1
+  && grep -q "passed" tmp/governance_verification_binding.log
+  && grep -q "executably bound" tmp/governance_verification_binding.log'
+signal_artifact: "tmp/governance_verification_binding.log"
+falsifier:
+  command: >-
+    bash -c 'PYTHONPATH=. python scripts/ci/check_governance_kernel_binding.py
+    >/dev/null 2>&1; test $? -ne 0'
+  description: >-
+    Inverse probe of the binding. The gate exits 0 only while the kernel is
+    schema-valid AND the engine loads and executes it (weights sum to 1, a
+    perfect score quantizes to a declared state, and the weakest-link rule
+    clamps). This falsifier exits 0 (fires) iff the gate exits non-zero — i.e.
+    the engine was deleted, the kernel drifted out of schema, or the executable
+    contract regressed. While the binding holds the falsifier exits 1. An exit 0
+    means the artifact has fallen back to policy-theater and must be re-bound,
+    not patched green.
+rollback_command: >-
+  bash -c 'git rm -f governance/verification_protocol.py
+  schemas/governance/neuron7x_verification_protocol.schema.json
+  scripts/ci/check_governance_kernel_binding.py
+  tests/unit/governance/test_verification_protocol.py
+  .claude/commit_acceptors/governance-verification-protocol-binding.yaml
+  && python scripts/ci/update_inventory.py --write'
+rollback_verification_command: >-
+  bash -c 'test ! -f governance/verification_protocol.py'
+memory_update_type: none
+ledger_path: ".claude/commit_acceptors/governance-verification-protocol-binding.yaml"
+report_path: "tmp/governance_verification_binding.log"
+evidence: []

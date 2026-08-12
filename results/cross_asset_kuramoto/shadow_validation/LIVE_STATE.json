@@ -1,0 +1,12 @@
+{
+  "last_eval_utc": "2026-05-06T22:00:33Z",
+  "live_bars": 15,
+  "cumulative_net_return": -0.040063,
+  "sharpe_live": -6.5606,
+  "max_dd_live": 0.046421,
+  "predictive_envelope_quantile": "p05_p25",
+  "status_label": "BUILDING_SAMPLE",
+  "gate_decision": "CONTINUE_SHADOW",
+  "operationally_unsafe": false,
+  "any_invariant_fail": false
+}

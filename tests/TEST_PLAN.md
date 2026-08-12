@@ -1,4 +1,4 @@
-# TradePulse Regression Test Matrix
+# GeoSync Regression Test Matrix
 
 This matrix maps core capabilities to automated coverage so reviewers can verify that
 critical behaviours are exercised before a release. It is derived from the initiatives

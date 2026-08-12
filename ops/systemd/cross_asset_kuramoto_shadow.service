@@ -1,0 +1,25 @@
+[Unit]
+Description=Cross-asset Kuramoto shadow run (frozen, append-only)
+After=network-online.target
+# Intentionally does NOT Require network — runner makes no network calls.
+
+[Service]
+Type=oneshot
+WorkingDirectory=%h/GeoSync
+ExecStart=/usr/bin/env python3 %h/GeoSync/scripts/run_cross_asset_kuramoto_shadow.py
+ExecStartPost=/usr/bin/env python3 %h/GeoSync/scripts/evaluate_cross_asset_kuramoto_shadow.py
+ExecStartPost=/usr/bin/env python3 %h/GeoSync/scripts/render_cross_asset_kuramoto_shadow_report.py
+ExecStartPost=/bin/bash %h/GeoSync/scripts/push_shadow_evidence.sh
+# No retries — if a run fails we want the incident surfaced, not swallowed.
+Restart=no
+# Append-only stdout/stderr. systemd already timestamps each line.
+StandardOutput=append:%h/GeoSync/results/cross_asset_kuramoto/shadow_validation/daily/systemd.out.log
+StandardError=append:%h/GeoSync/results/cross_asset_kuramoto/shadow_validation/daily/systemd.err.log
+# Protections (read-only /usr, no new privileges, private /tmp).
+NoNewPrivileges=true
+PrivateTmp=true
+ProtectSystem=strict
+ReadWritePaths=%h/GeoSync/results/cross_asset_kuramoto/shadow_validation %h/.cache
+
+[Install]
+WantedBy=default.target

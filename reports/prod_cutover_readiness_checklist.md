@@ -1,6 +1,6 @@
 # Production Cutover Readiness Checklist
 
-This checklist captures the minimum operational guardrails required before authorising a production cutover for TradePulse. Treat it
+This checklist captures the minimum operational guardrails required before authorising a production cutover for GeoSync. Treat it
 as a living document — each item should be validated during the go/no-go rehearsal and revisited whenever major architecture or
 process changes land.
 

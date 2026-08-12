@@ -1,0 +1,90 @@
+{
+  "schema": "academy-fellow/reference_conformance_certificate@v1",
+  "standard": "docs/phd/13_reference_inference_standard.md",
+  "source": ".claude/neuro/NEURO_OPERATIONALIZATION_LEDGER.yaml",
+  "generated_by": "scripts/ci/gen_reference_conformance.py",
+  "verdict": "CONFORMANT",
+  "tier": "evidence-discipline / admissibility — NOT empirical truth",
+  "ledger_distribution": {
+    "OPERATIONAL": 21,
+    "PARTIAL": 3,
+    "DECORATIVE": 3,
+    "OVERCLAIM": 2,
+    "LEGACY": 2,
+    "REJECTED": 1
+  },
+  "laws": [
+    {
+      "law": "L1-admissibility-not-promotion",
+      "statement": "A witnessed mechanism is admissible but is NOT promoted to a claim tier unless it is fully bound (invariant + contract + falsifier + test).",
+      "enforcing_gate": "tools/audit/neuro_symbolic_audit.py",
+      "pass": true,
+      "evidence": {
+        "open_missing_tests": 0
+      }
+    },
+    {
+      "law": "L2-no-promotion-without-invariant",
+      "statement": "No OPERATIONAL claim without >=1 INV-* binding from CLAUDE.md.",
+      "enforcing_gate": "tools/audit/neuro_symbolic_audit.py",
+      "pass": true,
+      "evidence": {
+        "operational_without_inv_ref": []
+      }
+    },
+    {
+      "law": "L3-falsification-first",
+      "statement": "Every OPERATIONAL/PARTIAL claim declares an executable falsifier.",
+      "enforcing_gate": "scripts/ci/check_falsifier_ledger.py",
+      "pass": true,
+      "evidence": {
+        "claims_without_falsifier": []
+      }
+    },
+    {
+      "law": "L4-no-overclaim-wall",
+      "statement": "Biological-equivalence and product-category overclaims are firewalled in runtime source and on the canonical doc surface.",
+      "enforcing_gate": "scripts/ci/check_neuro_claim_boundary.py + check_claim_boundary.py",
+      "pass": true,
+      "evidence": {
+        "neuro_wall": true,
+        "product_wall": true
+      }
+    },
+    {
+      "law": "L5-one-command-reproducibility",
+      "statement": "The full evidence battery runs from a single command (make phd-evidence).",
+      "enforcing_gate": "scripts/ci/phd_evidence.sh",
+      "pass": true,
+      "evidence": {
+        "phd_evidence_script": true
+      }
+    },
+    {
+      "law": "L6-witness-completeness",
+      "statement": "Every OPERATIONAL claim carries >=1 existing witness test and a non-empty falsifier; no claim rests on test exit-codes alone.",
+      "enforcing_gate": "scripts/ci/check_invariant_source_binding.py",
+      "pass": true,
+      "evidence": {
+        "operational_without_test": [],
+        "operational_without_falsifier": []
+      }
+    },
+    {
+      "law": "L7-partial-has-remediation",
+      "statement": "Every PARTIAL claim declares an active (non-KEEP) remediation.",
+      "enforcing_gate": "tools/audit/neuro_symbolic_audit.py",
+      "pass": true,
+      "evidence": {
+        "partial_with_keep": []
+      }
+    }
+  ],
+  "status_discipline": "Conformance to a reference standard of evidence discipline, reproducibility, and restraint. NOT a claim of a Distinguished-Professor-level result, and NOT a claim of empirical/scientific truth.",
+  "non_claims": [
+    "No biological equivalence.",
+    "No universal physics of markets.",
+    "No alpha/profitability/edge. No B.wheel=0.",
+    "Synthetic-only witnesses; no real L2 dataset/replay implied."
+  ]
+}

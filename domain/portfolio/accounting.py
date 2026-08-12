@@ -1,3 +1,5 @@
+# Copyright (c) 2023-2026 Yaroslav Vasylenko (neuron7xLab)
+# SPDX-License-Identifier: MIT
 """Portfolio accounting primitives for multi-asset trading."""
 
 from __future__ import annotations
@@ -80,9 +82,7 @@ class PortfolioSnapshot:
     corporate_actions: tuple[CorporateActionRecord, ...]
 
     def __post_init__(self) -> None:  # pragma: no cover - defensive
-        object.__setattr__(
-            self, "cash_balances", MappingProxyType(dict(self.cash_balances))
-        )
+        object.__setattr__(self, "cash_balances", MappingProxyType(dict(self.cash_balances)))
         object.__setattr__(self, "fees_paid", MappingProxyType(dict(self.fees_paid)))
 
 
@@ -91,13 +91,9 @@ class FXRates:
 
     __slots__ = ("base_currency", "_base_rates")
 
-    def __init__(
-        self, base_currency: str, rates: Mapping[str, DecimalInput] | None = None
-    ) -> None:
+    def __init__(self, base_currency: str, rates: Mapping[str, DecimalInput] | None = None) -> None:
         self.base_currency = base_currency.upper()
-        self._base_rates: MutableMapping[str, Decimal] = {
-            self.base_currency: Decimal("1")
-        }
+        self._base_rates: MutableMapping[str, Decimal] = {self.base_currency: Decimal("1")}
         if rates:
             for currency, rate in rates.items():
                 self.set_rate(currency, rate)
@@ -119,9 +115,7 @@ class FXRates:
         except KeyError as exc:  # pragma: no cover - defensive branch
             raise ValueError(f"Missing FX rate for {currency}") from exc
 
-    def convert(
-        self, amount: DecimalInput, from_currency: str, to_currency: str
-    ) -> Decimal:
+    def convert(self, amount: DecimalInput, from_currency: str, to_currency: str) -> Decimal:
         decimal_amount = _to_decimal(amount)
         source = from_currency.upper()
         target = to_currency.upper()
@@ -244,8 +238,7 @@ class PortfolioAccounting:
                 position.average_price = fill_price
             else:
                 position.average_price = (
-                    (position.average_price * abs(previous_qty) + fill_price * qty)
-                    / total_abs
+                    (position.average_price * abs(previous_qty) + fill_price * qty) / total_abs
                     if abs(previous_qty) > 0
                     else fill_price
                 )
@@ -253,12 +246,8 @@ class PortfolioAccounting:
         else:
             closing_qty = min(abs(previous_qty), qty)
             direction = Decimal("1") if previous_qty > 0 else Decimal("-1")
-            realized_local = (
-                closing_qty * (fill_price - position.average_price) * direction
-            )
-            realized_base = self.fx_rates.convert(
-                realized_local, currency, self.base_currency
-            )
+            realized_local = closing_qty * (fill_price - position.average_price) * direction
+            realized_base = self.fx_rates.convert(realized_local, currency, self.base_currency)
             position.realized_pnl_base += realized_base
             self._realized_pnl_base += realized_base
             net_qty = previous_qty + signed_qty
@@ -293,9 +282,7 @@ class PortfolioAccounting:
         self._refresh_unrealized(position)
         self._prune_position_if_flat(position)
 
-    def mark_to_market(
-        self, symbol: str, price: DecimalInput, currency: str | None = None
-    ) -> None:
+    def mark_to_market(self, symbol: str, price: DecimalInput, currency: str | None = None) -> None:
         """Refresh the market price and unrealised PnL for a position."""
 
         position = self._positions.get(symbol)
@@ -327,9 +314,7 @@ class PortfolioAccounting:
         if currency != self.base_currency:
             self.fx_rates.get_rate(currency)
         self._adjust_cash(currency, amount_decimal)
-        base_amount = self.fx_rates.convert(
-            amount_decimal, currency, self.base_currency
-        )
+        base_amount = self.fx_rates.convert(amount_decimal, currency, self.base_currency)
         self._realized_pnl_base += base_amount
         position = self._positions.get(symbol)
         if position is not None:
@@ -475,9 +460,7 @@ class PortfolioAccounting:
         currency = currency.upper()
         self._cash[currency] = self._cash.get(currency, Decimal("0")) + delta
 
-    def _record_fee(
-        self, currency: str, amount: Decimal, position: _PositionState | None
-    ) -> None:
+    def _record_fee(self, currency: str, amount: Decimal, position: _PositionState | None) -> None:
         self._adjust_cash(currency, -amount)
         self._fees[currency] = self._fees.get(currency, Decimal("0")) + amount
         fee_base = self.fx_rates.convert(amount, currency, self.base_currency)
@@ -491,11 +474,7 @@ class PortfolioAccounting:
             position.unrealized_pnl_base = Decimal("0")
             return
         direction = Decimal("1") if position.quantity > 0 else Decimal("-1")
-        raw = (
-            direction
-            * abs(position.quantity)
-            * (position.market_price - position.average_price)
-        )
+        raw = direction * abs(position.quantity) * (position.market_price - position.average_price)
         position.unrealized_pnl_base = self.fx_rates.convert(
             raw, position.currency, self.base_currency
         )

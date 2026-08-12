@@ -1,0 +1,108 @@
+# Diff-bound commit acceptor for rigorous Bayes-factor primitives.
+#
+# Closes the math-depth gap of the audit. Adds analytically derived
+# replacements for the ad hoc Bayes factors and decision thresholds
+# that previously lived in evidence_ledger.py without primary-source
+# justification.
+#
+# New module: bayes_rigorous.py
+#   * mann_whitney_null_variance      Mann & Whitney 1947 §3 eq. 5
+#   * mann_whitney_effective_n        n_eff = m·n/(m+n+1)
+#   * auc_to_z_under_null             Bamber 1975 Theorem 2
+#   * wagenmakers_bic_bayes_factor    Wagenmakers 2007 eqs. 6-8
+#   * auc_per_crisis_bf_rigorous      composed Mann-Whitney → BIC-BF
+#   * cramer_rao_alpha_lower_bound    Clauset, Shalizi & Newman 2009 eq. 3.7
+#   * derive_kill_threshold_log_odds  Berger 1985 §4.4 (Bayes-rule)
+#
+# Each formula is verified against either an analytical identity, a
+# canonical reference value, or a Monte-Carlo simulation.
+# Hypothesis property-tests cover the BIC-BF closed form across z,
+# n_eff sweeps.
+#
+# Locally verified:
+#   * pytest tests/research/systemic_risk/test_bayes_rigorous.py: 28/28 pass
+#     (incl. Monte Carlo CRLB attainment + Lindley penalty under H0)
+#   * pytest tests/research/systemic_risk/: 441/441 pass
+#   * mypy --strict on bayes_rigorous + tests: 0 errors
+#   * ruff + black: clean
+
+id: rigorous-bayes-factors
+status: ACTIVE
+claim_type: governance
+promise: >-
+  After this PR lands, ``research.systemic_risk`` ships a
+  fully-derived Bayes-factor / decision-theory module with primary
+  references for every formula. The ad hoc
+  ``auc_per_crisis_bayes_factor`` retains its existing API for
+  backwards compatibility; the rigorous form
+  ``auc_per_crisis_bf_rigorous`` is the new canonical entry point
+  for new evidence pipelines.
+
+diff_scope:
+  changed_files:
+    - path: ".claude/commit_acceptors/rigorous-bayes-factors.yaml"
+    - path: "research/systemic_risk/__init__.py"
+    - path: "research/systemic_risk/bayes_rigorous.py"
+    - path: "tests/research/systemic_risk/test_bayes_rigorous.py"
+  forbidden_paths:
+    - "trading/"
+    - "execution/"
+    - "forecast/"
+    - "policy/"
+    - "core/"
+    - "runtime/"
+    - "application/"
+
+required_python_symbols:
+  - "research/systemic_risk/bayes_rigorous.py::wagenmakers_bic_bayes_factor"
+  - "research/systemic_risk/bayes_rigorous.py::cramer_rao_alpha_lower_bound"
+  - "research/systemic_risk/bayes_rigorous.py::derive_kill_threshold_log_odds"
+  - "research/systemic_risk/bayes_rigorous.py::auc_per_crisis_bf_rigorous"
+  - "tests/research/systemic_risk/test_bayes_rigorous.py::TestCramerRao"
+
+expected_signal: >-
+  ``pytest tests/research/systemic_risk/test_bayes_rigorous.py -q``
+  reports 28 passed; before this PR the same command fails with
+  ModuleNotFoundError on ``research.systemic_risk.bayes_rigorous``.
+  Monte-Carlo verification of Cramér-Rao bound (≥95%, ≤120% of MLE
+  empirical SE on n=5000 Pareto α=2.5 over 200 replicas) passes.
+
+measurement_command: >-
+  bash -c '
+    mypy --strict
+      research/systemic_risk/bayes_rigorous.py
+      tests/research/systemic_risk/test_bayes_rigorous.py && python -m pytest tests/research/systemic_risk/test_bayes_rigorous.py -q
+  '
+
+signal_artifact: "tmp/rigorous_bayes_factors.log"
+
+falsifier:
+  command: |-
+    bash -c '
+    python -c "
+    from research.systemic_risk.bayes_rigorous import auc_per_crisis_bf_rigorous
+    bf = auc_per_crisis_bf_rigorous(0.5, n_pos=10, n_neg=10)
+    assert bf < 1.0, f\"Lindley penalty must yield BF<1 at AUC=0.5; got {bf}\"
+    " 2>/dev/null && exit 1 || exit 0
+    '
+  description: >-
+    Probes that the rigorous BF observes the Lindley penalty (BF < 1
+    at uninformative AUC = 0.5) — the most diagnostic departure from
+    the ad hoc form. Falsifier inverts: it succeeds (exit 0) only
+    when the import or the Lindley assertion fails.
+
+rollback_command: >-
+  bash -c '
+    git rm -f
+      research/systemic_risk/bayes_rigorous.py
+      tests/research/systemic_risk/test_bayes_rigorous.py
+      .claude/commit_acceptors/rigorous-bayes-factors.yaml && git checkout HEAD~1 -- research/systemic_risk/__init__.py
+  '
+
+rollback_verification_command: |-
+  python -c "import importlib.util,importlib,sys; _p=lambda m: all(importlib.util.find_spec('.'.join(m.split('.')[:i+1])) for i in range(len(m.split('.')))); present=_p('research.systemic_risk.bayes_rigorous') and hasattr(importlib.import_module('research.systemic_risk.bayes_rigorous'),'wagenmakers_bic_bayes_factor'); sys.exit(1 if present else 0)"
+
+memory_update_type: append
+ledger_path: ".claude/commit_acceptors/rigorous-bayes-factors.yaml"
+report_path: "tmp/rigorous_bayes_factors.log"
+evidence: []

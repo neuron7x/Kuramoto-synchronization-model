@@ -1,5 +1,7 @@
-# SPDX-License-Identifier: LicenseRef-TradePulse-Proprietary
-"""Hydra-powered experiment runner for TradePulse analytics."""
+# Copyright (c) 2023-2026 Yaroslav Vasylenko (neuron7xLab)
+# SPDX-License-Identifier: MIT
+"""Hydra-powered experiment runner for GeoSync analytics."""
+
 from __future__ import annotations
 
 import json
@@ -111,9 +113,7 @@ def _current_git_sha(cwd: Path) -> str | None:
     return result.stdout.strip() or None
 
 
-def collect_run_metadata(
-    run_dir: Path, original_cwd: Path, cfg: DictConfig
-) -> RunMetadata:
+def collect_run_metadata(run_dir: Path, original_cwd: Path, cfg: DictConfig) -> RunMetadata:
     """Collect metadata that allows reproducing the current experiment run."""
 
     timestamp = datetime.now(timezone.utc).isoformat()
@@ -141,12 +141,10 @@ def _write_metadata(metadata: RunMetadata) -> None:
     metadata_path.write_text(json.dumps(payload, indent=2), encoding="utf-8")
 
 
-def run_pipeline(
-    cfg: DictConfig, tracker: ExperimentTracker | None = None
-) -> dict[str, Any]:
+def run_pipeline(cfg: DictConfig, tracker: ExperimentTracker | None = None) -> dict[str, Any]:
     """Execute the analytics pipeline using configuration parameters."""
 
-    logger = logging.getLogger("tradepulse.experiment")
+    logger = logging.getLogger("geosync.experiment")
     tracker = tracker or NullExperimentTracker()
     data_cfg = cfg.experiment.data
     analytics_cfg = cfg.experiment.analytics
@@ -154,9 +152,7 @@ def run_pipeline(
     data_path = Path(to_absolute_path(str(data_cfg.price_csv)))
     tracker.log_data_version(data_path)
     if not data_path.exists():
-        logger.warning(
-            "Data file %s does not exist; analytics step skipped.", data_path
-        )
+        logger.warning("Data file %s does not exist; analytics step skipped.", data_path)
         tracker.record_status("missing-data", {"path": str(data_path)})
         return {"status": "missing-data", "path": str(data_path)}
 
@@ -182,9 +178,7 @@ def run_pipeline(
             "insufficient-data",
             {"observations": len(prices), "window": window},
         )
-        raise ValueError(
-            f"Not enough price observations ({len(prices)}) for window size {window}."
-        )
+        raise ValueError(f"Not enough price observations ({len(prices)}) for window size {window}.")
 
     phases = compute_phase(prices)
     R = float(kuramoto_order(phases[-window:]))
@@ -220,9 +214,7 @@ def main(cfg: DictConfig) -> None:
     try:
         experiment = validate_experiment_profile(cfg)
         registry = ExperimentProfileRegistry.discover()
-        selected_profile = OmegaConf.select(
-            cfg, "hydra.runtime.choices.experiment", default=None
-        )
+        selected_profile = OmegaConf.select(cfg, "hydra.runtime.choices.experiment", default=None)
         if selected_profile is not None:
             registry.ensure(str(selected_profile))
     except ExperimentProfileError as exc:

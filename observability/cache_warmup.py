@@ -1,16 +1,17 @@
+# Copyright (c) 2023-2026 Yaroslav Vasylenko (neuron7xLab)
+# SPDX-License-Identifier: MIT
 """Cache warm-up orchestration and cold-start safeguards."""
 
 from __future__ import annotations
 
 from collections import deque
 from dataclasses import dataclass, field
-from datetime import datetime, timezone
+from datetime import datetime
 from time import perf_counter
 from typing import Callable, Iterable, Mapping, MutableMapping
 
+from core.compat import utc_now
 from core.utils.metrics import get_metrics_collector
-
-UTC = timezone.utc
 
 
 def _infer_row_count(payload: object) -> int | None:
@@ -84,10 +85,7 @@ class CacheWarmupSpec:
             raise ValueError("max_cold_requests must be non-negative")
         if not 0.0 < self.target_hit_rate <= 1.0:
             raise ValueError("target_hit_rate must be in the (0.0, 1.0] interval")
-        if (
-            self.max_cold_latency_seconds is not None
-            and self.max_cold_latency_seconds <= 0
-        ):
+        if self.max_cold_latency_seconds is not None and self.max_cold_latency_seconds <= 0:
             raise ValueError("max_cold_latency_seconds must be positive when set")
 
 
@@ -151,9 +149,7 @@ class CacheWarmupStatus:
             payload.update(
                 {
                     "warmed_at": self.last_result.warmed_at,
-                    "last_duration_seconds": round(
-                        self.last_result.duration_seconds, 4
-                    ),
+                    "last_duration_seconds": round(self.last_result.duration_seconds, 4),
                     "last_rows": self.last_result.rows,
                     "last_strategy": self.last_result.strategy,
                     "last_detail": self.last_result.detail,
@@ -185,7 +181,7 @@ class CacheWarmupController:
 
         self._specs: Mapping[str, CacheWarmupSpec] = unique
         self._order: tuple[str, ...] = tuple(unique)
-        self._clock: Clock = clock or (lambda: datetime.now(UTC))
+        self._clock: Clock = clock or (lambda: utc_now())
         self._metrics = get_metrics_collector()
         self._min_samples_for_hit_rate = max(1, int(min_samples_for_hit_rate))
         self._statuses: MutableMapping[str, CacheWarmupStatus] = {
@@ -318,9 +314,7 @@ class CacheWarmupController:
         status.stats.cold_latencies.append(max(0.0, float(latency_seconds)))
         percentile = _percentile(status.stats.cold_latencies, 0.95)
         status.cold_latency_p95 = percentile
-        self._metrics.observe_cache_cold_latency(
-            status.spec.name, float(latency_seconds)
-        )
+        self._metrics.observe_cache_cold_latency(status.spec.name, float(latency_seconds))
         self._evaluate_degradations(status)
 
     def record_access(
@@ -376,9 +370,7 @@ class CacheWarmupController:
     def overall_ready(self) -> bool:
         """Return ``True`` when all critical caches are ready."""
 
-        return all(
-            status.ready for status in self._statuses.values() if status.spec.critical
-        )
+        return all(status.ready for status in self._statuses.values() if status.spec.critical)
 
     # ------------------------------------------------------------------
     # Internal helpers
@@ -399,10 +391,7 @@ class CacheWarmupController:
             reasons.add("warmup_failed")
 
         total = status.stats.total_accesses()
-        if (
-            total >= self._min_samples_for_hit_rate
-            and status.hit_rate < spec.target_hit_rate
-        ):
+        if total >= self._min_samples_for_hit_rate and status.hit_rate < spec.target_hit_rate:
             reasons.add("hit_rate")
 
         if (

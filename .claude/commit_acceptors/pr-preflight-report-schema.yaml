@@ -1,0 +1,71 @@
+# Diff-bound commit acceptor for the PR preflight report JSON-schema contract.
+#
+# Reconciles the report-schema idea from the superseded PR #948 onto the current
+# merged preflight engine: a declarative JSON schema for the report the engine
+# emits, plus an anti-drift test binding the schema's status enums to the
+# engine's status constants. Contract/test only; no physics, claim tier, or
+# alpha surface is touched.
+
+id: pr-preflight-report-schema
+status: ACTIVE
+claim_type: governance
+promise: >-
+  After this PR lands, a report produced by tools/ci/pr_preflight.py validates
+  against schemas/pr_preflight_report.schema.json, and the schema's final and
+  per-check status enums equal the engine's ALLOWED_FINAL_STATUSES and
+  ALLOWED_CHECK_STATUSES constants — so the declarative contract cannot drift
+  from the code-level validate_report_contract. No empirical, market, or alpha
+  claim is made.
+
+diff_scope:
+  changed_files:
+    - path: ".claude/commit_acceptors/pr-preflight-report-schema.yaml"
+    - path: "schemas/pr_preflight_report.schema.json"
+    - path: "tests/ci/test_pr_preflight_report_schema.py"
+  forbidden_paths:
+    - "trading/"
+    - "execution/"
+    - "forecast/"
+    - "policy/"
+    - "core/"
+    - "runtime/"
+
+required_python_symbols: []
+
+expected_signal: >-
+  pytest tests/ci/test_pr_preflight_report_schema.py passes: the schema is a
+  valid Draft 2020-12 metaschema, an engine-built report validates against it,
+  the status enums match the engine constants, and malformed reports are rejected.
+
+measurement_command: >-
+  python -m pytest --noconftest -p no:cacheprovider -q
+  tests/ci/test_pr_preflight_report_schema.py
+
+signal_artifact: "schemas/pr_preflight_report.schema.json"
+
+falsifier:
+  command: >-
+    python -c "import json; from pathlib import Path; from tools.ci import pr_preflight as p;
+    s=json.loads(Path('schemas/pr_preflight_report.schema.json').read_text());
+    fe=set(s['properties']['status']['enum']);
+    ce=set(s['properties']['checks']['items']['properties']['status']['enum']);
+    raise SystemExit(0 if (fe==set(p.ALLOWED_FINAL_STATUSES) and ce==set(p.ALLOWED_CHECK_STATUSES)) else 1)"
+  description: >-
+    Exits 0 only while the schema's status enums equal the engine constants. If
+    the engine adds/renames a status without updating the schema (or vice
+    versa), this exits non-zero — the exact silent drift the contract forbids.
+
+rollback_command: >-
+  bash -c '
+    git rm -f schemas/pr_preflight_report.schema.json
+      tests/ci/test_pr_preflight_report_schema.py
+      .claude/commit_acceptors/pr-preflight-report-schema.yaml
+  '
+
+rollback_verification_command: >-
+  bash -c 'test ! -e schemas/pr_preflight_report.schema.json'
+
+memory_update_type: append
+ledger_path: ".claude/commit_acceptors/pr-preflight-report-schema.yaml"
+report_path: "schemas/pr_preflight_report.schema.json"
+evidence: []

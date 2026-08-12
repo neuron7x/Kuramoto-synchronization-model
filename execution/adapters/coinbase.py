@@ -1,4 +1,5 @@
-# SPDX-License-Identifier: LicenseRef-TradePulse-Proprietary
+# Copyright (c) 2023-2026 Yaroslav Vasylenko (neuron7xLab)
+# SPDX-License-Identifier: MIT
 """Production-grade Coinbase Advanced Trade REST/WebSocket connector."""
 
 from __future__ import annotations
@@ -78,9 +79,7 @@ class CoinbaseRESTConnector(RESTWebSocketConnector):
         )
         self._stream_base = "wss://advanced-trade-ws.coinbase.com"
         if sandbox:
-            self._stream_base = (
-                "wss://advanced-trade-ws-public.sandbox.exchange.coinbase.com"
-            )
+            self._stream_base = "wss://advanced-trade-ws-public.sandbox.exchange.coinbase.com"
         # Credentials are loaded separately via authenticate() method, not hardcoded
         self._api_key: str | None = None  # nosec B105 - not a hardcoded password
         self._api_secret: str | None = None  # nosec B105 - not a hardcoded password
@@ -108,9 +107,7 @@ class CoinbaseRESTConnector(RESTWebSocketConnector):
             )
 
     # ------------------------------------------------------------------
-    def _resolve_credentials(
-        self, credentials: Mapping[str, str] | None
-    ) -> Mapping[str, str]:
+    def _resolve_credentials(self, credentials: Mapping[str, str] | None) -> Mapping[str, str]:
         supplied = {str(k).lower(): str(v) for k, v in (credentials or {}).items()}
         api_key = supplied.get("api_key") or os.getenv("COINBASE_API_KEY")
         api_secret = supplied.get("api_secret") or os.getenv("COINBASE_API_SECRET")
@@ -147,9 +144,7 @@ class CoinbaseRESTConnector(RESTWebSocketConnector):
         headers: Dict[str, str],
     ) -> tuple[Dict[str, Any], Dict[str, Any] | None, Dict[str, str], Any | None]:
         if self._api_secret is None:
-            raise RuntimeError(
-                "Coinbase connector signing requested without credentials"
-            )
+            raise RuntimeError("Coinbase connector signing requested without credentials")
         self._ensure_time_sync()
         timestamp = str(self._timestamp())
         body = json.dumps(json_payload or {}) if json_payload is not None else ""
@@ -164,9 +159,7 @@ class CoinbaseRESTConnector(RESTWebSocketConnector):
     def _order_endpoint(self) -> str:
         return "/orders"
 
-    def _build_place_payload(
-        self, order: Order, idempotency_key: str | None
-    ) -> Dict[str, Any]:
+    def _build_place_payload(self, order: Order, idempotency_key: str | None) -> Dict[str, Any]:
         payload: Dict[str, Any] = {
             "client_order_id": idempotency_key or order.order_id or "",
             "product_id": order.symbol.replace("_", "-"),
@@ -210,9 +203,7 @@ class CoinbaseRESTConnector(RESTWebSocketConnector):
         if idempotency_key and idempotency_key in self._idempotency_cache:
             return self._idempotency_cache[idempotency_key]
         payload = self._build_place_payload(order, idempotency_key)
-        response = self._request(
-            "POST", self._order_endpoint(), json_payload=payload, signed=True
-        )
+        response = self._request("POST", self._order_endpoint(), json_payload=payload, signed=True)
         submitted = self._parse_order(response, original=order)
         with self._lock:
             self._orders[submitted.order_id or ""] = submitted
@@ -220,9 +211,7 @@ class CoinbaseRESTConnector(RESTWebSocketConnector):
                 self._idempotency_cache[idempotency_key] = submitted
         return submitted
 
-    def _parse_order(
-        self, payload: Mapping[str, Any], *, original: Order | None = None
-    ) -> Order:
+    def _parse_order(self, payload: Mapping[str, Any], *, original: Order | None = None) -> Order:
         if "order" in payload and isinstance(payload["order"], Mapping):
             payload = payload["order"]
         symbol_value = _first_present(payload, "product_id")
@@ -232,10 +221,7 @@ class CoinbaseRESTConnector(RESTWebSocketConnector):
         if not symbol:
             raise ValueError("Order payload missing product identifier")
         side = (
-            str(
-                _first_present(payload, "side")
-                or (original.side.value if original else "buy")
-            )
+            str(_first_present(payload, "side") or (original.side.value if original else "buy"))
             .strip()
             .lower()
         )
@@ -271,9 +257,7 @@ class CoinbaseRESTConnector(RESTWebSocketConnector):
         return Order(
             symbol=symbol,
             side=OrderSide(side),
-            quantity=(
-                quantity if quantity > 0 else (original.quantity if original else 0.0)
-            ),
+            quantity=(quantity if quantity > 0 else (original.quantity if original else 0.0)),
             price=price,
             order_type=order_type,
             order_id=order_id,
@@ -298,9 +282,7 @@ class CoinbaseRESTConnector(RESTWebSocketConnector):
         raw_accounts = payload.get("accounts", [])
         if isinstance(raw_accounts, Mapping):
             accounts_iter: Iterable[Any] = raw_accounts.values()
-        elif isinstance(raw_accounts, Iterable) and not isinstance(
-            raw_accounts, (str, bytes)
-        ):
+        elif isinstance(raw_accounts, Iterable) and not isinstance(raw_accounts, (str, bytes)):
             accounts_iter = raw_accounts
         else:
             accounts_iter = []
@@ -317,9 +299,7 @@ class CoinbaseRESTConnector(RESTWebSocketConnector):
             asset = str(account.get("currency", "")).strip().upper()
             if not asset:
                 continue
-            positions.append(
-                {"symbol": asset, "qty": qty, "side": "long", "price": 0.0}
-            )
+            positions.append({"symbol": asset, "qty": qty, "side": "long", "price": 0.0})
         return positions
 
     def _stream_url(self) -> str | None:
@@ -431,9 +411,7 @@ def _self_test() -> AdapterDiagnostic:
             )
         )
     except Exception as exc:  # pragma: no cover - defensive guard
-        checks.append(
-            AdapterCheckResult(name="instantiate", status="failed", detail=str(exc))
-        )
+        checks.append(AdapterCheckResult(name="instantiate", status="failed", detail=str(exc)))
     return AdapterDiagnostic(adapter_id="coinbase.advanced-trade", checks=tuple(checks))
 
 

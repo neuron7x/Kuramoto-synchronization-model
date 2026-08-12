@@ -1,0 +1,116 @@
+# Diff-bound commit acceptor: measure the `modules` production surface.
+#
+# `modules` (18 files: risk/sizing, regime, execution, coordination, monitoring)
+# shipped in the wheel but was allowlisted as deferred_production with no coverage
+# profile. This PR measures and tests it: add `modules` to the release_90 coverage
+# source, drop it from the coverage-surface allowlist, bind its runtime invariants
+# to defect-sensitive contracts, and route the new suite through the component
+# matrix. Two fail-closed hardening fixes are included (a constant series no longer
+# leaks a NaN adf_statistic; the portfolio optimizer rejects NaN/Inf returns instead
+# of crashing with an opaque LinAlgError).
+
+id: modules-runtime-coverage-slice
+status: ACTIVE
+claim_type: governance
+promise: >-
+  After this PR, `modules` is in the release_90 coverage source (measured, not
+  deferred), removed from the coverage-surface allowlist, and its runtime surface
+  is bound by seven defect-sensitive contract suites: enum/dataclass boundaries and
+  finite artifact numerics; strategy-registry duplicate/unknown/suspended handling;
+  market-regime insufficient-data, constant-series, and determinism guarantees;
+  risk/sizing monotone caps, non-negative sizes, GABA magnitude fidelity, order and
+  optimizer fail-closed rejection (NaN covariance rejected, singular covariance
+  handled); execution/performance/report empty-input, PnL/slippage sign, impossible
+  drawdown and deterministic report hash; coordination/monitoring duplicate-id,
+  failed-task, alert dedup, severity ordering, stale/missing-column rejection,
+  secret hiding, and no-future-leakage. The coverage-surface audit reports `modules`
+  in `measured` with verdict PASS.
+
+diff_scope:
+  changed_files:
+    - path: ".claude/commit_acceptors/modules-runtime-coverage-slice.yaml"
+    - path: "modules/market_regime_analyzer.py"
+    - path: "modules/portfolio_optimizer.py"
+    - path: "tests/unit/modules/test_types_contract.py"
+    - path: "tests/unit/modules/test_signal_strategy_registry_contract.py"
+    - path: "tests/unit/modules/test_market_regime_analyzer_contract.py"
+    - path: "tests/unit/modules/test_risk_sizing_contracts.py"
+    - path: "tests/unit/modules/test_execution_performance_report_contracts.py"
+    - path: "tests/unit/modules/test_coordination_monitoring_contracts.py"
+    - path: "tests/property/modules/test_modules_no_future_leakage.py"
+    - path: "tests/property/modules/__init__.py"
+    - path: "configs/quality/release_90.coveragerc"
+    - path: "tests/fixtures/coverage_surface_allowlist.json"
+    - path: "artifacts/coverage_surface/coverage_surface_report.json"
+    - path: "artifacts/test_strength/mutation.modules.json"
+    - path: "data/testing/component_test_matrix.json"
+  forbidden_paths:
+    - "core/physics/"
+    - "core/kuramoto/"
+    - "execution/oms.py"
+
+required_python_symbols:
+  - "modules/portfolio_optimizer.py::PortfolioOptimizer"
+  - "modules/market_regime_analyzer.py::MarketRegimeAnalyzer"
+  - "modules/order_validator.py::OrderValidator"
+  - "modules/gaba_inhibition_gate.py::GABAInhibitionGate"
+  - "modules/dynamic_position_sizer.py::DynamicPositionSizer"
+
+expected_signal: >-
+  `python -m pytest --import-mode=importlib -p no:cacheprovider tests/unit/modules
+  tests/property/modules/test_modules_no_future_leakage.py -q` reports all passed,
+  and the coverage-surface audit reports `modules` in `measured` with verdict PASS
+  and no forbidden gaps.
+
+measurement_command: >-
+  bash -c '
+    python -m pytest --import-mode=importlib -p no:cacheprovider
+      tests/unit/modules
+      tests/property/modules/test_modules_no_future_leakage.py
+      tests/ci/test_coverage_source_matches_packaged_surface.py
+      tests/testing/test_select_component_tests.py -q
+  '
+
+signal_artifact: "tmp/modules_runtime_coverage_slice.log"
+
+falsifier:
+  command: |-
+    bash -c '
+      python -c "
+    import math
+    import numpy as np
+    import pandas as pd
+    from modules.portfolio_optimizer import PortfolioOptimizer, OptimizationMethod
+    from modules.market_regime_analyzer import MarketRegimeAnalyzer
+    frame = pd.DataFrame(np.zeros((60, 3)), columns=[\"A\", \"B\", \"C\"])
+    frame[\"A\"] = float(\"nan\")
+    rejected = False
+    try:
+        PortfolioOptimizer().optimize(frame, OptimizationMethod.MAX_SHARPE)
+    except ValueError:
+        rejected = True
+    assert rejected, \"NaN covariance was not rejected\"
+    metrics = MarketRegimeAnalyzer().classify_regime({\"prices\": [100.0] * 60})
+    assert math.isfinite(metrics.adf_statistic), \"adf_statistic leaked a non-finite value\"
+    "
+    '
+  description: >-
+    Asserts the two fail-closed hardening invariants: the portfolio optimizer
+    rejects a NaN-poisoned covariance with an explicit ValueError, and a constant
+    price series yields a finite (not NaN) adf_statistic artifact field. Exits 0 on
+    the correct tree and non-zero if either invariant regresses.
+
+rollback_command: >-
+  bash -c '
+    git rm -f .claude/commit_acceptors/modules-runtime-coverage-slice.yaml
+  '
+
+rollback_verification_command: >-
+  bash -c '
+    test ! -f .claude/commit_acceptors/modules-runtime-coverage-slice.yaml
+  '
+
+memory_update_type: append
+ledger_path: ".claude/commit_acceptors/modules-runtime-coverage-slice.yaml"
+report_path: "tmp/modules_runtime_coverage_slice.log"
+evidence: []

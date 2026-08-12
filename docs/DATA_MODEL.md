@@ -1,10 +1,10 @@
-# TradePulse Data Model Documentation
+# GeoSync Data Model Documentation
 
-This document describes the unified data layer for TradePulse, providing a single source of truth for all market data, trading events, and strategy inputs.
+This document describes the unified data layer for GeoSync, providing a single source of truth for all market data, trading events, and strategy inputs.
 
 ## Overview
 
-The TradePulse data layer follows these core principles:
+The GeoSync data layer follows these core principles:
 
 1. **Single Source of Truth** - All strategies, backtests, and live trading systems use the same data schemas
 2. **Strict Validation** - Price > 0, volume >= 0, monotonic timestamps, OHLC relationships
@@ -36,7 +36,7 @@ The TradePulse data layer follows these core principles:
 OHLCV bar representing aggregated price data for a time interval.
 
 ```python
-from tradepulse.data.schema import Bar, Timeframe
+from geosync.data.schema import Bar, Timeframe
 from decimal import Decimal
 from datetime import datetime, timezone
 
@@ -73,7 +73,7 @@ bar = Bar(
 Tick-level price update representing a single trade or quote.
 
 ```python
-from tradepulse.data.schema import Tick, OrderSide
+from geosync.data.schema import Tick, OrderSide
 
 tick = Tick(
     timestamp=datetime.now(timezone.utc),
@@ -100,7 +100,7 @@ tick = Tick(
 Structured feature vector for strategy consumption.
 
 ```python
-from tradepulse.data.schema import FeatureVector
+from geosync.data.schema import FeatureVector
 
 fv = FeatureVector(
     timestamp=datetime.now(timezone.utc),
@@ -119,7 +119,7 @@ macd = fv.get("macd", default=0.0)
 Point-in-time market state for a symbol.
 
 ```python
-from tradepulse.data.schema import MarketSnapshot
+from geosync.data.schema import MarketSnapshot
 
 snapshot = MarketSnapshot(
     timestamp=datetime.now(timezone.utc),
@@ -143,7 +143,7 @@ mid = snapshot.mid_price  # Decimal("45000")
 Supported timeframes for bar aggregation.
 
 ```python
-from tradepulse.data.schema import Timeframe
+from geosync.data.schema import Timeframe
 
 # Available timeframes
 Timeframe.S1   # 1 second
@@ -175,7 +175,7 @@ tf = Timeframe.from_string("1hour")  # Also works
 Result of data quality validation.
 
 ```python
-from tradepulse.data.quality import validate_series, DataQualityStatus
+from geosync.data.quality import validate_series, DataQualityStatus
 
 report = validate_series(bars)
 
@@ -193,7 +193,7 @@ if not report.is_valid():
 ### Validation Functions
 
 ```python
-from tradepulse.data.quality import (
+from geosync.data.quality import (
     validate_series,
     detect_gaps,
     detect_outliers,
@@ -240,7 +240,7 @@ except DataQualityError as e:
 ### Loading Historical Data
 
 ```python
-from tradepulse.data.api import load_historical_bars, DataSourceConfig
+from geosync.data.api import load_historical_bars, DataSourceConfig
 
 # Simple CSV loading
 bars = load_historical_bars(
@@ -270,7 +270,7 @@ bars = load_historical_bars(config)
 ### Getting Data Windows
 
 ```python
-from tradepulse.data.api import get_historical_window, get_latest_snapshot
+from geosync.data.api import get_historical_window, get_latest_snapshot
 
 # Get a time window
 window = get_historical_window(
@@ -288,7 +288,7 @@ snapshot = get_latest_snapshot(all_bars, "BTCUSDT")
 ### Normalizing Data
 
 ```python
-from tradepulse.data.api import normalize_bars
+from geosync.data.api import normalize_bars
 
 normalized = normalize_bars(
     raw_bars,
@@ -414,7 +414,7 @@ if config.source_type == "new_source":
 ## Module Structure
 
 ```
-src/tradepulse/data/
+src/geosync/data/
 ├── __init__.py     # Public API exports
 ├── schema.py       # Core data models (Bar, Tick, etc.)
 ├── quality.py      # Data quality validation

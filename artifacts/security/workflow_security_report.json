@@ -1,0 +1,1559 @@
+{
+  "parse_errors": [],
+  "status": "PASS",
+  "task": "SEC-011",
+  "workflows": [
+    {
+      "checks_out_pr_head": false,
+      "explicit_secret_refs": [],
+      "fatal_count": 0,
+      "flags": [],
+      "has_top_level_permissions": true,
+      "job_write_scopes": {},
+      "name": "Architecture Debt Ratchet",
+      "status": "PASS",
+      "top_level_permissions": {
+        "contents": "read"
+      },
+      "top_level_write_scopes": [],
+      "triggers": [
+        "pull_request",
+        "push"
+      ],
+      "uses_oidc_id_token": false,
+      "uses_pull_request_target": false,
+      "workflow": ".github/workflows/architecture-debt-ratchet.yml"
+    },
+    {
+      "checks_out_pr_head": false,
+      "explicit_secret_refs": [],
+      "fatal_count": 0,
+      "flags": [],
+      "has_top_level_permissions": true,
+      "job_write_scopes": {},
+      "name": "Bibliography Claim Gate",
+      "status": "PASS",
+      "top_level_permissions": {
+        "contents": "read"
+      },
+      "top_level_write_scopes": [],
+      "triggers": [
+        "merge_group",
+        "pull_request",
+        "push"
+      ],
+      "uses_oidc_id_token": false,
+      "uses_pull_request_target": false,
+      "workflow": ".github/workflows/bibliography-claim-gate.yml"
+    },
+    {
+      "checks_out_pr_head": false,
+      "explicit_secret_refs": [],
+      "fatal_count": 0,
+      "flags": [],
+      "has_top_level_permissions": true,
+      "job_write_scopes": {},
+      "name": "CALIB GRID Witness Map",
+      "status": "PASS",
+      "top_level_permissions": {
+        "contents": "read"
+      },
+      "top_level_write_scopes": [],
+      "triggers": [
+        "pull_request",
+        "push"
+      ],
+      "uses_oidc_id_token": false,
+      "uses_pull_request_target": false,
+      "workflow": ".github/workflows/calib-grid-witness-map.yml"
+    },
+    {
+      "checks_out_pr_head": false,
+      "explicit_secret_refs": [],
+      "fatal_count": 0,
+      "flags": [],
+      "has_top_level_permissions": true,
+      "job_write_scopes": {},
+      "name": "Check Epistemic Drift",
+      "status": "PASS",
+      "top_level_permissions": {
+        "contents": "read"
+      },
+      "top_level_write_scopes": [],
+      "triggers": [
+        "pull_request",
+        "push"
+      ],
+      "uses_oidc_id_token": false,
+      "uses_pull_request_target": false,
+      "workflow": ".github/workflows/check_epistemic_drift.yml"
+    },
+    {
+      "checks_out_pr_head": false,
+      "explicit_secret_refs": [],
+      "fatal_count": 0,
+      "flags": [],
+      "has_top_level_permissions": true,
+      "job_write_scopes": {},
+      "name": "Claim Boundary Gate",
+      "status": "PASS",
+      "top_level_permissions": {
+        "contents": "read"
+      },
+      "top_level_write_scopes": [],
+      "triggers": [
+        "pull_request",
+        "push"
+      ],
+      "uses_oidc_id_token": false,
+      "uses_pull_request_target": false,
+      "workflow": ".github/workflows/claim-boundary-gate.yml"
+    },
+    {
+      "checks_out_pr_head": false,
+      "explicit_secret_refs": [],
+      "fatal_count": 0,
+      "flags": [],
+      "has_top_level_permissions": true,
+      "job_write_scopes": {},
+      "name": "Claim Governance Foundation",
+      "status": "PASS",
+      "top_level_permissions": {
+        "contents": "read"
+      },
+      "top_level_write_scopes": [],
+      "triggers": [
+        "pull_request"
+      ],
+      "uses_oidc_id_token": false,
+      "uses_pull_request_target": false,
+      "workflow": ".github/workflows/claim-governance-foundation.yml"
+    },
+    {
+      "checks_out_pr_head": false,
+      "explicit_secret_refs": [],
+      "fatal_count": 0,
+      "flags": [],
+      "has_top_level_permissions": true,
+      "job_write_scopes": {},
+      "name": "Claim Evidence Gate",
+      "status": "PASS",
+      "top_level_permissions": {
+        "contents": "read"
+      },
+      "top_level_write_scopes": [],
+      "triggers": [
+        "pull_request",
+        "push"
+      ],
+      "uses_oidc_id_token": false,
+      "uses_pull_request_target": false,
+      "workflow": ".github/workflows/claims-evidence-gate.yml"
+    },
+    {
+      "checks_out_pr_head": false,
+      "explicit_secret_refs": [],
+      "fatal_count": 0,
+      "flags": [],
+      "has_top_level_permissions": true,
+      "job_write_scopes": {},
+      "name": "CNS Release Gate",
+      "status": "PASS",
+      "top_level_permissions": {
+        "contents": "read"
+      },
+      "top_level_write_scopes": [],
+      "triggers": [
+        "pull_request",
+        "push"
+      ],
+      "uses_oidc_id_token": false,
+      "uses_pull_request_target": false,
+      "workflow": ".github/workflows/cns-release-gate.yml"
+    },
+    {
+      "checks_out_pr_head": false,
+      "explicit_secret_refs": [],
+      "fatal_count": 0,
+      "flags": [],
+      "has_top_level_permissions": true,
+      "job_write_scopes": {},
+      "name": "Code Hygiene Gate",
+      "status": "PASS",
+      "top_level_permissions": {
+        "contents": "read"
+      },
+      "top_level_write_scopes": [],
+      "triggers": [
+        "pull_request",
+        "push"
+      ],
+      "uses_oidc_id_token": false,
+      "uses_pull_request_target": false,
+      "workflow": ".github/workflows/code-hygiene-gate.yml"
+    },
+    {
+      "checks_out_pr_head": false,
+      "explicit_secret_refs": [],
+      "fatal_count": 0,
+      "flags": [
+        {
+          "code": "JUSTIFIED_WRITE_SCOPE",
+          "level": "INFO",
+          "message": "top-level `security-events: write` — Upload CodeQL SARIF analysis to the repository Security tab (github/codeql-action)."
+        }
+      ],
+      "has_top_level_permissions": true,
+      "job_write_scopes": {},
+      "name": "CodeQL",
+      "status": "PASS",
+      "top_level_permissions": {
+        "contents": "read",
+        "security-events": "write"
+      },
+      "top_level_write_scopes": [
+        "security-events"
+      ],
+      "triggers": [
+        "push",
+        "schedule",
+        "workflow_dispatch"
+      ],
+      "uses_oidc_id_token": false,
+      "uses_pull_request_target": false,
+      "workflow": ".github/workflows/codeql.yml"
+    },
+    {
+      "checks_out_pr_head": false,
+      "explicit_secret_refs": [],
+      "fatal_count": 0,
+      "flags": [],
+      "has_top_level_permissions": true,
+      "job_write_scopes": {},
+      "name": "Cognitive Dynamics Lab Verification",
+      "status": "PASS",
+      "top_level_permissions": {
+        "contents": "read"
+      },
+      "top_level_write_scopes": [],
+      "triggers": [
+        "pull_request",
+        "push"
+      ],
+      "uses_oidc_id_token": false,
+      "uses_pull_request_target": false,
+      "workflow": ".github/workflows/cognitive-dynamics-lab.yml"
+    },
+    {
+      "checks_out_pr_head": false,
+      "explicit_secret_refs": [],
+      "fatal_count": 0,
+      "flags": [],
+      "has_top_level_permissions": true,
+      "job_write_scopes": {},
+      "name": "Commit Acceptor Gate",
+      "status": "PASS",
+      "top_level_permissions": {
+        "contents": "read"
+      },
+      "top_level_write_scopes": [],
+      "triggers": [
+        "merge_group",
+        "pull_request"
+      ],
+      "uses_oidc_id_token": false,
+      "uses_pull_request_target": false,
+      "workflow": ".github/workflows/commit-acceptor-gate.yml"
+    },
+    {
+      "checks_out_pr_head": false,
+      "explicit_secret_refs": [],
+      "fatal_count": 0,
+      "flags": [],
+      "has_top_level_permissions": true,
+      "job_write_scopes": {},
+      "name": "Company Value Functions",
+      "status": "PASS",
+      "top_level_permissions": {
+        "contents": "read"
+      },
+      "top_level_write_scopes": [],
+      "triggers": [
+        "merge_group",
+        "pull_request",
+        "workflow_dispatch"
+      ],
+      "uses_oidc_id_token": false,
+      "uses_pull_request_target": false,
+      "workflow": ".github/workflows/company-value-functions.yml"
+    },
+    {
+      "checks_out_pr_head": false,
+      "explicit_secret_refs": [],
+      "fatal_count": 0,
+      "flags": [],
+      "has_top_level_permissions": true,
+      "job_write_scopes": {},
+      "name": "Component Test Router",
+      "status": "PASS",
+      "top_level_permissions": {
+        "contents": "read"
+      },
+      "top_level_write_scopes": [],
+      "triggers": [
+        "merge_group",
+        "pull_request",
+        "workflow_dispatch"
+      ],
+      "uses_oidc_id_token": false,
+      "uses_pull_request_target": false,
+      "workflow": ".github/workflows/component-test-router.yml"
+    },
+    {
+      "checks_out_pr_head": false,
+      "explicit_secret_refs": [],
+      "fatal_count": 0,
+      "flags": [],
+      "has_top_level_permissions": true,
+      "job_write_scopes": {},
+      "name": "Architectural Connectome Gate",
+      "status": "PASS",
+      "top_level_permissions": {
+        "contents": "read"
+      },
+      "top_level_write_scopes": [],
+      "triggers": [
+        "merge_group",
+        "pull_request",
+        "push"
+      ],
+      "uses_oidc_id_token": false,
+      "uses_pull_request_target": false,
+      "workflow": ".github/workflows/connectome-gate.yml"
+    },
+    {
+      "checks_out_pr_head": false,
+      "explicit_secret_refs": [],
+      "fatal_count": 0,
+      "flags": [],
+      "has_top_level_permissions": true,
+      "job_write_scopes": {},
+      "name": "Coverage Calibration Isolated Sandbox",
+      "status": "PASS",
+      "top_level_permissions": {
+        "contents": "read"
+      },
+      "top_level_write_scopes": [],
+      "triggers": [
+        "pull_request",
+        "push",
+        "workflow_dispatch"
+      ],
+      "uses_oidc_id_token": false,
+      "uses_pull_request_target": false,
+      "workflow": ".github/workflows/coverage-calibration-isolated.yml"
+    },
+    {
+      "checks_out_pr_head": false,
+      "explicit_secret_refs": [],
+      "fatal_count": 0,
+      "flags": [],
+      "has_top_level_permissions": true,
+      "job_write_scopes": {},
+      "name": "Coverage Calibration Loop",
+      "status": "PASS",
+      "top_level_permissions": {
+        "contents": "read"
+      },
+      "top_level_write_scopes": [],
+      "triggers": [
+        "pull_request",
+        "push",
+        "workflow_dispatch"
+      ],
+      "uses_oidc_id_token": false,
+      "uses_pull_request_target": false,
+      "workflow": ".github/workflows/coverage-calibration-loop.yml"
+    },
+    {
+      "checks_out_pr_head": false,
+      "explicit_secret_refs": [],
+      "fatal_count": 0,
+      "flags": [],
+      "has_top_level_permissions": true,
+      "job_write_scopes": {},
+      "name": "Coverage Control Plane",
+      "status": "PASS",
+      "top_level_permissions": {
+        "contents": "read"
+      },
+      "top_level_write_scopes": [],
+      "triggers": [
+        "pull_request",
+        "push",
+        "workflow_dispatch"
+      ],
+      "uses_oidc_id_token": false,
+      "uses_pull_request_target": false,
+      "workflow": ".github/workflows/coverage-control-plane.yml"
+    },
+    {
+      "checks_out_pr_head": false,
+      "explicit_secret_refs": [],
+      "fatal_count": 0,
+      "flags": [],
+      "has_top_level_permissions": true,
+      "job_write_scopes": {},
+      "name": "Coverage Intelligence Gate",
+      "status": "PASS",
+      "top_level_permissions": {
+        "contents": "read"
+      },
+      "top_level_write_scopes": [],
+      "triggers": [
+        "pull_request",
+        "push",
+        "schedule",
+        "workflow_dispatch"
+      ],
+      "uses_oidc_id_token": false,
+      "uses_pull_request_target": false,
+      "workflow": ".github/workflows/coverage-intelligence.yml"
+    },
+    {
+      "checks_out_pr_head": false,
+      "explicit_secret_refs": [],
+      "fatal_count": 0,
+      "flags": [],
+      "has_top_level_permissions": true,
+      "job_write_scopes": {},
+      "name": "Coverage Ratchet Edge Tests",
+      "status": "PASS",
+      "top_level_permissions": {
+        "contents": "read"
+      },
+      "top_level_write_scopes": [],
+      "triggers": [
+        "pull_request",
+        "push",
+        "workflow_dispatch"
+      ],
+      "uses_oidc_id_token": false,
+      "uses_pull_request_target": false,
+      "workflow": ".github/workflows/coverage-ratchet-edges.yml"
+    },
+    {
+      "checks_out_pr_head": false,
+      "explicit_secret_refs": [],
+      "fatal_count": 0,
+      "flags": [],
+      "has_top_level_permissions": true,
+      "job_write_scopes": {},
+      "name": "Dependency Operational Determinism",
+      "status": "PASS",
+      "top_level_permissions": {
+        "contents": "read"
+      },
+      "top_level_write_scopes": [],
+      "triggers": [
+        "merge_group",
+        "pull_request",
+        "workflow_dispatch"
+      ],
+      "uses_oidc_id_token": false,
+      "uses_pull_request_target": false,
+      "workflow": ".github/workflows/dependency-operational-determinism.yml"
+    },
+    {
+      "checks_out_pr_head": false,
+      "explicit_secret_refs": [],
+      "fatal_count": 0,
+      "flags": [],
+      "has_top_level_permissions": true,
+      "job_write_scopes": {},
+      "name": "Descriptor Promotion Gate",
+      "status": "PASS",
+      "top_level_permissions": {
+        "contents": "read"
+      },
+      "top_level_write_scopes": [],
+      "triggers": [
+        "merge_group",
+        "pull_request",
+        "push"
+      ],
+      "uses_oidc_id_token": false,
+      "uses_pull_request_target": false,
+      "workflow": ".github/workflows/descriptor-promotion-gate.yml"
+    },
+    {
+      "checks_out_pr_head": false,
+      "explicit_secret_refs": [],
+      "fatal_count": 0,
+      "flags": [],
+      "has_top_level_permissions": true,
+      "job_write_scopes": {},
+      "name": "Docs Consistency Gate",
+      "status": "PASS",
+      "top_level_permissions": {
+        "contents": "read"
+      },
+      "top_level_write_scopes": [],
+      "triggers": [
+        "pull_request",
+        "push"
+      ],
+      "uses_oidc_id_token": false,
+      "uses_pull_request_target": false,
+      "workflow": ".github/workflows/docs-consistency-gate.yml"
+    },
+    {
+      "checks_out_pr_head": false,
+      "explicit_secret_refs": [],
+      "fatal_count": 0,
+      "flags": [],
+      "has_top_level_permissions": true,
+      "job_write_scopes": {},
+      "name": "Edge-Case Matrix — IERD-Q7",
+      "status": "PASS",
+      "top_level_permissions": {
+        "contents": "read"
+      },
+      "top_level_write_scopes": [],
+      "triggers": [
+        "merge_group",
+        "pull_request",
+        "push"
+      ],
+      "uses_oidc_id_token": false,
+      "uses_pull_request_target": false,
+      "workflow": ".github/workflows/edge-case-matrix.yml"
+    },
+    {
+      "checks_out_pr_head": false,
+      "explicit_secret_refs": [],
+      "fatal_count": 0,
+      "flags": [],
+      "has_top_level_permissions": true,
+      "job_write_scopes": {},
+      "name": "Epistemic Rhombus Gate",
+      "status": "PASS",
+      "top_level_permissions": {
+        "contents": "read"
+      },
+      "top_level_write_scopes": [],
+      "triggers": [
+        "merge_group",
+        "pull_request",
+        "push",
+        "workflow_dispatch"
+      ],
+      "uses_oidc_id_token": false,
+      "uses_pull_request_target": false,
+      "workflow": ".github/workflows/epistemic-rhombus-gate.yml"
+    },
+    {
+      "checks_out_pr_head": false,
+      "explicit_secret_refs": [],
+      "fatal_count": 0,
+      "flags": [],
+      "has_top_level_permissions": true,
+      "job_write_scopes": {},
+      "name": "evidence-grounding",
+      "status": "PASS",
+      "top_level_permissions": {
+        "contents": "read"
+      },
+      "top_level_write_scopes": [],
+      "triggers": [
+        "pull_request",
+        "push",
+        "workflow_dispatch"
+      ],
+      "uses_oidc_id_token": false,
+      "uses_pull_request_target": false,
+      "workflow": ".github/workflows/evidence-grounding.yml"
+    },
+    {
+      "checks_out_pr_head": false,
+      "explicit_secret_refs": [],
+      "fatal_count": 0,
+      "flags": [],
+      "has_top_level_permissions": true,
+      "job_write_scopes": {},
+      "name": "Fail-Closed Guardians",
+      "status": "PASS",
+      "top_level_permissions": {
+        "contents": "read"
+      },
+      "top_level_write_scopes": [],
+      "triggers": [
+        "pull_request",
+        "push"
+      ],
+      "uses_oidc_id_token": false,
+      "uses_pull_request_target": false,
+      "workflow": ".github/workflows/fail_closed_guardians.yml"
+    },
+    {
+      "checks_out_pr_head": false,
+      "explicit_secret_refs": [],
+      "fatal_count": 0,
+      "flags": [],
+      "has_top_level_permissions": true,
+      "job_write_scopes": {},
+      "name": "Feature-Debt Lock",
+      "status": "PASS",
+      "top_level_permissions": {
+        "contents": "read"
+      },
+      "top_level_write_scopes": [],
+      "triggers": [
+        "pull_request"
+      ],
+      "uses_oidc_id_token": false,
+      "uses_pull_request_target": false,
+      "workflow": ".github/workflows/feature-debt-lock.yml"
+    },
+    {
+      "checks_out_pr_head": false,
+      "explicit_secret_refs": [],
+      "fatal_count": 0,
+      "flags": [],
+      "has_top_level_permissions": true,
+      "job_write_scopes": {},
+      "name": "Final Inference Verdict",
+      "status": "PASS",
+      "top_level_permissions": {
+        "contents": "read"
+      },
+      "top_level_write_scopes": [],
+      "triggers": [
+        "pull_request",
+        "push"
+      ],
+      "uses_oidc_id_token": false,
+      "uses_pull_request_target": false,
+      "workflow": ".github/workflows/final-inference-verdict.yml"
+    },
+    {
+      "checks_out_pr_head": false,
+      "explicit_secret_refs": [],
+      "fatal_count": 0,
+      "flags": [],
+      "has_top_level_permissions": true,
+      "job_write_scopes": {},
+      "name": "Forbidden Torch JIT Gate",
+      "status": "PASS",
+      "top_level_permissions": {
+        "contents": "read"
+      },
+      "top_level_write_scopes": [],
+      "triggers": [
+        "merge_group",
+        "pull_request",
+        "push"
+      ],
+      "uses_oidc_id_token": false,
+      "uses_pull_request_target": false,
+      "workflow": ".github/workflows/forbidden-torch-jit-gate.yml"
+    },
+    {
+      "checks_out_pr_head": false,
+      "explicit_secret_refs": [],
+      "fatal_count": 0,
+      "flags": [],
+      "has_top_level_permissions": true,
+      "job_write_scopes": {},
+      "name": "formal-verification",
+      "status": "PASS",
+      "top_level_permissions": {
+        "contents": "read"
+      },
+      "top_level_write_scopes": [],
+      "triggers": [
+        "pull_request",
+        "push",
+        "workflow_dispatch"
+      ],
+      "uses_oidc_id_token": false,
+      "uses_pull_request_target": false,
+      "workflow": ".github/workflows/formal-verification.yml"
+    },
+    {
+      "checks_out_pr_head": false,
+      "explicit_secret_refs": [],
+      "fatal_count": 0,
+      "flags": [],
+      "has_top_level_permissions": true,
+      "job_write_scopes": {},
+      "name": "Governance Schema Export Sync",
+      "status": "PASS",
+      "top_level_permissions": {
+        "contents": "read"
+      },
+      "top_level_write_scopes": [],
+      "triggers": [
+        "merge_group",
+        "pull_request",
+        "push"
+      ],
+      "uses_oidc_id_token": false,
+      "uses_pull_request_target": false,
+      "workflow": ".github/workflows/governance-schema-export-sync.yml"
+    },
+    {
+      "checks_out_pr_head": false,
+      "explicit_secret_refs": [],
+      "fatal_count": 0,
+      "flags": [],
+      "has_top_level_permissions": true,
+      "job_write_scopes": {},
+      "name": "i18n",
+      "status": "PASS",
+      "top_level_permissions": {
+        "contents": "read"
+      },
+      "top_level_write_scopes": [],
+      "triggers": [
+        "pull_request",
+        "push"
+      ],
+      "uses_oidc_id_token": false,
+      "uses_pull_request_target": false,
+      "workflow": ".github/workflows/i18n.yml"
+    },
+    {
+      "checks_out_pr_head": false,
+      "explicit_secret_refs": [],
+      "fatal_count": 0,
+      "flags": [],
+      "has_top_level_permissions": true,
+      "job_write_scopes": {},
+      "name": "Import Architecture Gate",
+      "status": "PASS",
+      "top_level_permissions": {
+        "contents": "read"
+      },
+      "top_level_write_scopes": [],
+      "triggers": [
+        "pull_request",
+        "push"
+      ],
+      "uses_oidc_id_token": false,
+      "uses_pull_request_target": false,
+      "workflow": ".github/workflows/import-architecture-gate.yml"
+    },
+    {
+      "checks_out_pr_head": false,
+      "explicit_secret_refs": [],
+      "fatal_count": 0,
+      "flags": [],
+      "has_top_level_permissions": true,
+      "job_write_scopes": {},
+      "name": "Inference Transformer Contract",
+      "status": "PASS",
+      "top_level_permissions": {
+        "contents": "read"
+      },
+      "top_level_write_scopes": [],
+      "triggers": [
+        "pull_request",
+        "workflow_dispatch"
+      ],
+      "uses_oidc_id_token": false,
+      "uses_pull_request_target": false,
+      "workflow": ".github/workflows/inference-transformer-contract.yml"
+    },
+    {
+      "checks_out_pr_head": false,
+      "explicit_secret_refs": [],
+      "fatal_count": 0,
+      "flags": [],
+      "has_top_level_permissions": true,
+      "job_write_scopes": {},
+      "name": "Invariant Count Sync",
+      "status": "PASS",
+      "top_level_permissions": {
+        "contents": "read"
+      },
+      "top_level_write_scopes": [],
+      "triggers": [
+        "merge_group",
+        "pull_request",
+        "push"
+      ],
+      "uses_oidc_id_token": false,
+      "uses_pull_request_target": false,
+      "workflow": ".github/workflows/invariant-count-sync.yml"
+    },
+    {
+      "checks_out_pr_head": false,
+      "explicit_secret_refs": [],
+      "fatal_count": 0,
+      "flags": [],
+      "has_top_level_permissions": true,
+      "job_write_scopes": {},
+      "name": "L2 Demo Gate",
+      "status": "PASS",
+      "top_level_permissions": {
+        "contents": "read"
+      },
+      "top_level_write_scopes": [],
+      "triggers": [
+        "merge_group",
+        "pull_request",
+        "workflow_dispatch"
+      ],
+      "uses_oidc_id_token": false,
+      "uses_pull_request_target": false,
+      "workflow": ".github/workflows/l2-demo-gate.yml"
+    },
+    {
+      "checks_out_pr_head": false,
+      "explicit_secret_refs": [],
+      "fatal_count": 0,
+      "flags": [],
+      "has_top_level_permissions": true,
+      "job_write_scopes": {},
+      "name": "Latency Budget — server_compute",
+      "status": "PASS",
+      "top_level_permissions": {
+        "contents": "read"
+      },
+      "top_level_write_scopes": [],
+      "triggers": [
+        "merge_group",
+        "pull_request",
+        "push"
+      ],
+      "uses_oidc_id_token": false,
+      "uses_pull_request_target": false,
+      "workflow": ".github/workflows/latency-budget.yml"
+    },
+    {
+      "checks_out_pr_head": false,
+      "explicit_secret_refs": [],
+      "fatal_count": 0,
+      "flags": [],
+      "has_top_level_permissions": true,
+      "job_write_scopes": {},
+      "name": "Latency Layer Coverage — IERD-Q6",
+      "status": "PASS",
+      "top_level_permissions": {
+        "contents": "read"
+      },
+      "top_level_write_scopes": [],
+      "triggers": [
+        "merge_group",
+        "pull_request",
+        "push"
+      ],
+      "uses_oidc_id_token": false,
+      "uses_pull_request_target": false,
+      "workflow": ".github/workflows/latency-layer-coverage.yml"
+    },
+    {
+      "checks_out_pr_head": false,
+      "explicit_secret_refs": [],
+      "fatal_count": 0,
+      "flags": [],
+      "has_top_level_permissions": true,
+      "job_write_scopes": {},
+      "name": "Lighthouse CI — IERD-Q6 network_TTFB",
+      "status": "PASS",
+      "top_level_permissions": {
+        "contents": "read"
+      },
+      "top_level_write_scopes": [],
+      "triggers": [
+        "merge_group",
+        "pull_request",
+        "push"
+      ],
+      "uses_oidc_id_token": false,
+      "uses_pull_request_target": false,
+      "workflow": ".github/workflows/lighthouse-ci.yml"
+    },
+    {
+      "checks_out_pr_head": false,
+      "explicit_secret_refs": [],
+      "fatal_count": 0,
+      "flags": [],
+      "has_top_level_permissions": true,
+      "job_write_scopes": {},
+      "name": "Main Validation",
+      "status": "PASS",
+      "top_level_permissions": {
+        "contents": "read"
+      },
+      "top_level_write_scopes": [],
+      "triggers": [
+        "push",
+        "workflow_dispatch"
+      ],
+      "uses_oidc_id_token": false,
+      "uses_pull_request_target": false,
+      "workflow": ".github/workflows/main-validation.yml"
+    },
+    {
+      "checks_out_pr_head": false,
+      "explicit_secret_refs": [],
+      "fatal_count": 0,
+      "flags": [],
+      "has_top_level_permissions": true,
+      "job_write_scopes": {},
+      "name": "MFN Release Gate",
+      "status": "PASS",
+      "top_level_permissions": {
+        "contents": "read"
+      },
+      "top_level_write_scopes": [],
+      "triggers": [
+        "pull_request",
+        "push"
+      ],
+      "uses_oidc_id_token": false,
+      "uses_pull_request_target": false,
+      "workflow": ".github/workflows/mfn-release-gate.yml"
+    },
+    {
+      "checks_out_pr_head": false,
+      "explicit_secret_refs": [],
+      "fatal_count": 0,
+      "flags": [],
+      "has_top_level_permissions": true,
+      "job_write_scopes": {},
+      "name": "Mutation Kill Gate",
+      "status": "PASS",
+      "top_level_permissions": {
+        "contents": "read"
+      },
+      "top_level_write_scopes": [],
+      "triggers": [
+        "pull_request",
+        "push"
+      ],
+      "uses_oidc_id_token": false,
+      "uses_pull_request_target": false,
+      "workflow": ".github/workflows/mutation-kill-gate.yml"
+    },
+    {
+      "checks_out_pr_head": false,
+      "explicit_secret_refs": [],
+      "fatal_count": 0,
+      "flags": [],
+      "has_top_level_permissions": true,
+      "job_write_scopes": {},
+      "name": "Package Boundary Gate",
+      "status": "PASS",
+      "top_level_permissions": {
+        "contents": "read"
+      },
+      "top_level_write_scopes": [],
+      "triggers": [
+        "pull_request",
+        "push"
+      ],
+      "uses_oidc_id_token": false,
+      "uses_pull_request_target": false,
+      "workflow": ".github/workflows/package-boundary-gate.yml"
+    },
+    {
+      "checks_out_pr_head": false,
+      "explicit_secret_refs": [],
+      "fatal_count": 0,
+      "flags": [],
+      "has_top_level_permissions": true,
+      "job_write_scopes": {},
+      "name": "Physics-2026 Gate",
+      "status": "PASS",
+      "top_level_permissions": {
+        "contents": "read"
+      },
+      "top_level_write_scopes": [],
+      "triggers": [
+        "merge_group",
+        "pull_request",
+        "push"
+      ],
+      "uses_oidc_id_token": false,
+      "uses_pull_request_target": false,
+      "workflow": ".github/workflows/physics-2026-gate.yml"
+    },
+    {
+      "checks_out_pr_head": false,
+      "explicit_secret_refs": [],
+      "fatal_count": 0,
+      "flags": [],
+      "has_top_level_permissions": true,
+      "job_write_scopes": {},
+      "name": "Physics CI Evidence Emitter",
+      "status": "PASS",
+      "top_level_permissions": {
+        "contents": "read"
+      },
+      "top_level_write_scopes": [],
+      "triggers": [
+        "merge_group",
+        "pull_request",
+        "push"
+      ],
+      "uses_oidc_id_token": false,
+      "uses_pull_request_target": false,
+      "workflow": ".github/workflows/physics-ci-evidence-emitter.yml"
+    },
+    {
+      "checks_out_pr_head": false,
+      "explicit_secret_refs": [],
+      "fatal_count": 0,
+      "flags": [],
+      "has_top_level_permissions": true,
+      "job_write_scopes": {},
+      "name": "Physics Contracts",
+      "status": "PASS",
+      "top_level_permissions": {
+        "contents": "read"
+      },
+      "top_level_write_scopes": [],
+      "triggers": [
+        "merge_group",
+        "pull_request",
+        "push"
+      ],
+      "uses_oidc_id_token": false,
+      "uses_pull_request_target": false,
+      "workflow": ".github/workflows/physics-contracts.yml"
+    },
+    {
+      "checks_out_pr_head": false,
+      "explicit_secret_refs": [],
+      "fatal_count": 0,
+      "flags": [],
+      "has_top_level_permissions": true,
+      "job_write_scopes": {},
+      "name": "Physics Invariants",
+      "status": "PASS",
+      "top_level_permissions": {
+        "contents": "read"
+      },
+      "top_level_write_scopes": [],
+      "triggers": [
+        "pull_request",
+        "push"
+      ],
+      "uses_oidc_id_token": false,
+      "uses_pull_request_target": false,
+      "workflow": ".github/workflows/physics-invariants.yml"
+    },
+    {
+      "checks_out_pr_head": false,
+      "explicit_secret_refs": [],
+      "fatal_count": 0,
+      "flags": [],
+      "has_top_level_permissions": true,
+      "job_write_scopes": {},
+      "name": "Physics Kernel Gate",
+      "status": "PASS",
+      "top_level_permissions": {
+        "contents": "read"
+      },
+      "top_level_write_scopes": [],
+      "triggers": [
+        "merge_group",
+        "pull_request",
+        "push"
+      ],
+      "uses_oidc_id_token": false,
+      "uses_pull_request_target": false,
+      "workflow": ".github/workflows/physics-kernel-gate.yml"
+    },
+    {
+      "checks_out_pr_head": false,
+      "explicit_secret_refs": [],
+      "fatal_count": 0,
+      "flags": [],
+      "has_top_level_permissions": true,
+      "job_write_scopes": {},
+      "name": "Physics Release Scorecard Gate",
+      "status": "PASS",
+      "top_level_permissions": {
+        "contents": "read"
+      },
+      "top_level_write_scopes": [],
+      "triggers": [
+        "merge_group",
+        "pull_request",
+        "push"
+      ],
+      "uses_oidc_id_token": false,
+      "uses_pull_request_target": false,
+      "workflow": ".github/workflows/physics-release-scorecard-gate.yml"
+    },
+    {
+      "checks_out_pr_head": false,
+      "explicit_secret_refs": [],
+      "fatal_count": 0,
+      "flags": [],
+      "has_top_level_permissions": true,
+      "job_write_scopes": {},
+      "name": "Physics Reliability Gate",
+      "status": "PASS",
+      "top_level_permissions": {
+        "contents": "read"
+      },
+      "top_level_write_scopes": [],
+      "triggers": [
+        "merge_group",
+        "pull_request",
+        "push"
+      ],
+      "uses_oidc_id_token": false,
+      "uses_pull_request_target": false,
+      "workflow": ".github/workflows/physics-reliability-gate.yml"
+    },
+    {
+      "checks_out_pr_head": false,
+      "explicit_secret_refs": [],
+      "fatal_count": 0,
+      "flags": [],
+      "has_top_level_permissions": true,
+      "job_write_scopes": {},
+      "name": "PR Fast Diagnostics",
+      "status": "PASS",
+      "top_level_permissions": {
+        "contents": "read"
+      },
+      "top_level_write_scopes": [],
+      "triggers": [
+        "pull_request",
+        "workflow_dispatch"
+      ],
+      "uses_oidc_id_token": false,
+      "uses_pull_request_target": false,
+      "workflow": ".github/workflows/pr-fast-diagnostics.yml"
+    },
+    {
+      "checks_out_pr_head": false,
+      "explicit_secret_refs": [],
+      "fatal_count": 0,
+      "flags": [
+        {
+          "code": "JUSTIFIED_WRITE_SCOPE",
+          "level": "INFO",
+          "message": "job `dependency-review` `pull-requests: write` — Post the dependency-review summary comment on the PR (actions/dependency-review-action, comment-summary-in-pr: on-failure). Trigger is pull_request (not pull_request_target); fork tokens are read-only regardless."
+        }
+      ],
+      "has_top_level_permissions": true,
+      "job_write_scopes": {
+        "dependency-review": [
+          "pull-requests"
+        ]
+      },
+      "name": "PR Gate",
+      "status": "PASS",
+      "top_level_permissions": {
+        "contents": "read"
+      },
+      "top_level_write_scopes": [],
+      "triggers": [
+        "merge_group",
+        "pull_request"
+      ],
+      "uses_oidc_id_token": false,
+      "uses_pull_request_target": false,
+      "workflow": ".github/workflows/pr-gate.yml"
+    },
+    {
+      "checks_out_pr_head": false,
+      "explicit_secret_refs": [],
+      "fatal_count": 0,
+      "flags": [],
+      "has_top_level_permissions": true,
+      "job_write_scopes": {},
+      "name": "PR Lane Collision Gate",
+      "status": "PASS",
+      "top_level_permissions": {
+        "contents": "read"
+      },
+      "top_level_write_scopes": [],
+      "triggers": [
+        "merge_group",
+        "pull_request",
+        "push"
+      ],
+      "uses_oidc_id_token": false,
+      "uses_pull_request_target": false,
+      "workflow": ".github/workflows/pr-lane-collision-gate.yml"
+    },
+    {
+      "checks_out_pr_head": false,
+      "explicit_secret_refs": [],
+      "fatal_count": 0,
+      "flags": [],
+      "has_top_level_permissions": true,
+      "job_write_scopes": {},
+      "name": "PromptOps Validator",
+      "status": "PASS",
+      "top_level_permissions": {
+        "contents": "read"
+      },
+      "top_level_write_scopes": [],
+      "triggers": [
+        "pull_request",
+        "workflow_dispatch"
+      ],
+      "uses_oidc_id_token": false,
+      "uses_pull_request_target": false,
+      "workflow": ".github/workflows/promptops-validator.yml"
+    },
+    {
+      "checks_out_pr_head": false,
+      "explicit_secret_refs": [],
+      "fatal_count": 0,
+      "flags": [],
+      "has_top_level_permissions": true,
+      "job_write_scopes": {},
+      "name": "Readiness Gate",
+      "status": "PASS",
+      "top_level_permissions": {
+        "contents": "read"
+      },
+      "top_level_write_scopes": [],
+      "triggers": [
+        "merge_group",
+        "pull_request"
+      ],
+      "uses_oidc_id_token": false,
+      "uses_pull_request_target": false,
+      "workflow": ".github/workflows/readiness-gate.yml"
+    },
+    {
+      "checks_out_pr_head": false,
+      "explicit_secret_refs": [],
+      "fatal_count": 0,
+      "flags": [],
+      "has_top_level_permissions": true,
+      "job_write_scopes": {},
+      "name": "Reality Validators Gate",
+      "status": "PASS",
+      "top_level_permissions": {
+        "contents": "read"
+      },
+      "top_level_write_scopes": [],
+      "triggers": [
+        "merge_group",
+        "pull_request",
+        "push"
+      ],
+      "uses_oidc_id_token": false,
+      "uses_pull_request_target": false,
+      "workflow": ".github/workflows/reality-validators-gate.yml"
+    },
+    {
+      "checks_out_pr_head": false,
+      "explicit_secret_refs": [],
+      "fatal_count": 0,
+      "flags": [],
+      "has_top_level_permissions": true,
+      "job_write_scopes": {},
+      "name": "Release Gate",
+      "status": "PASS",
+      "top_level_permissions": {
+        "contents": "read"
+      },
+      "top_level_write_scopes": [],
+      "triggers": [
+        "push",
+        "schedule",
+        "workflow_dispatch"
+      ],
+      "uses_oidc_id_token": false,
+      "uses_pull_request_target": false,
+      "workflow": ".github/workflows/release-gate.yml"
+    },
+    {
+      "checks_out_pr_head": false,
+      "explicit_secret_refs": [],
+      "fatal_count": 0,
+      "flags": [],
+      "has_top_level_permissions": true,
+      "job_write_scopes": {},
+      "name": "Repo Integrity Gate",
+      "status": "PASS",
+      "top_level_permissions": {
+        "contents": "read"
+      },
+      "top_level_write_scopes": [],
+      "triggers": [
+        "pull_request",
+        "push",
+        "workflow_dispatch"
+      ],
+      "uses_oidc_id_token": false,
+      "uses_pull_request_target": false,
+      "workflow": ".github/workflows/repo-integrity-gate.yml"
+    },
+    {
+      "checks_out_pr_head": false,
+      "explicit_secret_refs": [],
+      "fatal_count": 0,
+      "flags": [],
+      "has_top_level_permissions": true,
+      "job_write_scopes": {},
+      "name": "Reproducible Capsule",
+      "status": "PASS",
+      "top_level_permissions": {
+        "contents": "read"
+      },
+      "top_level_write_scopes": [],
+      "triggers": [
+        "pull_request",
+        "push",
+        "workflow_dispatch"
+      ],
+      "uses_oidc_id_token": false,
+      "uses_pull_request_target": false,
+      "workflow": ".github/workflows/reproducible-capsule.yml"
+    },
+    {
+      "checks_out_pr_head": false,
+      "explicit_secret_refs": [],
+      "fatal_count": 0,
+      "flags": [],
+      "has_top_level_permissions": true,
+      "job_write_scopes": {},
+      "name": "Research Integrity Gate",
+      "status": "PASS",
+      "top_level_permissions": {
+        "contents": "read"
+      },
+      "top_level_write_scopes": [],
+      "triggers": [
+        "pull_request",
+        "push",
+        "workflow_dispatch"
+      ],
+      "uses_oidc_id_token": false,
+      "uses_pull_request_target": false,
+      "workflow": ".github/workflows/research-integrity-gate.yml"
+    },
+    {
+      "checks_out_pr_head": false,
+      "explicit_secret_refs": [],
+      "fatal_count": 0,
+      "flags": [],
+      "has_top_level_permissions": true,
+      "job_write_scopes": {},
+      "name": "Research Standard Contract",
+      "status": "PASS",
+      "top_level_permissions": {
+        "contents": "read"
+      },
+      "top_level_write_scopes": [],
+      "triggers": [
+        "pull_request",
+        "workflow_dispatch"
+      ],
+      "uses_oidc_id_token": false,
+      "uses_pull_request_target": false,
+      "workflow": ".github/workflows/research-standard-contract.yml"
+    },
+    {
+      "checks_out_pr_head": false,
+      "explicit_secret_refs": [],
+      "fatal_count": 0,
+      "flags": [
+        {
+          "code": "JUSTIFIED_WRITE_SCOPE",
+          "level": "INFO",
+          "message": "job `supply-chain` `attestations: write` — Write the SLSA build-provenance attestation to the attestations store (actions/attest-build-provenance)."
+        },
+        {
+          "code": "JUSTIFIED_WRITE_SCOPE",
+          "level": "INFO",
+          "message": "job `supply-chain` `id-token: write` — OIDC token for keyless SLSA build-provenance attestation (actions/attest-build-provenance). No secrets in scope; runs after the lane gate."
+        },
+        {
+          "code": "OIDC_ID_TOKEN",
+          "level": "INFO",
+          "message": "requests `id-token: write` (OIDC); confirm the audience is scoped."
+        }
+      ],
+      "has_top_level_permissions": true,
+      "job_write_scopes": {
+        "supply-chain": [
+          "attestations",
+          "id-token"
+        ]
+      },
+      "name": "Ricci Microstructure Gate",
+      "status": "PASS",
+      "top_level_permissions": {
+        "contents": "read"
+      },
+      "top_level_write_scopes": [],
+      "triggers": [
+        "pull_request",
+        "push"
+      ],
+      "uses_oidc_id_token": true,
+      "uses_pull_request_target": false,
+      "workflow": ".github/workflows/ricci-microstructure-gate.yml"
+    },
+    {
+      "checks_out_pr_head": false,
+      "explicit_secret_refs": [],
+      "fatal_count": 0,
+      "flags": [],
+      "has_top_level_permissions": true,
+      "job_write_scopes": {},
+      "name": "RVG Repository Verification Gate",
+      "status": "PASS",
+      "top_level_permissions": {
+        "contents": "read"
+      },
+      "top_level_write_scopes": [],
+      "triggers": [
+        "pull_request",
+        "push",
+        "workflow_dispatch"
+      ],
+      "uses_oidc_id_token": false,
+      "uses_pull_request_target": false,
+      "workflow": ".github/workflows/rvg.yml"
+    },
+    {
+      "checks_out_pr_head": false,
+      "explicit_secret_refs": [],
+      "fatal_count": 0,
+      "flags": [],
+      "has_top_level_permissions": true,
+      "job_write_scopes": {},
+      "name": "Schemathesis Contract",
+      "status": "PASS",
+      "top_level_permissions": {
+        "contents": "read"
+      },
+      "top_level_write_scopes": [],
+      "triggers": [
+        "merge_group",
+        "pull_request",
+        "push"
+      ],
+      "uses_oidc_id_token": false,
+      "uses_pull_request_target": false,
+      "workflow": ".github/workflows/schemathesis-contract.yml"
+    },
+    {
+      "checks_out_pr_head": false,
+      "explicit_secret_refs": [],
+      "fatal_count": 0,
+      "flags": [],
+      "has_top_level_permissions": true,
+      "job_write_scopes": {},
+      "name": "Security Deep Validation",
+      "status": "PASS",
+      "top_level_permissions": {
+        "contents": "read"
+      },
+      "top_level_write_scopes": [],
+      "triggers": [
+        "schedule",
+        "workflow_dispatch"
+      ],
+      "uses_oidc_id_token": false,
+      "uses_pull_request_target": false,
+      "workflow": ".github/workflows/security-deep.yml"
+    },
+    {
+      "checks_out_pr_head": false,
+      "explicit_secret_refs": [],
+      "fatal_count": 0,
+      "flags": [],
+      "has_top_level_permissions": true,
+      "job_write_scopes": {},
+      "name": "service-manifest-audit",
+      "status": "PASS",
+      "top_level_permissions": {
+        "contents": "read"
+      },
+      "top_level_write_scopes": [],
+      "triggers": [
+        "pull_request",
+        "push"
+      ],
+      "uses_oidc_id_token": false,
+      "uses_pull_request_target": false,
+      "workflow": ".github/workflows/service-manifest-audit.yml"
+    },
+    {
+      "checks_out_pr_head": false,
+      "explicit_secret_refs": [],
+      "fatal_count": 0,
+      "flags": [],
+      "has_top_level_permissions": true,
+      "job_write_scopes": {},
+      "name": "Truth-Gate Mutation Harness",
+      "status": "PASS",
+      "top_level_permissions": {
+        "contents": "read"
+      },
+      "top_level_write_scopes": [],
+      "triggers": [
+        "merge_group",
+        "pull_request",
+        "push"
+      ],
+      "uses_oidc_id_token": false,
+      "uses_pull_request_target": false,
+      "workflow": ".github/workflows/truth-gate-mutation.yml"
+    },
+    {
+      "checks_out_pr_head": false,
+      "explicit_secret_refs": [],
+      "fatal_count": 0,
+      "flags": [],
+      "has_top_level_permissions": true,
+      "job_write_scopes": {},
+      "name": "UX State Coverage — IERD-Q5",
+      "status": "PASS",
+      "top_level_permissions": {
+        "contents": "read"
+      },
+      "top_level_write_scopes": [],
+      "triggers": [
+        "merge_group",
+        "pull_request",
+        "push"
+      ],
+      "uses_oidc_id_token": false,
+      "uses_pull_request_target": false,
+      "workflow": ".github/workflows/ux-state-coverage.yml"
+    },
+    {
+      "checks_out_pr_head": false,
+      "explicit_secret_refs": [],
+      "fatal_count": 0,
+      "flags": [],
+      "has_top_level_permissions": true,
+      "job_write_scopes": {},
+      "name": "Wheel Contract Gate",
+      "status": "PASS",
+      "top_level_permissions": {
+        "contents": "read"
+      },
+      "top_level_write_scopes": [],
+      "triggers": [
+        "pull_request",
+        "push"
+      ],
+      "uses_oidc_id_token": false,
+      "uses_pull_request_target": false,
+      "workflow": ".github/workflows/wheel-contract-gate.yml"
+    }
+  ],
+  "workflows_audited": 70,
+  "workflows_dir": ".github/workflows",
+  "workflows_flagged": 0
+}

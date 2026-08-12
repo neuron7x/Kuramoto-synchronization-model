@@ -1,5 +1,5 @@
 ---
-owner: dx@tradepulse
+owner: dx@geosync
 review_cadence: quarterly
 last_reviewed: 2026-01-01
 ---
@@ -12,8 +12,8 @@ following the contract definitions in `docs/api/overview.md` and
 
 ## Prerequisites
 
-- **API base URL**: `https://api.tradepulse.example` (or staging equivalent).
-- **ed25519 signing key** configured for `X-TradePulse-Signature` as described in
+- **API base URL**: `https://api.geosync.example` (or staging equivalent).
+- **ed25519 signing key** configured for `X-GeoSync-Signature` as described in
   `docs/api/authentication.md`.
 - **Symbol catalog knowledge** (e.g., `BTC-USD`).
 - **Time sync** (NTP) to avoid signature drift.
@@ -22,8 +22,8 @@ following the contract definitions in `docs/api/overview.md` and
 
 ```bash
 curl -sS \
-  -H "X-TradePulse-Signature: v1=<ed25519_signature>" \
-  https://api.tradepulse.example/v1/signals/BTC-USD
+  -H "X-GeoSync-Signature: v1=<ed25519_signature>" \
+  https://api.geosync.example/v1/signals/BTC-USD
 ```
 
 ## Expected Outputs

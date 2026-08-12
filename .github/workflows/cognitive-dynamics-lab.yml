@@ -1,0 +1,69 @@
+name: Cognitive Dynamics Lab Verification
+
+concurrency:
+  group: ${{ github.workflow }}-${{ github.ref }}
+  cancel-in-progress: true
+
+on:
+  push:
+    branches: [main]
+    paths:
+      - 'docs/cognitive_dynamics/**'
+      - 'schemas/cognitive_dynamics_summary.schema.json'
+      - 'scripts/cognitive_dynamics_lab/**'
+      - '.claude/commit_acceptors/cognitive-dynamics-lab.yaml'
+      - '.github/workflows/cognitive-dynamics-lab.yml'
+  pull_request:
+    paths:
+      - 'docs/cognitive_dynamics/**'
+      - 'schemas/cognitive_dynamics_summary.schema.json'
+      - 'scripts/cognitive_dynamics_lab/**'
+      - '.claude/commit_acceptors/cognitive-dynamics-lab.yaml'
+      - '.github/workflows/cognitive-dynamics-lab.yml'
+
+permissions:
+  contents: read
+
+env:
+  FORCE_JAVASCRIPT_ACTIONS_TO_NODE24: 'true'
+
+jobs:
+  verify:
+    runs-on: ubuntu-latest
+    steps:
+      - name: Checkout
+        uses: actions/checkout@9c091bb21b7c1c1d1991bb908d89e4e9dddfe3e0
+
+      - name: Setup Python
+        uses: actions/setup-python@ece7cb06caefa5fff74198d8649806c4678c61a1
+        with:
+          python-version: '3.12'
+
+      - name: Compile scripts
+        run: |
+          python -m py_compile scripts/cognitive_dynamics_lab/simulation_runner.py
+          python -m py_compile scripts/cognitive_dynamics_lab/parameter_review_runner.py
+          python -m py_compile scripts/cognitive_dynamics_lab/benchmark_runner.py
+
+      - name: Run replay artifacts
+        run: |
+          python scripts/cognitive_dynamics_lab/simulation_runner.py --out artifacts/cognitive_dynamics_lab
+          python scripts/cognitive_dynamics_lab/parameter_review_runner.py --out artifacts/cognitive_dynamics_lab
+          python scripts/cognitive_dynamics_lab/benchmark_runner.py --out artifacts/cognitive_dynamics_lab_benchmark
+
+      - name: Verify expected outputs
+        run: |
+          test -f artifacts/cognitive_dynamics_lab/summary.json
+          test -f artifacts/cognitive_dynamics_lab/metrics_table.csv
+          test -f artifacts/cognitive_dynamics_lab/parameter_review_summary.json
+          test -f artifacts/cognitive_dynamics_lab/parameter_review.csv
+          test -f artifacts/cognitive_dynamics_lab_benchmark/benchmark_summary.json
+          test -f artifacts/cognitive_dynamics_lab_benchmark/benchmark_table.csv
+
+      - name: Upload verification artifacts
+        uses: actions/upload-artifact@043fb46d1a93c77aae656e7c1c64a875d1fc6a0a
+        with:
+          name: cognitive-dynamics-lab-verification
+          path: |
+            artifacts/cognitive_dynamics_lab
+            artifacts/cognitive_dynamics_lab_benchmark

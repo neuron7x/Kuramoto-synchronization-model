@@ -1,0 +1,66 @@
+# Diff-bound commit acceptor: fail-closed Tsallis entropy S_q + q-robustness.
+#
+# Hardens core.physics.free_energy_trading_gate.tsallis_entropy against the
+# silent-NaN path (a NaN weight slipped the `total < 1e-12` guard because
+# `NaN < 1e-12` is False, yielding a silent NaN entropy) and asserts the
+# INV-FE2 theorem S_q ≥ 0 for q>1 on the simplex (Tsallis 1988) fail-closed.
+#
+# The adversarial battery proves the entropic index q (used around q≈1.02 up
+# to the default 1.5) is NOT an overfit knob: S_q is monotone non-increasing in
+# q, smooth (bounded curvature) with no knife-edge near q≈1.02, and Lipschitz
+# in the deformation parameter (q-1). Dirty data (NaN/Inf weights, q≤1) is
+# rejected, never silently passed.
+#
+# Integrity gate, NOT a market claim. No dependency, no runtime behaviour change
+# for valid inputs, no lint/type suppressions.
+id: tsallis-q-robustness
+status: ACTIVE
+claim_type: fail_closed
+promise: >-
+  core.physics.free_energy_trading_gate.tsallis_entropy rejects non-finite
+  position weights (no silent NaN) and raises on a materially negative S_q,
+  enforcing the INV-FE2 theorem S_q ≥ 0 for q>1 on the probability simplex.
+  The adversarial test battery proves S_q is monotone non-increasing in q,
+  smooth with bounded curvature near q≈1.02, and bounded in sensitivity to a
+  ±10% move in (q-1) — i.e. q is a structural parameter, not an overfit knob.
+  No runtime behaviour changes for valid inputs; the degenerate zero-mass case
+  still returns 0.0.
+diff_scope:
+  changed_files:
+    - path: ".claude/commit_acceptors/tsallis-q-robustness.yaml"
+    - path: "core/physics/free_energy_trading_gate.py"
+    - path: "tests/unit/physics/test_tsallis_q_robustness.py"
+  forbidden_paths:
+    - "trading/"
+    - "execution/"
+    - "forecast/"
+    - "src/"
+required_python_symbols:
+  - "core/physics/free_energy_trading_gate.py::FreeEnergyTradingGate"
+  - "core/physics/free_energy_trading_gate.py::tsallis_entropy"
+expected_signal: >-
+  pytest tests/unit/physics/test_tsallis_q_robustness.py reports all tests
+  passing: S_q is non-negative and finite across the q grid {1.001..3.0} and
+  five distributions (uniform, concentrated, bimodal, Dirichlet, exponential);
+  monotone non-increasing in q; smooth near q≈1.02; sensitivity-bounded; and
+  dirty weights (NaN/Inf) plus q≤1 are rejected fail-closed.
+measurement_command: "bash -c 'mkdir -p tmp && python -m pytest tests/unit/physics/test_tsallis_q_robustness.py -q > tmp/tsallis_q_robustness.log 2>&1'"
+signal_artifact: "tmp/tsallis_q_robustness.log"
+falsifier:
+  command: "bash -c 'mkdir -p tmp && python -c \"import numpy as np,sys; from core.physics.free_energy_trading_gate import FreeEnergyTradingGate as G; g=G(q=1.02); fired=False\ntry:\n g.tsallis_entropy(np.array([np.nan,0.0,0.0]))\nexcept ValueError:\n fired=True\nsys.exit(0 if fired else 1)\" > tmp/tsallis_q_falsifier.log 2>&1'"
+  description: >-
+    Falsifier evidence is written to tmp/tsallis_q_falsifier.log.
+    Fail-closed teeth probe with the runner's polarity (exit 0 == green-state
+    holds). Feeds a NaN weight and exits 0 IFF tsallis_entropy raises ValueError
+    (the guard is live). If the silent-NaN path returns instead of raising, the
+    probe exits 1 — a broken green state demanding repair, not a green patch.
+rollback_command: >-
+  bash -c 'git checkout origin/main -- core/physics/free_energy_trading_gate.py
+  && git rm -f tests/unit/physics/test_tsallis_q_robustness.py
+  .claude/commit_acceptors/tsallis-q-robustness.yaml'
+rollback_verification_command: >-
+  bash -c 'test ! -f tests/unit/physics/test_tsallis_q_robustness.py
+  && ! grep -q "position weights must be finite" core/physics/free_energy_trading_gate.py'
+memory_update_type: none
+ledger_path: ".claude/commit_acceptors/tsallis-q-robustness.yaml"
+report_path: "docs/reports/diff_bound_commit_acceptor_layer.md"

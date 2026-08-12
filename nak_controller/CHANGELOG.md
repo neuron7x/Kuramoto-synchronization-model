@@ -2,7 +2,7 @@
 
 ## 2.1.0
 
-- Initial open-source drop of the NaK neuro-energetic controller for TradePulse.
+- Initial open-source drop of the NaK neuro-energetic controller for GeoSync.
 - Added deterministic RNG seeding and explicit `reset(seed=...)` support to keep
   runtime and tests reproducible.
 - Hardened configuration loading with strict validation and YAML schema checks

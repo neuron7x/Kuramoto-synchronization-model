@@ -1,0 +1,42 @@
+# Diff-bound commit acceptor: CTC-FALSIFY-001 C4 recursive self-audit.
+id: ctc-falsify-c4
+status: ACTIVE
+claim_type: governance
+promise: "C4 audits the C3 privileged phase-offset estimator with the same fail-closed gates; it FAILS them (d<1, confound-FP>0.05, sweep false-positives), so the C3 'recoverable in principle' inference is retracted to scope and RESULTS.md is corrected. No threshold tuning; the standard-estimand blindness finding is unchanged."
+diff_scope:
+  changed_files:
+    - path: "research/ctc_falsify/c4/__init__.py"
+    - path: "research/ctc_falsify/c4/config_c4.py"
+    - path: "research/ctc_falsify/c4/phase_offset.py"
+    - path: "research/ctc_falsify/c4/audit.py"
+    - path: "research/ctc_falsify/c4/run.py"
+    - path: "research/ctc_falsify/c4/schema/ctc_falsify_c4_result.schema.json"
+    - path: "research/ctc_falsify/c4/evidence/ctc_falsify_c4_result.json"
+    - path: "tests/research/ctc_falsify/test_ctc_falsify_c4.py"
+    - path: "research/ctc_falsify/RESULTS.md"
+    - path: ".github/detect-secrets.baseline"
+    - path: ".claude/commit_acceptors/ctc-falsify-c4.yaml"
+  forbidden_paths:
+    - "trading/"
+    - "execution/"
+    - "forecast/"
+    - "policy/"
+    - "research/ctc_falsify/config.py"
+required_python_symbols:
+  - "run_audit"
+  - "decide"
+  - "phase_offset"
+  - "offset_ab"
+  - "offset_ba"
+expected_signal: "C4 verdict is bound to G1..G4 booleans; reference run is a fail-closed INADMISSIBLE that retracts the C3 inference"
+measurement_command: "python -m pytest tests/research/ctc_falsify/test_ctc_falsify_c4.py -q"
+signal_artifact: "tmp/ctc_falsify_c4_pytest.log"
+falsifier:
+  command: "grep -qF 'RETRACTED to scope' research/ctc_falsify/RESULTS.md && grep -qF 'C4_INADMISSIBLE_ESTIMATOR_CANT_SEPARATE' research/ctc_falsify/c4/config_c4.py && grep -qF 'stays **OPEN**' research/ctc_falsify/RESULTS.md"
+  description: "Asserts the self-retraction is recorded (C3 inference retracted, the scoped INADMISSIBLE verdict exists, line stays OPEN). Fails if the result is silently re-promoted into the original over-claim."
+rollback_command: "git rm -rf research/ctc_falsify/c4 tests/research/ctc_falsify/test_ctc_falsify_c4.py && git checkout -- research/ctc_falsify/RESULTS.md .github/detect-secrets.baseline"
+rollback_verification_command: "test ! -d research/ctc_falsify/c4"
+memory_update_type: append
+ledger_path: ".claude/commit_acceptors/ctc-falsify-c4.yaml"
+report_path: "research/ctc_falsify/RESULTS.md"
+evidence: []

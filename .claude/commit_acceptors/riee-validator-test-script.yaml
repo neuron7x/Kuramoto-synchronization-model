@@ -1,0 +1,23 @@
+id: riee-validator-test-script
+status: ACTIVE
+claim_type: correctness
+promise: "Validator tests are bound."
+diff_scope:
+  changed_files:
+    - path: ".claude/commit_acceptors/riee-validator-test-script.yaml"
+    - path: "tests/tools/test_validate_financial_contract_script.py"
+    - path: "tests/tools/test_validate_financial_contract_adversarial.py"
+  forbidden_paths: []
+required_python_symbols: []
+expected_signal: "validator tests run"
+measurement_command: "python -m pytest -q tests/tools/test_validate_financial_contract_script.py tests/tools/test_validate_financial_contract_adversarial.py"
+signal_artifact: "tmp/riee_validator_test_script.log"
+falsifier:
+  command: "python -m pytest -q tests/tools/test_validate_financial_contract_script.py"
+  description: "test must execute"
+rollback_command: "git checkout HEAD~1 -- tests/tools/test_validate_financial_contract_script.py"
+rollback_verification_command: "python tools/commit_acceptor/validate_commit_acceptor.py"
+memory_update_type: append
+ledger_path: ".claude/commit_acceptors/riee-validator-test-script.yaml"
+report_path: "tests/tools/test_validate_financial_contract_script.py"
+evidence: []

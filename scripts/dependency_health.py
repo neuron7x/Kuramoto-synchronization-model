@@ -1,3 +1,5 @@
+# Copyright (c) 2023-2026 Yaroslav Vasylenko (neuron7xLab)
+# SPDX-License-Identifier: MIT
 """Dependency health checks spanning Python, Node, and Go toolchains."""
 
 from __future__ import annotations
@@ -17,6 +19,20 @@ from packaging.version import InvalidVersion, Version
 LOGGER = logging.getLogger(__name__)
 
 IGNORED_PREFIXES = ("-r ", "--", "http://", "https://", "git+", "svn+", "hg+")
+
+# pip treats a ``#`` preceded by whitespace as the start of an inline comment
+# (PEP 508 / pip's ``COMMENT_RE``). Full-line comments are filtered separately.
+_INLINE_COMMENT_RE = re.compile(r"\s+#.*$")
+
+
+def _strip_inline_comment(line: str) -> str:
+    """Remove a pip-style trailing ``# ...`` inline comment from a manifest line.
+
+    URL/VCS lines (which may carry ``#egg=`` fragments) are filtered by
+    ``IGNORED_PREFIXES`` before this is called, so stripping is unambiguous for
+    the PEP 508 requirement lines that remain.
+    """
+    return _INLINE_COMMENT_RE.sub("", line).strip()
 
 
 class DependencyHealthError(RuntimeError):
@@ -94,17 +110,14 @@ def load_requirement_specs(
                 continue
             if line.startswith(IGNORED_PREFIXES):
                 continue
+            line = _strip_inline_comment(line)
+            if not line:
+                continue
             try:
                 requirement = Requirement(line)
             except InvalidRequirement as exc:
-                raise DependencyHealthError(
-                    f"Invalid requirement '{line}' in {path}"
-                ) from exc
-            applies = (
-                requirement.marker.evaluate(environment)
-                if requirement.marker
-                else True
-            )
+                raise DependencyHealthError(f"Invalid requirement '{line}' in {path}") from exc
+            applies = requirement.marker.evaluate(environment) if requirement.marker else True
             specs.append(
                 RequirementSpec(
                     requirement=requirement,
@@ -125,12 +138,13 @@ def load_locked_dependencies(path: Path) -> dict[str, list[LockedDependency]]:
             continue
         if line.startswith(IGNORED_PREFIXES):
             continue
+        line = _strip_inline_comment(line)
+        if not line:
+            continue
         try:
             requirement = Requirement(line)
         except InvalidRequirement as exc:
-            raise DependencyHealthError(
-                f"Invalid requirement '{line}' in {path}"
-            ) from exc
+            raise DependencyHealthError(f"Invalid requirement '{line}' in {path}") from exc
         name = requirement.name
         specifiers = list(requirement.specifier)
         version: str | None = None
@@ -169,8 +183,7 @@ def compare_requirements_to_lock(
                     system=system,
                     path=spec.source,
                     message=(
-                        f"Requirement '{requirement.name}' is not pinned to an exact "
-                        "version."
+                        f"Requirement '{requirement.name}' is not pinned to an exact version."
                     ),
                 )
             )
@@ -188,16 +201,12 @@ def compare_requirements_to_lock(
             )
             continue
         if len(entries) > 1:
-            versions = ", ".join(
-                sorted({entry.version or "unresolved" for entry in entries})
-            )
+            versions = ", ".join(sorted({entry.version or "unresolved" for entry in entries}))
             issues.append(
                 DependencyIssue(
                     system=system,
                     path=lock_file,
-                    message=(
-                        f"Multiple versions locked for '{requirement.name}': {versions}."
-                    ),
+                    message=(f"Multiple versions locked for '{requirement.name}': {versions}."),
                 )
             )
         for entry in entries:
@@ -207,8 +216,7 @@ def compare_requirements_to_lock(
                         system=system,
                         path=lock_file,
                         message=(
-                            f"Locked dependency '{entry.name}' is not pinned to an "
-                            "exact version."
+                            f"Locked dependency '{entry.name}' is not pinned to an exact version."
                         ),
                     )
                 )
@@ -278,9 +286,7 @@ def check_python_dependencies(
 
     runtime_specs = load_requirement_specs(requirements, environment=environment)
     dev_specs = load_requirement_specs(dev_requirements, environment=environment)
-    backend_specs = load_requirement_specs(
-        backend_requirements, environment=environment
-    )
+    backend_specs = load_requirement_specs(backend_requirements, environment=environment)
     constraint_specs = load_requirement_specs(constraints, environment=environment)
 
     issues.extend(
@@ -339,9 +345,7 @@ def check_node_dependencies(package_json: Path, package_lock: Path) -> Dependenc
             DependencyIssue(
                 system="node",
                 path=package_lock,
-                message=(
-                    f"Unsupported lockfileVersion {lock_version}; expected 2 or 3."
-                ),
+                message=(f"Unsupported lockfileVersion {lock_version}; expected 2 or 3."),
             )
         )
 
@@ -392,9 +396,7 @@ def check_node_dependencies(package_json: Path, package_lock: Path) -> Dependenc
                 DependencyIssue(
                     system="node",
                     path=package_lock,
-                    message=(
-                        f"Dependency '{name}@{version}' missing from package-lock.json."
-                    ),
+                    message=(f"Dependency '{name}@{version}' missing from package-lock.json."),
                 )
             )
     for name, version in (package_data.get("devDependencies") or {}).items():
@@ -403,9 +405,7 @@ def check_node_dependencies(package_json: Path, package_lock: Path) -> Dependenc
                 DependencyIssue(
                     system="node",
                     path=package_lock,
-                    message=(
-                        f"Dev dependency '{name}@{version}' missing from package-lock.json."
-                    ),
+                    message=(f"Dev dependency '{name}@{version}' missing from package-lock.json."),
                 )
             )
     return DependencyHealthReport(issues=tuple(issues))
@@ -435,9 +435,7 @@ def check_go_dependencies(go_mod: Path, go_sum: Path) -> DependencyHealthReport:
                 DependencyIssue(
                     system="go",
                     path=go_sum,
-                    message=(
-                        f"Missing go.sum entry for '{module} {version}'."
-                    ),
+                    message=(f"Missing go.sum entry for '{module} {version}'."),
                 )
             )
     return DependencyHealthReport(issues=tuple(issues))

@@ -110,7 +110,7 @@ Configure repository-level secrets that are used across multiple workflows.
 - `SEMGREP_APP_TOKEN` - For Semgrep Cloud integration
 - `GITLEAKS_LICENSE` - For Gitleaks enterprise features
 - `COSIGN_CERTIFICATE_IDENTITY` - For SBOM signature verification
-  - Example: `https://github.com/neuron7x/TradePulse/.github/workflows/sbom.yml@refs/heads/main`
+  - Example: `https://github.com/neuron7xLab/GeoSync/.github/workflows/sbom.yml@refs/heads/main`
 - `COSIGN_CERTIFICATE_OIDC_ISSUER` - OIDC issuer URL
   - Example: `https://token.actions.githubusercontent.com`
 
@@ -173,20 +173,20 @@ The `.github/CODEOWNERS` file is already configured, but ensure it's enforced:
 
 ### Current Configuration:
 ```
-* @neuron7x
-/core/ @neuron7x
-/execution/ @neuron7x
-/analytics/ @neuron7x
-/apps/ @neuron7x
-/ui/ @neuron7x
-/tests/ @neuron7x
-/docs/ @neuron7x
+* @neuron7xLab
+/core/ @neuron7xLab
+/execution/ @neuron7xLab
+/analytics/ @neuron7xLab
+/apps/ @neuron7xLab
+/ui/ @neuron7xLab
+/tests/ @neuron7xLab
+/docs/ @neuron7xLab
 ```
 
 ### Verification:
 1. Create a test PR modifying any file
-2. Verify @neuron7x is automatically requested as a reviewer
-3. Verify PR cannot be merged without @neuron7x approval (due to branch protection)
+2. Verify @neuron7xLab is automatically requested as a reviewer
+3. Verify PR cannot be merged without @neuron7xLab approval (due to branch protection)
 
 ---
 

@@ -1,0 +1,70 @@
+# Diff-bound acceptor: WP-01 PR lane-collision governance gate.
+#
+# Turns the manual #1120/#1121 supersession decision into an executable detector:
+# two open non-draft PRs that share a single-source-of-truth governance file, or
+# share a Task/P0/WP lane token and overlap on a file, are flagged so they cannot
+# both be merged into one gate definition.
+
+id: pr-lane-collision-gate
+status: ACTIVE
+claim_type: correctness
+promise: >-
+  Adds tools/governance/check_pr_lane_collision.py exposing a pure
+  detect_collisions() core plus a live gh-backed mode, with
+  tests/governance/test_pr_lane_collision.py. The detector flags two open
+  non-draft PRs as a lane collision when they share a critical source-of-truth
+  file (tools/security|governance|claims|release/*.py, governance/*.yaml,
+  schemas/**, requirements*.txt, constraints/*.txt, pyproject.toml,
+  INVARIANTS.yaml) OR share a Task/P0/WP lane token AND overlap on any file.
+  Shared token alone, or shared non-critical file alone, is NOT a collision
+  (false-positive guards). Draft/closed PRs are excluded. CI gate
+  pr-lane-collision-gate runs the deterministic suite fail-closed.
+diff_scope:
+  changed_files:
+    - path: ".claude/commit_acceptors/pr-lane-collision-gate.yaml"
+    - path: ".github/workflows/pr-lane-collision-gate.yml"
+    - path: "tools/governance/check_pr_lane_collision.py"
+    - path: "tests/governance/test_pr_lane_collision.py"
+    - path: "docs/governance/pr_lane_collision_protocol.md"
+  forbidden_paths:
+    - "trading/"
+    - "execution/"
+    - "forecast/"
+    - "policy/"
+required_python_symbols:
+  - "detect_collisions"
+  - "PullRequest"
+expected_signal: >-
+  tests/governance/test_pr_lane_collision.py passes 7/7. The acceptance test
+  test_real_task2_pair_is_flagged confirms the #1120/#1121 pair is detected as
+  exactly one collision on both axes (shared
+  tools/security/check_dependency_manifest_consistency.py + requirements.txt and
+  shared lane token 'task2'). False-positive guards (shared token only, shared
+  non-critical file only) and draft/closed exclusion all hold.
+  ruff/black/mypy --strict clean; zero new noqa/type-ignore.
+measurement_command: >-
+  PYTHONPATH=. python -m pytest tests/governance/test_pr_lane_collision.py -v --noconftest
+signal_artifact: "tmp/pr_lane_collision_pytest.log"
+falsifier:
+  command: >-
+    PYTHONPATH=. python -m pytest tests/governance/test_pr_lane_collision.py
+    -v --noconftest -k "real_task2_pair_is_flagged or shared_token_without_file_overlap_is_not_a_collision"
+  description: >-
+    Removing the critical-file / shared-token detection makes the #1120/#1121
+    pair pass undetected (test_real_task2_pair_is_flagged fails); treating a
+    shared lane token alone as a collision raises false positives
+    (test_shared_token_without_file_overlap_is_not_a_collision fails). Each guard
+    fails before the implementation is correct.
+rollback_command: >-
+  git checkout HEAD~1 --
+  tools/governance/check_pr_lane_collision.py
+  tests/governance/test_pr_lane_collision.py
+  .github/workflows/pr-lane-collision-gate.yml
+  docs/governance/pr_lane_collision_protocol.md
+  .claude/commit_acceptors/pr-lane-collision-gate.yaml
+rollback_verification_command: >-
+  git diff --exit-code tools/governance/check_pr_lane_collision.py
+memory_update_type: none
+ledger_path: ".claude/commit_acceptors/pr-lane-collision-gate.yaml"
+report_path: "docs/reports/diff_bound_commit_acceptor_layer.md"
+evidence: []

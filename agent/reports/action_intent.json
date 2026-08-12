@@ -1,0 +1,69 @@
+{
+  "action": "DISCOVER_SOURCES",
+  "admissible": true,
+  "blocking_conditions": [
+    "populate at least one of: DUKASCOPY_DOWNLOAD_DIR, OANDA_API_TOKEN, DATABENTO_API_KEY, POLYGON_API_KEY, IBKR_GATEWAY_HOST, BINANCE_WS_ENDPOINT, ASKAR_L2_ENDPOINT"
+  ],
+  "diagnostics": {
+    "invariants": {
+      "INV_001_ohlc_only_blocks_precursor": {
+        "passed": false,
+        "reason": "all assets are OHLC-close-only \u2014 precursor claims forbidden"
+      },
+      "INV_002_missing_all_microstructure": {
+        "passed": false,
+        "reason": "every asset missing bid/ask/trades/depth \u2014 DEGRADED"
+      },
+      "INV_003_freshness": {
+        "passed": false,
+        "reason": "stale: 102951.0min > 60.0"
+      },
+      "INV_004_nan_policy": {
+        "passed": true,
+        "reason": "zero NaN in active payload"
+      },
+      "INV_005_asset_coverage": {
+        "passed": true,
+        "reason": "coverage=53 \u2265 10"
+      },
+      "INV_006_orthogonality_measured": {
+        "passed": false,
+        "reason": "no verdict available"
+      },
+      "INV_007_lead_capture_measured": {
+        "passed": false,
+        "reason": "no verdict available"
+      },
+      "INV_008_p_value_gate": {
+        "passed": false,
+        "reason": "no verdict available"
+      },
+      "INV_009_ic_gate": {
+        "passed": false,
+        "reason": "no verdict available"
+      },
+      "INV_010_audit_artifact_present": {
+        "passed": true,
+        "reason": "all required audit artifacts present"
+      },
+      "INV_011_schema_drift": {
+        "passed": false,
+        "reason": "schema drift detected \u2014 quarantine required"
+      },
+      "INV_012_protectors_override_generators": {
+        "passed": true,
+        "reason": "maintenance > processing by GeoSync physics doctrine"
+      }
+    },
+    "n_sources": 7
+  },
+  "next_required_artifact": "agent/reports/provider_manifest.json",
+  "priority": "P0",
+  "state": "DISCOVER_SOURCES",
+  "substrate_status": "DEAD",
+  "target": "provider_registry",
+  "why": [
+    "no microstructure provider configured",
+    "see agent/providers.py for candidates"
+  ]
+}

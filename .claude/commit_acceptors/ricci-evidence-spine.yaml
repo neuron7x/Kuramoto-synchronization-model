@@ -1,0 +1,58 @@
+id: ricci-evidence-spine
+status: ACTIVE
+claim_type: governance
+promise: >-
+  Diff-bound acceptor for the Ricci evidence spine. The change converts the
+  active research line into a bounded artifact-first contract with a schema,
+  validator, tests, claim firewall, and reproducibility hardening. It does not
+  promote the project to deployable or production status.
+
+diff_scope:
+  changed_files:
+    - path: "FORBIDDEN_CLAIMS.md"
+    - path: "README.md"
+    - path: "REPRODUCIBILITY_CAPSULE/COMMANDS.sh"
+    - path: "artifacts/runs/ricci_microstructure_v1/example_artifact.json"
+    - path: "pyproject.toml"
+    - path: "research_lines/ricci_microstructure_v1/contract.yaml"
+    - path: "schemas/research/research_inference_artifact.schema.json"
+    - path: "tests/research_lines/test_ricci_artifact_schema.py"
+    - path: "tools/research/validate_ricci_artifact_schema.py"
+    - path: ".claude/commit_acceptors/ricci-evidence-spine.yaml"
+  forbidden_paths:
+    - "application/"
+    - "backtest/"
+    - "execution/"
+    - "markets/"
+    - "runtime/"
+
+required_python_symbols:
+  - "tools.research.validate_ricci_artifact_schema"
+
+expected_signal: >-
+  Ricci microstructure artifacts are schema validated, forbidden claim language
+  is documented, and the active research line remains bounded to limited
+  empirical status until stronger evidence is committed.
+
+measurement_command: >-
+  python tools/research/validate_ricci_artifact_schema.py && python -m pytest -q tests/research_lines/test_ricci_artifact_schema.py --confcutdir=tests/research_lines
+
+signal_artifact: "artifacts/runs/ricci_microstructure_v1/example_artifact.json"
+
+falsifier:
+  command: >-
+    python -m pytest -q tests/research_lines/test_ricci_artifact_schema.py --confcutdir=tests/research_lines
+  description: >-
+    The test suite must reject malformed Ricci artifact records and invalid
+    claim escalation attempts.
+
+rollback_command: >-
+  git checkout -- FORBIDDEN_CLAIMS.md README.md REPRODUCIBILITY_CAPSULE/COMMANDS.sh artifacts/runs/ricci_microstructure_v1/example_artifact.json pyproject.toml research_lines/ricci_microstructure_v1/contract.yaml schemas/research/research_inference_artifact.schema.json tests/research_lines/test_ricci_artifact_schema.py tools/research/validate_ricci_artifact_schema.py .claude/commit_acceptors/ricci-evidence-spine.yaml
+
+rollback_verification_command: >-
+  git diff --exit-code
+
+memory_update_type: append
+ledger_path: ".claude/commit_acceptors/ricci-evidence-spine.yaml"
+report_path: "research_lines/ricci_microstructure_v1/contract.yaml"
+evidence: []

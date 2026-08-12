@@ -1,0 +1,29 @@
+{
+  "$schema": "http://json-schema.org/draft-07/schema#",
+  "$id": "geosync.event_bus_lifecycle_matrix.v1",
+  "title": "GeoSync Event-Bus Lifecycle Matrix",
+  "description": "Promotes the event bus from plumbing to a runtime inference substrate: every lifecycle invariant (subscribe tracks a task, stop cancels all, dup-no-orphan, poison->DLQ, handler-exception recorded, idempotent delivery, idempotent stop, publish-after-stop fails closed) binds to a real test. No asynchronous task may remain untracked.",
+  "type": "object",
+  "additionalProperties": false,
+  "required": ["schema", "component", "invariants", "verdict"],
+  "properties": {
+    "schema": { "const": "geosync.event_bus_lifecycle_matrix.v1" },
+    "component": { "type": "string", "minLength": 1 },
+    "verdict": { "enum": ["PASS", "FAIL"] },
+    "invariants": {
+      "type": "array",
+      "minItems": 8,
+      "items": {
+        "type": "object",
+        "additionalProperties": false,
+        "required": ["id", "statement", "test", "verdict"],
+        "properties": {
+          "id": { "type": "string", "minLength": 1 },
+          "statement": { "type": "string", "minLength": 1 },
+          "test": { "type": "string", "minLength": 1 },
+          "verdict": { "enum": ["PASS", "FAIL"] }
+        }
+      }
+    }
+  }
+}

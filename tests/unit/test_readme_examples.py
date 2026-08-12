@@ -1,3 +1,5 @@
+# Copyright (c) 2023-2026 Yaroslav Vasylenko (neuron7xLab)
+# SPDX-License-Identifier: MIT
 """Validate code examples from README.md to ensure they remain functional."""
 
 import numpy as np
@@ -5,8 +7,8 @@ import pandas as pd
 
 
 def test_readme_composite_engine_example() -> None:
-    """Validate the main README example with TradePulseCompositeEngine."""
-    from core.indicators.kuramoto_ricci_composite import TradePulseCompositeEngine
+    """Validate the main README example with GeoSyncCompositeEngine."""
+    from core.indicators.kuramoto_ricci_composite import GeoSyncCompositeEngine
 
     # Build a synthetic intraday data set
     np.random.seed(42)
@@ -16,7 +18,7 @@ def test_readme_composite_engine_example() -> None:
     bars = pd.DataFrame({"close": price, "volume": volume}, index=index)
 
     # Analyze the market regime with the Kuramoto–Ricci composite engine
-    engine = TradePulseCompositeEngine()
+    engine = GeoSyncCompositeEngine()
     snapshot = engine.analyze_market(bars)
 
     # Validate output structure

@@ -1,0 +1,88 @@
+# Diff-bound commit acceptor for the post-vacuous-oracle revalidation ledger
+# (DEBT_5).
+#
+# Binds the fail-closed gate that records exactly which critical lanes merged
+# under the vacuous python-fast-shard oracle (the double `-q` collect bug that
+# ran zero tests for the repo's entire history) and therefore carry a weakened
+# evidence-class. The gate makes it impossible to silently flip a lane to
+# "revalidated" without a real-oracle terminal sha plus a preserved evidence
+# artifact (the INTERLOCK). Infra/governance; no physics invariant, claim
+# tier, or alpha surface is touched.
+
+id: revalidation-ledger-debt5
+status: ACTIVE
+claim_type: governance
+promise: >-
+  After this PR lands, scripts/ci/check_revalidation_ledger.py reads
+  governance/REVALIDATION_LEDGER.yaml and fails closed unless every entry is
+  well-formed AND the revalidation interlock holds: a replay_status REPLAYED
+  claim is admissible only with both a 40-hex oracle_terminal_sha and an
+  in-repo replay_evidence path that exists, BOUNDED requires a non-empty
+  residual, and a seeded entry must keep merged_under_vacuous_oracle true with
+  no promotion language in its note. The ledger is seeded with the 7 verified
+  critical lanes (PRs 1090, 1115, 1131, 1146, 1150, 1152, 1161) merged under
+  the vacuous oracle, all PENDING replay under oracle PR #1153. The gate is
+  offline and deterministic. No empirical, market, or alpha claim is made.
+
+diff_scope:
+  changed_files:
+    - path: ".claude/commit_acceptors/revalidation-ledger-debt5.yaml"
+    - path: "governance/REVALIDATION_LEDGER.yaml"
+    - path: "scripts/ci/check_revalidation_ledger.py"
+    - path: "tests/scripts/test_check_revalidation_ledger.py"
+    - path: ".github/workflows/research-integrity-gate.yml"
+    - path: "INVENTORY.json"
+  forbidden_paths:
+    - "trading/"
+    - "execution/"
+    - "forecast/"
+    - "policy/"
+    - "core/"
+    - "runtime/"
+
+required_python_symbols:
+  - "scripts.ci.check_revalidation_ledger.main"
+
+expected_signal: >-
+  python -m pytest tests/scripts/test_check_revalidation_ledger.py passes, and
+  python scripts/ci/check_revalidation_ledger.py exits 0 on the seeded ledger
+  with all 7 lanes reported PENDING under oracle PR #1153.
+
+measurement_command: >-
+  python -m pytest --noconftest -p no:cacheprovider -q
+  tests/scripts/test_check_revalidation_ledger.py
+
+signal_artifact: "scripts/ci/check_revalidation_ledger.py"
+
+falsifier:
+  command: >-
+    python -c "import importlib.util, pathlib;
+    s = importlib.util.spec_from_file_location('m', 'scripts/ci/check_revalidation_ledger.py');
+    m = importlib.util.module_from_spec(s); s.loader.exec_module(m);
+    p = pathlib.Path('/tmp/bad_revalidation_ledger.yaml');
+    p.write_text('schema_version: 1\noracle_fix_pr: 1153\ncoverage_bound: x\nentries:\n  - id: x\n    pr: 1\n    merge_sha: deadbeef\n    lane_class: physics\n    merged_under_vacuous_oracle: true\n    replay_status: REPLAYED\n    recorded_utc: 2026-06-17\n    note: open debt\n');
+    raise SystemExit(0 if m.main(['--registry', str(p)]) == 1 else 1)"
+  description: >-
+    Feeds a ledger with a malformed sha and a REPLAYED status that carries no
+    oracle_terminal_sha and no replay_evidence. The gate must fail closed
+    (exit 1): a lane cannot be declared revalidated without a real-oracle sha
+    and a preserved evidence artifact. If it ever exits 0 for such an entry,
+    the interlock is broken and this falsifier exits non-zero.
+
+rollback_command: >-
+  bash -c '
+    git rm -f scripts/ci/check_revalidation_ledger.py
+      tests/scripts/test_check_revalidation_ledger.py
+      governance/REVALIDATION_LEDGER.yaml
+      .claude/commit_acceptors/revalidation-ledger-debt5.yaml
+    && git checkout -- .github/workflows/research-integrity-gate.yml
+    && python scripts/ci/update_inventory.py --write
+  '
+
+rollback_verification_command: >-
+  bash -c 'test ! -e scripts/ci/check_revalidation_ledger.py'
+
+memory_update_type: append
+ledger_path: ".claude/commit_acceptors/revalidation-ledger-debt5.yaml"
+report_path: "scripts/ci/check_revalidation_ledger.py"
+evidence: []

@@ -1,0 +1,237 @@
+{
+  "$schema": "https://json-schema.org/draft/2020-12/schema",
+  "$id": "https://github.com/neuron7xLab/GeoSync/schemas/json_artifact_contract.schema.json",
+  "title": "Deterministic JSON Artifact Contract",
+  "type": "object",
+  "additionalProperties": false,
+  "required": [
+    "contract_type",
+    "objective",
+    "inputs",
+    "execution_plan",
+    "python_runner_contract",
+    "validation_tests",
+    "failure_register",
+    "evidence_status",
+    "output_constraints",
+    "next_deterministic_action",
+    "final_verdict"
+  ],
+  "$defs": {
+    "non_empty_string": {"type": "string", "minLength": 1},
+    "string_list": {
+      "type": "array",
+      "items": {"$ref": "#/$defs/non_empty_string"}
+    },
+    "status": {
+      "type": "string",
+      "enum": ["EXTERNAL_VERIFIED", "CI_VERIFIED", "TOOL_VERIFIED", "HUMAN_REVIEWED", "CANDIDATE_NOT_VALIDATED", "BLOCKED", "REJECTED"]
+    },
+    "evidence_source": {
+      "type": "string",
+      "enum": ["unavailable", "python_runner", "tool_log", "ci_log", "parser_output", "benchmark_output", "human_review"]
+    },
+    "definition": {
+      "type": "object",
+      "additionalProperties": false,
+      "required": ["term", "operational_definition", "failure_condition", "validation_method"],
+      "properties": {
+        "term": {"$ref": "#/$defs/non_empty_string"},
+        "operational_definition": {"$ref": "#/$defs/non_empty_string"},
+        "failure_condition": {"$ref": "#/$defs/non_empty_string"},
+        "validation_method": {"$ref": "#/$defs/non_empty_string"}
+      }
+    },
+    "execution_step": {
+      "type": "object",
+      "additionalProperties": false,
+      "required": ["step_id", "action", "input", "output", "tool_required", "failure_condition"],
+      "properties": {
+        "step_id": {"$ref": "#/$defs/non_empty_string"},
+        "action": {"$ref": "#/$defs/non_empty_string"},
+        "input": {"$ref": "#/$defs/non_empty_string"},
+        "output": {"$ref": "#/$defs/non_empty_string"},
+        "tool_required": {"$ref": "#/$defs/non_empty_string"},
+        "failure_condition": {"$ref": "#/$defs/non_empty_string"}
+      }
+    },
+    "validation_test": {
+      "type": "object",
+      "additionalProperties": false,
+      "required": ["test_id", "test_type", "input", "expected_output", "runner", "pass_criteria", "fail_criteria"],
+      "properties": {
+        "test_id": {"$ref": "#/$defs/non_empty_string"},
+        "test_type": {"type": "string", "enum": ["schema", "unit", "integration", "regression", "parser", "repository", "security", "artifact", "behavioral"]},
+        "input": {"$ref": "#/$defs/non_empty_string"},
+        "expected_output": {"$ref": "#/$defs/non_empty_string"},
+        "runner": {"type": "string", "enum": ["python", "pytest", "jsonschema", "ruff", "mypy", "shell", "ci", "human_review"]},
+        "pass_criteria": {"$ref": "#/$defs/non_empty_string"},
+        "fail_criteria": {"$ref": "#/$defs/non_empty_string"}
+      }
+    },
+    "failure_record": {
+      "type": "object",
+      "additionalProperties": false,
+      "required": ["failure", "cause", "impact", "detection", "mitigation", "severity"],
+      "properties": {
+        "failure": {"$ref": "#/$defs/non_empty_string"},
+        "cause": {"$ref": "#/$defs/non_empty_string"},
+        "impact": {"$ref": "#/$defs/non_empty_string"},
+        "detection": {"$ref": "#/$defs/non_empty_string"},
+        "mitigation": {"$ref": "#/$defs/non_empty_string"},
+        "severity": {"type": "string", "enum": ["CRITICAL", "HIGH", "MEDIUM", "LOW"]}
+      }
+    }
+  },
+  "properties": {
+    "contract_type": {
+      "type": "string",
+      "enum": ["executable_task_contract", "external_validation_contract", "system_prompt_contract", "repository_repair_contract", "scoring_contract", "blocked_contract"]
+    },
+    "objective": {
+      "type": "object",
+      "additionalProperties": false,
+      "required": ["target_state", "current_state", "transformation", "action_vector", "optimization"],
+      "properties": {
+        "target_state": {"$ref": "#/$defs/non_empty_string"},
+        "current_state": {"$ref": "#/$defs/non_empty_string"},
+        "transformation": {"$ref": "#/$defs/non_empty_string"},
+        "action_vector": {"$ref": "#/$defs/non_empty_string"},
+        "optimization": {
+          "type": "object",
+          "additionalProperties": false,
+          "required": ["minimize", "maximize"],
+          "properties": {
+            "minimize": {"$ref": "#/$defs/string_list"},
+            "maximize": {"$ref": "#/$defs/string_list"}
+          }
+        }
+      }
+    },
+    "inputs": {
+      "type": "object",
+      "additionalProperties": false,
+      "required": ["required", "provided", "missing", "assumptions"],
+      "properties": {
+        "required": {"$ref": "#/$defs/string_list"},
+        "provided": {"$ref": "#/$defs/string_list"},
+        "missing": {"$ref": "#/$defs/string_list"},
+        "assumptions": {"$ref": "#/$defs/string_list"}
+      }
+    },
+    "definitions": {
+      "type": "array",
+      "items": {"$ref": "#/$defs/definition"}
+    },
+    "execution_plan": {
+      "type": "array",
+      "items": {"$ref": "#/$defs/execution_step"}
+    },
+    "python_runner_contract": {
+      "type": "object",
+      "additionalProperties": false,
+      "required": ["required", "entrypoint", "commands", "expected_artifacts", "timeout_seconds", "success_criteria", "failure_criteria"],
+      "properties": {
+        "required": {"type": "boolean"},
+        "entrypoint": {"$ref": "#/$defs/non_empty_string"},
+        "commands": {"$ref": "#/$defs/string_list"},
+        "expected_artifacts": {"$ref": "#/$defs/string_list"},
+        "timeout_seconds": {"type": "integer", "minimum": 1},
+        "success_criteria": {"$ref": "#/$defs/string_list"},
+        "failure_criteria": {"$ref": "#/$defs/string_list"}
+      }
+    },
+    "validation_tests": {
+      "type": "array",
+      "items": {"$ref": "#/$defs/validation_test"}
+    },
+    "failure_register": {
+      "type": "array",
+      "items": {"$ref": "#/$defs/failure_record"}
+    },
+    "evidence_status": {
+      "type": "object",
+      "additionalProperties": false,
+      "required": ["external_evidence_available", "evidence_source", "tests_executed", "tests_not_executed", "score", "confidence", "status"],
+      "properties": {
+        "external_evidence_available": {"type": "boolean"},
+        "evidence_source": {"$ref": "#/$defs/evidence_source"},
+        "tests_executed": {"$ref": "#/$defs/string_list"},
+        "tests_not_executed": {"$ref": "#/$defs/string_list"},
+        "score": {"type": ["number", "null"]},
+        "confidence": {"type": "number", "minimum": 0, "maximum": 1},
+        "status": {"$ref": "#/$defs/status"}
+      }
+    },
+    "output_constraints": {
+      "type": "object",
+      "additionalProperties": false,
+      "required": ["json_only", "no_markdown", "no_prose", "no_self_scoring", "no_simulated_tests", "no_validation_without_evidence", "minimize_tokens"],
+      "properties": {
+        "json_only": {"const": true},
+        "no_markdown": {"const": true},
+        "no_prose": {"const": true},
+        "no_self_scoring": {"const": true},
+        "no_simulated_tests": {"const": true},
+        "no_validation_without_evidence": {"const": true},
+        "minimize_tokens": {"const": true}
+      }
+    },
+    "next_deterministic_action": {"$ref": "#/$defs/non_empty_string"},
+    "final_verdict": {
+      "type": "object",
+      "additionalProperties": false,
+      "required": ["status", "reason", "evidence_required"],
+      "properties": {
+        "status": {"$ref": "#/$defs/status"},
+        "reason": {"$ref": "#/$defs/non_empty_string"},
+        "evidence_required": {"$ref": "#/$defs/string_list"}
+      }
+    }
+  },
+  "allOf": [
+    {
+      "if": {
+        "properties": {"contract_type": {"const": "blocked_contract"}},
+        "required": ["contract_type"]
+      },
+      "then": {
+        "properties": {
+          "inputs": {"properties": {"missing": {"minItems": 1}}},
+          "evidence_status": {
+            "properties": {
+              "external_evidence_available": {"const": false},
+              "evidence_source": {"const": "unavailable"},
+              "tests_executed": {"maxItems": 0},
+              "score": {"type": "null"},
+              "status": {"const": "BLOCKED"}
+            }
+          },
+          "final_verdict": {"properties": {"status": {"const": "BLOCKED"}}}
+        }
+      }
+    },
+    {
+      "if": {
+        "not": {"properties": {"contract_type": {"const": "blocked_contract"}}, "required": ["contract_type"]},
+        "properties": {
+          "evidence_status": {"properties": {"external_evidence_available": {"const": false}}}
+        }
+      },
+      "then": {
+        "properties": {
+          "evidence_status": {
+            "properties": {
+              "evidence_source": {"const": "unavailable"},
+              "tests_executed": {"maxItems": 0},
+              "score": {"type": "null"},
+              "confidence": {"maximum": 0.65},
+              "status": {"const": "CANDIDATE_NOT_VALIDATED"}
+            }
+          },
+          "final_verdict": {"properties": {"status": {"const": "CANDIDATE_NOT_VALIDATED"}}}
+        }
+      }
+    }
+  ]
+}

@@ -1,3 +1,5 @@
+# Copyright (c) 2023-2026 Yaroslav Vasylenko (neuron7xLab)
+# SPDX-License-Identifier: MIT
 """Tests for adaptive neuromodulator calibration system."""
 
 from __future__ import annotations
@@ -7,41 +9,41 @@ import time
 import numpy as np
 import pytest
 
-from tradepulse.core.neuro.adaptive_calibrator import (
+from core.utils.determinism import DEFAULT_SEED, seed_numpy
+from geosync.core.neuro.adaptive_calibrator import (
     AdaptiveCalibrator,
     CalibrationMetrics,
 )
-from core.utils.determinism import DEFAULT_SEED, seed_numpy
 
 
 @pytest.fixture
 def initial_params():
     """Fixture providing initial neuromodulator parameters."""
     return {
-        'dopamine': {
-            'discount_gamma': 0.99,
-            'learning_rate': 0.01,
-            'burst_factor': 1.5,
-            'base_temperature': 1.0,
-            'invigoration_threshold': 0.6,
+        "dopamine": {
+            "discount_gamma": 0.99,
+            "learning_rate": 0.01,
+            "burst_factor": 1.5,
+            "base_temperature": 1.0,
+            "invigoration_threshold": 0.6,
         },
-        'serotonin': {
-            'stress_threshold': 0.15,
-            'release_threshold': 0.10,
-            'desensitization_rate': 0.01,
-            'floor_min': 0.2,
+        "serotonin": {
+            "stress_threshold": 0.15,
+            "release_threshold": 0.10,
+            "desensitization_rate": 0.01,
+            "floor_min": 0.2,
         },
-        'gaba': {
-            'k_inhibit': 0.4,
-            'impulse_threshold': 0.5,
-            'stdp_lr': 0.01,
-            'max_inhibition': 0.85,
+        "gaba": {
+            "k_inhibit": 0.4,
+            "impulse_threshold": 0.5,
+            "stdp_lr": 0.01,
+            "max_inhibition": 0.85,
         },
-        'na_ach': {
-            'arousal_gain': 1.2,
-            'attention_gain': 1.0,
-            'risk_min': 0.5,
-            'risk_max': 1.5,
+        "na_ach": {
+            "arousal_gain": 1.2,
+            "attention_gain": 1.0,
+            "risk_min": 0.5,
+            "risk_max": 1.5,
         },
     }
 
@@ -76,12 +78,12 @@ class TestCalibrationMetrics:
     def test_composite_score_custom_weights(self, sample_metrics):
         """Test composite score with custom weights."""
         custom_weights = {
-            'sharpe': 0.5,
-            'drawdown': 0.2,
-            'win_rate': 0.1,
-            'stability': 0.1,
-            'stress': 0.05,
-            'arousal': 0.05,
+            "sharpe": 0.5,
+            "drawdown": 0.2,
+            "win_rate": 0.1,
+            "stability": 0.1,
+            "stress": 0.05,
+            "arousal": 0.05,
         }
 
         score = sample_metrics.composite_score(custom_weights)
@@ -145,7 +147,7 @@ class TestAdaptiveCalibrator:
     def test_initialization_missing_neuromodulator(self):
         """Test initialization fails with missing neuromodulator."""
         incomplete_params = {
-            'dopamine': {'learning_rate': 0.01},
+            "dopamine": {"learning_rate": 0.01},
             # Missing serotonin, gaba, na_ach
         }
 
@@ -209,17 +211,17 @@ class TestAdaptiveCalibrator:
             new_params = calibrator.step(sample_metrics)
 
             # Check dopamine bounds
-            assert 0.90 <= new_params['dopamine']['discount_gamma'] <= 0.999
-            assert 0.001 <= new_params['dopamine']['learning_rate'] <= 0.05
+            assert 0.90 <= new_params["dopamine"]["discount_gamma"] <= 0.999
+            assert 0.001 <= new_params["dopamine"]["learning_rate"] <= 0.05
 
             # Check serotonin bounds
-            assert 0.1 <= new_params['serotonin']['stress_threshold'] <= 0.3
+            assert 0.1 <= new_params["serotonin"]["stress_threshold"] <= 0.3
 
             # Check GABA bounds
-            assert 0.2 <= new_params['gaba']['k_inhibit'] <= 0.8
+            assert 0.2 <= new_params["gaba"]["k_inhibit"] <= 0.8
 
             # Check NA/ACh bounds
-            assert 0.8 <= new_params['na_ach']['arousal_gain'] <= 2.0
+            assert 0.8 <= new_params["na_ach"]["arousal_gain"] <= 2.0
 
     def test_temperature_decay(self, initial_params, sample_metrics):
         """Test that temperature decays over iterations."""
@@ -263,10 +265,10 @@ class TestAdaptiveCalibrator:
         best = calibrator.get_best_params()
 
         assert isinstance(best, dict)
-        assert 'dopamine' in best
-        assert 'serotonin' in best
-        assert 'gaba' in best
-        assert 'na_ach' in best
+        assert "dopamine" in best
+        assert "serotonin" in best
+        assert "gaba" in best
+        assert "na_ach" in best
 
     def test_calibration_report(self, initial_params, sample_metrics):
         """Test calibration report generation."""
@@ -274,18 +276,18 @@ class TestAdaptiveCalibrator:
 
         # Initial report should have no data
         report = calibrator.get_calibration_report()
-        assert report['status'] == 'no_data'
+        assert report["status"] == "no_data"
 
         # After steps, should have data
         for _ in range(5):
             calibrator.step(sample_metrics)
 
         report = calibrator.get_calibration_report()
-        assert report['status'] == 'active'
-        assert 'iteration' in report
-        assert 'best_score' in report
-        assert 'best_params' in report
-        assert 'recommendations' in report
+        assert report["status"] == "active"
+        assert "iteration" in report
+        assert "best_score" in report
+        assert "best_params" in report
+        assert "recommendations" in report
 
     def test_recommendations_high_drawdown(self, initial_params):
         """Test recommendations for high drawdown."""
@@ -307,8 +309,8 @@ class TestAdaptiveCalibrator:
         calibrator.step(high_dd_metrics)
         report = calibrator.get_calibration_report()
 
-        recommendations = report['recommendations']
-        assert any('drawdown' in rec.lower() for rec in recommendations)
+        recommendations = report["recommendations"]
+        assert any("drawdown" in rec.lower() for rec in recommendations)
 
     def test_export_and_restore_state(self, initial_params, sample_metrics):
         """Test state export and restoration."""

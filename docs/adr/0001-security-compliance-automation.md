@@ -6,7 +6,7 @@
 
 ## Context
 
-TradePulse must satisfy stringent identity and legal obligations covering portfolio-level strategy control, market-data licensing, and dependency governance. Prior documentation lacked prescriptive automation paths for enforcing these controls or documenting architectural decisions.
+GeoSync must satisfy stringent identity and legal obligations covering portfolio-level strategy control, market-data licensing, and dependency governance. Prior documentation lacked prescriptive automation paths for enforcing these controls or documenting architectural decisions.
 
 ## Decision
 

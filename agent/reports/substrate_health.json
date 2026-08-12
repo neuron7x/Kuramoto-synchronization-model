@@ -1,0 +1,15 @@
+{
+  "asset_coverage": 53,
+  "duplicate_rate": 0.0,
+  "feed_live": false,
+  "freshness_minutes": 102950.97100481667,
+  "gap_count": 10,
+  "heartbeat_ok": false,
+  "nan_rate": 0.0,
+  "precursor_capable_assets": 0,
+  "quality_score": 0.6000000000000001,
+  "schema_complete": false,
+  "status": "DEAD",
+  "substrate_label": "LATE_GEOMETRY_ONLY",
+  "ts": "2026-05-05T11:50:58.260289+00:00"
+}

@@ -1,0 +1,91 @@
+interactions:
+- request:
+    body: null
+    headers:
+      Accept:
+      - '*/*'
+      Accept-Encoding:
+      - gzip, deflate, br
+      Connection:
+      - keep-alive
+      User-Agent:
+      - python-requests/2.33.0
+    method: GET
+    uri: https://api.coinbase.com/api/v3/brokerage/time
+  response:
+    body:
+      string: '{"iso": "2026-04-08T09:12:15Z", "epochSeconds": "1775639535", "epochMillis":
+        "1775639535069"}'
+    headers:
+      CF-RAY:
+      - 9e902635797dca34-KBP
+      Cache-Control:
+      - no-store,no-store
+      Connection:
+      - keep-alive
+      Content-Type:
+      - application/json; charset=utf-8
+      Date:
+      - Wed, 08 Apr 2026 09:12:15 GMT
+      Nel:
+      - '{"report_to":"cf-nel","success_fraction":0.01,"max_age":604800}'
+      Report-To:
+      - '{"group":"cf-nel","max_age":604800,"endpoints":[{"url":"https://a.nel.cloudflare.com/report/v4?s=g5B0LdkY%2BUdV75vgxZcW4LKuHyqzlQRdkjIS6Ijp4oxqKd2yuXuh2pidP2Zy8kHbKtYx%2BqQ2HnIAYp3C%2F9DHGtcXf2lplkIGNehh5AHSs1h6Zt7UFIvevf7lltYoAI3cMQU%3D"}]}'
+      Server:
+      - cloudflare
+      Set-Cookie:
+      - cb_dm=573315d0-95a3-46e8-a41f-f552776e7eea; Path=/; Domain=coinbase.com; Expires=Tue,
+        08 Apr 2036 09:12:15 GMT; HttpOnly; Secure
+      - __cf_bm=nwiwnPaDNoIwsOoXgECmTXo0vmXZvocEwBCjXUzjsiU-1775639534.9579031-1.0.1.1-rGGb1h3wvv43ZKIgYUz0uwR4iW1_dYVnADTNrgkVNJnd.Yisn3Z9Nx_Es6Um2np7ww3I11wr30mTG2LUZ0LEa5jjAgPP_ETT7oXohCJdyRN8uSc1.9mHhGYrYWzSBWpo;
+        HttpOnly; Secure; Path=/; Domain=coinbase.com; Expires=Wed, 08 Apr 2026 09:42:15
+        GMT
+      Transfer-Encoding:
+      - chunked
+      access-control-allow-headers:
+      - Authorization, Content-Type, Accept, Second-Factor-Proof-Token, Client-Id,
+        Access-Token, X-Cb-Project-Name, X-Cb-Is-Logged-In, X-Cb-Platform, X-Cb-Session-Uuid,
+        X-Cb-Pagekey, X-Cb-UJS, Fingerprint-Tokens, X-Cb-Device-Id, X-Cb-Version-Name,Content-Type,
+        Accept, Second-Factor-Proof-Token, Itp-Resource-Id-User_uuid, Client-Id, Access-Token,
+        X-Cb-Project-Name, X-Cb-Is-Logged-In, X-Cb-Platform, X-Cb-Session-Uuid, X-Cb-Pagekey,
+        X-Cb-Ujs, Fingerprint-Tokens, X-Cb-Device-Id, X-Cb-Version-Name, X-Datadog-Parent-Id,
+        X-Datadog-Trace-Id, X-Datadog-Origin, X-Datadog-Sampling-Priority, Itp-Resource-Id-X-Cb-Unmask
+      access-control-allow-methods:
+      - GET,POST,DELETE,PUT,GET,POST,DELETE,PUT,PATCH
+      access-control-allow-private-network:
+      - true,true
+      access-control-expose-headers:
+      - ''
+      access-control-max-age:
+      - 7200,7200
+      cf-cache-status:
+      - DYNAMIC
+      content-length:
+      - '88'
+      cross-origin-opener-policy:
+      - same-origin
+      permissions-policy:
+      - camera=(), microphone=()
+      strict-transport-security:
+      - max-age=31536000; includeSubDomains; preload
+      trace-id:
+      - '5211173074994747239'
+      - '5211173074994747239'
+      vary:
+      - Origin,Origin
+      x-content-type-options:
+      - nosniff
+      x-dns-prefetch-control:
+      - 'off'
+      - 'off'
+      x-download-options:
+      - noopen
+      - noopen
+      x-frame-options:
+      - SAMEORIGIN
+      - SAMEORIGIN
+      x-xss-protection:
+      - 1; mode=block
+    status:
+      code: 200
+      message: OK
+version: 1

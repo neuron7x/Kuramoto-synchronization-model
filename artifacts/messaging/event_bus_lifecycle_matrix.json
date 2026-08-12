@@ -1,0 +1,55 @@
+{
+  "schema": "geosync.event_bus_lifecycle_matrix.v1",
+  "component": "core.messaging.event_bus",
+  "verdict": "PASS",
+  "invariants": [
+    {
+      "id": "BUS-1",
+      "statement": "every subscribe creates a tracked consumer task",
+      "test": "tests/unit/messaging/test_event_bus_extended.py::test_kafka_subscribe_processes_message_and_commits",
+      "verdict": "PASS"
+    },
+    {
+      "id": "BUS-2",
+      "statement": "stop cancels every tracked consumer task and clears the map",
+      "test": "tests/unit/messaging/test_event_bus_lifecycle_integrity.py::test_stop_cancels_every_consumer_task_and_clears_map",
+      "verdict": "PASS"
+    },
+    {
+      "id": "BUS-3",
+      "statement": "a duplicate topic subscription does not orphan the earlier consumer",
+      "test": "tests/unit/messaging/test_event_bus_extended.py::test_kafka_repeated_subscribe_does_not_orphan_the_earlier_consumer",
+      "verdict": "PASS"
+    },
+    {
+      "id": "BUS-4",
+      "statement": "a poison message is routed to retry/DLQ, not silently dropped",
+      "test": "tests/unit/messaging/test_event_bus_extended.py::test_kafka_retry_and_dlq_routing",
+      "verdict": "PASS"
+    },
+    {
+      "id": "BUS-5",
+      "statement": "a handler exception is recorded (retry/DLQ), never swallowed",
+      "test": "tests/unit/messaging/test_event_bus_extended.py::test_kafka_retry_and_dlq_routing",
+      "verdict": "PASS"
+    },
+    {
+      "id": "BUS-6",
+      "statement": "delivery is idempotent by event_id (no duplicate processing)",
+      "test": "tests/unit/messaging/test_event_bus.py::test_idempotent_store_marks_processed",
+      "verdict": "PASS"
+    },
+    {
+      "id": "BUS-7",
+      "statement": "stop is idempotent (a second stop is a safe no-op)",
+      "test": "tests/unit/messaging/test_event_bus_lifecycle_integrity.py::test_stop_is_idempotent",
+      "verdict": "PASS"
+    },
+    {
+      "id": "BUS-8",
+      "statement": "publish after stop fails closed (RuntimeError, never a stopped producer)",
+      "test": "tests/unit/messaging/test_event_bus_lifecycle_integrity.py::test_publish_after_stop_fails_closed",
+      "verdict": "PASS"
+    }
+  ]
+}

@@ -10,8 +10,8 @@
     }
   },
   "nav": {
-    "brand": "TradePulse",
-    "title": "TradePulse",
+    "brand": "GeoSync",
+    "title": "GeoSync",
     "badges": {
       "live": "مباشر"
     },
@@ -146,7 +146,7 @@
     }
   },
   "header": {
-    "title": "مركز مراقبة TradePulse",
+    "title": "مركز مراقبة GeoSync",
     "subtitle": "تحكم موحد في التنفيذ والمخاطر والتليمترية.",
     "tags": [
       "متعدد الأصول",
@@ -360,7 +360,7 @@
       "hero": {
         "eyebrow": "تمكين المجتمع",
         "title": "ابنِ الزخم مع المساهمين حول العالم",
-        "subtitle": "نسّق الإرشاد والرعاية ومشاركة المعرفة في منظومة TradePulse.",
+        "subtitle": "نسّق الإرشاد والرعاية ومشاركة المعرفة في منظومة GeoSync.",
         "cta": "استعرض دليل المساهمة",
         "secondaryCta": "انضم إلى دردشة المجتمع",
         "fallbackChannel": "قناة المجتمع"

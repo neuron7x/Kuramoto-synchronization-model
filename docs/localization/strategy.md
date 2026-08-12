@@ -1,4 +1,4 @@
-# TradePulse Dashboard Localization Strategy
+# GeoSync Dashboard Localization Strategy
 
 ## Target Locales and Market Notes
 

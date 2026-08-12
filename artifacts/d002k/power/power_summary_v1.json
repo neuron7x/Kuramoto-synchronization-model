@@ -1,0 +1,22 @@
+{
+  "alpha_per": 0.016666666666666666,
+  "bonferroni_denominator": 3,
+  "canonical_run_authorized": false,
+  "d002j_p7_anchor": {
+    "alpha_per_cell": 0.0004901960784313725,
+    "bonferroni_denominator": 102,
+    "refused_axis": "effect_too_small",
+    "status": "TERMINAL_REFUSED_RETAINED"
+  },
+  "decision": "POWER_GATE_REFUSED_UNDERPOWERED",
+  "effect_d": 0.8,
+  "generated_at": "2026-05-15T00:00:00Z",
+  "n_min": 20,
+  "narrowing_legitimacy_asserted": true,
+  "no_canonical_run_executed": true,
+  "phase": "P4",
+  "power_at_feasible_n": 0.048087892009101095,
+  "refused_axis": "effect_too_small_event_conditioned",
+  "schema_version": "D002K-POWER-SUMMARY-v1",
+  "study_id": "D-002K-P4"
+}

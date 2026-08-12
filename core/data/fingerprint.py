@@ -1,3 +1,5 @@
+# Copyright (c) 2023-2026 Yaroslav Vasylenko (neuron7xLab)
+# SPDX-License-Identifier: MIT
 """Dataset fingerprinting utilities for reproducibility and auditability."""
 
 from __future__ import annotations
@@ -6,7 +8,7 @@ import hashlib
 import json
 from datetime import datetime, timezone
 from pathlib import Path
-from typing import Iterable, Mapping, Sequence
+from typing import Mapping, Sequence
 
 from .dataset_contracts import DatasetContract
 

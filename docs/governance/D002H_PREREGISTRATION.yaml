@@ -1,0 +1,114 @@
+# D-002H Pre-Registration — ricci_flow-only canonical run scope
+# ----------------------------------------------------------------
+# Class:  pre-registered falsification protocol (fresh lineage after
+#         D-002G structural closure).
+# Date:   2026-05-13
+# Anchor: this file becomes content-addressed at PR merge.
+#         The sha256 of this file inside the merged git tree IS
+#         the contract identity. Do not edit after merge; any
+#         change after the anchor commit is a fresh pre-registration
+#         (D-002J or successor letter), NOT a patch.
+#
+# ----------------------------------------------------------------
+# Critical relationships
+# ----------------------------------------------------------------
+# D-002H IS NOT an amendment of D-002G.
+# D-002H IS NOT a rescue of D-002G or D-002C.
+# D-002H IS NOT a continuation of any prior D-002G mechanism PR.
+# D-002H IS a SEPARATE scientific contract that opens a new
+#   pre-registered lineage scoped to ricci_flow only, following the
+#   D-002G structural-closure verdict (PR #682 merge 8cf5364a).
+# D-002H does NOT authorise a canonical run — it locks the gates
+#   that MUST be passed (in separate downstream artifacts) before
+#   a canonical ricci_flow-only run can be opened.
+# ----------------------------------------------------------------
+
+study_id: D-002H
+schema_version: D002H-PREREGISTRATION-v1
+lineage_type: fresh_preregistration
+parent_closure: D-002G_STRUCTURAL_CLOSURE
+parent_merge_sha: 8cf5364a3f3b605d8b134bccbfe5170098e0e197
+parent_closure_artifact: docs/governance/D002G_STRUCTURAL_CLOSURE_REPORT.md
+merged_at_anchor: 2026-05-13T09:42:51Z
+
+substrate_scope:
+  included:
+    - ricci_flow
+  excluded:
+    - block_structured
+    - temporal_coupling
+
+exclusion_reason:
+  block_structured: |
+    Seed-deterministic under D-002G closure (BlockStructuredSubstrate.realize() line 401 discards seed by construction). Locked marginal set is seed-invariant -> M1/M2/M3 admissibility structurally impossible.
+  temporal_coupling: |
+    Inherits seed-deterministic base via TemporalKtSubstrate.realize() delegation to BlockStructuredSubstrate at lambda=0 (line 481-483). Same root cause as block_structured.
+
+# Allowed claims when canonical run eventually authorised by a
+# separate downstream artifact passing all 7 gates A..G.
+allowed_claims:
+  - "ricci_flow-scoped null-admissibility under M1 and M3 mechanism families"
+  - "ricci_flow-scoped canonical sweep result (after explicit authorisation artifact passes all 7 gates)"
+
+forbidden_claims:
+  - "cross-substrate robustness"
+  - "general topology robustness"
+  - "D-002G rescue"
+  - "D-002C rescue"
+  - "global systemic-risk conclusion"
+  - "scientific PASS before canonical run"
+  - "M4 inside D-002G"
+  - "block_structured remains in scope"
+  - "temporal_coupling remains in scope"
+
+null_mechanisms_allowed:
+  - M1_INDEPENDENT_SEED
+  - M3_TOPOLOGY_CONDITIONED
+null_mechanisms_excluded:
+  - M2_EDGE_WEIGHT       # degenerate on ricci_flow per #679 (already documented)
+  - M2_NODE_PAYLOAD      # topology-coupled or degenerate per #680
+  - M2_INJECTION_SEQUENCE # degenerate or contract-violating per #680
+
+canonical_run_authorized: false
+requires_explicit_authorization_artifact: true
+authorization_artifact_path: artifacts/d002h/authorization/d002h_canonical_run_authorisation.json
+authorization_gates_doc: docs/governance/D002H_CANONICAL_RUN_AUTHORIZATION_GATES.md
+
+# Prereg lock - any post-merge edit = fresh D002J pre-registration,
+# NOT a patch. This mirrors the D-002G prereg lock discipline.
+prereg_lock:
+  locked_at_merge: true
+  edit_policy: fresh_pre_registration_only
+  edit_constitutes: D002J pre-registration (or successor letter)
+
+# Reproducibility envelope (carries from D-002G discipline)
+reproducibility:
+  base_seed_range: [0, 99]
+  null_seed_offset_M1: 10000           # inherits from M1 contract
+  null_seed_M3: 12345                  # canonical M3 null seed (matches D-002G evaluation)
+  m3_topology_conditioned_salt: 523    # locked salt from M3 implementation
+  m3_generator_max_iterations: 100
+  m3_precursor_ensemble_size: 100
+
+# Tolerance constants (inherited from M3 implementation, sha-pinned)
+tolerances:
+  tol_marginal: 0.05
+  tol_non_degenerate: 1e-3
+  tol_density: 0.02
+  tol_spectral_radius: 0.05
+  tol_degree_wasserstein: 0.05
+
+# Canonical grid (scope-narrowed: 1 substrate x 3 N x 6 lambda = 18 cells)
+canonical_grid:
+  substrates: [ricci_flow]
+  N: [50, 100, 200]
+  lambda_values: [0.0, 0.05, 0.10, 0.20, 0.40, 1.0]
+  n_seeds: 20
+  n_bootstrap: 16
+  total_cells: 18
+
+relationship_to_d002g:
+  d002h_does_not_amend_d002g: true
+  d002h_does_not_rescue_d002g: true
+  d002h_inherits_negative_artifact_chain: true
+  d002h_acknowledges_substrate_exclusion: true

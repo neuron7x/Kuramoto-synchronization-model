@@ -1,0 +1,51 @@
+{
+  "canonical_taker_fee_bp": 4.0,
+  "cells": [
+    {
+      "bracketed": true,
+      "breakeven_maker_fraction": 0.07799882824608927,
+      "mean_net_bp_at_f0": -0.7799882824608928,
+      "n_trades": 18,
+      "profitable_at_f0": false,
+      "status": "BRACKET",
+      "taker_fee_bp": 3.0,
+      "total_rtc_at_f0_bp": 7.8
+    },
+    {
+      "bracketed": true,
+      "breakeven_maker_fraction": 0.23166569020507446,
+      "mean_net_bp_at_f0": -2.7799882824608937,
+      "n_trades": 18,
+      "profitable_at_f0": false,
+      "status": "BRACKET",
+      "taker_fee_bp": 4.0,
+      "total_rtc_at_f0_bp": 9.8
+    },
+    {
+      "bracketed": true,
+      "breakeven_maker_fraction": 0.34142773446149244,
+      "mean_net_bp_at_f0": -4.779988282460893,
+      "n_trades": 18,
+      "profitable_at_f0": false,
+      "status": "BRACKET",
+      "taker_fee_bp": 5.0,
+      "total_rtc_at_f0_bp": 11.8
+    },
+    {
+      "bracketed": true,
+      "breakeven_maker_fraction": 0.42374926765380583,
+      "mean_net_bp_at_f0": -6.779988282460893,
+      "n_trades": 18,
+      "profitable_at_f0": false,
+      "status": "BRACKET",
+      "taker_fee_bp": 6.0,
+      "total_rtc_at_f0_bp": 13.8
+    }
+  ],
+  "hold_sec": 180,
+  "max_viable_taker_fee_bp": 6.0,
+  "n_cells": 4,
+  "regime_quantile": 0.75,
+  "regime_window_sec": 300,
+  "verdict": "RESILIENT"
+}

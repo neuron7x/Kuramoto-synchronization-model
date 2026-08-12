@@ -1,5 +1,5 @@
 ---
-owner: quant-research@tradepulse
+owner: quant-research@geosync
 review_cadence: quarterly
 last_reviewed: 2025-11-04
 links:
@@ -58,10 +58,10 @@ The `analytics/regime` module provides **multi-dimensional market regime detecti
 ## Configuration
 
 ### Environment Variables:
-- `TRADEPULSE_REGIME_LOOKBACK_BARS`: Bars for regime calculation (default: `64`)
-- `TRADEPULSE_REGIME_UPDATE_FREQUENCY`: Update frequency in seconds (default: `60`)
-- `TRADEPULSE_ENABLE_EWS`: Enable early warning system (default: `true`)
-- `TRADEPULSE_ENABLE_TOPO_SENTINEL`: Enable topological monitoring (default: `true`)
+- `GEOSYNC_REGIME_LOOKBACK_BARS`: Bars for regime calculation (default: `64`)
+- `GEOSYNC_REGIME_UPDATE_FREQUENCY`: Update frequency in seconds (default: `60`)
+- `GEOSYNC_ENABLE_EWS`: Enable early warning system (default: `true`)
+- `GEOSYNC_ENABLE_TOPO_SENTINEL`: Enable topological monitoring (default: `true`)
 
 ### Configuration Files:
 Regime detection is configured via `configs/analytics/regime/`:
@@ -106,7 +106,7 @@ analytics/regime/
 │   │   ├── topo_sentinel.py         # Topological monitoring
 │   │   ├── causal_guard.py          # Causal signal filtering
 │   │   ├── fk_detector.py           # Foreman-Kahane detector
-│   │   ├── tradepulse_v21.py        # TradePulse v2.1 integration
+│   │   ├── geosync_v21.py        # GeoSync v2.1 integration
 │   │   └── _sklearn_compat.py       # Scikit-learn compatibility
 │   ├── ports/
 │   │   ├── __init__.py
@@ -121,7 +121,7 @@ analytics/regime/
     ├── test_core.py
     ├── test_ricci_flow.py
     ├── test_hncm_consensus.py
-    └── test_tradepulse_v21.py
+    └── test_geosync_v21.py
 ```
 
 ## Regime Dimensions
@@ -489,7 +489,7 @@ else:
 
 | Date | Author | Change |
 | ---- | ------ | ------ |
-| 2025-11-04 | quant-research@tradepulse | Created comprehensive README with multisensory integration principles |
+| 2025-11-04 | quant-research@geosync | Created comprehensive README with multisensory integration principles |
 
 ## See Also
 

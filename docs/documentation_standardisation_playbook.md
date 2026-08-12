@@ -1,5 +1,5 @@
 ---
-owner: docs@tradepulse
+owner: docs@geosync
 review_cadence: quarterly
 last_reviewed: 2025-12-08
 links:
@@ -10,7 +10,7 @@ links:
 
 # Documentation Standardisation Playbook
 
-This playbook codifies how TradePulse produces, reviews, and maintains
+This playbook codifies how GeoSync produces, reviews, and maintains
 mission-critical documentation artefacts. It provides system-level guidance for
 Architecture Decision Records (ADRs), READMEs, diagrams, metrics tables,
 incident playbooks, release checklists, glossary entries, onboarding guides,
@@ -89,7 +89,7 @@ versioning and compatibility policies.
 **The Tension:**  
 Excessive standardization stifles creativity and forces awkward fits; insufficient standardization creates chaos.
 
-**TradePulse Approach:**  
+**GeoSync Approach:**  
 - **Strict standardization:** Critical documents (ADRs, runbooks, release checklists)
 - **Moderate standardization:** Common documents (READMEs, guides, API contracts)
 - **Light standardization:** Exploratory documents (experiment notes, brainstorms, RFCs)
@@ -291,6 +291,6 @@ Allow flexibility when:
 
 - [Documentation Governance and Quality Framework](documentation_governance.md)
 - [Documentation Template Catalogue](templates/README.md)
-- [Documentation Enhancement Summary](../DOCUMENTATION_SUMMARY.md)
+- [Documentation Enhancement Summary](operations/DOCUMENTATION_SUMMARY.md)
 - [Quality Gates](quality_gates.md)
 - [Operational Readiness Runbooks](operational_readiness_runbooks.md)

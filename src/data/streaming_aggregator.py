@@ -1,3 +1,5 @@
+# Copyright (c) 2023-2026 Yaroslav Vasylenko (neuron7xLab)
+# SPDX-License-Identifier: MIT
 """Coordinate historical backfills and live tick streams with metadata checks.
 
 The aggregator validates symbol and venue metadata when ingesting sequences of

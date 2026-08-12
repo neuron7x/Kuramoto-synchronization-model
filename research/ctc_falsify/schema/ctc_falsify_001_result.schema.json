@@ -1,0 +1,86 @@
+{
+  "$schema": "https://json-schema.org/draft/2020-12/schema",
+  "$id": "research/ctc_falsify/schema/ctc_falsify_001_result.schema.json",
+  "title": "CTC-FALSIFY-001 result",
+  "type": "object",
+  "additionalProperties": false,
+  "required": [
+    "experiment_id",
+    "verdict",
+    "claim",
+    "boundary",
+    "generative_groundtruth",
+    "standard_pipeline",
+    "canonical_thresholds",
+    "positive_control",
+    "confound_diagnostic",
+    "n_seeds",
+    "readout_independent_of_groundtruth",
+    "real_data_bound",
+    "config_hash",
+    "repro_hash"
+  ],
+  "properties": {
+    "experiment_id": { "const": "CTC-FALSIFY-001" },
+    "verdict": {
+      "type": "string",
+      "enum": [
+        "INADMISSIBLE_NO_GENERATIVE_GROUNDTRUTH",
+        "INADMISSIBLE_ESTIMATOR_BLIND",
+        "INADMISSIBLE_CIRCULAR_PIPELINE",
+        "INADMISSIBLE_UNDERPOWERED",
+        "INADMISSIBLE_NO_REAL_DATA",
+        "KILLED_SCOPED",
+        "SURVIVED_INITIAL"
+      ]
+    },
+    "claim": { "type": "string", "minLength": 1 },
+    "boundary": { "type": "string", "minLength": 1 },
+    "generative_groundtruth": { "type": "string", "minLength": 1 },
+    "standard_pipeline": { "type": "string", "minLength": 1 },
+    "canonical_thresholds": {
+      "type": "object",
+      "additionalProperties": false,
+      "required": ["plv", "coherence"],
+      "properties": {
+        "plv": { "type": "number" },
+        "coherence": { "type": "number" }
+      }
+    },
+    "positive_control": {
+      "type": "object",
+      "additionalProperties": false,
+      "required": ["nplus_recovery_rate", "nplus_min_required", "mean_nplus_plv", "recovered"],
+      "properties": {
+        "nplus_recovery_rate": { "type": "number" },
+        "nplus_min_required": { "type": "number" },
+        "mean_nplus_plv": { "type": "number" },
+        "recovered": { "type": "boolean" }
+      }
+    },
+    "confound_diagnostic": {
+      "type": "object",
+      "additionalProperties": false,
+      "required": [
+        "n1_common_drive_false_positive_rate",
+        "n2_rate_false_positive_rate",
+        "n3_snr_false_positive_rate",
+        "mean_null_plv"
+      ],
+      "properties": {
+        "n1_common_drive_false_positive_rate": { "type": "number" },
+        "n2_rate_false_positive_rate": { "type": "number" },
+        "n3_snr_false_positive_rate": { "type": "number" },
+        "mean_null_plv": {
+          "type": "object",
+          "additionalProperties": { "type": "number" }
+        }
+      }
+    },
+    "n_seeds": { "type": "integer", "minimum": 0 },
+    "readout_independent_of_groundtruth": { "type": "boolean" },
+    "real_data_bound": { "type": "boolean" },
+    "config_hash": { "type": "string", "pattern": "^[a-f0-9]{64}$" },
+    "repro_hash": { "type": "string", "pattern": "^[a-f0-9]{64}$" }
+  }
+}

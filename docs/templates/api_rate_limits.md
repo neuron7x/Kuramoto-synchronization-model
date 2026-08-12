@@ -1,5 +1,5 @@
 ---
-owner: platform@tradepulse.example
+owner: platform@geosync.example
 review_cadence: quarterly
 last_reviewed: 2025-02-14
 links:

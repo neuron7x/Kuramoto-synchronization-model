@@ -1,4 +1,6 @@
-"""Modular ETL/ELT pipeline toolkit for TradePulse."""
+# Copyright (c) 2023-2026 Yaroslav Vasylenko (neuron7xLab)
+# SPDX-License-Identifier: MIT
+"""Modular ETL/ELT pipeline toolkit for GeoSync."""
 
 from .monitoring import (
     AutoReporter,

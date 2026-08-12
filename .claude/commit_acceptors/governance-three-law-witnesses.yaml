@@ -1,0 +1,126 @@
+# Diff-bound commit acceptor for the three-law governance INV-add batch.
+#
+# Adds three NEW machine-checkable invariants to the registry, each binding a
+# previously-unwitnessed catalog law to an executable @law witness, and syncs the
+# canonical count 100 -> 103 across all documentation surfaces:
+#
+#   thermo.landauer_bound   -> INV-TH3 (algebraic): per-bit erasure == k_B·T·ln 2,
+#                              N-bit cost >= N·k_B·T·ln 2.
+#   ecs.lyapunov_descent    -> INV-FE3 (conditional): V_before > 1e-12 => V_after
+#                              <= V_before; floor V<=1e-12 excluded by V>=0 physics.
+#   dopamine.bounded_signal -> INV-DA8 (universal): adapter |δ|=|tanh(scale·raw)|
+#                              <= 1 and finite for all finite input (distinct from
+#                              INV-DA7 which governs the RAW controller linearity).
+#
+# Honest-by-construction: the ECS invariant is CONDITIONAL, not universal — a
+# universal dV/dt<=0 claim is falsified at the origin (V>=0 cannot descend below
+# zero). The witness exercises the above-floor guarantee AND asserts a floor step
+# exists, so the precondition is documented, not a loophole. No code, schema, or
+# runtime behavior changes — registry text + witnesses + count surfaces only.
+#
+# Locally verified on origin/main base:
+#   * pytest <3 witnesses>: 3 passed
+#   * .claude/physics/validate_tests.py <each>: EXIT 0, no L1..L5 issues
+#   * scripts/count_invariants.py -> 103 ; check_invariant_count_sync.py -> in sync
+#   * ruff / black --check / mypy --strict clean ; zero new `# type: ignore`
+id: governance-three-law-witnesses
+status: ACTIVE
+claim_type: governance
+promise: >-
+  After this PR lands, the invariant registry contains INV-TH3
+  (thermo.landauer_bound), INV-FE3 (ecs.lyapunov_descent, conditional) and INV-DA8
+  (dopamine.bounded_signal), each bound to a passing @law witness under
+  tests/physics_contracts/ that clears .claude/physics/validate_tests with zero
+  L1..L5 issues. scripts/count_invariants.py reports 103 and all documentation
+  surfaces (CLAUDE.md, BASELINE.md, README.md, CLAIMS.md C-INV-COUNT) state 103 in
+  sync, with artifacts/claims_hashes.json regenerated so verify_claim_hashes and
+  check_epistemic_drift both pass, and the hardcoded invariant-witness tripwires in
+  scripts/ci/prove_repo_integrity.sh and scripts/ci/evidence_gate.sh updated to 103.
+  No market claim; no code, schema, or runtime behavior change.
+diff_scope:
+  changed_files:
+    - path: ".claude/commit_acceptors/governance-three-law-witnesses.yaml"
+    - path: ".claude/physics/INVARIANTS.yaml"
+    - path: "CLAUDE.md"
+    - path: "BASELINE.md"
+    - path: "README.md"
+    - path: "CLAIMS.md"
+    - path: "artifacts/claims_hashes.json"
+    - path: "scripts/ci/prove_repo_integrity.sh"
+    - path: "scripts/ci/evidence_gate.sh"
+    - path: "tests/physics_contracts/test_thermo_landauer_floor_witness.py"
+    - path: "tests/physics_contracts/test_ecs_lyapunov_descent_witness.py"
+    - path: "tests/physics_contracts/test_dopamine_adapter_bound_witness.py"
+  forbidden_paths:
+    - "trading/"
+    - "execution/"
+    - "forecast/"
+    - "policy/"
+    - "application/"
+    - "core/"
+    - "src/"
+    - "geosync_hpc/"
+    - "physics_contracts/catalog.yaml"
+required_python_symbols: []
+expected_signal: >-
+  `python -m pytest tests/physics_contracts/test_thermo_landauer_floor_witness.py
+  tests/physics_contracts/test_ecs_lyapunov_descent_witness.py
+  tests/physics_contracts/test_dopamine_adapter_bound_witness.py` reports 3 passed;
+  `python scripts/count_invariants.py` prints 103;
+  `PYTHONPATH=scripts python scripts/check_invariant_count_sync.py` reports all
+  surfaces in sync; validate_tests exits 0 on each witness; ruff/black/mypy clean.
+measurement_command: >-
+  bash -c 'mkdir -p tmp && python -m pytest
+  tests/physics_contracts/test_thermo_landauer_floor_witness.py
+  tests/physics_contracts/test_ecs_lyapunov_descent_witness.py
+  tests/physics_contracts/test_dopamine_adapter_bound_witness.py
+  > tmp/governance_three_law_witnesses.log 2>&1
+  && grep -q "3 passed" tmp/governance_three_law_witnesses.log
+  && python scripts/count_invariants.py | grep -qx "103"
+  && PYTHONPATH=scripts python scripts/check_invariant_count_sync.py | grep -q "in sync"
+  && python scripts/check_epistemic_drift.py | grep -q "synchronized at 103"
+  && python scripts/verify_claim_hashes.py | grep -q "verified"
+  && grep -q "= .103.;" scripts/ci/evidence_gate.sh
+  && grep -q "= .103." scripts/ci/prove_repo_integrity.sh'
+signal_artifact: "tmp/governance_three_law_witnesses.log"
+falsifier:
+  command: |-
+    bash -c 'python -c "
+    import math, sys
+    from core.physics.landauer import LandauerInferenceProfiler, K_BOLTZMANN
+    from core.neuro.signal_bus import NeuroSignalBus
+    from core.neuro.ecs_lyapunov import ECSLyapunovRegulator
+    from core.neuro.dopamine_execution_adapter import DopamineExecutionAdapter
+    broken = False
+    p = LandauerInferenceProfiler(T=300.0)
+    if abs(p.landauer_per_bit - K_BOLTZMANN*300.0*math.log(2)) > 1e-30: broken = True
+    r = ECSLyapunovRegulator(NeuroSignalBus())
+    for s, dt in ((1.5,0.5),(-0.8,0.25),(2.0,1.0),(0.3,0.75),(-1.2,0.5)):
+        vb = r._lyapunov(r.free_energy, r.compensatory_factor, r.stress_integral)
+        out = r.step(stress=s, dt=dt)
+        if vb > 1e-12 and out[\"dV_dt\"] > 1e-12: broken = True
+    da = DopamineExecutionAdapter(NeuroSignalBus(), tanh_scale=25.0)
+    if abs(da.compute_rpe(realized_pnl=1e9, predicted_return=-1e9, slippage=0.0)) > 1.0: broken = True
+    sys.exit(0 if broken else 1)"'
+  description: >-
+    Inverse probe of the three witnessed laws in real code. It exits 0 (fires) iff
+    ANY of the three holds false: the Landauer per-bit cost deviates from k_B·T·ln 2,
+    the ECS corrected step raises V above the floor (descent broken), or the dopamine
+    adapter emits |δ| > 1 (saturation broken). While all three hold the probe exits 1.
+    If it ever exits 0, one of INV-TH3 / INV-FE3 / INV-DA8 is no longer truthful and
+    the registry entry must be corrected or reverted, not patched green.
+rollback_command: >-
+  bash -c 'git checkout origin/main -- .claude/physics/INVARIANTS.yaml CLAUDE.md
+  BASELINE.md README.md
+  && git rm -f
+  tests/physics_contracts/test_thermo_landauer_floor_witness.py
+  tests/physics_contracts/test_ecs_lyapunov_descent_witness.py
+  tests/physics_contracts/test_dopamine_adapter_bound_witness.py
+  .claude/commit_acceptors/governance-three-law-witnesses.yaml'
+rollback_verification_command: >-
+  bash -c 'python scripts/count_invariants.py | grep -qx "100"
+  && test ! -f tests/physics_contracts/test_thermo_landauer_floor_witness.py'
+memory_update_type: none
+ledger_path: ".claude/commit_acceptors/governance-three-law-witnesses.yaml"
+report_path: "tmp/governance_three_law_witnesses.log"
+evidence: []

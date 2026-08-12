@@ -1,0 +1,81 @@
+# Diff-bound acceptor: executable falsification-contract physics modules + catalog.
+#
+# Adds a rich-format falsification layer (10 blocking laws) as thin facades over
+# the verified GeoSync engines. SEPARATE from the canonical 112-invariant catalog
+# (catalog.yaml / INVARIANTS.yaml are untouched; count stays 112). Every blocking
+# law binds hypothesis -> formal_invariant -> measured_quantity -> threshold ->
+# {positive_witness, negative_control} -> evidence_output.
+
+id: physics-falsification-contracts
+status: ACTIVE
+claim_type: fail_closed
+promise: >-
+  Adds 7 core/physics facade modules (ricci_kuramoto, metric_consistency,
+  causality, landauer extension, falsification, precision, governance) plus
+  physics_contracts/falsification_catalog.yaml (10 blocking laws) and its JSON
+  schema. Each facade reuses an existing verified engine and fails closed on
+  contract violation; precision.assert_numerical_stability gives teeth to the
+  previously-vacuous cond(A) <= kappa_max clause; the catalog is validated by
+  tools/validate_physics_contracts.py which emits per-domain evidence. mypy
+  --strict / ruff / black clean, zero type:ignore / noqa, invariant count
+  unchanged (112). No trading/execution/forecast/policy path touched.
+diff_scope:
+  changed_files:
+    - path: "core/physics/ricci_kuramoto.py"
+    - path: "core/physics/metric_consistency.py"
+    - path: "core/physics/causality.py"
+    - path: "core/physics/landauer.py"
+    - path: "core/physics/falsification.py"
+    - path: "core/physics/precision.py"
+    - path: "core/physics/governance.py"
+    - path: "physics_contracts/falsification_catalog.yaml"
+    - path: "physics_contracts/falsification_schema.json"
+  forbidden_paths:
+    - "trading/"
+    - "execution/"
+    - "forecast/"
+    - "policy/"
+required_python_symbols:
+  - "compute_order_parameter"
+  - "ricci_flow_step"
+  - "assert_distortion_bound"
+  - "assert_no_lookahead"
+  - "provenance_hash"
+  - "bit_erasure_cost"
+  - "assert_irreversible_dominance"
+  - "rejection_report"
+  - "assert_numerical_stability"
+  - "promotion_gate"
+expected_signal: >-
+  python tools/validate_physics_contracts.py emits status PASS with 10/10
+  blocking laws fully witnessed and writes evidence/physics/*_report.json; the
+  cond-gate rejects an ill-conditioned matrix; mypy --strict / ruff / black clean.
+measurement_command: >-
+  PYTHONPATH=. python tools/validate_physics_contracts.py
+signal_artifact: "evidence/physics/governance_report.json"
+falsifier:
+  command: >-
+    PYTHONPATH=. python -c "import sys;
+    from core.physics.precision import assert_numerical_stability;
+    import numpy as np;
+    rejected = False;
+    exec('try:\n assert_numerical_stability(np.array([[1.0,1.0],[1.0,1.0+1e-14]]), kappa_max=1e8)\nexcept ValueError:\n rejected = True');
+    print('ill-conditioned rejected:', rejected);
+    sys.exit(0 if rejected else 1)"
+  description: >-
+    Inverse probe for the numerical-stability cond-gate: feeds a near-singular
+    matrix and exits non-zero unless assert_numerical_stability raises. Fires iff
+    the cond(A) <= kappa_max enforcement is weakened back to the vacuous
+    finite-only check this layer exists to replace.
+rollback_command: >-
+  git rm -f core/physics/ricci_kuramoto.py core/physics/metric_consistency.py
+  core/physics/causality.py core/physics/falsification.py core/physics/precision.py
+  core/physics/governance.py physics_contracts/falsification_catalog.yaml
+  physics_contracts/falsification_schema.json
+  && git checkout -- core/physics/landauer.py
+rollback_verification_command: >-
+  test ! -f core/physics/falsification.py
+memory_update_type: append
+ledger_path: ".claude/commit_acceptors/physics-falsification-contracts.yaml"
+report_path: "docs/PHYSICS_REVIEW_PACKET.md"
+evidence: []

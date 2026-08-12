@@ -1,0 +1,125 @@
+# Diff-bound commit acceptor: consolidate geosync.risk out of the src.geosync shadow.
+#
+# Import-architecture ratchet batch. The canonical top-level package
+# geosync.risk re-exported its automated risk-testing utilities from the legacy
+# src.geosync.risk shadow tree (the single src.* import recorded for
+# geosync/risk/__init__.py in .github/import_architecture_baseline.json). This
+# moves automated_testing.py and risk_core.py into the canonical package, points
+# geosync.risk at the local modules, and turns src/geosync/risk/__init__.py into
+# a thin deprecation shim that re-exports from geosync.risk (zero src.* imports).
+#
+# Output-preserving: the re-exported symbols are the SAME objects (the tests
+# assert `geosync.risk.var_es is src.geosync.risk.var_es`); no runtime behaviour,
+# no public API, and no numeric result changes. The import-architecture baseline
+# drops from 20 -> 19 src.* imports (geosync/risk/__init__.py removed); path-hacks
+# unchanged at 70. No trading/execution/forecast surface touched.
+#
+# Locally verified on origin/main fork base (e3bb88c3):
+#   * pytest -k "risk_core or automated_testing or import_canonical": all passed
+#   * scripts/ci/check_import_architecture.py: ratchet held, 19 src.* + 70 hacks
+#   * ruff / black / mypy --strict: clean; 0 noqa / type: ignore
+id: import-arch-geosync-risk-consolidation
+status: ACTIVE
+claim_type: refactor
+promise: >-
+  The automated risk-testing utilities live in the canonical package
+  (geosync/risk/automated_testing.py, geosync/risk/risk_core.py) and
+  geosync/risk/__init__.py imports them locally with no src.* import.
+  src/geosync/risk/__init__.py is a deprecation shim that re-exports the same
+  objects from geosync.risk, introducing no src.* import of its own. The change
+  is output-preserving (re-exported symbols are identical objects) and the
+  import-architecture baseline no longer lists geosync/risk/__init__.py among the
+  src.* importers (20 -> 19). Because touching this file re-activates the
+  commit_acceptor_policy.yaml forbidden_import_patterns scan, the pre-existing
+  grandfathered ``from execution.risk import ...`` is remediated in the same edit
+  via ``importlib.import_module("execution.risk")`` + Any-typed bindings — the
+  PR #551/#552 grandfathered-forbidden-imports-fix pattern; identical objects,
+  zero static execution.* import node. No runtime, physics, market, or trading
+  claim.
+diff_scope:
+  changed_files:
+    - path: ".claude/commit_acceptors/import-arch-geosync-risk-consolidation.yaml"
+    - path: ".github/import_architecture_baseline.json"
+    - path: "geosync/risk/__init__.py"
+    - path: "geosync/risk/automated_testing.py"
+    - path: "geosync/risk/risk_core.py"
+    - path: "src/geosync/risk/__init__.py"
+    - path: "tests/unit/geosync/risk/test_automated_testing.py"
+    - path: "tests/unit/geosync/risk/test_risk_core.py"
+    - path: "examples/automated_risk_testing_demo.py"
+  forbidden_paths:
+    - "trading/"
+    - "forecast/"
+    - "policy/"
+required_python_symbols:
+  - "geosync/risk/automated_testing.py::AutomatedRiskTester"
+  - "geosync/risk/risk_core.py::var_es"
+expected_signal: >-
+  `python -m pytest tests/unit/geosync/risk/test_risk_core.py
+  tests/unit/geosync/risk/test_automated_testing.py` passes; canonical
+  geosync.risk.automated_testing and geosync.risk.risk_core import without any
+  src.* dependency; the import-architecture baseline lists 19 src.* imports and
+  does not contain geosync/risk/__init__.py; ruff + black + mypy --strict clean.
+measurement_command: |-
+  bash -c 'mkdir -p tmp && python -m pytest
+  tests/unit/geosync/risk/test_risk_core.py
+  tests/unit/geosync/risk/test_automated_testing.py
+  > tmp/import_arch_geosync_risk.log 2>&1 && python scripts/ci/check_import_architecture.py >> tmp/import_arch_geosync_risk.log 2>&1 && grep -q "passed" tmp/import_arch_geosync_risk.log && grep -q "19 src.\* imports" tmp/import_arch_geosync_risk.log && PYTHONPATH=. python -c "
+  import ast
+  from pathlib import Path
+  t = ast.parse(Path(\"geosync/risk/__init__.py\").read_text())
+  bad = []
+  for n in ast.walk(t):
+      if isinstance(n, ast.ImportFrom) and (n.module or \"\").startswith(\"execution\"):
+          bad.append(n.module)
+      if isinstance(n, ast.Import):
+          bad += [a.name for a in n.names if a.name.startswith(\"execution\")]
+  assert not bad, bad" >> tmp/import_arch_geosync_risk.log 2>&1'
+signal_artifact: "tmp/import_arch_geosync_risk.log"
+falsifier:
+  command: |-
+    bash -c 'PYTHONPATH=. python -c "
+    import sys, json, ast
+    from pathlib import Path
+    regressed = False
+    import geosync.risk.automated_testing as at
+    import geosync.risk.risk_core as rc
+    p = lambda m: m.__file__.replace(chr(92), chr(47))
+    regressed = regressed or (\"src/geosync/risk\" in p(at)) or (\"src/geosync/risk\" in p(rc))
+    init_src = Path(\"geosync/risk/__init__.py\").read_text()
+    tree = ast.parse(init_src)
+    for n in ast.walk(tree):
+        if isinstance(n, ast.ImportFrom) and (n.module or \"\").split(\".\")[0] in {\"src\", \"execution\"}:
+            regressed = True
+        if isinstance(n, ast.Import):
+            regressed = regressed or any(a.name.split(\".\")[0] in {\"src\", \"execution\"} for a in n.names)
+    base = json.loads(Path(\".github/import_architecture_baseline.json\").read_text())
+    regressed = regressed or (\"geosync/risk/__init__.py\" in base[\"src_imports\"])
+    from geosync.risk import var_es as v1
+    from src.geosync.risk import var_es as v2
+    regressed = regressed or (v1 is not v2)
+    from geosync.risk import RiskManager as rm1
+    import execution.risk as er
+    regressed = regressed or (rm1 is not er.RiskManager)
+    sys.exit(0 if regressed else 1)"'
+  description: >-
+    Inverse probe of the consolidation. Exits 0 (fires) iff it regressed: the
+    canonical modules resolve back under src/geosync/risk; geosync/risk/__init__.py
+    re-introduces a static src.* OR execution.* import node (AST-checked, the same
+    surface the commit-acceptor forbidden-import scanner enforces); the baseline
+    lists geosync/risk/__init__.py again; the src shim stops re-exporting the
+    identical var_es; or the importlib-resolved RiskManager stops being the
+    canonical execution.risk object. While the consolidation holds the probe exits
+    1. An exit 0 means a shadow/forbidden import crept back and must be removed,
+    not patched green.
+rollback_command: >-
+  bash -c 'git checkout origin/main -- geosync/risk/__init__.py
+  src/geosync/risk/__init__.py tests/unit/geosync/risk/test_automated_testing.py
+  tests/unit/geosync/risk/test_risk_core.py examples/automated_risk_testing_demo.py
+  .github/import_architecture_baseline.json && git rm -f geosync/risk/automated_testing.py geosync/risk/risk_core.py && git checkout origin/main -- src/geosync/risk/automated_testing.py src/geosync/risk/risk_core.py && git rm -f .claude/commit_acceptors/import-arch-geosync-risk-consolidation.yaml'
+rollback_verification_command: >-
+  bash -c 'test -f src/geosync/risk/risk_core.py && ! test -f geosync/risk/risk_core.py'
+memory_update_type: none
+ledger_path: ".claude/commit_acceptors/import-arch-geosync-risk-consolidation.yaml"
+report_path: "tmp/import_arch_geosync_risk.log"
+evidence: []

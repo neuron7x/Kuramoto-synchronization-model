@@ -1,0 +1,78 @@
+# Diff-bound commit acceptor for the lag_sweep_no_future_data falsifier-adequacy
+# test (the look-ahead-leak positive/negative control).
+#
+# This change adds ONE deterministic test. It promotes no claim, changes no
+# runtime behavior, touches no schema/guard, and uses no real data. It proves
+# the pre-registered lag_sweep_no_future_data null can FIRE: a feature
+# contaminated with future information is flagged (IC beats the permutation
+# null), while the clean causal Ricci descriptor is not. Claim tier stays
+# INSTRUMENTED / SYNTHETIC.
+#
+# Locally verified on origin/main base (2253a6a):
+#   * pytest tests/research_lines/test_ricci_lookahead_leak_falsifier.py: 4 passed
+#   * clean causal_ic=0.0597 <= null_p95=0.1025 (not flagged)
+#   * injected-leak leaky_ic=0.2187 > null_p95 (flagged)
+#   * ruff / mypy --strict clean ; zero new `# type: ignore`
+id: ricci-lookahead-leak-falsifier
+status: ACTIVE
+claim_type: governance
+promise: >-
+  After this PR lands, tests/research_lines/test_ricci_lookahead_leak_falsifier.py
+  reuses the committed W4 synthetic harness and asserts two controls for the
+  lag_sweep_no_future_data null: the clean causal Ricci descriptor's IC vs the
+  forward return stays inside the permutation-null band (not flagged), while a
+  feature deliberately contaminated with a small fraction of the future return
+  has an IC above the null's 95th percentile (flagged). The detector therefore
+  separates contaminated from clean by a clear margin. No market signal is
+  claimed; no claim tier is promoted; no schema, guard, or runtime file changes.
+diff_scope:
+  changed_files:
+    - path: ".claude/commit_acceptors/ricci-lookahead-leak-falsifier.yaml"
+    - path: "tests/research_lines/test_ricci_lookahead_leak_falsifier.py"
+  forbidden_paths:
+    - "trading/"
+    - "execution/"
+    - "forecast/"
+    - "policy/"
+    - "application/"
+    - "core/physics/"
+    - "core/kuramoto/"
+    - "src/"
+    - "geosync_hpc/"
+required_python_symbols: []
+expected_signal: >-
+  `python -m pytest tests/research_lines/test_ricci_lookahead_leak_falsifier.py`
+  reports 4 passed; the clean causal feature is not flagged (causal_ic <=
+  null_p95) and the injected look-ahead leak is flagged (leaky_ic > null_p95);
+  ruff and mypy --strict on the test are clean.
+measurement_command: >-
+  bash -c 'mkdir -p tmp && python -m pytest
+  tests/research_lines/test_ricci_lookahead_leak_falsifier.py
+  > tmp/ricci_lookahead_leak_falsifier.log 2>&1
+  && grep -q "4 passed" tmp/ricci_lookahead_leak_falsifier.log'
+signal_artifact: "tmp/ricci_lookahead_leak_falsifier.log"
+falsifier:
+  command: |-
+    bash -c 'python -c "
+    import numpy as np;
+    import tests.research_lines.test_ricci_lookahead_leak_falsifier as t;
+    causal, forward, p95 = t._fixture();
+    leaky_ic = t._ic(t._leaky_feature(causal, forward), forward);
+    import sys; sys.exit(0 if leaky_ic <= p95 else 1)"'
+  description: >-
+    Inverse probe of look-ahead-leak detection adequacy. It exits 0 (fires) iff
+    the injected future-contaminated feature is NOT flagged (leaky_ic <=
+    null_p95) — i.e. the no-lookahead falsifier went blind to a known leak. While
+    the detector correctly flags the contamination the probe exits 1. If it ever
+    exits 0, leak detection is broken and the change must be reverted, not
+    patched green.
+rollback_command: >-
+  git rm -f
+  tests/research_lines/test_ricci_lookahead_leak_falsifier.py
+  .claude/commit_acceptors/ricci-lookahead-leak-falsifier.yaml
+rollback_verification_command: >-
+  bash -c 'test ! -f tests/research_lines/test_ricci_lookahead_leak_falsifier.py'
+memory_update_type: none
+ledger_path: ".claude/commit_acceptors/ricci-lookahead-leak-falsifier.yaml"
+report_path: "tmp/ricci_lookahead_leak_falsifier.log"
+evidence: []

@@ -1,0 +1,35 @@
+id: dopamine-action-gate-decoupling
+status: DRAFT
+claim_type: refactor
+promise: "ActionGate evolves against a structural temperature-bound interface with fuzz, SMT, and runtime monitor witnesses."
+diff_scope:
+  changed_files:
+    - path: ".claude/commit_acceptors/dopamine-action-gate-decoupling.yaml"
+    - path: "src/geosync/core/neuro/dopamine/action_gate.py"
+    - path: "src/geosync/core/neuro/dopamine/action_gate_runtime_monitor.py"
+    - path: "tests/core/neuro/dopamine/test_action_gate.py"
+    - path: "tests/core/neuro/dopamine/test_action_gate_import_boundary.py"
+    - path: "tests/core/neuro/dopamine/test_action_gate_property_fuzz.py"
+    - path: "tests/core/neuro/dopamine/test_action_gate_runtime_monitor.py"
+    - path: "tests/core/neuro/dopamine/test_action_gate_smt_invariants.py"
+  forbidden_paths:
+    - "trading/"
+    - "execution/"
+    - "forecast/"
+    - "policy/"
+required_python_symbols:
+  - "src/geosync/core/neuro/dopamine/action_gate.py::TemperatureBoundsProvider"
+  - "src/geosync/core/neuro/dopamine/action_gate.py::ActionGate"
+  - "src/geosync/core/neuro/dopamine/action_gate_runtime_monitor.py::validate_action_gate_evaluation"
+expected_signal: "ActionGate has structural decoupling, bounded stress, Hypothesis fuzzing, Z3 invariant witnesses, and runtime monitor coverage."
+measurement_command: "python -m pytest tests/core/neuro/dopamine/test_action_gate.py tests/core/neuro/dopamine/test_action_gate_import_boundary.py tests/core/neuro/dopamine/test_action_gate_property_fuzz.py tests/core/neuro/dopamine/test_action_gate_runtime_monitor.py tests/core/neuro/dopamine/test_action_gate_smt_invariants.py -q"
+signal_artifact: "tests/core/neuro/dopamine/test_action_gate_import_boundary.py"
+falsifier:
+  command: "python -m pytest tests/core/neuro/dopamine/test_action_gate_import_boundary.py tests/core/neuro/dopamine/test_action_gate_property_fuzz.py tests/core/neuro/dopamine/test_action_gate_runtime_monitor.py tests/core/neuro/dopamine/test_action_gate_smt_invariants.py tests/core/neuro/dopamine/test_action_gate.py::test_gate_decouples_from_concrete_dopamine_controller -q"
+  description: "Fails on concrete-controller coupling, structural-provider breakage, bounded stress failure, generated-state invariant failure, SMT counterexample, or runtime monitor failure."
+rollback_command: "git checkout -- .claude/commit_acceptors/dopamine-action-gate-decoupling.yaml src/geosync/core/neuro/dopamine/action_gate.py src/geosync/core/neuro/dopamine/action_gate_runtime_monitor.py tests/core/neuro/dopamine/test_action_gate.py tests/core/neuro/dopamine/test_action_gate_import_boundary.py tests/core/neuro/dopamine/test_action_gate_property_fuzz.py tests/core/neuro/dopamine/test_action_gate_runtime_monitor.py tests/core/neuro/dopamine/test_action_gate_smt_invariants.py"
+rollback_verification_command: "git diff --exit-code"
+memory_update_type: none
+ledger_path: ".claude/commit_acceptors/dopamine-action-gate-decoupling.yaml"
+report_path: "tests/core/neuro/dopamine/test_action_gate_import_boundary.py"
+evidence: []

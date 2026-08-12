@@ -34,5 +34,5 @@ scripts/verify_security_constraints.py:71:        result = subprocess.run(
 scripts/verify_security_constraints.py:81:    except (subprocess.CalledProcessError, json.JSONDecodeError) as e:
 scripts/verify_security_constraints.py:194:        subprocess.run(cmd, check=True)
 scripts/verify_security_constraints.py:197:    except subprocess.CalledProcessError as e:
-src/tradepulse/perf/golden_path.py:31:        result = subprocess.run(
-src/tradepulse/core/digital_governance.py:615:        dangerous_patterns = ["exec(", "eval(", "os.system(", "subprocess.call("]
+src/geosync/perf/golden_path.py:31:        result = subprocess.run(
+src/geosync/core/digital_governance.py:615:        dangerous_patterns = ["exec(", "eval(", "os.system(", "subprocess.call("]

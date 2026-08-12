@@ -1,0 +1,53 @@
+# SPDX-License-Identifier: MIT
+id: d002h-authorization-chain-coherence
+status: DRAFT
+claim_type: fail_closed
+promise: >-
+  Cross-artifact coherence of the D-002H authorisation chain. The Gate F
+  authorisation grant and Gate G terminal final-lock both carry the A..E anchor
+  shas, the D-002C ledger pin, the D-002H prereg pin and the conjunction string,
+  but each is checked only against its own gate test's hardcoded constants — the
+  two grants are never compared to each other, so a re-anchor updating one grant
+  (and its test) but not the other passes silently. A new fail-closed gate reads
+  both grants and asserts they AGREE directly, and that the embedded prereg pin
+  matches the on-disk prereg. No hardcoded shas (single-source-by-comparison). It
+  does not grant, weaken, or re-verify authorisation; it refuses an incoherent
+  chain.
+diff_scope:
+  changed_files:
+    - path: ".claude/commit_acceptors/d002h-authorization-chain-coherence.yaml"
+    - path: "tests/systemic_risk/test_d002h_authorization_chain_coherence.py"
+  forbidden_paths:
+    - "trading/"
+    - "execution/"
+    - "forecast/"
+    - "policy/"
+required_python_symbols:
+  - "tests/systemic_risk/test_d002h_authorization_chain_coherence.py::test_ae_anchor_shas_agree_across_grants"
+expected_signal: >-
+  the two grants' A..E anchor shas, ledger pin, prereg pin and conjunction string
+  agree; the embedded prereg pin equals the on-disk prereg sha256; drifting any
+  one of these in only one grant fails the gate; pytest
+  tests/systemic_risk/test_d002h_authorization_chain_coherence.py passes.
+measurement_command: >-
+  bash -c 'python -m pytest -q tests/systemic_risk/test_d002h_authorization_chain_coherence.py'
+signal_artifact: "tmp/d002h_chain_coherence.log"
+falsifier:
+  command: |
+    python -c "import json, sys
+    f = json.load(open('artifacts/d002h/authorization/d002h_canonical_run_authorisation.json'))
+    g = json.load(open('artifacts/d002h/authorization/d002h_canonical_run_final_lock.json'))
+    fa = {x['gate']: x['anchor_sha'] for x in f['prior_gate_chain']}
+    ga = {x['gate']: x.get('anchor_sha') for x in g['gate_chain']}
+    sys.exit(0 if fa['A'] != ga['A'] else 1)"
+  description: >-
+    Compares the Gate-A anchor across the two grants and exits 0 only if they
+    DISAGREE (the incoherent-chain state). On the correct tree they agree, so the
+    command exits non-zero — proving the cross-artifact coherence check is bound
+    to the real grant contents, not decorative.
+rollback_command: "git revert --no-edit HEAD"
+rollback_verification_command: "git diff --exit-code tests/systemic_risk/test_d002h_authorization_chain_coherence.py"
+memory_update_type: none
+ledger_path: ".claude/commit_acceptors/d002h-authorization-chain-coherence.yaml"
+report_path: "docs/reports/diff_bound_commit_acceptor_layer.md"
+evidence: []

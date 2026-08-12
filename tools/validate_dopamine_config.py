@@ -1,10 +1,13 @@
 #!/usr/bin/env python3
+# Copyright (c) 2023-2026 Yaroslav Vasylenko (neuron7xLab)
+# SPDX-License-Identifier: MIT
 """Validate dopamine configuration against JSON schema.
 
 Usage:
     python tools/validate_dopamine_config.py <config.yaml>
     python tools/validate_dopamine_config.py --all  # Validate all configs
 """
+
 from __future__ import annotations
 
 import argparse
@@ -38,9 +41,7 @@ def load_config(config_path: Path) -> dict[str, Any]:
         return yaml.safe_load(f)
 
 
-def validate_config(
-    config: dict[str, Any], schema: dict[str, Any]
-) -> tuple[bool, list[str]]:
+def validate_config(config: dict[str, Any], schema: dict[str, Any]) -> tuple[bool, list[str]]:
     """Validate config against schema.
 
     Returns:
@@ -77,9 +78,7 @@ def validate_semantic_rules(config: dict[str, Any]) -> tuple[bool, list[str]]:
     # Check: ddm_min_temperature_scale <= ddm_max_temperature_scale
     if "ddm_min_temperature_scale" in config and "ddm_max_temperature_scale" in config:
         if config["ddm_min_temperature_scale"] > config["ddm_max_temperature_scale"]:
-            errors.append(
-                "ddm_min_temperature_scale must be <= ddm_max_temperature_scale"
-            )
+            errors.append("ddm_min_temperature_scale must be <= ddm_max_temperature_scale")
 
     # Note: go >= hold >= no_go is enforced at runtime by check_monotonic_thresholds
     # We document but don't validate here since it's a soft constraint

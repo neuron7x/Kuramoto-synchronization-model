@@ -1,0 +1,61 @@
+# SPDX-License-Identifier: MIT
+#
+# Product-category claim-boundary gate — fail-closed.
+#
+# GeoSync is a verification-first research platform, NOT a live-trading
+# system or alpha product (canonical: PRODUCT_CATEGORY.md). This gate
+# scans the canonical surface — top-level *.md + docs/ plus the
+# claim-bearing code modules in CODE_SURFACE_FILES (core/indicators/**) —
+# and fails on any unreviewed product-category claim. Reviewed mechanism / ops /
+# research-disclaimer / honest-negation references live in
+# .github/claim_boundary_allow.json. Stdlib-only; no install step.
+#
+# Path-filtered: a PR that touches no markdown, the script, the
+# allowlist, the tests, or this workflow skips the job entirely.
+name: Claim Boundary Gate
+
+concurrency:
+  group: ${{ github.workflow }}-${{ github.ref }}
+  cancel-in-progress: true
+
+on:
+  pull_request:
+    branches: [main]
+    paths:
+      - "**/*.md"
+      - "scripts/ci/check_claim_boundary.py"
+      - ".github/claim_boundary_allow.json"
+      - "tests/scripts/test_check_claim_boundary.py"
+      - ".github/workflows/claim-boundary-gate.yml"
+      # Claim-bearing code surfaces gated by CODE_SURFACE_FILES — an edit
+      # to an indicator module *alone* must still trigger the boundary gate.
+      - "core/indicators/**"
+  push:
+    branches: [main]
+    paths:
+      - "**/*.md"
+      - "scripts/ci/check_claim_boundary.py"
+      - ".github/claim_boundary_allow.json"
+      - "tests/scripts/test_check_claim_boundary.py"
+      - ".github/workflows/claim-boundary-gate.yml"
+      - "core/indicators/**"
+
+permissions:
+  contents: read
+
+jobs:
+  validate:
+    name: claim-boundary-gate
+    runs-on: ubuntu-latest
+    timeout-minutes: 5
+    steps:
+      - name: Checkout
+        uses: actions/checkout@9c091bb21b7c1c1d1991bb908d89e4e9dddfe3e0 # v7.0.0
+
+      - name: Setup Python
+        uses: actions/setup-python@ece7cb06caefa5fff74198d8649806c4678c61a1 # v6
+        with:
+          python-version: "3.12"
+
+      - name: Enforce product-category claim boundary
+        run: python scripts/ci/check_claim_boundary.py

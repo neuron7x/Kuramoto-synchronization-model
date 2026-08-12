@@ -78,7 +78,7 @@
 | DFA | `core/metrics/dfa.py` | `dfa_alpha()` |
 | Aperiodic slope | `core/metrics/aperiodic.py` | `aperiodic_slope()` |
 | RPE/APE | `rl/core/habit_head.py` | `ape_update()` |
-| Lévy diffusion | `neuropro/multifractal_opt.py` | `fractional_update()` |
+| Lévy diffusion | `geosync_hpc/multifractal_opt.py` | `fractional_update()` |
 | p-model cascade | `utils/fractal_cascade.py` | `DyadicPMCascade` |
 | Hölder fields | `core/metrics/holder.py` | `holder_exponent_wavelet()`, `local_holder_spectrum()` |
 | Singularity spectrum | `core/metrics/holder.py` | `singularity_spectrum()`, `multifractal_width()` |

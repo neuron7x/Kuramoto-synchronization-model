@@ -1,4 +1,4 @@
-name: Deploy TradePulse Environments
+name: Deploy GeoSync Environments
 
 on:
   push:
@@ -69,7 +69,7 @@ jobs:
         run: kustomize build deploy/kustomize/overlays/production >/tmp/production.yaml
 
   deploy-staging:
-    if: github.repository == 'neuron7x/TradePulse' && (github.event_name == 'push' || (github.event_name == 'workflow_dispatch' && (github.event.inputs.environment == 'staging' || github.event.inputs.environment == 'production')))
+    if: github.repository == 'neuron7xLab/GeoSync' && (github.event_name == 'push' || (github.event_name == 'workflow_dispatch' && (github.event.inputs.environment == 'staging' || github.event.inputs.environment == 'production')))
     name: Deploy staging
     runs-on: ubuntu-latest
     needs:
@@ -114,7 +114,7 @@ jobs:
           aws eks update-kubeconfig \
             --name "$AWS_STAGING_CLUSTER_NAME" \
             --region "$AWS_REGION" \
-            --alias tradepulse-staging
+            --alias geosync-staging
           echo "deploy_enabled=true" >>"$GITHUB_OUTPUT"
 
       - name: Install kubectl
@@ -181,7 +181,7 @@ output_docs = []
 for doc in documents:
     if not isinstance(doc, dict):
         continue
-    if doc.get("kind") != "Deployment" or doc.get("metadata", {}).get("name") != "tradepulse-api":
+    if doc.get("kind") != "Deployment" or doc.get("metadata", {}).get("name") != "geosync-api":
         continue
     canary = copy.deepcopy(doc)
     metadata = canary.setdefault("metadata", {})
@@ -189,7 +189,7 @@ for doc in documents:
     metadata.setdefault("labels", {})
     metadata["labels"]["app.kubernetes.io/instance"] = "canary"
     metadata.setdefault("annotations", {})
-    metadata["annotations"]["tradepulse.io/canary"] = "true"
+    metadata["annotations"]["geosync.io/canary"] = "true"
 
     spec = canary.setdefault("spec", {})
     spec["replicas"] = 1
@@ -210,25 +210,25 @@ if not output_docs:
 
 dest_path.write_text("\n---\n".join(yaml.safe_dump(doc) for doc in output_docs))
 PY
-          kubectl apply -n tradepulse-staging -f "$canary_manifest" --server-side --force-conflicts
+          kubectl apply -n geosync-staging -f "$canary_manifest" --server-side --force-conflicts
 
       - name: Wait for canary rollout
         if: steps.configure_kube.outputs.deploy_enabled == 'true'
-        run: kubectl rollout status deployment/tradepulse-api-canary -n tradepulse-staging --timeout=5m
+        run: kubectl rollout status deployment/geosync-api-canary -n geosync-staging --timeout=5m
 
       - name: Validate canary health and metrics
         if: steps.configure_kube.outputs.deploy_enabled == 'true'
         run: |
           set -euo pipefail
-          if ! kubectl run tradepulse-api-canary-check \
-            -n tradepulse-staging \
+          if ! kubectl run geosync-api-canary-check \
+            -n geosync-staging \
             --image=curlimages/curl:8.10.1 \
             --restart=Never \
             --attach \
             --rm \
-            --command -- /bin/sh -c "set -euo pipefail; curl -fsS http://tradepulse-api.tradepulse-staging.svc.cluster.local/health > /tmp/health; curl -fsS http://tradepulse-api.tradepulse-staging.svc.cluster.local:8001/metrics > /tmp/metrics; [ -s /tmp/health ] && [ -s /tmp/metrics ]"; then
-            kubectl logs deployment/tradepulse-api-canary -n tradepulse-staging || true
-            kubectl delete deployment/tradepulse-api-canary -n tradepulse-staging --wait=true --ignore-not-found
+            --command -- /bin/sh -c "set -euo pipefail; curl -fsS http://geosync-api.geosync-staging.svc.cluster.local/health > /tmp/health; curl -fsS http://geosync-api.geosync-staging.svc.cluster.local:8001/metrics > /tmp/metrics; [ -s /tmp/health ] && [ -s /tmp/metrics ]"; then
+            kubectl logs deployment/geosync-api-canary -n geosync-staging || true
+            kubectl delete deployment/geosync-api-canary -n geosync-staging --wait=true --ignore-not-found
             exit 1
           fi
 
@@ -238,14 +238,14 @@ PY
 
       - name: Wait for rollout
         if: steps.configure_kube.outputs.deploy_enabled == 'true'
-        run: kubectl rollout status deployment/tradepulse-api -n tradepulse-staging --timeout=5m
+        run: kubectl rollout status deployment/geosync-api -n geosync-staging --timeout=5m
 
       - name: Remove canary deployment
         if: always() && steps.configure_kube.outputs.deploy_enabled == 'true'
-        run: kubectl delete deployment/tradepulse-api-canary -n tradepulse-staging --ignore-not-found
+        run: kubectl delete deployment/geosync-api-canary -n geosync-staging --ignore-not-found
 
   deploy-production:
-    if: github.repository == 'neuron7x/TradePulse' && needs.deploy-staging.outputs.deploy_enabled == 'true' && github.ref == 'refs/heads/main' && (github.event_name == 'push' || (github.event_name == 'workflow_dispatch' && github.event.inputs.environment == 'production'))
+    if: github.repository == 'neuron7xLab/GeoSync' && needs.deploy-staging.outputs.deploy_enabled == 'true' && github.ref == 'refs/heads/main' && (github.event_name == 'push' || (github.event_name == 'workflow_dispatch' && github.event.inputs.environment == 'production'))
     name: Deploy production
     runs-on: ubuntu-latest
     needs:
@@ -300,7 +300,7 @@ PY
           aws eks update-kubeconfig \
             --name "$AWS_PRODUCTION_CLUSTER_NAME" \
             --region "$AWS_REGION" \
-            --alias tradepulse-production
+            --alias geosync-production
 
       - name: Diff manifest against cluster
         run: |
@@ -339,7 +339,7 @@ output_docs = []
 for doc in documents:
     if not isinstance(doc, dict):
         continue
-    if doc.get("kind") != "Deployment" or doc.get("metadata", {}).get("name") != "tradepulse-api":
+    if doc.get("kind") != "Deployment" or doc.get("metadata", {}).get("name") != "geosync-api":
         continue
     canary = copy.deepcopy(doc)
     metadata = canary.setdefault("metadata", {})
@@ -347,7 +347,7 @@ for doc in documents:
     metadata.setdefault("labels", {})
     metadata["labels"]["app.kubernetes.io/instance"] = "canary"
     metadata.setdefault("annotations", {})
-    metadata["annotations"]["tradepulse.io/canary"] = "true"
+    metadata["annotations"]["geosync.io/canary"] = "true"
 
     spec = canary.setdefault("spec", {})
     spec["replicas"] = 1
@@ -368,23 +368,23 @@ if not output_docs:
 
 dest_path.write_text("\n---\n".join(yaml.safe_dump(doc) for doc in output_docs))
 PY
-          kubectl apply -n tradepulse-production -f "$canary_manifest" --server-side --force-conflicts
+          kubectl apply -n geosync-production -f "$canary_manifest" --server-side --force-conflicts
 
       - name: Wait for canary rollout
-        run: kubectl rollout status deployment/tradepulse-api-canary -n tradepulse-production --timeout=10m
+        run: kubectl rollout status deployment/geosync-api-canary -n geosync-production --timeout=10m
 
       - name: Validate canary health and metrics
         run: |
           set -euo pipefail
-          if ! kubectl run tradepulse-api-canary-check \
-            -n tradepulse-production \
+          if ! kubectl run geosync-api-canary-check \
+            -n geosync-production \
             --image=curlimages/curl:8.10.1 \
             --restart=Never \
             --attach \
             --rm \
-            --command -- /bin/sh -c "set -euo pipefail; curl -fsS http://tradepulse-api.tradepulse-production.svc.cluster.local/health > /tmp/health; curl -fsS http://tradepulse-api.tradepulse-production.svc.cluster.local:8001/metrics > /tmp/metrics; [ -s /tmp/health ] && [ -s /tmp/metrics ]"; then
-            kubectl logs deployment/tradepulse-api-canary -n tradepulse-production || true
-            kubectl delete deployment/tradepulse-api-canary -n tradepulse-production --wait=true --ignore-not-found
+            --command -- /bin/sh -c "set -euo pipefail; curl -fsS http://geosync-api.geosync-production.svc.cluster.local/health > /tmp/health; curl -fsS http://geosync-api.geosync-production.svc.cluster.local:8001/metrics > /tmp/metrics; [ -s /tmp/health ] && [ -s /tmp/metrics ]"; then
+            kubectl logs deployment/geosync-api-canary -n geosync-production || true
+            kubectl delete deployment/geosync-api-canary -n geosync-production --wait=true --ignore-not-found
             exit 1
           fi
 
@@ -392,8 +392,8 @@ PY
         run: kubectl apply -k deploy/kustomize/overlays/production --server-side --force-conflicts
 
       - name: Wait for rollout
-        run: kubectl rollout status deployment/tradepulse-api -n tradepulse-production --timeout=10m
+        run: kubectl rollout status deployment/geosync-api -n geosync-production --timeout=10m
 
       - name: Remove canary deployment
         if: always()
-        run: kubectl delete deployment/tradepulse-api-canary -n tradepulse-production --ignore-not-found
+        run: kubectl delete deployment/geosync-api-canary -n geosync-production --ignore-not-found

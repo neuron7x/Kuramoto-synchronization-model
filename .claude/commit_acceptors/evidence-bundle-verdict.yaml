@@ -1,0 +1,80 @@
+# Diff-bound acceptor: claim-governance evidence-bundle capstone (Phase 14).
+#
+# GeoSync already enforces claim hygiene through several independent CI gates
+# (check_claim_boundary, check_claims, check_claim_maturity,
+# check_claim_artifact_graph, check_invariant_count_sync). What was missing is
+# the capstone the falsification-first research standard requires: a single
+# machine-readable VERDICT.json that a release manager or external reviewer can
+# read to answer "is the claim surface release-ready, and which gate blocks it?"
+#
+# scripts/ci/emit_verdict.py RUNS those existing gates (it reuses them as the
+# single source of truth — it re-implements no check) and emits a fail-closed
+# VERDICT.json: any gate failure ⇒ release_ready=false ⇒ non-zero exit, so
+# `make evidence` is a release gate, not a passive report. No runtime path is
+# touched; no claim/positioning doc is added (that surface already exists).
+
+id: evidence-bundle-verdict
+status: ACTIVE
+claim_type: correctness
+promise: >-
+  Adds scripts/ci/emit_verdict.py, a fail-closed aggregator that runs the five
+  existing claim-governance gates (claim-boundary, claims-evidence,
+  claim-maturity, claim-artifact-graph, invariant-count-sync) as subprocesses
+  and writes artifacts/audit/VERDICT.json with a per-gate result and an overall
+  release_ready boolean (AND of every gate; any failing or un-runnable gate is
+  blocking). Exposes it via a new `make evidence` target. The aggregator
+  re-implements no check — it reuses the existing gates verbatim as the single
+  source of truth. Adds tests/scripts/test_emit_verdict.py (10 cases:
+  pure build_verdict pass/fail/determinism, run_gate fail-closed on non-zero
+  exit, injected-runner main pass→0 and fail→1, registry sanity). Registers the
+  new script in INVENTORY.json. mypy --strict / ruff / black clean; no
+  type:ignore / noqa added. No runtime trading path touched.
+diff_scope:
+  changed_files:
+    - path: ".claude/commit_acceptors/evidence-bundle-verdict.yaml"
+    - path: "scripts/ci/emit_verdict.py"
+    - path: "tests/scripts/test_emit_verdict.py"
+  forbidden_paths:
+    - "trading/"
+    - "execution/"
+    - "forecast/"
+    - "policy/"
+required_python_symbols:
+  - "build_verdict"
+  - "run_gate"
+  - "main"
+expected_signal: >-
+  pytest tests/scripts/test_emit_verdict.py is green (10 cases, ~1s);
+  `python scripts/ci/emit_verdict.py` exits 0 on a clean tree and writes
+  artifacts/audit/VERDICT.json with release_ready=true and gate_count=5;
+  `make evidence` runs the same and prints the per-gate PASS lines; mypy
+  --strict clean on scripts/ci/emit_verdict.py; ruff + black clean;
+  check_inventory_sync exits 0 with emit_verdict.py registered.
+measurement_command: >-
+  python -m pytest tests/scripts/test_emit_verdict.py -v
+signal_artifact: "tmp/evidence_bundle_verdict_pytest.log"
+falsifier:
+  command: >-
+    python -c "import sys;
+    from scripts.ci.emit_verdict import build_verdict, GateOutcome;
+    fail=GateOutcome('x','c','d',1,False,'boom');
+    ok=GateOutcome('y','c','d',0,True,'ok');
+    v=build_verdict([ok, fail], commit='c', timestamp='t');
+    print('release_ready', v['release_ready'], 'blocking', v['blocking_gates']);
+    sys.exit(0 if (v['release_ready'] is False and v['blocking_gates'] == ['x']) else 1)"
+  description: >-
+    Inverse probe for the fail-closed aggregation contract: feeds one passing
+    and one failing GateOutcome to build_verdict and exits non-zero unless the
+    verdict is release_ready=false with the failing gate named in
+    blocking_gates. Fires iff the AND-aggregation is weakened so a failing gate
+    could be reported as release-ready — the exact regression the capstone
+    exists to prevent.
+rollback_command: >-
+  git rm -f scripts/ci/emit_verdict.py tests/scripts/test_emit_verdict.py
+  .claude/commit_acceptors/evidence-bundle-verdict.yaml
+rollback_verification_command: >-
+  test ! -f scripts/ci/emit_verdict.py
+memory_update_type: append
+ledger_path: ".claude/commit_acceptors/evidence-bundle-verdict.yaml"
+report_path: ".claude/commit_acceptors/evidence-bundle-verdict.yaml"
+evidence: []

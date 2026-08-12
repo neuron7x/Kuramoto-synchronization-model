@@ -1,7 +1,7 @@
 # Trading domain schema
 
 This directory contains a PostgreSQL schema for the trading domain used by
-TradePulse. Apply the SQL file(s) in this directory before enabling services
+GeoSync. Apply the SQL file(s) in this directory before enabling services
 that depend on PostgreSQL persistence for orders, executions, and positions.
 
 The schema is designed to be idempotent so it can be re-run safely during

@@ -1,5 +1,7 @@
-# SPDX-License-Identifier: LicenseRef-TradePulse-Proprietary
+# Copyright (c) 2023-2026 Yaroslav Vasylenko (neuron7xLab)
+# SPDX-License-Identifier: MIT
 """Unit tests for core.validation.mathematical_logic module."""
+
 from __future__ import annotations
 
 import numpy as np
@@ -199,9 +201,7 @@ class TestValidateBounds:
     def test_within_bounds(self) -> None:
         validator = MathematicalLogicValidator()
         data = np.array([5.0, 10.0, 15.0])
-        results = validator.validate_bounds(
-            data, name="data", min_value=0, max_value=20
-        )
+        results = validator.validate_bounds(data, name="data", min_value=0, max_value=20)
         assert all(r.passed for r in results)
 
     def test_below_min_bound(self) -> None:
@@ -221,9 +221,7 @@ class TestValidateBounds:
     def test_strict_bounds_min(self) -> None:
         validator = MathematicalLogicValidator()
         data = np.array([5.0, 10.0])
-        results = validator.validate_bounds(
-            data, name="data", min_value=5.0, strict=True
-        )
+        results = validator.validate_bounds(data, name="data", min_value=5.0, strict=True)
         min_result = next(r for r in results if "min_bound" in r.name)
         # Strict: 5.0 > 5.0 is False
         assert not min_result.passed
@@ -231,9 +229,7 @@ class TestValidateBounds:
     def test_strict_bounds_max(self) -> None:
         validator = MathematicalLogicValidator()
         data = np.array([5.0, 10.0])
-        results = validator.validate_bounds(
-            data, name="data", max_value=10.0, strict=True
-        )
+        results = validator.validate_bounds(data, name="data", max_value=10.0, strict=True)
         max_result = next(r for r in results if "max_bound" in r.name)
         # Strict: 10.0 < 10.0 is False
         assert not max_result.passed
@@ -251,50 +247,38 @@ class TestValidateMonotonic:
     def test_strictly_increasing_passes(self) -> None:
         validator = MathematicalLogicValidator()
         data = np.array([1.0, 2.0, 3.0, 4.0])
-        results = validator.validate_monotonic(
-            data, direction="increasing", strict=True
-        )
+        results = validator.validate_monotonic(data, direction="increasing", strict=True)
         assert results[0].passed
 
     def test_non_decreasing_passes(self) -> None:
         validator = MathematicalLogicValidator()
         data = np.array([1.0, 2.0, 2.0, 3.0])
-        results = validator.validate_monotonic(
-            data, direction="increasing", strict=False
-        )
+        results = validator.validate_monotonic(data, direction="increasing", strict=False)
         assert results[0].passed
 
     def test_strictly_increasing_fails(self) -> None:
         validator = MathematicalLogicValidator()
         data = np.array([1.0, 2.0, 2.0, 3.0])  # Has equal values
-        results = validator.validate_monotonic(
-            data, direction="increasing", strict=True
-        )
+        results = validator.validate_monotonic(data, direction="increasing", strict=True)
         assert not results[0].passed
         assert results[0].value == 1  # One violation
 
     def test_strictly_decreasing_passes(self) -> None:
         validator = MathematicalLogicValidator()
         data = np.array([4.0, 3.0, 2.0, 1.0])
-        results = validator.validate_monotonic(
-            data, direction="decreasing", strict=True
-        )
+        results = validator.validate_monotonic(data, direction="decreasing", strict=True)
         assert results[0].passed
 
     def test_non_increasing_passes(self) -> None:
         validator = MathematicalLogicValidator()
         data = np.array([4.0, 3.0, 3.0, 2.0])
-        results = validator.validate_monotonic(
-            data, direction="decreasing", strict=False
-        )
+        results = validator.validate_monotonic(data, direction="decreasing", strict=False)
         assert results[0].passed
 
     def test_decreasing_fails(self) -> None:
         validator = MathematicalLogicValidator()
         data = np.array([4.0, 3.0, 5.0, 2.0])  # 3->5 is increase
-        results = validator.validate_monotonic(
-            data, direction="decreasing", strict=False
-        )
+        results = validator.validate_monotonic(data, direction="decreasing", strict=False)
         assert not results[0].passed
 
     def test_single_element(self) -> None:
@@ -399,9 +383,7 @@ class TestValidateStatisticalMoments:
     def test_std_outside_tolerance(self) -> None:
         validator = MathematicalLogicValidator()
         data = np.array([0.0, 1.0, 2.0])
-        results = validator.validate_statistical_moments(
-            data, expected_std=0.5, std_tolerance=0.01
-        )
+        results = validator.validate_statistical_moments(data, expected_std=0.5, std_tolerance=0.01)
         std_result = next(r for r in results if "std" in r.name)
         assert not std_result.passed
 
@@ -502,9 +484,7 @@ class TestValidateRelationship:
         def bad_relationship(a: np.ndarray, b: np.ndarray) -> bool:
             raise ValueError("Test error")
 
-        result = validator.validate_relationship(
-            x, y, relationship=bad_relationship, name="bad"
-        )
+        result = validator.validate_relationship(x, y, relationship=bad_relationship, name="bad")
         assert not result.passed
         assert "Error" in result.message
 

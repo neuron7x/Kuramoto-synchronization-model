@@ -1,0 +1,138 @@
+{
+  "timestamp_utc": "2026-04-11T09:32:17.602268+00:00",
+  "steps": [
+    {
+      "name": "task7_fetch",
+      "cmd": [
+        "python",
+        "scripts/fetch_dukascopy_l2.py"
+      ],
+      "returncode": 0,
+      "ok": true
+    },
+    {
+      "name": "task8_ofi",
+      "cmd": [
+        "python",
+        "research/kernels/ofi_unity_live.py",
+        "--source",
+        "dukascopy",
+        "--input-csv",
+        "data/dukascopy/xauusd_l2_hourly.csv",
+        "--output",
+        "results/ofi_unity_dukascopy_verdict.json"
+      ],
+      "returncode": 0,
+      "ok": true
+    },
+    {
+      "name": "task9_neurophase",
+      "cmd": [
+        "python",
+        "research/kernels/neurophase_bridge.py",
+        "--input-csv",
+        "data/dukascopy/xauusd_l2_hourly.csv",
+        "--output-csv",
+        "results/neurophase_gate_history.csv",
+        "--window",
+        "256",
+        "--threshold",
+        "0.65"
+      ],
+      "returncode": 0,
+      "ok": true
+    },
+    {
+      "name": "task11_ricci_spread",
+      "cmd": [
+        "python",
+        "research/kernels/ricci_on_spread.py",
+        "--input-csv",
+        "data/dukascopy/xauusd_l2_hourly.csv",
+        "--output-json",
+        "results/ricci_on_spread_verdict.json"
+      ],
+      "returncode": 0,
+      "ok": true
+    },
+    {
+      "name": "task12_plv",
+      "cmd": [
+        "python",
+        "research/kernels/plv_market_spread.py",
+        "--input-csv",
+        "data/dukascopy/xauusd_l2_hourly.csv",
+        "--output-json",
+        "results/plv_spread_market_verdict.json"
+      ],
+      "returncode": 0,
+      "ok": true
+    },
+    {
+      "name": "task13_stress",
+      "cmd": [
+        "python",
+        "research/kernels/spread_stress_detector.py",
+        "--input-csv",
+        "data/dukascopy/xauusd_l2_hourly.csv",
+        "--output-json",
+        "results/spread_stress_verdict.json"
+      ],
+      "returncode": 0,
+      "ok": true
+    },
+    {
+      "name": "task14_regime",
+      "cmd": [
+        "python",
+        "research/kernels/ricci_regime_conditioned.py",
+        "--input-csv",
+        "data/dukascopy/xauusd_l2_hourly.csv",
+        "--output-json",
+        "results/ricci_regime_verdict.json"
+      ],
+      "returncode": 0,
+      "ok": true
+    },
+    {
+      "name": "task15_horizon",
+      "cmd": [
+        "python",
+        "research/kernels/horizon_sweep.py",
+        "--input-csv",
+        "data/dukascopy/xauusd_l2_hourly.csv",
+        "--output-json",
+        "results/horizon_sweep_verdict.json"
+      ],
+      "returncode": 0,
+      "ok": true
+    },
+    {
+      "name": "task16_combiner",
+      "cmd": [
+        "python",
+        "research/kernels/signal_combiner.py",
+        "--input-csv",
+        "data/dukascopy/xauusd_l2_hourly.csv",
+        "--output-json",
+        "results/signal_combiner_verdict.json"
+      ],
+      "returncode": 0,
+      "ok": true
+    },
+    {
+      "name": "task17_final",
+      "cmd": [
+        "python",
+        "research/askar/closing_report.py",
+        "--results-dir",
+        "results",
+        "--output-json",
+        "results/FINAL_REPORT.json"
+      ],
+      "returncode": 0,
+      "ok": true
+    }
+  ],
+  "all_ok": true
+}

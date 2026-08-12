@@ -1,0 +1,40 @@
+{
+  "substrate": {
+    "source": "data/askar_full/panel_hourly_extended.parquet",
+    "n_assets": 57,
+    "n_bars": 23869,
+    "first_ts": "2018-02-01 16:00:00",
+    "last_ts": "2026-02-23 00:00:00",
+    "window": 60,
+    "threshold": 0.3,
+    "permutations": 500
+  },
+  "b1_stats": {
+    "mean": 843.4971440571188,
+    "median": 830.0,
+    "p05": 598.0,
+    "p95": 1136.0,
+    "max": 1320.0
+  },
+  "IC": 0.01413,
+  "p_value": 0.031936,
+  "corr_momentum": -0.000133,
+  "corr_vol": 0.388021,
+  "corr_vix": -0.007055,
+  "corr_hyg": -0.006404,
+  "lead_capture": 0.078313,
+  "lead_capture_detail": {
+    "captured": 13,
+    "drawdown_events": 166,
+    "drawdown_threshold": -0.05,
+    "fwd_window": 20,
+    "lookback_bars": [
+      10,
+      30
+    ]
+  },
+  "DETECT": "FAIL",
+  "DISCRIMINATE": "FAIL",
+  "DELIVER": "FAIL",
+  "FINAL": "REJECT"
+}

@@ -1,4 +1,5 @@
-# SPDX-License-Identifier: LicenseRef-TradePulse-Proprietary
+# Copyright (c) 2023-2026 Yaroslav Vasylenko (neuron7xLab)
+# SPDX-License-Identifier: MIT
 """High-throughput helpers for evaluating strategy populations."""
 
 from __future__ import annotations
@@ -72,9 +73,7 @@ class StrategyEvaluationError(RuntimeError):
 
     def __init__(self, failures: Sequence[EvaluationResult]):
         message = ", ".join(f"{res.strategy.name}: {res.error}" for res in failures)
-        super().__init__(
-            f"Strategy evaluation failed for {len(failures)} strategy(ies): {message}"
-        )
+        super().__init__(f"Strategy evaluation failed for {len(failures)} strategy(ies): {message}")
         self.failures = list(failures)
 
 
@@ -192,7 +191,10 @@ class StrategyBatchEvaluator:
             duration = time.perf_counter() - start
             self._record_metrics(collector, strategy, None, duration, exc)
             return EvaluationResult(strategy, None, duration, exc)
-        except BaseException as exc:  # pragma: no cover - defensive
+        except (KeyboardInterrupt, SystemExit):
+            # Interrupts must propagate — never swallowed into a result.
+            raise
+        except Exception as exc:  # pragma: no cover - defensive
             duration = time.perf_counter() - start
             self._record_metrics(collector, strategy, None, duration, exc)
             return EvaluationResult(strategy, None, duration, exc)
@@ -221,16 +223,12 @@ class StrategyBatchEvaluator:
             return
 
         try:
-            collector.optimization_iterations.labels(
-                optimizer_type=self.optimizer_label
-            ).inc()
-            collector.optimization_duration.labels(
-                optimizer_type=self.optimizer_label
-            ).observe(duration)
+            collector.optimization_iterations.labels(optimizer_type=self.optimizer_label).inc()
+            collector.optimization_duration.labels(optimizer_type=self.optimizer_label).observe(
+                duration
+            )
             if error is not None:
-                collector.optimization_failures.labels(
-                    optimizer_type=self.optimizer_label
-                ).inc()
+                collector.optimization_failures.labels(optimizer_type=self.optimizer_label).inc()
             if error is None and score is not None and math.isfinite(score):
                 collector.set_strategy_score(strategy.name, score)
         except AttributeError:

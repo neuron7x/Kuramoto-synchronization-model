@@ -1,0 +1,43 @@
+# ci-heartbeat: stateful-cognitive-core-admissibility
+id: stateful-cognitive-core-admissibility
+status: ACTIVE
+claim_type: fail_closed
+promise: >-
+  Bind the stateful cognitive-core witness file required by the executable
+  falsification catalog. The test sequence exercises the live-state value
+  function over ordered snapshots and confirms a discriminating model oracle.
+  No trading/execution/forecast/policy change.
+diff_scope:
+  changed_files:
+    - path: ".claude/commit_acceptors/stateful-cognitive-core-admissibility.yaml"
+    - path: "tests/physics/test_stateful_cognitive_core.py"
+  forbidden_paths:
+    - "trading/"
+    - "execution/"
+    - "forecast/"
+    - "policy/"
+required_python_symbols:
+  - "CognitiveCore"
+  - "Decision"
+expected_signal: >-
+  PYTHONPATH=. python tools/validate_physics_contracts.py reports all blocking
+  laws fully witnessed and pytest passes for tests/physics/test_stateful_cognitive_core.py.
+measurement_command: >-
+  PYTHONPATH=. python tools/validate_physics_contracts.py && PYTHONPATH=.
+  python -m pytest tests/physics/test_stateful_cognitive_core.py -q
+signal_artifact: "tmp/stateful_cognitive_core_admissibility.log"
+falsifier:
+  command: >-
+    PYTHONPATH=. python -m pytest tests/physics/test_stateful_cognitive_core.py -q
+  description: >-
+    Fails if the ordered snapshot witness diverges from the independent model oracle.
+rollback_command: >-
+  git rm -f tests/physics/test_stateful_cognitive_core.py
+  .claude/commit_acceptors/stateful-cognitive-core-admissibility.yaml
+rollback_verification_command: >-
+  PYTHONPATH=. python tools/validate_physics_contracts.py
+memory_update_type: none
+ledger_path: ".claude/commit_acceptors/stateful-cognitive-core-admissibility.yaml"
+report_path: ".claude/commit_acceptors/stateful-cognitive-core-admissibility.yaml"
+evidence:
+  - path: "tests/physics/test_stateful_cognitive_core.py"

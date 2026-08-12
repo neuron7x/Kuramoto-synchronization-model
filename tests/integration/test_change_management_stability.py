@@ -1,3 +1,5 @@
+# Copyright (c) 2023-2026 Yaroslav Vasylenko (neuron7xLab)
+# SPDX-License-Identifier: MIT
 """Tests for change management and deployment stability.
 
 This module tests controlled deployment mechanisms including canary releases,
@@ -112,9 +114,7 @@ class TestProgressiveRollout:
         pause_threshold_multiplier = 1.5
 
         # Check if should pause
-        should_pause = (
-            current_error_rate > baseline_error_rate * pause_threshold_multiplier
-        )
+        should_pause = current_error_rate > baseline_error_rate * pause_threshold_multiplier
 
         assert should_pause, "Should pause rollout on metric degradation"
 
@@ -392,9 +392,7 @@ class TestEndToEndChangeManagement:
         # 4. Post-deployment verification
         verification_passed = True
 
-        success = all(
-            [validation_passed, canary_health, rollout_completed, verification_passed]
-        )
+        success = all([validation_passed, canary_health, rollout_completed, verification_passed])
 
         assert success
 

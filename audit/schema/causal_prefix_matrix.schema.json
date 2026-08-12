@@ -1,0 +1,28 @@
+{
+  "$schema": "http://json-schema.org/draft-07/schema#",
+  "$id": "geosync.causal_prefix_matrix.v1",
+  "title": "GeoSync Causal Prefix-Invariance Matrix",
+  "description": "For every time-indexed runtime signal, future input must not change past output. Each surface binds the prefix-invariance test (given A[:t]==B[:t] with divergent futures, the shared-prefix output is identical) that proves it. If future samples can alter historical output, the gate fails.",
+  "type": "object",
+  "additionalProperties": false,
+  "required": ["schema", "surfaces", "verdict"],
+  "properties": {
+    "schema": { "const": "geosync.causal_prefix_matrix.v1" },
+    "verdict": { "enum": ["PASS", "FAIL"] },
+    "surfaces": {
+      "type": "array",
+      "minItems": 6,
+      "items": {
+        "type": "object",
+        "additionalProperties": false,
+        "required": ["surface", "statement", "test", "verdict"],
+        "properties": {
+          "surface": { "type": "string", "minLength": 1 },
+          "statement": { "type": "string", "minLength": 1 },
+          "test": { "type": "string", "minLength": 1 },
+          "verdict": { "enum": ["PASS", "FAIL"] }
+        }
+      }
+    }
+  }
+}

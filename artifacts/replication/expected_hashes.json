@@ -1,0 +1,17 @@
+{
+  "artifact_sha256": "1e6fd4c68e19aa5ae3cb1f554ef67614e3cd1cc0e82b8aff537c499feeb4549b",
+  "fingerprints": {
+    "E.clean_clone": "fd28ce0642f0c91fecbf12fe1250b53509a2c1f2303f42f18814408fbcb6fc59",
+    "G.real_data": "2b7639e4fa4024ef1b6971a28e8f169793344d9902288be4138d4dd7a4b5ba66",
+    "H.falsification": "3c00c22615406409e430c5e8f76cf3a6ff5bd4839802cb4d0ab9e38225debe98",
+    "K.execution": "7fbc74bcb8f8f2d4ae127556b72aebf9c679b602cf784d12cef3ce533d8bbfb8",
+    "M.benchmarks": "dcb6460584e621ab80c08d16825aecf0e40bfb774b6f4b91867922e62e25efdb"
+  },
+  "gate": "Q.replication",
+  "git_dirty": true,
+  "git_sha": "6cb6e88aa9bc71001296a1efb1b6210b5090a8d4",
+  "install_command": "python -m pip wheel --no-deps -w dist .  &&  pip install dist/geosync-*.whl",
+  "missing_artifacts": [],
+  "replay_command": "python scripts/ci/release_gate.py --deep --json artifacts/release_gate/scorecard.json",
+  "schema_version": "1.0"
+}

@@ -1,8 +1,10 @@
+# Copyright (c) 2023-2026 Yaroslav Vasylenko (neuron7xLab)
+# SPDX-License-Identifier: MIT
 """Orchestrates the sanity cleanup workflow."""
 
 from __future__ import annotations
 
-# SPDX-License-Identifier: LicenseRef-TradePulse-Proprietary
+# SPDX-License-Identifier: MIT
 import json
 import logging
 from dataclasses import dataclass
@@ -25,11 +27,7 @@ class CleanupResult:
 
     @property
     def exit_code(self) -> int:
-        return (
-            0
-            if all(report.status != TaskStatus.FAILED for report in self.reports)
-            else 1
-        )
+        return 0 if all(report.status != TaskStatus.FAILED for report in self.reports) else 1
 
 
 def _write_summary(result: CleanupResult) -> Path | None:
@@ -44,9 +42,7 @@ def _write_summary(result: CleanupResult) -> Path | None:
                 "status": report.status.value,
                 "summary": report.summary,
                 "details": list(report.details),
-                "artifacts": {
-                    key: str(value) for key, value in (report.artifacts or {}).items()
-                },
+                "artifacts": {key: str(value) for key, value in (report.artifacts or {}).items()},
             }
             for report in result.reports
         ],
@@ -84,9 +80,7 @@ def _execute_task(func, context: TaskContext) -> TaskReport:
     try:
         report = func(context)
         if not isinstance(report, TaskReport):  # pragma: no cover - defensive guard
-            raise TypeError(
-                f"Task {func.__name__} returned unexpected type {type(report)!r}"
-            )
+            raise TypeError(f"Task {func.__name__} returned unexpected type {type(report)!r}")
         return report
     except Exception as exc:  # pragma: no cover - resilience to unexpected issues
         LOGGER.exception("Task %s failed", func.__name__)
@@ -125,14 +119,10 @@ def run_all(root: Path, options: CleanupOptions | None = None) -> CleanupResult:
     result = CleanupResult(root=resolved_root, reports=tuple(reports))
     summary_path = _write_summary(result)
     if summary_path:
-        LOGGER.info(
-            "Wrote cleanup summary to %s", summary_path.relative_to(resolved_root)
-        )
+        LOGGER.info("Wrote cleanup summary to %s", summary_path.relative_to(resolved_root))
 
     for report in reports:
-        LOGGER.info(
-            "[%s] %s — %s", report.status.value.upper(), report.name, report.summary
-        )
+        LOGGER.info("[%s] %s — %s", report.status.value.upper(), report.name, report.summary)
         for line in report.details:
             LOGGER.debug("    %s", line)
 

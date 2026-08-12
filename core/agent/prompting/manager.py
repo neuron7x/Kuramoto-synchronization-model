@@ -1,3 +1,5 @@
+# Copyright (c) 2023-2026 Yaroslav Vasylenko (neuron7xLab)
+# SPDX-License-Identifier: MIT
 """High level prompt management orchestrating rendering and experiments."""
 
 from __future__ import annotations
@@ -109,9 +111,7 @@ class PromptSanitizer:
     ) -> None:
         rules = tuple(blocked_patterns or self._DEFAULT_RULES)
         self._custom_rules = tuple(self._compile_rule(entry) for entry in rules)
-        self._security_rules = tuple(
-            self._compile_rule(entry) for entry in self._SECURITY_RULES
-        )
+        self._security_rules = tuple(self._compile_rule(entry) for entry in self._SECURITY_RULES)
         self._max_length = max_length
 
     @staticmethod
@@ -158,9 +158,7 @@ class PromptSanitizer:
         sanitized: dict[str, str] = {}
         for key, value in mapping.items():
             if not isinstance(key, str) or not key.strip():
-                raise PromptInjectionDetected(
-                    "parameter names must be non-empty strings"
-                )
+                raise PromptInjectionDetected("parameter names must be non-empty strings")
             sanitized[key.strip()] = self.sanitize_text(value)
         return sanitized
 
@@ -177,14 +175,10 @@ class PromptSanitizer:
 class PromptRunObserver:
     """Observer invoked when prompts are rendered or outcomes reported."""
 
-    def on_render(
-        self, record: PromptExecutionRecord
-    ) -> None:  # pragma: no cover - hook
+    def on_render(self, record: PromptExecutionRecord) -> None:  # pragma: no cover - hook
         del record
 
-    def on_outcome(
-        self, record_id: str, outcome: PromptOutcome
-    ) -> None:  # pragma: no cover - hook
+    def on_outcome(self, record_id: str, outcome: PromptOutcome) -> None:  # pragma: no cover - hook
         del record_id, outcome
 
 
@@ -204,7 +198,7 @@ class PromptManager:
         self._sanitizer = sanitizer or PromptSanitizer()
         self._observers = tuple(observers or ())
         self._default_window = default_window or PromptContextWindow(max_chars=4096)
-        self._logger = logger or logging.getLogger("tradepulse.prompting")
+        self._logger = logger or logging.getLogger("geosync.prompting")
         self._records: MutableMapping[str, tuple[str, str]] = {}
 
     @property
@@ -276,9 +270,7 @@ class PromptManager:
         try:
             family, variant = self._records[record_id]
         except KeyError as exc:
-            raise PromptTemplateNotFoundError(
-                f"Unknown record identifier '{record_id}'"
-            ) from exc
+            raise PromptTemplateNotFoundError(f"Unknown record identifier '{record_id}'") from exc
         try:
             rollback = self._library.record_outcome(family, variant, outcome)
             self._notify_outcome(record_id, outcome)
@@ -301,20 +293,15 @@ class PromptManager:
     # Internal helpers
     def _sanitize_context(self, context: PromptContext) -> PromptContext:
         sanitized_fragments = tuple(
-            self._sanitizer.sanitize_fragment(fragment)
-            for fragment in context.sorted_fragments()
+            self._sanitizer.sanitize_fragment(fragment) for fragment in context.sorted_fragments()
         )
         return PromptContext(fragments=sanitized_fragments, metadata=context.metadata)
 
-    def _render_template(
-        self, template: PromptTemplate, parameters: Mapping[str, str]
-    ) -> str:
+    def _render_template(self, template: PromptTemplate, parameters: Mapping[str, str]) -> str:
         try:
             return Template(template.content).substitute(parameters)
         except KeyError as exc:  # pragma: no cover - defensive branch
-            raise PromptGuardrailViolation(
-                f"Missing template placeholder: {exc.args[0]}"
-            ) from exc
+            raise PromptGuardrailViolation(f"Missing template placeholder: {exc.args[0]}") from exc
 
     def _assemble_prompt(
         self,
@@ -324,9 +311,7 @@ class PromptManager:
     ) -> tuple[str, tuple[ContextFragment, ...], tuple[ContextFragment, ...]]:
         prompt = base_prompt
         if len(prompt) > window.max_chars:
-            raise PromptGuardrailViolation(
-                "base prompt exceeds the configured context window"
-            )
+            raise PromptGuardrailViolation("base prompt exceeds the configured context window")
         included: list[ContextFragment] = []
         truncated: list[ContextFragment] = []
         current_length = len(prompt)
@@ -351,18 +336,14 @@ class PromptManager:
                 truncated.append(fragment.truncated(0))
                 continue
             truncated_fragment = fragment.truncated(available_for_content)
-            t_prefix, t_content = self._fragment_components(
-                truncated_fragment, window.separator
-            )
+            t_prefix, t_content = self._fragment_components(truncated_fragment, window.separator)
             total_additional = len(t_prefix) + len(t_content)
             if total_additional > max_additional:
                 excess = total_additional - max_additional
                 if excess >= len(t_content):
                     truncated.append(fragment.truncated(0))
                     continue
-                truncated_fragment = truncated_fragment.truncated(
-                    len(t_content) - excess
-                )
+                truncated_fragment = truncated_fragment.truncated(len(t_content) - excess)
                 t_prefix, t_content = self._fragment_components(
                     truncated_fragment, window.separator
                 )
@@ -372,9 +353,7 @@ class PromptManager:
             truncated.append(truncated_fragment)
         return prompt, tuple(included), tuple(truncated)
 
-    def _fragment_components(
-        self, fragment: ContextFragment, separator: str
-    ) -> tuple[str, str]:
+    def _fragment_components(self, fragment: ContextFragment, separator: str) -> tuple[str, str]:
         content = fragment.content.strip()
         if not content:
             return fragment.label, ""
@@ -412,9 +391,7 @@ class PromptManager:
             return None
         if isinstance(variant_assignment, float):
             if not 0.0 <= variant_assignment < 1.0:
-                raise PromptGuardrailViolation(
-                    "variant assignment floats must be within [0, 1)"
-                )
+                raise PromptGuardrailViolation("variant assignment floats must be within [0, 1)")
             return variant_assignment
         seed_material = family
         if variant_assignment is not None:

@@ -1,0 +1,124 @@
+# Diff-bound commit acceptor for the fractal/neuro-cognitive governance contract PR.
+#
+# Split per claim-type cap (governance <=16): this acceptor binds the
+# fractal-neuro-cognitive architecture + claim-state quantizer surface
+# (the executable core). The FVPS + Neuron7X value/calibration/filter/
+# verification prompt+data artifacts are bound by the companion acceptor
+# neuron7x-fvps-governance-contract.yaml.
+#
+# Purpose:
+#   Bind this governance-only surface to explicit evidence, rollback, and claim
+#   boundary. This acceptor intentionally does not validate cognition, physics,
+#   prediction, market readiness, or model-weight update claims.
+
+id: fractal-neuro-cognitive-governance-contract
+status: ACTIVE
+claim_type: governance
+promise: >-
+  GeoSync contains machine-readable and human-readable governance artifacts for
+  the fractal neuro-cognitive architecture and claim-state quantization. The
+  claim-state quantizer maps evidence envelopes into discrete proof states,
+  requires same-SHA green CI before EVIDENCE_BEARING promotion, and rejects
+  upward declared-state drift. The schema is fail-closed for envelope shape. This
+  surface does not change runtime, physics, market, or trading behavior.
+
+diff_scope:
+  changed_files:
+    - path: ".claude/commit_acceptors/fractal-neuro-cognitive-governance-contract.yaml"
+    - path: "data/governance/fractal_neuro_cognitive_architecture_v2026_1.json"
+    - path: "docs/architecture/fractal_neuro_cognitive_architecture_v2026_1.md"
+    - path: "schemas/governance/fractal_neuro_cognitive_execution.schema.json"
+    - path: "docs/governance/claim_state_quantum_input.md"
+    - path: "schemas/governance/claim_state_quantum_input.schema.json"
+    - path: "tools/governance/quantize_claim_state.py"
+    - path: "tests/governance/test_claim_state_quantum_input.py"
+    - path: "docs/prompts/fractal_neuro_cognitive_research_agent_v2026_1.md"
+    - path: "data/governance/fractal_neuro_cognitive_research_agent_v2026_1.json"
+  forbidden_paths:
+    - "trading/"
+    - "execution/"
+    - "forecast/"
+    - "policy/"
+    - "core/"
+    - "runtime/"
+    - "application/"
+    - "analytics/"
+    - "research/"
+
+required_python_symbols:
+  - "tools/governance/quantize_claim_state.py::ClaimState"
+  - "tools/governance/quantize_claim_state.py::missing_required_links"
+  - "tools/governance/quantize_claim_state.py::quantize_claim_state"
+  - "tools/governance/quantize_claim_state.py::validate_declared_state"
+  - "tests/governance/test_claim_state_quantum_input.py::test_empty_envelope_is_untested"
+  - "tests/governance/test_claim_state_quantum_input.py::test_missing_links_are_partial"
+  - "tests/governance/test_claim_state_quantum_input.py::test_same_sha_green_ci_is_ci_verified"
+  - "tests/governance/test_claim_state_quantum_input.py::test_scientific_vector_without_same_sha_ci_is_not_evidence_bearing"
+  - "tests/governance/test_claim_state_quantum_input.py::test_real_data_replay_baseline_falsifier_semantic_validation_is_evidence_bearing"
+  - "tests/governance/test_claim_state_quantum_input.py::test_declared_state_cannot_round_up"
+  - "tests/governance/test_claim_state_quantum_input.py::test_schema_is_fail_closed_for_claim_envelope_shape"
+
+expected_signal: >-
+  The governance claim-state quantizer deterministically maps evidence envelopes
+  into FALSE, UNTESTED, PARTIAL, LOCAL_VERIFIED, CI_VERIFIED, or
+  EVIDENCE_BEARING; it requires both a complete scientific evidence vector and
+  same-SHA green CI for EVIDENCE_BEARING, rejects upward declared-state drift,
+  and the input schema fails closed on unexpected or unstructured envelope data.
+
+measurement_command: >-
+  bash -c '
+    python -m compileall -q tools tests schemas data docs && python -m pytest -q tests/governance/test_claim_state_quantum_input.py
+  '
+
+signal_artifact: "tmp/fractal_neuro_cognitive_governance_contract.log"
+
+falsifier:
+  command: >-
+    bash -c '
+      python - <<"PY"
+      from tools.governance.quantize_claim_state import ClaimState, quantize_claim_state
+      envelope = {
+          "claim_id": "evidence-bearing-without-ci-probe",
+          "claim_text": "scientific vector alone must not promote",
+          "source_refs": ["source"],
+          "test_refs": ["test"],
+          "commands": [{"cmd": "pytest", "output_ref": "local", "exit_code": 0}],
+          "artifacts": ["artifact.json"],
+          "ci_proof": {"same_sha": False, "required_checks_green": False},
+          "failure_mode": "same-SHA CI missing",
+          "rollback": "revert",
+          "claim_boundary": {"allowed": ["governance"], "blocked": ["domain validation"]},
+          "negative_evidence": ["no CI proof"],
+          "scientific_evidence": {
+              "real_data": True,
+              "replay": True,
+              "baseline": True,
+              "falsifier": True,
+              "semantic_validation": True,
+          },
+      }
+      raise SystemExit(0 if quantize_claim_state(envelope) is not ClaimState.EVIDENCE_BEARING else 1)
+      PY
+    '
+  description: >-
+    Probes that a complete scientific evidence vector without same-SHA green CI
+    is not promoted to EVIDENCE_BEARING.
+
+rollback_command: >-
+  bash -c '
+    git checkout HEAD~1 --
+      .claude/commit_acceptors/fractal-neuro-cognitive-governance-contract.yaml
+      schemas/governance/claim_state_quantum_input.schema.json
+      tools/governance/quantize_claim_state.py
+      tests/governance/test_claim_state_quantum_input.py
+  '
+
+rollback_verification_command: >-
+  bash -c '
+    python -m pytest -q tests/governance/test_claim_state_quantum_input.py
+  '
+
+memory_update_type: append
+ledger_path: ".claude/commit_acceptors/fractal-neuro-cognitive-governance-contract.yaml"
+report_path: "tmp/fractal_neuro_cognitive_governance_contract.log"
+evidence: []

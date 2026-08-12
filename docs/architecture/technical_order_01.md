@@ -97,7 +97,7 @@ An automated regression guard now lives in
 `tests/tools/test_architecture_repo_regression.py`, invoking the scanner across
 the full repository to assert zero dependency cycles and to verify that the
 authoritative package roots remain visible (`core`, `execution`, `backtest`,
-`analytics`, `application`, `tradepulse`, `tradepulse_agent`). Run it locally
+`analytics`, `application`, `geosync`, `geosync_agent`). Run it locally
 with:
 
 ```bash

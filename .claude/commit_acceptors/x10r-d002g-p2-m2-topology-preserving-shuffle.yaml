@@ -1,0 +1,144 @@
+# Diff-bound commit acceptor for the D-002G-P2/M2 PR.
+#
+# Lands the M2 topology-preserving shuffle null mechanism + verifier
+# + 14 contract tests + locked-governance-at-P1-merge pin + 3
+# governance docs (M2 design + P2/M2 implementation report + B1.M2
+# update in the canonical-run blockers manifest).
+#
+# Strict scope:
+#   * NO sweep execution.
+#   * NO ledger update.
+#   * NO tier promotion / cross-promotion.
+#   * NO mutation of any locked governance file.
+#   * NO M1 / M6 production-code change.
+#   * NO P1 test modification.
+
+id: x10r-d002g-p2-m2-topology-preserving-shuffle
+status: ACTIVE
+claim_type: governance
+promise: >-
+  After this PR lands, research/systemic_risk/d002g_null_mechanisms.py
+  carries the M2 topology-preserving shuffle mechanism + its
+  M2EligibilityVerdict ladder (5 statuses) + verify_m2_eligibility
+  pre-check + fail-closed dispatch from realize_null. The realize_null
+  strategy Literal is extended with "M2_TOPOLOGY_PRESERVING_SHUFFLE"
+  alongside the pre-existing "M1_INDEPENDENT_SEED" and
+  "M6_PLACEBO_COUPLING".
+
+  tests/systemic_risk/ gains 14 M2 contract tests (one consolidated
+  file) plus a locked-governance pin file that anchors the 10
+  P1-merge shas. docs/governance/ gains the M2 long-form design doc
+  + the P2/M2 implementation report + an extension to the canonical-
+  run blockers manifest recording the B1.M2 mitigation status.
+
+  Strict scope: infrastructure + verifier + tests + docs only. This
+  PR does NOT establish D-002G scientific PASS, does NOT authorise a
+  canonical run, does NOT touch the D-002C ledger, and does NOT
+  fully CLOSE B1 — the M2 edge-weight shuffle is INELIGIBLE for the
+  two constant-payload substrates (block_structured,
+  temporal_coupling) and B1 remains PARTIALLY MITIGATED. The
+  canonical D-002G run remains BLOCKED on the AND-conjunction of
+  B1 (substrate eligibility — partially mitigated) AND B2
+  (percentile-CI limitation) AND any future blocker.
+
+diff_scope:
+  changed_files:
+    - path: ".claude/commit_acceptors/x10r-d002g-p2-m2-topology-preserving-shuffle.yaml"
+    - path: "research/systemic_risk/d002g_null_mechanisms.py"
+    - path: "tests/systemic_risk/test_d002g_m2_topology_preserving_shuffle.py"
+    - path: "tests/systemic_risk/test_d002g_m2_locked_governance_untouched.py"
+    - path: "docs/governance/D002G_M2_TOPOLOGY_PRESERVING_NULL.md"
+    - path: "docs/governance/D002G_P2_M2_IMPLEMENTATION_REPORT.md"
+    - path: "docs/governance/D002G_CANONICAL_RUN_BLOCKERS.md"
+  forbidden_paths:
+    - "docs/governance/D002G_PREREGISTRATION.yaml"
+    - "docs/governance/D002G_NONDEGENERATE_NULL_DESIGN.md"
+    - "docs/governance/D002G_ACCEPTANCE_RULES.md"
+    - ".claude/commit_acceptors/x10r-d002g-nondegenerate-null-redesign.yaml"
+    - ".claude/commit_acceptors/x10r-d002g-p1-implementation.yaml"
+    - ".claude/commit_acceptors/x10r-d002g-p1-strike-scaffolding.yaml"
+    - "docs/governance/D002C_PREREGISTRATION.yaml"
+    - "docs/governance/D002C_CLAIM_LEDGER.yaml"
+    - "docs/governance/D002C_CANONICAL_RUN_REPORT.md"
+    - "docs/governance/D002C_ATTEMPT_2_NULL_AUDIT_FALSIFICATION_REPORT.md"
+    - "application/governance/claim_ledger.py"
+    - "application/governance/commit_acceptor.py"
+required_python_symbols:
+  - "research.systemic_risk.d002g_null_mechanisms.realize_null"
+  - "research.systemic_risk.d002g_null_mechanisms.verify_m2_eligibility"
+  - "research.systemic_risk.d002g_null_mechanisms.M2EligibilityVerdict"
+  - "research.systemic_risk.d002g_null_mechanisms.M2NotEligibleError"
+  - "research.systemic_risk.d002g_null_mechanisms.M2TopologyMutationError"
+  - "research.systemic_risk.d002g_null_mechanisms.M2_PLACEBO_SALT"
+expected_signal: >-
+  `python -c "from research.systemic_risk.d002g_null_mechanisms
+  import realize_null, verify_m2_eligibility, M2EligibilityVerdict,
+  M2NotEligibleError, M2TopologyMutationError, M2_PLACEBO_SALT"`
+  succeeds; pytest tests/systemic_risk/test_d002g_m2_*.py -q passes
+  all 15 tests; the M2 implementation report contains the verbatim
+  claim-boundary block; every locked-files-at-P1-merge sha matches
+  its anchor; D002G_CANONICAL_RUN_BLOCKERS.md carries the B1.M2
+  partial-mitigation section with the eligibility table.
+measurement_command: >-
+  bash -c 'set -e;
+  python -c "from research.systemic_risk.d002g_null_mechanisms import realize_null, verify_m2_eligibility, M2EligibilityVerdict, M2NotEligibleError, M2TopologyMutationError, M2_PLACEBO_SALT";
+  PYTHONPATH=. python -m pytest tests/systemic_risk/test_d002g_m2_topology_preserving_shuffle.py tests/systemic_risk/test_d002g_m2_locked_governance_untouched.py -q;
+  grep -q "This PR implements D-002G-P2/M2 null-admissibility infrastructure only" docs/governance/D002G_P2_M2_IMPLEMENTATION_REPORT.md;
+  grep -q "B1.M2 — Mitigation status" docs/governance/D002G_CANONICAL_RUN_BLOCKERS.md;
+  grep -q "INELIGIBLE_M2_DEGENERATE_SHUFFLE_POOL" docs/governance/D002G_CANONICAL_RUN_BLOCKERS.md;
+  grep -q "ELIGIBLE_M2" docs/governance/D002G_M2_TOPOLOGY_PRESERVING_NULL.md;
+  grep -q "M2_TOPOLOGY_PRESERVING_SHUFFLE" research/systemic_risk/d002g_null_mechanisms.py'
+signal_artifact: "docs/governance/D002G_P2_M2_IMPLEMENTATION_REPORT.md"
+falsifier:
+  command: >-
+    bash -c 'set -e;
+    python -c "from research.systemic_risk.d002g_null_mechanisms import realize_null, verify_m2_eligibility, M2EligibilityVerdict, M2NotEligibleError, M2TopologyMutationError, M2_PLACEBO_SALT" || exit 1;
+    python -c "from research.systemic_risk.d002g_null_mechanisms import M2EligibilityVerdict; v = M2EligibilityVerdict(status=\"ELIGIBLE_M2\", substrate_id=\"_probe\", N=8, preserved_topology_hash=\"0\"*64, shuffle_domain=\"edge_weight\", candidate_pool_size=4, eligibility_reason=\"probe\"); assert v.status == \"ELIGIBLE_M2\"" || exit 2;
+    python -c "from research.systemic_risk.d002g_null_mechanisms import M2_PLACEBO_SALT, deterministic_mix; assert M2_PLACEBO_SALT == 211; assert deterministic_mix(0, 211) != deterministic_mix(0, 99)" || exit 3;
+    PYTHONPATH=. python -m pytest tests/systemic_risk/test_d002g_m2_topology_preserving_shuffle.py tests/systemic_risk/test_d002g_m2_locked_governance_untouched.py -q || exit 4;
+    grep -q "This PR implements D-002G-P2/M2 null-admissibility infrastructure only" docs/governance/D002G_P2_M2_IMPLEMENTATION_REPORT.md || exit 5;
+    grep -q "INELIGIBLE_M2_DEGENERATE_SHUFFLE_POOL" docs/governance/D002G_M2_TOPOLOGY_PRESERVING_NULL.md || exit 6;
+    grep -q "B1.M2 — Mitigation status" docs/governance/D002G_CANONICAL_RUN_BLOCKERS.md || exit 7;
+    grep -q "PARTIALLY MITIGATED" docs/governance/D002G_CANONICAL_RUN_BLOCKERS.md || exit 8;
+    grep -q "verify_m2_eligibility" research/systemic_risk/d002g_null_mechanisms.py || exit 9;
+    grep -q "M2_TOPOLOGY_PRESERVING_SHUFFLE" research/systemic_risk/d002g_null_mechanisms.py || exit 10;
+    if grep -E "VALIDATED_REAL_BANK_LEVEL_RESULT|TESTED_POSITIVE_REAL|BANK_LEVEL_PRECURSOR_CONFIRMED|real-data validated|bank-level confirmed|SYNTHETIC_GATE6_CERTIFIED_D002G_REDESIGN" docs/governance/D002G_M2_TOPOLOGY_PRESERVING_NULL.md docs/governance/D002G_P2_M2_IMPLEMENTATION_REPORT.md docs/governance/D002G_CANONICAL_RUN_BLOCKERS.md | grep -vE "forbidden|NOT|❌|absent|never|no_|cannot|D-002C|Forbidden|forbidden_outputs|out-of-scope|No " >/dev/null; then
+      echo "forbidden tier asserted outside forbidden-list context"; exit 11;
+    fi'
+  description: >-
+    Probes the D-002G-P2/M2 implementation:
+    (a) every M2 symbol imports cleanly;
+    (b) M2EligibilityVerdict round-trips through the dataclass;
+    (c) M2_PLACEBO_SALT is locked at 211 and produces an RNG seed
+        distinct from the M6 salt under the same base_seed;
+    (d) the 15 M2 tests (14 contract + 1 locked-governance pin)
+        pass;
+    (e) the implementation report carries the verbatim claim-
+        boundary string;
+    (f) the M2 design doc enumerates the DEGENERATE_SHUFFLE_POOL
+        verdict;
+    (g) the blockers manifest records B1.M2 PARTIALLY MITIGATED;
+    (h) the production module exposes verify_m2_eligibility and
+        the M2 strategy literal;
+    (i) no forbidden D-002C tier strings leak outside the
+        forbidden-list / D-002C-reference / out-of-scope context.
+    If any of these regress, the P2/M2 contract is broken.
+rollback_command: >-
+  bash -c 'git checkout HEAD~1 --
+  research/systemic_risk/d002g_null_mechanisms.py
+  docs/governance/D002G_CANONICAL_RUN_BLOCKERS.md
+  && rm -f tests/systemic_risk/test_d002g_m2_topology_preserving_shuffle.py
+  tests/systemic_risk/test_d002g_m2_locked_governance_untouched.py
+  docs/governance/D002G_M2_TOPOLOGY_PRESERVING_NULL.md
+  docs/governance/D002G_P2_M2_IMPLEMENTATION_REPORT.md
+  .claude/commit_acceptors/x10r-d002g-p2-m2-topology-preserving-shuffle.yaml'
+rollback_verification_command: >-
+  bash -c 'test ! -f tests/systemic_risk/test_d002g_m2_topology_preserving_shuffle.py
+  && test ! -f tests/systemic_risk/test_d002g_m2_locked_governance_untouched.py
+  && test ! -f docs/governance/D002G_M2_TOPOLOGY_PRESERVING_NULL.md
+  && test ! -f docs/governance/D002G_P2_M2_IMPLEMENTATION_REPORT.md
+  && test ! -f .claude/commit_acceptors/x10r-d002g-p2-m2-topology-preserving-shuffle.yaml'
+memory_update_type: append
+ledger_path: ".claude/commit_acceptors/x10r-d002g-p2-m2-topology-preserving-shuffle.yaml"
+report_path: "docs/governance/D002G_P2_M2_IMPLEMENTATION_REPORT.md"
+evidence: []

@@ -1,3 +1,5 @@
+# Copyright (c) 2023-2026 Yaroslav Vasylenko (neuron7xLab)
+# SPDX-License-Identifier: MIT
 """Validate dataset provenance metadata sidecars.
 
 The validator enforces:
@@ -11,18 +13,22 @@ from __future__ import annotations
 import argparse
 import json
 import os
-import sys
+import subprocess
 from pathlib import Path
 from typing import Iterable, List
 
-ROOT = Path(__file__).resolve().parents[1]
-if str(ROOT) not in sys.path:
-    sys.path.insert(0, str(ROOT))
+os.environ.setdefault("GEOSYNC_LIGHT_DATA_IMPORT", "1")
 
-os.environ.setdefault("TRADEPULSE_LIGHT_DATA_IMPORT", "1")
-
+# Packaged import (``scripts.validate_datasets``): core.data resolves from the
+# installed wheel, not an accidental repo-root sys.path insert (#945). The
+# os.environ side effect above is an E402-exempt pre-import hook (ruff).
 from core.data.dataset_contracts import DatasetContract, iter_contracts
-from core.data.fingerprint import compute_dataset_fingerprint, write_fingerprint_artifact
+from core.data.fingerprint import (
+    compute_dataset_fingerprint,
+    write_fingerprint_artifact,
+)
+
+ROOT = Path(__file__).resolve().parents[1]
 
 REQUIRED_FIELDS = {
     "dataset_id",
@@ -81,8 +87,44 @@ def _validate_contract_metadata(contract: DatasetContract) -> list[str]:
     return errors
 
 
+def _git_ignored(paths: list[Path]) -> set[Path]:
+    """Return the subset of *paths* that ``git`` reports as ignored.
+
+    The validator scans ``data/`` for orphan CSVs, but local research
+    artefacts (e.g. multi-megabyte Dukascopy snapshots) are routinely
+    placed there and listed in ``.gitignore``. Those files must not
+    raise a metadata-sidecar violation; they are not part of the
+    delivered dataset surface.
+    """
+
+    if not paths:
+        return set()
+    try:
+        result = subprocess.run(
+            ["git", "check-ignore", "--stdin", "-z"],
+            input="\0".join(str(p) for p in paths),
+            cwd=ROOT,
+            capture_output=True,
+            text=True,
+            check=False,
+        )
+    except (OSError, FileNotFoundError):
+        return set()
+    if result.returncode not in {0, 1}:
+        # 0 = at least one ignored, 1 = none ignored, others = real failure.
+        return set()
+    ignored: set[Path] = set()
+    for raw in result.stdout.split("\0"):
+        token = raw.strip()
+        if token:
+            ignored.add(Path(token).resolve())
+    return ignored
+
+
 def _discover_csvs(base: Path) -> Iterable[Path]:
-    return base.rglob("*.csv")
+    candidates = list(base.rglob("*.csv"))
+    ignored = _git_ignored(candidates)
+    return [p for p in candidates if p.resolve() not in ignored]
 
 
 def validate_all() -> list[str]:

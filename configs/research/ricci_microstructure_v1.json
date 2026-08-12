@@ -1,0 +1,7 @@
+{
+  "alpha": 0.5,
+  "depth": 5,
+  "n_min_edges": 2,
+  "n_surrogates": 1000,
+  "null_model_type": "iaaft"
+}

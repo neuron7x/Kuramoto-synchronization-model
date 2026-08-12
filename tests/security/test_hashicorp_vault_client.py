@@ -1,3 +1,5 @@
+# Copyright (c) 2023-2026 Yaroslav Vasylenko (neuron7xLab)
+# SPDX-License-Identifier: MIT
 from __future__ import annotations
 
 from datetime import datetime, timedelta, timezone
@@ -53,15 +55,12 @@ class _MockVaultAPI:
             )
         if request.url.path.startswith("/v1/sys/leases/revoke"):
             return httpx.Response(204)
-        if (
-            request.url.path.startswith("/v1/database/creds/")
-            and request.method == "POST"
-        ):
+        if request.url.path.startswith("/v1/database/creds/") and request.method == "POST":
             self._lease_counter += 1
             return httpx.Response(
                 200,
                 json={
-                    "lease_id": "database/creds/tradepulse/123",
+                    "lease_id": "database/creds/geosync/123",
                     "lease_duration": 120,
                     "renewable": True,
                     "data": {
@@ -188,7 +187,7 @@ def test_dynamic_credential_manager_renews_before_expiry() -> None:
     manager = DynamicCredentialManager(
         client,
         mount="database",
-        role="tradepulse",
+        role="geosync",
         refresh_margin=15,
         clock=clock,
     )
@@ -212,13 +211,9 @@ def test_vault_policy_manager_updates_policy_when_changed() -> None:
     client = _make_client(mock)
     manager = VaultPolicyManager(client)
 
-    created = manager.ensure_policy(
-        "tradepulse", 'path "secret/*" { capabilities = ["read"] }'
-    )
+    created = manager.ensure_policy("geosync", 'path "secret/*" { capabilities = ["read"] }')
     assert created is True
-    created_again = manager.ensure_policy(
-        "tradepulse", 'path "secret/*" { capabilities = ["read"] }'
-    )
+    created_again = manager.ensure_policy("geosync", 'path "secret/*" { capabilities = ["read"] }')
     assert created_again is False
 
 

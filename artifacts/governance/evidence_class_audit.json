@@ -1,0 +1,125 @@
+{
+  "audit_id": "DAT-009-evidence-class-audit",
+  "contamination_case_caught": true,
+  "evidence_classes": [
+    "FACT",
+    "MEASURED",
+    "SIMULATION",
+    "HYPOTHESIS",
+    "RETIRED"
+  ],
+  "expected_exit_code": 1,
+  "gate": "scripts/ci/check_evidence_class.py",
+  "gate_report": {
+    "artifact_count": 6,
+    "artifacts": [
+      {
+        "backs_claim_class": "FACT",
+        "evidence_class": "FACT",
+        "id": "gate_registry_count",
+        "manifest": "/tmp/claude-1000/-home-neuro7/8959fa78-447d-4eaf-b1d1-04200e63067b/scratchpad/example_records.json",
+        "real_data_manifest": false
+      },
+      {
+        "backs_claim_class": "HYPOTHESIS",
+        "evidence_class": "HYPOTHESIS",
+        "id": "phase_lock_conjecture",
+        "manifest": "/tmp/claude-1000/-home-neuro7/8959fa78-447d-4eaf-b1d1-04200e63067b/scratchpad/example_records.json",
+        "real_data_manifest": false
+      },
+      {
+        "backs_claim_class": "MEASURED",
+        "evidence_class": "MEASURED",
+        "id": "quotes_binance_2024",
+        "manifest": "/tmp/claude-1000/-home-neuro7/8959fa78-447d-4eaf-b1d1-04200e63067b/scratchpad/example_records.json",
+        "real_data_manifest": false
+      },
+      {
+        "backs_claim_class": "SIMULATION",
+        "evidence_class": "SIMULATION",
+        "id": "seeded_kuramoto_run",
+        "manifest": "/tmp/claude-1000/-home-neuro7/8959fa78-447d-4eaf-b1d1-04200e63067b/scratchpad/example_records.json",
+        "real_data_manifest": false
+      },
+      {
+        "backs_claim_class": "MEASURED",
+        "evidence_class": "SIMULATION",
+        "id": "synthetic_alpha_promoted",
+        "manifest": "/tmp/claude-1000/-home-neuro7/8959fa78-447d-4eaf-b1d1-04200e63067b/scratchpad/example_records.json",
+        "real_data_manifest": false
+      },
+      {
+        "backs_claim_class": "MEASURED",
+        "evidence_class": null,
+        "id": "unlabeled_ingest_dump",
+        "manifest": "/tmp/claude-1000/-home-neuro7/8959fa78-447d-4eaf-b1d1-04200e63067b/scratchpad/example_records.json",
+        "real_data_manifest": false
+      }
+    ],
+    "evidence_class_strengths": {
+      "FACT": 4,
+      "HYPOTHESIS": 1,
+      "MEASURED": 3,
+      "RETIRED": 0,
+      "SIMULATION": 2
+    },
+    "gate": "check_evidence_class",
+    "manifest_count": 1,
+    "status": "FLAGGED",
+    "target": "/tmp/claude-1000/-home-neuro7/8959fa78-447d-4eaf-b1d1-04200e63067b/scratchpad/example_records.json",
+    "violation_count": 2,
+    "violations": [
+      {
+        "backs_claim_class": "MEASURED",
+        "evidence_class": "SIMULATION",
+        "id": "synthetic_alpha_promoted",
+        "kind": "CROSS_CLASS_CONTAMINATION",
+        "manifest": "/tmp/claude-1000/-home-neuro7/8959fa78-447d-4eaf-b1d1-04200e63067b/scratchpad/example_records.json",
+        "reason": "SIMULATION (strength 2) may not back a empirical MEASURED claim (strength 3)"
+      },
+      {
+        "backs_claim_class": "MEASURED",
+        "evidence_class": null,
+        "id": "unlabeled_ingest_dump",
+        "kind": "MISSING_CLASS",
+        "manifest": "/tmp/claude-1000/-home-neuro7/8959fa78-447d-4eaf-b1d1-04200e63067b/scratchpad/example_records.json",
+        "reason": "artifact carries no evidence_class; absence is not empirical clearance"
+      }
+    ]
+  },
+  "input_records": [
+    {
+      "backs_claim_class": "MEASURED",
+      "evidence_class": "MEASURED",
+      "id": "quotes_binance_2024"
+    },
+    {
+      "backs_claim_class": "FACT",
+      "evidence_class": "FACT",
+      "id": "gate_registry_count"
+    },
+    {
+      "backs_claim_class": "SIMULATION",
+      "evidence_class": "SIMULATION",
+      "id": "seeded_kuramoto_run"
+    },
+    {
+      "backs_claim_class": "HYPOTHESIS",
+      "evidence_class": "HYPOTHESIS",
+      "id": "phase_lock_conjecture"
+    },
+    {
+      "backs_claim_class": "MEASURED",
+      "evidence_class": "SIMULATION",
+      "id": "synthetic_alpha_promoted"
+    },
+    {
+      "backs_claim_class": "MEASURED",
+      "id": "unlabeled_ingest_dump"
+    }
+  ],
+  "ontology_source": "governance/project_state.yaml",
+  "policy": "docs/EVIDENCE_CLASS_POLICY.md",
+  "purpose": "Demonstrate the synthetic->empirical contamination case is caught fail-closed.",
+  "unlabeled_case_caught": true
+}

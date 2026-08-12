@@ -1,0 +1,31 @@
+# SPDX-License-Identifier: MIT
+id: research-integrity-format-drift
+status: DRAFT
+claim_type: chore
+promise: "Research-surface tooling is ruff- and black-clean; no formatting/lint drift remains (research-integrity gate)."
+diff_scope:
+  changed_files:
+    - path: ".claude/commit_acceptors/research-integrity-format-drift.yaml"
+    - path: "tools/coverage/coverage_orchestrator.py"
+    - path: "tools/coverage/coverage_matrix_engine.py"
+    - path: "tools/coverage/coverage_behavior_profiler.py"
+    - path: "tools/research/validate_cme_iteration_contract.py"
+    - path: "tools/research/validate_operator_contract.py"
+  forbidden_paths:
+    - "trading/"
+    - "execution/"
+    - "forecast/"
+    - "policy/"
+required_python_symbols: []
+expected_signal: "ruff check and black --check pass on research/systemic_risk + tools + research test surfaces."
+measurement_command: "python -m ruff check tools/ && python -m black --check tools/"
+signal_artifact: "tmp/research_integrity_format.log"
+falsifier:
+  command: "python -c \"import subprocess,sys; r=subprocess.run([sys.executable,'-m','black','--check','tools/coverage/coverage_orchestrator.py']); sys.exit(0 if r.returncode!=0 else 1)\""
+  description: "Asserts a formatted file is unformatted; on the green path this exits non-zero, proving the promise is falsifiable."
+rollback_command: "git revert --no-edit HEAD"
+rollback_verification_command: "python -m black --check tools/coverage/coverage_orchestrator.py"
+memory_update_type: none
+ledger_path: ".claude/commit_acceptors/research-integrity-format-drift.yaml"
+report_path: "docs/reports/diff_bound_commit_acceptor_layer.md"
+evidence: []

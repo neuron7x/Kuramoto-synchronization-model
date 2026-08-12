@@ -1,4 +1,5 @@
-# SPDX-License-Identifier: LicenseRef-TradePulse-Proprietary
+# Copyright (c) 2023-2026 Yaroslav Vasylenko (neuron7xLab)
+# SPDX-License-Identifier: MIT
 """Tests for core.errors module - typed domain errors."""
 
 from __future__ import annotations
@@ -12,10 +13,10 @@ from core.errors import (
     DataQualityError,
     EngineError,
     ErrorContext,
+    GeoSyncError,
     IntegrityError,
     PipelineError,
     ResourceBudgetError,
-    TradePulseError,
     ValidationError,
 )
 
@@ -72,42 +73,42 @@ class TestErrorContext:
         assert "component" not in result
 
 
-class TestTradePulseError:
-    """Tests for base TradePulseError."""
+class TestGeoSyncError:
+    """Tests for base GeoSyncError."""
 
     def test_basic_creation(self) -> None:
-        """TradePulseError should accept basic message."""
-        err = TradePulseError("Something went wrong")
+        """GeoSyncError should accept basic message."""
+        err = GeoSyncError("Something went wrong")
         assert str(err) == "Something went wrong"
         assert err.message == "Something went wrong"
         assert err.context is not None
         assert err.error_code is None
 
     def test_with_error_code(self) -> None:
-        """TradePulseError should include error code in string."""
-        err = TradePulseError("Failed", error_code="E001")
+        """GeoSyncError should include error code in string."""
+        err = GeoSyncError("Failed", error_code="E001")
         assert "[E001]" in str(err)
         assert err.error_code == "E001"
 
     def test_with_correlation_id(self) -> None:
-        """TradePulseError should include correlation_id in string."""
+        """GeoSyncError should include correlation_id in string."""
         ctx = ErrorContext(correlation_id="corr-123")
-        err = TradePulseError("Failed", context=ctx)
+        err = GeoSyncError("Failed", context=ctx)
         assert "corr-123" in str(err)
 
     def test_to_dict(self) -> None:
-        """TradePulseError.to_dict should serialize correctly."""
-        err = TradePulseError("Test error", error_code="TEST_001")
+        """GeoSyncError.to_dict should serialize correctly."""
+        err = GeoSyncError("Test error", error_code="TEST_001")
         result = err.to_dict()
-        assert result["error_type"] == "TradePulseError"
+        assert result["error_type"] == "GeoSyncError"
         assert result["message"] == "Test error"
         assert result["error_code"] == "TEST_001"
         assert "context" in result
 
     def test_is_exception(self) -> None:
-        """TradePulseError should be raisable."""
-        with pytest.raises(TradePulseError) as exc_info:
-            raise TradePulseError("Test exception")
+        """GeoSyncError should be raisable."""
+        with pytest.raises(GeoSyncError) as exc_info:
+            raise GeoSyncError("Test exception")
         assert exc_info.value.message == "Test exception"
 
 
@@ -147,10 +148,10 @@ class TestValidationError:
         assert "999" in result["value"]
         assert result["constraint"] == "max 100"
 
-    def test_is_tradepulse_error(self) -> None:
-        """ValidationError should be a TradePulseError."""
+    def test_is_geosync_error(self) -> None:
+        """ValidationError should be a GeoSyncError."""
         err = ValidationError("Test")
-        assert isinstance(err, TradePulseError)
+        assert isinstance(err, GeoSyncError)
 
 
 class TestConfigError:
@@ -353,4 +354,4 @@ class TestDataQualityError:
         """DataQualityError should be a ValidationError."""
         err = DataQualityError("Test")
         assert isinstance(err, ValidationError)
-        assert isinstance(err, TradePulseError)
+        assert isinstance(err, GeoSyncError)

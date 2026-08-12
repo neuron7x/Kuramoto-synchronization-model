@@ -1,0 +1,56 @@
+# Diff-bound commit acceptor: sweep-checkpoint hash/idempotency ignores wall-clock.
+id: sweep-checkpoint-reproducible-hash
+status: ACTIVE
+claim_type: correctness
+promise: >-
+  After this PR, CellResult.to_canonical_dict (cell_key + payload only) drives
+  stable_ledger_sha256 and the save_cell IDEMPOTENT_ONLY comparison, so the same
+  science re-run with a different wall-clock duration_seconds hashes identically
+  and re-saves as an idempotent no-op instead of raising CheckpointCellConflict.
+  duration_seconds remains in to_dict (on-disk/human form) for auditability.
+diff_scope:
+  changed_files:
+    - path: ".claude/commit_acceptors/sweep-checkpoint-reproducible-hash.yaml"
+    - path: "research/systemic_risk/sweep_checkpoint.py"
+    - path: "tests/research/systemic_risk/test_sweep_checkpoint.py"
+  forbidden_paths:
+    - "core/physics/"
+    - "core/kuramoto/"
+    - "execution/oms.py"
+required_python_symbols:
+  - "research/systemic_risk/sweep_checkpoint.py::stable_ledger_sha256"
+  - "research/systemic_risk/sweep_checkpoint.py::CellResult"
+expected_signal: >-
+  `python -m pytest --import-mode=importlib
+  tests/research/systemic_risk/test_sweep_checkpoint.py -q` passes: two checkpoints
+  with identical payload but different duration_seconds hash equal and re-save is
+  a no-op; a different payload still conflicts.
+measurement_command: >-
+  bash -c '
+    python -m pytest --import-mode=importlib -p no:cacheprovider
+      tests/research/systemic_risk/test_sweep_checkpoint.py -q
+  '
+signal_artifact: "tmp/sweep_checkpoint_reproducible_hash.log"
+falsifier:
+  command: |-
+    bash -c '
+      python -c "
+    from research.systemic_risk.sweep_checkpoint import CellResult
+    a = CellResult(cell_key=\"k\", payload={\"v\": 1}, duration_seconds=0.1)
+    b = CellResult(cell_key=\"k\", payload={\"v\": 1}, duration_seconds=9.9)
+    assert a.to_canonical_dict() == b.to_canonical_dict()
+    assert \"duration_seconds\" not in a.to_canonical_dict()
+    "
+    '
+  description: >-
+    Asserts to_canonical_dict excludes duration_seconds and is equal across
+    differing wall-clock. Exits 0 on the correct tree (run_evidence green-state
+    contract), non-zero if duration re-enters the canonical form.
+rollback_command: >-
+  bash -c 'git rm -f .claude/commit_acceptors/sweep-checkpoint-reproducible-hash.yaml'
+rollback_verification_command: >-
+  bash -c 'test ! -f .claude/commit_acceptors/sweep-checkpoint-reproducible-hash.yaml'
+memory_update_type: append
+ledger_path: ".claude/commit_acceptors/sweep-checkpoint-reproducible-hash.yaml"
+report_path: "tmp/sweep_checkpoint_reproducible_hash.log"
+evidence: []

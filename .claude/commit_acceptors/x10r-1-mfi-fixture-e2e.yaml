@@ -1,0 +1,113 @@
+# Diff-bound commit acceptor for X-10R-1 PR #5 — frozen MFI demo
+# fixture + end-to-end pipeline test (closes the X-10R-1 epic
+# foundation: load → prior → allocator → audit on a stable, hermetic
+# dataset).
+#
+# What lands:
+#   * research/reconstruction/allocator/data/__init__.py
+#       Exposes DATA_DIR + MFI_DEMO_TSV path constants.
+#   * research/reconstruction/allocator/data/mfi_demo.tsv
+#       Frozen 25-bank × 5-country synthetic registry.
+#   * tests/reconstruction/allocator/test_mfi_fixture_e2e.py
+#       9 new tests pinning fixture integrity (existence, shape,
+#       country alphabetical order, sha256 hash) + end-to-end
+#       pipeline: load → SizeWeightedPrior → CountryToBankAllocator
+#       → audit. Aligned-SW beats Uniform by ≥ 6 OoM; Uniform fails
+#       audit; cert_id replay-stable.
+#
+# Locally verified:
+#   * pytest tests/reconstruction/allocator/: 117/117 passed
+#   * mypy --strict + ruff + black:           clean
+
+id: x10r-1-mfi-fixture-e2e
+status: ACTIVE
+claim_type: chore
+promise: >-
+  After this PR lands, research/reconstruction/allocator/data/
+  ships a frozen ECB-MFI-shaped fixture (mfi_demo.tsv, 25 banks
+  across 5 EU+EEA countries, illustrative total_assets) plus the
+  DATA_DIR / MFI_DEMO_TSV path constants. The fixture is hermetic,
+  license-clean, and exercise-only — real datasets (ECB MFI, EBA
+  transparency, BankFocus) ship in later epic PRs. tests/
+  reconstruction/allocator/test_mfi_fixture_e2e.py wraps the
+  PR-#642…#645 stack into a single end-to-end regression: load
+  → SizeWeightedPrior → CountryToBankAllocator → audit_bank_level_
+  recovery, on aligned (SW exact, audit passes) and on misaligned
+  (Uniform fails audit) directions. 9 new tests pin: fixture
+  existence, n_rows == 25, country alphabetical order, sha256
+  byte-content snapshot, conservation per country, prior_id flows
+  through, falsification anchor over the frozen fixture (aligned
+  SW beats Uniform by ≥ 6 OoM relative L1), audit pass + audit
+  fail directions, GATE_A4 cert_id replay stability through TSV
+  ingestion + prior + allocator.
+diff_scope:
+  changed_files:
+    - path: ".claude/commit_acceptors/x10r-1-mfi-fixture-e2e.yaml"
+    - path: ".gitignore"
+    - path: "research/reconstruction/allocator/__init__.py"
+    - path: "research/reconstruction/allocator/data/__init__.py"
+    - path: "research/reconstruction/allocator/data/mfi_demo.tsv"
+    - path: "tests/reconstruction/allocator/test_mfi_fixture_e2e.py"
+    # ILS-2026 review-driven additions (committed in 7d82ce4 / next):
+    - path: "research/reconstruction/allocator/dov_composition.py"
+    - path: "tests/reconstruction/allocator/test_dov_composition.py"
+    - path: ".claude/commit_acceptors/x10r-1-dov-composition.yaml"
+    - path: "X10R_INSTRUMENTED_STATE.md"
+  forbidden_paths:
+    - "trading/"
+    - "execution/"
+    - "forecast/"
+    - "policy/"
+    - "core/physics/"
+    - "core/kuramoto/"
+    - "application/governance/claim_ledger.py"
+    - "application/governance/commit_acceptor.py"
+required_python_symbols:
+  - "research/reconstruction/allocator/data/__init__.py::DATA_DIR"
+  - "research/reconstruction/allocator/data/__init__.py::MFI_DEMO_TSV"
+expected_signal: >-
+  Local: `pytest tests/reconstruction/allocator/ -q` reports
+  "117 passed"; `mypy --strict` is clean on every file under
+  research/reconstruction/allocator/ and
+  tests/reconstruction/allocator/; `ruff check` and
+  `black --check` both pass on those paths.
+measurement_command: >-
+  bash -c 'mypy --strict --follow-imports=silent
+  research/reconstruction/allocator/ tests/reconstruction/allocator/
+  && ruff check research/reconstruction/allocator/ tests/reconstruction/allocator/
+  && black --check research/reconstruction/allocator/ tests/reconstruction/allocator/
+  && pytest tests/reconstruction/allocator/ -q'
+signal_artifact: "tmp/x10r_1_mfi_fixture_e2e.log"
+falsifier:
+  command: |-
+    bash -c 'python -c "
+    from research.reconstruction.allocator import (
+        MFI_DEMO_TSV, CountryToBankAllocator, SizeWeightedPrior,
+        UniformPrior, audit_bank_level_recovery, load_mfi_registry,
+    )
+    import numpy as np
+    out = load_mfi_registry(MFI_DEMO_TSV)
+    assert out.n_rows == 25, f\"demo fixture should have 25 rows, got {out.n_rows}\"
+    countries = {c for _, c in out.bank_country_map}
+    assert countries == {\"DE\", \"FR\", \"IT\", \"ES\", \"NL\"}, (
+        f\"demo fixture should have 5 EU countries, got {countries}\"
+    )
+    "'
+  description: >-
+    Probes the frozen fixture is loadable and shaped correctly:
+    25 banks × 5 EU countries (DE / ES / FR / IT / NL). If a future
+    PR rewrites the fixture, this falsifier surfaces shape drift
+    immediately.
+rollback_command: >-
+  bash -c 'git checkout HEAD~1 --
+  && rm -rf research/reconstruction/allocator/data/
+  tests/reconstruction/allocator/test_mfi_fixture_e2e.py
+  .claude/commit_acceptors/x10r-1-mfi-fixture-e2e.yaml'
+rollback_verification_command: >-
+  bash -c 'test ! -d research/reconstruction/allocator/data
+  && test ! -f tests/reconstruction/allocator/test_mfi_fixture_e2e.py
+  && test ! -f .claude/commit_acceptors/x10r-1-mfi-fixture-e2e.yaml'
+memory_update_type: append
+ledger_path: ".claude/commit_acceptors/x10r-1-mfi-fixture-e2e.yaml"
+report_path: "tmp/x10r_1_mfi_fixture_e2e.log"
+evidence: []

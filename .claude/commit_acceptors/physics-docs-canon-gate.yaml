@@ -1,0 +1,77 @@
+id: physics-docs-canon-gate
+status: ACTIVE
+claim_type: correctness
+promise: >-
+  The physics documentation canon is machine-checkable, not manually trusted.
+  scripts/ci/check_physics_docs_canon.py binds every catalog law
+  (physics_contracts/catalog.yaml) and every registry invariant
+  (.claude/physics/INVARIANTS.yaml) into exactly one of seven classified domains
+  in docs/PHYSICS_CANON.manifest.json, and fails closed when: a law/invariant is
+  unclassified or double-counted (completeness), the committed manifest drifts
+  from the substrates, a registry section has no domain mapping, a canonical
+  physics doc carries overclaim language outside a quoted/negated context, or the
+  documentation index has unknown roles/domains or dangling paths. The neuro and
+  ontology domains are fixed at NON_CLAIM_ANALOGY so a neuro-modulator or
+  gradient-ontology axiom can never be read as a market-physics law.
+diff_scope:
+  changed_files:
+    - path: "scripts/ci/check_physics_docs_canon.py"
+    - path: "tests/unit/test_check_physics_docs_canon.py"
+    - path: "docs/PHYSICS_CANON.manifest.json"
+    - path: "docs/PHYSICS_CANON.md"
+    - path: "docs/PHYSICS_GLOSSARY.md"
+    - path: "docs/PHYSICS_MATURITY_MATRIX.md"
+    - path: "docs/PHYSICS_VERIFICATION_RUNBOOK.md"
+    - path: "docs/DOCUMENTATION_INDEX.manifest.json"
+    - path: "docs/PHYSICS_PROOF.md"
+    - path: "docs/research/RICCI_MICROSTRUCTURE_STATUS.md"
+    - path: ".claude/commit_acceptors/physics-docs-canon-gate.yaml"
+  forbidden_paths:
+    - "trading/"
+    - "execution/"
+    - "forecast/"
+    - "policy/"
+required_python_symbols:
+  - "build_manifest"
+  - "load_law_ids"
+  - "load_invariant_sections"
+  - "classify_law"
+  - "check_manifest"
+  - "check_canon_docs"
+  - "check_doc_index"
+  - "SECTION_TO_BUCKET"
+  - "BUCKET_POLICY"
+expected_signal: >-
+  The canon gate test module passes (10 tests): the committed manifest is in
+  sync, every law and invariant is classified exactly once (42 + 112), every
+  registry section maps to a bucket, the neuro/ontology domains are
+  NON_CLAIM_ANALOGY, the overclaim scanner flags forecast/predictor prose but
+  exempts negated lines, and the documentation index rejects unknown roles and
+  dangling paths. The gate itself exits 0 on the committed tree.
+measurement_command: >-
+  python -m pytest -q tests/unit/test_check_physics_docs_canon.py
+signal_artifact: "tests/unit/test_check_physics_docs_canon.py"
+falsifier:
+  command: >-
+    python -m pytest -q
+    tests/unit/test_check_physics_docs_canon.py::test_every_law_and_invariant_is_classified
+    tests/unit/test_check_physics_docs_canon.py::test_every_registry_section_maps_to_a_bucket
+    tests/unit/test_check_physics_docs_canon.py::test_overclaim_scanner_flags_and_exempts
+    tests/unit/test_check_physics_docs_canon.py::test_ontology_and_neuro_domains_are_non_claim
+  description: >-
+    Inverse falsifier probe. Drop a registry section from SECTION_TO_BUCKET, let
+    a law go unclassified, relax the overclaim scanner, or relabel the
+    neuro/ontology domains above NON_CLAIM_ANALOGY. The completeness,
+    section-mapping, overclaim, and non-claim tests must return non-zero rather
+    than silently passing, proving the canon gate is load-bearing.
+rollback_command: >-
+  git checkout HEAD~1 -- scripts/ci/check_physics_docs_canon.py
+  tests/unit/test_check_physics_docs_canon.py docs/PHYSICS_CANON.manifest.json
+rollback_verification_command: >-
+  python tools/commit_acceptor/validate_commit_acceptor.py
+memory_update_type: none
+ledger_path: ".claude/commit_acceptors/physics-docs-canon-gate.yaml"
+report_path: ".claude/commit_acceptors/physics-docs-canon-gate.yaml"
+evidence:
+  - path: "tests/unit/test_check_physics_docs_canon.py"
+    sha256: "8e2bed976f0445a366ac0f050663e61b39f0d7ee9a45ea1adbfdc74ce0ad39ab"  # pragma: allowlist secret

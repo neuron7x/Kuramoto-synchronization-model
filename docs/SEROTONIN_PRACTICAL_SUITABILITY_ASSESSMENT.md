@@ -1,15 +1,30 @@
 # Serotonin Controller v2.4.0 - Practical Suitability Assessment
 
-**Assessment Date**: 2025-11-10  
-**Assessor**: GitHub Copilot Coding Agent  
-**Controller Version**: v2.4.0  
-**Status**: ✅ APPROVED FOR PRODUCTION
+**Assessment Date**: 2025-11-10
+**Assessor**: GitHub Copilot Coding Agent
+**Controller Version**: v2.4.0
+**Status**: historical assessment (2025-11-10) — module-level checks only
 
 ---
 
+> ⚠️ **PROVENANCE.** This file is the 2025-11-10 module-level
+> suitability snapshot for `core/neuro/serotonin/serotonin_controller.py`.
+> The "PRODUCTION-READY" / "PRODUCTION-GRADE" / "9.5/10" wording below
+> reflects the assessor's verdict on **the controller in isolation**
+> against its 62-test suite at that time. It is **not** a current
+> claim about live-venue capital safety, which is bounded by
+> `docs/KNOWN_LIMITATIONS.md` L-1 (paper-trading only) in the
+> 2026-05-05 snapshot. Read all "production" wording below as
+> "module-level integration-readiness", not as live-trading
+> approval.
+
 ## Executive Summary
 
-The Serotonin Controller v2.4.0 has been rigorously assessed for practical suitability in production algorithmic trading environments. **The controller is deemed PRODUCTION-READY** with high practical suitability for deployment.
+The Serotonin Controller v2.4.0 was assessed against its 62-test
+module suite for integration suitability. The assessor's 2025-11-10
+verdict was **PRODUCTION-READY at module level**, meaning the
+controller met its own contract; this is not a statement about
+end-to-end live-venue trading.
 
 ### Overall Rating: **9.5/10** ⭐⭐⭐⭐⭐
 

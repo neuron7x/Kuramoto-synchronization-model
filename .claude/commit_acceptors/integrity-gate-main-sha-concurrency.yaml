@@ -1,0 +1,53 @@
+# Diff-bound acceptor: per-SHA main-push concurrency for integrity gates.
+
+id: integrity-gate-main-sha-concurrency
+status: ACTIVE
+claim_type: fail_closed
+promise: >-
+  Closes the residual concurrency P1 left after #1370. The repo-integrity and
+  research-integrity workflows grouped EVERY main-push run under a single
+  `<gate>-${{ github.ref }}` identity (refs/heads/main). cancel-in-progress=false
+  stops eviction of the in-progress run, but GitHub still drops *superseded
+  pending* runs in a group — so when several merges land in quick succession an
+  intermediate main SHA's still-QUEUED integrity run is cancelled before it
+  starts and that SHA never emits a terminal verdict. The fix groups PR runs by
+  github.ref (cancellable) and main-push runs by the EXACT github.sha
+  (non-cancellable, never superseded), guaranteeing every main commit reaches a
+  terminal integrity result. CI/governance only.
+
+diff_scope:
+  changed_files:
+    - path: ".claude/commit_acceptors/integrity-gate-main-sha-concurrency.yaml"
+    - path: ".github/workflows/repo-integrity-gate.yml"
+    - path: ".github/workflows/research-integrity-gate.yml"
+  forbidden_paths:
+    - "core/"
+    - "backtest/"
+    - "execution/"
+    - "analytics/"
+    - "research/systemic_risk/"
+
+required_python_symbols: []
+expected_signal: >-
+  Neither integrity workflow uses `<gate>-${{ github.ref }}` as its sole
+  main-push concurrency identity; both resolve the concurrency group to
+  github.sha on push and github.ref on pull_request, while cancel-in-progress
+  stays scoped to pull_request.
+measurement_command: >-
+  bash -c 'set -euo pipefail; mkdir -p tmp; { python -c "import yaml; [yaml.safe_load(open(f)) for f in (\".github/workflows/repo-integrity-gate.yml\",\".github/workflows/research-integrity-gate.yml\")]" && grep -q "github.event_name == .pull_request. && github.ref || github.sha" .github/workflows/repo-integrity-gate.yml && grep -q "github.event_name == .pull_request. && github.ref || github.sha" .github/workflows/research-integrity-gate.yml && ! grep -qE "group: repo-integrity-gate-..\{\{ github.ref \}\}" .github/workflows/repo-integrity-gate.yml && ! grep -qE "group: research-integrity-gate-..\{\{ github.ref \}\}" .github/workflows/research-integrity-gate.yml; } && echo "PASS: integrity gates group main-push by github.sha, PR by github.ref" | tee tmp/integrity_gate_sha_concurrency.log'
+signal_artifact: "tmp/integrity_gate_sha_concurrency.log"
+falsifier:
+  command: >-
+    bash -c 'grep -q "github.event_name == .pull_request. && github.ref || github.sha" .github/workflows/repo-integrity-gate.yml && grep -q "github.event_name == .pull_request. && github.ref || github.sha" .github/workflows/research-integrity-gate.yml && ! grep -qE "group: repo-integrity-gate-..\{\{ github.ref \}\}$" .github/workflows/repo-integrity-gate.yml && ! grep -qE "group: research-integrity-gate-..\{\{ github.ref \}\}$" .github/workflows/research-integrity-gate.yml'
+  description: >-
+    Fails if either integrity workflow reverts its main-push concurrency group
+    to the shared `<gate>-${{ github.ref }}` identity, which re-opens the
+    pending-run supersession gap that leaves intermediate main SHAs without a
+    terminal verdict.
+rollback_command: >-
+  bash -c 'git checkout origin/main -- .github/workflows/repo-integrity-gate.yml .github/workflows/research-integrity-gate.yml && git rm -f .claude/commit_acceptors/integrity-gate-main-sha-concurrency.yaml'
+rollback_verification_command: >-
+  bash -c 'grep -qE "group: repo-integrity-gate-..\{\{ github.ref \}\}" .github/workflows/repo-integrity-gate.yml'
+memory_update_type: append
+ledger_path: ".claude/commit_acceptors/integrity-gate-main-sha-concurrency.yaml"
+report_path: "tmp/integrity_gate_sha_concurrency.log"

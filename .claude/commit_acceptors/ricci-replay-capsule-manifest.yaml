@@ -1,0 +1,57 @@
+id: ricci-replay-capsule-manifest
+status: ACTIVE
+claim_type: governance
+promise: >-
+  Diff-bound acceptor for the Ricci synthetic-negative replay capsule manifest.
+  The change publishes a one-file manifest plus a one-command Make target that
+  make the EXISTING credential-free replay capsule externally reproducible, and
+  adds a consistency test that pins the manifest to the capsule's existing
+  hashes and blocker tuple. It does NOT promote any claim tier: the capsule
+  remains synthetic-only with a ceiling of INSTRUMENTED and proves only
+  deterministic blocked-replay plus negative-evidence preservation.
+
+diff_scope:
+  changed_files:
+    - path: "artifacts/runs/ricci_microstructure_v1/replay_capsule_manifest.json"
+    - path: "tests/research_lines/test_ricci_microstructure_replay_capsule.py"
+    - path: "Makefile"
+    - path: ".github/detect-secrets.baseline"
+    - path: ".claude/commit_acceptors/ricci-replay-capsule-manifest.yaml"
+  forbidden_paths:
+    - "application/"
+    - "backtest/"
+    - "execution/"
+    - "markets/"
+    - "runtime/"
+
+required_python_symbols:
+  - "tools.research.ricci_preregistration_guard"
+
+expected_signal: >-
+  The replay capsule manifest is byte-consistent with the capsule test pins
+  (data, config, and decision hashes plus the negative blocker tuple), the
+  claim ceiling stays INSTRUMENTED, and the credential-free one-command replay
+  reproduces the pinned blocked verdict.
+
+measurement_command: >-
+  python -m pytest -q tests/research_lines/test_ricci_microstructure_replay_capsule.py --confcutdir=tests/research_lines
+
+signal_artifact: "artifacts/runs/ricci_microstructure_v1/replay_capsule_manifest.json"
+
+falsifier:
+  command: >-
+    python -m pytest -q tests/research_lines/test_ricci_microstructure_replay_capsule.py::test_manifest_is_consistent_with_capsule --confcutdir=tests/research_lines
+  description: >-
+    The consistency test must fail closed if the manifest drifts from the
+    capsule pins or attempts to raise the claim ceiling above INSTRUMENTED.
+
+rollback_command: >-
+  git checkout -- artifacts/runs/ricci_microstructure_v1/replay_capsule_manifest.json tests/research_lines/test_ricci_microstructure_replay_capsule.py Makefile .github/detect-secrets.baseline .claude/commit_acceptors/ricci-replay-capsule-manifest.yaml
+
+rollback_verification_command: >-
+  git diff --exit-code
+
+memory_update_type: append
+ledger_path: ".claude/commit_acceptors/ricci-replay-capsule-manifest.yaml"
+report_path: "artifacts/runs/ricci_microstructure_v1/replay_capsule_manifest.json"
+evidence: []

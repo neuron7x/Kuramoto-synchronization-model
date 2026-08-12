@@ -1,0 +1,27 @@
+{
+  "artifact_sha256": "23d8d0a690bd3e1b7c19b18bd347dc0280f2a71bdb501338dc12a3c931a1a18b",
+  "claim_boundary_enforced": true,
+  "claim_boundary_evidence": "Claim-boundary gate passed: 623 canonical surfaces (docs + claim-bearing code) scanned, 127 reviewed mechanism/record references.",
+  "excluded_dimensions": [
+    "fills",
+    "slippage",
+    "fees",
+    "adverse_selection",
+    "latency",
+    "recovery_behavior"
+  ],
+  "forbidden_wording": [
+    "live-trading",
+    "production trading",
+    "deployable strategy",
+    "alpha engine",
+    "tradable signal"
+  ],
+  "gate": "K.execution",
+  "git_dirty": true,
+  "git_sha": "9846a5501e4f8a2c4b583f159feae6c1c6e82df6",
+  "rationale": "GeoSync is a verification-first quantitative research platform; execution realism (fills/slippage/adverse-selection/latency/recovery) is explicitly not modelled or claimed. The execution-realism harness in the codebase is internal substrate, not a live-execution promise.",
+  "schema_version": "1.0",
+  "scope": "OUT_OF_SCOPE",
+  "status": "PASS"
+}

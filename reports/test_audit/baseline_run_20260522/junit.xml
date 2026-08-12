@@ -1,0 +1,249 @@
+<?xml version="1.0" encoding="utf-8"?><testsuites name="pytest tests"><testsuite name="pytest" errors="50" failures="0" skipped="21" tests="71" time="36.569" timestamp="2026-05-22T13:43:16.558876+00:00" hostname="ci-runner"><testcase classname="" name="tests.analytics.test_kelly_criterion" time="0.000"><error message="collection failure">ImportError while importing test module '/workspace/GeoSync/tests/analytics/test_kelly_criterion.py'.
+Hint: make sure your test modules/packages have valid Python names.
+Traceback:
+tests/analytics/test_kelly_criterion.py:5: in &lt;module&gt;
+    from hypothesis import given, settings
+E   ModuleNotFoundError: No module named 'hypothesis'</error></testcase><testcase classname="" name="tests.api.test_schemathesis_contract" time="0.000"><skipped message="collection skipped">('/workspace/GeoSync/tests/api/test_schemathesis_contract.py', 44, 'Skipped: Schemathesis is an optional contract-test dep; install with `pip install schemathesis&gt;=4`.')</skipped></testcase><testcase classname="" name="tests.contracts.test_execution_pacts" time="0.000"><skipped message="collection skipped">('/workspace/GeoSync/tests/contracts/test_execution_pacts.py', 11, 'Skipped: pactman is required for contract tests')</skipped></testcase><testcase classname="" name="tests.core.cross_asset_kuramoto.test_no_future_leak" time="0.000"><error message="collection failure">ImportError while importing test module '/workspace/GeoSync/tests/core/cross_asset_kuramoto/test_no_future_leak.py'.
+Hint: make sure your test modules/packages have valid Python names.
+Traceback:
+tests/core/cross_asset_kuramoto/test_no_future_leak.py:12: in &lt;module&gt;
+    from hypothesis import HealthCheck, given, settings
+E   ModuleNotFoundError: No module named 'hypothesis'</error></testcase><testcase classname="" name="tests.core.dro_ara.test_properties" time="0.000"><error message="collection failure">ImportError while importing test module '/workspace/GeoSync/tests/core/dro_ara/test_properties.py'.
+Hint: make sure your test modules/packages have valid Python names.
+Traceback:
+tests/core/dro_ara/test_properties.py:32: in &lt;module&gt;
+    import hypothesis.extra.numpy as hnp
+E   ModuleNotFoundError: No module named 'hypothesis'</error></testcase><testcase classname="" name="tests.core.neuro.dopamine.test_dopamine_invariants_properties" time="0.000"><error message="collection failure">tests/core/neuro/dopamine/test_dopamine_invariants_properties.py:31: in &lt;module&gt;
+    @st.composite
+     ^^^^^^^^^^^^
+E   AttributeError: type object 'st' has no attribute 'composite'</error></testcase><testcase classname="" name="tests.core.neuro.serotonin.test_serotonin_properties" time="0.000"><error message="collection failure">ImportError while importing test module '/workspace/GeoSync/tests/core/neuro/serotonin/test_serotonin_properties.py'.
+Hint: make sure your test modules/packages have valid Python names.
+Traceback:
+tests/core/neuro/serotonin/test_serotonin_properties.py:10: in &lt;module&gt;
+    from hypothesis import given, settings
+E   ModuleNotFoundError: No module named 'hypothesis'</error></testcase><testcase classname="" name="tests.fuzz.test_ingestion_fuzz" time="0.000"><skipped message="collection skipped">('/workspace/GeoSync/tests/fuzz/test_ingestion_fuzz.py', 18, 'Skipped: hypothesis not installed')</skipped></testcase><testcase classname="" name="tests.geosync_hpc.test_ledger" time="0.000"><error message="collection failure">ImportError while importing test module '/workspace/GeoSync/tests/geosync_hpc/test_ledger.py'.
+Hint: make sure your test modules/packages have valid Python names.
+Traceback:
+tests/geosync_hpc/test_ledger.py:32: in &lt;module&gt;
+    from hypothesis import given, settings
+E   ModuleNotFoundError: No module named 'hypothesis'</error></testcase><testcase classname="" name="tests.geosync_hpc.test_session_fsm" time="0.000"><error message="collection failure">ImportError while importing test module '/workspace/GeoSync/tests/geosync_hpc/test_session_fsm.py'.
+Hint: make sure your test modules/packages have valid Python names.
+Traceback:
+tests/geosync_hpc/test_session_fsm.py:26: in &lt;module&gt;
+    from hypothesis import given, settings
+E   ModuleNotFoundError: No module named 'hypothesis'</error></testcase><testcase classname="" name="tests.invariants.test_remediation_invariants" time="0.000"><error message="collection failure">ImportError while importing test module '/workspace/GeoSync/tests/invariants/test_remediation_invariants.py'.
+Hint: make sure your test modules/packages have valid Python names.
+Traceback:
+tests/invariants/test_remediation_invariants.py:47: in &lt;module&gt;
+    from hypothesis import given, settings
+E   ModuleNotFoundError: No module named 'hypothesis'</error></testcase><testcase classname="" name="tests.metamorphic.test_metamorphic" time="0.000"><error message="collection failure">ImportError while importing test module '/workspace/GeoSync/tests/metamorphic/test_metamorphic.py'.
+Hint: make sure your test modules/packages have valid Python names.
+Traceback:
+tests/metamorphic/test_metamorphic.py:32: in &lt;module&gt;
+    from hypothesis import given, settings
+E   ModuleNotFoundError: No module named 'hypothesis'</error></testcase><testcase classname="" name="tests.negative_controls.test_negative_controls" time="0.000"><error message="collection failure">ImportError while importing test module '/workspace/GeoSync/tests/negative_controls/test_negative_controls.py'.
+Hint: make sure your test modules/packages have valid Python names.
+Traceback:
+tests/negative_controls/test_negative_controls.py:28: in &lt;module&gt;
+    from hypothesis import given, settings
+E   ModuleNotFoundError: No module named 'hypothesis'</error></testcase><testcase classname="" name="tests.property.research_extensions.test_drfree_properties" time="0.000"><error message="collection failure">ImportError while importing test module '/workspace/GeoSync/tests/property/research_extensions/test_drfree_properties.py'.
+Hint: make sure your test modules/packages have valid Python names.
+Traceback:
+tests/property/research_extensions/test_drfree_properties.py:14: in &lt;module&gt;
+    from hypothesis import HealthCheck, given, settings
+E   ModuleNotFoundError: No module named 'hypothesis'</error></testcase><testcase classname="" name="tests.property.research_extensions.test_ho_sparse_properties" time="0.000"><error message="collection failure">ImportError while importing test module '/workspace/GeoSync/tests/property/research_extensions/test_ho_sparse_properties.py'.
+Hint: make sure your test modules/packages have valid Python names.
+Traceback:
+tests/property/research_extensions/test_ho_sparse_properties.py:15: in &lt;module&gt;
+    from hypothesis import HealthCheck, assume, given, settings
+E   ModuleNotFoundError: No module named 'hypothesis'</error></testcase><testcase classname="" name="tests.property.research_extensions.test_kbeta_properties" time="0.000"><error message="collection failure">ImportError while importing test module '/workspace/GeoSync/tests/property/research_extensions/test_kbeta_properties.py'.
+Hint: make sure your test modules/packages have valid Python names.
+Traceback:
+tests/property/research_extensions/test_kbeta_properties.py:14: in &lt;module&gt;
+    from hypothesis import HealthCheck, given, settings
+E   ModuleNotFoundError: No module named 'hypothesis'</error></testcase><testcase classname="" name="tests.property.research_extensions.test_ricci_properties" time="0.000"><error message="collection failure">ImportError while importing test module '/workspace/GeoSync/tests/property/research_extensions/test_ricci_properties.py'.
+Hint: make sure your test modules/packages have valid Python names.
+Traceback:
+tests/property/research_extensions/test_ricci_properties.py:16: in &lt;module&gt;
+    from hypothesis import HealthCheck, assume, given, settings
+E   ModuleNotFoundError: No module named 'hypothesis'</error></testcase><testcase classname="" name="tests.property.test_backtest_properties" time="0.000"><skipped message="collection skipped">('/workspace/GeoSync/tests/property/test_backtest_properties.py', 13, 'Skipped: hypothesis not installed')</skipped></testcase><testcase classname="" name="tests.property.test_entropy_phase_properties" time="0.000"><skipped message="collection skipped">('/workspace/GeoSync/tests/property/test_entropy_phase_properties.py', 19, 'Skipped: hypothesis not installed')</skipped></testcase><testcase classname="" name="tests.property.test_execution_adapter_fuzz" time="0.000"><skipped message="collection skipped">('/workspace/GeoSync/tests/property/test_execution_adapter_fuzz.py', 13, 'Skipped: hypothesis not installed')</skipped></testcase><testcase classname="" name="tests.property.test_execution_connector_properties" time="0.000"><skipped message="collection skipped">('/workspace/GeoSync/tests/property/test_execution_connector_properties.py', 13, 'Skipped: hypothesis not installed')</skipped></testcase><testcase classname="" name="tests.property.test_execution_properties" time="0.000"><skipped message="collection skipped">('/workspace/GeoSync/tests/property/test_execution_properties.py', 11, 'Skipped: hypothesis not installed')</skipped></testcase><testcase classname="" name="tests.property.test_flow_metrics_properties" time="0.000"><skipped message="collection skipped">('/workspace/GeoSync/tests/property/test_flow_metrics_properties.py', 40, 'Skipped: hypothesis not installed')</skipped></testcase><testcase classname="" name="tests.property.test_hncm_math_properties" time="0.000"><skipped message="collection skipped">('/workspace/GeoSync/tests/property/test_hncm_math_properties.py', 15, 'Skipped: hypothesis not installed')</skipped></testcase><testcase classname="" name="tests.property.test_indicator_properties" time="0.000"><skipped message="collection skipped">('/workspace/GeoSync/tests/property/test_indicator_properties.py', 15, 'Skipped: hypothesis not installed')</skipped></testcase><testcase classname="" name="tests.property.test_ingestion_adapter_properties" time="0.000"><skipped message="collection skipped">('/workspace/GeoSync/tests/property/test_ingestion_adapter_properties.py', 17, 'Skipped: hypothesis not installed')</skipped></testcase><testcase classname="" name="tests.property.test_policy_properties" time="0.000"><error message="collection failure">tests/property/test_policy_properties.py:62: in &lt;module&gt;
+    class TestInjectionPatterns:
+tests/property/test_policy_properties.py:66: in TestInjectionPatterns
+    prefix=st.text(alphabet=string.ascii_letters + " ", min_size=0, max_size=20),
+           ^^^^^^^
+E   AttributeError: 'NoneType' object has no attribute 'text'</error></testcase><testcase classname="" name="tests.property.test_position_sizer_properties" time="0.000"><skipped message="collection skipped">('/workspace/GeoSync/tests/property/test_position_sizer_properties.py', 14, 'Skipped: hypothesis not installed')</skipped></testcase><testcase classname="" name="tests.property.test_resampling_contracts" time="0.000"><skipped message="collection skipped">('/workspace/GeoSync/tests/property/test_resampling_contracts.py', 16, 'Skipped: hypothesis not installed')</skipped></testcase><testcase classname="" name="tests.property.test_schemas_properties" time="0.000"><skipped message="collection skipped">('/workspace/GeoSync/tests/property/test_schemas_properties.py', 15, 'Skipped: hypothesis not installed')</skipped></testcase><testcase classname="" name="tests.property.test_strategy_properties" time="0.000"><skipped message="collection skipped">('/workspace/GeoSync/tests/property/test_strategy_properties.py', 16, 'Skipped: hypothesis not installed')</skipped></testcase><testcase classname="" name="tests.property.test_tacl_gating_properties" time="0.000"><skipped message="collection skipped">('/workspace/GeoSync/tests/property/test_tacl_gating_properties.py', 14, 'Skipped: hypothesis not installed')</skipped></testcase><testcase classname="" name="tests.property.test_tracing_failover_properties" time="0.000"><skipped message="collection skipped">('/workspace/GeoSync/tests/property/test_tracing_failover_properties.py', 14, 'Skipped: hypothesis is required for property-based tracing tests')</skipped></testcase><testcase classname="" name="tests.reconstruction.test_domain_of_validity" time="0.000"><error message="collection failure">ImportError while importing test module '/workspace/GeoSync/tests/reconstruction/test_domain_of_validity.py'.
+Hint: make sure your test modules/packages have valid Python names.
+Traceback:
+tests/reconstruction/test_domain_of_validity.py:20: in &lt;module&gt;
+    from hypothesis import given, settings
+E   ModuleNotFoundError: No module named 'hypothesis'</error></testcase><testcase classname="" name="tests.reconstruction.test_precursor_direction" time="0.000"><error message="collection failure">ImportError while importing test module '/workspace/GeoSync/tests/reconstruction/test_precursor_direction.py'.
+Hint: make sure your test modules/packages have valid Python names.
+Traceback:
+tests/reconstruction/test_precursor_direction.py:18: in &lt;module&gt;
+    from hypothesis import given, settings
+E   ModuleNotFoundError: No module named 'hypothesis'</error></testcase><testcase classname="" name="tests.research.calibration.test_grid_kuramoto" time="0.000"><error message="collection failure">ImportError while importing test module '/workspace/GeoSync/tests/research/calibration/test_grid_kuramoto.py'.
+Hint: make sure your test modules/packages have valid Python names.
+Traceback:
+tests/research/calibration/test_grid_kuramoto.py:22: in &lt;module&gt;
+    from hypothesis import assume, given, settings
+E   ModuleNotFoundError: No module named 'hypothesis'</error></testcase><testcase classname="" name="tests.research.systemic_risk.test_bayes_rigorous" time="0.000"><error message="collection failure">ImportError while importing test module '/workspace/GeoSync/tests/research/systemic_risk/test_bayes_rigorous.py'.
+Hint: make sure your test modules/packages have valid Python names.
+Traceback:
+tests/research/systemic_risk/test_bayes_rigorous.py:16: in &lt;module&gt;
+    from hypothesis import given
+E   ModuleNotFoundError: No module named 'hypothesis'</error></testcase><testcase classname="" name="tests.research.systemic_risk.test_disha_ba_correlation_figures" time="0.000"><skipped message="collection skipped">('/workspace/GeoSync/tests/research/systemic_risk/test_disha_ba_correlation_figures.py', 21, "Skipped: could not import 'matplotlib': No module named 'matplotlib'")</skipped></testcase><testcase classname="" name="tests.research.systemic_risk.test_minimal" time="0.000"><error message="collection failure">ImportError while importing test module '/workspace/GeoSync/tests/research/systemic_risk/test_minimal.py'.
+Hint: make sure your test modules/packages have valid Python names.
+Traceback:
+tests/research/systemic_risk/test_minimal.py:12: in &lt;module&gt;
+    from hypothesis import given
+E   ModuleNotFoundError: No module named 'hypothesis'</error></testcase><testcase classname="" name="tests.research.systemic_risk.test_occam_penalty" time="0.000"><error message="collection failure">ImportError while importing test module '/workspace/GeoSync/tests/research/systemic_risk/test_occam_penalty.py'.
+Hint: make sure your test modules/packages have valid Python names.
+Traceback:
+tests/research/systemic_risk/test_occam_penalty.py:10: in &lt;module&gt;
+    from hypothesis import given
+E   ModuleNotFoundError: No module named 'hypothesis'</error></testcase><testcase classname="" name="tests.research.systemic_risk.test_verdict_lattice" time="0.000"><error message="collection failure">ImportError while importing test module '/workspace/GeoSync/tests/research/systemic_risk/test_verdict_lattice.py'.
+Hint: make sure your test modules/packages have valid Python names.
+Traceback:
+tests/research/systemic_risk/test_verdict_lattice.py:15: in &lt;module&gt;
+    from hypothesis import given
+E   ModuleNotFoundError: No module named 'hypothesis'</error></testcase><testcase classname="" name="tests.tacl.test_evidence_ledger" time="0.000"><error message="collection failure">ImportError while importing test module '/workspace/GeoSync/tests/tacl/test_evidence_ledger.py'.
+Hint: make sure your test modules/packages have valid Python names.
+Traceback:
+tests/tacl/test_evidence_ledger.py:26: in &lt;module&gt;
+    from hypothesis import given
+E   ModuleNotFoundError: No module named 'hypothesis'</error></testcase><testcase classname="" name="tests.test_behavioral_contracts" time="0.000"><error message="collection failure">ImportError while importing test module '/workspace/GeoSync/tests/test_behavioral_contracts.py'.
+Hint: make sure your test modules/packages have valid Python names.
+Traceback:
+tests/test_behavioral_contracts.py:23: in &lt;module&gt;
+    from hypothesis import HealthCheck, given, settings
+E   ModuleNotFoundError: No module named 'hypothesis'</error></testcase><testcase classname="" name="tests.test_gamma_estimator" time="0.000"><error message="collection failure">ImportError while importing test module '/workspace/GeoSync/tests/test_gamma_estimator.py'.
+Hint: make sure your test modules/packages have valid Python names.
+Traceback:
+tests/test_gamma_estimator.py:7: in &lt;module&gt;
+    from hypothesis import given, settings
+E   ModuleNotFoundError: No module named 'hypothesis'</error></testcase><testcase classname="" name="tests.test_l2_property_based" time="0.000"><error message="collection failure">ImportError while importing test module '/workspace/GeoSync/tests/test_l2_property_based.py'.
+Hint: make sure your test modules/packages have valid Python names.
+Traceback:
+tests/test_l2_property_based.py:20: in &lt;module&gt;
+    from hypothesis import HealthCheck, given, settings
+E   ModuleNotFoundError: No module named 'hypothesis'</error></testcase><testcase classname="" name="tests.test_l2_visualize" time="0.000"><skipped message="collection skipped">('/workspace/GeoSync/tests/test_l2_visualize.py', 19, "Skipped: could not import 'matplotlib': No module named 'matplotlib'")</skipped></testcase><testcase classname="" name="tests.test_mathematical_proofs" time="0.000"><error message="collection failure">ImportError while importing test module '/workspace/GeoSync/tests/test_mathematical_proofs.py'.
+Hint: make sure your test modules/packages have valid Python names.
+Traceback:
+tests/test_mathematical_proofs.py:32: in &lt;module&gt;
+    from hypothesis import HealthCheck, assume, given, settings
+E   ModuleNotFoundError: No module named 'hypothesis'</error></testcase><testcase classname="" name="tests.test_reset_wave_property_based" time="0.000"><error message="collection failure">ImportError while importing test module '/workspace/GeoSync/tests/test_reset_wave_property_based.py'.
+Hint: make sure your test modules/packages have valid Python names.
+Traceback:
+tests/test_reset_wave_property_based.py:19: in &lt;module&gt;
+    from hypothesis import HealthCheck, assume, given, settings
+E   ModuleNotFoundError: No module named 'hypothesis'</error></testcase><testcase classname="" name="tests.unit.core.test_compat" time="0.000"><error message="collection failure">ImportError while importing test module '/workspace/GeoSync/tests/unit/core/test_compat.py'.
+Hint: make sure your test modules/packages have valid Python names.
+Traceback:
+tests/unit/core/test_compat.py:21: in &lt;module&gt;
+    from hypothesis import given
+E   ModuleNotFoundError: No module named 'hypothesis'</error></testcase><testcase classname="" name="tests.unit.core.test_kuramoto_identifiability" time="0.000"><error message="collection failure">ImportError while importing test module '/workspace/GeoSync/tests/unit/core/test_kuramoto_identifiability.py'.
+Hint: make sure your test modules/packages have valid Python names.
+Traceback:
+tests/unit/core/test_kuramoto_identifiability.py:24: in &lt;module&gt;
+    from hypothesis import given, settings
+E   ModuleNotFoundError: No module named 'hypothesis'</error></testcase><testcase classname="" name="tests.unit.core.test_kuramoto_integral_estimator" time="0.000"><error message="collection failure">ImportError while importing test module '/workspace/GeoSync/tests/unit/core/test_kuramoto_integral_estimator.py'.
+Hint: make sure your test modules/packages have valid Python names.
+Traceback:
+tests/unit/core/test_kuramoto_integral_estimator.py:25: in &lt;module&gt;
+    from hypothesis import assume, given, settings
+E   ModuleNotFoundError: No module named 'hypothesis'</error></testcase><testcase classname="" name="tests.unit.data.test_hot_symbol_cache" time="0.000"><skipped message="collection skipped">('/workspace/GeoSync/tests/unit/data/test_hot_symbol_cache.py', 10, "Skipped: could not import 'hypothesis': No module named 'hypothesis'")</skipped></testcase><testcase classname="" name="tests.unit.data.test_warehouses_clickhouse" time="0.000"><error message="collection failure">ImportError while importing test module '/workspace/GeoSync/tests/unit/data/test_warehouses_clickhouse.py'.
+Hint: make sure your test modules/packages have valid Python names.
+Traceback:
+tests/unit/data/test_warehouses_clickhouse.py:12: in &lt;module&gt;
+    from pytest_httpx import HTTPXMock
+E   ModuleNotFoundError: No module named 'pytest_httpx'</error></testcase><testcase classname="" name="tests.unit.neuro.test_epistemic_validation" time="0.000"><error message="collection failure">ImportError while importing test module '/workspace/GeoSync/tests/unit/neuro/test_epistemic_validation.py'.
+Hint: make sure your test modules/packages have valid Python names.
+Traceback:
+tests/unit/neuro/test_epistemic_validation.py:39: in &lt;module&gt;
+    from hypothesis import HealthCheck, given, settings
+E   ModuleNotFoundError: No module named 'hypothesis'</error></testcase><testcase classname="" name="tests.unit.physics.test_T10_ricci_universal_upper_bound" time="0.000"><error message="collection failure">ImportError while importing test module '/workspace/GeoSync/tests/unit/physics/test_T10_ricci_universal_upper_bound.py'.
+Hint: make sure your test modules/packages have valid Python names.
+Traceback:
+tests/unit/physics/test_T10_ricci_universal_upper_bound.py:37: in &lt;module&gt;
+    from hypothesis import HealthCheck, assume, given, settings
+E   ModuleNotFoundError: No module named 'hypothesis'</error></testcase><testcase classname="" name="tests.unit.physics.test_T17_cryptobiosis_exact_zero" time="0.000"><error message="collection failure">ImportError while importing test module '/workspace/GeoSync/tests/unit/physics/test_T17_cryptobiosis_exact_zero.py'.
+Hint: make sure your test modules/packages have valid Python names.
+Traceback:
+tests/unit/physics/test_T17_cryptobiosis_exact_zero.py:31: in &lt;module&gt;
+    from hypothesis import HealthCheck, given, settings
+E   ModuleNotFoundError: No module named 'hypothesis'</error></testcase><testcase classname="" name="tests.unit.physics.test_T1_kuramoto_ricci_boundary" time="0.000"><error message="collection failure">ImportError while importing test module '/workspace/GeoSync/tests/unit/physics/test_T1_kuramoto_ricci_boundary.py'.
+Hint: make sure your test modules/packages have valid Python names.
+Traceback:
+tests/unit/physics/test_T1_kuramoto_ricci_boundary.py:18: in &lt;module&gt;
+    import jax
+E   ModuleNotFoundError: No module named 'jax'</error></testcase><testcase classname="" name="tests.unit.physics.test_T22_lyapunov_robustness" time="0.000"><error message="collection failure">ImportError while importing test module '/workspace/GeoSync/tests/unit/physics/test_T22_lyapunov_robustness.py'.
+Hint: make sure your test modules/packages have valid Python names.
+Traceback:
+tests/unit/physics/test_T22_lyapunov_robustness.py:35: in &lt;module&gt;
+    from hypothesis import HealthCheck, given, settings
+E   ModuleNotFoundError: No module named 'hypothesis'</error></testcase><testcase classname="" name="tests.unit.physics.test_T24_kuramoto_metrics_witness" time="0.000"><error message="collection failure">ImportError while importing test module '/workspace/GeoSync/tests/unit/physics/test_T24_kuramoto_metrics_witness.py'.
+Hint: make sure your test modules/packages have valid Python names.
+Traceback:
+tests/unit/physics/test_T24_kuramoto_metrics_witness.py:49: in &lt;module&gt;
+    from hypothesis import given, settings
+E   ModuleNotFoundError: No module named 'hypothesis'</error></testcase><testcase classname="" name="tests.unit.physics.test_T26_landauer_witness" time="0.000"><error message="collection failure">ImportError while importing test module '/workspace/GeoSync/tests/unit/physics/test_T26_landauer_witness.py'.
+Hint: make sure your test modules/packages have valid Python names.
+Traceback:
+tests/unit/physics/test_T26_landauer_witness.py:28: in &lt;module&gt;
+    from hypothesis import given, settings
+E   ModuleNotFoundError: No module named 'hypothesis'</error></testcase><testcase classname="" name="tests.unit.physics.test_T27_tsallis_gate_witness" time="0.000"><error message="collection failure">ImportError while importing test module '/workspace/GeoSync/tests/unit/physics/test_T27_tsallis_gate_witness.py'.
+Hint: make sure your test modules/packages have valid Python names.
+Traceback:
+tests/unit/physics/test_T27_tsallis_gate_witness.py:30: in &lt;module&gt;
+    from hypothesis import given, settings
+E   ModuleNotFoundError: No module named 'hypothesis'</error></testcase><testcase classname="" name="tests.unit.physics.test_T28_wave2_witnesses" time="0.000"><error message="collection failure">ImportError while importing test module '/workspace/GeoSync/tests/unit/physics/test_T28_wave2_witnesses.py'.
+Hint: make sure your test modules/packages have valid Python names.
+Traceback:
+tests/unit/physics/test_T28_wave2_witnesses.py:68: in &lt;module&gt;
+    from hypothesis import HealthCheck, assume, given, settings
+E   ModuleNotFoundError: No module named 'hypothesis'</error></testcase><testcase classname="" name="tests.unit.physics.test_T2_lyapunov_full_spectrum" time="0.000"><error message="collection failure">ImportError while importing test module '/workspace/GeoSync/tests/unit/physics/test_T2_lyapunov_full_spectrum.py'.
+Hint: make sure your test modules/packages have valid Python names.
+Traceback:
+tests/unit/physics/test_T2_lyapunov_full_spectrum.py:24: in &lt;module&gt;
+    import jax
+E   ModuleNotFoundError: No module named 'jax'</error></testcase><testcase classname="" name="tests.unit.physics.test_T3_lyapunov_calibration" time="0.000"><error message="collection failure">ImportError while importing test module '/workspace/GeoSync/tests/unit/physics/test_T3_lyapunov_calibration.py'.
+Hint: make sure your test modules/packages have valid Python names.
+Traceback:
+tests/unit/physics/test_T3_lyapunov_calibration.py:13: in &lt;module&gt;
+    import jax
+E   ModuleNotFoundError: No module named 'jax'</error></testcase><testcase classname="" name="tests.unit.physics.test_T_dro1_gamma_algebraic" time="0.000"><error message="collection failure">ImportError while importing test module '/workspace/GeoSync/tests/unit/physics/test_T_dro1_gamma_algebraic.py'.
+Hint: make sure your test modules/packages have valid Python names.
+Traceback:
+tests/unit/physics/test_T_dro1_gamma_algebraic.py:35: in &lt;module&gt;
+    from hypothesis import HealthCheck, given, settings
+E   ModuleNotFoundError: No module named 'hypothesis'</error></testcase><testcase classname="" name="tests.unit.physics.test_arrow_of_time" time="0.000"><error message="collection failure">ImportError while importing test module '/workspace/GeoSync/tests/unit/physics/test_arrow_of_time.py'.
+Hint: make sure your test modules/packages have valid Python names.
+Traceback:
+tests/unit/physics/test_arrow_of_time.py:15: in &lt;module&gt;
+    from hypothesis import given
+E   ModuleNotFoundError: No module named 'hypothesis'</error></testcase><testcase classname="" name="tests.unit.physics.test_cosmological_compute_bound" time="0.000"><error message="collection failure">ImportError while importing test module '/workspace/GeoSync/tests/unit/physics/test_cosmological_compute_bound.py'.
+Hint: make sure your test modules/packages have valid Python names.
+Traceback:
+tests/unit/physics/test_cosmological_compute_bound.py:11: in &lt;module&gt;
+    from hypothesis import given, settings
+E   ModuleNotFoundError: No module named 'hypothesis'</error></testcase><testcase classname="" name="tests.unit.physics.test_free_energy_variational" time="0.000"><error message="collection failure">ImportError while importing test module '/workspace/GeoSync/tests/unit/physics/test_free_energy_variational.py'.
+Hint: make sure your test modules/packages have valid Python names.
+Traceback:
+tests/unit/physics/test_free_energy_variational.py:20: in &lt;module&gt;
+    from hypothesis import HealthCheck, given, settings
+E   ModuleNotFoundError: No module named 'hypothesis'</error></testcase><testcase classname="" name="tests.unit.physics.test_inv_dro2_risk_scalar" time="0.000"><error message="collection failure">ImportError while importing test module '/workspace/GeoSync/tests/unit/physics/test_inv_dro2_risk_scalar.py'.
+Hint: make sure your test modules/packages have valid Python names.
+Traceback:
+tests/unit/physics/test_inv_dro2_risk_scalar.py:19: in &lt;module&gt;
+    from hypothesis import HealthCheck, given, settings
+E   ModuleNotFoundError: No module named 'hypothesis'</error></testcase><testcase classname="" name="tests.unit.physics.test_jacobson_observer_coherence" time="0.000"><error message="collection failure">ImportError while importing test module '/workspace/GeoSync/tests/unit/physics/test_jacobson_observer_coherence.py'.
+Hint: make sure your test modules/packages have valid Python names.
+Traceback:
+tests/unit/physics/test_jacobson_observer_coherence.py:9: in &lt;module&gt;
+    from hypothesis import given
+E   ModuleNotFoundError: No module named 'hypothesis'</error></testcase><testcase classname="" name="tests.unit.physics.test_kuramoto_phase_correction" time="0.000"><error message="collection failure">ImportError while importing test module '/workspace/GeoSync/tests/unit/physics/test_kuramoto_phase_correction.py'.
+Hint: make sure your test modules/packages have valid Python names.
+Traceback:
+tests/unit/physics/test_kuramoto_phase_correction.py:24: in &lt;module&gt;
+    from hypothesis import HealthCheck, given, settings
+E   ModuleNotFoundError: No module named 'hypothesis'</error></testcase></testsuite></testsuites>

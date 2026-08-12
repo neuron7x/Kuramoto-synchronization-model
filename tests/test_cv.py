@@ -1,10 +1,12 @@
+# Copyright (c) 2023-2026 Yaroslav Vasylenko (neuron7xLab)
+# SPDX-License-Identifier: MIT
 """Unit tests for purged cross-validation."""
 
 from __future__ import annotations
 
 import numpy as np
 
-from neuropro.cv import purged_kfold
+from geosync_hpc.cv import purged_kfold
 
 
 def test_purged_cv_disjoint() -> None:

@@ -1,8 +1,8 @@
-# TradePulse Security Framework - Complete Index
+# GeoSync Security Framework - Complete Index
 
 ## Overview
 
-This document provides a comprehensive index to the TradePulse security framework, implementing all 10 critical security requirements aligned with NIST, ISO 27001, and industry best practices. Evidence: [@NIST80061r2; @ISO27001_2022]
+This document provides a comprehensive index to the GeoSync security framework, implementing all 10 critical security requirements aligned with NIST, ISO 27001, and industry best practices. Evidence: [@NIST80061r2; @ISO27001_2022]
 
 ## Framework Structure
 
@@ -291,7 +291,7 @@ This document provides a comprehensive index to the TradePulse security framewor
 
 ## Security Contacts
 
-- **Security Team**: security@tradepulse.local
+- **Security Team**: security@geosync.local
 - **CISO**: Responsible for overall security strategy
 - **Security Architect**: Architecture reviews and approvals
 - **SOC**: 24/7 security monitoring and incident response
@@ -353,7 +353,7 @@ This document provides a comprehensive index to the TradePulse security framewor
 - **Security Test Coverage**: 85% of security requirements covered by tests
 - **Deployment Security**: 95% security gate pass rate
 
-## Integration with Existing TradePulse Features
+## Integration with Existing GeoSync Features
 
 ### TACL (Thermodynamic Autonomic Control Layer)
 The security framework integrates with TACL to ensure security is maintained during autonomous system adjustments:
@@ -405,16 +405,16 @@ Security monitoring integrates with existing observability stack:
 
 ## Conclusion
 
-This comprehensive security framework implements all 10 critical security requirements for TradePulse, aligned with NIST, ISO 27001, and industry best practices. The framework is:
+This comprehensive security framework implements all 10 critical security requirements for GeoSync, aligned with NIST, ISO 27001, and industry best practices. The framework is:
 
 - **Complete**: All 10 requirements fully addressed
-- **Integrated**: Works with existing TradePulse systems
+- **Integrated**: Works with existing GeoSync systems
 - **Tested**: Security tests and validation in place
 - **Documented**: Comprehensive documentation and procedures
 - **Maintained**: Regular review and update schedule
 - **Compliant**: Mapped to regulatory requirements
 
-The framework provides defense-in-depth security across all layers, from governance and policy down to technical controls and monitoring, ensuring TradePulse is secure, compliant, and ready for production use and future growth.
+The framework provides defense-in-depth security across all layers, from governance and policy down to technical controls and monitoring, ensuring GeoSync is secure, compliant, and ready for production use and future growth.
 
 ---
 

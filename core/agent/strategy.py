@@ -1,4 +1,5 @@
-# SPDX-License-Identifier: LicenseRef-TradePulse-Proprietary
+# Copyright (c) 2023-2026 Yaroslav Vasylenko (neuron7xLab)
+# SPDX-License-Identifier: MIT
 """Trading strategy representation and evolutionary optimization.
 
 This module defines the Strategy abstraction used throughout the agent system,
@@ -29,6 +30,7 @@ Example:
     >>> mutant = strategy.generate_mutation(scale=0.2)
     >>> score = strategy.simulate_performance(price_data)
 """
+
 from __future__ import annotations
 
 import math
@@ -40,6 +42,10 @@ import numpy as np
 import pandas as pd
 
 from observability.tracing import pipeline_span
+
+from ..utils.logging import get_logger
+
+_logger = get_logger(__name__)
 
 
 @dataclass
@@ -78,9 +84,7 @@ class Strategy:
 
         self.validate_params()
 
-        def _update_diagnostics(
-            equity_curve: np.ndarray, positions: np.ndarray
-        ) -> None:
+        def _update_diagnostics(equity_curve: np.ndarray, positions: np.ndarray) -> None:
             if equity_curve.size == 0:
                 self.params["last_equity_curve"] = []
                 self.params["max_drawdown"] = 0.0
@@ -90,9 +94,7 @@ class Strategy:
             peak = np.maximum.accumulate(np.concatenate([[0.0], equity_curve]))[1:]
             drawdown = equity_curve - peak
             self.params["last_equity_curve"] = equity_curve.tolist()
-            self.params["max_drawdown"] = (
-                float(drawdown.min()) if drawdown.size else 0.0
-            )
+            self.params["max_drawdown"] = float(drawdown.min()) if drawdown.size else 0.0
             self.params["trades"] = (
                 int(np.count_nonzero(np.diff(positions))) if positions.size else 0
             )
@@ -117,9 +119,7 @@ class Strategy:
             series = series.replace([np.inf, -np.inf], np.nan)
             if series.isna().all():
                 self.score = 0.0
-                _update_diagnostics(
-                    np.array([], dtype=float), np.array([], dtype=float)
-                )
+                _update_diagnostics(np.array([], dtype=float), np.array([], dtype=float))
                 return self.score
             series = series.ffill().bfill()
 
@@ -127,9 +127,7 @@ class Strategy:
             returns = returns.replace([np.inf, -np.inf], np.nan).dropna()
             if returns.empty:
                 self.score = 0.0
-                _update_diagnostics(
-                    np.array([], dtype=float), np.array([], dtype=float)
-                )
+                _update_diagnostics(np.array([], dtype=float), np.array([], dtype=float))
                 return self.score
 
             lookback = int(self.params.get("lookback", 20))
@@ -147,9 +145,7 @@ class Strategy:
             effective_lookback = max(1, min(lookback, len(returns)))
 
             rolling_mean = (
-                returns.rolling(
-                    window=effective_lookback, min_periods=effective_lookback
-                )
+                returns.rolling(window=effective_lookback, min_periods=effective_lookback)
                 .mean()
                 .fillna(0.0)
             )
@@ -161,12 +157,8 @@ class Strategy:
                 .bfill()
                 .fillna(1e-6)
             )
-            zscore = (
-                (rolling_mean / rolling_vol).replace([np.inf, -np.inf], 0.0).fillna(0.0)
-            )
-            signal = np.where(
-                zscore > threshold, -1.0, np.where(zscore < -threshold, 1.0, 0.0)
-            )
+            zscore = (rolling_mean / rolling_vol).replace([np.inf, -np.inf], 0.0).fillna(0.0)
+            signal = np.where(zscore > threshold, -1.0, np.where(zscore < -threshold, 1.0, 0.0))
             if signal.size:
                 position = np.concatenate(([0.0], signal[:-1])) * risk_budget
             else:
@@ -217,11 +209,19 @@ class PiAgent:
         )
         self._instability_score = 0.7 * self._instability_score + 0.3 * score
         threshold = self.strategy.params.get("instability_threshold", 0.2)
-        triggered = (
-            hard_trigger or self._instability_score > threshold
-        ) and self._cooldown == 0
+        triggered = (hard_trigger or self._instability_score > threshold) and self._cooldown == 0
         if triggered:
             self._cooldown = 3
+            # TD-009: the threshold crossing is observable, not silent — pairs the
+            # hysteresis/cooldown debounce with an attributable transition record so
+            # state flips can be audited rather than inferred.
+            _logger.warning(
+                "agent_instability_triggered",
+                instability_score=round(self._instability_score, 6),
+                threshold=float(threshold),
+                hard_trigger=hard_trigger,
+                cooldown=self._cooldown,
+            )
         elif self._cooldown > 0:
             self._cooldown -= 1
         return triggered

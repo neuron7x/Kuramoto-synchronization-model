@@ -1,0 +1,109 @@
+# SPDX-License-Identifier: MIT
+#
+# Edge-Case Coverage Matrix Gate (IERD-Q7 Phase-4 EXIT).
+#
+# Scores the (endpoint × state × test_id) matrix from
+# tests/edge_cases/coverage_matrix.py:
+#
+#   ECC = covered applicable cells / total applicable cells   (≥ 0.90)
+#
+# over the ten §5/#532 states (empty, loading, success,
+# validation_error, server_error, network_failure, timeout,
+# partial_result, cancelled, simulation_diverged) against the gated
+# public operations, classified collection/command/probe. Every
+# covered cell cites a real resolvable test; the gate statically
+# verifies each cited target still exists — pytest nodes AND the
+# Playwright route-interception specs in
+# apps/web/tests/edge-case-probe.spec.ts.
+#
+# Phase status (per ADR 0020):
+#   * Phase-4 EXIT (this workflow) — ECC = 1.00. The client-only states
+#     (loading / cancelled / per-probe server_error) are exercised by
+#     the Playwright route-interception specs against the /edge-probe
+#     harness, so the ECC ≥ 0.90 threshold now runs FAIL-CLOSED
+#     alongside the §532 hard sub-requirements (network_failure +
+#     timeout per endpoint, simulation_diverged ↔ INV-DRO5) and the
+#     matrix well-formedness / cited-target-resolution tests. The claim
+#     `edge-case-coverage-matrix` re-classifies ANCHORED.
+#
+# Tracked by GitHub issue IERD-Q7 (#532) and claim
+# `edge-case-coverage-matrix` in `docs/CLAIMS.yaml`.
+name: Edge-Case Matrix — IERD-Q7
+
+on:
+  pull_request:
+    branches: [main]
+    paths:
+      - 'tests/edge_cases/**'
+      - 'schemas/openapi/**'
+      - 'application/api/**'
+      - 'apps/web/tests/edge-case-probe.spec.ts'
+      - 'apps/web/app/(public)/edge-probe/**'
+      - 'pyproject.toml'
+      - '.github/workflows/edge-case-matrix.yml'
+  merge_group:
+  push:
+    branches: [main]
+
+permissions:
+  contents: read
+
+concurrency:
+  group: edge-case-matrix-${{ github.event.pull_request.number || github.sha }}
+  cancel-in-progress: true
+
+jobs:
+  edge-case-matrix:
+    name: edge-case-matrix
+    runs-on: ubuntu-latest
+    timeout-minutes: 10
+    steps:
+      - name: Checkout
+        uses: actions/checkout@9c091bb21b7c1c1d1991bb908d89e4e9dddfe3e0 # v7.0.0
+
+      - name: Set up Python
+        uses: actions/setup-python@ece7cb06caefa5fff74198d8649806c4678c61a1 # v6
+        with:
+          python-version: '3.12'
+          cache: 'pip'
+
+      - name: Install runtime + test dependencies
+        run: |
+          set -euo pipefail
+          python -m pip install --upgrade pip
+          pip install -e .
+          pip install pytest
+
+      - name: Run edge-case coverage matrix gate
+        id: run
+        # Phase-4 EXIT: fail-closed. ECC = 1.00 with the client-only
+        # states backed by the Playwright route-interception specs;
+        # any regression (ECC < 0.90, a vanished cited target, or a
+        # broken §532 hard sub-requirement) now fails the check.
+        run: |
+          set -o pipefail
+          mkdir -p artifacts/edge-case-matrix
+          pytest tests/edge_cases/ \
+            -q -s --tb=short \
+            --junitxml=artifacts/edge-case-matrix/junit.xml \
+            2>&1 | tee artifacts/edge-case-matrix/run.log
+
+      - name: Upload edge-case-matrix artifact
+        if: always()
+        uses: actions/upload-artifact@043fb46d1a93c77aae656e7c1c64a875d1fc6a0a # v7.0.1
+        with:
+          name: edge-case-matrix-results
+          path: artifacts/edge-case-matrix/
+          retention-days: 14
+
+      - name: Summarise edge-case coverage
+        if: always()
+        run: |
+          set -euo pipefail
+          echo "## Edge-case coverage matrix — IERD-Q7 §532" >> "$GITHUB_STEP_SUMMARY"
+          echo "" >> "$GITHUB_STEP_SUMMARY"
+          if [ -f artifacts/edge-case-matrix/run.log ]; then
+            grep -E "^\[ecc\] AGGREGATE" artifacts/edge-case-matrix/run.log >> "$GITHUB_STEP_SUMMARY" || true
+          fi
+          echo "" >> "$GITHUB_STEP_SUMMARY"
+          echo "Phase status: **Phase-4 EXIT** — ECC = 1.00, FAIL-CLOSED. Client-only states (loading/cancelled/per-probe server_error) exercised by Playwright route-interception specs against /edge-probe. §532 hard requirements (network_failure+timeout per endpoint, simulation_diverged↔INV-DRO5) fail-closed. Claim re-classified ANCHORED." >> "$GITHUB_STEP_SUMMARY"

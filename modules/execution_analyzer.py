@@ -1,3 +1,5 @@
+# Copyright (c) 2023-2026 Yaroslav Vasylenko (neuron7xLab)
+# SPDX-License-Identifier: MIT
 """
 Execution Analyzer Module
 
@@ -18,6 +20,7 @@ from typing import Any, Dict, List, Optional
 import numpy as np
 
 from modules.types import MarketState
+
 
 class ExecutionSide(str, Enum):
     """Сторона виконання"""
@@ -169,9 +172,7 @@ class ExecutionAnalyzer:
 
     def _validate_market_state_latency(self, market_state: MarketState) -> float:
         if "market_data_latency_ms" not in market_state:
-            raise KeyError(
-                "market_state missing required key: 'market_data_latency_ms'"
-            )
+            raise KeyError("market_state missing required key: 'market_data_latency_ms'")
         market_data_latency_ms = float(market_state["market_data_latency_ms"])
         if market_data_latency_ms < 0:
             raise ValueError("market_state['market_data_latency_ms'] must be >= 0")
@@ -281,9 +282,7 @@ class ExecutionAnalyzer:
         ]
 
         # Загальна вартість slippage
-        total_slippage_cost = sum(
-            a.cost_analysis.get("slippage_cost", 0) for a in analyses
-        )
+        total_slippage_cost = sum(a.cost_analysis.get("slippage_cost", 0) for a in analyses)
 
         return {
             "total_executions": len(executions),
@@ -305,11 +304,15 @@ class ExecutionAnalyzer:
             },
             "quality": {
                 "mean_score": float(np.mean(quality_scores)),
-                "excellent_count": sum(1 for a in analyses if a.quality == ExecutionQuality.EXCELLENT),
+                "excellent_count": sum(
+                    1 for a in analyses if a.quality == ExecutionQuality.EXCELLENT
+                ),
                 "good_count": sum(1 for a in analyses if a.quality == ExecutionQuality.GOOD),
                 "average_count": sum(1 for a in analyses if a.quality == ExecutionQuality.AVERAGE),
                 "poor_count": sum(1 for a in analyses if a.quality == ExecutionQuality.POOR),
-                "very_poor_count": sum(1 for a in analyses if a.quality == ExecutionQuality.VERY_POOR),
+                "very_poor_count": sum(
+                    1 for a in analyses if a.quality == ExecutionQuality.VERY_POOR
+                ),
             },
             "costs": {
                 "total_slippage_cost": total_slippage_cost,
@@ -487,9 +490,7 @@ class ExecutionAnalyzer:
         end_of_day = start_of_day + timedelta(days=1)
 
         daily_executions = [
-            e
-            for e in self._executions
-            if start_of_day <= e.execution_time < end_of_day
+            e for e in self._executions if start_of_day <= e.execution_time < end_of_day
         ]
 
         if not daily_executions:
@@ -507,20 +508,14 @@ class ExecutionAnalyzer:
             volume = e.quantity * e.executed_price
             symbol_volumes[e.symbol] = symbol_volumes.get(e.symbol, 0) + volume
 
-        top_symbols = sorted(
-            symbol_volumes.items(), key=lambda x: x[1], reverse=True
-        )[:5]
+        top_symbols = sorted(symbol_volumes.items(), key=lambda x: x[1], reverse=True)[:5]
 
         return {
             "date": date.date().isoformat(),
             "total_executions": len(daily_executions),
-            "total_volume": sum(
-                e.quantity * e.executed_price for e in daily_executions
-            ),
+            "total_volume": sum(e.quantity * e.executed_price for e in daily_executions),
             "analysis": batch_analysis,
-            "top_symbols": [
-                {"symbol": s, "volume": v} for s, v in top_symbols
-            ],
+            "top_symbols": [{"symbol": s, "volume": v} for s, v in top_symbols],
         }
 
     def _calculate_slippage(self, execution: ExecutionRecord) -> SlippageMetrics:
@@ -536,9 +531,7 @@ class ExecutionAnalyzer:
 
         absolute_slippage = abs(price_diff)
         relative_slippage = (
-            absolute_slippage / execution.expected_price
-            if execution.expected_price > 0
-            else 0.0
+            absolute_slippage / execution.expected_price if execution.expected_price > 0 else 0.0
         )
         slippage_bps = relative_slippage * 10000
 
@@ -575,9 +568,7 @@ class ExecutionAnalyzer:
             total_latency_ms=float(total_latency_ms),
         )
 
-    def _calculate_quality_score(
-        self, slippage: SlippageMetrics, latency: LatencyMetrics
-    ) -> float:
+    def _calculate_quality_score(self, slippage: SlippageMetrics, latency: LatencyMetrics) -> float:
         """Розрахунок якості виконання (0-100)"""
         # Slippage score (50% ваги)
         slippage_penalty = min(abs(slippage.slippage_bps) / self.slippage_threshold_bps, 1.0)
@@ -646,9 +637,7 @@ class ExecutionAnalyzer:
             )
 
         if abs(slippage.slippage_bps) > self.slippage_threshold_bps * 2:
-            recommendations.append(
-                "Consider using TWAP or VWAP algorithms for large orders."
-            )
+            recommendations.append("Consider using TWAP or VWAP algorithms for large orders.")
 
         # Рекомендації по latency
         if latency.total_latency_ms > self.latency_threshold_ms:
@@ -679,9 +668,7 @@ class ExecutionAnalyzer:
 
         return recommendations
 
-    def _update_venue_stats(
-        self, execution: ExecutionRecord, analysis: ExecutionAnalysis
-    ) -> None:
+    def _update_venue_stats(self, execution: ExecutionRecord, analysis: ExecutionAnalysis) -> None:
         """Оновлення статистики venue"""
         venue = execution.venue
 
@@ -699,9 +686,7 @@ class ExecutionAnalyzer:
         stats["total_latency_ms"] += analysis.latency.total_latency_ms
         stats["total_quality_score"] += analysis.quality_score
 
-    def _update_symbol_stats(
-        self, execution: ExecutionRecord, analysis: ExecutionAnalysis
-    ) -> None:
+    def _update_symbol_stats(self, execution: ExecutionRecord, analysis: ExecutionAnalysis) -> None:
         """Оновлення статистики символу"""
         symbol = execution.symbol
 

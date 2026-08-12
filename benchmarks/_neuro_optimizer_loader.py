@@ -1,3 +1,5 @@
+# Copyright (c) 2023-2026 Yaroslav Vasylenko (neuron7xLab)
+# SPDX-License-Identifier: MIT
 """Helpers to load NeuroOptimizer without importing the entire package."""
 
 from __future__ import annotations
@@ -13,7 +15,7 @@ import numpy as np
 
 def load_optimizer() -> Tuple[Type[object], Type[object]]:
     """Load NeuroOptimizer and OptimizationConfig from the source file."""
-    module_path = Path("src/tradepulse/core/neuro/neuro_optimizer.py")
+    module_path = Path("src/geosync/core/neuro/neuro_optimizer.py")
     spec = importlib.util.spec_from_file_location("neuro_optimizer", module_path)
     if spec is None or spec.loader is None:
         raise RuntimeError("Unable to load neuro_optimizer module")
@@ -25,7 +27,7 @@ def load_optimizer() -> Tuple[Type[object], Type[object]]:
 
 def load_validation() -> Callable[..., None]:
     """Load validate_neuro_invariants from the source file."""
-    module_path = Path("src/tradepulse/core/neuro/_validation.py")
+    module_path = Path("src/geosync/core/neuro/_validation.py")
     spec = importlib.util.spec_from_file_location("neuro_validation", module_path)
     if spec is None or spec.loader is None:
         raise RuntimeError("Unable to load neuro validation module")

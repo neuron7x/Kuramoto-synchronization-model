@@ -1,0 +1,138 @@
+# Diff-bound commit acceptor for the adversarial feedback-guard
+# efficacy meta-suite.
+#
+# Independent adversarial verification that the negative-feedback /
+# fail-closed guards installed across the calibration / kuramoto /
+# jax-debt closures (#762 #764 #767 #770 #771) actually FIRE on the
+# exact regression each claims to catch. A guard never tried-to-be-
+# broken carries unknown information; this turns the hypothesis-
+# destruction discipline on the destruction machinery itself and
+# encodes guard EFFICACY as a continuously-asserted standing invariant.
+#
+# Strictly pure-additive: ONE new test module under tests/meta/ plus
+# this acceptor. NO production code, NO frozen artifact, NO sha-pinned
+# ledger, NO pre-registration, NO gate/threshold/seed/sigma/theta0, NO
+# existing guard test and NO RIP/* file is touched. Every injection is
+# ephemeral (a tracked-file copy into tmp_path, patched, run via an
+# isolated seeded subprocess pytest, asserted-and-discarded); the real
+# working tree is asserted git-diff-clean against origin/main inside
+# each meta-test.
+#
+# Per-guard verdict (clean-workspace control proves the guard PASSES
+# pre-injection ⇒ the meta-test fires on the injection, not on a broken
+# workspace): G1 G2 G3 G4 G5 G6 G7 all FIRE. No dead (0-bit) guard
+# found. All 10 meta-tests @slow; ~54s wall; deterministic (seeded, no
+# wall-clock, no network).
+#
+# HARD invariants verified:
+#   * git diff --exit-code origin/main -- <all frozen artifacts,
+#     sha-pinned ledgers, PREREGISTRATION*, SUPERSESSIONS*,
+#     AMENDMENT_001, the five existing guard tests, the two acceptors,
+#     RIP/> is EMPTY in the final tree.
+#   * Net diff: +tests/meta/test_feedback_guards_are_live.py and
+#     +this acceptor. Zero other change.
+#   * ruff + black + mypy --strict clean on the new module (fresh
+#     .mypy_cache).
+
+id: adversarial-verify-feedback-guards
+status: ACTIVE
+claim_type: chore
+promise: >-
+  After this PR lands, tests/meta/test_feedback_guards_are_live.py is a
+  standing invariant that every negative-feedback / fail-closed guard
+  installed across the calibration / kuramoto / jax-debt closures
+  (G1 lineage-scale forcing functions, G2 supersession registry, G3
+  module-scale strategy-registry AST cap, G4 F2 amendment no-peek /
+  no-recompute, G5 F3 forward-tolerance forcing, G6 sha-pinned RESULTS
+  bit-stability, G7 jax F5 acceptor narrowing) FIRES on the exact
+  minimal regression it claims to catch — proven by a clean-workspace
+  control showing the guard PASSES pre-injection and FAILS post-
+  injection. All injections are ephemeral (tracked-file copy into
+  tmp_path / isolated seeded subprocess pytest / asserted-and-
+  discarded); the real working tree's frozen artifacts, sha-pinned
+  ledgers, pre-registrations, existing guard tests, acceptors and RIP/
+  are byte-identical to origin/main. No production code, no frozen
+  artifact, no gate, threshold, seed, sigma, theta0 or decision rule is
+  touched; no science claim is promoted; no acceptor mask is extended.
+diff_scope:
+  changed_files:
+    - path: ".claude/commit_acceptors/adversarial-verify-feedback-guards.yaml"
+    - path: "tests/meta/test_feedback_guards_are_live.py"
+  forbidden_paths:
+    - "trading/"
+    - "execution/"
+    - "forecast/"
+    - "policy/"
+    - "core/"
+    - "research/"
+    - "application/governance/claim_ledger.py"
+    - "application/governance/commit_acceptor.py"
+    - ".claude/commit_acceptors/adversarial-ladder.yaml"
+    - ".claude/commit_acceptors/jax-engine-mypy-strict-debt.yaml"
+    - ".claude/commit_acceptors/calib-lineage-forcing-functions.yaml"
+    - ".claude/commit_acceptors/calib-supersession-amendment.yaml"
+    - ".claude/commit_acceptors/calib-deterministic-reduction-f3.yaml"
+    - ".claude/commit_acceptors/coupling-estimator-strategy-registry.yaml"
+    - "tests/research/calibration/test_grid_kuramoto.py"
+    - "tests/research/calibration/test_calib_lineage_forcing_functions.py"
+    - "tests/research/calibration/test_calib_amendment_001.py"
+    - "tests/research/calibration/test_calib_deterministic_reduction_f3.py"
+    - "tests/unit/core/test_kuramoto_coupling_strategy_registry.py"
+    - "RIP/"
+required_python_symbols: []
+expected_signal: >-
+  `pytest tests/meta/test_feedback_guards_are_live.py` is green (10
+  passed, all @slow); each meta-test asserts its guard returned a real
+  collected failure (non-zero + "failed"/"AssertionError") on its
+  precise injection and the working tree is git-diff-clean vs
+  origin/main; mypy --strict / ruff / black clean on the new module;
+  `git diff --exit-code origin/main -- research/calibration/grid_kuramoto
+  core/kuramoto/jax_engine.py core/kuramoto/coupling_estimator.py
+  .claude/commit_acceptors RIP
+  tests/research/calibration/test_grid_kuramoto.py
+  tests/research/calibration/test_calib_lineage_forcing_functions.py
+  tests/research/calibration/test_calib_amendment_001.py
+  tests/research/calibration/test_calib_deterministic_reduction_f3.py
+  tests/unit/core/test_kuramoto_coupling_strategy_registry.py` is EMPTY.
+measurement_command: >-
+  bash -c '
+    rm -rf .mypy_cache &&
+    mypy --strict --follow-imports=silent
+      tests/meta/test_feedback_guards_are_live.py && ruff check tests/meta/test_feedback_guards_are_live.py && black --check tests/meta/test_feedback_guards_are_live.py && git diff --exit-code origin/main --
+       research/calibration/grid_kuramoto
+       core/kuramoto/jax_engine.py
+       core/kuramoto/coupling_estimator.py
+       .claude/commit_acceptors/adversarial-ladder.yaml
+       .claude/commit_acceptors/jax-engine-mypy-strict-debt.yaml
+       tests/research/calibration/test_grid_kuramoto.py
+       tests/research/calibration/test_calib_lineage_forcing_functions.py
+       tests/research/calibration/test_calib_amendment_001.py
+       tests/research/calibration/test_calib_deterministic_reduction_f3.py
+       tests/unit/core/test_kuramoto_coupling_strategy_registry.py
+       RIP && python -m pytest tests/meta/test_feedback_guards_are_live.py -q
+  '
+signal_artifact: "tmp/adversarial_verify_feedback_guards.log"
+falsifier:
+  command: >-
+    bash -c '
+      python -m pytest
+      tests/meta/test_feedback_guards_are_live.py -q
+      >/tmp/_meta_guards.log 2>&1 ; ! grep -q "10 passed" /tmp/_meta_guards.log
+    '
+  description: >-
+    Succeeds (exit 0) only when the meta-suite does NOT report all 10
+    guard-efficacy tests passing — i.e. a standing guard stopped firing
+    on its injection (a dead 0-bit guard regressed in), or an injection
+    leaked into a frozen artifact. The acceptor is falsified by any
+    guard going 0-bit or any byte-stability breach.
+rollback_command: >-
+  bash -c 'rm -f
+    tests/meta/test_feedback_guards_are_live.py
+    .claude/commit_acceptors/adversarial-verify-feedback-guards.yaml'
+rollback_verification_command: >-
+  bash -c '! test -f tests/meta/test_feedback_guards_are_live.py && ! test -f
+    .claude/commit_acceptors/adversarial-verify-feedback-guards.yaml'
+memory_update_type: append
+ledger_path: ".claude/commit_acceptors/adversarial-verify-feedback-guards.yaml"
+report_path: "tmp/adversarial_verify_feedback_guards.log"
+evidence: []

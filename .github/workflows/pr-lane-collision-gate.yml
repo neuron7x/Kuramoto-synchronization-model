@@ -1,0 +1,51 @@
+# SPDX-License-Identifier: MIT
+#
+# PR Lane Collision Gate (WP-01) — governance against duplicate-lane PRs.
+#
+# Two open PRs that edit the same single-source-of-truth governance file, or
+# share a Task/P0/WP lane token and overlap on a file, would write two competing
+# definitions of one gate into main. This workflow runs the deterministic
+# detector suite (which pins the #1120/#1121 Task-2 pair as a collision and
+# rejects false positives). The live cross-PR scan is operator/scheduled — see
+# docs/governance/pr_lane_collision_protocol.md for why it is not a per-PR block.
+name: PR Lane Collision Gate
+
+on:
+  pull_request:
+    branches: [main]
+    paths:
+      - 'tools/governance/check_pr_lane_collision.py'
+      - 'tests/governance/test_pr_lane_collision.py'
+      - '.github/workflows/pr-lane-collision-gate.yml'
+  merge_group:
+  push:
+    branches: [main]
+
+permissions:
+  contents: read
+
+concurrency:
+  group: pr-lane-collision-gate-${{ github.event.pull_request.number || github.sha }}
+  cancel-in-progress: true
+
+jobs:
+  pr-lane-collision-gate:
+    name: pr-lane-collision-gate
+    runs-on: ubuntu-latest
+    timeout-minutes: 5
+    steps:
+      - name: Checkout
+        uses: actions/checkout@9c091bb21b7c1c1d1991bb908d89e4e9dddfe3e0 # v7.0.0
+
+      - name: Set up Python
+        uses: actions/setup-python@ece7cb06caefa5fff74198d8649806c4678c61a1 # v6
+        with:
+          python-version: '3.11'
+
+      - name: Install test dependency
+        run: python -m pip install --upgrade pytest
+
+      - name: Collision detector suite (deterministic, fail-closed)
+        # --noconftest: the detector test uses no repo fixtures; bypassing the
+        # repo conftests keeps this gate independent of the full stack.
+        run: PYTHONPATH=. python -m pytest tests/governance/test_pr_lane_collision.py -q --noconftest -p no:cacheprovider

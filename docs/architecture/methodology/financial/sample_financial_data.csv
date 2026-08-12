@@ -1,0 +1,4 @@
+symbol,venue,ts_utc,open,high,low,close,volume,spread_bps,fee_bps
+BTCUSDT,binance,2026-05-26T00:00:00Z,68850.2,68910.8,68740.0,68802.1,124.5,1.8,4.0
+ETHUSDT,binance,2026-05-26T00:00:00Z,3620.1,3631.6,3609.3,3614.8,890.2,2.1,4.0
+SOLUSDT,binance,2026-05-26T00:00:00Z,171.25,172.05,170.40,171.02,5400.0,3.4,4.0

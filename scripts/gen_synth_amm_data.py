@@ -1,12 +1,15 @@
 #!/usr/bin/env python3
+# Copyright (c) 2023-2026 Yaroslav Vasylenko (neuron7xLab)
+# SPDX-License-Identifier: MIT
 """Generate synthetic AMM (Automated Market Maker) data for testing and development.
 
 This script creates synthetic time series data with configurable regime changes,
 useful for testing trading algorithms and market analysis tools.
 """
+
 from __future__ import annotations
 
-# SPDX-License-Identifier: LicenseRef-TradePulse-Proprietary
+# SPDX-License-Identifier: MIT
 import argparse
 import csv
 import logging
@@ -70,9 +73,7 @@ def write_csv(
     Returns:
         Path to the written CSV file
     """
-    LOGGER.info(
-        "Generating %d synthetic AMM samples (seed=%d) to %s", n, seed, output_path
-    )
+    LOGGER.info("Generating %d synthetic AMM samples (seed=%d) to %s", n, seed, output_path)
 
     x, R, kappa, H = generate_amm_data(n, seed)
 

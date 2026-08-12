@@ -1,4 +1,24 @@
-"""Dopamine prediction network for advanced neuro trading."""
+# Copyright (c) 2023-2026 Yaroslav Vasylenko (neuron7xLab)
+# SPDX-License-Identifier: MIT
+"""Dopamine prediction network — research-tier moving-average tracker.
+
+⚠️ SCOPE OF NEURO-NAMING — read before extending.
+
+This module uses biological vocabulary (``_dopamine_levels``, ``_serotonin``,
+``_norepinephrine``) as decorative scalar dials updated by ad-hoc multiplicative
+rules. It is NOT a functional homologue of midbrain dopamine — there is no
+TD prediction error, no eligibility trace, no D1/D2 receptor model, no
+phasic-vs-tonic decomposition.
+
+For genuine Schultz-style RPE see:
+  * ``backtest/dopamine_td.py``                  — Numba-accelerated TD(0)
+  * ``core/neuro/dopamine_execution_adapter.py`` — RPE bridge to NeuroSignalBus
+  * ``src/geosync/core/neuro/dopamine/dopamine_controller.py`` — full controller
+
+Use ``DopaminePredictionNetwork`` only as a research-tier moving-average tracker
+where the bio-naming is an analogy, not a contract. Do NOT wire its outputs
+into any module that depends on INV-DA1..7.
+"""
 
 from __future__ import annotations
 
@@ -40,15 +60,11 @@ class DopaminePredictionNetwork:
         expected = baseline if expected_reward is None else float(expected_reward)
         prediction_error = float(actual_reward) - expected
 
-        effective_lr = self._learning_rate * (
-            1.0 + float(np.tanh(abs(prediction_error)))
-        )
+        effective_lr = self._learning_rate * (1.0 + float(np.tanh(abs(prediction_error))))
         new_expected = expected + effective_lr * prediction_error * self._norepinephrine
         self._expected[key] = new_expected
 
-        dopamine_signal = float(
-            np.tanh(prediction_error * (2.5 if prediction_error > 0 else 1.5))
-        )
+        dopamine_signal = float(np.tanh(prediction_error * (2.5 if prediction_error > 0 else 1.5)))
         current_level = self._dopamine_levels.get(key, 0.5)
         new_level = float(
             np.clip(
@@ -92,19 +108,13 @@ class DopaminePredictionNetwork:
         level = float(self._dopamine_levels.get(self._key(asset, strategy), 0.5))
         base = 1.0 - (level - 0.5) * 0.3 * self._serotonin
         bounds = self._cfg.dpa
-        return float(
-            np.clip(base, bounds.risk_modulation_min, bounds.risk_modulation_max)
-        )
+        return float(np.clip(base, bounds.risk_modulation_min, bounds.risk_modulation_max))
 
     def state(self) -> Dict[str, Any]:
         dopamine_values = list(self._dopamine_levels.values())
         avg_da = float(np.mean(dopamine_values)) if dopamine_values else 0.5
         recent = list(self._errors)[-100:]
-        avg_pe = (
-            float(np.mean([entry["prediction_error"] for entry in recent]))
-            if recent
-            else 0.0
-        )
+        avg_pe = float(np.mean([entry["prediction_error"] for entry in recent])) if recent else 0.0
         return {
             "dopamine_levels": dict(self._dopamine_levels),
             "expected_rewards": dict(self._expected),

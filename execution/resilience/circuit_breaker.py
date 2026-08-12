@@ -1,6 +1,8 @@
+# Copyright (c) 2023-2026 Yaroslav Vasylenko (neuron7xLab)
+# SPDX-License-Identifier: MIT
 """Resilience primitives for exchange connectors.
 
-This module provides Hystrix-style resilience patterns adapted for TradePulse's
+This module provides Hystrix-style resilience patterns adapted for GeoSync's
 execution layer. It combines circuit breakers, adaptive rate limiting, bulkhead
 isolation, and fallback strategies in a cohesive toolkit. The implementation is
 thread-safe and intentionally lightweight so it can be used from synchronous or
@@ -75,6 +77,21 @@ class CircuitBreaker:
             if self._state is CircuitBreakerState.HALF_OPEN:
                 self._half_open_calls += 1
             return True
+
+    def refund_half_open_probe(self) -> None:
+        """Return a half-open probe budget consumed by :meth:`allow_request`.
+
+        A composed profile may admit a request through the breaker (bumping the
+        half-open call count) and then reject it downstream (rate limiter /
+        bulkhead) before it ever runs. Without a refund those admitted-but-
+        never-executed probes exhaust ``half_open_max_calls`` and no
+        success/failure is ever recorded, wedging the breaker HALF_OPEN forever
+        (HALF_OPEN never re-checks recovery_timeout). Refund keeps the probe
+        budget accurate so recovery can still complete.
+        """
+        with self._lock:
+            if self._state is CircuitBreakerState.HALF_OPEN and self._half_open_calls > 0:
+                self._half_open_calls -= 1
 
     def record_success(self) -> None:
         with self._lock:
@@ -447,11 +464,17 @@ class ExchangeResilienceProfile:
             self._register_rejection("circuit_open")
             return False
 
+        # The breaker admitted the request above (bumping any half-open probe
+        # budget). If a downstream layer now rejects it, the probe never runs, so
+        # refund the budget — otherwise admitted-but-rejected probes wedge the
+        # breaker HALF_OPEN forever.
         if not self.leaky_bucket.allow():
+            self.circuit_breaker.refund_half_open_probe()
             self._register_rejection("leaky_bucket")
             return False
 
         if not self.bulkhead.acquire(timeout=0):
+            self.circuit_breaker.refund_half_open_probe()
             self._register_rejection("bulkhead")
             return False
 
@@ -459,14 +482,13 @@ class ExchangeResilienceProfile:
         token_cost = tokens * throttle_factor
         if not self.token_bucket.allow(token_cost):
             self.bulkhead.release()
+            self.circuit_breaker.refund_half_open_probe()
             self._register_rejection("token_bucket")
             return False
 
         return True
 
-    def release(
-        self, success: bool, latency_ms: float, error: Optional[Exception] = None
-    ) -> None:
+    def release(self, success: bool, latency_ms: float, error: Optional[Exception] = None) -> None:
         self.bulkhead.release()
         if success:
             self.circuit_breaker.record_success()
@@ -491,7 +513,7 @@ class ExchangeResilienceProfile:
     ) -> object:
         try:
             return primary(*args, **kwargs)
-        except Exception as exc:  # noqa: BLE001 - intentionally broad for resilience
+        except Exception as exc:
             with self._lock:
                 self.health.failures += 1
                 self.health.last_error = str(exc)
@@ -500,9 +522,7 @@ class ExchangeResilienceProfile:
                     continue
                 try:
                     return fallback.execute(exchange, operation, *args, **kwargs)
-                except (
-                    Exception
-                ):  # noqa: BLE001 - fallback errors should not mask original
+                except Exception:
                     continue
             raise
 
@@ -527,10 +547,7 @@ class ExchangeResilienceManager:
         return self._profiles[exchange]
 
     def health_report(self) -> Dict[str, Dict[str, object]]:
-        return {
-            exchange: profile.health.snapshot()
-            for exchange, profile in self._profiles.items()
-        }
+        return {exchange: profile.health.snapshot() for exchange, profile in self._profiles.items()}
 
 
 def default_resilience_profile(
@@ -555,9 +572,7 @@ def default_resilience_profile(
             half_open_max_calls=half_open_max_calls,
         )
     )
-    token_bucket = TokenBucketRateLimiter(
-        token_bucket_capacity, token_bucket_refill_per_sec
-    )
+    token_bucket = TokenBucketRateLimiter(token_bucket_capacity, token_bucket_refill_per_sec)
     leaky_bucket = LeakyBucketRateLimiter(leaky_bucket_capacity, leaky_bucket_leak_rate)
     throttler = AdaptiveThrottler()
     bulkhead = Bulkhead(bulkhead_concurrency)

@@ -1,0 +1,39 @@
+id: academy-fellow-witness-tests
+status: ACTIVE
+claim_type: correctness
+promise: >-
+  Twelve formula-derived, falsifier-bearing witness tests for previously
+  untested physics/neuro mechanisms declared in the neuro operationalization
+  ledger. Existing mechanisms only; no new physics, solver, or neuroscience.
+diff_scope:
+  changed_files:
+    - path: "tests/unit/physics/test_T19_gaba_stdp_monotone.py"
+    - path: "tests/unit/physics/test_ricci_flow_engine_invariants.py"
+    - path: "tests/unit/physics/test_kelly_sizing_growth.py"
+    - path: "tests/unit/physics/test_gradient_vital_signs_invariants.py"
+    - path: "tests/unit/physics/test_dro_ara_invariants.py"
+    - path: "tests/unit/physics/test_adaptive_criticality_kappa.py"
+    - path: "tests/unit/physics/test_hpc_neuro_bridge_determinism.py"
+    - path: "tests/unit/physics/test_dopamine_execution_adapter_bounds.py"
+    - path: "tests/unit/neuro/test_neuro_optimizer_null_model.py"
+    - path: "tests/unit/neuro/test_validation_bounds_provenance.py"
+    - path: "tests/unit/neuro/test_hebbian_plasticity_bounds.py"
+    - path: "tests/unit/neuro/test_homeostatic_stabilizer_setpoint.py"
+  forbidden_paths:
+    - "core/execution/"
+    - "core/strategies/"
+    - "interfaces/live_runner.py"
+    - "forecast/"
+required_python_symbols: []
+expected_signal: "All twelve witness modules pass with formula-derived tolerances."
+measurement_command: "python -m pytest tests/unit/physics/test_T19_gaba_stdp_monotone.py tests/unit/physics/test_ricci_flow_engine_invariants.py tests/unit/physics/test_kelly_sizing_growth.py tests/unit/physics/test_gradient_vital_signs_invariants.py tests/unit/physics/test_dro_ara_invariants.py tests/unit/physics/test_adaptive_criticality_kappa.py tests/unit/physics/test_hpc_neuro_bridge_determinism.py tests/unit/physics/test_dopamine_execution_adapter_bounds.py tests/unit/neuro/test_neuro_optimizer_null_model.py tests/unit/neuro/test_validation_bounds_provenance.py tests/unit/neuro/test_hebbian_plasticity_bounds.py tests/unit/neuro/test_homeostatic_stabilizer_setpoint.py -q"
+signal_artifact: "artifacts/academy_fellow/ACADEMY_FELLOW_REPORT.md"
+falsifier:
+  command: "python -m pytest tests/unit/physics/test_dopamine_execution_adapter_bounds.py::test_witness_id_that_does_not_exist"
+  description: "A bogus witness id must fail collection — proves the witness modules are real and the harness has teeth."
+rollback_command: "git checkout -- tests/unit/physics tests/unit/neuro"
+rollback_verification_command: "git diff --exit-code tests/unit/physics tests/unit/neuro"
+memory_update_type: append
+ledger_path: ".claude/commit_acceptors/academy-fellow-witness-tests.yaml"
+report_path: "artifacts/academy_fellow/ACADEMY_FELLOW_REPORT.md"
+evidence: []

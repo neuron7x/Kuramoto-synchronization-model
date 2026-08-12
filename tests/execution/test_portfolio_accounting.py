@@ -1,4 +1,5 @@
-# SPDX-License-Identifier: LicenseRef-TradePulse-Proprietary
+# Copyright (c) 2023-2026 Yaroslav Vasylenko (neuron7xLab)
+# SPDX-License-Identifier: MIT
 """Tests for portfolio PnL accounting utilities."""
 
 from __future__ import annotations
@@ -12,23 +13,16 @@ from execution.portfolio import PortfolioAccounting
 def test_apply_fill_and_realised_pnl() -> None:
     accounting = PortfolioAccounting(initial_cash=10_000.0)
 
-    accounting.apply_fill(
-        "BTCUSDT", OrderSide.BUY, quantity=1.0, price=1_000.0, fees=5.0
-    )
+    accounting.apply_fill("BTCUSDT", OrderSide.BUY, quantity=1.0, price=1_000.0, fees=5.0)
     assert pytest.approx(accounting.realized_pnl(), rel=1e-9) == 0.0
     assert pytest.approx(accounting.positions()["BTCUSDT"].quantity, rel=1e-9) == 1.0
-    assert (
-        pytest.approx(accounting.positions()["BTCUSDT"].entry_price, rel=1e-9)
-        == 1_000.0
-    )
+    assert pytest.approx(accounting.positions()["BTCUSDT"].entry_price, rel=1e-9) == 1_000.0
     assert pytest.approx(accounting.snapshot().cash, rel=1e-9) == 8_995.0
 
     accounting.mark_to_market("BTCUSDT", 1_100.0)
     assert pytest.approx(accounting.unrealized_pnl(), rel=1e-9) == 100.0
 
-    accounting.apply_fill(
-        "BTCUSDT", OrderSide.SELL, quantity=1.0, price=1_100.0, fees=5.0
-    )
+    accounting.apply_fill("BTCUSDT", OrderSide.SELL, quantity=1.0, price=1_100.0, fees=5.0)
     assert pytest.approx(accounting.realized_pnl(), rel=1e-9) == 100.0
     assert pytest.approx(accounting.unrealized_pnl(), rel=1e-9) == 0.0
     assert "BTCUSDT" in accounting.positions()

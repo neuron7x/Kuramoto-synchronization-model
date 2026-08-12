@@ -1,4 +1,6 @@
-"""Utility scripts bundled with the TradePulse repository.
+# Copyright (c) 2023-2026 Yaroslav Vasylenko (neuron7xLab)
+# SPDX-License-Identifier: MIT
+"""Utility scripts bundled with the GeoSync repository.
 
 This package is imported in a variety of contexts ranging from lightweight
 command-line helpers (for example ``python -m scripts.db_migrate``) to the
@@ -16,7 +18,7 @@ environments, including test suites that exercise individual helper modules.
 
 from __future__ import annotations
 
-# SPDX-License-Identifier: LicenseRef-TradePulse-Proprietary
+# SPDX-License-Identifier: MIT
 from importlib import import_module
 from typing import Any
 
@@ -38,4 +40,4 @@ def __dir__() -> list[str]:  # pragma: no cover - trivial helper
 
 
 if False:  # pragma: no cover - aid static type checkers without side effects
-    from .cli import main as main  # noqa: F401
+    from .cli import main as main

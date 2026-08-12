@@ -1,0 +1,42 @@
+[Unit]
+Description=GeoSync — Binance USDT-M perp L2 depth collector (unbounded)
+Documentation=https://github.com/neuron7xLab/GeoSync
+Wants=network-online.target
+After=network-online.target
+
+[Service]
+Type=simple
+# Adjust these to your deployment
+User=%i
+WorkingDirectory=/opt/geosync
+Environment=PYTHONUNBUFFERED=1
+Environment=PYTHONPATH=/opt/geosync
+
+# Unbounded run; duration_sec is ignored with --unbounded
+ExecStart=/opt/geosync/.venv/bin/python /opt/geosync/scripts/collect_binance_perp_l2.py \
+    --unbounded \
+    --out /opt/geosync/data/binance_l2_perp_longrun
+
+# Reliability
+Restart=always
+RestartSec=10
+StartLimitIntervalSec=120
+StartLimitBurst=10
+
+# Graceful shutdown: collector handles SIGTERM (drains to parquet then exits)
+KillSignal=SIGTERM
+TimeoutStopSec=60
+
+# Hardening
+NoNewPrivileges=true
+ProtectSystem=strict
+ProtectHome=read-only
+ReadWritePaths=/opt/geosync/data /opt/geosync/logs
+PrivateTmp=true
+
+# Logs go to journal; also tee to file for the health check script
+StandardOutput=append:/opt/geosync/logs/collector_longrun.log
+StandardError=append:/opt/geosync/logs/collector_longrun.log
+
+[Install]
+WantedBy=multi-user.target

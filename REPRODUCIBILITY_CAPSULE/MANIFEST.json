@@ -1,0 +1,42 @@
+{
+  "capsule_version": "0.9.9-research-integrity-candidate",
+  "capsule_generated_at_utc": "2026-05-08T19:00:00+00:00",
+  "repository": "neuron7xLab/GeoSync",
+  "branch": "feat/research-integrity-9-9",
+  "test_counts": {
+    "tests_research_systemic_risk": 583,
+    "tests_metamorphic": 25,
+    "tests_negative_controls": 17,
+    "total": 625,
+    "failures": 0,
+    "errors": 0,
+    "skipped": 0
+  },
+  "static_checks": {
+    "mypy_strict": "clean (5 pre-existing in core/kuramoto/jax_engine.py, out of scope)",
+    "ruff": "clean",
+    "black": "clean"
+  },
+  "x9r_smoke": {
+    "verdict": "PASS",
+    "max_claim_tier": "OBSERVED_IN_DATASET",
+    "failed_gate": null,
+    "tests_run": 9
+  },
+  "research_integrity_gates": {
+    "public_symbol_matrix": "PASS — 174 rows, 0 orphans, 0 phantoms",
+    "claims_compile": "PASS — 15 claims, all evidence resolves"
+  },
+  "public_api_surface": 174,
+  "deliverables_t1_through_t11": [
+    "T1 public_symbol_matrix.csv + tools/check_public_symbol_matrix.py",
+    "T2 tests/metamorphic/ — 25 invariant relations",
+    "T3 tests/negative_controls/ — 17 fail-as-expected tests",
+    "T4 claims.yaml + tools/compile_claims.py",
+    "T5 REPRODUCIBILITY_CAPSULE/ — this capsule",
+    "T6 REAL_DATA_INGEST_CONTRACT.md + validate_real_data_contract()",
+    "T7 EXTERNAL_REVIEW_PACKET/ — 8-file reviewer brief",
+    "T8 .github/workflows/research-integrity-gate.yml",
+    "T9 SELF_AUDIT_9_9_CANDIDATE.md"
+  ]
+}

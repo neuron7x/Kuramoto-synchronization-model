@@ -1,0 +1,113 @@
+# Diff-bound commit acceptor for the typed-governance package.
+#
+# Before: docs/CLAIMS.yaml (v3, 27 claims) and the
+# .claude/commit_acceptors/*.yaml corpus (29 active acceptors with 17
+# top-level fields) were parsed via dict access in
+# scripts/ci/check_claims.py and tools/commit_acceptor/validate_commit_acceptor.py.
+# Adding a field to either schema required edits in 3+ Python files;
+# silent drift was the dominant failure mode (no extra='forbid' guard).
+#
+# After: application/governance/ ships Pydantic v2 models for both
+# schemas with extra='forbid' enforcement, frozen instances, structured
+# round-trip tests against the canonical corpus, and JSON Schema export.
+# The legacy parsers continue to work unchanged; this PR is additive
+# and refactor-free at the consumption side.
+#
+# Locally verified:
+#   * mypy --strict + ruff: clean
+#   * pytest tests/governance/test_typed_models.py: 12/12 pass
+#   * load_claim_ledger('docs/CLAIMS.yaml'): schema_v3, 27 claims,
+#     21 ANCHORED, 6 EXTRAPOLATED, 0 SPECULATIVE/UNKNOWN
+#   * load_all_commit_acceptors('.claude/commit_acceptors'):
+#     29 acceptors, all ACTIVE
+
+id: governance-typed-models
+status: ACTIVE
+claim_type: governance
+promise: >-
+  application.governance ships two Pydantic v2 models (ClaimLedger,
+  CommitAcceptor) that round-trip the canonical docs/CLAIMS.yaml and
+  every .claude/commit_acceptors/*.yaml without modification. Both
+  models are frozen with extra='forbid' so future schema-drift
+  surfaces as a hard ValidationError rather than a silent drop.
+  application.governance.load_claim_ledger and
+  load_all_commit_acceptors / load_commit_acceptor are the canonical
+  loaders. JSON Schema export via model_json_schema() is consumable
+  by IDE tooling and external auditors. No legacy parser is removed
+  in this PR — the package is additive and refactor-free at the
+  consumption side; downstream migration of check_claims.py and
+  validate_commit_acceptor.py to the typed model is a follow-up.
+diff_scope:
+  changed_files:
+    - path: ".claude/commit_acceptors/governance-typed-models.yaml"
+    - path: "application/governance/__init__.py"
+    - path: "application/governance/claim_ledger.py"
+    - path: "application/governance/commit_acceptor.py"
+    - path: "tests/governance/test_typed_models.py"
+  forbidden_paths:
+    - "trading/"
+    - "execution/"
+    - "forecast/"
+    - "policy/"
+    - "core/physics/"
+    - "core/kuramoto/"
+    - "scripts/ci/check_claims.py"
+    - "tools/commit_acceptor/validate_commit_acceptor.py"
+    - ".claude/commit_acceptor_policy.yaml"
+required_python_symbols:
+  - "application/governance/claim_ledger.py::ClaimLedger"
+  - "application/governance/claim_ledger.py::ClaimEntry"
+  - "application/governance/claim_ledger.py::Falsifier"
+  - "application/governance/claim_ledger.py::Tier"
+  - "application/governance/claim_ledger.py::Priority"
+  - "application/governance/claim_ledger.py::load_claim_ledger"
+  - "application/governance/commit_acceptor.py::CommitAcceptor"
+  - "application/governance/commit_acceptor.py::DiffScope"
+  - "application/governance/commit_acceptor.py::AcceptorFalsifier"
+  - "application/governance/commit_acceptor.py::load_commit_acceptor"
+  - "application/governance/commit_acceptor.py::load_all_commit_acceptors"
+  - "tests/governance/test_typed_models.py::test_canonical_claim_ledger_parses"
+  - "tests/governance/test_typed_models.py::test_canonical_acceptor_corpus_parses"
+  - "tests/governance/test_typed_models.py::test_claim_entry_rejects_unknown_field"
+  - "tests/governance/test_typed_models.py::test_commit_acceptor_rejects_unknown_field"
+expected_signal: >-
+  Local: `mypy --strict --follow-imports=silent application/governance/`
+  reports "Success: no issues found in 3 source files"; `ruff check
+  application/governance/` reports "All checks passed!"; `pytest
+  tests/governance/test_typed_models.py -q` reports "12 passed".
+  `python -c "from application.governance import load_claim_ledger,
+  load_all_commit_acceptors; l = load_claim_ledger('docs/CLAIMS.yaml');
+  a = load_all_commit_acceptors('.claude/commit_acceptors');
+  print(len(l.claims), len(a))"` prints "27 29".
+measurement_command: >-
+  bash -c 'mypy --strict --follow-imports=silent application/governance
+  && ruff check application/governance tests/governance/test_typed_models.py
+  && python -m pytest tests/governance/test_typed_models.py -q'
+signal_artifact: "tmp/governance_typed_models.log"
+falsifier:
+  command: |-
+    bash -c 'python -c "from application.governance import ClaimEntry; from pydantic import ValidationError; import sys; sample={\"id\": \"t\", \"priority\": \"P0\", \"tier\": \"ANCHORED\", \"description\": \"x\", \"added_utc\": \"2026-05-07\", \"surprise\": True};
+    try:
+      ClaimEntry.model_validate(sample); sys.exit(1)
+    except ValidationError:
+      sys.exit(0)
+    "'
+  description: >-
+    Probes the extra='forbid' guard on ClaimEntry. If a future
+    change relaxes the model to allow unknown fields, the falsifier
+    succeeds (ClaimEntry accepts surprise field), exits 1, and the
+    invariant is broken. Re-introducing extra='allow' silently is
+    the historical drift surface this acceptor exists to prevent.
+rollback_command: >-
+  git checkout HEAD~1 --
+  application/governance/__init__.py
+  application/governance/claim_ledger.py
+  application/governance/commit_acceptor.py
+  tests/governance/test_typed_models.py
+  .claude/commit_acceptors/governance-typed-models.yaml
+rollback_verification_command: >-
+  bash -c 'test ! -d application/governance && test ! -f tests/governance/test_typed_models.py'
+memory_update_type: append
+ledger_path: ".claude/commit_acceptors/governance-typed-models.yaml"
+report_path: "tmp/governance_typed_models.log"
+evidence: []

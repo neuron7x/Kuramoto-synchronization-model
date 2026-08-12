@@ -1,0 +1,27 @@
+{
+  "artifact_sha256": "65422a43f773c6d25bd75e438af10374d323bfdad40f41628b0d8c8bb44909e5",
+  "cases": {
+    "kuramoto_order_N2048": {
+      "deterministic": true,
+      "median_latency_s": 9.847700130194426e-05,
+      "peak_mem_kib": 63.203125,
+      "result_hash": "e5796b65c7ca6d07bdff12fdd6c069b9fbf67eef1c2044cb9039453d0c16078b"
+    }
+  },
+  "gate": "M.benchmarks",
+  "git_dirty": false,
+  "git_sha": "6cb6e88aa9bc71001296a1efb1b6210b5090a8d4",
+  "hardware_fingerprint": {
+    "cpu_count": 16,
+    "machine": "x86_64",
+    "processor": "x86_64",
+    "python": "3.12.3",
+    "release": "6.8.0-124-generic",
+    "system": "Linux"
+  },
+  "hardware_id": "65686ba363d8c899",
+  "mode": "BASELINE",
+  "regression_budget": 0.5,
+  "schema_version": "1.0",
+  "status": "ESTABLISHED"
+}

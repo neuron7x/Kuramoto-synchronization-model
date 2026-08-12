@@ -1,12 +1,12 @@
 ---
-owner: docs@tradepulse
+owner: docs@geosync
 review_cadence: quarterly
 last_reviewed: 2026-01-01
 ---
 
-# TradePulse Modules
+# GeoSync Modules
 
-Колекція автономних модулів, які можна використовувати окремо або разом у пайплайнах TradePulse.
+Колекція автономних модулів, які можна використовувати окремо або разом у пайплайнах GeoSync.
 
 ## Огляд модулів
 

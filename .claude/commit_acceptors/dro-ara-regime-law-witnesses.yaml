@@ -1,0 +1,81 @@
+# Diff-bound commit acceptor for the DRO-ARA regime-observer law witnesses.
+#
+# Adds ONE test module binding three previously-unwitnessed catalog laws to
+# executable @law witnesses. Promotes no claim, changes no runtime behavior,
+# touches no schema/guard, uses no real data.
+#
+#   dro_ara.gamma_derivation   — γ = 2H + 1 to float precision (INV-DRO1).
+#   dro_ara.risk_scalar_bounds — rs ∈ [0, 1], Lipschitz-1 in γ (INV-DRO2).
+#   dro_ara.fail_closed_input  — degenerate input raises ValueError (INV-DRO5).
+#
+# Locally verified on origin/main base:
+#   * pytest tests/physics_contracts/test_dro_ara_regime_witnesses.py: 3 passed
+#   * .claude/physics/validate_tests.py <file>: 0 issues (L1..L5), EXIT 0
+#   * ruff / mypy --strict clean ; zero new `# type: ignore`
+id: dro-ara-regime-law-witnesses
+status: ACTIVE
+claim_type: governance
+promise: >-
+  After this PR lands, tests/physics_contracts/test_dro_ara_regime_witnesses.py
+  binds the catalog laws dro_ara.gamma_derivation, dro_ara.risk_scalar_bounds and
+  dro_ara.fail_closed_input to @law-decorated witnesses that pass
+  .claude/physics/validate_tests with zero issues. The gamma witness asserts
+  derive_gamma returns γ = 2H + 1 within 1e-5 (INV-DRO1); the risk witness
+  asserts risk_scalar stays in [0, 1] and is Lipschitz-1 in γ (INV-DRO2); the
+  fail-closed witness asserts NaN/Inf/constant/too-short/2-D inputs each raise
+  ValueError while admissible input is accepted (INV-DRO5). No market claim; no
+  runtime, schema, or guard change.
+diff_scope:
+  changed_files:
+    - path: ".claude/commit_acceptors/dro-ara-regime-law-witnesses.yaml"
+    - path: "tests/physics_contracts/test_dro_ara_regime_witnesses.py"
+  forbidden_paths:
+    - "trading/"
+    - "execution/"
+    - "forecast/"
+    - "policy/"
+    - "application/"
+    - "core/"
+    - "src/"
+    - "geosync_hpc/"
+    - "physics_contracts/catalog.yaml"
+    - ".claude/physics/INVARIANTS.yaml"
+required_python_symbols: []
+expected_signal: >-
+  `python -m pytest tests/physics_contracts/test_dro_ara_regime_witnesses.py`
+  reports 3 passed; `python .claude/physics/validate_tests.py
+  tests/physics_contracts/test_dro_ara_regime_witnesses.py` exits 0 with no
+  L1..L5 issues; ruff and mypy --strict on the file are clean.
+measurement_command: >-
+  bash -c 'mkdir -p tmp && python -m pytest
+  tests/physics_contracts/test_dro_ara_regime_witnesses.py
+  > tmp/dro_ara_regime_law_witnesses.log 2>&1
+  && grep -q "3 passed" tmp/dro_ara_regime_law_witnesses.log'
+signal_artifact: "tmp/dro_ara_regime_law_witnesses.log"
+falsifier:
+  command: |-
+    bash -c 'python -c "
+    import numpy as np
+    from core.dro_ara.engine import derive_gamma
+    rng = np.random.default_rng(0); worst = 0.0
+    for _ in range(40):
+        prices = 100.0 * np.exp(np.cumsum(rng.normal(0, 0.01, 128)))
+        g, h = derive_gamma(prices)[:2]
+        worst = max(worst, abs(g - (2*h + 1)))
+    import sys; sys.exit(0 if worst > 1e-5 else 1)"'
+  description: >-
+    Inverse probe of the γ = 2H + 1 derivation. It exits 0 (fires) iff γ deviates
+    from 2H + 1 beyond the catalog tolerance — i.e. γ was assigned independently
+    of H somewhere in the engine. While the Peng relation holds the probe exits 1.
+    If it ever exits 0, the regime witness is no longer truthful and the change
+    must be reverted, not patched green.
+rollback_command: >-
+  git rm -f
+  tests/physics_contracts/test_dro_ara_regime_witnesses.py
+  .claude/commit_acceptors/dro-ara-regime-law-witnesses.yaml
+rollback_verification_command: >-
+  bash -c 'test ! -f tests/physics_contracts/test_dro_ara_regime_witnesses.py'
+memory_update_type: none
+ledger_path: ".claude/commit_acceptors/dro-ara-regime-law-witnesses.yaml"
+report_path: "tmp/dro_ara_regime_law_witnesses.log"
+evidence: []

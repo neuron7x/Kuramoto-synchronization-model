@@ -1,6 +1,6 @@
 # Incident Coordination Procedures
 
-This document defines the end-to-end incident management process for TradePulse, coordinating response across teams, playbooks, and communication channels. It serves as the master procedure that integrates all incident-related documentation into a cohesive operational framework.
+This document defines the end-to-end incident management process for GeoSync, coordinating response across teams, playbooks, and communication channels. It serves as the master procedure that integrates all incident-related documentation into a cohesive operational framework.
 
 ## Table of Contents
 
@@ -35,13 +35,13 @@ Detection → Declaration → Triage → Mitigation → Resolution → Postmorte
 | Resolution to Postmortem | < 24 hours | < 48 hours | < 5 days | < 2 weeks |
 
 ### Telemetry Anchors for Lifecycle Phases
-- **Open Incident Count**: `tradepulse_incidents_open` on the Production Operations Dashboard highlights unresolved incidents by severity.
-- **Acknowledgement SLA**: `tradepulse_incident_ack_latency_seconds` histogram quantiles (p50/p90) surface paging delays and responder saturation.
-- **Resolution SLA**: `tradepulse_incident_resolution_latency_seconds` exposes elongated mitigation efforts that require executive visibility.
-- **Lifecycle Checkpoints**: `tradepulse_lifecycle_checkpoint_status` identifies blocked prerequisites during startup, trading, settlement, or maintenance windows.
-- **Automation Reliability**: `tradepulse_runbook_executions_total` tracks runbook failures and manual fallbacks that may prolong incidents.
+- **Open Incident Count**: `geosync_incidents_open` on the Production Operations Dashboard highlights unresolved incidents by severity.
+- **Acknowledgement SLA**: `geosync_incident_ack_latency_seconds` histogram quantiles (p50/p90) surface paging delays and responder saturation.
+- **Resolution SLA**: `geosync_incident_resolution_latency_seconds` exposes elongated mitigation efforts that require executive visibility.
+- **Lifecycle Checkpoints**: `geosync_lifecycle_checkpoint_status` identifies blocked prerequisites during startup, trading, settlement, or maintenance windows.
+- **Automation Reliability**: `geosync_runbook_executions_total` tracks runbook failures and manual fallbacks that may prolong incidents.
 
-These signals are summarised in [`observability/dashboards/tradepulse-production-operations.json`](../observability/dashboards/tradepulse-production-operations.json) and must be reviewed during every phase transition.
+These signals are summarised in [`observability/dashboards/geosync-production-operations.json`](../observability/dashboards/geosync-production-operations.json) and must be reviewed during every phase transition.
 
 ---
 
@@ -136,7 +136,7 @@ These signals are summarised in [`observability/dashboards/tradepulse-production
 - Status Page: Update immediately
 
 **Examples**:
-- TradePulseOrderErrorRate >50% for >5 minutes
+- GeoSyncOrderErrorRate >50% for >5 minutes
 - Complete broker connectivity loss
 - Database unavailable
 - Security credential leak detected
@@ -159,8 +159,8 @@ These signals are summarised in [`observability/dashboards/tradepulse-production
 - Status Page: Update within 15 minutes
 
 **Examples**:
-- TradePulseOrderErrorRate 5-50%
-- TradePulseSignalToFillLatency 2-3x threshold
+- GeoSyncOrderErrorRate 5-50%
+- GeoSyncSignalToFillLatency 2-3x threshold
 - Data ingestion failing for critical feed
 - Strategy performance significantly degraded
 
@@ -259,7 +259,7 @@ Updates: Every [15/30/60] minutes
 
 **Step 5: Create Incident Ticket**
 ```bash
-tradepulse-cli incident create \
+geosync-cli incident create \
   --severity [1|2|3|4] \
   --title "[Brief Description]" \
   --channel "#inc-YYYY-MM-DD-brief-description"
@@ -283,21 +283,21 @@ tradepulse-cli incident create \
 Common scenarios from [`docs/incident_playbooks.md`](incident_playbooks.md):
 
 #### Execution Lag Scenario
-1. **Detect**: TradePulseOrderAckLatency or TradePulseSignalToFillLatency alert
+1. **Detect**: GeoSyncOrderAckLatency or GeoSyncSignalToFillLatency alert
 2. **Reference**: Execution Lag section in incident playbooks
 3. **Execute**: Stabilize pipeline → Inspect queues → Fail over if needed
 4. **Coordinate**: IC manages communication, TL executes mitigation
 5. **Verify**: Latency returns to normal for 10+ minutes
 
 #### Rejected Orders Scenario
-1. **Detect**: TradePulseOrderErrorRate alert or spike in rejections
+1. **Detect**: GeoSyncOrderErrorRate alert or spike in rejections
 2. **Reference**: Rejected Orders section in incident playbooks
 3. **Execute**: Pause submissions → Diagnose → Mitigate
 4. **Coordinate**: IC engages Risk Officer if breach detected
 5. **Verify**: Rejection rate < 0.1% sustained
 
 #### Data Gaps Scenario
-1. **Detect**: TradePulseDataIngestionFailures or manual detection
+1. **Detect**: GeoSyncDataIngestionFailures or manual detection
 2. **Reference**: Data Gaps section in incident playbooks
 3. **Execute**: Confirm gap → Fail over → Notify quant leads
 4. **Coordinate**: IC manages downstream communication
@@ -338,14 +338,14 @@ Common scenarios from [`docs/incident_playbooks.md`](incident_playbooks.md):
 ### External Communication
 
 #### Status Page
-- **URL**: status.tradepulse.com (if exists)
+- **URL**: status.geosync.com (if exists)
 - **Update Triggers**: Sev 1/2 incidents with customer impact
 - **Update Cadence**: Every status update
 - **Message Tone**: Factual, transparent, actionable
 
 #### Customer Support
 - **Notification**: Immediate for Sev 1/2
-- **Channel**: Email to support-team@tradepulse.com
+- **Channel**: Email to support-team@geosync.com
 - **Content**: Impact summary, workarounds, ETA
 - **Follow-up**: Resolution notification
 
@@ -421,7 +421,7 @@ An incident can only be resolved when ALL criteria are met:
 
 3. **Close Incident Ticket**
    ```bash
-   tradepulse-cli incident resolve [incident-id] \
+   geosync-cli incident resolve [incident-id] \
      --root-cause "[description]" \
      --resolution "[description]"
    ```
@@ -441,7 +441,7 @@ If resolution requires follow-up work:
    - Assign owner and due date
 
 2. **Update Action Item Register**
-   - Add to [`reports/incidents/action_item_register.md`](../reports/incidents/action_item_register.md)
+   - Add to [`reports/incidents/action_item_register.md`](INCIDENT_RUNBOOK.md)
    - Track until completion
 
 3. **Schedule Review**
@@ -477,7 +477,7 @@ Optional but recommended for:
 ### Process
 
 **Step 1: Create Postmortem Document**
-- Use template: [`reports/incidents/postmortem_template.md`](../reports/incidents/postmortem_template.md)
+- Use template: [`reports/incidents/postmortem_template.md`](POSTMORTEM_TEMPLATE.md)
 - Create directory: `reports/incidents/YYYY/incident-YYYYMMDD-brief-name/`
 - Gather artifacts: logs, dashboards, screenshots, metrics
 
@@ -503,7 +503,7 @@ Optional but recommended for:
 - Share in all-hands if significant
 
 **Step 5: Track Action Items**
-- Add all action items to [`reports/incidents/action_item_register.md`](../reports/incidents/action_item_register.md)
+- Add all action items to [`reports/incidents/action_item_register.md`](INCIDENT_RUNBOOK.md)
 - Assign owners and due dates
 - Track in weekly incident review
 
@@ -528,7 +528,7 @@ Avoid:
 ## Operational Telemetry Integration
 
 ### Production Operations Dashboard
-- **Location**: [`observability/dashboards/tradepulse-production-operations.json`](../observability/dashboards/tradepulse-production-operations.json)
+- **Location**: [`observability/dashboards/geosync-production-operations.json`](../observability/dashboards/geosync-production-operations.json)
 - **Executive Summary**: `System Health Status` and `SLA Error Budget Burn` convey cross-service posture at a glance.
 - **Incident Response**: `Open Incidents by Severity` and `Incident Response Durations` panels validate acknowledgement/resolution SLAs in real time.
 - **Lifecycle Governance**: `Lifecycle Phase State` and `Lifecycle Checkpoint Status` surfaces blocked transitions that must be cleared before advancing phases.
@@ -537,14 +537,14 @@ Avoid:
 ### Metric-to-Action Matrix
 | Signal | Metric | Primary Owner | Required Action |
 |--------|--------|---------------|-----------------|
-| Critical incident active | `tradepulse_incidents_open{severity="critical"}` | Incident Commander | Convene bridge, follow critical incident playbook |
-| Ack SLA breach | `histogram_quantile(0.5, tradepulse_incident_ack_latency_seconds)` | On-call SRE | Trigger backup rota, audit paging integrations |
-| Resolution SLA breach | `histogram_quantile(0.5, tradepulse_incident_resolution_latency_seconds)` | Duty Manager | Escalate mitigation resources, update executives |
-| Lifecycle checkpoint blocked | `tradepulse_lifecycle_checkpoint_status{status="blocked"}` | Phase owner | Execute checkpoint runbook, clear dependency |
-| Runbook failures | `increase(tradepulse_runbook_executions_total{outcome="failed"}[15m])` | Automation owner | Apply manual fallback, remediate automation |
+| Critical incident active | `geosync_incidents_open{severity="critical"}` | Incident Commander | Convene bridge, follow critical incident playbook |
+| Ack SLA breach | `histogram_quantile(0.5, geosync_incident_ack_latency_seconds)` | On-call SRE | Trigger backup rota, audit paging integrations |
+| Resolution SLA breach | `histogram_quantile(0.5, geosync_incident_resolution_latency_seconds)` | Duty Manager | Escalate mitigation resources, update executives |
+| Lifecycle checkpoint blocked | `geosync_lifecycle_checkpoint_status{status="blocked"}` | Phase owner | Execute checkpoint runbook, clear dependency |
+| Runbook failures | `increase(geosync_runbook_executions_total{outcome="failed"}[15m])` | Automation owner | Apply manual fallback, remediate automation |
 
 ### Automation Feedback Loop
-1. **Observe** failure via `Runbook Execution Outcomes` or alert `TradePulseRunbookFailures`.
+1. **Observe** failure via `Runbook Execution Outcomes` or alert `GeoSyncRunbookFailures`.
 2. **Escalate** to automation owner and record manual steps in incident log.
 3. **Patch** automation and confirm success metrics reset to zero.
 4. **Retrofit** lessons into [`docs/system_lifecycle_operations.md`](system_lifecycle_operations.md) and associated runbooks.
@@ -667,9 +667,9 @@ Update this document and related playbooks:
 ## Appendix: Contact Information
 
 ### On-Call Rotations
-- **SRE**: Via PagerDuty schedule "TradePulse-SRE"
-- **Platform**: Via PagerDuty schedule "TradePulse-Platform"
-- **Data Pipeline**: Via PagerDuty schedule "TradePulse-Data"
+- **SRE**: Via PagerDuty schedule "GeoSync-SRE"
+- **Platform**: Via PagerDuty schedule "GeoSync-Platform"
+- **Data Pipeline**: Via PagerDuty schedule "GeoSync-Data"
 
 ### Escalation Contacts
 - **Platform Lead**: @platform-lead

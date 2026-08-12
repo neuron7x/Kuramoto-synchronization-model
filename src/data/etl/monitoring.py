@@ -1,3 +1,5 @@
+# Copyright (c) 2023-2026 Yaroslav Vasylenko (neuron7xLab)
+# SPDX-License-Identifier: MIT
 """Monitoring, quality, and reporting utilities for ETL pipelines."""
 
 from __future__ import annotations

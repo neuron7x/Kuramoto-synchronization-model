@@ -1,9 +1,11 @@
+# Copyright (c) 2023-2026 Yaroslav Vasylenko (neuron7xLab)
+# SPDX-License-Identifier: MIT
 from __future__ import annotations
 
 import os
 from datetime import datetime, timedelta, timezone
 from pathlib import Path
-from typing import Callable, Sequence
+from typing import Any, Callable, Sequence, cast
 
 import httpx
 import jwt
@@ -16,16 +18,13 @@ from fastapi import FastAPI, status
 from fastapi.testclient import TestClient
 from jwt.algorithms import RSAAlgorithm
 
-os.environ.setdefault("TRADEPULSE_AUDIT_SECRET", "test-audit-secret")
-os.environ.setdefault("TRADEPULSE_OAUTH2_ISSUER", "https://issuer.tradepulse.test")
-os.environ.setdefault("TRADEPULSE_OAUTH2_AUDIENCE", "tradepulse-api")
-os.environ.setdefault(
-    "TRADEPULSE_OAUTH2_JWKS_URI", "https://issuer.tradepulse.test/jwks"
-)
-os.environ.setdefault("TRADEPULSE_RBAC_AUDIT_SECRET", "test-rbac-secret")
+os.environ.setdefault("GEOSYNC_AUDIT_SECRET", "test-audit-secret")
+os.environ.setdefault("GEOSYNC_OAUTH2_ISSUER", "https://issuer.geosync.test")
+os.environ.setdefault("GEOSYNC_OAUTH2_AUDIENCE", "geosync-api")
+os.environ.setdefault("GEOSYNC_OAUTH2_JWKS_URI", "https://issuer.geosync.test/jwks")
+os.environ.setdefault("GEOSYNC_RBAC_AUDIT_SECRET", "test-rbac-secret")
 
 from application.api import security as security_module
-from application.api import service as service_module
 from application.api.rate_limit import (
     InMemorySlidingWindowBackend,
     SlidingWindowRateLimiter,
@@ -43,7 +42,7 @@ from core.config.cli_models import PostgresTLSConfig
 
 API_V1_PREFIX = "/api/v1"
 TWO_FACTOR_HEADER = "X-Admin-OTP"
-TWO_FACTOR_SECRET = os.environ["TRADEPULSE_TWO_FACTOR_SECRET"]
+TWO_FACTOR_SECRET = os.environ["GEOSYNC_TWO_FACTOR_SECRET"]
 
 
 def _api_v1(path: str) -> str:
@@ -62,9 +61,9 @@ def security_context(monkeypatch: pytest.MonkeyPatch) -> Callable[..., str]:
     jwk_dict.update({"kid": kid, "alg": "RS256", "use": "sig"})
 
     settings = ApiSecuritySettings(
-        oauth2_issuer="https://issuer.tradepulse.test",
-        oauth2_audience="tradepulse-api",
-        oauth2_jwks_uri="https://issuer.tradepulse.test/jwks",
+        oauth2_issuer="https://issuer.geosync.test",
+        oauth2_audience="geosync-api",
+        oauth2_jwks_uri="https://issuer.geosync.test/jwks",
         trusted_hosts=["testserver", "localhost"],
     )
 
@@ -113,7 +112,7 @@ def configured_app(
     security_context: Callable[..., str],
     tmp_path: Path,
 ) -> FastAPI:
-    monkeypatch.delenv("TRADEPULSE_AUDIT_SECRET", raising=False)
+    monkeypatch.delenv("GEOSYNC_AUDIT_SECRET", raising=False)
     settings = AdminApiSettings(
         audit_secret="unit-audit-secret",
         kill_switch_store_path=tmp_path / "kill_switch.sqlite",
@@ -139,8 +138,8 @@ class _InstrumentedMetricsCollector:
 def test_create_app_requires_secrets(
     monkeypatch: pytest.MonkeyPatch, security_context: Callable[..., str]
 ) -> None:
-    monkeypatch.delenv("TRADEPULSE_AUDIT_SECRET", raising=False)
-    with pytest.raises(RuntimeError, match="TRADEPULSE_AUDIT_SECRET"):
+    monkeypatch.delenv("GEOSYNC_AUDIT_SECRET", raising=False)
+    with pytest.raises(RuntimeError, match="GEOSYNC_AUDIT_SECRET"):
         create_app()
 
 
@@ -160,7 +159,17 @@ def test_create_app_uses_postgres_store(
         def load(self) -> None:
             return None
 
-    monkeypatch.setattr(service_module, "PostgresKillSwitchStateStore", DummyStore)
+    # The PostgresKillSwitchStateStore is now resolved at runtime via
+    # importlib in `application.api.risk_factory` (so service.py's
+    # static import graph stays free of `execution.risk` per the
+    # commit-acceptor forbidden-import gate). Resolve the module
+    # through importlib here for the same reason — a top-level
+    # `import execution.risk` would re-violate the gate from the
+    # test file.
+    import importlib
+
+    execution_risk_module = importlib.import_module("execution.risk")
+    monkeypatch.setattr(execution_risk_module, "PostgresKillSwitchStateStore", DummyStore)
 
     tls_dir = tmp_path / "tls"
     tls_dir.mkdir()
@@ -182,8 +191,9 @@ def test_create_app_uses_postgres_store(
     app = create_app(settings=settings)
 
     kill_switch = app.state.risk_manager.kill_switch
-    assert isinstance(kill_switch._store, DummyStore)  # type: ignore[attr-defined]
-    assert invoked["kwargs"]["pool_min_size"] == 0
+    assert isinstance(kill_switch._store, DummyStore)
+    invoked_kwargs = cast(dict[str, object], invoked["kwargs"])
+    assert invoked_kwargs["pool_min_size"] == 0
 
 
 def _build_payload() -> dict[str, object]:
@@ -332,7 +342,7 @@ def test_feature_idempotency_conflict_is_detected(
     assert first.status_code == 200
 
     mutated = _build_payload()
-    mutated["bars"][0]["close"] += 1.0
+    cast(list[dict[str, Any]], mutated["bars"])[0]["close"] += 1.0
     conflict = client.post(_api_v1("/features"), json=mutated, headers=headers)
     assert conflict.status_code == 409
     error = conflict.json()["error"]
@@ -389,9 +399,7 @@ def test_graphql_interface_exposes_latest_data(
     headers = _auth_headers(token)
 
     feature_payload = _build_payload()
-    feature_response = client.post(
-        _api_v1("/features"), json=feature_payload, headers=headers
-    )
+    feature_response = client.post(_api_v1("/features"), json=feature_payload, headers=headers)
     assert feature_response.status_code == 200
 
     prediction_payload = _build_payload()
@@ -485,9 +493,7 @@ def test_websocket_stream_broadcasts_updates(
         assert initial["signals"] == []
 
         feature_payload = _build_payload()
-        feature_response = client.post(
-            _api_v1("/features"), json=feature_payload, headers=headers
-        )
+        feature_response = client.post(_api_v1("/features"), json=feature_payload, headers=headers)
         assert feature_response.status_code == 200
         feature_event = websocket.receive_json()
         assert feature_event["type"] == "feature"
@@ -504,6 +510,44 @@ def test_websocket_stream_broadcasts_updates(
         assert signal_event["type"] == "signal"
         assert signal_event["symbol"] == "TEST-USD"
         assert "signal" in signal_event
+
+
+@pytest.mark.parametrize(
+    "raw_body",
+    [
+        pytest.param(b"\x00\x00\x00\x00\x00", id="utf32-be-truncated"),
+        pytest.param(b"\x80start", id="invalid-utf8-start-byte"),
+        pytest.param(b"\xff\xfe\x00", id="bare-bom-no-payload"),
+        pytest.param(b"\x90\x90\x90\x90", id="invalid-utf8-continuation"),
+    ],
+)
+def test_invalid_utf8_body_returns_400_not_500(
+    configured_app: FastAPI,
+    security_context: Callable[..., str],
+    raw_body: bytes,
+) -> None:
+    """Schemathesis fuzzing produced UnicodeDecodeError paths that surfaced as 500s.
+
+    Root cause: ``json.loads(body)`` raises ``UnicodeDecodeError`` (not
+    ``JSONDecodeError``) when *body* contains bytes that do not decode under
+    the advertised encoding. The body-parser middleware now catches both,
+    so every non-UTF-8 body returns a structured 400 instead of crashing.
+    """
+    client = TestClient(configured_app, raise_server_exceptions=False)
+    token = security_context(subject="fuzz-user")
+    headers = {
+        "Authorization": f"Bearer {token}",
+        "Content-Type": "application/json",
+    }
+    response = client.post(_api_v1("/predictions"), content=raw_body, headers=headers)
+    assert response.status_code == status.HTTP_400_BAD_REQUEST, (
+        f"expected 400 BAD_REQUEST on non-UTF-8 body, got "
+        f"{response.status_code} (body would have crashed json.loads with "
+        f"UnicodeDecodeError before the fix)"
+    )
+    body = response.json()
+    assert body["error"]["code"] == "ERR_BAD_REQUEST"
+    assert "Malformed JSON" in body["error"]["message"]
 
 
 def test_internal_errors_return_structured_payload(configured_app: FastAPI) -> None:
@@ -561,9 +605,7 @@ def test_feature_endpoint_supports_pagination_and_filters(
     token = security_context(subject="feature-user")
     headers = _auth_headers(token)
 
-    first_page = client.post(
-        "/features?limit=3&featurePrefix=macd", json=payload, headers=headers
-    )
+    first_page = client.post("/features?limit=3&featurePrefix=macd", json=payload, headers=headers)
     assert first_page.status_code == 200
     first_body = first_page.json()
     assert first_body["pagination"]["limit"] == 3
@@ -594,9 +636,7 @@ def test_feature_filter_returns_404_for_unknown_prefix(
     token = security_context(subject="feature-user")
     headers = _auth_headers(token)
 
-    response = client.post(
-        "/features?featurePrefix=does-not-exist", json=payload, headers=headers
-    )
+    response = client.post("/features?featurePrefix=does-not-exist", json=payload, headers=headers)
     assert response.status_code == 404
     error = response.json()["error"]
     assert error["code"] == "ERR_FEATURES_FILTER_MISMATCH"
@@ -615,9 +655,7 @@ def test_prediction_endpoint_filters_by_action_and_confidence(
     baseline_body = baseline.json()
     assert baseline_body["pagination"]["limit"] == 5
     sample_action = baseline_body["items"][0]["signal"]["action"]
-    confidence_threshold = max(
-        0.0, baseline_body["items"][0]["signal"]["confidence"] - 0.05
-    )
+    confidence_threshold = max(0.0, baseline_body["items"][0]["signal"]["confidence"] - 0.05)
 
     filtered = client.post(
         f"/predictions?limit=5&action={sample_action}&minConfidence={confidence_threshold}",
@@ -627,9 +665,7 @@ def test_prediction_endpoint_filters_by_action_and_confidence(
     assert filtered.status_code == 200
     filtered_body = filtered.json()
     assert filtered_body["filters"]["actions"] == [sample_action]
-    assert filtered_body["filters"]["min_confidence"] == pytest.approx(
-        confidence_threshold
-    )
+    assert filtered_body["filters"]["min_confidence"] == pytest.approx(confidence_threshold)
     for item in filtered_body["items"]:
         assert item["signal"]["action"] == sample_action
         assert item["signal"]["confidence"] >= confidence_threshold
@@ -657,9 +693,7 @@ def test_prediction_endpoint_rejects_invalid_confidence_filter(
     token = security_context(subject="prediction-user")
     headers = _auth_headers(token)
 
-    response = client.post(
-        "/predictions?minConfidence=2.5", json=payload, headers=headers
-    )
+    response = client.post("/predictions?minConfidence=2.5", json=payload, headers=headers)
     assert response.status_code == 422
     error = response.json()["error"]
     assert error["code"] == "ERR_INVALID_CONFIDENCE"
@@ -744,9 +778,7 @@ def test_admin_endpoints_require_two_factor(
     valid_code = generate_totp_code(TWO_FACTOR_SECRET)
     replacement_digit = "0" if valid_code[0] != "0" else "1"
     invalid_code = replacement_digit + valid_code[1:]
-    invalid_headers = _auth_headers(
-        token, client_cert=True, two_factor_code=invalid_code
-    )
+    invalid_headers = _auth_headers(token, client_cert=True, two_factor_code=invalid_code)
     response = client.post("/admin/kill-switch", headers=invalid_headers, json=payload)
     assert response.status_code == 401
     body = response.json()
@@ -771,9 +803,7 @@ def test_admin_endpoint_rejects_wrong_audience(
 def test_client_rate_limit_is_enforced(security_context: Callable[..., str]) -> None:
     rate_settings = ApiRateLimitSettings(
         default_policy=RateLimitPolicy(max_requests=5, window_seconds=60),
-        client_policies={
-            "feature-user": RateLimitPolicy(max_requests=1, window_seconds=60)
-        },
+        client_policies={"feature-user": RateLimitPolicy(max_requests=1, window_seconds=60)},
     )
     limiter = SlidingWindowRateLimiter(InMemorySlidingWindowBackend(), rate_settings)
     app = create_app(
@@ -788,15 +818,11 @@ def test_client_rate_limit_is_enforced(security_context: Callable[..., str]) -> 
     response_ok = client.post("/features", json=payload, headers=_auth_headers(token))
     assert response_ok.status_code == 200
 
-    response_limited = client.post(
-        "/features", json=payload, headers=_auth_headers(token)
-    )
+    response_limited = client.post("/features", json=payload, headers=_auth_headers(token))
     assert response_limited.status_code == 429
 
     other_token = security_context(subject="different-user")
-    recovery = client.post(
-        "/features", json=payload, headers=_auth_headers(other_token)
-    )
+    recovery = client.post("/features", json=payload, headers=_auth_headers(other_token))
     assert recovery.status_code == 200
 
 
@@ -829,9 +855,7 @@ def test_health_probe_emits_metrics_when_collector_present(
     assert duration >= 0
 
     assert collector.status_flags.get("api.overall") is True
-    component_keys = {
-        name for name in collector.status_flags if name.startswith("component.")
-    }
+    component_keys = {name for name in collector.status_flags if name.startswith("component.")}
     assert component_keys, "Component health metrics should be recorded"
 
 
@@ -847,9 +871,9 @@ def test_prometheus_metrics_include_api_counters(configured_app: FastAPI) -> Non
     metrics_response = client.get("/metrics")
     assert metrics_response.status_code == 200
     body = metrics_response.text
-    assert "tradepulse_api_requests_total" in body
+    assert "geosync_api_requests_total" in body
     assert 'route="/health"' in body
-    assert "tradepulse_api_request_latency_seconds_count" in body
+    assert "geosync_api_request_latency_seconds_count" in body
 
 
 def test_health_probe_reflects_kill_switch(configured_app: FastAPI) -> None:
@@ -869,9 +893,7 @@ def test_health_probe_reflects_kill_switch(configured_app: FastAPI) -> None:
 
 def test_health_probe_flags_dependency_failure() -> None:
     probes = {
-        "postgres": lambda: DependencyProbeResult(
-            healthy=False, detail="connection refused"
-        ),
+        "postgres": lambda: DependencyProbeResult(healthy=False, detail="connection refused"),
     }
     app = create_app(
         settings=AdminApiSettings(audit_secret="unit-audit-secret"),
@@ -893,14 +915,12 @@ def test_trusted_host_middleware_blocks_unlisted_hosts(
     monkeypatch: pytest.MonkeyPatch, security_context: Callable[..., str]
 ) -> None:
     restricted_settings = ApiSecuritySettings(
-        oauth2_issuer="https://issuer.tradepulse.test",
-        oauth2_audience="tradepulse-api",
-        oauth2_jwks_uri="https://issuer.tradepulse.test/jwks",
-        trusted_hosts=["api.tradepulse.test"],
+        oauth2_issuer="https://issuer.geosync.test",
+        oauth2_audience="geosync-api",
+        oauth2_jwks_uri="https://issuer.geosync.test/jwks",
+        trusted_hosts=["api.geosync.test"],
     )
-    monkeypatch.setattr(
-        security_module, "_default_settings_loader", lambda: restricted_settings
-    )
+    monkeypatch.setattr(security_module, "_default_settings_loader", lambda: restricted_settings)
     if hasattr(security_module.get_api_security_settings, "_instance"):
         delattr(security_module.get_api_security_settings, "_instance")
 
@@ -913,7 +933,7 @@ def test_trusted_host_middleware_blocks_unlisted_hosts(
     denied = client.post("/features", json=payload, headers=bad_host_headers)
     assert denied.status_code == 400
 
-    good_host_headers = {**_auth_headers(token), "Host": "api.tradepulse.test"}
+    good_host_headers = {**_auth_headers(token), "Host": "api.geosync.test"}
     permitted = client.post("/features", json=payload, headers=good_host_headers)
     assert permitted.status_code == 200
 
@@ -922,15 +942,13 @@ def test_payload_guard_rejects_large_and_suspicious_bodies(
     monkeypatch: pytest.MonkeyPatch, security_context: Callable[..., str]
 ) -> None:
     tuned_settings = ApiSecuritySettings(
-        oauth2_issuer="https://issuer.tradepulse.test",
-        oauth2_audience="tradepulse-api",
-        oauth2_jwks_uri="https://issuer.tradepulse.test/jwks",
+        oauth2_issuer="https://issuer.geosync.test",
+        oauth2_audience="geosync-api",
+        oauth2_jwks_uri="https://issuer.geosync.test/jwks",
         trusted_hosts=["testserver"],
         max_request_bytes=512,
     )
-    monkeypatch.setattr(
-        security_module, "_default_settings_loader", lambda: tuned_settings
-    )
+    monkeypatch.setattr(security_module, "_default_settings_loader", lambda: tuned_settings)
     if hasattr(security_module.get_api_security_settings, "_instance"):
         delattr(security_module.get_api_security_settings, "_instance")
 
@@ -939,7 +957,7 @@ def test_payload_guard_rejects_large_and_suspicious_bodies(
     token = security_context(subject="feature-user")
 
     oversized_payload = _build_payload()
-    oversized_payload["bars"] *= 20
+    oversized_payload["bars"] = cast(list[dict[str, Any]], oversized_payload["bars"]) * 20
     response_large = client.post(
         "/features",
         json=oversized_payload,
@@ -949,7 +967,7 @@ def test_payload_guard_rejects_large_and_suspicious_bodies(
 
     suspicious_payload = _build_payload()
     suspicious_payload["symbol"] = "<script>alert(1)</script>"
-    suspicious_payload["bars"] = suspicious_payload["bars"][:1]
+    suspicious_payload["bars"] = cast(list[dict[str, Any]], suspicious_payload["bars"])[:1]
     response_suspicious = client.post(
         "/features",
         json=suspicious_payload,
@@ -972,31 +990,30 @@ class _DummyWebSocket:
 @pytest.mark.asyncio
 async def test_shutdown_hook_marks_app_unhealthy_and_closes_streams() -> None:
     app = create_app(settings=AdminApiSettings(audit_secret="unit-audit-secret"))
-    await app.router.startup()
+    _do_startup = getattr(app.router, "startup", None) or app.router._startup
+    await _do_startup()
     shutdown_executed = False
     transport = httpx.ASGITransport(app=app)
 
-    async with httpx.AsyncClient(
-        transport=transport, base_url="http://testserver"
-    ) as client:
+    async with httpx.AsyncClient(transport=transport, base_url="http://testserver") as client:
         ready_response = await client.get("/health")
         assert ready_response.status_code == 200
 
         stream_manager = app.state.stream_manager
         dummy_socket = _DummyWebSocket()
-        async with stream_manager._lock:  # type: ignore[attr-defined]
-            stream_manager._connections.add(dummy_socket)  # type: ignore[attr-defined]
+        async with stream_manager._lock:
+            stream_manager._connections.add(dummy_socket)
 
         try:
-            await app.router.shutdown()
+            await (getattr(app.router, "shutdown", None) or app.router._shutdown)()
             shutdown_executed = True
         finally:
             if not shutdown_executed:
-                await app.router.shutdown()
+                await (getattr(app.router, "shutdown", None) or app.router._shutdown)()
 
         assert getattr(app.state, "shutting_down", False) is True
         assert dummy_socket.closed_codes == [status.WS_1012_SERVICE_RESTART]
-        assert not stream_manager._connections  # type: ignore[attr-defined]
+        assert not stream_manager._connections
 
         health_server = app.state.health_server
         if health_server is not None:

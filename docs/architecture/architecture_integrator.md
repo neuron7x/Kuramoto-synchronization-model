@@ -2,7 +2,7 @@
 
 ## Overview
 
-The **Architecture Integrator** is a centralized coordination layer for managing architectural components across the TradePulse system. It provides a unified interface for component lifecycle management, dependency resolution, health monitoring, and architectural compliance validation.
+The **Architecture Integrator** is a centralized coordination layer for managing architectural components across the GeoSync system. It provides a unified interface for component lifecycle management, dependency resolution, health monitoring, and architectural compliance validation.
 
 ## Purpose
 
@@ -101,12 +101,12 @@ integrator.stop_all()
 ### Integration with Existing Systems
 
 ```python
-from application.system_orchestrator import build_tradepulse_system
+from application.system_orchestrator import build_geosync_system
 from core.architecture_integrator import ArchitectureIntegrator
 from core.architecture_integrator.adapters import create_system_component_adapter
 
-# Create TradePulse system
-system = build_tradepulse_system()
+# Create GeoSync system
+system = build_geosync_system()
 
 # Create adapter
 adapter = create_system_component_adapter(system)
@@ -114,10 +114,10 @@ adapter = create_system_component_adapter(system)
 # Register with integrator
 integrator = ArchitectureIntegrator()
 integrator.register_component(
-    name="tradepulse_system",
+    name="geosync_system",
     instance=adapter,
     version="1.0.0",
-    description="Core TradePulse system",
+    description="Core GeoSync system",
     tags=["core"],
     provides=["trading_system"],
 )
@@ -127,7 +127,7 @@ integrator.initialize_all()
 integrator.start_all()
 
 # Monitor health
-health = integrator.check_component_health("tradepulse_system")
+health = integrator.check_component_health("geosync_system")
 print(f"System status: {health.status}, healthy: {health.healthy}")
 ```
 
@@ -253,15 +253,15 @@ Component health is monitored continuously:
 
 ## Integration Points
 
-### With TradePulseSystem
+### With GeoSyncSystem
 
-The `TradePulseSystemAdapter` bridges the gap between the Architecture Integrator and the existing `TradePulseSystem`:
+The `GeoSyncSystemAdapter` bridges the gap between the Architecture Integrator and the existing `GeoSyncSystem`:
 
 ```python
-from core.architecture_integrator.adapters import TradePulseSystemAdapter
+from core.architecture_integrator.adapters import GeoSyncSystemAdapter
 
-system = build_tradepulse_system()
-adapter = TradePulseSystemAdapter(system)
+system = build_geosync_system()
+adapter = GeoSyncSystemAdapter(system)
 
 # Use adapter with integrator
 integrator.register_component(
@@ -270,15 +270,15 @@ integrator.register_component(
 )
 ```
 
-### With TradePulseOrchestrator
+### With GeoSyncOrchestrator
 
-The `TradePulseOrchestratorAdapter` integrates the orchestrator:
+The `GeoSyncOrchestratorAdapter` integrates the orchestrator:
 
 ```python
-from core.architecture_integrator.adapters import TradePulseOrchestratorAdapter
+from core.architecture_integrator.adapters import GeoSyncOrchestratorAdapter
 
-orchestrator = TradePulseOrchestrator(system)
-adapter = TradePulseOrchestratorAdapter(orchestrator)
+orchestrator = GeoSyncOrchestrator(system)
+adapter = GeoSyncOrchestratorAdapter(orchestrator)
 
 integrator.register_component(
     name="orchestrator",

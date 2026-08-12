@@ -1,0 +1,105 @@
+# Copyright (c) 2023-2026 Yaroslav Vasylenko (neuron7xLab)
+# SPDX-License-Identifier: MIT
+#
+# GeoSync productization map: 5 sellable packages, each backed by a
+# proof artifact already merged to main.
+#
+# Lie blocked: "engineering depth = market value".
+# Each package below has BOTH a buyer pain AND a non-claim list, so
+# the pitch never exceeds what the codebase actually delivers.
+
+schema_version: 1
+
+packages:
+  - id: P_FALSE_CLAIM_AUDIT
+    name: "False-Claim Audit"
+    buyer_pain: |
+      Engineering team is shipping confident claims (release notes,
+      governance reports, model evaluations) that downstream readers
+      cannot mechanically verify.
+    deliverables:
+      - "Audit of repository false-confidence concentrations across C1..C10."
+      - "Documented exemption manifest for historical state."
+      - "Regression-detector wired into CI so new findings trip the gate."
+    timeline_weeks: 2
+    price_band: "PB1_LIGHT"
+    proof_artifact: ".claude/audit/false_confidence_exemptions.yaml"
+    demo_command: "python tools/audit/false_confidence_detector.py --exit-on-finding"
+    non_claims:
+      - "Does NOT certify that the live tree has zero defects."
+      - "Does NOT replace human code review."
+      - "Does NOT promise specific reduction in baseline findings."
+
+  - id: P_AI_RESEARCH_VERIFICATION
+    name: "AI/Research Verification Stack"
+    buyer_pain: |
+      Multi-model AI orchestra produces high-confidence outputs that
+      cannot be evaluated against a uniform evidence gate.
+    deliverables:
+      - "Cross-agent review harness with confidence-text recording."
+      - "Forbidden-overclaim red-line set enforced uniformly."
+      - "Falsifier forge generating mutation candidates from claim ledger."
+    timeline_weeks: 3
+    price_band: "PB2_MEDIUM"
+    proof_artifact: "tools/agents/cross_agent_review_harness.py"
+    demo_command: "python -m pytest tests/agents -q"
+    non_claims:
+      - "Does NOT rate models against each other."
+      - "Does NOT assert one model is more truthful than another."
+      - "Does NOT replace domain expert review."
+
+  - id: P_QUANT_GOVERNANCE_HARDENING
+    name: "Quant Governance Hardening"
+    buyer_pain: |
+      Quant team's risk and governance reports drift from underlying
+      claims; release ledgers cannot be replayed.
+    deliverables:
+      - "Proof-carrying PR manifest schema and validator."
+      - "Replayable reality-ledger with deterministic command runner."
+      - "Reality budget gate (NEEDS_SPLIT / CEREMONY_RISK / ACCEPTABLE_EXCEPTION)."
+    timeline_weeks: 4
+    price_band: "PB3_HEAVY"
+    proof_artifact: "docs/releases/replay_manifest_2026_04_27.yaml"
+    demo_command: "python tools/governance/replay_release_ledger.py --manifest docs/releases/replay_manifest_2026_04_27.yaml"
+    non_claims:
+      - "Does NOT promise alpha or trading edge."
+      - "Does NOT certify regulatory compliance."
+      - "Does NOT enforce business policy beyond the stated structural gates."
+
+  - id: P_DEPENDENCY_REACHABILITY_SECURITY
+    name: "Dependency / Reachability Security Audit"
+    buyer_pain: |
+      Security team's vulnerability reports show 'patched in lockfile'
+      while Dockerfiles install a different manifest.
+    deliverables:
+      - "Dependency-truth unifier (D1..D7 drift classes) with deptry handoff."
+      - "Reachability-graph integration test for GraphQL WS surface."
+      - "Scanner-path mismatch detector (C2 class)."
+    timeline_weeks: 3
+    price_band: "PB2_MEDIUM"
+    proof_artifact: "tools/deps/validate_dependency_truth.py"
+    demo_command: "python tools/deps/validate_dependency_truth.py"
+    non_claims:
+      - "Does NOT replace pip-audit or trivy."
+      - "Does NOT enumerate all CVEs."
+      - "Does NOT certify that all transitive deps are reachable."
+
+  - id: P_FULL_REALITY_VALIDATION
+    name: "Full Reality-Validation Integration"
+    buyer_pain: |
+      Engineering org needs the entire claim → evidence → witness →
+      falsifier → restore → CI gate → regression lock loop, end to
+      end, on a buyer-grade timeline.
+    deliverables:
+      - "All four packages above, integrated."
+      - "Buyer-grade demo harness (run_demo.py) with tmp-only mutations."
+      - "Operator-session ingestion converting human/AI sessions to YAML ledger."
+      - "Claim-to-code provenance graph (markdown + JSON output)."
+    timeline_weeks: 8
+    price_band: "PB4_FLAGSHIP"
+    proof_artifact: "demos/reality_validation_demo/run_demo.py"
+    demo_command: "python demos/reality_validation_demo/run_demo.py"
+    non_claims:
+      - "Does NOT claim 'production-ready' or 'fully verified' status."
+      - "Does NOT replace code review, security review, or domain expertise."
+      - "Does NOT generalise beyond the structural reality-loop contract."

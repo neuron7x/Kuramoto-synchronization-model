@@ -1,8 +1,10 @@
+# Copyright (c) 2023-2026 Yaroslav Vasylenko (neuron7xLab)
+# SPDX-License-Identifier: MIT
 """Baseline loading utilities for nightly regression runs."""
 
 from __future__ import annotations
 
-# SPDX-License-Identifier: LicenseRef-TradePulse-Proprietary
+# SPDX-License-Identifier: MIT
 import json
 import math
 from dataclasses import dataclass
@@ -136,12 +138,8 @@ class BaselineStore:
                 if not isinstance(scenario_value, Mapping):
                     continue
                 baseline = self._coerce_metrics(scenario_value.get("baseline", {}))
-                thresholds = self._coerce_thresholds(
-                    scenario_value.get("thresholds", {})
-                )
-                parsed_stage[str(scenario)] = BaselineEntry(
-                    metrics=baseline, thresholds=thresholds
-                )
+                thresholds = self._coerce_thresholds(scenario_value.get("thresholds", {}))
+                parsed_stage[str(scenario)] = BaselineEntry(metrics=baseline, thresholds=thresholds)
             self._entries[str(stage)] = parsed_stage
 
     @staticmethod

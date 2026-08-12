@@ -1,9 +1,11 @@
+# Copyright (c) 2023-2026 Yaroslav Vasylenko (neuron7xLab)
+# SPDX-License-Identifier: MIT
 """Safe update gating aligned with TACL risk filters."""
 
 from __future__ import annotations
 
-from dataclasses import dataclass, field, fields
 import logging
+from dataclasses import dataclass, field, fields
 from typing import Mapping
 
 from tacl.risk_gating import PreActionDecision, RiskGatingConfig, RiskGatingEngine
@@ -55,8 +57,7 @@ def _risk_config_from_mapping(payload: Mapping[str, object] | None) -> RiskGatin
         return RiskGatingConfig()
     default_cfg = RiskGatingConfig()
     kwargs = {
-        f.name: payload.get(f.name, getattr(default_cfg, f.name))
-        for f in fields(default_cfg)
+        f.name: payload.get(f.name, getattr(default_cfg, f.name)) for f in fields(default_cfg)
     }
     return RiskGatingConfig(**kwargs)
 
@@ -83,9 +84,7 @@ class SafeUpdateGate:
         metadata: Mapping[str, object] | None = None,
     ) -> SafeUpdateDecision:
         rpe_abs = float(rpe_metrics.get("rpe_abs", 0.0))
-        policy_deviation = min(
-            rpe_abs * self._config.rpe_scale, self._config.policy_deviation_cap
-        )
+        policy_deviation = min(rpe_abs * self._config.rpe_scale, self._config.policy_deviation_cap)
         context = {
             "venue": "rl_update",
             "symbol": "rpe",

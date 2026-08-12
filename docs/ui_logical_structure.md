@@ -1,7 +1,7 @@
-# TradePulse UI Logical Structure
+# GeoSync UI Logical Structure
 
 ## Overview
-The TradePulse interface prioritizes rapid navigation between high-impact workflows: configuring the trading environment, reviewing recent activity, and diving into actionable analytics. The following logical structure organizes the UI into predictable zones so that users can move fluidly between these tasks without losing context.
+The GeoSync interface prioritizes rapid navigation between high-impact workflows: configuring the trading environment, reviewing recent activity, and diving into actionable analytics. The following logical structure organizes the UI into predictable zones so that users can move fluidly between these tasks without losing context.
 
 ## Global Framework
 - **Primary Navigation Bar (Top)**

@@ -1,6 +1,7 @@
 #!/usr/bin/env python3
-# SPDX-License-Identifier: LicenseRef-TradePulse-Proprietary
-"""Generate sample market data CSV files for testing TradePulse interfaces.
+# Copyright (c) 2023-2026 Yaroslav Vasylenko (neuron7xLab)
+# SPDX-License-Identifier: MIT
+"""Generate sample market data CSV files for testing GeoSync interfaces.
 
 This utility creates realistic synthetic market data suitable for testing
 the CLI, dashboard, and other interfaces. The generated data includes
@@ -134,9 +135,7 @@ def generate_volume(
     rng = np.random.default_rng(seed)
 
     # Base log-normal volume
-    volume = rng.lognormal(
-        mean=np.log(mean_volume) - (volatility**2) / 2, sigma=volatility, size=n
-    )
+    volume = rng.lognormal(mean=np.log(mean_volume) - (volatility**2) / 2, sigma=volatility, size=n)
 
     # Add correlation with price changes if prices provided
     if prices is not None and len(prices) == n and price_correlation != 0:
@@ -170,9 +169,7 @@ def generate_market_data(
 
     # Generate prices based on regime
     if regime == "trending":
-        prices = generate_trending_prices(
-            periods, trend=0.03, volatility=1.2, seed=seed
-        )
+        prices = generate_trending_prices(periods, trend=0.03, volatility=1.2, seed=seed)
     elif regime == "mean_reverting":
         prices = generate_mean_reverting_prices(
             periods, reversion_speed=0.15, volatility=2.0, seed=seed
@@ -191,9 +188,7 @@ def generate_market_data(
     )
 
     # Create DataFrame
-    df = pd.DataFrame(
-        {"timestamp": timestamps, "price": prices, "volume": volume.astype(int)}
-    )
+    df = pd.DataFrame({"timestamp": timestamps, "price": prices, "volume": volume.astype(int)})
 
     return df
 
@@ -201,7 +196,7 @@ def generate_market_data(
 def main():
     """Main entry point for the sample data generator."""
     parser = argparse.ArgumentParser(
-        description="Generate sample market data CSV for testing TradePulse interfaces",
+        description="Generate sample market data CSV for testing GeoSync interfaces",
         formatter_class=argparse.RawDescriptionHelpFormatter,
         epilog="""
 Examples:
@@ -219,9 +214,7 @@ Examples:
         """,
     )
 
-    parser.add_argument(
-        "--output", "-o", type=str, required=True, help="Output CSV file path"
-    )
+    parser.add_argument("--output", "-o", type=str, required=True, help="Output CSV file path")
 
     parser.add_argument(
         "--periods",
@@ -279,8 +272,8 @@ Examples:
     print(f"  Price std dev: ${df['price'].std():.2f}")
     print(f"  Mean volume: {df['volume'].mean():,.0f}")
     print("\nYou can now use this data with:")
-    print(f"  tradepulse analyze --csv {output_path}")
-    print(f"  tradepulse backtest --csv {output_path}")
+    print(f"  geosync analyze --csv {output_path}")
+    print(f"  geosync backtest --csv {output_path}")
     print("  streamlit run interfaces/dashboard_streamlit.py")
 
 

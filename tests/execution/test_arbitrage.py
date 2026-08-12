@@ -1,3 +1,5 @@
+# Copyright (c) 2023-2026 Yaroslav Vasylenko (neuron7xLab)
+# SPDX-License-Identifier: MIT
 from __future__ import annotations
 
 import asyncio
@@ -26,9 +28,7 @@ class InMemoryGateway(SettlementGateway):
         self.released: set[str] = set()
         self._counter = 0
 
-    async def reserve(
-        self, exchange_id: str, asset: str, amount: Decimal, transfer_id: str
-    ) -> str:
+    async def reserve(self, exchange_id: str, asset: str, amount: Decimal, transfer_id: str) -> str:
         token = f"{exchange_id}:{asset}:{self._counter}"
         self._counter += 1
         self.reservations[token] = (exchange_id, asset, amount)
@@ -109,9 +109,42 @@ async def test_atomic_capital_mover_success_and_failure() -> None:
     )
     result = await mover.execute(plan)
     assert result.committed is False
-    assert any(
-        token in failing_gateway.released for token in failing_gateway.reservations
+    assert any(token in failing_gateway.released for token in failing_gateway.reservations)
+
+
+@pytest.mark.asyncio
+async def test_partial_flag_distinguishes_a_settled_leg_from_a_clean_no_op() -> None:
+    """`partial=committed_count > 0` is the difference between "nothing happened, retry" and
+    "money moved on one venue, reconcile by hand".
+
+    A mutation probe left `Gt -> LtE` alive: no test read the flag at all, so an inverted
+    `partial` would report a non-atomic failure as a clean no-op and a clean no-op as needing
+    reconciliation. Both directions are pinned here — the first-leg failure must NOT be
+    partial, the second-leg failure MUST be.
+    """
+    plan_legs = {("EX1", "USDT"): Decimal("1000"), ("EX2", "BTC"): Decimal("1")}
+
+    # Second leg fails after the first has settled -> a genuine partial commit.
+    mover = AtomicCapitalMover({"EX1": InMemoryGateway(), "EX2": FailingCommitGateway()})
+    partial = await mover.execute(
+        CapitalTransferPlan(
+            transfer_id="partial", legs=plan_legs, initiated_at=datetime.now(timezone.utc)
+        )
     )
+    assert partial.committed is False
+    assert partial.committed_legs == 1
+    assert partial.partial is True, "a settled leg was reported as a clean no-op"
+
+    # First leg fails -> nothing settled, so this is NOT partial.
+    mover = AtomicCapitalMover({"EX1": FailingCommitGateway(), "EX2": InMemoryGateway()})
+    clean = await mover.execute(
+        CapitalTransferPlan(
+            transfer_id="clean", legs=plan_legs, initiated_at=datetime.now(timezone.utc)
+        )
+    )
+    assert clean.committed is False
+    assert clean.committed_legs == 0
+    assert clean.partial is False, "a clean no-op was flagged as needing reconciliation"
 
 
 @pytest.mark.asyncio

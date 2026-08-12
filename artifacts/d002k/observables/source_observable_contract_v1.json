@@ -1,0 +1,269 @@
+{
+  "schema_version": "D002K-SOURCE-OBSERVABLE-CONTRACT-v1",
+  "generated_at": "2026-05-15T00:00:00Z",
+  "parent_prereg_path": "docs/governance/D002K_PREREGISTRATION.yaml",
+  "parent_prereg_sha256": "2cd923810bf64547cd86ecb403bfd3f12a799cb16c3d10ebc07bc05865fee43f",
+  "parent_p1b_registry_sha256": "f1899b7a882b4b3efbebb54e3dc942c079839f77f981273e2dd09757973b14ec",
+  "parent_p1b_audit_sha256": "1e6f89299315bdc85d7929aa0883b44eee24af4474e33d4a2db95da446f7786c",
+  "parent_p2_window_registry_sha256": "41f281d9e97fbf49725f0eb1a1bb7b45865c14cdc5c525ea96231ef0aa651e8f",
+  "primary_metric": "pre_post_standardized_mean_shift",
+  "primary_mechanism": "funding_liquidity_rollover",
+  "d002k_primary_windows": [
+    "CW3_US_REPO_SPIKE_2019",
+    "CW4_COVID_DASH_FOR_CASH_2020",
+    "CW5_UK_GILT_LDI_2022"
+  ],
+  "narrowness_statement": "D-002K is funding-liquidity ONLY. No contagion / balance-sheet / cross-asset sources are bound. Narrowing scope against the inherited effect_too_small axis is legitimate design; loosening statistics at fixed scope would be laundering and is forbidden. D-002J remains terminally REFUSED at P7.",
+  "total_observables": 8,
+  "observables": [
+    {
+      "observable_id": "obs_sofr_level_shift",
+      "observable_family": "level_shift",
+      "mechanism_channel": "funding_liquidity_rollover_overnight_repo_rate",
+      "source_id": "NYFED_SOFR",
+      "source_audit_status": "VERIFIED",
+      "series_reference": "SOFR (Secured Overnight Financing Rate, daily)",
+      "crisis_windows": [
+        "CW3_US_REPO_SPIKE_2019",
+        "CW4_COVID_DASH_FOR_CASH_2020"
+      ],
+      "release_boundary": {
+        "vintage_required": false,
+        "vintage_field": null,
+        "observation_date_field": "observation_date",
+        "release_date_field": "release_date",
+        "lookahead_invariants": [
+          "observation_date <= decision_date",
+          "release_date <= decision_date"
+        ]
+      },
+      "primary_metric_mapping": "pre_post_standardized_mean_shift",
+      "role": "funding_liquidity_observable",
+      "forbidden_use": [
+        "not a systemic-risk predictor",
+        "not bank-level validation",
+        "not pre-2018 repo history (use LIBOR/OIS instead, out of D-002K scope)",
+        "not individual counterparty attribution"
+      ],
+      "evidence_notes": "SOFR is the canonical point-in-time overnight secured funding rate; BIS QR 2019 Q4 anchors the 2019 US repo spike on SOFR percentiles. Published next business day, not revised; release_date == observation_date+1bd boundary still enforced."
+    },
+    {
+      "observable_id": "obs_sofr_ois_spread_widening",
+      "observable_family": "spread_widening",
+      "mechanism_channel": "funding_liquidity_rollover_secured_unsecured_basis",
+      "source_id": "FED_H15",
+      "source_audit_status": "VERIFIED",
+      "series_reference": "H.15 SOFR vs EFFR/OBFR spread (TGCR/BGCR/SOFR post-2014 block)",
+      "crisis_windows": [
+        "CW3_US_REPO_SPIKE_2019",
+        "CW4_COVID_DASH_FOR_CASH_2020"
+      ],
+      "release_boundary": {
+        "vintage_required": false,
+        "vintage_field": null,
+        "observation_date_field": "observation_date",
+        "release_date_field": "release_date",
+        "lookahead_invariants": [
+          "observation_date <= decision_date",
+          "release_date <= decision_date"
+        ]
+      },
+      "primary_metric_mapping": "pre_post_standardized_mean_shift",
+      "role": "funding_liquidity_observable",
+      "forbidden_use": [
+        "not a systemic-risk predictor",
+        "not bank-level validation",
+        "not post-LIBOR continuity without explicit methodology note",
+        "not credit-spread interpretation (this is a funding basis, not a credit spread)"
+      ],
+      "evidence_notes": "H.15 secured-vs-unsecured overnight rate spread is the classic funding-liquidity stress widening signal. FRED mirrors H.15 under DGS/DFF/etc.; primary discipline uses the H.15 release boundary."
+    },
+    {
+      "observable_id": "obs_ofr_repo_haircut_volatility_burst",
+      "observable_family": "volatility_burst",
+      "mechanism_channel": "funding_liquidity_rollover_repo_collateral_haircut_dispersion",
+      "source_id": "OFR_REPO_DATA",
+      "source_audit_status": "VERIFIED",
+      "series_reference": "OFR Short-Term Funding Monitor tri-party haircut distribution / dealer-to-money-fund volume",
+      "crisis_windows": [
+        "CW3_US_REPO_SPIKE_2019",
+        "CW4_COVID_DASH_FOR_CASH_2020"
+      ],
+      "release_boundary": {
+        "vintage_required": false,
+        "vintage_field": null,
+        "observation_date_field": "observation_date",
+        "release_date_field": "release_date",
+        "lookahead_invariants": [
+          "observation_date <= decision_date",
+          "release_date <= decision_date"
+        ]
+      },
+      "primary_metric_mapping": "pre_post_standardized_mean_shift",
+      "role": "funding_liquidity_observable",
+      "forbidden_use": [
+        "not a systemic-risk predictor",
+        "not bank-level validation",
+        "not bilateral uncleared repo segments in detail",
+        "not European repo markets (out of OFR coverage and D-002K scope)"
+      ],
+      "evidence_notes": "OFR tri-party haircut dispersion / dealer-money-fund volume captures the funding-liquidity volatility burst during the 2019 repo spike. Methodology revisions documented; revision-stable monitor series, release boundary enforced."
+    },
+    {
+      "observable_id": "obs_ofr_fsi_funding_recovery_time",
+      "observable_family": "recovery_time",
+      "mechanism_channel": "funding_liquidity_rollover_funding_subcomponent_normalisation",
+      "source_id": "OFR_FSI",
+      "source_audit_status": "VERIFIED",
+      "series_reference": "OFR FSI funding subcomponent (ofr_fsi_credit_equity_safe_assets_funding_volatility -> funding leg)",
+      "crisis_windows": [
+        "CW3_US_REPO_SPIKE_2019",
+        "CW4_COVID_DASH_FOR_CASH_2020",
+        "CW5_UK_GILT_LDI_2022"
+      ],
+      "release_boundary": {
+        "vintage_required": false,
+        "vintage_field": null,
+        "observation_date_field": "observation_date",
+        "release_date_field": "release_date",
+        "lookahead_invariants": [
+          "observation_date <= decision_date",
+          "release_date <= decision_date"
+        ]
+      },
+      "primary_metric_mapping": "pre_post_standardized_mean_shift",
+      "role": "funding_liquidity_observable",
+      "forbidden_use": [
+        "not a systemic-risk predictor",
+        "not bank-level validation",
+        "not used as a y-label when constructed from the same underlying series as x",
+        "not the full composite OFR-FSI (only the funding subcomponent is in D-002K scope)"
+      ],
+      "evidence_notes": "Only the FUNDING subcomponent of OFR-FSI is bound (not the composite). Recovery_time = elapsed time for the funding leg to return to pre-window baseline band; Monin 2017 documents construction. Funding-liquidity relevant only."
+    },
+    {
+      "observable_id": "obs_sofr_99pct_transition_steepness",
+      "observable_family": "transition_steepness",
+      "mechanism_channel": "funding_liquidity_rollover_tail_rate_jump_slope",
+      "source_id": "NYFED_SOFR",
+      "source_audit_status": "VERIFIED",
+      "series_reference": "SOFR 99th percentile daily series (tail of secured overnight distribution)",
+      "crisis_windows": [
+        "CW3_US_REPO_SPIKE_2019",
+        "CW4_COVID_DASH_FOR_CASH_2020"
+      ],
+      "release_boundary": {
+        "vintage_required": false,
+        "vintage_field": null,
+        "observation_date_field": "observation_date",
+        "release_date_field": "release_date",
+        "lookahead_invariants": [
+          "observation_date <= decision_date",
+          "release_date <= decision_date"
+        ]
+      },
+      "primary_metric_mapping": "pre_post_standardized_mean_shift",
+      "role": "funding_liquidity_observable",
+      "forbidden_use": [
+        "not a systemic-risk predictor",
+        "not bank-level validation",
+        "not intra-day intra-segment dynamics (lost in daily aggregate)",
+        "not pre-2018 history"
+      ],
+      "evidence_notes": "SOFR 99th-percentile slope captures funding-liquidity transition steepness (how abruptly the secured-rate tail jumps). The 2019 spike pushed the SOFR 99th pct sharply; daily-aggregate limitation acknowledged."
+    },
+    {
+      "observable_id": "obs_stlfsi_funding_stress_persistence",
+      "observable_family": "stress_persistence",
+      "mechanism_channel": "funding_liquidity_rollover_persistent_us_funding_stress",
+      "source_id": "STLFSI",
+      "source_audit_status": "VERIFIED",
+      "series_reference": "STLFSI4 composite US financial-stress index (funding-stress proxy, weekly)",
+      "crisis_windows": [
+        "CW3_US_REPO_SPIKE_2019",
+        "CW4_COVID_DASH_FOR_CASH_2020"
+      ],
+      "release_boundary": {
+        "vintage_required": true,
+        "vintage_field": "release_date",
+        "observation_date_field": "observation_date",
+        "release_date_field": "release_date",
+        "lookahead_invariants": [
+          "observation_date <= decision_date",
+          "release_date <= decision_date"
+        ]
+      },
+      "primary_metric_mapping": "pre_post_standardized_mean_shift",
+      "role": "funding_liquidity_observable",
+      "forbidden_use": [
+        "not a systemic-risk predictor",
+        "not bank-level validation",
+        "not a continuous series across the 2022 LIBOR break without methodology note",
+        "not intra-week dynamics (weekly frequency)"
+      ],
+      "evidence_notes": "STLFSI is a revisable constructed index whose constituents are re-estimated; vintage_required=true so point-in-time STLFSI vintages (release_date) must be used, NOT post-hoc revised values. Stress_persistence = number of consecutive periods above the pre-window stress band. Kliesen-Smith 2010 construction."
+    },
+    {
+      "observable_id": "obs_alfred_tedrate_vintage_level_shift_uk_gilt",
+      "observable_family": "level_shift",
+      "mechanism_channel": "funding_liquidity_rollover_term_funding_spread_realtime_vintage",
+      "source_id": "ALFRED",
+      "source_audit_status": "PARTIAL",
+      "series_reference": "ALFRED real-time vintages of the FRED TEDRATE / OIS-Treasury funding-spread proxy (point-in-time)",
+      "crisis_windows": [
+        "CW5_UK_GILT_LDI_2022"
+      ],
+      "release_boundary": {
+        "vintage_required": true,
+        "vintage_field": "release_date",
+        "observation_date_field": "observation_date",
+        "release_date_field": "release_date",
+        "lookahead_invariants": [
+          "observation_date <= decision_date",
+          "release_date <= decision_date"
+        ]
+      },
+      "primary_metric_mapping": "pre_post_standardized_mean_shift",
+      "role": "funding_liquidity_observable",
+      "forbidden_use": [
+        "not a systemic-risk predictor",
+        "not bank-level validation",
+        "not post-hoc revised data used for in-window prediction",
+        "not a non-FRED-native series (ALFRED only vintages FRED-native series)"
+      ],
+      "evidence_notes": "ALFRED supplies the point-in-time vintage lens for the revisable funding-spread proxy used in the CW5 UK gilt/LDI window. vintage_required=true: the D-002I/D-002J look-ahead lesson applied at the observable layer (Croushore 2011 requires ALFRED for honest replication). PARTIAL audit status acknowledged; vintage alignment with decision_date is explicit, not assumed."
+    },
+    {
+      "observable_id": "obs_vix_control_covariate",
+      "observable_family": "volatility_burst",
+      "mechanism_channel": "market_wide_implied_volatility_control_not_funding_liquidity",
+      "source_id": "CBOE_VIX",
+      "source_audit_status": "PARTIAL",
+      "series_reference": "VIXCLS (CBOE VIX close via FRED) -- CONTROL COVARIATE ONLY, NOT a funding-liquidity observable",
+      "crisis_windows": [
+        "CW3_US_REPO_SPIKE_2019",
+        "CW4_COVID_DASH_FOR_CASH_2020",
+        "CW5_UK_GILT_LDI_2022"
+      ],
+      "release_boundary": {
+        "vintage_required": false,
+        "vintage_field": null,
+        "observation_date_field": "observation_date",
+        "release_date_field": "release_date",
+        "lookahead_invariants": [
+          "observation_date <= decision_date",
+          "release_date <= decision_date"
+        ]
+      },
+      "primary_metric_mapping": "pre_post_standardized_mean_shift",
+      "role": "control_covariate",
+      "forbidden_use": [
+        "not a systemic-risk predictor",
+        "not bank-level validation",
+        "not a funding-liquidity observable (it is a market-wide equity-vol control only)",
+        "not a Kuramoto-style coherence observable; cross-asset coherence does not prove interbank contagion"
+      ],
+      "evidence_notes": "VIX is explicitly a CONTROL covariate, NOT a funding-liquidity observable. It conditions / de-confounds market-wide risk-off but never feeds the funding-liquidity signal as an endpoint. role=control_covariate enforced by test. Echoes the cross-asset != interbank discipline."
+    }
+  ]
+}

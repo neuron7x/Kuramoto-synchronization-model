@@ -1,0 +1,90 @@
+# Diff-bound acceptor for INV-K10: symplecticity of the swing-equation
+# velocity-Verlet integrator — the ROOT property of the K7/K8/K9 cluster.
+#
+# INV-K8 (energy conserved at fixed dt) and INV-K9 (bounded O(dt^2) error, no
+# secular drift) are CONSEQUENCES of a single defining property: the one-step
+# Jacobian M is symplectic, MᵀJM = J, equivalently det(M)=1 (Liouville volume
+# preservation). This registers and machine-checks that root directly.
+#
+# Verified: complex-step Jacobian of the production step gives symplectic-form
+# residual 2.22e-16 and det(M)=1.000000000000000 (undamped); a non-symplectic
+# Euler step gives an O(dt^2)~1e-4 residual — a 12-order separation. Damped
+# det(M)=exp(-(Σd/m)dt) phase-space contraction cross-checked. No production
+# code change — the test binds a complex-safe replica to the engine bit-exactly.
+
+id: inv-k10-symplecticity
+status: ACTIVE
+claim_type: correctness
+promise: >-
+  Registers INV-K10 (conservation / symplectic 2-form): the velocity-Verlet
+  integrator of the undamped (ω=0, d=0) second-order swing equation is
+  symplectic — its one-step Jacobian M preserves the standard symplectic form
+  MᵀJM = J (J=[[0,I],[-I,0]]) to machine precision, equivalently det(M)=1
+  (Liouville phase-space-volume preservation). This is the ROOT property from
+  which INV-K8 (energy conservation) and INV-K9 (bounded O(dt²) error, no
+  secular drift) follow as theorems (Hairer-Lubich-Wanner). One trajectory test
+  added to tests/unit/physics/test_T18_kuramoto_p1.py: it builds M by complex-
+  step differentiation (machine-precision, no truncation) after binding a
+  complex-safe replica to SecondOrderKuramotoEngine bit-exactly, then asserts
+  the symplectic-form residual and |det(M)-1| are below 1e-12. Zero production
+  code change.
+diff_scope:
+  changed_files:
+    - path: ".claude/commit_acceptors/inv-k10-symplecticity.yaml"
+    - path: ".claude/physics/INVARIANTS.yaml"
+    - path: "tests/unit/physics/test_T18_kuramoto_p1.py"
+    - path: "scripts/ci/prove_repo_integrity.sh"
+    - path: "scripts/ci/evidence_gate.sh"
+    - path: "CLAUDE.md"
+    - path: "BASELINE.md"
+    - path: "README.md"
+    - path: "CLAIMS.md"
+    - path: "artifacts/claims_hashes.json"
+  forbidden_paths:
+    - "trading/"
+    - "execution/"
+    - "forecast/"
+    - "policy/"
+required_python_symbols:
+  - "test_swing_integrator_jacobian_is_symplectic"
+expected_signal: >-
+  All 7 tests in tests/unit/physics/test_T18_kuramoto_p1.py pass, including the
+  new INV-K10 symplecticity test; physics validator 0 issues; mypy --strict
+  clean; invariant-count-sync reports 100 across README/BASELINE/CLAUDE/CLAIMS/
+  registry; both .sh witness pins read 100. Verified: symplectic-form residual
+  max|MᵀJM-J| = 2.22e-16, det(M) = 1.000000000000000; a non-symplectic Euler
+  step gives an O(dt²)≈1e-4 residual (12-order separation).
+measurement_command: >-
+  PYTHONPATH=. python -m pytest tests/unit/physics/test_T18_kuramoto_p1.py
+  -k symplectic -v
+signal_artifact: "tmp/inv_k10_symplecticity_pytest.log"
+falsifier:
+  command: >-
+    PYTHONPATH=. python -m pytest tests/unit/physics/test_T18_kuramoto_p1.py
+    -v -k "swing_integrator_jacobian_is_symplectic"
+  description: >-
+    Filters to the INV-K10 symplecticity test. It is the falsifier for loss of
+    the integrator's defining property: the one-step Jacobian must preserve the
+    symplectic form to machine precision (residual < 1e-12) and have unit
+    determinant. A non-symplectic step (Euler) raises the residual to O(dt²)≈
+    1e-4 and breaks det(M)=1, failing both assertions; the complex-safe replica
+    is first bound to the production engine bit-exactly so the probe tests the
+    shipped integrator, not a model.
+rollback_command: >-
+  git checkout HEAD~1 --
+  tests/unit/physics/test_T18_kuramoto_p1.py
+  .claude/physics/INVARIANTS.yaml
+  scripts/ci/prove_repo_integrity.sh
+  scripts/ci/evidence_gate.sh
+  CLAUDE.md
+  BASELINE.md
+  README.md
+  CLAIMS.md
+  artifacts/claims_hashes.json
+  .claude/commit_acceptors/inv-k10-symplecticity.yaml
+rollback_verification_command: >-
+  git diff --exit-code tests/unit/physics/test_T18_kuramoto_p1.py
+memory_update_type: none
+ledger_path: ".claude/commit_acceptors/inv-k10-symplecticity.yaml"
+report_path: "docs/reports/diff_bound_commit_acceptor_layer.md"
+evidence: []

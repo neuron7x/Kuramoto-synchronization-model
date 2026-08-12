@@ -1,0 +1,76 @@
+name: Coverage Control Plane
+
+on:
+  pull_request:
+    paths:
+      - "tools/coverage/coverage_control_plane.py"
+      - "tools/coverage/coverage_calibration_loop.py"
+      - "tools/coverage/coverage_matrix_engine.py"
+      - "tools/coverage/coverage_orchestrator.py"
+      - "tools/coverage/coverage_quality_system.py"
+      - "tools/coverage/coverage_state_aggregator.py"
+      - "tools/coverage/coverage_behavior_profiler.py"
+      - "tools/coverage/geosync_coverage_intelligence.py"
+      - "tests/tools/test_coverage_control_plane.py"
+      - "tests/tools/test_coverage_matrix_engine.py"
+      - "tests/tools/test_coverage_orchestrator.py"
+      - "tests/tools/test_coverage_quality_system.py"
+      - "tests/tools/test_coverage_state_aggregator.py"
+      - "tests/tools/test_coverage_behavior_profiler.py"
+      - ".github/workflows/coverage-control-plane.yml"
+  push:
+    branches: [main]
+    paths:
+      - "tools/coverage/coverage_control_plane.py"
+      - "tools/coverage/coverage_calibration_loop.py"
+      - "tools/coverage/coverage_matrix_engine.py"
+      - "tools/coverage/coverage_orchestrator.py"
+      - "tools/coverage/coverage_quality_system.py"
+      - "tools/coverage/coverage_state_aggregator.py"
+      - "tools/coverage/coverage_behavior_profiler.py"
+      - "tools/coverage/geosync_coverage_intelligence.py"
+      - "tests/tools/test_coverage_control_plane.py"
+      - "tests/tools/test_coverage_matrix_engine.py"
+      - "tests/tools/test_coverage_orchestrator.py"
+      - "tests/tools/test_coverage_quality_system.py"
+      - "tests/tools/test_coverage_state_aggregator.py"
+      - "tests/tools/test_coverage_behavior_profiler.py"
+      - ".github/workflows/coverage-control-plane.yml"
+  workflow_dispatch:
+
+permissions:
+  contents: read
+
+concurrency:
+  group: coverage-control-plane-${{ github.ref }}
+  cancel-in-progress: true
+
+jobs:
+  control-plane-contract:
+    runs-on: ubuntu-latest
+    timeout-minutes: 10
+    steps:
+      - name: Checkout
+        uses: actions/checkout@9c091bb21b7c1c1d1991bb908d89e4e9dddfe3e0 # v7.0.0
+
+      - name: Set up Python
+        uses: actions/setup-python@ece7cb06caefa5fff74198d8649806c4678c61a1 # v6
+        with:
+          python-version: "3.12"
+
+      - name: Install minimal test dependencies
+        run: |
+          python -m pip install --upgrade pip
+          python -m pip install pytest pyyaml tomli
+          python -m pip install -r requirements.txt
+
+      - name: Run control-plane orchestration contract tests
+        run: |
+          python -m pytest \
+            tests/tools/test_coverage_control_plane.py \
+            tests/tools/test_coverage_matrix_engine.py \
+            tests/tools/test_coverage_orchestrator.py \
+            tests/tools/test_coverage_quality_system.py \
+            tests/tools/test_coverage_state_aggregator.py \
+            tests/tools/test_coverage_behavior_profiler.py \
+            -q -p no:cacheprovider

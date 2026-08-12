@@ -1,0 +1,53 @@
+id: feature-cache-freshness-contract
+status: ACTIVE
+claim_type: governance
+promise: >-
+  artifacts/cache/feature_cache_freshness_matrix.json binds the 8 realtime
+  feature-cache freshness invariants (event-time CAS parity, tz normalisation,
+  microsecond round-trip, malformed/missing-ts rejection, authoritative ordered DB
+  fallback) to real PASS tests. Feature data served to live inference cannot go
+  backward in event time; the gate fails closed on a missing node or non-PASS
+  invariant.
+diff_scope:
+  changed_files:
+    - path: ".claude/commit_acceptors/feature-cache-freshness-contract.yaml"
+    - path: "artifacts/cache/feature_cache_freshness_matrix.json"
+    - path: "audit/schema/feature_cache_freshness_matrix.schema.json"
+    - path: "tests/unit/core/test_realtime_store_freshness_contract.py"
+    - path: "tests/ci/test_feature_cache_freshness_matrix.py"
+  forbidden_paths:
+    - "execution/"
+required_python_symbols: []
+expected_signal: >-
+  `python -m pytest --import-mode=importlib
+  tests/unit/core/test_realtime_store_freshness_contract.py
+  tests/ci/test_feature_cache_freshness_matrix.py -q` passes; every invariant binds
+  an existing PASS test.
+measurement_command: >-
+  bash -c '
+    python -m pytest --import-mode=importlib -p no:cacheprovider
+      tests/unit/core/test_realtime_store_freshness_contract.py
+      tests/ci/test_feature_cache_freshness_matrix.py -q
+  '
+signal_artifact: "tmp/feature_cache_freshness.log"
+falsifier:
+  command: |-
+    bash -c '
+      python -c "
+    import json
+    m = json.load(open(\"artifacts/cache/feature_cache_freshness_matrix.json\"))
+    ok = len(m[\"invariants\"]) >= 8 and all(i[\"verdict\"]==\"PASS\" for i in m[\"invariants\"]) and m[\"verdict\"]==\"PASS\"
+    raise SystemExit(0 if ok else \"freshness matrix incomplete or non-PASS\")
+    "
+    '
+  description: >-
+    Asserts >=8 freshness invariants, all PASS. Exits 0 on the bound matrix;
+    non-zero if an invariant is dropped or regresses.
+rollback_command: >-
+  bash -c 'git rm -f .claude/commit_acceptors/feature-cache-freshness-contract.yaml'
+rollback_verification_command: >-
+  bash -c 'test ! -f .claude/commit_acceptors/feature-cache-freshness-contract.yaml'
+memory_update_type: append
+ledger_path: ".claude/commit_acceptors/feature-cache-freshness-contract.yaml"
+report_path: "tmp/feature_cache_freshness.log"
+evidence: []

@@ -1,0 +1,17 @@
+{
+  "$schema": "https://json-schema.org/draft/2020-12/schema",
+  "title": "CognitiveMirrorMethod",
+  "type": "object",
+  "required": ["id", "definition", "input", "process", "output", "validation", "failure_modes", "example"],
+  "properties": {
+    "id": {"type": "string"},
+    "definition": {"type": "string"},
+    "input": {"type": "object"},
+    "process": {"type": "array", "items": {"type": "string"}},
+    "output": {"type": "object"},
+    "validation": {"type": "array", "items": {"type": "string"}},
+    "failure_modes": {"type": "array", "items": {"type": "string"}},
+    "example": {"type": "object"}
+  },
+  "additionalProperties": false
+}

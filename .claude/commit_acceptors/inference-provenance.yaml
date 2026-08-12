@@ -1,0 +1,68 @@
+id: inference-provenance
+status: ACTIVE
+claim_type: correctness
+promise: >-
+  Signed (content-addressed) and reproducible provenance for the inference-integrity
+  artifacts. Every tool-generated artifact is byte-reproducible from its generator
+  via main(--out); every artifact is sha256-pinned and chained into a
+  provenance_root so any tampering changes the root and is detected. Not a PKI
+  signature — a KMS signature over provenance_root is a deploy-time step.
+diff_scope:
+  changed_files:
+    - path: ".claude/commit_acceptors/inference-provenance.yaml"
+    - path: "tools/audit_inference_provenance.py"
+    - path: "scripts/ci/validate_inference_artifacts.py"
+    - path: "tests/ci/test_inference_provenance_manifest.py"
+    - path: "tests/unit/tools/test_inference_provenance.py"
+    - path: "artifacts/provenance/inference_provenance.json"
+    - path: "audit/schema/inference_provenance.schema.json"
+    - path: "scripts/ci/verify_changeset.py"
+    - path: ".pre-commit-config.yaml"
+    - path: ".gitleaks.toml"
+    - path: ".github/workflows/pr-gate.yml"
+  forbidden_paths:
+    - "execution/"
+    - "core/"
+required_python_symbols:
+  - "tools/audit_inference_provenance.py::build_provenance"
+expected_signal: >-
+  `python -m pytest --import-mode=importlib
+  tests/ci/test_inference_provenance_manifest.py tests/unit/tools/test_inference_provenance.py -q`
+  passes; all generated artifacts reproduce byte-identical and the manifest hashes
+  match the committed artifacts.
+measurement_command: >-
+  bash -c '
+    python -m pytest --import-mode=importlib -p no:cacheprovider
+      tests/ci/test_inference_provenance_manifest.py
+      tests/unit/tools/test_inference_provenance.py -q
+  '
+signal_artifact: "tmp/inference_provenance.log"
+falsifier:
+  command: |-
+    bash -c '
+      python -c "
+    import importlib.util, json, shutil, tempfile, pathlib
+    spec = importlib.util.spec_from_file_location(\"prov\", \"tools/audit_inference_provenance.py\")
+    prov = importlib.util.module_from_spec(spec); spec.loader.exec_module(prov)
+    honest = prov.build_provenance(pathlib.Path(\".\"))
+    tmp = pathlib.Path(tempfile.mkdtemp())
+    shutil.copytree(\"artifacts\", tmp / \"artifacts\"); shutil.copytree(\"tools\", tmp / \"tools\")
+    v = tmp / \"artifacts/state/mutable_state_registry.json\"
+    d = json.loads(v.read_text()); d[\"verdict\"] = \"UNBOUND\"; v.write_text(json.dumps(d))
+    tampered = prov.build_provenance(tmp)
+    ok = honest[\"verdict\"] == \"PASS\" and tampered[\"provenance_root\"] != honest[\"provenance_root\"]
+    raise SystemExit(0 if ok else \"provenance not reproducible or tampering not detected\")
+    "
+    '
+  description: >-
+    Confirms the honest provenance is PASS and that mutating a pinned artifact
+    changes the provenance_root. Exits 0 when reproducible + tamper-evident;
+    non-zero otherwise.
+rollback_command: >-
+  bash -c 'git rm -f .claude/commit_acceptors/inference-provenance.yaml'
+rollback_verification_command: >-
+  bash -c 'test ! -f .claude/commit_acceptors/inference-provenance.yaml'
+memory_update_type: append
+ledger_path: ".claude/commit_acceptors/inference-provenance.yaml"
+report_path: "tmp/inference_provenance.log"
+evidence: []

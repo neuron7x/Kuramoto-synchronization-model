@@ -117,7 +117,7 @@ g_i = −log(−log U), U ∼ Uniform(0,1)
 ### Basic Usage
 
 ```python
-from neuropro.hpc_active_inference_v4 import HPCActiveInferenceModuleV4
+from geosync_hpc.hpc_active_inference_v4 import HPCActiveInferenceModuleV4
 import pandas as pd
 
 # Initialize model
@@ -163,7 +163,7 @@ print(f"Action: {result['action']}, PWPE: {result['pwpe']:.4f}")
 ### Grid Search for Perturbation Scale
 
 ```python
-from neuropro.hpc_validation import calibrate_perturbation_scale
+from geosync_hpc.hpc_validation import calibrate_perturbation_scale
 
 best_epsilon, results = calibrate_perturbation_scale(
     model,
@@ -176,7 +176,7 @@ best_epsilon, results = calibrate_perturbation_scale(
 ### Validation Metrics
 
 ```python
-from neuropro.hpc_validation import validate_hpc_ai
+from geosync_hpc.hpc_validation import validate_hpc_ai
 
 metrics = validate_hpc_ai(model, data, n_steps=20)
 print(f"Mean PWPE: {metrics.mean_pwpe:.4f}")
@@ -187,7 +187,7 @@ print(f"Action Diversity: {metrics.action_diversity:.1%}")
 ### Backtesting
 
 ```python
-from neuropro.hpc_validation import simple_backtest
+from geosync_hpc.hpc_validation import simple_backtest
 
 results = simple_backtest(model, data, initial_capital=10000.0)
 print(f"Total Return: {results['total_return']:.2%}")
@@ -285,11 +285,11 @@ print(f"Max Drawdown: {results['max_drawdown']:.2%}")
 
 ## License
 
-Copyright (c) 2025 TradePulse. All rights reserved.
+Copyright (c) 2025 GeoSync. All rights reserved.
 See LICENSE file for details.
 
 ## Contact
 
 For questions or support:
-- GitHub Issues: https://github.com/neuron7x/TradePulse/issues
-- Documentation: https://tradepulse.readthedocs.io
+- GitHub Issues: https://github.com/neuron7xLab/GeoSync/issues
+- Documentation: https://geosync.readthedocs.io

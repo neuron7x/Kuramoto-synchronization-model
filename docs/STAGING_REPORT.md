@@ -50,7 +50,7 @@ and protocol activator safety behaviour in a representative pre-production soak.
 - Fallback deterministic: yes
 
 ## Audit Guarantees
-- Thermodynamic decisions are streamed to `/var/log/tradepulse/thermo_audit.jsonl`
+- Thermodynamic decisions are streamed to `/var/log/geosync/thermo_audit.jsonl`
   for 7-year retention, ensuring every deviation from invariants is reviewable.
 - Circuit breaker blocks topology evolution until an authorised manual override clears
   the halt state.

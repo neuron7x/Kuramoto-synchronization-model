@@ -1,0 +1,32 @@
+# Copyright (c) 2023-2026 Yaroslav Vasylenko (neuron7xLab)
+# SPDX-License-Identifier: MIT
+#
+# PR proof schema. Every serious PR landing on main carries a record
+# of this shape under .claude/pr_proofs/PR<N>.yaml. The validator at
+# tools/governance/validate_pr_proof.py rejects malformed records.
+#
+# Lie blocked by this schema:
+#   "PR description = proof"
+#
+# A PR description is text. A proof is the executable claim that a
+# named lie cannot pass without a mechanical witness. The two are not
+# the same.
+
+schema_version: 1
+
+required_fields:
+  - pr_number               # int, > 0
+  - lie_blocked             # non-empty str — name the inference this PR refuses
+  - files_changed           # non-empty list[str] of repo-relative paths
+  - tests_run               # non-empty list[str] (pytest selectors or CLI commands)
+  - falsifier_command       # non-empty str: the mutation command that re-introduces the lie
+  - falsifier_expected_failure  # non-empty list[str] of test ids expected to fail under mutation
+  - restore_command         # non-empty str: how the source was restored
+  - evidence_paths          # non-empty list[str]: artifacts the proof rests on
+  - remaining_uncertainty   # non-empty str: what this PR still does NOT prove
+  - closure_status          # one of: CLOSED / PARTIAL / BLOCKED
+
+closure_constraints:
+  - "closure=CLOSED requires falsifier_command + falsifier_expected_failure + restore_command + evidence_paths"
+  - "closure=PARTIAL requires remaining_uncertainty to name what is missing"
+  - "closure=BLOCKED requires remaining_uncertainty to name the blocker"

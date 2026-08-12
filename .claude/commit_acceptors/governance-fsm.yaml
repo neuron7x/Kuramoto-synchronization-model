@@ -1,0 +1,99 @@
+# Diff-bound commit acceptor for the Governance FSM (pillar 7).
+#
+# Operationalises pillar 7 of the Canonical Seven: a frozen,
+# fail-closed finite-state machine encoding the lifecycle of every
+# claim, with an explicit absorbing terminal state REJECTED. Once a
+# claim is REJECTED, no transition can resurrect it.
+#
+# Pure-function, no I/O, mypy --strict / ruff / black clean.
+#
+# State graph:
+#   IDEA → HYPOTHESIS → INSTRUMENTED → TESTED_ON_SYNTHETIC →
+#   TESTED_ON_REAL_DATA → MEASURED → REPLICATED → VALIDATED
+#
+#   any state ──KILL──→ REJECTED       (terminal, absorbing)
+#   any state ──INVALIDATE──→ IDEA     (reset, evidence struck)
+#   any state ──QUARANTINE──→ QUARANTINED
+#   any state ──DEMOTE──→ previous tier on the ladder (clamps at IDEA)
+#   any state ──STOP──→ state unchanged (run halt only)
+#   any state ──NONE──→ state unchanged
+#
+# Locally verified:
+#   * pytest tests/research/systemic_risk/test_governance_fsm.py: 23/23 pass
+#   * mypy --strict on FSM + test file: 0 errors
+#   * ruff + black on changed files: clean
+
+id: governance-fsm
+status: ACTIVE
+claim_type: governance
+promise: >-
+  After this PR lands, ``research.systemic_risk`` exposes
+  ``GovernanceFSM`` plus the canonical state alphabet
+  (``GovernanceState``, ``PROMOTABLE_LADDER``, ``TERMINAL_STATES``,
+  ``INITIAL_STATE``) and the ``InvalidTransitionError`` raised on
+  forbidden transitions. The FSM consumes :class:`TierTransition`
+  from the death engine as its event vocabulary; ``REJECTED`` is
+  absorbing and ``QUARANTINED`` requires external sign-off to escape.
+
+diff_scope:
+  changed_files:
+    - path: ".claude/commit_acceptors/governance-fsm.yaml"
+    - path: "research/systemic_risk/__init__.py"
+    - path: "research/systemic_risk/governance_fsm.py"
+    - path: "tests/research/systemic_risk/test_governance_fsm.py"
+  forbidden_paths:
+    - "trading/"
+    - "execution/"
+    - "forecast/"
+    - "policy/"
+    - "core/"
+    - "runtime/"
+    - "application/"
+
+required_python_symbols:
+  - "research/systemic_risk/governance_fsm.py::GovernanceFSM"
+  - "research/systemic_risk/governance_fsm.py::PROMOTABLE_LADDER"
+  - "research/systemic_risk/governance_fsm.py::TERMINAL_STATES"
+  - "research/systemic_risk/governance_fsm.py::InvalidTransitionError"
+  - "tests/research/systemic_risk/test_governance_fsm.py::TestKillIsAbsorbing"
+
+expected_signal: >-
+  ``pytest tests/research/systemic_risk/test_governance_fsm.py -q`` reports
+  23 passed; before this PR the same command fails with
+  ModuleNotFoundError on ``research.systemic_risk.governance_fsm``.
+
+measurement_command: >-
+  bash -c '
+    mypy --strict
+      research/systemic_risk/governance_fsm.py
+      tests/research/systemic_risk/test_governance_fsm.py && python -m pytest tests/research/systemic_risk/test_governance_fsm.py -q
+  '
+
+signal_artifact: "tmp/governance_fsm.log"
+
+falsifier:
+  command: |-
+    bash -c '
+      python -c "from research.systemic_risk import GovernanceFSM, PROMOTABLE_LADDER; assert len(PROMOTABLE_LADDER) >= 6 and GovernanceFSM.initial().state == \"IDEA\"" 2>/dev/null && exit 1 || exit 0
+    '
+  description: >-
+    Probes the FSM and ladder are exposed and the initial state is
+    ``IDEA``. The falsifier inverts: it succeeds (exit 0) only when
+    the import or the state assertion fails, which would mean pillar
+    7 rolled back.
+
+rollback_command: >-
+  bash -c '
+    git rm -f
+      research/systemic_risk/governance_fsm.py
+      tests/research/systemic_risk/test_governance_fsm.py
+      .claude/commit_acceptors/governance-fsm.yaml && git checkout HEAD~1 -- research/systemic_risk/__init__.py
+  '
+
+rollback_verification_command: |-
+  python -c "import importlib.util,importlib,sys; _p=lambda m: all(importlib.util.find_spec('.'.join(m.split('.')[:i+1])) for i in range(len(m.split('.')))); present=_p('research.systemic_risk') and hasattr(importlib.import_module('research.systemic_risk'),'GovernanceFSM'); sys.exit(1 if present else 0)"
+
+memory_update_type: append
+ledger_path: ".claude/commit_acceptors/governance-fsm.yaml"
+report_path: "tmp/governance_fsm.log"
+evidence: []

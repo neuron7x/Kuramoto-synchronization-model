@@ -1,0 +1,109 @@
+# Diff-bound acceptor: honest relabel of the T7 "diffusion" predictor.
+#
+# Closes a physics MISLABEL (not a numeric bug). core/physics/diffusion_predictor.py
+# advertised heat-kernel graph "diffusion" as a "validated framework" and the
+# class is named DiffusionVolatilityPredictor, but the object it computes is a
+# normalised RANKING SCORE that relaxes toward the graph's stationary
+# distribution on a FINITE graph — NOT free, mass-conserving Fickian diffusion.
+#
+# Verified mechanism (measured, see falsifier): on a finite line graph the heat
+# kernel exp(-Lt) cannot spread past the end nodes, so the mean-square
+# displacement SATURATES — the long-horizon log-log scaling exponent is ≈0.1,
+# NOT the Fickian 1. (The per-step clamp+L1 simplex projection R is a near-no-op
+# at machine precision for valid Laplacian + non-negative simplex inputs; it is a
+# ranking guard, not the cause of the non-Fickian behaviour. This corrects the
+# original task hypothesis that R itself destroyed the diffusion signature.)
+#
+# This commit is DOCSTRING + TEST + COMMENT ONLY. All numeric computation is
+# byte-identical (verified: predict() and backtest() outputs match the pre-commit
+# module exactly across randomised inputs). No public symbol is renamed, so
+# core/physics/__init__.py exports and all consumers are untouched. The hardcoded
+# mean_lead_time=1.0 is relabelled as a fixed construction constant (1-step-ahead
+# by design), explicitly NOT an empirical measurement; its value is unchanged.
+# No INVARIANTS.yaml / CLAUDE.md / BASELINE.md / README change (no count moves).
+
+id: diffusion-rank-propagation-relabel
+status: ACTIVE
+claim_type: correctness
+promise: >-
+  core.physics.diffusion_predictor is honestly framed as heat-kernel RANK
+  PROPAGATION (a normalised ranking that relaxes toward the graph stationary
+  distribution), provenance tier EXTRAPOLATED, NOT physical/Fickian diffusion
+  and NOT a "validated framework". The docstrings state that on a finite graph
+  the mean-square displacement SATURATES (scaling exponent ≈0, not the Fickian
+  1), that the per-step clamp+L1 simplex projection R is a near-no-op for valid
+  inputs (it is a ranking guard, not the cause of the saturation), and that the
+  reported mean_lead_time=1.0 is a fixed construction constant (1-step-ahead by
+  design) and not an empirical lead time. All numeric output is byte-identical
+  to the prior module (no renorm change, no propagation-math change, no backtest
+  score change); public symbols DiffusionVolatilityPredictor /
+  VolatilityFrontPrediction / BacktestResult are retained. A falsification test
+  (test_msd_saturates_not_fickian) pins the saturating MSD exponent on a known
+  line graph and asserts it is < 0.3 (measured ≈0.1), and a companion test
+  (test_renorm_is_noop_for_valid_inputs) pins that R agrees with the free heat
+  kernel to machine precision (<1e-9) for valid simplex inputs.
+diff_scope:
+  changed_files:
+    - path: ".claude/commit_acceptors/diffusion-rank-propagation-relabel.yaml"
+    - path: "core/physics/diffusion_predictor.py"
+      sha256: "9dae70f063b807fc4cdcf2b36e3832b9d3e3907e440678665e27e75632f28999"  # pragma: allowlist secret
+    - path: "tests/unit/physics/test_T7_diffusion_predictor.py"
+      sha256: "e09db779887149ada123f84d620b5c5b5cbacb693fa7d92e5bd7a5868347d206"  # pragma: allowlist secret
+  forbidden_paths:
+    - "trading/"
+    - "execution/"
+    - "forecast/"
+    - "policy/"
+required_python_symbols:
+  - "DiffusionVolatilityPredictor"
+  - "VolatilityFrontPrediction"
+  - "BacktestResult"
+expected_signal: >-
+  pytest tests/unit/physics/test_T7_diffusion_predictor.py
+  tests/core/test_physics_modules.py is green (30 passed), including the new
+  TestNonFickian class; black --check, ruff format, ruff check, and
+  mypy --strict are clean on the two changed Python files;
+  validate_tests.py --audit-code reports 0 clamp/bounds issues and
+  --self-check prints "Physics kernel self-check PASSED". Measured saturation-
+  regime MSD exponent on a 41-node line graph (centre source, horizons
+  64..1024) is ≈0.1 (far below the Fickian 1); renorm-vs-free-kernel max
+  deviation is ~1e-16. predict()/backtest() outputs are byte-identical to the
+  pre-commit module across randomised inputs (verified by direct comparison).
+measurement_command: >-
+  python -m pytest tests/unit/physics/test_T7_diffusion_predictor.py
+  tests/core/test_physics_modules.py -q
+signal_artifact: "tmp/diffusion_rank_propagation_pytest.log"
+falsifier:
+  command: >-
+    python -c "import numpy as np, sys;
+    from core.physics.diffusion_predictor import DiffusionVolatilityPredictor;
+    n=41; adj=np.zeros((n,n));
+    [adj.__setitem__((i,i+1),1.0) or adj.__setitem__((i+1,i),1.0) for i in range(n-1)];
+    pos=np.arange(n,dtype=float); rho0=np.zeros(n); rho0[n//2]=1.0;
+    p=DiffusionVolatilityPredictor(D_0=1.0); L=p._build_laplacian(adj,None);
+    hor=[64.,128.,256.,512.,1024.];
+    msd=[float(np.sum((d:=p._propagate(rho0,L,t))*(pos-np.sum(d*pos))**2)) for t in hor];
+    slope=float(np.polyfit(np.log(hor),np.log(msd),1)[0]);
+    print('msd_exponent', round(slope,4));
+    sys.exit(1 if slope>=0.3 else 0)"
+  description: >-
+    Measures the saturation-regime mean-square-displacement scaling exponent of
+    the PRODUCTION propagator on a known 41-node line graph (centre point
+    source, horizons 64..1024). Free Fickian diffusion would give exponent ≈1.
+    The probe exits 0 only because the finite-graph relaxation SATURATES
+    (measured exponent ≈0.1 < 0.3); it exits non-zero iff the operator starts
+    behaving like unbounded Fickian diffusion (exponent ≥0.3). This proves the
+    object is non-Fickian rank propagation and would fire if a future change
+    re-asserted the "diffusion" label by removing the saturating relaxation —
+    distinguishing the honest relabel from a real diffusion model.
+rollback_command: >-
+  git checkout HEAD~1 --
+  core/physics/diffusion_predictor.py
+  tests/unit/physics/test_T7_diffusion_predictor.py
+  .claude/commit_acceptors/diffusion-rank-propagation-relabel.yaml
+rollback_verification_command: >-
+  git diff --exit-code core/physics/diffusion_predictor.py
+memory_update_type: none
+ledger_path: ".claude/commit_acceptors/diffusion-rank-propagation-relabel.yaml"
+report_path: "core/physics/diffusion_predictor.py"
+evidence: []

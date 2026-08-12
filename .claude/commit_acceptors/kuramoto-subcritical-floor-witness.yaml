@@ -1,0 +1,95 @@
+# Diff-bound commit acceptor for the Kuramoto subcritical finite-size-floor witness.
+#
+# Adds ONE @pytest.mark.heavy_math test module binding the previously-unwitnessed
+# catalog law kuramoto.subcritical_finite_size to an executable @law witness,
+# citing the EXISTING registry invariant INV-K5 (no new invariant, no count
+# change, no documentation-surface edit). Promotes no claim, changes no runtime
+# behavior, touches no schema/guard, uses no real data.
+#
+#   kuramoto.subcritical_finite_size — below K_c the order parameter sits at the
+#     finite-size floor: r < 3/sqrt(N) for >=99% of M=60 Lorentzian trials at
+#     N=256, and the mean tracks the analytic coefficient c=sqrt(pi/2)/sqrt(N)
+#     (INV-K5: <R> ~ O(1/sqrt(N)) in the incoherent regime, >=50 realizations).
+#
+# This was the last witnessable unwitnessed catalog law (the only remaining two,
+# oms.idempotency/oms.causal_order, are architecturally blocked by the
+# forbidden-import gate). Resolving it brings physical-law-coverage to 32/34.
+# M=60 honours INV-K5's >=50-realization floor and keeps the heavy lane well under
+# its 1200s budget (the catalog's heavier M>=200 protocol is the nightly standard).
+#
+# Locally verified on origin/main base (count 103, unchanged by this PR):
+#   * pytest -m heavy_math <file>: 1 passed (M=60, frac<floor=1.0000, ~30 s)
+#   * .claude/physics/validate_tests.py <file>: 0 issues (L1..L5), EXIT 0
+#   * ruff / black --check / mypy --strict clean ; zero new `# type: ignore`
+id: kuramoto-subcritical-floor-witness
+status: ACTIVE
+claim_type: governance
+promise: >-
+  After this PR lands, tests/physics_contracts/test_kuramoto_subcritical_floor_witness.py
+  binds the catalog law kuramoto.subcritical_finite_size to an @law-decorated,
+  @pytest.mark.heavy_math witness that passes .claude/physics/validate_tests with
+  zero issues. The witness runs M=60 subcritical Lorentzian ensembles at N=256,
+  K=0.5*K_c, equilibration t>20/gamma, and asserts at least 99% of trials satisfy
+  r < 3/sqrt(N) and that the ensemble mean tracks the Lorentzian floor
+  sqrt(pi/2)/sqrt(N) within a factor of two (INV-K5, >=50 realizations). It cites
+  an existing invariant — the registry count is unchanged. No market claim; no
+  runtime, schema, or guard change.
+diff_scope:
+  changed_files:
+    - path: ".claude/commit_acceptors/kuramoto-subcritical-floor-witness.yaml"
+    - path: "tests/physics_contracts/test_kuramoto_subcritical_floor_witness.py"
+  forbidden_paths:
+    - "trading/"
+    - "execution/"
+    - "forecast/"
+    - "policy/"
+    - "application/"
+    - "core/"
+    - "src/"
+    - "geosync_hpc/"
+    - "physics_contracts/catalog.yaml"
+    - ".claude/physics/INVARIANTS.yaml"
+required_python_symbols: []
+expected_signal: >-
+  `python -m pytest tests/physics_contracts/test_kuramoto_subcritical_floor_witness.py
+  -m heavy_math` reports 1 passed; `python .claude/physics/validate_tests.py
+  tests/physics_contracts/test_kuramoto_subcritical_floor_witness.py` exits 0 with
+  no L1..L5 issues; ruff, black --check and mypy --strict on the file are clean.
+measurement_command: >-
+  bash -c 'mkdir -p tmp && python -m pytest
+  tests/physics_contracts/test_kuramoto_subcritical_floor_witness.py -m heavy_math
+  > tmp/kuramoto_subcritical_floor_witness.log 2>&1
+  && grep -q "1 passed" tmp/kuramoto_subcritical_floor_witness.log'
+signal_artifact: "tmp/kuramoto_subcritical_floor_witness.log"
+falsifier:
+  command: |-
+    bash -c 'python -c "
+    import math, numpy as np, sys
+    from core.kuramoto.config import KuramotoConfig
+    from core.kuramoto.engine import KuramotoEngine
+    gamma = 2.0; N = 256; K = 0.5 * 2.0 * gamma
+    def tail_r(seed):
+        rng = np.random.default_rng(seed)
+        omega = (rng.standard_cauchy(N) * gamma).astype(np.float64)
+        theta0 = rng.uniform(-math.pi, math.pi, N).astype(np.float64)
+        cfg = KuramotoConfig(N=N, K=K, omega=omega, theta0=theta0, dt=0.1, steps=140, seed=seed)
+        return float(np.mean(KuramotoEngine(cfg).run().order_parameter[-50:]))
+    floor = 3.0 / math.sqrt(N)
+    frac = np.mean([tail_r(s) < floor for s in range(30)])
+    sys.exit(0 if frac < 0.99 else 1)"'
+  description: >-
+    Inverse probe of the subcritical floor (light M=30 ensemble). It exits 0
+    (fires) iff fewer than 99% of subcritical trials sit below the 3/sqrt(N) floor
+    — i.e. the engine leaks coherence in the incoherent regime. While the floor
+    holds the probe exits 1. If it ever exits 0, INV-K5 is no longer truthful for
+    the engine and the witness must be corrected or reverted, not patched green.
+rollback_command: >-
+  git rm -f
+  tests/physics_contracts/test_kuramoto_subcritical_floor_witness.py
+  .claude/commit_acceptors/kuramoto-subcritical-floor-witness.yaml
+rollback_verification_command: >-
+  bash -c 'test ! -f tests/physics_contracts/test_kuramoto_subcritical_floor_witness.py'
+memory_update_type: none
+ledger_path: ".claude/commit_acceptors/kuramoto-subcritical-floor-witness.yaml"
+report_path: "tmp/kuramoto_subcritical_floor_witness.log"
+evidence: []

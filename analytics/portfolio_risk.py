@@ -1,3 +1,5 @@
+# Copyright (c) 2023-2026 Yaroslav Vasylenko (neuron7xLab)
+# SPDX-License-Identifier: MIT
 """Portfolio risk stress testing utilities.
 
 This module implements risk analytics tailored for institutional-grade
@@ -90,8 +92,7 @@ class StressScenarioResult:
                 ),
                 "missing_assets": list(self.missing_assets),
                 "contributions": [
-                    {"asset": item.asset, "pnl": float(item.pnl)}
-                    for item in self.contributions
+                    {"asset": item.asset, "pnl": float(item.pnl)} for item in self.contributions
                 ],
             }
         )
@@ -137,9 +138,7 @@ class VolatilityScenarioResult:
                 "baseline_var": float(self.baseline_var),
                 "baseline_expected_shortfall": float(self.baseline_expected_shortfall),
                 "projected_var": float(self.projected_var),
-                "projected_expected_shortfall": float(
-                    self.projected_expected_shortfall
-                ),
+                "projected_expected_shortfall": float(self.projected_expected_shortfall),
                 "description": self.description,
             }
         )
@@ -182,18 +181,13 @@ class PortfolioStressReport:
                 "portfolio_value": float(self.portfolio_value),
                 "risk_metrics": dict(self.risk_metrics.to_dict()),
                 "exposures": [
-                    {"asset": asset, "notional": float(amount)}
-                    for asset, amount in self.exposures
+                    {"asset": asset, "notional": float(amount)} for asset, amount in self.exposures
                 ],
-                "scenario_results": [
-                    dict(result.to_dict()) for result in self.scenario_results
-                ],
+                "scenario_results": [dict(result.to_dict()) for result in self.scenario_results],
                 "volatility_results": [
                     dict(result.to_dict()) for result in self.volatility_results
                 ],
-                "limit_breaches": [
-                    dict(breach.to_dict()) for breach in self.limit_breaches
-                ],
+                "limit_breaches": [dict(breach.to_dict()) for breach in self.limit_breaches],
             }
         )
 
@@ -235,9 +229,7 @@ class PortfolioStressReport:
             lines.append("| --- | ---: | ---: |")
             for result in self.scenario_results:
                 lines.append(
-                    "| "
-                    + result.name
-                    + f" | ${result.pnl:,.2f} | {result.relative_impact:.2%} |"
+                    "| " + result.name + f" | ${result.pnl:,.2f} | {result.relative_impact:.2%} |"
                 )
 
         if self.volatility_results:
@@ -317,9 +309,7 @@ class PortfolioStressTester:
             return self._pnl
         return self._pnl.rolling(window=horizon_days).sum().dropna()
 
-    def compute_var_es(
-        self, *, confidence_level: float, horizon_days: int
-    ) -> PortfolioRiskMetrics:
+    def compute_var_es(self, *, confidence_level: float, horizon_days: int) -> PortfolioRiskMetrics:
         if not (0.0 < confidence_level < 1.0):
             raise ValueError("confidence_level must be between 0 and 1")
         aggregated = self._aggregate_pnl(horizon_days)
@@ -426,9 +416,7 @@ class PortfolioStressTester:
 
         breaches: list[RiskLimitBreach] = []
         if var_limit is not None and risk_metrics.var > var_limit:
-            breaches.append(
-                RiskLimitBreach(metric="var", value=risk_metrics.var, limit=var_limit)
-            )
+            breaches.append(RiskLimitBreach(metric="var", value=risk_metrics.var, limit=var_limit))
         if (
             expected_shortfall_limit is not None
             and risk_metrics.expected_shortfall > expected_shortfall_limit

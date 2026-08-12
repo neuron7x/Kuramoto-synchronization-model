@@ -1,5 +1,5 @@
 ---
-owner: platform@tradepulse
+owner: platform@geosync
 review_cadence: semiannual
 last_reviewed: 2025-12-28
 links:

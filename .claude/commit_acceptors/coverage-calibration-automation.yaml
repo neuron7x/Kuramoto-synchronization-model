@@ -1,0 +1,52 @@
+id: coverage-calibration-automation
+status: ACTIVE
+claim_type: correctness
+promise: >-
+  Adds a deterministic calibration planner for the TD-023 coverage-ascent
+  campaign. The planner consumes machine-generated coverage_summary.json,
+  refuses invalid evidence by default, selects the next 90/92/95/97 global band,
+  ranks surfaces by risk-weighted missing statements, and emits JSON/Markdown
+  work plans without changing production thresholds or coverage omit rules.
+
+diff_scope:
+  changed_files:
+    - path: tools/coverage/calibrate_coverage_ascent.py
+    - path: tests/tools/test_coverage_calibration.py
+    - path: .claude/commit_acceptors/coverage-calibration-automation.yaml
+  forbidden_paths:
+    - configs/quality/release_90.coveragerc
+    - configs/quality/coverage_targets.toml
+    - configs/quality/critical_surface.toml
+    - pyproject.toml
+
+required_python_symbols:
+  - tools.coverage.calibrate_coverage_ascent.build_plan
+  - tools.coverage.calibrate_coverage_ascent.main
+  - tools.coverage.calibrate_coverage_ascent.SurfaceCalibration
+  - tools.coverage.calibrate_coverage_ascent.CalibrationPlan
+
+expected_signal: >-
+  The calibration test suite passes and proves that invalid evidence fails
+  closed, next-band selection is deterministic, complete surfaces are excluded,
+  and critical/high-risk missing statements dominate the work plan.
+
+measurement_command: >-
+  bash -c 'set -euo pipefail; mkdir -p tmp; PYTHONPATH=. python -m pytest tests/tools/test_coverage_calibration.py -q | tee tmp/coverage_calibration_automation.log'
+
+signal_artifact: tmp/coverage_calibration_automation.log
+
+falsifier:
+  command: >-
+    bash -c 'PYTHONPATH=. python -m pytest tests/tools/test_coverage_calibration.py -q'
+  description: >-
+    Fails if malformed or invalid evidence is trusted, if the next coverage band
+    is selected incorrectly, if already-complete surfaces are recommended, or if
+    risk-weighted missing statements stop dominating the ranked plan.
+
+rollback_command: >-
+  bash -c 'git rm -f tools/coverage/calibrate_coverage_ascent.py tests/tools/test_coverage_calibration.py .claude/commit_acceptors/coverage-calibration-automation.yaml'
+rollback_verification_command: >-
+  bash -c 'test ! -f tools/coverage/calibrate_coverage_ascent.py && test ! -f tests/tools/test_coverage_calibration.py && test ! -f .claude/commit_acceptors/coverage-calibration-automation.yaml'
+memory_update_type: append
+ledger_path: .claude/commit_acceptors/coverage-calibration-automation.yaml
+report_path: tmp/coverage_calibration_automation.log

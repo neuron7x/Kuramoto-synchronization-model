@@ -1,4 +1,6 @@
 #!/usr/bin/env python3
+# Copyright (c) 2023-2026 Yaroslav Vasylenko (neuron7xLab)
+# SPDX-License-Identifier: MIT
 """
 Python Version Matrix Guard - Ensures consistency across Dockerfile, CI workflows, and pyproject.toml
 This script prevents version drift by validating that all Python versions are within the supported range.
@@ -20,8 +22,8 @@ def parse_requires_python(pyproject_path: Path) -> Tuple[str, str]:
 
     version_spec = match.group(1)
     # Parse >=X.Y,<X.Z format
-    min_match = re.search(r'>=(\d+\.\d+)', version_spec)
-    max_match = re.search(r'<(\d+\.\d+)', version_spec)
+    min_match = re.search(r">=(\d+\.\d+)", version_spec)
+    max_match = re.search(r"<(\d+\.\d+)", version_spec)
 
     if not min_match or not max_match:
         print(f"❌ ERROR: Unexpected requires-python format: {version_spec}")
@@ -36,15 +38,15 @@ def check_dockerfiles(repo_root: Path, min_ver: str, max_ver: str) -> List[str]:
     issues = []
     dockerfiles = list(repo_root.glob("**/Dockerfile*"))
 
-    min_major, min_minor = map(int, min_ver.split('.'))
-    max_major, max_minor = map(int, max_ver.split('.'))
+    min_major, min_minor = map(int, min_ver.split("."))
+    max_major, max_minor = map(int, max_ver.split("."))
 
     for dockerfile in dockerfiles:
         content = dockerfile.read_text()
         # Find all FROM python:X.Y lines
-        for match in re.finditer(r'FROM\s+python:(\d+\.\d+)', content):
+        for match in re.finditer(r"FROM\s+python:(\d+\.\d+)", content):
             version = match.group(1)
-            major, minor = map(int, version.split('.'))
+            major, minor = map(int, version.split("."))
 
             # Check if version is in range [min_ver, max_ver)
             if (major, minor) < (min_major, min_minor) or (major, minor) >= (max_major, max_minor):
@@ -64,8 +66,8 @@ def check_workflows(repo_root: Path, min_ver: str, max_ver: str) -> List[str]:
     if not workflow_dir.exists():
         return issues
 
-    min_major, min_minor = map(int, min_ver.split('.'))
-    max_major, max_minor = map(int, max_ver.split('.'))
+    min_major, min_minor = map(int, min_ver.split("."))
+    max_major, max_minor = map(int, max_ver.split("."))
 
     for workflow in workflow_dir.glob("*.yml"):
         content = workflow.read_text()
@@ -74,26 +76,29 @@ def check_workflows(repo_root: Path, min_ver: str, max_ver: str) -> List[str]:
         # Match: python-version: "X.Y" or python-version: ['X.Y', 'X.Z']
         for match in re.finditer(r'python-version:\s*["\']?(\d+\.\d+)["\']?', content):
             version = match.group(1)
-            major, minor = map(int, version.split('.'))
+            major, minor = map(int, version.split("."))
 
             if (major, minor) < (min_major, min_minor) or (major, minor) >= (max_major, max_minor):
                 rel_path = workflow.relative_to(repo_root)
-                line_no = content[:match.start()].count('\n') + 1
+                line_no = content[: match.start()].count("\n") + 1
                 issues.append(
                     f"  ❌ {rel_path}:{line_no}: python-version: {version} (out of range: >={min_ver},<{max_ver})"
                 )
 
         # Also check matrix definitions like ["3.11", "3.12", "3.13"]
-        for match in re.finditer(r'python-version:\s*\[([^\]]+)\]', content):
+        for match in re.finditer(r"python-version:\s*\[([^\]]+)\]", content):
             versions_str = match.group(1)
             versions = re.findall(r'["\'](\d+\.\d+)["\']', versions_str)
 
             for version in versions:
-                major, minor = map(int, version.split('.'))
+                major, minor = map(int, version.split("."))
 
-                if (major, minor) < (min_major, min_minor) or (major, minor) >= (max_major, max_minor):
+                if (major, minor) < (min_major, min_minor) or (major, minor) >= (
+                    max_major,
+                    max_minor,
+                ):
                     rel_path = workflow.relative_to(repo_root)
-                    line_no = content[:match.start()].count('\n') + 1
+                    line_no = content[: match.start()].count("\n") + 1
                     issues.append(
                         f"  ❌ {rel_path}:{line_no}: matrix includes {version} (out of range: >={min_ver},<{max_ver})"
                     )
@@ -137,7 +142,7 @@ def main():
         print("Remediation:")
         print(f"  All Python versions must be in range: >={min_ver},<{max_ver}")
         print(f"  - Dockerfiles: Use python:{min_ver}-slim or python:3.12-slim")
-        print(f"  - Workflows: Use matrix python-version: [\"{min_ver}\", \"3.12\"]")
+        print(f'  - Workflows: Use matrix python-version: ["{min_ver}", "3.12"]')
         print()
         print("Source of truth: pyproject.toml requires-python field")
         sys.exit(1)

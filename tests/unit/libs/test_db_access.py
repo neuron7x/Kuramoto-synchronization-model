@@ -1,3 +1,5 @@
+# Copyright (c) 2023-2026 Yaroslav Vasylenko (neuron7xLab)
+# SPDX-License-Identifier: MIT
 """Tests for the generic data access layer helpers."""
 
 from __future__ import annotations
@@ -88,9 +90,7 @@ class RecordingFactory:
         self.connections: list[FakeConnection] = []
 
     def __call__(self) -> FakeConnection:
-        cursor = self.cursor_factory(
-            fetchone_result=self.fetchone, fetchall_result=self.fetchall
-        )
+        cursor = self.cursor_factory(fetchone_result=self.fetchone, fetchall_result=self.fetchall)
         connection = FakeConnection(cursor)
         self.connections.append(connection)
         return connection

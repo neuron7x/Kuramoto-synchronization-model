@@ -1,0 +1,109 @@
+{
+  "schema": "evidence_provenance_contract@v1",
+  "note": "Provenance classification for the governance EVIDENCE-artifact surface (artifacts/academy_fellow/, artifacts/physics_v2/, claims_hashes.json, docs/architecture/claim_graph.json). Every evidence artifact carries a determinism_class so trust is uniform, not mixed. The freshness gate (scripts/ci/check_artifact_freshness.py) regenerates each `deterministic` artifact and asserts byte-identical to the committed file; `nondeterministic`/`external-data-bound`/`generated-but-excluded` artifacts require an exclusion_reason and are not byte-compared. A new evidence artifact without an entry here fails the gate (no silent unclassified trust).",
+  "determinism_classes": [
+    "deterministic",
+    "nondeterministic",
+    "external-data-bound",
+    "generated-but-excluded"
+  ],
+  "evidence_surfaces": [
+    "artifacts/academy_fellow",
+    "artifacts/physics_v2"
+  ],
+  "artifacts": [
+    {
+      "artifact": "artifacts/academy_fellow/distinguished_evidence_table.json",
+      "determinism_class": "deterministic",
+      "generator": [
+        "scripts/ci/gen_distinguished_evidence_table.py"
+      ],
+      "sources": [
+        ".claude/neuro/NEURO_OPERATIONALIZATION_LEDGER.yaml"
+      ]
+    },
+    {
+      "artifact": "artifacts/academy_fellow/law_mechanism_witness_matrix.json",
+      "determinism_class": "deterministic",
+      "generator": [
+        "scripts/ci/gen_law_mechanism_witness_matrix.py"
+      ],
+      "sources": [
+        ".claude/physics/INVARIANTS.yaml"
+      ]
+    },
+    {
+      "artifact": "artifacts/academy_fellow/traceability_report.json",
+      "determinism_class": "deterministic",
+      "generator": [
+        "scripts/ci/gen_law_mechanism_witness_matrix.py"
+      ],
+      "sources": [
+        ".claude/physics/INVARIANTS.yaml"
+      ]
+    },
+    {
+      "artifact": "artifacts/academy_fellow/reference_conformance_certificate.json",
+      "determinism_class": "deterministic",
+      "generator": [
+        "scripts/ci/gen_reference_conformance.py"
+      ],
+      "sources": [
+        ".claude/neuro/NEURO_OPERATIONALIZATION_LEDGER.yaml"
+      ]
+    },
+    {
+      "artifact": "artifacts/physics_v2/law_witness_index.json",
+      "determinism_class": "generated-but-excluded",
+      "generator": [
+        "scripts/ci/check_physics_law_witness_index.py",
+        "--write"
+      ],
+      "sources": [
+        ".claude/physics/INVARIANTS.yaml"
+      ],
+      "exclusion_reason": "Produced by a VERDICT GATE (check_physics_law_witness_index.py), not a pure generator: --write is coupled to mutable on-disk state and can exit non-zero mid-pipeline. Byte-freshness is enforced by its own dedicated gate step in phd_evidence.sh, not by re-running the gate as a generator here."
+    },
+    {
+      "artifact": "artifacts/physics_v2/inference_readiness.json",
+      "determinism_class": "generated-but-excluded",
+      "generator": [
+        "scripts/ci/check_physics_inference_readiness.py",
+        "--write"
+      ],
+      "sources": [
+        "artifacts/physics_v2/law_witness_index.json"
+      ],
+      "exclusion_reason": "Produced by a VERDICT GATE (check_physics_inference_readiness.py) that recomputes from the law-witness index; re-running it as a generator is order/state-coupled and can exit non-zero. Byte-freshness is enforced by its own dedicated gate step in phd_evidence.sh."
+    },
+    {
+      "artifact": "artifacts/claims_hashes.json",
+      "determinism_class": "deterministic",
+      "generator": [
+        "scripts/generate_claim_hashes.py"
+      ],
+      "sources": [
+        "CLAIMS.md"
+      ]
+    },
+    {
+      "artifact": "docs/architecture/claim_graph.json",
+      "determinism_class": "deterministic",
+      "generator": [
+        "scripts/generate_claim_graph.py"
+      ],
+      "sources": [
+        "CLAIMS.md"
+      ]
+    },
+    {
+      "artifact": "artifacts/physics_v2/REL-004_readiness_receipt.json",
+      "determinism_class": "generated-but-excluded",
+      "sources": [
+        "scripts/ci/check_physics_law_witness_index.py",
+        ".claude/physics/INVARIANTS.yaml"
+      ],
+      "exclusion_reason": "Timestamped readiness RECEIPT emitted by a VERDICT GATE (check_physics_law_witness_index.py --write) \u2014 carries a mutable generated_utc field, so it is not bit-reproducible on re-run. Same rationale as physics_v2/law_witness_index.json and inference_readiness.json; freshness of the underlying index is enforced by that gate's own step, not by re-running it here."
+    }
+  ]
+}

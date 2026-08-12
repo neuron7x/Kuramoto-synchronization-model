@@ -1,4 +1,6 @@
-"""Microservice-oriented façade for TradePulse subsystems."""
+# Copyright (c) 2023-2026 Yaroslav Vasylenko (neuron7xLab)
+# SPDX-License-Identifier: MIT
+"""Microservice-oriented façade for GeoSync subsystems."""
 
 from .backtesting import BacktestingService
 from .base import Microservice, ServiceHealth, ServiceState

@@ -1,16 +1,31 @@
-# TradePulse Comprehensive Security Audit Report
+# GeoSync Comprehensive Security Audit Report
 
-**Audit Date:** 2025-12-08  
-**Audit Type:** Comprehensive Security & Technical Assessment  
-**Auditor:** GitHub Copilot Security Agent  
-**Repository:** neuron7x/TradePulse  
+**Audit Date:** 2025-12-08
+**Audit Type:** Comprehensive Security & Technical Assessment
+**Auditor:** GitHub Copilot Security Agent
+**Repository:** neuron7xLab/GeoSync
 **Version:** 0.1.0 Beta
 
 ---
 
+> ⚠️ **PROVENANCE — READ FIRST.** This is the historical 2025-12-08
+> security audit, retained for audit-trail completeness. The verdicts
+> ("STRONG", "EXCEPTIONAL", "Mathematically proven stability") and the
+> 95/100 score reflect the audit team's assessment at that time. They
+> are NOT a current 2026-05-05 evidence boundary. Specifically:
+>
+> * "Mathematically proven stability" refers to the formal-Lyapunov
+>   structure of the ECS regulator, not to live-venue capital safety.
+> * "Production-ready" predates limitation L-1 (paper-trading only),
+>   which still binds in the 2026-05-05 canonical snapshot.
+>
+> Treat strong language in this file as historical-aspirational. The
+> current evidence boundary is in `CLAIMS.md`,
+> `docs/PERFORMANCE_LEDGER.md`, and `docs/KNOWN_LIMITATIONS.md`.
+
 ## Executive Summary
 
-This comprehensive security audit examines the TradePulse trading platform across multiple dimensions including dependency security, code security, infrastructure hardening, authentication/authorization, and safety-critical systems. The audit follows industry standards including OWASP Top 10, NIST SP 800-53, ISO 27001, and regulatory requirements (SEC, FINRA, EU AI Act).
+This comprehensive security audit examines the GeoSync trading platform across multiple dimensions including dependency security, code security, infrastructure hardening, authentication/authorization, and safety-critical systems. The audit follows industry standards including OWASP Top 10, NIST SP 800-53, ISO 27001, and regulatory requirements (SEC, FINRA, EU AI Act).
 
 ### Overall Security Posture: **STRONG** ✅
 
@@ -94,11 +109,11 @@ cd go/services/vpin && govulncheck ./...
 ### 1.4 Rust Dependencies
 
 **Status:** ℹ️ Requires manual verification  
-**Location:** `rust/tradepulse-accel`
+**Location:** `rust/geosync-accel`
 
 **Recommendation:**
 ```bash
-cd rust/tradepulse-accel && cargo audit
+cd rust/geosync-accel && cargo audit
 ```
 
 ---
@@ -312,7 +327,7 @@ where ε = 0.01 × baseline_EMA
 1. **Lyapunov-Style Energy Descent** - Mathematically proven stability
 2. **Mutation Blocking** - Automatically rejects unsafe topology changes
 3. **Human Override Required** - Manual approval for out-of-bounds changes
-4. **Audit Trail** - All decisions logged to `/var/log/tradepulse/thermo_audit.jsonl`
+4. **Audit Trail** - All decisions logged to `/var/log/geosync/thermo_audit.jsonl`
 5. **7-Year Retention** - Compliance with financial regulations
 
 ### 5.2 Crisis Handling
@@ -333,7 +348,7 @@ where ε = 0.01 × baseline_EMA
 
 | Regulation | Requirement | Implementation |
 |------------|-------------|----------------|
-| SEC / FINRA | Audit trail for autonomous decisions | `/var/log/tradepulse/thermo_audit.jsonl` with 7-year retention |
+| SEC / FINRA | Audit trail for autonomous decisions | `/var/log/geosync/thermo_audit.jsonl` with 7-year retention |
 | EU AI Act | Human oversight for AI systems | Manual reset endpoint `POST /thermo/reset` |
 | SOC 2 | Change tracking | Telemetry captures timestamps, ΔF, activation metadata |
 | ISO 27001 | Fail-safe procedures | Monotonic constraint prevents unsafe mutations |
@@ -566,7 +581,7 @@ pytest tests/security/ tests/unit/test_security*.py \
    - Add govulncheck to CI/CD
 
 3. **Rust Dependency Audit**
-   - Run `cargo audit` in `rust/tradepulse-accel`
+   - Run `cargo audit` in `rust/geosync-accel`
    - Update vulnerable crates
    - Add cargo-audit to CI/CD
 
@@ -646,7 +661,7 @@ pytest tests/security/ tests/unit/test_security*.py \
 
 ## 13. Conclusion
 
-TradePulse demonstrates **excellent security posture** with:
+GeoSync demonstrates **excellent security posture** with:
 
 ✅ **Zero dependency vulnerabilities** (all packages up to date)  
 ✅ **Zero HIGH severity code issues** (2 MEDIUM, both acceptable)  
@@ -675,17 +690,17 @@ TradePulse demonstrates **excellent security posture** with:
 
 ### Final Assessment
 
-**TradePulse is ready for production deployment** with the current security posture. The system demonstrates enterprise-grade security controls, comprehensive safety guarantees, and strong compliance alignment. The identified areas for improvement are **non-blocking** and can be addressed through normal development cycles.
+**GeoSync is ready for production deployment** with the current security posture. The system demonstrates enterprise-grade security controls, comprehensive safety guarantees, and strong compliance alignment. The identified areas for improvement are **non-blocking** and can be addressed through normal development cycles.
 
-The TACL safety system provides **formal guarantees** that set TradePulse apart from typical trading platforms, ensuring both performance and safety in autonomous topology optimization.
+The TACL safety system provides **formal guarantees** that set GeoSync apart from typical trading platforms, ensuring both performance and safety in autonomous topology optimization.
 
 ---
 
 ## Appendix A: Security Contacts
 
-- **Security Issues:** security@tradepulse.local
-- **General Issues:** https://github.com/neuron7x/TradePulse/issues
-- **Security Advisories:** https://github.com/neuron7x/TradePulse/security/advisories
+- **Security Issues:** security@geosync.local
+- **General Issues:** https://github.com/neuron7xLab/GeoSync/issues
+- **Security Advisories:** https://github.com/neuron7xLab/GeoSync/security/advisories
 
 ---
 

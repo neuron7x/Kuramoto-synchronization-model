@@ -1,4 +1,6 @@
-"""Base primitives shared across TradePulse microservices."""
+# Copyright (c) 2023-2026 Yaroslav Vasylenko (neuron7xLab)
+# SPDX-License-Identifier: MIT
+"""Base primitives shared across GeoSync microservices."""
 
 from __future__ import annotations
 
@@ -47,7 +49,7 @@ class Microservice:
         self._name = name
         self._state = ServiceState.STOPPED
         self._last_error: str | None = None
-        self._tracer = get_tracer(f"tradepulse.microservice.{name}")
+        self._tracer = get_tracer(f"geosync.microservice.{name}")
         self._operation_stats: MutableMapping[str, _OperationStats] = {}
         self._operation_contracts: MutableMapping[str, ServiceInteractionContract] = {}
 
@@ -231,9 +233,7 @@ class _OperationStats:
     replays: int = 0
     last_error: str | None = None
 
-    def record(
-        self, duration: float, success: bool, *, error: Exception | None
-    ) -> None:
+    def record(self, duration: float, success: bool, *, error: Exception | None) -> None:
         self.latencies.append(duration)
         if success:
             self.successes += 1

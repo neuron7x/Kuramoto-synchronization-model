@@ -1,0 +1,128 @@
+# Diff-bound commit acceptor for IERD-Q5 Phase-4 EXIT: UX
+# state-coverage gate (fail-closed, claim ANCHORED).
+#
+# Before (Phase-4 ENTRY): the gate scored a crude state→status-code
+# proxy and ran informationally (continue-on-error: true), guarded by
+# GEOSYNC_UX_STATE_GATE=1; UXRS was 0.4394 by design because the API
+# could not emit the `timeout` state (deadline breaches surfaced as
+# 500, conflating server_error and timeout).
+#
+# After (Phase-4 EXIT): the only genuinely-absent state is made real.
+# application/api/middleware/request_timeout.py adds
+# RequestTimeoutMiddleware, wired innermost in create_app, which bounds
+# every non-streaming request by GEOSYNC_REQUEST_TIMEOUT_SECONDS and
+# emits a canonical 504 ErrorResponse envelope on breach;
+# ApiErrorCode.GATEWAY_TIMEOUT + 504 in COMMON_ERROR_RESPONSES make 504
+# declared on every collection/command op (regenerated spec). The test
+# is rewritten to score each state by its genuine, falsifiable
+# discriminator (status code / ApiErrorCode filter-mismatch enum /
+# pagination.next_cursor / live 504 middleware) over the semantically
+# applicable matrix (collection/command/probe classes), NOT a proxy —
+# refusing to bend HTTP semantics for a number. UXRS = 1.0000 (50/50).
+# Behavioural tests prove the 504 is emitted, not merely declared. The
+# run step is now fail-closed; the env-gate and continue-on-error are
+# removed; claim `ux-readiness-state-coverage` is ANCHORED with
+# INV-API-CONTRACT.
+#
+# Locally verified (development laptop, native Python):
+#   tests/api/test_ux_state_coverage.py ................ 6 passed
+#     [uxrs] AGGREGATE covered=50/50 UXRS=1.0000
+#   tests/api + tests/unit/api regression .............. 158 passed
+#     (openapi drift, full service suite, latency budget — 0 regressions)
+#   mypy --strict / black / ruff ....................... clean
+
+id: ierd-q5-ux-state-coverage-gate
+status: ACTIVE
+claim_type: correctness
+promise: >-
+  RequestTimeoutMiddleware emits a canonical 504 ErrorResponse on a
+  deadline breach (proven by
+  tests/api/test_ux_state_coverage.py::test_request_timeout_middleware_emits_504_envelope),
+  and fails closed on a non-positive deadline
+  (test_request_timeout_middleware_rejects_nonpositive_deadline).
+  test_uxrs_meets_threshold scores every public operation against the
+  genuine discriminator for each of the six IERD §5 UX states over the
+  applicable collection/command/probe matrix and asserts
+  UXRS = covered/applicable ≥ 0.95 (observed 1.0000, 50/50);
+  test_error_envelope_on_all_4xx_5xx asserts every 4xx/5xx (incl. 504)
+  $refs #/components/schemas/ErrorResponse. The UX State Coverage
+  workflow runs the suite fail-closed (no continue-on-error) on every
+  PR touching the API surface or schema and uploads junit.xml +
+  run.log as `ux-state-coverage-results` (14-day retention). Phase-4
+  EXIT contract: continue-on-error is NOT set on the run step and the
+  claim is ANCHORED; any flip back to informational must co-ship an
+  EXTRAPOLATED re-classification.
+diff_scope:
+  changed_files:
+    - path: ".claude/commit_acceptors/ierd-q5-ux-state-coverage-gate.yaml"
+    - path: ".github/workflows/ux-state-coverage.yml"
+    - path: "docs/CLAIMS.yaml"
+    - path: "tests/api/test_ux_state_coverage.py"
+    - path: "application/api/middleware/request_timeout.py"
+    - path: "application/api/middleware/__init__.py"
+    - path: "application/api/errors.py"
+    - path: "application/api/service.py"
+    - path: "schemas/openapi/geosync-online-inference-v1.json"
+  forbidden_paths:
+    - "trading/"
+    - "execution/"
+    - "forecast/"
+    - "policy/"
+    - "core/physics/"
+    - "core/kuramoto/"
+required_python_symbols:
+  - "tests/api/test_ux_state_coverage.py::test_uxrs_meets_threshold"
+  - "tests/api/test_ux_state_coverage.py::test_error_envelope_on_all_4xx_5xx"
+  - "tests/api/test_ux_state_coverage.py::test_request_timeout_middleware_emits_504_envelope"
+  - "tests/api/test_ux_state_coverage.py::test_request_timeout_middleware_rejects_nonpositive_deadline"
+  - "application/api/middleware/request_timeout.py::RequestTimeoutMiddleware"
+  - "application/api/errors.py::ApiErrorCode"
+expected_signal: >-
+  Local: `mypy --strict --follow-imports=silent
+  application/api/middleware/request_timeout.py
+  tests/api/test_ux_state_coverage.py` reports "Success: no issues
+  found in 2 source files"; `black --check` and `ruff check` clean;
+  `pytest tests/api/test_ux_state_coverage.py -q` reports 6 passed
+  with `[uxrs] AGGREGATE covered=50/50 UXRS=1.0000`; `pytest tests/api
+  tests/unit/api -q` reports 158 passed (openapi drift + full service
+  suite + latency budget, 0 regressions, schemathesis skipped — runs
+  fail-closed in its own workflow); `python scripts/ci/check_claims.py`
+  reports schema v3 with `ux-readiness-state-coverage` ANCHORED, all
+  evidence paths present, falsifier block well-formed.
+measurement_command: >-
+  bash -c 'mypy --strict --follow-imports=silent
+  application/api/middleware/request_timeout.py tests/api/test_ux_state_coverage.py
+  && black --check application/api/middleware/request_timeout.py tests/api/test_ux_state_coverage.py
+  && ruff check application/api/middleware/request_timeout.py application/api/errors.py application/api/service.py tests/api/test_ux_state_coverage.py
+  && python scripts/ci/check_claims.py'
+signal_artifact: "tmp/ierd_q5_ux_state_coverage_gate.log"
+falsifier:
+  command: >-
+    bash -c 'python -c "import yaml,sys; spec=yaml.safe_load(open(\".github/workflows/ux-state-coverage.yml\")); steps=spec[\"jobs\"][\"ux-state-coverage\"][\"steps\"]; run_step=next(s for s in steps if s.get(\"id\")==\"run\"); sys.exit(0 if run_step.get(\"continue-on-error\") is not True else 1)"'
+  description: >-
+    Phase-4 EXIT (2026-05-16): the gate is now fail-closed. The
+    falsifier asserts the inverse invariant — `continue-on-error` must
+    NOT be True on the ux-state-coverage run step. If a future change
+    flips the gate back to informational, the falsifier exits
+    non-zero, forcing the claim back to EXTRAPOLATED in
+    docs/CLAIMS.yaml. Prevents silent strictness regression, identical
+    to the Q4 Phase-3 EXIT guarantee.
+rollback_command: >-
+  git checkout HEAD~1 --
+  .claude/commit_acceptors/ierd-q5-ux-state-coverage-gate.yaml
+  .github/workflows/ux-state-coverage.yml
+  tests/api/test_ux_state_coverage.py
+  application/api/middleware/request_timeout.py
+  application/api/middleware/__init__.py
+  application/api/errors.py
+  application/api/service.py
+  schemas/openapi/geosync-online-inference-v1.json
+  docs/CLAIMS.yaml
+rollback_verification_command: >-
+  git diff --exit-code tests/api/test_ux_state_coverage.py
+  .github/workflows/ux-state-coverage.yml
+  application/api/middleware/request_timeout.py
+memory_update_type: append
+ledger_path: ".claude/commit_acceptors/ierd-q5-ux-state-coverage-gate.yaml"
+report_path: "tmp/ierd_q5_ux_state_coverage_gate.log"
+evidence: []

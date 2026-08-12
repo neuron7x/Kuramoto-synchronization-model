@@ -1,5 +1,5 @@
 ---
-owner: docs@tradepulse
+owner: docs@geosync
 review_cadence: quarterly
 last_reviewed: 2025-12-28
 links:
@@ -10,7 +10,7 @@ links:
 # Documentation Template Catalogue
 
 Use this directory to source, version, and review canonical templates for the
-TradePulse documentation system. Each template below ships with inline
+GeoSync documentation system. Each template below ships with inline
 instructions wrapped in a `<details>` block so authors can remove the guidance
 once the document is instantiated. Templates reflect the requirements defined in
 the Documentation Governance and Standardisation playbooks.

@@ -1,4 +1,4 @@
-%% TradePulse trust boundaries and data flow constraints
+%% GeoSync trust boundaries and data flow constraints
 flowchart TD
     subgraph Boundary0[Boundary 0: Public]
         clients[Clients]
@@ -15,7 +15,7 @@ flowchart TD
     end
 
     subgraph Boundary3[Boundary 3: Core Services]
-        tradepulse_api[TradePulse API]
+        geosync_api[GeoSync API]
         service_mesh[Service Mesh mTLS]
         kafka[Kafka Cluster]
         postgres[PostgreSQL HA]
@@ -24,8 +24,8 @@ flowchart TD
     clients -->|HTTPS| waf
     waf -->|sanitised headers| gateway
     gateway -->|validated hosts| authn
-    authn -->|JWT + mTLS| tradepulse_api
-    tradepulse_api -->|id-tagged events| observability
-    tradepulse_api --> service_mesh
+    authn -->|JWT + mTLS| geosync_api
+    geosync_api -->|id-tagged events| observability
+    geosync_api --> service_mesh
     service_mesh --> kafka
     service_mesh --> postgres

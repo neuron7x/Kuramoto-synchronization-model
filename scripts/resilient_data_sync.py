@@ -1,8 +1,10 @@
+# Copyright (c) 2023-2026 Yaroslav Vasylenko (neuron7xLab)
+# SPDX-License-Identifier: MIT
 """Cross-platform data synchronisation helper with resilience features."""
 
 from __future__ import annotations
 
-# SPDX-License-Identifier: LicenseRef-TradePulse-Proprietary
+# SPDX-License-Identifier: MIT
 import argparse
 import json
 import sys
@@ -104,9 +106,7 @@ def _resolve_sources(raw_sources: list[str], pattern: str) -> list[ResolvedSourc
         parsed = urlparse(raw)
         if parsed.scheme in {"http", "https", "file"}:
             name = _destination_name(raw)
-            resolved.append(
-                ResolvedSource(source=raw, destination_key=name, checksum_keys=(raw,))
-            )
+            resolved.append(ResolvedSource(source=raw, destination_key=name, checksum_keys=(raw,)))
             continue
         path = Path(raw)
         if path.is_file():
@@ -209,9 +209,7 @@ def _transfer_one(
                 checksum=checksum,
                 status=f"transfer_error:{exc}",
             )
-    return SyncResult(
-        source=source, destination=destination, checksum=checksum, status="ok"
-    )
+    return SyncResult(source=source, destination=destination, checksum=checksum, status="ok")
 
 
 def main(argv: Iterable[str] | None = None) -> int:
@@ -226,9 +224,7 @@ def main(argv: Iterable[str] | None = None) -> int:
         print(str(exc), file=sys.stderr)
         return EXIT_CODES["invalid_arguments"]
 
-    manager: ArtifactManager = create_artifact_manager(
-        args.script_name, root=args.artifact_root
-    )
+    manager: ArtifactManager = create_artifact_manager(args.script_name, root=args.artifact_root)
     resolved_sources = _resolve_sources(args.sources, args.pattern)
     if not resolved_sources:
         print("No matching sources found.", file=sys.stderr)
@@ -262,9 +258,7 @@ def main(argv: Iterable[str] | None = None) -> int:
         for spec, checksum_value, future in futures:
             try:
                 result = future.result()
-            except (
-                Exception
-            ) as exc:  # pragma: no cover - defensive catch for unexpected failures
+            except Exception as exc:  # pragma: no cover - defensive catch for unexpected failures
                 results.append(
                     SyncResult(
                         source=spec.source,
@@ -281,9 +275,7 @@ def main(argv: Iterable[str] | None = None) -> int:
         if result.status != "ok":
             has_failures = True
         status_message = "✅" if result.status == "ok" else "❌"
-        print(
-            f"{status_message} {result.source} → {result.destination} ({result.status})"
-        )
+        print(f"{status_message} {result.source} → {result.destination} ({result.status})")
 
     if args.json:
         payload = [

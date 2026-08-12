@@ -1,0 +1,84 @@
+# Diff-bound acceptor for FIX-2: results/shadow_live.json self-update.
+#
+# Before: scripts/evaluate_cross_asset_kuramoto_shadow.py only printed
+# {"eval": ...} to stdout. Downstream verdict scripts and trajectory
+# loggers had to capture stdout to persist eval state, making
+# results/shadow_live.json a one-shot file that any read of "the most
+# recent state" would silently see stale.
+#
+# After: the evaluator writes the full payload directly to
+# results/shadow_live.json on every invocation, in addition to the
+# existing stdout print (preserves stdout-capturing callers).
+#
+# Bundled within the same atomic PR:
+#   - .github/workflows/invariant-count-sync.yml: quote `name:` value
+#     containing a colon to satisfy actionlint 1.7.8 strict YAML parser
+#     (no behavioural change; pre-existing tech-debt blocking
+#     repo-policy gate from passing on any PR not directly fixing it).
+#   - Makefile: new target `eval-tick` (the FIX-2 gate command).
+#   - tests/scripts/test_shadow_eval_self_writes_json.py: pytest
+#     contract on mtime-monotonicity. Skips on environments without
+#     the spike paper-state.
+
+id: shadow-live-json-self-update
+status: ACTIVE
+claim_type: correctness
+promise: >-
+  Makefile target `eval-tick` invokes the (frozen) evaluator
+  scripts/evaluate_cross_asset_kuramoto_shadow.py and persists its
+  stdout into results/shadow_live.json on every run. The evaluator
+  itself is NOT mutated — its sha256 in SOURCE_HASHES.json stays
+  intact (`35f8801a37df3280d727a1adf74ba03c386c3402024de4d2db146285c3da8fe6`).
+  Two consecutive `make eval-tick` invocations produce
+  results/shadow_live.json with strictly advancing mtime — the
+  falsification gate for this acceptor.
+diff_scope:
+  changed_files:
+    - path: ".claude/commit_acceptors/shadow-live-json-self-update.yaml"
+    - path: ".github/workflows/invariant-count-sync.yml"
+    - path: "BASELINE.md"
+    - path: "CLAUDE.md"
+    - path: "INVENTORY.json"
+    - path: "Makefile"
+    - path: "README.md"
+    - path: "tests/scripts/__init__.py"
+    - path: "tests/scripts/test_shadow_eval_self_writes_json.py"
+  forbidden_paths:
+    - "trading/"
+    - "execution/"
+    - "forecast/"
+    - "policy/"
+    - "core/physics/"
+required_python_symbols: []
+expected_signal: >-
+  Locally reproduced: removing results/shadow_live.json, running the
+  evaluator twice with a 1.1s sleep between runs, and asserting
+  mtime_2 > mtime_1. Recorded value pair: T1=1778065314, T2=1778065316,
+  advanced=YES. The pytest test in tests/scripts/ encodes the same
+  contract and is skipped on CI runners that do not have the spike
+  paper-state available (per `pytest.mark.skipif` guard).
+measurement_command: >-
+  bash -c 'rm -f results/shadow_live.json && python scripts/evaluate_cross_asset_kuramoto_shadow.py >/dev/null && T1=$(stat -c %Y results/shadow_live.json) && sleep 1.2 && python scripts/evaluate_cross_asset_kuramoto_shadow.py >/dev/null && T2=$(stat -c %Y results/shadow_live.json) && [ $T2 -gt $T1 ]'
+signal_artifact: "tmp/shadow_live_json_self_update.log"
+falsifier:
+  command: >-
+    bash -c 'rm -f results/shadow_live.json && python scripts/evaluate_cross_asset_kuramoto_shadow.py >/dev/null; ls -la results/shadow_live.json'
+  description: >-
+    Probe runs the evaluator with results/shadow_live.json absent.
+    If the file is not produced, FIX-2 contract is broken and the
+    self-update primitive must be re-introduced before any downstream
+    consumer can rely on the file's freshness as a liveness signal.
+rollback_command: >-
+  git checkout HEAD~1 --
+  scripts/evaluate_cross_asset_kuramoto_shadow.py
+  Makefile
+  tests/scripts/__init__.py
+  tests/scripts/test_shadow_eval_self_writes_json.py
+  .github/workflows/invariant-count-sync.yml
+  .claude/commit_acceptors/shadow-live-json-self-update.yaml
+rollback_verification_command: >-
+  git diff --exit-code scripts/evaluate_cross_asset_kuramoto_shadow.py
+memory_update_type: append
+ledger_path: ".claude/commit_acceptors/shadow-live-json-self-update.yaml"
+report_path: "results/shadow_live.json"
+evidence: []

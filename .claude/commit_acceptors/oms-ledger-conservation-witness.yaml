@@ -1,0 +1,79 @@
+# Diff-bound commit acceptor for the OMS position-conservation witness.
+#
+# Adds ONE test module binding the previously-unwitnessed catalog law
+# oms.position_conservation to an executable @law witness via the fixed-point
+# execution ledger (geosync_hpc.ledger), WITHOUT importing the forbidden
+# execution/ path. Promotes no claim, changes no runtime behavior, touches no
+# schema/guard, uses no real data.
+#
+#   oms.position_conservation — cash + position*mark conserved modulo fee on
+#                               every fill, and independent fills commute
+#                               (INV-HPC3).
+#
+# Locally verified on origin/main base:
+#   * pytest tests/physics_contracts/test_oms_ledger_conservation_witness.py: 2 passed
+#   * .claude/physics/validate_tests.py <file>: 0 issues (L1..L5), EXIT 0
+#   * ruff / mypy --strict clean ; zero new `# type: ignore`
+id: oms-ledger-conservation-witness
+status: ACTIVE
+claim_type: governance
+promise: >-
+  After this PR lands, tests/physics_contracts/test_oms_ledger_conservation_witness.py
+  binds oms.position_conservation to @law witnesses that drive geosync_hpc.ledger:
+  conservation_holds() returns True after every apply_fill over a long random fill
+  sequence, and independent fill pairs commute to a byte-identical state
+  (INV-HPC3). It passes validate_tests with zero issues and imports no execution/
+  path. No market claim; no runtime, schema, or guard change.
+diff_scope:
+  changed_files:
+    - path: ".claude/commit_acceptors/oms-ledger-conservation-witness.yaml"
+    - path: "tests/physics_contracts/test_oms_ledger_conservation_witness.py"
+  forbidden_paths:
+    - "trading/"
+    - "execution/"
+    - "forecast/"
+    - "policy/"
+    - "application/"
+    - "core/"
+    - "src/"
+    - "geosync_hpc/"
+    - "physics_contracts/catalog.yaml"
+    - ".claude/physics/INVARIANTS.yaml"
+required_python_symbols: []
+expected_signal: >-
+  pytest reports 2 passed; validate_tests exits 0 with no L1..L5 issues; ruff and
+  mypy --strict clean.
+measurement_command: >-
+  bash -c 'mkdir -p tmp && python -m pytest
+  tests/physics_contracts/test_oms_ledger_conservation_witness.py
+  > tmp/oms_ledger_conservation_witness.log 2>&1
+  && grep -q "2 passed" tmp/oms_ledger_conservation_witness.log'
+signal_artifact: "tmp/oms_ledger_conservation_witness.log"
+falsifier:
+  command: |-
+    bash -c 'python -c "
+    import numpy as np
+    from geosync_hpc.ledger import apply_fill, conservation_holds, initial_state, scale_bps, scale_price, scale_qty
+    rng = np.random.default_rng(0); st = initial_state(); mark = scale_price(100.0); breached = False
+    for _ in range(200):
+        f = dict(fill_price_scaled=scale_price(float(rng.uniform(50,150))), qty_delta_scaled=scale_qty(float(rng.uniform(-5,5))), fee_bps_scaled=scale_bps(float(rng.uniform(0,10))))
+        after = apply_fill(st, **f)
+        if not conservation_holds(st, after, mark_price_scaled=mark, **f): breached = True
+        st = after
+    import sys; sys.exit(0 if breached else 1)"'
+  description: >-
+    Inverse probe of ledger conservation. It exits 0 (fires) iff any fill breaks
+    the cash + position*mark identity (conservation_holds returns False) -- i.e.
+    book value is synthesized or destroyed in real code. While conservation holds
+    on every fill the probe exits 1. If it ever exits 0, the witness is no longer
+    truthful and the change must be reverted, not patched green.
+rollback_command: >-
+  git rm -f
+  tests/physics_contracts/test_oms_ledger_conservation_witness.py
+  .claude/commit_acceptors/oms-ledger-conservation-witness.yaml
+rollback_verification_command: >-
+  bash -c 'test ! -f tests/physics_contracts/test_oms_ledger_conservation_witness.py'
+memory_update_type: none
+ledger_path: ".claude/commit_acceptors/oms-ledger-conservation-witness.yaml"
+report_path: "tmp/oms_ledger_conservation_witness.log"
+evidence: []

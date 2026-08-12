@@ -1,0 +1,9 @@
+claim_id,scope,verdict,expected_artifact
+production-readiness-doc,docs,PASS,docs/PRODUCTION_READINESS_STACK.md
+release-verdict-protocol,docs,PASS,docs/RELEASE_VERDICT_PROTOCOL.md
+readiness-verifier,repository,BLOCKED,scripts/verify_production_readiness.py
+commit-acceptor,repository,PASS,.claude/commit_acceptors/production-readiness-stack.yaml
+test-suite-command,repository,BLOCKED,results/production_readiness/READINESS_SUMMARY.json
+lint-command,repository,BLOCKED,results/production_readiness/READINESS_SUMMARY.json
+type-check-command,repository,BLOCKED,results/production_readiness/READINESS_SUMMARY.json
+release-verdict-artifact,artifact,PASS,results/production_readiness/RELEASE_VERDICT.md

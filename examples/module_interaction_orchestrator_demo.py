@@ -1,4 +1,6 @@
 #!/usr/bin/env python
+# Copyright (c) 2023-2026 Yaroslav Vasylenko (neuron7xLab)
+# SPDX-License-Identifier: MIT
 """Demo script for the Module Interaction Orchestrator.
 
 This script demonstrates how to use the ModuleInteractionOrchestrator to
@@ -403,7 +405,7 @@ def main():
     print("\n")
     print("╔" + "=" * 78 + "╗")
     print("║" + " " * 78 + "║")
-    print("║" + "  Module Interaction Orchestrator for TradePulse".center(78) + "║")
+    print("║" + "  Module Interaction Orchestrator for GeoSync".center(78) + "║")
     print("║" + "  Unified Sequence Management Demo".center(78) + "║")
     print("║" + " " * 78 + "║")
     print("╚" + "=" * 78 + "╝")

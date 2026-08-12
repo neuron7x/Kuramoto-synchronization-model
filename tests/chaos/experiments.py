@@ -1,7 +1,9 @@
+# Copyright (c) 2023-2026 Yaroslav Vasylenko (neuron7xLab)
+# SPDX-License-Identifier: MIT
 """Chaos engineering experiment definitions.
 
 This module provides a flexible abstraction for describing chaos experiments that
-can be orchestrated inside the TradePulse test-suite.  The implementation is
+can be orchestrated inside the GeoSync test-suite.  The implementation is
 framework agnostic and can be adapted to Chaos Toolkit style controls or custom
 infrastructure adapters.  Each scenario focuses on a specific failure mode while
 sharing common post-conditions that encode the project's resilience objectives.
@@ -22,9 +24,7 @@ from typing import Any, Callable, Optional, Protocol, Sequence
 class NetworkController(Protocol):
     """Controls traffic shaping for network related chaos."""
 
-    def inject_latency(
-        self, latency_ms: int, jitter_ms: int, duration_s: float
-    ) -> None:
+    def inject_latency(self, latency_ms: int, jitter_ms: int, duration_s: float) -> None:
         """Introduce latency with optional jitter for the provided duration."""
 
     def reset(self) -> None:
@@ -110,9 +110,7 @@ class ChaosContext:
     steady_state: SteadyStateVerifier
     sleep: Callable[[float], None] = time.sleep
     clock: Callable[[], float] = time.perf_counter
-    logger: logging.Logger = field(
-        default_factory=lambda: logging.getLogger("chaos.experiments")
-    )
+    logger: logging.Logger = field(default_factory=lambda: logging.getLogger("chaos.experiments"))
 
     def log(self, message: str, **extra: Any) -> None:
         """Emit a structured log entry for the running experiment."""
@@ -159,9 +157,7 @@ class MetricCheck:
             success=success,
             description=self.description,
         )
-        return MetricResult(
-            name=self.name, success=success, description=self.description
-        )
+        return MetricResult(name=self.name, success=success, description=self.description)
 
 
 @dataclass(slots=True)
@@ -200,9 +196,7 @@ class ChaosScenario:
     detection: Optional[Callable[[ChaosContext], DetectionResult]] = None
 
     def execute(self, context: ChaosContext) -> ChaosOutcome:
-        context.log(
-            "Starting scenario", scenario=self.name, description=self.description
-        )
+        context.log("Starting scenario", scenario=self.name, description=self.description)
         baseline = context.steady_state.snapshot()
         start = context.clock()
         for step in self.steps:
@@ -234,14 +228,12 @@ class ChaosExperimentSuite:
     scenarios: Sequence[ChaosScenario]
 
     def run(self, context: ChaosContext) -> Sequence[ChaosOutcome]:
-        context.log(
-            "Running chaos experiment suite", scenario_count=len(self.scenarios)
-        )
+        context.log("Running chaos experiment suite", scenario_count=len(self.scenarios))
         return tuple(scenario.execute(context) for scenario in self.scenarios)
 
 
 # ---------------------------------------------------------------------------
-# Metric helpers aligned with the TradePulse resilience objectives
+# Metric helpers aligned with the GeoSync resilience objectives
 # ---------------------------------------------------------------------------
 
 
@@ -265,8 +257,7 @@ def recovery_time_metric(max_seconds: float = 300.0) -> MetricCheck:
     return MetricCheck(
         name="recovery-time",
         description=description,
-        evaluator=lambda context: context.monitoring.recovery_time_seconds()
-        <= max_seconds,
+        evaluator=lambda context: context.monitoring.recovery_time_seconds() <= max_seconds,
     )
 
 
@@ -280,8 +271,7 @@ def exchange_survival_metric(min_ratio: float = 0.5) -> MetricCheck:
     return MetricCheck(
         name="exchange-survival",
         description=description,
-        evaluator=lambda context: context.monitoring.exchange_survival_ratio()
-        >= min_ratio,
+        evaluator=lambda context: context.monitoring.exchange_survival_ratio() >= min_ratio,
     )
 
 
@@ -592,8 +582,8 @@ def build_steady_state_verification_experiment() -> ChaosScenario:
 # ---------------------------------------------------------------------------
 
 
-def build_tradepulse_chaos_suite() -> ChaosExperimentSuite:
-    """Return the canonical chaos experiment suite for TradePulse."""
+def build_geosync_chaos_suite() -> ChaosExperimentSuite:
+    """Return the canonical chaos experiment suite for GeoSync."""
 
     scenarios: Sequence[ChaosScenario] = (
         build_steady_state_verification_experiment(),
@@ -616,7 +606,7 @@ __all__ = [
     "ChaosOutcome",
     "ChaosScenario",
     "ChaosExperimentSuite",
-    "build_tradepulse_chaos_suite",
+    "build_geosync_chaos_suite",
     "build_network_latency_experiment",
     "build_exchange_api_failure_experiment",
     "build_database_connection_drop_experiment",

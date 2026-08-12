@@ -1,0 +1,54 @@
+REL-005 — canonical immutable release ref: verification transcript
+generated_utc: 2026-07-19T14:37:04Z
+worktree: /home/neuro7/GeoSync-wt-w2
+branch: remediation/wave2-p0
+tag: geosync-canonical-8080e4b4
+
+$ git cat-file -t geosync-canonical-8080e4b4
+tag
+
+$ git rev-parse geosync-canonical-8080e4b4            # tag object
+2fdcbf4452e81e66564f8028616131f4d3dd916b
+
+$ git rev-parse geosync-canonical-8080e4b4^{commit}   # dereferenced target commit
+8080e4b475efe054901804f25b37b80bd06203f4
+
+$ git rev-parse geosync-canonical-8080e4b4^{tree}     # TREE-HASH MATCH CHECK
+9060de4a097ea467f7ab5d52ecb660ba345f671b
+expected: 9060de4a097ea467f7ab5d52ecb660ba345f671b
+RESULT: TREE MATCH == PASS
+
+$ git cat-file -t <target objects>   # non-dangling / real-object check
+  commit  8080e4b475efe054901804f25b37b80bd06203f4
+  commit  449f439c5605f89a1beeaac73e5eca8b7cfe1112
+  commit  963d87d79f4a2613f93b7b870dc25ace1cc02460
+  tree    9060de4a097ea467f7ab5d52ecb660ba345f671b
+
+$ git log --format=... 8080e4b4   # merge topology
+  commit  8080e4b475efe054901804f25b37b80bd06203f4
+  tree    9060de4a097ea467f7ab5d52ecb660ba345f671b
+  parents 963d87d79f4a2613f93b7b870dc25ace1cc02460 449f439c5605f89a1beeaac73e5eca8b7cfe1112
+  subject Merge branch 'fix/defect-sweep-2026-07-19' into 'main'
+
+$ git log --format=... 449f439c   # content-source commit
+  commit  449f439c5605f89a1beeaac73e5eca8b7cfe1112
+  tree    9060de4a097ea467f7ab5d52ecb660ba345f671b
+  parents 963d87d79f4a2613f93b7b870dc25ace1cc02460
+  subject fix: fail-closed defect sweep — 26 verified defects across 5 surfaces
+
+# REACHABILITY
+$ git branch --contains 8080e4b4
+  + remediation/wave1-gov-rel
+  * remediation/wave2-p0
+$ git merge-base --is-ancestor geosync-canonical-8080e4b4^{commit} HEAD; echo $?
+  exit=0  (0 => reachable from HEAD=63062a51b4bf883c424b49926d68179696703483)
+
+# SIGNATURE (honest record: SSH signature, NOT OpenPGP/GPG)
+$ git config gpg.format
+  ssh
+$ git tag -v geosync-canonical-8080e4b4   (stderr = verification verdict)
+  Good "git" signature for neuron7x@gmail.com with ED25519 key SHA256:w7ynAVmM58JG9ksD/CaRjP+6k4AMb0pF2MW362VyhEc
+$ git cat-file -p geosync-canonical-8080e4b4 | grep -c "BEGIN SSH SIGNATURE"
+  1
+  NOTE: signature format is SSH (ed25519), a real cryptographic signature,
+        but it is NOT an OpenPGP/GPG signature. provenance json: gpg_signed=false.

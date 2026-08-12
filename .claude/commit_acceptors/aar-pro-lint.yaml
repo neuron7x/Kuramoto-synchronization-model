@@ -1,0 +1,24 @@
+id: aar-pro-lint
+status: ACTIVE
+claim_type: governance
+promise: AAR-PRO lint config is explicit and diff-bound.
+diff_scope:
+  changed_files:
+  - path: ruff.toml
+  - path: .claude/commit_acceptors/aar-pro-lint.yaml
+  forbidden_paths: []
+required_python_symbols: []
+expected_signal: Ruff config remains scoped to AAR-PRO scripts.
+measurement_command: ruff check scripts/aar_pro_smoke.py scripts/aar_pro_readiness.py
+falsifier:
+  command: ruff check scripts/aar_pro_smoke.py scripts/aar_pro_readiness.py
+  description: Must fail if script linting regresses.
+rollback_command: git checkout -- ruff.toml .claude/commit_acceptors/aar-pro-lint.yaml
+rollback_verification_command: git diff --exit-code ruff.toml .claude/commit_acceptors/aar-pro-lint.yaml
+memory_update_type: append
+ledger_path: .claude/commit_acceptors/aar-pro-lint.yaml
+report_path: artifacts/aar_pro/action_result_acceptor_audit.md
+signal_artifact: ruff.toml
+evidence:
+- path: ruff.toml
+- path: .claude/commit_acceptors/aar-pro-lint.yaml

@@ -1,4 +1,5 @@
-# SPDX-License-Identifier: LicenseRef-TradePulse-Proprietary
+# Copyright (c) 2023-2026 Yaroslav Vasylenko (neuron7xLab)
+# SPDX-License-Identifier: MIT
 """Sandbox-friendly broker connectors for major exchanges."""
 
 from __future__ import annotations
@@ -19,9 +20,7 @@ try:  # pragma: no cover - optional import for live connectors
         CoinbaseRESTConnector,
         KrakenRESTConnector,
     )
-except (
-    Exception
-):  # pragma: no cover - adapters may not be available in minimal installs
+except Exception:  # pragma: no cover - adapters may not be available in minimal installs
     BinanceRESTConnector = None  # type: ignore[assignment]
     CoinbaseRESTConnector = None  # type: ignore[assignment]
     KrakenRESTConnector = None  # type: ignore[assignment]
@@ -146,15 +145,11 @@ class ExecutionConnector:
             if data["long_qty"] > 0:
                 position["long_quantity"] = data["long_qty"]
                 if data["long_cost"] > 0:
-                    position["long_average_price"] = (
-                        data["long_cost"] / data["long_qty"]
-                    )
+                    position["long_average_price"] = data["long_cost"] / data["long_qty"]
             if data["short_qty"] > 0:
                 position["short_quantity"] = data["short_qty"]
                 if data["short_cost"] > 0:
-                    position["short_average_price"] = (
-                        data["short_cost"] / data["short_qty"]
-                    )
+                    position["short_average_price"] = data["short_cost"] / data["short_qty"]
             positions.append(position)
         return positions
 

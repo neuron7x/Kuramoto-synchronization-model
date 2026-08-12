@@ -1,13 +1,13 @@
 # Reliability Scenarios: Golden Path Failure Modes
 
-> **Purpose**: Document canonical failure scenarios for TradePulse's golden path (backtest workflow and minimal live trading cycle) with explicit reproduction steps and expected behavior.
+> **Purpose**: Document canonical failure scenarios for GeoSync's golden path (backtest workflow and minimal live trading cycle) with explicit reproduction steps and expected behavior.
 >
 > **Last Updated**: 2025-12-11
-> **Maintainer**: TradePulse Team
+> **Maintainer**: GeoSync Team
 
 ## Overview
 
-This document defines the key failure modes for TradePulse's core workflows and validates that the system fails gracefully without data corruption, silent errors, or zombie processes. Each scenario is backed by automated tests in `tests/reliability/`.
+This document defines the key failure modes for GeoSync's core workflows and validates that the system fails gracefully without data corruption, silent errors, or zombie processes. Each scenario is backed by automated tests in `tests/reliability/`.
 
 ### Goals
 

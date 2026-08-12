@@ -1,0 +1,4 @@
+{
+  "_doc": "Deterministic invariant teeth-audit floor: BOUND_GREEN (witness collects, is not skip-only, and passes) must not regress. Raise as witnesses are added; a drop is a fail-closed regression.",
+  "bound_green_floor": 53
+}

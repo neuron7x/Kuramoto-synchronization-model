@@ -1,0 +1,734 @@
+{
+  "lag_rows": 1,
+  "n_bins": 8,
+  "n_pairs": 45,
+  "n_rows": 19081,
+  "n_surrogates": 100,
+  "n_symbols": 10,
+  "pairs": [
+    {
+      "report": {
+        "asymmetry_nats": -0.0016650573082142156,
+        "lag_rows": 1,
+        "n_bins": 8,
+        "n_samples": 19081,
+        "n_surrogates": 100,
+        "p_value_x_to_y": 0.009900990099009901,
+        "p_value_y_to_x": 0.009900990099009901,
+        "te_x_to_y_nats": 0.019395177032548845,
+        "te_y_to_x_nats": 0.01773011972433463,
+        "verdict": "BIDIRECTIONAL"
+      },
+      "symbol_x": "BTCUSDT",
+      "symbol_y": "ETHUSDT"
+    },
+    {
+      "report": {
+        "asymmetry_nats": -0.002397053370872187,
+        "lag_rows": 1,
+        "n_bins": 8,
+        "n_samples": 19081,
+        "n_surrogates": 100,
+        "p_value_x_to_y": 0.009900990099009901,
+        "p_value_y_to_x": 0.009900990099009901,
+        "te_x_to_y_nats": 0.018494262551704683,
+        "te_y_to_x_nats": 0.016097209180832496,
+        "verdict": "BIDIRECTIONAL"
+      },
+      "symbol_x": "BTCUSDT",
+      "symbol_y": "SOLUSDT"
+    },
+    {
+      "report": {
+        "asymmetry_nats": -0.002704170833354884,
+        "lag_rows": 1,
+        "n_bins": 8,
+        "n_samples": 19081,
+        "n_surrogates": 100,
+        "p_value_x_to_y": 0.009900990099009901,
+        "p_value_y_to_x": 0.009900990099009901,
+        "te_x_to_y_nats": 0.017322983665967195,
+        "te_y_to_x_nats": 0.01461881283261231,
+        "verdict": "BIDIRECTIONAL"
+      },
+      "symbol_x": "BTCUSDT",
+      "symbol_y": "BNBUSDT"
+    },
+    {
+      "report": {
+        "asymmetry_nats": -0.0007488747213524813,
+        "lag_rows": 1,
+        "n_bins": 8,
+        "n_samples": 19081,
+        "n_surrogates": 100,
+        "p_value_x_to_y": 0.009900990099009901,
+        "p_value_y_to_x": 0.009900990099009901,
+        "te_x_to_y_nats": 0.01861316540902163,
+        "te_y_to_x_nats": 0.01786429068766915,
+        "verdict": "BIDIRECTIONAL"
+      },
+      "symbol_x": "BTCUSDT",
+      "symbol_y": "XRPUSDT"
+    },
+    {
+      "report": {
+        "asymmetry_nats": 0.0022526656950348223,
+        "lag_rows": 1,
+        "n_bins": 8,
+        "n_samples": 19081,
+        "n_surrogates": 100,
+        "p_value_x_to_y": 0.009900990099009901,
+        "p_value_y_to_x": 0.009900990099009901,
+        "te_x_to_y_nats": 0.019201350480405204,
+        "te_y_to_x_nats": 0.021454016175440026,
+        "verdict": "BIDIRECTIONAL"
+      },
+      "symbol_x": "BTCUSDT",
+      "symbol_y": "ADAUSDT"
+    },
+    {
+      "report": {
+        "asymmetry_nats": -0.0031719328229379284,
+        "lag_rows": 1,
+        "n_bins": 8,
+        "n_samples": 19081,
+        "n_surrogates": 100,
+        "p_value_x_to_y": 0.009900990099009901,
+        "p_value_y_to_x": 0.009900990099009901,
+        "te_x_to_y_nats": 0.016537484322633522,
+        "te_y_to_x_nats": 0.013365551499695594,
+        "verdict": "BIDIRECTIONAL"
+      },
+      "symbol_x": "BTCUSDT",
+      "symbol_y": "AVAXUSDT"
+    },
+    {
+      "report": {
+        "asymmetry_nats": -0.004173631757865316,
+        "lag_rows": 1,
+        "n_bins": 8,
+        "n_samples": 19081,
+        "n_surrogates": 100,
+        "p_value_x_to_y": 0.009900990099009901,
+        "p_value_y_to_x": 0.009900990099009901,
+        "te_x_to_y_nats": 0.01835789415324584,
+        "te_y_to_x_nats": 0.014184262395380523,
+        "verdict": "BIDIRECTIONAL"
+      },
+      "symbol_x": "BTCUSDT",
+      "symbol_y": "LINKUSDT"
+    },
+    {
+      "report": {
+        "asymmetry_nats": -0.000855237937576768,
+        "lag_rows": 1,
+        "n_bins": 8,
+        "n_samples": 19081,
+        "n_surrogates": 100,
+        "p_value_x_to_y": 0.009900990099009901,
+        "p_value_y_to_x": 0.009900990099009901,
+        "te_x_to_y_nats": 0.016757346034832154,
+        "te_y_to_x_nats": 0.015902108097255386,
+        "verdict": "BIDIRECTIONAL"
+      },
+      "symbol_x": "BTCUSDT",
+      "symbol_y": "DOTUSDT"
+    },
+    {
+      "report": {
+        "asymmetry_nats": -0.0020808750536808196,
+        "lag_rows": 1,
+        "n_bins": 8,
+        "n_samples": 19081,
+        "n_surrogates": 100,
+        "p_value_x_to_y": 0.009900990099009901,
+        "p_value_y_to_x": 0.009900990099009901,
+        "te_x_to_y_nats": 0.018240658749526892,
+        "te_y_to_x_nats": 0.016159783695846072,
+        "verdict": "BIDIRECTIONAL"
+      },
+      "symbol_x": "BTCUSDT",
+      "symbol_y": "POLUSDT"
+    },
+    {
+      "report": {
+        "asymmetry_nats": 0.0024696209715688103,
+        "lag_rows": 1,
+        "n_bins": 8,
+        "n_samples": 19081,
+        "n_surrogates": 100,
+        "p_value_x_to_y": 0.009900990099009901,
+        "p_value_y_to_x": 0.009900990099009901,
+        "te_x_to_y_nats": 0.01603194146337085,
+        "te_y_to_x_nats": 0.01850156243493966,
+        "verdict": "BIDIRECTIONAL"
+      },
+      "symbol_x": "ETHUSDT",
+      "symbol_y": "SOLUSDT"
+    },
+    {
+      "report": {
+        "asymmetry_nats": 0.0009629788976826051,
+        "lag_rows": 1,
+        "n_bins": 8,
+        "n_samples": 19081,
+        "n_surrogates": 100,
+        "p_value_x_to_y": 0.009900990099009901,
+        "p_value_y_to_x": 0.009900990099009901,
+        "te_x_to_y_nats": 0.017168972903276687,
+        "te_y_to_x_nats": 0.018131951800959292,
+        "verdict": "BIDIRECTIONAL"
+      },
+      "symbol_x": "ETHUSDT",
+      "symbol_y": "BNBUSDT"
+    },
+    {
+      "report": {
+        "asymmetry_nats": 0.0016692533798651453,
+        "lag_rows": 1,
+        "n_bins": 8,
+        "n_samples": 19081,
+        "n_surrogates": 100,
+        "p_value_x_to_y": 0.009900990099009901,
+        "p_value_y_to_x": 0.009900990099009901,
+        "te_x_to_y_nats": 0.01649887716585232,
+        "te_y_to_x_nats": 0.018168130545717465,
+        "verdict": "BIDIRECTIONAL"
+      },
+      "symbol_x": "ETHUSDT",
+      "symbol_y": "XRPUSDT"
+    },
+    {
+      "report": {
+        "asymmetry_nats": 0.0024549588000374115,
+        "lag_rows": 1,
+        "n_bins": 8,
+        "n_samples": 19081,
+        "n_surrogates": 100,
+        "p_value_x_to_y": 0.009900990099009901,
+        "p_value_y_to_x": 0.009900990099009901,
+        "te_x_to_y_nats": 0.01720224258153499,
+        "te_y_to_x_nats": 0.0196572013815724,
+        "verdict": "BIDIRECTIONAL"
+      },
+      "symbol_x": "ETHUSDT",
+      "symbol_y": "ADAUSDT"
+    },
+    {
+      "report": {
+        "asymmetry_nats": 0.00246497502766555,
+        "lag_rows": 1,
+        "n_bins": 8,
+        "n_samples": 19081,
+        "n_surrogates": 100,
+        "p_value_x_to_y": 0.009900990099009901,
+        "p_value_y_to_x": 0.009900990099009901,
+        "te_x_to_y_nats": 0.013961468049290856,
+        "te_y_to_x_nats": 0.016426443076956405,
+        "verdict": "BIDIRECTIONAL"
+      },
+      "symbol_x": "ETHUSDT",
+      "symbol_y": "AVAXUSDT"
+    },
+    {
+      "report": {
+        "asymmetry_nats": -0.0006991062475792086,
+        "lag_rows": 1,
+        "n_bins": 8,
+        "n_samples": 19081,
+        "n_surrogates": 100,
+        "p_value_x_to_y": 0.009900990099009901,
+        "p_value_y_to_x": 0.009900990099009901,
+        "te_x_to_y_nats": 0.016054535661082014,
+        "te_y_to_x_nats": 0.015355429413502805,
+        "verdict": "BIDIRECTIONAL"
+      },
+      "symbol_x": "ETHUSDT",
+      "symbol_y": "LINKUSDT"
+    },
+    {
+      "report": {
+        "asymmetry_nats": -0.0024441973089878877,
+        "lag_rows": 1,
+        "n_bins": 8,
+        "n_samples": 19081,
+        "n_surrogates": 100,
+        "p_value_x_to_y": 0.009900990099009901,
+        "p_value_y_to_x": 0.009900990099009901,
+        "te_x_to_y_nats": 0.016779071815957308,
+        "te_y_to_x_nats": 0.01433487450696942,
+        "verdict": "BIDIRECTIONAL"
+      },
+      "symbol_x": "ETHUSDT",
+      "symbol_y": "DOTUSDT"
+    },
+    {
+      "report": {
+        "asymmetry_nats": -0.0011863220057432827,
+        "lag_rows": 1,
+        "n_bins": 8,
+        "n_samples": 19081,
+        "n_surrogates": 100,
+        "p_value_x_to_y": 0.009900990099009901,
+        "p_value_y_to_x": 0.009900990099009901,
+        "te_x_to_y_nats": 0.016434647959491365,
+        "te_y_to_x_nats": 0.015248325953748082,
+        "verdict": "BIDIRECTIONAL"
+      },
+      "symbol_x": "ETHUSDT",
+      "symbol_y": "POLUSDT"
+    },
+    {
+      "report": {
+        "asymmetry_nats": -0.00013120615170532368,
+        "lag_rows": 1,
+        "n_bins": 8,
+        "n_samples": 19081,
+        "n_surrogates": 100,
+        "p_value_x_to_y": 0.009900990099009901,
+        "p_value_y_to_x": 0.009900990099009901,
+        "te_x_to_y_nats": 0.017392453016442443,
+        "te_y_to_x_nats": 0.01726124686473712,
+        "verdict": "BIDIRECTIONAL"
+      },
+      "symbol_x": "SOLUSDT",
+      "symbol_y": "BNBUSDT"
+    },
+    {
+      "report": {
+        "asymmetry_nats": -0.0014313221259047992,
+        "lag_rows": 1,
+        "n_bins": 8,
+        "n_samples": 19081,
+        "n_surrogates": 100,
+        "p_value_x_to_y": 0.009900990099009901,
+        "p_value_y_to_x": 0.009900990099009901,
+        "te_x_to_y_nats": 0.019626479887698202,
+        "te_y_to_x_nats": 0.018195157761793403,
+        "verdict": "BIDIRECTIONAL"
+      },
+      "symbol_x": "SOLUSDT",
+      "symbol_y": "XRPUSDT"
+    },
+    {
+      "report": {
+        "asymmetry_nats": 0.0006273515546186097,
+        "lag_rows": 1,
+        "n_bins": 8,
+        "n_samples": 19081,
+        "n_surrogates": 100,
+        "p_value_x_to_y": 0.009900990099009901,
+        "p_value_y_to_x": 0.009900990099009901,
+        "te_x_to_y_nats": 0.01804101037507971,
+        "te_y_to_x_nats": 0.01866836192969832,
+        "verdict": "BIDIRECTIONAL"
+      },
+      "symbol_x": "SOLUSDT",
+      "symbol_y": "ADAUSDT"
+    },
+    {
+      "report": {
+        "asymmetry_nats": -0.002853746576147528,
+        "lag_rows": 1,
+        "n_bins": 8,
+        "n_samples": 19081,
+        "n_surrogates": 100,
+        "p_value_x_to_y": 0.009900990099009901,
+        "p_value_y_to_x": 0.009900990099009901,
+        "te_x_to_y_nats": 0.016578736542793772,
+        "te_y_to_x_nats": 0.013724989966646244,
+        "verdict": "BIDIRECTIONAL"
+      },
+      "symbol_x": "SOLUSDT",
+      "symbol_y": "AVAXUSDT"
+    },
+    {
+      "report": {
+        "asymmetry_nats": -0.001930516100912251,
+        "lag_rows": 1,
+        "n_bins": 8,
+        "n_samples": 19081,
+        "n_surrogates": 100,
+        "p_value_x_to_y": 0.009900990099009901,
+        "p_value_y_to_x": 0.009900990099009901,
+        "te_x_to_y_nats": 0.017168048341903663,
+        "te_y_to_x_nats": 0.015237532240991412,
+        "verdict": "BIDIRECTIONAL"
+      },
+      "symbol_x": "SOLUSDT",
+      "symbol_y": "LINKUSDT"
+    },
+    {
+      "report": {
+        "asymmetry_nats": -0.0014516774176071973,
+        "lag_rows": 1,
+        "n_bins": 8,
+        "n_samples": 19081,
+        "n_surrogates": 100,
+        "p_value_x_to_y": 0.009900990099009901,
+        "p_value_y_to_x": 0.009900990099009901,
+        "te_x_to_y_nats": 0.015588335803484777,
+        "te_y_to_x_nats": 0.01413665838587758,
+        "verdict": "BIDIRECTIONAL"
+      },
+      "symbol_x": "SOLUSDT",
+      "symbol_y": "DOTUSDT"
+    },
+    {
+      "report": {
+        "asymmetry_nats": -0.0005486516348725337,
+        "lag_rows": 1,
+        "n_bins": 8,
+        "n_samples": 19081,
+        "n_surrogates": 100,
+        "p_value_x_to_y": 0.009900990099009901,
+        "p_value_y_to_x": 0.009900990099009901,
+        "te_x_to_y_nats": 0.017764060052433372,
+        "te_y_to_x_nats": 0.017215408417560838,
+        "verdict": "BIDIRECTIONAL"
+      },
+      "symbol_x": "SOLUSDT",
+      "symbol_y": "POLUSDT"
+    },
+    {
+      "report": {
+        "asymmetry_nats": 0.0009623372819965968,
+        "lag_rows": 1,
+        "n_bins": 8,
+        "n_samples": 19081,
+        "n_surrogates": 100,
+        "p_value_x_to_y": 0.009900990099009901,
+        "p_value_y_to_x": 0.009900990099009901,
+        "te_x_to_y_nats": 0.01758580791125022,
+        "te_y_to_x_nats": 0.018548145193246816,
+        "verdict": "BIDIRECTIONAL"
+      },
+      "symbol_x": "BNBUSDT",
+      "symbol_y": "XRPUSDT"
+    },
+    {
+      "report": {
+        "asymmetry_nats": 0.001879403264140704,
+        "lag_rows": 1,
+        "n_bins": 8,
+        "n_samples": 19081,
+        "n_surrogates": 100,
+        "p_value_x_to_y": 0.009900990099009901,
+        "p_value_y_to_x": 0.009900990099009901,
+        "te_x_to_y_nats": 0.016223251462941596,
+        "te_y_to_x_nats": 0.0181026547270823,
+        "verdict": "BIDIRECTIONAL"
+      },
+      "symbol_x": "BNBUSDT",
+      "symbol_y": "ADAUSDT"
+    },
+    {
+      "report": {
+        "asymmetry_nats": -0.0008054650507563089,
+        "lag_rows": 1,
+        "n_bins": 8,
+        "n_samples": 19081,
+        "n_surrogates": 100,
+        "p_value_x_to_y": 0.009900990099009901,
+        "p_value_y_to_x": 0.009900990099009901,
+        "te_x_to_y_nats": 0.015077286824107403,
+        "te_y_to_x_nats": 0.014271821773351094,
+        "verdict": "BIDIRECTIONAL"
+      },
+      "symbol_x": "BNBUSDT",
+      "symbol_y": "AVAXUSDT"
+    },
+    {
+      "report": {
+        "asymmetry_nats": -0.001138236237963216,
+        "lag_rows": 1,
+        "n_bins": 8,
+        "n_samples": 19081,
+        "n_surrogates": 100,
+        "p_value_x_to_y": 0.009900990099009901,
+        "p_value_y_to_x": 0.009900990099009901,
+        "te_x_to_y_nats": 0.01606172661131993,
+        "te_y_to_x_nats": 0.014923490373356715,
+        "verdict": "BIDIRECTIONAL"
+      },
+      "symbol_x": "BNBUSDT",
+      "symbol_y": "LINKUSDT"
+    },
+    {
+      "report": {
+        "asymmetry_nats": -0.00012558847107394834,
+        "lag_rows": 1,
+        "n_bins": 8,
+        "n_samples": 19081,
+        "n_surrogates": 100,
+        "p_value_x_to_y": 0.009900990099009901,
+        "p_value_y_to_x": 0.009900990099009901,
+        "te_x_to_y_nats": 0.015457963778307967,
+        "te_y_to_x_nats": 0.015332375307234018,
+        "verdict": "BIDIRECTIONAL"
+      },
+      "symbol_x": "BNBUSDT",
+      "symbol_y": "DOTUSDT"
+    },
+    {
+      "report": {
+        "asymmetry_nats": -0.0018136345380502933,
+        "lag_rows": 1,
+        "n_bins": 8,
+        "n_samples": 19081,
+        "n_surrogates": 100,
+        "p_value_x_to_y": 0.009900990099009901,
+        "p_value_y_to_x": 0.009900990099009901,
+        "te_x_to_y_nats": 0.017213587304263343,
+        "te_y_to_x_nats": 0.01539995276621305,
+        "verdict": "BIDIRECTIONAL"
+      },
+      "symbol_x": "BNBUSDT",
+      "symbol_y": "POLUSDT"
+    },
+    {
+      "report": {
+        "asymmetry_nats": 0.0008119265638433931,
+        "lag_rows": 1,
+        "n_bins": 8,
+        "n_samples": 19081,
+        "n_surrogates": 100,
+        "p_value_x_to_y": 0.009900990099009901,
+        "p_value_y_to_x": 0.009900990099009901,
+        "te_x_to_y_nats": 0.018827305338147794,
+        "te_y_to_x_nats": 0.019639231901991187,
+        "verdict": "BIDIRECTIONAL"
+      },
+      "symbol_x": "XRPUSDT",
+      "symbol_y": "ADAUSDT"
+    },
+    {
+      "report": {
+        "asymmetry_nats": -0.0012184618419017641,
+        "lag_rows": 1,
+        "n_bins": 8,
+        "n_samples": 19081,
+        "n_surrogates": 100,
+        "p_value_x_to_y": 0.009900990099009901,
+        "p_value_y_to_x": 0.009900990099009901,
+        "te_x_to_y_nats": 0.015389665605751113,
+        "te_y_to_x_nats": 0.014171203763849349,
+        "verdict": "BIDIRECTIONAL"
+      },
+      "symbol_x": "XRPUSDT",
+      "symbol_y": "AVAXUSDT"
+    },
+    {
+      "report": {
+        "asymmetry_nats": -0.003245562973352106,
+        "lag_rows": 1,
+        "n_bins": 8,
+        "n_samples": 19081,
+        "n_surrogates": 100,
+        "p_value_x_to_y": 0.009900990099009901,
+        "p_value_y_to_x": 0.009900990099009901,
+        "te_x_to_y_nats": 0.01732776279036115,
+        "te_y_to_x_nats": 0.014082199817009046,
+        "verdict": "BIDIRECTIONAL"
+      },
+      "symbol_x": "XRPUSDT",
+      "symbol_y": "LINKUSDT"
+    },
+    {
+      "report": {
+        "asymmetry_nats": -0.00033103285583122033,
+        "lag_rows": 1,
+        "n_bins": 8,
+        "n_samples": 19081,
+        "n_surrogates": 100,
+        "p_value_x_to_y": 0.009900990099009901,
+        "p_value_y_to_x": 0.009900990099009901,
+        "te_x_to_y_nats": 0.014891944176144941,
+        "te_y_to_x_nats": 0.014560911320313721,
+        "verdict": "BIDIRECTIONAL"
+      },
+      "symbol_x": "XRPUSDT",
+      "symbol_y": "DOTUSDT"
+    },
+    {
+      "report": {
+        "asymmetry_nats": -0.00017395383379614077,
+        "lag_rows": 1,
+        "n_bins": 8,
+        "n_samples": 19081,
+        "n_surrogates": 100,
+        "p_value_x_to_y": 0.009900990099009901,
+        "p_value_y_to_x": 0.009900990099009901,
+        "te_x_to_y_nats": 0.016065913221388516,
+        "te_y_to_x_nats": 0.015891959387592376,
+        "verdict": "BIDIRECTIONAL"
+      },
+      "symbol_x": "XRPUSDT",
+      "symbol_y": "POLUSDT"
+    },
+    {
+      "report": {
+        "asymmetry_nats": -0.002883983273276247,
+        "lag_rows": 1,
+        "n_bins": 8,
+        "n_samples": 19081,
+        "n_surrogates": 100,
+        "p_value_x_to_y": 0.009900990099009901,
+        "p_value_y_to_x": 0.009900990099009901,
+        "te_x_to_y_nats": 0.01821429997346403,
+        "te_y_to_x_nats": 0.015330316700187785,
+        "verdict": "BIDIRECTIONAL"
+      },
+      "symbol_x": "ADAUSDT",
+      "symbol_y": "AVAXUSDT"
+    },
+    {
+      "report": {
+        "asymmetry_nats": -0.0029822446365959897,
+        "lag_rows": 1,
+        "n_bins": 8,
+        "n_samples": 19081,
+        "n_surrogates": 100,
+        "p_value_x_to_y": 0.009900990099009901,
+        "p_value_y_to_x": 0.009900990099009901,
+        "te_x_to_y_nats": 0.0182399753062794,
+        "te_y_to_x_nats": 0.01525773066968341,
+        "verdict": "BIDIRECTIONAL"
+      },
+      "symbol_x": "ADAUSDT",
+      "symbol_y": "LINKUSDT"
+    },
+    {
+      "report": {
+        "asymmetry_nats": -0.0013531992223276487,
+        "lag_rows": 1,
+        "n_bins": 8,
+        "n_samples": 19081,
+        "n_surrogates": 100,
+        "p_value_x_to_y": 0.009900990099009901,
+        "p_value_y_to_x": 0.009900990099009901,
+        "te_x_to_y_nats": 0.016828233299419907,
+        "te_y_to_x_nats": 0.015475034077092258,
+        "verdict": "BIDIRECTIONAL"
+      },
+      "symbol_x": "ADAUSDT",
+      "symbol_y": "DOTUSDT"
+    },
+    {
+      "report": {
+        "asymmetry_nats": -0.003198250807482955,
+        "lag_rows": 1,
+        "n_bins": 8,
+        "n_samples": 19081,
+        "n_surrogates": 100,
+        "p_value_x_to_y": 0.009900990099009901,
+        "p_value_y_to_x": 0.009900990099009901,
+        "te_x_to_y_nats": 0.01903236917081791,
+        "te_y_to_x_nats": 0.015834118363334954,
+        "verdict": "BIDIRECTIONAL"
+      },
+      "symbol_x": "ADAUSDT",
+      "symbol_y": "POLUSDT"
+    },
+    {
+      "report": {
+        "asymmetry_nats": 0.0006485136077781506,
+        "lag_rows": 1,
+        "n_bins": 8,
+        "n_samples": 19081,
+        "n_surrogates": 100,
+        "p_value_x_to_y": 0.009900990099009901,
+        "p_value_y_to_x": 0.009900990099009901,
+        "te_x_to_y_nats": 0.014270893199983977,
+        "te_y_to_x_nats": 0.014919406807762128,
+        "verdict": "BIDIRECTIONAL"
+      },
+      "symbol_x": "AVAXUSDT",
+      "symbol_y": "LINKUSDT"
+    },
+    {
+      "report": {
+        "asymmetry_nats": -0.0009163300742815808,
+        "lag_rows": 1,
+        "n_bins": 8,
+        "n_samples": 19081,
+        "n_surrogates": 100,
+        "p_value_x_to_y": 0.009900990099009901,
+        "p_value_y_to_x": 0.009900990099009901,
+        "te_x_to_y_nats": 0.01485703724390509,
+        "te_y_to_x_nats": 0.01394070716962351,
+        "verdict": "BIDIRECTIONAL"
+      },
+      "symbol_x": "AVAXUSDT",
+      "symbol_y": "DOTUSDT"
+    },
+    {
+      "report": {
+        "asymmetry_nats": -5.943738595994702e-05,
+        "lag_rows": 1,
+        "n_bins": 8,
+        "n_samples": 19081,
+        "n_surrogates": 100,
+        "p_value_x_to_y": 0.009900990099009901,
+        "p_value_y_to_x": 0.009900990099009901,
+        "te_x_to_y_nats": 0.015440006953069456,
+        "te_y_to_x_nats": 0.015380569567109509,
+        "verdict": "BIDIRECTIONAL"
+      },
+      "symbol_x": "AVAXUSDT",
+      "symbol_y": "POLUSDT"
+    },
+    {
+      "report": {
+        "asymmetry_nats": -0.0009135327417406584,
+        "lag_rows": 1,
+        "n_bins": 8,
+        "n_samples": 19081,
+        "n_surrogates": 100,
+        "p_value_x_to_y": 0.009900990099009901,
+        "p_value_y_to_x": 0.009900990099009901,
+        "te_x_to_y_nats": 0.016166994975059287,
+        "te_y_to_x_nats": 0.015253462233318629,
+        "verdict": "BIDIRECTIONAL"
+      },
+      "symbol_x": "LINKUSDT",
+      "symbol_y": "DOTUSDT"
+    },
+    {
+      "report": {
+        "asymmetry_nats": -6.715654240292863e-05,
+        "lag_rows": 1,
+        "n_bins": 8,
+        "n_samples": 19081,
+        "n_surrogates": 100,
+        "p_value_x_to_y": 0.009900990099009901,
+        "p_value_y_to_x": 0.009900990099009901,
+        "te_x_to_y_nats": 0.014727827764031795,
+        "te_y_to_x_nats": 0.014660671221628866,
+        "verdict": "BIDIRECTIONAL"
+      },
+      "symbol_x": "LINKUSDT",
+      "symbol_y": "POLUSDT"
+    },
+    {
+      "report": {
+        "asymmetry_nats": -0.0019272335375287684,
+        "lag_rows": 1,
+        "n_bins": 8,
+        "n_samples": 19081,
+        "n_surrogates": 100,
+        "p_value_x_to_y": 0.009900990099009901,
+        "p_value_y_to_x": 0.009900990099009901,
+        "te_x_to_y_nats": 0.01630118239135559,
+        "te_y_to_x_nats": 0.014373948853826823,
+        "verdict": "BIDIRECTIONAL"
+      },
+      "symbol_x": "DOTUSDT",
+      "symbol_y": "POLUSDT"
+    }
+  ],
+  "seed": 42,
+  "verdict_counts": {
+    "BIDIRECTIONAL": 45
+  }
+}

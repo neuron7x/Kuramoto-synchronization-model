@@ -1,0 +1,215 @@
+# D-002C Signal Amplification Sweep — Pre-Registration
+# ----------------------------------------------------------------
+# Class: pre-registered falsification protocol.
+# Date:  2026-05-11
+# Issue: #654
+# Anchor commit: TBD (this file is the anchor; its sha256
+#                inside the merged git tree is the timestamp of
+#                record. Do not edit after the D-002C sweep
+#                begins; any change after t_0 is a fresh
+#                pre-registration.)
+#
+# This file commits the acceptance criteria for D-002C *before*
+# the sweep is run, so that the resulting verdict is falsifiable
+# by construction. The verdict at sweep-end is checked against
+# the committed thresholds here, not against any post-hoc
+# narrative.
+# ----------------------------------------------------------------
+
+version: 1
+issue: 654
+follows: 656                # the D-002B-A report that defined the boundary D-002C must beat
+blocked_by_issue: [655]     # D-002D checkpoint/resume must ship first
+strict_scope_invariant: INV-IDENTIFICATION-1  # remains globally active
+
+# --------------------------------------------------------------
+# 1. Motivation (boundary D-002C must beat)
+# --------------------------------------------------------------
+# D-002B-A boundary (PR #656, ledger sha256
+# e3b9d0a4daa553485e7123bdbe325ca4e9c3c4a9cf46499208087e3910321362):  # pragma: allowlist secret
+#   - Gate 6 fail-closed (FPR = 0.000) across the full grid.
+#   - sub-MDE on N <= 200 / n_bootstrap=16 / n_seeds=20.
+#   - N=400 cells show partial detectability (power 0.95 at
+#     lambda=0.40, direction `hindered`) but CI rule still fails
+#     at lambda=1.
+# Reading: Gate 6 is SNR-bound, not N-bound. D-002C tests
+# whether information density (substrate / metric / variance
+# control) lifts |signal|/CI above 1 at N <= 200.
+
+# --------------------------------------------------------------
+# 2. Hypotheses (pre-committed, in priority order)
+# --------------------------------------------------------------
+hypotheses:
+  - id: H1
+    statement: >-
+      A block-structured substrate (2-4 weakly-coupled modules)
+      at N <= 200 yields |signal|/CI > 1 at some lambda <= 0.40
+      with FPR <= 0.05.
+    falsified_if: >-
+      The block-structured surface yields power < 0.80 OR FPR > 0.05
+      at every (N <= 200, lambda) cell in the swept grid.
+
+  - id: H2
+    statement: >-
+      A Ricci-flow-weighted substrate at N <= 200 yields
+      |signal|/CI > 1 at some lambda <= 0.40 with FPR <= 0.05.
+    falsified_if: same shape as H1, with substrate replaced.
+
+  - id: H3
+    statement: >-
+      A temporal-coupling substrate K(t) at N <= 200 yields
+      a dynamic-metric (tau_onset OR sync-AUC OR phase-lag)
+      with |signal|/CI > 1 at some K(t) profile with FPR <= 0.05.
+    falsified_if: same shape, with metric replaced.
+
+  - id: H4
+    statement: >-
+      Common-Random-Numbers (CRN) + paired seeds + control
+      variates yield >= 2x SNR improvement vs the D-002B-A
+      bootstrap on at least one (substrate, metric) cell.
+    falsified_if: max measured SNR ratio < 1.5x across all cells.
+
+# --------------------------------------------------------------
+# 3. Sweep design
+# --------------------------------------------------------------
+sweep:
+  substrates:
+    - id: ricci_flow
+      param_grid:
+        base_topology: [core_periphery, ring_lattice, modular_block]
+        ricci_iterations: [2, 5, 10]
+    - id: block_structured
+      param_grid:
+        n_blocks: [2, 3, 4]
+        inter_block_p: [0.05, 0.10, 0.20]
+        intra_block_p: [0.60, 0.80]
+    - id: temporal_coupling
+      param_grid:
+        K_profile: [step, sinusoid, exponential_ramp]
+        period_quarters: [4, 8, 12]
+  metrics:
+    - id: tau_onset
+      threshold_R: 0.50
+    - id: sync_auc
+      window_steps: 1000
+    - id: phase_lag
+      reference: substrate_eigenvector_1
+  variance_reduction:
+    - common_random_numbers
+    - paired_seeds_recon_vs_null
+    - control_variates_null_proxy
+  N_grid: [50, 100, 200]      # explicitly N <= 200 — protocol fence
+  n_seeds: 20
+  n_bootstrap: 16
+
+# --------------------------------------------------------------
+# 4. Acceptance rules (pre-committed)
+# --------------------------------------------------------------
+acceptance:
+  primary_certification_rule:
+    tier_if_pass: SYNTHETIC_GATE6_CERTIFIED_REDESIGN_N_LE_200
+    tier_if_fail: D002C_REDESIGN_INSUFFICIENT_AT_TESTED_BUDGET
+    requirements:
+      - id: R1
+        rule: "exists N in [50,100,200], substrate, metric: |signal|/CI > 1"
+      - id: R2
+        rule: "FPR(lambda=0) <= 0.05 across all swept cells of that (N, substrate, metric)"
+      - id: R3
+        rule: "direction stability >= 0.80 (i.e. <= 20% direction flips across seeds at the selected cell)"
+  # Formal mathematical decisions locked at pre-registration time.
+  # These are NOT "defaults" — they are the contract the sweep driver
+  # must agree with at launch. validate_sweep_config() raises
+  # PreregistrationMismatch on any disagreement.
+  formal_decisions:
+    ci_method: bca_bootstrap                                # bias-corrected, accelerated
+    ci_alpha: 0.05                                          # family-wise α
+    signal_ci_ratio_threshold: 1.0                          # R1 numeric form
+    direction_consistency_min_seeds: 3                      # of n_seeds=20
+    direction_stability_min_fraction: 0.80                  # R3 numeric form
+    multiple_testing_correction:
+      method: bonferroni
+      n_cells: 216                                          # 3 substrates × 3 metrics × 3 N × 6 λ × stratified
+      # effective_alpha_per_cell = ci_alpha / n_cells       # derived in code
+    lambda_grid: [0.0, 0.05, 0.10, 0.20, 0.40, 1.0]         # explicit λ sweep dimension
+  secondary_metrics_to_log:
+    - per_substrate_per_metric_per_N_power_table
+    - per_substrate_per_metric_per_N_CI_width_table
+    - per_substrate_per_metric_per_N_direction_stability
+    - SNR_ratio_vs_D002BA_bootstrap_estimator
+
+# --------------------------------------------------------------
+# 5. Forbidden outputs (re-asserted)
+# --------------------------------------------------------------
+forbidden_outputs:
+  - SYNTHETIC_GATE6_CERTIFIED                  # without scope
+  - REAL_DOV_READY                              # owned by D-003
+  - VALIDATED_REAL_BANK_LEVEL_RESULT
+  - BANK_LEVEL_PRECURSOR_CONFIRMED
+  - any tier not in {SYNTHETIC_GATE6_CERTIFIED_REDESIGN_N_LE_200,
+                     D002C_REDESIGN_INSUFFICIENT_AT_TESTED_BUDGET}
+
+# --------------------------------------------------------------
+# 6. Reproducibility envelope
+# --------------------------------------------------------------
+reproducibility:
+  substrate_seed: 42                  # canonical, inherited from D-002A/B-A
+  driver: scripts/run_x10r_d002c_signal_amplification_sweep.py  # TBD
+  checkpoint_required: true            # cf. D-002D issue #655
+  expected_wallclock_hours_p95: 8
+  forbidden_to_post_hoc_change:
+    - this_yaml
+    - any acceptance threshold above
+    - the substrate / metric / variance set
+  if_post_hoc_change_needed:
+    - new pre-registration file with new sweep label, new sha256
+    - old file remains as historical record (do NOT overwrite)
+
+# --------------------------------------------------------------
+# 7. Anti-overclaim guardrails
+# --------------------------------------------------------------
+anti_overclaim:
+  - the verdict is computed by acceptance.primary_certification_rule
+    on the sweep ledger ONLY; no judgement call in the report.
+  - if the rule passes but only marginally (within 5% of any
+    threshold), report MARGINAL_PASS and require an
+    independent re-sweep with re-randomised substrate seed
+    before promoting to certification.
+  - if the rule passes in only one (substrate, metric) combination,
+    report SINGLE_PATH_PASS and DO NOT generalise the claim
+    beyond that combination.
+  - SNR ratio gain (H4) is reported as a measurement; it does
+    not itself constitute certification.
+
+# --------------------------------------------------------------
+# 8. Connection to Disha co-movement corridors (informational)
+# --------------------------------------------------------------
+# The Disha artifact (figures/disha_ba_correlation/) reports 5
+# stress-window co-movement corridors at country-level. The
+# block-structured substrate H1 here uses those corridors as
+# motivation for block topology design, not as evidence input.
+# If H1 passes with a block structure that resembles those
+# corridors, that is a *predictive* emergence — not a circular
+# fit. The Disha corridors are descriptive (n=11), not used in
+# any rule above.
+
+# --------------------------------------------------------------
+# 9. Disclosure / claim-tier hygiene
+# --------------------------------------------------------------
+disclosure:
+  inv_identification_1: globally_active
+  real_data_path: not_invoked
+  bank_level_inference: forbidden
+  certification_unqualified: forbidden
+  scope_label: synthetic_only
+
+# --------------------------------------------------------------
+# 10. Provenance
+# --------------------------------------------------------------
+provenance:
+  predecessor_report: X10R_GATE6_CERTIFICATION_REPORT.md
+  predecessor_boundary_card: docs/governance/X10R_BOUNDARY_CARD.md
+  predecessor_ledger_sha256: e3b9d0a4daa553485e7123bdbe325ca4e9c3c4a9cf46499208087e3910321362  # pragma: allowlist secret
+  protocol_authors: [neuron7xLab, Claude Code]
+  not_a_paper: true
+  not_a_promise_of_success: true
+  is_a_falsification_contract: true

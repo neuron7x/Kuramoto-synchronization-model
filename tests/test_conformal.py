@@ -1,10 +1,12 @@
+# Copyright (c) 2023-2026 Yaroslav Vasylenko (neuron7xLab)
+# SPDX-License-Identifier: MIT
 """Unit tests for the conformal calibration module."""
 
 from __future__ import annotations
 
 import numpy as np
 
-from neuropro.conformal import ConformalCQR
+from geosync_hpc.conformal import ConformalCQR
 
 
 def test_cqr_qhat_nonnegative() -> None:

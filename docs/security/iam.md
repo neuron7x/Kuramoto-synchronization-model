@@ -1,22 +1,22 @@
 ---
 title: Identity and Access Management
-description: Centralised identity architecture covering SSO, MFA, least-privilege policy automation, and RBAC enforcement for TradePulse.
+description: Centralised identity architecture covering SSO, MFA, least-privilege policy automation, and RBAC enforcement for GeoSync.
 ---
 
 # Identity and Access Management
 
-TradePulse relies on a layered IAM programme that federates workforce and service identities through a single control plane. The objective is to ensure that every interactive session and automation workflow is authenticated via single sign-on (SSO), verified with multi-factor authentication (MFA), and authorised under least-privilege, role-based access control (RBAC) policies.
+GeoSync relies on a layered IAM programme that federates workforce and service identities through a single control plane. The objective is to ensure that every interactive session and automation workflow is authenticated via single sign-on (SSO), verified with multi-factor authentication (MFA), and authorised under least-privilege, role-based access control (RBAC) policies.
 
 ## Identity Federation and SSO
 
-- **Primary IdP** – Azure AD, Okta, or another OIDC-compliant provider acts as the source of truth for workforce identities. All applications integrate through the shared `tradepulse` tenant/app registration.
+- **Primary IdP** – Azure AD, Okta, or another OIDC-compliant provider acts as the source of truth for workforce identities. All applications integrate through the shared `geosync` tenant/app registration.
 - **SSO enablement** – Users authenticate through the IdP portal. OIDC/OAuth clients consume signed JWTs that include the `sub`, `email`, `groups`, and `assurance_level` claims required by the control plane.
-- **Session brokers** – The DMZ identity proxy exchanges external IdP tokens for internal audience JWTs referenced by `TRADEPULSE_OAUTH2_AUDIENCE`. Sidecars enforce token validation before requests reach FastAPI services.
+- **Session brokers** – The DMZ identity proxy exchanges external IdP tokens for internal audience JWTs referenced by `GEOSYNC_OAUTH2_AUDIENCE`. Sidecars enforce token validation before requests reach FastAPI services.
 - **Break-glass accounts** – Stored in a hardware security module (HSM)-backed vault with manual rotation procedures. Break-glass access is logged and requires post-incident review.
 
 ### Implementation Checklist
 
-1. Register TradePulse as a confidential OIDC client with redirect URIs for the CLI, UI, and admin tools.
+1. Register GeoSync as a confidential OIDC client with redirect URIs for the CLI, UI, and admin tools.
 2. Configure the IdP to issue group membership in the `groups` claim and assurance level (reflecting MFA status) in the `acr` or custom claim.
 3. Deploy the identity proxy with JWKS caching and strict issuer/audience validation.
 4. Validate SSO end-to-end by exercising login flows for CLI, UI, and API clients.
@@ -37,7 +37,7 @@ TradePulse relies on a layered IAM programme that federates workforce and servic
 
 ## Least-Privilege RBAC Model
 
-RBAC scopes map to TradePulse capabilities across portfolio management, model operations, and platform administration. Roles are defined declaratively in the IAM configuration repository and rendered into OPA bundles for runtime enforcement.
+RBAC scopes map to GeoSync capabilities across portfolio management, model operations, and platform administration. Roles are defined declaratively in the IAM configuration repository and rendered into OPA bundles for runtime enforcement.
 
 | Role | Scope | Example Permissions |
 | --- | --- | --- |

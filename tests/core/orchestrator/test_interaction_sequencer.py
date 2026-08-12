@@ -1,3 +1,5 @@
+# Copyright (c) 2023-2026 Yaroslav Vasylenko (neuron7xLab)
+# SPDX-License-Identifier: MIT
 """Tests for the module interaction sequencer."""
 
 from __future__ import annotations
@@ -179,15 +181,9 @@ class TestModuleInteractionOrchestrator:
         orch = ModuleInteractionOrchestrator()
 
         # Register modules in different phases
-        orch.register_module(
-            ModuleDefinition(name="exec", phase=ModulePhase.EXECUTION)
-        )
-        orch.register_module(
-            ModuleDefinition(name="signal", phase=ModulePhase.SIGNAL_GENERATION)
-        )
-        orch.register_module(
-            ModuleDefinition(name="ingest", phase=ModulePhase.INGESTION)
-        )
+        orch.register_module(ModuleDefinition(name="exec", phase=ModulePhase.EXECUTION))
+        orch.register_module(ModuleDefinition(name="signal", phase=ModulePhase.SIGNAL_GENERATION))
+        orch.register_module(ModuleDefinition(name="ingest", phase=ModulePhase.INGESTION))
 
         sequence = orch.build_execution_sequence()
         # Should follow phase order
@@ -206,9 +202,7 @@ class TestModuleInteractionOrchestrator:
                 dependencies=["module1"],
             )
         )
-        orch.register_module(
-            ModuleDefinition(name="module1", phase=ModulePhase.INGESTION)
-        )
+        orch.register_module(ModuleDefinition(name="module1", phase=ModulePhase.INGESTION))
 
         sequence = orch.build_execution_sequence()
         assert sequence.index("module1") < sequence.index("module2")
@@ -217,12 +211,8 @@ class TestModuleInteractionOrchestrator:
         """Should skip disabled modules in sequence."""
         orch = ModuleInteractionOrchestrator()
 
-        orch.register_module(
-            ModuleDefinition(name="module1", phase=ModulePhase.INGESTION)
-        )
-        orch.register_module(
-            ModuleDefinition(name="module2", phase=ModulePhase.INGESTION)
-        )
+        orch.register_module(ModuleDefinition(name="module1", phase=ModulePhase.INGESTION))
+        orch.register_module(ModuleDefinition(name="module2", phase=ModulePhase.INGESTION))
 
         orch.disable_module("module2")
         sequence = orch.build_execution_sequence()
@@ -293,9 +283,7 @@ class TestModuleInteractionOrchestrator:
         """Should handle modules without handlers."""
         orch = ModuleInteractionOrchestrator()
 
-        orch.register_module(
-            ModuleDefinition(name="module1", phase=ModulePhase.INGESTION)
-        )
+        orch.register_module(ModuleDefinition(name="module1", phase=ModulePhase.INGESTION))
 
         context = orch.execute()
         assert context.has_error()
@@ -345,15 +333,9 @@ class TestModuleInteractionOrchestrator:
         """Should list modules filtered by phase."""
         orch = ModuleInteractionOrchestrator()
 
-        orch.register_module(
-            ModuleDefinition(name="ingest1", phase=ModulePhase.INGESTION)
-        )
-        orch.register_module(
-            ModuleDefinition(name="ingest2", phase=ModulePhase.INGESTION)
-        )
-        orch.register_module(
-            ModuleDefinition(name="signal1", phase=ModulePhase.SIGNAL_GENERATION)
-        )
+        orch.register_module(ModuleDefinition(name="ingest1", phase=ModulePhase.INGESTION))
+        orch.register_module(ModuleDefinition(name="ingest2", phase=ModulePhase.INGESTION))
+        orch.register_module(ModuleDefinition(name="signal1", phase=ModulePhase.SIGNAL_GENERATION))
 
         ingestion_modules = orch.list_modules_by_phase(ModulePhase.INGESTION)
         assert set(ingestion_modules) == {"ingest1", "ingest2"}
@@ -365,9 +347,7 @@ class TestModuleInteractionOrchestrator:
         """Should reset orchestrator state."""
         orch = ModuleInteractionOrchestrator()
 
-        orch.register_module(
-            ModuleDefinition(name="module1", phase=ModulePhase.INGESTION)
-        )
+        orch.register_module(ModuleDefinition(name="module1", phase=ModulePhase.INGESTION))
         assert len(orch.list_modules()) == 1
 
         orch.reset()
@@ -398,9 +378,7 @@ class TestModuleInteractionOrchestrator:
         # Create a complex dependency graph:
         # A -> B -> D
         # A -> C -> D
-        orch.register_module(
-            ModuleDefinition(name="A", phase=ModulePhase.INGESTION)
-        )
+        orch.register_module(ModuleDefinition(name="A", phase=ModulePhase.INGESTION))
         orch.register_module(
             ModuleDefinition(
                 name="B",

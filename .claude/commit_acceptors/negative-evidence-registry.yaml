@@ -1,0 +1,104 @@
+# Diff-bound commit acceptor for the negative-evidence registry gate.
+#
+# Adds governance/NEGATIVE_EVIDENCE.yaml — the authoritative registry of
+# negative evidence across the four operational categories
+# (failed_null_comparison, invalid_input, calibration_miss, replay_mismatch) —
+# and scripts/ci/check_negative_evidence.py, a fail-closed gate that keeps a
+# negative result preserved, not rewritten, and never laundered into a
+# "partial success".
+#
+# For every entry the gate requires one of the four categories, a
+# negative-class verdict (never a positive/promotion verdict), a non-empty
+# description free of promotion language ("partial success", "validated",
+# "unblocked", "passed", ...), a 40-hex sha anchor, and an in-repo artifact
+# that still EXISTS. Seeded with four real preserved negatives mirrored from
+# the tombstone ledger, one per category.
+#
+# Promotes NO claim tier, adds NO invariant, changes NO runtime behaviour,
+# modifies NO existing file.
+#
+# Locally verified on origin/main fork base:
+#   * python scripts/ci/check_negative_evidence.py: 4 PASS (all categories), exit 0
+#   * pytest tests/scripts/test_check_negative_evidence.py: 9 passed
+#   * ruff check / ruff format --check / black --check: clean
+#   * mypy --strict scripts/ci/check_negative_evidence.py: no issues
+#   * python scripts/ci/check_inventory_sync.py: PASS (50 files)
+id: negative-evidence-registry
+status: ACTIVE
+claim_type: governance
+promise: >-
+  governance/NEGATIVE_EVIDENCE.yaml is the authoritative registry of negative
+  evidence across exactly four categories (failed_null_comparison,
+  invalid_input, calibration_miss, replay_mismatch) and
+  scripts/ci/check_negative_evidence.py fails closed unless every entry
+  declares one of those categories, carries a negative-class verdict
+  (REJECTED/INVALID/MISS/MISMATCH/FALSIFIED/NULL/INFEASIBLE/RETRACTED, never a
+  positive or promotion verdict), has a non-empty description with no promotion
+  language (partial success, validated, unblocked, passed, success, ...),
+  sha-anchors a 40-hex commit, and references an in-repo artifact that still
+  exists. A lost artifact, a dropped sha, a forbidden category, a non-negative
+  verdict, or promotion language returns exit 1; a missing/malformed registry
+  returns exit 2. No claim tier is promoted; no runtime behaviour changes; no
+  existing file is touched.
+diff_scope:
+  changed_files:
+    - path: ".claude/commit_acceptors/negative-evidence-registry.yaml"
+    - path: "governance/NEGATIVE_EVIDENCE.yaml"
+    - path: "scripts/ci/check_negative_evidence.py"
+    - path: "tests/scripts/test_check_negative_evidence.py"
+    - path: ".github/workflows/research-integrity-gate.yml"
+    - path: "INVENTORY.json"
+  forbidden_paths:
+    - "trading/"
+    - "execution/"
+    - "forecast/"
+required_python_symbols:
+  - "scripts/ci/check_negative_evidence.py::main"
+expected_signal: >-
+  `python scripts/ci/check_negative_evidence.py` prints one [PASS] line per
+  entry (4 total, all four categories covered) and `OK: all 4 negative-evidence
+  entries preserved and honestly negative`, exiting 0; the behavioural suite
+  reports 9 passed including the lost-artifact, dropped-sha, bad-category,
+  non-negative-verdict, and promotion-language negatives.
+measurement_command: >-
+  bash -c 'mkdir -p tmp && python -m pytest
+  tests/scripts/test_check_negative_evidence.py -v --no-header -o addopts=""
+  -p no:cacheprovider 2>&1 | grep -E "PASSED|FAILED|ERROR" | sed -E "s/ +\[[0-9 ]+%\]//" > tmp/negative_evidence_pytest.log && test "$(grep -c PASSED tmp/negative_evidence_pytest.log)" = "9"'
+signal_artifact: "tmp/negative_evidence_pytest.log"
+falsifier:
+  command: |-
+    bash -c 'python - <<'\''PY'\''
+    import sys, tempfile, pathlib, importlib.util, yaml
+    root = pathlib.Path(".").resolve()
+    spec = importlib.util.spec_from_file_location(
+        "ne", root / "scripts/ci/check_negative_evidence.py")
+    ne = importlib.util.module_from_spec(spec)
+    sys.modules["ne"] = ne
+    spec.loader.exec_module(ne)
+    reg = yaml.safe_load((root / "governance/NEGATIVE_EVIDENCE.yaml").read_text())
+    e = dict(reg["entries"][0])
+    e["description"] = "a partial success, validated and unblocked"
+    with tempfile.TemporaryDirectory() as d:
+        p = pathlib.Path(d) / "n.yaml"
+        p.write_text(yaml.safe_dump({"schema_version":1,"entries":[e]}))
+        rc = ne.main(["--registry", str(p)])
+    sys.exit(0 if rc != 1 else 1)
+    PY'
+  description: >-
+    Inverse probe of the anti-laundering rule. It exits 0 (fires) iff an entry
+    whose description launders a negative into a "partial success / validated /
+    unblocked" is NOT rejected — i.e. the gate has stopped failing closed on
+    promotion language. While the rule holds the probe exits 1.
+rollback_command: >-
+  bash -c 'git rm -f governance/NEGATIVE_EVIDENCE.yaml
+  scripts/ci/check_negative_evidence.py
+  tests/scripts/test_check_negative_evidence.py
+  .claude/commit_acceptors/negative-evidence-registry.yaml && git checkout .github/workflows/research-integrity-gate.yml INVENTORY.json'
+rollback_verification_command: >-
+  bash -c 'test ! -f scripts/ci/check_negative_evidence.py && test ! -f governance/NEGATIVE_EVIDENCE.yaml'
+memory_update_type: none
+ledger_path: ".claude/commit_acceptors/negative-evidence-registry.yaml"
+report_path: "tmp/negative_evidence_pytest.log"
+evidence:
+  - path: "tmp/negative_evidence_pytest.log"
+    sha256: "44d3902a577049d1b44b5cad3d97dedb6e6f2aec8f56f193e53734f9beda6191"  # pragma: allowlist secret

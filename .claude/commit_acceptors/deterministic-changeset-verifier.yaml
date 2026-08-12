@@ -1,0 +1,76 @@
+# Diff-bound commit acceptor: a deterministic local mirror of the PR-gate.
+#
+# Root cause of repeated "green locally, red in CI" cycles: local checks did not
+# reproduce the CI gate set on the same changed-file view CI uses, so a skipped
+# black run, an unbound commit-acceptor, an undeclared INVENTORY entry, or a
+# detect-secrets hit only surfaced after pushing. `scripts/ci/verify_changeset.py`
+# runs the EXACT fast CI gates against `git diff <base>...HEAD`, fail-closed:
+# success is reported ONLY when every applicable gate ran and passed (a missing
+# tool is UNVERIFIED and fails the run — we never claim verification we did not do).
+#
+# This is enabling infrastructure, not a research/product claim; it lowers the
+# cost of every future change and makes "verified" mean verified.
+#
+# Locally verified:
+#   * python scripts/ci/verify_changeset.py on its own committed changeset -> all gates pass
+#   * pytest tests/ci/test_verify_changeset.py -> 5 passed (fail-closed on UNVERIFIED/FAIL)
+#   * black + ruff + mypy --strict clean
+
+id: deterministic-changeset-verifier
+status: ACTIVE
+claim_type: governance
+promise: >-
+  After this PR lands, `scripts/ci/verify_changeset.py` deterministically runs the
+  fast PR-gate checks (ruff, black --check, mypy, bandit, detect-secrets,
+  commit-acceptor, import-architecture, inventory, manifest, docs-consistency)
+  against the same changed-file set CI uses and fails closed unless every
+  applicable gate ran and passed; `make verify` invokes it.
+diff_scope:
+  changed_files:
+    - path: ".claude/commit_acceptors/deterministic-changeset-verifier.yaml"
+    - path: "scripts/ci/verify_changeset.py"
+    - path: "tests/ci/test_verify_changeset.py"
+    - path: "Makefile"
+  forbidden_paths:
+    - "trading/"
+    - "execution/"
+    - "forecast/"
+    - "policy/"
+    - "core/physics/"
+    - "core/kuramoto/"
+required_python_symbols:
+  - "scripts/ci/verify_changeset.py::verify"
+expected_signal: >-
+  `python scripts/ci/verify_changeset.py` prints a per-gate PASS/FAIL/SKIP table
+  and exits 0 only when no gate is FAIL or UNVERIFIED; `pytest
+  tests/ci/test_verify_changeset.py` passes (5), proving the run fails closed on
+  an UNVERIFIED (missing tool) or any FAIL gate.
+measurement_command: >-
+  bash -c '
+    python -m pytest tests/ci/test_verify_changeset.py -q && python scripts/ci/verify_changeset.py --base-ref origin/main
+  '
+signal_artifact: "tmp/changeset_verifier.log"
+falsifier:
+  command: >-
+    bash -c '
+      python -m pytest -q
+        "tests/ci/test_verify_changeset.py::test_fail_closed_on_unverified"
+        >/dev/null 2>&1
+      test "$?" -ne 0
+    '
+  description: >-
+    Runs the fail-closed assertion. The falsifier succeeds (exit 0) only if it
+    FAILS — i.e. only if the verifier starts reporting success despite an
+    UNVERIFIED gate. With the fail-closed contract intact the test passes (exit
+    0), so `test $? -ne 0` exits 1 and the falsifier fails.
+rollback_command: >-
+  bash -c 'git checkout origin/main -- Makefile && rm -f
+    scripts/ci/verify_changeset.py
+    tests/ci/test_verify_changeset.py
+    .claude/commit_acceptors/deterministic-changeset-verifier.yaml'
+rollback_verification_command: >-
+  bash -c '! test -f scripts/ci/verify_changeset.py'
+memory_update_type: append
+ledger_path: ".claude/commit_acceptors/deterministic-changeset-verifier.yaml"
+report_path: "tmp/changeset_verifier.log"
+evidence: []

@@ -1,0 +1,67 @@
+# Diff-bound acceptor: fail-closed degenerate-input guards in the Kuramoto
+# phase-transition and chimera detectors (computational-audit findings).
+#
+# PhaseTransitionAnalyzer._find_critical_K raised an opaque np.gradient
+# IndexError on a single-point sweep and silently returned K_c=0 for a flat
+# (never-crossing) R curve. ott_antonsen.detect_chimera silently dropped
+# oscillators with negative sector labels (n_sectors = max()+1 ignores them),
+# making the global and per-sector order parameters mutually inconsistent.
+# Both violate the CLAUDE.md fail-closed doctrine.
+
+id: kuramoto-degenerate-input-failclosed
+status: ACTIVE
+claim_type: correctness
+promise: >-
+  _find_critical_K now raises on a <2-point sweep and returns NaN (explicit
+  "no transition") for a flat R curve instead of a spurious left-endpoint K_c;
+  detect_chimera rejects empty and negative-labelled sector assignments instead
+  of silently dropping oscillators. The genuine-crossing and valid-sector paths
+  are unchanged (regression-tested). No invariant added or changed; six
+  reproduction tests added (4 fail-closed + 2 regression).
+diff_scope:
+  changed_files:
+    - path: ".claude/commit_acceptors/kuramoto-degenerate-input-failclosed.yaml"
+    - path: "core/kuramoto/phase_transition.py"
+    - path: "core/kuramoto/ott_antonsen.py"
+    - path: "tests/unit/core/test_kuramoto_modules.py"
+  forbidden_paths:
+    - "trading/"
+    - "execution/"
+    - "forecast/"
+    - "policy/"
+required_python_symbols:
+  - "PhaseTransitionAnalyzer"
+  - "detect_chimera"
+expected_signal: >-
+  All tests in tests/unit/core/test_kuramoto_modules.py pass, including the new
+  TestDegenerateInputFailClosed class (4 fail-closed + 2 regression); existing
+  chimera and phase-transition suites stay green (no regression); mypy --strict,
+  ruff, black, physics-code-audit clean on both changed modules. Reproduced
+  before/after: _find_critical_K([2.0],[0.5]) raised IndexError -> ValueError;
+  flat R returned K_c=0.0 -> NaN; detect_chimera with sectors [-1,-1,0,0]
+  silently dropped two oscillators -> ValueError.
+measurement_command: >-
+  PYTHONPATH=. python -m pytest tests/unit/core/test_kuramoto_modules.py
+  -k Degenerate -v
+signal_artifact: "tmp/kuramoto_degenerate_failclosed_pytest.log"
+falsifier:
+  command: >-
+    PYTHONPATH=. python -m pytest tests/unit/core/test_kuramoto_modules.py
+    -v -k "Degenerate"
+  description: >-
+    A single-point sweep and an empty/negative chimera assignment must each
+    raise; a flat R curve must return NaN; and the genuine-crossing and
+    valid-sector regression tests must still pass. Reverting any guard
+    re-introduces the opaque crash or the silent-drop and fails the test.
+rollback_command: >-
+  git checkout HEAD~1 --
+  core/kuramoto/phase_transition.py
+  core/kuramoto/ott_antonsen.py
+  tests/unit/core/test_kuramoto_modules.py
+  .claude/commit_acceptors/kuramoto-degenerate-input-failclosed.yaml
+rollback_verification_command: >-
+  git diff --exit-code core/kuramoto/phase_transition.py
+memory_update_type: none
+ledger_path: ".claude/commit_acceptors/kuramoto-degenerate-input-failclosed.yaml"
+report_path: "docs/reports/diff_bound_commit_acceptor_layer.md"
+evidence: []

@@ -1,0 +1,82 @@
+# Diff-bound commit acceptor for the Kelly-sizing physical-law witnesses.
+#
+# Adds ONE test module binding two previously-unwitnessed catalog laws to
+# executable @law witnesses. Promotes no claim, changes no runtime behavior,
+# touches no schema/guard, uses no real data.
+#
+#   kelly.fraction_cap          — applied fraction ≤ configured cap (INV-KELLY2).
+#   kelly.log_growth_optimality — f* = μ/σ² maximises E[log(1+f·X)] (INV-KELLY3).
+#
+# Locally verified on origin/main base (2253a6a):
+#   * pytest tests/physics_contracts/test_kelly_sizing_witnesses.py: 2 passed
+#   * .claude/physics/validate_tests.py <file>: 0 issues (L1..L5), EXIT 0
+#   * ruff / mypy --strict clean ; zero new `# type: ignore`
+id: kelly-sizing-law-witnesses
+status: ACTIVE
+claim_type: governance
+promise: >-
+  After this PR lands, tests/physics_contracts/test_kelly_sizing_witnesses.py
+  binds the catalog laws kelly.fraction_cap and kelly.log_growth_optimality to
+  @law-decorated witnesses that pass .claude/physics/validate_tests with zero
+  issues. The cap witness asserts KuramotoKellyAdapter.compute_kelly_fraction
+  never exceeds kelly_base·ceil nor falls below kelly_base·floor (INV-KELLY2);
+  the optimality witness asserts f*=μ/σ² is the Monte-Carlo arg-max of expected
+  log-growth within the grid+MC budget and within 3 standard errors (INV-KELLY3).
+  No market claim; no runtime, schema, or guard change.
+diff_scope:
+  changed_files:
+    - path: ".claude/commit_acceptors/kelly-sizing-law-witnesses.yaml"
+    - path: "tests/physics_contracts/test_kelly_sizing_witnesses.py"
+  forbidden_paths:
+    - "trading/"
+    - "execution/"
+    - "forecast/"
+    - "policy/"
+    - "application/"
+    - "core/"
+    - "src/"
+    - "geosync_hpc/"
+    - "physics_contracts/catalog.yaml"
+required_python_symbols: []
+expected_signal: >-
+  `python -m pytest tests/physics_contracts/test_kelly_sizing_witnesses.py`
+  reports 2 passed; `python .claude/physics/validate_tests.py
+  tests/physics_contracts/test_kelly_sizing_witnesses.py` exits 0 with no
+  L1..L5 issues; ruff and mypy --strict on the file are clean.
+measurement_command: >-
+  bash -c 'mkdir -p tmp && python -m pytest
+  tests/physics_contracts/test_kelly_sizing_witnesses.py
+  > tmp/kelly_sizing_law_witnesses.log 2>&1
+  && grep -q "2 passed" tmp/kelly_sizing_law_witnesses.log'
+signal_artifact: "tmp/kelly_sizing_law_witnesses.log"
+falsifier:
+  command: |-
+    bash -c 'python -c "
+    import numpy as np
+    from core.neuro.signal_bus import NeuroSignalBus
+    from core.neuro.kuramoto_kelly import KuramotoKellyAdapter
+    a = KuramotoKellyAdapter(NeuroSignalBus(), floor=0.1, ceil=1.0)
+    rng = np.random.default_rng(0)
+    breached = False
+    for _ in range(30):
+        prices = 100.0 * np.exp(np.cumsum(rng.normal(0.0, 0.01, 40)))
+        for kb in (0.05, 0.2, 0.5, 1.0):
+            if a.compute_kelly_fraction(kb, prices) > kb * 1.0 + 1e-12:
+                breached = True
+    import sys; sys.exit(0 if breached else 1)"'
+  description: >-
+    Inverse probe of the Kelly cap. It exits 0 (fires) iff the applied fraction
+    exceeds kelly_base·ceil beyond tolerance — i.e. the cap is broken in real
+    code. While the cap holds the probe exits 1. If it ever exits 0, the sizing
+    witness is no longer truthful and the change must be reverted, not patched
+    green.
+rollback_command: >-
+  git rm -f
+  tests/physics_contracts/test_kelly_sizing_witnesses.py
+  .claude/commit_acceptors/kelly-sizing-law-witnesses.yaml
+rollback_verification_command: >-
+  bash -c 'test ! -f tests/physics_contracts/test_kelly_sizing_witnesses.py'
+memory_update_type: none
+ledger_path: ".claude/commit_acceptors/kelly-sizing-law-witnesses.yaml"
+report_path: "tmp/kelly_sizing_law_witnesses.log"
+evidence: []

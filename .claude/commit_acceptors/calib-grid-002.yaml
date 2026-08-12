@@ -1,0 +1,183 @@
+# Diff-bound commit acceptor for CALIB-GRID-002.
+#
+# NEW pre-registered lineage attacking the proven CALIB-GRID-001 / R1
+# *differential-class* boundary with a different estimator class: the
+# weak / integral form (Messenger & Bortz, Weak SINDy, J. Comput. Phys.
+# 443 (2021) 110525). FROZEN-GATE DISCIPLINE: the CALIB-GRID-001 / R1
+# pre-registration, its five acceptance-gate thresholds, the embedded
+# IEEE data, the theta0 perturbation, sigma, the seeds and the decision
+# rule are the single source of truth from PR #749/#751/#755 and are
+# NOT touched. CALIB-GRID-002 carries its OWN cg002.* gates and its own
+# pre-registration. estimate_swing_coupling_integral is strictly
+# additive; the first-order and R1 differential swing point estimates
+# stay bit-identical (verified by test_differential_paths_bit_identical_
+# after_integral_added, test_r1_first_order_path_is_bit_stable,
+# test_r1_swing_path_closes_noiseless_frobenius_gate).
+#
+# Locally verified:
+#   * pytest tests/research/calibration/test_grid_kuramoto.py
+#     tests/unit/core/test_kuramoto_integral_estimator.py
+#     tests/unit/core/test_kuramoto_identifiability.py: 53 passed
+#     (33 fast + 20 slow), -m "not slow": 33 passed
+#   * pytest tests/unit/core/test_kuramoto_coupling_estimator.py +
+#     tests/research/systemic_risk/test_coupling.py: 34 passed
+#   * mypy --strict / ruff / black: clean on every touched file
+#     (fresh-cache; the stale .mypy_cache `google` crash is an
+#     environmental cache corruption, not a code defect)
+#   * no-peek drift test binds cg002.py constants + every gate
+#     threshold to PREREGISTRATION_002.yaml
+#   * frozen CALIB-GRID-001 prereg<->gates drift tests still pass
+#
+# MEASURED outcome (cg002.* gates, pre-registered before the run, no
+# retune; tier MEASURED). Verdict NEGATIVE and sha-pinned. The
+# falsifiable claim is FALSIFIED for the noisy regime: the
+# estimator-CLASS change did NOT close the frozen sigma=0.02 /
+# record-length regime and it RELOCATES the boundary.
+#   noiseless Frobenius : R1 differential 0.0666 -> integral 0.0381
+#                         (PASS <=0.10, no regression)
+#   noiseless topo F1   : 1.000 (PASS)
+#   noisy Frobenius     : R1 differential 16.607 -> integral 0.9468
+#                         (17.5x better, still FAIL >0.25)
+#   noisy topo F1       : 0.800 (FAIL)
+#   theorem-class DCB   : 0.5000 (FAIL <=0.15; same pseudo-inverse
+#                         ill-conditioning as the parent R1
+#                         critical-coupling gate, NOT the new class)
+#   front-gate sigma=0.02: REFUSE under BOTH differential and integral
+#                         (claim #2<->#1 FALSIFIED — regressor-level
+#                         SNR floor keeps R2 noise-dominated)
+#   null-battery FPR    : 0.10 (FAIL <=0.05; 3-edge small-graph
+#                         specificity limitation, reported not masked)
+# Relocated localization (corrected, sha-pinned): a direct regressor
+# SNR measurement on the frozen sigma=0.02 trajectory shows the clean
+# sin(theta_i-theta_j) coupling regressor has std 0.002-0.016 while the
+# sigma=0.02 noise injects std ~0.029 into the SAME regressor (SNR <
+# 0.6 every edge, 0.085 on edge (0,2)). The boundary is therefore a
+# CLASS-INDEPENDENT regressor-level signal floor at the frozen
+# excitation, not the double-differentiation operator R1 attributed it
+# to. The frozen CALIB-GRID-001 negative artifact stands as the
+# differential-class boundary record; this CALIB-GRID-002 sha-pinned
+# NEGATIVE stands as the class-independent regressor-floor boundary
+# record. No scientific claim promoted; no gate retuned.
+
+id: calib-grid-002
+status: ACTIVE
+claim_type: documentation
+promise: >-
+  After this PR lands, core.kuramoto.coupling_estimator ships an
+  additive integral / weak-form swing identification path
+  (estimate_swing_coupling_integral + _test_function_stencil) that
+  never double-differentiates the phase (Messenger & Bortz weak form);
+  it returns a contract-identical SwingCouplingEstimate and
+  interoperates unchanged with the merged identifiability front-gate.
+  research/calibration/grid_kuramoto/cg002/ ships a NEW pre-registered
+  lineage (PREREGISTRATION_002.yaml + PROVENANCE_002.md committed
+  before the run, branch base sha
+  a5e0d533b2201c999b31c792773e858f8da713bf) with its own cg002.* gates,
+  a Dorfler-Chertkov-Bullo theorem-class metric, a topology-preserving
+  + flat-coupling null battery, run.py --cg002, and a sha-pinned
+  RESULTS.json/RESULTS.md. The verdict is NEGATIVE and sha-pinned: the
+  integral class is sound noiseless (Frobenius 0.0381 <= 0.10, no
+  regression vs R1's 0.0666) and improves the noisy error 17.5x over
+  the R1 differential class, but it does NOT close the frozen sigma=0.02
+  regime (0.9468 >> 0.25) and the front-gate still REFUSEs sigma=0.02 —
+  the falsifiable claim is FALSIFIED there. The estimator-class change
+  closed nothing the differential class could not; it RELOCATES the
+  boundary to a class-independent regressor-level signal floor proven
+  by a direct regressor SNR measurement. No scientific claim is
+  promoted; the frozen CALIB-GRID-001 / R1 gates were not touched.
+diff_scope:
+  changed_files:
+    - path: ".claude/commit_acceptors/calib-grid-002.yaml"
+    - path: "core/kuramoto/coupling_estimator.py"
+    - path: "research/calibration/grid_kuramoto/__init__.py"
+    - path: "research/calibration/grid_kuramoto/run.py"
+    - path: "research/calibration/grid_kuramoto/cg002/__init__.py"
+    - path: "research/calibration/grid_kuramoto/cg002/cg002.py"
+    - path: "research/calibration/grid_kuramoto/cg002/PREREGISTRATION_002.yaml"
+    - path: "research/calibration/grid_kuramoto/cg002/PROVENANCE_002.md"
+    - path: "research/calibration/grid_kuramoto/cg002/RESULTS.json"
+    - path: "research/calibration/grid_kuramoto/cg002/RESULTS.md"
+    - path: "tests/research/calibration/test_grid_kuramoto.py"
+    - path: "tests/unit/core/test_kuramoto_integral_estimator.py"
+  forbidden_paths:
+    - "trading/"
+    - "execution/"
+    - "forecast/"
+    - "policy/"
+    - "core/physics/"
+    - "research/calibration/grid_kuramoto/PREREGISTRATION.md"
+    - "research/calibration/grid_kuramoto/gates.py"
+    - "research/calibration/grid_kuramoto/r1/"
+    - "research/calibration/grid_kuramoto/identifiability/THRESHOLD_PROVENANCE.md"
+    - "core/kuramoto/identifiability.py"
+    - "application/governance/claim_ledger.py"
+    - "application/governance/commit_acceptor.py"
+required_python_symbols:
+  - "core/kuramoto/coupling_estimator.py::estimate_swing_coupling_integral"
+  - "core/kuramoto/coupling_estimator.py::_test_function_stencil"
+  - "research/calibration/grid_kuramoto/cg002/cg002.py::build_cg002_ledger"
+  - "research/calibration/grid_kuramoto/cg002/cg002.py::recover_coupling_integral"
+  - "research/calibration/grid_kuramoto/cg002/cg002.py::dcb_phase_cohesiveness_rel_error"
+  - "research/calibration/grid_kuramoto/cg002/cg002.py::null_battery_fpr"
+expected_signal: >-
+  `pytest tests/research/calibration/test_grid_kuramoto.py
+  tests/unit/core/test_kuramoto_integral_estimator.py
+  tests/unit/core/test_kuramoto_identifiability.py -m "not slow"`
+  reports "33 passed"; the @slow suite reports "53 passed"; mypy
+  --strict / ruff / black are clean on the diff; the CG002 no-peek
+  drift test passes; the frozen CALIB-GRID-001 prereg<->gates drift
+  tests still pass; build_cg002_ledger emits verdict == "NEGATIVE" with
+  is_science_claim == False; the integral noiseless Frobenius PASSES
+  <=0.10 (better than R1's 0.0666) while the noisy regime FAILS and the
+  front-gate REFUSEs sigma=0.02 under both classes.
+measurement_command: >-
+  bash -c '
+    rm -rf .mypy_cache &&
+    mypy --strict --follow-imports=silent
+      core/kuramoto/coupling_estimator.py
+      research/calibration/grid_kuramoto/
+      tests/research/calibration/test_grid_kuramoto.py
+      tests/unit/core/test_kuramoto_integral_estimator.py && ruff check core/kuramoto research/calibration tests/research/calibration
+       tests/unit/core/test_kuramoto_integral_estimator.py && black --check core/kuramoto/coupling_estimator.py
+       research/calibration/grid_kuramoto
+       tests/research/calibration/test_grid_kuramoto.py
+       tests/unit/core/test_kuramoto_integral_estimator.py && python -m pytest tests/research/calibration/test_grid_kuramoto.py
+       tests/unit/core/test_kuramoto_integral_estimator.py
+       tests/unit/core/test_kuramoto_identifiability.py -q -m "not slow"
+  '
+signal_artifact: "tmp/calib_grid_002.log"
+falsifier:
+  command: >-
+    bash -c '
+      python -m pytest
+      "tests/research/calibration/test_grid_kuramoto.py::test_cg002_verdict_is_negative_and_localized"
+      "tests/research/calibration/test_grid_kuramoto.py::test_cg002_preregistration_matches_code"
+      "tests/research/calibration/test_grid_kuramoto.py::test_cg002_does_not_touch_frozen_calib_grid_001_gates"
+      "tests/unit/core/test_kuramoto_integral_estimator.py::test_differential_paths_bit_identical_after_integral_added"
+      -q >/tmp/_calib_002_rails.log 2>&1 && ! grep -q "4 passed" /tmp/_calib_002_rails.log
+    '
+  description: >-
+    Probes four load-bearing CALIB-GRID-002 rails: the integral form
+    lands a NEGATIVE that is sha-pinned and localized (noiseless PASS /
+    noisy FAIL / front-gate REFUSE); the cg002.py constants + gate
+    thresholds match PREREGISTRATION_002.yaml (no post-data retune); the
+    frozen CALIB-GRID-001 / R1 gates are untouched; and the R1
+    differential swing path is bit-identical (strictly additive
+    estimator class). The falsifier succeeds (exit 0) only when one of
+    these rails fails.
+rollback_command: >-
+  bash -c 'git checkout origin/main --
+    core/kuramoto/coupling_estimator.py
+    research/calibration/grid_kuramoto/__init__.py
+    research/calibration/grid_kuramoto/run.py
+    tests/research/calibration/test_grid_kuramoto.py && rm -rf
+    research/calibration/grid_kuramoto/cg002
+    tests/unit/core/test_kuramoto_integral_estimator.py
+    .claude/commit_acceptors/calib-grid-002.yaml'
+rollback_verification_command: >-
+  bash -c '! test -d research/calibration/grid_kuramoto/cg002 && ! grep -q estimate_swing_coupling_integral
+    core/kuramoto/coupling_estimator.py'
+memory_update_type: append
+ledger_path: ".claude/commit_acceptors/calib-grid-002.yaml"
+report_path: "tmp/calib_grid_002.log"
+evidence: []

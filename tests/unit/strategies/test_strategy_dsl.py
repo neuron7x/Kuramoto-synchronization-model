@@ -1,3 +1,5 @@
+# Copyright (c) 2023-2026 Yaroslav Vasylenko (neuron7xLab)
+# SPDX-License-Identifier: MIT
 """Unit tests for the strategy configuration DSL."""
 
 from __future__ import annotations
@@ -103,15 +105,11 @@ def test_loader_merges_preset_and_inline_values(tmp_path: Path) -> None:
     assert definition.metadata.preset == "base_momentum"
     assert definition.runtime.seed == 42
 
-    strategy_component = next(
-        item for item in definition.pipeline if item.id == "strategy"
-    )
+    strategy_component = next(item for item in definition.pipeline if item.id == "strategy")
     assert strategy_component.entrypoint.endswith("DummyStrategy")
     assert strategy_component.parameters.require()["symbol"] == "ETH-USD"
     assert strategy_component.parameters.require()["window"] == 55
-    assert strategy_component.parameters.optional[
-        "threshold"
-    ].resolved() == pytest.approx(0.5)
+    assert strategy_component.parameters.optional["threshold"].resolved() == pytest.approx(0.5)
 
 
 def test_pipeline_materialise_resets_rng(tmp_path: Path) -> None:

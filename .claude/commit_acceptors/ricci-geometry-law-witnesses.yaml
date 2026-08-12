@@ -1,0 +1,80 @@
+# Diff-bound commit acceptor for the Ricci-geometry physical-law witnesses.
+#
+# This change adds ONE test module that binds two previously-unwitnessed catalog
+# laws to executable mathematical witnesses, raising physics_contracts
+# physical-law-coverage. It promotes no claim, changes no runtime behavior,
+# touches no schema/guard, and uses no real data.
+#
+#   ricci.ollivier_bounds   — κ ∈ [−1, 1] (INV-RC1 upper bound on any connected
+#                             graph; INV-RC3 full bound on build_price_graph).
+#   ricci.flow_monotonicity — Perelman-like F = Σκ²w non-increasing under a
+#                             discrete Ricci flow step (INV-RC-FLOW family).
+#
+# Locally verified on origin/main base (2253a6a):
+#   * pytest tests/physics_contracts/test_ricci_geometry_witnesses.py: 2 passed
+#   * .claude/physics/validate_tests.py <file>: 0 issues (L1..L5), EXIT 0
+#   * both laws register in physics_contracts.law.WITNESS_REGISTRY
+#   * ruff / mypy --strict clean ; zero new `# type: ignore`
+id: ricci-geometry-law-witnesses
+status: ACTIVE
+claim_type: governance
+promise: >-
+  After this PR lands, tests/physics_contracts/test_ricci_geometry_witnesses.py
+  binds the catalog laws ricci.ollivier_bounds and ricci.flow_monotonicity to
+  @law-decorated mathematical witnesses that pass .claude/physics/validate_tests
+  with zero issues. The Ollivier–Ricci witness sweeps connected weighted graphs
+  asserting κ ≤ 1 (INV-RC1) and price graphs asserting κ ∈ [−1, 1] (INV-RC3);
+  the flow witness asserts the Perelman-like F-functional Σκ²w is non-increasing
+  under a discrete Ricci flow step within the catalog's 1e-9 numerical slack.
+  No market claim is made; no runtime, schema, or guard file changes.
+diff_scope:
+  changed_files:
+    - path: ".claude/commit_acceptors/ricci-geometry-law-witnesses.yaml"
+    - path: "tests/physics_contracts/test_ricci_geometry_witnesses.py"
+  forbidden_paths:
+    - "trading/"
+    - "execution/"
+    - "forecast/"
+    - "policy/"
+    - "application/"
+    - "core/"
+    - "src/"
+    - "geosync_hpc/"
+    - "physics_contracts/catalog.yaml"
+required_python_symbols: []
+expected_signal: >-
+  `python -m pytest tests/physics_contracts/test_ricci_geometry_witnesses.py`
+  reports 2 passed; `python .claude/physics/validate_tests.py
+  tests/physics_contracts/test_ricci_geometry_witnesses.py` exits 0 with no
+  L1..L5 issues; ruff and mypy --strict on the file are clean.
+measurement_command: >-
+  bash -c 'mkdir -p tmp && python -m pytest
+  tests/physics_contracts/test_ricci_geometry_witnesses.py
+  > tmp/ricci_geometry_law_witnesses.log 2>&1
+  && grep -q "2 passed" tmp/ricci_geometry_law_witnesses.log'
+signal_artifact: "tmp/ricci_geometry_law_witnesses.log"
+falsifier:
+  command: |-
+    bash -c 'python -c "
+    import networkx as nx;
+    import tests.physics_contracts.test_ricci_geometry_witnesses as t;
+    from core.indicators.ricci import ricci_curvature_edge;
+    g = t._random_connected_weighted_graph(0, 7);
+    worst = max(ricci_curvature_edge(g, int(u), int(v)) for u, v in g.edges());
+    import sys; sys.exit(0 if worst > 1.0 + t.CURVATURE_EPS else 1)"'
+  description: >-
+    Inverse probe of the Ollivier–Ricci upper bound. It exits 0 (fires) iff some
+    edge curvature exceeds 1 beyond the numerical tolerance — i.e. the
+    definitional bound κ ≤ 1 is broken in the real code. While the bound holds
+    the probe exits 1. If it ever exits 0, the geometry witness is no longer a
+    truthful witness and the change must be reverted, not patched green.
+rollback_command: >-
+  git rm -f
+  tests/physics_contracts/test_ricci_geometry_witnesses.py
+  .claude/commit_acceptors/ricci-geometry-law-witnesses.yaml
+rollback_verification_command: >-
+  bash -c 'test ! -f tests/physics_contracts/test_ricci_geometry_witnesses.py'
+memory_update_type: none
+ledger_path: ".claude/commit_acceptors/ricci-geometry-law-witnesses.yaml"
+report_path: "tmp/ricci_geometry_law_witnesses.log"
+evidence: []

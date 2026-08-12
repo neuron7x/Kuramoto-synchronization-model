@@ -1,0 +1,36 @@
+{
+  "$schema": "http://json-schema.org/draft-07/schema#",
+  "$id": "geosync.homeostasis_contract.v1",
+  "title": "GeoSync Neuromodulatory Homeostasis Contract",
+  "description": "The dopamine/serotonin opponent-process drive must stay provably admissible: allostatic load bounded, controller parameters in-spec, components phase-coherent. The No-Ungrounded-Act gate returns GO only when all hold, else NO-GO (fail-closed). Each invariant binds to a test that drives the real neuromodulatory objects.",
+  "type": "object",
+  "additionalProperties": false,
+  "required": ["schema", "component", "gate", "invariants", "verdict"],
+  "properties": {
+    "schema": { "const": "geosync.homeostasis_contract.v1" },
+    "component": { "type": "string", "minLength": 1 },
+    "allostatic_bound": { "type": "number" },
+    "coherence_min": { "type": "number" },
+    "worst_allostatic_load": { "type": "number" },
+    "coherence_locked": { "type": "number" },
+    "coherence_spread": { "type": "number" },
+    "gate": { "enum": ["GO", "NO-GO"] },
+    "report_only": { "type": "boolean" },
+    "verdict": { "enum": ["PASS", "FAIL"] },
+    "invariants": {
+      "type": "array",
+      "minItems": 5,
+      "items": {
+        "type": "object",
+        "additionalProperties": false,
+        "required": ["id", "statement", "test", "passed"],
+        "properties": {
+          "id": { "type": "string", "minLength": 1 },
+          "statement": { "type": "string", "minLength": 1 },
+          "test": { "type": "string", "minLength": 1 },
+          "passed": { "type": "boolean" }
+        }
+      }
+    }
+  }
+}

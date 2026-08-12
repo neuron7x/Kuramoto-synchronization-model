@@ -1,0 +1,34 @@
+{
+  "capture_timestamp_utc": "2026-05-09T06:07:46+00:00",
+  "config": {
+    "align": "trailing",
+    "candidate_score_method": "kuramoto_R_per_snapshot",
+    "window": 60
+  },
+  "config_hash": "bis-lbs-claims-allsectors-cross-border-quarterly",
+  "crisis_lock_timestamp_utc": "2026-05-01T00:00:00+00:00",
+  "filter_spec": {
+    "FREQ": "Q",
+    "L_CP_SECTOR": "A",
+    "L_CURR_TYPE": "A",
+    "L_DENOM": "TO1",
+    "L_INSTR": "A",
+    "L_MEASURE": "S",
+    "L_PARENT_CTY": "5J",
+    "L_POSITION": "C",
+    "L_POS_TYPE": "N",
+    "L_REP_BANK_TYPE": "A",
+    "TIME_RANGE": [
+      "1995-Q1",
+      "2023-Q4"
+    ]
+  },
+  "first_evaluation_timestamp_utc": "2026-05-08T00:00:00+00:00",
+  "interpretation_caveat": "Edges are directed total cross-border claims of country i's resident banks on ALL counterparty sectors in country j (banks + non-banks). The BIS LBS bulk feed does not publish a bank-to-bank bilateral cell at REP\u00d7CP-country granularity; the Banks-only (B/I/J) sector breakdown is aggregated to L_CP_COUNTRY=5J only. This panel is therefore an interbank-embedded total-claim network, not a pure interbank graph. True bank-to-bank bilateral data requires BIS-confidential or per-country supervisory extracts.",
+  "n_banks": 31,
+  "n_days": 116,
+  "payload_sha256": "18a72a05159e31c381704ba05f774ab66e8aa7a2eb979bf0a929a02ea08d0270",
+  "schema_version": "interbank.panel.v1",
+  "seed": 20260508,
+  "source_id": "BIS-LBS-WS_LBS_D_PUB-v1.0"
+}

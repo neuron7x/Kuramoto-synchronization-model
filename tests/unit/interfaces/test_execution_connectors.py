@@ -1,3 +1,5 @@
+# Copyright (c) 2023-2026 Yaroslav Vasylenko (neuron7xLab)
+# SPDX-License-Identifier: MIT
 from __future__ import annotations
 
 import base64
@@ -105,9 +107,7 @@ def test_binance_http_error_maps_to_order_error(monkeypatch) -> None:
 def test_rate_limit_detection() -> None:
     req = httpx.Request("GET", "https://example.com")
     resp_429 = httpx.Response(429, request=req)
-    resp_header = httpx.Response(
-        200, headers={"X-RateLimit-Remaining": "0"}, request=req
-    )
+    resp_header = httpx.Response(200, headers={"X-RateLimit-Remaining": "0"}, request=req)
 
     assert is_rate_limited(resp_429)
     assert is_rate_limited(resp_header)

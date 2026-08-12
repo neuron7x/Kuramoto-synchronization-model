@@ -1,8 +1,8 @@
 apiVersion: scheduling.k8s.io/v1
 kind: PriorityClass
 metadata:
-  name: tradepulse-critical
+  name: geosync-critical
 value: 1000000000
 preemptionPolicy: PreemptLowerPriority
 globalDefault: false
-description: "Ensures TradePulse production workloads remain schedulable under cluster pressure."
+description: "Ensures GeoSync production workloads remain schedulable under cluster pressure."

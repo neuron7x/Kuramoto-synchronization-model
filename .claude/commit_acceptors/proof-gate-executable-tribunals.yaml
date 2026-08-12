@@ -1,0 +1,58 @@
+id: proof-gate-executable-tribunals
+status: ACTIVE
+claim_type: correctness
+promise: >-
+  The 6 MANUAL gating probes (E/G/H/K/M/Q) in scripts/ci/release_gate.py become
+  artifact-aware executable tribunals: each delegates to a scripts/ci generator
+  that emits a content-addressable JSON verdict (command -> input hash -> output
+  hash -> verdict) via the shared proof_common provenance/self-hash primitives.
+  Under --deep the generator is re-run from scratch so the verdict reflects live
+  machine evidence at HEAD, never stale prose. G.real_data resolves to BLOCKED
+  (synthetic-only fixtures; no real venue/license/provenance manifest), surfaced
+  honestly, never faked GREEN. No new physics or neuroscience; no alpha; synthetic
+  only.
+diff_scope:
+  changed_files:
+    - path: "scripts/ci/proof_common.py"
+    - path: "scripts/ci/probe_clean_clone.py"
+    - path: "scripts/ci/real_data_probe.py"
+    - path: "scripts/ci/falsification_ledger.py"
+    - path: "scripts/ci/execution_contract.py"
+    - path: "scripts/ci/benchmark_spine.py"
+    - path: "scripts/ci/replication_packet.py"
+    - path: "scripts/ci/generate_manifest.py"
+    - path: "scripts/ci/release_gate.py"
+    - path: "scripts/ci/check_claim_boundary.py"
+    - path: "tests/scripts/test_proof_gates.py"
+    - path: ".claude/commit_acceptors/proof-gate-executable-tribunals.yaml"
+  forbidden_paths:
+    - "trading/"
+    - "execution/"
+    - "forecast/"
+    - "policy/"
+required_python_symbols:
+  - "scripts.ci.proof_common:write_artifact"
+  - "scripts.ci.proof_common:verify_artifact_selfhash"
+  - "scripts.ci.real_data_probe:run"
+  - "scripts.ci.falsification_ledger:run"
+  - "scripts.ci.replication_packet:main"
+expected_signal: >-
+  tests/scripts/test_proof_gates.py is fully green: every generator survives its
+  own controls (8/8 falsification controls SURVIVED), fails closed on corruption,
+  is deterministic (identical output_sha256 across re-runs), and G.real_data stays
+  BLOCKED.
+measurement_command: "python -m pytest tests/scripts/test_proof_gates.py -q"
+signal_artifact: "artifacts/falsification/ledger.json"
+falsifier:
+  command: "python -c \"import sys; from scripts.ci import real_data_probe as r; p=r.run(); sys.exit(0 if p['status'] in ('MEASURED_SINGLE','MEASURED_MULTI') else 1)\""
+  description: >-
+    Exits non-zero in the asserted healthy state (real_data_probe correctly
+    reports BLOCKED because the repository ships only synthetic fixtures); flips
+    to pass (exit 0) only if the gate regressed and fabricated a MEASURED real-data
+    tier without a real venue/license/provenance manifest.
+rollback_command: "git checkout -- scripts/ci/proof_common.py scripts/ci/probe_clean_clone.py scripts/ci/real_data_probe.py scripts/ci/falsification_ledger.py scripts/ci/execution_contract.py scripts/ci/benchmark_spine.py scripts/ci/replication_packet.py scripts/ci/generate_manifest.py scripts/ci/release_gate.py scripts/ci/check_claim_boundary.py"
+rollback_verification_command: "git diff --exit-code scripts/ci/proof_common.py scripts/ci/probe_clean_clone.py scripts/ci/real_data_probe.py scripts/ci/falsification_ledger.py scripts/ci/execution_contract.py scripts/ci/benchmark_spine.py scripts/ci/replication_packet.py scripts/ci/generate_manifest.py scripts/ci/release_gate.py scripts/ci/check_claim_boundary.py"
+memory_update_type: append
+ledger_path: ".claude/commit_acceptors/proof-gate-executable-tribunals.yaml"
+report_path: "BLOCKED.md"
+evidence: []

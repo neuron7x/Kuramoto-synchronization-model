@@ -1,0 +1,329 @@
+# D-002G Non-Degenerate Null Redesign — Pre-Registration
+# ----------------------------------------------------------------
+# Class:  pre-registered falsification protocol (separate contract from D-002C).
+# Date:   2026-05-12
+# Anchor: this file becomes content-addressed at PR merge.
+#         The sha256 of this file inside the merged git tree IS
+#         the contract identity. Do not edit after merge; any
+#         change after the anchor commit is a fresh pre-registration.
+#
+# This file commits the acceptance criteria for D-002G BEFORE
+# the redesign is implemented or the canonical sweep is run. The
+# verdict at sweep-end is checked against the locked thresholds
+# here, not against any post-hoc narrative.
+#
+# ----------------------------------------------------------------
+# Critical relationships
+# ----------------------------------------------------------------
+# D-002G IS NOT a rescue of D-002C.
+# D-002G IS NOT an edit of D002C_PREREGISTRATION.yaml.
+# D-002G IS NOT a continuation of attempt-1 or attempt-2.
+# D-002G IS a SEPARATE scientific contract that addresses the
+#   degenerate-null root cause exposed by D-002C attempt-2.
+# ----------------------------------------------------------------
+
+version: 1
+issue: 654                # parent epic remains
+follows: 656              # historical anchor (D-002B-A)
+supersedes_null_mechanism_in: D002C_PREREGISTRATION.yaml
+                          # (only the null mechanism; D-002C as a
+                          # whole is preserved append-only)
+references:
+  - D002C_PREREGISTRATION.yaml
+  - D002C_ATTEMPT_2_NULL_AUDIT_FALSIFICATION_REPORT.md
+  - D002G_NONDEGENERATE_NULL_DESIGN.md
+  - D002G_ACCEPTANCE_RULES.md
+
+strict_scope_invariant: INV-IDENTIFICATION-1  # remains globally active
+
+# --------------------------------------------------------------
+# 1. Motivation
+# --------------------------------------------------------------
+# D-002C attempt-2 (RUN_ID d002c_canonical_attempt_2_20260512T160318Z,
+# tier D002C_REDESIGN_INSUFFICIENT_AT_TESTED_BUDGET) ran the
+# C2.4-A2 + C2.4-C2 + C2.4-D contract chain end-to-end. The
+# executable post-sweep null audit reported aggregate_verdict=FAIL
+# at 9 / 54 cells — exactly the λ=0 cohort.
+#
+# Root cause: under the locked paired-CRN protocol, at λ=0 the
+# substrate produces K_precursor == K_baseline bit-identically.
+# The Kuramoto integrator yields identical R(t), per-seed metric
+# values are identical, permutation shuffle is degenerate, and
+# the empirical p-value collapses to 1.0.
+#
+# D-002G redesigns the null mechanism so the λ=0 cohort has
+# non-trivial discriminability under permutation testing while
+# preserving H0 ("no precursor effect at λ=0").
+#
+# Detail: docs/governance/D002G_NONDEGENERATE_NULL_DESIGN.md
+
+# --------------------------------------------------------------
+# 2. Hypotheses (pre-committed, falsifiable, in priority order)
+# --------------------------------------------------------------
+hypotheses:
+  - id: G1
+    statement: >-
+      Under M1 (independent-seed null cohort at λ=0), the
+      block_structured substrate × sync_auc metric yields
+      |signal|/CI > 1 at some λ ≤ 0.40 with FPR ≤ 0.05 (Bonferroni
+      per cell) AND non-trivial null audit PASS AND R2-B PASS.
+    falsified_if: >-
+      The block_structured surface under M1 fails any of
+      R1/R2/R3/R2-B/NULL_AUDIT at every (N, λ) cell.
+
+  - id: G2
+    statement: >-
+      Under M1, the Ricci-flow substrate × sync_auc reproduces the
+      G1 finding (independent substrate, same metric).
+    falsified_if: >-
+      Same shape as G1, substrate replaced.
+
+  - id: G3
+    statement: >-
+      Under M1, the temporal_coupling substrate × sync_auc
+      reproduces the G1 finding (independent substrate dynamics,
+      same metric).
+    falsified_if: >-
+      Same shape as G1, substrate replaced.
+
+  - id: G4
+    statement: >-
+      The R2-B placebo coupling gate (M6) reports FPR ≤ 0.05 at
+      the selected cell — implying the metric detects the
+      precursor TOPOLOGY, not merely Frobenius-norm energy
+      injection.
+    falsified_if: >-
+      R2-B FPR > 0.05 at the selected cell. Cell EXCLUDED from
+      D-002G claim regardless of R1/R2/R3.
+
+# --------------------------------------------------------------
+# 3. Null mechanism (pre-committed)
+# --------------------------------------------------------------
+null_mechanism:
+  primary: M1
+  primary_description: >-
+    Independent-seed null cohort at λ=0. Substrate
+    realize_null(N=N, seed=seed + null_seed_offset) produces a
+    K_baseline matrix that is NOT bit-identical to
+    realize(N, lambda_=0, seed=seed). The null cohort retains
+    the baseline structural pattern (same substrate family,
+    same density / spectral calibration) but draws independent
+    ω + θ_0 + integrator stream.
+  null_seed_offset: 10000
+  preserves_H0: true   # H0 = "no precursor effect at λ=0"
+  preserves_paired_CRN_at_lambda_positive: true
+
+  fallback: M2
+  fallback_description: >-
+    Topology-preserving shuffled null. Used only if Phase 0
+    verification fails for M1. Substrate generates a degree-
+    sequence-preserving rewired graph for the null cohort.
+
+  forbidden:
+    - bit-identical paired CRN (the degenerate D-002C mechanism)
+
+# --------------------------------------------------------------
+# 4. Supplementary gate (R2-B, M6 placebo coupling)
+# --------------------------------------------------------------
+supplementary_null:
+  id: R2_B
+  mechanism: M6
+  description: >-
+    Placebo coupling. For each (substrate, metric, N, λ>0) cell,
+    generate a "fake precursor" injection with the same
+    Frobenius norm shift as the locked mechanism, but applied to
+    a RANDOM subset of edges (NOT the substrate-specific
+    privileged sites: top-10% κ edges for Ricci, inter-block
+    edges for block_structured, locked sites for temporal). The
+    metric should NOT detect this fake injection. Under H0 the
+    placebo FPR ≤ Bonferroni-corrected α.
+  random_site_seed: 99
+  threshold: 0.05
+  bonferroni_n_cells: 216
+
+# --------------------------------------------------------------
+# 5. Sweep design (inherited from D-002C, re-asserted)
+# --------------------------------------------------------------
+sweep:
+  substrates:
+    - id: ricci_flow
+      param_grid:
+        base_topology: [core_periphery, ring_lattice, modular_block]
+        ricci_iterations: [2, 5, 10]
+    - id: block_structured
+      param_grid:
+        n_blocks: [2, 3, 4]
+        inter_block_p: [0.05, 0.10, 0.20]
+        intra_block_p: [0.60, 0.80]
+    - id: temporal_coupling
+      param_grid:
+        K_profile: [step, sinusoid, exponential_ramp]
+        period_quarters: [4, 8, 12]
+  metrics:
+    - id: tau_onset
+      threshold_R: 0.50
+    - id: sync_auc
+      window_steps: 1000
+    - id: phase_lag
+      reference: substrate_eigenvector_1
+  variance_reduction:
+    - common_random_numbers
+    - paired_seeds_recon_vs_null
+    - control_variates_null_proxy
+  N_grid: [50, 100, 200]
+  lambda_grid: [0.0, 0.05, 0.10, 0.20, 0.40, 1.0]
+  n_seeds: 20
+  n_bootstrap: 16
+
+# --------------------------------------------------------------
+# 6. Phase 0 pre-launch verification (HARD GATE)
+# --------------------------------------------------------------
+phase_0_verification:
+  required: true
+  description: >-
+    Before any canonical D-002G sweep, the redesigned null
+    mechanism MUST pass three checks per (substrate, N) cell.
+    See D002G_ACCEPTANCE_RULES.md §4 for full procedure.
+  checks:
+    phase_0a:
+      id: bit_identity_broken
+      acceptance: >-
+        For every (substrate, N), realize_null produces a
+        K_baseline matrix NOT bit-identical to realize at λ=0.
+    phase_0b:
+      id: H0_preserved
+      acceptance: >-
+        Two-sided t-test on per-seed null-vs-null differences
+        cannot reject mean=0 at α=0.05 across 50 seeds.
+    phase_0c:
+      id: permutation_discriminability_non_trivial
+      acceptance: >-
+        Empirical p-value distribution under run_null_audit with
+        n_shuffles=1000 has 90% of cells with p ∈ [0.05, 0.95].
+
+  fail_action: >-
+    If M1 fails Phase 0, fall back to M2 (topology-preserving
+    shuffle) and restart Phase 0. If M2 also fails, escalate to
+    a fresh pre-registration (D-002H or similar). NEVER edit
+    D002G_PREREGISTRATION.yaml after merge.
+
+# --------------------------------------------------------------
+# 7. Acceptance rules (pre-committed)
+# --------------------------------------------------------------
+acceptance:
+  primary_certification_rule:
+    tier_if_pass: SYNTHETIC_GATE6_CERTIFIED_D002G_REDESIGN
+    tier_if_fail: D002G_REDESIGN_INSUFFICIENT_AT_TESTED_BUDGET
+    tier_if_refused: D002G_INFRASTRUCTURE_REFUSED
+    requirements:
+      - id: R1
+        rule: "exists N in [50,100,200], substrate, metric: |signal|/CI > 1"
+      - id: R2
+        rule: "FPR(λ=0, M1 null) ≤ 0.05 (Bonferroni per cell)"
+      - id: R3
+        rule: "direction stability ≥ 0.80 at selected cell"
+      - id: R2_B
+        rule: "FPR_R2B(λ>0, M6 placebo) ≤ 0.05 at selected cell"
+      - id: NULL_AUDIT
+        rule: "run_null_audit_all reports aggregate_verdict=PASS on M1 cohort"
+
+  formal_decisions:
+    ci_method: bca_bootstrap
+    ci_alpha: 0.05
+    signal_ci_ratio_threshold: 1.0
+    direction_consistency_min_seeds: 3
+    direction_stability_min_fraction: 0.80
+    multiple_testing_correction:
+      method: bonferroni
+      n_cells: 216
+    null_audit_n_shuffles: 100
+    null_audit_rng_seed: 42
+    null_audit_p_threshold: 0.05
+    r2_b_n_shuffles: 100
+    r2_b_random_site_seed: 99
+    r2_b_threshold: 0.05
+
+# --------------------------------------------------------------
+# 8. Forbidden outputs (re-asserted)
+# --------------------------------------------------------------
+forbidden_outputs:
+  - SYNTHETIC_GATE6_CERTIFIED                  # unqualified
+  - SYNTHETIC_GATE6_CERTIFIED_REDESIGN_N_LE_200 # belongs to D-002C, not D-002G
+  - REAL_DOV_READY
+  - VALIDATED_REAL_BANK_LEVEL_RESULT
+  - BANK_LEVEL_PRECURSOR_CONFIRMED
+  - "D-002G validates D-002C"
+  - "D-002G lifts attempt-2 falsification"
+  - any tier not in {SYNTHETIC_GATE6_CERTIFIED_D002G_REDESIGN,
+                     D002G_REDESIGN_INSUFFICIENT_AT_TESTED_BUDGET,
+                     D002G_INFRASTRUCTURE_REFUSED}
+
+# --------------------------------------------------------------
+# 9. Reproducibility envelope
+# --------------------------------------------------------------
+reproducibility:
+  substrate_seed: 42                # inherited
+  null_seed_offset: 10000           # NEW for M1
+  r2_b_random_site_seed: 99         # NEW for M6
+  driver: scripts/run_x10r_d002g_signal_amplification_sweep.py  # TBD (implementation PR)
+  checkpoint_required: true         # cf. D-002D
+  expected_wallclock_hours_p95: 0.5 # scaled from D-002C attempt-2
+  forbidden_to_post_hoc_change:
+    - this_yaml
+    - any acceptance threshold above
+    - null_mechanism above
+    - phase_0_verification above
+  if_post_hoc_change_needed:
+    - new pre-registration file with fresh sha
+    - old file remains as historical record (do NOT overwrite)
+
+# --------------------------------------------------------------
+# 10. Anti-overclaim guardrails (inherited from D-002C §7)
+# --------------------------------------------------------------
+anti_overclaim:
+  - the verdict is computed by acceptance.primary_certification_rule
+    on the sweep ledger ONLY; no judgement call in the report.
+  - if the rule passes but only marginally (within 5% of any
+    threshold), report MARGINAL_PASS and require an independent
+    re-sweep with re-randomised substrate_seed (43) before
+    promoting beyond MARGINAL_PASS_SYNTHETIC.
+  - if the rule passes in only one (substrate, metric) combination,
+    report SINGLE_PATH_PASS and DO NOT generalise.
+  - if any null audit cell FAILs, verdict refused (NULL_AUDIT_FAIL).
+  - if R2-B FAILs at the selected cell, EXCLUDE that cell and
+    re-search for a cell that passes BOTH R1/R2/R3 and R2-B.
+
+# --------------------------------------------------------------
+# 11. Relationship to attempt-1 / attempt-2 (re-asserted)
+# --------------------------------------------------------------
+relationship_to_d002c:
+  attempt_1_status_preserved: SUPPORTED_SYNTHETIC_SCOPED
+  attempt_2_status_preserved: FALSIFIED_BY_EXECUTABLE_NULL_AUDIT
+  d002g_does_not_resurrect_attempt_1: true
+  d002g_does_not_walk_back_attempt_2: true
+  d002g_is_a_separate_contract: true
+  d002g_verdict_does_not_cross_promote: true
+
+# --------------------------------------------------------------
+# 12. Disclosure / claim-tier hygiene
+# --------------------------------------------------------------
+disclosure:
+  inv_identification_1: globally_active
+  real_data_path: not_invoked
+  bank_level_inference: forbidden
+  certification_unqualified: forbidden
+  scope_label: synthetic_only
+
+# --------------------------------------------------------------
+# 13. Provenance
+# --------------------------------------------------------------
+provenance:
+  predecessor_pre_registration: docs/governance/D002C_PREREGISTRATION.yaml
+  predecessor_falsification_report: docs/governance/D002C_ATTEMPT_2_NULL_AUDIT_FALSIFICATION_REPORT.md
+  redesign_design_doc: docs/governance/D002G_NONDEGENERATE_NULL_DESIGN.md
+  acceptance_rules_doc: docs/governance/D002G_ACCEPTANCE_RULES.md
+  protocol_authors: [neuron7xLab, Claude Code]
+  not_a_paper: true
+  not_a_promise_of_success: true
+  is_a_falsification_contract: true
+  not_a_rescue_of_d002c: true

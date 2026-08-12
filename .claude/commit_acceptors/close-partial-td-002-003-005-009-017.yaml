@@ -1,0 +1,98 @@
+# Diff-bound commit acceptor: close the 5 PARTIAL items from the 2026-06-10
+# tech-debt registry reconciliation (PR #897). Each had its root defect already
+# fixed; only the closure ARTIFACT (a log-warn, a guard+test, a benchmark, a
+# jitter test, a warn-path test) was missing. This PR lands those artifacts:
+#
+#   * TD-002: multiscale analyzer now emits an observable warning naming the
+#     skipped timeframes (was structurally signaled only) + test.
+#   * TD-003: WaveletWindowSelector guards constant/degenerate series, returning
+#     the stable mid-range fallback instead of collapsing to the noisy min_window
+#     (all-zero CWT spectrum argmax) + test.
+#   * TD-005: deterministic cache-invariant test for LightGraph (O(1) edge count,
+#     edge-list cache built once and invalidated only on topology change) —
+#     pins the vectorization/caching optimisation without wall-clock flake.
+#   * TD-009: PiAgent.detect_instability emits an attributable transition log on
+#     threshold crossing + a sub-threshold jitter stability test.
+#   * TD-017: pytest.warns test for the SciPy-unavailable Wasserstein fallback
+#     RuntimeWarning path.
+#
+# Locally verified:
+#   * mypy --strict / ruff / black: clean on both modified src modules
+#   * 60 passed across the 4 affected test files (5 new tests, 0 regressions)
+
+id: close-partial-td-002-003-005-009-017
+status: ACTIVE
+claim_type: correctness
+promise: >-
+  After this PR lands, the 5 PARTIAL items from PR #897's reconciliation are
+  fully closed: multiscale skipped scales emit an observable warning (TD-002),
+  the wavelet selector guards constant/degenerate series against noise
+  amplification (TD-003), LightGraph's caching/vectorisation invariant is pinned
+  by a deterministic test (TD-005), PiAgent threshold crossings are logged and
+  proven stable under jitter (TD-009), and the Ricci W1 fallback RuntimeWarning
+  path is tested (TD-017). No physics invariant or asymptotic regime is altered.
+diff_scope:
+  changed_files:
+    - path: ".claude/commit_acceptors/close-partial-td-002-003-005-009-017.yaml"
+    - path: "core/indicators/multiscale_kuramoto.py"
+    - path: "core/agent/strategy.py"
+    - path: "tests/unit/test_indicators_kuramoto_multiscale.py"
+    - path: "tests/property/test_strategy_properties.py"
+    - path: "tests/unit/indicators/test_temporal_ricci.py"
+    - path: "tests/unit/test_indicators_ricci.py"
+    - path: "reports/TECH_DEBT_REGISTRY.md"
+  forbidden_paths:
+    - "trading/"
+    - "forecast/"
+    - "policy/"
+    - "execution/"
+    - "core/physics/"
+    - "core/kuramoto/"
+required_python_symbols:
+  - "core/indicators/multiscale_kuramoto.py::WaveletWindowSelector"
+  - "core/indicators/multiscale_kuramoto.py::MultiScaleKuramoto"
+  - "core/agent/strategy.py::PiAgent"
+expected_signal: >-
+  `mypy --strict core/indicators/multiscale_kuramoto.py core/agent/strategy.py`
+  is clean; ruff + black are clean on the modified src; the 4 affected test
+  files report all-passing with the 5 new closure tests included.
+measurement_command: >-
+  bash -c '
+    mypy --strict core/indicators/multiscale_kuramoto.py core/agent/strategy.py && ruff check core/indicators/multiscale_kuramoto.py core/agent/strategy.py && black --check core/indicators/multiscale_kuramoto.py core/agent/strategy.py && python -m pytest
+        tests/unit/test_indicators_kuramoto_multiscale.py
+        tests/property/test_strategy_properties.py
+        tests/unit/indicators/test_temporal_ricci.py
+        tests/unit/test_indicators_ricci.py -q
+  '
+signal_artifact: "tmp/close_partial_td.log"
+falsifier:
+  command: |-
+    bash -c '
+      python -c "
+    import numpy as np
+    from core.indicators.multiscale_kuramoto import WaveletWindowSelector
+    sel = WaveletWindowSelector(min_window=8, max_window=256)
+    w = sel.select_window(np.ones(2000, dtype=float))
+    import sys
+    sys.exit(0 if w <= sel.min_window else 1)
+      "
+    '
+  description: >-
+    Probes the TD-003 guard: a constant series must NOT select the smallest
+    (noisiest) window. The falsifier succeeds (exit 0) only if the selector
+    regresses to returning min_window on flat input, re-opening the noise-
+    amplification defect.
+rollback_command: >-
+  bash -c 'git checkout origin/main --
+    core/indicators/multiscale_kuramoto.py
+    core/agent/strategy.py
+    tests/unit/test_indicators_kuramoto_multiscale.py
+    tests/property/test_strategy_properties.py
+    tests/unit/indicators/test_temporal_ricci.py
+    tests/unit/test_indicators_ricci.py && rm -f .claude/commit_acceptors/close-partial-td-002-003-005-009-017.yaml'
+rollback_verification_command: >-
+  bash -c '! test -f .claude/commit_acceptors/close-partial-td-002-003-005-009-017.yaml'
+memory_update_type: append
+ledger_path: ".claude/commit_acceptors/close-partial-td-002-003-005-009-017.yaml"
+report_path: "tmp/close_partial_td.log"
+evidence: []

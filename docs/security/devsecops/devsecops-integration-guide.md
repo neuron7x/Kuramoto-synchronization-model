@@ -323,12 +323,12 @@ jobs:
       - uses: actions/checkout@v4
 
       - name: Build container image
-        run: docker build -t tradepulse:${{ github.sha }} .
+        run: docker build -t geosync:${{ github.sha }} .
 
       - name: Run Trivy scanner
         uses: aquasecurity/trivy-action@master
         with:
-          image-ref: tradepulse:${{ github.sha }}
+          image-ref: geosync:${{ github.sha }}
           format: 'sarif'
           output: 'trivy-results.sarif'
           severity: 'CRITICAL,HIGH'
@@ -341,14 +341,14 @@ jobs:
       - name: Run Grype scanner
         uses: anchore/scan-action@v3
         with:
-          image: tradepulse:${{ github.sha }}
+          image: geosync:${{ github.sha }}
           fail-build: true
           severity-cutoff: high
 
       - name: Sign container image
         if: github.ref == 'refs/heads/main'
         run: |
-          cosign sign --key cosign.key tradepulse:${{ github.sha }}
+          cosign sign --key cosign.key geosync:${{ github.sha }}
 ```
 
 ## 5. Security in Test Phase

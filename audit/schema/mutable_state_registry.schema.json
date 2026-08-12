@@ -1,0 +1,62 @@
+{
+  "$schema": "http://json-schema.org/draft-07/schema#",
+  "$id": "geosync.mutable_state_registry.v1",
+  "title": "GeoSync Mutable-State Registry",
+  "description": "Every mutable runtime state surface (cache, ledger, risk map, task set, session) declares its owner, key, ordering field, write/read/conflict/staleness rules, concurrency guard, and the tests that prove them. A covered system can still lie if state is stale, loses updates, or is served out of order; this registry makes each surface's ownership and ordering policy explicit and test-bound.",
+  "type": "object",
+  "additionalProperties": false,
+  "required": ["schema", "components", "verdict"],
+  "properties": {
+    "schema": { "const": "geosync.mutable_state_registry.v1" },
+    "verdict": { "enum": ["BOUND", "UNBOUND"] },
+    "components": {
+      "type": "array",
+      "minItems": 1,
+      "items": {
+        "type": "object",
+        "additionalProperties": false,
+        "required": [
+          "component",
+          "source",
+          "state_surface",
+          "state_owner",
+          "state_key",
+          "ordering_field",
+          "write_rule",
+          "read_rule",
+          "conflict_rule",
+          "staleness_rule",
+          "concurrency_guard",
+          "concurrent",
+          "is_cache",
+          "tests",
+          "verdict"
+        ],
+        "properties": {
+          "component": { "type": "string", "minLength": 1 },
+          "source": { "type": "string", "minLength": 1 },
+          "state_surface": { "type": "string", "minLength": 1 },
+          "state_owner": { "type": "string", "minLength": 1 },
+          "state_key": {
+            "type": "array",
+            "items": { "type": "string", "minLength": 1 }
+          },
+          "ordering_field": { "type": ["string", "null"] },
+          "write_rule": { "type": "string", "minLength": 1 },
+          "read_rule": { "type": "string", "minLength": 1 },
+          "conflict_rule": { "type": "string", "minLength": 1 },
+          "staleness_rule": { "type": "string", "minLength": 1 },
+          "concurrency_guard": { "type": "string", "minLength": 1 },
+          "concurrent": { "type": "boolean" },
+          "is_cache": { "type": "boolean" },
+          "tests": {
+            "type": "array",
+            "minItems": 1,
+            "items": { "type": "string", "minLength": 1 }
+          },
+          "verdict": { "enum": ["BOUND", "UNBOUND"] }
+        }
+      }
+    }
+  }
+}

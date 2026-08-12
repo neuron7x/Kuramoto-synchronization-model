@@ -1,3 +1,5 @@
+# Copyright (c) 2023-2026 Yaroslav Vasylenko (neuron7xLab)
+# SPDX-License-Identifier: MIT
 """Position sizing functions for neuro-adaptive trading systems.
 
 This module implements volatility-targeted position sizing with dual modulation
@@ -100,9 +102,7 @@ class SizerConfig:
         if min_pulse < 0:
             raise ValueError(f"min_pulse must be non-negative, got {min_pulse}")
         if max_pulse <= min_pulse:
-            raise ValueError(
-                f"max_pulse ({max_pulse}) must be > min_pulse ({min_pulse})"
-            )
+            raise ValueError(f"max_pulse ({max_pulse}) must be > min_pulse ({min_pulse})")
         if clip <= 0:
             raise ValueError(f"clip must be positive, got {clip}")
         if not (0 < kelly_fraction <= 1.0):
@@ -155,9 +155,7 @@ def precision_weight(pi: float, min_precision: float = 0.0) -> float:
     return float(1.0 / (1.0 + math.exp(-z)))
 
 
-def position_size(
-    direction: int, pi: float, S: float, est_sigma: float, cfg: SizerConfig
-) -> float:
+def position_size(direction: int, pi: float, S: float, est_sigma: float, cfg: SizerConfig) -> float:
     """Compute position size with volatility targeting and dual modulation.
 
     Args:

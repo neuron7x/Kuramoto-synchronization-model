@@ -1,0 +1,42 @@
+[
+  {
+    "parameter": "alpha_error",
+    "old_value": 0.7,
+    "new_value": 0.58,
+    "direction": "decrease",
+    "reason": "High prediction error can overdrive excitation in noisy environments.",
+    "expected_effect": "Lower noise amplification and less runaway divergence.",
+    "risk": "Slower adaptation after real regime shift.",
+    "verification_test": "EXP-002 and EXP-005"
+  },
+  {
+    "parameter": "beta_stability",
+    "old_value": 0.55,
+    "new_value": 0.67,
+    "direction": "increase",
+    "reason": "Divergence must be gated when variance growth exceeds realism gain.",
+    "expected_effect": "Improved stability margin under stress perturbation.",
+    "risk": "Premature convergence if too high.",
+    "verification_test": "EXP-006"
+  },
+  {
+    "parameter": "w_realism_gap",
+    "old_value": 1.0,
+    "new_value": 1.25,
+    "direction": "increase",
+    "reason": "Simulation must not optimize internal smoothness over external trajectory validity.",
+    "expected_effect": "Better prioritization of target-dynamics match.",
+    "risk": "Higher compute cost.",
+    "verification_test": "All cases"
+  },
+  {
+    "parameter": "update_density",
+    "old_value": 1.0,
+    "new_value": 0.55,
+    "direction": "schedule",
+    "reason": "Energy cost should scale with event importance, not every timestep.",
+    "expected_effect": "Improved energy efficiency with bounded realism loss.",
+    "risk": "Missed fast transitions.",
+    "verification_test": "EXP-007 and EXP-005"
+  }
+]

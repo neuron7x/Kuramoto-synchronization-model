@@ -1,0 +1,98 @@
+{
+  "version": "1.0",
+  "component": "geosync.dopamine",
+  "allowed_public_claim_before_evaluation": "STRUCTURAL / RESEARCH-GATED",
+  "forbidden_claims": [
+    "production market edge",
+    "biological dopamine replication",
+    "autonomous financial intelligence",
+    "anchored alpha",
+    "empirical superiority"
+  ],
+  "semantics": {
+    "RAW_TD_RPE": {
+      "owner": "src/geosync/core/neuro/dopamine/dopamine_controller.py",
+      "production_allowed": true,
+      "market_claim_allowed": false,
+      "required_invariants": [
+        "gamma in (0, 1]",
+        "reward/value/next_value finite",
+        "delta finite",
+        "delta linear in reward",
+        "delta monotone in next_value",
+        "no NaN/Inf"
+      ]
+    },
+    "BOUNDED_EXECUTION_RPE": {
+      "owner": "core/neuro/dopamine_execution_adapter.py",
+      "production_allowed": true,
+      "market_claim_allowed": false,
+      "required_invariants": [
+        "bounded_rpe in [-1, 1]",
+        "bounded_rpe finite",
+        "adapter is not raw TD",
+        "slippage penalty non-negative"
+      ]
+    },
+    "DISTRIBUTIONAL_RPE_SURFACE": {
+      "owner": "src/geosync/core/neuro/dopamine/experimental_rpe.py",
+      "production_allowed": false,
+      "market_claim_allowed": false,
+      "required_invariants": [
+        "canonical TD anchor preserved",
+        "risk penalty non-negative",
+        "expectile tau in (0, 1)",
+        "learning rate in (0, 1]",
+        "outputs finite",
+        "no silent mean-only collapse"
+      ]
+    },
+    "EXPECTILE_VALUE_SURFACE": {
+      "owner": "src/geosync/core/neuro/dopamine/expectile_value.py",
+      "production_allowed": false,
+      "market_claim_allowed": false,
+      "required_invariants": [
+        "expectile tau in (0, 1)",
+        "outputs finite",
+        "evaluation-only before promotion"
+      ]
+    },
+    "BACKTEST_DOPAMINE_SIGNAL": {
+      "owner": "backtest/dopamine_td.py",
+      "production_allowed": false,
+      "market_claim_allowed": false,
+      "required_invariants": [
+        "evaluation harness only",
+        "no experimental helper import without marker",
+        "no claim registry promotion without evidence"
+      ]
+    }
+  },
+  "additional_role_sources": {
+    "src/geosync/core/neuro/dopamine/action_gate.py": "ACTION_GATE",
+    "src/geosync/core/neuro/dopamine/ddm_adapter.py": "DDM_ADAPTER",
+    "src/geosync/core/neuro/dopamine/dopamine_step_extension.py": "STEP_EXTENSION",
+    "src/geosync/core/neuro/dopamine/_validation.py": "VALIDATION_HELPER",
+    "src/geosync/core/neuro/dopamine/_invariants.py": "INVARIANT_HELPER",
+    "src/geosync/core/neuro/dopamine/telemetry.py": "TELEMETRY"
+  },
+  "forbidden_edges": [
+    "production->experimental_surface",
+    "adapter->raw_td_linearity_claim",
+    "backtest->claim_registry_without_evidence",
+    "experimental_surface->production_policy_without_promotion",
+    "docs->market_edge_without_parameter_lock"
+  ],
+  "required_artifacts": [
+    "artifacts/dopamine_contract/CONTRACT_VERDICT.json",
+    "artifacts/dopamine_config/CONFIG_VALIDATION_REPORT.json",
+    "artifacts/dopamine_schema/SCHEMA_RUNTIME_PARITY.json",
+    "artifacts/dopamine_properties/PROPERTY_FALSIFICATION_REPORT.json",
+    "artifacts/dopamine_backtest/BACKTEST_PARITY_REPORT.json",
+    "artifacts/dopamine_slo/SLO_VERDICT.json",
+    "artifacts/dopamine_security/SECURITY_VERDICT.json",
+    "artifacts/dopamine_performance/PERFORMANCE_REPORT.json",
+    "artifacts/dopamine_claims/CLAIM_PROMOTION_VERDICT.json",
+    "artifacts/dopamine_release/DOPAMINE_COMPONENT_VERDICT.json"
+  ]
+}

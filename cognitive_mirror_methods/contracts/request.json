@@ -1,0 +1,5 @@
+{
+  "required": ["request_id", "module", "operation", "input", "output_format", "language"],
+  "formats": ["json", "markdown", "artifact"],
+  "rule": "unknown fields are rejected by validators"
+}

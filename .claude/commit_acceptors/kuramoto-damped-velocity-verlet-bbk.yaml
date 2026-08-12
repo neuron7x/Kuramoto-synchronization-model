@@ -1,0 +1,73 @@
+# Diff-bound commit acceptor: make the second-order Kuramoto engine's DAMPED
+# velocity update genuinely second-order (BBK / semi-implicit velocity Verlet).
+#
+# Bug (verified on main): core/kuramoto/second_order.py's run() evaluated the
+# velocity-dependent friction -d*v at the OLD velocity in the corrector
+# (accel_new = inv_m*(omega + coupling(theta_new) - d*v)), then
+# v_new = v + 0.5*(accel + accel_new)*dt. That integrates the friction by
+# explicit Euler, dropping the damped map to FIRST order despite the docstring's
+# "Velocity Verlet (symplectic, energy-conserving)" claim and the INV-K10
+# det(M)=exp(-(Sum d/m)*dt) Liouville-contraction claim. It was masked because
+# the existing INV-K10 damped test exercises a LOCAL verlet_step_damped helper,
+# not the production engine; the undamped tests (d=0) cannot see the bug.
+#
+# Fix: solve v_new = v + 0.5*dt*(a(theta,v) + a(theta_new,v_new)) for v_new,
+# giving v_new = (v + half*(F + F_new - d*v)) / (1 + half*d), half = 0.5*dt/m.
+# Undamped (d=0) this reduces EXACTLY to standard velocity Verlet (bit-identical
+# undamped trajectories; INV-K8/K9/K10 undamped tests unchanged). Numerically
+# verified: damped velocity convergence order = 2.000 (was ~1).
+
+id: kuramoto-damped-velocity-verlet-bbk
+status: ACTIVE
+claim_type: correctness
+promise: >-
+  After this PR, SecondOrderKuramotoEngine.run integrates the velocity-dependent
+  damping implicitly (BBK velocity Verlet), so the damped swing-equation map is
+  second-order in dt, matching the docstring and the INV-K10 Liouville
+  contraction claim. Undamped runs are bit-identical to before. A new test
+  drives the real engine on a pure-damping system and asserts O(dt^2)
+  convergence (the prior explicit-Euler damping gives order ~1 and fails it).
+diff_scope:
+  changed_files:
+    - path: ".claude/commit_acceptors/kuramoto-damped-velocity-verlet-bbk.yaml"
+    - path: "core/kuramoto/second_order.py"
+    - path: "tests/unit/physics/test_T18_kuramoto_p1.py"
+    # Epistemic-integrity insulation (PATH A): the BBK correction changes the
+    # live integrator, which byte-frozen CALIB-GRID ledgers reproduced against.
+    # Frozen reproduction now replays a committed trajectory snapshot, so the
+    # frozen artifacts stay byte-unchanged and BBK remains the live path.
+    - path: "research/calibration/grid_kuramoto/calibration.py"
+    - path: "research/calibration/grid_kuramoto/frozen_replay.py"
+    - path: "research/calibration/grid_kuramoto/PROVENANCE_FROZEN_REPLAY.md"
+    - path: "tests/research/calibration/test_frozen_replay_isolation.py"
+    # Live engine grew lines; numerical clamp registry line-pins shift +9.
+    - path: "tools/physics/clamp_registry.yaml"
+  forbidden_paths:
+    - "core/physics/"
+    - "core/neuro/"
+required_python_symbols:
+  - "tests/unit/physics/test_T18_kuramoto_p1.py::test_INV_K10_engine_damped_velocity_is_second_order"
+  - "tests/research/calibration/test_frozen_replay_isolation.py::test_frozen_reproduction_never_calls_live_integrator"
+expected_signal: >-
+  pytest tests/unit/physics/test_T18_kuramoto_p1.py passes including
+  test_INV_K10_engine_damped_velocity_is_second_order (engine damped velocity
+  convergence order >= 1.9, measured 2.000); on the prior explicit-Euler damping
+  it FAILS (order ~1). ruff + mypy --strict clean on the engine.
+measurement_command: >-
+  bash -c 'PYTHONPATH=. python -m pytest tests/unit/physics/test_T18_kuramoto_p1.py -q'
+signal_artifact: "tmp/kuramoto_damped_order.log"
+falsifier:
+  command: >-
+    bash -c 'PYTHONPATH=. python -m pytest
+    tests/unit/physics/test_T18_kuramoto_p1.py::test_INV_K10_engine_damped_velocity_is_second_order
+    -q'
+  description: >-
+    The engine damped-velocity order test must pass (slope>=1.9) with the
+    implicit BBK update and FAIL on the prior explicit-Euler corrector (slope
+    ~1). A pass on the Euler code would make the falsifier vacuous.
+rollback_command: "git revert --no-edit HEAD"
+rollback_verification_command: "python tools/commit_acceptor/validate_commit_acceptor.py"
+memory_update_type: append
+ledger_path: ".claude/commit_acceptors/kuramoto-damped-velocity-verlet-bbk.yaml"
+report_path: ".claude/commit_acceptors/kuramoto-damped-velocity-verlet-bbk.yaml"
+evidence: []

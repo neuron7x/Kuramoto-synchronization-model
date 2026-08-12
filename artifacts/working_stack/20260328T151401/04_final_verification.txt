@@ -15,8 +15,8 @@ Python 3.12.3 on Linux 6.8.0-101-lowlatency
 
 3. BUILD ARTIFACT: PASS
    - Command: python -m build
-   - Output: tradepulse-0.1.0-py3-none-any.whl (2.0MB)
-             tradepulse-0.1.0.tar.gz (1.7MB)
+   - Output: geosync-0.1.0-py3-none-any.whl (2.0MB)
+             geosync-0.1.0.tar.gz (1.7MB)
 
 4. FULL TEST SUITE: 7868 passed, 111 failed, 0 errors
    - Command: pytest tests/ -m "not slow and not heavy_math and not nightly and not flaky" --override-ini="addopts=-ra --continue-on-collection-errors --import-mode=importlib"

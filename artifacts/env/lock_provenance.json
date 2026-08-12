@@ -1,0 +1,57 @@
+{
+  "gate_id": "G-LOCK-HASHES",
+  "schema": "lock_provenance/v1",
+  "generated_by": "scripts/ci/check_lock_hashes.py",
+  "gate_mode": "verify-only",
+  "hash_algorithm": "sha256",
+  "allow_unhashed_names": [
+    "distribute",
+    "pip",
+    "setuptools",
+    "wheel"
+  ],
+  "locks": [
+    {
+      "path": "requirements.lock",
+      "exists": true,
+      "line_count_requirements": 155,
+      "hashed_count": 155,
+      "unhashed_count": 0,
+      "unpinned_count": 0,
+      "malformed_hash_count": 0,
+      "duplicate_count": 0,
+      "exempt_unhashed": [],
+      "fully_hashed": true,
+      "ok": true,
+      "tool": "pip-compile --generate-hashes --constraint=constraints/security.txt --no-strip-extras --output-file=requirements.lock pyproject.toml"
+    },
+    {
+      "path": "requirements-dev.lock",
+      "exists": true,
+      "line_count_requirements": 252,
+      "hashed_count": 252,
+      "unhashed_count": 0,
+      "unpinned_count": 0,
+      "malformed_hash_count": 0,
+      "duplicate_count": 0,
+      "exempt_unhashed": [],
+      "fully_hashed": true,
+      "ok": true,
+      "tool": "pip-compile --generate-hashes --constraint=constraints/security.txt --extra=dev --no-strip-extras --output-file=requirements-dev.lock pyproject.toml"
+    },
+    {
+      "path": "requirements-scan.lock",
+      "exists": true,
+      "line_count_requirements": 121,
+      "hashed_count": 121,
+      "unhashed_count": 0,
+      "unpinned_count": 0,
+      "malformed_hash_count": 0,
+      "duplicate_count": 0,
+      "exempt_unhashed": [],
+      "fully_hashed": true,
+      "ok": true,
+      "tool": "pip-compile --generate-hashes --constraint=constraints/security.txt --constraint=requirements.lock --no-annotate --output-file=requirements-scan.lock --strip-extras requirements-scan.txt"
+    }
+  ]
+}

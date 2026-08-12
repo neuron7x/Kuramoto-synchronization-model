@@ -1,0 +1,135 @@
+# Diff-bound commit acceptor for IERD-Q6 Phase-4 EXIT: the
+# network_TTFB regression-gated Lighthouse-CI budget run (#531).
+#
+# Before: claim `e2e-latency-budget-compliance` had three of four §5
+# latency layers regression-gated (server_compute, client_render,
+# db_io). The fourth, network_TTFB, had no real-network budget run, so
+# LayerCoverage = 0.75 and the "all four layers regression-gated"
+# check (tests/observability/test_latency_layer_coverage.py
+# ::test_all_four_layers_regression_gated) was env-gated and
+# informational (latency-layer-coverage.yml run step
+# continue-on-error: true).
+#
+# After: .github/workflows/lighthouse-ci.yml builds the REAL Next app
+# (apps/web), serves it with `next start`, and drives headless Chrome
+# (Lighthouse CI) against the public /signin route for 3 runs,
+# asserting the §5 budgets fail-closed via apps/web/lighthouserc.json:
+# server-response-time (network_TTFB) < 300 ms and
+# first-contentful-paint (client_render) < 1.0 s at error level (any
+# violation exits the build non-zero). A falsifier step tightens the
+# TTFB budget to 1 ms and asserts the run FAILS, proving the budget is
+# enforced, not decorative.
+# tests/observability/test_lighthouse_network_ttfb_gate.py statically
+# falsifies that the workflow + config carry the fail-closed TTFB/FCP
+# assertions and the 1 ms falsifier, and is the cited network_TTFB
+# regression target. With that cited,
+# tests/observability/test_latency_layer_coverage.py now scores
+# LayerCoverage = 1.0 and latency-layer-coverage.yml drops
+# continue-on-error (genuinely fail-closed).
+#
+# Honesty: network_TTFB is flipped to COVERED ONLY because the
+# Lighthouse job genuinely builds, serves and gates the real app. This
+# was verified locally on this branch (node v22 dev laptop; CI uses
+# node 24):
+#   apps/web: npm ci -> 0; npm run build -> 0 (real routes /signin,
+#     /edge-probe prerendered); npm run start serves HTTP 200 with
+#     measured TTFB ~7-80 ms.
+#   lhci autorun --config=lighthouserc.json -> exit 0 (all §5
+#     assertions pass on the real served build, 3 runs).
+#   lhci autorun with TTFB budget tightened to 1 ms -> exit 1 with
+#     "server-response-time failure for maxNumericValue assertion
+#     expected <= 1 found 4.989" (falsifier proves fail-closed).
+#   GEOSYNC_LATENCY_LAYER_GATE=1 pytest
+#     tests/observability/test_latency_layer_coverage.py
+#     tests/observability/test_lighthouse_network_ttfb_gate.py
+#     -> 11 passed; [layer] AGGREGATE covered=4/4 LayerCoverage=1.0000
+#   mypy --strict on both changed test modules -> Success.
+#   actionlint on both workflows -> exit 0; action_pinning_guard:
+#     new workflow uses are SHA-pinned.
+# The composite claim tier is NOT re-classified ANCHORED here; OTel
+# trace propagation remains separate follow-up work.
+
+id: ierd-q6-network-ttfb-lighthouse-gate
+status: ACTIVE
+claim_type: correctness
+promise: >-
+  .github/workflows/lighthouse-ci.yml builds and serves the real
+  apps/web Next build and runs Lighthouse CI against /signin with
+  apps/web/lighthouserc.json asserting server-response-time
+  (network_TTFB) < 300 ms and first-contentful-paint < 1.0 s at error
+  level (fail-closed); a 1 ms-TTFB falsifier step proves the budget is
+  non-decorative. tests/observability/test_lighthouse_network_ttfb_gate.py
+  statically falsifies the workflow + config enforce that gate and is
+  the cited network_TTFB regression target, so
+  tests/observability/test_latency_layer_coverage.py scores
+  LayerCoverage == 1.0 and latency-layer-coverage.yml is fail-closed
+  (continue-on-error removed).
+diff_scope:
+  changed_files:
+    - path: ".claude/commit_acceptors/ierd-q6-network-ttfb-lighthouse-gate.yaml"
+    - path: ".claude/commit_acceptors/ierd-q6-latency-layer-coverage-gate.yaml"
+    - path: ".github/workflows/lighthouse-ci.yml"
+    - path: ".github/workflows/latency-layer-coverage.yml"
+    - path: "apps/web/lighthouserc.json"
+    - path: "tests/observability/test_latency_layer_coverage.py"
+    - path: "tests/observability/test_lighthouse_network_ttfb_gate.py"
+    - path: "docs/CLAIMS.yaml"
+  forbidden_paths:
+    - "trading/"
+    - "execution/"
+    - "forecast/"
+    - "policy/"
+    - "core/physics/"
+    - "core/kuramoto/"
+    - "application/api/service.py"
+    - "application/api/errors.py"
+    - "schemas/openapi/"
+required_python_symbols:
+  - "tests/observability/test_lighthouse_network_ttfb_gate.py::test_lighthouse_ttfb_budget_fail_closed"
+  - "tests/observability/test_lighthouse_network_ttfb_gate.py::test_lighthouse_fcp_budget_fail_closed"
+  - "tests/observability/test_lighthouse_network_ttfb_gate.py::test_lighthouse_workflow_is_fail_closed"
+  - "tests/observability/test_lighthouse_network_ttfb_gate.py::test_lighthouse_workflow_carries_budget_falsifier"
+  - "tests/observability/test_latency_layer_coverage.py::test_network_ttfb_layer_gated_fail_closed"
+  - "tests/observability/test_latency_layer_coverage.py::test_all_four_layers_regression_gated"
+expected_signal: >-
+  Local: `mypy --strict
+  tests/observability/test_lighthouse_network_ttfb_gate.py
+  tests/observability/test_latency_layer_coverage.py` reports Success;
+  `GEOSYNC_LATENCY_LAYER_GATE=1 pytest
+  tests/observability/test_latency_layer_coverage.py
+  tests/observability/test_lighthouse_network_ttfb_gate.py -q -s`
+  reports 11 passed with `[layer] AGGREGATE covered=4/4
+  LayerCoverage=1.0000`; `actionlint .github/workflows/lighthouse-ci.yml
+  .github/workflows/latency-layer-coverage.yml` exits 0; in apps/web
+  `lhci autorun --config=lighthouserc.json` exits 0 on the real served
+  build and exits non-zero with a 1 ms TTFB budget.
+measurement_command: >-
+  bash -c 'GEOSYNC_LATENCY_LAYER_GATE=1 python -m pytest
+  tests/observability/test_latency_layer_coverage.py
+  tests/observability/test_lighthouse_network_ttfb_gate.py -q'
+signal_artifact: "tmp/ierd_q6_network_ttfb_lighthouse_gate.log"
+falsifier:
+  command: >-
+    python -c "import json; cfg = json.load(open('apps/web/lighthouserc.json')); a = cfg['ci']['assert']['assertions']['server-response-time']; raise SystemExit(0 if (a[0] == 'error' and a[1]['maxNumericValue'] == 300) else 1)"
+  description: >-
+    Asserts the network_TTFB budget in apps/web/lighthouserc.json is an
+    error-level (fail-closed) server-response-time assertion pinned at
+    the §5 300 ms. If a future change downgrades it to warn or detunes
+    the budget, the gate becomes decorative and the falsifier exits
+    non-zero, signalling the layer is no longer genuinely gated.
+rollback_command: >-
+  git checkout HEAD~1 --
+  .claude/commit_acceptors/ierd-q6-network-ttfb-lighthouse-gate.yaml
+  .github/workflows/lighthouse-ci.yml
+  .github/workflows/latency-layer-coverage.yml
+  apps/web/lighthouserc.json
+  tests/observability/test_latency_layer_coverage.py
+  tests/observability/test_lighthouse_network_ttfb_gate.py
+  docs/CLAIMS.yaml
+rollback_verification_command: >-
+  git diff --exit-code .github/workflows/lighthouse-ci.yml
+  tests/observability/test_lighthouse_network_ttfb_gate.py
+memory_update_type: append
+ledger_path: ".claude/commit_acceptors/ierd-q6-network-ttfb-lighthouse-gate.yaml"
+report_path: "tmp/ierd_q6_network_ttfb_lighthouse_gate.log"
+evidence: []

@@ -1,20 +1,50 @@
-"""Multi-scale Kuramoto synchronization analyzer for market microstructure.
+# Copyright (c) 2023-2026 Yaroslav Vasylenko (neuron7xLab)
+# SPDX-License-Identifier: MIT
+"""Cross-scale phase-coherence descriptor for a single price series.
 
-This module implements a hierarchical Kuramoto oscillator model that analyzes market
-synchronization patterns across multiple time horizons. It leverages phase coherence
-of price oscillations to detect emergent market structures and regime shifts.
+What this module ACTUALLY computes
+-----------------------------------
+This module computes a **cross-scale phase-coherence descriptor of one
+univariate price series** (Layer-B). It is **not** a physical
+asset-network Kuramoto model: there is no ``N×N`` coupling graph, there are
+no asset nodes, and no coupling matrix is inferred. The honest object being
+measured is the temporal phase coherence of a *single* series resampled to
+several time horizons, plus the agreement of those per-horizon order
+parameters across scales.
 
-The Kuramoto model treats each timeframe as a coupled oscillator. When oscillators
-synchronize (high order parameter R), it indicates strong market consensus and
-directional movement. Cross-scale coherence measures how well different timeframes
-align, providing insight into the robustness of market trends.
+Concretely, for each horizon (1m, 5m, 15m, 1h) the single series is
+resampled and the **Kuramoto order parameter** ``R = |⟨exp(iθ)⟩|`` is taken
+over the instantaneous Hilbert phases *within that horizon's window*. The
+"oscillators" being averaged are the time samples of one series at one
+horizon — not separate market participants. ``consensus_R`` is the mean of
+those per-horizon ``R`` values and ``cross_scale_coherence`` is
+``1 − std(R_across_horizons)`` clamped to ``[0, 1]``. Both are descriptive
+summaries of a single series.
+
+Two consequences are declared as machine-readable provenance on
+:class:`MultiScaleResult` (``layer="market_descriptor"``,
+``claim_boundary="descriptor_only_not_predictor"``,
+``single_series=True``, ``is_network_model=False``) rather than hidden:
+
+* the genuine **asset-network** Sakaguchi–Kuramoto identification stack lives
+  in :mod:`core.kuramoto.network_engine`, which infers an ``N×N`` coupling
+  matrix from ``N ≥ 2`` series. This module is the single-series descriptor
+  and must not be read as that network model;
+* the descriptor is **descriptive, not predictive**: the declarative
+  Layer-B label is a *statement of scope*, **not** an enforcement mechanism.
+  Nothing here gates, verifies, or asserts predictive or financial meaning;
+  the label simply records what the numbers are (and are not).
+
+The historical "coupled oscillator network" / "market consensus" framing
+overstated the construct and is corrected here without changing any numeric
+output.
 
 Key Components:
     TimeFrame: Enumeration of standard trading horizons (1m, 5m, 15m, 1h)
     KuramotoResult: Per-timeframe synchronization metrics
     MultiScaleResult: Aggregated consensus across all analyzed timeframes
     FractalResampler: Efficient hierarchical data resampling with caching
-    MultiScaleKuramoto: Main analyzer class for computing order parameters
+    MultiScaleKuramoto: Single-series cross-scale phase-coherence descriptor
 
 The implementation includes energy-aware caching to minimize computational overhead
 during backtesting and supports adaptive windowing for different market conditions.
@@ -29,7 +59,6 @@ from __future__ import annotations
 
 import math
 from dataclasses import dataclass, field
-from enum import Enum
 from typing import Any, Dict, Mapping, MutableMapping, Optional, Sequence
 
 import networkx as nx
@@ -41,33 +70,20 @@ try:  # SciPy is optional in lightweight environments
 except Exception:  # pragma: no cover - executed when SciPy unavailable
     _signal = None
 
-from . import fractal_gcl as _fractal_gcl
+from ..utils.logging import get_logger
 from .base import BaseFeature, FeatureResult
 from .cache import FileSystemIndicatorCache, hash_input_data
+from .timeframe import TimeFrame  # re-exported for backward-compatible imports
 
+_logger = get_logger(__name__)
 
-class TimeFrame(Enum):
-    """Discrete trading horizons expressed in seconds."""
-
-    M1 = 60
-    M5 = 300
-    M15 = 900
-    H1 = 3600
-
-    @property
-    def pandas_freq(self) -> str:
-        """Return the pandas frequency string for resampling."""
-
-        return f"{int(self.value)}s"
-
-    @property
-    def seconds(self) -> int:
-        """Expose the time frame in seconds for downstream consumers."""
-
-        return int(self.value)
-
-    def __str__(self) -> str:  # pragma: no cover - tiny helper
-        return self.name
+# Machine-readable Layer-B provenance for :class:`MultiScaleResult`. These are
+# declarative scope statements, NOT enforcement: they record that the result is
+# a cross-scale phase-coherence descriptor of a single price series, not an
+# inferred N×N asset-network Kuramoto model. The genuine network identification
+# stack is core.kuramoto.network_engine.
+_LAYER: str = "market_descriptor"
+_CLAIM_BOUNDARY: str = "descriptor_only_not_predictor"
 
 
 @dataclass(slots=True)
@@ -81,7 +97,27 @@ class KuramotoResult:
 
 @dataclass(slots=True)
 class MultiScaleResult:
-    """Aggregate multi-scale consensus metrics produced by the analyzer."""
+    """Cross-scale phase-coherence descriptor of a single price series.
+
+    The aggregate metrics summarise the per-horizon Kuramoto order
+    parameters of **one** univariate series resampled to several horizons.
+    This is a Layer-B *descriptor*, not an inferred asset-network model: the
+    provenance fields declare that scope.
+
+    Provenance (declarative, not enforcement)
+    -----------------------------------------
+    layer
+        ``"market_descriptor"`` — Layer-B structural descriptor.
+    claim_boundary
+        ``"descriptor_only_not_predictor"`` — the value describes the input
+        series; it makes no predictive or financial claim.
+    single_series
+        ``True`` — computed from one univariate series across horizons.
+    is_network_model
+        ``False`` — there is no ``N×N`` coupling graph or asset nodes here;
+        the genuine network identification stack is
+        :class:`core.kuramoto.network_engine.NetworkKuramotoEngine`.
+    """
 
     consensus_R: float
     cross_scale_coherence: float
@@ -92,6 +128,10 @@ class MultiScaleResult:
     timeframe_endpoints: Mapping[TimeFrame, pd.Timestamp] = field(default_factory=dict)
     timeframe_series: Mapping[TimeFrame, pd.Series] = field(default_factory=dict)
     energy_profile: Mapping[str, float] = field(default_factory=dict)
+    layer: str = _LAYER
+    claim_boundary: str = _CLAIM_BOUNDARY
+    single_series: bool = True
+    is_network_model: bool = False
 
 
 @dataclass(slots=True)
@@ -100,15 +140,13 @@ class FractalResampler:
 
     The resampler memoizes intermediate timeframes and reuses them when a coarser
     horizon is an integer multiple of a previously computed one.  This mirrors
-    the "fractal" refinement of horizons used throughout TradePulse and reduces
+    the "fractal" refinement of horizons used throughout GeoSync and reduces
     redundant :meth:`pandas.Series.resample` calls—cutting CPU time and energy
     consumption in large backtests.
     """
 
     series: pd.Series
-    _cache: MutableMapping[TimeFrame, pd.Series] = field(
-        default_factory=dict, init=False
-    )
+    _cache: MutableMapping[TimeFrame, pd.Series] = field(default_factory=dict, init=False)
     _cache_hits: int = field(default=0, init=False)
     _direct_resamples: int = field(default=0, init=False)
 
@@ -182,11 +220,7 @@ class FractalResampler:
                     raise
                 continue
 
-        return {
-            timeframe: results[timeframe]
-            for timeframe in unique_order
-            if timeframe in results
-        }
+        return {timeframe: results[timeframe] for timeframe in unique_order if timeframe in results}
 
     def stats(self) -> Mapping[str, float]:
         """Expose cache utilisation metrics for energy profiling."""
@@ -225,7 +259,17 @@ def _hilbert_phase(series: np.ndarray) -> np.ndarray:
     Optimized with reduced array allocations and in-place operations.
     """
 
-    x = np.ascontiguousarray(series, dtype=np.float64)
+    # Private, writable, C-contiguous working buffer. ``ascontiguousarray`` can
+    # return the caller's array UNCHANGED when it is already C-contiguous
+    # float64 — including read-only / caller-owned buffers. This routine then
+    # mutates x in place (putmask below, in-place detrend + Hilbert multiplier),
+    # which raises "putmask: output array is read-only" on a read-only input —
+    # silently degrading GeoSyncCompositeEngine to its fallback feature set — or
+    # corrupts the caller's data through aliasing. Copy once up front; every
+    # in-place op below is then both safe and allocation-free.
+    x = np.array(series, dtype=np.float64, copy=True)
+    if not x.flags.c_contiguous:
+        x = np.ascontiguousarray(x)
     n = x.size
     if n == 0:
         raise ValueError("phase extraction requires at least one sample")
@@ -318,7 +362,9 @@ class WaveletWindowSelector:
         self.min_window = min_window
         self.max_window = max_window
         self.wavelet = wavelet
-        self.levels = max(2, levels)
+        self.levels = max(
+            2, levels
+        )  # bounds: minimum 2 decomposition levels for meaningful multi-scale analysis
         self.max_samples = int(max_samples) if max_samples is not None else None
         self._fallback_window = self._compute_fallback_window()
         self._widths_cache: np.ndarray | None = None
@@ -331,10 +377,9 @@ class WaveletWindowSelector:
 
     def _candidate_widths(self) -> np.ndarray:
         if self._widths_cache is None:
-            widths = np.linspace(
-                self.min_window, self.max_window, self.levels, dtype=np.float64
-            )
+            widths = np.linspace(self.min_window, self.max_window, self.levels, dtype=np.float64)
             # Clip and convert to integers in one operation
+            # bounds: wavelet window widths clamped to configured [min, max] range
             widths = np.clip(widths, self.min_window, self.max_window).astype(np.int32)
             widths = np.unique(widths)
             widths = widths[widths > 0]
@@ -345,9 +390,7 @@ class WaveletWindowSelector:
 
     def select_window(self, prices: Sequence[float]) -> int:
         if self.max_window > 1_048_576:
-            raise ValueError(
-                "max_window is excessively large for efficient wavelet analysis"
-            )
+            raise ValueError("max_window is excessively large for efficient wavelet analysis")
         if self.levels > 8192:
             raise ValueError(
                 "levels is excessively large and could exhaust memory during wavelet selection"
@@ -357,6 +400,12 @@ class WaveletWindowSelector:
             raise ValueError("cannot select window from empty price series")
         if self.max_samples is not None and values.size > self.max_samples:
             values = values[-self.max_samples :]
+        # TD-003: a constant / degenerate series carries no oscillatory energy, so the
+        # ricker CWT returns an all-zero spectrum whose argmax collapses to min_window —
+        # the smallest, noisiest scale. Guard it explicitly: return the stable mid-range
+        # fallback window instead of amplifying noise on illiquid/flat input.
+        if not np.isfinite(values).all() or float(np.ptp(values)) == 0.0:
+            return self._fallback_window
         if _signal is None:
             return self._fallback_window
 
@@ -377,7 +426,15 @@ class WaveletWindowSelector:
 
 
 class MultiScaleKuramoto:
-    """Compute Kuramoto synchronization metrics across multiple horizons."""
+    """Single-series cross-scale phase-coherence descriptor.
+
+    Computes the Kuramoto order parameter ``R = |⟨exp(iθ)⟩|`` of one
+    univariate price series at each configured horizon and summarises their
+    agreement across scales. This is a Layer-B descriptor — it does **not**
+    infer an ``N×N`` coupling matrix and is **not** the asset-network
+    Sakaguchi–Kuramoto model in :mod:`core.kuramoto.network_engine`. See the
+    module docstring and the provenance fields on :class:`MultiScaleResult`.
+    """
 
     def __init__(
         self,
@@ -406,7 +463,9 @@ class MultiScaleKuramoto:
         self.use_adaptive_window = use_adaptive_window
         self.min_samples_per_scale = int(min_samples_per_scale)
         self.selector = selector or WaveletWindowSelector(
-            min_window=max(32, self.base_window // 2),
+            min_window=max(
+                32, self.base_window // 2
+            ),  # bounds: floor at 32 for stable wavelet decomposition
             max_window=self.base_window * 2,
         )
 
@@ -424,9 +483,7 @@ class MultiScaleKuramoto:
             return int(self.selector.select_window(values))
         return self.base_window
 
-    def analyze(
-        self, df: pd.DataFrame, *, price_col: str = "close"
-    ) -> MultiScaleResult:
+    def analyze(self, df: pd.DataFrame, *, price_col: str = "close") -> MultiScaleResult:
         if price_col not in df.columns:
             raise KeyError(f"column '{price_col}' not found in dataframe")
         series = df[price_col]
@@ -473,9 +530,7 @@ class MultiScaleKuramoto:
             R, psi = self._kuramoto_order_parameter(phases[-window:])
             record.update(
                 {
-                    "result": KuramotoResult(
-                        order_parameter=R, mean_phase=psi, window=window
-                    ),
+                    "result": KuramotoResult(order_parameter=R, mean_phase=psi, window=window),
                     "endpoint": sampled.index[-1],
                     "samples": int(sampled.size),
                     "series": sampled,
@@ -507,6 +562,17 @@ class MultiScaleKuramoto:
             if isinstance(series, pd.Series):
                 timeframe_series[timeframe] = series
 
+        # TD-002: skipped scales (insufficient samples / window < min_samples_per_scale)
+        # are not silent — they surface both structurally (MultiScaleResult.skipped_timeframes)
+        # and as an observable warning so an opaque all-zero consensus is attributable.
+        if skipped:
+            _logger.warning(
+                "multiscale_timeframes_skipped",
+                skipped=[tf.name for tf in skipped],
+                analyzed=[tf.name for tf in timeframe_results],
+                min_samples_per_scale=self.min_samples_per_scale,
+            )
+
         if timeframe_results:
             R_values = np.array(
                 [res.order_parameter for res in timeframe_results.values()], dtype=float
@@ -514,6 +580,7 @@ class MultiScaleKuramoto:
             consensus_R = float(np.mean(R_values))
             if R_values.size > 1:
                 dispersion = float(np.std(R_values))
+                # INV-K1: coherence metric derived from R dispersion, bounded to [0,1]
                 cross_scale_coherence = float(np.clip(1.0 - dispersion, 0.0, 1.0))
             else:
                 cross_scale_coherence = 1.0
@@ -527,9 +594,7 @@ class MultiScaleKuramoto:
             dominant_scale = None
 
         adaptive_window = (
-            int(np.median(windows))
-            if windows and self.use_adaptive_window
-            else self.base_window
+            int(np.median(windows)) if windows and self.use_adaptive_window else self.base_window
         )
 
         energy_profile = {
@@ -607,6 +672,13 @@ class MultiScaleKuramotoFeature(BaseFeature):
             metadata["dominant_timeframe"] = result.dominant_scale.name
         metadata["cross_scale_coherence"] = result.cross_scale_coherence
         metadata["energy_profile"] = dict(result.energy_profile)
+        # Layer-B provenance: declarative scope, not enforcement. Surfaces the
+        # descriptor-only / single-series / not-a-network-model boundary to
+        # every downstream consumer of the FeatureResult metadata.
+        metadata["layer"] = result.layer
+        metadata["claim_boundary"] = result.claim_boundary
+        metadata["single_series"] = result.single_series
+        metadata["is_network_model"] = result.is_network_model
         return metadata
 
     def _store_timeframe_cache(
@@ -692,9 +764,7 @@ class MultiScaleKuramotoFeature(BaseFeature):
             result = cached_result
 
         metadata = self._metadata_from_result(result)
-        feature = FeatureResult(
-            name=self.name, value=result.consensus_R, metadata=metadata
-        )
+        feature = FeatureResult(name=self.name, value=result.consensus_R, metadata=metadata)
 
         if self.cache is not None and cached_result is None and not df.empty:
             target = df[[price_col]] if price_col in df.columns else df
@@ -736,7 +806,11 @@ def fractal_gcl_novelty(
 ) -> tuple[float, float]:
     """Convenience wrapper exposing fractal novelty estimates to FHMC."""
 
-    return _fractal_gcl.fractal_gcl_novelty(graph, embeddings_i, embeddings_j)
+    # Imported lazily inside the function to avoid a module-level import cycle
+    # within the ``core.indicators`` package (py/unsafe-cyclic-import).
+    from .fractal_gcl import fractal_gcl_novelty as _fractal_gcl_novelty
+
+    return _fractal_gcl_novelty(graph, embeddings_i, embeddings_j)
 
 
 __all__ = [

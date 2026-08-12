@@ -6,7 +6,7 @@ This document describes the module interaction orchestration architecture that i
 
 ## Problem Statement
 
-The TradePulse platform consists of multiple modules that need to interact in a specific sequence:
+The GeoSync platform consists of multiple modules that need to interact in a specific sequence:
 
 1. **Data Ingestion** → Load market data
 2. **Validation** → Ensure data quality
@@ -134,12 +134,12 @@ class ModuleInteractionOrchestrator:
 
 ### Relationship with Other Orchestrators
 
-TradePulse has multiple orchestrators, each serving a distinct purpose:
+GeoSync has multiple orchestrators, each serving a distinct purpose:
 
 | Orchestrator | Purpose | Scope |
 |--------------|---------|-------|
 | **ModuleInteractionOrchestrator** | Sequence module interactions | Pipeline coordination |
-| **TradePulseOrchestrator** | High-level system façade | End-to-end workflows |
+| **GeoSyncOrchestrator** | High-level system façade | End-to-end workflows |
 | **ModeOrchestrator** | Trading mode state machine | Mode transitions |
 | **StrategyOrchestrator** | Parallel strategy evaluation | Strategy concurrency |
 
@@ -147,8 +147,8 @@ These orchestrators are **complementary** and can be used together:
 
 ```python
 # System-level orchestrator
-system = build_tradepulse_system()
-tp_orchestrator = TradePulseOrchestrator(system)
+system = build_geosync_system()
+tp_orchestrator = GeoSyncOrchestrator(system)
 
 # Module sequence orchestrator
 module_orchestrator = ModuleInteractionOrchestrator()
@@ -391,7 +391,7 @@ orchestrator.visualize_dependencies(output="graph.png")
 
 ## Conclusion
 
-The `ModuleInteractionOrchestrator` provides a robust, flexible solution for managing module interactions in the TradePulse trading system. It ensures correct execution order, detects configuration errors, and enables dynamic control—all while maintaining clear, auditable dependencies between modules.
+The `ModuleInteractionOrchestrator` provides a robust, flexible solution for managing module interactions in the GeoSync trading system. It ensures correct execution order, detects configuration errors, and enables dynamic control—all while maintaining clear, auditable dependencies between modules.
 
 ## References
 

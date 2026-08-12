@@ -1,0 +1,132 @@
+# Diff-bound commit acceptor for X-10R-1 PR #2 — first concrete
+# prior beyond UniformPrior, plus the registry-loader surface.
+#
+# What lands:
+#   * research/reconstruction/allocator/size_weighted_prior.py
+#       SizeWeightedPrior: per-bank size-weighted shares with
+#       per-country mean imputation for missing weights.
+#   * research/reconstruction/allocator/registry.py
+#       registry_to_bank_country_map: parses {country: [banks]}
+#       into the canonical deterministic bank_country_map tuple.
+#   * tests/reconstruction/allocator/test_size_weighted_prior.py
+#       19 tests pinning protocol satisfaction, closed-form share,
+#       has_evidence semantics, falsification anchor (aligned
+#       SizeWeightedPrior crushes UniformPrior; anti-aligned does
+#       NOT beat UniformPrior; empty weights degenerate to
+#       UniformPrior recovery error), cert_id distinguishes priors.
+#   * tests/reconstruction/allocator/test_registry.py
+#       10 tests: deterministic ordering, duplicate-detection,
+#       blank-input rejection, round-trip with SizeWeightedPrior.
+#
+# Locally verified:
+#   * pytest tests/reconstruction/allocator/: 72/72 passed
+#   * mypy --strict + ruff + black:           clean
+
+id: x10r-1-size-weighted-prior
+status: ACTIVE
+claim_type: chore
+promise: >-
+  After this PR lands, research/reconstruction/allocator/ ships its
+  first concrete prior beyond the UniformPrior falsification anchor.
+  SizeWeightedPrior consumes a per-bank weight dict and assigns
+  shares ∝ weight within country, with maximum-entropy mean
+  imputation for banks resident in the country but missing from
+  the weight dict. The closed-form share contract is share(c, b) =
+  weight[b] / Σ resident weights, validated by the test
+  test_share_equals_weight_over_country_total.
+  registry_to_bank_country_map converts a {country: [banks]}
+  dictionary into the deterministic bank_country_map tuple the
+  allocator and priors consume — alphabetical country order +
+  preserved within-country bank order. 29 new tests pin: protocol
+  satisfaction, closed-form correctness, has_evidence semantics,
+  cert_id distinguishes priors with different prior_id, the
+  allocator's GATE_A1 conservation under SizeWeightedPrior, and
+  the FALSIFICATION ANCHOR — SizeWeightedPrior with weights
+  ALIGNED to ground-truth shares MUST beat UniformPrior on a
+  lognormal substrate by ≥ 6 orders of magnitude in relative L1
+  error; ANTI-aligned weights MUST NOT beat UniformPrior; empty-
+  weight SizeWeightedPrior must degenerate to UniformPrior.
+diff_scope:
+  changed_files:
+    - path: ".claude/commit_acceptors/x10r-1-size-weighted-prior.yaml"
+    - path: "research/reconstruction/allocator/__init__.py"
+    - path: "research/reconstruction/allocator/registry.py"
+    - path: "research/reconstruction/allocator/size_weighted_prior.py"
+    - path: "tests/reconstruction/allocator/test_registry.py"
+    - path: "tests/reconstruction/allocator/test_size_weighted_prior.py"
+  forbidden_paths:
+    - "trading/"
+    - "execution/"
+    - "forecast/"
+    - "policy/"
+    - "core/physics/"
+    - "core/kuramoto/"
+    - "application/governance/claim_ledger.py"
+    - "application/governance/commit_acceptor.py"
+required_python_symbols:
+  - "research/reconstruction/allocator/size_weighted_prior.py::SizeWeightedPrior"
+  - "research/reconstruction/allocator/registry.py::registry_to_bank_country_map"
+expected_signal: >-
+  Local: `pytest tests/reconstruction/allocator/ -q` reports
+  "72 passed"; `mypy --strict` is clean on every file under
+  research/reconstruction/allocator/ and
+  tests/reconstruction/allocator/; `ruff check` and
+  `black --check` both pass on those paths.
+measurement_command: >-
+  bash -c 'mypy --strict --follow-imports=silent
+  research/reconstruction/allocator/ tests/reconstruction/allocator/
+  && ruff check research/reconstruction/allocator/ tests/reconstruction/allocator/
+  && black --check research/reconstruction/allocator/ tests/reconstruction/allocator/
+  && pytest tests/reconstruction/allocator/ -q'
+signal_artifact: "tmp/x10r_1_size_weighted_prior.log"
+falsifier:
+  command: |-
+    bash -c 'python -c "
+    from research.reconstruction.allocator import (
+        CountryToBankAllocator, SizeWeightedPrior, UniformPrior,
+        bank_level_recovery_l1, synthetic_country_aggregates,
+    )
+    agg_in, agg_out, gt_in, _, bcm = synthetic_country_aggregates(
+        n_countries=4, n_banks_per_country=8,
+        share_distribution=\"lognormal\", seed=42,
+    )
+    weights = {b: float(gt_in[i]) for i, (b, _) in enumerate(bcm)}
+    err_sw = bank_level_recovery_l1(
+        ground_truth=gt_in,
+        allocated=CountryToBankAllocator(
+            prior=SizeWeightedPrior(bank_country_map=bcm, bank_weights=weights)
+        ).allocate(agg_in, agg_out, bank_country_map=bcm).s_in,
+    )
+    err_un = bank_level_recovery_l1(
+        ground_truth=gt_in,
+        allocated=CountryToBankAllocator(
+            prior=UniformPrior(bank_country_map=bcm)
+        ).allocate(agg_in, agg_out, bank_country_map=bcm).s_in,
+    )
+    assert err_un / max(err_sw, 1e-30) > 1e6, (
+        f\"falsification anchor broken: SizeWeightedPrior aligned err={err_sw:.6e} \"
+        f\"vs UniformPrior err={err_un:.6e}\"
+    )
+    "'
+  description: >-
+    Probes the falsification anchor: aligned SizeWeightedPrior on a
+    lognormal-share substrate must beat UniformPrior by at least
+    6 orders of magnitude in relative L1 (the aligned prior should
+    be exact). If it does not, either the closed-form share is
+    broken or the substrate is somehow not lognormal — either way,
+    the prior is doing no work.
+rollback_command: >-
+  bash -c 'git checkout HEAD~1 --
+  && rm -f research/reconstruction/allocator/registry.py
+  research/reconstruction/allocator/size_weighted_prior.py
+  tests/reconstruction/allocator/test_registry.py
+  tests/reconstruction/allocator/test_size_weighted_prior.py
+  .claude/commit_acceptors/x10r-1-size-weighted-prior.yaml'
+rollback_verification_command: >-
+  bash -c 'test ! -f research/reconstruction/allocator/registry.py
+  && test ! -f research/reconstruction/allocator/size_weighted_prior.py
+  && test ! -f .claude/commit_acceptors/x10r-1-size-weighted-prior.yaml'
+memory_update_type: append
+ledger_path: ".claude/commit_acceptors/x10r-1-size-weighted-prior.yaml"
+report_path: "tmp/x10r_1_size_weighted_prior.log"
+evidence: []

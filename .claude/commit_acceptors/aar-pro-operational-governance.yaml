@@ -1,0 +1,39 @@
+id: aar-pro-operational-governance
+claim_type: governance
+promise: AAR-PRO operational contracts, evidence artifacts, invariant registry, formal files, and scoped governance tooling remain machine-verifiable without overbroad single-acceptor claims.
+diff_scope:
+  changed_files:
+  - path: .claude/commit_acceptors/canonical-action-result-comparator.yaml
+  - path: .claude/commit_acceptors/aar-pro-verification-suite.yaml
+  - path: .claude/commit_acceptors/aar-pro-operational-governance.yaml
+  - path: artifacts/aar_pro/action_result_acceptor_audit.md
+  - path: artifacts/aar_pro/action_result_comparator_pytest.txt
+  - path: core/dro_ara/README.md
+  - path: docs/operations/aar_pro_v1_invariants.yaml
+  - path: docs/operations/aar_pro_v1_operational_contract.md
+  - path: docs/physics/dro_ara_invariants.md
+  - path: formal/AAR_PRO_V1.tla
+  - path: formal/AAR_PRO_V1.cfg
+  - path: tests/test_levels.yaml
+  - path: tools/commit_acceptor/validate_commit_acceptor.py
+  forbidden_paths:
+  - trading/
+  - execution/
+  - forecast/
+  - policy/
+required_python_symbols:
+- _filter_acceptors_by_id
+expected_signal: Scoped acceptor validation passes for the AAR-PRO acceptor set without unrelated historical evidence warnings or per-claim file-cap violations.
+measurement_command: python tools/commit_acceptor/validate_commit_acceptor.py .claude/commit_acceptors --acceptor-id canonical-action-result-comparator --acceptor-id aar-pro-verification-suite --acceptor-id aar-pro-operational-governance --summary-out tmp/commit_acceptor_validation_invariant_registry_scoped.json
+falsifier:
+  command: python -m pytest -q -W ignore::DeprecationWarning tests/unit/commit_acceptor/test_validate_commit_acceptor.py::test_cli_acceptor_id_scopes_validation_warnings tests/unit/commit_acceptor/test_validate_commit_acceptor.py::test_cli_acceptor_id_returns_2_for_unknown_id tests/unit/commit_acceptor/test_validate_commit_acceptor.py::test_cli_acceptor_id_can_select_multiple_acceptors tests/formal/test_aar_pro_invariants_yaml.py tests/formal/test_aar_pro_tla_spec.py
+  description: Must fail when scoped governance selection, invariant registry, or formal contract binding is removed.
+rollback_command: git checkout -- .claude/commit_acceptors/canonical-action-result-comparator.yaml .claude/commit_acceptors/aar-pro-verification-suite.yaml .claude/commit_acceptors/aar-pro-operational-governance.yaml artifacts/aar_pro/action_result_acceptor_audit.md artifacts/aar_pro/action_result_comparator_pytest.txt core/dro_ara/README.md docs/operations/aar_pro_v1_invariants.yaml docs/operations/aar_pro_v1_operational_contract.md docs/physics/dro_ara_invariants.md formal/AAR_PRO_V1.tla formal/AAR_PRO_V1.cfg tests/test_levels.yaml tools/commit_acceptor/validate_commit_acceptor.py
+rollback_verification_command: git diff --exit-code .claude/commit_acceptors/canonical-action-result-comparator.yaml .claude/commit_acceptors/aar-pro-verification-suite.yaml .claude/commit_acceptors/aar-pro-operational-governance.yaml artifacts/aar_pro/action_result_acceptor_audit.md artifacts/aar_pro/action_result_comparator_pytest.txt core/dro_ara/README.md docs/operations/aar_pro_v1_invariants.yaml docs/operations/aar_pro_v1_operational_contract.md docs/physics/dro_ara_invariants.md formal/AAR_PRO_V1.tla formal/AAR_PRO_V1.cfg tests/test_levels.yaml tools/commit_acceptor/validate_commit_acceptor.py
+ledger_path: .claude/commit_acceptors/aar-pro-operational-governance.yaml
+report_path: artifacts/aar_pro/action_result_acceptor_audit.md
+status: ACTIVE
+memory_update_type: append
+signal_artifact: artifacts/aar_pro/action_result_comparator_pytest.txt
+evidence:
+- path: artifacts/aar_pro/action_result_comparator_pytest.txt

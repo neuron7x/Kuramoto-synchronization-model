@@ -1,0 +1,66 @@
+# L2 Ricci evidence-protocol reference registry.
+#
+# Resolution target for the `baseline_id`, `null_model_id`, and `falsifier_id`
+# fields of an L2 Ricci session artifact
+# (schemas/research/l2_ricci_session.schema.json). A session's declared
+# baseline/null/falsifier id is only meaningful if it RESOLVES to a registered,
+# described reference here. An id that names nothing is an unfalsifiable
+# placeholder dressed as provenance; tools/research/check_l2_registry_refs.py
+# rejects unresolved ids, fail-closed.
+#
+# This registry does NOT assert that any L2 Ricci result exists. It declares the
+# reference *objects* (baselines, null models, falsifiers) a real depth-5
+# session would be judged against. The line stays HYPOTHESIS-tier until a real
+# depth-5 capture is recorded; registering a baseline is not registering a
+# result.
+#
+# Schema:
+#   schema_version: int
+#   baselines:  { <id>: { description: str } }
+#   null_models:{ <id>: { description: str } }
+#   falsifiers: { <id>: { description: str } }
+#
+# Every id MUST match ^[a-z][a-z0-9_]{2,63}$ (the schema pattern for the
+# corresponding *_id field). The "*_unset" ids the --dry-run skeleton uses are
+# intentionally NOT registered: a placeholder skeleton must not resolve to a
+# real reference.
+
+schema_version: 1
+
+baselines:
+  no_lookahead_persistence:
+    description: >-
+      No-lookahead persistence baseline: predict next mid-price direction from
+      the sign of the trailing mid-price change only, with a strict one-bar
+      execution lag. The L2 Ricci score must beat this to claim it adds anything
+      over trivial momentum.
+  zero_signal_flat:
+    description: >-
+      Flat (always-abstain) baseline: takes no position, realizes no edge and no
+      cost. The trivial floor any non-degenerate signal must clear.
+
+null_models:
+  permutation_null:
+    description: >-
+      Block-permutation null: the depth-5 Ricci feature series is block-permuted
+      against forward returns to destroy any genuine lead-lag while preserving
+      marginal distributions. A signal that does not beat this null is not
+      evidence.
+  phase_randomized_null:
+    description: >-
+      Phase-randomized (surrogate) null: the feature series is phase-randomized
+      to preserve its power spectrum while destroying nonlinear phase structure,
+      testing whether the score survives spectrum-matched noise.
+
+falsifiers:
+  lookahead_leak_falsifier:
+    description: >-
+      Lookahead-leak falsifier: sweeps the feature-to-return lag through
+      non-positive (future) lags and asserts the score does NOT strengthen when
+      future information is leaked in. A score that only appears at negative lags
+      is a leakage artifact and is killed.
+  cost_model_falsifier:
+    description: >-
+      Cost-model falsifier: re-evaluates the session under the venue's realized
+      spread and impact cost model and asserts any gross edge survives costs. An
+      edge that exists only gross is killed.

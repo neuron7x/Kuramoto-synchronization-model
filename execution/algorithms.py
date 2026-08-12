@@ -1,4 +1,5 @@
-# SPDX-License-Identifier: LicenseRef-TradePulse-Proprietary
+# Copyright (c) 2023-2026 Yaroslav Vasylenko (neuron7xLab)
+# SPDX-License-Identifier: MIT
 """Execution algorithms for slicing large parent orders."""
 
 from __future__ import annotations
@@ -84,9 +85,7 @@ class VWAPAlgorithm(ExecutionAlgorithm):
                 price=parent.price,
                 order_type=OrderType.LIMIT if parent.price else OrderType.MARKET,
             )
-            children.append(
-                ChildOrder(order=child, scheduled_time=now + idx * interval)
-            )
+            children.append(ChildOrder(order=child, scheduled_time=now + idx * interval))
         # Numerical guard to ensure total quantity matches parent
         diff = parent.quantity - sum(child.order.quantity for child in children)
         if abs(diff) > 1e-9:
@@ -119,9 +118,7 @@ class POVAlgorithm(ExecutionAlgorithm):
         if total_forecast <= 0:
             raise ValueError("forecast_volume must sum to positive value")
         target_qty = parent.quantity
-        allocations = [
-            min(target_qty, self.participation * bucket) for bucket in self.forecast
-        ]
+        allocations = [min(target_qty, self.participation * bucket) for bucket in self.forecast]
         # Normalize allocations to ensure full quantity is sent if possible
         allocated = sum(allocations)
         if allocated < target_qty:
@@ -136,9 +133,7 @@ class POVAlgorithm(ExecutionAlgorithm):
                 price=parent.price,
                 order_type=OrderType.LIMIT if parent.price else OrderType.MARKET,
             )
-            children.append(
-                ChildOrder(order=child, scheduled_time=now + idx * interval)
-            )
+            children.append(ChildOrder(order=child, scheduled_time=now + idx * interval))
         return children
 
 

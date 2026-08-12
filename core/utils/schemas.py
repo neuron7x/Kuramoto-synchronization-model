@@ -1,5 +1,7 @@
-# SPDX-License-Identifier: LicenseRef-TradePulse-Proprietary
-"""JSON Schema generation for TradePulse data structures."""
+# Copyright (c) 2023-2026 Yaroslav Vasylenko (neuron7xLab)
+# SPDX-License-Identifier: MIT
+"""JSON Schema generation for GeoSync data structures."""
+
 from __future__ import annotations
 
 import json
@@ -15,9 +17,7 @@ except ModuleNotFoundError:  # pragma: no cover - exercised when dependency miss
     BaseModel = None  # type: ignore[assignment]
 
 
-def dataclass_to_json_schema(
-    cls: Type[Any], title: str | None = None
-) -> Dict[str, Any]:
+def dataclass_to_json_schema(cls: Type[Any], title: str | None = None) -> Dict[str, Any]:
     """Convert a dataclass to JSON Schema.
 
     Args:
@@ -176,7 +176,7 @@ def _type_to_schema(typ: Any) -> Dict[str, Any]:
 
 
 def generate_all_schemas() -> Dict[str, Dict[str, Any]]:
-    """Generate schemas for all key TradePulse data structures.
+    """Generate schemas for all key GeoSync data structures.
 
     Returns:
         Dictionary mapping class names to schemas
@@ -188,19 +188,16 @@ def generate_all_schemas() -> Dict[str, Dict[str, Any]]:
     schemas = {}
 
     # Core schemas
-    schemas["FeatureResult"] = dataclass_to_json_schema(
-        FeatureResult, title="FeatureResult"
-    )
+    schemas["FeatureResult"] = dataclass_to_json_schema(FeatureResult, title="FeatureResult")
     schemas["FeatureResult"]["description"] = (
         "Result from a feature/indicator transformation. Contains the computed "
         "value, metadata, and feature name."
     )
 
     schemas["BacktestResult"] = dataclass_to_json_schema(Result, title="BacktestResult")
-    schemas["BacktestResult"]["description"] = (
-        "Result from a backtest run. Contains profit/loss, maximum drawdown, "
-        "and number of trades."
-    )
+    schemas["BacktestResult"][
+        "description"
+    ] = "Result from a backtest run. Contains profit/loss, maximum drawdown, and number of trades."
 
     schemas["Ticker"] = model_to_json_schema(Ticker, title="Ticker")
     schemas["Ticker"][

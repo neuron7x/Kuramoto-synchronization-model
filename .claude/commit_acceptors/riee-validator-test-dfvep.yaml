@@ -1,0 +1,22 @@
+id: riee-validator-test-dfvep
+status: ACTIVE
+claim_type: correctness
+promise: "Validator manifest test is bound."
+diff_scope:
+  changed_files:
+    - path: ".claude/commit_acceptors/riee-validator-test-dfvep.yaml"
+    - path: "tests/tools/test_validate_financial_contract_dfvep.py"
+  forbidden_paths: []
+required_python_symbols: []
+expected_signal: "test runs"
+measurement_command: "python -m pytest -q tests/tools/test_validate_financial_contract_dfvep.py"
+signal_artifact: "tmp/riee_validator_test_dfvep.log"
+falsifier:
+  command: "python -m pytest -q tests/tools/test_validate_financial_contract_dfvep.py"
+  description: "test must execute"
+rollback_command: "git checkout HEAD~1 -- tests/tools/test_validate_financial_contract_dfvep.py"
+rollback_verification_command: "python tools/commit_acceptor/validate_commit_acceptor.py"
+memory_update_type: append
+ledger_path: ".claude/commit_acceptors/riee-validator-test-dfvep.yaml"
+report_path: "tests/tools/test_validate_financial_contract_dfvep.py"
+evidence: []

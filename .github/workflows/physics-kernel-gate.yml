@@ -1,0 +1,181 @@
+# SPDX-License-Identifier: MIT
+#
+# Physics Kernel Gate — invariant-driven test validation.
+#
+# This workflow enforces the physical-contracts layer:
+#   1. The physics kernel (.claude/physics/) is internally consistent
+#      (self-check: INVARIANTS.yaml loads, every invariant type has a
+#      matching L3 checker, theory-file IDs cross-reference the YAML).
+#   2. Every test in tests/ that touches a physics module is grounded
+#      in an INV-* invariant (L1), references a valid id (L2), has a
+#      structure matching its invariant type (L3), emits a 5-field
+#      error message on failure (L4), and derives thresholds from
+#      theory rather than magic literals (L5).
+#   3. Production physics code in changed core/ Python files does not silently
+#      clamp or clip physical quantities without logging or an INV-* comment
+#      (C1, C2 audit).
+#
+# The gate is fail-closed for changed physics tests and changed core code.
+# Repo-wide grounding remains informational until the migration backlog closes.
+name: Physics Kernel Gate
+
+on:
+  pull_request:
+    branches: [main]
+    paths:
+      - 'core/**'
+      - 'tests/**'
+      - '.claude/physics/**'
+      - '.github/workflows/physics-kernel-gate.yml'
+  merge_group:
+  push:
+    branches: [main]
+
+permissions:
+  contents: read
+
+concurrency:
+  group: physics-kernel-gate-${{ github.event.pull_request.number || github.sha }}
+  cancel-in-progress: true
+
+jobs:
+  # ---------------------------------------------------------------------------
+  # kernel-self-check
+  # ---------------------------------------------------------------------------
+  kernel-self-check:
+    name: physics-kernel-self-check
+    runs-on: ubuntu-latest
+    continue-on-error: false
+    steps:
+      - name: Checkout
+        uses: actions/checkout@9c091bb21b7c1c1d1991bb908d89e4e9dddfe3e0 # v7.0.0
+
+      - name: Set up Python
+        uses: actions/setup-python@ece7cb06caefa5fff74198d8649806c4678c61a1 # v6
+        with:
+          python-version: '3.12'
+
+      - name: Run physics kernel self-check
+        run: |
+          set -euo pipefail
+          python .claude/physics/validate_tests.py --self-check
+
+  test-validation:
+    name: physics-test-validation
+    runs-on: ubuntu-latest
+    needs: kernel-self-check
+    continue-on-error: false
+    steps:
+      - name: Checkout
+        uses: actions/checkout@9c091bb21b7c1c1d1991bb908d89e4e9dddfe3e0 # v7.0.0
+
+      - name: Set up Python
+        uses: actions/setup-python@ece7cb06caefa5fff74198d8649806c4678c61a1 # v6
+        with:
+          python-version: '3.12'
+
+      - name: Validate physics witness sidecar map
+        run: |
+          set -euo pipefail
+          python .claude/physics/validate_witness_map.py
+
+      - name: Validate fully-migrated physics tests (strict, fail-closed)
+        run: |
+          set -euo pipefail
+          STRICT_FILES=(
+            "tests/unit/physics/test_T8_kelly_oms_signalbus_hpc.py"
+            "tests/unit/physics/test_T9_kuramoto_transitions.py"
+            "tests/unit/physics/test_T10_ricci_bounds.py"
+            "tests/unit/physics/test_T11_dopamine_algebraic.py"
+            "tests/unit/physics/test_T12_serotonin_stability.py"
+            "tests/unit/physics/test_T13_free_energy_components.py"
+            "tests/unit/physics/test_T14_portfolio_energy_conservation.py"
+            "tests/unit/physics/test_T15_oms_idempotency_causality.py"
+            "tests/unit/physics/test_T16_signalbus_dag.py"
+            "tests/core/neuro/serotonin/test_serotonin_properties.py"
+            "tests/core/neuro/dopamine/test_dopamine_invariants_properties.py"
+          )
+          exit_code=0
+          for file in "${STRICT_FILES[@]}"; do
+            echo "::group::strict: ${file}"
+            if ! python .claude/physics/validate_tests.py "${file}"; then
+              echo "::error file=${file}::strict physics validation failed"
+              exit_code=1
+            fi
+            echo "::endgroup::"
+          done
+          exit "${exit_code}"
+
+      - name: Validate partial-migration files (no L2-L5 regression)
+        run: |
+          set -euo pipefail
+          PARTIAL_MIGRATED=(
+            "tests/unit/physics/test_T4_higher_order_kuramoto.py"
+            "tests/unit/physics/test_T2_explosive_sync.py"
+            "tests/unit/physics/test_T6_free_energy_gate.py"
+            "tests/unit/core/neuro/test_gaba_position_gate.py"
+          )
+          exit_code=0
+          for file in "${PARTIAL_MIGRATED[@]}"; do
+            echo "::group::partial: ${file}"
+            report=$(python .claude/physics/validate_tests.py "${file}" 2>&1 || true)
+            echo "${report}"
+            regressed=0
+            for level in L2 L3 L4 L5; do
+              count=$(echo "${report}" | grep -E "^\s+\[${level}\]" | head -1 | grep -oE "[0-9]+$" || echo "0")
+              if [ "${count}" != "0" ]; then
+                echo "::error file=${file}::${level} regression: ${count} issue(s)"
+                regressed=1
+              fi
+            done
+            if [ "${regressed}" -eq 1 ]; then
+              exit_code=1
+            fi
+            echo "::endgroup::"
+          done
+          exit "${exit_code}"
+
+      - name: Repo-wide physics grounding report (informational)
+        if: always()
+        run: |
+          set -euo pipefail
+          python .claude/physics/validate_tests.py tests/ --summary || true
+
+  code-audit:
+    name: physics-code-audit
+    runs-on: ubuntu-latest
+    needs: kernel-self-check
+    continue-on-error: false
+    steps:
+      - name: Checkout
+        uses: actions/checkout@9c091bb21b7c1c1d1991bb908d89e4e9dddfe3e0 # v7.0.0
+        with:
+          fetch-depth: 0
+
+      - name: Set up Python
+        uses: actions/setup-python@ece7cb06caefa5fff74198d8649806c4678c61a1 # v6
+        with:
+          python-version: '3.12'
+
+      - name: Audit changed core/ files for silent clamps and undocumented bounds
+        run: |
+          set -euo pipefail
+          if [ -n "${GITHUB_BASE_REF:-}" ]; then
+            changed=$(git diff --name-only "origin/${GITHUB_BASE_REF}"...HEAD)
+          else
+            changed=$(git diff-tree --no-commit-id --name-only -r "${GITHUB_SHA}")
+          fi
+          echo "${changed}"
+          mapfile -t core_py_files < <(printf '%s\n' "${changed}" | grep -E '^core/.*\.py$' || true)
+          if [ "${#core_py_files[@]}" -eq 0 ]; then
+            echo "No changed core/*.py files in this PR; skipping core code audit."
+            exit 0
+          fi
+          for file in "${core_py_files[@]}"; do
+            if [ ! -f "${file}" ]; then
+              continue
+            fi
+            echo "::group::physics-code-audit: ${file}"
+            python .claude/physics/validate_tests.py "${file}" --audit-code --summary
+            echo "::endgroup::"
+          done

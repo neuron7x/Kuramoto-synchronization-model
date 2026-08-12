@@ -1,0 +1,121 @@
+# Diff-bound commit acceptor for D-001 (Issue #637) —
+# weighted_allocation operational-regime fidelity test surface.
+#
+# What lands:
+#   * tests/reconstruction/test_weighted_allocation_under_cimini_regime.py
+#       11 tests pinning the operational regime: Cimini-calibrated
+#       p_ij + Bernoulli + IPF on lognormal marginals; ≥ 3/4
+#       densities clear Gate 5 row/col L1 ≤ 0.05; total mass
+#       conserved to 1 % at every density; multi-seed and heavy-
+#       tail (sigma=2) stress.
+#   * X10R_WEIGHTED_ALLOCATION_OPERATIONAL_REGIME_REPORT.md
+#       Empirical result + reproduction recipe + explicit
+#       "What this PR does NOT do" section.
+#
+# Locally verified:
+#   * pytest -m "not slow":  9 passed
+#   * pytest -m "slow":      2 passed
+#   * mypy --strict + ruff + black: clean
+
+id: x10r-weighted-allocation-cimini-regime
+status: ACTIVE
+claim_type: chore
+promise: >-
+  After this PR lands, tests/reconstruction/ ships
+  test_weighted_allocation_under_cimini_regime.py — the missing
+  operational-regime test surface flagged by Issue #637 and
+  D-001. Closes the gap where the original
+  test_weighted_allocation.py covers UNIFORM-Bernoulli supports
+  (p=0.30) but production uses Cimini-calibrated heterogeneous
+  p_ij. New tests pin the contract: at densities {0.03, 0.05,
+  0.08, 0.12} on lognormal marginals (mass-balanced), the full
+  fit_cimini_squartini → Bernoulli → IPF pipeline must clear
+  Gate 5 row/col L1 ≤ 0.05 in ≥ 3 of 4 cells (matches the
+  production gate where downstream Gate 5 catches any IPF
+  residual at d=0.03 on heavy-tailed marginals). Empirical
+  result at canonical seed=42, N=80, sigma=1.0:
+  d=0.03 FAIL (row_L1 0.0838); d=0.05 PASS (0.0162);
+  d=0.08 PASS (~4e-10); d=0.12 PASS (~3e-10) → 3/4.
+  Multi-seed and heavy-tail (sigma=2) stress tests guard
+  against canonical-seed cherry-picking and BIS-LBS-like
+  regime drift.
+diff_scope:
+  changed_files:
+    - path: ".claude/commit_acceptors/x10r-weighted-allocation-cimini-regime.yaml"
+    - path: "tests/reconstruction/test_weighted_allocation_under_cimini_regime.py"
+    - path: "X10R_WEIGHTED_ALLOCATION_OPERATIONAL_REGIME_REPORT.md"
+  forbidden_paths:
+    - "trading/"
+    - "execution/"
+    - "forecast/"
+    - "policy/"
+    - "core/physics/"
+    - "core/kuramoto/"
+    - "research/reconstruction/allocator/"  # D-001 is reconstruction-side, NOT allocator
+    - "research/reconstruction/weighted_allocation.py"  # NO source change
+    - "application/governance/claim_ledger.py"
+    - "application/governance/commit_acceptor.py"
+required_python_symbols:
+  - "tests/reconstruction/test_weighted_allocation_under_cimini_regime.py::test_operational_regime_passes_three_of_four_densities"
+  - "tests/reconstruction/test_weighted_allocation_under_cimini_regime.py::test_total_mass_conserved_in_cimini_regime"
+expected_signal: >-
+  Local: `pytest tests/reconstruction/test_weighted_allocation_under_cimini_regime.py -m "not slow" -q`
+  reports "9 passed"; with "-m slow" reports "2 passed";
+  `mypy --strict --follow-imports=silent` clean on the new test
+  file; `ruff check` and `black --check` both pass on
+  tests/reconstruction/test_weighted_allocation_under_cimini_regime.py.
+measurement_command: >-
+  bash -c 'mypy --strict --follow-imports=silent
+  tests/reconstruction/test_weighted_allocation_under_cimini_regime.py
+  && ruff check tests/reconstruction/test_weighted_allocation_under_cimini_regime.py
+  && black --check tests/reconstruction/test_weighted_allocation_under_cimini_regime.py
+  && pytest tests/reconstruction/test_weighted_allocation_under_cimini_regime.py -q'
+signal_artifact: "tmp/x10r_weighted_allocation_operational_regime.json"
+falsifier:
+  command: |-
+    bash -c 'python -c "
+    import numpy as np
+    from research.reconstruction.cimini_squartini import (
+        fit_cimini_squartini, p_link,
+    )
+    from research.reconstruction.weighted_allocation import (
+        allocate_weights, sample_adjacency_bernoulli,
+    )
+    rng = np.random.default_rng(42)
+    s_out = rng.lognormal(mean=10.0, sigma=1.0, size=80)
+    s_in = rng.lognormal(mean=10.0, sigma=1.0, size=80)
+    s_in = s_in * (s_out.sum() / s_in.sum())
+    n_pass = 0
+    for d in (0.03, 0.05, 0.08, 0.12):
+        fit = fit_cimini_squartini(s_out, s_in, target_density=d)
+        p = p_link(fit.x, fit.y, fit.z)
+        a = sample_adjacency_bernoulli(
+            p, rng=np.random.default_rng(42 * 31 + int(d * 1000))
+        )
+        w = allocate_weights(a, s_out, s_in)
+        mean_strength = float((s_out + s_in).mean() / 2.0)
+        row = float(np.abs(s_out - w.sum(axis=1)).sum() / 80 / mean_strength)
+        col = float(np.abs(s_in - w.sum(axis=0)).sum() / 80 / mean_strength)
+        if row <= 0.05 and col <= 0.05:
+            n_pass += 1
+    assert n_pass >= 3, f\"operational-regime broke: {n_pass}/4 densities\"
+    "'
+  description: >-
+    Probes the D-001 contract empirically: at the canonical
+    seed=42, N=80, sigma=1.0, the operational regime must clear
+    ≥ 3 of 4 default-sweep densities. If the falsifier exits
+    non-zero, the Cimini → Bernoulli → IPF pipeline regressed
+    on heavy-tailed lognormal marginals.
+rollback_command: >-
+  bash -c 'git checkout HEAD~1 --
+  && rm -f tests/reconstruction/test_weighted_allocation_under_cimini_regime.py
+  X10R_WEIGHTED_ALLOCATION_OPERATIONAL_REGIME_REPORT.md
+  .claude/commit_acceptors/x10r-weighted-allocation-cimini-regime.yaml'
+rollback_verification_command: >-
+  bash -c 'test ! -f tests/reconstruction/test_weighted_allocation_under_cimini_regime.py
+  && test ! -f X10R_WEIGHTED_ALLOCATION_OPERATIONAL_REGIME_REPORT.md
+  && test ! -f .claude/commit_acceptors/x10r-weighted-allocation-cimini-regime.yaml'
+memory_update_type: append
+ledger_path: ".claude/commit_acceptors/x10r-weighted-allocation-cimini-regime.yaml"
+report_path: "tmp/x10r_weighted_allocation_operational_regime.json"
+evidence: []

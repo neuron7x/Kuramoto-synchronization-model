@@ -1,0 +1,138 @@
+# Diff-bound commit acceptor for the D-002C canonical run freeze.
+# Documentation-only: records the canonical synthetic PASS, claim scope,
+# known gaps (null-audit data contract + R2 structural + metric scope),
+# and the priority stack for next required PRs.
+#
+# What lands:
+#   * docs/governance/D002C_CANONICAL_RUN_REPORT.md
+#   * docs/governance/D002C_CLAIM_LEDGER.yaml
+#   * docs/governance/D002C_NULL_AUDIT_GAP_AND_C2_4_A2_SPEC.md
+#   * docs/governance/D002C_R2_STRUCTURAL_LIMITATION_NOTE.md
+#   * docs/governance/D002C_R2_B_SUPPLEMENTARY_NULL_SPEC.md
+#   * docs/governance/D002E_METRIC_REHABILITATION_SPEC.md
+#   * docs/governance/evidence/D002C_CANONICAL_ARCHIVE_MANIFEST.txt
+#   * docs/governance/evidence/D002C_CANONICAL_ARCHIVE_SHA256.txt
+#
+# Strict scope:
+#   Documentation-only. NO source change. NO test change. NO
+#   acceptor schema change for any other acceptor. NO pre-registration
+#   edit. NO threshold tuning. NO claim promotion past
+#   SUPPORTED_SYNTHETIC_SCOPED.
+
+id: x10r-d002c-canonical-run-freeze
+status: ACTIVE
+claim_type: documentation
+promise: >-
+  After this PR lands, docs/governance/ carries the canonical D-002C
+  freeze bundle: run report, claim ledger entry, two limitation
+  specs (null-audit data contract gap, R2 structural), one
+  supplementary-null research spec (R2-B), one metric-rehabilitation
+  spec (D-002E for tau_onset / phase_lag), and the archive manifest
+  + sha256 for the RUN_ID d002c_canonical_20260512T122837Z evidence
+  tar.gz. No new science is asserted. The PASS at
+  tier=SYNTHETIC_GATE6_CERTIFIED_REDESIGN_N_LE_200 is recorded as
+  SUPPORTED_SYNTHETIC_SCOPED with explicit limitations list and
+  forbidden_interpretations list. Five next-priority items
+  enumerated (C2.4-A2, canonical rerun, R2-B, D-002E, #670).
+
+  Strict scope: documentation-only. No source change. No test change.
+  No pre-registration edit. No threshold tuning. No claim promotion.
+
+diff_scope:
+  changed_files:
+    - path: ".claude/commit_acceptors/x10r-d002c-canonical-run-freeze.yaml"
+    - path: "docs/governance/D002C_CANONICAL_RUN_REPORT.md"
+    - path: "docs/governance/D002C_CLAIM_LEDGER.yaml"
+    - path: "docs/governance/D002C_NULL_AUDIT_GAP_AND_C2_4_A2_SPEC.md"
+    - path: "docs/governance/D002C_R2_STRUCTURAL_LIMITATION_NOTE.md"
+    - path: "docs/governance/D002C_R2_B_SUPPLEMENTARY_NULL_SPEC.md"
+    - path: "docs/governance/D002E_METRIC_REHABILITATION_SPEC.md"
+    - path: "docs/governance/evidence/D002C_CANONICAL_ARCHIVE_MANIFEST.txt"
+    - path: "docs/governance/evidence/D002C_CANONICAL_ARCHIVE_SHA256.txt"
+  forbidden_paths:
+    - "trading/"
+    - "execution/"
+    - "forecast/"
+    - "policy/"
+    - "core/"
+    - "research/"
+    - "scripts/"
+    - "tests/"
+    - "docs/governance/D002C_PREREGISTRATION.yaml"
+    - "application/governance/claim_ledger.py"
+    - "application/governance/commit_acceptor.py"
+required_python_symbols: []
+expected_signal: >-
+  `git ls-tree HEAD docs/governance/` shows the six new D-002C/D-002E
+  governance artifacts; `docs/governance/evidence/D002C_CANONICAL_ARCHIVE_SHA256.txt`
+  pins the canonical run archive sha; `python -c "import yaml;
+  yaml.safe_load(open('docs/governance/D002C_CLAIM_LEDGER.yaml'))"`
+  succeeds; every claim_id in the ledger has a `status` field and an
+  explicit `limitations` list.
+measurement_command: >-
+  bash -c 'test -f docs/governance/D002C_CANONICAL_RUN_REPORT.md
+  && test -f docs/governance/D002C_CLAIM_LEDGER.yaml
+  && test -f docs/governance/D002C_NULL_AUDIT_GAP_AND_C2_4_A2_SPEC.md
+  && test -f docs/governance/D002C_R2_STRUCTURAL_LIMITATION_NOTE.md
+  && test -f docs/governance/D002C_R2_B_SUPPLEMENTARY_NULL_SPEC.md
+  && test -f docs/governance/D002E_METRIC_REHABILITATION_SPEC.md
+  && test -f docs/governance/evidence/D002C_CANONICAL_ARCHIVE_MANIFEST.txt
+  && test -f docs/governance/evidence/D002C_CANONICAL_ARCHIVE_SHA256.txt
+  && grep -q "SYNTHETIC_GATE6_CERTIFIED_REDESIGN_N_LE_200" docs/governance/D002C_CANONICAL_RUN_REPORT.md
+  && grep -q "SUPPORTED_SYNTHETIC_SCOPED" docs/governance/D002C_CLAIM_LEDGER.yaml
+  && grep -q "c4f62f867f4aee6bb17ab6c768a6faf3791f2fedf17bd576490a2bb499566e1d" docs/governance/evidence/D002C_CANONICAL_ARCHIVE_SHA256.txt
+  && python -c "import yaml; yaml.safe_load(open(\"docs/governance/D002C_CLAIM_LEDGER.yaml\"))"'
+signal_artifact: "docs/governance/D002C_CANONICAL_RUN_REPORT.md"
+falsifier:
+  command: >-
+    bash -c 'set -e;
+    grep -q "tier: SYNTHETIC_GATE6_CERTIFIED_REDESIGN_N_LE_200" docs/governance/D002C_CLAIM_LEDGER.yaml || exit 1;
+    grep -q "status: SUPPORTED_SYNTHETIC_SCOPED" docs/governance/D002C_CLAIM_LEDGER.yaml || exit 1;
+    grep -q "null_audit_execution_gap_pending_C2_4_A2" docs/governance/D002C_CLAIM_LEDGER.yaml || exit 1;
+    grep -q "R2_structurally_satisfied_under_lambda_zero_paired_CRN" docs/governance/D002C_CLAIM_LEDGER.yaml || exit 1;
+    grep -q "no_real_data_validation" docs/governance/D002C_CLAIM_LEDGER.yaml || exit 1;
+    grep -q "no_bank_level_inference" docs/governance/D002C_CLAIM_LEDGER.yaml || exit 1;
+    grep -q "no_production_certification" docs/governance/D002C_CLAIM_LEDGER.yaml || exit 1;
+    grep -q "no_universal_claim" docs/governance/D002C_CLAIM_LEDGER.yaml || exit 1;
+    if grep -E "VALIDATED_REAL_BANK_LEVEL_RESULT|TESTED_POSITIVE_REAL|BANK_LEVEL_PRECURSOR_CONFIRMED|real-data validated|bank-level confirmed" docs/governance/D002C_CANONICAL_RUN_REPORT.md docs/governance/D002C_NULL_AUDIT_GAP_AND_C2_4_A2_SPEC.md docs/governance/D002C_R2_STRUCTURAL_LIMITATION_NOTE.md docs/governance/D002C_R2_B_SUPPLEMENTARY_NULL_SPEC.md docs/governance/D002E_METRIC_REHABILITATION_SPEC.md | grep -vE "forbidden|NOT|❌|absent|never|no_real|no_bank" >/dev/null; then
+      echo "forbidden tier asserted outside forbidden-list context";
+      exit 2;
+    fi;
+    python -c "import yaml; d = yaml.safe_load(open(\"docs/governance/D002C_CLAIM_LEDGER.yaml\")); assert len(d[\"claims\"])==1; c = d[\"claims\"][0]; assert c[\"status\"]==\"SUPPORTED_SYNTHETIC_SCOPED\"; assert c[\"tier\"]==\"SYNTHETIC_GATE6_CERTIFIED_REDESIGN_N_LE_200\"; assert c[\"exit_code\"]==0; assert len(c[\"limitations\"])>=4; assert len(c[\"forbidden_interpretations\"])>=8; print(\"claim ledger schema PASS\")"'
+  description: >-
+    Probes the D-002C freeze contract: (a) ledger asserts the tier and
+    SUPPORTED_SYNTHETIC_SCOPED status; (b) all four documented gaps
+    are present in the limitations list (null-audit, R2 structural,
+    no real-data, no bank-level, no production, no universal);
+    (c) no forbidden tier phrasing appears in any of the 6 doc files
+    outside an explicit forbidden-list/❌ context;
+    (d) the ledger YAML schema has the expected claim count + tier +
+    exit_code + limitations + forbidden_interpretations array
+    cardinalities. If any of these regress, the claim boundary is
+    broken and the doc bundle no longer represents the canonical
+    PASS faithfully.
+rollback_command: >-
+  bash -c 'git checkout HEAD~1 --
+  && rm -f docs/governance/D002C_CANONICAL_RUN_REPORT.md
+  docs/governance/D002C_CLAIM_LEDGER.yaml
+  docs/governance/D002C_NULL_AUDIT_GAP_AND_C2_4_A2_SPEC.md
+  docs/governance/D002C_R2_STRUCTURAL_LIMITATION_NOTE.md
+  docs/governance/D002C_R2_B_SUPPLEMENTARY_NULL_SPEC.md
+  docs/governance/D002E_METRIC_REHABILITATION_SPEC.md
+  docs/governance/evidence/D002C_CANONICAL_ARCHIVE_MANIFEST.txt
+  docs/governance/evidence/D002C_CANONICAL_ARCHIVE_SHA256.txt
+  .claude/commit_acceptors/x10r-d002c-canonical-run-freeze.yaml'
+rollback_verification_command: >-
+  bash -c 'test ! -f docs/governance/D002C_CANONICAL_RUN_REPORT.md
+  && test ! -f docs/governance/D002C_CLAIM_LEDGER.yaml
+  && test ! -f docs/governance/D002C_NULL_AUDIT_GAP_AND_C2_4_A2_SPEC.md
+  && test ! -f docs/governance/D002C_R2_STRUCTURAL_LIMITATION_NOTE.md
+  && test ! -f docs/governance/D002C_R2_B_SUPPLEMENTARY_NULL_SPEC.md
+  && test ! -f docs/governance/D002E_METRIC_REHABILITATION_SPEC.md
+  && test ! -f docs/governance/evidence/D002C_CANONICAL_ARCHIVE_MANIFEST.txt
+  && test ! -f docs/governance/evidence/D002C_CANONICAL_ARCHIVE_SHA256.txt
+  && test ! -f .claude/commit_acceptors/x10r-d002c-canonical-run-freeze.yaml'
+memory_update_type: append
+ledger_path: ".claude/commit_acceptors/x10r-d002c-canonical-run-freeze.yaml"
+report_path: "docs/governance/D002C_CANONICAL_RUN_REPORT.md"
+evidence: []

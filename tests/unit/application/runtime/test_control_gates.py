@@ -1,3 +1,5 @@
+# Copyright (c) 2023-2026 Yaroslav Vasylenko (neuron7xLab)
+# SPDX-License-Identifier: MIT
 from __future__ import annotations
 
 import types
@@ -10,7 +12,9 @@ from application.runtime.decision_telemetry import build_decision_event
 
 
 class _Config:
-    def __init__(self, gate_defaults: dict | None = None, controllers_required: bool = True) -> None:
+    def __init__(
+        self, gate_defaults: dict | None = None, controllers_required: bool = True
+    ) -> None:
         self.gate_defaults = gate_defaults or {
             "min_position_multiplier": 0.0,
             "max_position_multiplier": 1.0,
@@ -70,7 +74,9 @@ def test_default_policy_falls_back_to_allow_and_clamps_max() -> None:
     serotonin = _Serotonin(action_gate="ALLOW", risk_budget=2.0)
     thermo = _Thermo()
 
-    result = evaluate_control_gates(cfg, {"serotonin": serotonin, "thermo": thermo}, {"risk_score": 0.1})
+    result = evaluate_control_gates(
+        cfg, {"serotonin": serotonin, "thermo": thermo}, {"risk_score": 0.1}
+    )
 
     assert result.gate.decision is Decision.ALLOW
     assert result.gate.position_multiplier == pytest.approx(0.7)

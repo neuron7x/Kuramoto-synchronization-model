@@ -1,3 +1,5 @@
+# Copyright (c) 2023-2026 Yaroslav Vasylenko (neuron7xLab)
+# SPDX-License-Identifier: MIT
 from __future__ import annotations
 
 from collections import deque
@@ -11,7 +13,7 @@ from fastapi import FastAPI, HTTPException, Request, status
 from fastapi.testclient import TestClient
 from starlette.requests import Request as StarletteRequest
 
-from execution.risk import RiskLimits, RiskManager
+from geosync.risk import RiskLimits, RiskManager
 from src.admin.remote_control import (
     AdminIdentity,
     AdminRateLimiter,
@@ -121,9 +123,7 @@ def test_kill_switch_endpoint_reflects_facade_state() -> None:
 
     app = FastAPI()
     app.include_router(
-        create_remote_control_router(
-            facade, audit_logger, identity_dependency=identity_dependency
-        )
+        create_remote_control_router(facade, audit_logger, identity_dependency=identity_dependency)
     )
     client = TestClient(app)
     try:
@@ -159,13 +159,9 @@ def test_kill_switch_reaffirmation_is_audited(
 ) -> None:
     client, _, records, _ = remote_control_fixture
     headers = {"X-Test-Admin-Subject": "auditor"}
-    first = client.post(
-        "/admin/kill-switch", headers=headers, json={"reason": "initial"}
-    )
+    first = client.post("/admin/kill-switch", headers=headers, json={"reason": "initial"})
     assert first.status_code == 200
-    second = client.post(
-        "/admin/kill-switch", headers=headers, json={"reason": "still engaged"}
-    )
+    second = client.post("/admin/kill-switch", headers=headers, json={"reason": "still engaged"})
     assert second.status_code == 200
     body = second.json()
     assert body["already_engaged"] is True
@@ -226,9 +222,7 @@ def test_identity_dependency_errors_are_propagated() -> None:
     risk_manager = RiskManagerFacade(RiskManager(RiskLimits()))
 
     async def failing_identity(_: Request) -> AdminIdentity:
-        raise HTTPException(
-            status_code=status.HTTP_401_UNAUTHORIZED, detail="invalid cert"
-        )
+        raise HTTPException(status_code=status.HTTP_401_UNAUTHORIZED, detail="invalid cert")
 
     app = FastAPI()
     app.include_router(
@@ -320,22 +314,34 @@ def _request_from_headers(headers: dict[str, str]) -> Request:
         "method": "GET",
         "path": "/admin/kill-switch",
         "headers": [
-            (key.lower().encode("utf-8"), value.encode("utf-8"))
-            for key, value in headers.items()
+            (key.lower().encode("utf-8"), value.encode("utf-8")) for key, value in headers.items()
         ],
         "client": ("10.0.0.99", 443),
     }
     return StarletteRequest(scope)
 
 
-def test_resolve_ip_prefers_forwarded_header() -> None:
+def test_resolve_ip_prefers_forwarded_header_from_trusted_proxy() -> None:
     request = _request_from_headers(
         {
             "X-Forwarded-For": " 203.0.113.7 , 10.0.0.1",
             "X-Real-IP": "198.51.100.5",
         }
     )
-    assert _resolve_ip(request) == "203.0.113.7"
+    # The direct peer (10.0.0.99) is a trusted proxy, so its forwarded chain wins.
+    assert _resolve_ip(request, trusted_proxies=("10.0.0.0/24",)) == "203.0.113.7"
+
+
+def test_resolve_ip_ignores_forwarded_header_from_untrusted_peer() -> None:
+    request = _request_from_headers(
+        {
+            "X-Forwarded-For": " 203.0.113.7 , 10.0.0.1",
+            "X-Real-IP": "198.51.100.5",
+        }
+    )
+    # No trusted proxies: the spoofable forwarded headers are ignored and the
+    # direct peer address (10.0.0.99) is used — defeats source-IP spoofing.
+    assert _resolve_ip(request) == "10.0.0.99"
 
 
 def test_normalize_ip_strips_port_and_zone() -> None:

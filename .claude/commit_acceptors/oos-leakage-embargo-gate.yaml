@@ -1,0 +1,56 @@
+# SPDX-License-Identifier: MIT
+id: oos-leakage-embargo-gate
+status: DRAFT
+claim_type: fail_closed
+promise: >-
+  The Kuramoto OOS validation path (core/kuramoto/oos_validation.py) gains a
+  fail-closed leakage gate. The repo already ships an embargoed/purged splitter
+  in backtest/time_splits.py, but the Kuramoto OOS path split train/val/test as
+  contiguous slices with no embargo — admissible at horizon 1, silently
+  optimistic at any multi-step (overlapping-label) horizon. OOSConfig now
+  carries an embargo and refuses any horizon > 1 unless embargo >= horizon - 1;
+  temporal_split applies the purge gap. Horizon-1 default behaviour is
+  bit-unchanged (zero blast radius). This makes a leaky multi-step OOS
+  un-runnable rather than optimistically biased; it is not a predictive claim.
+diff_scope:
+  changed_files:
+    - path: ".claude/commit_acceptors/oos-leakage-embargo-gate.yaml"
+    - path: "core/kuramoto/oos_validation.py"
+    - path: "tests/unit/core/test_oos_leakage_gate.py"
+    - path: "tools/physics/clamp_registry.yaml"
+  forbidden_paths:
+    - "trading/"
+    - "execution/"
+    - "forecast/"
+    - "policy/"
+required_python_symbols:
+  - "tests/unit/core/test_oos_leakage_gate.py::test_multistep_horizon_without_embargo_is_refused"
+expected_signal: >-
+  OOSConfig(horizon=3) raises (embargo < horizon-1); OOSConfig(horizon=3,
+  embargo=2) is accepted; temporal_split(..., embargo=5) opens a 5-observation
+  purge gap; the horizon-1 default split stays contiguous; pytest
+  tests/unit/core/test_oos_leakage_gate.py and the existing
+  tests/unit/core/test_kuramoto_validation.py both pass.
+measurement_command: >-
+  bash -c 'python -m pytest -q tests/unit/core/test_oos_leakage_gate.py tests/unit/core/test_kuramoto_validation.py'
+signal_artifact: "tmp/oos_leakage_gate.log"
+falsifier:
+  command: |
+    python -c "import sys, contextlib
+    from core.kuramoto.oos_validation import OOSConfig
+    raised = True
+    with contextlib.suppress(ValueError):
+        OOSConfig(horizon=2)
+        raised = False
+    sys.exit(1 if raised else 0)"
+  description: >-
+    Constructs a multi-step OOSConfig(horizon=2) with the default embargo of 0
+    and exits 0 only if it does NOT raise (the regressed fail-open state). On the
+    correct tree the leakage gate refuses it, so the command exits non-zero —
+    proving the gate is real, not decorative.
+rollback_command: "git revert --no-edit HEAD"
+rollback_verification_command: "git diff --exit-code core/kuramoto/oos_validation.py"
+memory_update_type: none
+ledger_path: ".claude/commit_acceptors/oos-leakage-embargo-gate.yaml"
+report_path: "docs/reports/diff_bound_commit_acceptor_layer.md"
+evidence: []

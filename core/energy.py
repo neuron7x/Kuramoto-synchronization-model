@@ -1,25 +1,43 @@
-"""Thermodynamic energy calculations for system optimization.
+# Copyright (c) 2023-2026 Yaroslav Vasylenko (neuron7xLab)
+# SPDX-License-Identifier: MIT
+"""Operational-cost energy for TACL system-topology optimization.
 
-This module provides thermodynamic energy functions used by the TACL
-(Thermodynamic Autonomic Control Layer) to model and optimize system topology.
-It treats the distributed trading system as a physical system where services
-are nodes connected by "bonds" with different characteristics.
+This module provides the energy functions used by the TACL (Thermodynamic
+Autonomic Control Layer) to model and optimize *system topology*. It treats the
+distributed system as a physical analogue where services are nodes connected by
+"bonds" with different characteristics.
 
-Key Concepts:
-- **Bonds**: Represent communication links between services with types like
-  covalent (low-latency), ionic (high-coherency), metallic (high-stability)
-- **Free Energy**: Combines internal energy, resource costs, and entropy
-- **Thermodynamic Control**: Uses energy descent to optimize system topology
+ONTOLOGY CONTRACT (two distinct energies — do not conflate)
+-----------------------------------------------------------
+1. ``operational_cost_energy`` (this module's optimization objective):
+   a *cost functional* over a service-bond topology. It is the quantity TACL
+   minimizes via :func:`~runtime.thermo_controller.gradient_descent_step`.
+   Here entropy/disorder is a **penalty that RAISES the objective** — the more
+   disordered the topology, the higher the cost. This is the correct sign for a
+   minimization target and is NOT the thermodynamic Helmholtz/Gibbs free energy.
 
-The energy model enables automatic protocol selection, adaptive recovery,
-and crisis-aware reconfiguration while maintaining monotonic energy descent
-constraints for safety.
+2. ``thermo_free_energy`` (canonical physics, INV-FE2): F = U − T·S, where
+   raising entropy S *LOWERS* F. This matches
+   :pyattr:`core.validation.physics_validator.ThermodynamicState.gibbs_energy`
+   and the CLAUDE.md canon. F itself may be either sign.
+
+The historical name ``system_free_energy`` conflated these two opposite-sign
+conventions (a free energy whose entropy term ADDED). It is retained as a
+backward-compatible alias of :func:`operational_cost_energy`; new code should
+call the intent-revealing name.
+
+UNIT CONTRACT
+-------------
+Outputs are **dimensionless** operational-cost units (``ENERGY_UNITS``).
+``K_BOLTZMANN_EFFECTIVE`` and ``SYSTEM_TEMPERATURE_K`` are a *fixed normalization
+convention borrowed from physics* to keep the entropy term's magnitude bounded;
+they do NOT make the output an energy measured in joules. No Joule claim is made
+or implied by this module.
 
 Example:
-    >>> from core.energy import system_free_energy
-    >>> topology = {...}  # Service topology definition
-    >>> energy = system_free_energy(topology)
-    >>> print(f"System free energy: {energy:.6f}")
+    >>> from core.energy import operational_cost_energy
+    >>> cost = operational_cost_energy(bonds, latencies, coherency, 0.0, 0.0)
+    >>> print(f"Operational cost: {cost:.3e} (dimensionless)")
 """
 
 from __future__ import annotations
@@ -70,17 +88,21 @@ BOND_LIBRARY: Dict[BondType, BondParams] = {
     },
 }
 
+# Fixed normalization convention (NOT a joule claim — see UNIT CONTRACT in the
+# module docstring). These constants only bound the magnitude of the entropy
+# penalty in the dimensionless operational-cost objective.
 K_BOLTZMANN_EFFECTIVE: Final[float] = 1.38e-23
 SYSTEM_TEMPERATURE_K: Final[float] = 300.0
 
-# Pre-compute the kT product since it's used in every energy calculation
+# Pre-compute the kT product since it's used in every cost calculation
 _KT_PRODUCT: Final[float] = K_BOLTZMANN_EFFECTIVE * SYSTEM_TEMPERATURE_K
 
-# We operate on dimensionless, normalised energy units.  The raw contributions
-# coming from bond, resource and entropy terms are scaled down to match
-# physically plausible magnitudes (≈10⁻¹⁸ J) which keeps numerical derivatives
-# stable even when control loops run at sub-millisecond cadence.
+# Output is dimensionless operational cost, scaled for numerical-derivative
+# stability when control loops run at sub-millisecond cadence.
 ENERGY_SCALE: Final[float] = 1e-18
+
+# Explicit unit declaration so downstream code/tests can assert the boundary.
+ENERGY_UNITS: Final[str] = "dimensionless"
 
 
 def bond_internal_energy(
@@ -116,16 +138,22 @@ def bond_internal_energy(
     return params["base_energy"] + latency_cost + incoherence_cost - stability_gain
 
 
-def system_free_energy(
+def operational_cost_energy(
     bonds: Dict[Tuple[str, str], BondType],
     latencies: Dict[Tuple[str, str], float],
     coherency: Dict[Tuple[str, str], float],
     resource_usage: float,
     entropy: float,
 ) -> float:
-    """Compute total system free energy.
+    """Dimensionless operational-cost objective minimized by TACL.
 
-    Optimized with local variable caching and reduced numpy calls.
+    This is a *cost functional* over a service-bond topology, NOT the
+    thermodynamic free energy. By construction entropy is a disorder **penalty**:
+    ``∂/∂entropy ≥ 0`` (more disorder ⇒ higher cost). For the canonical
+    physics free energy F = U − T·S, use :func:`thermo_free_energy`.
+
+    Returns a dimensionless value (``ENERGY_UNITS``); see the module UNIT
+    CONTRACT — no joule claim is made.
     """
     internal_energy = 0.0
     for (src, dst), kind in bonds.items():
@@ -140,10 +168,29 @@ def system_free_energy(
         resource_clipped = resource_usage
 
     resource_term = 2.0 * resource_clipped
+    # Disorder penalty: raises the cost objective (correct sign for a
+    # minimization target — opposite to the −T·S term of thermo_free_energy).
     entropy_term = _KT_PRODUCT * (entropy if entropy > 0.0 else 0.0)
 
-    free_energy = internal_energy + resource_term + entropy_term
-    return ENERGY_SCALE * free_energy
+    cost = internal_energy + resource_term + entropy_term
+    return ENERGY_SCALE * cost
+
+
+# Backward-compatible alias. ``system_free_energy`` historically named the
+# operational-cost objective "free energy", which collided with the canonical
+# F = U − T·S sign convention. New code should call ``operational_cost_energy``.
+system_free_energy = operational_cost_energy
+
+
+def thermo_free_energy(internal_energy: float, temperature: float, entropy: float) -> float:
+    """Canonical thermodynamic free energy F = U − T·S (INV-FE2).
+
+    Mirrors :pyattr:`core.validation.physics_validator.ThermodynamicState.gibbs_energy`.
+    Unlike :func:`operational_cost_energy`, raising entropy *lowers* F here:
+    ``∂F/∂entropy = −temperature ≤ 0``. F may be either sign; only the
+    components (U, T, S) carry non-negativity guarantees (INV-FE2).
+    """
+    return internal_energy - temperature * entropy
 
 
 def delta_free_energy(F_prev: float, F_now: float, dt_seconds: float) -> float:
@@ -160,7 +207,10 @@ __all__ = [
     "K_BOLTZMANN_EFFECTIVE",
     "SYSTEM_TEMPERATURE_K",
     "ENERGY_SCALE",
+    "ENERGY_UNITS",
     "bond_internal_energy",
+    "operational_cost_energy",
     "system_free_energy",
+    "thermo_free_energy",
     "delta_free_energy",
 ]

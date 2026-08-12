@@ -1,3 +1,5 @@
+# Copyright (c) 2023-2026 Yaroslav Vasylenko (neuron7xLab)
+# SPDX-License-Identifier: MIT
 from __future__ import annotations
 
 from pathlib import Path
@@ -81,9 +83,7 @@ def test_indicator_observability_pipeline() -> None:
         curvature_ema_alpha=0.3,
     )
 
-    analysis_frame = df.tail(160)[["price", "volume"]].rename(
-        columns={"price": "close"}
-    )
+    analysis_frame = df.tail(160)[["price", "volume"]].rename(columns={"price": "close"})
     result = analyzer.analyze(
         analysis_frame, price_col="close", volume_col="volume", reset_history=True
     )
@@ -115,125 +115,125 @@ def test_indicator_observability_pipeline() -> None:
 
     if collector.enabled:
         total_kuramoto = registry.get_sample_value(
-            "tradepulse_indicator_compute_total",
+            "geosync_indicator_compute_total",
             {"indicator_name": "kuramoto_indicator", "status": "success"},
         )
         assert total_kuramoto is not None and total_kuramoto >= 2.0
 
         kuramoto_gauge = registry.get_sample_value(
-            "tradepulse_indicator_value", {"indicator_name": "kuramoto_indicator"}
+            "geosync_indicator_value", {"indicator_name": "kuramoto_indicator"}
         )
         assert kuramoto_gauge == pytest.approx(kuramoto_values[-1])
 
         kuramoto_samples = registry.get_sample_value(
-            "tradepulse_indicator_sample_size",
+            "geosync_indicator_sample_size",
             {"indicator_name": "kuramoto_indicator"},
         )
         assert kuramoto_samples == pytest.approx(float(prices.size))
 
         kuramoto_window = registry.get_sample_value(
-            "tradepulse_indicator_window_size",
+            "geosync_indicator_window_size",
             {"indicator_name": "kuramoto_indicator"},
         )
         assert kuramoto_window == pytest.approx(float(smoothed_indicator.window))
 
         kuramoto_finite = registry.get_sample_value(
-            "tradepulse_indicator_quality_ratio",
+            "geosync_indicator_quality_ratio",
             {"indicator_name": "kuramoto_indicator", "metric": "input_finite"},
         )
         assert kuramoto_finite is not None and 0.99 <= kuramoto_finite <= 1.0
 
         kuramoto_valid = registry.get_sample_value(
-            "tradepulse_indicator_quality_ratio",
+            "geosync_indicator_quality_ratio",
             {"indicator_name": "kuramoto_indicator", "metric": "valid_windows"},
         )
         assert kuramoto_valid is not None and 0.2 <= kuramoto_valid <= 1.0
 
         kuramoto_weight = registry.get_sample_value(
-            "tradepulse_indicator_quality_ratio",
+            "geosync_indicator_quality_ratio",
             {"indicator_name": "kuramoto_indicator", "metric": "weight_positive"},
         )
         assert kuramoto_weight is not None and 0.9 <= kuramoto_weight <= 1.0
 
         temporal_total = registry.get_sample_value(
-            "tradepulse_indicator_compute_total",
+            "geosync_indicator_compute_total",
             {"indicator_name": "temporal_ricci", "status": "success"},
         )
         assert temporal_total == pytest.approx(1.0)
 
         transition_gauge = registry.get_sample_value(
-            "tradepulse_indicator_value",
+            "geosync_indicator_value",
             {"indicator_name": "temporal_ricci.transition_score"},
         )
         assert transition_gauge == pytest.approx(result.topological_transition_score)
 
         curvature_gauge = registry.get_sample_value(
-            "tradepulse_indicator_value",
+            "geosync_indicator_value",
             {"indicator_name": "temporal_ricci.avg_curvature"},
         )
         assert curvature_gauge is not None
 
         temporal_samples = registry.get_sample_value(
-            "tradepulse_indicator_sample_size",
+            "geosync_indicator_sample_size",
             {"indicator_name": "temporal_ricci"},
         )
         assert temporal_samples == pytest.approx(float(len(analysis_frame)))
 
         temporal_window = registry.get_sample_value(
-            "tradepulse_indicator_window_size",
+            "geosync_indicator_window_size",
             {"indicator_name": "temporal_ricci"},
         )
         assert temporal_window == pytest.approx(float(analyzer.window_size))
 
         temporal_coverage = registry.get_sample_value(
-            "tradepulse_indicator_quality_ratio",
+            "geosync_indicator_quality_ratio",
             {"indicator_name": "temporal_ricci", "metric": "snapshot_coverage"},
         )
         assert temporal_coverage is not None and 0.5 <= temporal_coverage <= 1.0
 
         temporal_volume = registry.get_sample_value(
-            "tradepulse_indicator_quality_ratio",
+            "geosync_indicator_quality_ratio",
             {"indicator_name": "temporal_ricci", "metric": "volume_coverage"},
         )
         assert temporal_volume is not None and 0.5 <= temporal_volume <= 1.0
 
         vpin_total = registry.get_sample_value(
-            "tradepulse_indicator_compute_total",
+            "geosync_indicator_compute_total",
             {"indicator_name": "vpin_indicator", "status": "success"},
         )
         assert vpin_total == pytest.approx(1.0)
 
         vpin_gauge = registry.get_sample_value(
-            "tradepulse_indicator_value", {"indicator_name": "vpin_indicator"}
+            "geosync_indicator_value", {"indicator_name": "vpin_indicator"}
         )
         assert vpin_gauge == pytest.approx(vpin_values[-1])
 
         vpin_samples = registry.get_sample_value(
-            "tradepulse_indicator_sample_size",
+            "geosync_indicator_sample_size",
             {"indicator_name": "vpin_indicator"},
         )
         assert vpin_samples == pytest.approx(float(volume_data.shape[0]))
 
         vpin_window = registry.get_sample_value(
-            "tradepulse_indicator_window_size",
+            "geosync_indicator_window_size",
             {"indicator_name": "vpin_indicator"},
         )
         assert vpin_window == pytest.approx(float(vpin.bucket_size))
 
         vpin_finite = registry.get_sample_value(
-            "tradepulse_indicator_quality_ratio",
+            "geosync_indicator_quality_ratio",
             {"indicator_name": "vpin_indicator", "metric": "input_finite"},
         )
         assert vpin_finite is not None and 0.95 <= vpin_finite <= 1.0
 
         vpin_valid = registry.get_sample_value(
-            "tradepulse_indicator_quality_ratio",
+            "geosync_indicator_quality_ratio",
             {"indicator_name": "vpin_indicator", "metric": "valid_windows"},
         )
         assert vpin_valid is not None and 0.2 <= vpin_valid <= 1.0
 
         vpin_positive = registry.get_sample_value(
-            "tradepulse_indicator_quality_ratio",
+            "geosync_indicator_quality_ratio",
             {"indicator_name": "vpin_indicator", "metric": "positive_volume"},
         )
         assert vpin_positive is not None and 0.5 <= vpin_positive <= 1.0

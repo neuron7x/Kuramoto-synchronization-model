@@ -1,0 +1,70 @@
+{
+  "$schema": "http://json-schema.org/draft-07/schema#",
+  "title": "Neuron7X Verification Protocol Kernel",
+  "description": "Machine-readable governance verification contract that governance.verification_protocol loads and executes at runtime. The score_function weights, thresholds, and conformance_states are the executable contract: the engine reads them from the artifact rather than hardcoding them.",
+  "type": "object",
+  "required": [
+    "id",
+    "version",
+    "artifact_type",
+    "purpose",
+    "conformance_states",
+    "score_function",
+    "thresholds",
+    "weakest_link_rule",
+    "allowed_actions",
+    "boundary"
+  ],
+  "properties": {
+    "id": {"type": "string", "minLength": 1},
+    "version": {"type": "string", "minLength": 1},
+    "artifact_type": {"const": "governance_verification_contract"},
+    "purpose": {"type": "string", "minLength": 1},
+    "pipeline": {"type": "array", "items": {"type": "string"}},
+    "required_fields": {"type": "array", "items": {"type": "string"}},
+    "requirement_classes": {"type": "array", "items": {"type": "string"}},
+    "conformance_states": {
+      "type": "array",
+      "minItems": 2,
+      "items": {"type": "string"},
+      "description": "Ordered weakest -> strongest. The engine uses this order for the weakest-link clamp."
+    },
+    "state_rules": {"type": "object"},
+    "score_function": {
+      "type": "object",
+      "required": ["formula", "variables"],
+      "properties": {
+        "formula": {"type": "string", "minLength": 1},
+        "variables": {
+          "type": "object",
+          "minProperties": 1,
+          "additionalProperties": {"type": "string"}
+        },
+        "weights": {
+          "type": "object",
+          "minProperties": 1,
+          "additionalProperties": {"type": "number", "minimum": 0, "maximum": 1},
+          "description": "Optional explicit weights keyed by variable symbol. When absent the engine parses them from the formula string."
+        }
+      }
+    },
+    "thresholds": {
+      "type": "array",
+      "minItems": 1,
+      "items": {
+        "type": "object",
+        "required": ["min", "max", "state"],
+        "properties": {
+          "min": {"type": "number", "minimum": 0, "maximum": 1},
+          "max": {"type": "number", "minimum": 0, "maximum": 1},
+          "state": {"type": "string"}
+        }
+      },
+      "description": "Contiguous bands that partition [0, 1]. The engine fail-closes if they leave a gap or overlap, or if any state is not in conformance_states."
+    },
+    "weakest_link_rule": {"type": "string", "minLength": 1},
+    "blocked_promotions": {"type": "array", "items": {"type": "string"}},
+    "allowed_actions": {"type": "array", "minItems": 1, "items": {"type": "string"}},
+    "boundary": {"type": "string", "minLength": 1}
+  }
+}

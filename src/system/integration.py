@@ -1,4 +1,6 @@
-"""Composable TradePulse platform primitives."""
+# Copyright (c) 2023-2026 Yaroslav Vasylenko (neuron7xLab)
+# SPDX-License-Identifier: MIT
+"""Composable GeoSync platform primitives."""
 
 from __future__ import annotations
 
@@ -14,15 +16,15 @@ from pandas.tseries.offsets import BaseOffset
 from analytics.signals.pipeline import FeaturePipelineConfig
 from application.system import (
     ExchangeAdapterConfig,
+    GeoSyncSystem,
+    GeoSyncSystemConfig,
     LiveLoopSettings,
-    TradePulseSystem,
-    TradePulseSystemConfig,
 )
 from application.system_orchestrator import (
+    GeoSyncOrchestrator,
     MarketDataSource,
     StrategyRun,
-    TradePulseOrchestrator,
-    build_tradepulse_system,
+    build_geosync_system,
 )
 from core.data.models import InstrumentType
 from execution.risk import RiskLimits
@@ -58,11 +60,11 @@ class StreamingPipelineSettings:
 
 
 @dataclass(slots=True)
-class TradePulsePlatform:
-    """Aggregate TradePulse services into a cohesive runtime."""
+class GeoSyncPlatform:
+    """Aggregate GeoSync services into a cohesive runtime."""
 
-    system: TradePulseSystem
-    orchestrator: TradePulseOrchestrator
+    system: GeoSyncSystem
+    orchestrator: GeoSyncOrchestrator
     cache_service: DataIngestionCacheService
     risk_manager: RiskManagerFacade
     audit_logger: AuditLogger
@@ -89,7 +91,7 @@ class TradePulsePlatform:
         await self.streaming_pipeline.stop()
 
     @asynccontextmanager
-    async def streaming_session(self) -> AsyncIterator["TradePulsePlatform"]:
+    async def streaming_session(self) -> AsyncIterator["GeoSyncPlatform"]:
         """Manage the streaming lifecycle within an async context manager.
 
         When a streaming pipeline is configured, the context manager starts it
@@ -115,7 +117,7 @@ class TradePulsePlatform:
         finally:
             await self.stop_streaming()
 
-    async def __aenter__(self) -> "TradePulsePlatform":
+    async def __aenter__(self) -> "GeoSyncPlatform":
         """Enable ``async with`` usage that automatically starts streaming."""
 
         await self.start_streaming()
@@ -249,10 +251,10 @@ class TradePulsePlatform:
         )
 
 
-def build_tradepulse_platform(
+def build_geosync_platform(
     *,
-    system: TradePulseSystem | None = None,
-    system_config: TradePulseSystemConfig | None = None,
+    system: GeoSyncSystem | None = None,
+    system_config: GeoSyncSystemConfig | None = None,
     venues: Sequence[ExchangeAdapterConfig] | None = None,
     feature_pipeline: FeaturePipelineConfig | None = None,
     risk_limits: RiskLimits | None = None,
@@ -265,10 +267,10 @@ def build_tradepulse_platform(
     audit_logger: AuditLogger | None = None,
     audit_secret: str | None = None,
     audit_secret_resolver: Callable[[], str] | None = None,
-) -> TradePulsePlatform:
-    """Instantiate a :class:`TradePulsePlatform` with sensible defaults."""
+) -> GeoSyncPlatform:
+    """Instantiate a :class:`GeoSyncPlatform` with sensible defaults."""
 
-    resolved_system = _resolve_tradepulse_system(
+    resolved_system = _resolve_geosync_system(
         system=system,
         system_config=system_config,
         venues=venues,
@@ -278,7 +280,7 @@ def build_tradepulse_platform(
         allowed_data_roots=allowed_data_roots,
         max_csv_bytes=max_csv_bytes,
     )
-    orchestrator = TradePulseOrchestrator(resolved_system)
+    orchestrator = GeoSyncOrchestrator(resolved_system)
 
     resolved_streaming_pipeline, resolved_cache_service = _resolve_streaming_components(
         system=resolved_system,
@@ -295,7 +297,7 @@ def build_tradepulse_platform(
 
     risk_facade = RiskManagerFacade(resolved_system.risk_manager)
 
-    return TradePulsePlatform(
+    return GeoSyncPlatform(
         system=resolved_system,
         orchestrator=orchestrator,
         cache_service=resolved_cache_service,
@@ -305,26 +307,26 @@ def build_tradepulse_platform(
     )
 
 
-def _resolve_tradepulse_system(
+def _resolve_geosync_system(
     *,
-    system: TradePulseSystem | None,
-    system_config: TradePulseSystemConfig | None,
+    system: GeoSyncSystem | None,
+    system_config: GeoSyncSystemConfig | None,
     venues: Sequence[ExchangeAdapterConfig] | None,
     feature_pipeline: FeaturePipelineConfig | None,
     risk_limits: RiskLimits | None,
     live_settings: LiveLoopSettings | None,
     allowed_data_roots: Iterable[str | Path] | None,
     max_csv_bytes: int | None,
-) -> TradePulseSystem:
-    """Return a fully initialised :class:`TradePulseSystem`."""
+) -> GeoSyncSystem:
+    """Return a fully initialised :class:`GeoSyncSystem`."""
 
     if system is not None and system_config is not None:
         raise ValueError("Provide either system or system_config, not both")
     if system is not None:
         return system
     if system_config is not None:
-        return TradePulseSystem(system_config)
-    return build_tradepulse_system(
+        return GeoSyncSystem(system_config)
+    return build_geosync_system(
         venues=venues,
         feature_pipeline=feature_pipeline,
         risk_limits=risk_limits,
@@ -336,7 +338,7 @@ def _resolve_tradepulse_system(
 
 def _resolve_streaming_components(
     *,
-    system: TradePulseSystem,
+    system: GeoSyncSystem,
     cache_service: DataIngestionCacheService | None,
     streaming_pipeline: StreamingIngestionPipeline | None,
     streaming_settings: StreamingPipelineSettings | None,
@@ -344,16 +346,12 @@ def _resolve_streaming_components(
     """Return coherent streaming and caching components."""
 
     if streaming_pipeline is not None and streaming_settings is not None:
-        raise ValueError(
-            "Provide either streaming_pipeline or streaming_settings, not both"
-        )
+        raise ValueError("Provide either streaming_pipeline or streaming_settings, not both")
 
     if streaming_pipeline is not None:
         pipeline_cache = streaming_pipeline.cache_service
         if cache_service is not None and cache_service is not pipeline_cache:
-            raise ValueError(
-                "cache_service must match the streaming pipeline cache_service"
-            )
+            raise ValueError("cache_service must match the streaming pipeline cache_service")
         return streaming_pipeline, pipeline_cache
 
     resolved_cache_service = cache_service or DataIngestionCacheService(
@@ -384,9 +382,7 @@ def _resolve_audit_logger(
 
     if audit_logger is not None:
         if audit_secret is not None or audit_secret_resolver is not None:
-            raise ValueError(
-                "Do not provide audit credentials when supplying an audit_logger"
-            )
+            raise ValueError("Do not provide audit credentials when supplying an audit_logger")
         return audit_logger
 
     if audit_secret is None and audit_secret_resolver is None:
@@ -395,9 +391,7 @@ def _resolve_audit_logger(
         )
 
     if audit_secret is not None and audit_secret_resolver is not None:
-        raise ValueError(
-            "audit_secret and audit_secret_resolver are mutually exclusive"
-        )
+        raise ValueError("audit_secret and audit_secret_resolver are mutually exclusive")
 
     if audit_secret is not None:
         return AuditLogger(secret=audit_secret)
@@ -408,6 +402,6 @@ def _resolve_audit_logger(
 
 __all__ = [
     "StreamingPipelineSettings",
-    "TradePulsePlatform",
-    "build_tradepulse_platform",
+    "GeoSyncPlatform",
+    "build_geosync_platform",
 ]

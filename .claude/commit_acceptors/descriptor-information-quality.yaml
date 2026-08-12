@@ -1,0 +1,129 @@
+# Diff-bound commit acceptor for the descriptor information-quality instrument.
+#
+# Adds analytics/signals/descriptor_information_quality.py: pure, deterministic
+# descriptor-only measures that quantify how much information an already-
+# computed state sequence carries and how distinguishable it is from its
+# declared null baseline. It consumes the label tuples produced by
+# analytics.signals.state_quantization and the mid-rank percentile produced by
+# analytics.signals.null_comparison; it imports and modifies neither.
+#
+# compute_information_quality(observed_states, null_states, *, labels,
+# observed_percentile) returns an immutable InformationQuality carrying
+# shannon_entropy_bits (H = -Σ p·log2 p over the empirical label pmf),
+# effective_states (2**H), normalized_entropy (H/log2 k), js_divergence_bits
+# (Jensen-Shannon observed‖null, in [0,1] bits), distinguishability
+# (|percentile-50|/50), null_effective_n, n_states, and the boundary
+# disclaimers (claim_boundary="descriptor_only_not_predictor",
+# not_predictive_claim, not_financial_advice, research_only).
+#
+# Every quantity is a STRUCTURAL descriptor of an existing state sequence; it
+# is not a significance verdict, not alpha, not predictive or financial. An
+# empty/duplicated label vocabulary, an out-of-vocabulary state, an empty
+# observed sequence, and a percentile outside [0,100] each fail closed with
+# ValueError.
+#
+# Promotes NO claim tier, adds NO invariant, changes NO runtime behaviour,
+# modifies NO existing file, adds NO dependency (numpy only). Descriptor-only
+# research infrastructure. (Registration in governance/INSTRUMENTS.yaml lands
+# in the immediate follow-up PR, once this module has a merge_commit the
+# evidence-chain gate can resolve.)
+#
+# Locally verified on origin/main fork base:
+#   * pytest tests/unit/analytics/test_descriptor_information_quality.py: 19 passed
+#   * ruff check / ruff format --check / black --check: clean
+#   * mypy --strict analytics/signals/descriptor_information_quality.py: no issues
+#   * python scripts/ci/check_claim_boundary.py: PASS
+#   * detect-secrets-hook (baseline): clean; zero suppression tokens
+id: descriptor-information-quality
+status: ACTIVE
+claim_type: governance
+promise: >-
+  analytics.signals.descriptor_information_quality exposes one pure,
+  deterministic function compute_information_quality(observed_states,
+  null_states, *, labels, observed_percentile) that returns an immutable
+  InformationQuality dataclass. It describes an already-computed label
+  sequence (of the shape produced by state_quantization) against a null label
+  sequence and the mid-rank percentile produced by null_comparison, reporting
+  shannon_entropy_bits in [0, log2 k], effective_states=2**H in [1, k],
+  normalized_entropy=H/log2(k) in [0, 1] (0 when k==1), js_divergence_bits
+  (Jensen-Shannon observed‖null) in [0, 1] bits, distinguishability
+  =|percentile-50|/50 in [0, 1], null_effective_n, n_states, and the
+  disclaimers claim_boundary="descriptor_only_not_predictor",
+  not_predictive_claim=True, not_financial_advice=True, research_only=True.
+  The function is pure (equal inputs -> equal results, no randomness, no
+  global state); a uniform label distribution maximises entropy at log2(k) and
+  a degenerate one drives it to 0; identical observed/null distributions give
+  js_divergence_bits 0 and disjoint supports give 1 bit. An empty/duplicated
+  vocabulary, an out-of-vocabulary state, an empty observed sequence, and a
+  percentile outside [0, 100] each fail closed with ValueError. No claim tier
+  is promoted; no runtime behaviour changes; no existing file is touched; the
+  measures are structural descriptors, not significance, predictive, or
+  financial claims.
+diff_scope:
+  changed_files:
+    - path: ".claude/commit_acceptors/descriptor-information-quality.yaml"
+    - path: "analytics/signals/descriptor_information_quality.py"
+    - path: "tests/unit/analytics/test_descriptor_information_quality.py"
+  forbidden_paths:
+    - "trading/"
+    - "execution/"
+    - "forecast/"
+    - "core/"
+    - "src/"
+required_python_symbols:
+  - "analytics/signals/descriptor_information_quality.py::compute_information_quality"
+  - "analytics/signals/descriptor_information_quality.py::InformationQuality"
+expected_signal: >-
+  `python -m pytest tests/unit/analytics/test_descriptor_information_quality.py`
+  reports 19 passed; compute_information_quality is deterministic, maximises
+  entropy at log2(k) for a uniform label distribution and collapses it to 0
+  for a degenerate one, returns Jensen-Shannon divergence 0 for identical and
+  1 bit for disjoint distributions, declares the descriptor-only boundary, and
+  rejects an empty/duplicated vocabulary, an out-of-vocabulary state, an empty
+  observed sequence, and an out-of-range percentile with ValueError.
+measurement_command: >-
+  bash -c 'mkdir -p tmp && python -m pytest
+  tests/unit/analytics/test_descriptor_information_quality.py -v --no-header
+  -o addopts="" -p no:cacheprovider 2>&1 | grep -E "PASSED|FAILED|ERROR"
+  | sed -E "s/ +\[[0-9 ]+%\]//" > tmp/descriptor_information_quality_pytest.log
+  && test "$(grep -c PASSED tmp/descriptor_information_quality_pytest.log)" = "19"'
+signal_artifact: "tmp/descriptor_information_quality_pytest.log"
+falsifier:
+  command: >-
+    python -c 'import sys, math;
+    from analytics.signals.descriptor_information_quality import
+    compute_information_quality as f;
+    labels=["a","b","c","d"];
+    uni=[labels[i] for i in range(4)]*100;
+    unimax = abs(f(uni, uni, labels=labels, observed_percentile=50.0).shannon_entropy_bits
+    - math.log2(4)) < 1e-9;
+    degen = f(["a"]*50, ["a"]*50, labels=labels, observed_percentile=50.0).shannon_entropy_bits
+    == 0.0;
+    js_id = abs(f(uni, uni, labels=labels, observed_percentile=50.0).js_divergence_bits) < 1e-9;
+    import subprocess;
+    bad = subprocess.run([sys.executable, "-c",
+    "from analytics.signals.descriptor_information_quality import compute_information_quality as f;
+    f([], [\"a\"], labels=[\"a\",\"b\",\"c\",\"d\"], observed_percentile=50.0)"]).returncode != 0;
+    sys.exit(0 if (not unimax or not degen or not js_id or not bad) else 1)'
+  description: >-
+    Inverse probe of the information-quality contract. It exits 0 (fires) iff
+    a uniform label distribution stops maximising entropy at log2(k), OR a
+    degenerate distribution stops collapsing entropy to 0, OR identical
+    observed/null distributions stop giving Jensen-Shannon divergence 0, OR an
+    empty observed sequence is accepted instead of failing closed. While the
+    contract holds the probe exits 1. An exit 0 means the measure has lost its
+    entropy normalisation, divergence calibration, or fail-closed guarantee
+    and must be repaired, not patched green.
+rollback_command: >-
+  bash -c 'git rm -f analytics/signals/descriptor_information_quality.py
+  tests/unit/analytics/test_descriptor_information_quality.py
+  .claude/commit_acceptors/descriptor-information-quality.yaml'
+rollback_verification_command: >-
+  bash -c 'test ! -f analytics/signals/descriptor_information_quality.py
+  && test ! -f tests/unit/analytics/test_descriptor_information_quality.py'
+memory_update_type: none
+ledger_path: ".claude/commit_acceptors/descriptor-information-quality.yaml"
+report_path: "tmp/descriptor_information_quality_pytest.log"
+evidence:
+  - path: "tmp/descriptor_information_quality_pytest.log"
+    sha256: "7ddec13e7032e144b6985ed561ac62f5de2a334dbd449021a497dc45c7695d5f"  # pragma: allowlist secret

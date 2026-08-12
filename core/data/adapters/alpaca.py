@@ -1,3 +1,5 @@
+# Copyright (c) 2023-2026 Yaroslav Vasylenko (neuron7xLab)
+# SPDX-License-Identifier: MIT
 """Alpaca Markets ingestion adapter with resilient HTTP/WebSocket support."""
 
 from __future__ import annotations

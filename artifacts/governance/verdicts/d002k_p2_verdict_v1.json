@@ -1,0 +1,22 @@
+{
+  "schema_version": "D002J-VERDICT-CAPSULE-v1",
+  "node_id": "D002K-P2",
+  "phase": "P2",
+  "pr_number": 0,
+  "merge_sha": "0000000000000000000000000000000000000000",
+  "parent_nodes": ["D002K-P1"],
+  "decision": "D002K_MATCHED_PLACEBO_READY",
+  "status": "TERMINAL_PASS",
+  "artifact_paths": [
+    "artifacts/d002k/placebo/matched_placebo_registry_v1.json",
+    "artifacts/d002k/placebo/matched_placebo_summary_v1.json",
+    "docs/research/D002K_MATCHED_PLACEBO_PROTOCOL.md",
+    "research/systemic_risk/d002k_placebo_selection.py"
+  ],
+  "test_paths": ["tests/systemic_risk/test_d002k_matched_placebo.py"],
+  "allowed_next_nodes": ["D002K-P3"],
+  "forbidden_next_nodes": ["D002K-P4", "D002K-P5"],
+  "claim_boundary": "Deterministic matched-placebo registry; n_placebo_per_crisis per K-P0 lock; 0 overlap with any registered crisis window; calendar-length exact; seed-locked reproducible; no canonical run; canonical_run_authorized=false; D-002K does not rescue D-002J; D-002J stays REFUSED.",
+  "failure_retention": null,
+  "source_summary_path": "artifacts/d002k/placebo/matched_placebo_summary_v1.json"
+}

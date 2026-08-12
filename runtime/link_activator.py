@@ -1,3 +1,5 @@
+# Copyright (c) 2023-2026 Yaroslav Vasylenko (neuron7xLab)
+# SPDX-License-Identifier: MIT
 """Runtime Link Activator.
 
 This module maps thermodynamic bond abstractions to concrete
@@ -69,9 +71,7 @@ class LinkActivator:
         self.enable_rdma = enable_rdma
         self.enable_crdt = enable_crdt
         self._activation_history: List[Dict[str, Any]] = []
-        logger.debug(
-            "LinkActivator initialised with RDMA=%s, CRDT=%s", enable_rdma, enable_crdt
-        )
+        logger.debug("LinkActivator initialised with RDMA=%s, CRDT=%s", enable_rdma, enable_crdt)
 
     # Public API ---------------------------------------------------------
     def apply(
@@ -138,9 +138,7 @@ class LinkActivator:
     def get_total_cost(self) -> float:
         """Return the cumulative protocol cost."""
 
-        return sum(
-            entry["cost"] for entry in self._activation_history if entry["success"]
-        )
+        return sum(entry["cost"] for entry in self._activation_history if entry["success"])
 
     # Internal helpers ---------------------------------------------------
     def _record_history(
@@ -233,7 +231,7 @@ class LinkActivator:
         )
 
     def _shared_memory(self, src: str, dst: str) -> ActivationResult:
-        metadata = {"segment": f"/tradepulse/{src}-{dst}", "bytes": 4096}
+        metadata = {"segment": f"/geosync/{src}-{dst}", "bytes": 4096}
         return ActivationResult(
             success=True,
             protocol_used=ProtocolType.SHARED_MEMORY,
@@ -242,9 +240,7 @@ class LinkActivator:
             metadata=metadata,
         )
 
-    def _gossip(
-        self, src: str, dst: str, *, priority: str = "normal"
-    ) -> ActivationResult:
+    def _gossip(self, src: str, dst: str, *, priority: str = "normal") -> ActivationResult:
         metadata = {"channel": f"gossip::{src}->{dst}", "priority": priority}
         return ActivationResult(
             success=True,
@@ -265,7 +261,7 @@ class LinkActivator:
         )
 
     def _local_ledger(self, src: str, dst: str) -> ActivationResult:
-        metadata = {"path": f"/var/lib/tradepulse/{src}_{dst}.db"}
+        metadata = {"path": f"/var/lib/geosync/{src}_{dst}.db"}
         return ActivationResult(
             success=True,
             protocol_used=ProtocolType.LOCAL_LEDGER,

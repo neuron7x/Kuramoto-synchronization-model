@@ -1,6 +1,6 @@
 # Troubleshooting Guide
 
-Common issues and their solutions when working with TradePulse.
+Common issues and their solutions when working with GeoSync.
 
 ---
 
@@ -80,24 +80,24 @@ pip install -r requirements-dev.lock
 ### ModuleNotFoundError: No module named 'core'
 
 **Problem:**
-Python can't find the TradePulse modules.
+Python can't find the GeoSync modules.
 
 **Solutions:**
 
 1. Add project to PYTHONPATH:
 ```bash
-export PYTHONPATH=/path/to/TradePulse:$PYTHONPATH
+export PYTHONPATH=/path/to/GeoSync:$PYTHONPATH
 ```
 
 2. Install in development mode:
 ```bash
-cd /path/to/TradePulse
+cd /path/to/GeoSync
 pip install -e .
 ```
 
 3. Run from project root:
 ```bash
-cd /path/to/TradePulse
+cd /path/to/GeoSync
 python -m interfaces.cli analyze --csv sample.csv
 ```
 
@@ -655,7 +655,7 @@ pip install -e .
 
 2. Run from project root:
 ```bash
-cd /path/to/TradePulse
+cd /path/to/GeoSync
 pytest tests/
 ```
 
@@ -781,7 +781,7 @@ sudo chown -R $USER:$USER .
 ```yaml
 # docker-compose.yml
 services:
-  tradepulse:
+  geosync:
     user: "${UID}:${GID}"
 ```
 
@@ -799,19 +799,19 @@ Container starts and immediately stops.
 
 1. Check logs:
 ```bash
-docker compose logs tradepulse
+docker compose logs geosync
 ```
 
 2. Run interactively:
 ```bash
-docker compose run --rm tradepulse /bin/bash
+docker compose run --rm geosync /bin/bash
 ```
 
 3. Check command:
 ```yaml
 # docker-compose.yml
 services:
-  tradepulse:
+  geosync:
     command: ["python", "-m", "interfaces.cli", "--help"]
 ```
 
@@ -864,7 +864,7 @@ pip list | grep -E "(numpy|scipy|pandas)"
 ## Still Having Issues?
 
 1. Check [FAQ](faq.md)
-2. Search [GitHub Issues](https://github.com/neuron7x/TradePulse/issues)
+2. Search [GitHub Issues](https://github.com/neuron7xLab/GeoSync/issues)
 3. Enable debug logging
 4. Create minimal reproducible example
 5. Open a new issue with:

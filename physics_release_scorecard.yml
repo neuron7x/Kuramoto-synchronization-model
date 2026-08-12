@@ -1,0 +1,89 @@
+# Physics Release Scorecard (WP-03) — a GATE, not a badge.
+#
+# Research question: can partial physics evidence silently become release-ready?
+# This scorecard makes that impossible by construction. The checker
+# (tools/release/check_physics_release_scorecard.py) RECOMPUTES readiness from
+# the per-dimension states and fails closed if `claimed_ready` is true while any
+# REQUIRED dimension is below `min_state_for_ready`. PARTIAL != READY.
+#
+# States (strict order, low to high):
+#   FALSE < UNTESTED < PARTIAL < LOCAL_VERIFIED < CI_VERIFIED < EVIDENCE_BEARING
+# Any state >= LOCAL_VERIFIED MUST carry non-empty `evidence` (claim -> proof).
+#
+# This scorecard is intentionally HONEST: release is NOT ready. The blocking
+# dimensions below double as the remaining WP roadmap.
+
+version: 1
+release_sha: null            # bound at an actual release; null = working scorecard
+min_state_for_ready: CI_VERIFIED
+claimed_ready: false
+
+dimensions:
+  - name: dependency_security_gate
+    required: true
+    state: CI_VERIFIED
+    evidence: >-
+      PR #1120 merged (Task-2 all-strict by default);
+      python tools/security/check_dependency_manifest_consistency.py exits 0;
+      CI gates constraints-lock-sync + secrets-supply-chain.
+
+  - name: CodeQL_gate
+    required: true
+    state: CI_VERIFIED
+    evidence: ".github/workflows/codeql.yml active on push/PR to main."
+
+  - name: claim_boundary_gate
+    required: true
+    state: CI_VERIFIED
+    evidence: ".github/workflows/claim-boundary-gate.yml + tools/claims/check_claim_boundary.py."
+
+  - name: SecondOrderStabilityAudit
+    required: true
+    state: CI_VERIFIED
+    evidence: >-
+      PR #1115 merged: promotion firewall (promotion_allowed structurally False) +
+      trajectory-wide cross-solver; 11/11 tests in CI physics lanes.
+
+  - name: descriptor_promotion_firewall
+    required: true
+    state: CI_VERIFIED
+    evidence: "PR #1117 merged; descriptor-promotion-gate active in CI."
+
+  - name: same_SHA_CI_proof
+    required: true
+    state: PARTIAL
+    evidence: >-
+      Commit acceptors bind diffs to falsifiers, but no release-time harness yet
+      proves the scorecard release_sha equals the green-CI SHA (WP-07).
+
+  - name: negative_evidence_ledger
+    required: true
+    state: CI_VERIFIED
+    evidence: >-
+      governance/NEGATIVE_EVIDENCE.yaml enforced by scripts/ci/check_negative_evidence.py,
+      wired as a fail-closed step in .github/workflows/research-integrity-gate.yml
+      (run line) with tests/scripts/test_check_negative_evidence.py.
+
+  - name: artifact_replayability
+    required: true
+    state: PARTIAL
+    evidence: >-
+      tools/release_evidence_harness.py exists but the full
+      claim->source->command->artifact->CI-SHA->rollback chain is not enforced (WP-07).
+
+  - name: Scorecard_gate
+    required: true
+    state: "FALSE"      # quoted: YAML 1.1 would parse bare FALSE as a boolean
+    evidence: ""        # OpenSSF Scorecard workflow ABSENT — supply-chain gap.
+
+  - name: Ricci_L2_evidence_protocol
+    required: false
+    state: PARTIAL
+    evidence: >-
+      PR #1116 builds the promotion PATH; L2 depth-5 line stays HYPOTHESIS until a
+      real session with a real data hash (WP-06).
+
+  - name: Kuramoto_K_ownership
+    required: false
+    state: UNTESTED
+    evidence: ""        # not audited this lane.

@@ -1,3 +1,5 @@
+# Copyright (c) 2023-2026 Yaroslav Vasylenko (neuron7xLab)
+# SPDX-License-Identifier: MIT
 """Domain models supporting cross-exchange arbitrage orchestration."""
 
 from __future__ import annotations
@@ -119,9 +121,18 @@ class CapitalTransferPlan:
 
 @dataclass(slots=True, frozen=True)
 class TransferResult:
-    """Outcome of a capital transfer orchestration."""
+    """Outcome of a capital transfer orchestration.
+
+    ``committed`` is True only for a fully-atomic transfer. ``partial`` is True
+    when SOME legs settled but the transfer did not complete — capital is
+    imbalanced across venues and reconciliation is required; ``committed_legs``
+    records how many legs settled. A clean failure (nothing settled) has
+    ``committed=False, partial=False, committed_legs=0``.
+    """
 
     transfer_id: str
     committed: bool
     committed_at: datetime
     reason: str | None = None
+    committed_legs: int = 0
+    partial: bool = False

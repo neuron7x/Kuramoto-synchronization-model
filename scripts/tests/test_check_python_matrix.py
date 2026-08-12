@@ -1,3 +1,5 @@
+# Copyright (c) 2023-2026 Yaroslav Vasylenko (neuron7xLab)
+# SPDX-License-Identifier: MIT
 from pathlib import Path
 
 import pytest
@@ -17,8 +19,7 @@ def test_check_workflows_detects_out_of_range(tmp_path: Path) -> None:
     workflow_dir.mkdir(parents=True)
     workflow_file = workflow_dir / "ci.yml"
     workflow_file.write_text(
-        "jobs:\n  build:\n    strategy:\n      matrix:\n"
-        "        python-version: ['3.9', '3.10']\n"
+        "jobs:\n  build:\n    strategy:\n      matrix:\n        python-version: ['3.9', '3.10']\n"
     )
 
     issues = mod.check_workflows(tmp_path, "3.10", "3.13")

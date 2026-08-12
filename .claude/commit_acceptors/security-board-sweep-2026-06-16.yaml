@@ -1,0 +1,70 @@
+# Diff-bound acceptor for the 2026-06-16 GitHub Security board sweep.
+#
+# Closes the open CodeQL code-scanning alerts via root-cause source fixes
+# (zero new lint or type suppressions — debt-ratchet neutral):
+#   - py/unsafe-cyclic-import  (core/indicators/multiscale_kuramoto.py): lazy import
+#   - py/comparison-of-identical-expressions (resolution_auditor.py): math.isfinite guard
+#   - py/multiple-definition  (kuramoto_ricci_composite.py): dead `s = 0.0` -> `s: float`
+#   - py/import-and-import-from (application/api/service.py): json import consolidation
+#   - py/empty-except, py/unused-import, py/import-and-import-from across tests/
+#
+# Dependency-security bumps (requirements*.txt, Cargo.*, package-lock.json,
+# rust/src/lib.rs) are intentionally NOT bound here: .txt / .lock / .rs are
+# non-code extensions and Cargo.toml / package-lock.json are policy-exempt
+# dependency manifests. This acceptor governs only the .py CodeQL refactors.
+
+id: security-board-sweep-2026-06-16
+status: ACTIVE
+claim_type: refactor
+promise: >-
+  Every CodeQL code-scanning alert addressed in this sweep is fixed at the
+  source (lazy import to break the core.indicators cycle, math.isfinite NaN/inf
+  guard, removal of the dead s=0.0 initializer, json import consolidation, and
+  removal of genuinely-unused imports / non-empty except handlers in tests) with
+  identical runtime behaviour and zero new lint/type/debt suppressions.
+diff_scope:
+  changed_files:
+    - path: ".claude/commit_acceptors/security-board-sweep-2026-06-16.yaml"
+    - path: "governance/INSTRUMENTS.yaml"
+    - path: "analytics/signals/resolution_auditor.py"
+    - path: "application/api/service.py"
+    - path: "core/indicators/kuramoto_ricci_composite.py"
+    - path: "core/indicators/multiscale_kuramoto.py"
+    - path: "tests/ci/test_autonomy_cycle.py"
+    - path: "tests/ci/test_json_artifact_checks_root.py"
+    - path: "tests/conftest.py"
+    - path: "tests/research_lines/test_ricci_lookahead_leak_falsifier.py"
+    - path: "tests/runtime/test_admin_secret_fail_closed.py"
+    - path: "tests/security/test_capsule_secret_boundary.py"
+    - path: "tests/unit/analytics/test_replay_descriptor_capsule.py"
+    - path: "tests/unit/test_indicators_ricci.py"
+    - path: "tests/unit/test_market_state_contract.py"
+  forbidden_paths:
+    - "trading/"
+    - "execution/"
+    - "forecast/"
+    - "policy/"
+required_python_symbols:
+  - "fractal_gcl_novelty"
+expected_signal: >-
+  ruff check + ruff format --check + black --check + mypy --strict pass on every
+  changed .py file, and the affected unit suites (resolution_auditor,
+  kuramoto_ricci_composite, multiscale_kuramoto, market_state_contract) stay green.
+measurement_command: >-
+  python -m ruff check analytics/signals/resolution_auditor.py application/api/service.py
+  core/indicators/kuramoto_ricci_composite.py core/indicators/multiscale_kuramoto.py
+  && python -m mypy --strict analytics/signals/resolution_auditor.py application/api/service.py
+  core/indicators/kuramoto_ricci_composite.py core/indicators/multiscale_kuramoto.py
+  | tee tmp/security_board_sweep_2026_06_16.log
+signal_artifact: "tmp/security_board_sweep_2026_06_16.log"
+falsifier:
+  command: "git stash && python -m ruff check core/indicators/multiscale_kuramoto.py; git stash pop"
+  description: >-
+    Restoring the pre-fix top-level `from . import fractal_gcl` reintroduces the
+    py/unsafe-cyclic-import finding, proving the lazy-import fix is load-bearing.
+rollback_command: "git revert --no-edit HEAD"
+rollback_verification_command: "git diff --exit-code origin/main -- core/indicators/multiscale_kuramoto.py"
+memory_update_type: none
+ledger_path: ".claude/commit_acceptors/security-board-sweep-2026-06-16.yaml"
+report_path: "docs/reports/diff_bound_commit_acceptor_layer.md"
+evidence: []

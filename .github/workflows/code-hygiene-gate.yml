@@ -1,0 +1,53 @@
+# SPDX-License-Identifier: MIT
+#
+# Code-hygiene ratchet — fail-closed, monotone-down. Sibling of the
+# import-architecture gate (ADR 0024): freezes intra-module debt
+# (god functions/classes, cyclomatic complexity, broad excepts, runtime
+# print, ambient nondeterminism) plus test skip/xfail debt, and fails on
+# any NEW violator or any stale ledger entry. See ADR 0025. Stdlib-only; fast.
+#
+# Path-filtered: a PR touching no Python, the checkers, the manifest or the
+# baselines skips entirely.
+name: Code Hygiene Gate
+
+on:
+  # No path filter: this gate is a (to-be) branch-protection REQUIRED check, so
+  # it must report on every PR. A path-filtered required check that never runs
+  # is reported as "Expected" forever and dead-locks the merge. The ratchets
+  # are stdlib-only and finish in a few seconds even when nothing relevant
+  # changed.
+  pull_request:
+    branches: [main]
+  push:
+    branches: [main]
+
+permissions:
+  contents: read
+
+jobs:
+  validate:
+    name: code-hygiene-gate
+    runs-on: ubuntu-latest
+    timeout-minutes: 5
+    steps:
+      - name: Checkout
+        uses: actions/checkout@9c091bb21b7c1c1d1991bb908d89e4e9dddfe3e0 # v7.0.0
+        with:
+          fetch-depth: 0 # meta-gate diffs baseline totals against origin/main
+
+      - name: Setup Python
+        uses: actions/setup-python@ece7cb06caefa5fff74198d8649806c4678c61a1 # v6
+        with:
+          python-version: "3.12"
+
+      - name: Fetch base ref
+        run: git fetch --no-tags origin main:refs/remotes/origin/main || true
+
+      - name: Enforce code-hygiene ratchet
+        run: python scripts/ci/check_code_hygiene.py
+
+      - name: Enforce test skip/xfail ratchet
+        run: python scripts/ci/check_skip_ratchet.py
+
+      - name: Enforce debt-baseline monotonicity (anti-laundering meta-gate)
+        run: python scripts/ci/check_debt_baseline_monotonic.py --base-ref origin/main

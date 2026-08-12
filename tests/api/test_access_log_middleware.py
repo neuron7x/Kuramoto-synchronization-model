@@ -1,3 +1,5 @@
+# Copyright (c) 2023-2026 Yaroslav Vasylenko (neuron7xLab)
+# SPDX-License-Identifier: MIT
 from __future__ import annotations
 
 import json
@@ -26,9 +28,7 @@ def test_access_log_middleware_records_request(tmp_path) -> None:
         return {"ok": True}
 
     client = TestClient(app)
-    response = client.get(
-        "/ping", headers={"x-request-id": "req-123", "User-Agent": "pytest"}
-    )
+    response = client.get("/ping", headers={"x-request-id": "req-123", "User-Agent": "pytest"})
 
     assert response.status_code == 200
     assert response.headers["x-request-id"] == "req-123"

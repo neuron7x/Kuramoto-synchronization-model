@@ -1,0 +1,67 @@
+id: value-target-contract-executable-gate
+status: ACTIVE
+claim_type: correctness
+promise: >-
+  The value-inference gate is executable, not documentation. Each run declares
+  a typed ValueTarget (name, direction, unit, baseline policy) and a SignalRole
+  per signal (role + standalone score); compute_value_inference computes a
+  direction-aware InferenceGain (fused vs best standalone vs null-fusion
+  baseline) and a fail-closed InferenceVerdict that DEMOTES when gain is
+  absent, when upstream normalization is incomplete, or when no roles are
+  declared, and SUPPORTS only when fusion strictly beats both baselines;
+  ablation_report enumerates per-signal deltas; and value_report emits a
+  deterministic one-command payload carrying the claim boundary. No
+  predictive-rank claim is asserted.
+diff_scope:
+  changed_files:
+    - path: "core/indicators/value_target_contract.py"
+    - path: "tests/unit/indicators/test_value_target_contract.py"
+    - path: ".claude/commit_acceptors/value-target-contract-executable-gate.yaml"
+  forbidden_paths:
+    - "trading/"
+    - "execution/"
+    - "forecast/"
+    - "policy/"
+required_python_symbols:
+  - "ValueTarget"
+  - "SignalRole"
+  - "InferenceGain"
+  - "InferenceVerdict"
+  - "compute_value_inference"
+  - "ablation_report"
+  - "value_report"
+  - "build_value_report"
+  - "VALUE_CLAIM_BOUNDARY"
+expected_signal: >-
+  The value-target test module passes (21 tests): a declared target and roles
+  with strict gain validate SUPPORTED, fusion that ties the best standalone or
+  the null-fusion baseline demotes to DEMOTED_NO_GAIN, incomplete normalization
+  demotes to DEMOTED_INCOMPLETE, no roles yields NOT_RUN, the ablation report
+  ranks the strongest standalone positive, direction-aware gain handles
+  lower-is-better targets, and the one-command value report is deterministic.
+measurement_command: >-
+  python -m pytest -q tests/unit/indicators/test_value_target_contract.py
+signal_artifact: "tests/unit/indicators/test_value_target_contract.py"
+falsifier:
+  command: >-
+    python -m pytest -q
+    tests/unit/indicators/test_value_target_contract.py::test_demotes_when_gain_absent
+    tests/unit/indicators/test_value_target_contract.py::test_demotes_when_normalization_incomplete
+    tests/unit/indicators/test_value_target_contract.py::test_null_fusion_baseline_blocks_overclaim
+  description: >-
+    Inverse falsifier probe. Relax compute_value_inference to SUPPORT a run
+    whose fused score ties the best standalone or the null-fusion baseline, or
+    to ignore the normalization_ok flag. The gain-absent, normalization, and
+    null-baseline demotion tests must return non-zero rather than silently
+    passing, proving the claim-demotion logic is load-bearing.
+rollback_command: >-
+  git checkout HEAD~1 -- core/indicators/value_target_contract.py
+  tests/unit/indicators/test_value_target_contract.py
+rollback_verification_command: >-
+  python tools/commit_acceptor/validate_commit_acceptor.py
+memory_update_type: none
+ledger_path: ".claude/commit_acceptors/value-target-contract-executable-gate.yaml"
+report_path: ".claude/commit_acceptors/value-target-contract-executable-gate.yaml"
+evidence:
+  - path: "tests/unit/indicators/test_value_target_contract.py"
+    sha256: "04454758888e0ab1c1300a44f05162dddd1ef2cb0ad2fe7792d42dc66858d619"  # pragma: allowlist secret

@@ -1,4 +1,5 @@
-# SPDX-License-Identifier: LicenseRef-TradePulse-Proprietary
+# Copyright (c) 2023-2026 Yaroslav Vasylenko (neuron7xLab)
+# SPDX-License-Identifier: MIT
 """Performance Tracking for Risk Monitoring.
 
 This module provides comprehensive performance tracking with key metrics:
@@ -133,11 +134,13 @@ class PerformanceMetrics:
         if self.calmar_ratio is not None:
             lines.append(f"Calmar Ratio: {self.calmar_ratio:.3f}")
 
-        lines.extend([
-            "",
-            "--- TRADE STATISTICS ---",
-            f"Win Rate: {self.win_rate:.2%}" if self.win_rate else "Win Rate: N/A",
-        ])
+        lines.extend(
+            [
+                "",
+                "--- TRADE STATISTICS ---",
+                f"Win Rate: {self.win_rate:.2%}" if self.win_rate else "Win Rate: N/A",
+            ]
+        )
 
         if self.profit_factor is not None:
             lines.append(f"Profit Factor: {self.profit_factor:.3f}")
@@ -322,9 +325,7 @@ class PerformanceTracker:
             # Total return
             total_return = self._current_equity - self._initial_capital
             total_return_pct = (
-                (total_return / self._initial_capital * 100)
-                if self._initial_capital > 0
-                else 0.0
+                (total_return / self._initial_capital * 100) if self._initial_capital > 0 else 0.0
             )
 
             # Annualized metrics
@@ -455,9 +456,7 @@ class PerformanceTracker:
                 "metrics": metrics.to_dict(),
             }
 
-    def _calculate_annualized_return(
-        self, returns: NDArray[np.float64]
-    ) -> float:
+    def _calculate_annualized_return(self, returns: NDArray[np.float64]) -> float:
         """Calculate annualized return from period returns."""
         if len(returns) == 0:
             return 0.0
@@ -486,9 +485,7 @@ class PerformanceTracker:
         annualized = std * math.sqrt(self._config.periods_per_year)
         return annualized
 
-    def _calculate_sharpe_ratio(
-        self, returns: NDArray[np.float64]
-    ) -> float | None:
+    def _calculate_sharpe_ratio(self, returns: NDArray[np.float64]) -> float | None:
         """Calculate annualized Sharpe ratio."""
         if len(returns) < 2:
             return None
@@ -505,9 +502,7 @@ class PerformanceTracker:
         sharpe = (mean_excess / std) * math.sqrt(self._config.periods_per_year)
         return float(sharpe)
 
-    def _calculate_sortino_ratio(
-        self, returns: NDArray[np.float64]
-    ) -> float | None:
+    def _calculate_sortino_ratio(self, returns: NDArray[np.float64]) -> float | None:
         """Calculate annualized Sortino ratio."""
         if len(returns) < 2:
             return None
@@ -528,9 +523,7 @@ class PerformanceTracker:
         sortino = (mean_excess / downside_std) * math.sqrt(self._config.periods_per_year)
         return float(sortino)
 
-    def _calculate_max_drawdown(
-        self, equity: NDArray[np.float64]
-    ) -> tuple[float, float]:
+    def _calculate_max_drawdown(self, equity: NDArray[np.float64]) -> tuple[float, float]:
         """Calculate maximum drawdown."""
         if len(equity) == 0:
             return 0.0, 0.0
@@ -577,9 +570,7 @@ class PerformanceTracker:
 
         return winning, losing, win_rate, avg_win, avg_loss, profit_factor
 
-    def _calculate_rolling_sharpe(
-        self, returns: NDArray[np.float64]
-    ) -> NDArray[np.float64]:
+    def _calculate_rolling_sharpe(self, returns: NDArray[np.float64]) -> NDArray[np.float64]:
         """Calculate rolling Sharpe ratio."""
         window = self._config.rolling_window
         if len(returns) < window:

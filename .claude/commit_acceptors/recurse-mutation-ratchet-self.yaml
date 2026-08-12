@@ -1,0 +1,65 @@
+# Diff-bound commit acceptor: K applied to K. Probe the mutation-kill verifier
+# with its own test suite, close the survivors, and enroll the verifier in its
+# own ledger so the gate re-probes itself on every change. Test + ledger only.
+
+id: recurse-mutation-ratchet-self
+status: ACTIVE
+claim_type: correctness
+promise: >-
+  After this PR lands, scripts/ci/check_mutation_kill_ratchet.py is enrolled in
+  docs/MUTATION_KILL_BASELINE.json (floor 0.88) so the mutation-kill gate
+  re-probes the verifier with tests/ci/test_mutation_kill_ratchet.py whenever the
+  verifier or its tests change — the gate's output fed back as its input. Probing
+  the verifier with its own suite (K applied to K) ran 66.7% -> 88.9% logic
+  kill-rate across one iteration: two real survivors were closed (L102 git-
+  failure path in _base_ledger; L151 fail-closed `or` on a broken probe report),
+  and the lone remaining survivor (L157 cosmetic status label, printed but never
+  asserted) is a proven-equivalent mutant. The self-guard has teeth: weakening
+  the verifier's own test drops it to 77.8% and the gate fails. Test + ledger
+  only; no production-source change.
+
+diff_scope:
+  changed_files:
+    - path: ".claude/commit_acceptors/recurse-mutation-ratchet-self.yaml"
+    - path: "docs/MUTATION_KILL_BASELINE.json"
+    - path: "tests/ci/test_mutation_kill_ratchet.py"
+  forbidden_paths:
+    - "trading/"
+    - "execution/"
+    - "forecast/"
+    - "policy/"
+    - "core/"
+    - "runtime/"
+    - "application/"
+
+required_python_symbols:
+  - "tests/ci/test_mutation_kill_ratchet.py::test_base_ledger_reads_committed_ledger"
+  - "tests/ci/test_mutation_kill_ratchet.py::test_broken_probe_report_fails_closed"
+
+expected_signal: >-
+  python -m pytest tests/ci/test_mutation_kill_ratchet.py passes (7 tests) and
+  the verifier is listed in docs/MUTATION_KILL_BASELINE.json modules.
+
+measurement_command: >-
+  bash -c 'mkdir -p tmp && python -m pytest -q tests/ci/test_mutation_kill_ratchet.py | tee tmp/recurse_ratchet.log'
+
+signal_artifact: "tmp/recurse_ratchet.log"
+
+falsifier:
+  command: >-
+    bash -c 'python -m pytest -q tests/ci/test_mutation_kill_ratchet.py::test_base_ledger_reads_committed_ledger tests/ci/test_mutation_kill_ratchet.py::test_broken_probe_report_fails_closed && python -c "import json; m=json.load(open(\"docs/MUTATION_KILL_BASELINE.json\"))[\"modules\"]; assert \"scripts/ci/check_mutation_kill_ratchet.py\" in m"'
+  description: >-
+    Runs the two survivor-closing tests (each kills a verifier-logic mutant the
+    earlier suite missed) AND asserts the verifier is enrolled in its own
+    ledger. Succeeds only when the recursion holds: the verifier both tests its
+    own boundary and is itself subject to the gate it runs.
+
+rollback_command: >-
+  bash -c 'git checkout origin/main -- tests/ci/test_mutation_kill_ratchet.py docs/MUTATION_KILL_BASELINE.json && git rm -f .claude/commit_acceptors/recurse-mutation-ratchet-self.yaml'
+
+rollback_verification_command: >-
+  bash -c 'python -c "import json; assert \"scripts/ci/check_mutation_kill_ratchet.py\" not in json.load(open(\"docs/MUTATION_KILL_BASELINE.json\"))[\"modules\"]"'
+
+memory_update_type: append
+ledger_path: ".claude/commit_acceptors/recurse-mutation-ratchet-self.yaml"
+report_path: "tmp/recurse_ratchet.log"

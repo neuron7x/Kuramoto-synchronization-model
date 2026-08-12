@@ -1,0 +1,39 @@
+name: evidence-grounding
+
+concurrency:
+  group: ${{ github.workflow }}-${{ github.ref }}
+  cancel-in-progress: true
+
+permissions:
+  contents: read
+
+on:
+  pull_request:
+    paths:
+      - 'docs/METRICS_CONTRACT.md'
+      - 'reports/test_audit/**'
+      - 'tools/claims/**'
+      - 'docs/testing/**'
+  push:
+    branches: [main]
+  workflow_dispatch:
+
+jobs:
+  validate-evidence:
+    runs-on: ubuntu-latest
+    steps:
+      - uses: actions/checkout@9c091bb21b7c1c1d1991bb908d89e4e9dddfe3e0
+      - uses: actions/setup-python@ece7cb06caefa5fff74198d8649806c4678c61a1
+        with:
+          python-version: '3.11'
+      - name: Install minimal deps
+        run: |
+          python -m pip install --upgrade pip
+      - name: Run evidence validator
+        run: python tools/claims/validate_claims_have_evidence.py | tee evidence-validator.log
+      - name: Upload validator log
+        if: always()
+        uses: actions/upload-artifact@043fb46d1a93c77aae656e7c1c64a875d1fc6a0a
+        with:
+          name: evidence-validator-log
+          path: evidence-validator.log

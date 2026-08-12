@@ -1,3 +1,5 @@
+# Copyright (c) 2023-2026 Yaroslav Vasylenko (neuron7xLab)
+# SPDX-License-Identifier: MIT
 """
 Order Validator Module
 
@@ -169,9 +171,7 @@ class OrderValidator:
         )
 
         # Кастомні валідатори
-        self._custom_validators: List[
-            Callable[[Order], List[ValidationError]]
-        ] = []
+        self._custom_validators: List[Callable[[Order], List[ValidationError]]] = []
 
         # Заборонені символи
         self._blocked_symbols: Set[str] = set()
@@ -292,9 +292,7 @@ class OrderValidator:
             )
 
         # Перевірка ціни для лімітних ордерів
-        if order.order_type == OrderType.LIMIT and (
-            order.price is None or order.price <= 0
-        ):
+        if order.order_type == OrderType.LIMIT and (order.price is None or order.price <= 0):
             errors.append(
                 ValidationError(
                     code="MISSING_LIMIT_PRICE",
@@ -593,9 +591,7 @@ class OrderValidator:
         self._daily_trades += 1
         self._daily_volume += order.quantity * execution_price
 
-    def add_custom_validator(
-        self, validator: Callable[[Order], List[ValidationError]]
-    ) -> None:
+    def add_custom_validator(self, validator: Callable[[Order], List[ValidationError]]) -> None:
         """
         Додавання кастомного валідатора
 

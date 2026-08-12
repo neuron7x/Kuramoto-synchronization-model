@@ -1,10 +1,12 @@
+# Copyright (c) 2023-2026 Yaroslav Vasylenko (neuron7xLab)
+# SPDX-License-Identifier: MIT
 """Tests to verify canonical namespace behavior.
 
-The canonical public namespace for TradePulse is `tradepulse.*`.
+The canonical public namespace for GeoSync is `geosync.*`.
 The `src/` directory is a source layout container, NOT a runtime package.
 
 These tests verify:
-1. `tradepulse` is importable and resolves to the correct location
+1. `geosync` is importable and resolves to the correct location
 2. After installation, `src` is not an importable package
 3. Core modules are accessible via canonical imports
 """
@@ -17,26 +19,26 @@ import pytest
 
 
 class TestCanonicalNamespace:
-    """Test the canonical `tradepulse.*` namespace."""
+    """Test the canonical `geosync.*` namespace."""
 
-    def test_tradepulse_is_importable(self):
-        """Verify `tradepulse` package is importable."""
-        tradepulse = importlib.import_module("tradepulse")
-        assert tradepulse is not None
-        assert hasattr(tradepulse, "__file__")
+    def test_geosync_is_importable(self):
+        """Verify `geosync` package is importable."""
+        geosync = importlib.import_module("geosync")
+        assert geosync is not None
+        assert hasattr(geosync, "__file__")
 
-    def test_tradepulse_file_location(self):
-        """Verify `tradepulse` resolves to top-level, not src/tradepulse."""
-        tradepulse = importlib.import_module("tradepulse")
-        tradepulse_path = Path(tradepulse.__file__).resolve()
-        # Should NOT be under src/tradepulse
-        assert "src/tradepulse" not in str(tradepulse_path), (
-            f"tradepulse should not resolve to src/tradepulse, got {tradepulse_path}"
-        )
+    def test_geosync_file_location(self):
+        """Verify `geosync` resolves to top-level, not src/geosync."""
+        geosync = importlib.import_module("geosync")
+        geosync_path = Path(geosync.__file__).resolve()
+        # Should NOT be under src/geosync
+        assert "src/geosync" not in str(
+            geosync_path
+        ), f"geosync should not resolve to src/geosync, got {geosync_path}"
 
-    def test_tradepulse_risk_submodule(self):
-        """Verify `tradepulse.risk` is importable."""
-        risk = importlib.import_module("tradepulse.risk")
+    def test_geosync_risk_submodule(self):
+        """Verify `geosync.risk` is importable."""
+        risk = importlib.import_module("geosync.risk")
         assert risk is not None
 
 
@@ -107,6 +109,6 @@ class TestPackagingIntegrity:
         content = pyproject_path.read_text()
 
         # Check that src is in exclude list
-        assert '"src"' in content or "'src'" in content, (
-            "pyproject.toml should exclude 'src' from packages"
-        )
+        assert (
+            '"src"' in content or "'src'" in content
+        ), "pyproject.toml should exclude 'src' from packages"

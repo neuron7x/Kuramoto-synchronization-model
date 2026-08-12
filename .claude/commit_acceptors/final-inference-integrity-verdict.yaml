@@ -1,0 +1,57 @@
+id: final-inference-integrity-verdict
+status: ACTIVE
+claim_type: fail_closed
+promise: >-
+  tools/audit_final_inference_verdict.py aggregates every inference-integrity
+  sub-verdict (coverage, mutable state, concurrency, causal prefix, runtime
+  failure, risk reservation, cache freshness, event-bus lifecycle; and under
+  --release component strength + RVG) into one final verdict. PASS only when every
+  consumed artifact is present, schema-valid, passing, and not report-only; a FAIL
+  exits non-zero. No single green workflow can imply system truth.
+diff_scope:
+  changed_files:
+    - path: ".claude/commit_acceptors/final-inference-integrity-verdict.yaml"
+    - path: "tools/audit_final_inference_verdict.py"
+    - path: "tests/tools/test_final_inference_verdict.py"
+    - path: "artifacts/inference/final_inference_verdict.json"
+    - path: "audit/schema/final_inference_verdict.schema.json"
+  forbidden_paths:
+    - "execution/"
+    - "core/"
+required_python_symbols:
+  - "tools/audit_final_inference_verdict.py::build_verdict"
+  - "tools/audit_final_inference_verdict.py::exit_code"
+expected_signal: >-
+  `python -m pytest --import-mode=importlib tests/tools/test_final_inference_verdict.py
+  -q` passes; the committed artifact is PASS and a missing/FAIL/report-only/wrong-schema
+  sub-artifact forces a FAIL.
+measurement_command: >-
+  bash -c '
+    python -m pytest --import-mode=importlib -p no:cacheprovider
+      tests/tools/test_final_inference_verdict.py -q
+  '
+signal_artifact: "tmp/final_inference_verdict.log"
+falsifier:
+  command: |-
+    bash -c '
+      python -c "
+    import importlib.util, tempfile, os
+    spec = importlib.util.spec_from_file_location(\"afiv\", \"tools/audit_final_inference_verdict.py\")
+    afiv = importlib.util.module_from_spec(spec); spec.loader.exec_module(afiv)
+    d = tempfile.mkdtemp()
+    rc = afiv.main([\"--root\", d, \"--out\", os.path.join(d, \"v.json\")])
+    raise SystemExit(0 if rc == 1 else \"missing substrate did not force a non-zero exit\")
+    "
+    '
+  description: >-
+    Aggregates over an empty root (every substrate artifact missing) and asserts
+    main() returns 1. Exits 0 when the aggregator fails closed; non-zero if a
+    missing substrate can still pass.
+rollback_command: >-
+  bash -c 'git rm -f .claude/commit_acceptors/final-inference-integrity-verdict.yaml'
+rollback_verification_command: >-
+  bash -c 'test ! -f .claude/commit_acceptors/final-inference-integrity-verdict.yaml'
+memory_update_type: append
+ledger_path: ".claude/commit_acceptors/final-inference-integrity-verdict.yaml"
+report_path: "tmp/final_inference_verdict.log"
+evidence: []

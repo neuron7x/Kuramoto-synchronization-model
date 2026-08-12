@@ -116,7 +116,7 @@ class ErrorSignal:
 Every prediction MUST reference a valid action_id that exists in the action log.
 
 ### I2: Outcome Follows Prediction
-Outcome MUST only be recorded for actions that have predictions.
+Outcome MUST only be recorded for actions that have predictions. Missing predictions are fail-closed: implementations MUST raise an error or emit an invalid-input witness and MUST NOT synthesize default predictions.
 
 ### I3: Error Computation Consistency
 ```

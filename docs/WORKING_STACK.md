@@ -1,17 +1,17 @@
-# TradePulse — Working Stack Runbook
+# GeoSync — Working Stack Runbook
 
 Verified 2026-03-28 on Python 3.12.3, Linux (Ubuntu).
 
 ## What This Repo Is
 
-TradePulse v0.1.0 — algorithmic trading framework with geometric market indicators
+GeoSync v0.1.0 — algorithmic trading framework with geometric market indicators
 (Kuramoto synchronization, Ricci curvature, entropy production, neuro-inspired controllers).
 
 ## Canonical Product Identity
 
-- **Package**: `tradepulse`
+- **Package**: `geosync`
 - **Primary import surface**: `core.*`, `backtest.*`, `execution.*`, `analytics.*`
-- **Build artifact**: `tradepulse-0.1.0-py3-none-any.whl`
+- **Build artifact**: `geosync-0.1.0-py3-none-any.whl`
 
 ## Bootstrap (Fresh Environment)
 
@@ -62,16 +62,20 @@ pytest tests/ -m "not slow and not heavy_math and not nightly and not flaky" \
 
 ```bash
 python -m build
-# Output: dist/tradepulse-0.1.0-py3-none-any.whl
-#         dist/tradepulse-0.1.0.tar.gz
+# Output: dist/geosync-0.1.0-py3-none-any.whl
+#         dist/geosync-0.1.0.tar.gz
 ```
 
 ## Known Non-Blocking Gaps
 
 1. **111 test failures** in full suite — all pre-existing, none affect golden path.
    Categories: property tests (Hypothesis), serotonin controller, GABA gate, workflow YAML tests.
-2. **Namespace drift**: `core/` labeled "legacy" but is the active import surface for examples/tests.
-   `src/tradepulse/` marked canonical but not used by golden path. Both coexist.
+2. **Namespace drift (ADR 0024, in migration)**: canonical install root is top-level
+   `geosync/`; `src/geosync/` is the retired fork still carrying legacy
+   `__CANONICAL__ = True` markers. `core/` is labeled "legacy" but remains an active
+   import surface for examples/tests. The import-architecture ratchet
+   (`scripts/ci/check_import_architecture.py`) freezes the `src.*`/path-hack debt so
+   it can only shrink as the staged collapse proceeds.
 3. **Torch CUDA**: torch is installed with CUDA 12.8 support. On CPU-only machines, some
    torch-dependent test modules emit collection warnings (handled by `--continue-on-collection-errors`).
 4. **Not a git repo**: The working directory is not initialized as a git repo.

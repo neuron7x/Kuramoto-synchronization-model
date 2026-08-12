@@ -1,7 +1,7 @@
 {
   "type": "record",
   "name": "TickEvent",
-  "namespace": "tradepulse.events.marketdata.v1_0_0",
+  "namespace": "geosync.events.marketdata.v1_0_0",
   "doc": "Real-time market tick update for a single symbol.",
   "fields": [
     {"name": "event_id", "type": "string", "doc": "Globally unique identifier for idempotency."},

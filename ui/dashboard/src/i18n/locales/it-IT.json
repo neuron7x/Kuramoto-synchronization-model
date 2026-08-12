@@ -10,8 +10,8 @@
     }
   },
   "nav": {
-    "brand": "TradePulse",
-    "title": "TradePulse",
+    "brand": "GeoSync",
+    "title": "GeoSync",
     "badges": {
       "live": "Live"
     },
@@ -146,7 +146,7 @@
     }
   },
   "header": {
-    "title": "Centro di monitoraggio TradePulse",
+    "title": "Centro di monitoraggio GeoSync",
     "subtitle": "Controllo unificato su esecuzione, rischio e telemetria.",
     "tags": [
       "multi-asset",
@@ -360,7 +360,7 @@
       "hero": {
         "eyebrow": "Abilitazione community",
         "title": "Costruisci slancio con contributor globali",
-        "subtitle": "Coordina mentorship, sponsorship e condivisione delle conoscenze nell’ecosistema TradePulse.",
+        "subtitle": "Coordina mentorship, sponsorship e condivisione delle conoscenze nell’ecosistema GeoSync.",
         "cta": "Apri il playbook di contribuzione",
         "secondaryCta": "Unisciti alla chat della community",
         "fallbackChannel": "Canale community"

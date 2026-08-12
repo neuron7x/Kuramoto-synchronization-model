@@ -1,0 +1,98 @@
+# Copyright (c) 2023-2026 Yaroslav Vasylenko (neuron7xLab)
+# SPDX-License-Identifier: MIT
+#
+# GOV-002 — Per-task P0 approval ledger (schema + skeleton).
+#
+# One record per closed (or in-flight) P0. A record only satisfies the
+# two-signature / COI contract in REMEDIATION_RACI.yaml when:
+#   * author is set,
+#   * independent_approver is set AND independent_approver != author,
+#   * verdict == CLOSED requires both signatures dated.
+#
+# This file is a schema/skeleton: the `schema` block documents fields; the
+# `records` list starts with a single template (verdict PENDING) and is
+# appended to as remediation tasks close. Fill records; do not fabricate
+# sign-offs.
+
+version: 1
+task_id: GOV-002
+raci_ref: governance/REMEDIATION_RACI.yaml
+
+# ---------------------------------------------------------------------------
+# Schema for each entry in `records`.
+# ---------------------------------------------------------------------------
+schema:
+  fields:
+    task_id:
+      type: string
+      required: true
+      description: Remediation task id (e.g. GOV-002, SEC-014).
+    workstream:
+      type: string
+      required: true
+      description: One of the 11 workstream ids (GOV/REL/ENV/TST/ARC/PKG/SEC/DOC/RES/DAT/OPS).
+    priority:
+      type: string
+      required: true
+      enum: [P0, P1, P2]
+    title:
+      type: string
+      required: true
+      description: Short human-readable summary of the fix.
+    author:
+      type: string
+      required: true
+      description: Identity of the person who authored the fix.
+    author_signoff_date:
+      type: string
+      required: false
+      description: ISO-8601 date the author attested the fix is ready.
+    independent_approver:
+      type: string
+      required: true
+      description: >
+        Identity of the independent verifier. MUST differ from author
+        (COI_AUTHOR_NOT_SOLE_CLOSER). Should map to the workstream approver
+        role in REMEDIATION_RACI.yaml.
+    approver_signoff_date:
+      type: string
+      required: false
+      description: ISO-8601 date the independent approver signed off.
+    date:
+      type: string
+      required: true
+      description: ISO-8601 date the record was last updated.
+    verdict:
+      type: string
+      required: true
+      enum: [PENDING, VERIFYING, CLOSED, REJECTED]
+      description: >
+        CLOSED requires both author and independent_approver signatures with
+        distinct identities and both signoff dates present.
+    evidence:
+      type: list
+      required: false
+      description: Paths/URLs to reproduction logs, CI runs, test node ids.
+  invariants:
+    - author != independent_approver          # COI clause
+    - verdict == CLOSED => author_signoff_date and approver_signoff_date set
+    - two signatures required for every P0 closure
+
+# ---------------------------------------------------------------------------
+# Records — append one entry per P0. Template below is intentionally PENDING.
+# ---------------------------------------------------------------------------
+records:
+  - task_id: GOV-002
+    workstream: GOV
+    priority: P0
+    title: Assign single technical owner + independent verifier RACI.
+    author: TBD
+    author_signoff_date: null
+    independent_approver: TBD          # MUST be != author before verdict CLOSED
+    approver_signoff_date: null
+    date: 2026-07-19
+    verdict: PENDING
+    evidence:
+      - governance/REMEDIATION_RACI.yaml
+      - scripts/ci/check_raci.py
+      - tests/ci/test_raci.py

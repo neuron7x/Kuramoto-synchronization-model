@@ -1,4 +1,5 @@
-# SPDX-License-Identifier: LicenseRef-TradePulse-Proprietary
+# Copyright (c) 2023-2026 Yaroslav Vasylenko (neuron7xLab)
+# SPDX-License-Identifier: MIT
 """Data center health monitoring.
 
 Provides continuous health monitoring for data centers with:
@@ -86,9 +87,7 @@ class DataCenterHealthMonitor:
         self._check_history: Dict[str, List[HealthCheckResult]] = {}
         self._health_checker: Optional[Callable[[str], HealthCheckResult]] = None
 
-    def register_health_checker(
-        self, checker: Callable[[str], HealthCheckResult]
-    ) -> None:
+    def register_health_checker(self, checker: Callable[[str], HealthCheckResult]) -> None:
         """Register a custom health check function.
 
         Args:
@@ -166,9 +165,7 @@ class DataCenterHealthMonitor:
             self._failure_counts[dc_id] = self._failure_counts.get(dc_id, 0) + 1
             self._success_counts[dc_id] = 0
 
-    def _update_data_center_health(
-        self, dc: DataCenter, result: HealthCheckResult
-    ) -> None:
+    def _update_data_center_health(self, dc: DataCenter, result: HealthCheckResult) -> None:
         """Update data center health based on check result.
 
         Args:
@@ -199,15 +196,12 @@ class DataCenterHealthMonitor:
                     f"Data center {dc.id} marked as degraded after "
                     f"{failure_count} consecutive failures"
                 )
-        elif (
-            success_count >= self.config.recovery_threshold and not dc.health.is_healthy
-        ):
+        elif success_count >= self.config.recovery_threshold and not dc.health.is_healthy:
             dc.health.is_healthy = True
             if dc.status == DataCenterStatus.DEGRADED:
                 dc.status = DataCenterStatus.ACTIVE
                 logger.info(
-                    f"Data center {dc.id} recovered after "
-                    f"{success_count} consecutive successes"
+                    f"Data center {dc.id} recovered after {success_count} consecutive successes"
                 )
 
         # Check latency threshold
@@ -215,8 +209,7 @@ class DataCenterHealthMonitor:
             if dc.status == DataCenterStatus.ACTIVE:
                 dc.status = DataCenterStatus.DEGRADED
                 logger.warning(
-                    f"Data center {dc.id} degraded due to high latency: "
-                    f"{result.latency_ms:.1f}ms"
+                    f"Data center {dc.id} degraded due to high latency: {result.latency_ms:.1f}ms"
                 )
 
     def is_check_due(self, dc: DataCenter) -> bool:
@@ -254,9 +247,7 @@ class DataCenterHealthMonitor:
             history = self._check_history.get(dc_id, [])
             return list(history[-limit:])
 
-    def get_availability_percentage(
-        self, dc_id: str, window_minutes: int = 60
-    ) -> float:
+    def get_availability_percentage(self, dc_id: str, window_minutes: int = 60) -> float:
         """Calculate availability percentage for a data center.
 
         Args:
@@ -280,9 +271,7 @@ class DataCenterHealthMonitor:
             successful = sum(1 for r in recent_checks if r.success)
             return (successful / len(recent_checks)) * 100.0
 
-    def get_average_latency(
-        self, dc_id: str, window_minutes: int = 60
-    ) -> Optional[float]:
+    def get_average_latency(self, dc_id: str, window_minutes: int = 60) -> Optional[float]:
         """Calculate average latency for a data center.
 
         Args:

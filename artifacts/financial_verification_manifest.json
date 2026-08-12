@@ -1,0 +1,24 @@
+{
+  "protocol_version": "DFV-EP v1.0",
+  "timestamp_utc": "2026-05-26T10:52:32Z",
+  "verification_metrics": {
+    "records_processed": 3,
+    "benford_chi_square": 5.754362,
+    "max_detected_z_score": 1.231817,
+    "epistemic_drift_delta": 0.0
+  },
+  "integrity": {
+    "data_ledger_sha256_chunks": [
+      "58900364",
+      "302609da",
+      "98f5e099",
+      "2b138fde",
+      "25d86f2e",
+      "5c2c005f",
+      "90a01d0f",
+      "c2c87617"
+    ],
+    "verification_provenance_marker": "local-dev-marker"
+  },
+  "verdict": "EP_PARITY_PASSED"
+}

@@ -1,7 +1,9 @@
+# Copyright (c) 2023-2026 Yaroslav Vasylenko (neuron7xLab)
+# SPDX-License-Identifier: MIT
 """Module interaction sequencer for orchestrating execution flow.
 
 This module provides a unified orchestration mechanism that manages the
-sequence of interactions between TradePulse modules, ensuring proper
+sequence of interactions between GeoSync modules, ensuring proper
 dependency ordering and execution flow.
 """
 
@@ -86,7 +88,7 @@ class ModuleInteractionOrchestrator:
 
     This orchestrator ensures modules execute in the correct order based on
     their dependencies and phases, providing a unified coordination mechanism
-    for the TradePulse pipeline.
+    for the GeoSync pipeline.
 
     Example:
         >>> orchestrator = ModuleInteractionOrchestrator()
@@ -171,9 +173,7 @@ class ModuleInteractionOrchestrator:
             return self._execution_order
 
         # Get enabled modules
-        enabled_modules = {
-            name: mod for name, mod in self._modules.items() if mod.enabled
-        }
+        enabled_modules = {name: mod for name, mod in self._modules.items() if mod.enabled}
 
         if not enabled_modules:
             self._execution_order = []
@@ -260,9 +260,7 @@ class ModuleInteractionOrchestrator:
 
         # Check for cycles
         if len(result) != len(modules):
-            raise ValueError(
-                "Circular dependency detected in module orchestration"
-            )
+            raise ValueError("Circular dependency detected in module orchestration")
 
         return result
 
@@ -288,9 +286,7 @@ class ModuleInteractionOrchestrator:
             module = self._modules[module_name]
 
             if not module.handler:
-                context.add_error(
-                    f"Module '{module_name}' has no handler defined"
-                )
+                context.add_error(f"Module '{module_name}' has no handler defined")
                 continue
 
             try:
@@ -342,11 +338,7 @@ class ModuleInteractionOrchestrator:
         Returns:
             List of module names in the specified phase
         """
-        return [
-            name
-            for name, mod in self._modules.items()
-            if mod.phase == phase and mod.enabled
-        ]
+        return [name for name, mod in self._modules.items() if mod.phase == phase and mod.enabled]
 
     def reset(self) -> None:
         """Clear all registered modules and reset state."""

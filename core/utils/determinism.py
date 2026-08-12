@@ -1,8 +1,10 @@
+# Copyright (c) 2023-2026 Yaroslav Vasylenko (neuron7xLab)
+# SPDX-License-Identifier: MIT
 """Utilities that keep numeric libraries deterministic across environments."""
 
 from __future__ import annotations
 
-# SPDX-License-Identifier: LicenseRef-TradePulse-Proprietary
+# SPDX-License-Identifier: MIT
 import os
 import random
 from typing import MutableMapping
@@ -27,6 +29,7 @@ def apply_thread_determinism(env: MutableMapping[str, str] | None = None) -> Non
     target = env if env is not None else os.environ
     for key, value in THREAD_BOUND_ENV_VARS.items():
         target.setdefault(key, value)
+
 
 def seed_numpy(seed: int = DEFAULT_SEED) -> None:
     """Seed Python and NumPy RNGs for deterministic experiments."""

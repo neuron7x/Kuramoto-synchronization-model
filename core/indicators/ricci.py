@@ -1,4 +1,5 @@
-# SPDX-License-Identifier: LicenseRef-TradePulse-Proprietary
+# Copyright (c) 2023-2026 Yaroslav Vasylenko (neuron7xLab)
+# SPDX-License-Identifier: MIT
 """Ricci curvature-based structural stress indicators for price graphs.
 
 This module turns price histories into discrete graphs and computes
@@ -21,7 +22,6 @@ coordinate with the governance guardrails documented in ``docs/monitoring.md``.
 
 from __future__ import annotations
 
-import asyncio
 import logging
 import warnings
 from collections.abc import Mapping
@@ -90,9 +90,7 @@ except Exception:  # pragma: no cover - fallback for lightweight environments
         ) -> Iterable[tuple[int, float]] | float:
             if node is None:
                 if weight:
-                    return tuple(
-                        (n, sum(neigh.values())) for n, neigh in self._adj.items()
-                    )
+                    return tuple((n, sum(neigh.values())) for n, neigh in self._adj.items())
                 return tuple((n, len(neigh)) for n, neigh in self._adj.items())
             neigh = self._adj.get(int(node), {})
             return sum(neigh.values()) if weight else len(neigh)
@@ -182,7 +180,7 @@ except ImportError:  # pragma: no cover
     def njit(*args, **kwargs):  # type: ignore[misc]
         """No-op decorator when numba is unavailable."""
 
-        def decorator(func):  # type: ignore[no-untyped-def]
+        def decorator(func: Any) -> Any:
             return func
 
         if len(args) == 1 and callable(args[0]):
@@ -340,11 +338,7 @@ class NodeDistribution:
     positions: np.ndarray
 
     def __post_init__(self) -> None:
-        if (
-            self.support.ndim != 1
-            or self.probabilities.ndim != 1
-            or self.positions.ndim != 1
-        ):
+        if self.support.ndim != 1 or self.probabilities.ndim != 1 or self.positions.ndim != 1:
             raise ValueError("NodeDistribution arrays must be one-dimensional")
         if (
             self.support.shape != self.probabilities.shape
@@ -353,9 +347,7 @@ class NodeDistribution:
             raise ValueError("NodeDistribution arrays must share the same shape")
         total = float(self.probabilities.sum())
         if not np.isfinite(total) or total <= 0.0:
-            raise ValueError(
-                "NodeDistribution probabilities must sum to a positive finite value"
-            )
+            raise ValueError("NodeDistribution probabilities must sum to a positive finite value")
 
 
 def _graph_geometry(G: nx.Graph) -> tuple[float, float]:
@@ -373,9 +365,7 @@ def _graph_geometry(G: nx.Graph) -> tuple[float, float]:
     return offset, scale
 
 
-def _normalized_neighbor_weights(
-    G: nx.Graph, node: int
-) -> tuple[np.ndarray, np.ndarray]:
+def _normalized_neighbor_weights(G: nx.Graph, node: int) -> tuple[np.ndarray, np.ndarray]:
     """Return neighbour identifiers and normalized transition weights."""
 
     neighbors = [int(n) for n in G.neighbors(node)]
@@ -400,7 +390,9 @@ def _normalized_neighbor_weights(
         return np.array([int(node)], dtype=int), np.array([1.0], dtype=float)
 
     w_arr = np.nan_to_num(w_arr, nan=0.0, posinf=0.0, neginf=0.0)
-    total = float(w_arr.sum())
+    # INV-HPC2: extreme weights can overflow sum(); catch and fallback to uniform
+    with np.errstate(over="ignore", invalid="ignore"):
+        total = float(w_arr.sum())
     if not np.isfinite(total) or total <= 0.0:
         w_arr = np.full_like(w_arr, 1.0 / len(w_arr))
     else:
@@ -484,7 +476,14 @@ def build_price_graph(prices: np.ndarray, delta: float = 0.005) -> nx.Graph:
     scale = float(abs(base))
     if not np.isfinite(scale) or scale == 0.0:
         scale = 1.0
-    levels = np.round((p - base) / (scale * delta)).astype(int)
+    # INV-HPC2: clamp before int cast to prevent overflow on extreme price deltas
+    with np.errstate(over="ignore", invalid="ignore", divide="ignore"):
+        raw_levels = np.round((p - base) / (scale * delta))
+    raw_levels = np.nan_to_num(raw_levels, nan=0.0, posinf=0.0, neginf=0.0)
+    max_int = np.iinfo(np.int64).max // 2
+    # INV-HPC2 / bounds: clip to ±(int64_max//2) so the .astype(int) cast
+    # cannot overflow on extreme price deltas (finite-in → finite-out).
+    levels = np.clip(raw_levels, -max_int, max_int).astype(int)
     G = nx.Graph()
     for i, lv in enumerate(levels):
         G.add_node(int(lv))
@@ -498,6 +497,201 @@ def build_price_graph(prices: np.ndarray, delta: float = 0.005) -> nx.Graph:
     except Exception:  # pragma: no cover - fallback graphs may not support attr writes
         pass
     return G
+
+
+#: Documented multiple of the unit price-level step at which the 1-D positional
+#: embedding stops being commensurate with the |Δp|+1 weighted geodesic. In the
+#: commensurate (path-like) regime consecutive ``build_price_graph`` levels move
+#: by unit steps, so the maximal inter-step level jump is 1. A jump beyond this
+#: multiple means a price gap large enough that the positional metric (in which
+#: W₁ is measured) and the combinatorial/weighted metric (in which d is measured)
+#: diverge — exactly the condition under which κ = 1 − W₁/d can fall below −1.
+#: This is the STRUCTURAL necessary condition; it is a fast pre-filter, NOT a
+#: sufficient one (a series that revisits levels can build a denser graph whose
+#: edges leave the band even when every consecutive jump is ≤ this multiple), so
+#: the regime certificate below ALSO verifies the exact per-edge bound κ ≥ −1.
+_COMMENSURATE_MAX_STEP_MULTIPLE: int = 1
+#: κ ≥ −1 ⇔ W₁/d ≤ 2. The lower bound of the INV-RC3 symmetric band; the gate
+#: never presents an edge with κ < −1 − tolerance as INV-RC3-valid.
+_RC3_LOWER_BOUND: float = -1.0
+#: Float round-off tolerance for the κ ≥ −1 boundary check (matches the
+#: identity-witness tolerance in tests/physics_contracts).
+_RC3_BOUND_TOLERANCE: float = 1e-9
+
+
+@dataclass(slots=True, frozen=True)
+class RicciRegimeCertificate:
+    """Runtime certificate of which Ricci curvature bound a graph actually obeys.
+
+    Ollivier (2009) defines κ(x,y) = 1 − W₁(μₓ, μᵧ) / d(x,y); the symmetric band
+    κ ∈ [−1, 1] (INV-RC3) is **not** universal — its lower bound κ ≥ −1 assumes
+    the graph-distance metric, i.e. that the positional embedding in which W₁ is
+    measured is commensurate with the combinatorial/weighted geodesic d. For a
+    :func:`build_price_graph` output that holds only in the path-like regime where
+    consecutive price levels move by unit steps. On a jumpy / gapped / volatile
+    series the two metrics diverge, W₁/d exceeds 2 on some edge, and κ descends
+    below −1 (≈ −6 at δ = 0.05). The prior runtime presented that out-of-regime κ
+    with no signal that the tight INV-RC3 band no longer applied.
+
+    This certificate closes that gap by recording, per graph:
+
+    * ``asserted_tier`` — ``"INV-RC3"`` only when the commensurate-metric regime
+      is verified (structural max-jump predicate AND every finite edge satisfies
+      κ ≥ −1). Otherwise it is **downgraded** to ``"INV-RC1"`` — the universal
+      κ ≤ 1 bound that always holds (W₁ ≥ 0) — and the deviation is recorded.
+    * ``commensurate`` — whether the regime held; ``False`` ⇒ downgraded.
+    * ``max_level_step`` — the maximal inter-step price-level jump (the structural
+      necessary condition; ``≤ _COMMENSURATE_MAX_STEP_MULTIPLE`` in regime).
+    * ``kappa_min`` — the witnessed minimum edge curvature.
+    * ``deviation`` — human-readable record of WHY the regime was rejected, or an
+      empty string when INV-RC3 holds.
+
+    The design mirrors the module's declarative claim-boundary contract: a
+    consumer that reads ``asserted_tier`` learns whether the tight band is
+    honestly claimable; an out-of-regime κ is never silently labelled INV-RC3.
+    """
+
+    asserted_tier: Literal["INV-RC1", "INV-RC3"]
+    commensurate: bool
+    max_level_step: int
+    kappa_min: float
+    n_edges_below_lower_bound: int
+    deviation: str
+
+
+def assert_ricci_regime(
+    G: nx.Graph,
+    *,
+    distributions: Mapping[int, NodeDistribution] | None = None,
+    raise_on_violation: bool = False,
+) -> RicciRegimeCertificate:
+    """Validate the commensurate-metric regime before asserting the INV-RC3 band.
+
+    INV-RC3's κ ∈ [−1, 1] is conditional on the positional embedding (in which
+    the Wasserstein mass W₁ is measured) being commensurate with the
+    combinatorial/weighted geodesic d (Ollivier, J. Funct. Anal. 2009: the band
+    assumes the graph-distance metric, not an arbitrary positional embedding).
+    For ``build_price_graph`` output that holds only when consecutive price levels
+    move by unit steps; a jumpy/gapped/volatile series breaks it and κ = 1 − W₁/d
+    descends below −1. This gate verifies the regime at runtime and, on violation,
+    **downgrades** the asserted tier INV-RC3 → INV-RC1 (universal κ ≤ 1 only) and
+    records the deviation, so an out-of-regime κ is never presented as
+    INV-RC3-valid.
+
+    The check has two legs and is fail-closed — INV-RC3 is asserted ONLY when both
+    hold:
+
+    1. STRUCTURAL (necessary): the maximal inter-step price-level jump is within
+       ``_COMMENSURATE_MAX_STEP_MULTIPLE`` of the unit step. A larger jump is a
+       price gap that breaks positional↔combinatorial commensurateness.
+    2. EXACT (binding): every finite edge satisfies κ ≥ −1 − tolerance
+       (equivalently W₁/d ≤ 2). This catches the cases the structural pre-filter
+       misses (e.g. level-revisiting series whose consecutive jumps are all unit
+       but whose denser graph still leaves the band).
+
+    A degenerate graph (empty / single node / no edges) cannot support the tight
+    band and is fail-closed to INV-RC1.
+
+    Args:
+        G: Graph, typically a :func:`build_price_graph` output.
+        distributions: Optional pre-computed node distributions (efficiency).
+        raise_on_violation: When ``True`` raise :class:`ValueError` instead of
+            downgrading. Default ``False`` keeps the declarative downgrade that
+            matches the module's claim-boundary design.
+
+    Returns:
+        RicciRegimeCertificate recording the asserted tier and any deviation.
+
+    Raises:
+        ValueError: If ``raise_on_violation`` is set and the regime is broken.
+    """
+    nodes = [int(n) for n in G.nodes()]
+    edges = [(int(u), int(v)) for u, v in G.edges()]
+
+    def _downgrade(
+        deviation: str, max_step: int, kappa_min: float, n_below: int
+    ) -> RicciRegimeCertificate:
+        if raise_on_violation:
+            raise ValueError(
+                f"Ricci commensurate-metric regime violated ({deviation}); "
+                "INV-RC3 κ ∈ [−1, 1] is not assertable — only the universal "
+                "INV-RC1 κ ≤ 1 holds"
+            )
+        return RicciRegimeCertificate(
+            asserted_tier="INV-RC1",
+            commensurate=False,
+            max_level_step=max_step,
+            kappa_min=kappa_min,
+            n_edges_below_lower_bound=n_below,
+            deviation=deviation,
+        )
+
+    if len(nodes) < 2 or not edges:
+        return _downgrade(
+            "degenerate graph (fewer than 2 nodes or no edges) cannot support "
+            "the commensurate-metric regime",
+            max_step=0,
+            kappa_min=float("nan"),
+            n_below=0,
+        )
+
+    # Leg 1 — STRUCTURAL: maximal inter-step price-level jump. Node IDs ARE the
+    # quantised price levels; the realised path visits them in edge order, but
+    # the worst-case inter-step jump is bounded below by the largest gap between
+    # any two level IDs that share an edge.
+    max_level_step = 0
+    for u, v in edges:
+        max_level_step = max(max_level_step, abs(u - v))
+    structural_ok = max_level_step <= _COMMENSURATE_MAX_STEP_MULTIPLE
+
+    # Leg 2 — EXACT: per-edge κ ≥ −1. This is the binding, fail-closed check.
+    if distributions is None:
+        distributions = compute_node_distributions(G)
+    kappa_min = float("inf")
+    n_below = 0
+    for u, v in edges:
+        kappa = ricci_curvature_edge(G, u, v, distributions=distributions)
+        if not np.isfinite(kappa):
+            continue
+        kappa_min = min(kappa_min, kappa)
+        if kappa < _RC3_LOWER_BOUND - _RC3_BOUND_TOLERANCE:
+            n_below += 1
+    if not np.isfinite(kappa_min):
+        return _downgrade(
+            "no finite edge curvature available; regime not verifiable",
+            max_step=max_level_step,
+            kappa_min=float("nan"),
+            n_below=0,
+        )
+
+    if not structural_ok:
+        return _downgrade(
+            f"max inter-step price-level jump {max_level_step} exceeds the "
+            f"commensurate unit-step multiple {_COMMENSURATE_MAX_STEP_MULTIPLE}; "
+            "positional and combinatorial metrics are incommensurate "
+            f"(witnessed κ_min = {kappa_min:.4f})",
+            max_step=max_level_step,
+            kappa_min=kappa_min,
+            n_below=n_below,
+        )
+    if n_below > 0:
+        return _downgrade(
+            f"{n_below} edge(s) violate κ ≥ −1 (W₁/d > 2): the positional "
+            "embedding left the graph-distance metric despite unit-step structure "
+            f"(witnessed κ_min = {kappa_min:.4f})",
+            max_step=max_level_step,
+            kappa_min=kappa_min,
+            n_below=n_below,
+        )
+
+    return RicciRegimeCertificate(
+        asserted_tier="INV-RC3",
+        commensurate=True,
+        max_level_step=max_level_step,
+        kappa_min=kappa_min,
+        n_edges_below_lower_bound=0,
+        deviation="",
+    )
 
 
 def local_distribution(G: nx.Graph, node: int, radius: int = 1) -> np.ndarray:
@@ -581,8 +775,17 @@ def ricci_curvature_edge(
             (avoids redundant neighbor probability calculations).
 
     Returns:
-        float: Curvature value κ(x, y) ∈ (-∞, 1]. Typically κ ∈ [-2, 1] for
-        well-behaved price graphs. Returns 0.0 for invalid/missing edges.
+        float: Curvature value κ(x, y). The universal upper bound κ ≤ 1 holds
+        for every edge of every connected graph (INV-RC1, P0), since
+        κ = 1 − W₁/d and W₁ ≥ 0. The symmetric band κ ∈ [−1, 1] holds ONLY for
+        build_price_graph output (INV-RC3, P1): its consecutive integer node IDs
+        make the 1-D positional embedding equal to the combinatorial distance.
+        This function uses a 1-D positional embedding (offset/scale from graph
+        attrs) with α = 1/(deg+1), so the lower bound is construction-conditional
+        — for arbitrary (non-price-graph) topologies with large positional spread
+        κ can descend below −1 (e.g. a 12-node cycle yields κ = −2 on its
+        wrap-around edge: endpoints 11 apart in the integer embedding but
+        graph-distance 1). Returns 0.0 for invalid/missing edges.
 
     Numerical Stability:
         - Non-finite edge weights handled gracefully
@@ -664,9 +867,9 @@ def _shortest_path_length_safe(G: nx.Graph, x: int, y: int) -> float:
     except ValueError as exc:
         if _log_debug_enabled():
             _logger.debug(
-                "ricci.shortest_path: falling back to unweighted distance for edge (%s,%s)",
-                x,
-                y,
+                "ricci.shortest_path: falling back to unweighted distance for edge",
+                x=str(x),
+                y=str(y),
                 error=str(exc),
             )
         try:
@@ -690,8 +893,9 @@ def mean_ricci(
         chunk_size: Optional batch size for edge iteration to bound memory usage.
         use_float32: When ``True``, accumulate in ``float32`` as a performance
             trade-off.
-        parallel: Execution strategy. Set to ``"async"`` to evaluate edges via an
-            asyncio-backed thread pool, mirroring the scaling guidance in
+        parallel: Execution strategy. Set to ``"async"`` to evaluate edges via a
+            loop-agnostic thread pool (safe under any runtime, including an
+            already-running event loop), mirroring the scaling guidance in
             ``docs/execution.md``.
         max_workers: Upper bound for the thread pool when ``parallel`` is async.
 
@@ -743,10 +947,7 @@ def mean_ricci(
         if parallel == "async":
             curv = _run_ricci_async(G, edges, max_workers, distributions)
         else:
-            curv = [
-                ricci_curvature_edge(G, u, v, distributions=distributions)
-                for u, v in edges
-            ]
+            curv = [ricci_curvature_edge(G, u, v, distributions=distributions) for u, v in edges]
         dtype = np.float32 if use_float32 else float
         if not curv:  # pragma: no cover - empty graph handled above
             return 0.0
@@ -757,50 +958,42 @@ def mean_ricci(
         return float(np.mean(arr))
 
 
+def _ricci_edge_worker(
+    G: nx.Graph,
+    distributions: Mapping[int, NodeDistribution] | None,
+    edge: tuple[int, int],
+) -> float:
+    """Compute the Ricci curvature of a single edge (thread-pool worker)."""
+
+    u, v = edge
+    return ricci_curvature_edge(G, int(u), int(v), distributions=distributions)
+
+
 def _run_ricci_async(
     G: nx.Graph,
     edges: list[tuple[int, int]],
     max_workers: int | None,
     distributions: Mapping[int, NodeDistribution] | None,
 ) -> list[float]:
-    """Evaluate curvature across edges concurrently using asyncio threads."""
+    """Evaluate curvature across edges concurrently using a thread pool.
 
-    async def _runner() -> list[float]:
-        loop = asyncio.get_running_loop()
-        executor: ThreadPoolExecutor | None = None
-        try:
-            if max_workers is not None:
-                executor = ThreadPoolExecutor(max_workers=max_workers)
-            futures = [
-                loop.run_in_executor(
-                    executor,
-                    partial(
-                        ricci_curvature_edge,
-                        G,
-                        int(u),
-                        int(v),
-                        distributions=distributions,
-                    ),
-                )
-                for u, v in edges
-            ]
-            return await asyncio.gather(*futures)
-        finally:
-            if executor is not None:
-                executor.shutdown(wait=True)
+    Loop-agnostic by construction: it uses a plain :class:`ThreadPoolExecutor`
+    and never creates or drives an asyncio event loop, so the result is
+    identical whether called from a bare script, a Jupyter kernel, a
+    FastAPI/Starlette handler, a Celery worker, or any other context that
+    already owns a running event loop. ``executor.map`` yields results in edge
+    order, keeping the curvature sequence deterministic for the downstream mean.
 
-    try:
-        return asyncio.run(_runner())
-    except RuntimeError as exc:
-        if "event loop is running" not in str(exc):
-            raise
-        new_loop = asyncio.new_event_loop()
-        try:
-            asyncio.set_event_loop(new_loop)
-            return new_loop.run_until_complete(_runner())
-        finally:
-            asyncio.set_event_loop(None)
-            new_loop.close()
+    Threads (not processes) are intentional: the hot inner work
+    (``ricci_curvature_edge`` → shortest paths + the Numba/NumPy W1 transport)
+    releases the GIL, whereas a process pool would force pickling the whole
+    graph for every edge. No event loop, asyncgen finalizer, or executor handle
+    can leak — the ``with`` block joins all workers before returning.
+    """
+
+    worker = partial(_ricci_edge_worker, G, distributions)
+    with ThreadPoolExecutor(max_workers=max_workers) as executor:
+        return list(executor.map(worker, edges))
 
 
 def _maybe_warn_w1() -> None:
@@ -878,8 +1071,12 @@ def _w1_fallback(
     # Robust array-level sanitization using np.nan_to_num
     weights_a = np.nan_to_num(weights_a, nan=0.0, posinf=0.0, neginf=0.0)
     weights_b = np.nan_to_num(weights_b, nan=0.0, posinf=0.0, neginf=0.0)
-    np.clip(weights_a, 0.0, None, out=weights_a)
-    np.clip(weights_b, 0.0, None, out=weights_b)
+    np.clip(
+        weights_a, 0.0, None, out=weights_a
+    )  # INV-HPC2: probability weights must be non-negative for W1 distance
+    np.clip(
+        weights_b, 0.0, None, out=weights_b
+    )  # INV-HPC2: probability weights must be non-negative for W1 distance
 
     total_a = float(weights_a.sum())
     total_b = float(weights_b.sum())
@@ -906,9 +1103,7 @@ def _w1_fallback(
 
     # Use JIT-compiled kernel for mass array construction if available
     if _HAS_NUMBA:
-        mass_a, mass_b = _build_mass_arrays_jit(
-            positions, pos_a, weights_a, pos_b, weights_b
-        )
+        mass_a, mass_b = _build_mass_arrays_jit(positions, pos_a, weights_a, pos_b, weights_b)
         return float(_w1_jit_kernel(positions, mass_a, mass_b))
 
     # Fallback to numpy vectorized implementation
@@ -959,8 +1154,8 @@ class MeanRicciFeature(BaseFeature):
             delta: Price quantisation granularity.
             chunk_size: Process edges in chunks for large graphs.
             use_float32: Use ``float32`` precision for memory efficiency.
-            parallel_async: Execute curvature computations concurrently via
-                asyncio thread pools.
+            parallel_async: Execute curvature computations concurrently via a
+                loop-agnostic thread pool.
             max_workers: Optional cap for the async worker pool when
                 ``parallel_async`` is enabled.
             name: Optional custom name.
@@ -1017,4 +1212,6 @@ __all__ = [
     "ricci_curvature_edge",
     "mean_ricci",
     "MeanRicciFeature",
+    "RicciRegimeCertificate",
+    "assert_ricci_regime",
 ]

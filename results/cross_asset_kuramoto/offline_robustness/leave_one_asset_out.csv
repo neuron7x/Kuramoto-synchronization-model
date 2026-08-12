@@ -1,0 +1,15 @@
+loo_type,omitted_asset,benchmark_recomputed,oos_sharpe,delta_sharpe_vs_full,max_dd,delta_max_dd_vs_full,ann_return,turnover,fold1,fold2,fold3,fold4,fold5,notes
+baseline_full,,no,1.26185,0.0,-0.167614,0.0,0.235849,21.257861,2.582349,1.010714,-1.146439,0.94199,0.850688,"8-asset regime, 5-asset tradable, frozen buckets."
+regime,BTC,no,1.50298,0.24113,-0.170482,-0.002868,0.279792,24.07797,2.61397,-0.011527,-1.532751,1.271164,1.132364,R(t) recomputed on 7 assets; tradable unchanged.
+regime,ETH,no,1.619915,0.358065,-0.185155,-0.017541,0.299024,19.167473,2.603781,0.93261,-1.525682,1.055348,1.243583,R(t) recomputed on 7 assets; tradable unchanged.
+regime,SPY,no,1.590072,0.328222,-0.187228,-0.019614,0.308731,27.429546,2.35976,-0.329187,-1.650507,0.948609,1.228589,R(t) recomputed on 7 assets; tradable unchanged.
+regime,QQQ,no,1.302838,0.040988,-0.173383,-0.005769,0.251499,33.147991,2.733921,0.440615,-1.569759,0.750935,0.918401,R(t) recomputed on 7 assets; tradable unchanged.
+regime,GLD,no,1.314929,0.053079,-0.165531,0.002083,0.24968,20.772438,2.966979,-0.11454,-1.492152,1.056339,0.883703,R(t) recomputed on 7 assets; tradable unchanged.
+regime,TLT,no,1.231108,-0.030742,-0.14548,0.022134,0.230852,25.725723,2.755475,0.637506,-0.753385,1.171276,0.804294,R(t) recomputed on 7 assets; tradable unchanged.
+regime,DXY,no,1.57241,0.31056,-0.169355,-0.001741,0.286727,17.041884,0.798013,0.281753,-1.032309,0.981516,1.191516,R(t) recomputed on 7 assets; tradable unchanged.
+regime,VIX,no,1.257044,-0.004806,-0.114958,0.052656,0.234961,24.091633,2.381962,0.576629,-1.144075,1.127663,0.861028,R(t) recomputed on 7 assets; tradable unchanged.
+tradable,BTC,no,1.140884,-0.120966,-0.15064,0.016974,0.187004,18.372718,1.971988,0.936767,-0.96166,0.425806,0.842808,"tradable=('ETH', 'SPY', 'TLT', 'GLD'); buckets filtered; inv-vol risk-parity naturally renormalises within remaining bucket members."
+tradable,ETH,no,1.250581,-0.011269,-0.102424,0.06519,0.201716,19.765636,1.941358,0.185181,-1.136497,0.817969,0.883206,"tradable=('BTC', 'SPY', 'TLT', 'GLD'); buckets filtered; inv-vol risk-parity naturally renormalises within remaining bucket members."
+tradable,SPY,no,1.26185,0.0,-0.167614,0.0,0.235849,21.257861,2.582349,1.010714,-1.146439,0.94199,0.850688,"tradable=('BTC', 'ETH', 'TLT', 'GLD'); buckets filtered; inv-vol risk-parity naturally renormalises within remaining bucket members."
+tradable,TLT,no,1.730704,0.468854,-0.156919,0.010695,0.342027,17.24873,2.508761,1.16913,-0.628643,1.363565,1.406231,"tradable=('BTC', 'ETH', 'SPY', 'GLD'); buckets filtered; inv-vol risk-parity naturally renormalises within remaining bucket members."
+tradable,GLD,no,0.53193,-0.72992,-0.230158,-0.062545,0.096161,17.896011,3.017605,1.247903,-1.576681,0.750242,-0.01053,"tradable=('BTC', 'ETH', 'SPY', 'TLT'); buckets filtered; inv-vol risk-parity naturally renormalises within remaining bucket members."

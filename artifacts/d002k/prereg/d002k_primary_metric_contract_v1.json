@@ -1,0 +1,35 @@
+{
+  "schema_version": "D002K-PRIMARY-METRIC-CONTRACT-v1",
+  "study_id": "D-002K",
+  "node_id": "D002K-P0",
+  "generated_at": "2026-05-15T00:00:00Z",
+  "primary_metric_id": "pre_post_standardized_mean_shift",
+  "is_single_primary": true,
+  "n_primary_metrics": 1,
+  "locked_before_any_run": true,
+  "input_observable_family": "level_shift",
+  "input_observable": "funding_stress_index",
+  "input_observable_source": "funding_liquidity_rollover substrate observable_outputs (point-in-time public: SOFR, OFR tri-party repo volumes, FRED H.15)",
+  "mathematical_definition": "pre_post_standardized_mean_shift = ( mean(funding_stress_index over the locked in-crisis window) - mean(funding_stress_index over the locked matched pre-window baseline) ) / pooled_std(pre-window baseline). A single scalar standardized mean shift (Cohen's-d form) of funding_stress_index between the locked pre-window baseline and the locked in-crisis window.",
+  "computation_steps": [
+    "1. For a given window W (a crisis window OR a matched placebo window), take the locked pre-window baseline segment B_W and the locked in-window segment I_W of funding_stress_index, both defined by the locked matched-placebo policy calendar.",
+    "2. Compute mu_pre = mean(funding_stress_index over B_W).",
+    "3. Compute mu_in = mean(funding_stress_index over I_W).",
+    "4. Compute sigma_pre = sample standard deviation of funding_stress_index over B_W (the pooled baseline std; degrees of freedom fixed at pre-registration, n-1).",
+    "5. pre_post_standardized_mean_shift(W) = (mu_in - mu_pre) / sigma_pre.",
+    "6. Repeat identically for every crisis window and every matched placebo window; the confirmatory contrast is crisis-vs-matched-placebo on this single scalar."
+  ],
+  "decision_threshold_semantics": "The primary decision compares the crisis-window pre_post_standardized_mean_shift against the matched-placebo distribution of the same scalar, under the Bonferroni-corrected alpha with denominator = n_windows * n_primary_metrics = 3. The numeric threshold and the per-window critical value are NOT set here -- they are power-gate territory and are derived at the P-power phase from an honestly-sourced effect prior. This contract locks WHAT is measured and HOW, never the threshold VALUE.",
+  "secondary_metrics": [
+    "max_zscore",
+    "area_under_stress_curve",
+    "recovery_half_life",
+    "slope_into_crisis",
+    "volatility_ratio",
+    "persistence_above_threshold"
+  ],
+  "secondary_metrics_status": "exploratory_only",
+  "secondary_metrics_note": "Secondary metrics are exploratory ONLY: they never enter the primary confirmatory decision, never enter the Bonferroni denominator, and cannot be promoted to a primary endpoint without a fresh D-002L pre-registration.",
+  "no_rescue_boundary": "This metric contract is part of fresh lineage D-002K. It does NOT rescue D-002J; D-002J remains terminally REFUSED at P7. Alpha is not relaxed and the effect prior is not inflated by locking a single narrow primary metric -- this is scope narrowing, not statistical loosening.",
+  "canonical_run_authorized": false
+}

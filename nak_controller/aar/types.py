@@ -1,3 +1,5 @@
+# Copyright (c) 2023-2026 Yaroslav Vasylenko (neuron7xLab)
+# SPDX-License-Identifier: MIT
 """AAR (Acceptor of Action Result) type definitions.
 
 This module defines the core data structures for the AAR feedback mechanism

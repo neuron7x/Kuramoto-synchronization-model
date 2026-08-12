@@ -1,12 +1,12 @@
 ---
-owner: integrations@tradepulse
+owner: integrations@geosync
 review_cadence: quarterly
 last_reviewed: 2026-01-01
 ---
 
-# TradePulse Interfaces
+# GeoSync Interfaces
 
-This directory contains the interface layer for TradePulse, providing entry points for users and systems to interact with the trading framework.
+This directory contains the interface layer for GeoSync, providing entry points for users and systems to interact with the trading framework.
 
 > 📚 **For comprehensive documentation with detailed examples, see the [User Interaction Guide](../docs/USER_INTERACTION_GUIDE.md).**
 
@@ -32,7 +32,7 @@ python -c "from interfaces.cli import signal_from_indicators; import numpy as np
 
 ## Overview
 
-The interfaces module provides multiple ways to interact with TradePulse:
+The interfaces module provides multiple ways to interact with GeoSync:
 
 1. **Command-Line Interface (CLI)** - For scripting and automation
 2. **Streamlit Dashboard** - For interactive analysis and visualization
@@ -47,13 +47,13 @@ Command-line interface for running analyses, backtests, and live trading.
 
 #### Commands
 
-##### `tradepulse analyze`
+##### `geosync analyze`
 
 Compute geometric and technical indicators from price data.
 
 **Usage:**
 ```bash
-tradepulse analyze --csv data.csv [OPTIONS]
+geosync analyze --csv data.csv [OPTIONS]
 ```
 
 **Options:**
@@ -87,22 +87,22 @@ JSON object with indicators:
 **Example:**
 ```bash
 # Analyze price data with 100-period window
-tradepulse analyze --csv prices.csv --window 100
+geosync analyze --csv prices.csv --window 100
 
 # Use GPU acceleration
-tradepulse analyze --csv prices.csv --gpu
+geosync analyze --csv prices.csv --gpu
 
 # Specify custom price column
-tradepulse analyze --csv data.csv --price-col close_price
+geosync analyze --csv data.csv --price-col close_price
 ```
 
-##### `tradepulse backtest`
+##### `geosync backtest`
 
 Run walk-forward backtesting with indicator-based signals.
 
 **Usage:**
 ```bash
-tradepulse backtest --csv data.csv [OPTIONS]
+geosync backtest --csv data.csv [OPTIONS]
 ```
 
 **Options:**
@@ -131,19 +131,19 @@ tradepulse backtest --csv data.csv [OPTIONS]
 **Example:**
 ```bash
 # Backtest with 0.1% fees
-tradepulse backtest --csv historical_data.csv --fee 0.001
+geosync backtest --csv historical_data.csv --fee 0.001
 
 # Backtest with custom window
-tradepulse backtest --csv data.csv --window 150
+geosync backtest --csv data.csv --window 150
 ```
 
-##### `tradepulse live`
+##### `geosync live`
 
 Launch live trading with risk management.
 
 **Usage:**
 ```bash
-tradepulse live [OPTIONS]
+geosync live [OPTIONS]
 ```
 
 **Options:**
@@ -156,13 +156,13 @@ tradepulse live [OPTIONS]
 **Example:**
 ```bash
 # Launch with default config
-tradepulse live
+geosync live
 
 # Trade on specific venues
-tradepulse live --venue binance --venue coinbase
+geosync live --venue binance --venue coinbase
 
 # Enable metrics export
-tradepulse live --metrics-port 8000
+geosync live --metrics-port 8000
 ```
 
 #### Error Handling
@@ -332,7 +332,7 @@ signals = signal_from_indicators(prices, window=3)
 
 for file in data/*.csv; do
     echo "Analyzing $file..."
-    tradepulse analyze --csv "$file" > "results/$(basename $file .csv).json"
+    geosync analyze --csv "$file" > "results/$(basename $file .csv).json"
 done
 ```
 
@@ -344,7 +344,7 @@ import json
 
 # Run analysis via CLI
 result = subprocess.run(
-    ['tradepulse', 'analyze', '--csv', 'data.csv'],
+    ['geosync', 'analyze', '--csv', 'data.csv'],
     capture_output=True,
     text=True
 )
@@ -394,16 +394,16 @@ All interfaces support distributed tracing via W3C traceparent:
 ```bash
 # Pass traceparent for distributed tracing
 export TRACEPARENT="00-0af7651916cd43dd8448eb211c80319c-b7ad6b7169203331-01"
-tradepulse analyze --csv data.csv
+geosync analyze --csv data.csv
 ```
 
 ## Support & Documentation
 
-- **Full Documentation**: [https://github.com/neuron7x/TradePulse](https://github.com/neuron7x/TradePulse)
+- **Full Documentation**: [https://github.com/neuron7xLab/GeoSync](https://github.com/neuron7xLab/GeoSync)
 - **User Interaction Guide**: [docs/USER_INTERACTION_GUIDE.md](../docs/USER_INTERACTION_GUIDE.md) — Comprehensive examples for all interfaces
-- **API Reference**: [https://docs.tradepulse.io/api](https://docs.tradepulse.io/api)
+- **API Reference**: [https://docs.geosync.io/api](https://docs.geosync.io/api)
 - **Examples**: See `examples/` directory in repository
-- **Issues**: [GitHub Issues](https://github.com/neuron7x/TradePulse/issues)
+- **Issues**: [GitHub Issues](https://github.com/neuron7xLab/GeoSync/issues)
 
 ## Version History
 
@@ -414,4 +414,4 @@ tradepulse analyze --csv data.csv
 
 ---
 
-**Note**: This is the interface layer for TradePulse. Implementations must follow the contracts defined by the respective ABC classes to ensure boundary transparency and facilitate testing.
+**Note**: This is the interface layer for GeoSync. Implementations must follow the contracts defined by the respective ABC classes to ensure boundary transparency and facilitate testing.

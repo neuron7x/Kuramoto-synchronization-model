@@ -1,3 +1,5 @@
+# Copyright (c) 2023-2026 Yaroslav Vasylenko (neuron7xLab)
+# SPDX-License-Identifier: MIT
 """Liquidity management utilities for cross-venue arbitrage."""
 
 from __future__ import annotations
@@ -65,13 +67,8 @@ class LiquidityLedger:
                 state = _LiquidityState(base_available, quote_available)
                 self._balances[key] = state
             else:
-                if (
-                    state.base_reserved > base_available
-                    or state.quote_reserved > quote_available
-                ):
-                    raise LiquidityError(
-                        "cannot set balances below outstanding reservations"
-                    )
+                if state.base_reserved > base_available or state.quote_reserved > quote_available:
+                    raise LiquidityError("cannot set balances below outstanding reservations")
                 state.base_available = base_available
                 state.quote_available = quote_available
 
@@ -108,9 +105,7 @@ class LiquidityLedger:
                 raise LiquidityError(f"reservation_id {reservation_id} already exists")
             state = self._balances.get(key)
             if state is None:
-                raise LiquidityError(
-                    f"No balance configured for {exchange_id}:{symbol}"
-                )
+                raise LiquidityError(f"No balance configured for {exchange_id}:{symbol}")
             available_base = state.base_available - state.base_reserved
             available_quote = state.quote_available - state.quote_reserved
             if base_amount > available_base or quote_amount > available_quote:
@@ -147,9 +142,7 @@ class LiquidityLedger:
             key = (reservation.exchange_id, reservation.symbol)
             state = self._balances.get(key)
             if state is None:
-                raise LiquidityError(
-                    f"Balance missing for reservation {reservation_id}"
-                )
+                raise LiquidityError(f"Balance missing for reservation {reservation_id}")
             if reservation.base_amount > state.base_reserved:
                 raise LiquidityError("reserved base less than reservation")
             if reservation.quote_amount > state.quote_reserved:
@@ -176,14 +169,10 @@ class LiquidityLedger:
         with self._lock:
             state = self._balances.get(key)
             if state is None:
-                raise LiquidityError(
-                    f"No balance configured for {exchange_id}:{symbol}"
-                )
+                raise LiquidityError(f"No balance configured for {exchange_id}:{symbol}")
             state.base_available += base_delta
             state.quote_available += quote_delta
-            if state.base_available < Decimal("0") or state.quote_available < Decimal(
-                "0"
-            ):
+            if state.base_available < Decimal("0") or state.quote_available < Decimal("0"):
                 raise LiquidityError("negative balance after fill application")
 
     def available_balances(self) -> Mapping[tuple[str, str], tuple[Decimal, Decimal]]:

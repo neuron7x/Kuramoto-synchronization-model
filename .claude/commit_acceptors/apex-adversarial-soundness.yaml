@@ -1,0 +1,67 @@
+id: apex-adversarial-soundness
+status: ACTIVE
+claim_type: correctness
+promise: >-
+  N4: the No-Ungrounded-Act apex resists a taxonomy of forgeries. It no longer
+  trusts verdict fields — it re-checks the numeric homeostasis grounds (H1/H3),
+  rejects report-only runs, and RE-DERIVES H4 by re-running the aggregator over the
+  substrate. A forged final verdict that hides a FAIL/missing/wrong-schema
+  substrate, a forged homeostasis number, or a smuggled report-only contract each
+  yields FORBIDDEN. Bounded adversarial evidence over a named attack family, not a
+  formal proof.
+diff_scope:
+  changed_files:
+    - path: ".claude/commit_acceptors/apex-adversarial-soundness.yaml"
+    - path: "tools/audit_no_ungrounded_act.py"
+    - path: "tests/unit/neuro/test_apex_adversarial.py"
+    - path: "tests/ci/test_apex_adversarial_report.py"
+    - path: "artifacts/inference/apex_adversarial_report.json"
+    - path: "audit/schema/apex_adversarial_report.schema.json"
+  forbidden_paths:
+    - "execution/"
+    - "core/neuro/"
+required_python_symbols:
+  - "tools/audit_no_ungrounded_act.py::build_apex"
+  - "tools/audit_no_ungrounded_act.py::_rederive_final_verdict"
+expected_signal: >-
+  `python -m pytest --import-mode=importlib tests/unit/neuro/test_apex_adversarial.py
+  tests/ci/test_apex_adversarial_report.py -q` passes; every forgery in the taxonomy
+  yields FORBIDDEN.
+measurement_command: >-
+  bash -c '
+    python -m pytest --import-mode=importlib -p no:cacheprovider
+      tests/unit/neuro/test_apex_adversarial.py
+      tests/ci/test_apex_adversarial_report.py -q
+  '
+signal_artifact: "tmp/apex_adversarial_soundness.log"
+falsifier:
+  command: |-
+    bash -c '
+      python -c "
+    import importlib.util, json, shutil, tempfile, pathlib
+    spec = importlib.util.spec_from_file_location(\"nua\", \"tools/audit_no_ungrounded_act.py\")
+    nua = importlib.util.module_from_spec(spec); spec.loader.exec_module(nua)
+    tmp = pathlib.Path(tempfile.mkdtemp())
+    shutil.copytree(\"artifacts\", tmp / \"artifacts\")
+    # forge: final verdict PASS but a substrate FAIL
+    fv = tmp / \"artifacts/inference/final_inference_verdict.json\"
+    d = json.loads(fv.read_text()); d[\"verdict\"] = \"PASS\"; fv.write_text(json.dumps(d))
+    cm = tmp / \"artifacts/concurrency/concurrency_matrix.json\"
+    d = json.loads(cm.read_text()); d[\"verdict\"] = \"FAIL\"; cm.write_text(json.dumps(d))
+    forged = nua.build_apex(tmp)[\"gate\"]
+    honest = nua.build_apex(pathlib.Path(\".\"))[\"gate\"]
+    raise SystemExit(0 if forged == \"FORBIDDEN\" and honest == \"ADMISSIBLE\" else \"apex fooled by a forged aggregate\")
+    "
+    '
+  description: >-
+    Forges the final verdict to PASS while a substrate is FAIL. Exits 0 when the
+    apex re-derivation still returns FORBIDDEN (honest root stays ADMISSIBLE);
+    non-zero if the forgery fools the apex.
+rollback_command: >-
+  bash -c 'git rm -f .claude/commit_acceptors/apex-adversarial-soundness.yaml'
+rollback_verification_command: >-
+  bash -c 'test ! -f .claude/commit_acceptors/apex-adversarial-soundness.yaml'
+memory_update_type: append
+ledger_path: ".claude/commit_acceptors/apex-adversarial-soundness.yaml"
+report_path: "tmp/apex_adversarial_soundness.log"
+evidence: []

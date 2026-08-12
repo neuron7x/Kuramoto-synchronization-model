@@ -1,0 +1,89 @@
+# Diff-bound commit acceptor: IAAFT linear-spectral null for the L2 Ricci
+# microstructure kill test.
+#
+# The kill test reported only two nulls: permutation_shuffle (gating, destroys
+# ALL temporal order) and circular_shift (advisory, loses power on the
+# autocorrelated Ricci signal). Neither preserves the signal's linear
+# autocorrelation while testing it. This PR wires the canonical IAAFT surrogate
+# (core.kuramoto.falsification.iaaft_surrogate, Schreiber & Schmitz 1996) into
+# the kill test as an ADVISORY null: it preserves the Ricci signal's power
+# spectrum + amplitude distribution exactly, so a surviving IC cannot be a
+# linear-spectral artifact. It is reported, never gating — promotion to a
+# gating null requires a separate fail-closed positive-control audit. No
+# published verdict is altered.
+
+id: iaaft-microstructure-null
+status: ACTIVE
+claim_type: correctness
+promise: >-
+  After this PR lands, research.microstructure.killtest.run_killtest reports an
+  `iaaft` entry in null_test_pvalues computed by _iaaft_pvalue, which surrogates
+  the 1-D cross-sectional Ricci signal over its finite support via
+  iaaft_surrogate (power-spectrum + amplitude-distribution preserving) and
+  recomputes the pooled IC against the real forward-return target. The null is
+  advisory: it is never added to the gate reasons and the binary PROCEED/KILL
+  verdict is unchanged. The estimator has demonstrated power (it stays
+  significant on a matched real edge) and fails closed (p=1.0) on <50 finite
+  samples, so it never manufactures a false signal.
+
+diff_scope:
+  changed_files:
+    - path: ".claude/commit_acceptors/iaaft-microstructure-null.yaml"
+    - path: "research/microstructure/killtest.py"
+    - path: "tests/test_l2_killtest.py"
+    - path: "research/microstructure/CHANGELOG.L2.md"
+  forbidden_paths:
+    - "trading/"
+    - "execution/"
+    - "forecast/"
+    - "policy/"
+
+required_python_symbols:
+  - "research/microstructure/killtest.py::_iaaft_pvalue"
+  - "research/microstructure/killtest.py::run_killtest"
+
+expected_signal: >-
+  pytest tests/test_l2_killtest.py reports all tests passed; the six IAAFT
+  tests confirm bounded probability, power on a real edge (p<0.05), relative
+  non-significance when independent, determinism, fail-closed short support
+  (p=1.0), and advisory non-gating integration (verdict stays KILL on noise).
+
+measurement_command: >-
+  bash -c '
+    python -m pytest tests/test_l2_killtest.py -q -p no:cacheprovider
+  '
+
+signal_artifact: "tmp/iaaft_microstructure_null.log"
+
+falsifier:
+  command: >-
+    bash -c 'python -c "import sys; import numpy as np; from research.microstructure.killtest
+    import _iaaft_pvalue, _pooled_ic; rng = np.random.default_rng(11); sig =
+    rng.normal(0.0, 1.0, size=1000).cumsum().astype(float); base = np.repeat(sig[:, None], 5,
+    axis=1); tgt = base + rng.normal(0.0, 0.01, size=(1000, 5)); obs = _pooled_ic(base, tgt);
+    p = _iaaft_pvalue(sig, tgt, obs, 5, trials=100, iters=60, seed=3); sys.exit(0 if p >= 0.05
+    else 1)"'
+  description: >-
+    Inverts the power invariant: it exits 0 (succeeds) only when the IAAFT null
+    is BLIND to a genuine, autocorrelated edge (positive-control p >= 0.05) —
+    i.e. the null was weakened until it can no longer detect real structure.
+    With the estimator intact the matched edge stays significant (p < 0.05), so
+    this exits 1.
+
+rollback_command: >-
+  bash -c '
+    git checkout origin/main --
+      research/microstructure/killtest.py
+      tests/test_l2_killtest.py
+    && git rm -f .claude/commit_acceptors/iaaft-microstructure-null.yaml
+  '
+
+rollback_verification_command: >-
+  bash -c '
+    test ! -e .claude/commit_acceptors/iaaft-microstructure-null.yaml
+    && ! grep -q "_iaaft_pvalue" research/microstructure/killtest.py
+  '
+
+memory_update_type: none
+ledger_path: ".claude/commit_acceptors/iaaft-microstructure-null.yaml"
+report_path: "research/microstructure/CHANGELOG.L2.md"

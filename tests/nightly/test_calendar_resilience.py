@@ -1,5 +1,7 @@
-# SPDX-License-Identifier: LicenseRef-TradePulse-Proprietary
+# Copyright (c) 2023-2026 Yaroslav Vasylenko (neuron7xLab)
+# SPDX-License-Identifier: MIT
 """Nightly stress tests for DST, holidays, and infrastructure outages."""
+
 from __future__ import annotations
 
 import asyncio
@@ -28,12 +30,8 @@ def _nyse_calendar() -> MarketCalendar:
         date(2024, 12, 25),
     }
     special_sessions = {
-        date(2024, 11, 29): SessionHours(
-            time(9, 30), time(13, 0)
-        ),  # Thanksgiving Friday
-        date(2024, 3, 15): SessionHours(
-            time(9, 30), time(12, 0)
-        ),  # Simulated outage early close
+        date(2024, 11, 29): SessionHours(time(9, 30), time(13, 0)),  # Thanksgiving Friday
+        date(2024, 3, 15): SessionHours(time(9, 30), time(12, 0)),  # Simulated outage early close
     }
     return MarketCalendar(
         "America/New_York",
@@ -69,9 +67,7 @@ def test_calendar_handles_consecutive_holiday_sequence() -> None:
         datetime(2024, 12, 2, 0, 0, tzinfo=ZoneInfo("UTC")),
     )
     assert len(thanksgiving_week) == 4
-    close_hours = [
-        session[1].astimezone(ZoneInfo("UTC")).hour for session in thanksgiving_week
-    ]
+    close_hours = [session[1].astimezone(ZoneInfo("UTC")).hour for session in thanksgiving_week]
     assert close_hours == [21, 21, 21, 18]
 
     friday_close = thanksgiving_week[-1][1] + timedelta(minutes=10)

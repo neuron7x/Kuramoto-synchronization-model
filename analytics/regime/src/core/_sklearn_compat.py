@@ -1,6 +1,8 @@
+# Copyright (c) 2023-2026 Yaroslav Vasylenko (neuron7xLab)
+# SPDX-License-Identifier: MIT
 """Compatibility shims for a minimal subset of scikit-learn.
 
-The original TradePulse analytics stack depends on a handful of utilities from
+The original GeoSync analytics stack depends on a handful of utilities from
 ``scikit-learn`` (logistic regression, isotonic calibration and a couple of
 metrics).  The production environment bundles those dependencies, but the kata
 testbed deliberately keeps the footprint small and does not install optional
@@ -13,7 +15,7 @@ parts of the scikit-learn API we rely on.  The implementations prioritise
 numerical robustness and readability over raw performance, which is perfectly
 adequate for the modest problem sizes exercised in the test-suite.
 
-Only the symbols imported in ``tradepulse_v21`` are implemented here:
+Only the symbols imported in ``geosync_v21`` are implemented here:
 
 ``LogisticRegression``
     Solves an L2-regularised logistic regression via iteratively reweighted
@@ -145,9 +147,7 @@ class LogisticRegression:
 
     def decision_function(self, features: ArrayLike) -> ArrayLike:
         if self.coef_ is None or self.intercept_ is None:
-            raise RuntimeError(
-                "The model must be fitted before calling decision_function"
-            )
+            raise RuntimeError("The model must be fitted before calling decision_function")
         x = np.asarray(features, dtype=float)
         return x @ self.coef_ + self.intercept_
 
@@ -180,9 +180,7 @@ class IsotonicRegression:
 
     def predict(self, x: ArrayLike) -> ArrayLike:
         if self._x is None or self._y is None:
-            raise RuntimeError(
-                "The isotonic regressor must be fitted before prediction"
-            )
+            raise RuntimeError("The isotonic regressor must be fitted before prediction")
 
         x_arr = np.asarray(x, dtype=float)
         x_sorted = self._x

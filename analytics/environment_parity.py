@@ -1,3 +1,5 @@
+# Copyright (c) 2023-2026 Yaroslav Vasylenko (neuron7xLab)
+# SPDX-License-Identifier: MIT
 """Parity coordination utilities across backtest, paper, and live runs.
 
 The helpers defined here provide a structured way to compare strategy results
@@ -134,13 +136,9 @@ class StrategyRunSnapshot:
             if not math.isfinite(numeric):
                 continue
             cleaned_metrics[str(key)] = numeric
-        object.__setattr__(
-            self, "metrics", MappingProxyType(dict(sorted(cleaned_metrics.items())))
-        )
+        object.__setattr__(self, "metrics", MappingProxyType(dict(sorted(cleaned_metrics.items()))))
 
-        cleaned_metadata = {
-            str(key): value for key, value in dict(self.metadata).items()
-        }
+        cleaned_metadata = {str(key): value for key, value in dict(self.metadata).items()}
         object.__setattr__(self, "metadata", MappingProxyType(cleaned_metadata))
 
     @classmethod
@@ -161,11 +159,7 @@ class StrategyRunSnapshot:
         metrics: MutableMapping[str, float] = {}
         if hasattr(report, "as_dict"):
             metrics.update(
-                {
-                    key: float(value)
-                    for key, value in report.as_dict().items()
-                    if value is not None
-                }
+                {key: float(value) for key, value in report.as_dict().items() if value is not None}
             )
 
         if extra_metrics:
@@ -268,8 +262,7 @@ class EnvironmentParityReport:
             parts.append(f"Missing environments: {missing}")
         if self.missing_metrics:
             detail = ", ".join(
-                f"{env}({', '.join(metrics)})"
-                for env, metrics in self.missing_metrics.items()
+                f"{env}({', '.join(metrics)})" for env, metrics in self.missing_metrics.items()
             )
             parts.append(f"Missing metrics: {detail}")
         if self.metric_deviations:
@@ -313,9 +306,7 @@ class EnvironmentParityChecker:
             raise ValueError("Snapshots must refer to the same strategy")
         strategy = strategy_names.pop()
 
-        missing_envs = tuple(
-            env for env in config.required_environments if env not in env_map
-        )
+        missing_envs = tuple(env for env in config.required_environments if env not in env_map)
 
         baseline_snapshot = env_map.get(config.baseline_environment)
 
@@ -329,9 +320,7 @@ class EnvironmentParityChecker:
             required_metrics = set()
 
         required_metrics.update(
-            metric
-            for metric in config.metric_tolerances.keys()
-            if metric not in excluded
+            metric for metric in config.metric_tolerances.keys() if metric not in excluded
         )
 
         missing_metrics: MutableMapping[str, tuple[str, ...]] = {}
@@ -387,9 +376,7 @@ class EnvironmentParityChecker:
                 if left_value is None or right_value is None:
                     continue
 
-                tolerance = config.metric_tolerances.get(
-                    metric, config.default_tolerance
-                )
+                tolerance = config.metric_tolerances.get(metric, config.default_tolerance)
                 if not tolerance.allows(left_value, right_value):
                     difference = abs(right_value - left_value)
                     scale = max(abs(left_value), abs(right_value), 1.0)
@@ -406,16 +393,12 @@ class EnvironmentParityChecker:
                     )
 
         code_digests = {env: snapshot.code_digest for env, snapshot in env_map.items()}
-        parameter_digests = {
-            env: snapshot.parameters_digest for env, snapshot in env_map.items()
-        }
+        parameter_digests = {env: snapshot.parameters_digest for env, snapshot in env_map.items()}
 
         if config.metadata_keys:
             metadata_keys = set(config.metadata_keys)
         else:
-            metadata_sets = [
-                set(snapshot.metadata.keys()) for snapshot in env_map.values()
-            ]
+            metadata_sets = [set(snapshot.metadata.keys()) for snapshot in env_map.values()]
             metadata_keys = set.intersection(*metadata_sets) if metadata_sets else set()
             metadata_keys -= _DEFAULT_METADATA_IGNORES
 

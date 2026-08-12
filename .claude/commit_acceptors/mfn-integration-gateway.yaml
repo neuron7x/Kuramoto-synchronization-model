@@ -1,0 +1,56 @@
+id: mfn-integration-gateway
+status: ACTIVE
+claim_type: governance
+promise: >-
+  The dependency-light MFN integration gateway, its three console entrypoints,
+  and the hermetic clean-install verifier are bound together; the gateway emits
+  a hash-manifested INSTRUMENTED-tier bundle and promotes no predictive claim.
+
+diff_scope:
+  changed_files:
+    - path: ".claude/commit_acceptors/mfn-integration-gateway.yaml"
+    - path: ".github/workflows/mfn-release-gate.yml"
+    - path: "geosync/mfn/__init__.py"
+    - path: "geosync/mfn/cli.py"
+    - path: "geosync/mfn/contract.py"
+    - path: "geosync/mfn/pipeline.py"
+    - path: "tests/unit/mfn/test_mfn_cli.py"
+    - path: "tools/verify_mfn_clean_install.py"
+  forbidden_paths:
+    - "trading/"
+    - "execution/"
+    - "forecast/"
+    - "runtime/"
+    - "application/"
+
+required_python_symbols:
+  - "geosync.mfn.cli.main"
+  - "geosync.mfn.pipeline.run_all"
+  - "geosync.mfn.contract.MFNContract"
+  - "tools.verify_mfn_clean_install.main"
+
+expected_signal: >-
+  A clean run produces a self-contained bundle (manifest.json + SHA256SUMS +
+  runbook.md + the six stage artifacts) that validates against its own hash
+  manifest; the bundle is byte-reproducible under a pinned SOURCE_DATE_EPOCH.
+
+measurement_command: >-
+  PYTHONPATH=. python -m pytest --noconftest -p no:cacheprovider -q tests/unit/mfn
+
+signal_artifact: "geosync/mfn/pipeline.py"
+
+falsifier:
+  command: python -m geosync.mfn.cli validate --bundle /tmp/nonexistent-mfn-bundle
+  description: validating a missing bundle reports missing artifacts and exits non-zero
+
+rollback_command: >-
+  git checkout -- geosync/mfn tools/verify_mfn_clean_install.py
+  tests/unit/mfn .github/workflows/mfn-release-gate.yml
+  .claude/commit_acceptors/mfn-integration-gateway.yaml
+
+rollback_verification_command: git diff --exit-code
+
+memory_update_type: append
+ledger_path: ".claude/commit_acceptors/mfn-integration-gateway.yaml"
+report_path: "geosync/mfn/pipeline.py"
+evidence: []

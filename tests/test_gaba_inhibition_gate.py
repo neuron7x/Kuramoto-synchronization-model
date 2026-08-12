@@ -1,3 +1,5 @@
+# Copyright (c) 2023-2026 Yaroslav Vasylenko (neuron7xLab)
+# SPDX-License-Identifier: MIT
 import math
 
 import pytest
@@ -14,9 +16,9 @@ from modules.gaba_inhibition_gate import (
 def base_state(vix=20.0, vol=0.1, ret=0.01, pos=1.0, rpe=0.0, dt_ms=20.0):
     return {
         "vix": torch.tensor(vix),
-        "vol": torch.tensor(vol),
-        "ret": torch.tensor(ret),
-        "pos": torch.tensor(pos),
+        "volatility": torch.tensor(vol),
+        "return": torch.tensor(ret),
+        "position": torch.tensor(pos),
         "rpe": torch.tensor(rpe),
         "delta_t_ms": torch.tensor(dt_ms),
     }
@@ -54,9 +56,7 @@ def test_cycle_modulation_range():
 
 def test_custom_gate_params():
     """Test gate with custom parameters."""
-    custom_params = GateParams(
-        k_inhibit=0.6, cycle_modulation=False, risk_min=0.3, risk_max=2.0
-    )
+    custom_params = GateParams(k_inhibit=0.6, cycle_modulation=False, risk_min=0.3, risk_max=2.0)
     gate = GABAInhibitionGate(params=custom_params)
     a = torch.tensor([1.0])
     gated, metrics = gate(base_state(), a)
@@ -205,10 +205,10 @@ def test_market_state_nan_validation():
     with pytest.raises(ValueError, match="vix contains NaN or Inf"):
         gate(state_with_nan, torch.tensor([1.0]))
 
-    # Test Inf in vol
+    # Test Inf in volatility
     state_with_inf = base_state()
-    state_with_inf["vol"] = torch.tensor(float("inf"))
-    with pytest.raises(ValueError, match="vol contains NaN or Inf"):
+    state_with_inf["volatility"] = torch.tensor(float("inf"))
+    with pytest.raises(ValueError, match="volatility contains NaN or Inf"):
         gate(state_with_inf, torch.tensor([1.0]))
 
 
@@ -501,14 +501,10 @@ def test_rpe_and_position_adaptive_plasticity():
     gate = GABAInhibitionGate()
     action = torch.tensor([1.0])
 
-    positive_state = base_state(
-        vix=50.0, vol=0.6, ret=0.4, rpe=0.9, pos=0.2, dt_ms=10.0
-    )
+    positive_state = base_state(vix=50.0, vol=0.6, ret=0.4, rpe=0.9, pos=0.2, dt_ms=10.0)
     _, metrics_positive = gate(positive_state, action)
 
-    negative_state = base_state(
-        vix=50.0, vol=0.6, ret=0.4, rpe=-0.9, pos=3.0, dt_ms=10.0
-    )
+    negative_state = base_state(vix=50.0, vol=0.6, ret=0.4, rpe=-0.9, pos=3.0, dt_ms=10.0)
     _, metrics_negative = gate(negative_state, action)
 
     assert metrics_positive.adaptive_delta > metrics_negative.adaptive_delta

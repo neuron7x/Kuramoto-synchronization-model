@@ -1,7 +1,9 @@
+# Copyright (c) 2023-2026 Yaroslav Vasylenko (neuron7xLab)
+# SPDX-License-Identifier: MIT
 import os
 
-os.environ.setdefault("TRADEPULSE_AUDIT_SECRET", "test-secret-placeholder")
-os.environ["TRADEPULSE_TWO_FACTOR_SECRET"] = "JBSWY3DPEHPK3PXP"
+os.environ.setdefault("GEOSYNC_AUDIT_SECRET", "test-secret-placeholder")
+os.environ["GEOSYNC_TWO_FACTOR_SECRET"] = "JBSWY3DPEHPK3PXP"
 
 from application.runtime.init_control_platform import initialize_control_platform
 

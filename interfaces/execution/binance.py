@@ -1,3 +1,5 @@
+# Copyright (c) 2023-2026 Yaroslav Vasylenko (neuron7xLab)
+# SPDX-License-Identifier: MIT
 """Binance execution connector with authenticated REST and user-stream support."""
 
 from __future__ import annotations
@@ -134,9 +136,7 @@ class BinanceExecutionConnector(AuthenticatedRESTExecutionConnector):
                 params=params,
                 idempotency_key=client_id,
             )
-        except (
-            httpx.HTTPStatusError
-        ) as exc:  # pragma: no cover - httpx raises with status context
+        except httpx.HTTPStatusError as exc:  # pragma: no cover - httpx raises with status context
             raise OrderError(str(exc)) from exc
         data = response.json()
         order_id = data.get("orderId")
@@ -345,9 +345,7 @@ class BinanceExecutionConnector(AuthenticatedRESTExecutionConnector):
         if executed:
             last_price = float(payload.get("avgPrice", 0) or 0)
             if not last_price and executed:
-                cumulative_quote = float(
-                    payload.get("cummulativeQuoteQty", payload.get("Z", 0))
-                )
+                cumulative_quote = float(payload.get("cummulativeQuoteQty", payload.get("Z", 0)))
                 if cumulative_quote:
                     last_price = cumulative_quote / executed
             if last_price:

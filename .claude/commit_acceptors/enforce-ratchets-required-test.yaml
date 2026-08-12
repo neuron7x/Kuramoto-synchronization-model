@@ -1,0 +1,73 @@
+# Diff-bound commit acceptor: make the code-hygiene / import-architecture
+# ratchets ENFORCING via the required python-fast-tests suite.
+#
+# The ratchet gate workflows are not branch-protection required, so their
+# verdict could not block a merge (the apparatus was advisory). This test runs
+# the three git-light ratchets inside a required check, so new debt that is not
+# paid into the baseline now fails a required gate. Infra/governance only.
+
+id: enforce-ratchets-required-test
+status: ACTIVE
+claim_type: governance
+promise: >-
+  After this PR lands, tests/ci/test_ratchets_enforced.py runs
+  check_code_hygiene, check_skip_ratchet and check_import_architecture inside
+  the required python-fast-tests suite and asserts each exits 0, so a PR that
+  adds a god function, broad except, ambient nondeterminism, runtime print,
+  test skip, src.* import or sys.path hack without paying it into the baseline
+  fails a REQUIRED check rather than only an advisory gate. The meta-gate
+  (anti-laundering) remains enforced by the code-hygiene-gate workflow. No
+  physics, runtime, or forecasting change.
+
+diff_scope:
+  changed_files:
+    - path: ".claude/commit_acceptors/enforce-ratchets-required-test.yaml"
+    - path: "tests/ci/test_ratchets_enforced.py"
+  forbidden_paths:
+    - "trading/"
+    - "execution/"
+    - "forecast/"
+    - "policy/"
+    - "core/"
+    - "runtime/"
+    - "application/"
+
+required_python_symbols:
+  - "tests/ci/test_ratchets_enforced.py::test_ratchet_holds_on_current_tree"
+
+expected_signal: >-
+  python -m pytest tests/ci/test_ratchets_enforced.py reports 3 passed on a
+  clean tree.
+
+measurement_command: >-
+  bash -c '
+    mkdir -p tmp &&
+    python -m pytest -q tests/ci/test_ratchets_enforced.py | tee tmp/enforce_ratchets.log
+  '
+
+signal_artifact: "tmp/enforce_ratchets.log"
+
+falsifier:
+  command: >-
+    bash -c 'printf "def big():\n" > geosync/__enf_inject.py; for i in $(seq 1 90); do printf "    x%d=%d\n" "$i" "$i" >> geosync/__enf_inject.py; done; python -m pytest -q tests/ci/test_ratchets_enforced.py >/dev/null 2>&1; rc=$?; rm -f geosync/__enf_inject.py; test "$rc" -ne 0'
+  description: >-
+    Writes a 90-line god function into a runtime root and asserts the
+    enforcement test FAILS (exit non-zero). Succeeds (exit 0) only when new
+    debt trips a required check — proving the ratchet is now enforcing, not
+    advisory. The temp file is always removed.
+
+rollback_command: >-
+  bash -c '
+    git rm -f
+      tests/ci/test_ratchets_enforced.py
+      .claude/commit_acceptors/enforce-ratchets-required-test.yaml
+  '
+
+rollback_verification_command: >-
+  bash -c '
+    test ! -e tests/ci/test_ratchets_enforced.py
+  '
+
+memory_update_type: append
+ledger_path: ".claude/commit_acceptors/enforce-ratchets-required-test.yaml"
+report_path: "tmp/enforce_ratchets.log"

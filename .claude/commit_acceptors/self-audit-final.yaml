@@ -1,0 +1,84 @@
+# Diff-bound commit acceptor for the final self-audit + LIMITATIONS update.
+#
+# Closes audit tasks 24 (LIMITATIONS § 6 — outstanding gaps), 31, 32, 33
+# (self-audit + score-card). Doc-only PR; no code changes.
+#
+# Locally verified:
+#   * pytest tests/research/systemic_risk/: 532/532 pass (no regressions
+#     from doc-only changes)
+
+id: self-audit-final
+status: ACTIVE
+claim_type: documentation
+promise: >-
+  After this PR lands, ``research/systemic_risk/`` ships a final
+  honest self-audit ``SELF_AUDIT_2026-05-08.md`` with anchored
+  per-axis scores (88/100 weighted aggregate; the 12-point gap
+  attributed to real-data and external-review blockers, not to
+  unfinished autonomous work). LIMITATIONS.md § 6 enumerates the
+  blocked checklist items.
+
+diff_scope:
+  changed_files:
+    - path: ".claude/commit_acceptors/self-audit-final.yaml"
+    - path: "research/systemic_risk/LIMITATIONS.md"
+    - path: "research/systemic_risk/SELF_AUDIT_2026-05-08.md"
+  forbidden_paths:
+    - "trading/"
+    - "execution/"
+    - "forecast/"
+    - "policy/"
+    - "core/"
+    - "runtime/"
+    - "application/"
+    - "research/systemic_risk/death_conditions.py"
+    - "research/systemic_risk/evidence_ledger.py"
+    - "research/systemic_risk/leakage_sentinel.py"
+    - "research/systemic_risk/data_firewall.py"
+    - "research/systemic_risk/replication_capsule.py"
+    - "research/systemic_risk/governance_fsm.py"
+    - "research/systemic_risk/canonical_seven.py"
+    - "research/systemic_risk/minimal.py"
+    - "research/systemic_risk/cli.py"
+    - "research/systemic_risk/synthetic.py"
+
+required_python_symbols: []
+
+expected_signal: >-
+  ``grep -c 'Blocked' research/systemic_risk/SELF_AUDIT_2026-05-08.md``
+  reports >= 5 (one per blocked task). ``grep -c 'Done'
+  research/systemic_risk/SELF_AUDIT_2026-05-08.md`` reports >= 15.
+
+measurement_command: >-
+  bash -c '
+    grep -c Done research/systemic_risk/SELF_AUDIT_2026-05-08.md
+  '
+
+signal_artifact: "tmp/self_audit_final.log"
+
+falsifier:
+  command: >-
+    bash -c '
+      grep -q "Outstanding gaps" research/systemic_risk/LIMITATIONS.md 2>/dev/null && exit 1 || exit 0
+    '
+  description: >-
+    Probes that LIMITATIONS § 6 was added. Falsifier inverts: it
+    succeeds (exit 0) only when the section is missing, which would
+    mean the audit doc rolled back.
+
+rollback_command: >-
+  bash -c '
+    git rm -f
+      research/systemic_risk/SELF_AUDIT_2026-05-08.md
+      .claude/commit_acceptors/self-audit-final.yaml && git checkout HEAD~1 -- research/systemic_risk/LIMITATIONS.md
+  '
+
+rollback_verification_command: >-
+  bash -c '
+    [ ! -f research/systemic_risk/SELF_AUDIT_2026-05-08.md ]
+  '
+
+memory_update_type: append
+ledger_path: ".claude/commit_acceptors/self-audit-final.yaml"
+report_path: "tmp/self_audit_final.log"
+evidence: []

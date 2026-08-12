@@ -1,0 +1,53 @@
+{
+  "schema_version": "D002K-SOURCE-OBSERVABLE-SUMMARY-v1",
+  "generated_at": "2026-05-15T00:00:00Z",
+  "parent_contract_path": "artifacts/d002k/observables/source_observable_contract_v1.json",
+  "primary_metric": "pre_post_standardized_mean_shift",
+  "primary_mechanism": "funding_liquidity_rollover",
+  "total_observables": 8,
+  "counts_by_observable_family": {
+    "level_shift": 2,
+    "spread_widening": 1,
+    "volatility_burst": 2,
+    "recovery_time": 1,
+    "transition_steepness": 1,
+    "stress_persistence": 1
+  },
+  "p0_families_covered": [
+    "level_shift",
+    "spread_widening",
+    "volatility_burst",
+    "recovery_time",
+    "transition_steepness",
+    "stress_persistence"
+  ],
+  "all_six_p0_families_covered": true,
+  "counts_by_source_id": {
+    "NYFED_SOFR": 2,
+    "FED_H15": 1,
+    "OFR_REPO_DATA": 1,
+    "OFR_FSI": 1,
+    "STLFSI": 1,
+    "ALFRED": 1,
+    "CBOE_VIX": 1
+  },
+  "all_sources_p1b_surviving": true,
+  "counts_by_crisis_window": {
+    "CW3_US_REPO_SPIKE_2019": 7,
+    "CW4_COVID_DASH_FOR_CASH_2020": 7,
+    "CW5_UK_GILT_LDI_2022": 3
+  },
+  "all_windows_in_cw3_cw4_cw5": true,
+  "vintage_required_count": 2,
+  "vintage_required_observable_ids": [
+    "obs_stlfsi_funding_stress_persistence",
+    "obs_alfred_tedrate_vintage_level_shift_uk_gilt"
+  ],
+  "control_covariate_count": 1,
+  "control_covariate_observable_ids": [
+    "obs_vix_control_covariate"
+  ],
+  "funding_liquidity_observable_count": 7,
+  "contagion_or_balance_sheet_sources_bound": 0,
+  "decision": "D002K_SOURCE_OBSERVABLE_CONTRACT_READY"
+}

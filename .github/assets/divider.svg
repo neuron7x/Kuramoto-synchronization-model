@@ -1,0 +1,33 @@
+<svg xmlns="http://www.w3.org/2000/svg" width="800" height="12" viewBox="0 0 800 12">
+  <defs>
+    <linearGradient id="pulse-green" x1="0%" y1="0%" x2="100%" y2="0%">
+      <stop offset="0%" stop-color="#00ff41" stop-opacity="0">
+        <animate attributeName="offset" values="-0.3;1.0" dur="3s" repeatCount="indefinite"/>
+      </stop>
+      <stop offset="15%" stop-color="#00ff41" stop-opacity="0.8">
+        <animate attributeName="offset" values="-0.15;1.15" dur="3s" repeatCount="indefinite"/>
+      </stop>
+      <stop offset="30%" stop-color="#00ff41" stop-opacity="0">
+        <animate attributeName="offset" values="0;1.3" dur="3s" repeatCount="indefinite"/>
+      </stop>
+    </linearGradient>
+    <linearGradient id="pulse-red" x1="100%" y1="0%" x2="0%" y2="0%">
+      <stop offset="0%" stop-color="#ff3333" stop-opacity="0">
+        <animate attributeName="offset" values="-0.3;1.0" dur="4s" repeatCount="indefinite"/>
+      </stop>
+      <stop offset="15%" stop-color="#ff3333" stop-opacity="0.6">
+        <animate attributeName="offset" values="-0.15;1.15" dur="4s" repeatCount="indefinite"/>
+      </stop>
+      <stop offset="30%" stop-color="#ff3333" stop-opacity="0">
+        <animate attributeName="offset" values="0;1.3" dur="4s" repeatCount="indefinite"/>
+      </stop>
+    </linearGradient>
+    <filter id="glow">
+      <feGaussianBlur stdDeviation="1" result="blur"/>
+      <feMerge><feMergeNode in="blur"/><feMergeNode in="SourceGraphic"/></feMerge>
+    </filter>
+  </defs>
+  <line x1="0" y1="6" x2="800" y2="6" stroke="#1a2332" stroke-width="0.5"/>
+  <line x1="0" y1="6" x2="800" y2="6" stroke="url(#pulse-green)" stroke-width="1.5" filter="url(#glow)"/>
+  <line x1="0" y1="6" x2="800" y2="6" stroke="url(#pulse-red)" stroke-width="1.2" filter="url(#glow)"/>
+</svg>

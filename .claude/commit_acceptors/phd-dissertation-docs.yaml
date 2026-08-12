@@ -1,0 +1,42 @@
+# SPDX-License-Identifier: MIT
+id: phd-dissertation-docs
+status: ACTIVE
+claim_type: documentation
+promise: >-
+  Diff-bound documentation acceptor for the docs/phd dissertation layer. The
+  bound files frame GeoSync's governance infrastructure as a research artifact
+  and make only admissibility claims; they explicitly disclaim market alpha,
+  profitability, B.wheel=0, and real L2 empirical validation. They promote no
+  trading, execution, forecasting, or policy behavior.
+diff_scope:
+  changed_files:
+    - path: ".claude/commit_acceptors/phd-dissertation-docs.yaml"
+    - path: "docs/phd/00_thesis_statement.md"
+    - path: "docs/phd/01_research_questions.md"
+    - path: "docs/phd/02_contributions.md"
+    - path: "docs/phd/03_evidence_matrix.md"
+    - path: "docs/phd/04_limitation_ledger.md"
+    - path: "docs/phd/05_next_empirical_chapter.md"
+    - path: "docs/phd/README.md"
+  forbidden_paths:
+    - "trading/"
+    - "execution/"
+    - "forecast/"
+    - "policy/"
+required_python_symbols: []
+expected_signal: >-
+  scripts/ci/check_claim_boundary.py exits 0 — the dissertation docs assert no
+  unreviewed product-category claim; every claim stays at admissibility tier.
+measurement_command: "python scripts/ci/check_claim_boundary.py"
+signal_artifact: "tmp/phd_docs_claim_boundary.log"
+falsifier:
+  command: "python -c \"import subprocess,sys; r=subprocess.run([sys.executable,'scripts/ci/check_claim_boundary.py']); sys.exit(0 if r.returncode!=0 else 1)\""
+  description: >-
+    Asserts the claim-boundary gate is RED; on the green path this probe exits
+    non-zero, proving the promise is falsifiable rather than vacuous.
+rollback_command: "git revert --no-edit HEAD"
+rollback_verification_command: "python scripts/ci/check_claim_boundary.py"
+memory_update_type: none
+ledger_path: "docs/phd/03_evidence_matrix.md"
+report_path: "docs/phd/README.md"
+evidence: []

@@ -1,0 +1,22 @@
+id: bbb-nvu-cng-product-readiness
+status: ACTIVE
+claim_type: documentation
+promise: "Diff-bound acceptor for the BBB NVU readiness document."
+diff_scope:
+  changed_files:
+    - path: ".claude/commit_acceptors/bbb-nvu-cng-product-readiness.yaml"
+    - path: "BBB_NVU_Cognitive_Noise_Gate_2026/docs/product_readiness_manifest.md"
+  forbidden_paths: []
+required_python_symbols: []
+expected_signal: "The readiness document is covered by a diff-bound acceptor."
+measurement_command: "python BBB_NVU_Cognitive_Noise_Gate_2026/tools/verify_artifact.py"
+signal_artifact: "tmp/bbb_nvu_cng_verify_artifact.json"
+falsifier:
+  command: "python missing_bbb_nvu_command.py"
+  description: "Missing command must fail."
+rollback_command: "git diff --exit-code"
+rollback_verification_command: "git diff --exit-code"
+memory_update_type: append
+ledger_path: ".claude/commit_acceptors/bbb-nvu-cng-product-readiness.yaml"
+report_path: "tmp/bbb_nvu_cng_verify_artifact.json"
+evidence: []

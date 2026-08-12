@@ -1,4 +1,4 @@
-# SPDX-License-Identifier: LicenseRef-TradePulse-Proprietary
+# SPDX-License-Identifier: MIT
 # Continuous integration Hydra profile.
 
 defaults:

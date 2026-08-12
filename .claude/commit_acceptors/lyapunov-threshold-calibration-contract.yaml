@@ -1,0 +1,31 @@
+# Diff-bound commit acceptor: Lyapunov threshold calibration contract.
+id: lyapunov-threshold-calibration-contract
+status: ACTIVE
+claim_type: determinism
+promise: "Lyapunov threshold selection uses a deterministic fixed grid, calibration/validation split, holdout metric reporting, sensitivity sweep metadata, and fail-closed invalid input handling without adding prediction or trading claims."
+diff_scope:
+  changed_files:
+    - path: "cortex_service/scripts/calibrate_lyapunov_threshold.py"
+    - path: "cortex_service/tests/test_calibrate_lyapunov_threshold.py"
+    - path: ".claude/commit_acceptors/lyapunov-threshold-calibration-contract.yaml"
+  forbidden_paths:
+    - "trading/"
+    - "execution/"
+    - "forecast/"
+    - "research/calibration/grid_kuramoto/"
+required_python_symbols:
+  - "calibrate_threshold"
+  - "CalibrationResult"
+  - "SensitivityRow"
+expected_signal: "deterministic Lyapunov threshold calibration records split metadata and sensitivity sweep"
+measurement_command: "python -m pytest cortex_service/tests/test_calibrate_lyapunov_threshold.py -q"
+signal_artifact: "tmp/lyapunov_threshold_calibration_pytest.log"
+falsifier:
+  command: "python -m pytest cortex_service/tests/test_calibrate_lyapunov_threshold.py::test_validation_split_does_not_select_candidate -q"
+  description: "Probe fails if validation metrics influence threshold selection."
+rollback_command: "git checkout -- cortex_service/scripts/calibrate_lyapunov_threshold.py cortex_service/tests/test_calibrate_lyapunov_threshold.py"
+rollback_verification_command: "git diff --exit-code cortex_service/scripts/calibrate_lyapunov_threshold.py cortex_service/tests/test_calibrate_lyapunov_threshold.py"
+memory_update_type: none
+ledger_path: ".claude/commit_acceptors/lyapunov-threshold-calibration-contract.yaml"
+report_path: ".claude/commit_acceptors/lyapunov-threshold-calibration-contract.yaml"
+evidence: []

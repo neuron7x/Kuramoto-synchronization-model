@@ -69,6 +69,12 @@ updates:
       - javascript
       - frontend
     open-pull-requests-limit: 10
+    ignore:
+      # eslint 10.x breaks transitive eslint-plugin-react@7.37.x bundled by
+      # eslint-config-next (Linter#getFilename removal). Hold on 9.x until the
+      # plugin ecosystem catches up, then drop this ignore.
+      - dependency-name: "eslint"
+        update-types: ["version-update:semver-major"]
     groups:
       # Development tools
       frontend-dev-tools:
@@ -94,6 +100,11 @@ updates:
       - javascript
       - ui
     open-pull-requests-limit: 10
+    ignore:
+      # See /apps/web rationale — eslint 10.x is incompatible with bundled
+      # eslint-plugin-react until upstream releases a compat version.
+      - dependency-name: "eslint"
+        update-types: ["version-update:semver-major"]
     groups:
       # Development tools
       ui-dev-tools:
@@ -106,7 +117,7 @@ updates:
 
   # Rust dependencies
   - package-ecosystem: "cargo"
-    directory: "/rust/tradepulse-accel"
+    directory: "/rust/geosync-accel"
     schedule:
       interval: "weekly"
     labels:
@@ -177,3 +188,13 @@ updates:
       - dependencies
       - docker
     open-pull-requests-limit: 5
+
+  - package-ecosystem: "gomod"
+    directory: "/examples/go-client"
+    schedule:
+      interval: "weekly"
+    labels:
+      - dependencies
+      - go
+    open-pull-requests-limit: 5
+

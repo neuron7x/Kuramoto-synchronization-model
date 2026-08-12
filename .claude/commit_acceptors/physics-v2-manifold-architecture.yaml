@@ -1,0 +1,157 @@
+# Diff-bound commit acceptor for the Physics v2 first implementation slice.
+#
+# This replaces the earlier non-standard "draft_handoff" document (which failed
+# the static-schema gate because it lacked the required acceptor fields). The
+# architecture narrative now lives entirely in
+# docs/architecture/physics_v2_universal_synchronization_manifold.md (governance
+# markdown, acceptor-exempt). This file is the standard, schema-valid acceptor
+# that binds the first implementation slice.
+#
+# What lands in this slice (typed contracts + draft laws only — NO solver, NO L2
+# ingest, NO market claim):
+#   * physics_contracts/manifold/{__init__,contracts,fixtures}.py
+#       Frozen typed contracts: MarketCausalGraphSnapshot (P2 schema, fail-closed
+#       validation + deterministic snapshot_id), CurvatureSyncFrame (P4 schema),
+#       ComparisonReport (P5 null-control container with downgrade discipline),
+#       EvidenceCapsuleShape (P6 shape, reuse-mapped to instrument_validation),
+#       and the fail-closed require_licensed_l2 gate (explicit DATA_UNAVAILABLE).
+#   * physics_contracts/catalog.yaml
+#       Six candidate Physics v2 laws, ALL severity: warn (non-blocking).
+#   * tests/physics_contracts/test_physics_v2_manifold_contracts.py
+#       25 deterministic synthetic tests; three structural laws additionally
+#       bound as literal-free @law witnesses.
+#   * artifacts/physics_v2/inventory.md  (P0 inventory; markdown, exempt)
+#
+# Strict scope (architecture doc §5):
+#   * NO predictive-alpha claim.
+#   * NO production-trading integration.
+#   * NO universal-market-physics or relativity-equivalence claim.
+#   * NO real-L2 claim — no dataset manifest, data hash, or run artifact exists in
+#     this slice, and EvidenceCapsuleShape fails closed if one is asserted.
+#   * NO new blocking law (all six are warn) and NO solver.
+
+id: physics-v2-manifold-architecture
+status: ACTIVE
+claim_type: fail_closed
+promise: >-
+  After this PR lands, the Physics v2 typed contract layer in
+  physics_contracts/manifold/ provides a fail-closed, deterministic vocabulary
+  for the snapshot -> curvature/synchronization frame -> comparison report ->
+  evidence capsule chain. Every contract validates fail-closed (a violation is a
+  ValueError, never a silent clamp): MarketCausalGraphSnapshot rejects
+  non-monotonic intervals, negative latency, a causal cutoff below the latency
+  floor, out-of-range edge indices, self-loops, and negative/non-finite weights;
+  assert_no_lookahead rejects any source event after the snapshot end;
+  require_licensed_l2 raises LicensedDataUnavailable (explicit DATA_UNAVAILABLE)
+  for a missing, zero-hash, or synthetic-tagged fingerprint and NEVER substitutes
+  synthetic data; ComparisonReport refuses the SURVIVED_NULLS status unless the
+  candidate strictly beats every negative control; EvidenceCapsuleShape refuses a
+  real-data maturity tier when data_status is DATA_UNAVAILABLE. Replay identity
+  holds: snapshot_id, run_id, and capsule_digest are deterministic canonical-JSON
+  SHA-256 digests. The six candidate laws added to physics_contracts/catalog.yaml
+  are all severity: warn (non-blocking); no blocking law and no solver enters in
+  this slice. No predictive-alpha, production-trading, universal-physics,
+  relativity-equivalence, or real-L2 claim is made.
+diff_scope:
+  changed_files:
+    - path: ".claude/commit_acceptors/physics-v2-manifold-architecture.yaml"
+    - path: "docs/architecture/physics_v2_universal_synchronization_manifold.md"
+    - path: "physics_contracts/catalog.yaml"
+    - path: "physics_contracts/manifold/__init__.py"
+    - path: "physics_contracts/manifold/contracts.py"
+    - path: "physics_contracts/manifold/fixtures.py"
+    - path: "tests/physics_contracts/test_physics_v2_manifold_contracts.py"
+    - path: "artifacts/physics_v2/inventory.md"
+    - path: ".github/claim_boundary_allow.json"
+  forbidden_paths:
+    - "trading/"
+    - "execution/"
+    - "forecast/"
+    - "policy/"
+    - "core/physics/"
+    - "core/kuramoto/"
+    - "src/geosync/"
+required_python_symbols:
+  - "tests/physics_contracts/test_physics_v2_manifold_contracts.py::test_candidate_laws_present_and_warn_severity"
+  - "tests/physics_contracts/test_physics_v2_manifold_contracts.py::test_snapshot_id_is_deterministic"
+  - "tests/physics_contracts/test_physics_v2_manifold_contracts.py::test_no_lookahead_rejects_future_event"
+  - "tests/physics_contracts/test_physics_v2_manifold_contracts.py::test_require_licensed_l2_fails_closed_on_missing_data"
+  - "tests/physics_contracts/test_physics_v2_manifold_contracts.py::test_require_licensed_l2_rejects_synthetic_fingerprint"
+  - "tests/physics_contracts/test_physics_v2_manifold_contracts.py::test_comparison_report_survival_requires_beating_every_control"
+  - "tests/physics_contracts/test_physics_v2_manifold_contracts.py::test_capsule_blocks_real_maturity_without_data"
+expected_signal: >-
+  Local: `pytest tests/physics_contracts/test_physics_v2_manifold_contracts.py -q`
+  reports "25 passed"; `mypy --strict physics_contracts` is clean;
+  `ruff check physics_contracts/manifold tests/physics_contracts/test_physics_v2_manifold_contracts.py`
+  and `black --check` on the same paths both pass;
+  `python tools/validate_tests.py` introduces no new blocking-missing or
+  witness-error finding (the six new laws appear only under WARN).
+measurement_command: >-
+  bash -c 'mypy --strict physics_contracts
+  && ruff check physics_contracts/manifold tests/physics_contracts/test_physics_v2_manifold_contracts.py
+  && black --check physics_contracts/manifold tests/physics_contracts/test_physics_v2_manifold_contracts.py
+  && pytest tests/physics_contracts/test_physics_v2_manifold_contracts.py -q'
+signal_artifact: "tmp/physics_v2_manifold_contracts_pytest.log"
+falsifier:
+  command: |-
+    bash -c 'python -c "
+    from physics_contracts.manifold import fixtures as fx
+    from physics_contracts.manifold.contracts import (
+        require_licensed_l2,
+        LicensedDataUnavailable,
+        ComparisonReport,
+        NullControl,
+    )
+    # 1. fail-closed: missing licensed data must raise, never return synthetic.
+    raised = False
+    try:
+        require_licensed_l2(None)
+    except LicensedDataUnavailable:
+        raised = True
+    assert raised, \"require_licensed_l2(None) must fail closed\"
+    # 2. synthetic fingerprints are rejected in the real-data path.
+    syn = fx.synthetic_snapshot().dataset_fingerprint
+    raised = False
+    try:
+        require_licensed_l2(syn)
+    except LicensedDataUnavailable:
+        raised = True
+    assert raised, \"synthetic fingerprint must not pass as licensed data\"
+    # 3. replay identity: snapshot_id is deterministic.
+    assert fx.synthetic_snapshot(7).snapshot_id == fx.synthetic_snapshot(7).snapshot_id
+    # 4. over-claim guard: SURVIVED_NULLS illegal when a control ties the candidate.
+    raised = False
+    try:
+        ComparisonReport(
+            candidate_statistic=0.5,
+            null_controls=(NullControl(name=\"n\", statistic=0.5),),
+            claim_status=\"SURVIVED_NULLS\",
+            validity_domain=\"falsifier\",
+        )
+    except ValueError:
+        raised = True
+    assert raised, \"ComparisonReport must refuse unearned SURVIVED_NULLS\"
+    print(\"physics-v2 fail-closed contract holds\")
+    "'
+  description: >-
+    Probes the Physics v2 fail-closed contract: (1) require_licensed_l2(None)
+    must raise LicensedDataUnavailable rather than substituting synthetic data;
+    (2) a synthetic-tagged fingerprint must be rejected on the licensed-data
+    path; (3) snapshot_id must be a deterministic content-address (replay
+    identity); (4) ComparisonReport must refuse the SURVIVED_NULLS status when a
+    negative control is not strictly beaten. Any other behaviour is a contract
+    breach.
+rollback_command: >-
+  bash -c 'git checkout origin/main -- physics_contracts/catalog.yaml
+  && rm -rf physics_contracts/manifold
+  && rm -f tests/physics_contracts/test_physics_v2_manifold_contracts.py
+  artifacts/physics_v2/inventory.md
+  .claude/commit_acceptors/physics-v2-manifold-architecture.yaml'
+rollback_verification_command: >-
+  bash -c 'test ! -d physics_contracts/manifold
+  && test ! -f tests/physics_contracts/test_physics_v2_manifold_contracts.py
+  && test ! -f .claude/commit_acceptors/physics-v2-manifold-architecture.yaml'
+memory_update_type: append
+ledger_path: ".claude/commit_acceptors/physics-v2-manifold-architecture.yaml"
+report_path: "tmp/physics_v2_manifold_contracts_pytest.log"
+evidence: []

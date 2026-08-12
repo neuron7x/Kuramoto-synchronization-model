@@ -2,7 +2,7 @@
 
 ## Overview
 
-The TradePulse performance testing infrastructure provides comprehensive replay-based testing for multi-exchange market data with automated regression detection and CI/CD integration.
+The GeoSync performance testing infrastructure provides comprehensive replay-based testing for multi-exchange market data with automated regression detection and CI/CD integration.
 
 ## Features
 
@@ -352,6 +352,6 @@ If latency metrics are unexpectedly high:
 
 ## References
 
-- [Performance Testing Guide](./testing.md)
+- [Performance Testing Guide](operations/TESTING.md)
 - [CI/CD Documentation](../README.md#cicd)
-- [Replay Recording Format](./data_formats.md)
+- [Replay Recording Format](data/sample_market_data.md)

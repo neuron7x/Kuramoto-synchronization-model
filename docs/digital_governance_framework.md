@@ -6,7 +6,7 @@
 
 ## Overview
 
-The Digital Governance Framework implements all 20 requirements of the TradePulse digital transformation mandate. It provides centralized enforcement and observability for complete digitalization of the trading system.
+The Digital Governance Framework implements all 20 requirements of the GeoSync digital transformation mandate. It provides centralized enforcement and observability for complete digitalization of the trading system.
 
 ## Architecture
 
@@ -41,12 +41,12 @@ The Digital Governance Framework implements all 20 requirements of the TradePuls
 Main orchestrator that coordinates all governance functions.
 
 ```python
-from src.tradepulse.core.digital_governance import DigitalGovernanceFramework
+from src.geosync.core.digital_governance import DigitalGovernanceFramework
 
 # Initialize framework
 governance = DigitalGovernanceFramework(
     schema_dir=Path("schemas/events/json/1.0.0"),
-    audit_log_path=Path("/var/log/tradepulse/audit.jsonl"),
+    audit_log_path=Path("/var/log/geosync/audit.jsonl"),
     enable_strict_mode=True,
 )
 
@@ -104,7 +104,7 @@ Validates all market events against JSON schemas.
 - `prediction_completed` - ML prediction results
 
 ```python
-from src.tradepulse.core.digital_governance import SchemaValidator
+from src.geosync.core.digital_governance import SchemaValidator
 
 validator = SchemaValidator(Path("schemas/events/json/1.0.0"))
 
@@ -130,7 +130,7 @@ Collects and monitors TACL observability metrics.
 - `nak_arousal` - NAK arousal state
 
 ```python
-from src.tradepulse.core.digital_governance import TACLMetricsCollector
+from src.geosync.core.digital_governance import TACLMetricsCollector
 
 collector = TACLMetricsCollector()
 
@@ -151,7 +151,7 @@ violations = collector.check_thresholds(
 Manages secrets and validates code security.
 
 ```python
-from src.tradepulse.core.digital_governance import SecretManager
+from src.geosync.core.digital_governance import SecretManager
 
 manager = SecretManager()
 
@@ -167,7 +167,7 @@ violations = manager.validate_no_hardcoded_secrets(code)
 Structured audit logging for regulatory compliance.
 
 ```python
-from src.tradepulse.core.digital_governance import DigitalAuditRecord, ComplianceLevel
+from src.geosync.core.digital_governance import DigitalAuditRecord, ComplianceLevel
 
 record = DigitalAuditRecord(
     event_type="strategy_decision",
@@ -251,8 +251,8 @@ json_str = record.to_json()
 ### With Neuro-Orchestrator
 
 ```python
-from src.tradepulse.core.neuro.neuro_orchestrator import NeuroOrchestrator
-from src.tradepulse.core.digital_governance import DigitalGovernanceFramework
+from src.geosync.core.neuro.neuro_orchestrator import NeuroOrchestrator
+from src.geosync.core.digital_governance import DigitalGovernanceFramework
 
 orchestrator = NeuroOrchestrator()
 governance = DigitalGovernanceFramework()
@@ -273,7 +273,7 @@ governance.log_audit_event(
 
 ```python
 from tacl.energy_model import EnergyModel
-from src.tradepulse.core.digital_governance import DigitalGovernanceFramework
+from src.geosync.core.digital_governance import DigitalGovernanceFramework
 
 energy_model = EnergyModel()
 governance = DigitalGovernanceFramework()
@@ -292,7 +292,7 @@ governance.enforce_tacl_boundaries(free_energy_max=1.0)
 
 ```python
 from core.architecture_integrator import ArchitectureIntegrator
-from src.tradepulse.core.digital_governance import DigitalGovernanceFramework
+from src.geosync.core.digital_governance import DigitalGovernanceFramework
 
 integrator = ArchitectureIntegrator()
 governance = DigitalGovernanceFramework()

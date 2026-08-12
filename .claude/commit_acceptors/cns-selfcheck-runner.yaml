@@ -1,0 +1,37 @@
+id: cns-selfcheck-runner
+status: ACTIVE
+claim_type: governance
+promise: CNS selfcheck runner is bound to its release gate script.
+
+diff_scope:
+  changed_files:
+    - path: ".claude/commit_acceptors/cns-selfcheck-runner.yaml"
+    - path: "tools/cns_program/regression_selftest.py"
+  forbidden_paths:
+    - "trading/"
+    - "execution/"
+    - "forecast/"
+    - "runtime/"
+    - "application/"
+
+required_python_symbols:
+  - "tools.cns_program.regression_selftest.main"
+
+expected_signal: CNS selfcheck runner executes release gate checks.
+
+measurement_command: python tools/cns_program/regression_selftest.py
+
+signal_artifact: "tools/cns_program/regression_selftest.py"
+
+falsifier:
+  command: python tools/cns_program/verify_release_manifest.py --manifest /tmp/cns_missing_manifest.json
+  description: missing manifest is reported as invalid
+
+rollback_command: git checkout -- tools/cns_program/regression_selftest.py .claude/commit_acceptors/cns-selfcheck-runner.yaml
+
+rollback_verification_command: git diff --exit-code
+
+memory_update_type: append
+ledger_path: ".claude/commit_acceptors/cns-selfcheck-runner.yaml"
+report_path: "tools/cns_program/regression_selftest.py"
+evidence: []

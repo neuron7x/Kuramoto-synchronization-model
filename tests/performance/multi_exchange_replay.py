@@ -1,3 +1,5 @@
+# Copyright (c) 2023-2026 Yaroslav Vasylenko (neuron7xLab)
+# SPDX-License-Identifier: MIT
 """Multi-exchange replay data loader with performance metrics collection.
 
 This module provides utilities to load and replay recorded exchange data from
@@ -148,9 +150,7 @@ def load_replay_recording(
         meta_data = json.loads(metadata_path.read_text(encoding="utf-8"))
         metadata = ReplayMetadata(
             name=meta_data.get("name", path.stem),
-            exchange=meta_data.get(
-                "exchange", meta_data.get("venue", exchange or "unknown")
-            ),
+            exchange=meta_data.get("exchange", meta_data.get("venue", exchange or "unknown")),
             symbol=meta_data.get("symbol", ""),
             start_time=_parse_timestamp(meta_data["start_time"]),
             end_time=_parse_timestamp(meta_data["end_time"]),
@@ -208,9 +208,7 @@ def compute_performance_metrics(ticks: Sequence[ExchangeTick]) -> PerformanceMet
         return metrics
 
     # Compute latencies
-    latencies = [
-        (tick.ingest_ts - tick.exchange_ts).total_seconds() * 1000.0 for tick in ticks
-    ]
+    latencies = [(tick.ingest_ts - tick.exchange_ts).total_seconds() * 1000.0 for tick in ticks]
     metrics.latencies_ms = latencies
 
     # Compute throughput
@@ -231,9 +229,7 @@ def compute_performance_metrics(ticks: Sequence[ExchangeTick]) -> PerformanceMet
     return metrics
 
 
-def check_regression(
-    metrics: PerformanceMetrics, budget: PerformanceBudget
-) -> RegressionResult:
+def check_regression(metrics: PerformanceMetrics, budget: PerformanceBudget) -> RegressionResult:
     """Check if metrics violate performance budget.
 
     Args:

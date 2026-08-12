@@ -1,4 +1,4 @@
-# TradePulse Sample Data
+# GeoSync Sample Data
 
 This directory contains sample datasets for testing, development, and demonstration purposes.
 
@@ -94,7 +94,7 @@ python scripts/data_sanity.py data/golden
 
 ```python
 import pandas as pd
-from core.indicators.kuramoto_ricci_composite import TradePulseCompositeEngine
+from core.indicators.kuramoto_ricci_composite import GeoSyncCompositeEngine
 
 # Load sample data
 df = pd.read_csv("data/sample_crypto_ohlcv.csv")
@@ -102,7 +102,7 @@ btc = df[df["symbol"] == "BTC"].copy()
 btc.set_index("timestamp", inplace=True)
 
 # Analyze market regime
-engine = TradePulseCompositeEngine()
+engine = GeoSyncCompositeEngine()
 snapshot = engine.analyze_market(btc)
 
 print(f"Phase: {snapshot.phase.value}")
@@ -145,5 +145,5 @@ print(f"Max Drawdown: {result.max_dd:.2%}")
 ## Related Documentation
 
 - [Data Validation Guide](../docs/data/sample_market_data.md)
-- [Testing Guide](../TESTING.md)
+- [Testing Guide](../docs/operations/TESTING.md)
 - [Examples](../examples/)

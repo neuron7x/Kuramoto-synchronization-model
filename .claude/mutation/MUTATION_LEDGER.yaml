@@ -1,0 +1,168 @@
+# GeoSync Mutation Kill Ledger
+#
+# Tracks every mutation the repository's mutation harnesses can apply,
+# what test is expected to detect it, and the last observed result. The
+# ledger is machine-validated by tests/mutation/test_mutation_ledger.py
+# and is the single source of truth for mutation coverage.
+#
+# Two harnesses feed the ledger:
+#
+#   tools/physics_mutation_check.py
+#       Pre-existing physics-invariant mutants (Arrow / Bekenstein /
+#       failure_axes / observer bandwidth / cosmological / simulation
+#       falsification). Already shipped before the calibration layer.
+#
+#   tools/mutation/security_mutation_check.py
+#       New — covers the calibration-layer gates: dependency-truth
+#       unifier, evidence-matrix validator, claim-ledger validator.
+#
+# Schema:
+#   mutant_id              — unique identifier
+#   target_file            — file the mutation patches
+#   mutation               — short human description
+#   expected_killing_test  — pytest node ID of the test that must fail
+#                            when the mutant is active
+#   harness                — physics_mutation_check | security_mutation_check
+#   killed                 — YES / NO / NOT_FOUND / RESTORE_FAILED
+#   last_run_command       — command run to verify the mutant
+#   last_run_status        — exit code (numeric) from last run
+#   restore_verified       — YES / NO (was the working tree clean after?)
+#   notes                  — optional commentary
+#
+# Conventions:
+#   - `last_run_*` and `killed` may be empty in the YAML; populate them
+#     by re-running the harness and committing the updated ledger.
+#   - DO NOT mark a mutant `killed: YES` without a corresponding
+#     `restore_verified: YES`. A killed mutant that left the tree dirty
+#     is a HARDER failure than a survived mutant.
+
+schema_version: 1
+
+mutants:
+
+  # =========================================================================
+  # Physics — owned by tools/physics_mutation_check.py
+  # =========================================================================
+  - mutant_id: anchored_ignores_arrow
+    harness: physics_mutation_check
+    target_file: core/physics/anchored_substrate_gate.py
+    mutation: |
+      Anchored gate composes only the Bekenstein axis — drops Arrow.
+      Composite admits even when ΔS < 0.
+    expected_killing_test: tests/unit/physics/test_anchored_substrate_gate.py
+    killed: YES
+    last_run_command: python tools/physics_mutation_check.py --mutant anchored_ignores_arrow
+    last_run_status: 0
+    restore_verified: YES
+    notes: pre-existing harness, kept as-is.
+
+  - mutant_id: anchored_ignores_bekenstein
+    harness: physics_mutation_check
+    target_file: core/physics/anchored_substrate_gate.py
+    mutation: |
+      Anchored gate composes only the Arrow axis — drops Bekenstein.
+      Composite admits even when I exceeds Bekenstein ceiling.
+    expected_killing_test: tests/unit/physics/test_anchored_substrate_gate.py
+    killed: YES
+    last_run_command: python tools/physics_mutation_check.py --mutant anchored_ignores_bekenstein
+    last_run_status: 0
+    restore_verified: YES
+
+  - mutant_id: failure_axes_drops_arrow
+    harness: physics_mutation_check
+    target_file: core/physics/anchored_substrate_gate.py
+    mutation: |
+      `failure_axes` drops the ARROW append — multi-failure scenarios
+      report only BEKENSTEIN, hiding the second cause.
+    expected_killing_test: tests/integration/test_substrate_gate_chain.py
+    killed: YES
+    last_run_command: python tools/physics_mutation_check.py --mutant failure_axes_drops_arrow
+    last_run_status: 0
+    restore_verified: YES
+
+  - mutant_id: bandwidth_inverted
+    harness: physics_mutation_check
+    target_file: core/physics/observer_bandwidth.py
+    mutation: |
+      Bandwidth comparison inverted — Γ ≥ Σ̇ becomes Γ ≤ Σ̇,
+      producing the opposite verdict.
+    expected_killing_test: tests/unit/physics/test_observer_bandwidth.py
+    killed: YES
+    last_run_command: python tools/physics_mutation_check.py --mutant bandwidth_inverted
+    last_run_status: 0
+    restore_verified: YES
+
+  - mutant_id: cosmo_above_passes
+    harness: physics_mutation_check
+    target_file: core/physics/cosmological_compute_bound.py
+    mutation: |
+      Cosmological compute claim above the ceiling silently passes
+      instead of raising.
+    expected_killing_test: tests/unit/physics/test_cosmological_compute_bound.py
+    killed: YES
+    last_run_command: python tools/physics_mutation_check.py --mutant cosmo_above_passes
+    last_run_status: 0
+    restore_verified: YES
+
+  - mutant_id: sim_threshold_inverted
+    harness: physics_mutation_check
+    target_file: core/physics/simulation_falsification.py
+    mutation: |
+      Simulation falsification threshold comparison inverted: > becomes <.
+    expected_killing_test: tests/unit/physics/test_simulation_falsification.py
+    killed: YES
+    last_run_command: python tools/physics_mutation_check.py --mutant sim_threshold_inverted
+    last_run_status: 0
+    restore_verified: YES
+
+  # =========================================================================
+  # Calibration layer — owned by tools/mutation/security_mutation_check.py
+  # =========================================================================
+  - mutant_id: dep_policy_accepts_torch_drift
+    harness: security_mutation_check
+    target_file: tools/deps/validate_dependency_truth.py
+    mutation: |
+      validate_dependency_truth treats requirements.txt floor below the
+      pyproject floor as fine — F01 regression slips past the gate.
+    expected_killing_test: tests/deps/test_validate_dependency_truth.py::test_d1_detects_pyproject_above_requirements
+    killed: YES
+    last_run_command: python tools/mutation/security_mutation_check.py --mutant dep_policy_accepts_torch_drift
+    last_run_status: 0
+    restore_verified: YES
+
+  - mutant_id: dep_policy_accepts_strawberry_below_fix
+    harness: security_mutation_check
+    target_file: tools/deps/validate_dependency_truth.py
+    mutation: |
+      validate_dependency_truth ignores lockfile pins below the manifest
+      floor — F03 regression slips past the gate.
+    expected_killing_test: tests/deps/test_validate_dependency_truth.py::test_d2_detects_lock_below_floor
+    killed: YES
+    last_run_command: python tools/mutation/security_mutation_check.py --mutant dep_policy_accepts_strawberry_below_fix
+    last_run_status: 0
+    restore_verified: YES
+
+  - mutant_id: evidence_validator_allows_scanner_to_imply_exploit
+    harness: security_mutation_check
+    target_file: .claude/evidence/validate_evidence.py
+    mutation: |
+      Evidence matrix validator drops BOTH OVERCLAIM_REFUSED checks (per-
+      category and cross-category) — SCANNER_OUTPUT can then falsely
+      support RUNTIME_REACHABILITY / EXPLOIT_PATH_CONFIRMED.
+    expected_killing_test: tests/unit/evidence/test_validate_evidence.py::test_inject_scanner_reachability_refused
+    killed: YES
+    last_run_command: python tools/mutation/security_mutation_check.py --mutant evidence_validator_allows_scanner_to_imply_exploit
+    last_run_status: 0
+    restore_verified: YES
+
+  - mutant_id: claim_ledger_allows_fact_with_no_falsifier
+    harness: security_mutation_check
+    target_file: .claude/claims/validate_claims.py
+    mutation: |
+      Claim validator removes the NO_FALSIFIER rule — a FACT-tier claim
+      with no falsifier slips past the gate.
+    expected_killing_test: tests/unit/claims/test_validate_claims.py::test_inject_no_falsifier_fails
+    killed: YES
+    last_run_command: python tools/mutation/security_mutation_check.py --mutant claim_ledger_allows_fact_with_no_falsifier
+    last_run_status: 0
+    restore_verified: YES

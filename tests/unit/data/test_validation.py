@@ -1,4 +1,5 @@
-# SPDX-License-Identifier: LicenseRef-TradePulse-Proprietary
+# Copyright (c) 2023-2026 Yaroslav Vasylenko (neuron7xLab)
+# SPDX-License-Identifier: MIT
 """Unit tests for the strict time series validation helpers."""
 
 from __future__ import annotations
@@ -57,7 +58,12 @@ def test_validate_timeseries_frame_success(
     base_config: TimeSeriesValidationConfig, valid_frame: pd.DataFrame
 ) -> None:
     validated = validate_timeseries_frame(valid_frame, base_config)
-    pd.testing.assert_frame_equal(validated, valid_frame)
+    # The validator pins the timestamp dtype to ``datetime64[ns, UTC]`` so the
+    # downstream contract is independent of pandas major versions (pandas 3
+    # defaults to microsecond resolution).
+    expected = valid_frame.copy()
+    expected["timestamp"] = expected["timestamp"].astype("datetime64[ns, UTC]")
+    pd.testing.assert_frame_equal(validated, expected)
 
 
 def test_validate_timeseries_frame_rejects_nan(
@@ -381,9 +387,7 @@ class TestValidateOHLCV:
     def test_optional_columns_not_required(self) -> None:
         """Verify optional columns are not required."""
         df = pd.DataFrame({"close": [100.0, 101.0, 102.0] * 10})
-        result = validate_ohlcv(
-            df, open_col=None, high_col=None, low_col=None, volume_col=None
-        )
+        result = validate_ohlcv(df, open_col=None, high_col=None, low_col=None, volume_col=None)
         assert result.valid is True
 
 
@@ -487,9 +491,7 @@ class TestValidateTimeseriesFrameExtended:
         """Verify extra columns fail when strict mode is on."""
         df = pd.DataFrame(
             {
-                "timestamp": pd.date_range(
-                    "2024-01-01", periods=10, freq="1min", tz="UTC"
-                ),
+                "timestamp": pd.date_range("2024-01-01", periods=10, freq="1min", tz="UTC"),
                 "close": [100.0] * 10,
                 "extra": [0] * 10,
             }
@@ -505,9 +507,7 @@ class TestValidateTimeseriesFrameExtended:
         """Verify extra columns allowed when strict mode is off."""
         df = pd.DataFrame(
             {
-                "timestamp": pd.date_range(
-                    "2024-01-01", periods=10, freq="1min", tz="UTC"
-                ),
+                "timestamp": pd.date_range("2024-01-01", periods=10, freq="1min", tz="UTC"),
                 "close": [100.0] * 10,
                 "extra": [0] * 10,
             }
@@ -523,9 +523,7 @@ class TestValidateTimeseriesFrameExtended:
         """Verify nullable column allows NaN values."""
         df = pd.DataFrame(
             {
-                "timestamp": pd.date_range(
-                    "2024-01-01", periods=5, freq="1min", tz="UTC"
-                ),
+                "timestamp": pd.date_range("2024-01-01", periods=5, freq="1min", tz="UTC"),
                 "close": [100.0, np.nan, 102.0, np.nan, 104.0],
             }
         )

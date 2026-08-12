@@ -1,8 +1,10 @@
+# Copyright (c) 2023-2026 Yaroslav Vasylenko (neuron7xLab)
+# SPDX-License-Identifier: MIT
 """Concurrency helpers for script orchestration."""
 
 from __future__ import annotations
 
-# SPDX-License-Identifier: LicenseRef-TradePulse-Proprietary
+# SPDX-License-Identifier: MIT
 import signal
 import threading
 from concurrent.futures import Future, ThreadPoolExecutor, wait
@@ -18,9 +20,7 @@ class TaskQueue:
     def __init__(self, max_workers: int) -> None:
         if max_workers <= 0:
             raise ValueError("max_workers must be positive")
-        self._executor = ThreadPoolExecutor(
-            max_workers=max_workers, thread_name_prefix="scripts"
-        )
+        self._executor = ThreadPoolExecutor(max_workers=max_workers, thread_name_prefix="scripts")
         self._futures: set[Future[object]] = set()
         self._lock = threading.Lock()
         self._stopped = threading.Event()
@@ -34,9 +34,7 @@ class TaskQueue:
         future.add_done_callback(self._futures.discard)
         return future
 
-    def map(
-        self, fn: Callable[[T], object], iterable: Iterable[T]
-    ) -> list[Future[object]]:
+    def map(self, fn: Callable[[T], object], iterable: Iterable[T]) -> list[Future[object]]:
         return [self.submit(fn, item) for item in iterable]
 
     def join(self) -> None:

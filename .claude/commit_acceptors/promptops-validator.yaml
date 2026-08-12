@@ -1,0 +1,69 @@
+# Diff-bound acceptor: PromptOps validator + deterministic shadow gate (PR #1217).
+#
+# Adds a provider-free PromptOps contract validator and a deterministic shadow
+# runner so CI gets a stable regression surface before any token-spending,
+# secret-leaking provider-backed job runs. No runtime trading path touched.
+
+id: promptops-validator
+status: ACTIVE
+claim_type: governance
+promise: >-
+  Adds tools/promptops_validate.py (JSON-schema + structural validation of
+  PromptOps system-prompt contracts: id/semver/ref/url/markdown-link shape,
+  fail-closed secret scanning for openai/aws/generic token patterns) and
+  tools/promptops_shadow_runner.py (deterministic, provider-free shadow pass over
+  validated contracts). Both are pure-stdlib CLIs, ruff + black + mypy clean with
+  no sys.path mutation and no type:ignore/noqa (yaml imported via
+  importlib.import_module typed Any). Ships JSON schema, an example contract, a
+  pinned CI workflow, and 8 tests covering validation, secret detection, and the
+  deterministic shadow verdict. No INVENTORY runtime path; tools/ scripts run
+  script-relative.
+diff_scope:
+  changed_files:
+    - path: ".claude/commit_acceptors/promptops-validator.yaml"
+    - path: ".github/workflows/promptops-validator.yml"
+    - path: "docs/operations/promptops_validator_pr1.md"
+    - path: "examples/promptops/system_prompt_contract.example.yaml"
+    - path: "schemas/promptops/system_prompt_contract.schema.json"
+    - path: "tests/promptops/test_promptops_shadow_runner.py"
+    - path: "tests/promptops/test_promptops_validate.py"
+    - path: "tools/promptops_shadow_runner.py"
+    - path: "tools/promptops_validate.py"
+  forbidden_paths:
+    - "trading/"
+    - "execution/"
+    - "forecast/"
+    - "policy/"
+required_python_symbols:
+  - "validate_artifact"
+  - "load_artifact"
+  - "run_shadow"
+expected_signal: >-
+  pytest tests/promptops/test_promptops_validate.py
+  tests/promptops/test_promptops_shadow_runner.py is green (8 cases): the example
+  contract validates clean, malformed/secret-bearing contracts are flagged
+  fail-closed, and the shadow runner emits a deterministic verdict for a given
+  input. ruff + black + mypy clean; import-architecture ratchet held (no new
+  sys.path hack); debt-ratchet unchanged (no new type:ignore/noqa); all CI
+  actions SHA-pinned.
+measurement_command: >-
+  python -m pytest tests/promptops/test_promptops_validate.py
+  tests/promptops/test_promptops_shadow_runner.py -q --confcutdir=tests/promptops
+signal_artifact: "tmp/promptops_validator_pytest.log"
+falsifier:
+  description: >-
+    Secret detection is real: the openai_key pattern matches a synthetic sk- key
+    and rejects benign text. If validation/secret-scanning is gutted, this fails.
+  command: >-
+    python -c "import sys;
+    sys.path.insert(0, 'tools');
+    import promptops_validate as v;
+    ok = bool(v.SECRET_PATTERNS['openai_key'].search('sk-abcdefghij0123456789ABCD'))
+    and not bool(v.SECRET_PATTERNS['openai_key'].search('no-secret-here'));
+    sys.exit(0 if ok else 1)"
+rollback_command: "git checkout -- .claude/commit_acceptors/promptops-validator.yaml"
+rollback_verification_command: "git diff --exit-code .claude/commit_acceptors/promptops-validator.yaml"
+memory_update_type: none
+ledger_path: ".claude/commit_acceptors/promptops-validator.yaml"
+report_path: "docs/reports/diff_bound_commit_acceptor_layer.md"
+evidence: []

@@ -1,12 +1,12 @@
 ---
-owner: dx@tradepulse
+owner: dx@geosync
 review_cadence: quarterly
 last_reviewed: 2026-01-01
 ---
 
 # Usage Examples
 
-This directory contains practical examples for using TradePulse.
+This directory contains practical examples for using GeoSync.
 
 ---
 
@@ -18,8 +18,8 @@ dependency is pinned there and compatible with the current lockfile.
 | Use-case | Quickstart | Dependencies (version lock) |
 | --- | --- | --- |
 | Market regime snapshot (core indicators) | `python examples/quick_start.py --seed 7 --num-points 400` | `numpy==2.3.3`, `pandas==2.3.3` |
-| Strategy backtest (NeuroTrade PRO) | `python examples/neuro_trade_pulse_backtest.py` | `numpy==2.3.3`, `pandas==2.3.3` |
-| Real-time style snapshot (signal generation) | `python examples/neuro_trade_pulse_snapshot.py` | `numpy==2.3.3`, `pandas==2.3.3` |
+| Strategy backtest (GeoSync HPC) | `python examples/neuro_geosync_backtest.py` | `numpy==2.3.3`, `pandas==2.3.3` |
+| Real-time style snapshot (signal generation) | `python examples/neuro_geosync_snapshot.py` | `numpy==2.3.3`, `pandas==2.3.3` |
 | Integrated risk management pipeline | `python examples/integrated_risk_management_example.py` | `numpy==2.3.3` |
 
 These same quickstarts are used for CI smoke tests so compatibility with
@@ -42,7 +42,7 @@ The manifest lists deterministic seeds and the pinned dependencies (from
 | [`quickstart_signal_fetch.md`](quickstart_signal_fetch.md) | Fetch market signals with signed requests. |
 | [`prediction_submission.md`](prediction_submission.md) | Submit async predictions with idempotency. |
 | [`webhook_consumer.md`](webhook_consumer.md) | Consume `signal.published` and `prediction.completed` webhooks. |
-| [`sdk_integration.md`](sdk_integration.md) | SDK wrapper patterns for TradePulse API. |
+| [`sdk_integration.md`](sdk_integration.md) | SDK wrapper patterns for GeoSync API. |
 
 ---
 
@@ -418,7 +418,7 @@ system.run('sample.csv')
 ## More Examples
 
 For more detailed examples, see:
-- [Extending TradePulse](../extending.md)
+- [Extending GeoSync](../extending.md)
 - [Integration API](../integration-api.md)
 - [Developer Scenarios](../scenarios.md)
 

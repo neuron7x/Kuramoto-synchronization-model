@@ -1,0 +1,68 @@
+{
+  "$schema": "https://json-schema.org/draft/2020-12/schema",
+  "$id": "research/ctc_falsify/c_real/schema/ctc_falsify_c_real_result.schema.json",
+  "title": "CTC-FALSIFY-001-C-REAL result",
+  "type": "object",
+  "additionalProperties": false,
+  "required": [
+    "experiment_id",
+    "verdict",
+    "claim",
+    "boundary",
+    "estimator",
+    "primary_endpoint",
+    "dataset_selection_rule",
+    "thresholds",
+    "dataset_bound",
+    "config_hash",
+    "repro_hash"
+  ],
+  "properties": {
+    "experiment_id": { "const": "CTC-FALSIFY-001-C-REAL" },
+    "verdict": {
+      "type": "string",
+      "enum": [
+        "INADMISSIBLE_NO_PAIRED_DATA",
+        "INADMISSIBLE_NO_INDEPENDENT_ROUTING_LABEL",
+        "INADMISSIBLE_DATASET_UNSUITABLE",
+        "INADMISSIBLE_UNDERPOWERED",
+        "KILLED_SCOPED",
+        "SURVIVED_INITIAL"
+      ]
+    },
+    "claim": { "type": "string", "minLength": 1 },
+    "boundary": { "type": "string", "minLength": 1 },
+    "estimator": { "type": "string", "minLength": 1 },
+    "primary_endpoint": { "type": "string", "minLength": 1 },
+    "dataset_selection_rule": {
+      "type": "object",
+      "additionalProperties": false,
+      "required": ["inclusion", "source_order"],
+      "properties": {
+        "inclusion": { "type": "array", "items": { "type": "string" }, "minItems": 1 },
+        "source_order": { "type": "array", "items": { "type": "string" }, "minItems": 1 }
+      }
+    },
+    "thresholds": {
+      "type": "object",
+      "additionalProperties": false,
+      "required": [
+        "auc_support_min",
+        "auc_chance_hi",
+        "mde_auc",
+        "min_sessions",
+        "holm_alpha"
+      ],
+      "properties": {
+        "auc_support_min": { "type": "number" },
+        "auc_chance_hi": { "type": "number" },
+        "mde_auc": { "type": "number" },
+        "min_sessions": { "type": "integer" },
+        "holm_alpha": { "type": "number" }
+      }
+    },
+    "dataset_bound": { "type": "boolean" },
+    "config_hash": { "type": "string", "pattern": "^[a-f0-9]{64}$" },
+    "repro_hash": { "type": "string", "pattern": "^[a-f0-9]{64}$" }
+  }
+}

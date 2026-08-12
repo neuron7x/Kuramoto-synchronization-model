@@ -1,6 +1,6 @@
 # Test Coverage Analysis Report
 **Generated**: February 14, 2025  
-**Repository**: neuron7x/TradePulse  
+**Repository**: neuron7xLab/GeoSync  
 **Coverage Tool**: pytest-cov v7.0.0
 
 ## Executive Summary

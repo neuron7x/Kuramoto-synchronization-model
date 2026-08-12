@@ -1,14 +1,14 @@
 ---
-owner: quant-systems@tradepulse
+owner: quant-systems@geosync
 review_cadence: quarterly
 last_reviewed: 2026-01-01
 ---
 
-# TradePulse Calibration Guide
+# GeoSync Calibration Guide
 
 ## Overview
 
-This guide provides comprehensive instructions for calibrating accuracy, thresholds, and sensitivity parameters across TradePulse controllers and modules. Proper calibration is essential for optimal trading performance under different market conditions.
+This guide provides comprehensive instructions for calibrating accuracy, thresholds, and sensitivity parameters across GeoSync controllers and modules. Proper calibration is essential for optimal trading performance under different market conditions.
 
 ## Table of Contents
 
@@ -23,7 +23,7 @@ This guide provides comprehensive instructions for calibrating accuracy, thresho
 
 ## Introduction
 
-TradePulse employs multiple controllers and modules that work together to make trading decisions:
+GeoSync employs multiple controllers and modules that work together to make trading decisions:
 
 - **NAK Controller**: Manages neuro-energetic state and trading limits
 - **Dopamine Controller**: Handles reward prediction and action selection
@@ -101,7 +101,7 @@ The Risk Engine enforces hard limits to protect capital.
 
 ## Calibration Profiles
 
-TradePulse provides three pre-configured calibration profiles optimized for different market conditions and risk preferences:
+GeoSync provides three pre-configured calibration profiles optimized for different market conditions and risk preferences:
 
 ### Conservative Profile
 - **Use Case**: Low volatility markets, risk-averse trading, account preservation
@@ -131,7 +131,7 @@ TradePulse provides three pre-configured calibration profiles optimized for diff
 
 ### Using the Calibration Utility
 
-TradePulse provides a command-line utility for easy calibration:
+GeoSync provides a command-line utility for easy calibration:
 
 ```bash
 # List available profiles
@@ -428,7 +428,7 @@ Scale risk parameters to your actual account size. A $10K account and $1M accoun
 For automated parameter tuning, use the Adaptive Calibrator:
 
 ```python
-from tradepulse.core.neuro.adaptive_calibrator import (
+from geosync.core.neuro.adaptive_calibrator import (
     AdaptiveCalibrator,
     CalibrationMetrics,
 )
@@ -530,10 +530,10 @@ To add a new controller or parameter:
 
 - [Calibration Parameter Reference](CALIBRATION_PARAMETER_REFERENCE.md) - Complete parameter tables
 - [NAK Controller Documentation](../nak_controller/README.md)
-- [Dopamine Controller Specification](dopamine_v1_enhancements.md)
+- [Dopamine Controller Specification](neuromodulators/dopamine_v1_enhancements.md)
 - [Neuro-Optimization Guide](neuro_optimization_guide.md)
 - [Risk Management Architecture](../SECURITY.md)
-- [Adaptive Calibrator API](../src/tradepulse/core/neuro/README_OPTIMIZATION.md)
+- [Adaptive Calibrator API](../src/geosync/core/neuro/README_OPTIMIZATION.md)
 - [Calibration Constants Source](../core/neuro/calibration_constants.py)
 
 ## Changelog

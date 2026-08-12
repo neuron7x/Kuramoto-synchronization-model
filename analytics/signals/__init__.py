@@ -1,4 +1,11 @@
+# Copyright (c) 2023-2026 Yaroslav Vasylenko (neuron7xLab)
+# SPDX-License-Identifier: MIT
 """Signal research utilities for feature engineering and model evaluation."""
+
+from __future__ import annotations
+
+from importlib import import_module
+from typing import Any
 
 from .convergence import (
     ConvergenceConfig,
@@ -27,16 +34,27 @@ from .news_sentiment import (
     SentimentLabel,
     aggregate_sentiment,
 )
-from .pipeline import (
-    FeaturePipelineConfig,
-    LeakageGate,
-    ModelCandidate,
-    SignalFeaturePipeline,
-    SignalModelEvaluation,
-    SignalModelSelector,
-    build_supervised_learning_frame,
-    make_default_candidates,
-)
+
+_PIPELINE_EXPORTS = {
+    "FeaturePipelineConfig",
+    "LeakageGate",
+    "ModelCandidate",
+    "SignalFeaturePipeline",
+    "SignalModelEvaluation",
+    "SignalModelSelector",
+    "build_supervised_learning_frame",
+    "make_default_candidates",
+}
+
+
+def __getattr__(name: str) -> Any:
+    if name not in _PIPELINE_EXPORTS:
+        raise AttributeError(f"module {__name__!r} has no attribute {name!r}")
+    module = import_module(".pipeline", package=__name__)
+    value = getattr(module, name)
+    globals()[name] = value
+    return value
+
 
 __all__ = [
     "FeaturePipelineConfig",

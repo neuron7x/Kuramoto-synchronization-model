@@ -1,0 +1,52 @@
+# Diff-bound acceptor for the coverage-intelligence gate POT dependency repair.
+
+id: coverage-gate-pot-dep
+status: ACTIVE
+claim_type: fail_closed
+promise: >-
+  The Coverage Intelligence Gate collects the full suite, including
+  tests/research_lines/test_ricci_microstructure_v1.py, whose Ollivier-Ricci
+  kernel imports the POT optimal-transport package. POT lives in the pyproject
+  neuro_advanced optional group, deliberately excluded from the pip-compiled
+  locks and from the gate's [dev,contract] install, so `ot` was never installed
+  and the module ImportError-ed at collection (pytest exit 2 -> make
+  coverage-baseline Error 1). This pre-existing, chronically-red, non-required
+  gate is repaired by installing POT explicitly in the gate's environment,
+  mirroring repo-integrity-gate and ricci-microstructure-gate. The kernel now
+  runs for real (never importorskip), so its lines are MEASURED rather than
+  silently dropped from the coverage surface. CI/governance only.
+
+diff_scope:
+  changed_files:
+    - path: ".claude/commit_acceptors/coverage-gate-pot-dep.yaml"
+    - path: ".github/workflows/coverage-intelligence.yml"
+  forbidden_paths:
+    - "core/"
+    - "backtest/"
+    - "execution/"
+    - "analytics/"
+    - "research/systemic_risk/"
+
+required_python_symbols: []
+expected_signal: >-
+  .github/workflows/coverage-intelligence.yml installs POT>=0.9.5 before the
+  pip-check / measurement steps, and tests/research_lines/test_ricci_microstructure_v1.py
+  collects and passes instead of ImportError-ing on `import ot`.
+measurement_command: >-
+  bash -c 'set -euo pipefail; mkdir -p tmp; { grep -q "POT>=0.9.5" .github/workflows/coverage-intelligence.yml && python -c "import yaml,sys; yaml.safe_load(open(\".github/workflows/coverage-intelligence.yml\"))"; } && echo "PASS: coverage gate installs POT>=0.9.5; ricci-microstructure lane measurable" | tee tmp/coverage_gate_pot_dep.log'
+signal_artifact: "tmp/coverage_gate_pot_dep.log"
+falsifier:
+  command: >-
+    bash -c 'grep -q "POT>=0.9.5" .github/workflows/coverage-intelligence.yml && ! grep -q "importorskip(\"ot\")" tests/research_lines/test_ricci_microstructure_v1.py'
+  description: >-
+    Fails if the coverage gate stops installing POT (the ricci-microstructure
+    lane would ImportError at collection again), or if the lane is downgraded to
+    importorskip("ot"), which would vacuously drop the real optimal-transport
+    kernel from the measured coverage surface.
+rollback_command: >-
+  bash -c 'git checkout origin/main -- .github/workflows/coverage-intelligence.yml && git rm -f .claude/commit_acceptors/coverage-gate-pot-dep.yaml'
+rollback_verification_command: >-
+  bash -c '! grep -q "POT>=0.9.5" .github/workflows/coverage-intelligence.yml'
+memory_update_type: append
+ledger_path: ".claude/commit_acceptors/coverage-gate-pot-dep.yaml"
+report_path: "tmp/coverage_gate_pot_dep.log"

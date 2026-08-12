@@ -1,0 +1,84 @@
+# Diff-bound commit acceptor: decompose RegulatoryComplianceValidator.validate
+# (cyclomatic complexity 61, 374 LOC — a god+complex function) into 13 per-check
+# methods, behaviour-preserving, locked by a 24-case branch-covering golden
+# battery. Pays down the now-ENFORCED code-hygiene baseline on TWO dimensions
+# (god_function and complexity). Compliance layer, no physics.
+
+id: decompose-regulatory-validate
+status: ACTIVE
+claim_type: refactor
+promise: >-
+  After this PR lands, core/compliance/regulatory.py's
+  RegulatoryComplianceValidator.validate (was 374 LOC, cyclomatic ~61) is
+  decomposed into a ~33-LOC orchestrator (cyclomatic 12, under the 15 budget)
+  plus thirteen per-check methods, each <=62 LOC and <=9 cyclomatic. No new god
+  or over-complex function is created. Behaviour is byte-identical across a
+  24-case golden battery that exercises every check branch (compliant baseline,
+  one targeted violation per check, nested-lookup forms, empty). The
+  code-hygiene baseline shrinks on TWO dimensions: god_function 161->160 and
+  complexity 127->126; the meta-gate confirms both decreases. No behaviour,
+  physics, or compliance-rule change.
+
+diff_scope:
+  changed_files:
+    - path: ".claude/commit_acceptors/decompose-regulatory-validate.yaml"
+    - path: "core/compliance/regulatory.py"
+    - path: "docs/CODE_DEBT_BASELINE.json"
+    - path: "tests/unit/compliance/regulatory_validate_golden.json"
+    - path: "tests/unit/compliance/test_regulatory_validate_golden.py"
+  forbidden_paths:
+    - "trading/"
+    - "execution/"
+    - "forecast/"
+    - "policy/"
+    - "runtime/"
+    - "application/"
+    - "core/kuramoto/"
+    - "core/physics/"
+    - "core/neuro/"
+
+required_python_symbols:
+  - "core/compliance/regulatory.py::validate"
+  - "core/compliance/regulatory.py::_check_privacy"
+  - "core/compliance/regulatory.py::_check_audit"
+
+expected_signal: >-
+  python -m pytest tests/unit/compliance/test_regulatory_validate_golden.py
+  reports 25 passed; the full regulatory test suite passes; python
+  scripts/ci/check_code_hygiene.py no longer flags validate and exits 0.
+
+measurement_command: >-
+  bash -c '
+    mkdir -p tmp &&
+    python -m pytest -q tests/unit/compliance/test_regulatory_validate_golden.py tests/unit/compliance/test_regulatory_compliance.py | tee tmp/decompose_regulatory.log &&
+    python scripts/ci/check_code_hygiene.py | tee -a tmp/decompose_regulatory.log
+  '
+
+signal_artifact: "tmp/decompose_regulatory.log"
+
+falsifier:
+  command: >-
+    bash -c 'python -m pytest -q tests/unit/compliance/test_regulatory_validate_golden.py'
+  description: >-
+    Runs the 24-case golden battery. Succeeds (exit 0) only when the decomposed
+    validate() still produces the frozen (compliant, issues, metadata_view)
+    triple for every branch-exercising input — if the decomposition changed any
+    compliance verdict, a case diverges and this fails.
+
+rollback_command: >-
+  bash -c '
+    git checkout origin/main -- core/compliance/regulatory.py docs/CODE_DEBT_BASELINE.json &&
+    git rm -f
+      tests/unit/compliance/test_regulatory_validate_golden.py
+      tests/unit/compliance/regulatory_validate_golden.json
+      .claude/commit_acceptors/decompose-regulatory-validate.yaml
+  '
+
+rollback_verification_command: >-
+  bash -c '
+    ! grep -q "_check_privacy" core/compliance/regulatory.py
+  '
+
+memory_update_type: append
+ledger_path: ".claude/commit_acceptors/decompose-regulatory-validate.yaml"
+report_path: "tmp/decompose_regulatory.log"

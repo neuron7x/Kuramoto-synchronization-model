@@ -1,0 +1,16 @@
+{
+  "$schema": "https://json-schema.org/draft/2020-12/schema",
+  "title": "ControlAction",
+  "type": "object",
+  "required": ["action_id", "action_class", "description", "trigger_rule", "risk_state", "requires_human_review"],
+  "properties": {
+    "action_id": {"type": "string"},
+    "action_class": {"type": "string", "enum": ["DATA_CONTROL", "OPERATIONAL_CONTROL", "RESEARCH_CONTROL", "CLINICAL_ESCALATION"]},
+    "description": {"type": "string"},
+    "trigger_rule": {"type": "string"},
+    "risk_state": {"type": "string"},
+    "requires_human_review": {"type": "boolean"},
+    "prohibited_autonomous_execution": {"type": "boolean"}
+  },
+  "additionalProperties": false
+}

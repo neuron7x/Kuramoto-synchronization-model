@@ -1,0 +1,119 @@
+# Diff-bound commit acceptor for X-10R-2 — reciprocity-aware positive
+# controls (GH issue #636). Closes the FIX B6 debt from PR #635.
+#
+# Adds to research/reconstruction/positive_control.py:
+#   * compute_reciprocity_ratio(W)  — empirical r-ratio observable
+#   * reciprocity_keep_p_for_target(r)  — closed-form inverse mapping
+#   * _apply_reciprocity_filter — drop one direction of bidirectional
+#     pairs with prob 1 − keep_p (preserves one edge per previously-
+#     edged pair → no disconnection at small N)
+#   * `reciprocity_keep_p` param on ground_truth_ba/_core_periphery/
+#     _hierarchical (default 1.0 ⇒ original behaviour)
+#   * `tested_at_reciprocity` populated from achieved ratio when
+#     Gate-5 sweep passes
+#   * ReciprocityAwareRecoveryCertificate + run_reciprocity_aware_recovery
+#     for a (reciprocity × density) grid aggregate
+#
+# In research/reconstruction/recovery_audit.py:
+#   * Reciprocity dimension RE-classified as provenance-only on the
+#     domain-of-validity gate. The previous FIX B2 wiring conflated
+#     network-level reciprocity (substrate topology) with marginal-
+#     level Pearson(s_in, s_out); these are different observables and
+#     gating one against the other is a category error. The
+#     `tested_at_reciprocity` envelope is still surfaced in
+#     `certified_envelope` for inspection but does NOT drive verdicts.
+#
+# Locally verified:
+#   * pytest tests/reconstruction/ -m "not slow": 160 passed
+#   * pytest tests/reconstruction/ -m "slow":      17 passed
+#   * mypy --strict + ruff + black:                clean
+
+id: x10r-2-reciprocity-aware-controls
+status: ACTIVE
+claim_type: chore
+promise: >-
+  After this PR lands, research/reconstruction/positive_control.py
+  exposes a `reciprocity_keep_p` parameter on every ground-truth
+  generator + a closed-form mapping
+  reciprocity_keep_p_for_target(r) = r/(2-r) and an empirical
+  observable compute_reciprocity_ratio(W). run_recovery_on_substrate
+  populates tested_at_reciprocity with the substrate's achieved
+  ratio when Gate-5 passes. ReciprocityAwareRecoveryCertificate +
+  run_reciprocity_aware_recovery walk a (reciprocity × density)
+  grid; tested_at_reciprocity on the aggregate is non-empty iff
+  every cell passes. recovery_audit.check_domain_of_validity is
+  amended: reciprocity becomes provenance-only because Pearson
+  (the only marginal observable) measures node balance, not
+  network reciprocity. 18 new tests pin the contract: closed-form
+  inversion, achieved-ratio convergence under the 1/3 keep_p
+  setting (target 0.5), one-edge-per-pair invariant, sweep
+  rejection of empty grids and out-of-range targets, failed-cell
+  envelope discipline (tested_at_reciprocity = () on partial
+  sweeps).
+diff_scope:
+  changed_files:
+    - path: ".claude/commit_acceptors/x10r-2-reciprocity-aware-controls.yaml"
+    - path: "research/reconstruction/__init__.py"
+    - path: "research/reconstruction/positive_control.py"
+    - path: "research/reconstruction/recovery_audit.py"
+    - path: "tests/reconstruction/test_domain_of_validity.py"
+    - path: "tests/reconstruction/test_reciprocity_aware_recovery.py"
+  forbidden_paths:
+    - "trading/"
+    - "execution/"
+    - "forecast/"
+    - "policy/"
+    - "core/physics/"
+    - "core/kuramoto/"
+    - "application/governance/claim_ledger.py"
+    - "application/governance/commit_acceptor.py"
+required_python_symbols:
+  - "research/reconstruction/positive_control.py::compute_reciprocity_ratio"
+  - "research/reconstruction/positive_control.py::reciprocity_keep_p_for_target"
+  - "research/reconstruction/positive_control.py::ReciprocityAwareRecoveryCertificate"
+  - "research/reconstruction/positive_control.py::run_reciprocity_aware_recovery"
+expected_signal: >-
+  Local: `pytest tests/reconstruction/ -m "not slow"` reports
+  "160 passed"; `pytest tests/reconstruction/ -m "slow"` reports
+  "17 passed"; `mypy --strict` is clean on every file under
+  research/reconstruction/ and tests/reconstruction/;
+  `ruff check` and `black --check` both pass on those paths.
+measurement_command: >-
+  bash -c 'mypy --strict --follow-imports=silent
+  research/reconstruction/ tests/reconstruction/
+  && ruff check research/reconstruction/ tests/reconstruction/
+  && black --check research/reconstruction/ tests/reconstruction/
+  && pytest tests/reconstruction/ -m "not slow" -q'
+signal_artifact: "tmp/x10r_2_reciprocity.log"
+falsifier:
+  command: |-
+    bash -c 'python -c "
+    from research.reconstruction.positive_control import (
+        compute_reciprocity_ratio, ground_truth_core_periphery,
+        reciprocity_keep_p_for_target,
+    )
+    keep_p = reciprocity_keep_p_for_target(0.5)
+    rs = [compute_reciprocity_ratio(
+        ground_truth_core_periphery(n=120, core_frac=0.30, seed=s,
+                                    reciprocity_keep_p=keep_p))
+        for s in range(5)]
+    mean = sum(rs) / 5
+    assert 0.40 <= mean <= 0.60, f\"r-mean {mean:.3f} out of [0.40, 0.60]\"
+    "'
+  description: >-
+    Probes the closed-form mapping
+    reciprocity_keep_p = r_target / (2 - r_target). With r_target = 0.5
+    the keep_p is 1/3 and the empirical achieved ratio across 5
+    seeds at N=120 must land in [0.40, 0.60]. Falls outside that
+    band ⇒ either the filter or the closed-form is broken.
+rollback_command: >-
+  bash -c 'git checkout HEAD~1 --
+  && rm -f tests/reconstruction/test_reciprocity_aware_recovery.py
+  .claude/commit_acceptors/x10r-2-reciprocity-aware-controls.yaml'
+rollback_verification_command: >-
+  bash -c 'test ! -f tests/reconstruction/test_reciprocity_aware_recovery.py
+  && test ! -f .claude/commit_acceptors/x10r-2-reciprocity-aware-controls.yaml'
+memory_update_type: append
+ledger_path: ".claude/commit_acceptors/x10r-2-reciprocity-aware-controls.yaml"
+report_path: "tmp/x10r_2_reciprocity.log"
+evidence: []

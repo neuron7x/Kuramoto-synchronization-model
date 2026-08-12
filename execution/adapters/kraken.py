@@ -1,4 +1,5 @@
-# SPDX-License-Identifier: LicenseRef-TradePulse-Proprietary
+# Copyright (c) 2023-2026 Yaroslav Vasylenko (neuron7xLab)
+# SPDX-License-Identifier: MIT
 """Kraken spot trading REST/WebSocket connector."""
 
 from __future__ import annotations
@@ -77,9 +78,7 @@ class KrakenRESTConnector(RESTWebSocketConnector):
 
     # ------------------------------------------------------------------
     # RESTWebSocketConnector hooks
-    def _resolve_credentials(
-        self, credentials: Mapping[str, str] | None
-    ) -> Mapping[str, str]:
+    def _resolve_credentials(self, credentials: Mapping[str, str] | None) -> Mapping[str, str]:
         supplied = {str(k).lower(): str(v) for k, v in (credentials or {}).items()}
         api_key = supplied.get("api_key") or os.getenv("KRAKEN_API_KEY")
         api_secret = supplied.get("api_secret") or os.getenv("KRAKEN_API_SECRET")
@@ -122,9 +121,7 @@ class KrakenRESTConnector(RESTWebSocketConnector):
         payload = dict(params)
         payload.setdefault("nonce", nonce)
         postdata = urlencode(payload)
-        sha256_hash = hashlib.sha256(
-            (payload["nonce"] + postdata).encode("utf-8")
-        ).digest()
+        sha256_hash = hashlib.sha256((payload["nonce"] + postdata).encode("utf-8")).digest()
         signature = hmac.new(
             self._api_secret,
             path.encode("utf-8") + sha256_hash,
@@ -138,9 +135,7 @@ class KrakenRESTConnector(RESTWebSocketConnector):
     def _order_endpoint(self) -> str:
         return "/0/private/AddOrder"
 
-    def _build_place_payload(
-        self, order: Order, idempotency_key: str | None
-    ) -> Dict[str, Any]:
+    def _build_place_payload(self, order: Order, idempotency_key: str | None) -> Dict[str, Any]:
         order_type = order.order_type
         kraken_type = order_type.value.replace("_", "-")
         if order_type is OrderType.STOP:
@@ -166,9 +161,7 @@ class KrakenRESTConnector(RESTWebSocketConnector):
             payload["userref"] = idempotency_key
         return payload
 
-    def _parse_order(
-        self, payload: Mapping[str, Any], *, original: Order | None = None
-    ) -> Order:
+    def _parse_order(self, payload: Mapping[str, Any], *, original: Order | None = None) -> Order:
         data = self._extract_order_payload(payload)
         symbol_value = _first_present(data, "pair", "symbol")
         symbol = str(symbol_value).strip().upper() if symbol_value is not None else ""
@@ -209,15 +202,9 @@ class KrakenRESTConnector(RESTWebSocketConnector):
             price = float(original.price) if original.price is not None else None
         avg_price_value = _first_present(data, "avg_price", "price")
         average_price = _coerce_optional_float(avg_price_value)
-        status_value = (
-            str(_first_present(data, "status", "state") or "open").strip().lower()
-        )
+        status_value = str(_first_present(data, "status", "state") or "open").strip().lower()
         status = _STATUS_MAP.get(status_value, OrderStatus.OPEN)
-        if (
-            filled_quantity
-            and filled_quantity < quantity
-            and status is OrderStatus.FILLED
-        ):
+        if filled_quantity and filled_quantity < quantity and status is OrderStatus.FILLED:
             status = OrderStatus.PARTIALLY_FILLED
         return Order(
             symbol=symbol,
@@ -244,16 +231,12 @@ class KrakenRESTConnector(RESTWebSocketConnector):
         return "/0/private/Balance", {}
 
     def _parse_positions(self, payload: Mapping[str, Any]) -> list[dict]:
-        result = (
-            payload.get("result")
-            if isinstance(payload.get("result"), Mapping)
-            else payload
-        )
+        result = payload.get("result") if isinstance(payload.get("result"), Mapping) else payload
         positions: list[dict] = []
         if isinstance(result, Mapping):
             for asset, value in result.items():
                 qty = _coerce_optional_float(value) or 0.0
-                if qty <= 0:
+                if not (qty > 0):  # handles NaN and <= 0
                     continue
                 symbol = str(asset).strip().upper()
                 if not symbol:
@@ -272,9 +255,7 @@ class KrakenRESTConnector(RESTWebSocketConnector):
         token_response = self._request(
             "POST", "/0/private/GetWebSocketsToken", params={}, signed=True
         )
-        token_payload = (
-            token_response.get("result") if isinstance(token_response, Mapping) else {}
-        )
+        token_payload = token_response.get("result") if isinstance(token_response, Mapping) else {}
         token = None
         if isinstance(token_payload, Mapping):
             token = token_payload.get("token")
@@ -396,9 +377,7 @@ def _self_test() -> AdapterDiagnostic:
             )
         )
     except Exception as exc:  # pragma: no cover - defensive guard
-        checks.append(
-            AdapterCheckResult(name="instantiate", status="failed", detail=str(exc))
-        )
+        checks.append(AdapterCheckResult(name="instantiate", status="failed", detail=str(exc)))
     return AdapterDiagnostic(adapter_id="kraken.spot", checks=tuple(checks))
 
 

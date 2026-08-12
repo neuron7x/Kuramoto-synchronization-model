@@ -1,0 +1,85 @@
+{
+  "schema_version": "D002I-PREREG-v1",
+  "study_id": "D-002I",
+  "lineage_type": "fresh_preregistration",
+  "parent_lineage": "D-002H",
+  "parent_canonical_run_merge_sha": "250d8069d16ecabdb49b5a20b7cf1d622eddc925",
+  "parent_canonical_run_verdict": "REFUSED_NULL_AUDIT_FAIL_D002H",
+  "parent_canonical_run_artifact": "artifacts/d002h/canonical/d002h_canonical_run_verdict.json",
+  "parent_null_audit_capsule": "artifacts/d002h/canonical/results/d002h_ricci_flow_canonical_v1_2026-05-14/null_audit_capsule.json",
+  "parent_null_audit_n_audited": 54,
+  "parent_null_audit_n_fail": 42,
+  "investigation_only": true,
+  "canonical_run_authorized": false,
+  "locked_at_merge": true,
+  "edit_policy": "fresh_pre_registration_only",
+  "edit_constitutes": "D002K pre-registration (or successor letter)",
+  "substrate_scope": {
+    "included": ["ricci_flow"],
+    "excluded": ["block_structured", "temporal_coupling"]
+  },
+  "hypotheses": [
+    {
+      "id": "H_I1",
+      "name": "M1 null seed offset degeneracy",
+      "scope": "M1 mechanism only",
+      "falsification_protocol": "D-002I-P1/H1 -- re-run null audit only with alternative null_seed_offset_M1 in {100000, 1000000, hash_mixed}",
+      "support_criterion": "aggregate_verdict flips FAIL -> PASS for at least one alternative offset",
+      "refutation_criterion": "all alternative offsets retain aggregate_verdict == FAIL",
+      "parameter_set": {"null_seed_offset_M1": [100000, 1000000, "hash_mixed"]}
+    },
+    {
+      "id": "H_I2",
+      "name": "M3 generator over-fit to precursor marginals",
+      "scope": "M3 mechanism only",
+      "falsification_protocol": "D-002I-P1/H2 -- re-run null audit only with tol_marginal in {0.01, 0.005, 0.001}",
+      "support_criterion": "aggregate_verdict flips FAIL -> PASS for at least one tighter tolerance",
+      "refutation_criterion": "all tighter tolerances retain aggregate_verdict == FAIL",
+      "parameter_set": {"tol_marginal": [0.01, 0.005, 0.001]}
+    },
+    {
+      "id": "H_I3",
+      "name": "Signal genuinely below permutation-detectable threshold",
+      "scope": "signal-magnitude interpretation only; no substrate code edit; no D-002H prereg edit",
+      "falsification_protocol": "D-002I-P1/H3 -- parametrise lambda scaling at the runner level only (no substrate edit); evaluate on doubled-lambda grid {0.0, 0.1, 0.2, 0.4, 0.8, 2.0}",
+      "support_criterion": "null audit verdict flips FAIL -> PASS with augmented signal",
+      "refutation_criterion": "signal augmentation does not change the null audit verdict",
+      "parameter_set": {"lambda_grid_augmented": [0.0, 0.1, 0.2, 0.4, 0.8, 2.0], "substrate_code_edit": false}
+    },
+    {
+      "id": "H_I4",
+      "name": "Bonferroni n_cells=216 over-correction",
+      "scope": "Bonferroni denominator interpretation only; does NOT change D-002H pre-reg; does NOT re-run canonical sweep",
+      "falsification_protocol": "D-002I-P1/H4 -- re-derive verdict from existing sweep capsule with n_cells=18; do NOT re-run sweep",
+      "support_criterion": "R1 AND R2 AND R3 conjunction flips for at least one cell when n_cells=18 PROVIDED NULL_AUDIT separately PASSes",
+      "refutation_criterion": "no R2 verdict change with n_cells=18, OR NULL_AUDIT still FAILs (which renders H_I4 moot)",
+      "parameter_set": {"n_cells_alternative": 18, "re_run_sweep": false}
+    }
+  ],
+  "forbidden_claims": [
+    "D-002I will produce D-002H PASS",
+    "D-002I rescues D-002H",
+    "D-002I rescues D-002G or D-002C",
+    "D-002I authorises a new canonical sweep",
+    "canonical sweep will re-run on a new substrate set",
+    "real-data validated",
+    "bank-level confirmed",
+    "cross-substrate generalisation",
+    "global systemic-risk conclusion",
+    "block_structured returns to scope",
+    "temporal_coupling returns to scope",
+    "M2 returns to scope",
+    "M6 returns to scope"
+  ],
+  "allowed_claims": [
+    "D-002I-P1/H1..H4 are 4 falsifiable scoped investigations",
+    "each hypothesis produces a SUPPORTED or REFUTED scoped verdict",
+    "investigation outcomes inform whether D-002J (mechanism redesign) is warranted",
+    "D-002H REFUSED stays the truthful canonical verdict regardless of D-002I outcomes"
+  ],
+  "locked_anchors": {
+    "d002g_acceptance_rules_sha256": "875b1e3eb031b8e5333dc8b455454f0a30419ead1ebe787aa01d5882e7d6ad31",
+    "d002h_preregistration_sha256": "44b18b5a40ce9d188a9c3bd49339621f81a65a15f97a683247902450dd54acec",
+    "d002c_claim_ledger_sha256": "f96ba9b5a2057d2e0bff84afc28578ab316cff73f6dc6673fb0d6d543b8bd6dd"
+  }
+}

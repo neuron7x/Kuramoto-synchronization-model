@@ -1,0 +1,31 @@
+id: web-agent-evaluator-tools
+status: DRAFT
+claim_type: correctness
+promise: "Web-agent evaluator tools deterministically compute score, injection, runtime trace, task, context, and live-evidence outcomes without production-readiness bypass."
+diff_scope:
+  changed_files:
+    - path: ".claude/commit_acceptors/web-agent-evaluator-tools.yaml"
+    - path: "tools/web_agent_context_efficiency_eval.py"
+    - path: "tools/web_agent_injection_eval.py"
+    - path: "tools/web_agent_live_evidence_eval.py"
+    - path: "tools/web_agent_runtime_trace_eval.py"
+    - path: "tools/web_agent_score.py"
+    - path: "tools/web_agent_task_eval.py"
+  forbidden_paths:
+    - "trading/"
+    - "execution/"
+    - "forecast/"
+    - "policy/"
+required_python_symbols: []
+expected_signal: "evaluator tools reproduce artifacts and preserve live-evidence readiness gates"
+measurement_command: "python -m pytest tests/agents/test_web_agent_score.py tests/agents/test_runtime_trace_evaluator.py tests/agents/test_task_completion_evaluator.py tests/agents/test_context_efficiency_evaluator.py tests/agents/test_live_evidence_evaluator.py"
+signal_artifact: "artifacts/agents/web_agent_live_evidence_eval.json"
+falsifier:
+  command: "python -c \"raise SystemExit(1)\""
+  description: "Always-failing probe proving evaluator-tool acceptor failures are surfaced by CI."
+rollback_command: "git checkout -- .claude/commit_acceptors/web-agent-evaluator-tools.yaml tools/web_agent_context_efficiency_eval.py tools/web_agent_injection_eval.py tools/web_agent_live_evidence_eval.py tools/web_agent_runtime_trace_eval.py tools/web_agent_score.py tools/web_agent_task_eval.py"
+rollback_verification_command: "git diff --exit-code tools .claude/commit_acceptors/web-agent-evaluator-tools.yaml"
+memory_update_type: none
+ledger_path: ".claude/commit_acceptors/web-agent-evaluator-tools.yaml"
+report_path: "docs/agents/web_agent_baseline_report.md"
+evidence: []

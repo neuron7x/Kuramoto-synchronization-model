@@ -1,0 +1,64 @@
+# Diff-bound acceptor: fail-closed guards in the natural-frequency estimator.
+#
+# A computational audit found estimate_natural_frequencies_from_theta used
+# np.median (not nan-aware) while documenting "tolerates up to 50% outliers":
+# a single NaN phase silently poisoned the whole-column estimate (omega ->
+# [nan, ...]). It also let T<3 raise an opaque numpy np.gradient message
+# instead of a clear contract error. Both violate the CLAUDE.md fail-closed
+# doctrine. No invariant added or changed; the 50%-FINITE-outlier robustness
+# of the median is preserved (only NaN/Inf is now rejected).
+
+id: natural-frequency-failclosed
+status: ACTIVE
+claim_type: correctness
+promise: >-
+  estimate_natural_frequencies_from_theta now fails closed on a non-finite
+  phase matrix (a NaN/Inf is a contract violation, not an outlier — np.median
+  is not nan-aware) and on fewer than 3 timesteps (clear ValueError instead of
+  an opaque np.gradient message). The documented 50%-outlier tolerance is
+  preserved for FINITE phase-slip artefacts. No invariant added or changed;
+  three reproduction tests added (2 fail-closed + 1 regression) to the existing
+  TestNaturalFrequency suite.
+diff_scope:
+  changed_files:
+    - path: ".claude/commit_acceptors/natural-frequency-failclosed.yaml"
+    - path: "core/kuramoto/natural_frequency.py"
+    - path: "tests/unit/core/test_kuramoto_identification.py"
+  forbidden_paths:
+    - "trading/"
+    - "execution/"
+    - "forecast/"
+    - "policy/"
+required_python_symbols:
+  - "estimate_natural_frequencies_from_theta"
+expected_signal: >-
+  All TestNaturalFrequency tests pass (4 existing + 3 new); the wider
+  kuramoto-identification suite stays green (no regression); mypy --strict,
+  ruff, black, physics-code-audit clean on the changed module. Reproduced
+  before/after: a NaN phase returned omega=[nan, 0.1] -> now raises ValueError;
+  T=1 raised an opaque numpy gradient message -> now raises a clear ValueError.
+measurement_command: >-
+  PYTHONPATH=. python -m pytest tests/unit/core/test_kuramoto_identification.py
+  -k NaturalFrequency -v
+signal_artifact: "tmp/natural_frequency_failclosed_pytest.log"
+falsifier:
+  command: >-
+    PYTHONPATH=. python -m pytest tests/unit/core/test_kuramoto_identification.py
+    -v -k "non_finite_phase or too_few_timesteps or finite_outliers"
+  description: >-
+    Filters to the fail-closed reproduction tests plus the regression guard: a
+    NaN phase and T<3 must each raise ValueError, while a large FINITE
+    phase-slip outlier must still be tolerated by the median (omega ≈ 0.1).
+    Reverting the finiteness guard re-introduces the silent NaN-poisoned
+    estimate and fails the corresponding test.
+rollback_command: >-
+  git checkout HEAD~1 --
+  core/kuramoto/natural_frequency.py
+  tests/unit/core/test_kuramoto_identification.py
+  .claude/commit_acceptors/natural-frequency-failclosed.yaml
+rollback_verification_command: >-
+  git diff --exit-code core/kuramoto/natural_frequency.py
+memory_update_type: none
+ledger_path: ".claude/commit_acceptors/natural-frequency-failclosed.yaml"
+report_path: "docs/reports/diff_bound_commit_acceptor_layer.md"
+evidence: []

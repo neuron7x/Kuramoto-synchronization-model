@@ -1,3 +1,5 @@
+# Copyright (c) 2023-2026 Yaroslav Vasylenko (neuron7xLab)
+# SPDX-License-Identifier: MIT
 """Event bus abstractions with Kafka backend support."""
 
 from __future__ import annotations
@@ -10,7 +12,7 @@ from dataclasses import dataclass, field
 from datetime import datetime, timezone
 from enum import Enum
 from pathlib import Path
-from typing import Awaitable, Callable, Dict, MutableMapping, Optional
+from typing import Any, Awaitable, Callable, Dict, MutableMapping, Optional
 
 from .idempotency import (
     EventIdempotencyStore,
@@ -33,34 +35,34 @@ class EventTopic(Enum):
     """Canonical event bus topics."""
 
     MARKET_TICKS = TopicMetadata(
-        name="tradepulse.market.ticks",
+        name="geosync.market.ticks",
         partition_key="symbol",
-        retry_topic="tradepulse.market.ticks.retry",
-        dlq_topic="tradepulse.market.ticks.dlq",
+        retry_topic="geosync.market.ticks.retry",
+        dlq_topic="geosync.market.ticks.dlq",
     )
     MARKET_BARS = TopicMetadata(
-        name="tradepulse.market.bars",
+        name="geosync.market.bars",
         partition_key="symbol",
-        retry_topic="tradepulse.market.bars.retry",
-        dlq_topic="tradepulse.market.bars.dlq",
+        retry_topic="geosync.market.bars.retry",
+        dlq_topic="geosync.market.bars.dlq",
     )
     SIGNALS = TopicMetadata(
-        name="tradepulse.signals.generated",
+        name="geosync.signals.generated",
         partition_key="symbol",
-        retry_topic="tradepulse.signals.generated.retry",
-        dlq_topic="tradepulse.signals.generated.dlq",
+        retry_topic="geosync.signals.generated.retry",
+        dlq_topic="geosync.signals.generated.dlq",
     )
     ORDERS = TopicMetadata(
-        name="tradepulse.execution.orders",
+        name="geosync.execution.orders",
         partition_key="symbol",
-        retry_topic="tradepulse.execution.orders.retry",
-        dlq_topic="tradepulse.execution.orders.dlq",
+        retry_topic="geosync.execution.orders.retry",
+        dlq_topic="geosync.execution.orders.dlq",
     )
     FILLS = TopicMetadata(
-        name="tradepulse.execution.fills",
+        name="geosync.execution.fills",
         partition_key="symbol",
-        retry_topic="tradepulse.execution.fills.retry",
-        dlq_topic="tradepulse.execution.fills.dlq",
+        retry_topic="geosync.execution.fills.retry",
+        dlq_topic="geosync.execution.fills.dlq",
     )
 
     def __str__(self) -> str:
@@ -108,8 +110,8 @@ class EventBusConfig:
     backend: EventBusBackend
     bootstrap_servers: Optional[str] = None
     nats_url: Optional[str] = None
-    client_id: str = "tradepulse-event-bus"
-    consumer_group: str = "tradepulse"
+    client_id: str = "geosync-event-bus"
+    consumer_group: str = "geosync"
     enable_idempotence: bool = True
     retry_attempts: int = 5
     retry_backoff_ms: int = 250
@@ -160,7 +162,10 @@ class KafkaEventBus(BaseEventBus):
             raise ValueError("KafkaEventBus requires a Kafka backend configuration")
         super().__init__(config, idempotency_store=idempotency_store)
         self._producer = None
-        self._consumer_tasks: Dict[str, asyncio.Task[None]] = {}
+        # One topic may be subscribed more than once; keep EVERY consumer task so
+        # a later subscribe cannot orphan an earlier one (leaked socket + double
+        # delivery) and stop() can cancel all of them.
+        self._consumer_tasks: Dict[str, list[asyncio.Task[None]]] = {}
         self._security_kwargs: Dict[str, object] | None = None
 
     async def start(self) -> None:
@@ -183,18 +188,23 @@ class KafkaEventBus(BaseEventBus):
     async def stop(self) -> None:
         if self._producer:
             await self._producer.stop()
-        for task in self._consumer_tasks.values():
+        # Drop the producer handle so stop() is idempotent and a publish after
+        # stop fails closed (RuntimeError) instead of using a stopped producer.
+        self._producer = None
+        tasks = [task for group in self._consumer_tasks.values() for task in group]
+        for task in tasks:
             task.cancel()
+        # Await cancellation so each consumer's `finally: consumer.stop()` runs
+        # (closes the AIOKafkaConsumer socket) before we return.
+        if tasks:
+            await asyncio.gather(*tasks, return_exceptions=True)
         self._consumer_tasks.clear()
 
     async def publish(self, topic: EventTopic, envelope: EventEnvelope) -> None:
         if self._producer is None:
             raise RuntimeError("KafkaEventBus.start() must be called before publish()")
         key = envelope.partition_key.encode("utf-8")
-        headers = [
-            (name, value.encode("utf-8"))
-            for name, value in envelope.as_message().items()
-        ]
+        headers = [(name, value.encode("utf-8")) for name, value in envelope.as_message().items()]
         await self._producer.send_and_wait(
             topic.metadata.name, envelope.payload, key=key, headers=headers
         )
@@ -237,10 +247,8 @@ class KafkaEventBus(BaseEventBus):
             finally:
                 await consumer.stop()
 
-        task = asyncio.create_task(
-            _consume(), name=f"kafka-consumer-{topic.metadata.name}"
-        )
-        self._consumer_tasks[topic.metadata.name] = task
+        task = asyncio.create_task(_consume(), name=f"kafka-consumer-{topic.metadata.name}")
+        self._consumer_tasks.setdefault(topic.metadata.name, []).append(task)
 
     def _get_security_kwargs(self) -> Dict[str, object]:
         if self._security_kwargs is None:
@@ -256,9 +264,7 @@ class KafkaEventBus(BaseEventBus):
 
         cafile = self._config.ssl_cafile
         if not cafile:
-            raise ValueError(
-                "ssl_cafile must be configured for secure Kafka connections"
-            )
+            raise ValueError("ssl_cafile must be configured for secure Kafka connections")
         cafile_path = Path(cafile)
         if not cafile_path.is_file():
             raise FileNotFoundError(f"ssl_cafile not found at {cafile}")
@@ -291,9 +297,7 @@ class KafkaEventBus(BaseEventBus):
 
         if protocol == "SASL_SSL":
             if not self._config.sasl_username or not self._config.sasl_password:
-                raise ValueError(
-                    "SASL credentials must be supplied for SASL_SSL protocol"
-                )
+                raise ValueError("SASL credentials must be supplied for SASL_SSL protocol")
             mechanism = self._config.sasl_mechanism or "PLAIN"
             kwargs.update(
                 {
@@ -305,9 +309,7 @@ class KafkaEventBus(BaseEventBus):
 
         return kwargs
 
-    async def _publish_retry_or_dlq(
-        self, topic: EventTopic, envelope: EventEnvelope
-    ) -> None:
+    async def _publish_retry_or_dlq(self, topic: EventTopic, envelope: EventEnvelope) -> None:
         if self._producer is None:
             return
         attempt = int(envelope.headers.get("retry-attempt", "0")) + 1
@@ -317,18 +319,14 @@ class KafkaEventBus(BaseEventBus):
                 topic.metadata.retry_topic,
                 envelope.payload,
                 key=envelope.partition_key.encode("utf-8"),
-                headers=[
-                    (k, v.encode("utf-8")) for k, v in envelope.as_message().items()
-                ],
+                headers=[(k, v.encode("utf-8")) for k, v in envelope.as_message().items()],
             )
         else:
             await self._producer.send_and_wait(
                 topic.metadata.dlq_topic,
                 envelope.payload,
                 key=envelope.partition_key.encode("utf-8"),
-                headers=[
-                    (k, v.encode("utf-8")) for k, v in envelope.as_message().items()
-                ],
+                headers=[(k, v.encode("utf-8")) for k, v in envelope.as_message().items()],
             )
 
 
@@ -427,9 +425,7 @@ class NATSEventBus(BaseEventBus):
                     exc,
                 )
 
-    async def _publish_retry_or_dlq(
-        self, topic: EventTopic, envelope: EventEnvelope
-    ) -> None:
+    async def _publish_retry_or_dlq(self, topic: EventTopic, envelope: EventEnvelope) -> None:
         if not self._nc or not self._js:
             return
         attempt = int(envelope.headers.get("retry-attempt", "0")) + 1
@@ -445,7 +441,7 @@ class NATSEventBus(BaseEventBus):
             )
 
 
-def _envelope_from_kafka_message(message) -> EventEnvelope:  # type: ignore[no-untyped-def]
+def _envelope_from_kafka_message(message: Any) -> EventEnvelope:
     headers = {key: value.decode("utf-8") for key, value in message.headers}
     occurred_at = (
         datetime.fromisoformat(headers.get("occurred_at"))
@@ -464,7 +460,7 @@ def _envelope_from_kafka_message(message) -> EventEnvelope:  # type: ignore[no-u
     )
 
 
-def _envelope_from_nats_message(message) -> EventEnvelope:  # type: ignore[no-untyped-def]
+def _envelope_from_nats_message(message: Any) -> EventEnvelope:
     headers = dict(message.headers or {})
     occurred_at_raw = headers.get("occurred_at")
     occurred_at = (
@@ -480,7 +476,5 @@ def _envelope_from_nats_message(message) -> EventEnvelope:  # type: ignore[no-un
         content_type=headers.get("content_type", "application/octet-stream"),
         schema_version=headers.get("schema_version", "0.0.0"),
         occurred_at=occurred_at,
-        headers={
-            k: (v if isinstance(v, str) else json.dumps(v)) for k, v in headers.items()
-        },
+        headers={k: (v if isinstance(v, str) else json.dumps(v)) for k, v in headers.items()},
     )

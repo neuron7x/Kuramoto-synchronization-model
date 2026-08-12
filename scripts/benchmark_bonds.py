@@ -1,3 +1,5 @@
+# Copyright (c) 2023-2026 Yaroslav Vasylenko (neuron7xLab)
+# SPDX-License-Identifier: MIT
 from __future__ import annotations
 
 import argparse
@@ -34,9 +36,7 @@ def run_benchmark(iterations: int = 200) -> dict[str, float | int]:
     graph.add_node("broker", cpu_norm=0.3)
     graph.add_node("audit", cpu_norm=0.7)
 
-    graph.add_edge(
-        "ingest", "matcher", type="covalent", latency_norm=0.4, coherency=0.92
-    )
+    graph.add_edge("ingest", "matcher", type="covalent", latency_norm=0.4, coherency=0.92)
     graph.add_edge("matcher", "risk", type="ionic", latency_norm=0.8, coherency=0.71)
     graph.add_edge("risk", "broker", type="metallic", latency_norm=0.15, coherency=0.88)
     graph.add_edge("broker", "audit", type="hydrogen", latency_norm=1.2, coherency=0.63)
@@ -82,9 +82,7 @@ def main() -> None:
 
     mean_abs = abs(metrics["dFdt_mean"])
     if mean_abs > args.target_dF:
-        raise SystemExit(
-            f"dF/dt gate failed. mean_abs={mean_abs} > target={args.target_dF}"
-        )
+        raise SystemExit(f"dF/dt gate failed. mean_abs={mean_abs} > target={args.target_dF}")
 
 
 if __name__ == "__main__":

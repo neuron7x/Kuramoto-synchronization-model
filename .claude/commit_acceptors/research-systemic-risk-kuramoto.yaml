@@ -1,0 +1,131 @@
+# Diff-bound commit acceptor for the systemic-risk Kuramoto research module.
+#
+# Adds research/systemic_risk/ — a pre-registered falsification battery
+# for the hypothesis that interbank phase-locking precedes banking-crisis
+# events. The module composes existing core.kuramoto primitives; it does
+# not introduce new physics. Layer 2 (Sustainer) in the maintenance
+# hierarchy: emits a diagnostic score, never takes execution action.
+#
+# Decision rule (frozen pre-registration):
+#   HARD_FAIL : ∃ crisis with AUC ≤ 0.55
+#   HARD_PASS : ≥2 crises with AUC ≥ 0.70 AND BH-corrected p ≤ 0.01
+#   UNDECIDED : neither (collect more data, do not promote tier)
+#
+# Locally verified:
+#   * pytest tests/research/systemic_risk/: 57/57 passed
+#   * mypy --strict on every new file: clean
+#   * ruff + black: clean
+#   * Lower-rail dry-run (random phases): HARD_FAIL, AUC=0.455 (correct)
+#   * Upper-rail dry-run (injected +2σ pre-event signal): HARD_PASS,
+#     AUC=0.92, p_BH=5e-4 across 2 crises (correct)
+#   * No real interbank exposure data shipped; topology loader expects
+#     user-supplied parquet/CSV.
+
+id: research-systemic-risk-kuramoto
+status: ACTIVE
+# claim_type=governance: this PR is primarily governance over a falsifiable
+# research hypothesis — pre-registered decision rule, frozen thresholds,
+# CLAIMS.md ledger entry, fail-closed verdict. The research code itself is
+# composition over the existing core.kuramoto stack.
+claim_type: governance
+promise: >-
+  After this PR lands, research/systemic_risk/ ships a pre-registered
+  falsification battery for C-SYSRISK-PHASE (HYPOTHESIS tier in
+  CLAIMS.md). The battery composes core.kuramoto primitives, an event
+  ledger sourced from Laeven & Valencia 2018 plus post-LV2020 anchor
+  events, an exposure-matrix → adjacency adapter with a self-contained
+  Barabási-Albert null, and a Mann-Whitney AUC + permutation p +
+  Benjamini-Hochberg FDR pipeline. The decision rule (HARD_FAIL ≤ 0.55,
+  HARD_PASS ≥ 0.70 AND p_BH ≤ 0.01 on ≥2 crises) is encoded once and
+  frozen — any subsequent change to thresholds is a new pre-registration
+  on a fresh branch. End-to-end rails are verified: random phases →
+  HARD_FAIL (AUC≈0.45), injected pre-event signal → HARD_PASS (AUC≈0.92,
+  p_BH=5e-4). Tier promotion to MEASURED requires the battery to return
+  HARD_PASS on ≥2 independent crises with real user-supplied interbank
+  exposure data.
+diff_scope:
+  changed_files:
+    - path: ".claude/commit_acceptors/research-systemic-risk-kuramoto.yaml"
+    - path: "CLAIMS.md"
+    - path: "research/systemic_risk/README.md"
+    - path: "research/systemic_risk/__init__.py"
+    - path: "research/systemic_risk/early_warning.py"
+    - path: "research/systemic_risk/event_ledger.py"
+    - path: "research/systemic_risk/falsification.py"
+    - path: "research/systemic_risk/phase_extraction.py"
+    - path: "research/systemic_risk/topology.py"
+    - path: "tests/research/systemic_risk/__init__.py"
+    - path: "tests/research/systemic_risk/test_early_warning.py"
+    - path: "tests/research/systemic_risk/test_event_ledger.py"
+    - path: "tests/research/systemic_risk/test_falsification.py"
+    - path: "tests/research/systemic_risk/test_topology.py"
+  forbidden_paths:
+    - "trading/"
+    - "execution/"
+    - "forecast/"
+    - "policy/"
+    - "core/physics/"
+    - "core/kuramoto/"
+    - "application/governance/claim_ledger.py"
+    - "application/governance/commit_acceptor.py"
+    - "scripts/ci/check_claims.py"
+    - "tools/commit_acceptor/validate_commit_acceptor.py"
+required_python_symbols:
+  - "research/systemic_risk/event_ledger.py::BankingCrisisLedger"
+  - "research/systemic_risk/event_ledger.py::DEFAULT_LEDGER"
+  - "research/systemic_risk/topology.py::InterbankTopology"
+  - "research/systemic_risk/topology.py::barabasi_albert_null"
+  - "research/systemic_risk/early_warning.py::compute_early_warning"
+  - "research/systemic_risk/early_warning.py::kuramoto_order_parameter"
+  - "research/systemic_risk/falsification.py::run_falsification"
+  - "research/systemic_risk/falsification.py::auc_mann_whitney"
+  - "research/systemic_risk/falsification.py::benjamini_hochberg"
+expected_signal: >-
+  Local: `python -m pytest tests/research/systemic_risk/ -q` reports
+  "57 passed"; `mypy --strict` is clean on every file under
+  research/systemic_risk/ and tests/research/systemic_risk/;
+  `ruff check` and `black --check` both pass on those paths;
+  the lower-rail dry-run on random phases returns
+  verdict=HARD_FAIL with AUC ≈ 0.45 against the USA filter, while
+  the upper-rail dry-run with an injected +2σ pre-event signal
+  returns verdict=HARD_PASS with AUC ≈ 0.92 and p_BH ≈ 5e-4 on
+  ≥2 USA crises.
+measurement_command: >-
+  bash -c 'mypy --strict
+  research/systemic_risk/event_ledger.py
+  research/systemic_risk/topology.py
+  research/systemic_risk/phase_extraction.py
+  research/systemic_risk/early_warning.py
+  research/systemic_risk/falsification.py
+  research/systemic_risk/__init__.py
+  tests/research/systemic_risk/
+  && ruff check research/systemic_risk/ tests/research/systemic_risk/
+  && black --check research/systemic_risk/ tests/research/systemic_risk/
+  && python -m pytest tests/research/systemic_risk/ -q'
+signal_artifact: "tmp/research_systemic_risk_kuramoto.log"
+falsifier:
+  command: >-
+    bash -c 'python -m pytest tests/research/systemic_risk/test_falsification.py::TestRunFalsificationSanity::test_random_scores_do_not_pass
+    -q >/tmp/_sysrisk_null.log 2>&1
+    && ! grep -q "1 passed" /tmp/_sysrisk_null.log'
+  description: >-
+    Probes the null-rail invariant of the falsification battery:
+    on i.i.d. random scores against the synthetic ledger,
+    `run_falsification` must never return HARD_PASS. The protected
+    test asserts this. The falsifier inverts: it succeeds (exit 0)
+    only when the protected null-rail test did NOT pass, which
+    would mean the battery has a leak that systematically inflates
+    AUC under the null.
+rollback_command: >-
+  git checkout HEAD~1 --
+  CLAIMS.md
+  && rm -rf research/systemic_risk/ tests/research/systemic_risk/
+  .claude/commit_acceptors/research-systemic-risk-kuramoto.yaml
+rollback_verification_command: >-
+  bash -c 'test ! -d research/systemic_risk
+  && test ! -d tests/research/systemic_risk
+  && test ! -f .claude/commit_acceptors/research-systemic-risk-kuramoto.yaml'
+memory_update_type: append
+ledger_path: ".claude/commit_acceptors/research-systemic-risk-kuramoto.yaml"
+report_path: "tmp/research_systemic_risk_kuramoto.log"
+evidence: []

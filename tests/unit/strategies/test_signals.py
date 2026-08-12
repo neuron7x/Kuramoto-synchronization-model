@@ -1,3 +1,5 @@
+# Copyright (c) 2023-2026 Yaroslav Vasylenko (neuron7xLab)
+# SPDX-License-Identifier: MIT
 """Unit tests for core strategy signal utilities."""
 
 import numpy as np
@@ -29,11 +31,7 @@ def test_threshold_signal_with_variable_thresholds():
     prices = np.array([-0.5, 0.0, 0.5, 1.5])
 
     default_threshold_signal = threshold_signal(prices)
-    np.testing.assert_array_equal(
-        default_threshold_signal, np.array([-1.0, -1.0, 1.0, 1.0])
-    )
+    np.testing.assert_array_equal(default_threshold_signal, np.array([-1.0, -1.0, 1.0, 1.0]))
 
     variable_threshold_signal = threshold_signal(prices, threshold=0.75)
-    np.testing.assert_array_equal(
-        variable_threshold_signal, np.array([-1.0, -1.0, -1.0, 1.0])
-    )
+    np.testing.assert_array_equal(variable_threshold_signal, np.array([-1.0, -1.0, -1.0, 1.0]))

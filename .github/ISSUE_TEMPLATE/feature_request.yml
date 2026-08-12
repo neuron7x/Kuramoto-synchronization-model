@@ -1,0 +1,61 @@
+name: "✨ Feature request"
+description: Propose a new capability, indicator, engine, or API surface for GeoSync.
+title: "[Feature] "
+labels: ["type: feature", "status: needs-triage"]
+body:
+  - type: markdown
+    attributes:
+      value: |
+        Thank you for proposing an enhancement to GeoSync. Strong feature requests
+        explain the *problem* first and the *solution* second — this lets us evaluate
+        the trade-offs against the architectural principles in `docs/ARCHITECTURE.md`.
+  - type: textarea
+    id: problem
+    attributes:
+      label: Problem statement
+      description: What limitation, friction, or missing capability are you hitting?
+      placeholder: "I want to run Kuramoto simulations on a 1M-node sparse graph, but..."
+    validations:
+      required: true
+  - type: textarea
+    id: proposal
+    attributes:
+      label: Proposed solution
+      description: What would the API / CLI / UI look like? Sketch the ideal workflow.
+      render: python
+    validations:
+      required: true
+  - type: textarea
+    id: alternatives
+    attributes:
+      label: Alternatives considered
+      description: Other approaches, existing libraries, or workarounds you evaluated.
+  - type: dropdown
+    id: scope
+    attributes:
+      label: Scope
+      options:
+        - "core/indicators (signal layer)"
+        - "core/kuramoto (simulation engines)"
+        - "backtest (event-driven engine, walk-forward)"
+        - "execution (OMS, routing, risk)"
+        - "observability (metrics, tracing, dashboards)"
+        - "docs / examples"
+        - "infrastructure / CI"
+        - "other"
+    validations:
+      required: true
+  - type: textarea
+    id: references
+    attributes:
+      label: References
+      description: Papers, RFCs, prior art, benchmarks, or related issues.
+  - type: checkboxes
+    id: checks
+    attributes:
+      label: Pre-submission checklist
+      options:
+        - label: This proposal does not duplicate an existing issue or discussion.
+          required: true
+        - label: I have read the architecture guardrails in `docs/ARCHITECTURE.md`.
+          required: true

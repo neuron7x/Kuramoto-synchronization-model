@@ -1,0 +1,64 @@
+# Diff-bound acceptor (part A) for actions/checkout @v6.0.2 → @v6.0.3
+# (dependabot PR #879). Split into a/b because the bump touches 28
+# workflow files (above governance cap=16). This part binds the first
+# 14 workflows alphabetically, plus INVENTORY.json refresh and this
+# acceptor file. Sibling: checkout-v6-0-3-bump-b.yaml.
+
+id: checkout-v6-0-3-bump-a
+status: ACTIVE
+claim_type: governance
+promise: >-
+  Bumps actions/checkout from v6.0.2 to v6.0.3 in 14 of 28 workflow
+  files (alphabetical first half). SHA-pinned forms collapse to the
+  canonical v6.0.3 SHA df4cb1c069e1874edd31b4311f1884172cec0e10.
+  INVENTORY.json sha256 for .github/workflows/pr-gate.yml is refreshed
+  to 49f7b6e44e99368dc8d6ba54109390f73be62d0d8ac7f17657c1385ec6db03c1
+  (was b439d2ebf518dd141b3346734d8a2305d50a99fb514b9eeedf8392d358ae7c1f).
+  No functional change beyond the SHA-pin bump.
+diff_scope:
+  changed_files:
+    - path: ".claude/commit_acceptors/checkout-v6-0-3-bump-a.yaml"
+    - path: "INVENTORY.json"
+    - path: ".github/workflows/bibliography-claim-gate.yml"
+    - path: ".github/workflows/calib-grid-witness-map.yml"
+    - path: ".github/workflows/claims-evidence-gate.yml"
+    - path: ".github/workflows/cns-release-gate.yml"
+    - path: ".github/workflows/codeql.yml"
+    - path: ".github/workflows/commit-acceptor-gate.yml"
+    - path: ".github/workflows/connectome-gate.yml"
+    - path: ".github/workflows/edge-case-matrix.yml"
+    - path: ".github/workflows/epistemic-rhombus-gate.yml"
+    - path: ".github/workflows/evidence-grounding.yml"
+    - path: ".github/workflows/formal-verification.yml"
+    - path: ".github/workflows/governance-schema-export-sync.yml"
+    - path: ".github/workflows/i18n.yml"
+    - path: ".github/workflows/invariant-count-sync.yml"
+  forbidden_paths:
+    - "trading/"
+    - "execution/"
+    - "forecast/"
+    - "policy/"
+required_python_symbols: []
+expected_signal: >-
+  Each of the 14 listed workflow files references actions/checkout@v6.0.3
+  (or the pinned SHA df4cb1c069e1874edd31b4311f1884172cec0e10);
+  INVENTORY.json sha256 for pr-gate.yml matches local sha256sum.
+measurement_command: >-
+  bash -c "for f in .github/workflows/bibliography-claim-gate.yml .github/workflows/calib-grid-witness-map.yml .github/workflows/claims-evidence-gate.yml .github/workflows/cns-release-gate.yml .github/workflows/codeql.yml .github/workflows/commit-acceptor-gate.yml .github/workflows/connectome-gate.yml .github/workflows/edge-case-matrix.yml .github/workflows/epistemic-rhombus-gate.yml .github/workflows/evidence-grounding.yml .github/workflows/formal-verification.yml .github/workflows/governance-schema-export-sync.yml .github/workflows/i18n.yml .github/workflows/invariant-count-sync.yml; do grep -E 'actions/checkout@(v6\\.0\\.3|df4cb1c069e1874edd31b4311f1884172cec0e10)' \"$f\" >/dev/null || { echo MISSING $f; exit 1; }; done"
+signal_artifact: "tmp/checkout_v6_0_3_bump_a.log"
+falsifier:
+  command: >-
+    bash -c "sha256sum .github/workflows/pr-gate.yml | awk '{print $1}' |
+    diff - <(jq -r '.files[] | select(.path==\".github/workflows/pr-gate.yml\") | .sha256' INVENTORY.json)"
+  description: >-
+    Probe verifies INVENTORY sha256 for pr-gate.yml matches actual file
+    content. Non-empty diff means INVENTORY drifted from reality.
+rollback_command: >-
+  git checkout HEAD~1 -- .github/workflows/ INVENTORY.json
+  .claude/commit_acceptors/checkout-v6-0-3-bump-a.yaml
+rollback_verification_command: >-
+  git diff --exit-code .github/workflows/ INVENTORY.json
+memory_update_type: append
+ledger_path: ".claude/commit_acceptors/checkout-v6-0-3-bump-a.yaml"
+report_path: ".claude/commit_acceptors/checkout-v6-0-3-bump-a.yaml"
+evidence: []

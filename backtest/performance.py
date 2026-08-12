@@ -1,3 +1,5 @@
+# Copyright (c) 2023-2026 Yaroslav Vasylenko (neuron7xLab)
+# SPDX-License-Identifier: MIT
 """Performance analytics helpers for backtest results."""
 
 from __future__ import annotations
@@ -136,9 +138,7 @@ def compute_performance_metrics(
                     skewness = m3 / (m2**1.5) if m2 > 0 else 0.0
                     kurtosis = m4 / (m2**2) if m2 > 0 else 3.0
                     denom_term = (
-                        1.0
-                        - skewness * sr_periodic
-                        + ((kurtosis - 1.0) / 4.0) * sr_periodic**2
+                        1.0 - skewness * sr_periodic + ((kurtosis - 1.0) / 4.0) * sr_periodic**2
                     )
                     if denom_term > 1e-12:
                         z_score = (
@@ -154,24 +154,16 @@ def compute_performance_metrics(
         downside = excess_returns[excess_returns < 0.0]
         if downside.size:
             downside_vol = (
-                float(np.std(downside, ddof=1))
-                if downside.size > 1
-                else float(np.std(downside))
+                float(np.std(downside, ddof=1)) if downside.size > 1 else float(np.std(downside))
             )
             if downside_vol > 0:
-                sortino_ratio = (
-                    float(np.mean(excess_returns)) / downside_vol * annualisation
-                )
+                sortino_ratio = float(np.mean(excess_returns)) / downside_vol * annualisation
         elif excess_returns.size:
             sortino_ratio = math.inf
 
     certainty_equivalent: float | None = None
     if returns.size:
-        variance = (
-            float(np.var(returns, ddof=1))
-            if returns.size > 1
-            else float(np.var(returns))
-        )
+        variance = float(np.var(returns, ddof=1)) if returns.size > 1 else float(np.var(returns))
         mean_return = float(np.mean(returns))
         ce_periodic = mean_return - 0.5 * float(max(risk_aversion, 0.0)) * variance
         if periods_per_year > 0:
@@ -191,12 +183,7 @@ def compute_performance_metrics(
             certainty_equivalent = ce_periodic
 
     cagr: float | None = None
-    if (
-        equity.size
-        and initial_capital > 0.0
-        and equity[-1] > 0.0
-        and periods_per_year > 0
-    ):
+    if equity.size and initial_capital > 0.0 and equity[-1] > 0.0 and periods_per_year > 0:
         years = equity.size / periods_per_year
         if years > 0:
             cagr = float((equity[-1] / float(initial_capital)) ** (1.0 / years) - 1.0)
@@ -298,9 +285,9 @@ def export_performance_report(
     target_dir = Path(directory)
     target_dir.mkdir(parents=True, exist_ok=True)
 
-    safe_name = "".join(
-        c if c.isalnum() or c in {"-", "_"} else "_" for c in strategy_name
-    ).strip("_")
+    safe_name = "".join(c if c.isalnum() or c in {"-", "_"} else "_" for c in strategy_name).strip(
+        "_"
+    )
     if not safe_name:
         safe_name = "strategy"
     timestamp = datetime.now(timezone.utc).strftime("%Y%m%dT%H%M%SZ")

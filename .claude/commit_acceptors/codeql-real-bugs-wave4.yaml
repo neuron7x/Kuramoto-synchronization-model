@@ -1,0 +1,72 @@
+# Diff-bound acceptor for CodeQL real-bug wave 4.
+#
+# The final sweep of the code-scanning board surfaced (below the top-15 fold)
+# several genuine defects in subtle rule classes. Three are real bugs, two are
+# misleading-but-harmless generator returns. Pure correctness; touches no
+# execution/forecast/policy/trading order-placement logic (live_loop change is
+# in the read-only order-poll telemetry path).
+
+id: codeql-real-bugs-wave4
+status: ACTIVE
+claim_type: correctness
+promise: >-
+  execution/live_loop._poll_outstanding_orders had `except OrderError` before
+  `except (TransientOrderError, ConnectionError, TimeoutError)`; since
+  TransientOrderError subclasses OrderError, the transient branch was
+  unreachable for it and transient errors were mis-logged as
+  live_loop.fetch_failed instead of live_loop.poll_retry. Reordering restores
+  correct routing (5 parametrized regression tests). bench_indicators called
+  compute_phase(coupling=0.3) — no such parameter, a guaranteed TypeError when
+  the benchmark runs; removed. The integrated-risk example called
+  update_position_limits(symbol=...) but the parameter is market_state_or_symbol
+  — TypeError on run; corrected. core/data/materialization._chunk_frame and
+  src/audit/stores._iter_entries returned `[]` from a generator (discarded by
+  Python, misleading); changed to bare `return`. No behavioural change beyond
+  the corrected error routing.
+diff_scope:
+  changed_files:
+    - path: ".claude/commit_acceptors/codeql-real-bugs-wave4.yaml"
+    - path: "execution/live_loop.py"
+    - path: "bench/bench_indicators.py"
+    - path: "examples/integrated_risk_management_example.py"
+    - path: "core/data/materialization.py"
+    - path: "src/audit/stores.py"
+    - path: "docs/reports/codeql_real_bugs_wave4.md"
+  forbidden_paths:
+    - "trading/"
+    - "forecast/"
+    - "policy/"
+required_python_symbols:
+  - "LiveExecutionLoop"
+  - "compute_phase"
+expected_signal: >-
+  In _poll_outstanding_orders the specific (TransientOrderError, ConnectionError,
+  TimeoutError) handler precedes the broad OrderError handler; compute_phase and
+  update_position_limits calls match their signatures; the existing live-loop
+  suite passes; ruff / black / mypy --strict clean on all changed modules.
+measurement_command: >-
+  PYTHONPATH=. python -m pytest tests/execution/test_live_loop.py
+  tests/execution/test_live_loop_streaming.py -q
+signal_artifact: "tmp/codeql_real_bugs_wave4_pytest.log"
+falsifier:
+  command: >-
+    PYTHONPATH=. python -c "import inspect, execution.live_loop as m;
+    src=inspect.getsource(m.LiveExecutionLoop._poll_outstanding_orders);
+    i_t=src.index('TransientOrderError'); i_o=src.index('except OrderError');
+    import sys; sys.exit(0 if i_t < i_o else 1)"
+  description: >-
+    Exits nonzero if the broad `except OrderError` still precedes the
+    transient clause (the unreachable-except bug). Passes only when the
+    specific handler is ordered first.
+rollback_command: >-
+  git checkout origin/main -- execution/live_loop.py bench/bench_indicators.py
+  examples/integrated_risk_management_example.py core/data/materialization.py
+  src/audit/stores.py
+rollback_verification_command: >-
+  git diff --exit-code origin/main -- execution/live_loop.py
+  bench/bench_indicators.py examples/integrated_risk_management_example.py
+  core/data/materialization.py src/audit/stores.py
+memory_update_type: none
+ledger_path: ".claude/commit_acceptors/codeql-real-bugs-wave4.yaml"
+report_path: "docs/reports/codeql_real_bugs_wave4.md"
+evidence: []

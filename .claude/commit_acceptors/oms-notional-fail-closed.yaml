@@ -1,0 +1,84 @@
+# Diff-bound commit acceptor: OMS notional risk gate fails closed on unknown mark.
+#
+# Bug: a market order has no price pre-fill; the OMS substituted a nominal $1
+# reference price, so qty*1.0 slipped under any real notional cap (fail-OPEN for
+# the most common order type). Fix rejects when a finite cap is in force and no
+# real reference price is available; leaves cap-less flows admitting normally.
+
+id: oms-notional-fail-closed
+status: ACTIVE
+claim_type: correctness
+promise: >-
+  After this PR, execution.oms resolves the pre-trade notional reference price
+  via _risk_reference_price, which fails CLOSED (raises ComplianceViolation) when
+  a market order carries no price/average_price AND a finite notional cap is
+  active on the RiskManager (limits.max_notional < inf) or RiskCompliance
+  (_config.max_notional_per_order > 0). When no notional cap is configured the
+  nominal substitute price is inert and ordinary market orders are still
+  admitted. A $1 floor can no longer let qty*1.0 bypass a real notional cap.
+
+diff_scope:
+  changed_files:
+    - path: ".claude/commit_acceptors/oms-notional-fail-closed.yaml"
+    - path: "execution/oms.py"
+    - path: "tests/execution/test_oms_notional_fail_closed.py"
+  forbidden_paths:
+    - "core/physics/"
+    - "core/kuramoto/"
+    - "domain/positions/entity.py"
+
+required_python_symbols:
+  - "execution/oms.py::_risk_reference_price"
+  - "execution/oms.py::OrderManagementSystem"
+
+expected_signal: >-
+  `python -m pytest --import-mode=importlib
+  tests/execution/test_oms_notional_fail_closed.py -q` reports 6 passed; a
+  market order (no price) submitted to an OMS whose RiskManager has a finite
+  max_notional raises ComplianceViolation, while the same order under the default
+  infinite cap is admitted.
+
+measurement_command: >-
+  bash -c '
+    python -m pytest --import-mode=importlib -p no:cacheprovider
+      tests/execution/test_oms_notional_fail_closed.py
+      tests/execution/test_risk_limits.py
+      tests/execution/test_risk_compliance.py -q
+  '
+
+signal_artifact: "tmp/oms_notional_fail_closed.log"
+
+falsifier:
+  command: |-
+    bash -c '
+      python -c "
+    from domain import Order, OrderType
+    from execution.oms import _risk_reference_price
+    o = Order(symbol=\"BTC/USDT\", side=\"buy\", quantity=1.0, price=None, order_type=OrderType.MARKET)
+    try:
+        _risk_reference_price(o, notional_cap_active=True)
+        raised = False
+    except Exception:
+        raised = True
+    assert raised, \"expected fail-closed rejection\"
+      "
+    '
+  description: >-
+    Asserts that a market order with no reference price and an active notional
+    cap fails closed. It asserts the fix invariant and, per the run_evidence green-state
+    contract, exits 0 on the correct (green) tree and non-zero if the fix
+    regresses or is rolled back.
+rollback_command: >-
+  bash -c '
+    git rm -f .claude/commit_acceptors/oms-notional-fail-closed.yaml
+  '
+
+rollback_verification_command: >-
+  bash -c '
+    test ! -f .claude/commit_acceptors/oms-notional-fail-closed.yaml
+  '
+
+memory_update_type: append
+ledger_path: ".claude/commit_acceptors/oms-notional-fail-closed.yaml"
+report_path: "tmp/oms_notional_fail_closed.log"
+evidence: []

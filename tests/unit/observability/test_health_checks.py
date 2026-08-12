@@ -1,3 +1,5 @@
+# Copyright (c) 2023-2026 Yaroslav Vasylenko (neuron7xLab)
+# SPDX-License-Identifier: MIT
 from __future__ import annotations
 
 from datetime import timedelta
@@ -7,9 +9,9 @@ import numpy as np
 
 from application.system import (
     ExchangeAdapterConfig,
+    GeoSyncSystem,
+    GeoSyncSystemConfig,
     LiveLoopSettings,
-    TradePulseSystem,
-    TradePulseSystemConfig,
 )
 from execution.connectors import BinanceConnector
 from observability.health_checks import (
@@ -20,11 +22,11 @@ from observability.health_checks import (
 )
 
 
-def _build_system(tmp_path: Path) -> TradePulseSystem:
+def _build_system(tmp_path: Path) -> GeoSyncSystem:
     venue = ExchangeAdapterConfig(name="binance", connector=BinanceConnector())
     settings = LiveLoopSettings(state_dir=tmp_path / "state")
-    config = TradePulseSystemConfig(venues=[venue], live_settings=settings)
-    return TradePulseSystem(config)
+    config = GeoSyncSystemConfig(venues=[venue], live_settings=settings)
+    return GeoSyncSystem(config)
 
 
 def _data_path() -> Path:
@@ -43,7 +45,9 @@ def test_data_pipeline_health_reflects_status(tmp_path: Path) -> None:
     result = evaluate_data_pipeline_health(system)
     assert result.healthy
 
-    system._last_ingestion_completed_at = system.last_ingestion_completed_at - timedelta(seconds=400)  # type: ignore[assignment]
+    system._last_ingestion_completed_at = system.last_ingestion_completed_at - timedelta(
+        seconds=400
+    )  # type: ignore[assignment]
     result = evaluate_data_pipeline_health(system, stale_after_seconds=300.0)
     assert not result.healthy
 

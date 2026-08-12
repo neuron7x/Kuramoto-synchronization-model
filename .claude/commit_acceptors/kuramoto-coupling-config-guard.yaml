@@ -1,0 +1,65 @@
+id: kuramoto-coupling-config-guard
+status: ACTIVE
+claim_type: correctness
+promise: >-
+  No public KuramotoConfig path silently double-scales coupling: a physical
+  weight matrix with K != 1 is rejected, an undeclared convention with K != 1
+  is rejected fail-closed (the constructor cannot tell a normalized topology A
+  from a physical weight matrix W, so the ambiguity must not pass silently), and
+  signed coupling cannot claim attractive Kuramoto.
+diff_scope:
+  changed_files:
+    - path: ".claude/commit_acceptors/kuramoto-coupling-config-guard.yaml"
+    - path: "core/kuramoto/config.py"
+    - path: "core/kuramoto/cli.py"
+    - path: "core/kuramoto/sparse.py"
+    - path: "core/physics/explosive_sync.py"
+    - path: "core/physics/liquidity_coupling.py"
+    - path: "research/reconstruction/kuramoto_on_reconstruction.py"
+    - path: "tests/unit/core/test_config_coupling_migration.py"
+    - path: "tests/unit/core/test_kuramoto_engine.py"
+    - path: "tests/unit/physics/test_T1_liquidity_coupling.py"
+    - path: "tests/integration/test_physics_engine_full_pipeline.py"
+    - path: "docs/reports/kuramoto_coupling_config_guard.md"
+  forbidden_paths:
+    - "trading/"
+    - "execution/"
+    - "forecast/"
+    - "policy/"
+required_python_symbols: []
+expected_signal: >-
+  ruff + black + mypy --strict clean; the config-layer migration suite is green;
+  full_weight + K!=1 raises, undeclared + K!=1 raises fail-closed,
+  from_coupling_spec scales exactly once, and a signed CouplingSpec propagates
+  the signed claim boundary.
+measurement_command: "python -m pytest tests/unit/core/test_config_coupling_migration.py tests/unit/core/test_kuramoto_coupling_spec.py"
+signal_artifact: "tmp/kuramoto_coupling_config_guard.json"
+falsifier:
+  command: |-
+    bash -c 'python -c "
+    import numpy as np, sys
+    from core.kuramoto.config import KuramotoConfig
+    regressed = False
+    # full_weight + K!=1 must raise (matrix already physical, no extra scaling)
+    try:
+        KuramotoConfig(N=2, K=2.0, adjacency=np.eye(2), adjacency_kind=\"full_weight\")
+        regressed = True
+    except ValueError:
+        pass
+    # undeclared convention + K!=1 must raise fail-closed (cannot tell A from W)
+    try:
+        KuramotoConfig(N=2, K=2.0, adjacency=np.eye(2))
+        regressed = True
+    except ValueError:
+        pass
+    sys.exit(0 if regressed else 1)"'
+  description: >-
+    Both silent-double-scaling paths MUST raise ValueError. The probe exits 0
+    (fires) iff EITHER a full-weight matrix scaled by a non-unit K OR an
+    undeclared convention with K != 1 constructs without raising — i.e. the
+    anti-double-scaling guard has regressed.
+rollback_command: "git revert --no-edit <merge_sha>"
+rollback_verification_command: "python -m pytest tests/unit/core/test_config_coupling_migration.py"
+memory_update_type: append
+ledger_path: ".claude/commit_acceptors/kuramoto-coupling-config-guard.yaml"
+report_path: "docs/reports/kuramoto_coupling_config_guard.md"

@@ -1,3 +1,5 @@
+# Copyright (c) 2023-2026 Yaroslav Vasylenko (neuron7xLab)
+# SPDX-License-Identifier: MIT
 from __future__ import annotations
 
 from datetime import datetime, timedelta, timezone
@@ -49,7 +51,7 @@ def test_register_and_activate_multiple_versions() -> None:
         lineage=LineageRecord(
             parent_versions=("fraud-model:0.9.0",),
             data_fingerprint="abc123",
-            created_by="mlops@tradepulse",  # nosec - test data
+            created_by="mlops@geosync",  # nosec - test data
         ),
     )
 
@@ -175,7 +177,7 @@ def test_lifecycle_transitions_and_rollbacks() -> None:
         target_version="forecaster:2.1.0",
         restored_version="forecaster:2.0.0",
         reason="Performance regression",
-        performed_by="sre@tradepulse",  # nosec - test data
+        performed_by="sre@geosync",  # nosec - test data
     )
 
     history = registry.rollback_history()

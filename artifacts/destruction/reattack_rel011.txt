@@ -1,0 +1,12 @@
+REL-011 release-evidence gate — RE-ATTACK closure (against fixed gate, base 80fd48496)
+generated post-fix; each destroyer repro re-run -> correct fail-closed verdict
+
+== RD-F1 content-blind (garbage/empty/FAIL/{} receipts + --emit) ==
+    [UNSATISFIED] MANDATORY coverage
+    [UNSATISFIED] MANDATORY mutation
+    [UNSATISFIED] MANDATORY sbom
+    [UNSATISFIED] MANDATORY tests
+    [UNSATISFIED] MANDATORY wheel
+  release_readiness: NOT_READY
+  -> [CLOSED] garbage receipts do NOT certify READY
+20 passed in 0.82s

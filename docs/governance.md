@@ -1,6 +1,6 @@
 # Governance and Data Controls
 
-This guide defines the governance guardrails for TradePulse across access management, data contracts, privacy, and cataloguing. Policies apply to all production and pre-production environments unless explicitly waived by the Governance Council. Dataset-level provenance and validation rules are captured in [DATA_GOVERNANCE.md](DATA_GOVERNANCE.md) and must be followed for any calibration or certification workflow that consumes repository data.
+This guide defines the governance guardrails for GeoSync across access management, data contracts, privacy, and cataloguing. Policies apply to all production and pre-production environments unless explicitly waived by the Governance Council. Dataset-level provenance and validation rules are captured in [DATA_GOVERNANCE.md](DATA_GOVERNANCE.md) and must be followed for any calibration or certification workflow that consumes repository data.
 
 ## Role-Based Access Control (RBAC)
 
@@ -28,8 +28,8 @@ This guide defines the governance guardrails for TradePulse across access manage
 
 ### Temporary Debug Access Tokens
 
-- **Scoped issuance** – Engineers can mint temporary debug tokens with `tradepulse-cli auth mint --scope debug --ttl 2h`. Tokens are namespaced per environment and include explicit expiry metadata.
-- **Automatic expiration** – Tokens are backed by the identity provider with short-lived credentials (≤4 hours). Revocation occurs automatically at expiry or on manual kill via `tradepulse-cli auth revoke --token <id>`.
+- **Scoped issuance** – Engineers can mint temporary debug tokens with `geosync-cli auth mint --scope debug --ttl 2h`. Tokens are namespaced per environment and include explicit expiry metadata.
+- **Automatic expiration** – Tokens are backed by the identity provider with short-lived credentials (≤4 hours). Revocation occurs automatically at expiry or on manual kill via `geosync-cli auth revoke --token <id>`.
 - **Usage journal** – Every token use emits `auth.token_usage` events recording subject, IP, scope, and command executed. The journal feeds into weekly access review dashboards.
 - **Approval workflow** – Minting tokens requires peer approval captured through the governance service. The approval ID is embedded in the token claims and validated by gateways before honoring the request.
 

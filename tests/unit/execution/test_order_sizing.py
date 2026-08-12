@@ -1,3 +1,5 @@
+# Copyright (c) 2023-2026 Yaroslav Vasylenko (neuron7xLab)
+# SPDX-License-Identifier: MIT
 from __future__ import annotations
 
 import math
@@ -49,9 +51,7 @@ def test_calculate_position_size_guards_invalid_inputs() -> None:
 
     assert calculate_position_size(balance=0.0, risk=0.1, price=100.0) == 0.0
     assert calculate_position_size(balance=1_000.0, risk=-1.0, price=100.0) == 0.0
-    assert calculate_position_size(
-        balance=1_000.0, risk=10.0, price=100.0
-    ) == pytest.approx(10.0)
+    assert calculate_position_size(balance=1_000.0, risk=10.0, price=100.0) == pytest.approx(10.0)
 
 
 def test_size_rejects_non_positive_price() -> None:
@@ -95,9 +95,7 @@ def test_size_biases_down_when_rounding_overshoots(
 
     qty = sizer.size(balance=balance, risk=risk, price=price)
 
-    assert (
-        calls
-    ), "nextafter should be consulted when the initial quantity exceeds the budget"
+    assert calls, "nextafter should be consulted when the initial quantity exceeds the budget"
     assert qty >= 0.0
     assert qty * price <= balance * min(max(risk, 0.0), 1.0) + 1e-12
 

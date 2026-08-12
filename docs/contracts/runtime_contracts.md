@@ -1,10 +1,10 @@
 ---
-owner: runtime-platform@tradepulse
+owner: runtime-platform@geosync
 review_cadence: quarterly
 last_reviewed: 2026-01-01
 ---
 
-# TradePulse Runtime Contracts
+# GeoSync Runtime Contracts
 
 **Version:** 1.0.0  
 **Status:** Active  

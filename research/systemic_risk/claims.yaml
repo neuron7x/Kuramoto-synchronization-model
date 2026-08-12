@@ -1,0 +1,175 @@
+# Claim → evidence anchors registry (audit task T4 of the 9.9-upgrade).
+#
+# Each claim must reference real, in-tree code + tests. ``status`` is
+# one of {verified, hypothesis, blocked}. ``falsifier`` lists the
+# precise condition under which the claim dies.
+#
+# Use ``python tools/compile_claims.py --fail-on-floating`` to validate.
+
+claims:
+  - id: C001
+    text: "Canonical Seven provides a fail-closed falsification workflow"
+    status: verified
+    evidence:
+      - research/systemic_risk/canonical_seven.py
+      - research/systemic_risk/death_conditions.py
+      - research/systemic_risk/governance_fsm.py
+      - tests/research/systemic_risk/test_canonical_seven.py
+      - tests/research/systemic_risk/test_death_conditions.py
+      - tests/research/systemic_risk/test_governance_fsm.py
+    falsifier:
+      - "any KILL action fails to drive FSM state to REJECTED"
+      - "KILL is not absorbing in FSM state"
+    ci_gate: pytest_research_systemic_risk
+
+  - id: C002
+    text: "Verdict aggregation is the join (max) of a totally-ordered lattice"
+    status: verified
+    evidence:
+      - research/systemic_risk/verdict_lattice.py
+      - tests/research/systemic_risk/test_verdict_lattice.py
+    falsifier:
+      - "join(a, b) != max(a, b)"
+      - "any of {idempotence, commutativity, associativity, identity} axiom fails"
+    ci_gate: pytest_research_systemic_risk
+
+  - id: C003
+    text: "Bayes-factor primitives derive from primary statistical theory"
+    status: verified
+    evidence:
+      - research/systemic_risk/bayes_rigorous.py
+      - tests/research/systemic_risk/test_bayes_rigorous.py
+      - research/systemic_risk/THEORY_PROOFS.md
+    falsifier:
+      - "MLE empirical SE on Pareto α=2.5, n=5000 falls below 0.95 × Cramér-Rao bound"
+      - "wagenmakers BF closed form deviates from (z² - log n_eff)/2"
+    ci_gate: pytest_research_systemic_risk
+
+  - id: C004
+    text: "Data Reality Firewall enforces eight orthogonal ingress gates"
+    status: verified
+    evidence:
+      - research/systemic_risk/data_firewall.py
+      - tests/research/systemic_risk/test_data_firewall.py
+    falsifier:
+      - "FIREWALL_GATES count != 8"
+      - "any gate is silently skipped on a malformed input"
+    ci_gate: pytest_research_systemic_risk
+
+  - id: C005
+    text: "Leakage Sentinel detects six canonical time-leakage failure modes"
+    status: verified
+    evidence:
+      - research/systemic_risk/leakage_sentinel.py
+      - tests/research/systemic_risk/test_leakage_sentinel.py
+    falsifier:
+      - "any positive sentinel test produces detected=False"
+      - "agg detected != OR of component detected"
+    ci_gate: pytest_research_systemic_risk
+
+  - id: C006
+    text: "Replication Capsule comparator is fail-closed in six stages"
+    status: verified
+    evidence:
+      - research/systemic_risk/replication_capsule.py
+      - tests/research/systemic_risk/test_replication_capsule.py
+    falsifier:
+      - "matched=True returned for non-finite metric"
+      - "matched=True returned for divergent config_hash or seed"
+    ci_gate: pytest_research_systemic_risk
+
+  - id: C007
+    text: "Adversarial Ladder evaluates eight canonical prosecutors with paired-bootstrap delta-AUC"
+    status: verified
+    evidence:
+      - research/systemic_risk/adversarial_ladder.py
+      - tests/research/systemic_risk/test_adversarial_ladder.py
+    falsifier:
+      - "LADDER_RUNGS count != 8"
+      - "candidate ACQUITTED with non-empty losing_paths"
+    ci_gate: pytest_research_systemic_risk
+
+  - id: C008
+    text: "Governance FSM has REJECTED as an absorbing terminal state"
+    status: verified
+    evidence:
+      - research/systemic_risk/governance_fsm.py
+      - tests/research/systemic_risk/test_governance_fsm.py
+      - tests/metamorphic/test_metamorphic.py
+    falsifier:
+      - "any input transitions FSM out of REJECTED"
+    ci_gate: pytest_research_systemic_risk
+
+  - id: C009
+    text: "Protocol X-9R is a deterministic 9-gate empirical falsification machine"
+    status: verified
+    evidence:
+      - research/systemic_risk/protocol_x9r.py
+      - tests/research/systemic_risk/test_protocol_x9r.py
+    falsifier:
+      - "any gate omits its full GateResult contract"
+      - "PASS verdict reached with any gate FAIL or BLOCKED"
+    ci_gate: pytest_research_systemic_risk
+
+  - id: C010
+    text: "Minimal Canonical Seven encodes all 7 pillars in <800 LoC of NamedTuple-only code"
+    status: verified
+    evidence:
+      - research/systemic_risk/minimal.py
+      - tests/research/systemic_risk/test_minimal.py
+    falsifier:
+      - "wc -l minimal.py > 800"
+      - "any dataclass(frozen=True, slots=True) usage in minimal.py"
+    ci_gate: pytest_research_systemic_risk
+
+  - id: C011
+    text: "All public symbols of research.systemic_risk are mapped to invariants and tests"
+    status: verified
+    evidence:
+      - research/systemic_risk/public_symbol_matrix.csv
+      - tools/check_public_symbol_matrix.py
+    falsifier:
+      - "any public symbol absent from matrix CSV"
+      - "any matrix row with empty mandatory field"
+    ci_gate: research_integrity_gate
+
+  - id: C012
+    text: "Negative-control suite confirms canonical failure tiers on garbage inputs"
+    status: verified
+    evidence:
+      - tests/negative_controls/test_negative_controls.py
+    falsifier:
+      - "phase-shuffled panel produces PASS"
+      - "replication-mismatch produces non-REJECTED FSM state"
+    ci_gate: research_integrity_gate
+
+  - id: C013
+    text: "Metamorphic test layer encodes invariant relations across input transforms"
+    status: verified
+    evidence:
+      - tests/metamorphic/test_metamorphic.py
+    falsifier:
+      - "global phase shift changes Kuramoto order parameter magnitude"
+      - "evidence-order permutation changes posterior log-odds"
+    ci_gate: research_integrity_gate
+
+  - id: C014
+    text: "Real-data evaluation requires e-MID / ECB MMSR feed which is licence-restricted"
+    status: blocked
+    evidence:
+      - research/systemic_risk/LIMITATIONS.md
+      - research/systemic_risk/SELF_AUDIT_2026-05-08.md
+    falsifier:
+      - "any AUC value claimed without a corresponding RunManifest pointing to real data"
+    ci_gate: pytest_research_systemic_risk
+
+  - id: C015
+    text: "External adversarial review pending; codebase review-ready"
+    status: hypothesis
+    evidence:
+      - EXTERNAL_REVIEW_PACKET/00_REVIEWER_BRIEF.md
+      - research/systemic_risk/SELF_AUDIT_2026-05-08.md
+    falsifier:
+      - "review packet incomplete or missing reviewer-brief"
+      - "no review form provided"
+    ci_gate: pytest_research_systemic_risk

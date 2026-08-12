@@ -1,0 +1,18 @@
+{
+  "binding_tooling_present": false,
+  "blockers": [
+    "binding_tooling_missing",
+    "independent_routing_label_not_confirmed",
+    "too_large_for_environment",
+    "trial_structure_not_confirmed",
+    "two_or_more_areas_not_confirmed"
+  ],
+  "can_run_c_real": false,
+  "config_hash": "e1e8977c2b688a74aaef34fde46a9d3126f24fe56c7067f5d6f363ab32851f4b",
+  "n_candidates": 1,
+  "repro_hash": "33b7747af2259de5075ba1ba352cfde3048c2eb2f7c623891a132ea43291a4bb",
+  "selected_access_uri": null,
+  "selected_dataset_id": null,
+  "selected_source": null,
+  "verdict": "INADMISSIBLE_TOO_LARGE_FOR_ENVIRONMENT"
+}

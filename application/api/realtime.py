@@ -1,3 +1,5 @@
+# Copyright (c) 2023-2026 Yaroslav Vasylenko (neuron7xLab)
+# SPDX-License-Identifier: MIT
 """Utilities for streaming market data and trading signals."""
 
 from __future__ import annotations
@@ -11,7 +13,7 @@ from typing import Any, Deque
 from fastapi import WebSocket, WebSocketDisconnect, status
 from pydantic import BaseModel
 
-LOGGER = logging.getLogger("tradepulse.api.realtime")
+LOGGER = logging.getLogger("geosync.api.realtime")
 
 
 class RealTimeStreamManager:
@@ -58,9 +60,7 @@ class RealTimeStreamManager:
             try:
                 await connection.close(code=code)
             except Exception:  # pragma: no cover - defensive
-                LOGGER.debug(
-                    "Failed to close realtime websocket connection", exc_info=True
-                )
+                LOGGER.debug("Failed to close realtime websocket connection", exc_info=True)
 
 
 class AnalyticsStore:
@@ -140,17 +140,11 @@ class AnalyticsStore:
 
     async def recent_features(self, *, limit: int = 20) -> list[BaseModel]:
         async with self._lock:
-            return [
-                entry.model_copy(deep=True)
-                for entry in list(self._feature_history)[:limit]
-            ]
+            return [entry.model_copy(deep=True) for entry in list(self._feature_history)[:limit]]
 
     async def recent_predictions(self, *, limit: int = 20) -> list[BaseModel]:
         async with self._lock:
-            return [
-                entry.model_copy(deep=True)
-                for entry in list(self._prediction_history)[:limit]
-            ]
+            return [entry.model_copy(deep=True) for entry in list(self._prediction_history)[:limit]]
 
 
 def _iso(value: Any) -> str | None:

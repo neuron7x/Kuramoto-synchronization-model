@@ -1,4 +1,4 @@
-# TradePulse Formalization Documentation Index
+# GeoSync Formalization Documentation Index
 
 **Version:** 1.1.0  
 **Date:** 2025-12-08  
@@ -7,7 +7,7 @@
 
 ## Overview
 
-This document serves as the **master index** for all formalized documentation in TradePulse. It provides a comprehensive map of requirements, architectural decisions, formal specifications, and their interconnections.
+This document serves as the **master index** for all formalized documentation in GeoSync. It provides a comprehensive map of requirements, architectural decisions, formal specifications, and their interconnections.
 
 ## Document Purpose
 
@@ -447,14 +447,14 @@ Formal methods and verification artifacts for critical system properties.
 
 | Requirement | ADR | Implementation | Tests | Documentation |
 |-------------|-----|----------------|-------|---------------|
-| **REQ-001** | [ADR-0001](adr/0001-fractal-indicator-composition-architecture.md) | `core/indicators/fractal/` | `tests/indicators/test_fractal*.py` | [Tutorial](tutorials/fractal-indicators.md) |
-| **REQ-002** | [ADR-0003](adr/0003-automated-data-quality-framework.md) | `core/data/quality/` | `tests/data/test_quality*.py` | [Quality Guide](data/quality-control.md) |
-| **REQ-003** | ADR-0004 *(planned)* | `core/data/resampling/` | `tests/data/test_sync*.py` | [Sync Guide](data/synchronization-guide.md) |
-| **REQ-004** | ADR-0005 *(planned)* | `backtest/incremental/` | `tests/backtest/test_incremental*.py` | [Incremental Doc](backtest/incremental-execution.md) |
-| **REQ-005** | ADR-0006 *(planned)* | `execution/fault_tolerant/` | `tests/execution/test_fault*.py` | [Fault Tolerance](execution/fault-tolerant-orders.md) |
+| **REQ-001** | [ADR-0001](adr/0001-fractal-indicator-composition-architecture.md) | `core/indicators/fractal/` | `tests/indicators/test_fractal*.py` | [Tutorial](adr/0001-fractal-indicator-composition-architecture.md) |
+| **REQ-002** | [ADR-0003](adr/0003-automated-data-quality-framework.md) | `core/data/quality/` | `tests/data/test_quality*.py` | [Quality Guide](data/README.md) |
+| **REQ-003** | ADR-0004 *(planned)* | `core/data/resampling/` | `tests/data/test_sync*.py` | [Sync Guide](data/README.md) |
+| **REQ-004** | ADR-0005 *(planned)* | `backtest/incremental/` | `tests/backtest/test_incremental*.py` | [Incremental Doc](operations/TESTING.md) |
+| **REQ-005** | ADR-0006 *(planned)* | `execution/fault_tolerant/` | `tests/execution/test_fault*.py` | [Fault Tolerance](operations/TESTING.md) |
 | **SEC-001** | [ADR-0002](adr/0002-versioned-market-data-storage.md) | `core/data/versioned/` | `tests/data/test_versioned*.py` | ADR-0002 |
-| **SEC-002** | ADR-0007 *(planned)* | `backtest/deterministic/` | `tests/backtest/test_determinism*.py` | [Determinism Guide](backtest/determinism-guide.md) |
-| **SEC-003** | ADR-0008 *(planned)* | `execution/risk/pretrade/` | `tests/execution/test_pretrade*.py` | [Risk Management](execution/risk-management.md) |
+| **SEC-002** | ADR-0007 *(planned)* | `backtest/deterministic/` | `tests/backtest/test_determinism*.py` | [Determinism Guide](operations/TESTING.md) |
+| **SEC-003** | ADR-0008 *(planned)* | `execution/risk/pretrade/` | `tests/execution/test_pretrade*.py` | [Risk Management](risk_controls.md) |
 | **SEC-004** | ADR-0009 *(planned)* | `infra/secrets/` | `tests/security/test_encryption*.py` | Security Framework |
 | **SEC-005** | ADR-0010 *(planned)* | `compliance/`, `observability/audit/` | `tests/compliance/test_audit*.py` | Compliance Docs |
 | **NFR-001** | ADR-0011 *(planned)* | `observability/` | `tests/observability/` | Observability Docs |
@@ -579,12 +579,12 @@ All formalization documents follow:
 - [Incident Coordination](incident_coordination_procedures.md) - Incident management
 
 ### Security
-- [Security Framework Summary](../SECURITY_FRAMEWORK_SUMMARY.md) - Comprehensive security docs
+- [Security Framework Summary](security/SECURITY_FRAMEWORK_INDEX.md) - Comprehensive security docs
 - [Security Policy](../SECURITY.md) - Vulnerability reporting
 
 ### Development
 - [Contributing Guide](../CONTRIBUTING.md) - Development guidelines
-- [Testing Guide](../TESTING.md) - Test infrastructure
+- [Testing Guide](operations/TESTING.md) - Test infrastructure
 - [Documentation Standards](documentation_standardisation_playbook.md)
 
 ---
@@ -651,4 +651,4 @@ All formalization documents follow:
 **Next Review:** 2026-02-18  
 **Status:** 🟢 Active
 
-*This index is the authoritative source for navigating TradePulse formalized documentation. Keep it updated with all formalization artifacts.*
+*This index is the authoritative source for navigating GeoSync formalized documentation. Keep it updated with all formalization artifacts.*

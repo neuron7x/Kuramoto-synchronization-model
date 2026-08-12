@@ -1,9 +1,9 @@
 # Configuration System
 
-TradePulse uses a unified configuration layer powered by
+GeoSync uses a unified configuration layer powered by
 [`pydantic-settings`](https://docs.pydantic.dev/latest/concepts/pydantic_settings/).
 Every service, domain module and CLI tool now reads its settings through the same
-`TradePulseSettings` model which merges values from multiple sources.
+`GeoSyncSettings` model which merges values from multiple sources.
 
 ## Source precedence
 
@@ -11,7 +11,7 @@ Configuration values are resolved in the following order (highest priority first
 
 1. **Command line overrides** – values passed to `load_kuramoto_ricci_config(..., cli_overrides=...)`
    or via the new `--config-override` flag in CLI utilities.
-2. **Process environment variables** – variables prefixed with `TRADEPULSE_`.
+2. **Process environment variables** – variables prefixed with `GEOSYNC_`.
 3. **`.env` files** – the loader automatically reads a `.env` file from the current
    working directory if present.
 4. **YAML files** – the base configuration is read from the file referenced by
@@ -72,11 +72,11 @@ and booleans can be expressed naturally, for example
 
 ## Environment variables and `.env`
 
-Environment variables use the `TRADEPULSE_` prefix and `__` as the nested delimiter:
+Environment variables use the `GEOSYNC_` prefix and `__` as the nested delimiter:
 
 ```bash
-export TRADEPULSE_KURAMOTO__BASE_WINDOW=300
-export TRADEPULSE_COMPOSITE__THRESHOLDS__R_STRONG_EMERGENT=0.85
+export GEOSYNC_KURAMOTO__BASE_WINDOW=300
+export GEOSYNC_COMPOSITE__THRESHOLDS__R_STRONG_EMERGENT=0.85
 ```
 
 The same syntax works inside a `.env` file located in the working directory. When present,
@@ -148,10 +148,10 @@ rules are automatically applied across the code base.
 Generate a JSON schema describing the full configuration model with the helper script:
 
 ```bash
-python scripts/export_tradepulse_schema.py --output schemas/tradepulse-settings.schema.json
+python scripts/export_geosync_schema.py --output schemas/geosync-settings.schema.json
 ```
 
 Omitting `--output` prints the schema to standard output, which makes it easy to pipe
 into tooling or inspect the structure inline. The schema is derived directly from
-`TradePulseSettings` so it always reflects the latest validation rules enforced at
+`GeoSyncSettings` so it always reflects the latest validation rules enforced at
 startup.

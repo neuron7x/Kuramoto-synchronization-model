@@ -1,0 +1,55 @@
+{
+  "after": {
+    "status": "PASS",
+    "violation_count": 0,
+    "violations": []
+  },
+  "artifact": "CITATION.cff forbidden-claim boundary (before/after)",
+  "before": {
+    "status": "FLAGGED",
+    "violation_count": 1,
+    "violations": [
+      {
+        "claim": "production-grade",
+        "disposition": "use",
+        "field": "abstract",
+        "matched": "production-grade",
+        "pattern": "\\bproduction[\\s\\-]grade\\b"
+      }
+    ]
+  },
+  "delta": {
+    "violation_count": 1
+  },
+  "forbidden_vocabulary": [
+    "deployable",
+    "guaranteed",
+    "market-physics-proven",
+    "production-grade",
+    "production-ready",
+    "proven",
+    "proven-predictor",
+    "risk-free",
+    "validated",
+    "validated-alpha"
+  ],
+  "invariants": [
+    "version 1.1.0 unchanged (owned by REL-008)",
+    "authors / DOIs / references bibliography unchanged"
+  ],
+  "narrative_overclaims_reworded": [
+    "title: 'Geometric Market Intelligence Platform' -> 'Verification-First Quantitative Market-Structure Research Platform'",
+    "abstract: 'production-grade quantitative research infrastructure' (SSOT violation) -> 'verification-first quantitative research platform'",
+    "abstract: asserted 'applies ... to financial market analysis' market-edge framing -> 'studied as market-microstructure descriptors'",
+    "keywords: 'algorithmic-trading','real-time-analytics','market-microstructure' -> research/verification-first descriptors",
+    "added evidence-tier line (FACT/MEASURED/SIMULATION/HYPOTHESIS), RESEARCH_ALPHA maturity, and a limitations note"
+  ],
+  "scanned_fields": [
+    "title",
+    "abstract",
+    "keywords"
+  ],
+  "scanner": "scripts/ci/check_cff_claims.py",
+  "ssot": "governance/project_state.yaml#forbidden_claims",
+  "task_id": "REL-009"
+}

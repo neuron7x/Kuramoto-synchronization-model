@@ -1,0 +1,197 @@
+{
+  "$schema": "https://json-schema.org/draft/2020-12/schema",
+  "$id": "https://neuron7xlab.dev/schemas/release_evidence.schema.json",
+  "title": "GeoSync Release Evidence Bundle",
+  "description": "A single schema-validated release evidence bundle (task REL-011). It enumerates, per evidence category, the backing artifact path(s), each artifact's sha256, and a present/absent status. It does NOT duplicate the underlying artifacts; it REFERENCES them. A category is mandatory when its receipt is required to declare a release ready. If any mandatory category is not fully PRESENT the release_readiness verdict is NOT_READY (the gate is RED — an honest 'release not ready' signal, never a fabricated green). The bundle is regenerated deterministically (sorted keys, fixed content -> identical bytes) by scripts/ci/check_release_evidence.py.",
+  "type": "object",
+  "additionalProperties": false,
+  "required": [
+    "bundle_version",
+    "release_version",
+    "source_ref",
+    "categories",
+    "release_readiness"
+  ],
+  "properties": {
+    "bundle_version": {
+      "type": "string",
+      "const": "release_evidence.v1"
+    },
+    "release_version": {
+      "type": "string",
+      "pattern": "^[0-9]+\\.[0-9]+\\.[0-9]+$",
+      "description": "Version SSOT, must equal VERSION and CITATION.cff version (1.1.0)."
+    },
+    "source_ref": {
+      "type": "object",
+      "additionalProperties": false,
+      "required": ["commit", "tree", "tag", "provenance_ref"],
+      "properties": {
+        "commit": {
+          "type": "string",
+          "pattern": "^[0-9a-f]{40}$",
+          "description": "Canonical release commit sha (read from the REL-005 provenance manifest, not live git, so regen is deterministic across later commits)."
+        },
+        "tree": {
+          "type": "string",
+          "pattern": "^[0-9a-f]{40}$"
+        },
+        "tag": {
+          "type": "string",
+          "minLength": 1
+        },
+        "provenance_ref": {
+          "type": "string",
+          "minLength": 1,
+          "description": "Path to the REL-005 canonical provenance manifest that pins commit/tree/tag."
+        }
+      }
+    },
+    "categories": {
+      "type": "object",
+      "additionalProperties": false,
+      "required": [
+        "version",
+        "commit_tree_tag",
+        "manifests",
+        "sbom",
+        "tests",
+        "coverage",
+        "mutation",
+        "security_scan",
+        "wheel",
+        "docs",
+        "research_verdicts",
+        "cleanroom_reproducible_build",
+        "approvals"
+      ],
+      "propertyNames": {
+        "enum": [
+          "version",
+          "commit_tree_tag",
+          "manifests",
+          "sbom",
+          "tests",
+          "coverage",
+          "mutation",
+          "security_scan",
+          "wheel",
+          "docs",
+          "research_verdicts",
+          "cleanroom_reproducible_build",
+          "approvals"
+        ]
+      },
+      "patternProperties": {
+        "^[a-z_]+$": { "$ref": "#/$defs/category" }
+      }
+    },
+    "release_readiness": {
+      "type": "object",
+      "additionalProperties": false,
+      "required": [
+        "verdict",
+        "mandatory_categories",
+        "present_mandatory",
+        "missing_mandatory"
+      ],
+      "properties": {
+        "verdict": {
+          "type": "string",
+          "enum": ["READY", "NOT_READY"],
+          "description": "READY iff every mandatory category is fully PRESENT. NOT_READY otherwise (gate RED)."
+        },
+        "mandatory_categories": {
+          "type": "array",
+          "items": { "type": "string" },
+          "uniqueItems": true
+        },
+        "present_mandatory": {
+          "type": "array",
+          "items": { "type": "string" },
+          "uniqueItems": true
+        },
+        "missing_mandatory": {
+          "type": "array",
+          "items": { "type": "string" },
+          "uniqueItems": true,
+          "description": "Mandatory categories not fully PRESENT. Non-empty -> verdict NOT_READY."
+        }
+      }
+    }
+  },
+  "$defs": {
+    "category": {
+      "type": "object",
+      "additionalProperties": false,
+      "required": ["mandatory", "status", "artifacts"],
+      "properties": {
+        "mandatory": { "type": "boolean" },
+        "status": {
+          "type": "string",
+          "enum": ["PRESENT", "MISSING", "PARTIAL", "UNSATISFIED", "INVALID"],
+          "description": "PRESENT: all artifacts present AND content-satisfied. MISSING: none present. PARTIAL: some present, some missing. UNSATISFIED: at least one artifact is present but fails its receipt-content contract (garbage/empty/FAIL/below-floor). INVALID: reserved for a category whose artifact is present but structurally unusable."
+        },
+        "description": { "type": "string" },
+        "artifacts": {
+          "type": "array",
+          "minItems": 1,
+          "items": { "$ref": "#/$defs/artifact" }
+        }
+      }
+    },
+    "artifact": {
+      "type": "object",
+      "additionalProperties": false,
+      "required": ["path", "sha256", "status"],
+      "properties": {
+        "path": {
+          "type": "string",
+          "minLength": 1,
+          "description": "Repo-relative path to the referenced evidence artifact (present) or the canonical location where the mandatory receipt WOULD live (missing)."
+        },
+        "sha256": {
+          "oneOf": [
+            { "type": "string", "pattern": "^[0-9a-f]{64}$" },
+            { "type": "null" }
+          ],
+          "description": "sha256 of the file on disk (any on-disk status) or null (MISSING). Never fabricated."
+        },
+        "status": {
+          "type": "string",
+          "enum": ["PRESENT", "MISSING", "UNSATISFIED", "INVALID"],
+          "description": "PRESENT: on disk and content-satisfied. MISSING: no file. UNSATISFIED: on disk, parseable, but fails the receipt-content contract (missing shape / FAIL verdict / match:false / below floor). INVALID: on disk but empty / not JSON / wrong top-level type."
+        },
+        "reason": {
+          "type": "string",
+          "description": "Short human explanation present when status is UNSATISFIED or INVALID."
+        },
+        "task": {
+          "type": "string",
+          "description": "Originating remediation task id, if any."
+        },
+        "verdict": {
+          "type": "string",
+          "description": "Recorded verdict carried by this artifact (e.g. INSUFFICIENT_EVIDENCE, PASS), read live from the artifact."
+        },
+        "note": { "type": "string" }
+      },
+      "allOf": [
+        {
+          "if": { "properties": { "status": { "const": "MISSING" } } },
+          "then": { "properties": { "sha256": { "type": "null" } } }
+        },
+        {
+          "if": {
+            "properties": { "status": { "enum": ["PRESENT", "UNSATISFIED", "INVALID"] } }
+          },
+          "then": {
+            "properties": {
+              "sha256": { "type": "string", "pattern": "^[0-9a-f]{64}$" }
+            }
+          }
+        }
+      ]
+    }
+  }
+}

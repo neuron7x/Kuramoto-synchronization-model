@@ -1,0 +1,96 @@
+# Diff-bound commit acceptor: complete the deterministic local CI mirror and fix
+# the false-confidence detector's local≠CI divergence at the root.
+#
+# Two coupled changes, one goal — make `make verify` a faithful, deterministic
+# mirror of the fast CI gate surface so "green locally" implies "green in CI":
+#
+# 1. ROOT-CAUSE FIX (false_confidence_detector.py). The detector's file walks
+#    descended into non-source artifact dirs — an untracked `build/` (from
+#    `python -m build`) and stale `.claude/worktrees/` agent copies — producing
+#    findings that exist only on a developer's machine and that CI (a clean
+#    tracked-only checkout) never sees. A single `_is_excluded` helper now skips
+#    build/dist/.venv/caches/.git/site-packages/*.egg-info/.claude/worktrees
+#    across every scan (C2 Dockerfile, C3 tests, C4 docs, C8/C9/C10
+#    concentration). The detector is now deterministic regardless of local
+#    clutter — verified to return 0 with both a fake `build/.../Dockerfile` and a
+#    leaky `.claude/worktrees/.../*.py` present.
+#
+# 2. COMPLETENESS (verify_changeset.py). The local mirror previously covered only
+#    a subset of the deterministic gates, which is exactly how the C3
+#    false-confidence finding reached CI. It now mirrors the full fast
+#    deterministic PR-gate surface — adding false-confidence, claim-boundary,
+#    claims-evidence, evidence-grounding, dependency-truth, connectome,
+#    public-symbol-matrix, compile-claims, readiness-register, pr-gate-contract,
+#    and an actionlint gate that fails closed (UNVERIFIED) when a workflow changed
+#    but the binary is absent. The docstring honestly enumerates what it does NOT
+#    cover (pytest shards, cns/mfn release builds, rust/frontend) rather than
+#    implying total coverage.
+#
+# Locally verified:
+#   * detector returns 0 findings with build/ and .claude/worktrees/ present
+#   * pytest tests/audit/test_false_confidence_detector.py -> 30 passed (2 new)
+#   * pytest tests/ci/test_verify_changeset.py -> 7 passed (2 new)
+#   * scripts/ci/verify_changeset.py on this changeset -> all applicable gates pass (~12s)
+#   * black + ruff + mypy --strict clean
+
+id: complete-ci-mirror
+status: ACTIVE
+claim_type: governance
+promise: >-
+  After this PR lands, the false-confidence detector ignores non-source artifact
+  and worktree dirs (deterministic regardless of local clutter), and
+  scripts/ci/verify_changeset.py mirrors the full fast deterministic PR-gate set
+  (including false-confidence) and fails closed on any FAIL or UNVERIFIED gate.
+diff_scope:
+  changed_files:
+    - path: ".claude/commit_acceptors/complete-ci-mirror.yaml"
+    - path: "tools/audit/false_confidence_detector.py"
+    - path: "scripts/ci/verify_changeset.py"
+    - path: "tests/audit/test_false_confidence_detector.py"
+    - path: "tests/ci/test_verify_changeset.py"
+  forbidden_paths:
+    - "trading/"
+    - "execution/"
+    - "forecast/"
+    - "policy/"
+    - "core/physics/"
+    - "core/kuramoto/"
+required_python_symbols:
+  - "tools/audit/false_confidence_detector.py::_is_excluded"
+  - "scripts/ci/verify_changeset.py::verify"
+expected_signal: >-
+  `pytest tests/audit/test_false_confidence_detector.py tests/ci/test_verify_changeset.py`
+  passes (37): _is_excluded skips build/worktree/cache paths but not first-party
+  source; clutter produces no findings; the actionlint gate skips without a
+  workflow change and is UNVERIFIED when the binary is missing. The detector
+  returns 0 findings even with build/ and .claude/worktrees/ present.
+measurement_command: >-
+  bash -c '
+    python -m pytest tests/audit/test_false_confidence_detector.py tests/ci/test_verify_changeset.py -q && python scripts/ci/verify_changeset.py --base-ref origin/main
+  '
+signal_artifact: "tmp/complete_ci_mirror.log"
+falsifier:
+  command: >-
+    bash -c '
+      python -m pytest -q
+        "tests/audit/test_false_confidence_detector.py::test_clutter_does_not_produce_findings"
+        >/dev/null 2>&1
+      test "$?" -ne 0
+    '
+  description: >-
+    Runs the clutter-isolation assertion. The falsifier succeeds (exit 0) only if
+    it FAILS — i.e. only if the detector again surfaces findings from build/ or
+    .claude/worktrees/. With the _is_excluded guard in place the test passes (exit
+    0), so `test $? -ne 0` exits 1 and the falsifier fails.
+rollback_command: >-
+  bash -c 'git checkout origin/main --
+    tools/audit/false_confidence_detector.py
+    scripts/ci/verify_changeset.py
+    tests/audit/test_false_confidence_detector.py
+    tests/ci/test_verify_changeset.py && rm -f .claude/commit_acceptors/complete-ci-mirror.yaml'
+rollback_verification_command: >-
+  bash -c '! test -f .claude/commit_acceptors/complete-ci-mirror.yaml'
+memory_update_type: append
+ledger_path: ".claude/commit_acceptors/complete-ci-mirror.yaml"
+report_path: "tmp/complete_ci_mirror.log"
+evidence: []

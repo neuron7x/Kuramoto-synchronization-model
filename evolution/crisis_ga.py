@@ -1,3 +1,5 @@
+# Copyright (c) 2023-2026 Yaroslav Vasylenko (neuron7xLab)
+# SPDX-License-Identifier: MIT
 """Crisis-aware genetic algorithm for topology optimisation."""
 
 from __future__ import annotations
@@ -44,15 +46,9 @@ class CrisisAwareGA:
     """Genetic algorithm that adapts parameters based on crisis level."""
 
     CONFIGS: Dict[str, GAConfig] = {
-        CrisisMode.NORMAL: GAConfig(
-            population_size=5, mutation_rate=0.1, num_generations=10
-        ),
-        CrisisMode.ELEVATED: GAConfig(
-            population_size=15, mutation_rate=0.3, num_generations=30
-        ),
-        CrisisMode.CRITICAL: GAConfig(
-            population_size=30, mutation_rate=0.5, num_generations=50
-        ),
+        CrisisMode.NORMAL: GAConfig(population_size=5, mutation_rate=0.1, num_generations=10),
+        CrisisMode.ELEVATED: GAConfig(population_size=15, mutation_rate=0.3, num_generations=30),
+        CrisisMode.CRITICAL: GAConfig(population_size=30, mutation_rate=0.5, num_generations=50),
     }
 
     def __init__(
@@ -78,12 +74,8 @@ class CrisisAwareGA:
             crisis_threshold,
         )
 
-    def evolve(
-        self, initial_topology: Topology, current_F: float
-    ) -> Tuple[Topology, float, str]:
-        crisis_mode = CrisisMode.detect(
-            current_F, self.F_baseline, self.crisis_threshold
-        )
+    def evolve(self, initial_topology: Topology, current_F: float) -> Tuple[Topology, float, str]:
+        crisis_mode = CrisisMode.detect(current_F, self.F_baseline, self.crisis_threshold)
         config = self.CONFIGS[crisis_mode]
 
         self.crisis_history.append(
@@ -95,9 +87,7 @@ class CrisisAwareGA:
             }
         )
 
-        population = self._initialise_population(
-            initial_topology, config.population_size
-        )
+        population = self._initialise_population(initial_topology, config.population_size)
         best: Topology = deepcopy(initial_topology)
         best_fitness = self.fitness_func(best) + self.homeostasis_penalty
 
@@ -133,9 +123,7 @@ class CrisisAwareGA:
             mode = str(record["crisis_mode"])
             counts[mode] = counts.get(mode, 0) + 1
 
-        critical_rate = counts.get(CrisisMode.CRITICAL, 0) / max(
-            self.generation_count, 1
-        )
+        critical_rate = counts.get(CrisisMode.CRITICAL, 0) / max(self.generation_count, 1)
         return {
             "total_generations": self.generation_count,
             "crisis_counts": counts,

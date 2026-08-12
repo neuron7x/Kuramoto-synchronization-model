@@ -1,0 +1,39 @@
+{
+  "$schema": "https://json-schema.org/draft/2020-12/schema",
+  "title": "MetricsSnapshot",
+  "type": "object",
+  "required": [
+    "snapshot_id",
+    "created_at",
+    "total_runs",
+    "risk_state_counts",
+    "degradation_counts",
+    "action_class_counts",
+    "human_review_required",
+    "autonomous_execution_prohibited",
+    "low_confidence_runs",
+    "incident_candidates"
+  ],
+  "properties": {
+    "snapshot_id": {"type": "string"},
+    "created_at": {"type": "string", "format": "date-time"},
+    "total_runs": {"type": "integer", "minimum": 0},
+    "risk_state_counts": {
+      "type": "object",
+      "additionalProperties": {"type": "integer", "minimum": 0}
+    },
+    "degradation_counts": {
+      "type": "object",
+      "additionalProperties": {"type": "integer", "minimum": 0}
+    },
+    "action_class_counts": {
+      "type": "object",
+      "additionalProperties": {"type": "integer", "minimum": 0}
+    },
+    "human_review_required": {"type": "integer", "minimum": 0},
+    "autonomous_execution_prohibited": {"type": "integer", "minimum": 0},
+    "low_confidence_runs": {"type": "integer", "minimum": 0},
+    "incident_candidates": {"type": "integer", "minimum": 0}
+  },
+  "additionalProperties": false
+}

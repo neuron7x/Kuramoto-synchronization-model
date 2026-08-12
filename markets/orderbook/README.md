@@ -1,4 +1,4 @@
-# TradePulse Order Book Model
+# GeoSync Order Book Model
 
 `markets/orderbook` is now formalized as an **independent market microstructure model**
 that can be installed and evolved separately from the rest of the repository.
@@ -15,11 +15,11 @@ layer for exchange snapshots and diffs. It is intended for:
 
 ## Public surfaces
 
-- `tradepulse_orderbook.PriceTimeOrderBook`
-- `tradepulse_orderbook.Order`
-- `tradepulse_orderbook.OrderBookIngestService`
-- `tradepulse_orderbook.ConsistencyValidator`
-- `tradepulse_orderbook.InMemoryMetricsRecorder`
+- `geosync_orderbook.PriceTimeOrderBook`
+- `geosync_orderbook.Order`
+- `geosync_orderbook.OrderBookIngestService`
+- `geosync_orderbook.ConsistencyValidator`
+- `geosync_orderbook.InMemoryMetricsRecorder`
 
 ## Local development
 

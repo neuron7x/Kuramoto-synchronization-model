@@ -1,0 +1,83 @@
+# Diff-bound acceptor: White's Reality Check for data-snooping over a strategy
+# set (Phase 12 — "no result without correction"; CHECKPOINT: "no empirical
+# result without null models and baselines").
+#
+# GeoSync already ships the single-trial side of the correction (Deflated Sharpe
+# Ratio in research/microstructure/robustness.deflated_sharpe, plus PSR/PBO in
+# research/robustness/cpcv.py). What was missing is the strategy-SELECTION side:
+# a joint bootstrap test of whether the BEST of K candidates beats a benchmark
+# after accounting for the search. White (2000) is the canonical test; a grep of
+# the repo finds no reality-check / SPA / stepM implementation. This adds it.
+
+id: white-reality-check
+status: ACTIVE
+claim_type: correctness
+promise: >-
+  Adds research/robustness/white_reality_check.py implementing White's Reality
+  Check (White 2000, Econometrica 68(5):1097-1126): white_reality_check(
+  performance, *, n_bootstrap, block_size, seed) takes a (T, K) matrix of
+  per-period performance differentials vs a benchmark, forms the studentised
+  best-mean statistic V = sqrt(T)*max_k mean_t f_k,t, and obtains its null
+  distribution by a circular-block bootstrap that re-centres each strategy by
+  its own mean (imposing H0: max_k E[f_k] <= 0). Returns a frozen
+  WhiteRealityCheckResult with a p_value in (0, 1] using the (count+1)/(B+1)
+  convention. Fail-closed on non-2-D / <2 periods / no strategies / non-finite
+  input / non-positive bootstrap count / out-of-range block size. Deterministic
+  for a fixed seed. Pure NumPy, mypy --strict clean, no type:ignore / noqa.
+  tests/research/robustness/test_white_reality_check.py adds 11 cases including
+  the key demonstration that the Reality Check is strictly more conservative
+  than a naive best-of-K t-test on snooped noise. research/ is outside the
+  INVENTORY scope; no runtime trading path touched.
+diff_scope:
+  changed_files:
+    - path: ".claude/commit_acceptors/white-reality-check.yaml"
+    - path: "research/robustness/white_reality_check.py"
+    - path: "tests/research/robustness/test_white_reality_check.py"
+  forbidden_paths:
+    - "trading/"
+    - "execution/"
+    - "forecast/"
+    - "policy/"
+required_python_symbols:
+  - "white_reality_check"
+  - "WhiteRealityCheckResult"
+expected_signal: >-
+  pytest tests/research/robustness/test_white_reality_check.py is green (11
+  cases, ~2s): a strong edge among noise rejects H0 (p < 0.05); 50–100 pure-noise
+  strategies are NOT significant (p > 0.10) while a naive best-of-K t-test on the
+  same data falsely reports p < 0.05; identical seed ⇒ identical p; malformed
+  input and invalid parameters fail-closed. mypy --strict clean on
+  research/robustness/white_reality_check.py; ruff + black clean; no INVENTORY
+  change (research/ out of scope).
+measurement_command: >-
+  python -m pytest tests/research/robustness/test_white_reality_check.py -v
+signal_artifact: "tmp/white_reality_check_pytest.log"
+falsifier:
+  command: >-
+    python -c "import numpy as np, sys;
+    from research.robustness.white_reality_check import white_reality_check;
+    rng = np.random.default_rng(11);
+    noise = rng.normal(0.0, 1.0, (500, 100));
+    rc = white_reality_check(noise, n_bootstrap=2000, seed=0);
+    best = int(noise.mean(axis=0).argmax()); s = noise[:, best];
+    from math import erfc, sqrt;
+    t = float(np.sqrt(s.size) * s.mean() / s.std(ddof=1));
+    naive = 0.5 * erfc(t / sqrt(2.0));
+    print('naive_p', round(naive, 4), 'rc_p', round(rc.p_value, 4));
+    sys.exit(0 if (naive < 0.05 and rc.p_value > 0.10) else 1)"
+  description: >-
+    Inverse probe for the snooping correction: on 100 pure-noise strategies the
+    naive best-of-K one-sided t-test is (falsely) significant (p < 0.05) while
+    White's Reality Check is not (p > 0.10). Exits non-zero unless BOTH hold —
+    i.e. iff the bootstrap re-centring / max-statistic is broken so the test
+    stops correcting for data snooping, which is the entire reason it exists.
+rollback_command: >-
+  git rm -f research/robustness/white_reality_check.py
+  tests/research/robustness/test_white_reality_check.py
+  .claude/commit_acceptors/white-reality-check.yaml
+rollback_verification_command: >-
+  test ! -f research/robustness/white_reality_check.py
+memory_update_type: append
+ledger_path: ".claude/commit_acceptors/white-reality-check.yaml"
+report_path: ".claude/commit_acceptors/white-reality-check.yaml"
+evidence: []

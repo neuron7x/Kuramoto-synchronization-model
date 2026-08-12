@@ -1,3 +1,5 @@
+# Copyright (c) 2023-2026 Yaroslav Vasylenko (neuron7xLab)
+# SPDX-License-Identifier: MIT
 """Shared numeric tolerances to keep tests stable across platforms."""
 
 from __future__ import annotations

@@ -1,0 +1,60 @@
+{
+  "generated_utc": "2026-04-21T20:20:59Z",
+  "drops": {
+    "EURUSD": {
+      "n_raw": 142374,
+      "dropped_bad_year": 0,
+      "dropped_dup": 0,
+      "n_clean": 142374
+    },
+    "GBPUSD": {
+      "n_raw": 142335,
+      "dropped_bad_year": 1,
+      "dropped_dup": 0,
+      "n_clean": 142334
+    },
+    "USDJPY": {
+      "n_raw": 142026,
+      "dropped_bad_year": 1,
+      "dropped_dup": 0,
+      "n_clean": 142025
+    },
+    "AUDUSD": {
+      "n_raw": 139881,
+      "dropped_bad_year": 0,
+      "dropped_dup": 0,
+      "n_clean": 139881
+    },
+    "USDCAD": {
+      "n_raw": 140764,
+      "dropped_bad_year": 0,
+      "dropped_dup": 0,
+      "n_clean": 140764
+    },
+    "USDCHF": {
+      "n_raw": 140746,
+      "dropped_bad_year": 0,
+      "dropped_dup": 0,
+      "n_clean": 140746
+    },
+    "EURGBP": {
+      "n_raw": 140769,
+      "dropped_bad_year": 0,
+      "dropped_dup": 0,
+      "n_clean": 140769
+    },
+    "EURJPY": {
+      "n_raw": 140438,
+      "dropped_bad_year": 0,
+      "dropped_dup": 0,
+      "n_clean": 140438
+    }
+  },
+  "panel_bars": 5863,
+  "panel_first_ts": "2003-08-04 21:00:00",
+  "panel_last_ts": "2026-02-23 21:00:00",
+  "log_returns_bars": 5862,
+  "log_returns_first_ts": "2003-08-05 21:00:00",
+  "log_returns_last_ts": "2026-02-23 21:00:00",
+  "n_folds": 222
+}

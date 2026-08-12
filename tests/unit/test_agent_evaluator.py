@@ -1,4 +1,5 @@
-# SPDX-License-Identifier: LicenseRef-TradePulse-Proprietary
+# Copyright (c) 2023-2026 Yaroslav Vasylenko (neuron7xLab)
+# SPDX-License-Identifier: MIT
 from __future__ import annotations
 
 import time
@@ -23,9 +24,7 @@ class _SleepyStrategy(Strategy):
         super().__init__(name=name, params={})
         self.delay = delay
 
-    def simulate_performance(
-        self, data: Any
-    ) -> float:  # pragma: no cover - exercised in tests
+    def simulate_performance(self, data: Any) -> float:  # pragma: no cover - exercised in tests
         time.sleep(self.delay)
         return self.delay
 
@@ -34,9 +33,7 @@ class _FailingStrategy(Strategy):
     def __init__(self, name: str) -> None:
         super().__init__(name=name, params={})
 
-    def simulate_performance(
-        self, data: Any
-    ) -> float:  # pragma: no cover - exercised in tests
+    def simulate_performance(self, data: Any) -> float:  # pragma: no cover - exercised in tests
         raise RuntimeError(f"boom: {self.name}")
 
 
@@ -72,9 +69,7 @@ def test_batch_evaluator_preserves_strategy_order() -> None:
 
 def test_batch_evaluator_parallelises_execution() -> None:
     strategies = [_SleepyStrategy(f"s{i}", delay=0.05) for i in range(4)]
-    evaluator = StrategyBatchEvaluator(
-        max_workers=4, chunk_size=4, sandbox=_PassthroughSandbox()
-    )
+    evaluator = StrategyBatchEvaluator(max_workers=4, chunk_size=4, sandbox=_PassthroughSandbox())
 
     start = time.perf_counter()
     results = evaluator.evaluate(strategies, _sample_frame())

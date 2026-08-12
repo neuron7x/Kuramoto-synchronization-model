@@ -1,0 +1,21 @@
+{
+  "schema_version": "D002H-CANONICAL-GRID-v1",
+  "study_id": "D-002H",
+  "gate": "C",
+  "parent_prereg_sha": "44b18b5a40ce9d188a9c3bd49339621f81a65a15f97a683247902450dd54acec",
+  "parent_prereg_path": "docs/governance/D002H_PREREGISTRATION.yaml",
+  "substrates": ["ricci_flow"],
+  "N": [50, 100, 200],
+  "lambda_values": [0.0, 0.05, 0.10, 0.20, 0.40, 1.0],
+  "n_seeds": 20,
+  "n_bootstrap": 16,
+  "base_seed": 42,
+  "null_seed_M3": 12345,
+  "total_cells": 18,
+  "canonical_run_authorized": false,
+  "downstream_gates_remaining": ["D", "E", "F", "G"],
+  "gate_a_pass": true,
+  "gate_b_pass": true,
+  "gate_a_anchor_sha": "1b59ce5326a8e8bd8aaaf9666a06075d34b4f6a5",
+  "gate_b_anchor_sha": "b97daae8b554ab9960510564e19263adcc1fe71b"
+}

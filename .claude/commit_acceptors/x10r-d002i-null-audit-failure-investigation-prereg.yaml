@@ -1,0 +1,205 @@
+# Diff-bound commit acceptor for the D-002I pre-registration PR.
+#
+# D-002I opens a fresh pre-registered lineage AFTER the D-002H canonical
+# sweep delivered the REFUSED verdict (PR #691, merge sha 250d8069). The
+# null audit aggregated FAIL across 42 / 54 audited cells on ricci_flow
+# under M1 union M3 null mechanisms. D-002I locks 4 falsifiable
+# hypotheses (H_I1 M1 offset, H_I2 M3 tolerance, H_I3 signal magnitude,
+# H_I4 Bonferroni denominator) BEFORE any investigation runs. Each
+# hypothesis is tested in a separate downstream PR (D-002I-P1/H1..H4)
+# under a pre-committed protocol.
+#
+# Pure pre-registration: NO source-code edit, NO mechanism change, NO
+# canonical sweep run, NO D-002C ledger touch, NO D-002G or D-002H
+# prereg edit, NO prior gate artifact edit. D-002I does NOT claim
+# D-002H REFUSED was wrong (the verdict was truthful) and does NOT
+# rewrite that verdict.
+
+id: x10r-d002i-null-audit-failure-investigation-prereg
+status: ACTIVE
+claim_type: governance
+promise: >-
+  After this PR lands, docs/governance/D002I_PREREGISTRATION.yaml exists
+  carrying 4 falsifiable hypotheses (H_I1..H_I4), each with a
+  falsification_protocol, support_criterion, refutation_criterion, and
+  scope; parent_canonical_run_merge_sha pinned to
+  250d8069d16ecabdb49b5a20b7cf1d622eddc925; canonical_run_authorized
+  false; investigation_only true; prereg_lock.locked_at_merge true.
+
+  docs/governance/D002I_INVESTIGATION_RATIONALE.md exists carrying the
+  8-section rationale (why D-002I exists, why post-hoc tuning is
+  forbidden, why each hypothesis is scoped, what claims become possible
+  per outcome path, what claims remain impossible, boundary against
+  substrate redesign, expected runtime per H_I1..H_I4, decision tree
+  post-investigation).
+
+  docs/governance/D002I_CLAIM_BOUNDARY.md exists carrying the verbatim
+  D-002I is investigation, not validation claim-boundary block.
+
+  artifacts/d002i/prereg/d002i_preregistration_lock.json exists with
+  schema_version D002I-PREREG-v1, 4 hypotheses, parent_canonical_run_merge_sha
+  pinned, locked_at_merge true.
+
+  tests/systemic_risk/test_d002i_preregistration.py carries at least 12
+  required-by-brief tests including test_d002i_prereg_exists,
+  test_d002i_4_hypotheses_pinned,
+  test_d002i_each_hypothesis_has_falsification_protocol,
+  test_d002i_each_hypothesis_has_support_and_refutation_criterion,
+  test_d002i_parent_canonical_run_sha_pinned,
+  test_d002i_substrate_scope_ricci_flow_only,
+  test_d002i_forbids_post_hoc_substrate_redesign,
+  test_d002i_forbids_d002h_rescue_claim,
+  test_d002i_no_canonical_run_authorisation,
+  test_d002i_preserves_d002c_ledger,
+  test_d002i_preserves_d002h_prereg,
+  test_d002i_claim_boundary_verbatim_present.
+
+  docs/governance/D002G_CANONICAL_RUN_BLOCKERS.md gains an append-only
+  D-002I lineage opened section naming H_I1..H_I4 and the parent
+  REFUSED verdict.
+
+  D-002G acceptance rules byte-exact
+  875b1e3eb031b8e5333dc8b455454f0a30419ead1ebe787aa01d5882e7d6ad31.
+  D-002H prereg byte-exact
+  44b18b5a40ce9d188a9c3bd49339621f81a65a15f97a683247902450dd54acec.
+  D-002C claim ledger byte-exact
+  f96ba9b5a2057d2e0bff84afc28578ab316cff73f6dc6673fb0d6d543b8bd6dd.
+
+  Pure pre-registration: NO new source code, NO new mechanism, NO
+  canonical sweep run, NO prior-gate artifact edit. D-002I is
+  investigation, not validation. D-002H REFUSED remains the truthful
+  canonical verdict; D-002I does NOT retroactively flip it.
+
+diff_scope:
+  changed_files:
+    - path: "docs/governance/D002I_PREREGISTRATION.yaml"
+    - path: "docs/governance/D002I_INVESTIGATION_RATIONALE.md"
+    - path: "docs/governance/D002I_CLAIM_BOUNDARY.md"
+    - path: "artifacts/d002i/prereg/d002i_preregistration_lock.json"
+    - path: "tests/systemic_risk/test_d002i_preregistration.py"
+    - path: ".claude/commit_acceptors/x10r-d002i-null-audit-failure-investigation-prereg.yaml"
+    - path: "docs/governance/D002G_CANONICAL_RUN_BLOCKERS.md"
+    - path: "scripts/x10r_d002h_gate_d_scan.py"
+  forbidden_paths:
+    - "docs/governance/D002C_CLAIM_LEDGER.yaml"
+    - "docs/governance/D002C_PREREGISTRATION.yaml"
+    - "docs/governance/D002C_CANONICAL_RUN_REPORT.md"
+    - "docs/governance/D002C_ATTEMPT_2_NULL_AUDIT_FALSIFICATION_REPORT.md"
+    - "docs/governance/D002G_ACCEPTANCE_RULES.md"
+    - "docs/governance/D002G_PREREGISTRATION.yaml"
+    - "docs/governance/D002G_NONDEGENERATE_NULL_DESIGN.md"
+    - "docs/governance/D002G_P3_M3_PREREGISTRATION.md"
+    - "docs/governance/D002G_STRUCTURAL_CLOSURE_REPORT.md"
+    - "docs/governance/D002G_NEGATIVE_SPACE_MAP.md"
+    - "docs/governance/D002G_M3_ELIGIBILITY_MATRIX.md"
+    - "docs/governance/D002H_PREREGISTRATION.yaml"
+    - "docs/governance/D002H_SCOPE_RATIONALE.md"
+    - "docs/governance/D002H_CLAIM_BOUNDARY.md"
+    - "docs/governance/D002H_CANONICAL_RUN_AUTHORIZATION_GATES.md"
+    - "docs/governance/D002H_GATE_B_REPORT.md"
+    - "docs/governance/D002H_GATE_C_CANONICAL_GRID.md"
+    - "docs/governance/D002H_GATE_D_FORBIDDEN_CLAIM_SCAN.md"
+    - "docs/governance/D002H_GATE_E_LOCKED_FILE_REPORT.md"
+    - "docs/governance/D002H_GATE_F_AUTHORIZATION_REPORT.md"
+    - "docs/governance/D002H_GATE_G_CI_LOCK_REPORT.md"
+    - "docs/governance/D002H_R2B_INAPPLICABILITY_NOTE.md"
+    - "docs/governance/D002H_CANONICAL_RUN_REPORT.md"
+    - "artifacts/d002h/prereg/d002h_preregistration_lock.json"
+    - "artifacts/d002h/eligibility/d002h_ricci_eligibility.json"
+    - "artifacts/d002h/canonical/d002h_canonical_grid.json"
+    - "artifacts/d002h/canonical/d002h_canonical_run_verdict.json"
+    - "artifacts/d002h/scans/d002h_forbidden_claim_scan.json"
+    - "artifacts/d002h/locks/d002h_locked_file_pins.json"
+    - "artifacts/d002h/authorization/d002h_canonical_run_authorisation.json"
+    - "artifacts/d002h/authorization/d002h_canonical_run_final_lock.json"
+    - "artifacts/d002h/canonical/results/"
+    - "research/systemic_risk/d002c_substrates.py"
+    - "research/systemic_risk/d002g_null_mechanisms.py"
+    - "artifacts/d002g/closure/"
+    - "artifacts/d002g/m3/"
+    - "artifacts/d002g/p3/"
+    - "artifacts/d002g/canonical/"
+required_python_symbols: []
+expected_signal: >-
+  `PYTHONPATH=. python -m pytest
+  tests/systemic_risk/test_d002i_preregistration.py -q` passes all
+  cases; D-002I_PREREGISTRATION.yaml lists 4 hypotheses (H_I1..H_I4)
+  each with falsification_protocol, support_criterion, and
+  refutation_criterion; parent_canonical_run_merge_sha pinned to
+  250d8069d16ecabdb49b5a20b7cf1d622eddc925;
+  canonical_run_authorized false; investigation_only true;
+  D002I_CLAIM_BOUNDARY.md carries the verbatim claim-boundary block;
+  D002G_CANONICAL_RUN_BLOCKERS.md gains the append-only D-002I
+  lineage opened section; D-002G acceptance rules sha256 byte-exact
+  at 875b1e3eb031b8e5333dc8b455454f0a30419ead1ebe787aa01d5882e7d6ad31;
+  D-002H prereg sha256 byte-exact at
+  44b18b5a40ce9d188a9c3bd49339621f81a65a15f97a683247902450dd54acec;
+  D-002C claim ledger sha256 byte-exact at
+  f96ba9b5a2057d2e0bff84afc28578ab316cff73f6dc6673fb0d6d543b8bd6dd.
+measurement_command: >-
+  bash -c 'set -e;
+  PYTHONPATH=. python -m pytest tests/systemic_risk/test_d002i_preregistration.py -q;
+  test -f docs/governance/D002I_PREREGISTRATION.yaml;
+  test -f docs/governance/D002I_INVESTIGATION_RATIONALE.md;
+  test -f docs/governance/D002I_CLAIM_BOUNDARY.md;
+  test -f artifacts/d002i/prereg/d002i_preregistration_lock.json;
+  grep -q "study_id: D-002I" docs/governance/D002I_PREREGISTRATION.yaml;
+  grep -q "250d8069d16ecabdb49b5a20b7cf1d622eddc925" docs/governance/D002I_PREREGISTRATION.yaml;
+  grep -q "H_I1" docs/governance/D002I_PREREGISTRATION.yaml;
+  grep -q "H_I2" docs/governance/D002I_PREREGISTRATION.yaml;
+  grep -q "H_I3" docs/governance/D002I_PREREGISTRATION.yaml;
+  grep -q "H_I4" docs/governance/D002I_PREREGISTRATION.yaml;
+  grep -q "D-002I lineage opened" docs/governance/D002G_CANONICAL_RUN_BLOCKERS.md;
+  test "$(sha256sum docs/governance/D002G_ACCEPTANCE_RULES.md | awk "{print \$1}")" = "875b1e3eb031b8e5333dc8b455454f0a30419ead1ebe787aa01d5882e7d6ad31";
+  test "$(sha256sum docs/governance/D002H_PREREGISTRATION.yaml | awk "{print \$1}")" = "44b18b5a40ce9d188a9c3bd49339621f81a65a15f97a683247902450dd54acec";
+  test "$(sha256sum docs/governance/D002C_CLAIM_LEDGER.yaml | awk "{print \$1}")" = "f96ba9b5a2057d2e0bff84afc28578ab316cff73f6dc6673fb0d6d543b8bd6dd"'
+signal_artifact: "docs/governance/D002I_PREREGISTRATION.yaml"
+falsifier:
+  command: >-
+    bash -c 'set -e;
+    PYTHONPATH=. python -m pytest tests/systemic_risk/test_d002i_preregistration.py -q || exit 1;
+    test -f docs/governance/D002I_PREREGISTRATION.yaml || exit 2;
+    test -f docs/governance/D002I_INVESTIGATION_RATIONALE.md || exit 3;
+    test -f docs/governance/D002I_CLAIM_BOUNDARY.md || exit 4;
+    test -f artifacts/d002i/prereg/d002i_preregistration_lock.json || exit 5;
+    test -f tests/systemic_risk/test_d002i_preregistration.py || exit 6;
+    test -f .claude/commit_acceptors/x10r-d002i-null-audit-failure-investigation-prereg.yaml || exit 7;
+    grep -q "study_id: D-002I" docs/governance/D002I_PREREGISTRATION.yaml || exit 8;
+    grep -q "250d8069d16ecabdb49b5a20b7cf1d622eddc925" docs/governance/D002I_PREREGISTRATION.yaml || exit 9;
+    grep -q "H_I1" docs/governance/D002I_PREREGISTRATION.yaml || exit 10;
+    grep -q "H_I4" docs/governance/D002I_PREREGISTRATION.yaml || exit 11;
+    grep -q "D-002I lineage opened" docs/governance/D002G_CANONICAL_RUN_BLOCKERS.md || exit 12;
+    test "$(sha256sum docs/governance/D002G_ACCEPTANCE_RULES.md | awk "{print \$1}")" = "875b1e3eb031b8e5333dc8b455454f0a30419ead1ebe787aa01d5882e7d6ad31" || exit 13;
+    test "$(sha256sum docs/governance/D002H_PREREGISTRATION.yaml | awk "{print \$1}")" = "44b18b5a40ce9d188a9c3bd49339621f81a65a15f97a683247902450dd54acec" || exit 14;
+    test "$(sha256sum docs/governance/D002C_CLAIM_LEDGER.yaml | awk "{print \$1}")" = "f96ba9b5a2057d2e0bff84afc28578ab316cff73f6dc6673fb0d6d543b8bd6dd" || exit 15'
+  description: >-
+    Probes the D-002I null-audit failure-mode investigation
+    pre-registration: tests pass; 6 files exist on disk (prereg YAML,
+    rationale MD, claim boundary MD, prereg lock JSON, test module,
+    commit acceptor); the prereg names study_id D-002I, parent
+    canonical sweep merge sha 250d8069..., all 4 hypotheses
+    H_I1..H_I4; BLOCKERS.md gains the append-only D-002I lineage
+    opened section; D-002G acceptance rules, D-002H prereg, and D-002C
+    claim ledger sha256 all byte-exact at their locked anchors.
+    Regression on any -> D-002I pre-registration contract broken.
+rollback_command: >-
+  bash -c 'rm -rf
+  docs/governance/D002I_PREREGISTRATION.yaml
+  docs/governance/D002I_INVESTIGATION_RATIONALE.md
+  docs/governance/D002I_CLAIM_BOUNDARY.md
+  artifacts/d002i/
+  tests/systemic_risk/test_d002i_preregistration.py
+  .claude/commit_acceptors/x10r-d002i-null-audit-failure-investigation-prereg.yaml
+  && git checkout HEAD~1 -- docs/governance/D002G_CANONICAL_RUN_BLOCKERS.md'
+rollback_verification_command: >-
+  bash -c 'test ! -f docs/governance/D002I_PREREGISTRATION.yaml
+  && test ! -f docs/governance/D002I_INVESTIGATION_RATIONALE.md
+  && test ! -f docs/governance/D002I_CLAIM_BOUNDARY.md
+  && test ! -d artifacts/d002i
+  && test ! -f tests/systemic_risk/test_d002i_preregistration.py
+  && test ! -f .claude/commit_acceptors/x10r-d002i-null-audit-failure-investigation-prereg.yaml
+  && ! grep -q "D-002I lineage opened" docs/governance/D002G_CANONICAL_RUN_BLOCKERS.md'
+memory_update_type: append
+ledger_path: ".claude/commit_acceptors/x10r-d002i-null-audit-failure-investigation-prereg.yaml"
+report_path: "docs/governance/D002I_INVESTIGATION_RATIONALE.md"
+evidence: []

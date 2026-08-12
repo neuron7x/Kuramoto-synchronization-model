@@ -2,7 +2,7 @@
 
 ## Overview
 
-The Automated Risk Testing Module provides comprehensive automated testing capabilities for risk management systems in TradePulse. It enables systematic validation of risk metrics, stress testing under various market conditions, and Monte Carlo simulations to ensure robust risk controls.
+The Automated Risk Testing Module provides comprehensive automated testing capabilities for risk management systems in GeoSync. It enables systematic validation of risk metrics, stress testing under various market conditions, and Monte Carlo simulations to ensure robust risk controls.
 
 ## Features
 
@@ -40,7 +40,7 @@ The module supports the following scenario types:
 
 ```python
 import numpy as np
-from tradepulse.risk.automated_testing import validate_risk_metrics
+from geosync.risk.automated_testing import validate_risk_metrics
 
 # Generate or load returns data
 returns = np.random.normal(0.0005, 0.015, 252)
@@ -57,7 +57,7 @@ print(f"All Validations Passed: {result['all_valid']}")
 ### Stress Testing
 
 ```python
-from tradepulse.risk.automated_testing import (
+from geosync.risk.automated_testing import (
     AutomatedRiskTester,
     generate_market_stress_scenarios,
 )
@@ -86,7 +86,7 @@ print(f"Pass Rate: {summary['pass_rate']:.1%}")
 ### Monte Carlo Simulation
 
 ```python
-from tradepulse.risk.automated_testing import (
+from geosync.risk.automated_testing import (
     AutomatedRiskTester,
     MonteCarloConfig,
 )
@@ -118,7 +118,7 @@ print(f"Mean ES: {np.mean(ess):.6f} ± {np.std(ess):.6f}")
 
 ```python
 import numpy as np
-from tradepulse.risk.automated_testing import (
+from geosync.risk.automated_testing import (
     AutomatedRiskTester,
     RiskScenario,
     ScenarioType,
@@ -347,7 +347,7 @@ When extending the module:
 
 ## License
 
-This module is part of TradePulse and is subject to the same license terms.
+This module is part of GeoSync and is subject to the same license terms.
 
 ## Support
 

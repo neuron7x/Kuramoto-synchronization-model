@@ -1,0 +1,93 @@
+# Diff-bound acceptor for the #823 physics-test grounding backlog batch.
+#
+# Reduces the count of physics tests that are NOT grounded in a registered
+# INVARIANT (CLAUDE.md Rule Zero). For each touched file the grounding is made
+# real and machine-visible: genuine physics witnesses gain an INV-* reference
+# in the test-function docstring plus a falsifying assertion / property
+# structure (T9 INV-K2, T10 INV-RC1, T17 INV-CB1/CB8, DRO1 INV-DRO1,
+# DRO2 INV-DRO2, T18b rocof_max guard), and tests that match a physics
+# filename keyword but witness NO registered invariant are correctly marked
+# NON_PHYSICS (deprecated-alias migration contract, unit-label bookkeeping,
+# audit-scope honesty metadata, candidate-set name governance, filesystem
+# write/import isolation). No xfail/skip/tolerance masking; one probabilistic
+# pytest.skip in T17 was REMOVED and replaced with the deterministic INV-CB8
+# abort path. Repo-wide validator L1 falls from 2263 to 2236.
+
+id: physics-grounding-backlog-batch-823
+status: DRAFT
+claim_type: governance
+promise: >-
+  Reduce the physics-test grounding backlog (issue #823) without masking. Ten
+  test files under tests/ are brought to validate_tests.py Total = 0 (L1..L5):
+  six gain real INV-* function-docstring references plus falsifying structure
+  (test_T9_kuramoto_finite_size_sweep INV-K2; test_T10_ricci_universal_upper_bound
+  INV-RC1; test_T17_cryptobiosis_exact_zero INV-CB1/INV-CB8 — the probabilistic
+  pytest.skip is replaced by the deterministic INV-CB8 abort;
+  test_T_dro1_gamma_algebraic INV-DRO1; test_inv_dro2_risk_scalar INV-DRO2;
+  test_T18b_second_order_stability_guard rocof_max INV-HPC2 property loop), and
+  four files that match a physics filename keyword but witness no REGISTERED
+  invariant are correctly classified NON_PHYSICS (test_conservation_aliases —
+  deprecated-alias migration contract; test_dimensional_homogeneity — static
+  unit-label bookkeeping; test_kuramoto_candidate_set + test_kuramoto_no_interference
+  — research governance / filesystem isolation; plus two audit-scope honesty
+  tests inside test_T18b). The physics kernel self-check stays PASSED at 112
+  invariants and the witness-map sidecar stays PASS. No production code under
+  core/ is touched; no invariant is added or removed.
+diff_scope:
+  changed_files:
+    - path: ".claude/commit_acceptors/physics-grounding-backlog-batch-823.yaml"
+    - path: "scripts/ci/physics_grounding_batch_823_falsifier.py"
+    - path: "tests/unit/physics/test_T9_kuramoto_finite_size_sweep.py"
+    - path: "tests/unit/physics/test_T10_ricci_universal_upper_bound.py"
+    - path: "tests/unit/physics/test_T17_cryptobiosis_exact_zero.py"
+    - path: "tests/unit/physics/test_T_dro1_gamma_algebraic.py"
+    - path: "tests/unit/physics/test_inv_dro2_risk_scalar.py"
+    - path: "tests/unit/physics/test_T18b_second_order_stability_guard.py"
+    - path: "tests/unit/physics/test_conservation_aliases.py"
+    - path: "tests/physics/test_dimensional_homogeneity.py"
+    - path: "tests/research/robustness/test_kuramoto_candidate_set.py"
+    - path: "tests/research/robustness/test_kuramoto_no_interference.py"
+  forbidden_paths:
+    - "trading/"
+    - "execution/"
+    - "forecast/"
+    - "policy/"
+    - "core/"
+required_python_symbols: []
+expected_signal: >-
+  python .claude/physics/validate_tests.py <file> reports "Total: 0" and "All
+  physics tests pass validation." for each of the ten changed test files;
+  pytest passes all 81 collected tests across the ten files; the kernel
+  self-check PASSES with 112 invariants; validate_witness_map.py PASSES.
+  Repo-wide validate_tests.py tests/ --summary L1 = 2236 (down from the 2263
+  baseline at the start of this branch).
+measurement_command: >-
+  python .claude/physics/validate_tests.py tests/unit/physics/test_T17_cryptobiosis_exact_zero.py
+signal_artifact: "tmp/physics_grounding_backlog_batch_823.log"
+falsifier:
+  command: >-
+    python scripts/ci/physics_grounding_batch_823_falsifier.py
+  description: >-
+    Inverse probe: runs validate_tests.py on every file bound by this acceptor
+    and exits non-zero if any file reports a non-zero L1..L5 total, i.e. if a
+    bound test silently loses its INV-* grounding or NON_PHYSICS classification.
+    Fires iff the grounding this batch added is later removed or regressed —
+    distinguishing a genuinely-grounded surface from a decorative one.
+rollback_command: >-
+  git checkout origin/main --
+  tests/unit/physics/test_T9_kuramoto_finite_size_sweep.py
+  tests/unit/physics/test_T10_ricci_universal_upper_bound.py
+  tests/unit/physics/test_T17_cryptobiosis_exact_zero.py
+  tests/unit/physics/test_T_dro1_gamma_algebraic.py
+  tests/unit/physics/test_inv_dro2_risk_scalar.py
+  tests/unit/physics/test_T18b_second_order_stability_guard.py
+  tests/unit/physics/test_conservation_aliases.py
+  tests/physics/test_dimensional_homogeneity.py
+  tests/research/robustness/test_kuramoto_candidate_set.py
+  tests/research/robustness/test_kuramoto_no_interference.py
+rollback_verification_command: >-
+  python .claude/physics/validate_tests.py tests/ --summary
+memory_update_type: none
+ledger_path: ".claude/commit_acceptors/physics-grounding-backlog-batch-823.yaml"
+report_path: ".claude/commit_acceptors/physics-grounding-backlog-batch-823.yaml"
+evidence: []

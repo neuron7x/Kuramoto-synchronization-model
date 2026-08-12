@@ -1,0 +1,786 @@
+{
+  "schema_version": "D002J-INGESTION-MANIFEST-v1",
+  "generated_at": "2026-05-15T00:00:00Z",
+  "study_id": "D-002J-P3",
+  "pr_lineage": "D-002G -> D-002H REFUSED -> D-002I -> D-002J P0 -> P1 -> P1A REJECTED -> P1B PARTIALLY_VERIFIED -> P2 -> P2.5 -> P3",
+  "parent_registry_path": "artifacts/d002j/data_registry/source_registry_v1.json",
+  "parent_registry_sha256": "f1899b7a882b4b3efbebb54e3dc942c079839f77f981273e2dd09757973b14ec",
+  "parent_window_registry_path": "artifacts/d002j/crisis_windows/crisis_window_registry_v1.json",
+  "parent_window_registry_sha256": "41f281d9e97fbf49725f0eb1a1bb7b45865c14cdc5c525ea96231ef0aa651e8f",
+  "total_adapters": 18,
+  "claim_boundary": "Adapter CONTRACTS ONLY. No data ingested. No fetching executed. No modelling. No canonical run authorisation. Every adapter binds to a P1B audit-surviving source (audit_status in {VERIFIED, PARTIAL}) and to one or more P2 window_ids. Point-in-time discipline encoded via vintage_required, forecast_required, and the per-adapter lookahead invariants (observation_date <= decision_date, release_date <= decision_date). No private microdata, no restricted microdata, no paywall scraping.",
+  "adapters": [
+    {
+      "adapter_id": "adapter_fred_vixcls_v1",
+      "adapter_class": "official_api_adapter",
+      "status": "STUB_ONLY",
+      "source_id": "CBOE_VIX",
+      "window_ids": [
+        "CW1_GFC_2007_2009",
+        "CW2_EUROZONE_2011_2012",
+        "CW3_US_REPO_SPIKE_2019",
+        "CW4_COVID_DASH_FOR_CASH_2020",
+        "CW5_UK_GILT_LDI_2022",
+        "CW6_REGIONAL_BANKING_2023"
+      ],
+      "endpoint": "https://api.stlouisfed.org/fred/series/observations?series_id=VIXCLS",
+      "output_target": "artifacts/d002j/ingestion/staged/adapter_fred_vixcls_v1/data.csv",
+      "schema_contract_path": "artifacts/d002j/ingestion/schemas/adapter_fred_vixcls_v1_schema.json",
+      "checksum_contract": {
+        "algorithm": "sha256",
+        "field": "data_sha256",
+        "verified_at_ingest_time": true
+      },
+      "vintage_required": false,
+      "vintage_field": null,
+      "forecast_required": false,
+      "forecast_date_field": null,
+      "observation_date_field": "observation_date",
+      "release_date_field": "release_date",
+      "decision_date_field": "decision_date",
+      "lookahead_invariants": [
+        "observation_date <= decision_date",
+        "release_date <= decision_date"
+      ],
+      "max_download_bytes": 5000000,
+      "license_boundary": "public_daily_history_redistributable_via_FRED",
+      "access_boundary": "public",
+      "rate_limit_policy": "fred_api_120_req_per_min_per_key",
+      "deterministic_replay": true,
+      "wall_clock_dependent": false,
+      "private_data": false,
+      "restricted_microdata": false,
+      "forbidden_use": [
+        "fixed_income_specific_stress_use_MOVE_instead",
+        "credit_specific_stress_use_credit_spreads_instead"
+      ]
+    },
+    {
+      "adapter_id": "adapter_fred_stlfsi_v1",
+      "adapter_class": "official_api_adapter",
+      "status": "STUB_ONLY",
+      "source_id": "STLFSI",
+      "window_ids": [
+        "CW1_GFC_2007_2009",
+        "CW2_EUROZONE_2011_2012",
+        "CW3_US_REPO_SPIKE_2019",
+        "CW4_COVID_DASH_FOR_CASH_2020",
+        "CW6_REGIONAL_BANKING_2023"
+      ],
+      "endpoint": "https://api.stlouisfed.org/fred/series/observations?series_id=STLFSI4",
+      "output_target": "artifacts/d002j/ingestion/staged/adapter_fred_stlfsi_v1/data.csv",
+      "schema_contract_path": "artifacts/d002j/ingestion/schemas/adapter_fred_stlfsi_v1_schema.json",
+      "checksum_contract": {
+        "algorithm": "sha256",
+        "field": "data_sha256",
+        "verified_at_ingest_time": true
+      },
+      "vintage_required": false,
+      "vintage_field": null,
+      "forecast_required": false,
+      "forecast_date_field": null,
+      "observation_date_field": "observation_date",
+      "release_date_field": "release_date",
+      "decision_date_field": "decision_date",
+      "lookahead_invariants": [
+        "observation_date <= decision_date",
+        "release_date <= decision_date"
+      ],
+      "max_download_bytes": 5000000,
+      "license_boundary": "public_redistribution_permitted_with_attribution",
+      "access_boundary": "public",
+      "rate_limit_policy": "fred_api_120_req_per_min_per_key",
+      "deterministic_replay": true,
+      "wall_clock_dependent": false,
+      "private_data": false,
+      "restricted_microdata": false,
+      "forbidden_use": [
+        "continuous_series_pre_post_2022_libor_break_without_methodology_note"
+      ]
+    },
+    {
+      "adapter_id": "adapter_fred_kcfsi_v1",
+      "adapter_class": "official_api_adapter",
+      "status": "STUB_ONLY",
+      "source_id": "KCFSI",
+      "window_ids": [
+        "CW1_GFC_2007_2009",
+        "CW2_EUROZONE_2011_2012",
+        "CW4_COVID_DASH_FOR_CASH_2020",
+        "CW6_REGIONAL_BANKING_2023"
+      ],
+      "endpoint": "https://api.stlouisfed.org/fred/series/observations?series_id=KCFSI",
+      "output_target": "artifacts/d002j/ingestion/staged/adapter_fred_kcfsi_v1/data.csv",
+      "schema_contract_path": "artifacts/d002j/ingestion/schemas/adapter_fred_kcfsi_v1_schema.json",
+      "checksum_contract": {
+        "algorithm": "sha256",
+        "field": "data_sha256",
+        "verified_at_ingest_time": true
+      },
+      "vintage_required": false,
+      "vintage_field": null,
+      "forecast_required": false,
+      "forecast_date_field": null,
+      "observation_date_field": "observation_date",
+      "release_date_field": "release_date",
+      "decision_date_field": "decision_date",
+      "lookahead_invariants": [
+        "observation_date <= decision_date",
+        "release_date <= decision_date"
+      ],
+      "max_download_bytes": 5000000,
+      "license_boundary": "public_redistribution_permitted_with_attribution",
+      "access_boundary": "public",
+      "rate_limit_policy": "fred_api_120_req_per_min_per_key",
+      "deterministic_replay": true,
+      "wall_clock_dependent": false,
+      "private_data": false,
+      "restricted_microdata": false,
+      "forbidden_use": [
+        "intra_month_dynamics",
+        "post_2019_high_frequency_event_identification"
+      ]
+    },
+    {
+      "adapter_id": "adapter_fred_h15_treasury_v1",
+      "adapter_class": "official_api_adapter",
+      "status": "STUB_ONLY",
+      "source_id": "FED_H15",
+      "window_ids": [
+        "CW1_GFC_2007_2009",
+        "CW2_EUROZONE_2011_2012",
+        "CW3_US_REPO_SPIKE_2019",
+        "CW4_COVID_DASH_FOR_CASH_2020",
+        "CW5_UK_GILT_LDI_2022",
+        "CW6_REGIONAL_BANKING_2023"
+      ],
+      "endpoint": "https://api.stlouisfed.org/fred/series/observations?series_id=DGS10",
+      "output_target": "artifacts/d002j/ingestion/staged/adapter_fred_h15_treasury_v1/data.csv",
+      "schema_contract_path": "artifacts/d002j/ingestion/schemas/adapter_fred_h15_treasury_v1_schema.json",
+      "checksum_contract": {
+        "algorithm": "sha256",
+        "field": "data_sha256",
+        "verified_at_ingest_time": true
+      },
+      "vintage_required": false,
+      "vintage_field": null,
+      "forecast_required": false,
+      "forecast_date_field": null,
+      "observation_date_field": "observation_date",
+      "release_date_field": "release_date",
+      "decision_date_field": "decision_date",
+      "lookahead_invariants": [
+        "observation_date <= decision_date",
+        "release_date <= decision_date"
+      ],
+      "max_download_bytes": 5000000,
+      "license_boundary": "public_domain_us_government_work",
+      "access_boundary": "public",
+      "rate_limit_policy": "fred_api_120_req_per_min_per_key",
+      "deterministic_replay": true,
+      "wall_clock_dependent": false,
+      "private_data": false,
+      "restricted_microdata": false,
+      "forbidden_use": [
+        "post_libor_continuity_without_explicit_methodology_note"
+      ]
+    },
+    {
+      "adapter_id": "adapter_fred_michigan_inflation_expect_v1",
+      "adapter_class": "official_api_adapter",
+      "status": "STUB_ONLY",
+      "source_id": "FRED",
+      "window_ids": [
+        "CW1_GFC_2007_2009",
+        "CW2_EUROZONE_2011_2012",
+        "CW4_COVID_DASH_FOR_CASH_2020",
+        "CW6_REGIONAL_BANKING_2023"
+      ],
+      "endpoint": "https://api.stlouisfed.org/fred/series/observations?series_id=MICH",
+      "output_target": "artifacts/d002j/ingestion/staged/adapter_fred_michigan_inflation_expect_v1/data.csv",
+      "schema_contract_path": "artifacts/d002j/ingestion/schemas/adapter_fred_michigan_inflation_expect_v1_schema.json",
+      "checksum_contract": {
+        "algorithm": "sha256",
+        "field": "data_sha256",
+        "verified_at_ingest_time": true
+      },
+      "vintage_required": false,
+      "vintage_field": null,
+      "forecast_required": true,
+      "forecast_date_field": "forecast_horizon_end_date",
+      "observation_date_field": "observation_date",
+      "release_date_field": "release_date",
+      "decision_date_field": "decision_date",
+      "lookahead_invariants": [
+        "observation_date <= decision_date",
+        "release_date <= decision_date",
+        "forecast_horizon_end_date > observation_date"
+      ],
+      "max_download_bytes": 5000000,
+      "license_boundary": "public_redistribution_permitted_with_attribution",
+      "access_boundary": "public",
+      "rate_limit_policy": "fred_api_120_req_per_min_per_key",
+      "deterministic_replay": true,
+      "wall_clock_dependent": false,
+      "private_data": false,
+      "restricted_microdata": false,
+      "forbidden_use": [
+        "real_time_decision_use_without_ALFRED_vintage_lookup",
+        "claim_of_underlying_methodology_owned_by_fred"
+      ]
+    },
+    {
+      "adapter_id": "adapter_fred_ofr_fsi_v1",
+      "adapter_class": "official_api_adapter",
+      "status": "STUB_ONLY",
+      "source_id": "OFR_FSI",
+      "window_ids": [
+        "CW1_GFC_2007_2009",
+        "CW2_EUROZONE_2011_2012",
+        "CW3_US_REPO_SPIKE_2019",
+        "CW4_COVID_DASH_FOR_CASH_2020",
+        "CW5_UK_GILT_LDI_2022",
+        "CW6_REGIONAL_BANKING_2023"
+      ],
+      "endpoint": "https://www.financialresearch.gov/financial-stress-index/data/ofrfsi.csv",
+      "output_target": "artifacts/d002j/ingestion/staged/adapter_fred_ofr_fsi_v1/data.csv",
+      "schema_contract_path": "artifacts/d002j/ingestion/schemas/adapter_fred_ofr_fsi_v1_schema.json",
+      "checksum_contract": {
+        "algorithm": "sha256",
+        "field": "data_sha256",
+        "verified_at_ingest_time": true
+      },
+      "vintage_required": false,
+      "vintage_field": null,
+      "forecast_required": false,
+      "forecast_date_field": null,
+      "observation_date_field": "observation_date",
+      "release_date_field": "release_date",
+      "decision_date_field": "decision_date",
+      "lookahead_invariants": [
+        "observation_date <= decision_date",
+        "release_date <= decision_date"
+      ],
+      "max_download_bytes": 5000000,
+      "license_boundary": "public_domain_us_government_work",
+      "access_boundary": "public",
+      "rate_limit_policy": null,
+      "deterministic_replay": true,
+      "wall_clock_dependent": false,
+      "private_data": false,
+      "restricted_microdata": false,
+      "forbidden_use": [
+        "use_as_y_label_when_constructed_from_same_underlying_series_as_x"
+      ]
+    },
+    {
+      "adapter_id": "adapter_alfred_gdp_vintage_v1",
+      "adapter_class": "official_api_adapter",
+      "status": "STUB_ONLY",
+      "source_id": "ALFRED",
+      "window_ids": [
+        "CW1_GFC_2007_2009",
+        "CW2_EUROZONE_2011_2012",
+        "CW3_US_REPO_SPIKE_2019",
+        "CW4_COVID_DASH_FOR_CASH_2020",
+        "CW6_REGIONAL_BANKING_2023"
+      ],
+      "endpoint": "https://api.stlouisfed.org/fred/series/observations?series_id=GDPC1&vintage_dates=...",
+      "output_target": "artifacts/d002j/ingestion/staged/adapter_alfred_gdp_vintage_v1/data.csv",
+      "schema_contract_path": "artifacts/d002j/ingestion/schemas/adapter_alfred_gdp_vintage_v1_schema.json",
+      "checksum_contract": {
+        "algorithm": "sha256",
+        "field": "data_sha256",
+        "verified_at_ingest_time": true
+      },
+      "vintage_required": true,
+      "vintage_field": "vintage_release_date",
+      "forecast_required": false,
+      "forecast_date_field": null,
+      "observation_date_field": "observation_date",
+      "release_date_field": "release_date",
+      "decision_date_field": "decision_date",
+      "lookahead_invariants": [
+        "observation_date <= decision_date",
+        "release_date <= decision_date",
+        "vintage_release_date <= decision_date"
+      ],
+      "max_download_bytes": 5000000,
+      "license_boundary": "public_redistribution_permitted_with_attribution",
+      "access_boundary": "public",
+      "rate_limit_policy": "fred_api_120_req_per_min_per_key",
+      "deterministic_replay": true,
+      "wall_clock_dependent": false,
+      "private_data": false,
+      "restricted_microdata": false,
+      "forbidden_use": [
+        "post_hoc_revised_data_used_for_in_window_prediction"
+      ]
+    },
+    {
+      "adapter_id": "adapter_alfred_unemp_vintage_v1",
+      "adapter_class": "official_api_adapter",
+      "status": "STUB_ONLY",
+      "source_id": "ALFRED",
+      "window_ids": [
+        "CW1_GFC_2007_2009",
+        "CW4_COVID_DASH_FOR_CASH_2020",
+        "CW6_REGIONAL_BANKING_2023"
+      ],
+      "endpoint": "https://api.stlouisfed.org/fred/series/observations?series_id=UNRATE&vintage_dates=...",
+      "output_target": "artifacts/d002j/ingestion/staged/adapter_alfred_unemp_vintage_v1/data.csv",
+      "schema_contract_path": "artifacts/d002j/ingestion/schemas/adapter_alfred_unemp_vintage_v1_schema.json",
+      "checksum_contract": {
+        "algorithm": "sha256",
+        "field": "data_sha256",
+        "verified_at_ingest_time": true
+      },
+      "vintage_required": true,
+      "vintage_field": "vintage_release_date",
+      "forecast_required": false,
+      "forecast_date_field": null,
+      "observation_date_field": "observation_date",
+      "release_date_field": "release_date",
+      "decision_date_field": "decision_date",
+      "lookahead_invariants": [
+        "observation_date <= decision_date",
+        "release_date <= decision_date",
+        "vintage_release_date <= decision_date"
+      ],
+      "max_download_bytes": 5000000,
+      "license_boundary": "public_redistribution_permitted_with_attribution",
+      "access_boundary": "public",
+      "rate_limit_policy": "fred_api_120_req_per_min_per_key",
+      "deterministic_replay": true,
+      "wall_clock_dependent": false,
+      "private_data": false,
+      "restricted_microdata": false,
+      "forbidden_use": [
+        "post_hoc_revised_data_used_for_in_window_prediction"
+      ]
+    },
+    {
+      "adapter_id": "adapter_philly_fed_rtdsm_gdp_v1",
+      "adapter_class": "static_csv_adapter",
+      "status": "REQUIRES_MANUAL_DOWNLOAD",
+      "source_id": "PHILLY_FED_RTDSM",
+      "window_ids": [
+        "CW1_GFC_2007_2009",
+        "CW2_EUROZONE_2011_2012",
+        "CW3_US_REPO_SPIKE_2019",
+        "CW4_COVID_DASH_FOR_CASH_2020",
+        "CW6_REGIONAL_BANKING_2023"
+      ],
+      "endpoint": "https://www.philadelphiafed.org/surveys-and-data/real-time-data-research/real-output-and-growth",
+      "output_target": "artifacts/d002j/ingestion/staged/adapter_philly_fed_rtdsm_gdp_v1/data.csv",
+      "schema_contract_path": "artifacts/d002j/ingestion/schemas/adapter_philly_fed_rtdsm_gdp_v1_schema.json",
+      "checksum_contract": {
+        "algorithm": "sha256",
+        "field": "data_sha256",
+        "verified_at_ingest_time": true
+      },
+      "vintage_required": true,
+      "vintage_field": "vintage_release_date",
+      "forecast_required": false,
+      "forecast_date_field": null,
+      "observation_date_field": "observation_date",
+      "release_date_field": "release_date",
+      "decision_date_field": "decision_date",
+      "lookahead_invariants": [
+        "observation_date <= decision_date",
+        "release_date <= decision_date",
+        "vintage_release_date <= decision_date"
+      ],
+      "max_download_bytes": 5000000,
+      "license_boundary": "public_redistribution_permitted_with_attribution",
+      "access_boundary": "public",
+      "rate_limit_policy": null,
+      "deterministic_replay": true,
+      "wall_clock_dependent": false,
+      "private_data": false,
+      "restricted_microdata": false,
+      "forbidden_use": [
+        "post_hoc_revised_data_used_for_in_window_prediction",
+        "redistribution_without_Philadelphia_Fed_attribution",
+        "claim_of_owning_the_methodology"
+      ]
+    },
+    {
+      "adapter_id": "adapter_bis_cbs_v1",
+      "adapter_class": "static_csv_adapter",
+      "status": "REQUIRES_MANUAL_DOWNLOAD",
+      "source_id": "BIS_CBS",
+      "window_ids": [
+        "CW1_GFC_2007_2009",
+        "CW2_EUROZONE_2011_2012",
+        "CW3_US_REPO_SPIKE_2019",
+        "CW4_COVID_DASH_FOR_CASH_2020",
+        "CW5_UK_GILT_LDI_2022",
+        "CW6_REGIONAL_BANKING_2023"
+      ],
+      "endpoint": "https://www.bis.org/statistics/full_data_sets.htm",
+      "output_target": "artifacts/d002j/ingestion/staged/adapter_bis_cbs_v1/data.csv",
+      "schema_contract_path": "artifacts/d002j/ingestion/schemas/adapter_bis_cbs_v1_schema.json",
+      "checksum_contract": {
+        "algorithm": "sha256",
+        "field": "data_sha256",
+        "verified_at_ingest_time": true
+      },
+      "vintage_required": false,
+      "vintage_field": null,
+      "forecast_required": false,
+      "forecast_date_field": null,
+      "observation_date_field": "observation_date",
+      "release_date_field": "release_date",
+      "decision_date_field": "decision_date",
+      "lookahead_invariants": [
+        "observation_date <= decision_date",
+        "release_date <= decision_date"
+      ],
+      "max_download_bytes": 5000000,
+      "license_boundary": "public_domain_with_attribution_required",
+      "access_boundary": "public",
+      "rate_limit_policy": null,
+      "deterministic_replay": true,
+      "wall_clock_dependent": false,
+      "private_data": false,
+      "restricted_microdata": false,
+      "forbidden_use": [
+        "intra_quarter_contagion_dynamics",
+        "individual_bank_attribution"
+      ]
+    },
+    {
+      "adapter_id": "adapter_ecb_cbd_v1",
+      "adapter_class": "official_api_adapter",
+      "status": "STUB_ONLY",
+      "source_id": "ECB_CBD",
+      "window_ids": [
+        "CW2_EUROZONE_2011_2012",
+        "CW4_COVID_DASH_FOR_CASH_2020",
+        "CW5_UK_GILT_LDI_2022"
+      ],
+      "endpoint": "https://data-api.ecb.europa.eu/service/data/CBD2",
+      "output_target": "artifacts/d002j/ingestion/staged/adapter_ecb_cbd_v1/data.csv",
+      "schema_contract_path": "artifacts/d002j/ingestion/schemas/adapter_ecb_cbd_v1_schema.json",
+      "checksum_contract": {
+        "algorithm": "sha256",
+        "field": "data_sha256",
+        "verified_at_ingest_time": true
+      },
+      "vintage_required": false,
+      "vintage_field": null,
+      "forecast_required": false,
+      "forecast_date_field": null,
+      "observation_date_field": "observation_date",
+      "release_date_field": "release_date",
+      "decision_date_field": "decision_date",
+      "lookahead_invariants": [
+        "observation_date <= decision_date",
+        "release_date <= decision_date"
+      ],
+      "max_download_bytes": 5000000,
+      "license_boundary": "public_domain_with_attribution_required",
+      "access_boundary": "public",
+      "rate_limit_policy": "ecb_sdmx_no_documented_hard_limit_polite_default",
+      "deterministic_replay": true,
+      "wall_clock_dependent": false,
+      "private_data": false,
+      "restricted_microdata": false,
+      "forbidden_use": [
+        "pre_2007_history",
+        "non_euro_area_jurisdictions"
+      ]
+    },
+    {
+      "adapter_id": "adapter_ofr_repo_dashboard_v1",
+      "adapter_class": "static_csv_adapter",
+      "status": "STUB_ONLY",
+      "source_id": "OFR_REPO_DATA",
+      "window_ids": [
+        "CW3_US_REPO_SPIKE_2019",
+        "CW4_COVID_DASH_FOR_CASH_2020",
+        "CW6_REGIONAL_BANKING_2023"
+      ],
+      "endpoint": "https://www.financialresearch.gov/short-term-funding-monitor/api/v1/series/export",
+      "output_target": "artifacts/d002j/ingestion/staged/adapter_ofr_repo_dashboard_v1/data.csv",
+      "schema_contract_path": "artifacts/d002j/ingestion/schemas/adapter_ofr_repo_dashboard_v1_schema.json",
+      "checksum_contract": {
+        "algorithm": "sha256",
+        "field": "data_sha256",
+        "verified_at_ingest_time": true
+      },
+      "vintage_required": false,
+      "vintage_field": null,
+      "forecast_required": false,
+      "forecast_date_field": null,
+      "observation_date_field": "observation_date",
+      "release_date_field": "release_date",
+      "decision_date_field": "decision_date",
+      "lookahead_invariants": [
+        "observation_date <= decision_date",
+        "release_date <= decision_date"
+      ],
+      "max_download_bytes": 5000000,
+      "license_boundary": "public_domain_us_government_work",
+      "access_boundary": "public",
+      "rate_limit_policy": null,
+      "deterministic_replay": true,
+      "wall_clock_dependent": false,
+      "private_data": false,
+      "restricted_microdata": false,
+      "forbidden_use": [
+        "bilateral_uncleared_repo_segments_in_detail",
+        "european_repo_markets"
+      ]
+    },
+    {
+      "adapter_id": "adapter_ecb_mmsr_metadata_v1",
+      "adapter_class": "metadata_only_adapter",
+      "status": "REQUIRES_LICENSE_REVIEW",
+      "source_id": "ECB_MMSR",
+      "window_ids": [
+        "CW3_US_REPO_SPIKE_2019",
+        "CW4_COVID_DASH_FOR_CASH_2020",
+        "CW5_UK_GILT_LDI_2022"
+      ],
+      "endpoint": "https://www.ecb.europa.eu/stats/financial_markets_and_interest_rates/money_market/html/index.en.html",
+      "output_target": "artifacts/d002j/ingestion/staged/adapter_ecb_mmsr_metadata_v1/metadata.json",
+      "schema_contract_path": "artifacts/d002j/ingestion/schemas/adapter_ecb_mmsr_metadata_v1_schema.json",
+      "checksum_contract": {
+        "algorithm": "sha256",
+        "field": "data_sha256",
+        "verified_at_ingest_time": true
+      },
+      "vintage_required": false,
+      "vintage_field": null,
+      "forecast_required": false,
+      "forecast_date_field": null,
+      "observation_date_field": "observation_date",
+      "release_date_field": "release_date",
+      "decision_date_field": "decision_date",
+      "lookahead_invariants": [
+        "observation_date <= decision_date",
+        "release_date <= decision_date"
+      ],
+      "max_download_bytes": 500000,
+      "license_boundary": "public_aggregates_only_micro_data_not_redistributable",
+      "access_boundary": "license_review",
+      "rate_limit_policy": null,
+      "deterministic_replay": true,
+      "wall_clock_dependent": false,
+      "private_data": false,
+      "restricted_microdata": true,
+      "forbidden_use": [
+        "redistribution_of_micro_data",
+        "pre_2016_history"
+      ]
+    },
+    {
+      "adapter_id": "adapter_icap_move_metadata_v1",
+      "adapter_class": "metadata_only_adapter",
+      "status": "REQUIRES_LICENSE_REVIEW",
+      "source_id": "ICAP_MOVE",
+      "window_ids": [
+        "CW1_GFC_2007_2009",
+        "CW2_EUROZONE_2011_2012",
+        "CW5_UK_GILT_LDI_2022"
+      ],
+      "endpoint": "https://www.theice.com/iba",
+      "output_target": "artifacts/d002j/ingestion/staged/adapter_icap_move_metadata_v1/metadata.json",
+      "schema_contract_path": "artifacts/d002j/ingestion/schemas/adapter_icap_move_metadata_v1_schema.json",
+      "checksum_contract": {
+        "algorithm": "sha256",
+        "field": "data_sha256",
+        "verified_at_ingest_time": true
+      },
+      "vintage_required": false,
+      "vintage_field": null,
+      "forecast_required": false,
+      "forecast_date_field": null,
+      "observation_date_field": "observation_date",
+      "release_date_field": "release_date",
+      "decision_date_field": "decision_date",
+      "lookahead_invariants": [
+        "observation_date <= decision_date",
+        "release_date <= decision_date"
+      ],
+      "max_download_bytes": 500000,
+      "license_boundary": "vendor_licence_required_for_full_history",
+      "access_boundary": "license_review",
+      "rate_limit_policy": null,
+      "deterministic_replay": true,
+      "wall_clock_dependent": false,
+      "private_data": false,
+      "restricted_microdata": false,
+      "forbidden_use": [
+        "redistribution_of_full_history_without_licence",
+        "claim_of_owning_the_methodology"
+      ]
+    },
+    {
+      "adapter_id": "adapter_lit_interbank_contagion_v1",
+      "adapter_class": "literature_reference_adapter",
+      "status": "STUB_ONLY",
+      "source_id": "LIT_INTERBANK_CONTAGION",
+      "window_ids": [
+        "CW1_GFC_2007_2009",
+        "CW2_EUROZONE_2011_2012"
+      ],
+      "endpoint": null,
+      "output_target": "artifacts/d002j/ingestion/staged/adapter_lit_interbank_contagion_v1/references.json",
+      "schema_contract_path": "artifacts/d002j/ingestion/schemas/adapter_lit_interbank_contagion_v1_schema.json",
+      "checksum_contract": {
+        "algorithm": "sha256",
+        "field": "data_sha256",
+        "verified_at_ingest_time": true
+      },
+      "vintage_required": false,
+      "vintage_field": null,
+      "forecast_required": false,
+      "forecast_date_field": null,
+      "observation_date_field": "publication_date",
+      "release_date_field": "publication_date",
+      "decision_date_field": "decision_date",
+      "lookahead_invariants": [
+        "publication_date <= decision_date"
+      ],
+      "max_download_bytes": 500000,
+      "license_boundary": "preprint_redistribution_ok_published_version_may_be_restricted",
+      "access_boundary": "public",
+      "rate_limit_policy": null,
+      "deterministic_replay": true,
+      "wall_clock_dependent": false,
+      "private_data": false,
+      "restricted_microdata": false,
+      "forbidden_use": [
+        "treating_paper_results_as_raw_data_series",
+        "redistribution_of_paywalled_published_versions"
+      ]
+    },
+    {
+      "adapter_id": "adapter_lit_network_recon_v1",
+      "adapter_class": "literature_reference_adapter",
+      "status": "STUB_ONLY",
+      "source_id": "LIT_NETWORK_RECON",
+      "window_ids": [
+        "CW1_GFC_2007_2009",
+        "CW2_EUROZONE_2011_2012",
+        "CW4_COVID_DASH_FOR_CASH_2020"
+      ],
+      "endpoint": null,
+      "output_target": "artifacts/d002j/ingestion/staged/adapter_lit_network_recon_v1/references.json",
+      "schema_contract_path": "artifacts/d002j/ingestion/schemas/adapter_lit_network_recon_v1_schema.json",
+      "checksum_contract": {
+        "algorithm": "sha256",
+        "field": "data_sha256",
+        "verified_at_ingest_time": true
+      },
+      "vintage_required": false,
+      "vintage_field": null,
+      "forecast_required": false,
+      "forecast_date_field": null,
+      "observation_date_field": "publication_date",
+      "release_date_field": "publication_date",
+      "decision_date_field": "decision_date",
+      "lookahead_invariants": [
+        "publication_date <= decision_date"
+      ],
+      "max_download_bytes": 500000,
+      "license_boundary": "preprint_redistribution_ok_published_version_may_be_restricted",
+      "access_boundary": "public",
+      "rate_limit_policy": null,
+      "deterministic_replay": true,
+      "wall_clock_dependent": false,
+      "private_data": false,
+      "restricted_microdata": false,
+      "forbidden_use": [
+        "max_entropy_reconstruction_as_sole_basis_without_Mistrulli_bias_acknowledgement"
+      ]
+    },
+    {
+      "adapter_id": "adapter_fed_timeline_events_v1",
+      "adapter_class": "manual_event_registry_adapter",
+      "status": "STUB_ONLY",
+      "source_id": "FED_TIMELINE",
+      "window_ids": [
+        "CW1_GFC_2007_2009",
+        "CW3_US_REPO_SPIKE_2019",
+        "CW4_COVID_DASH_FOR_CASH_2020",
+        "CW6_REGIONAL_BANKING_2023"
+      ],
+      "endpoint": "https://www.federalreserve.gov/monetarypolicy/files/CARES-Act-Report.pdf",
+      "output_target": "artifacts/d002j/ingestion/staged/adapter_fed_timeline_events_v1/events.json",
+      "schema_contract_path": "artifacts/d002j/ingestion/schemas/adapter_fed_timeline_events_v1_schema.json",
+      "checksum_contract": {
+        "algorithm": "sha256",
+        "field": "data_sha256",
+        "verified_at_ingest_time": true
+      },
+      "vintage_required": false,
+      "vintage_field": null,
+      "forecast_required": false,
+      "forecast_date_field": null,
+      "observation_date_field": "event_date",
+      "release_date_field": "release_date",
+      "decision_date_field": "decision_date",
+      "lookahead_invariants": [
+        "event_date <= decision_date",
+        "release_date <= decision_date"
+      ],
+      "max_download_bytes": 5000000,
+      "license_boundary": "public_domain_us_government_work",
+      "access_boundary": "public",
+      "rate_limit_policy": null,
+      "deterministic_replay": true,
+      "wall_clock_dependent": false,
+      "private_data": false,
+      "restricted_microdata": false,
+      "forbidden_use": [
+        "claim_of_underlying_decision_internals_beyond_public_record"
+      ]
+    },
+    {
+      "adapter_id": "adapter_fred_nber_recession_v1",
+      "adapter_class": "official_api_adapter",
+      "status": "STUB_ONLY",
+      "source_id": "NBER_RECESSION",
+      "window_ids": [
+        "CW1_GFC_2007_2009",
+        "CW2_EUROZONE_2011_2012",
+        "CW4_COVID_DASH_FOR_CASH_2020"
+      ],
+      "endpoint": "https://api.stlouisfed.org/fred/series/observations?series_id=USREC",
+      "output_target": "artifacts/d002j/ingestion/staged/adapter_fred_nber_recession_v1/data.csv",
+      "schema_contract_path": "artifacts/d002j/ingestion/schemas/adapter_fred_nber_recession_v1_schema.json",
+      "checksum_contract": {
+        "algorithm": "sha256",
+        "field": "data_sha256",
+        "verified_at_ingest_time": true
+      },
+      "vintage_required": false,
+      "vintage_field": null,
+      "forecast_required": false,
+      "forecast_date_field": null,
+      "observation_date_field": "observation_date",
+      "release_date_field": "release_date",
+      "decision_date_field": "decision_date",
+      "lookahead_invariants": [
+        "observation_date <= decision_date",
+        "release_date <= decision_date"
+      ],
+      "max_download_bytes": 5000000,
+      "license_boundary": "public_domain_with_attribution_required",
+      "access_boundary": "public",
+      "rate_limit_policy": "fred_api_120_req_per_min_per_key",
+      "deterministic_replay": true,
+      "wall_clock_dependent": false,
+      "private_data": false,
+      "restricted_microdata": false,
+      "forbidden_use": [
+        "real_time_recession_prediction_use",
+        "non_us_business_cycles"
+      ]
+    }
+  ]
+}

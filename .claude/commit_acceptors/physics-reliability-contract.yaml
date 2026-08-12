@@ -1,0 +1,75 @@
+# Diff-bound acceptor: physics module reliability contract (Well-Architected gate).
+#
+# A green test is not a reliability claim. This adds a fail-closed contract: every
+# DECLARED physics module must publish failure_mode / blast_radius /
+# degradation_mode / recovery_command, each bound invariant must be literally
+# present in the module source, and the covered-module ratchet must not regress.
+# Uncovered INV-bearing modules are reported by name (the contract names its gap).
+
+id: physics-reliability-contract
+status: ACTIVE
+claim_type: correctness
+promise: >-
+  Adds governance/PHYSICS_RELIABILITY.yaml (6 grounded module entries),
+  schemas/physics/reliability_contract.schema.json, and
+  tools/physics/check_physics_reliability.py (fail-closed checker exposing
+  check()). The checker fails closed when a declared invariant is absent from the
+  module source, a recovery_command is not executable-shaped, an entry is
+  malformed against the schema, or the covered count drops below coverage_floor.
+  Every INV-bearing module under core/kuramoto + core/physics without an entry is
+  reported BY NAME as the explicit backlog, so the artifact cannot imply coverage
+  it lacks. CI gate physics-reliability-gate runs the checker + tests fail-closed.
+  No core/ physics dynamics are touched.
+diff_scope:
+  changed_files:
+    - path: ".claude/commit_acceptors/physics-reliability-contract.yaml"
+    - path: ".github/workflows/physics-reliability-gate.yml"
+    - path: "governance/PHYSICS_RELIABILITY.yaml"
+    - path: "schemas/physics/reliability_contract.schema.json"
+    - path: "tools/physics/check_physics_reliability.py"
+    - path: "tests/physics/test_physics_reliability_contract.py"
+    - path: "docs/physics/reliability_contract.md"
+  forbidden_paths:
+    - "trading/"
+    - "execution/"
+    - "forecast/"
+    - "policy/"
+required_python_symbols:
+  - "check"
+expected_signal: >-
+  tests/physics/test_physics_reliability_contract.py passes 9/9 and
+  `python tools/physics/check_physics_reliability.py` exits 0 with
+  6 covered / 35 in-scope / 29 named-backlog modules. --strict-coverage exits
+  non-zero (named backlog becomes hard failure). Declared-invariant-presence
+  test confirms every bound INV is literally grep-able in its module source.
+  ruff/black/mypy --strict clean; zero new noqa/type-ignore.
+measurement_command: >-
+  PYTHONPATH=. python -m pytest tests/physics/test_physics_reliability_contract.py -v
+signal_artifact: "tmp/physics_reliability_contract_pytest.log"
+falsifier:
+  command: >-
+    PYTHONPATH=. python -m pytest tests/physics/test_physics_reliability_contract.py
+    -v -k "declared_invariants_are_present_in_module_source or strict_coverage_fails_closed_on_backlog
+    or recovery_command_must_be_executable_shaped"
+  description: >-
+    Citing an invariant a module does not carry fails
+    test_declared_invariants_are_present_in_module_source; letting the named
+    backlog pass under --strict-coverage fails
+    test_strict_coverage_fails_closed_on_backlog; accepting prose-only recovery
+    text fails test_recovery_command_must_be_executable_shaped. Each guard fails
+    before the implementation is correct.
+rollback_command: >-
+  git checkout HEAD~1 --
+  governance/PHYSICS_RELIABILITY.yaml
+  schemas/physics/reliability_contract.schema.json
+  tools/physics/check_physics_reliability.py
+  tests/physics/test_physics_reliability_contract.py
+  .github/workflows/physics-reliability-gate.yml
+  docs/physics/reliability_contract.md
+  .claude/commit_acceptors/physics-reliability-contract.yaml
+rollback_verification_command: >-
+  git diff --exit-code tools/physics/check_physics_reliability.py
+memory_update_type: none
+ledger_path: ".claude/commit_acceptors/physics-reliability-contract.yaml"
+report_path: "docs/reports/diff_bound_commit_acceptor_layer.md"
+evidence: []

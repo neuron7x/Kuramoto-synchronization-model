@@ -1,0 +1,22 @@
+{
+  "schema_version": "2026.06.18",
+  "status": "INDEPENDENT_REFERENCE_SOLVER_DEFINED",
+  "scope": "GeoSync canonical weighted Kuramoto lane",
+  "primary_solver": "core/kuramoto/kuramoto_ricci_engine.py::kuramoto_ricci_trajectory",
+  "reference_solver": "reproducibility/reference_solvers/geosync_kuramoto_numpy.py::kuramoto_numpy_trajectory",
+  "reference_dependency_boundary": "pure NumPy, no import from production Kuramoto solver",
+  "comparison_test": "tests/physics/test_replication.py::test_numpy_reference_solver_matches_jax_midpoint_trajectory",
+  "tolerance": {
+    "rtol": 1e-06,
+    "atol": 1e-06
+  },
+  "measurement_command": "python -m pytest tests/physics/test_replication.py",
+  "computed_in_connector": false,
+  "ci_or_local_execution_required": true,
+  "stop_conditions": [
+    "reference solver imports production solver",
+    "trajectory mismatch exceeds tolerance",
+    "order parameter mismatch exceeds tolerance"
+  ],
+  "verdict": "REFERENCE_PATH_DEFINED_RUNTIME_PROOF_PENDING"
+}

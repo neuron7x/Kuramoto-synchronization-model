@@ -1,3 +1,5 @@
+# Copyright (c) 2023-2026 Yaroslav Vasylenko (neuron7xLab)
+# SPDX-License-Identifier: MIT
 """
 Data Quality Monitor Module
 
@@ -294,8 +296,7 @@ class DataQualityMonitor:
         recent_issues = [
             i
             for i in self._issues
-            if i.symbol == symbol
-            and (datetime.now() - i.detected_at).total_seconds() < 3600
+            if i.symbol == symbol and (datetime.now() - i.detected_at).total_seconds() < 3600
         ]
 
         # Розрахунок якості
@@ -805,9 +806,7 @@ class DataQualityMonitor:
         recent_issues = self.get_recent_issues(limit=100)
         severity_counts = {}
         for issue in recent_issues:
-            severity_counts[issue.severity.value] = (
-                severity_counts.get(issue.severity.value, 0) + 1
-            )
+            severity_counts[issue.severity.value] = severity_counts.get(issue.severity.value, 0) + 1
 
         return {
             "symbols_monitored": len(self._last_updates),

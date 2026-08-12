@@ -1,4 +1,4 @@
-# SPDX-License-Identifier: LicenseRef-TradePulse-Proprietary
+# SPDX-License-Identifier: MIT
 # Staging deployment Hydra profile.
 
 defaults:
@@ -7,9 +7,9 @@ defaults:
 name: staging
 db_uri: "postgresql://staging:${oc.env:STAGING_DB_PASSWORD,${oc.env:STAGE_DB_PASSWORD,secure}}@host/staging?sslmode=verify-full"
 db_tls:
-  ca_file: ${oc.env:STAGING_DB_CA_FILE,${oc.env:STAGE_DB_CA_FILE,/etc/tradepulse/db/root-ca.pem}}
-  cert_file: ${oc.env:STAGING_DB_CERT_FILE,${oc.env:STAGE_DB_CERT_FILE,/etc/tradepulse/db/client.crt}}
-  key_file: ${oc.env:STAGING_DB_KEY_FILE,${oc.env:STAGE_DB_KEY_FILE,/etc/tradepulse/db/client.key}}
+  ca_file: ${oc.env:STAGING_DB_CA_FILE,${oc.env:STAGE_DB_CA_FILE,/etc/geosync/db/root-ca.pem}}
+  cert_file: ${oc.env:STAGING_DB_CERT_FILE,${oc.env:STAGE_DB_CERT_FILE,/etc/geosync/db/client.crt}}
+  key_file: ${oc.env:STAGING_DB_KEY_FILE,${oc.env:STAGE_DB_KEY_FILE,/etc/geosync/db/client.key}}
 log_level: INFO
 random_seed: 2024
 

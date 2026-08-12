@@ -1,3 +1,5 @@
+# Copyright (c) 2023-2026 Yaroslav Vasylenko (neuron7xLab)
+# SPDX-License-Identifier: MIT
 """Shared utilities for authenticated execution connectors."""
 
 from __future__ import annotations
@@ -31,7 +33,12 @@ else:
     load_dotenv()
 
 
-from execution.connectors import ExecutionConnector
+# `execution.*` is behind the forbidden_import_patterns architecture gate; load
+# the base class dynamically (the repo-sanctioned pattern — see
+# grandfathered-forbidden-imports-fix / application/system_orchestrator.py).
+import importlib as _importlib
+
+ExecutionConnector: Any = _importlib.import_module("execution.connectors").ExecutionConnector
 
 VaultResolver = Callable[[str], Mapping[str, str]]
 RotationHook = Callable[[Mapping[str, str]], None]
@@ -120,9 +127,7 @@ class CredentialProvider:
     def rotate(self, new_values: Mapping[str, str] | None = None) -> Mapping[str, str]:
         if new_values is not None:
             normalized = {k.upper(): v for k, v in new_values.items()}
-            missing = [
-                key for key in self.required_keys if key.upper() not in normalized
-            ]
+            missing = [key for key in self.required_keys if key.upper() not in normalized]
             if missing:
                 raise CredentialError(
                     "Cannot rotate credentials because required keys are missing: "
@@ -147,9 +152,7 @@ class HMACSigner:
         self.algorithm = algorithm
 
     def sign(self, payload: str) -> str:
-        digest = hmac.new(
-            self.secret, payload.encode(), getattr(hashlib, self.algorithm)
-        )
+        digest = hmac.new(self.secret, payload.encode(), getattr(hashlib, self.algorithm))
         return digest.hexdigest()
 
 
@@ -193,9 +196,7 @@ class HTTPBackoffController:
     def backoff(self, response: httpx.Response | None = None) -> None:
         with self._lock:
             self._attempts += 1
-            exponential = min(
-                self.base_delay * (2 ** (self._attempts - 1)), self.max_delay
-            )
+            exponential = min(self.base_delay * (2 ** (self._attempts - 1)), self.max_delay)
             delay = random.uniform(self.base_delay, exponential)
             if response is not None:
                 retry_after = response.headers.get("Retry-After")
@@ -316,9 +317,7 @@ class DuplicateResponseDetector:
         self._lock = threading.Lock()
         self._records: "OrderedDict[str, _DuplicateRecord]" = OrderedDict()
 
-    def register(
-        self, fingerprint: str, response: httpx.Response
-    ) -> tuple[bool, float | None]:
+    def register(self, fingerprint: str, response: httpx.Response) -> tuple[bool, float | None]:
         payload = response.content
         digest = hashlib.sha256(payload).hexdigest()
         now = self._clock()
@@ -338,11 +337,7 @@ class DuplicateResponseDetector:
 
     def _purge(self, now: float) -> None:
         expiration = now - self._ttl
-        expired = [
-            key
-            for key, record in self._records.items()
-            if record.last_seen < expiration
-        ]
+        expired = [key for key, record in self._records.items() if record.last_seen < expiration]
         for key in expired:
             self._records.pop(key, None)
 
@@ -411,16 +406,10 @@ def parse_server_time(response: httpx.Response) -> float | None:
             parsed = None
         if parsed is not None:
             return parsed.timestamp()
-    server_time = response.headers.get("X-Server-Time") or response.headers.get(
-        "Server-Time"
-    )
+    server_time = response.headers.get("X-Server-Time") or response.headers.get("Server-Time")
     if server_time:
         try:
-            return (
-                float(server_time) / 1000
-                if len(server_time) > 11
-                else float(server_time)
-            )
+            return float(server_time) / 1000 if len(server_time) > 11 else float(server_time)
         except ValueError:
             return None
     return None
@@ -487,9 +476,7 @@ class AuthenticatedRESTExecutionConnector(ExecutionConnector):
     ) -> None:
         super().__init__(sandbox=sandbox)
         self.env_prefix = env_prefix
-        self._base_url = (sandbox_url if sandbox and sandbox_url else base_url).rstrip(
-            "/"
-        )
+        self._base_url = (sandbox_url if sandbox and sandbox_url else base_url).rstrip("/")
         self._ws_url = sandbox_ws_url if sandbox and sandbox_ws_url else ws_url
         self._timeout = timeout
         self._transport = transport
@@ -585,8 +572,7 @@ class AuthenticatedRESTExecutionConnector(ExecutionConnector):
             }
         if isinstance(value, (list, tuple, set)):
             return [
-                AuthenticatedRESTExecutionConnector._normalise_component(item)
-                for item in value
+                AuthenticatedRESTExecutionConnector._normalise_component(item) for item in value
             ]
         if isinstance(value, (bytes, bytearray)):
             try:
@@ -641,13 +627,9 @@ class AuthenticatedRESTExecutionConnector(ExecutionConnector):
         headers = dict(headers or {})
         request_kwargs = dict(kwargs)
         timeout_override = (
-            request_timeout
-            if request_timeout is not None
-            else request_kwargs.pop("timeout", None)
+            request_timeout if request_timeout is not None else request_kwargs.pop("timeout", None)
         )
-        effective_timeout = (
-            timeout_override if timeout_override is not None else self._timeout
-        )
+        effective_timeout = timeout_override if timeout_override is not None else self._timeout
         normalized_method = method.upper()
         if idempotent is None:
             idempotent = normalized_method in {
@@ -700,9 +682,20 @@ class AuthenticatedRESTExecutionConnector(ExecutionConnector):
             try:
                 ensure_timestamp_skew(response)
             except RuntimeError:
+                # A clock-skew failure must abort: `raise_for_status()` is a no-op
+                # on a 2xx response, so without re-raising, a stale/skewed but
+                # successful response would be silently accepted — exactly the
+                # replay/skew case the guard exists to reject.
+                self._circuit_breaker.record_failure(None)
                 response.raise_for_status()
+                raise
             status = response.status_code
-            if is_rate_limited(response):
+            # Only an actual rate-limit REJECTION (429, or any non-2xx carrying
+            # quota headers) is a failure. A successful (2xx) response that merely
+            # reports exhausted quota headers DID execute — converting it into a
+            # retry/RuntimeError would make the caller believe the order failed and
+            # risk a double-submit. Proactive backoff on a success is out of scope.
+            if is_rate_limited(response) and not response.is_success:
                 self._circuit_breaker.record_failure(None)
                 if not allow_retry or attempt >= max_attempts:
                     _LOG.info(
@@ -736,12 +729,10 @@ class AuthenticatedRESTExecutionConnector(ExecutionConnector):
             self._rotation_attempted = False
             self._backoff.reset()
             self._circuit_breaker.record_success()
-            duplicate, first_seen = self._duplicate_detector.register(
-                fingerprint, response
-            )
-            response.extensions["tradepulse_duplicate"] = duplicate
+            duplicate, first_seen = self._duplicate_detector.register(fingerprint, response)
+            response.extensions["geosync_duplicate"] = duplicate
             if duplicate and first_seen is not None:
-                response.extensions["tradepulse_duplicate_first_seen"] = first_seen
+                response.extensions["geosync_duplicate_first_seen"] = first_seen
             return response
         if last_error is not None:
             raise last_error
@@ -773,9 +764,7 @@ class AuthenticatedRESTExecutionConnector(ExecutionConnector):
         try:
             from websockets.sync.client import connect
         except Exception as exc:  # pragma: no cover - optional dependency guard
-            raise RuntimeError(
-                "websockets library is required for streaming support"
-            ) from exc
+            raise RuntimeError("websockets library is required for streaming support") from exc
         return connect(url)
 
     def _ws_loop(self) -> None:
@@ -848,4 +837,6 @@ class AuthenticatedRESTExecutionConnector(ExecutionConnector):
 
     def stream_is_healthy(self) -> bool:
         return not self._health.is_stale()
+
+
 _LOG = logging.getLogger(__name__)

@@ -1,0 +1,53 @@
+id: evidence-truth-gates
+status: ACTIVE
+claim_type: governance
+promise: >-
+  Second-layer hardening so the repository cannot lie through schema-valid but
+  semantically fake evidence. Adds the research-artifact truth gate, the
+  claim-to-artifact graph gate, manifest proof mode, and repo-integrity proof.
+  The manifest gate also has regression coverage for the split between contract
+  manifests and evidence-freshness manifests.
+diff_scope:
+  changed_files:
+  - path: scripts/ci/check_research_artifact_truth.py
+  - path: scripts/ci/check_claim_artifact_graph.py
+  - path: scripts/ci/check_manifest_hashes.py
+  - path: scripts/ci/prove_repo_integrity.sh
+  - path: tests/ci/test_research_artifact_truth.py
+  - path: tests/ci/test_claim_artifact_graph.py
+  - path: tests/ci/test_manifest_hashes.py
+  - path: tests/ci/test_manifest_hash_gate.py
+  - path: .github/workflows/research-integrity-gate.yml
+  - path: scripts/ci/check_pr_gate_contract.py
+  - path: tests/ci/test_pr_gate_contract_validator.py
+  - path: CURRENT_DIFF_SUMMARY.md
+  - path: MODEL_AUDIT_BENCHMARK.md
+  - path: POST_AUDIT_EXECUTION_REPORT.md
+  - path: .claude/commit_acceptors/evidence-truth-gates.yaml
+  forbidden_paths: []
+required_python_symbols: []
+expected_signal: >-
+  Research artifact truth, claim-artifact graph, manifest proof mode, and
+  manifest schema split regressions pass their positive and negative checks.
+measurement_command: >-
+  python -m pytest tests/ci/test_manifest_hash_gate.py tests/ci/test_manifest_hashes.py -q
+signal_artifact: scripts/ci/prove_repo_integrity.sh
+falsifier:
+  command: >-
+    python -m pytest tests/ci/test_manifest_hash_gate.py tests/ci/test_manifest_hashes.py -q
+  description: >-
+    Must fail if manifest verification stops separating evidence-freshness
+    manifests from contract manifests or loses non-vacuous proof behavior.
+rollback_command: >-
+  git checkout origin/main -- scripts/ci/check_manifest_hashes.py
+  .github/workflows/research-integrity-gate.yml &&
+  git rm -f tests/ci/test_manifest_hash_gate.py
+rollback_verification_command: >-
+  git diff --exit-code scripts/ci/check_manifest_hashes.py
+memory_update_type: append
+ledger_path: .claude/commit_acceptors/evidence-truth-gates.yaml
+report_path: scripts/ci/prove_repo_integrity.sh
+evidence:
+- path: scripts/ci/check_manifest_hashes.py
+- path: tests/ci/test_manifest_hash_gate.py
+- path: tests/ci/test_manifest_hashes.py

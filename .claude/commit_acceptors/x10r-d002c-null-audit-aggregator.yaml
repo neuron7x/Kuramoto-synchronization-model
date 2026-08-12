@@ -1,0 +1,335 @@
+# Diff-bound commit acceptor for D-002C C2.4-C2 (issue #654) —
+# Null audit aggregator + capsule-sha alignment with the preflight
+# validator.
+#
+# What lands:
+#   * research/systemic_risk/d002c_null_audit.py
+#       ADDITIVE EDIT: introduces run_null_audit_all (per-cell
+#       aggregator) + NullAuditInputCell + NullAuditAggregateResult
+#       + NullAuditAggregateInvalid. The existing run_null_audit /
+#       run_null_audit_from_capsule contracts are NOT touched.
+#
+#       The aggregator emits a real d002c_null_audit_capsule_v1
+#       capsule whose sha256 is computed through
+#       d002c_preflight.canonical_preflight_json (function-scope
+#       import to avoid coupling the module load graph to the
+#       preflight). This closes the C2.6 sha-drift the validator
+#       previously caught when writers hashed with plain
+#       json.dumps(sort_keys=True, separators) only.
+#
+#       Aggregate verdict rules:
+#         - PASS iff every audited cell has verdict==PASS AND zero
+#           cells were skipped (no per-seed data) AND >=1 cell was
+#           audited.
+#         - any FAIL cell → aggregate=FAIL (fail-closed)
+#         - any SKIPPED_NO_PER_SEED_DATA cell → aggregate=FAIL
+#           (a missing audit is not evidence of a passing audit)
+#         - empty resolved cell list without aggregate_only_if_empty
+#           → raise NullAuditAggregateInvalid (refuse to silently
+#           regress to the C2.5 launch-hygiene compromise)
+#         - empty resolved cell list with aggregate_only_if_empty
+#           → emit the preflight escape capsule (results=[],
+#           aggregate_only=true)
+#
+#   * tests/research/systemic_risk/test_d002c_null_audit_aggregator.py
+#       13 tests pinning the contract:
+#         - capsule kind = d002c_null_audit_capsule_v1
+#         - capsule sha matches preflight validator's canonical
+#           recompute end-to-end (loads stub POS/NEG/SMOKE + the
+#           emitted null-audit capsule through the validator and
+#           asserts launch_allowed=True)
+#         - aggregate PASS iff every cell PASSes
+#         - any FAIL cell → aggregate=FAIL
+#         - empty results without aggregate_only_if_empty → raises
+#         - empty results with aggregate_only_if_empty → emits the
+#           escape capsule the preflight accepts
+#         - non-finite p_value_empirical → preflight refuses with
+#           capsule_non_finite_load_bearing_field
+#         - capsule sha deterministic across calls (same inputs +
+#           same generated_at + same seed)
+#         - capsule sha changes when one cell's verdict flips
+#         - NullAuditInputCell is frozen
+#         - NullAuditAggregateResult is frozen
+#         - skipped cells force aggregate=FAIL (fail-closed)
+#         - exactly one of sweep_results / sweep_capsule_path
+#           must be provided (both, or neither, raises)
+#
+#   * .claude/commit_acceptors/x10r-d002c-null-audit-aggregator.yaml
+#       This file.
+#
+# Strict scope:
+#   Aggregator + capsule emission ONLY. NO claim layer. NO tier
+#   promotion. NO modification of the per-pair primitive contract.
+#   NO touching pos/neg/smoke writers (C2.6 PR #671 owns those).
+#   NO modification of d002c_preflight (the validator is correct).
+#   NO modification of D002C_PREREGISTRATION.yaml.
+#
+# Claim boundary:
+#   This PR removes the aggregate_only null-audit compromise to
+#   unblock the canonical D-002C rerun. It introduces NO claim
+#   layer and NO certification — the D-002C verdict tier is
+#   still gated by the C2.5 acceptance evaluator. The
+#   aggregator's verdict is consumed by the preflight, which
+#   refuses launch on FAIL; downstream tier promotion is
+#   strictly out of scope.
+
+id: x10r-d002c-null-audit-aggregator
+status: ACTIVE
+claim_type: correctness
+promise: >-
+  After this PR lands,
+  research.systemic_risk.d002c_null_audit.run_null_audit_all
+  aggregates per-cell paired-difference permutation audits into a
+  d002c_null_audit_capsule_v1 capsule whose recomputed sha256
+  bit-exactly matches the preflight validator's canonical recompute
+  through d002c_preflight.canonical_preflight_json. The aggregate
+  verdict is PASS iff every audited cell PASSes AND zero cells were
+  skipped for missing per-seed data; any FAIL or SKIPPED cell flips
+  it to FAIL (fail-closed). An empty resolved cell list raises
+  NullAuditAggregateInvalid unless the caller opts in via
+  aggregate_only_if_empty=True, so the C2.5 launch-hygiene
+  compromise cannot silently regress.
+
+  This PR removes the aggregate_only null-audit compromise to unblock
+  canonical D-002C rerun. It introduces NO claim layer and NO
+  certification.
+diff_scope:
+  changed_files:
+    - path: ".claude/commit_acceptors/x10r-d002c-null-audit-aggregator.yaml"
+    - path: "research/systemic_risk/d002c_null_audit.py"
+    - path: "tests/research/systemic_risk/test_d002c_null_audit_aggregator.py"
+  forbidden_paths:
+    - "trading/"
+    - "execution/"
+    - "forecast/"
+    - "policy/"
+    - "core/physics/"
+    - "core/kuramoto/"
+    - "research/reconstruction/"
+    - "research/systemic_risk/D002C_PREREGISTRATION.yaml"
+    - "research/systemic_risk/d002c_preflight.py"
+    - "research/systemic_risk/d002c_pos_control.py"
+    - "research/systemic_risk/d002c_neg_control.py"
+    - "research/systemic_risk/d002c_smoke_test.py"
+    - "research/systemic_risk/d002c_crn_validator.py"
+    - "research/systemic_risk/d002c_kuramoto.py"
+    - "research/systemic_risk/d002c_metrics.py"
+    - "research/systemic_risk/d002c_substrates.py"
+    - "research/systemic_risk/d002c_preregistration.py"
+    - "research/systemic_risk/d002c_sweep_runner.py"
+    - "research/systemic_risk/d002c_verdict.py"
+    - "research/systemic_risk/sweep_checkpoint.py"
+    - "scripts/run_x10r_"
+    - "application/governance/claim_ledger.py"
+    - "application/governance/commit_acceptor.py"
+required_python_symbols:
+  - "research/systemic_risk/d002c_null_audit.py::run_null_audit_all"
+  - "research/systemic_risk/d002c_null_audit.py::NullAuditInputCell"
+  - "research/systemic_risk/d002c_null_audit.py::NullAuditAggregateResult"
+  - "research/systemic_risk/d002c_null_audit.py::NullAuditAggregateInvalid"
+  - "research/systemic_risk/d002c_null_audit.py::NULL_AUDIT_AGGREGATE_KIND"
+  - "research/systemic_risk/d002c_null_audit.py::SKIPPED_NO_PER_SEED_DATA"
+  - "tests/research/systemic_risk/test_d002c_null_audit_aggregator.py::test_run_null_audit_all_writes_capsule_with_correct_kind"
+  - "tests/research/systemic_risk/test_d002c_null_audit_aggregator.py::test_capsule_sha_matches_validator_recompute"
+  - "tests/research/systemic_risk/test_d002c_null_audit_aggregator.py::test_aggregate_pass_iff_all_cells_pass"
+  - "tests/research/systemic_risk/test_d002c_null_audit_aggregator.py::test_one_fail_cell_makes_aggregate_fail"
+  - "tests/research/systemic_risk/test_d002c_null_audit_aggregator.py::test_empty_results_without_aggregate_only_refuses"
+  - "tests/research/systemic_risk/test_d002c_null_audit_aggregator.py::test_non_finite_p_value_refuses_via_preflight"
+  - "tests/research/systemic_risk/test_d002c_null_audit_aggregator.py::test_capsule_sha_deterministic_across_calls"
+  - "tests/research/systemic_risk/test_d002c_null_audit_aggregator.py::test_capsule_sha_changes_when_one_cell_verdict_changes"
+  - "tests/research/systemic_risk/test_d002c_null_audit_aggregator.py::test_null_audit_input_cell_is_frozen"
+  - "tests/research/systemic_risk/test_d002c_null_audit_aggregator.py::test_null_audit_aggregate_result_is_frozen"
+  - "tests/research/systemic_risk/test_d002c_null_audit_aggregator.py::test_skipped_cells_force_aggregate_fail"
+  - "tests/research/systemic_risk/test_d002c_null_audit_aggregator.py::test_handles_capsule_path_or_sweep_results_but_not_both"
+expected_signal: >-
+  Local: `pytest tests/research/systemic_risk/test_d002c_null_audit_aggregator.py
+  tests/research/systemic_risk/test_d002c_null_audit.py
+  tests/research/systemic_risk/test_d002c_sweep_runner_preflight_integration.py
+  tests/audit/test_false_confidence_detector.py -q`
+  reports all green (13 new + 26 existing null-audit + 19 sweep-runner
+  preflight integration + 28 false-confidence detector). `mypy --strict
+  --follow-imports=silent` clean on the two edited Python files.
+  `ruff check` and `black --check` both pass.
+measurement_command: >-
+  bash -c 'mypy --strict --follow-imports=silent
+  research/systemic_risk/d002c_null_audit.py
+  tests/research/systemic_risk/test_d002c_null_audit_aggregator.py
+  && ruff check
+  research/systemic_risk/d002c_null_audit.py
+  tests/research/systemic_risk/test_d002c_null_audit_aggregator.py
+  && black --check
+  research/systemic_risk/d002c_null_audit.py
+  tests/research/systemic_risk/test_d002c_null_audit_aggregator.py
+  && pytest tests/research/systemic_risk/test_d002c_null_audit_aggregator.py
+  tests/research/systemic_risk/test_d002c_null_audit.py
+  tests/research/systemic_risk/test_d002c_sweep_runner_preflight_integration.py
+  tests/audit/test_false_confidence_detector.py -q'
+signal_artifact: "tests/research/systemic_risk/test_d002c_null_audit_aggregator.py"
+falsifier:
+  command: |-
+    bash -c 'PYTHONPATH=. python -c "
+    import hashlib, json, tempfile
+    from pathlib import Path
+    import numpy as np
+    from research.systemic_risk.d002c_null_audit import (
+        run_null_audit_all,
+        NullAuditInputCell,
+        NullAuditAggregateInvalid,
+        NULL_AUDIT_AGGREGATE_KIND,
+    )
+    from research.systemic_risk.d002c_preflight import (
+        canonical_preflight_json,
+        load_and_validate_preflight_capsules,
+        PreflightCapsulePaths,
+        POS_CONTROL_KIND,
+        NEG_CONTROL_KIND,
+    )
+
+    def _seal(body):
+        canon = canonical_preflight_json(body)
+        sha = hashlib.sha256(canon.encode('"'"'utf-8'"'"')).hexdigest()
+        out = dict(body)
+        out['"'"'sha256'"'"'] = sha
+        return out
+
+    def _strong(key, n=20):
+        rng = np.random.default_rng(hash(key) & 0xFFFFFFFF)
+        null = rng.normal(0.0, 0.05, size=n).astype(np.float64)
+        return NullAuditInputCell(key, null + 1.0, null)
+
+    def _noise(key, n=20):
+        rng = np.random.default_rng((hash(key) ^ 0xDEADBEEF) & 0xFFFFFFFF)
+        p = rng.normal(0, 1, size=n).astype(np.float64)
+        nl = rng.normal(0, 1, size=n).astype(np.float64)
+        p = p - float(p.mean()) + 0.5
+        nl = nl - float(nl.mean()) + 0.5
+        return NullAuditInputCell(key, p, nl)
+
+    with tempfile.TemporaryDirectory() as td:
+        td = Path(td)
+
+        # (a) all-PASS cells → aggregate=PASS
+        out_pass = td / '"'"'all_pass.json'"'"'
+        res_pass = run_null_audit_all(
+            output_path=out_pass,
+            sweep_results=(_strong('"'"'A'"'"'), _strong('"'"'B'"'"')),
+            n_shuffles=100,
+        )
+        assert res_pass.aggregate_verdict == '"'"'PASS'"'"', res_pass.aggregate_verdict
+        assert res_pass.n_pass == 2
+
+        # (b) one FAIL cell → aggregate=FAIL
+        out_fail = td / '"'"'mixed.json'"'"'
+        res_fail = run_null_audit_all(
+            output_path=out_fail,
+            sweep_results=(_strong('"'"'A'"'"'), _noise('"'"'B'"'"')),
+            n_shuffles=200,
+        )
+        assert res_fail.aggregate_verdict == '"'"'FAIL'"'"', res_fail.aggregate_verdict
+        assert res_fail.n_fail >= 1
+
+        # (c) emitted PASS capsule passes preflight (stub POS/NEG/SMOKE)
+        pos = td / '"'"'pos.json'"'"'
+        neg = td / '"'"'neg.json'"'"'
+        smoke = td / '"'"'smoke.json'"'"'
+        pos_body = _seal({
+            '"'"'kind'"'"': POS_CONTROL_KIND, '"'"'all_pass'"'"': True,
+            '"'"'n_pass'"'"': 9, '"'"'n_exclude'"'"': 0, '"'"'excluded_combos'"'"': [],
+            '"'"'n_seeds'"'"': 50, '"'"'N'"'"': 400, '"'"'lambda_'"'"': 1.0,
+            '"'"'threshold'"'"': 2.0, '"'"'steps_per_quarter'"'"': 10,
+            '"'"'omega_gamma'"'"': 0.5, '"'"'rng_seed_base'"'"': 42,
+            '"'"'wallclock_seconds'"'"': 0.0, '"'"'results'"'"': [],
+            '"'"'generated_at'"'"': '"'"'2026-05-12T12:00:00Z'"'"',
+            '"'"'substrate_ids'"'"': ['"'"'ricci_flow'"'"', '"'"'block_structured'"'"', '"'"'temporal_coupling'"'"'],
+            '"'"'metric_ids'"'"': ['"'"'tau_onset'"'"', '"'"'sync_auc'"'"', '"'"'phase_lag'"'"'],
+        })
+        neg_body = _seal({
+            '"'"'kind'"'"': NEG_CONTROL_KIND, '"'"'all_pass'"'"': True,
+            '"'"'n_pass'"'"': 27, '"'"'n_exclude'"'"': 0, '"'"'excluded_cells'"'"': [],
+            '"'"'n_seeds'"'"': 50, '"'"'N_grid'"'"': [50, 100, 200],
+            '"'"'alpha_bonferroni'"'"': 2.31e-4, '"'"'tolerance'"'"': 1e-3,
+            '"'"'steps_per_quarter'"'"': 10, '"'"'omega_gamma'"'"': 0.5,
+            '"'"'rng_seed_base'"'"': 42, '"'"'independent_seed_stride'"'"': 10000,
+            '"'"'wallclock_seconds'"'"': 0.0, '"'"'results'"'"': [],
+            '"'"'generated_at'"'"': '"'"'2026-05-12T12:01:00Z'"'"',
+            '"'"'substrate_ids'"'"': ['"'"'ricci_flow'"'"', '"'"'block_structured'"'"', '"'"'temporal_coupling'"'"'],
+            '"'"'metric_ids'"'"': ['"'"'tau_onset'"'"', '"'"'sync_auc'"'"', '"'"'phase_lag'"'"'],
+        })
+        smoke_body = _seal({
+            '"'"'verdict'"'"': '"'"'PASS'"'"', '"'"'grid_N'"'"': [50, 100],
+            '"'"'grid_lambda'"'"': [0.0, 0.5], '"'"'n_seeds'"'"': 5,
+            '"'"'n_cells_total'"'"': 36, '"'"'n_cells_ok'"'"': 36, '"'"'n_cells_failed'"'"': 0,
+            '"'"'total_wallclock_seconds'"'"': 1.0, '"'"'max_wallclock_seconds'"'"': 60.0,
+            '"'"'over_budget'"'"': False, '"'"'steps_per_quarter'"'"': 6,
+            '"'"'omega_gamma'"'"': 0.5, '"'"'rng_seed_base'"'"': 42,
+            '"'"'cells'"'"': [], '"'"'generated_at'"'"': '"'"'2026-05-12T12:03:00Z'"'"',
+        })
+        pos.write_text(json.dumps(pos_body), encoding='"'"'utf-8'"'"')
+        neg.write_text(json.dumps(neg_body), encoding='"'"'utf-8'"'"')
+        smoke.write_text(json.dumps(smoke_body), encoding='"'"'utf-8'"'"')
+
+        paths = PreflightCapsulePaths(
+            pos_control=pos, neg_control=neg,
+            null_audit=out_pass, smoke_test=smoke,
+        )
+        decision = load_and_validate_preflight_capsules(paths)
+        assert decision.launch_allowed, decision.refusal_reasons
+        assert decision.capsule_shas['"'"'null_audit'"'"'] == res_pass.sha256
+
+        # (d) capsule sha deterministic for same inputs + fixed ts
+        out_d1 = td / '"'"'d1.json'"'"'
+        out_d2 = td / '"'"'d2.json'"'"'
+        cells = (_strong('"'"'X'"'"'),)
+        r1 = run_null_audit_all(
+            output_path=out_d1, sweep_results=cells,
+            n_shuffles=50, rng_seed=7,
+            generated_at='"'"'2026-05-12T14:00:00Z'"'"',
+        )
+        r2 = run_null_audit_all(
+            output_path=out_d2, sweep_results=cells,
+            n_shuffles=50, rng_seed=7,
+            generated_at='"'"'2026-05-12T14:00:00Z'"'"',
+        )
+        assert r1.sha256 == r2.sha256
+
+        # (e) empty without aggregate_only → raises
+        out_e = td / '"'"'empty.json'"'"'
+        try:
+            run_null_audit_all(output_path=out_e, sweep_results=(), n_shuffles=20)
+            raise AssertionError('"'"'should have raised'"'"')
+        except NullAuditAggregateInvalid:
+            pass
+    print('"'"'falsifier_ok'"'"')
+    "'
+  description: >-
+    Probes the C2.4-C2 contract end-to-end:
+      (a) all-PASS sweep_results aggregate to aggregate_verdict=PASS;
+      (b) one FAIL cell flips the aggregate to FAIL (fail-closed);
+      (c) the emitted PASS capsule passes the preflight validator
+          end-to-end with stub POS/NEG/SMOKE (launch_allowed=True),
+          AND the validator's recomputed null_audit sha matches the
+          writer's sha — confirming the C2.6 canonical_preflight_json
+          alignment;
+      (d) the capsule sha is deterministic for the same inputs +
+          fixed generated_at;
+      (e) an empty resolved cell list without aggregate_only_if_empty
+          raises NullAuditAggregateInvalid (no silent regression to
+          the C2.5 launch-hygiene compromise).
+    If any of these regress, the canonical D-002C launch hygiene
+    breaks — either the preflight refuses a real PASS capsule, or
+    the system silently accepts a launch that did not exercise the
+    null-audit FAIL signal.
+rollback_command: >-
+  bash -c 'git checkout HEAD~1 --
+  research/systemic_risk/d002c_null_audit.py
+  && rm -f
+  tests/research/systemic_risk/test_d002c_null_audit_aggregator.py
+  .claude/commit_acceptors/x10r-d002c-null-audit-aggregator.yaml'
+rollback_verification_command: >-
+  bash -c 'test ! -f tests/research/systemic_risk/test_d002c_null_audit_aggregator.py
+  && test ! -f .claude/commit_acceptors/x10r-d002c-null-audit-aggregator.yaml
+  && ! grep -q "run_null_audit_all" research/systemic_risk/d002c_null_audit.py'
+memory_update_type: append
+ledger_path: ".claude/commit_acceptors/x10r-d002c-null-audit-aggregator.yaml"
+report_path: "tests/research/systemic_risk/test_d002c_null_audit_aggregator.py"
+evidence: []

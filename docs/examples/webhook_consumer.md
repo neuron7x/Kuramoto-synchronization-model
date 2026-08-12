@@ -1,5 +1,5 @@
 ---
-owner: dx@tradepulse
+owner: dx@geosync
 review_cadence: quarterly
 last_reviewed: 2026-01-01
 ---
@@ -11,15 +11,15 @@ listed in `docs/api/webhooks.md` and `schemas/events/json/1.0.0/*`.
 
 ## Prerequisites
 
-- Public HTTPS endpoint for TradePulse to call (TLS 1.2+).
-- **ed25519 verification key** for `X-TradePulse-Webhook` signatures.
+- Public HTTPS endpoint for GeoSync to call (TLS 1.2+).
+- **ed25519 verification key** for `X-GeoSync-Webhook` signatures.
 - Dedupe store keyed by `event_id` (e.g., Redis, Postgres).
 - Ability to respond **2xx within 2 seconds** and process asynchronously.
 
 ## Sample Handler (Pseudo-code)
 
 ```python
-from tradepulse_webhooks import verify_signature
+from geosync_webhooks import verify_signature
 
 seen = set()
 

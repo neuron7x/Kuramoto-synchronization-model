@@ -1,6 +1,6 @@
 # Indicators
 
-TradePulse exposes a composable feature stack that measures synchronisation,
+GeoSync exposes a composable feature stack that measures synchronisation,
 entropy, fractality, and geometric curvature. All indicators implement the
 `BaseFeature` contract and can be orchestrated via `FeatureBlock` pipelines. 【F:core/indicators/base.py†L1-L80】
 

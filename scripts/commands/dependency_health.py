@@ -1,3 +1,5 @@
+# Copyright (c) 2023-2026 Yaroslav Vasylenko (neuron7xLab)
+# SPDX-License-Identifier: MIT
 """Commands to validate dependency health across toolchains."""
 
 from __future__ import annotations
@@ -133,9 +135,7 @@ def handle(args: object) -> int:
     namespace: Namespace = args if isinstance(args, Namespace) else Namespace(**vars(args))
 
     requirements = _resolve_paths(namespace.requirements, DEFAULT_REQUIREMENTS)
-    dev_requirements = _resolve_paths(
-        namespace.dev_requirements, DEFAULT_DEV_REQUIREMENTS
-    )
+    dev_requirements = _resolve_paths(namespace.dev_requirements, DEFAULT_DEV_REQUIREMENTS)
     backend_requirements = _resolve_paths(
         namespace.backend_requirements, DEFAULT_BACKEND_REQUIREMENTS
     )
@@ -159,17 +159,13 @@ def handle(args: object) -> int:
     if not namespace.skip_node:
         for package_json, package_lock in _resolve_node_pairs(namespace.node_package):
             try:
-                reports.append(
-                    check_node_dependencies(package_json, package_lock)
-                )
+                reports.append(check_node_dependencies(package_json, package_lock))
             except DependencyHealthError as exc:
                 raise CommandError(str(exc)) from exc
 
     if not namespace.skip_go:
         try:
-            reports.append(
-                check_go_dependencies(namespace.go_mod, namespace.go_sum)
-            )
+            reports.append(check_go_dependencies(namespace.go_mod, namespace.go_sum))
         except DependencyHealthError as exc:
             raise CommandError(str(exc)) from exc
 
@@ -182,9 +178,7 @@ def handle(args: object) -> int:
                 issue.path,
                 issue.message,
             )
-        raise CommandError(
-            f"Dependency health check failed with {len(combined.issues)} issue(s)."
-        )
+        raise CommandError(f"Dependency health check failed with {len(combined.issues)} issue(s).")
 
     LOGGER.info("Dependency health checks passed.")
     return 0

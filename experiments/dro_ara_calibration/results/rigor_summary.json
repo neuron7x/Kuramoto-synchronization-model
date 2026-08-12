@@ -1,0 +1,164 @@
+{
+  "assets": {
+    "spdr_sp500": {
+      "cells": {
+        "n_total": 77,
+        "n_active": 20,
+        "n_significant_bootstrap": 15,
+        "n_fdr_passing": 0,
+        "best": {
+          "H": 0.4,
+          "rs": 0.1,
+          "active_folds": 3.0,
+          "mean_sharpe": -0.2612709078526992,
+          "mean_trades": 15.666666666666666,
+          "worst_dd": 0.1278400340222806,
+          "sharpe_ci_lo": -0.2612709078526992,
+          "sharpe_ci_hi": -0.2612709078526992,
+          "significant_at_95": 1.0,
+          "p_value_null": 1.0,
+          "deflated_sharpe_stat": -2.8067301199792443,
+          "expected_max_under_null": 1.7233869929451566,
+          "probability_edge_real": 0.0025023575871580468,
+          "min_detectable_sharpe": 22.788918523915534,
+          "is_adequately_powered": 0.0,
+          "fdr_passes": 0.0
+        }
+      },
+      "baselines": {
+        "gate_rate": 0.029926595143986448,
+        "buy_hold_mean_sharpe": 1.3956838856381801,
+        "random_gate_mean_sharpe": -0.2772793202066909,
+        "n_folds": 69
+      }
+    },
+    "xauusd": {
+      "cells": {
+        "n_total": 77,
+        "n_active": 49,
+        "n_significant_bootstrap": 30,
+        "n_fdr_passing": 0,
+        "best": {
+          "H": 0.3,
+          "rs": 0.1,
+          "active_folds": 1.0,
+          "mean_sharpe": 1.45089903936306,
+          "mean_trades": 15.0,
+          "worst_dd": 0.036902512281251,
+          "sharpe_ci_lo": NaN,
+          "sharpe_ci_hi": NaN,
+          "significant_at_95": 0.0,
+          "p_value_null": NaN,
+          "deflated_sharpe_stat": -0.986338219277366,
+          "expected_max_under_null": 2.437237258640426,
+          "probability_edge_real": 0.16198358542928976,
+          "min_detectable_sharpe": NaN,
+          "is_adequately_powered": 0.0,
+          "fdr_passes": 0.0
+        }
+      },
+      "baselines": {
+        "gate_rate": 0.028108255380982654,
+        "buy_hold_mean_sharpe": 0.5975251410809619,
+        "random_gate_mean_sharpe": -0.5109991824175455,
+        "n_folds": 286
+      }
+    },
+    "usa500": {
+      "cells": {
+        "n_total": 77,
+        "n_active": 36,
+        "n_significant_bootstrap": 36,
+        "n_fdr_passing": 7,
+        "best": {
+          "H": 0.5,
+          "rs": 0.35,
+          "active_folds": 3.0,
+          "mean_sharpe": -0.4025531653487206,
+          "mean_trades": 18.333333333333332,
+          "worst_dd": 0.1409906295609984,
+          "sharpe_ci_lo": -0.4025531653487206,
+          "sharpe_ci_hi": -0.4025531653487206,
+          "significant_at_95": 1.0,
+          "p_value_null": 1.0,
+          "deflated_sharpe_stat": -3.0065334046528056,
+          "expected_max_under_null": 1.7233869929451566,
+          "probability_edge_real": 0.0013212250933707617,
+          "min_detectable_sharpe": 22.788918523915534,
+          "is_adequately_powered": 0.0,
+          "fdr_passes": 0.0
+        }
+      },
+      "baselines": {
+        "gate_rate": 0.04865800865800866,
+        "buy_hold_mean_sharpe": 1.2131059251309562,
+        "random_gate_mean_sharpe": -0.5287853048505375,
+        "n_folds": 150
+      }
+    },
+    "eurgbp": {
+      "cells": {
+        "n_total": 77,
+        "n_active": 30,
+        "n_significant_bootstrap": 25,
+        "n_fdr_passing": 20,
+        "best": {
+          "H": 0.35,
+          "rs": 0.1,
+          "active_folds": 7.0,
+          "mean_sharpe": -0.8436282884436591,
+          "mean_trades": 17.142857142857142,
+          "worst_dd": 0.0710668917804064,
+          "sharpe_ci_lo": -0.8436282884436591,
+          "sharpe_ci_hi": -0.8436282884436591,
+          "significant_at_95": 1.0,
+          "p_value_null": 0.598,
+          "deflated_sharpe_stat": -4.503696097904897,
+          "expected_max_under_null": 0.9949979442947859,
+          "probability_edge_real": 3.33908437426956e-06,
+          "min_detectable_sharpe": 14.918849163146318,
+          "is_adequately_powered": 0.0,
+          "fdr_passes": 0.0
+        }
+      },
+      "baselines": {
+        "gate_rate": 0.05470287288469106,
+        "buy_hold_mean_sharpe": 0.008340698328792171,
+        "random_gate_mean_sharpe": -1.1361479370869854,
+        "n_folds": 297
+      }
+    },
+    "eurusd": {
+      "cells": {
+        "n_total": 77,
+        "n_active": 36,
+        "n_significant_bootstrap": 20,
+        "n_fdr_passing": 20,
+        "best": {
+          "H": 0.55,
+          "rs": 0.1,
+          "active_folds": 68.0,
+          "mean_sharpe": -1.067563055089139,
+          "mean_trades": 18.5,
+          "worst_dd": 0.1603643702040571,
+          "sharpe_ci_lo": -1.761931418105066,
+          "sharpe_ci_hi": -0.667820913126365,
+          "significant_at_95": 1.0,
+          "p_value_null": 0.001,
+          "deflated_sharpe_stat": -11.175617470762932,
+          "expected_max_under_null": 0.2977559216525854,
+          "probability_edge_real": 2.683788348021022e-29,
+          "min_detectable_sharpe": 4.786630311836386,
+          "is_adequately_powered": 0.0,
+          "fdr_passes": 1.0
+        }
+      },
+      "baselines": {
+        "gate_rate": 0.025844587306381325,
+        "buy_hold_mean_sharpe": 0.0030122945552997792,
+        "random_gate_mean_sharpe": -0.7489843110279177,
+        "n_folds": 301
+      }
+    }
+  }
+}

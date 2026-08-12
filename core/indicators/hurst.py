@@ -1,11 +1,19 @@
-# SPDX-License-Identifier: LicenseRef-TradePulse-Proprietary
-"""Hurst exponent calculation for detecting long-memory processes in financial markets.
+# Copyright (c) 2023-2026 Yaroslav Vasylenko (neuron7xLab)
+# SPDX-License-Identifier: MIT
+"""Hurst exponent: a within-window scaling/persistence descriptor.
+
+The Hurst exponent H is a bounded, research-only descriptor of the lag-scaling
+of a finite time series over the declared lag range. It is NOT a strategy
+selector, NOT predictive, and NOT financial advice. It describes the observed
+self-affinity *inside the analysed window*; it makes no claim about future
+prices. Any strategy-adjacent use requires a null baseline (Brownian / AR)
+plus an out-of-sample falsifier first (see CLAIMS.yaml / FORBIDDEN_CLAIMS.md).
 
 Mathematical Foundation:
     The Hurst exponent H ∈ [0, 1] is a measure of long-term memory and self-affinity
     in time series data. Originally developed by Harold Edwin Hurst for analyzing
-    river flow patterns, it has become fundamental in financial analysis for detecting
-    persistence and mean reversion.
+    river flow patterns, it is a standard scaling descriptor used to characterize
+    persistence and anti-persistence in a sample.
 
 Classical Rescaled Range (R/S) Analysis:
     For a time series {x₁, x₂, ..., xₙ}, the rescaled range R/S is defined as:
@@ -34,34 +42,31 @@ Hurst Exponent Regimes:
              - E[x(t+1) - x(t)] = 0
              - Var[x(t+τ) - x(t)] ~ τ
 
-    H > 0.5: Persistent (trending) behavior
-             - Long-range positive correlations
-             - Momentum effects
-             - Tendency to continue in same direction
-             - E[x(t+1) > x̄ | x(t) > x̄] > 0.5
+    H > 0.5: Persistent scaling (within-window positive autocorrelation)
+             - Long-range positive correlations in the sample
              - Var[x(t+τ) - x(t)] ~ τ^(2H) with 2H > 1
 
-    H < 0.5: Anti-persistent (mean-reverting) behavior
-             - Long-range negative correlations
-             - Reversion to mean
-             - Tendency to reverse direction
-             - E[x(t+1) < x̄ | x(t) > x̄] > 0.5
+    H < 0.5: Anti-persistent scaling (within-window negative autocorrelation)
+             - Long-range negative correlations in the sample
              - Var[x(t+τ) - x(t)] ~ τ^(2H) with 2H < 1
 
-Financial Market Interpretation:
-    - H ∈ [0.45, 0.55]: Efficient market (random walk hypothesis)
-    - H ∈ [0.55, 0.70]: Moderately trending (suitable for momentum strategies)
-    - H ∈ [0.70, 1.00]: Strongly trending (high persistence)
-    - H ∈ [0.30, 0.45]: Moderately mean-reverting (suitable for mean reversion)
-    - H ∈ [0.00, 0.30]: Strongly mean-reverting (high anti-persistence)
+Descriptor Bands (research labels, NOT strategy selectors):
+    These bands are descriptive labels for the measured scaling regime of the
+    analysed sample. They do NOT recommend, select, or endorse any strategy and
+    are NOT predictive of future behaviour.
+    - H ∈ [0.45, 0.55]: Scaling consistent with a random walk over the window
+    - H ∈ [0.55, 0.70]: Moderate persistence in the sample
+    - H ∈ [0.70, 1.00]: Strong persistence in the sample
+    - H ∈ [0.30, 0.45]: Moderate anti-persistence in the sample
+    - H ∈ [0.00, 0.30]: Strong anti-persistence in the sample
 
-The Hurst exponent (H) characterizes long-term memory in time series:
-- H = 0.5: Random walk (Brownian motion)
-- H > 0.5: Persistent (trending) behavior
-- H < 0.5: Anti-persistent (mean-reverting) behavior
+The Hurst exponent (H) is a within-window scaling descriptor:
+- H = 0.5: Scaling consistent with a random walk (Brownian motion)
+- H > 0.5: Persistent scaling in the sample
+- H < 0.5: Anti-persistent scaling in the sample
 
 This module uses rescaled range (R/S) analysis to estimate the Hurst exponent
-from price time series data.
+from a time series sample.
 
 Relationship to Other Measures:
     - DFA exponent α: H ≈ α for stationary series
@@ -82,6 +87,7 @@ References:
     - Peters, E. E. (1994). Fractal Market Analysis: Applying Chaos Theory
       to Investment and Economics. Wiley.
 """
+
 from __future__ import annotations
 
 import logging
@@ -100,9 +106,7 @@ _metrics = get_metrics_collector()
 _DEFAULT_MIN_LAG = 2
 _DEFAULT_MAX_LAG = 50
 _DEFAULT_LAGS = np.arange(_DEFAULT_MIN_LAG, _DEFAULT_MAX_LAG + 1, dtype=int)
-_DEFAULT_DESIGN = np.vstack(
-    [np.ones_like(_DEFAULT_LAGS, dtype=float), np.log(_DEFAULT_LAGS)]
-).T
+_DEFAULT_DESIGN = np.vstack([np.ones_like(_DEFAULT_LAGS, dtype=float), np.log(_DEFAULT_LAGS)]).T
 _DEFAULT_PSEUDO = np.linalg.pinv(_DEFAULT_DESIGN)
 
 _NUMBA_AUTO_THRESHOLD = 50_000
@@ -133,7 +137,10 @@ def _cuda_available() -> bool:
 
 if _numba_available():  # pragma: no cover - compiled at import time
 
-    @njit(parallel=True, fastmath=True)
+    # fastmath removed: nnan/ninf assume finite operands, so a NaN in x would be
+    # silently mangled instead of propagating (the `var > 0.0` guard and NaN
+    # semantics must hold). parallel retained.
+    @njit(parallel=True)
     def _compute_tau_numba(x: np.ndarray, lags: np.ndarray, out: np.ndarray) -> None:
         n = x.size
         for idx in prange(lags.size):
@@ -384,17 +391,16 @@ def hurst_exponent(
 
         The Hurst exponent H is extracted as the slope of the log-log regression.
 
-    Scaling Behavior Interpretation:
-        H = 0.5: Brownian motion (white noise, random walk)
-                 → Efficient market, no memory
-        H > 0.5: Persistent, long-range correlations (trending)
-                 → Momentum strategies favorable
-                 → E[x(t+1) > x̄ | x(t) > x̄] > 0.5
-        H < 0.5: Anti-persistent, mean-reverting
-                 → Contrarian strategies favorable
-                 → E[x(t+1) < x̄ | x(t) > x̄] > 0.5
+    Scaling Behavior Interpretation (descriptor-only, NOT predictive):
+        H = 0.5: Scaling consistent with Brownian motion (white noise)
+        H > 0.5: Persistent scaling, long-range positive correlation in sample
+                 → E[x(t+1) > x̄ | x(t) > x̄] > 0.5 within the window
+        H < 0.5: Anti-persistent scaling, long-range negative correlation
+                 → E[x(t+1) < x̄ | x(t) > x̄] > 0.5 within the window
         H → 1.0: Strong persistence (1/f noise for H = 1)
         H → 0.0: Strong anti-persistence
+        These are descriptions of the analysed sample, not strategy
+        recommendations and not forecasts of future price.
 
     Relationship to Other Exponents:
         - H = α (DFA scaling exponent) for stationary processes
@@ -425,10 +431,10 @@ def hurst_exponent(
             when :mod:`numba.cuda` is available.
 
     Returns:
-        Hurst exponent H ∈ [0, 1]:
-        - H ≈ 0.5 ± 0.05: Random walk, no memory (95% CI for white noise)
-        - H > 0.5: Persistent/trending (0.5-1.0)
-        - H < 0.5: Anti-persistent/mean-reverting (0.0-0.5)
+        Hurst exponent H ∈ [0, 1] (within-window scaling descriptor):
+        - H ≈ 0.5 ± 0.05: Scaling consistent with a random walk (95% CI for white noise)
+        - H > 0.5: Persistent scaling (0.5-1.0)
+        - H < 0.5: Anti-persistent scaling (0.0-0.5)
         Returns 0.5 if insufficient data (< 2·max_lag samples).
 
     Numerical Stability:
@@ -444,19 +450,19 @@ def hurst_exponent(
     Example:
         >>> import numpy as np
         >>>
-        >>> # Generate trending series (H > 0.5)
-        >>> trend = np.cumsum(np.random.randn(1000)) + np.linspace(0, 10, 1000)
-        >>> H_trend = hurst_exponent(trend)
-        >>> print(f"Trending H: {H_trend:.3f}")  # Should be > 0.5
-        Trending H: 0.653
+        >>> # Persistent-scaling series (H > 0.5)
+        >>> persistent = np.cumsum(np.random.randn(1000)) + np.linspace(0, 10, 1000)
+        >>> H_persistent = hurst_exponent(persistent)
+        >>> print(f"Persistent H: {H_persistent:.3f}")  # Should be > 0.5
+        Persistent H: 0.653
         >>>
-        >>> # Generate mean-reverting series (H < 0.5)
-        >>> mean_rev = np.random.randn(1000)
+        >>> # Anti-persistent-scaling series (H < 0.5)
+        >>> anti = np.random.randn(1000)
         >>> for i in range(1, 1000):
-        ...     mean_rev[i] = -0.5 * mean_rev[i-1] + np.random.randn()
-        >>> H_mr = hurst_exponent(mean_rev)
-        >>> print(f"Mean-reverting H: {H_mr:.3f}")  # Should be < 0.5
-        Mean-reverting H: 0.423
+        ...     anti[i] = -0.5 * anti[i-1] + np.random.randn()
+        >>> H_anti = hurst_exponent(anti)
+        >>> print(f"Anti-persistent H: {H_anti:.3f}")  # Should be < 0.5
+        Anti-persistent H: 0.423
 
     Note:
         - Requires at least 2 * max_lag data points
@@ -507,9 +513,7 @@ def hurst_exponent(
         lags_int = lags.astype(np.int32)
         try:
             if selected_backend == "cuda":
-                tau = _compute_tau_cuda(
-                    np.asarray(x, dtype=np.float32, copy=False), lags
-                )
+                tau = _compute_tau_cuda(np.asarray(x, dtype=np.float32, copy=False), lags)
                 if tau_buffer is not None and tau_buffer.shape == tau.shape:
                     np.copyto(tau_buffer, tau)
                     tau = tau_buffer
@@ -548,12 +552,13 @@ class HurstFeature(BaseFeature):
     """Feature wrapper for Hurst exponent estimation.
 
     This class wraps the hurst_exponent() function as a BaseFeature, making it
-    compatible with the TradePulse feature pipeline.
+    compatible with the GeoSync feature pipeline.
 
-    The Hurst exponent is particularly useful for:
-    - Identifying market regimes (trending vs mean-reverting)
-    - Portfolio diversification (different H values = different behaviors)
-    - Risk management (H > 0.5 suggests momentum, H < 0.5 suggests reversion)
+    The output is a within-window scaling descriptor (persistence vs
+    anti-persistence in the analysed sample). It is NOT a strategy selector,
+    NOT predictive, and NOT financial advice; any strategy-adjacent use
+    requires a null baseline (Brownian / AR) and an out-of-sample falsifier
+    first.
 
     Attributes:
         min_lag: Minimum lag for R/S analysis
@@ -570,13 +575,13 @@ class HurstFeature(BaseFeature):
         >>>
         >>> print(f"{result.name}: {result.value:.3f}")
         >>> if result.value > 0.55:
-        ...     print("Market shows trending behavior")
+        ...     print("Sample shows persistent scaling")
         ... elif result.value < 0.45:
-        ...     print("Market shows mean-reverting behavior")
+        ...     print("Sample shows anti-persistent scaling")
         ... else:
-        ...     print("Market shows random walk behavior")
+        ...     print("Sample shows random-walk scaling")
         hurst: 0.623
-        Market shows trending behavior
+        Sample shows persistent scaling
     """
 
     def __init__(

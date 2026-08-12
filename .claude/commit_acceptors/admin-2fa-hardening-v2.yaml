@@ -1,0 +1,90 @@
+# Diff-bound commit acceptor: harden #904/#905 after adversarial review.
+#
+# An adversarial re-review refuted two just-merged security fixes:
+#
+# 1. #904 was still exploitable. geosync/__init__.py (runs on `import geosync`)
+#    and init_control_platform defaulted an UNSET profile to "dev", so a default
+#    production deployment (which sets no profile) silently injected the public
+#    pyotp seed JBSWY3DPEHPK3PXP as the admin second factor. Now the dev seed is
+#    injected ONLY for an EXPLICIT dev-class profile; unset/production is
+#    production-safe (no insecure default) and fails closed via the required
+#    two_factor_secret field. The test session declares GEOSYNC_PROFILE in the
+#    root conftest so the test-vector secret remains available at collection.
+#
+# 2. #905 was too strict. A TOTP code is constant within its ~30s window, so
+#    keying single-use on (subject, counter) made a read + write in the same
+#    window impossible. Single-use now applies to STATE-CHANGING methods only;
+#    GET/HEAD/OPTIONS verify but do not consume the code, so a captured code still
+#    cannot be replayed into a second write.
+#
+# Locally verified:
+#   * `import geosync` with unset profile injects NO seed (subprocess check)
+#   * pytest tests/runtime/test_admin_secret_fail_closed.py tests/security/test_totp_replay.py -> green
+#   * tests/api/test_service.py::test_admin_endpoints_accept_jwt_and_certificate passes (was red on main)
+#   * black + ruff + mypy --strict clean
+
+id: admin-2fa-hardening-v2
+status: ACTIVE
+claim_type: security
+promise: >-
+  After this PR lands, importing geosync or running initialize_control_platform
+  with an unset or production-like profile never injects the public TOTP seed
+  (fails closed via the required secret), and admin TOTP single-use is enforced
+  only on state-changing methods so a read and a write can share one in-window
+  code while a captured code cannot be replayed into a second write.
+diff_scope:
+  changed_files:
+    - path: ".claude/commit_acceptors/admin-2fa-hardening-v2.yaml"
+    - path: "geosync/__init__.py"
+    - path: "application/runtime/init_control_platform.py"
+    - path: "application/api/security.py"
+    - path: "conftest.py"
+    - path: "tests/runtime/test_admin_secret_fail_closed.py"
+    - path: "tests/security/test_totp_replay.py"
+  forbidden_paths:
+    - "trading/"
+    - "execution/"
+    - "forecast/"
+    - "policy/"
+    - "core/physics/"
+    - "core/kuramoto/"
+required_python_symbols:
+  - "application/api/security.py::require_two_factor"
+expected_signal: >-
+  `pytest tests/runtime/test_admin_secret_fail_closed.py tests/security/test_totp_replay.py`
+  passes: unset/production profiles fail closed without injecting the seed; a GET
+  does not burn the code so a same-window POST succeeds, while a second POST with
+  the same code is rejected as a replay.
+measurement_command: >-
+  bash -c '
+    python -m pytest tests/runtime/test_admin_secret_fail_closed.py tests/security/test_totp_replay.py -q
+  '
+signal_artifact: "tmp/admin_2fa_hardening_v2.log"
+falsifier:
+  command: >-
+    bash -c '
+      python -m pytest -q
+        "tests/runtime/test_admin_secret_fail_closed.py::test_unset_profile_is_production_safe_and_fails_closed"
+        >/dev/null 2>&1
+      test "$?" -ne 0
+    '
+  description: >-
+    Runs the unset-profile fail-closed assertion. The falsifier succeeds (exit 0)
+    only if it FAILS — i.e. only if an unset profile injects the public seed or
+    does not fail closed again. With the fix the test passes (exit 0), so
+    `test $? -ne 0` exits 1 and the falsifier fails.
+rollback_command: >-
+  bash -c 'git checkout origin/main --
+    geosync/__init__.py
+    application/runtime/init_control_platform.py
+    application/api/security.py
+    conftest.py
+    tests/runtime/test_admin_secret_fail_closed.py
+    tests/security/test_totp_replay.py
+    && rm -f .claude/commit_acceptors/admin-2fa-hardening-v2.yaml'
+rollback_verification_command: >-
+  bash -c '! test -f .claude/commit_acceptors/admin-2fa-hardening-v2.yaml'
+memory_update_type: append
+ledger_path: ".claude/commit_acceptors/admin-2fa-hardening-v2.yaml"
+report_path: "tmp/admin_2fa_hardening_v2.log"
+evidence: []

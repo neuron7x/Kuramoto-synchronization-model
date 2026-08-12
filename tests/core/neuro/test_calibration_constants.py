@@ -1,3 +1,5 @@
+# Copyright (c) 2023-2026 Yaroslav Vasylenko (neuron7xLab)
+# SPDX-License-Identifier: MIT
 """Tests for the calibration constants module."""
 
 from __future__ import annotations
@@ -61,7 +63,7 @@ class TestParameterRanges:
         for threshold in [
             ranges.INVIGORATION_THRESHOLD_DEFAULT,
             ranges.NO_GO_THRESHOLD_DEFAULT,
-            ranges.HOLD_THRESHOLD_DEFAULT
+            ranges.HOLD_THRESHOLD_DEFAULT,
         ]:
             assert 0.0 <= threshold <= 1.0
 
@@ -100,7 +102,11 @@ class TestParameterRanges:
 
         # Safe mode multiplier is in [0, 1]
         safe_mult = ranges.SAFE_MODE_POSITION_MULTIPLIER_DEFAULT
-        assert ranges.SAFE_MODE_POSITION_MULTIPLIER_RANGE[0] <= safe_mult <= ranges.SAFE_MODE_POSITION_MULTIPLIER_RANGE[1]
+        assert (
+            ranges.SAFE_MODE_POSITION_MULTIPLIER_RANGE[0]
+            <= safe_mult
+            <= ranges.SAFE_MODE_POSITION_MULTIPLIER_RANGE[1]
+        )
 
         # Kill switch streak is positive
         assert ranges.KILL_SWITCH_LOSS_STREAK_DEFAULT >= ranges.KILL_SWITCH_LOSS_STREAK_MIN
@@ -110,7 +116,11 @@ class TestParameterRanges:
         ranges = RegimeAdaptiveParameterRanges()
 
         # Thresholds maintain ordering
-        assert ranges.CALM_THRESHOLD_DEFAULT < ranges.STRESSED_THRESHOLD_DEFAULT < ranges.CRITICAL_THRESHOLD_DEFAULT
+        assert (
+            ranges.CALM_THRESHOLD_DEFAULT
+            < ranges.STRESSED_THRESHOLD_DEFAULT
+            < ranges.CRITICAL_THRESHOLD_DEFAULT
+        )
 
         # Multipliers are positive
         assert ranges.CALM_MULTIPLIER_DEFAULT > 0
@@ -400,7 +410,9 @@ class TestRiskEngineInvariants:
 
         is_valid, errors = validate_parameter_invariants("risk_engine", params)
         assert not is_valid
-        assert any("max_orders_per_minute" in err and "max_orders_per_hour" in err for err in errors)
+        assert any(
+            "max_orders_per_minute" in err and "max_orders_per_hour" in err for err in errors
+        )
 
     def test_risk_engine_safe_mode_multiplier_out_of_range_fails(self):
         """Risk Engine validation fails when safe_mode_position_multiplier is out of [0, 1]."""

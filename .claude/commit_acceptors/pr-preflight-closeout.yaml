@@ -1,0 +1,71 @@
+# Diff-bound commit acceptor for the PR preflight production-readiness closeout.
+#
+# Binds the requirements-traceability contract, its live gate, and the
+# review-ready PR body that finalize the structured preflight evidence runner.
+# Governance/docs only; no physics, claim tier, or alpha surface is touched.
+
+id: pr-preflight-closeout
+status: ACTIVE
+claim_type: governance
+promise: >-
+  After this PR lands, tools/ci/pr_preflight_requirements.json declares the ten
+  MUST preflight requirements, each bound to a real linked test and code path;
+  tests/ci/test_pr_preflight_requirements.py fails closed if any linked test or
+  code path is missing or renamed; and reports/pr_preflight_pr_body.md states the
+  runner is review-ready, not production-validated, without overclaiming. No
+  empirical, market, or alpha claim is made.
+
+diff_scope:
+  changed_files:
+    - path: ".claude/commit_acceptors/pr-preflight-closeout.yaml"
+    - path: "tools/ci/pr_preflight_requirements.json"
+    - path: "tests/ci/test_pr_preflight_requirements.py"
+    - path: "reports/pr_preflight_pr_body.md"
+  forbidden_paths:
+    - "trading/"
+    - "execution/"
+    - "forecast/"
+    - "policy/"
+    - "core/"
+    - "runtime/"
+
+required_python_symbols: []
+
+expected_signal: >-
+  pytest tests/ci/test_pr_preflight_requirements.py passes: the requirements file
+  is well-formed, every linked_code path exists, and every linked_test resolves to
+  a real test function.
+
+measurement_command: >-
+  python -m pytest --noconftest -p no:cacheprovider -q
+  tests/ci/test_pr_preflight_requirements.py
+
+signal_artifact: "tools/ci/pr_preflight_requirements.json"
+
+falsifier:
+  command: >-
+    python -c "import json; from pathlib import Path;
+    reqs=json.loads(Path('tools/ci/pr_preflight_requirements.json').read_text())['requirements'];
+    ok=all(('::' in t) and (Path(t.split('::')[0]).exists()) and (('def '+t.split('::')[1]+'(') in Path(t.split('::')[0]).read_text()) for r in reqs for t in r['linked_tests']);
+    raise SystemExit(0 if ok else 1)"
+  description: >-
+    Resolves every linked_test to a real test function on disk. Exits 0 only when
+    all resolve; a renamed/removed linked test makes it exit non-zero — the exact
+    decorative-traceability drift the gate must forbid.
+
+rollback_command: >-
+  bash -c '
+    git rm -f tools/ci/pr_preflight_requirements.json
+      tests/ci/test_pr_preflight_requirements.py
+      reports/pr_preflight_pr_body.md
+      .claude/commit_acceptors/pr-preflight-closeout.yaml
+    && python scripts/ci/update_inventory.py --write
+  '
+
+rollback_verification_command: >-
+  bash -c 'test ! -e tools/ci/pr_preflight_requirements.json'
+
+memory_update_type: append
+ledger_path: ".claude/commit_acceptors/pr-preflight-closeout.yaml"
+report_path: "tools/ci/pr_preflight_requirements.json"
+evidence: []

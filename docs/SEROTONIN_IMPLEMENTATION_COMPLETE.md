@@ -1,14 +1,27 @@
-# Serotonin Controller v2.4.0 - Implementation Complete
+# Serotonin Controller v2.4.0 — Module-Level Implementation Snapshot
 
-**Date**: 2025-11-10  
-**Status**: ✅ IMPLEMENTATION COMPLETE  
+**Date**: 2025-11-10
+**Status**: ✅ MODULE-LEVEL IMPLEMENTATION SNAPSHOT
 **Controller Version**: v2.4.0
+
+---
+
+> ⚠️ **PROVENANCE.** This file is the 2025-11-10 module-level
+> implementation snapshot for `core/neuro/serotonin/serotonin_controller.py`.
+> All "PRODUCTION-READY" / "PRODUCTION-GRADE" / "IMPLEMENTATION COMPLETE"
+> wording below is **scoped to the controller in isolation** against its
+> 62-test suite. It is not a current claim about live-venue capital
+> safety; that boundary is bound by `docs/KNOWN_LIMITATIONS.md` L-1
+> (paper-trading only) in the 2026-05-05 snapshot. Read "production"
+> here as "module-level integration-readiness".
 
 ---
 
 ## Executive Summary
 
-The Serotonin Controller v2.4.0 practical suitability assessment and implementation stages are **COMPLETE**. The controller has been:
+The Serotonin Controller v2.4.0 module-level practical suitability
+assessment and implementation stages are recorded as **COMPLETE
+within their own scope** (the controller and its 62-test suite). The controller has been:
 
 1. ✅ **Thoroughly tested** - All 62 unit tests passing
 2. ✅ **Documented comprehensively** - Assessment, deployment guide, examples
@@ -32,7 +45,7 @@ These changes properly reflect the documented v2.4.0 enhancements and are expect
 
 **Test Execution**:
 ```bash
-cd /home/runner/work/TradePulse/TradePulse
+cd /home/runner/work/GeoSync/GeoSync
 # Temporarily work around torch dependency
 cd core/neuro && mv __init__.py __init__.py.bak && touch __init__.py
 cd ../..

@@ -1,3 +1,5 @@
+# Copyright (c) 2023-2026 Yaroslav Vasylenko (neuron7xLab)
+# SPDX-License-Identifier: MIT
 from __future__ import annotations
 
 import copy
@@ -92,9 +94,7 @@ def gate_config_fixture() -> dict[str, object]:
     config_path = Path("ci/release_gates.yml").resolve()
     config = yaml.safe_load(config_path.read_text(encoding="utf-8"))
     config["perf_budgets_file"] = str(Path("configs/perf_budgets.yaml").resolve())
-    config["scenario_file"] = str(
-        Path("tacl/link_activator_test_scenarios.yaml").resolve()
-    )
+    config["scenario_file"] = str(Path("tacl/link_activator_test_scenarios.yaml").resolve())
     return config
 
 
@@ -129,8 +129,6 @@ def test_progressive_rollout_triggers_rollback_on_degradation(
     assert controller.run("degraded_packet_loss") is False
     assert controller.audit_log[-1]["stage"] == "automated-rollback"
     failure_reasons = [
-        entry.get("reason")
-        for entry in controller.audit_log
-        if entry["stage"] == "validate-energy"
+        entry.get("reason") for entry in controller.audit_log if entry["stage"] == "validate-energy"
     ]
     assert any("free energy" in (reason or "") for reason in failure_reasons)

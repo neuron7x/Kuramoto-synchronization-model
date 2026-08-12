@@ -1,4 +1,6 @@
-"""Service registry bundling the individual TradePulse microservices."""
+# Copyright (c) 2023-2026 Yaroslav Vasylenko (neuron7xLab)
+# SPDX-License-Identifier: MIT
+"""Service registry bundling the individual GeoSync microservices."""
 
 from __future__ import annotations
 
@@ -9,7 +11,7 @@ from application.microservices.base import Microservice, ServiceState
 from application.microservices.contracts import default_contract_registry
 from application.microservices.execution import ExecutionService
 from application.microservices.market_data import MarketDataService
-from application.system import TradePulseSystem
+from application.system import GeoSyncSystem
 
 
 @dataclass(slots=True)
@@ -39,7 +41,7 @@ class ServiceRegistry:
                 service.start()
 
     @classmethod
-    def from_system(cls, system: TradePulseSystem) -> "ServiceRegistry":
+    def from_system(cls, system: GeoSyncSystem) -> "ServiceRegistry":
         contracts = default_contract_registry()
         market_data = MarketDataService(system, contracts=contracts)
         backtesting = BacktestingService(

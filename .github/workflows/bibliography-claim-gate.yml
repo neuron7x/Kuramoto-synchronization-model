@@ -1,0 +1,94 @@
+# SPDX-License-Identifier: MIT
+
+name: Bibliography Claim Gate
+
+on:
+  pull_request:
+    branches: [main]
+    paths:
+      - "CLAIMS.md"
+      - "docs/BIBLIOGRAPHY.md"
+      - "docs/claim_source_matrix.json"
+      - ".github/workflows/bibliography-claim-gate.yml"
+  merge_group:
+  push:
+    branches: [main]
+    paths:
+      - "CLAIMS.md"
+      - "docs/BIBLIOGRAPHY.md"
+      - "docs/claim_source_matrix.json"
+      - ".github/workflows/bibliography-claim-gate.yml"
+
+permissions:
+  contents: read
+
+env:
+  FORCE_JAVASCRIPT_ACTIONS_TO_NODE24: 'true'
+
+concurrency:
+  group: bibliography-claim-gate-${{ github.event.pull_request.number || github.sha }}
+  cancel-in-progress: true
+
+jobs:
+  bibliography-claim-gate:
+    name: bibliography-claim-gate
+    runs-on: ubuntu-latest
+    continue-on-error: false
+    timeout-minutes: 5
+    steps:
+      - name: Checkout
+        uses: actions/checkout@9c091bb21b7c1c1d1991bb908d89e4e9dddfe3e0 # v7.0.0
+
+      - name: Set up Python
+        uses: actions/setup-python@ece7cb06caefa5fff74198d8649806c4678c61a1 # v6
+        with:
+          python-version: '3.12'
+
+      - name: Validate claim-source matrix
+        run: |
+          set -euo pipefail
+          python - <<'PY'
+          import json
+          import re
+          from pathlib import Path
+
+          bib = Path("docs/BIBLIOGRAPHY.md").read_text(encoding="utf-8")
+          claims = Path("CLAIMS.md").read_text(encoding="utf-8")
+          matrix = json.loads(Path("docs/claim_source_matrix.json").read_text(encoding="utf-8"))
+          bib_ids = set(re.findall(r"^### (BIB-[A-Z0-9-]+)\b", bib, re.MULTILINE))
+          claim_ids = set(re.findall(r"^\| ([CR]-[A-Z0-9-]+) \|", claims, re.MULTILINE))
+          valid_tiers = {"FACT", "MEASURED", "DERIVED", "SIMULATION", "SYNTHETIC_DEMO", "HYPOTHESIS", "SPECULATIVE", "RETIRED"}
+          rows = matrix.get("entries")
+          if not isinstance(rows, list) or not rows:
+              raise SystemExit("matrix entries must be a non-empty list")
+          seen = set()
+          for row in rows:
+              claim_id = row.get("claim_id")
+              if claim_id not in claim_ids:
+                  raise SystemExit(f"matrix claim missing from CLAIMS.md: {claim_id}")
+              if claim_id in seen:
+                  raise SystemExit(f"duplicate matrix claim row: {claim_id}")
+              seen.add(claim_id)
+              if row.get("claim_tier") not in valid_tiers:
+                  raise SystemExit(f"{claim_id}: invalid tier")
+              status = row.get("claim_status")
+              if status not in {"active", "retired"}:
+                  raise SystemExit(f"{claim_id}: invalid status")
+              if status == "retired" and row.get("claim_tier") != "RETIRED":
+                  raise SystemExit(f"{claim_id}: retired status requires RETIRED tier")
+              sources = row.get("sources")
+              if not isinstance(sources, list):
+                  raise SystemExit(f"{claim_id}: sources must be a list")
+              unknown = sorted(set(sources) - bib_ids)
+              if unknown:
+                  raise SystemExit(f"{claim_id}: unknown BIB ids: {unknown}")
+              if not row.get("local_evidence"):
+                  raise SystemExit(f"{claim_id}: local_evidence must be non-empty")
+              boundary = row.get("boundary")
+              if not isinstance(boundary, str) or len(boundary.strip()) < 24:
+                  raise SystemExit(f"{claim_id}: boundary is missing or too weak")
+          missing = sorted(claim_ids - seen)
+          if missing:
+              raise SystemExit(f"CLAIMS.md ids missing from matrix: {missing}")
+          print(f"claim-source-matrix: OK ({len(bib_ids)} bibliography sources, {len(seen)} claim rows)")
+          PY

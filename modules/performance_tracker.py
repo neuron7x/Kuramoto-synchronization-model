@@ -1,3 +1,5 @@
+# Copyright (c) 2023-2026 Yaroslav Vasylenko (neuron7xLab)
+# SPDX-License-Identifier: MIT
 """
 Performance Tracker Module
 
@@ -164,21 +166,13 @@ class PerformanceTracker:
         market_value = quantity * current_price
         cost_basis = quantity * average_price
         unrealized_pnl = market_value - cost_basis
-        unrealized_pnl_pct = (
-            unrealized_pnl / cost_basis if cost_basis != 0 else 0.0
-        )
+        unrealized_pnl_pct = unrealized_pnl / cost_basis if cost_basis != 0 else 0.0
 
         # Розрахунок ваги
-        total_positions_value = sum(
-            p.market_value for p in self._positions.values()
-        )
+        total_positions_value = sum(p.market_value for p in self._positions.values())
         total_positions_value += market_value  # Включаємо поточну позицію
 
-        weight = (
-            market_value / self._current_equity
-            if self._current_equity > 0
-            else 0.0
-        )
+        weight = market_value / self._current_equity if self._current_equity > 0 else 0.0
 
         self._positions[symbol] = PositionSnapshot(
             symbol=symbol,
@@ -271,9 +265,7 @@ class PerformanceTracker:
 
         # Розрахунок повернень
         total_pnl = self._current_equity - self.initial_capital
-        cumulative_return = (
-            total_pnl / self.initial_capital if self.initial_capital > 0 else 0.0
-        )
+        cumulative_return = total_pnl / self.initial_capital if self.initial_capital > 0 else 0.0
 
         # Денне повернення
         daily_return = 0.0
@@ -328,7 +320,9 @@ class PerformanceTracker:
 
         annualized_return = (1 + total_return) ** scaling - 1
         daily_return = np.mean(returns) if len(returns) > 0 else 0.0
-        volatility = np.std(returns) * np.sqrt(self.annualization_factor) if len(returns) > 1 else 0.0
+        volatility = (
+            np.std(returns) * np.sqrt(self.annualization_factor) if len(returns) > 1 else 0.0
+        )
 
         # Sharpe Ratio
         excess_return = annualized_return - self.risk_free_rate
@@ -356,9 +350,7 @@ class PerformanceTracker:
         total_trades = self._winning_trades + self._losing_trades
         win_rate = self._winning_trades / total_trades if total_trades > 0 else 0.0
         profit_factor = (
-            self._total_profit / self._total_loss
-            if self._total_loss > 0
-            else float("inf")
+            self._total_profit / self._total_loss if self._total_loss > 0 else float("inf")
         )
 
         return PerformanceMetrics(
@@ -397,9 +389,7 @@ class PerformanceTracker:
 
         # Атрибуція за позиціями
         for symbol, position in self._positions.items():
-            contribution = (
-                position.unrealized_pnl / total_pnl if total_pnl != 0 else 0.0
-            )
+            contribution = position.unrealized_pnl / total_pnl if total_pnl != 0 else 0.0
 
             results.append(
                 AttributionResult(
@@ -416,9 +406,7 @@ class PerformanceTracker:
         for trade in self._trade_history:
             if trade["pnl"] != 0:
                 symbol = trade["symbol"]
-                trade_pnl_by_symbol[symbol] = (
-                    trade_pnl_by_symbol.get(symbol, 0.0) + trade["pnl"]
-                )
+                trade_pnl_by_symbol[symbol] = trade_pnl_by_symbol.get(symbol, 0.0) + trade["pnl"]
 
         for symbol, pnl in trade_pnl_by_symbol.items():
             contribution = pnl / total_pnl if total_pnl != 0 else 0.0
@@ -435,9 +423,7 @@ class PerformanceTracker:
 
         return results
 
-    def get_equity_curve(
-        self, timeframe: TimeFrame = TimeFrame.ALL_TIME
-    ) -> pd.DataFrame:
+    def get_equity_curve(self, timeframe: TimeFrame = TimeFrame.ALL_TIME) -> pd.DataFrame:
         """
         Отримання equity curve
 
@@ -570,9 +556,7 @@ class PerformanceTracker:
         """Оновлення нереалізованого PnL"""
         self._unrealized_pnl = sum(p.unrealized_pnl for p in self._positions.values())
 
-    def _filter_history(
-        self, timeframe: TimeFrame
-    ) -> List[PerformanceSnapshot]:
+    def _filter_history(self, timeframe: TimeFrame) -> List[PerformanceSnapshot]:
         """Фільтрація історії за timeframe"""
         if timeframe == TimeFrame.ALL_TIME:
             return self._equity_history

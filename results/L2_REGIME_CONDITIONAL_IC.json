@@ -1,0 +1,20 @@
+{
+  "abs_ratio_high_over_low": 3.1603121564299896,
+  "baseline_ic_pooled": 0.12229471858695447,
+  "cells": [
+    {
+      "ic": 0.22616986479401247,
+      "n_rows": 4696,
+      "regime": "HIGH_VOL"
+    },
+    {
+      "ic": 0.07156567250290322,
+      "n_rows": 14385,
+      "regime": "LOW_VOL"
+    }
+  ],
+  "horizon_sec": 180,
+  "regime_quantile": 0.75,
+  "regime_window_sec": 300,
+  "verdict": "VOL_DRIVEN"
+}

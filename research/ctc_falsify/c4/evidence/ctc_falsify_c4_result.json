@@ -1,0 +1,26 @@
+{
+  "audit": {
+    "cohens_d": 0.47990567261596656,
+    "confound_false_positive_rate": 0.4722222222222222,
+    "decision_boundary": 4.076250325310106,
+    "g1_separable": false,
+    "g2_confounds_rejected": false,
+    "g3_signflip_ok": true,
+    "g4_sweep_clean": false,
+    "signflip_pass_fraction": 1.0,
+    "sweep_false_positive_count": 20,
+    "sweep_total": 32
+  },
+  "audited_estimator": "mean gamma-band phase offset (the C3 boundary probe)",
+  "boundary": "Scoped, in-silico, hypothesis-level. Audits ONLY the C3 boundary-probe estimator on the existing generative ground truth. NOT a CTC-theory verdict, NOT real data. Pass => C3's in-silico negative hardens; any failure => the C3 'recoverable in principle' claim is scoped/retracted, not the standard-estimand blindness finding.",
+  "claim": "The privileged mean-gamma-phase-offset estimator that underwrote C3's 'channel recoverable in principle' is itself admissible: it separates N+ from confounds, rejects confound-only draws, is genuinely directed (sign-flips), and never invents a channel at channel_strength == 0 across a common-drive sweep.",
+  "config_hash": "e53b082dcd6f025b9dd4be2cdf92239f0034d5e09ea983719f0ab5d23d1f51fe",
+  "experiment_id": "CTC-FALSIFY-001-C4",
+  "repro_hash": "53004ab77e46326f514717017274e504a6dcda669d51a87ff7020c064cb2b85b",
+  "thresholds": {
+    "d_min": 1.0,
+    "fp_max": 0.05,
+    "sign_frac": 0.9
+  },
+  "verdict": "C4_INADMISSIBLE_ESTIMATOR_CANT_SEPARATE"
+}

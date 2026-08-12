@@ -1,4 +1,5 @@
-# SPDX-License-Identifier: LicenseRef-TradePulse-Proprietary
+# Copyright (c) 2023-2026 Yaroslav Vasylenko (neuron7xLab)
+# SPDX-License-Identifier: MIT
 """Configuration models for Risk Guardian."""
 
 from __future__ import annotations
@@ -55,9 +56,7 @@ class RiskGuardianConfig:
             daily_loss_limit_pct=float(data.get("daily_loss_limit_pct", 5.0)),
             max_drawdown_pct=float(data.get("max_drawdown_pct", 10.0)),
             safe_mode_threshold_pct=float(data.get("safe_mode_threshold_pct", 7.0)),
-            safe_mode_position_multiplier=float(
-                data.get("safe_mode_position_multiplier", 0.5)
-            ),
+            safe_mode_position_multiplier=float(data.get("safe_mode_position_multiplier", 0.5)),
             max_position_pct=float(data.get("max_position_pct", 20.0)),
             enable_kill_switch=bool(data.get("enable_kill_switch", True)),
             enable_safe_mode=bool(data.get("enable_safe_mode", True)),
@@ -123,9 +122,7 @@ class SimulationResult:
         """Calculate percentage improvement in Sharpe ratio."""
         if self.baseline_sharpe == 0:
             return 0.0
-        return (
-            (self.protected_sharpe - self.baseline_sharpe) / abs(self.baseline_sharpe)
-        ) * 100
+        return ((self.protected_sharpe - self.baseline_sharpe) / abs(self.baseline_sharpe)) * 100
 
     @property
     def drawdown_reduction(self) -> float:

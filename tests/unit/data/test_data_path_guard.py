@@ -1,4 +1,5 @@
-# SPDX-License-Identifier: LicenseRef-TradePulse-Proprietary
+# Copyright (c) 2023-2026 Yaroslav Vasylenko (neuron7xLab)
+# SPDX-License-Identifier: MIT
 import os
 from pathlib import Path
 
@@ -19,7 +20,7 @@ def temp_files(tmp_path: Path):
 def test_guard_uses_environment_roots(
     monkeypatch: pytest.MonkeyPatch, tmp_path: Path
 ) -> None:
-    monkeypatch.setenv("TRADEPULSE_DATA_ROOTS", os.pathsep.join([str(tmp_path)]))
+    monkeypatch.setenv("GEOSYNC_DATA_ROOTS", os.pathsep.join([str(tmp_path)]))
     guard = DataPathGuard()
     assert tmp_path in guard.allowed_roots
 
@@ -40,9 +41,9 @@ def test_guard_rejects_non_directory(tmp_path: Path) -> None:
 def test_guard_rejects_invalid_max_bytes(
     monkeypatch: pytest.MonkeyPatch, tmp_path: Path
 ) -> None:
-    monkeypatch.setenv("TRADEPULSE_DATA_ROOTS", str(tmp_path))
-    monkeypatch.setenv("TRADEPULSE_MAX_CSV_BYTES", "invalid")
-    with pytest.raises(ValueError, match="TRADEPULSE_MAX_CSV_BYTES"):
+    monkeypatch.setenv("GEOSYNC_DATA_ROOTS", str(tmp_path))
+    monkeypatch.setenv("GEOSYNC_MAX_CSV_BYTES", "invalid")
+    with pytest.raises(ValueError, match="GEOSYNC_MAX_CSV_BYTES"):
         DataPathGuard()
 
 

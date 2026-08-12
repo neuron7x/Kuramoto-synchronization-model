@@ -1,0 +1,250 @@
+# Diff-bound commit acceptor for the D-002H ricci_flow-only scope
+# pre-registration PR.
+#
+# Opens a fresh pre-registered lineage after D-002G structural closure
+# (PR #682 merge 8cf5364a3f3b605d8b134bccbfe5170098e0e197). D-002H is
+# scoped to ricci_flow substrate only; block_structured and
+# temporal_coupling are explicitly excluded per the closure finding
+# (research/systemic_risk/d002c_substrates.py:401 — BlockStructuredSubstrate
+# discards its seed by construction; TemporalKtSubstrate inherits via
+# delegation at lines 481-483).
+#
+# Strict scope:
+#   * NO D-002G scientific PASS claim.
+#   * NO D-002G rescue claim. NO D-002C rescue claim.
+#   * NO canonical D-002H run authorisation (this PR PASSES Gate A only).
+#   * NO canonical sweep execution.
+#   * NO D002C_CLAIM_LEDGER.yaml mutation (sha pinned byte-exact).
+#   * NO D-002G prereg edit. NO M4 inside D-002G.
+#   * NO substrate code edit. NO mechanism code edit.
+#   * NO cross-substrate / general-topology robustness claim.
+#
+# The 7-gate conjunction (A..G) is the canonical-run authorisation
+# contract. THIS PR passes Gate A only; Gates B..G live in separate
+# downstream artifacts.
+
+id: x10r-d002h-ricci-flow-prereg
+status: ACTIVE
+claim_type: documentation
+promise: >-
+  After this PR lands, docs/governance/D002H_PREREGISTRATION.yaml
+  carries the schema_version "D002H-PREREGISTRATION-v1" with study_id
+  "D-002H", lineage_type "fresh_preregistration", parent_merge_sha
+  pinned to the D-002G structural-closure merge sha
+  (8cf5364a3f3b605d8b134bccbfe5170098e0e197), substrate_scope.included
+  == [ricci_flow], substrate_scope.excluded == [block_structured,
+  temporal_coupling], canonical_run_authorized == false,
+  requires_explicit_authorization_artifact == true, prereg_lock with
+  edit_policy "fresh_pre_registration_only".
+
+  docs/governance/D002H_SCOPE_RATIONALE.md carries the 8-section
+  rationale; docs/governance/D002H_CLAIM_BOUNDARY.md carries the
+  verbatim claim-boundary paragraph plus 5 forbidden interpretations;
+  docs/governance/D002H_CANONICAL_RUN_AUTHORIZATION_GATES.md enumerates
+  exactly the 7 gates A..G with the explicit conjunction rule;
+  artifacts/d002h/prereg/d002h_preregistration_lock.json carries the
+  schema_version "D002H-PREREGISTRATION-LOCK-v1" payload.
+
+  docs/governance/D002G_CANONICAL_RUN_BLOCKERS.md gains an append-only
+  "D-002G ↔ D-002H lineage transition" section after §B2 referencing
+  the D-002H prereg + gates docs.
+
+  tests/systemic_risk/test_d002h_preregistration.py adds 12 tests
+  pinning the D-002H prereg invariants:
+    test_d002h_prereg_exists,
+    test_d002h_scope_is_ricci_flow_only,
+    test_d002h_excludes_block_structured,
+    test_d002h_excludes_temporal_coupling,
+    test_d002h_forbids_cross_substrate_claims,
+    test_d002h_forbids_d002g_rescue_claim,
+    test_d002h_forbids_canonical_run_without_authorization,
+    test_d002h_preserves_d002c_ledger,
+    test_d002h_parent_closure_sha_pinned,
+    test_d002h_requires_fresh_lineage,
+    test_d002h_claim_boundary_verbatim_present,
+    test_d002h_no_substrate_code_touch.
+
+  Strict scope: prereg + rationale + claim-boundary + gates + lock
+  json + tests + acceptor + BLOCKERS.md append-only update. NO
+  substrate / mechanism / D-002G prereg / D-002C ledger mutation. NO
+  canonical D-002H run authorisation. THIS PR passes Gate A only.
+
+diff_scope:
+  changed_files:
+    - path: ".claude/commit_acceptors/x10r-d002h-ricci-flow-prereg.yaml"
+    - path: "docs/governance/D002H_PREREGISTRATION.yaml"
+    - path: "docs/governance/D002H_SCOPE_RATIONALE.md"
+    - path: "docs/governance/D002H_CLAIM_BOUNDARY.md"
+    - path: "docs/governance/D002H_CANONICAL_RUN_AUTHORIZATION_GATES.md"
+    - path: "docs/governance/D002G_CANONICAL_RUN_BLOCKERS.md"
+    - path: "artifacts/d002h/prereg/d002h_preregistration_lock.json"
+    - path: "tests/systemic_risk/test_d002h_preregistration.py"
+  forbidden_paths:
+    # D-002C locked governance + claim ledger
+    - "docs/governance/D002C_CLAIM_LEDGER.yaml"
+    - "docs/governance/D002C_PREREGISTRATION.yaml"
+    - "docs/governance/D002C_CANONICAL_RUN_REPORT.md"
+    - "docs/governance/D002C_ATTEMPT_2_NULL_AUDIT_FALSIFICATION_REPORT.md"
+    # D-002G locked governance + prior PR reports
+    - "docs/governance/D002G_PREREGISTRATION.yaml"
+    - "docs/governance/D002G_NONDEGENERATE_NULL_DESIGN.md"
+    - "docs/governance/D002G_ACCEPTANCE_RULES.md"
+    - "docs/governance/D002G_P3_M3_PREREGISTRATION.md"
+    - "docs/governance/D002G_P1_IMPLEMENTATION_REPORT.md"
+    - "docs/governance/D002G_P1_DESIGN_ADVERSARIAL_AUDIT.md"
+    - "docs/governance/D002G_P2_M2_IMPLEMENTATION_REPORT.md"
+    - "docs/governance/D002G_M2_TOPOLOGY_PRESERVING_NULL.md"
+    - "docs/governance/D002G_P3_DISCOVERY_REPORT.md"
+    - "docs/governance/D002G_P3_NULL_DOMAIN_CONTRACTS.md"
+    - "docs/governance/D002G_P3_ELIGIBILITY_MATRIX.md"
+    - "docs/governance/D002G_P3_IMPLEMENTATION_REPORT.md"
+    - "docs/governance/D002G_M3_IMPLEMENTATION_REPORT.md"
+    - "docs/governance/D002G_M3_ELIGIBILITY_MATRIX.md"
+    - "docs/governance/D002G_STRUCTURAL_CLOSURE_REPORT.md"
+    - "docs/governance/D002G_NEGATIVE_SPACE_MAP.md"
+    # Prior commit acceptors
+    - ".claude/commit_acceptors/x10r-d002g-nondegenerate-null-redesign.yaml"
+    - ".claude/commit_acceptors/x10r-d002g-p1-implementation.yaml"
+    - ".claude/commit_acceptors/x10r-d002g-p1-strike-scaffolding.yaml"
+    - ".claude/commit_acceptors/x10r-d002g-p2-m2-topology-preserving-shuffle.yaml"
+    - ".claude/commit_acceptors/x10r-d002g-p3-constant-payload-null-recovery.yaml"
+    - ".claude/commit_acceptors/x10r-d002g-m3-topology-conditioned-null.yaml"
+    - ".claude/commit_acceptors/x10r-d002g-structural-closure.yaml"
+    # Substrate code + null mechanism module
+    - "research/systemic_risk/d002c_substrates.py"
+    - "research/systemic_risk/d002g_null_mechanisms.py"
+    # Prior D-002G artifact tree (closure / m3 / p3 / canonical)
+    - "artifacts/d002g/closure/"
+    - "artifacts/d002g/m3/"
+    - "artifacts/d002g/p3/"
+    - "artifacts/d002g/canonical/"
+    # Canonical D-002H artifact tree (forbidden in THIS PR - downstream only)
+    - "artifacts/d002h/canonical/"
+    - "artifacts/d002h/authorization/"
+    - "artifacts/d002h/eligibility/"
+required_python_symbols: []
+expected_signal: >-
+  `pytest tests/systemic_risk/test_d002h_preregistration.py -q` passes
+  all 12 tests; `python -c "import yaml;
+  d=yaml.safe_load(open('docs/governance/D002H_PREREGISTRATION.yaml'));
+  assert d['study_id']=='D-002H';
+  assert d['substrate_scope']['included']==['ricci_flow'];
+  assert 'block_structured' in d['substrate_scope']['excluded'];
+  assert 'temporal_coupling' in d['substrate_scope']['excluded'];
+  assert d['canonical_run_authorized'] is False;
+  assert d['requires_explicit_authorization_artifact'] is True;
+  assert d['parent_merge_sha']=='8cf5364a3f3b605d8b134bccbfe5170098e0e197';
+  assert 'cross-substrate robustness' in d['forbidden_claims'];
+  assert 'D-002G rescue' in d['forbidden_claims']"` succeeds; the
+  D-002C claim ledger sha256 stays byte-exact at the locked anchor
+  (f96ba9b5a2057d2e0bff84afc28578ab316cff73f6dc6673fb0d6d543b8bd6dd);
+  the substrate file sha256 stays byte-exact at
+  4b2e5d65c104a5be5a207951cd3c4ae099f31ce83b3f2c0766a160d8c9e80eca; the
+  BLOCKERS.md gains the "D-002G ↔ D-002H lineage transition" section.
+measurement_command: >-
+  bash -c 'set -e;
+  PYTHONPATH=. python -m pytest tests/systemic_risk/test_d002h_preregistration.py -q;
+  python -c "import yaml;
+  d=yaml.safe_load(open(\"docs/governance/D002H_PREREGISTRATION.yaml\"));
+  assert d[\"study_id\"]==\"D-002H\";
+  assert d[\"schema_version\"]==\"D002H-PREREGISTRATION-v1\";
+  assert d[\"lineage_type\"]==\"fresh_preregistration\";
+  assert d[\"substrate_scope\"][\"included\"]==[\"ricci_flow\"];
+  assert \"block_structured\" in d[\"substrate_scope\"][\"excluded\"];
+  assert \"temporal_coupling\" in d[\"substrate_scope\"][\"excluded\"];
+  assert d[\"canonical_run_authorized\"] is False;
+  assert d[\"requires_explicit_authorization_artifact\"] is True;
+  assert d[\"parent_merge_sha\"]==\"8cf5364a3f3b605d8b134bccbfe5170098e0e197\";
+  assert \"cross-substrate robustness\" in d[\"forbidden_claims\"];
+  assert \"D-002G rescue\" in d[\"forbidden_claims\"];
+  assert d[\"prereg_lock\"][\"edit_policy\"]==\"fresh_pre_registration_only\"";
+  python -c "import json;
+  d=json.load(open(\"artifacts/d002h/prereg/d002h_preregistration_lock.json\"));
+  assert d[\"schema_version\"]==\"D002H-PREREGISTRATION-LOCK-v1\";
+  assert d[\"study_id\"]==\"D-002H\";
+  assert d[\"parent_merge_sha\"]==\"8cf5364a3f3b605d8b134bccbfe5170098e0e197\";
+  assert d[\"canonical_run_authorized\"] is False;
+  assert d[\"d002c_ledger_touched\"] is False;
+  assert d[\"d002g_amended\"] is False;
+  assert d[\"substrate_code_edited\"] is False;
+  assert d[\"mechanism_code_edited\"] is False";
+  grep -q "D-002H is scoped to ricci_flow only" docs/governance/D002H_CLAIM_BOUNDARY.md;
+  grep -q "Gate A — D-002H prereg locked" docs/governance/D002H_CANONICAL_RUN_AUTHORIZATION_GATES.md;
+  grep -q "Gate G — CI terminal green" docs/governance/D002H_CANONICAL_RUN_AUTHORIZATION_GATES.md;
+  grep -q "D-002G ↔ D-002H lineage transition" docs/governance/D002G_CANONICAL_RUN_BLOCKERS.md;
+  test "$(sha256sum docs/governance/D002C_CLAIM_LEDGER.yaml | awk "{print \$1}")" = "f96ba9b5a2057d2e0bff84afc28578ab316cff73f6dc6673fb0d6d543b8bd6dd";
+  test "$(sha256sum research/systemic_risk/d002c_substrates.py | awk "{print \$1}")" = "4b2e5d65c104a5be5a207951cd3c4ae099f31ce83b3f2c0766a160d8c9e80eca";
+  test "$(sha256sum research/systemic_risk/d002g_null_mechanisms.py | awk "{print \$1}")" = "c7e275191454e1e961d5a079a21b6e1dbfcbc1661d48ddf14d0d0c39a426f257";
+  test "$(sha256sum docs/governance/D002G_PREREGISTRATION.yaml | awk "{print \$1}")" = "1ab91f09370e4705a8b0849467bc1f56df2e58d58d5623d3b6d905cbd110bb04";
+  test "$(sha256sum docs/governance/D002G_P3_M3_PREREGISTRATION.md | awk "{print \$1}")" = "0f11a0c890374c35e4dedecc66caec52ae867f49a8f8b3be2374f1464712c1f8"'
+signal_artifact: "docs/governance/D002H_PREREGISTRATION.yaml"
+falsifier:
+  command: >-
+    bash -c 'set -e;
+    PYTHONPATH=. python -m pytest tests/systemic_risk/test_d002h_preregistration.py -q || exit 1;
+    test -f docs/governance/D002H_PREREGISTRATION.yaml || exit 2;
+    test -f docs/governance/D002H_SCOPE_RATIONALE.md || exit 3;
+    test -f docs/governance/D002H_CLAIM_BOUNDARY.md || exit 4;
+    test -f docs/governance/D002H_CANONICAL_RUN_AUTHORIZATION_GATES.md || exit 5;
+    test -f artifacts/d002h/prereg/d002h_preregistration_lock.json || exit 6;
+    python -c "import yaml;
+    d=yaml.safe_load(open(\"docs/governance/D002H_PREREGISTRATION.yaml\"));
+    assert d[\"study_id\"]==\"D-002H\";
+    assert d[\"substrate_scope\"][\"included\"]==[\"ricci_flow\"];
+    assert set(d[\"substrate_scope\"][\"excluded\"])=={\"block_structured\",\"temporal_coupling\"};
+    assert d[\"canonical_run_authorized\"] is False;
+    assert d[\"requires_explicit_authorization_artifact\"] is True;
+    assert d[\"parent_merge_sha\"]==\"8cf5364a3f3b605d8b134bccbfe5170098e0e197\";
+    assert \"cross-substrate robustness\" in d[\"forbidden_claims\"];
+    assert \"general topology robustness\" in d[\"forbidden_claims\"];
+    assert \"D-002G rescue\" in d[\"forbidden_claims\"];
+    assert d[\"lineage_type\"]==\"fresh_preregistration\";
+    assert d[\"prereg_lock\"][\"edit_policy\"]==\"fresh_pre_registration_only\"" || exit 7;
+    grep -q "D-002G ↔ D-002H lineage transition" docs/governance/D002G_CANONICAL_RUN_BLOCKERS.md || exit 8;
+    test "$(sha256sum docs/governance/D002C_CLAIM_LEDGER.yaml | awk "{print \$1}")" = "f96ba9b5a2057d2e0bff84afc28578ab316cff73f6dc6673fb0d6d543b8bd6dd" || exit 9;
+    test "$(sha256sum research/systemic_risk/d002c_substrates.py | awk "{print \$1}")" = "4b2e5d65c104a5be5a207951cd3c4ae099f31ce83b3f2c0766a160d8c9e80eca" || exit 10;
+    test "$(sha256sum research/systemic_risk/d002g_null_mechanisms.py | awk "{print \$1}")" = "c7e275191454e1e961d5a079a21b6e1dbfcbc1661d48ddf14d0d0c39a426f257" || exit 11;
+    if grep -rE "D-002G rescued|D-002C rescued|D-002G validated|D-002G PASS|cross-substrate robustness|general topology robustness|M4 inside D-002G|M4 will fix|canonical run authorised|canonical run authorized" docs/governance/D002H_PREREGISTRATION.yaml docs/governance/D002H_SCOPE_RATIONALE.md docs/governance/D002H_CLAIM_BOUNDARY.md docs/governance/D002H_CANONICAL_RUN_AUTHORIZATION_GATES.md | grep -vE "forbidden|NOT|never|cannot|does not|do not|out of scope|out-of-scope|requires|❌|must (not|pass)|MUST NOT|when authorised|when authorized|after.+(authorisation|authorization)|until.+(authorisation|authorization)|^[^:]+:  - \"|attempt|reject|REJECT|deny|denied|prohibited|disallowed|impossible"; then
+      echo "forbidden promotional phrase leaked outside denial context"; exit 12;
+    fi'
+  description: >-
+    Probes the D-002H pre-registration artifact:
+    (a) the 12 prereg tests all pass;
+    (b) all 5 new docs/artifacts exist on disk;
+    (c) the yaml carries study_id D-002H, scope_included=[ricci_flow],
+        scope_excluded={block_structured,temporal_coupling},
+        canonical_run_authorized=false, requires_explicit_authorization
+        =true, parent_merge_sha=8cf5364a, forbidden_claims contains the
+        three canonical phrases, lineage_type=fresh_preregistration,
+        edit_policy=fresh_pre_registration_only;
+    (d) BLOCKERS.md carries the new lineage-transition section;
+    (e) D002C_CLAIM_LEDGER.yaml is byte-exact unchanged;
+    (f) d002c_substrates.py is byte-exact unchanged at the parent
+        closure base sha;
+    (g) d002g_null_mechanisms.py is byte-exact unchanged;
+    (h) no forbidden D-002G rescue / cross-substrate / M4-in-D002G /
+        canonical-run-authorised phrase leaks outside denial context.
+    If any of these regress, the D-002H prereg contract is broken.
+rollback_command: >-
+  bash -c 'rm -f
+  docs/governance/D002H_PREREGISTRATION.yaml
+  docs/governance/D002H_SCOPE_RATIONALE.md
+  docs/governance/D002H_CLAIM_BOUNDARY.md
+  docs/governance/D002H_CANONICAL_RUN_AUTHORIZATION_GATES.md
+  artifacts/d002h/prereg/d002h_preregistration_lock.json
+  tests/systemic_risk/test_d002h_preregistration.py
+  .claude/commit_acceptors/x10r-d002h-ricci-flow-prereg.yaml
+  && git checkout HEAD~1 -- docs/governance/D002G_CANONICAL_RUN_BLOCKERS.md'
+rollback_verification_command: >-
+  bash -c 'test ! -f docs/governance/D002H_PREREGISTRATION.yaml
+  && test ! -f docs/governance/D002H_SCOPE_RATIONALE.md
+  && test ! -f docs/governance/D002H_CLAIM_BOUNDARY.md
+  && test ! -f docs/governance/D002H_CANONICAL_RUN_AUTHORIZATION_GATES.md
+  && test ! -f artifacts/d002h/prereg/d002h_preregistration_lock.json
+  && test ! -f tests/systemic_risk/test_d002h_preregistration.py
+  && test ! -f .claude/commit_acceptors/x10r-d002h-ricci-flow-prereg.yaml
+  && ! grep -q "D-002G ↔ D-002H lineage transition" docs/governance/D002G_CANONICAL_RUN_BLOCKERS.md'
+memory_update_type: append
+ledger_path: ".claude/commit_acceptors/x10r-d002h-ricci-flow-prereg.yaml"
+report_path: "docs/governance/D002H_PREREGISTRATION.yaml"
+evidence: []

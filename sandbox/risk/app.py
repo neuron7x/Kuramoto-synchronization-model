@@ -1,3 +1,5 @@
+# Copyright (c) 2023-2026 Yaroslav Vasylenko (neuron7xLab)
+# SPDX-License-Identifier: MIT
 """FastAPI application for the sandbox risk layer."""
 
 from __future__ import annotations
@@ -40,9 +42,7 @@ class ControlAuditLogger(AuditLoggerProtocol):
 
 def create_engine(settings: RiskSettings) -> RiskEngine:
     control_client = ControlClient(str(settings.control_url))
-    limits = RiskLimits(
-        max_position=settings.max_position, max_notional=settings.max_notional
-    )
+    limits = RiskLimits(max_position=settings.max_position, max_notional=settings.max_notional)
     return RiskEngine(
         limits=limits,
         kill_switch=ControlKillSwitchProvider(control_client),
@@ -50,13 +50,11 @@ def create_engine(settings: RiskSettings) -> RiskEngine:
     )
 
 
-def create_app(
-    settings: RiskSettings | None = None, engine: RiskEngine | None = None
-) -> FastAPI:
+def create_app(settings: RiskSettings | None = None, engine: RiskEngine | None = None) -> FastAPI:
     config = settings or risk_settings()
     risk_engine = engine or create_engine(config)
 
-    app = FastAPI(title="TradePulse Sandbox Risk Engine", version="1.0.0")
+    app = FastAPI(title="GeoSync Sandbox Risk Engine", version="1.0.0")
 
     @app.get("/health")
     async def health() -> dict[str, Any]:

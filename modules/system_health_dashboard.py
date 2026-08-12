@@ -1,3 +1,5 @@
+# Copyright (c) 2023-2026 Yaroslav Vasylenko (neuron7xLab)
+# SPDX-License-Identifier: MIT
 """
 System Health Dashboard Module
 
@@ -349,9 +351,7 @@ class SystemHealthDashboard:
                 unhealthy += 1
 
         total = healthy + degraded + unhealthy
-        uptime_percent = (
-            (healthy + degraded) / total * 100 if total > 0 else 100.0
-        )
+        uptime_percent = (healthy + degraded) / total * 100 if total > 0 else 100.0
 
         # Визначення загального статусу
         if unhealthy > 0:
@@ -496,7 +496,8 @@ class SystemHealthDashboard:
 
         # Збір діагностичної інформації
         recent_alerts = [
-            a for a in self._alerts
+            a
+            for a in self._alerts
             if a.component_id == component_id
             and (datetime.now() - a.created_at).total_seconds() < 86400
         ]
@@ -539,9 +540,7 @@ class SystemHealthDashboard:
         if callback in self._subscribers:
             self._subscribers.remove(callback)
 
-    def _update_from_health_check(
-        self, component_id: str, check: HealthCheck
-    ) -> None:
+    def _update_from_health_check(self, component_id: str, check: HealthCheck) -> None:
         """Оновлення компонента з результату health check"""
         if component_id not in self._components:
             return
@@ -617,14 +616,11 @@ class SystemHealthDashboard:
 
             if component.error_count > 0:
                 recommendations.append(
-                    f"Component has {component.error_count} errors. "
-                    "Investigate the root cause."
+                    f"Component has {component.error_count} errors. Investigate the root cause."
                 )
 
         if component.status == ComponentStatus.DEGRADED:
-            recommendations.append(
-                "Component is degraded. Monitor closely for further issues."
-            )
+            recommendations.append("Component is degraded. Monitor closely for further issues.")
 
             # Перевірка latency
             if component.health_checks:
@@ -633,8 +629,7 @@ class SystemHealthDashboard:
                 )
                 if avg_latency > self.degraded_threshold_latency_ms:
                     recommendations.append(
-                        f"Average latency is {avg_latency:.0f}ms. "
-                        "Check for performance issues."
+                        f"Average latency is {avg_latency:.0f}ms. Check for performance issues."
                     )
 
         if component.last_error:
@@ -719,9 +714,9 @@ class SystemHealthDashboard:
             "active_alerts": summary.active_alerts,
             "total_alerts": len(self._alerts),
             "uptime_percent": f"{summary.uptime_percent:.1f}%",
-            "system_uptime": str(timedelta(seconds=int(
-                (datetime.now() - self._start_time).total_seconds()
-            ))),
+            "system_uptime": str(
+                timedelta(seconds=int((datetime.now() - self._start_time).total_seconds()))
+            ),
             "health_checks_registered": len(self._health_checks),
             "subscribers": len(self._subscribers),
         }

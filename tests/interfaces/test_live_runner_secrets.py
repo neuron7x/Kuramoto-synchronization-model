@@ -1,3 +1,5 @@
+# Copyright (c) 2023-2026 Yaroslav Vasylenko (neuron7xLab)
+# SPDX-License-Identifier: MIT
 from __future__ import annotations
 
 from pathlib import Path
@@ -40,24 +42,18 @@ sandbox = true
         encoding="utf-8",
     )
 
-    store = {
-        "secret/data/dummy": {"api_key": "vault-key", "api_secret": "vault-secret"}
-    }
+    store = {"secret/data/dummy": {"api_key": "vault-key", "api_secret": "vault-secret"}}
 
-    monkeypatch.setenv("TRADEPULSE_VAULT_ADDR", "https://vault.tradepulse.local")
-    monkeypatch.setenv("TRADEPULSE_VAULT_TOKEN", "vault-token")
+    monkeypatch.setenv("GEOSYNC_VAULT_ADDR", "https://vault.geosync.local")
+    monkeypatch.setenv("GEOSYNC_VAULT_TOKEN", "vault-token")
     monkeypatch.setenv("DUMMY_VAULT_PATH", "secret/data/dummy")
 
     def _fake_build(config, **_):  # type: ignore[no-untyped-def]
-        assert config.address == "https://vault.tradepulse.local"
+        assert config.address == "https://vault.geosync.local"
         return lambda path: dict(store[path])
 
-    monkeypatch.setattr(
-        "interfaces.secrets.backends.build_hashicorp_vault_resolver", _fake_build
-    )
-    monkeypatch.setattr(
-        "interfaces.live_runner.build_hashicorp_vault_resolver", _fake_build
-    )
+    monkeypatch.setattr("interfaces.secrets.backends.build_hashicorp_vault_resolver", _fake_build)
+    monkeypatch.setattr("interfaces.live_runner.build_hashicorp_vault_resolver", _fake_build)
 
     runner = LiveTradingRunner(config_path=config_path)
 
@@ -115,16 +111,12 @@ sandbox = true
         encoding="utf-8",
     )
 
-    store = {
-        "secret/data/dummy": {"api_key": "vault-key", "api_secret": "vault-secret"}
-    }
+    store = {"secret/data/dummy": {"api_key": "vault-key", "api_secret": "vault-secret"}}
 
     def resolver(path: str) -> Mapping[str, str]:
         return dict(store[path])
 
-    runner = LiveTradingRunner(
-        config_path=config_path, secret_backends={"vault": resolver}
-    )
+    runner = LiveTradingRunner(config_path=config_path, secret_backends={"vault": resolver})
 
     credentials = runner._credentials["dummy"]  # noqa: SLF001 - inspection helper
     assert credentials["API_KEY"] == "vault-key"

@@ -1,0 +1,27 @@
+# SPDX-License-Identifier: MIT
+id: claim-boundary-physics-audit-allow
+status: DRAFT
+claim_type: governance
+promise: "docs/PHYSICS_BOUNDARY_AUDIT.md line is a reviewed honest-negation of the product boundary; allowlist it so the claim-boundary gate passes without weakening the boundary."
+diff_scope:
+  changed_files:
+    - path: ".claude/commit_acceptors/claim-boundary-physics-audit-allow.yaml"
+    - path: ".github/claim_boundary_allow.json"
+  forbidden_paths:
+    - "trading/"
+    - "execution/"
+    - "forecast/"
+    - "policy/"
+required_python_symbols: []
+expected_signal: "scripts/ci/check_claim_boundary.py exits 0 (no unreviewed product-category claims)."
+measurement_command: "python scripts/ci/check_claim_boundary.py"
+signal_artifact: "tmp/claim_boundary.log"
+falsifier:
+  command: "python -c \"import subprocess,sys; r=subprocess.run([sys.executable,'scripts/ci/check_claim_boundary.py']); sys.exit(0 if r.returncode!=0 else 1)\""
+  description: "Asserts the claim-boundary gate is RED; on the green path this probe exits non-zero, proving the promise is falsifiable."
+rollback_command: "git revert --no-edit HEAD"
+rollback_verification_command: "python scripts/ci/check_claim_boundary.py"
+memory_update_type: none
+ledger_path: ".github/claim_boundary_allow.json"
+report_path: "docs/reports/diff_bound_commit_acceptor_layer.md"
+evidence: []

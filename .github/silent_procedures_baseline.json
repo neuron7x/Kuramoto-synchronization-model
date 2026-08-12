@@ -1,0 +1,13 @@
+{
+ "_doc": "Procedures (-> None) whose broad `except` neither re-raises nor reports: the caller cannot tell 'done' from 'did not happen'. RATCHET -- this list may only SHRINK. Not every entry is a bug (a metric that fails to publish is genuinely best-effort), which is why it is frozen rather than forced to zero. Pay down from the capital surfaces first.",
+ "version": 1,
+ "count": 5,
+ "capital_surface_count": 3,
+ "silent": [
+  "geosync/cli/geosync_cli.py::_ingest_worker",
+  "geosync/cli/geosync_cli.py::ingest",
+  "geosync/risk/kill_switch.py::_load_state",
+  "geosync/risk/kill_switch.py::_notify_callbacks",
+  "geosync/risk/kill_switch.py::_persist"
+ ]
+}

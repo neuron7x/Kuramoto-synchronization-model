@@ -1,3 +1,5 @@
+# Copyright (c) 2023-2026 Yaroslav Vasylenko (neuron7xLab)
+# SPDX-License-Identifier: MIT
 """
 Integrated Risk Management Example
 
@@ -10,11 +12,11 @@ Integrated Risk Management Example
 
 import numpy as np
 
+from core.utils.determinism import seed_numpy
 from modules.adaptive_risk_manager import AdaptiveRiskManager
 from modules.agent_coordinator import AgentCoordinator, AgentType, Priority
 from modules.dynamic_position_sizer import DynamicPositionSizer, SizingMethod
 from modules.market_regime_analyzer import MarketRegimeAnalyzer
-from core.utils.determinism import seed_numpy
 
 
 def generate_market_data(n_bars=200, trend=0.0005, volatility=0.015):
@@ -30,15 +32,13 @@ def generate_market_data(n_bars=200, trend=0.0005, volatility=0.015):
 
 def main():
     print("=" * 80)
-    print("TradePulse Integrated Risk Management System")
+    print("GeoSync Integrated Risk Management System")
     print("=" * 80)
     print()
 
     # Initialize components
     print("🔧 Initializing components...")
-    risk_manager = AdaptiveRiskManager(
-        base_capital=100000.0, risk_tolerance=0.02, var_window=100
-    )
+    risk_manager = AdaptiveRiskManager(base_capital=100000.0, risk_tolerance=0.02, var_window=100)
 
     regime_analyzer = MarketRegimeAnalyzer(regime_window=50, transition_threshold=0.7)
 
@@ -103,9 +103,7 @@ def main():
     # Get strategy recommendations based on regime
     recommendations = regime_analyzer.recommend_strategy_parameters(regime_metrics)
     print("📋 Strategy Recommendations:")
-    print(
-        f"   Position Size Multiplier: {recommendations['position_size_multiplier']:.2f}"
-    )
+    print(f"   Position Size Multiplier: {recommendations['position_size_multiplier']:.2f}")
     print(f"   Stop Loss Multiplier: {recommendations['stop_loss_multiplier']:.2f}")
     print(f"   Take Profit Multiplier: {recommendations['take_profit_multiplier']:.2f}")
     print(f"   Holding Period Target: {recommendations['holding_period_target']} bars")
@@ -126,7 +124,7 @@ def main():
     print("🎯 Calculating position limits...")
     current_volatility = np.std(returns[-20:])
     position_limit = risk_manager.update_position_limits(
-        symbol="BTCUSD", volatility=current_volatility
+        market_state_or_symbol="BTCUSD", volatility=current_volatility
     )
 
     print(f"   Symbol: {position_limit.symbol}")

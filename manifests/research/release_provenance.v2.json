@@ -1,0 +1,81 @@
+{
+  "schema_version": "2.0.0",
+  "manifest_id": "geosync.release_provenance.v2",
+  "task": "REL-005",
+  "status": "RECORDED",
+  "generated_utc": "2026-07-19T14:37:04Z",
+  "purpose": "Pin the canonical immutable GeoSync release ref to an annotated, cryptographically signed git tag and document the merge/source tree-identity relationship.",
+  "release_ref": {
+    "tag_name": "geosync-canonical-8080e4b4",
+    "tag_type": "annotated",
+    "tag_object_sha": "2fdcbf4452e81e66564f8028616131f4d3dd916b",
+    "canonical_commit": "8080e4b475efe054901804f25b37b80bd06203f4",
+    "tree": "9060de4a097ea467f7ab5d52ecb660ba345f671b",
+    "parents": [
+      "963d87d79f4a2613f93b7b870dc25ace1cc02460",
+      "449f439c5605f89a1beeaac73e5eca8b7cfe1112"
+    ]
+  },
+  "objects": {
+    "merge_commit": {
+      "sha": "8080e4b475efe054901804f25b37b80bd06203f4",
+      "type": "commit",
+      "tree": "9060de4a097ea467f7ab5d52ecb660ba345f671b",
+      "parents": [
+        "963d87d79f4a2613f93b7b870dc25ace1cc02460",
+        "449f439c5605f89a1beeaac73e5eca8b7cfe1112"
+      ],
+      "subject": "Merge branch 'fix/defect-sweep-2026-07-19' into 'main'",
+      "role": "export merge commit — canonical release ref (this tag's target)"
+    },
+    "content_commit": {
+      "sha": "449f439c5605f89a1beeaac73e5eca8b7cfe1112",
+      "type": "commit",
+      "tree": "9060de4a097ea467f7ab5d52ecb660ba345f671b",
+      "parents": [
+        "963d87d79f4a2613f93b7b870dc25ace1cc02460"
+      ],
+      "subject": "fix: fail-closed defect sweep — 26 verified defects across 5 surfaces",
+      "role": "fix-sweep content/source commit — content-equivalent to the merge"
+    },
+    "base_commit": {
+      "sha": "963d87d79f4a2613f93b7b870dc25ace1cc02460",
+      "type": "commit",
+      "subject": "Merge branch 'port/ebsvap-governance' into 'main'",
+      "role": "common base (prior main); first parent of the merge and the sole parent of the content commit"
+    },
+    "canonical_tree": {
+      "sha": "9060de4a097ea467f7ab5d52ecb660ba345f671b",
+      "type": "tree",
+      "role": "canonical release tree; identical between merge_commit and content_commit"
+    }
+  },
+  "rationale": {
+    "tree_identity": "The merge commit 8080e4b4 and the content commit 449f439c share the exact same tree 9060de4a because main had not advanced past base 963d87d7 since the fix-sweep branch (fix/defect-sweep-2026-07-19, tip 449f439c) forked from it. The merge's first parent (963d87d7) contributed no changes to integrate, so the two-parent merge reproduces the fix-sweep tip's tree verbatim — a --no-ff merge whose resulting content is identical to a fast-forward. The merge commit adds only the two-parent topology that records the integration of the fix-sweep into main; it introduces no content delta over 449f439c.",
+    "why_tag_targets_merge": "The tag targets the merge commit 8080e4b4 (not the content commit 449f439c) because 8080e4b4 is the object that actually landed on the main line of history and carries the integration provenance (both parents). 449f439c is recorded here as the content-equivalent source commit. Both resolve to the same canonical tree 9060de4a, so the release content is unambiguous regardless of which of the two is dereferenced.",
+    "immutability": "A git tag object is content-addressed by SHA; the annotated tag 2fdcbf44 pins commit 8080e4b4 and, transitively, tree 9060de4a. Any change to the referenced content would change the tree hash and break the reference, making the ref immutable by construction."
+  },
+  "signature": {
+    "signed": true,
+    "signature_format": "ssh",
+    "signature_algorithm": "ed25519",
+    "signer_key_fingerprint": "SHA256:w7ynAVmM58JG9ksD/CaRjP+6k4AMb0pF2MW362VyhEc",
+    "signer_identity": "neuron7x@gmail.com",
+    "verification": "Good \"git\" signature (git tag -v exit 0)",
+    "gpg_signed": false,
+    "gpg_signed_reason": "Repository signing is configured with gpg.format=ssh, so `git tag -s` produced a valid SSH (ed25519) signature, NOT an OpenPGP/GPG signature. No OpenPGP signature was made; gpg_signed is therefore false. The tag is nonetheless cryptographically signed and verifies GOOD against the configured SSH key. An OpenPGP secret key (925BE80C890EC034A7CA6C83A906D4F2B07A1BB7) exists in the keyring but was not used because the repo's gpg.format is ssh."
+  },
+  "acceptance": {
+    "tag_reachable": true,
+    "tag_resolves": true,
+    "tree_hash_match": true,
+    "target_tree_equals_9060de4a": true,
+    "references_real_non_dangling_object": true,
+    "merge_source_relationship_documented": true,
+    "reachability_evidence": "Reachable from HEAD (63062a51...) via `git merge-base --is-ancestor ...^{commit} HEAD` exit 0; contained in branches remediation/wave1-gov-rel and remediation/wave2-p0."
+  },
+  "evidence_files": [
+    "manifests/research/release_provenance.v2.json",
+    "artifacts/release/release_ref_verification.txt"
+  ]
+}

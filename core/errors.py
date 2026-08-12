@@ -1,12 +1,13 @@
-# SPDX-License-Identifier: LicenseRef-TradePulse-Proprietary
-"""Typed domain errors for TradePulse core infrastructure.
+# Copyright (c) 2023-2026 Yaroslav Vasylenko (neuron7xLab)
+# SPDX-License-Identifier: MIT
+"""Typed domain errors for GeoSync core infrastructure.
 
 This module provides a centralized error taxonomy for the core package,
 ensuring consistent error handling, fail-fast behavior on invalid inputs,
 and auditable error paths with correlation IDs.
 
 Error Hierarchy:
-    TradePulseError (base)
+    GeoSyncError (base)
     ├── ValidationError - input/data validation failures
     ├── ConfigError - configuration errors
     ├── IntegrityError - data integrity/security failures
@@ -54,8 +55,8 @@ class ErrorContext:
         return result
 
 
-class TradePulseError(Exception):
-    """Base exception for all TradePulse domain errors.
+class GeoSyncError(Exception):
+    """Base exception for all GeoSync domain errors.
 
     All domain-specific errors should inherit from this class to ensure
     consistent error handling and auditability across the codebase.
@@ -96,7 +97,7 @@ class TradePulseError(Exception):
         }
 
 
-class ValidationError(TradePulseError):
+class ValidationError(GeoSyncError):
     """Error raised when input or data validation fails.
 
     This error indicates that data does not meet expected constraints,
@@ -122,9 +123,7 @@ class ValidationError(TradePulseError):
         context: ErrorContext | None = None,
         error_code: str | None = None,
     ) -> None:
-        super().__init__(
-            message, context=context, error_code=error_code or "VALIDATION_ERROR"
-        )
+        super().__init__(message, context=context, error_code=error_code or "VALIDATION_ERROR")
         self.field = field
         self.value = value
         self.constraint = constraint
@@ -140,7 +139,7 @@ class ValidationError(TradePulseError):
         return result
 
 
-class ConfigError(TradePulseError):
+class ConfigError(GeoSyncError):
     """Error raised for configuration-related failures.
 
     This includes invalid configuration values, missing required settings,
@@ -164,9 +163,7 @@ class ConfigError(TradePulseError):
         context: ErrorContext | None = None,
         error_code: str | None = None,
     ) -> None:
-        super().__init__(
-            message, context=context, error_code=error_code or "CONFIG_ERROR"
-        )
+        super().__init__(message, context=context, error_code=error_code or "CONFIG_ERROR")
         self.config_key = config_key
         self.config_value = config_value
         self.expected_type = expected_type
@@ -181,7 +178,7 @@ class ConfigError(TradePulseError):
         return result
 
 
-class IntegrityError(TradePulseError):
+class IntegrityError(GeoSyncError):
     """Error raised when data integrity or security checks fail.
 
     This includes checksum mismatches, tampered artifacts, TLS verification
@@ -207,9 +204,7 @@ class IntegrityError(TradePulseError):
         context: ErrorContext | None = None,
         error_code: str | None = None,
     ) -> None:
-        super().__init__(
-            message, context=context, error_code=error_code or "INTEGRITY_ERROR"
-        )
+        super().__init__(message, context=context, error_code=error_code or "INTEGRITY_ERROR")
         self.artifact = artifact
         self.expected_checksum = expected_checksum
         self.actual_checksum = actual_checksum
@@ -228,7 +223,7 @@ class IntegrityError(TradePulseError):
         return result
 
 
-class ResourceBudgetError(TradePulseError):
+class ResourceBudgetError(GeoSyncError):
     """Error raised when resource budgets are exceeded.
 
     This includes latency budget violations, memory limits, CPU quotas,
@@ -256,9 +251,7 @@ class ResourceBudgetError(TradePulseError):
         context: ErrorContext | None = None,
         error_code: str | None = None,
     ) -> None:
-        super().__init__(
-            message, context=context, error_code=error_code or "RESOURCE_BUDGET_ERROR"
-        )
+        super().__init__(message, context=context, error_code=error_code or "RESOURCE_BUDGET_ERROR")
         self.resource = resource
         self.budget_ms = budget_ms
         self.actual_ms = actual_ms
@@ -292,7 +285,7 @@ class ResourceBudgetError(TradePulseError):
         return result
 
 
-class EngineError(TradePulseError):
+class EngineError(GeoSyncError):
     """Error raised during engine execution failures.
 
     This includes errors in the core trading engine loop, signal generation
@@ -316,9 +309,7 @@ class EngineError(TradePulseError):
         context: ErrorContext | None = None,
         error_code: str | None = None,
     ) -> None:
-        super().__init__(
-            message, context=context, error_code=error_code or "ENGINE_ERROR"
-        )
+        super().__init__(message, context=context, error_code=error_code or "ENGINE_ERROR")
         self.stage = stage
         self.run_id = run_id
         self.cycle_number = cycle_number
@@ -334,7 +325,7 @@ class EngineError(TradePulseError):
         return result
 
 
-class PipelineError(TradePulseError):
+class PipelineError(GeoSyncError):
     """Error raised during pipeline or workflow execution failures.
 
     This includes errors in data pipelines, feature pipelines, and
@@ -360,9 +351,7 @@ class PipelineError(TradePulseError):
         context: ErrorContext | None = None,
         error_code: str | None = None,
     ) -> None:
-        super().__init__(
-            message, context=context, error_code=error_code or "PIPELINE_ERROR"
-        )
+        super().__init__(message, context=context, error_code=error_code or "PIPELINE_ERROR")
         self.pipeline = pipeline
         self.stage = stage
         self.idempotency_key = idempotency_key
@@ -429,7 +418,7 @@ class DataQualityError(ValidationError):
 
 __all__ = [
     "ErrorContext",
-    "TradePulseError",
+    "GeoSyncError",
     "ValidationError",
     "ConfigError",
     "IntegrityError",

@@ -1,3 +1,5 @@
+# Copyright (c) 2023-2026 Yaroslav Vasylenko (neuron7xLab)
+# SPDX-License-Identifier: MIT
 """Tests for the FETE runtime integration utilities."""
 
 from __future__ import annotations
@@ -49,9 +51,7 @@ def test_yahoo_fetcher_returns_candles() -> None:
 
 def test_paper_account_rebalance_and_cash_management() -> None:
     now = datetime.now()
-    account = PaperTradingAccount(
-        initial_cash=1_000.0, transaction_cost=0.0, slippage=0.0
-    )
+    account = PaperTradingAccount(initial_cash=1_000.0, transaction_cost=0.0, slippage=0.0)
     equity = account.equity({"BTC": 100.0}, timestamp=now, record=False)
     assert equity == 1_000.0
 
@@ -97,9 +97,7 @@ def test_risk_guard_stop_loss_and_circuit_breaker() -> None:
     assert reason == "daily_loss"
     assert guard.circuit_breaker_active
 
-    position = Position(
-        symbol="BTC", quantity=1.0, entry_price=100.0, current_price=100.0
-    )
+    position = Position(symbol="BTC", quantity=1.0, entry_price=100.0, current_price=100.0)
     triggered = guard.stop_loss_triggered(position, 94.0, timestamp=now)
     assert triggered
     assert guard.events[-1].code == "stop_loss"
@@ -130,9 +128,7 @@ def test_backtest_engine_generates_report() -> None:
     prices = np.array([100.0, 101.0, 100.5, 102.0, 103.5, 104.0], dtype=float)
     probs = np.linspace(0.45, 0.6, prices.size)
     fete = FETE(FETEConfig())
-    account = PaperTradingAccount(
-        initial_cash=5_000.0, transaction_cost=0.0, slippage=0.0
-    )
+    account = PaperTradingAccount(initial_cash=5_000.0, transaction_cost=0.0, slippage=0.0)
     guard = RiskGuard(
         max_position_fraction=0.3,
         max_daily_loss=0.5,

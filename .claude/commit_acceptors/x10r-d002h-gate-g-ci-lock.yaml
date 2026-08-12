@@ -1,0 +1,253 @@
+# Diff-bound commit acceptor for the D-002H Gate G final CI lock PR.
+#
+# Gate G is term 7 (TERMINAL) of the 7-gate canonical-run authorisation
+# conjunction A AND B AND C AND D AND E AND F AND G. PASS of Gate G
+# emits the TERMINAL state CANONICAL_RUN_AUTHORIZED with
+# canonical_run_authorized_final = True. Gate G is the AUTHORISATION
+# terminal - it does NOT execute the D-002H canonical sweep. The sweep
+# itself is a SEPARATE downstream PR.
+#
+# Pure declaration + read-only verification. Emits a machine-readable
+# artifact at
+# artifacts/d002h/authorization/d002h_canonical_run_final_lock.json
+# (schema D002H-GATE-G-v1) and a human-readable report at
+# docs/governance/D002H_GATE_G_CI_LOCK_REPORT.md. Phase 0 GitHub Actions
+# check-runs query for each prior gate sha is recorded inline in the
+# artifact as ci_verdict='ALL_REQUIRED_PASS'. The 6 prior-gate anchors
+# A..F are verified ancestors of origin/main via
+# git merge-base --is-ancestor.
+#
+# Strict scope (per the operating law):
+#   * NO canonical run. NO sweep. NO results. NO sweep PR.
+#   * NO new mechanism family. NO new verdict literal. NO new salt.
+#   * NO D-002G prereg edit. NO D-002H prereg edit. NO locked-file edit.
+#   * NO D002C_CLAIM_LEDGER.yaml mutation (sha pinned byte-exact at
+#     f96ba9b5a2057d2e0bff84afc28578ab316cff73f6dc6673fb0d6d543b8bd6dd).
+#   * NO substrate code edit. NO mechanism code edit.
+#   * NO modification of prior gate artifacts (A..F).
+#   * Gate G PASS = canonical_run_authorized_final True; the canonical
+#     sweep itself remains a SEPARATE downstream PR.
+
+id: x10r-d002h-gate-g-ci-lock
+status: ACTIVE
+claim_type: governance
+promise: >-
+  After this PR lands,
+  artifacts/d002h/authorization/d002h_canonical_run_final_lock.json
+  carries schema_version "D002H-GATE-G-v1" with study_id "D-002H",
+  gate "G", status "CANONICAL_RUN_AUTHORIZED",
+  canonical_run_authorized_final True, authorisation_scope
+  "ricci_flow substrate only (per D-002H prereg substrate_scope)",
+  conjunction_required "A AND B AND C AND D AND E AND F AND G",
+  conjunction_satisfied "A AND B AND C AND D AND E AND F AND G",
+  gate_chain of length 6 recording Gates A..F at the brief-specified
+  shas + PR numbers with ci_verdict "ALL_REQUIRED_PASS",
+  canonical_run_execution_status "NOT_STARTED",
+  canonical_run_execution_artifact declaring the sweep is a SEPARATE
+  downstream PR, the D-002C ledger pin
+  f96ba9b5a2057d2e0bff84afc28578ab316cff73f6dc6673fb0d6d543b8bd6dd,
+  the D-002H prereg pin
+  44b18b5a40ce9d188a9c3bd49339621f81a65a15f97a683247902450dd54acec,
+  substrate pin 4b2e5d65c104a5be5a207951cd3c4ae099f31ce83b3f2c0766a160d8c9e80eca,
+  and mechanism pin c7e275191454e1e961d5a079a21b6e1dbfcbc1661d48ddf14d0d0c39a426f257.
+
+  docs/governance/D002H_GATE_G_CI_LOCK_REPORT.md carries the 9-section
+  report (scope, prior gate CI verification table, conjunction status,
+  TERMINAL VERDICT CANONICAL_RUN_AUTHORIZED, claim boundary verbatim,
+  forbidden interpretations, next legal step, reproduce, downstream).
+
+  tests/systemic_risk/test_d002h_gate_g_ci_lock.py carries the 12
+  required-by-brief tests with exact names plus parametrised ancestor
+  + per-gate pin-match tests (24 cases total):
+  test_gate_g_artifact_exists, test_gate_g_schema_version,
+  test_gate_g_status_canonical_run_authorized,
+  test_gate_g_canonical_run_authorized_final_is_true,
+  test_gate_g_conjunction_satisfied_string,
+  test_gate_g_chain_has_6_prior_gates,
+  test_gate_g_all_6_prior_gates_have_ci_pass_verdict,
+  test_gate_g_authorisation_scope_ricci_flow_only,
+  test_gate_g_canonical_run_execution_not_started,
+  test_gate_g_preserves_d002c_ledger,
+  test_gate_g_preserves_d002h_prereg,
+  test_gate_g_does_not_run_sweep,
+  test_gate_g_each_anchor_is_ancestor_of_main (6 cases),
+  test_gate_g_each_anchor_pin_matches_artifact (6 cases).
+
+  docs/governance/D002G_CANONICAL_RUN_BLOCKERS.md gains an append-only
+  "D-002H Gate G" section after the Gate F section.
+
+  Gate G is pure declaration + read-only ancestor + CI verification:
+  NO canonical run, NO sweep, NO results. NO new mechanism. NO new
+  verdict literal. NO substrate / mechanism / locked governance edit.
+  NO D-002C ledger mutation. NO D-002H prereg edit. NO modification of
+  prior gate artifacts. The canonical sweep itself is a SEPARATE
+  downstream PR; Gate G is the AUTHORISATION terminal.
+
+diff_scope:
+  changed_files:
+    - path: ".claude/commit_acceptors/x10r-d002h-gate-g-ci-lock.yaml"
+    - path: "tests/systemic_risk/test_d002h_gate_g_ci_lock.py"
+    - path: "docs/governance/D002H_GATE_G_CI_LOCK_REPORT.md"
+    - path: "artifacts/d002h/authorization/d002h_canonical_run_final_lock.json"
+    - path: "docs/governance/D002G_CANONICAL_RUN_BLOCKERS.md"
+    - path: ".github/detect-secrets.baseline"
+  forbidden_paths:
+    - "docs/governance/D002C_CLAIM_LEDGER.yaml"
+    - "docs/governance/D002C_PREREGISTRATION.yaml"
+    - "docs/governance/D002C_CANONICAL_RUN_REPORT.md"
+    - "docs/governance/D002C_ATTEMPT_2_NULL_AUDIT_FALSIFICATION_REPORT.md"
+    - "docs/governance/D002G_PREREGISTRATION.yaml"
+    - "docs/governance/D002G_NONDEGENERATE_NULL_DESIGN.md"
+    - "docs/governance/D002G_ACCEPTANCE_RULES.md"
+    - "docs/governance/D002G_P3_M3_PREREGISTRATION.md"
+    - "docs/governance/D002G_STRUCTURAL_CLOSURE_REPORT.md"
+    - "docs/governance/D002G_NEGATIVE_SPACE_MAP.md"
+    - "docs/governance/D002G_M3_ELIGIBILITY_MATRIX.md"
+    - "docs/governance/D002H_PREREGISTRATION.yaml"
+    - "docs/governance/D002H_SCOPE_RATIONALE.md"
+    - "docs/governance/D002H_CLAIM_BOUNDARY.md"
+    - "docs/governance/D002H_CANONICAL_RUN_AUTHORIZATION_GATES.md"
+    - "docs/governance/D002H_GATE_B_REPORT.md"
+    - "docs/governance/D002H_GATE_C_CANONICAL_GRID.md"
+    - "docs/governance/D002H_GATE_D_FORBIDDEN_CLAIM_SCAN.md"
+    - "docs/governance/D002H_GATE_E_LOCKED_FILE_REPORT.md"
+    - "docs/governance/D002H_GATE_F_AUTHORIZATION_REPORT.md"
+    - "artifacts/d002h/prereg/d002h_preregistration_lock.json"
+    - "artifacts/d002h/eligibility/d002h_ricci_eligibility.json"
+    - "artifacts/d002h/canonical/d002h_canonical_grid.json"
+    - "artifacts/d002h/scans/d002h_forbidden_claim_scan.json"
+    - "artifacts/d002h/locks/d002h_locked_file_pins.json"
+    - "artifacts/d002h/authorization/d002h_canonical_run_authorisation.json"
+    - "scripts/x10r_d002h_gate_b_eligibility.py"
+    - "scripts/x10r_d002h_gate_d_scan.py"
+    - "tests/systemic_risk/test_d002h_gate_b_eligibility.py"
+    - "tests/systemic_risk/test_d002h_gate_c_grid.py"
+    - "tests/systemic_risk/test_d002h_gate_d_forbidden_claims.py"
+    - "tests/systemic_risk/test_d002h_gate_e_locked_files.py"
+    - "tests/systemic_risk/test_d002h_gate_f_authorization.py"
+    - "tests/systemic_risk/test_d002h_preregistration.py"
+    - ".claude/commit_acceptors/x10r-d002h-ricci-flow-prereg.yaml"
+    - ".claude/commit_acceptors/x10r-d002h-gate-b-eligibility.yaml"
+    - ".claude/commit_acceptors/x10r-d002h-gate-c-canonical-grid.yaml"
+    - ".claude/commit_acceptors/x10r-d002h-gate-d-forbidden-claim-scan.yaml"
+    - ".claude/commit_acceptors/x10r-d002h-gate-e-locked-files.yaml"
+    - ".claude/commit_acceptors/x10r-d002h-gate-f-authorization.yaml"
+    - "research/systemic_risk/d002c_substrates.py"
+    - "research/systemic_risk/d002g_null_mechanisms.py"
+    - "artifacts/d002g/closure/"
+    - "artifacts/d002g/m3/"
+    - "artifacts/d002g/p3/"
+    - "artifacts/d002g/canonical/"
+    - "artifacts/d002h/canonical/results/"
+required_python_symbols:
+  - "tests/systemic_risk/test_d002h_gate_g_ci_lock.py::test_gate_g_artifact_exists"
+  - "tests/systemic_risk/test_d002h_gate_g_ci_lock.py::test_gate_g_schema_version"
+  - "tests/systemic_risk/test_d002h_gate_g_ci_lock.py::test_gate_g_status_canonical_run_authorized"
+  - "tests/systemic_risk/test_d002h_gate_g_ci_lock.py::test_gate_g_canonical_run_authorized_final_is_true"
+  - "tests/systemic_risk/test_d002h_gate_g_ci_lock.py::test_gate_g_conjunction_satisfied_string"
+  - "tests/systemic_risk/test_d002h_gate_g_ci_lock.py::test_gate_g_chain_has_6_prior_gates"
+  - "tests/systemic_risk/test_d002h_gate_g_ci_lock.py::test_gate_g_all_6_prior_gates_have_ci_pass_verdict"
+  - "tests/systemic_risk/test_d002h_gate_g_ci_lock.py::test_gate_g_authorisation_scope_ricci_flow_only"
+  - "tests/systemic_risk/test_d002h_gate_g_ci_lock.py::test_gate_g_canonical_run_execution_not_started"
+  - "tests/systemic_risk/test_d002h_gate_g_ci_lock.py::test_gate_g_preserves_d002c_ledger"
+  - "tests/systemic_risk/test_d002h_gate_g_ci_lock.py::test_gate_g_preserves_d002h_prereg"
+  - "tests/systemic_risk/test_d002h_gate_g_ci_lock.py::test_gate_g_does_not_run_sweep"
+expected_signal: >-
+  `PYTHONPATH=. python -m pytest
+  tests/systemic_risk/test_d002h_gate_g_ci_lock.py -q` passes all 24
+  cases (12 base contract tests + 6 parametrised ancestor + 6
+  parametrised pin-match); the artifact JSON parses and satisfies the
+  schema / status / counters / chain asserts; the D-002C claim ledger
+  sha256 stays byte-exact at
+  f96ba9b5a2057d2e0bff84afc28578ab316cff73f6dc6673fb0d6d543b8bd6dd;
+  the D-002H prereg sha256 stays byte-exact at
+  44b18b5a40ce9d188a9c3bd49339621f81a65a15f97a683247902450dd54acec;
+  the substrate sha256 stays byte-exact at
+  4b2e5d65c104a5be5a207951cd3c4ae099f31ce83b3f2c0766a160d8c9e80eca;
+  the mechanism sha256 stays byte-exact at
+  c7e275191454e1e961d5a079a21b6e1dbfcbc1661d48ddf14d0d0c39a426f257;
+  BLOCKERS.md gains the "D-002H Gate G" append-only section after the
+  Gate F section.
+measurement_command: >-
+  bash -c 'set -e;
+  PYTHONPATH=. python -m pytest tests/systemic_risk/test_d002h_gate_g_ci_lock.py -q;
+  python -c "import json;
+  d=json.load(open(\"artifacts/d002h/authorization/d002h_canonical_run_final_lock.json\"));
+  assert d[\"schema_version\"]==\"D002H-GATE-G-v1\";
+  assert d[\"study_id\"]==\"D-002H\";
+  assert d[\"gate\"]==\"G\";
+  assert d[\"status\"]==\"CANONICAL_RUN_AUTHORIZED\";
+  assert d[\"canonical_run_authorized_final\"] is True;
+  assert d[\"authorisation_scope\"]==\"ricci_flow substrate only (per D-002H prereg substrate_scope)\";
+  assert d[\"conjunction_required\"]==\"A AND B AND C AND D AND E AND F AND G\";
+  assert d[\"conjunction_satisfied\"]==\"A AND B AND C AND D AND E AND F AND G\";
+  assert d[\"canonical_run_execution_status\"]==\"NOT_STARTED\";
+  assert len(d[\"gate_chain\"])==6;
+  assert [e[\"gate\"] for e in d[\"gate_chain\"]]==[\"A\",\"B\",\"C\",\"D\",\"E\",\"F\"];
+  assert all(e[\"ci_verdict\"]==\"ALL_REQUIRED_PASS\" for e in d[\"gate_chain\"])";
+  grep -q "D-002H Gate G" docs/governance/D002G_CANONICAL_RUN_BLOCKERS.md;
+  grep -q "D002H-GATE-G-v1" docs/governance/D002H_GATE_G_CI_LOCK_REPORT.md;
+  test ! -d artifacts/d002h/canonical/results;
+  test "$(sha256sum docs/governance/D002C_CLAIM_LEDGER.yaml | awk "{print \$1}")" = "f96ba9b5a2057d2e0bff84afc28578ab316cff73f6dc6673fb0d6d543b8bd6dd";
+  test "$(sha256sum docs/governance/D002H_PREREGISTRATION.yaml | awk "{print \$1}")" = "44b18b5a40ce9d188a9c3bd49339621f81a65a15f97a683247902450dd54acec";
+  test "$(sha256sum research/systemic_risk/d002c_substrates.py | awk "{print \$1}")" = "4b2e5d65c104a5be5a207951cd3c4ae099f31ce83b3f2c0766a160d8c9e80eca";
+  test "$(sha256sum research/systemic_risk/d002g_null_mechanisms.py | awk "{print \$1}")" = "c7e275191454e1e961d5a079a21b6e1dbfcbc1661d48ddf14d0d0c39a426f257"'
+signal_artifact: "artifacts/d002h/authorization/d002h_canonical_run_final_lock.json"
+falsifier:
+  command: >-
+    bash -c 'set -e;
+    PYTHONPATH=. python -m pytest tests/systemic_risk/test_d002h_gate_g_ci_lock.py -q || exit 1;
+    test -f artifacts/d002h/authorization/d002h_canonical_run_final_lock.json || exit 2;
+    test -f docs/governance/D002H_GATE_G_CI_LOCK_REPORT.md || exit 3;
+    test -f tests/systemic_risk/test_d002h_gate_g_ci_lock.py || exit 4;
+    python -c "import json;
+    d=json.load(open(\"artifacts/d002h/authorization/d002h_canonical_run_final_lock.json\"));
+    assert d[\"schema_version\"]==\"D002H-GATE-G-v1\";
+    assert d[\"status\"]==\"CANONICAL_RUN_AUTHORIZED\";
+    assert d[\"canonical_run_authorized_final\"] is True;
+    assert d[\"canonical_run_execution_status\"]==\"NOT_STARTED\";
+    assert len(d[\"gate_chain\"])==6;
+    assert all(e[\"ci_verdict\"]==\"ALL_REQUIRED_PASS\" for e in d[\"gate_chain\"]);
+    assert \"results\" not in d;
+    assert \"sweep\" not in d" || exit 5;
+    grep -q "D-002H Gate G" docs/governance/D002G_CANONICAL_RUN_BLOCKERS.md || exit 6;
+    test "$(sha256sum docs/governance/D002C_CLAIM_LEDGER.yaml | awk "{print \$1}")" = "f96ba9b5a2057d2e0bff84afc28578ab316cff73f6dc6673fb0d6d543b8bd6dd" || exit 7;
+    test "$(sha256sum docs/governance/D002H_PREREGISTRATION.yaml | awk "{print \$1}")" = "44b18b5a40ce9d188a9c3bd49339621f81a65a15f97a683247902450dd54acec" || exit 8;
+    test "$(sha256sum research/systemic_risk/d002c_substrates.py | awk "{print \$1}")" = "4b2e5d65c104a5be5a207951cd3c4ae099f31ce83b3f2c0766a160d8c9e80eca" || exit 9;
+    test "$(sha256sum research/systemic_risk/d002g_null_mechanisms.py | awk "{print \$1}")" = "c7e275191454e1e961d5a079a21b6e1dbfcbc1661d48ddf14d0d0c39a426f257" || exit 10;
+    test ! -d artifacts/d002h/canonical/results || exit 11;
+    if grep -rE "scientific PASS achieved|sweep complete|sweep result|canonical run executed|D-002G rescued|D-002C rescued|cross-substrate robustness|general topology robustness|block_structured authorised|temporal_coupling authorised" docs/governance/D002H_GATE_G_CI_LOCK_REPORT.md | grep -vE "forbidden|NOT|never|cannot|does not|do not|out of scope|MUST NOT|alone does NOT|prohibited|disallowed|requires|impossible|deny|denied|reject|REJECT|attempt|FAIL|excluded|blocked|BLOCKED|absolute|❌|terminal"; then
+      echo "forbidden promotional phrase leaked outside denial context"; exit 12;
+    fi'
+  description: >-
+    Probes the D-002H Gate G final CI lock artifact: Gate G tests pass
+    (12 base + 6 parametrised ancestor + 6 parametrised pin-match);
+    4 new files exist on disk (test + report + JSON artifact +
+    acceptor); artifact JSON has the locked schema_version
+    D002H-GATE-G-v1, status CANONICAL_RUN_AUTHORIZED,
+    canonical_run_authorized_final True,
+    canonical_run_execution_status NOT_STARTED, gate_chain length 6,
+    all 6 ci_verdicts == ALL_REQUIRED_PASS, no ``results`` or ``sweep``
+    field; BLOCKERS.md carries the new Gate G append-only section;
+    D-002C claim ledger byte-exact at the anchor sha; D-002H prereg
+    sha byte-exact; substrate + mechanism module shas byte-exact
+    unchanged; no artifacts/d002h/canonical/results/ directory exists;
+    no forbidden promotional phrase leaks outside denial context inside
+    the report. Regression on any -> Gate G contract broken.
+rollback_command: >-
+  bash -c 'rm -f
+  tests/systemic_risk/test_d002h_gate_g_ci_lock.py
+  docs/governance/D002H_GATE_G_CI_LOCK_REPORT.md
+  artifacts/d002h/authorization/d002h_canonical_run_final_lock.json
+  .claude/commit_acceptors/x10r-d002h-gate-g-ci-lock.yaml
+  && git checkout HEAD~1 -- docs/governance/D002G_CANONICAL_RUN_BLOCKERS.md'
+rollback_verification_command: >-
+  bash -c 'test ! -f tests/systemic_risk/test_d002h_gate_g_ci_lock.py
+  && test ! -f docs/governance/D002H_GATE_G_CI_LOCK_REPORT.md
+  && test ! -f artifacts/d002h/authorization/d002h_canonical_run_final_lock.json
+  && test ! -f .claude/commit_acceptors/x10r-d002h-gate-g-ci-lock.yaml
+  && ! grep -q "D-002H Gate G" docs/governance/D002G_CANONICAL_RUN_BLOCKERS.md'
+memory_update_type: append
+ledger_path: ".claude/commit_acceptors/x10r-d002h-gate-g-ci-lock.yaml"
+report_path: "docs/governance/D002H_GATE_G_CI_LOCK_REPORT.md"
+evidence: []

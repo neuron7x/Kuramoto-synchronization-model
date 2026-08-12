@@ -1,0 +1,40 @@
+{
+  "gate_id": "G-SCAN-TOOLCHAIN",
+  "schema": "scan_toolchain_receipt/v1",
+  "generated_by": "scripts/ci/check_scan_toolchain.py",
+  "requirement": "SEC-002",
+  "scan_lock": "requirements-scan.lock",
+  "scan_lock_exists": true,
+  "required_hashed": [
+    "pip-audit"
+  ],
+  "required_pinned": [
+    "pip",
+    "pip-audit"
+  ],
+  "pinned_tools": {
+    "pip": {
+      "version": "26.1.2",
+      "operator": "==",
+      "sha256": [
+        "382ff9f685ee3bc25864f820aa50505825f10f5458ffff07e30a6d96e5715cab",
+        "f49cd134c61cf2fd75e0ce2676db03e4054504a5a4986d00f8299ae632dc4605"
+      ],
+      "exact_pin": true,
+      "hashed": true
+    },
+    "pip-audit": {
+      "version": "2.10.1",
+      "operator": "==",
+      "sha256": [
+        "1eb4565d19ebe5d48996f4b770b4d2b32887e12cb12cfa637f1a064011b55ffc",
+        "99ef3f600a317c1945f1e89e227ef26e1c2d618429b8bd3fa6f4f7c440c4611a"
+      ],
+      "exact_pin": true,
+      "hashed": true
+    }
+  },
+  "ok": true,
+  "offline_policy": "A scan that cannot reach the advisory DB (offline/error/non-zero exit) is classified RED/MANUAL by classify_scan_outcome -- never a false GREEN. See docs/SCAN_TOOLCHAIN_POLICY.md.",
+  "errors": []
+}

@@ -1,0 +1,51 @@
+[
+  {
+    "run_id": "EXP-001",
+    "environment_case": "baseline",
+    "perturbations": ["low_noise", "smooth_latent_drift"],
+    "expected_failure_surface": "false attractor if convergence pressure is too strong",
+    "metrics": ["prediction_error", "ei_balance", "realism_gap"]
+  },
+  {
+    "run_id": "EXP-002",
+    "environment_case": "high_noise",
+    "perturbations": ["noise_std_0_28"],
+    "expected_failure_surface": "excitation amplifies noise",
+    "metrics": ["state_entropy", "divergence_index", "noise_amplifier"]
+  },
+  {
+    "run_id": "EXP-003",
+    "environment_case": "delayed_feedback",
+    "perturbations": ["feedback_delay_8"],
+    "expected_failure_surface": "wrong attractor from stale error correction",
+    "metrics": ["transition_mismatch", "realism_gap", "recovery_time"]
+  },
+  {
+    "run_id": "EXP-004",
+    "environment_case": "scarce_data",
+    "perturbations": ["observability_mask_0_45"],
+    "expected_failure_surface": "premature convergence under missing evidence",
+    "metrics": ["mae", "confidence_limit", "missing_signals"]
+  },
+  {
+    "run_id": "EXP-005",
+    "environment_case": "rapid_regime_shift",
+    "perturbations": ["transition_dynamics_switch_mid_run"],
+    "expected_failure_surface": "static fit fails dynamic transition",
+    "metrics": ["post_shift_mae", "adaptivity_loss", "stability_margin"]
+  },
+  {
+    "run_id": "EXP-006",
+    "environment_case": "stress_perturbation",
+    "perturbations": ["targeted_outliers", "direction_change_interval"],
+    "expected_failure_surface": "divergence without useful novelty",
+    "metrics": ["novelty_realism_gain", "invalid_hypothesis_mass"]
+  },
+  {
+    "run_id": "EXP-007",
+    "environment_case": "resource_constrained",
+    "perturbations": ["update_density_0_35", "budget_cut"],
+    "expected_failure_surface": "energy budget blocks adaptation",
+    "metrics": ["energy_efficiency", "realism_gap", "sparse_update_loss"]
+  }
+]

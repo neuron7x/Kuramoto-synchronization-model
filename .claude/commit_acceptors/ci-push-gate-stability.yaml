@@ -1,0 +1,61 @@
+# Diff-bound acceptor for main-push CI stability repair.
+
+id: ci-push-gate-stability
+status: ACTIVE
+claim_type: fail_closed
+promise: >-
+  Restores the four red main-push integrity checks to terminal green by closing
+  BOTH actual failure modes, not just the first one the witness count surfaced:
+  (1) the repository-integrity proof was pinned to a stale 112-invariant witness
+  while the live registry holds 132, so prove_repo_integrity.sh aborted at step
+  [1/14] before any downstream proof ran; (2) once past that, the registry
+  schema gate still failed because INV-TAU2 carried a dangling related-reference
+  to a non-existent INV-LANDAUER (the real id is INV-LANDAUER-PROXY), and the
+  evidence-freshness gate failed because the derived deterministic artifacts
+  (docs/architecture/claim_graph.json + artifacts/.manifest.json) were stale
+  relative to their generators. Push-time repo/research integrity runs are also
+  made non-cancellable on main so a later merge cannot erase an in-flight
+  enforcement verdict. CI/governance only — no production, physics-runtime, or
+  research-algorithm behaviour changes.
+
+diff_scope:
+  changed_files:
+    - path: ".claude/commit_acceptors/ci-push-gate-stability.yaml"
+    - path: ".github/workflows/repo-integrity-gate.yml"
+    - path: ".github/workflows/research-integrity-gate.yml"
+    - path: "scripts/ci/prove_repo_integrity.sh"
+    - path: ".claude/physics/INVARIANTS.yaml"
+    - path: "docs/architecture/claim_graph.json"
+    - path: "artifacts/.manifest.json"
+  forbidden_paths:
+    - "core/"
+    - "backtest/"
+    - "execution/"
+    - "analytics/"
+    - "research/systemic_risk/"
+
+required_python_symbols: []
+expected_signal: >-
+  count_invariants.py returns 132; prove_repo_integrity.sh pins 132; the live
+  invariant-registry schema validates with zero unresolved related-references
+  (INV-TAU2 -> INV-LANDAUER-PROXY resolves); all deterministic evidence
+  artifacts are byte-fresh against their generators; and both push-time
+  integrity workflows scope cancel-in-progress to pull_request only.
+measurement_command: >-
+  bash -c 'set -euo pipefail; mkdir -p tmp; { test "$(python scripts/count_invariants.py)" = "132" && grep -q "\"132\"" scripts/ci/prove_repo_integrity.sh && python scripts/check_invariant_registry_schema.py >/dev/null && python scripts/ci/check_artifact_freshness.py >/dev/null && grep -q "github.event_name == .pull_request." .github/workflows/repo-integrity-gate.yml && grep -q "github.event_name == .pull_request." .github/workflows/research-integrity-gate.yml; } && echo "PASS: witness=132, registry-schema clean, evidence fresh, push-gate cancel scoped to pull_request" | tee tmp/ci_push_gate_stability.log'
+signal_artifact: "tmp/ci_push_gate_stability.log"
+falsifier:
+  command: >-
+    bash -c 'test "$(python scripts/count_invariants.py)" = "132" && grep -q "\"132\"" scripts/ci/prove_repo_integrity.sh && python scripts/check_invariant_registry_schema.py >/dev/null && python scripts/ci/check_artifact_freshness.py >/dev/null && grep -q "github.event_name == .pull_request." .github/workflows/repo-integrity-gate.yml && grep -q "github.event_name == .pull_request." .github/workflows/research-integrity-gate.yml'
+  description: >-
+    Fails if the witness pin drifts from the live count, if the registry schema
+    re-acquires an unresolved related-reference, if any deterministic evidence
+    artifact goes stale against its generator, or if either main-push integrity
+    workflow returns to unconditional cancel-in-progress.
+rollback_command: >-
+  bash -c 'git checkout origin/main -- .github/workflows/repo-integrity-gate.yml .github/workflows/research-integrity-gate.yml scripts/ci/prove_repo_integrity.sh && git rm -f .claude/commit_acceptors/ci-push-gate-stability.yaml'
+rollback_verification_command: >-
+  bash -c 'grep -q "\"112\"" scripts/ci/prove_repo_integrity.sh'
+memory_update_type: append
+ledger_path: ".claude/commit_acceptors/ci-push-gate-stability.yaml"
+report_path: "tmp/ci_push_gate_stability.log"

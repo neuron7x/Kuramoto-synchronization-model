@@ -1,5 +1,5 @@
 ---
-owner: integrations@tradepulse
+owner: integrations@geosync
 review_cadence: quarterly
 last_reviewed: 2026-01-01
 links:
@@ -12,7 +12,7 @@ links:
 
 ## Overview
 
-TradePulse applies layered rate limits to protect system stability. Limits are
+GeoSync applies layered rate limits to protect system stability. Limits are
 enforced per API key or signature identity and reset on rolling time windows.
 
 ## Current limits

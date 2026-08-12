@@ -1,0 +1,22 @@
+id: riee-validator-test-fixture
+status: ACTIVE
+claim_type: correctness
+promise: "Validator fixture test is bound."
+diff_scope:
+  changed_files:
+    - path: ".claude/commit_acceptors/riee-validator-test-fixture.yaml"
+    - path: "tests/tools/test_financial_data_contract.py"
+  forbidden_paths: []
+required_python_symbols: []
+expected_signal: "test runs"
+measurement_command: "python -m pytest -q tests/tools/test_financial_data_contract.py"
+signal_artifact: "tmp/riee_validator_test_fixture.log"
+falsifier:
+  command: "python -m pytest -q tests/tools/test_financial_data_contract.py"
+  description: "test must execute"
+rollback_command: "git checkout HEAD~1 -- tests/tools/test_financial_data_contract.py"
+rollback_verification_command: "python tools/commit_acceptor/validate_commit_acceptor.py"
+memory_update_type: append
+ledger_path: ".claude/commit_acceptors/riee-validator-test-fixture.yaml"
+report_path: "tests/tools/test_financial_data_contract.py"
+evidence: []

@@ -1,0 +1,35 @@
+id: pr-1416-repair-protocol
+status: ACTIVE
+claim_type: fail_closed
+promise: >-
+  Adds governed PR #1416 repair and onboarding documentation without changing
+  runtime, research, trading, execution, or test semantics.
+diff_scope:
+  changed_files:
+    - path: ".claude/commit_acceptors/pr-1416-repair-protocol.yaml"
+    - path: "docs/ci/pr-1416-fail-closed-repair-protocol.md"
+    - path: "docs/ci/pr-1416-agent-onboarding.md"
+  forbidden_paths:
+    - "core/"
+    - "backtest/"
+    - "execution/"
+    - "analytics/"
+    - "research/systemic_risk/"
+required_python_symbols: []
+expected_signal: >-
+  The PR #1416 repair protocol and onboarding document exist, preserve the
+  autonomous repair loop, and remain governed by this acceptor.
+measurement_command: >-
+  python -c "from pathlib import Path; a=Path('docs/ci/pr-1416-fail-closed-repair-protocol.md').read_text(encoding='utf-8'); b=Path('docs/ci/pr-1416-agent-onboarding.md').read_text(encoding='utf-8'); assert 'BUG-001' in a and 'No-weakening rules' in a; assert 'Autonomous loop' in b and 'Final report format' in b"
+signal_artifact: "tmp/pr_1416_repair_protocol.log"
+falsifier:
+  command: >-
+    python -c "from pathlib import Path; b=Path('docs/ci/pr-1416-agent-onboarding.md').read_text(encoding='utf-8'); assert 'Autonomous loop' in b and 'Final report format' in b"
+  description: >-
+    Fails if the onboarding handoff loses its autonomous loop or final report format.
+rollback_command: "true"
+rollback_verification_command: "true"
+memory_update_type: none
+ledger_path: ".claude/commit_acceptors/pr-1416-repair-protocol.yaml"
+report_path: "docs/ci/pr-1416-agent-onboarding.md"
+evidence: []

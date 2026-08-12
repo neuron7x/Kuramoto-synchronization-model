@@ -1,0 +1,108 @@
+# Diff-bound commit acceptor for the integrated descriptor replay capsule.
+#
+# Adds analytics/signals/descriptor_capsule.py and the one-command runner
+# scripts/run_descriptor_capsule.py. build_capsule(config) chains the
+# descriptor-only instruments — null_baseline → state_quantization →
+# null_comparison → descriptor_information_quality → descriptor_metadata —
+# into a single deterministic capsule and returns one manifest carrying every
+# stage's digest, the observed-vs-null rank/percentile, the information-quality
+# measures (entropy, perplexity, JS divergence, distinguishability), the
+# claim-safe disclaimers, and a manifest_digest over the canonical body. The
+# same config yields a byte-identical manifest.
+#
+# Every output is a STRUCTURAL descriptor of seeded inputs
+# (claim_boundary="descriptor_only_not_predictor"); it is not a significance,
+# predictive, or financial claim. A malformed config or any chained
+# instrument's own fail-closed guard raises ValueError; the capsule never
+# emits an ambiguous manifest. Imports and modifies NO existing instrument;
+# adds NO dependency (numpy only).
+#
+# Locally verified on origin/main fork base:
+#   * pytest tests/unit/analytics/test_descriptor_capsule.py: 10 passed
+#   * one-command run reproduces the manifest_digest byte-identically
+#   * ruff check / ruff format --check / black --check: clean
+#   * mypy --strict on both new sources: no issues
+#   * python scripts/ci/check_claim_boundary.py: PASS
+#   * zero suppression-comment tokens; detect-secrets (baseline): clean
+id: descriptor-capsule
+status: ACTIVE
+claim_type: governance
+promise: >-
+  analytics.signals.descriptor_capsule.build_capsule(config) deterministically
+  chains null_baseline, state_quantization, null_comparison,
+  descriptor_information_quality and descriptor_metadata into one manifest
+  carrying config_hash, per-stage digests, the observed-vs-null rank /
+  percentile / n_null / is_outside_null_band, the information-quality measures,
+  claim_boundary="descriptor_only_not_predictor", not_predictive_claim=True,
+  not_financial_advice=True, research_only=True, and a manifest_digest over the
+  canonical (sort_keys) body. Equal config yields a byte-identical manifest and
+  manifest_digest; scripts/run_descriptor_capsule.py prints that manifest as
+  JSON from a single command. A missing required key, an empty observed series,
+  a non-positive null length, or any chained instrument's fail-closed guard
+  raises ValueError. No claim tier is promoted; no runtime behaviour changes;
+  no existing file is touched; every output is a structural descriptor, not a
+  significance, predictive, or financial claim.
+diff_scope:
+  changed_files:
+    - path: ".claude/commit_acceptors/descriptor-capsule.yaml"
+    - path: "analytics/signals/descriptor_capsule.py"
+    - path: "scripts/run_descriptor_capsule.py"
+    - path: "tests/unit/analytics/test_descriptor_capsule.py"
+  forbidden_paths:
+    - "trading/"
+    - "execution/"
+    - "forecast/"
+    - "core/"
+    - "src/"
+required_python_symbols:
+  - "analytics/signals/descriptor_capsule.py::build_capsule"
+expected_signal: >-
+  `python -m pytest tests/unit/analytics/test_descriptor_capsule.py` reports
+  10 passed; build_capsule is deterministic (equal config -> equal manifest and
+  manifest_digest), carries all four stages plus the observed-vs-null rank,
+  stamps the descriptor-only boundary across manifest, metadata and
+  information-quality, varies its digest with the null seed and the observed
+  series, and fails closed on a missing observed key, an empty observed series,
+  a zero null length, and a labels/thresholds mismatch.
+measurement_command: >-
+  bash -c 'mkdir -p tmp && python -m pytest
+  tests/unit/analytics/test_descriptor_capsule.py -v --no-header -o addopts=""
+  -p no:cacheprovider 2>&1 | grep -E "PASSED|FAILED|ERROR"
+  | sed -E "s/ +\[[0-9 ]+%\]//" > tmp/descriptor_capsule_pytest.log
+  && test "$(grep -c PASSED tmp/descriptor_capsule_pytest.log)" = "10"'
+signal_artifact: "tmp/descriptor_capsule_pytest.log"
+falsifier:
+  command: >-
+    python -c 'import sys;
+    from analytics.signals.descriptor_capsule import build_capsule;
+    cfg = {"observed":[0.1,-0.2,0.4,0.9,-1.3],"thresholds":[-0.5,0.5],
+    "labels":["low","mid","high"],"null_seed":42,"null_n":500};
+    det = build_capsule(cfg)["manifest_digest"]
+    == build_capsule(dict(cfg))["manifest_digest"];
+    safe = build_capsule(cfg)["claim_boundary"] == "descriptor_only_not_predictor";
+    import subprocess;
+    bad = subprocess.run([sys.executable, "-c",
+    "from analytics.signals.descriptor_capsule import build_capsule;
+    build_capsule({\"thresholds\":[0.0],\"labels\":[\"a\",\"b\"],\"null_seed\":1})"]).returncode != 0;
+    sys.exit(0 if (not det or not safe or not bad) else 1)'
+  description: >-
+    Inverse probe of the capsule contract. It exits 0 (fires) iff the manifest
+    digest stops being deterministic for equal config, OR the descriptor-only
+    boundary disappears from the manifest, OR a config missing the observed
+    series is accepted instead of failing closed. While the contract holds the
+    probe exits 1. An exit 0 means the capsule has lost determinism, its
+    boundary disclaimer, or its fail-closed guarantee and must be repaired.
+rollback_command: >-
+  bash -c 'git rm -f analytics/signals/descriptor_capsule.py
+  scripts/run_descriptor_capsule.py
+  tests/unit/analytics/test_descriptor_capsule.py
+  .claude/commit_acceptors/descriptor-capsule.yaml'
+rollback_verification_command: >-
+  bash -c 'test ! -f analytics/signals/descriptor_capsule.py
+  && test ! -f scripts/run_descriptor_capsule.py'
+memory_update_type: none
+ledger_path: ".claude/commit_acceptors/descriptor-capsule.yaml"
+report_path: "tmp/descriptor_capsule_pytest.log"
+evidence:
+  - path: "tmp/descriptor_capsule_pytest.log"
+    sha256: "b1fbf0a741ef79ee3741526d1001463647c009a2c573fc5579f1fc80f14ba612"  # pragma: allowlist secret

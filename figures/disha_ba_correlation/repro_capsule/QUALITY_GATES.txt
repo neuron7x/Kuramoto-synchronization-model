@@ -1,0 +1,4 @@
+mypy --strict: PASS (verified at build time)
+ruff: PASS
+black --check: PASS
+pytest tests/research/systemic_risk/test_disha_ba_correlation_figures.py: PASS

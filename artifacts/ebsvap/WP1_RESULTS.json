@@ -1,0 +1,71 @@
+{
+  "task": "WP1 atomic claim compiler",
+  "critical_unsupported_claim_recall": 1.0,
+  "valid_claim_false_rejection_rate": 0.0,
+  "overclaims": [
+    {
+      "claim_id": "O1",
+      "status": "REJECT",
+      "reason": "EMPIRICAL requires observed data, none provided",
+      "seeded": "REJECT"
+    },
+    {
+      "claim_id": "O2",
+      "status": "REJECT",
+      "reason": "PROBABILISTIC requires calibration on independent data",
+      "seeded": "REJECT"
+    },
+    {
+      "claim_id": "O3",
+      "status": "REJECT",
+      "reason": "CAUSAL requires interventional evidence (not correlation)",
+      "seeded": "REJECT"
+    },
+    {
+      "claim_id": "O4",
+      "status": "REJECT",
+      "reason": "GENERALIZATION requires a structural/non-IID test",
+      "seeded": "REJECT"
+    },
+    {
+      "claim_id": "O5",
+      "status": "REJECT",
+      "reason": "'independent' but evidence shares the implementation source",
+      "seeded": "REJECT"
+    },
+    {
+      "claim_id": "O6",
+      "status": "REJECT",
+      "reason": "SAFETY not established by unit tests alone",
+      "seeded": "REJECT"
+    },
+    {
+      "claim_id": "O7",
+      "status": "REJECT",
+      "reason": "'optimal' without an optimality proof (myopic != optimal)",
+      "seeded": "REJECT"
+    }
+  ],
+  "valid_controls": [
+    {
+      "claim_id": "V1",
+      "status": "ADMIT",
+      "reason": "evidence entails wording",
+      "seeded": "ADMIT"
+    },
+    {
+      "claim_id": "V2",
+      "status": "ADMIT",
+      "reason": "evidence entails wording",
+      "seeded": "ADMIT"
+    },
+    {
+      "claim_id": "V3",
+      "status": "ADMIT",
+      "reason": "evidence entails wording",
+      "seeded": "ADMIT"
+    }
+  ],
+  "pass": true,
+  "verdict": "CLAIM_COMPILER_PASS"
+}

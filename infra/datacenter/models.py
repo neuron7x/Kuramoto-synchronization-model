@@ -1,4 +1,5 @@
-# SPDX-License-Identifier: LicenseRef-TradePulse-Proprietary
+# Copyright (c) 2023-2026 Yaroslav Vasylenko (neuron7xLab)
+# SPDX-License-Identifier: MIT
 """Data center models and configuration.
 
 Defines the core data structures for representing data centers, their
@@ -114,9 +115,7 @@ class DataCenterHealth:
 
         # Resource utilization impact (up to -20 points)
         # Use max utilization to ensure high usage in any resource is penalized
-        max_utilization = max(
-            self.cpu_utilization, self.memory_utilization, self.disk_utilization
-        )
+        max_utilization = max(self.cpu_utilization, self.memory_utilization, self.disk_utilization)
         if max_utilization > 70:
             score -= min(20.0, (max_utilization - 70) / 1.0)
 

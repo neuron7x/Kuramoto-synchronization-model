@@ -1,0 +1,70 @@
+{
+  "artifact_id": "WEB_AGENT_LIVE_RUNTIME_TRACE_001",
+  "measurement_mode": "live_github_connector_session_trace",
+  "status": "LIVE_TRACE_AVAILABLE_FOR_GITHUB_CONNECTOR_SUBSET_ONLY",
+  "scope": "PR_1221_web_agent_architecture_protocol",
+  "source": "ChatGPT GitHub connector actions executed against neuron7xLab/GeoSync branch web-agent-architecture-protocol",
+  "events": [
+    {
+      "event_id": "LIVE-GH-001",
+      "tool_id": "github_fetch_file",
+      "action": "fetch_file",
+      "effect": "read_repository_file",
+      "reversibility": "read_only",
+      "uncertainty": "low",
+      "side_effect_report": "none",
+      "contract_match": true,
+      "trusted_output": false,
+      "confirmation_required": false,
+      "confirmation_present": false,
+      "result": "success"
+    },
+    {
+      "event_id": "LIVE-GH-002",
+      "tool_id": "github_update_file",
+      "action": "update_file",
+      "effect": "replace_explicit_branch_file",
+      "reversibility": "reversible_by_followup_commit",
+      "uncertainty": "low",
+      "side_effect_report": "creates_commit_on_branch_only",
+      "contract_match": true,
+      "trusted_output": true,
+      "confirmation_required": false,
+      "confirmation_present": false,
+      "result": "success_pending_this_patch"
+    },
+    {
+      "event_id": "LIVE-GH-003",
+      "tool_id": "github_create_file",
+      "action": "create_file",
+      "effect": "create_explicit_branch_file",
+      "reversibility": "reversible_by_followup_delete_or_revert_commit",
+      "uncertainty": "low",
+      "side_effect_report": "creates_commit_on_branch_only",
+      "contract_match": true,
+      "trusted_output": true,
+      "confirmation_required": false,
+      "confirmation_present": false,
+      "result": "success_pending_this_patch"
+    },
+    {
+      "event_id": "LIVE-GH-004",
+      "tool_id": "github_update_pr_body",
+      "action": "update_pull_request",
+      "effect": "update_pr_metadata",
+      "reversibility": "reversible_by_followup_update",
+      "uncertainty": "low",
+      "side_effect_report": "updates_pr_body_only",
+      "contract_match": true,
+      "trusted_output": true,
+      "confirmation_required": false,
+      "confirmation_present": false,
+      "result": "success_pending_this_patch"
+    }
+  ],
+  "failure_conditions": [
+    "Do not treat this as live verification for web_search, web_fetch, local file adapters, or code_exec.",
+    "Do not treat branch commits as release deployment.",
+    "Do not mark full production readiness from GitHub connector subset evidence."
+  ]
+}

@@ -1,0 +1,28 @@
+{
+  "schema_version": "D002J-VERDICT-CAPSULE-v1",
+  "node_id": "D002K-P4",
+  "phase": "P4",
+  "pr_number": 0,
+  "merge_sha": "0000000000000000000000000000000000000000",
+  "parent_nodes": [
+    "D002K-P3"
+  ],
+  "decision": "POWER_GATE_REFUSED_UNDERPOWERED",
+  "status": "TERMINAL_REFUSED",
+  "artifact_paths": [
+    "tools/systemic_risk/design_d002k_power_gate.py",
+    "artifacts/d002k/power/power_design_v1.json",
+    "artifacts/d002k/power/power_summary_v1.json",
+    "docs/research/D002K_POWER_FIRST_REPORT.md"
+  ],
+  "test_paths": [
+    "tests/systemic_risk/test_d002k_power_gate.py"
+  ],
+  "allowed_next_nodes": [],
+  "forbidden_next_nodes": [
+    "D002K-P5"
+  ],
+  "claim_boundary": "Power design only; no data scoring; no canonical run; canonical_run_authorized=false; alpha NOT relaxed vs D-002J-P7 (narrowing is K-P0-locked scope, not loosened stats); effect prior conservative not inflated; D-002J + K-P0..P3 frozen; D-002K-P4 does NOT rescue D-002J.",
+  "failure_retention": "POWER_GATE_REFUSED_UNDERPOWERED on axis effect_too_small_event_conditioned: at the K-P0-locked Bonferroni alpha_per=0.016667 (0.05/(3 windows x 1 primary metric)) the conservative honestly-sourced funding-liquidity effect prior (Cohen's d=0.80, the conservative lower edge of the literature, NOT the point estimate, NOT inflated) reaches power 0.0481 at the feasible event-conditioned sample (crisis-side n1=1 per window because CW3/CW4/CW5 are unique unrepeatable historical events; reference arm n2=5 K-P2 matched placebos) -- far below the K-P0 power target 0.8. The design-transparency n_min for power>=0.8 is 20 crisis-side replicates per window, which an event-conditioned design cannot supply (a crisis window happens once). This is the same class of honest refusal as D-002J-P7 (effect_too_small at alpha=0.05/102). Narrowing scope from 102 to 3 hypotheses raised alpha_per legitimately (fewer pre-registered hypotheses) but did NOT relax D-002J-P7's alpha at fixed scope; the binding constraint is structural underpower of an irreproducible single-realisation event-conditioned design, not multiple-testing. Forward motion requires fresh D-002L pre-registration; D-002J stays REFUSED; this is a retained truthful negative, not a failure to fix.",
+  "source_summary_path": "artifacts/d002k/power/power_summary_v1.json"
+}

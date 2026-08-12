@@ -1,3 +1,5 @@
+# Copyright (c) 2023-2026 Yaroslav Vasylenko (neuron7xLab)
+# SPDX-License-Identifier: MIT
 from __future__ import annotations
 
 import hashlib
@@ -15,7 +17,7 @@ def _write_contract(
 ) -> None:
     front_matter_lines = [
         "---",
-        "owner: data@tradepulse",
+        "owner: data@geosync",
         "review_cadence: quarterly",
         "artifacts:",
         "  - path: " + artifact_path,

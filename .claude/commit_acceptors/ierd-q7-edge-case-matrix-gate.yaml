@@ -1,0 +1,125 @@
+# Diff-bound commit acceptor for IERD-Q7 Phase-4 EXIT: edge-case
+# coverage matrix gate flipped fail-closed at ECC ≥ 0.90.
+#
+# Before (Phase-4 ENTRY): the (endpoint × state × test_id) matrix in
+# tests/edge_cases/coverage_matrix.py scored ECC = 0.7753 (69/89). The
+# client-only states — loading, cancelled, and per-probe server_error —
+# had no genuine test until the frontend consumed the endpoints, so
+# test_ecc_meets_threshold was guarded by GEOSYNC_EDGE_CASE_GATE=1 and
+# the edge-case-matrix workflow ran its threshold informationally
+# (continue-on-error: true on the run step).
+#
+# After (Phase-4 EXIT): a real client surface (apps/web .../edge-probe)
+# issues a genuine fetch to a probed public endpoint and resolves every
+# edge-case state; the Playwright route-interception specs in
+# apps/web/tests/edge-case-probe.spec.ts drive each previously-UNCOVERED
+# state via page.route (delayed fulfil → loading, route.abort('failed')
+# → network_failure, a hung route past the client deadline → timeout,
+# fulfill status 500 per probe → server_error, a non-finite forecast
+# envelope → INV-DRO5 simulation_diverged) or a genuine user cancel.
+# coverage_matrix.py now resolves those Playwright spec cells
+# (path.spec.ts::<endpoint>::<state>) with real teeth — the file must
+# contain the test( block AND the cited <endpoint> + probe-state-<state>
+# markers, so renaming/deleting a spec flips the cell UNCOVERED. ECC =
+# 89/89 = 1.0000. The env guard and continue-on-error are removed:
+# test_ecc_meets_threshold now runs unguarded and FAIL-CLOSED in every
+# lane, and the claim `edge-case-coverage-matrix` re-classifies ANCHORED.
+#
+# Locally verified (development laptop, native Python):
+#   tests/edge_cases/ (no env, unguarded) ............... 5 passed
+#     [ecc] AGGREGATE covered=89/89 ECC=1.0000 threshold=0.90
+#   TS resolver teeth: present markers → True; missing
+#     endpoint/state/file → False (all three)
+#   mypy --strict tests/edge_cases/{coverage_matrix,test_edge_case_matrix}.py
+#     ............................................... Success, 2 files
+#   apps/web TypeScript/lint/Playwright layer: NOT EXECUTED in this
+#     sandbox (npm registry idle-timeout + node v22 < required v24); the
+#     specs are authored and the python matrix/gate side is fully green.
+
+id: ierd-q7-edge-case-matrix-gate
+status: ACTIVE
+claim_type: correctness
+promise: >-
+  tests/edge_cases/coverage_matrix.py defines the canonical
+  (endpoint × state × test_id) matrix over the ten §5/#532 states and
+  the gated public operations, and now resolves Playwright spec cells
+  (path.spec.ts::<endpoint>::<state>) alongside pytest cells.
+  tests/edge_cases/test_edge_case_matrix.py asserts (a) every cited test
+  target statically resolves — pytest def AND Playwright test( block +
+  cited <endpoint>/probe-state-<state> markers, (b) the matrix is
+  well-formed and total, (c) §532 hard requirement — network_failure AND
+  timeout covered for every applicable endpoint — fail-closed,
+  (d) simulation_diverged cites the INV-DRO5 fail-closed suite
+  fail-closed, and (e) ECC = covered/applicable ≥ 0.90 (observed 1.0000)
+  FAIL-CLOSED with no env guard. apps/web/tests/edge-case-probe.spec.ts
+  drives every client-only state against the /edge-probe harness via
+  page.route. The Edge-Case Matrix workflow runs the suite fail-closed
+  (continue-on-error removed) and uploads junit.xml + run.log. Claim
+  re-classified ANCHORED.
+diff_scope:
+  changed_files:
+    - path: ".claude/commit_acceptors/ierd-q7-edge-case-matrix-gate.yaml"
+    - path: ".github/workflows/edge-case-matrix.yml"
+    - path: "tests/edge_cases/coverage_matrix.py"
+    - path: "tests/edge_cases/test_edge_case_matrix.py"
+    - path: "apps/web/tests/edge-case-probe.spec.ts"
+    - path: "apps/web/app/(public)/edge-probe/page.tsx"
+    - path: "apps/web/app/(public)/edge-probe/edge-probe-client.tsx"
+    - path: "apps/web/app/(public)/edge-probe/endpoint-probe.tsx"
+    - path: "apps/web/middleware.ts"
+    - path: "apps/web/app/auth/auth-provider.tsx"
+  forbidden_paths:
+    - "trading/"
+    - "execution/"
+    - "forecast/"
+    - "policy/"
+    - "core/physics/"
+    - "core/kuramoto/"
+    - "application/api/service.py"
+    - "application/api/errors.py"
+    - "schemas/openapi/"
+required_python_symbols:
+  - "tests/edge_cases/test_edge_case_matrix.py::test_ecc_meets_threshold"
+  - "tests/edge_cases/test_edge_case_matrix.py::test_every_cited_test_target_resolves"
+  - "tests/edge_cases/test_edge_case_matrix.py::test_network_failure_and_timeout_covered_for_every_endpoint"
+  - "tests/edge_cases/test_edge_case_matrix.py::test_simulation_diverged_correlates_with_inv_dro5"
+  - "tests/edge_cases/coverage_matrix.py::compute_ecc"
+  - "tests/edge_cases/coverage_matrix.py::ECC_THRESHOLD"
+expected_signal: >-
+  Local: `mypy --strict tests/edge_cases/coverage_matrix.py
+  tests/edge_cases/test_edge_case_matrix.py` reports "Success: no issues
+  found in 2 source files"; `pytest tests/edge_cases/ -q` (no env)
+  reports 5 passed with `[ecc] AGGREGATE covered=89/89 ECC=1.0000
+  threshold=0.90`; the Playwright spec cells resolve True and missing
+  endpoint/state/file resolve False.
+measurement_command: >-
+  bash -c 'mypy --strict tests/edge_cases/coverage_matrix.py
+  tests/edge_cases/test_edge_case_matrix.py
+  && python -m pytest tests/edge_cases/ -q'
+signal_artifact: "tmp/ierd_q7_edge_case_matrix_gate.log"
+falsifier:
+  command: >-
+    bash -c 'python -c "from tests.edge_cases.coverage_matrix import compute_ecc, ECC_THRESHOLD; import sys; covered, applicable, ecc, _ = compute_ecc(); sys.exit(0 if ecc >= ECC_THRESHOLD else 1)"'
+  description: >-
+    Inverts the ECC ≥ 0.90 fail-closed claim: recomputes ECC from the
+    matrix and exits 0 only while ECC ≥ ECC_THRESHOLD. If a future change
+    drops a cited spec, breaks the TS resolver, or otherwise pushes ECC
+    below 0.90, the falsifier flips non-zero — the Phase-4 EXIT
+    fail-closed guarantee is then provably broken and the commit must
+    roll back. Observed today ECC = 1.0000 ≥ 0.90 → exit 0.
+rollback_command: >-
+  git checkout HEAD~1 --
+  .claude/commit_acceptors/ierd-q7-edge-case-matrix-gate.yaml
+  .github/workflows/edge-case-matrix.yml
+  tests/edge_cases/
+  "apps/web/tests/edge-case-probe.spec.ts"
+  "apps/web/app/(public)/edge-probe"
+  apps/web/middleware.ts
+  apps/web/app/auth/auth-provider.tsx
+rollback_verification_command: >-
+  git diff --exit-code tests/edge_cases/
+  .github/workflows/edge-case-matrix.yml
+memory_update_type: append
+ledger_path: ".claude/commit_acceptors/ierd-q7-edge-case-matrix-gate.yaml"
+report_path: "tmp/ierd_q7_edge_case_matrix_gate.log"
+evidence: []

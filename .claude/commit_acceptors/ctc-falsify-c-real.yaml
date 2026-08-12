@@ -1,0 +1,38 @@
+id: ctc-falsify-c-real
+status: ACTIVE
+claim_type: governance
+promise: "C-real is a FROZEN pre-registration + fail-closed stub: dataset selection rule pinned by config_hash before any data, estimator pre-committed to the C5 cross-spectral discriminant, independent routing label mandatory (no toggle GT on real data). Reference verdict INADMISSIBLE_NO_PAIRED_DATA; KILLED_SCOPED/SURVIVED_INITIAL unreachable here. No data touched, no CTC-theory claim."
+diff_scope:
+  changed_files:
+    - path: "research/ctc_falsify/c_real/__init__.py"
+    - path: "research/ctc_falsify/c_real/config_c_real.py"
+    - path: "research/ctc_falsify/c_real/gate.py"
+    - path: "research/ctc_falsify/c_real/run.py"
+    - path: "research/ctc_falsify/c_real/schema/ctc_falsify_c_real_result.schema.json"
+    - path: "research/ctc_falsify/c_real/evidence/ctc_falsify_c_real_result.json"
+    - path: "tests/research/ctc_falsify/test_ctc_falsify_c_real.py"
+    - path: "docs/research/CTC_FALSIFY_001_C_REAL_PREREGISTRATION.md"
+    - path: ".github/detect-secrets.baseline"
+    - path: ".claude/commit_acceptors/ctc-falsify-c-real.yaml"
+  forbidden_paths:
+    - "trading/"
+    - "execution/"
+    - "forecast/"
+    - "policy/"
+    - "research/ctc_falsify/config.py"
+required_python_symbols:
+  - "decide"
+  - "run"
+  - "config_hash"
+expected_signal: "pre-data verdict is the fail-closed INADMISSIBLE_NO_PAIRED_DATA; gate is a pure function of admissibility booleans"
+measurement_command: "python -m pytest tests/research/ctc_falsify/test_ctc_falsify_c_real.py -q"
+signal_artifact: "tmp/ctc_c_real_pytest.log"
+falsifier:
+  command: "python -c \"from research.ctc_falsify.c_real.gate import decide; import research.ctc_falsify.c_real.config_c_real as c; raise SystemExit(0 if decide(dataset_bound=False)==c.VERDICT_NO_PAIRED_DATA and decide(dataset_bound=True, independent_label=False)==c.VERDICT_NO_INDEPENDENT_LABEL else 1)\""
+  description: "Probe asserts pre-data fails closed AND a bound dataset without an independent routing label still cannot reach a verdict (exits 0). Exits 1 if the fail-closed ordering is ever weakened to admit a self-labelled (circular) kill."
+rollback_command: "git rm -rf research/ctc_falsify/c_real tests/research/ctc_falsify/test_ctc_falsify_c_real.py docs/research/CTC_FALSIFY_001_C_REAL_PREREGISTRATION.md && git checkout -- .github/detect-secrets.baseline"
+rollback_verification_command: "test ! -d research/ctc_falsify/c_real"
+memory_update_type: append
+ledger_path: ".claude/commit_acceptors/ctc-falsify-c-real.yaml"
+report_path: "docs/research/CTC_FALSIFY_001_C_REAL_PREREGISTRATION.md"
+evidence: []

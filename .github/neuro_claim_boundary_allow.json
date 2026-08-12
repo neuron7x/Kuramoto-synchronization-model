@@ -1,0 +1,4 @@
+{
+  "_comment": "Reviewed exceptions for scripts/ci/check_neuro_claim_boundary.py. A forbidden biological-equivalence phrase in runtime source must be reworded, carry an inline '# no-bio-claim' pragma, or appear here with a reason. Empty by design: runtime source currently carries zero biological-equivalence claims.",
+  "allow": []
+}

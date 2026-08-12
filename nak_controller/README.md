@@ -25,7 +25,7 @@ python -m nak_controller.cli.run_validate \
 - `core/` – state machines, configuration and energetic models.
 - `control/` – PI control loop and neuromodulator adjustments.
 - `runtime/` – orchestration logic combining observations and limits.
-- `integration/` – `NaKHook` adapter for TradePulse integration points.
+- `integration/` – `NaKHook` adapter for GeoSync integration points.
 - `validate/` – simulation environment and validation harness.
 - `cli/` – runnable entry points for validation and sweeps.
 - `tests/` – unit coverage for deterministic behaviour and CLI guarantees.

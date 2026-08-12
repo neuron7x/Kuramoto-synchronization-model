@@ -1,0 +1,47 @@
+{
+  "tag": "Run A (gross)",
+  "costs_bps": {
+    "EURUSD": 0.0,
+    "GBPUSD": 0.0,
+    "USDJPY": 0.0,
+    "AUDUSD": 0.0,
+    "USDCAD": 0.0,
+    "USDCHF": 0.0,
+    "EURGBP": 0.0,
+    "EURJPY": 0.0
+  },
+  "n_folds_total": 222,
+  "n_folds_valid": 222,
+  "oos_first_ts": "2008-01-02 21:00:00",
+  "oos_last_ts": "2026-02-09 21:00:00",
+  "oos_bars": 4704,
+  "verdict": "FAIL",
+  "verdict_reason": "failing gates: primary Sharpe -0.0046<0.8; %positive 45.9%<60%; maxDD 0.4061>0.2",
+  "criteria": {
+    "primary_median_sharpe": -0.0046,
+    "primary_median_sharpe_floor": 0.8,
+    "primary_pass": false,
+    "positive_folds_frac": 0.4595,
+    "positive_folds_floor": 0.6,
+    "positive_folds_pass": false,
+    "n_folds_2022": 15,
+    "median_2022_sharpe": 0.2636,
+    "median_2022_pass": true,
+    "max_drawdown_oos": 0.4061,
+    "max_drawdown_ceil": 0.2,
+    "drawdown_pass": false,
+    "n_valid_folds": 222,
+    "median_turnover_per_bar": 0.0
+  },
+  "baselines": {
+    "buy_and_hold_eq_weight": {
+      "sharpe": -0.0427,
+      "max_drawdown": 0.1618
+    },
+    "combo_2bar_lag": {
+      "sharpe": -0.0154,
+      "max_drawdown": 0.3052
+    },
+    "note": "Neither baseline gates the verdict; reported for reference (\u00a74.6)."
+  }
+}

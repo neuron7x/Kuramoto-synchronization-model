@@ -1,0 +1,10 @@
+prompts:
+  - id: finalizer_mirror
+    version: "1.0.0"
+    path: cognitive_mirror_methods/prompts/finalizer_mirror.md
+    purpose: "Decode noisy input into operational intent."
+    input_schema: cognitive_mirror_methods/schemas/method.schema.json
+    output_schema: cognitive_mirror_methods/schemas/consolidation_report.schema.json
+    tests:
+      - cognitive_mirror_methods/tests/test_method_contracts.py
+    status: stable

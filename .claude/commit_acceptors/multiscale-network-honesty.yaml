@@ -1,0 +1,140 @@
+# Diff-bound commit acceptor for the multiscale / network honesty fix (S5).
+#
+# Two legs, both additive and non-numeric:
+#
+# (a) core/indicators/multiscale_kuramoto.py advertised a "coupled oscillator
+#     network" computing "market consensus", but it has NO N×N coupling graph
+#     and NO asset nodes — it computes a cross-scale phase-coherence descriptor
+#     of a SINGLE univariate price series (Layer-B). The module + class
+#     docstrings now state that plainly, and MultiScaleResult gains
+#     machine-readable provenance fields layer="market_descriptor",
+#     claim_boundary="descriptor_only_not_predictor", single_series=True,
+#     is_network_model=False (surfaced into the FeatureResult metadata). The
+#     labels are DECLARATIVE scope, not enforcement.
+#
+# (b) core/kuramoto/network_engine.py NetworkKuramotoEngine accepted N=1,
+#     producing a degenerate 1×1 "network" with no inter-asset coupling. The
+#     identification entry points identify() and identify_from_returns() now
+#     fail-closed on N<2 with ValueError, so a genuine asset-network model
+#     cannot be instantiated from a single series. No existing valid caller
+#     passes N=1 (synthetic.py already enforces N≥2; all engine tests use
+#     N∈{4,5}).
+#
+# Bit-for-bit numeric behaviour for valid inputs (consensus_R,
+# cross_scale_coherence, per-horizon order parameters; identified coupling /
+# metrics for N≥2) is unchanged: the multiscale fields are defaulted and the
+# guard only rejects N<2, which no valid path reaches. Tests lock both
+# semantics: the descriptor declares its Layer-B boundary and the numbers are
+# unperturbed; a single-series PhaseMatrix and a single-column / 1-D returns
+# array both raise ValueError.
+#
+# Promotes NO claim tier, adds NO invariant, changes NO numeric runtime
+# behaviour for valid inputs, adds NO dependency. A declarative Layer-B label
+# is NOT enforcement — it records scope; the only behavioural change is the
+# fail-closed N≥2 guard.
+#
+# Locally verified on origin/main fork base (f7bc594d):
+#   * python -m compileall: clean
+#   * pytest changed + dependent suites: 52 + 123 passed, no regression
+#   * ruff format --check / black --check / ruff check: clean
+#   * mypy --strict core/indicators/multiscale_kuramoto.py
+#     core/kuramoto/network_engine.py: no issues
+#   * .claude/physics/validate_tests.py --audit-code: 0 clamp/bounds issues
+#   * check_claim_boundary.py / check_claims.py: PASS
+#   * zero noqa / type: ignore across all changed files
+id: multiscale-network-honesty
+status: ACTIVE
+claim_type: governance
+promise: >-
+  core.indicators.multiscale_kuramoto computes a cross-scale phase-coherence
+  descriptor of a SINGLE univariate price series (Layer-B) and now declares
+  that honestly: the module and class docstrings no longer frame it as a
+  coupled asset-oscillator network, and MultiScaleResult carries provenance
+  fields layer="market_descriptor",
+  claim_boundary="descriptor_only_not_predictor", single_series=True,
+  is_network_model=False (also surfaced into the FeatureResult metadata). In
+  parallel, core.kuramoto.network_engine.NetworkKuramotoEngine now fails closed
+  on N<2 at both identification entry points (identify, identify_from_returns)
+  with ValueError, so a genuine N×N asset-network model cannot be instantiated
+  from a single series. Numeric output for valid inputs is byte-unchanged: the
+  multiscale provenance fields are defaulted and the N≥2 guard rejects only the
+  degenerate single-series case that no valid caller reaches. Tests lock the
+  semantics: the descriptor declares its Layer-B boundary and reconstructs its
+  unchanged consensus_R, while a single-series PhaseMatrix and a single-column
+  or 1-D returns array both raise ValueError. No claim tier is promoted; no
+  invariant is added; the declarative Layer-B label is scope, not enforcement.
+diff_scope:
+  changed_files:
+    - path: ".claude/commit_acceptors/multiscale-network-honesty.yaml"
+    - path: "core/indicators/multiscale_kuramoto.py"
+    - path: "core/kuramoto/network_engine.py"
+    - path: "tests/unit/test_indicators_kuramoto_multiscale.py"
+    - path: "tests/unit/core/test_kuramoto_network_engine.py"
+  forbidden_paths:
+    - "trading/"
+    - "execution/"
+    - "forecast/"
+    - "src/"
+required_python_symbols:
+  - "core/indicators/multiscale_kuramoto.py::MultiScaleResult"
+  - "core/indicators/multiscale_kuramoto.py::MultiScaleKuramoto"
+  - "core/kuramoto/network_engine.py::NetworkKuramotoEngine"
+expected_signal: >-
+  `python -m pytest tests/unit/test_indicators_kuramoto_multiscale.py
+  tests/unit/core/test_kuramoto_network_engine.py -v` reports 52 passed; the
+  multiscale result declares layer="market_descriptor",
+  claim_boundary="descriptor_only_not_predictor", single_series=True,
+  is_network_model=False, and NetworkKuramotoEngine raises ValueError on N<2.
+measurement_command: >-
+  bash -c 'mkdir -p tmp && python -m pytest
+  tests/unit/test_indicators_kuramoto_multiscale.py
+  tests/unit/core/test_kuramoto_network_engine.py -v
+  > tmp/multiscale_network_honesty_pytest.log 2>&1
+  && grep -qE "52 passed" tmp/multiscale_network_honesty_pytest.log'
+signal_artifact: "tmp/multiscale_network_honesty_pytest.log"
+falsifier:
+  command: |-
+    python -c 'import sys, numpy as np;
+    from core.indicators.multiscale_kuramoto import MultiScaleResult;
+    from core.kuramoto.network_engine import NetworkKuramotoEngine;
+    from core.kuramoto.contracts import PhaseMatrix;
+    res = MultiScaleResult(consensus_R=0.0, cross_scale_coherence=0.0,
+    dominant_scale=None, adaptive_window=1, timeframe_results={},
+    skipped_timeframes=());
+    declares = (res.layer == "market_descriptor"
+    and res.claim_boundary == "descriptor_only_not_predictor"
+    and res.single_series is True and res.is_network_model is False);
+    T = 64;
+    theta = np.mod(np.linspace(0.0, 6.0, T), 2.0 * np.pi).reshape(T, 1);
+    pm = PhaseMatrix(theta=theta, timestamps=np.arange(T, dtype=np.float64),
+    asset_ids=("solo",), extraction_method="hilbert", frequency_band=(0.5, 1.5));
+    guarded = False;
+    try:
+        NetworkKuramotoEngine().identify(pm)
+    except ValueError:
+        guarded = True;
+    sys.exit(0 if (not declares or not guarded) else 1)'
+  description: >-
+    Inverse probe of the honesty contract. It exits 0 (fires) iff the
+    multiscale descriptor stops declaring its Layer-B boundary (any of
+    layer / claim_boundary / single_series / is_network_model drifts), OR the
+    NetworkKuramotoEngine stops fail-closing on a single-series (N=1)
+    PhaseMatrix. While both legs of the contract hold the probe exits 1. An
+    exit 0 means either the descriptor has silently re-acquired a
+    network/predictor claim or the engine again admits a degenerate 1×1
+    "network" from one series, and must be repaired at the cause, not patched
+    green.
+rollback_command: >-
+  bash -c 'git checkout origin/main -- core/indicators/multiscale_kuramoto.py
+  core/kuramoto/network_engine.py
+  tests/unit/test_indicators_kuramoto_multiscale.py
+  tests/unit/core/test_kuramoto_network_engine.py
+  && git rm -f .claude/commit_acceptors/multiscale-network-honesty.yaml'
+rollback_verification_command: >-
+  bash -c 'test ! -f .claude/commit_acceptors/multiscale-network-honesty.yaml'
+memory_update_type: none
+ledger_path: ".claude/commit_acceptors/multiscale-network-honesty.yaml"
+report_path: "tmp/multiscale_network_honesty_pytest.log"
+evidence:
+  - path: "tmp/multiscale_network_honesty_pytest.log"
+    sha256: "2d76782d9045ba58150e0f1b463148499df917cdedcc2ff5de2e8ab6a8196fce"  # pragma: allowlist secret

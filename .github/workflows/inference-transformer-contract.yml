@@ -1,0 +1,59 @@
+name: Inference Transformer Contract
+
+on:
+  pull_request:
+    branches: [main]
+    paths:
+      - 'schemas/research/inference_transformer_contract.schema.json'
+      - 'configs/research/geosync_inference_transformer.v1.yaml'
+      - 'data/research/inference_transformer_blocks.v1.json'
+      - 'scripts/ci/check_inference_transformer_contract.py'
+      - 'scripts/ci/check_n7x_value_functions.py'
+      - 'tests/ci/test_inference_transformer_contract.py'
+      - 'src/geosync/research/**'
+      - 'tools/research/run_inference_transformer_demo.py'
+      - 'artifacts/runs/ricci_microstructure_v1/inference_transformer_placeholder.json'
+      - '.claude/value_functions/n7x_value_functions.v1.yaml'
+      - '.github/workflows/inference-transformer-contract.yml'
+  workflow_dispatch:
+
+permissions:
+  contents: read
+
+concurrency:
+  group: inference-transformer-contract-${{ github.ref }}
+  cancel-in-progress: true
+
+jobs:
+  inference-transformer-contract:
+    name: inference-transformer-contract
+    runs-on: ubuntu-latest
+    timeout-minutes: 10
+    steps:
+      - name: Checkout
+        uses: actions/checkout@9c091bb21b7c1c1d1991bb908d89e4e9dddfe3e0
+
+      - name: Setup Python
+        uses: actions/setup-python@ece7cb06caefa5fff74198d8649806c4678c61a1
+        with:
+          python-version: '3.12'
+
+      - name: Install focused test deps
+        run: |
+          python -m pip install --upgrade pip
+          python -m pip install pytest pyyaml
+
+      - name: JSON schema parses
+        run: python -m json.tool schemas/research/inference_transformer_contract.schema.json >/dev/null
+
+      - name: N7X value function check
+        run: python scripts/ci/check_n7x_value_functions.py
+
+      - name: Contract seed check
+        run: python scripts/ci/check_inference_transformer_contract.py
+
+      - name: Placeholder demo emits artifact
+        run: python tools/research/run_inference_transformer_demo.py
+
+      - name: Contract tests
+        run: python -m pytest tests/ci/test_inference_transformer_contract.py -q

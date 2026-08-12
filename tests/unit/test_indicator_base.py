@@ -1,9 +1,11 @@
-# SPDX-License-Identifier: LicenseRef-TradePulse-Proprietary
+# Copyright (c) 2023-2026 Yaroslav Vasylenko (neuron7xLab)
+# SPDX-License-Identifier: MIT
 """Unit tests for base feature classes and metrics integration.
 
 This module tests the core feature transformation infrastructure,
 focusing on metrics collection and observability integration.
 """
+
 from __future__ import annotations
 
 import contextlib
@@ -23,12 +25,8 @@ class _ConstantFeature(BaseFeature):
         super().__init__(name="constant")
         self._value = value
 
-    def transform(
-        self, data, **kwargs
-    ):  # noqa: ANN001 - interface defined by BaseFeature
-        return FeatureResult(
-            name=self.name, value=self._value, metadata={"data_id": id(data)}
-        )
+    def transform(self, data, **kwargs):  # noqa: ANN001 - interface defined by BaseFeature
+        return FeatureResult(name=self.name, value=self._value, metadata={"data_id": id(data)})
 
 
 def test_feature_transform_with_metrics(monkeypatch):

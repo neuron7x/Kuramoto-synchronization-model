@@ -1,0 +1,86 @@
+# Diff-bound acceptor for FIX-1: live pipeline_status self-refresh.
+#
+# Before: shadow_validation/daily/ contained exactly one folder dated
+# 2026-04-10 with `operationally_unsafe=True`. The frozen evaluator
+# (scripts/evaluate_cross_asset_kuramoto_shadow.py, in SOURCE_HASHES)
+# reads the most recent daily folder via `_load_pipeline_status_for_latest`
+# and inherits its op_unsafe flag — meaning every shadow eval was
+# permanently OPERATIONALLY_UNSAFE regardless of whether the live
+# paper-trader had been ticking.
+#
+# After: a new geosync.pipeline_status_check module recomputes the
+# pipeline_status row from the live spike paper-trader's append-only
+# equity.csv (which advances on every `paper_trader.py --tick`) and
+# writes a fresh daily/<run_date>/pipeline_status.csv each invocation.
+# DP3 staleness criterion (last_bar age > 5 business days vs run_date)
+# is enforced.
+#
+# Locally verified: status_label transitions OPERATIONALLY_UNSAFE →
+# BUILDING_SAMPLE on a fresh paper-state at bar 15/90 — confirms the
+# stuck-flag is cleared by this primitive and the eval pipeline now
+# reads live freshness.
+
+id: pipeline-status-self-refresh
+status: ACTIVE
+claim_type: correctness
+promise: >-
+  `python -m geosync.pipeline_status_check --day today` writes
+  results/cross_asset_kuramoto/shadow_validation/daily/<today>/pipeline_status.csv
+  with operationally_unsafe recomputed from the live paper-state
+  ledger's last bar vs the run-date business-day age (DP3 threshold:
+  > 5 business days). Two consecutive invocations on the same day
+  produce a single file whose mtime advances. The frozen shadow
+  evaluator then picks up the fresh row via its existing
+  `_load_pipeline_status_for_latest` glob without modification.
+  The op_unsafe value is therefore live: it tracks whether the
+  paper-trader has been ticked recently, not whether the historical
+  data CSVs (which the original shadow runner ingests) advanced.
+diff_scope:
+  changed_files:
+    - path: ".claude/commit_acceptors/pipeline-status-self-refresh.yaml"
+    - path: "INVENTORY.json"
+    - path: "geosync/pipeline_status_check.py"
+    - path: "tests/scripts/test_pipeline_status_check.py"
+  forbidden_paths:
+    - "trading/"
+    - "execution/"
+    - "forecast/"
+    - "policy/"
+    - "core/physics/"
+    - "scripts/evaluate_cross_asset_kuramoto_shadow.py"
+required_python_symbols:
+  - "geosync/pipeline_status_check.py::refresh"
+  - "geosync/pipeline_status_check.py::PIPELINE_STATUS_COLUMNS"
+  - "geosync/pipeline_status_check.py::STALENESS_LIMIT_BD"
+expected_signal: >-
+  Local end-to-end: paper_trader.py --tick → bar 22 / day_n=22, last
+  bar 2026-05-06; `python -m geosync.pipeline_status_check --day today`
+  writes daily/2026-05-06/pipeline_status.csv with
+  operationally_unsafe=False; rerunning the shadow evaluator emits
+  status_label="BUILDING_SAMPLE" instead of "OPERATIONALLY_UNSAFE",
+  closing the stuck-flag root cause documented in
+  results/cross_asset_kuramoto/shadow_validation/SHADOW_SUMMARY.md.
+measurement_command: >-
+  bash -c 'python -m geosync.pipeline_status_check --day today >/dev/null && test -f results/cross_asset_kuramoto/shadow_validation/daily/$(date -u +%F)/pipeline_status.csv && [ $(stat -c %Y "results/cross_asset_kuramoto/shadow_validation/daily/$(date -u +%F)/pipeline_status.csv") -gt $(date -d "1 hour ago" +%s) ]'
+signal_artifact: "tmp/pipeline_status_self_refresh.log"
+falsifier:
+  command: >-
+    bash -c 'rm -rf /tmp/fake_daily && python -m geosync.pipeline_status_check --day today --daily-root /tmp/fake_daily --equity-path /nonexistent/equity.csv; rc=$?; test $rc -ne 0'
+  description: >-
+    Probe runs the module against a missing paper-state ledger. If
+    the module silently writes a daily file or returns 0, FIX-1
+    invariant is broken — the refresh is not gated on the existence
+    of fresh evidence and would mask a paper-trader outage as
+    "operationally safe".
+rollback_command: >-
+  git checkout HEAD~1 --
+  geosync/pipeline_status_check.py
+  tests/scripts/test_pipeline_status_check.py
+  .claude/commit_acceptors/pipeline-status-self-refresh.yaml
+  INVENTORY.json
+rollback_verification_command: >-
+  git diff --exit-code geosync/pipeline_status_check.py
+memory_update_type: append
+ledger_path: ".claude/commit_acceptors/pipeline-status-self-refresh.yaml"
+report_path: "results/cross_asset_kuramoto/shadow_validation/daily"
+evidence: []

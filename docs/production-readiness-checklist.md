@@ -40,5 +40,5 @@ Core checks:
 
 - [ ] Є заповнений шаблон постмортему для останнього drill (`reports/live/<date>/postmortem.md`).
 - [ ] Валідація комунікаційної матриці: канали `#inc-trading`, `#risk-ops`, external status page.
-- [ ] Тригериться симульований алерт на `TradePulseVenueDivergence` та задокументовано виконання плейбука.
+- [ ] Тригериться симульований алерт на `GeoSyncVenueDivergence` та задокументовано виконання плейбука.
 - [ ] Результати failover rehearsal прикріплені (`reports/live/<date>/recon.json`, Grafana скріншоти).

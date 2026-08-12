@@ -2,7 +2,7 @@
 
 ## Overview
 
-TradePulse integrates seven fundamental physical laws into its trading framework to ground market analysis in deterministic, falsifiable principles. This physics-inspired approach aims to:
+GeoSync integrates seven fundamental physical laws into its trading framework to ground market analysis in deterministic, falsifiable principles. This physics-inspired approach aims to:
 
 1. **Reduce Noise**: Physical constraints filter spurious signals
 2. **Improve Stability**: Conservation laws ensure model consistency

@@ -1,3 +1,5 @@
+# Copyright (c) 2023-2026 Yaroslav Vasylenko (neuron7xLab)
+# SPDX-License-Identifier: MIT
 """Monitoring utilities for the advanced neuro module."""
 
 from __future__ import annotations
@@ -18,9 +20,7 @@ class NeuroStateMonitor:
         self._start_time = datetime.now()
 
     def record(self, metric_type: str, data: Dict[str, Any]) -> None:
-        self._history.append(
-            {"timestamp": datetime.now(), "type": metric_type, "data": data}
-        )
+        self._history.append({"timestamp": datetime.now(), "type": metric_type, "data": data})
         self._aggregate(metric_type, data)
 
     def dashboard(self) -> Dict[str, Any]:

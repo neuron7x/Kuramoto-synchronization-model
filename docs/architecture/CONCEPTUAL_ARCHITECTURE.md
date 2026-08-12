@@ -1,4 +1,4 @@
-# TradePulse Conceptual Architecture
+# GeoSync Conceptual Architecture
 
 > **Note**: The full detailed conceptual architecture documentation is available in Ukrainian at
 > [CONCEPTUAL_ARCHITECTURE_UA.md](../CONCEPTUAL_ARCHITECTURE_UA.md). This document provides an
@@ -6,7 +6,7 @@
 
 ## Overview
 
-This document series visualizes the conceptual elements of the TradePulse system and their
+This document series visualizes the conceptual elements of the GeoSync system and their
 relationships through comprehensive diagrams. It serves as a high-level abstraction guide to
 understanding the architecture.
 
@@ -184,4 +184,4 @@ When updating diagrams:
 
 **Version**: 1.0.0  
 **Last Updated**: 2025-11-17  
-**Authors**: TradePulse Architecture Team
+**Authors**: GeoSync Architecture Team

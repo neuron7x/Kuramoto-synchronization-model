@@ -1,0 +1,153 @@
+# Diff-bound commit acceptor for D-002B (issue #652) —
+# Gate 6 high-budget power certification sweep + report.
+#
+# What lands:
+#   * scripts/run_x10r_gate6_certification_sweep.py
+#       Parallel sweep driver. Per-(N, λ, seed) work units across
+#       a ProcessPoolExecutor. Same SensitivityCell aggregation as
+#       the sequential reference; only wallclock differs.
+#   * tests/reconstruction/test_x10r_gate6_certification_driver.py
+#       9 fast unit tests on aggregation + classification. No
+#       Kuramoto sims; pure pipeline-plumbing checks.
+#   * X10R_GATE6_CERTIFICATION_REPORT.md
+#       Empirical sweep result + verdict (CERTIFIED / NOT_CERTIFIED)
+#       + scoped state language + required bibliographic-anchors
+#       sentence + reproduction recipe.
+#
+# Locally verified before push:
+#   * pytest -m "not slow":  9 passed (driver tests), <5 ms cumulative
+#   * mypy --strict + ruff + black: clean on every changed file
+#   * sweep produces tmp/x10r_gate6_certification_sweep.json with
+#     verdict line; ledger is deterministic at substrate_seed=42
+
+id: x10r-gate6-certification
+status: ACTIVE
+claim_type: correctness
+promise: >-
+  After this PR lands, the Gate 6 high-budget power certification
+  sweep (issue #652) is COMPLETE on a scoped subset: the
+  synthetic (N × λ) surface has been measured at N ∈
+  {50, 100, 200, 400}, λ ∈ {0.0, 0.05, 0.10, 0.20, 0.40, 1.0},
+  n_seeds=20, n_bootstrap=16 on the canonical core-periphery
+  substrate; FPR, power, MDE per N, median |ΔR|, median CI
+  width, and signed-direction stability are recorded across
+  three ledgers (full, N ≤ 200 subset, N = 400 exploratory).
+
+  The PR emits ONE of two scoped tier outcomes computed STRICTLY
+  on the N ≤ 200 subset (D-002B-A):
+    * SYNTHETIC_GATE6_CERTIFIED_N_LE_200 — iff ALL of:
+        - max(power(λ=0)) ≤ 0.05 across N ∈ {50, 100, 200};
+        - max(power(0 < λ < 1.0)) ≥ 0.80 across N ≤ 200;
+        - at least one N ∈ {50, 100, 200} has mde_lambda_per_n[N] < 1.0;
+        - median_ci_width < median_abs_delta_r at λ=1.0 for EVERY
+          tested N ≤ 200;
+    * GATE6_NOT_CERTIFIED_AT_TESTED_BUDGET_N_LE_200 — otherwise.
+
+  N = 400 cells are EXCLUDED from the verdict and live in a
+  dedicated exploratory ledger; they motivate D-002C (issue
+  #654, formal N=400 extension) but bear NO certification
+  claim. D-002D (issue #655, checkpoint/resume driver-debt)
+  is the prerequisite for D-002C's >10 h sweep.
+
+  Empirical verdict emitted by this PR:
+  GATE6_NOT_CERTIFIED_AT_TESTED_BUDGET_N_LE_200.
+  Rules eval: FPR PASS (0.000), power FAIL (0.200 < 0.80),
+  MDE finite FAIL (None at every N ≤ 200), CI<|ΔR|@λ=1 FAIL
+  (all three N ≤ 200 cells).
+
+  Strict scope: synthetic only. NO real-data Gate 6 verdict,
+  NO bank-level inference claim, NO INV-IDENTIFICATION-1 lift,
+  NO source-code change to gate_6_precursor_discriminative or
+  any upstream X-10R module. No SYNTHETIC_GATE6_CERTIFIED
+  (unqualified) tier is ever emitted from this PR.
+diff_scope:
+  changed_files:
+    - path: ".claude/commit_acceptors/x10r-gate6-certification.yaml"
+    - path: "scripts/run_x10r_gate6_certification_sweep.py"
+    - path: "tests/reconstruction/test_x10r_gate6_certification_driver.py"
+    - path: "X10R_GATE6_CERTIFICATION_REPORT.md"
+  forbidden_paths:
+    - "trading/"
+    - "execution/"
+    - "forecast/"
+    - "policy/"
+    - "core/physics/"
+    - "core/kuramoto/"
+    - "research/reconstruction/kuramoto_on_reconstruction.py"
+    - "research/reconstruction/sensitivity_surface.py"  # NO source change
+    - "research/reconstruction/positive_control.py"
+    - "research/reconstruction/cimini_squartini.py"
+    - "research/reconstruction/weighted_allocation.py"
+    - "application/governance/claim_ledger.py"
+    - "application/governance/commit_acceptor.py"
+required_python_symbols:
+  - "tests/reconstruction/test_x10r_gate6_certification_driver.py::test_classify_certifies_when_all_three_rules_pass"
+  - "tests/reconstruction/test_x10r_gate6_certification_driver.py::test_classify_rejects_when_fpr_too_high"
+  - "tests/reconstruction/test_x10r_gate6_certification_driver.py::test_classify_rejects_when_power_below_threshold"
+  - "tests/reconstruction/test_x10r_gate6_certification_driver.py::test_classify_rejects_when_ci_width_dominates_at_lambda_one"
+  - "tests/reconstruction/test_x10r_gate6_certification_driver.py::test_aggregate_mde_per_n_unreached_is_inf"
+expected_signal: >-
+  Local: `pytest tests/reconstruction/test_x10r_gate6_certification_driver.py -q`
+  reports "9 passed"; mypy --strict --follow-imports=silent clean
+  on the new test + driver script; ruff + black clean. Sweep
+  ledger tmp/x10r_gate6_certification_sweep.json contains
+  "verdict": "<one of the two scoped tiers>".
+measurement_command: >-
+  bash -c 'mypy --strict --follow-imports=silent
+  scripts/run_x10r_gate6_certification_sweep.py
+  tests/reconstruction/test_x10r_gate6_certification_driver.py && ruff check
+  scripts/run_x10r_gate6_certification_sweep.py
+  tests/reconstruction/test_x10r_gate6_certification_driver.py && black --check
+  scripts/run_x10r_gate6_certification_sweep.py
+  tests/reconstruction/test_x10r_gate6_certification_driver.py && pytest tests/reconstruction/test_x10r_gate6_certification_driver.py -q'
+signal_artifact: "tmp/x10r_gate6_certification_sweep.json"
+falsifier:
+  command: |-
+    bash -c 'PYTHONPATH=. python -c "
+    import importlib.util
+    spec = importlib.util.spec_from_file_location(\"d\", \"scripts/run_x10r_gate6_certification_sweep.py\")
+    m = importlib.util.module_from_spec(spec); spec.loader.exec_module(m)
+    from research.reconstruction.sensitivity_surface import SensitivityCell, SensitivitySurface
+    # Hand-craft a NOT_CERTIFIED-shape surface matching this PR'\''s
+    # empirical pilot finding (all N <= 200 sub-MDE; FPR fail-closed).
+    cells = []
+    for n in (50, 100, 200):
+        cells.extend([
+            SensitivityCell(n_nodes=n, lambda_mix=0.0, n_seeds=20, n_pass=0,
+                n_facilitated=0, n_hindered=0, n_no_signal=20,
+                median_delta_r=0.0, median_ci_width=0.25, median_abs_delta_r=0.02),
+            SensitivityCell(n_nodes=n, lambda_mix=1.0, n_seeds=20, n_pass=0,
+                n_facilitated=0, n_hindered=0, n_no_signal=20,
+                median_delta_r=0.05, median_ci_width=0.25, median_abs_delta_r=0.05),
+        ])
+    s = SensitivitySurface(n_grid=(50, 100, 200), lambda_grid=(0.0, 1.0),
+        n_seeds=20, cells=tuple(cells), fpr_estimate=0.0,
+        mde_lambda_per_n={50: float(\"inf\"), 100: float(\"inf\"), 200: float(\"inf\")})
+    v, m_ = m._classify(s)
+    # The driver'\''s _classify is the unscoped path; the SCOPED
+    # N <= 200 verdict is computed in the report pipeline. The
+    # falsifier asserts the driver classifier behaves correctly
+    # on the empirically-observed sub-MDE shape.
+    assert v == \"GATE6_NOT_CERTIFIED_AT_TESTED_BUDGET\", f\"classifier broke: {v}\"
+    "'
+  description: >-
+    Probes the D-002B-A classifier on a synthetic NOT_CERTIFIED-shape
+    surface matching this PR's empirical findings (sub-MDE across
+    all N <= 200, fail-closed at lambda=0, CI width dominating
+    |Delta R| at lambda=1). If the classifier no longer emits
+    GATE6_NOT_CERTIFIED_AT_TESTED_BUDGET on this shape, the
+    verdict logic regressed. The SCOPED tier
+    GATE6_NOT_CERTIFIED_AT_TESTED_BUDGET_N_LE_200 is the report-
+    layer projection over the N <= 200 subset of this same shape;
+    by construction the driver classifier feeds the scoped report.
+rollback_command: >-
+  bash -c 'git checkout HEAD~1 -- && rm -f scripts/run_x10r_gate6_certification_sweep.py
+  tests/reconstruction/test_x10r_gate6_certification_driver.py
+  X10R_GATE6_CERTIFICATION_REPORT.md
+  .claude/commit_acceptors/x10r-gate6-certification.yaml'
+rollback_verification_command: >-
+  bash -c 'test ! -f scripts/run_x10r_gate6_certification_sweep.py && test ! -f tests/reconstruction/test_x10r_gate6_certification_driver.py && test ! -f X10R_GATE6_CERTIFICATION_REPORT.md && test ! -f .claude/commit_acceptors/x10r-gate6-certification.yaml'
+memory_update_type: append
+ledger_path: ".claude/commit_acceptors/x10r-gate6-certification.yaml"
+report_path: "tmp/x10r_gate6_certification_sweep.json"
+evidence: []

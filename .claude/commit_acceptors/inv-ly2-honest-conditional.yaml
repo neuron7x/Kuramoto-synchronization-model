@@ -1,0 +1,66 @@
+# Diff-bound acceptor: correct INV-LY2 from false-universal to honest-conditional
+# and characterise the stiffness breakdown — same pattern as INV-RC3 (#1023).
+#
+# INV-LY2 was stated as a universal P0 claim ("Hamiltonian flow ⇒ Σλ=0 to
+# 1e-3"). A computational audit showed it holds only when the fastest mode is
+# time-resolved: the variational (tangent) integrator is non-symplectic, so the
+# Σλ error grows as O((ω·dt)^4) (measured log-log slope 3.998: Σλ = 2.5e-3 at
+# ω·dt=0.1 up to 6.4e-1 at ω·dt=0.4). This restates the invariant honestly and
+# adds a test that pins the breakdown ORDER as a quantified, falsifiable law.
+
+id: inv-ly2-honest-conditional
+status: ACTIVE
+claim_type: governance
+promise: >-
+  Restates INV-LY2 in CLAUDE.md from a false-universal P0 claim to an honest
+  CONDITIONAL one (Σλ=0 holds only for a resolved ω·dt ≲ 0.05; the non-symplectic
+  tangent integrator's error grows as O((ω·dt)^4)), and adds
+  test_INV_LY2_stiff_breakdown_scales_as_fourth_power to
+  test_T2_lyapunov_full_spectrum.py, which characterises the breakdown order as
+  a quantified law (log-log slope of |Σλ| vs ω·dt ≈ 4, measured 3.998) rather
+  than asserting a bound the code cannot keep. The existing resolved-regime test
+  (ω·dt=0.01) is unchanged. No invariant added or removed (count stays 100);
+  mirrors the INV-RC3 false-universal correction (#1023).
+diff_scope:
+  changed_files:
+    - path: ".claude/commit_acceptors/inv-ly2-honest-conditional.yaml"
+    - path: "CLAUDE.md"
+    - path: "tests/unit/physics/test_T2_lyapunov_full_spectrum.py"
+  forbidden_paths:
+    - "trading/"
+    - "execution/"
+    - "forecast/"
+    - "policy/"
+required_python_symbols:
+  - "test_INV_LY2_stiff_breakdown_scales_as_fourth_power"
+expected_signal: >-
+  The full tests/unit/physics/test_T2_lyapunov_full_spectrum.py suite passes
+  (17 tests), including the new breakdown-scaling test and the unchanged
+  resolved-regime test; mypy --strict clean; invariant count unchanged at 100
+  (count-sync/drift green). Reproduced: |Σλ| = {2.5e-3, 4.0e-2, 2.02e-1, 6.4e-1}
+  at ω·dt = {0.1, 0.2, 0.3, 0.4}, log-log slope 3.998 ≈ 4.
+measurement_command: >-
+  PYTHONPATH=. python -m pytest tests/unit/physics/test_T2_lyapunov_full_spectrum.py
+  -k LY2 -v
+signal_artifact: "tmp/inv_ly2_conditional_pytest.log"
+falsifier:
+  command: >-
+    PYTHONPATH=. python -m pytest tests/unit/physics/test_T2_lyapunov_full_spectrum.py
+    -v -k "LY2_stiff_breakdown"
+  description: >-
+    Sweeps ω·dt from 0.1 to 0.4 and asserts the log-log slope of |Σλ| is ≈ 4
+    (3.5 < slope < 4.5) and that the most under-resolved case visibly exceeds the
+    former 1e-3 bound. This pins the O((ω·dt)^4) non-symplectic-tangent error as
+    a quantified law; a symplectic tangent integrator (a future fix) would change
+    the order and is expected to update this characterisation.
+rollback_command: >-
+  git checkout HEAD~1 --
+  CLAUDE.md
+  tests/unit/physics/test_T2_lyapunov_full_spectrum.py
+  .claude/commit_acceptors/inv-ly2-honest-conditional.yaml
+rollback_verification_command: >-
+  git diff --exit-code tests/unit/physics/test_T2_lyapunov_full_spectrum.py
+memory_update_type: none
+ledger_path: ".claude/commit_acceptors/inv-ly2-honest-conditional.yaml"
+report_path: "docs/reports/diff_bound_commit_acceptor_layer.md"
+evidence: []

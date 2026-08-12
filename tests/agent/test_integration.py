@@ -1,3 +1,5 @@
+# Copyright (c) 2023-2026 Yaroslav Vasylenko (neuron7xLab)
+# SPDX-License-Identifier: MIT
 from __future__ import annotations
 
 from collections import deque
@@ -6,8 +8,8 @@ from pathlib import Path
 import numpy as np
 
 from domain import Signal
-from tradepulse.sdk import SDKConfig, TradePulseSDK
-from tradepulse_agent import (
+from geosync.sdk import GeoSyncSDK, SDKConfig
+from geosync_agent import (
     AgentAction,
     AgentDataFeedConfig,
     AgentDataLoader,
@@ -59,7 +61,7 @@ def test_agent_trade_orchestrator_executes_order(tmp_path: Path) -> None:
         correlation_id_factory=_factory("corr"),
         session_id_factory=_factory("session"),
     )
-    sdk = TradePulseSDK(system, sdk_config)
+    sdk = GeoSyncSDK(system, sdk_config)
 
     execution_config = AgentExecutionConfig(
         position_increment=env_config.position_increment,

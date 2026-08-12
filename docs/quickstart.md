@@ -1,6 +1,6 @@
 # Quick Start Guide
 
-Get up and running with TradePulse in 5 minutes.
+Get up and running with GeoSync in 5 minutes.
 
 ---
 
@@ -16,8 +16,8 @@ Get up and running with TradePulse in 5 minutes.
 ## Step 1: Clone the Repository
 
 ```bash
-git clone https://github.com/neuron7x/TradePulse.git
-cd TradePulse
+git clone https://github.com/neuron7xLab/GeoSync.git
+cd GeoSync
 ```
 
 ---
@@ -291,8 +291,8 @@ Now that you're up and running, explore:
 - **[Performance Guide](performance.md)** - Memory optimization and execution profiling
 - **[Indicators Guide](indicators.md)** - Learn about available indicators
 - **[Backtesting Guide](backtest.md)** - Advanced backtesting features
-- **[Execution Guide](execution.md)** - Live trading setup
-- **[Extending TradePulse](extending.md)** - Add custom indicators and strategies
+- **[Execution Guide](execution.md)** - Execution-realism harness (paper/replay) setup
+- **[Extending GeoSync](extending.md)** - Add custom indicators and strategies
 - **[Integration API](integration-api.md)** - Connect to exchanges
 
 ---
@@ -360,7 +360,7 @@ mypy core/
 ### Project Structure
 
 ```
-TradePulse/
+GeoSync/
 ├── core/               # Core trading logic
 │   ├── indicators/     # Technical indicators
 │   ├── agent/          # Strategy optimization
@@ -382,7 +382,7 @@ TradePulse/
 If you see `ModuleNotFoundError`:
 ```bash
 # Ensure you're in the project directory
-cd /path/to/TradePulse
+cd /path/to/GeoSync
 
 # Install in editable mode
 pip install -e .
@@ -415,7 +415,7 @@ python -m scripts --help
 ## Summary
 
 You've successfully:
-- ✅ Installed TradePulse
+- ✅ Installed GeoSync
 - ✅ Verified the installation
 - ✅ Analyzed market data
 - ✅ Run a backtest

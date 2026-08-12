@@ -1,9 +1,17 @@
-TradePulse
-Copyright (c) 2025 TradePulse Contributors
+GeoSync — Geometric Market Intelligence Platform
+Copyright (c) 2023-2026 Yaroslav Vasylenko (neuron7xLab)
+https://github.com/neuron7xLab/GeoSync
 
-This product includes software developed by the TradePulse community and is
-provided under the TradePulse Proprietary License Agreement (TPLA). See the
-LICENSE file for full license text.
+Original contributions:
+  - Kuramoto phase synchronization for market microstructure analysis
+  - Neuromodulatory risk architecture: serotonin ODE (Miyazaki 2014),
+    dopamine TD-error (Schultz 1997), GABAergic inhibition gate (Mink 1996),
+    ECS Lyapunov homeostatic regulator (Friston 2009)
+  - Cryptobiosis phase-transition survival mechanism
+  - Physics-first test validation (53 invariants, AST-based)
+  - gamma~1.0 metastability hypothesis — cross-substrate validation
+  - NFI (Neuromodulatory Field Intelligence) cognitive architecture
+  - Ontology of Gradient (INV-YV1: dV > 0, d(dV)/dt != 0)
+  - Adversarial Orchestration methodology
 
-TradePulse also bundles third-party open source packages. Their licenses and
-attribution requirements are documented in `docs/legal/THIRD_PARTY_NOTICES.md`.
+Third-party attributions: docs/legal/THIRD_PARTY_NOTICES.md

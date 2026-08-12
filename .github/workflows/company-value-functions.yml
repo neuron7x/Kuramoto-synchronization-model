@@ -1,0 +1,41 @@
+# SPDX-License-Identifier: MIT
+name: Company Value Functions
+
+on:
+  pull_request:
+    branches: [main]
+    paths:
+      - '.github/workflows/company-value-functions.yml'
+      - 'data/governance/company_value_functions.json'
+      - 'docs/governance/company_value_functions.md'
+      - 'tools/governance/check_company_value_functions.py'
+      - 'tests/governance/test_company_value_functions.py'
+  merge_group:
+  workflow_dispatch:
+
+permissions:
+  contents: read
+
+env:
+  FORCE_JAVASCRIPT_ACTIONS_TO_NODE24: 'true'
+
+concurrency:
+  group: company-value-functions-${{ github.event.pull_request.number || github.sha }}
+  cancel-in-progress: true
+
+jobs:
+  company-value-functions:
+    name: company-value-functions
+    runs-on: ubuntu-latest
+    timeout-minutes: 5
+    steps:
+      - name: Checkout
+        uses: actions/checkout@9c091bb21b7c1c1d1991bb908d89e4e9dddfe3e0 # v7.0.0
+
+      - name: Set up Python
+        uses: actions/setup-python@a309ff8b426b58ec0e2a45f0f869d46889d02405 # v6
+        with:
+          python-version: '3.12'
+
+      - name: Validate and self-test company value functions
+        run: python tools/governance/check_company_value_functions.py --self-test

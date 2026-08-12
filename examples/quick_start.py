@@ -1,4 +1,6 @@
-"""Quick start example demonstrating TradePulse's core market analysis capabilities.
+# Copyright (c) 2023-2026 Yaroslav Vasylenko (neuron7xLab)
+# SPDX-License-Identifier: MIT
+"""Quick start example demonstrating GeoSync's core market analysis capabilities.
 
 This script shows how to:
 1. Generate sample market data
@@ -18,7 +20,7 @@ import numpy as np
 import pandas as pd
 
 from core.data.validation import validate_ohlcv
-from core.indicators.kuramoto_ricci_composite import TradePulseCompositeEngine
+from core.indicators.kuramoto_ricci_composite import GeoSyncCompositeEngine
 from core.utils.determinism import DEFAULT_SEED, seed_numpy
 
 
@@ -42,11 +44,7 @@ def sample_df(n: int = 1500, seed: int | None = None) -> pd.DataFrame:
 
     idx = pd.date_range("2024-01-01", periods=n, freq="1min")
     r1 = np.cumsum(np.random.normal(0, 0.6, n // 3))
-    r2 = (
-        r1[-1]
-        + 0.05 * np.arange(n // 3)
-        + 2.5 * np.sin(2 * np.pi * np.arange(n // 3) / 100.0)
-    )
+    r2 = r1[-1] + 0.05 * np.arange(n // 3) + 2.5 * np.sin(2 * np.pi * np.arange(n // 3) / 100.0)
     r3 = r2[-1] + np.cumsum(np.random.normal(0, 1.2, n - 2 * (n // 3)))
     price = 100 + np.concatenate([r1, r2, r3])
     vol = np.random.lognormal(10, 1, n)
@@ -75,9 +73,7 @@ def load_csv_data(csv_path: str, price_col: str = "close") -> pd.DataFrame:
 
     if price_col not in df.columns:
         available = ", ".join(df.columns[:10])
-        raise ValueError(
-            f"Column '{price_col}' not found. Available columns: {available}"
-        )
+        raise ValueError(f"Column '{price_col}' not found. Available columns: {available}")
 
     # Try to parse datetime index
     date_cols = [
@@ -128,7 +124,7 @@ def analyze_market(df: pd.DataFrame) -> dict:
     Returns:
         Dictionary with analysis results
     """
-    engine = TradePulseCompositeEngine()
+    engine = GeoSyncCompositeEngine()
     snapshot = engine.analyze_market(df)
 
     return {
@@ -142,7 +138,7 @@ def analyze_market(df: pd.DataFrame) -> dict:
 def main():
     """Main entry point for quick start example."""
     parser = argparse.ArgumentParser(
-        description="TradePulse Quick Start - Market Analysis Demo",
+        description="GeoSync Quick Start - Market Analysis Demo",
         formatter_class=argparse.RawDescriptionHelpFormatter,
         epilog=f"""
 Examples:
@@ -203,7 +199,7 @@ Examples:
             )
 
         # Analyze
-        print("\n=== TradePulse Market Analysis ===")
+        print("\n=== GeoSync Market Analysis ===")
         print("-" * 40)
 
         result = analyze_market(df)

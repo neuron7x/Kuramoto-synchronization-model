@@ -1,3 +1,5 @@
+# Copyright (c) 2023-2026 Yaroslav Vasylenko (neuron7xLab)
+# SPDX-License-Identifier: MIT
 """Unit tests for the ECS-Inspired Regulator."""
 
 from __future__ import annotations
@@ -46,14 +48,10 @@ class TestECSInspiredRegulatorInit:
 
     def test_invalid_risk_threshold(self) -> None:
         """Test that invalid risk threshold is rejected."""
-        with pytest.raises(
-            ValueError, match="initial_risk_threshold must be between 0 and 1"
-        ):
+        with pytest.raises(ValueError, match="initial_risk_threshold must be between 0 and 1"):
             ECSInspiredRegulator(initial_risk_threshold=0.0)
 
-        with pytest.raises(
-            ValueError, match="initial_risk_threshold must be between 0 and 1"
-        ):
+        with pytest.raises(ValueError, match="initial_risk_threshold must be between 0 and 1"):
             ECSInspiredRegulator(initial_risk_threshold=1.5)
 
     def test_invalid_smoothing_alpha(self) -> None:
@@ -223,9 +221,7 @@ class TestAdaptParameters:
         the stress level above threshold before adapt_parameters will
         trigger threshold increase (more conservative behavior).
         """
-        regulator = ECSInspiredRegulator(
-            initial_risk_threshold=0.05, stress_threshold=0.02
-        )
+        regulator = ECSInspiredRegulator(initial_risk_threshold=0.05, stress_threshold=0.02)
         initial_threshold = regulator.risk_threshold
 
         # Induce high stress with multiple updates to build EMA level
@@ -253,12 +249,16 @@ class TestAdaptParameters:
         leads to higher thresholds (more conservative behavior).
         """
         reg_acute = ECSInspiredRegulator(
-            initial_risk_threshold=0.05, stress_threshold=0.02, chronic_threshold=20,
-            conformal_gate_enabled=False
+            initial_risk_threshold=0.05,
+            stress_threshold=0.02,
+            chronic_threshold=20,
+            conformal_gate_enabled=False,
         )
         reg_chronic = ECSInspiredRegulator(
-            initial_risk_threshold=0.05, stress_threshold=0.02, chronic_threshold=3,
-            conformal_gate_enabled=False
+            initial_risk_threshold=0.05,
+            stress_threshold=0.02,
+            chronic_threshold=3,
+            conformal_gate_enabled=False,
         )
 
         # High stress for both - enough iterations to trigger chronic in one
@@ -286,12 +286,10 @@ class TestAdaptParameters:
     def test_adapt_context_dependent(self) -> None:
         """Test context-dependent adaptation."""
         reg_stable = ECSInspiredRegulator(
-            initial_risk_threshold=0.05, stress_threshold=0.02,
-            conformal_gate_enabled=False
+            initial_risk_threshold=0.05, stress_threshold=0.02, conformal_gate_enabled=False
         )
         reg_chaotic = ECSInspiredRegulator(
-            initial_risk_threshold=0.05, stress_threshold=0.02,
-            conformal_gate_enabled=False
+            initial_risk_threshold=0.05, stress_threshold=0.02, conformal_gate_enabled=False
         )
 
         # High stress for both - enough to exceed threshold
@@ -325,9 +323,9 @@ class TestAdaptParameters:
 
         # Threshold should recover toward initial (decrease from 0.08 toward 0.05)
         assert regulator.risk_threshold < 0.08, f"Expected recovery: {regulator.risk_threshold}"
-        assert regulator.risk_threshold > regulator._initial_action_threshold * 0.9, (
-            f"Recovery should be gradual: {regulator.risk_threshold}"
-        )
+        assert (
+            regulator.risk_threshold > regulator._initial_action_threshold * 0.9
+        ), f"Recovery should be gradual: {regulator.risk_threshold}"
 
 
 class TestKalmanFilter:
@@ -352,9 +350,7 @@ class TestKalmanFilter:
         true_signal = 0.5
         noisy_signals = true_signal + rng.normal(0, 0.1, 20)
 
-        filtered_signals = [
-            regulator.kalman_filter_signal(sig) for sig in noisy_signals
-        ]
+        filtered_signals = [regulator.kalman_filter_signal(sig) for sig in noisy_signals]
 
         # Later filtered values should be closer to true signal
         early_error = abs(filtered_signals[5] - true_signal)
@@ -557,9 +553,7 @@ class TestIntegrationScenarios:
 
     def test_acute_stress_scenario(self) -> None:
         """Test regulator behavior under acute stress."""
-        regulator = ECSInspiredRegulator(
-            stress_threshold=0.05, chronic_threshold=10, seed=42
-        )
+        regulator = ECSInspiredRegulator(stress_threshold=0.05, chronic_threshold=10, seed=42)
         rng = np.random.default_rng(42)
 
         actions = []
@@ -583,8 +577,7 @@ class TestIntegrationScenarios:
         we use a lower threshold and more iterations.
         """
         regulator = ECSInspiredRegulator(
-            stress_threshold=0.02, chronic_threshold=5, seed=42,
-            conformal_gate_enabled=False
+            stress_threshold=0.02, chronic_threshold=5, seed=42, conformal_gate_enabled=False
         )
         rng = np.random.default_rng(42)
 
@@ -727,9 +720,7 @@ class TestStrictMonotonicDescent:
 
     def test_strict_monotonicity_enforcement(self) -> None:
         """Test that free energy strictly decreases when enforced."""
-        regulator = ECSInspiredRegulator(
-            fe_scaling=1.0, enforce_monotonicity=True, seed=42
-        )
+        regulator = ECSInspiredRegulator(fe_scaling=1.0, enforce_monotonicity=True, seed=42)
         rng = np.random.default_rng(42)
 
         fe_values = []
@@ -747,14 +738,12 @@ class TestStrictMonotonicDescent:
         for i in range(1, len(fe_values)):
             assert fe_values[i] <= fe_values[i - 1] + FE_STABILITY_EPSILON, (
                 f"Monotonicity violated at step {i}: "
-                f"FE[{i}]={fe_values[i]} > FE[{i-1}]={fe_values[i-1]}"
+                f"FE[{i}]={fe_values[i]} > FE[{i - 1}]={fe_values[i - 1]}"
             )
 
     def test_monotonicity_can_be_disabled(self) -> None:
         """Test that monotonicity enforcement can be disabled."""
-        regulator = ECSInspiredRegulator(
-            fe_scaling=1.0, enforce_monotonicity=False, seed=42
-        )
+        regulator = ECSInspiredRegulator(fe_scaling=1.0, enforce_monotonicity=False, seed=42)
 
         # First update with low stress
         regulator.update_stress(np.array([0.01, -0.01]), 0.01)
@@ -769,9 +758,7 @@ class TestStrictMonotonicDescent:
 
     def test_monotonicity_violation_count(self) -> None:
         """Test that monotonicity violations are counted."""
-        regulator = ECSInspiredRegulator(
-            fe_scaling=1.0, enforce_monotonicity=True, seed=42
-        )
+        regulator = ECSInspiredRegulator(fe_scaling=1.0, enforce_monotonicity=True, seed=42)
 
         # Start with low stress
         regulator.update_stress(np.array([0.001]), 0.001)
@@ -926,9 +913,7 @@ class TestDynamicAdaptation:
 
     def test_feedback_loop_adjusts_stress_threshold(self) -> None:
         """Test that feedback loop adjusts stress threshold."""
-        regulator = ECSInspiredRegulator(
-            stress_threshold=0.1, volatility_adaptive=True, seed=42
-        )
+        regulator = ECSInspiredRegulator(stress_threshold=0.1, volatility_adaptive=True, seed=42)
 
         _ = regulator.stress_threshold  # Record initial threshold
 
@@ -962,9 +947,7 @@ class TestChronicStressEdgeCases:
 
     def test_prolonged_chronic_stress_forces_hold(self) -> None:
         """Test that prolonged chronic stress forces conservative behavior."""
-        regulator = ECSInspiredRegulator(
-            stress_threshold=0.02, chronic_threshold=3, seed=42
-        )
+        regulator = ECSInspiredRegulator(stress_threshold=0.02, chronic_threshold=3, seed=42)
 
         # Build up chronic stress
         for _ in range(20):
@@ -981,9 +964,7 @@ class TestChronicStressEdgeCases:
 
     def test_chronic_stress_reduces_compensation(self) -> None:
         """Test compensation behavior during chronic stress."""
-        regulator = ECSInspiredRegulator(
-            stress_threshold=0.02, chronic_threshold=3, seed=42
-        )
+        regulator = ECSInspiredRegulator(stress_threshold=0.02, chronic_threshold=3, seed=42)
 
         # Normal compensation
         regulator.update_stress(np.array([0.1, -0.1]), 0.1)
@@ -1000,9 +981,7 @@ class TestChronicStressEdgeCases:
 
     def test_recovery_from_chronic_stress(self) -> None:
         """Test proper recovery from chronic stress state."""
-        regulator = ECSInspiredRegulator(
-            stress_threshold=0.02, chronic_threshold=3, seed=42
-        )
+        regulator = ECSInspiredRegulator(stress_threshold=0.02, chronic_threshold=3, seed=42)
 
         # Build chronic stress
         for _ in range(15):
@@ -1102,9 +1081,7 @@ class TestStressSimulations:
 
     def test_high_frequency_updates(self) -> None:
         """Test regulator stability with high-frequency updates."""
-        regulator = ECSInspiredRegulator(
-            enforce_monotonicity=True, seed=42
-        )
+        regulator = ECSInspiredRegulator(enforce_monotonicity=True, seed=42)
         rng = np.random.default_rng(42)
 
         prev_fe = None
@@ -1425,9 +1402,9 @@ class TestConformalCalibration:
         expected_coverage = 1 - alpha
 
         # Allow ±0.10 tolerance due to finite sample size and rolling calibration window
-        assert abs(empirical_coverage - expected_coverage) < 0.10, (
-            f"Coverage {empirical_coverage:.3f} deviates too much from {expected_coverage:.2f}"
-        )
+        assert (
+            abs(empirical_coverage - expected_coverage) < 0.10
+        ), f"Coverage {empirical_coverage:.3f} deviates too much from {expected_coverage:.2f}"
 
     def test_stress_tightening_fewer_gate_pass(self) -> None:
         """5. Stress tightening: higher stress → fewer gate-pass."""
@@ -1482,10 +1459,9 @@ class TestConformalCalibration:
                 pass_high += 1
 
         # Higher stress should have fewer or equal gate passes (monotonic safety)
-        assert pass_high <= pass_low, (
-            f"Stress tightening violated: high stress pass={pass_high}, "
-            f"low stress pass={pass_low}"
-        )
+        assert (
+            pass_high <= pass_low
+        ), f"Stress tightening violated: high stress pass={pass_high}, low stress pass={pass_low}"
 
     def test_trace_hash_chain_tamper_detection(self) -> None:
         """6. Trace hash-chain: any change to old event breaks event_hash."""
@@ -1532,9 +1508,9 @@ class TestConformalCalibration:
         ).hexdigest()
 
         # The recomputed hash should differ from original
-        assert recomputed_hash != original_event["event_hash"], (
-            "Tampering should produce different hash"
-        )
+        assert (
+            recomputed_hash != original_event["event_hash"]
+        ), "Tampering should produce different hash"
 
     def test_schema_stability_all_events_same_keys(self) -> None:
         """7. Schema stability: all events have the same set of keys."""
@@ -1566,9 +1542,9 @@ class TestConformalCalibration:
             )
 
         # Verify required fields match imported schema constant
-        assert first_keys == TRACE_SCHEMA_FIELDS, (
-            f"Missing required fields: {TRACE_SCHEMA_FIELDS - first_keys}"
-        )
+        assert (
+            first_keys == TRACE_SCHEMA_FIELDS
+        ), f"Missing required fields: {TRACE_SCHEMA_FIELDS - first_keys}"
 
     def test_determinism_fixed_inputs_reproducible(self) -> None:
         """8. Determinism: fixed inputs → reproducible trace and decisions."""
@@ -1612,9 +1588,9 @@ class TestConformalCalibration:
 
         # Event hashes must match
         for i, (e1, e2) in enumerate(zip(trace1, trace2)):
-            assert e1["event_hash"] == e2["event_hash"], (
-                f"Event {i} hash mismatch: {e1['event_hash']} != {e2['event_hash']}"
-            )
+            assert (
+                e1["event_hash"] == e2["event_hash"]
+            ), f"Event {i} hash mismatch: {e1['event_hash']} != {e2['event_hash']}"
 
 
 def test_ecs_regulator_demo_runs(tmp_path, monkeypatch) -> None:

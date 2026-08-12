@@ -1,3 +1,5 @@
+# Copyright (c) 2023-2026 Yaroslav Vasylenko (neuron7xLab)
+# SPDX-License-Identifier: MIT
 """Hölder exponent estimation via wavelet coefficients for multifractal analysis.
 
 Mathematical Foundation:
@@ -287,8 +289,7 @@ def local_holder_spectrum(
     """
     if not _PYWT_AVAILABLE:
         raise RuntimeError(
-            "PyWavelets is required for local Hölder spectrum. "
-            "Install with: pip install PyWavelets"
+            "PyWavelets is required for local Hölder spectrum. Install with: pip install PyWavelets"
         )
 
     series = np.asarray(tuple(x) if not isinstance(x, np.ndarray) else x, dtype=float)
@@ -349,8 +350,7 @@ def singularity_spectrum(
     """
     if not _PYWT_AVAILABLE:
         raise RuntimeError(
-            "PyWavelets is required for singularity spectrum. "
-            "Install with: pip install PyWavelets"
+            "PyWavelets is required for singularity spectrum. Install with: pip install PyWavelets"
         )
 
     series = np.asarray(tuple(x) if not isinstance(x, np.ndarray) else x, dtype=float)

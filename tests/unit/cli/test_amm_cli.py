@@ -1,10 +1,12 @@
+# Copyright (c) 2023-2026 Yaroslav Vasylenko (neuron7xLab)
+# SPDX-License-Identifier: MIT
 import argparse
 from contextlib import contextmanager
 from pathlib import Path
 
 import pytest
 
-from cli import amm_cli
+from geosync.cli import amm_cli
 
 
 @pytest.fixture
@@ -103,16 +105,33 @@ async def test_stream_csv_rejects_invalid_numbers(tmp_path: Path) -> None:
         [row async for row in amm_cli.stream_csv(path)]
 
 
+def test_parse_required_treats_whitespace_as_empty() -> None:
+    """`raw is None or raw.strip() == ""` — whitespace counts as empty.
+
+    A blank-but-non-empty required cell must fail as *empty*, not as *non-numeric*.
+    Under `Or->And` the empty branch no longer fires for "   " (it is not None),
+    so the value falls through to float("   ") and raises the 'must be numeric'
+    error instead. Matching on 'required' pins the correct empty-cell message.
+    """
+    with pytest.raises(amm_cli.CSVValidationError, match="required"):
+        amm_cli._parse_required({"R": "   "}, "R", 7)
+
+
+def test_parse_optional_treats_whitespace_as_none() -> None:
+    """Same guard on the optional path: whitespace yields None, never a parse.
+
+    Under `Or->And` "   " skips the None-return and hits float("   "), which
+    raises an *uncaught* ValueError; the original quietly returns None.
+    """
+    assert amm_cli._parse_optional({"H": "   "}, "H") is None
+
+
 @pytest.mark.anyio
-async def test_run_publishes_metrics(
-    monkeypatch: pytest.MonkeyPatch, sample_csv: Path
-) -> None:
+async def test_run_publishes_metrics(monkeypatch: pytest.MonkeyPatch, sample_csv: Path) -> None:
     ports: list[int] = []
     monkeypatch.setattr(amm_cli, "start_http_server", lambda port: ports.append(port))
 
-    published: list[
-        tuple[str, str, dict[str, float | None], dict[str, float | None]]
-    ] = []
+    published: list[tuple[str, str, dict[str, float | None], dict[str, float | None]]] = []
 
     def fake_publish(symbol: str, tf: str, out, **kwargs):
         published.append((symbol, tf, out, kwargs))

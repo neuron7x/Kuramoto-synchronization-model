@@ -1,9 +1,11 @@
-# SPDX-License-Identifier: LicenseRef-TradePulse-Proprietary
+# Copyright (c) 2023-2026 Yaroslav Vasylenko (neuron7xLab)
+# SPDX-License-Identifier: MIT
 """Additional property-based tests for entropy and phase analysis.
 
 These tests complement existing property tests with more coverage of edge
 cases and mathematical properties.
 """
+
 from __future__ import annotations
 
 import numpy as np
@@ -147,8 +149,7 @@ class TestPhaseAnalysisProperties:
         np.random.seed(42)
         # Generate random price series
         series_list = [
-            100 * np.exp(np.cumsum(np.random.normal(0, 0.01, length)))
-            for _ in range(n_assets)
+            100 * np.exp(np.cumsum(np.random.normal(0, 0.01, length))) for _ in range(n_assets)
         ]
 
         # Should complete successfully

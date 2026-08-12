@@ -1,0 +1,125 @@
+{
+  "$schema": "https://json-schema.org/draft/2020-12/schema",
+  "$id": "https://geosync.local/schemas/pre_release_convergence_task_graph.schema.json",
+  "title": "Pre-Release Convergence Task Graph",
+  "type": "object",
+  "additionalProperties": false,
+  "required": ["cycle_id", "contract_type", "objective", "definition_lock", "agent_outputs", "task_graph", "evidence_status", "reverse_trace", "next_deterministic_action", "final_gate"],
+  "properties": {
+    "cycle_id": {"type": "string", "minLength": 1},
+    "contract_type": {"const": "pre_release_convergence_task_graph"},
+    "objective": {
+      "type": "object",
+      "additionalProperties": false,
+      "required": ["target_state", "current_state", "transformation", "action_vector", "optimization"],
+      "properties": {
+        "target_state": {"type": "string"},
+        "current_state": {"type": "string"},
+        "transformation": {"type": "string"},
+        "action_vector": {"const": "earn -> exit -> build systems"},
+        "optimization": {
+          "type": "object",
+          "additionalProperties": false,
+          "required": ["minimize", "maximize"],
+          "properties": {
+            "minimize": {"$ref": "#/$defs/string_list"},
+            "maximize": {"$ref": "#/$defs/string_list"}
+          }
+        }
+      }
+    },
+    "definition_lock": {
+      "type": "object",
+      "additionalProperties": false,
+      "required": ["status", "claim_tier_change", "forbidden_promotion", "invariants"],
+      "properties": {
+        "status": {"const": "CANDIDATE_NOT_VALIDATED"},
+        "claim_tier_change": {"const": "none"},
+        "forbidden_promotion": {"$ref": "#/$defs/string_list"},
+        "invariants": {"type": "array", "minItems": 1, "items": {"type": "string"}}
+      }
+    },
+    "agent_outputs": {
+      "type": "object",
+      "additionalProperties": false,
+      "required": ["orchestrator", "web_evidence_agent", "local_code_builder", "integrator", "verifier", "falsifier", "validator_calibrator"],
+      "properties": {
+        "orchestrator": {"$ref": "#/$defs/agent_output"},
+        "web_evidence_agent": {"$ref": "#/$defs/agent_output"},
+        "local_code_builder": {"$ref": "#/$defs/agent_output"},
+        "integrator": {"$ref": "#/$defs/agent_output"},
+        "verifier": {"$ref": "#/$defs/agent_output"},
+        "falsifier": {"$ref": "#/$defs/agent_output"},
+        "validator_calibrator": {"$ref": "#/$defs/agent_output"}
+      }
+    },
+    "task_graph": {"type": "array", "minItems": 7, "items": {"$ref": "#/$defs/task"}},
+    "evidence_status": {
+      "type": "object",
+      "additionalProperties": false,
+      "required": ["external_evidence_available", "evidence_source", "tests_executed", "tests_not_executed", "score", "confidence", "status"],
+      "properties": {
+        "external_evidence_available": {"const": false},
+        "evidence_source": {"const": "unavailable"},
+        "tests_executed": {"type": "array", "maxItems": 0},
+        "tests_not_executed": {"$ref": "#/$defs/string_list"},
+        "score": {"type": "null"},
+        "confidence": {"type": "number", "maximum": 0.65},
+        "status": {"const": "CANDIDATE_NOT_VALIDATED"}
+      }
+    },
+    "reverse_trace": {"type": "array", "minItems": 1, "items": {"$ref": "#/$defs/reverse_trace"}},
+    "next_deterministic_action": {"type": "string", "minLength": 1},
+    "final_gate": {
+      "type": "object",
+      "additionalProperties": false,
+      "required": ["status", "reason", "evidence_required"],
+      "properties": {
+        "status": {"const": "BLOCKED_BY_EVIDENCE"},
+        "reason": {"type": "string", "minLength": 1},
+        "evidence_required": {"type": "array", "minItems": 1, "items": {"type": "string"}}
+      }
+    }
+  },
+  "$defs": {
+    "string_list": {"type": "array", "items": {"type": "string"}},
+    "agent_output": {
+      "type": "object",
+      "additionalProperties": false,
+      "required": ["role", "artifact_delta", "status", "next_input_required"],
+      "properties": {
+        "role": {"type": "string", "minLength": 1},
+        "artifact_delta": {"$ref": "#/$defs/string_list"},
+        "status": {"enum": ["READY_FOR_AGENT_EXECUTION", "CANDIDATE_NOT_VALIDATED", "BLOCKED", "PARTIAL", "BROKEN"]},
+        "confidence_limit": {"type": "number", "maximum": 0.65},
+        "next_input_required": {"type": "string", "minLength": 1}
+      }
+    },
+    "task": {
+      "type": "object",
+      "additionalProperties": false,
+      "required": ["step_id", "role", "action", "command", "expected_artifact", "failure_condition"],
+      "properties": {
+        "step_id": {"type": "string", "minLength": 1},
+        "role": {"type": "string", "minLength": 1},
+        "action": {"type": "string", "minLength": 1},
+        "command": {"type": "string", "minLength": 1},
+        "expected_artifact": {"type": "string", "minLength": 1},
+        "failure_condition": {"type": "string", "minLength": 1}
+      }
+    },
+    "reverse_trace": {
+      "type": "object",
+      "additionalProperties": false,
+      "required": ["failure", "cause", "component", "patch", "test", "evidence"],
+      "properties": {
+        "failure": {"type": "string", "minLength": 1},
+        "cause": {"type": "string", "minLength": 1},
+        "component": {"type": "string", "minLength": 1},
+        "patch": {"type": "string", "minLength": 1},
+        "test": {"type": "string", "minLength": 1},
+        "evidence": {"type": "string", "minLength": 1}
+      }
+    }
+  }
+}

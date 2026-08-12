@@ -1,4 +1,6 @@
-"""Sliding window rate limiter utilities for TradePulse APIs."""
+# Copyright (c) 2023-2026 Yaroslav Vasylenko (neuron7xLab)
+# SPDX-License-Identifier: MIT
+"""Sliding window rate limiter utilities for GeoSync APIs."""
 
 from __future__ import annotations
 
@@ -64,7 +66,7 @@ class InMemorySlidingWindowBackend:
 class RedisSlidingWindowBackend:
     """Redis based backend suitable for horizontally scaled deployments."""
 
-    def __init__(self, client, *, key_prefix: str = "tradepulse:rate") -> None:  # type: ignore[no-untyped-def]
+    def __init__(self, client, *, key_prefix: str = "geosync:rate") -> None:  # type: ignore[no-untyped-def]
         self._client = client
         self._prefix = key_prefix.rstrip(":")
 
@@ -192,9 +194,7 @@ class SlidingWindowRateLimiter:
                 return specific, f"subject:{subject}"
             return self._settings.default_policy, f"subject:{subject}"
         if ip_address:
-            policy = (
-                self._settings.unauthenticated_policy or self._settings.default_policy
-            )
+            policy = self._settings.unauthenticated_policy or self._settings.default_policy
             return policy, f"ip:{ip_address}"
         return self._settings.default_policy, "anonymous"
 
@@ -249,9 +249,7 @@ def build_rate_limiter(settings: ApiRateLimitSettings) -> SlidingWindowRateLimit
                 "Redis-backed rate limiting requires the 'redis' package to be installed."
             ) from exc
 
-        client = from_url(
-            str(settings.redis_url), encoding="utf-8", decode_responses=False
-        )
+        client = from_url(str(settings.redis_url), encoding="utf-8", decode_responses=False)
         backend: RateLimiterBackend = RedisSlidingWindowBackend(
             client, key_prefix=settings.redis_key_prefix
         )

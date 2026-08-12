@@ -1,5 +1,8 @@
 #!/usr/bin/env python3
+# Copyright (c) 2023-2026 Yaroslav Vasylenko (neuron7xLab)
+# SPDX-License-Identifier: MIT
 """Check for central file changes and require justification."""
+
 from __future__ import annotations
 
 import argparse

@@ -1,0 +1,69 @@
+{
+  "$schema": "https://json-schema.org/draft/2020-12/schema",
+  "$id": "research/ctc_falsify/l2/schema/ctc_falsify_l2v2_result.schema.json",
+  "title": "CTC-FALSIFY-001-L2V2 result",
+  "type": "object",
+  "additionalProperties": false,
+  "required": [
+    "experiment_id",
+    "verdict",
+    "estimator",
+    "claim",
+    "boundary",
+    "self_validation",
+    "thresholds",
+    "real_dataset_bound",
+    "config_hash",
+    "repro_hash"
+  ],
+  "properties": {
+    "experiment_id": { "const": "CTC-FALSIFY-001-L2V2" },
+    "verdict": {
+      "type": "string",
+      "enum": [
+        "INADMISSIBLE_NO_PAIRED_DATA",
+        "INADMISSIBLE_DATASET_UNSUITABLE",
+        "INADMISSIBLE_SURROGATE_MISMATCH",
+        "INADMISSIBLE_NPLUS_INSITU_BLIND",
+        "INADMISSIBLE_UNDERPOWERED",
+        "KILLED_SCOPED",
+        "SURVIVED_INITIAL"
+      ]
+    },
+    "estimator": { "type": "string", "minLength": 1 },
+    "claim": { "type": "string", "minLength": 1 },
+    "boundary": { "type": "string", "minLength": 1 },
+    "self_validation": {
+      "type": "object",
+      "additionalProperties": false,
+      "required": [
+        "estimator_version",
+        "mean_nplus_residual_z",
+        "max_confound_residual_z",
+        "nplus_recovered",
+        "confounds_not_flagged",
+        "n_validation_seeds"
+      ],
+      "properties": {
+        "estimator_version": { "type": "string", "minLength": 1 },
+        "mean_nplus_residual_z": { "type": "number" },
+        "max_confound_residual_z": { "type": "number" },
+        "nplus_recovered": { "type": "boolean" },
+        "confounds_not_flagged": { "type": "boolean" },
+        "n_validation_seeds": { "type": "integer", "minimum": 0 }
+      }
+    },
+    "thresholds": {
+      "type": "object",
+      "additionalProperties": false,
+      "required": ["nplus_residual_min_z", "confound_residual_max_z"],
+      "properties": {
+        "nplus_residual_min_z": { "type": "number" },
+        "confound_residual_max_z": { "type": "number" }
+      }
+    },
+    "real_dataset_bound": { "type": "boolean" },
+    "config_hash": { "type": "string", "pattern": "^[a-f0-9]{64}$" },
+    "repro_hash": { "type": "string", "pattern": "^[a-f0-9]{64}$" }
+  }
+}

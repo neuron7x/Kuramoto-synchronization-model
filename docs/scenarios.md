@@ -1,6 +1,6 @@
 # Developer Scenarios
 
-Common development tasks and workflows for TradePulse contributors.
+Common development tasks and workflows for GeoSync contributors.
 
 ---
 
@@ -28,7 +28,7 @@ Use the [Scenario Template](scenario_template.md) alongside the web-based **Scen
 - **Auto-generated JSON snippets** – copy the preview directly into documentation or configuration files once all warnings clear.
 - **Template presets** – choose from breakout, mean-reversion, or volatility archetypes as a starting point.
 
-> 🛡️ Pair these guardrails with the CLI sanity checks (`cli/amm_cli.py`) so malformed CSV feeds or unsafe metrics never reach production pipelines.
+> 🛡️ Pair these guardrails with the CLI sanity checks (`geosync/cli/amm_cli.py`) so malformed CSV feeds or unsafe metrics never reach production pipelines.
 
 ---
 
@@ -38,8 +38,8 @@ Use the [Scenario Template](scenario_template.md) alongside the web-based **Scen
 
 ```bash
 # Clone repository
-git clone https://github.com/neuron7x/TradePulse.git
-cd TradePulse
+git clone https://github.com/neuron7xLab/GeoSync.git
+cd GeoSync
 
 # Create virtual environment
 python -m venv .venv
@@ -621,8 +621,8 @@ git push origin v1.0.0
 
 ```bash
 # Build Docker image
-docker build -t tradepulse:1.0.0 .
-docker push tradepulse:1.0.0
+docker build -t geosync:1.0.0 .
+docker push geosync:1.0.0
 ```
 
 ---
@@ -693,8 +693,8 @@ Implements #456"
 ## Resources
 
 - [CONTRIBUTING.md](../CONTRIBUTING.md)
-- [TESTING.md](../TESTING.md)
-- [Code Review Guidelines](https://github.com/neuron7x/TradePulse/wiki/Code-Review)
+- [TESTING.md](operations/TESTING.md)
+- [Code Review Guidelines](https://github.com/neuron7xLab/GeoSync/wiki/Code-Review)
 
 ---
 

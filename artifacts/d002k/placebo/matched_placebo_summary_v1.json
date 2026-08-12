@@ -1,0 +1,32 @@
+{
+  "calendar_length_exact_match_all": true,
+  "counts": {
+    "by_macro_period_class": {
+      "gradual_normalization": 7,
+      "pandemic_policy_era": 1,
+      "post_gfc_zirp_taper": 5,
+      "post_tightening_plateau": 2
+    },
+    "by_volatility_regime_bucket": {
+      "low_baseline_vol": 8,
+      "medium_baseline_vol": 7
+    },
+    "per_crisis": {
+      "CW3_US_REPO_SPIKE_2019": 5,
+      "CW4_COVID_DASH_FOR_CASH_2020": 5,
+      "CW5_UK_GILT_LDI_2022": 5
+    },
+    "total": 15
+  },
+  "decision": "D002K_MATCHED_PLACEBO_READY",
+  "determinism_verified": true,
+  "generated_at": "2026-05-15T00:00:00Z",
+  "n_placebo_per_crisis": 5,
+  "non_overlap_all_verified": true,
+  "parent_crisis_registry_sha256": "41f281d9e97fbf49725f0eb1a1bb7b45865c14cdc5c525ea96231ef0aa651e8f",
+  "parent_prereg_sha256": "2cd923810bf64547cd86ecb403bfd3f12a799cb16c3d10ebc07bc05865fee43f",
+  "parent_registry_path": "artifacts/d002k/placebo/matched_placebo_registry_v1.json",
+  "schema_version": "D002K-MATCHED-PLACEBO-SUMMARY-v1",
+  "selection_algorithm_id": "d002k_p2_deterministic_grid_permutation_v1",
+  "selection_seed": 20260515
+}

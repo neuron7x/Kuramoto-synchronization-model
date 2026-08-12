@@ -1,5 +1,5 @@
 data:
-  path: neuropro/data/sim_ticks.csv
+  path: geosync_hpc/data/sim_ticks.csv
   time_col: timestamp
   price_col: mid
   bid_col: bid

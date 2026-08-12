@@ -1,4 +1,5 @@
-# SPDX-License-Identifier: LicenseRef-TradePulse-Proprietary
+# Copyright (c) 2023-2026 Yaroslav Vasylenko (neuron7xLab)
+# SPDX-License-Identifier: MIT
 from __future__ import annotations
 
 import builtins
@@ -53,9 +54,7 @@ def test_secret_detector_detects_production_tls_certs(tmp_path: Path) -> None:
 def test_secret_detector_masks_findings() -> None:
     workspace = Path(tempfile.mkdtemp(prefix="secretdetector"))
     target = workspace / "config.py"
-    target.write_text(
-        "API_KEY = 'abcd1234'\npassword='verysecretvalue'\n", encoding="utf-8"
-    )
+    target.write_text("API_KEY = 'abcd1234'\npassword='verysecretvalue'\n", encoding="utf-8")
 
     detector = SecretDetector()
     findings = detector.scan_file(target)
@@ -90,9 +89,7 @@ def test_secret_detector_accepts_custom_patterns(tmp_path: Path) -> None:
     assert any(secret_type == "custom" for secret_type, *_ in findings)
 
 
-def test_scan_file_handles_unreadable_file(
-    tmp_path: Path, monkeypatch: pytest.MonkeyPatch
-) -> None:
+def test_scan_file_handles_unreadable_file(tmp_path: Path, monkeypatch: pytest.MonkeyPatch) -> None:
     """Test that unreadable files are handled gracefully."""
     workspace = Path(tempfile.mkdtemp(prefix="unreadable"))
     target = workspace / "secrets.env"
@@ -116,9 +113,7 @@ def test_scan_file_handles_unreadable_file(
 
 def test_scan_directory_respects_extension_filter() -> None:
     repo = Path(tempfile.mkdtemp(prefix="secdir"))
-    (repo / "config.yaml").write_text(
-        "secret: 'should-be-detected'\n", encoding="utf-8"
-    )
+    (repo / "config.yaml").write_text("secret: 'should-be-detected'\n", encoding="utf-8")
     (repo / "image.png").write_bytes(b"binary-data")
 
     detector = SecretDetector()

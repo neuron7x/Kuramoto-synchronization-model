@@ -1,4 +1,6 @@
 #!/usr/bin/env python3
+# Copyright (c) 2023-2026 Yaroslav Vasylenko (neuron7xLab)
+# SPDX-License-Identifier: MIT
 """Validate OHLCV data files for trading analysis quality.
 
 This script provides comprehensive data quality checks for OHLCV files,
@@ -8,7 +10,8 @@ Usage:
     python scripts/validate_ohlcv_data.py data/sample_crypto_ohlcv.csv
     python scripts/validate_ohlcv_data.py data/*.csv --format json
 """
-# SPDX-License-Identifier: LicenseRef-TradePulse-Proprietary
+
+# SPDX-License-Identifier: MIT
 
 from __future__ import annotations
 
@@ -116,9 +119,7 @@ def validate_ohlcv_file(
             report.date_range = f"{timestamps.min()} to {timestamps.max()}"
         except (ValueError, TypeError) as exc:
             # Handle expected parsing errors with specific message
-            report.warnings.append(
-                f"Could not parse timestamps in column '{timestamp_col}': {exc}"
-            )
+            report.warnings.append(f"Could not parse timestamps in column '{timestamp_col}': {exc}")
         except Exception as exc:
             # Log unexpected errors for debugging but continue validation
             LOGGER.warning(
@@ -149,9 +150,7 @@ def validate_ohlcv_file(
                 nan_pct = nan_count / len(df) * 100
                 if nan_pct > 5:
                     report.valid = False
-                    report.errors.append(
-                        f"{nan_count} NaN values in {label} ({nan_pct:.1f}%)"
-                    )
+                    report.errors.append(f"{nan_count} NaN values in {label} ({nan_pct:.1f}%)")
                 else:
                     report.warnings.append(f"{nan_count} NaN values in {label}")
 
@@ -163,9 +162,7 @@ def validate_ohlcv_file(
                 report.errors.append(f"{non_positive} non-positive values in {label}")
 
     # Validate OHLC relationships
-    has_ohlc = all(
-        col and col in df.columns for col in [open_col, high_col, low_col, close_col]
-    )
+    has_ohlc = all(col and col in df.columns for col in [open_col, high_col, low_col, close_col])
 
     if has_ohlc:
         # High >= Low

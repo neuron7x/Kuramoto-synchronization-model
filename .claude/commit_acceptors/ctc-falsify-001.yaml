@@ -1,0 +1,49 @@
+# Diff-bound commit acceptor for CTC-FALSIFY-001.
+# Binds the changeset that introduces the fail-closed Communication-through-
+# Coherence falsification engine so CI's --require-acceptor-for-code-change
+# passes on its own diff.
+
+id: ctc-falsify-001
+status: ACTIVE
+claim_type: governance
+promise: "CTC-FALSIFY-001 is fail-closed pre-data: KILLED_SCOPED/SURVIVED_INITIAL are unreachable without a bound real dataset; the standard PLV+coherence pipeline is tested against a physics generative ground truth with a positive control."
+diff_scope:
+  changed_files:
+    - path: "research/ctc_falsify/__init__.py"
+    - path: "research/ctc_falsify/config.py"
+    - path: "research/ctc_falsify/generative.py"
+    - path: "research/ctc_falsify/pipeline.py"
+    - path: "research/ctc_falsify/gates.py"
+    - path: "research/ctc_falsify/run.py"
+    - path: "research/ctc_falsify/schema/ctc_falsify_001_result.schema.json"
+    - path: "research/ctc_falsify/evidence/ctc_falsify_001_result.json"
+    - path: "tests/research/ctc_falsify/__init__.py"
+    - path: "tests/research/ctc_falsify/test_ctc_falsify_001.py"
+    - path: "config/research_line_registry.yaml"
+    - path: ".claude/commit_acceptors/ctc-falsify-001.yaml"
+    - path: "docs/research/CTC_FALSIFY_001_PREREGISTRATION.md"
+    - path: ".github/detect-secrets.baseline"
+  forbidden_paths:
+    - "trading/"
+    - "execution/"
+    - "forecast/"
+    - "policy/"
+required_python_symbols:
+  - "run"
+  - "run_diagnostic"
+  - "decide"
+  - "simulate"
+  - "run_standard_pipeline"
+  - "config_hash"
+expected_signal: "all CTC-FALSIFY-001 construct-validity tests pass; reference verdict is a fail-closed INADMISSIBLE"
+measurement_command: "python -m pytest tests/research/ctc_falsify -q"
+signal_artifact: "tmp/ctc_falsify_001_pytest.log"
+falsifier:
+  command: "python -c \"from research.ctc_falsify.gates import decide, Diagnostic; from research.ctc_falsify import config as c; decide(Diagnostic(nplus_recovery_rate=1.0, null_false_positive_rate={f:0.0 for f in c.NULL_FAMILIES}, n_seeds=c.N_NULL_SEEDS, readout_independent_of_groundtruth=True, mean_nplus_plv=0.5, mean_null_plv={f:0.1 for f in c.NULL_FAMILIES}), real_data=True)\""
+  description: "Probe attempts to reach a real-data verdict pre-binding; it MUST raise NotImplementedError, proving the kill path is fail-closed and the promise is falsifiable."
+rollback_command: "git checkout -- research/ctc_falsify tests/research/ctc_falsify config/research_line_registry.yaml"
+rollback_verification_command: "git diff --exit-code research/ctc_falsify tests/research/ctc_falsify config/research_line_registry.yaml"
+memory_update_type: append
+ledger_path: ".claude/commit_acceptors/ctc-falsify-001.yaml"
+report_path: "docs/research/CTC_FALSIFY_001_PREREGISTRATION.md"
+evidence: []

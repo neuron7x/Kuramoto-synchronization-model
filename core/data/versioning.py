@@ -1,3 +1,5 @@
+# Copyright (c) 2023-2026 Yaroslav Vasylenko (neuron7xLab)
+# SPDX-License-Identifier: MIT
 """Minimal artifact versioning helpers for the CLI."""
 
 from __future__ import annotations

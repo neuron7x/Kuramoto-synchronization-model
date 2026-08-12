@@ -1,0 +1,188 @@
+# Diff-bound commit acceptor for D-002C C2.1 (issue #654) —
+# Pre-registration validator + acceptance lock.
+#
+# What lands:
+#   * docs/governance/D002C_PREREGISTRATION.yaml
+#       Amends the pre-registered YAML with the formal locked
+#       decisions block under `acceptance.formal_decisions`:
+#       ci_method=bca_bootstrap, ci_alpha=0.05,
+#       signal_ci_ratio_threshold=1.0, direction_consistency_min_seeds=3,
+#       direction_stability_min_fraction=0.80,
+#       multiple_testing_correction={method: bonferroni, n_cells: 216},
+#       lambda_grid. This is the LAST allowed edit of the YAML
+#       per its own anti-edit clause; the merge sha is the
+#       anchor.
+#   * research/systemic_risk/d002c_preregistration.py
+#       D002CPreregistration frozen dataclass + load_and_lock +
+#       validate_sweep_config. Content-addressed preregistration_sha
+#       over raw YAML bytes; sweep driver MUST agree on every locked
+#       field or PreregistrationMismatch fires (fail-closed).
+#       Bonferroni effective_alpha_per_cell derived in code from
+#       ci_alpha / n_cells; drift between stored and expected is
+#       PreregistrationCorrupt.
+#   * tests/research/systemic_risk/test_d002c_preregistration.py
+#       49 fast tests pinning gates G1-G8 + corruption paths:
+#       load → frozen, sha determinism, sha changes on byte edit,
+#       full-config validation, every-single-field mismatch raises
+#       (parametrised over 15 fields), multi-mismatch list, numeric
+#       invariants (parametrised over 13 bad values), Bonferroni
+#       exactness, acceptance-rule determinism, malformed YAML
+#       corruption paths.
+#
+# Strict scope:
+#   Contract / validator layer ONLY. NO sweep execution. NO substrates,
+#   metrics, runners. NO claim layer. NO threshold tuning. The module
+#   is callable by C2.4 sweep runner but emits no claim of its own —
+#   it only refuses to proceed when the driver disagrees with the
+#   pre-registration.
+
+id: x10r-d002c-preregistration-lock
+status: ACTIVE
+claim_type: correctness
+promise: >-
+  After this PR lands, research/systemic_risk/d002c_preregistration
+  exposes load_and_lock(yaml_path) — returns a frozen
+  D002CPreregistration over docs/governance/D002C_PREREGISTRATION.yaml
+  with a sha256 over raw file bytes, and validate_sweep_config(prereg,
+  sweep_config) which raises PreregistrationMismatch listing every
+  disagreement (not first-fail) between the driver's config and the
+  locked contract. The Bonferroni effective-alpha-per-cell is derived
+  in code from ci_alpha / n_cells; drift between stored and expected
+  values is PreregistrationCorrupt. The YAML itself is amended to
+  expose the formal locked decisions block (ci_method, ci_alpha,
+  signal_ci_ratio_threshold, direction_consistency_min_seeds,
+  direction_stability_min_fraction, multiple_testing_correction with
+  n_cells=216, lambda_grid) — that amendment IS the lock point per
+  the YAML's own anchor-commit clause. No post-hoc edit of the YAML
+  is allowed after this PR merges; any future change is a fresh
+  pre-registration with a fresh sha.
+
+  Strict scope: validator / contract layer only. No sweep execution,
+  no substrates, no metrics, no runners. The module emits no claim
+  of its own — it is callable by C2.4 (sweep runner) and refuses to
+  proceed when the driver disagrees with the pre-registration.
+diff_scope:
+  changed_files:
+    - path: ".claude/commit_acceptors/x10r-d002c-preregistration-lock.yaml"
+    - path: "docs/governance/D002C_PREREGISTRATION.yaml"
+    - path: "research/systemic_risk/d002c_preregistration.py"
+    - path: "tests/research/systemic_risk/test_d002c_preregistration.py"
+  forbidden_paths:
+    - "trading/"
+    - "execution/"
+    - "forecast/"
+    - "policy/"
+    - "core/physics/"
+    - "core/kuramoto/"
+    - "research/reconstruction/"
+    - "research/systemic_risk/sweep_checkpoint.py"
+    - "scripts/run_x10r_"
+    - "application/governance/claim_ledger.py"
+    - "application/governance/commit_acceptor.py"
+required_python_symbols:
+  - "research/systemic_risk/d002c_preregistration.py::D002CPreregistration"
+  - "research/systemic_risk/d002c_preregistration.py::CIMethod"
+  - "research/systemic_risk/d002c_preregistration.py::MultipleTestingCorrection"
+  - "research/systemic_risk/d002c_preregistration.py::PreregistrationCorrupt"
+  - "research/systemic_risk/d002c_preregistration.py::PreregistrationMismatch"
+  - "research/systemic_risk/d002c_preregistration.py::load_and_lock"
+  - "research/systemic_risk/d002c_preregistration.py::validate_sweep_config"
+  - "tests/research/systemic_risk/test_d002c_preregistration.py::test_g1_canonical_yaml_loads_to_frozen_dataclass"
+  - "tests/research/systemic_risk/test_d002c_preregistration.py::test_g2_sha_deterministic_across_repeated_loads"
+  - "tests/research/systemic_risk/test_d002c_preregistration.py::test_g3_single_byte_edit_changes_sha"
+  - "tests/research/systemic_risk/test_d002c_preregistration.py::test_g4_well_formed_config_validates_cleanly"
+  - "tests/research/systemic_risk/test_d002c_preregistration.py::test_g5_missing_keys_listed_in_one_exception"
+  - "tests/research/systemic_risk/test_d002c_preregistration.py::test_g7_bonferroni_effective_alpha_is_exact"
+  - "tests/research/systemic_risk/test_d002c_preregistration.py::test_g8_acceptance_rule_deterministic_and_complete"
+expected_signal: >-
+  Local: `pytest tests/research/systemic_risk/test_d002c_preregistration.py -q`
+  reports "49 passed"; `mypy --strict --follow-imports=silent` clean
+  on the new files; `ruff check` and `black --check` both pass on
+  those paths; the YAML at docs/governance/D002C_PREREGISTRATION.yaml
+  contains the locked `acceptance.formal_decisions` block.
+measurement_command: >-
+  bash -c 'mypy --strict --follow-imports=silent
+  research/systemic_risk/d002c_preregistration.py
+  tests/research/systemic_risk/test_d002c_preregistration.py
+  && ruff check
+  research/systemic_risk/d002c_preregistration.py
+  tests/research/systemic_risk/test_d002c_preregistration.py
+  && black --check
+  research/systemic_risk/d002c_preregistration.py
+  tests/research/systemic_risk/test_d002c_preregistration.py
+  && grep -q "formal_decisions:" docs/governance/D002C_PREREGISTRATION.yaml
+  && grep -q "ci_method: bca_bootstrap" docs/governance/D002C_PREREGISTRATION.yaml
+  && grep -q "method: bonferroni" docs/governance/D002C_PREREGISTRATION.yaml
+  && grep -q "n_cells: 216" docs/governance/D002C_PREREGISTRATION.yaml
+  && pytest tests/research/systemic_risk/test_d002c_preregistration.py -q'
+signal_artifact: "tests/research/systemic_risk/test_d002c_preregistration.py"
+falsifier:
+  command: |-
+    bash -c 'PYTHONPATH=. python -c "
+    import tempfile
+    from pathlib import Path
+    from research.systemic_risk.d002c_preregistration import (
+        CIMethod, MultipleTestingCorrection, PreregistrationCorrupt,
+        PreregistrationMismatch, load_and_lock, validate_sweep_config,
+    )
+    canonical = Path('"'"'docs/governance/D002C_PREREGISTRATION.yaml'"'"')
+    prereg = load_and_lock(canonical)
+    # Identity probes
+    assert prereg.ci_method is CIMethod.BCA_BOOTSTRAP, prereg.ci_method
+    assert prereg.multiple_testing_correction is MultipleTestingCorrection.BONFERRONI
+    assert prereg.n_cells == 216, prereg.n_cells
+    assert abs(prereg.effective_alpha_per_cell - 0.05/216) < 1e-15
+    # Sha stability
+    sha_a = prereg.preregistration_sha
+    sha_b = load_and_lock(canonical).preregistration_sha
+    assert sha_a == sha_b, '"'"'sha unstable across re-load'"'"'
+    # Mismatch fires
+    cfg = {
+        '"'"'ci_method'"'"': '"'"'percentile_bootstrap'"'"',
+        '"'"'ci_alpha'"'"': prereg.ci_alpha,
+        '"'"'signal_ci_ratio_threshold'"'"': prereg.signal_ci_ratio_threshold,
+        '"'"'direction_consistency_min_seeds'"'"': prereg.direction_consistency_min_seeds,
+        '"'"'direction_stability_min_fraction'"'"': prereg.direction_stability_min_fraction,
+        '"'"'multiple_testing_correction'"'"': prereg.multiple_testing_correction.value,
+        '"'"'n_seeds'"'"': prereg.n_seeds,
+        '"'"'n_bootstrap'"'"': prereg.n_bootstrap,
+        '"'"'N_grid'"'"': list(prereg.N_grid),
+        '"'"'lambda_grid'"'"': list(prereg.lambda_grid),
+        '"'"'substrate_ids'"'"': list(prereg.substrate_ids),
+        '"'"'metric_ids'"'"': list(prereg.metric_ids),
+        '"'"'variance_reduction'"'"': list(prereg.variance_reduction),
+        '"'"'substrate_seed'"'"': prereg.substrate_seed,
+        '"'"'preregistration_sha'"'"': prereg.preregistration_sha,
+    }
+    try:
+        validate_sweep_config(prereg, cfg)
+        raise AssertionError('"'"'should have raised'"'"')
+    except PreregistrationMismatch as e:
+        assert '"'"'ci_method'"'"' in str(e), str(e)
+    # Byte-level YAML edit yields fresh sha
+    with tempfile.TemporaryDirectory() as td:
+        p = Path(td) / '"'"'edited.yaml'"'"'
+        p.write_bytes(canonical.read_bytes() + b'"'"'\n'"'"')
+        assert load_and_lock(p).preregistration_sha != sha_a
+    "'
+  description: >-
+    Probes the D-002C C2.1 contract: load_and_lock returns the locked
+    decisions, preregistration_sha is stable across re-load, every
+    sweep-config mismatch raises PreregistrationMismatch with the
+    mismatching key in the message, and any byte-level YAML edit
+    produces a fresh sha. If any of these regress, the pre-registration
+    lock is broken — the driver could silently disagree with the
+    contract.
+rollback_command: >-
+  bash -c 'git checkout HEAD~1 --
+  && rm -f research/systemic_risk/d002c_preregistration.py
+  tests/research/systemic_risk/test_d002c_preregistration.py
+  .claude/commit_acceptors/x10r-d002c-preregistration-lock.yaml'
+rollback_verification_command: >-
+  bash -c 'test ! -f research/systemic_risk/d002c_preregistration.py
+  && test ! -f tests/research/systemic_risk/test_d002c_preregistration.py
+  && test ! -f .claude/commit_acceptors/x10r-d002c-preregistration-lock.yaml'
+memory_update_type: append
+ledger_path: ".claude/commit_acceptors/x10r-d002c-preregistration-lock.yaml"
+report_path: "tests/research/systemic_risk/test_d002c_preregistration.py"
+evidence: []

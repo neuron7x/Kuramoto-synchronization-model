@@ -1,0 +1,95 @@
+# Diff-bound acceptor for reset-wave engine (Layer-2 sustainer primitive).
+#
+# Pure-Python damped phase synchronisation solver on the compact phase
+# manifold [-π, π) with provable monotone potential decrease and
+# fail-closed safety lock. Composes with Laws T1 (Φ-criterion), T6
+# (ReplayManifest), T7 (pinning).
+
+id: reset-wave-engine
+status: ACTIVE
+claim_type: correctness
+promise: >-
+  geosync.neuroeconomics.reset_wave_engine ships a damped phase-
+  synchronisation solver: wrap_phase / phase_distance /
+  phase_alignment_potential / ResetWaveConfig / ResetWaveState /
+  ResetWaveResult / run_reset_wave / latent_interpretive_forecast_layer.
+  Integrates θ̇ = K · sin(θ* − θ) under either Euler or fixed-step
+  RK4 on the compact circle. Fail-closed lock when any |Δ_i| >
+  max_phase_error; otherwise the Lyapunov potential
+  V = mean(1 − cos(Δ)) is non-increasing per step in the empirical
+  stable regime 0 < K · dt ≤ 0.2 — verified across a 4·3·3·3
+  configuration grid × 20 random seeds.
+  geosync.neuroeconomics.homeostatic_stabilizer adds ResetWaveReport
+  + NeuroHomeostaticStabilizer.re_adaptation_to_baseline (Kuramoto-
+  style mean-sin reset with thermodynamic invariant
+  pre_reset_energy ≥ post_reset_energy and safety lock on extreme
+  phase error). Determinism by frozen-dataclass equality. Fail-closed
+  on mismatched vector sizes, serotonin_gain ≤ 0, max_phase_error ≤ 0,
+  invalid integrator, non-positive coupling_gain/dt/steps.
+diff_scope:
+  changed_files:
+    - path: ".claude/commit_acceptors/reset-wave-engine.yaml"
+    - path: "geosync/neuroeconomics/reset_wave_engine.py"
+    - path: "geosync/neuroeconomics/homeostatic_stabilizer.py"
+    - path: "tests/test_reset_wave_engine.py"
+    - path: "tests/test_reset_wave_physics_laws.py"
+    - path: "tests/test_reset_wave_stress_validation.py"
+    - path: "tests/test_homeostatic_stabilizer.py"
+    - path: "docs/reset_wave_truth_value_function.md"
+    - path: "docs/stability_bounds.md"
+  forbidden_paths:
+    - "trading/"
+    - "execution/"
+    - "forecast/"
+    - "policy/"
+required_python_symbols:
+  - "ResetWaveConfig"
+  - "ResetWaveResult"
+  - "ResetWaveState"
+  - "ResetWaveReport"
+  - "phase_alignment_potential"
+  - "phase_distance"
+  - "run_reset_wave"
+  - "wrap_phase"
+expected_signal: >-
+  All 30 new unit tests pass under pytest; ruff, black, mypy --strict
+  --follow-imports=silent clean on both source files; lock-or-decrease
+  invariant holds across the full 4·3·3·3·20 stress grid; randomised
+  re_adaptation_to_baseline (100 trials) shows post_reset_energy ≤
+  pre_reset_energy.
+measurement_command: >-
+  python -m pytest tests/test_reset_wave_engine.py
+  tests/test_reset_wave_physics_laws.py
+  tests/test_reset_wave_stress_validation.py
+  tests/test_homeostatic_stabilizer.py -v
+signal_artifact: "tmp/reset_wave_engine_pytest.log"
+falsifier:
+  command: >-
+    python -m pytest tests/test_reset_wave_engine.py
+    tests/test_reset_wave_physics_laws.py
+    tests/test_reset_wave_stress_validation.py
+    -v -k "lock or decreases or determ or rk4 or stress or fixed_point"
+  description: >-
+    Probe filters to the load-bearing tests:
+    lock-on-extreme-drift (fail-closed before any step is taken);
+    potential-decreases-under-stable-reset (monotone V↓);
+    determinism (same input ⇒ same output by frozen-dataclass equality);
+    rk4_fixed_and_euler_are_stable (both integrators preserve V↓);
+    stress (lock-or-decrease invariant on 720 trials across grid);
+    zero-error fixed_point (steady state at θ = θ*).
+rollback_command: >-
+  git checkout HEAD~1 -- geosync/neuroeconomics/reset_wave_engine.py
+  geosync/neuroeconomics/homeostatic_stabilizer.py
+  tests/test_reset_wave_engine.py
+  tests/test_reset_wave_physics_laws.py
+  tests/test_reset_wave_stress_validation.py
+  tests/test_homeostatic_stabilizer.py
+  docs/reset_wave_truth_value_function.md
+  docs/stability_bounds.md
+  .claude/commit_acceptors/reset-wave-engine.yaml
+rollback_verification_command: >-
+  git diff --exit-code geosync/neuroeconomics/reset_wave_engine.py
+memory_update_type: append
+ledger_path: ".claude/commit_acceptors/reset-wave-engine.yaml"
+report_path: "docs/reset_wave_truth_value_function.md"
+evidence: []

@@ -1,3 +1,5 @@
+# Copyright (c) 2023-2026 Yaroslav Vasylenko (neuron7xLab)
+# SPDX-License-Identifier: MIT
 """Tests for sandbox subchart templates."""
 
 from __future__ import annotations
@@ -8,12 +10,7 @@ from typing import Any, Dict, List
 import yaml
 
 SANDBOX_CHART = (
-    Path(__file__).resolve().parents[2]
-    / "deploy"
-    / "helm"
-    / "tradepulse"
-    / "charts"
-    / "sandbox"
+    Path(__file__).resolve().parents[2] / "deploy" / "helm" / "geosync" / "charts" / "sandbox"
 )
 
 

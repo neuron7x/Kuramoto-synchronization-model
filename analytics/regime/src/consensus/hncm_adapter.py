@@ -1,12 +1,13 @@
-# SPDX-License-Identifier: LicenseRef-TradePulse-Proprietary
-"""HNCM-style adaptive consensus for TradePulse.
+# Copyright (c) 2023-2026 Yaroslav Vasylenko (neuron7xLab)
+# SPDX-License-Identifier: MIT
+"""HNCM-style adaptive consensus for GeoSync.
 
 Адаптивний шар колективного інтелекту:
 - Зважене середнє агентних оцінок у [-1,1] з урахуванням впевненості [0,1].
 - Онлайн-навчання ваг з EMA за реалізованим результатом (PnL/accuracy у [-1,1]).
 - Сумісне з :mod:`analytics.regime.src.core.ews` (EWSResult) та :mod:`domain.signals`.
 
-Залежності: тільки стандартна бібліотека + існуючі модулі TradePulse.
+Залежності: тільки стандартна бібліотека + існуючі модулі GeoSync.
 """
 
 from __future__ import annotations
@@ -59,7 +60,7 @@ class _StateStore:
     """Проста JSON-пам'ять для нагород/ваг (атомарний запис)."""
 
     def __init__(self, path: str | Path | None = None) -> None:
-        self.path = Path(path or Path.home() / ".tradepulse" / "hncm_state.json")
+        self.path = Path(path or Path.home() / ".geosync" / "hncm_state.json")
         self.path.parent.mkdir(parents=True, exist_ok=True)
         self.state: Dict[str, Any] = self._fresh_state()
         self._load()
@@ -72,9 +73,7 @@ class _StateStore:
             return
         try:
             raw = json.loads(self.path.read_text())
-            if not isinstance(
-                raw, Mapping
-            ):  # pragma: no cover - defensive, asserted in tests
+            if not isinstance(raw, Mapping):  # pragma: no cover - defensive, asserted in tests
                 raise TypeError("state must be a mapping")
         except Exception:
             # якщо файл пошкоджено — зберегти як .corrupt.json і почати заново
@@ -114,7 +113,7 @@ class _StateStore:
 
 
 class HNCMConsensusAdapter:
-    """Адаптивний консенсус (HNCM v1.1 логіка) для TradePulse.
+    """Адаптивний консенсус (HNCM v1.1 логіка) для GeoSync.
 
     Parameters
     ----------
@@ -123,7 +122,7 @@ class HNCMConsensusAdapter:
     alpha: float
         EMA-сгладжування для оновлення нагород (0<alpha≤1).
     state_path: Optional[str|Path]
-        Шлях до JSON зі станом (за замовчуванням ~/.tradepulse/hncm_state.json).
+        Шлях до JSON зі станом (за замовчуванням ~/.geosync/hncm_state.json).
     buy_threshold, sell_threshold: float
         Пороги картографування score→BUY/SELL; інакше HOLD.
     """
@@ -137,9 +136,7 @@ class HNCMConsensusAdapter:
         buy_threshold: float = 0.15,
         sell_threshold: float = -0.15,
     ) -> None:
-        self.base_weights: Dict[str, float] = self._validate_base_weights(
-            base_weights or {}
-        )
+        self.base_weights: Dict[str, float] = self._validate_base_weights(base_weights or {})
         self.alpha = self._validate_alpha(alpha)
         self.store = _StateStore(state_path)
         self.buy_threshold, self.sell_threshold = self._validate_thresholds(
@@ -171,9 +168,7 @@ class HNCMConsensusAdapter:
         for agent, value in weights.items():
             v = float(value)
             if v < 0.0:
-                raise ValueError(
-                    f"base weight for agent '{agent}' must be non-negative"
-                )
+                raise ValueError(f"base weight for agent '{agent}' must be non-negative")
             validated[str(agent)] = v
         return validated
 
@@ -185,9 +180,7 @@ class HNCMConsensusAdapter:
         return a
 
     @staticmethod
-    def _validate_thresholds(
-        buy_threshold: float, sell_threshold: float
-    ) -> Tuple[float, float]:
+    def _validate_thresholds(buy_threshold: float, sell_threshold: float) -> Tuple[float, float]:
         buy = float(buy_threshold)
         sell = float(sell_threshold)
         if not -1.0 <= sell <= buy <= 1.0:
@@ -202,13 +195,9 @@ class HNCMConsensusAdapter:
         override_weights: Optional[Mapping[str, float]] = None,
     ) -> Tuple[float, Dict[str, float]]:
         votes = tuple(votes)
-        weights = self._effective_weights(
-            self.base_weights, learned_weights, override_weights
-        )
+        weights = self._effective_weights(self.base_weights, learned_weights, override_weights)
         for vote in votes:
-            weights.setdefault(
-                vote.agent, max(0.0, float(self.base_weights.get(vote.agent, 1.0)))
-            )
+            weights.setdefault(vote.agent, max(0.0, float(self.base_weights.get(vote.agent, 1.0))))
         num = 0.0
         den = 0.0
         for v in votes:
@@ -289,9 +278,7 @@ class HNCMConsensusAdapter:
 # ---------- EWS → AgentVote ----------
 
 
-def ews_to_vote(
-    agent_name: str, ews_result: Any, *, use_probability: bool = True
-) -> AgentVote:
+def ews_to_vote(agent_name: str, ews_result: Any, *, use_probability: bool = True) -> AgentVote:
     """Перетворити :class:`EWSResult` у голос агента."""
     score = 0.0
     prob = getattr(ews_result, "probability", None)
@@ -299,6 +286,4 @@ def ews_to_vote(
         score = clamp(2.0 * float(prob), 0.0, 2.0) - 1.0
     elif hasattr(ews_result, "ews_score"):
         score = clamp(float(getattr(ews_result, "ews_score")), -1.0, 1.0)
-    return AgentVote(
-        agent=agent_name, score=score, confidence=1.0, rationale="EWS meta-signal"
-    )
+    return AgentVote(agent=agent_name, score=score, confidence=1.0, rationale="EWS meta-signal")

@@ -1,4 +1,5 @@
-# SPDX-License-Identifier: LicenseRef-TradePulse-Proprietary
+# Copyright (c) 2023-2026 Yaroslav Vasylenko (neuron7xLab)
+# SPDX-License-Identifier: MIT
 """Comprehensive Unit Tests for Paper Trading Engine.
 
 This module provides thorough test coverage for the paper trading engine,
@@ -13,6 +14,7 @@ Tests cover:
 - PaperOrderReport generation
 - PaperTradingEngine execution flow
 """
+
 from __future__ import annotations
 
 import pytest
@@ -74,6 +76,7 @@ class TestLatencySample:
 # DeterministicLatencyModel Tests
 # ============================================================================
 
+
 class TestDeterministicLatencyModel:
     """Test suite for DeterministicLatencyModel."""
 
@@ -126,6 +129,7 @@ class TestDeterministicLatencyModel:
 # TelemetryEvent Tests
 # ============================================================================
 
+
 class TestTelemetryEvent:
     """Test suite for TelemetryEvent dataclass."""
 
@@ -155,6 +159,7 @@ class TestTelemetryEvent:
 # FillEvent Tests
 # ============================================================================
 
+
 class TestFillEvent:
     """Test suite for FillEvent dataclass."""
 
@@ -175,6 +180,7 @@ class TestFillEvent:
 # ============================================================================
 # PnLAnalysis Tests
 # ============================================================================
+
 
 class TestPnLAnalysis:
     """Test suite for PnLAnalysis dataclass."""
@@ -208,6 +214,7 @@ class TestPnLAnalysis:
 # PaperOrderReport Tests
 # ============================================================================
 
+
 class TestPaperOrderReport:
     """Test suite for PaperOrderReport dataclass."""
 
@@ -226,9 +233,7 @@ class TestPaperOrderReport:
             order=sample_order,
             latency=LatencySample(ack_delay=0.01, fill_delay=0.02),
             fills=(FillEvent(quantity=1.0, price=50000.0, timestamp=100.0),),
-            telemetry=(
-                TelemetryEvent(timestamp=100.0, event="order.submit", attributes={}),
-            ),
+            telemetry=(TelemetryEvent(timestamp=100.0, event="order.submit", attributes={}),),
             pnl=PnLAnalysis(
                 realized_value=50000.0,
                 ideal_value=50000.0,
@@ -260,6 +265,7 @@ class TestPaperOrderReport:
 # PaperTradingEngine Tests
 # ============================================================================
 
+
 class TestPaperTradingEngine:
     """Test suite for PaperTradingEngine class."""
 
@@ -274,9 +280,7 @@ class TestPaperTradingEngine:
         return PaperTradingEngine(connector)
 
     @pytest.fixture
-    def engine_with_latency(
-        self, connector: SimulatedExchangeConnector
-    ) -> PaperTradingEngine:
+    def engine_with_latency(self, connector: SimulatedExchangeConnector) -> PaperTradingEngine:
         """Create a paper trading engine with latency model."""
         latency_model = DeterministicLatencyModel(ack_delay=0.01, fill_delay=0.02)
         return PaperTradingEngine(connector, latency_model=latency_model)
@@ -286,9 +290,7 @@ class TestPaperTradingEngine:
         engine = PaperTradingEngine(connector)
         assert engine is not None
 
-    def test_engine_with_custom_clock(
-        self, connector: SimulatedExchangeConnector
-    ) -> None:
+    def test_engine_with_custom_clock(self, connector: SimulatedExchangeConnector) -> None:
         """Test engine accepts custom clock function."""
         clock_value = 1000.0
         engine = PaperTradingEngine(connector, clock=lambda: clock_value)
@@ -326,9 +328,7 @@ class TestPaperTradingEngine:
         # PnL should reflect slippage
         assert report.pnl.ideal_value != report.pnl.realized_value
 
-    def test_execute_order_with_latency(
-        self, engine_with_latency: PaperTradingEngine
-    ) -> None:
+    def test_execute_order_with_latency(self, engine_with_latency: PaperTradingEngine) -> None:
         """Test order execution with latency model."""
         order = Order(symbol="BTCUSD", side=OrderSide.BUY, quantity=1.0)
 
@@ -350,9 +350,7 @@ class TestPaperTradingEngine:
         assert "order.ack" in event_types
         assert "order.fill" in event_types
 
-    def test_execute_order_invalid_execution_price_raises(
-        self, engine: PaperTradingEngine
-    ) -> None:
+    def test_execute_order_invalid_execution_price_raises(self, engine: PaperTradingEngine) -> None:
         """Test that zero execution price raises ValueError."""
         order = Order(symbol="BTCUSD", side=OrderSide.BUY, quantity=1.0)
 
@@ -368,9 +366,7 @@ class TestPaperTradingEngine:
         with pytest.raises(ValueError, match="execution_price must be positive"):
             engine.execute_order(order, execution_price=-100.0)
 
-    def test_execute_order_invalid_ideal_price_raises(
-        self, engine: PaperTradingEngine
-    ) -> None:
+    def test_execute_order_invalid_ideal_price_raises(self, engine: PaperTradingEngine) -> None:
         """Test that zero ideal price raises ValueError."""
         order = Order(symbol="BTCUSD", side=OrderSide.BUY, quantity=1.0)
 
@@ -388,14 +384,10 @@ class TestPaperTradingEngine:
         )
 
         # Check that metadata is recorded in telemetry
-        submit_event = next(
-            e for e in report.telemetry if e.event == "order.submit"
-        )
+        submit_event = next(e for e in report.telemetry if e.event == "order.submit")
         assert "metadata" in submit_event.attributes
 
-    def test_execute_order_with_idempotency_key(
-        self, engine: PaperTradingEngine
-    ) -> None:
+    def test_execute_order_with_idempotency_key(self, engine: PaperTradingEngine) -> None:
         """Test order execution with idempotency key."""
         order = Order(symbol="BTCUSD", side=OrderSide.BUY, quantity=1.0)
 
@@ -421,9 +413,7 @@ class TestPaperTradingEngine:
         assert report.order.filled_quantity == 5.0
         assert report.order.status == OrderStatus.PARTIALLY_FILLED
 
-    def test_telemetry_listener_callback(
-        self, connector: SimulatedExchangeConnector
-    ) -> None:
+    def test_telemetry_listener_callback(self, connector: SimulatedExchangeConnector) -> None:
         """Test that telemetry listeners are called."""
         events_received: list[TelemetryEvent] = []
 
@@ -479,6 +469,7 @@ class TestPaperTradingEngine:
 # Edge Cases and Error Handling
 # ============================================================================
 
+
 class TestPaperTradingEdgeCases:
     """Test edge cases and error handling in paper trading."""
 
@@ -490,17 +481,13 @@ class TestPaperTradingEdgeCases:
     def engine(self, connector: SimulatedExchangeConnector) -> PaperTradingEngine:
         return PaperTradingEngine(connector)
 
-    def test_execute_order_with_zero_quantity_raises(
-        self, engine: PaperTradingEngine
-    ) -> None:
+    def test_execute_order_with_zero_quantity_raises(self, engine: PaperTradingEngine) -> None:
         """Test that zero quantity order raises during execution."""
         # Order with zero quantity should fail at creation or execution
         with pytest.raises(ValueError):
             Order(symbol="BTCUSD", side=OrderSide.BUY, quantity=0.0)
 
-    def test_execute_order_negative_quantity_raises(
-        self, engine: PaperTradingEngine
-    ) -> None:
+    def test_execute_order_negative_quantity_raises(self, engine: PaperTradingEngine) -> None:
         """Test that negative quantity order raises."""
         with pytest.raises(ValueError):
             Order(symbol="BTCUSD", side=OrderSide.BUY, quantity=-1.0)
@@ -538,6 +525,7 @@ class TestPaperTradingEdgeCases:
 # ============================================================================
 # Custom Clock Tests
 # ============================================================================
+
 
 class TestPaperTradingWithCustomClock:
     """Test paper trading with custom clock for deterministic timing."""

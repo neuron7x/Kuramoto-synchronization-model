@@ -1,0 +1,124 @@
+# Diff-bound commit acceptor for the FVPS + Neuron7X governance contract PR.
+#
+# Split per claim-type cap (governance <=16): companion to
+# fractal-neuro-cognitive-governance-contract.yaml. That acceptor binds the
+# executable claim-state quantizer + fractal architecture; this acceptor binds
+# the FVPS value-function and Neuron7X value/calibration/filter/verification
+# prompt+data artifacts (pure governance docs + data, no runtime code).
+#
+# Purpose:
+#   Bind these governance-only prompt/data artifacts to explicit rollback and
+#   claim boundary. This acceptor intentionally does not validate cognition,
+#   physics, prediction, market readiness, or model-weight update claims.
+
+id: neuron7x-fvps-governance-contract
+status: ACTIVE
+claim_type: governance
+promise: >-
+  After this PR lands, GeoSync contains machine-readable and human-readable
+  governance artifacts for FVPS value-function scoring, FVPS max-inference-rank
+  scoring, Neuron7X value functions, Neuron7X calibration thresholds, Neuron7X
+  signal filtering rules, and Neuron7X verification/conformance rules. The PR
+  adds governance prompt docs and JSON data only. It does not change runtime,
+  physics, market, or trading behavior.
+
+diff_scope:
+  changed_files:
+    - path: ".claude/commit_acceptors/neuron7x-fvps-governance-contract.yaml"
+    - path: "docs/prompts/fvps_agent_v2026_3.md"
+    - path: "data/governance/fvps_agent_v2026_3.json"
+    - path: "docs/prompts/fvps_max_inference_rank_prompt_v2026_4.md"
+    - path: "data/governance/fvps_max_inference_rank_prompt_v2026_4.json"
+    - path: "docs/prompts/neuron7x_value_functions_v2026_5.md"
+    - path: "data/governance/neuron7x_value_functions_v2026_5.json"
+    - path: "docs/prompts/neuron7x_calibration_protocol_v2026_6.md"
+    - path: "data/governance/neuron7x_calibration_protocol_v2026_6.json"
+    - path: "docs/prompts/neuron7x_filter_protocol_v2026_7.md"
+    - path: "data/governance/neuron7x_filter_protocol_v2026_7.json"
+    - path: "docs/prompts/neuron7x_verification_protocol_v2026_8.md"
+    - path: "data/governance/neuron7x_verification_protocol_v2026_8.json"
+  forbidden_paths:
+    - "trading/"
+    - "execution/"
+    - "forecast/"
+    - "policy/"
+    - "core/"
+    - "runtime/"
+    - "application/"
+    - "analytics/"
+    - "research/"
+
+required_python_symbols: []
+
+expected_signal: >-
+  The six FVPS/Neuron7X JSON governance artifacts parse as valid JSON objects
+  and define value-function scoring, calibration thresholds, signal filtering
+  rules, and verification/conformance rules without claiming runtime, physics,
+  market, or trading behavior changes.
+
+measurement_command: |-
+  bash -c '
+    for f in \
+      data/governance/fvps_agent_v2026_3.json \
+      data/governance/fvps_max_inference_rank_prompt_v2026_4.json \
+      data/governance/neuron7x_value_functions_v2026_5.json \
+      data/governance/neuron7x_calibration_protocol_v2026_6.json \
+      data/governance/neuron7x_filter_protocol_v2026_7.json \
+      data/governance/neuron7x_verification_protocol_v2026_8.json; do
+      python -c "import json,sys; json.load(open(sys.argv[1]))" "$f" || exit 1
+    done
+  '
+
+signal_artifact: "tmp/neuron7x_fvps_governance_contract.log"
+
+falsifier:
+  command: >-
+    bash -c '
+      python - <<"PY"
+      import pathlib
+      import sys
+
+      files = [
+          "data/governance/fvps_agent_v2026_3.json",
+          "data/governance/fvps_max_inference_rank_prompt_v2026_4.json",
+          "data/governance/neuron7x_value_functions_v2026_5.json",
+          "data/governance/neuron7x_calibration_protocol_v2026_6.json",
+          "data/governance/neuron7x_filter_protocol_v2026_7.json",
+          "data/governance/neuron7x_verification_protocol_v2026_8.json",
+      ]
+      missing = [f for f in files if not pathlib.Path(f).exists()]
+      sys.exit(0 if missing else 1)
+      PY
+    '
+  description: >-
+    Probes that all six FVPS/Neuron7X governance data artifacts are present.
+    The falsifier inverts: it succeeds (exit 0) only when one of the bound
+    artifacts is absent, which would mean the governance layer rolled back.
+
+rollback_command: >-
+  bash -c '
+    git rm -f
+      .claude/commit_acceptors/neuron7x-fvps-governance-contract.yaml
+      docs/prompts/fvps_agent_v2026_3.md
+      data/governance/fvps_agent_v2026_3.json
+      docs/prompts/fvps_max_inference_rank_prompt_v2026_4.md
+      data/governance/fvps_max_inference_rank_prompt_v2026_4.json
+      docs/prompts/neuron7x_value_functions_v2026_5.md
+      data/governance/neuron7x_value_functions_v2026_5.json
+      docs/prompts/neuron7x_calibration_protocol_v2026_6.md
+      data/governance/neuron7x_calibration_protocol_v2026_6.json
+      docs/prompts/neuron7x_filter_protocol_v2026_7.md
+      data/governance/neuron7x_filter_protocol_v2026_7.json
+      docs/prompts/neuron7x_verification_protocol_v2026_8.md
+      data/governance/neuron7x_verification_protocol_v2026_8.json
+  '
+
+rollback_verification_command: >-
+  bash -c '
+    test ! -e data/governance/fvps_agent_v2026_3.json && test ! -e data/governance/neuron7x_value_functions_v2026_5.json && test ! -e data/governance/neuron7x_calibration_protocol_v2026_6.json && test ! -e data/governance/neuron7x_filter_protocol_v2026_7.json && test ! -e data/governance/neuron7x_verification_protocol_v2026_8.json
+  '
+
+memory_update_type: append
+ledger_path: ".claude/commit_acceptors/neuron7x-fvps-governance-contract.yaml"
+report_path: "tmp/neuron7x_fvps_governance_contract.log"
+evidence: []

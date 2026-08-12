@@ -1,4 +1,5 @@
-# SPDX-License-Identifier: LicenseRef-TradePulse-Proprietary
+# Copyright (c) 2023-2026 Yaroslav Vasylenko (neuron7xLab)
+# SPDX-License-Identifier: MIT
 """Unit tests for core/data/market_feed_storage.py."""
 
 from __future__ import annotations
@@ -374,6 +375,40 @@ class TestMarketFeedStorageDownload:
                 # This should not raise ValueError even with corrupted checksum
                 result = storage.download_recording("test-rec", verify_checksum=False)
                 assert result is not None
+
+
+    def test_download_metadata_checksum_match_does_not_raise(
+        self, storage_with_data: tuple
+    ) -> None:
+        """A MATCHING metadata checksum must pass silently, not raise.
+
+        Pins :197 `actual_checksum != stored_checksum` against NotEq->Eq, which
+        would raise a spurious 'Checksum mismatch' on every intact metadata
+        blob. The jsonl checksum in the fixture already matches, so control
+        reaches the metadata branch; the metadata object here carries a correct
+        checksum. Parsers are patched so the test isolates the integrity guard.
+        """
+        storage, mock_client = storage_with_data
+
+        metadata_bytes = b'{"schema": "market_feed/v1"}'
+        metadata_checksum = hashlib.sha256(metadata_bytes).hexdigest()
+        mock_client.objects["feeds/test-rec.metadata.json"] = {
+            "Body": metadata_bytes,
+            "Metadata": {"checksum": metadata_checksum},
+        }
+
+        with patch("core.data.market_feed_storage.MarketFeedRecording") as rec_cls, patch(
+            "core.data.market_feed.MarketFeedRecord.from_jsonl"
+        ), patch("core.data.market_feed_storage.MarketFeedMetadata") as meta_cls:
+            rec_cls.return_value = MagicMock()
+            meta_cls.from_dict.return_value = MagicMock()
+
+            # Must NOT raise: intact metadata checksum.
+            result = storage.download_recording(
+                "test-rec", include_metadata=True, verify_checksum=True
+            )
+            assert result is not None
+        meta_cls.from_dict.assert_called_once()
 
 
 class TestMarketFeedStorageFileOps:

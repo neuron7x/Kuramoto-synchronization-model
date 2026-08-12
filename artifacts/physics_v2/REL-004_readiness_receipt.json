@@ -1,0 +1,112 @@
+{
+  "task": "REL-004",
+  "branch": "remediation/wave2-p0",
+  "generated_utc": "2026-07-19T14:36:57.748281Z",
+  "checker_path": "scripts/ci/check_physics_law_witness_index.py",
+  "checker_commands": {
+    "regenerate": "python scripts/ci/check_physics_law_witness_index.py --write",
+    "verify": "python scripts/ci/check_physics_law_witness_index.py"
+  },
+  "checker_verdict": "PASS",
+  "checker_exit_code": 0,
+  "checker_stdout": "PHYSICS LAW-WITNESS INDEX: OK (32/32 blocking laws witnessed; 53/132 invariants with existing witnesses)",
+  "counts": {
+    "catalog_laws": 42,
+    "blocking_laws": 32,
+    "blocking_covered": 32,
+    "invariants_index": 132,
+    "invariants_covered": 53,
+    "count_invariants_py": 132,
+    "invariant_count_reconciled": true
+  },
+  "all_blocking_laws_witnessed": true,
+  "warn_laws_no_witness_deferred": [
+    {
+      "law_id": "kelly.log_growth_optimality",
+      "severity": "warn",
+      "status": "WARN_ONLY",
+      "witnesses": 1,
+      "reason": "non-block warn law"
+    },
+    {
+      "law_id": "kuramoto.finite_size_scaling_with_causal_cutoff",
+      "severity": "warn",
+      "status": "WARN_ONLY",
+      "witnesses": 0,
+      "reason": "DRAFT/deferred (warn-severity, non-blocking)"
+    },
+    {
+      "law_id": "manifold.causal_cutoff",
+      "severity": "warn",
+      "status": "WARN_ONLY",
+      "witnesses": 5,
+      "reason": "non-block warn law"
+    },
+    {
+      "law_id": "manifold.curvature_transport_balance",
+      "severity": "warn",
+      "status": "WARN_ONLY",
+      "witnesses": 0,
+      "reason": "non-block warn law"
+    },
+    {
+      "law_id": "manifold.metric_snapshot_schema",
+      "severity": "warn",
+      "status": "WARN_ONLY",
+      "witnesses": 2,
+      "reason": "non-block warn law"
+    },
+    {
+      "law_id": "manifold.provenance_replay_identity",
+      "severity": "warn",
+      "status": "WARN_ONLY",
+      "witnesses": 7,
+      "reason": "non-block warn law"
+    },
+    {
+      "law_id": "pncc.landauer_proxy_dominance",
+      "severity": "warn",
+      "status": "WARN_ONLY",
+      "witnesses": 1,
+      "reason": "non-block warn law"
+    },
+    {
+      "law_id": "pncc.no_bio_claim",
+      "severity": "warn",
+      "status": "WARN_ONLY",
+      "witnesses": 1,
+      "reason": "non-block warn law"
+    },
+    {
+      "law_id": "pncc.reversible_gate_byte_exact",
+      "severity": "warn",
+      "status": "WARN_ONLY",
+      "witnesses": 1,
+      "reason": "non-block warn law"
+    },
+    {
+      "law_id": "ricci.flow_energy_nonincrease_declared_domain",
+      "severity": "warn",
+      "status": "WARN_ONLY",
+      "witnesses": 0,
+      "reason": "DRAFT/deferred (warn-severity, non-blocking)"
+    }
+  ],
+  "residual_missing_invariants": [
+    {
+      "id": "INV-OA2",
+      "provenance": "UNSPECIFIED",
+      "status": "MISSING",
+      "declared_tests": [
+        "['tests/unit/physics/test_T23_ott_antonsen_chimera.py',",
+        "'tests/unit/physics/test_T23b_ott_antonsen_analytical.py']"
+      ]
+    }
+  ],
+  "notes": [
+    "Index regenerated from live sources: physics_contracts/catalog.yaml (42 laws) and .claude/physics/INVARIANTS.yaml (132 invariants). Only artifacts/physics_v2/law_witness_index.json was written by the generator.",
+    "inference_readiness.json is NOT written by this generator; left untouched.",
+    "All 32 blocking (severity=block) laws have executable witnesses. The 10 non-covered laws are all severity=warn (WARN_ONLY, non-blocking); two are explicitly DRAFT with witness deferred.",
+    "INV-OA2 shows MISSING due to a pre-existing generator limitation: its INVARIANTS.yaml tests: field is a YAML list, but _invariant_entry only parses string-valued tests fields (str(list).split() mangles the paths). Both declared test files DO exist on disk. Not a fail-closed case (provenance=UNSPECIFIED, not ANCHORED); checker still PASSES. Not fixed here to stay within REL-004 scope (index regeneration only)."
+  ]
+}

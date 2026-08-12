@@ -1,0 +1,53 @@
+{
+  "receipt": "unicode_archive_receipt",
+  "audit_finding": "#1 Unicode filename portability",
+  "task": "REL-007",
+  "generated_utc": "2026-07-19T16:15:18Z",
+  "git_head": "dab318ff56901507a3835ea087958fc73612e810",
+  "tool_versions": {
+    "git": "git version 2.43.0",
+    "python": "Python 3.12.3"
+  },
+  "method": "git archive --format=zip HEAD -> python zipfile extraction; compare filename UTF-8 bytes byte-for-byte; NFC via unicodedata.normalize.",
+  "non_ascii_tracked_count": 1,
+  "paths": [
+    {
+      "path": "docs/operations/СТАН_РОЗВИТКУ_ПРОЄКТУ.md",
+      "utf8_bytes_hex": "646f63732f6f7065726174696f6e732fd0a1d0a2d090d09d5fd0a0d09ed097d092d098d0a2d09ad0a35fd09fd0a0d09ed084d09ad0a2d0a32e6d64",
+      "codepoints": [
+        "U+0421",
+        "U+0422",
+        "U+0410",
+        "U+041D",
+        "U+0420",
+        "U+041E",
+        "U+0417",
+        "U+0412",
+        "U+0418",
+        "U+0422",
+        "U+041A",
+        "U+0423",
+        "U+041F",
+        "U+0420",
+        "U+041E",
+        "U+0404",
+        "U+041A",
+        "U+0422",
+        "U+0423"
+      ],
+      "is_nfc": true,
+      "is_nfd_stable": true,
+      "exists_on_disk": true,
+      "archive_present": true,
+      "archive_utf8_flag": true,
+      "archive_byte_identical": true
+    }
+  ],
+  "round_trip_result": "PASS",
+  "verdict": "Tracked Cyrillic path is NFC-normalized (Ukrainian base letters have no canonical decomposition, so NFC==NFD==tracked bytes) and survives the git archive->zip round-trip byte-identical with the zip UTF-8 language flag (0x800) set. The archived bytes are CORRECT; the '#U....' rendering seen with some legacy unzip builds is a display defect in extractors that ignore the UTF-8 flag, not a corruption. No rename required.",
+  "evidence": {
+    "test": "tests/packaging/test_unicode_paths.py",
+    "gate": "scripts/ci/check_unicode_paths.py",
+    "policy": "docs/UNICODE_PATHS_POLICY.md"
+  }
+}

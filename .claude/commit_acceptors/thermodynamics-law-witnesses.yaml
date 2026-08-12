@@ -1,0 +1,83 @@
+# Diff-bound commit acceptor for the thermodynamics physical-law witnesses.
+#
+# Adds ONE test module binding two previously-unwitnessed catalog laws to
+# executable @law witnesses. Promotes no claim, changes no runtime behavior,
+# touches no schema/guard, uses no real data.
+#
+#   thermo.second_law_closed   — Boltzmann entropy non-decreasing under mixing
+#                                (INV-TH2).
+#   thermo.free_energy_descent — the free-energy gate admits a trade only when
+#                                ΔF ≤ 0 (INV-FE1).
+#
+# Locally verified on origin/main base (2253a6a):
+#   * pytest tests/physics_contracts/test_thermodynamics_witnesses.py: 2 passed
+#   * .claude/physics/validate_tests.py <file>: 0 issues (L1..L5), EXIT 0
+#   * ruff / mypy --strict clean ; zero new `# type: ignore`
+id: thermodynamics-law-witnesses
+status: ACTIVE
+claim_type: governance
+promise: >-
+  After this PR lands, tests/physics_contracts/test_thermodynamics_witnesses.py
+  binds the catalog laws thermo.second_law_closed and thermo.free_energy_descent
+  to @law-decorated witnesses that pass .claude/physics/validate_tests with zero
+  issues. The entropy witness asserts Boltzmann entropy is non-decreasing under
+  a doubly-stochastic mixing step (INV-TH2) within 1e-12 slack; the free-energy
+  witness asserts the FreeEnergyTradingGate admits a position change only when
+  ΔF ≤ 0 and never admits a free-energy increase (INV-FE1). No market claim; no
+  runtime, schema, or guard change.
+diff_scope:
+  changed_files:
+    - path: ".claude/commit_acceptors/thermodynamics-law-witnesses.yaml"
+    - path: "tests/physics_contracts/test_thermodynamics_witnesses.py"
+  forbidden_paths:
+    - "trading/"
+    - "execution/"
+    - "forecast/"
+    - "policy/"
+    - "application/"
+    - "core/"
+    - "src/"
+    - "geosync_hpc/"
+    - "physics_contracts/catalog.yaml"
+required_python_symbols: []
+expected_signal: >-
+  `python -m pytest tests/physics_contracts/test_thermodynamics_witnesses.py`
+  reports 2 passed; `python .claude/physics/validate_tests.py
+  tests/physics_contracts/test_thermodynamics_witnesses.py` exits 0 with no
+  L1..L5 issues; ruff and mypy --strict on the file are clean.
+measurement_command: >-
+  bash -c 'mkdir -p tmp && python -m pytest
+  tests/physics_contracts/test_thermodynamics_witnesses.py
+  > tmp/thermodynamics_law_witnesses.log 2>&1
+  && grep -q "2 passed" tmp/thermodynamics_law_witnesses.log'
+signal_artifact: "tmp/thermodynamics_law_witnesses.log"
+falsifier:
+  command: |-
+    bash -c 'python -c "
+    import numpy as np
+    from core.physics.free_energy_trading_gate import FreeEnergyTradingGate
+    gate = FreeEnergyTradingGate()
+    rng = np.random.default_rng(0)
+    breached = False
+    for _ in range(200):
+        n = int(rng.integers(2, 6))
+        d = gate.check(rng.normal(0,1,n), rng.normal(0,1,n), rng.normal(0,0.02,n), T_LOB=1.0)
+        if d.allowed and d.delta_F > 1e-9:
+            breached = True
+    import sys; sys.exit(0 if breached else 1)"'
+  description: >-
+    Inverse probe of the free-energy descent law. It exits 0 (fires) iff the gate
+    admits a trade whose ΔF > 0 — i.e. an admitted move increases free energy,
+    breaking the descent criterion in real code. While every admitted trade has
+    ΔF ≤ 0 the probe exits 1. If it ever exits 0, the thermodynamics witness is
+    no longer truthful and the change must be reverted, not patched green.
+rollback_command: >-
+  git rm -f
+  tests/physics_contracts/test_thermodynamics_witnesses.py
+  .claude/commit_acceptors/thermodynamics-law-witnesses.yaml
+rollback_verification_command: >-
+  bash -c 'test ! -f tests/physics_contracts/test_thermodynamics_witnesses.py'
+memory_update_type: none
+ledger_path: ".claude/commit_acceptors/thermodynamics-law-witnesses.yaml"
+report_path: "tmp/thermodynamics_law_witnesses.log"
+evidence: []

@@ -1,8 +1,8 @@
 locals {
-  name_prefix = "tradepulse-${var.environment}"
+  name_prefix = "geosync-${var.environment}"
   base_tags = {
     "Environment" = var.environment
-    "Project"     = "TradePulse"
+    "Project"     = "GeoSync"
     "ManagedBy"   = "Terraform"
   }
   tags = merge(local.base_tags, var.tags)
@@ -92,7 +92,7 @@ module "eks" {
       instance_types = group.instance_types
       capacity_type  = group.capacity_type
       labels = merge({
-        "app.kubernetes.io/part-of"    = "tradepulse"
+        "app.kubernetes.io/part-of"    = "geosync"
         "app.kubernetes.io/managed-by" = "terraform"
         "environment"                  = var.environment
       }, group.labels)

@@ -1,0 +1,99 @@
+# ci-heartbeat: t2b-ci-governance-binding
+id: t2b-ci-governance-binding
+status: ACTIVE
+claim_type: governance
+promise: >-
+  Bind the CI/governance carrier files that accumulated on the
+  t2b-runtime-fix branch (company-value-function governance gate,
+  operational dependency-determinism gate, patched setup-geosync toolchain
+  bootstrap, stable artifact-freshness manifest, and controlled component-test
+  router) to a diff-bound acceptor. These are CI gates, governance data,
+  self-falsifying validators, deterministic changed-file-to-test routing,
+  a lightweight component-test CI lane, and regression tests; they add
+  verification surface only. Also binds the contract-manifest hash gate
+  (check_manifest_hashes.py), which now skips evidence-freshness manifests so
+  the stable artifacts/manifest.json is verified by the freshness gate rather
+  than misread as path-missing by the contract-hash gate. No runtime, physics,
+  score, shadow-rail, or trading/execution/forecast/policy changes.
+diff_scope:
+  changed_files:
+    - path: ".claude/commit_acceptors/t2b-ci-governance-binding.yaml"
+    - path: ".github/actions/setup-geosync/action.yml"
+    - path: ".github/workflows/pr-gate.yml"
+    - path: ".github/workflows/company-value-functions.yml"
+    - path: ".github/workflows/dependency-operational-determinism.yml"
+    - path: "artifacts/manifest.json"
+    - path: "data/governance/company_value_functions.json"
+    - path: "scripts/ci/check_artifact_freshness.py"
+    - path: "scripts/ci/check_manifest_hashes.py"
+    - path: "tests/ci/test_artifact_freshness_gate.py"
+    - path: "tests/ci/test_setup_geosync_toolchain.py"
+    - path: "tests/deps/test_operational_dependency_determinism.py"
+    - path: "tests/governance/test_company_value_functions.py"
+    - path: "tools/deps/check_operational_dependency_determinism.py"
+    - path: "tools/governance/check_company_value_functions.py"
+  forbidden_paths:
+    - "trading/"
+    - "execution/"
+    - "forecast/"
+    - "policy/"
+required_python_symbols: []
+expected_signal: >-
+  The dependency-operational-determinism gate, company-value-function gate,
+  setup-geosync toolchain regression tests, artifact-freshness gate, controlled
+  component-test router, and lightweight router workflow pass deterministically.
+  The governance gates prove controlled negative detection through self-test
+  mode. The component-test router maps a changed repository path to the smallest
+  relevant pytest selector plan, rejects invalid matrices, stays empty for
+  unmapped documentation-only changes, and can run the selected component test
+  set without invoking the full PR suite. The binding makes no score increase,
+  no shadow-rail promotion, no final validation claim, and no
+  trading/execution/forecast/policy change.
+measurement_command: >-
+  python -m pytest tests/ci/test_artifact_freshness_gate.py
+  tests/ci/test_setup_geosync_toolchain.py
+  tests/deps/test_operational_dependency_determinism.py
+  tests/governance/test_company_value_functions.py
+signal_artifact: "tmp/t2b_ci_governance_binding_pytest.log"
+falsifier:
+  command: >-
+    python -m pytest tests/ci/test_artifact_freshness_gate.py
+    tests/ci/test_setup_geosync_toolchain.py
+    tests/deps/test_operational_dependency_determinism.py
+    tests/governance/test_company_value_functions.py
+  description: >-
+    Fails if the artifact-freshness gate, setup-geosync toolchain bootstrap,
+    operational dependency-determinism gate, company-value-function governance
+    gate, controlled component-test router, or lightweight router workflow
+    regress, or if their controlled negative tests stop proving failure
+    detection.
+rollback_command: >-
+  git checkout origin/main --
+  .github/workflows/pr-gate.yml
+  .github/actions/setup-geosync/action.yml
+  .github/workflows/company-value-functions.yml
+  .github/workflows/dependency-operational-determinism.yml
+  artifacts/manifest.json
+  data/governance/company_value_functions.json
+  scripts/ci/check_artifact_freshness.py
+  scripts/ci/check_manifest_hashes.py
+  tests/ci/test_artifact_freshness_gate.py
+  tests/ci/test_setup_geosync_toolchain.py
+  tests/deps/test_operational_dependency_determinism.py
+  tests/governance/test_company_value_functions.py
+  tools/deps/check_operational_dependency_determinism.py
+  tools/governance/check_company_value_functions.py
+rollback_verification_command: >-
+  git diff --exit-code tools/governance/check_company_value_functions.py
+memory_update_type: none
+ledger_path: ".claude/commit_acceptors/t2b-ci-governance-binding.yaml"
+report_path: ".claude/commit_acceptors/t2b-ci-governance-binding.yaml"
+evidence:
+  - path: "scripts/ci/check_artifact_freshness.py"
+  - path: "scripts/ci/check_manifest_hashes.py"
+  - path: "tests/ci/test_artifact_freshness_gate.py"
+  - path: "tests/ci/test_setup_geosync_toolchain.py"
+  - path: "tests/deps/test_operational_dependency_determinism.py"
+  - path: "tests/governance/test_company_value_functions.py"
+  - path: "tools/deps/check_operational_dependency_determinism.py"
+  - path: "tools/governance/check_company_value_functions.py"

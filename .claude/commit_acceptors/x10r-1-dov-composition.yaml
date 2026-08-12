@@ -1,0 +1,135 @@
+# Diff-bound commit acceptor for X-10R-1 PR #6 — composed
+# Domain-of-Validity gate that requires BOTH the allocator
+# certificate envelope AND the reconstruction certificate envelope
+# to certify a real BIS bank-level run.
+#
+# What lands:
+#   * research/reconstruction/allocator/dov_composition.py
+#       ComposedDomainStatus enum + ComposedDomainCheck dataclass +
+#       check_composed_domain_of_validity helper.
+#   * tests/reconstruction/allocator/test_dov_composition.py
+#       9 new tests pinning the 4-cell verdict matrix
+#       (BOTH_WITHIN / RECONSTRUCTION_OUT / ALLOCATOR_OUT /
+#       BOTH_OUT), coverage threshold customisation, provenance
+#       fields surfaced as measured-only, and a full E2E run
+#       through the frozen MFI demo fixture into BOTH_WITHIN.
+#
+# Locally verified:
+#   * pytest tests/reconstruction/allocator/: 126/126 passed
+#   * mypy --strict + ruff + black:           clean
+
+id: x10r-1-dov-composition
+status: ACTIVE
+claim_type: chore
+promise: >-
+  After this PR lands, research/reconstruction/allocator/ exposes
+  a composed Domain-of-Validity gate that combines the existing
+  X-10R reconstruction DoV verdict with the allocator-side
+  coverage_ratio envelope. ComposedDomainStatus is a 4-element
+  enum: BOTH_WITHIN (the only verdict admitting a bank-level
+  claim), RECONSTRUCTION_OUT, ALLOCATOR_OUT, BOTH_OUT.
+  ComposedDomainCheck.is_admissible_for_bank_level_claim is the
+  single boolean for downstream consumers. The default coverage
+  threshold is 0.80 (≥80% of countries with real prior evidence);
+  customisable via allocator_coverage_ratio_min. The composed
+  gate is FAIL-CLOSED — anything other than BOTH_WITHIN keeps
+  INV-IDENTIFICATION-1 in force and forbids bank-level claims.
+  9 new tests pin the contract: every cell of the verdict matrix,
+  coverage threshold customisation, default 0.80, provenance
+  surface (n_banks / n_countries surface as measured-only and
+  do NOT drive the verdict), envelope record carries the applied
+  threshold for audit, and a full E2E run from MFI demo fixture
+  through SizeWeightedPrior + CountryToBankAllocator into
+  BOTH_WITHIN.
+diff_scope:
+  changed_files:
+    - path: ".claude/commit_acceptors/x10r-1-dov-composition.yaml"
+    - path: "research/reconstruction/allocator/__init__.py"
+    - path: "research/reconstruction/allocator/dov_composition.py"
+    - path: "tests/reconstruction/allocator/test_dov_composition.py"
+  forbidden_paths:
+    - "trading/"
+    - "execution/"
+    - "forecast/"
+    - "policy/"
+    - "core/physics/"
+    - "core/kuramoto/"
+    - "application/governance/claim_ledger.py"
+    - "application/governance/commit_acceptor.py"
+required_python_symbols:
+  - "research/reconstruction/allocator/dov_composition.py::ComposedDomainStatus"
+  - "research/reconstruction/allocator/dov_composition.py::ComposedDomainCheck"
+  - "research/reconstruction/allocator/dov_composition.py::check_composed_domain_of_validity"
+expected_signal: >-
+  Local: `pytest tests/reconstruction/allocator/ -q` reports
+  "126 passed"; `mypy --strict` is clean on every file under
+  research/reconstruction/allocator/ and
+  tests/reconstruction/allocator/; `ruff check` and
+  `black --check` both pass on those paths.
+measurement_command: >-
+  bash -c 'mypy --strict --follow-imports=silent
+  research/reconstruction/allocator/ tests/reconstruction/allocator/
+  && ruff check research/reconstruction/allocator/ tests/reconstruction/allocator/
+  && black --check research/reconstruction/allocator/ tests/reconstruction/allocator/
+  && pytest tests/reconstruction/allocator/ -q'
+signal_artifact: "tmp/x10r_1_dov_composition.log"
+falsifier:
+  command: |-
+    bash -c 'python -c "
+    from research.reconstruction.allocator import (
+        ComposedDomainStatus,
+        check_composed_domain_of_validity,
+    )
+    from research.reconstruction.allocator.certificate import BankLevelMarginalsCertificate
+    from research.reconstruction.positive_control import (
+        ground_truth_core_periphery, run_recovery_on_substrate,
+    )
+    import numpy as np
+    rec_cert = run_recovery_on_substrate(
+        \"CP_80_falsifier\",
+        ground_truth_core_periphery(n=80, core_frac=0.30, seed=42),
+        seed=42,
+    )
+    alloc_cert = BankLevelMarginalsCertificate(
+        prior_id=\"stub\", n_countries=1, n_banks=1, coverage_ratio=0.40,
+        fallback_policy=\"uniform_within_country\",
+        bank_country_map=((\"B0\", \"C0\"),),
+        s_in=np.array([1.0]), s_out=np.array([1.0]),
+        country_aggregates_in=((\"C0\", 1.0),),
+        country_aggregates_out=((\"C0\", 1.0),),
+        cert_id=\"0\" * 64,
+    )
+    rng = np.random.default_rng(0)
+    s = rng.lognormal(mean=10.0, sigma=1.0, size=80)
+    s_in = s * (s.sum() / s.sum())
+    inside = float(
+        (min(rec_cert.tested_at_densities) + max(rec_cert.tested_at_densities)) / 2.0
+    )
+    composed = check_composed_domain_of_validity(
+        s, s_in, recovery_certificate=rec_cert,
+        allocator_certificate=alloc_cert,
+        reconstruction_inferred_density=inside,
+    )
+    assert composed.status is ComposedDomainStatus.ALLOCATOR_OUT
+    assert not composed.is_admissible_for_bank_level_claim
+    "'
+  description: >-
+    Probes the failure-direction of the composed gate: a real
+    coverage_ratio of 0.40 (well below 0.80 default) MUST surface
+    as ALLOCATOR_OUT and forbid the bank-level claim. If the gate
+    erroneously emits BOTH_WITHIN at this coverage, the
+    fail-closed contract is broken — bank-level claims could
+    leak through with insufficient prior evidence.
+rollback_command: >-
+  bash -c 'git checkout HEAD~1 --
+  && rm -f research/reconstruction/allocator/dov_composition.py
+  tests/reconstruction/allocator/test_dov_composition.py
+  .claude/commit_acceptors/x10r-1-dov-composition.yaml'
+rollback_verification_command: >-
+  bash -c 'test ! -f research/reconstruction/allocator/dov_composition.py
+  && test ! -f tests/reconstruction/allocator/test_dov_composition.py
+  && test ! -f .claude/commit_acceptors/x10r-1-dov-composition.yaml'
+memory_update_type: append
+ledger_path: ".claude/commit_acceptors/x10r-1-dov-composition.yaml"
+report_path: "tmp/x10r_1_dov_composition.log"
+evidence: []

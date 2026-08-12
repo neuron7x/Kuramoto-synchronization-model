@@ -1,0 +1,65 @@
+{
+  "$schema": "https://json-schema.org/draft/2020-12/schema",
+  "$id": "https://neuron7xlab.local/schemas/inference/context_manifest.schema.json",
+  "title": "Inference context manifest (WP-01)",
+  "description": "Fail-closed upfront contract that must exist before a kernel run. Binds problem, universe, window, data contract, target, claim tier, null models, stop rules and the evidence path. claim_tier is validated against the canonical maturity LADDER in analytics/signals/claim_maturity.py by tools/inference/validate_context_manifest.py (single source of truth; this schema does not duplicate the rung list).",
+  "type": "object",
+  "additionalProperties": false,
+  "required": [
+    "schema_version",
+    "problem_statement",
+    "asset_universe",
+    "time_window",
+    "data_source",
+    "target_variable",
+    "claim_tier",
+    "null_models",
+    "stop_rules",
+    "evidence_path"
+  ],
+  "properties": {
+    "schema_version": {"const": 1},
+    "problem_statement": {"type": "string", "minLength": 1},
+    "asset_universe": {
+      "type": "array",
+      "minItems": 1,
+      "items": {"type": "string", "minLength": 1}
+    },
+    "time_window": {
+      "type": "object",
+      "additionalProperties": false,
+      "required": ["start", "end"],
+      "properties": {
+        "start": {"type": "string", "format": "date-time"},
+        "end": {"type": "string", "format": "date-time"}
+      }
+    },
+    "data_source": {
+      "type": "object",
+      "additionalProperties": false,
+      "required": ["name", "contract_ref", "sha256"],
+      "properties": {
+        "name": {"type": "string", "minLength": 1},
+        "contract_ref": {"type": "string", "minLength": 1},
+        "sha256": {"type": "string", "pattern": "^[0-9a-f]{64}$"}
+      }
+    },
+    "target_variable": {"type": "string", "minLength": 1},
+    "claim_tier": {
+      "type": "string",
+      "minLength": 1,
+      "description": "Must be a rung in analytics/signals/claim_maturity.LADDER (enforced by the validator, not duplicated here)."
+    },
+    "null_models": {
+      "type": "array",
+      "minItems": 1,
+      "items": {"type": "string", "minLength": 1}
+    },
+    "stop_rules": {
+      "type": "array",
+      "minItems": 1,
+      "items": {"type": "string", "minLength": 1}
+    },
+    "evidence_path": {"type": "string", "minLength": 1}
+  }
+}

@@ -1,0 +1,94 @@
+# Diff-bound acceptor for INV-K8: second-order (swing-equation) energy balance.
+#
+# The second-order Kuramoto integrator in core/kuramoto/second_order.py
+# claims in its docstring to be "symplectic, energy-conserving", but NO
+# test defended that claim. INV-K8 registers the conservation law and
+# binds it to two falsifiable trajectory tests. No production code is
+# modified — the energy is observed black-box from the velocities and the
+# order parameter (all-to-all potential V = -(K*N/2)*R^2 + const).
+#
+# Mutation-verified before commit: replacing Stoermer-Verlet with Euler
+# trips the undamped clause (range/E_scale 0.39 vs Verlet 3e-5); flipping
+# the damping sign (-d*v -> +d*v) trips the damped clause (E diverges by
+# ~1.5e9 over the horizon). Same blind-manifold class as the Ott-Antonsen
+# z-bar omega0=0 conjugate defect (PR #745).
+
+id: inv-k8-swing-energy-balance
+status: ACTIVE
+claim_type: correctness
+promise: >-
+  Registers INV-K8 (conservation): the second-order swing-equation total
+  energy E = (1/2)*sum(m_i*theta_dot_i^2) + V(theta), with
+  V(theta) = -(1/2)*sum_ij A_ij*cos(theta_j - theta_i), obeys
+  dE/dt = sum(omega_i*theta_dot_i) - sum(d_i*theta_dot_i^2). With
+  omega_i == 0 it is CONSERVED when d_i == 0 (Stoermer-Verlet bounded
+  drift, no secular trend) and MONOTONE NON-INCREASING when d_i >= 0
+  (dissipation). For the all-to-all model A_ij = K/N, V = -(K*N/2)*R^2
+  + const, the INV-K7 potential, so E is observable black-box from the
+  velocity and order-parameter trajectories with no production change.
+  Defends the "symplectic, energy-conserving" docstring claim in
+  core/kuramoto/second_order.py against the two regression classes that
+  survive every prior second-order assertion: loss of symplecticity
+  (Euler drift) and damping-sign inversion (anti-damping = injection).
+diff_scope:
+  changed_files:
+    - path: ".claude/commit_acceptors/inv-k8-swing-energy-balance.yaml"
+    - path: ".claude/physics/INVARIANTS.yaml"
+    - path: "tests/unit/physics/test_T18_kuramoto_p1.py"
+    - path: "scripts/ci/prove_repo_integrity.sh"
+    - path: "scripts/ci/evidence_gate.sh"
+    - path: "CLAUDE.md"
+    - path: "BASELINE.md"
+    - path: "README.md"
+    - path: "CLAIMS.md"
+    - path: "artifacts/claims_hashes.json"
+  forbidden_paths:
+    - "trading/"
+    - "execution/"
+    - "forecast/"
+    - "policy/"
+required_python_symbols:
+  - "test_swing_energy_conserved_undamped"
+  - "test_swing_energy_dissipated_damped"
+expected_signal: >-
+  All 5 tests in tests/unit/physics/test_T18_kuramoto_p1.py pass under
+  pytest, including the two new INV-K8 tests; the physics validator
+  reports 0 issues (exit 0) on the file; mypy --strict clean; the
+  invariant-count-sync gate reports 98 invariants in sync across
+  README.md, BASELINE.md, CLAUDE.md and .claude/physics/INVARIANTS.yaml.
+  Mutation cross-check (recorded, not run in CI): undamped clause trips
+  at range/E_scale=0.389 under Euler vs 3e-5 under Verlet; damped clause
+  trips with 6000 positive energy steps under a +d*v sign flip.
+measurement_command: >-
+  PYTHONPATH=. python -m pytest tests/unit/physics/test_T18_kuramoto_p1.py
+  -k swing -v
+signal_artifact: "tmp/inv_k8_swing_energy_pytest.log"
+falsifier:
+  command: >-
+    PYTHONPATH=. python -m pytest tests/unit/physics/test_T18_kuramoto_p1.py
+    -v -k "swing_energy_conserved_undamped or swing_energy_dissipated_damped"
+  description: >-
+    Filters to the two load-bearing INV-K8 tests. The undamped test is the
+    falsifier for loss of symplecticity (non-symplectic integration injects
+    secular energy growth past the 1e-2 bounded-drift bound); the damped
+    test is the falsifier for damping-sign inversion (anti-damping makes E
+    increase, violating dE/dt <= 0). Both bounds are calibrated to observed
+    Verlet behaviour, not magic numbers.
+rollback_command: >-
+  git checkout HEAD~1 --
+  tests/unit/physics/test_T18_kuramoto_p1.py
+  scripts/ci/prove_repo_integrity.sh
+  scripts/ci/evidence_gate.sh
+  .claude/physics/INVARIANTS.yaml
+  CLAUDE.md
+  BASELINE.md
+  README.md
+  CLAIMS.md
+  artifacts/claims_hashes.json
+  .claude/commit_acceptors/inv-k8-swing-energy-balance.yaml
+rollback_verification_command: >-
+  git diff --exit-code tests/unit/physics/test_T18_kuramoto_p1.py
+memory_update_type: none
+ledger_path: ".claude/commit_acceptors/inv-k8-swing-energy-balance.yaml"
+report_path: "docs/reports/diff_bound_commit_acceptor_layer.md"
+evidence: []

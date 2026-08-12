@@ -1,0 +1,6 @@
+{
+  "_doc": "Falsifiers whose test_id only COLLECTS with an optional dependency installed. Documented, not silently ignored: check_falsifier_nodes.py fails closed on any OTHER unresolvable falsifier. Each entry names the optional dep. Remove an entry once the dep is in the standard/CI environment.",
+  "allow": {
+    "tests/api/test_schemathesis_contract.py::test_api_operation_conforms_to_schema": "schemathesis>=4 is an optional contract-test dependency; the node collects only when installed (INV-API-CONTRACT)."
+  }
+}

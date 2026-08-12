@@ -1,0 +1,167 @@
+# SPDX-License-Identifier: MIT
+#
+# ENV-002 — Python version matrix.
+#
+# GeoSync declares a two-leg support window in pyproject.toml:
+#     requires-python = ">=3.11,<3.13"
+#     classifiers: Programming Language :: Python :: 3.11 / 3.12
+#
+# ENV-001 (scripts/ci/check_env_preflight.py) certifies the LIVE canonical 3.12
+# interpreter. This workflow is its matrix companion: it runs the full suite on
+# BOTH declared legs (3.11 AND 3.12) and validates the 3.11 environment CONTRACT
+# (artifacts/env/python311.json) against the dependency policy.
+#
+# WHY A WORKFLOW AND NOT A SANDBOX RUN: the 3.11 environment descriptor committed
+# in the repo is a CONTRACT, not a live resolution — the authoring sandbox only
+# had a 3.12 interpreter, so a live 3.11 resolution could not be honestly emitted
+# there. The `py311-live` leg below is where the live 3.11 build / import /
+# full-suite / artifact-generation actually happens. (A fully hermetic image is
+# ENV-005's job; this workflow is the pre-hermetic matrix proof.)
+name: Python Matrix (ENV-002)
+
+on:
+  pull_request:
+    branches: [main]
+    paths:
+      - 'pyproject.toml'
+      - 'requirements.txt'
+      - 'requirements*.lock'
+      - 'artifacts/env/**'
+      - 'scripts/ci/check_py_matrix.py'
+      - 'scripts/ci/check_env_preflight.py'
+      - 'tests/ci/test_py_matrix.py'
+      - 'tests/ci/test_env_preflight.py'
+      - '.github/workflows/python-matrix.yml'
+  push:
+    branches: [main]
+  workflow_dispatch:
+
+permissions:
+  contents: read
+
+env:
+  FORCE_JAVASCRIPT_ACTIONS_TO_NODE24: 'true'
+
+concurrency:
+  group: python-matrix-${{ github.event.pull_request.number || github.ref }}
+  cancel-in-progress: true
+
+jobs:
+  # ------------------------------------------------------------------ #
+  # Interpreter-independent: the 3.11 contract must match the policy.
+  # Runs on 3.12 (this runner's default) because it evaluates JSON, not
+  # a live 3.11 interpreter.
+  # ------------------------------------------------------------------ #
+  contract-gate:
+    name: contract-gate
+    runs-on: ubuntu-latest
+    timeout-minutes: 15
+    steps:
+      - name: Checkout
+        uses: actions/checkout@9c091bb21b7c1c1d1991bb908d89e4e9dddfe3e0 # v7.0.0
+        with:
+          fetch-depth: 0
+
+      - name: Setup Python environment
+        uses: ./.github/actions/setup-geosync
+        with:
+          python-version: '3.12'
+          cache-prefix: python-matrix-contract
+
+      - name: Validate the 3.11 matrix contract against dependency policy
+        env:
+          PYTHONUTF8: '1'
+          PYTHONIOENCODING: 'utf-8'
+        run: |
+          set -euo pipefail
+          .venv/bin/python scripts/ci/check_py_matrix.py \
+            --contract artifacts/env/python311.json --json
+
+      - name: Prove the committed contract equals a freshly-built one (no drift)
+        env:
+          PYTHONUTF8: '1'
+          PYTHONIOENCODING: 'utf-8'
+        run: |
+          set -euo pipefail
+          .venv/bin/python scripts/ci/check_py_matrix.py \
+            --emit-contract /tmp/python311.rebuilt.json --target 3.11
+          # Byte-for-byte equality: the committed contract must be exactly what
+          # the policy produces today, or the dependency policy has drifted.
+          diff -u artifacts/env/python311.json /tmp/python311.rebuilt.json
+
+      - name: Matrix gate closure tests
+        env:
+          PYTHONUTF8: '1'
+          PYTHONIOENCODING: 'utf-8'
+        run: .venv/bin/pytest tests/ci/test_py_matrix.py -q
+
+  # ------------------------------------------------------------------ #
+  # LIVE matrix: build / import / full suite on BOTH declared legs.
+  # This is where the honest live 3.11 execution happens.
+  # ------------------------------------------------------------------ #
+  live-suite:
+    name: live-suite (py${{ matrix.python-version }})
+    runs-on: ubuntu-latest
+    timeout-minutes: 150
+    strategy:
+      fail-fast: false
+      matrix:
+        python-version: ['3.11', '3.12']
+    steps:
+      - name: Checkout
+        uses: actions/checkout@9c091bb21b7c1c1d1991bb908d89e4e9dddfe3e0 # v7.0.0
+        with:
+          fetch-depth: 0
+
+      - name: Setup Python environment
+        uses: ./.github/actions/setup-geosync
+        with:
+          python-version: ${{ matrix.python-version }}
+          cache-prefix: python-matrix-py${{ matrix.python-version }}
+
+      - name: Build / import smoke
+        env:
+          PYTHONUTF8: '1'
+          PYTHONIOENCODING: 'utf-8'
+        run: |
+          set -euo pipefail
+          .venv/bin/python -c "import sys; print('live interpreter', sys.version)"
+          .venv/bin/python -c "import core; import numpy, pandas, scipy; print('core import OK')"
+
+      - name: ENV-001 live preflight (3.12 canonical leg only)
+        if: matrix.python-version == '3.12'
+        env:
+          PYTHONUTF8: '1'
+          PYTHONIOENCODING: 'utf-8'
+        run: .venv/bin/python scripts/ci/check_env_preflight.py --json
+
+      - name: Emit the LIVE env descriptor for this leg (evidence)
+        env:
+          PYTHONUTF8: '1'
+          PYTHONIOENCODING: 'utf-8'
+        run: |
+          set -euo pipefail
+          out="artifacts/env/live-py${{ matrix.python-version }}.json"
+          # The ENV-001 descriptor builder resolves the live interpreter; on the
+          # 3.11 leg this is the genuine 3.11 resolution the sandbox could not
+          # produce. Uploaded as evidence, not committed.
+          .venv/bin/python scripts/ci/check_env_preflight.py --emit-descriptor "$out" || true
+          test -f "$out" && echo "wrote $out"
+
+      - name: Full suite (both legs)
+        env:
+          PYTHONUTF8: '1'
+          PYTHONIOENCODING: 'utf-8'
+        run: |
+          set -euo pipefail
+          # Serial full suite — an enforcement gate must COMPLETE. See
+          # main-validation.yml for the parallelism / timeout rationale.
+          .venv/bin/pytest tests/ -m "not nightly and not flaky" -q
+
+      - name: Upload live env descriptor
+        if: always()
+        uses: actions/upload-artifact@043fb46d1a93c77aae656e7c1c64a875d1fc6a0a # v7.0.1
+        with:
+          name: live-env-py${{ matrix.python-version }}
+          path: artifacts/env/live-py${{ matrix.python-version }}.json
+          if-no-files-found: ignore

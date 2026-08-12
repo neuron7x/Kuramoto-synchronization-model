@@ -1,0 +1,128 @@
+# Diff-bound acceptor for the Gabor time-frequency uncertainty limit.
+#
+# Closes a genuine physics CATEGORY ERROR: core/physics/uncertainty.py
+# previously dressed the classical product std(price)·std(diff(price)) as the
+# quantum Heisenberg relation ΔxΔp ≥ ℏ/2 using a fabricated ℏ=1.0
+# (constants.PLANCK_REDUCED), so the "bound" ℏ/2 was just the number 0.5.
+# Price and its first difference are JOINTLY OBSERVABLE — there is no
+# commutator [x̂,p̂]=iℏ and no Fourier-conjugate pairing, so the framing was
+# physically meaningless. This replaces it with the EXACT, anchored Gabor
+# limit Δt·Δf ≥ 1/(4π) (Gabor 1946; Folland-Sitaram 1997): time and frequency
+# ARE a Fourier-conjugate pair, 1/(4π) is a pure-math constant (no Planck
+# constant), the bound is derivable to machine precision, and a Gaussian
+# envelope saturates it exactly. Adds one constitutional invariant INV-GABOR1.
+#
+# Pure signal-processing / Fourier analysis. NOT a market model and no market
+# claim: inputs are a sampled real signal; outputs are its time and frequency
+# second moments and their product.
+
+id: uncertainty-gabor-limit
+status: ACTIVE
+claim_type: correctness
+promise: >-
+  core.physics.uncertainty is rewritten from a fabricated "Heisenberg
+  ΔxΔp ≥ ℏ/2" framing (category error: a classical std-product with a
+  fabricated ℏ=1.0) to the EXACT Gabor time-frequency limit. It ships
+  GABOR_LIMIT (= 1/(4π), exact), gabor_lower_bound() (the bound accessor),
+  time_frequency_spread(signal) (Δt = √2nd-moment of normalized |x|² about
+  its time centroid; Δf = √2nd-moment of normalized |FFT(x)|² about its
+  frequency centroid on the np.fft.fftfreq axis; product Δt·Δf), and
+  check_gabor_limit(Δt, Δf) (fail-closed comparator). The fabricated
+  constants PLANCK_REDUCED / MIN_POSITION_UNCERTAINTY / MIN_MOMENTUM_UNCERTAINTY
+  are removed from core.physics.constants, and the consumer
+  UncertaintyQuantificationIndicator (core.indicators.physics) is reframed to
+  report Δt·Δf of the price fluctuation with metadata keys time_spread /
+  freq_spread. Adds ONE constitutional invariant:
+    INV-GABOR1 | algebraic | Δt·Δf ≥ 1/(4π) for a well-resolved finite-energy
+                             signal, saturated (equality) by a Gaussian
+                             envelope. 1/(4π) ≈ 0.0796 is exact — NO Planck
+                             constant, NO fabricated ℏ/2. Scope note: the
+                             continuous bound; the discrete estimator realizes
+                             it faithfully in the well-resolved regime.
+  Pure NumPy, total/typed, mypy --strict clean. No runtime trading path is
+  touched. Count moves 106 → 107 across all synced surfaces (INVARIANTS.yaml,
+  CLAUDE.md header + registry + routing, README badge, BASELINE.md, the two
+  CI shell witnesses prove_repo_integrity.sh and evidence_gate.sh).
+diff_scope:
+  changed_files:
+    - path: ".claude/commit_acceptors/uncertainty-gabor-limit.yaml"
+    - path: ".claude/physics/INVARIANTS.yaml"
+    - path: "core/physics/uncertainty.py"
+    - path: "core/physics/constants.py"
+    - path: "core/physics/__init__.py"
+    - path: "core/indicators/physics.py"
+    - path: "tests/unit/physics/test_uncertainty.py"
+    - path: "tests/unit/test_indicators_physics.py"
+    - path: "scripts/ci/prove_repo_integrity.sh"
+    - path: "scripts/ci/evidence_gate.sh"
+    - path: "artifacts/claims_hashes.json"
+    - path: "docs/architecture/claim_graph.json"
+  forbidden_paths:
+    - "trading/"
+    - "execution/"
+    - "forecast/"
+    - "policy/"
+required_python_symbols:
+  - "GABOR_LIMIT"
+  - "gabor_lower_bound"
+  - "time_frequency_spread"
+  - "check_gabor_limit"
+expected_signal: >-
+  All 10 unit tests in tests/unit/physics/test_uncertainty.py and the 3
+  UncertaintyQuantificationIndicator tests in
+  tests/unit/test_indicators_physics.py pass under pytest (25 tests total in
+  the two files, ~0.5s); ruff + black clean on the changed Python (tests are
+  excluded from formatters by pyproject); mypy --strict clean on
+  core/physics/uncertainty.py and core/indicators/physics.py;
+  validate_tests.py --audit-code reports 0 clamp/bounds issues on
+  uncertainty.py and validate_tests.py on test_uncertainty.py reports 100%
+  physics grounding with L1..L5 = 0; the kernel self-check PASSES with 107
+  invariants and INV-GABOR1 ANCHORED; scripts/count_invariants.py prints 107
+  and scripts.check_invariant_count_sync exits 0. Measured Gaussian
+  saturation: Δt·Δf = 0.07957747154594765 vs target 1/(4π) =
+  0.07957747154594767 (dev 2.8e-17, i.e. machine precision).
+measurement_command: >-
+  python -m pytest tests/unit/physics/test_uncertainty.py
+  tests/unit/test_indicators_physics.py -v
+signal_artifact: "tmp/uncertainty_gabor_limit_pytest.log"
+falsifier:
+  command: >-
+    python -c "import numpy as np, math, sys;
+    from core.physics.uncertainty import time_frequency_spread, GABOR_LIMIT;
+    n=4096; idx=np.arange(n,dtype=float);
+    g=np.exp(-((idx-n/2.0)**2)/(2.0*200.0**2));
+    _,_,p=time_frequency_spread(g);
+    dev=abs(p-GABOR_LIMIT);
+    print('gabor product', p, 'target', GABOR_LIMIT, 'dev', dev);
+    sys.exit(1 if dev > 1e-3 else 0)"
+  description: >-
+    Inverse probe for INV-GABOR1: builds a Gaussian-windowed signal and exits
+    non-zero iff its measured time-frequency product Δt·Δf deviates from the
+    exact saturation value 1/(4π) by more than 1e-3. Fires iff the moment
+    computation, the FFT power-spectrum spread, or the bound constant is wrong
+    — proving the bound is real, derivable, and falsifiable, and distinguishing
+    an implementation bug from a passing physics witness.
+rollback_command: >-
+  git checkout HEAD~1 --
+  core/physics/uncertainty.py
+  core/physics/constants.py
+  core/physics/__init__.py
+  core/indicators/physics.py
+  tests/unit/physics/test_uncertainty.py
+  tests/unit/test_indicators_physics.py
+  .claude/physics/INVARIANTS.yaml
+  CLAUDE.md
+  BASELINE.md
+  README.md
+  scripts/ci/prove_repo_integrity.sh
+  scripts/ci/evidence_gate.sh
+  CLAIMS.md
+  artifacts/claims_hashes.json
+  docs/architecture/claim_graph.json
+  .claude/commit_acceptors/uncertainty-gabor-limit.yaml
+rollback_verification_command: >-
+  git diff --exit-code core/physics/uncertainty.py
+memory_update_type: append
+ledger_path: ".claude/commit_acceptors/uncertainty-gabor-limit.yaml"
+report_path: ".claude/commit_acceptors/uncertainty-gabor-limit.yaml"
+evidence: []

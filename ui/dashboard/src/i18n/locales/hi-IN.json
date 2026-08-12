@@ -10,8 +10,8 @@
     }
   },
   "nav": {
-    "brand": "TradePulse",
-    "title": "TradePulse",
+    "brand": "GeoSync",
+    "title": "GeoSync",
     "badges": {
       "live": "लाइव"
     },
@@ -146,7 +146,7 @@
     }
   },
   "header": {
-    "title": "TradePulse निगरानी हब",
+    "title": "GeoSync निगरानी हब",
     "subtitle": "निष्पादन, जोखिम और टेलीमेट्री पर एकीकृत नियंत्रण।",
     "tags": [
       "मल्टी-एसेट",
@@ -360,7 +360,7 @@
       "hero": {
         "eyebrow": "समुदाय सशक्तिकरण",
         "title": "विश्वभर के योगदानकर्ताओं के साथ गति बनाएं",
-        "subtitle": "TradePulse पारिस्थितिकी तंत्र में mentorship, sponsorship और ज्ञान-साझा का समन्वय करें।",
+        "subtitle": "GeoSync पारिस्थितिकी तंत्र में mentorship, sponsorship और ज्ञान-साझा का समन्वय करें।",
         "cta": "योगदान प्लेबुक देखें",
         "secondaryCta": "समुदाय चैट से जुड़ें",
         "fallbackChannel": "समुदाय चैनल"

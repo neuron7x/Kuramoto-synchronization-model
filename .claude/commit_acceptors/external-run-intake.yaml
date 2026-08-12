@@ -1,0 +1,73 @@
+# Diff-bound commit acceptor for the external CI/run repair intake gate.
+#
+# Binds the fail-closed intake tool that stops a repair agent from patching the
+# wrong checkout when a task references another repository or a GitHub Actions
+# run outside the mounted tree. Deterministic, offline, read-only — repository
+# identity comes from tracked local metadata and local git state only. Infra/
+# governance; no physics invariant, claim tier, or alpha surface is touched.
+
+id: external-run-intake
+status: ACTIVE
+claim_type: governance
+promise: >-
+  After this PR lands, scripts/ci/external_run_intake.py assesses a checkout and
+  returns repair_allowed only when repository identity, trusted remote host,
+  expected package, clean git checkout, and a configured trusted remote all
+  agree; any missing, malformed, dirty, untrusted, or mismatched workspace fails
+  closed with explicit blockers and a non-zero exit. The tool is offline and
+  deterministic. No empirical, market, or alpha claim is made.
+
+diff_scope:
+  changed_files:
+    - path: ".claude/commit_acceptors/external-run-intake.yaml"
+    - path: "scripts/ci/external_run_intake.py"
+    - path: "tests/ci/test_external_run_intake.py"
+    - path: "docs/technical-debt.md"
+    - path: "INVENTORY.json"
+  forbidden_paths:
+    - "trading/"
+    - "execution/"
+    - "forecast/"
+    - "policy/"
+    - "core/"
+    - "runtime/"
+
+required_python_symbols:
+  - "scripts.ci.external_run_intake.assess_workspace"
+  - "scripts.ci.external_run_intake.main"
+
+expected_signal: >-
+  python -m pytest tests/ci/test_external_run_intake.py passes, and
+  python scripts/ci/external_run_intake.py --target-repo <owner/name> exits 0
+  only for a clean checkout whose identity and trusted remote match the target.
+
+measurement_command: >-
+  python -m pytest --noconftest -p no:cacheprovider -q tests/ci/test_external_run_intake.py
+
+signal_artifact: "scripts/ci/external_run_intake.py"
+
+falsifier:
+  command: >-
+    python -c "from pathlib import Path; from scripts.ci.external_run_intake import assess_workspace;
+    r = assess_workspace(Path('/tmp'), 'neuron7xLab/GeoSync');
+    raise SystemExit(0 if (not r.repair_allowed and r.blockers) else 1)"
+  description: >-
+    Assesses a non-repository directory (/tmp) as a target checkout. It must
+    fail closed — repair_allowed False with explicit blockers. If it ever
+    returns repair_allowed True for a workspace that is not the target repo, the
+    fail-closed guarantee is broken and this falsifier exits non-zero.
+
+rollback_command: >-
+  bash -c '
+    git rm -f scripts/ci/external_run_intake.py tests/ci/test_external_run_intake.py
+      docs/technical-debt.md .claude/commit_acceptors/external-run-intake.yaml
+    && python scripts/ci/update_inventory.py --write
+  '
+
+rollback_verification_command: >-
+  bash -c 'test ! -e scripts/ci/external_run_intake.py'
+
+memory_update_type: append
+ledger_path: ".claude/commit_acceptors/external-run-intake.yaml"
+report_path: "scripts/ci/external_run_intake.py"
+evidence: []

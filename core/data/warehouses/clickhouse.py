@@ -1,3 +1,5 @@
+# Copyright (c) 2023-2026 Yaroslav Vasylenko (neuron7xLab)
+# SPDX-License-Identifier: MIT
 """ClickHouse time-series warehouse integration."""
 
 from __future__ import annotations
@@ -31,7 +33,7 @@ _LOGGER = get_logger(__name__)
 class ClickHouseConfig:
     """Runtime configuration for the ClickHouse integration."""
 
-    database: str = "tradepulse"
+    database: str = "geosync"
     raw_table: str = "raw_ticks"
     rollup_table: str = "minute_bars"
     retention_days: int = 30
@@ -307,7 +309,7 @@ class ClickHouseWarehouse(TimeSeriesWarehouse):
             + ids.raw_qualified
             + ", "
             + ids.rollup_qualified
-            + " TO 's3://tradepulse-clickhouse-backups/{date}/' SETTINGS compression='zstd'"
+            + " TO 's3://geosync-clickhouse-backups/{date}/' SETTINGS compression='zstd'"
         )
         return (
             BackupStep(
@@ -316,7 +318,7 @@ class ClickHouseWarehouse(TimeSeriesWarehouse):
             ),
             BackupStep(
                 description="Validate backup metadata",
-                command="SYSTEM RESTORE FROM 's3://tradepulse-clickhouse-backups/{date}/' DRY RUN",
+                command="SYSTEM RESTORE FROM 's3://geosync-clickhouse-backups/{date}/' DRY RUN",
             ),
         )
 

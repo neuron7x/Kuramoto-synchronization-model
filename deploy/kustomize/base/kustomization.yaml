@@ -5,7 +5,7 @@ labels:
   - includeSelectors: true
     includeTemplates: true
     pairs:
-      app.kubernetes.io/part-of: tradepulse
+      app.kubernetes.io/part-of: geosync
       app.kubernetes.io/managed-by: kustomize
 
 resources:

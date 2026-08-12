@@ -1,0 +1,116 @@
+# Diff-bound acceptor for T2b: Stuart-Landau substrate of explosive synchronization.
+#
+# Parallel to T2 (pure-Kuramoto), per Lee et al. PNAS 2025
+# (DOI 10.1073/pnas.2505434122). Pure NumPy / SciPy. No external models.
+#
+# Status note: H1 ("SL ES proximity leads R-peak") is REJECTED on the
+# pre-registered 2026-04-10 cross-asset OOS window (p = 0.765 vs 0.05
+# threshold). The implementation, invariants, and tests are integrated only
+# for universal substrate bounds INV-SL1/SL2. The empirical leads claim is
+# REJECTED_DO_NOT_PROMOTE unless a new pre-registration, new substrate, and
+# independent OOS evidence overturn this result.
+# No T2b signal is wired into the shadow rail.
+
+id: T2b-stuart-landau-es
+status: ACTIVE
+claim_type: fail_closed
+promise: >-
+  core.physics.stuart_landau_es ships fit_stuart_landau (per-series
+  amplitude-preserving μ, ω fit by Hilbert envelope), rolling_es_proximity
+  (forward+backward K-sweep hysteresis area normalised to [0, 1]),
+  crisis_signal_sl (τ-bar lookback rolling-max alarm), and the
+  StuartLandauResult dataclass. Keeps two constitutional implementation
+  invariants active:
+    INV-SL1 | universal   | fit_stuart_landau returns amplitude ≥ 0 for
+                            every input (Hilbert envelope is non-negative
+                            by construction; verified on synthetic and
+                            real-asset returns).
+    INV-SL2 | universal   | rolling_es_proximity ∈ [0, 1] for every
+                            window — bounded by hysteresis-area
+                            normalisation; fail-closed via clamp +
+                            invariant test.
+  The prior empirical lead claim formerly tracked as INV-T2b is
+  not an active physics invariant. It is a rejected empirical hypothesis:
+    INV-T2b | empirical   | crisis_signal_sl τ-bar leads R-peak on
+                            ensembles where ES is the underlying mechanism.
+                            Status: REJECTED_DO_NOT_PROMOTE on the
+                            pre-registered 2026-04-10 BTC/ETH/SPY/GLD/TLT
+                            window (p = 0.765 with 999 circular-shift
+                            surrogates; high apparent leads_rate is a
+                            window-search artefact). A future retry requires
+                            a different substrate / window / universe and a
+                            NEW pre-registration before any claim promotion.
+  Citation in core/physics/explosive_sync.py updated from Kim et al.
+  to Lee et al. PNAS 2025 — canonical paper for neural + economic ES.
+  Pre-registration document SL_ES_PREREGISTRATION.md is frozen
+  2026-05-06 BEFORE the OOS run; permutation outcome recorded
+  immediately afterwards in artifacts/rolling_es_proximity_oos.json.
+diff_scope:
+  changed_files:
+    - path: ".claude/commit_acceptors/T2b-stuart-landau-es.yaml"
+    - path: ".claude/physics/INVARIANTS.yaml"
+    - path: "core/physics/stuart_landau_es.py"
+    - path: "core/physics/explosive_sync.py"
+    - path: "tests/unit/physics/test_T2b_stuart_landau_es.py"
+    - path: "benchmarks/rolling_es_proximity_oos.py"
+    - path: "results/cross_asset_kuramoto/SL_ES_PREREGISTRATION.md"
+    - path: "artifacts/rolling_es_proximity_oos.json"
+    # PR #1425 strict-evidence binding (issue #1358 P0/P1 closure).
+    - path: "artifacts/rolling_es_proximity_oos.strict_replay_proof.json"
+    - path: "tools/verify_rolling_es_strict_replay.py"
+    - path: "tests/benchmarks/test_rolling_es_proximity_oos_contract.py"
+  forbidden_paths:
+    - "trading/"
+    - "execution/"
+    - "forecast/"
+    - "policy/"
+required_python_symbols:
+  - "StuartLandauResult"
+  - "fit_stuart_landau"
+  - "rolling_es_proximity"
+  - "crisis_signal_sl"
+expected_signal: >-
+  All unit tests in tests/unit/physics/test_T2b_stuart_landau_es.py
+  pass under pytest; black, ruff, mypy --strict clean on the four
+  changed Python files; INV-SL1 (amplitude ≥ 0), INV-SL2
+  (es_proximity ∈ [0,1]), rolling shape contract, API contract,
+  and synthetic-ensemble lead detection remain green as implementation
+  witnesses only. Pre-registered OOS outcome (REJECT) recorded verbatim in
+  artifacts/rolling_es_proximity_oos.json: leads_rate=0.906,
+  p_value=0.765, n_episodes=32, DECISION=REJECT H1. The real-data
+  empirical lead claim is REJECTED_DO_NOT_PROMOTE and must not be used
+  as validation evidence or shadow-rail signal.
+measurement_command: >-
+  python -m pytest tests/unit/physics/test_T2b_stuart_landau_es.py -v
+signal_artifact: "tmp/T2b_stuart_landau_es_pytest.log"
+falsifier:
+  command: >-
+    python -m pytest tests/unit/physics/test_T2b_stuart_landau_es.py
+    -v -k "SL1 or SL2 or rolling_shape or api_contract or leads_r_peak"
+  description: >-
+    Probe filters to the load-bearing tests:
+    SL1 (universal amplitude ≥ 0 — Hilbert envelope non-negativity);
+    SL2 (universal es_proximity ∈ [0, 1] — hysteresis-area bound);
+    rolling_shape (rolling output shape contract);
+    api_contract (StuartLandauResult dataclass + function signatures);
+    leads_r_peak (synthetic-ensemble lead detection — implementation-only
+    witness on a designed ES mechanism, explicitly not validation of the
+    rejected real-data lead claim).
+rollback_command: >-
+  git checkout HEAD~1 --
+  core/physics/stuart_landau_es.py
+  core/physics/explosive_sync.py
+  tests/unit/physics/test_T2b_stuart_landau_es.py
+  benchmarks/rolling_es_proximity_oos.py
+  results/cross_asset_kuramoto/SL_ES_PREREGISTRATION.md
+  artifacts/rolling_es_proximity_oos.json
+  .claude/physics/INVARIANTS.yaml
+  .claude/commit_acceptors/T2b-stuart-landau-es.yaml
+rollback_verification_command: >-
+  git diff --exit-code core/physics/stuart_landau_es.py
+memory_update_type: append
+ledger_path: ".claude/commit_acceptors/T2b-stuart-landau-es.yaml"
+report_path: "results/cross_asset_kuramoto/SL_ES_PREREGISTRATION.md"
+evidence:
+  - path: "results/cross_asset_kuramoto/SL_ES_PREREGISTRATION.md"
+  - path: "artifacts/rolling_es_proximity_oos.json"

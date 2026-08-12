@@ -1,0 +1,9 @@
+Cache coherence and action freshness proof
+steps = 3
+max_action_age_ms = 250
+invariant_i_status = unsat
+invariant_ii_status = unsat
+invariant_iii_status = unsat
+Invariant I: UNSAT (cache/db mismatch always implies DIVERGENT)
+Invariant II: UNSAT (stale snapshots cannot emit verdicts)
+Invariant III: UNSAT (no cache version regress on sync writes)

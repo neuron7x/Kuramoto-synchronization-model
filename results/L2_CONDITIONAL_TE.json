@@ -1,0 +1,592 @@
+{
+  "conditioner": "BTCUSDT",
+  "lag_rows": 1,
+  "n_bins": 6,
+  "n_pairs": 36,
+  "n_rows": 19081,
+  "n_surrogates": 80,
+  "n_symbols": 10,
+  "pairs": [
+    {
+      "report": {
+        "lag_rows": 1,
+        "n_bins": 6,
+        "n_samples": 19081,
+        "n_surrogates": 80,
+        "p_value_conditional": 0.012345679012345678,
+        "reduction_fraction": -1.6585620824139824,
+        "reduction_nats": -0.01821935117126689,
+        "te_conditional_y_to_x_nats": 0.02920437932574467,
+        "te_unconditional_y_to_x_nats": 0.010985028154477779,
+        "verdict": "PRIVATE_FLOW"
+      },
+      "symbol_x": "ETHUSDT",
+      "symbol_y": "SOLUSDT"
+    },
+    {
+      "report": {
+        "lag_rows": 1,
+        "n_bins": 6,
+        "n_samples": 19081,
+        "n_surrogates": 80,
+        "p_value_conditional": 0.012345679012345678,
+        "reduction_fraction": -1.3810446701134655,
+        "reduction_nats": -0.016151813907095726,
+        "te_conditional_y_to_x_nats": 0.02784717341039746,
+        "te_unconditional_y_to_x_nats": 0.011695359503301733,
+        "verdict": "PRIVATE_FLOW"
+      },
+      "symbol_x": "ETHUSDT",
+      "symbol_y": "BNBUSDT"
+    },
+    {
+      "report": {
+        "lag_rows": 1,
+        "n_bins": 6,
+        "n_samples": 19081,
+        "n_surrogates": 80,
+        "p_value_conditional": 0.012345679012345678,
+        "reduction_fraction": -1.7101667285971667,
+        "reduction_nats": -0.017946202785936283,
+        "te_conditional_y_to_x_nats": 0.02844003504558817,
+        "te_unconditional_y_to_x_nats": 0.010493832259651888,
+        "verdict": "PRIVATE_FLOW"
+      },
+      "symbol_x": "ETHUSDT",
+      "symbol_y": "XRPUSDT"
+    },
+    {
+      "report": {
+        "lag_rows": 1,
+        "n_bins": 6,
+        "n_samples": 19081,
+        "n_surrogates": 80,
+        "p_value_conditional": 0.012345679012345678,
+        "reduction_fraction": -1.420073830529072,
+        "reduction_nats": -0.018647311081525692,
+        "te_conditional_y_to_x_nats": 0.03177853755767188,
+        "te_unconditional_y_to_x_nats": 0.013131226476146191,
+        "verdict": "PRIVATE_FLOW"
+      },
+      "symbol_x": "ETHUSDT",
+      "symbol_y": "ADAUSDT"
+    },
+    {
+      "report": {
+        "lag_rows": 1,
+        "n_bins": 6,
+        "n_samples": 19081,
+        "n_surrogates": 80,
+        "p_value_conditional": 0.024691358024691357,
+        "reduction_fraction": -2.6690254113881315,
+        "reduction_nats": -0.019463715254249024,
+        "te_conditional_y_to_x_nats": 0.026756158095445563,
+        "te_unconditional_y_to_x_nats": 0.0072924428411965374,
+        "verdict": "PRIVATE_FLOW"
+      },
+      "symbol_x": "ETHUSDT",
+      "symbol_y": "AVAXUSDT"
+    },
+    {
+      "report": {
+        "lag_rows": 1,
+        "n_bins": 6,
+        "n_samples": 19081,
+        "n_surrogates": 80,
+        "p_value_conditional": 0.012345679012345678,
+        "reduction_fraction": -2.4937239740210058,
+        "reduction_nats": -0.019874296002968896,
+        "te_conditional_y_to_x_nats": 0.02784402168633015,
+        "te_unconditional_y_to_x_nats": 0.007969725683361252,
+        "verdict": "PRIVATE_FLOW"
+      },
+      "symbol_x": "ETHUSDT",
+      "symbol_y": "LINKUSDT"
+    },
+    {
+      "report": {
+        "lag_rows": 1,
+        "n_bins": 6,
+        "n_samples": 19081,
+        "n_surrogates": 80,
+        "p_value_conditional": 0.024691358024691357,
+        "reduction_fraction": -2.646669412260551,
+        "reduction_nats": -0.019941043422266196,
+        "te_conditional_y_to_x_nats": 0.027475434884188264,
+        "te_unconditional_y_to_x_nats": 0.007534391461922068,
+        "verdict": "PRIVATE_FLOW"
+      },
+      "symbol_x": "ETHUSDT",
+      "symbol_y": "DOTUSDT"
+    },
+    {
+      "report": {
+        "lag_rows": 1,
+        "n_bins": 6,
+        "n_samples": 19081,
+        "n_surrogates": 80,
+        "p_value_conditional": 0.012345679012345678,
+        "reduction_fraction": -2.759823514853319,
+        "reduction_nats": -0.019954682861240417,
+        "te_conditional_y_to_x_nats": 0.027185102760862508,
+        "te_unconditional_y_to_x_nats": 0.00723041989962209,
+        "verdict": "PRIVATE_FLOW"
+      },
+      "symbol_x": "ETHUSDT",
+      "symbol_y": "POLUSDT"
+    },
+    {
+      "report": {
+        "lag_rows": 1,
+        "n_bins": 6,
+        "n_samples": 19081,
+        "n_surrogates": 80,
+        "p_value_conditional": 0.012345679012345678,
+        "reduction_fraction": -2.1922457011343552,
+        "reduction_nats": -0.020460789287239132,
+        "te_conditional_y_to_x_nats": 0.02979404480538288,
+        "te_unconditional_y_to_x_nats": 0.009333255518143749,
+        "verdict": "PRIVATE_FLOW"
+      },
+      "symbol_x": "SOLUSDT",
+      "symbol_y": "BNBUSDT"
+    },
+    {
+      "report": {
+        "lag_rows": 1,
+        "n_bins": 6,
+        "n_samples": 19081,
+        "n_surrogates": 80,
+        "p_value_conditional": 0.012345679012345678,
+        "reduction_fraction": -1.9434409132646635,
+        "reduction_nats": -0.017853568722234703,
+        "te_conditional_y_to_x_nats": 0.02704014527332913,
+        "te_unconditional_y_to_x_nats": 0.00918657655109443,
+        "verdict": "PRIVATE_FLOW"
+      },
+      "symbol_x": "SOLUSDT",
+      "symbol_y": "XRPUSDT"
+    },
+    {
+      "report": {
+        "lag_rows": 1,
+        "n_bins": 6,
+        "n_samples": 19081,
+        "n_surrogates": 80,
+        "p_value_conditional": 0.012345679012345678,
+        "reduction_fraction": -1.6741823944428138,
+        "reduction_nats": -0.01947778103617695,
+        "te_conditional_y_to_x_nats": 0.031111985947679062,
+        "te_unconditional_y_to_x_nats": 0.011634204911502112,
+        "verdict": "PRIVATE_FLOW"
+      },
+      "symbol_x": "SOLUSDT",
+      "symbol_y": "ADAUSDT"
+    },
+    {
+      "report": {
+        "lag_rows": 1,
+        "n_bins": 6,
+        "n_samples": 19081,
+        "n_surrogates": 80,
+        "p_value_conditional": 0.012345679012345678,
+        "reduction_fraction": -3.0034653794447688,
+        "reduction_nats": -0.020589603559155404,
+        "te_conditional_y_to_x_nats": 0.027444886027222896,
+        "te_unconditional_y_to_x_nats": 0.006855282468067493,
+        "verdict": "PRIVATE_FLOW"
+      },
+      "symbol_x": "SOLUSDT",
+      "symbol_y": "AVAXUSDT"
+    },
+    {
+      "report": {
+        "lag_rows": 1,
+        "n_bins": 6,
+        "n_samples": 19081,
+        "n_surrogates": 80,
+        "p_value_conditional": 0.012345679012345678,
+        "reduction_fraction": -2.617620360270046,
+        "reduction_nats": -0.020870066066084207,
+        "te_conditional_y_to_x_nats": 0.028842981612909782,
+        "te_unconditional_y_to_x_nats": 0.007972915546825573,
+        "verdict": "PRIVATE_FLOW"
+      },
+      "symbol_x": "SOLUSDT",
+      "symbol_y": "LINKUSDT"
+    },
+    {
+      "report": {
+        "lag_rows": 1,
+        "n_bins": 6,
+        "n_samples": 19081,
+        "n_surrogates": 80,
+        "p_value_conditional": 0.024691358024691357,
+        "reduction_fraction": -2.8305261097609895,
+        "reduction_nats": -0.0198396469876433,
+        "te_conditional_y_to_x_nats": 0.026848819918154992,
+        "te_unconditional_y_to_x_nats": 0.007009172930511694,
+        "verdict": "PRIVATE_FLOW"
+      },
+      "symbol_x": "SOLUSDT",
+      "symbol_y": "DOTUSDT"
+    },
+    {
+      "report": {
+        "lag_rows": 1,
+        "n_bins": 6,
+        "n_samples": 19081,
+        "n_surrogates": 80,
+        "p_value_conditional": 0.012345679012345678,
+        "reduction_fraction": -2.2244497752803047,
+        "reduction_nats": -0.019661290529078133,
+        "te_conditional_y_to_x_nats": 0.028500011343352574,
+        "te_unconditional_y_to_x_nats": 0.00883872081427444,
+        "verdict": "PRIVATE_FLOW"
+      },
+      "symbol_x": "SOLUSDT",
+      "symbol_y": "POLUSDT"
+    },
+    {
+      "report": {
+        "lag_rows": 1,
+        "n_bins": 6,
+        "n_samples": 19081,
+        "n_surrogates": 80,
+        "p_value_conditional": 0.012345679012345678,
+        "reduction_fraction": -2.4267271585400576,
+        "reduction_nats": -0.01986909688499635,
+        "te_conditional_y_to_x_nats": 0.02805670743489838,
+        "te_unconditional_y_to_x_nats": 0.00818761054990203,
+        "verdict": "PRIVATE_FLOW"
+      },
+      "symbol_x": "BNBUSDT",
+      "symbol_y": "XRPUSDT"
+    },
+    {
+      "report": {
+        "lag_rows": 1,
+        "n_bins": 6,
+        "n_samples": 19081,
+        "n_surrogates": 80,
+        "p_value_conditional": 0.024691358024691357,
+        "reduction_fraction": -1.5923210579028606,
+        "reduction_nats": -0.017321578679261086,
+        "te_conditional_y_to_x_nats": 0.02819977349637553,
+        "te_unconditional_y_to_x_nats": 0.010878194817114443,
+        "verdict": "PRIVATE_FLOW"
+      },
+      "symbol_x": "BNBUSDT",
+      "symbol_y": "ADAUSDT"
+    },
+    {
+      "report": {
+        "lag_rows": 1,
+        "n_bins": 6,
+        "n_samples": 19081,
+        "n_surrogates": 80,
+        "p_value_conditional": 0.04938271604938271,
+        "reduction_fraction": -3.4258572388816866,
+        "reduction_nats": -0.020513024630792572,
+        "te_conditional_y_to_x_nats": 0.026500730247354897,
+        "te_unconditional_y_to_x_nats": 0.005987705616562325,
+        "verdict": "PRIVATE_FLOW"
+      },
+      "symbol_x": "BNBUSDT",
+      "symbol_y": "AVAXUSDT"
+    },
+    {
+      "report": {
+        "lag_rows": 1,
+        "n_bins": 6,
+        "n_samples": 19081,
+        "n_surrogates": 80,
+        "p_value_conditional": 0.012345679012345678,
+        "reduction_fraction": -2.3652638468584475,
+        "reduction_nats": -0.019649125478461087,
+        "te_conditional_y_to_x_nats": 0.027956496981458155,
+        "te_unconditional_y_to_x_nats": 0.008307371502997067,
+        "verdict": "PRIVATE_FLOW"
+      },
+      "symbol_x": "BNBUSDT",
+      "symbol_y": "LINKUSDT"
+    },
+    {
+      "report": {
+        "lag_rows": 1,
+        "n_bins": 6,
+        "n_samples": 19081,
+        "n_surrogates": 80,
+        "p_value_conditional": 0.012345679012345678,
+        "reduction_fraction": -2.5234402182000966,
+        "reduction_nats": -0.021485015778932484,
+        "te_conditional_y_to_x_nats": 0.02999919242713427,
+        "te_unconditional_y_to_x_nats": 0.008514176648201787,
+        "verdict": "PRIVATE_FLOW"
+      },
+      "symbol_x": "BNBUSDT",
+      "symbol_y": "DOTUSDT"
+    },
+    {
+      "report": {
+        "lag_rows": 1,
+        "n_bins": 6,
+        "n_samples": 19081,
+        "n_surrogates": 80,
+        "p_value_conditional": 0.012345679012345678,
+        "reduction_fraction": -3.0385386536639385,
+        "reduction_nats": -0.022370617158586466,
+        "te_conditional_y_to_x_nats": 0.02973291190234807,
+        "te_unconditional_y_to_x_nats": 0.007362294743761601,
+        "verdict": "PRIVATE_FLOW"
+      },
+      "symbol_x": "BNBUSDT",
+      "symbol_y": "POLUSDT"
+    },
+    {
+      "report": {
+        "lag_rows": 1,
+        "n_bins": 6,
+        "n_samples": 19081,
+        "n_surrogates": 80,
+        "p_value_conditional": 0.012345679012345678,
+        "reduction_fraction": -1.6036961688605456,
+        "reduction_nats": -0.018845362688187088,
+        "te_conditional_y_to_x_nats": 0.030596567844196815,
+        "te_unconditional_y_to_x_nats": 0.011751205156009727,
+        "verdict": "PRIVATE_FLOW"
+      },
+      "symbol_x": "XRPUSDT",
+      "symbol_y": "ADAUSDT"
+    },
+    {
+      "report": {
+        "lag_rows": 1,
+        "n_bins": 6,
+        "n_samples": 19081,
+        "n_surrogates": 80,
+        "p_value_conditional": 0.012345679012345678,
+        "reduction_fraction": -2.479824277899917,
+        "reduction_nats": -0.019078189139974493,
+        "te_conditional_y_to_x_nats": 0.02677155246010909,
+        "te_unconditional_y_to_x_nats": 0.007693363320134599,
+        "verdict": "PRIVATE_FLOW"
+      },
+      "symbol_x": "XRPUSDT",
+      "symbol_y": "AVAXUSDT"
+    },
+    {
+      "report": {
+        "lag_rows": 1,
+        "n_bins": 6,
+        "n_samples": 19081,
+        "n_surrogates": 80,
+        "p_value_conditional": 0.012345679012345678,
+        "reduction_fraction": -3.5406709200248083,
+        "reduction_nats": -0.021342599545556982,
+        "te_conditional_y_to_x_nats": 0.02737044003896478,
+        "te_unconditional_y_to_x_nats": 0.006027840493407798,
+        "verdict": "PRIVATE_FLOW"
+      },
+      "symbol_x": "XRPUSDT",
+      "symbol_y": "LINKUSDT"
+    },
+    {
+      "report": {
+        "lag_rows": 1,
+        "n_bins": 6,
+        "n_samples": 19081,
+        "n_surrogates": 80,
+        "p_value_conditional": 0.06172839506172839,
+        "reduction_fraction": -2.0524707844822223,
+        "reduction_nats": -0.01752394372818782,
+        "te_conditional_y_to_x_nats": 0.026061918475832568,
+        "te_unconditional_y_to_x_nats": 0.008537974747644748,
+        "verdict": "COMMON_FACTOR"
+      },
+      "symbol_x": "XRPUSDT",
+      "symbol_y": "DOTUSDT"
+    },
+    {
+      "report": {
+        "lag_rows": 1,
+        "n_bins": 6,
+        "n_samples": 19081,
+        "n_surrogates": 80,
+        "p_value_conditional": 0.012345679012345678,
+        "reduction_fraction": -2.515230419273455,
+        "reduction_nats": -0.021249550226205834,
+        "te_conditional_y_to_x_nats": 0.029697901543594855,
+        "te_unconditional_y_to_x_nats": 0.008448351317389021,
+        "verdict": "PRIVATE_FLOW"
+      },
+      "symbol_x": "XRPUSDT",
+      "symbol_y": "POLUSDT"
+    },
+    {
+      "report": {
+        "lag_rows": 1,
+        "n_bins": 6,
+        "n_samples": 19081,
+        "n_surrogates": 80,
+        "p_value_conditional": 0.012345679012345678,
+        "reduction_fraction": -2.4294608807860842,
+        "reduction_nats": -0.019089666081592453,
+        "te_conditional_y_to_x_nats": 0.02694723902403709,
+        "te_unconditional_y_to_x_nats": 0.007857572942444638,
+        "verdict": "PRIVATE_FLOW"
+      },
+      "symbol_x": "ADAUSDT",
+      "symbol_y": "AVAXUSDT"
+    },
+    {
+      "report": {
+        "lag_rows": 1,
+        "n_bins": 6,
+        "n_samples": 19081,
+        "n_surrogates": 80,
+        "p_value_conditional": 0.012345679012345678,
+        "reduction_fraction": -2.262381703824189,
+        "reduction_nats": -0.01864346921912278,
+        "te_conditional_y_to_x_nats": 0.02688410747552709,
+        "te_unconditional_y_to_x_nats": 0.00824063825640431,
+        "verdict": "PRIVATE_FLOW"
+      },
+      "symbol_x": "ADAUSDT",
+      "symbol_y": "LINKUSDT"
+    },
+    {
+      "report": {
+        "lag_rows": 1,
+        "n_bins": 6,
+        "n_samples": 19081,
+        "n_surrogates": 80,
+        "p_value_conditional": 0.012345679012345678,
+        "reduction_fraction": -2.566562552486837,
+        "reduction_nats": -0.020400326609210866,
+        "te_conditional_y_to_x_nats": 0.028348828230355554,
+        "te_unconditional_y_to_x_nats": 0.007948501621144686,
+        "verdict": "PRIVATE_FLOW"
+      },
+      "symbol_x": "ADAUSDT",
+      "symbol_y": "DOTUSDT"
+    },
+    {
+      "report": {
+        "lag_rows": 1,
+        "n_bins": 6,
+        "n_samples": 19081,
+        "n_surrogates": 80,
+        "p_value_conditional": 0.012345679012345678,
+        "reduction_fraction": -2.8300201069038686,
+        "reduction_nats": -0.02002915956850047,
+        "te_conditional_y_to_x_nats": 0.02710655082789085,
+        "te_unconditional_y_to_x_nats": 0.00707739125939038,
+        "verdict": "PRIVATE_FLOW"
+      },
+      "symbol_x": "ADAUSDT",
+      "symbol_y": "POLUSDT"
+    },
+    {
+      "report": {
+        "lag_rows": 1,
+        "n_bins": 6,
+        "n_samples": 19081,
+        "n_surrogates": 80,
+        "p_value_conditional": 0.07407407407407407,
+        "reduction_fraction": -2.1228964187717083,
+        "reduction_nats": -0.017874697759370756,
+        "te_conditional_y_to_x_nats": 0.026294655323627666,
+        "te_unconditional_y_to_x_nats": 0.008419957564256913,
+        "verdict": "COMMON_FACTOR"
+      },
+      "symbol_x": "AVAXUSDT",
+      "symbol_y": "LINKUSDT"
+    },
+    {
+      "report": {
+        "lag_rows": 1,
+        "n_bins": 6,
+        "n_samples": 19081,
+        "n_surrogates": 80,
+        "p_value_conditional": 0.09876543209876543,
+        "reduction_fraction": -2.874778762736297,
+        "reduction_nats": -0.018911175935025972,
+        "te_conditional_y_to_x_nats": 0.02548948247470062,
+        "te_unconditional_y_to_x_nats": 0.006578306539674647,
+        "verdict": "COMMON_FACTOR"
+      },
+      "symbol_x": "AVAXUSDT",
+      "symbol_y": "DOTUSDT"
+    },
+    {
+      "report": {
+        "lag_rows": 1,
+        "n_bins": 6,
+        "n_samples": 19081,
+        "n_surrogates": 80,
+        "p_value_conditional": 0.012345679012345678,
+        "reduction_fraction": -3.3790113221026523,
+        "reduction_nats": -0.02163303069780467,
+        "te_conditional_y_to_x_nats": 0.028035208327781686,
+        "te_unconditional_y_to_x_nats": 0.006402177629977018,
+        "verdict": "PRIVATE_FLOW"
+      },
+      "symbol_x": "AVAXUSDT",
+      "symbol_y": "POLUSDT"
+    },
+    {
+      "report": {
+        "lag_rows": 1,
+        "n_bins": 6,
+        "n_samples": 19081,
+        "n_surrogates": 80,
+        "p_value_conditional": 0.012345679012345678,
+        "reduction_fraction": -2.590113578002084,
+        "reduction_nats": -0.020572172851888816,
+        "te_conditional_y_to_x_nats": 0.028514748431048325,
+        "te_unconditional_y_to_x_nats": 0.00794257557915951,
+        "verdict": "PRIVATE_FLOW"
+      },
+      "symbol_x": "LINKUSDT",
+      "symbol_y": "DOTUSDT"
+    },
+    {
+      "report": {
+        "lag_rows": 1,
+        "n_bins": 6,
+        "n_samples": 19081,
+        "n_surrogates": 80,
+        "p_value_conditional": 0.012345679012345678,
+        "reduction_fraction": -2.489257882638562,
+        "reduction_nats": -0.01966677847512791,
+        "te_conditional_y_to_x_nats": 0.027567437789012064,
+        "te_unconditional_y_to_x_nats": 0.007900659313884156,
+        "verdict": "PRIVATE_FLOW"
+      },
+      "symbol_x": "LINKUSDT",
+      "symbol_y": "POLUSDT"
+    },
+    {
+      "report": {
+        "lag_rows": 1,
+        "n_bins": 6,
+        "n_samples": 19081,
+        "n_surrogates": 80,
+        "p_value_conditional": 0.012345679012345678,
+        "reduction_fraction": -2.646160575589381,
+        "reduction_nats": -0.020168410676584488,
+        "te_conditional_y_to_x_nats": 0.027790174398195512,
+        "te_unconditional_y_to_x_nats": 0.007621763721611023,
+        "verdict": "PRIVATE_FLOW"
+      },
+      "symbol_x": "DOTUSDT",
+      "symbol_y": "POLUSDT"
+    }
+  ],
+  "seed": 42,
+  "verdict_counts": {
+    "COMMON_FACTOR": 3,
+    "PRIVATE_FLOW": 33
+  }
+}

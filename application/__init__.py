@@ -1,3 +1,5 @@
+# Copyright (c) 2023-2026 Yaroslav Vasylenko (neuron7xLab)
+# SPDX-License-Identifier: MIT
 """Application layer bridging domain entities to upper layers."""
 
 from __future__ import annotations
@@ -17,10 +19,10 @@ __all__ = [
     "ServiceRegistry",
     "ServiceState",
     "StrategyRun",
-    "TradePulseOrchestrator",
-    "TradePulseSystem",
-    "TradePulseSystemConfig",
-    "build_tradepulse_system",
+    "GeoSyncOrchestrator",
+    "GeoSyncSystem",
+    "GeoSyncSystemConfig",
+    "build_geosync_system",
     "order_to_dto",
     "position_to_dto",
     "signal_to_dto",
@@ -43,15 +45,15 @@ _IMPORT_MAP: dict[str, tuple[str, str]] = {
     "StrategyRun": ("application.microservices", "StrategyRun"),
     "ExchangeAdapterConfig": ("application.system", "ExchangeAdapterConfig"),
     "LiveLoopSettings": ("application.system", "LiveLoopSettings"),
-    "TradePulseSystem": ("application.system", "TradePulseSystem"),
-    "TradePulseSystemConfig": ("application.system", "TradePulseSystemConfig"),
-    "TradePulseOrchestrator": (
+    "GeoSyncSystem": ("application.system", "GeoSyncSystem"),
+    "GeoSyncSystemConfig": ("application.system", "GeoSyncSystemConfig"),
+    "GeoSyncOrchestrator": (
         "application.system_orchestrator",
-        "TradePulseOrchestrator",
+        "GeoSyncOrchestrator",
     ),
-    "build_tradepulse_system": (
+    "build_geosync_system": (
         "application.system_orchestrator",
-        "build_tradepulse_system",
+        "build_geosync_system",
     ),
     "order_to_dto": ("application.trading", "order_to_dto"),
     "position_to_dto": ("application.trading", "position_to_dto"),

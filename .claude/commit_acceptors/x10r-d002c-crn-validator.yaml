@@ -1,0 +1,231 @@
+# Diff-bound commit acceptor for D-002C C2.3 (issue #654) —
+# Common-Random-Numbers variance-reduction GO/NO-GO validator.
+#
+# What lands:
+#   * research/systemic_risk/d002c_kuramoto.py
+#       Minimal Kuramoto integrator (Heun's method / RK2) over a
+#       substrate K-trajectory of shape (T_quarters, N, N). Strict
+#       determinism: same (K, seed, config) → bit-exact identical
+#       output across calls. ω drawn from Lorentzian(0, omega_gamma);
+#       initial θ uniform [-π, π); both seeded by the same RNG so
+#       a single seed fully specifies a realisation.
+#       Shared primitive — consumed by C2.3 (this PR) and C2.4
+#       (sweep runner, pending). NO metric evaluation, NO CRN
+#       bookkeeping, NO claim layer.
+#   * research/systemic_risk/d002c_crn_validator.py
+#       CRN variance-reduction GO/NO-GO validator.
+#       measure_variance_reduction(substrate, metric, ...) returns
+#       a CRNValidatorResult with variance_ratio = V(paired) /
+#       V(unpaired) + GO/NO_GO verdict at ratio_threshold (default
+#       0.50, i.e. ≥2x variance reduction).
+#       run_full_validation(...) sweeps the 9-cell substrate ×
+#       metric grid, computes a global verdict (GO iff
+#       minimum_passes cells pass; default 6/9), and writes an
+#       atomic JSON capsule (tmp + fsync + os.replace, matching
+#       D-002D's discipline) with a canonical sha256.
+#       CRN protocol:
+#         paired   — same seed for both runs in the pair (substrate
+#                    seed + integrator seed identical) → only K
+#                    differs between K_baseline and K_precursor;
+#                    shared noise cancels in the metric difference.
+#         unpaired — substrate seed and integrator seed differ
+#                    between the two runs in the pair → no
+#                    cancellation.
+#       The capsule is what C2.4 reads to refuse-or-launch the
+#       69 120-cell sweep.
+#   * tests/research/systemic_risk/test_d002c_kuramoto.py
+#       15 fast tests pinning the integrator's contract:
+#       shape, R ∈ [0, 1], finite trajectories, θ wrapped to
+#       [-π, π), bit-exact same-seed reproducibility, different-
+#       seed yields different trajectory, same-seed-different-K
+#       yields different trajectory (load-bearing for CRN to
+#       even work), input validation, hyperparameter defaults
+#       match locked constants.
+#   * tests/research/systemic_risk/test_d002c_crn_validator.py
+#       27 fast tests pinning gates G1-G8 from the C2.3 order:
+#         G1 toy variance-ratio computation matches numpy ddof=1
+#         G2 paired variance strictly < unpaired variance on the
+#            stable block × sync_auc combo
+#         G3 ratio computation handles zero-unpaired edge case
+#            (returns inf, NOT NaN)
+#         G4 sha256 of result deterministic across calls; changes
+#            with threshold / seed
+#         G5 atomic write writes file, no orphan .tmp, no orphan
+#            on serialisation failure, creates parent dirs,
+#            overwrites existing
+#         G6 mypy --strict / ruff / black clean (CI)
+#         G7 per-metric integration coverage on block substrate
+#         G8 full pipeline produces a JSON-parseable capsule with
+#            per-cell sha matching the validator's emission
+#       Plus: rejects bad input (n_replicates < 2, non-finite
+#       threshold, minimum_passes outside [1, n_cells]); frozen
+#       dataclass; default-constants sanity (DEFAULT_RATIO_THRESHOLD
+#       == 0.50, DEFAULT_MINIMUM_PASSES == 6); global verdict
+#       GO when minimum_passes met; NO_GO when threshold set
+#       impossibly tight (1e-50).
+#
+# Strict scope:
+#   Variance measurement + capsule emission ONLY. NO sweep
+#   execution. NO claim layer. NO promotion of a GO verdict into
+#   a tier — C2.4 reads the capsule and refuses to launch if
+#   the global verdict is NO_GO. The validator emits no claim
+#   of its own.
+
+id: x10r-d002c-crn-validator
+status: ACTIVE
+claim_type: correctness
+promise: >-
+  After this PR lands, research/systemic_risk/d002c_crn_validator
+  exposes measure_variance_reduction(substrate, metric, ...) — a
+  Common-Random-Numbers variance-ratio estimator with a configurable
+  per-cell GO/NO-GO threshold (default 0.50) — and
+  run_full_validation(...) which sweeps the 9-cell substrate × metric
+  grid, applies the global-verdict rule (GO iff minimum_passes cells
+  pass; default 6/9), and writes an atomic JSON capsule with a
+  canonical sha256.
+
+  The capsule is the gating artifact for C2.4: the sweep runner
+  reads the capsule, parses global_verdict, and refuses to launch
+  the 69 120-cell sweep if global_verdict == "NO_GO".
+
+  Co-lands research/systemic_risk/d002c_kuramoto — a minimal
+  Heun-method Kuramoto integrator over a substrate K-trajectory.
+  Shared primitive consumed by C2.3 (this PR) and C2.4 (pending);
+  strict determinism (same (K, seed, config) → bit-exact identical
+  output) is verified by test.
+
+  Strict scope: variance measurement + capsule emission only. No
+  sweep execution. No claim layer. No promotion of a GO verdict
+  into any tier. The validator emits no claim of its own.
+diff_scope:
+  changed_files:
+    - path: ".claude/commit_acceptors/x10r-d002c-crn-validator.yaml"
+    - path: "research/systemic_risk/d002c_kuramoto.py"
+    - path: "research/systemic_risk/d002c_crn_validator.py"
+    - path: "tests/research/systemic_risk/test_d002c_kuramoto.py"
+    - path: "tests/research/systemic_risk/test_d002c_crn_validator.py"
+  forbidden_paths:
+    - "trading/"
+    - "execution/"
+    - "forecast/"
+    - "policy/"
+    - "core/physics/"
+    - "core/kuramoto/"
+    - "research/reconstruction/"
+    - "research/systemic_risk/sweep_checkpoint.py"
+    - "research/systemic_risk/d002c_preregistration.py"
+    - "research/systemic_risk/d002c_substrates.py"
+    - "research/systemic_risk/d002c_metrics.py"
+    - "scripts/run_x10r_"
+    - "application/governance/claim_ledger.py"
+    - "application/governance/commit_acceptor.py"
+required_python_symbols:
+  - "research/systemic_risk/d002c_kuramoto.py::simulate_kuramoto"
+  - "research/systemic_risk/d002c_kuramoto.py::IntegratorInvalid"
+  - "research/systemic_risk/d002c_crn_validator.py::CRNValidatorResult"
+  - "research/systemic_risk/d002c_crn_validator.py::CRNGlobalVerdict"
+  - "research/systemic_risk/d002c_crn_validator.py::CRNValidatorInvalid"
+  - "research/systemic_risk/d002c_crn_validator.py::measure_variance_reduction"
+  - "research/systemic_risk/d002c_crn_validator.py::run_full_validation"
+  - "tests/research/systemic_risk/test_d002c_kuramoto.py::test_simulate_bit_exact_same_seed"
+  - "tests/research/systemic_risk/test_d002c_kuramoto.py::test_simulate_same_K_seed_differs_per_K"
+  - "tests/research/systemic_risk/test_d002c_crn_validator.py::test_compute_variance_ratio_matches_numpy_ddof1"
+  - "tests/research/systemic_risk/test_d002c_crn_validator.py::test_measure_sha_deterministic_across_calls"
+  - "tests/research/systemic_risk/test_d002c_crn_validator.py::test_real_pipeline_paired_var_lower_than_unpaired"
+  - "tests/research/systemic_risk/test_d002c_crn_validator.py::test_real_pipeline_capsule_json_round_trip"
+  - "tests/research/systemic_risk/test_d002c_crn_validator.py::test_atomic_write_no_orphan_tmp_on_exception"
+  - "tests/research/systemic_risk/test_d002c_crn_validator.py::test_paired_variance_never_exceeds_unpaired_on_stable_combo"
+expected_signal: >-
+  Local: `pytest tests/research/systemic_risk/test_d002c_kuramoto.py
+  tests/research/systemic_risk/test_d002c_crn_validator.py -q`
+  reports "42 passed"; `mypy --strict --follow-imports=silent`
+  clean on the four new files; `ruff check` and `black --check`
+  both pass.
+measurement_command: >-
+  bash -c 'mypy --strict --follow-imports=silent
+  research/systemic_risk/d002c_kuramoto.py
+  research/systemic_risk/d002c_crn_validator.py
+  tests/research/systemic_risk/test_d002c_kuramoto.py
+  tests/research/systemic_risk/test_d002c_crn_validator.py
+  && ruff check
+  research/systemic_risk/d002c_kuramoto.py
+  research/systemic_risk/d002c_crn_validator.py
+  tests/research/systemic_risk/test_d002c_kuramoto.py
+  tests/research/systemic_risk/test_d002c_crn_validator.py
+  && black --check
+  research/systemic_risk/d002c_kuramoto.py
+  research/systemic_risk/d002c_crn_validator.py
+  tests/research/systemic_risk/test_d002c_kuramoto.py
+  tests/research/systemic_risk/test_d002c_crn_validator.py
+  && pytest tests/research/systemic_risk/test_d002c_kuramoto.py
+  tests/research/systemic_risk/test_d002c_crn_validator.py -q'
+signal_artifact: "tests/research/systemic_risk/test_d002c_crn_validator.py"
+falsifier:
+  command: |-
+    bash -c 'PYTHONPATH=. python -c "
+    import math, json, tempfile
+    from pathlib import Path
+    from research.systemic_risk.d002c_crn_validator import (
+        DEFAULT_RATIO_THRESHOLD, DEFAULT_MINIMUM_PASSES,
+        CRNValidatorInvalid, measure_variance_reduction, run_full_validation,
+    )
+    from research.systemic_risk.d002c_substrates import BlockStructuredSubstrate
+    from research.systemic_risk.d002c_metrics import AucPreEventMetric
+    # Sha determinism
+    a = measure_variance_reduction(BlockStructuredSubstrate(), AucPreEventMetric(), N=30, lambda_=0.50, n_replicates=4, steps_per_quarter=4)
+    b = measure_variance_reduction(BlockStructuredSubstrate(), AucPreEventMetric(), N=30, lambda_=0.50, n_replicates=4, steps_per_quarter=4)
+    assert a.sha256 == b.sha256, '"'"'sha unstable'"'"'
+    assert a.variance_ratio == b.variance_ratio
+    # Default constants
+    assert DEFAULT_RATIO_THRESHOLD == 0.50
+    assert DEFAULT_MINIMUM_PASSES == 6
+    # Paired variance never exceeds unpaired on stable combo
+    r = measure_variance_reduction(BlockStructuredSubstrate(), AucPreEventMetric(), N=50, lambda_=0.50, n_replicates=12, steps_per_quarter=4)
+    assert r.paired_variance <= r.unpaired_variance + 1e-12, (r.paired_variance, r.unpaired_variance)
+    # Atomic capsule writes JSON parseable file
+    with tempfile.TemporaryDirectory() as td:
+        cap = Path(td) / '"'"'cap.json'"'"'
+        v = run_full_validation(output_path=cap, substrates=(BlockStructuredSubstrate(),), metrics=(AucPreEventMetric(),), N=30, lambda_=0.50, n_replicates=8, steps_per_quarter=4, minimum_passes=1)
+        data = json.loads(cap.read_text(encoding='"'"'utf-8'"'"'))
+        assert data['"'"'global_verdict'"'"'] in {'"'"'GO'"'"', '"'"'NO_GO'"'"'}
+        assert data['"'"'results'"'"'][0]['"'"'sha256'"'"'] == v.results[0].sha256
+    # NO_GO when threshold impossibly tight
+    with tempfile.TemporaryDirectory() as td:
+        cap = Path(td) / '"'"'cap.json'"'"'
+        v = run_full_validation(output_path=cap, substrates=(BlockStructuredSubstrate(),), metrics=(AucPreEventMetric(),), N=20, lambda_=0.50, n_replicates=4, steps_per_quarter=4, ratio_threshold=1e-50, minimum_passes=1)
+        assert v.global_verdict == '"'"'NO_GO'"'"'
+    # Invalid threshold raises
+    try:
+        measure_variance_reduction(BlockStructuredSubstrate(), AucPreEventMetric(), N=20, lambda_=0.50, n_replicates=4, ratio_threshold=0.0)
+        raise AssertionError('"'"'should have raised'"'"')
+    except CRNValidatorInvalid:
+        pass
+    "'
+  description: >-
+    Probes the D-002C C2.3 contract: sha256 of the result is
+    deterministic across calls; default constants are at their
+    locked values; paired variance never exceeds unpaired on
+    the stable block × sync_auc combo (CRN cannot HURT in this
+    regime); atomic capsule writes a JSON-parseable file with
+    per-cell sha matching the validator's emission;
+    impossible-threshold yields global NO_GO; invalid threshold
+    raises CRNValidatorInvalid. If any of these regress, the
+    CRN GO/NO-GO contract is broken — the sweep would launch
+    on unsupported variance assumptions.
+rollback_command: >-
+  bash -c 'git checkout HEAD~1 --
+  && rm -f research/systemic_risk/d002c_kuramoto.py
+  research/systemic_risk/d002c_crn_validator.py
+  tests/research/systemic_risk/test_d002c_kuramoto.py
+  tests/research/systemic_risk/test_d002c_crn_validator.py
+  .claude/commit_acceptors/x10r-d002c-crn-validator.yaml'
+rollback_verification_command: >-
+  bash -c 'test ! -f research/systemic_risk/d002c_kuramoto.py
+  && test ! -f research/systemic_risk/d002c_crn_validator.py
+  && test ! -f tests/research/systemic_risk/test_d002c_kuramoto.py
+  && test ! -f tests/research/systemic_risk/test_d002c_crn_validator.py
+  && test ! -f .claude/commit_acceptors/x10r-d002c-crn-validator.yaml'
+memory_update_type: append
+ledger_path: ".claude/commit_acceptors/x10r-d002c-crn-validator.yaml"
+report_path: "tests/research/systemic_risk/test_d002c_crn_validator.py"
+evidence: []

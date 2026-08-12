@@ -1,0 +1,76 @@
+# Diff-bound commit acceptor for CANON.md update — pillars 3, 4, 6, 7 LIVE.
+#
+# After PRs #569 (data firewall), #570 (replication capsule), and
+# #571 (governance FSM) merged, all seven pillars of the Canonical
+# Seven are now live in main. This PR refreshes CANON.md to reflect
+# the complete state — replaces the "foundation only" framing with
+# the pipeline diagram, adds invariants F6/F7/F8, and updates the
+# pillar-status table.
+#
+# Doc-only PR; no code changes.
+
+id: canon-pillars-complete
+status: ACTIVE
+claim_type: documentation
+promise: >-
+  After this PR lands, ``research/systemic_risk/CANON.md`` reflects
+  all seven canonical pillars as LIVE, includes the end-to-end pipeline
+  diagram, the F1–F8 invariant list, and an idiomatic public-surface
+  import example.
+
+diff_scope:
+  changed_files:
+    - path: ".claude/commit_acceptors/canon-pillars-complete.yaml"
+    - path: "research/systemic_risk/CANON.md"
+  forbidden_paths:
+    - "trading/"
+    - "execution/"
+    - "forecast/"
+    - "policy/"
+    - "core/"
+    - "runtime/"
+    - "application/"
+    - "research/systemic_risk/death_conditions.py"
+    - "research/systemic_risk/evidence_ledger.py"
+    - "research/systemic_risk/leakage_sentinel.py"
+    - "research/systemic_risk/data_firewall.py"
+    - "research/systemic_risk/replication_capsule.py"
+    - "research/systemic_risk/governance_fsm.py"
+    - "research/systemic_risk/adversarial_ladder.py"
+
+required_python_symbols: []
+
+expected_signal: >-
+  ``grep -c 'LIVE' research/systemic_risk/CANON.md`` reports >= 7
+  (one per pillar) on the diff branch; the previous version showed
+  only the foundation-layer framing without per-pillar status.
+
+measurement_command: >-
+  bash -c 'grep -c LIVE research/systemic_risk/CANON.md'
+
+signal_artifact: "tmp/canon_pillars_complete.log"
+
+falsifier:
+  command: >-
+    bash -c '
+      grep -q "Canonical Seven — Complete" research/systemic_risk/CANON.md 2>/dev/null && exit 1 || exit 0
+    '
+  description: >-
+    Probes that the title was updated. Falsifier inverts: it succeeds
+    (exit 0) only when the title is missing, which would mean the
+    update rolled back.
+
+rollback_command: >-
+  bash -c '
+    git checkout HEAD~1 -- research/systemic_risk/CANON.md && git rm -f .claude/commit_acceptors/canon-pillars-complete.yaml
+  '
+
+rollback_verification_command: >-
+  bash -c '
+    grep -q "Foundation Layer" research/systemic_risk/CANON.md
+  '
+
+memory_update_type: append
+ledger_path: ".claude/commit_acceptors/canon-pillars-complete.yaml"
+report_path: "tmp/canon_pillars_complete.log"
+evidence: []

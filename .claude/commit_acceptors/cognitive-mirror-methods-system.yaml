@@ -1,0 +1,51 @@
+id: cognitive-mirror-methods-system
+status: ACTIVE
+claim_type: documentation
+promise: "Adds a bounded Cognitive Mirror Methods system slice with public contracts and integration docs."
+diff_scope:
+  changed_files:
+    - path: "cognitive_mirror_methods/__init__.py"
+    - path: "cognitive_mirror_methods/README.md"
+    - path: "cognitive_mirror_methods/artifacts/consolidation/CONSOLIDATION_REPORT.json"
+    - path: "cognitive_mirror_methods/contracts/request.json"
+    - path: "cognitive_mirror_methods/contracts/response.json"
+    - path: "cognitive_mirror_methods/docs/architecture.md"
+    - path: "cognitive_mirror_methods/docs/glossary.md"
+    - path: "cognitive_mirror_methods/docs/safety.md"
+    - path: "cognitive_mirror_methods/prompts/finalizer_mirror.md"
+    - path: "cognitive_mirror_methods/prompts/registry.yaml"
+    - path: "cognitive_mirror_methods/schemas/consolidation_report.schema.json"
+    - path: "cognitive_mirror_methods/schemas/method.schema.json"
+    - path: "cognitive_mirror_methods/system/adapters/schema_adapter.py"
+    - path: "cognitive_mirror_methods/system/artifacts/integration_report.json"
+    - path: "cognitive_mirror_methods/system/docs/integration_map.md"
+    - path: "cognitive_mirror_methods/system/docs/module_contracts.md"
+    - path: "cognitive_mirror_methods/system/interfaces/public_api.py"
+    - path: "cognitive_mirror_methods/system/orchestration/pipeline.py"
+    - path: "cognitive_mirror_methods/system/orchestration/registry.py"
+    - path: "cognitive_mirror_methods/system/orchestration/router.py"
+    - path: "cognitive_mirror_methods/tests/test_method_contracts.py"
+    - path: "cognitive_mirror_methods/tools/finalizer100.py"
+    - path: "cognitive_mirror_methods/tools/schema_validator.py"
+    - path: ".claude/commit_acceptors/cognitive-mirror-methods-system.yaml"
+  forbidden_paths:
+    - "trading/"
+    - "execution/"
+    - "forecast/"
+    - "policy/"
+required_python_symbols:
+  - "cognitive_mirror_methods.system.interfaces.public_api.execute"
+  - "cognitive_mirror_methods.system.orchestration.router.route_request"
+  - "cognitive_mirror_methods.system.orchestration.pipeline.run_pipeline"
+expected_signal: "acceptor validates and changed files remain bounded to the cmm system slice"
+measurement_command: "python tools/commit_acceptor/validate_commit_acceptor.py"
+signal_artifact: "tmp/cognitive_mirror_methods_acceptor.json"
+falsifier:
+  command: "python -c 'raise SystemExit(1)'"
+  description: "Negative probe proving failed validation is surfaced."
+rollback_command: "git checkout -- cognitive_mirror_methods .claude/commit_acceptors/cognitive-mirror-methods-system.yaml"
+rollback_verification_command: "git diff --exit-code cognitive_mirror_methods .claude/commit_acceptors/cognitive-mirror-methods-system.yaml"
+memory_update_type: none
+ledger_path: ".claude/commit_acceptors/cognitive-mirror-methods-system.yaml"
+report_path: "cognitive_mirror_methods/system/artifacts/integration_report.json"
+evidence: []

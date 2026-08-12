@@ -1,10 +1,12 @@
+# Copyright (c) 2023-2026 Yaroslav Vasylenko (neuron7xLab)
+# SPDX-License-Identifier: MIT
 """Tests for async data ingestion."""
 
 import asyncio
 import csv
 from datetime import datetime, timezone
 from pathlib import Path
-from typing import AsyncIterator, Iterable, List
+from typing import Any, AsyncIterator, Iterable, List, NoReturn
 
 import pytest
 
@@ -22,14 +24,18 @@ class DummyAdapter(IngestionAdapter):
         self._ticks: List[Ticker] = list(ticks)
         self.closed = False
 
-    async def fetch(self, **kwargs):  # type: ignore[override]
+    async def fetch(self, **kwargs: Any) -> List[Ticker]:
         return list(self._ticks)
 
-    async def stream(self, **kwargs):  # type: ignore[override]
+    async def stream(self, **kwargs: Any) -> AsyncIterator[Ticker]:  # type: ignore[override,misc]
+        # Base class declares ``async def stream`` returning AsyncIterator,
+        # which mypy infers as a coroutine-returning-iterator signature. The
+        # async-generator form (this override, using ``yield``) is the
+        # intended semantics; the type: ignore silences the formal conflict.
         for tick in self._ticks:
             yield tick
 
-    async def aclose(self) -> None:  # type: ignore[override]
+    async def aclose(self) -> None:
         self.closed = True
 
 
@@ -115,9 +121,7 @@ class TestAsyncDataIngestor:
         ingestor = AsyncDataIngestor()
         ticks = []
 
-        async for tick in ingestor.stream_ticks(
-            "test_source", "BTC", interval_ms=10, max_ticks=5
-        ):
+        async for tick in ingestor.stream_ticks("test_source", "BTC", interval_ms=10, max_ticks=5):
             ticks.append(tick)
 
         assert len(ticks) == 5
@@ -202,9 +206,9 @@ class TestAsyncDataIngestor:
                 writer.writerow([float(i), 100.0 + i, 1000])
 
         ingestor = AsyncDataIngestor()
-        batches = []
+        batches: list[int] = []
 
-        def collect_batch(batch):
+        def collect_batch(batch: list[Ticker]) -> None:
             batches.append(len(batch))
 
         ticks_iter = ingestor.read_csv(str(csv_file))
@@ -236,9 +240,7 @@ class TestAsyncDataIngestor:
         """The async ingestor should enforce configured file size limits."""
 
         csv_file = tmp_path / "big.csv"
-        csv_file.write_text(
-            "ts,price\n" + "\n".join("1,1" for _ in range(40)), encoding="utf-8"
-        )
+        csv_file.write_text("ts,price\n" + "\n".join("1,1" for _ in range(40)), encoding="utf-8")
 
         ingestor = AsyncDataIngestor(allowed_roots=[tmp_path], max_csv_bytes=32)
 
@@ -320,7 +322,7 @@ class TestMergeStreams:
     async def test_merge_empty_stream(self) -> None:
         """Test merging with empty stream."""
 
-        async def empty_stream():
+        async def empty_stream() -> AsyncIterator[Ticker]:
             return
             yield  # Make it a generator
 
@@ -338,7 +340,7 @@ class TestMergeStreams:
     async def test_merge_streams_handles_failures(self) -> None:
         """Failed streams should be skipped while others continue."""
 
-        async def flaky_stream():
+        async def flaky_stream() -> AsyncIterator[Ticker]:
             yield Ticker.create(
                 symbol="FLAKY",
                 venue="TEST",
@@ -395,9 +397,15 @@ class TestBinanceWebSocketStream:
 
         stream = BinanceWebSocketStream("BTCUSDT")
 
+        from urllib.parse import urlparse
+
         assert stream.symbol == "BTCUSDT"
-        assert "btcusdt@trade" in stream.url
-        assert stream.url.startswith("wss://stream.binance.com")
+        # Use urlparse — closes CodeQL py/incomplete-url-substring-sanitization
+        # (substring checks on URLs are unsafe; exact hostname comparison is not).
+        parsed = urlparse(stream.url)
+        assert parsed.scheme == "wss"
+        assert parsed.hostname == "stream.binance.com"
+        assert parsed.path.endswith("btcusdt@trade")
         assert not stream._running
 
     def test_initialization_custom_url(self) -> None:
@@ -507,7 +515,7 @@ class TestBinanceWebSocketStream:
         assert tick is None
 
     @pytest.mark.asyncio
-    async def test_connect_missing_websockets(self, monkeypatch) -> None:
+    async def test_connect_missing_websockets(self, monkeypatch: pytest.MonkeyPatch) -> None:
         """Test that connect raises error when websockets library is unavailable."""
         import sys
 
@@ -519,7 +527,7 @@ class TestBinanceWebSocketStream:
         ws_module = sys.modules.pop("websockets", None)
 
         # Patch the import inside the connect method
-        def mock_import_error():
+        def mock_import_error() -> NoReturn:
             raise ImportError("websockets not installed")
 
         try:

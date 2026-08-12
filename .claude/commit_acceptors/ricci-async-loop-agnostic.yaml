@@ -1,0 +1,72 @@
+# Diff-bound commit acceptor for the loop-agnostic async fan-out fix.
+#
+# mean_ricci(parallel="async") and ParallelFeatureBlock(mode="thread") drove an
+# asyncio event loop and broke inside any already-running loop (Jupyter /
+# FastAPI / Celery). This binds the root-cause fix: both paths now use a plain
+# order-preserving ThreadPoolExecutor with no event-loop dependency. Pure
+# runtime-correctness change; no physics invariant, claim tier, or alpha
+# surface is touched.
+
+id: ricci-async-loop-agnostic
+status: ACTIVE
+claim_type: correctness
+promise: >-
+  After this PR lands, mean_ricci(parallel="async") and
+  ParallelFeatureBlock(mode="thread") evaluate identically whether called from a
+  bare script or from an already-running asyncio event loop, returning the same
+  value as the serial path with results in deterministic edge/feature order and
+  no leaked loop, coroutine, or executor. The documented max_workers is honored
+  in thread mode. No numerical, market, or alpha claim is made.
+
+diff_scope:
+  changed_files:
+    - path: ".claude/commit_acceptors/ricci-async-loop-agnostic.yaml"
+    - path: "core/indicators/ricci.py"
+    - path: "core/indicators/base.py"
+    - path: "tests/unit/test_indicators_ricci.py"
+    - path: "tests/unit/test_indicator_pipeline.py"
+  forbidden_paths:
+    - "trading/"
+    - "execution/"
+    - "forecast/"
+    - "policy/"
+
+required_python_symbols:
+  - "core.indicators.ricci._run_ricci_async"
+  - "core.indicators.ricci.mean_ricci"
+  - "core.indicators.base._run_block_thread"
+
+expected_signal: >-
+  pytest tests/unit/test_indicators_ricci.py tests/unit/test_indicator_pipeline.py
+  passes, including the loop-agnostic regression tests that call the async/thread
+  fan-out from inside asyncio.run() and assert equality with the serial path.
+
+measurement_command: >-
+  python -m pytest --noconftest -p no:cacheprovider -q
+  tests/unit/test_indicators_ricci.py tests/unit/test_indicator_pipeline.py
+
+signal_artifact: "core/indicators/ricci.py"
+
+falsifier:
+  command: >-
+    python -m pytest --noconftest -p no:cacheprovider -q
+    "tests/unit/test_indicators_ricci.py::test_mean_ricci_async_is_loop_agnostic"
+  description: >-
+    Exercises mean_ricci(parallel="async") from inside a running asyncio loop.
+    On the pre-fix code this raised RuntimeError("asyncio.run() cannot be called
+    from a running event loop"), so this test failing again is the falsifier:
+    it means the loop-agnostic guarantee regressed.
+
+rollback_command: >-
+  bash -c '
+    git checkout -- core/indicators/ricci.py core/indicators/base.py
+      tests/unit/test_indicators_ricci.py tests/unit/test_indicator_pipeline.py
+    && git rm -f .claude/commit_acceptors/ricci-async-loop-agnostic.yaml
+  '
+
+rollback_verification_command: git diff --exit-code core/indicators/ricci.py core/indicators/base.py
+
+memory_update_type: append
+ledger_path: ".claude/commit_acceptors/ricci-async-loop-agnostic.yaml"
+report_path: "core/indicators/ricci.py"
+evidence: []

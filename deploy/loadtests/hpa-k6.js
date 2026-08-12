@@ -16,8 +16,8 @@ export const options = {
 };
 
 const BASE_URL =
-  __ENV.TRADEPULSE_BASE_URL || 'http://tradepulse-api.tradepulse.svc.cluster.local';
-const LATENCY_SLO_MS = parseFloat(__ENV.TRADEPULSE_LATENCY_SLO_MS || '400');
+  __ENV.GEOSYNC_BASE_URL || 'http://geosync-api.geosync.svc.cluster.local';
+const LATENCY_SLO_MS = parseFloat(__ENV.GEOSYNC_LATENCY_SLO_MS || '400');
 
 export default function () {
   const res = http.get(`${BASE_URL}/health`);

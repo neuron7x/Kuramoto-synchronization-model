@@ -1,13 +1,13 @@
-# TradePulse API Reference
+# GeoSync API Reference
 
-Comprehensive reference for TradePulse public APIs: Python library, CLI, and HTTP endpoints.
+Comprehensive reference for GeoSync public APIs: Python library, CLI, and HTTP endpoints.
 
 ---
 
 ## Table of Contents
 
 - [Python API](#python-api)
-  - [TradePulseCompositeEngine](#tradepulsecompositeengine)
+  - [GeoSyncCompositeEngine](#geosynccompositeengine)
   - [Kuramoto Indicators](#kuramoto-indicators)
   - [Ricci Flow Indicators](#ricci-flow-indicators)
   - [Entropy Indicators](#entropy-indicators)
@@ -29,7 +29,7 @@ Comprehensive reference for TradePulse public APIs: Python library, CLI, and HTT
 ```python
 import numpy as np
 import pandas as pd
-from core.indicators.kuramoto_ricci_composite import TradePulseCompositeEngine
+from core.indicators.kuramoto_ricci_composite import GeoSyncCompositeEngine
 
 # Create market data with DatetimeIndex
 index = pd.date_range("2024-01-01", periods=720, freq="5min")
@@ -38,7 +38,7 @@ volume = np.random.lognormal(9.5, 0.35, 720)
 bars = pd.DataFrame({"close": prices, "volume": volume}, index=index)
 
 # Analyze market regime
-engine = TradePulseCompositeEngine()
+engine = GeoSyncCompositeEngine()
 signal = engine.analyze_market(bars)
 
 print(f"Phase: {signal.phase.value}")
@@ -48,7 +48,7 @@ print(f"Entry Signal: {signal.entry_signal:.3f}")
 
 ---
 
-### TradePulseCompositeEngine
+### GeoSyncCompositeEngine
 
 The main entry point for market regime analysis combining Kuramoto synchronization with Ricci flow curvature.
 
@@ -57,7 +57,7 @@ The main entry point for market regime analysis combining Kuramoto synchronizati
 #### Constructor
 
 ```python
-TradePulseCompositeEngine(
+GeoSyncCompositeEngine(
     kuramoto_config: Optional[Dict] = None,
     ricci_config: Optional[Dict] = None,
     composite_config: Optional[Dict] = None
@@ -89,10 +89,10 @@ composite_config = {
 **Full Configuration Example:**
 
 ```python
-from core.indicators.kuramoto_ricci_composite import TradePulseCompositeEngine
+from core.indicators.kuramoto_ricci_composite import GeoSyncCompositeEngine
 
 # Custom configuration for all components
-engine = TradePulseCompositeEngine(
+engine = GeoSyncCompositeEngine(
     kuramoto_config={
         "scales": [60, 300, 900],    # 1m, 5m, 15m timeframes in seconds
         "coupling": 0.8,              # Oscillator coupling strength
@@ -147,10 +147,10 @@ Analyze market regime and generate trading signals.
 
 ```python
 from core.indicators.kuramoto_ricci_composite import (
-    TradePulseCompositeEngine, MarketPhase
+    GeoSyncCompositeEngine, MarketPhase
 )
 
-engine = TradePulseCompositeEngine()
+engine = GeoSyncCompositeEngine()
 signal = engine.analyze_market(market_data)
 
 if signal.phase == MarketPhase.STRONG_EMERGENT and signal.confidence > 0.7:
@@ -349,7 +349,7 @@ print(f"Sharpe Ratio: {result.performance.sharpe_ratio:.2f}")
 
 ## CLI Reference
 
-The TradePulse CLI provides operational commands for analysis, backtesting, and live trading.
+The GeoSync CLI provides operational commands for analysis, backtesting, and live trading.
 
 ```bash
 python -m interfaces.cli <command> [options]
@@ -469,7 +469,7 @@ python -m interfaces.cli live \
 
 ### Overview
 
-TradePulse exposes a FastAPI-based REST API for programmatic access.
+GeoSync exposes a FastAPI-based REST API for programmatic access.
 
 **Base URL:** `http://localhost:8000/api/v1`
 
@@ -609,9 +609,9 @@ All API endpoints return structured error responses:
 ### Python SDK
 
 ```python
-from tradepulse import TradePulseClient
+from geosync import GeoSyncClient
 
-client = TradePulseClient(api_key="your-key")
+client = GeoSyncClient(api_key="your-key")
 
 # Analyze market
 result = client.analyze(symbol="BTC/USDT", window=200)

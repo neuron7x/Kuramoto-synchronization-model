@@ -1,3 +1,5 @@
+# Copyright (c) 2023-2026 Yaroslav Vasylenko (neuron7xLab)
+# SPDX-License-Identifier: MIT
 """Thermodynamics Configuration Module
 
 Centralized configuration for TACL (Thermodynamic Autonomic Control Layer)
@@ -135,7 +137,7 @@ class TelemetryConfig:
     """Configuration for telemetry and observability."""
 
     # Audit log path
-    audit_log_path: Path = Path("/var/log/tradepulse/thermo_audit.jsonl")
+    audit_log_path: Path = Path("/var/log/geosync/thermo_audit.jsonl")
 
     # Telemetry export paths
     telemetry_export_dir: Path = Path(".ci_artifacts")
@@ -228,9 +230,7 @@ class ThermoConfig:
     # Sub-configurations
     crisis: CrisisThresholds = field(default_factory=CrisisThresholds)
     safety: SafetyConstraints = field(default_factory=SafetyConstraints)
-    genetic_algorithm: GeneticAlgorithmConfig = field(
-        default_factory=GeneticAlgorithmConfig
-    )
+    genetic_algorithm: GeneticAlgorithmConfig = field(default_factory=GeneticAlgorithmConfig)
     recovery_agent: RecoveryAgentConfig = field(default_factory=RecoveryAgentConfig)
     link_activator: LinkActivatorConfig = field(default_factory=LinkActivatorConfig)
     telemetry: TelemetryConfig = field(default_factory=TelemetryConfig)
@@ -268,9 +268,7 @@ class ThermoConfig:
         if "safety" in data:
             config.safety = SafetyConstraints(**data["safety"])
         if "genetic_algorithm" in data:
-            config.genetic_algorithm = GeneticAlgorithmConfig(
-                **data["genetic_algorithm"]
-            )
+            config.genetic_algorithm = GeneticAlgorithmConfig(**data["genetic_algorithm"])
         if "recovery_agent" in data:
             config.recovery_agent = RecoveryAgentConfig(**data["recovery_agent"])
         if "link_activator" in data:
@@ -278,9 +276,7 @@ class ThermoConfig:
         if "telemetry" in data:
             telemetry_data = data["telemetry"]
             if "audit_log_path" in telemetry_data:
-                telemetry_data["audit_log_path"] = Path(
-                    telemetry_data["audit_log_path"]
-                )
+                telemetry_data["audit_log_path"] = Path(telemetry_data["audit_log_path"])
             if "telemetry_export_dir" in telemetry_data:
                 telemetry_data["telemetry_export_dir"] = Path(
                     telemetry_data["telemetry_export_dir"]
@@ -341,8 +337,7 @@ class ThermoConfig:
                 for k, v in self.link_activator.__dict__.items()
             },
             "telemetry": {
-                k: str(v) if isinstance(v, Path) else v
-                for k, v in self.telemetry.__dict__.items()
+                k: str(v) if isinstance(v, Path) else v for k, v in self.telemetry.__dict__.items()
             },
             "cns_stabilizer": self.cns_stabilizer.__dict__,
             "vlpo_filter": self.vlpo_filter.__dict__,
@@ -504,10 +499,7 @@ class ThermoConfig:
                 )
             )
 
-        if (
-            self.safety.recovery_decay_factor <= 0
-            or self.safety.recovery_decay_factor > 1
-        ):
+        if self.safety.recovery_decay_factor <= 0 or self.safety.recovery_decay_factor > 1:
             issues.append(
                 ConfigValidationIssue(
                     field="safety.recovery_decay_factor",
@@ -634,10 +626,7 @@ class ThermoConfig:
             issues.append(
                 ConfigValidationIssue(
                     field="vlpo_filter.calibration_mode",
-                    message=(
-                        "Calibration mode must be one of "
-                        f"{sorted(valid_calibration_modes)}"
-                    ),
+                    message=(f"Calibration mode must be one of {sorted(valid_calibration_modes)}"),
                     severity="error",
                     current_value=self.vlpo_filter.calibration_mode,
                 )
@@ -722,9 +711,7 @@ class ConfigValidationIssue:
             "field": self.field,
             "message": self.message,
             "severity": self.severity,
-            "current_value": (
-                str(self.current_value) if self.current_value is not None else None
-            ),
+            "current_value": (str(self.current_value) if self.current_value is not None else None),
         }
 
 
@@ -766,7 +753,7 @@ def load_default_config() -> ThermoConfig:
     config_paths = [
         Path("config/thermo_config.yaml"),
         Path("configs/thermo_config.yaml"),
-        Path("/etc/tradepulse/thermo_config.yaml"),
+        Path("/etc/geosync/thermo_config.yaml"),
     ]
 
     for config_path in config_paths:

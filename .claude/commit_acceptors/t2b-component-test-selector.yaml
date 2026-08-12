@@ -1,0 +1,60 @@
+# ci-heartbeat: t2b-component-test-selector
+id: t2b-component-test-selector
+status: ACTIVE
+claim_type: governance
+promise: >-
+  Bind the deterministic component-test selector carriers added on the
+  t2b-runtime-fix branch (changed-file-to-pytest routing matrix, typed pure
+  planner, CLI wrapper, and regression tests). Split out of
+  t2b-ci-governance-binding to keep each governance acceptor under its
+  changed-file cap. Adds verification surface only — no runtime, physics,
+  score, shadow-rail, or trading/execution/forecast/policy changes.
+diff_scope:
+  changed_files:
+    - path: ".claude/commit_acceptors/t2b-component-test-selector.yaml"
+    - path: ".github/workflows/component-test-router.yml"
+    - path: "data/testing/component_test_matrix.json"
+    - path: "tests/testing/test_select_component_tests.py"
+    - path: "tools/testing/component_test_planner.py"
+    - path: "tools/testing/select_component_tests.py"
+  forbidden_paths:
+    - "trading/"
+    - "execution/"
+    - "forecast/"
+    - "policy/"
+required_python_symbols: []
+expected_signal: >-
+  The component-test router maps a changed repository path to the smallest
+  relevant pytest selector plan, rejects invalid matrices, stays empty for
+  unmapped documentation-only changes, and separates typed pure planning from
+  CLI execution. Its regression tests prove both the positive routing and the
+  controlled-negative rejection paths. No score increase, no shadow-rail
+  promotion, no final validation claim, and no trading/execution/forecast/policy
+  change.
+measurement_command: >-
+  python -m pytest tests/testing/test_select_component_tests.py -q
+signal_artifact: "tmp/t2b_component_test_selector_pytest.log"
+falsifier:
+  command: >-
+    python -m pytest tests/testing/test_select_component_tests.py -q
+  description: >-
+    Fails if the component-test router regresses — mis-routes a changed path,
+    accepts an invalid matrix, or stops proving the controlled-negative
+    rejection path.
+rollback_command: >-
+  git checkout origin/main --
+  .github/workflows/component-test-router.yml
+  data/testing/component_test_matrix.json
+  tests/testing/test_select_component_tests.py
+  tools/testing/component_test_planner.py
+  tools/testing/select_component_tests.py
+rollback_verification_command: >-
+  git diff --exit-code tools/testing/select_component_tests.py
+memory_update_type: none
+ledger_path: ".claude/commit_acceptors/t2b-component-test-selector.yaml"
+report_path: ".claude/commit_acceptors/t2b-component-test-selector.yaml"
+evidence:
+  - path: "data/testing/component_test_matrix.json"
+  - path: "tests/testing/test_select_component_tests.py"
+  - path: "tools/testing/component_test_planner.py"
+  - path: "tools/testing/select_component_tests.py"

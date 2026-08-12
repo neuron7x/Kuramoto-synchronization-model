@@ -1,0 +1,47 @@
+id: issue-1228-slice3-unit
+status: ACTIVE
+claim_type: governance
+promise: >-
+  Issue #1228 tasks 18-22 are bound to durable unit carriers without granting score credit.
+  The dt row exists in the units table, the artifact records the verdict,
+  and the dimensional homogeneity test path is linked.
+
+diff_scope:
+  changed_files:
+    - path: ".claude/commit_acceptors/issue-1228-slice3-unit.yaml"
+    - path: "artifacts/physics_validation/issue_1228_slice3_unit_contract_verdict.json"
+    - path: "docs/physics/units_table.md"
+    - path: "scripts/ci/prove_repo_integrity.sh"
+  forbidden_paths:
+    - "core/"
+    - "runtime/"
+    - "trading/"
+    - "execution/"
+    - "forecast/"
+    - "policy/"
+
+required_python_symbols: []
+
+expected_signal: >-
+  The JSON verdict parses successfully and the units table contains the exact explicit dt row.
+  Score credit, final validation, and target-interval claims remain disabled.
+
+measurement_command: >-
+  bash -c 'mkdir -p tmp && python -m json.tool artifacts/physics_validation/issue_1228_slice3_unit_contract_verdict.json > tmp/issue_1228_slice3_unit_contract_verdict.normalized.json && python -c "from pathlib import Path; row = chr(124) + chr(32) + chr(96) + chr(100) + chr(116) + chr(96) + chr(32) + chr(124); raise SystemExit(0 if row in Path(chr(100)+chr(111)+chr(99)+chr(115)+chr(47)+chr(112)+chr(104)+chr(121)+chr(115)+chr(105)+chr(99)+chr(115)+chr(47)+chr(117)+chr(110)+chr(105)+chr(116)+chr(115)+chr(95)+chr(116)+chr(97)+chr(98)+chr(108)+chr(101)+chr(46)+chr(109)+chr(100)).read_text() else 1)"'
+
+signal_artifact: "tmp/issue_1228_slice3_unit_contract_verdict.normalized.json"
+
+falsifier:
+  command: >-
+    bash -c 'python -m json.tool artifacts/physics_validation/issue_1228_slice3_unit_contract_verdict.json >/dev/null && python -c "from pathlib import Path; row = chr(124) + chr(32) + chr(96) + chr(100) + chr(116) + chr(96) + chr(32) + chr(124); raise SystemExit(0 if row in Path(chr(100)+chr(111)+chr(99)+chr(115)+chr(47)+chr(112)+chr(104)+chr(121)+chr(115)+chr(105)+chr(99)+chr(115)+chr(47)+chr(117)+chr(110)+chr(105)+chr(116)+chr(115)+chr(95)+chr(116)+chr(97)+chr(98)+chr(108)+chr(101)+chr(46)+chr(109)+chr(100)).read_text() else 1)"'
+  description: >-
+    Fails if the unit artifact is invalid JSON or the exact dt row is absent from the units table.
+
+rollback_command: >-
+  bash -c 'git rm -f artifacts/physics_validation/issue_1228_slice3_unit_contract_verdict.json .claude/commit_acceptors/issue-1228-slice3-unit.yaml && git checkout -- docs/physics/units_table.md'
+rollback_verification_command: >-
+  bash -c 'test ! -e artifacts/physics_validation/issue_1228_slice3_unit_contract_verdict.json'
+
+memory_update_type: append
+ledger_path: ".claude/commit_acceptors/issue-1228-slice3-unit.yaml"
+report_path: "tmp/issue_1228_slice3_unit_contract_verdict.normalized.json"

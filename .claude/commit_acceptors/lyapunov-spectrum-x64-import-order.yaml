@@ -1,0 +1,63 @@
+# Diff-bound acceptor: make the Lyapunov-spectrum float64 contract
+# import-order-independent.
+#
+# INV-LY1 (1e-3/1e-6 precision) and INV-LY2 (Σλ=0 to 1e-3 on Hamiltonian flow)
+# require jax_enable_x64. The spectrum module did NOT enable it; x64 was only
+# turned on as a side-effect of importing core.kuramoto.lyapunov_calibration.
+# Importing the documented public API (lyapunov_spectrum) alone therefore
+# computed in float32 — a silent precision loss whose correctness depended on
+# import order. This enables x64 at import in the module that owns the contract.
+
+id: lyapunov-spectrum-x64-import-order
+status: ACTIVE
+claim_type: correctness
+promise: >-
+  core.physics.lyapunov_spectrum now calls jax.config.update("jax_enable_x64",
+  True) at import (idempotent), so the estimator computes in float64 regardless
+  of whether an unrelated module enabled x64 first. INV-LY1/LY2 precision no
+  longer depends on import order. A subprocess test verifies a fresh interpreter
+  importing only lyapunov_spectrum yields x64-enabled, float64 spectra with
+  Σλ < 1e-3 on a harmonic-oscillator Hamiltonian flow. No invariant added or
+  changed; the existing T2 suite stays green.
+diff_scope:
+  changed_files:
+    - path: ".claude/commit_acceptors/lyapunov-spectrum-x64-import-order.yaml"
+    - path: "core/physics/lyapunov_spectrum.py"
+    - path: "tests/unit/core/test_lyapunov_spectrum_x64.py"
+  forbidden_paths:
+    - "trading/"
+    - "execution/"
+    - "forecast/"
+    - "policy/"
+required_python_symbols:
+  - "lyapunov_spectrum"
+expected_signal: >-
+  tests/unit/core/test_lyapunov_spectrum_x64.py passes; the existing
+  tests/unit/physics/test_T2_lyapunov_full_spectrum.py suite stays green (no
+  regression); mypy --strict, ruff, black, physics-code-audit clean on the
+  changed module. Reproduced before/after: import-only lyapunov_spectrum had
+  jax x64 = False (float32) -> now True (float64), Σλ = 4e-6 on a Hamiltonian
+  flow; reverting the fix fails the subprocess test.
+measurement_command: >-
+  PYTHONPATH=. python -m pytest tests/unit/core/test_lyapunov_spectrum_x64.py -v
+signal_artifact: "tmp/lyapunov_spectrum_x64_pytest.log"
+falsifier:
+  command: >-
+    PYTHONPATH=. python -m pytest tests/unit/core/test_lyapunov_spectrum_x64.py
+    -v -k "import_order"
+  description: >-
+    Runs a fresh interpreter importing ONLY lyapunov_spectrum and asserts x64 is
+    enabled, the spectrum dtype is float64, and Σλ < 1e-3 (INV-LY2) on a
+    harmonic-oscillator Hamiltonian flow. Reverting the import-time x64 enable
+    drops the subprocess back to float32 and fails the test (confirmed).
+rollback_command: >-
+  git checkout HEAD~1 --
+  core/physics/lyapunov_spectrum.py
+  tests/unit/core/test_lyapunov_spectrum_x64.py
+  .claude/commit_acceptors/lyapunov-spectrum-x64-import-order.yaml
+rollback_verification_command: >-
+  git diff --exit-code core/physics/lyapunov_spectrum.py
+memory_update_type: none
+ledger_path: ".claude/commit_acceptors/lyapunov-spectrum-x64-import-order.yaml"
+report_path: "docs/reports/diff_bound_commit_acceptor_layer.md"
+evidence: []

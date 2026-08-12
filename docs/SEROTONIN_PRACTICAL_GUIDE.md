@@ -7,7 +7,7 @@ This guide covers the practical utility methods added to the serotonin controlle
 ## Quick Start
 
 ```python
-from tradepulse.core.neuro.serotonin.serotonin_controller import SerotoninController
+from geosync.core.neuro.serotonin.serotonin_controller import SerotoninController
 
 # Initialize with performance tracking
 controller = SerotoninController(

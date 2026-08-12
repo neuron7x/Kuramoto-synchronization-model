@@ -1,0 +1,122 @@
+# Diff-bound commit acceptor for the executable resolution auditor.
+#
+# Adds analytics/signals/resolution_auditor.py: a pure, deterministic
+# measurement-discipline gate. audit_resolution(metadata) reads a descriptor
+# run's own metadata (input depth, finite/invalid counts, session count,
+# temporal cadence, optional graph density, replayability, artifact
+# completeness) and returns an immutable ResolutionAudit verdict of
+# "sufficient" | "insufficient" | "unknown" plus a sorted blocked_claims
+# tuple naming every resolution dimension below its floor. The verdict is a
+# pure function of (metadata, governed floors) — no clock, no randomness,
+# no process-global state — so identical metadata is byte-identical. Counts
+# that do not reconcile (finite+invalid != input), missing required keys,
+# non-int/negative counts, bool-as-count, empty temporal token, non-bool
+# flags, and a graph density outside [0, 1] all fail closed with ValueError.
+# blocked_claims is preserved as negative evidence even under an "unknown"
+# verdict. Adds the matching contract test suite.
+#
+# Promotes NO claim tier, adds NO invariant, changes NO existing runtime
+# behaviour, adds NO dependency (stdlib only — no numpy). Descriptor-only:
+# the verdict references no outcome/return and carries no predictive,
+# significance, or financial meaning; every verdict declares
+# claim_boundary="descriptor_only_not_predictor". A "sufficient" verdict
+# asserts only that a measurement is dense enough to be described, never
+# that any descriptor predicts anything.
+#
+# Locally verified on origin/main fork base (d06939f0):
+#   * pytest tests/unit/analytics/test_resolution_auditor.py: 28 passed
+#   * ruff check / ruff format --check / black --check: clean
+#   * mypy --strict analytics/signals/resolution_auditor.py: no issues
+#   * mypy --strict tests/unit/analytics/test_resolution_auditor.py: no issues
+#   * python scripts/ci/check_claim_boundary.py: PASS
+#   * python scripts/ci/check_claims.py: PASS
+#   * zero `noqa` / `type: ignore` suppressions across both new files
+id: resolution-auditor-contract
+status: ACTIVE
+claim_type: governance
+promise: >-
+  analytics.signals.resolution_auditor exposes a single pure entry point,
+  audit_resolution(metadata), returning an immutable ResolutionAudit whose
+  resolution_status is "sufficient" only when every applicable resolution
+  floor (input depth, session count, finite ratio, invalid ratio, graph
+  density when present, replayability, artifact completeness) is cleared,
+  "insufficient" when one or more dimensions fall below floor, and "unknown"
+  when there are no samples or the temporal cadence is declared unknown.
+  blocked_claims is the sorted tuple of failing dimension tokens, preserved
+  as negative evidence in every non-"sufficient" verdict. The verdict is a
+  byte-deterministic function of its input; missing required keys,
+  non-integer or negative counts, a bool passed as a count, counts that do
+  not reconcile (finite_count + invalid_count != input_count), an empty
+  temporal token, a non-boolean flag, and a graph_density outside [0, 1]
+  all fail closed with ValueError. Every verdict declares
+  claim_boundary="descriptor_only_not_predictor"; no claim tier is
+  promoted; no existing runtime behaviour changes; the verdict is a
+  measurement-discipline gate, not a predictive or financial signal.
+diff_scope:
+  changed_files:
+    - path: ".claude/commit_acceptors/resolution-auditor-contract.yaml"
+    - path: "analytics/signals/resolution_auditor.py"
+    - path: "tests/unit/analytics/test_resolution_auditor.py"
+  forbidden_paths:
+    - "trading/"
+    - "execution/"
+    - "forecast/"
+    - "core/"
+    - "src/"
+required_python_symbols:
+  - "analytics/signals/resolution_auditor.py::audit_resolution"
+  - "analytics/signals/resolution_auditor.py::ResolutionAudit"
+expected_signal: >-
+  `python -m pytest tests/unit/analytics/test_resolution_auditor.py` reports
+  28 passed; the auditor is deterministic for identical metadata, derives
+  the three verdict regimes from governed floors, preserves blocked_claims
+  as negative evidence, declares the descriptor-only boundary on every
+  verdict, and rejects malformed or inconsistent metadata with ValueError.
+measurement_command: >-
+  bash -c 'mkdir -p tmp && python -m pytest
+  tests/unit/analytics/test_resolution_auditor.py -v
+  > tmp/resolution_auditor_pytest.log 2>&1
+  && grep -qE "28 passed" tmp/resolution_auditor_pytest.log'
+signal_artifact: "tmp/resolution_auditor_pytest.log"
+falsifier:
+  command: >-
+    python -c 'import sys, subprocess;
+    from analytics.signals.resolution_auditor import audit_resolution;
+    good = {"input_count": 256, "finite_count": 256, "invalid_count": 0,
+    "session_count": 3, "temporal_resolution": "1min", "replayable": True,
+    "artifact_complete": True, "graph_density": 0.5};
+    det = audit_resolution(good).as_dict() == audit_resolution(good).as_dict();
+    suff = audit_resolution(good).resolution_status == "sufficient";
+    boundary_ok = audit_resolution(good).claim_boundary
+    == "descriptor_only_not_predictor";
+    bad = dict(good, finite_count=100, invalid_count=100);
+    inconsistent_fails = subprocess.run([sys.executable, "-c",
+    "from analytics.signals.resolution_auditor import audit_resolution;"
+    "audit_resolution({\"input_count\": 256, \"finite_count\": 100,"
+    "\"invalid_count\": 100, \"session_count\": 3,"
+    "\"temporal_resolution\": \"1min\", \"replayable\": True,"
+    "\"artifact_complete\": True})"]).returncode != 0;
+    sys.exit(0 if (not det or not suff or not boundary_ok
+    or not inconsistent_fails) else 1)'
+  description: >-
+    Inverse probe of the resolution-auditor contract. It exits 0 (fires) iff
+    the verdict stops being deterministic, OR a fully-resolved record stops
+    grading "sufficient", OR the descriptor-only boundary disappears from the
+    verdict, OR inconsistent counts (finite+invalid != input) are accepted
+    instead of failing closed. While the contract holds, the probe exits 1.
+    An exit 0 means the auditor has lost determinism, its grading discipline,
+    its boundary disclaimer, or its fail-closed guarantee and must be
+    repaired, not patched green.
+rollback_command: >-
+  bash -c 'git rm -f analytics/signals/resolution_auditor.py
+  tests/unit/analytics/test_resolution_auditor.py
+  .claude/commit_acceptors/resolution-auditor-contract.yaml'
+rollback_verification_command: >-
+  bash -c 'test ! -f analytics/signals/resolution_auditor.py
+  && test ! -f tests/unit/analytics/test_resolution_auditor.py'
+memory_update_type: none
+ledger_path: ".claude/commit_acceptors/resolution-auditor-contract.yaml"
+report_path: "tmp/resolution_auditor_pytest.log"
+evidence:
+  - path: "tmp/resolution_auditor_pytest.log"
+    sha256: "9c948a9e1aa9b3a82ac3a5b233296b20dbe08c3ac95d1e258bb37a007c13daa2"  # pragma: allowlist secret

@@ -2,7 +2,7 @@
 
 ## Overview
 
-TradePulse employs a comprehensive, multi-layered testing strategy designed to ensure reliability, performance, and correctness across all system components. This document describes the testing philosophy, patterns, and best practices used throughout the project.
+GeoSync employs a comprehensive, multi-layered testing strategy designed to ensure reliability, performance, and correctness across all system components. This document describes the testing philosophy, patterns, and best practices used throughout the project.
 
 ## Testing Philosophy
 
@@ -472,5 +472,5 @@ pytest tests/ --cov=core --cov=backtest --cov=execution
 - [pytest documentation](https://docs.pytest.org/)
 - [Hypothesis documentation](https://hypothesis.readthedocs.io/)
 - [Test Pyramid](https://martinfowler.com/articles/practical-test-pyramid.html)
-- [TradePulse TESTING.md](../TESTING.md) - Execution instructions
-- [TradePulse TEST_PLAN.md](../tests/TEST_PLAN.md) - Coverage matrix
+- [GeoSync TESTING.md](operations/TESTING.md) - Execution instructions
+- [GeoSync TEST_PLAN.md](../tests/TEST_PLAN.md) - Coverage matrix

@@ -1,0 +1,159 @@
+# PRE-REGISTRATION — CALIB-GRID-002
+#
+# Status: pre-registered, fail-closed. Committed on branch
+# `feat/calib-grid-002` off `origin/main` sha
+# a5e0d533b2201c999b31c792773e858f8da713bf BEFORE the full simulation
+# was run. No threshold or weak-form constant may be retuned after the
+# result ledger is produced; a post-data edit invalidates the artifact.
+# A no-peek drift test (test_cg002_preregistration_matches_code) binds
+# the code constants to this document.
+#
+# CALIB-GRID-002 is a NEW pre-registered lineage. It is NOT a refinement
+# of the frozen CALIB-GRID-001 / R1 gates (those proved the differential
+# swing estimator class is at its limit at the frozen sigma=0.02 /
+# record length). It is a legitimately different experiment with its own
+# pre-registration that attacks the proven differential-class boundary
+# with a different estimator class.
+
+identifier: CALIB-GRID-002
+kind: external-ground-truth-calibration
+is_hypothesis: false
+parent_lineages:
+  - "PR #749 — CALIB-GRID-001 (frozen pre-registration, NEGATIVE)"
+  - "PR #751 — R1 swing-aware differential estimator (NEGATIVE, frozen)"
+  - "PR #755 — graded identifiability front-gate (reliability infra)"
+
+# --- The falsifiable claim ------------------------------------------------
+falsifiable_claim: >-
+  An INTEGRAL / WEAK-FORM swing identifier that NEVER double-
+  differentiates the phase (the phase enters only inside integrals
+  against the analytic derivatives of a compactly supported test
+  function — Messenger & Bortz, Weak SINDy, J. Comput. Phys. 443
+  (2021) 110525) can recover the signed coupling at the SAME frozen
+  sigma=0.02 / record length where the CALIB-GRID-001 R1 differential
+  estimator provably cannot, and the merged identifiability front-gate
+  ACCEPTS the sigma=0.02 case under the integral form (graded score at
+  or above the merged REFUSE threshold) where it REFUSES under the
+  differential form. Integration is a low-pass operator (the quadrature
+  of zero-mean noise has variance proportional to sigma^2 ||phi||^2 dt
+  and averages noise DOWN) versus the omega^4 high-pass amplification
+  of the differential path's double Savitzky-Golay derivative.
+
+# --- Frozen configuration (pre-committed, mirrors cg002.py) ---------------
+config:
+  system: "WSCC-9 (Anderson&Fouad-2003-Ex2.6)"
+  # Same frozen simulation as CALIB-GRID-001 (SimConfig defaults) so the
+  # comparison to the differential class is direct — only the estimator
+  # class changes between the two columns.
+  coupling_scale: 8.0
+  dt: 0.01
+  steps: 8000
+  keep_frac: 0.6
+  theta0_perturb: 0.6
+  seed: 42
+  noise_sigma: 0.02
+  topology_rel_threshold: 0.10
+  estimator: "core.kuramoto.coupling_estimator.estimate_swing_coupling_integral"
+  # Weak-form solver settings fixed from the SIGNAL CLASS, not the gate:
+  #  * bump_order = 6  -> (1-s^2)^6 is C^5 with phi=phi'=0 at the window
+  #    endpoints, so the integration-by-parts boundary terms vanish
+  #    exactly; the canonical Messenger-Bortz compact test function.
+  #  * test_support = 120 samples (1.2 s) -> the integration window is
+  #    the low-pass cutoff. The WSCC-9 / scale-8 rotor slew is
+  #    over-damped with a ~0.5 s relative-angle excursion (R1 ATTEMPT:
+  #    no zero-crossings, monotone slew); 1.2 s averages sigma=0.02 down
+  #    while staying inside the kept transient (48 s) and keeps the weak
+  #    design above the theory hard floor.
+  #  * n_windows = 400 -> an over-determined global solve (N*400 rows);
+  #    more windows tighten the least-squares without changing the
+  #    estimator class.
+  #  * pe_min_singular_ratio = PE_HARD_FLOOR = sqrt(eps_float64)
+  #    = 1.4901161193847656e-08 -> the THEORY half-mantissa numerical
+  #    catastrophe floor already in the merged codebase
+  #    (core.kuramoto.identifiability.PE_HARD_FLOOR). This is NOT a
+  #    retune: it is the documented hard fail-closed floor; the graded
+  #    REFUSE sits above it.
+  bump_order: 6
+  test_support: 120
+  n_windows: 400
+  pe_min_singular_ratio_is_PE_HARD_FLOOR: true
+
+# --- Pre-registered acceptance gates (frozen — same numeric targets as
+#     the frozen CALIB-GRID-001 noisy gate so the comparison is direct:
+#     did the estimator-CLASS change close what refinement could not?) --
+gates:
+  noiseless:
+    - name: cg002.noiseless.frobenius
+      metric_key: frobenius_rel_error
+      operator: "<="
+      threshold: 0.10
+      localises_to: "weak-form design conditioning on the over-damped transient"
+    - name: cg002.noiseless.topology_f1
+      metric_key: topology_f1
+      operator: ">="
+      threshold: 0.95
+      localises_to: "weak-form edge-support thresholding"
+  noisy:
+    - name: cg002.noisy.frobenius
+      metric_key: frobenius_rel_error
+      operator: "<="
+      threshold: 0.25
+      localises_to: "regressor-level coupling SNR at the frozen sigma=0.02"
+    - name: cg002.noisy.topology_f1
+      metric_key: topology_f1
+      operator: ">="
+      threshold: 0.90
+      localises_to: "weak-form support stability under sigma"
+  theorem_class:
+    - name: cg002.noiseless.dcb_consistency
+      metric_key: dcb_phase_cohesiveness_rel_error
+      operator: "<="
+      threshold: 0.15
+      localises_to: "Dorfler-Chertkov-Bullo DC-power-flow consistency of (K_hat, P_hat)"
+  front_gate:
+    - name: cg002.front_gate_accepts_noisy_integral
+      kind: binary
+      expectation: ACCEPT
+      localises_to: "identifiability front-gate under the integral estimator at sigma=0.02"
+  null_battery:
+    - name: cg002.null_fpr
+      metric_key: empirical_fpr
+      operator: "<="
+      threshold: 0.05
+      localises_to: "specificity of the weak-form edge support under topology-preserving / flat-coupling nulls"
+
+# --- Decision rule -------------------------------------------------------
+decision_rule: >-
+  verdict = PASS iff EVERY gate above passes (noiseless Frobenius/F1,
+  noisy Frobenius/F1, theorem-class DCB, the binary front-gate-accepts
+  expectation, and the null-battery FPR); otherwise verdict = NEGATIVE.
+  A NEGATIVE verdict is informative, not a defect: the failing gate's
+  localises_to names the exact boundary. No promotion language
+  ("validated" / "breakthrough" / "calibrated") is permitted on partial
+  success; the only admissible terminal labels are PASS and NEGATIVE.
+  If the integral form PASSES the noisy gate the differential estimator
+  provably could not, that is stated factually with metric + procedure +
+  tier MEASURED and the frozen CALIB-GRID-001 negative artifact stands
+  as the differential-class boundary record. If it still FAILS, the
+  sha-pinned NEGATIVE localizes the next boundary with no masking.
+
+# --- M_i / D_i provenance ------------------------------------------------
+machine_constant_provenance:
+  WSCC-9: >-
+    Uses the published Anderson & Fouad inertia/damping already embedded
+    in research/calibration/grid_kuramoto/grid_data.py (H = [23.64,
+    6.40, 3.01] s; m = 2H/omega_s, omega_s = 2*pi*60; uniform damping
+    d_i = 2.0 p.u. per Dorfler-Bullo PNAS 2013 Fig. 1). No new data.
+  IEEE-39: >-
+    NOT exercised by the pre-registered CALIB-GRID-002 verdict. If any
+    second-order IEEE-39 use is added later, M_i / D_i are NOT in the
+    steady-state Athay/Pai case data and MUST be declared as a
+    preregistered `unspecified -> scenario sidecar` OPTION in
+    PROVENANCE_002.md, never silently assumed.
+
+replication:
+  tolerance_class: deterministic_with_drift
+  determinism: "all RNG seeded from seed=42; weak quadrature deterministic"
+  capsule: "cg002/RESULTS.json (ledger_sha256 over sort_keys=True JSON)"
+  reproduce: >-
+    PYTHONPATH=. python -m research.calibration.grid_kuramoto.run --cg002

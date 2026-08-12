@@ -1,0 +1,23 @@
+{
+  "schema": "repository_system_contract@v1",
+  "source": "docs/REPOSITORY_SYSTEM.md",
+  "note": "Single semantic contract for the repository-system surface. Section ORDINALS may change (the etalon line renumbers and inserts sections); the SEMANTIC contract below may not. Governance tests DERIVE their expectations from this manifest (number-agnostic heading regexes + required links/semantics/verbs), not from hardcoded ordinals. A section may be added freely; removing a required_section or required_semantics entry is a governance change that must update this manifest with a migration note, never a silent drift.",
+  "required_sections": [
+    { "id": "CANONICAL_SURFACES", "heading_regex": "^##\\s+\\d+\\.\\s+Canonical Surfaces\\s*$" },
+    { "id": "SYSTEM_LAYERS", "heading_regex": "^##\\s+\\d+\\.\\s+System Layers\\s*$" },
+    { "id": "CLAIM_PROMOTION_AUTOMATON", "heading_regex": "^##\\s+\\d+\\.\\s+Claim Promotion Automaton\\s*$" },
+    { "id": "EVIDENCE_ARTIFACT_REQUIREMENTS", "heading_regex": "^##\\s+\\d+\\.\\s+Evidence-Bearing Artifact Requirements\\s*$" },
+    { "id": "INFERENCE_OPERATION_BOUNDARY", "heading_regex": "^##\\s+\\d+\\.\\s+Inference Operation Boundary\\s*$" },
+    { "id": "RICCI_MICROSTRUCTURE_BOUNDARY", "heading_regex": "^##\\s+\\d+\\.\\s+Ricci Microstructure Boundary\\s*$" },
+    { "id": "MFN_GATEWAY_BOUNDARY", "heading_regex": "^##\\s+\\d+\\.\\s+MFN Gateway Boundary\\s*$" },
+    { "id": "REVIEWER_PROTOCOL", "heading_regex": "^##\\s+\\d+\\.\\s+Reviewer Protocol\\s*$" },
+    { "id": "COMPLETION_DEFINITION", "heading_regex": "^##\\s+\\d+\\.\\s+Definition of Repository Completion\\s*$" }
+  ],
+  "required_links": ["PRODUCT_CATEGORY.md", "CLAIMS.md", "FORBIDDEN_CLAIMS.md", "AGENTS.md"],
+  "required_semantics": [
+    "replay command succeeds",
+    "retired or failed states are preserved",
+    "RETIRED"
+  ],
+  "required_verbs": ["promotion", "replay"]
+}

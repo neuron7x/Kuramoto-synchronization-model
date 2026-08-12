@@ -1,3 +1,5 @@
+# Copyright (c) 2023-2026 Yaroslav Vasylenko (neuron7xLab)
+# SPDX-License-Identifier: MIT
 """Streaming pipeline for social media sentiment ingestion."""
 
 from __future__ import annotations
@@ -39,8 +41,8 @@ class SocialStreamClient(Protocol):
 class SocialPublicationConfig:
     """Control publication behaviour of :class:`SocialListeningPipeline`."""
 
-    features_topic: str = "tradepulse.altdata.social.features"
-    snapshot_topic: str = "tradepulse.altdata.social.snapshots"
+    features_topic: str = "geosync.altdata.social.features"
+    snapshot_topic: str = "geosync.altdata.social.snapshots"
     content_type: str = "application/json"
 
 

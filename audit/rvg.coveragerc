@@ -1,0 +1,15 @@
+# RVG-1 default self-audit coverage scope: the harness measures itself.
+# The RVG tools are loaded dynamically (importlib) by the self-tests, so
+# coverage is scoped by `include` rather than by pyproject's repo-wide source.
+# For a full-repo audit, pass a different RVG_COVERAGERC (or widen include).
+[run]
+branch = True
+include =
+    tools/rvg_audit.py
+    tools/rvg_normalize_mutation.py
+    tools/rvg_verify_artifacts.py
+    tools/rvg_assert_verdict.py
+
+[report]
+precision = 2
+show_missing = true

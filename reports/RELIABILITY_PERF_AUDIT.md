@@ -1,4 +1,4 @@
-# TradePulse — Reliability & Performance Audit
+# GeoSync — Reliability & Performance Audit
 
 **Version**: 1.0.0  
 **Date**: 2025-12-07  
@@ -8,7 +8,7 @@
 
 ## Executive Summary
 
-This document provides a comprehensive reliability and performance audit of the TradePulse quantitative trading platform. The audit identifies critical operational flows, evaluates existing SLOs and resilience mechanisms, assesses resource management, documents observability coverage, and highlights reliability gaps requiring attention before production scale.
+This document provides a comprehensive reliability and performance audit of the GeoSync quantitative trading platform. The audit identifies critical operational flows, evaluates existing SLOs and resilience mechanisms, assesses resource management, documents observability coverage, and highlights reliability gaps requiring attention before production scale.
 
 **Key Findings:**
 - ✅ Strong foundation: explicit timeouts, rate limiters, and retry logic exist in execution adapters
@@ -507,26 +507,26 @@ The following SLOs are proposed based on performance budget analysis and system 
 
 | Subsystem | Metrics Count | Key Metrics | Status |
 |-----------|---------------|-------------|--------|
-| Features | 3 | `tradepulse_feature_transform_duration_seconds` | ✅ Defined |
-| Indicators | 6 | `tradepulse_indicator_compute_duration_seconds` | ✅ Defined |
-| Backtest | ~10 | `tradepulse_backtest_duration_seconds` | ✅ Defined |
-| Execution | ~15 | `tradepulse_order_submission_duration_seconds` | ✅ Defined |
-| Risk | ~8 | `tradepulse_risk_limit_violations_total` | ✅ Defined |
-| Observability | ~5 | `tradepulse_health_check_duration_seconds` | ✅ Defined |
+| Features | 3 | `geosync_feature_transform_duration_seconds` | ✅ Defined |
+| Indicators | 6 | `geosync_indicator_compute_duration_seconds` | ✅ Defined |
+| Backtest | ~10 | `geosync_backtest_duration_seconds` | ✅ Defined |
+| Execution | ~15 | `geosync_order_submission_duration_seconds` | ✅ Defined |
+| Risk | ~8 | `geosync_risk_limit_violations_total` | ✅ Defined |
+| Observability | ~5 | `geosync_health_check_duration_seconds` | ✅ Defined |
 
 #### Missing Metrics
 
 ```markdown
-- [REL-METRIC-01] `tradepulse_exchange_rate_limit_hit_total{exchange}` – Track 429 responses
-- [REL-METRIC-02] `tradepulse_circuit_breaker_state{component}` – Track CB state (open/closed/half-open)
-- [REL-METRIC-03] `tradepulse_circuit_breaker_trips_total{component, reason}` – Track CB trips
-- [REL-METRIC-04] `tradepulse_backpressure_events_total{component}` – Track backpressure activation
-- [REL-METRIC-05] `tradepulse_queue_depth{queue_name}` – Track queue depths
-- [REL-METRIC-06] `tradepulse_websocket_reconnect_total{exchange}` – Track reconnections
-- [REL-METRIC-07] `tradepulse_feature_store_read_errors_total` – Track feature store errors
-- [REL-METRIC-08] `tradepulse_database_query_timeout_total{operation}` – Track DB timeouts
-- [REL-METRIC-09] `tradepulse_stale_data_detected_total{source}` – Track stale data detection
-- [REL-METRIC-10] `tradepulse_degraded_mode_active{component}` – Track degradation mode
+- [REL-METRIC-01] `geosync_exchange_rate_limit_hit_total{exchange}` – Track 429 responses
+- [REL-METRIC-02] `geosync_circuit_breaker_state{component}` – Track CB state (open/closed/half-open)
+- [REL-METRIC-03] `geosync_circuit_breaker_trips_total{component, reason}` – Track CB trips
+- [REL-METRIC-04] `geosync_backpressure_events_total{component}` – Track backpressure activation
+- [REL-METRIC-05] `geosync_queue_depth{queue_name}` – Track queue depths
+- [REL-METRIC-06] `geosync_websocket_reconnect_total{exchange}` – Track reconnections
+- [REL-METRIC-07] `geosync_feature_store_read_errors_total` – Track feature store errors
+- [REL-METRIC-08] `geosync_database_query_timeout_total{operation}` – Track DB timeouts
+- [REL-METRIC-09] `geosync_stale_data_detected_total{source}` – Track stale data detection
+- [REL-METRIC-10] `geosync_degraded_mode_active{component}` – Track degradation mode
 ```
 
 ---
@@ -915,7 +915,7 @@ From `configs/performance_budgets.yaml`:
 
 **Current State: 🟡 Moderate Maturity**
 
-TradePulse demonstrates a strong foundation for reliability with explicit timeouts, rate limiters, comprehensive health checks, and robust observability infrastructure. However, several critical gaps remain that must be addressed before production scale:
+GeoSync demonstrates a strong foundation for reliability with explicit timeouts, rate limiters, comprehensive health checks, and robust observability infrastructure. However, several critical gaps remain that must be addressed before production scale:
 
 - ✅ **Strengths**: Structured logging, metrics catalog, health checks, rate limiting, kill-switch
 - ⚠️ **Gaps**: Circuit breakers, backpressure, some timeouts, SLO enforcement
@@ -972,7 +972,7 @@ Track the following metrics to measure reliability improvement:
 
 This audit represents the current state as of 2025-12-07. Regular reviews (quarterly) are recommended to ensure continued alignment with production requirements and evolving reliability standards.
 
-**Prepared by**: TradePulse Reliability Engineering Team  
+**Prepared by**: GeoSync Reliability Engineering Team  
 **Reviewed by**: [To be completed]  
 **Approved by**: [To be completed]
 

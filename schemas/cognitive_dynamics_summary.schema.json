@@ -1,0 +1,281 @@
+{
+  "$schema": "https://json-schema.org/draft/2020-12/schema",
+  "$id": "https://github.com/neuron7xLab/GeoSync/schemas/cognitive_dynamics_summary.schema.json",
+  "title": "CognitiveDynamicsSummary",
+  "type": "object",
+  "required": [
+    "run_id",
+    "method_version",
+    "seed",
+    "status",
+    "artifact_role",
+    "claim_tier",
+    "replay_command",
+    "metric_scale",
+    "calibration_profile",
+    "optimization_profile",
+    "normalization_references",
+    "quantization_bins",
+    "quantized_states",
+    "aggregate_metrics",
+    "normalized_metrics",
+    "quantized_metrics",
+    "optimized_metrics",
+    "objective_score",
+    "objective_state",
+    "detected_holes_frequency",
+    "confidence"
+  ],
+  "properties": {
+    "run_id": {"type": "string"},
+    "method_version": {"type": "string"},
+    "seed": {"type": "integer"},
+    "status": {
+      "type": "string",
+      "enum": ["ARTIFACT_BUILT", "PARTIAL", "FAILED"]
+    },
+    "artifact_role": {
+      "type": "string",
+      "enum": ["simulation_evidence", "design_contract"]
+    },
+    "claim_tier": {
+      "type": "string",
+      "enum": ["simulation-only", "replay-validated", "external-validated"]
+    },
+    "replay_command": {"type": "string"},
+    "metric_scale": {
+      "type": "string",
+      "enum": ["0..1"]
+    },
+    "calibration_profile": {
+      "type": "object",
+      "required": [
+        "version",
+        "sensitivity",
+        "low_upper",
+        "high_lower",
+        "precision_digits"
+      ],
+      "properties": {
+        "version": {"type": "string"},
+        "sensitivity": {
+          "type": "string",
+          "enum": ["conservative", "balanced", "sensitive"]
+        },
+        "low_upper": {
+          "type": "number",
+          "minimum": 0,
+          "maximum": 1
+        },
+        "high_lower": {
+          "type": "number",
+          "minimum": 0,
+          "maximum": 1
+        },
+        "precision_digits": {
+          "type": "integer",
+          "minimum": 0,
+          "maximum": 12
+        },
+        "signal_pass_min": {"type": "number"},
+        "limit_pass_max": {"type": "number"}
+      },
+      "additionalProperties": false
+    },
+    "optimization_profile": {
+      "type": "object",
+      "required": ["version", "mode", "objective_scale"],
+      "properties": {
+        "version": {"type": "string"},
+        "mode": {"type": "string"},
+        "objective_scale": {
+          "type": "string",
+          "enum": ["0..1"]
+        },
+        "metric_directions": {
+          "type": "object",
+          "additionalProperties": {
+            "type": "string",
+            "enum": ["maximize", "minimize"]
+          }
+        },
+        "metric_weights": {
+          "type": "object",
+          "additionalProperties": {
+            "type": "number",
+            "minimum": 0,
+            "maximum": 1
+          }
+        },
+        "decision_thresholds": {"type": "object"}
+      },
+      "additionalProperties": true
+    },
+    "normalization_references": {
+      "type": "object",
+      "required": [
+        "mean_mae",
+        "mean_realism_gap",
+        "mean_ei_balance",
+        "mean_outside_ei_fraction",
+        "mean_energy_efficiency",
+        "mean_stability_margin"
+      ],
+      "additionalProperties": {"type": "number", "exclusiveMinimum": 0}
+    },
+    "quantization_bins": {
+      "type": "object",
+      "required": ["low", "medium", "high"],
+      "additionalProperties": {
+        "type": "array",
+        "items": {"type": "number"},
+        "minItems": 2,
+        "maxItems": 2
+      }
+    },
+    "quantized_states": {
+      "type": "array",
+      "prefixItems": [
+        {"type": "string", "enum": ["low"]},
+        {"type": "string", "enum": ["medium"]},
+        {"type": "string", "enum": ["high"]}
+      ],
+      "minItems": 3,
+      "maxItems": 3
+    },
+    "aggregate_metrics": {
+      "type": "object",
+      "required": [
+        "mean_mae",
+        "mean_realism_gap",
+        "mean_ei_balance",
+        "mean_outside_ei_fraction",
+        "mean_energy_efficiency",
+        "mean_stability_margin"
+      ],
+      "additionalProperties": {"type": "number"}
+    },
+    "normalized_metrics": {
+      "type": "object",
+      "required": [
+        "mean_mae",
+        "mean_realism_gap",
+        "mean_ei_balance",
+        "mean_outside_ei_fraction",
+        "mean_energy_efficiency",
+        "mean_stability_margin"
+      ],
+      "additionalProperties": {
+        "type": "number",
+        "minimum": 0,
+        "maximum": 1
+      }
+    },
+    "quantized_metrics": {
+      "type": "object",
+      "required": [
+        "mean_mae",
+        "mean_realism_gap",
+        "mean_ei_balance",
+        "mean_outside_ei_fraction",
+        "mean_energy_efficiency",
+        "mean_stability_margin"
+      ],
+      "additionalProperties": {
+        "type": "object",
+        "required": ["value", "state"],
+        "properties": {
+          "value": {
+            "type": "number",
+            "minimum": 0,
+            "maximum": 1
+          },
+          "state": {
+            "type": "string",
+            "enum": ["low", "medium", "high"]
+          }
+        },
+        "additionalProperties": false
+      }
+    },
+    "optimized_metrics": {
+      "type": "object",
+      "required": [
+        "mean_mae",
+        "mean_realism_gap",
+        "mean_ei_balance",
+        "mean_outside_ei_fraction",
+        "mean_energy_efficiency",
+        "mean_stability_margin"
+      ],
+      "additionalProperties": {
+        "type": "object",
+        "required": [
+          "direction",
+          "normalized_value",
+          "utility",
+          "weight",
+          "weighted_utility"
+        ],
+        "properties": {
+          "direction": {
+            "type": "string",
+            "enum": ["maximize", "minimize"]
+          },
+          "normalized_value": {
+            "type": "number",
+            "minimum": 0,
+            "maximum": 1
+          },
+          "utility": {
+            "type": "number",
+            "minimum": 0,
+            "maximum": 1
+          },
+          "weight": {
+            "type": "number",
+            "minimum": 0,
+            "maximum": 1
+          },
+          "weighted_utility": {
+            "type": "number",
+            "minimum": 0,
+            "maximum": 1
+          }
+        },
+        "additionalProperties": false
+      }
+    },
+    "objective_score": {
+      "type": "number",
+      "minimum": 0,
+      "maximum": 1
+    },
+    "objective_state": {
+      "type": "string",
+      "enum": ["optimize", "watch", "stable"]
+    },
+    "detected_holes_frequency": {
+      "type": "object",
+      "additionalProperties": {"type": "integer"}
+    },
+    "confidence": {
+      "type": "object",
+      "required": ["level", "reason", "cannot_claim"],
+      "properties": {
+        "level": {
+          "type": "number",
+          "minimum": 0,
+          "maximum": 0.75
+        },
+        "reason": {"type": "string"},
+        "cannot_claim": {
+          "type": "array",
+          "items": {"type": "string"}
+        }
+      },
+      "additionalProperties": false
+    }
+  },
+  "additionalProperties": true
+}

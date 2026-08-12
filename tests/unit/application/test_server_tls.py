@@ -1,3 +1,5 @@
+# Copyright (c) 2023-2026 Yaroslav Vasylenko (neuron7xLab)
+# SPDX-License-Identifier: MIT
 from __future__ import annotations
 
 import ssl
@@ -24,8 +26,8 @@ def _generate_server_material(tmp_path: Path) -> tuple[Path, Path, Path]:
     root_subject = x509.Name(
         [
             x509.NameAttribute(NameOID.COUNTRY_NAME, "US"),
-            x509.NameAttribute(NameOID.ORGANIZATION_NAME, "TradePulse Test CA"),
-            x509.NameAttribute(NameOID.COMMON_NAME, "TradePulse Root CA"),
+            x509.NameAttribute(NameOID.ORGANIZATION_NAME, "GeoSync Test CA"),
+            x509.NameAttribute(NameOID.COMMON_NAME, "GeoSync Root CA"),
         ]
     )
     root_cert = (
@@ -44,8 +46,8 @@ def _generate_server_material(tmp_path: Path) -> tuple[Path, Path, Path]:
     server_subject = x509.Name(
         [
             x509.NameAttribute(NameOID.COUNTRY_NAME, "US"),
-            x509.NameAttribute(NameOID.ORGANIZATION_NAME, "TradePulse API"),
-            x509.NameAttribute(NameOID.COMMON_NAME, "tradepulse.dev"),
+            x509.NameAttribute(NameOID.ORGANIZATION_NAME, "GeoSync API"),
+            x509.NameAttribute(NameOID.COMMON_NAME, "geosync.dev"),
         ]
     )
     server_cert = (
@@ -57,9 +59,7 @@ def _generate_server_material(tmp_path: Path) -> tuple[Path, Path, Path]:
         .not_valid_before(now - timedelta(days=1))
         .not_valid_after(now + timedelta(days=90))
         .add_extension(
-            x509.SubjectAlternativeName(
-                [x509.DNSName("tradepulse.dev"), x509.DNSName("localhost")]
-            ),
+            x509.SubjectAlternativeName([x509.DNSName("geosync.dev"), x509.DNSName("localhost")]),
             critical=False,
         )
         .add_extension(

@@ -1,20 +1,20 @@
 apiVersion: apps/v1
 kind: Deployment
 metadata:
-  name: tradepulse-api
+  name: geosync-api
 spec:
   replicas: 5
   template:
     metadata:
       annotations:
-        security.tradepulse.dev/log-level: "warn"
-        security.tradepulse.dev/mtls-required: "true"
+        security.geosync.dev/log-level: "warn"
+        security.geosync.dev/mtls-required: "true"
         prometheus.io/scrape: "true"
         prometheus.io/port: "8001"
       labels:
         environment: production
     spec:
-      priorityClassName: tradepulse-critical
+      priorityClassName: geosync-critical
       nodeSelector:
         environment: production
       tolerations:
@@ -26,7 +26,7 @@ spec:
         runAsNonRoot: true
         fsGroup: 2000
       containers:
-        - name: tradepulse-api
+        - name: geosync-api
           resources:
             requests:
               cpu: "750m"
@@ -35,9 +35,9 @@ spec:
               cpu: "2"
               memory: 2Gi
           env:
-            - name: TRADEPULSE_ENVIRONMENT
+            - name: GEOSYNC_ENVIRONMENT
               value: production
-            - name: TRADEPULSE_RATE_LIMIT_TPS
+            - name: GEOSYNC_RATE_LIMIT_TPS
               value: "1200"
       topologySpreadConstraints:
         - maxSkew: 1
@@ -45,7 +45,7 @@ spec:
           whenUnsatisfiable: DoNotSchedule
           labelSelector:
             matchLabels:
-              app.kubernetes.io/name: tradepulse-api
+              app.kubernetes.io/name: geosync-api
       affinity:
         podAntiAffinity:
           requiredDuringSchedulingIgnoredDuringExecution:
@@ -54,5 +54,5 @@ spec:
                   - key: app.kubernetes.io/name
                     operator: In
                     values:
-                      - tradepulse-api
+                      - geosync-api
               topologyKey: kubernetes.io/hostname

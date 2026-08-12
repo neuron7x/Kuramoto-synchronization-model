@@ -1,8 +1,10 @@
+# Copyright (c) 2023-2026 Yaroslav Vasylenko (neuron7xLab)
+# SPDX-License-Identifier: MIT
 """Tests for integrate_kuramoto_ricci.py script."""
 
 from __future__ import annotations
 
-# SPDX-License-Identifier: LicenseRef-TradePulse-Proprietary
+# SPDX-License-Identifier: MIT
 from pathlib import Path
 
 import pytest
@@ -38,9 +40,7 @@ def test_path_default_uses_env_var(tmp_path: Path, monkeypatch: pytest.MonkeyPat
     env_path.mkdir()
     monkeypatch.setenv("TEST_ENV_VAR", str(env_path))
 
-    result = integrate_kuramoto_ricci._path_default(
-        "TEST_ENV_VAR", Path("fallback/path")
-    )
+    result = integrate_kuramoto_ricci._path_default("TEST_ENV_VAR", Path("fallback/path"))
 
     assert result == env_path
 
@@ -49,9 +49,7 @@ def test_path_default_uses_fallback(monkeypatch: pytest.MonkeyPatch) -> None:
     """Test _path_default uses fallback when env var not set."""
     monkeypatch.delenv("TEST_MISSING_VAR", raising=False)
 
-    result = integrate_kuramoto_ricci._path_default(
-        "TEST_MISSING_VAR", Path("fallback/path")
-    )
+    result = integrate_kuramoto_ricci._path_default("TEST_MISSING_VAR", Path("fallback/path"))
 
     # Should use fallback relative to REPO_ROOT
     assert "fallback/path" in str(result) or "fallback" in str(result)
@@ -87,11 +85,16 @@ def test_parse_args_dry_run() -> None:
 
 def test_parse_args_config_overrides() -> None:
     """Test parse_args with config overrides."""
-    args = integrate_kuramoto_ricci.parse_args([
-        "--data", "test.csv",
-        "--config-override", "key1=value1",
-        "--config-override", "key2=value2",
-    ])
+    args = integrate_kuramoto_ricci.parse_args(
+        [
+            "--data",
+            "test.csv",
+            "--config-override",
+            "key1=value1",
+            "--config-override",
+            "key2=value2",
+        ]
+    )
 
     assert len(args.config_overrides) == 2
     assert "key1=value1" in args.config_overrides
@@ -150,9 +153,7 @@ def test_print_plan_output(tmp_path: Path, capsys) -> None:
     config_path = tmp_path / "config.yaml"
     output_dir = tmp_path / "output"
 
-    integrate_kuramoto_ricci._print_plan(
-        data_path, config_path, output_dir, ["key=value"]
-    )
+    integrate_kuramoto_ricci._print_plan(data_path, config_path, output_dir, ["key=value"])
 
     captured = capsys.readouterr()
     assert "[dry-run]" in captured.out
@@ -183,12 +184,17 @@ def test_main_dry_run(tmp_path: Path, capsys) -> None:
     config_file = tmp_path / "config.yaml"
     config_file.write_text("key: value\n", encoding="utf-8")
 
-    exit_code = integrate_kuramoto_ricci.main([
-        "--data", str(data_file),
-        "--config", str(config_file),
-        "--output", str(tmp_path / "output"),
-        "--dry-run",
-    ])
+    exit_code = integrate_kuramoto_ricci.main(
+        [
+            "--data",
+            str(data_file),
+            "--config",
+            str(config_file),
+            "--output",
+            str(tmp_path / "output"),
+            "--dry-run",
+        ]
+    )
 
     assert exit_code == 0
     captured = capsys.readouterr()
@@ -198,9 +204,12 @@ def test_main_dry_run(tmp_path: Path, capsys) -> None:
 def test_main_missing_data_file() -> None:
     """Test main exits when data file is missing."""
     with pytest.raises(SystemExit) as exc_info:
-        integrate_kuramoto_ricci.main([
-            "--data", "/nonexistent/data.csv",
-        ])
+        integrate_kuramoto_ricci.main(
+            [
+                "--data",
+                "/nonexistent/data.csv",
+            ]
+        )
 
     # SystemExit message contains "not found" for missing file
     exit_message = str(exc_info.value).lower()
@@ -213,10 +222,14 @@ def test_main_missing_config_file(tmp_path: Path) -> None:
     data_file.write_text("close\n100\n", encoding="utf-8")
 
     with pytest.raises(SystemExit) as exc_info:
-        integrate_kuramoto_ricci.main([
-            "--data", str(data_file),
-            "--config", "/nonexistent/config.yaml",
-        ])
+        integrate_kuramoto_ricci.main(
+            [
+                "--data",
+                str(data_file),
+                "--config",
+                "/nonexistent/config.yaml",
+            ]
+        )
 
     # SystemExit message contains "not found" for missing config
     exit_message = str(exc_info.value).lower()
@@ -236,11 +249,16 @@ def test_main_output_dir_not_empty_blocked(tmp_path: Path) -> None:
     (output_dir / "existing.txt").write_text("existing", encoding="utf-8")
 
     with pytest.raises(SystemExit) as exc_info:
-        integrate_kuramoto_ricci.main([
-            "--data", str(data_file),
-            "--config", str(config_file),
-            "--output", str(output_dir),
-        ])
+        integrate_kuramoto_ricci.main(
+            [
+                "--data",
+                str(data_file),
+                "--config",
+                str(config_file),
+                "--output",
+                str(output_dir),
+            ]
+        )
 
     # SystemExit message contains "not empty" for non-empty directory
     exit_message = str(exc_info.value).lower()

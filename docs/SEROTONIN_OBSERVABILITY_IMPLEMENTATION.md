@@ -9,7 +9,7 @@
 
 ## Executive Summary
 
-Цей документ описує впровадження комплексної системи SRE observability для серотонінового контроллера TradePulse, виконане згідно з принципами, викладеними в **docs/prompts/system_prompt_principal_architect.md** та задокументоване в **ADR-0002**.
+Цей документ описує впровадження комплексної системи SRE observability для серотонінового контроллера GeoSync, виконане згідно з принципами, викладеними в **docs/prompts/system_prompt_principal_architect.md** та задокументоване в **ADR-0002**.
 
 ### Ключові досягнення
 
@@ -187,7 +187,7 @@ serotonin_step_duration_seconds_bucket{le="0.0005"} 0
 
 ### 3.1 Test Coverage
 
-**Файл:** `tests/unit/tradepulse/core/neuro/serotonin/test_observability.py` (8.7 KB)
+**Файл:** `tests/unit/geosync/core/neuro/serotonin/test_observability.py` (8.7 KB)
 
 | Категорія | Тести | Статус |
 |-----------|-------|--------|

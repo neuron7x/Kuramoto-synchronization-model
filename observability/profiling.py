@@ -1,4 +1,6 @@
-"""Lightweight profiling helpers for TradePulse workflows.
+# Copyright (c) 2023-2026 Yaroslav Vasylenko (neuron7xLab)
+# SPDX-License-Identifier: MIT
+"""Lightweight profiling helpers for GeoSync workflows.
 
 This module provides structured instrumentation that can be reused across
 command-line tools and notebooks to capture performance characteristics of

@@ -1,4 +1,6 @@
-"""FinOps cost control utilities for TradePulse.
+# Copyright (c) 2023-2026 Yaroslav Vasylenko (neuron7xLab)
+# SPDX-License-Identifier: MIT
+"""FinOps cost control utilities for GeoSync.
 
 The module provides primitives to monitor infrastructure usage, evaluate budget
 compliance, and emit actionable optimisation guidance.  It favours an
@@ -66,9 +68,7 @@ class ResourceUsageSample:
             raise ValueError("cost must be a finite, non-negative number")
         for key, value in self.usage.items():
             if value < 0.0 or not math.isfinite(value):
-                raise ValueError(
-                    f"usage metric '{key}' must be a finite, non-negative number"
-                )
+                raise ValueError(f"usage metric '{key}' must be a finite, non-negative number")
 
 
 @dataclass(slots=True, frozen=True)
@@ -253,13 +253,9 @@ class FinOpsController:
     ) -> None:
         self._alert_sink = alert_sink
         self._clock = clock or (lambda: datetime.now(timezone.utc))
-        self._usage_by_resource: MutableMapping[str, list[ResourceUsageSample]] = (
-            defaultdict(list)
-        )
+        self._usage_by_resource: MutableMapping[str, list[ResourceUsageSample]] = defaultdict(list)
         self._budgets: MutableMapping[str, Budget] = {}
-        self._budget_ledgers: MutableMapping[str, list[tuple[datetime, float]]] = (
-            defaultdict(list)
-        )
+        self._budget_ledgers: MutableMapping[str, list[tuple[datetime, float]]] = defaultdict(list)
         self._budget_thresholds: MutableMapping[str, float] = defaultdict(float)
 
     # ------------------------------------------------------------------
@@ -292,9 +288,7 @@ class FinOpsController:
                 continue
             ledger = self._budget_ledgers[budget.name]
             self._insert_ledger_entry(ledger, sample)
-            total_cost, window_start = self._prune_and_sum(
-                ledger, budget, sample.timestamp
-            )
+            total_cost, window_start = self._prune_and_sum(ledger, budget, sample.timestamp)
             alert_events = self._evaluate_budget(
                 budget,
                 total_cost,
@@ -327,9 +321,7 @@ class FinOpsController:
         max_sample_cost = 0.0
 
         for resource_id, samples in self._usage_by_resource.items():
-            relevant_samples = self._slice_samples(
-                samples, window_start, as_of, metadata_filter
-            )
+            relevant_samples = self._slice_samples(samples, window_start, as_of, metadata_filter)
             resource_sum = 0.0
             for sample in relevant_samples:
                 resource_sum += sample.cost
@@ -376,9 +368,7 @@ class FinOpsController:
         recommendations: list[OptimizationRecommendation] = []
 
         for resource_id, samples in self._usage_by_resource.items():
-            relevant = self._slice_samples(
-                samples, window_start, as_of, metadata_filter
-            )
+            relevant = self._slice_samples(samples, window_start, as_of, metadata_filter)
             if not relevant:
                 continue
 
@@ -457,9 +447,7 @@ class FinOpsController:
         dedupe_index: dict[tuple[str, ...], ResourceProfile] = {}
 
         for resource_id, samples in self._usage_by_resource.items():
-            relevant = self._slice_samples(
-                samples, window_start, as_of, metadata_filter
-            )
+            relevant = self._slice_samples(samples, window_start, as_of, metadata_filter)
             if not relevant:
                 continue
 
@@ -497,17 +485,13 @@ class FinOpsController:
                     dedupe_index[dedupe_key] = profile
 
         cloud_costs_map = dict(sorted(cloud_costs.items(), key=lambda item: item[0]))
-        instance_costs_map = dict(
-            sorted(instance_costs.items(), key=lambda item: item[0])
-        )
+        instance_costs_map = dict(sorted(instance_costs.items(), key=lambda item: item[0]))
 
         cloud_highlights = self._build_cloud_profile_recommendations(cloud_costs_map)
         additional_recommendations.extend(cloud_highlights)
 
         budget_statuses = self._collect_budget_statuses(as_of, metadata_filter)
-        additional_recommendations.extend(
-            self._derive_budget_recommendations(budget_statuses)
-        )
+        additional_recommendations.extend(self._derive_budget_recommendations(budget_statuses))
 
         review_schedule = self._build_weekly_review_schedule(as_of)
         if review_schedule:
@@ -535,12 +519,8 @@ class FinOpsController:
             generated_at=as_of,
             window_start=window_start,
             window_end=as_of,
-            cloud_costs={
-                key: round(value, 2) for key, value in cloud_costs_map.items()
-            },
-            instance_costs={
-                key: round(value, 2) for key, value in instance_costs_map.items()
-            },
+            cloud_costs={key: round(value, 2) for key, value in cloud_costs_map.items()},
+            instance_costs={key: round(value, 2) for key, value in instance_costs_map.items()},
             resource_profiles=resource_profiles_sorted,
             recommendations=tuple(combined_recommendations),
             budget_statuses=budget_statuses,
@@ -550,9 +530,7 @@ class FinOpsController:
     # ------------------------------------------------------------------
     # Budget status queries
     # ------------------------------------------------------------------
-    def get_budget_status(
-        self, name: str, *, as_of: datetime | None = None
-    ) -> BudgetStatus:
+    def get_budget_status(self, name: str, *, as_of: datetime | None = None) -> BudgetStatus:
         """Return the current status of a budget."""
 
         if name not in self._budgets:
@@ -573,9 +551,7 @@ class FinOpsController:
             breached=total_cost >= budget.limit,
         )
 
-    def iter_budget_statuses(
-        self, *, as_of: datetime | None = None
-    ) -> Sequence[BudgetStatus]:
+    def iter_budget_statuses(self, *, as_of: datetime | None = None) -> Sequence[BudgetStatus]:
         """Return statuses for all budgets."""
 
         as_of = as_of or self._clock()
@@ -605,17 +581,13 @@ class FinOpsController:
                 if 0.0 <= value <= 1.0 and math.isfinite(value):
                     utilisation_values.append(value)
 
-        average_utilisation = (
-            statistics.fmean(utilisation_values) if utilisation_values else None
-        )
+        average_utilisation = statistics.fmean(utilisation_values) if utilisation_values else None
 
         metadata_snapshot: dict[str, str] = {}
         for sample in samples:
             metadata_snapshot.update(sample.metadata)
 
-        cloud = self._most_common_metadata(
-            samples, ("cloud", "cloud_provider", "provider")
-        )
+        cloud = self._most_common_metadata(samples, ("cloud", "cloud_provider", "provider"))
         instance_type = self._most_common_metadata(
             samples,
             ("instance_type", "machine_type", "instance_class", "flavor"),
@@ -762,9 +734,7 @@ class FinOpsController:
 
         # Model footprint optimisation (compression / quantisation / distillation)
         model_size = self._parse_float_metadata(metadata, "model_size_gb")
-        parameter_count = self._parse_float_metadata(
-            metadata, "parameter_count_billion"
-        )
+        parameter_count = self._parse_float_metadata(metadata, "parameter_count_billion")
         throughput = self._parse_float_metadata(metadata, "throughput_rps")
         heavy_model = False
         if model_size is not None and model_size >= 20.0:
@@ -783,9 +753,7 @@ class FinOpsController:
                     metadata={
                         "model_size_gb": round(model_size or 0.0, 2),
                         "parameter_count_billion": round(parameter_count or 0.0, 2),
-                        "throughput_rps": (
-                            round(throughput or 0.0, 3) if throughput else 0.0
-                        ),
+                        "throughput_rps": (round(throughput or 0.0, 3) if throughput else 0.0),
                     },
                     category="model_optimisation",
                 )
@@ -814,9 +782,7 @@ class FinOpsController:
 
         return recommendations
 
-    def _build_deduplication_key(
-        self, profile: ResourceProfile
-    ) -> tuple[str, ...] | None:
+    def _build_deduplication_key(self, profile: ResourceProfile) -> tuple[str, ...] | None:
         metadata = profile.metadata
         key_parts: list[str] = []
         for key_name in ("workload_id", "model_id", "dataset_id"):
@@ -835,9 +801,7 @@ class FinOpsController:
     ) -> list[OptimizationRecommendation]:
         if not cloud_costs:
             return []
-        sorted_clouds = sorted(
-            cloud_costs.items(), key=lambda item: item[1], reverse=True
-        )
+        sorted_clouds = sorted(cloud_costs.items(), key=lambda item: item[1], reverse=True)
         top_cloud, top_cost = sorted_clouds[0]
         recommendations = [
             OptimizationRecommendation(
@@ -1111,9 +1075,7 @@ class FinOpsController:
         for sample in samples:
             if sample.timestamp < start or sample.timestamp > end:
                 continue
-            if metadata_filter and not self._sample_matches_scope(
-                sample, metadata_filter
-            ):
+            if metadata_filter and not self._sample_matches_scope(sample, metadata_filter):
                 continue
             result.append(sample)
         return result

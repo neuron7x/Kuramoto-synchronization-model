@@ -1,3 +1,5 @@
+# Copyright (c) 2023-2026 Yaroslav Vasylenko (neuron7xLab)
+# SPDX-License-Identifier: MIT
 """Middleware that records HTTP access events for audit purposes."""
 
 from __future__ import annotations
@@ -107,12 +109,10 @@ class AccessLogMiddleware(BaseHTTPMiddleware):
     ) -> None:
         super().__init__(app)
         self._audit_trail = audit_trail or get_access_audit_trail()
-        self._logger = logger or logging.getLogger("tradepulse.audit.access")
+        self._logger = logger or logging.getLogger("geosync.audit.access")
         self._service = service
         headers = capture_headers or ("x-request-id", "x-correlation-id")
-        self._capture_headers = tuple(
-            {header.lower(): header for header in headers}.values()
-        )
+        self._capture_headers = tuple({header.lower(): header for header in headers}.values())
 
     async def dispatch(self, request: Request, call_next) -> Response:
         request_id = None

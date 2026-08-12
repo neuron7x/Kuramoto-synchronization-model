@@ -1,0 +1,147 @@
+{
+  "artifact": "CALIB-GRID-001",
+  "branch_sha": "52e3912785ea5e10aadc30981eb1504ca8948e56",
+  "citation": "Anderson&Fouad-2003-Ex2.6 / Dorfler-Bullo-PNAS-2013-Fig1",
+  "closes_noisy_gate": false,
+  "front_gate": {
+    "noiseless": {
+      "edges": [
+        {
+          "ci_contains_zero": false,
+          "ci_high": 8.308482830874562,
+          "ci_low": 8.206709593271894,
+          "crlb_band_covers_k_true": false,
+          "crlb_se": 0.025963037689835548,
+          "edge": [
+            0,
+            1
+          ],
+          "k_hat": 8.257596212073228,
+          "k_true": 7.739082422208,
+          "wald_ratio": 318.05200572913134
+        },
+        {
+          "ci_contains_zero": false,
+          "ci_high": 4.983787894280395,
+          "ci_low": 4.413994362036259,
+          "crlb_band_covers_k_true": false,
+          "crlb_se": 0.14535816390979509,
+          "edge": [
+            0,
+            2
+          ],
+          "k_hat": 4.698891128158327,
+          "k_true": 5.1733722556799995,
+          "wald_ratio": 32.32629665764296
+        },
+        {
+          "ci_contains_zero": false,
+          "ci_high": 9.408069556473194,
+          "ci_low": 9.317622128532122,
+          "crlb_band_covers_k_true": false,
+          "crlb_se": 0.023073747439879326,
+          "edge": [
+            1,
+            2
+          ],
+          "k_hat": 9.362845842502658,
+          "k_true": 8.87424208992,
+          "wald_ratio": 405.77915949276877
+        }
+      ],
+      "frobenius_rel_error": 0.0665563875240445,
+      "k_hat_fro": 18.864270741611,
+      "k_true_fro": 18.18842213629737,
+      "n_crlb_band_covers_k_true": 0,
+      "n_edges": 3,
+      "r_squared": 0.991416804187007,
+      "reason": "ACCEPT: every coupling edge's 95% CI excludes zero (binding edge (0,2) |K\u0302|/SE=32.326 > z_0.975) and the linear swing fit is adequate (R\u00b2=0.9914 \u2265 \u00bd); score min(s_A=0.9700, s_B=0.9914)=0.9700 \u2265 refuse threshold 0.6622 (\u03c3\u0302\u00b2=0.0003159).",
+      "reciprocal_condition": 0.08162888859506728,
+      "refuse_threshold": 0.6621580515090663,
+      "regime": "noiseless",
+      "residual_variance": 0.00031592894328851055,
+      "score": 0.9699936656546967,
+      "verdict": "ACCEPT"
+    },
+    "noisy": {
+      "edges": [
+        {
+          "ci_contains_zero": false,
+          "ci_high": 151.46747378664622,
+          "ci_low": 133.91266165252256,
+          "crlb_band_covers_k_true": false,
+          "crlb_se": 4.478350692307052,
+          "edge": [
+            0,
+            1
+          ],
+          "k_hat": 142.6900677195844,
+          "k_true": 7.739082422208,
+          "wald_ratio": 31.862191579748
+        },
+        {
+          "ci_contains_zero": false,
+          "ci_high": 178.33747699409687,
+          "ci_low": 159.1718009107938,
+          "crlb_band_covers_k_true": false,
+          "crlb_se": 4.889292924380119,
+          "edge": [
+            0,
+            2
+          ],
+          "k_hat": 168.75463895244533,
+          "k_true": 5.1733722556799995,
+          "wald_ratio": 34.51514187480199
+        },
+        {
+          "ci_contains_zero": false,
+          "ci_high": -7.980982581141848,
+          "ci_low": -25.1958637067497,
+          "crlb_band_covers_k_true": false,
+          "crlb_se": 4.39163200482168,
+          "edge": [
+            1,
+            2
+          ],
+          "k_hat": -16.588423143945775,
+          "k_true": 8.87424208992,
+          "wald_ratio": 3.7772798644633565
+        }
+      ],
+      "frobenius_rel_error": 16.607054036168236,
+      "k_hat_fro": 313.4126971779936,
+      "k_true_fro": 18.18842213629737,
+      "n_crlb_band_covers_k_true": 0,
+      "n_edges": 3,
+      "r_squared": 0.16298896327213241,
+      "reason": "REFUSE [model adequacy: R\u00b2=0.1630 < \u00bd \u2014 the linear swing fit is noise-dominated (\u03c3\u0302\u00b2=176.4); the per-edge Wald CIs are tight around a *biased* K\u0302 (confidently wrong, not imprecise)]. score min(s_A=0.7907, s_B=0.1630)=0.1630 < refuse threshold 0.6622 (1/cond=0.478). The point estimate is misleading rather than imprecise; instrument out of envelope \u2014 no trustworthy K\u0302 is promoted (graded self-knowledge layer, not a tuning knob).",
+      "reciprocal_condition": 0.47801531362319516,
+      "refuse_threshold": 0.6621580515090663,
+      "regime": "noisy",
+      "residual_variance": 176.4493603383767,
+      "score": 0.16298896327213241,
+      "verdict": "REFUSE"
+    }
+  },
+  "frozen_preregistration_sha": "d170d48afa5066c13edeb40b2c1904b3fd708516",
+  "interpretation": "Before (binary PE guard): the reciprocal condition number is HIGHER in the noisy case than the noiseless one, so the merged guard PASSES the noisy regime while emitting a K\u0302 biased ~20x. After (graded front-gate): the noiseless case ACCEPTs (model adequate, R2 high) and the noisy case REFUSEs (R2 noise-dominated). The frozen noisy.frobenius gate STAYS NEGATIVE \u2014 this does NOT close it; the upgrade is that the instrument now self-reports the failure instead of silently emitting a misleading point estimate.",
+  "is_science_claim": false,
+  "kind": "reliability-instrument-honesty",
+  "ledger_sha256": "0b19118124ad08a12d003a0410c3cf02bba7681eaf9a8e0fdff91b918c99f335",
+  "lineage": "identifiability-front-gate (upgrade #2)",
+  "parent_ledger_sha256": "ed8d409b7b222eb053572d6bf9ab6e98c5f4918be1cae384864733a2b4d72aaf",
+  "parent_lineages": [
+    "PR #749 (CALIB-GRID-001)",
+    "PR #751 (R1)"
+  ],
+  "python": "3.12.3",
+  "scope": "additive graded self-knowledge layer on the already-calibrated swing estimator; PREREGISTRATION/gates/seeds/sigma/theta0/decision-rule untouched",
+  "system": "WSCC-9",
+  "theory_constants": {
+    "pe_hard_floor": 1.4901161193847656e-08,
+    "provenance": "research/calibration/grid_kuramoto/identifiability/THRESHOLD_PROVENANCE.md",
+    "r2_floor": 0.5,
+    "refuse_score": 0.6621580515090663,
+    "wald_z_0975": 1.959963984540054
+  }
+}

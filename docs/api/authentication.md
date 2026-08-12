@@ -1,5 +1,5 @@
 ---
-owner: integrations@tradepulse
+owner: integrations@geosync
 review_cadence: quarterly
 last_reviewed: 2026-01-01
 links:
@@ -12,16 +12,16 @@ links:
 
 ## Overview
 
-TradePulse API requests must be authenticated before any trading signal or
+GeoSync API requests must be authenticated before any trading signal or
 prediction data is returned. The public HTTP API relies on **ed25519 request
-signatures** provided via `X-TradePulse-Signature`. Admin-only routes use OAuth2
+signatures** provided via `X-GeoSync-Signature`. Admin-only routes use OAuth2
 bearer tokens and are documented in the admin OpenAPI spec.
 
 **Supported methods**
 
 | API Surface | Authentication | Header(s) | Notes |
 | --- | --- | --- | --- |
-| Public HTTP API | ed25519 signature | `X-TradePulse-Signature` | Required for all public routes. |
+| Public HTTP API | ed25519 signature | `X-GeoSync-Signature` | Required for all public routes. |
 | Admin remote control | OAuth2 bearer token | `Authorization: Bearer <token>` | Admin scope required. |
 
 ## Security requirements
@@ -59,8 +59,8 @@ bearer tokens and are documented in the admin OpenAPI spec.
 
 ```http
 GET /v1/signals/BTC-USD HTTP/1.1
-Host: api.tradepulse.example
-X-TradePulse-Signature: v1=<ed25519_signature>
+Host: api.geosync.example
+X-GeoSync-Signature: v1=<ed25519_signature>
 ```
 
 ```json

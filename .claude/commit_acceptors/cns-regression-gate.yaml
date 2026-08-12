@@ -1,0 +1,39 @@
+id: cns-regression-gate
+status: ACTIVE
+claim_type: governance
+promise: >-
+  Add a standalone CNS regression gate and wire it into the CNS Release Gate
+  workflow so the generated quality artifact is checked without pytest coupling.
+diff_scope:
+  changed_files:
+    - path: ".claude/commit_acceptors/cns-regression-gate.yaml"
+    - path: ".github/workflows/cns-release-gate.yml"
+    - path: "tools/cns_program/run_regression_gate.py"
+  forbidden_paths:
+    - "core/"
+    - "trading/"
+    - "execution/"
+    - "forecast/"
+    - "runtime/"
+required_python_symbols:
+  - "tools.cns_program.run_regression_gate.regression_quality_artifact_passes"
+  - "tools.cns_program.run_regression_gate.main"
+expected_signal: >-
+  CNS Release Gate, PR Gate, Commit Acceptor Gate, and Physics Invariants pass.
+measurement_command: >-
+  python tools/cns_program/run_regression_gate.py
+signal_artifact: "results/cns_quality_gate.json"
+falsifier:
+  command: >-
+    python tools/cns_program/verify_release_manifest.py --manifest /tmp/nonexistent-cns-manifest.json
+  description: >-
+    Manifest verification must fail closed when the manifest is absent.
+rollback_command: >-
+  git checkout -- .claude/commit_acceptors/cns-regression-gate.yaml tools/cns_program/run_regression_gate.py
+rollback_verification_command: >-
+  git diff --quiet -- .claude/commit_acceptors/cns-regression-gate.yaml tools/cns_program/run_regression_gate.py
+memory_update_type: append
+ledger_path: ".claude/commit_acceptors/cns-regression-gate.yaml"
+report_path: "results/cns_quality_gate.json"
+evidence:
+  - path: "tools/cns_program/run_regression_gate.py"

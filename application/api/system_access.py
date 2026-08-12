@@ -1,9 +1,13 @@
-"""FastAPI application exposing operational TradePulse system primitives."""
+# Copyright (c) 2023-2026 Yaroslav Vasylenko (neuron7xLab)
+# SPDX-License-Identifier: MIT
+"""FastAPI application exposing operational GeoSync system primitives."""
 
 from __future__ import annotations
 
 import asyncio
+import ipaddress
 import logging
+from collections.abc import Collection
 from dataclasses import dataclass
 from datetime import datetime, timezone
 from pathlib import Path
@@ -23,14 +27,16 @@ from application.api.rate_limit import (
     SlidingWindowRateLimiter,
     build_rate_limiter,
 )
-from application.api.security import verify_request_identity
+from application.api.security import get_api_security_settings, verify_request_identity
+from application.security.access_control import AccessDeniedError
 from application.security.rbac import AuthorizationGateway
 from application.settings import (
     ApiRateLimitSettings,
+    ApiSecuritySettings,
     BackendRuntimeSettings,
     NotificationSettings,
 )
-from application.system import TradePulseSystem
+from application.system import GeoSyncSystem
 from application.trading import order_to_dto
 from core.utils.debug import VariableInspector
 from domain import Order, OrderSide, OrderType, Position
@@ -47,7 +53,6 @@ from observability.notifications import (
     SlackNotifier,
 )
 from src.admin.remote_control import AdminIdentity
-from src.security import AccessDeniedError
 
 
 def _read_version() -> str:
@@ -116,9 +121,7 @@ class StatusResponse(BaseModel):
 
     status: str = Field(..., description="Operational state of the system.")
     uptime_seconds: float = Field(..., ge=0.0, description="Service uptime in seconds.")
-    version: str = Field(
-        ..., min_length=1, description="Semantic version of the deployment."
-    )
+    version: str = Field(..., min_length=1, description="Semantic version of the deployment.")
 
 
 class PositionSnapshot(BaseModel):
@@ -185,18 +188,14 @@ class OrderRequest(BaseModel):
     @model_validator(mode="after")
     def _validate_reference_price(self) -> "OrderRequest":
         if self.price is None and self.reference_price is None:
-            raise ValueError(
-                "reference_price must be supplied when no price is provided"
-            )
+            raise ValueError("reference_price must be supplied when no price is provided")
         return self
 
 
 class OrderResponse(BaseModel):
     """Subset of order lifecycle data returned to REST clients."""
 
-    order_id: str | None = Field(
-        default=None, description="Venue supplied order identifier."
-    )
+    order_id: str | None = Field(default=None, description="Venue supplied order identifier.")
     status: str = Field(..., description="Latest known status of the order.")
     filled_quantity: float = Field(..., ge=0.0)
     average_price: float | None = Field(default=None, ge=0.0)
@@ -298,11 +297,11 @@ def _trade_attributes_provider(request: Request, _: AdminIdentity) -> Mapping[st
 
 
 class SystemAccess:
-    """Coordinator exposing TradePulse system capabilities over REST."""
+    """Coordinator exposing GeoSync system capabilities over REST."""
 
     def __init__(
         self,
-        system: TradePulseSystem,
+        system: GeoSyncSystem,
         *,
         logger: logging.Logger | None = None,
         notifier: NotificationDispatcher | None = None,
@@ -314,7 +313,7 @@ class SystemAccess:
         self._normaliser = _PositionNormaliser()
         self._connected: set[str] = set()
         self._version = _read_version()
-        self._logger = logger or logging.getLogger("tradepulse.system_access")
+        self._logger = logger or logging.getLogger("geosync.system_access")
         self._notifier = notifier
         self._audit_trail = audit_trail or get_system_audit_trail()
         self._auditable_levels = {"info", "warning", "error", "critical"}
@@ -332,9 +331,7 @@ class SystemAccess:
         **fields: Any,
     ) -> None:
         logger_method = getattr(self._logger, level, None)
-        if (
-            logger_method is None
-        ):  # pragma: no cover - defensive guard for invalid level
+        if logger_method is None:  # pragma: no cover - defensive guard for invalid level
             raise AttributeError(f"Unsupported log level requested: {level}")
         audit_subject = identity.subject if identity is not None else None
         logger_payload = {"event": message, **fields}
@@ -367,9 +364,7 @@ class SystemAccess:
     ) -> None:
         if self._notifier is None:
             return
-        await self._notifier.dispatch(
-            event, subject=subject, message=message, metadata=metadata
-        )
+        await self._notifier.dispatch(event, subject=subject, message=message, metadata=metadata)
 
     @staticmethod
     def _actor(identity: AdminIdentity | None) -> str:
@@ -389,32 +384,24 @@ class SystemAccess:
             uptime_seconds=uptime,
             kill_switch_engaged=kill_switch,
         )
-        return StatusResponse(
-            status=status_value, uptime_seconds=uptime, version=self._version
-        )
+        return StatusResponse(status=status_value, uptime_seconds=uptime, version=self._version)
 
     def _default_venue(self) -> str:
         names = self._system.connector_names
         if not names:
-            raise RuntimeError("TradePulseSystem has no configured execution venues")
+            raise RuntimeError("GeoSyncSystem has no configured execution venues")
         return names[0]
 
-    def _ensure_connected(
-        self, venue: str, *, identity: AdminIdentity | None = None
-    ) -> None:
+    def _ensure_connected(self, venue: str, *, identity: AdminIdentity | None = None) -> None:
         key = venue.lower()
         if key in self._connected:
-            self._log(
-                "debug", "system.connector.cached", identity=identity, venue=venue
-            )
+            self._log("debug", "system.connector.cached", identity=identity, venue=venue)
             return
         connector = self._system.get_connector(venue)
         actor = self._actor(identity)
         roles = identity.roles if identity is not None else ()
         try:
-            credentials = self._system.connector_credentials(
-                venue, actor=actor, roles=roles
-            )
+            credentials = self._system.connector_credentials(venue, actor=actor, roles=roles)
         except AccessDeniedError as exc:
             self._log(
                 "warning",
@@ -441,9 +428,7 @@ class SystemAccess:
         self._connected.add(key)
         self._log("info", "system.connector.connected", identity=identity, venue=venue)
 
-    async def list_positions(
-        self, *, identity: AdminIdentity | None = None
-    ) -> PositionsResponse:
+    async def list_positions(self, *, identity: AdminIdentity | None = None) -> PositionsResponse:
         self._log("info", "system.positions.fetch", identity=identity)
         snapshots: list[PositionSnapshot] = []
         for venue in self._system.connector_names:
@@ -552,9 +537,7 @@ class SystemAccess:
 
             placed: Order
             try:
-                placed = connector.place_order(
-                    order, idempotency_key=request.client_order_id
-                )
+                placed = connector.place_order(order, idempotency_key=request.client_order_id)
             except Exception as exc:
                 self._log(
                     "error",
@@ -600,9 +583,7 @@ class SystemAccess:
             response = OrderResponse(
                 order_id=dto.get("order_id"),
                 status=str(dto.get("status", placed.status.value)),
-                filled_quantity=float(
-                    dto.get("filled_quantity", placed.filled_quantity)
-                ),
+                filled_quantity=float(dto.get("filled_quantity", placed.filled_quantity)),
                 average_price=_coerce_float(dto.get("average_price")),
             )
 
@@ -647,29 +628,67 @@ def _get_access(request: Request) -> SystemAccess:
     return access
 
 
-def _resolve_ip(request: Request) -> str:
-    forwarded_for = request.headers.get("x-forwarded-for")
-    if forwarded_for:
-        for part in forwarded_for.split(","):
-            candidate = part.strip().split()[0]
-            if candidate:
-                return candidate
+def _peer_is_trusted_proxy(peer: str | None, trusted_proxies: Collection[str]) -> bool:
+    """Return ``True`` when *peer* matches a trusted-proxy IP or CIDR network."""
 
-    real_ip = request.headers.get("x-real-ip")
-    if real_ip:
-        return real_ip.strip()
+    if peer is None or not trusted_proxies:
+        return False
+    try:
+        peer_addr = ipaddress.ip_address(peer)
+    except ValueError:
+        return False
+    for entry in trusted_proxies:
+        try:
+            if "/" in entry:
+                if peer_addr in ipaddress.ip_network(entry, strict=False):
+                    return True
+            elif peer_addr == ipaddress.ip_address(entry):
+                return True
+        except ValueError:
+            continue
+    return False
 
-    if request.client and request.client.host:
-        return request.client.host
+
+def _resolve_ip(request: Request, *, trusted_proxies: Collection[str] = ()) -> str:
+    """Return the originating IP address for the request.
+
+    ``X-Forwarded-For`` / ``X-Real-IP`` are only honoured when the *direct* peer
+    is a configured trusted proxy; otherwise an unauthenticated client could
+    spoof its source IP on every request to mint a fresh per-IP rate-limit
+    bucket and evade the pre-auth throttle. With no trusted proxies configured
+    (the default), the direct peer address is always used. Empty or whitespace
+    forwarded segments are skipped rather than indexed, so a malformed header
+    (e.g. ``" "`` or ``,1.2.3.4``) can no longer raise ``IndexError``.
+    """
+
+    peer = request.client.host if request.client and request.client.host else None
+
+    if _peer_is_trusted_proxy(peer, trusted_proxies):
+        forwarded_for = request.headers.get("x-forwarded-for")
+        if forwarded_for:
+            for part in forwarded_for.split(","):
+                stripped = part.strip()
+                if not stripped:
+                    continue
+                candidate = stripped.split()[0]
+                if candidate:
+                    return candidate
+
+        real_ip = request.headers.get("x-real-ip")
+        if real_ip:
+            stripped_real = real_ip.strip()
+            if stripped_real:
+                return stripped_real
+
+    if peer is not None:
+        return peer
     return "unknown"
 
 
 def create_system_app(
-    system: TradePulseSystem,
+    system: GeoSyncSystem,
     *,
-    identity_dependency: (
-        Callable[..., Awaitable[AdminIdentity] | AdminIdentity] | None
-    ) = None,
+    identity_dependency: Callable[..., Awaitable[AdminIdentity] | AdminIdentity] | None = None,
     reader_roles: Sequence[str] = ("foundation:viewer",),
     trader_roles: Sequence[str] = ("trading:operator",),
     authorization_gateway: AuthorizationGateway | None = None,
@@ -680,11 +699,12 @@ def create_system_app(
     runtime_settings: BackendRuntimeSettings | None = None,
     rate_limiter: SlidingWindowRateLimiter | None = None,
     rate_limit_settings: ApiRateLimitSettings | None = None,
+    security_settings: ApiSecuritySettings | None = None,
 ) -> FastAPI:
-    """Instantiate a FastAPI app exposing TradePulse system endpoints.
+    """Instantiate a FastAPI app exposing GeoSync system endpoints.
 
     Args:
-        system: TradePulse orchestration facade powering the API.
+        system: GeoSync orchestration facade powering the API.
         rate_limiter: Optional limiter enforcing per-subject/IP throughput.
         rate_limit_settings: Settings used to build a limiter when one is not
             explicitly supplied.
@@ -732,12 +752,11 @@ def create_system_app(
     )
 
     resolved_rate_limit_settings = rate_limit_settings or ApiRateLimitSettings()
+    resolved_security_settings = security_settings or get_api_security_settings()
     limiter = rate_limiter or build_rate_limiter(resolved_rate_limit_settings)
 
-    notifier = notification_dispatcher or _build_notification_dispatcher(
-        notification_settings
-    )
-    logger = logging.getLogger("tradepulse.system_access")
+    notifier = notification_dispatcher or _build_notification_dispatcher(notification_settings)
+    logger = logging.getLogger("geosync.system_access")
     access = SystemAccess(
         system,
         logger=logger,
@@ -746,7 +765,7 @@ def create_system_app(
     )
 
     app = FastAPI(
-        title="TradePulse System API",
+        title="GeoSync System API",
         version=access.version,
         debug=runtime_settings.debug,
     )
@@ -759,9 +778,7 @@ def create_system_app(
         capture_headers=("x-request-id", "x-correlation-id", "traceparent"),
     )
 
-    inspector = VariableInspector(
-        redact_patterns=runtime_settings.redact_pattern_values()
-    )
+    inspector = VariableInspector(redact_patterns=runtime_settings.redact_pattern_values())
     if runtime_settings.inspect_variables:
         inspector.register(
             "environment",
@@ -774,9 +791,7 @@ def create_system_app(
         risk_manager = getattr(system, "risk_manager", None)
         kill_switch = getattr(risk_manager, "kill_switch", None)
         try:
-            engaged = (
-                bool(kill_switch.is_triggered()) if kill_switch is not None else None
-            )
+            engaged = bool(kill_switch.is_triggered()) if kill_switch is not None else None
         except Exception:  # pragma: no cover - defensive guard
             engaged = None
         reason = getattr(kill_switch, "reason", None)
@@ -800,9 +815,7 @@ def create_system_app(
         "notifications",
         lambda: {
             "dispatcher": type(notifier).__name__ if notifier is not None else None,
-            "email_configured": bool(
-                notification_settings and notification_settings.email
-            ),
+            "email_configured": bool(notification_settings and notification_settings.email),
             "slack_configured": bool(
                 notification_settings and notification_settings.slack_webhook_url
             ),
@@ -814,7 +827,7 @@ def create_system_app(
     app.state.rate_limiter = limiter
     app.state.rate_limit_settings = resolved_rate_limit_settings
     if runtime_settings.debug and runtime_settings.log_variables_on_startup:
-        debug_logger = logging.getLogger("tradepulse.debug")
+        debug_logger = logging.getLogger("geosync.debug")
 
         @app.on_event("startup")
         async def _log_system_debug_snapshot() -> None:
@@ -830,7 +843,9 @@ def create_system_app(
         async def _precheck_rate_limit(
             request: Request,
         ) -> Callable[[AdminIdentity | None], Awaitable[None]]:
-            ip_address = _resolve_ip(request)
+            ip_address = _resolve_ip(
+                request, trusted_proxies=resolved_security_settings.trusted_proxies
+            )
             await limiter.check(subject=None, ip_address=ip_address)
 
             async def _finalize(identity: AdminIdentity | None) -> None:

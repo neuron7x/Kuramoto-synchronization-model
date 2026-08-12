@@ -1,0 +1,122 @@
+# SPDX-License-Identifier: MIT
+#
+# Component Test Router — lightweight changed-file -> isolated pytest selector.
+#
+# This lane is intentionally small: it validates the routing matrix, derives a
+# deterministic component-test plan from the PR diff, then runs only the selected
+# component tests. It does not replace PR Gate, mutation, or research integrity;
+# it gives a fast, mechanized first falsifier for the component touched by a PR.
+name: Component Test Router
+
+on:
+  pull_request:
+    branches: [main]
+    paths:
+      - '.github/workflows/component-test-router.yml'
+      - 'data/testing/component_test_matrix.json'
+      - 'tools/testing/component_test_planner.py'
+      - 'tools/testing/select_component_tests.py'
+      - 'tests/testing/test_select_component_tests.py'
+      - 'core/physics/stuart_landau_es.py'
+      - 'tests/unit/physics/test_T2b_stuart_landau_es.py'
+      - '.github/actions/setup-geosync/action.yml'
+      - '.github/workflows/dependency-operational-determinism.yml'
+      - 'constraints/security.txt'
+      - 'requirements*.txt'
+      - 'requirements*.lock'
+      - 'tools/deps/check_operational_dependency_determinism.py'
+      - 'tests/deps/test_operational_dependency_determinism.py'
+      - 'tests/ci/test_setup_geosync_toolchain.py'
+      - '.github/workflows/company-value-functions.yml'
+      - 'data/governance/company_value_functions.json'
+      - 'docs/governance/company_value_functions.md'
+      - 'tools/governance/check_company_value_functions.py'
+      - 'tests/governance/test_company_value_functions.py'
+      - 'artifacts/manifest.json'
+      - 'scripts/ci/check_artifact_freshness.py'
+      - 'tests/ci/test_artifact_freshness_gate.py'
+  merge_group:
+  workflow_dispatch:
+
+permissions:
+  contents: read
+
+env:
+  FORCE_JAVASCRIPT_ACTIONS_TO_NODE24: 'true'
+
+concurrency:
+  group: component-test-router-${{ github.event.pull_request.number || github.sha }}
+  cancel-in-progress: true
+
+jobs:
+  component-test-router:
+    name: component-test-router
+    runs-on: ubuntu-latest
+    continue-on-error: false
+    timeout-minutes: 12
+    steps:
+      - name: Checkout
+        uses: actions/checkout@9c091bb21b7c1c1d1991bb908d89e4e9dddfe3e0 # v7.0.0
+        with:
+          fetch-depth: 0
+
+      - name: Collect changed files
+        shell: bash
+        run: |
+          set -euo pipefail
+          if [[ "${GITHUB_EVENT_NAME}" == "pull_request" ]]; then
+            git fetch --no-tags origin "${{ github.base_ref }}"
+            base_ref="origin/${{ github.base_ref }}"
+            git diff --name-only "$base_ref...$GITHUB_SHA" > /tmp/changed_files.txt
+          else
+            git diff-tree --no-commit-id --name-only -r "$GITHUB_SHA" > /tmp/changed_files.txt
+          fi
+          echo "---- changed files ----"
+          cat /tmp/changed_files.txt
+
+      - name: Validate router matrix and build plan
+        id: route
+        shell: bash
+        run: |
+          set -euo pipefail
+          python -m tools.testing.select_component_tests --validate-only
+          set +e
+          python -m tools.testing.select_component_tests \
+            --changed-files-from /tmp/changed_files.txt > /tmp/component_test_plan.json
+          plan_rc=$?
+          set -e
+          echo "---- component test plan ----"
+          cat /tmp/component_test_plan.json
+          python - <<'PY' >> "$GITHUB_OUTPUT"
+          import json
+          from pathlib import Path
+
+          plan = json.loads(Path('/tmp/component_test_plan.json').read_text())
+          print(f"status={plan['status']}")
+          print(f"has_selectors={'true' if plan['selectors'] else 'false'}")
+          PY
+          if [[ "$plan_rc" -ne 0 ]]; then
+            echo "component-test-router refused plan with rc=$plan_rc"
+            exit "$plan_rc"
+          fi
+
+      - name: Setup Python environment for selected component tests
+        if: steps.route.outputs.has_selectors == 'true'
+        uses: ./.github/actions/setup-geosync
+        with:
+          python-version: '3.11'
+          cache-prefix: component-test-router
+
+      - name: Run selected component tests
+        if: steps.route.outputs.has_selectors == 'true'
+        shell: bash
+        run: |
+          set -euo pipefail
+          python -m tools.testing.select_component_tests \
+            --changed-files-from /tmp/changed_files.txt \
+            --run
+
+      - name: Empty component plan
+        if: steps.route.outputs.has_selectors != 'true'
+        shell: bash
+        run: echo "No mapped component changed; component-test-router passes empty."

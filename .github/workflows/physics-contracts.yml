@@ -1,0 +1,115 @@
+# SPDX-License-Identifier: MIT
+#
+# Physics Contracts — executable falsification gate.
+#
+# Enforces the rich-format falsification-contract layer
+# (physics_contracts/falsification_catalog.yaml): every blocking law must carry a
+# collected positive witness AND a negative control, the catalog must be
+# schema-valid, all declared evidence artifacts must be emitted, and the review
+# packet must build. Fail-closed. SEPARATE from the canonical 112-invariant
+# Physics Kernel Gate — this does not read or mutate catalog.yaml.
+name: Physics Contracts
+
+on:
+  pull_request:
+    branches: [main]
+    paths:
+      - 'analytics/**'
+      - 'core/indicators/**'
+      - 'core/kuramoto/**'
+      - 'core/neuro/**'
+      - 'core/physics/**'
+      - 'core/data/leakage.py'
+      - 'physics_contracts/falsification_catalog.yaml'
+      - 'physics_contracts/falsification_schema.json'
+      - 'tests/physics/**'
+      - 'tools/validate_physics_contracts.py'
+      - 'tools/build_physics_review_packet.py'
+      - '.github/workflows/physics-contracts.yml'
+  merge_group:
+  push:
+    branches: [main]
+
+permissions:
+  contents: read
+
+concurrency:
+  group: physics-contracts-${{ github.event.pull_request.number || github.sha }}
+  cancel-in-progress: true
+
+jobs:
+  physics-contracts:
+    name: validate-witness-evidence
+    runs-on: ubuntu-latest
+    env:
+      GEOSYNC_LIGHT_DATA_IMPORT: '1'
+      PYTHONUTF8: '1'
+      PYTHONIOENCODING: utf-8
+    steps:
+      - name: Checkout
+        uses: actions/checkout@9c091bb21b7c1c1d1991bb908d89e4e9dddfe3e0 # v7.0.0
+
+      - name: Set up Python
+        uses: actions/setup-python@ece7cb06caefa5fff74198d8649806c4678c61a1 # v6
+        with:
+          python-version: '3.12'
+
+      - name: Install
+        run: |
+          set -euo pipefail
+          python -m pip install --upgrade pip
+          python -m pip install -e ".[dev]" || python -m pip install -e . \
+            || python -m pip install numpy pyyaml pytest
+
+      - name: Validate catalog + emit evidence (fail-closed)
+        run: |
+          set -euo pipefail
+          PYTHONPATH=. python tools/validate_physics_contracts.py
+
+      - name: Run physics witnesses + negative controls
+        run: |
+          set -euo pipefail
+          mkdir -p tmp
+          PYTHONPATH=. python -m pytest tests/physics -q -rA 2>&1 | tee tmp/physics_contracts_pytest.log
+
+      - name: Build review packet
+        run: |
+          set -euo pipefail
+          PYTHONPATH=. python tools/build_physics_review_packet.py
+
+      - name: Fail if any evidence artifact is missing
+        run: |
+          set -euo pipefail
+          missing=0
+          for f in \
+            evidence/physics/ricci_kuramoto_report.json \
+            evidence/physics/metric_consistency_report.json \
+            evidence/physics/causality_report.json \
+            evidence/physics/landauer_report.json \
+            evidence/physics/thermodynamics_report.json \
+            evidence/physics/ecs_lyapunov_report.json \
+            evidence/physics/dro_ara_gamma_report.json \
+            evidence/physics/dynamical_systems_report.json \
+            evidence/physics/neuromodulation_report.json \
+            evidence/physics/falsification_report.json \
+            evidence/physics/precision_report.json \
+            evidence/physics/governance_report.json \
+            docs/PHYSICS_VERDICT.md \
+            docs/PHYSICS_REVIEW_PACKET.md \
+            docs/PHYSICS_CLAIMS.md; do
+            if [ ! -f "$f" ]; then echo "::error::missing artifact $f"; missing=1; fi
+          done
+          exit "$missing"
+
+      - name: Upload evidence + packet
+        if: always()
+        uses: actions/upload-artifact@043fb46d1a93c77aae656e7c1c64a875d1fc6a0a # v4
+        with:
+          name: physics-contracts-evidence
+          path: |
+            evidence/physics/*
+            docs/PHYSICS_VERDICT.md
+            docs/PHYSICS_REVIEW_PACKET.md
+            docs/PHYSICS_CLAIMS.md
+            tmp/physics_contracts_pytest.log
+          if-no-files-found: error

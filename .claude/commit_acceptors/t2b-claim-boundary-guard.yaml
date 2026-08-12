@@ -1,0 +1,56 @@
+id: t2b-claim-boundary-guard
+status: ACTIVE
+claim_type: fail_closed
+promise: >-
+  Prevent the rejected T2b real-data lead hypothesis from being silently
+  promoted back into a live physics invariant, validation claim, or shadow-rail
+  signal. Universal implementation bounds INV-SL1 and INV-SL2 remain active;
+  the empirical lead claim is REJECTED_DO_NOT_PROMOTE unless a new
+  pre-registration and independent OOS result justify reconsideration.
+diff_scope:
+  changed_files:
+    - path: ".claude/commit_acceptors/T2b-stuart-landau-es.yaml"
+    - path: ".claude/physics/INVARIANTS.yaml"
+    - path: "tests/ci/test_t2b_claim_boundary.py"
+    - path: ".claude/commit_acceptors/t2b-claim-boundary-guard.yaml"
+  forbidden_paths:
+    - "trading/"
+    - "execution/"
+    - "forecast/"
+    - "policy/"
+required_python_symbols: []
+expected_signal: >-
+  tests/ci/test_t2b_claim_boundary.py passes and asserts that the acceptor
+  contains REJECTED_DO_NOT_PROMOTE, says the empirical claim is not an active
+  physics invariant, preserves INV-SL1/INV-SL2, that the invariant registry
+  (.claude/physics/INVARIANTS.yaml) marks INV-T2b REFUTED not active, that the
+  frozen OOS artifact records decision REJECT with p_value above the
+  pre-registered threshold, and forbids phrases that would re-promote T2b as an
+  open validation hypothesis.
+measurement_command: >-
+  python -m pytest tests/ci/test_t2b_claim_boundary.py -q
+signal_artifact: "tmp/t2b_claim_boundary_pytest.log"
+falsifier:
+  command: >-
+    python -m pytest tests/ci/test_t2b_claim_boundary.py -q
+  description: >-
+    Fails if T2b real-data lead evidence is described as live validation,
+    shadow-rail signal, or open empirical hypothesis instead of
+    REJECTED_DO_NOT_PROMOTE.
+rollback_command: >-
+  bash -c 'set -e;
+  git checkout HEAD~1 -- .claude/commit_acceptors/T2b-stuart-landau-es.yaml
+  .claude/physics/INVARIANTS.yaml;
+  git rm -f tests/ci/test_t2b_claim_boundary.py
+  .claude/commit_acceptors/t2b-claim-boundary-guard.yaml'
+rollback_verification_command: >-
+  bash -c 'git diff --exit-code HEAD~1 --
+  .claude/commit_acceptors/T2b-stuart-landau-es.yaml .claude/physics/INVARIANTS.yaml
+  && test ! -e tests/ci/test_t2b_claim_boundary.py
+  && test ! -e .claude/commit_acceptors/t2b-claim-boundary-guard.yaml'
+memory_update_type: append
+ledger_path: ".claude/commit_acceptors/t2b-claim-boundary-guard.yaml"
+report_path: "results/cross_asset_kuramoto/SL_ES_PREREGISTRATION.md"
+evidence:
+  - path: "results/cross_asset_kuramoto/SL_ES_PREREGISTRATION.md"
+  - path: "artifacts/rolling_es_proximity_oos.json"

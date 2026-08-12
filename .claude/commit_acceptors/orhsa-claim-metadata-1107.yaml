@@ -1,0 +1,78 @@
+# Diff-bound acceptor: ORHSA #1107 downstream claim-boundary closure (S4/S7 +
+# S5 guard test). The merged S4/S5/S7 PRs (#1104/#1105/#1106) added descriptor
+# honesty at source; this slice propagates the downstream claim status the
+# issue still required and pins it with guard tests. NO numeric output changes
+# (freeze): only additive metadata fields and tests.
+
+id: orhsa-claim-metadata-1107
+status: ACTIVE
+claim_type: correctness
+promise: >-
+  S4: adds predictive_claim=False, trading_claim=False,
+  validation_status="descriptor_only" to KuramotoResult and the fit_transform
+  metadata dict in src/geosync/features/kuramoto.py. S7: adds audit_scope
+  ("nonfinite_and_rocof_only") and remaining_audit_gaps (energy_like_drift,
+  phase_spread_bound, solver_metadata, stiffness_assumption,
+  cross_solver_reference) to SecondOrderResult, declaring the guard is partial
+  (full audit tracked in issue #1109). Adds tests:
+  test_proxy_feature_cannot_claim_predictive_or_trading_validity,
+  test_feature_result_metadata_preserves_descriptor_only_status,
+  test_second_order_audit_scope_is_partial,
+  test_second_order_remaining_gaps_are_declared,
+  test_multiscale_output_cannot_claim_network_or_market_consensus. No numeric
+  output changed; no weighted/signed Ricci; no invariant added or changed. The
+  network N>=2 requirement is already covered by existing #1105 tests and is not
+  duplicated.
+diff_scope:
+  changed_files:
+    - path: ".claude/commit_acceptors/orhsa-claim-metadata-1107.yaml"
+    - path: "src/geosync/features/kuramoto.py"
+    - path: "core/kuramoto/second_order.py"
+    - path: "tests/unit/geosync/features/test_kuramoto.py"
+    - path: "tests/unit/physics/test_T18b_second_order_stability_guard.py"
+    - path: "tests/unit/test_indicators_kuramoto_multiscale.py"
+  forbidden_paths:
+    - "trading/"
+    - "execution/"
+    - "forecast/"
+    - "policy/"
+required_python_symbols:
+  - "KuramotoResult"
+  - "SecondOrderResult"
+expected_signal: >-
+  The S4/S5/S7 test files pass including the five new #1107 guard tests; the
+  descriptor cannot advertise predictive/trading/validated/network/market-
+  consensus claims, and the second-order guard declares its partial audit scope.
+  Numeric outputs (R, delta_R, labels, velocities, frequency metrics) are
+  byte-identical. ruff/black/mypy --strict clean.
+measurement_command: >-
+  PYTHONPATH=. python -m pytest tests/unit/geosync/features/test_kuramoto.py
+  tests/unit/physics/test_T18b_second_order_stability_guard.py
+  tests/unit/test_indicators_kuramoto_multiscale.py -v
+signal_artifact: "tmp/orhsa_claim_metadata_1107_pytest.log"
+falsifier:
+  command: >-
+    PYTHONPATH=. python -m pytest
+    tests/unit/geosync/features/test_kuramoto.py
+    tests/unit/physics/test_T18b_second_order_stability_guard.py
+    -v -k "cannot_claim_predictive_or_trading or audit_scope_is_partial or remaining_gaps_are_declared"
+  description: >-
+    Setting validation_status to anything other than "descriptor_only" (or
+    predictive_claim/trading_claim True) fails
+    test_proxy_feature_cannot_claim_predictive_or_trading_validity. Relabelling
+    audit_scope as a full audit, or dropping a remaining gap, fails the S7
+    partial-audit tests. Each guard has a test that fails before the patch.
+rollback_command: >-
+  git checkout HEAD~1 --
+  src/geosync/features/kuramoto.py
+  core/kuramoto/second_order.py
+  tests/unit/geosync/features/test_kuramoto.py
+  tests/unit/physics/test_T18b_second_order_stability_guard.py
+  tests/unit/test_indicators_kuramoto_multiscale.py
+  .claude/commit_acceptors/orhsa-claim-metadata-1107.yaml
+rollback_verification_command: >-
+  git diff --exit-code src/geosync/features/kuramoto.py
+memory_update_type: none
+ledger_path: ".claude/commit_acceptors/orhsa-claim-metadata-1107.yaml"
+report_path: "docs/reports/diff_bound_commit_acceptor_layer.md"
+evidence: []

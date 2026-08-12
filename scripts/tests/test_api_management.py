@@ -1,3 +1,5 @@
+# Copyright (c) 2023-2026 Yaroslav Vasylenko (neuron7xLab)
+# SPDX-License-Identifier: MIT
 from __future__ import annotations
 
 from pathlib import Path
@@ -57,4 +59,4 @@ def test_governance_runner_generates_artifacts(tmp_path: Path) -> None:
     assert "create-prediction" in routes_index
 
     overview_content = artifacts.overview.read_text()
-    assert "TradePulse API Governance Overview" in overview_content
+    assert "GeoSync API Governance Overview" in overview_content

@@ -1,0 +1,4 @@
+dd_rank,start_date,end_date,depth,recovery_date,asset_1,contribution_pct_1,asset_2,contribution_pct_2,asset_3,contribution_pct_3
+1,2018-05-03,2018-12-14,0.4214,2020-07-27,ETH,0.6428,BTC,0.249,TLT,0.049
+2,2021-11-08,2022-10-24,0.3392,2024-10-18,ETH,0.4328,BTC,0.3516,TLT,0.1102
+3,2021-11-08,2022-10-24,0.3392,2024-10-18,ETH,0.4328,BTC,0.3516,TLT,0.1102

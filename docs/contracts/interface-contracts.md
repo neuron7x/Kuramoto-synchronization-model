@@ -1,10 +1,10 @@
 ---
-owner: integrations@tradepulse
+owner: integrations@geosync
 review_cadence: quarterly
 last_reviewed: 2026-01-01
 ---
 
-# TradePulse Interface Contracts Specification
+# GeoSync Interface Contracts Specification
 
 **Version:** 1.0.0
 **Date:** 2025-11-18
@@ -13,7 +13,7 @@ last_reviewed: 2026-01-01
 
 ## Purpose
 
-This document defines formal interface contracts for TradePulse platform components. Each contract specifies:
+This document defines formal interface contracts for GeoSync platform components. Each contract specifies:
 - Interface signature and semantics
 - Pre-conditions and post-conditions
 - Invariants that must be maintained

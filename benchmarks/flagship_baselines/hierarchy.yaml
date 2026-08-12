@@ -1,0 +1,51 @@
+# Copyright (c) 2023-2026 Yaroslav Vasylenko (neuron7xLab)
+# SPDX-License-Identifier: MIT
+#
+# Declarative registry of the FLAGSHIP-RQ-001 baseline hierarchy. The gate
+# (scripts/ci/check_baselines.py) checks that every REQUIRED tier here is also a
+# real callable in baselines.py and appears in comparison_report.json. This YAML
+# is the human-facing contract; baselines.py is the executable source of truth.
+
+rq_id: FLAGSHIP-RQ-001
+prereg_id: FLAGSHIP-PREREG-001
+decision_variable: D_marginal          # marginal defects caught ONLY by flagship
+prereg_margin: 1                       # one-sided: D_marginal >= 1 supports H1
+
+# The comparators the clean-archive wheel-contract check must beat.
+baselines:
+  - tier: NAIVE
+    fn: baseline_naive
+    rq_role: >-
+      NULL: run nothing / trust the green CI. Catches 0 by construction -- the
+      status quo the flagship exists to challenge.
+  - tier: EXISTING_SUITE
+    fn: baseline_existing_suite
+    rq_role: >-
+      Pre-existing CI gate suite (import-linter, unit tests, release-gate probes)
+      resolving imports IN PLACE with the repo root on sys.path. It flags a defect
+      only if the imported namespace fails to resolve in place. Primary null
+      reference from the prereg.
+  - tier: ABLATED
+    fn: baseline_ablated
+    rq_role: >-
+      Flagship with its load-bearing step removed: NOT built from a clean
+      git archive (working-tree top-level dirs treated as shipped -- the stale
+      build/ failure mode). Isolates the clean-archive step.
+  - tier: SHUFFLED
+    fn: baseline_shuffled
+    rq_role: >-
+      Permutation / label-shuffle null control (fixed seed): imported-namespace
+      labels replaced by stdlib tokens, which the flagship correctly ignores.
+      Confirms detections come from real first-party-exclusion structure.
+
+flagship:
+  tier: FLAGSHIP
+  fn: flagship_check
+  rq_role: >-
+    Clean-archive wheel contract (scripts/ci/check_wheel_contract.py): flags a
+    packaged module importing a first-party namespace the wheel does NOT ship.
+
+# The claim is SUPPORTED iff D_marginal >= prereg_margin AND the detected set is
+# reproducible across >= 2 independent reruns at the pinned snapshot AND at least
+# one detected defect is not flagged by any pre-existing gate; REJECTED iff
+# D_marginal == 0; else INSUFFICIENT_EVIDENCE. See baselines.decide (SSOT).

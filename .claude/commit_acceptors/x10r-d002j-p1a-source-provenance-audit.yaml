@@ -1,0 +1,245 @@
+# Diff-bound commit acceptor for the D-002J-P1A source-registry
+# provenance audit PR.
+#
+# D-002J-P1A is the first verification gate of the D-002J Frontier
+# Benchmark Program. P1A audits the 25 sources committed by PR #695
+# in artifacts/d002j/data_registry/source_registry_v1.json against
+# ten verification dimensions (provider, official URL, documentation,
+# access method, license boundary, coverage, frequency, variables,
+# crisis-window relevance, mechanistic relevance). P1A is audit-only:
+# NO ingestion, NO analysis, NO canonical run, NO source-code edit,
+# NO prereg edit, NO ledger edit.
+#
+# Pure governance: NO research/systemic_risk/*.py edit, NO
+# scripts/x10r_d002*.py edit, NO D-002C/D-002G/D-002H/D-002I/D-002J
+# governance file edit (BLOCKERS.md only). The audit DOWNGRADES five
+# sources whose URL pins are stale (ECB_CBD, ICAP_MOVE, BIS_QR_NETWORK,
+# FED_TIMELINE, BOE_LDI_REVIEW) and marks seven PARTIAL. The decision
+# is SOURCE_REGISTRY_REJECTED because the information_constraint
+# mechanism family carries only one source (ALFRED, PARTIAL) and the
+# ≥2 verified/partial-per-family floor is not satisfied. Rejection
+# is a valid scientific outcome.
+
+id: x10r-d002j-p1a-source-provenance-audit
+status: ACTIVE
+claim_type: governance
+promise: >-
+  After this PR lands,
+  artifacts/d002j/data_registry/source_provenance_audit_v1.json
+  exists with schema_version D002J-SOURCE-PROVENANCE-AUDIT-v1,
+  total_sources 25, audit_decision SOURCE_REGISTRY_REJECTED,
+  parent_registry_sha256
+  0fae24d4c3ef3165509166bec89d6dc5eee806888f352358ad77851e51079b7b
+  (byte-exact at audit time), counts.verified 13, counts.partial 7,
+  counts.downgraded 5, counts.rejected 0, counts.verified_or_partial
+  20.
+
+  artifacts/d002j/data_registry/source_access_smoke_v1.json exists
+  with schema_version D002J-SOURCE-ACCESS-SMOKE-v1,
+  no_large_downloads true, no_private_data true, all bytes_downloaded
+  bounded ≤ 4 KB per probe.
+
+  artifacts/d002j/data_registry/source_evidence_lock_v1.json exists
+  with schema_version D002J-SOURCE-EVIDENCE-LOCK-v1, entries pinning
+  every VERIFIED source to at least one evidence URL.
+
+  artifacts/d002j/data_registry/source_registry_audit_summary_v1.json
+  exists with schema_version D002J-SOURCE-REGISTRY-AUDIT-SUMMARY-v1,
+  canonical_run_authorized false, source_code_changed false,
+  decision SOURCE_REGISTRY_REJECTED.
+
+  docs/research/D002J_SOURCE_PROVENANCE_AUDIT.md gains the narrative
+  audit companion. docs/research/D002J_SOURCE_DOWNGRADE_LOG.md
+  records the five DOWNGRADED sources (ECB_CBD, ICAP_MOVE,
+  BIS_QR_NETWORK, FED_TIMELINE, BOE_LDI_REVIEW) with repair
+  instructions. docs/research/D002J_P1A_AUDIT_BOUNDARY.md states
+  the ALLOWED/FORBIDDEN scope.
+
+  tests/systemic_risk/test_d002j_source_provenance_audit.py carries
+  22 fail-closed tests covering registry-pin sha, audit/smoke/lock
+  JSON existence + schema, source-id parity, no private data, no
+  large downloads, audit_status taxonomy, evidence_ref presence per
+  VERIFIED, license_boundary per VERIFIED, forbidden_use per
+  VERIFIED, crisis-window retention floor 3, mechanism-family
+  surfaced honestly, downgrade-log parity, summary-↔-audit count
+  parity, no canonical-run authorisation, D-002J prereg byte-exact,
+  D-002C ledger byte-exact, research/systemic_risk source un-edited,
+  no merge markers.
+
+  docs/governance/D002G_CANONICAL_RUN_BLOCKERS.md gains an
+  append-only D-002J-P1A audit section recording counts, decision
+  SOURCE_REGISTRY_REJECTED, the five DOWNGRADED source_ids, the
+  information_constraint floor failure, and the next legal PR tag
+  (fix(x10r,D-002J-P1)).
+
+  D-002C claim ledger sha byte-exact
+  eb0b7151d76e5409e6dc9bb4a023551de5e0704673d5ac9f726319ef84a32387.
+  D-002G prereg sha byte-exact
+  1ab91f09370e4705a8b0849467bc1f56df2e58d58d5623d3b6d905cbd110bb04.
+  D-002G acceptance rules sha byte-exact
+  875b1e3eb031b8e5333dc8b455454f0a30419ead1ebe787aa01d5882e7d6ad31.
+  D-002H prereg sha byte-exact
+  44b18b5a40ce9d188a9c3bd49339621f81a65a15f97a683247902450dd54acec.
+  D-002I prereg sha byte-exact
+  b646989c032dc0e29f9b791e0b68209ff22b40f4757737712badc8656cf2db5f.
+  D-002J prereg sha byte-exact
+  f3dc65b7e64b96eafe6f23ca8bdd0e05dc9bf95b12c2658b227bd0340f7975a0.
+  P1 registry sha byte-exact
+  0fae24d4c3ef3165509166bec89d6dc5eee806888f352358ad77851e51079b7b.
+
+  Audit-only: NO ingestion, NO analysis, NO canonical run, NO
+  source-code edit, NO prereg edit, NO ledger edit, NO new sources
+  added. SOURCE_REGISTRY_REJECTED triggers a follow-up fix PR; P2
+  cannot open until the decision flips.
+
+diff_scope:
+  changed_files:
+    - path: "artifacts/d002j/data_registry/source_provenance_audit_v1.json"
+    - path: "artifacts/d002j/data_registry/source_access_smoke_v1.json"
+    - path: "artifacts/d002j/data_registry/source_evidence_lock_v1.json"
+    - path: "artifacts/d002j/data_registry/source_registry_audit_summary_v1.json"
+    - path: "docs/research/D002J_SOURCE_PROVENANCE_AUDIT.md"
+    - path: "docs/research/D002J_SOURCE_DOWNGRADE_LOG.md"
+    - path: "docs/research/D002J_P1A_AUDIT_BOUNDARY.md"
+    - path: "tests/systemic_risk/test_d002j_source_provenance_audit.py"
+    - path: ".claude/commit_acceptors/x10r-d002j-p1a-source-provenance-audit.yaml"
+    - path: "docs/governance/D002G_CANONICAL_RUN_BLOCKERS.md"
+    - path: ".github/detect-secrets.baseline"
+  forbidden_paths:
+    - "docs/governance/D002C_CLAIM_LEDGER.yaml"
+    - "docs/governance/D002C_PREREGISTRATION.yaml"
+    - "docs/governance/D002C_CANONICAL_RUN_REPORT.md"
+    - "docs/governance/D002C_ATTEMPT_2_NULL_AUDIT_FALSIFICATION_REPORT.md"
+    - "docs/governance/D002G_ACCEPTANCE_RULES.md"
+    - "docs/governance/D002G_PREREGISTRATION.yaml"
+    - "docs/governance/D002G_NONDEGENERATE_NULL_DESIGN.md"
+    - "docs/governance/D002G_P3_M3_PREREGISTRATION.md"
+    - "docs/governance/D002G_STRUCTURAL_CLOSURE_REPORT.md"
+    - "docs/governance/D002G_NEGATIVE_SPACE_MAP.md"
+    - "docs/governance/D002G_M3_ELIGIBILITY_MATRIX.md"
+    - "docs/governance/D002H_PREREGISTRATION.yaml"
+    - "docs/governance/D002H_CANONICAL_RUN_AUTHORIZATION_GATES.md"
+    - "docs/governance/D002H_GATE_B_REPORT.md"
+    - "docs/governance/D002H_GATE_C_CANONICAL_GRID.md"
+    - "docs/governance/D002H_CLAIM_BOUNDARY.md"
+    - "docs/governance/D002H_CANONICAL_RUN_REPORT.md"
+    - "docs/governance/D002I_PREREGISTRATION.yaml"
+    - "docs/governance/D002I_INVESTIGATION_RATIONALE.md"
+    - "docs/governance/D002I_CLAIM_BOUNDARY.md"
+    - "docs/governance/D002J_PREREGISTRATION.yaml"
+    - "artifacts/d002c/"
+    - "artifacts/d002g/"
+    - "artifacts/d002h/"
+    - "artifacts/d002i/"
+    - "artifacts/d002j/data_registry/source_registry_v1.json"
+    - "artifacts/d002j/data_registry/source_registry_summary_v1.json"
+    - "artifacts/d002j/prereg/"
+    - "research/systemic_risk/"
+    - "scripts/x10r_d002c_attempt_2_null_audit.py"
+    - "scripts/x10r_d002g_gate_d_scan.py"
+    - "scripts/x10r_d002h_gate_d_scan.py"
+    - "scripts/x10r_d002h_canonical_sweep.py"
+required_python_symbols:
+  - "tests.systemic_risk.test_d002j_source_provenance_audit.test_p1_registry_exists"
+  - "tests.systemic_risk.test_d002j_source_provenance_audit.test_audit_json_exists"
+  - "tests.systemic_risk.test_d002j_source_provenance_audit.test_access_smoke_json_exists"
+  - "tests.systemic_risk.test_d002j_source_provenance_audit.test_evidence_lock_json_exists"
+  - "tests.systemic_risk.test_d002j_source_provenance_audit.test_audit_schema_version"
+  - "tests.systemic_risk.test_d002j_source_provenance_audit.test_all_registry_sources_are_audited"
+  - "tests.systemic_risk.test_d002j_source_provenance_audit.test_source_ids_match_registry"
+  - "tests.systemic_risk.test_d002j_source_provenance_audit.test_no_private_or_internship_data"
+  - "tests.systemic_risk.test_d002j_source_provenance_audit.test_no_large_downloads"
+  - "tests.systemic_risk.test_d002j_source_provenance_audit.test_each_source_has_audit_status"
+  - "tests.systemic_risk.test_d002j_source_provenance_audit.test_each_verified_source_has_evidence_ref"
+  - "tests.systemic_risk.test_d002j_source_provenance_audit.test_each_verified_source_has_license_boundary"
+  - "tests.systemic_risk.test_d002j_source_provenance_audit.test_each_verified_source_has_forbidden_use"
+  - "tests.systemic_risk.test_d002j_source_provenance_audit.test_crisis_windows_retain_verified_sources"
+  - "tests.systemic_risk.test_d002j_source_provenance_audit.test_mechanisms_retain_verified_sources"
+  - "tests.systemic_risk.test_d002j_source_provenance_audit.test_downgrade_log_exists"
+  - "tests.systemic_risk.test_d002j_source_provenance_audit.test_audit_summary_counts_match_audit"
+  - "tests.systemic_risk.test_d002j_source_provenance_audit.test_audit_does_not_authorize_canonical_run"
+  - "tests.systemic_risk.test_d002j_source_provenance_audit.test_d002j_prereg_not_modified"
+  - "tests.systemic_risk.test_d002j_source_provenance_audit.test_d002c_ledger_not_modified"
+  - "tests.systemic_risk.test_d002j_source_provenance_audit.test_systemic_risk_source_code_not_modified"
+  - "tests.systemic_risk.test_d002j_source_provenance_audit.test_no_unresolved_merge_markers"
+expected_signal: >-
+  `PYTHONPATH=. python -m pytest
+  tests/systemic_risk/test_d002j_source_provenance_audit.py -q` passes
+  all 22 cases; four audit JSON artifacts validate with their pinned
+  schema_version strings; decision is SOURCE_REGISTRY_REJECTED;
+  D002G_CANONICAL_RUN_BLOCKERS.md gains the append-only D-002J-P1A
+  audit section; six locked governance shas + the P1 registry sha
+  all byte-exact at their pinned anchors.
+measurement_command: >-
+  bash -c 'set -e;
+  PYTHONPATH=. python -m pytest tests/systemic_risk/test_d002j_source_provenance_audit.py -q;
+  test -f artifacts/d002j/data_registry/source_provenance_audit_v1.json;
+  test -f artifacts/d002j/data_registry/source_access_smoke_v1.json;
+  test -f artifacts/d002j/data_registry/source_evidence_lock_v1.json;
+  test -f artifacts/d002j/data_registry/source_registry_audit_summary_v1.json;
+  test -f docs/research/D002J_SOURCE_PROVENANCE_AUDIT.md;
+  test -f docs/research/D002J_SOURCE_DOWNGRADE_LOG.md;
+  test -f docs/research/D002J_P1A_AUDIT_BOUNDARY.md;
+  python -m json.tool artifacts/d002j/data_registry/source_provenance_audit_v1.json > /dev/null;
+  python -m json.tool artifacts/d002j/data_registry/source_access_smoke_v1.json > /dev/null;
+  python -m json.tool artifacts/d002j/data_registry/source_evidence_lock_v1.json > /dev/null;
+  python -m json.tool artifacts/d002j/data_registry/source_registry_audit_summary_v1.json > /dev/null;
+  grep -q "D002J-SOURCE-PROVENANCE-AUDIT-v1" artifacts/d002j/data_registry/source_provenance_audit_v1.json;
+  grep -q "SOURCE_REGISTRY_REJECTED" artifacts/d002j/data_registry/source_provenance_audit_v1.json;
+  grep -q "D-002J-P1A" docs/governance/D002G_CANONICAL_RUN_BLOCKERS.md;
+  test "$(sha256sum docs/governance/D002G_PREREGISTRATION.yaml | awk "{print \$1}")" = "1ab91f09370e4705a8b0849467bc1f56df2e58d58d5623d3b6d905cbd110bb04";
+  test "$(sha256sum docs/governance/D002G_ACCEPTANCE_RULES.md | awk "{print \$1}")" = "875b1e3eb031b8e5333dc8b455454f0a30419ead1ebe787aa01d5882e7d6ad31";
+  test "$(sha256sum docs/governance/D002H_PREREGISTRATION.yaml | awk "{print \$1}")" = "44b18b5a40ce9d188a9c3bd49339621f81a65a15f97a683247902450dd54acec";
+  test "$(sha256sum docs/governance/D002C_CLAIM_LEDGER.yaml | awk "{print \$1}")" = "eb0b7151d76e5409e6dc9bb4a023551de5e0704673d5ac9f726319ef84a32387";
+  test "$(sha256sum docs/governance/D002J_PREREGISTRATION.yaml | awk "{print \$1}")" = "f3dc65b7e64b96eafe6f23ca8bdd0e05dc9bf95b12c2658b227bd0340f7975a0";
+  test "$(sha256sum artifacts/d002j/data_registry/source_registry_v1.json | awk "{print \$1}")" = "0fae24d4c3ef3165509166bec89d6dc5eee806888f352358ad77851e51079b7b"'
+signal_artifact: "artifacts/d002j/data_registry/source_provenance_audit_v1.json"
+falsifier:
+  command: >-
+    bash -c 'set -e;
+    PYTHONPATH=. python -m pytest tests/systemic_risk/test_d002j_source_provenance_audit.py -q || exit 1;
+    test -f artifacts/d002j/data_registry/source_provenance_audit_v1.json || exit 2;
+    test -f artifacts/d002j/data_registry/source_access_smoke_v1.json || exit 3;
+    test -f artifacts/d002j/data_registry/source_evidence_lock_v1.json || exit 4;
+    test -f artifacts/d002j/data_registry/source_registry_audit_summary_v1.json || exit 5;
+    test -f docs/research/D002J_SOURCE_PROVENANCE_AUDIT.md || exit 6;
+    test -f docs/research/D002J_SOURCE_DOWNGRADE_LOG.md || exit 7;
+    test -f docs/research/D002J_P1A_AUDIT_BOUNDARY.md || exit 8;
+    test -f tests/systemic_risk/test_d002j_source_provenance_audit.py || exit 9;
+    test -f .claude/commit_acceptors/x10r-d002j-p1a-source-provenance-audit.yaml || exit 10;
+    grep -q "D002J-SOURCE-PROVENANCE-AUDIT-v1" artifacts/d002j/data_registry/source_provenance_audit_v1.json || exit 11;
+    grep -q "SOURCE_REGISTRY_REJECTED" artifacts/d002j/data_registry/source_provenance_audit_v1.json || exit 12;
+    grep -q "D-002J-P1A" docs/governance/D002G_CANONICAL_RUN_BLOCKERS.md || exit 13;
+    test "$(sha256sum docs/governance/D002J_PREREGISTRATION.yaml | awk "{print \$1}")" = "f3dc65b7e64b96eafe6f23ca8bdd0e05dc9bf95b12c2658b227bd0340f7975a0" || exit 14;
+    test "$(sha256sum artifacts/d002j/data_registry/source_registry_v1.json | awk "{print \$1}")" = "0fae24d4c3ef3165509166bec89d6dc5eee806888f352358ad77851e51079b7b" || exit 15'
+  description: >-
+    Probes the D-002J-P1A audit: 22 tests pass; the four JSON
+    artifacts plus three MD companions plus test plus acceptor plus
+    modified BLOCKERS.md exist on disk; audit JSON valid with pinned
+    schema_version and SOURCE_REGISTRY_REJECTED decision; BLOCKERS.md
+    carries the D-002J-P1A lineage section; D-002J prereg + P1
+    registry sha256 byte-exact. Regression on any -> D-002J-P1A audit
+    contract broken.
+rollback_command: >-
+  bash -c 'rm -f
+  artifacts/d002j/data_registry/source_provenance_audit_v1.json
+  artifacts/d002j/data_registry/source_access_smoke_v1.json
+  artifacts/d002j/data_registry/source_evidence_lock_v1.json
+  artifacts/d002j/data_registry/source_registry_audit_summary_v1.json
+  docs/research/D002J_SOURCE_PROVENANCE_AUDIT.md
+  docs/research/D002J_SOURCE_DOWNGRADE_LOG.md
+  docs/research/D002J_P1A_AUDIT_BOUNDARY.md
+  tests/systemic_risk/test_d002j_source_provenance_audit.py
+  .claude/commit_acceptors/x10r-d002j-p1a-source-provenance-audit.yaml
+  && git checkout HEAD -- docs/governance/D002G_CANONICAL_RUN_BLOCKERS.md'
+rollback_verification_command: >-
+  bash -c 'test ! -f artifacts/d002j/data_registry/source_provenance_audit_v1.json
+  && test ! -f artifacts/d002j/data_registry/source_access_smoke_v1.json
+  && test ! -f docs/research/D002J_SOURCE_PROVENANCE_AUDIT.md
+  && test ! -f tests/systemic_risk/test_d002j_source_provenance_audit.py
+  && test ! -f .claude/commit_acceptors/x10r-d002j-p1a-source-provenance-audit.yaml
+  && ! grep -q "D-002J-P1A" docs/governance/D002G_CANONICAL_RUN_BLOCKERS.md'
+memory_update_type: append
+ledger_path: ".claude/commit_acceptors/x10r-d002j-p1a-source-provenance-audit.yaml"
+report_path: "docs/research/D002J_SOURCE_PROVENANCE_AUDIT.md"
+evidence: []

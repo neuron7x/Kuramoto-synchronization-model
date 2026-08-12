@@ -1,0 +1,276 @@
+# Diff-bound commit acceptor for the D-002J pre-registration PR.
+#
+# D-002J opens a fresh pre-registered lineage AFTER the D-002H canonical
+# sweep delivered the REFUSED verdict (PR #692, merge sha 669d4458) and
+# D-002I (investigation lineage, PR #693, merge sha 2e55b73a) was
+# opened. D-002J locks 5 research questions (RQ1..RQ5), 7 workstreams
+# (W1..W7), 6 crisis windows (CW1..CW6), allowed and forbidden claim
+# boundaries, and a power-first design discipline BEFORE any source
+# code is added under research/systemic_risk/ or any downstream
+# substrate / crisis-window / null-model code is implemented. Each
+# workstream is implemented in a separate downstream PR (D-002J-W1..W7)
+# under a pre-committed protocol.
+#
+# Pure pre-registration: NO source-code edit, NO mechanism change, NO
+# canonical sweep run, NO D-002C ledger touch, NO D-002G or D-002H or
+# D-002I prereg edit, NO prior gate artifact edit. D-002J does NOT
+# claim D-002H REFUSED was wrong (the verdict was truthful) and does
+# NOT rewrite that verdict.
+
+id: x10r-d002j-financial-benchmark-prereg
+status: ACTIVE
+claim_type: governance
+promise: >-
+  After this PR lands, docs/governance/D002J_PREREGISTRATION.yaml
+  exists carrying 5 research questions (RQ1..RQ5), 7 workstreams
+  (W1..W7), 6 crisis windows (CW1..CW6 with canonical year ranges),
+  forbidden_claims (7 entries from plan §14), allowed_claims (6 entries
+  from plan §15), success_criteria (10 entries from plan §16),
+  failure_criteria (8 entries from plan §17), parent_lineage = D-002H,
+  parent_canonical_run_merge_sha
+  250d8069d16ecabdb49b5a20b7cf1d622eddc925,
+  parent_investigation_lineage = D-002I,
+  parent_investigation_prereg_sha
+  44b18b5a40ce9d188a9c3bd49339621f81a65a15f97a683247902450dd54acec,
+  canonical_run_authorized false, benchmark_only true,
+  requires_power_first_approval true, prereg_lock.locked_at_merge true.
+
+  docs/research/D002J_RESEARCH_PLAN.md carries the §1-§22 plan
+  narrative (justification, central goal, central thesis, 5 RQs, 7
+  workstreams, 6 crisis windows, forbidden/allowed claims, success
+  and failure criteria, lineage chain).
+
+  docs/research/D002J_DATA_SOURCE_MATRIX.md (W1 scaffold),
+  docs/research/D002J_CRISIS_WINDOW_REGISTRY.md (W2 scaffold),
+  docs/research/D002J_NULL_MODEL_HIERARCHY.md (W5 scaffold), and
+  docs/research/D002J_POWER_FIRST_PROTOCOL.md (W6 scaffold) all
+  exist with locked acceptance contracts.
+
+  artifacts/d002j/prereg/d002j_preregistration_lock.json exists with
+  schema_version D002J-PREREG-v1, 5 RQs, 7 workstreams, 6 crisis
+  windows, parent_canonical_run_merge_sha pinned,
+  parent_investigation_prereg_sha pinned, locked_at_merge true.
+
+  tests/systemic_risk/test_d002j_preregistration.py carries 14
+  required-by-brief tests including test_d002j_prereg_files_exist,
+  test_d002j_schema_version_pinned,
+  test_d002j_5_research_questions_pinned,
+  test_d002j_7_workstreams_pinned,
+  test_d002j_6_crisis_windows_pinned,
+  test_d002j_crisis_window_year_ranges_pinned,
+  test_d002j_forbidden_claims_content,
+  test_d002j_allowed_claims_content,
+  test_d002j_parent_lineage_d002h,
+  test_d002j_parent_investigation_d002i,
+  test_d002j_d002c_ledger_anchor_field,
+  test_d002j_locked_governance_shas_byte_exact,
+  test_d002j_no_canonical_run_authorisation,
+  test_d002j_prereg_lock_at_merge,
+  test_d002j_success_criteria_pinned,
+  test_d002j_failure_criteria_pinned,
+  test_d002j_blockers_append_landed,
+  test_d002j_research_plan_sections_present,
+  test_d002j_w2_w5_w6_scaffold_contracts_present.
+
+  docs/governance/D002G_CANONICAL_RUN_BLOCKERS.md gains an append-only
+  D-002J lineage opened section naming RQ1..RQ5, W1..W7, CW1..CW6 and
+  the parent REFUSED verdict.
+
+  D-002G prereg byte-exact
+  1ab91f09370e4705a8b0849467bc1f56df2e58d58d5623d3b6d905cbd110bb04.
+  D-002G acceptance rules byte-exact
+  875b1e3eb031b8e5333dc8b455454f0a30419ead1ebe787aa01d5882e7d6ad31.
+  D-002H prereg byte-exact
+  44b18b5a40ce9d188a9c3bd49339621f81a65a15f97a683247902450dd54acec.
+  D-002C claim ledger byte-exact at the post-D-002H-REFUSED-append
+  anchor eb0b7151d76e5409e6dc9bb4a023551de5e0704673d5ac9f726319ef84a32387.
+
+  Pure pre-registration: NO new source code, NO new mechanism, NO
+  canonical sweep run, NO prior-gate artifact edit. D-002J is
+  benchmark, not validation. D-002H REFUSED remains the truthful
+  canonical verdict; D-002J does NOT retroactively flip it. D-002J
+  does NOT pre-empt D-002I investigation outcomes.
+
+diff_scope:
+  changed_files:
+    - path: "docs/governance/D002J_PREREGISTRATION.yaml"
+    - path: "docs/research/D002J_RESEARCH_PLAN.md"
+    - path: "docs/research/D002J_DATA_SOURCE_MATRIX.md"
+    - path: "docs/research/D002J_CRISIS_WINDOW_REGISTRY.md"
+    - path: "docs/research/D002J_NULL_MODEL_HIERARCHY.md"
+    - path: "docs/research/D002J_POWER_FIRST_PROTOCOL.md"
+    - path: "artifacts/d002j/prereg/d002j_preregistration_lock.json"
+    - path: "tests/systemic_risk/test_d002j_preregistration.py"
+    - path: ".claude/commit_acceptors/x10r-d002j-financial-benchmark-prereg.yaml"
+    - path: "docs/governance/D002G_CANONICAL_RUN_BLOCKERS.md"
+    - path: "scripts/x10r_d002h_gate_d_scan.py"
+  forbidden_paths:
+    - "docs/governance/D002C_CLAIM_LEDGER.yaml"
+    - "docs/governance/D002C_PREREGISTRATION.yaml"
+    - "docs/governance/D002C_CANONICAL_RUN_REPORT.md"
+    - "docs/governance/D002C_ATTEMPT_2_NULL_AUDIT_FALSIFICATION_REPORT.md"
+    - "docs/governance/D002G_ACCEPTANCE_RULES.md"
+    - "docs/governance/D002G_PREREGISTRATION.yaml"
+    - "docs/governance/D002G_NONDEGENERATE_NULL_DESIGN.md"
+    - "docs/governance/D002G_P3_M3_PREREGISTRATION.md"
+    - "docs/governance/D002G_STRUCTURAL_CLOSURE_REPORT.md"
+    - "docs/governance/D002G_NEGATIVE_SPACE_MAP.md"
+    - "docs/governance/D002G_M3_ELIGIBILITY_MATRIX.md"
+    - "docs/governance/D002H_PREREGISTRATION.yaml"
+    - "docs/governance/D002H_SCOPE_RATIONALE.md"
+    - "docs/governance/D002H_CLAIM_BOUNDARY.md"
+    - "docs/governance/D002H_CANONICAL_RUN_AUTHORIZATION_GATES.md"
+    - "docs/governance/D002H_GATE_B_REPORT.md"
+    - "docs/governance/D002H_GATE_C_CANONICAL_GRID.md"
+    - "docs/governance/D002H_GATE_D_FORBIDDEN_CLAIM_SCAN.md"
+    - "docs/governance/D002H_GATE_E_LOCKED_FILE_REPORT.md"
+    - "docs/governance/D002H_GATE_F_AUTHORIZATION_REPORT.md"
+    - "docs/governance/D002H_GATE_G_CI_LOCK_REPORT.md"
+    - "docs/governance/D002H_R2B_INAPPLICABILITY_NOTE.md"
+    - "docs/governance/D002H_CANONICAL_RUN_REPORT.md"
+    - "docs/governance/D002I_PREREGISTRATION.yaml"
+    - "docs/governance/D002I_INVESTIGATION_RATIONALE.md"
+    - "docs/governance/D002I_CLAIM_BOUNDARY.md"
+    - "artifacts/d002h/prereg/d002h_preregistration_lock.json"
+    - "artifacts/d002h/eligibility/d002h_ricci_eligibility.json"
+    - "artifacts/d002h/canonical/d002h_canonical_grid.json"
+    - "artifacts/d002h/canonical/d002h_canonical_run_verdict.json"
+    - "artifacts/d002h/scans/d002h_forbidden_claim_scan.json"
+    - "artifacts/d002h/locks/d002h_locked_file_pins.json"
+    - "artifacts/d002h/authorization/d002h_canonical_run_authorisation.json"
+    - "artifacts/d002h/authorization/d002h_canonical_run_final_lock.json"
+    - "artifacts/d002h/canonical/results/"
+    - "artifacts/d002i/prereg/d002i_preregistration_lock.json"
+    - "research/systemic_risk/d002c_substrates.py"
+    - "research/systemic_risk/d002g_null_mechanisms.py"
+    - "artifacts/d002g/closure/"
+    - "artifacts/d002g/m3/"
+    - "artifacts/d002g/p3/"
+    - "artifacts/d002g/canonical/"
+required_python_symbols:
+  - "tests.systemic_risk.test_d002j_preregistration.test_d002j_prereg_files_exist"
+  - "tests.systemic_risk.test_d002j_preregistration.test_d002j_schema_version_pinned"
+  - "tests.systemic_risk.test_d002j_preregistration.test_d002j_5_research_questions_pinned"
+  - "tests.systemic_risk.test_d002j_preregistration.test_d002j_7_workstreams_pinned"
+  - "tests.systemic_risk.test_d002j_preregistration.test_d002j_6_crisis_windows_pinned"
+  - "tests.systemic_risk.test_d002j_preregistration.test_d002j_crisis_window_year_ranges_pinned"
+  - "tests.systemic_risk.test_d002j_preregistration.test_d002j_forbidden_claims_content"
+  - "tests.systemic_risk.test_d002j_preregistration.test_d002j_allowed_claims_content"
+  - "tests.systemic_risk.test_d002j_preregistration.test_d002j_parent_lineage_d002h"
+  - "tests.systemic_risk.test_d002j_preregistration.test_d002j_parent_investigation_d002i"
+  - "tests.systemic_risk.test_d002j_preregistration.test_d002j_d002c_ledger_anchor_field"
+  - "tests.systemic_risk.test_d002j_preregistration.test_d002j_locked_governance_shas_byte_exact"
+  - "tests.systemic_risk.test_d002j_preregistration.test_d002j_no_canonical_run_authorisation"
+  - "tests.systemic_risk.test_d002j_preregistration.test_d002j_prereg_lock_at_merge"
+  - "tests.systemic_risk.test_d002j_preregistration.test_d002j_success_criteria_pinned"
+  - "tests.systemic_risk.test_d002j_preregistration.test_d002j_failure_criteria_pinned"
+  - "tests.systemic_risk.test_d002j_preregistration.test_d002j_blockers_append_landed"
+  - "tests.systemic_risk.test_d002j_preregistration.test_d002j_research_plan_sections_present"
+  - "tests.systemic_risk.test_d002j_preregistration.test_d002j_w2_w5_w6_scaffold_contracts_present"
+expected_signal: >-
+  `PYTHONPATH=. python -m pytest
+  tests/systemic_risk/test_d002j_preregistration.py -q` passes all
+  cases; D002J_PREREGISTRATION.yaml lists 5 research questions
+  (RQ1..RQ5), 7 workstreams (W1..W7), 6 crisis windows (CW1..CW6);
+  parent_canonical_run_merge_sha pinned to
+  250d8069d16ecabdb49b5a20b7cf1d622eddc925;
+  parent_investigation_prereg_sha pinned to
+  44b18b5a40ce9d188a9c3bd49339621f81a65a15f97a683247902450dd54acec;
+  canonical_run_authorized false; benchmark_only true;
+  requires_power_first_approval true;
+  D002G_CANONICAL_RUN_BLOCKERS.md gains the append-only D-002J
+  lineage opened section; D-002G prereg sha256 byte-exact at
+  1ab91f09370e4705a8b0849467bc1f56df2e58d58d5623d3b6d905cbd110bb04;
+  D-002G acceptance rules sha256 byte-exact at
+  875b1e3eb031b8e5333dc8b455454f0a30419ead1ebe787aa01d5882e7d6ad31;
+  D-002H prereg sha256 byte-exact at
+  44b18b5a40ce9d188a9c3bd49339621f81a65a15f97a683247902450dd54acec;
+  D-002C claim ledger sha256 byte-exact at the
+  post-D-002H-REFUSED-append anchor
+  eb0b7151d76e5409e6dc9bb4a023551de5e0704673d5ac9f726319ef84a32387.
+measurement_command: >-
+  bash -c 'set -e;
+  PYTHONPATH=. python -m pytest tests/systemic_risk/test_d002j_preregistration.py -q;
+  test -f docs/governance/D002J_PREREGISTRATION.yaml;
+  test -f docs/research/D002J_RESEARCH_PLAN.md;
+  test -f docs/research/D002J_DATA_SOURCE_MATRIX.md;
+  test -f docs/research/D002J_CRISIS_WINDOW_REGISTRY.md;
+  test -f docs/research/D002J_NULL_MODEL_HIERARCHY.md;
+  test -f docs/research/D002J_POWER_FIRST_PROTOCOL.md;
+  test -f artifacts/d002j/prereg/d002j_preregistration_lock.json;
+  grep -q "study_id: D-002J" docs/governance/D002J_PREREGISTRATION.yaml;
+  grep -q "250d8069d16ecabdb49b5a20b7cf1d622eddc925" docs/governance/D002J_PREREGISTRATION.yaml;
+  grep -q "RQ1" docs/governance/D002J_PREREGISTRATION.yaml;
+  grep -q "RQ5" docs/governance/D002J_PREREGISTRATION.yaml;
+  grep -q "W1" docs/governance/D002J_PREREGISTRATION.yaml;
+  grep -q "W7" docs/governance/D002J_PREREGISTRATION.yaml;
+  grep -q "CW1" docs/governance/D002J_PREREGISTRATION.yaml;
+  grep -q "CW6" docs/governance/D002J_PREREGISTRATION.yaml;
+  grep -q "D-002J lineage opened" docs/governance/D002G_CANONICAL_RUN_BLOCKERS.md;
+  test "$(sha256sum docs/governance/D002G_PREREGISTRATION.yaml | awk "{print \$1}")" = "1ab91f09370e4705a8b0849467bc1f56df2e58d58d5623d3b6d905cbd110bb04";
+  test "$(sha256sum docs/governance/D002G_ACCEPTANCE_RULES.md | awk "{print \$1}")" = "875b1e3eb031b8e5333dc8b455454f0a30419ead1ebe787aa01d5882e7d6ad31";
+  test "$(sha256sum docs/governance/D002H_PREREGISTRATION.yaml | awk "{print \$1}")" = "44b18b5a40ce9d188a9c3bd49339621f81a65a15f97a683247902450dd54acec";
+  test "$(sha256sum docs/governance/D002C_CLAIM_LEDGER.yaml | awk "{print \$1}")" = "eb0b7151d76e5409e6dc9bb4a023551de5e0704673d5ac9f726319ef84a32387"'
+signal_artifact: "docs/governance/D002J_PREREGISTRATION.yaml"
+falsifier:
+  command: >-
+    bash -c 'set -e;
+    PYTHONPATH=. python -m pytest tests/systemic_risk/test_d002j_preregistration.py -q || exit 1;
+    test -f docs/governance/D002J_PREREGISTRATION.yaml || exit 2;
+    test -f docs/research/D002J_RESEARCH_PLAN.md || exit 3;
+    test -f docs/research/D002J_DATA_SOURCE_MATRIX.md || exit 4;
+    test -f docs/research/D002J_CRISIS_WINDOW_REGISTRY.md || exit 5;
+    test -f docs/research/D002J_NULL_MODEL_HIERARCHY.md || exit 6;
+    test -f docs/research/D002J_POWER_FIRST_PROTOCOL.md || exit 7;
+    test -f artifacts/d002j/prereg/d002j_preregistration_lock.json || exit 8;
+    test -f tests/systemic_risk/test_d002j_preregistration.py || exit 9;
+    test -f .claude/commit_acceptors/x10r-d002j-financial-benchmark-prereg.yaml || exit 10;
+    grep -q "study_id: D-002J" docs/governance/D002J_PREREGISTRATION.yaml || exit 11;
+    grep -q "250d8069d16ecabdb49b5a20b7cf1d622eddc925" docs/governance/D002J_PREREGISTRATION.yaml || exit 12;
+    grep -q "RQ1" docs/governance/D002J_PREREGISTRATION.yaml || exit 13;
+    grep -q "RQ5" docs/governance/D002J_PREREGISTRATION.yaml || exit 14;
+    grep -q "W7" docs/governance/D002J_PREREGISTRATION.yaml || exit 15;
+    grep -q "CW6" docs/governance/D002J_PREREGISTRATION.yaml || exit 16;
+    grep -q "D-002J lineage opened" docs/governance/D002G_CANONICAL_RUN_BLOCKERS.md || exit 17;
+    test "$(sha256sum docs/governance/D002G_PREREGISTRATION.yaml | awk "{print \$1}")" = "1ab91f09370e4705a8b0849467bc1f56df2e58d58d5623d3b6d905cbd110bb04" || exit 18;
+    test "$(sha256sum docs/governance/D002G_ACCEPTANCE_RULES.md | awk "{print \$1}")" = "875b1e3eb031b8e5333dc8b455454f0a30419ead1ebe787aa01d5882e7d6ad31" || exit 19;
+    test "$(sha256sum docs/governance/D002H_PREREGISTRATION.yaml | awk "{print \$1}")" = "44b18b5a40ce9d188a9c3bd49339621f81a65a15f97a683247902450dd54acec" || exit 20;
+    test "$(sha256sum docs/governance/D002C_CLAIM_LEDGER.yaml | awk "{print \$1}")" = "eb0b7151d76e5409e6dc9bb4a023551de5e0704673d5ac9f726319ef84a32387" || exit 21'
+  description: >-
+    Probes the D-002J financial-mechanistic systemic-risk benchmark
+    pre-registration: tests pass; 9 files exist on disk (prereg YAML,
+    research plan MD, W1/W2/W5/W6 scaffold MDs, prereg lock JSON, test
+    module, commit acceptor); the prereg names study_id D-002J, parent
+    canonical sweep merge sha 250d8069..., all 5 RQs RQ1..RQ5, all 7
+    workstreams W1..W7, all 6 crisis windows CW1..CW6; BLOCKERS.md
+    gains the append-only D-002J lineage opened section; D-002G
+    prereg, D-002G acceptance rules, D-002H prereg, and D-002C claim
+    ledger sha256 all byte-exact at their locked anchors. Regression
+    on any -> D-002J pre-registration contract broken.
+rollback_command: >-
+  bash -c 'rm -rf
+  docs/governance/D002J_PREREGISTRATION.yaml
+  docs/research/D002J_RESEARCH_PLAN.md
+  docs/research/D002J_DATA_SOURCE_MATRIX.md
+  docs/research/D002J_CRISIS_WINDOW_REGISTRY.md
+  docs/research/D002J_NULL_MODEL_HIERARCHY.md
+  docs/research/D002J_POWER_FIRST_PROTOCOL.md
+  artifacts/d002j/
+  tests/systemic_risk/test_d002j_preregistration.py
+  .claude/commit_acceptors/x10r-d002j-financial-benchmark-prereg.yaml
+  && git checkout HEAD~1 -- docs/governance/D002G_CANONICAL_RUN_BLOCKERS.md'
+rollback_verification_command: >-
+  bash -c 'test ! -f docs/governance/D002J_PREREGISTRATION.yaml
+  && test ! -f docs/research/D002J_RESEARCH_PLAN.md
+  && test ! -f docs/research/D002J_DATA_SOURCE_MATRIX.md
+  && test ! -f docs/research/D002J_CRISIS_WINDOW_REGISTRY.md
+  && test ! -f docs/research/D002J_NULL_MODEL_HIERARCHY.md
+  && test ! -f docs/research/D002J_POWER_FIRST_PROTOCOL.md
+  && test ! -d artifacts/d002j
+  && test ! -f tests/systemic_risk/test_d002j_preregistration.py
+  && test ! -f .claude/commit_acceptors/x10r-d002j-financial-benchmark-prereg.yaml
+  && ! grep -q "D-002J lineage opened" docs/governance/D002G_CANONICAL_RUN_BLOCKERS.md'
+memory_update_type: append
+ledger_path: ".claude/commit_acceptors/x10r-d002j-financial-benchmark-prereg.yaml"
+report_path: "docs/research/D002J_RESEARCH_PLAN.md"
+evidence: []

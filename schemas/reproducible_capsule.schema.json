@@ -1,0 +1,109 @@
+{
+  "$schema": "https://json-schema.org/draft/2020-12/schema",
+  "$id": "https://schemas.neuron7xlab.org/reproducible_capsule.schema.json",
+  "title": "Reproducible Capsule Manifest",
+  "description": "Contract for a reproducible-infrastructure capsule manifest. A capsule is the byte-deterministic output of a dependency-light generator, hash-pinned for integrity and regenerable for reproducibility. It proves infrastructure reproducibility ONLY and is never empirical evidence: is_empirical_evidence is fixed false and evidence_class is fixed REPRODUCIBLE_INFRASTRUCTURE_PROOF. Unknown top-level fields fail validation so a capsule cannot be malformed silently.",
+  "type": "object",
+  "additionalProperties": false,
+  "required": [
+    "schema_version",
+    "capsule_id",
+    "artifact_role",
+    "evidence_class",
+    "is_empirical_evidence",
+    "generator",
+    "git_sha",
+    "source_date_epoch",
+    "created_at_utc",
+    "verify_command",
+    "artifacts",
+    "sha256_manifest",
+    "claim_boundary"
+  ],
+  "properties": {
+    "schema_version": {
+      "const": "geosync.reproducible_capsule.v1",
+      "description": "Pinned schema identity. Bump the vN suffix on any breaking envelope change."
+    },
+    "capsule_id": {
+      "type": "string",
+      "pattern": "^[a-z][a-z0-9_]{2,63}$",
+      "description": "Stable lowercase identifier for the capsule lineage."
+    },
+    "artifact_role": {
+      "const": "instrumentation_capsule",
+      "description": "Fixed role. A reproducible capsule instruments integrity/reproducibility; it is not a research or evidence artifact."
+    },
+    "evidence_class": {
+      "const": "REPRODUCIBLE_INFRASTRUCTURE_PROOF",
+      "description": "Fixed evidence class. The capsule proves the infrastructure reproduces; it asserts nothing empirical."
+    },
+    "is_empirical_evidence": {
+      "const": false,
+      "description": "Always false. A reproducible capsule may never be interpreted as empirical market evidence."
+    },
+    "generator": {
+      "type": "string",
+      "minLength": 1,
+      "description": "The exact command that regenerates the bundle bit-for-bit."
+    },
+    "git_sha": {
+      "type": "string",
+      "pattern": "^[0-9a-f]{40}$",
+      "description": "Repository git SHA the capsule was generated against (provenance)."
+    },
+    "source_date_epoch": {
+      "type": "integer",
+      "minimum": 0,
+      "description": "Pinned SOURCE_DATE_EPOCH under which the bundle is byte-reproducible."
+    },
+    "created_at_utc": {
+      "type": "string",
+      "format": "date-time",
+      "pattern": "Z$",
+      "description": "Deterministic creation time derived from source_date_epoch (UTC, trailing Z)."
+    },
+    "verify_command": {
+      "type": "string",
+      "minLength": 1,
+      "description": "The command that proves on-disk bytes equal a fresh regeneration."
+    },
+    "artifacts": {
+      "type": "array",
+      "minItems": 1,
+      "description": "Hash-pinned bundle files. Every path is repo-relative; every digest is SHA-256.",
+      "items": {
+        "type": "object",
+        "additionalProperties": false,
+        "required": ["path", "sha256", "bytes"],
+        "properties": {
+          "path": {
+            "type": "string",
+            "pattern": "^(?!/)(?!.*\\.\\.)[A-Za-z0-9._/-]+$",
+            "description": "Repo-relative path. Absolute paths and '..' traversal are rejected."
+          },
+          "sha256": {
+            "type": "string",
+            "pattern": "^[0-9a-f]{64}$",
+            "description": "Lowercase hex SHA-256 of the artifact file."
+          },
+          "bytes": {
+            "type": "integer",
+            "minimum": 0,
+            "description": "Size of the artifact in bytes."
+          }
+        }
+      }
+    },
+    "sha256_manifest": {
+      "type": "string",
+      "pattern": "^[0-9a-f]{64}$",
+      "description": "SHA-256 of the bundle's own SHA256SUMS file (manifest-of-manifests anchor)."
+    },
+    "claim_boundary": {
+      "type": "string",
+      "minLength": 1,
+      "description": "Plain-language boundary: infrastructure reproducibility only, never empirical market evidence."
+    }
+  }
+}

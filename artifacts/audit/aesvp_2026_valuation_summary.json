@@ -1,0 +1,203 @@
+{
+  "schema_version": "aesvp-2026-valuation-summary.v1",
+  "repository": "neuron7xLab/GeoSync",
+  "record_type": "engineering_work_product_replacement_cost_assessment",
+  "measured_commit_sha1_parts": ["2d2f638f", "6db1e4ab", "6d6b4928", "da3ac356", "4920a5f3"],
+  "measured_commit_reconstruction_rule": "Concatenate measured_commit_sha1_parts in order.",
+  "measured_branch": "work",
+  "audit_timestamp_utc": "2026-06-04T08:05:53Z",
+  "scope": {
+    "file_selection": "100_percent_git_ls_files",
+    "excluded_claims": [
+      "product_sale_price",
+      "startup_valuation",
+      "revenue_potential",
+      "official_us_gaap_capitalization",
+      "strategic_premium"
+    ],
+    "confidence": "medium",
+    "confidence_reason": "Metrics are internally consistent, but generated/vendor classification and accounting-stage evidence remain unresolved."
+  },
+  "repository_metrics": {
+    "tracked_files": 5360,
+    "total_text_lines": 1285631,
+    "text_sloc": 1061865,
+    "source_sloc": 582058,
+    "source_ksloc": 582.058,
+    "python_sloc": 552036,
+    "python_functions": 32497,
+    "python_test_files": 1484,
+    "property_test_files": 150,
+    "assert_statements": 29860,
+    "critical_function_heuristic": 3535,
+    "branch_nodes": 40366,
+    "try_nodes": 1983,
+    "except_handlers": 1916,
+    "raise_nodes": 6118,
+    "eval_exec_call_sites": 26,
+    "unsafe_yaml_load_files": 0,
+    "validation_symbols": 189,
+    "pydantic_references": 330,
+    "sha256_references": 2844,
+    "jsonl_references": 496,
+    "todo_fixme_markers": 50,
+    "complexity_over_10_count": 811,
+    "dependency_manifests": 50,
+    "ci_workflows": 27,
+    "security_workflows": 15,
+    "audit_governance_artifacts": 378,
+    "claims_evidence_artifacts": 205,
+    "test_to_source_ratio": 0.374893910916,
+    "property_test_density": 0.04243281471,
+    "documentation_to_source_ratio": 0.162866930787
+  },
+  "source_sloc_by_extension": {
+    ".py": 552036,
+    ".js": 10852,
+    ".tf": 8937,
+    ".tsx": 2150,
+    ".html": 1531,
+    ".ts": 1298,
+    ".sh": 1068,
+    ".go": 706,
+    ".rs": 666,
+    ".tla": 600,
+    ".mmd": 559,
+    ".sql": 507,
+    ".css": 365,
+    ".proto": 353,
+    ".tpl": 181,
+    ".j2": 146,
+    ".avsc": 103
+  },
+  "model_inputs": {
+    "replacement_cost_formula": "V_RC = A * KSLOC_equ^E * EM * H_pm * R_labor",
+    "exponent_formula": "E = 1.01 + 0.01 * sum(SF)",
+    "A": 2.94,
+    "scale_factors": [1.24, 5.07, 1.41, 1.10, 1.56],
+    "scale_factor_sum": 10.38,
+    "E": 1.1138,
+    "KSLOC_equ": 582.058,
+    "H_pm": 152,
+    "labor_rates_usd_per_hour": {
+      "low": 90,
+      "central": 120,
+      "high": 150
+    },
+    "effort_multipliers": {
+      "low": 0.75,
+      "central": 1.0,
+      "high": 1.25
+    }
+  },
+  "quality_index": {
+    "D_idx": 0.979264727741,
+    "V_bounds": 0.949903660886,
+    "C_inv": 0.04243281471,
+    "Psi_AQI": 0.734780376084,
+    "weights": {
+      "D_idx": 0.40,
+      "V_bounds": 0.35,
+      "C_inv": 0.25
+    }
+  },
+  "technical_debt_discount": {
+    "complexity_factor": 0.013765205092,
+    "dynamic_execution_factor": 0.000019323193,
+    "property_test_gap_factor": 0.008989218329,
+    "todo_fixme_factor": 0.010000000000,
+    "total_debt_factor": 0.032773746614,
+    "central_impact_usd": 2111143
+  },
+  "valuation_outputs_usd": {
+    "low": {
+      "labor_rate": 90,
+      "effort_multiplier": 0.75,
+      "V_RC": 36233819,
+      "Omega_TDB": 1187518,
+      "TCAV_verified_rmd_zero": 25436381
+    },
+    "central": {
+      "labor_rate": 120,
+      "effort_multiplier": 1.0,
+      "V_RC": 64415679,
+      "Omega_TDB": 2111143,
+      "TCAV_verified_rmd_zero": 45220234
+    },
+    "high": {
+      "labor_rate": 150,
+      "effort_multiplier": 1.25,
+      "V_RC": 100649498,
+      "Omega_TDB": 3298661,
+      "TCAV_verified_rmd_zero": 70656615
+    }
+  },
+  "practical_rebuild_model_usd": {
+    "lean_rebuild": 646304,
+    "enterprise_rebuild": 2789200,
+    "full_tracked_tree_reconstruction": 6116480
+  },
+  "engineering_capitalization_filter_usd": {
+    "official_accounting_claim": false,
+    "engineering_candidate_total": 1213302,
+    "surfaces": {
+      "development_implemented_software": {
+        "candidate": "partial",
+        "allocation": 1171464,
+        "candidate_amount": 820025,
+        "blocker": "Missing owner approval, time records, and accounting-stage evidence."
+      },
+      "testing_verification": {
+        "candidate": "partial",
+        "allocation": 446272,
+        "candidate_amount": 223136,
+        "blocker": "Some tests unavailable in environment; property-test density is low."
+      },
+      "security_compliance": {
+        "candidate": "partial",
+        "allocation": 223136,
+        "candidate_amount": 100411,
+        "blocker": "Prior audit issues require remediation evidence."
+      },
+      "documentation_governance": {
+        "candidate": "partial",
+        "allocation": 278920,
+        "candidate_amount": 69730,
+        "blocker": "Not all governance content maps directly to development-stage assets."
+      },
+      "research_hypothesis": {
+        "candidate": "no",
+        "allocation": 502056,
+        "candidate_amount": 0,
+        "blocker": "Hypothesis/evidence exploration is excluded."
+      },
+      "maintenance_technical_debt": {
+        "candidate": "no",
+        "allocation": 167352,
+        "candidate_amount": 0,
+        "blocker": "Debt remediation is excluded."
+      }
+    }
+  },
+  "gates": {
+    "G1_strict_input_type_check": {"status": "partial", "primary_blocker": "Strict validation coverage is not universal."},
+    "G2_cryptographic_integrity": {"status": "pass", "primary_blocker": "No blocker for repository-level hash evidence."},
+    "G3_side_effect_isolation": {"status": "partial", "primary_blocker": "High-complexity runtime/API functions remain."},
+    "G4_property_based_sufficiency": {"status": "partial", "primary_blocker": "Property-test density is 0.042432814710."},
+    "G5_idempotency_verification": {"status": "partial", "primary_blocker": "Per-entrypoint idempotency witnesses are incomplete."},
+    "G6_tamper_detection": {"status": "partial", "primary_blocker": "Config and CI hardening evidence is incomplete."},
+    "G7_zero_unhandled_exceptions": {"status": "partial", "primary_blocker": "Fail-closed exception taxonomy is not universal."},
+    "G8_traceability_matrix": {"status": "partial", "primary_blocker": "Requirement-to-line mapping is incomplete."},
+    "G9_audit_provenance": {"status": "partial", "primary_blocker": "Signed JSONL provenance is not universal."},
+    "G10_technical_debt_control": {"status": "fail", "primary_blocker": "811 functions exceed complexity 10."},
+    "G11_accounting_stage_traceability": {"status": "partial", "primary_blocker": "No full research/development accounting ledger."}
+  },
+  "falsification_rules": [
+    "The measured metrics cannot be reproduced from tracked files at the stated commit.",
+    "Source SLOC includes generated or vendor artifacts without disclosure.",
+    "CI, test, or security passing is claimed without fresh evidence.",
+    "The record is used as a sale-price, startup-value, revenue, or official capitalization claim.",
+    "The companion markdown appendix diverges from this JSON record."
+  ],
+  "supported_statement": "GeoSync has a measured AESVP-2026 central engineering TCAV of $45,220,234 for the stated audit snapshot. The defensible claim is a formula-bound engineering replacement-cost assessment of the measured repository state."
+}

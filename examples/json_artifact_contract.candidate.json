@@ -1,0 +1,96 @@
+{
+  "contract_type": "repository_repair_contract",
+  "objective": {
+    "target_state": "external validation ready",
+    "current_state": "no external runner evidence",
+    "transformation": "emit deterministic contract for external validation",
+    "action_vector": "earn -> exit -> build systems",
+    "optimization": {
+      "minimize": [
+        "E_stress",
+        "H_entropy",
+        "epsilon_error",
+        "token_cost",
+        "ambiguity",
+        "fake_validation"
+      ],
+      "maximize": [
+        "V_system",
+        "V_autonomy",
+        "V_verified_progress"
+      ]
+    }
+  },
+  "inputs": {
+    "required": [
+      "external_runner_output"
+    ],
+    "provided": [
+      "contract_spec"
+    ],
+    "missing": [
+      "external_runner_output"
+    ],
+    "assumptions": [
+      "No runner evidence is attached."
+    ]
+  },
+  "definitions": [],
+  "execution_plan": [
+    {
+      "step_id": "P1",
+      "action": "validate json syntax",
+      "input": "contract file",
+      "output": "parser result",
+      "tool_required": "python",
+      "failure_condition": "invalid json"
+    }
+  ],
+  "python_runner_contract": {
+    "required": true,
+    "entrypoint": "tools/validate_json_artifact_contract.py",
+    "commands": [
+      "python tools/validate_json_artifact_contract.py examples/json_artifact_contract.candidate.json --out artifacts/validation/json_artifact_contract.result.json"
+    ],
+    "expected_artifacts": [
+      "artifacts/validation/json_artifact_contract.result.json"
+    ],
+    "timeout_seconds": 300,
+    "success_criteria": [
+      "validator exits 0"
+    ],
+    "failure_criteria": [
+      "validator exits nonzero"
+    ]
+  },
+  "validation_tests": [],
+  "failure_register": [],
+  "evidence_status": {
+    "external_evidence_available": false,
+    "evidence_source": "unavailable",
+    "tests_executed": [],
+    "tests_not_executed": [
+      "external_runner"
+    ],
+    "score": null,
+    "confidence": 0.65,
+    "status": "CANDIDATE_NOT_VALIDATED"
+  },
+  "output_constraints": {
+    "json_only": true,
+    "no_markdown": true,
+    "no_prose": true,
+    "no_self_scoring": true,
+    "no_simulated_tests": true,
+    "no_validation_without_evidence": true,
+    "minimize_tokens": true
+  },
+  "next_deterministic_action": "python tools/validate_json_artifact_contract.py examples/json_artifact_contract.candidate.json --out artifacts/validation/json_artifact_contract.result.json",
+  "final_verdict": {
+    "status": "CANDIDATE_NOT_VALIDATED",
+    "reason": "External evidence is absent.",
+    "evidence_required": [
+      "validator output"
+    ]
+  }
+}

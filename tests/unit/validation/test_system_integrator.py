@@ -1,5 +1,7 @@
-# SPDX-License-Identifier: LicenseRef-TradePulse-Proprietary
+# Copyright (c) 2023-2026 Yaroslav Vasylenko (neuron7xLab)
+# SPDX-License-Identifier: MIT
 """Unit tests for core.validation.system_integrator module."""
+
 from __future__ import annotations
 
 import numpy as np
@@ -52,9 +54,7 @@ class TestSystemState:
         assert state.thermodynamic.free_energy == 1e-18
 
     def test_with_pathway(self) -> None:
-        pathway = PathwayState(
-            dopamine=0.5, serotonin=0.5, excitation=0.5, inhibition=0.5
-        )
+        pathway = PathwayState(dopamine=0.5, serotonin=0.5, excitation=0.5, inhibition=0.5)
         state = SystemState(pathway=pathway)
         assert state.pathway is not None
         assert state.pathway.dopamine == 0.5
@@ -67,9 +67,7 @@ class TestSystemState:
 
     def test_combined_state(self) -> None:
         thermo = ThermodynamicState(free_energy=1e-18, entropy=0.5)
-        pathway = PathwayState(
-            dopamine=0.5, serotonin=0.5, excitation=0.5, inhibition=0.5
-        )
+        pathway = PathwayState(dopamine=0.5, serotonin=0.5, excitation=0.5, inhibition=0.5)
         data = np.array([1.0, 2.0, 3.0])
         state = SystemState(
             thermodynamic=thermo,
@@ -201,9 +199,7 @@ class TestValidate:
 
     def test_neuro_only(self) -> None:
         integrator = SystemIntegrator()
-        pathway = PathwayState(
-            dopamine=0.5, serotonin=0.5, excitation=0.5, inhibition=0.5
-        )
+        pathway = PathwayState(dopamine=0.5, serotonin=0.5, excitation=0.5, inhibition=0.5)
         state = SystemState(pathway=pathway)
         report = integrator.validate(state)
         assert report.is_valid
@@ -222,9 +218,7 @@ class TestValidate:
     def test_all_domains(self) -> None:
         integrator = SystemIntegrator()
         thermo = ThermodynamicState(free_energy=0.0, entropy=0.5)
-        pathway = PathwayState(
-            dopamine=0.5, serotonin=0.5, excitation=0.5, inhibition=0.5
-        )
+        pathway = PathwayState(dopamine=0.5, serotonin=0.5, excitation=0.5, inhibition=0.5)
         data = np.array([1.0, 2.0, 3.0])
         state = SystemState(thermodynamic=thermo, pathway=pathway, data=data)
         report = integrator.validate(state)
@@ -246,9 +240,7 @@ class TestValidate:
 
     def test_neuro_validation_failure(self) -> None:
         neuro_config = NeuroIntegrityConfig(min_coherence=0.5)
-        config = SystemValidationConfig(
-            neuro_config=neuro_config, cross_domain_checks=False
-        )
+        config = SystemValidationConfig(neuro_config=neuro_config, cross_domain_checks=False)
         integrator = SystemIntegrator(config)
         pathway = PathwayState(
             dopamine=0.5,
@@ -300,9 +292,7 @@ class TestValidate:
     def test_health_level_optimal(self) -> None:
         integrator = SystemIntegrator()
         thermo = ThermodynamicState(free_energy=0.0, entropy=0.5)
-        pathway = PathwayState(
-            dopamine=0.5, serotonin=0.5, excitation=0.5, inhibition=0.5
-        )
+        pathway = PathwayState(dopamine=0.5, serotonin=0.5, excitation=0.5, inhibition=0.5)
         data = np.array([1.0, 2.0, 3.0])
         state = SystemState(thermodynamic=thermo, pathway=pathway, data=data)
         report = integrator.validate(state)
@@ -342,12 +332,8 @@ class TestValidateTransition:
 
     def test_neuro_transition(self) -> None:
         integrator = SystemIntegrator()
-        pathway1 = PathwayState(
-            dopamine=0.5, serotonin=0.5, excitation=0.5, inhibition=0.5
-        )
-        pathway2 = PathwayState(
-            dopamine=0.6, serotonin=0.5, excitation=0.5, inhibition=0.5
-        )
+        pathway1 = PathwayState(dopamine=0.5, serotonin=0.5, excitation=0.5, inhibition=0.5)
+        pathway2 = PathwayState(dopamine=0.6, serotonin=0.5, excitation=0.5, inhibition=0.5)
         state1 = SystemState(pathway=pathway1)
         state2 = SystemState(pathway=pathway2)
         report = integrator.validate_transition(state1, state2, dt=1.0)
@@ -386,10 +372,7 @@ class TestCrossDomainConsistency:
         data = np.array([1.0, 1.0, 1.0, 1.0, 1.0])  # Very low CV
         state = SystemState(thermodynamic=thermo, data=data)
         report = integrator.validate(state)
-        assert any(
-            "Entropy-variability mismatch" in issue
-            for issue in report.cross_domain_issues
-        )
+        assert any("Entropy-variability mismatch" in issue for issue in report.cross_domain_issues)
 
     def test_neural_energy_mismatch(self) -> None:
         config = SystemValidationConfig(
@@ -408,9 +391,7 @@ class TestCrossDomainConsistency:
         )
         state = SystemState(thermodynamic=thermo, pathway=pathway)
         report = integrator.validate(state)
-        assert any(
-            "Neural-energy mismatch" in issue for issue in report.cross_domain_issues
-        )
+        assert any("Neural-energy mismatch" in issue for issue in report.cross_domain_issues)
 
     def test_coherence_quality_mismatch(self) -> None:
         config = SystemValidationConfig(
@@ -430,10 +411,7 @@ class TestCrossDomainConsistency:
         data = np.array([1.0, np.nan, np.nan, np.nan, 5.0])  # 60% NaN
         state = SystemState(pathway=pathway, data=data)
         report = integrator.validate(state)
-        assert any(
-            "Coherence-quality mismatch" in issue
-            for issue in report.cross_domain_issues
-        )
+        assert any("Coherence-quality mismatch" in issue for issue in report.cross_domain_issues)
 
     def test_no_cross_domain_when_disabled(self) -> None:
         config = SystemValidationConfig(cross_domain_checks=False)

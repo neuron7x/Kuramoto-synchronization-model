@@ -1,0 +1,30 @@
+{
+  "schema_version": "1.0.0",
+  "manifest_id": "geosync.cost_latency_assumptions.v1",
+  "status": "DRAFT",
+  "purpose": "Declare cost, latency, and operating assumptions before any utility-oriented result can be interpreted.",
+  "required_fields": [
+    "assumption_id",
+    "venue",
+    "instrument",
+    "fee_model",
+    "spread_model",
+    "latency_model",
+    "slippage_model",
+    "operating_cost_model",
+    "timestamp_utc",
+    "assumption_sha256"
+  ],
+  "rules": [
+    "gross measurements must not be presented as net utility",
+    "latency assumptions must be explicit",
+    "cost assumptions must be hashed with the run config",
+    "missing assumptions force measurement-only interpretation"
+  ],
+  "blocking_conditions": [
+    "missing fee model",
+    "missing latency model",
+    "missing assumption hash",
+    "gross result presented as net result"
+  ]
+}

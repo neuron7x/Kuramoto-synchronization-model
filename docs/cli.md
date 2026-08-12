@@ -1,11 +1,11 @@
-# TradePulse CLI Reference
+# GeoSync CLI Reference
 
-The TradePulse CLI orchestrates ingestion, backtesting, optimisation, execution,
+The GeoSync CLI orchestrates ingestion, backtesting, optimisation, execution,
 and reporting pipelines. This reference covers the developer-experience
 improvements added for deterministic runs and improved shell ergonomics.
 
-For a command-by-command breakdown generated directly from `tradepulse-cli --help`,
-see the auto-generated [TradePulse CLI Command Reference](tradepulse_cli_reference.md).
+For a command-by-command breakdown generated directly from `geosync-cli --help`,
+see the auto-generated [GeoSync CLI Command Reference](geosync_cli_reference.md).
 
 ## Global Improvements
 
@@ -25,13 +25,13 @@ see the auto-generated [TradePulse CLI Command Reference](tradepulse_cli_referen
 Generate shell completion snippets using the dedicated command:
 
 ```bash
-tradepulse-cli completion bash   # bash, zsh, or fish
+geosync-cli completion bash   # bash, zsh, or fish
 ```
 
 Add the emitted line to your shell profile. Example (`~/.bashrc`):
 
 ```bash
-eval "$(_TRADEPULSE_CLI_COMPLETE=bash_source tradepulse-cli)"
+eval "$(_GEOSYNC_CLI_COMPLETE=bash_source geosync-cli)"
 ```
 
 ## Output Rendering Options
@@ -48,7 +48,7 @@ support `--output` (alias `--output-format`) with the following values:
 Example:
 
 ```bash
-tradepulse-cli backtest --config configs/runbook/backtest.yaml --output jsonl | jq '.'
+geosync-cli backtest --config configs/runbook/backtest.yaml --output jsonl | jq '.'
 ```
 
 ## Template Generation
@@ -57,7 +57,7 @@ Template generation now uses `--template-output` to avoid collisions with the
 new output rendering flag:
 
 ```bash
-tradepulse-cli backtest --generate-config --template-output configs/runbook/backtest.yaml
+geosync-cli backtest --generate-config --template-output configs/runbook/backtest.yaml
 ```
 
 ## Integration with `jq`
@@ -65,7 +65,7 @@ tradepulse-cli backtest --generate-config --template-output configs/runbook/back
 Pair JSONL output with `jq` to build quick sanity checks or dashboards:
 
 ```bash
-tradepulse-cli exec --config configs/runbook/exec.yaml --output jsonl \
+geosync-cli exec --config configs/runbook/exec.yaml --output jsonl \
   | jq 'select(.metric == "latest_signal")'
 ```
 
@@ -90,7 +90,7 @@ for feeding delta ingestion jobs.
 Wrap CLI invocations with shell logic to branch based on severity:
 
 ```bash
-if ! tradepulse-cli backtest --config configs/runbook/backtest.yaml; then
+if ! geosync-cli backtest --config configs/runbook/backtest.yaml; then
   case $? in
     2) echo "config error" ;;
     3) echo "data missing" ;;

@@ -1,0 +1,15 @@
+{
+  "confidence": 0.30579963,
+  "contract": {
+    "claim_tier": "INSTRUMENTED",
+    "input_window_sec": 30,
+    "schema_version": "mfn.integration.v1",
+    "seed": 7
+  },
+  "regime": "downward_drift",
+  "risk_flag": false,
+  "schema_version": "mfn.integration.v1",
+  "source": "extract.json",
+  "stage": "detect",
+  "timestamp_utc": "2023-11-14T22:13:20Z"
+}

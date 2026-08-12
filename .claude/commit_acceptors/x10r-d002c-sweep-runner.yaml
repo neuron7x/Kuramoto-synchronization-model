@@ -1,0 +1,256 @@
+# Diff-bound commit acceptor for D-002C C2.4 session A (issue #654) —
+# Signal Amplification Sweep runner core + BCa bootstrap + D-002D
+# checkpoint integration.
+#
+# What lands:
+#   * research/systemic_risk/d002c_sweep_runner.py
+#       Sweep driver core. Exposes:
+#         run_one_cell(substrate, metric, N, lambda_, n_seeds,
+#                      n_bootstrap, rng_seed_base,
+#                      direction_consistency_min_seeds, ci_alpha,
+#                      steps_per_quarter=..., omega_gamma=...)
+#         -> SweepCellOutput
+#       One paired-CRN sweep cell. Mirrors the C2.3 CRN protocol:
+#         seed_i in [base, base+n_seeds): substrate.realize(seed_i),
+#         integrator(K_baseline, seed_i), integrator(K_precursor,
+#         seed_i), metric.evaluate on each, take diff. Same seed →
+#         shared ω + θ(0), shared integrator stream; only K differs.
+#       Per-cell payload:
+#         * signal_mean from d002c_metrics.signal_mean (KM RMST when
+#           the metric is right-censored)
+#         * bca_ci_lo / bca_ci_hi from bca_bootstrap_ci (locally
+#           implemented BCa per DiCiccio & Efron 1996 §2)
+#         * signal_over_ci = |signal_mean| / half_CI_width
+#         * direction: "up"/"down" by sign-count threshold or "none"
+#         * per-cohort censoring fractions
+#         * sha256 over canonical-JSON payload (wallclock excluded
+#           so re-runs on different clocks yield identical sha)
+#
+#         run_sweep(preregistration, sweep_config, checkpoint_path,
+#                   rng_seed_base=42, steps_per_quarter=...,
+#                   omega_gamma=..., progress_callback=None,
+#                   code_sha=...) -> SweepResult
+#       Full pre-registered sweep:
+#         1. validate_sweep_config(preregistration, sweep_config)
+#            — refuses to launch on any disagreement with the locked
+#            prereg (PreregistrationMismatch).
+#         2. Build full_grid: cartesian product of N × λ × substrate
+#            × metric in canonical order.
+#         3. D-002D CheckpointManager.load_or_create on the supplied
+#            path. Atomic per-cell save_cell after every cell. A
+#            kill mid-sweep loses at most one in-flight cell.
+#         4. Iterate remaining_cells; call run_one_cell; save.
+#         5. SweepResult with stable aggregate sha (sorted by
+#            cell_key — invariant under traversal order, stable
+#            across resume).
+#
+#         bca_bootstrap_ci(samples, n_bootstrap, alpha, seed=0)
+#         -> tuple[float, float]
+#       First-principles BCa:
+#         * θ̂ = mean(samples)
+#         * resample with replacement n_bootstrap times → θ̂_b
+#         * bias z_0 = Φ^{-1}(#{θ̂_b < θ̂} / n_bootstrap), clamped to
+#           a finite tail to absorb saturated small-B replicates
+#         * acceleration a = Σ Δ³ / [6 (Σ Δ²)^{3/2}] from jackknife;
+#           a = 0 when the jackknife denominator is zero (degenerate
+#           but defined)
+#         * adjusted endpoints α₁, α₂ via Φ(z_0 + (z_0 + z_p)/(1 −
+#           a(z_0 + z_p))); singular denom → pin to {0, 1} so the
+#           empirical CI collapses to the extremum
+#         * empirical percentile via numpy linear-interpolation
+#         * fail-closed contract: ValueError on empty / 1-element
+#           sample, non-finite element, n_bootstrap < 2, alpha
+#           outside (0, 1)
+#
+#   * tests/research/systemic_risk/test_d002c_sweep_runner.py
+#       37 tests pinning:
+#         BCa unit:    contract violations, constant-sample collapse,
+#                      determinism in seed, coverage on N(0,1) mean,
+#                      skewed-distribution finiteness, endpoint
+#                      ordering
+#         run_one_cell: SweepCellOutput contract, finite endpoints,
+#                      λ=0 ⇒ exact-zero signal_mean (paired-CRN
+#                      bit-cancellation), direction rule, censoring
+#                      fractions in [0, 1], deterministic sha,
+#                      sha changes with inputs, all-three substrates
+#                      + all-three metrics route OK, bad-input
+#                      rejection
+#         run_sweep:   PreregistrationMismatch on tampered cfg, full
+#                      9-cell mini-grid under 60 s, checkpoint
+#                      durability (file exists + reload through
+#                      CheckpointManager), resume after partial
+#                      completion (no rework), resume after kill
+#                      yields same aggregate sha as cold run,
+#                      progress_callback fires once per cell and not
+#                      at all on a fully-resumed sweep, JSON
+#                      serialisable ledger, deterministic aggregate
+#                      sha across paths
+#         Frozen:      SweepCellOutput + SweepResult both
+#                      FrozenInstanceError on attribute write
+#
+# Strict scope:
+#   Sweep driver + BCa bootstrap + D-002D checkpoint integration ONLY.
+#   NO claim layer (the C2.5 acceptance evaluator, pending, owns the
+#   verdict). NO threshold tuning. NO post-hoc relaxation. NO sweep-
+#   launch script (C2.6, pending). The runner emits no claim of its
+#   own — it walks the cell grid the pre-registration locks.
+
+id: x10r-d002c-sweep-runner
+status: ACTIVE
+claim_type: correctness
+promise: >-
+  After this PR lands, research/systemic_risk/d002c_sweep_runner
+  exposes run_one_cell(...) — a paired-CRN per-cell evaluator over
+  (substrate, metric, N, λ) that returns a frozen SweepCellOutput
+  carrying BCa-bootstrap CI endpoints (first-principles
+  implementation), |signal|/CI ratio, direction-consistency
+  classification, per-cohort censoring fractions, and a content-
+  addressed sha256 — and run_sweep(...) which walks the full
+  pre-registered cell grid through the D-002D CheckpointManager
+  with atomic per-cell durability, refuses to launch on any
+  pre-registration mismatch, and produces a frozen SweepResult
+  with a stable aggregate sha across resumes.
+
+  The runner is the C2.4 session-A scope. It depends on
+  research/systemic_risk/d002c_preregistration (C2.1),
+  d002c_substrates + d002c_metrics (C2.2), d002c_kuramoto +
+  d002c_crn_validator (C2.3), and research/systemic_risk/
+  sweep_checkpoint (D-002D) — all imported, none modified.
+
+  Strict scope: driver + BCa bootstrap + checkpoint integration
+  only. No claim layer. No threshold tuning. No post-hoc
+  relaxation. The runner emits no claim of its own.
+diff_scope:
+  changed_files:
+    - path: ".claude/commit_acceptors/x10r-d002c-sweep-runner.yaml"
+    - path: "research/systemic_risk/d002c_sweep_runner.py"
+    - path: "tests/research/systemic_risk/test_d002c_sweep_runner.py"
+  forbidden_paths:
+    - "trading/"
+    - "execution/"
+    - "forecast/"
+    - "policy/"
+    - "core/physics/"
+    - "core/kuramoto/"
+    - "research/reconstruction/"
+    - "research/systemic_risk/sweep_checkpoint.py"
+    - "research/systemic_risk/d002c_preregistration.py"
+    - "research/systemic_risk/d002c_substrates.py"
+    - "research/systemic_risk/d002c_metrics.py"
+    - "research/systemic_risk/d002c_kuramoto.py"
+    - "research/systemic_risk/d002c_crn_validator.py"
+    - "research/systemic_risk/d002c_pos_control.py"
+    - "research/systemic_risk/d002c_neg_control.py"
+    - "research/systemic_risk/d002c_null_audit.py"
+    - "research/systemic_risk/d002c_smoke_test.py"
+    - "scripts/run_x10r_"
+    - "application/governance/claim_ledger.py"
+    - "application/governance/commit_acceptor.py"
+required_python_symbols:
+  - "research/systemic_risk/d002c_sweep_runner.py::SweepCellOutput"
+  - "research/systemic_risk/d002c_sweep_runner.py::SweepResult"
+  - "research/systemic_risk/d002c_sweep_runner.py::SweepRunnerInvalid"
+  - "research/systemic_risk/d002c_sweep_runner.py::bca_bootstrap_ci"
+  - "research/systemic_risk/d002c_sweep_runner.py::run_one_cell"
+  - "research/systemic_risk/d002c_sweep_runner.py::run_sweep"
+  - "tests/research/systemic_risk/test_d002c_sweep_runner.py::test_bca_constant_sample_collapses_to_point"
+  - "tests/research/systemic_risk/test_d002c_sweep_runner.py::test_bca_coverage_on_normal_mean"
+  - "tests/research/systemic_risk/test_d002c_sweep_runner.py::test_bca_deterministic_same_seed"
+  - "tests/research/systemic_risk/test_d002c_sweep_runner.py::test_run_one_cell_lambda_zero_signal_near_zero"
+  - "tests/research/systemic_risk/test_d002c_sweep_runner.py::test_run_one_cell_deterministic_bit_exact"
+  - "tests/research/systemic_risk/test_d002c_sweep_runner.py::test_run_sweep_validates_against_preregistration"
+  - "tests/research/systemic_risk/test_d002c_sweep_runner.py::test_run_sweep_resume_after_kill_completes_remainder"
+  - "tests/research/systemic_risk/test_d002c_sweep_runner.py::test_run_sweep_completes_full_mini_grid_under_60s"
+expected_signal: >-
+  Local: `pytest tests/research/systemic_risk/test_d002c_sweep_runner.py
+  -q` reports "37 passed"; `mypy --strict --follow-imports=silent`
+  clean on the two new files; `ruff check` and `black --check`
+  both pass; the false-confidence detector regression suite stays
+  green on the new test file (no C3 finding for any test name).
+measurement_command: >-
+  bash -c 'mypy --strict --follow-imports=silent
+  research/systemic_risk/d002c_sweep_runner.py
+  tests/research/systemic_risk/test_d002c_sweep_runner.py
+  && ruff check
+  research/systemic_risk/d002c_sweep_runner.py
+  tests/research/systemic_risk/test_d002c_sweep_runner.py
+  && black --check
+  research/systemic_risk/d002c_sweep_runner.py
+  tests/research/systemic_risk/test_d002c_sweep_runner.py
+  && pytest tests/research/systemic_risk/test_d002c_sweep_runner.py
+  tests/audit/test_false_confidence_detector.py -q'
+signal_artifact: "tests/research/systemic_risk/test_d002c_sweep_runner.py"
+falsifier:
+  command: |-
+    bash -c 'PYTHONPATH=. python -c "
+    import math, tempfile
+    from pathlib import Path
+    from research.systemic_risk.d002c_sweep_runner import (
+        SweepCellOutput, SweepResult, run_one_cell, run_sweep,
+    )
+    from research.systemic_risk.d002c_substrates import BlockStructuredSubstrate
+    from research.systemic_risk.d002c_metrics import AucPreEventMetric
+    from research.systemic_risk.d002c_preregistration import (
+        load_and_lock, PreregistrationMismatch,
+    )
+    # 1. block × sync_auc cell at N=50 produces finite output
+    a = run_one_cell(substrate=BlockStructuredSubstrate(), metric=AucPreEventMetric(), N=50, lambda_=0.40, n_seeds=4, n_bootstrap=4, rng_seed_base=42, direction_consistency_min_seeds=2, ci_alpha=0.05, steps_per_quarter=4)
+    assert isinstance(a, SweepCellOutput)
+    assert math.isfinite(a.signal_mean) and math.isfinite(a.bca_ci_lo) and math.isfinite(a.bca_ci_hi)
+    # 2. sha256 deterministic across two calls
+    b = run_one_cell(substrate=BlockStructuredSubstrate(), metric=AucPreEventMetric(), N=50, lambda_=0.40, n_seeds=4, n_bootstrap=4, rng_seed_base=42, direction_consistency_min_seeds=2, ci_alpha=0.05, steps_per_quarter=4)
+    assert a.sha256 == b.sha256, '"'"'sha unstable'"'"'
+    # 3. λ=0 ⇒ signal_mean exactly 0 (paired-CRN bit-cancellation)
+    z = run_one_cell(substrate=BlockStructuredSubstrate(), metric=AucPreEventMetric(), N=50, lambda_=0.0, n_seeds=4, n_bootstrap=4, rng_seed_base=42, direction_consistency_min_seeds=2, ci_alpha=0.05, steps_per_quarter=4)
+    assert z.signal_mean == 0.0, z.signal_mean
+    assert z.bca_ci_lo == 0.0 == z.bca_ci_hi
+    # 4. run_sweep refuses to launch on tampered config
+    prereg = load_and_lock(Path('"'"'docs/governance/D002C_PREREGISTRATION.yaml'"'"'))
+    cfg = {
+        '"'"'ci_method'"'"': '"'"'percentile_bootstrap'"'"',  # tampered
+        '"'"'ci_alpha'"'"': prereg.ci_alpha,
+        '"'"'signal_ci_ratio_threshold'"'"': prereg.signal_ci_ratio_threshold,
+        '"'"'direction_consistency_min_seeds'"'"': prereg.direction_consistency_min_seeds,
+        '"'"'direction_stability_min_fraction'"'"': prereg.direction_stability_min_fraction,
+        '"'"'multiple_testing_correction'"'"': prereg.multiple_testing_correction.value,
+        '"'"'n_seeds'"'"': prereg.n_seeds,
+        '"'"'n_bootstrap'"'"': prereg.n_bootstrap,
+        '"'"'N_grid'"'"': list(prereg.N_grid),
+        '"'"'lambda_grid'"'"': list(prereg.lambda_grid),
+        '"'"'substrate_ids'"'"': list(prereg.substrate_ids),
+        '"'"'metric_ids'"'"': list(prereg.metric_ids),
+        '"'"'variance_reduction'"'"': list(prereg.variance_reduction),
+        '"'"'substrate_seed'"'"': prereg.substrate_seed,
+        '"'"'preregistration_sha'"'"': prereg.preregistration_sha,
+    }
+    with tempfile.TemporaryDirectory() as td:
+        try:
+            run_sweep(preregistration=prereg, sweep_config=cfg, checkpoint_path=Path(td) / '"'"'c.json'"'"', steps_per_quarter=4)
+            raise AssertionError('"'"'tampered config should have raised'"'"')
+        except PreregistrationMismatch:
+            pass
+    "'
+  description: >-
+    Probes the D-002C C2.4 contract: run_one_cell on block × sync_auc
+    at N=50 produces a finite SweepCellOutput; the sha256 is
+    deterministic across calls with identical inputs; λ=0 paired-CRN
+    yields signal_mean == 0.0 *exactly* (the bit-cancellation that
+    is the load-bearing physics of CRN — a single drifted bit would
+    break this assertion); run_sweep refuses to launch when the
+    sweep_config disagrees with the locked pre-registration on the
+    CI method (PreregistrationMismatch). If any of these regress,
+    the sweep would either produce non-reproducible results or
+    silently honour a tampered contract.
+rollback_command: >-
+  bash -c 'git checkout HEAD~1 --
+  && rm -f research/systemic_risk/d002c_sweep_runner.py
+  tests/research/systemic_risk/test_d002c_sweep_runner.py
+  .claude/commit_acceptors/x10r-d002c-sweep-runner.yaml'
+rollback_verification_command: >-
+  bash -c 'test ! -f research/systemic_risk/d002c_sweep_runner.py
+  && test ! -f tests/research/systemic_risk/test_d002c_sweep_runner.py
+  && test ! -f .claude/commit_acceptors/x10r-d002c-sweep-runner.yaml'
+memory_update_type: append
+ledger_path: ".claude/commit_acceptors/x10r-d002c-sweep-runner.yaml"
+report_path: "tests/research/systemic_risk/test_d002c_sweep_runner.py"
+evidence: []

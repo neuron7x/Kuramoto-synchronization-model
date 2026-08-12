@@ -1,7 +1,7 @@
 {
   "type": "record",
   "name": "FillEvent",
-  "namespace": "tradepulse.events.execution.v1_0_0",
+  "namespace": "geosync.events.execution.v1_0_0",
   "doc": "Execution fill acknowledgment for an order.",
   "fields": [
     {"name": "event_id", "type": "string", "doc": "Globally unique identifier for idempotency."},

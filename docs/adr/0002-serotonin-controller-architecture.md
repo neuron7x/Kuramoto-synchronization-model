@@ -10,7 +10,7 @@
 
 ### Business Context
 
-TradePulse operates in high-frequency trading environments where rapid market conditions can lead to:
+GeoSync operates in high-frequency trading environments where rapid market conditions can lead to:
 - Excessive risk exposure during volatile periods
 - Portfolio drawdowns from overtrading during stress
 - Need for adaptive risk management that responds to chronic vs. acute stress
@@ -244,9 +244,9 @@ We implement a **dual-component serotonin controller** with:
 
 ## References
 
-1. [SEROTONIN_V2.4.0_SUMMARY.md](/SEROTONIN_V2.4.0_SUMMARY.md) - Implementation summary
-2. [SEROTONIN_PRACTICAL_GUIDE.md](/docs/SEROTONIN_PRACTICAL_GUIDE.md) - Usage guide
-3. [SEROTONIN_DEPLOYMENT_GUIDE.md](/docs/SEROTONIN_DEPLOYMENT_GUIDE.md) - Deployment procedures
+1. [SEROTONIN_IMPROVEMENTS_V2.4.0.md](../SEROTONIN_IMPROVEMENTS_V2.4.0.md) - Implementation summary
+2. [SEROTONIN_PRACTICAL_GUIDE.md](../SEROTONIN_PRACTICAL_GUIDE.md) - Usage guide
+3. [SEROTONIN_DEPLOYMENT_GUIDE.md](../SEROTONIN_DEPLOYMENT_GUIDE.md) - Deployment procedures
 4. NIST AI RMF - Risk management framework for AI components
 5. ISO/IEC 25010:2023 - Quality model reference
 

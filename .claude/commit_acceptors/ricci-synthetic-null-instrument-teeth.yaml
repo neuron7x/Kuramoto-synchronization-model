@@ -1,0 +1,55 @@
+id: ricci-synthetic-null-instrument-teeth
+status: ACTIVE
+claim_type: fail_closed
+promise: >-
+  Hardens the merged W4 synthetic-null line (#1002) with the piece it lacked: a
+  reusable instrument (metric/policy split) and a TEETH positive control proving
+  the permutation null actually FIRES on a planted signal, plus an INV-RC3
+  physics-grounded bound on the descriptor. On structureless depth-5 noise the
+  production Ricci descriptor still does NOT beat the null. Research line stays
+  INSTRUMENTED / SYNTHETIC with no empirical market promotion.
+
+diff_scope:
+  changed_files:
+    - path: "tools/research/ricci_synthetic_null.py"
+    - path: "tests/research_lines/test_ricci_synthetic_null_falsifier.py"
+    - path: ".claude/commit_acceptors/ricci-synthetic-null-instrument-teeth.yaml"
+  forbidden_paths:
+    - "application/"
+    - "backtest/"
+    - "execution/"
+    - "markets/"
+    - "runtime/"
+    - "trading/"
+
+required_python_symbols:
+  - "tools.research.ricci_synthetic_null"
+
+expected_signal: >-
+  evaluate_synthetic_null() returns beats_null=False with observed |IC| inside
+  the 95th-percentile permutation-null band and p-value >= alpha, pinned to a
+  fixed reference realization and bounded by INV-RC3; the teeth test confirms the
+  same machinery fires (beats_null=True) on a planted monotone signal.
+
+measurement_command: >-
+  python -m tools.research.ricci_synthetic_null && python -m pytest -q tests/research_lines/test_ricci_synthetic_null_falsifier.py --confcutdir=tests/research_lines
+
+signal_artifact: "artifacts/runs/ricci_microstructure_v1/synthetic_null_falsifier.json"
+
+falsifier:
+  command: >-
+    python -m pytest -q tests/research_lines/test_ricci_synthetic_null_falsifier.py::test_falsifier_fires_on_planted_signal --confcutdir=tests/research_lines
+  description: >-
+    Proves the falsifier has teeth: an injected monotone signal MUST beat the
+    permutation null. A vacuous always-green control would fail this probe.
+
+rollback_command: >-
+  git rm -f tools/research/ricci_synthetic_null.py tests/research_lines/test_ricci_synthetic_null_falsifier.py .claude/commit_acceptors/ricci-synthetic-null-instrument-teeth.yaml
+
+rollback_verification_command: >-
+  git diff --cached --name-only
+
+memory_update_type: append
+ledger_path: ".claude/commit_acceptors/ricci-synthetic-null-instrument-teeth.yaml"
+report_path: "research_lines/ricci_microstructure_v1/contract.yaml"
+evidence: []

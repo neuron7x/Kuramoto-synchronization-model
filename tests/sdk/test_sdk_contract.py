@@ -1,3 +1,5 @@
+# Copyright (c) 2023-2026 Yaroslav Vasylenko (neuron7xLab)
+# SPDX-License-Identifier: MIT
 from __future__ import annotations
 
 from pathlib import Path
@@ -8,18 +10,18 @@ import pytest
 
 from application.system import (
     ExchangeAdapterConfig,
+    GeoSyncSystem,
+    GeoSyncSystemConfig,
     LiveLoopSettings,
-    TradePulseSystem,
-    TradePulseSystemConfig,
 )
 from domain import Order, OrderSide, Signal, SignalAction
 from execution.connectors import BinanceConnector
 from execution.risk import RiskLimits
-from tradepulse.sdk import (
+from geosync.sdk import (
+    GeoSyncSDK,
     MarketState,
     SDKConfig,
     SuggestedOrder,
-    TradePulseSDK,
 )
 
 
@@ -55,21 +57,18 @@ def _position_sizer(signal) -> float:
     return max(signal.confidence, 0.25)
 
 
-def _build_system(
-    tmp_path: Path, *, risk_limits: RiskLimits | None = None
-) -> TradePulseSystem:
+def _build_system(tmp_path: Path, *, risk_limits: RiskLimits | None = None) -> GeoSyncSystem:
     venue = ExchangeAdapterConfig(name="BINANCE", connector=BinanceConnector())
     settings = LiveLoopSettings(state_dir=tmp_path / "state")
-    config = TradePulseSystemConfig(
+    config = GeoSyncSystemConfig(
         venues=[venue],
         live_settings=settings,
-        risk_limits=risk_limits
-        or RiskLimits(max_notional=1_000_000.0, max_position=1_000.0),
+        risk_limits=risk_limits or RiskLimits(max_notional=1_000_000.0, max_position=1_000.0),
     )
-    return TradePulseSystem(config)
+    return GeoSyncSystem(config)
 
 
-def _load_market_frame(system: TradePulseSystem) -> pd.DataFrame:
+def _load_market_frame(system: GeoSyncSystem) -> pd.DataFrame:
     data_path = Path(__file__).resolve().parents[2] / "data" / "sample.csv"
     frame = system.ingest_csv(data_path, symbol="BTCUSDT", venue="BINANCE")
     return frame
@@ -83,7 +82,7 @@ def test_sdk_happy_path(tmp_path: Path) -> None:
         signal_strategy=_strategy,
         position_sizer=_position_sizer,
     )
-    sdk = TradePulseSDK(system, config)
+    sdk = GeoSyncSDK(system, config)
 
     state = MarketState(symbol="BTCUSDT", venue="BINANCE", market_frame=market)
     signal = sdk.get_signal(state)
@@ -128,11 +127,9 @@ def test_risk_check_rejection(tmp_path: Path) -> None:
         signal_strategy=_strategy,
         position_sizer=lambda signal: 1.0,
     )
-    sdk = TradePulseSDK(system, config)
+    sdk = GeoSyncSDK(system, config)
 
-    signal = sdk.get_signal(
-        MarketState(symbol="BTCUSDT", venue="BINANCE", market_frame=market)
-    )
+    signal = sdk.get_signal(MarketState(symbol="BTCUSDT", venue="BINANCE", market_frame=market))
     proposal = sdk.propose_trade(signal)
 
     result = sdk.risk_check(proposal.order)
@@ -150,7 +147,7 @@ def test_propose_trade_requires_context(tmp_path: Path) -> None:
         signal_strategy=_strategy,
         position_sizer=_position_sizer,
     )
-    sdk = TradePulseSDK(system, config)
+    sdk = GeoSyncSDK(system, config)
 
     with pytest.raises(LookupError):
         signal = type(
@@ -169,7 +166,7 @@ def test_exit_short_position_requests_buy_order(tmp_path: Path, monkeypatch) -> 
         signal_strategy=_strategy,
         position_sizer=_position_sizer,
     )
-    sdk = TradePulseSDK(system, config)
+    sdk = GeoSyncSDK(system, config)
 
     state = MarketState(symbol="BTCUSDT", venue="BINANCE", market_frame=market)
     sdk.get_signal(state)
@@ -191,7 +188,7 @@ def test_exit_order_uses_position_size(tmp_path: Path, monkeypatch) -> None:
         signal_strategy=_strategy,
         position_sizer=_position_sizer,
     )
-    sdk = TradePulseSDK(system, config)
+    sdk = GeoSyncSDK(system, config)
 
     state = MarketState(symbol="BTCUSDT", venue="BINANCE", market_frame=market)
     sdk.get_signal(state)
@@ -213,7 +210,7 @@ def test_exit_flat_position_raises(tmp_path: Path, monkeypatch) -> None:
         signal_strategy=_strategy,
         position_sizer=_position_sizer,
     )
-    sdk = TradePulseSDK(system, config)
+    sdk = GeoSyncSDK(system, config)
 
     state = MarketState(symbol="BTCUSDT", venue="BINANCE", market_frame=market)
     sdk.get_signal(state)

@@ -1,3 +1,5 @@
+# Copyright (c) 2023-2026 Yaroslav Vasylenko (neuron7xLab)
+# SPDX-License-Identifier: MIT
 from __future__ import annotations
 
 import numpy as np
@@ -31,9 +33,7 @@ async def test_scaling_exponent_detects_persistence() -> None:
     analyzer = MultiscaleFractalAnalyzer()
     rng = np.random.default_rng(321)
 
-    persistent_prices = np.maximum(
-        1.0, 50.0 + np.cumsum(0.3 + rng.normal(0.0, 0.05, size=256))
-    )
+    persistent_prices = np.maximum(1.0, 50.0 + np.cumsum(0.3 + rng.normal(0.0, 0.05, size=256)))
     noise_prices = np.maximum(1.0, 50.0 + np.cumsum(rng.normal(0.0, 0.3, size=256)))
 
     persistent_features = await analyzer.analyze(persistent_prices)
@@ -92,9 +92,7 @@ def test_candidate_generator_uses_asset_features() -> None:
 
     assert {c["asset"] for c in candidates} == set(asset_features.keys())
     eur_momentum = next(
-        c
-        for c in candidates
-        if c["asset"] == "EURUSD" and c["strategy"] == "fractal_momentum"
+        c for c in candidates if c["asset"] == "EURUSD" and c["strategy"] == "fractal_momentum"
     )
     gbp_mean_rev = next(
         c
@@ -137,9 +135,7 @@ async def test_fractal_dynamics_adjust_risk_scaling() -> None:
             }
         },
     }
-    persistent_adjusted = await manager.apply(
-        decision, neuro_context, persistent_market_context
-    )
+    persistent_adjusted = await manager.apply(decision, neuro_context, persistent_market_context)
 
     antipersistent_market_context = {
         **base_market_context,

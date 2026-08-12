@@ -1,0 +1,100 @@
+# Diff-bound commit acceptor for the PNCC thermodynamic-control law witnesses.
+#
+# Adds ONE test module binding two previously-unwitnessed catalog laws to
+# executable @law witnesses, each citing an EXISTING registry invariant (no new
+# invariant, no count change, no documentation-surface edit). Promotes no claim,
+# changes no runtime behavior, touches no schema/guard, uses no real data.
+#
+#   pncc.reversible_gate_byte_exact — rollback(trace.audit_hash).state_bytes ==
+#                                     pre_state over 1000 reversible actions
+#                                     (INV-REVERSIBLE-GATE; Bennett 1973).
+#   pncc.landauer_proxy_dominance   — C_irr >= C_rev, strict iff
+#                                     irreversibility_score > 0, equality at 0
+#                                     (INV-LANDAUER-PROXY; Landauer 1961).
+#
+# Locally verified on origin/main base (count 103, unchanged by this PR):
+#   * pytest tests/physics_contracts/test_pncc_thermodynamic_law_witnesses.py: 2 passed
+#   * .claude/physics/validate_tests.py <file>: 0 issues (L1..L5), EXIT 0
+#   * ruff / black --check / mypy --strict clean ; zero new `# type: ignore`
+id: pncc-thermodynamic-law-witnesses
+status: ACTIVE
+claim_type: governance
+promise: >-
+  After this PR lands, tests/physics_contracts/test_pncc_thermodynamic_law_witnesses.py
+  binds the catalog laws pncc.reversible_gate_byte_exact and
+  pncc.landauer_proxy_dominance to @law-decorated witnesses that pass
+  .claude/physics/validate_tests with zero issues. The reversible-gate witness
+  asserts rollback recovers the byte-exact pre-state over 1000 random reversible
+  actions (INV-REVERSIBLE-GATE); the dominance witness asserts the irreversible
+  aggregate proxy cost is >= the reversible alternative, strictly so when
+  irreversibility_score > 0 and equal at score == 0 (INV-LANDAUER-PROXY). Both
+  cite existing invariants — the registry count is unchanged. No market claim; no
+  runtime, schema, or guard change.
+diff_scope:
+  changed_files:
+    - path: ".claude/commit_acceptors/pncc-thermodynamic-law-witnesses.yaml"
+    - path: "tests/physics_contracts/test_pncc_thermodynamic_law_witnesses.py"
+  forbidden_paths:
+    - "trading/"
+    - "execution/"
+    - "forecast/"
+    - "policy/"
+    - "application/"
+    - "core/"
+    - "src/"
+    - "geosync_hpc/"
+    - "physics_contracts/catalog.yaml"
+    - ".claude/physics/INVARIANTS.yaml"
+required_python_symbols: []
+expected_signal: >-
+  `python -m pytest tests/physics_contracts/test_pncc_thermodynamic_law_witnesses.py`
+  reports 2 passed; `python .claude/physics/validate_tests.py
+  tests/physics_contracts/test_pncc_thermodynamic_law_witnesses.py` exits 0 with no
+  L1..L5 issues; ruff, black --check and mypy --strict on the file are clean.
+measurement_command: >-
+  bash -c 'mkdir -p tmp && python -m pytest
+  tests/physics_contracts/test_pncc_thermodynamic_law_witnesses.py
+  > tmp/pncc_thermodynamic_law_witnesses.log 2>&1
+  && grep -q "2 passed" tmp/pncc_thermodynamic_law_witnesses.log'
+signal_artifact: "tmp/pncc_thermodynamic_law_witnesses.log"
+falsifier:
+  command: |-
+    bash -c 'python -c "
+    import numpy as np, sys
+    from core.physics.reversible_gate import ReversibleGate, ReversibleGateConfig
+    from core.physics.thermodynamic_budget import (ThermodynamicBudgetConfig, aggregate_entry,
+        compute_entropy_cost, compute_irreversibility_cost, compute_latency_cost,
+        compute_token_cost, reversible_alternative_cost)
+    broken = False
+    cfg = ReversibleGateConfig(); gate = ReversibleGate(cfg); rng = np.random.default_rng(0)
+    for i in range(200):
+        pre = rng.bytes(int(rng.integers(1, 64)))
+        t = gate.gate(action_id=f\"a{i}\", pre_state=pre, action_payload=rng.bytes(8),
+            post_state=rng.bytes(16), irreversibility_score=float(rng.uniform(0, cfg.irreversibility_threshold)),
+            timestamp_ns=1000+i, rollback_payload=pre)
+        if gate.rollback(t.audit_hash).state_bytes != pre: broken = True
+    bcfg = ThermodynamicBudgetConfig(); rng2 = np.random.default_rng(1)
+    for i in range(200):
+        score = float(rng2.uniform(1e-6, 1.0))
+        irr = compute_irreversibility_cost(True, score, bcfg)
+        e = aggregate_entry(f\"a{i}\", 1000+i, compute_token_cost(10, 10),
+            compute_latency_cost(100, 100), compute_entropy_cost(5.0, 5.0), irr)
+        if e.total_proxy_cost <= reversible_alternative_cost(e, bcfg): broken = True
+    sys.exit(0 if broken else 1)"'
+  description: >-
+    Inverse probe of the two witnessed laws in real code. It exits 0 (fires) iff
+    either holds false: a reversible rollback fails to recover the byte-exact
+    pre-state, OR an irreversible action with positive score fails to strictly
+    dominate its reversible alternative. While both hold the probe exits 1. If it
+    ever exits 0, INV-REVERSIBLE-GATE or INV-LANDAUER-PROXY is no longer truthful
+    and the witness must be corrected or reverted, not patched green.
+rollback_command: >-
+  git rm -f
+  tests/physics_contracts/test_pncc_thermodynamic_law_witnesses.py
+  .claude/commit_acceptors/pncc-thermodynamic-law-witnesses.yaml
+rollback_verification_command: >-
+  bash -c 'test ! -f tests/physics_contracts/test_pncc_thermodynamic_law_witnesses.py'
+memory_update_type: none
+ledger_path: ".claude/commit_acceptors/pncc-thermodynamic-law-witnesses.yaml"
+report_path: "tmp/pncc_thermodynamic_law_witnesses.log"
+evidence: []

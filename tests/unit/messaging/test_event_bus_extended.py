@@ -1,3 +1,5 @@
+# Copyright (c) 2023-2026 Yaroslav Vasylenko (neuron7xLab)
+# SPDX-License-Identifier: MIT
 from __future__ import annotations
 
 import asyncio
@@ -25,9 +27,7 @@ def stub_aiokafka(monkeypatch):
     """Inject a lightweight aiokafka stub for KafkaEventBus tests."""
 
     class DummyKafkaMessage:
-        def __init__(
-            self, *, key: bytes, value: bytes, headers: list[tuple[str, bytes]]
-        ) -> None:
+        def __init__(self, *, key: bytes, value: bytes, headers: list[tuple[str, bytes]]) -> None:
             self.key = key
             self.value = value
             self.headers = headers
@@ -55,9 +55,7 @@ def stub_aiokafka(monkeypatch):
             key: bytes,
             headers: list[tuple[str, bytes]],
         ) -> None:
-            self.sent.append(
-                {"topic": topic, "value": value, "key": key, "headers": headers}
-            )
+            self.sent.append({"topic": topic, "value": value, "key": key, "headers": headers})
 
     class DummyAIOKafkaConsumer:
         instances: List["DummyAIOKafkaConsumer"] = []
@@ -213,9 +211,7 @@ def stub_nats(monkeypatch):
         dummy_module.latest_client = client
         return client
 
-    dummy_module = type(
-        "nats", (), {"connect": connect, "DummyNATSMessage": DummyNATSMessage}
-    )
+    dummy_module = type("nats", (), {"connect": connect, "DummyNATSMessage": DummyNATSMessage})
     monkeypatch.setitem(sys.modules, "nats", dummy_module)
     try:
         yield dummy_module
@@ -224,9 +220,7 @@ def stub_nats(monkeypatch):
 
 
 @pytest.mark.asyncio
-async def test_kafka_start_and_stop_initialises_producer(
-    stub_aiokafka, kafka_tls
-) -> None:
+async def test_kafka_start_and_stop_initialises_producer(stub_aiokafka, kafka_tls) -> None:
     config = EventBusConfig(
         backend=EventBusBackend.KAFKA,
         bootstrap_servers="kafka:9092",
@@ -245,9 +239,7 @@ async def test_kafka_start_and_stop_initialises_producer(
 
 
 @pytest.mark.asyncio
-async def test_kafka_subscribe_processes_message_and_commits(
-    stub_aiokafka, kafka_tls
-) -> None:
+async def test_kafka_subscribe_processes_message_and_commits(stub_aiokafka, kafka_tls) -> None:
     config = EventBusConfig(
         backend=EventBusBackend.KAFKA,
         bootstrap_servers="kafka:9092",
@@ -266,9 +258,7 @@ async def test_kafka_subscribe_processes_message_and_commits(
         ("content_type", b"application/avro"),
         ("occurred_at", b"2024-01-01T00:00:00"),
     ]
-    message = stub_aiokafka.DummyKafkaMessage(
-        key=b"AAPL", value=b"payload", headers=headers
-    )
+    message = stub_aiokafka.DummyKafkaMessage(key=b"AAPL", value=b"payload", headers=headers)
     stub_aiokafka.AIOKafkaConsumer.queued_messages = [message]
 
     received: list[EventEnvelope] = []
@@ -277,7 +267,7 @@ async def test_kafka_subscribe_processes_message_and_commits(
         received.append(envelope)
 
     await bus.subscribe(EventTopic.MARKET_TICKS, handler)
-    task = bus._consumer_tasks[EventTopic.MARKET_TICKS.metadata.name]
+    task = bus._consumer_tasks[EventTopic.MARKET_TICKS.metadata.name][0]
     await asyncio.wait_for(task, timeout=0.1)
 
     assert len(received) == 1
@@ -291,6 +281,47 @@ async def test_kafka_subscribe_processes_message_and_commits(
     assert consumer.kwargs["ssl_context"] is kafka_tls["contexts"][0]
 
     await bus.stop()
+
+
+@pytest.mark.asyncio
+async def test_kafka_repeated_subscribe_does_not_orphan_the_earlier_consumer(
+    stub_aiokafka, kafka_tls
+) -> None:
+    # Subscribing the same topic twice must keep BOTH consumer tasks — a later
+    # subscribe must not overwrite (orphan) the earlier one, leaking its socket
+    # and double-delivering. stop() must then cancel/clean all of them.
+    config = EventBusConfig(
+        backend=EventBusBackend.KAFKA,
+        bootstrap_servers="kafka:9092",
+        ssl_cafile=kafka_tls["cafile"],
+    )
+    bus = KafkaEventBus(config)
+    await bus.start()
+
+    async def handler(_: EventEnvelope) -> None:
+        return None
+
+    stub_aiokafka.AIOKafkaConsumer.instances.clear()
+    stub_aiokafka.AIOKafkaConsumer.queued_messages = []
+    await bus.subscribe(EventTopic.MARKET_TICKS, handler)
+    await bus.subscribe(EventTopic.MARKET_TICKS, handler)
+
+    name = EventTopic.MARKET_TICKS.metadata.name
+    # The core fix: BOTH consumer tasks are tracked; the second subscribe did not
+    # overwrite (orphan) the first. On the buggy code this list would be a single
+    # task and the first consumer would leak.
+    assert len(bus._consumer_tasks[name]) == 2, "second subscribe orphaned the first task"
+    assert len(stub_aiokafka.AIOKafkaConsumer.instances) == 2
+    tracked = list(bus._consumer_tasks[name])
+
+    # Let the (message-less) consume loops run to completion so each closes its
+    # consumer via `finally: consumer.stop()`.
+    await asyncio.sleep(0.05)
+    assert all(c._stopped for c in stub_aiokafka.AIOKafkaConsumer.instances)
+
+    await bus.stop()
+    assert bus._consumer_tasks == {}
+    assert all(t.done() for t in tracked)
 
 
 @pytest.mark.asyncio
@@ -457,12 +488,8 @@ def test_envelope_serialisation_round_trip(stub_aiokafka) -> None:
         schema_version="3.0.0",
         headers={"extra": "value"},
     )
-    headers = [
-        (key, value.encode("utf-8")) for key, value in envelope.as_message().items()
-    ]
-    message = stub_aiokafka.DummyKafkaMessage(
-        key=b"AAPL", value=b"payload", headers=headers
-    )
+    headers = [(key, value.encode("utf-8")) for key, value in envelope.as_message().items()]
+    message = stub_aiokafka.DummyKafkaMessage(key=b"AAPL", value=b"payload", headers=headers)
     reconstructed = _envelope_from_kafka_message(message)
     assert reconstructed.event_id == envelope.event_id
     assert reconstructed.headers["extra"] == "value"

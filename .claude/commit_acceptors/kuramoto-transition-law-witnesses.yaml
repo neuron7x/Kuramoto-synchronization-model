@@ -1,0 +1,101 @@
+# Diff-bound commit acceptor for the Kuramoto phase-transition law witnesses.
+#
+# Adds ONE test module binding two previously-unwitnessed catalog laws to
+# executable @law witnesses, each citing an EXISTING registry invariant (no new
+# invariant, no count change, no documentation-surface edit). Promotes no claim,
+# changes no runtime behavior, touches no schema/guard, uses no real data.
+#
+#   kuramoto.order_parameter_bounds — r = |<e^{iθ}>| ∈ [0, 1], upper bound
+#                                     attained exactly at identical phases (INV-K1).
+#   kuramoto.critical_scaling       — exact Ott-Antonsen steady state
+#                                     R_inf = sqrt((K-K_c)/K): identity R^2*K =
+#                                     (K-K_c) to float precision and log-log slope
+#                                     β = 1/2 vs reduced coupling (INV-OA2).
+#
+# Honest boundary (documented in the module): the β = 1/2 exponent is a
+# thermodynamic-limit statement. A naive finite-N simulation does NOT recover it
+# near K_c (the O(1/sqrt(N)) incoherent floor drags the measured slope toward 1);
+# the witness reads β off the EXACT Ott-Antonsen mean-field reduction, which is
+# that limit, not off a noisy finite ensemble.
+#
+# Locally verified on origin/main base (count 103, unchanged by this PR):
+#   * pytest tests/physics_contracts/test_kuramoto_transition_witnesses.py: 2 passed
+#   * .claude/physics/validate_tests.py <file>: 0 issues (L1..L5), EXIT 0
+#   * ruff / black --check / mypy --strict clean ; zero new `# type: ignore`
+id: kuramoto-transition-law-witnesses
+status: ACTIVE
+claim_type: governance
+promise: >-
+  After this PR lands, tests/physics_contracts/test_kuramoto_transition_witnesses.py
+  binds the catalog laws kuramoto.order_parameter_bounds and
+  kuramoto.critical_scaling to @law-decorated witnesses that pass
+  .claude/physics/validate_tests with zero issues. The bounds witness asserts
+  r = |<e^{iθ}>| stays in [0, 1] over fuzzed phase configurations and equals 1
+  exactly at identical phases (INV-K1); the scaling witness asserts the exact
+  Ott-Antonsen identity R_inf^2 * K = (K - K_c) to float precision, strict
+  monotonicity of R_inf in K, and a log-log critical exponent β = 0.5 ± 0.05
+  versus the reduced coupling (INV-OA2). Both cite existing invariants — the
+  registry count is unchanged. No market claim; no runtime, schema, or guard change.
+diff_scope:
+  changed_files:
+    - path: ".claude/commit_acceptors/kuramoto-transition-law-witnesses.yaml"
+    - path: "tests/physics_contracts/test_kuramoto_transition_witnesses.py"
+  forbidden_paths:
+    - "trading/"
+    - "execution/"
+    - "forecast/"
+    - "policy/"
+    - "application/"
+    - "core/"
+    - "src/"
+    - "geosync_hpc/"
+    - "physics_contracts/catalog.yaml"
+    - ".claude/physics/INVARIANTS.yaml"
+required_python_symbols: []
+expected_signal: >-
+  `python -m pytest tests/physics_contracts/test_kuramoto_transition_witnesses.py`
+  reports 2 passed; `python .claude/physics/validate_tests.py
+  tests/physics_contracts/test_kuramoto_transition_witnesses.py` exits 0 with no
+  L1..L5 issues; ruff, black --check and mypy --strict on the file are clean.
+measurement_command: >-
+  bash -c 'mkdir -p tmp && python -m pytest
+  tests/physics_contracts/test_kuramoto_transition_witnesses.py
+  > tmp/kuramoto_transition_law_witnesses.log 2>&1
+  && grep -q "2 passed" tmp/kuramoto_transition_law_witnesses.log'
+signal_artifact: "tmp/kuramoto_transition_law_witnesses.log"
+falsifier:
+  command: |-
+    bash -c 'python -c "
+    import numpy as np, sys
+    from core.kuramoto.metrics import order_parameter
+    from core.kuramoto.ott_antonsen import OttAntonsenEngine
+    broken = False
+    rng = np.random.default_rng(0)
+    for seed in range(40):
+        theta = np.random.default_rng(seed).uniform(-np.pi, np.pi, (5, 256))
+        r = order_parameter(theta, axis=1)
+        if float(r.min()) < -1e-12 or float(r.max()) > 1.0 + 1e-12: broken = True
+    ref = OttAntonsenEngine(K=2.0, delta=0.5, omega0=0.0); kc = ref.K_c
+    Ks = np.linspace(kc*(1+1e-5), kc*1.3, 200)
+    R = np.array([OttAntonsenEngine(K=float(k), delta=0.5, omega0=0.0).R_steady for k in Ks])
+    if float(np.max(np.abs(R*R*Ks - (Ks-kc)))) > 1e-12: broken = True
+    slope = float(np.polyfit(np.log((Ks-kc)/Ks), np.log(R), 1)[0])
+    if abs(slope - 0.5) > 0.05: broken = True
+    sys.exit(0 if broken else 1)"'
+  description: >-
+    Inverse probe of the two witnessed laws in real code. It exits 0 (fires) iff
+    either holds false: the order parameter leaves [0, 1] for some fuzzed phase
+    config, OR the Ott-Antonsen steady state breaks the identity R^2*K = (K-K_c)
+    or the mean-field exponent drifts off 0.5 ± 0.05. While both hold the probe
+    exits 1. If it ever exits 0, INV-K1 or INV-OA2 is no longer truthful in code
+    and the witness must be corrected or reverted, not patched green.
+rollback_command: >-
+  git rm -f
+  tests/physics_contracts/test_kuramoto_transition_witnesses.py
+  .claude/commit_acceptors/kuramoto-transition-law-witnesses.yaml
+rollback_verification_command: >-
+  bash -c 'test ! -f tests/physics_contracts/test_kuramoto_transition_witnesses.py'
+memory_update_type: none
+ledger_path: ".claude/commit_acceptors/kuramoto-transition-law-witnesses.yaml"
+report_path: "tmp/kuramoto_transition_law_witnesses.log"
+evidence: []

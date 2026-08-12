@@ -1,11 +1,11 @@
 apiVersion: policy/v1
 kind: PodDisruptionBudget
 metadata:
-  name: tradepulse-api
+  name: geosync-api
   labels:
-    app.kubernetes.io/name: tradepulse-api
+    app.kubernetes.io/name: geosync-api
 spec:
   minAvailable: 2
   selector:
     matchLabels:
-      app.kubernetes.io/name: tradepulse-api
+      app.kubernetes.io/name: geosync-api

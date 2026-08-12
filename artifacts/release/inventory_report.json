@@ -1,0 +1,16 @@
+{
+  "task": "REL-003",
+  "generated_at": "2026-07-19",
+  "managed_scopes": [
+    ".github/workflows/pr-gate.yml",
+    "scripts/ci",
+    "scripts/generate_stakeholder_assets.py",
+    "src/mycelium_fractal_net/connectors",
+    "tests/connectors"
+  ],
+  "file_count": 105,
+  "ebsvap_wp1_present": true,
+  "ebsvap_wp3_present": true,
+  "gate": "check_inventory_sync.py",
+  "deterministic": "run1==run2 verified"
+}

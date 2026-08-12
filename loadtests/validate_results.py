@@ -1,3 +1,5 @@
+# Copyright (c) 2023-2026 Yaroslav Vasylenko (neuron7xLab)
+# SPDX-License-Identifier: MIT
 """Validate Locust CSV output against throughput and error-rate thresholds."""
 
 from __future__ import annotations
@@ -50,14 +52,10 @@ def validate(stats_path: Path) -> None:
             f"Throughput below threshold: {requests_per_second:.2f} < {MIN_REQUESTS_PER_SECOND:.2f}"
         )
     if error_rate > MAX_ERROR_RATE:
-        raise SystemExit(
-            f"Error rate exceeded: {error_rate:.4f} > {MAX_ERROR_RATE:.4f}"
-        )
+        raise SystemExit(f"Error rate exceeded: {error_rate:.4f} > {MAX_ERROR_RATE:.4f}")
 
 
 if __name__ == "__main__":
     if len(sys.argv) != 2:
-        raise SystemExit(
-            "Usage: python loadtests/validate_results.py <locust_stats_csv>"
-        )
+        raise SystemExit("Usage: python loadtests/validate_results.py <locust_stats_csv>")
     validate(Path(sys.argv[1]))

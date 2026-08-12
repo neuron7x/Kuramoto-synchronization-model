@@ -1,0 +1,47 @@
+id: state-contract
+status: ACTIVE
+claim_type: fail_closed
+promise: >-
+  Add a compact state-machine admissibility contract test for the cognitive
+  core (core/physics/cognitive_core.py — the live-state invariant value
+  function merged in #1402): a complete, in-manifold snapshot carrying all
+  nine configured invariant fields must return an admissible GO verdict, and
+  an incomplete snapshot (missing required invariant fields) must fail closed
+  to a non-admissible INADMISSIBLE verdict rather than being vacuously
+  approved. This acceptor governs only itself and the new test file; it makes
+  no change to cognitive_core.py, and no trading/execution/forecast/policy
+  behavior change.
+diff_scope:
+  changed_files:
+    - path: ".claude/commit_acceptors/state-contract.yaml"
+    - path: "tests/physics/test_state_machine_contract.py"
+  forbidden_paths:
+    - "trading/"
+    - "execution/"
+    - "forecast/"
+    - "policy/"
+required_python_symbols:
+  - "CognitiveCore"
+expected_signal: >-
+  tests/physics/test_state_machine_contract.py passes: a complete nine-field
+  snapshot is admissible (GO), and a single-field snapshot is rejected
+  fail-closed (NO_GO / INADMISSIBLE).
+measurement_command: >-
+  PYTHONPATH=. python -m pytest tests/physics/test_state_machine_contract.py -q
+signal_artifact: "tmp/state_contract.log"
+falsifier:
+  command: >-
+    PYTHONPATH=. python -m pytest tests/physics/test_state_machine_contract.py -q
+  description: >-
+    Fails if a complete in-manifold snapshot stops being admissible, or if an
+    incomplete snapshot is vacuously approved instead of failing closed.
+rollback_command: >-
+  git rm -f tests/physics/test_state_machine_contract.py
+  .claude/commit_acceptors/state-contract.yaml
+rollback_verification_command: >-
+  git diff --exit-code tests/physics/test_state_machine_contract.py
+  .claude/commit_acceptors/state-contract.yaml
+memory_update_type: none
+ledger_path: ".claude/commit_acceptors/state-contract.yaml"
+report_path: ".claude/commit_acceptors/state-contract.yaml"
+evidence: []

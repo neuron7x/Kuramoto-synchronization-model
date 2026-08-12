@@ -1,0 +1,236 @@
+# SPDX-License-Identifier: MIT
+#
+# Physics-2026 Gate — fail-closed validators for the physics-2026 evidence rail.
+#
+# Blocks the named lie:
+#
+#   "validators exist = validators enforce"
+#
+# The repository ships two validators
+# (tools/research/validate_physics_2026_sources.py and
+#  tools/research/validate_physics_2026_translation.py) plus the unit
+# test suites for P1..P6 and the integration reality chain. Without
+# this workflow, those validators are scripts on disk that nothing
+# requires. This gate makes them required status checks.
+#
+# Invariants:
+#   * Fail-closed: every job is `continue-on-error: false`.
+#   * Pinned actions by 40-character commit SHA (repo-policy enforces).
+#   * Permissions are read-only.
+#   * Content-aware: the gate triggers only when the relevant files
+#     change, so unrelated PRs are not slowed down.
+name: Physics-2026 Gate
+
+on:
+  pull_request:
+    branches: [main]
+    paths:
+      - '.claude/research/PHYSICS_2026_TRANSLATION.yaml'
+      - '.claude/research/PHYSICS_2026_SOURCES.yaml'
+      - 'tools/research/**'
+      - 'geosync_hpc/regimes/**'
+      - 'geosync_hpc/nulls/**'
+      - 'geosync_hpc/coherence/**'
+      - 'geosync_hpc/dynamics/**'
+      - 'tests/research/**'
+      - 'tests/unit/regimes/**'
+      - 'tests/unit/nulls/**'
+      - 'tests/unit/coherence/**'
+      - 'tests/unit/dynamics/**'
+      - 'tests/integration/test_physics_2026_reality_chain.py'
+      - '.github/workflows/physics-2026-gate.yml'
+  merge_group:
+  push:
+    branches: [main]
+
+permissions:
+  contents: read
+
+concurrency:
+  group: physics-2026-gate-${{ github.event.pull_request.number || github.sha }}
+  cancel-in-progress: true
+
+jobs:
+  # ---------------------------------------------------------------------------
+  # validators — run the two physics-2026 validators on the rail.
+  # Fast (<1s each), no heavy deps. If either exits non-zero, merge is
+  # blocked.
+  # ---------------------------------------------------------------------------
+  validators:
+    name: physics-2026-validators
+    runs-on: ubuntu-latest
+    continue-on-error: false
+    timeout-minutes: 5
+    steps:
+      - name: Checkout
+        uses: actions/checkout@9c091bb21b7c1c1d1991bb908d89e4e9dddfe3e0 # v7.0.0
+
+      - name: Set up Python
+        uses: actions/setup-python@ece7cb06caefa5fff74198d8649806c4678c61a1 # v6
+        with:
+          python-version: '3.12'
+
+      - name: Install validator dependencies
+        run: |
+          set -euo pipefail
+          python -m pip install --upgrade pip
+          python -m pip install 'PyYAML>=6.0.3'
+
+      - name: Validate physics-2026 source rail
+        run: |
+          set -euo pipefail
+          python tools/research/validate_physics_2026_sources.py
+
+      - name: Validate physics-2026 translation matrix
+        run: |
+          set -euo pipefail
+          python tools/research/validate_physics_2026_translation.py
+
+  # ---------------------------------------------------------------------------
+  # unit-tests — run the P1..P6 unit suites + the validator unit tests.
+  # ---------------------------------------------------------------------------
+  unit-tests:
+    name: physics-2026-unit-tests
+    runs-on: ubuntu-latest
+    needs: validators
+    continue-on-error: false
+    timeout-minutes: 10
+    steps:
+      - name: Checkout
+        uses: actions/checkout@9c091bb21b7c1c1d1991bb908d89e4e9dddfe3e0 # v7.0.0
+
+      - name: Set up Python
+        uses: actions/setup-python@ece7cb06caefa5fff74198d8649806c4678c61a1 # v6
+        with:
+          python-version: '3.12'
+
+      - name: Install minimal test dependencies
+        run: |
+          set -euo pipefail
+          # tests/conftest.py imports pandas + pytest + yaml at module
+          # level. Pandas is part of the project's runtime contract
+          # (requirements.txt pins pandas>=2.3.3); the minimal install
+          # below mirrors that pin so pytest collection succeeds.
+          python -m pip install --upgrade pip
+          python -m pip install \
+            'pytest>=8.4' \
+            'numpy>=2.3.3' \
+            'pandas>=2.3.3' \
+            'PyYAML>=6.0.3'
+
+      - name: Run physics-2026 unit suites
+        run: |
+          set -euo pipefail
+          python -m pytest \
+            tests/research/test_validate_physics_2026_translation.py \
+            tests/unit/regimes/test_population_event_catalog.py \
+            tests/unit/regimes/test_structured_absence.py \
+            tests/unit/nulls/test_dynamic_null_model.py \
+            tests/unit/coherence/test_global_parity_witness.py \
+            tests/unit/coherence/test_composite_binding_structure.py \
+            tests/unit/dynamics/test_motional_correlation_witness.py \
+            -v --tb=short
+
+  # ---------------------------------------------------------------------------
+  # integration-chain — run the P1..P6 reality-chain integration test.
+  # Proves the witnesses compose into a fail-closed system gate.
+  # ---------------------------------------------------------------------------
+  integration-chain:
+    name: physics-2026-integration-chain
+    runs-on: ubuntu-latest
+    needs: unit-tests
+    continue-on-error: false
+    timeout-minutes: 10
+    steps:
+      - name: Checkout
+        uses: actions/checkout@9c091bb21b7c1c1d1991bb908d89e4e9dddfe3e0 # v7.0.0
+
+      - name: Set up Python
+        uses: actions/setup-python@ece7cb06caefa5fff74198d8649806c4678c61a1 # v6
+        with:
+          python-version: '3.12'
+
+      - name: Install minimal integration dependencies
+        run: |
+          set -euo pipefail
+          # tests/conftest.py imports pandas + pytest + yaml at module
+          # level. The integration suite also needs numpy. Pandas is
+          # pinned by the project (requirements.txt: pandas>=2.3.3); we
+          # mirror that pin here.
+          python -m pip install --upgrade pip
+          python -m pip install \
+            'pytest>=8.4' \
+            'numpy>=2.3.3' \
+            'pandas>=2.3.3' \
+            'PyYAML>=6.0.3'
+
+      - name: Run physics-2026 reality chain
+        run: |
+          set -euo pipefail
+          python -m pytest tests/integration/test_physics_2026_reality_chain.py -v --tb=short
+
+  # ---------------------------------------------------------------------------
+  # injection-probe — fail-closed proof that the translation validator
+  # rejects a forbidden-overclaim mutation.
+  #
+  # The job temporarily injects a forbidden phrase into a copy of the
+  # translation YAML, runs the validator on that copy, and asserts the
+  # validator exits NON-ZERO. If the validator passes the mutated YAML
+  # the gate fails — proving the "validators exist = validators
+  # enforce" lie has returned.
+  #
+  # The mutation is performed in the runner's tmp directory; the
+  # checked-in YAML is never touched.
+  # ---------------------------------------------------------------------------
+  injection-probe:
+    name: physics-2026-injection-probe
+    runs-on: ubuntu-latest
+    needs: validators
+    continue-on-error: false
+    timeout-minutes: 5
+    steps:
+      - name: Checkout
+        uses: actions/checkout@9c091bb21b7c1c1d1991bb908d89e4e9dddfe3e0 # v7.0.0
+
+      - name: Set up Python
+        uses: actions/setup-python@ece7cb06caefa5fff74198d8649806c4678c61a1 # v6
+        with:
+          python-version: '3.12'
+
+      - name: Install validator dependencies
+        run: |
+          set -euo pipefail
+          python -m pip install --upgrade pip
+          python -m pip install 'PyYAML>=6.0.3'
+
+      - name: Inject forbidden overclaim and assert validator rejects
+        run: |
+          set -euo pipefail
+          python tools/research/validate_physics_2026_translation.py
+          mkdir -p /tmp/physics_2026_probe
+          cp .claude/research/PHYSICS_2026_TRANSLATION.yaml /tmp/physics_2026_probe/MUTATED.yaml
+          python - <<'PY'
+          from pathlib import Path
+          path = Path('/tmp/physics_2026_probe/MUTATED.yaml')
+          original = path.read_text(encoding='utf-8')
+          # Inject a forbidden overclaim into a free-text field. The
+          # validator's forbidden-phrase scan must reject this.
+          mutated = original.replace(
+              'methodological_pattern: |',
+              'methodological_pattern: |\n      this is a new law of physics that predicts returns;',
+              1,
+          )
+          assert mutated != original, "mutation must change the file"
+          path.write_text(mutated, encoding='utf-8')
+          PY
+          set +e
+          python tools/research/validate_physics_2026_translation.py \
+            --translation /tmp/physics_2026_probe/MUTATED.yaml \
+            --output /tmp/physics_2026_probe/report.json
+          rc=$?
+          set -e
+          if [ "${rc}" -eq 0 ]; then
+            echo "::error::injection-probe FAILED: validator passed a forbidden-overclaim mutation"
+            exit 1
+          fi
+          echo "injection-probe OK: validator rejected mutation with exit code ${rc}"

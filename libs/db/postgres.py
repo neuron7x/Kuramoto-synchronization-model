@@ -1,3 +1,5 @@
+# Copyright (c) 2023-2026 Yaroslav Vasylenko (neuron7xLab)
+# SPDX-License-Identifier: MIT
 """PostgreSQL connection factory enforcing TLS requirements."""
 
 from __future__ import annotations
@@ -29,9 +31,7 @@ def create_postgres_connection(
 
     try:
         import psycopg
-    except (
-        ImportError
-    ) as exc:  # pragma: no cover - defensive guard when dependency is missing.
+    except ImportError as exc:  # pragma: no cover - defensive guard when dependency is missing.
         msg = "psycopg must be installed to create PostgreSQL connections"
         raise RuntimeError(msg) from exc
 

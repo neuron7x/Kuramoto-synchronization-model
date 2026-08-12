@@ -1,0 +1,199 @@
+{
+  "pai": 1.0,
+  "threshold": 0.9,
+  "threshold_met": true,
+  "total_declared_modules": 19,
+  "total_covered_modules": 19,
+  "modules": [
+    {
+      "label": "*gradient_vital_signs* | *maintenance_hierarchy*",
+      "declared_invariants": 1,
+      "distinct_inv_refs_in_tests": 1,
+      "test_files_count": 3,
+      "forbidden_assertion_count": 0,
+      "forbidden_assertion_files": [],
+      "covered": true
+    },
+    {
+      "label": "*kuramoto* | *sync* | *phase*",
+      "declared_invariants": 7,
+      "distinct_inv_refs_in_tests": 7,
+      "test_files_count": 21,
+      "forbidden_assertion_count": 2,
+      "forbidden_assertion_files": [
+        "tests/integration/research_extensions/test_four_feature_pipeline.py:1",
+        "tests/test_mathematical_proofs.py:1"
+      ],
+      "covered": true
+    },
+    {
+      "label": "*explosive* | *hysteresis*",
+      "declared_invariants": 2,
+      "distinct_inv_refs_in_tests": 2,
+      "test_files_count": 2,
+      "forbidden_assertion_count": 0,
+      "forbidden_assertion_files": [],
+      "covered": true
+    },
+    {
+      "label": "*ott_antonsen* | *chimera*",
+      "declared_invariants": 3,
+      "distinct_inv_refs_in_tests": 3,
+      "test_files_count": 4,
+      "forbidden_assertion_count": 0,
+      "forbidden_assertion_files": [],
+      "covered": true
+    },
+    {
+      "label": "*lyapunov_exponent* | *mle*",
+      "declared_invariants": 2,
+      "distinct_inv_refs_in_tests": 2,
+      "test_files_count": 1,
+      "forbidden_assertion_count": 0,
+      "forbidden_assertion_files": [],
+      "covered": true
+    },
+    {
+      "label": "*spectral_graph* | *laplacian* | *fiedler*",
+      "declared_invariants": 2,
+      "distinct_inv_refs_in_tests": 2,
+      "test_files_count": 1,
+      "forbidden_assertion_count": 0,
+      "forbidden_assertion_files": [],
+      "covered": true
+    },
+    {
+      "label": "*serotonin* | *5ht*",
+      "declared_invariants": 7,
+      "distinct_inv_refs_in_tests": 7,
+      "test_files_count": 7,
+      "forbidden_assertion_count": 4,
+      "forbidden_assertion_files": [
+        "tests/core/neuro/serotonin/test_serotonin_controller.py:3",
+        "tests/core/neuro/serotonin/test_serotonin_runtime_safety.py:1"
+      ],
+      "covered": true
+    },
+    {
+      "label": "*dopamine* | *rpe* | *td_error*",
+      "declared_invariants": 7,
+      "distinct_inv_refs_in_tests": 7,
+      "test_files_count": 6,
+      "forbidden_assertion_count": 0,
+      "forbidden_assertion_files": [],
+      "covered": true
+    },
+    {
+      "label": "*gaba* | *inhibit*",
+      "declared_invariants": 5,
+      "distinct_inv_refs_in_tests": 5,
+      "test_files_count": 3,
+      "forbidden_assertion_count": 0,
+      "forbidden_assertion_files": [],
+      "covered": true
+    },
+    {
+      "label": "*energy* | *lyapunov* | *ecs*",
+      "declared_invariants": 2,
+      "distinct_inv_refs_in_tests": 2,
+      "test_files_count": 4,
+      "forbidden_assertion_count": 1,
+      "forbidden_assertion_files": [
+        "tests/unit/physics/test_T6_free_energy_gate.py:1"
+      ],
+      "covered": true
+    },
+    {
+      "label": "*thermo* | *conservation*",
+      "declared_invariants": 2,
+      "distinct_inv_refs_in_tests": 2,
+      "test_files_count": 3,
+      "forbidden_assertion_count": 0,
+      "forbidden_assertion_files": [],
+      "covered": true
+    },
+    {
+      "label": "*ricci* | *curvature*",
+      "declared_invariants": 3,
+      "distinct_inv_refs_in_tests": 3,
+      "test_files_count": 4,
+      "forbidden_assertion_count": 1,
+      "forbidden_assertion_files": [
+        "tests/test_mathematical_proofs.py:1"
+      ],
+      "covered": true
+    },
+    {
+      "label": "*kelly* | *sizing*",
+      "declared_invariants": 3,
+      "distinct_inv_refs_in_tests": 3,
+      "test_files_count": 2,
+      "forbidden_assertion_count": 0,
+      "forbidden_assertion_files": [],
+      "covered": true
+    },
+    {
+      "label": "*oms* | *order* | *execution*",
+      "declared_invariants": 3,
+      "distinct_inv_refs_in_tests": 3,
+      "test_files_count": 3,
+      "forbidden_assertion_count": 0,
+      "forbidden_assertion_files": [],
+      "covered": true
+    },
+    {
+      "label": "*signal_bus* | *signalbus*",
+      "declared_invariants": 2,
+      "distinct_inv_refs_in_tests": 2,
+      "test_files_count": 6,
+      "forbidden_assertion_count": 0,
+      "forbidden_assertion_files": [],
+      "covered": true
+    },
+    {
+      "label": "*hpc* | *kernel*",
+      "declared_invariants": 2,
+      "distinct_inv_refs_in_tests": 2,
+      "test_files_count": 22,
+      "forbidden_assertion_count": 8,
+      "forbidden_assertion_files": [
+        "tests/core/neuro/serotonin/test_serotonin_runtime_safety.py:1",
+        "tests/integration/research_extensions/test_four_feature_pipeline.py:1",
+        "tests/tacl/test_evidence_ledger.py:1",
+        "tests/unit/physics/test_arrow_of_time.py:2",
+        "tests/unit/physics/test_cosmological_compute_bound.py:1",
+        "tests/unit/physics/test_thermodynamic_budget.py:2"
+      ],
+      "covered": true
+    },
+    {
+      "label": "*cryptobiosis* | *dormant*",
+      "declared_invariants": 8,
+      "distinct_inv_refs_in_tests": 8,
+      "test_files_count": 3,
+      "forbidden_assertion_count": 0,
+      "forbidden_assertion_files": [],
+      "covered": true
+    },
+    {
+      "label": "*dfa* | *hurst* | *criticality*",
+      "declared_invariants": 1,
+      "distinct_inv_refs_in_tests": 1,
+      "test_files_count": 2,
+      "forbidden_assertion_count": 0,
+      "forbidden_assertion_files": [],
+      "covered": true
+    },
+    {
+      "label": "*dro_ara* | *regime_observer*",
+      "declared_invariants": 5,
+      "distinct_inv_refs_in_tests": 5,
+      "test_files_count": 5,
+      "forbidden_assertion_count": 1,
+      "forbidden_assertion_files": [
+        "tests/research/dro_ara/test_power_mc.py:1"
+      ],
+      "covered": true
+    }
+  ]
+}

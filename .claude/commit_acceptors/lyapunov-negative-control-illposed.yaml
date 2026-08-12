@@ -1,0 +1,43 @@
+id: lyapunov-negative-control-illposed
+status: ACTIVE
+claim_type: correctness
+promise: >-
+  Fixes the cross-platform fragility of the T3 calibration negative control. The
+  test asserted two recovered couplings differ by >0.05 for two targets, but the
+  4-oscillator Kuramoto-Ricci system has a flat, non-monotonic maximal-Lyapunov
+  landscape (|lambda_1| < 1.3e-2 across the whole feasible K range), so the
+  lambda->K inverse is globally ill-conditioned: distinct targets — even
+  opposite-sign lambda — recover nearby couplings, and recovered K is
+  hypersensitive to ~1e-6 target noise. The |dK|>0.05 proxy only holds in a
+  well-conditioned regime this system does not have; it passed locally and failed
+  under different CI BLAS by numerical noise. Replace it with the docstring's
+  real claim — each recovery CONVERGED to a coupling strictly interior to
+  (K_min, K_max), i.e. no boundary clamping — which is robust and strictly
+  stronger (a clamped K*=K_min still fails). No INV-CAL invariant is weakened.
+diff_scope:
+  changed_files:
+  - path: tests/unit/physics/test_T3_lyapunov_calibration.py
+  - path: .claude/commit_acceptors/lyapunov-negative-control-illposed.yaml
+  forbidden_paths: []
+required_python_symbols: []
+expected_signal: >-
+  tests/unit/physics/test_T3_lyapunov_calibration.py passes deterministically
+  across platforms; the negative control still fails if the optimiser clamps K
+  to a search bound.
+measurement_command: python -m pytest tests/unit/physics/test_T3_lyapunov_calibration.py -q
+signal_artifact: tests/unit/physics/test_T3_lyapunov_calibration.py
+falsifier:
+  command: python -m pytest "tests/unit/physics/test_T3_lyapunov_calibration.py::test_negative_control_K_search_does_not_clamp_to_K_min" -q
+  description: >-
+    Must fail if a recovery does not CONVERGE (INV-CAL1) or if K* clamps to
+    K_min/K_max — the boundary-pinning bug the control exists to catch.
+rollback_command: >-
+  git checkout origin/main -- tests/unit/physics/test_T3_lyapunov_calibration.py &&
+  git rm -f .claude/commit_acceptors/lyapunov-negative-control-illposed.yaml
+rollback_verification_command: >-
+  git diff --exit-code tests/unit/physics/test_T3_lyapunov_calibration.py
+memory_update_type: append
+ledger_path: .claude/commit_acceptors/lyapunov-negative-control-illposed.yaml
+report_path: tests/unit/physics/test_T3_lyapunov_calibration.py
+evidence:
+- path: tests/unit/physics/test_T3_lyapunov_calibration.py

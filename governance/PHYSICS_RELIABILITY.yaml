@@ -1,0 +1,134 @@
+# Physics Module Reliability Contract (Well-Architected reliability for physics gates).
+#
+# Microsoft Well-Architected reliability discipline says: expect failure, isolate
+# critical components, make observability explicit — do not pray on uptime. Applied
+# to GeoSync: a green test is NOT a reliability claim. Every covered physics module
+# must publish HOW it fails (grounded in its invariants' FALSIFICATION clause), the
+# BLAST RADIUS of that failure, its DEGRADATION signal, and a RECOVERY path.
+#
+# This file is intentionally INCOMPLETE: it covers a grounded seed set and the
+# checker (tools/physics/check_physics_reliability.py) reports every uncovered
+# INV-bearing module BY NAME as the explicit backlog. coverage_floor ratchets the
+# covered count so entries can grow but never silently disappear.
+#
+# Schema: schemas/physics/reliability_contract.schema.json
+# Layers/roles: CLAUDE.md Section 0 (generator/sustainer/protector; L0..L4).
+
+version: 1
+coverage_floor: 6
+scope_roots:
+  - core/kuramoto
+  - core/physics
+
+modules:
+  - module: core/kuramoto/second_order.py
+    invariants: [INV-K8, INV-HPC2]
+    role: generator
+    layer: L4
+    failure_mode: >-
+      A non-symplectic step (e.g. forward Euler) injects or leaks swing energy
+      E=½Σmθ̇²+V and grows it secularly (INV-K8 FALSIFICATION: Euler -> secular
+      growth, +d·θ̇ sign-flip -> injection); a NaN/Inf phase or velocity would
+      propagate an unphysical trajectory (INV-HPC2).
+    blast_radius: >-
+      Corrupts every consumer of the integrated trajectory: the
+      SecondOrderStabilityReport energy/cross-solver diagnostics, the
+      frequency-nadir / RoCoF summary, and any grid-stability margin read off
+      the run.
+    degradation_mode: >-
+      energy_like_drift rises above 1e-3 in the conservative regime and
+      stiffness_regime flips to underresolved_stiff before hard divergence.
+    recovery_command: "raise SecondOrderDivergenceError at the diverging step; rerun with rocof_max set or a smaller dt"
+    fail_closed: true
+
+  - module: core/kuramoto/lyapunov_calibration.py
+    invariants: [INV-CAL1, INV-CAL2, INV-CAL3]
+    role: sustainer
+    layer: L1
+    failure_mode: >-
+      An infeasible target lambda returned as silent best-effort would assert a
+      coupling that does not achieve it (INV-CAL2 demands status INFEASIBLE);
+      a non-positive K* or any contract violation would emit an unphysical
+      coupling (INV-CAL1/CAL3 hard positivity, ValueError on violation).
+    blast_radius: >-
+      A mis-calibrated K* feeds every downstream Kuramoto run: the sync-onset
+      boundary, the Ricci engine coupling, and any regime label derived from
+      the target lambda_1.
+    degradation_mode: >-
+      the round-trip residual approaches the tolerance ceiling (5e-2) as the
+      requested target nears infeasibility.
+    recovery_command: "return status INFEASIBLE (never silent best-effort); raise ValueError when K* <= 0"
+    fail_closed: true
+
+  - module: core/kuramoto/ott_antonsen.py
+    invariants: [INV-OA1, INV-OA2, INV-OA3]
+    role: generator
+    layer: L4
+    failure_mode: >-
+      Numerical drift pushing |z(t)| above 1 leaves the unit-disk manifold
+      (INV-OA1), making R_inf unphysical; a wrong steady state breaks the exact
+      K>2Delta => R_inf=sqrt(1-2Delta/K) law (INV-OA2) that the full engine is
+      validated against.
+    blast_radius: >-
+      Any low-dimensional Kuramoto reduction and chimera analysis built on the
+      OA manifold, plus the analytical R_inf reference used to cross-check the
+      full second-order engine.
+    degradation_mode: >-
+      |z| approaches 1 from below and the OA-vs-full-engine R disagreement
+      widens before the manifold is exited.
+    recovery_command: "raise ValueError on |z| > 1+eps (clamp forbidden); re-solve OA with a smaller dt"
+    fail_closed: true
+
+  - module: core/physics/predictability_horizon.py
+    invariants: [INV-TAU1, INV-TAU2, INV-TAU3]
+    role: sustainer
+    layer: L1
+    failure_mode: >-
+      An over-budget delta_0 request silently fulfilled would violate the
+      Landauer floor E_min=k_B*T*ln(Delta/delta_0) (INV-TAU2); a horizon tau
+      computed with lambda_1<=0 must be +inf, not a finite number (INV-TAU1).
+    blast_radius: >-
+      Any predictability/horizon estimate and the Landauer energy budget that
+      gates downstream forecast admissibility.
+    degradation_mode: >-
+      requested delta_0 approaches the affordable floor and tau grows toward the
+      +inf boundary as lambda_1 -> 0+.
+    recovery_command: "raise ValueError('physically unaffordable') on over-budget delta_0; fail-closed on any contract violation"
+    fail_closed: true
+
+  - module: core/physics/determinism_kit.py
+    invariants: [INV-DET1, INV-DET2, INV-DET3]
+    role: protector
+    layer: L2
+    failure_mode: >-
+      A hash collision across non-identical canonical inputs (INV-DET2:
+      1-ULP perturbation must change the hash) or a non-deterministic hash for
+      identical inputs (INV-DET1) would let a non-reproducible run masquerade as
+      replayable.
+    blast_radius: >-
+      Every replay and attestation that trusts the determinism hash: the
+      release-evidence reproducibility claim and the bit-identical
+      reproducibility kit (Law T6).
+    degradation_mode: >-
+      dtype/shape/trajectory-order aliasing slips through canonicalization
+      before an outright collision appears.
+    recovery_command: "raise ValueError on any contract violation; regenerate the replay manifest and re-verify the hash"
+    fail_closed: true
+
+  - module: core/physics/lyapunov_spectrum.py
+    invariants: [INV-LY1, INV-LY2, INV-LY3]
+    role: sustainer
+    layer: L1
+    failure_mode: >-
+      qr_every not dividing n_steps, or a non-1D x0, silently accepted would
+      emit a mis-normalized spectrum (INV-LY3 demands ValueError); an unresolved
+      fast mode makes Sum(lambda_k) drift from 0 in Hamiltonian flow as
+      O((omega*dt)^4) (INV-LY2 is conditional, not universal).
+    blast_radius: >-
+      Every chaos/stability verdict from the full Lyapunov spectrum: the MLE
+      sign, the T2 law cross-checks, and any regime classification built on it.
+    degradation_mode: >-
+      Sum(lambda_k) departs from 0 as omega*dt grows past ~0.05 in the harmonic
+      reference, before the spectrum becomes meaningless.
+    recovery_command: "raise ValueError on qr_every not dividing n_steps or non-1D x0; rerun with omega*dt <= 0.05 resolved"
+    fail_closed: true

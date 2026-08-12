@@ -1,3 +1,5 @@
+# Copyright (c) 2023-2026 Yaroslav Vasylenko (neuron7xLab)
+# SPDX-License-Identifier: MIT
 from __future__ import annotations
 
 from multiprocessing import Event
@@ -92,9 +94,7 @@ def test_stop_exporter_process_ignores_inactive(
         def terminate(self) -> None:  # pragma: no cover - not invoked
             raise AssertionError("should not terminate")
 
-        def join(
-            self, timeout: float | None = None
-        ) -> None:  # pragma: no cover - not invoked
+        def join(self, timeout: float | None = None) -> None:  # pragma: no cover - not invoked
             raise AssertionError("should not join")
 
     exporters.stop_exporter_process(FakeProcess())

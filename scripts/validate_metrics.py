@@ -1,28 +1,31 @@
 #!/usr/bin/env python
+# Copyright (c) 2023-2026 Yaroslav Vasylenko (neuron7xLab)
+# SPDX-License-Identifier: MIT
 """CLI entrypoint for metrics validation."""
 
 from __future__ import annotations
 
 import argparse
 import importlib.util
-import math
 import json
+import math
 import os
 import sys
 from pathlib import Path
 from typing import Mapping
 
 from fastapi.testclient import TestClient
+
+# Packaged import (``scripts.validate_metrics``): tools.observability resolves
+# from the installed wheel, not an accidental repo-root sys.path insert (#945).
+from tools.observability.builder import MetricDefinition, validate_metrics
+
 try:
     from prometheus_client.parser import text_string_to_metric_families
 except ImportError:  # pragma: no cover - fallback for older prometheus_client versions
     text_string_to_metric_families = None
 
 ROOT = Path(__file__).resolve().parents[1]
-if str(ROOT) not in sys.path:
-    sys.path.insert(0, str(ROOT))
-
-from tools.observability.builder import MetricDefinition, validate_metrics  # noqa: E402
 
 _spec = importlib.util.spec_from_file_location(
     "metrics_validation", ROOT / "observability" / "metrics_validation.py"
@@ -41,7 +44,9 @@ structural_issues = _METRICS_VALIDATION.structural_issues
 summarise_catalog = _METRICS_VALIDATION.summarise_catalog
 write_artifact = _METRICS_VALIDATION.write_artifact
 
-ARTIFACT_DIR = Path(os.environ.get("METRICS_VALIDATION_ARTIFACT_DIR", "artifacts/metrics-validation"))
+ARTIFACT_DIR = Path(
+    os.environ.get("METRICS_VALIDATION_ARTIFACT_DIR", "artifacts/metrics-validation")
+)
 
 
 def _default_catalogs() -> list[Path]:
@@ -93,7 +98,11 @@ def _parse_metrics_payload(payload: str) -> dict[str, list[dict[str, object]]]:
         for family in text_string_to_metric_families(payload):
             parsed.setdefault(family.name, [])
             for sample in family.samples:
-                record = {"labels": dict(sample.labels or {}), "value": float(sample.value)}
+                record = {
+                    "labels": dict(sample.labels or {}),
+                    "value": float(sample.value),
+                    "name": sample.name,
+                }
                 parsed[family.name].append(record)
                 if sample.name != family.name:
                     parsed.setdefault(sample.name, []).append(record)
@@ -122,8 +131,37 @@ def _parse_metrics_payload(payload: str) -> dict[str, list[dict[str, object]]]:
         else:
             name = left
             labels = {}
-        metrics.setdefault(name, []).append({"labels": labels, "value": value_f})
+        metrics.setdefault(name, []).append({"labels": labels, "value": value_f, "name": name})
     return metrics
+
+
+_HISTOGRAM_BOOKKEEPING_SUFFIXES: tuple[str, ...] = (
+    "_bucket",
+    "_count",
+    "_sum",
+    "_created",
+    "_gcount",
+    "_gsum",
+)
+
+
+def _is_value_sample(sample: dict[str, object]) -> bool:
+    """Return True if ``sample`` carries a metric value (vs. histogram tally).
+
+    Histogram/summary exposition emits cumulative bookkeeping series — ``_bucket``
+    counts (carrying an ``le`` label), ``_count``, ``_sum``, ``_created`` — that
+    grow with traffic and are not observation magnitudes. Numeric min/max bounds
+    only apply to genuine value samples (gauges, counters, and the direct
+    observation series), so those tallies must be excluded from bound checks.
+    """
+    labels = sample.get("labels")
+    if isinstance(labels, dict) and "le" in labels:
+        # Histogram bucket counts (cumulative tallies), never observation values.
+        return False
+    name = sample.get("name")
+    if isinstance(name, str) and name.endswith(_HISTOGRAM_BOOKKEEPING_SUFFIXES):
+        return False
+    return True
 
 
 def _sample_value(
@@ -164,19 +202,23 @@ def _validate_regression_baselines(root: Path) -> list[str]:
                 if key in cfg and cfg[key] is not None and cfg[key] < 0:
                     errors.append(f"{scenario_name}.{metric_name}: {key} cannot be negative")
             for bound in ("min_value", "max_value"):
-                if bound in cfg and cfg[bound] is not None and not isinstance(
-                    cfg[bound], (int, float)
+                if (
+                    bound in cfg
+                    and cfg[bound] is not None
+                    and not isinstance(cfg[bound], (int, float))
                 ):
-                    errors.append(f"{scenario_name}.{metric_name}: {bound} must be numeric when set")
+                    errors.append(
+                        f"{scenario_name}.{metric_name}: {bound} must be numeric when set"
+                    )
     return errors
 
 
 def run_runtime(root: Path, catalogs: list[Path]) -> int:
     # The application factory requires audit secrets; default to safe values.
     env = os.environ
-    env.setdefault("TRADEPULSE_AUDIT_SECRET", "0" * 16)
-    env.setdefault("TRADEPULSE_RBAC_AUDIT_SECRET", "1" * 32)
-    env.setdefault("TRADEPULSE_TWO_FACTOR_SECRET", "2" * 32)
+    env.setdefault("GEOSYNC_AUDIT_SECRET", "0" * 16)
+    env.setdefault("GEOSYNC_RBAC_AUDIT_SECRET", "1" * 32)
+    env.setdefault("GEOSYNC_TWO_FACTOR_SECRET", "2" * 32)
 
     from application.api.service import create_app
 
@@ -220,76 +262,81 @@ def run_runtime(root: Path, catalogs: list[Path]) -> int:
     status_labels = {"route": "/health", "method": "GET", "status": "200"}
 
     requests_before = _sample_value(
-        baseline_metrics, "tradepulse_api_requests_total", status_labels, default=0.0
+        baseline_metrics, "geosync_api_requests_total", status_labels, default=0.0
     )
     requests_after = _sample_value(
-        metrics_after, "tradepulse_api_requests_total", status_labels, default=0.0
+        metrics_after, "geosync_api_requests_total", status_labels, default=0.0
     )
     latency_before = _sample_value(
         baseline_metrics,
-        "tradepulse_api_request_latency_seconds_count",
+        "geosync_api_request_latency_seconds_count",
         labels_health,
         default=0.0,
     )
     latency_after = _sample_value(
         metrics_after,
-        "tradepulse_api_request_latency_seconds_count",
+        "geosync_api_request_latency_seconds_count",
         labels_health,
         default=0.0,
     )
     latency_sum = _sample_value(
         metrics_after,
-        "tradepulse_api_request_latency_seconds_sum",
+        "geosync_api_request_latency_seconds_sum",
         labels_health,
     )
 
-    inflight_value = _sample_value(
-        metrics_after, "tradepulse_api_requests_in_flight", labels_health
-    )
+    inflight_value = _sample_value(metrics_after, "geosync_api_requests_in_flight", labels_health)
 
     queue_depth_samples = [
         sample["value"]
-        for sample in final_metrics.get("tradepulse_api_queue_depth", [])
+        for sample in final_metrics.get("geosync_api_queue_depth", [])
         if isinstance(sample.get("value"), (int, float))
     ]
 
     ticks_before = _sample_value(
         metrics_after,
-        "tradepulse_ticks_processed_total",
+        "geosync_ticks_processed_total",
         {"source": "runtime", "symbol": "TEST"},
         default=0.0,
     )
     ticks_after = _sample_value(
         final_metrics,
-        "tradepulse_ticks_processed_total",
+        "geosync_ticks_processed_total",
         {"source": "runtime", "symbol": "TEST"},
         default=0.0,
     )
 
     deltas = {
-        "tradepulse_api_requests_total": None
-        if requests_before is None or requests_after is None
-        else requests_after - requests_before,
-        "tradepulse_api_request_latency_seconds_count": None
-        if latency_before is None or latency_after is None
-        else latency_after - latency_before,
-        "tradepulse_ticks_processed_total": ticks_after - ticks_before
-        if ticks_after is not None and ticks_before is not None
-        else None,
+        "geosync_api_requests_total": (
+            None
+            if requests_before is None or requests_after is None
+            else requests_after - requests_before
+        ),
+        "geosync_api_request_latency_seconds_count": (
+            None
+            if latency_before is None or latency_after is None
+            else latency_after - latency_before
+        ),
+        "geosync_ticks_processed_total": (
+            ticks_after - ticks_before
+            if ticks_after is not None and ticks_before is not None
+            else None
+        ),
     }
 
     invariants = {
-        "health_counter_incremented": deltas["tradepulse_api_requests_total"] is not None
-        and deltas["tradepulse_api_requests_total"] >= 2,
-        "health_latency_incremented": deltas["tradepulse_api_request_latency_seconds_count"] is not None
-        and deltas["tradepulse_api_request_latency_seconds_count"] >= 2,
+        "health_counter_incremented": deltas["geosync_api_requests_total"] is not None
+        and deltas["geosync_api_requests_total"] >= 2,
+        "health_latency_incremented": deltas["geosync_api_request_latency_seconds_count"]
+        is not None
+        and deltas["geosync_api_request_latency_seconds_count"] >= 2,
         "latency_finite": latency_sum is None or (math.isfinite(latency_sum) and latency_sum >= 0),
         "inflight_finite": inflight_value is None
         or (math.isfinite(float(inflight_value)) and float(inflight_value) >= 0.0),
         "queue_depth_finite": not queue_depth_samples
         or all(math.isfinite(float(value)) and float(value) >= 0 for value in queue_depth_samples),
-        "non_api_metric_delta": deltas["tradepulse_ticks_processed_total"] is not None
-        and deltas["tradepulse_ticks_processed_total"] > 0,
+        "non_api_metric_delta": deltas["geosync_ticks_processed_total"] is not None
+        and deltas["geosync_ticks_processed_total"] > 0,
     }
 
     results: dict[str, object] = {
@@ -324,9 +371,9 @@ def run_expectations(
         return 1
 
     env = os.environ
-    env.setdefault("TRADEPULSE_AUDIT_SECRET", "0" * 16)
-    env.setdefault("TRADEPULSE_RBAC_AUDIT_SECRET", "1" * 32)
-    env.setdefault("TRADEPULSE_TWO_FACTOR_SECRET", "2" * 32)
+    env.setdefault("GEOSYNC_AUDIT_SECRET", "0" * 16)
+    env.setdefault("GEOSYNC_RBAC_AUDIT_SECRET", "1" * 32)
+    env.setdefault("GEOSYNC_TWO_FACTOR_SECRET", "2" * 32)
 
     snapshots: list[dict[str, list[dict[str, object]]]] = []
     runtime_artifact = ARTIFACT_DIR / "runtime.json"
@@ -388,6 +435,13 @@ def run_expectations(
         upper = rule.get("max")
         if lower is not None or upper is not None:
             for sample in samples_second:
+                if not _is_value_sample(sample):
+                    # Histogram/summary bookkeeping samples (_bucket/_count/_sum/
+                    # _created and any le-bucketed series) are cumulative tallies
+                    # that grow with traffic, not metric values. Bounding them
+                    # against a fixed min/max is a category error that fails the
+                    # gate once enough requests accrue on a shared registry.
+                    continue
                 value = float(sample["value"])
                 if lower is not None and value < lower:
                     issues.append(
@@ -456,7 +510,7 @@ def _write_report(statuses: dict[str, int]) -> None:
 
 
 def main(argv: list[str] | None = None) -> int:
-    parser = argparse.ArgumentParser(description="Validate TradePulse metrics")
+    parser = argparse.ArgumentParser(description="Validate GeoSync metrics")
     parser.add_argument(
         "--level",
         action="append",

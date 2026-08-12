@@ -1,20 +1,27 @@
-# SPDX-License-Identifier: LicenseRef-TradePulse-Proprietary
-"""Entropy-based market uncertainty indicators.
+# Copyright (c) 2023-2026 Yaroslav Vasylenko (neuron7xLab)
+# SPDX-License-Identifier: MIT
+"""Entropy-based distributional descriptors.
 
-This module provides Shannon entropy and delta entropy calculations for
-quantifying market uncertainty and regime changes.
+This module provides Shannon entropy and delta entropy calculations. Both are
+bounded, research-only descriptors of a finite sample under the declared bins
+and window. They are NOT predictive, NOT regime-transition signals, and NOT
+financial advice. Any such promotion requires an explicit event definition and
+a null baseline first (see CLAIMS.yaml / FORBIDDEN_CLAIMS.md).
 
-Shannon entropy measures the randomness or unpredictability in price data.
-Higher entropy indicates more chaotic or random behavior, while lower entropy
-suggests more structured or predictable patterns.
+Shannon entropy is the binned distributional uncertainty of the sample under
+the declared bins. Higher entropy means probability mass is spread more evenly
+across bins; lower entropy means mass is concentrated in fewer bins. Low
+entropy is concentration of mass, NOT "predictability" of future values.
 
-Delta entropy (ΔH) measures the change in entropy over time, which can signal
-regime transitions in the market.
+Delta entropy (ΔH) is the change in that binned-entropy descriptor between two
+windows. It is a change in a descriptor, NOT a proven regime-transition signal:
+asserting a regime transition requires an event definition plus a null baseline.
 
 References:
     - Shannon, C. E. (1948). A mathematical theory of communication.
       Bell System Technical Journal, 27(3), 379-423.
 """
+
 from __future__ import annotations
 
 import asyncio
@@ -106,25 +113,26 @@ def entropy(
     Implementation:
         1. Normalize input x(t) to interval [-1, 1] for numerical stability:
            x̃(t) = x(t) / max|x(t)|
-        
+
         2. Discretize into B bins via histogram to approximate probability mass:
            pᵢ = count(bin i) / N,  where N = total count
-        
+
         3. Compute entropy (with 0·log(0) := 0 convention):
            H = -∑ᵢ₌₁ᴮ pᵢ · log(pᵢ)
 
     Physical Interpretation:
-        H = 0:        Zero entropy (deterministic/constant signal)
-        H = log(B):   Maximum entropy (uniform distribution over B bins)
-        0 < H < log(B): Partial structure
+        H = 0:        Zero entropy (deterministic/constant sample)
+        H = log(B):   Maximum entropy (uniform mass over B bins)
+        0 < H < log(B): Mass partially concentrated across bins
 
-    In Financial Context:
-        - High H → High market uncertainty/randomness (chaotic regime)
-        - Low H → Low uncertainty/predictability (trending regime)
-        - ΔH > 0 → Increasing chaos (regime transition signal)
-        - ΔH < 0 → Decreasing chaos (consolidation signal)
+    Descriptor Interpretation (descriptor-only, NOT predictive):
+        - High H → mass spread evenly across bins (high binned uncertainty)
+        - Low H → mass concentrated in fewer bins (NOT predictability of values)
+        - ΔH > 0 → mass spreading out over time (a descriptor change, not a
+          proven regime-transition signal)
+        - ΔH < 0 → mass concentrating over time (a descriptor change)
 
-    Entropy quantifies the uncertainty or randomness in the data distribution.
+    Entropy quantifies the binned distributional uncertainty of the sample.
     The series is normalized and binned, then Shannon entropy is computed as:
 
         H = -Σ p(i) * log(p(i))
@@ -151,7 +159,7 @@ def entropy(
 
     Returns:
         Shannon entropy value H ≥ 0 in nats (natural logarithm base).
-        Higher values indicate more randomness/chaos.
+        Higher values indicate mass spread more evenly across bins.
         Returns 0.0 for empty or invalid input.
 
     Numerical Stability:
@@ -225,9 +233,9 @@ def entropy(
                 return result
             except Exception as exc:  # pragma: no cover - defensive logging
                 _logger.warning(
-                    "GPU entropy backend '%s' failed (%s); falling back to CPU.",
-                    selected_backend,
-                    exc,
+                    "GPU entropy backend failed; falling back to CPU.",
+                    backend=selected_backend,
+                    error=str(exc),
                 )
                 _LAST_ENTROPY_BACKEND = "cpu"
 
@@ -249,13 +257,9 @@ def entropy(
 
         # Chunked processing for large arrays
         if chunk_size is not None and x.size > chunk_size:
-            chunks = [
-                x[i : min(i + chunk_size, x.size)] for i in range(0, x.size, chunk_size)
-            ]
+            chunks = [x[i : min(i + chunk_size, x.size)] for i in range(0, x.size, chunk_size)]
             tasks = [
-                (chunk, bins, dtype, global_scale, hist_range)
-                for chunk in chunks
-                if chunk.size > 0
+                (chunk, bins, dtype, global_scale, hist_range) for chunk in chunks if chunk.size > 0
             ]
             if not tasks:
                 _LAST_ENTROPY_BACKEND = "cpu"
@@ -395,9 +399,7 @@ def _entropy_gpu(
         device_hist = cuda.to_device(np.zeros(bins, dtype=np.int32))
         threads = 256
         blocks = (int(data.size) + threads - 1) // threads
-        _entropy_histogram_kernel[blocks, threads](
-            device_data, device_hist, min_v, max_v
-        )
+        _entropy_histogram_kernel[blocks, threads](device_data, device_hist, min_v, max_v)
         cuda.synchronize()
         counts = device_hist.copy_to_host().astype(np.float32)
         total = counts.sum(dtype=np.float32)
@@ -425,9 +427,7 @@ def _entropy_chunk_worker(
 
 
 def _run_entropy_process(
-    tasks: Sequence[
-        tuple[np.ndarray, int, np.dtype, float | None, tuple[float, float] | None]
-    ],
+    tasks: Sequence[tuple[np.ndarray, int, np.dtype, float | None, tuple[float, float] | None]],
     max_workers: int | None,
 ) -> list[tuple[np.ndarray, int]]:
     with ProcessPoolExecutor(max_workers=max_workers) as executor:
@@ -435,9 +435,7 @@ def _run_entropy_process(
 
 
 def _run_entropy_async(
-    tasks: Sequence[
-        tuple[np.ndarray, int, np.dtype, float | None, tuple[float, float] | None]
-    ],
+    tasks: Sequence[tuple[np.ndarray, int, np.dtype, float | None, tuple[float, float] | None]],
     max_workers: int | None,
 ) -> list[tuple[np.ndarray, int]]:
     async def _runner() -> list[tuple[np.ndarray, int]]:
@@ -447,8 +445,7 @@ def _run_entropy_async(
             if max_workers is not None:
                 executor = ThreadPoolExecutor(max_workers=max_workers)
             futures = [
-                loop.run_in_executor(executor, _entropy_chunk_worker, task)
-                for task in tasks
+                loop.run_in_executor(executor, _entropy_chunk_worker, task) for task in tasks
             ]
             return await asyncio.gather(*futures)
         finally:
@@ -460,10 +457,7 @@ def _run_entropy_async(
         return asyncio.run(coro)
     except RuntimeError as exc:
         message = str(exc)
-        if (
-            "event loop is running" not in message
-            and "running event loop" not in message
-        ):
+        if "event loop is running" not in message and "running event loop" not in message:
             coro.close()
             raise
         coro.close()
@@ -490,23 +484,23 @@ def delta_entropy(series: np.ndarray, window: int = 100, bins_range=(10, 50)) ->
             H(t₂) = -∑ᵢ p₂,ᵢ · log(p₂,ᵢ)  [entropy of second window]
             ΔH = H(t₂) - H(t₁)
 
-    Physical Interpretation:
-        ΔH > 0: Increasing entropy → market becoming more chaotic/uncertain
-        ΔH = 0: Constant entropy → stable regime
-        ΔH < 0: Decreasing entropy → market becoming more structured/predictable
+    Descriptor Interpretation (descriptor-only, NOT predictive):
+        ΔH > 0: binned mass spreading out between the two windows
+        ΔH = 0: binned uncertainty unchanged between the two windows
+        ΔH < 0: binned mass concentrating between the two windows
 
-    Applications in Regime Detection:
-        - |ΔH| > threshold: Regime transition signal
-        - ΔH ≫ 0 with low H(t₁): Trending → Random walk transition
-        - ΔH ≪ 0 with high H(t₁): Random walk → Trending transition
+    Boundary note (NOT a regime-detection claim):
+        A large |ΔH| is a change in the binned-entropy descriptor only. It is
+        NOT a proven regime-transition signal: any such claim requires an
+        explicit event definition plus a null baseline before promotion.
 
-    Delta entropy (ΔH) measures the rate of change in market uncertainty by
-    comparing entropy between two consecutive time windows:
+    Delta entropy (ΔH) is the change in the binned-entropy descriptor between
+    two consecutive windows:
 
         ΔH = H(t) - H(t-τ)
 
-    where τ is the window size. Positive ΔH indicates increasing chaos,
-    negative ΔH suggests decreasing uncertainty.
+    where τ is the window size. Positive ΔH means mass spread out, negative ΔH
+    means mass concentrated; neither is a forecast of future values.
 
     Args:
         series: 1D array of numeric data (typically prices)
@@ -519,8 +513,8 @@ def delta_entropy(series: np.ndarray, window: int = 100, bins_range=(10, 50)) ->
 
     Returns:
         Delta entropy value ΔH (can be positive, negative, or zero).
-        Positive values indicate increasing uncertainty (↑ chaos),
-        negative values indicate decreasing uncertainty (↑ structure).
+        Positive values indicate mass spreading across bins,
+        negative values indicate mass concentrating across bins.
         Returns 0.0 if insufficient data (need at least 2 * window points).
 
     Numerical Stability:
@@ -533,18 +527,19 @@ def delta_entropy(series: np.ndarray, window: int = 100, bins_range=(10, 50)) ->
         Space: O(B) for histogram bins
 
     Example:
-        >>> prices = np.linspace(100, 110, 300)  # Trending market
+        >>> prices = np.linspace(100, 110, 300)  # monotone sample
         >>> dH = delta_entropy(prices, window=100)
         >>> if dH > 0.5:
-        ...     print("Market becoming more chaotic")
+        ...     print("Binned mass spread out between windows")
         ... elif dH < -0.5:
-        ...     print("Market becoming more structured")
+        ...     print("Binned mass concentrated between windows")
 
     Note:
         - Requires at least 2 * window data points
         - Bins are adaptively chosen based on window size: B ∈ [B_min, B_max]
-        - Useful for detecting regime transitions and structural breaks
-        - Sign of ΔH indicates direction of uncertainty change
+        - Describes a change in the binned-entropy descriptor only; it is not a
+          regime-transition claim without an event definition + null baseline
+        - Sign of ΔH indicates direction of the binned-uncertainty change
 
     References:
         - Pincus, S. M. (1991). Approximate entropy as a measure of system
@@ -560,7 +555,9 @@ def delta_entropy(series: np.ndarray, window: int = 100, bins_range=(10, 50)) ->
     a, b = x[-window * 2 : -window], x[-window:]
 
     # Adaptive bin selection
-    bins = int(np.clip(window // 3, bins_range[0], bins_range[1]))
+    bins = int(
+        np.clip(window // 3, bins_range[0], bins_range[1])
+    )  # bounds: histogram bin count clamped to configured [min, max] range
 
     # Compute entropy difference
     return float(entropy(b, bins) - entropy(a, bins))
@@ -570,7 +567,7 @@ class EntropyFeature(BaseFeature):
     """Feature wrapper for Shannon entropy indicator.
 
     This class wraps the entropy() function as a BaseFeature, making it
-    compatible with the TradePulse feature pipeline and composition system.
+    compatible with the GeoSync feature pipeline and composition system.
 
     Attributes:
         bins: Number of histogram bins for entropy calculation
@@ -675,9 +672,11 @@ class EntropyFeature(BaseFeature):
 class DeltaEntropyFeature(BaseFeature):
     """Feature wrapper for delta entropy (rate of entropy change).
 
-    This feature computes the change in Shannon entropy over time by comparing
-    entropy between consecutive time windows. Useful for detecting regime
-    transitions and changes in market dynamics.
+    This feature computes the change in the binned Shannon-entropy descriptor
+    over time by comparing entropy between consecutive windows. It is a
+    descriptor change only — NOT predictive, NOT a regime-transition signal,
+    and NOT financial advice; any such claim requires an event definition plus
+    a null baseline first.
 
     Attributes:
         window: Size of each time window
@@ -689,13 +688,13 @@ class DeltaEntropyFeature(BaseFeature):
         >>> import numpy as np
         >>>
         >>> feature = DeltaEntropyFeature(window=100, bins_range=(10, 50))
-        >>> prices = np.linspace(100, 110, 300)  # Trending market
+        >>> prices = np.linspace(100, 110, 300)  # monotone sample
         >>> result = feature.transform(prices)
         >>>
         >>> if result.value > 0.5:
-        ...     print("Market becoming more chaotic")
+        ...     print("Binned mass spread out between windows")
         ... elif result.value < -0.5:
-        ...     print("Market becoming more structured")
+        ...     print("Binned mass concentrated between windows")
     """
 
     def __init__(

@@ -1,0 +1,58 @@
+# SPDX-License-Identifier: MIT
+#
+# Forbidden torch JIT / deserialization gate — fail-closed (P0-3).
+#
+# A torch dependency advisory was dismissed on the assumption that the
+# TorchScript JIT and unguarded pickle-deserialization paths are unused. This
+# gate enforces that assumption repo-wide: any reintroduction of
+# torch.jit.{script,trace,load} or a torch.load lacking the literal
+# weights_only=True fails CI. AST-based, stdlib-only, no install step.
+#
+# Path-filtered: a PR that touches no Python source, the gate, the allowlist,
+# the test, the policy doc, or this workflow skips the job entirely.
+name: Forbidden Torch JIT Gate
+
+concurrency:
+  group: ${{ github.workflow }}-${{ github.ref }}
+  cancel-in-progress: true
+
+on:
+  pull_request:
+    branches: [main]
+    paths:
+      - "**/*.py"
+      - "tools/security/check_forbidden_torch_jit.py"
+      - "tools/security/forbidden_torch_jit_allowlist.json"
+      - "tests/tools/test_forbidden_torch_jit.py"
+      - "docs/security/forbidden_torch_jit_policy.md"
+      - ".github/workflows/forbidden-torch-jit-gate.yml"
+  merge_group:
+  push:
+    branches: [main]
+    paths:
+      - "**/*.py"
+      - "tools/security/check_forbidden_torch_jit.py"
+      - "tools/security/forbidden_torch_jit_allowlist.json"
+      - "tests/tools/test_forbidden_torch_jit.py"
+      - "docs/security/forbidden_torch_jit_policy.md"
+      - ".github/workflows/forbidden-torch-jit-gate.yml"
+
+permissions:
+  contents: read
+
+jobs:
+  validate:
+    name: forbidden-torch-jit-gate
+    runs-on: ubuntu-latest
+    timeout-minutes: 5
+    steps:
+      - name: Checkout
+        uses: actions/checkout@9c091bb21b7c1c1d1991bb908d89e4e9dddfe3e0 # v7.0.0
+
+      - name: Setup Python
+        uses: actions/setup-python@ece7cb06caefa5fff74198d8649806c4678c61a1 # v6
+        with:
+          python-version: "3.12"
+
+      - name: Enforce forbidden-torch-jit gate
+        run: python tools/security/check_forbidden_torch_jit.py

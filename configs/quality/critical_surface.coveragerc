@@ -1,4 +1,4 @@
-# SPDX-License-Identifier: LicenseRef-TradePulse-Proprietary
+# SPDX-License-Identifier: MIT
 [run]
 source =
     core
@@ -11,5 +11,14 @@ include =
     core/indicators/kuramoto.py
     core/utils/security.py
     core/utils/slo.py
+    execution/oms.py
+    execution/order_lifecycle.py
+    execution/position_sizer.py
+    execution/compliance.py
+    execution/order_ledger.py
+    execution/resilience/circuit_breaker.py
+    execution/arbitrage/engine.py
+    execution/arbitrage/capital.py
+    core/security/tls.py
 show_missing = True
 precision = 2

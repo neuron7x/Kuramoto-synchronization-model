@@ -1,0 +1,127 @@
+# Diff-bound commit acceptor for the verbatim physics descriptor-contract
+# tests + the stale-fixture repair (issues #1101, #1107, #1109).
+#
+# TEST/GOVERNANCE-ONLY change set. No source-logic changes to any physics or
+# kuramoto module. Three test files change:
+#
+#   * tests/unit/physics/test_T3_forman_ricci.py
+#     Adds TestIssue1101DescriptorContract with the four EXACT-named #1101
+#     tests (GAP-001..004), thin aliases over behaviour already covered by the
+#     representation-honesty / layer-boundary suites:
+#       - test_result_declares_layer_claim_boundary_and_projection_policy
+#       - test_nonfinite_correlation_rejected_before_projection
+#       - test_undefined_correlation_not_silently_zeroed_without_policy
+#       - test_dual_track_monitor_exposes_descriptor_consumer_boundary
+#     These assert the CURRENT implemented contract on FormanRicciResult /
+#     DualTrackRicciMonitor (the OR-clause "exclude+record via
+#     nonfinite_input_count + nan_policy" form, NOT a ValueError). No source
+#     change; curvature output byte-unchanged.
+#
+#   * tests/unit/core/test_kuramoto_network_engine.py
+#     Adds the EXACT-named #1107 (ORHSA S4/S5/S7) test
+#     test_network_engine_requires_asset_nodes_and_nxn_coupling, asserting the
+#     already-implemented N<2 ValueError fail-closed guard on both entry points
+#     AND that a valid N>=2 run emits an N×N coupling matrix over exactly the
+#     asset nodes with a zero diagonal. No source change.
+#
+#   * tests/unit/physics/test_second_order_stability_audit.py
+#     Repairs the stale _signed_asymmetric_engine() fixture: it built a signed,
+#     asymmetric adjacency that a later-merged KuramotoConfig validator rejects
+#     at construction (claim_boundary='physical_attractive_kuramoto_only'
+#     forbids negative weights). The fix passes the correct claim_boundary
+#     token CLAIM_SIGNED='signed_or_repulsive_dynamics_only' so the signed
+#     engine constructs and the SecondOrderStabilityAudit logic (#1109) is
+#     exercised, un-skipping test_failed_audit_blocks_stability_promotion and
+#     test_asymmetric_or_signed_adjacency_invalidates_energy_claim. The audit is
+#     NOT weakened — only the fixture's declared claim boundary is corrected to
+#     match the signed adjacency it deliberately constructs.
+#
+# Promotes NO claim tier, adds NO invariant, changes NO numeric output. Asserts
+# no predictive, physical, or financial claim. Locally verified on origin/main
+# base: pytest 46 passed across the three files; mypy --strict clean on all
+# three; zero new noqa / type: ignore. Test files are repo-excluded from
+# ruff/black (ruff.toml extend-exclude=["tests","**/tests"];
+# pyproject black force-exclude tests/).
+id: physics-verbatim-descriptor-contract-tests
+status: ACTIVE
+claim_type: governance
+promise: >-
+  The four verbatim #1101 descriptor-contract tests
+  (test_result_declares_layer_claim_boundary_and_projection_policy,
+  test_nonfinite_correlation_rejected_before_projection,
+  test_undefined_correlation_not_silently_zeroed_without_policy,
+  test_dual_track_monitor_exposes_descriptor_consumer_boundary) pin the current
+  FormanRicciResult / DualTrackRicciMonitor claim-boundary, non-finite-exclusion
+  (nan_policy="nonfinite_excluded_and_recorded" + nonfinite_input_count),
+  undefined-correlation, and descriptor-consumer-boundary contract; the verbatim
+  #1107 test test_network_engine_requires_asset_nodes_and_nxn_coupling pins the
+  N<2 ValueError fail-closed guard plus N×N coupling output; and the repaired
+  _signed_asymmetric_engine() fixture passes claim_boundary=CLAIM_SIGNED so the
+  #1109 SecondOrderStabilityAudit logic is exercised and the whole
+  test_second_order_stability_audit.py file is green. Test-only / fixture-only;
+  no source-logic change; no numeric output change; no claim tier promoted.
+diff_scope:
+  changed_files:
+    - path: ".claude/commit_acceptors/physics-verbatim-descriptor-contract-tests.yaml"
+    - path: "tests/unit/physics/test_T3_forman_ricci.py"
+    - path: "tests/unit/core/test_kuramoto_network_engine.py"
+    - path: "tests/unit/physics/test_second_order_stability_audit.py"
+  forbidden_paths:
+    - "trading/"
+    - "execution/"
+    - "forecast/"
+    - "src/"
+required_python_symbols: []
+expected_signal: >-
+  `python -m pytest tests/unit/physics/test_T3_forman_ricci.py
+  tests/unit/core/test_kuramoto_network_engine.py
+  tests/unit/physics/test_second_order_stability_audit.py` reports all passed,
+  including the four verbatim #1101 tests, the verbatim #1107 test, and both
+  previously-red #1109 fixture tests.
+measurement_command: >-
+  bash -c 'mkdir -p tmp && python -m pytest
+  "tests/unit/physics/test_T3_forman_ricci.py::TestIssue1101DescriptorContract::test_result_declares_layer_claim_boundary_and_projection_policy"
+  "tests/unit/physics/test_T3_forman_ricci.py::TestIssue1101DescriptorContract::test_nonfinite_correlation_rejected_before_projection"
+  "tests/unit/physics/test_T3_forman_ricci.py::TestIssue1101DescriptorContract::test_undefined_correlation_not_silently_zeroed_without_policy"
+  "tests/unit/physics/test_T3_forman_ricci.py::TestIssue1101DescriptorContract::test_dual_track_monitor_exposes_descriptor_consumer_boundary"
+  "tests/unit/core/test_kuramoto_network_engine.py::TestNetworkKuramotoEngine::test_network_engine_requires_asset_nodes_and_nxn_coupling"
+  "tests/unit/physics/test_second_order_stability_audit.py::test_failed_audit_blocks_stability_promotion"
+  "tests/unit/physics/test_second_order_stability_audit.py::test_asymmetric_or_signed_adjacency_invalidates_energy_claim"
+  > tmp/physics_verbatim_contract_pytest.log 2>&1
+  && grep -qE "7 passed" tmp/physics_verbatim_contract_pytest.log'
+signal_artifact: "tmp/physics_verbatim_contract_pytest.log"
+falsifier:
+  command: >-
+    python -c 'import sys, numpy as np;
+    from core.physics.forman_ricci import FormanRicciCurvature, DualTrackRicciMonitor;
+    frc = FormanRicciCurvature(threshold=0.5);
+    n = 4;
+    corr = np.full((n, n), 0.9); np.fill_diagonal(corr, 1.0);
+    corr[0, 1] = corr[1, 0] = np.nan; corr[2, 3] = corr[3, 2] = np.inf;
+    r = frc.compute_from_correlation(corr);
+    nonfinite_ok = (r.nan_policy == "nonfinite_excluded_and_recorded"
+    and r.nonfinite_input_count == 4
+    and (0, 1) not in r.edge_curvatures and (2, 3) not in r.edge_curvatures);
+    boundary_ok = (r.layer == "market_descriptor" and r.physical_claim is False
+    and r.claim_boundary == "derived_unsigned_unweighted_topology_descriptor"
+    and r.projection_policy == "abs_correlation_threshold_binary");
+    consumer_ok = ("advisory" in DualTrackRicciMonitor.descriptor_consumer_boundary
+    and "not_validated" in DualTrackRicciMonitor.descriptor_consumer_boundary);
+    sys.exit(0 if (not nonfinite_ok or not boundary_ok or not consumer_ok) else 1)'
+  description: >-
+    Inverse probe of the #1101 descriptor contract the verbatim tests assert. It
+    fires (exit 0) iff the non-finite exclude+record policy, the
+    layer/claim-boundary/projection-policy declaration, or the consumer boundary
+    regresses. While the contract holds it exits 1, proving the promise is
+    falsifiable against the live module rather than only the test names.
+rollback_command: >-
+  bash -c 'git checkout origin/main -- tests/unit/physics/test_T3_forman_ricci.py
+  tests/unit/core/test_kuramoto_network_engine.py
+  tests/unit/physics/test_second_order_stability_audit.py
+  && git rm -f .claude/commit_acceptors/physics-verbatim-descriptor-contract-tests.yaml'
+rollback_verification_command: >-
+  bash -c 'test ! -f .claude/commit_acceptors/physics-verbatim-descriptor-contract-tests.yaml'
+memory_update_type: none
+ledger_path: ".claude/commit_acceptors/physics-verbatim-descriptor-contract-tests.yaml"
+report_path: "tmp/physics_verbatim_contract_pytest.log"
+evidence: []

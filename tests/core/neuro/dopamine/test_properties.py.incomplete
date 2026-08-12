@@ -10,8 +10,8 @@ from pathlib import Path
 import pytest
 from hypothesis import HealthCheck, given, settings, strategies as st
 
-from tradepulse.core.neuro.dopamine import DopamineController
-from tradepulse.core.neuro.dopamine.ddm_adapter import adapt_ddm_parameters, ddm_thresholds
+from geosync.core.neuro.dopamine import DopamineController
+from geosync.core.neuro.dopamine.ddm_adapter import adapt_ddm_parameters, ddm_thresholds
 
 
 # Hypothesis profiles for different test modes

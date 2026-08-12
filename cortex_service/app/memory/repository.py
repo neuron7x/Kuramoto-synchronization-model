@@ -1,3 +1,5 @@
+# Copyright (c) 2023-2026 Yaroslav Vasylenko (neuron7xLab)
+# SPDX-License-Identifier: MIT
 """Persistence layer for cortex memory constructs."""
 
 from __future__ import annotations
@@ -71,9 +73,7 @@ class MemoryRepository:
                 else:
                     self._session.add(PortfolioExposure(**row))
 
-    def fetch_exposures(
-        self, portfolio_id: str, limit: int = 50
-    ) -> list[PortfolioExposure]:
+    def fetch_exposures(self, portfolio_id: str, limit: int = 50) -> list[PortfolioExposure]:
         statement = (
             select(PortfolioExposure)
             .where(PortfolioExposure.portfolio_id == portfolio_id)
@@ -85,9 +85,7 @@ class MemoryRepository:
     def store_regime(
         self, label: str, valence: float, confidence: float, as_of: datetime
     ) -> MarketRegime:
-        regime = MarketRegime(
-            label=label, valence=valence, confidence=confidence, as_of=as_of
-        )
+        regime = MarketRegime(label=label, valence=valence, confidence=confidence, as_of=as_of)
         self._session.add(regime)
         return regime
 

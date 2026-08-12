@@ -1,3 +1,5 @@
+# Copyright (c) 2023-2026 Yaroslav Vasylenko (neuron7xLab)
+# SPDX-License-Identifier: MIT
 from __future__ import annotations
 
 import hashlib
@@ -19,9 +21,7 @@ class DummyWebSocket:
     def __enter__(self) -> "DummyWebSocket":
         return self
 
-    def __exit__(
-        self, exc_type, exc, tb
-    ) -> None:  # pragma: no cover - interface compliance
+    def __exit__(self, exc_type, exc, tb) -> None:  # pragma: no cover - interface compliance
         return None
 
     def recv(self) -> str:
@@ -52,9 +52,7 @@ def test_binance_signature_and_idempotency() -> None:
             filtered = [(k, v) for k, v in params if k != "signature"]
             query = urlencode(sorted(filtered))
             signature = dict(params)["signature"]
-            expected = hmac.new(
-                b"test-secret", query.encode(), hashlib.sha256
-            ).hexdigest()
+            expected = hmac.new(b"test-secret", query.encode(), hashlib.sha256).hexdigest()
             assert signature == expected
             assert dict(params)["timestamp"] == expected_timestamp
             body = {"orderId": 4242, "status": "NEW", "executedQty": "0"}
@@ -71,14 +69,10 @@ def test_binance_signature_and_idempotency() -> None:
         raise AssertionError(f"Unexpected request: {request.method} {request.url}")
 
     transport = httpx.MockTransport(handler)
-    connector = BinanceExecutionConnector(
-        sandbox=True, enable_stream=False, transport=transport
-    )
+    connector = BinanceExecutionConnector(sandbox=True, enable_stream=False, transport=transport)
     connector.connect(credentials={"API_KEY": "test-key", "API_SECRET": "test-secret"})
 
-    order = Order(
-        symbol="BTCUSDT", side="buy", quantity=1.0, order_type=OrderType.MARKET
-    )
+    order = Order(symbol="BTCUSDT", side="buy", quantity=1.0, order_type=OrderType.MARKET)
 
     first = connector.place_order(order, idempotency_key="idem-1")
     second = connector.place_order(order, idempotency_key="idem-1")
@@ -101,12 +95,8 @@ def test_binance_rate_limit_backoff(monkeypatch: pytest.MonkeyPatch) -> None:
         if request.method == "POST" and request.url.path == "/api/v3/order":
             call_sequence.append("order")
             if len(call_sequence) == 1:
-                return httpx.Response(
-                    429, json={"code": -1003, "msg": "Too many requests"}
-                )
-            return httpx.Response(
-                200, json={"orderId": 1001, "status": "NEW", "executedQty": "0"}
-            )
+                return httpx.Response(429, json={"code": -1003, "msg": "Too many requests"})
+            return httpx.Response(200, json={"orderId": 1001, "status": "NEW", "executedQty": "0"})
         raise AssertionError(f"Unexpected request: {request.method} {request.url}")
 
     connector = BinanceExecutionConnector(
@@ -114,9 +104,7 @@ def test_binance_rate_limit_backoff(monkeypatch: pytest.MonkeyPatch) -> None:
     )
     connector.connect(credentials={"API_KEY": "test-key", "API_SECRET": "test-secret"})
 
-    order = Order(
-        symbol="BTCUSDT", side="buy", quantity=1.0, order_type=OrderType.MARKET
-    )
+    order = Order(symbol="BTCUSDT", side="buy", quantity=1.0, order_type=OrderType.MARKET)
     result = connector.place_order(order)
 
     assert result.order_id is not None

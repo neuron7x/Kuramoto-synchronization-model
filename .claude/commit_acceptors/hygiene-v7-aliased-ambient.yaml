@@ -1,0 +1,82 @@
+# Diff-bound commit acceptor for hygiene V7 — aliased-ambient detection.
+#
+# Closes residual vector V7 (ADR 0026): the ambient-nondeterminism detector
+# resolved a call's base through the file's import-alias map, so an aliased
+# import (import datetime as DT; DT.now()) is now caught. Forward-defense; no
+# baseline growth (0 new sites today). Detector-only, no runtime change.
+
+id: hygiene-v7-aliased-ambient
+status: ACTIVE
+claim_type: correctness
+promise: >-
+  After this PR lands, check_code_hygiene.py resolves a call's base name
+  through the file's import-alias map before matching ambient-nondeterminism,
+  so an aliased clock/RNG/sleep call (import datetime as DT -> DT.now();
+  from time import time as t -> t()) is detected. A 6-case regression battery
+  (tests/ci/test_hygiene_alias_ambient.py) pins detection of aliased ambient
+  calls and non-detection of aliased non-ambient calls. The runtime-root
+  baseline is unchanged (no aliased ambient exists today), so this is pure
+  forward-defense. No physics, runtime, or forecasting change.
+
+diff_scope:
+  changed_files:
+    - path: ".claude/commit_acceptors/hygiene-v7-aliased-ambient.yaml"
+    - path: "INVENTORY.json"
+    - path: "scripts/ci/check_code_hygiene.py"
+    - path: "tests/ci/test_hygiene_alias_ambient.py"
+  forbidden_paths:
+    - "trading/"
+    - "execution/"
+    - "forecast/"
+    - "policy/"
+    - "core/"
+    - "runtime/"
+    - "application/"
+
+required_python_symbols:
+  - "scripts/ci/check_code_hygiene.py::_alias_map"
+  - "scripts/ci/check_code_hygiene.py::_scan_file"
+
+expected_signal: >-
+  python -m pytest tests/ci/test_hygiene_alias_ambient.py reports 6 passed;
+  python scripts/ci/check_code_hygiene.py prints "Code-hygiene ratchet held"
+  and exits 0; python scripts/ci/check_debt_baseline_monotonic.py confirms no
+  baseline total grew.
+
+measurement_command: >-
+  bash -c '
+    mkdir -p tmp &&
+    python -m pytest -q tests/ci/test_hygiene_alias_ambient.py | tee tmp/hygiene_v7.log &&
+    python scripts/ci/check_code_hygiene.py | tee -a tmp/hygiene_v7.log
+  '
+
+signal_artifact: "tmp/hygiene_v7.log"
+
+falsifier:
+  command: >-
+    bash -c '
+      python -m pytest -q
+        tests/ci/test_hygiene_alias_ambient.py::test_aliased_module_clock_is_caught
+        tests/ci/test_hygiene_alias_ambient.py::test_non_ambient_aliased_call_is_not_counted
+    '
+  description: >-
+    Runs the two polar cases: an aliased datetime.now() MUST be caught and an
+    aliased os.getpid() MUST NOT be counted. Succeeds (exit 0) only when both
+    hold — if alias resolution over- or under-matched, one would fail.
+
+rollback_command: >-
+  bash -c '
+    git checkout origin/main -- scripts/ci/check_code_hygiene.py &&
+    git rm -f
+      tests/ci/test_hygiene_alias_ambient.py
+      .claude/commit_acceptors/hygiene-v7-aliased-ambient.yaml
+  '
+
+rollback_verification_command: >-
+  bash -c '
+    ! grep -q _alias_map scripts/ci/check_code_hygiene.py
+  '
+
+memory_update_type: append
+ledger_path: ".claude/commit_acceptors/hygiene-v7-aliased-ambient.yaml"
+report_path: "tmp/hygiene_v7.log"

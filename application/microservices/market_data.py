@@ -1,3 +1,5 @@
+# Copyright (c) 2023-2026 Yaroslav Vasylenko (neuron7xLab)
+# SPDX-License-Identifier: MIT
 """Microservice responsible for market data ingestion and feature building."""
 
 from __future__ import annotations
@@ -12,7 +14,7 @@ from application.microservices.contracts import (
     MarketDataSource,
     default_contract_registry,
 )
-from application.system import TradePulseSystem
+from application.system import GeoSyncSystem
 from core.data.models import InstrumentType, PriceTick
 
 
@@ -21,7 +23,7 @@ class MarketDataService(Microservice):
 
     def __init__(
         self,
-        system: TradePulseSystem,
+        system: GeoSyncSystem,
         *,
         contracts: IntegrationContractRegistry | None = None,
     ) -> None:
@@ -31,10 +33,10 @@ class MarketDataService(Microservice):
         self._contracts = contracts or default_contract_registry()
         try:
             self._operation_contracts["ingest"] = self._contracts.get_service(
-                "tradepulse.service.market-data.ingest"
+                "geosync.service.market-data.ingest"
             )
             self._operation_contracts["build_features"] = self._contracts.get_service(
-                "tradepulse.service.market-data.features"
+                "geosync.service.market-data.features"
             )
         except KeyError:  # pragma: no cover - defensive
             pass
@@ -144,9 +146,7 @@ class MarketDataService(Microservice):
             metadata["last_symbol"] = self._last_source.symbol
             metadata["last_venue"] = self._last_source.venue
         if self._system.last_ingestion_duration_seconds is not None:
-            metadata["last_duration_seconds"] = (
-                self._system.last_ingestion_duration_seconds
-            )
+            metadata["last_duration_seconds"] = self._system.last_ingestion_duration_seconds
         if self._system.last_ingestion_error is not None:
             metadata["last_error"] = self._system.last_ingestion_error
         return metadata or None

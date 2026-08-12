@@ -1,0 +1,61 @@
+# Diff-bound acceptor — register every physics clamp site in the numerical-policy
+# clamp registry and drain the numerical_policy_unregistered_clamps cluster (#1173).
+#
+# The fail-closed clamp scanner (tools/physics/check_silent_clamps.py) requires
+# every clamp-shaped op in the scoped physics tree to be bound, BY SHAPE, to a
+# named entry in tools/physics/clamp_registry.yaml. The recent physics fixes
+# (diffusion rank-propagation, tsallis q-MLE, Gabor uncertainty, explosive K_c,
+# stuart-landau mu, lyapunov R²) added/shifted clamp sites, leaving 36
+# unregistered + 31 stale. This regenerates each registry entry's `sites` list
+# from the live scan (grouped by shape), so unregistered=0 and stale=0; the
+# declared reason/physical_meaning/failure_mode of each shape entry is preserved.
+# All clamps are legitimate guard-floors/epsilons/adjacency-magnitude/nan-repair
+# already carrying inline INV-/bounds notes (validate_tests --audit-code clean).
+
+id: numerical-policy-clamp-registration
+status: ACTIVE
+claim_type: governance
+promise: >-
+  tools/physics/clamp_registry.yaml binds every clamp site in the scoped physics
+  tree by shape (abs_sign_loss, cap_minimum, epsilon_add, floor_builtin,
+  floor_maximum, nan_repair, saturate_clip, symmetrise), so
+  check_silent_clamps.build_report() reports unregistered=[] and stale=[] (ok).
+  tests/tools/test_numerical_policy.py passes, and the
+  numerical_policy_unregistered_clamps cluster (#1173) is drained from
+  tests/ci/fast_quarantine.txt + docs/ci/fast_backlog_ledger.md. No source
+  behaviour changes — only the registry's site enumeration and the quarantine
+  list/ledger.
+diff_scope:
+  changed_files:
+    - path: ".claude/commit_acceptors/numerical-policy-clamp-registration.yaml"
+    - path: "tools/physics/clamp_registry.yaml"
+    - path: "tests/ci/fast_quarantine.txt"
+    - path: "docs/ci/fast_backlog_ledger.md"
+  forbidden_paths:
+    - "trading/"
+    - "execution/"
+    - "forecast/"
+    - "policy/"
+required_python_symbols: []
+expected_signal: >-
+  check_silent_clamps reports unregistered=0, stale=0, ok=True;
+  tests/tools/test_numerical_policy.py all pass; numerical_policy cluster absent
+  from fast_quarantine.txt.
+measurement_command: >-
+  bash -c 'set -e; mkdir -p tmp; python -m pytest tests/tools/test_numerical_policy.py -q | tee tmp/numerical_policy_clamps.log'
+signal_artifact: "tmp/numerical_policy_clamps.log"
+falsifier:
+  command: >-
+    bash -c 'python -c "from tools.physics import check_silent_clamps as c; r=c.build_report(); raise SystemExit(0 if (r.unregistered or r.stale) else 1)"'
+  description: >-
+    Exits 0 (falsification) iff the registry has any unregistered or stale clamp
+    site — i.e. the registration is incomplete. On the green path both are empty
+    so this exits 1, proving full coverage and falsifiability.
+rollback_command: >-
+  git checkout HEAD~1 -- tools/physics/clamp_registry.yaml tests/ci/fast_quarantine.txt
+  docs/ci/fast_backlog_ledger.md .claude/commit_acceptors/numerical-policy-clamp-registration.yaml
+rollback_verification_command: "git diff --exit-code tools/physics/clamp_registry.yaml"
+memory_update_type: append
+ledger_path: "docs/ci/fast_backlog_ledger.md"
+report_path: "docs/ci/fast_backlog_ledger.md"
+evidence: []

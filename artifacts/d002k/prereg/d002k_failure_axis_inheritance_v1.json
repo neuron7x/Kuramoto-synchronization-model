@@ -1,0 +1,51 @@
+{
+  "schema_version": "D002K-FAILURE-AXIS-INHERITANCE-v1",
+  "study_id": "D-002K",
+  "node_id": "D002K-P0",
+  "generated_at": "2026-05-15T00:00:00Z",
+  "parent_lineage": "D-002J",
+  "parent_status": "TERMINAL_REFUSED",
+  "parent_refusal_node": "D002J-P7",
+  "parent_refusal_pr": 705,
+  "parent_refusal_merge_sha": "c5c4158bed639014ec35ab8f53ec70d98be660a2",
+  "parent_refusal_decision": "POWER_GATE_REFUSED_UNDERPOWERED",
+  "inherited_failure_axis": "effect_too_small",
+  "is_rescue": false,
+  "d002j_p7_n_min_distribution": {
+    "min": 150,
+    "median": 235,
+    "max": 417
+  },
+  "d002j_bonferroni_denominator": 102,
+  "d002j_feasible_cap_n_seeds": 100,
+  "d002j_runtime_was_binding_constraint": false,
+  "d002j_binding_constraint": "effect_too_small: honest P4-sourced substrate-vs-null separation spread across 102 cells under Bonferroni alpha=0.05/102 is below the minimum detectable effect at a feasible per-cell seed budget; runtime (measured per-sim ~4e-5 s) was NOT binding.",
+  "d002k_design_response": {
+    "n_mechanisms": 1,
+    "primary_mechanism": "funding_liquidity_rollover",
+    "n_windows": 3,
+    "primary_windows": [
+      "CW3_US_REPO_SPIKE_2019",
+      "CW4_COVID_DASH_FOR_CASH_2020",
+      "CW5_UK_GILT_LDI_2022"
+    ],
+    "n_primary_metrics": 1,
+    "primary_metric": "pre_post_standardized_mean_shift",
+    "d002k_bonferroni_denominator": 3,
+    "bonferroni_denominator_rule": "n_windows * n_primary_metrics",
+    "narrowing_not_loosening": "Denominator shrinks 102 -> 3 because the pre-registered hypothesis count honestly shrinks (3 windows x 1 metric), NOT because alpha was loosened at a fixed hypothesis count. Narrowing scope is legitimate design; loosening statistics at fixed scope is forbidden laundering.",
+    "snr_levers": [
+      "single highest-SNR mechanism (direct public observables, lowest fake-network risk)",
+      "3 windows that are each a funding-liquidity event with strong public data",
+      "single locked primary metric",
+      "crisis-vs-matched-placebo contrast replaces diffuse substrate-vs-null grid",
+      "power-gate-before-scoring as a prereg law"
+    ],
+    "alpha_relaxed": false,
+    "effect_prior_inflated": false,
+    "d002j_grid_shrunk_post_hoc": false
+  },
+  "no_rescue_boundary": "D-002K does NOT reopen, mutate, or rescue D-002J. D-002J remains terminally REFUSED at P7 (POWER_GATE_REFUSED_UNDERPOWERED). D-002K is a fresh, narrower lineage designed against the effect_too_small axis. The D-002J-P7 REFUSED verdict remains the truthful terminal outcome.",
+  "d002k_does_not_authorise_d002j_p8": true,
+  "canonical_run_authorized": false
+}

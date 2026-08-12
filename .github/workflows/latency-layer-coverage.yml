@@ -1,0 +1,123 @@
+# SPDX-License-Identifier: MIT
+#
+# Latency Layer Coverage Gate (IERD-Q6 Phase-4 progress).
+#
+# Scores the four §5 latency layers (client_render, network_TTFB,
+# server_compute, db_io) from tests/observability/
+# test_latency_layer_coverage.py. Every covered layer cites a real
+# resolvable regression test (cross-language: pytest node or frontend
+# Jest spec), statically verified to exist; uncovered layers are
+# explicit. The Grafana latency dashboard is structurally validated
+# against the §5 budgets.
+#
+# Phase status (per ADR 0020):
+#   * Phase-4 ENTRY (#550, prior) — only server_compute gated.
+#   * Phase-4 progress — client_render Web Vitals instrumentation +
+#     db_io collector gate + Grafana dashboard landed fail-closed in
+#     the global lanes; the "all four layers regression-gated" check
+#     was informational because network_TTFB lacked a real-network
+#     budget run.
+#   * Phase-4 EXIT (#531, this change) — the network_TTFB Lighthouse-CI
+#     budget run landed (.github/workflows/lighthouse-ci.yml +
+#     apps/web/lighthouserc.json): a real Next build is served and
+#     headless Chrome asserts TTFB < 300 ms / FCP < 1.0 s fail-closed,
+#     with a 1 ms-TTFB falsifier. LayerCoverage = 1.0 and this gate is
+#     now fail-closed (continue-on-error removed). OTel trace
+#     propagation remains separate follow-up work and the composite
+#     claim tier is unchanged here.
+#
+# Tracked by GitHub issue IERD-Q6 (#531) and claim
+# `e2e-latency-budget-compliance` in `docs/CLAIMS.yaml`.
+name: Latency Layer Coverage — IERD-Q6
+
+on:
+  pull_request:
+    branches: [main]
+    paths:
+      - 'tests/observability/test_latency_layer_coverage.py'
+      - 'tests/observability/test_lighthouse_network_ttfb_gate.py'
+      - 'observability/grafana/latency_budget_dashboard.json'
+      - 'apps/web/app/_components/web-vitals-reporter.tsx'
+      - 'apps/web/lighthouserc.json'
+      - 'tests/api/test_latency_budget_server_compute.py'
+      - '.github/workflows/lighthouse-ci.yml'
+      - 'pyproject.toml'
+      - '.github/workflows/latency-layer-coverage.yml'
+  merge_group:
+  push:
+    branches: [main]
+
+permissions:
+  contents: read
+
+concurrency:
+  group: latency-layer-coverage-${{ github.event.pull_request.number || github.sha }}
+  cancel-in-progress: true
+
+jobs:
+  latency-layer-coverage:
+    name: latency-layer-coverage
+    runs-on: ubuntu-latest
+    timeout-minutes: 10
+    env:
+      # Activates the Phase-4 'all 4 layers regression-gated' check.
+      # The global python-fast-tests / python-heavy-tests lanes do NOT
+      # set this, so test_all_four_layers_regression_gated SKIPs there
+      # (network_TTFB has no regression-gated budget run yet); it runs
+      # and fails informationally only here, where continue-on-error:
+      # true keeps the check green. The four genuinely-green layer
+      # tests run unguarded in the global lanes. Same isolation
+      # posture as the Q5/Q7 ENTRY gates.
+      GEOSYNC_LATENCY_LAYER_GATE: "1"
+    steps:
+      - name: Checkout
+        uses: actions/checkout@9c091bb21b7c1c1d1991bb908d89e4e9dddfe3e0 # v7.0.0
+
+      - name: Set up Python
+        uses: actions/setup-python@ece7cb06caefa5fff74198d8649806c4678c61a1 # v6
+        with:
+          python-version: '3.12'
+          cache: 'pip'
+
+      - name: Install runtime + test dependencies
+        run: |
+          set -euo pipefail
+          python -m pip install --upgrade pip
+          pip install -e .
+          pip install pytest
+
+      - name: Run latency layer coverage gate
+        id: run
+        # Phase-4 EXIT (#531): network_TTFB now has a real
+        # regression-gated Lighthouse-CI budget run, so LayerCoverage =
+        # 1.0 and this gate is fail-closed (continue-on-error removed).
+        # Both the per-layer fail-closed tests and the env-gated
+        # all-four-layers check must pass.
+        run: |
+          set -o pipefail
+          mkdir -p artifacts/latency-layer-coverage
+          pytest tests/observability/test_latency_layer_coverage.py \
+            tests/observability/test_lighthouse_network_ttfb_gate.py \
+            -q -s --tb=short \
+            --junitxml=artifacts/latency-layer-coverage/junit.xml \
+            2>&1 | tee artifacts/latency-layer-coverage/run.log
+
+      - name: Upload latency-layer-coverage artifact
+        if: always()
+        uses: actions/upload-artifact@043fb46d1a93c77aae656e7c1c64a875d1fc6a0a # v7.0.1
+        with:
+          name: latency-layer-coverage-results
+          path: artifacts/latency-layer-coverage/
+          retention-days: 14
+
+      - name: Summarise latency layer coverage
+        if: always()
+        run: |
+          set -euo pipefail
+          echo "## Latency layer coverage — IERD-Q6 §5" >> "$GITHUB_STEP_SUMMARY"
+          echo "" >> "$GITHUB_STEP_SUMMARY"
+          if [ -f artifacts/latency-layer-coverage/run.log ]; then
+            grep -E "^\[layer\] AGGREGATE" artifacts/latency-layer-coverage/run.log >> "$GITHUB_STEP_SUMMARY" || true
+          fi
+          echo "" >> "$GITHUB_STEP_SUMMARY"
+          echo "Phase status: **Phase-4 EXIT (#531)** — all four layers regression-gated fail-closed (server_compute + client_render + db_io + network_TTFB Lighthouse-CI). LayerCoverage = 1.0." >> "$GITHUB_STEP_SUMMARY"

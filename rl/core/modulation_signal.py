@@ -1,3 +1,5 @@
+# Copyright (c) 2023-2026 Yaroslav Vasylenko (neuron7xLab)
+# SPDX-License-Identifier: MIT
 """Modulation signal controllers for risk-weighted learning updates."""
 
 from __future__ import annotations
@@ -18,9 +20,7 @@ class ModulationSignalConfig:
     max_scale: float = 1.5
 
     @classmethod
-    def from_mapping(
-        cls, payload: Mapping[str, object] | None
-    ) -> "ModulationSignalConfig":
+    def from_mapping(cls, payload: Mapping[str, object] | None) -> "ModulationSignalConfig":
         if not payload:
             return cls()
         return cls(
@@ -52,9 +52,7 @@ class ModulationSignalController:
         self._config = config or ModulationSignalConfig()
 
     @classmethod
-    def from_mapping(
-        cls, payload: Mapping[str, object] | None
-    ) -> "ModulationSignalController":
+    def from_mapping(cls, payload: Mapping[str, object] | None) -> "ModulationSignalController":
         return cls(ModulationSignalConfig.from_mapping(payload))
 
     def compute(
@@ -65,9 +63,7 @@ class ModulationSignalController:
         threat: float,
     ) -> ModulationSignalDecision:
         rpe_abs = float(rpe_metrics.get("rpe_abs", 0.0))
-        risk_score = (rpe_abs * self._config.rpe_weight) + (
-            threat * self._config.threat_weight
-        )
+        risk_score = (rpe_abs * self._config.rpe_weight) + (threat * self._config.threat_weight)
         arousal_boost = orexin * self._config.orexin_weight
         raw_scale = self._config.base_scale + arousal_boost - risk_score
         scale = max(self._config.min_scale, min(self._config.max_scale, raw_scale))

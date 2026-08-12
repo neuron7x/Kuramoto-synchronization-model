@@ -71,7 +71,7 @@
     }
   },
   "description": "Order instruction emitted by the execution service.",
-  "$id": "tradepulse.events.execution.v1_0_0.OrderEvent",
+  "$id": "geosync.events.execution.v1_0_0.OrderEvent",
   "required": [
     "event_id",
     "schema_version",

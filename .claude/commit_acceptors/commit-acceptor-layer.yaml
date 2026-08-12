@@ -1,0 +1,48 @@
+# Self-acceptor for the diff-bound commit acceptor layer.
+# This file binds the very PR that introduces the layer, so CI's
+# --require-acceptor-for-code-change passes on its own changeset.
+
+id: commit-acceptor-layer
+status: ACTIVE
+claim_type: governance
+promise: "Repository rejects unbound code commits via diff-bound acceptors with falsifier, evidence hash, and rollback."
+diff_scope:
+  changed_files:
+    - path: ".claude/commit_acceptor_policy.yaml"
+    - path: ".claude/commit_acceptor_template.yaml"
+    - path: ".claude/commit_acceptors/canonical-action-result-comparator.yaml"
+    - path: ".claude/commit_acceptors/commit-acceptor-layer.yaml"
+    - path: "tools/commit_acceptor/__init__.py"
+    - path: "tools/commit_acceptor/validate_commit_acceptor.py"
+    - path: "tools/commit_acceptor/run_evidence.py"
+    - path: "tests/unit/commit_acceptor/__init__.py"
+    - path: "tests/unit/commit_acceptor/test_validate_commit_acceptor.py"
+    - path: "tests/unit/commit_acceptor/test_run_evidence.py"
+    - path: ".github/workflows/commit-acceptor-gate.yml"
+    - path: "docs/reports/diff_bound_commit_acceptor_layer.md"
+  forbidden_paths:
+    - "trading/"
+    - "execution/"
+    - "forecast/"
+    - "policy/"
+required_python_symbols:
+  - "validate_acceptors"
+  - "validate_diff_binding"
+  - "compute_artifact_hashes"
+  - "forbidden_imports"
+  - "RequiredFields"
+  - "run_acceptor"
+  - "update_acceptor_yaml"
+  - "EvidenceResult"
+expected_signal: "all commit_acceptor unit tests pass"
+measurement_command: "python -m pytest tests/unit/commit_acceptor -v"
+signal_artifact: "tmp/commit_acceptor_pytest.log"
+falsifier:
+  command: "python -m pytest tests/unit/commit_acceptor -v -k \"code_change_without_acceptor\""
+  description: "Probe asserts diff-binding fails when a code file is changed but no acceptor claims it."
+rollback_command: "git checkout -- tools/commit_acceptor tests/unit/commit_acceptor .claude/commit_acceptors .claude/commit_acceptor_template.yaml .claude/commit_acceptor_policy.yaml .github/workflows/commit-acceptor-gate.yml docs/reports/diff_bound_commit_acceptor_layer.md"
+rollback_verification_command: "git diff --exit-code"
+memory_update_type: append
+ledger_path: ".claude/commit_acceptors/commit-acceptor-layer.yaml"
+report_path: "docs/reports/diff_bound_commit_acceptor_layer.md"
+evidence: []

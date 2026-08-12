@@ -4,7 +4,7 @@ metadata:
   name: logstash
   labels:
     app.kubernetes.io/name: logstash
-    app.kubernetes.io/part-of: tradepulse
+    app.kubernetes.io/part-of: geosync
 spec:
   replicas: 1
   selector:
@@ -14,7 +14,7 @@ spec:
     metadata:
       labels:
         app.kubernetes.io/name: logstash
-        app.kubernetes.io/part-of: tradepulse
+        app.kubernetes.io/part-of: geosync
     spec:
       containers:
         - name: logstash
@@ -37,7 +37,7 @@ spec:
             - name: ELASTICSEARCH_API_KEY
               value: ""
             - name: LOG_INDEX_PREFIX
-              value: tradepulse-logs
+              value: geosync-logs
           readinessProbe:
             httpGet:
               path: /
@@ -67,5 +67,5 @@ spec:
       volumes:
         - name: pipeline
           configMap:
-            name: tradepulse-logstash-pipeline
+            name: geosync-logstash-pipeline
             defaultMode: 0440

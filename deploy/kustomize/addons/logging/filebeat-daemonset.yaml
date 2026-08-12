@@ -4,7 +4,7 @@ metadata:
   name: filebeat
   labels:
     app.kubernetes.io/name: filebeat
-    app.kubernetes.io/part-of: tradepulse
+    app.kubernetes.io/part-of: geosync
 spec:
   selector:
     matchLabels:
@@ -13,7 +13,7 @@ spec:
     metadata:
       labels:
         app.kubernetes.io/name: filebeat
-        app.kubernetes.io/part-of: tradepulse
+        app.kubernetes.io/part-of: geosync
     spec:
       serviceAccountName: filebeat
       terminationGracePeriodSeconds: 30
@@ -34,7 +34,7 @@ spec:
               valueFrom:
                 fieldRef:
                   fieldPath: spec.nodeName
-            - name: TRADEPULSE_ENVIRONMENT
+            - name: GEOSYNC_ENVIRONMENT
               valueFrom:
                 fieldRef:
                   fieldPath: metadata.namespace
@@ -87,7 +87,7 @@ spec:
       volumes:
         - name: config
           configMap:
-            name: tradepulse-filebeat-config
+            name: geosync-filebeat-config
             defaultMode: 0640
         - name: data
           hostPath:

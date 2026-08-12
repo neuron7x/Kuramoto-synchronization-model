@@ -1,0 +1,52 @@
+# SPDX-License-Identifier: MIT
+id: claims-falsifier-resolution-gate
+status: DRAFT
+claim_type: fail_closed
+promise: >-
+  NFI register (#1228) tasks 29/33 + ADR 0021. validate_claims_have_evidence.py
+  checks claims' evidence ARTIFACTS, but nothing verified that a claim's
+  falsifier.test_id (a pytest node id) still resolves to a real test. A renamed
+  or deleted test leaves a claim asserting its tier behind a falsifier pointer at
+  nothing. This fail-closed gate parses every CLAIMS.yaml falsifier.test_id and
+  confirms (via AST, no pytest collection) the file exists and defines the named
+  test/method, stripping parametrise suffixes. All 23 current falsifiers resolve
+  (no live rot found) -- the gate is a regression guard. No scientific claim.
+diff_scope:
+  changed_files:
+    - path: ".claude/commit_acceptors/claims-falsifier-resolution-gate.yaml"
+    - path: "tools/claims/check_falsifier_test_ids_resolve.py"
+    - path: "tests/claims/test_check_falsifier_test_ids_resolve.py"
+  forbidden_paths:
+    - "trading/"
+    - "execution/"
+    - "forecast/"
+    - "policy/"
+required_python_symbols:
+  - "tests/claims/test_check_falsifier_test_ids_resolve.py::test_check_collects_rot"
+expected_signal: >-
+  check_falsifier_test_ids_resolve reports all CLAIMS.yaml falsifier.test_id node
+  ids resolve on the committed tree; a node id with a missing file or missing
+  test function is flagged as rot; parametrise suffixes and Class::method ids
+  resolve correctly; pytest tests/claims/test_check_falsifier_test_ids_resolve.py passes.
+measurement_command: >-
+  bash -c 'python -m pytest -q tests/claims/test_check_falsifier_test_ids_resolve.py && python tools/claims/check_falsifier_test_ids_resolve.py'
+signal_artifact: "tmp/claims_falsifier_resolution.log"
+falsifier:
+  command: |
+    python -c "import importlib.util, sys
+    from pathlib import Path
+    s = importlib.util.spec_from_file_location('c', 'tools/claims/check_falsifier_test_ids_resolve.py')
+    m = importlib.util.module_from_spec(s); sys.modules['c'] = m; s.loader.exec_module(m)
+    err = m.resolve_node_id('tests/does/not/exist_test.py::test_x', Path('.'))
+    sys.exit(0 if err is None else 1)"
+  description: >-
+    Resolves a node id whose file does not exist and exits 0 only if the resolver
+    wrongly returns None (the vacuous-gate regression). On the correct tree it
+    returns an error, so the command exits non-zero -- proving the resolver
+    actually detects rot, not decorative.
+rollback_command: "git revert --no-edit HEAD"
+rollback_verification_command: "git diff --exit-code tools/claims/check_falsifier_test_ids_resolve.py"
+memory_update_type: none
+ledger_path: ".claude/commit_acceptors/claims-falsifier-resolution-gate.yaml"
+report_path: "docs/reports/diff_bound_commit_acceptor_layer.md"
+evidence: []

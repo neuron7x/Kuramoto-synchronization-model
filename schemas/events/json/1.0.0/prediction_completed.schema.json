@@ -1,6 +1,6 @@
 {
   "$schema": "https://json-schema.org/draft/2020-12/schema",
-  "$id": "tradepulse.events.prediction_completed.v1",
+  "$id": "geosync.events.prediction_completed.v1",
   "title": "PredictionCompletedEvent",
   "description": "Webhook payload emitted when an asynchronous prediction is complete.",
   "type": "object",

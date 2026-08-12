@@ -1,3 +1,5 @@
+# Copyright (c) 2023-2026 Yaroslav Vasylenko (neuron7xLab)
+# SPDX-License-Identifier: MIT
 """Caching layer for thermodynamics computations to improve performance.
 
 This module provides intelligent caching for expensive thermodynamic calculations,
@@ -52,9 +54,7 @@ class ThermoCache:
         self.ttl_seconds = ttl_seconds
         self.time_bucket_size = time_bucket_size
 
-        self._energy_cache: Dict[CacheKey, Tuple[float, float]] = (
-            {}
-        )  # (value, timestamp)
+        self._energy_cache: Dict[CacheKey, Tuple[float, float]] = {}  # (value, timestamp)
         self._topology_cache: Dict[str, Tuple[Any, float]] = {}  # (topology, timestamp)
         self._metrics_cache: Dict[str, Tuple[Any, float]] = {}  # (metrics, timestamp)
 
@@ -135,9 +135,7 @@ class ThermoCache:
             Cached energy value if found, None otherwise
         """
         topo_hash = self._compute_topology_hash(topology)
-        metrics_hash = self._compute_metrics_hash(
-            latencies, coherency, resource, entropy
-        )
+        metrics_hash = self._compute_metrics_hash(latencies, coherency, resource, entropy)
         time_bucket = self._get_time_bucket()
 
         key = CacheKey(
@@ -171,9 +169,7 @@ class ThermoCache:
         self._evict_old_entries()
 
         topo_hash = self._compute_topology_hash(topology)
-        metrics_hash = self._compute_metrics_hash(
-            latencies, coherency, resource, entropy
-        )
+        metrics_hash = self._compute_metrics_hash(latencies, coherency, resource, entropy)
         time_bucket = self._get_time_bucket()
 
         key = CacheKey(
@@ -332,10 +328,7 @@ class VectorizedOperations:
 
         # Compute rolling std
         rolling_std = np.array(
-            [
-                np.std(values[max(0, i - window_size) : i + 1])
-                for i in range(len(values))
-            ]
+            [np.std(values[max(0, i - window_size) : i + 1]) for i in range(len(values))]
         )
 
         # Compute z-scores

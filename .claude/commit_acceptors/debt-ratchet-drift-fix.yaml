@@ -1,0 +1,33 @@
+# SPDX-License-Identifier: MIT
+id: debt-ratchet-drift-fix
+status: DRAFT
+claim_type: governance
+promise: "Architecture-debt ratchet returns to budget by fixing suppressions (and a counter self-match), never by raising the budget."
+diff_scope:
+  changed_files:
+    - path: ".claude/commit_acceptors/debt-ratchet-drift-fix.yaml"
+    - path: "tools/architecture_debt_inference.py"
+    - path: "tests/ci/test_autonomy_cycle.py"
+    - path: "tests/test_physics_boundary_report_schema.py"
+    - path: "tests/unit/api/test_service_helper_edges.py"
+    - path: "tests/unit/api/test_service_network_edges.py"
+  forbidden_paths:
+    - "trading/"
+    - "execution/"
+    - "forecast/"
+    - "policy/"
+required_python_symbols:
+  - "tools.architecture_debt_inference.m_type_ignore"
+  - "tools.architecture_debt_inference.infer"
+expected_signal: "architecture_debt_inference --check exits 0 (type_ignore<=704, noqa<=510); no debt class over budget."
+measurement_command: "python tools/architecture_debt_inference.py --check tools/debt_budget.json"
+signal_artifact: "tmp/architecture_debt_drift_fix.log"
+falsifier:
+  command: "python -c \"import subprocess,sys; r=subprocess.run([sys.executable,'tools/architecture_debt_inference.py','--check','tools/debt_budget.json']); sys.exit(0 if r.returncode!=0 else 1)\""
+  description: "Asserts the ratchet is RED; on the green path this probe exits non-zero, proving the promise (ratchet OK) is falsifiable."
+rollback_command: "git revert --no-edit HEAD"
+rollback_verification_command: "python tools/architecture_debt_inference.py --check tools/debt_budget.json"
+memory_update_type: none
+ledger_path: ".claude/commit_acceptors/debt-ratchet-drift-fix.yaml"
+report_path: "docs/reports/diff_bound_commit_acceptor_layer.md"
+evidence: []

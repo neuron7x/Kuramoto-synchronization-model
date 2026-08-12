@@ -1,6 +1,8 @@
+# Copyright (c) 2023-2026 Yaroslav Vasylenko (neuron7xLab)
+# SPDX-License-Identifier: MIT
 """Thermodynamic energy model for impulse-driven trading graphs.
 
-This module provides a lightweight abstraction that maps TradePulse's
+This module provides a lightweight abstraction that maps GeoSync's
 computation graph into a thermodynamic system.  Nodes behave like charged
 particles, edges encode communication channels, and the resulting energy
 surface can be optimised via gradient descent to reduce execution latency and
@@ -142,17 +144,10 @@ def compute_edge_latency(edge_attributes: Mapping[str, float]) -> float:
 def total_latency(graph: nx.Graph) -> float:
     """Aggregate latency across all edges of the graph."""
 
-    return float(
-        sum(
-            compute_edge_latency(edge_data)
-            for _, _, edge_data in graph.edges(data=True)
-        )
-    )
+    return float(sum(compute_edge_latency(edge_data) for _, _, edge_data in graph.edges(data=True)))
 
 
-def compute_potential_energy(
-    graph: nx.Graph, *, constant: float = COULOMB_CONSTANT
-) -> float:
+def compute_potential_energy(graph: nx.Graph, *, constant: float = COULOMB_CONSTANT) -> float:
     """Compute the Coulomb-style potential energy of the graph."""
 
     potential = 0.0
@@ -176,7 +171,7 @@ def buffer_uncertainty(buffer: PulseBuffer) -> float:
 
 @dataclass(slots=True)
 class ThermodynamicSystem:
-    """Thermodynamic abstraction over a TradePulse execution graph."""
+    """Thermodynamic abstraction over a GeoSync execution graph."""
 
     graph: nx.Graph = field(default_factory=nx.Graph)
     buffer: PulseBuffer = field(default_factory=PulseBuffer)
@@ -190,8 +185,7 @@ class ThermodynamicSystem:
         if timestamp is None:
             timestamp = time.time()
         latencies = [
-            compute_edge_latency(edge_data)
-            for _, _, edge_data in self.graph.edges(data=True)
+            compute_edge_latency(edge_data) for _, _, edge_data in self.graph.edges(data=True)
         ]
         self.buffer.extend(timestamp, latencies)
 

@@ -1,4 +1,4 @@
-# SPDX-License-Identifier: LicenseRef-TradePulse-Proprietary
+# SPDX-License-Identifier: MIT
 repos:
   - repo: https://github.com/astral-sh/ruff-pre-commit
     rev: v0.6.5
@@ -52,11 +52,32 @@ repos:
         entry: python scripts/ci/check_config_sprawl.py --staged
         language: python
         pass_filenames: false
+      - id: inventory-sync
+        name: inventory sync (managed scopes)
+        entry: python scripts/ci/check_inventory_sync.py
+        language: python
+        pass_filenames: false
+      - id: manifest-hash-sync
+        name: manifest hash verification
+        entry: python scripts/ci/check_manifest_hashes.py
+        language: python
+        pass_filenames: false
+      - id: actionlint-local
+        name: actionlint (local-or-docker)
+        entry: python scripts/ci/run_actionlint.py
+        language: python
+        pass_filenames: false
   - repo: https://github.com/Yelp/detect-secrets
     rev: v1.5.0
     hooks:
       - id: detect-secrets
-        args: ["--baseline", ".secrets.baseline"]
+        args:
+          [
+            "--baseline",
+            ".secrets.baseline",
+            "--exclude-files",
+            "^(INVENTORY\\.json|artifacts/provenance/inference_provenance\\.json)$",
+          ]
   - repo: https://github.com/gitleaks/gitleaks
     rev: v8.22.1
     hooks:

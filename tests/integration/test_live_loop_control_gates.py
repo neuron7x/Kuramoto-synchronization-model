@@ -1,3 +1,5 @@
+# Copyright (c) 2023-2026 Yaroslav Vasylenko (neuron7xLab)
+# SPDX-License-Identifier: MIT
 from __future__ import annotations
 
 import types
@@ -74,7 +76,9 @@ class GateAwareRisk:
     def set_default_decision(self, value: str) -> None:
         self.config.gate_defaults["default_decision"] = value
 
-    def validate_order(self, symbol: str, side: Any, quantity: float, reference_price: float) -> None:
+    def validate_order(
+        self, symbol: str, side: Any, quantity: float, reference_price: float
+    ) -> None:
         result = evaluate_control_gates(self.config, self.controllers, dict(self._signals))
         self.last_gate = result.gate.decision
         if result.gate.decision is Decision.DENY:
@@ -151,19 +155,25 @@ def test_live_loop_respects_control_gate_decisions(live_loop_config) -> None:
         finally:
             loop.shutdown()
 
-    def _assert_throttle(loop: LiveExecutionLoop, connector: CountingConnector, risk: GateAwareRisk, cid: str) -> None:
+    def _assert_throttle(
+        loop: LiveExecutionLoop, connector: CountingConnector, risk: GateAwareRisk, cid: str
+    ) -> None:
         with pytest.raises(OrderRateExceeded):
             _submit_sample(loop, cid)
         assert connector.placements == 0
         assert risk.last_gate is Decision.THROTTLE
 
-    def _assert_deny(loop: LiveExecutionLoop, connector: CountingConnector, risk: GateAwareRisk, cid: str) -> None:
+    def _assert_deny(
+        loop: LiveExecutionLoop, connector: CountingConnector, risk: GateAwareRisk, cid: str
+    ) -> None:
         with pytest.raises(LimitViolation):
             _submit_sample(loop, cid)
         assert risk.kill_switch.is_triggered()
         assert connector.placements == 0
 
-    def _assert_allow(loop: LiveExecutionLoop, connector: CountingConnector, risk: GateAwareRisk, cid: str) -> None:
+    def _assert_allow(
+        loop: LiveExecutionLoop, connector: CountingConnector, risk: GateAwareRisk, cid: str
+    ) -> None:
         _submit_sample(loop, cid)
         for _ in range(3):
             try:

@@ -1,3 +1,5 @@
+# Copyright (c) 2023-2026 Yaroslav Vasylenko (neuron7xLab)
+# SPDX-License-Identifier: MIT
 """Validate that dependency declarations stay aligned across manifests."""
 
 from __future__ import annotations
@@ -120,9 +122,7 @@ def check_alignment(requirements_file: Path, pyproject_file: Path) -> int:
         issues["Only in pyproject"].extend(unexpected)
 
     if not issues:
-        print(
-            "✅ Dependency declarations in requirements.txt and pyproject.toml are aligned."
-        )
+        print("✅ Dependency declarations in requirements.txt and pyproject.toml are aligned.")
         return 0
 
     print("❌ Dependency alignment issues detected:")

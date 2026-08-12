@@ -1,0 +1,53 @@
+id: riee-claim-integrity
+status: ACTIVE
+claim_type: governance
+promise: >-
+  Claim graph and claim hash artifacts are generated from CLAIMS.md and fail
+  closed on duplicate claim IDs, hash drift, missing guard surface, or malformed
+  claim rows.
+diff_scope:
+  changed_files:
+    - path: ".claude/commit_acceptors/riee-claim-integrity.yaml"
+    - path: "CLAIMS.md"
+    - path: "artifacts/claims_hashes.json"
+    - path: "docs/architecture/EPISTEMIC_DRIFT_ACT_2026-05-26.md"
+    - path: "docs/architecture/EPISTEMIC_DRIFT_SPEC_2026-05-26.md"
+    - path: "docs/architecture/EXTRAPOLATION_ACT_2026-05-26.md"
+    - path: "docs/architecture/claim_graph.json"
+    - path: "scripts/generate_claim_graph.py"
+    - path: "scripts/generate_claim_hashes.py"
+    - path: "scripts/verify_claim_hashes.py"
+    - path: "scripts/verify_guard_surface.py"
+    - path: "tests/tools/test_claim_graph_generator.py"
+    - path: "tests/tools/test_claim_hashes.py"
+    - path: "tests/tools/test_verify_claim_hashes_duplicates.py"
+    - path: "tests/tools/test_verify_guard_surface.py"
+  forbidden_paths:
+    - "trading/"
+    - "execution/"
+    - "forecast/"
+    - "policy/"
+required_python_symbols:
+  - "claim_lines"
+  - "parse_claim_nodes"
+  - "main"
+expected_signal: >-
+  Claim graph/hash checks reject duplicate claim IDs and verify generated
+  artifacts against CLAIMS.md.
+measurement_command: >-
+  python scripts/generate_claim_graph.py && python scripts/verify_claim_hashes.py && python -m pytest -q tests/tools/test_claim_graph_generator.py tests/tools/test_claim_hashes.py tests/tools/test_verify_claim_hashes_duplicates.py tests/tools/test_verify_guard_surface.py
+signal_artifact: "tmp/riee_claim_integrity.log"
+falsifier:
+  command: >-
+    python -m pytest -q tests/tools/test_verify_claim_hashes_duplicates.py
+  description: >-
+    Inject duplicate claim IDs; verification must fail rather than overwriting
+    earlier hashes.
+rollback_command: >-
+  git checkout HEAD~1 -- CLAIMS.md docs/architecture/claim_graph.json scripts/generate_claim_graph.py scripts/generate_claim_hashes.py scripts/verify_claim_hashes.py scripts/verify_guard_surface.py
+rollback_verification_command: >-
+  python tools/commit_acceptor/validate_commit_acceptor.py
+memory_update_type: append
+ledger_path: ".claude/commit_acceptors/riee-claim-integrity.yaml"
+report_path: "docs/architecture/EPISTEMIC_DRIFT_SPEC_2026-05-26.md"
+evidence: []

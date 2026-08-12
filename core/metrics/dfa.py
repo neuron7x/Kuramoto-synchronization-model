@@ -1,3 +1,5 @@
+# Copyright (c) 2023-2026 Yaroslav Vasylenko (neuron7xLab)
+# SPDX-License-Identifier: MIT
 """Detrended fluctuation analysis utilities for long-range correlation detection.
 
 This module implements Detrended Fluctuation Analysis (DFA) for estimating
@@ -76,7 +78,7 @@ def dfa_alpha(
 
         4. Perform log-log regression to estimate scaling exponent:
            log F(s) ~ α · log s
-           
+
            where α is extracted as the slope.
 
     Statistical Properties:

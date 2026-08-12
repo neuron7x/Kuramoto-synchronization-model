@@ -1,5 +1,5 @@
 ---
-owner: docs@tradepulse
+owner: docs@geosync
 review_cadence: monthly
 last_reviewed: 2025-12-25
 status: active
@@ -10,15 +10,22 @@ links:
 
 # Metrics Contract: Claims vs Evidence
 
-> **Purpose**: Single source of truth for TradePulse quality/performance/security claims.
+> **Purpose**: Single source of truth for GeoSync quality/performance/security claims.
 >
 > All coverage, performance, security, and compliance claims in README.md, TESTING.md, SECURITY.md,
 > and docs/** must reference this document for their evidence status.
 >
 > **Last Updated**: 2025-12-25
-> **Maintainer**: TradePulse Team
+> **Maintainer**: GeoSync Team
 
 ## ⚠️ Important Disclaimers
+
+## Stage 2 Coverage Closure
+
+- Stage 2A introduces coverage surface targets and validation contract tooling.
+- 98% coverage remains a goal unless artifact-backed coverage proves it.
+- Surface thresholds are contract targets, not achieved metrics.
+- No coverage claim is promoted by this PR.
 
 1. **This is NOT a legal document.** It does not constitute a warranty, guarantee, or contractual commitment.
 2. **This document requires regular maintenance.** Claims and statuses must be updated after documentation changes, releases, and evidence collection.
@@ -67,6 +74,7 @@ links:
 | id | domain | claim | measurement_command | evidence_path | status | notes |
 |----|--------|-------|---------------------|---------------|--------|-------|
 | COV_98_CI_GATE | coverage | 98% CI coverage gate enforced on all PRs | `pytest tests/ --cov=core --cov=backtest --cov=execution --cov-fail-under=98` | `.github/workflows/tests.yml`, `reports/coverage/` | goal | Target gate, currently not met. See actual coverage below. |
+| COV_SURFACE_TARGETS_2026 | coverage | Surface-based coverage contract with module thresholds and artifact evidence | `python tools/coverage/validate_coverage_targets.py --coverage reports/coverage/coverage.xml --targets configs/quality/coverage_targets.toml` | `configs/quality/coverage_targets.toml`, `reports/coverage/coverage_summary.json`, `reports/coverage/module_coverage.json` | partial | Introduced in Stage 2 to prevent overclaiming raw global coverage percentages. |
 | COV_BACKTEST_74 | coverage | backtest/ module ~74% coverage | `pytest tests/unit/backtest tests/integration/test_backtest.py tests/integration/test_golden_path_backtest.py --cov=backtest --cov-report=term` | `reports/coverage/index.html` | proven | Measured 2025-12-10: 73.85%. Key files: engine.py (95%), performance.py (96%), dopamine_td.py (92%) |
 | COV_EXECUTION_44 | coverage | execution/ module ~44% coverage | `pytest tests/unit/execution tests/integration/ --cov=execution --cov-report=term -m "not slow"` | `reports/coverage/index.html` | proven | Measured 2025-12-10: 43.61%. Key files: paper_trading.py (98%), connectors.py (68%), order_lifecycle.py (74%) |
 | COV_CORE_32 | coverage | core modules ~32% coverage | `pytest tests/unit/core tests/integration/ --cov=core --cov-report=term -m "not slow"` | `reports/coverage/index.html` | proven | Measured 2025-12-10: 32.05%. High coverage: engine/core.py (95%), orchestrator (96%), maintenance/backups (95%) |
@@ -175,7 +183,7 @@ links:
 | PROD_WALK_FORWARD | product | Walk-forward optimization | N/A | backtest/ | partial | Documented capability |
 | PROD_PROPERTY_TESTS | product | Property-based testing with Hypothesis | `pytest tests/property/` | tests/property/ | proven | Tests exist and run in CI |
 | PROD_FUZZ_TESTS | product | Fuzz testing | `pytest tests/fuzz/` | tests/fuzz/ | proven | Tests exist and run in CI |
-| PROD_RISK_GUARDIAN | product | Risk Guardian drawdown protection | `tp risk-guardian simulate` | money_proof/ | partial | Scripts present, no production data |
+| PROD_RISK_GUARDIAN | product | Risk Guardian drawdown protection | `tp risk-guardian simulate` | execution/risk/ | partial | Scripts present, no production data |
 
 ### Other Claims
 

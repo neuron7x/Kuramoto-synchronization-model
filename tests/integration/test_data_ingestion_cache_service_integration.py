@@ -1,3 +1,5 @@
+# Copyright (c) 2023-2026 Yaroslav Vasylenko (neuron7xLab)
+# SPDX-License-Identifier: MIT
 from __future__ import annotations
 
 from datetime import datetime, timedelta, timezone
@@ -157,9 +159,7 @@ def test_ingest_csv_caches_frame_and_supports_range_queries() -> None:
         end=end,
     )
 
-    expected_slice = frame.loc[
-        frame.index[(frame.index >= start) & (frame.index <= end)]
-    ]
+    expected_slice = frame.loc[frame.index[(frame.index >= start) & (frame.index <= end)]]
     pd.testing.assert_frame_equal(sliced, expected_slice)
 
     snapshot = service.cache_snapshot()

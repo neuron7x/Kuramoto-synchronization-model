@@ -1,3 +1,5 @@
+# Copyright (c) 2023-2026 Yaroslav Vasylenko (neuron7xLab)
+# SPDX-License-Identifier: MIT
 """Monte Carlo scenario generation utilities for backtesting."""
 
 from __future__ import annotations
@@ -69,9 +71,7 @@ def generate_monte_carlo_scenarios(
     for _ in range(int(cfg.n_scenarios)):
         scale = float(rng.uniform(cfg.volatility_scale[0], cfg.volatility_scale[1]))
         lag = int(rng.integers(lag_low, lag_high + 1)) if lag_high > 0 else 0
-        simulated = rng.normal(
-            loc=base_mean, scale=base_std * scale, size=base_returns.size
-        )
+        simulated = rng.normal(loc=base_mean, scale=base_std * scale, size=base_returns.size)
         if lag > 0:
             simulated = np.roll(simulated, lag)
             simulated[:lag] = 0.0
@@ -81,9 +81,7 @@ def generate_monte_carlo_scenarios(
             dropout_ratio = float(mask.mean())
         else:
             dropout_ratio = 0.0
-        log_path = np.concatenate(
-            ([log_prices[0]], log_prices[0] + np.cumsum(simulated))
-        )
+        log_path = np.concatenate(([log_prices[0]], log_prices[0] + np.cumsum(simulated)))
         prices_path = np.exp(log_path)
         returns = np.diff(prices_path) / prices_path[:-1]
         scenarios.append(

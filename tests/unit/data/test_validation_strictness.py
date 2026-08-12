@@ -1,4 +1,5 @@
-# SPDX-License-Identifier: LicenseRef-TradePulse-Proprietary
+# Copyright (c) 2023-2026 Yaroslav Vasylenko (neuron7xLab)
+# SPDX-License-Identifier: MIT
 from __future__ import annotations
 
 from datetime import UTC, timedelta
@@ -54,7 +55,12 @@ def test_validate_timeseries_frame_honours_frequency() -> None:
     frame = pd.DataFrame({"timestamp": index, "value": [1.0, 2.0, 3.0, 4.0]})
     config = _build_config(pd.Timedelta(minutes=5))
     result = validate_timeseries_frame(frame, config)
-    pd.testing.assert_frame_equal(result, frame)
+    # The validator pins ``timestamp`` to ``datetime64[ns, UTC]``; pandas 3
+    # defaults to microsecond resolution, so we compare against the
+    # canonical normalized frame here.
+    expected = frame.copy()
+    expected["timestamp"] = expected["timestamp"].astype("datetime64[ns, UTC]")
+    pd.testing.assert_frame_equal(result, expected)
 
 
 def test_validate_timeseries_frame_rejects_frequency_mismatch() -> None:

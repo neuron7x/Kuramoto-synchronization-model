@@ -1,3 +1,5 @@
+# Copyright (c) 2023-2026 Yaroslav Vasylenko (neuron7xLab)
+# SPDX-License-Identifier: MIT
 """Prompt Quality Filter + Prompt State Control System (PQF-PSCS).
 
 The evaluator consumes an input payload (see problem statement) and produces
@@ -34,9 +36,7 @@ _MEMORY_PATTERNS: tuple[str, ...] = (
     "change policies",
     "override policies",
 )
-_SEVERE_THREAT_TYPES = frozenset(
-    {"injection", "exfiltration", "tool_abuse", "memory_poisoning"}
-)
+_SEVERE_THREAT_TYPES = frozenset({"injection", "exfiltration", "tool_abuse", "memory_poisoning"})
 
 _METRIC_WEIGHTS = {
     # PQF-PSCS emphasizes grounding and constraint preservation to keep the
@@ -65,16 +65,12 @@ def run_pqf_pscs(payload: Mapping[str, Any]) -> dict[str, Any]:
     state_before = _normalize_state(payload.get("system_state") or {})
 
     threat = _detect_threats(candidate_prompt, constraints, allowed_sources)
-    metrics = _compute_metrics(
-        candidate_prompt, task_context, allowed_sources, constraints, threat
-    )
+    metrics = _compute_metrics(candidate_prompt, task_context, allowed_sources, constraints, threat)
     decision = _decide(threat, metrics, state_before["degradation_budget"])
     state_transition = _build_state_transition(state_before, constraints, threat)
     violations = _build_violations(threat, metrics, constraints, decision)
     patched_prompt = (
-        _build_patched_prompt(
-            candidate_prompt, task_context, allowed_sources, constraints
-        )
+        _build_patched_prompt(candidate_prompt, task_context, allowed_sources, constraints)
         if decision == "REPAIR"
         else ""
     )
@@ -200,15 +196,17 @@ def _decide(
     types = set(threat.get("types", ()))
     severe_threat = bool(types & _SEVERE_THREAT_TYPES)
 
-    if threat.get("detected") and severe_threat and (
-        safety_leak_risk > _BLOCK_SAFETY_THRESHOLD
-        or constraint_erosion > _BLOCK_CONSTRAINT_THRESHOLD
+    if (
+        threat.get("detected")
+        and severe_threat
+        and (
+            safety_leak_risk > _BLOCK_SAFETY_THRESHOLD
+            or constraint_erosion > _BLOCK_CONSTRAINT_THRESHOLD
+        )
     ):
         return "BLOCK"
 
-    if metrics.get("degradation_total", 0.0) <= budget_max and not threat.get(
-        "detected"
-    ):
+    if metrics.get("degradation_total", 0.0) <= budget_max and not threat.get("detected"):
         return "ALLOW"
 
     return "REPAIR"

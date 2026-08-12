@@ -1,0 +1,4 @@
+{
+  "_doc": "RTM requirements whose mapped tests exercise their modules only indirectly (via an integration harness). Each needs a reason. Empty = every RTM link is a direct test->module import.",
+  "allow": {}
+}

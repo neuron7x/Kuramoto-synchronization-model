@@ -1,0 +1,73 @@
+# SPDX-License-Identifier: MIT
+#
+# Architectural Connectome Gate — neuro-physical boundary contract.
+#
+# This workflow fails closed when a Python module inside the canonical cortex
+# packages imports across a forbidden brain-zone boundary declared in
+# docs/architecture/connectome.yaml.
+name: Architectural Connectome Gate
+
+on:
+  pull_request:
+    branches: [main]
+  merge_group:
+  push:
+    branches: [main]
+
+permissions:
+  contents: read
+
+env:
+  FORCE_JAVASCRIPT_ACTIONS_TO_NODE24: 'true'
+
+concurrency:
+  group: connectome-gate-${{ github.event.pull_request.number || github.sha }}
+  cancel-in-progress: true
+
+jobs:
+  enforce-connectome:
+    name: enforce-connectome
+    runs-on: ubuntu-latest
+    continue-on-error: false
+    timeout-minutes: 10
+    steps:
+      - name: Checkout Code Base
+        uses: actions/checkout@9c091bb21b7c1c1d1991bb908d89e4e9dddfe3e0 # v7.0.0
+
+      - name: Set up Python 3.12
+        uses: actions/setup-python@ece7cb06caefa5fff74198d8649806c4678c61a1 # v6
+        with:
+          python-version: '3.12'
+
+      - name: Install gate dependencies
+        run: |
+          set -euo pipefail
+          python -m pip install --upgrade pip
+          python -m pip install 'PyYAML>=6.0.3' 'pytest>=8.0.0'
+
+      - name: Execute AST structural inspection
+        run: |
+          set -euo pipefail
+          mkdir -p build/connectome
+          python tools/architecture/check_connectome.py
+          python tools/architecture/check_connectome.py --format json > build/connectome/violations.json
+
+      - name: Execute connectome AST regression tests
+        run: |
+          set -euo pipefail
+          python -m pytest --noconftest tests/tools/architecture/test_check_connectome.py tests/tools/architecture/test_connectome_selftest.py -q --junitxml=build/connectome/ast-regression.xml
+
+      - name: Execute connectome edge-case tests
+        run: |
+          set -euo pipefail
+          python -m pytest --noconftest tests/tools/architecture/test_check_connectome_edge_cases.py -q --junitxml=build/connectome/edge-cases.xml
+
+      - name: Execute canonical connectome shape tests
+        run: |
+          set -euo pipefail
+          python -m pytest --noconftest tests/tools/architecture/test_connectome_contract_shape.py -q --junitxml=build/connectome/contract-shape.xml
+
+      - name: Emit connectome evidence manifest
+        run: |
+          set -euo pipefail
+          python -c "import json, pathlib, sys; out=pathlib.Path('build/connectome'); out.mkdir(parents=True, exist_ok=True); payload={'gate':'architectural-connectome','python':sys.version.split()[0],'artifacts':sorted(str(p) for p in out.glob('*'))}; (out/'manifest.json').write_text(json.dumps(payload, indent=2, sort_keys=True)+'\n', encoding='utf-8'); print((out/'manifest.json').read_text(encoding='utf-8'))"

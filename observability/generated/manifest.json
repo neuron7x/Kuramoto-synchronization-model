@@ -2,15 +2,15 @@
   "alerts": [
     {
       "interval": "1m",
-      "name": "tradepulse.execution",
+      "name": "geosync.execution",
       "rules": [
         {
-          "alert": "TradePulseOrderErrorRate",
+          "alert": "GeoSyncOrderErrorRate",
           "annotations": {
             "description": "More than 5% of orders failed in the last 5 minutes",
             "summary": "High order error rate detected"
           },
-          "expr": "sum(rate(tradepulse_orders_placed_total{status=\"error\"}[5m])) / sum(rate(tradepulse_orders_placed_total[5m])) > 0.05",
+          "expr": "sum(rate(geosync_orders_placed_total{status=\"error\"}[5m])) / sum(rate(geosync_orders_placed_total[5m])) > 0.05",
           "for": "5m",
           "labels": {
             "severity": "critical",
@@ -18,12 +18,12 @@
           }
         },
         {
-          "alert": "TradePulseOrderLatency",
+          "alert": "GeoSyncOrderLatency",
           "annotations": {
             "description": "P95 order placement latency exceeded the target for 10 minutes",
             "summary": "Order placement latency above 2 seconds"
           },
-          "expr": "histogram_quantile(0.95, sum(rate(tradepulse_order_placement_duration_seconds_bucket[5m])) by (le)) > 2",
+          "expr": "histogram_quantile(0.95, sum(rate(geosync_order_placement_duration_seconds_bucket[5m])) by (le)) > 2",
           "for": "10m",
           "labels": {
             "severity": "warning",
@@ -34,15 +34,15 @@
     },
     {
       "interval": "2m",
-      "name": "tradepulse.data",
+      "name": "geosync.data",
       "rules": [
         {
-          "alert": "TradePulseDataIngestionFailures",
+          "alert": "GeoSyncDataIngestionFailures",
           "annotations": {
             "description": "At least one ingestion job reported errors in the last 10 minutes",
             "summary": "Data ingestion failure detected"
           },
-          "expr": "increase(tradepulse_data_ingestion_total{status=\"error\"}[10m]) > 0",
+          "expr": "increase(geosync_data_ingestion_total{status=\"error\"}[10m]) > 0",
           "for": "0m",
           "labels": {
             "severity": "critical",
@@ -50,12 +50,12 @@
           }
         },
         {
-          "alert": "TradePulseDataFreshness",
+          "alert": "GeoSyncDataFreshness",
           "annotations": {
             "description": "Average ingestion lag exceeded five minutes",
             "summary": "Data ingestion freshness degraded"
           },
-          "expr": "max(time() - tradepulse_data_ingestion_duration_seconds_sum / tradepulse_data_ingestion_duration_seconds_count) > 300",
+          "expr": "max(time() - geosync_data_ingestion_duration_seconds_sum / geosync_data_ingestion_duration_seconds_count) > 300",
           "for": "5m",
           "labels": {
             "severity": "warning",
@@ -66,15 +66,15 @@
     },
     {
       "interval": "1m",
-      "name": "tradepulse.strategy",
+      "name": "geosync.strategy",
       "rules": [
         {
-          "alert": "TradePulseBacktestFailures",
+          "alert": "GeoSyncBacktestFailures",
           "annotations": {
             "description": "At least one strategy backtest ended with an error in the last 30 minutes",
             "summary": "Backtest run failed"
           },
-          "expr": "increase(tradepulse_backtest_total{status=\"error\"}[30m]) > 0",
+          "expr": "increase(geosync_backtest_total{status=\"error\"}[30m]) > 0",
           "for": "0m",
           "labels": {
             "severity": "warning",
@@ -82,12 +82,12 @@
           }
         },
         {
-          "alert": "TradePulseOptimizationSlow",
+          "alert": "GeoSyncOptimizationSlow",
           "annotations": {
             "description": "Average optimisation duration exceeded two minutes",
             "summary": "Strategy optimisation running slowly"
           },
-          "expr": "avg(rate(tradepulse_optimization_duration_seconds_sum[30m]) / rate(tradepulse_optimization_duration_seconds_count[30m])) > 120",
+          "expr": "avg(rate(geosync_optimization_duration_seconds_sum[30m]) / rate(geosync_optimization_duration_seconds_count[30m])) > 120",
           "for": "30m",
           "labels": {
             "severity": "info",
@@ -98,7 +98,7 @@
     }
   ],
   "dashboards": [
-    "tradepulse-overview",
+    "geosync-overview",
     "tp-pipeline"
   ],
   "metrics": [
@@ -108,7 +108,7 @@
         "feature_name",
         "feature_type"
       ],
-      "name": "tradepulse_feature_transform_duration_seconds",
+      "name": "geosync_feature_transform_duration_seconds",
       "subsystem": "features",
       "type": "histogram"
     },
@@ -119,7 +119,7 @@
         "feature_type",
         "status"
       ],
-      "name": "tradepulse_feature_transform_total",
+      "name": "geosync_feature_transform_total",
       "subsystem": "features",
       "type": "counter"
     },
@@ -128,7 +128,7 @@
       "labels": [
         "feature_name"
       ],
-      "name": "tradepulse_feature_value",
+      "name": "geosync_feature_value",
       "subsystem": "features",
       "type": "gauge"
     },
@@ -137,7 +137,7 @@
       "labels": [
         "strategy"
       ],
-      "name": "tradepulse_backtest_duration_seconds",
+      "name": "geosync_backtest_duration_seconds",
       "subsystem": "backtest",
       "type": "histogram"
     },
@@ -147,7 +147,7 @@
         "strategy",
         "status"
       ],
-      "name": "tradepulse_backtest_total",
+      "name": "geosync_backtest_total",
       "subsystem": "backtest",
       "type": "counter"
     },
@@ -156,7 +156,7 @@
       "labels": [
         "strategy"
       ],
-      "name": "tradepulse_backtest_pnl",
+      "name": "geosync_backtest_pnl",
       "subsystem": "backtest",
       "type": "gauge"
     },
@@ -165,7 +165,7 @@
       "labels": [
         "strategy"
       ],
-      "name": "tradepulse_backtest_max_drawdown",
+      "name": "geosync_backtest_max_drawdown",
       "subsystem": "backtest",
       "type": "gauge"
     },
@@ -174,7 +174,7 @@
       "labels": [
         "strategy"
       ],
-      "name": "tradepulse_backtest_trades",
+      "name": "geosync_backtest_trades",
       "subsystem": "backtest",
       "type": "gauge"
     },
@@ -184,7 +184,7 @@
         "source",
         "symbol"
       ],
-      "name": "tradepulse_data_ingestion_duration_seconds",
+      "name": "geosync_data_ingestion_duration_seconds",
       "subsystem": "data",
       "type": "histogram"
     },
@@ -195,7 +195,7 @@
         "symbol",
         "status"
       ],
-      "name": "tradepulse_data_ingestion_total",
+      "name": "geosync_data_ingestion_total",
       "subsystem": "data",
       "type": "counter"
     },
@@ -206,7 +206,7 @@
         "symbol",
         "quantile"
       ],
-      "name": "tradepulse_data_ingestion_latency_quantiles_seconds",
+      "name": "geosync_data_ingestion_latency_quantiles_seconds",
       "subsystem": "data",
       "type": "gauge"
     },
@@ -216,7 +216,7 @@
         "source",
         "symbol"
       ],
-      "name": "tradepulse_ticks_processed_total",
+      "name": "geosync_ticks_processed_total",
       "subsystem": "data",
       "type": "counter"
     },
@@ -226,7 +226,7 @@
         "exchange",
         "symbol"
       ],
-      "name": "tradepulse_order_placement_duration_seconds",
+      "name": "geosync_order_placement_duration_seconds",
       "subsystem": "execution",
       "type": "histogram"
     },
@@ -238,7 +238,7 @@
         "order_type",
         "status"
       ],
-      "name": "tradepulse_orders_placed_total",
+      "name": "geosync_orders_placed_total",
       "subsystem": "execution",
       "type": "counter"
     },
@@ -249,7 +249,7 @@
         "symbol",
         "quantile"
       ],
-      "name": "tradepulse_order_submission_latency_quantiles_seconds",
+      "name": "geosync_order_submission_latency_quantiles_seconds",
       "subsystem": "execution",
       "type": "gauge"
     },
@@ -260,7 +260,7 @@
         "symbol",
         "quantile"
       ],
-      "name": "tradepulse_order_ack_latency_quantiles_seconds",
+      "name": "geosync_order_ack_latency_quantiles_seconds",
       "subsystem": "execution",
       "type": "gauge"
     },
@@ -271,7 +271,7 @@
         "symbol",
         "quantile"
       ],
-      "name": "tradepulse_order_fill_latency_quantiles_seconds",
+      "name": "geosync_order_fill_latency_quantiles_seconds",
       "subsystem": "execution",
       "type": "gauge"
     },
@@ -281,7 +281,7 @@
         "exchange",
         "symbol"
       ],
-      "name": "tradepulse_open_positions",
+      "name": "geosync_open_positions",
       "subsystem": "execution",
       "type": "gauge"
     },
@@ -291,7 +291,7 @@
         "strategy",
         "quantile"
       ],
-      "name": "tradepulse_signal_generation_latency_quantiles_seconds",
+      "name": "geosync_signal_generation_latency_quantiles_seconds",
       "subsystem": "signals",
       "type": "gauge"
     },
@@ -303,7 +303,7 @@
         "symbol",
         "quantile"
       ],
-      "name": "tradepulse_signal_to_fill_latency_quantiles_seconds",
+      "name": "geosync_signal_to_fill_latency_quantiles_seconds",
       "subsystem": "execution",
       "type": "gauge"
     },
@@ -313,7 +313,7 @@
         "strategy",
         "status"
       ],
-      "name": "tradepulse_signal_generation_total",
+      "name": "geosync_signal_generation_total",
       "subsystem": "signals",
       "type": "counter"
     },
@@ -322,14 +322,14 @@
       "labels": [
         "strategy_name"
       ],
-      "name": "tradepulse_strategy_score",
+      "name": "geosync_strategy_score",
       "subsystem": "strategy",
       "type": "gauge"
     },
     {
       "description": "Count of strategies loaded in memory.",
       "labels": [],
-      "name": "tradepulse_strategy_memory_size",
+      "name": "geosync_strategy_memory_size",
       "subsystem": "strategy",
       "type": "gauge"
     },
@@ -338,7 +338,7 @@
       "labels": [
         "optimizer_type"
       ],
-      "name": "tradepulse_optimization_duration_seconds",
+      "name": "geosync_optimization_duration_seconds",
       "subsystem": "optimization",
       "type": "histogram"
     },
@@ -347,7 +347,7 @@
       "labels": [
         "optimizer_type"
       ],
-      "name": "tradepulse_optimization_iterations_total",
+      "name": "geosync_optimization_iterations_total",
       "subsystem": "optimization",
       "type": "counter"
     }

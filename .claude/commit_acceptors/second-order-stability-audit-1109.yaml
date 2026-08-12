@@ -1,0 +1,83 @@
+# Diff-bound acceptor: full SecondOrderStabilityAudit (issue #1109).
+#
+# The second-order engine's runtime guard covers only non-finite states and an
+# optional RoCoF bound (SecondOrderResult.audit_scope = nonfinite_and_rocof_only).
+# This adds an offline numerical-stability audit closing the declared gaps:
+# energy-like drift, phase spread, solver metadata, stiffness regime, and an
+# independent cross-solver agreement check. Diagnostics only — the symplectic
+# Verlet dynamics are untouched (numeric output frozen).
+
+id: second-order-stability-audit-1109
+status: ACTIVE
+claim_type: correctness
+promise: >-
+  Adds SecondOrderStabilityReport and SecondOrderKuramotoEngine.audit() to
+  core/kuramoto/second_order.py. The audit runs the engine and measures:
+  energy_like_drift (relative swing-energy drift E=½Σmθ̇²−Σωθ−½Σ adj cos(Δθ),
+  bounded by symplectic Verlet in the ω≡0,d≡0 conservative regime per
+  INV-K8/K9/K10), phase_spread_bound, solver_metadata (stoermer_verlet/order-2/
+  symplectic/fixed-step), stiffness_ratio = ω_fast·dt with ω_fast=√(λ_max(L_adj)/
+  m_min) and a resolved/marginal/stiff regime label, and a cross-solver check
+  vs an independent explicit RK4 over a short horizon. remaining_gaps stays
+  explicit (full Lyapunov spectrum, long-horizon secular growth, heterogeneous
+  damping modes) so full S7 stability is NOT claimed. A promotion firewall makes
+  this explicit: audit_passed (in-scope checks held), failure_reason (named
+  failing checks), metric_validity_flags (energy_model_valid only for a
+  symmetric/unsigned adjacency), trajectory_wide_cross_solver_max (worst step,
+  not just the endpoint), and promotion_allowed = audit_passed AND no remaining
+  gaps — structurally always False. No change to the Verlet dynamics; numeric
+  trajectory/summary byte-identical.
+diff_scope:
+  changed_files:
+    - path: ".claude/commit_acceptors/second-order-stability-audit-1109.yaml"
+    - path: "core/kuramoto/second_order.py"
+    - path: "tests/unit/physics/test_second_order_stability_audit.py"
+  forbidden_paths:
+    - "trading/"
+    - "execution/"
+    - "forecast/"
+    - "policy/"
+required_python_symbols:
+  - "SecondOrderStabilityReport"
+  - "SecondOrderKuramotoEngine"
+expected_signal: >-
+  tests/unit/physics/test_second_order_stability_audit.py passes 11/11:
+  conservative-regime energy drift <=1e-3 (~2e-6 measured), phase spread finite,
+  solver metadata identifies the symplectic Verlet integrator, stiffness regime
+  is 'resolved' for dt=0.005/K=2 and 'underresolved_stiff' for dt=0.2/K=50,
+  Verlet agrees with independent RK4 to <=1e-3 (~1.5e-6 measured) trajectory-wide
+  (>= endpoint), promotion_allowed is False on a clean run, and a signed/
+  asymmetric adjacency in the conservative regime sets energy_model_valid=False
+  with audit_passed=False / failure_reason naming the invalid energy model.
+  Existing T18b guard suite stays green (21 passed). physics-code-audit reports
+  0 clamp/bounds issues. ruff/black/mypy --strict clean; zero new noqa/type-ignore.
+measurement_command: >-
+  PYTHONPATH=. python -m pytest tests/unit/physics/test_second_order_stability_audit.py -v
+signal_artifact: "tmp/second_order_stability_audit_pytest.log"
+falsifier:
+  command: >-
+    PYTHONPATH=. python -m pytest tests/unit/physics/test_second_order_stability_audit.py
+    -v -k "energy_like_drift_bound or cross_solver_reference_agreement or stiffness_regime_declared
+    or asymmetric_or_signed_adjacency_invalidates_energy_claim or failed_audit_blocks_stability_promotion"
+  description: >-
+    Replacing the symplectic Verlet step with a non-symplectic scheme makes the
+    conservative-regime energy drift exceed 1e-3 (test_energy_like_drift_bound
+    fails) and breaks Verlet/RK4 agreement (test_cross_solver_reference_agreement
+    fails). Mislabelling a coarse stiff run as resolved fails
+    test_stiffness_regime_declared. Dropping the energy-model validity gate (so a
+    signed/asymmetric adjacency is treated as conservative) fails
+    test_asymmetric_or_signed_adjacency_invalidates_energy_claim; letting a
+    passing partial audit set promotion_allowed=True fails
+    test_failed_audit_blocks_stability_promotion. Each guard fails before the
+    implementation.
+rollback_command: >-
+  git checkout HEAD~1 --
+  core/kuramoto/second_order.py
+  tests/unit/physics/test_second_order_stability_audit.py
+  .claude/commit_acceptors/second-order-stability-audit-1109.yaml
+rollback_verification_command: >-
+  git diff --exit-code core/kuramoto/second_order.py
+memory_update_type: none
+ledger_path: ".claude/commit_acceptors/second-order-stability-audit-1109.yaml"
+report_path: "docs/reports/diff_bound_commit_acceptor_layer.md"
+evidence: []

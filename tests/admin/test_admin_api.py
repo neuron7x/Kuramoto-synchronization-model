@@ -1,3 +1,5 @@
+# Copyright (c) 2023-2026 Yaroslav Vasylenko (neuron7xLab)
+# SPDX-License-Identifier: MIT
 """Tests for admin API endpoints."""
 
 from __future__ import annotations
@@ -174,3 +176,65 @@ class TestAdminAPI:
         )
 
         assert response.status_code == 500
+
+    def test_token_comparison_is_constant_time(self, client, monkeypatch):
+        """DEFECT 6: the admin token check must use hmac.compare_digest.
+
+        A `!=` string compare leaks length/prefix timing on the kill-switch
+        gate. We assert the wrong-token path is routed through
+        ``hmac.compare_digest`` (and still rejects with 401).
+        """
+        import admin.api as admin_api
+
+        calls: list[tuple[str, str]] = []
+        real_compare = admin_api.hmac.compare_digest
+
+        def _spy(a, b):
+            calls.append((a, b))
+            return real_compare(a, b)
+
+        monkeypatch.setattr(admin_api.hmac, "compare_digest", _spy)
+
+        response = client.post(
+            "/admin/risk/kill_switch",
+            json={"enabled": True},
+            headers={"Authorization": "Bearer wrong-token"},
+        )
+
+        assert response.status_code == 401
+        assert calls, "verify_token must route the token check through hmac.compare_digest"
+        # Operands are encoded to bytes before compare_digest (DS-22): bytes-vs-bytes
+        # is total and never raises TypeError on non-ASCII input.
+        assert calls[-1] == (b"wrong-token", b"test-secret-token")
+
+    def test_non_ascii_bearer_token_is_401_not_500(self):
+        """DS-22 [DoS]: a non-ASCII Bearer token must not crash verify_token.
+
+        ``hmac.compare_digest`` over two ``str`` operands raises ``TypeError``
+        the moment either contains a non-ASCII code point, which FastAPI turns
+        into an unhandled HTTP 500 (fail-closed but 500-spammable). Encoding
+        both operands to bytes makes the compare total, so a bad Unicode token
+        is a clean 401 rejection. We exercise ``verify_token`` directly because
+        HTTP header transport is latin-1 and cannot carry the repro payload.
+        """
+        from fastapi import HTTPException
+        from fastapi.security import HTTPAuthorizationCredentials
+
+        from admin.api import verify_token
+
+        creds = HTTPAuthorizationCredentials(scheme="Bearer", credentials="паролькириличний")
+        with pytest.raises(HTTPException) as exc_info:
+            verify_token(credentials=creds)
+        # 401 (clean reject), NOT a bubbled-up TypeError -> 500.
+        assert exc_info.value.status_code == 401
+
+    def test_correct_token_still_authorizes_after_bytes_fix(self, client, risk_compliance):
+        """DS-22 non-vacuous twin: the exact token still authorizes post-fix."""
+        response = client.post(
+            "/admin/risk/kill_switch",
+            json={"enabled": True},
+            headers={"Authorization": "Bearer test-secret-token"},
+        )
+
+        assert response.status_code == 200
+        assert risk_compliance._config.kill_switch is True

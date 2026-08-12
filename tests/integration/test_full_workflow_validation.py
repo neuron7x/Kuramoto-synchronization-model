@@ -1,4 +1,5 @@
-# SPDX-License-Identifier: LicenseRef-TradePulse-Proprietary
+# Copyright (c) 2023-2026 Yaroslav Vasylenko (neuron7xLab)
+# SPDX-License-Identifier: MIT
 """Comprehensive integration tests validating the full trading workflow.
 
 This module tests the complete end-to-end workflow from data ingestion
@@ -20,7 +21,7 @@ from backtest.event_driven import EventDrivenBacktestEngine
 from core.indicators.entropy import delta_entropy, entropy
 from core.indicators.hurst import hurst_exponent
 from core.indicators.kuramoto import compute_phase, kuramoto_order
-from core.indicators.kuramoto_ricci_composite import TradePulseCompositeEngine
+from core.indicators.kuramoto_ricci_composite import GeoSyncCompositeEngine
 from core.indicators.ricci import build_price_graph, mean_ricci
 from core.phase.detector import composite_transition, phase_flags
 
@@ -100,13 +101,11 @@ class TestIndicatorPipeline:
 
 
 class TestCompositeEngine:
-    """Test the TradePulse composite analysis engine."""
+    """Test the GeoSync composite analysis engine."""
 
-    def test_analyze_market_returns_valid_snapshot(
-        self, synthetic_market_data: pd.DataFrame
-    ):
+    def test_analyze_market_returns_valid_snapshot(self, synthetic_market_data: pd.DataFrame):
         """Composite engine should return valid market snapshot."""
-        engine = TradePulseCompositeEngine()
+        engine = GeoSyncCompositeEngine()
         snapshot = engine.analyze_market(synthetic_market_data)
 
         assert hasattr(snapshot, "phase")
@@ -128,7 +127,7 @@ class TestCompositeEngine:
             index=pd.date_range("2024-01-01", periods=300, freq="1min"),
         )
 
-        engine = TradePulseCompositeEngine()
+        engine = GeoSyncCompositeEngine()
         snapshot = engine.analyze_market(minimal_data)
 
         assert snapshot is not None
@@ -247,12 +246,10 @@ class TestDataPersistence:
 class TestEndToEndWorkflow:
     """Test complete end-to-end trading workflow."""
 
-    def test_full_analysis_to_backtest_pipeline(
-        self, synthetic_market_data: pd.DataFrame
-    ):
+    def test_full_analysis_to_backtest_pipeline(self, synthetic_market_data: pd.DataFrame):
         """Full workflow from analysis through backtesting."""
         # Step 1: Analyze market regime
-        engine = TradePulseCompositeEngine()
+        engine = GeoSyncCompositeEngine()
         snapshot = engine.analyze_market(synthetic_market_data)
 
         # Step 2: Generate trading signal based on analysis

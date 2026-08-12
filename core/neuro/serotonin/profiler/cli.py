@@ -1,4 +1,6 @@
 #!/usr/bin/env python3
+# Copyright (c) 2023-2026 Yaroslav Vasylenko (neuron7xLab)
+# SPDX-License-Identifier: MIT
 """Command-line interface for serotonin controller profiling.
 
 Usage:
@@ -79,9 +81,7 @@ def main(argv: list[str] | None = None) -> int:
     controller_path = Path(__file__).parent.parent / "serotonin_controller.py"
     profiler_path = Path(__file__).parent / "behavioral_profiler.py"
 
-    controller_module = load_module_directly(
-        "serotonin_controller_cli", controller_path
-    )
+    controller_module = load_module_directly("serotonin_controller_cli", controller_path)
     profiler_module = load_module_directly("behavioral_profiler_cli", profiler_path)
 
     SerotoninController = controller_module.SerotoninController

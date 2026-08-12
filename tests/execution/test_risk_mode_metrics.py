@@ -1,3 +1,5 @@
+# Copyright (c) 2023-2026 Yaroslav Vasylenko (neuron7xLab)
+# SPDX-License-Identifier: MIT
 """Tests for risk and trading mode metrics in execution/metrics.py."""
 
 from __future__ import annotations
@@ -30,11 +32,11 @@ class TestRiskMetrics:
         metrics = RiskMetrics(registry)
 
         metrics.record_kill_switch(True, env="prod")
-        value = _sample_value(registry, "tradepulse_risk_kill_switch", {"env": "prod"})
+        value = _sample_value(registry, "geosync_risk_kill_switch", {"env": "prod"})
         assert value == 1.0
 
         metrics.record_kill_switch(False, env="prod")
-        value = _sample_value(registry, "tradepulse_risk_kill_switch", {"env": "prod"})
+        value = _sample_value(registry, "geosync_risk_kill_switch", {"env": "prod"})
         assert value == 0.0
 
     def test_gross_exposure_recording(self) -> None:
@@ -42,9 +44,7 @@ class TestRiskMetrics:
         metrics = RiskMetrics(registry)
 
         metrics.record_gross_exposure(50000.0, env="staging")
-        value = _sample_value(
-            registry, "tradepulse_risk_gross_exposure", {"env": "staging"}
-        )
+        value = _sample_value(registry, "geosync_risk_gross_exposure", {"env": "staging"})
         assert value == 50000.0
 
     def test_daily_drawdown_recording(self) -> None:
@@ -54,7 +54,7 @@ class TestRiskMetrics:
         metrics.record_daily_drawdown(5.5, mode="percent", env="prod")
         value = _sample_value(
             registry,
-            "tradepulse_risk_daily_drawdown",
+            "geosync_risk_daily_drawdown",
             {"env": "prod", "mode": "percent"},
         )
         assert value == 5.5
@@ -64,14 +64,10 @@ class TestRiskMetrics:
         metrics = RiskMetrics(registry)
 
         metrics.record_circuit_state("open")
-        open_value = _sample_value(
-            registry, "tradepulse_risk_circuit_state", {"state": "open"}
-        )
-        closed_value = _sample_value(
-            registry, "tradepulse_risk_circuit_state", {"state": "closed"}
-        )
+        open_value = _sample_value(registry, "geosync_risk_circuit_state", {"state": "open"})
+        closed_value = _sample_value(registry, "geosync_risk_circuit_state", {"state": "closed"})
         half_open_value = _sample_value(
-            registry, "tradepulse_risk_circuit_state", {"state": "half_open"}
+            registry, "geosync_risk_circuit_state", {"state": "half_open"}
         )
 
         assert open_value == 1.0
@@ -80,12 +76,8 @@ class TestRiskMetrics:
 
         # Now switch to closed
         metrics.record_circuit_state("closed")
-        open_value = _sample_value(
-            registry, "tradepulse_risk_circuit_state", {"state": "open"}
-        )
-        closed_value = _sample_value(
-            registry, "tradepulse_risk_circuit_state", {"state": "closed"}
-        )
+        open_value = _sample_value(registry, "geosync_risk_circuit_state", {"state": "open"})
+        closed_value = _sample_value(registry, "geosync_risk_circuit_state", {"state": "closed"})
         assert open_value == 0.0
         assert closed_value == 1.0
 
@@ -98,10 +90,10 @@ class TestRiskMetrics:
         metrics.record_rejection("notional_limit")
 
         position_count = _sample_value(
-            registry, "tradepulse_risk_rejections_total", {"reason": "position_limit"}
+            registry, "geosync_risk_rejections_total", {"reason": "position_limit"}
         )
         notional_count = _sample_value(
-            registry, "tradepulse_risk_rejections_total", {"reason": "notional_limit"}
+            registry, "geosync_risk_rejections_total", {"reason": "notional_limit"}
         )
 
         assert position_count == 2.0
@@ -114,7 +106,7 @@ class TestRiskMetrics:
         metrics.record_circuit_trip("high_volatility")
         value = _sample_value(
             registry,
-            "tradepulse_risk_circuit_trips_total",
+            "geosync_risk_circuit_trips_total",
             {"reason": "high_volatility"},
         )
         assert value == 1.0
@@ -124,7 +116,7 @@ class TestRiskMetrics:
         metrics = RiskMetrics(registry)
 
         metrics.record_open_orders(15, env="prod")
-        value = _sample_value(registry, "tradepulse_risk_open_orders", {"env": "prod"})
+        value = _sample_value(registry, "geosync_risk_open_orders", {"env": "prod"})
         assert value == 15.0
 
     def test_disabled_when_prometheus_unavailable(self, monkeypatch) -> None:
@@ -147,15 +139,9 @@ class TestTradingModeMetrics:
 
         metrics.set_mode("LIVE", reason="initial")
 
-        live_value = _sample_value(
-            registry, "tradepulse_trading_mode", {"mode": "LIVE"}
-        )
-        paper_value = _sample_value(
-            registry, "tradepulse_trading_mode", {"mode": "PAPER"}
-        )
-        backtest_value = _sample_value(
-            registry, "tradepulse_trading_mode", {"mode": "BACKTEST"}
-        )
+        live_value = _sample_value(registry, "geosync_trading_mode", {"mode": "LIVE"})
+        paper_value = _sample_value(registry, "geosync_trading_mode", {"mode": "PAPER"})
+        backtest_value = _sample_value(registry, "geosync_trading_mode", {"mode": "BACKTEST"})
 
         assert live_value == 1.0
         assert paper_value == 0.0
@@ -173,12 +159,8 @@ class TestTradingModeMetrics:
         # Transition to PAPER
         metrics.set_mode("PAPER", reason="manual")
 
-        paper_value = _sample_value(
-            registry, "tradepulse_trading_mode", {"mode": "PAPER"}
-        )
-        backtest_value = _sample_value(
-            registry, "tradepulse_trading_mode", {"mode": "BACKTEST"}
-        )
+        paper_value = _sample_value(registry, "geosync_trading_mode", {"mode": "PAPER"})
+        backtest_value = _sample_value(registry, "geosync_trading_mode", {"mode": "BACKTEST"})
 
         assert paper_value == 1.0
         assert backtest_value == 0.0
@@ -187,7 +169,7 @@ class TestTradingModeMetrics:
         # Check transition was recorded
         transition_count = _sample_value(
             registry,
-            "tradepulse_trading_mode_transitions_total",
+            "geosync_trading_mode_transitions_total",
             {"from_mode": "BACKTEST", "to_mode": "PAPER", "reason": "manual"},
         )
         assert transition_count == 1.0
@@ -201,7 +183,7 @@ class TestTradingModeMetrics:
         metrics.update_duration()
 
         duration = _sample_value(
-            registry, "tradepulse_trading_mode_duration_seconds", {"mode": "LIVE"}
+            registry, "geosync_trading_mode_duration_seconds", {"mode": "LIVE"}
         )
         assert duration is not None
         assert duration >= 0.05  # Should be at least 50ms
@@ -214,12 +196,12 @@ class TestTradingModeMetrics:
 
         latency_count = _sample_value(
             registry,
-            "tradepulse_trading_mode_transition_latency_seconds_count",
+            "geosync_trading_mode_transition_latency_seconds_count",
             {"from_mode": "PAPER", "to_mode": "LIVE"},
         )
         latency_sum = _sample_value(
             registry,
-            "tradepulse_trading_mode_transition_latency_seconds_sum",
+            "geosync_trading_mode_transition_latency_seconds_sum",
             {"from_mode": "PAPER", "to_mode": "LIVE"},
         )
 
@@ -234,9 +216,7 @@ class TestTradingModeMetrics:
         metrics.set_mode("live", reason="test")
         assert metrics.current_mode == "LIVE"
 
-        live_value = _sample_value(
-            registry, "tradepulse_trading_mode", {"mode": "LIVE"}
-        )
+        live_value = _sample_value(registry, "geosync_trading_mode", {"mode": "LIVE"})
         assert live_value == 1.0
 
     def test_disabled_when_prometheus_unavailable(self, monkeypatch) -> None:

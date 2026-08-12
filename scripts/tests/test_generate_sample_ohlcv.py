@@ -1,8 +1,10 @@
+# Copyright (c) 2023-2026 Yaroslav Vasylenko (neuron7xLab)
+# SPDX-License-Identifier: MIT
 """Tests for generate_sample_ohlcv.py script."""
 
 from __future__ import annotations
 
-# SPDX-License-Identifier: LicenseRef-TradePulse-Proprietary
+# SPDX-License-Identifier: MIT
 from pathlib import Path
 
 import numpy as np
@@ -21,9 +23,7 @@ def test_generate_price_series_length() -> None:
 def test_generate_price_series_base_price() -> None:
     """Test that generate_price_series respects base price."""
     base_price = 50.0
-    prices = generate_sample_ohlcv.generate_price_series(
-        n=10, base_price=base_price, seed=42
-    )
+    prices = generate_sample_ohlcv.generate_price_series(n=10, base_price=base_price, seed=42)
     # First price should be close to base price
     assert abs(prices[0] - base_price) < base_price * 0.5
 
@@ -85,9 +85,7 @@ def test_generate_ohlcv_from_ticks_positive_volume() -> None:
 
 def test_generate_market_data_columns() -> None:
     """Test that generate_market_data returns correct columns."""
-    df = generate_sample_ohlcv.generate_market_data(
-        symbol="BTC", days=1, timeframe="1h", seed=42
-    )
+    df = generate_sample_ohlcv.generate_market_data(symbol="BTC", days=1, timeframe="1h", seed=42)
 
     expected_cols = ["timestamp", "symbol", "open", "high", "low", "close", "volume"]
     assert list(df.columns) == expected_cols
@@ -95,9 +93,7 @@ def test_generate_market_data_columns() -> None:
 
 def test_generate_market_data_symbol() -> None:
     """Test that generate_market_data uses correct symbol."""
-    df = generate_sample_ohlcv.generate_market_data(
-        symbol="ETH", days=1, timeframe="1h", seed=42
-    )
+    df = generate_sample_ohlcv.generate_market_data(symbol="ETH", days=1, timeframe="1h", seed=42)
 
     assert all(df["symbol"] == "ETH")
 
@@ -105,15 +101,11 @@ def test_generate_market_data_symbol() -> None:
 def test_generate_market_data_bar_count() -> None:
     """Test that generate_market_data produces correct number of bars."""
     # 1 day with 1h timeframe = 24 bars
-    df = generate_sample_ohlcv.generate_market_data(
-        symbol="BTC", days=1, timeframe="1h", seed=42
-    )
+    df = generate_sample_ohlcv.generate_market_data(symbol="BTC", days=1, timeframe="1h", seed=42)
     assert len(df) == 24
 
     # 1 day with 4h timeframe = 6 bars
-    df = generate_sample_ohlcv.generate_market_data(
-        symbol="BTC", days=1, timeframe="4h", seed=42
-    )
+    df = generate_sample_ohlcv.generate_market_data(symbol="BTC", days=1, timeframe="4h", seed=42)
     assert len(df) == 6
 
 
@@ -216,14 +208,22 @@ def test_parse_args_defaults() -> None:
 
 def test_parse_args_custom_values() -> None:
     """Test parse_args with custom values."""
-    args = generate_sample_ohlcv.parse_args([
-        "-o", "custom.csv",
-        "--symbols", "BTC", "ETH",
-        "-d", "30",
-        "-t", "4h",
-        "--seed", "123",
-        "-v",
-    ])
+    args = generate_sample_ohlcv.parse_args(
+        [
+            "-o",
+            "custom.csv",
+            "--symbols",
+            "BTC",
+            "ETH",
+            "-d",
+            "30",
+            "-t",
+            "4h",
+            "--seed",
+            "123",
+            "-v",
+        ]
+    )
 
     assert args.output == Path("custom.csv")
     assert args.symbols == ["BTC", "ETH"]
@@ -237,11 +237,16 @@ def test_main_success(tmp_path: Path, capsys) -> None:
     """Test main returns 0 on success."""
     output_path = tmp_path / "output.csv"
 
-    exit_code = generate_sample_ohlcv.main([
-        "-o", str(output_path),
-        "-d", "1",
-        "-t", "1h",
-    ])
+    exit_code = generate_sample_ohlcv.main(
+        [
+            "-o",
+            str(output_path),
+            "-d",
+            "1",
+            "-t",
+            "1h",
+        ]
+    )
 
     assert exit_code == 0
     assert output_path.exists()
@@ -254,12 +259,18 @@ def test_main_creates_output_file(tmp_path: Path) -> None:
     """Test that main creates the output file."""
     output_path = tmp_path / "generated.csv"
 
-    generate_sample_ohlcv.main([
-        "-o", str(output_path),
-        "--symbols", "BTC",
-        "-d", "1",
-        "-t", "1h",
-    ])
+    generate_sample_ohlcv.main(
+        [
+            "-o",
+            str(output_path),
+            "--symbols",
+            "BTC",
+            "-d",
+            "1",
+            "-t",
+            "1h",
+        ]
+    )
 
     assert output_path.exists()
     df = pd.read_csv(output_path)
@@ -271,12 +282,20 @@ def test_main_multiple_symbols(tmp_path: Path) -> None:
     """Test main with multiple symbols."""
     output_path = tmp_path / "multi.csv"
 
-    generate_sample_ohlcv.main([
-        "-o", str(output_path),
-        "--symbols", "BTC", "ETH", "SOL",
-        "-d", "1",
-        "-t", "1d",
-    ])
+    generate_sample_ohlcv.main(
+        [
+            "-o",
+            str(output_path),
+            "--symbols",
+            "BTC",
+            "ETH",
+            "SOL",
+            "-d",
+            "1",
+            "-t",
+            "1d",
+        ]
+    )
 
     df = pd.read_csv(output_path)
     assert len(df["symbol"].unique()) == 3

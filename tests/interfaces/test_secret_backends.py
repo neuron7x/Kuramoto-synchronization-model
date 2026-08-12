@@ -1,3 +1,5 @@
+# Copyright (c) 2023-2026 Yaroslav Vasylenko (neuron7xLab)
+# SPDX-License-Identifier: MIT
 from __future__ import annotations
 
 import base64
@@ -47,21 +49,21 @@ def test_hashicorp_config_from_environment_reads_token_file(
 ) -> None:
     token_path = tmp_path / "token"
     token_path.write_text("vault-token\n", encoding="utf-8")
-    monkeypatch.setenv("TRADEPULSE_VAULT_ADDR", "https://vault.tradepulse.local")
-    monkeypatch.delenv("TRADEPULSE_VAULT_TOKEN", raising=False)
-    monkeypatch.setenv("TRADEPULSE_VAULT_TOKEN_FILE", str(token_path))
+    monkeypatch.setenv("GEOSYNC_VAULT_ADDR", "https://vault.geosync.local")
+    monkeypatch.delenv("GEOSYNC_VAULT_TOKEN", raising=False)
+    monkeypatch.setenv("GEOSYNC_VAULT_TOKEN_FILE", str(token_path))
 
     config = HashicorpVaultBackendConfig.from_environment()
 
     assert config is not None
-    assert config.address == "https://vault.tradepulse.local"
+    assert config.address == "https://vault.geosync.local"
     assert config.token == "vault-token"
 
 
 def test_hashicorp_config_requires_token(monkeypatch: pytest.MonkeyPatch) -> None:
-    monkeypatch.setenv("TRADEPULSE_VAULT_ADDR", "https://vault.tradepulse.local")
-    monkeypatch.delenv("TRADEPULSE_VAULT_TOKEN", raising=False)
-    monkeypatch.delenv("TRADEPULSE_VAULT_TOKEN_FILE", raising=False)
+    monkeypatch.setenv("GEOSYNC_VAULT_ADDR", "https://vault.geosync.local")
+    monkeypatch.delenv("GEOSYNC_VAULT_TOKEN", raising=False)
+    monkeypatch.delenv("GEOSYNC_VAULT_TOKEN_FILE", raising=False)
 
     with pytest.raises(SecretBackendConfigurationError):
         HashicorpVaultBackendConfig.from_environment()
@@ -69,7 +71,7 @@ def test_hashicorp_config_requires_token(monkeypatch: pytest.MonkeyPatch) -> Non
 
 def test_hashicorp_resolver_fetches_secret_payload() -> None:
     config = HashicorpVaultBackendConfig(
-        address="https://vault.tradepulse.local",
+        address="https://vault.geosync.local",
         token="vault-token",
         default_mount="secret",
         kv_version=2,
@@ -96,7 +98,7 @@ def test_hashicorp_resolver_fetches_secret_payload() -> None:
 
 def test_hashicorp_resolver_supports_default_mount() -> None:
     config = HashicorpVaultBackendConfig(
-        address="https://vault.tradepulse.local",
+        address="https://vault.geosync.local",
         token="vault-token",
         default_mount="secret",
         kv_version=2,
@@ -114,7 +116,7 @@ def test_hashicorp_resolver_supports_default_mount() -> None:
 
 def test_hashicorp_resolver_rejects_invalid_path() -> None:
     config = HashicorpVaultBackendConfig(
-        address="https://vault.tradepulse.local",
+        address="https://vault.geosync.local",
         token="vault-token",
     )
     client = _DummyVaultClient()
@@ -125,8 +127,8 @@ def test_hashicorp_resolver_rejects_invalid_path() -> None:
 
 
 def test_aws_config_from_environment(monkeypatch: pytest.MonkeyPatch) -> None:
-    monkeypatch.setenv("TRADEPULSE_AWS_SECRETS_MANAGER_ENABLED", "true")
-    monkeypatch.setenv("TRADEPULSE_AWS_SECRETS_REGION", "eu-central-1")
+    monkeypatch.setenv("GEOSYNC_AWS_SECRETS_MANAGER_ENABLED", "true")
+    monkeypatch.setenv("GEOSYNC_AWS_SECRETS_REGION", "eu-central-1")
 
     config = AWSSecretsManagerBackendConfig.from_environment()
 
@@ -142,9 +144,7 @@ def test_aws_resolver_parses_json_secret() -> None:
             assert SecretId == "app/demo"
             return {"SecretString": json.dumps({"apiKey": "value", "retries": 2})}
 
-    resolver = build_aws_secrets_manager_resolver(
-        config, client_factory=lambda _: _DummyClient()
-    )
+    resolver = build_aws_secrets_manager_resolver(config, client_factory=lambda _: _DummyClient())
 
     payload = resolver("app/demo")
 
@@ -161,9 +161,7 @@ def test_aws_resolver_decodes_binary_secret() -> None:
             encoded = base64.b64encode(b"binary-secret").decode("ascii")
             return {"SecretBinary": encoded}
 
-    resolver = build_aws_secrets_manager_resolver(
-        config, client_factory=lambda _: _DummyClient()
-    )
+    resolver = build_aws_secrets_manager_resolver(config, client_factory=lambda _: _DummyClient())
 
     payload = resolver("app/binary")
 
@@ -178,9 +176,7 @@ def test_aws_resolver_errors_when_payload_missing() -> None:
             assert SecretId == "app/invalid"
             return {}
 
-    resolver = build_aws_secrets_manager_resolver(
-        config, client_factory=lambda _: _DummyClient()
-    )
+    resolver = build_aws_secrets_manager_resolver(config, client_factory=lambda _: _DummyClient())
 
     with pytest.raises(SecretBackendError):
         resolver("app/invalid")

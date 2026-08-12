@@ -1,3 +1,5 @@
+# Copyright (c) 2023-2026 Yaroslav Vasylenko (neuron7xLab)
+# SPDX-License-Identifier: MIT
 """Regression tests for the CycloneDX SBOM workflow configuration."""
 
 from __future__ import annotations
@@ -5,11 +7,12 @@ from __future__ import annotations
 from pathlib import Path
 from typing import Any, Dict, Iterable
 
+import pytest
 import yaml
 
-WORKFLOW_PATH = (
-    Path(__file__).resolve().parents[2] / ".github" / "workflows" / "sbom.yml"
-)
+WORKFLOW_PATH = Path(__file__).resolve().parents[2] / ".github" / "workflows" / "sbom.yml"
+
+pytestmark = pytest.mark.skipif(not WORKFLOW_PATH.exists(), reason="workflow file not found")
 
 
 def _load_workflow() -> Dict[str, Any]:

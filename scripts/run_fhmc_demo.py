@@ -1,3 +1,5 @@
+# Copyright (c) 2023-2026 Yaroslav Vasylenko (neuron7xLab)
+# SPDX-License-Identifier: MIT
 """Run a short FHMC-controlled demo inside the toy market environment."""
 
 from __future__ import annotations

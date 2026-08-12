@@ -1,0 +1,167 @@
+schema_version: 1.0.0
+contract_id: geosync.inference_transformer.v1
+research_line: ricci_microstructure_v1
+
+claim_boundary:
+  tier: HYPOTHESIS
+  forbidden_promotions:
+    - alpha
+    - predictor
+    - product_grade
+    - deployment_ready
+    - measured_microstructure_edge
+  allowed_language:
+    - geometric regime inference instrument
+    - provenance-instrumented hypothesis
+    - transformer-style deterministic dataflow
+    - falsification-first research control plane
+
+state_machine:
+  initial: INSTRUMENTED
+  allowed:
+    - IDEA
+    - HYPOTHESIS
+    - PREREGISTERED
+    - INSTRUMENTED
+    - TESTED_SYNTHETIC
+    - TESTED_REAL_SINGLE
+    - TESTED_REAL_MULTI
+    - MEASURED
+    - REPLICATED
+  terminal:
+    - REJECTED
+    - BLOCKED_DATA
+    - BLOCKED_REPRO
+    - BLOCKED_NULL
+    - BLOCKED_COST_MODEL
+    - RETIRED
+
+data_model:
+  entities:
+    - name: market_observation
+      role: Immutable input slice from bars or order-book substrate.
+      minimum_fields: [source_id, venue, instrument, timestamp_utc, data_sha256]
+    - name: graph_snapshot
+      role: Time-indexed market graph produced from a declared construction rule.
+      minimum_fields: [nodes, edges, weights, window_id, construction_method]
+    - name: geometry_state
+      role: Multi-view geometric state over graph curvature, topology, synchronization, and uncertainty.
+      minimum_fields: [ricci_summary, kuramoto_summary, topology_summary, uncertainty]
+    - name: regime_certificate
+      role: Runtime passport for any inference result; not a trading action.
+      minimum_fields: [regime_label, confidence, domain, downgrade_reason, claim_tier]
+    - name: evidence_artifact
+      role: Canonical artifact envelope compatible with research_inference_artifact schema.
+      minimum_fields: [run_id, git_sha, data_sha256, config_sha256, replay_command]
+  hash_fields:
+    - data_sha256
+    - config_sha256
+    - env_sha256
+    - output_sha256
+  certificate_fields:
+    - method_version
+    - domain
+    - assumptions
+    - uncertainty
+    - falsification_status
+    - downgrade_reason
+
+blocks:
+  - id: immutable_substrate_adapter
+    kind: substrate_adapter
+    purpose: Normalize raw market observations without making microstructure claims from bar-level data.
+    inputs: [raw_market_observation]
+    outputs: [market_observation]
+    invariants: [INV-NFD1, INV-DET1]
+    failure_mode: fail_closed
+  - id: market_graph_constructor
+    kind: graph_constructor
+    purpose: Transform validated observations into declared graph snapshots with no silent window leakage.
+    inputs: [market_observation]
+    outputs: [graph_snapshot]
+    invariants: [INV-NFD1, INV-DET1, INV-RC1]
+    failure_mode: emit_blocked_certificate
+  - id: ricci_geometry_encoder
+    kind: geometry_encoder
+    purpose: Encode local and aggregate curvature under an explicit metric-domain certificate.
+    inputs: [graph_snapshot]
+    outputs: [geometry_state.ricci_summary]
+    invariants: [INV-RC1, INV-RC3]
+    failure_mode: downgrade_to_hypothesis
+  - id: kuramoto_sync_encoder
+    kind: synchronization_encoder
+    purpose: Encode synchronization structure only as a regime feature, never as a directional trading action.
+    inputs: [graph_snapshot]
+    outputs: [geometry_state.kuramoto_summary]
+    invariants: [INV-K1]
+    failure_mode: fail_closed
+  - id: topology_uncertainty_encoder
+    kind: topology_encoder
+    purpose: Reserve a plug point for TDA/persistence or topology-drift evidence without promoting absent results.
+    inputs: [graph_snapshot]
+    outputs: [geometry_state.topology_summary]
+    invariants: []
+    failure_mode: quarantine
+  - id: causality_firewall
+    kind: causality_firewall
+    purpose: Prevent geometry metrics from being promoted into causal or predictive claims without a declared causal test.
+    inputs: [geometry_state]
+    outputs: [regime_certificate]
+    invariants: [CLAIM-BOUNDARY]
+    failure_mode: emit_blocked_certificate
+  - id: falsification_matrix
+    kind: falsification_matrix
+    purpose: Bind nulls, baselines, cost model, and replay gates before any evidence-bearing promotion.
+    inputs: [regime_certificate]
+    outputs: [falsification_record]
+    invariants: [INV-DET1]
+    failure_mode: quarantine
+  - id: evidence_emitter
+    kind: evidence_emitter
+    purpose: Emit canonical research artifact and machine-readable handoff for implementation agents.
+    inputs: [regime_certificate, falsification_record]
+    outputs: [evidence_artifact]
+    invariants: [SCHEMA-VALID]
+    failure_mode: fail_closed
+
+gates:
+  - id: schema.inference_transformer_contract
+    blocks: [agent_orchestrator, evidence_emitter]
+    command: python -m json.tool schemas/research/inference_transformer_contract.schema.json >/dev/null
+    blocks_promotion: true
+  - id: schema.research_artifact_truth
+    blocks: [evidence_emitter]
+    command: python tools/research/validate_ricci_artifact_schema.py --semantic --artifact artifacts/runs/ricci_microstructure_v1/example_artifact.json
+    blocks_promotion: true
+  - id: claim_boundary
+    blocks: [causality_firewall, evidence_emitter]
+    command: python scripts/ci/check_research_artifact_truth.py
+    blocks_promotion: true
+
+outputs:
+  - path: configs/research/geosync_inference_transformer.v1.yaml
+    schema: schemas/research/inference_transformer_contract.schema.json
+    role: config
+  - path: data/research/inference_transformer_blocks.v1.json
+    schema: schemas/research/inference_transformer_contract.schema.json
+    role: contract
+  - path: docs/research/INFERENCE_TRANSFORMER_CONTROL_PLANE.md
+    schema: markdown-operational-architecture
+    role: report
+  - path: .claude/handoffs/inference-transformer-control-plane.md
+    schema: claude-handoff
+    role: handoff
+
+agent_handoff:
+  primary_agent: code-claude
+  entrypoint: .claude/handoffs/inference-transformer-control-plane.md
+  required_first_reads:
+    - AGENTS.md
+    - README.md
+    - PRODUCT_CATEGORY.md
+    - CLAIMS.md
+    - FORBIDDEN_CLAIMS.md
+    - docs/REPOSITORY_SYSTEM.md
+    - research_lines/ricci_microstructure_v1/contract.yaml
+    - schemas/research/research_inference_artifact.schema.json
+  first_implementation_pr: Implement contract validation plus a deterministic regime_certificate example without promoting ricci_microstructure_v1 beyond HYPOTHESIS.

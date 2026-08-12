@@ -1,8 +1,15 @@
+# Copyright (c) 2023-2026 Yaroslav Vasylenko (neuron7xLab)
+# SPDX-License-Identifier: MIT
 """Kuramoto-Ricci composite market phase analyzer.
 
-This module provides a sophisticated market regime classification system that combines
+This module provides a market regime classification system that combines
 Kuramoto synchronization analysis with Ricci flow curvature metrics to identify
-distinct market phases and generate actionable trading signals.
+distinct market phases.
+
+Outputs are bounded structural-state descriptors for research and verification
+only. They are NOT financial advice, NOT a trading instruction, and NOT
+predictive evidence of price. Any downstream promotion to a claim requires
+replay, falsifier, and provenance (see CLAIMS.yaml / FORBIDDEN_CLAIMS.md).
 
 The composite engine fuses multi-scale Kuramoto oscillator analysis with temporal
 Ricci flow to classify markets into five distinct phases:
@@ -14,14 +21,16 @@ Ricci flow to classify markets into five distinct phases:
 
 Key Components:
     MarketPhase: Enumeration of market regime states
-    CompositeSignal: Complete signal output with phase, confidence, and trading signals
-    KuramotoRicciComposite: Core analyzer that produces signals from raw metrics
-    TradePulseCompositeEngine: High-level API for market analysis
+    CompositeSignal: Bounded structural-state descriptor (phase, confidence,
+        and bounded entry/exit/risk descriptor fields)
+    KuramotoRicciComposite: Core analyzer that produces structural descriptors
+        from raw metrics
+    GeoSyncCompositeEngine: High-level API for structural market-state analysis
 
 Example:
-    >>> engine = TradePulseCompositeEngine()
-    >>> signal = engine.analyze_market(price_df)
-    >>> print(f"Phase: {signal.phase.value}, Entry: {signal.entry_signal}")
+    >>> engine = GeoSyncCompositeEngine()
+    >>> state = engine.analyze_market(price_df)
+    >>> print(f"Phase: {state.phase.value}, entry_descriptor={state.entry_signal}")
 """
 
 from dataclasses import dataclass, field
@@ -45,6 +54,17 @@ class MarketPhase(Enum):
 
 @dataclass
 class CompositeSignal:
+    """Bounded structural-state descriptor emitted by the composite analyzer.
+
+    Every field is a research-only structural descriptor, not a trading
+    instruction, financial advice, or predictive evidence of price. The
+    fields ``entry_signal``, ``exit_signal`` and ``risk_multiplier`` are
+    retained for backward compatibility but denote bounded structural
+    quantities (clamped to ``[-1, 1]``, ``[0, 1]`` and ``[0.1, 2.0]``
+    respectively), never an order, size, or directional market call.
+    Promotion to any claim requires replay, falsifier, and provenance.
+    """
+
     phase: MarketPhase
     confidence: float
     kuramoto_R: float
@@ -91,9 +111,7 @@ class KuramotoRicciComposite:
             return MarketPhase.POST_EMERGENT
         return MarketPhase.CHAOTIC
 
-    def _confidence(
-        self, phase: MarketPhase, coherence: float, trans: float, R: float
-    ) -> float:
+    def _confidence(self, phase: MarketPhase, coherence: float, trans: float, R: float) -> float:
         conf = coherence
         if phase == MarketPhase.STRONG_EMERGENT:
             conf *= 1.0 + R
@@ -105,27 +123,33 @@ class KuramotoRicciComposite:
         dist = min(abs(R - self.Rs), abs(R - self.Rp))
         if dist < 0.1:
             conf *= 0.8
-        return float(np.clip(conf, 0.0, 1.0))
+        return float(
+            np.clip(conf, 0.0, 1.0)
+        )  # INV-K1: confidence score bounded to [0,1] as probability
 
     def _entry(self, phase: MarketPhase, R: float, kt: float, conf: float) -> float:
         if conf < self.min_conf:
             return 0.0
-        s = 0.0
+        s: float
         if phase == MarketPhase.STRONG_EMERGENT:
-            s = np.clip(-kt, 0.0, 1.0)  # more negative -> stronger long
+            s = np.clip(
+                -kt, 0.0, 1.0
+            )  # more negative curvature -> larger structural directional descriptor  # INV-RC1: curvature descriptor clipped to [0,1] for directional strength
         elif phase == MarketPhase.PROTO_EMERGENT:
             s = 0.5 * R
         elif phase == MarketPhase.POST_EMERGENT:
             s = -0.3
         else:
             s = 0.0
-        return float(np.clip(s * conf, -1.0, 1.0))
+        return float(np.clip(s * conf, -1.0, 1.0))  # INV-K1: composite signal bounded to [-1,1]
 
     def _exit(self, phase: MarketPhase, trans: float, R: float) -> float:
         if phase == MarketPhase.POST_EMERGENT:
             return 0.7
         if phase == MarketPhase.TRANSITION:
-            return float(np.clip(trans, 0.0, 1.0))
+            return float(
+                np.clip(trans, 0.0, 1.0)
+            )  # INV-RC1: transition probability bounded to [0,1]
         if phase == MarketPhase.CHAOTIC:
             return 0.5
         if phase == MarketPhase.STRONG_EMERGENT:
@@ -142,7 +166,9 @@ class KuramotoRicciComposite:
             base = 0.3
         elif phase == MarketPhase.POST_EMERGENT:
             base = 0.2
-        return float(np.clip(base * coh, 0.1, 2.0))
+        return float(
+            np.clip(base * coh, 0.1, 2.0)
+        )  # bounds: structural risk descriptor multiplier clamped to [0.1, 2.0] operating range
 
     def analyze(
         self,
@@ -172,9 +198,7 @@ class KuramotoRicciComposite:
             entry_signal=entry,
             exit_signal=exit_u,
             risk_multiplier=risk,
-            dominant_timeframe_sec=(
-                kres.dominant_scale.seconds if kres.dominant_scale else None
-            ),
+            dominant_timeframe_sec=(kres.dominant_scale.seconds if kres.dominant_scale else None),
             timestamp=ts,
             skipped_timeframes=[str(tf) for tf in kres.skipped_timeframes],
         )
@@ -222,9 +246,7 @@ class KuramotoRicciComposite:
     ) -> float:
         return self._entry(phase, R, temporal_ricci, confidence)
 
-    def _generate_exit_signal(
-        self, phase: MarketPhase, transition_score: float, R: float
-    ) -> float:
+    def _generate_exit_signal(self, phase: MarketPhase, transition_score: float, R: float) -> float:
         return self._exit(phase, transition_score, R)
 
     def _compute_risk_multiplier(
@@ -233,7 +255,7 @@ class KuramotoRicciComposite:
         return self._risk(phase, confidence, coherence)
 
 
-class TradePulseCompositeEngine:
+class GeoSyncCompositeEngine:
     def __init__(
         self,
         kuramoto_config: Optional[Dict] = None,
@@ -255,16 +277,14 @@ class TradePulseCompositeEngine:
         self, df: pd.DataFrame, price_col: str = "close", volume_col: str = "volume"
     ) -> CompositeSignal:
         if not isinstance(df.index, pd.DatetimeIndex):
-            raise TypeError("TradePulseCompositeEngine requires a DatetimeIndex")
+            raise TypeError("GeoSyncCompositeEngine requires a DatetimeIndex")
 
         sanitized = df.sort_index()
         if sanitized.index.has_duplicates:
             sanitized = sanitized[~sanitized.index.duplicated(keep="last")]
 
         if sanitized.empty:
-            raise ValueError(
-                "DataFrame must contain at least one row after sanitisation"
-            )
+            raise ValueError("DataFrame must contain at least one row after sanitisation")
 
         latest_ts = sanitized.index[-1]
         last_signal: CompositeSignal | None = self.history[-1] if self.history else None
@@ -289,9 +309,7 @@ class TradePulseCompositeEngine:
             volume_col=volume_col,
             reset_history=reset_temporal,
         )
-        static_ricci = (
-            rres.graph_snapshots[-1].avg_curvature if rres.graph_snapshots else 0.0
-        )
+        static_ricci = rres.graph_snapshots[-1].avg_curvature if rres.graph_snapshots else 0.0
         sig = self.c.analyze(kres, rres, static_ricci, sanitized.index[-1])
         if should_reset_history:
             self._clear_history()

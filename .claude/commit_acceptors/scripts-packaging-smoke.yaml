@@ -1,0 +1,77 @@
+# Diff-bound commit acceptor for the script-entrypoint packaging contract.
+#
+# Binds the packaging fix that makes scripts.* console-script targets importable
+# after a normal wheel/editable install instead of relying on the repository
+# root accidentally being on PYTHONPATH: a scripts/ci package marker, the
+# setuptools include + console_scripts in pyproject, and a smoke test that keeps
+# the build contract honest. Packaging/test only; no physics, claim tier, or
+# alpha surface is touched.
+
+id: scripts-packaging-smoke
+status: ACTIVE
+claim_type: correctness
+promise: >-
+  After this PR lands, every scripts.* console-script declared in pyproject
+  resolves to a packaged module: the target module file exists, every package
+  level on its path carries an __init__.py marker, and setuptools find.include
+  covers "scripts"/"scripts.*", so a clean wheel or editable install exposes the
+  entrypoints without a repository-root PYTHONPATH. A smoke test fails closed if
+  any entrypoint target is unpackaged or missing its package marker. No
+  empirical, market, or alpha claim is made.
+
+diff_scope:
+  changed_files:
+    - path: ".claude/commit_acceptors/scripts-packaging-smoke.yaml"
+    - path: "pyproject.toml"
+    - path: "scripts/ci/__init__.py"
+    - path: "tests/scripts/test_packaging_smoke.py"
+    - path: "INVENTORY.json"
+  forbidden_paths:
+    - "trading/"
+    - "execution/"
+    - "forecast/"
+    - "policy/"
+    - "core/"
+    - "runtime/"
+
+required_python_symbols: []
+
+expected_signal: >-
+  python -m pytest tests/scripts/test_packaging_smoke.py passes: each scripts.*
+  console-script target exists and carries package markers, and the setuptools
+  include set covers scripts/scripts.*.
+
+measurement_command: >-
+  python -m pytest --noconftest -p no:cacheprovider -q tests/scripts/test_packaging_smoke.py
+
+signal_artifact: "tests/scripts/test_packaging_smoke.py"
+
+falsifier:
+  command: >-
+    python -c "import tomllib; from pathlib import Path;
+    d=tomllib.loads(Path('pyproject.toml').read_text());
+    s=d['project']['scripts'];
+    mods=[t.split(':')[0] for t in s.values() if t.split(':')[0].startswith('scripts.')];
+    ok=all((Path(*m.split('.')).with_suffix('.py').exists() or (Path(*m.split('.'))/'__init__.py').exists()) for m in mods);
+    raise SystemExit(0 if (mods and ok) else 1)"
+  description: >-
+    Resolves every scripts.* console-script target to a file on disk. Exits 0
+    only when at least one target exists and all resolve; if a declared
+    entrypoint points at an unpackaged module, it exits non-zero — the exact
+    broken-install state the contract forbids.
+
+rollback_command: >-
+  bash -c '
+    git rm -f scripts/ci/__init__.py tests/scripts/test_packaging_smoke.py
+      .claude/commit_acceptors/scripts-packaging-smoke.yaml
+    && git checkout -- pyproject.toml
+    && python scripts/ci/update_inventory.py --write
+  '
+
+rollback_verification_command: >-
+  bash -c 'test ! -e scripts/ci/__init__.py'
+
+memory_update_type: append
+ledger_path: ".claude/commit_acceptors/scripts-packaging-smoke.yaml"
+report_path: "tests/scripts/test_packaging_smoke.py"
+evidence: []

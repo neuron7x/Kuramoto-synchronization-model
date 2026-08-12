@@ -1,28 +1,28 @@
 # Rate limiting and host protection
 
-TradePulse now exposes configurable knobs for the operations team to tune per-client
+GeoSync now exposes configurable knobs for the operations team to tune per-client
 quotas and ingress filtering. This document summarises the key environment variables
 and the recommended workflow when rolling out changes.
 
 ## Per-client rate policies
 
 Rate limits are managed by `ApiRateLimitSettings` which reads configuration from the
-`TRADEPULSE_RATE_*` environment variables.
+`GEOSYNC_RATE_*` environment variables.
 
 | Setting | Environment variable | Description |
 | --- | --- | --- |
-| `default_policy` | `TRADEPULSE_RATE_DEFAULT_POLICY` | JSON object defining `max_requests` and `window_seconds` for authenticated subjects without a dedicated override. |
-| `unauthenticated_policy` | `TRADEPULSE_RATE_UNAUTHENTICATED_POLICY` | Optional JSON object that constrains unauthenticated/IP keyed requests. When omitted the default policy applies. |
-| `client_policies` | `TRADEPULSE_RATE_CLIENT_POLICIES` | JSON object mapping authenticated subjects (API keys or mTLS subjects) to individual policies. |
-| `redis_url` | `TRADEPULSE_RATE_REDIS_URL` | Redis URI used to coordinate limits across multiple application instances. |
-| `redis_key_prefix` | `TRADEPULSE_RATE_REDIS_KEY_PREFIX` | Prefix applied to Redis keys when coordinating quotas. |
+| `default_policy` | `GEOSYNC_RATE_DEFAULT_POLICY` | JSON object defining `max_requests` and `window_seconds` for authenticated subjects without a dedicated override. |
+| `unauthenticated_policy` | `GEOSYNC_RATE_UNAUTHENTICATED_POLICY` | Optional JSON object that constrains unauthenticated/IP keyed requests. When omitted the default policy applies. |
+| `client_policies` | `GEOSYNC_RATE_CLIENT_POLICIES` | JSON object mapping authenticated subjects (API keys or mTLS subjects) to individual policies. |
+| `redis_url` | `GEOSYNC_RATE_REDIS_URL` | Redis URI used to coordinate limits across multiple application instances. |
+| `redis_key_prefix` | `GEOSYNC_RATE_REDIS_KEY_PREFIX` | Prefix applied to Redis keys when coordinating quotas. |
 
 ### Example: dedicate a burstier policy to a specific subject
 
 ```bash
-export TRADEPULSE_RATE_DEFAULT_POLICY='{"max_requests": 120, "window_seconds": 60}'
-export TRADEPULSE_RATE_CLIENT_POLICIES='{"vip-client": {"max_requests": 240, "window_seconds": 60}}'
-export TRADEPULSE_RATE_REDIS_URL='redis://cache.internal:6379/0'
+export GEOSYNC_RATE_DEFAULT_POLICY='{"max_requests": 120, "window_seconds": 60}'
+export GEOSYNC_RATE_CLIENT_POLICIES='{"vip-client": {"max_requests": 240, "window_seconds": 60}}'
+export GEOSYNC_RATE_REDIS_URL='redis://cache.internal:6379/0'
 ```
 
 After updating the environment, redeploy the service. The FastAPI application will
@@ -31,7 +31,7 @@ provided.
 
 ### Operational checklist
 
-1. Update the appropriate `TRADEPULSE_RATE_*` variables for your environment.
+1. Update the appropriate `GEOSYNC_RATE_*` variables for your environment.
 2. Ensure Redis connectivity (TLS, authentication) is configured before rolling
    out a clustered deployment.
 3. Restart the application pods and monitor the `429` metrics for unexpected spikes.
@@ -40,25 +40,25 @@ provided.
 ## Host allow-list and payload inspection
 
 `ApiSecuritySettings` now includes defensive defaults that can be overridden via
-environment variables with the `TRADEPULSE_` prefix.
+environment variables with the `GEOSYNC_` prefix.
 
 | Setting | Environment variable | Description |
 | --- | --- | --- |
-| `trusted_hosts` | `TRADEPULSE_TRUSTED_HOSTS` | Comma-separated list or JSON array of host headers accepted by the API gateway. |
-| `max_request_bytes` | `TRADEPULSE_MAX_REQUEST_BYTES` | Maximum payload size (in bytes) accepted before rejecting with HTTP 413. |
-| `suspicious_json_keys` | `TRADEPULSE_SUSPICIOUS_JSON_KEYS` | JSON array of JSON keys that should trigger a rejection. |
-| `suspicious_json_substrings` | `TRADEPULSE_SUSPICIOUS_JSON_SUBSTRINGS` | JSON array of substrings that, when present in JSON values, cause the WAF to reject the request. |
-| `upstream_waf_request_id_header` | `TRADEPULSE_UPSTREAM_WAF_REQUEST_ID_HEADER` | Header supplied by the external gateway that uniquely identifies the transaction and is copied into audit logs. |
-| `upstream_waf_forwarded_for_header` | `TRADEPULSE_UPSTREAM_WAF_FORWARDED_FOR_HEADER` | Header from the upstream WAF that contains the canonical client IP chain used for rate limiting. |
-| `upstream_waf_event_header` | `TRADEPULSE_UPSTREAM_WAF_EVENT_HEADER` | Header carrying the upstream inspection disposition (e.g., allow, challenged) that is recorded in FastAPI security logs. |
+| `trusted_hosts` | `GEOSYNC_TRUSTED_HOSTS` | Comma-separated list or JSON array of host headers accepted by the API gateway. |
+| `max_request_bytes` | `GEOSYNC_MAX_REQUEST_BYTES` | Maximum payload size (in bytes) accepted before rejecting with HTTP 413. |
+| `suspicious_json_keys` | `GEOSYNC_SUSPICIOUS_JSON_KEYS` | JSON array of JSON keys that should trigger a rejection. |
+| `suspicious_json_substrings` | `GEOSYNC_SUSPICIOUS_JSON_SUBSTRINGS` | JSON array of substrings that, when present in JSON values, cause the WAF to reject the request. |
+| `upstream_waf_request_id_header` | `GEOSYNC_UPSTREAM_WAF_REQUEST_ID_HEADER` | Header supplied by the external gateway that uniquely identifies the transaction and is copied into audit logs. |
+| `upstream_waf_forwarded_for_header` | `GEOSYNC_UPSTREAM_WAF_FORWARDED_FOR_HEADER` | Header from the upstream WAF that contains the canonical client IP chain used for rate limiting. |
+| `upstream_waf_event_header` | `GEOSYNC_UPSTREAM_WAF_EVENT_HEADER` | Header carrying the upstream inspection disposition (e.g., allow, challenged) that is recorded in FastAPI security logs. |
 
 ### Example: tighten ingress for production
 
 ```bash
-export TRADEPULSE_TRUSTED_HOSTS='["api.tradepulse.com", "api.tradepulse.internal"]'
-export TRADEPULSE_MAX_REQUEST_BYTES=524288
-export TRADEPULSE_SUSPICIOUS_JSON_KEYS='["$where", "__proto__"]'
-export TRADEPULSE_SUSPICIOUS_JSON_SUBSTRINGS='["<script", "javascript:"]'
+export GEOSYNC_TRUSTED_HOSTS='["api.geosync.com", "api.geosync.internal"]'
+export GEOSYNC_MAX_REQUEST_BYTES=524288
+export GEOSYNC_SUSPICIOUS_JSON_KEYS='["$where", "__proto__"]'
+export GEOSYNC_SUSPICIOUS_JSON_SUBSTRINGS='["<script", "javascript:"]'
 ```
 
 Apply the new configuration and verify that your ingress controller forwards the
@@ -67,18 +67,18 @@ payload rules will be rejected before reaching any route handlers.
 
 ### External gateway integration
 
-TradePulse assumes a managed cloud WAF or API gateway performs TLS termination,
+GeoSync assumes a managed cloud WAF or API gateway performs TLS termination,
 bot mitigation, and deep payload inspection before traffic reaches the
 FastAPI runtime. The `upstream_waf_*` settings document how decision metadata
 is handed off so the in-app WAF can trust the forwarded context.
 
 1. Require the external gateway to populate the request ID and client IP chain
-   headers configured through `TRADEPULSE_UPSTREAM_WAF_REQUEST_ID_HEADER` and
-   `TRADEPULSE_UPSTREAM_WAF_FORWARDED_FOR_HEADER`. The FastAPI WAF relies on
+   headers configured through `GEOSYNC_UPSTREAM_WAF_REQUEST_ID_HEADER` and
+   `GEOSYNC_UPSTREAM_WAF_FORWARDED_FOR_HEADER`. The FastAPI WAF relies on
    these values to coordinate quota enforcement and correlate audit entries
    with upstream logs.
 2. Propagate the inspection outcome header configured via
-   `TRADEPULSE_UPSTREAM_WAF_EVENT_HEADER`. Persist the value in application logs
+   `GEOSYNC_UPSTREAM_WAF_EVENT_HEADER`. Persist the value in application logs
    and forward it to your SIEM so investigations can pivot between gateway and
    application perspectives.
 3. Offload full body signature scanning and protocol anomaly detection to the

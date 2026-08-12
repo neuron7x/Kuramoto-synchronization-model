@@ -1,0 +1,61 @@
+{
+  "schema_version": "1.0.0",
+  "generated_at_utc": "2026-05-29T11:25:00Z",
+  "map": ".claude/physics/TEST_WITNESS_MAP.json",
+  "source": "local_ast_score",
+  "totals": {
+    "files": 5,
+    "test_functions": 137,
+    "witness_functions": 56,
+    "non_physics_functions": 81,
+    "unmapped_functions": 0,
+    "coverage": 1.0
+  },
+  "files": [
+    {
+      "file": "tests/core/neuro/dopamine/test_invariants.py",
+      "test_functions": 30,
+      "witness_functions": 0,
+      "non_physics_functions": 30,
+      "unmapped_functions": 0,
+      "coverage": 1.0
+    },
+    {
+      "file": "tests/core/neuro/serotonin/test_serotonin_controller.py",
+      "test_functions": 29,
+      "witness_functions": 17,
+      "non_physics_functions": 12,
+      "unmapped_functions": 0,
+      "coverage": 1.0
+    },
+    {
+      "file": "tests/core/neuro/serotonin/test_serotonin_runtime_safety.py",
+      "test_functions": 24,
+      "witness_functions": 13,
+      "non_physics_functions": 11,
+      "unmapped_functions": 0,
+      "coverage": 1.0
+    },
+    {
+      "file": "tests/unit/core/test_kuramoto_modules.py",
+      "test_functions": 23,
+      "witness_functions": 16,
+      "non_physics_functions": 7,
+      "unmapped_functions": 0,
+      "coverage": 1.0
+    },
+    {
+      "file": "tests/unit/test_kuramoto_ricci_composite.py",
+      "test_functions": 31,
+      "witness_functions": 10,
+      "non_physics_functions": 21,
+      "unmapped_functions": 0,
+      "coverage": 1.0
+    }
+  ],
+  "claim_boundary": {
+    "governance_score_only": true,
+    "does_not_promote_scientific_claims": true,
+    "requires_ci_or_local_revalidation_before_release": true
+  }
+}

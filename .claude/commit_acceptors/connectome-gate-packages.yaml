@@ -1,0 +1,57 @@
+id: connectome-gate-packages
+status: ACTIVE
+claim_type: chore
+promise: >-
+  Diff-bound package-marker acceptor for the architectural connectome gate. The
+  change declares lightweight package namespaces required by import resolution,
+  mypy explicit package bases, and the connectome validator test surface. It
+  does not change runtime behavior or expand the static import-topology claim.
+
+diff_scope:
+  changed_files:
+    - path: ".claude/commit_acceptors/connectome-gate-packages.yaml"
+    - path: "geosync/cortex/__init__.py"
+    - path: "geosync/cortex/amygdala/__init__.py"
+    - path: "geosync/cortex/basal_ganglia/__init__.py"
+    - path: "geosync/cortex/hippocampus/__init__.py"
+    - path: "geosync/cortex/motor/__init__.py"
+    - path: "geosync/cortex/prefrontal/__init__.py"
+    - path: "geosync/cortex/sensory/__init__.py"
+    - path: "tests/tools/__init__.py"
+    - path: "tests/tools/architecture/__init__.py"
+    - path: "tools/architecture/__init__.py"
+  forbidden_paths:
+    - "application/"
+    - "backtest/"
+    - "core/"
+    - "markets/"
+    - "modules/"
+
+required_python_symbols: []
+
+expected_signal: >-
+  Import roots and test/tool namespaces resolve deterministically without
+  relying on implicit namespace-package behavior.
+
+measurement_command: >-
+  python tools/architecture/connectome_selftest.py && python -m pytest --noconftest tests/tools/architecture/test_connectome_selftest.py -q
+
+signal_artifact: "tools/architecture/__init__.py"
+
+falsifier:
+  command: >-
+    python -c "import tools.architecture.check_connectome; import tests.tools.architecture.test_connectome_selftest"
+  description: >-
+    Package markers must make the connectome tooling and tests importable under
+    the repository mypy and import-resolution policy.
+
+rollback_command: >-
+  git checkout -- geosync/cortex tests/tools/__init__.py tests/tools/architecture/__init__.py tools/architecture/__init__.py .claude/commit_acceptors/connectome-gate-packages.yaml
+
+rollback_verification_command: >-
+  git diff --exit-code
+
+memory_update_type: append
+ledger_path: ".claude/commit_acceptors/connectome-gate-packages.yaml"
+report_path: "tools/architecture/__init__.py"
+evidence: []

@@ -34,7 +34,7 @@ The agent system prompt is designed to be used with LLM-based PR automation tool
 
 **File:** `fractal-tech-debt-engine-v2.md`
 
-**Purpose:** Systematically reduces technical debt in the TradePulse/ML-SDM ecosystem through Pull Requests, focusing on neuro-inspired algorithmic trading, neuro-economic and RL modules, data pipelines, backtesting, and infrastructure.
+**Purpose:** Systematically reduces technical debt in the GeoSync/ML-SDM ecosystem through Pull Requests, focusing on neuro-inspired algorithmic trading, neuro-economic and RL modules, data pipelines, backtesting, and infrastructure.
 
 **Scope:**
 - Trading strategies and risk models
@@ -57,7 +57,7 @@ The agent system prompt is designed to be used with LLM-based PR automation tool
 - `PATCH_ONLY`: Direct diff patches when appropriate
 
 **Usage:**
-Use this agent to analyze Pull Requests for technical debt in the TradePulse codebase. The agent applies a consistent 5-step fractal protocol (INTENT → MISMATCH → REFACTOR PLAN → SAFE PATCH → VERIFY LOOP) at each level of analysis, ensuring changes preserve trading behavior, scientific invariants, and system stability.
+Use this agent to analyze Pull Requests for technical debt in the GeoSync codebase. The agent applies a consistent 5-step fractal protocol (INTENT → MISMATCH → REFACTOR PLAN → SAFE PATCH → VERIFY LOOP) at each level of analysis, ensuring changes preserve trading behavior, scientific invariants, and system stability.
 
 **Resources:**
 - [Integration Guide](FRACTAL_TECH_DEBT_INTEGRATION.md) - Detailed workflow examples and best practices

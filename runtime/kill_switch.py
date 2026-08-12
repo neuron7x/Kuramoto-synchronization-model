@@ -1,3 +1,5 @@
+# Copyright (c) 2023-2026 Yaroslav Vasylenko (neuron7xLab)
+# SPDX-License-Identifier: MIT
 """Global kill-switch used by safety-critical components.
 
 This module provides enterprise-grade kill switch functionality with:
@@ -18,7 +20,6 @@ import json
 import logging
 import os
 import threading
-import time
 from contextlib import contextmanager
 from dataclasses import dataclass
 from datetime import datetime, timezone
@@ -26,7 +27,47 @@ from enum import Enum
 from pathlib import Path
 from typing import Callable, List, Optional
 
+from geosync.core.compat import default_clock
+
 logger = logging.getLogger(__name__)
+
+
+def _now_epoch_seconds() -> float:
+    """Wall-clock seconds via the injected :class:`Clock`.
+
+    Routes through ``default_clock().epoch_ns()`` so audit/lifecycle traces
+    are deterministic under a ``FrozenClock`` (formal/micro_dynamic_bug_fractal_audit.md
+    §3 — Clock monotonicity / Replay determinism invariants).
+    """
+
+    return default_clock().epoch_ns() / 1_000_000_000
+
+
+class KillSwitchCallbackError(RuntimeError):
+    """Raised when one or more kill-switch state-change callbacks failed.
+
+    A registered halt action (flatten/disconnect) that raises during a trip is
+    isolated so the remaining callbacks still run, but the failure is surfaced
+    (fail-closed) so the trip is NOT reported as fully effected. The internal
+    state transition has already completed and is deliberately NOT rolled back:
+    a halt whose protective side-effect failed must fail CLOSED (state stays
+    changed) while still signalling the failure to the caller.
+    """
+
+    def __init__(
+        self,
+        is_active: bool,
+        reason: str,
+        errors: List[BaseException],
+    ) -> None:
+        self.is_active = is_active
+        self.reason = reason
+        self.errors = list(errors)
+        joined = "; ".join(f"{type(e).__name__}: {e}" for e in self.errors)
+        super().__init__(
+            f"{len(self.errors)} kill-switch callback(s) failed during state "
+            f"change (active={is_active}, reason={reason!r}): {joined}"
+        )
 
 
 class KillSwitchReason(Enum):
@@ -58,9 +99,7 @@ class KillSwitchEvent:
         """Convert event to dictionary for serialization."""
         return {
             "timestamp": self.timestamp,
-            "timestamp_iso": datetime.fromtimestamp(
-                self.timestamp, tz=timezone.utc
-            ).isoformat(),
+            "timestamp_iso": datetime.fromtimestamp(self.timestamp, tz=timezone.utc).isoformat(),
             "action": self.action,
             "reason": self.reason,
             "source": self.source,
@@ -152,7 +191,7 @@ class KillSwitchManager:
             True if kill switch is active (either programmatically or via env var)
         """
         with self._state_lock:
-            return self.state.active or os.getenv("TRADEPULSE_KILL_SWITCH", "0") == "1"
+            return self.state.active or os.getenv("GEOSYNC_KILL_SWITCH", "0") == "1"
 
     def activate(
         self,
@@ -171,12 +210,10 @@ class KillSwitchManager:
         Returns:
             True if activation succeeded, False otherwise
         """
-        reason_str = (
-            reason.value if isinstance(reason, KillSwitchReason) else str(reason)
-        )
+        reason_str = reason.value if isinstance(reason, KillSwitchReason) else str(reason)
 
         with self._state_lock:
-            now = time.time()
+            now = _now_epoch_seconds()
             previous_state = self.state.active
 
             # Check cooldown (unless forced or already active)
@@ -256,7 +293,7 @@ class KillSwitchManager:
             True if deactivation succeeded, False otherwise
         """
         with self._state_lock:
-            now = time.time()
+            now = _now_epoch_seconds()
             previous_state = self.state.active
 
             # Check cooldown (unless forced or already inactive)
@@ -325,18 +362,16 @@ class KillSwitchManager:
             Dictionary with current state and statistics
         """
         with self._state_lock:
-            now = time.time()
+            now = _now_epoch_seconds()
             return {
                 "active": self.is_active(),
                 "active_programmatic": self.state.active,
-                "active_env": os.getenv("TRADEPULSE_KILL_SWITCH", "0") == "1",
+                "active_env": os.getenv("GEOSYNC_KILL_SWITCH", "0") == "1",
                 "activation_time": self.state.activation_time,
                 "activation_reason": self.state.activation_reason,
                 "activation_source": self.state.activation_source,
                 "active_duration_seconds": (
-                    now - self.state.activation_time
-                    if self.state.activation_time
-                    else None
+                    now - self.state.activation_time if self.state.activation_time else None
                 ),
                 "total_activations": self.state.activation_count,
                 "total_deactivations": self.state.deactivation_count,
@@ -387,7 +422,7 @@ class KillSwitchManager:
     ) -> None:
         """Record a state change event in the audit log."""
         event = KillSwitchEvent(
-            timestamp=time.time(),
+            timestamp=_now_epoch_seconds(),
             action=action,
             reason=reason,
             source=source,
@@ -402,12 +437,24 @@ class KillSwitchManager:
             self.audit_log = self.audit_log[-self.max_audit_entries :]
 
     def _notify_callbacks(self, is_active: bool, reason: str) -> None:
-        """Notify all registered callbacks of a state change."""
+        """Notify all registered callbacks of a state change.
+
+        Per-callback isolation is preserved (one failing callback must not stop
+        the others), but failures are aggregated and surfaced: if ANY callback
+        raised, a :class:`KillSwitchCallbackError` is raised after every callback
+        has been invoked. Callers of :meth:`activate` / :meth:`deactivate` thus
+        cannot receive a plain ``True`` when a protective halt action failed —
+        the trip is not silently reported as fully effected.
+        """
+        errors: List[BaseException] = []
         for callback in self.callbacks:
             try:
                 callback(is_active, reason)
             except Exception as e:
                 logger.error("Kill switch callback error: %s", e)
+                errors.append(e)
+        if errors:
+            raise KillSwitchCallbackError(is_active, reason, errors)
 
     def _persist_state(self) -> None:
         """Persist current state to disk for recovery."""
@@ -423,7 +470,7 @@ class KillSwitchManager:
                 "activation_source": self.state.activation_source,
                 "activation_count": self.state.activation_count,
                 "deactivation_count": self.state.deactivation_count,
-                "persisted_at": time.time(),
+                "persisted_at": _now_epoch_seconds(),
             }
             with open(self.persist_path, "w", encoding="utf-8") as f:
                 json.dump(state_data, f, indent=2)
@@ -498,14 +545,26 @@ def is_kill_switch_active() -> bool:
 def activate_kill_switch(
     reason: KillSwitchReason | str = KillSwitchReason.MANUAL,
     source: str = "legacy_api",
-) -> None:
+) -> bool:
     """Activate the kill switch.
+
+    A safety trip must not be suppressible by the anti-toggle cooldown, so this
+    public helper calls :meth:`KillSwitchManager.activate` with ``force=True``
+    (matching :func:`kill_switch_guard`). ``force=True`` bypasses the cooldown
+    window in ``activate`` (the ``if not force and not self.state.active`` guard
+    short-circuits), so an automated trip within ``cooldown_seconds`` of a prior
+    state change (e.g. right after an operator deactivate) is no longer silently
+    refused. The ``bool`` result is propagated so callers can detect a failed or
+    ineffective trip.
 
     Args:
         reason: Reason for activation
         source: Identifier of the caller
+
+    Returns:
+        True if the activation took effect, False otherwise.
     """
-    _get_manager().activate(reason=reason, source=source)
+    return _get_manager().activate(reason=reason, source=source, force=True)
 
 
 def deactivate_kill_switch(
@@ -572,6 +631,7 @@ __all__ = [
     "KillSwitchReason",
     "KillSwitchEvent",
     "KillSwitchState",
+    "KillSwitchCallbackError",
     "get_kill_switch_status",
     "get_kill_switch_audit_log",
     # Legacy API

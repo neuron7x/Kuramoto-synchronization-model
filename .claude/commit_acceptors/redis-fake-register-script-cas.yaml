@@ -1,0 +1,45 @@
+id: redis-fake-register-script-cas
+status: ACTIVE
+claim_type: correctness
+promise: >-
+  The external-service integration fake now models register_script, so the
+  RealTimeFeatureStore Redis write path (event_ts Lua CAS added in #1454) is
+  exercised end to end and test_feature_store_persists_records_to_redis_and_timescale
+  passes instead of raising AttributeError on the missing method.
+diff_scope:
+  changed_files:
+    - path: ".claude/commit_acceptors/redis-fake-register-script-cas.yaml"
+    - path: "tests/integration/test_external_service_interactions.py"
+  forbidden_paths:
+    - "core/features/realtime_store.py"
+required_python_symbols:
+  - "tests/integration/test_external_service_interactions.py::_FakeRedis"
+expected_signal: >-
+  `python -m pytest --import-mode=importlib
+  tests/integration/test_external_service_interactions.py -q` passes (3 tests),
+  including the feature-store persistence path.
+measurement_command: >-
+  bash -c '
+    python -m pytest --import-mode=importlib -p no:cacheprovider
+      tests/integration/test_external_service_interactions.py -q
+  '
+signal_artifact: "tmp/redis_fake_register_script_cas.log"
+falsifier:
+  command: |-
+    bash -c '
+      python -m pytest --import-mode=importlib -p no:cacheprovider -q
+        "tests/integration/test_external_service_interactions.py::test_feature_store_persists_records_to_redis_and_timescale"
+      >/dev/null 2>&1 && exit 0 || exit 1
+    '
+  description: >-
+    Runs the feature-store persistence test. Exits 0 when the fake models
+    register_script (write path green); non-zero if the method is missing and the
+    store write raises AttributeError.
+rollback_command: >-
+  bash -c 'git rm -f .claude/commit_acceptors/redis-fake-register-script-cas.yaml'
+rollback_verification_command: >-
+  bash -c 'test ! -f .claude/commit_acceptors/redis-fake-register-script-cas.yaml'
+memory_update_type: append
+ledger_path: ".claude/commit_acceptors/redis-fake-register-script-cas.yaml"
+report_path: "tmp/redis_fake_register_script_cas.log"
+evidence: []

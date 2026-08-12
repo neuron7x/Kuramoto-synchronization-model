@@ -1,0 +1,63 @@
+# Diff-bound commit acceptor: wire co-located test suites into the release
+# coverage measurement, exclude co-located test BODIES from the measured
+# production surface (anti self-inflation), repair the un-importable
+# neural_controller facade and the pandas-2.2 'T' freq deprecation, and stop the
+# namespace-integrity guard from raising false positives on hidden
+# agent-worktree trees.
+#
+# This is an integrity/correctness change. It adds NO dependency, NO runtime
+# behaviour change, NO market claim and NO claim-tier promotion, and introduces
+# no lint or type-checker suppressions. See report_path for the full rationale
+# and the (re-derived, honest) release-coverage effect.
+id: colocated-suites-and-guard-robustness
+status: ACTIVE
+claim_type: correctness
+promise: >-
+  make coverage-baseline executes the seven co-located test suites
+  (core/neuro/tests, analytics/{tests,fpma/tests,regime/tests,signals/tests},
+  markets/orderbook/tests, geosync/neural_controller/tests) via a --cov-append
+  second invocation while surface_contract.map_file_to_surface excludes those
+  test files from the measured production surface (test bodies never count as
+  covered production lines); geosync.neural_controller imports cleanly because
+  core.params re-exports PredictiveConfig/SensoryConfig/OBSERVATION_KEYS; the
+  analytics/signals suite uses the pandas 'min' alias; and
+  check_namespace_integrity ignores hidden directories while still flagging a
+  visible rogue __CANONICAL__ marker.
+diff_scope:
+  changed_files:
+    - path: ".claude/commit_acceptors/colocated-suites-and-guard-robustness.yaml"
+    - path: "Makefile"
+    - path: "analytics/signals/tests/__init__.py"
+    - path: "analytics/signals/tests/test_igs_adaptation.py"
+    - path: "analytics/signals/tests/test_igs_core.py"
+    - path: "analytics/signals/tests/test_igs_streaming.py"
+    - path: "analytics/tests/__init__.py"
+    - path: "docs/reports/colocated_coverage_and_guard_robustness.md"
+    - path: "geosync/neural_controller/core/params.py"
+    - path: "scripts/check_namespace_integrity.py"
+    - path: "tests/test_architecture_guards.py"
+    - path: "tests/tools/test_coverage_surface_contract.py"
+    - path: "tools/coverage/surface_contract.py"
+  forbidden_paths:
+    - "trading/"
+    - "execution/"
+    - "forecast/"
+    - "policy/"
+required_python_symbols:
+  - "scripts.check_namespace_integrity.check_namespace_integrity"
+  - "geosync.neural_controller.core.params.PredictiveConfig"
+  - "geosync.neural_controller.core.params.SensoryConfig"
+  - "geosync.neural_controller.core.params.OBSERVATION_KEYS"
+  - "tools.coverage.surface_contract.is_colocated_test_file"
+expected_signal: "all seven co-located suites plus the architecture-guard and surface-contract tests pass"
+measurement_command: "python -m pytest core/neuro/tests analytics/tests analytics/fpma/tests analytics/regime/tests analytics/signals/tests markets/orderbook/tests geosync/neural_controller/tests tests/test_architecture_guards.py tests/tools/test_coverage_surface_contract.py -q"
+signal_artifact: "tmp/colocated_suites.log"
+falsifier:
+  command: "python -c \"import sys; from tools.coverage.surface_contract import is_colocated_test_file; sys.exit(1 if is_colocated_test_file('core/neuro/tests/test_engine.py') else 0)\""
+  description: "On the green path co-located test files are excluded from the production surface, so this probe exits 1 (fails); it could only pass if the self-inflation defect regressed (test bodies counted as production)."
+rollback_command: "git checkout origin/main -- Makefile scripts/check_namespace_integrity.py geosync/neural_controller/core/params.py analytics/signals/tests tools/coverage/surface_contract.py"
+rollback_verification_command: "git diff --exit-code origin/main -- tools/coverage/surface_contract.py"
+memory_update_type: none
+ledger_path: ".claude/commit_acceptors/colocated-suites-and-guard-robustness.yaml"
+report_path: "docs/reports/colocated_coverage_and_guard_robustness.md"
+evidence: []

@@ -60,7 +60,7 @@
     }
   },
   "description": "Aggregated OHLCV bar for a symbol and interval.",
-  "$id": "tradepulse.events.marketdata.v1_0_0.BarEvent",
+  "$id": "geosync.events.marketdata.v1_0_0.BarEvent",
   "required": [
     "event_id",
     "schema_version",

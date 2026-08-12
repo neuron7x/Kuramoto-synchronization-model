@@ -1,0 +1,65 @@
+{
+  "canonical_breakeven": 0.23166569020507446,
+  "cells": [
+    {
+      "bracketed": true,
+      "breakeven_maker_fraction": 0.30439830783374716,
+      "regime_quantile": 0.7,
+      "regime_window_sec": 180
+    },
+    {
+      "bracketed": true,
+      "breakeven_maker_fraction": 0.3223049516010643,
+      "regime_quantile": 0.7,
+      "regime_window_sec": 300
+    },
+    {
+      "bracketed": true,
+      "breakeven_maker_fraction": 0.34902320374370843,
+      "regime_quantile": 0.7,
+      "regime_window_sec": 450
+    },
+    {
+      "bracketed": true,
+      "breakeven_maker_fraction": 0.2563995848204199,
+      "regime_quantile": 0.75,
+      "regime_window_sec": 180
+    },
+    {
+      "bracketed": true,
+      "breakeven_maker_fraction": 0.23166569020507446,
+      "regime_quantile": 0.75,
+      "regime_window_sec": 300
+    },
+    {
+      "bracketed": true,
+      "breakeven_maker_fraction": 0.37166880763952287,
+      "regime_quantile": 0.75,
+      "regime_window_sec": 450
+    },
+    {
+      "bracketed": true,
+      "breakeven_maker_fraction": 0.19856482857805627,
+      "regime_quantile": 0.8,
+      "regime_window_sec": 180
+    },
+    {
+      "bracketed": true,
+      "breakeven_maker_fraction": 0.13795407405477028,
+      "regime_quantile": 0.8,
+      "regime_window_sec": 300
+    },
+    {
+      "bracketed": true,
+      "breakeven_maker_fraction": 0.34289319326501383,
+      "regime_quantile": 0.8,
+      "regime_window_sec": 450
+    }
+  ],
+  "max_relative_drift": 0.6043325505408903,
+  "n_bracketed": 9,
+  "n_cells": 9,
+  "robust_rel_tolerance": 0.1,
+  "sensitive_rel_tolerance": 0.25,
+  "verdict": "SENSITIVE"
+}

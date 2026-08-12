@@ -1,0 +1,34 @@
+id: bbb-nvu-cng-schemas
+status: ACTIVE
+claim_type: correctness
+promise: "Diff-bound acceptor for BBB NVU JSON schema files."
+diff_scope:
+  changed_files:
+    - path: ".claude/commit_acceptors/bbb-nvu-cng-schemas.yaml"
+    - path: "BBB_NVU_Cognitive_Noise_Gate_2026/schemas/control_action.schema.json"
+    - path: "BBB_NVU_Cognitive_Noise_Gate_2026/schemas/incident_record.schema.json"
+    - path: "BBB_NVU_Cognitive_Noise_Gate_2026/schemas/inference_input.schema.json"
+    - path: "BBB_NVU_Cognitive_Noise_Gate_2026/schemas/inference_run.schema.json"
+    - path: "BBB_NVU_Cognitive_Noise_Gate_2026/schemas/metrics_snapshot.schema.json"
+    - path: "BBB_NVU_Cognitive_Noise_Gate_2026/schemas/observation.schema.json"
+    - path: "BBB_NVU_Cognitive_Noise_Gate_2026/schemas/operational_envelope.schema.json"
+    - path: "BBB_NVU_Cognitive_Noise_Gate_2026/schemas/provenance.schema.json"
+    - path: "BBB_NVU_Cognitive_Noise_Gate_2026/schemas/risk_state.schema.json"
+  forbidden_paths:
+    - "trading/"
+    - "execution/"
+    - "forecast/"
+    - "policy/"
+required_python_symbols: []
+expected_signal: "Schema files parse under the verifier."
+measurement_command: "python BBB_NVU_Cognitive_Noise_Gate_2026/tools/verify_artifact.py"
+signal_artifact: "tmp/bbb_nvu_cng_verify_artifact.json"
+falsifier:
+  command: "python BBB_NVU_Cognitive_Noise_Gate_2026/tools/verify_artifact.py --invalid-mode"
+  description: "Unknown verifier modes must fail."
+rollback_command: "git diff --exit-code"
+rollback_verification_command: "git diff --exit-code"
+memory_update_type: append
+ledger_path: ".claude/commit_acceptors/bbb-nvu-cng-schemas.yaml"
+report_path: "tmp/bbb_nvu_cng_verify_artifact.json"
+evidence: []

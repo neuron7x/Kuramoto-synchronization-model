@@ -17,7 +17,7 @@
 ### 1. Calibration Utility Script
 **Location**: `scripts/calibrate_controllers.py`
 
-A comprehensive command-line tool for calibrating TradePulse controllers:
+A comprehensive command-line tool for calibrating GeoSync controllers:
 - 353 lines of Python code
 - Three pre-configured calibration profiles
 - Validation engine for configuration files

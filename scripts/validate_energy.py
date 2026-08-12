@@ -1,4 +1,6 @@
 #!/usr/bin/env python3
+# Copyright (c) 2023-2026 Yaroslav Vasylenko (neuron7xLab)
+# SPDX-License-Identifier: MIT
 """
 Energy Validation CLI Tool
 
@@ -34,9 +36,7 @@ def load_metrics_from_json(path: Path) -> List[Dict[str, float]]:
     elif "metrics" in data:
         return data["metrics"]
     else:
-        raise ValueError(
-            "Invalid JSON format: expected list or dict with 'metrics' key"
-        )
+        raise ValueError("Invalid JSON format: expected list or dict with 'metrics' key")
 
 
 def validate_single_metric_set(
@@ -59,9 +59,7 @@ def validate_single_metric_set(
                 if penalty > 0:
                     metric_config = validator.config.get_metric(name)
                     metric_value = metrics.get(name, 0)
-                    print(
-                        f"    - {name}: {metric_value:.3f} > {metric_config.threshold:.3f}"
-                    )
+                    print(f"    - {name}: {metric_value:.3f} > {metric_config.threshold:.3f}")
 
     return result.passed
 
@@ -78,9 +76,7 @@ def main():
         help="JSON file containing metrics to validate",
     )
 
-    parser.add_argument(
-        "--config", type=Path, help="Custom energy configuration YAML file"
-    )
+    parser.add_argument("--config", type=Path, help="Custom energy configuration YAML file")
 
     parser.add_argument(
         "--metric",
@@ -89,9 +85,7 @@ def main():
         help="Individual metric in format name=value (can be used multiple times)",
     )
 
-    parser.add_argument(
-        "--output", "-o", type=Path, help="Output path for validation report JSON"
-    )
+    parser.add_argument("--output", "-o", type=Path, help="Output path for validation report JSON")
 
     parser.add_argument("--verbose", "-v", action="store_true", help="Verbose output")
 
@@ -148,9 +142,7 @@ def main():
                 name, value = metric_arg.split("=")
                 metrics[name.strip()] = float(value.strip())
             except ValueError:
-                print(
-                    f"Error: Invalid metric format '{metric_arg}'. Expected name=value"
-                )
+                print(f"Error: Invalid metric format '{metric_arg}'. Expected name=value")
                 return 1
         metrics_list.append(metrics)
 
@@ -177,7 +169,7 @@ def main():
 
     for i, metrics in enumerate(metrics_list):
         if args.verbose and len(metrics_list) > 1:
-            print(f"Validation {i+1}/{len(metrics_list)}:")
+            print(f"Validation {i + 1}/{len(metrics_list)}:")
 
         passed = validate_single_metric_set(validator, metrics, args.verbose)
 

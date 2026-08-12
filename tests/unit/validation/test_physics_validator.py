@@ -1,5 +1,7 @@
-# SPDX-License-Identifier: LicenseRef-TradePulse-Proprietary
+# Copyright (c) 2023-2026 Yaroslav Vasylenko (neuron7xLab)
+# SPDX-License-Identifier: MIT
 """Unit tests for core.validation.physics_validator module."""
+
 from __future__ import annotations
 
 import pytest
@@ -268,9 +270,7 @@ class TestValidateTransition:
         bounds = EnergyBounds(entropy_tolerance=1e-6)
         validator = PhysicsValidator(bounds)
         state_before = ThermodynamicState(free_energy=0.0, entropy=0.5)
-        state_after = ThermodynamicState(
-            free_energy=0.0, entropy=0.4
-        )  # Entropy decreased
+        state_after = ThermodynamicState(free_energy=0.0, entropy=0.4)  # Entropy decreased
         report = validator.validate_transition(state_before, state_after, dt=1.0)
         assert not report.is_valid
         assert any("Second Law violation" in v for v in report.violations)
@@ -279,9 +279,7 @@ class TestValidateTransition:
         bounds = EnergyBounds(max_energy_rate=1e-18)
         validator = PhysicsValidator(bounds)
         state_before = ThermodynamicState(free_energy=0.0, entropy=0.5)
-        state_after = ThermodynamicState(
-            free_energy=1e-15, entropy=0.5
-        )  # Large energy change
+        state_after = ThermodynamicState(free_energy=1e-15, entropy=0.5)  # Large energy change
         report = validator.validate_transition(state_before, state_after, dt=1.0)
         assert not report.is_valid
         assert any("Energy rate" in v and "exceeds" in v for v in report.violations)
@@ -290,9 +288,7 @@ class TestValidateTransition:
         bounds = EnergyBounds(max_energy_rate=1e-17)
         validator = PhysicsValidator(bounds)
         state_before = ThermodynamicState(free_energy=0.0, entropy=0.5)
-        state_after = ThermodynamicState(
-            free_energy=0.85e-17, entropy=0.5
-        )  # 85% of limit
+        state_after = ThermodynamicState(free_energy=0.85e-17, entropy=0.5)  # 85% of limit
         report = validator.validate_transition(state_before, state_after, dt=1.0)
         assert any("approaching limit" in w for w in report.warnings)
 
@@ -303,9 +299,7 @@ class TestValidateTransition:
         )
         validator = PhysicsValidator(bounds)
         state_before = ThermodynamicState(free_energy=1e-15, entropy=0.5)
-        state_after = ThermodynamicState(
-            free_energy=1e-16, entropy=0.51
-        )  # 90% energy change
+        state_after = ThermodynamicState(free_energy=1e-16, entropy=0.51)  # 90% energy change
         report = validator.validate_transition(state_before, state_after, dt=100.0)
         assert any("Large energy change" in w for w in report.warnings)
 
@@ -347,8 +341,7 @@ class TestValidateTrajectory:
     def test_valid_trajectory(self) -> None:
         validator = PhysicsValidator()
         states = [
-            ThermodynamicState(free_energy=i * 1e-20, entropy=0.5 + i * 0.01)
-            for i in range(5)
+            ThermodynamicState(free_energy=i * 1e-20, entropy=0.5 + i * 0.01) for i in range(5)
         ]
         report = validator.validate_trajectory(states)
         assert report.is_valid
@@ -357,8 +350,7 @@ class TestValidateTrajectory:
     def test_trajectory_with_timestamps(self) -> None:
         validator = PhysicsValidator()
         states = [
-            ThermodynamicState(free_energy=i * 1e-20, entropy=0.5 + i * 0.01)
-            for i in range(3)
+            ThermodynamicState(free_energy=i * 1e-20, entropy=0.5 + i * 0.01) for i in range(3)
         ]
         timestamps = [0.0, 1000.0, 2000.0]
         report = validator.validate_trajectory(states, timestamps_ms=timestamps)
@@ -435,9 +427,7 @@ class TestComputeEnergyGradient:
         state = ThermodynamicState(free_energy=1e-18, entropy=0.5, temperature=300.0)
         gradients = compute_energy_gradient(state, perturbation=1e-6)
         # Numerical gradient should match analytical
-        assert gradients["entropy_numerical"] == pytest.approx(
-            gradients["entropy"], rel=1e-4
-        )
+        assert gradients["entropy_numerical"] == pytest.approx(gradients["entropy"], rel=1e-4)
 
     def test_zero_perturbation_skips_numerical(self) -> None:
         state = ThermodynamicState(free_energy=1e-18, entropy=0.5, temperature=300.0)

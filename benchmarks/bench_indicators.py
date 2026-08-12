@@ -1,11 +1,15 @@
-# SPDX-License-Identifier: LicenseRef-TradePulse-Proprietary
+# Copyright (c) 2023-2026 Yaroslav Vasylenko (neuron7xLab)
+# SPDX-License-Identifier: MIT
 """Performance benchmarks for core indicator computations.
 
 This module provides benchmarks for key geometric market indicators to track
 performance regressions and validate optimization improvements. Run with:
     pytest benchmarks/bench_indicators.py --benchmark-only
 """
+
 from __future__ import annotations
+
+from typing import TYPE_CHECKING, Any
 
 import numpy as np
 import pytest
@@ -14,6 +18,9 @@ from core.indicators.entropy import entropy
 from core.indicators.kuramoto import compute_phase, kuramoto_order
 from core.indicators.ricci import build_price_graph, mean_ricci
 from utils.seed import set_global_seed
+
+if TYPE_CHECKING:
+    from pytest_benchmark.fixture import BenchmarkFixture
 
 
 class TestKuramotoBenchmarks:
@@ -34,33 +41,43 @@ class TestKuramotoBenchmarks:
         """10000-point test signal."""
         return np.sin(np.linspace(0, 4 * np.pi, 10000))
 
-    def test_compute_phase_small(self, benchmark, small_signal):
+    def test_compute_phase_small(
+        self, benchmark: BenchmarkFixture, small_signal: np.ndarray
+    ) -> None:
         """Benchmark phase computation on small signal."""
         result = benchmark(compute_phase, small_signal)
         assert result.shape == small_signal.shape
 
-    def test_compute_phase_medium(self, benchmark, medium_signal):
+    def test_compute_phase_medium(
+        self, benchmark: BenchmarkFixture, medium_signal: np.ndarray
+    ) -> None:
         """Benchmark phase computation on medium signal."""
         result = benchmark(compute_phase, medium_signal)
         assert result.shape == medium_signal.shape
 
-    def test_compute_phase_large(self, benchmark, large_signal):
+    def test_compute_phase_large(
+        self, benchmark: BenchmarkFixture, large_signal: np.ndarray
+    ) -> None:
         """Benchmark phase computation on large signal."""
         result = benchmark(compute_phase, large_signal)
         assert result.shape == large_signal.shape
 
-    def test_compute_phase_float32(self, benchmark, large_signal):
+    def test_compute_phase_float32(
+        self, benchmark: BenchmarkFixture, large_signal: np.ndarray
+    ) -> None:
         """Benchmark phase computation with float32 optimization."""
         result = benchmark(compute_phase, large_signal, use_float32=True)
         assert result.shape == large_signal.shape
 
-    def test_kuramoto_order_1d(self, benchmark, medium_signal):
+    def test_kuramoto_order_1d(
+        self, benchmark: BenchmarkFixture, medium_signal: np.ndarray
+    ) -> None:
         """Benchmark Kuramoto order for 1D phase array."""
         phases = compute_phase(medium_signal)
         result = benchmark(kuramoto_order, phases)
         assert isinstance(result, (float, np.floating))
 
-    def test_kuramoto_order_2d(self, benchmark):
+    def test_kuramoto_order_2d(self, benchmark: BenchmarkFixture) -> None:
         """Benchmark Kuramoto order for 2D phase matrix."""
         # 50 oscillators x 200 timesteps
         set_global_seed()  # Fixed seed for reproducible benchmarks
@@ -86,17 +103,23 @@ class TestRicciBenchmarks:
         noise = np.random.normal(0, 2, 500)
         return trend + noise
 
-    def test_build_price_graph_trending(self, benchmark, trending_prices):
+    def test_build_price_graph_trending(
+        self, benchmark: BenchmarkFixture, trending_prices: np.ndarray
+    ) -> None:
         """Benchmark graph construction for trending prices."""
         graph = benchmark(build_price_graph, trending_prices, delta=0.01)
         assert graph.number_of_nodes() > 0
 
-    def test_build_price_graph_volatile(self, benchmark, volatile_prices):
+    def test_build_price_graph_volatile(
+        self, benchmark: BenchmarkFixture, volatile_prices: np.ndarray
+    ) -> None:
         """Benchmark graph construction for volatile prices."""
         graph = benchmark(build_price_graph, volatile_prices, delta=0.01)
         assert graph.number_of_nodes() > 0
 
-    def test_mean_ricci_small_graph(self, benchmark, trending_prices):
+    def test_mean_ricci_small_graph(
+        self, benchmark: BenchmarkFixture, trending_prices: np.ndarray
+    ) -> None:
         """Benchmark mean Ricci curvature on small graph."""
         # Use larger delta for fewer nodes/edges
         prices = trending_prices[:100]
@@ -104,7 +127,9 @@ class TestRicciBenchmarks:
         result = benchmark(mean_ricci, graph)
         assert isinstance(result, (float, np.floating))
 
-    def test_mean_ricci_with_float32(self, benchmark, trending_prices):
+    def test_mean_ricci_with_float32(
+        self, benchmark: BenchmarkFixture, trending_prices: np.ndarray
+    ) -> None:
         """Benchmark mean Ricci with float32 optimization."""
         prices = trending_prices[:200]
         graph = build_price_graph(prices, delta=0.01)
@@ -133,26 +158,30 @@ class TestEntropyBenchmarks:
             structured[i] = 0.3 * structured[i - 1] + noise[i]
         return structured
 
-    def test_entropy_random(self, benchmark, random_returns):
+    def test_entropy_random(self, benchmark: BenchmarkFixture, random_returns: np.ndarray) -> None:
         """Benchmark entropy on random data."""
         result = benchmark(entropy, random_returns, bins=30)
         assert isinstance(result, (float, np.floating))
         assert result >= 0
 
-    def test_entropy_structured(self, benchmark, structured_returns):
+    def test_entropy_structured(
+        self, benchmark: BenchmarkFixture, structured_returns: np.ndarray
+    ) -> None:
         """Benchmark entropy on structured data."""
         result = benchmark(entropy, structured_returns, bins=30)
         assert isinstance(result, (float, np.floating))
         assert result >= 0
 
-    def test_entropy_with_float32(self, benchmark, random_returns):
+    def test_entropy_with_float32(
+        self, benchmark: BenchmarkFixture, random_returns: np.ndarray
+    ) -> None:
         """Benchmark entropy with float32 optimization."""
         result = benchmark(entropy, random_returns, bins=30, use_float32=True)
         assert isinstance(result, (float, np.floating))
 
-    def test_entropy_chunked(self, benchmark):
+    def test_entropy_chunked(self, benchmark: BenchmarkFixture) -> None:
         """Benchmark chunked entropy for large dataset."""
-        seed_numpy()  # Fixed seed for reproducible benchmarks
+        set_global_seed(42)  # Fixed seed for reproducible benchmarks
         large_data = np.random.normal(0, 0.02, 100000)
         result = benchmark(entropy, large_data, bins=50, chunk_size=10000)
         assert isinstance(result, (float, np.floating))
@@ -161,10 +190,10 @@ class TestEntropyBenchmarks:
 class TestEndToEndBenchmarks:
     """End-to-end benchmarks for typical workflows."""
 
-    def test_full_indicator_pipeline(self, benchmark):
+    def test_full_indicator_pipeline(self, benchmark: BenchmarkFixture) -> None:
         """Benchmark complete indicator computation pipeline."""
 
-        def compute_indicators():
+        def compute_indicators() -> dict[str, Any]:
             # Simulate typical workflow
             set_global_seed()  # Fixed seed for reproducible benchmarks
             prices = 100 * np.exp(np.cumsum(np.random.normal(0.0001, 0.02, 500)))

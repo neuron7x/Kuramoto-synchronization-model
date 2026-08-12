@@ -1,3 +1,5 @@
+# Copyright (c) 2023-2026 Yaroslav Vasylenko (neuron7xLab)
+# SPDX-License-Identifier: MIT
 """Signal feature pipelines and walk-forward model selection utilities."""
 
 from __future__ import annotations
@@ -137,9 +139,7 @@ class SignalFeaturePipeline:
         features["macd_ema_slow"] = slow_ema
         features["macd"] = fast_ema - slow_ema
         features["macd_signal"] = (
-            features["macd"]
-            .ewm(span=cfg.macd_signal, adjust=False, min_periods=1)
-            .mean()
+            features["macd"].ewm(span=cfg.macd_signal, adjust=False, min_periods=1).mean()
         )
         features["macd_histogram"] = features["macd"] - features["macd_signal"]
         features["price_range"] = (high - low).astype(float)
@@ -228,9 +228,7 @@ class LeakageGate:
     lag: int = 0
     dropna: bool = True
 
-    def apply(
-        self, features: pd.DataFrame, target: pd.Series
-    ) -> tuple[pd.DataFrame, pd.Series]:
+    def apply(self, features: pd.DataFrame, target: pd.Series) -> tuple[pd.DataFrame, pd.Series]:
         aligned_features = features.shift(self.lag) if self.lag else features.copy()
         combined = aligned_features.join(target.rename("__target__"), how="inner")
         combined.replace([np.inf, -np.inf], np.nan, inplace=True)
@@ -251,9 +249,7 @@ class ModelCandidate:
 class RegressorLike:
     """Minimal protocol for regression estimators."""
 
-    def fit(
-        self, X: np.ndarray, y: np.ndarray
-    ) -> "RegressorLike":  # pragma: no cover - protocol
+    def fit(self, X: np.ndarray, y: np.ndarray) -> "RegressorLike":  # pragma: no cover - protocol
         raise NotImplementedError
 
     def predict(self, X: np.ndarray) -> np.ndarray:  # pragma: no cover - protocol
@@ -301,9 +297,7 @@ def make_default_candidates() -> list[ModelCandidate]:
         candidates.append(
             ModelCandidate(
                 "random_forest",
-                lambda: RandomForestRegressor(
-                    n_estimators=200, max_depth=6, random_state=42
-                ),
+                lambda: RandomForestRegressor(n_estimators=200, max_depth=6, random_state=42),
             )
         )
     except Exception:  # pragma: no cover - handled gracefully
@@ -393,18 +387,12 @@ def _sortino_ratio(returns: np.ndarray, risk_free: float = 0.0) -> float:
     return float(np.mean(excess) / downside_std)
 
 
-def _pnl_attribution(
-    strategy_returns: np.ndarray, positions: np.ndarray
-) -> dict[str, float]:
+def _pnl_attribution(strategy_returns: np.ndarray, positions: np.ndarray) -> dict[str, float]:
     total = float(np.sum(strategy_returns))
     long_mask = positions > 0
     short_mask = positions < 0
-    long_contrib = (
-        float(np.sum(strategy_returns[long_mask])) if np.any(long_mask) else 0.0
-    )
-    short_contrib = (
-        float(np.sum(strategy_returns[short_mask])) if np.any(short_mask) else 0.0
-    )
+    long_contrib = float(np.sum(strategy_returns[long_mask])) if np.any(long_mask) else 0.0
+    short_contrib = float(np.sum(strategy_returns[short_mask])) if np.any(short_mask) else 0.0
     gross = float(np.sum(np.abs(strategy_returns)))
     return {
         "total_pnl": total,
@@ -414,9 +402,7 @@ def _pnl_attribution(
     }
 
 
-def _performance_budget(
-    strategy_returns: np.ndarray, positions: np.ndarray
-) -> dict[str, float]:
+def _performance_budget(strategy_returns: np.ndarray, positions: np.ndarray) -> dict[str, float]:
     exposure = np.abs(positions)
     active = exposure > 0
     if not np.any(active):
@@ -479,18 +465,12 @@ class SignalModelSelector:
         candidates: Sequence[ModelCandidate] | None = None,
     ) -> None:
         self.splitter = splitter
-        self.candidates = (
-            list(candidates) if candidates is not None else make_default_candidates()
-        )
+        self.candidates = list(candidates) if candidates is not None else make_default_candidates()
 
-    def _iter_splits(
-        self, data: pd.DataFrame
-    ) -> Iterator[tuple[np.ndarray, np.ndarray]]:
+    def _iter_splits(self, data: pd.DataFrame) -> Iterator[tuple[np.ndarray, np.ndarray]]:
         yield from self.splitter.split(data)
 
-    def evaluate(
-        self, features: pd.DataFrame, target: pd.Series
-    ) -> list[SignalModelEvaluation]:
+    def evaluate(self, features: pd.DataFrame, target: pd.Series) -> list[SignalModelEvaluation]:
         if not isinstance(features, pd.DataFrame):
             raise TypeError("features must be a pandas DataFrame")
         if not isinstance(target, pd.Series):
@@ -526,9 +506,7 @@ class SignalModelSelector:
                 regression = {
                     "mae": regression_metrics.mean_absolute_error(y_test, predictions),
                     "mse": regression_metrics.mean_squared_error(y_test, predictions),
-                    "rmse": regression_metrics.root_mean_squared_error(
-                        y_test, predictions
-                    ),
+                    "rmse": regression_metrics.root_mean_squared_error(y_test, predictions),
                     "r2": regression_metrics.r2_score(y_test, predictions),
                 }
                 regression_rows.append({"split": split_idx, **regression})
@@ -542,9 +520,7 @@ class SignalModelSelector:
                     )
                 )
             aggregate_metrics = {
-                key: float(np.mean(values))
-                for key, values in aggregate_store.items()
-                if values
+                key: float(np.mean(values)) for key, values in aggregate_store.items() if values
             }
             regression_report = pd.DataFrame(regression_rows)
             evaluations.append(

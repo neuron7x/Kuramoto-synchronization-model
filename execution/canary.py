@@ -1,3 +1,5 @@
+# Copyright (c) 2023-2026 Yaroslav Vasylenko (neuron7xLab)
+# SPDX-License-Identifier: MIT
 """Live experiment guardrails for canary deployments."""
 
 from __future__ import annotations
@@ -65,9 +67,7 @@ class CanaryController:
         self._pnl_high_water = max(self._pnl_high_water, pnl)
         if self._pnl_high_water == 0:
             return 0.0
-        return max(
-            0.0, (self._pnl_high_water - pnl) / max(abs(self._pnl_high_water), 1e-6)
-        )
+        return max(0.0, (self._pnl_high_water - pnl) / max(abs(self._pnl_high_water), 1e-6))
 
     def _cooldown_active(self) -> bool:
         if self._last_disable is None:
@@ -102,9 +102,7 @@ class CanaryController:
             self._last_disable = self._time()
             return CanaryDecision("disable", "guardrail-breach", dict(breaches))
 
-        return CanaryDecision(
-            "continue", "healthy" if not breaches else "cooldown", dict(breaches)
-        )
+        return CanaryDecision("continue", "healthy" if not breaches else "cooldown", dict(breaches))
 
     def reset(self) -> None:
         """Reset the controller state, typically after disabling the canary."""

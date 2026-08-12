@@ -1,8 +1,10 @@
+# Copyright (c) 2023-2026 Yaroslav Vasylenko (neuron7xLab)
+# SPDX-License-Identifier: MIT
 from __future__ import annotations
 
 import asyncio
 import json
-from datetime import UTC, datetime, timedelta
+from datetime import datetime, timedelta
 
 import pytest
 
@@ -13,6 +15,7 @@ from core.altdata.social_listening import (
     SocialSentimentScorer,
     SocialSignalFactory,
 )
+from core.compat import UTC
 from src.data.event_bus import BrokerMessage, MessageBroker
 from src.data.social_listening import (
     SocialListeningPipeline,
@@ -54,13 +57,9 @@ def test_social_listening_processor_grouped_aggregation() -> None:
     config = SocialListeningConfig(window=timedelta(minutes=15), frequency="1min")
     processor = SocialListeningProcessor(config=config)
     posts = [
-        SocialPost(
-            timestamp=_ts(0), platform="twitter", text="BTC 🚀", symbols=["BTC"]
-        ),
+        SocialPost(timestamp=_ts(0), platform="twitter", text="BTC 🚀", symbols=["BTC"]),
         SocialPost(timestamp=_ts(1), platform="reddit", text="BTC 🚀", symbols=["BTC"]),
-        SocialPost(
-            timestamp=_ts(2), platform="twitter", text="ETH 😡", symbols=["ETH"]
-        ),
+        SocialPost(timestamp=_ts(2), platform="twitter", text="ETH 😡", symbols=["ETH"]),
     ]
     processor.ingest(posts)
     aggregated = processor.aggregate()
@@ -141,9 +140,7 @@ async def test_social_listening_pipeline_publishes_payloads() -> None:
         snapshot_interval=timedelta(minutes=1),
     )
     processor = SocialListeningProcessor(config=config)
-    publication = SocialPublicationConfig(
-        features_topic="features", snapshot_topic="snapshots"
-    )
+    publication = SocialPublicationConfig(features_topic="features", snapshot_topic="snapshots")
     pipeline = SocialListeningPipeline(
         clients=[client],
         processor=processor,

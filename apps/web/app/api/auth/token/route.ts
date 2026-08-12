@@ -1,10 +1,10 @@
 import { cookies } from 'next/headers'
 import { NextResponse } from 'next/server'
 
-const REFRESH_COOKIE_NAME = 'tp.refreshToken'
+const REFRESH_COOKIE_NAME = 'gs.refreshToken'
 
 export async function POST() {
-  const cookieStore = cookies()
+  const cookieStore = await cookies()
   const refreshToken = cookieStore.get(REFRESH_COOKIE_NAME)
 
   if (!refreshToken || !refreshToken.value) {

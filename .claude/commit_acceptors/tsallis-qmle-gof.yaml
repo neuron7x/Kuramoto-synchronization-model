@@ -1,0 +1,127 @@
+# Diff-bound acceptor for the Tsallis gate q-estimator rewrite:
+# kurtosis moment-match -> Student-t MLE with a Kolmogorov-Smirnov
+# goodness-of-fit gate, fail-closed on non-q-Gaussian samples.
+#
+# Closes a verdict-flipping physics gap. The legacy estimate_q moment-
+# matched excess kurtosis into the closed form q=(5+3κ)/(3+κ) (Tsallis-
+# Bukman) while the docstrings claimed "rolling q-fit / MLE". There was
+# (a) NO MLE/log-likelihood/optimiser, and (b) NO goodness-of-fit, so a
+# non-q-Gaussian sample (bimodal, skewed) silently received a q and a
+# regime. Worse, kurtosis is undefined exactly in the heavy-tail crisis
+# regime (ν ≤ 4 ⟺ q ≥ 1.4) the gate targets, so the κ-q estimator was
+# unstable where it matters most.
+#
+# This makes the fit REAL and FAIL-CLOSED: q is the MLE Student-t
+# degrees-of-freedom fit mapped via the exact q-Gaussian equivalence
+# q=(ν+3)/(ν+1) (Souza & Tsallis 1997; Tsallis 2009 Ch.4), and a KS GoF
+# against the fitted t CDF gates the result. p < gof_alpha ⟹ the sample
+# is not a q-Gaussian ⟹ the gate returns the conservative fallback
+# (q=1.5, ELEVATED, multiplier 0.25) with gof_passed=False, mirroring the
+# pre-existing data-scarcity branch. Kurtosis is retained as a reported
+# DIAGNOSTIC, never the estimator.
+#
+# Provenance: the FIT is now ANCHORED (MLE + KS GoF). The regime CUTOFFS
+# q_normal=1.35 / q_crisis=1.55 remain EXTRAPOLATED operational thresholds
+# (literature-prose, not fitted), documented as such in the module.
+#
+# No INV count change: works within the existing INV-FE2 (component
+# non-negativity / multiplier in [0,1]) and INV-HPC2 (finite, q ≥ 1)
+# contracts. No runtime/Kelly/OMS path consumes estimate_q today.
+
+id: tsallis-qmle-gof
+status: ACTIVE
+claim_type: correctness
+promise: >-
+  core.physics.tsallis_gate replaces the kurtosis moment-match q SOURCE
+  with a real maximum-likelihood estimator: estimate_q now MLE-fits the
+  Student-t degrees of freedom ν (scipy.stats.t.fit, 3-parameter joint
+  loc/scale/df) on the return sample and maps q=(ν+3)/(ν+1), the exact
+  q-Gaussian↔Student-t equivalence, with ν bracketed to [2.05, 200] so
+  q ∈ (1, 1.6557] and floored at q ≥ 1. The fit is goodness-of-fit gated:
+  a Kolmogorov-Smirnov statistic + p-value of the sample against the
+  fitted t CDF is stored on TsallisGateResult (gof_stat, gof_pvalue,
+  gof_passed) alongside the fitted nu and a diagnostic-only kurtosis.
+  evaluate() FAILS CLOSED — when gof_pvalue < gof_alpha (default 0.05)
+  the sample is not a q-Gaussian and the gate returns the conservative
+  fallback (q=1.5, ELEVATED, position_multiplier=0.25, gof_passed=False),
+  the same convention already used for n_obs < min_observations; it never
+  emits a confident q-derived regime from an unfitted sample. A second,
+  one-directional small-N fail-closed guard closes a fail-OPEN found by an
+  adversarial audit: scipy.stats.t.fit escapes to the Gaussian limit on a
+  genuine heavy-tailed sample at small N (measured 16% of t(ν=5) seeds at
+  N=60), reading as q≈1 / NORMAL / full position on a pre-crisis tail. Below
+  the trust floor n_mle_trust (default 300, the smallest N at which the
+  measured escape rate reaches 0%) a less-conservative-than-fallback sizing
+  is demoted to the conservative fallback; a confident CRISIS read is never
+  weakened. Verified: t(ν=5)@N=60 grants NORMAL/full in 0/200 seeds (was
+  ~16%); a true Gaussian at N≥300 still earns NORMAL/full position.
+  Satisfies INV-FE2 (multiplier ∈ [0,1], components ≥ 0) and INV-HPC2
+  (q finite, q ≥ 1); every clamp carries an INV-/bounds note. Pure additive
+  widening of TsallisGateResult; no INVARIANTS.yaml count change, no trading
+  or runtime surface touched.
+diff_scope:
+  changed_files:
+    - path: ".claude/commit_acceptors/tsallis-qmle-gof.yaml"
+    - path: "core/physics/tsallis_gate.py"
+    - path: "tests/unit/physics/test_T5_tsallis_gate.py"
+    - path: "tests/unit/physics/test_T27_tsallis_gate_witness.py"
+  forbidden_paths:
+    - "trading/"
+    - "execution/"
+    - "forecast/"
+    - "policy/"
+required_python_symbols:
+  - "TsallisRiskGate"
+  - "TsallisGateResult"
+  - "TsallisRegime"
+  - "estimate_q"
+  - "fit_q"
+expected_signal: >-
+  All 45 tests in test_T5_tsallis_gate.py, test_T27_tsallis_gate_witness.py
+  and test_T28_wave2_witnesses.py pass (~4.8s). black, ruff, mypy --strict
+  clean on the changed Python; validate_tests.py --audit-code reports 0
+  clamp/bounds issues on tsallis_gate.py; validate_tests.py on T27 reports
+  100% physics grounding with L1/L2/L3/L5 = 0; --self-check PASSED.
+  Measured: MLE recovers a KNOWN q from t(ν) samples at N=20000 —
+  t(3) q=1.5025 vs true 1.5000 (err 0.0025), t(5) 1.3521 vs 1.3333,
+  t(8) 1.2452 vs 1.2222, t(30) 1.0656 vs 1.0645 — all KS p ≥ 0.82. A
+  bimodal mixture (N=1000) FAILS CLOSED: gof_p ≈ 3.6e-82 < 0.05,
+  gof_passed=False, regime=ELEVATED, multiplier=0.25; a skewed
+  exponential likewise fails closed (gof_p ≈ 6.9e-20). Heavy-tail
+  direction preserved under MLE: q(t3) − q(gauss) gap ≥ 0.37 over 3 seeds.
+measurement_command: >-
+  python -m pytest tests/unit/physics/test_T5_tsallis_gate.py
+  tests/unit/physics/test_T27_tsallis_gate_witness.py -v
+signal_artifact: "tmp/tsallis_qmle_gof_pytest.log"
+falsifier:
+  command: >-
+    python -c "import numpy as np, sys;
+    from core.physics.tsallis_gate import TsallisRiskGate;
+    rng=np.random.default_rng(1);
+    bim=np.concatenate([rng.normal(-5.0,0.3,500), rng.normal(5.0,0.3,500)]);
+    g=TsallisRiskGate(window=2000, min_observations=20, gof_alpha=0.05);
+    r=g.evaluate(bim);
+    print('gof_passed', r.gof_passed, 'mult', r.position_multiplier, 'gof_p', r.gof_pvalue);
+    confident = r.gof_passed or r.position_multiplier != 0.25;
+    sys.exit(1 if confident else 0)"
+  description: >-
+    Inverse probe for the fail-closed contract: fits a KNOWN non-q-Gaussian
+    (bimodal two-mode mixture) sample and exits NON-ZERO iff the gate emits
+    a confident q-derived regime (gof_passed True, or any position
+    multiplier other than the 0.25 conservative fallback). Exits zero only
+    when the GoF rejects the fit and the gate fails closed — proving the
+    fail-closed path actually fires. A regression that dropped the GoF gate
+    (or silently passed an unfitted sample through to a q-derived regime)
+    would make this exit non-zero.
+rollback_command: >-
+  git checkout HEAD~1 --
+  core/physics/tsallis_gate.py
+  tests/unit/physics/test_T5_tsallis_gate.py
+  tests/unit/physics/test_T27_tsallis_gate_witness.py
+  .claude/commit_acceptors/tsallis-qmle-gof.yaml
+rollback_verification_command: >-
+  git diff --exit-code core/physics/tsallis_gate.py
+memory_update_type: append
+ledger_path: ".claude/commit_acceptors/tsallis-qmle-gof.yaml"
+report_path: ".claude/commit_acceptors/tsallis-qmle-gof.yaml"
+evidence: []

@@ -1,0 +1,86 @@
+{
+  "version": "v1.0.0",
+  "axes": ["Intent", "Time", "Energy", "Error", "Control"],
+  "variables": [
+    {
+      "name": "policy_intent_score",
+      "role": "actor_state",
+      "axis": "Intent",
+      "source": "runtime policy router objective trace",
+      "units": "normalized score [0,1]",
+      "owner_module": "runtime",
+      "contradiction_event": "HiddenContradiction.IntentPolicyMismatch",
+      "flow": {
+        "mode": "stream",
+        "source_stream": "runtime.policy.intent",
+        "cadence_ms": 250,
+        "max_staleness_ms": 1000,
+        "lag_tolerance_ms": 200
+      }
+    },
+    {
+      "name": "decision_latency_ms",
+      "role": "witness_state",
+      "axis": "Time",
+      "source": "execution loop timing telemetry",
+      "units": "milliseconds",
+      "owner_module": "execution",
+      "contradiction_event": "HiddenContradiction.TimeBudgetExceeded",
+      "flow": {
+        "mode": "stream",
+        "source_stream": "execution.loop.latency",
+        "cadence_ms": 100,
+        "max_staleness_ms": 500,
+        "lag_tolerance_ms": 100
+      }
+    },
+    {
+      "name": "free_energy_delta",
+      "role": "coherence_state",
+      "axis": "Energy",
+      "source": "tacl free-energy descent monitor",
+      "units": "delta free-energy",
+      "owner_module": "tacl",
+      "contradiction_event": "HiddenContradiction.EnergyNonDescent",
+      "flow": {
+        "mode": "stream",
+        "source_stream": "tacl.free_energy.delta",
+        "cadence_ms": 500,
+        "max_staleness_ms": 2000,
+        "lag_tolerance_ms": 250
+      }
+    },
+    {
+      "name": "prediction_error_sigma",
+      "role": "witness_state",
+      "axis": "Error",
+      "source": "model residual quality stream",
+      "units": "standard deviations",
+      "owner_module": "core",
+      "contradiction_event": "HiddenContradiction.ErrorDrift",
+      "flow": {
+        "mode": "stream",
+        "source_stream": "core.model.error_sigma",
+        "cadence_ms": 500,
+        "max_staleness_ms": 2000,
+        "lag_tolerance_ms": 250
+      }
+    },
+    {
+      "name": "risk_gate_state",
+      "role": "risk_state",
+      "axis": "Control",
+      "source": "runtime risk gate finite state machine",
+      "units": "enum",
+      "owner_module": "runtime",
+      "contradiction_event": "HiddenContradiction.ControlGateBypass",
+      "flow": {
+        "mode": "stream",
+        "source_stream": "runtime.risk.gate_state",
+        "cadence_ms": 100,
+        "max_staleness_ms": 500,
+        "lag_tolerance_ms": 100
+      }
+    }
+  ]
+}

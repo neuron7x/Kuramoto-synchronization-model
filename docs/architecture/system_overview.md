@@ -1,17 +1,17 @@
 ---
-title: TradePulse Architecture Overview
+title: GeoSync Architecture Overview
 ---
 
-# TradePulse Architecture Overview
+# GeoSync Architecture Overview
 
-This page outlines the core TradePulse architecture through contextual, component, interaction, and data flow diagrams to support onboarding and operational planning. The 2025 revision folds in the new governance, observability, and multi-experience delivery initiatives that have been rolled out over the last two quarters.
+This page outlines the core GeoSync architecture through contextual, component, interaction, and data flow diagrams to support onboarding and operational planning. The 2025 revision folds in the new governance, observability, and multi-experience delivery initiatives that have been rolled out over the last two quarters.
 
 ## System Context
 
-TradePulse combines ingestion pipelines, a unified data platform, model operations, decisioning services, and multi-experience delivery channels for traders, quants, and downstream systems. Oversight capabilities span every layer to enforce policy, telemetry, and auditability.
+GeoSync combines ingestion pipelines, a unified data platform, model operations, decisioning services, and multi-experience delivery channels for traders, quants, and downstream systems. Oversight capabilities span every layer to enforce policy, telemetry, and auditability.
 
 <figure markdown>
-![TradePulse system context diagram](assets/system_overview.svg){ width="960" }
+![GeoSync system context diagram](assets/system_overview.svg){ width="960" }
 <figcaption>System context showing how external and internal sources flow through ingestion into the core platform, where decisioning services deliver governed insights to multiple experience channels with continuous oversight.</figcaption>
 </figure>
 
@@ -38,7 +38,7 @@ The diagram source is stored alongside the rendered asset at [`assets/service_in
 ## Data Flow and Governance
 
 <figure markdown>
-![TradePulse data governance flow](assets/data_flow.svg){ width="960" }
+![GeoSync data governance flow](assets/data_flow.svg){ width="960" }
 <figcaption>Data lifecycle illustrating how governance checkpoints maintain quality from ingestion through production trading and monitoring.</figcaption>
 </figure>
 

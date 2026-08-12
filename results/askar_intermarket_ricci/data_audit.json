@@ -1,0 +1,74 @@
+{
+  "assets": {
+    "XAUUSD": {
+      "file": "XAUUSD_GMT_0_NO-DST.parquet",
+      "n_bars": 54009,
+      "nan_count": 0,
+      "first_ts": "2017-01-03 00:00:00",
+      "last_ts": "2026-02-23 00:00:00",
+      "dtypes": {
+        "open": "float64",
+        "high": "float64",
+        "low": "float64",
+        "close": "float64"
+      },
+      "columns": [
+        "open",
+        "high",
+        "low",
+        "close"
+      ]
+    },
+    "USA500": {
+      "file": "USA_500_Index_GMT_0_NO-DST.parquet",
+      "n_bars": 51105,
+      "nan_count": 0,
+      "first_ts": "2017-01-03 08:00:00",
+      "last_ts": "2026-02-23 00:00:00",
+      "dtypes": {
+        "open": "float64",
+        "high": "float64",
+        "low": "float64",
+        "close": "float64"
+      },
+      "columns": [
+        "open",
+        "high",
+        "low",
+        "close"
+      ]
+    },
+    "SPY": {
+      "file": "SPDR_S_P_500_ETF_GMT_0_NO-DST.parquet",
+      "n_bars": 15849,
+      "nan_count": 0,
+      "first_ts": "2017-02-16 16:00:00",
+      "last_ts": "2026-02-20 21:00:00",
+      "dtypes": {
+        "open": "float64",
+        "high": "float64",
+        "low": "float64",
+        "close": "float64"
+      },
+      "columns": [
+        "open",
+        "high",
+        "low",
+        "close"
+      ]
+    }
+  },
+  "raw_common_intersection": {
+    "n_bars": 15842,
+    "first_ts": "2017-02-16 16:00:00",
+    "last_ts": "2026-02-20 21:00:00"
+  },
+  "aligned_panel": {
+    "n_bars": 15849,
+    "n_return_bars": 15848,
+    "first_ts": "2017-02-16 16:00:00",
+    "last_ts": "2026-02-20 21:00:00",
+    "anchor": "SPY",
+    "ffill_limit_hours": 24
+  }
+}

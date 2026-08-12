@@ -1,4 +1,5 @@
-# SPDX-License-Identifier: LicenseRef-TradePulse-Proprietary
+# Copyright (c) 2023-2026 Yaroslav Vasylenko (neuron7xLab)
+# SPDX-License-Identifier: MIT
 """Mathematical trading algorithms for optimization, dynamics, and risk management.
 
 This module provides production-ready implementations of quantitative finance

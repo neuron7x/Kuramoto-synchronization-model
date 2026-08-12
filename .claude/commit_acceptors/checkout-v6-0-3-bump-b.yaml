@@ -1,0 +1,56 @@
+# Diff-bound acceptor (part B) for actions/checkout @v6.0.2 → @v6.0.3
+# (dependabot PR #879). Part-of-pair with checkout-v6-0-3-bump-a.yaml.
+# This part binds the second 14 workflows alphabetically.
+
+id: checkout-v6-0-3-bump-b
+status: ACTIVE
+claim_type: governance
+promise: >-
+  Bumps actions/checkout from v6.0.2 to v6.0.3 in 14 of 28 workflow
+  files (alphabetical second half). SHA-pinned forms collapse to the
+  canonical v6.0.3 SHA df4cb1c069e1874edd31b4311f1884172cec0e10. No
+  functional change beyond the SHA-pin bump.
+diff_scope:
+  changed_files:
+    - path: ".claude/commit_acceptors/checkout-v6-0-3-bump-b.yaml"
+    - path: ".github/workflows/l2-demo-gate.yml"
+    - path: ".github/workflows/latency-budget.yml"
+    - path: ".github/workflows/latency-layer-coverage.yml"
+    - path: ".github/workflows/main-validation.yml"
+    - path: ".github/workflows/physics-2026-gate.yml"
+    - path: ".github/workflows/physics-invariants.yml"
+    - path: ".github/workflows/physics-kernel-gate.yml"
+    - path: ".github/workflows/pr-gate.yml"
+    - path: ".github/workflows/readiness-gate.yml"
+    - path: ".github/workflows/reality-validators-gate.yml"
+    - path: ".github/workflows/research-integrity-gate.yml"
+    - path: ".github/workflows/schemathesis-contract.yml"
+    - path: ".github/workflows/security-deep.yml"
+    - path: ".github/workflows/ux-state-coverage.yml"
+  forbidden_paths:
+    - "trading/"
+    - "execution/"
+    - "forecast/"
+    - "policy/"
+required_python_symbols: []
+expected_signal: >-
+  Each of the 14 listed workflow files references actions/checkout@v6.0.3
+  (or the pinned SHA df4cb1c069e1874edd31b4311f1884172cec0e10).
+measurement_command: >-
+  bash -c "for f in .github/workflows/l2-demo-gate.yml .github/workflows/latency-budget.yml .github/workflows/latency-layer-coverage.yml .github/workflows/main-validation.yml .github/workflows/physics-2026-gate.yml .github/workflows/physics-invariants.yml .github/workflows/physics-kernel-gate.yml .github/workflows/pr-gate.yml .github/workflows/readiness-gate.yml .github/workflows/reality-validators-gate.yml .github/workflows/research-integrity-gate.yml .github/workflows/schemathesis-contract.yml .github/workflows/security-deep.yml .github/workflows/ux-state-coverage.yml; do grep -E 'actions/checkout@(v6\\.0\\.3|df4cb1c069e1874edd31b4311f1884172cec0e10)' \"$f\" >/dev/null || { echo MISSING $f; exit 1; }; done"
+signal_artifact: "tmp/checkout_v6_0_3_bump_b.log"
+falsifier:
+  command: >-
+    bash -c "grep -rE 'actions/checkout@(v6\\.0\\.2|de0fac2e4500dabe0009e67214ff5f5447ce83dd)' .github/workflows/ | wc -l | grep -q '^0$'"
+  description: >-
+    Probe verifies no workflow still references the old v6.0.2 SHA. A
+    non-zero count means the bump is incomplete.
+rollback_command: >-
+  git checkout HEAD~1 -- .github/workflows/
+  .claude/commit_acceptors/checkout-v6-0-3-bump-b.yaml
+rollback_verification_command: >-
+  git diff --exit-code .github/workflows/
+memory_update_type: append
+ledger_path: ".claude/commit_acceptors/checkout-v6-0-3-bump-b.yaml"
+report_path: ".claude/commit_acceptors/checkout-v6-0-3-bump-b.yaml"
+evidence: []

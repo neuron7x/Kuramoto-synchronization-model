@@ -1,0 +1,71 @@
+# Diff-bound commit acceptor: the mutation-kill ratchet — the falsification
+# loop's K operator as ENFORCED CI infrastructure (not a one-off measurement).
+
+id: mutation-kill-ratchet
+status: ACTIVE
+claim_type: correctness
+promise: >-
+  After this PR lands, scripts/ci/check_mutation_kill_ratchet.py is a gate that,
+  for every claim-critical module in docs/MUTATION_KILL_BASELINE.json, re-runs
+  tools/mutation_probe.py --only-logic whenever that module's source or tests
+  change and FAILS if the comparison/boolean logic kill-rate drops below the
+  frozen floor; floors are monotone-up (a PR may raise one, never lower it); it
+  fails closed if a baseline cannot be established. The .github/workflows/
+  mutation-kill-gate.yml runs it on every PR (no path filter, so it is
+  branch-protection-eligible) and the checker is cheap when no claim-critical
+  module changed. tests/ci/test_mutation_kill_ratchet.py proves non-vacuity in
+  both directions: a lowered floor and a below-floor re-probe both fail; a clean
+  tree and a met-floor change both hold; a baseline failure fails closed.
+
+diff_scope:
+  changed_files:
+    - path: ".claude/commit_acceptors/mutation-kill-ratchet.yaml"
+    - path: "docs/MUTATION_KILL_BASELINE.json"
+    - path: "scripts/ci/check_mutation_kill_ratchet.py"
+    - path: "tests/ci/test_mutation_kill_ratchet.py"
+    - path: ".github/workflows/mutation-kill-gate.yml"
+    - path: "Makefile"
+    - path: "INVENTORY.json"
+  forbidden_paths:
+    - "trading/"
+    - "execution/"
+    - "forecast/"
+    - "policy/"
+    - "core/"
+    - "runtime/"
+
+required_python_symbols:
+  - "scripts/ci/check_mutation_kill_ratchet.py::main"
+  - "scripts/ci/check_mutation_kill_ratchet.py::_probe_module"
+  - "tests/ci/test_mutation_kill_ratchet.py::test_lowering_a_floor_fails"
+  - "tests/ci/test_mutation_kill_ratchet.py::test_regression_below_floor_fails"
+
+expected_signal: >-
+  python -m pytest tests/ci/test_mutation_kill_ratchet.py passes (5 tests), and
+  python scripts/ci/check_mutation_kill_ratchet.py --base-ref origin/main holds
+  when no claim-critical module changed.
+
+measurement_command: >-
+  bash -c 'mkdir -p tmp && python -m pytest -q tests/ci/test_mutation_kill_ratchet.py | tee tmp/mutation_ratchet.log'
+
+signal_artifact: "tmp/mutation_ratchet.log"
+
+falsifier:
+  command: >-
+    bash -c 'python -m pytest -q tests/ci/test_mutation_kill_ratchet.py::test_lowering_a_floor_fails tests/ci/test_mutation_kill_ratchet.py::test_regression_below_floor_fails'
+  description: >-
+    Runs the two failure-direction tests: a lowered floor and a below-floor
+    re-probe must each drive main() to a non-zero exit. They pass (exit 0) only
+    when the gate actually fails on regression — if the ratchet were a no-op
+    pass-always, these tests would fail, exposing it. This is the gate proving
+    it has teeth.
+
+rollback_command: >-
+  bash -c 'git rm -f scripts/ci/check_mutation_kill_ratchet.py tests/ci/test_mutation_kill_ratchet.py docs/MUTATION_KILL_BASELINE.json .github/workflows/mutation-kill-gate.yml .claude/commit_acceptors/mutation-kill-ratchet.yaml && git checkout origin/main -- Makefile INVENTORY.json'
+
+rollback_verification_command: >-
+  bash -c 'test ! -e scripts/ci/check_mutation_kill_ratchet.py'
+
+memory_update_type: append
+ledger_path: ".claude/commit_acceptors/mutation-kill-ratchet.yaml"
+report_path: "tmp/mutation_ratchet.log"

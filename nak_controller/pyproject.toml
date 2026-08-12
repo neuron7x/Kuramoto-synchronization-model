@@ -3,10 +3,10 @@ requires = ["setuptools>=68", "wheel"]
 build-backend = "setuptools.build_meta"
 
 [project]
-name = "tradepulse-nak"
+name = "geosync-nak"
 version = "2.1.0"
 description = "NaK Neuro-Energetic Controller for multi-strategy trading systems"
-authors = [{name="TradePulse R&D"}]
+authors = [{name="GeoSync R&D"}]
 readme = "README.md"
 requires-python = ">=3.11,<3.13"
 dependencies = [

@@ -1,4 +1,5 @@
-# SPDX-License-Identifier: LicenseRef-TradePulse-Proprietary
+# Copyright (c) 2023-2026 Yaroslav Vasylenko (neuron7xLab)
+# SPDX-License-Identifier: MIT
 """Utilities for constraining filesystem access to safe locations."""
 
 from __future__ import annotations
@@ -21,7 +22,7 @@ class DataPathGuard:
         max_bytes: int | None = None,
         follow_symlinks: bool = False,
     ) -> None:
-        env_roots = os.environ.get("TRADEPULSE_DATA_ROOTS")
+        env_roots = os.environ.get("GEOSYNC_DATA_ROOTS")
         roots: list[str | Path] = []
 
         if env_roots:
@@ -51,13 +52,13 @@ class DataPathGuard:
         self._follow_symlinks = follow_symlinks
 
         if max_bytes is None:
-            max_bytes_env = os.environ.get("TRADEPULSE_MAX_CSV_BYTES")
+            max_bytes_env = os.environ.get("GEOSYNC_MAX_CSV_BYTES")
             if max_bytes_env:
                 try:
                     max_bytes = int(max_bytes_env)
                 except ValueError as exc:  # pragma: no cover - defensive
                     raise ValueError(
-                        "TRADEPULSE_MAX_CSV_BYTES must be an integer"
+                        "GEOSYNC_MAX_CSV_BYTES must be an integer"
                     ) from exc
             else:
                 max_bytes = self._DEFAULT_MAX_BYTES

@@ -1,4 +1,5 @@
-# SPDX-License-Identifier: LicenseRef-TradePulse-Proprietary
+# Copyright (c) 2023-2026 Yaroslav Vasylenko (neuron7xLab)
+# SPDX-License-Identifier: MIT
 """Unit tests for ML pipeline module."""
 
 from __future__ import annotations
@@ -94,9 +95,7 @@ class TestFeatureEngineeringDAG:
             return {"b_result": 2}
 
         dag.register(FeatureNode(name="node_a", compute=compute_a))
-        dag.register(
-            FeatureNode(name="node_b", compute=compute_b, dependencies=("node_a",))
-        )
+        dag.register(FeatureNode(name="node_b", compute=compute_b, dependencies=("node_a",)))
 
         ctx = PipelineContext(training_frame=None)
         features = dag.run(ctx)
@@ -332,9 +331,7 @@ class TestDetectModelDrift:
         """Verify detect_model_drift returns tuple."""
         detector = ModelDriftDetector()
         data = list(range(50))
-        result = detect_model_drift(
-            detector, expected_scores=data, observed_scores=data
-        )
+        result = detect_model_drift(detector, expected_scores=data, observed_scores=data)
         assert isinstance(result, tuple)
         assert len(result) == 2
         assert isinstance(result[0], bool)
@@ -373,9 +370,7 @@ class TestRecordOnlineLearningEvent:
     def test_record_event_creates_storage(self) -> None:
         """Verify record_event creates storage entry."""
         storage: dict = {}
-        record_online_learning_event(
-            storage, model_id="model_1", payload={"data": "value"}
-        )
+        record_online_learning_event(storage, model_id="model_1", payload={"data": "value"})
         assert "model_1" in storage
         assert len(storage["model_1"]) == 1
         assert storage["model_1"][0]["payload"] == {"data": "value"}
@@ -383,9 +378,7 @@ class TestRecordOnlineLearningEvent:
     def test_record_event_appends_to_existing(self) -> None:
         """Verify record_event appends to existing storage."""
         storage: dict = {"model_1": [{"payload": {"old": "data"}, "recorded_at": "ts"}]}
-        record_online_learning_event(
-            storage, model_id="model_1", payload={"new": "data"}
-        )
+        record_online_learning_event(storage, model_id="model_1", payload={"new": "data"})
         assert len(storage["model_1"]) == 2
 
 
@@ -429,17 +422,13 @@ class TestMLPipeline:
 
         return _train
 
-    def test_ml_pipeline_creation(
-        self, simple_dag: FeatureEngineeringDAG, train_fn
-    ) -> None:
+    def test_ml_pipeline_creation(self, simple_dag: FeatureEngineeringDAG, train_fn) -> None:
         """Verify MLPipeline can be created."""
         pipeline = MLPipeline(simple_dag, train_fn)
         assert pipeline._feature_dag is simple_dag
         assert pipeline._train_fn is train_fn
 
-    def test_ml_pipeline_run_basic(
-        self, simple_dag: FeatureEngineeringDAG, train_fn
-    ) -> None:
+    def test_ml_pipeline_run_basic(self, simple_dag: FeatureEngineeringDAG, train_fn) -> None:
         """Verify MLPipeline run completes."""
         pipeline = MLPipeline(simple_dag, train_fn)
         ctx = PipelineContext(training_frame="data")
@@ -449,9 +438,7 @@ class TestMLPipeline:
         assert result.model == "trained_model"
         assert result.metrics["accuracy"] == 0.9
 
-    def test_ml_pipeline_run_with_tuner(
-        self, simple_dag: FeatureEngineeringDAG, train_fn
-    ) -> None:
+    def test_ml_pipeline_run_with_tuner(self, simple_dag: FeatureEngineeringDAG, train_fn) -> None:
         """Verify MLPipeline run with tuner."""
 
         def objective(params: Mapping[str, Any]) -> float:
@@ -468,9 +455,7 @@ class TestMLPipeline:
 
         assert result.model == "trained_model"
 
-    def test_ml_pipeline_run_with_drift_detection(
-        self, simple_dag: FeatureEngineeringDAG
-    ) -> None:
+    def test_ml_pipeline_run_with_drift_detection(self, simple_dag: FeatureEngineeringDAG) -> None:
         """Verify MLPipeline run with drift detection."""
 
         def train_fn_with_drift(
@@ -494,9 +479,7 @@ class TestMLPipeline:
         assert "drift_psi" in result.metrics
         assert "drift_alert" in result.metrics
 
-    def test_ml_pipeline_run_with_ab_tester(
-        self, simple_dag: FeatureEngineeringDAG
-    ) -> None:
+    def test_ml_pipeline_run_with_ab_tester(self, simple_dag: FeatureEngineeringDAG) -> None:
         """Verify MLPipeline run with A/B tester."""
 
         def train_fn_for_ab(

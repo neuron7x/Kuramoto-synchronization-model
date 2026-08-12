@@ -1,3 +1,5 @@
+# Copyright (c) 2023-2026 Yaroslav Vasylenko (neuron7xLab)
+# SPDX-License-Identifier: MIT
 """Encrypted secret vault with fine-grained access controls and rotation support."""
 
 from __future__ import annotations
@@ -56,9 +58,7 @@ class SecretMetadata:
             "created_at": _ensure_utc(self.created_at).isoformat(),
             "updated_at": _ensure_utc(self.updated_at).isoformat(),
             "rotation_interval_seconds": (
-                self.rotation_interval.total_seconds()
-                if self.rotation_interval
-                else None
+                self.rotation_interval.total_seconds() if self.rotation_interval else None
             ),
             "labels": dict(self.labels),
         }
@@ -168,9 +168,7 @@ class SecretVault:
             raise ValueError("policy must not be None")
         self._policy = policy
 
-    def set_policy_rules(
-        self, permissions: Mapping[str, Mapping[str, Iterable[str]]]
-    ) -> None:
+    def set_policy_rules(self, permissions: Mapping[str, Mapping[str, Iterable[str]]]) -> None:
         """Convenience helper to replace the current access rules."""
 
         self._policy = SecretAccessPolicy(permissions)
@@ -216,11 +214,7 @@ class SecretVault:
                 rotation_interval=(
                     rotation_interval
                     if rotation_interval is not None
-                    else (
-                        existing_metadata.rotation_interval
-                        if existing_metadata
-                        else None
-                    )
+                    else (existing_metadata.rotation_interval if existing_metadata else None)
                 ),
                 labels=label_data,
             )
@@ -269,9 +263,7 @@ class SecretVault:
             except KeyError as exc:
                 raise SecretVaultError(f"Unknown secret '{name}'") from exc
             try:
-                value = self._fernet.decrypt(
-                    record["ciphertext"].encode("utf-8")
-                ).decode("utf-8")
+                value = self._fernet.decrypt(record["ciphertext"].encode("utf-8")).decode("utf-8")
             except InvalidToken as exc:
                 raise SecretVaultError(f"Failed to decrypt secret '{name}'") from exc
             self._audit(
@@ -356,9 +348,7 @@ class SecretVault:
                 ip_address=ip_address,
                 details={
                     "secret": metadata.model_dump(),
-                    "rotation_interval_seconds": (
-                        interval.total_seconds() if interval else None
-                    ),
+                    "rotation_interval_seconds": (interval.total_seconds() if interval else None),
                 },
             )
             return metadata
@@ -394,12 +384,8 @@ class SecretVault:
             metadata = SecretMetadata(
                 name=name,
                 version=int(record.get("version", 1)),
-                created_at=(
-                    datetime.fromisoformat(created_at) if created_at else _utc_now()
-                ),
-                updated_at=(
-                    datetime.fromisoformat(updated_at) if updated_at else _utc_now()
-                ),
+                created_at=(datetime.fromisoformat(created_at) if created_at else _utc_now()),
+                updated_at=(datetime.fromisoformat(updated_at) if updated_at else _utc_now()),
                 rotation_interval=(
                     timedelta(seconds=rotation_seconds) if rotation_seconds else None
                 ),
@@ -429,9 +415,7 @@ class SecretVault:
         payload = {"secrets": secrets}
         tmp_path = self._path.with_suffix(".tmp")
         self._path.parent.mkdir(parents=True, exist_ok=True)
-        tmp_path.write_text(
-            json.dumps(payload, indent=2, sort_keys=True), encoding="utf-8"
-        )
+        tmp_path.write_text(json.dumps(payload, indent=2, sort_keys=True), encoding="utf-8")
         os.replace(tmp_path, self._path)
         try:
             os.chmod(self._path, 0o600)

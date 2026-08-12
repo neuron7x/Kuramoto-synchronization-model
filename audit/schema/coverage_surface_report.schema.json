@@ -1,0 +1,49 @@
+{
+  "$schema": "http://json-schema.org/draft-07/schema#",
+  "$id": "geosync.coverage_surface_report.v1",
+  "title": "GeoSync Coverage-Surface Audit Report",
+  "description": "Binds every packaged production root to an explicit coverage decision (measured / allowlisted / forbidden). Emitted by tools/audit_coverage_surface.py.",
+  "type": "object",
+  "additionalProperties": false,
+  "required": [
+    "schema",
+    "packaged_roots",
+    "coverage_sources",
+    "coverage_sources_by_profile",
+    "measured",
+    "missing_from_coverage",
+    "allowlisted",
+    "invalid_allowlist_entries",
+    "stale_packaging_roots",
+    "forbidden_gaps",
+    "verdict"
+  ],
+  "properties": {
+    "schema": { "const": "geosync.coverage_surface_report.v1" },
+    "packaged_roots": { "type": "array", "items": { "type": "string" } },
+    "coverage_sources": { "type": "array", "items": { "type": "string" } },
+    "coverage_sources_by_profile": {
+      "type": "object",
+      "additionalProperties": { "type": "array", "items": { "type": "string" } }
+    },
+    "measured": { "type": "array", "items": { "type": "string" } },
+    "missing_from_coverage": { "type": "array", "items": { "type": "string" } },
+    "allowlisted": {
+      "type": "array",
+      "items": {
+        "type": "object",
+        "additionalProperties": false,
+        "required": ["root", "reason", "note"],
+        "properties": {
+          "root": { "type": "string" },
+          "reason": { "type": "string" },
+          "note": { "type": "string", "minLength": 20 }
+        }
+      }
+    },
+    "invalid_allowlist_entries": { "type": "array", "items": { "type": "string" } },
+    "stale_packaging_roots": { "type": "array", "items": { "type": "string" } },
+    "forbidden_gaps": { "type": "array", "items": { "type": "string" } },
+    "verdict": { "type": "string", "enum": ["PASS", "FAIL"] }
+  }
+}

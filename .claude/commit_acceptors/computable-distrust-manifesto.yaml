@@ -1,0 +1,52 @@
+id: computable-distrust-manifesto
+status: ACTIVE
+claim_type: governance
+promise: >-
+  docs/COMPUTABLE_DISTRUST.md is the canonical statement of the project, and it is
+  itself truth-gated: every backticked repo path it cites must exist, a required
+  set of load-bearing artifacts must be cited, the named final verdict must be
+  PASS and the apex ADMISSIBLE, and epistemic tier labels must be present. The
+  manifesto cannot overclaim.
+diff_scope:
+  changed_files:
+    - path: ".claude/commit_acceptors/computable-distrust-manifesto.yaml"
+    - path: "docs/COMPUTABLE_DISTRUST.md"
+    - path: "tests/ci/test_manifesto_integrity.py"
+  forbidden_paths:
+    - "execution/"
+    - "core/"
+required_python_symbols: []
+expected_signal: >-
+  `python -m pytest --import-mode=importlib tests/ci/test_manifesto_integrity.py -q`
+  passes; every path the manifesto cites exists and the named verdicts hold.
+measurement_command: >-
+  bash -c '
+    python -m pytest --import-mode=importlib -p no:cacheprovider
+      tests/ci/test_manifesto_integrity.py -q
+  '
+signal_artifact: "tmp/computable_distrust_manifesto.log"
+falsifier:
+  command: |-
+    bash -c '
+      python -c "
+    import re, pathlib
+    root = pathlib.Path(\".\")
+    text = (root / \"docs/COMPUTABLE_DISTRUST.md\").read_text(encoding=\"utf-8\")
+    cited = {m.group(1) for m in re.finditer(r\"\`([A-Za-z0-9_][A-Za-z0-9_./-]*\.(?:json|py|yml|md))\`\", text)}
+    missing = [p for p in cited if not (root / p).exists()]
+    required = {\"artifacts/inference/final_inference_verdict.json\", \"tools/audit_no_ungrounded_act.py\"}
+    raise SystemExit(0 if not missing and required <= cited else f\"manifesto drift: {missing}\")
+    "
+    '
+  description: >-
+    Checks every cited manifesto path exists and the load-bearing set is present.
+    Exits 0 when the manifesto is bound to reality; non-zero if it cites a missing
+    path or dropped a required citation.
+rollback_command: >-
+  bash -c 'git rm -f .claude/commit_acceptors/computable-distrust-manifesto.yaml'
+rollback_verification_command: >-
+  bash -c 'test ! -f .claude/commit_acceptors/computable-distrust-manifesto.yaml'
+memory_update_type: append
+ledger_path: ".claude/commit_acceptors/computable-distrust-manifesto.yaml"
+report_path: "tmp/computable_distrust_manifesto.log"
+evidence: []

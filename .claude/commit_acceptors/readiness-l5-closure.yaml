@@ -1,0 +1,93 @@
+# Diff-bound commit acceptor: close 4 of the 5 readiness-register gaps with
+# real, SHA-pinned, reproducible evidence; keep RD-001 rigorously OPEN.
+#
+# Closes (governance/readiness_register.json):
+#   * OPS-001 — executed cryptobiosis + kill-switch recovery drill (deterministic
+#     report; INV-CB1 DORMANT multiplier==0, staged rehydration, audited failover).
+#   * QA-001  — whole-repo ruff/black sweep surfacing the changed-files-only blind
+#     spot (42 ruff + 6 black drift made VISIBLE + CI-retained; not a clean bill).
+#   * GOV-001 — escalated commit-acceptor-validation to a blocking required check
+#     (10→12) + binding gate-waiver protocol.
+#   * EXT-001 — CodeQL independent-review → remediation map: 5/5 error findings
+#     resolved (2 dismissed verified-FP + 3 fixed in PR #900), 16 note/warn tracked.
+# RD-001 stays OPEN by design — blocked on licensed e-MID/ECB data, not effort;
+# a public substitute would violate admissibility (no independent crisis label).
+#
+# Locally verified:
+#   * tools/check_readiness_register.py: ok (schema, closed entries carry evidence)
+#   * tools/readiness/verify_evidence.py: 8 artifacts, 0 sha256 drift
+#   * recovery drill all_passed=true, deterministic (stable SHA on re-run)
+#   * mypy --strict / ruff / black clean on all new tooling
+#   * tests/governance/test_readiness_register.py: 5 passed
+
+id: readiness-l5-closure
+status: ACTIVE
+claim_type: governance
+promise: >-
+  After this PR lands, the GeoSync readiness register closes OPS-001, QA-001,
+  GOV-001 and EXT-001 with SHA-256-pinned, machine-verifiable evidence artifacts
+  under governance/evidence/, each with a runnable verification_command; a CI
+  lane (readiness-gate) re-verifies evidence integrity, re-executes the recovery
+  drill deterministically, and retains the whole-repo quality snapshot. RD-001
+  remains open with a documented fail-closed acquisition gate. No science claim
+  is promoted; QA-001 surfaces residual lint debt rather than asserting clean.
+diff_scope:
+  changed_files:
+    - path: ".claude/commit_acceptors/readiness-l5-closure.yaml"
+    - path: "governance/readiness_register.json"
+    - path: "governance/evidence/ops001_recovery_drill_report.json"
+    - path: "governance/evidence/qa001_full_repo_quality_report.json"
+    - path: "governance/evidence/ext001_remediation_map.json"
+    - path: "governance/evidence/ext001_review_report.md"
+    - path: "governance/evidence/gov001_blocking_check.json"
+    - path: "governance/evidence/rd001_acquisition_gate.md"
+    - path: "docs/governance/waiver_protocol.md"
+    - path: "tools/readiness/__init__.py"
+    - path: "tools/readiness/run_recovery_drill.py"
+    - path: "tools/readiness/full_repo_quality.py"
+    - path: "tools/readiness/verify_evidence.py"
+    - path: ".github/workflows/readiness-gate.yml"
+  forbidden_paths:
+    - "trading/"
+    - "forecast/"
+    - "policy/"
+    - "core/physics/"
+    - "core/kuramoto/"
+required_python_symbols:
+  - "tools/readiness/run_recovery_drill.py::build_report"
+  - "tools/readiness/full_repo_quality.py::build_report"
+  - "tools/readiness/verify_evidence.py::verify"
+expected_signal: >-
+  `python tools/check_readiness_register.py` prints "readiness register ok";
+  `python -m tools.readiness.verify_evidence` reports 8 artifacts with 0 errors;
+  `python -m tools.readiness.run_recovery_drill` exits 0 (all_passed) and the
+  report SHA is stable; mypy --strict + ruff + black are clean on tools/readiness/;
+  tests/governance/test_readiness_register.py passes.
+measurement_command: >-
+  bash -c '
+    python tools/check_readiness_register.py && python -m tools.readiness.verify_evidence && python -m tools.readiness.run_recovery_drill && git diff --exit-code governance/evidence/ops001_recovery_drill_report.json && mypy --strict tools/readiness/ && ruff check tools/readiness/ && black --check tools/readiness/ && python -m pytest -q tests/governance/test_readiness_register.py
+  '
+signal_artifact: "tmp/readiness_l5_closure.log"
+falsifier:
+  command: >-
+    bash -c '
+      python -m tools.readiness.run_recovery_drill >/tmp/_drill.log 2>&1
+      test $? -ne 0
+    '
+  description: >-
+    Probes the OPS-001 resilience claim: the recovery drill exits 0 only when
+    both the cryptobiosis DORMANT-then-rehydrate path and the kill-switch
+    failover recover cleanly. The falsifier succeeds (exit 0) only if the drill
+    FAILS — i.e. recovery regressed — which would falsify the OPS-001 closure.
+rollback_command: >-
+  bash -c 'git checkout origin/main --
+    governance/readiness_register.json
+    .github/workflows/readiness-gate.yml && rm -rf tools/readiness governance/evidence
+    docs/governance/waiver_protocol.md
+    .claude/commit_acceptors/readiness-l5-closure.yaml'
+rollback_verification_command: >-
+  bash -c '! test -d tools/readiness'
+memory_update_type: append
+ledger_path: ".claude/commit_acceptors/readiness-l5-closure.yaml"
+report_path: "tmp/readiness_l5_closure.log"
+evidence: []

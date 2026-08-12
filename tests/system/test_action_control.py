@@ -1,3 +1,5 @@
+# Copyright (c) 2023-2026 Yaroslav Vasylenko (neuron7xLab)
+# SPDX-License-Identifier: MIT
 """Tests for the action control governor enforcing TACL and mandate rules."""
 
 from __future__ import annotations
@@ -112,10 +114,7 @@ def test_a1_action_blocked_when_energy_increases_without_recovery() -> None:
 
     assert decision.allowed is False
     assert decision.tacl is not None and decision.tacl.allowed is False
-    assert (
-        decision.reason
-        == "projected free energy increases without a guaranteed recovery path"
-    )
+    assert decision.reason == "projected free energy increases without a guaranteed recovery path"
     details = _latest_details(store)
     assert details["allowed"] is False
     assert details["tacl_allowed"] is False
@@ -198,9 +197,7 @@ def test_governor_rejects_unknown_module_requests() -> None:
     )
     forecast = FreeEnergyForecast(current=0.9, projected=0.7)
 
-    with pytest.raises(
-        ValueError, match="No mandate defined for module 'orchestrator'"
-    ):
+    with pytest.raises(ValueError, match="No mandate defined for module 'orchestrator'"):
         governor.evaluate(intent, state=SystemState.NORMAL, forecast=forecast)
 
 
@@ -244,10 +241,7 @@ def test_tacl_gate_rejects_non_positive_recovery_window() -> None:
     decision = gate.evaluate(forecast)
 
     assert decision.allowed is False
-    assert (
-        decision.reason
-        == "recovery window must be positive when guarantees_descent is true"
-    )
+    assert decision.reason == "recovery window must be positive when guarantees_descent is true"
 
 
 def test_mandate_rejects_target_outside_object_scope() -> None:

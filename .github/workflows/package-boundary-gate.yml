@@ -1,0 +1,50 @@
+# SPDX-License-Identifier: MIT
+#
+# Package-boundary ratchet — fail-closed, monotone-down. Freezes the set of
+# non-geosync top-level packages still shipped on the wheel surface (see
+# ADR 0024) and fails on any NEW leak or any stale ledger entry, so the
+# canonical-geosync* migration can only progress. Stdlib-only; fast.
+#
+# Path-filtered: a PR touching neither pyproject, the checker, nor the
+# baseline skips entirely.
+name: Package Boundary Gate
+
+concurrency:
+  group: ${{ github.workflow }}-${{ github.ref }}
+  cancel-in-progress: true
+
+on:
+  pull_request:
+    branches: [main]
+    paths:
+      - "pyproject.toml"
+      - ".github/package_boundary_baseline.json"
+      - "scripts/ci/check_package_boundary.py"
+      - ".github/workflows/package-boundary-gate.yml"
+  push:
+    branches: [main]
+    paths:
+      - "pyproject.toml"
+      - ".github/package_boundary_baseline.json"
+      - "scripts/ci/check_package_boundary.py"
+      - ".github/workflows/package-boundary-gate.yml"
+
+permissions:
+  contents: read
+
+jobs:
+  validate:
+    name: package-boundary-gate
+    runs-on: ubuntu-latest
+    timeout-minutes: 5
+    steps:
+      - name: Checkout
+        uses: actions/checkout@9c091bb21b7c1c1d1991bb908d89e4e9dddfe3e0 # v7.0.0
+
+      - name: Setup Python
+        uses: actions/setup-python@ece7cb06caefa5fff74198d8649806c4678c61a1 # v6
+        with:
+          python-version: "3.12"
+
+      - name: Enforce package-boundary ratchet
+        run: python scripts/ci/check_package_boundary.py

@@ -1,5 +1,7 @@
-# SPDX-License-Identifier: LicenseRef-TradePulse-Proprietary
+# Copyright (c) 2023-2026 Yaroslav Vasylenko (neuron7xLab)
+# SPDX-License-Identifier: MIT
 """Unit tests for the experiment tracking helpers."""
+
 from __future__ import annotations
 
 import json
@@ -99,20 +101,15 @@ def test_tracker_generates_reports_archives(
     tracker.log_artifact(data_path, alias="dataset.csv")
     tracker.finalize(results={"status": "ok"}, error=None)
 
-    reports_dir = (
-        Path(experiment_cfg.tracking.base_dir) / experiment_cfg.tracking.reports_dirname
-    )
+    reports_dir = Path(experiment_cfg.tracking.base_dir) / experiment_cfg.tracking.reports_dirname
     artifacts_dir = (
-        Path(experiment_cfg.tracking.base_dir)
-        / experiment_cfg.tracking.artifacts_dirname
+        Path(experiment_cfg.tracking.base_dir) / experiment_cfg.tracking.artifacts_dirname
     )
     assert (reports_dir / experiment_cfg.tracking.reports.markdown_filename).exists()
     assert (reports_dir / experiment_cfg.tracking.reports.dashboard_filename).exists()
     assert (reports_dir / "ci_summary.json").exists()
     assert (artifacts_dir / "metrics.json").exists()
-    archives = sorted(
-        (Path(experiment_cfg.tracking.base_dir) / "archives").glob("*.zip")
-    )
+    archives = sorted((Path(experiment_cfg.tracking.base_dir) / "archives").glob("*.zip"))
     assert archives, "expected archive to be generated"
 
 

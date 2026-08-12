@@ -1,0 +1,44 @@
+# SPDX-License-Identifier: MIT
+name: Dependency Operational Determinism
+
+on:
+  pull_request:
+    branches: [main]
+    paths:
+      - '.github/actions/setup-geosync/action.yml'
+      - '.github/workflows/dependency-operational-determinism.yml'
+      - 'constraints/security.txt'
+      - 'pyproject.toml'
+      - 'requirements*.txt'
+      - 'requirements*.lock'
+      - 'tools/deps/check_operational_dependency_determinism.py'
+      - 'tests/deps/test_operational_dependency_determinism.py'
+  merge_group:
+  workflow_dispatch:
+
+permissions:
+  contents: read
+
+env:
+  FORCE_JAVASCRIPT_ACTIONS_TO_NODE24: 'true'
+
+concurrency:
+  group: dependency-operational-determinism-${{ github.event.pull_request.number || github.sha }}
+  cancel-in-progress: true
+
+jobs:
+  dependency-operational-determinism:
+    name: dependency-operational-determinism
+    runs-on: ubuntu-latest
+    timeout-minutes: 5
+    steps:
+      - name: Checkout
+        uses: actions/checkout@9c091bb21b7c1c1d1991bb908d89e4e9dddfe3e0 # v7.0.0
+
+      - name: Set up Python
+        uses: actions/setup-python@a309ff8b426b58ec0e2a45f0f869d46889d02405 # v6
+        with:
+          python-version: '3.12'
+
+      - name: Validate and self-test dependency operational determinism gate
+        run: python tools/deps/check_operational_dependency_determinism.py --self-test

@@ -1,6 +1,6 @@
 # DOC PR COPILOT v2 User Guide
 
-> **Internal LLM Prompt**: This document contains configuration and usage instructions for an LLM-based documentation agent used during TradePulse development. It is not part of the runtime system.
+> **Internal LLM Prompt**: This document contains configuration and usage instructions for an LLM-based documentation agent used during GeoSync development. It is not part of the runtime system.
 
 This guide explains how to use the DOC PR COPILOT v2 agent system for automated documentation maintenance.
 
@@ -150,12 +150,12 @@ DOC_PATCHES:
   ACTION: UPDATE_SECTION
   SECTION: "CLI Commands"
   BEFORE: |
-    tradepulse run      # Start trading
-    tradepulse backtest # Run backtest
+    geosync run      # Start trading
+    geosync backtest # Run backtest
   AFTER: |
-    tradepulse run      # Start trading
-    tradepulse backtest # Run backtest
-    tradepulse validate # Validate configuration
+    geosync run      # Start trading
+    geosync backtest # Run backtest
+    geosync validate # Validate configuration
 ```
 
 ### REVIEW_NOTES Format
@@ -384,12 +384,12 @@ REVIEW_NOTES:
 ### Getting Help
 
 1. **Check documentation:**
-   - [Agent Configuration](.github/agents/README.md)
-   - [Integration Guide](.github/agents/INTEGRATION.md)
-   - [4C Principles](.github/agents/4C-PRINCIPLES.md)
+   - [Agent Configuration](../../.github/agents/README.md)
+   - [Integration Guide](../../.github/agents/INTEGRATION.md)
+   - [4C Principles](../../.github/agents/4C-PRINCIPLES.md)
 
 2. **Review examples:**
-   - [Example Output](.github/agents/example-output.md)
+   - [Example Output](../../.github/agents/example-output.md)
    - Real PR comments from the agent
 
 3. **Open an issue:**
@@ -414,10 +414,10 @@ To improve the agent:
 
 ## Related Documentation
 
-- [4C Principles](.github/agents/4C-PRINCIPLES.md) - Documentation standards
-- [Integration Guide](.github/agents/INTEGRATION.md) - Technical setup
-- [Example Output](.github/agents/example-output.md) - Sample responses
-- [Agent Configuration](.github/agents/README.md) - All available agents
+- [4C Principles](../../.github/agents/4C-PRINCIPLES.md) - Documentation standards
+- [Integration Guide](../../.github/agents/INTEGRATION.md) - Technical setup
+- [Example Output](../../.github/agents/example-output.md) - Sample responses
+- [Agent Configuration](../../.github/agents/README.md) - All available agents
 
 ## Changelog
 

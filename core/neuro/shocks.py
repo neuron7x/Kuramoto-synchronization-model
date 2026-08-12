@@ -1,3 +1,5 @@
+# Copyright (c) 2023-2026 Yaroslav Vasylenko (neuron7xLab)
+# SPDX-License-Identifier: MIT
 """Reinforcement-learning driven shock scenario generator used for chaos tests."""
 
 from __future__ import annotations
@@ -61,7 +63,7 @@ if nn is not None and torch is not None and Normal is not None and F is not None
 else:
 
     class _ShockPolicy:
-        def __init__(self, feature_dim: int) -> None:  # noqa: D401 - simple guard
+        def __init__(self, feature_dim: int) -> None:
             raise ModuleNotFoundError(
                 "PyTorch is required for ShockScenarioGenerator",
             ) from _IMPORT_ERROR
@@ -84,9 +86,7 @@ class ShockScenarioGenerator:
                 "PyTorch is required for ShockScenarioGenerator"
             ) from _IMPORT_ERROR
 
-        self._device = torch.device(
-            device or ("cuda" if torch.cuda.is_available() else "cpu")
-        )
+        self._device = torch.device(device or ("cuda" if torch.cuda.is_available() else "cpu"))
         baseline_tensor = torch.tensor(
             list(baseline_shocks), dtype=torch.float32, device=self._device
         )
@@ -103,9 +103,7 @@ class ShockScenarioGenerator:
             feature_names or (f"feature_{idx}" for idx in range(feature_dim))
         )
         if len(self._feature_names) != feature_dim:
-            raise ValueError(
-                "feature_names length must match baseline feature dimension"
-            )
+            raise ValueError("feature_names length must match baseline feature dimension")
 
         self._risk_tolerance = float(risk_tolerance)
         self._baseline = baseline_tensor
@@ -146,9 +144,7 @@ class ShockScenarioGenerator:
                     span.set_attributes(
                         {
                             "chaos.reward.mean": float(reward.mean().item()),
-                            "chaos.drawdown.max": float(
-                                metrics["drawdown"].max().item()
-                            ),
+                            "chaos.drawdown.max": float(metrics["drawdown"].max().item()),
                         }
                     )
 
@@ -174,9 +170,7 @@ class ShockScenarioGenerator:
                 span.set_attributes(
                     {
                         "chaos.generated": len(scenarios),
-                        "chaos.drawdown.max": max(
-                            s.predicted_drawdown for s in scenarios
-                        ),
+                        "chaos.drawdown.max": max(s.predicted_drawdown for s in scenarios),
                     }
                 )
         return scenarios[:count]
@@ -185,9 +179,7 @@ class ShockScenarioGenerator:
     # Internal helpers
     # ------------------------------------------------------------------
     def _sample_state(self, batch: int) -> torch.Tensor:
-        indices = torch.randint(
-            0, self._baseline.size(0), (batch,), device=self._device
-        )
+        indices = torch.randint(0, self._baseline.size(0), (batch,), device=self._device)
         return self._baseline[indices]
 
     def _evaluate(
@@ -199,9 +191,7 @@ class ShockScenarioGenerator:
         weights = torch.ones_like(scenario) * 0.1
         priority = min(scenario.size(1), 3)
         if priority:
-            base_weights = torch.tensor(
-                [0.5, 0.3, 0.2], device=self._device, dtype=scenario.dtype
-            )
+            base_weights = torch.tensor([0.5, 0.3, 0.2], device=self._device, dtype=scenario.dtype)
             weights[:, :priority] = base_weights[:priority]
         drawdown = torch.relu((scenario.abs() * weights).sum(dim=1))
         penalty = torch.relu(drawdown - self._risk_tolerance) * 25.0
@@ -223,9 +213,7 @@ class ShockScenarioGenerator:
         metrics: Mapping[str, torch.Tensor],
         index: int,
     ) -> ShockScenario:
-        values = {
-            name: float(sample[i].item()) for i, name in enumerate(self._feature_names)
-        }
+        values = {name: float(sample[i].item()) for i, name in enumerate(self._feature_names)}
         scenario = ShockScenario(
             values=values,
             predicted_drawdown=float(metrics["drawdown"][index].item()),

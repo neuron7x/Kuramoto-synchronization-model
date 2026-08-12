@@ -1,0 +1,31 @@
+id: dhtfv-five-minute-proof
+status: ACTIVE
+claim_type: correctness
+promise: "A single proof command loads a deterministic fixture, generates one hypothesis, runs one holdout test, applies a falsifier, and writes artifacts/geosync_proof/verdict.json."
+diff_scope:
+  changed_files:
+    - path: "geosync/proof/__init__.py"
+    - path: "geosync/proof/run.py"
+    - path: "tests/test_geosync_proof.py"
+    - path: "docs/GEOSYNC_PROOF.md"
+    - path: ".claude/commit_acceptors/dhtfv-five-minute-proof.yaml"
+  forbidden_paths: []
+required_python_symbols:
+  - "load_market_data"
+  - "generate_hypothesis"
+  - "run_test"
+  - "build_verdict"
+  - "write_verdict"
+  - "main"
+expected_signal: "proof tests pass and proof command emits a REJECT verdict for the default fixture."
+measurement_command: "python -m pytest tests/test_geosync_proof.py -q"
+signal_artifact: "artifacts/geosync_proof/verdict.json"
+falsifier:
+  command: "python -m geosync.proof.run"
+  description: "The proof is falsified if the fixture no longer produces the expected rejected holdout result or if the command stops writing the verdict artifact."
+rollback_command: "git status --short"
+rollback_verification_command: "git status --short"
+memory_update_type: append
+ledger_path: ".claude/commit_acceptors/dhtfv-five-minute-proof.yaml"
+report_path: "docs/GEOSYNC_PROOF.md"
+evidence: []

@@ -1,3 +1,5 @@
+# Copyright (c) 2023-2026 Yaroslav Vasylenko (neuron7xLab)
+# SPDX-License-Identifier: MIT
 """Service for signal computation business logic."""
 
 from __future__ import annotations
@@ -41,9 +43,7 @@ class SignalService:
         """
         feature_list = list(features)
         if not feature_list:
-            raise ValidationError(
-                "At least one feature is required", details={"feature_count": 0}
-            )
+            raise ValidationError("At least one feature is required", details={"feature_count": 0})
 
         try:
             signals = build_signal_ensemble(feature_list, self._settings)
@@ -66,9 +66,7 @@ class SignalService:
 
             return signals, ensemble_strength, synchrony
         except ValueError as exc:
-            raise ValidationError(
-                f"Invalid features for signal computation: {exc}"
-            ) from exc
+            raise ValidationError(f"Invalid features for signal computation: {exc}") from exc
 
 
 __all__ = ["SignalService"]

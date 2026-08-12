@@ -1,0 +1,35 @@
+{
+  "horizon_ic": {
+    "60": 0.10387428026009198,
+    "120": 0.1139687060447858,
+    "180": 0.12229471858695447,
+    "240": 0.10157799598094913,
+    "300": 0.10260055741899882
+  },
+  "ic_baselines": {
+    "plain_ofi": 0.01916584098843665,
+    "plain_return": 0.006981633710105293,
+    "realized_vol": -0.01193748669023651
+  },
+  "ic_signal": 0.12229471858695447,
+  "metadata": {
+    "corr_step_sec": 30,
+    "corr_window_sec": 300,
+    "ic_gate": 0.03,
+    "n_levels": 5,
+    "primary_horizon_sec": 180,
+    "pvalue_gate": 0.05,
+    "ricci_threshold": 0.5
+  },
+  "n_samples": 19081,
+  "n_symbols": 10,
+  "null_test_pvalues": {
+    "circular_shift": 0.027944111776447105,
+    "permutation_shuffle": 0.001996007984031936
+  },
+  "reasons": [],
+  "residual_ic": 0.11300370962166714,
+  "residual_ic_pvalue": 0.001996007984031936,
+  "seed": 42,
+  "verdict": "PROCEED"
+}

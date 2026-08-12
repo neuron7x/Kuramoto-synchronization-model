@@ -1,0 +1,1003 @@
+[
+  {
+    "input": {
+      "subject_id": "ADV_001",
+      "critical_data_invalid": true,
+      "confidence": 999.0,
+      "domain_indices": {
+        "BSI": 30,
+        "NRI": 25,
+        "VML": 30,
+        "GRS": 60,
+        "CNI": 20
+      },
+      "degradations": []
+    },
+    "risk_state": "BLACK_INVALID",
+    "confidence": 0.0
+  },
+  {
+    "input": {
+      "subject_id": "ADV_001",
+      "critical_data_invalid": false,
+      "confidence": 1.0,
+      "domain_indices": {},
+      "degradations": []
+    },
+    "risk_state": "YELLOW_WATCH",
+    "confidence": 0.9
+  },
+  {
+    "input": {
+      "subject_id": "ADV_001",
+      "critical_data_invalid": false,
+      "confidence": 1.0,
+      "domain_indices": {
+        "BSI": "__NON_FINITE_FLOAT__:nan",
+        "NRI": 25,
+        "VML": 30,
+        "GRS": 60,
+        "CNI": 20
+      },
+      "degradations": []
+    },
+    "risk_state": "BLACK_INVALID",
+    "confidence": 0.0
+  },
+  {
+    "input": {
+      "subject_id": "ADV_001",
+      "critical_data_invalid": false,
+      "confidence": 1.0,
+      "domain_indices": {
+        "BSI": 30,
+        "NRI": 1000000.0,
+        "VML": 30,
+        "GRS": 60,
+        "CNI": 20
+      },
+      "degradations": []
+    },
+    "risk_state": "BLACK_INVALID",
+    "confidence": 0.0
+  },
+  {
+    "input": {
+      "subject_id": "ADV_001",
+      "critical_data_invalid": false,
+      "confidence": 1.0,
+      "domain_indices": {
+        "BSI": 30,
+        "NRI": 25,
+        "VML": 30,
+        "GRS": 60,
+        "CNI": 20
+      },
+      "degradations": [
+        "OUT_OF_DISTRIBUTION"
+      ]
+    },
+    "risk_state": "RED_CRITICAL",
+    "confidence": 1.0
+  },
+  {
+    "input": {
+      "subject_id": "ADV_001",
+      "critical_data_invalid": false,
+      "confidence": 1.0,
+      "domain_indices": {
+        "BSI": 34.9999,
+        "NRI": 29.9999,
+        "VML": 34.9999,
+        "GRS": 55.0001,
+        "CNI": 29.9999
+      },
+      "degradations": [
+        "UNKNOWN_PROVENANCE"
+      ]
+    },
+    "risk_state": "RED_CRITICAL",
+    "confidence": 0.75
+  },
+  {
+    "input": {
+      "subject_id": "ADV_001",
+      "critical_data_invalid": true,
+      "confidence": 999.0,
+      "domain_indices": {
+        "BSI": 30,
+        "NRI": 25,
+        "VML": 30,
+        "GRS": 60,
+        "CNI": 20
+      },
+      "degradations": []
+    },
+    "risk_state": "BLACK_INVALID",
+    "confidence": 0.0
+  },
+  {
+    "input": {
+      "subject_id": "ADV_001",
+      "critical_data_invalid": false,
+      "confidence": 1.0,
+      "domain_indices": {},
+      "degradations": []
+    },
+    "risk_state": "YELLOW_WATCH",
+    "confidence": 0.9
+  },
+  {
+    "input": {
+      "subject_id": "ADV_001",
+      "critical_data_invalid": false,
+      "confidence": 1.0,
+      "domain_indices": {
+        "BSI": "__NON_FINITE_FLOAT__:nan",
+        "NRI": 25,
+        "VML": 30,
+        "GRS": 60,
+        "CNI": 20
+      },
+      "degradations": []
+    },
+    "risk_state": "BLACK_INVALID",
+    "confidence": 0.0
+  },
+  {
+    "input": {
+      "subject_id": "ADV_001",
+      "critical_data_invalid": false,
+      "confidence": 1.0,
+      "domain_indices": {
+        "BSI": 30,
+        "NRI": 1000000.0,
+        "VML": 30,
+        "GRS": 60,
+        "CNI": 20
+      },
+      "degradations": []
+    },
+    "risk_state": "BLACK_INVALID",
+    "confidence": 0.0
+  },
+  {
+    "input": {
+      "subject_id": "ADV_001",
+      "critical_data_invalid": false,
+      "confidence": 1.0,
+      "domain_indices": {
+        "BSI": 30,
+        "NRI": 25,
+        "VML": 30,
+        "GRS": 60,
+        "CNI": 20
+      },
+      "degradations": [
+        "SOURCE_CONFLICT"
+      ]
+    },
+    "risk_state": "RED_CRITICAL",
+    "confidence": 0.7
+  },
+  {
+    "input": {
+      "subject_id": "ADV_001",
+      "critical_data_invalid": false,
+      "confidence": 1.0,
+      "domain_indices": {
+        "BSI": 34.9999,
+        "NRI": 29.9999,
+        "VML": 34.9999,
+        "GRS": 55.0001,
+        "CNI": 29.9999
+      },
+      "degradations": [
+        "UNKNOWN_PROVENANCE"
+      ]
+    },
+    "risk_state": "RED_CRITICAL",
+    "confidence": 0.75
+  },
+  {
+    "input": {
+      "subject_id": "ADV_001",
+      "critical_data_invalid": true,
+      "confidence": 999.0,
+      "domain_indices": {
+        "BSI": 30,
+        "NRI": 25,
+        "VML": 30,
+        "GRS": 60,
+        "CNI": 20
+      },
+      "degradations": []
+    },
+    "risk_state": "BLACK_INVALID",
+    "confidence": 0.0
+  },
+  {
+    "input": {
+      "subject_id": "ADV_001",
+      "critical_data_invalid": false,
+      "confidence": 1.0,
+      "domain_indices": {},
+      "degradations": []
+    },
+    "risk_state": "YELLOW_WATCH",
+    "confidence": 0.9
+  },
+  {
+    "input": {
+      "subject_id": "ADV_001",
+      "critical_data_invalid": false,
+      "confidence": 1.0,
+      "domain_indices": {
+        "BSI": "__NON_FINITE_FLOAT__:nan",
+        "NRI": 25,
+        "VML": 30,
+        "GRS": 60,
+        "CNI": 20
+      },
+      "degradations": []
+    },
+    "risk_state": "BLACK_INVALID",
+    "confidence": 0.0
+  },
+  {
+    "input": {
+      "subject_id": "ADV_001",
+      "critical_data_invalid": false,
+      "confidence": 1.0,
+      "domain_indices": {
+        "BSI": 30,
+        "NRI": 1000000.0,
+        "VML": 30,
+        "GRS": 60,
+        "CNI": 20
+      },
+      "degradations": []
+    },
+    "risk_state": "BLACK_INVALID",
+    "confidence": 0.0
+  },
+  {
+    "input": {
+      "subject_id": "ADV_001",
+      "critical_data_invalid": false,
+      "confidence": 1.0,
+      "domain_indices": {
+        "BSI": 30,
+        "NRI": 25,
+        "VML": 30,
+        "GRS": 60,
+        "CNI": 20
+      },
+      "degradations": [
+        "OUT_OF_DISTRIBUTION"
+      ]
+    },
+    "risk_state": "RED_CRITICAL",
+    "confidence": 1.0
+  },
+  {
+    "input": {
+      "subject_id": "ADV_001",
+      "critical_data_invalid": false,
+      "confidence": 1.0,
+      "domain_indices": {
+        "BSI": 34.9999,
+        "NRI": 29.9999,
+        "VML": 34.9999,
+        "GRS": 55.0001,
+        "CNI": 29.9999
+      },
+      "degradations": [
+        "UNKNOWN_PROVENANCE"
+      ]
+    },
+    "risk_state": "RED_CRITICAL",
+    "confidence": 0.75
+  },
+  {
+    "input": {
+      "subject_id": "ADV_001",
+      "critical_data_invalid": true,
+      "confidence": 999.0,
+      "domain_indices": {
+        "BSI": 30,
+        "NRI": 25,
+        "VML": 30,
+        "GRS": 60,
+        "CNI": 20
+      },
+      "degradations": []
+    },
+    "risk_state": "BLACK_INVALID",
+    "confidence": 0.0
+  },
+  {
+    "input": {
+      "subject_id": "ADV_001",
+      "critical_data_invalid": false,
+      "confidence": 1.0,
+      "domain_indices": {},
+      "degradations": []
+    },
+    "risk_state": "YELLOW_WATCH",
+    "confidence": 0.9
+  },
+  {
+    "input": {
+      "subject_id": "ADV_001",
+      "critical_data_invalid": false,
+      "confidence": 1.0,
+      "domain_indices": {
+        "BSI": "__NON_FINITE_FLOAT__:nan",
+        "NRI": 25,
+        "VML": 30,
+        "GRS": 60,
+        "CNI": 20
+      },
+      "degradations": []
+    },
+    "risk_state": "BLACK_INVALID",
+    "confidence": 0.0
+  },
+  {
+    "input": {
+      "subject_id": "ADV_001",
+      "critical_data_invalid": false,
+      "confidence": 1.0,
+      "domain_indices": {
+        "BSI": 30,
+        "NRI": 1000000.0,
+        "VML": 30,
+        "GRS": 60,
+        "CNI": 20
+      },
+      "degradations": []
+    },
+    "risk_state": "BLACK_INVALID",
+    "confidence": 0.0
+  },
+  {
+    "input": {
+      "subject_id": "ADV_001",
+      "critical_data_invalid": false,
+      "confidence": 1.0,
+      "domain_indices": {
+        "BSI": 30,
+        "NRI": 25,
+        "VML": 30,
+        "GRS": 60,
+        "CNI": 20
+      },
+      "degradations": [
+        "SOURCE_CONFLICT"
+      ]
+    },
+    "risk_state": "RED_CRITICAL",
+    "confidence": 0.7
+  },
+  {
+    "input": {
+      "subject_id": "ADV_001",
+      "critical_data_invalid": false,
+      "confidence": 1.0,
+      "domain_indices": {
+        "BSI": 34.9999,
+        "NRI": 29.9999,
+        "VML": 34.9999,
+        "GRS": 55.0001,
+        "CNI": 29.9999
+      },
+      "degradations": [
+        "UNKNOWN_PROVENANCE"
+      ]
+    },
+    "risk_state": "RED_CRITICAL",
+    "confidence": 0.75
+  },
+  {
+    "input": {
+      "subject_id": "ADV_001",
+      "critical_data_invalid": true,
+      "confidence": 999.0,
+      "domain_indices": {
+        "BSI": 30,
+        "NRI": 25,
+        "VML": 30,
+        "GRS": 60,
+        "CNI": 20
+      },
+      "degradations": []
+    },
+    "risk_state": "BLACK_INVALID",
+    "confidence": 0.0
+  },
+  {
+    "input": {
+      "subject_id": "ADV_001",
+      "critical_data_invalid": false,
+      "confidence": 1.0,
+      "domain_indices": {},
+      "degradations": []
+    },
+    "risk_state": "YELLOW_WATCH",
+    "confidence": 0.9
+  },
+  {
+    "input": {
+      "subject_id": "ADV_001",
+      "critical_data_invalid": false,
+      "confidence": 1.0,
+      "domain_indices": {
+        "BSI": "__NON_FINITE_FLOAT__:nan",
+        "NRI": 25,
+        "VML": 30,
+        "GRS": 60,
+        "CNI": 20
+      },
+      "degradations": []
+    },
+    "risk_state": "BLACK_INVALID",
+    "confidence": 0.0
+  },
+  {
+    "input": {
+      "subject_id": "ADV_001",
+      "critical_data_invalid": false,
+      "confidence": 1.0,
+      "domain_indices": {
+        "BSI": 30,
+        "NRI": 1000000.0,
+        "VML": 30,
+        "GRS": 60,
+        "CNI": 20
+      },
+      "degradations": []
+    },
+    "risk_state": "BLACK_INVALID",
+    "confidence": 0.0
+  },
+  {
+    "input": {
+      "subject_id": "ADV_001",
+      "critical_data_invalid": false,
+      "confidence": 1.0,
+      "domain_indices": {
+        "BSI": 30,
+        "NRI": 25,
+        "VML": 30,
+        "GRS": 60,
+        "CNI": 20
+      },
+      "degradations": [
+        "SOURCE_CONFLICT"
+      ]
+    },
+    "risk_state": "RED_CRITICAL",
+    "confidence": 0.7
+  },
+  {
+    "input": {
+      "subject_id": "ADV_001",
+      "critical_data_invalid": false,
+      "confidence": 1.0,
+      "domain_indices": {
+        "BSI": 34.9999,
+        "NRI": 29.9999,
+        "VML": 34.9999,
+        "GRS": 55.0001,
+        "CNI": 29.9999
+      },
+      "degradations": [
+        "UNKNOWN_PROVENANCE"
+      ]
+    },
+    "risk_state": "RED_CRITICAL",
+    "confidence": 0.75
+  },
+  {
+    "input": {
+      "subject_id": "ADV_001",
+      "critical_data_invalid": true,
+      "confidence": 999.0,
+      "domain_indices": {
+        "BSI": 30,
+        "NRI": 25,
+        "VML": 30,
+        "GRS": 60,
+        "CNI": 20
+      },
+      "degradations": []
+    },
+    "risk_state": "BLACK_INVALID",
+    "confidence": 0.0
+  },
+  {
+    "input": {
+      "subject_id": "ADV_001",
+      "critical_data_invalid": false,
+      "confidence": 1.0,
+      "domain_indices": {},
+      "degradations": []
+    },
+    "risk_state": "YELLOW_WATCH",
+    "confidence": 0.9
+  },
+  {
+    "input": {
+      "subject_id": "ADV_001",
+      "critical_data_invalid": false,
+      "confidence": 1.0,
+      "domain_indices": {
+        "BSI": "__NON_FINITE_FLOAT__:nan",
+        "NRI": 25,
+        "VML": 30,
+        "GRS": 60,
+        "CNI": 20
+      },
+      "degradations": []
+    },
+    "risk_state": "BLACK_INVALID",
+    "confidence": 0.0
+  },
+  {
+    "input": {
+      "subject_id": "ADV_001",
+      "critical_data_invalid": false,
+      "confidence": 1.0,
+      "domain_indices": {
+        "BSI": 30,
+        "NRI": 1000000.0,
+        "VML": 30,
+        "GRS": 60,
+        "CNI": 20
+      },
+      "degradations": []
+    },
+    "risk_state": "BLACK_INVALID",
+    "confidence": 0.0
+  },
+  {
+    "input": {
+      "subject_id": "ADV_001",
+      "critical_data_invalid": false,
+      "confidence": 1.0,
+      "domain_indices": {
+        "BSI": 30,
+        "NRI": 25,
+        "VML": 30,
+        "GRS": 60,
+        "CNI": 20
+      },
+      "degradations": [
+        "UNKNOWN_PROVENANCE",
+        "CLOCK_SKEW_DETECTED"
+      ]
+    },
+    "risk_state": "RED_CRITICAL",
+    "confidence": 0.75
+  },
+  {
+    "input": {
+      "subject_id": "ADV_001",
+      "critical_data_invalid": false,
+      "confidence": 1.0,
+      "domain_indices": {
+        "BSI": 34.9999,
+        "NRI": 29.9999,
+        "VML": 34.9999,
+        "GRS": 55.0001,
+        "CNI": 29.9999
+      },
+      "degradations": [
+        "UNKNOWN_PROVENANCE"
+      ]
+    },
+    "risk_state": "RED_CRITICAL",
+    "confidence": 0.75
+  },
+  {
+    "input": {
+      "subject_id": "ADV_001",
+      "critical_data_invalid": true,
+      "confidence": 999.0,
+      "domain_indices": {
+        "BSI": 30,
+        "NRI": 25,
+        "VML": 30,
+        "GRS": 60,
+        "CNI": 20
+      },
+      "degradations": []
+    },
+    "risk_state": "BLACK_INVALID",
+    "confidence": 0.0
+  },
+  {
+    "input": {
+      "subject_id": "ADV_001",
+      "critical_data_invalid": false,
+      "confidence": 1.0,
+      "domain_indices": {},
+      "degradations": []
+    },
+    "risk_state": "YELLOW_WATCH",
+    "confidence": 0.9
+  },
+  {
+    "input": {
+      "subject_id": "ADV_001",
+      "critical_data_invalid": false,
+      "confidence": 1.0,
+      "domain_indices": {
+        "BSI": "__NON_FINITE_FLOAT__:nan",
+        "NRI": 25,
+        "VML": 30,
+        "GRS": 60,
+        "CNI": 20
+      },
+      "degradations": []
+    },
+    "risk_state": "BLACK_INVALID",
+    "confidence": 0.0
+  },
+  {
+    "input": {
+      "subject_id": "ADV_001",
+      "critical_data_invalid": false,
+      "confidence": 1.0,
+      "domain_indices": {
+        "BSI": 30,
+        "NRI": 1000000.0,
+        "VML": 30,
+        "GRS": 60,
+        "CNI": 20
+      },
+      "degradations": []
+    },
+    "risk_state": "BLACK_INVALID",
+    "confidence": 0.0
+  },
+  {
+    "input": {
+      "subject_id": "ADV_001",
+      "critical_data_invalid": false,
+      "confidence": 1.0,
+      "domain_indices": {
+        "BSI": 30,
+        "NRI": 25,
+        "VML": 30,
+        "GRS": 60,
+        "CNI": 20
+      },
+      "degradations": [
+        "OUT_OF_DISTRIBUTION"
+      ]
+    },
+    "risk_state": "RED_CRITICAL",
+    "confidence": 1.0
+  },
+  {
+    "input": {
+      "subject_id": "ADV_001",
+      "critical_data_invalid": false,
+      "confidence": 1.0,
+      "domain_indices": {
+        "BSI": 34.9999,
+        "NRI": 29.9999,
+        "VML": 34.9999,
+        "GRS": 55.0001,
+        "CNI": 29.9999
+      },
+      "degradations": [
+        "UNKNOWN_PROVENANCE"
+      ]
+    },
+    "risk_state": "RED_CRITICAL",
+    "confidence": 0.75
+  },
+  {
+    "input": {
+      "subject_id": "ADV_001",
+      "critical_data_invalid": true,
+      "confidence": 999.0,
+      "domain_indices": {
+        "BSI": 30,
+        "NRI": 25,
+        "VML": 30,
+        "GRS": 60,
+        "CNI": 20
+      },
+      "degradations": []
+    },
+    "risk_state": "BLACK_INVALID",
+    "confidence": 0.0
+  },
+  {
+    "input": {
+      "subject_id": "ADV_001",
+      "critical_data_invalid": false,
+      "confidence": 1.0,
+      "domain_indices": {},
+      "degradations": []
+    },
+    "risk_state": "YELLOW_WATCH",
+    "confidence": 0.9
+  },
+  {
+    "input": {
+      "subject_id": "ADV_001",
+      "critical_data_invalid": false,
+      "confidence": 1.0,
+      "domain_indices": {
+        "BSI": "__NON_FINITE_FLOAT__:nan",
+        "NRI": 25,
+        "VML": 30,
+        "GRS": 60,
+        "CNI": 20
+      },
+      "degradations": []
+    },
+    "risk_state": "BLACK_INVALID",
+    "confidence": 0.0
+  },
+  {
+    "input": {
+      "subject_id": "ADV_001",
+      "critical_data_invalid": false,
+      "confidence": 1.0,
+      "domain_indices": {
+        "BSI": 30,
+        "NRI": 1000000.0,
+        "VML": 30,
+        "GRS": 60,
+        "CNI": 20
+      },
+      "degradations": []
+    },
+    "risk_state": "BLACK_INVALID",
+    "confidence": 0.0
+  },
+  {
+    "input": {
+      "subject_id": "ADV_001",
+      "critical_data_invalid": false,
+      "confidence": 1.0,
+      "domain_indices": {
+        "BSI": 30,
+        "NRI": 25,
+        "VML": 30,
+        "GRS": 60,
+        "CNI": 20
+      },
+      "degradations": [
+        "CLOCK_SKEW_DETECTED"
+      ]
+    },
+    "risk_state": "RED_CRITICAL",
+    "confidence": 1.0
+  },
+  {
+    "input": {
+      "subject_id": "ADV_001",
+      "critical_data_invalid": false,
+      "confidence": 1.0,
+      "domain_indices": {
+        "BSI": 34.9999,
+        "NRI": 29.9999,
+        "VML": 34.9999,
+        "GRS": 55.0001,
+        "CNI": 29.9999
+      },
+      "degradations": [
+        "UNKNOWN_PROVENANCE"
+      ]
+    },
+    "risk_state": "RED_CRITICAL",
+    "confidence": 0.75
+  },
+  {
+    "input": {
+      "subject_id": "ADV_001",
+      "critical_data_invalid": true,
+      "confidence": 999.0,
+      "domain_indices": {
+        "BSI": 30,
+        "NRI": 25,
+        "VML": 30,
+        "GRS": 60,
+        "CNI": 20
+      },
+      "degradations": []
+    },
+    "risk_state": "BLACK_INVALID",
+    "confidence": 0.0
+  },
+  {
+    "input": {
+      "subject_id": "ADV_001",
+      "critical_data_invalid": false,
+      "confidence": 1.0,
+      "domain_indices": {},
+      "degradations": []
+    },
+    "risk_state": "YELLOW_WATCH",
+    "confidence": 0.9
+  },
+  {
+    "input": {
+      "subject_id": "ADV_001",
+      "critical_data_invalid": false,
+      "confidence": 1.0,
+      "domain_indices": {
+        "BSI": "__NON_FINITE_FLOAT__:nan",
+        "NRI": 25,
+        "VML": 30,
+        "GRS": 60,
+        "CNI": 20
+      },
+      "degradations": []
+    },
+    "risk_state": "BLACK_INVALID",
+    "confidence": 0.0
+  },
+  {
+    "input": {
+      "subject_id": "ADV_001",
+      "critical_data_invalid": false,
+      "confidence": 1.0,
+      "domain_indices": {
+        "BSI": 30,
+        "NRI": 1000000.0,
+        "VML": 30,
+        "GRS": 60,
+        "CNI": 20
+      },
+      "degradations": []
+    },
+    "risk_state": "BLACK_INVALID",
+    "confidence": 0.0
+  },
+  {
+    "input": {
+      "subject_id": "ADV_001",
+      "critical_data_invalid": false,
+      "confidence": 1.0,
+      "domain_indices": {
+        "BSI": 30,
+        "NRI": 25,
+        "VML": 30,
+        "GRS": 60,
+        "CNI": 20
+      },
+      "degradations": [
+        "CLOCK_SKEW_DETECTED"
+      ]
+    },
+    "risk_state": "RED_CRITICAL",
+    "confidence": 1.0
+  },
+  {
+    "input": {
+      "subject_id": "ADV_001",
+      "critical_data_invalid": false,
+      "confidence": 1.0,
+      "domain_indices": {
+        "BSI": 34.9999,
+        "NRI": 29.9999,
+        "VML": 34.9999,
+        "GRS": 55.0001,
+        "CNI": 29.9999
+      },
+      "degradations": [
+        "UNKNOWN_PROVENANCE"
+      ]
+    },
+    "risk_state": "RED_CRITICAL",
+    "confidence": 0.75
+  },
+  {
+    "input": {
+      "subject_id": "ADV_001",
+      "critical_data_invalid": true,
+      "confidence": 999.0,
+      "domain_indices": {
+        "BSI": 30,
+        "NRI": 25,
+        "VML": 30,
+        "GRS": 60,
+        "CNI": 20
+      },
+      "degradations": []
+    },
+    "risk_state": "BLACK_INVALID",
+    "confidence": 0.0
+  },
+  {
+    "input": {
+      "subject_id": "ADV_001",
+      "critical_data_invalid": false,
+      "confidence": 1.0,
+      "domain_indices": {},
+      "degradations": []
+    },
+    "risk_state": "YELLOW_WATCH",
+    "confidence": 0.9
+  },
+  {
+    "input": {
+      "subject_id": "ADV_001",
+      "critical_data_invalid": false,
+      "confidence": 1.0,
+      "domain_indices": {
+        "BSI": "__NON_FINITE_FLOAT__:nan",
+        "NRI": 25,
+        "VML": 30,
+        "GRS": 60,
+        "CNI": 20
+      },
+      "degradations": []
+    },
+    "risk_state": "BLACK_INVALID",
+    "confidence": 0.0
+  },
+  {
+    "input": {
+      "subject_id": "ADV_001",
+      "critical_data_invalid": false,
+      "confidence": 1.0,
+      "domain_indices": {
+        "BSI": 30,
+        "NRI": 1000000.0,
+        "VML": 30,
+        "GRS": 60,
+        "CNI": 20
+      },
+      "degradations": []
+    },
+    "risk_state": "BLACK_INVALID",
+    "confidence": 0.0
+  },
+  {
+    "input": {
+      "subject_id": "ADV_001",
+      "critical_data_invalid": false,
+      "confidence": 1.0,
+      "domain_indices": {
+        "BSI": 30,
+        "NRI": 25,
+        "VML": 30,
+        "GRS": 60,
+        "CNI": 20
+      },
+      "degradations": [
+        "SOURCE_CONFLICT"
+      ]
+    },
+    "risk_state": "RED_CRITICAL",
+    "confidence": 0.7
+  },
+  {
+    "input": {
+      "subject_id": "ADV_001",
+      "critical_data_invalid": false,
+      "confidence": 1.0,
+      "domain_indices": {
+        "BSI": 34.9999,
+        "NRI": 29.9999,
+        "VML": 34.9999,
+        "GRS": 55.0001,
+        "CNI": 29.9999
+      },
+      "degradations": [
+        "UNKNOWN_PROVENANCE"
+      ]
+    },
+    "risk_state": "RED_CRITICAL",
+    "confidence": 0.75
+  }
+]

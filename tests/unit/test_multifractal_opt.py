@@ -1,3 +1,5 @@
+# Copyright (c) 2023-2026 Yaroslav Vasylenko (neuron7xLab)
+# SPDX-License-Identifier: MIT
 """Unit tests for fractional Lévy updates used by FHMC agents."""
 
 from __future__ import annotations
@@ -7,7 +9,7 @@ import pytest
 
 torch = pytest.importorskip("torch")
 
-from neuropro.multifractal_opt import fractional_update  # noqa: E402
+from geosync_hpc.multifractal_opt import fractional_update  # noqa: E402
 
 
 def test_fractional_update_descends_without_noise() -> None:

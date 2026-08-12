@@ -1,0 +1,24 @@
+{
+  "schema": "wave1_fx_universe_v2",
+  "locked_at_utc": "2026-04-21",
+  "locked_by": "neuron7x@ukr.net",
+  "supersedes": "/home/neuro7/wave1_combo_v1/universe.json (v1)",
+  "geosync_sha": "8b68156df48f1d8ec7566a8db57fb71a66cf8622",
+  "geosync_root": "/home/neuro7/Desktop/Торгова система легенда/GeoSync-main (4)/GeoSync-main",
+  "data_root": "/home/neuro7/Downloads/аскар/TransferNow-202604101WrhmK3D",
+  "data_audit": "/home/neuro7/Downloads/аскар/data_audit_report.md",
+  "selection_rule": "hourly native; resample to daily close at 21:00 UTC (last close ≤ 21:00 each UTC day); drop rows with ts.year < 1990 (audit corrupt_ts flag) OR duplicate ts",
+  "rebalance_time_utc": "21:00",
+  "signal_to_trade_lag_bars": 1,
+  "assets": [
+    {"symbol": "EURUSD", "file": "EURUSD_GMT+0_NO-DST.parquet", "rows_raw": 142374, "audit_corrupt_ts": 0, "cost_bps_run_b": 1.0},
+    {"symbol": "GBPUSD", "file": "GBPUSD_GMT+0_NO-DST.parquet", "rows_raw": 142335, "audit_corrupt_ts": 1, "cost_bps_run_b": 1.0},
+    {"symbol": "USDJPY", "file": "USDJPY_GMT+0_NO-DST.parquet", "rows_raw": 142026, "audit_corrupt_ts": 1, "cost_bps_run_b": 1.5},
+    {"symbol": "AUDUSD", "file": "AUDUSD_GMT+0_NO-DST.parquet", "rows_raw": 139881, "audit_corrupt_ts": 0, "cost_bps_run_b": 1.0},
+    {"symbol": "USDCAD", "file": "USDCAD_GMT+0_NO-DST.parquet", "rows_raw": 140764, "audit_corrupt_ts": 0, "cost_bps_run_b": 1.5},
+    {"symbol": "USDCHF", "file": "USDCHF_GMT+0_NO-DST.parquet", "rows_raw": 140746, "audit_corrupt_ts": 0, "cost_bps_run_b": 1.5},
+    {"symbol": "EURGBP", "file": "EURGBP_GMT+0_NO-DST.parquet", "rows_raw": 140769, "audit_corrupt_ts": 0, "cost_bps_run_b": 1.5},
+    {"symbol": "EURJPY", "file": "EURJPY_GMT+0_NO-DST.parquet", "rows_raw": 140438, "audit_corrupt_ts": 0, "cost_bps_run_b": 1.5}
+  ],
+  "n_assets": 8
+}

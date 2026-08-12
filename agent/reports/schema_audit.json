@@ -1,0 +1,852 @@
+{
+  "assets": [
+    {
+      "asset": "AUDCAD",
+      "can_derive_ofi": false,
+      "can_derive_spread": false,
+      "fields": [
+        "AUDCAD"
+      ],
+      "has_ask": false,
+      "has_ask_depth": false,
+      "has_bid": false,
+      "has_bid_depth": false,
+      "has_ofi": false,
+      "has_spread": false,
+      "has_trades": false,
+      "precursor_capable": false
+    },
+    {
+      "asset": "AUDCHF",
+      "can_derive_ofi": false,
+      "can_derive_spread": false,
+      "fields": [
+        "AUDCHF"
+      ],
+      "has_ask": false,
+      "has_ask_depth": false,
+      "has_bid": false,
+      "has_bid_depth": false,
+      "has_ofi": false,
+      "has_spread": false,
+      "has_trades": false,
+      "precursor_capable": false
+    },
+    {
+      "asset": "AUDJPY",
+      "can_derive_ofi": false,
+      "can_derive_spread": false,
+      "fields": [
+        "AUDJPY"
+      ],
+      "has_ask": false,
+      "has_ask_depth": false,
+      "has_bid": false,
+      "has_bid_depth": false,
+      "has_ofi": false,
+      "has_spread": false,
+      "has_trades": false,
+      "precursor_capable": false
+    },
+    {
+      "asset": "AUDNZD",
+      "can_derive_ofi": false,
+      "can_derive_spread": false,
+      "fields": [
+        "AUDNZD"
+      ],
+      "has_ask": false,
+      "has_ask_depth": false,
+      "has_bid": false,
+      "has_bid_depth": false,
+      "has_ofi": false,
+      "has_spread": false,
+      "has_trades": false,
+      "precursor_capable": false
+    },
+    {
+      "asset": "AUDUSD",
+      "can_derive_ofi": false,
+      "can_derive_spread": false,
+      "fields": [
+        "AUDUSD"
+      ],
+      "has_ask": false,
+      "has_ask_depth": false,
+      "has_bid": false,
+      "has_bid_depth": false,
+      "has_ofi": false,
+      "has_spread": false,
+      "has_trades": false,
+      "precursor_capable": false
+    },
+    {
+      "asset": "Australia_200_Index",
+      "can_derive_ofi": false,
+      "can_derive_spread": false,
+      "fields": [
+        "Australia_200_Index"
+      ],
+      "has_ask": false,
+      "has_ask_depth": false,
+      "has_bid": false,
+      "has_bid_depth": false,
+      "has_ofi": false,
+      "has_spread": false,
+      "has_trades": false,
+      "precursor_capable": false
+    },
+    {
+      "asset": "CADCHF",
+      "can_derive_ofi": false,
+      "can_derive_spread": false,
+      "fields": [
+        "CADCHF"
+      ],
+      "has_ask": false,
+      "has_ask_depth": false,
+      "has_bid": false,
+      "has_bid_depth": false,
+      "has_ofi": false,
+      "has_spread": false,
+      "has_trades": false,
+      "precursor_capable": false
+    },
+    {
+      "asset": "CADJPY",
+      "can_derive_ofi": false,
+      "can_derive_spread": false,
+      "fields": [
+        "CADJPY"
+      ],
+      "has_ask": false,
+      "has_ask_depth": false,
+      "has_bid": false,
+      "has_bid_depth": false,
+      "has_ofi": false,
+      "has_spread": false,
+      "has_trades": false,
+      "precursor_capable": false
+    },
+    {
+      "asset": "CHFJPY",
+      "can_derive_ofi": false,
+      "can_derive_spread": false,
+      "fields": [
+        "CHFJPY"
+      ],
+      "has_ask": false,
+      "has_ask_depth": false,
+      "has_bid": false,
+      "has_bid_depth": false,
+      "has_ofi": false,
+      "has_spread": false,
+      "has_trades": false,
+      "precursor_capable": false
+    },
+    {
+      "asset": "EURAUD",
+      "can_derive_ofi": false,
+      "can_derive_spread": false,
+      "fields": [
+        "EURAUD"
+      ],
+      "has_ask": false,
+      "has_ask_depth": false,
+      "has_bid": false,
+      "has_bid_depth": false,
+      "has_ofi": false,
+      "has_spread": false,
+      "has_trades": false,
+      "precursor_capable": false
+    },
+    {
+      "asset": "EURCAD",
+      "can_derive_ofi": false,
+      "can_derive_spread": false,
+      "fields": [
+        "EURCAD"
+      ],
+      "has_ask": false,
+      "has_ask_depth": false,
+      "has_bid": false,
+      "has_bid_depth": false,
+      "has_ofi": false,
+      "has_spread": false,
+      "has_trades": false,
+      "precursor_capable": false
+    },
+    {
+      "asset": "EURCHF",
+      "can_derive_ofi": false,
+      "can_derive_spread": false,
+      "fields": [
+        "EURCHF"
+      ],
+      "has_ask": false,
+      "has_ask_depth": false,
+      "has_bid": false,
+      "has_bid_depth": false,
+      "has_ofi": false,
+      "has_spread": false,
+      "has_trades": false,
+      "precursor_capable": false
+    },
+    {
+      "asset": "EURGBP",
+      "can_derive_ofi": false,
+      "can_derive_spread": false,
+      "fields": [
+        "EURGBP"
+      ],
+      "has_ask": false,
+      "has_ask_depth": false,
+      "has_bid": false,
+      "has_bid_depth": false,
+      "has_ofi": false,
+      "has_spread": false,
+      "has_trades": false,
+      "precursor_capable": false
+    },
+    {
+      "asset": "EURJPY",
+      "can_derive_ofi": false,
+      "can_derive_spread": false,
+      "fields": [
+        "EURJPY"
+      ],
+      "has_ask": false,
+      "has_ask_depth": false,
+      "has_bid": false,
+      "has_bid_depth": false,
+      "has_ofi": false,
+      "has_spread": false,
+      "has_trades": false,
+      "precursor_capable": false
+    },
+    {
+      "asset": "EURNZD",
+      "can_derive_ofi": false,
+      "can_derive_spread": false,
+      "fields": [
+        "EURNZD"
+      ],
+      "has_ask": false,
+      "has_ask_depth": false,
+      "has_bid": false,
+      "has_bid_depth": false,
+      "has_ofi": false,
+      "has_spread": false,
+      "has_trades": false,
+      "precursor_capable": false
+    },
+    {
+      "asset": "EURUSD",
+      "can_derive_ofi": false,
+      "can_derive_spread": false,
+      "fields": [
+        "EURUSD"
+      ],
+      "has_ask": false,
+      "has_ask_depth": false,
+      "has_bid": false,
+      "has_bid_depth": false,
+      "has_ofi": false,
+      "has_spread": false,
+      "has_trades": false,
+      "precursor_capable": false
+    },
+    {
+      "asset": "Euro_Bund",
+      "can_derive_ofi": false,
+      "can_derive_spread": false,
+      "fields": [
+        "Euro_Bund"
+      ],
+      "has_ask": false,
+      "has_ask_depth": false,
+      "has_bid": false,
+      "has_bid_depth": false,
+      "has_ofi": false,
+      "has_spread": false,
+      "has_trades": false,
+      "precursor_capable": false
+    },
+    {
+      "asset": "Europe_50_Index",
+      "can_derive_ofi": false,
+      "can_derive_spread": false,
+      "fields": [
+        "Europe_50_Index"
+      ],
+      "has_ask": false,
+      "has_ask_depth": false,
+      "has_bid": false,
+      "has_bid_depth": false,
+      "has_ofi": false,
+      "has_spread": false,
+      "has_trades": false,
+      "precursor_capable": false
+    },
+    {
+      "asset": "France_40_Index",
+      "can_derive_ofi": false,
+      "can_derive_spread": false,
+      "fields": [
+        "France_40_Index"
+      ],
+      "has_ask": false,
+      "has_ask_depth": false,
+      "has_bid": false,
+      "has_bid_depth": false,
+      "has_ofi": false,
+      "has_spread": false,
+      "has_trades": false,
+      "precursor_capable": false
+    },
+    {
+      "asset": "GBPAUD",
+      "can_derive_ofi": false,
+      "can_derive_spread": false,
+      "fields": [
+        "GBPAUD"
+      ],
+      "has_ask": false,
+      "has_ask_depth": false,
+      "has_bid": false,
+      "has_bid_depth": false,
+      "has_ofi": false,
+      "has_spread": false,
+      "has_trades": false,
+      "precursor_capable": false
+    },
+    {
+      "asset": "GBPCAD",
+      "can_derive_ofi": false,
+      "can_derive_spread": false,
+      "fields": [
+        "GBPCAD"
+      ],
+      "has_ask": false,
+      "has_ask_depth": false,
+      "has_bid": false,
+      "has_bid_depth": false,
+      "has_ofi": false,
+      "has_spread": false,
+      "has_trades": false,
+      "precursor_capable": false
+    },
+    {
+      "asset": "GBPCHF",
+      "can_derive_ofi": false,
+      "can_derive_spread": false,
+      "fields": [
+        "GBPCHF"
+      ],
+      "has_ask": false,
+      "has_ask_depth": false,
+      "has_bid": false,
+      "has_bid_depth": false,
+      "has_ofi": false,
+      "has_spread": false,
+      "has_trades": false,
+      "precursor_capable": false
+    },
+    {
+      "asset": "GBPJPY",
+      "can_derive_ofi": false,
+      "can_derive_spread": false,
+      "fields": [
+        "GBPJPY"
+      ],
+      "has_ask": false,
+      "has_ask_depth": false,
+      "has_bid": false,
+      "has_bid_depth": false,
+      "has_ofi": false,
+      "has_spread": false,
+      "has_trades": false,
+      "precursor_capable": false
+    },
+    {
+      "asset": "GBPNZD",
+      "can_derive_ofi": false,
+      "can_derive_spread": false,
+      "fields": [
+        "GBPNZD"
+      ],
+      "has_ask": false,
+      "has_ask_depth": false,
+      "has_bid": false,
+      "has_bid_depth": false,
+      "has_ofi": false,
+      "has_spread": false,
+      "has_trades": false,
+      "precursor_capable": false
+    },
+    {
+      "asset": "GBPUSD",
+      "can_derive_ofi": false,
+      "can_derive_spread": false,
+      "fields": [
+        "GBPUSD"
+      ],
+      "has_ask": false,
+      "has_ask_depth": false,
+      "has_bid": false,
+      "has_bid_depth": false,
+      "has_ofi": false,
+      "has_spread": false,
+      "has_trades": false,
+      "precursor_capable": false
+    },
+    {
+      "asset": "Germany_40_Index",
+      "can_derive_ofi": false,
+      "can_derive_spread": false,
+      "fields": [
+        "Germany_40_Index"
+      ],
+      "has_ask": false,
+      "has_ask_depth": false,
+      "has_bid": false,
+      "has_bid_depth": false,
+      "has_ofi": false,
+      "has_spread": false,
+      "has_trades": false,
+      "precursor_capable": false
+    },
+    {
+      "asset": "Hong_Kong_40_Index",
+      "can_derive_ofi": false,
+      "can_derive_spread": false,
+      "fields": [
+        "Hong_Kong_40_Index"
+      ],
+      "has_ask": false,
+      "has_ask_depth": false,
+      "has_bid": false,
+      "has_bid_depth": false,
+      "has_ofi": false,
+      "has_spread": false,
+      "has_trades": false,
+      "precursor_capable": false
+    },
+    {
+      "asset": "Japan_225",
+      "can_derive_ofi": false,
+      "can_derive_spread": false,
+      "fields": [
+        "Japan_225"
+      ],
+      "has_ask": false,
+      "has_ask_depth": false,
+      "has_bid": false,
+      "has_bid_depth": false,
+      "has_ofi": false,
+      "has_spread": false,
+      "has_trades": false,
+      "precursor_capable": false
+    },
+    {
+      "asset": "NZDCAD",
+      "can_derive_ofi": false,
+      "can_derive_spread": false,
+      "fields": [
+        "NZDCAD"
+      ],
+      "has_ask": false,
+      "has_ask_depth": false,
+      "has_bid": false,
+      "has_bid_depth": false,
+      "has_ofi": false,
+      "has_spread": false,
+      "has_trades": false,
+      "precursor_capable": false
+    },
+    {
+      "asset": "NZDCHF",
+      "can_derive_ofi": false,
+      "can_derive_spread": false,
+      "fields": [
+        "NZDCHF"
+      ],
+      "has_ask": false,
+      "has_ask_depth": false,
+      "has_bid": false,
+      "has_bid_depth": false,
+      "has_ofi": false,
+      "has_spread": false,
+      "has_trades": false,
+      "precursor_capable": false
+    },
+    {
+      "asset": "NZDJPY",
+      "can_derive_ofi": false,
+      "can_derive_spread": false,
+      "fields": [
+        "NZDJPY"
+      ],
+      "has_ask": false,
+      "has_ask_depth": false,
+      "has_bid": false,
+      "has_bid_depth": false,
+      "has_ofi": false,
+      "has_spread": false,
+      "has_trades": false,
+      "precursor_capable": false
+    },
+    {
+      "asset": "NZDUSD",
+      "can_derive_ofi": false,
+      "can_derive_spread": false,
+      "fields": [
+        "NZDUSD"
+      ],
+      "has_ask": false,
+      "has_ask_depth": false,
+      "has_bid": false,
+      "has_bid_depth": false,
+      "has_ofi": false,
+      "has_spread": false,
+      "has_trades": false,
+      "precursor_capable": false
+    },
+    {
+      "asset": "PowerShares_QQQ_ETF",
+      "can_derive_ofi": false,
+      "can_derive_spread": false,
+      "fields": [
+        "PowerShares_QQQ_ETF"
+      ],
+      "has_ask": false,
+      "has_ask_depth": false,
+      "has_bid": false,
+      "has_bid_depth": false,
+      "has_ofi": false,
+      "has_spread": false,
+      "has_trades": false,
+      "precursor_capable": false
+    },
+    {
+      "asset": "SPDR_Gold_Shares_ETF",
+      "can_derive_ofi": false,
+      "can_derive_spread": false,
+      "fields": [
+        "SPDR_Gold_Shares_ETF"
+      ],
+      "has_ask": false,
+      "has_ask_depth": false,
+      "has_bid": false,
+      "has_bid_depth": false,
+      "has_ofi": false,
+      "has_spread": false,
+      "has_trades": false,
+      "precursor_capable": false
+    },
+    {
+      "asset": "SPDR_S_P_500_ETF",
+      "can_derive_ofi": false,
+      "can_derive_spread": false,
+      "fields": [
+        "SPDR_S_P_500_ETF"
+      ],
+      "has_ask": false,
+      "has_ask_depth": false,
+      "has_bid": false,
+      "has_bid_depth": false,
+      "has_ofi": false,
+      "has_spread": false,
+      "has_trades": false,
+      "precursor_capable": false
+    },
+    {
+      "asset": "Spain_35_Index",
+      "can_derive_ofi": false,
+      "can_derive_spread": false,
+      "fields": [
+        "Spain_35_Index"
+      ],
+      "has_ask": false,
+      "has_ask_depth": false,
+      "has_bid": false,
+      "has_bid_depth": false,
+      "has_ofi": false,
+      "has_spread": false,
+      "has_trades": false,
+      "precursor_capable": false
+    },
+    {
+      "asset": "Switzerland_20_Index",
+      "can_derive_ofi": false,
+      "can_derive_spread": false,
+      "fields": [
+        "Switzerland_20_Index"
+      ],
+      "has_ask": false,
+      "has_ask_depth": false,
+      "has_bid": false,
+      "has_bid_depth": false,
+      "has_ofi": false,
+      "has_spread": false,
+      "has_trades": false,
+      "precursor_capable": false
+    },
+    {
+      "asset": "UK_100_Index",
+      "can_derive_ofi": false,
+      "can_derive_spread": false,
+      "fields": [
+        "UK_100_Index"
+      ],
+      "has_ask": false,
+      "has_ask_depth": false,
+      "has_bid": false,
+      "has_bid_depth": false,
+      "has_ofi": false,
+      "has_spread": false,
+      "has_trades": false,
+      "precursor_capable": false
+    },
+    {
+      "asset": "USA_100_Technical_Index",
+      "can_derive_ofi": false,
+      "can_derive_spread": false,
+      "fields": [
+        "USA_100_Technical_Index"
+      ],
+      "has_ask": false,
+      "has_ask_depth": false,
+      "has_bid": false,
+      "has_bid_depth": false,
+      "has_ofi": false,
+      "has_spread": false,
+      "has_trades": false,
+      "precursor_capable": false
+    },
+    {
+      "asset": "USA_30_Index",
+      "can_derive_ofi": false,
+      "can_derive_spread": false,
+      "fields": [
+        "USA_30_Index"
+      ],
+      "has_ask": false,
+      "has_ask_depth": false,
+      "has_bid": false,
+      "has_bid_depth": false,
+      "has_ofi": false,
+      "has_spread": false,
+      "has_trades": false,
+      "precursor_capable": false
+    },
+    {
+      "asset": "USA_500_Index",
+      "can_derive_ofi": false,
+      "can_derive_spread": false,
+      "fields": [
+        "USA_500_Index"
+      ],
+      "has_ask": false,
+      "has_ask_depth": false,
+      "has_bid": false,
+      "has_bid_depth": false,
+      "has_ofi": false,
+      "has_spread": false,
+      "has_trades": false,
+      "precursor_capable": false
+    },
+    {
+      "asset": "USDCAD",
+      "can_derive_ofi": false,
+      "can_derive_spread": false,
+      "fields": [
+        "USDCAD"
+      ],
+      "has_ask": false,
+      "has_ask_depth": false,
+      "has_bid": false,
+      "has_bid_depth": false,
+      "has_ofi": false,
+      "has_spread": false,
+      "has_trades": false,
+      "precursor_capable": false
+    },
+    {
+      "asset": "USDCHF",
+      "can_derive_ofi": false,
+      "can_derive_spread": false,
+      "fields": [
+        "USDCHF"
+      ],
+      "has_ask": false,
+      "has_ask_depth": false,
+      "has_bid": false,
+      "has_bid_depth": false,
+      "has_ofi": false,
+      "has_spread": false,
+      "has_trades": false,
+      "precursor_capable": false
+    },
+    {
+      "asset": "USDJPY",
+      "can_derive_ofi": false,
+      "can_derive_spread": false,
+      "fields": [
+        "USDJPY"
+      ],
+      "has_ask": false,
+      "has_ask_depth": false,
+      "has_bid": false,
+      "has_bid_depth": false,
+      "has_ofi": false,
+      "has_spread": false,
+      "has_trades": false,
+      "precursor_capable": false
+    },
+    {
+      "asset": "VanEck_Vectors_Gold_Miners_ETF",
+      "can_derive_ofi": false,
+      "can_derive_spread": false,
+      "fields": [
+        "VanEck_Vectors_Gold_Miners_ETF"
+      ],
+      "has_ask": false,
+      "has_ask_depth": false,
+      "has_bid": false,
+      "has_bid_depth": false,
+      "has_ofi": false,
+      "has_spread": false,
+      "has_trades": false,
+      "precursor_capable": false
+    },
+    {
+      "asset": "XAUUSD",
+      "can_derive_ofi": false,
+      "can_derive_spread": false,
+      "fields": [
+        "XAUUSD"
+      ],
+      "has_ask": false,
+      "has_ask_depth": false,
+      "has_bid": false,
+      "has_bid_depth": false,
+      "has_ofi": false,
+      "has_spread": false,
+      "has_trades": false,
+      "precursor_capable": false
+    },
+    {
+      "asset": "iShares_20_Year_Treasury_Bond_ETF",
+      "can_derive_ofi": false,
+      "can_derive_spread": false,
+      "fields": [
+        "iShares_20_Year_Treasury_Bond_ETF"
+      ],
+      "has_ask": false,
+      "has_ask_depth": false,
+      "has_bid": false,
+      "has_bid_depth": false,
+      "has_ofi": false,
+      "has_spread": false,
+      "has_trades": false,
+      "precursor_capable": false
+    },
+    {
+      "asset": "iShares_China_Large_Cap_ETF",
+      "can_derive_ofi": false,
+      "can_derive_spread": false,
+      "fields": [
+        "iShares_China_Large_Cap_ETF"
+      ],
+      "has_ask": false,
+      "has_ask_depth": false,
+      "has_bid": false,
+      "has_bid_depth": false,
+      "has_ofi": false,
+      "has_spread": false,
+      "has_trades": false,
+      "precursor_capable": false
+    },
+    {
+      "asset": "iShares_MSCI_EAFE_ETF",
+      "can_derive_ofi": false,
+      "can_derive_spread": false,
+      "fields": [
+        "iShares_MSCI_EAFE_ETF"
+      ],
+      "has_ask": false,
+      "has_ask_depth": false,
+      "has_bid": false,
+      "has_bid_depth": false,
+      "has_ofi": false,
+      "has_spread": false,
+      "has_trades": false,
+      "precursor_capable": false
+    },
+    {
+      "asset": "iShares_MSCI_Emerging_Markets_ETF",
+      "can_derive_ofi": false,
+      "can_derive_spread": false,
+      "fields": [
+        "iShares_MSCI_Emerging_Markets_ETF"
+      ],
+      "has_ask": false,
+      "has_ask_depth": false,
+      "has_bid": false,
+      "has_bid_depth": false,
+      "has_ofi": false,
+      "has_spread": false,
+      "has_trades": false,
+      "precursor_capable": false
+    },
+    {
+      "asset": "iShares_MSCI_Japan_ETF",
+      "can_derive_ofi": false,
+      "can_derive_spread": false,
+      "fields": [
+        "iShares_MSCI_Japan_ETF"
+      ],
+      "has_ask": false,
+      "has_ask_depth": false,
+      "has_bid": false,
+      "has_bid_depth": false,
+      "has_ofi": false,
+      "has_spread": false,
+      "has_trades": false,
+      "precursor_capable": false
+    },
+    {
+      "asset": "iShares_Russell_2000_ETF",
+      "can_derive_ofi": false,
+      "can_derive_spread": false,
+      "fields": [
+        "iShares_Russell_2000_ETF"
+      ],
+      "has_ask": false,
+      "has_ask_depth": false,
+      "has_bid": false,
+      "has_bid_depth": false,
+      "has_ofi": false,
+      "has_spread": false,
+      "has_trades": false,
+      "precursor_capable": false
+    },
+    {
+      "asset": "iShares_U_S_Real_Estate_ETF",
+      "can_derive_ofi": false,
+      "can_derive_spread": false,
+      "fields": [
+        "iShares_U_S_Real_Estate_ETF"
+      ],
+      "has_ask": false,
+      "has_ask_depth": false,
+      "has_bid": false,
+      "has_bid_depth": false,
+      "has_ofi": false,
+      "has_spread": false,
+      "has_trades": false,
+      "precursor_capable": false
+    }
+  ]
+}

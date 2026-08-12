@@ -1,3 +1,5 @@
+# Copyright (c) 2023-2026 Yaroslav Vasylenko (neuron7xLab)
+# SPDX-License-Identifier: MIT
 """
 Strategy Scheduler Module
 
@@ -246,10 +248,7 @@ class StrategyScheduler:
             task.status = TaskStatus.CANCELLED
 
             # Видалення з обробників подій
-            if (
-                task.schedule.schedule_type == ScheduleType.ON_EVENT
-                and task.schedule.event_trigger
-            ):
+            if task.schedule.schedule_type == ScheduleType.ON_EVENT and task.schedule.event_trigger:
                 handlers = self._event_handlers.get(task.schedule.event_trigger, [])
                 if task_id in handlers:
                     handlers.remove(task_id)
@@ -639,7 +638,6 @@ class StrategyScheduler:
             ),
             "upcoming_tasks": next_runs,
             "event_handlers": {
-                event: len(handlers)
-                for event, handlers in self._event_handlers.items()
+                event: len(handlers) for event, handlers in self._event_handlers.items()
             },
         }

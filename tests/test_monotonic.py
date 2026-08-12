@@ -1,3 +1,5 @@
+# Copyright (c) 2023-2026 Yaroslav Vasylenko (neuron7xLab)
+# SPDX-License-Identifier: MIT
 """Thermodynamic monotonicity regression tests."""
 
 from __future__ import annotations
@@ -35,9 +37,7 @@ def _build_resilient_graph() -> nx.DiGraph:
     graph.add_node("ingest", cpu_norm=0.55)
     graph.add_node("matcher", cpu_norm=0.52)
     graph.add_node("risk", cpu_norm=0.57)
-    graph.add_edge(
-        "ingest", "matcher", type="metallic", latency_norm=0.45, coherency=0.88
-    )
+    graph.add_edge("ingest", "matcher", type="metallic", latency_norm=0.45, coherency=0.88)
     graph.add_edge("matcher", "risk", type="hydrogen", latency_norm=0.5, coherency=0.83)
     graph.add_edge("risk", "ingest", type="metallic", latency_norm=0.48, coherency=0.85)
     return graph
@@ -107,9 +107,7 @@ def test_worsened_topology_trips_monotonicity_guardrail() -> None:
     F_old = controller._compute_free_energy(snapshot=snapshot)
 
     degraded_topology = _build_degraded_topology(list(controller.current_topology))
-    F_bad = controller._compute_free_energy(
-        topology=degraded_topology, snapshot=snapshot
-    )
+    F_bad = controller._compute_free_energy(topology=degraded_topology, snapshot=snapshot)
 
     tolerance = controller._check_monotonic_with_tolerance(F_old, F_bad)
     assert not tolerance.accepted

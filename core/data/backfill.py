@@ -1,3 +1,5 @@
+# Copyright (c) 2023-2026 Yaroslav Vasylenko (neuron7xLab)
+# SPDX-License-Identifier: MIT
 """Incremental backfill helpers with hierarchical caching.
 
 The ingestion layer maintains three logical cache tiers:

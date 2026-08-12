@@ -1,0 +1,68 @@
+# Diff-bound commit acceptor: fix the GABA position gate's calm-market
+# inhibition floor (INV-GABA4).
+#
+# Bug (verified on main): core/neuro/gaba_position_gate.py computed
+#   inhibition = sigmoid(z),  z = w_vix*vix/30 + w_vol*vol/0.2 + w_rpe*max(0,-rpe)
+# All drivers are non-negative so z >= 0, and a plain sigmoid floors the gate at
+# sigmoid(0) = 0.5 — a permanent 50% inhibition of position size even in a
+# dead-calm market (vix=0, vol=0, rpe>=0). That violates INV-GABA4
+# (vol -> 0 => inhibition -> 0). The production oracle (geosync_oracle.py:234)
+# uses this gate. The existing INV-GABA4 test passed only because its
+# convergence threshold was a loose 0.6, tuned around the 0.5 floor.
+#
+# Fix: rectified sigmoid inhibition = max(0, 2*sigmoid(z) - 1), which maps
+# z in [0, inf) onto [0, 1) with f(0)=0 (INV-GABA4) and f(inf)->1 (INV-GABA5),
+# monotone in every driver (INV-GABA2), bounded in [0,1] (INV-GABA1). Tightens
+# the INV-GABA4 convergence bound 0.6 -> 0.05 and adds an exact dead-calm test.
+#
+# Behavioral note (transparency): this REDUCES inhibition in calm markets
+# (0.5 -> 0), i.e. calm-market positions are no longer halved by GABA. That is
+# the behavior INV-GABA4 specifies; high-stress inhibition is essentially
+# unchanged (2*sigmoid(3.83)-1 = 0.957).
+
+id: gaba-rectified-sigmoid-inv-gaba4
+status: ACTIVE
+claim_type: correctness
+promise: >-
+  After this PR, GABAPositionGate.update_inhibition uses a rectified sigmoid
+  max(0, 2*sigmoid(z)-1) so a dead-calm market (zero stress drivers) yields
+  inhibition 0 (INV-GABA4) instead of the prior 0.5 plain-sigmoid floor, while
+  preserving INV-GABA1 ([0,1]), INV-GABA2 (monotone), and INV-GABA5 (->1 under
+  extreme stress). A new exact dead-calm test and a tightened convergence bound
+  (0.6 -> 0.05) falsify the prior floor.
+diff_scope:
+  changed_files:
+    - path: ".claude/commit_acceptors/gaba-rectified-sigmoid-inv-gaba4.yaml"
+    - path: "core/neuro/gaba_position_gate.py"
+    - path: "tests/unit/physics/test_T19_neuro_p1.py"
+  forbidden_paths:
+    - "core/physics/"
+    - "core/kuramoto/"
+required_python_symbols:
+  - "tests/unit/physics/test_T19_neuro_p1.py::test_gaba_dead_calm_market_has_zero_inhibition"
+expected_signal: >-
+  pytest tests/unit/physics/test_T19_neuro_p1.py passes including
+  test_gaba_dead_calm_market_has_zero_inhibition (dead-calm inhibition == 0.0)
+  and the tightened INV-GABA4 convergence bound; on the prior plain-sigmoid gate
+  the dead-calm test FAILS (returns 0.5). ruff + mypy --strict clean; neuro
+  integration tests unaffected.
+measurement_command: >-
+  bash -c 'PYTHONPATH=. python -m pytest tests/unit/physics/test_T19_neuro_p1.py
+  tests/unit/core/neuro/test_gaba_position_gate.py
+  tests/physics_contracts/test_gaba_gate_witnesses.py -q'
+signal_artifact: "tmp/gaba_inv_gaba4.log"
+falsifier:
+  command: >-
+    bash -c 'PYTHONPATH=. python -m pytest
+    tests/unit/physics/test_T19_neuro_p1.py::test_gaba_dead_calm_market_has_zero_inhibition
+    -q'
+  description: >-
+    The dead-calm test must pass with the rectified sigmoid and FAIL on the
+    prior plain sigmoid (which returns 0.5 at zero drivers). A pass on the
+    plain-sigmoid gate would make the falsifier vacuous.
+rollback_command: "git revert --no-edit HEAD"
+rollback_verification_command: "python tools/commit_acceptor/validate_commit_acceptor.py"
+memory_update_type: append
+ledger_path: ".claude/commit_acceptors/gaba-rectified-sigmoid-inv-gaba4.yaml"
+report_path: ".claude/commit_acceptors/gaba-rectified-sigmoid-inv-gaba4.yaml"
+evidence: []

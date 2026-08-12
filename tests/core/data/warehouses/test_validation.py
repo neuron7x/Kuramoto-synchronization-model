@@ -1,3 +1,5 @@
+# Copyright (c) 2023-2026 Yaroslav Vasylenko (neuron7xLab)
+# SPDX-License-Identifier: MIT
 """Unit tests for warehouse identifier validation helpers."""
 
 from __future__ import annotations
@@ -44,7 +46,7 @@ def test_clickhouse_config_validation_applies() -> None:
 def test_clickhouse_bootstrap_uses_sanitised_identifiers() -> None:
     client = httpx.Client(base_url="http://example.com")
     cfg = ClickHouseConfig(
-        database="tradepulse", raw_table="ticks", rollup_table="bars"
+        database="geosync", raw_table="ticks", rollup_table="bars"
     )
     warehouse = ClickHouseWarehouse(client, config=cfg)
     statements = warehouse.bootstrap_statements()

@@ -1,3 +1,5 @@
+# Copyright (c) 2023-2026 Yaroslav Vasylenko (neuron7xLab)
+# SPDX-License-Identifier: MIT
 """Core error computation for AAR (Acceptor of Action Result).
 
 This module provides functions to compute error signals from predictions
@@ -189,9 +191,7 @@ def compute_error(
         higher_is_better=True,  # Higher PnL is better
     )
 
-    latency_abs = absolute_error(
-        prediction.expected_latency_ms, outcome.actual_latency_ms
-    )
+    latency_abs = absolute_error(prediction.expected_latency_ms, outcome.actual_latency_ms)
     latency_rel = relative_error(
         prediction.expected_latency_ms, outcome.actual_latency_ms, latency_scale
     )

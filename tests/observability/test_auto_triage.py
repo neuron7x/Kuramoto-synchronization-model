@@ -1,3 +1,5 @@
+# Copyright (c) 2023-2026 Yaroslav Vasylenko (neuron7xLab)
+# SPDX-License-Identifier: MIT
 """Tests for the automated incident triage orchestrator."""
 
 from __future__ import annotations
@@ -34,9 +36,7 @@ def test_auto_triage_full_workflow_creates_artifacts(tmp_path: Path) -> None:
     old_incident = old_year / "INC-20230101-001"
     old_incident.mkdir(parents=True)
     (old_incident / "summary.json").write_text("{}", encoding="utf-8")
-    os.utime(
-        old_incident, (base_time.timestamp() - 10_000, base_time.timestamp() - 10_000)
-    )
+    os.utime(old_incident, (base_time.timestamp() - 10_000, base_time.timestamp() - 10_000))
 
     service_log = tmp_path / "service.log"
     service_log.write_text("error: something happened\n", encoding="utf-8")
@@ -59,11 +59,11 @@ def test_auto_triage_full_workflow_creates_artifacts(tmp_path: Path) -> None:
         ],
         log_paths=[service_log],
         traffic_replay_sources=[traffic_dump],
-        owner_routes={"order-matching": "order-matching@sre.tradepulse"},
-        runbook_links=["https://runbooks.tradepulse/order-latency"],
-        dashboard_links=["https://grafana.tradepulse/d/latency"],
+        owner_routes={"order-matching": "order-matching@sre.geosync"},
+        runbook_links=["https://runbooks.geosync/order-latency"],
+        dashboard_links=["https://grafana.geosync/d/latency"],
         communication_templates={"critical": "pagerduty-blast"},
-        escalation_policy={"critical": ["vp-eng@tradepulse"]},
+        escalation_policy={"critical": ["vp-eng@geosync"]},
         recovery_actions=["rollback deployment", "scale out cluster"],
         training_schedule=["First Monday of the month"],
         archive_history=1,
@@ -75,14 +75,14 @@ def test_auto_triage_full_workflow_creates_artifacts(tmp_path: Path) -> None:
         context={
             "service": "order-matching",
             "incident_title": "Order latency regression",
-            "links": ["https://status.tradepulse/incidents/123"],
+            "links": ["https://status.geosync/incidents/123"],
         },
     )
 
     assert report.detection.triggered is True
     assert report.detection.severity == "critical"
     assert report.incident is not None
-    assert report.owner == "order-matching@sre.tradepulse"
+    assert report.owner == "order-matching@sre.geosync"
     assert report.ticket_path is not None and report.ticket_path.exists()
     assert report.summary_path.exists()
 
@@ -98,7 +98,7 @@ def test_auto_triage_full_workflow_creates_artifacts(tmp_path: Path) -> None:
 
     with report.ticket_path.open(encoding="utf-8") as fp:
         ticket = json.load(fp)
-    assert ticket["escalation_contacts"] == ["vp-eng@tradepulse"]
+    assert ticket["escalation_contacts"] == ["vp-eng@geosync"]
     assert ticket["communication_template"] == "pagerduty-blast"
 
     with (triage_dir / "resources.json").open(encoding="utf-8") as fp:
@@ -109,16 +109,14 @@ def test_auto_triage_full_workflow_creates_artifacts(tmp_path: Path) -> None:
         postmortem_contents = fp.read()
     assert report.incident.identifier in postmortem_contents
     assert "## Summary" in postmortem_contents
-    assert "https://runbooks.tradepulse/order-latency" in postmortem_contents
+    assert "https://runbooks.geosync/order-latency" in postmortem_contents
 
     with report.summary_path.open(encoding="utf-8") as fp:
         summary = json.load(fp)
     assert summary["detection"]["triggered"] is True
     assert summary["incident"]["id"] == report.incident.identifier
     step_names = {step["name"] for step in summary["steps"]}
-    assert {"detection", "traffic_capture", "log_collection", "postmortem"}.issubset(
-        step_names
-    )
+    assert {"detection", "traffic_capture", "log_collection", "postmortem"}.issubset(step_names)
 
     assert not old_incident.exists(), "archive pruning should remove oldest incident"
 
@@ -134,9 +132,7 @@ def test_auto_triage_skips_when_no_thresholds_breached(tmp_path: Path) -> None:
     )
 
     orchestrator = AutoTriageOrchestrator(config, now=now)
-    report = orchestrator.execute(
-        metrics={"error_rate": 0.05}, context={"service": "pricing"}
-    )
+    report = orchestrator.execute(metrics={"error_rate": 0.05}, context={"service": "pricing"})
 
     assert report.detection.triggered is False
     assert report.incident is None

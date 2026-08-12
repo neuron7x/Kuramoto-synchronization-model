@@ -1,0 +1,285 @@
+{
+  "fps_audit": 1.0,
+  "threshold": 1.0,
+  "threshold_met": true,
+  "total_anchored_or_extrapolated": 27,
+  "qualifying": 27,
+  "tier_distribution": {
+    "SPECULATIVE": 0,
+    "ANCHORED": 20,
+    "EXTRAPOLATED": 7,
+    "UNKNOWN": 0
+  },
+  "audits": [
+    {
+      "id": "hpc-runtime-state-seal-bit-identical",
+      "tier": "ANCHORED",
+      "priority": "P0",
+      "has_test_evidence": true,
+      "has_artefact_evidence": false,
+      "all_paths_exist": true,
+      "counts_for_numerator": true,
+      "missing_paths": []
+    },
+    {
+      "id": "hpc-fixed-point-ledger-conservation",
+      "tier": "ANCHORED",
+      "priority": "P0",
+      "has_test_evidence": true,
+      "has_artefact_evidence": false,
+      "all_paths_exist": true,
+      "counts_for_numerator": true,
+      "missing_paths": []
+    },
+    {
+      "id": "hpc-indexed-rng-control-flow-free",
+      "tier": "ANCHORED",
+      "priority": "P0",
+      "has_test_evidence": true,
+      "has_artefact_evidence": false,
+      "all_paths_exist": true,
+      "counts_for_numerator": true,
+      "missing_paths": []
+    },
+    {
+      "id": "hpc-runtime-state-envelope-integrity",
+      "tier": "ANCHORED",
+      "priority": "P0",
+      "has_test_evidence": true,
+      "has_artefact_evidence": false,
+      "all_paths_exist": true,
+      "counts_for_numerator": true,
+      "missing_paths": []
+    },
+    {
+      "id": "hpc-session-lifecycle-explicit-fsm",
+      "tier": "ANCHORED",
+      "priority": "P1",
+      "has_test_evidence": true,
+      "has_artefact_evidence": false,
+      "all_paths_exist": true,
+      "counts_for_numerator": true,
+      "missing_paths": []
+    },
+    {
+      "id": "robustness-hac-psr-newey-west",
+      "tier": "ANCHORED",
+      "priority": "P1",
+      "has_test_evidence": true,
+      "has_artefact_evidence": true,
+      "all_paths_exist": true,
+      "counts_for_numerator": true,
+      "missing_paths": []
+    },
+    {
+      "id": "cross-asset-walkforward-artifact-integrity",
+      "tier": "EXTRAPOLATED",
+      "priority": "P1",
+      "has_test_evidence": true,
+      "has_artefact_evidence": true,
+      "all_paths_exist": true,
+      "counts_for_numerator": true,
+      "missing_paths": []
+    },
+    {
+      "id": "ricci-microstructure-ten-axis-falsification",
+      "tier": "ANCHORED",
+      "priority": "P1",
+      "has_test_evidence": false,
+      "has_artefact_evidence": true,
+      "all_paths_exist": true,
+      "counts_for_numerator": true,
+      "missing_paths": []
+    },
+    {
+      "id": "kuramoto-order-parameter-bounded",
+      "tier": "ANCHORED",
+      "priority": "P0",
+      "has_test_evidence": true,
+      "has_artefact_evidence": false,
+      "all_paths_exist": true,
+      "counts_for_numerator": true,
+      "missing_paths": []
+    },
+    {
+      "id": "lyapunov-mle-finite-bounded",
+      "tier": "ANCHORED",
+      "priority": "P0",
+      "has_test_evidence": true,
+      "has_artefact_evidence": false,
+      "all_paths_exist": true,
+      "counts_for_numerator": true,
+      "missing_paths": []
+    },
+    {
+      "id": "serotonin-controller-bounded-veto",
+      "tier": "ANCHORED",
+      "priority": "P0",
+      "has_test_evidence": true,
+      "has_artefact_evidence": false,
+      "all_paths_exist": true,
+      "counts_for_numerator": true,
+      "missing_paths": []
+    },
+    {
+      "id": "dopamine-td-error-algebraic-exact",
+      "tier": "ANCHORED",
+      "priority": "P0",
+      "has_test_evidence": true,
+      "has_artefact_evidence": false,
+      "all_paths_exist": true,
+      "counts_for_numerator": true,
+      "missing_paths": []
+    },
+    {
+      "id": "gaba-inhibition-monotone-bounded",
+      "tier": "ANCHORED",
+      "priority": "P0",
+      "has_test_evidence": true,
+      "has_artefact_evidence": false,
+      "all_paths_exist": true,
+      "counts_for_numerator": true,
+      "missing_paths": []
+    },
+    {
+      "id": "ricci-curvature-bounded",
+      "tier": "ANCHORED",
+      "priority": "P0",
+      "has_test_evidence": true,
+      "has_artefact_evidence": false,
+      "all_paths_exist": true,
+      "counts_for_numerator": true,
+      "missing_paths": []
+    },
+    {
+      "id": "kelly-sizing-cap-enforced",
+      "tier": "ANCHORED",
+      "priority": "P0",
+      "has_test_evidence": true,
+      "has_artefact_evidence": false,
+      "all_paths_exist": true,
+      "counts_for_numerator": true,
+      "missing_paths": []
+    },
+    {
+      "id": "oms-conservation-idempotency-monotone",
+      "tier": "ANCHORED",
+      "priority": "P0",
+      "has_test_evidence": true,
+      "has_artefact_evidence": false,
+      "all_paths_exist": true,
+      "counts_for_numerator": true,
+      "missing_paths": []
+    },
+    {
+      "id": "signalbus-deterministic-fanout",
+      "tier": "ANCHORED",
+      "priority": "P0",
+      "has_test_evidence": true,
+      "has_artefact_evidence": false,
+      "all_paths_exist": true,
+      "counts_for_numerator": true,
+      "missing_paths": []
+    },
+    {
+      "id": "cryptobiosis-phase-transition-survival",
+      "tier": "ANCHORED",
+      "priority": "P0",
+      "has_test_evidence": true,
+      "has_artefact_evidence": false,
+      "all_paths_exist": true,
+      "counts_for_numerator": true,
+      "missing_paths": []
+    },
+    {
+      "id": "reset-wave-phase-synchronization",
+      "tier": "ANCHORED",
+      "priority": "P0",
+      "has_test_evidence": true,
+      "has_artefact_evidence": true,
+      "all_paths_exist": true,
+      "counts_for_numerator": true,
+      "missing_paths": []
+    },
+    {
+      "id": "reset-wave-distributed-resilience",
+      "tier": "EXTRAPOLATED",
+      "priority": "P0",
+      "has_test_evidence": true,
+      "has_artefact_evidence": true,
+      "all_paths_exist": true,
+      "counts_for_numerator": true,
+      "missing_paths": []
+    },
+    {
+      "id": "dro-ara-regime-fail-closed",
+      "tier": "ANCHORED",
+      "priority": "P0",
+      "has_test_evidence": true,
+      "has_artefact_evidence": false,
+      "all_paths_exist": true,
+      "counts_for_numerator": true,
+      "missing_paths": []
+    },
+    {
+      "id": "ierd-phase0-yana-response",
+      "tier": "ANCHORED",
+      "priority": "P1",
+      "has_test_evidence": false,
+      "has_artefact_evidence": true,
+      "all_paths_exist": true,
+      "counts_for_numerator": true,
+      "missing_paths": []
+    },
+    {
+      "id": "api-contract-openapi-coverage",
+      "tier": "EXTRAPOLATED",
+      "priority": "P1",
+      "has_test_evidence": true,
+      "has_artefact_evidence": false,
+      "all_paths_exist": true,
+      "counts_for_numerator": true,
+      "missing_paths": []
+    },
+    {
+      "id": "ux-readiness-state-coverage",
+      "tier": "EXTRAPOLATED",
+      "priority": "P1",
+      "has_test_evidence": true,
+      "has_artefact_evidence": false,
+      "all_paths_exist": true,
+      "counts_for_numerator": true,
+      "missing_paths": []
+    },
+    {
+      "id": "e2e-latency-budget-compliance",
+      "tier": "EXTRAPOLATED",
+      "priority": "P1",
+      "has_test_evidence": true,
+      "has_artefact_evidence": true,
+      "all_paths_exist": true,
+      "counts_for_numerator": true,
+      "missing_paths": []
+    },
+    {
+      "id": "edge-case-coverage-matrix",
+      "tier": "EXTRAPOLATED",
+      "priority": "P1",
+      "has_test_evidence": true,
+      "has_artefact_evidence": false,
+      "all_paths_exist": true,
+      "counts_for_numerator": true,
+      "missing_paths": []
+    },
+    {
+      "id": "geosync-system-tier",
+      "tier": "EXTRAPOLATED",
+      "priority": "P0",
+      "has_test_evidence": false,
+      "has_artefact_evidence": true,
+      "all_paths_exist": true,
+      "counts_for_numerator": true,
+      "missing_paths": []
+    }
+  ]
+}

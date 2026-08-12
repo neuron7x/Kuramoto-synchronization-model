@@ -1,4 +1,5 @@
-# SPDX-License-Identifier: LicenseRef-TradePulse-Proprietary
+# Copyright (c) 2023-2026 Yaroslav Vasylenko (neuron7xLab)
+# SPDX-License-Identifier: MIT
 """Local adapter implementations for regime detection ports.
 
 This module provides concrete implementations of regime detection port interfaces
@@ -299,11 +300,7 @@ class LocalFeatureExtractor(FeatureExtractionPort):
             corr_series = returns.rolling(min(21, len(returns))).corr()
             if isinstance(corr_series, pd.DataFrame):
                 mean_corr = corr_series.groupby(level=0).apply(
-                    lambda x: (
-                        x.values[np.triu_indices(len(x), k=1)].mean()
-                        if len(x) > 1
-                        else 0.0
-                    )
+                    lambda x: (x.values[np.triu_indices(len(x), k=1)].mean() if len(x) > 1 else 0.0)
                 )
                 features["cross_correlation"] = mean_corr
                 self._feature_names.append("cross_correlation")
@@ -313,9 +310,7 @@ class LocalFeatureExtractor(FeatureExtractionPort):
         # Initialize uniform importance
         n_features = len(self._feature_names)
         if n_features > 0:
-            self._feature_importance = {
-                name: 1.0 / n_features for name in self._feature_names
-            }
+            self._feature_importance = {name: 1.0 / n_features for name in self._feature_names}
 
         return result
 
@@ -533,9 +528,7 @@ class FileRegimePersistence(RegimePersistencePort):
         if isinstance(obj, (np.integer, np.floating)):
             return float(obj)
         if isinstance(obj, dict):
-            return {
-                k: FileRegimePersistence._make_serializable(v) for k, v in obj.items()
-            }
+            return {k: FileRegimePersistence._make_serializable(v) for k, v in obj.items()}
         if isinstance(obj, (list, tuple)):
             return [FileRegimePersistence._make_serializable(v) for v in obj]
         return obj

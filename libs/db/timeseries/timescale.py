@@ -1,3 +1,5 @@
+# Copyright (c) 2023-2026 Yaroslav Vasylenko (neuron7xLab)
+# SPDX-License-Identifier: MIT
 """TimescaleDB integration helpers for long-term market data storage."""
 
 from __future__ import annotations
@@ -104,23 +106,13 @@ class TimescaleSchemaManager:
 
     def retention_sql(self) -> str:
         horizon = (
-            self.retention.drop
-            or self.retention.cold
-            or self.retention.warm
-            or self.retention.hot
+            self.retention.drop or self.retention.cold or self.retention.warm or self.retention.hot
         )
-        return (
-            "SELECT add_retention_policy("
-            f"'{self.schema.table}', {_format_interval(horizon)});"
-        )
+        return f"SELECT add_retention_policy('{self.schema.table}', {_format_interval(horizon)});"
 
-    def continuous_aggregate_sql(
-        self, rollup: RollupMaterialization
-    ) -> tuple[str, ...]:
+    def continuous_aggregate_sql(self, rollup: RollupMaterialization) -> tuple[str, ...]:
         bucket_interval = _format_interval(rollup.interval)
-        bucket_select = (
-            f"time_bucket({bucket_interval}, {self.schema.timestamp_column}) AS bucket"
-        )
+        bucket_select = f"time_bucket({bucket_interval}, {self.schema.timestamp_column}) AS bucket"
         select_columns = [bucket_select]
         select_columns.extend(dimension.name for dimension in self.schema.dimensions)
         select_columns.extend(
@@ -211,9 +203,7 @@ class TimescaleQueryBuilder:
         filters: Mapping[str, str] | None = None,
     ) -> str:
         source = (
-            rollup.materialized_view_name or f"{rollup.name}_cagg"
-            if rollup
-            else self._schema.table
+            rollup.materialized_view_name or f"{rollup.name}_cagg" if rollup else self._schema.table
         )
         interval = _format_interval(rollup.interval if rollup else timedelta(minutes=1))
         dims = [dimension.name for dimension in self._schema.dimensions]

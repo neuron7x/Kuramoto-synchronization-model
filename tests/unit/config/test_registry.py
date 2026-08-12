@@ -1,3 +1,5 @@
+# Copyright (c) 2023-2026 Yaroslav Vasylenko (neuron7xLab)
+# SPDX-License-Identifier: MIT
 """Tests for the centralized configuration registry."""
 
 from __future__ import annotations
@@ -87,9 +89,7 @@ def test_publish_requires_sufficient_approvals() -> None:
         environments=[Environment.STAGE],
     )
 
-    assert registry.get_active_version("alpha-strategy", Environment.STAGE) == Version(
-        "1.0.0"
-    )
+    assert registry.get_active_version("alpha-strategy", Environment.STAGE) == Version("1.0.0")
 
 
 def test_validator_enforced() -> None:
@@ -167,9 +167,7 @@ def test_compatibility_policy_blocks_incompatible_payload() -> None:
 def test_release_checks_run_for_production_promotions() -> None:
     calls: list[tuple[str, Version, Mapping[str, object]]] = []
 
-    def release_check(
-        profile: str, version: Version, payload: Mapping[str, object]
-    ) -> None:
+    def release_check(profile: str, version: Version, payload: Mapping[str, object]) -> None:
         calls.append((profile, version, payload))
 
     registry = ConfigRegistry(release_checks=[release_check])
@@ -260,9 +258,7 @@ def test_rollback_restores_previous_version() -> None:
         reason="Stage smoke tests failed",
     )
 
-    assert registry.get_active_version("alpha-strategy", Environment.STAGE) == Version(
-        "1.0.0"
-    )
+    assert registry.get_active_version("alpha-strategy", Environment.STAGE) == Version("1.0.0")
 
 
 def test_rollback_requires_approvals_for_target_version() -> None:
@@ -298,9 +294,7 @@ def test_rollback_requires_approvals_for_target_version() -> None:
             reason="Rolling forward without approvals should fail",
         )
 
-    assert registry.get_active_version("alpha-strategy", Environment.STAGE) == Version(
-        "1.0.0"
-    )
+    assert registry.get_active_version("alpha-strategy", Environment.STAGE) == Version("1.0.0")
 
 
 def test_audit_trail_includes_lifecycle_events() -> None:
@@ -344,9 +338,57 @@ def test_publish_atomically_updates_multiple_environments() -> None:
         environments=[Environment.STAGE, Environment.PROD],
     )
 
-    assert registry.get_active_version("alpha-strategy", Environment.STAGE) == Version(
-        "4.0.0"
+    assert registry.get_active_version("alpha-strategy", Environment.STAGE) == Version("4.0.0")
+    assert registry.get_active_version("alpha-strategy", Environment.PROD) == Version("4.0.0")
+
+
+def test_publish_comment_overrides_default_audit_message() -> None:
+    """`message = comment or ", ".join(...)` -- a supplied comment wins.
+
+    Under Or->And a truthy comment collapses to the joined environment names
+    (`x and y` returns y), losing the operator's own audit note.
+    """
+    registry = ConfigRegistry()
+    registry.register_profile("alpha-strategy", "1.0.0", _base_payload(), actor="quant")
+    registry.approve_profile("alpha-strategy", "1.0.0", approver="risk")
+    registry.publish_profile(
+        "alpha-strategy",
+        "1.0.0",
+        actor="release",
+        environments=[Environment.STAGE],
+        comment="hand-written rollout note",
     )
-    assert registry.get_active_version("alpha-strategy", Environment.PROD) == Version(
-        "4.0.0"
+    publish_msgs = [e.message for e in registry.audit_trail("alpha-strategy") if e.action == "publish"]
+    assert publish_msgs == ["hand-written rollout note"]
+
+
+def test_rollback_runs_release_checks_only_for_prod(monkeypatch) -> None:
+    """`if env == Environment.PROD` gates release checks to PROD rollbacks only.
+
+    Under Eq->NotEq the guard inverts: a STAGE rollback would trigger the
+    (potentially blocking) production release gate while a PROD rollback skips it.
+    """
+    registry = ConfigRegistry()
+    registry.register_profile("alpha-strategy", "1.0.0", _base_payload(), actor="quant")
+    registry.register_profile("alpha-strategy", "1.1.0", _base_payload(), actor="quant")
+    for version in ("1.0.0", "1.1.0"):
+        registry.approve_profile("alpha-strategy", version, approver="risk")
+    registry.publish_profile(
+        "alpha-strategy", "1.1.0", actor="release",
+        environments=[Environment.STAGE, Environment.PROD],
     )
+
+    calls: list[str] = []
+    monkeypatch.setattr(
+        registry, "_run_release_checks", lambda name, record: calls.append(name)
+    )
+
+    registry.rollback_profile(
+        "alpha-strategy", environment=Environment.STAGE, target_version="1.0.0", actor="release"
+    )
+    assert calls == []  # STAGE rollback must not invoke the production gate
+
+    registry.rollback_profile(
+        "alpha-strategy", environment=Environment.PROD, target_version="1.0.0", actor="release"
+    )
+    assert calls == ["alpha-strategy"]  # PROD rollback must invoke it exactly once

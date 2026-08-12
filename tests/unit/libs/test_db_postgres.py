@@ -1,3 +1,5 @@
+# Copyright (c) 2023-2026 Yaroslav Vasylenko (neuron7xLab)
+# SPDX-License-Identifier: MIT
 """Regression tests for the PostgreSQL connection factory."""
 
 from __future__ import annotations
@@ -15,9 +17,7 @@ from libs.db.postgres import create_postgres_connection
 class _FakePsycopgModule(SimpleNamespace):
     """Collect the arguments used to construct a connection."""
 
-    def __call__(
-        self, **kwargs: Any
-    ) -> object:  # pragma: no cover - compatibility shim.
+    def __call__(self, **kwargs: Any) -> object:  # pragma: no cover - compatibility shim.
         return self.connect(**kwargs)
 
     def connect(self, **kwargs: Any) -> object:
@@ -47,14 +47,14 @@ def test_factory_passes_tls_parameters(
     tls = _tls(tmp_path_factory)
     uri = "postgresql://user:pass@db/prod?sslmode=verify-full"
 
-    conn = create_postgres_connection(uri, tls, application_name="tradepulse")
+    conn = create_postgres_connection(uri, tls, application_name="geosync")
 
     assert conn is not None
     assert fake_psycopg.kwargs["conninfo"] == uri
     assert fake_psycopg.kwargs["sslrootcert"] == str(tls.ca_file)
     assert fake_psycopg.kwargs["sslcert"] == str(tls.cert_file)
     assert fake_psycopg.kwargs["sslkey"] == str(tls.key_file)
-    assert fake_psycopg.kwargs["application_name"] == "tradepulse"
+    assert fake_psycopg.kwargs["application_name"] == "geosync"
 
 
 @pytest.mark.parametrize(

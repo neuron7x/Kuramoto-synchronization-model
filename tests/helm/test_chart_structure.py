@@ -1,3 +1,5 @@
+# Copyright (c) 2023-2026 Yaroslav Vasylenko (neuron7xLab)
+# SPDX-License-Identifier: MIT
 """Tests for Helm chart structure and configuration."""
 
 from __future__ import annotations
@@ -7,7 +9,7 @@ from typing import Any, Dict
 
 import yaml
 
-HELM_BASE = Path(__file__).resolve().parents[2] / "deploy" / "helm" / "tradepulse"
+HELM_BASE = Path(__file__).resolve().parents[2] / "deploy" / "helm" / "geosync"
 
 
 def _load_yaml(path: Path) -> Dict[str, Any]:
@@ -25,7 +27,7 @@ def test_umbrella_chart_exists() -> None:
     assert chart_path.exists(), "Umbrella Chart.yaml must exist"
 
     chart = _load_yaml(chart_path)
-    assert chart["name"] == "tradepulse"
+    assert chart["name"] == "geosync"
     assert chart["type"] == "application"
     assert "version" in chart
     assert "appVersion" in chart
@@ -117,9 +119,7 @@ def test_sandbox_has_autoscaling() -> None:
     sandbox = values["sandbox"]
     assert sandbox["autoscaling"]["enabled"] is True
     assert sandbox["autoscaling"]["minReplicas"] >= 2
-    assert (
-        sandbox["autoscaling"]["maxReplicas"] >= sandbox["autoscaling"]["minReplicas"]
-    )
+    assert sandbox["autoscaling"]["maxReplicas"] >= sandbox["autoscaling"]["minReplicas"]
 
 
 def test_sandbox_has_pod_disruption_budget() -> None:

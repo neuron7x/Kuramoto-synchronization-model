@@ -1,0 +1,63 @@
+# Diff-bound acceptor for the import-architecture ratchet (B-keystone, stage 0).
+#
+# Freezes the first-party `src.*`-import (24) and `sys.path`-mutation (82)
+# debt as a baseline that may only shrink, so the canonical-geosync migration
+# (ADR 0024) can proceed without regressions. Additive CI gate + ADR +
+# baseline; no runtime import is touched, no execution/forecast/policy code
+# changed, no existing gate weakened.
+
+id: import-architecture-ratchet
+status: ACTIVE
+claim_type: governance
+promise: >-
+  scripts/ci/check_import_architecture.py fails closed on any NEW first-party
+  `src.*` import or `sys.path` mutation beyond the frozen baseline in
+  .github/import_architecture_baseline.json, and also fails when a baseline
+  entry no longer violates (forcing the ledger to tighten via --write). The
+  debt sets (24 src.* importers + 82 path-hacks) can therefore only shrink
+  toward empty, at which point one canonical geosync package is achieved.
+  ADR 0024 records the machine-verified root cause (three roots merged by
+  path-hacks, stale src/geosync fork, circular-import fragility) and the
+  staged, suite-gated migration plan.
+diff_scope:
+  changed_files:
+    - path: ".claude/commit_acceptors/import-architecture-ratchet.yaml"
+    - path: "scripts/ci/check_import_architecture.py"
+    - path: "tests/scripts/test_check_import_architecture.py"
+    - path: ".github/workflows/import-architecture-gate.yml"
+    - path: ".github/import_architecture_baseline.json"
+    - path: "docs/adr/0024-import-architecture-canonicalization.md"
+  forbidden_paths:
+    - "trading/"
+    - "execution/"
+    - "forecast/"
+    - "policy/"
+required_python_symbols:
+  - "main"
+  - "_scan"
+  - "_load_baseline"
+expected_signal: >-
+  python scripts/ci/check_import_architecture.py exits 0 on the current tree
+  ("ratchet held: 24 src.* imports + 82 path-hacks"); the 5-test mirror
+  passes; ruff / black / mypy --strict clean on the checker and its test.
+measurement_command: >-
+  python scripts/ci/check_import_architecture.py;
+  python -m pytest tests/scripts/test_check_import_architecture.py -q
+signal_artifact: "tmp/import_architecture_ratchet.log"
+falsifier:
+  command: "bash -c '! python scripts/ci/check_import_architecture.py'"
+  description: >-
+    On the green path the ratchet exits 0, so the negated probe exits
+    non-zero. If a new src.* import or path-hack entered, the ratchet would
+    exit 1 and the probe would pass — proving the gate detects regression
+    rather than rubber-stamping.
+rollback_command: >-
+  git checkout origin/main -- scripts/ci/check_import_architecture.py
+  .github/workflows/import-architecture-gate.yml
+  .github/import_architecture_baseline.json
+rollback_verification_command: >-
+  git diff --exit-code origin/main -- scripts/ci/check_import_architecture.py
+memory_update_type: append
+ledger_path: ".github/import_architecture_baseline.json"
+report_path: "docs/adr/0024-import-architecture-canonicalization.md"
+evidence: []

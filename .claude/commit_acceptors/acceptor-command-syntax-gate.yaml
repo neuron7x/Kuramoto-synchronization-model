@@ -1,0 +1,82 @@
+# Diff-bound commit acceptor for the acceptor-command syntax gate.
+#
+# Closes a hole in the commit-acceptor layer: the evidence cycle
+# (tools/commit_acceptor/run_evidence.py) is not executed in CI -- only the
+# structural validate_commit_acceptor.py runs -- so an acceptor's
+# measurement_command / falsifier.command could carry an inline `python -c`
+# payload (or nested `bash -c` script) that does not even PARSE. It would crash
+# on the first byte if anything ever ran it, yet the structural gate passed it.
+# This happened at scale because authors wrote multi-line commands in YAML
+# FOLDED block scalars (`>` / `>-`), which collapse newlines into spaces and
+# turn valid multi-statement Python/shell into a SyntaxError.
+#
+# scripts/ci/check_acceptor_command_syntax.py walks every acceptor, extracts
+# every nested `python -c` payload and `bash -c` script, and verifies both the
+# Python (compile) and the shell (bash -n) parse. It is wired into
+# .github/workflows/commit-acceptor-gate.yml so the whole layer is enforced
+# fail-closed on every PR. The fix for a flagged acceptor is to repair the
+# command (literal `|-` block or single-logical-line) or extract it to a
+# committed single-purpose script the YAML round-trip cannot reflow.
+#
+# This is an integrity gate, NOT a market claim and NOT a predictive model.
+# Adds NO dependency (stdlib + existing pyyaml), NO runtime change, and no lint
+# or type-checker suppressions.
+id: acceptor-command-syntax-gate
+status: ACTIVE
+claim_type: fail_closed
+promise: >-
+  scripts/ci/check_acceptor_command_syntax.py statically verifies that every
+  commit acceptor's measurement_command and falsifier.command are syntactically
+  valid: each nested `python -c` payload compiles and each `bash -c` / `sh -c`
+  script passes `bash -n`. It runs repo-wide (all acceptors, not diff-bound) in
+  the Commit Acceptor Gate workflow, exiting non-zero on any violation. The gate
+  self-validates its teeth via `--selftest` (a deliberately broken fixture must
+  be flagged and a valid one must not). No runtime behaviour changes, no
+  dependency is added, no claim tier is promoted.
+diff_scope:
+  changed_files:
+    - path: ".claude/commit_acceptors/acceptor-command-syntax-gate.yaml"
+    - path: "scripts/ci/check_acceptor_command_syntax.py"
+    - path: ".github/workflows/commit-acceptor-gate.yml"
+  forbidden_paths:
+    - "trading/"
+    - "execution/"
+    - "forecast/"
+    - "src/"
+required_python_symbols:
+  - "scripts/ci/check_acceptor_command_syntax.py::scan"
+  - "scripts/ci/check_acceptor_command_syntax.py::main"
+  - "scripts/ci/check_acceptor_command_syntax.py::selftest"
+  - "scripts/ci/check_acceptor_command_syntax.py::_check_command"
+expected_signal: >-
+  Running the gate across .claude/commit_acceptors/ exits 0 and prints
+  "OK: inline python payloads compile across N acceptors": every nested python
+  payload compiles and every nested shell script passes bash -n. A
+  non-reproducible pytest log is deliberately NOT used as the signal -- the
+  behavioural proof is the deterministic repo-wide scan plus the --selftest
+  teeth check in the falsifier below.
+measurement_command: "bash -c 'mkdir -p tmp && python scripts/ci/check_acceptor_command_syntax.py > tmp/acceptor_command_syntax.log 2>&1'"
+signal_artifact: "tmp/acceptor_command_syntax.log"
+falsifier:
+  command: "bash -c 'mkdir -p tmp && python scripts/ci/check_acceptor_command_syntax.py --selftest > tmp/acceptor_command_syntax_selftest.log 2>&1'"
+  description: >-
+    Falsifier evidence is written to tmp/acceptor_command_syntax_selftest.log.
+    Fail-closed teeth probe with the polarity the runner enforces (exit 0 ==
+    green-state precondition holds). --selftest builds a temp dir with one
+    deliberately broken acceptor (python `import os from sys import path`) and
+    one valid acceptor, runs the scanner, and exits 0 IFF exactly the broken one
+    is flagged -- i.e. the gate is live. If the scanner silently accepts the
+    broken fixture the gate has gone vacuous and the probe exits 1, which the
+    runner reports as a broken green state (SIGNAL_FAILED) demanding repair, not
+    a green patch. A naive "fired => exit 1" probe would be INVERTED relative to
+    this runner and would mark a correct tree as failed -- a fake acceptor.
+rollback_command: >-
+  bash -c 'git rm -f scripts/ci/check_acceptor_command_syntax.py
+  .claude/commit_acceptors/acceptor-command-syntax-gate.yaml
+  && git checkout origin/main -- .github/workflows/commit-acceptor-gate.yml'
+rollback_verification_command: >-
+  bash -c 'test ! -f scripts/ci/check_acceptor_command_syntax.py
+  && ! grep -q "check_acceptor_command_syntax" .github/workflows/commit-acceptor-gate.yml'
+memory_update_type: none
+ledger_path: ".claude/commit_acceptors/acceptor-command-syntax-gate.yaml"
+report_path: "docs/reports/diff_bound_commit_acceptor_layer.md"

@@ -1,3 +1,5 @@
+# Copyright (c) 2023-2026 Yaroslav Vasylenko (neuron7xLab)
+# SPDX-License-Identifier: MIT
 from __future__ import annotations
 
 import importlib
@@ -52,24 +54,18 @@ def test_polars_backend_prepares_index_and_roundtrips(tmp_path, monkeypatch):
 
         def to_dict(self, *, as_series: bool = False):
             assert as_series is False
-            return {
-                column: self._frame[column].tolist() for column in self._frame.columns
-            }
+            return {column: self._frame[column].tolist() for column in self._frame.columns}
 
     class _PolarsModule:
         def from_pandas(self, frame: pd.DataFrame) -> _Dataset:
             storage["from_pandas"] = frame.copy()
             return _Dataset(frame)
 
-        def DataFrame(
-            self, data, *, strict: bool = False
-        ):  # pragma: no cover - signature parity
+        def DataFrame(self, data, *, strict: bool = False):  # pragma: no cover - signature parity
             frame = pd.DataFrame(data)
             return _Dataset(frame)
 
-        def read_parquet(
-            self, path: Path
-        ) -> _Dataset:  # pragma: no cover - signature parity
+        def read_parquet(self, path: Path) -> _Dataset:  # pragma: no cover - signature parity
             return _Dataset(storage["written"])
 
     monkeypatch.setattr(dataframe_io, "_load_polars", lambda: _PolarsModule())
@@ -108,9 +104,7 @@ def test_polars_backend_read_falls_back_without_pyarrow(tmp_path, monkeypatch):
 
         def to_dict(self, *, as_series: bool = False):
             assert as_series is False
-            return {
-                column: self._frame[column].tolist() for column in self._frame.columns
-            }
+            return {column: self._frame[column].tolist() for column in self._frame.columns}
 
     class _PolarsModule:
         def __init__(self) -> None:
@@ -120,25 +114,19 @@ def test_polars_backend_read_falls_back_without_pyarrow(tmp_path, monkeypatch):
             storage["from_pandas"] = frame.copy()
             return _Dataset(frame)
 
-        def DataFrame(
-            self, data, *, strict: bool = False
-        ):  # pragma: no cover - signature parity
+        def DataFrame(self, data, *, strict: bool = False):  # pragma: no cover - signature parity
             self.created_from_dict = data
             frame = pd.DataFrame(data)
             return _Dataset(frame)
 
-        def read_parquet(
-            self, path: Path
-        ) -> _Dataset:  # pragma: no cover - signature parity
+        def read_parquet(self, path: Path) -> _Dataset:  # pragma: no cover - signature parity
             return _Dataset(storage["written"])
 
     monkeypatch.setattr(dataframe_io, "_load_polars", lambda: _PolarsModule())
 
     backend = dataframe_io._polars_backend()
 
-    original = pd.DataFrame(
-        {"alpha": [1.0, 2.0], "beta": pd.date_range("2023-01-01", periods=2)}
-    )
+    original = pd.DataFrame({"alpha": [1.0, 2.0], "beta": pd.date_range("2023-01-01", periods=2)})
     path = tmp_path / "data.parquet"
 
     backend.write_fn(original, path, index=False)
@@ -161,18 +149,12 @@ def test_polars_backend_prepare_falls_back_without_pyarrow(tmp_path, monkeypatch
             storage["written"] = self._frame.copy()
             buffer.write(b"parquet")
 
-        def to_pandas(
-            self, *, use_pyarrow: bool = False
-        ):  # pragma: no cover - unused in test
+        def to_pandas(self, *, use_pyarrow: bool = False):  # pragma: no cover - unused in test
             return self._frame.copy()
 
-        def to_dict(
-            self, *, as_series: bool = False
-        ):  # pragma: no cover - unused in test
+        def to_dict(self, *, as_series: bool = False):  # pragma: no cover - unused in test
             assert as_series is False
-            return {
-                column: self._frame[column].tolist() for column in self._frame.columns
-            }
+            return {column: self._frame[column].tolist() for column in self._frame.columns}
 
     class _PolarsModule:
         def __init__(self) -> None:
@@ -186,9 +168,7 @@ def test_polars_backend_prepare_falls_back_without_pyarrow(tmp_path, monkeypatch
             frame = pd.DataFrame(data)
             return _Dataset(frame)
 
-        def read_parquet(
-            self, path: Path
-        ) -> _Dataset:  # pragma: no cover - signature parity
+        def read_parquet(self, path: Path) -> _Dataset:  # pragma: no cover - signature parity
             return _Dataset(storage["written"])
 
     module = _PolarsModule()
@@ -196,9 +176,7 @@ def test_polars_backend_prepare_falls_back_without_pyarrow(tmp_path, monkeypatch
 
     backend = dataframe_io._polars_backend()
 
-    original = pd.DataFrame(
-        {"value": [1.0, 2.5]}, index=pd.Index(["row1", "row2"], name="id")
-    )
+    original = pd.DataFrame({"value": [1.0, 2.5]}, index=pd.Index(["row1", "row2"], name="id"))
     path = tmp_path / "data.parquet"
 
     backend.write_fn(original, path, index=True)
@@ -213,16 +191,12 @@ def test_select_backend_prefers_json_when_allowed(monkeypatch):
 
     monkeypatch.setattr(dataframe_io, "_available_backends", lambda: [json_backend])
 
-    selected = dataframe_io._select_backend(
-        require_parquet=False, allow_json_fallback=True
-    )
+    selected = dataframe_io._select_backend(require_parquet=False, allow_json_fallback=True)
     assert selected.name == "json"
 
 
 def test_select_backend_requires_parquet(monkeypatch):
-    monkeypatch.setattr(
-        dataframe_io, "_available_backends", lambda: [dataframe_io._json_backend()]
-    )
+    monkeypatch.setattr(dataframe_io, "_available_backends", lambda: [dataframe_io._json_backend()])
 
     with pytest.raises(dataframe_io.MissingParquetDependencyError):
         dataframe_io._select_backend(require_parquet=True, allow_json_fallback=False)
@@ -241,9 +215,7 @@ def test_write_dataframe_uses_json_extension(monkeypatch, tmp_path):
     assert written.read_text()
 
 
-def test_write_dataframe_honors_explicit_json_when_parquet_available(
-    monkeypatch, tmp_path
-):
+def test_write_dataframe_honors_explicit_json_when_parquet_available(monkeypatch, tmp_path):
     writes: list[str] = []
 
     def _write_parquet(frame: pd.DataFrame, path: Path, index: bool) -> None:

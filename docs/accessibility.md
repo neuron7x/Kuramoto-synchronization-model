@@ -1,6 +1,6 @@
 # Accessibility Playbook
 
-Accessible interfaces are a baseline requirement for TradePulse dashboards and
+Accessible interfaces are a baseline requirement for GeoSync dashboards and
 Next.js applications. This playbook focuses on keyboard navigation, ARIA usage,
 colour contrast, and automated audits so a11y stays embedded in the delivery
 pipeline.

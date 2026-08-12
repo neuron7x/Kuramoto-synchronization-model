@@ -83,9 +83,11 @@ export function SignInForm() {
             disabled={isDisabled}
             required
             fullWidth
-            helperText="Enter your TradePulse work email address"
-            inputProps={{
-              'aria-label': 'Work email',
+            helperText="Enter your GeoSync work email address"
+            slotProps={{
+              htmlInput: {
+                'aria-label': 'Work email',
+              },
             }}
           />
           <TextField
@@ -99,8 +101,10 @@ export function SignInForm() {
             required
             fullWidth
             helperText="Enter your account password"
-            inputProps={{
-              'aria-label': 'Password',
+            slotProps={{
+              htmlInput: {
+                'aria-label': 'Password',
+              },
             }}
           />
           {error ? (
@@ -116,7 +120,7 @@ export function SignInForm() {
               loading={submitting}
               disabled={isDisabled}
               size="large"
-              aria-label={submitting ? 'Signing in...' : 'Sign in to TradePulse'}
+              aria-label={submitting ? 'Signing in...' : 'Sign in to GeoSync'}
             >
               Continue
             </LoadingButton>

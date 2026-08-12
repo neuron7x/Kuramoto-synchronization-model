@@ -1,5 +1,5 @@
 ---
-owner: execution@tradepulse
+owner: execution@geosync
 review_cadence: quarterly
 last_reviewed: 2025-11-04
 links:
@@ -55,10 +55,10 @@ The `execution/resilience` module implements **adaptive coping mechanisms** for 
 ## Configuration
 
 ### Environment Variables:
-- `TRADEPULSE_CIRCUIT_BREAKER_ENABLED`: Enable circuit breakers (default: `true`)
-- `TRADEPULSE_RATE_LIMITER_ENABLED`: Enable rate limiting (default: `true`)
-- `TRADEPULSE_BULKHEAD_ENABLED`: Enable bulkhead isolation (default: `true`)
-- `TRADEPULSE_CB_STATE_PATH`: Persistent circuit breaker state (default: `~/.tradepulse/resilience/cb_state.json`)
+- `GEOSYNC_CIRCUIT_BREAKER_ENABLED`: Enable circuit breakers (default: `true`)
+- `GEOSYNC_RATE_LIMITER_ENABLED`: Enable rate limiting (default: `true`)
+- `GEOSYNC_BULKHEAD_ENABLED`: Enable bulkhead isolation (default: `true`)
+- `GEOSYNC_CB_STATE_PATH`: Persistent circuit breaker state (default: `~/.geosync/resilience/cb_state.json`)
 
 ### Configuration Files:
 Resilience is configured via `configs/resilience/`:
@@ -457,7 +457,7 @@ threading.Thread(target=monitor_exchange_health, daemon=True).start()
 
 | Date | Author | Change |
 | ---- | ------ | ------ |
-| 2025-11-04 | execution@tradepulse | Created comprehensive README with allostatic regulation principles |
+| 2025-11-04 | execution@geosync | Created comprehensive README with allostatic regulation principles |
 
 ## See Also
 

@@ -1,3 +1,5 @@
+# Copyright (c) 2023-2026 Yaroslav Vasylenko (neuron7xLab)
+# SPDX-License-Identifier: MIT
 """Immutable trading signal entity."""
 
 from __future__ import annotations
@@ -52,9 +54,7 @@ class Signal:
     def to_dict(self) -> dict[str, Any]:
         """Serialize to a JSON-friendly representation."""
         # action is converted to SignalAction in __post_init__, but mypy sees the union type
-        action_value = (
-            self.action.value if isinstance(self.action, SignalAction) else self.action
-        )
+        action_value = self.action.value if isinstance(self.action, SignalAction) else self.action
         return {
             "symbol": self.symbol,
             "action": action_value,

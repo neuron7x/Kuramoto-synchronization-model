@@ -1,0 +1,25 @@
+id: riee-readiness-docs
+status: ACTIVE
+claim_type: governance
+promise: "RIEE readiness docs and readiness test are bound."
+diff_scope:
+  changed_files:
+    - path: ".claude/commit_acceptors/riee-readiness-docs.yaml"
+    - path: "docs/architecture/RIEE_OPERATIONAL_READINESS_2026-05-26.md"
+    - path: "docs/architecture/RIEE_PRODUCTION_RUNBOOK_2026-05-26.md"
+    - path: "docs/architecture/RIEE_COMMERCIAL_AUTOMATION_2026-05-26.md"
+    - path: "tests/tools/test_production_readiness_riee.py"
+  forbidden_paths: []
+required_python_symbols: []
+expected_signal: "readiness docs are present and readiness test runs"
+measurement_command: "python -m pytest -q tests/tools/test_production_readiness_riee.py"
+signal_artifact: "tmp/riee_readiness_docs.log"
+falsifier:
+  command: "python -m pytest -q tests/tools/test_production_readiness_riee.py"
+  description: "readiness test must execute"
+rollback_command: "git checkout HEAD~1 -- docs/architecture/RIEE_OPERATIONAL_READINESS_2026-05-26.md docs/architecture/RIEE_PRODUCTION_RUNBOOK_2026-05-26.md docs/architecture/RIEE_COMMERCIAL_AUTOMATION_2026-05-26.md tests/tools/test_production_readiness_riee.py"
+rollback_verification_command: "python tools/commit_acceptor/validate_commit_acceptor.py"
+memory_update_type: append
+ledger_path: ".claude/commit_acceptors/riee-readiness-docs.yaml"
+report_path: "docs/architecture/RIEE_OPERATIONAL_READINESS_2026-05-26.md"
+evidence: []

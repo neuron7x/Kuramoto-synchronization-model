@@ -1,0 +1,27 @@
+id: pr-preflight-runbook
+status: ACTIVE
+claim_type: governance
+promise: "The structured PR preflight runner has an operational developer runbook and the repository system map exposes that runbook without losing canonical sections."
+diff_scope:
+  changed_files:
+    - path: ".claude/commit_acceptors/pr-preflight-runbook.yaml"
+    - path: "docs/PR_PREFLIGHT_RUNBOOK.md"
+    - path: "docs/REPOSITORY_SYSTEM.md"
+  forbidden_paths:
+    - "trading/"
+    - "execution/"
+    - "forecast/"
+    - "policy/"
+required_python_symbols: []
+expected_signal: "Runbook explains wrapper command, direct runner commands, evidence outputs, status model, check registry, report schema, triage decision tree, failure class mapping, behavioral expectations, acceptance boundary, rollback protocol, and anti-regression rules; repository system map links the runbook while retaining completion definition."
+measurement_command: "grep -R \"Report contract\" docs/PR_PREFLIGHT_RUNBOOK.md && grep -R \"Triage decision tree\" docs/PR_PREFLIGHT_RUNBOOK.md && grep -R \"docs/PR_PREFLIGHT_RUNBOOK.md\" docs/REPOSITORY_SYSTEM.md && grep -R \"Definition of Repository Completion\" docs/REPOSITORY_SYSTEM.md"
+signal_artifact: "docs/PR_PREFLIGHT_RUNBOOK.md"
+falsifier:
+  command: 'grep -REn "VALIDATED|PRODUCTION_READY|ELITE" docs/PR_PREFLIGHT_RUNBOOK.md docs/REPOSITORY_SYSTEM.md'
+  description: "Runbook and repository map must not claim forbidden final states."
+rollback_command: "restore docs/REPOSITORY_SYSTEM.md from the previous complete canonical map and remove runbook/acceptor changes if the runbook is rolled back"
+rollback_verification_command: "verify docs/REPOSITORY_SYSTEM.md still contains sections 1 through 10 and docs/PR_PREFLIGHT_RUNBOOK.md is either linked consistently or absent consistently"
+memory_update_type: none
+ledger_path: ".claude/commit_acceptors/pr-preflight-runbook.yaml"
+report_path: "docs/PR_PREFLIGHT_RUNBOOK.md"
+evidence: []

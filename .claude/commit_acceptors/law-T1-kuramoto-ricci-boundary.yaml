@@ -1,0 +1,85 @@
+# Diff-bound acceptor for Law T1: Kuramoto-Ricci sync-onset boundary.
+#
+# Constitutional law T1 of seven (CLAUDE.md GeoSync Physics Law Act).
+# Builds on Law T2 (lyapunov_spectrum) for variational MLE verification.
+
+id: law-T1-kuramoto-ricci-boundary
+status: ACTIVE
+claim_type: correctness
+promise: >-
+  core.kuramoto.kuramoto_ricci_engine ships a JAX-pure Kuramoto network
+  on Ollivier-Ricci edge weights with the analytic Restrepo-Ott-Hunt
+  sync-onset boundary Φ(K, γ, A) = K·λ_max(A) − 2γ. Public surface:
+  ricci_to_adjacency (filters anti-correlated edges), kuramoto_ricci_rhs
+  (factory for T2 spectrum estimator), kuramoto_ricci_step (midpoint
+  RK2), kuramoto_ricci_trajectory (jit-fused via lax.scan),
+  phase_transition_boundary (returns BoundaryReport with Φ, K_c,
+  λ_max(A), γ), order_parameter (R ∈ [0, 1]; INV-K1 compat), and
+  coupling_potential (V; INV-KR3). Adds three constitutional invariants:
+    INV-KR1 | algebraic    | sign(Φ) determines asymptotic ⟨R⟩ regime
+                              on complete-graph + Lorentzian-frequency
+                              ensembles (subcritical: ⟨R⟩ < 1.5·3/√N;
+                              supercritical: ⟨R⟩ > 0.5).
+    INV-KR2 | qualitative  | the variational MLE crosses zero through
+                              Φ = 0 (verified via T2 lyapunov_spectrum):
+                              supercritical λ_1 < 0.15, subcritical
+                              λ_1 > -0.05.
+    INV-KR3 | conservation | with ω_i = 0 (homogeneous limit), V(θ(t))
+                              is non-increasing under midpoint flow on
+                              dense weighted graph (max dV ≤ 1e-9).
+  Determinism: bit-identical trajectories under identical inputs
+  (INV-HPC1).
+diff_scope:
+  changed_files:
+    - path: ".claude/commit_acceptors/law-T1-kuramoto-ricci-boundary.yaml"
+    - path: "core/kuramoto/kuramoto_ricci_engine.py"
+    - path: "tests/unit/physics/test_T1_kuramoto_ricci_boundary.py"
+    - path: "docs/laws/T1_kuramoto_ricci_boundary.md"
+    - path: "newsfragments/law-T1-kuramoto-ricci-boundary.feature.md"
+    - path: "CLAUDE.md"
+  forbidden_paths:
+    - "trading/"
+    - "execution/"
+    - "forecast/"
+    - "policy/"
+required_python_symbols:
+  - "BoundaryReport"
+  - "coupling_potential"
+  - "kuramoto_ricci_rhs"
+  - "kuramoto_ricci_step"
+  - "kuramoto_ricci_trajectory"
+  - "order_parameter"
+  - "phase_transition_boundary"
+  - "ricci_to_adjacency"
+expected_signal: >-
+  All 18 unit tests pass under pytest; black, ruff, mypy --strict clean
+  on source and test files; complete-graph K_c sanity check matches
+  2γ/(N−1) to 1e-12; Lorentzian-frequency ER ensemble at K = 4·K_c
+  reaches ⟨R⟩ > 0.7 within T = 100.
+measurement_command: >-
+  python -m pytest tests/unit/physics/test_T1_kuramoto_ricci_boundary.py -v
+signal_artifact: "tmp/law_T1_kuramoto_ricci_boundary_pytest.log"
+falsifier:
+  command: >-
+    python -m pytest tests/unit/physics/test_T1_kuramoto_ricci_boundary.py
+    -v -k "INV_KR1 or INV_KR2 or INV_KR3 or HPC1 or negative_control"
+  description: >-
+    Probe filters to the load-bearing tests:
+    INV-KR1 (Φ-sign → ⟨R⟩ regime, the operational claim of the law);
+    INV-KR2 (variational MLE sign at sub/supercritical, ties T1 to T2);
+    INV-KR3 (V monotone at ω=0, the gradient-flow Lyapunov function);
+    INV-HPC1 (determinism); negative_control (V can increase with ω≠0
+    AND K=0 yields no sync — proves the positive claims are not vacuous).
+rollback_command: >-
+  git checkout HEAD~1 -- core/kuramoto/kuramoto_ricci_engine.py
+  tests/unit/physics/test_T1_kuramoto_ricci_boundary.py
+  .claude/commit_acceptors/law-T1-kuramoto-ricci-boundary.yaml
+  docs/laws/T1_kuramoto_ricci_boundary.md
+  newsfragments/law-T1-kuramoto-ricci-boundary.feature.md
+  CLAUDE.md
+rollback_verification_command: >-
+  git diff --exit-code core/kuramoto/kuramoto_ricci_engine.py
+memory_update_type: append
+ledger_path: ".claude/commit_acceptors/law-T1-kuramoto-ricci-boundary.yaml"
+report_path: "docs/laws/T1_kuramoto_ricci_boundary.md"
+evidence: []

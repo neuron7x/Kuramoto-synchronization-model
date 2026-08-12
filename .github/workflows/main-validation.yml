@@ -1,0 +1,136 @@
+name: Main Validation
+
+on:
+  push:
+    branches: [main]
+  workflow_dispatch:
+
+permissions:
+  contents: read
+
+env:
+  FORCE_JAVASCRIPT_ACTIONS_TO_NODE24: 'true'
+
+concurrency:
+  group: main-validation-${{ github.ref }}
+  cancel-in-progress: false
+
+jobs:
+  python-full-validation:
+    name: python-full-validation
+    runs-on: ubuntu-latest
+    # Serial full-suite (~18k tests under coverage) is ~75-95 min on the 4-core
+    # runner; the old 60-min cap killed it mid-suite (silent non-enforcement).
+    # Cap raised with headroom so a healthy serial run completes and the
+    # guardrail enforces; a genuine hang still fails closed well under the
+    # 6-hour default.
+    timeout-minutes: 150
+    steps:
+      - name: Checkout
+        uses: actions/checkout@9c091bb21b7c1c1d1991bb908d89e4e9dddfe3e0 # v7.0.0
+        with:
+          # tests/systemic_risk/test_d002h_gate_{f,g}_*.py call
+          # `git merge-base --is-ancestor <historical-sha> origin/main`
+          # to verify the seven canonical-run authorisation anchors
+          # are real ancestors of main. Default actions/checkout depth=1
+          # makes those historical commits unavailable -> exit 128
+          # ("Not a valid commit name"). Full history is required.
+          fetch-depth: 0
+
+      - name: Setup Python environment
+        uses: ./.github/actions/setup-geosync
+        with:
+          python-version: '3.11'
+          cache-prefix: main-full-tests
+
+      - name: Verify pip executable
+        run: .venv/bin/python -m pip --version
+
+      - name: Run broader post-merge validation suite
+        env:
+          # Match the fast-shard recipe (pr-gate.yml): force UTF-8 so file reads
+          # never hit the runner's ASCII fallback. Repo source/tests contain
+          # UTF-8 (— ≤ κ → …); an open() without encoding= would otherwise raise
+          # UnicodeDecodeError.
+          PYTHONUTF8: '1'
+          PYTHONIOENCODING: 'utf-8'
+        run: |
+          # An enforcement gate must COMPLETE — run SERIALLY. The earlier serial
+          # run overran the 60-min cap (run 27870261022: 60m15s, killed
+          # mid-suite, guardrail step skipped, conclusion `cancelled`). A first
+          # attempt to parallelize with `-n auto` (run 27872709126) completed in
+          # ~26 min but surfaced xdist-ONLY failures the timeout vacuum had
+          # hidden: pytest-benchmark yields no timing under xdist, and
+          # module-scoped logging/caplog tests fail by cross-worker ordering —
+          # artifacts of parallel execution, not real regressions. So this gate
+          # keeps the original SERIAL semantics and just gets enough budget to
+          # finish (timeout-minutes raised above). A total hang still fails
+          # closed via the job-level cap.
+          .venv/bin/pytest tests/ -m "not nightly and not flaky" \
+            --cov=core \
+            --cov=backtest \
+            --cov=execution \
+            --cov-config=configs/quality/critical_surface.coveragerc \
+            --cov-report=term-missing \
+            --cov-report=xml
+
+      - name: Enforce coverage guardrail
+        run: |
+          .venv/bin/python -m tools.coverage.guardrail \
+            --config configs/quality/critical_surface.toml \
+            --coverage coverage.xml
+
+  packaging-smoke:
+    name: packaging-smoke
+    runs-on: ubuntu-latest
+    steps:
+      - name: Checkout
+        uses: actions/checkout@9c091bb21b7c1c1d1991bb908d89e4e9dddfe3e0 # v7.0.0
+
+      - name: Setup Python environment
+        uses: ./.github/actions/setup-geosync
+        with:
+          python-version: '3.11'
+          cache-prefix: main-package
+
+      - name: Verify pip executable
+        run: .venv/bin/python -m pip --version
+
+      - name: Build Python package artifacts
+        run: .venv/bin/python -m build --sdist --wheel --outdir dist
+
+  frontend-build-smoke:
+    name: frontend-build-smoke
+    runs-on: ubuntu-latest
+    steps:
+      - name: Checkout
+        uses: actions/checkout@9c091bb21b7c1c1d1991bb908d89e4e9dddfe3e0 # v7.0.0
+
+      - name: Setup Node.js
+        uses: actions/setup-node@48b55a011bda9f5d6aeb4c2d9c7362e8dae4041e # v6.4.0
+        with:
+          node-version: '24'
+          cache: npm
+          cache-dependency-path: apps/web/package-lock.json
+
+      - name: Build frontend
+        working-directory: apps/web
+        run: |
+          npm ci
+          npm run build
+
+  brand-consistency:
+    name: brand-consistency
+    runs-on: ubuntu-latest
+    timeout-minutes: 5
+    steps:
+      - name: Checkout
+        uses: actions/checkout@9c091bb21b7c1c1d1991bb908d89e4e9dddfe3e0 # v7.0.0
+
+      - name: Setup Python
+        uses: actions/setup-python@ece7cb06caefa5fff74198d8649806c4678c61a1 # v6
+        with:
+          python-version: '3.11'
+
+      - name: Scan for legacy brand identifiers
+        run: python tools/quality/brand_consistency.py

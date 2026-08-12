@@ -251,12 +251,12 @@ const communityProfile = {
     {
       name: 'Mentorship sprint',
       description: 'Six-week track pairing maintainers with first-time contributors.',
-      url: 'https://tradepulse.dev/community/mentorship',
+      url: 'https://geosync.dev/community/mentorship',
     },
     {
       name: 'Observability guild',
       description: 'Weekly office hours focused on instrumentation and tracing contributions.',
-      url: 'https://tradepulse.dev/community/observability-guild',
+      url: 'https://geosync.dev/community/observability-guild',
     },
   ],
   events: [
@@ -265,33 +265,33 @@ const communityProfile = {
       date: '2025-02-12T16:00:00Z',
       type: 'Virtual',
       location: 'Online',
-      url: 'https://tradepulse.dev/events/community-call',
+      url: 'https://geosync.dev/events/community-call',
     },
     {
       name: 'Contributor summit',
       date: '2025-04-18T09:00:00Z',
       type: 'Hybrid',
       location: 'Barcelona / Remote',
-      url: 'https://tradepulse.dev/events/summit',
+      url: 'https://geosync.dev/events/summit',
     },
   ],
   resources: [
     {
       label: 'Contribution playbook',
       description: 'Step-by-step onboarding with tooling, workflows, and review expectations.',
-      url: 'https://tradepulse.dev/docs/contribute',
+      url: 'https://geosync.dev/docs/contribute',
       category: 'Guides',
     },
     {
       label: 'Design system',
       description: 'Reusable tokens, components, and accessibility guidance.',
-      url: 'https://tradepulse.dev/design-system',
+      url: 'https://geosync.dev/design-system',
       category: 'Design',
     },
     {
       label: 'Incident response runbook',
       description: 'Checklist for coordinating responders and status updates.',
-      url: 'https://tradepulse.dev/ops/incident',
+      url: 'https://geosync.dev/ops/incident',
       category: 'Operations',
     },
   ],
@@ -301,14 +301,14 @@ const communityProfile = {
       leads: 6,
       focus: 'Quant research enablement and governance.',
       location: 'Remote / NYC',
-      url: 'https://tradepulse.dev/community/hubs/na',
+      url: 'https://geosync.dev/community/hubs/na',
     },
     {
       region: 'EMEA',
       leads: 4,
       focus: 'Localization reviews and regulatory readiness.',
       location: 'Warsaw / Remote',
-      url: 'https://tradepulse.dev/community/hubs/emea',
+      url: 'https://geosync.dev/community/hubs/emea',
     },
   ],
   opportunities: [
@@ -316,13 +316,13 @@ const communityProfile = {
       title: 'Compliance automation squad',
       scope: 'Risk & controls',
       description: 'Ship analytics to visualise real-time exposure adjustments.',
-      url: 'https://tradepulse.dev/community/opportunities/compliance',
+      url: 'https://geosync.dev/community/opportunities/compliance',
     },
     {
       title: 'Mobile UX guild',
       scope: 'Product design',
       description: 'Adapt dashboards for native mobile workflows.',
-      url: 'https://tradepulse.dev/community/opportunities/mobile',
+      url: 'https://geosync.dev/community/opportunities/mobile',
     },
   ],
   champions: [
@@ -340,17 +340,17 @@ const communityProfile = {
     },
   ],
   channels: [
-    { label: 'Slack', url: 'https://chat.tradepulse.dev' },
-    { label: 'GitHub Discussions', url: 'https://github.com/tradepulse-ai/tradepulse/discussions' },
+    { label: 'Slack', url: 'https://chat.geosync.dev' },
+    { label: 'GitHub Discussions', url: 'https://github.com/geosync-ai/geosync/discussions' },
   ],
-  primaryCta: { label: 'Contribution playbook', url: 'https://tradepulse.dev/docs/contribute' },
-  secondaryCta: { url: 'https://chat.tradepulse.dev' },
+  primaryCta: { label: 'Contribution playbook', url: 'https://geosync.dev/docs/contribute' },
+  secondaryCta: { url: 'https://chat.geosync.dev' },
 };
 
 const githubOverview = {
-  organization: 'TradePulse',
-  repository: 'TradePulse',
-  url: 'https://github.com/tradepulse-ai/tradepulse',
+  organization: 'GeoSync',
+  repository: 'GeoSync',
+  url: 'https://github.com/geosync-ai/geosync',
   stars: 4820,
   stars_delta: 0.16,
   forks: 318,
@@ -371,14 +371,14 @@ const githubOverview = {
     {
       name: 'CI',
       badge:
-        'https://img.shields.io/github/actions/workflow/status/tradepulse-ai/tradepulse/ci.yml?label=CI&logo=github',
-      url: 'https://github.com/tradepulse-ai/tradepulse/actions/workflows/ci.yml',
+        'https://img.shields.io/github/actions/workflow/status/geosync-ai/geosync/ci.yml?label=CI&logo=github',
+      url: 'https://github.com/geosync-ai/geosync/actions/workflows/ci.yml',
     },
     {
       name: 'Quality gate',
       badge:
-        'https://img.shields.io/github/actions/workflow/status/tradepulse-ai/tradepulse/quality.yml?label=Quality&logo=github',
-      url: 'https://github.com/tradepulse-ai/tradepulse/actions/workflows/quality.yml',
+        'https://img.shields.io/github/actions/workflow/status/geosync-ai/geosync/quality.yml?label=Quality&logo=github',
+      url: 'https://github.com/geosync-ai/geosync/actions/workflows/quality.yml',
     },
   ],
   quality: {
@@ -460,7 +460,7 @@ const monitoringTelemetry = {
     killSwitch: {
       enabled: false,
       changedAt: now - 120000,
-      changedBy: 'ops@tradepulse.ai',
+      changedBy: 'ops@geosync.ai',
       reason: 'Quarterly drill reset',
     },
     circuitBreaker: {

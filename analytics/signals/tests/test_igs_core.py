@@ -1,3 +1,5 @@
+# Copyright (c) 2023-2026 Yaroslav Vasylenko (neuron7xLab)
+# SPDX-License-Identifier: MIT
 import numpy as np
 import pandas as pd
 
@@ -8,7 +10,7 @@ def test_epr_reasonable_on_noise():
     np.random.seed(1)
     n = 2000
     prices = 100 + np.cumsum(np.random.randn(n))
-    series = pd.Series(prices, index=pd.date_range("2024-01-01", periods=n, freq="T"))
+    series = pd.Series(prices, index=pd.date_range("2024-01-01", periods=n, freq="min"))
 
     cfg = IGSConfig(window=200, n_states=5, min_counts=50)
     feats = compute_igs_features(series, cfg)
@@ -22,7 +24,7 @@ def test_flux_in_bounds():
     np.random.seed(2)
     n = 1500
     prices = 100 + np.cumsum(np.random.randn(n))
-    series = pd.Series(prices, index=pd.date_range("2024-01-01", periods=n, freq="T"))
+    series = pd.Series(prices, index=pd.date_range("2024-01-01", periods=n, freq="min"))
 
     cfg = IGSConfig(window=200, n_states=5, min_counts=50)
     feats = compute_igs_features(series, cfg)

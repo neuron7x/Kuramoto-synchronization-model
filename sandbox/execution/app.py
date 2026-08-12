@@ -1,3 +1,5 @@
+# Copyright (c) 2023-2026 Yaroslav Vasylenko (neuron7xLab)
+# SPDX-License-Identifier: MIT
 """FastAPI application for the sandbox paper execution service."""
 
 from __future__ import annotations
@@ -66,7 +68,7 @@ def create_app(
     config = settings or execution_settings()
     execution_engine = engine or create_engine(config)
 
-    app = FastAPI(title="TradePulse Sandbox Paper Execution", version="1.0.0")
+    app = FastAPI(title="GeoSync Sandbox Paper Execution", version="1.0.0")
 
     @app.get("/health")
     async def health() -> dict[str, Any]:

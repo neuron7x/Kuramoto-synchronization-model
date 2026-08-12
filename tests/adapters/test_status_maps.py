@@ -1,4 +1,5 @@
-# SPDX-License-Identifier: LicenseRef-TradePulse-Proprietary
+# Copyright (c) 2023-2026 Yaroslav Vasylenko (neuron7xLab)
+# SPDX-License-Identifier: MIT
 import importlib
 import inspect
 import pkgutil
@@ -28,9 +29,7 @@ def _collect_canonical_statuses() -> Set[str]:
             "pending",
         }
 
-    for _, name, ispkg in pkgutil.walk_packages(
-        interfaces.__path__, interfaces.__name__ + "."
-    ):
+    for _, name, ispkg in pkgutil.walk_packages(interfaces.__path__, interfaces.__name__ + "."):
         try:
             mod = importlib.import_module(name)
         except Exception:
@@ -64,9 +63,7 @@ def _iter_adapter_modules():
         yield name
 
 
-STATUS_MAP_NAME_RE = re.compile(
-    r".*(ORDER|EXEC|STATUS).*(MAP|MAPPING).*", re.IGNORECASE
-)
+STATUS_MAP_NAME_RE = re.compile(r".*(ORDER|EXEC|STATUS).*(MAP|MAPPING).*", re.IGNORECASE)
 
 
 def _find_status_maps(mod) -> Dict[str, Dict[Any, Any]]:
@@ -101,6 +98,4 @@ def test_status_maps_values_are_canonical():
 
 def test_status_maps_cover_common_states():
     typical = {"open", "partially_filled", "filled", "cancelled", "rejected"}
-    assert typical.issubset(
-        CANONICAL_STATUS_NAMES
-    ), "Canonical statuses missing typical names"
+    assert typical.issubset(CANONICAL_STATUS_NAMES), "Canonical statuses missing typical names"

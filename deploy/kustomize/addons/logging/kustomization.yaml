@@ -8,10 +8,10 @@ resources:
   - logstash-service.yaml
 
 configMapGenerator:
-  - name: tradepulse-filebeat-config
+  - name: geosync-filebeat-config
     files:
       - filebeat.yml=../../../../observability/logging/filebeat.kubernetes.yml
-  - name: tradepulse-logstash-pipeline
+  - name: geosync-logstash-pipeline
     files:
       - logstash.conf=../../../../observability/logstash/pipeline/logstash.conf
 
@@ -26,7 +26,7 @@ replacements:
     targets:
       - select:
           kind: ClusterRoleBinding
-          name: tradepulse-filebeat
+          name: geosync-filebeat
         fieldPaths:
           - subjects.0.namespace
         options:

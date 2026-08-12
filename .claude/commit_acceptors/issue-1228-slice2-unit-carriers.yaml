@@ -1,0 +1,48 @@
+id: issue-1228-slice2-unit-carriers
+status: ACTIVE
+claim_type: governance
+promise: >-
+  Issue #1228 tasks 12-17 are bound to durable unit-row carriers without granting score credit:
+  theta, omega, K, A, R, and Phi are mapped to the existing units table. Task 18 is not
+  closed here because an explicit dt unit-row carrier is not present in the units table.
+
+diff_scope:
+  changed_files:
+    - path: ".claude/commit_acceptors/issue-1228-slice1-ricci-carriers.yaml"
+    - path: ".claude/commit_acceptors/issue-1228-slice2-unit-carriers.yaml"
+    - path: "artifacts/physics_validation/issue_1228_slice1_verdict.json"
+    - path: "artifacts/physics_validation/issue_1228_slice2_units_verdict.json"
+  forbidden_paths:
+    - "core/"
+    - "runtime/"
+    - "trading/"
+    - "execution/"
+    - "forecast/"
+    - "policy/"
+
+required_python_symbols: []
+
+expected_signal: >-
+  The added JSON verdict parses successfully and records the issue-1228 slice-2
+  unit-row carrier map for tasks 12-17. It is artifact-only and keeps score credit,
+  final validation, and target-interval claims disabled while task 18 remains open.
+
+measurement_command: >-
+  bash -c 'mkdir -p tmp && python -m json.tool artifacts/physics_validation/issue_1228_slice2_units_verdict.json > tmp/issue_1228_slice2_units_verdict.normalized.json'
+
+signal_artifact: "tmp/issue_1228_slice2_units_verdict.normalized.json"
+
+falsifier:
+  command: >-
+    bash -c 'python -m json.tool artifacts/physics_validation/issue_1228_slice2_units_verdict.json >/dev/null'
+  description: >-
+    Fails if the unit-row artifact-only verdict is not valid JSON.
+
+rollback_command: >-
+  bash -c 'git rm -f artifacts/physics_validation/issue_1228_slice2_units_verdict.json .claude/commit_acceptors/issue-1228-slice2-unit-carriers.yaml'
+rollback_verification_command: >-
+  bash -c 'test ! -e artifacts/physics_validation/issue_1228_slice2_units_verdict.json'
+
+memory_update_type: append
+ledger_path: ".claude/commit_acceptors/issue-1228-slice2-unit-carriers.yaml"
+report_path: "tmp/issue_1228_slice2_units_verdict.normalized.json"

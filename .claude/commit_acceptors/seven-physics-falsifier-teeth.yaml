@@ -1,0 +1,121 @@
+# Diff-bound commit acceptor for the seven-physics falsifier-resolution teeth.
+#
+# Binds each EXTRAPOLATED/SPECULATIVE seven-physics invariant in
+# .claude/physics/INVARIANTS.yaml to THE EXACT pytest node that fails when its
+# bound is violated, via a new node-level `falsifier_test` field, and adds an
+# executable gate test that proves every such binding resolves to a real,
+# collectable, violation-exercising pytest node.
+#
+#   INV-COSMOLOGICAL-COMPUTE  -> test_compute_claim_above_budget_violation
+#   INV-JACOBSON-OBSERVER     -> test_witness_extended_inconsistent_when_correction_breaks_balance
+#   INV-SIMULATION-FALSIFICATION -> test_point_eval_above_threshold_rules_out_with_reason
+#   INV-OBSERVER-BANDWIDTH    -> test_bound_violated_when_gamma_above_bandwidth
+#
+# Promotes NO tier (EXTRAPOLATED stays EXTRAPOLATED, SPECULATIVE stays P2),
+# adds NO invariant (count stays 99), changes NO runtime math, adds NO
+# dependency. The evidence-matrix generator gains one `Falsifier Node` column;
+# the matrix is regenerated deterministically.
+#
+# Locally verified on origin/main fork base:
+#   * pytest tests/unit/physics/test_falsifier_resolution.py: 17 passed
+#   * mutation probe (dangling node / passing-path node / dropped binding):
+#     each turns the gate red on the correct guarantee (see falsifier below)
+#   * python scripts/ci/check_claims.py: PASS (21/21 P0/P1 ANCHORED unaffected)
+#   * python scripts/count_invariants.py: 99 (unchanged); count-sync OK
+#   * python .claude/physics/validate_tests.py --self-check: PASSED
+#   * ruff format / black / ruff check on tools/physics_evidence_matrix.py: clean
+#   * mypy --strict tools/physics_evidence_matrix.py
+#       + tests/unit/physics/test_falsifier_resolution.py: no issues
+id: seven-physics-falsifier-teeth
+status: ACTIVE
+claim_type: governance
+promise: >-
+  After this PR lands, each EXTRAPOLATED/SPECULATIVE seven-physics invariant
+  (INV-COSMOLOGICAL-COMPUTE, INV-JACOBSON-OBSERVER, INV-SIMULATION-FALSIFICATION,
+  INV-OBSERVER-BANDWIDTH) declares a node-level `falsifier_test` in
+  .claude/physics/INVARIANTS.yaml that resolves to a real, collectable pytest
+  node which asserts the bound's violation verdict. The gate test
+  tests/unit/physics/test_falsifier_resolution.py fails closed if any binding is
+  missing, dangles to a non-existent function, drifts to a test that does not
+  reference its invariant, or points at a passing-path test that never exercises
+  the failing side of the bound. No tier is promoted; no invariant is added (the
+  registry count stays 99); no runtime math or schema changes.
+diff_scope:
+  changed_files:
+    - path: ".claude/commit_acceptors/seven-physics-falsifier-teeth.yaml"
+    - path: ".claude/physics/INVARIANTS.yaml"
+    - path: "tests/unit/physics/test_falsifier_resolution.py"
+    - path: "tools/physics_evidence_matrix.py"
+    - path: "docs/physics/evidence_matrix.md"
+  forbidden_paths:
+    - "trading/"
+    - "execution/"
+    - "forecast/"
+    - "policy/"
+    - "application/"
+    - "core/"
+    - "src/"
+    - "geosync_hpc/"
+    - "physics_contracts/catalog.yaml"
+required_python_symbols: []
+expected_signal: >-
+  `python -m pytest tests/unit/physics/test_falsifier_resolution.py` reports
+  17 passed; the four EXTRAPOLATED/SPECULATIVE seven-physics invariants each
+  carry a `falsifier_test` node id that AST-resolves to a defined test_* function
+  asserting a violation verdict. check_claims, invariant count (99), and the
+  physics-kernel self-check are unchanged.
+measurement_command: >-
+  bash -c 'mkdir -p tmp && python -m pytest
+  tests/unit/physics/test_falsifier_resolution.py -v
+  > tmp/seven_physics_falsifier_teeth.log 2>&1
+  && grep -q "17 passed" tmp/seven_physics_falsifier_teeth.log'
+signal_artifact: "tmp/seven_physics_falsifier_teeth.log"
+falsifier:
+  command: |-
+    bash -c 'python -c "
+    import ast, pathlib, sys
+    sys.path.insert(0, \".claude/physics\")
+    from validate_tests import load_invariants
+    root = pathlib.Path(\".\")
+    reg = load_invariants()
+    bindings = {k: v[\"falsifier_test\"] for k, v in reg.items() if v.get(\"falsifier_test\")}
+    markers = (\"is_within_budget is False\", \"is_extended_consistent is False\",
+               \"is_bound_consistent is False\", \"hardware_class_ruled_out is True\")
+    toothless = False
+    for inv, node in bindings.items():
+        rel, func = node.split(\"::\", 1)
+        p = root / rel
+        if not p.is_file():
+            toothless = True; continue
+        tree = ast.parse(p.read_text())
+        fn = next((n for n in ast.walk(tree)
+                   if isinstance(n, (ast.FunctionDef, ast.AsyncFunctionDef)) and n.name == func), None)
+        if fn is None:
+            toothless = True; continue
+        seg = ast.get_source_segment(p.read_text(), fn) or \"\"
+        if not any(m in seg for m in markers):
+            toothless = True
+    sys.exit(0 if toothless else 1)"'
+  description: >-
+    Inverse probe of the falsifier-resolution invariant. It exits 0 (fires) iff
+    at least one declared `falsifier_test` binding is toothless — i.e. it dangles
+    to a missing file/function or points at a test that asserts no violation
+    verdict (no `is_*_consistent is False` / `is_within_budget is False` /
+    `hardware_class_ruled_out is True`). While every binding resolves to a real
+    node that exercises the failing side of its bound, the probe exits 1. If it
+    ever exits 0, a seven-physics invariant has lost its executable falsifier and
+    the binding must be repaired or the tier demoted — not patched green.
+rollback_command: >-
+  bash -c 'git checkout -- .claude/physics/INVARIANTS.yaml
+  tools/physics_evidence_matrix.py docs/physics/evidence_matrix.md;
+  git rm -f tests/unit/physics/test_falsifier_resolution.py
+  .claude/commit_acceptors/seven-physics-falsifier-teeth.yaml'
+rollback_verification_command: >-
+  bash -c 'test ! -f tests/unit/physics/test_falsifier_resolution.py
+  && ! grep -q "falsifier_test" .claude/physics/INVARIANTS.yaml'
+memory_update_type: none
+ledger_path: ".claude/commit_acceptors/seven-physics-falsifier-teeth.yaml"
+report_path: "tmp/seven_physics_falsifier_teeth.log"
+evidence:
+  - path: "tmp/seven_physics_falsifier_teeth.log"
+    sha256: "fbeb39d942d770328666ae75f3d93123a1bd3ee6091a32d48d4d29f8e5b7fff2"  # pragma: allowlist secret

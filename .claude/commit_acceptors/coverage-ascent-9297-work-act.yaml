@@ -1,0 +1,46 @@
+id: coverage-ascent-9297-work-act
+status: ACTIVE
+claim_type: documentation
+promise: >-
+  Diff-bound documentation acceptor for the Coverage Ascent 92-97 Work Act.
+  The bound file defines the value function, methodology, protocols, maturity
+  gates, and evidence checklist for the release-coverage ascent. It is an
+  engineering protocol, not a readiness claim: it forbids threshold lowering,
+  omit-rule expansion, and any percentage claim without same-commit machine
+  evidence from the release coverage authority.
+diff_scope:
+  changed_files:
+    - path: ".claude/commit_acceptors/coverage-ascent-9297-work-act.yaml"
+    - path: "reports/COVERAGE_ASCENT_92_97_WORK_ACT.md"
+  forbidden_paths:
+    - "configs/quality/release_90.coveragerc"
+    - "configs/quality/coverage_targets.toml"
+    - "configs/quality/critical_surface.toml"
+    - "pyproject.toml"
+required_python_symbols: []
+expected_signal: >-
+  The work act keeps all thirteen numbered protocol sections and the explicit
+  "not a readiness claim" status line, so the document cannot silently mutate
+  into an unevidenced completion claim.
+measurement_command: >-
+  bash -c 'set -euo pipefail; mkdir -p tmp; f=reports/COVERAGE_ASCENT_92_97_WORK_ACT.md;
+  grep -q "Status: engineering protocol, not a readiness claim." "$f";
+  for i in 1 2 3 4 5 6 7 8 9 10 11 12 13; do grep -q "^## $i\." "$f"; done;
+  grep -q "No threshold may be lowered" "$f";
+  echo "work-act structure verified: 13 sections + fail-closed status line" | tee tmp/coverage_ascent_9297_work_act.log'
+signal_artifact: tmp/coverage_ascent_9297_work_act.log
+falsifier:
+  command: >-
+    bash -c 'f=/dev/null; grep -q "Status: engineering protocol, not a readiness claim." "$f"'
+  description: >-
+    The structural check must fail on a document that lost the fail-closed
+    status line; if it passes on empty input the measurement is vacuous.
+rollback_command: >-
+  bash -c 'git rm -f reports/COVERAGE_ASCENT_92_97_WORK_ACT.md .claude/commit_acceptors/coverage-ascent-9297-work-act.yaml'
+rollback_verification_command: >-
+  bash -c 'test ! -f reports/COVERAGE_ASCENT_92_97_WORK_ACT.md && test ! -f .claude/commit_acceptors/coverage-ascent-9297-work-act.yaml'
+memory_update_type: append
+ledger_path: .claude/commit_acceptors/coverage-ascent-9297-work-act.yaml
+report_path: tmp/coverage_ascent_9297_work_act.log
+evidence: []
+# icde-trigger: 2026-07-02

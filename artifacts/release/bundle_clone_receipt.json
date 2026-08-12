@@ -1,0 +1,31 @@
+{
+  "gate_id": "G-RELEASE-BUNDLE-CLONE",
+  "task": "REL-006",
+  "generated_utc": "2026-07-19T15:08:36Z",
+  "canonical_tag": "geosync-canonical-8080e4b4",
+  "canonical_commit": "8080e4b475efe054901804f25b37b80bd06203f4",
+  "expected_tree": "9060de4a097ea467f7ab5d52ecb660ba345f671b",
+  "bundle": {
+    "built_by": "scripts/release/build_canonical_bundle.sh",
+    "refs_included": [
+      "refs/heads/main",
+      "refs/tags/geosync-canonical-8080e4b4"
+    ],
+    "ref_count": 2,
+    "note": "built to /tmp only; ~150MB binary never committed"
+  },
+  "clone": {
+    "mode": "plain git clone (no manual ref selection)",
+    "head_branch": "main",
+    "head_commit": "8080e4b475efe054901804f25b37b80bd06203f4",
+    "head_tree": "9060de4a097ea467f7ab5d52ecb660ba345f671b",
+    "tree_matches_canonical": true
+  },
+  "fsck": {
+    "command": "git fsck --strict",
+    "exit_code": 0,
+    "result": "PASS",
+    "dangling_count": 0
+  },
+  "verdict": "PASS"
+}

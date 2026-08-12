@@ -1,3 +1,5 @@
+# Copyright (c) 2023-2026 Yaroslav Vasylenko (neuron7xLab)
+# SPDX-License-Identifier: MIT
 """Cross-exchange arbitrage coordination engine."""
 
 from __future__ import annotations
@@ -93,18 +95,14 @@ class CrossExchangeArbitrageEngine:
             raise ValueError("symbols must not be empty")
         for symbol in symbols:
             if symbol not in self._pair_config:
-                raise ValueError(
-                    f"pair_config missing base/quote definition for {symbol}"
-                )
+                raise ValueError(f"pair_config missing base/quote definition for {symbol}")
         if self._running.is_set():
             raise RuntimeError("Engine already running")
         self._running.set()
         self._stop_requested.clear()
         async with asyncio.TaskGroup() as task_group:
             for exchange_id, provider in self._providers.items():
-                task_group.create_task(
-                    self._consume_quotes(exchange_id, provider, symbols)
-                )
+                task_group.create_task(self._consume_quotes(exchange_id, provider, symbols))
             task_group.create_task(self._process_quotes(symbols, opportunity_callback))
         self._running.clear()
 
@@ -236,8 +234,7 @@ class CrossExchangeArbitrageEngine:
         if net_profit < self._min_profit:
             return None
         latency_snapshot = {
-            exchange_id: tracker.percentile(50)
-            for exchange_id, tracker in self._latencies.items()
+            exchange_id: tracker.percentile(50) for exchange_id, tracker in self._latencies.items()
         }
         return ArbitrageOpportunity(
             symbol=symbol,

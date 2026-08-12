@@ -1,0 +1,47 @@
+id: inference-transformer-control-plane
+status: DRAFT
+claim_type: documentation
+promise: "Inference transformer control-plane changes remain bounded to research contracts, placeholder artifacts, and local validation without promoting research claims."
+diff_scope:
+  changed_files:
+    - path: ".claude/commit_acceptors/inference-transformer-control-plane.yaml"
+    - path: ".claude/value_functions/n7x_value_functions.v1.yaml"
+    - path: ".github/workflows/inference-transformer-contract.yml"
+    - path: "artifacts/runs/ricci_microstructure_v1/inference_transformer_placeholder.json"
+    - path: "configs/research/geosync_inference_transformer.v1.yaml"
+    - path: "data/research/inference_transformer_blocks.v1.json"
+    - path: "docs/research/ANTHROPIC_DESIGN_STACK_ADAPTATION.md"
+    - path: "docs/research/INFERENCE_TRANSFORMER_CONTROL_PLANE.md"
+    - path: "docs/research/INFERENCE_TRANSFORMER_IMPLEMENTATION_PLAN.md"
+    - path: "docs/research/N7X_CLAUDE_CODE_HANDOFF.md"
+    - path: "docs/research/SUTSKEVER_KARPATHY_ANTHROPIC_VALUE_SYNTHESIS.md"
+    - path: "schemas/research/inference_transformer_contract.schema.json"
+    - path: "scripts/ci/check_inference_transformer_contract.py"
+    - path: "scripts/ci/check_n7x_value_functions.py"
+    - path: "src/geosync/research/__init__.py"
+    - path: "src/geosync/research/transformer/__init__.py"
+    - path: "src/geosync/research/transformer/contracts.py"
+    - path: "src/geosync/research/transformer/pipeline.py"
+    - path: "tests/ci/test_inference_transformer_contract.py"
+    - path: "tools/research/run_inference_transformer_demo.py"
+  forbidden_paths:
+    - "trading/"
+    - "execution/"
+    - "forecast/"
+    - "policy/"
+required_python_symbols:
+  - "validate_contract"
+  - "RegimeCertificate"
+  - "ResearchInferenceArtifact"
+expected_signal: "Focused inference transformer workflow validates schema, value functions, contract check, placeholder artifact generation, and pytest coverage."
+measurement_command: "python scripts/ci/check_inference_transformer_contract.py && python scripts/ci/check_n7x_value_functions.py && python tools/research/run_inference_transformer_demo.py && pytest -q tests/ci/test_inference_transformer_contract.py"
+signal_artifact: "artifacts/runs/ricci_microstructure_v1/inference_transformer_placeholder.json"
+falsifier:
+  command: "python -c \"import json, pathlib; p=pathlib.Path('artifacts/runs/ricci_microstructure_v1/inference_transformer_placeholder.json'); d=json.loads(p.read_text()); raise SystemExit(0 if d.get('certificate', {}).get('claim_tier') == 'HYPOTHESIS' else 1)\""
+  description: "The placeholder artifact must remain bounded to the HYPOTHESIS tier; a promoted artifact falsifies this acceptor."
+rollback_command: "git checkout origin/main -- .claude/commit_acceptors/inference-transformer-control-plane.yaml"
+rollback_verification_command: "git diff --exit-code .claude/commit_acceptors/inference-transformer-control-plane.yaml"
+memory_update_type: none
+ledger_path: ".claude/commit_acceptors/inference-transformer-control-plane.yaml"
+report_path: "docs/research/INFERENCE_TRANSFORMER_CONTROL_PLANE.md"
+evidence: []

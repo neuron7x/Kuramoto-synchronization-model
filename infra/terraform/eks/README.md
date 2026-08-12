@@ -1,6 +1,6 @@
-# TradePulse EKS Infrastructure
+# GeoSync EKS Infrastructure
 
-This Terraform configuration provisions a production-ready Amazon EKS foundation for TradePulse. It prioritises
+This Terraform configuration provisions a production-ready Amazon EKS foundation for GeoSync. It prioritises
 fault tolerance, security, and operational excellence for latency-sensitive trading workloads.
 
 ## Features

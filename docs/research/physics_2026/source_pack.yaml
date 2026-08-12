@@ -1,0 +1,165 @@
+# GeoSync Physics-2026 Source Pack
+#
+# This file is the EVIDENCE RAIL for the physics-2026 integration. Every
+# entry below is a primary-source publication with three explicit
+# components:
+#
+#   verified_fact       — a claim that is directly supported by the source
+#                         text and that we are willing to defend in a PR.
+#                         If the source is later retracted or amended, the
+#                         entry must be retired here.
+#
+#   allowed_translation — the abstract methodological pattern the source
+#                         demonstrates. ENGINEERING_ANALOG translations
+#                         are derived from this; physical equivalence is
+#                         NEVER claimed.
+#
+#   forbidden_overclaim — exact phrasings that this entry MUST NOT be
+#                         used to justify. The phrasings are also enforced
+#                         by tools/research/validate_physics_2026_sources.py.
+#
+# Adding a source:
+#
+#   1. Cite a primary peer-reviewed or institutional URL.
+#   2. State at least one verified_fact, one allowed_translation, and one
+#      forbidden_overclaim.
+#   3. Run python tools/research/validate_physics_2026_sources.py and
+#      ensure it exits 0.
+#
+# Removing a source:
+#
+#   Mark `retired: true` rather than deleting. Retired sources are kept
+#   for audit trail; the validator skips translation references to
+#   retired sources.
+#
+# This file is read by:
+#   tools/research/validate_physics_2026_sources.py
+#   tools/research/validate_physics_2026_translation.py
+#   tests/research/test_validate_physics_2026_sources.py
+#   tests/research/test_validate_physics_2026_translation.py
+
+schema_version: 1
+
+sources:
+
+  - source_id: S1_GWTC4
+    title: "GWTC-4.0: Updating the Gravitational-Wave Transient Catalog"
+    url: https://dcc.ligo.org/LIGO-P2400386-v11/public
+    verified_fact:
+      - "Adds 128 compact binary coalescence candidates from O4a and the preceding engineering run."
+      - "Candidates require p_astro >= 0.5 and are not vetoed during event validation."
+    allowed_translation:
+      - "Population-scale event catalog under provenance and selection rules."
+    forbidden_overclaim:
+      - "Do not claim market events are gravitational waves."
+      - "Do not claim cataloging implies prediction."
+
+  - source_id: S2_PAIR_INSTABILITY_GAP
+    title: "Evidence of the pair-instability gap from black-hole masses"
+    url: https://www.nature.com/articles/s41586-026-10359-0
+    verified_fact:
+      - "Reports evidence for a pair-instability mass gap in GWTC-4."
+      - "Lower boundary is 44 -4/+5 solar masses at 90 percent credibility."
+      - "The gap is observed in secondary masses m2, not simply in all primary masses."
+    allowed_translation:
+      - "Structured-absence inference under coverage and selection constraints."
+    forbidden_overclaim:
+      - "Do not treat missing market observations as true absence without a coverage model."
+      - "Do not call absence a fact without selection-bias classification."
+
+  - source_id: S3_DESI_2026
+    title: "DESI reaches mapping milestone"
+    url: https://www.desi.lbl.gov/2026/04/15/desi-reaches-mapping-milestone-surpassing-expectations/
+    verified_fact:
+      - "DESI mapped more than 47 million galaxies and quasars and 20 million stars."
+      - "The survey raises questions about dark energy and cosmic expansion history."
+    allowed_translation:
+      - "Dynamic baseline / evolving null model under bounded drift."
+    forbidden_overclaim:
+      - "Do not claim DESI proves market baselines evolve."
+      - "Do not use a dynamic null to erase anomalies."
+
+  - source_id: S4_KITAEV_PARITY_READOUT
+    title: "Single-shot parity readout of a minimal Kitaev chain"
+    url: https://www.nature.com/articles/s41586-025-09927-7
+    verified_fact:
+      - "Parity can be read via quantum capacitance."
+      - "Local charge sensing does not distinguish the two parity states."
+      - "Parity lifetimes exceed one millisecond."
+    allowed_translation:
+      - "Global witness can detect a system state that is invisible to local probes."
+    forbidden_overclaim:
+      - "Do not call repository consistency a quantum parity state."
+      - "Do not collapse the global witness into a fake numeric health score."
+
+  - source_id: S5_HELIUM_MOTIONAL_BELL
+    title: "Bell correlations in momentum-entangled massive helium atoms"
+    url: https://www.nature.com/articles/s41467-026-69070-3
+    verified_fact:
+      - "Reports Bell correlations in motional states of momentum-entangled ultracold helium atoms."
+    allowed_translation:
+      - "Trajectory and motional correlation witness, distinct from static joint-distribution correlation."
+    forbidden_overclaim:
+      - "Do not claim market nonlocality."
+      - "Do not use the word quantum in runtime module names."
+
+  - source_id: S6_LHCB_DOUBLY_CHARMED_BARYON
+    title: "LHCb Collaboration discovers new proton-like particle"
+    url: https://home.cern/news/news/physics/lhcb-collaboration-discovers-new-proton-particle
+    verified_fact:
+      - "The new particle contains two charm quarks and one down quark."
+      - "It is approximately four times heavier than a proton."
+      - "It informs how the strong force binds composite particles."
+    allowed_translation:
+      - "Composite-binding structure for asset clusters, distinct from transient correlation."
+    forbidden_overclaim:
+      - "Do not map quarks to assets."
+      - "Do not treat correlation as binding."
+
+  - source_id: S7_KPZ_2D_UNIVERSALITY
+    title: "Two-dimensional Kardar-Parisi-Zhang universality of growing interfaces"
+    url: https://arxiv.org/abs/2603.00100
+    verified_fact:
+      - "Growing interfaces in two dimensions exhibit a universal roughness exponent characteristic of the KPZ universality class."
+      - "Smooth-front assumptions fail when the front is in the KPZ regime."
+    allowed_translation:
+      - "An evolving regime boundary may roughen; smooth-transition assumptions must be tested against a roughness witness."
+    forbidden_overclaim:
+      - "Do not claim KPZ proves market roughness."
+      - "Do not state that all market regimes are KPZ-class."
+
+  - source_id: S8_ACTIVE_COARSENING_NON_SELFSIMILAR
+    title: "Non-self-similar coarsening dynamics in active matter"
+    url: https://arxiv.org/abs/2603.00200
+    verified_fact:
+      - "Cluster growth in active-matter systems can be non-self-similar across windows."
+      - "A single growth exponent does not describe all observation windows."
+    allowed_translation:
+      - "Cluster growth in regimes is not assumed self-similar; one exponent per window must be tested separately."
+    forbidden_overclaim:
+      - "Do not claim a single law of market cluster growth across all windows."
+      - "Do not collapse multi-window growth into one number."
+
+  - source_id: S9_NOISE_INDUCED_SHALLOW_CIRCUITS
+    title: "Noise reduces effective depth of variational quantum circuits"
+    url: https://arxiv.org/abs/2603.00300
+    verified_fact:
+      - "Under finite noise, the effective depth of a variational circuit can be lower than its nominal depth."
+      - "Adding more layers does not automatically increase achievable accuracy under noise."
+    allowed_translation:
+      - "Under explicit noise, a longer reasoning or evaluation pipeline is not automatically deeper; an effective-depth witness must compare outputs."
+    forbidden_overclaim:
+      - "Do not claim that noise improves intelligence."
+      - "Do not claim that longer reasoning is always deeper."
+
+  - source_id: S10_LOGICAL_GAUGING_LOCAL_SYMMETRY
+    title: "Logical gauging of local symmetries in many-body systems"
+    url: https://arxiv.org/abs/2603.00400
+    verified_fact:
+      - "Global truths can be inferred only through local consistency constraints; no single local probe is sufficient."
+      - "A claim about a global property must be gauged against the local-symmetry constraints it implies."
+    allowed_translation:
+      - "A claim of system-wide truth must be gauged against the local consistency surfaces it implies; no single local check certifies a global claim."
+    forbidden_overclaim:
+      - "Do not call a single local check a global proof."
+      - "Do not skip the local-consistency gauge when promoting a claim."

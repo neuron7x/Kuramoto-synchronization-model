@@ -1,0 +1,56 @@
+# SPDX-License-Identifier: MIT
+id: ricci-ms-ten-axis-synthetic
+status: DRAFT
+claim_type: correctness
+promise: >-
+  Path B of the ten-axis falsification battery for ricci-microstructure
+  (decomposition R2-R8 on a synthetic ground-truth substrate). A deterministic
+  generator plants a known predictive edge and known persistence; seven
+  array-level axis methods (block-bootstrap CI, deflated Sharpe, purged K-fold,
+  mutual information, lag attribution, spectral redness, DFA Hurst) are each
+  shown to DETECT the planted structure and REJECT its absence (permuted / white
+  controls). Thresholds are set between empirically-measured edge and null
+  statistics. SCOPE: validates the axis METHODS have power and control false
+  positives; it does NOT anchor the frozen Session-1 result (path A, gated on the
+  external L2 substrate) and does not cover kill-test/walk-forward/TE (next rung,
+  I/O adapters). No real-market or predictive claim.
+diff_scope:
+  changed_files:
+    - path: ".claude/commit_acceptors/ricci-ms-ten-axis-synthetic.yaml"
+    - path: "research/microstructure/synthetic_substrate.py"
+    - path: "tests/research/microstructure/test_ten_axis_synthetic.py"
+  forbidden_paths:
+    - "trading/"
+    - "execution/"
+    - "forecast/"
+    - "policy/"
+required_python_symbols:
+  - "tests/research/microstructure/test_ten_axis_synthetic.py::test_axis2_block_bootstrap_ci"
+expected_signal: >-
+  on a synthetic substrate with a planted edge, each of the seven array-level
+  axes detects the edge/persistence; on the permuted/white control each rejects
+  it; with edge=0 the detect assertions fail (the battery is not vacuous);
+  pytest tests/research/microstructure/test_ten_axis_synthetic.py passes.
+measurement_command: >-
+  bash -c 'PYTHONPATH=. python -m pytest -q tests/research/microstructure/test_ten_axis_synthetic.py'
+signal_artifact: "tmp/ricci_ms_ten_axis_synthetic.log"
+falsifier:
+  command: |
+    python -c "import sys
+    from research.microstructure.synthetic_substrate import make_persistent_signal, plant_edge
+    from research.microstructure.robustness import mutual_information
+    sig = make_persistent_signal(4000, 6, seed=7)
+    zero = plant_edge(sig, edge=0.0, noise=1.0, seed=8)
+    mi = mutual_information(sig.ravel(), zero.ravel()).mutual_information_nats
+    sys.exit(0 if mi > 0.1 else 1)"
+  description: >-
+    Drives the mutual-information axis with a zero-edge (pure-noise) substrate and
+    exits 0 only if MI still exceeds the 0.1-nat detect threshold (the method
+    manufacturing information out of noise). On the correct tree MI is near zero,
+    so the command exits non-zero -- proving the axis does not fabricate signal.
+rollback_command: "git revert --no-edit HEAD"
+rollback_verification_command: "git diff --exit-code research/microstructure/synthetic_substrate.py"
+memory_update_type: none
+ledger_path: ".claude/commit_acceptors/ricci-ms-ten-axis-synthetic.yaml"
+report_path: "docs/reports/diff_bound_commit_acceptor_layer.md"
+evidence: []

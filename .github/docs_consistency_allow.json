@@ -1,0 +1,5 @@
+{
+  "version": 1,
+  "_doc": "Reviewed exceptions to the docs-consistency gate (scripts/ci/check_docs_consistency.py). Each entry is a doc line that mentions `src/geosync` next to a canonical-assertion token but is NOT a present-tense claim that src/geosync is the canonical root (e.g. it quotes a historical decision, or is mechanism/reference text). New unreviewed occurrences fail the gate. Canonical decision: ADR 0024 — top-level geosync/ is canonical, src/geosync/ is the retired fork.",
+  "allow": []
+}

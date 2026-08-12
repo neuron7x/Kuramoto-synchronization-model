@@ -1,4 +1,4 @@
-# ECS-Inspired Regulator for TradePulse
+# ECS-Inspired Regulator for GeoSync
 
 ## Overview
 
@@ -12,7 +12,7 @@ Based on longitudinal studies (2025 updates), the regulator differentiates betwe
 - **Chronic stress** (>5 periods): Larger hardening of the threshold (20%+) with constrained 2-AG-inspired compensation capped for safety.
 
 ### 2. Context-Dependent Normalization
-Integrates with Kuramoto-Ricci phase analysis from TradePulse:
+Integrates with Kuramoto-Ricci phase analysis from GeoSync:
 - **Stable phase**: Normal action threshold
 - **Chaotic/Transition phases**: Conservative modulation (≥1.05x hardening)
 - Based on scRNA-seq analysis showing CB1-receptor feedback loops
@@ -37,7 +37,7 @@ Integrates with Kuramoto-Ricci phase analysis from TradePulse:
 
 ## Installation
 
-The module is already integrated into TradePulse's core.neuro package:
+The module is already integrated into GeoSync's core.neuro package:
 
 ```python
 from core.neuro.ecs_regulator import ECSInspiredRegulator, ECSMetrics
@@ -143,7 +143,7 @@ regulator = ECSInspiredRegulator(
 {"timestamp_utc":"2024-01-01T00:00:01Z","schema_version":"1.0","decision_id":"92c1...","prev_hash":"0000...","mode":"NORMAL","stress_level":0.0,"chronic_counter":0,"free_energy_proxy":0.0,"raw_signal":0.2,"filtered_signal":0.19,"adjusted_signal":0.19,"conformal_q":0.05,"prediction_interval_low":0.14,"prediction_interval_high":0.24,"conformal_ready":true,"action":1,"confidence_gate_pass":true,"reason_codes":["Decision"],"params_snapshot":{"action_threshold":0.02,"smoothing_alpha":0.9,"stress_threshold":0.1,"crisis_threshold":0.15,"alpha":0.1,"calibration_window":256,"min_calibration":32,"conformal_gate_enabled":true,"stress_q_multiplier":1.25,"crisis_q_multiplier":1.5},"mode_context":"NORMAL","stress_level_context":0.0,"event_hash":"bafc..."}
 ```
 
-## Integration with TradePulse Components
+## Integration with GeoSync Components
 
 ### 1. FractalMotivationController Integration
 
@@ -194,8 +194,8 @@ for state, signals in trading_loop():
 ```python
 from core.neuro import ECSInspiredRegulator
 
-# Assuming you have TradePulseCompositeEngine
-engine = TradePulseCompositeEngine()
+# Assuming you have GeoSyncCompositeEngine
+engine = GeoSyncCompositeEngine()
 ecs_reg = ECSInspiredRegulator()
 
 # Get market phase from Kuramoto-Ricci analysis
@@ -525,7 +525,7 @@ def test_monotonic_free_energy_descent(returns, drawdowns):
 
 ## License
 
-Part of TradePulse - see LICENSE file.
+Part of GeoSync - see LICENSE file.
 
 ## Contributing
 
@@ -537,5 +537,5 @@ See CONTRIBUTING.md for guidelines on:
 ## Support
 
 For integration assistance or questions:
-- GitHub Issues: https://github.com/neuron7x/TradePulse/issues
+- GitHub Issues: https://github.com/neuron7xLab/GeoSync/issues
 - Documentation: See DOCUMENTATION_SUMMARY.md

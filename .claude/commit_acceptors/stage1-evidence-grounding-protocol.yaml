@@ -1,0 +1,47 @@
+# Diff-bound commit acceptor for Stage-1 evidence grounding protocol closure.
+id: stage1-evidence-grounding-protocol
+status: ACTIVE
+claim_type: documentation
+promise: "Stage-1 evidence grounding hardening is fail-closed: baseline artifacts, coverage summary, claims validator, and tests remain bound to evidence semantics."
+diff_scope:
+  changed_files:
+    - path: "docs/METRICS_CONTRACT.md"
+    - path: "docs/testing/canonical_commands.md"
+    - path: "reports/test_audit/current_state_20260522.md"
+    - path: "reports/test_audit/post_merge_triage_20260522.md"
+    - path: "reports/test_audit/evidence_index.json"
+    - path: "reports/test_audit/baseline_run_20260522/coverage_summary.json"
+    - path: "reports/test_audit/baseline_run_20260522/environment.json"
+    - path: "reports/test_audit/baseline_run_20260522/junit.xml"
+    - path: "reports/test_audit/baseline_run_20260522T145545Z/coverage_summary.json"
+    - path: "reports/test_audit/baseline_run_20260522T145545Z/run_metadata.json"
+    - path: "reports/test_audit/baseline_run_20260522T150359Z/coverage_summary.json"
+    - path: "reports/test_audit/baseline_run_20260522T150359Z/run_metadata.json"
+    - path: "reports/test_audit/baseline_run_20260522T151534Z/run_metadata.json"
+    - path: "reports/test_audit/baseline_run_20260522T151534Z/coverage_summary.json"
+    - path: "scripts/test_audit/run_evidence_baseline.sh"
+    - path: "tools/coverage/write_coverage_summary.py"
+    - path: "tools/claims/validate_claims_have_evidence.py"
+    - path: "tests/tools/test_validate_claims_have_evidence.py"
+    - path: ".github/workflows/evidence-grounding.yml"
+    - path: ".claude/commit_acceptors/stage1-evidence-grounding-protocol.yaml"
+  forbidden_paths:
+    - "trading/"
+    - "execution/"
+    - "forecast/"
+    - "policy/"
+required_python_symbols:
+  - "validate"
+  - "_verify_manifest"
+expected_signal: "Claim evidence validator passes and Stage-1 artifacts are policy-compliant"
+measurement_command: "python tools/claims/validate_claims_have_evidence.py"
+signal_artifact: "tmp/stage1_evidence_grounding.log"
+falsifier:
+  command: "python tools/claims/validate_claims_have_evidence.py"
+  description: "Fails if claim/evidence mapping or artifact policy invariants are broken."
+rollback_command: "git checkout -- docs/METRICS_CONTRACT.md docs/testing/canonical_commands.md reports/test_audit scripts/test_audit tools/coverage tools/claims tests/tools .github/workflows/evidence-grounding.yml"
+rollback_verification_command: "git diff --exit-code docs/METRICS_CONTRACT.md docs/testing/canonical_commands.md reports/test_audit scripts/test_audit tools/coverage tools/claims tests/tools .github/workflows/evidence-grounding.yml"
+memory_update_type: none
+ledger_path: ".claude/commit_acceptors/stage1-evidence-grounding-protocol.yaml"
+report_path: ".claude/commit_acceptors/stage1-evidence-grounding-protocol.yaml"
+evidence: []

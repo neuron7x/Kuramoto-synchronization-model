@@ -1,0 +1,22 @@
+{
+  "_doc": "Canonical headline counts, each recomputed from the same source its gate uses, at the stamped commit. Reports must cite this artifact, not remembered numbers.",
+  "counts": {
+    "claim_surfaces": {
+      "source": "check_claim_boundary._iter_surface (gate scan set)",
+      "value": 705
+    },
+    "invariants": {
+      "source": "scripts/count_invariants.py (.claude/physics/INVARIANTS.yaml)",
+      "value": 132
+    },
+    "manifest_entries": {
+      "source": "MANIFEST.sha256 line count (gate D.manifest input)",
+      "value": 7178
+    },
+    "test_files_tracked": {
+      "source": "git ls-files, rule of release_gate probe P.tests",
+      "value": 1862
+    }
+  },
+  "git_sha": "4f5e754e9b0ab96373742d9bf630628669b52971"
+}

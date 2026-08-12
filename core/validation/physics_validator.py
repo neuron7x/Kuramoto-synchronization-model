@@ -1,3 +1,5 @@
+# Copyright (c) 2023-2026 Yaroslav Vasylenko (neuron7xLab)
+# SPDX-License-Identifier: MIT
 """Physics-based validation for thermodynamic system constraints.
 
 This module provides validators that enforce thermodynamic laws and energy
@@ -65,9 +67,7 @@ class ThermodynamicState:
         if self.temperature <= 0:
             raise ValueError(f"Temperature must be positive, got {self.temperature}")
         if not 0.0 <= self.resource_usage <= 1.0:
-            raise ValueError(
-                f"resource_usage must be in [0,1], got {self.resource_usage}"
-            )
+            raise ValueError(f"resource_usage must be in [0,1], got {self.resource_usage}")
 
     @property
     def gibbs_energy(self) -> float:
@@ -284,9 +284,7 @@ class PhysicsValidator:
 
         # Energy conservation check (accounting for work done)
         # In open systems, energy change should be bounded by reasonable work
-        max_work = self.bounds.energy_conservation_tolerance * abs(
-            state_before.free_energy
-        )
+        max_work = self.bounds.energy_conservation_tolerance * abs(state_before.free_energy)
         if max_work > 0 and abs(energy_delta) > max_work:
             report.add_warning(
                 f"Large energy change {energy_delta:.2e} detected (threshold: {max_work:.2e})"
@@ -344,10 +342,7 @@ class PhysicsValidator:
         for i in range(1, len(states)):
             if timestamps_ms is not None:
                 dt = (timestamps_ms[i] - timestamps_ms[i - 1]) / 1000.0
-            elif (
-                states[i].timestamp_ms is not None
-                and states[i - 1].timestamp_ms is not None
-            ):
+            elif states[i].timestamp_ms is not None and states[i - 1].timestamp_ms is not None:
                 dt = (states[i].timestamp_ms - states[i - 1].timestamp_ms) / 1000.0
             else:
                 dt = 1.0  # Default 1 second

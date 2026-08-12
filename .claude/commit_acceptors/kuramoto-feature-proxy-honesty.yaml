@@ -1,0 +1,136 @@
+# Diff-bound commit acceptor for the Kuramoto feature proxy-honesty fix (S4).
+#
+# src/geosync/features/kuramoto.py computed a per-asset angle via
+# arctan2(rolling_std(returns), rolling_mean(returns)) — a heuristic std/mean
+# PROXY, not an analytic-signal (Hilbert) instantaneous phase — then built the
+# Kuramoto order parameter R = |<exp(i*theta)>| and assigned PHYSICAL-sounding
+# regime labels (EMERGENT / CHAOTIC / TRANSITION). The module advertised
+# "Hilbert phase" in its docstring and the public KuramotoResult carried NO
+# provenance and NO descriptor_proxy claim boundary, so a consumer could read R
+# and the labels as a validated physical Kuramoto phase. The validated phase
+# path is core/kuramoto/phase_extractor.py and is NOT touched here.
+#
+# This change makes the feature honest WITHOUT changing any numeric output:
+#   * module + class docstrings now state plainly that the implemented method is
+#     the arctan2(std, mean) proxy angle and that R / the labels are descriptor
+#     synchrony / descriptor regimes, NOT a physical phase; the analytic-signal
+#     path is named as the validated alternative;
+#   * KuramotoResult becomes a frozen dataclass carrying machine-readable
+#     provenance: proxy=True, phase_method="arctan2_std_mean_proxy",
+#     claim_boundary="descriptor_proxy_not_physical_phase",
+#     regime_kind="descriptor_regime", and information_loss recording what the
+#     proxy discards relative to an analytic phase;
+#   * fit_transform now also returns these provenance keys in its dict so the
+#     boundary travels with the public dict output, and a new result() helper
+#     returns the typed provenance-bearing KuramotoResult.
+#
+# Numeric behaviour (R, delta_R, labels) is byte-unchanged; the new dataclass
+# fields and dict keys are defaulted/additive, so existing callers that read
+# "R" / "delta_R" / "labels" are unaffected. The package-level __CANONICAL__
+# marker in src/geosync/features/__init__.py is a namespace-integrity flag
+# (the package is canonical, not a shim — gated by
+# scripts/check_namespace_integrity.py); it is INTENTIONALLY kept, and the
+# proxy/claim_boundary provenance now lives on the public result so the proxy
+# cannot be mistaken for the validated core phase path.
+#
+# Promotes NO claim tier, adds NO invariant, changes NO numeric runtime
+# behaviour, adds NO dependency. Descriptor honesty / claim-boundary fix.
+#
+# Locally verified on origin/main fork base (f7bc594d):
+#   * python -m compileall: clean
+#   * pytest tests/unit/geosync/features/test_kuramoto.py: 9 passed
+#   * pytest tests/unit/geosync/features/ + indicators public-api: 34 passed
+#   * ruff check / ruff format --check / black --check: clean
+#   * mypy --strict src/geosync/features/kuramoto.py: no issues found
+#   * .claude/physics/validate_tests.py --audit-code: no clamp/bounds issues
+#   * check_claim_boundary.py: PASS; check_claims.py: PASS
+#   * check_namespace_integrity.py: PASS
+#   * zero noqa / type: ignore across both changed files
+id: kuramoto-feature-proxy-honesty
+status: ACTIVE
+claim_type: governance
+promise: >-
+  src.geosync.features.kuramoto computes a Kuramoto-style synchrony DESCRIPTOR
+  over an arctan2(rolling_std, rolling_mean) proxy angle — not an analytic-signal
+  physical phase — and now declares that honestly: the module and class
+  docstrings no longer advertise a Hilbert/physical phase as the computed
+  method, and every emitted result carries provenance proxy=True,
+  phase_method="arctan2_std_mean_proxy",
+  claim_boundary="descriptor_proxy_not_physical_phase",
+  regime_kind="descriptor_regime", and information_loss recording the discarded
+  analytic-phase information. Numeric output (R, delta_R, labels) is
+  byte-unchanged; the new dataclass fields and dict keys are defaulted/additive
+  so no existing caller breaks. Tests lock the semantics: the public dict and
+  the KuramotoResult both expose proxy=True and the descriptor_proxy boundary,
+  the regime labels travel with their proxy provenance, and R for a fixed
+  seeded input matches the standalone arctan2(std, mean) -> |<exp(i*theta)>|
+  computation exactly. No claim tier is promoted; no invariant is added; the
+  descriptor asserts no predictive or financial meaning.
+diff_scope:
+  changed_files:
+    - path: ".claude/commit_acceptors/kuramoto-feature-proxy-honesty.yaml"
+    - path: "src/geosync/features/kuramoto.py"
+    - path: "tests/unit/geosync/features/test_kuramoto.py"
+  forbidden_paths:
+    - "trading/"
+    - "execution/"
+    - "forecast/"
+    - "core/kuramoto/"
+required_python_symbols:
+  - "src/geosync/features/kuramoto.py::KuramotoResult"
+  - "src/geosync/features/kuramoto.py::KuramotoSynchrony"
+expected_signal: >-
+  `python -m pytest tests/unit/geosync/features/test_kuramoto.py` reports
+  9 passed; the emitted dict and the KuramotoResult both declare proxy=True with
+  claim_boundary="descriptor_proxy_not_physical_phase" and
+  regime_kind="descriptor_regime", and the descriptor order parameter R is
+  numerically unchanged for a fixed seeded input.
+measurement_command: >-
+  bash -c 'mkdir -p tmp && PYTHONPATH=. python -m pytest
+  tests/unit/geosync/features/test_kuramoto.py -v
+  > tmp/kuramoto_feature_proxy_pytest.log 2>&1
+  && grep -qE "9 passed" tmp/kuramoto_feature_proxy_pytest.log'
+signal_artifact: "tmp/kuramoto_feature_proxy_pytest.log"
+falsifier:
+  command: >-
+    bash -c 'PYTHONPATH=. python -c "import importlib.util, sys;
+    from pathlib import Path;
+    spec = importlib.util.spec_from_file_location(\"kfp\",
+    \"src/geosync/features/kuramoto.py\");
+    m = importlib.util.module_from_spec(spec); sys.modules[\"kfp\"] = m;
+    spec.loader.exec_module(m);
+    import numpy as np, pandas as pd;
+    rng = np.random.RandomState(7);
+    dates = pd.date_range(\"2024-01-01\", periods=100, freq=\"1h\");
+    base = np.cumsum(rng.randn(100));
+    px = pd.DataFrame({\"a\": 100 + base + rng.randn(100) * 0.5,
+    \"b\": 100 + base + rng.randn(100) * 0.5,
+    \"c\": 100 + base + rng.randn(100) * 0.5}, index=dates);
+    out = m.KuramotoSynchrony(window=30).fit_transform(px);
+    res = m.KuramotoSynchrony(window=30).result(px);
+    declares = (out.get(\"proxy\") is True
+    and out.get(\"claim_boundary\") == \"descriptor_proxy_not_physical_phase\"
+    and out.get(\"regime_kind\") == \"descriptor_regime\"
+    and res.proxy is True
+    and res.claim_boundary == \"descriptor_proxy_not_physical_phase\");
+    sys.exit(0 if not declares else 1)"'
+  description: >-
+    Inverse probe of the proxy-honesty contract. It exits 0 (fires) iff the
+    emitted dict OR the KuramotoResult stops declaring proxy=True /
+    claim_boundary="descriptor_proxy_not_physical_phase" /
+    regime_kind="descriptor_regime" — i.e. the proxy descriptor has drifted back
+    into an undeclared physical-phase claim. While the contract holds the probe
+    exits 1. An exit 0 means the boundary must be repaired (re-declare the proxy
+    provenance, or deliver a real analytic-signal phase), not patched green.
+rollback_command: >-
+  bash -c 'git checkout origin/main -- src/geosync/features/kuramoto.py
+  tests/unit/geosync/features/test_kuramoto.py
+  && git rm -f .claude/commit_acceptors/kuramoto-feature-proxy-honesty.yaml'
+rollback_verification_command: >-
+  bash -c 'test ! -f .claude/commit_acceptors/kuramoto-feature-proxy-honesty.yaml'
+memory_update_type: none
+ledger_path: ".claude/commit_acceptors/kuramoto-feature-proxy-honesty.yaml"
+report_path: "tmp/kuramoto_feature_proxy_pytest.log"
+evidence:
+  - path: "tmp/kuramoto_feature_proxy_pytest.log"
+    sha256: "69ae8ef5b4de3c98cb2433d0e103208c31f08dc4580f2701cd0711594eb24c2b"  # pragma: allowlist secret

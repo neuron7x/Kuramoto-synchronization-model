@@ -1,0 +1,75 @@
+{
+  "$schema": "https://json-schema.org/draft/2020-12/schema",
+  "$id": "https://geosync.local/schemas/mfn_evidence_bundle.schema.json",
+  "title": "MFN Evidence Bundle",
+  "type": "object",
+  "additionalProperties": false,
+  "required": [
+    "status",
+    "claim_tier_change",
+    "mfn_state",
+    "commit",
+    "dirty_worktree",
+    "python_version",
+    "platform",
+    "commands",
+    "artifacts",
+    "failures",
+    "unknowns",
+    "next_action",
+    "first_file_to_open"
+  ],
+  "properties": {
+    "status": {"enum": ["PASS", "PARTIAL", "FAIL", "BLOCKED"]},
+    "claim_tier_change": {"const": "none"},
+    "mfn_state": {"enum": ["INSTRUMENTED", "EVIDENCE_BEARING_CANDIDATE", "BLOCKED"]},
+    "commit": {"type": "string", "pattern": "^[0-9a-f]{40}$"},
+    "dirty_worktree": {"type": "boolean"},
+    "python_version": {"type": "string", "minLength": 1},
+    "platform": {"type": "string", "minLength": 1},
+    "commands": {"type": "array", "minItems": 1, "items": {"$ref": "#/$defs/command"}},
+    "artifacts": {"type": "array", "minItems": 1, "items": {"$ref": "#/$defs/artifact"}},
+    "failures": {"type": "array", "items": {"$ref": "#/$defs/failure"}},
+    "unknowns": {"type": "array", "items": {"type": "string"}},
+    "next_action": {"type": "string", "minLength": 1},
+    "first_file_to_open": {"const": "artifacts/mfn_evidence/EVIDENCE_BUNDLE.json"}
+  },
+  "$defs": {
+    "command": {
+      "type": "object",
+      "additionalProperties": false,
+      "required": ["name", "command", "exit_code", "duration_seconds", "stdout_log", "stderr_log", "result"],
+      "properties": {
+        "name": {"type": "string", "minLength": 1},
+        "command": {"type": "string", "minLength": 1},
+        "exit_code": {"type": "integer"},
+        "duration_seconds": {"type": "number", "minimum": 0},
+        "stdout_log": {"type": "string"},
+        "stderr_log": {"type": "string"},
+        "result": {"enum": ["PASS", "FAIL", "SKIPPED", "BLOCKED"]},
+        "timed_out": {"type": "boolean"}
+      }
+    },
+    "artifact": {
+      "type": "object",
+      "additionalProperties": false,
+      "required": ["path", "exists", "bytes", "sha256"],
+      "properties": {
+        "path": {"type": "string", "minLength": 1},
+        "exists": {"const": true},
+        "bytes": {"type": "integer", "minimum": 0},
+        "sha256": {"type": "string", "pattern": "^[0-9a-f]{64}$"}
+      }
+    },
+    "failure": {
+      "type": "object",
+      "additionalProperties": false,
+      "required": ["step", "status", "cause"],
+      "properties": {
+        "step": {"type": "string", "minLength": 1},
+        "status": {"enum": ["FAIL", "BLOCKED"]},
+        "cause": {"type": "string", "minLength": 1}
+      }
+    }
+  }
+}

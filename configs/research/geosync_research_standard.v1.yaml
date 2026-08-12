@@ -1,0 +1,87 @@
+schema_version: 1.0.0
+standard_id: geosync.research_standard.v1
+status: DRAFT
+
+scope:
+  research_line: ricci_microstructure_v1
+  evidence_level: HYPOTHESIS
+  non_goals:
+    - do not present proxy geometry as direct microstructure evidence
+    - do not present measurement artifacts as deployment proof
+    - do not publish a standard release without reproduction and provenance gates
+
+layers:
+  - id: claim_governance
+    purpose: Keep public language tied to evidence level, source status, and known limits.
+    owner_role: research_lead
+    required_artifacts:
+      - CLAIMS.md
+      - FORBIDDEN_CLAIMS.md
+      - docs/research/RESEARCH_STANDARD_CONTRACT.md
+    exit_gate: unsupported public language is blocked before release
+  - id: data_lineage
+    purpose: Preserve point-in-time universe, source hash, membership, and proxy labeling.
+    owner_role: data_lead
+    required_artifacts:
+      - data/research/research_standard_layers.v1.json
+      - manifests/research/dynamic_universe.v1.json
+    exit_gate: no observation crosses into geometry without lineage and timestamp discipline
+  - id: method_certification
+    purpose: Attach method domain, tolerance, uncertainty, and downgrade reason to every research result.
+    owner_role: methods_lead
+    required_artifacts:
+      - schemas/research/inference_transformer_contract.schema.json
+      - configs/research/geosync_inference_transformer.v1.yaml
+    exit_gate: no method output is accepted without a certificate envelope
+  - id: experiment_epistemics
+    purpose: Bind nulls, baselines, replay commands, and negative-result handling before any public result.
+    owner_role: platform_lead
+    required_artifacts:
+      - artifacts/runs/ricci_microstructure_v1/inference_transformer_placeholder.json
+      - docs/research/RESEARCH_STANDARD_CONTRACT.md
+    exit_gate: every result has a replay path and falsification status
+  - id: release_provenance
+    purpose: Require archive readiness, action hygiene, scan hygiene, and independent-review packet before standard release.
+    owner_role: security_lead
+    required_artifacts:
+      - .github/workflows/research-standard-contract.yml
+      - review/research_standard_review_packet.md
+    exit_gate: release candidate is blocked until provenance and review packet checks pass
+
+required_manifests:
+  - path: manifests/research/dynamic_universe.v1.json
+    role: point-in-time universe and membership manifest
+    must_exist: true
+  - path: manifests/research/reproduction_badge.v1.json
+    role: independent reproduction state machine
+    must_exist: true
+  - path: manifests/research/release_provenance.v1.json
+    role: release provenance and archive readiness manifest
+    must_exist: true
+  - path: manifests/research/cost_latency_assumptions.v1.json
+    role: cost, latency, and operating-assumption manifest
+    must_exist: true
+
+release_gates:
+  - id: schema.research_standard_contract
+    command: python -m json.tool schemas/research/research_standard_contract.schema.json >/dev/null
+    blocks_release: true
+  - id: research_standard_contract_check
+    command: python scripts/ci/check_research_standard_contract.py
+    blocks_release: true
+  - id: research_standard_tests
+    command: pytest -q tests/ci/test_research_standard_contract.py
+    blocks_release: true
+
+handoff:
+  primary_agent: code-claude
+  entrypoint: .claude/handoffs/research-standard-governance-contract.md
+  required_first_reads:
+    - configs/research/geosync_research_standard.v1.yaml
+    - schemas/research/research_standard_contract.schema.json
+    - data/research/research_standard_layers.v1.json
+    - manifests/research/dynamic_universe.v1.json
+    - manifests/research/reproduction_badge.v1.json
+    - manifests/research/release_provenance.v1.json
+    - manifests/research/cost_latency_assumptions.v1.json
+    - docs/research/RESEARCH_STANDARD_CONTRACT.md

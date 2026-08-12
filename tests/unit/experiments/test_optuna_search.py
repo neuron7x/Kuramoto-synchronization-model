@@ -1,3 +1,5 @@
+# Copyright (c) 2023-2026 Yaroslav Vasylenko (neuron7xLab)
+# SPDX-License-Identifier: MIT
 from __future__ import annotations
 
 import json
@@ -59,9 +61,7 @@ def test_optuna_search_logs_artifacts_and_promotes_best(tmp_path: Path) -> None:
 
     best_trial_history = max(
         result.trial_history,
-        key=lambda item: (
-            float("-inf") if item["value"] is None else float(item["value"])
-        ),
+        key=lambda item: (float("-inf") if item["value"] is None else float(item["value"])),
     )
     assert len(best_trial_history["fold_scores"]) == config.n_splits
 
@@ -73,9 +73,7 @@ def test_optuna_search_logs_artifacts_and_promotes_best(tmp_path: Path) -> None:
     assert summary["baseline"]["params"] == config.baseline_params
     assert summary["improvement"] == result.improvement
 
-    artifact_paths = [
-        artifact.absolute_path(registry.base_dir) for artifact in run.artifacts
-    ]
+    artifact_paths = [artifact.absolute_path(registry.base_dir) for artifact in run.artifacts]
     assert {path.name for path in artifact_paths} == {
         "study_summary.json",
         "trials_history.json",

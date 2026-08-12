@@ -1,3 +1,5 @@
+# Copyright (c) 2023-2026 Yaroslav Vasylenko (neuron7xLab)
+# SPDX-License-Identifier: MIT
 """Tests for the core architecture system principles module."""
 
 from __future__ import annotations
@@ -456,9 +458,7 @@ class TestIntegrativePrinciple:
     def test_validate_all_integrations(self, full_context: Dict[str, Any]) -> None:
         principle = IntegrativePrinciple()
         violations = principle.validate(full_context)
-        integration_violations = [
-            v for v in violations if "integration" in v.description.lower()
-        ]
+        integration_violations = [v for v in violations if "integration" in v.description.lower()]
         assert len(integration_violations) == 0
 
     def test_validate_missing_integrations(self) -> None:
@@ -677,9 +677,7 @@ class TestAutonomousPrinciple:
 class TestSystemArchitecture:
     """Tests for SystemArchitecture container."""
 
-    def test_all_principles_present(
-        self, system_architecture: SystemArchitecture
-    ) -> None:
+    def test_all_principles_present(self, system_architecture: SystemArchitecture) -> None:
         principles = system_architecture.principles
         assert len(principles) == 7
         assert "neuro_oriented" in principles
@@ -707,9 +705,7 @@ class TestSystemArchitecture:
         total_violations = sum(len(v) for v in results.values())
         assert total_violations == 0
 
-    def test_validate_all_with_violations(
-        self, system_architecture: SystemArchitecture
-    ) -> None:
+    def test_validate_all_with_violations(self, system_architecture: SystemArchitecture) -> None:
         empty_context: Dict[str, Any] = {}
         results = system_architecture.validate_all(empty_context)
         # Empty context should produce violations in most principles
@@ -769,9 +765,7 @@ class TestEnums:
         # Test status enum members exist and are distinct
         assert PrincipleStatus.NOT_IMPLEMENTED != PrincipleStatus.IMPLEMENTED
         assert PrincipleStatus.NOT_IMPLEMENTED != PrincipleStatus.VALIDATED
-        assert (
-            len(PrincipleStatus) == 4
-        )  # NOT_IMPLEMENTED, PARTIAL, IMPLEMENTED, VALIDATED
+        assert len(PrincipleStatus) == 4  # NOT_IMPLEMENTED, PARTIAL, IMPLEMENTED, VALIDATED
 
     def test_component_role_values(self) -> None:
         assert ComponentRole.SENSOR.value == "sensor"

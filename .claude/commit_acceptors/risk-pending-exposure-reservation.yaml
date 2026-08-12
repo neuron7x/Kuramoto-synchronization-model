@@ -1,0 +1,73 @@
+id: risk-pending-exposure-reservation
+status: ACTIVE
+claim_type: correctness
+promise: >-
+  After this PR, RiskManager evaluates position/notional caps against actual +
+  pending exposure. validate_order(reserve=True, reservation_id) atomically holds
+  the order's exposure; register_fill(reservation_id) converts the filled amount
+  (partial fills reduce the remainder); release_reservation discharges it on
+  reject/cancel/timeout. Two orders each below the cap but jointly above it can no
+  longer both be admitted — the reservation-lag bypass is closed. OMS wires this
+  end to end behind OMSConfig.reserve_risk_exposure (default off), and
+  open_reservation_count() proves fills/rejects/cancels leak no holds.
+diff_scope:
+  changed_files:
+    - path: ".claude/commit_acceptors/risk-pending-exposure-reservation.yaml"
+    - path: "execution/risk/core.py"
+    - path: "execution/oms.py"
+    - path: "tests/unit/execution/test_risk_pending_reservations.py"
+    - path: "tests/concurrency/test_risk_reservation_race.py"
+    - path: "tests/integration/test_oms_risk_reservation_integration.py"
+    - path: "tests/ci/test_risk_reservation_lifecycle.py"
+    - path: "artifacts/risk/reservation_lifecycle.json"
+    - path: "audit/schema/risk_reservation_lifecycle.schema.json"
+  forbidden_paths:
+    - "core/physics/"
+    - "core/kuramoto/"
+required_python_symbols:
+  - "execution/risk/core.py::RiskManager"
+  - "execution/risk/core.py::_Reservation"
+  - "execution/oms.py::OrderManagementSystem"
+expected_signal: >-
+  `python -m pytest --import-mode=importlib
+  tests/unit/execution/test_risk_pending_reservations.py
+  tests/concurrency/test_risk_reservation_race.py
+  tests/integration/test_oms_risk_reservation_integration.py
+  tests/ci/test_risk_reservation_lifecycle.py -q` passes; two orders below the cap
+  but jointly above it cannot both be admitted, and no reservation leaks.
+measurement_command: >-
+  bash -c '
+    python -m pytest --import-mode=importlib -p no:cacheprovider
+      tests/unit/execution/test_risk_pending_reservations.py
+      tests/concurrency/test_risk_reservation_race.py
+      tests/integration/test_oms_risk_reservation_integration.py
+      tests/ci/test_risk_reservation_lifecycle.py -q
+  '
+signal_artifact: "tmp/risk_pending_exposure_reservation.log"
+falsifier:
+  command: |-
+    bash -c '
+      python -c "
+    import importlib
+    r = importlib.import_module(\"execution.risk\")
+    m = r.RiskManager(r.RiskLimits(max_position=1.0, max_notional=float(\"inf\")))
+    m.validate_order(\"BTC-USD\", \"buy\", 1.0, 10.0, reserve=True, reservation_id=\"a\")
+    try:
+        m.validate_order(\"BTC-USD\", \"buy\", 1.0, 10.0, reserve=True, reservation_id=\"b\")
+    except r.LimitViolation:
+        raise SystemExit(0)
+    raise SystemExit(\"cap-bypass: second order admitted despite pending hold\")
+    "
+    '
+  description: >-
+    Reserves the whole cap, then submits a second order that would exceed it via
+    pending. Exits 0 when the second order is rejected (reservation accounting is
+    live); non-zero if the pending term is dropped and the bypass returns.
+rollback_command: >-
+  bash -c 'git rm -f .claude/commit_acceptors/risk-pending-exposure-reservation.yaml'
+rollback_verification_command: >-
+  bash -c 'test ! -f .claude/commit_acceptors/risk-pending-exposure-reservation.yaml'
+memory_update_type: append
+ledger_path: ".claude/commit_acceptors/risk-pending-exposure-reservation.yaml"
+report_path: "tmp/risk_pending_exposure_reservation.log"
+evidence: []

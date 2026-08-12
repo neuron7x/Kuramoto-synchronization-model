@@ -1,0 +1,259 @@
+# Diff-bound commit acceptor for D-002K-P4: power-first gate before the
+# event-conditioned benchmark run (power DESIGN only; NO scoring, NO
+# model run, NO canonical run).
+#
+# D-002K-P4 is the truth point of D-002K. It computes, honestly, whether
+# the K-P0/P1/P2/P3-locked 3-hypothesis event-conditioned design can
+# reach power >= 0.8 for a conservative funding-liquidity effect at the
+# K-P0-locked Bonferroni alpha (0.05/(3 windows x 1 primary metric) =
+# 0.016667). The honest computation: at the conservative literature
+# lower-edge prior (Cohen's d = 0.80, NOT inflated) the
+# crisis-vs-matched-placebo-reference contrast reaches power 0.0481 at
+# the feasible event-conditioned sample (crisis-side n1 = 1 per window
+# because CW3/CW4/CW5 are unique unrepeatable historical events;
+# reference arm n2 = 5 K-P2 matched placebos) -- far below the K-P0
+# power target 0.8. Decision: POWER_GATE_REFUSED_UNDERPOWERED,
+# TERMINAL_REFUSED, canonical_run_authorized = false. Forward motion is
+# a fresh D-002L pre-registration; NOT P5, NOT a D-002J resurrection.
+#
+# Anti-laundering spine: the Bonferroni denominator 3 is the legitimate
+# consequence of FEWER pre-registered hypotheses (K-P0 lock), NOT a
+# relaxation of D-002J-P7's alpha = 0.05/102 = 4.9e-4 at a fixed
+# hypothesis count. Narrowing scope is not relaxing statistics. D-002K
+# does not un-refuse D-002J: D-002J-P7 stays TERMINAL_REFUSED and
+# retained.
+#
+# Frozen byte-exact: D-002K-P0 primary-metric contract
+# (7effc088810ba5933850618312fcad369fdac0386b4a3cab6f14455feeb5a569),
+# D-002K-P1 observable contract
+# (952739cbfe4aa16a54eb5684be4bbd653e820eaf92113418e379a3bf8a2a71c3),
+# D-002K-P2 placebo registry
+# (435d41df868859f25811236fa4675d01f202682c693d06208922c263ace09413),
+# D-002K-P3 metric contract
+# (9c2ce60b6fbcb52e969d71e2137d8345c35f2f71ff9dcc1d64b9ad759d2480ce),
+# D-002K prereg
+# (2cd923810bf64547cd86ecb403bfd3f12a799cb16c3d10ebc07bc05865fee43f),
+# D-002J prereg
+# (f3dc65b7e64b96eafe6f23ca8bdd0e05dc9bf95b12c2658b227bd0340f7975a0),
+# all artifacts/d002j/**, artifacts/d002k/{prereg,observables,placebo,metrics}/**.
+
+id: x10r-d002k-p4-power-gate
+status: ACTIVE
+claim_type: governance
+promise: >-
+  After this PR lands, the D-002K-P4 power design carries the
+  K-P0-locked Bonferroni alpha_per = 0.05/3 = 0.016667 (denominator =
+  n_windows(3) x n_primary_metrics(1)), the conservative honestly-
+  sourced funding-liquidity effect prior (Cohen's d = 0.80, NOT
+  inflated, provenance documented), the design-transparency n_min, the
+  event-conditioned feasible-n cap (crisis-side n1 = 1 per window;
+  reference arm n2 = 5 K-P2 placebos) with its justification and
+  D-002J-P7 anchor reference, and an explicit comparison_to_d002j_p7
+  recording that the smaller Bonferroni denominator derives from the
+  K-P0-locked pre-registered hypothesis count and is NOT a relaxation
+  of D-002J-P7's alpha at a fixed hypothesis count
+  (narrowing_is_scope_not_alpha_relaxation = true). The honest decision
+  is POWER_GATE_REFUSED_UNDERPOWERED (power 0.0481 << 0.8 at the
+  feasible sample); canonical_run_authorized = false; the P4 verdict is
+  TERMINAL_REFUSED with empty allowed_next_nodes, D002K-P5 forbidden,
+  and failure_retention pointing forward to a fresh D-002L
+  pre-registration.
+
+  tests/systemic_risk/test_d002k_power_gate.py carries 24 guard tests
+  fail-closing the suite on any alpha relaxation at fixed scope, any
+  effect-prior inflation, any scope shrink below the K-P0 3-cell lock,
+  any primary-metric swap, any data scoring / model run / canonical
+  run, any determinism break, any D-002J / K-P0 / K-P1 / K-P2 / K-P3
+  artifact drift, any un-refusal of D-002J-P7, and any systemic-risk /
+  bank-level claim. Tests 17/18 are conditional on the actual decision
+  and implement both the PASS and REFUSED branches honestly.
+
+  DAG regenerated to 15 nodes (D002K-P4 appended after D002K-P3, topo
+  tail D002K-P4); P4 honestly REFUSED so next_legal is empty and
+  D002K-P4 joins D002J-P1A + D002J-P7 in rejected_nodes_retained;
+  canonical_run_authorized_anywhere stays false. Lineage map
+  regenerated deterministically.
+
+  Frozen byte-exact: D-002K-P0 primary-metric contract
+  7effc088810ba5933850618312fcad369fdac0386b4a3cab6f14455feeb5a569;
+  D-002K-P1 observable contract
+  952739cbfe4aa16a54eb5684be4bbd653e820eaf92113418e379a3bf8a2a71c3;
+  D-002K-P2 placebo registry
+  435d41df868859f25811236fa4675d01f202682c693d06208922c263ace09413;
+  D-002K-P3 metric contract
+  9c2ce60b6fbcb52e969d71e2137d8345c35f2f71ff9dcc1d64b9ad759d2480ce;
+  D-002K prereg
+  2cd923810bf64547cd86ecb403bfd3f12a799cb16c3d10ebc07bc05865fee43f;
+  D-002J prereg
+  f3dc65b7e64b96eafe6f23ca8bdd0e05dc9bf95b12c2658b227bd0340f7975a0;
+  all artifacts/d002j/**, artifacts/d002k/{prereg,observables,placebo,metrics}/**.
+
+  D-002J remains the truthful terminal REFUSED verdict. D-002K-P4 does
+  NOT rescue, reopen, or amend D-002J. No scoring, no model run, no
+  canonical sweep. The honest POWER_GATE_REFUSED_UNDERPOWERED is a
+  retained truthful negative, not a failure to fix. Next legal PR:
+  fresh D-002L pre-registration (NOT D-002K-P5).
+
+diff_scope:
+  changed_files:
+    - path: "tools/systemic_risk/design_d002k_power_gate.py"
+    - path: "artifacts/d002k/power/power_design_v1.json"
+    - path: "artifacts/d002k/power/power_summary_v1.json"
+    - path: "docs/research/D002K_POWER_FIRST_REPORT.md"
+    - path: "tests/systemic_risk/test_d002k_power_gate.py"
+    - path: "artifacts/governance/verdicts/d002k_p4_verdict_v1.json"
+    - path: "artifacts/governance/verdicts/d002j_verdict_dag_v1.json"
+    - path: "docs/research/D002J_LINEAGE_MAP.md"
+    - path: "tests/governance/test_verdict_dag_integrity.py"
+    - path: "tests/systemic_risk/test_d002k_preregistration.py"
+    - path: "tests/systemic_risk/test_d002k_source_observable_contract.py"
+    - path: ".claude/commit_acceptors/x10r-d002k-p4-power-gate.yaml"
+    - path: "docs/governance/D002G_CANONICAL_RUN_BLOCKERS.md"
+    - path: ".github/detect-secrets.baseline"
+  forbidden_paths:
+    - "docs/governance/D002C_CLAIM_LEDGER.yaml"
+    - "docs/governance/D002C_PREREGISTRATION.yaml"
+    - "docs/governance/D002G_ACCEPTANCE_RULES.md"
+    - "docs/governance/D002G_PREREGISTRATION.yaml"
+    - "docs/governance/D002H_PREREGISTRATION.yaml"
+    - "docs/governance/D002I_PREREGISTRATION.yaml"
+    - "docs/governance/D002J_PREREGISTRATION.yaml"
+    - "docs/governance/D002K_PREREGISTRATION.yaml"
+    - "docs/research/D002K_DESIGN_RATIONALE.md"
+    - "docs/research/D002K_SOURCE_OBSERVABLE_CONTRACT.md"
+    - "docs/research/D002K_MATCHED_PLACEBO_PROTOCOL.md"
+    - "docs/research/D002K_EVENT_METRIC_CONTRACT.md"
+    - "artifacts/d002c/"
+    - "artifacts/d002d/"
+    - "artifacts/d002e/"
+    - "artifacts/d002f/"
+    - "artifacts/d002g/"
+    - "artifacts/d002h/"
+    - "artifacts/d002i/"
+    - "artifacts/d002j/"
+    - "artifacts/d002k/prereg/"
+    - "artifacts/d002k/observables/"
+    - "artifacts/d002k/placebo/"
+    - "artifacts/d002k/metrics/"
+    - "research/systemic_risk/d002k_source_observable_contract.py"
+    - "research/systemic_risk/d002k_placebo_selection.py"
+    - "research/systemic_risk/d002k_event_metrics.py"
+    - "tools/systemic_risk/design_d002j_power_grid.py"
+    - "scripts/x10r_d002c.py"
+    - "scripts/x10r_d002d.py"
+    - "scripts/x10r_d002e.py"
+    - "scripts/x10r_d002f.py"
+    - "scripts/x10r_d002g.py"
+    - "scripts/x10r_d002h_gate_d_scan.py"
+    - "scripts/x10r_d002i.py"
+    - "scripts/x10r_d002j.py"
+required_python_symbols:
+  - "tests.systemic_risk.test_d002k_power_gate.test_power_design_exists"
+  - "tests.systemic_risk.test_d002k_power_gate.test_power_summary_exists"
+  - "tests.systemic_risk.test_d002k_power_gate.test_schema_versions"
+  - "tests.systemic_risk.test_d002k_power_gate.test_parent_shas_pinned_kp0_kp1_kp2_kp3"
+  - "tests.systemic_risk.test_d002k_power_gate.test_alpha_policy_bonferroni_denominator_is_n_windows_times_n_primary"
+  - "tests.systemic_risk.test_d002k_power_gate.test_alpha_per_equals_0_05_over_denominator"
+  - "tests.systemic_risk.test_d002k_power_gate.test_effect_size_prior_has_provenance"
+  - "tests.systemic_risk.test_d002k_power_gate.test_effect_size_prior_not_inflated_flag_true"
+  - "tests.systemic_risk.test_d002k_power_gate.test_effect_size_uses_conservative_bound"
+  - "tests.systemic_risk.test_d002k_power_gate.test_n_min_computed_and_positive"
+  - "tests.systemic_risk.test_d002k_power_gate.test_power_target_is_0_8"
+  - "tests.systemic_risk.test_d002k_power_gate.test_decision_matches_canonical_run_authorized_flag"
+  - "tests.systemic_risk.test_d002k_power_gate.test_feasible_n_cap_present_with_justification"
+  - "tests.systemic_risk.test_d002k_power_gate.test_comparison_to_d002j_p7_present"
+  - "tests.systemic_risk.test_d002k_power_gate.test_narrowing_is_scope_not_alpha_relaxation_asserted"
+  - "tests.systemic_risk.test_d002k_power_gate.test_d002j_p7_still_refused_unchanged"
+  - "tests.systemic_risk.test_d002k_power_gate.test_if_refused_axis_recorded_and_next_is_fresh_lineage"
+  - "tests.systemic_risk.test_d002k_power_gate.test_if_pass_power_ge_0_8_at_feasible_n"
+  - "tests.systemic_risk.test_d002k_power_gate.test_power_gate_decision_deterministic"
+  - "tests.systemic_risk.test_d002k_power_gate.test_no_data_scoring_performed"
+  - "tests.systemic_risk.test_d002k_power_gate.test_no_systemic_risk_prediction_claim"
+  - "tests.systemic_risk.test_d002k_power_gate.test_no_d002k_prereg_or_prior_phase_edit"
+  - "tests.systemic_risk.test_d002k_power_gate.test_no_canonical_run_unless_gate_pass"
+  - "tests.systemic_risk.test_d002k_power_gate.test_no_unresolved_merge_markers"
+expected_signal: >-
+  `PYTHONPATH=. python -m pytest
+  tests/systemic_risk/test_d002k_power_gate.py -q` reports "24 passed";
+  the power design carries alpha_per = 0.05/3 = 0.016667
+  (Bonferroni denominator 3 = n_windows(3) x n_primary_metrics(1)), a
+  conservative non-inflated effect prior d = 0.80 with documented
+  provenance, an event-conditioned feasible-n cap (crisis-side n1 = 1,
+  reference n2 = 5) with justification + D-002J-P7 anchor,
+  comparison_to_d002j_p7.narrowing_is_scope_not_alpha_relaxation = true,
+  decision POWER_GATE_REFUSED_UNDERPOWERED, canonical_run_authorized =
+  false; D-002K-P0 primary-metric contract sha256 byte-exact at
+  7effc088810ba5933850618312fcad369fdac0386b4a3cab6f14455feeb5a569;
+  D-002K-P1 observable contract sha256 byte-exact at
+  952739cbfe4aa16a54eb5684be4bbd653e820eaf92113418e379a3bf8a2a71c3;
+  D-002K-P2 placebo registry sha256 byte-exact at
+  435d41df868859f25811236fa4675d01f202682c693d06208922c263ace09413;
+  D-002K-P3 metric contract sha256 byte-exact at
+  9c2ce60b6fbcb52e969d71e2137d8345c35f2f71ff9dcc1d64b9ad759d2480ce;
+  `git diff --stat origin/main -- artifacts/d002j/
+  artifacts/d002k/prereg/ artifacts/d002k/observables/
+  artifacts/d002k/placebo/ artifacts/d002k/metrics/
+  docs/governance/D002J_PREREGISTRATION.yaml
+  docs/governance/D002K_PREREGISTRATION.yaml` returns empty; verdict
+  DAG nodes_count=15, next_legal_nodes_from_main_head=[],
+  rejected_nodes_retained includes D002J-P1A + D002J-P7 + D002K-P4,
+  canonical_run_authorized_anywhere=false.
+measurement_command: >-
+  bash -c 'set -e;
+  PYTHONPATH=. python -m pytest tests/systemic_risk/test_d002k_power_gate.py -q;
+  test "$(sha256sum artifacts/d002k/prereg/d002k_primary_metric_contract_v1.json | awk "{print \$1}")" = "7effc088810ba5933850618312fcad369fdac0386b4a3cab6f14455feeb5a569";
+  test "$(sha256sum artifacts/d002k/observables/source_observable_contract_v1.json | awk "{print \$1}")" = "952739cbfe4aa16a54eb5684be4bbd653e820eaf92113418e379a3bf8a2a71c3";
+  test "$(sha256sum artifacts/d002k/placebo/matched_placebo_registry_v1.json | awk "{print \$1}")" = "435d41df868859f25811236fa4675d01f202682c693d06208922c263ace09413";
+  test "$(sha256sum artifacts/d002k/metrics/event_metric_contract_v1.json | awk "{print \$1}")" = "9c2ce60b6fbcb52e969d71e2137d8345c35f2f71ff9dcc1d64b9ad759d2480ce";
+  test -z "$(git diff --stat origin/main -- artifacts/d002j/ artifacts/d002k/prereg/ artifacts/d002k/observables/ artifacts/d002k/placebo/ artifacts/d002k/metrics/ docs/governance/D002J_PREREGISTRATION.yaml docs/governance/D002K_PREREGISTRATION.yaml)"'
+signal_artifact: "tests/systemic_risk/test_d002k_power_gate.py"
+falsifier:
+  command: >-
+    bash -c 'set -e;
+    PYTHONPATH=. python -m pytest tests/systemic_risk/test_d002k_power_gate.py -q || exit 1;
+    test -f artifacts/d002k/power/power_design_v1.json || exit 2;
+    test -f artifacts/d002k/power/power_summary_v1.json || exit 3;
+    test -f artifacts/governance/verdicts/d002k_p4_verdict_v1.json || exit 4;
+    test "$(sha256sum artifacts/d002k/prereg/d002k_primary_metric_contract_v1.json | awk "{print \$1}")" = "7effc088810ba5933850618312fcad369fdac0386b4a3cab6f14455feeb5a569" || exit 5;
+    test "$(sha256sum artifacts/d002k/observables/source_observable_contract_v1.json | awk "{print \$1}")" = "952739cbfe4aa16a54eb5684be4bbd653e820eaf92113418e379a3bf8a2a71c3" || exit 6;
+    test "$(sha256sum artifacts/d002k/placebo/matched_placebo_registry_v1.json | awk "{print \$1}")" = "435d41df868859f25811236fa4675d01f202682c693d06208922c263ace09413" || exit 7;
+    test "$(sha256sum artifacts/d002k/metrics/event_metric_contract_v1.json | awk "{print \$1}")" = "9c2ce60b6fbcb52e969d71e2137d8345c35f2f71ff9dcc1d64b9ad759d2480ce" || exit 8;
+    python3 -c "import json,sys; d=json.load(open(\"artifacts/governance/verdicts/d002j_verdict_dag_v1.json\")); sys.exit(0 if d[\"nodes_count\"]==15 and d[\"next_legal_nodes_from_main_head\"]==[] and \"D002K-P4\" in d[\"rejected_nodes_retained\"] and \"D002J-P7\" in d[\"rejected_nodes_retained\"] and d[\"canonical_run_authorized_anywhere\"] is False else 9)" || exit 9;
+    python3 -c "import json,sys; d=json.load(open(\"artifacts/d002k/power/power_design_v1.json\")); sys.exit(0 if d[\"decision\"]==\"POWER_GATE_REFUSED_UNDERPOWERED\" and d[\"canonical_run_authorized\"] is False and d[\"comparison_to_d002j_p7\"][\"narrowing_is_scope_not_alpha_relaxation\"] is True else 10)" || exit 10'
+  description: >-
+    Probes the D-002K-P4 power-first gate: the 24-test guard module
+    passes; design / summary / P4 verdict artifacts exist; D-002K-P0
+    primary-metric contract + K-P1 observable contract + K-P2 placebo
+    registry + K-P3 metric contract are sha256 byte-exact at their
+    frozen anchors; the regenerated verdict DAG has 15 nodes,
+    next_legal empty, D002K-P4 + D002J-P7 retained rejected, and
+    canonical_run_authorized_anywhere false; the power design's honest
+    decision is POWER_GATE_REFUSED_UNDERPOWERED with
+    canonical_run_authorized false and
+    narrowing_is_scope_not_alpha_relaxation true. Regression on any ->
+    the power gate broke or a frozen governance artifact silently
+    mutated or the anti-laundering invariant was violated.
+rollback_command: >-
+  bash -c 'rm -f
+  tools/systemic_risk/design_d002k_power_gate.py
+  artifacts/d002k/power/power_design_v1.json
+  artifacts/d002k/power/power_summary_v1.json
+  docs/research/D002K_POWER_FIRST_REPORT.md
+  tests/systemic_risk/test_d002k_power_gate.py
+  artifacts/governance/verdicts/d002k_p4_verdict_v1.json
+  .claude/commit_acceptors/x10r-d002k-p4-power-gate.yaml
+  && git checkout HEAD~1 -- artifacts/governance/verdicts/d002j_verdict_dag_v1.json
+  docs/research/D002J_LINEAGE_MAP.md
+  tests/governance/test_verdict_dag_integrity.py
+  tests/systemic_risk/test_d002k_preregistration.py
+  tests/systemic_risk/test_d002k_source_observable_contract.py
+  docs/governance/D002G_CANONICAL_RUN_BLOCKERS.md
+  .github/detect-secrets.baseline'
+rollback_verification_command: >-
+  bash -c 'test ! -f tools/systemic_risk/design_d002k_power_gate.py
+  && test ! -f tests/systemic_risk/test_d002k_power_gate.py
+  && test ! -f artifacts/governance/verdicts/d002k_p4_verdict_v1.json'
+memory_update_type: append
+ledger_path: ".claude/commit_acceptors/x10r-d002k-p4-power-gate.yaml"
+report_path: "tests/systemic_risk/test_d002k_power_gate.py"
+evidence: []

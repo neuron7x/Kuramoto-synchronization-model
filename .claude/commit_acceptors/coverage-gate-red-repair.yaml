@@ -1,0 +1,91 @@
+# Diff-bound commit acceptor for the Coverage Intelligence Gate red repair.
+#
+# The non-required "Coverage Intelligence Gate" (Release coverage gate 90%) had
+# been RED on every main commit for hours — pre-existing, independent of the
+# #994/#997/#998/#1000/#1001 sequence. Two orthogonal root causes, both fixed
+# at the root (no symptom masking, no threshold weakening):
+#
+#   1. THREE class-scoped fixtures were defined as instance methods
+#      (`@pytest.fixture(scope="class")` + `def f(self)`). pytest 8.4+ emits
+#      PytestRemovedIn10Warning (a DeprecationWarning); the gate runs under
+#      `-W error::DeprecationWarning`, so the warning became a hard collection
+#      error and cascaded AssertionErrors across the affected classes. None of
+#      the three fixtures use `self`, so they are now `@staticmethod` — the
+#      canonical non-deprecated form. Future-proof under any pytest version.
+#
+#   2. scripts/validate_metrics.py::run_expectations applied numeric min/max
+#      bounds to EVERY sample of a histogram family. The official prometheus
+#      parser dumps `_bucket`/`_count`/`_sum`/`_created` under the bare family
+#      name; those are cumulative tallies that grow with traffic. On a shared
+#      process-global registry the `/metrics` route count reached 156 across the
+#      48-minute suite, tripping `above_max value 156.0 > 100.0` — a category
+#      error, not a latency regression. The bound check now excludes histogram
+#      bookkeeping samples (le-bucketed counts + tally suffixes) via the new
+#      `_is_value_sample` predicate, so bounds apply only to genuine value
+#      series (gauges, counters, observation samples). Traffic-invariant.
+#
+# Locally verified: tests/observability (all pass, incl. the 4 bound tests),
+# the 3 kuramoto suites (61 pass), all validate_metrics consumers (36 pass);
+# a 156-request reproduction yields 0 value-eligible samples above the bound.
+# mypy --strict + ruff + black clean on scripts/validate_metrics.py.
+
+id: coverage-gate-red-repair
+status: ACTIVE
+claim_type: correctness
+promise: >-
+  After this PR lands, the Coverage Intelligence Gate no longer fails on the two
+  pre-existing roots: the three kuramoto fixtures raise no class-scoped
+  instance-method deprecation, and metric min/max expectations bound only value
+  samples — histogram bucket/count/sum/created tallies are excluded, so the gate
+  is invariant to request volume on the shared registry.
+diff_scope:
+  changed_files:
+    - path: ".claude/commit_acceptors/coverage-gate-red-repair.yaml"
+    - path: "scripts/validate_metrics.py"
+    - path: "tests/unit/core/test_kuramoto_coupling_estimator.py"
+    - path: "tests/unit/core/test_kuramoto_network_engine.py"
+    - path: "tests/unit/core/test_kuramoto_validation.py"
+  forbidden_paths:
+    - "trading/"
+    - "execution/"
+    - "forecast/"
+    - "policy/"
+    - "core/physics/"
+    - "core/kuramoto/"
+required_python_symbols:
+  - "scripts/validate_metrics.py::_is_value_sample"
+  - "scripts/validate_metrics.py::run_expectations"
+expected_signal: >-
+  `pytest tests/observability/test_metrics_expectations.py
+  tests/unit/core/test_kuramoto_coupling_estimator.py
+  tests/unit/core/test_kuramoto_network_engine.py
+  tests/unit/core/test_kuramoto_validation.py` passes; a 156-request scrape of
+  geosync_api_request_latency_seconds yields zero value-eligible samples above
+  the configured max (the bucket/count tallies are excluded from bounds).
+measurement_command: >-
+  python -m pytest tests/observability/test_metrics_expectations.py
+  tests/unit/core/test_kuramoto_coupling_estimator.py
+  tests/unit/core/test_kuramoto_network_engine.py
+  tests/unit/core/test_kuramoto_validation.py -q
+signal_artifact: "scripts/validate_metrics.py"
+falsifier:
+  command: >-
+    grep -qE "def (ground_truth|synthetic_state|engine_and_phases)\(\s*self"
+    tests/unit/core/test_kuramoto_coupling_estimator.py
+    tests/unit/core/test_kuramoto_network_engine.py
+    tests/unit/core/test_kuramoto_validation.py
+  description: >-
+    Succeeds only if any of the three fixtures regresses back to an instance
+    method; on the green path all are staticmethods so this probe exits
+    non-zero, proving the deprecation fix is falsifiable.
+rollback_command: >-
+  git revert --no-edit HEAD
+rollback_verification_command: >-
+  git diff --exit-code scripts/validate_metrics.py
+  tests/unit/core/test_kuramoto_coupling_estimator.py
+  tests/unit/core/test_kuramoto_network_engine.py
+  tests/unit/core/test_kuramoto_validation.py
+memory_update_type: none
+ledger_path: ".claude/commit_acceptors/coverage-gate-red-repair.yaml"
+report_path: "docs/reports/diff_bound_commit_acceptor_layer.md"
+evidence: []

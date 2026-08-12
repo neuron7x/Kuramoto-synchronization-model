@@ -1,4 +1,5 @@
-# SPDX-License-Identifier: LicenseRef-TradePulse-Proprietary
+# Copyright (c) 2023-2026 Yaroslav Vasylenko (neuron7xLab)
+# SPDX-License-Identifier: MIT
 """Tests for RestIngestor HTTP polling connector.
 
 Uses httpx mock to simulate HTTP responses without network access.
@@ -103,9 +104,7 @@ class TestRestIngestor:
         await ingestor.close()
 
     @pytest.mark.asyncio
-    async def test_parse_object_with_data_field(
-        self, httpx_mock: pytest.fixture
-    ) -> None:
+    async def test_parse_object_with_data_field(self, httpx_mock: pytest.fixture) -> None:
         """Test parsing object response with 'data' array."""
         httpx_mock.add_response(
             url="https://api.example.com/data",
@@ -128,9 +127,7 @@ class TestRestIngestor:
         await ingestor.close()
 
     @pytest.mark.asyncio
-    async def test_parse_object_with_results_field(
-        self, httpx_mock: pytest.fixture
-    ) -> None:
+    async def test_parse_object_with_results_field(self, httpx_mock: pytest.fixture) -> None:
         """Test parsing object response with 'results' array."""
         httpx_mock.add_response(
             url="https://api.example.com/data",

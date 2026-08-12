@@ -1,0 +1,105 @@
+# Diff-bound commit acceptor for closing my own contribution to the
+# named-but-unfalsifiable ANCHORED set in docs/CLAIMS.yaml.
+#
+# Context: PR #551 (Q4 Phase-3 EXIT, 2026-05-07) re-classified the
+# claim `api-contract-openapi-coverage` from EXTRAPOLATED to ANCHORED
+# without writing the falsifier-block ADR 0021 mandates on every v3
+# ANCHORED claim. Today's audit (run after #551 + #552 + #553 + #554 +
+# #555) named that omission: my own claim was on the floating list.
+#
+# This PR closes it. INV-API-CONTRACT is added to
+# .claude/physics/INVARIANTS.yaml (registry: 90 → 91), the four
+# documentation surfaces that the invariant-count-sync gate audits
+# are bumped in lock-step (README.md, BASELINE.md, CLAUDE.md
+# headline), and the CLAIMS.yaml entry for api-contract-openapi-coverage
+# now carries a falsifier-block citing INV-API-CONTRACT and the
+# canonical pytest test_id.
+#
+# Locally verified:
+#   * python scripts/count_invariants.py: 91
+#   * python scripts/check_invariant_count_sync.py: OK 91
+#   * python scripts/ci/check_claims.py:
+#       falsifier coverage 9/21 ANCHORED (was 8/21)
+#       12/21 ANCHORED still lack falsifier (was 13/21)
+#   * python scripts/export_governance_schemas.py --check: PASS
+#   * pytest tests/governance/test_typed_models.py
+#         tests/scripts/test_export_governance_schemas.py: 19/19 pass
+
+id: falsifier-api-contract-openapi-coverage
+status: ACTIVE
+claim_type: governance
+promise: >-
+  After this PR lands, the docs/CLAIMS.yaml entry
+  `api-contract-openapi-coverage` carries a v3 falsifier-block whose
+  test_id resolves to a real pytest node
+  (`tests/api/test_schemathesis_contract.py::test_api_operation_conforms_to_schema`)
+  and whose `invariants_cited` references the new INV-API-CONTRACT
+  declared in .claude/physics/INVARIANTS.yaml. The
+  invariant-count-sync gate reports OK at 91 across the four
+  documentation surfaces. The check_claims falsifier-coverage line
+  reads "9/21 ANCHORED" (was 8/21). My own contribution to the
+  named-but-unfalsifiable list (closed yesterday in #551) is removed
+  from the list today by writing the falsifier-block I owed.
+diff_scope:
+  changed_files:
+    - path: ".claude/commit_acceptors/falsifier-api-contract-openapi-coverage.yaml"
+    - path: ".claude/physics/INVARIANTS.yaml"
+    - path: "BASELINE.md"
+    - path: "CLAUDE.md"
+    - path: "README.md"
+    - path: "docs/CLAIMS.yaml"
+  forbidden_paths:
+    - "trading/"
+    - "execution/"
+    - "forecast/"
+    - "policy/"
+    - "core/physics/"
+    - "core/kuramoto/"
+    - "application/"
+    - "src/"
+    - "tools/commit_acceptor/"
+    - "scripts/ci/"
+    - "scripts/check_invariant_count_sync.py"
+    - "scripts/count_invariants.py"
+required_python_symbols: []
+expected_signal: >-
+  `python scripts/count_invariants.py` returns 91; `python
+  scripts/check_invariant_count_sync.py` reports
+  "OK: 91 invariants, all documentation surfaces in sync.";
+  `python scripts/ci/check_claims.py` includes the line
+  "falsifier coverage: 9/21 ANCHORED" and the missing-falsifier list
+  no longer contains `api-contract-openapi-coverage`. `python
+  scripts/export_governance_schemas.py --check` exits 0.
+measurement_command: >-
+  bash -c 'python scripts/count_invariants.py | grep -q "^91$"
+  && PYTHONPATH=scripts python scripts/check_invariant_count_sync.py
+  && python scripts/ci/check_claims.py 2>&1 | grep -q "9/21 ANCHORED"
+  && ! python scripts/ci/check_claims.py 2>&1 | grep -q "api-contract-openapi-coverage"
+  && python scripts/export_governance_schemas.py --check'
+signal_artifact: "tmp/falsifier_api_contract_openapi_coverage.log"
+falsifier:
+  command: >-
+    bash -c 'python scripts/ci/check_claims.py 2>&1
+    | grep -q "api-contract-openapi-coverage"'
+  description: >-
+    Probes the claim-ledger gate for the api-contract-openapi-coverage
+    id appearing in the missing-falsifier WARN list. After this PR,
+    that id MUST NOT appear (it carries a v3 falsifier-block now).
+    If a future change strips the falsifier block, check_claims.py
+    re-emits the id on the WARN list, the falsifier exits 0, and
+    the regression is flagged. This is the inverse-probe pattern: the
+    falsifier exits 0 ONLY when the invariant has broken.
+rollback_command: >-
+  git checkout HEAD~1 --
+  .claude/physics/INVARIANTS.yaml
+  README.md
+  BASELINE.md
+  CLAUDE.md
+  docs/CLAIMS.yaml
+  .claude/commit_acceptors/falsifier-api-contract-openapi-coverage.yaml
+rollback_verification_command: >-
+  bash -c 'python scripts/count_invariants.py | grep -q "^90$"'
+memory_update_type: append
+ledger_path: ".claude/commit_acceptors/falsifier-api-contract-openapi-coverage.yaml"
+report_path: "tmp/falsifier_api_contract_openapi_coverage.log"
+evidence: []

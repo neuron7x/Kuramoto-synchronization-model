@@ -1,0 +1,30 @@
+[Unit]
+Description=GeoSync shadow trajectory daily tick (FIX-5 wrapper)
+After=network-online.target
+# Intentionally does NOT Require network — wrapper falls back gracefully
+# if paper_trader can't reach exchanges (logs FAIL, continues with eval).
+
+[Service]
+Type=oneshot
+WorkingDirectory=%h/GeoSync
+# FIX-5 wrapper: tick → pipeline_status_refresh → eval+shadow_live.json
+# → CI-aware verdict → DP3 honest test → trajectory.log append.
+# Idempotent on the same UTC day. Co-exists with the older
+# cross_asset_kuramoto_shadow.service (frozen artefact, evaluator-only).
+ExecStart=/bin/bash %h/GeoSync/scripts/shadow_daily_tick.sh
+# No retries — if a run fails we want the incident surfaced, not swallowed.
+Restart=no
+# Logs go to the user journal so the FIX-5 falsification gate
+# (journalctl --user-unit | grep 'tick: ok') can observe them.
+StandardOutput=journal
+StandardError=journal
+# Protections (read-only /usr, no new privileges, private /tmp).
+NoNewPrivileges=true
+PrivateTmp=true
+ProtectSystem=strict
+# Wrapper writes paper-state (tick), shadow_validation, results/ root,
+# and reads pip caches.
+ReadWritePaths=%h/GeoSync/results %h/spikes/cross_asset_sync_regime/paper_state %h/.cache
+
+[Install]
+WantedBy=default.target

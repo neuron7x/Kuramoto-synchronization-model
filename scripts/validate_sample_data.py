@@ -1,3 +1,5 @@
+# Copyright (c) 2023-2026 Yaroslav Vasylenko (neuron7xLab)
+# SPDX-License-Identifier: MIT
 """Validate dataset sample contracts against on-disk artifacts.
 
 This utility scans dataset contract markdown files (by default under
@@ -13,7 +15,7 @@ an ``artifacts`` list containing entries of the form:
 .. code-block:: yaml
 
    ---
-   owner: data@tradepulse
+   owner: data@geosync
    review_cadence: quarterly
    artifacts:
      - path: data/sample.csv
@@ -150,9 +152,7 @@ def _parse_artifact_specs(
     raw_artifacts = front_matter.get("artifacts")
     if raw_artifacts is None:
         raise ValidationError("front matter missing 'artifacts' list")
-    if not isinstance(raw_artifacts, Sequence) or isinstance(
-        raw_artifacts, (str, bytes)
-    ):
+    if not isinstance(raw_artifacts, Sequence) or isinstance(raw_artifacts, (str, bytes)):
         raise ValidationError("'artifacts' must be a sequence of mappings")
 
     specs: list[ArtifactSpec] = []
@@ -196,9 +196,7 @@ def _parse_artifact_specs(
     return tuple(specs)
 
 
-def _resolve_artifact_path(
-    spec: ArtifactSpec, *, contract_path: Path, repo_root: Path
-) -> Path:
+def _resolve_artifact_path(spec: ArtifactSpec, *, contract_path: Path, repo_root: Path) -> Path:
     """Resolve an artifact path within the repository root."""
 
     candidates = []
@@ -262,9 +260,7 @@ def validate_contract(path: Path, *, repo_root: Path) -> ContractReport:
         actual_size: int | None = None
 
         try:
-            resolved = _resolve_artifact_path(
-                spec, contract_path=path, repo_root=repo_root
-            )
+            resolved = _resolve_artifact_path(spec, contract_path=path, repo_root=repo_root)
         except ValidationError as exc:
             artifact_errors.append(str(exc))
             artifacts.append(
@@ -286,9 +282,7 @@ def validate_contract(path: Path, *, repo_root: Path) -> ContractReport:
             try:
                 actual_checksum = _compute_checksum(resolved, spec.algorithm)
             except (OSError, ValueError) as exc:
-                artifact_errors.append(
-                    f"failed to compute checksum for {resolved}: {exc}"
-                )
+                artifact_errors.append(f"failed to compute checksum for {resolved}: {exc}")
 
             if actual_checksum and actual_checksum.lower() != spec.digest:
                 artifact_errors.append(
@@ -320,9 +314,7 @@ def validate_contract(path: Path, *, repo_root: Path) -> ContractReport:
     )
 
 
-def discover_contracts(
-    directories: Sequence[Path] | None = None, *, repo_root: Path
-) -> list[Path]:
+def discover_contracts(directories: Sequence[Path] | None = None, *, repo_root: Path) -> list[Path]:
     """Return all markdown contracts from the provided directories."""
 
     dirs = directories if directories is not None else DEFAULT_CONTRACT_DIRS
@@ -338,9 +330,7 @@ def discover_contracts(
     return discovered
 
 
-def validate_contracts(
-    paths: Iterable[Path], *, repo_root: Path
-) -> list[ContractReport]:
+def validate_contracts(paths: Iterable[Path], *, repo_root: Path) -> list[ContractReport]:
     """Validate multiple contracts returning per-contract reports."""
 
     reports: list[ContractReport] = []
@@ -349,14 +339,10 @@ def validate_contracts(
     return reports
 
 
-def _render_text_report(
-    reports: Sequence[ContractReport], *, warn_as_error: bool
-) -> str:
+def _render_text_report(reports: Sequence[ContractReport], *, warn_as_error: bool) -> str:
     lines: list[str] = []
     for report in reports:
-        status = (
-            "OK" if report.valid(treat_warnings_as_errors=warn_as_error) else "FAIL"
-        )
+        status = "OK" if report.valid(treat_warnings_as_errors=warn_as_error) else "FAIL"
         lines.append(f"[{status}] {report.path}")
         for error in report.errors:
             lines.append(f"  ERROR: {error}")
@@ -451,8 +437,7 @@ def main(argv: Sequence[str] | None = None) -> int:
 
     treat_warnings_as_errors = args.fail_on_warning
     if reports and all(
-        report.valid(treat_warnings_as_errors=treat_warnings_as_errors)
-        for report in reports
+        report.valid(treat_warnings_as_errors=treat_warnings_as_errors) for report in reports
     ):
         return 0
     if not reports:

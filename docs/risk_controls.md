@@ -1,6 +1,6 @@
 # Risk Controls
 
-This document describes the risk control system implemented in TradePulse, including pre-trade compliance checks, circuit breaker protection, kill-switch functionality, and observability.
+This document describes the risk control system implemented in GeoSync, including pre-trade compliance checks, circuit breaker protection, kill-switch functionality, and observability.
 
 ## Overview
 
@@ -151,7 +151,7 @@ Secure REST API for risk control operations.
 Toggle the global kill switch:
 
 ```bash
-curl -X POST https://api.tradepulse.example.com/admin/risk/kill_switch \
+curl -X POST https://api.geosync.example.com/admin/risk/kill_switch \
   -H 'Authorization: Bearer YOUR_ADMIN_TOKEN' \
   -H 'Content-Type: application/json' \
   -d '{"enabled": true}'
@@ -171,7 +171,7 @@ Response:
 Retrieve current risk state:
 
 ```bash
-curl https://api.tradepulse.example.com/admin/risk/state \
+curl https://api.geosync.example.com/admin/risk/state \
   -H 'Authorization: Bearer YOUR_ADMIN_TOKEN'
 ```
 
@@ -287,15 +287,15 @@ except ComplianceViolation as e:
 The system exports metrics for monitoring:
 
 **Gauges:**
-- `tradepulse_risk_kill_switch{env}` - Kill switch state (0=off, 1=on)
-- `tradepulse_risk_gross_exposure{env}` - Current gross exposure
-- `tradepulse_risk_daily_drawdown{env,mode}` - Current daily drawdown
-- `tradepulse_risk_circuit_state{state}` - Circuit breaker state
-- `tradepulse_risk_open_orders{env}` - Current open orders count
+- `geosync_risk_kill_switch{env}` - Kill switch state (0=off, 1=on)
+- `geosync_risk_gross_exposure{env}` - Current gross exposure
+- `geosync_risk_daily_drawdown{env,mode}` - Current daily drawdown
+- `geosync_risk_circuit_state{state}` - Circuit breaker state
+- `geosync_risk_open_orders{env}` - Current open orders count
 
 **Counters:**
-- `tradepulse_risk_rejections_total{reason}` - Total rejections by reason
-- `tradepulse_risk_circuit_trips_total{reason}` - Total circuit breaker trips
+- `geosync_risk_rejections_total{reason}` - Total rejections by reason
+- `geosync_risk_circuit_trips_total{reason}` - Total circuit breaker trips
 
 ### Structured Logging
 
@@ -338,7 +338,7 @@ Import the dashboard from `monitoring/grafana/risk_dashboard.json` to visualize:
 To immediately halt all trading:
 
 ```bash
-curl -X POST https://api.tradepulse.example.com/admin/risk/kill_switch \
+curl -X POST https://api.geosync.example.com/admin/risk/kill_switch \
   -H 'Authorization: Bearer YOUR_ADMIN_TOKEN' \
   -H 'Content-Type: application/json' \
   -d '{"enabled": true}'
@@ -454,7 +454,7 @@ Potential improvements for future releases:
 
 ## References
 
-- [OMS Documentation](../DOCUMENTATION_SUMMARY.md#execution-layer)
+- [OMS Documentation](operations/DOCUMENTATION_SUMMARY.md#execution-layer)
 - [Prometheus Client Documentation](https://github.com/prometheus/client_python)
 - [FastAPI Documentation](https://fastapi.tiangolo.com/)
 - [Circuit Breaker Pattern](https://martinfowler.com/bliki/CircuitBreaker.html)

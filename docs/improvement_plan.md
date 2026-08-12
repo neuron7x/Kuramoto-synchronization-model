@@ -1,4 +1,4 @@
-# TradePulse Improvement Plan to Reach 9-10/10 Scores
+# GeoSync Improvement Plan to Reach 9-10/10 Scores
 
 This document converts the proposed enhancements into concrete, actionable steps for each capability facet. Each section lists prioritized initiatives, implementation guidance, and success criteria.
 
@@ -12,12 +12,12 @@ This document converts the proposed enhancements into concrete, actionable steps
 
 2. **Introduce Pluggable Strategy/Indicator Framework**
    - Define an abstract base class protocol in `core/strategies/base.py` with lifecycle hooks (`initialize`, `handle_tick`, `finalize`).
-   - Allow dynamic registration through Python entry points (`pyproject.toml` → `[project.entry-points."tradepulse.plugins"]`).
+   - Allow dynamic registration through Python entry points (`pyproject.toml` → `[project.entry-points."geosync.plugins"]`).
    - Provide discovery utilities in `core/strategies/loader.py` that load plugins by name and validate versions.
-   - _Success metric_: Third parties can ship pip-installable packages that TradePulse can auto-discover without code changes.
+   - _Success metric_: Third parties can ship pip-installable packages that GeoSync can auto-discover without code changes.
 
 3. **Implement API Versioning**
-   - Introduce explicit version headers (e.g., `X-TradePulse-Version`) and namespaced routes (`/api/v1/`).
+   - Introduce explicit version headers (e.g., `X-GeoSync-Version`) and namespaced routes (`/api/v1/`).
    - Maintain OpenAPI specs per version under `schemas/openapi/`.
    - _Success metric_: Backward compatibility guarantees and deprecation policy documented.
 
@@ -84,7 +84,7 @@ This document converts the proposed enhancements into concrete, actionable steps
 
 2. **Automate Savings Recommendations**
    - Feed utilisation metrics into heuristics that flag opportunities: promote feature-cache hits, collapse redundant aggregations, and suggest throttling backtests when diminishing returns are detected.
-   - Publish weekly "cost optimisation" reports in `reports/finops/recommendations/` and expose a CLI (`tradepulse_cli finops suggestions`) to query live hints.
+   - Publish weekly "cost optimisation" reports in `reports/finops/recommendations/` and expose a CLI (`geosync_cli finops suggestions`) to query live hints.
    - _Success metric_: Quarterly review shows at least three high-impact savings actions implemented from the recommendation feed.
 
 3. **Close the Loop with Alerting**
@@ -230,4 +230,4 @@ This document converts the proposed enhancements into concrete, actionable steps
 
 ---
 
-_This plan should be reviewed quarterly to track adoption progress and recalibrate priorities as TradePulse evolves._
+_This plan should be reviewed quarterly to track adoption progress and recalibrate priorities as GeoSync evolves._

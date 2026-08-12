@@ -1,0 +1,30 @@
+id: nfi-physics-core-tests
+status: DRAFT
+claim_type: correctness
+promise: "NFI physics core tests bind score, dimensional, invariant, convergence, and interface contracts to executable pytest assertions."
+diff_scope:
+  changed_files:
+    - path: ".claude/commit_acceptors/nfi-physics-core-tests.yaml"
+    - path: "tests/test_physics_score.py"
+    - path: "tests/physics/test_dimensional_homogeneity.py"
+    - path: "tests/physics/test_invariants.py"
+    - path: "tests/physics/test_interface_contracts.py"
+    - path: "tests/physics/test_convergence.py"
+  forbidden_paths:
+    - "trading/"
+    - "execution/"
+    - "forecast/"
+    - "policy/"
+required_python_symbols: []
+expected_signal: "core physics contract tests execute without claiming final physical rank"
+measurement_command: "python -m pytest tests/test_physics_score.py tests/physics/test_dimensional_homogeneity.py tests/physics/test_invariants.py tests/physics/test_interface_contracts.py tests/physics/test_convergence.py"
+signal_artifact: "artifacts/physics_validation/baseline_score.json"
+falsifier:
+  command: "python -m pytest tests/test_physics_score.py --collect-only"
+  description: "Collection probe proving the score-test surface is discoverable before execution."
+rollback_command: "git checkout -- tests/test_physics_score.py tests/physics/test_dimensional_homogeneity.py tests/physics/test_invariants.py tests/physics/test_interface_contracts.py tests/physics/test_convergence.py .claude/commit_acceptors/nfi-physics-core-tests.yaml"
+rollback_verification_command: "git diff --exit-code tests/test_physics_score.py tests/physics/test_dimensional_homogeneity.py tests/physics/test_invariants.py tests/physics/test_interface_contracts.py tests/physics/test_convergence.py .claude/commit_acceptors/nfi-physics-core-tests.yaml"
+memory_update_type: none
+ledger_path: ".claude/commit_acceptors/nfi-physics-core-tests.yaml"
+report_path: "docs/physics/geosync_core.md"
+evidence: []

@@ -4,7 +4,7 @@ metadata:
   name: logstash
   labels:
     app.kubernetes.io/name: logstash
-    app.kubernetes.io/part-of: tradepulse
+    app.kubernetes.io/part-of: geosync
 spec:
   selector:
     app.kubernetes.io/name: logstash

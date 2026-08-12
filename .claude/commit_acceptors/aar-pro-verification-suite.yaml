@@ -1,0 +1,39 @@
+id: aar-pro-verification-suite
+claim_type: correctness
+promise: AAR-PRO test, formal, integration, precision, self-healing, and commit-acceptor probes remain diff-bound, replayable, and falsifiable.
+diff_scope:
+  changed_files:
+  - path: nak_controller/tests/test_aar.py
+  - path: tests/core/dro_ara/test_falsification.py
+  - path: tests/formal/test_aar_pro_invariants_yaml.py
+  - path: tests/formal/test_aar_pro_tla_spec.py
+  - path: tests/integration/control/test_action_result_comparator_integration.py
+  - path: tests/integration/control/test_aar_pro_readiness_script.py
+  - path: tests/integration/control/test_aar_pro_smoke_script.py
+  - path: tests/unit/control/test_action_result_comparator.py
+  - path: tests/unit/control/test_control_episode.py
+  - path: tests/unit/control/test_precision_extremes.py
+  - path: tests/unit/control/test_self_healing.py
+  - path: tests/unit/commit_acceptor/test_validate_commit_acceptor.py
+  forbidden_paths:
+  - trading/
+  - execution/
+  - forecast/
+  - policy/
+required_python_symbols:
+- test_cli_acceptor_id_scopes_validation_warnings
+- test_14b_precision_inversion_is_falsifiable
+expected_signal: Targeted AAR-PRO verification suite passes with precision, chronology, formal, smoke, readiness, self-healing, and scoped acceptor probes.
+measurement_command: pytest -q -W ignore::DeprecationWarning nak_controller/tests/test_aar.py tests/unit/control/test_action_result_comparator.py tests/unit/control/test_control_episode.py tests/unit/control/test_precision_extremes.py tests/unit/control/test_self_healing.py tests/integration/control/test_action_result_comparator_integration.py tests/integration/control/test_aar_pro_smoke_script.py tests/integration/control/test_aar_pro_readiness_script.py tests/formal/test_aar_pro_tla_spec.py tests/formal/test_aar_pro_invariants_yaml.py tests/unit/commit_acceptor/test_validate_commit_acceptor.py::test_cli_acceptor_id_scopes_validation_warnings tests/unit/commit_acceptor/test_validate_commit_acceptor.py::test_cli_acceptor_id_returns_2_for_unknown_id tests/unit/commit_acceptor/test_validate_commit_acceptor.py::test_cli_acceptor_id_can_select_multiple_acceptors tests/core/dro_ara/test_invariants.py tests/core/dro_ara/test_falsification.py
+falsifier:
+  command: python -m pytest -q -W ignore::DeprecationWarning tests/unit/control/test_action_result_comparator.py::test_14b_precision_inversion_is_falsifiable tests/unit/control/test_precision_extremes.py tests/unit/commit_acceptor/test_validate_commit_acceptor.py::test_cli_acceptor_id_scopes_validation_warnings tests/core/dro_ara/test_falsification.py
+  description: Must fail when precision weighting, chronology, bounded energy, self-healing, or scoped acceptor validation regress.
+rollback_command: git checkout -- nak_controller/tests/test_aar.py tests/core/dro_ara/test_falsification.py tests/formal/test_aar_pro_invariants_yaml.py tests/formal/test_aar_pro_tla_spec.py tests/integration/control/test_action_result_comparator_integration.py tests/integration/control/test_aar_pro_readiness_script.py tests/integration/control/test_aar_pro_smoke_script.py tests/unit/control/test_action_result_comparator.py tests/unit/control/test_control_episode.py tests/unit/control/test_precision_extremes.py tests/unit/control/test_self_healing.py tests/unit/commit_acceptor/test_validate_commit_acceptor.py
+rollback_verification_command: git diff --exit-code nak_controller/tests/test_aar.py tests/core/dro_ara/test_falsification.py tests/formal/test_aar_pro_invariants_yaml.py tests/formal/test_aar_pro_tla_spec.py tests/integration/control/test_aar_pro_readiness_script.py tests/integration/control/test_aar_pro_smoke_script.py tests/unit/control/test_action_result_comparator.py tests/unit/control/test_control_episode.py tests/unit/control/test_precision_extremes.py tests/unit/control/test_self_healing.py tests/unit/commit_acceptor/test_validate_commit_acceptor.py
+ledger_path: .claude/commit_acceptors/aar-pro-verification-suite.yaml
+report_path: artifacts/aar_pro/action_result_acceptor_audit.md
+status: ACTIVE
+memory_update_type: append
+signal_artifact: artifacts/aar_pro/action_result_comparator_pytest.txt
+evidence:
+- path: artifacts/aar_pro/action_result_comparator_pytest.txt

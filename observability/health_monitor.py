@@ -1,4 +1,6 @@
-"""Periodic health monitoring utilities for TradePulse services."""
+# Copyright (c) 2023-2026 Yaroslav Vasylenko (neuron7xLab)
+# SPDX-License-Identifier: MIT
+"""Periodic health monitoring utilities for GeoSync services."""
 
 from __future__ import annotations
 
@@ -61,12 +63,8 @@ class PeriodicHealthMonitor:
         self._metrics = get_metrics_collector()
         self._stop_event = threading.Event()
         self._thread: threading.Thread | None = None
-        self._next_run: MutableMapping[str, float] = {
-            check.name: 0.0 for check in self._checks
-        }
-        self._statuses: MutableMapping[str, bool] = {
-            check.name: False for check in self._checks
-        }
+        self._next_run: MutableMapping[str, float] = {check.name: 0.0 for check in self._checks}
+        self._statuses: MutableMapping[str, bool] = {check.name: False for check in self._checks}
         self._lock = threading.Lock()
         self._poll_interval = min(check.interval for check in self._checks)
 
@@ -171,9 +169,7 @@ class PeriodicHealthMonitor:
         return bool(result), None, None
 
     @staticmethod
-    def _format_message(
-        detail: str | None, metrics: Mapping[str, object] | None
-    ) -> str | None:
+    def _format_message(detail: str | None, metrics: Mapping[str, object] | None) -> str | None:
         if not metrics:
             return detail
 

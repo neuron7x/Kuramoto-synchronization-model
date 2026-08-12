@@ -1,0 +1,40 @@
+# Copyright (c) 2023-2026 Yaroslav Vasylenko (neuron7xLab)
+# SPDX-License-Identifier: MIT
+#
+# Closes dependency-truth drift class D4: the auxiliary service Dockerfiles
+# (coherence_bridge/, cortex_service/, sandbox/) install a loose
+# `requirements.txt` that no CI workflow ran through a security scanner.
+# Installation is not auditing — this workflow runs pip-audit against each of
+# those manifests so the same dependency set the Dockerfiles ship is actually
+# vulnerability-scanned in CI.
+name: service-manifest-audit
+
+on:
+  pull_request:
+    paths:
+      - 'coherence_bridge/requirements.txt'
+      - 'sandbox/requirements.txt'
+      - 'requirements.txt'
+      - '.github/workflows/service-manifest-audit.yml'
+  push:
+    branches: [main]
+
+permissions:
+  contents: read
+
+jobs:
+  audit-service-manifests:
+    runs-on: ubuntu-latest
+    steps:
+      - uses: actions/checkout@9c091bb21b7c1c1d1991bb908d89e4e9dddfe3e0  # v7.0.0
+      - uses: actions/setup-python@ece7cb06caefa5fff74198d8649806c4678c61a1  # v6.3.0
+        with:
+          python-version: '3.12'
+      - name: Install pip-audit
+        run: python -m pip install --upgrade pip pip-audit
+      - name: Audit coherence_bridge service manifest
+        run: pip-audit -r coherence_bridge/requirements.txt
+      - name: Audit sandbox service manifest
+        run: pip-audit -r sandbox/requirements.txt
+      - name: Audit cortex_service build manifest (root requirements.txt)
+        run: pip-audit -r requirements.txt

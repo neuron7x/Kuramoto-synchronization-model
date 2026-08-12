@@ -1,4 +1,5 @@
-# SPDX-License-Identifier: LicenseRef-TradePulse-Proprietary
+# Copyright (c) 2023-2026 Yaroslav Vasylenko (neuron7xLab)
+# SPDX-License-Identifier: MIT
 from __future__ import annotations
 
 import logging
@@ -91,9 +92,7 @@ def normalize_df(
                     numeric_ts, unit=unit, errors="coerce", utc=True
                 )
             else:
-                normalized[timestamp_col] = pd.to_datetime(
-                    timestamps, errors="coerce", utc=True
-                )
+                normalized[timestamp_col] = pd.to_datetime(timestamps, errors="coerce", utc=True)
             normalized = normalized.sort_values(timestamp_col)
 
         normalized = normalized.drop_duplicates()
@@ -132,14 +131,12 @@ def normalize_df(
                 schema_version="dynamic",
             )
             if post_fp["content_hash"] != input_fp["content_hash"]:
-                _logger.warning("%s mutated input dataframe", trace_id)
+                _logger.warning("input dataframe mutated", trace_id=trace_id)
 
         return normalized
 
 
-def scale_series(
-    x: ArrayLike, method: str = "zscore", *, use_float32: bool = False
-) -> np.ndarray:
+def scale_series(x: ArrayLike, method: str = "zscore", *, use_float32: bool = False) -> np.ndarray:
     """Scale a 1-D array according to the requested ``method``.
 
     Currently supported scaling methods are ``"zscore"`` (default) and
@@ -258,9 +255,7 @@ def normalize_numeric_columns(
         else:
             candidate_columns = list(columns)
 
-        target_columns = [
-            column for column in candidate_columns if column not in exclude_set
-        ]
+        target_columns = [column for column in candidate_columns if column not in exclude_set]
 
         for column in target_columns:
             if column not in normalized.columns:
@@ -270,13 +265,9 @@ def normalize_numeric_columns(
             if pd.api.types.is_bool_dtype(series.dtype):
                 raise TypeError(f"Column {column!r} has boolean dtype which cannot be scaled")
             if not is_numeric_dtype(series.dtype):
-                raise TypeError(
-                    f"Column {column!r} has non-numeric dtype {series.dtype}"
-                )
+                raise TypeError(f"Column {column!r} has non-numeric dtype {series.dtype}")
 
-            values = series.to_numpy(
-                dtype=np.float32 if use_float32 else float, copy=True
-            )
+            values = series.to_numpy(dtype=np.float32 if use_float32 else float, copy=True)
 
             if values.size == 0:
                 continue
@@ -286,9 +277,7 @@ def normalize_numeric_columns(
                 normalized[column] = values
                 continue
 
-            scaled = scale_series(
-                values[~nan_mask], method=method, use_float32=use_float32
-            )
+            scaled = scale_series(values[~nan_mask], method=method, use_float32=use_float32)
             values[~nan_mask] = scaled
             normalized[column] = values
 

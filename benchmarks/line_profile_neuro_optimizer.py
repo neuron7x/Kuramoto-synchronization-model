@@ -1,3 +1,5 @@
+# Copyright (c) 2023-2026 Yaroslav Vasylenko (neuron7xLab)
+# SPDX-License-Identifier: MIT
 """Run line_profiler for hot NeuroOptimizer functions."""
 
 from __future__ import annotations
@@ -12,6 +14,7 @@ from benchmarks._neuro_optimizer_loader import (
     load_validation,
 )
 from utils.seed import set_global_seed
+
 try:
     from line_profiler import LineProfiler
 except ImportError:  # pragma: no cover - optional dependency

@@ -1,3 +1,5 @@
+# Copyright (c) 2023-2026 Yaroslav Vasylenko (neuron7xLab)
+# SPDX-License-Identifier: MIT
 from __future__ import annotations
 
 import asyncio
@@ -39,11 +41,7 @@ def test_drift_detector_evaluates_metrics() -> None:
 
 def test_quality_monitor_detects_deviation() -> None:
     monitor = QualityDegradationMonitor(
-        [
-            QualityGuardrail(
-                metric="accuracy", lower=0.8, warning_margin=0.05, critical_margin=0.1
-            )
-        ]
+        [QualityGuardrail(metric="accuracy", lower=0.8, warning_margin=0.05, critical_margin=0.1)]
     )
     deviations = monitor.evaluate({"accuracy": 0.69})
     assert len(deviations) == 1
@@ -53,9 +51,7 @@ def test_quality_monitor_detects_deviation() -> None:
 
 
 def test_retraining_trigger_requires_multiple_events() -> None:
-    trigger = RetrainingTrigger(
-        window=dt.timedelta(minutes=10), min_events=2, min_features=1
-    )
+    trigger = RetrainingTrigger(window=dt.timedelta(minutes=10), min_events=2, min_features=1)
     first = trigger.evaluate(_utc(0), ["feature_a"])
     assert not first.triggered
     second = trigger.evaluate(_utc(5), ["feature_a"])
@@ -126,9 +122,7 @@ def test_monitoring_service_generates_alerts_and_dashboard() -> None:
     retraining_trigger = RetrainingTrigger(
         window=dt.timedelta(minutes=30), min_events=1, min_features=1
     )
-    isolation_planner = ImpactIsolationPlanner(
-        quarantine_severities=("major", "critical")
-    )
+    isolation_planner = ImpactIsolationPlanner(quarantine_severities=("major", "critical"))
     change_log = FeatureChangeLog(max_records=10)
     change_log.record("feature_a", "backfill", author="alice")
     dispatcher = _StubDispatcher()

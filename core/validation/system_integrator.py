@@ -1,4 +1,6 @@
-"""Unified system validation integrator for TradePulse.
+# Copyright (c) 2023-2026 Yaroslav Vasylenko (neuron7xLab)
+# SPDX-License-Identifier: MIT
+"""Unified system validation integrator for GeoSync.
 
 This module provides a comprehensive system-level validator that integrates
 physics, neuroscience, and mathematical validation into a unified framework.
@@ -217,9 +219,7 @@ class SystemIntegrator:
                 score = max(0.5, score - 0.1 * len(physics_report.warnings))
             domain_scores.append(score)
             report.metrics["physics_score"] = score
-            report.metrics.update(
-                {f"physics_{k}": v for k, v in physics_report.metrics.items()}
-            )
+            report.metrics.update({f"physics_{k}": v for k, v in physics_report.metrics.items()})
 
         # Neural validation
         if state.pathway is not None:
@@ -230,9 +230,7 @@ class SystemIntegrator:
                 score = max(0.5, score - 0.1 * len(neuro_report.warnings))
             domain_scores.append(score)
             report.metrics["neuro_score"] = score
-            report.metrics.update(
-                {f"neuro_{k}": v for k, v in neuro_report.metrics.items()}
-            )
+            report.metrics.update({f"neuro_{k}": v for k, v in neuro_report.metrics.items()})
 
         # Data validation
         if state.data is not None:
@@ -248,9 +246,7 @@ class SystemIntegrator:
                 score = max(0.5, score - 0.1 * data_report.warnings)
             domain_scores.append(score)
             report.metrics["data_score"] = score
-            report.metrics.update(
-                {f"data_{k}": v for k, v in data_report.metrics.items()}
-            )
+            report.metrics.update({f"data_{k}": v for k, v in data_report.metrics.items()})
 
         # Cross-domain consistency checks
         if self.config.cross_domain_checks:
@@ -293,9 +289,7 @@ class SystemIntegrator:
             "emergent": 0.9,
             "post-emergent": 0.1,
         }
-        report.metrics["market_phase"] = phase_mapping.get(
-            state.market_phase.lower(), 0.5
-        )
+        report.metrics["market_phase"] = phase_mapping.get(state.market_phase.lower(), 0.5)
         if state.timestamp_ms is not None:
             report.metrics["timestamp_ms"] = state.timestamp_ms
 
@@ -321,10 +315,7 @@ class SystemIntegrator:
         domain_scores: list[float] = []
 
         # Physics transition validation
-        if (
-            state_before.thermodynamic is not None
-            and state_after.thermodynamic is not None
-        ):
+        if state_before.thermodynamic is not None and state_after.thermodynamic is not None:
             physics_report = self.physics_validator.validate_transition(
                 state_before.thermodynamic, state_after.thermodynamic, dt
             )
@@ -390,11 +381,7 @@ class SystemIntegrator:
         cfg = self.config
 
         # Check entropy consistency between physics and data
-        if (
-            state.thermodynamic is not None
-            and state.data is not None
-            and len(state.data) > 1
-        ):
+        if state.thermodynamic is not None and state.data is not None and len(state.data) > 1:
             # High physical entropy should correlate with data variability
             physical_entropy = state.thermodynamic.entropy
             finite_data = state.data[np.isfinite(state.data)]
@@ -406,10 +393,7 @@ class SystemIntegrator:
                     data_cv = data_std / data_mean  # Coefficient of variation
 
                     # Check for inconsistency: high entropy but low variability
-                    if (
-                        physical_entropy > 0.7
-                        and data_cv < cfg.entropy_variability_threshold
-                    ):
+                    if physical_entropy > 0.7 and data_cv < cfg.entropy_variability_threshold:
                         report.add_cross_domain_issue(
                             f"Entropy-variability mismatch: entropy={physical_entropy:.2f}, "
                             f"data_cv={data_cv:.4f}"
@@ -434,10 +418,7 @@ class SystemIntegrator:
             nan_ratio = nan_count / len(state.data) if len(state.data) > 0 else 0
 
             # High coherence with poor data quality is concerning
-            if (
-                coherence > cfg.coherence_threshold
-                and nan_ratio > cfg.nan_ratio_threshold
-            ):
+            if coherence > cfg.coherence_threshold and nan_ratio > cfg.nan_ratio_threshold:
                 report.add_cross_domain_issue(
                     f"Coherence-quality mismatch: coherence={coherence:.2f}, "
                     f"nan_ratio={nan_ratio:.2%}"

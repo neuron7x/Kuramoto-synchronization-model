@@ -1,3 +1,5 @@
+# Copyright (c) 2023-2026 Yaroslav Vasylenko (neuron7xLab)
+# SPDX-License-Identifier: MIT
 """Render a markdown catalogue of all registered event schemas."""
 
 from __future__ import annotations
@@ -21,9 +23,7 @@ def _format_version_entry(entry: dict[str, str]) -> str:
 
 def main() -> None:
     parser = argparse.ArgumentParser(description="Render event schema catalogue")
-    parser.add_argument(
-        "--registry", default="schemas/events", help="Path to registry directory"
-    )
+    parser.add_argument("--registry", default="schemas/events", help="Path to registry directory")
     parser.add_argument(
         "--output",
         type=Path,
@@ -35,7 +35,7 @@ def main() -> None:
     registry = EventSchemaRegistry.from_directory(args.registry)
     catalogue = registry.catalogue()
 
-    lines = ["# TradePulse Event Schema Catalogue", ""]
+    lines = ["# GeoSync Event Schema Catalogue", ""]
     lines.append(
         "This document is auto-generated from the canonical schema registry.\n"
         "It enumerates all events, their version history, and integration metadata."

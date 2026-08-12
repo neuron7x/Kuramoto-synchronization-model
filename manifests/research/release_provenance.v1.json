@@ -1,0 +1,29 @@
+{
+  "schema_version": "1.0.0",
+  "manifest_id": "geosync.release_provenance.v1",
+  "status": "DRAFT",
+  "purpose": "Declare provenance requirements for public research-standard candidates.",
+  "required_fields": [
+    "release_id",
+    "git_sha",
+    "workflow_run_id",
+    "artifact_sha256",
+    "dependency_lock_state",
+    "action_pin_state",
+    "scan_state",
+    "archive_target",
+    "archive_record"
+  ],
+  "rules": [
+    "candidate must be tied to immutable git sha",
+    "workflow provenance must be preserved",
+    "artifact digest must be recorded",
+    "archive metadata must be recorded for citable releases"
+  ],
+  "blocking_conditions": [
+    "mutable reference",
+    "missing artifact digest",
+    "missing workflow id",
+    "unknown archive target"
+  ]
+}

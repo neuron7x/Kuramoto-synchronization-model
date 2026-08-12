@@ -1,0 +1,11 @@
+{
+  "_doc": "SEC-016 security regression corpus. Each entry is a KNOWN, reviewed security-sensitive site (from the SEC-010 attack-surface review). A NEW site not listed here fails the gate — that is the ratchet. Removing a site is fine (the surface shrank).",
+  "shell_true": {
+    "tools/commit_acceptor/run_evidence.py": "committed-config command string via shell=True; nosec B602; spec-required, trust=repo-commit",
+    "scripts/ci/run_rust_accel_contract.py": "criterion.command via shell=True; committed contract config, trust=repo-commit"
+  },
+  "pickle_load": {
+    "runtime/recovery_agent.py": "RestrictedUnpickler.find_class admits primitives only; nosec B301",
+    "core/indicators/cache.py": "_SafeUnpickler.find_class guard"
+  }
+}

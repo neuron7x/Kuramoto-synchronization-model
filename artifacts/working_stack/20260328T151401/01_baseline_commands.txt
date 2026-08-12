@@ -31,7 +31,7 @@ pytest tests/integration/test_golden_path_backtest.py -v
 
 ## 7. Build artifact
 python -m build
-# Result: tradepulse-0.1.0-py3-none-any.whl (2.0MB), tradepulse-0.1.0.tar.gz (1.7MB)
+# Result: geosync-0.1.0-py3-none-any.whl (2.0MB), geosync-0.1.0.tar.gz (1.7MB)
 
 ## 8. Full test suite
 pytest tests/ -m "not slow and not heavy_math and not nightly and not flaky" --tb=no --override-ini="addopts=-ra --continue-on-collection-errors --import-mode=importlib"

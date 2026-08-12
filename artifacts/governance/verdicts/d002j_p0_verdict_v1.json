@@ -1,0 +1,24 @@
+{
+  "allowed_next_nodes": [
+    "D002J-P1"
+  ],
+  "artifact_paths": [
+    "docs/governance/D002J_PREREGISTRATION.yaml",
+    "artifacts/d002j/prereg/d002j_preregistration_lock.json"
+  ],
+  "claim_boundary": "D-002J is benchmark_only=true; canonical_run_authorized=false; requires_power_first_approval=true; does NOT rescue D-002H; D-002H REFUSED remains canonical verdict.",
+  "decision": "D002J_PREREG_LOCKED",
+  "failure_retention": null,
+  "forbidden_next_nodes": [],
+  "merge_sha": "22df530b473bec2c258489b0d3504f175d5b4a1e",
+  "node_id": "D002J-P0",
+  "parent_nodes": [],
+  "phase": "P0",
+  "pr_number": 694,
+  "schema_version": "D002J-VERDICT-CAPSULE-v1",
+  "source_summary_path": "artifacts/d002j/prereg/d002j_preregistration_lock.json",
+  "status": "TERMINAL_PASS",
+  "test_paths": [
+    "tests/systemic_risk/test_d002j_preregistration.py"
+  ]
+}

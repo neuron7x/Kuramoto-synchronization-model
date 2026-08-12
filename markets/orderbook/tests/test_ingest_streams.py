@@ -1,4 +1,5 @@
-# SPDX-License-Identifier: LicenseRef-TradePulse-Proprietary
+# Copyright (c) 2023-2026 Yaroslav Vasylenko (neuron7xLab)
+# SPDX-License-Identifier: MIT
 from __future__ import annotations
 
 from datetime import datetime, timedelta, timezone
@@ -41,9 +42,7 @@ def test_binance_ingest_flow() -> None:
         "E": 1_700_000_000_000,
     }
     arrival = _ts(1_700_000_000_500)
-    snapshot = binance.parse_snapshot(
-        snapshot_payload, instrument="BTCUSDT", ts_arrival=arrival
-    )
+    snapshot = binance.parse_snapshot(snapshot_payload, instrument="BTCUSDT", ts_arrival=arrival)
     service.process_snapshot(snapshot)
 
     diff_payload = {
@@ -71,9 +70,7 @@ def test_binance_ingest_flow() -> None:
 
     metrics_snapshot = metrics.snapshot()["BTCUSDT"]
     assert metrics_snapshot.latency_ms is not None and metrics_snapshot.latency_ms >= 0
-    assert (
-        metrics_snapshot.freshness_ms is not None and metrics_snapshot.freshness_ms >= 0
-    )
+    assert metrics_snapshot.freshness_ms is not None and metrics_snapshot.freshness_ms >= 0
     assert metrics_snapshot.gap_events == 0
     assert not requests  # no recovery requested
 

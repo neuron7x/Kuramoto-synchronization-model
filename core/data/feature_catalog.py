@@ -1,3 +1,5 @@
+# Copyright (c) 2023-2026 Yaroslav Vasylenko (neuron7xLab)
+# SPDX-License-Identifier: MIT
 """File-backed feature catalog helpers used by the CLI."""
 
 from __future__ import annotations
@@ -9,7 +11,7 @@ from datetime import datetime, timezone
 from pathlib import Path
 from typing import Dict, Iterable, List, Optional
 
-from core.config.cli_models import CatalogConfig, TradePulseBaseConfig
+from core.config.cli_models import CatalogConfig, GeoSyncBaseConfig
 
 
 @dataclass
@@ -51,7 +53,7 @@ class FeatureCatalog:
         name: str,
         artifact_path: Path,
         *,
-        config: TradePulseBaseConfig,
+        config: GeoSyncBaseConfig,
         lineage: Optional[Iterable[str]] = None,
         metadata: Optional[Dict[str, object]] = None,
     ) -> CatalogEntry:

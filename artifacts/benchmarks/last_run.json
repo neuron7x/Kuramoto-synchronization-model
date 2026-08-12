@@ -1,0 +1,40 @@
+{
+  "artifact_sha256": "6672ecd7bd2b8b331ae47674dafb3eaf432368a0f22bddb317c73dfa60092f03",
+  "cases": {
+    "kuramoto_order_N2048": {
+      "deterministic": true,
+      "median_latency_s": 9.034600225277245e-05,
+      "peak_mem_kib": 63.203125,
+      "result_hash": "e5796b65c7ca6d07bdff12fdd6c069b9fbf67eef1c2044cb9039453d0c16078b"
+    }
+  },
+  "findings": [
+    {
+      "baseline_latency_s": 9.847700130194426e-05,
+      "case": "kuramoto_order_N2048",
+      "current_latency_s": 9.034600225277245e-05,
+      "deterministic": true,
+      "limit_s": 0.00014771550195291638,
+      "same_hardware": true,
+      "verdict": "PASS",
+      "within_budget": true
+    }
+  ],
+  "gate": "M.benchmarks",
+  "git_dirty": true,
+  "git_sha": "9846a5501e4f8a2c4b583f159feae6c1c6e82df6",
+  "hardware_fingerprint": {
+    "cpu_count": 16,
+    "machine": "x86_64",
+    "processor": "x86_64",
+    "python": "3.12.3",
+    "release": "6.8.0-124-generic",
+    "system": "Linux"
+  },
+  "hardware_id": "65686ba363d8c899",
+  "mode": "CHECK",
+  "regression_budget": 0.5,
+  "same_hardware": true,
+  "schema_version": "1.0",
+  "status": "PASS"
+}

@@ -1,5 +1,5 @@
 ---
-owner: quant-research@tradepulse
+owner: quant-research@geosync
 review_cadence: quarterly
 last_reviewed: 2025-11-04
 links:
@@ -51,10 +51,10 @@ The `analytics/fpma` module implements **FPM-A (Фазово-Режимна Мо
 ## Configuration
 
 ### Environment Variables:
-- `TRADEPULSE_FPMA_MODEL_PATH`: Trained regime model path (default: `~/.tradepulse/models/fpma`)
-- `TRADEPULSE_FPMA_NUM_STATES`: Number of discrete regimes (default: `4`)
-- `TRADEPULSE_FPMA_LOOKBACK_DAYS`: Historical data for regime classification (default: `252`)
-- `TRADEPULSE_FPMA_UPDATE_FREQUENCY`: Model retraining frequency in days (default: `30`)
+- `GEOSYNC_FPMA_MODEL_PATH`: Trained regime model path (default: `~/.geosync/models/fpma`)
+- `GEOSYNC_FPMA_NUM_STATES`: Number of discrete regimes (default: `4`)
+- `GEOSYNC_FPMA_LOOKBACK_DAYS`: Historical data for regime classification (default: `252`)
+- `GEOSYNC_FPMA_UPDATE_FREQUENCY`: Model retraining frequency in days (default: `30`)
 
 ### Configuration Files:
 FPMA is configured via `configs/analytics/fpma/`:
@@ -368,11 +368,24 @@ for regime_id, metrics in pnl_by_regime.items():
 ## Performance Characteristics (Empirical Evidence)
 
 ### Accuracy Metrics:
-- **Regime classification accuracy**: 90-95% (offline validation)
-- **Transition detection lead time**: 1-5 days advance warning
-- **False positive rate**: 5-10% (misclassified regimes)
+> ⚠️ Same provenance caveat as the table below — literature-reference,
+> not GeoSync-measured.
+- **Regime classification accuracy**: 90-95% (literature, offline validation)
+- **Transition detection lead time**: 1-5 days advance warning (literature)
+- **False positive rate**: 5-10% (literature, misclassified regimes)
 
 ### Performance Improvement (vs Static Strategies):
+
+> ⚠️ **PROVENANCE — READ FIRST.** The numbers in the table below are
+> **literature-reference values** lifted from the HMM+MPC studies cited in
+> `docs/FPM-A.md` (1998–2015 panel of MSCI World / S&P 500 / TOPIX / DAX /
+> FTSE / MSCI EM). They characterize **the academic methodology that
+> inspired FPMA, NOT a GeoSync backtest**. No artefact in `results/` and no
+> entry in `docs/PERFORMANCE_LEDGER.md` corresponds to these exact figures.
+> Tier per `CLAIMS.md`: `LITERATURE-ANCHOR`, not `EMPIRICAL-GEOSYNC`.
+> Reproducing them in GeoSync would require running the same methodology
+> on the same indices over the same window — that work has not been done.
+
 Based on peer-reviewed research cited in `docs/FPM-A.md`:
 
 | Metric | Static Strategy | FPMA Strategy | Improvement |
@@ -382,7 +395,8 @@ Based on peer-reviewed research cited in `docs/FPM-A.md`:
 | Max Drawdown | 57% | 26% | -54.4% |
 | Volatility | 18% | 12% | -33.3% |
 
-**Markets Tested**: MSCI World, S&P 500, TOPIX, DAX, FTSE, MSCI EM (1998-2015)
+**Markets Tested (literature panel, NOT GeoSync runs)**: MSCI World, S&P 500, TOPIX, DAX, FTSE, MSCI EM (1998–2015)
+**GeoSync FPMA module own backtests**: see `docs/PERFORMANCE_LEDGER.md` for what GeoSync has actually measured to date.
 
 ### Computational Performance:
 - Regime detection: 100-500ms (252-day lookback)
@@ -399,11 +413,11 @@ Based on peer-reviewed research cited in `docs/FPM-A.md`:
 
 | Date | Author | Change |
 | ---- | ------ | ------ |
-| 2025-11-04 | quant-research@tradepulse | Created comprehensive README with neuroeconomic state-switching principles |
+| 2025-11-04 | quant-research@geosync | Created comprehensive README with neuroeconomic state-switching principles |
 
 ## See Also
 
 - [FPM-A Detailed Documentation](../../docs/FPM-A.md)
 - [System Modules Reference](../../docs/architecture/system_modules_reference.md)
-- [Regime-Based Strategies Research](../../docs/roadmap/regime_strategies.md)
+- [Regime-Based Strategies Research](../regime/README.md)
 - [Neuroeconomic Principles](../../docs/neuroecon.md)

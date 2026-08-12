@@ -1,0 +1,46 @@
+id: readiness-validator
+status: ACTIVE
+claim_type: governance
+promise: >-
+  Diff-bound acceptor for replacing the readiness checker assert chain with an
+  explicit validator. The checker must still pass under optimized Python mode.
+
+diff_scope:
+  changed_files:
+    - path: "tools/check_readiness_register.py"
+    - path: "tests/governance/test_readiness_register.py"
+    - path: ".claude/commit_acceptors/readiness-validator.yaml"
+  forbidden_paths:
+    - "application/"
+    - "backtest/"
+    - "core/"
+    - "markets/"
+    - "modules/"
+
+required_python_symbols: []
+
+expected_signal: >-
+  The readiness checker returns deterministic exit codes and remains effective
+  when Python assertions are disabled.
+
+measurement_command: >-
+  python tools/check_readiness_register.py && python -m pytest -q tests/governance/test_readiness_register.py --confcutdir=tests/governance
+
+signal_artifact: "tools/check_readiness_register.py"
+
+falsifier:
+  command: >-
+    python -O tools/check_readiness_register.py
+  description: >-
+    Optimized Python mode must still execute the readiness validation path.
+
+rollback_command: >-
+  git checkout -- tools/check_readiness_register.py tests/governance/test_readiness_register.py .claude/commit_acceptors/readiness-validator.yaml
+
+rollback_verification_command: >-
+  git diff --exit-code
+
+memory_update_type: append
+ledger_path: ".claude/commit_acceptors/readiness-validator.yaml"
+report_path: "tools/check_readiness_register.py"
+evidence: []

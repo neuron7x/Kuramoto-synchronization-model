@@ -1,4 +1,5 @@
-# SPDX-License-Identifier: LicenseRef-TradePulse-Proprietary
+# Copyright (c) 2023-2026 Yaroslav Vasylenko (neuron7xLab)
+# SPDX-License-Identifier: MIT
 from __future__ import annotations
 
 import json
@@ -10,10 +11,10 @@ import yaml
 
 from core.config import (
     ConfigError,
+    GeoSyncSettings,
     KuramotoRicciIntegrationConfig,
-    TradePulseSettings,
     YamlSettingsSource,
-    export_tradepulse_settings_schema,
+    export_geosync_settings_schema,
     load_kuramoto_ricci_config,
     parse_cli_overrides,
 )
@@ -78,9 +79,7 @@ def test_loader_reads_yaml_values() -> None:
 
 def test_invalid_thresholds_raise_error() -> None:
     payload = {
-        "composite": {
-            "thresholds": {"R_proto_emergent": 0.8, "R_strong_emergent": 0.7}
-        },
+        "composite": {"thresholds": {"R_proto_emergent": 0.8, "R_strong_emergent": 0.7}},
     }
 
     with pytest.raises(ConfigError):
@@ -107,7 +106,7 @@ def test_settings_source_priority(monkeypatch, tmp_path) -> None:
     yaml_path.write_text(yaml.safe_dump(yaml_payload))
 
     dotenv_path = tmp_path / ".env"
-    dotenv_path.write_text("TRADEPULSE_KURAMOTO__BASE_WINDOW=256\n", encoding="utf8")
+    dotenv_path.write_text("GEOSYNC_KURAMOTO__BASE_WINDOW=256\n", encoding="utf8")
 
     monkeypatch.chdir(tmp_path)
 
@@ -116,7 +115,7 @@ def test_settings_source_priority(monkeypatch, tmp_path) -> None:
     assert cfg_from_dotenv.kuramoto.base_window == 256
 
     # Environment variables take precedence over .env
-    monkeypatch.setenv("TRADEPULSE_KURAMOTO__BASE_WINDOW", "384")
+    monkeypatch.setenv("GEOSYNC_KURAMOTO__BASE_WINDOW", "384")
     cfg_from_env = load_kuramoto_ricci_config(yaml_path)
     assert cfg_from_env.kuramoto.base_window == 384
 
@@ -128,7 +127,7 @@ def test_settings_source_priority(monkeypatch, tmp_path) -> None:
     assert cfg_from_cli.kuramoto.base_window == 512
 
     # Removing env sources falls back to YAML defaults
-    monkeypatch.delenv("TRADEPULSE_KURAMOTO__BASE_WINDOW", raising=False)
+    monkeypatch.delenv("GEOSYNC_KURAMOTO__BASE_WINDOW", raising=False)
     dotenv_path.unlink()
     cfg_from_yaml = load_kuramoto_ricci_config(yaml_path)
     assert cfg_from_yaml.kuramoto.base_window == 128
@@ -159,7 +158,7 @@ class _StubSource:
 
 def test_yaml_settings_source_uses_default_file() -> None:
     source = YamlSettingsSource(
-        TradePulseSettings,
+        GeoSyncSettings,
         _StubSource({}),
         _StubSource({}),
         _StubSource({}),
@@ -174,7 +173,7 @@ def test_yaml_settings_source_reads_cli_override_path(tmp_path: Path) -> None:
     config_path.write_text(yaml.safe_dump({"kuramoto": {"base_window": 321}}))
 
     source = YamlSettingsSource(
-        TradePulseSettings,
+        GeoSyncSettings,
         _StubSource({"config_file": str(config_path)}),
         _StubSource({}),
         _StubSource({}),
@@ -189,7 +188,7 @@ def test_yaml_settings_source_rejects_non_mapping_payload(tmp_path: Path) -> Non
     config_path.write_text(yaml.safe_dump([1, 2, 3]))
 
     source = YamlSettingsSource(
-        TradePulseSettings,
+        GeoSyncSettings,
         _StubSource({"config_file": str(config_path)}),
         _StubSource({}),
         _StubSource({}),
@@ -204,7 +203,7 @@ def test_yaml_settings_source_surfaces_yaml_parse_errors(tmp_path: Path) -> None
     broken_path.write_text("invalid: [unterminated")
 
     source = YamlSettingsSource(
-        TradePulseSettings,
+        GeoSyncSettings,
         _StubSource({"config_file": str(broken_path)}),
         _StubSource({}),
         _StubSource({}),
@@ -214,18 +213,18 @@ def test_yaml_settings_source_surfaces_yaml_parse_errors(tmp_path: Path) -> None
         source()
 
 
-def test_export_tradepulse_schema_writes_file(tmp_path: Path) -> None:
-    destination = tmp_path / "tradepulse-schema.json"
-    schema = export_tradepulse_settings_schema(destination, indent=4)
+def test_export_geosync_schema_writes_file(tmp_path: Path) -> None:
+    destination = tmp_path / "geosync-schema.json"
+    schema = export_geosync_settings_schema(destination, indent=4)
 
     assert destination.exists()
     parsed = json.loads(destination.read_text(encoding="utf8"))
-    assert parsed["title"] == "TradePulseSettings"
+    assert parsed["title"] == "GeoSyncSettings"
     assert schema == parsed
 
 
-def test_export_tradepulse_schema_returns_payload_without_writing() -> None:
-    schema = export_tradepulse_settings_schema(None)
+def test_export_geosync_schema_returns_payload_without_writing() -> None:
+    schema = export_geosync_settings_schema(None)
 
     assert "properties" in schema
     assert "kuramoto" in schema["properties"]

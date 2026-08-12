@@ -1,0 +1,173 @@
+{
+  "bibliography_version": "2026-05-28",
+  "purpose": "Machine-readable map from GeoSync claims to external sources, local evidence, and boundaries.",
+  "entries": [
+    {
+      "claim_id": "C-INV-COUNT",
+      "claim_status": "active",
+      "claim_tier": "FACT",
+      "claim_summary": "97 invariants in .claude/physics/INVARIANTS.yaml.",
+      "sources": [],
+      "source_policy": "local-accounting-only",
+      "local_evidence": [
+        "python scripts/count_invariants.py",
+        ".claude/physics/INVARIANTS.yaml",
+        "BASELINE.md",
+        "README.md"
+      ],
+      "boundary": "External bibliography is not needed for a repository count; the count must match the registry and fail-closed sync checks."
+    },
+    {
+      "claim_id": "C-PHYS-KERNEL",
+      "claim_status": "active",
+      "claim_tier": "MEASURED",
+      "claim_summary": "Physics-inspired research platform with a partially machine-checkable invariant layer.",
+      "sources": [
+        "BIB-SYNC-003",
+        "BIB-SYNC-004",
+        "BIB-RL-001",
+        "BIB-FEP-001",
+        "BIB-GEOM-001",
+        "BIB-FORMAL-001"
+      ],
+      "local_evidence": [
+        ".claude/physics/INVARIANTS.yaml",
+        ".claude/physics/*_THEORY.md",
+        "BASELINE.md",
+        ".github/workflows/physics-kernel-gate.yml"
+      ],
+      "boundary": "Sources justify definitions and analogies; local invariant registry and CI evidence define what is actually machine-checkable."
+    },
+    {
+      "claim_id": "C-TLA-PROOF",
+      "claim_status": "active",
+      "claim_tier": "FACT",
+      "claim_summary": "Four-barrier admission gate is model-checked in TLA+ with three invariants.",
+      "sources": [
+        "BIB-FORMAL-001"
+      ],
+      "local_evidence": [
+        "formal/tla/AdmissionGate.tla",
+        ".github/workflows/formal-verification.yml"
+      ],
+      "boundary": "TLA+ checks the formal model. It does not prove the full implementation unless model-code correspondence is separately established."
+    },
+    {
+      "claim_id": "C-SYSRISK-PHASE",
+      "claim_status": "active",
+      "claim_tier": "HYPOTHESIS",
+      "claim_summary": "Interbank phase-locking precedes banking-crisis events.",
+      "sources": [
+        "BIB-SYNC-004",
+        "BIB-CRIT-001",
+        "BIB-FINNET-001",
+        "BIB-FINNET-002",
+        "BIB-FINNET-003",
+        "BIB-FINNET-004",
+        "BIB-FINNET-005",
+        "BIB-STATS-001"
+      ],
+      "local_evidence": [
+        "research/systemic_risk/README.md",
+        "research/systemic_risk/falsification.py",
+        "research/systemic_risk/null_models.py"
+      ],
+      "boundary": "Must remain HYPOTHESIS until real directed exposure data, crisis windows, null baselines, bootstrap CI, and multiplicity correction produce a signed HARD_PASS."
+    },
+    {
+      "claim_id": "C-EPI-RHOMBUS",
+      "claim_status": "active",
+      "claim_tier": "FACT",
+      "claim_summary": "Epistemic Rhombus manifest maps four governance criteria to schema-validated external gates.",
+      "sources": [],
+      "source_policy": "local-governance-contract",
+      "local_evidence": [
+        "governance/epistemic_rhombus_manifest.jsonl",
+        "schemas/governance/epistemic_rhombus_manifest.schema.json",
+        "scripts/validate_epistemic_rhombus_manifest.py",
+        "tests/scripts/test_validate_epistemic_rhombus_manifest.py",
+        ".github/workflows/epistemic-rhombus-gate.yml"
+      ],
+      "boundary": "This is a repository-local governance fact: it validates manifest structure, gate binding, threat-model metadata, and deterministic report emission; it does not prove scientific truth or external signature validity."
+    },
+    {
+      "claim_id": "R-VERIFIED-PHYS",
+      "claim_status": "retired",
+      "claim_tier": "RETIRED",
+      "claim_summary": "GeoSync is a verified physical system.",
+      "sources": [
+        "BIB-FORMAL-001"
+      ],
+      "local_evidence": [
+        "docs/audit/2026-04-30-external-audit.md",
+        "CLAIMS.md"
+      ],
+      "boundary": "Retired because formal, simulation, invariant, and analogy evidence do not verify a full physical market system."
+    },
+    {
+      "claim_id": "R-OOS-78",
+      "claim_status": "retired",
+      "claim_tier": "RETIRED",
+      "claim_summary": "+78% OOS walk-forward alpha vs equal-weight, drawdown -53%.",
+      "sources": [
+        "BIB-QUANT-002",
+        "BIB-QUANT-003",
+        "BIB-QUANT-004"
+      ],
+      "local_evidence": [
+        "docs/audit/2026-04-30-external-audit.md",
+        "CLAIMS.md"
+      ],
+      "boundary": "Retired until signed audit artifact declares data provenance, cost model, null models, factor baselines, and multiple-testing correction."
+    },
+    {
+      "claim_id": "R-CRITICALITY",
+      "claim_status": "retired",
+      "claim_tier": "RETIRED",
+      "claim_summary": "Phase-transition / criticality detection.",
+      "sources": [
+        "BIB-CRIT-001",
+        "BIB-CRIT-002",
+        "BIB-SYNC-003"
+      ],
+      "local_evidence": [
+        "docs/audit/2026-04-30-external-audit.md",
+        ".claude/physics/ALTERNATIVE_HYPOTHESES.md"
+      ],
+      "boundary": "Retired until finite-size scaling, susceptibility, scaling collapse, and null-model rejection exist at gate level."
+    },
+    {
+      "claim_id": "R-MARKET-CONS",
+      "claim_status": "retired",
+      "claim_tier": "RETIRED",
+      "claim_summary": "Market energy / momentum conservation.",
+      "sources": [
+        "BIB-STOCH-001"
+      ],
+      "local_evidence": [
+        "docs/audit/2026-04-30-external-audit.md",
+        "CLAIMS.md"
+      ],
+      "boundary": "Retired because proxy formulas and analogy do not establish a physical conservation law over market volume, price, or order flow."
+    },
+    {
+      "claim_id": "C-RICCI-MICROSTRUCTURE-V1",
+      "claim_summary": "Ollivier-Ricci curvature on real L2 order-book microstructure may carry falsifiable signal beyond null baselines.",
+      "claim_tier": "HYPOTHESIS",
+      "claim_status": "active",
+      "sources": [
+        "BIB-GEOM-001",
+        "BIB-GEOM-003",
+        "BIB-GEOM-004",
+        "BIB-STATS-001"
+      ],
+      "local_evidence": [
+        "geosync_research/lines/ricci_microstructure_v1/ricci_kernel.py",
+        "tests/research_lines/test_ricci_microstructure_v1.py",
+        "docs/NEGATIVE_RESULTS.md",
+        "docs/RICCI_MICROSTRUCTURE.md"
+      ],
+      "boundary": "Must remain HYPOTHESIS / T3 exploratory: NOT alpha, NOT a trading signal, NOT proven market physics. Support requires p_value < 0.01 AND |cliffs_delta| >= 0.147 against IAAFT/volume/permutation/block nulls on honest real L2 data; the committed canonical run is HYPOTHESIS_NOT_SUPPORTED and that negative result is preserved."
+    }
+  ]
+}

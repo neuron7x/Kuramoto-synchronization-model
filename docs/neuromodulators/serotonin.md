@@ -74,7 +74,7 @@ serotonin:
 ### Basic Usage
 
 ```python
-from src.tradepulse.core.neuro.serotonin import SerotoninController
+from src.geosync.core.neuro.serotonin import SerotoninController
 
 # Initialize controller
 controller = SerotoninController("configs/serotonin.yaml")
@@ -146,10 +146,10 @@ pytest tests/integration/ -k serotonin
 
 ## Related Documentation
 
-- [ADR-0002: Serotonin Controller Architecture](/docs/adr/0002-serotonin-controller-architecture.md)
-- [Serotonin Practical Guide](/docs/SEROTONIN_PRACTICAL_GUIDE.md)
-- [Serotonin Deployment Guide](/docs/SEROTONIN_DEPLOYMENT_GUIDE.md)
-- [Dopamine Neuromodulator](/docs/neuromodulators/dopamine.md)
+- [ADR-0002: Serotonin Controller Architecture](../adr/0002-serotonin-controller-architecture.md)
+- [Serotonin Practical Guide](../SEROTONIN_PRACTICAL_GUIDE.md)
+- [Serotonin Deployment Guide](../SEROTONIN_DEPLOYMENT_GUIDE.md)
+- [Dopamine Neuromodulator](dopamine.md)
 
 ## Implementation Status
 

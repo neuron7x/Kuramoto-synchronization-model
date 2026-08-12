@@ -1,4 +1,5 @@
-# SPDX-License-Identifier: LicenseRef-TradePulse-Proprietary
+# Copyright (c) 2023-2026 Yaroslav Vasylenko (neuron7xLab)
+# SPDX-License-Identifier: MIT
 from __future__ import annotations
 
 import csv
@@ -226,16 +227,10 @@ def test_historical_csv_skips_malformed_rows(tmp_path: Path) -> None:
 def test_historical_csv_supports_custom_columns(tmp_path: Path) -> None:
     csv_path = tmp_path / "history_custom.csv"
     with csv_path.open("w", newline="", encoding="utf-8") as f:
-        writer = csv.DictWriter(
-            f, fieldnames=["timestamp", "close", "trade_volume", "ignored"]
-        )
+        writer = csv.DictWriter(f, fieldnames=["timestamp", "close", "trade_volume", "ignored"])
         writer.writeheader()
-        writer.writerow(
-            {"timestamp": "1", "close": "100", "trade_volume": "5", "ignored": "x"}
-        )
-        writer.writerow(
-            {"timestamp": "2", "close": "101", "trade_volume": "6", "ignored": "y"}
-        )
+        writer.writerow({"timestamp": "1", "close": "100", "trade_volume": "5", "ignored": "x"})
+        writer.writerow({"timestamp": "2", "close": "101", "trade_volume": "6", "ignored": "y"})
 
     ingestor = DataIngestor()
     collected: list[Ticker] = []
@@ -284,9 +279,7 @@ def test_historical_csv_rejects_symlink(tmp_path: Path) -> None:
 
 def test_historical_csv_enforces_size_limit(tmp_path: Path) -> None:
     csv_path = tmp_path / "large.csv"
-    csv_path.write_text(
-        "ts,price\n" + "\n".join("1,1" for _ in range(40)), encoding="utf-8"
-    )
+    csv_path.write_text("ts,price\n" + "\n".join("1,1" for _ in range(40)), encoding="utf-8")
 
     ingestor = DataIngestor(allowed_roots=[tmp_path], max_csv_bytes=32)
 

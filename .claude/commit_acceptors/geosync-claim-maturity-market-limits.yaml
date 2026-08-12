@@ -1,0 +1,106 @@
+# Diff-bound commit acceptor for the GeoSync claim-maturity market-limits
+# layer + the credential-free external-reproducibility replay capsule.
+#
+# This change adds claim-discipline gates only. It promotes no claim, changes
+# no runtime signal behavior, and adds no dependency. Two fail-closed pieces:
+#
+#   1. physics_contracts/market_limits.yaml + tools/research/market_limits.py
+#      + tests/physics_contracts/test_market_limits.py — eight explicit market
+#      approximation limits (non-conservative, non-stationary, agent-driven,
+#      liquidity-discontinuous, regime-shock, open-system order flow,
+#      correlation!=causal, descriptor!=predictor). Each carries valid_when /
+#      invalid_when, a required witness, a registered pre-registered null, a
+#      claim-tier ceiling from FORBIDDEN_CLAIMS.md, and forbidden claims. The
+#      16 witnesses prove the contract stays well-formed: no dangling witness
+#      reference, every falsifier is one of the four registered nulls, every
+#      tier ceiling is canonical.
+#
+#   2. tests/research_lines/test_ricci_microstructure_replay_capsule.py — the
+#      credential-free external-reproducibility capsule for the
+#      ricci_microstructure_v1 line. It replays the existing promotion guard on
+#      the committed *synthetic* placeholder and pins fixture provenance, a
+#      deterministic decision hash, and the exact preserved negative verdict
+#      (HYPOTHESIS / OBSERVE / NOT_RUN + three blockers). EXTERNALLY_REPRODUCIBLE
+#      for the L2 Ricci *market* claim stays BLOCKED (needs real data + human
+#      witness); only the pipeline and its blocked verdict are made reproducible.
+#
+# Locally verified on origin/main base (1cbaeee):
+#   * pytest tests/physics_contracts/test_market_limits.py
+#     tests/research_lines/test_ricci_microstructure_replay_capsule.py: 21 pass
+#   * ruff / black / mypy --strict clean on the new modules
+#   * zero new `# type: ignore` suppressions (debt ratchet neutral)
+id: geosync-claim-maturity-market-limits
+status: ACTIVE
+claim_type: governance
+promise: >-
+  After this PR lands, physics_contracts/market_limits.yaml declares exactly
+  eight market approximation limits, each with non-empty valid_when /
+  invalid_when / forbidden_claims, a falsifier_required drawn from the four
+  registered nulls (permutation_null, lag_sweep_no_future_data, cost_model,
+  multi_session_replay), a witness_required that resolves to a function in
+  tests/physics_contracts/test_market_limits.py, and a max_claim_tier_violated
+  drawn from the FORBIDDEN_CLAIMS.md vocabulary. The ricci_microstructure_v1
+  replay capsule reproduces, with no venue credentials, the guard's negative
+  promotion decision on the committed synthetic placeholder and pins its
+  provenance + decision hashes. No claim is promoted; the L2 Ricci market claim
+  stays HYPOTHESIS / Not Deployable.
+diff_scope:
+  changed_files:
+    - path: ".claude/commit_acceptors/geosync-claim-maturity-market-limits.yaml"
+    - path: "physics_contracts/market_limits.yaml"
+    - path: "tools/research/market_limits.py"
+    - path: "tests/physics_contracts/test_market_limits.py"
+    - path: "tests/research_lines/test_ricci_microstructure_replay_capsule.py"
+  forbidden_paths:
+    - "trading/"
+    - "execution/"
+    - "forecast/"
+    - "policy/"
+    - "core/physics/"
+    - "core/kuramoto/"
+    - "core/neuro/"
+    - "application/"
+    - "src/"
+    - "geosync_hpc/"
+required_python_symbols: []
+expected_signal: >-
+  `python -m pytest tests/physics_contracts/test_market_limits.py
+  tests/research_lines/test_ricci_microstructure_replay_capsule.py -q` reports
+  21 passed; `python tools/commit_acceptor/validate_commit_acceptor.py` exits 0;
+  `ruff check` and `mypy --strict` on tools/research/market_limits.py are clean.
+measurement_command: >-
+  bash -c 'python -m pytest
+  tests/physics_contracts/test_market_limits.py
+  tests/research_lines/test_ricci_microstructure_replay_capsule.py -q
+  > tmp/geosync_claim_maturity_market_limits.log 2>&1
+  && grep -q "21 passed" tmp/geosync_claim_maturity_market_limits.log'
+signal_artifact: "tmp/geosync_claim_maturity_market_limits.log"
+falsifier:
+  command: |-
+    bash -c 'python -c "
+    from tools.research.market_limits import load_contract, KNOWN_FALSIFIERS;
+    c = load_contract();
+    broken = [l.limit_id for l in c.limits
+              if l.falsifier_required not in KNOWN_FALSIFIERS
+              or not l.valid_when or not l.invalid_when or not l.forbidden_claims];
+    import sys; sys.exit(0 if broken else 1)"'
+  description: >-
+    Inverse probe of the market-limits discipline. It exits 0 (falsifier fires)
+    iff any limit names a falsifier outside the four registered nulls, or has an
+    empty valid_when / invalid_when / forbidden_claims list — i.e. the contract
+    has been weakened to an unfalsifiable or unbounded limit. While the contract
+    is well-formed the probe exits 1 (no break). If this ever exits 0, the
+    claim-discipline guarantee is broken and the change must be reverted.
+rollback_command: >-
+  git rm -f
+  physics_contracts/market_limits.yaml
+  tools/research/market_limits.py
+  tests/physics_contracts/test_market_limits.py
+  tests/research_lines/test_ricci_microstructure_replay_capsule.py
+  .claude/commit_acceptors/geosync-claim-maturity-market-limits.yaml
+rollback_verification_command: >-
+  bash -c 'test ! -f physics_contracts/market_limits.yaml'
+memory_update_type: none
+ledger_path: ".claude/commit_acceptors/geosync-claim-maturity-market-limits.yaml"
+report_path: "tmp/geosync_claim_maturity_market_limits.log"
+evidence: []

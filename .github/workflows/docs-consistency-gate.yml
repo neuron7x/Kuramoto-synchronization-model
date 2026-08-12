@@ -1,0 +1,50 @@
+# SPDX-License-Identifier: MIT
+#
+# Docs-consistency gate — fail-closed. Enforces ADR 0024 in prose: no doc may
+# reassert `src/geosync` as the canonical root (canonical root is top-level
+# `geosync/`; `src/geosync/` is the retired fork). Honest descriptions of the
+# legacy/retired state are exempt; reviewed exceptions live in
+# .github/docs_consistency_allow.json. Stdlib-only; fast.
+#
+# Path-filtered: a PR touching no Markdown, the checker, or the allowlist skips.
+name: Docs Consistency Gate
+
+concurrency:
+  group: ${{ github.workflow }}-${{ github.ref }}
+  cancel-in-progress: true
+
+on:
+  pull_request:
+    branches: [main]
+    paths:
+      - "**/*.md"
+      - ".github/docs_consistency_allow.json"
+      - "scripts/ci/check_docs_consistency.py"
+      - ".github/workflows/docs-consistency-gate.yml"
+  push:
+    branches: [main]
+    paths:
+      - "**/*.md"
+      - ".github/docs_consistency_allow.json"
+      - "scripts/ci/check_docs_consistency.py"
+      - ".github/workflows/docs-consistency-gate.yml"
+
+permissions:
+  contents: read
+
+jobs:
+  validate:
+    name: docs-consistency-gate
+    runs-on: ubuntu-latest
+    timeout-minutes: 5
+    steps:
+      - name: Checkout
+        uses: actions/checkout@9c091bb21b7c1c1d1991bb908d89e4e9dddfe3e0 # v7.0.0
+
+      - name: Setup Python
+        uses: actions/setup-python@ece7cb06caefa5fff74198d8649806c4678c61a1 # v6
+        with:
+          python-version: "3.12"
+
+      - name: Enforce docs-consistency (ADR 0024 canonical root)
+        run: python scripts/ci/check_docs_consistency.py

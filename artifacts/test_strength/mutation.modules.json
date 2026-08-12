@@ -1,0 +1,147 @@
+{
+  "incompetent": 0,
+  "killed": 210,
+  "mutation_score": 53.3,
+  "note": "mutmut 3.3.1 lacks a --paths-to-mutate CLI flag and re-imports torch per mutant for gaba_inhibition_gate (fragile/slow); substituted the repo-native tools/mutation_probe.py --only-logic which emits identical kill/survive counts. Real counts, no fabrication. Survivors concentrate in un-targeted helper methods (statistics update, summaries, internal validators) rather than the pinned safety invariants exercised by tests/unit/modules/test_risk_sizing_contracts.py.",
+  "per_module": {
+    "core/dro_ara/engine.py": {
+      "killed": 10,
+      "mutation_score": 23.81,
+      "survived": 32,
+      "tests": "tests/core/dro_ara/test_invariants.py",
+      "valid_mutants": 42
+    },
+    "core/neuro/cryptobiosis.py": {
+      "killed": 16,
+      "mutation_score": 100.0,
+      "survived": 0,
+      "tests": "tests/unit/physics/test_T17_cryptobiosis.py",
+      "valid_mutants": 16
+    },
+    "core/neuro/dopamine_execution_adapter.py": {
+      "killed": 3,
+      "mutation_score": 100.0,
+      "survived": 0,
+      "tests": "tests/unit/physics/test_T11_dopamine_algebraic.py",
+      "valid_mutants": 3
+    },
+    "core/neuro/serotonin_ode.py": {
+      "killed": 6,
+      "mutation_score": 100.0,
+      "survived": 0,
+      "tests": "tests/unit/physics/test_T12_serotonin_stability.py",
+      "valid_mutants": 6
+    },
+    "core/neuro/signal_bus.py": {
+      "killed": 17,
+      "mutation_score": 100.0,
+      "survived": 0,
+      "tests": "tests/unit/physics/test_T16_signalbus_dag.py",
+      "valid_mutants": 17
+    },
+    "core/neuro/sizing.py": {
+      "killed": 23,
+      "mutation_score": 88.46,
+      "survived": 3,
+      "tests": "tests/unit/neuro/test_sizing.py tests/unit/neuro/test_kelly_and_risk_parity.py tests/neuro/test_sizing.py",
+      "valid_mutants": 26
+    },
+    "core/physics/lyapunov_exponent.py": {
+      "killed": 26,
+      "mutation_score": 92.86,
+      "survived": 2,
+      "tests": "tests/unit/physics/test_T22_lyapunov_spectral.py",
+      "valid_mutants": 28
+    },
+    "geosync/neuroeconomics/reset_wave_distributed.py": {
+      "killed": 10,
+      "mutation_score": 100.0,
+      "survived": 0,
+      "tests": "tests/test_reset_wave_distributed_resilience.py",
+      "valid_mutants": 10
+    },
+    "geosync/neuroeconomics/reset_wave_engine.py": {
+      "killed": 9,
+      "mutation_score": 17.31,
+      "survived": 43,
+      "tests": "tests/test_reset_wave_physics_laws.py",
+      "valid_mutants": 52
+    },
+    "geosync_hpc/backtest.py": {
+      "killed": 0,
+      "mutation_score": 0.0,
+      "survived": 13,
+      "tests": "tests/geosync_hpc/test_backtest_runtime_reset.py",
+      "valid_mutants": 13
+    },
+    "geosync_hpc/indexed_rng.py": {
+      "killed": 9,
+      "mutation_score": 100.0,
+      "survived": 0,
+      "tests": "tests/geosync_hpc/test_indexed_rng.py",
+      "valid_mutants": 9
+    },
+    "geosync_hpc/ledger.py": {
+      "killed": 11,
+      "mutation_score": 100.0,
+      "survived": 0,
+      "tests": "tests/geosync_hpc/test_ledger.py",
+      "valid_mutants": 11
+    },
+    "geosync_hpc/runtime_state.py": {
+      "killed": 5,
+      "mutation_score": 100.0,
+      "survived": 0,
+      "tests": "tests/geosync_hpc/test_runtime_state.py",
+      "valid_mutants": 5
+    },
+    "geosync_hpc/session_fsm.py": {
+      "killed": 1,
+      "mutation_score": 100.0,
+      "survived": 0,
+      "tests": "tests/geosync_hpc/test_session_fsm.py",
+      "valid_mutants": 1
+    },
+    "modules/dynamic_position_sizer.py": {
+      "killed": 6,
+      "mutation_score": 25.0,
+      "survived": 18,
+      "tests": "tests/unit/modules/test_risk_sizing_contracts.py tests/unit/modules/test_dynamic_position_sizer.py",
+      "valid_mutants": 24
+    },
+    "modules/gaba_inhibition_gate.py": {
+      "killed": 33,
+      "mutation_score": 64.71,
+      "survived": 18,
+      "tests": "tests/unit/modules/test_risk_sizing_contracts.py",
+      "valid_mutants": 51
+    },
+    "modules/order_validator.py": {
+      "killed": 8,
+      "mutation_score": 20.51,
+      "survived": 31,
+      "tests": "tests/unit/modules/test_risk_sizing_contracts.py",
+      "valid_mutants": 39
+    },
+    "research/robustness/cpcv.py": {
+      "killed": 17,
+      "mutation_score": 45.95,
+      "survived": 20,
+      "tests": "tests/research/robustness/test_hac_psr.py",
+      "valid_mutants": 37
+    },
+    "scripts/ci/lint_forbidden_terms.py": {
+      "killed": 0,
+      "mutation_score": 0.0,
+      "survived": 4,
+      "tests": "tests/governance/test_ierd_phase0_yana_response_coverage.py",
+      "valid_mutants": 4
+    }
+  },
+  "scope": "risk/sizing core + geosync_hpc + neuro/physics/research/dro/reset-wave claim-falsifier modules: compare/boolop (logic) mutations only",
+  "survived": 184,
+  "timeout": 0,
+  "timeout_counted_as_killed": false,
+  "tool": "mutation_probe (tools/mutation_probe.py --only-logic)",
+  "valid_mutants": 394
+}

@@ -1,0 +1,46 @@
+{
+  "D_marginal": 70,
+  "FLAGSHIP": {
+    "D_total": 70,
+    "rq_role": "clean-archive wheel contract (the comparator under test)",
+    "tier": "FLAGSHIP"
+  },
+  "baselines": {
+    "ABLATED": {
+      "D": 0,
+      "rq_role": "flagship with the clean-archive step removed (isolates the load-bearing step)",
+      "tier": "ABLATED"
+    },
+    "EXISTING_SUITE": {
+      "D": 0,
+      "rq_role": "pre-existing in-place gates (import-linter/unit-tests/release probes) = primary null",
+      "tier": "EXISTING_SUITE"
+    },
+    "NAIVE": {
+      "D": 0,
+      "rq_role": "run nothing / trust green CI (definitional D=0)",
+      "tier": "NAIVE"
+    },
+    "SHUFFLED": {
+      "D": 0,
+      "rq_role": "permutation/label-shuffle null control",
+      "tier": "SHUFFLED"
+    }
+  },
+  "decision_variable": "D_marginal",
+  "honesty_note": "D_marginal=70 strongly favours H1 (every baseline catches 0; the clean-archive check catches 70 first-party imports that resolve in place and that import-linter left green). Verdict is INSUFFICIENT_EVIDENCE, NOT SUPPORTED, because the prereg same-snapshot reproducibility leg is unverified. No SUPPORTED result is fabricated.",
+  "marginal_detection_confirmed": true,
+  "prereg_id": "FLAGSHIP-PREREG-001",
+  "prereg_margin": 1,
+  "reproducibility_note": "Instrument determinism demonstrated: two independent reruns at current HEAD gave a bit-identical defect set (74==74). But the committed snapshot-S artifact reports 70 defects with a different wheel_sha (stale vs HEAD), and no same-S rerun was executed. Prereg criterion (2) reproducibility-at-S is therefore NOT verified -> verdict withheld from SUPPORTED (fail-closed).",
+  "reproducibility_verified_at_S": false,
+  "rq_id": "FLAGSHIP-RQ-001",
+  "schema": "flagship_baselines.comparison_report/v1",
+  "snapshot": {
+    "candidate_defect_count": 70,
+    "evidence_surface": "artifacts/wheel_contract.json",
+    "wheel_sha256": "9943ce620b11e83f19d855d97e9a387bbed05dc68d9b67e0e4138fd600536616"
+  },
+  "verdict": "INSUFFICIENT_EVIDENCE",
+  "verdict_rule": "SUPPORTED iff D_marginal>=prereg_margin AND reproducibility_verified_at_S AND marginal_detection_confirmed; REJECTED iff D_marginal==0; else INSUFFICIENT_EVIDENCE (baselines.decide is the single source of truth)."
+}

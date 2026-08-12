@@ -1,6 +1,6 @@
-# Contributing to TradePulse
+# Contributing to GeoSync
 
-**Дякуємо за інтерес до TradePulse! / Thank you for your interest in TradePulse!**
+**Дякуємо за інтерес до GeoSync! / Thank you for your interest in GeoSync!**
 
 This document outlines the rules and processes that enable fast and safe development.
 
@@ -8,20 +8,20 @@ This document outlines the rules and processes that enable fast and safe develop
 
 ## 🎯 Your First Contribution
 
-**New to TradePulse? Welcome!** Here's how to make your first contribution:
+**New to GeoSync? Welcome!** Here's how to make your first contribution:
 
 ### Quick Start for New Contributors
 
 1. **Find an Issue**
-   - Browse [**good first issues**](https://github.com/neuron7x/TradePulse/issues?q=is%3Aissue+is%3Aopen+label%3A%22good+first+issue%22) — curated for newcomers
+   - Browse [**good first issues**](https://github.com/neuron7xLab/GeoSync/issues?q=is%3Aissue+is%3Aopen+label%3A%22good+first+issue%22) — curated for newcomers
    - Look for issues labeled `help wanted` or `documentation`
-   - Don't see something you like? Check [GitHub Discussions](https://github.com/neuron7x/TradePulse/discussions) for ideas
+   - Don't see something you like? Check [GitHub Discussions](https://github.com/neuron7xLab/GeoSync/discussions) for ideas
 
 2. **Set Up Your Environment**
    ```bash
    # Fork the repo on GitHub, then clone your fork
-   git clone https://github.com/YOUR-USERNAME/TradePulse.git
-   cd TradePulse
+   git clone https://github.com/YOUR-USERNAME/GeoSync.git
+   cd GeoSync
 
    # Create virtual environment
    python -m venv .venv
@@ -64,8 +64,8 @@ This document outlines the rules and processes that enable fast and safe develop
 
 ### Need Help?
 
-- 💬 Ask in [GitHub Discussions](https://github.com/neuron7x/TradePulse/discussions) — no question is too small!
-- 🎮 Join our [Discord](https://discord.gg/tradepulse) for real-time chat
+- 💬 Ask in [GitHub Discussions](https://github.com/neuron7xLab/GeoSync/discussions) — no question is too small!
+- 🎮 Join our [Discord](https://discord.gg/geosync) for real-time chat
 - 📧 Email maintainers for sensitive issues
 
 ---
@@ -88,7 +88,7 @@ This document outlines the rules and processes that enable fast and safe develop
 
 ## Architectural Framework
 
-TradePulse follows these core principles:
+GeoSync follows these core principles:
 
 ### Contracts-First Design
 - **Protocol Buffers**: `.proto` files in `libs/proto/` are the single source of truth for data formats and RPC
@@ -130,8 +130,8 @@ TradePulse follows these core principles:
 
 ```bash
 # Clone repository
-git clone https://github.com/neuron7x/TradePulse.git
-cd TradePulse
+git clone https://github.com/neuron7xLab/GeoSync.git
+cd GeoSync
 
 # Create Python virtual environment
 python -m venv .venv
@@ -217,7 +217,7 @@ make e2e            # End-to-end smoke tests
 make perf           # Performance benchmarks
 ```
 
-See [TESTING.md](TESTING.md) for detailed testing guidelines.
+See [TESTING.md](docs/operations/TESTING.md) for detailed testing guidelines.
 
 ### 5. Check Code Quality
 
@@ -454,7 +454,7 @@ What actually happened.
 **Environment**
 - OS: [e.g., Ubuntu 22.04]
 - Python version: [e.g., 3.11.5]
-- TradePulse version: [e.g., main branch, commit abc123]
+- GeoSync version: [e.g., main branch, commit abc123]
 
 **Additional context**
 Any other relevant information.
@@ -640,13 +640,13 @@ cd apps/web && npm run dev
 - Test with diverse inputs
 - Catch edge cases automatically
 
-See [TESTING.md](TESTING.md) for complete testing guide.
+See [TESTING.md](docs/operations/TESTING.md) for complete testing guide.
 
 ---
 
 ## Dependency Management
 
-TradePulse uses a **lock file approach** for reproducible builds with strict security controls.
+GeoSync uses a **lock file approach** for reproducible builds with strict security controls.
 
 ### Dependency Files Structure
 
@@ -783,7 +783,7 @@ def function_name(arg1: type, arg2: type) -> return_type:
 
 ## License and Patents
 
-This project is licensed under the **TradePulse Proprietary License Agreement (TPLA)**
+This project is licensed under the **MIT License**
 (see [LICENSE](LICENSE)).
 
 By contributing, you agree to license your contributions under the same terms.
@@ -798,11 +798,11 @@ By contributing, you agree to license your contributions under the same terms.
 - Ask in GitHub Discussions
 
 **For Code of Conduct violations:**
-- Email: conduct@tradepulse.local
+- Email: conduct@geosync.local
 - See [CODE_OF_CONDUCT.md](CODE_OF_CONDUCT.md)
 
 **For security issues:**
-- Email: security@tradepulse.local
+- Email: security@geosync.local
 - See [SECURITY.md](SECURITY.md)
 
 ---
@@ -814,4 +814,4 @@ Contributors are recognized in:
 - CHANGELOG.md
 - GitHub contributors page
 
-Thank you for contributing to TradePulse! 🚀
+Thank you for contributing to GeoSync! 🚀

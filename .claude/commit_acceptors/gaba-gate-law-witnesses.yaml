@@ -1,0 +1,81 @@
+# Diff-bound commit acceptor for the GABA position-gate law witnesses.
+#
+# Adds ONE test module binding two previously-unwitnessed catalog laws to
+# executable @law witnesses. Promotes no claim, changes no runtime behavior,
+# touches no schema/guard, uses no real data.
+#
+#   gaba.gate_bounds         — gate multiplier ∈ [0, 1] (INV-GABA1).
+#   gaba.monotone_inhibition — gate non-increasing in inhibition; registry
+#                              anchor INV-GABA3 (inhibition only reduces).
+#
+# Locally verified on origin/main base:
+#   * pytest tests/physics_contracts/test_gaba_gate_witnesses.py: 2 passed
+#   * .claude/physics/validate_tests.py <file>: 0 issues (L1..L5), EXIT 0
+#   * ruff / mypy --strict clean ; zero new `# type: ignore`
+id: gaba-gate-law-witnesses
+status: ACTIVE
+claim_type: governance
+promise: >-
+  After this PR lands, tests/physics_contracts/test_gaba_gate_witnesses.py binds
+  the catalog laws gaba.gate_bounds and gaba.monotone_inhibition to @law-decorated
+  witnesses that pass .claude/physics/validate_tests with zero issues. The bounds
+  witness asserts the GABAPositionGate multiplier stays in [0, 1] over a swept
+  inhibition grid (INV-GABA1); the monotonicity witness asserts the gate is
+  non-increasing in inhibition and genuinely responds (non-vacuous), anchored on
+  INV-GABA3 (inhibition only reduces). No market claim; no runtime, schema, or
+  guard change.
+diff_scope:
+  changed_files:
+    - path: ".claude/commit_acceptors/gaba-gate-law-witnesses.yaml"
+    - path: "tests/physics_contracts/test_gaba_gate_witnesses.py"
+  forbidden_paths:
+    - "trading/"
+    - "execution/"
+    - "forecast/"
+    - "policy/"
+    - "application/"
+    - "core/"
+    - "src/"
+    - "geosync_hpc/"
+    - "physics_contracts/catalog.yaml"
+    - ".claude/physics/INVARIANTS.yaml"
+required_python_symbols: []
+expected_signal: >-
+  `python -m pytest tests/physics_contracts/test_gaba_gate_witnesses.py`
+  reports 2 passed; `python .claude/physics/validate_tests.py
+  tests/physics_contracts/test_gaba_gate_witnesses.py` exits 0 with no L1..L5
+  issues; ruff and mypy --strict on the file are clean.
+measurement_command: >-
+  bash -c 'mkdir -p tmp && python -m pytest
+  tests/physics_contracts/test_gaba_gate_witnesses.py
+  > tmp/gaba_gate_law_witnesses.log 2>&1
+  && grep -q "2 passed" tmp/gaba_gate_law_witnesses.log'
+signal_artifact: "tmp/gaba_gate_law_witnesses.log"
+falsifier:
+  command: |-
+    bash -c 'python -c "
+    import numpy as np
+    from core.neuro.signal_bus import NeuroSignalBus
+    from core.neuro.gaba_position_gate import GABAPositionGate
+    def gate(i):
+        b = NeuroSignalBus(); b.publish_gaba(float(i)); return GABAPositionGate(b).gate_position_size(1.0)
+    gates = np.array([gate(i) for i in np.linspace(0, 1, 200)])
+    out_of_bounds = bool(gates.min() < -1e-12 or gates.max() > 1 + 1e-12)
+    increases = bool(np.max(np.diff(gates)) > 1e-12)
+    import sys; sys.exit(0 if out_of_bounds or increases else 1)"'
+  description: >-
+    Inverse probe of the GABA gate contract. It exits 0 (fires) iff the gate ever
+    leaves [0, 1] or increases with inhibition — i.e. the bound or the
+    monotonicity is broken in real code. While both hold the probe exits 1. If it
+    ever exits 0, the gate witness is no longer truthful and the change must be
+    reverted, not patched green.
+rollback_command: >-
+  git rm -f
+  tests/physics_contracts/test_gaba_gate_witnesses.py
+  .claude/commit_acceptors/gaba-gate-law-witnesses.yaml
+rollback_verification_command: >-
+  bash -c 'test ! -f tests/physics_contracts/test_gaba_gate_witnesses.py'
+memory_update_type: none
+ledger_path: ".claude/commit_acceptors/gaba-gate-law-witnesses.yaml"
+report_path: "tmp/gaba_gate_law_witnesses.log"
+evidence: []

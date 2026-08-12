@@ -1,3 +1,5 @@
+# Copyright (c) 2023-2026 Yaroslav Vasylenko (neuron7xLab)
+# SPDX-License-Identifier: MIT
 from __future__ import annotations
 
 from datetime import datetime, timedelta, timezone
@@ -42,9 +44,7 @@ def test_resource_usage_sample_validation() -> None:
     with pytest.raises(ValueError):
         ResourceUsageSample(resource_id="x", timestamp=timestamp, cost=-1.0)
     with pytest.raises(ValueError):
-        ResourceUsageSample(
-            resource_id="x", timestamp=timestamp, cost=1.0, usage={"cpu": -0.5}
-        )
+        ResourceUsageSample(resource_id="x", timestamp=timestamp, cost=1.0, usage={"cpu": -0.5})
 
 
 def test_budget_alerts_trigger_and_reset() -> None:
@@ -332,9 +332,7 @@ def test_generate_cost_optimisation_plan_systemic_actions() -> None:
     assert plan.cloud_costs["gcp"] > 0.0
     assert any(key.startswith("aws:") for key in plan.instance_costs)
 
-    profile_lookup = {
-        profile.resource_id: profile for profile in plan.resource_profiles
-    }
+    profile_lookup = {profile.resource_id: profile for profile in plan.resource_profiles}
     assert profile_lookup["trainer-a"].cloud == "aws"
     assert profile_lookup["trainer-a"].purchase_option == "on-demand"
 
@@ -356,18 +354,12 @@ def test_generate_cost_optimisation_plan_systemic_actions() -> None:
     idle_recs = [rec for rec in plan.recommendations if rec.category == "idle_shutdown"]
     assert idle_recs, "Expected idle shutdown recommendation"
 
-    governance_recs = [
-        rec for rec in plan.recommendations if rec.category == "governance"
-    ]
+    governance_recs = [rec for rec in plan.recommendations if rec.category == "governance"]
     assert (
-        governance_recs[0]
-        .metadata["next_review"]
-        .startswith(str(plan.review_schedule[0].date()))
+        governance_recs[0].metadata["next_review"].startswith(str(plan.review_schedule[0].date()))
     )
 
-    overspend = [
-        rec for rec in plan.recommendations if rec.category == "overspend_alert"
-    ]
+    overspend = [rec for rec in plan.recommendations if rec.category == "overspend_alert"]
     assert overspend[0].resource_id == "research"
 
     assert len(plan.review_schedule) == 4

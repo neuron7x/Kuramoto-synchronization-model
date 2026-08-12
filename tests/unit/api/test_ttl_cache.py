@@ -1,10 +1,12 @@
+# Copyright (c) 2023-2026 Yaroslav Vasylenko (neuron7xLab)
+# SPDX-License-Identifier: MIT
 import os
 from datetime import datetime, timedelta, timezone
 
 import pytest
 
-os.environ.setdefault("TRADEPULSE_ADMIN_TOKEN", "test-token")
-os.environ.setdefault("TRADEPULSE_AUDIT_SECRET", "test-secret-value")
+os.environ.setdefault("GEOSYNC_ADMIN_TOKEN", "test-token")
+os.environ.setdefault("GEOSYNC_AUDIT_SECRET", "test-secret-value")
 
 from application.api import service
 from application.api.service import FeatureResponse, TTLCache

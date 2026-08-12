@@ -1,0 +1,60 @@
+# Diff-bound commit acceptor: add --only-logic to tools/mutation_probe.py so
+# numeric-heavy claim-critical physics modules can be probed for behaviour-logic
+# gaps (compare/boolop) without spending minutes on tuning-constant mutations.
+
+id: mutation-probe-only-logic
+status: ACTIVE
+claim_type: correctness
+promise: >-
+  After this PR lands, tools/mutation_probe.py accepts --only-logic, which
+  probes only comparison and boolean-operator mutation sites (the behaviour-logic
+  gaps) and skips constant/arithmetic mutations before running the test selector.
+  On a numeric-heavy physics module where tuning constants dominate and are mostly
+  equivalent, this cuts probe time several-fold while preserving the actionable
+  logic survivors. The probe remains byte-non-destructive (signal-safe restore).
+  No change to default behaviour when --only-logic is absent.
+
+diff_scope:
+  changed_files:
+    - path: ".claude/commit_acceptors/mutation-probe-only-logic.yaml"
+    - path: "tools/mutation_probe.py"
+  forbidden_paths:
+    - "trading/"
+    - "execution/"
+    - "forecast/"
+    - "policy/"
+    - "runtime/"
+    - "application/"
+    - "core/"
+
+required_python_symbols:
+  - "tools/mutation_probe.py::probe"
+  - "tools/mutation_probe.py::main"
+
+expected_signal: >-
+  python tools/mutation_probe.py core/cross_asset_kuramoto/invariants.py --tests
+  tests/core/cross_asset_kuramoto/test_invariants.py --only-logic reports only
+  compare/boolop survivors and leaves the module byte-unchanged.
+
+measurement_command: >-
+  bash -c 'mkdir -p tmp && python -m py_compile tools/mutation_probe.py && python tools/mutation_probe.py --help | tee tmp/only_logic.log | grep -q only-logic'
+
+signal_artifact: "tmp/only_logic.log"
+
+falsifier:
+  command: >-
+    bash -c 'before=$(sha256sum core/cross_asset_kuramoto/invariants.py); out=$(python tools/mutation_probe.py core/cross_asset_kuramoto/invariants.py --tests tests/core/cross_asset_kuramoto/test_invariants.py --only-logic 2>/dev/null); after=$(sha256sum core/cross_asset_kuramoto/invariants.py); echo "$out" | grep -vqE "\[(intconst|binop|boolconst)\]" && test "$before" = "$after"'
+  description: >-
+    Runs --only-logic and asserts (a) NO intconst/binop/boolconst survivor is
+    reported (only logic kinds are probed) and (b) the module is byte-unchanged.
+    Succeeds only when the filter and the non-destructive guarantee both hold.
+
+rollback_command: >-
+  bash -c 'git checkout origin/main -- tools/mutation_probe.py && git rm -f .claude/commit_acceptors/mutation-probe-only-logic.yaml'
+
+rollback_verification_command: >-
+  bash -c '! grep -q only-logic tools/mutation_probe.py'
+
+memory_update_type: append
+ledger_path: ".claude/commit_acceptors/mutation-probe-only-logic.yaml"
+report_path: "tmp/only_logic.log"

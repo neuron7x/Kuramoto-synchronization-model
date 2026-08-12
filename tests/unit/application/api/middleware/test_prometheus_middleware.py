@@ -1,5 +1,8 @@
+# Copyright (c) 2023-2026 Yaroslav Vasylenko (neuron7xLab)
+# SPDX-License-Identifier: MIT
 from __future__ import annotations
 
+import logging
 import types
 
 import pytest
@@ -59,3 +62,46 @@ async def test_latency_observation_non_negative(monkeypatch):
     assert method == "GET"
     assert status == 500
     assert duration >= 0.0
+
+
+@pytest.mark.asyncio
+async def test_server_error_logs_a_traceback_and_client_error_does_not(caplog):
+    """The `status_code >= 500` severity split feeds ONLY the log, so no numeric assertion
+    could ever see it: a mutation probe killed 1 of 2 mutants here, and the survivor was
+    `GtE -> Lt` — an inverted severity that would bury 5xx tracebacks at INFO while shouting
+    about every 404. Observability that cannot fail a test is not observability.
+    """
+    collector = DummyCollector()
+    middleware = PrometheusMetricsMiddleware(lambda req: None, collector=collector)
+
+    class _Failure(RuntimeError):
+        status_code = 503
+
+    async def raise_server_error(request):
+        raise _Failure("upstream down")
+
+    caplog.set_level(logging.INFO, logger="geosync.api.metrics")
+    with pytest.raises(_Failure):
+        await middleware.dispatch(_make_request("/upstream"), raise_server_error)
+
+    server_records = [r for r in caplog.records if r.levelno == logging.ERROR]
+    assert server_records, "a 5xx failure produced no ERROR-level record"
+    assert server_records[-1].exc_info is not None, "the 5xx path logged without a traceback"
+
+    caplog.clear()
+
+    class _ClientFailure(RuntimeError):
+        status_code = 404
+
+    async def raise_client_error(request):
+        raise _ClientFailure("no such item")
+
+    with pytest.raises(_ClientFailure):
+        await middleware.dispatch(_make_request("/missing"), raise_client_error)
+
+    assert not [r for r in caplog.records if r.levelno >= logging.ERROR], (
+        "a 4xx failure was logged at ERROR — the severity split is inverted"
+    )
+    assert [r for r in caplog.records if r.levelno == logging.INFO], (
+        "a 4xx failure produced no INFO record at all"
+    )

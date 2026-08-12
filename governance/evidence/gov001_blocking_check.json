@@ -1,0 +1,41 @@
+{
+  "artifact": "gov001_blocking_check",
+  "readiness_entry": "GOV-001",
+  "schema": "readiness.evidence.v1",
+  "snapshot_date": "2026-06-10",
+  "branch": "main",
+  "action": "Escalated a report-only governance surface to a blocking required status check.",
+  "escalated_contexts": [
+    "commit-acceptor-validation (3.11)",
+    "commit-acceptor-validation (3.12)"
+  ],
+  "required_checks_before": [
+    "constraints-lock-sync",
+    "enforce-connectome",
+    "frontend-gate",
+    "go-workspace-integrity",
+    "python-fast-tests",
+    "python-heavy-tests",
+    "python-quality",
+    "readiness-register",
+    "repo-policy",
+    "secrets-supply-chain"
+  ],
+  "required_checks_after": [
+    "commit-acceptor-validation (3.11)",
+    "commit-acceptor-validation (3.12)",
+    "constraints-lock-sync",
+    "enforce-connectome",
+    "frontend-gate",
+    "go-workspace-integrity",
+    "python-fast-tests",
+    "python-heavy-tests",
+    "python-quality",
+    "readiness-register",
+    "repo-policy",
+    "secrets-supply-chain"
+  ],
+  "rationale": "commit-acceptor-validation enforces that every code change is bound to a diff-scoped acceptor with a falsifier and rollback. It ran on every PR but did not block merge (report-only). Making it required closes the GOV-001 gap: report-only review surfaces now have an explicit blocking rule. Exceptions are governed by docs/governance/waiver_protocol.md.",
+  "reversible": true,
+  "rollback": "gh api -X PATCH repos/neuron7xLab/GeoSync/branches/main/protection/required_status_checks --input <required_checks_before as {strict:false, checks:[{context}...]}>"
+}

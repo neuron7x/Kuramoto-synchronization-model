@@ -217,7 +217,7 @@ Edit `scripts/calibrate_controllers.py` to add your own profiles:
 For systematic optimization, use the adaptive calibrator:
 
 ```python
-from tradepulse.core.neuro.adaptive_calibrator import AdaptiveCalibrator
+from geosync.core.neuro.adaptive_calibrator import AdaptiveCalibrator
 
 calibrator = AdaptiveCalibrator(initial_params)
 # Run optimization loop
@@ -234,7 +234,7 @@ calibrator = AdaptiveCalibrator(initial_params)
 
 For questions or issues:
 1. Check the [Full Calibration Guide](CALIBRATION_GUIDE.md)
-2. Review [TROUBLESHOOTING.md](../TROUBLESHOOTING.md)
+2. Review [TROUBLESHOOTING.md](troubleshooting.md)
 3. Open an issue on GitHub with validation output and configuration
 
 ---

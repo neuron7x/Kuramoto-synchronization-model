@@ -1,3 +1,5 @@
+# Copyright (c) 2023-2026 Yaroslav Vasylenko (neuron7xLab)
+# SPDX-License-Identifier: MIT
 """Debug helpers for capturing structured runtime state snapshots."""
 
 from __future__ import annotations
@@ -91,13 +93,8 @@ class VariableInspector:
                 for item_key, item_value in value.items()
             }
 
-        if isinstance(value, Sequence) and not isinstance(
-            value, (str, bytes, bytearray)
-        ):
-            return [
-                self._sanitise(path + (str(index),), item)
-                for index, item in enumerate(value)
-            ]
+        if isinstance(value, Sequence) and not isinstance(value, (str, bytes, bytearray)):
+            return [self._sanitise(path + (str(index),), item) for index, item in enumerate(value)]
 
         if is_dataclass(value):
             return self._sanitise(path, asdict(value))

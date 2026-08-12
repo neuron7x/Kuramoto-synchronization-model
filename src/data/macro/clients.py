@@ -1,3 +1,5 @@
+# Copyright (c) 2023-2026 Yaroslav Vasylenko (neuron7xLab)
+# SPDX-License-Identifier: MIT
 """HTTP clients and adapters for macroeconomic data providers."""
 
 from __future__ import annotations

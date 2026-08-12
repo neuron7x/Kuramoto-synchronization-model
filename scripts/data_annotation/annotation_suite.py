@@ -1,3 +1,5 @@
+# Copyright (c) 2023-2026 Yaroslav Vasylenko (neuron7xLab)
+# SPDX-License-Identifier: MIT
 """Comprehensive data annotation workflow utilities.
 
 This module provides the building blocks necessary to run high quality
@@ -67,9 +69,7 @@ class DatasetVersion:
 class AnnotationProject:
     """Manages annotation records, instructions, and metadata."""
 
-    def __init__(
-        self, project_id: str, name: str, instruction: InstructionTemplate
-    ) -> None:
+    def __init__(self, project_id: str, name: str, instruction: InstructionTemplate) -> None:
         self.project_id = project_id
         self.name = name
         self.instruction = instruction
@@ -79,9 +79,7 @@ class AnnotationProject:
 
     def assign_item(self, item_id: str, annotator_id: str) -> None:
         self.item_assignments[item_id].append(annotator_id)
-        self.audit_log.log(
-            "assignment", {"item_id": item_id, "annotator_id": annotator_id}
-        )
+        self.audit_log.log("assignment", {"item_id": item_id, "annotator_id": annotator_id})
 
     def add_record(self, record: AnnotationRecord) -> None:
         self.records.append(record)
@@ -112,9 +110,7 @@ class AnnotationInterface:
     def __init__(self, project: AnnotationProject) -> None:
         self.project = project
 
-    def next_assignment(
-        self, annotator_id: str, backlog: Iterable[str]
-    ) -> Optional[str]:
+    def next_assignment(self, annotator_id: str, backlog: Iterable[str]) -> Optional[str]:
         assigned = self.project.item_assignments
         for item_id in backlog:
             if annotator_id not in assigned[item_id]:
@@ -172,11 +168,7 @@ class QualityChecker:
         accuracy = (tp + tn) / total if total else 0.0
         precision = tp / (tp + fp) if (tp + fp) else 0.0
         recall = tp / (tp + fn) if (tp + fn) else 0.0
-        f1 = (
-            (2 * precision * recall) / (precision + recall)
-            if (precision + recall)
-            else 0.0
-        )
+        f1 = (2 * precision * recall) / (precision + recall) if (precision + recall) else 0.0
         return {
             "accuracy": accuracy,
             "precision": precision,
@@ -215,9 +207,7 @@ class InterraterAgreementCalculator:
         labels = set(label_counts_left) | set(label_counts_right)
         pe = 0.0
         for label in labels:
-            pe += (label_counts_left[label] / len(items)) * (
-                label_counts_right[label] / len(items)
-            )
+            pe += (label_counts_left[label] / len(items)) * (label_counts_right[label] / len(items))
         if math.isclose(1 - pe, 0.0):
             return float("nan")
         return (observed - pe) / (1 - pe)
@@ -268,9 +258,7 @@ class ActiveLearningSampler:
         self, scored_items: Sequence[Tuple[str, Sequence[float]]], batch_size: int
     ) -> List[str]:
         if self.strategy == "uncertainty":
-            scored = sorted(
-                scored_items, key=lambda item: self._entropy(item[1]), reverse=True
-            )
+            scored = sorted(scored_items, key=lambda item: self._entropy(item[1]), reverse=True)
         elif self.strategy == "margin":
             scored = sorted(scored_items, key=lambda item: self._margin(item[1]))
         else:
@@ -314,9 +302,7 @@ class InstructionTemplateManager:
         return template
 
     def latest(self, name: str) -> Optional[InstructionTemplate]:
-        candidates = [
-            template for template in self.templates.values() if template.name == name
-        ]
+        candidates = [template for template in self.templates.values() if template.name == name]
         if not candidates:
             return None
         return max(candidates, key=lambda template: template.version)
@@ -375,9 +361,7 @@ class DatasetManager:
         return dataset_version
 
     def list_versions(self) -> List[DatasetVersion]:
-        return sorted(
-            self.versions.values(), key=lambda version: version.created_at, reverse=True
-        )
+        return sorted(self.versions.values(), key=lambda version: version.created_at, reverse=True)
 
 
 class AuditLog:
@@ -480,12 +464,8 @@ class PrivacyController:
 
     def enforce(self, record: MutableMapping[str, Any]) -> MutableMapping[str, Any]:
         processed = self.anonymizer.anonymize(record)
-        if self.policies.get("drop_free_text") and isinstance(
-            processed.get("text"), str
-        ):
-            processed["text"] = processed["text"][
-                : self.policies.get("max_text_length", 200)
-            ]
+        if self.policies.get("drop_free_text") and isinstance(processed.get("text"), str):
+            processed["text"] = processed["text"][: self.policies.get("max_text_length", 200)]
         return processed
 
 

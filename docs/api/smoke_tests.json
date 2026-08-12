@@ -4,7 +4,7 @@
     "description": "Fetch BTC-USD signal and validate structure.",
     "expected_status": 200,
     "headers": {
-      "X-TradePulse-Signature": "test-signature"
+      "X-GeoSync-Signature": "test-signature"
     },
     "method": "GET",
     "name": "signal-btc-ok",
@@ -27,7 +27,7 @@
     "headers": {
       "Content-Type": "application/json",
       "X-Idempotency-Key": "demo-key-1",
-      "X-TradePulse-Signature": "test-signature"
+      "X-GeoSync-Signature": "test-signature"
     },
     "method": "POST",
     "name": "prediction-accepted",

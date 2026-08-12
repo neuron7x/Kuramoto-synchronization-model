@@ -1,0 +1,89 @@
+# Diff-bound acceptor for Law T3: Coupling calibration to a target λ_1.
+#
+# Constitutional law T3 of seven (CLAUDE.md GeoSync Physics Law Act).
+# Composes Law T1 RHS (kuramoto_ricci_rhs) with Law T2 estimator
+# (lyapunov_spectrum) under a SciPy bounded Brent optimiser.
+
+id: law-T3-lyapunov-calibration
+status: ACTIVE
+claim_type: correctness
+promise: >-
+  core.kuramoto.lyapunov_calibration ships the calibration primitive
+  calibrate_coupling_to_lambda(target, *, omega, A, theta_0, K_min,
+  K_max, dt, n_steps, qr_every, tolerance, max_iter) which finds the
+  scalar K* > 0 minimising |λ_1(K · A; ω) − target|² on a bounded
+  interval. Returns a CalibrationReport with status (CONVERGED or
+  INFEASIBLE), K_optimal, lambda_achieved, residual, n_evaluations.
+  Adds three constitutional invariants:
+    INV-CAL1 | algebraic    | feasible target ⇒ residual ≤ tolerance
+                              (default 5e-2). On the round-trip
+                              (synthesise λ from K_truth, calibrate
+                              back) the calibrator achieves residual
+                              5e-17 — limited only by SciPy xatol and
+                              T2 estimator finite-T noise.
+    INV-CAL2 | conditional  | infeasible target ⇒ status INFEASIBLE.
+                              Tested: target λ = 5.0 (physically out of
+                              reach for N=6 supercritical Kuramoto)
+                              correctly reports INFEASIBLE.
+    INV-CAL3 | universal    | K* > 0 always; positivity is a hard
+                              search-bound (K_min > 0 enforced),
+                              never a soft penalty. Every contract
+                              violation (NaN/inf target, K_min ≤ 0,
+                              K_max ≤ K_min, tolerance ≤ 0, max_iter
+                              ≤ 0, signed adjacency, shape mismatch)
+                              raises ValueError; fail-closed.
+  Determinism: bit-identical K* under identical inputs (INV-HPC1
+  compatibility) on the same JAX/SciPy versions.
+diff_scope:
+  changed_files:
+    - path: ".claude/commit_acceptors/law-T3-lyapunov-calibration.yaml"
+    - path: "core/kuramoto/lyapunov_calibration.py"
+    - path: "tests/unit/physics/test_T3_lyapunov_calibration.py"
+    - path: "docs/laws/T3_lyapunov_calibration.md"
+    - path: "newsfragments/law-T3-lyapunov-calibration.feature.md"
+    - path: "CLAUDE.md"
+  forbidden_paths:
+    - "trading/"
+    - "execution/"
+    - "forecast/"
+    - "policy/"
+required_python_symbols:
+  - "CalibrationReport"
+  - "CalibrationStatus"
+  - "calibrate_coupling_to_lambda"
+expected_signal: >-
+  All 15 unit tests pass under pytest; black, ruff, mypy --strict
+  clean; complete-graph round-trip from K_truth = 1.5·K_c achieves
+  residual ≤ 5e-2 (typically ≤ 1e-12) in ~12 SciPy evaluations; an
+  intentionally infeasible target (λ_1 = 5.0) reports INFEASIBLE.
+measurement_command: >-
+  python -m pytest tests/unit/physics/test_T3_lyapunov_calibration.py -v
+signal_artifact: "tmp/law_T3_lyapunov_calibration_pytest.log"
+falsifier:
+  command: >-
+    python -m pytest tests/unit/physics/test_T3_lyapunov_calibration.py
+    -v -k "INV_CAL1 or INV_CAL2 or INV_CAL3 or HPC1 or negative_control"
+  description: >-
+    Probe filters to the load-bearing tests:
+    INV-CAL1 (residual within tolerance for feasible target — the
+    operational claim);
+    INV-CAL2 (INFEASIBLE returned, not a misleading CONVERGED, on
+    impossible λ_1 = 5.0);
+    INV-CAL3 (positivity hard bound; eight parametrised contract
+    violations all raise ValueError);
+    INV-HPC1 (calibration bit-repeatable);
+    negative_control (different λ-targets produce different K — proves
+    the optimiser is not silently clamping to K_min).
+rollback_command: >-
+  git checkout HEAD~1 -- core/kuramoto/lyapunov_calibration.py
+  tests/unit/physics/test_T3_lyapunov_calibration.py
+  .claude/commit_acceptors/law-T3-lyapunov-calibration.yaml
+  docs/laws/T3_lyapunov_calibration.md
+  newsfragments/law-T3-lyapunov-calibration.feature.md
+  CLAUDE.md
+rollback_verification_command: >-
+  git diff --exit-code core/kuramoto/lyapunov_calibration.py
+memory_update_type: append
+ledger_path: ".claude/commit_acceptors/law-T3-lyapunov-calibration.yaml"
+report_path: "docs/laws/T3_lyapunov_calibration.md"
+evidence: []

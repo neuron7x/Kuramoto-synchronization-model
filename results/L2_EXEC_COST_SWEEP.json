@@ -1,0 +1,156 @@
+[
+  {
+    "cumulative_net_bp": -560.1488714537259,
+    "maker_fraction": 0.0,
+    "mean_net_bp": -6.5133589703921615,
+    "n_trades": 86,
+    "round_trip_cost_bp": 9.8,
+    "sharpe_annualized": -187.1123815555041,
+    "sharpe_per_trade": -0.4468757576756151,
+    "strategy": "UNCONDITIONAL",
+    "win_rate": 0.2441860465116279
+  },
+  {
+    "cumulative_net_bp": -102.62612681242993,
+    "maker_fraction": 0.0,
+    "mean_net_bp": -4.88695841963952,
+    "n_trades": 21,
+    "round_trip_cost_bp": 9.8,
+    "sharpe_annualized": -95.51042510010576,
+    "sharpe_per_trade": -0.2281051271311465,
+    "strategy": "REGIME_Q75",
+    "win_rate": 0.38095238095238093
+  },
+  {
+    "cumulative_net_bp": -302.14887145372575,
+    "maker_fraction": 0.25,
+    "mean_net_bp": -3.5133589703921597,
+    "n_trades": 86,
+    "round_trip_cost_bp": 6.800000000000001,
+    "sharpe_annualized": -100.9299452398967,
+    "sharpe_per_trade": -0.24104842969922868,
+    "strategy": "UNCONDITIONAL",
+    "win_rate": 0.3488372093023256
+  },
+  {
+    "cumulative_net_bp": -39.62612681242992,
+    "maker_fraction": 0.25,
+    "mean_net_bp": -1.8869584196395202,
+    "n_trades": 21,
+    "round_trip_cost_bp": 6.800000000000001,
+    "sharpe_annualized": -36.878603280460965,
+    "sharpe_per_trade": -0.0880762333629206,
+    "strategy": "REGIME_Q75",
+    "win_rate": 0.38095238095238093
+  },
+  {
+    "cumulative_net_bp": -44.14887145372573,
+    "maker_fraction": 0.5,
+    "mean_net_bp": -0.5133589703921597,
+    "n_trades": 86,
+    "round_trip_cost_bp": 3.8000000000000003,
+    "sharpe_annualized": -14.747508924289352,
+    "sharpe_per_trade": -0.035221101722842346,
+    "strategy": "UNCONDITIONAL",
+    "win_rate": 0.4186046511627907
+  },
+  {
+    "cumulative_net_bp": 23.37387318757011,
+    "maker_fraction": 0.5,
+    "mean_net_bp": 1.1130415803604814,
+    "n_trades": 21,
+    "round_trip_cost_bp": 3.8000000000000003,
+    "sharpe_annualized": 21.753218539183866,
+    "sharpe_per_trade": 0.05195266040530536,
+    "strategy": "REGIME_Q75",
+    "win_rate": 0.42857142857142855
+  },
+  {
+    "cumulative_net_bp": 162.25112854627423,
+    "maker_fraction": 0.7,
+    "mean_net_bp": 1.88664102960784,
+    "n_trades": 86,
+    "round_trip_cost_bp": 1.4000000000000008,
+    "sharpe_annualized": 54.19844012819651,
+    "sharpe_per_trade": 0.12944076065826668,
+    "strategy": "UNCONDITIONAL",
+    "win_rate": 0.5232558139534884
+  },
+  {
+    "cumulative_net_bp": 73.77387318757008,
+    "maker_fraction": 0.7,
+    "mean_net_bp": 3.51304158036048,
+    "n_trades": 21,
+    "round_trip_cost_bp": 1.4000000000000008,
+    "sharpe_annualized": 68.65867599489968,
+    "sharpe_per_trade": 0.163975775419886,
+    "strategy": "REGIME_Q75",
+    "win_rate": 0.5238095238095238
+  },
+  {
+    "cumulative_net_bp": 265.45112854627433,
+    "maker_fraction": 0.8,
+    "mean_net_bp": 3.0866410296078413,
+    "n_trades": 86,
+    "round_trip_cost_bp": 0.1999999999999995,
+    "sharpe_annualized": 88.67141465443949,
+    "sharpe_per_trade": 0.2117716918488213,
+    "strategy": "UNCONDITIONAL",
+    "win_rate": 0.5813953488372093
+  },
+  {
+    "cumulative_net_bp": 98.9738731875701,
+    "maker_fraction": 0.8,
+    "mean_net_bp": 4.713041580360481,
+    "n_trades": 21,
+    "round_trip_cost_bp": 0.1999999999999995,
+    "sharpe_annualized": 92.11140472275763,
+    "sharpe_per_trade": 0.21998733292717643,
+    "strategy": "REGIME_Q75",
+    "win_rate": 0.5714285714285714
+  },
+  {
+    "cumulative_net_bp": 368.6511285462743,
+    "maker_fraction": 0.9,
+    "mean_net_bp": 4.286641029607841,
+    "n_trades": 86,
+    "round_trip_cost_bp": -1.0000000000000004,
+    "sharpe_annualized": 123.14438918068241,
+    "sharpe_per_trade": 0.2941026230393758,
+    "strategy": "UNCONDITIONAL",
+    "win_rate": 0.5813953488372093
+  },
+  {
+    "cumulative_net_bp": 124.1738731875701,
+    "maker_fraction": 0.9,
+    "mean_net_bp": 5.91304158036048,
+    "n_trades": 21,
+    "round_trip_cost_bp": -1.0000000000000004,
+    "sharpe_annualized": 115.56413345061553,
+    "sharpe_per_trade": 0.27599889043446674,
+    "strategy": "REGIME_Q75",
+    "win_rate": 0.5714285714285714
+  },
+  {
+    "cumulative_net_bp": 471.85112854627425,
+    "maker_fraction": 1.0,
+    "mean_net_bp": 5.48664102960784,
+    "n_trades": 86,
+    "round_trip_cost_bp": -2.2,
+    "sharpe_annualized": 157.61736370692532,
+    "sharpe_per_trade": 0.37643355422993025,
+    "strategy": "UNCONDITIONAL",
+    "win_rate": 0.6046511627906976
+  },
+  {
+    "cumulative_net_bp": 149.3738731875701,
+    "maker_fraction": 1.0,
+    "mean_net_bp": 7.1130415803604805,
+    "n_trades": 21,
+    "round_trip_cost_bp": -2.2,
+    "sharpe_annualized": 139.01686217847342,
+    "sharpe_per_trade": 0.33201044794175705,
+    "strategy": "REGIME_Q75",
+    "win_rate": 0.5714285714285714
+  }
+]

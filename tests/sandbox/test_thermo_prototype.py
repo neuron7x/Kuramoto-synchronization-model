@@ -1,3 +1,5 @@
+# Copyright (c) 2023-2026 Yaroslav Vasylenko (neuron7xLab)
+# SPDX-License-Identifier: MIT
 from __future__ import annotations
 
 import math
@@ -10,10 +12,7 @@ def test_run_prototype_reduces_free_energy() -> None:
 
     assert isinstance(result, PrototypeResult)
     assert result.initial_free_energy > result.optimised_free_energy
-    assert (
-        result.delta_free_energy
-        == result.optimised_free_energy - result.initial_free_energy
-    )
+    assert result.delta_free_energy == result.optimised_free_energy - result.initial_free_energy
     assert math.isclose(
         result.derivative,
         result.delta_free_energy / 1e-3,

@@ -1,3 +1,5 @@
+# Copyright (c) 2023-2026 Yaroslav Vasylenko (neuron7xLab)
+# SPDX-License-Identifier: MIT
 """Tests for NaK controller CLI interfaces.
 
 Security note: subprocess usage is acceptable here as we're running
@@ -48,9 +50,7 @@ def test_cli_returns_json_and_zero() -> None:
     ]
 
     # Run with timeout to prevent hanging
-    proc = subprocess.run(
-        cmd, capture_output=True, text=True, check=False, env=env, timeout=30
-    )
+    proc = subprocess.run(cmd, capture_output=True, text=True, check=False, env=env, timeout=30)
 
     assert proc.returncode == 0, f"CLI failed with stderr: {proc.stderr}"
 
@@ -58,18 +58,12 @@ def test_cli_returns_json_and_zero() -> None:
     try:
         payload = json.loads(proc.stdout)
     except json.JSONDecodeError as error:
-        raise AssertionError(
-            f"Invalid JSON output: {error}\nOutput: {proc.stdout}"
-        ) from error
+        raise AssertionError(f"Invalid JSON output: {error}\nOutput: {proc.stdout}") from error
 
     # Validate expected structure
     assert set(payload) == {
         "baseline",
         "nak",
     }, f"Unexpected keys in output: {set(payload)}"
-    assert (
-        "avg_risk_per_trade" in payload["baseline"]
-    ), "Missing avg_risk_per_trade in baseline"
-    assert (
-        payload["baseline"]["avg_risk_per_trade"] > 0.0
-    ), "avg_risk_per_trade must be positive"
+    assert "avg_risk_per_trade" in payload["baseline"], "Missing avg_risk_per_trade in baseline"
+    assert payload["baseline"]["avg_risk_per_trade"] > 0.0, "avg_risk_per_trade must be positive"

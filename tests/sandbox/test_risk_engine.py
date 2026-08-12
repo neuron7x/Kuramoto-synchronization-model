@@ -1,3 +1,5 @@
+# Copyright (c) 2023-2026 Yaroslav Vasylenko (neuron7xLab)
+# SPDX-License-Identifier: MIT
 from datetime import datetime, timezone
 
 import pytest
@@ -20,9 +22,7 @@ from sandbox.risk.engine import (
 
 class StubKillSwitch(KillSwitchProviderProtocol):
     def __init__(self, engaged: bool = False) -> None:
-        self._state = KillSwitchState(
-            engaged=engaged, reason="maintenance" if engaged else None
-        )
+        self._state = KillSwitchState(engaged=engaged, reason="maintenance" if engaged else None)
 
     async def state(self) -> KillSwitchState:
         return self._state

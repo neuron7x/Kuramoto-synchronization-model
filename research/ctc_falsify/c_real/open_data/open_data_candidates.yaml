@@ -1,0 +1,33 @@
+binding_tooling_present: false
+binding_tooling_required:
+- pynwb
+- dandi
+- remfile
+candidates:
+- access_method: dandi-api-metadata
+  access_reproducible: true
+  admissibility_verdict: REJECT_TOO_LARGE_FOR_ENV
+  blockers:
+  - too_large_for_environment
+  - two_or_more_areas_not_confirmed
+  - trial_structure_not_confirmed
+  - independent_routing_label_not_confirmed
+  candidate_routing_label_name: null
+  checked_at_utc: '1970-01-01T00:00:00+00:00'
+  data_format: NWB
+  dataset_id: DANDI:MOCK0001
+  estimated_size_bytes: 128849018880
+  evidence_urls:
+  - https://api.dandiarchive.org/api/dandisets/MOCK0001/
+  has_independent_routing_label: null
+  has_lfp: true
+  has_spikes: true
+  has_trials: null
+  has_two_or_more_areas: null
+  license_or_access_status: public
+  sessions_count_estimate: null
+  source: DANDI Archive (offline mock)
+  source_url: https://dandiarchive.org/dandiset/MOCK0001
+  subject_count_estimate: 12
+schema_version: 1
+terminal_verdict: INADMISSIBLE_TOO_LARGE_FOR_ENVIRONMENT

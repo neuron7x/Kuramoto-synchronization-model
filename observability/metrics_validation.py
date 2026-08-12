@@ -1,3 +1,5 @@
+# Copyright (c) 2023-2026 Yaroslav Vasylenko (neuron7xLab)
+# SPDX-License-Identifier: MIT
 """Utilities for validating Prometheus metric definitions and runtime exposure."""
 
 from __future__ import annotations
@@ -13,7 +15,7 @@ from prometheus_client import CollectorRegistry, Counter, Gauge, Histogram
 
 from tools.observability.builder import MetricDefinition, validate_metrics
 
-_METRIC_PREFIXES = ("tradepulse_", "cortex_")
+_METRIC_PREFIXES = ("geosync_", "cortex_")
 _METRIC_TYPES = {"Counter", "Gauge", "Histogram", "Summary"}
 _HIGH_CARDINALITY_LABELS = {
     "id",
@@ -282,16 +284,16 @@ def _validate_naming(metric: MetricDefinition) -> list[str]:
 _DEAD_METRIC_WHITELIST = frozenset(
     {
         # Metrics updated indirectly via helper methods or background samplers.
-        "tradepulse_api_requests_in_flight",
-        "tradepulse_model_inference_latency_quantiles_seconds",
-        "tradepulse_data_ingestion_latency_quantiles_seconds",
-        "tradepulse_order_submission_latency_quantiles_seconds",
-        "tradepulse_order_ack_latency_quantiles_seconds",
-        "tradepulse_order_fill_latency_quantiles_seconds",
-        "tradepulse_signal_to_fill_latency_quantiles_seconds",
-        "tradepulse_signal_generation_latency_quantiles_seconds",
-        "tradepulse_optimization_duration_seconds",
-        "tradepulse_optimization_iterations_total",
+        "geosync_api_requests_in_flight",
+        "geosync_model_inference_latency_quantiles_seconds",
+        "geosync_data_ingestion_latency_quantiles_seconds",
+        "geosync_order_submission_latency_quantiles_seconds",
+        "geosync_order_ack_latency_quantiles_seconds",
+        "geosync_order_fill_latency_quantiles_seconds",
+        "geosync_signal_to_fill_latency_quantiles_seconds",
+        "geosync_signal_generation_latency_quantiles_seconds",
+        "geosync_optimization_duration_seconds",
+        "geosync_optimization_iterations_total",
     }
 )
 
@@ -329,7 +331,9 @@ def _binding_index(code_metrics: Mapping[str, CodeMetric]) -> dict[str, tuple[st
     return index
 
 
-def _match_binding(chain: str | None, index: Mapping[str, tuple[str, str]]) -> tuple[str, str] | None:
+def _match_binding(
+    chain: str | None, index: Mapping[str, tuple[str, str]]
+) -> tuple[str, str] | None:
     if chain is None:
         return None
     candidates = set()
@@ -345,7 +349,9 @@ def _match_binding(chain: str | None, index: Mapping[str, tuple[str, str]]) -> t
     return None
 
 
-def find_dead_metrics(root: Path, code_metrics: Mapping[str, CodeMetric]) -> list[dict[str, object]]:
+def find_dead_metrics(
+    root: Path, code_metrics: Mapping[str, CodeMetric]
+) -> list[dict[str, object]]:
     """Return metrics that are declared but never updated."""
 
     index = _binding_index(code_metrics)
@@ -392,7 +398,9 @@ def find_dead_metrics(root: Path, code_metrics: Mapping[str, CodeMetric]) -> lis
     return dead
 
 
-def _issue(metric: str, code: str, message: str, sources: Sequence[str] | None) -> dict[str, object]:
+def _issue(
+    metric: str, code: str, message: str, sources: Sequence[str] | None
+) -> dict[str, object]:
     return {
         "metric": metric,
         "metric_name": metric,
@@ -426,9 +434,7 @@ def structural_issues(
         for mismatch in type_mismatches:
             issues.append(_issue(name, "naming", mismatch, sources))
 
-        denylisted = [
-            label for label in metric.labels if label.lower() in _HIGH_CARDINALITY_LABELS
-        ]
+        denylisted = [label for label in metric.labels if label.lower() in _HIGH_CARDINALITY_LABELS]
         if denylisted:
             issues.append(
                 _issue(

@@ -1,6 +1,6 @@
 # Architecture Review Program
 
-This program institutionalises recurring technical architecture reviews for TradePulse to ensure we continuously meet scalability,
+This program institutionalises recurring technical architecture reviews for GeoSync to ensure we continuously meet scalability,
 resilience, compliance, and cost efficiency requirements for a mission-critical trading platform. The playbook defines governance,
 inputs, evaluation criteria, artefacts, and follow-through controls so every review produces actionable outcomes with measurable
 progress.
@@ -135,4 +135,4 @@ business days.
 | **Continuous Improvement** | Ongoing | Quarterly retrospectives, metric reviews, tooling upgrades |
 
 Adhering to this program ensures architecture reviews surface actionable insights, enforce accountability, and continuously derisk
-TradePulse’s mission-critical trading infrastructure.
+GeoSync’s mission-critical trading infrastructure.

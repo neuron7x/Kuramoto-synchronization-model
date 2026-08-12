@@ -1,0 +1,19 @@
+[package]
+name = "geosync-accel-fuzz"
+version = "0.0.0"
+edition = "2021"
+publish = false
+
+[package.metadata]
+cargo-fuzz = true
+
+[dependencies]
+geosync-accel = { path = ".." }
+libfuzzer-sys = "0.4"
+
+[[bin]]
+name = "numeric_primitives"
+path = "fuzz_targets/numeric_primitives.rs"
+test = false
+doc = false
+bench = false

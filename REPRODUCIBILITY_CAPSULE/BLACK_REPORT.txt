@@ -1,0 +1,5 @@
+would reformat /home/neuro7/Desktop/Торгова система легенда/GeoSync-main (4)/GeoSync-canon7/tests/test_reset_wave_critical_centers_gate.py
+would reformat /home/neuro7/Desktop/Торгова система легенда/GeoSync-main (4)/GeoSync-canon7/tests/test_reset_wave_manifold_reentry.py
+
+Oh no! 💥 💔 💥
+2 files would be reformatted, 1310 files would be left unchanged.

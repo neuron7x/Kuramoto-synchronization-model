@@ -1,0 +1,117 @@
+{
+  "artifact_id": "WEB_AGENT_TOOL_CONTRACT_INVENTORY_001",
+  "status": "STATIC_TOOL_CONTRACTS_DEFINED_NOT_LIVE_ADAPTER_VERIFIED",
+  "measurement_mode": "static_contract_inventory",
+  "tools": [
+    {
+      "tool_id": "web_search",
+      "responsibility": "Return ranked public web search results for a query.",
+      "input_schema": {"query": "string", "max_results": "integer"},
+      "output_schema": {"results": "array<SearchResult>", "error": "string|null"},
+      "side_effect": "none",
+      "irreversible": false,
+      "trusted_output": false,
+      "failure_mode": "explicit_error_or_empty_result",
+      "retry_policy": "transient_backoff_max_3",
+      "escalation": "ambiguous_query_or_conflicting_sources"
+    },
+    {
+      "tool_id": "web_fetch",
+      "responsibility": "Fetch a specific URL and return bounded content plus provenance.",
+      "input_schema": {"url": "string"},
+      "output_schema": {"content": "string", "source_url": "string", "error": "string|null"},
+      "side_effect": "none",
+      "irreversible": false,
+      "trusted_output": false,
+      "failure_mode": "explicit_fetch_error",
+      "retry_policy": "transient_backoff_max_3",
+      "escalation": "content_contains_instruction_override_or_required_source_missing"
+    },
+    {
+      "tool_id": "file_read",
+      "responsibility": "Read a local or connector-backed file without modifying it.",
+      "input_schema": {"path": "string"},
+      "output_schema": {"content": "string", "path": "string", "error": "string|null"},
+      "side_effect": "none",
+      "irreversible": false,
+      "trusted_output": false,
+      "failure_mode": "explicit_missing_or_permission_error",
+      "retry_policy": "no_retry_for_missing_file",
+      "escalation": "sensitive_file_or_ambiguous_file_target"
+    },
+    {
+      "tool_id": "file_write",
+      "responsibility": "Write one explicitly scoped artifact path.",
+      "input_schema": {"path": "string", "content": "string"},
+      "output_schema": {"path": "string", "written": "boolean", "error": "string|null"},
+      "side_effect": "writes_file",
+      "irreversible": false,
+      "trusted_output": true,
+      "failure_mode": "explicit_write_error",
+      "retry_policy": "retry_only_if_transient_io_error",
+      "escalation": "overwrite_or_path_scope_uncertain"
+    },
+    {
+      "tool_id": "code_exec",
+      "responsibility": "Execute bounded code for tests, calculations, or artifact generation.",
+      "input_schema": {"command": "array<string>", "timeout_seconds": "integer"},
+      "output_schema": {"exit_code": "integer", "stdout": "string", "stderr": "string"},
+      "side_effect": "bounded_runtime_effects",
+      "irreversible": false,
+      "trusted_output": false,
+      "failure_mode": "nonzero_exit_with_logs",
+      "retry_policy": "no_retry_without_changed_input",
+      "escalation": "network_secret_destructive_or_unbounded_command"
+    },
+    {
+      "tool_id": "github_fetch_file",
+      "responsibility": "Fetch one repository file at one ref.",
+      "input_schema": {"repository": "string", "path": "string", "ref": "string"},
+      "output_schema": {"content": "string", "sha": "string", "error": "string|null"},
+      "side_effect": "none",
+      "irreversible": false,
+      "trusted_output": false,
+      "failure_mode": "explicit_api_error_or_not_found",
+      "retry_policy": "transient_backoff_max_3",
+      "escalation": "ambiguous_ref_or_missing_expected_file"
+    },
+    {
+      "tool_id": "github_create_file",
+      "responsibility": "Create exactly one new repository file on an explicit branch.",
+      "input_schema": {"repository": "string", "path": "string", "branch": "string", "content": "string"},
+      "output_schema": {"commit_sha": "string", "error": "string|null"},
+      "side_effect": "creates_commit",
+      "irreversible": false,
+      "trusted_output": true,
+      "failure_mode": "explicit_api_error_or_path_exists",
+      "retry_policy": "no_retry_without_refetching_branch_state",
+      "escalation": "branch_or_path_scope_uncertain"
+    },
+    {
+      "tool_id": "github_update_file",
+      "responsibility": "Replace exactly one existing repository file using its current blob SHA.",
+      "input_schema": {"repository": "string", "path": "string", "branch": "string", "sha": "string", "content": "string"},
+      "output_schema": {"commit_sha": "string", "content_sha": "string", "error": "string|null"},
+      "side_effect": "creates_commit",
+      "irreversible": false,
+      "trusted_output": true,
+      "failure_mode": "explicit_api_error_or_sha_conflict",
+      "retry_policy": "refetch_current_sha_before_retry",
+      "escalation": "overwrite_semantics_uncertain_or_destructive_change"
+    }
+  ],
+  "coverage": {
+    "total_tools": 8,
+    "tools_with_single_responsibility": 8,
+    "tools_with_input_schema": 8,
+    "tools_with_output_schema": 8,
+    "tools_with_failure_mode": 8,
+    "tools_with_retry_policy": 8,
+    "coverage_ratio": 1.0
+  },
+  "failure_conditions": [
+    "Do not treat static inventory as live adapter proof.",
+    "Do not allow untrusted tool output to become instruction authority.",
+    "Do not perform irreversible or destructive external actions without explicit confirmation."
+  ]
+}

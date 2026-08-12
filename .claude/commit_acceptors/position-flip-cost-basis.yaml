@@ -1,0 +1,78 @@
+# Diff-bound commit acceptor: reset cost basis on a position flip through zero.
+#
+# Bug: Position.apply_fill discriminated "partial reduction" from "flip" by
+# magnitude (abs(net_qty) < abs(previous_qty)); a flip into a SMALLER opposite
+# side (long 5 -> sell 8 -> short 3) satisfied that test and kept the stale
+# long entry price, corrupting cost basis and downstream realized/unrealized PnL
+# (INV-OMS lineage). Fix uses the SIGN change as the discriminator.
+
+id: position-flip-cost-basis
+status: ACTIVE
+claim_type: correctness
+promise: >-
+  After this PR, domain.positions.Position.apply_fill resets entry_price to the
+  fill price whenever a fill flips the position through zero to the opposite
+  side (long->short or short->long), regardless of whether the residual opposite
+  exposure is smaller or larger than the prior exposure. A genuine same-side
+  partial reduction still preserves the prior entry_price. Cost basis and
+  unrealized/realized PnL are therefore correct across a sign reversal.
+
+diff_scope:
+  changed_files:
+    - path: ".claude/commit_acceptors/position-flip-cost-basis.yaml"
+    - path: "domain/positions/entity.py"
+    - path: "tests/domain/positions/test_position_flip_cost_basis.py"
+  forbidden_paths:
+    - "core/physics/"
+    - "core/kuramoto/"
+    - "execution/oms.py"
+
+required_python_symbols:
+  - "domain/positions/entity.py::Position"
+
+expected_signal: >-
+  `python -m pytest --import-mode=importlib
+  tests/domain/positions/test_position_flip_cost_basis.py -q` reports 5 passed;
+  a long-5 position sold 8 flips to short 3 with entry_price == fill price and
+  unrealized_pnl == 0 at that mark.
+
+measurement_command: >-
+  bash -c '
+    python -m pytest --import-mode=importlib -p no:cacheprovider
+      tests/domain/positions/test_position_flip_cost_basis.py
+      tests/unit/domain/test_position.py
+      tests/unit/execution/test_portfolio.py -q
+  '
+
+signal_artifact: "tmp/position_flip_cost_basis.log"
+
+falsifier:
+  command: |-
+    bash -c '
+      python -c "
+    from domain.orders import OrderSide
+    from domain.positions.entity import Position
+    p = Position(\"BTCUSD\")
+    p.apply_fill(OrderSide.BUY, 5, 100.0)
+    p.apply_fill(OrderSide.SELL, 8, 120.0)
+    assert p.quantity == -3 and p.entry_price == 120.0 and p.unrealized_pnl == 0.0
+      "
+    '
+  description: >-
+    Flips a long-5 position to short-3 and asserts the cost basis reset. It asserts the fix invariant and, per the run_evidence green-state
+    contract, exits 0 on the correct (green) tree and non-zero if the fix
+    regresses or is rolled back.
+rollback_command: >-
+  bash -c '
+    git rm -f .claude/commit_acceptors/position-flip-cost-basis.yaml
+  '
+
+rollback_verification_command: >-
+  bash -c '
+    test ! -f .claude/commit_acceptors/position-flip-cost-basis.yaml
+  '
+
+memory_update_type: append
+ledger_path: ".claude/commit_acceptors/position-flip-cost-basis.yaml"
+report_path: "tmp/position_flip_cost_basis.log"
+evidence: []

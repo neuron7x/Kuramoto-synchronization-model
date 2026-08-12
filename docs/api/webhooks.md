@@ -3,13 +3,13 @@
 ## signal.published
 Emitted whenever a new trading signal is available.
 
-**owner:** Platform Engineering (platform@tradepulse.example)  
+**owner:** Platform Engineering (platform@geosync.example)  
 **last_reviewed:** 2025-12-28
 
 **Inputs**
 - Method: `POST`
-- Schema: `/workspace/TradePulse/schemas/events/json/1.0.0/signals.schema.json`
-- Signature: `X-TradePulse-Webhook` via `ed25519` (version v1)
+- Schema: `/workspace/GeoSync/schemas/events/json/1.0.0/signals.schema.json`
+- Signature: `X-GeoSync-Webhook` via `ed25519` (version v1)
 - Delivery: max attempts 5 with 30s backoff
 
 **Outputs**
@@ -35,13 +35,13 @@ Emitted whenever a new trading signal is available.
 ## prediction.completed
 Delivered when an asynchronous prediction finishes execution.
 
-**owner:** Platform Engineering (platform@tradepulse.example)  
+**owner:** Platform Engineering (platform@geosync.example)  
 **last_reviewed:** 2025-12-28
 
 **Inputs**
 - Method: `POST`
-- Schema: `/workspace/TradePulse/schemas/events/json/1.0.0/prediction_completed.schema.json`
-- Signature: `X-TradePulse-Webhook` via `ed25519` (version v1)
+- Schema: `/workspace/GeoSync/schemas/events/json/1.0.0/prediction_completed.schema.json`
+- Signature: `X-GeoSync-Webhook` via `ed25519` (version v1)
 - Delivery: max attempts 8 with 45s backoff
 
 **Outputs**

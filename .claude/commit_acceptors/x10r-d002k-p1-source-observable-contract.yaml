@@ -1,0 +1,181 @@
+# Diff-bound commit acceptor for D-002K-P1: source & observable
+# contract for funding-liquidity.
+#
+# D-002K-P1 binds the six D-002K-P0-locked observable families to
+# P1B-audit-surviving funding-liquidity sources, the three D-002K
+# crisis windows (CW3/CW4/CW5), point-in-time release/vintage
+# boundaries, and the single P0-locked primary metric
+# pre_post_standardized_mean_shift. NO ingestion, NO scoring, NO
+# model run, NO canonical sweep. Narrow by design against the
+# inherited effect_too_small axis; D-002J stays terminally REFUSED.
+#
+# Frozen byte-exact: D-002K-P0 prereg
+# (2cd923810bf64547cd86ecb403bfd3f12a799cb16c3d10ebc07bc05865fee43f),
+# D-002J prereg
+# (f3dc65b7e64b96eafe6f23ca8bdd0e05dc9bf95b12c2658b227bd0340f7975a0),
+# all artifacts/d002j/** and artifacts/d002k/prereg/**.
+
+id: x10r-d002k-p1-source-observable-contract
+status: ACTIVE
+claim_type: governance
+promise: >-
+  After this PR lands, the D-002K-P1 source & observable contract
+  binds all six D-002K-P0-locked observable families (level_shift,
+  spread_widening, volatility_burst, recovery_time,
+  transition_steepness, stress_persistence) to P1B-audit-surviving
+  funding-liquidity sources x {CW3,CW4,CW5}, with point-in-time
+  vintage discipline (>=1 vintage_required observable) and the single
+  P0-locked primary metric pre_post_standardized_mean_shift. VIX is
+  bound as a control_covariate, never a funding-liquidity observable.
+  No contagion / balance-sheet / cross-asset source is bound.
+
+  tests/systemic_risk/test_d002k_source_observable_contract.py carries
+  23 guard tests fail-closing the suite on any source not
+  P1B-surviving, any window outside {CW3,CW4,CW5}, any missing P0
+  family, any lost vintage invariant, any contagion/balance-sheet
+  binding, any control/observable mislabel, any D-002K-P0 prereg or
+  D-002J artifact drift, and any systemic-risk / bank-level claim.
+
+  DAG regenerated to 12 nodes (D002K-P1 appended after D002K-P0,
+  next_legal=[D002K-P2]); D002J-P1A + D002J-P7 stay
+  TERMINAL_REJECTED/REFUSED retained; canonical_run_authorized
+  anywhere stays false.
+
+  Frozen byte-exact: D-002K-P0 prereg
+  2cd923810bf64547cd86ecb403bfd3f12a799cb16c3d10ebc07bc05865fee43f;
+  D-002J prereg
+  f3dc65b7e64b96eafe6f23ca8bdd0e05dc9bf95b12c2658b227bd0340f7975a0;
+  all artifacts/d002j/** and artifacts/d002k/prereg/**.
+
+  D-002J remains the truthful terminal REFUSED verdict. D-002K-P1
+  does NOT rescue, reopen, or amend D-002J. No ingestion, no scoring,
+  no canonical sweep. Next legal PR: feat(x10r,D-002K-P2) matched
+  placebo windows.
+
+diff_scope:
+  changed_files:
+    - path: "artifacts/d002k/observables/source_observable_contract_v1.json"
+    - path: "artifacts/d002k/observables/source_observable_summary_v1.json"
+    - path: "docs/research/D002K_SOURCE_OBSERVABLE_CONTRACT.md"
+    - path: "tests/systemic_risk/test_d002k_source_observable_contract.py"
+    - path: "artifacts/governance/verdicts/d002k_p1_verdict_v1.json"
+    - path: "artifacts/governance/verdicts/d002j_verdict_dag_v1.json"
+    - path: "docs/research/D002J_LINEAGE_MAP.md"
+    - path: "tests/governance/test_verdict_dag_integrity.py"
+    - path: "tests/systemic_risk/test_d002k_preregistration.py"
+    - path: ".claude/commit_acceptors/x10r-d002k-p1-source-observable-contract.yaml"
+    - path: "docs/governance/D002G_CANONICAL_RUN_BLOCKERS.md"
+    - path: ".github/detect-secrets.baseline"
+  forbidden_paths:
+    - "docs/governance/D002C_CLAIM_LEDGER.yaml"
+    - "docs/governance/D002C_PREREGISTRATION.yaml"
+    - "docs/governance/D002G_ACCEPTANCE_RULES.md"
+    - "docs/governance/D002G_PREREGISTRATION.yaml"
+    - "docs/governance/D002H_PREREGISTRATION.yaml"
+    - "docs/governance/D002I_PREREGISTRATION.yaml"
+    - "docs/governance/D002J_PREREGISTRATION.yaml"
+    - "docs/governance/D002K_PREREGISTRATION.yaml"
+    - "docs/research/D002K_DESIGN_RATIONALE.md"
+    - "artifacts/d002c/"
+    - "artifacts/d002d/"
+    - "artifacts/d002e/"
+    - "artifacts/d002f/"
+    - "artifacts/d002g/"
+    - "artifacts/d002h/"
+    - "artifacts/d002i/"
+    - "artifacts/d002j/"
+    - "artifacts/d002k/prereg/"
+    - "research/systemic_risk/"
+    - "scripts/x10r_d002c.py"
+    - "scripts/x10r_d002d.py"
+    - "scripts/x10r_d002e.py"
+    - "scripts/x10r_d002f.py"
+    - "scripts/x10r_d002g.py"
+    - "scripts/x10r_d002h_gate_d_scan.py"
+    - "scripts/x10r_d002i.py"
+    - "scripts/x10r_d002j.py"
+required_python_symbols:
+  - "tests.systemic_risk.test_d002k_source_observable_contract.test_contract_exists"
+  - "tests.systemic_risk.test_d002k_source_observable_contract.test_summary_exists"
+  - "tests.systemic_risk.test_d002k_source_observable_contract.test_contract_schema_version"
+  - "tests.systemic_risk.test_d002k_source_observable_contract.test_parent_prereg_sha_pinned"
+  - "tests.systemic_risk.test_d002k_source_observable_contract.test_every_observable_family_from_p0_covered"
+  - "tests.systemic_risk.test_d002k_source_observable_contract.test_min_six_observables"
+  - "tests.systemic_risk.test_d002k_source_observable_contract.test_every_observable_source_in_p1b_surviving"
+  - "tests.systemic_risk.test_d002k_source_observable_contract.test_no_observable_source_downgraded_or_rejected"
+  - "tests.systemic_risk.test_d002k_source_observable_contract.test_every_observable_window_in_cw3_cw4_cw5"
+  - "tests.systemic_risk.test_d002k_source_observable_contract.test_no_observable_window_outside_d002k_scope"
+  - "tests.systemic_risk.test_d002k_source_observable_contract.test_at_least_one_vintage_required_observable"
+  - "tests.systemic_risk.test_d002k_source_observable_contract.test_vintage_required_observables_have_vintage_field"
+  - "tests.systemic_risk.test_d002k_source_observable_contract.test_lookahead_invariants_present_each_observable"
+  - "tests.systemic_risk.test_d002k_source_observable_contract.test_primary_metric_mapping_matches_p0_lock"
+  - "tests.systemic_risk.test_d002k_source_observable_contract.test_vix_class_marked_control_not_observable"
+  - "tests.systemic_risk.test_d002k_source_observable_contract.test_no_contagion_or_balance_sheet_source_bound"
+  - "tests.systemic_risk.test_d002k_source_observable_contract.test_summary_counts_match_contract"
+  - "tests.systemic_risk.test_d002k_source_observable_contract.test_no_systemic_risk_prediction_claim"
+  - "tests.systemic_risk.test_d002k_source_observable_contract.test_no_bank_level_validation_claim"
+  - "tests.systemic_risk.test_d002k_source_observable_contract.test_no_d002k_prereg_edit"
+  - "tests.systemic_risk.test_d002k_source_observable_contract.test_no_d002j_artifacts_modified"
+  - "tests.systemic_risk.test_d002k_source_observable_contract.test_no_canonical_run_authorized"
+  - "tests.systemic_risk.test_d002k_source_observable_contract.test_no_unresolved_merge_markers"
+expected_signal: >-
+  `PYTHONPATH=. python -m pytest
+  tests/systemic_risk/test_d002k_source_observable_contract.py -q`
+  reports "23 passed"; D-002K-P0 prereg sha256 byte-exact at
+  2cd923810bf64547cd86ecb403bfd3f12a799cb16c3d10ebc07bc05865fee43f;
+  D-002J prereg sha256 byte-exact at
+  f3dc65b7e64b96eafe6f23ca8bdd0e05dc9bf95b12c2658b227bd0340f7975a0;
+  `git diff --stat origin/main -- artifacts/d002j/
+  docs/governance/D002J_PREREGISTRATION.yaml
+  docs/governance/D002K_PREREGISTRATION.yaml
+  artifacts/d002k/prereg/` returns empty; verdict DAG nodes_count=12,
+  next_legal_nodes_from_main_head=["D002K-P2"],
+  rejected_nodes_retained=["D002J-P1A","D002J-P7"],
+  canonical_run_authorized_anywhere=false.
+measurement_command: >-
+  bash -c 'set -e;
+  PYTHONPATH=. python -m pytest tests/systemic_risk/test_d002k_source_observable_contract.py -q;
+  test "$(sha256sum docs/governance/D002K_PREREGISTRATION.yaml | awk "{print \$1}")" = "2cd923810bf64547cd86ecb403bfd3f12a799cb16c3d10ebc07bc05865fee43f";
+  test "$(sha256sum docs/governance/D002J_PREREGISTRATION.yaml | awk "{print \$1}")" = "f3dc65b7e64b96eafe6f23ca8bdd0e05dc9bf95b12c2658b227bd0340f7975a0";
+  test -z "$(git diff --stat origin/main -- artifacts/d002j/ docs/governance/D002J_PREREGISTRATION.yaml docs/governance/D002K_PREREGISTRATION.yaml artifacts/d002k/prereg/)"'
+signal_artifact: "tests/systemic_risk/test_d002k_source_observable_contract.py"
+falsifier:
+  command: >-
+    bash -c 'set -e;
+    PYTHONPATH=. python -m pytest tests/systemic_risk/test_d002k_source_observable_contract.py -q || exit 1;
+    test -f artifacts/d002k/observables/source_observable_contract_v1.json || exit 2;
+    test -f artifacts/d002k/observables/source_observable_summary_v1.json || exit 3;
+    test -f artifacts/governance/verdicts/d002k_p1_verdict_v1.json || exit 4;
+    test "$(sha256sum docs/governance/D002K_PREREGISTRATION.yaml | awk "{print \$1}")" = "2cd923810bf64547cd86ecb403bfd3f12a799cb16c3d10ebc07bc05865fee43f" || exit 5;
+    test "$(sha256sum docs/governance/D002J_PREREGISTRATION.yaml | awk "{print \$1}")" = "f3dc65b7e64b96eafe6f23ca8bdd0e05dc9bf95b12c2658b227bd0340f7975a0" || exit 6;
+    python3 -c "import json,sys; d=json.load(open(\"artifacts/governance/verdicts/d002j_verdict_dag_v1.json\")); sys.exit(0 if d[\"nodes_count\"]==12 and d[\"next_legal_nodes_from_main_head\"]==[\"D002K-P2\"] and d[\"rejected_nodes_retained\"]==[\"D002J-P1A\",\"D002J-P7\"] and d[\"canonical_run_authorized_anywhere\"] is False else 7)" || exit 7'
+  description: >-
+    Probes the D-002K-P1 source/observable contract: the 23-test
+    guard module passes; contract / summary / P1 verdict artifacts
+    exist; D-002K-P0 + D-002J preregs sha256 byte-exact at their
+    frozen anchors; the regenerated verdict DAG has 12 nodes,
+    next_legal=[D002K-P2], D002J-P1A+P7 retained rejected, and
+    canonical_run_authorized_anywhere false. Regression on any ->
+    contract broken or a frozen governance artifact silently mutated.
+rollback_command: >-
+  bash -c 'rm -f
+  artifacts/d002k/observables/source_observable_contract_v1.json
+  artifacts/d002k/observables/source_observable_summary_v1.json
+  docs/research/D002K_SOURCE_OBSERVABLE_CONTRACT.md
+  tests/systemic_risk/test_d002k_source_observable_contract.py
+  artifacts/governance/verdicts/d002k_p1_verdict_v1.json
+  .claude/commit_acceptors/x10r-d002k-p1-source-observable-contract.yaml
+  && git checkout HEAD~1 -- artifacts/governance/verdicts/d002j_verdict_dag_v1.json
+  docs/research/D002J_LINEAGE_MAP.md
+  tests/governance/test_verdict_dag_integrity.py
+  tests/systemic_risk/test_d002k_preregistration.py
+  docs/governance/D002G_CANONICAL_RUN_BLOCKERS.md
+  .github/detect-secrets.baseline'
+rollback_verification_command: >-
+  bash -c 'test ! -f artifacts/d002k/observables/source_observable_contract_v1.json
+  && test ! -f tests/systemic_risk/test_d002k_source_observable_contract.py
+  && test ! -f artifacts/governance/verdicts/d002k_p1_verdict_v1.json'
+memory_update_type: append
+ledger_path: ".claude/commit_acceptors/x10r-d002k-p1-source-observable-contract.yaml"
+report_path: "tests/systemic_risk/test_d002k_source_observable_contract.py"
+evidence: []

@@ -1,14 +1,34 @@
+# Copyright (c) 2023-2026 Yaroslav Vasylenko (neuron7xLab)
+# SPDX-License-Identifier: MIT
 """Minimal executable core trading engine (Core Engine v1)."""
 
 from __future__ import annotations
 
 from collections.abc import Iterable, Iterator, Mapping
 from dataclasses import dataclass, field, replace
-from datetime import datetime, timezone
-from time import perf_counter
+from datetime import datetime
 from typing import Any, Protocol, TypeVar, runtime_checkable
 
+from geosync.core.compat import default_clock
+
 _T = TypeVar("_T")
+
+
+def _now() -> datetime:
+    """Wall-clock UTC from the injected :class:`Clock` (Class A migration)."""
+
+    return default_clock().now()
+
+
+def _stage_ms(start_ns: int) -> float:
+    """Stage-latency helper: delta from ``start_ns`` in milliseconds.
+
+    Routes through the injected :class:`Clock` so a ``FrozenClock`` yields a
+    deterministic monotone counter for replay-equality tests; production
+    ``SystemClock`` proxies ``time.monotonic_ns`` and preserves real timings.
+    """
+
+    return (default_clock().monotonic_ns() - start_ns) / 1_000_000
 
 
 @dataclass(slots=True)
@@ -16,7 +36,7 @@ class EngineContext:
     """Represents the execution context for a single engine cycle."""
 
     run_id: str
-    as_of: datetime = field(default_factory=lambda: datetime.now(timezone.utc))
+    as_of: datetime = field(default_factory=_now)
     metadata: Mapping[str, Any] = field(default_factory=dict)
 
 
@@ -26,7 +46,7 @@ class MarketData:
 
     source: str
     payload: Mapping[str, Any]
-    timestamp: datetime = field(default_factory=lambda: datetime.now(timezone.utc))
+    timestamp: datetime = field(default_factory=_now)
 
 
 @dataclass(slots=True)
@@ -63,7 +83,7 @@ class LogEntry:
     level: str
     message: str
     context: Mapping[str, Any] = field(default_factory=dict)
-    created_at: datetime = field(default_factory=lambda: datetime.now(timezone.utc))
+    created_at: datetime = field(default_factory=_now)
 
 
 @dataclass(slots=True)
@@ -200,34 +220,29 @@ class CoreEngine:
             cycle_index = 0
             for market_data in self._yield_data(context):
                 cycle_index += 1
-                cycle_started_at = datetime.now(timezone.utc)
-                stopwatch = perf_counter()
+                cycle_started_at = _now()
+                stopwatch = default_clock().monotonic_ns()
 
-                signal_timer = perf_counter()
+                signal_timer = default_clock().monotonic_ns()
                 generated_signals = self._collect_and_validate(
                     "SignalGenerator.generate",
                     self._yield_signals(market_data, context),
                     Signal,
                 )
-                signal_latency_ms = (perf_counter() - signal_timer) * 1000.0
+                signal_latency_ms = _stage_ms(signal_timer)
                 received_count = len(generated_signals)
 
-                risk_timer = perf_counter()
+                risk_timer = default_clock().monotonic_ns()
                 decisions = self._collect_and_validate(
                     "RiskManager.assess",
-                    (
-                        self._risk_manager.assess(signal, context)
-                        for signal in generated_signals
-                    ),
+                    (self._risk_manager.assess(signal, context) for signal in generated_signals),
                     RiskDecision,
                 )
-                risk_latency_ms = (perf_counter() - risk_timer) * 1000.0
+                risk_latency_ms = _stage_ms(risk_timer)
                 approved_count = sum(1 for decision in decisions if decision.approved)
                 rejected_count = received_count - approved_count
 
-                signal_decision_pairs = tuple(
-                    zip(generated_signals, decisions, strict=True)
-                )
+                signal_decision_pairs = tuple(zip(generated_signals, decisions, strict=True))
                 if self._config.drop_rejected_signals:
                     filtered_pairs = tuple(
                         (signal, decision)
@@ -240,7 +255,7 @@ class CoreEngine:
                 dispatched_signals = tuple(signal for signal, _ in filtered_pairs)
                 dispatched_decisions = tuple(decision for _, decision in filtered_pairs)
 
-                execution_timer = perf_counter()
+                execution_timer = default_clock().monotonic_ns()
                 executions = self._collect_and_validate(
                     "ExecutionClient.execute",
                     (
@@ -249,14 +264,14 @@ class CoreEngine:
                     ),
                     ExecutionOutcome,
                 )
-                execution_latency_ms = (perf_counter() - execution_timer) * 1000.0
+                execution_latency_ms = _stage_ms(execution_timer)
 
-                completed_at = datetime.now(timezone.utc)
+                completed_at = _now()
                 metrics = CycleMetrics(
                     sequence_number=cycle_index,
                     started_at=cycle_started_at,
                     completed_at=completed_at,
-                    duration_ms=(perf_counter() - stopwatch) * 1000.0,
+                    duration_ms=_stage_ms(stopwatch),
                     stage_durations=StageDurations(
                         signal_ms=signal_latency_ms,
                         risk_ms=risk_latency_ms,
@@ -286,9 +301,7 @@ class CoreEngine:
                             entry.context.setdefault("log_entries", metrics.log_entries)
                         else:  # pragma: no cover - defensive path for Mapping implementations
                             mutable_context = dict(entry.context)
-                            mutable_context.setdefault(
-                                "log_entries", metrics.log_entries
-                            )
+                            mutable_context.setdefault("log_entries", metrics.log_entries)
                             entry.context = mutable_context
 
                 yield EngineCycle(
@@ -329,9 +342,7 @@ class CoreEngine:
                 )
             yield item
 
-    def _yield_signals(
-        self, data: MarketData, context: EngineContext
-    ) -> Iterator[Signal]:
+    def _yield_signals(self, data: MarketData, context: EngineContext) -> Iterator[Signal]:
         generated = self._signal_generator.generate(data, context)
         if generated is None:
             return

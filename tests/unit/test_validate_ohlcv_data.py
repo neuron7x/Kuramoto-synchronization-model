@@ -1,9 +1,11 @@
+# Copyright (c) 2023-2026 Yaroslav Vasylenko (neuron7xLab)
+# SPDX-License-Identifier: MIT
 """Tests for OHLCV data validation script.
 
 This module tests the scripts/validate_ohlcv_data.py module.
 """
 
-# SPDX-License-Identifier: LicenseRef-TradePulse-Proprietary
+# SPDX-License-Identifier: MIT
 
 import tempfile
 from pathlib import Path

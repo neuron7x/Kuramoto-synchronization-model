@@ -1,12 +1,12 @@
 ---
-owner: quant-systems@tradepulse
+owner: quant-systems@geosync
 review_cadence: quarterly
 last_reviewed: 2026-01-01
 ---
 
 # Calibration Parameter Reference
 
-Comprehensive reference for all calibration parameters across TradePulse controllers.
+Comprehensive reference for all calibration parameters across GeoSync controllers.
 
 ## Table of Contents
 

@@ -1,0 +1,134 @@
+# Diff-bound commit acceptor for IERD-Q6 Phase-4 progress: latency
+# layer coverage gate (client_render instrumented, dashboard, matrix).
+#
+# Before: claim `e2e-latency-budget-compliance` declared a four-layer
+# budget but only server_compute was regression-gated (Phase-4 ENTRY
+# #550). client_render was never captured in the browser; there was
+# no latency Grafana dashboard and no layer-coverage scoring.
+#
+# After: apps/web/app/_components/web-vitals-reporter.tsx wires Next's
+# useReportWebVitals (zero new deps) into a budget-classified beacon —
+# the genuine client_render instrumentation — mounted in
+# apps/web/app/layout.tsx and unit-falsified by
+# apps/web/app/__tests__/web-vitals-reporter.test.tsx.
+# observability/grafana/latency_budget_dashboard.json adds the
+# four-layer dashboard at the §5 budgets.
+# tests/observability/test_latency_layer_coverage.py scores the layers
+# the Q7 way: every covered layer cites a real resolvable test
+# (statically verified cross-language), uncovered layers are explicit.
+# server_compute + client_render + db_io + dashboard structural checks
+# run fail-closed in the global lanes; the "all four layers
+# regression-gated" check is red by design (network_TTFB needs a
+# real-network/Lighthouse budget run) so it is env-gated
+# (GEOSYNC_LATENCY_LAYER_GATE) and informational at Phase-4 progress.
+# Phase-4 EXIT lands Lighthouse CI + OTel propagation, lifts
+# LayerCoverage to 1.0, flips fail-closed (claim ANCHORED).
+#
+# Locally verified (development laptop, native Python + node):
+#   tests/observability/test_latency_layer_coverage.py WITHOUT flag
+#     ... 4 passed, 1 skipped (global-lane posture)
+#   ... WITH GEOSYNC_LATENCY_LAYER_GATE=1 ... 4 passed,
+#     test_all_four_layers_regression_gated FAIL (informational)
+#     [layer] AGGREGATE covered=3/4 LayerCoverage=0.7500
+#   apps/web jest web-vitals-reporter ... 5 passed
+#   mypy --strict / black / ruff ... clean; npm lint/typecheck/format ... clean
+
+id: ierd-q6-latency-layer-coverage-gate
+status: ACTIVE
+claim_type: correctness
+promise: >-
+  apps/web/app/_components/web-vitals-reporter.tsx wires
+  next/web-vitals into a §5-budget-classified beacon (client_render
+  instrumentation, zero new deps), mounted in layout.tsx and
+  unit-falsified by web-vitals-reporter.test.tsx.
+  observability/grafana/latency_budget_dashboard.json carries one
+  panel per §5 layer at the verbatim budget.
+  tests/observability/test_latency_layer_coverage.py asserts
+  (a) every cited layer target statically resolves, (b) server_compute
+  is gated fail-closed, (c) client_render is instrumented fail-closed,
+  (d) the Grafana dashboard is well-formed against the §5 budgets and
+  real Prometheus series fail-closed, and (e) LayerCoverage == 1.0
+  (observed 0.75, informational at Phase-4 progress). The
+  Latency Layer Coverage workflow runs the suite path-filtered with
+  GEOSYNC_LATENCY_LAYER_GATE=1 and uploads junit.xml + run.log as
+  `latency-layer-coverage-results` (14-day retention). Phase-4
+  contract: continue-on-error is set on the run STEP so the GitHub
+  check resolves SUCCESS even though the all-four check fails; Phase-4
+  EXIT removes it and the claim re-classifies ANCHORED.
+diff_scope:
+  changed_files:
+    - path: ".claude/commit_acceptors/ierd-q6-latency-layer-coverage-gate.yaml"
+    - path: ".github/workflows/latency-layer-coverage.yml"
+    - path: "docs/CLAIMS.yaml"
+    - path: "tests/observability/test_latency_layer_coverage.py"
+    - path: "observability/grafana/latency_budget_dashboard.json"
+    - path: "apps/web/app/_components/web-vitals-reporter.tsx"
+    - path: "apps/web/app/__tests__/web-vitals-reporter.test.tsx"
+    - path: "apps/web/app/layout.tsx"
+  forbidden_paths:
+    - "trading/"
+    - "execution/"
+    - "forecast/"
+    - "policy/"
+    - "core/physics/"
+    - "core/kuramoto/"
+    - "application/api/service.py"
+    - "application/api/errors.py"
+    - "schemas/openapi/"
+required_python_symbols:
+  - "tests/observability/test_latency_layer_coverage.py::test_all_four_layers_regression_gated"
+  - "tests/observability/test_latency_layer_coverage.py::test_every_cited_layer_target_resolves"
+  - "tests/observability/test_latency_layer_coverage.py::test_server_compute_layer_gated_fail_closed"
+  - "tests/observability/test_latency_layer_coverage.py::test_client_render_instrumented_fail_closed"
+  - "tests/observability/test_latency_layer_coverage.py::test_grafana_latency_dashboard_well_formed"
+  - "tests/observability/test_latency_layer_coverage.py::LAYER_BUDGETS_MS"
+expected_signal: >-
+  Local: `mypy --strict --follow-imports=silent
+  tests/observability/test_latency_layer_coverage.py` reports
+  "Success: no issues found in 1 source file"; `black --check` and
+  `ruff check` clean; `pytest
+  tests/observability/test_latency_layer_coverage.py -q` (no flag)
+  reports 4 passed + 1 skipped; with GEOSYNC_LATENCY_LAYER_GATE=1
+  reports 4 passed and test_all_four_layers_regression_gated failing
+  informationally at `[layer] AGGREGATE covered=3/4
+  LayerCoverage=0.7500`; `cd apps/web && npx jest
+  web-vitals-reporter --ci` reports 5 passed; `python
+  scripts/ci/check_claims.py` reports schema v3 with
+  `e2e-latency-budget-compliance` extended evidence_paths present.
+measurement_command: >-
+  bash -c 'mypy --strict --follow-imports=silent
+  tests/observability/test_latency_layer_coverage.py
+  && black --check tests/observability/test_latency_layer_coverage.py
+  && ruff check tests/observability/test_latency_layer_coverage.py
+  && python scripts/ci/check_claims.py'
+signal_artifact: "tmp/ierd_q6_latency_layer_coverage_gate.log"
+falsifier:
+  command: >-
+    bash -c 'python -c "import yaml,sys; spec=yaml.safe_load(open(\".github/workflows/latency-layer-coverage.yml\")); steps=spec[\"jobs\"][\"latency-layer-coverage\"][\"steps\"]; run_step=next(s for s in steps if s.get(\"id\")==\"run\"); sys.exit(0 if run_step.get(\"continue-on-error\") is None else 1)"'
+  description: >-
+    SUPERSEDED by ierd-q6-network-ttfb-lighthouse-gate (Phase-4 EXIT,
+    #531): the latency-layer-coverage run step is now genuinely
+    fail-closed (no continue-on-error) because all four layers —
+    including network_TTFB via the Lighthouse-CI budget run — are
+    regression-gated. This falsifier now asserts the run step carries
+    NO continue-on-error key; a regression that re-adds it (silencing
+    the all-four-layers check) exits non-zero. The Phase-4 progress
+    contract this acceptor originally pinned (continue-on-error: true)
+    no longer holds.
+rollback_command: >-
+  git checkout HEAD~1 --
+  .claude/commit_acceptors/ierd-q6-latency-layer-coverage-gate.yaml
+  .github/workflows/latency-layer-coverage.yml
+  tests/observability/test_latency_layer_coverage.py
+  observability/grafana/latency_budget_dashboard.json
+  apps/web/app/_components/web-vitals-reporter.tsx
+  apps/web/app/__tests__/web-vitals-reporter.test.tsx
+  apps/web/app/layout.tsx
+  docs/CLAIMS.yaml
+rollback_verification_command: >-
+  git diff --exit-code tests/observability/test_latency_layer_coverage.py
+  .github/workflows/latency-layer-coverage.yml
+memory_update_type: append
+ledger_path: ".claude/commit_acceptors/ierd-q6-latency-layer-coverage-gate.yaml"
+report_path: "tmp/ierd_q6_latency_layer_coverage_gate.log"
+evidence: []

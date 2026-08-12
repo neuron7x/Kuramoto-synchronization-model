@@ -1,6 +1,6 @@
 # Configuration Directory Structure
 
-TradePulse uses multiple configuration directories, each serving a specific purpose. This separation ensures clean organization and prevents configuration conflicts.
+GeoSync uses multiple configuration directories, each serving a specific purpose. This separation ensures clean organization and prevents configuration conflicts.
 
 ## Directory Overview
 
@@ -30,7 +30,7 @@ config_path = Path("nak_controller/conf/nak.yaml")
 
 **Example usage:**
 ```python
-from tradepulse.core.neuro.dopamine import DopamineController
+from geosync.core.neuro.dopamine import DopamineController
 controller = DopamineController("config/dopamine.yaml")
 ```
 
@@ -57,7 +57,7 @@ controller = DopamineController("config/dopamine.yaml")
 
 **Example usage:**
 ```python
-from tradepulse.core.neuro.serotonin import SerotoninController
+from geosync.core.neuro.serotonin import SerotoninController
 controller = SerotoninController("configs/serotonin.yaml")
 ```
 

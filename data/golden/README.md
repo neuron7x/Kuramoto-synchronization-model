@@ -1,7 +1,7 @@
 # Golden Datasets
 
 This directory contains the minimal, versioned datasets that anchor
-regression checks for TradePulse. The files are intentionally small so they can
+regression checks for GeoSync. The files are intentionally small so they can
 be shipped with the repository and exercised in unit tests or CLI sanity checks
 without external dependencies.
 

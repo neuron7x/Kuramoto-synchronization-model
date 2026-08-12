@@ -1,4 +1,5 @@
-# SPDX-License-Identifier: LicenseRef-TradePulse-Proprietary
+# Copyright (c) 2023-2026 Yaroslav Vasylenko (neuron7xLab)
+# SPDX-License-Identifier: MIT
 from __future__ import annotations
 
 import numpy as np
@@ -42,3 +43,25 @@ def test_volume_profile_metrics() -> None:
     assert imbalance(np.zeros(2), np.zeros(2)) == 0.0
     assert order_aggression(0.0, 0.0) == 0.0
     assert pytest.approx(order_aggression(3.0, 1.0), rel=1e-12) == 0.5
+
+
+def test_skewness_degenerate_guard_is_pinned_in_both_directions() -> None:
+    """The `std() == 0 or size == 0` guard was invisible to every existing assertion.
+
+    A logic-mutation probe killed 0 of 3 mutants on that line: the symmetric-distribution
+    test asserts |skew| < 1e-12, so a mutant that returns 0.0 for EVERY input passes it.
+    Pinning the guard needs both sides — degenerate input must return exactly 0.0, and
+    genuinely skewed input must NOT, which is what kills `Eq -> NotEq`.
+    """
+    # Degenerate: zero variance and empty. Both must take the guard.
+    assert skewness(np.full(32, 7.0)) == 0.0
+    assert skewness(np.array([])) == 0.0
+
+    # Non-degenerate: a right-skewed sample must produce a positive third moment. An
+    # inverted guard (`std() != 0`) would return 0.0 here; `Or -> And` would let the empty
+    # case through to `np.mean` of an empty array and yield nan rather than 0.0.
+    right_skewed = np.array([0.0] * 30 + [10.0])
+    assert skewness(right_skewed) > 0.5
+
+    left_skewed = -right_skewed
+    assert skewness(left_skewed) < -0.5

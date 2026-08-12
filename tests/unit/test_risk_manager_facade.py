@@ -1,3 +1,5 @@
+# Copyright (c) 2023-2026 Yaroslav Vasylenko (neuron7xLab)
+# SPDX-License-Identifier: MIT
 from __future__ import annotations
 
 from pathlib import Path
@@ -6,7 +8,7 @@ import pytest
 import yaml
 
 from execution.risk import RiskLimits, RiskManager
-from src.risk.risk_manager import KillSwitchState, RiskManagerFacade
+from application.risk.risk_manager import KillSwitchState, RiskManagerFacade
 from src.security import AccessController, AccessDeniedError, AccessPolicy
 
 
@@ -99,13 +101,9 @@ def test_facade_enforces_permissions_for_kill_switch(tmp_path: Path) -> None:
     controller = _write_policy(
         tmp_path,
         {
-            "subjects": {
-                "system": {"permissions": ["engage_kill_switch", "reset_kill_switch"]}
-            },
+            "subjects": {"system": {"permissions": ["engage_kill_switch", "reset_kill_switch"]}},
             "roles": {
-                "risk_team": {
-                    "permissions": ["engage_kill_switch", "reset_kill_switch"]
-                },
+                "risk_team": {"permissions": ["engage_kill_switch", "reset_kill_switch"]},
                 "operations": {"permissions": ["read_exchange_keys"]},
             },
         },
@@ -158,3 +156,63 @@ def test_facade_updates_limits_when_authorised(tmp_path: Path) -> None:
 
     with pytest.raises(AccessDeniedError):
         facade.update_risk_limits(actor="dave", roles=(), max_notional=750.0)
+
+
+# --- DEFECT 4: (_triggered, _reason) pair must update/read atomically ---
+def test_kill_switch_snapshot_is_consistent_pair() -> None:
+    manager = RiskManager(RiskLimits())
+    ks = manager.kill_switch
+
+    engaged, reason = ks.snapshot()
+    assert engaged is False and reason == ""
+
+    ks.trigger("halt-now")
+    engaged, reason = ks.snapshot()
+    assert engaged is True and reason == "halt-now"
+
+    ks.reset()
+    engaged, reason = ks.snapshot()
+    assert engaged is False and reason == ""
+
+
+def test_kill_switch_pair_never_torn_under_concurrency() -> None:
+    """Under concurrent trigger/reset, a reader must never observe the switch
+    engaged with an empty (stale) reason. Before the lock was added this pair
+    was written as two unguarded assignments and could tear."""
+    import threading
+
+    manager = RiskManager(RiskLimits())
+    ks = manager.kill_switch
+    stop = threading.Event()
+    violations: list[tuple[bool, str]] = []
+
+    def writer() -> None:
+        i = 0
+        while not stop.is_set():
+            ks.trigger(f"halt-{i}")
+            ks.reset()
+            i += 1
+
+    def reader() -> None:
+        while not stop.is_set():
+            engaged, reason = ks.snapshot()
+            if engaged and reason == "":
+                violations.append((engaged, reason))
+
+    # Daemon threads + a try/finally-guaranteed stop.set() so the test can
+    # never hang even if an assertion or attribute lookup fails mid-run.
+    threads = [threading.Thread(target=writer, daemon=True) for _ in range(2)]
+    threads += [threading.Thread(target=reader, daemon=True) for _ in range(3)]
+    for t in threads:
+        t.start()
+    try:
+        # Bounded run; the invariant is deterministic under the lock.
+        for _ in range(20000):
+            if ks.snapshot() == (True, ""):
+                violations.append((True, ""))
+    finally:
+        stop.set()
+        for t in threads:
+            t.join(timeout=5.0)
+
+    assert not violations, f"torn read observed: {violations[:3]}"

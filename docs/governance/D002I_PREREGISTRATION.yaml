@@ -1,0 +1,257 @@
+# D-002I Pre-Registration — null-audit failure-mode investigation (4 hypotheses)
+# ----------------------------------------------------------------
+# Class:  pre-registered falsification protocol (fresh lineage AFTER
+#         D-002H canonical-sweep REFUSED verdict).
+# Date:   2026-05-14
+# Anchor: this file becomes content-addressed at PR merge.
+#         The sha256 of this file inside the merged git tree IS
+#         the contract identity. Do not edit after merge; any
+#         change after the anchor commit is a fresh pre-registration
+#         (D-002K or successor letter), NOT a patch.
+#
+# ----------------------------------------------------------------
+# Critical relationships
+# ----------------------------------------------------------------
+# D-002I IS NOT an amendment of D-002H.
+# D-002I IS NOT a rescue of D-002H or D-002G or D-002C.
+# D-002I IS NOT a claim that D-002H REFUSED was wrong — the
+#   REFUSED verdict was the truthful canonical outcome.
+# D-002I IS NOT an authorisation for any canonical sweep.
+# D-002I IS a SEPARATE scientific contract that opens a new
+#   pre-registered lineage scoped to investigating WHY 42/54
+#   audited cells FAILed the permutation null audit under the
+#   D-002H canonical run.
+# D-002I locks 4 falsifiable hypotheses BEFORE any investigation
+#   is implemented. Each hypothesis is tested in a separate
+#   downstream PR (D-002I-P1/H1..H4) under a pre-committed
+#   protocol — post-hoc tuning is precisely the failure mode
+#   this pre-registration exists to prevent.
+# ----------------------------------------------------------------
+
+study_id: D-002I
+schema_version: D002I-PREREGISTRATION-v1
+lineage_type: fresh_preregistration
+parent_lineage: D-002H
+parent_canonical_run_merge_sha: 250d8069d16ecabdb49b5a20b7cf1d622eddc925
+parent_canonical_run_verdict: REFUSED_NULL_AUDIT_FAIL_D002H
+parent_canonical_run_artifact: artifacts/d002h/canonical/d002h_canonical_run_verdict.json
+parent_null_audit_capsule: artifacts/d002h/canonical/results/d002h_ricci_flow_canonical_v1_2026-05-14/null_audit_capsule.json
+parent_null_audit_n_fail: 42
+parent_null_audit_n_audited: 54
+merged_at_anchor: pending  # set by merge commit
+
+# ----------------------------------------------------------------
+# Substrate scope (inherited from D-002G structural closure)
+# ----------------------------------------------------------------
+substrate_scope:
+  included:
+    - ricci_flow
+  excluded:
+    - block_structured
+    - temporal_coupling
+
+exclusion_reason:
+  block_structured: |
+    Remains seed-deterministic per D-002G structural closure (PR #682
+    sha 8cf5364a). D-002I does NOT re-open this exclusion.
+  temporal_coupling: |
+    Remains seed-deterministic per D-002G structural closure. D-002I
+    does NOT re-open this exclusion.
+
+# ----------------------------------------------------------------
+# Four falsifiable hypotheses — pre-committed BEFORE implementation
+# ----------------------------------------------------------------
+hypotheses:
+  - id: H_I1
+    name: M1 null seed offset degeneracy
+    claim: |
+      The M1 null cohort (null_seed = base_seed + 10000) is marginally
+      degenerate under permutation null audit because seed offset 10000
+      may produce K_null with subtle structural similarity to K_p, even
+      though M1 admissibility verifies bit-distinctness.
+    falsification_protocol: |
+      D-002I-P1/H1 will re-run the null audit only (NOT the canonical
+      sweep) with alternative null_seed_offset_M1 values from the set
+      {100000, 1000000, hash-mixed} on the same locked ricci_flow grid.
+    support_criterion: |
+      aggregate_verdict flips FAIL -> PASS for at least one alternative
+      offset.
+    refutation_criterion: |
+      All alternative offsets retain aggregate_verdict == FAIL.
+    scope: M1 mechanism only
+
+  - id: H_I2
+    name: M3 generator over-fit to precursor marginals
+    claim: |
+      The M3 topology-conditioned null is too smooth. The match tolerance
+      tol_marginal = 0.05 over-fits K_null to K_p marginals, making the
+      cohort statistically indistinguishable from precursor at the
+      permutation null audit level.
+    falsification_protocol: |
+      D-002I-P1/H2 will re-run the null audit only (NOT the canonical
+      sweep) with tol_marginal in {0.01, 0.005, 0.001} (tighter -- the
+      generator must work harder).
+    support_criterion: |
+      aggregate_verdict flips FAIL -> PASS for at least one tighter
+      tolerance.
+    refutation_criterion: |
+      All tighter tolerances retain aggregate_verdict == FAIL.
+    scope: M3 mechanism only
+
+  - id: H_I3
+    name: Signal genuinely below permutation-detectable threshold
+    claim: |
+      The signal magnitude (signal_over_ci ~= 1.08 on sync_auc M1 only)
+      is genuinely too small. Null audit FAIL reflects true signal
+      weakness, not a mechanism design fault.
+    falsification_protocol: |
+      D-002I-P1/H3 will parametrise lambda scaling at the runner level
+      ONLY (NOT a substrate code edit -- that would violate the locked
+      substrate code anchor; the substrate code lock is preserved).
+      The evaluation grid is the doubled-lambda set
+      {0.0, 0.1, 0.2, 0.4, 0.8, 2.0}.
+    support_criterion: |
+      Null audit verdict flips FAIL -> PASS with augmented signal.
+    refutation_criterion: |
+      Signal augmentation does not change the null audit verdict.
+    scope: |
+      Signal-magnitude interpretation only; no substrate code edit;
+      no D-002H prereg edit; this is investigation, not validation.
+
+  - id: H_I4
+    name: Bonferroni n_cells=216 over-correction
+    claim: |
+      D-002H inherited n_cells=216 from the D-002G 3-substrate grid.
+      With the D-002H 18-cell scope, the effective per-cell alpha
+      = 0.05 / 216 = 2.314814e-4 is over-strict. Re-evaluation with
+      n_cells=18 (per-cell alpha = 0.05 / 18 = 2.777778e-3) may change
+      the R2 verdicts.
+    falsification_protocol: |
+      D-002I-P1/H4 will re-derive the verdict from the existing
+      sweep_capsule_v1.json with n_cells=18 (no re-run of the sweep).
+    support_criterion: |
+      R1 ∧ R2 ∧ R3 conjunction flips such that at least one cell PASSes
+      with n_cells=18 -- PROVIDED NULL_AUDIT separately PASSes for that
+      cell. If NULL_AUDIT still FAILs, H_I4 is moot because NULL_AUDIT
+      precedes R1/R2/R3 in the acceptance chain.
+    refutation_criterion: |
+      No R2 verdict change with n_cells=18, OR NULL_AUDIT still FAILs
+      (which renders H_I4 moot regardless of R2 change).
+    scope: |
+      Bonferroni denominator interpretation only; does NOT change the
+      D-002H pre-registration; does NOT re-run the canonical sweep.
+
+# ----------------------------------------------------------------
+# Boundary claims
+# ----------------------------------------------------------------
+forbidden_claims:
+  - "D-002I will produce D-002H PASS"
+  - "D-002I rescues D-002H"
+  - "D-002I rescues D-002G or D-002C"
+  - "D-002I authorises a new canonical sweep"
+  - "canonical sweep will re-run on a new substrate set"
+  - "real-data validated"
+  - "bank-level confirmed"
+  - "cross-substrate generalisation"
+  - "global systemic-risk conclusion"
+  - "block_structured returns to scope"
+  - "temporal_coupling returns to scope"
+  - "M2 returns to scope"
+  - "M6 returns to scope"
+
+allowed_claims:
+  - "D-002I-P1/H1..H4 are 4 falsifiable scoped investigations"
+  - "each hypothesis produces a SUPPORTED or REFUTED scoped verdict"
+  - "investigation outcomes inform whether D-002J (mechanism redesign) is warranted"
+  - "D-002H REFUSED stays the truthful canonical verdict regardless of D-002I outcomes"
+
+# ----------------------------------------------------------------
+# No canonical-run authorisation
+# ----------------------------------------------------------------
+canonical_run_authorized: false
+requires_canonical_authorisation_artifact: false  # D-002I is investigation, not canonical
+investigation_only: true
+
+# ----------------------------------------------------------------
+# Prereg lock - any post-merge edit = fresh D-002K pre-registration
+# ----------------------------------------------------------------
+prereg_lock:
+  locked_at_merge: true
+  edit_policy: fresh_pre_registration_only
+  edit_constitutes: D002K pre-registration (or successor letter)
+
+# ----------------------------------------------------------------
+# Reproducibility envelope inherited from D-002H (read-only baseline)
+# ----------------------------------------------------------------
+inherited_reproducibility_baseline:
+  base_seed_range: [0, 99]
+  null_seed_offset_M1_baseline: 10000
+  null_seed_M3_baseline: 12345
+  m3_topology_conditioned_salt: 523
+  tol_marginal_baseline: 0.05
+  parent_grid:
+    substrates: [ricci_flow]
+    N: [50, 100, 200]
+    lambda_values: [0.0, 0.05, 0.10, 0.20, 0.40, 1.0]
+    n_seeds: 20
+    n_bootstrap: 16
+    total_cells: 18
+
+# ----------------------------------------------------------------
+# Per-hypothesis parameter sweeps (pre-committed; no post-hoc tuning)
+# ----------------------------------------------------------------
+hypothesis_parameter_sets:
+  H_I1:
+    null_seed_offset_M1: [100000, 1000000, "hash_mixed"]
+  H_I2:
+    tol_marginal: [0.01, 0.005, 0.001]
+  H_I3:
+    lambda_grid_augmented: [0.0, 0.1, 0.2, 0.4, 0.8, 2.0]
+    substrate_code_edit: false  # explicit lock
+  H_I4:
+    n_cells_alternative: 18
+    re_run_sweep: false  # explicit lock; re-verdict against existing capsule only
+
+# ----------------------------------------------------------------
+# Relationship to prior lineage
+# ----------------------------------------------------------------
+relationship_to_d002h:
+  d002i_does_not_amend_d002h: true
+  d002i_does_not_rescue_d002h: true
+  d002i_does_not_re_run_d002h_canonical: true
+  d002i_investigates_null_audit_failure_only: true
+  d002h_refused_verdict_remains_truthful_canonical_outcome: true
+
+relationship_to_d002g:
+  d002i_does_not_amend_d002g: true
+  d002i_does_not_rescue_d002g: true
+  d002i_inherits_negative_artifact_chain: true
+  d002i_acknowledges_substrate_exclusion: true
+
+relationship_to_d002c:
+  d002i_does_not_amend_d002c: true
+  d002i_does_not_rescue_d002c: true
+  d002i_does_not_touch_d002c_ledger: true
+  d002c_ledger_sha_at_d002i_prereg: f96ba9b5a2057d2e0bff84afc28578ab316cff73f6dc6673fb0d6d543b8bd6dd
+
+# ----------------------------------------------------------------
+# Decision tree post-investigation (pre-committed)
+# ----------------------------------------------------------------
+decision_tree:
+  - condition: "all 4 hypotheses REFUTED"
+    interpretation: |
+      D-002H REFUSED is structural: the M1+M3 mechanism families on
+      ricci_flow at this signal magnitude are fundamentally insufficient
+      for the permutation null audit. D-002H stays as terminal scoped
+      negative artifact; any forward motion = fresh D-002J pre-reg.
+  - condition: "exactly 1 hypothesis SUPPORTED"
+    interpretation: |
+      Identifies a single dominant failure axis. Forward motion =
+      fresh D-002J pre-registration designed against that axis only.
+      D-002H REFUSED still stands as canonical verdict; D-002I does
+      not retroactively flip it.
+  - condition: "≥ 2 hypotheses SUPPORTED"
+    interpretation: |
+      Multiple confounded failure axes. Forward motion = fresh D-002J
+      pre-reg, but design must orthogonalise the axes before any new
+      canonical run can be authorised.

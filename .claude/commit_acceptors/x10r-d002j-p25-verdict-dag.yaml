@@ -1,0 +1,169 @@
+# Diff-bound commit acceptor for the D-002J-P2.5 verdict DAG
+# bootstrap PR.
+#
+# D-002J-P2.5 is the governance self-anchor: it backfills five per-
+# phase verdict capsules (P0..P2) under a canonical capsule schema,
+# adds the DAG-about-the-DAG verdict (the recursive self-anchor with
+# self_verdict.node_id = D002J-P2.5), ships a deterministic lineage
+# renderer, and locks the topological invariants with a 16-test
+# integrity guard. P2.5 is governance infrastructure only: it does
+# NOT ingest data, does NOT model anything, does NOT execute any
+# null, does NOT authorise any canonical run, does NOT mutate any
+# existing P0/P1/P1A/P1B/P2 artifact, does NOT touch any locked
+# governance file (D-002C ledger / D-002G prereg+rules /
+# D-002H prereg / D-002I prereg / D-002J prereg).
+
+id: x10r-d002j-p25-verdict-dag
+status: ACTIVE
+claim_type: chore
+promise: >-
+  After this PR lands,
+  artifacts/governance/verdicts/ contains five
+  D002J-VERDICT-CAPSULE-v1 JSON capsules (P0, P1, P1A, P1B, P2) plus
+  the DAG-about-the-DAG verdict d002j_verdict_dag_v1.json under schema
+  D002J-VERDICT-DAG-v1 whose dag_self_verdict.node_id is "D002J-P2.5".
+  tools/governance/verdict_dag.py exposes
+  load_capsule / load_dag / check_acyclic / topological_order /
+  detect_orphans / emit_dag_verdict; tools/governance/render_lineage.py
+  re-renders docs/research/D002J_LINEAGE_MAP.md byte-deterministically
+  from the on-disk capsules. tests/governance/test_verdict_dag_integrity.py
+  ships 16 named guards covering acyclicity, the topological order
+  P0->P1->P1A->P1B->P2, P1A retention as TERMINAL_REJECTED, P1B's
+  P1A parent edge, P2's P1B-not-P1A parent edge, canonical-run-not-
+  authorized-anywhere, dag_self_verdict presence, no orphans,
+  load_capsule round-trip, render idempotence, locked-sha byte-exact,
+  and the merge-marker scan. The six locked governance shas remain
+  byte-exact. No source-code, prereg, ledger, ingestion, or canonical-
+  run change.
+
+diff_scope:
+  changed_files:
+    - path: "tools/governance/verdict_dag.py"
+    - path: "tools/governance/render_lineage.py"
+    - path: "tests/governance/test_verdict_dag_integrity.py"
+    - path: "artifacts/governance/verdicts/d002j_p0_verdict_v1.json"
+    - path: "artifacts/governance/verdicts/d002j_p1_verdict_v1.json"
+    - path: "artifacts/governance/verdicts/d002j_p1a_verdict_v1.json"
+    - path: "artifacts/governance/verdicts/d002j_p1b_verdict_v1.json"
+    - path: "artifacts/governance/verdicts/d002j_p2_verdict_v1.json"
+    - path: "artifacts/governance/verdicts/d002j_verdict_dag_v1.json"
+    - path: "docs/research/D002J_LINEAGE_MAP.md"
+    - path: "docs/governance/D002G_CANONICAL_RUN_BLOCKERS.md"
+    - path: ".claude/commit_acceptors/x10r-d002j-p25-verdict-dag.yaml"
+  forbidden_paths:
+    - "docs/governance/D002C_CLAIM_LEDGER.yaml"
+    - "docs/governance/D002C_PREREGISTRATION.yaml"
+    - "docs/governance/D002C_ATTEMPT_2_NULL_AUDIT_FALSIFICATION_REPORT.md"
+    - "docs/governance/D002C_CANONICAL_RUN_REPORT.md"
+    - "docs/governance/D002C_LAUNCH_PROTOCOL.md"
+    - "docs/governance/D002C_NULL_AUDIT_DATA_CONTRACT.md"
+    - "docs/governance/D002C_NULL_AUDIT_GAP_AND_C2_4_A2_SPEC.md"
+    - "docs/governance/D002C_PREFLIGHT_CONTRACT.md"
+    - "docs/governance/D002C_R2_B_SUPPLEMENTARY_NULL_SPEC.md"
+    - "docs/governance/D002C_R2_STRUCTURAL_LIMITATION_NOTE.md"
+    - "docs/governance/D002G_ACCEPTANCE_RULES.md"
+    - "docs/governance/D002G_PREREGISTRATION.yaml"
+    - "docs/governance/D002G_DEGENERATE_NULL_REDESIGN_SPEC.md"
+    - "docs/governance/D002G_M2_TOPOLOGY_PRESERVING_NULL.md"
+    - "docs/governance/D002G_M3_ELIGIBILITY_MATRIX.md"
+    - "docs/governance/D002G_M3_IMPLEMENTATION_REPORT.md"
+    - "docs/governance/D002G_NEGATIVE_SPACE_MAP.md"
+    - "docs/governance/D002G_NONDEGENERATE_NULL_DESIGN.md"
+    - "docs/governance/D002G_P1_DESIGN_ADVERSARIAL_AUDIT.md"
+    - "docs/governance/D002G_P1_IMPLEMENTATION_REPORT.md"
+    - "docs/governance/D002G_P2_M2_IMPLEMENTATION_REPORT.md"
+    - "docs/governance/D002G_P3_DISCOVERY_REPORT.md"
+    - "docs/governance/D002G_P3_ELIGIBILITY_MATRIX.md"
+    - "docs/governance/D002G_P3_IMPLEMENTATION_REPORT.md"
+    - "docs/governance/D002G_P3_M3_PREREGISTRATION.md"
+    - "docs/governance/D002G_P3_NULL_DOMAIN_CONTRACTS.md"
+    - "docs/governance/D002G_STRUCTURAL_CLOSURE_REPORT.md"
+    - "docs/governance/D002H_PREREGISTRATION.yaml"
+    - "docs/governance/D002H_CANONICAL_RUN_AUTHORIZATION_GATES.md"
+    - "docs/governance/D002H_CANONICAL_RUN_REPORT.md"
+    - "docs/governance/D002H_CLAIM_BOUNDARY.md"
+    - "docs/governance/D002H_GATE_B_REPORT.md"
+    - "docs/governance/D002H_GATE_C_CANONICAL_GRID.md"
+    - "docs/governance/D002H_GATE_D_FORBIDDEN_CLAIM_SCAN.md"
+    - "docs/governance/D002H_GATE_E_LOCKED_FILE_REPORT.md"
+    - "docs/governance/D002H_GATE_F_AUTHORIZATION_REPORT.md"
+    - "docs/governance/D002H_GATE_G_CI_LOCK_REPORT.md"
+    - "docs/governance/D002H_R2B_INAPPLICABILITY_NOTE.md"
+    - "docs/governance/D002H_SCOPE_RATIONALE.md"
+    - "docs/governance/D002I_CLAIM_BOUNDARY.md"
+    - "docs/governance/D002I_INVESTIGATION_RATIONALE.md"
+    - "docs/governance/D002I_PREREGISTRATION.yaml"
+    - "docs/governance/D002J_PREREGISTRATION.yaml"
+    - "research/systemic_risk/"
+    - "scripts/x10r_d002c_attempt_2_null_audit.py"
+    - "scripts/x10r_d002g_gate_d_scan.py"
+    - "scripts/x10r_d002h_gate_d_scan.py"
+    - "scripts/x10r_d002h_canonical_sweep.py"
+    - "artifacts/d002c/"
+    - "artifacts/d002g/"
+    - "artifacts/d002h/"
+    - "artifacts/d002i/"
+    - "artifacts/d002j/prereg/"
+    - "artifacts/d002j/data_registry/"
+    - "artifacts/d002j/crisis_windows/"
+    - "artifacts/d002j/ingestion/"
+required_python_symbols:
+  - "tests.governance.test_verdict_dag_integrity.test_all_phases_p0_p2_have_verdict_capsules"
+  - "tests.governance.test_verdict_dag_integrity.test_dag_is_acyclic"
+  - "tests.governance.test_verdict_dag_integrity.test_dag_topological_order_matches_phase_sequence"
+  - "tests.governance.test_verdict_dag_integrity.test_p1a_rejected_retained_as_terminal_rejected"
+  - "tests.governance.test_verdict_dag_integrity.test_p1a_failure_retention_non_empty"
+  - "tests.governance.test_verdict_dag_integrity.test_p1a_allowed_next_includes_p1b_repair_path"
+  - "tests.governance.test_verdict_dag_integrity.test_p1b_parent_includes_p1a"
+  - "tests.governance.test_verdict_dag_integrity.test_p2_parent_is_p1b_not_p1a_directly"
+  - "tests.governance.test_verdict_dag_integrity.test_p2_allowed_next_includes_p25_and_p3"
+  - "tests.governance.test_verdict_dag_integrity.test_canonical_run_not_authorized_anywhere_in_dag"
+  - "tests.governance.test_verdict_dag_integrity.test_dag_self_verdict_present"
+  - "tests.governance.test_verdict_dag_integrity.test_no_orphan_nodes"
+  - "tests.governance.test_verdict_dag_integrity.test_all_capsule_jsons_parse_via_load_capsule"
+  - "tests.governance.test_verdict_dag_integrity.test_lineage_map_md_renders_deterministically"
+  - "tests.governance.test_verdict_dag_integrity.test_locked_governance_shas_byte_exact"
+  - "tests.governance.test_verdict_dag_integrity.test_no_unresolved_merge_markers"
+expected_signal: >-
+  PYTHONPATH=. python -m pytest
+  tests/governance/test_verdict_dag_integrity.py -q passes all 16
+  DAG integrity guards; six capsule JSON artifacts validate with the
+  pinned D002J-VERDICT-CAPSULE-v1 / D002J-VERDICT-DAG-v1 schemas;
+  dag_self_verdict.node_id == "D002J-P2.5"; six locked governance shas
+  all byte-exact; render_lineage.py produces byte-identical output on
+  repeat runs.
+measurement_command: >-
+  bash -c 'set -e;
+  PYTHONPATH=. python -m pytest tests/governance/test_verdict_dag_integrity.py -q;
+  PYTHONPATH=. python -m tools.governance.verdict_dag check -v;
+  PYTHONPATH=. python -m tools.governance.render_lineage --out /tmp/_d002j_lm1.md;
+  PYTHONPATH=. python -m tools.governance.render_lineage --out /tmp/_d002j_lm2.md;
+  diff /tmp/_d002j_lm1.md /tmp/_d002j_lm2.md;
+  test -f artifacts/governance/verdicts/d002j_verdict_dag_v1.json;
+  python -m json.tool artifacts/governance/verdicts/d002j_verdict_dag_v1.json > /dev/null;
+  grep -q "D002J-VERDICT-DAG-v1" artifacts/governance/verdicts/d002j_verdict_dag_v1.json;
+  grep -q "VERDICT_DAG_BOOTSTRAPPED" artifacts/governance/verdicts/d002j_verdict_dag_v1.json;
+  grep -q "D002J-P2.5" docs/governance/D002G_CANONICAL_RUN_BLOCKERS.md;
+  test "$(sha256sum docs/governance/D002J_PREREGISTRATION.yaml | awk "{print \$1}")" = "f3dc65b7e64b96eafe6f23ca8bdd0e05dc9bf95b12c2658b227bd0340f7975a0"'
+signal_artifact: "artifacts/governance/verdicts/d002j_verdict_dag_v1.json"
+falsifier:
+  command: >-
+    bash -c 'set -e;
+    PYTHONPATH=. python -m pytest tests/governance/test_verdict_dag_integrity.py -q || exit 1;
+    PYTHONPATH=. python -m tools.governance.verdict_dag check || exit 2;
+    grep -q "VERDICT_DAG_BOOTSTRAPPED" artifacts/governance/verdicts/d002j_verdict_dag_v1.json || exit 3;
+    grep -q "D002J-P2.5" docs/governance/D002G_CANONICAL_RUN_BLOCKERS.md || exit 4;
+    test "$(sha256sum docs/governance/D002J_PREREGISTRATION.yaml | awk "{print \$1}")" = "f3dc65b7e64b96eafe6f23ca8bdd0e05dc9bf95b12c2658b227bd0340f7975a0" || exit 5'
+  description: >-
+    Probes D-002J-P2.5 verdict DAG bootstrap: 16 tests pass; the
+    verdict_dag CLI validates the on-disk DAG; the DAG verdict JSON
+    declares decision VERDICT_DAG_BOOTSTRAPPED; BLOCKERS appended
+    with D-002J-P2.5 section; D-002J prereg sha byte-exact UNCHANGED.
+rollback_command: >-
+  bash -c 'rm -rf artifacts/governance/verdicts/ && git checkout HEAD -- docs/governance/D002G_CANONICAL_RUN_BLOCKERS.md && rm -f tools/governance/verdict_dag.py tools/governance/render_lineage.py tests/governance/test_verdict_dag_integrity.py docs/research/D002J_LINEAGE_MAP.md .claude/commit_acceptors/x10r-d002j-p25-verdict-dag.yaml'
+rollback_verification_command: >-
+  bash -c 'test ! -f .claude/commit_acceptors/x10r-d002j-p25-verdict-dag.yaml && test ! -d artifacts/governance/verdicts'
+memory_update_type: append
+ledger_path: ".claude/commit_acceptors/x10r-d002j-p25-verdict-dag.yaml"
+report_path: "docs/research/D002J_LINEAGE_MAP.md"
+evidence: []

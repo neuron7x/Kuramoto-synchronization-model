@@ -1,4 +1,5 @@
-# SPDX-License-Identifier: LicenseRef-TradePulse-Proprietary
+# Copyright (c) 2023-2026 Yaroslav Vasylenko (neuron7xLab)
+# SPDX-License-Identifier: MIT
 """Thread watchdog supervising background worker threads.
 
 The watchdog keeps a registry of worker callables, restarting them if the
@@ -175,9 +176,7 @@ class Watchdog:
         """Register and immediately start a worker."""
 
         if self._stopping:
-            raise RuntimeError(
-                "Cannot register workers after watchdog has been stopped"
-            )
+            raise RuntimeError("Cannot register workers after watchdog has been stopped")
 
         if args is None:
             args = ()
@@ -209,27 +208,19 @@ class Watchdog:
                     },
                 )
 
-        thread = threading.Thread(
-            target=_runner, name=f"{self._name}-{name}", daemon=True
-        )
+        thread = threading.Thread(target=_runner, name=f"{self._name}-{name}", daemon=True)
         spec.thread = thread
         thread.start()
 
     def _monitor_loop(self) -> None:
         next_heartbeat = time.monotonic() + self._heartbeat_interval
-        next_probe = (
-            time.monotonic() + self._health_probe_interval if self._health_url else None
-        )
+        next_probe = time.monotonic() + self._health_probe_interval if self._health_url else None
 
         while not self._stop_event.wait(self._monitor_interval):
             self._check_workers()
 
             now = time.monotonic()
-            if (
-                self._redis_client is not None
-                and self._heartbeat_channel
-                and now >= next_heartbeat
-            ):
+            if self._redis_client is not None and self._heartbeat_channel and now >= next_heartbeat:
                 self._publish_heartbeat()
                 next_heartbeat = now + self._heartbeat_interval
 
@@ -267,15 +258,11 @@ class Watchdog:
             name: bool(spec.thread and spec.thread.is_alive())
             for name, spec in list(self._workers.items())
         }
-        payload = json.dumps(
-            {"watchdog": self._name, "timestamp": time.time(), "workers": status}
-        )
+        payload = json.dumps({"watchdog": self._name, "timestamp": time.time(), "workers": status})
         try:
             if self._redis_client is not None and self._heartbeat_channel:
                 self._redis_client.publish(self._heartbeat_channel, payload)
-        except (
-            Exception
-        ) as exc:  # pragma: no cover - redis outages only exercised in production
+        except Exception as exc:  # pragma: no cover - redis outages only exercised in production
             LOGGER.warning(
                 "Failed to publish watchdog heartbeat",
                 extra={"event": "watchdog.heartbeat_error", "error": str(exc)},

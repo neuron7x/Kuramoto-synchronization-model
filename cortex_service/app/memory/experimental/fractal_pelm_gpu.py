@@ -1,3 +1,5 @@
+# Copyright (c) 2023-2026 Yaroslav Vasylenko (neuron7xLab)
+# SPDX-License-Identifier: MIT
 """Experimental GPU/CPU backend for phase-aware vector retrieval.
 
 This module provides FractalPELMGPU, an EXPERIMENTAL memory backend
@@ -60,9 +62,7 @@ def _get_torch() -> Any:
     global _torch_module, _TORCH_AVAILABLE
 
     if _TORCH_AVAILABLE is False:
-        raise ImportError(
-            "FractalPELMGPU requires PyTorch. Install it with: pip install torch"
-        )
+        raise ImportError("FractalPELMGPU requires PyTorch. Install it with: pip install torch")
 
     if _torch_module is None:
         try:
@@ -214,9 +214,7 @@ class FractalPELMGPU:
         if self.capacity <= 0:
             raise ValueError(f"capacity must be positive, got {self.capacity}")
         if not 0.0 <= self.fractal_weight <= 1.0:
-            raise ValueError(
-                f"fractal_weight must be in [0, 1], got {self.fractal_weight}"
-            )
+            raise ValueError(f"fractal_weight must be in [0, 1], got {self.fractal_weight}")
 
         # Initialize torch (will raise ImportError if not available)
         self._torch = _get_torch()
@@ -384,20 +382,17 @@ class FractalPELMGPU:
 
         if n_vectors != n_phases:
             raise ValueError(
-                f"vectors and phases must have same length, "
-                f"got {n_vectors} and {n_phases}"
+                f"vectors and phases must have same length, got {n_vectors} and {n_phases}"
             )
 
         if vectors_t.shape[1] != self.dimension:
             raise ValueError(
-                f"vectors must have dimension {self.dimension}, "
-                f"got {vectors_t.shape[1]}"
+                f"vectors must have dimension {self.dimension}, got {vectors_t.shape[1]}"
             )
 
         if metadatas is not None and len(metadatas) != n_vectors:
             raise ValueError(
-                f"metadatas must have same length as vectors, "
-                f"got {len(metadatas)} and {n_vectors}"
+                f"metadatas must have same length as vectors, got {len(metadatas)} and {n_vectors}"
             )
 
         # Convert back to numpy for storage (CPU-side)
@@ -531,8 +526,7 @@ class FractalPELMGPU:
 
         if query_t.shape[1] != self.dimension:
             raise ValueError(
-                f"query_vectors must have dimension {self.dimension}, "
-                f"got {query_t.shape[1]}"
+                f"query_vectors must have dimension {self.dimension}, got {query_t.shape[1]}"
             )
 
         # Build stored vectors matrix
@@ -566,15 +560,12 @@ class FractalPELMGPU:
             sim_scores = cosine_scores[q_idx]
 
             # Compute phase coherence
-            phase_coherence = self._compute_phase_coherence(
-                query_phase, stored_phases_t
-            )
+            phase_coherence = self._compute_phase_coherence(query_phase, stored_phases_t)
 
             # Combine scores: weighted average of cosine and phase coherence
             base_weight = 1.0 - self.fractal_weight
             combined_scores = base_weight * (
-                _DEFAULT_COSINE_WEIGHT * sim_scores
-                + _DEFAULT_PHASE_WEIGHT * phase_coherence
+                _DEFAULT_COSINE_WEIGHT * sim_scores + _DEFAULT_PHASE_WEIGHT * phase_coherence
             )
 
             # Add fractal weighting if enabled
@@ -597,9 +588,7 @@ class FractalPELMGPU:
                 self._to_numpy(top_scores), self._to_numpy(top_indices).astype(int)
             ):
                 entry = self._entries[idx]
-                query_results.append(
-                    (float(score), entry.vector.copy(), entry.metadata)
-                )
+                query_results.append((float(score), entry.vector.copy(), entry.metadata))
 
             all_results.append(query_results)
 

@@ -1,3 +1,5 @@
+# Copyright (c) 2023-2026 Yaroslav Vasylenko (neuron7xLab)
+# SPDX-License-Identifier: MIT
 """Sentiment stream aggregation for alternative datasets."""
 
 from __future__ import annotations
@@ -44,22 +46,18 @@ class SentimentFeatureBuilder:
                 }
             )
         if not rows:
-            return pd.DataFrame(
-                columns=["timestamp", "source", "score", "volume"]
-            ).set_index("timestamp")
+            return pd.DataFrame(columns=["timestamp", "source", "score", "volume"]).set_index(
+                "timestamp"
+            )
         frame = pd.DataFrame(rows)
         return frame.set_index("timestamp").sort_index()
 
-    def aggregate(
-        self, signals: Iterable[SentimentSignal], freq: str = "1min"
-    ) -> pd.DataFrame:
+    def aggregate(self, signals: Iterable[SentimentSignal], freq: str = "1min") -> pd.DataFrame:
         """Return a resampled view containing weighted sentiment statistics."""
 
         frame = self._prepare(signals)
         if frame.empty:
-            return pd.DataFrame(
-                columns=["sentiment_vwap", "sentiment_momentum", "sources"]
-            )
+            return pd.DataFrame(columns=["sentiment_vwap", "sentiment_momentum", "sources"])
 
         grouped = frame.resample(freq)
         weight_sum = grouped["volume"].sum().replace(0.0, np.nan)
@@ -67,9 +65,7 @@ class SentimentFeatureBuilder:
             lambda batch: float((batch["score"] * batch["volume"]).sum()),
         )
         vwap = (weighted_score / weight_sum).fillna(0.0).rename("sentiment_vwap")
-        momentum = (
-            grouped["score"].mean().diff().fillna(0.0).rename("sentiment_momentum")
-        )
+        momentum = grouped["score"].mean().diff().fillna(0.0).rename("sentiment_momentum")
         sources = grouped["source"].nunique().rename("sources").fillna(0).astype(int)
         return pd.concat([vwap, momentum, sources], axis=1).fillna(0.0)
 
@@ -82,9 +78,7 @@ class SentimentFeatureBuilder:
         recent = frame.iloc[-50:]
         weights = recent["volume"].replace(0.0, 1.0)
         vwap = float((recent["score"] * weights).sum() / weights.sum())
-        momentum = float(
-            recent["score"].iloc[-5:].mean() - recent["score"].iloc[:5].mean()
-        )
+        momentum = float(recent["score"].iloc[-5:].mean() - recent["score"].iloc[:5].mean())
         return {
             "sentiment_vwap": vwap,
             "sentiment_momentum": momentum,

@@ -1,3 +1,5 @@
+# Copyright (c) 2023-2026 Yaroslav Vasylenko (neuron7xLab)
+# SPDX-License-Identifier: MIT
 """Property-based tests for tracing failover resilience."""
 
 from __future__ import annotations
@@ -77,12 +79,8 @@ def _load_tracing():
         st.sampled_from(FALSY_VALUES),
     ).filter(lambda pair: pair[0] != pair[1]),
     failover_key=st.sampled_from(FAILOVER_KEYS),
-    hot_ratio=st.floats(
-        min_value=0.0, max_value=1.0, allow_nan=False, allow_infinity=False
-    ),
-    default_ratio=st.floats(
-        min_value=0.0, max_value=1.0, allow_nan=False, allow_infinity=False
-    ),
+    hot_ratio=st.floats(min_value=0.0, max_value=1.0, allow_nan=False, allow_infinity=False),
+    default_ratio=st.floats(min_value=0.0, max_value=1.0, allow_nan=False, allow_infinity=False),
     use_matching_pattern=st.booleans(),
     additional_attrs=st.dictionaries(
         keys=st.text(IDENTIFIER_CHARS, min_size=3, max_size=16),
@@ -134,7 +132,6 @@ def _exercise_sampler(
     use_matching_pattern: bool,
     additional_attrs: Mapping[str, Any],
 ) -> None:
-
     truthy_value, falsy_value = truthy_pair
     failover_truthy, failover_falsy = failover_pair
 
@@ -185,9 +182,7 @@ def _exercise_sampler(
     sampler._hot_sampler.calls.clear()
     sampler._default_sampler.calls.clear()
 
-    sampler.should_sample(
-        None, 2, non_failover_stage, None, non_failover_attributes, None
-    )
+    sampler.should_sample(None, 2, non_failover_stage, None, non_failover_attributes, None)
 
     assert len(sampler._hot_sampler.calls) == 0
     assert len(sampler._default_sampler.calls) == 1

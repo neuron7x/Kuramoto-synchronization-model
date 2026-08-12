@@ -1,3 +1,5 @@
+# Copyright (c) 2023-2026 Yaroslav Vasylenko (neuron7xLab)
+# SPDX-License-Identifier: MIT
 """Release gating utilities combining latency, compliance, and checklist status."""
 
 from __future__ import annotations
@@ -73,8 +75,7 @@ class ReleaseGateEvaluator:
                 name,
                 False,
                 reason=(
-                    f"p95 latency {p95:.3f}ms exceeds target"
-                    f" {self.latency_p95_target_ms:.3f}ms"
+                    f"p95 latency {p95:.3f}ms exceeds target {self.latency_p95_target_ms:.3f}ms"
                 ),
                 metrics=metrics,
             )
@@ -90,9 +91,7 @@ class ReleaseGateEvaluator:
             )
         return ReleaseGateResult(name, True, metrics=metrics)
 
-    def evaluate_compliance(
-        self, reports: Sequence[ComplianceReport]
-    ) -> ReleaseGateResult:
+    def evaluate_compliance(self, reports: Sequence[ComplianceReport]) -> ReleaseGateResult:
         """Ensure pre-trade compliance did not block or flag orders."""
 
         name = "compliance"
@@ -161,9 +160,7 @@ class ReleaseGateEvaluator:
         data = json.loads(path.read_text(encoding="utf-8"))
         return self.evaluate_checklist(data)
 
-    def aggregate_results(
-        self, results: Sequence[ReleaseGateResult]
-    ) -> ReleaseGateResult:
+    def aggregate_results(self, results: Sequence[ReleaseGateResult]) -> ReleaseGateResult:
         """Collapse individual gate results into a single release signal."""
 
         aggregate_metrics: MutableMapping[str, float] = {}

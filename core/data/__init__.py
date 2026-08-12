@@ -1,11 +1,12 @@
-# SPDX-License-Identifier: LicenseRef-TradePulse-Proprietary
-"""Core data utilities and models for TradePulse."""
+# Copyright (c) 2023-2026 Yaroslav Vasylenko (neuron7xLab)
+# SPDX-License-Identifier: MIT
+"""Core data utilities and models for GeoSync."""
 
 from __future__ import annotations
 
 import os
 
-_LIGHT_IMPORT = os.environ.get("TRADEPULSE_LIGHT_DATA_IMPORT") == "1"
+_LIGHT_IMPORT = os.environ.get("GEOSYNC_LIGHT_DATA_IMPORT") == "1"
 
 if not _LIGHT_IMPORT:
     import numpy as _np

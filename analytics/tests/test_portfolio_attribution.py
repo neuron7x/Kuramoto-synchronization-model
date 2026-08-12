@@ -1,3 +1,5 @@
+# Copyright (c) 2023-2026 Yaroslav Vasylenko (neuron7xLab)
+# SPDX-License-Identifier: MIT
 from __future__ import annotations
 
 import pandas as pd
@@ -135,8 +137,7 @@ def test_portfolio_attribution_report_generation() -> None:
     strategy_breakdown = {item.name: item for item in report.strategy_breakdown}
     assert set(strategy_breakdown) == set(strategy_totals.index)
     assert (
-        pytest.approx(strategy_totals["alpha"], rel=1e-9)
-        == strategy_breakdown["alpha"].total_pnl
+        pytest.approx(strategy_totals["alpha"], rel=1e-9) == strategy_breakdown["alpha"].total_pnl
     )
 
     factor_contributions = inputs["factor_exposures"] * inputs["factor_returns"]
@@ -157,9 +158,7 @@ def test_portfolio_attribution_report_generation() -> None:
     assert 0.0 <= hedge.effectiveness <= 1.0
 
     assert report.regime_stability, "regime stability metrics expected"
-    alpha_metrics = next(
-        item for item in report.regime_stability if item.strategy == "alpha"
-    )
+    alpha_metrics = next(item for item in report.regime_stability if item.strategy == "alpha")
     assert alpha_metrics.metrics, "per-regime metrics should exist"
 
     assert report.alerts, "expected concentration alerts based on configured limits"

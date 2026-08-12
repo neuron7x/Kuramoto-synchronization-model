@@ -18,7 +18,7 @@ export default defineConfig({
     video: 'retain-on-failure',
   },
   metadata: {
-    product: 'TradePulse Dashboard',
+    product: 'GeoSync Dashboard',
     surface: 'ui-signals',
   },
 });

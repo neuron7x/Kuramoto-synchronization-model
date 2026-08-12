@@ -1,5 +1,7 @@
-# SPDX-License-Identifier: LicenseRef-TradePulse-Proprietary
+# Copyright (c) 2023-2026 Yaroslav Vasylenko (neuron7xLab)
+# SPDX-License-Identifier: MIT
 """Data structures for level 2 order book ingestion."""
+
 from __future__ import annotations
 
 from dataclasses import dataclass
@@ -51,10 +53,7 @@ class OrderBookDiff:
         if self.sequence_end < self.sequence_start:
             msg = "sequence_end must be >= sequence_start"
             raise ValueError(msg)
-        if (
-            self.ts_event.tzinfo is None
-            or self.ts_event.tzinfo.utcoffset(self.ts_event) is None
-        ):
+        if self.ts_event.tzinfo is None or self.ts_event.tzinfo.utcoffset(self.ts_event) is None:
             raise ValueError("ts_event must be timezone-aware")
         if (
             self.ts_arrival.tzinfo is None
@@ -78,10 +77,7 @@ class OrderBookSnapshot:
     source: str
 
     def __post_init__(self) -> None:
-        if (
-            self.ts_event.tzinfo is None
-            or self.ts_event.tzinfo.utcoffset(self.ts_event) is None
-        ):
+        if self.ts_event.tzinfo is None or self.ts_event.tzinfo.utcoffset(self.ts_event) is None:
             raise ValueError("ts_event must be timezone-aware")
         if (
             self.ts_arrival.tzinfo is None

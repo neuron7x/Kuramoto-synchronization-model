@@ -1,0 +1,77 @@
+# CALIB-GRID invariant extension registry
+# Scope: tests/research/calibration/test_grid_kuramoto.py
+# This file is an extension surface. Promotion into INVARIANTS.yaml requires
+# a later atomic registry merge after local CI and evidence-matrix regeneration.
+
+calib_grid:
+  grid_contract:
+    id: INV-CALIB-GRID-CONTRACT
+    type: universal
+    statement: "Embedded grid fixtures preserve finite dimensions, symmetric susceptance, zero diagonal, positive voltage/inertia/damping, and mean-centred injection where required by the reduced lossless model."
+    test_type: property_test
+    priority: P0
+    tests: tests/research/calibration/test_grid_kuramoto.py
+
+  grid_fail_closed:
+    id: INV-CALIB-GRID-FAIL-CLOSED
+    type: universal
+    statement: "Malformed grid inputs must raise typed validation errors rather than being silently repaired."
+    test_type: property_test
+    priority: P0
+    tests: tests/research/calibration/test_grid_kuramoto.py
+
+  db_reduction_formula:
+    id: INV-CALIB-GRID-DB-REDUCTION
+    type: algebraic
+    statement: "Reduced coupling obeys K_ij = |V_i||V_j|B_ij to floating precision with zero diagonal and symmetry inherited from the susceptance matrix."
+    test_type: property_test
+    priority: P0
+    tests: tests/research/calibration/test_grid_kuramoto.py
+
+  rotating_gauge:
+    id: INV-CALIB-GRID-GAUGE
+    type: algebraic
+    statement: "Natural frequencies derived from P_i/d_i are mean removed into a rotating reference gauge while preserving relative ordering."
+    test_type: property_test
+    priority: P0
+    tests: tests/research/calibration/test_grid_kuramoto.py
+
+  db_scale_invariance:
+    id: INV-CALIB-GRID-DB-SCALE
+    type: algebraic
+    statement: "Dorfler-Bullo critical scale transforms as s_crit(sK, omega) = s_crit(K, omega) / s for uniform positive coupling scale s."
+    test_type: property_test
+    priority: P0
+    tests: tests/research/calibration/test_grid_kuramoto.py
+
+  db_disconnected_fail_closed:
+    id: INV-CALIB-GRID-DB-FAIL-CLOSED
+    type: conditional
+    statement: "Disconnected coupling graphs must fail closed for critical-coupling estimation because no global synchronization threshold is defined."
+    test_type: property_test
+    priority: P0
+    tests: tests/research/calibration/test_grid_kuramoto.py
+
+  instrument_soundness:
+    id: INV-CALIB-GRID-INSTRUMENT-SOUNDNESS
+    type: statistical
+    statement: "In the estimator design regime with matched first-order dynamics and persistent excitation, topology or coupling recovery must beat the documented out-of-regime failure floor."
+    test_type: statistical_test
+    priority: P0
+    tests: tests/research/calibration/test_grid_kuramoto.py
+
+  swing_recovery:
+    id: INV-CALIB-GRID-SWING-RECOVERY
+    type: statistical
+    statement: "On matched noiseless swing data with persistent excitation, the swing-aware estimator must recover K, P, and frequency within predeclared relative-error bounds."
+    test_type: statistical_test
+    priority: P0
+    tests: tests/research/calibration/test_grid_kuramoto.py
+
+  pe_fail_closed:
+    id: INV-CALIB-GRID-PE-FAIL-CLOSED
+    type: conditional
+    statement: "Rank-deficient phase-locked trajectories must trigger the persistent-excitation guard rather than emit a biased coupling estimate."
+    test_type: property_test
+    priority: P0
+    tests: tests/research/calibration/test_grid_kuramoto.py

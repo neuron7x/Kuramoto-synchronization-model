@@ -1,3 +1,5 @@
+# Copyright (c) 2023-2026 Yaroslav Vasylenko (neuron7xLab)
+# SPDX-License-Identifier: MIT
 """Lifecycle management for system components.
 
 This module provides lifecycle coordination for components, ensuring proper
@@ -213,9 +215,7 @@ class LifecycleManager:
                 if self._on_error:
                     self._on_error(name, exc)
                 if stop_on_error:
-                    raise RuntimeError(
-                        f"Component initialization failed: {name}"
-                    ) from exc
+                    raise RuntimeError(f"Component initialization failed: {name}") from exc
 
         return initialized
 
@@ -264,9 +264,7 @@ class LifecycleManager:
                     )
                     logger.info(f"Component {name} started successfully")
                 elif component.status != ComponentStatus.RUNNING:
-                    logger.warning(
-                        f"Component {name} not in INITIALIZED state, skipping start"
-                    )
+                    logger.warning(f"Component {name} not in INITIALIZED state, skipping start")
             except Exception as exc:
                 logger.error(f"Failed to start component {name}: {exc}")
                 self._emit_event(
@@ -403,9 +401,7 @@ class LifecycleManager:
 
             if remaining_time <= 0:
                 if shutdown_config.force_after_timeout:
-                    logger.warning(
-                        "Shutdown timeout exceeded, force stopping remaining components"
-                    )
+                    logger.warning("Shutdown timeout exceeded, force stopping remaining components")
                     # Force stop remaining components
                     for remaining_name in order[order.index(name) :]:
                         try:
@@ -417,14 +413,10 @@ class LifecycleManager:
                                 component.stop()
                                 stopped.append(remaining_name)
                         except Exception as exc:
-                            logger.error(
-                                f"Force stop failed for {remaining_name}: {exc}"
-                            )
+                            logger.error(f"Force stop failed for {remaining_name}: {exc}")
                     break
                 else:
-                    logger.warning(
-                        "Shutdown timeout exceeded, skipping remaining components"
-                    )
+                    logger.warning("Shutdown timeout exceeded, skipping remaining components")
                     break
 
             try:
@@ -458,8 +450,7 @@ class LifecycleManager:
 
         total_time = time.monotonic() - start_time
         logger.info(
-            f"Graceful shutdown completed: {len(stopped)} components stopped "
-            f"in {total_time:.2f}s"
+            f"Graceful shutdown completed: {len(stopped)} components stopped in {total_time:.2f}s"
         )
         return stopped
 
@@ -484,9 +475,7 @@ class LifecycleManager:
                         f"Cannot initialize {name}: dependency {dep} is not initialized"
                     )
             elif not self._registry.has_capability(dep):
-                raise RuntimeError(
-                    f"Cannot initialize {name}: dependency {dep} is not available"
-                )
+                raise RuntimeError(f"Cannot initialize {name}: dependency {dep} is not available")
 
         component.initialize()
 
@@ -510,9 +499,7 @@ class LifecycleManager:
                     ComponentStatus.RUNNING,
                     ComponentStatus.DEGRADED,
                 }:
-                    raise RuntimeError(
-                        f"Cannot start {name}: dependency {dep} is not running"
-                    )
+                    raise RuntimeError(f"Cannot start {name}: dependency {dep} is not running")
 
         component.start()
 
@@ -746,8 +733,7 @@ class LifecycleManager:
                         )
                     )
                     logger.info(
-                        f"Component {name} recovered successfully after "
-                        f"{attempt} attempt(s)"
+                        f"Component {name} recovered successfully after {attempt} attempt(s)"
                     )
                     return True
 
@@ -757,9 +743,7 @@ class LifecycleManager:
                     time.sleep(current_delay)
                     current_delay *= 2  # Exponential backoff
 
-        logger.error(
-            f"Failed to recover component {name} after {max_attempts} attempts"
-        )
+        logger.error(f"Failed to recover component {name} after {max_attempts} attempts")
         return False
 
     def recover_all_failed(

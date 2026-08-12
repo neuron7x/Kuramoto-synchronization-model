@@ -1,17 +1,17 @@
-# Reality Map — TradePulse v0.1.0
+# Reality Map — GeoSync v0.1.0
 
 ## Product Identity
-- **Name**: TradePulse
+- **Name**: GeoSync
 - **Version**: 0.1.0 (pre-release)
-- **Package name**: `tradepulse` (PyPI-style)
-- **License**: Proprietary (LicenseRef-TradePulse-Proprietary)
+- **Package name**: `geosync` (PyPI-style)
+- **License**: MIT
 
 ## Canonical Namespace
-- **Canonical**: `tradepulse.*` lives in `src/tradepulse/`
-- **Active top-level packages**: `core`, `backtest`, `execution`, `analytics`, `modules`, `tradepulse`
+- **Canonical**: `geosync.*` lives in `src/geosync/`
+- **Active top-level packages**: `core`, `backtest`, `execution`, `analytics`, `modules`, `geosync`
 - **Legacy shim**: `core/__init__.py` says "Legacy package shim" but golden path imports from `core.*` directly
-- **Reality**: Golden path uses `core.*` and `backtest.*` as primary imports, NOT `src.tradepulse.*`
-- **Package discovery**: `pyproject.toml` uses `where=["."]` (flat layout), includes both `core` and `tradepulse`
+- **Reality**: Golden path uses `core.*` and `backtest.*` as primary imports, NOT `src.geosync.*`
+- **Package discovery**: `pyproject.toml` uses `where=["."]` (flat layout), includes both `core` and `geosync`
 
 ## Canonical Entrypoints
 1. `examples/quick_start.py` — primary demo (synthetic data + Kuramoto-Ricci analysis)
@@ -20,10 +20,10 @@
 4. `python -m build` — produces wheel + sdist
 
 ## Architecture Drift (Observed)
-- Repo name: "Kuramoto-synchronization-model-main" vs product name "TradePulse"
+- Repo name: "Kuramoto-synchronization-model-main" vs product name "GeoSync"
 - `core/` labeled "legacy" in its __init__.py but is the primary import surface for golden path
-- `src/tradepulse/` is `__CANONICAL__ = True` but not used by examples or tests
-- Two `tradepulse/` directories: top-level (neural_controller, risk, data_quality) and `src/tradepulse/`
+- `src/geosync/` is `__CANONICAL__ = True` but not used by examples or tests
+- Two `geosync/` directories: top-level (neural_controller, risk, data_quality) and `src/geosync/`
 - Mixed use of `PYTHONPATH=.` (Makefile) and `pythonpath = .` (pytest.ini)
 
 ## Likely Blockers (Pre-baseline)
@@ -39,6 +39,6 @@
 
 ## Build Surface
 - `python -m build` via setuptools + setuptools_scm
-- Produces: `tradepulse-0.1.0-py3-none-any.whl` (~2MB), `tradepulse-0.1.0.tar.gz` (~1.7MB)
+- Produces: `geosync-0.1.0-py3-none-any.whl` (~2MB), `geosync-0.1.0.tar.gz` (~1.7MB)
 - Lock files: `requirements.lock`, `requirements-dev.lock` (pip-compile generated)
 - Security constraints: `constraints/security.txt`

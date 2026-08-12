@@ -1,4 +1,5 @@
-# SPDX-License-Identifier: LicenseRef-TradePulse-Proprietary
+# Copyright (c) 2023-2026 Yaroslav Vasylenko (neuron7xLab)
+# SPDX-License-Identifier: MIT
 """Foundational feature/block interfaces for indicator transformers.
 
 These contracts make the fractal composition of indicators explicit: every
@@ -9,10 +10,9 @@ an existing block (or nested block) without bespoke glue code.
 
 from __future__ import annotations
 
-import asyncio
 from abc import ABC, abstractmethod
 from collections.abc import Iterable, Mapping, MutableSequence, Sequence
-from concurrent.futures import ProcessPoolExecutor
+from concurrent.futures import ProcessPoolExecutor, ThreadPoolExecutor
 from dataclasses import dataclass, field
 from functools import partial
 from typing import Any, Callable, Literal
@@ -45,16 +45,12 @@ class BaseFeature(ABC):
     def transform(self, data: FeatureInput, **kwargs: Any) -> FeatureResult:
         """Produce a feature result from raw input."""
 
-    def transform_with_metrics(
-        self, data: FeatureInput, **kwargs: Any
-    ) -> FeatureResult:
+    def transform_with_metrics(self, data: FeatureInput, **kwargs: Any) -> FeatureResult:
         """Transform with automatic metrics collection."""
         metrics = get_metrics_collector()
         feature_type = kwargs.get("feature_type", "generic")
 
-        with pipeline_span(
-            "features.transform", feature_name=self.name, feature_type=feature_type
-        ):
+        with pipeline_span("features.transform", feature_name=self.name, feature_type=feature_type):
             with metrics.measure_feature_transform(self.name, feature_type):
                 result = self.transform(data, **kwargs)
 
@@ -114,18 +110,14 @@ class FeatureBlock(BaseBlock):
 
         if isinstance(features, str):
             if block_name is not None:
-                raise TypeError(
-                    "features must be an iterable of BaseFeature instances or None"
-                )
+                raise TypeError("features must be an iterable of BaseFeature instances or None")
             block_name = features
             feature_sequence = None
         elif features is None:
             feature_sequence = None
         else:
             if not isinstance(features, Iterable):
-                raise TypeError(
-                    "features must be an iterable of BaseFeature instances or None"
-                )
+                raise TypeError("features must be an iterable of BaseFeature instances or None")
             feature_sequence = tuple(features)
 
         if feature_sequence is not None and any(
@@ -141,44 +133,36 @@ class FeatureBlock(BaseBlock):
         for feature in self.features:
             try:
                 yield feature.transform(data, **kwargs)
-            except Exception as exc:  # noqa: BLE001 - we re-raise with context
-                raise FeatureExecutionError(
-                    feature=feature, block=self.name, cause=exc
-                ) from exc
+            except Exception as exc:
+                raise FeatureExecutionError(feature=feature, block=self.name, cause=exc) from exc
 
-    def evaluate(
-        self, data: FeatureInput, **kwargs: Any
-    ) -> Mapping[str, FeatureResult]:
+    def evaluate(self, data: FeatureInput, **kwargs: Any) -> Mapping[str, FeatureResult]:
         """Run all features and return their full :class:`FeatureResult`s."""
 
         return {result.name: result for result in self._iter_results(data, kwargs)}
 
-    def transform_all(
-        self, data: FeatureInput, **kwargs: Any
-    ) -> Mapping[str, FeatureResult]:
+    def transform_all(self, data: FeatureInput, **kwargs: Any) -> Mapping[str, FeatureResult]:
         """Alias for :meth:`evaluate` to align with the public documentation."""
 
         return self.evaluate(data, **kwargs)
 
     def run(self, data: FeatureInput, **kwargs: Any) -> Mapping[str, Any]:
-        return {
-            name: result.value for name, result in self.evaluate(data, **kwargs).items()
-        }
+        return {name: result.value for name, result in self.evaluate(data, **kwargs).items()}
 
 
 class ParallelFeatureBlock(BaseBlock):
     """Block that executes features concurrently while sharing the same input buffer.
 
-    The block supports both thread-based (asyncio) fan-out and process-based
-    execution. Thread-based execution is typically sufficient when indicator
-    computations release the Global Interpreter Lock (for example NumPy or
-    CuPy heavy lifting). Process mode is available for CPU-bound pure Python
-    features.
+    The block supports both thread-based and process-based execution.
+    Thread-based execution is typically sufficient when indicator computations
+    release the Global Interpreter Lock (for example NumPy or CuPy heavy
+    lifting). Process mode is available for CPU-bound pure Python features.
 
     Args:
         features: Iterable of feature instances to orchestrate.
-        mode: ``"thread"`` to leverage :mod:`asyncio`/thread pools or
-            ``"process"`` for a :class:`concurrent.futures.ProcessPoolExecutor`.
+        mode: ``"thread"`` for a loop-agnostic
+            :class:`concurrent.futures.ThreadPoolExecutor` or ``"process"``
+            for a :class:`concurrent.futures.ProcessPoolExecutor`.
         max_workers: Optional hard limit for the executor.
     """
 
@@ -200,17 +184,33 @@ class ParallelFeatureBlock(BaseBlock):
 
         if self.mode == "process":
             return self._run_process(data, **kwargs)
-        return _run_block_thread(self.features, data, kwargs, block_name=self.name)
+        return _run_block_thread(
+            self.features,
+            data,
+            kwargs,
+            block_name=self.name,
+            max_workers=self.max_workers,
+        )
 
     def _run_process(self, data: FeatureInput, **kwargs: Any) -> Mapping[str, Any]:
         with ProcessPoolExecutor(max_workers=self.max_workers) as executor:
             transform = partial(_process_transform, block_name=self.name)
             futures = [
-                executor.submit(transform, feature, data, kwargs)
-                for feature in self.features
+                executor.submit(transform, feature, data, kwargs) for feature in self.features
             ]
             results = [future.result() for future in futures]
         return {result.name: result.value for result in results}
+
+
+def _block_thread_worker(
+    data: FeatureInput,
+    kwargs: Mapping[str, Any],
+    block_name: str | None,
+    feature: BaseFeature,
+) -> FeatureResult:
+    """Evaluate one feature inside the block's thread pool."""
+
+    return _execute_feature(feature, data, dict(kwargs), block_name)
 
 
 def _run_block_thread(
@@ -218,39 +218,22 @@ def _run_block_thread(
     data: FeatureInput,
     kwargs: Mapping[str, Any],
     block_name: str | None = None,
+    max_workers: int | None = None,
 ) -> Mapping[str, Any]:
-    async def _runner() -> Mapping[str, Any]:
-        loop = asyncio.get_running_loop()
-        tasks = [
-            loop.run_in_executor(
-                None,
-                _execute_feature,
-                feature,
-                data,
-                dict(kwargs),
-                block_name,
-            )
-            for feature in features
-        ]
-        results = await asyncio.gather(*tasks)
-        return {result.name: result.value for result in results}
+    """Fan features out across a loop-agnostic thread pool.
 
-    try:
-        return asyncio.run(_runner())
-    except RuntimeError as exc:
-        message = str(exc)
-        if (
-            "event loop is running" not in message
-            and "cannot be called from a running event loop" not in message
-        ):
-            raise
-        new_loop = asyncio.new_event_loop()
-        try:
-            asyncio.set_event_loop(new_loop)
-            return new_loop.run_until_complete(_runner())
-        finally:
-            asyncio.set_event_loop(None)
-            new_loop.close()
+    Uses a plain :class:`ThreadPoolExecutor` and never creates or drives an
+    asyncio event loop, so a feature block evaluates identically from a bare
+    script, a Jupyter kernel, a FastAPI/Starlette handler, a Celery worker, or
+    any context that already owns a running loop. ``executor.map`` preserves
+    feature order, keeping the result mapping deterministic, and the ``with``
+    block joins every worker before returning — no loop or executor leaks.
+    """
+
+    worker = partial(_block_thread_worker, data, kwargs, block_name)
+    with ThreadPoolExecutor(max_workers=max_workers) as executor:
+        results = list(executor.map(worker, features))
+    return {result.name: result.value for result in results}
 
 
 def _process_transform(
@@ -276,10 +259,8 @@ def _execute_feature(
 ) -> FeatureResult:
     try:
         return feature.transform(data, **kwargs)
-    except Exception as exc:  # noqa: BLE001 - we re-raise with context
-        raise FeatureExecutionError(
-            feature=feature, block=block_name, cause=exc
-        ) from exc
+    except Exception as exc:
+        raise FeatureExecutionError(feature=feature, block=block_name, cause=exc) from exc
 
 
 class FeatureExecutionError(RuntimeError):

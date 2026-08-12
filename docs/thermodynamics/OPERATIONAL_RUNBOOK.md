@@ -105,7 +105,7 @@ curl -s http://localhost:8080/thermo/activations | jq '.activations[-10:]'
 
 1. Export audit logs for compliance:
    ```bash
-   cat /var/log/tradepulse/thermo_audit.jsonl | tail -10080 > weekly_audit.jsonl
+   cat /var/log/geosync/thermo_audit.jsonl | tail -10080 > weekly_audit.jsonl
    ```
 
 2. Analyze energy trends:
@@ -115,7 +115,7 @@ curl -s http://localhost:8080/thermo/activations | jq '.activations[-10:]'
 
 3. Review monotonic violations:
    ```bash
-   grep "monotonic_violation" /var/log/tradepulse/thermo_audit.jsonl | wc -l
+   grep "monotonic_violation" /var/log/geosync/thermo_audit.jsonl | wc -l
    ```
 
 ## Crisis Response
@@ -275,7 +275,7 @@ curl http://localhost:8080/thermo/status | jq '.bottleneck_edge, .max_edge_cost'
 curl http://localhost:8080/thermo/history?limit=50 | jq '.records[].dF_dt'
 
 # Rejection reasons
-grep "rejected" /var/log/tradepulse/thermo_audit.jsonl | tail -20
+grep "rejected" /var/log/geosync/thermo_audit.jsonl | tail -20
 ```
 
 ### Protocol Activation Failures
@@ -292,7 +292,7 @@ curl http://localhost:8080/thermo/activations | \
   jq '.activations[] | select(.success == false)'
 
 # Protocol availability
-systemctl status tradepulse-protocols
+systemctl status geosync-protocols
 ```
 
 ## Maintenance Procedures
@@ -330,16 +330,16 @@ systemctl status tradepulse-protocols
 
 ```bash
 # Graceful shutdown
-systemctl stop tradepulse-thermo-controller
+systemctl stop geosync-thermo-controller
 
 # Verify audit logs are flushed
 sync
 
 # Restart
-systemctl start tradepulse-thermo-controller
+systemctl start geosync-thermo-controller
 
 # Verify initialization
-journalctl -u tradepulse-thermo-controller -f | grep "initialized"
+journalctl -u geosync-thermo-controller -f | grep "initialized"
 
 # Check initial free energy
 sleep 5
@@ -350,16 +350,16 @@ curl http://localhost:8080/thermo/status | jq '.current_F'
 
 ```bash
 # Backup current config
-cp /etc/tradepulse/thermo_config.yaml /etc/tradepulse/thermo_config.yaml.backup
+cp /etc/geosync/thermo_config.yaml /etc/geosync/thermo_config.yaml.backup
 
 # Update configuration
-vim /etc/tradepulse/thermo_config.yaml
+vim /etc/geosync/thermo_config.yaml
 
 # Validate configuration
-python -c "from runtime.thermo_config import ThermoConfig; ThermoConfig.from_yaml('/etc/tradepulse/thermo_config.yaml'); print('Valid')"
+python -c "from runtime.thermo_config import ThermoConfig; ThermoConfig.from_yaml('/etc/geosync/thermo_config.yaml'); print('Valid')"
 
 # Apply (requires restart)
-systemctl restart tradepulse-thermo-controller
+systemctl restart geosync-thermo-controller
 ```
 
 ## Compliance and Audit
@@ -370,14 +370,14 @@ Audit logs must be retained for **7 years** for regulatory compliance.
 
 ```bash
 # Verify audit log location
-ls -lh /var/log/tradepulse/thermo_audit.jsonl
+ls -lh /var/log/geosync/thermo_audit.jsonl
 
 # Rotate logs monthly
-logrotate -f /etc/logrotate.d/tradepulse-thermo
+logrotate -f /etc/logrotate.d/geosync-thermo
 
 # Archive to long-term storage
-aws s3 cp /var/log/tradepulse/thermo_audit.jsonl.$(date +%Y%m).gz \
-  s3://tradepulse-compliance/thermo-audit/
+aws s3 cp /var/log/geosync/thermo_audit.jsonl.$(date +%Y%m).gz \
+  s3://geosync-compliance/thermo-audit/
 ```
 
 ### Compliance Reporting
@@ -394,7 +394,7 @@ python scripts/generate_thermo_compliance_report.py \
 
 ```bash
 # Review all manual overrides
-grep "manual_override" /var/log/tradepulse/thermo_audit.jsonl | \
+grep "manual_override" /var/log/geosync/thermo_audit.jsonl | \
   jq -r '[.ts, .override_reason] | @tsv'
 
 # Verify dual approval documentation
@@ -408,11 +408,11 @@ grep "manual_override" /var/log/tradepulse/thermo_audit.jsonl | \
 | Thermodynamic Duty Officer | Approve overrides | Rotating weekly |
 | Platform Staff Engineer | System expertise | On-call rotation |
 | SRE Team Lead | Escalation point | 24/7 pager |
-| Security Team | Token management | security@tradepulse.io |
+| Security Team | Token management | security@geosync.io |
 
 ## References
 
-- [TACL Architecture](./TACL.md)
+- [TACL Architecture](../TACL.md)
 - [Metrics Formalization](./METRICS_FORMALIZATION.md)
 - [Energy Validator API](../../runtime/energy_validator.py)
 - [Configuration Guide](../../runtime/thermo_config.py)

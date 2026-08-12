@@ -1,0 +1,50 @@
+# SPDX-License-Identifier: MIT
+id: phd-methodology-phase2
+status: ACTIVE
+claim_type: governance
+promise: >-
+  Diff-bound governance acceptor for the docs/phd Phase-2 dissertation layer
+  (methodology, literature gap, evaluation protocol, threats-to-validity,
+  reproducibility package) plus the research-claim traceability gate. The bound
+  surfaces make only admissibility claims and explicitly disclaim market alpha,
+  profitability, B.wheel=0, and real L2 empirical validation. No runtime,
+  scientific, kernel, trading, execution, forecast, or policy behavior changes.
+diff_scope:
+  changed_files:
+    - path: ".claude/commit_acceptors/phd-methodology-phase2.yaml"
+    - path: "docs/phd/06_methodology.md"
+    - path: "docs/phd/07_literature_gap.md"
+    - path: "docs/phd/08_evaluation_protocol.md"
+    - path: "docs/phd/09_threats_to_validity.md"
+    - path: "docs/phd/10_artifact_reproducibility_package.md"
+    - path: "scripts/ci/check_phd_traceability.py"
+    - path: "tests/ci/test_phd_traceability.py"
+    - path: "artifacts/phd_traceability.json"
+    - path: ".github/workflows/research-integrity-gate.yml"
+    - path: "INVENTORY.json"
+  forbidden_paths:
+    - "trading/"
+    - "execution/"
+    - "forecast/"
+    - "policy/"
+    - "broker/"
+    - "live/"
+    - "strategy/"
+required_python_symbols: []
+expected_signal: >-
+  check_phd_traceability.py exits 0 (every dissertation chapter binds to an
+  artifact reference; no forbidden positive over-claim) and check_claim_boundary.py
+  exits 0.
+measurement_command: "python scripts/ci/check_phd_traceability.py"
+signal_artifact: "artifacts/phd_traceability.json"
+falsifier:
+  command: "python -c \"import subprocess,sys; r=subprocess.run([sys.executable,'scripts/ci/check_phd_traceability.py']); sys.exit(0 if r.returncode!=0 else 1)\""
+  description: >-
+    Asserts the traceability gate is RED; on the green path this probe exits
+    non-zero, proving the promise is falsifiable rather than vacuous.
+rollback_command: "git revert --no-edit HEAD"
+rollback_verification_command: "python scripts/ci/check_phd_traceability.py"
+memory_update_type: none
+ledger_path: "artifacts/phd_traceability.json"
+report_path: "docs/phd/08_evaluation_protocol.md"
+evidence: []

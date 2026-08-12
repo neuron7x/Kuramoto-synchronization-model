@@ -1,5 +1,7 @@
-# SPDX-License-Identifier: LicenseRef-TradePulse-Proprietary
+# Copyright (c) 2023-2026 Yaroslav Vasylenko (neuron7xLab)
+# SPDX-License-Identifier: MIT
 """Level 2 order book ingestion exports."""
+
 from .consistency import ConsistencyError, ConsistencyValidator
 from .ingester import IngestConfig, OrderBookIngestService, SnapshotRequester
 from .metrics import InMemoryMetricsRecorder, MetricsRecorder, MetricsSample

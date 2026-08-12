@@ -8,7 +8,7 @@ The `application/` package bridges domain primitives to external experiences (AP
 
 ## Scope and responsibilities
 
-- **Orchestration between domain and upper layers.** `TradePulseSystem` and `TradePulseOrchestrator` compose ingestion, analytics, and execution flows in [`application/system.py`](../../application/system.py) and [`application/system_orchestrator.py`](../../application/system_orchestrator.py).
+- **Orchestration between domain and upper layers.** `GeoSyncSystem` and `GeoSyncOrchestrator` compose ingestion, analytics, and execution flows in [`application/system.py`](../../application/system.py) and [`application/system_orchestrator.py`](../../application/system_orchestrator.py).
 - **System bootstrap and runtime hardening.** Uvicorn startup, TLS enforcement, and runtime settings live under [`application/runtime/`](../../application/runtime/).
 - **Configuration, secrets, and rotation.** Secure configuration surfaces are provided by [`application/configuration/secure_store.py`](../../application/configuration/secure_store.py) and secret backends in [`application/secrets/`](../../application/secrets/).
 - **Security controls.** RBAC, TLS context construction, and multi-factor helpers sit in [`application/security/`](../../application/security/).
@@ -26,8 +26,8 @@ The `application/` package bridges domain primitives to external experiences (AP
 
 ## Bootstrap and safety checklist
 
-1. **Build a system instance** using `build_tradepulse_system` or `TradePulseSystemConfig` to hydrate ingestion, feature pipeline, risk, and live loop defaults.
-2. **Wire services** through `ServiceRegistry.from_system(system)` and use `TradePulseOrchestrator` to expose ingestion/backtest/execution flows to APIs or workers.
+1. **Build a system instance** using `build_geosync_system` or `GeoSyncSystemConfig` to hydrate ingestion, feature pipeline, risk, and live loop defaults.
+2. **Wire services** through `ServiceRegistry.from_system(system)` and use `GeoSyncOrchestrator` to expose ingestion/backtest/execution flows to APIs or workers.
 3. **Enforce TLS**: `application/runtime/server.py` requires TLS unless explicitly permitted; `application/security/tls.py` defines cipher suites and client certificate policies.
 4. **Apply RBAC**: `application/security/rbac.py` validates subjects/roles and emits audit logs via `AuditLogger` before accessing execution credentials or admin APIs.
 5. **Load secrets via vaults**: `application/configuration/secure_store.py` registers namespaces and routes reads through `SecretVault`. Secret rotation is handled by `SecretRotator`, and credentials should never be embedded in settings files.

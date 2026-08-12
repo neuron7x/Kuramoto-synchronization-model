@@ -1,0 +1,144 @@
+{
+  "universe": "14 assets \u2014 Askar L2 optimal",
+  "universe_assets": [
+    {
+      "file": "USA_500_Index_GMT+0_NO-DST.parquet",
+      "label": "equity_anchor"
+    },
+    {
+      "file": "SPDR_Gold_Shares_ETF_GMT+0_NO-DST.parquet",
+      "label": "gold"
+    },
+    {
+      "file": "EURUSD_GMT+0_NO-DST.parquet",
+      "label": "fx"
+    },
+    {
+      "file": "AUDUSD_GMT+0_NO-DST.parquet",
+      "label": "fx"
+    },
+    {
+      "file": "USDCAD_GMT+0_NO-DST.parquet",
+      "label": "fx"
+    },
+    {
+      "file": "EURGBP_GMT+0_NO-DST.parquet",
+      "label": "fx"
+    },
+    {
+      "file": "iShares_20+_Year_Treasury_Bond_ETF_GMT+0_NO-DST.parquet",
+      "label": "bonds"
+    },
+    {
+      "file": "Euro_Bund_GMT+0_NO-DST.parquet",
+      "label": "bonds"
+    },
+    {
+      "file": "US_Brent_Crude_Oil_GMT+0_NO-DST.parquet",
+      "label": "oil"
+    },
+    {
+      "file": "Soybean_GMT+0_NO-DST.parquet",
+      "label": "agri"
+    },
+    {
+      "file": "iShares_MSCI_Emerging_Markets_ETF_GMT+0_NO-DST.parquet",
+      "label": "equity_em"
+    },
+    {
+      "file": "iShares_MSCI_Japan_ETF_GMT+0_NO-DST.parquet",
+      "label": "equity_japan"
+    },
+    {
+      "file": "iShares_U.S._Real_Estate_ETF_GMT+0_NO-DST.parquet",
+      "label": "real_estate"
+    },
+    {
+      "file": "China_A50_Index_GMT+0_NO-DST.parquet",
+      "label": "equity_china"
+    }
+  ],
+  "baseline_yfinance_IC": 0.106,
+  "overlap_start": "2017-12-01",
+  "overlap_end": "2026-02-20",
+  "split_date": "2023-07-01",
+  "daily": {
+    "IC_train": -0.0162,
+    "IC_test": 0.0407,
+    "sharpe_train": -0.217,
+    "sharpe_test": -0.555,
+    "maxdd_test": -0.1689,
+    "crisis_2022": -0.0943,
+    "overfit_ratio": 2.558,
+    "vol_conditioned": true,
+    "mean_vol_weight_train": 0.717,
+    "mean_vol_weight_test": 0.643,
+    "n_train": 1497,
+    "n_test": 765,
+    "permutation_p": 0.152,
+    "permutation_sigma": 1.07,
+    "permutation_ic": 0.0407,
+    "corr_momentum": -0.0101,
+    "corr_vol": 0.0895,
+    "vs_baseline_delta_IC": -0.0653
+  },
+  "hourly": {
+    "IC_train": 0.0114,
+    "IC_test": 0.0035,
+    "sharpe_test": -0.246,
+    "permutation_p": 0.336,
+    "permutation_sigma": 0.44,
+    "crisis_2022": 0.0192,
+    "n_train": 30714,
+    "n_test": 15276
+  },
+  "walkforward_5fold": [
+    {
+      "fold": 1,
+      "test_start": "2019-08-26 00:00:00",
+      "test_end": "2020-12-11 00:00:00",
+      "IC": -0.1141,
+      "sharpe": 0.384,
+      "mean_vol_weight": 0.867,
+      "n_test": 377
+    },
+    {
+      "fold": 2,
+      "test_start": "2020-12-14 00:00:00",
+      "test_end": "2022-04-05 00:00:00",
+      "IC": -0.0359,
+      "sharpe": -0.31,
+      "mean_vol_weight": 0.704,
+      "n_test": 377
+    },
+    {
+      "fold": 3,
+      "test_start": "2022-04-06 00:00:00",
+      "test_end": "2023-07-13 00:00:00",
+      "IC": 0.0555,
+      "sharpe": 0.153,
+      "mean_vol_weight": 0.843,
+      "n_test": 377
+    },
+    {
+      "fold": 4,
+      "test_start": "2023-07-14 00:00:00",
+      "test_end": "2024-10-22 00:00:00",
+      "IC": 0.0371,
+      "sharpe": -0.728,
+      "mean_vol_weight": 0.632,
+      "n_test": 377
+    },
+    {
+      "fold": 5,
+      "test_start": "2024-10-23 00:00:00",
+      "test_end": "2026-02-20 00:00:00",
+      "IC": 0.0456,
+      "sharpe": 0.086,
+      "mean_vol_weight": 0.696,
+      "n_test": 377
+    }
+  ],
+  "walkforward_folds_positive_IC": 3,
+  "verdict": "DEGRADED"
+}

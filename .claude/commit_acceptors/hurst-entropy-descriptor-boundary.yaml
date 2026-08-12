@@ -1,0 +1,107 @@
+# Diff-bound commit acceptor for Instrument E — descriptor-only
+# claim-boundary cleanup of the Hurst and Entropy indicators.
+#
+# core/indicators/hurst.py framed its H bands as "suitable for momentum
+# strategies" / "suitable for mean reversion" and called H<0.5
+# "Contrarian strategies favorable" — a descriptor->strategy boundary
+# crossing. core/indicators/entropy.py framed low entropy as
+# "predictable patterns" and delta-entropy as a "regime transition
+# signal" — a descriptor->prediction crossing. Both contradict the
+# canonical boundary (PRODUCT_CATEGORY.md / FORBIDDEN_CLAIMS.md): GeoSync
+# is verification-first research, not a strategy selector or a predictive
+# product. The claim-boundary scanner
+# (scripts/ci/check_claim_boundary.py) previously gated only the composite
+# and market-state modules on the code surface, so nothing stopped that
+# wording from living — or reappearing — in these two descriptor modules.
+#
+# This change is docstrings/comments only. It rewrites the prose into
+# descriptor-only language (H = within-window scaling/persistence
+# descriptor over the declared lag range, NOT a strategy selector and NOT
+# predictive; Shannon entropy = binned distributional uncertainty under
+# the declared bins/window, low entropy = concentration of mass and NOT
+# "predictability"; delta-entropy = a change in that descriptor and NOT a
+# proven regime-transition signal), folds the two modules into the
+# scanner's CODE_SURFACE_FILES under the identical normalise + allowlist +
+# stale machinery, and adds a parametrized regression test so the
+# forbidden phrasing cannot silently return.
+#
+# No runtime/math change, no public-API change: the numerics, clipping,
+# return contracts, and class/function signatures of hurst_exponent /
+# HurstFeature / entropy / delta_entropy / EntropyFeature /
+# DeltaEntropyFeature are byte-for-byte preserved (only their
+# documentation is corrected). Identifier names do not match the phrase
+# patterns, so the gate cannot touch the API.
+
+id: hurst-entropy-descriptor-boundary
+status: ACTIVE
+claim_type: documentation
+promise: >-
+  After this PR lands, scripts/ci/check_claim_boundary.py scans
+  core/indicators/hurst.py and core/indicators/entropy.py as part of its
+  canonical code surface — not only the markdown docs and the existing
+  composite/market-state modules — using the identical normalise +
+  allowlist + stale machinery, and exits 0 with the message naming
+  "canonical surfaces (docs + claim-bearing code)". Both modules carry no
+  unreviewed product-category phrasing on their prose surface: the Hurst
+  "suitable for momentum strategies" / "suitable for mean reversion" /
+  "Contrarian strategies favorable" framing is replaced by descriptor-only
+  scaling/persistence language (NOT a strategy selector, NOT predictive,
+  strategy-adjacent use requires a null baseline + out-of-sample falsifier
+  first), and the Entropy "predictable patterns" / "regime transition
+  signal" framing is replaced by binned-distributional-uncertainty
+  language (low entropy = concentration of mass NOT predictability;
+  delta-entropy = a descriptor change NOT a proven regime-transition
+  signal). An injected banned phrase in any scanned code surface makes
+  main() exit 1. Runtime numerics, clipping, return contracts, and the
+  public API are unchanged.
+diff_scope:
+  changed_files:
+    - path: ".claude/commit_acceptors/hurst-entropy-descriptor-boundary.yaml"
+    - path: "core/indicators/hurst.py"
+    - path: "core/indicators/entropy.py"
+    - path: "scripts/ci/check_claim_boundary.py"
+    - path: "tests/scripts/test_check_claim_boundary.py"
+  forbidden_paths:
+    - "trading/"
+    - "execution/"
+    - "forecast/"
+    - "policy/"
+    - "core/strategies/"
+required_python_symbols:
+  - "main"
+  - "_iter_surface"
+  - "_normalise"
+  - "_load_allowlist"
+expected_signal: >-
+  check_claim_boundary.py exits 0 ("Claim-boundary gate passed: N
+  canonical surfaces (docs + claim-bearing code) scanned, M reviewed
+  mechanism/record references"); the claim-boundary test mirror passes
+  (incl. the new parametrized hurst/entropy code-surface regression); the
+  hurst/entropy unit and property suites stay green; ruff / black / mypy
+  --strict are clean on the changed gate and indicator modules.
+measurement_command: >-
+  bash -c 'set -e;
+  python scripts/ci/check_claim_boundary.py;
+  python -m pytest tests/scripts/test_check_claim_boundary.py -q;
+  PYTHONPATH=. python -m pytest tests/unit/test_indicators_hurst.py tests/unit/test_indicators_entropy.py tests/core/test_indicators_entropy.py -q'
+signal_artifact: "tmp/claim_boundary_gate.log"
+falsifier:
+  command: "bash -c '! python scripts/ci/check_claim_boundary.py'"
+  description: >-
+    On the green path the gate exits 0, so the negated probe exits
+    non-zero — proving the promise is falsifiable: if any unreviewed
+    product-category claim were present on the doc OR the newly-gated
+    hurst/entropy code surfaces, the gate would exit 1 and the negated
+    probe would pass, surfacing the broken descriptor boundary.
+rollback_command: >-
+  bash -c 'rm -f .claude/commit_acceptors/hurst-entropy-descriptor-boundary.yaml
+  && git checkout origin/main -- core/indicators/hurst.py core/indicators/entropy.py
+  scripts/ci/check_claim_boundary.py tests/scripts/test_check_claim_boundary.py'
+rollback_verification_command: >-
+  bash -c 'test ! -f .claude/commit_acceptors/hurst-entropy-descriptor-boundary.yaml
+  && git diff --exit-code origin/main -- core/indicators/hurst.py core/indicators/entropy.py
+  scripts/ci/check_claim_boundary.py tests/scripts/test_check_claim_boundary.py'
+memory_update_type: append
+ledger_path: ".claude/commit_acceptors/hurst-entropy-descriptor-boundary.yaml"
+report_path: "PRODUCT_CATEGORY.md"
+evidence: []

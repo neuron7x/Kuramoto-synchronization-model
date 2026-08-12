@@ -1,0 +1,82 @@
+# Diff-bound acceptor for the physics-invariant tightening pass.
+#
+# Adds 70 falsifying tests (69 default + 1 heavy_math) that
+# strengthen seven P0 invariants from CLAUDE.md to algebraic /
+# Hypothesis-fuzz / boundary-bit-pattern level. No production code
+# is touched — every change is an additive test under
+# tests/unit/physics/.
+
+id: physics-invariant-tightening
+status: ACTIVE
+claim_type: correctness
+promise: >-
+  Seven P0 invariants from CLAUDE.md (INV-OA2, INV-FE1, INV-LE1,
+  INV-RC1, INV-DRO1, INV-CB1, INV-K2) gain falsifying tests at the
+  strongest available form: algebraic exact at machine epsilon,
+  Hypothesis property fuzz over input space, boundary-bit-pattern
+  identity, or finite-size sweep with 1/√N scaling. All seven
+  pass, all assertions follow the 5-field error format, every
+  test references its INV-* ID.
+diff_scope:
+  changed_files:
+    - path: ".claude/commit_acceptors/physics-invariant-tightening.yaml"
+    - path: "docs/reports/physics_invariant_tightening.md"
+    - path: "newsfragments/physics-invariant-tightening.feature.md"
+    - path: "tests/unit/physics/test_T10_ricci_universal_upper_bound.py"
+    - path: "tests/unit/physics/test_T13_free_energy_monotonicity.py"
+    - path: "tests/unit/physics/test_T17_cryptobiosis_exact_zero.py"
+    - path: "tests/unit/physics/test_T22_lyapunov_robustness.py"
+    - path: "tests/unit/physics/test_T23_ott_antonsen_algebraic.py"
+    - path: "tests/unit/physics/test_T_dro1_gamma_algebraic.py"
+    - path: "tests/unit/physics/test_T9_kuramoto_finite_size_sweep.py"
+  forbidden_paths:
+    - "trading/"
+    - "execution/"
+    - "forecast/"
+    - "policy/"
+required_python_symbols: []
+expected_signal: >-
+  All 69 default-marked tests pass under pytest; the 1 heavy_math
+  test (1/√N scaling) passes under the heavy_math marker; physics
+  validator reports zero L1 / L2 / L4 issues across all seven new
+  files; mypy --strict and ruff clean.
+measurement_command: >-
+  python -m pytest tests/unit/physics/test_T10_ricci_universal_upper_bound.py
+  tests/unit/physics/test_T13_free_energy_monotonicity.py
+  tests/unit/physics/test_T17_cryptobiosis_exact_zero.py
+  tests/unit/physics/test_T22_lyapunov_robustness.py
+  tests/unit/physics/test_T23_ott_antonsen_algebraic.py
+  tests/unit/physics/test_T_dro1_gamma_algebraic.py
+  tests/unit/physics/test_T9_kuramoto_finite_size_sweep.py
+  -v -m "not heavy_math"
+signal_artifact: "tmp/physics_invariant_tightening_pytest.log"
+falsifier:
+  command: >-
+    python -m pytest tests/unit/physics/test_T23_ott_antonsen_algebraic.py
+    -v -k "test_inv_oa2_fixed_point_residual_at_machine_epsilon"
+  description: >-
+    Probe runs the strongest individual test of the pack — INV-OA2
+    fixed-point residual at machine epsilon. The test evaluates the
+    Ott-Antonsen ODE right-hand side at the analytical fixed point
+    R_∞ = √(1 − 2Δ/K) and asserts |dz/dt| < 1e-13 across 10
+    parameter cells. A residual above the round-off floor would
+    prove the OttAntonsenEngine implementation has drifted from
+    the formula. Existing integration-tolerance test (1e-3) would
+    NOT catch a sign or factor drift; this one would.
+rollback_command: >-
+  git checkout HEAD~1 -- tests/unit/physics/test_T10_ricci_universal_upper_bound.py
+  tests/unit/physics/test_T13_free_energy_monotonicity.py
+  tests/unit/physics/test_T17_cryptobiosis_exact_zero.py
+  tests/unit/physics/test_T22_lyapunov_robustness.py
+  tests/unit/physics/test_T23_ott_antonsen_algebraic.py
+  tests/unit/physics/test_T_dro1_gamma_algebraic.py
+  tests/unit/physics/test_T9_kuramoto_finite_size_sweep.py
+  .claude/commit_acceptors/physics-invariant-tightening.yaml
+  docs/reports/physics_invariant_tightening.md
+  newsfragments/physics-invariant-tightening.feature.md
+rollback_verification_command: >-
+  git diff --exit-code tests/unit/physics/
+memory_update_type: append
+ledger_path: ".claude/commit_acceptors/physics-invariant-tightening.yaml"
+report_path: "docs/reports/physics_invariant_tightening.md"
+evidence: []

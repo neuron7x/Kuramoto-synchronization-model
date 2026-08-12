@@ -5,7 +5,7 @@ import type { Page as PlaywrightPage } from 'playwright-core'
 test.describe('Scenario Studio smoke', () => {
   test('renders the primary dashboard layout', async ({ page }) => {
     await page.goto('/')
-    await expect(page).toHaveTitle(/TradePulse Scenario Studio/i)
+    await expect(page).toHaveTitle(/GeoSync Scenario Studio/i)
     await expect(page.getByRole('heading', { name: 'Scenario Studio' })).toBeVisible()
     await expect(page.getByLabel('Scenario template')).toBeVisible()
 

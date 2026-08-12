@@ -2,7 +2,7 @@
 
 ## Overview
 
-The EEPFractalRegulator (EEP-FPPA Fractal Energy Regulator) is a fractal-driven state regulation system designed for energy-efficient analytics and adaptive crisis control in TradePulse. It provides real-time monitoring of market dynamics through fractal metrics and enables adaptive system responses during stress events.
+The EEPFractalRegulator (EEP-FPPA Fractal Energy Regulator) is a fractal-driven state regulation system designed for energy-efficient analytics and adaptive crisis control in GeoSync. It provides real-time monitoring of market dynamics through fractal metrics and enables adaptive system responses during stress events.
 
 ## Key Features
 
@@ -103,7 +103,7 @@ for signal_value in live_market_stream:
     logger.info(f"H={metrics.hurst:.3f}, CSI={metrics.csi:.3f}")
 ```
 
-## Integration with TradePulse
+## Integration with GeoSync
 
 ### As Feature Engineering Step
 
@@ -138,10 +138,10 @@ class FractalFeatureEnricher:
 Monitor overall system health in orchestrator:
 
 ```python
-from application.system_orchestrator import TradePulseOrchestrator
+from application.system_orchestrator import GeoSyncOrchestrator
 from core.neuro.fractal_regulator import EEPFractalRegulator
 
-class HealthMonitoredOrchestrator(TradePulseOrchestrator):
+class HealthMonitoredOrchestrator(GeoSyncOrchestrator):
     """Orchestrator with fractal health monitoring."""
     
     def __init__(self, system, **kwargs):
@@ -404,7 +404,7 @@ When extending the regulator:
 
 ## License
 
-Part of TradePulse project. See main LICENSE file.
+Part of GeoSync project. See main LICENSE file.
 
 ## Support
 

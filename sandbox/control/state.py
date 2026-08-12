@@ -1,3 +1,5 @@
+# Copyright (c) 2023-2026 Yaroslav Vasylenko (neuron7xLab)
+# SPDX-License-Identifier: MIT
 """Control plane state management for the sandbox."""
 
 from __future__ import annotations
@@ -24,9 +26,7 @@ class ControlState:
         self._kill_switch = KillSwitchState(engaged=False)
         self._lock = Lock()
         self._audit = InMemoryAuditLog()
-        self._targets = [
-            HealthCheckTarget(name, url) for name, url in health_targets.items()
-        ]
+        self._targets = [HealthCheckTarget(name, url) for name, url in health_targets.items()]
 
     def engage(self, reason: str) -> KillSwitchState:
         with self._lock:
@@ -45,9 +45,7 @@ class ControlState:
 
     def reset(self) -> KillSwitchState:
         with self._lock:
-            self._kill_switch = KillSwitchState(
-                engaged=False, reason=None, engaged_at=None
-            )
+            self._kill_switch = KillSwitchState(engaged=False, reason=None, engaged_at=None)
             self._audit.emit(
                 source="control-api",
                 category="kill-switch",

@@ -1,5 +1,5 @@
 ---
-owner: docs@tradepulse
+owner: docs@geosync
 review_cadence: quarterly
 last_reviewed: 2025-12-08
 links:
@@ -10,7 +10,7 @@ links:
 
 # Documentation Governance and Quality Framework
 
-This playbook formalises how TradePulse plans, writes, reviews, and maintains documentation across the repository. It defines
+This playbook formalises how GeoSync plans, writes, reviews, and maintains documentation across the repository. It defines
 mandatory artefacts, review cadences, and automation hooks so that documentation quality keeps pace with code changes. The
 framework applies to all Markdown, Jupyter, configuration samples, and diagrams served through the documentation portal or
 referenced by release materials.
@@ -22,7 +22,7 @@ referenced by release materials.
 ### The Business Case for Formal Governance
 
 **Context:**  
-Documentation is often treated as an afterthought in software projects, leading to knowledge silos, onboarding friction, and operational risks. As TradePulse scales and enters production use for financial trading, informal documentation practices become untenable.
+Documentation is often treated as an afterthought in software projects, leading to knowledge silos, onboarding friction, and operational risks. As GeoSync scales and enters production use for financial trading, informal documentation practices become untenable.
 
 **Core Arguments for Governance:**
 
@@ -35,7 +35,7 @@ Documentation is often treated as an afterthought in software projects, leading 
 - MiFID II requires audit trails for algorithmic trading systems
 - ISO 27001 certification demands documented information security controls
 
-**Consequence:** Without governance, TradePulse cannot demonstrate compliance, potentially blocking institutional adoption and exposing to regulatory sanctions.
+**Consequence:** Without governance, GeoSync cannot demonstrate compliance, potentially blocking institutional adoption and exposing to regulatory sanctions.
 
 **Benefit:** Formal governance creates audit-ready documentation, reducing compliance costs by 60-80% and enabling enterprise sales.
 
@@ -132,9 +132,9 @@ Documentation is often treated as an afterthought in software projects, leading 
 
 ### Governance Maturity Model
 
-TradePulse targets **Level 4 (Managed)** maturity, with progression to **Level 5 (Optimizing)**:
+GeoSync targets **Level 4 (Managed)** maturity, with progression to **Level 5 (Optimizing)**:
 
-| Level | Characteristics | TradePulse Status |
+| Level | Characteristics | GeoSync Status |
 |-------|----------------|-------------------|
 | **Level 1: Initial** | Ad-hoc documentation, no standards, inconsistent quality | ❌ Surpassed |
 | **Level 2: Repeatable** | Basic templates exist, some process documentation | ❌ Surpassed |
@@ -182,7 +182,7 @@ Each document begins with a YAML metadata block capturing owner(s), review caden
 
 ```yaml
 ---
-owner: indicators@tradepulse
+owner: indicators@geosync
 review_cadence: quarterly
 last_reviewed: 2025-02-14
 links:
@@ -302,7 +302,7 @@ Key quality indicators tracked in the metrics snapshot:
 - Identify automation opportunities
 - Update governance framework
 
-**Output:** Prioritized improvements documented in [DOCUMENTATION_SUMMARY.md](../DOCUMENTATION_SUMMARY.md)
+**Output:** Prioritized improvements documented in [DOCUMENTATION_SUMMARY.md](operations/DOCUMENTATION_SUMMARY.md)
 
 #### 2. Documentation Debt Tracking
 **Purpose:** Capture and prioritize technical debt in documentation
@@ -310,7 +310,7 @@ Key quality indicators tracked in the metrics snapshot:
 **Process:**
 - Contributors raise "Docs Debt" issues for: stale content, missing verifications, incomplete metadata, broken links
 - Documentation Steward triages and assigns owners
-- Tracked in [Issue Tracking](../DOCUMENTATION_SUMMARY.md#issue-tracking)
+- Tracked in [Issue Tracking](operations/DOCUMENTATION_SUMMARY.md#issue-tracking)
 
 **Metrics:** Debt age distribution, resolution velocity, debt creation rate
 
@@ -391,4 +391,4 @@ This framework is living documentation - iterate, improve, and keep it pragmatic
 
 ---
 
-Maintaining rigorous yet pragmatic documentation governance ensures TradePulse contributors can move quickly without sacrificing accuracy, operational resilience, or auditability. The governance framework exists to support engineering excellence, not constrain it.
+Maintaining rigorous yet pragmatic documentation governance ensures GeoSync contributors can move quickly without sacrificing accuracy, operational resilience, or auditability. The governance framework exists to support engineering excellence, not constrain it.

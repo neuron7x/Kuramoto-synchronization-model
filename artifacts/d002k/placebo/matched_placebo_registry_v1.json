@@ -1,0 +1,413 @@
+{
+  "determinism_note": "Same (crisis spec, K-P0 policy, locked seed) -> bit-identical placebo list. No hand-picking; no manual override field.",
+  "generated_at": "2026-05-15T00:00:00Z",
+  "match_on": [
+    "macro_period",
+    "volatility_regime",
+    "calendar_length",
+    "data_availability",
+    "pre_window_baseline_variance"
+  ],
+  "n_placebo_per_crisis": 5,
+  "non_overlap_all_verified": true,
+  "parent_crisis_registry_path": "artifacts/d002j/crisis_windows/crisis_window_registry_v1.json",
+  "parent_crisis_registry_sha256": "41f281d9e97fbf49725f0eb1a1bb7b45865c14cdc5c525ea96231ef0aa651e8f",
+  "parent_prereg_path": "docs/governance/D002K_PREREGISTRATION.yaml",
+  "parent_prereg_sha256": "2cd923810bf64547cd86ecb403bfd3f12a799cb16c3d10ebc07bc05865fee43f",
+  "placebos": [
+    {
+      "baseline_variance_match": {
+        "crisis_proxy": 2.0,
+        "placebo_proxy": 1.0,
+        "relative_delta": 0.5,
+        "within_tolerance": "false"
+      },
+      "calendar_length_days": 20,
+      "data_availability_match": "strong",
+      "end_date": "2014-09-09",
+      "macro_period_class": "post_gfc_zirp_taper",
+      "match_tolerances": {
+        "baseline_variance_rel_tolerance": 0.25,
+        "calendar_length": "exact_trading_day_equality",
+        "data_availability": "inherits_parent_crisis_status",
+        "macro_period": "non_crisis_era_distinct_from_parent",
+        "volatility_regime": "era_baseline_vol_bucket"
+      },
+      "non_overlap_verified": true,
+      "parent_crisis_window_id": "CW3_US_REPO_SPIKE_2019",
+      "placebo_id": "CW3_US_REPO_SPIKE_2019__PLACEBO_01",
+      "seed": 20260515,
+      "selection_rationale": "deterministic grid+permutation (algo d002k_p2_deterministic_grid_permutation_v1, seed 20260515); calendar length 20 trading days exact-matched to CW3_US_REPO_SPIKE_2019; non-crisis macro era 'post_gfc_zirp_taper'; zero overlap with any of the six D-002J registered windows.",
+      "start_date": "2014-08-13",
+      "volatility_regime_bucket": "low_baseline_vol"
+    },
+    {
+      "baseline_variance_match": {
+        "crisis_proxy": 2.0,
+        "placebo_proxy": 1.0,
+        "relative_delta": 0.5,
+        "within_tolerance": "false"
+      },
+      "calendar_length_days": 20,
+      "data_availability_match": "strong",
+      "end_date": "2015-03-03",
+      "macro_period_class": "post_gfc_zirp_taper",
+      "match_tolerances": {
+        "baseline_variance_rel_tolerance": 0.25,
+        "calendar_length": "exact_trading_day_equality",
+        "data_availability": "inherits_parent_crisis_status",
+        "macro_period": "non_crisis_era_distinct_from_parent",
+        "volatility_regime": "era_baseline_vol_bucket"
+      },
+      "non_overlap_verified": true,
+      "parent_crisis_window_id": "CW3_US_REPO_SPIKE_2019",
+      "placebo_id": "CW3_US_REPO_SPIKE_2019__PLACEBO_02",
+      "seed": 20260515,
+      "selection_rationale": "deterministic grid+permutation (algo d002k_p2_deterministic_grid_permutation_v1, seed 20260515); calendar length 20 trading days exact-matched to CW3_US_REPO_SPIKE_2019; non-crisis macro era 'post_gfc_zirp_taper'; zero overlap with any of the six D-002J registered windows.",
+      "start_date": "2015-02-04",
+      "volatility_regime_bucket": "low_baseline_vol"
+    },
+    {
+      "baseline_variance_match": {
+        "crisis_proxy": 2.0,
+        "placebo_proxy": 2.0,
+        "relative_delta": 0.0,
+        "within_tolerance": "true"
+      },
+      "calendar_length_days": 20,
+      "data_availability_match": "strong",
+      "end_date": "2018-05-15",
+      "macro_period_class": "gradual_normalization",
+      "match_tolerances": {
+        "baseline_variance_rel_tolerance": 0.25,
+        "calendar_length": "exact_trading_day_equality",
+        "data_availability": "inherits_parent_crisis_status",
+        "macro_period": "non_crisis_era_distinct_from_parent",
+        "volatility_regime": "era_baseline_vol_bucket"
+      },
+      "non_overlap_verified": true,
+      "parent_crisis_window_id": "CW3_US_REPO_SPIKE_2019",
+      "placebo_id": "CW3_US_REPO_SPIKE_2019__PLACEBO_03",
+      "seed": 20260515,
+      "selection_rationale": "deterministic grid+permutation (algo d002k_p2_deterministic_grid_permutation_v1, seed 20260515); calendar length 20 trading days exact-matched to CW3_US_REPO_SPIKE_2019; non-crisis macro era 'gradual_normalization'; zero overlap with any of the six D-002J registered windows.",
+      "start_date": "2018-04-18",
+      "volatility_regime_bucket": "medium_baseline_vol"
+    },
+    {
+      "baseline_variance_match": {
+        "crisis_proxy": 2.0,
+        "placebo_proxy": 2.0,
+        "relative_delta": 0.0,
+        "within_tolerance": "true"
+      },
+      "calendar_length_days": 20,
+      "data_availability_match": "strong",
+      "end_date": "2018-11-20",
+      "macro_period_class": "gradual_normalization",
+      "match_tolerances": {
+        "baseline_variance_rel_tolerance": 0.25,
+        "calendar_length": "exact_trading_day_equality",
+        "data_availability": "inherits_parent_crisis_status",
+        "macro_period": "non_crisis_era_distinct_from_parent",
+        "volatility_regime": "era_baseline_vol_bucket"
+      },
+      "non_overlap_verified": true,
+      "parent_crisis_window_id": "CW3_US_REPO_SPIKE_2019",
+      "placebo_id": "CW3_US_REPO_SPIKE_2019__PLACEBO_04",
+      "seed": 20260515,
+      "selection_rationale": "deterministic grid+permutation (algo d002k_p2_deterministic_grid_permutation_v1, seed 20260515); calendar length 20 trading days exact-matched to CW3_US_REPO_SPIKE_2019; non-crisis macro era 'gradual_normalization'; zero overlap with any of the six D-002J registered windows.",
+      "start_date": "2018-10-24",
+      "volatility_regime_bucket": "medium_baseline_vol"
+    },
+    {
+      "baseline_variance_match": {
+        "crisis_proxy": 2.0,
+        "placebo_proxy": 1.0,
+        "relative_delta": 0.5,
+        "within_tolerance": "false"
+      },
+      "calendar_length_days": 20,
+      "data_availability_match": "strong",
+      "end_date": "2021-05-11",
+      "macro_period_class": "pandemic_policy_era",
+      "match_tolerances": {
+        "baseline_variance_rel_tolerance": 0.25,
+        "calendar_length": "exact_trading_day_equality",
+        "data_availability": "inherits_parent_crisis_status",
+        "macro_period": "non_crisis_era_distinct_from_parent",
+        "volatility_regime": "era_baseline_vol_bucket"
+      },
+      "non_overlap_verified": true,
+      "parent_crisis_window_id": "CW3_US_REPO_SPIKE_2019",
+      "placebo_id": "CW3_US_REPO_SPIKE_2019__PLACEBO_05",
+      "seed": 20260515,
+      "selection_rationale": "deterministic grid+permutation (algo d002k_p2_deterministic_grid_permutation_v1, seed 20260515); calendar length 20 trading days exact-matched to CW3_US_REPO_SPIKE_2019; non-crisis macro era 'pandemic_policy_era'; zero overlap with any of the six D-002J registered windows.",
+      "start_date": "2021-04-14",
+      "volatility_regime_bucket": "low_baseline_vol"
+    },
+    {
+      "baseline_variance_match": {
+        "crisis_proxy": 4.0,
+        "placebo_proxy": 1.0,
+        "relative_delta": 0.75,
+        "within_tolerance": "false"
+      },
+      "calendar_length_days": 35,
+      "data_availability_match": "strong",
+      "end_date": "2014-05-20",
+      "macro_period_class": "post_gfc_zirp_taper",
+      "match_tolerances": {
+        "baseline_variance_rel_tolerance": 0.25,
+        "calendar_length": "exact_trading_day_equality",
+        "data_availability": "inherits_parent_crisis_status",
+        "macro_period": "non_crisis_era_distinct_from_parent",
+        "volatility_regime": "era_baseline_vol_bucket"
+      },
+      "non_overlap_verified": true,
+      "parent_crisis_window_id": "CW4_COVID_DASH_FOR_CASH_2020",
+      "placebo_id": "CW4_COVID_DASH_FOR_CASH_2020__PLACEBO_01",
+      "seed": 20260515,
+      "selection_rationale": "deterministic grid+permutation (algo d002k_p2_deterministic_grid_permutation_v1, seed 20260515); calendar length 35 trading days exact-matched to CW4_COVID_DASH_FOR_CASH_2020; non-crisis macro era 'post_gfc_zirp_taper'; zero overlap with any of the six D-002J registered windows.",
+      "start_date": "2014-04-02",
+      "volatility_regime_bucket": "low_baseline_vol"
+    },
+    {
+      "baseline_variance_match": {
+        "crisis_proxy": 4.0,
+        "placebo_proxy": 1.0,
+        "relative_delta": 0.75,
+        "within_tolerance": "false"
+      },
+      "calendar_length_days": 35,
+      "data_availability_match": "strong",
+      "end_date": "2017-03-14",
+      "macro_period_class": "gradual_normalization",
+      "match_tolerances": {
+        "baseline_variance_rel_tolerance": 0.25,
+        "calendar_length": "exact_trading_day_equality",
+        "data_availability": "inherits_parent_crisis_status",
+        "macro_period": "non_crisis_era_distinct_from_parent",
+        "volatility_regime": "era_baseline_vol_bucket"
+      },
+      "non_overlap_verified": true,
+      "parent_crisis_window_id": "CW4_COVID_DASH_FOR_CASH_2020",
+      "placebo_id": "CW4_COVID_DASH_FOR_CASH_2020__PLACEBO_02",
+      "seed": 20260515,
+      "selection_rationale": "deterministic grid+permutation (algo d002k_p2_deterministic_grid_permutation_v1, seed 20260515); calendar length 35 trading days exact-matched to CW4_COVID_DASH_FOR_CASH_2020; non-crisis macro era 'gradual_normalization'; zero overlap with any of the six D-002J registered windows.",
+      "start_date": "2017-01-25",
+      "volatility_regime_bucket": "low_baseline_vol"
+    },
+    {
+      "baseline_variance_match": {
+        "crisis_proxy": 4.0,
+        "placebo_proxy": 1.0,
+        "relative_delta": 0.75,
+        "within_tolerance": "false"
+      },
+      "calendar_length_days": 35,
+      "data_availability_match": "strong",
+      "end_date": "2018-01-09",
+      "macro_period_class": "gradual_normalization",
+      "match_tolerances": {
+        "baseline_variance_rel_tolerance": 0.25,
+        "calendar_length": "exact_trading_day_equality",
+        "data_availability": "inherits_parent_crisis_status",
+        "macro_period": "non_crisis_era_distinct_from_parent",
+        "volatility_regime": "era_baseline_vol_bucket"
+      },
+      "non_overlap_verified": true,
+      "parent_crisis_window_id": "CW4_COVID_DASH_FOR_CASH_2020",
+      "placebo_id": "CW4_COVID_DASH_FOR_CASH_2020__PLACEBO_03",
+      "seed": 20260515,
+      "selection_rationale": "deterministic grid+permutation (algo d002k_p2_deterministic_grid_permutation_v1, seed 20260515); calendar length 35 trading days exact-matched to CW4_COVID_DASH_FOR_CASH_2020; non-crisis macro era 'gradual_normalization'; zero overlap with any of the six D-002J registered windows.",
+      "start_date": "2017-11-22",
+      "volatility_regime_bucket": "low_baseline_vol"
+    },
+    {
+      "baseline_variance_match": {
+        "crisis_proxy": 4.0,
+        "placebo_proxy": 2.0,
+        "relative_delta": 0.5,
+        "within_tolerance": "false"
+      },
+      "calendar_length_days": 35,
+      "data_availability_match": "strong",
+      "end_date": "2018-07-03",
+      "macro_period_class": "gradual_normalization",
+      "match_tolerances": {
+        "baseline_variance_rel_tolerance": 0.25,
+        "calendar_length": "exact_trading_day_equality",
+        "data_availability": "inherits_parent_crisis_status",
+        "macro_period": "non_crisis_era_distinct_from_parent",
+        "volatility_regime": "era_baseline_vol_bucket"
+      },
+      "non_overlap_verified": true,
+      "parent_crisis_window_id": "CW4_COVID_DASH_FOR_CASH_2020",
+      "placebo_id": "CW4_COVID_DASH_FOR_CASH_2020__PLACEBO_04",
+      "seed": 20260515,
+      "selection_rationale": "deterministic grid+permutation (algo d002k_p2_deterministic_grid_permutation_v1, seed 20260515); calendar length 35 trading days exact-matched to CW4_COVID_DASH_FOR_CASH_2020; non-crisis macro era 'gradual_normalization'; zero overlap with any of the six D-002J registered windows.",
+      "start_date": "2018-05-16",
+      "volatility_regime_bucket": "medium_baseline_vol"
+    },
+    {
+      "baseline_variance_match": {
+        "crisis_proxy": 4.0,
+        "placebo_proxy": 2.0,
+        "relative_delta": 0.5,
+        "within_tolerance": "false"
+      },
+      "calendar_length_days": 35,
+      "data_availability_match": "strong",
+      "end_date": "2024-05-28",
+      "macro_period_class": "post_tightening_plateau",
+      "match_tolerances": {
+        "baseline_variance_rel_tolerance": 0.25,
+        "calendar_length": "exact_trading_day_equality",
+        "data_availability": "inherits_parent_crisis_status",
+        "macro_period": "non_crisis_era_distinct_from_parent",
+        "volatility_regime": "era_baseline_vol_bucket"
+      },
+      "non_overlap_verified": true,
+      "parent_crisis_window_id": "CW4_COVID_DASH_FOR_CASH_2020",
+      "placebo_id": "CW4_COVID_DASH_FOR_CASH_2020__PLACEBO_05",
+      "seed": 20260515,
+      "selection_rationale": "deterministic grid+permutation (algo d002k_p2_deterministic_grid_permutation_v1, seed 20260515); calendar length 35 trading days exact-matched to CW4_COVID_DASH_FOR_CASH_2020; non-crisis macro era 'post_tightening_plateau'; zero overlap with any of the six D-002J registered windows.",
+      "start_date": "2024-04-10",
+      "volatility_regime_bucket": "medium_baseline_vol"
+    },
+    {
+      "baseline_variance_match": {
+        "crisis_proxy": 4.0,
+        "placebo_proxy": 1.0,
+        "relative_delta": 0.75,
+        "within_tolerance": "false"
+      },
+      "calendar_length_days": 16,
+      "data_availability_match": "partial",
+      "end_date": "2014-09-03",
+      "macro_period_class": "post_gfc_zirp_taper",
+      "match_tolerances": {
+        "baseline_variance_rel_tolerance": 0.25,
+        "calendar_length": "exact_trading_day_equality",
+        "data_availability": "inherits_parent_crisis_status",
+        "macro_period": "non_crisis_era_distinct_from_parent",
+        "volatility_regime": "era_baseline_vol_bucket"
+      },
+      "non_overlap_verified": true,
+      "parent_crisis_window_id": "CW5_UK_GILT_LDI_2022",
+      "placebo_id": "CW5_UK_GILT_LDI_2022__PLACEBO_01",
+      "seed": 20260515,
+      "selection_rationale": "deterministic grid+permutation (algo d002k_p2_deterministic_grid_permutation_v1, seed 20260515); calendar length 16 trading days exact-matched to CW5_UK_GILT_LDI_2022; non-crisis macro era 'post_gfc_zirp_taper'; zero overlap with any of the six D-002J registered windows.",
+      "start_date": "2014-08-13",
+      "volatility_regime_bucket": "low_baseline_vol"
+    },
+    {
+      "baseline_variance_match": {
+        "crisis_proxy": 4.0,
+        "placebo_proxy": 1.0,
+        "relative_delta": 0.75,
+        "within_tolerance": "false"
+      },
+      "calendar_length_days": 16,
+      "data_availability_match": "partial",
+      "end_date": "2015-05-13",
+      "macro_period_class": "post_gfc_zirp_taper",
+      "match_tolerances": {
+        "baseline_variance_rel_tolerance": 0.25,
+        "calendar_length": "exact_trading_day_equality",
+        "data_availability": "inherits_parent_crisis_status",
+        "macro_period": "non_crisis_era_distinct_from_parent",
+        "volatility_regime": "era_baseline_vol_bucket"
+      },
+      "non_overlap_verified": true,
+      "parent_crisis_window_id": "CW5_UK_GILT_LDI_2022",
+      "placebo_id": "CW5_UK_GILT_LDI_2022__PLACEBO_02",
+      "seed": 20260515,
+      "selection_rationale": "deterministic grid+permutation (algo d002k_p2_deterministic_grid_permutation_v1, seed 20260515); calendar length 16 trading days exact-matched to CW5_UK_GILT_LDI_2022; non-crisis macro era 'post_gfc_zirp_taper'; zero overlap with any of the six D-002J registered windows.",
+      "start_date": "2015-04-22",
+      "volatility_regime_bucket": "low_baseline_vol"
+    },
+    {
+      "baseline_variance_match": {
+        "crisis_proxy": 4.0,
+        "placebo_proxy": 2.0,
+        "relative_delta": 0.5,
+        "within_tolerance": "false"
+      },
+      "calendar_length_days": 16,
+      "data_availability_match": "partial",
+      "end_date": "2018-06-27",
+      "macro_period_class": "gradual_normalization",
+      "match_tolerances": {
+        "baseline_variance_rel_tolerance": 0.25,
+        "calendar_length": "exact_trading_day_equality",
+        "data_availability": "inherits_parent_crisis_status",
+        "macro_period": "non_crisis_era_distinct_from_parent",
+        "volatility_regime": "era_baseline_vol_bucket"
+      },
+      "non_overlap_verified": true,
+      "parent_crisis_window_id": "CW5_UK_GILT_LDI_2022",
+      "placebo_id": "CW5_UK_GILT_LDI_2022__PLACEBO_03",
+      "seed": 20260515,
+      "selection_rationale": "deterministic grid+permutation (algo d002k_p2_deterministic_grid_permutation_v1, seed 20260515); calendar length 16 trading days exact-matched to CW5_UK_GILT_LDI_2022; non-crisis macro era 'gradual_normalization'; zero overlap with any of the six D-002J registered windows.",
+      "start_date": "2018-06-06",
+      "volatility_regime_bucket": "medium_baseline_vol"
+    },
+    {
+      "baseline_variance_match": {
+        "crisis_proxy": 4.0,
+        "placebo_proxy": 2.0,
+        "relative_delta": 0.5,
+        "within_tolerance": "false"
+      },
+      "calendar_length_days": 16,
+      "data_availability_match": "partial",
+      "end_date": "2018-08-29",
+      "macro_period_class": "gradual_normalization",
+      "match_tolerances": {
+        "baseline_variance_rel_tolerance": 0.25,
+        "calendar_length": "exact_trading_day_equality",
+        "data_availability": "inherits_parent_crisis_status",
+        "macro_period": "non_crisis_era_distinct_from_parent",
+        "volatility_regime": "era_baseline_vol_bucket"
+      },
+      "non_overlap_verified": true,
+      "parent_crisis_window_id": "CW5_UK_GILT_LDI_2022",
+      "placebo_id": "CW5_UK_GILT_LDI_2022__PLACEBO_04",
+      "seed": 20260515,
+      "selection_rationale": "deterministic grid+permutation (algo d002k_p2_deterministic_grid_permutation_v1, seed 20260515); calendar length 16 trading days exact-matched to CW5_UK_GILT_LDI_2022; non-crisis macro era 'gradual_normalization'; zero overlap with any of the six D-002J registered windows.",
+      "start_date": "2018-08-08",
+      "volatility_regime_bucket": "medium_baseline_vol"
+    },
+    {
+      "baseline_variance_match": {
+        "crisis_proxy": 4.0,
+        "placebo_proxy": 2.0,
+        "relative_delta": 0.5,
+        "within_tolerance": "false"
+      },
+      "calendar_length_days": 16,
+      "data_availability_match": "partial",
+      "end_date": "2024-04-03",
+      "macro_period_class": "post_tightening_plateau",
+      "match_tolerances": {
+        "baseline_variance_rel_tolerance": 0.25,
+        "calendar_length": "exact_trading_day_equality",
+        "data_availability": "inherits_parent_crisis_status",
+        "macro_period": "non_crisis_era_distinct_from_parent",
+        "volatility_regime": "era_baseline_vol_bucket"
+      },
+      "non_overlap_verified": true,
+      "parent_crisis_window_id": "CW5_UK_GILT_LDI_2022",
+      "placebo_id": "CW5_UK_GILT_LDI_2022__PLACEBO_05",
+      "seed": 20260515,
+      "selection_rationale": "deterministic grid+permutation (algo d002k_p2_deterministic_grid_permutation_v1, seed 20260515); calendar length 16 trading days exact-matched to CW5_UK_GILT_LDI_2022; non-crisis macro era 'post_tightening_plateau'; zero overlap with any of the six D-002J registered windows.",
+      "start_date": "2024-03-13",
+      "volatility_regime_bucket": "medium_baseline_vol"
+    }
+  ],
+  "schema_version": "D002K-MATCHED-PLACEBO-REGISTRY-v1",
+  "selection_algorithm_id": "d002k_p2_deterministic_grid_permutation_v1",
+  "selection_seed": 20260515,
+  "total_placebos": 15
+}

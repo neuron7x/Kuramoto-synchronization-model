@@ -1,0 +1,113 @@
+name: 'Setup GeoSync Development Environment'
+description: 'Sets up Python with cached dependencies for GeoSync development'
+
+inputs:
+  python-version:
+    description: 'Python version to use'
+    required: true
+  install-dev:
+    description: 'Whether to install dev dependencies'
+    required: false
+    default: 'true'
+  cache-prefix:
+    description: 'Cache key prefix for venv'
+    required: false
+    default: 'venv'
+
+outputs:
+  cache-hit:
+    description: 'Whether venv cache was hit'
+    value: ${{ steps.venv-cache.outputs.cache-hit }}
+  python-version:
+    description: 'Python version used'
+    value: ${{ steps.setup-python.outputs.python-version }}
+
+runs:
+  using: composite
+  steps:
+    - name: Set up Python
+      id: setup-python
+      uses: actions/setup-python@83679a892e2d95755f2dac6acb0bfd1e9ac5d548 # v6
+      with:
+        python-version: ${{ inputs.python-version }}
+        cache: 'pip'
+        cache-dependency-path: |
+          requirements.lock
+          requirements-dev.lock
+          constraints/security.txt
+          
+    - name: Cache Python virtual environment
+      uses: actions/cache@0057852bfaa89a56745cba8c7296529d2fc39830 # v4
+      id: venv-cache
+      with:
+        path: .venv
+        key: ${{ inputs.cache-prefix }}-${{ runner.os }}-py${{ inputs.python-version }}-${{ hashFiles('requirements*.lock', 'constraints/security.txt', '.github/actions/setup-geosync/action.yml') }}
+        restore-keys: |
+          ${{ inputs.cache-prefix }}-${{ runner.os }}-py${{ inputs.python-version }}-
+          
+    - name: Create virtual environment
+      if: steps.venv-cache.outputs.cache-hit != 'true'
+      shell: bash
+      run: python -m venv .venv
+      
+    - name: Install dependencies
+      if: steps.venv-cache.outputs.cache-hit != 'true'
+      shell: bash
+      run: |
+        set -euo pipefail
+        # Bootstrap tooling is part of the trusted supply chain. Keep these pins
+        # aligned with constraints/security.txt so CI never starts from a known
+        # vulnerable installer/build backend.
+        .venv/bin/python -m pip install \
+          pip==26.1.1 \
+          setuptools==78.1.1 \
+          wheel==0.47.0
+        .venv/bin/python -m pip install -c constraints/security.txt -r requirements.lock
+        if [ "${{ inputs.install-dev }}" = "true" ]; then
+          .venv/bin/python -m pip install -c constraints/security.txt -r requirements-dev.lock
+        fi
+        # Runtime/dev locks can legitimately pull packaging tooling as transitive
+        # build/test support. Re-assert the trusted bootstrap pins after lock
+        # installation so every downstream gate runs with the audited toolchain
+        # rather than whatever the resolver last touched.
+        .venv/bin/python -m pip install \
+          pip==26.1.1 \
+          setuptools==78.1.1 \
+          wheel==0.47.0
+
+    - name: Verify pinned pip and pytest versions
+      shell: bash
+      run: |
+        .venv/bin/python - <<'PY'
+        from pathlib import Path
+        import importlib.metadata as metadata
+
+        expected_pip = "26.1.1"
+        expected_setuptools = "78.1.1"
+        expected_wheel = "0.47.0"
+
+        for dist_name, expected in (
+            ("pip", expected_pip),
+            ("setuptools", expected_setuptools),
+            ("wheel", expected_wheel),
+        ):
+            actual = metadata.version(dist_name)
+            if actual != expected:
+                raise SystemExit(f"{dist_name} version mismatch: {actual} != {expected}")
+            print(f"{dist_name} pinned: {actual}")
+
+        if "${{ inputs.install-dev }}" == "true":
+            expected_pytest = None
+            for line in Path("requirements-dev.lock").read_text(encoding="utf-8").splitlines():
+                if line.startswith("pytest=="):
+                    expected_pytest = line.split("==", 1)[1].strip()
+                    break
+            if expected_pytest is None:
+                raise SystemExit("pytest pin not found in requirements-dev.lock")
+            pytest_version = metadata.version("pytest")
+            if pytest_version != expected_pytest:
+                raise SystemExit(
+                    f"pytest version mismatch: {pytest_version} != {expected_pytest}"
+                )
+            print(f"pytest pinned: {pytest_version}")
+        PY

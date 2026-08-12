@@ -1,6 +1,6 @@
 # Security Hardening Program
 
-This document codifies the end-to-end security hardening program for TradePulse.
+This document codifies the end-to-end security hardening program for GeoSync.
 It augments the global guidance in [`SECURITY.md`](../../SECURITY.md) with
 operational processes, ownership, and control verification for the most
 sensitive areas of the platform.
@@ -70,7 +70,7 @@ Operational requirements:
 
 - Fuzzing CI jobs must enforce a minimum of **30 minutes** runtime for nightly
   builds and **5 minutes** for PRs with sanitizer instrumentation enabled.
-- Corpus and crash artifacts stored in `s3://tradepulse-security-fuzzing/<target>`.
+- Corpus and crash artifacts stored in `s3://geosync-security-fuzzing/<target>`.
 - The owning team triages new crashes within **24 hours**; blocking issues are
   filed with severity `S0`.
 - Coverage reports ingested into the security dashboard; target is ≥ 80%

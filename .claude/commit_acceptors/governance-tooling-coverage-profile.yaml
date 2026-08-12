@@ -1,0 +1,73 @@
+# Diff-bound commit acceptor: dedicated governance-tooling coverage profile.
+#
+# tools/ and scripts/ stay out of the release_90 denominator but must not be
+# outside ALL measurement — this adds configs/quality/governance_tools.coveragerc
+# and structural contracts so a regression in a gate/verifier/auditor is
+# observable rather than silently uncovered.
+
+id: governance-tooling-coverage-profile
+status: ACTIVE
+claim_type: governance
+promise: >-
+  After this PR, configs/quality/governance_tools.coveragerc exists and sources
+  both tools and scripts, and tests/tools/test_governance_tooling_coverage_profile
+  .py enforces that the profile exists, sources tools+scripts, does not smuggle
+  any of its own source into omit, sources only real directories, measures the
+  audit/RVG verifier tooling, and is routed by the component matrix.
+
+diff_scope:
+  changed_files:
+    - path: ".claude/commit_acceptors/governance-tooling-coverage-profile.yaml"
+    - path: "configs/quality/governance_tools.coveragerc"
+    - path: "tests/tools/test_governance_tooling_coverage_profile.py"
+    - path: "data/testing/component_test_matrix.json"
+  forbidden_paths:
+    - "core/physics/"
+    - "core/kuramoto/"
+    - "execution/oms.py"
+
+required_python_symbols: []
+
+expected_signal: >-
+  `python -m pytest --import-mode=importlib
+  tests/tools/test_governance_tooling_coverage_profile.py -q` reports 6 passed:
+  the profile exists, sources tools+scripts, does not hide its own source, and is
+  routed by the component matrix.
+
+measurement_command: >-
+  bash -c '
+    python -m pytest --import-mode=importlib -p no:cacheprovider
+      tests/tools/test_governance_tooling_coverage_profile.py -q
+  '
+
+signal_artifact: "tmp/governance_tooling_coverage_profile.log"
+
+falsifier:
+  command: |-
+    bash -c '
+      python -c "
+    import configparser
+    p = configparser.ConfigParser(); p.read(\"configs/quality/governance_tools.coveragerc\")
+    roots = {l.strip() for l in p.get(\"run\", \"source\").splitlines() if l.strip()}
+    assert \"tools\" in roots and \"scripts\" in roots
+    "
+    '
+  description: >-
+    Asserts the governance profile sources both tools and scripts. Per the
+    run_evidence green-state contract it exits 0 on the correct tree and non-zero
+    if the profile is removed or a source root drops.
+
+rollback_command: >-
+  bash -c '
+    git rm -f .claude/commit_acceptors/governance-tooling-coverage-profile.yaml
+  '
+
+rollback_verification_command: >-
+  bash -c '
+    test ! -f .claude/commit_acceptors/governance-tooling-coverage-profile.yaml
+  '
+
+memory_update_type: append
+ledger_path: ".claude/commit_acceptors/governance-tooling-coverage-profile.yaml"
+report_path: "tmp/governance_tooling_coverage_profile.log"
+evidence: []

@@ -1,0 +1,35 @@
+{
+  "allowed_next_nodes": [
+    "D002J-P4"
+  ],
+  "artifact_paths": [
+    "artifacts/d002j/ingestion/ingestion_manifest_v1.json",
+    "artifacts/d002j/ingestion/adapter_registry_v1.json",
+    "artifacts/d002j/ingestion/source_hash_manifest_v1.json",
+    "docs/research/D002J_INGESTION_BOUNDARY.md",
+    "docs/research/D002J_POINT_IN_TIME_DISCIPLINE.md"
+  ],
+  "claim_boundary": "Adapter contracts only; NO data ingested; NO modeling; NO canonical run authorized. Every adapter is subset of P1B audit-surviving sources AND subset of P2 window_ids. Point-in-time discipline executable via vintage_required and forecast_required flags plus per-adapter lookahead invariants. P3 does NOT rescue D-002H; D-002H REFUSED remains the truthful canonical verdict. No prediction claim; no bank-level validation; no canonical run authorisation; no cross-asset interbank causal claim.",
+  "decision": "INGESTION_MANIFEST_READY",
+  "failure_retention": null,
+  "forbidden_next_nodes": [
+    "D002J-P5",
+    "D002J-P6",
+    "D002J-P7",
+    "D002J-P8",
+    "D002J-P9"
+  ],
+  "merge_sha": "0000000000000000000000000000000000000000",
+  "node_id": "D002J-P3",
+  "parent_nodes": [
+    "D002J-P2"
+  ],
+  "phase": "P3",
+  "pr_number": 701,
+  "schema_version": "D002J-VERDICT-CAPSULE-v1",
+  "source_summary_path": "artifacts/d002j/ingestion/adapter_registry_v1.json",
+  "status": "TERMINAL_PASS",
+  "test_paths": [
+    "tests/systemic_risk/test_d002j_ingestion_manifest.py"
+  ]
+}

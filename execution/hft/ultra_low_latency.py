@@ -1,3 +1,5 @@
+# Copyright (c) 2023-2026 Yaroslav Vasylenko (neuron7xLab)
+# SPDX-License-Identifier: MIT
 """Ultra low latency order management primitives."""
 
 from __future__ import annotations
@@ -128,9 +130,7 @@ class OrderEnvelope:
 class UltraLowLatencyOMS:
     """High-frequency order management system skeleton."""
 
-    def __init__(
-        self, capacity: int, transmitter: RDMATransport | KernelBypassSocket
-    ) -> None:
+    def __init__(self, capacity: int, transmitter: RDMATransport | KernelBypassSocket) -> None:
         self._queue = DisruptorQueue(capacity)
         self._transmitter = transmitter
 

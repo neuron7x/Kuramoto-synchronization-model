@@ -1,0 +1,97 @@
+{
+  "$schema": "https://json-schema.org/draft/2020-12/schema",
+  "$id": "https://github.com/neuron7xLab/GeoSync/schemas/operational_definition.schema.json",
+  "title": "GeoSync Operational Definition Ontology",
+  "description": "Machine-readable operational definitions of the physics/neuroscience vocabulary. Each term declares whether it is a rigorous mechanism, an engineering analogue (arithmetic proxy, non-claim), or a retired tombstone, together with its mathematical object, observable->math mapping, units, validity domain, alternative hypotheses, and falsifier.",
+  "type": "object",
+  "required": ["schema_version", "ontology_id", "terms"],
+  "properties": {
+    "schema_version": {"type": "integer", "minimum": 1},
+    "ontology_id": {"type": "string", "minLength": 1},
+    "policy": {"type": "object"},
+    "metaphor_only": {
+      "type": "array",
+      "items": {"type": "string", "minLength": 1},
+      "uniqueItems": true
+    },
+    "terms": {
+      "type": "array",
+      "minItems": 1,
+      "items": {"$ref": "#/$defs/term"}
+    }
+  },
+  "additionalProperties": true,
+  "$defs": {
+    "term": {
+      "type": "object",
+      "required": [
+        "name",
+        "status",
+        "is_claim",
+        "math_object",
+        "observable_mapping",
+        "units",
+        "validity_domain",
+        "alternatives",
+        "falsifier"
+      ],
+      "properties": {
+        "name": {"type": "string", "minLength": 1},
+        "status": {"type": "string", "enum": ["mechanism", "analogue", "retired"]},
+        "is_claim": {"type": "boolean"},
+        "aliases": {"type": "array", "items": {"type": "string"}},
+        "math_object": {"type": "string"},
+        "observable_mapping": {"type": "string"},
+        "units": {"type": "string"},
+        "validity_domain": {"type": "string"},
+        "alternatives": {
+          "type": "array",
+          "items": {"type": "string", "minLength": 1}
+        },
+        "falsifier": {"type": "string"},
+        "invariants": {"type": "array", "items": {"type": "string"}},
+        "note": {"type": "string"},
+        "superseded_by": {"type": "string"},
+        "source": {"type": "string"}
+      },
+      "additionalProperties": true,
+      "allOf": [
+        {
+          "$comment": "A mechanism term is a claim and must carry a non-empty math_object, observable_mapping, falsifier, and at least one alternative hypothesis.",
+          "if": {"properties": {"status": {"const": "mechanism"}}},
+          "then": {
+            "properties": {
+              "is_claim": {"const": true},
+              "math_object": {"minLength": 1},
+              "observable_mapping": {"minLength": 1},
+              "falsifier": {"minLength": 1},
+              "alternatives": {"minItems": 1}
+            }
+          }
+        },
+        {
+          "$comment": "An analogue term is a non-claim and must carry an honesty note.",
+          "if": {"properties": {"status": {"const": "analogue"}}},
+          "then": {
+            "required": ["note"],
+            "properties": {
+              "is_claim": {"const": false},
+              "note": {"minLength": 1}
+            }
+          }
+        },
+        {
+          "$comment": "A retired term is a non-claim tombstone and must carry a retirement note.",
+          "if": {"properties": {"status": {"const": "retired"}}},
+          "then": {
+            "required": ["note"],
+            "properties": {
+              "is_claim": {"const": false},
+              "note": {"minLength": 1}
+            }
+          }
+        }
+      ]
+    }
+  }
+}

@@ -1,0 +1,36 @@
+# Fast-lane quarantine — keeps python-fast-shard REAL-green, not fake-green.
+#
+# The shard collects every fast node id, SUBTRACTS the test files listed here,
+# then runs the remainder. This makes a known, tracked failure visible debt
+# instead of either (a) a vacuous 0/0 pass or (b) a red required gate that
+# blocks every PR. New, unquarantined failures still fail CI.
+#
+# Format (one entry per line; blank lines and #-comments ignored):
+#   <test_path>  cluster=<id> issue=#<n> lane=<lane> expiry=<machine-checkable condition>
+#
+# Rules enforced by pr-gate.yml:
+#   - every entry MUST carry issue=#<digits> (no issue ref => gate fails);
+#   - paths are subtracted by prefix from the collected node-id set;
+#   - the post-subtraction collection must be non-empty (else gate fails).
+#
+# See docs/ci/fast_backlog_ledger.md for the full ledger.
+
+
+# Surfaced AFTER the cli_import_shadowing quarantine let collection reach the
+# rest of the fast surface — these clusters were hidden behind the cli import
+# failures, not absent. Each is deterministic, issue-tracked, drained per cluster.
+
+# Second layer: with layer-1 quarantined the oracle ran the full kept set
+# (17,670 ids, maxfail=100 not hit) and surfaced these — the complete remainder.
+
+# cli_import_shadowing (issue #1158) — RESOLVED & UN-QUARANTINED 2026-06-24.
+# Root cause: the repo-root `cli/` package was not in [tool.setuptools.packages.find]
+# while the unrelated `scripts/cli.py` (scripts.cli) was, so under the CI editable
+# install top-level `cli` resolved to scripts/cli.py and the four CLI test modules
+# ImportError'd. Fixed by re-homing the package into the canonical wheel namespace:
+# `cli/` -> `geosync/cli/` (#1158, ADR-0024). As `geosync.cli` it is packaged by
+# the existing `geosync.*` find entry with ZERO package-boundary debt, and the
+# public import path `geosync.cli` cannot be shadowed by `scripts.cli`. Importers
+# updated to `from geosync.cli[.geosync_cli] import ...`; the four modules below now
+# collect + pass. Expiry condition (cli package importable in CI) is met.
+# See docs/ci/fast_backlog_ledger.md.

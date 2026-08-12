@@ -1,3 +1,5 @@
+# Copyright (c) 2023-2026 Yaroslav Vasylenko (neuron7xLab)
+# SPDX-License-Identifier: MIT
 """Admin API for secure risk control operations.
 
 Provides endpoints for:
@@ -8,6 +10,7 @@ Provides endpoints for:
 
 from __future__ import annotations
 
+import hmac
 import os
 from typing import Optional
 
@@ -66,7 +69,13 @@ def verify_token(
             detail="Admin API token not configured",
         )
 
-    if credentials.credentials != expected_token:
+    # Compare as bytes: hmac.compare_digest over two str operands raises
+    # TypeError on any non-ASCII character, which would surface as an unhandled
+    # HTTP 500 (500-spam DoS). bytes-vs-bytes is total — it returns False for a
+    # mismatch instead of crashing — while preserving exact auth semantics.
+    if not hmac.compare_digest(
+        credentials.credentials.encode("utf-8"), expected_token.encode("utf-8")
+    ):
         raise HTTPException(
             status_code=status.HTTP_401_UNAUTHORIZED,
             detail="Invalid authentication credentials",
@@ -89,7 +98,7 @@ def create_admin_app(
         FastAPI application
     """
     app = FastAPI(
-        title="TradePulse Admin API",
+        title="GeoSync Admin API",
         description="Secure admin endpoints for risk controls",
         version="1.0.0",
     )
@@ -145,9 +154,7 @@ def create_admin_app(
 
         if circuit_breaker is not None:
             response_data.circuit_breaker_state = circuit_breaker.state.value
-            response_data.circuit_breaker_ttl = (
-                circuit_breaker.get_time_until_recovery()
-            )
+            response_data.circuit_breaker_ttl = circuit_breaker.get_time_until_recovery()
             last_trip = circuit_breaker.get_last_trip_reason()
             response_data.circuit_breaker_last_trip = last_trip
 

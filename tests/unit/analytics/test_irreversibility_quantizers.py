@@ -1,3 +1,5 @@
+# Copyright (c) 2023-2026 Yaroslav Vasylenko (neuron7xLab)
+# SPDX-License-Identifier: MIT
 import math
 from typing import Dict
 
@@ -54,9 +56,7 @@ def test_batch_streaming_parity_quantization(quant_mode: str):
 
     common_idx = stream_df.index.intersection(batch.index)
     assert len(common_idx) > 0
-    batch_common = batch.loc[
-        common_idx, ["epr", "flux_index", "tra", "pe", "regime_score"]
-    ]
+    batch_common = batch.loc[common_idx, ["epr", "flux_index", "tra", "pe", "regime_score"]]
     stream_common = stream_df.loc[common_idx]
     mask = batch_common.notna().all(axis=1) & stream_common.notna().all(axis=1)
     common_idx = common_idx[mask.values]

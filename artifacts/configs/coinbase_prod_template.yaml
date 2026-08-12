@@ -15,7 +15,7 @@ execution:
           - PASSPHRASE
         secret_backend:
           adapter: kms
-          path: projects/sample/locations/global/keyRings/tradepulse/cryptoKeys/coinbase
+          path: projects/sample/locations/global/keyRings/geosync/cryptoKeys/coinbase
           field_mapping:
             API_KEY: apiKey
             API_SECRET: apiSecret

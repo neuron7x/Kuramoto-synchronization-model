@@ -1,0 +1,64 @@
+interactions:
+- request:
+    body: null
+    headers:
+      Accept:
+      - '*/*'
+      Accept-Encoding:
+      - gzip, deflate, br
+      Connection:
+      - keep-alive
+      User-Agent:
+      - python-requests/2.33.0
+    method: GET
+    uri: https://api.kraken.com/0/public/Time
+  response:
+    body:
+      string: '{"error": [], "result": {"unixtime": 1775640439, "rfc1123": "Wed, 08
+        Apr 26 09:27:19 +0000"}}'
+    headers:
+      CF-RAY:
+      - 9e903c48fd6b4bf9-WAW
+      Cache-Control:
+      - no-store
+      Connection:
+      - keep-alive
+      Content-Type:
+      - application/json
+      Date:
+      - Wed, 08 Apr 2026 09:27:19 GMT
+      Server:
+      - cloudflare
+      Transfer-Encoding:
+      - chunked
+      X-Content-Type-Options:
+      - nosniff
+      access-control-allow-credentials:
+      - 'true'
+      access-control-expose-headers:
+      - date,x-trace-id,x-internal-auth
+      b69oaiuh7-pad:
+      - BQX2#U2KHTquarX4+zcmPVgb~kH361v0&t
+      cf-cache-status:
+      - MISS
+      content-length:
+      - '87'
+      referrer-policy:
+      - strict-origin-when-cross-origin
+      set-cookie:
+      - __cf_bm=liBQjCFkRNMoUM6f_A5iNBqYq_4uU4KkLkVxJJh4Sd8-1775640439.196879-1.0.1.1-P4yplgesVX5_Tng76r7.4RZv.9pluw0fpODv9PYwm_8ycz_Z54riu1vSELjJov7PEXQBNqWFlTb6lxYfzoWUlt2_bMkyiAGXeiqQfYlSaPN6XKO9b3e4kpn42Vlfwgg9;
+        HttpOnly; Secure; Path=/; Domain=kraken.com; Expires=Wed, 08 Apr 2026 09:57:19
+        GMT
+      strict-transport-security:
+      - max-age=31536000; includeSubDomains; preload
+      vary:
+      - Accept-Encoding
+      - origin
+      x-proxy:
+      - gateway
+      x-trace-id:
+      - 0ab2b882019d6c6ae9b400209e99c918
+    status:
+      code: 200
+      message: OK
+version: 1

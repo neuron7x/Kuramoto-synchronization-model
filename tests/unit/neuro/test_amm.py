@@ -1,3 +1,5 @@
+# Copyright (c) 2023-2026 Yaroslav Vasylenko (neuron7xLab)
+# SPDX-License-Identifier: MIT
 from __future__ import annotations
 
 import asyncio
@@ -9,9 +11,7 @@ from core.neuro.amm import AdaptiveMarketMind, AMMConfig
 
 
 def test_precision_penalized_by_entropy_and_desync() -> None:
-    cfg = AMMConfig(
-        alpha=0.05, beta=1.0, lambda_sync=0.5, eta_ricci=0.3, pi_max=100.0, pi_min=1e-6
-    )
+    cfg = AMMConfig(alpha=0.05, beta=1.0, lambda_sync=0.5, eta_ricci=0.3, pi_max=100.0, pi_min=1e-6)
     rng = np.random.default_rng(1)
 
     amm = AdaptiveMarketMind(cfg, use_internal_entropy=False, R_bar=0.5)
@@ -26,12 +26,8 @@ def test_precision_penalized_by_entropy_and_desync() -> None:
     for _ in range(200):
         amm_internal.update(float(rng.normal(0.0, 0.05)), R_t=0.5, kappa_t=0.0, H_t=0.0)
 
-    internal_baseline = amm_internal.update(0.001, R_t=0.5, kappa_t=0.0, H_t=0.1)[
-        "amm_precision"
-    ]
-    internal_stressed = amm_internal.update(0.001, R_t=0.5, kappa_t=0.0, H_t=1.5)[
-        "amm_precision"
-    ]
+    internal_baseline = amm_internal.update(0.001, R_t=0.5, kappa_t=0.0, H_t=0.1)["amm_precision"]
+    internal_stressed = amm_internal.update(0.001, R_t=0.5, kappa_t=0.0, H_t=1.5)["amm_precision"]
     assert internal_stressed < internal_baseline
 
 
@@ -74,10 +70,7 @@ def test_batch_matches_stream_updates() -> None:
     kappa = rng.normal(0.0, 0.2, 64).astype(np.float32)
 
     amm = AdaptiveMarketMind(cfg)
-    seq = {
-        k: []
-        for k in ("amm_pulse", "amm_precision", "amm_valence", "pred", "pe", "entropy")
-    }
+    seq = {k: [] for k in ("amm_pulse", "amm_precision", "amm_valence", "pred", "pe", "entropy")}
     for i in range(len(x)):
         out = amm.update(float(x[i]), float(R[i]), float(kappa[i]), None)
         for key in seq:
@@ -85,6 +78,4 @@ def test_batch_matches_stream_updates() -> None:
 
     batched = AdaptiveMarketMind.batch(cfg, x, R, kappa, None)
     for key in seq:
-        assert np.allclose(
-            batched[key], np.asarray(seq[key], dtype=np.float32), atol=1e-6
-        )
+        assert np.allclose(batched[key], np.asarray(seq[key], dtype=np.float32), atol=1e-6)

@@ -1,0 +1,195 @@
+# Diff-bound commit acceptor for the D-002G-P3 PR.
+#
+# Lands the M2 node-payload + injection-sequence sub-domain verifiers
+# + realisers + an admissibility-adjudication protocol over the locked
+# pre-registration grid. Honest scientific outcome on the prereg
+# substrate set: NO new admissibility is unlocked; B1 stays open and
+# the PR ships an M3 pre-registration draft locked at this PR's merge
+# commit.
+#
+# Strict scope:
+#   * NO canonical D-002G run.
+#   * NO D-002G PASS claim.
+#   * NO D-002C ledger update.
+#   * NO tier promotion / cross-promotion.
+#   * NO mutation of any locked governance file (P1 + P2 anchors).
+#   * NO P1 / P2 test modification.
+#   * NO B2 closure.
+
+id: x10r-d002g-p3-constant-payload-null-recovery
+status: ACTIVE
+claim_type: governance
+promise: >-
+  After this PR lands, research/systemic_risk/d002g_null_mechanisms.py
+  carries two new M2 sub-domain verifiers
+  (verify_m2_node_payload_eligibility,
+  verify_m2_injection_sequence_eligibility) and two corresponding
+  realisers (realize_m2_node_payload_null,
+  realize_m2_injection_sequence_null), plus 10 new verdict literals
+  extending M2EligibilityStatus (5 for node_payload, 5 for
+  injection_sequence). The realize_null dispatch gains a
+  shuffle_domain Literal parameter defaulting to "edge_weight" (P2
+  contract preserved) and routing to the correct verifier+realiser
+  pair on M2 calls. Two new salt constants M2_NODE_PAYLOAD_SALT=313
+  and M2_INJECTION_SEQUENCE_SALT=419 are locked.
+
+  tests/systemic_risk/ gains 5 new P3 test files (node_payload,
+  injection_sequence, constant_payload_blockers,
+  no_canonical_promotion, traps) totalling 39+ tests, all green.
+  docs/governance/ gains the P3 discovery report, the null-domain
+  contracts document, the eligibility matrix, the implementation
+  report, AND an M3 pre-registration draft locked at this PR's
+  merge commit. D002G_CANONICAL_RUN_BLOCKERS.md gains a §B1.P3
+  subsection recording the OPEN_REQUIRES_M3 upgrade.
+
+  Strict scope: adjudication infrastructure + tests + docs only.
+  This PR does NOT establish D-002G scientific PASS, does NOT
+  authorise a canonical run, does NOT touch the D-002C ledger,
+  and does NOT close B1 — the M2 node-payload and
+  injection-sequence sub-domains are INELIGIBLE on the two
+  constant-payload substrates exactly as the M2 edge-weight
+  sub-domain was. The honest negative result triggers a fresh M3
+  pre-registration; canonical D-002G remains BLOCKED on the
+  AND-conjunction of B1 (substrate eligibility — OPEN_REQUIRES_M3)
+  AND B2 (percentile-CI limitation) AND any future blocker.
+
+diff_scope:
+  changed_files:
+    - path: ".claude/commit_acceptors/x10r-d002g-p3-constant-payload-null-recovery.yaml"
+    - path: "research/systemic_risk/d002g_null_mechanisms.py"
+    - path: "tests/systemic_risk/test_d002g_p3_node_payload_null.py"
+    - path: "tests/systemic_risk/test_d002g_p3_injection_sequence_null.py"
+    - path: "tests/systemic_risk/test_d002g_p3_constant_payload_blockers.py"
+    - path: "tests/systemic_risk/test_d002g_p3_no_canonical_promotion.py"
+    - path: "tests/systemic_risk/test_d002g_p3_traps.py"
+    - path: "docs/governance/D002G_P3_DISCOVERY_REPORT.md"
+    - path: "docs/governance/D002G_P3_NULL_DOMAIN_CONTRACTS.md"
+    - path: "docs/governance/D002G_P3_ELIGIBILITY_MATRIX.md"
+    - path: "docs/governance/D002G_P3_IMPLEMENTATION_REPORT.md"
+    - path: "docs/governance/D002G_P3_M3_PREREGISTRATION.md"
+    - path: "docs/governance/D002G_CANONICAL_RUN_BLOCKERS.md"
+    - path: "artifacts/d002g/p3/null_domain_verdicts.json"
+  forbidden_paths:
+    - "docs/governance/D002G_PREREGISTRATION.yaml"
+    - "docs/governance/D002G_NONDEGENERATE_NULL_DESIGN.md"
+    - "docs/governance/D002G_ACCEPTANCE_RULES.md"
+    - ".claude/commit_acceptors/x10r-d002g-nondegenerate-null-redesign.yaml"
+    - ".claude/commit_acceptors/x10r-d002g-p1-implementation.yaml"
+    - ".claude/commit_acceptors/x10r-d002g-p1-strike-scaffolding.yaml"
+    - ".claude/commit_acceptors/x10r-d002g-p2-m2-topology-preserving-shuffle.yaml"
+    - "docs/governance/D002C_PREREGISTRATION.yaml"
+    - "docs/governance/D002C_CLAIM_LEDGER.yaml"
+    - "docs/governance/D002C_CANONICAL_RUN_REPORT.md"
+    - "docs/governance/D002C_ATTEMPT_2_NULL_AUDIT_FALSIFICATION_REPORT.md"
+    - "tests/systemic_risk/test_d002g_m2_topology_preserving_shuffle.py"
+    - "tests/systemic_risk/test_d002g_m2_locked_governance_untouched.py"
+    - "application/governance/claim_ledger.py"
+    - "application/governance/commit_acceptor.py"
+required_python_symbols:
+  - "research.systemic_risk.d002g_null_mechanisms.realize_null"
+  - "research.systemic_risk.d002g_null_mechanisms.verify_m2_node_payload_eligibility"
+  - "research.systemic_risk.d002g_null_mechanisms.verify_m2_injection_sequence_eligibility"
+  - "research.systemic_risk.d002g_null_mechanisms.realize_m2_node_payload_null"
+  - "research.systemic_risk.d002g_null_mechanisms.realize_m2_injection_sequence_null"
+  - "research.systemic_risk.d002g_null_mechanisms.M2_NODE_PAYLOAD_SALT"
+  - "research.systemic_risk.d002g_null_mechanisms.M2_INJECTION_SEQUENCE_SALT"
+expected_signal: >-
+  `python -c "from research.systemic_risk.d002g_null_mechanisms
+  import verify_m2_node_payload_eligibility,
+  verify_m2_injection_sequence_eligibility, realize_m2_node_payload_null,
+  realize_m2_injection_sequence_null, M2_NODE_PAYLOAD_SALT,
+  M2_INJECTION_SEQUENCE_SALT"` succeeds; `pytest
+  tests/systemic_risk/test_d002g_p3_*.py -q` passes all 39+ tests; the
+  P3 implementation report contains the verbatim claim-boundary block;
+  the eligibility matrix doc records FINAL_NULL_DOMAIN=M3_REQUIRED
+  for both block_structured and temporal_coupling; the M3
+  pre-registration doc declares its lock at this PR's merge commit;
+  the D002C_CLAIM_LEDGER.yaml sha256 is unchanged
+  (f96ba9b5a2057d2e0bff84afc28578ab316cff73f6dc6673fb0d6d543b8bd6dd).
+measurement_command: >-
+  bash -c 'set -e;
+  python -c "from research.systemic_risk.d002g_null_mechanisms import verify_m2_node_payload_eligibility, verify_m2_injection_sequence_eligibility, realize_m2_node_payload_null, realize_m2_injection_sequence_null, M2_NODE_PAYLOAD_SALT, M2_INJECTION_SEQUENCE_SALT";
+  PYTHONPATH=. python -m pytest tests/systemic_risk/test_d002g_p3_node_payload_null.py tests/systemic_risk/test_d002g_p3_injection_sequence_null.py tests/systemic_risk/test_d002g_p3_constant_payload_blockers.py tests/systemic_risk/test_d002g_p3_no_canonical_promotion.py tests/systemic_risk/test_d002g_p3_traps.py -q;
+  grep -q "This PR implements D-002G-P3 constant-payload null-admissibility" docs/governance/D002G_P3_IMPLEMENTATION_REPORT.md;
+  grep -q "P3_M3_PREREGISTRATION_REQUIRED" docs/governance/D002G_P3_IMPLEMENTATION_REPORT.md;
+  grep -q "B1.P3" docs/governance/D002G_CANONICAL_RUN_BLOCKERS.md;
+  grep -q "OPEN_REQUIRES_M3" docs/governance/D002G_CANONICAL_RUN_BLOCKERS.md;
+  grep -q "ELIGIBLE_M2_NODE_PAYLOAD" research/systemic_risk/d002g_null_mechanisms.py;
+  grep -q "ELIGIBLE_M2_INJECTION_SEQUENCE" research/systemic_risk/d002g_null_mechanisms.py'
+signal_artifact: "docs/governance/D002G_P3_IMPLEMENTATION_REPORT.md"
+falsifier:
+  command: >-
+    bash -c 'set -e;
+    python -c "from research.systemic_risk.d002g_null_mechanisms import verify_m2_node_payload_eligibility, verify_m2_injection_sequence_eligibility, realize_m2_node_payload_null, realize_m2_injection_sequence_null, M2_NODE_PAYLOAD_SALT, M2_INJECTION_SEQUENCE_SALT, deterministic_mix" || exit 1;
+    python -c "from research.systemic_risk.d002g_null_mechanisms import M2_NODE_PAYLOAD_SALT, M2_INJECTION_SEQUENCE_SALT, M2_PLACEBO_SALT, deterministic_mix; assert M2_NODE_PAYLOAD_SALT == 313; assert M2_INJECTION_SEQUENCE_SALT == 419; assert len({deterministic_mix(42, s) for s in (M2_PLACEBO_SALT, M2_NODE_PAYLOAD_SALT, M2_INJECTION_SEQUENCE_SALT)}) == 3" || exit 2;
+    PYTHONPATH=. python -m pytest tests/systemic_risk/test_d002g_p3_node_payload_null.py tests/systemic_risk/test_d002g_p3_injection_sequence_null.py tests/systemic_risk/test_d002g_p3_constant_payload_blockers.py tests/systemic_risk/test_d002g_p3_no_canonical_promotion.py tests/systemic_risk/test_d002g_p3_traps.py -q || exit 3;
+    PYTHONPATH=. python -m pytest tests/systemic_risk/test_d002g_m2_topology_preserving_shuffle.py tests/systemic_risk/test_d002g_m2_locked_governance_untouched.py -q || exit 4;
+    test -f tests/systemic_risk/test_d002g_p3_node_payload_null.py || exit 5;
+    test -f tests/systemic_risk/test_d002g_p3_injection_sequence_null.py || exit 6;
+    test -f tests/systemic_risk/test_d002g_p3_constant_payload_blockers.py || exit 7;
+    test -f tests/systemic_risk/test_d002g_p3_no_canonical_promotion.py || exit 8;
+    test -f tests/systemic_risk/test_d002g_p3_traps.py || exit 9;
+    grep -q "This PR implements D-002G-P3 constant-payload null-admissibility" docs/governance/D002G_P3_IMPLEMENTATION_REPORT.md || exit 10;
+    grep -q "M3_REQUIRED" docs/governance/D002G_P3_ELIGIBILITY_MATRIX.md || exit 11;
+    grep -q "locked at the merge commit" docs/governance/D002G_P3_M3_PREREGISTRATION.md || exit 12;
+    grep -q "B1.P3" docs/governance/D002G_CANONICAL_RUN_BLOCKERS.md || exit 13;
+    grep -q "ELIGIBLE_M2_NODE_PAYLOAD" research/systemic_risk/d002g_null_mechanisms.py || exit 14;
+    grep -q "ELIGIBLE_M2_INJECTION_SEQUENCE" research/systemic_risk/d002g_null_mechanisms.py || exit 15;
+    test "$(sha256sum docs/governance/D002C_CLAIM_LEDGER.yaml | cut -d\  -f1)" = "f96ba9b5a2057d2e0bff84afc28578ab316cff73f6dc6673fb0d6d543b8bd6dd" || exit 16;
+    if grep -E "VALIDATED_REAL_BANK_LEVEL_RESULT|TESTED_POSITIVE_REAL|BANK_LEVEL_PRECURSOR_CONFIRMED|real-data validated|bank-level confirmed|SYNTHETIC_GATE6_CERTIFIED_D002G_REDESIGN|D-002G validated|canonical run unblocked|D-002C rescued" docs/governance/D002G_P3_*.md | grep -vE "forbidden|NOT|never|cannot|D-002C|out-of-scope|No "; then
+      echo "forbidden tier claim leaked outside forbidden-list context"; exit 17;
+    fi'
+  description: >-
+    Probes the D-002G-P3 implementation:
+    (a) every P3 symbol imports cleanly;
+    (b) M2_NODE_PAYLOAD_SALT=313 and M2_INJECTION_SEQUENCE_SALT=419 are
+        locked and produce pairwise-distinct RNG seeds against the
+        M2_PLACEBO_SALT under the same base_seed;
+    (c) all 5 P3 test files pass on their dedicated subset;
+    (d) all P2 tests still pass unchanged (no regression);
+    (e) all 5 P3 test files exist on disk;
+    (f) the P3 implementation report carries the verbatim claim
+        boundary;
+    (g) the P3 eligibility matrix records M3_REQUIRED on the
+        constant-payload substrates;
+    (h) the M3 pre-registration declares its lock-at-merge-commit
+        clause;
+    (i) the blockers manifest records B1.P3;
+    (j) production module exposes both new ELIGIBLE_* literals;
+    (k) D002C_CLAIM_LEDGER.yaml is byte-exact unchanged at the
+        branch-off sha256;
+    (l) no forbidden D-002G PASS / D-002C-rescue claim strings leak
+        outside the forbidden-list / out-of-scope context.
+    If any of these regress, the P3 contract is broken.
+rollback_command: >-
+  bash -c 'git checkout HEAD~1 --
+  research/systemic_risk/d002g_null_mechanisms.py
+  docs/governance/D002G_CANONICAL_RUN_BLOCKERS.md
+  && rm -f tests/systemic_risk/test_d002g_p3_node_payload_null.py
+  tests/systemic_risk/test_d002g_p3_injection_sequence_null.py
+  tests/systemic_risk/test_d002g_p3_constant_payload_blockers.py
+  tests/systemic_risk/test_d002g_p3_no_canonical_promotion.py
+  tests/systemic_risk/test_d002g_p3_traps.py
+  docs/governance/D002G_P3_DISCOVERY_REPORT.md
+  docs/governance/D002G_P3_NULL_DOMAIN_CONTRACTS.md
+  docs/governance/D002G_P3_ELIGIBILITY_MATRIX.md
+  docs/governance/D002G_P3_IMPLEMENTATION_REPORT.md
+  docs/governance/D002G_P3_M3_PREREGISTRATION.md
+  artifacts/d002g/p3/null_domain_verdicts.json
+  .claude/commit_acceptors/x10r-d002g-p3-constant-payload-null-recovery.yaml'
+rollback_verification_command: >-
+  bash -c 'test ! -f tests/systemic_risk/test_d002g_p3_node_payload_null.py
+  && test ! -f tests/systemic_risk/test_d002g_p3_injection_sequence_null.py
+  && test ! -f tests/systemic_risk/test_d002g_p3_constant_payload_blockers.py
+  && test ! -f tests/systemic_risk/test_d002g_p3_no_canonical_promotion.py
+  && test ! -f tests/systemic_risk/test_d002g_p3_traps.py
+  && test ! -f docs/governance/D002G_P3_DISCOVERY_REPORT.md
+  && test ! -f docs/governance/D002G_P3_NULL_DOMAIN_CONTRACTS.md
+  && test ! -f docs/governance/D002G_P3_ELIGIBILITY_MATRIX.md
+  && test ! -f docs/governance/D002G_P3_IMPLEMENTATION_REPORT.md
+  && test ! -f docs/governance/D002G_P3_M3_PREREGISTRATION.md
+  && test ! -f .claude/commit_acceptors/x10r-d002g-p3-constant-payload-null-recovery.yaml'
+memory_update_type: append
+ledger_path: ".claude/commit_acceptors/x10r-d002g-p3-constant-payload-null-recovery.yaml"
+report_path: "docs/governance/D002G_P3_IMPLEMENTATION_REPORT.md"
+evidence: []

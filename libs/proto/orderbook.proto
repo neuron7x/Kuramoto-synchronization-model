@@ -1,15 +1,15 @@
 syntax = "proto3";
 
-package tradepulse.orderbook.v1;
+package geosync.orderbook.v1;
 
-option go_package = "github.com/TradePulse/TradePulse/libs/proto/gen/go/orderbook;orderbookpb";
+option go_package = "github.com/GeoSync/GeoSync/libs/proto/gen/go/orderbook;orderbookpb";
 
 import "google/protobuf/timestamp.proto";
 import "libs/proto/market_data.proto";
 
 message AnalyzeRequest {
-  tradepulse.market.v1.OrderBook orderbook = 1;
-  repeated tradepulse.market.v1.Trade recent_trades = 2;
+  geosync.market.v1.OrderBook orderbook = 1;
+  repeated geosync.market.v1.Trade recent_trades = 2;
 }
 
 message SpreadComponents {

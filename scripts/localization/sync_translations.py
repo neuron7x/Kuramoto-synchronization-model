@@ -1,5 +1,7 @@
 #!/usr/bin/env python3
-"""Synchronise TradePulse dashboard localization assets."""
+# Copyright (c) 2023-2026 Yaroslav Vasylenko (neuron7xLab)
+# SPDX-License-Identifier: MIT
+"""Synchronise GeoSync dashboard localization assets."""
 
 from __future__ import annotations
 
@@ -14,12 +16,12 @@ from typing import Any, Dict, Iterable, Mapping, Set
 import yaml
 from jsonschema import Draft202012Validator
 
+from core.compat import utc_now
+
 REPO_ROOT = Path(__file__).resolve().parents[2]
 DEFAULT_LOCALES_YAML = REPO_ROOT / "configs" / "localization" / "locales.yaml"
 TRANSLATIONS_DIR = REPO_ROOT / "ui" / "dashboard" / "src" / "i18n" / "locales"
-METADATA_JSON = (
-    REPO_ROOT / "ui" / "dashboard" / "src" / "i18n" / "locales.metadata.json"
-)
+METADATA_JSON = REPO_ROOT / "ui" / "dashboard" / "src" / "i18n" / "locales.metadata.json"
 SCHEMA_PATH = REPO_ROOT / "schemas" / "localization" / "translation.schema.json"
 COVERAGE_REPORT = REPO_ROOT / "reports" / "localization" / "coverage.json"
 DEFAULT_VENDOR_DIR = REPO_ROOT / "scripts" / "localization" / "vendor"
@@ -166,9 +168,7 @@ def load_translations(translations_dir: Path) -> Dict[str, Dict[str, Any]]:
     return translations
 
 
-def apply_vendor_overrides(
-    translations: Dict[str, Dict[str, Any]], vendor_dir: Path
-) -> bool:
+def apply_vendor_overrides(translations: Dict[str, Dict[str, Any]], vendor_dir: Path) -> bool:
     if not vendor_dir.exists():
         return False
     changed = False
@@ -197,9 +197,7 @@ def validate_translation(
         raise ValueError(f"Schema validation failed for {path}:\n{formatted}")
 
 
-def compute_coverage(
-    base_keys: Set[str], locale: str, keys: Set[str]
-) -> LocaleCoverage:
+def compute_coverage(base_keys: Set[str], locale: str, keys: Set[str]) -> LocaleCoverage:
     missing = base_keys - keys
     extra = keys - base_keys
     return LocaleCoverage(locale=locale, missing=missing, extra=extra)
@@ -212,10 +210,7 @@ def write_translations(
     for locale, payload in translations.items():
         path = translations_dir / f"{locale}.json"
         if check:
-            if (
-                not path.exists()
-                or json.loads(path.read_text(encoding="utf-8")) != payload
-            ):
+            if not path.exists() or json.loads(path.read_text(encoding="utf-8")) != payload:
                 return True
             continue
         dump_json(path, payload)
@@ -244,9 +239,7 @@ def main(argv: Iterable[str]) -> int:
     issues = []
 
     for locale, payload in translations.items():
-        validate_translation(
-            payload, validator, args.translations_dir / f"{locale}.json"
-        )
+        validate_translation(payload, validator, args.translations_dir / f"{locale}.json")
         locale_keys = flatten_keys(payload)
         stats = compute_coverage(base_keys, locale, locale_keys)
         coverage["locales"][locale] = {
@@ -269,13 +262,10 @@ def main(argv: Iterable[str]) -> int:
         )
         metadata_changed = (
             not args.metadata_output.exists()
-            or json.loads(args.metadata_output.read_text(encoding="utf-8"))
-            != metadata_payload
+            or json.loads(args.metadata_output.read_text(encoding="utf-8")) != metadata_payload
         )
         if args.coverage_report.exists():
-            existing_coverage = json.loads(
-                args.coverage_report.read_text(encoding="utf-8")
-            )
+            existing_coverage = json.loads(args.coverage_report.read_text(encoding="utf-8"))
             existing_coverage["generatedAt"] = None
         else:
             existing_coverage = None
@@ -298,17 +288,13 @@ def main(argv: Iterable[str]) -> int:
 
     write_translations(translations, args.translations_dir, check=False)
     dump_json(args.metadata_output, metadata_payload)
-    from datetime import UTC, datetime
-
-    coverage["generatedAt"] = datetime.now(UTC).isoformat().replace("+00:00", "Z")
+    coverage["generatedAt"] = utc_now().isoformat().replace("+00:00", "Z")
     dump_json(args.coverage_report, coverage)
 
     if issues:
         for locale, stats in issues:
             if stats.missing:
-                print(
-                    f"[warn] Locale {locale} missing keys: {', '.join(sorted(stats.missing))}"
-                )
+                print(f"[warn] Locale {locale} missing keys: {', '.join(sorted(stats.missing))}")
             if stats.extra:
                 print(
                     f"[warn] Locale {locale} has unexpected keys: {', '.join(sorted(stats.extra))}"

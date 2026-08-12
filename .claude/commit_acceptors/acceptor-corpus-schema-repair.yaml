@@ -1,0 +1,134 @@
+# Diff-bound commit acceptor: repair the acceptor corpus so the typed-model
+# loader parses every file and every rollback verification command is runnable.
+#
+# Two defect classes were blocking tests/governance/test_typed_models.py
+# (quarantine cluster #1170 "acceptor_corpus_legacy_mapping") and leaving eight
+# rollback verification commands syntactically broken:
+#
+# PART A (corpus no longer loads):
+#   (a) Three acceptors declared required_python_symbols in the LEGACY
+#       [{file:..., symbol:...}] mapping form instead of the canonical
+#       "module::symbol" string form, tripping the mode='before' guard in
+#       application/governance/commit_acceptor.py:
+#         - governance-verification-protocol-binding.yaml
+#         - forman-ricci-margin-onset-honesty.yaml
+#         - import-arch-geosync-risk-consolidation.yaml
+#       Each mapping was converted to the canonical string preserving the same
+#       file+symbol semantics (e.g. governance/verification_protocol.py::VerificationProtocol).
+#   (b) Two acceptors carried a disallowed extra falsifier.falsifier_artifact
+#       field (extra='forbid' rejects it):
+#         - acceptor-command-syntax-gate.yaml
+#         - tsallis-q-robustness.yaml
+#       The artifact-path intent was folded into falsifier.description (an allowed
+#       field) — the log path is named in prose, no information lost.
+#
+# PART B (rollback verification commands do not parse):
+#   Eight acceptors wrapped a multi-line `python -c "try: ... except ImportError:
+#   ..."` in a folded scalar; the indented try-block became "unexpected indent".
+#   Each was rewritten as a VALID SINGLE-LINE `python -c` that preserves the exact
+#   semantics — "the rolled-back module/symbol is ABSENT": it walks the dotted
+#   module path with importlib.util.find_spec (raise-safe: an absent top package
+#   short-circuits before any child is queried), then checks the symbol via
+#   hasattr, and exits 1 iff present / 0 iff absent. Files:
+#     canonical-seven-foundation, canonical-seven-orchestrator,
+#     cli-and-pre-registration, data-reality-firewall, governance-fsm,
+#     replication-capsule, rigorous-bayes-factors, verdict-lattice.
+#
+# Governance-hygiene scope only: no runtime, physics, market, or trading surface
+# is touched; no claim tier is promoted; no numeric behaviour changes.
+#
+# Locally verified:
+#   * python -m pytest tests/governance/test_typed_models.py -q: all pass
+#   * ast.parse over all 8 rollback python payloads: 0 broken
+#   * each rewritten rollback command runs; exits 1 (modules present pre-rollback)
+#   * validate_commit_acceptor.py: exit 0, no new errors on touched files
+#   * scripts/ci/check_acceptor_command_syntax.py: OK across the corpus
+id: acceptor-corpus-schema-repair
+status: ACTIVE
+claim_type: governance
+promise: >-
+  Every .claude/commit_acceptors/*.yaml parses against the typed model in
+  application.governance.commit_acceptor (no legacy {file, symbol} mapping form,
+  no disallowed falsifier.falsifier_artifact field), and the eight previously
+  broken rollback_verification_command payloads (canonical-seven-foundation,
+  canonical-seven-orchestrator, cli-and-pre-registration, data-reality-firewall,
+  governance-fsm, replication-capsule, rigorous-bayes-factors, verdict-lattice)
+  are valid single-line `python -c` probes whose bodies parse with ast.parse and
+  preserve the "rolled-back symbol is absent ⇒ exit 0, present ⇒ exit 1"
+  semantics. Governance-hygiene only; no runtime, physics, market, or trading
+  claim is asserted and no claim tier is promoted.
+diff_scope:
+  changed_files:
+    - path: ".claude/commit_acceptors/acceptor-corpus-schema-repair.yaml"
+    - path: ".claude/commit_acceptors/governance-verification-protocol-binding.yaml"
+    - path: ".claude/commit_acceptors/forman-ricci-margin-onset-honesty.yaml"
+    - path: ".claude/commit_acceptors/import-arch-geosync-risk-consolidation.yaml"
+    - path: ".claude/commit_acceptors/acceptor-command-syntax-gate.yaml"
+    - path: ".claude/commit_acceptors/tsallis-q-robustness.yaml"
+    - path: ".claude/commit_acceptors/canonical-seven-foundation.yaml"
+    - path: ".claude/commit_acceptors/canonical-seven-orchestrator.yaml"
+    - path: ".claude/commit_acceptors/cli-and-pre-registration.yaml"
+    - path: ".claude/commit_acceptors/data-reality-firewall.yaml"
+    - path: ".claude/commit_acceptors/governance-fsm.yaml"
+    - path: ".claude/commit_acceptors/replication-capsule.yaml"
+    - path: ".claude/commit_acceptors/rigorous-bayes-factors.yaml"
+    - path: ".claude/commit_acceptors/verdict-lattice.yaml"
+    - path: "tools/commit_acceptor/acceptor_corpus_schema_falsifier.py"
+  forbidden_paths:
+    - "trading/"
+    - "execution/"
+    - "forecast/"
+    - "policy/"
+required_python_symbols:
+  - "tools/commit_acceptor/acceptor_corpus_schema_falsifier.py::extract_python_payloads"
+  - "tools/commit_acceptor/acceptor_corpus_schema_falsifier.py::main"
+expected_signal: >-
+  `python -m pytest tests/governance/test_typed_models.py -q` reports all passed;
+  `python tools/commit_acceptor/acceptor_corpus_schema_falsifier.py` prints the
+  OK line and exits 0 (corpus loads, all 8 rollback payloads ast.parse cleanly);
+  `python tools/commit_acceptor/validate_commit_acceptor.py` exits 0 with no new
+  errors on the touched files.
+measurement_command: >-
+  bash -c 'mkdir -p tmp && python -m pytest tests/governance/test_typed_models.py -q
+  > tmp/acceptor_corpus_schema_repair.log 2>&1
+  && python tools/commit_acceptor/acceptor_corpus_schema_falsifier.py
+  >> tmp/acceptor_corpus_schema_repair.log 2>&1; echo "falsifier_exit=$?"
+  >> tmp/acceptor_corpus_schema_repair.log'
+signal_artifact: "tmp/acceptor_corpus_schema_repair.log"
+falsifier:
+  command: "python tools/commit_acceptor/acceptor_corpus_schema_falsifier.py"
+  description: >-
+    Inverse probe aligned to the runner's polarity (run_evidence.py ~L411:
+    falsifier exit 0 == correct/green, non-zero == SIGNAL_FAILED). It re-runs the
+    typed-model corpus loader over .claude/commit_acceptors/ AND ast.parses the
+    inline `python -c` payload of each of the eight repaired
+    rollback_verification_command fields. It exits 1 (fires) iff the corpus fails
+    to load (a re-introduced legacy mapping form or extra falsifier_artifact
+    field, or any other schema drift) OR any of the eight rollback payloads fails
+    to parse / loses its inline python payload — i.e. the "unexpected indent"
+    regression returned. While the repair holds (a clean corpus) the probe exits
+    0. An exit 1 means the corpus drifted back to an unloadable / unparseable
+    state and must be repaired, not patched green.
+rollback_command: >-
+  bash -c 'git checkout origin/main --
+  .claude/commit_acceptors/governance-verification-protocol-binding.yaml
+  .claude/commit_acceptors/forman-ricci-margin-onset-honesty.yaml
+  .claude/commit_acceptors/import-arch-geosync-risk-consolidation.yaml
+  .claude/commit_acceptors/acceptor-command-syntax-gate.yaml
+  .claude/commit_acceptors/tsallis-q-robustness.yaml
+  .claude/commit_acceptors/canonical-seven-foundation.yaml
+  .claude/commit_acceptors/canonical-seven-orchestrator.yaml
+  .claude/commit_acceptors/cli-and-pre-registration.yaml
+  .claude/commit_acceptors/data-reality-firewall.yaml
+  .claude/commit_acceptors/governance-fsm.yaml
+  .claude/commit_acceptors/replication-capsule.yaml
+  .claude/commit_acceptors/rigorous-bayes-factors.yaml
+  .claude/commit_acceptors/verdict-lattice.yaml
+  && git rm -f tools/commit_acceptor/acceptor_corpus_schema_falsifier.py
+  .claude/commit_acceptors/acceptor-corpus-schema-repair.yaml'
+rollback_verification_command: |-
+  python -c "import importlib.util,importlib,sys; _p=lambda m: all(importlib.util.find_spec('.'.join(m.split('.')[:i+1])) for i in range(len(m.split('.')))); present=_p('tools.commit_acceptor.acceptor_corpus_schema_falsifier') and hasattr(importlib.import_module('tools.commit_acceptor.acceptor_corpus_schema_falsifier'),'extract_python_payloads'); sys.exit(1 if present else 0)"
+memory_update_type: none
+ledger_path: ".claude/commit_acceptors/acceptor-corpus-schema-repair.yaml"
+report_path: "docs/reports/diff_bound_commit_acceptor_layer.md"
+evidence: []

@@ -1,0 +1,21 @@
+{
+  "_doc": "Synthetic BIS CBS (Consolidated Banking Statistics) marginal fixture for issue #639. INPUT VALIDATION fixture only: nationality/parent-group ontology, intragroup positions EXCLUDED by construction. Structurally admissible for the substrate-agnostic Cimini-Squartini engine. NOT a market, predictive, bank-level, or product-readiness claim; values are fabricated.",
+  "schema_version": "bis.cbs.marginals.v1",
+  "ontology": "nationality_parent_group",
+  "intragroup_excluded": true,
+  "reporting_period": "2023-Q4",
+  "positions": [
+    {"reporter_group": "DE", "counterparty_group": "US", "claim_usd_mn": 1850.0},
+    {"reporter_group": "DE", "counterparty_group": "GB", "claim_usd_mn": 920.0},
+    {"reporter_group": "DE", "counterparty_group": "FR", "claim_usd_mn": 740.0},
+    {"reporter_group": "US", "counterparty_group": "DE", "claim_usd_mn": 1320.0},
+    {"reporter_group": "US", "counterparty_group": "GB", "claim_usd_mn": 1610.0},
+    {"reporter_group": "US", "counterparty_group": "JP", "claim_usd_mn": 880.0},
+    {"reporter_group": "GB", "counterparty_group": "US", "claim_usd_mn": 1190.0},
+    {"reporter_group": "GB", "counterparty_group": "DE", "claim_usd_mn": 530.0},
+    {"reporter_group": "FR", "counterparty_group": "DE", "claim_usd_mn": 670.0},
+    {"reporter_group": "FR", "counterparty_group": "US", "claim_usd_mn": 410.0},
+    {"reporter_group": "JP", "counterparty_group": "US", "claim_usd_mn": 950.0},
+    {"reporter_group": "JP", "counterparty_group": "GB", "claim_usd_mn": 360.0}
+  ]
+}

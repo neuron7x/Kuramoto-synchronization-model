@@ -1,7 +1,7 @@
-# SPDX-License-Identifier: LicenseRef-TradePulse-Proprietary
+# SPDX-License-Identifier: MIT
 global:
   scrape_interval: 15s
 scrape_configs:
   - job_name: 'nfpro'
     static_configs:
-      - targets: ['tradepulse:8001']
+      - targets: ['geosync:8001']

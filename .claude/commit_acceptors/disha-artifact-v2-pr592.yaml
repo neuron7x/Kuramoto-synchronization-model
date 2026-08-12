@@ -1,0 +1,106 @@
+# Diff-bound commit acceptor for PR #592 (opened as #625) —
+# Disha artefact v2 layer. Companion to instrument-validation-pr592.
+# Split per claim-type cap (governance ≤16): this acceptor binds the
+# tools/disha_artifact + tests/disha_artifact_v2 surface.
+
+id: disha-artifact-v2-pr592
+status: ACTIVE
+claim_type: governance
+promise: >-
+  After this PR lands, tools/disha_artifact provides v2 wrappers that
+  consume the instrument_validation gating layer: 6-metric Bonferroni
+  discrimination, mass+observation-filtered risk concentration ranking,
+  Lehman-pair headline-blocked CSV emission, and an anchored summary
+  compiler. tools/build_disha_ba_correlation_figures.py imports and
+  calls emit_verdict before any artefact write.
+
+diff_scope:
+  changed_files:
+    - path: ".claude/commit_acceptors/disha-artifact-v2-pr592.yaml"
+    - path: "DISHA_SAFE_120_WORDS_v2.md"
+    - path: "tools/build_disha_ba_correlation_figures.py"
+    - path: "tools/disha_artifact/__init__.py"
+    - path: "tools/disha_artifact/discrimination_v2.py"
+    - path: "tools/disha_artifact/risk_concentration_v2.py"
+    - path: "tools/disha_artifact/summary_compiler.py"
+    - path: "tests/disha_artifact_v2/__init__.py"
+    - path: "tests/disha_artifact_v2/test_discrimination_v2.py"
+    - path: "tests/disha_artifact_v2/test_risk_concentration_v2.py"
+    - path: "tests/disha_artifact_v2/test_summary_compiler.py"
+    - path: "tests/disha_artifact_v2/test_build_script_gating.py"
+  forbidden_paths:
+    - "research/systemic_risk/protocol_x9r.py"
+    - "tools/build_bis_lbs_dataset.py"
+    - "trading/"
+    - "execution/"
+    - "forecast/"
+    - "policy/"
+    - "core/"
+    - "runtime/"
+    - "application/"
+
+required_python_symbols:
+  - "tools/disha_artifact/discrimination_v2.py::discriminate_ba_vs_er_six_metrics"
+  - "tools/disha_artifact/risk_concentration_v2.py::filter_risk_concentration"
+  - "tools/disha_artifact/risk_concentration_v2.py::lehman_pair_correlations_block_headline"
+  - "tools/disha_artifact/risk_concentration_v2.py::article_risk_score"
+  - "tools/disha_artifact/summary_compiler.py::compile_safe_summary"
+
+expected_signal: >-
+  ``pytest tests/disha_artifact_v2/ -q`` reports 19 passed; the
+  existing 54 disha tests in tests/research/systemic_risk/ remain green.
+
+measurement_command: >-
+  bash -c '
+    mypy --strict tools/disha_artifact/ tools/build_disha_ba_correlation_figures.py && python -m pytest tests/disha_artifact_v2/ -q
+  '
+
+signal_artifact: "tmp/disha_artifact_v2_pr592.log"
+
+falsifier:
+  command: |-
+    bash -c '
+      python -c "
+    from tools.disha_artifact.discrimination_v2 import (
+        discriminate_ba_vs_er_six_metrics,
+    )
+    from tools.disha_artifact.risk_concentration_v2 import (
+        filter_risk_concentration,
+        lehman_pair_correlations_block_headline,
+    )
+    from tools.disha_artifact.summary_compiler import compile_safe_summary
+    assert callable(discriminate_ba_vs_er_six_metrics)
+    assert callable(filter_risk_concentration)
+    assert callable(lehman_pair_correlations_block_headline)
+    assert callable(compile_safe_summary)
+      " 2>/dev/null && exit 1 || exit 0
+    '
+  description: >-
+    Probes that the public Disha v2 API symbols are exposed at the
+    documented names. Falsifier inverts: it succeeds (exit 0) only
+    when an import or assertion fails, which would mean the layer
+    rolled back.
+
+rollback_command: >-
+  bash -c '
+    rm -rf tools/disha_artifact tests/disha_artifact_v2 && rm -f .claude/commit_acceptors/disha-artifact-v2-pr592.yaml DISHA_SAFE_120_WORDS_v2.md && git checkout HEAD -- tools/build_disha_ba_correlation_figures.py
+  '
+
+rollback_verification_command: |-
+  bash -c '
+    python -c "
+  try:
+      from tools.disha_artifact.discrimination_v2 import (
+          discriminate_ba_vs_er_six_metrics,
+      )
+  except ImportError:
+      pass
+  else:
+      raise SystemExit(1)
+    "
+  '
+
+memory_update_type: append
+ledger_path: ".claude/commit_acceptors/disha-artifact-v2-pr592.yaml"
+report_path: "tmp/disha_artifact_v2_pr592.log"
+evidence: []

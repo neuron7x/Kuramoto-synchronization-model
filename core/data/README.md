@@ -1,5 +1,5 @@
 ---
-owner: data-platform@tradepulse
+owner: data-platform@geosync
 review_cadence: quarterly
 last_reviewed: 2025-11-04
 links:
@@ -12,7 +12,7 @@ links:
 
 ## Purpose
 
-The `core/data` module serves as the **sensory cortex** of the TradePulse system, providing unified ingestion, validation, and lineage tracking for all market data and derived features. Inspired by how the brain's thalamus filters and routes sensory input to higher cortical areas, this module ensures only validated, normalized, and versioned data reaches the decision-making layers.
+The `core/data` module serves as the **sensory cortex** of the GeoSync system, providing unified ingestion, validation, and lineage tracking for all market data and derived features. Inspired by how the brain's thalamus filters and routes sensory input to higher cortical areas, this module ensures only validated, normalized, and versioned data reaches the decision-making layers.
 
 **Neuroeconomic Mapping:**
 - **Thalamic Relay**: `ingestion.py` and `async_ingestion.py` act as the sensory gateway, filtering raw market feeds
@@ -61,13 +61,13 @@ The `core/data` module serves as the **sensory cortex** of the TradePulse system
 ## Configuration
 
 ### Environment Variables:
-- `TRADEPULSE_DATA_ROOT`: Base directory for all data storage (default: `~/.tradepulse/data`)
-- `TRADEPULSE_FEATURE_STORE_BACKEND`: Backend type: `redis`, `parquet`, `feast` (default: `redis`)
-- `TRADEPULSE_DLQ_RETENTION_DAYS`: Dead letter queue retention period (default: `30`)
-- `TRADEPULSE_ENABLE_DATA_LINEAGE`: Enable full lineage tracking (default: `true`, incurs 5-10% overhead)
-- `TRADEPULSE_INGESTION_WORKERS`: Parallel ingestion workers (default: `4`)
-- `TRADEPULSE_KAFKA_BOOTSTRAP_SERVERS`: Kafka/Redpanda brokers for streaming ingestion
-- `TRADEPULSE_S3_BUCKET`: S3-compatible bucket for Iceberg lakehouse (e.g., `s3://tradepulse-features`)
+- `GEOSYNC_DATA_ROOT`: Base directory for all data storage (default: `~/.geosync/data`)
+- `GEOSYNC_FEATURE_STORE_BACKEND`: Backend type: `redis`, `parquet`, `feast` (default: `redis`)
+- `GEOSYNC_DLQ_RETENTION_DAYS`: Dead letter queue retention period (default: `30`)
+- `GEOSYNC_ENABLE_DATA_LINEAGE`: Enable full lineage tracking (default: `true`, incurs 5-10% overhead)
+- `GEOSYNC_INGESTION_WORKERS`: Parallel ingestion workers (default: `4`)
+- `GEOSYNC_KAFKA_BOOTSTRAP_SERVERS`: Kafka/Redpanda brokers for streaming ingestion
+- `GEOSYNC_S3_BUCKET`: S3-compatible bucket for Iceberg lakehouse (e.g., `s3://geosync-features`)
 
 ### Configuration Files:
 Data pipelines are configured via `configs/data/`:
@@ -438,7 +438,7 @@ print(f"Gaps remaining: {status.gaps_count}")
 
 | Date | Author | Change |
 | ---- | ------ | ------ |
-| 2025-11-04 | data-platform@tradepulse | Created comprehensive README with neuroeconomic context |
+| 2025-11-04 | data-platform@geosync | Created comprehensive README with neuroeconomic context |
 
 ## See Also
 

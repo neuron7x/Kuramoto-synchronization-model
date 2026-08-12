@@ -1,0 +1,92 @@
+# Diff-bound commit acceptor for the P0 physics-test grounding batch (#823).
+#
+# Test-only change. Grounds the top-5 P0 backlog test files with REAL physics
+# invariant annotations (INV-5HT*, INV-K*, INV-HPC*, INV-OA*, INV-RC*) plus
+# strengthened diagnostics and derived/named thresholds; genuine implementation
+# and admissibility tests are marked NON_PHYSICS. No runtime, schema, guard, or
+# production-code change; no market claim; no new data.
+#
+# Locally verified on origin/main base (a553e49e):
+#   * pytest on all five touched files (incl. @slow): all green
+#   * .claude/physics/validate_tests.py on each of the four physics files: 0 issues
+#   * repository validator before->after: grounded 331->361, total issues 2386->2195
+#   * ruff check + ruff format --check + black --check + mypy --strict clean
+#   * zero new `# type: ignore` / `# noqa` / skip / xfail
+id: ground-p0-backlog-batch-serotonin-kuramoto
+status: ACTIVE
+claim_type: governance
+promise: >-
+  After this PR lands, the five P0-backlog test files
+  (tests/core/neuro/serotonin/test_serotonin_controller.py,
+  tests/core/neuro/serotonin/test_serotonin_runtime_safety.py,
+  tests/unit/test_kuramoto_ricci_composite.py,
+  tests/unit/core/test_kuramoto_modules.py,
+  tests/research/calibration/test_grid_kuramoto.py) each pass
+  .claude/physics/validate_tests.py with their physics witnesses grounded to
+  registered invariants (zero L1..L5 issues on the four physics modules) and the
+  calibration-instrument file reclassified NON_PHYSICS, while every test still
+  passes and still tests the same physical quantity. No runtime, schema, or guard
+  change; no market claim.
+diff_scope:
+  changed_files:
+    - path: ".claude/commit_acceptors/ground-p0-backlog-batch-serotonin-kuramoto.yaml"
+    - path: "tests/core/neuro/serotonin/test_serotonin_controller.py"
+    - path: "tests/core/neuro/serotonin/test_serotonin_runtime_safety.py"
+    - path: "tests/unit/test_kuramoto_ricci_composite.py"
+    - path: "tests/unit/core/test_kuramoto_modules.py"
+    - path: "tests/research/calibration/test_grid_kuramoto.py"
+  forbidden_paths:
+    - "trading/"
+    - "execution/"
+    - "forecast/"
+    - "policy/"
+    - "application/"
+    - "core/"
+    - "src/"
+    - "geosync_hpc/"
+    - ".claude/physics/INVARIANTS.yaml"
+    - ".claude/physics/validate_tests.py"
+required_python_symbols: []
+expected_signal: >-
+  `python .claude/physics/validate_tests.py
+  tests/core/neuro/serotonin/test_serotonin_controller.py
+  tests/core/neuro/serotonin/test_serotonin_runtime_safety.py
+  tests/unit/test_kuramoto_ricci_composite.py
+  tests/unit/core/test_kuramoto_modules.py` reports zero issues (L1..L5) and
+  `python -m pytest` on all five touched files reports all passed.
+measurement_command: >-
+  bash -c 'mkdir -p tmp && python .claude/physics/validate_tests.py
+  tests/core/neuro/serotonin/test_serotonin_controller.py
+  tests/core/neuro/serotonin/test_serotonin_runtime_safety.py
+  tests/unit/test_kuramoto_ricci_composite.py
+  tests/unit/core/test_kuramoto_modules.py
+  > tmp/ground_p0_backlog_batch.log 2>&1
+  && grep -q "All physics tests pass validation." tmp/ground_p0_backlog_batch.log'
+signal_artifact: "tmp/ground_p0_backlog_batch.log"
+falsifier:
+  command: >-
+    bash -c 'python .claude/physics/validate_tests.py
+    tests/unit/core/test_kuramoto_modules.py --summary 2>&1
+    | grep -E "Total:\s+0" >/dev/null && exit 1 || exit 0'
+  description: >-
+    Inverse probe of the grounding claim. It exits 0 (fires) iff the kuramoto
+    modules file still carries any L1..L5 validator issue (i.e. the grounding is
+    incomplete or was reverted); it exits 1 while the file is fully grounded
+    (Total 0). If the probe ever exits 0, the grounding promise is no longer
+    truthful and the change must be reverted, not patched green.
+rollback_command: >-
+  git checkout origin/main --
+  tests/core/neuro/serotonin/test_serotonin_controller.py
+  tests/core/neuro/serotonin/test_serotonin_runtime_safety.py
+  tests/unit/test_kuramoto_ricci_composite.py
+  tests/unit/core/test_kuramoto_modules.py
+  tests/research/calibration/test_grid_kuramoto.py
+  && git rm -f
+  .claude/commit_acceptors/ground-p0-backlog-batch-serotonin-kuramoto.yaml
+rollback_verification_command: >-
+  bash -c 'test ! -f
+  .claude/commit_acceptors/ground-p0-backlog-batch-serotonin-kuramoto.yaml'
+memory_update_type: none
+ledger_path: ".claude/commit_acceptors/ground-p0-backlog-batch-serotonin-kuramoto.yaml"
+report_path: "docs/physics/P0_MIGRATION_BACKLOG.md"
+evidence: []

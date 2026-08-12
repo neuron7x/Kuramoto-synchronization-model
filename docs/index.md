@@ -1,8 +1,8 @@
-# TradePulse Documentation Portal
+# GeoSync Documentation Portal
 
 <div class="hero" data-animate="fade-up">
   <p class="hero__eyebrow">Документація • Strategy • Operations</p>
-  <h1>Опануйте TradePulse з повною впевненістю</h1>
+  <h1>Опануйте GeoSync з повною впевненістю</h1>
   <p class="hero__lead">
     Цей портал поєднує концепції, формальні стандарти та практичні процедури,
     необхідні для проєктування, запуску та масштабування торгових агентів.
@@ -14,7 +14,7 @@
     <a class="hero-action hero-action--ghost" href="ARCHITECTURE/">Дослідити архітектуру</a>
     <a class="hero-action hero-action--ghost" href="operational_handbook/">Перейти до операцій</a>
   </div>
-  <img class="hero__illustration" src="assets/banner.png" alt="Візуалізація потоків TradePulse" loading="lazy">
+  <img class="hero__illustration" src="assets/banner.png" alt="Візуалізація потоків GeoSync" loading="lazy">
   <span class="hero__badge-ring" aria-hidden="true"></span>
 </div>
 
@@ -85,7 +85,7 @@
     <div class="card__links">
       <a class="card__link" href="scenarios/">Developer Scenarios</a>
       <a class="card__link" href="cookbook_backtest_live/">Backtest → Live Guide</a>
-      <a class="card__link" href="extending/">Extending TradePulse</a>
+      <a class="card__link" href="extending/">Extending GeoSync</a>
     </div>
   </article>
   <article class="card" data-animate="fade-up">
@@ -121,7 +121,7 @@
   <div class="timeline__step">
     <strong>0–10 хвилин — налаштування середовища</strong>
     <p>Виконайте <a href="quickstart/">Quick Start</a>, застосуйте docker або local setup,
-      перевірте CLI: <code>tradepulse --help</code>.</p>
+      перевірте CLI: <code>geosync --help</code>.</p>
   </div>
   <div class="timeline__step">
     <strong>10–20 хвилин — перший експеримент</strong>

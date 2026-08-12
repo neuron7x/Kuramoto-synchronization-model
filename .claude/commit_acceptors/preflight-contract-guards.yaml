@@ -1,0 +1,30 @@
+id: preflight-contract-guards
+status: ACTIVE
+claim_type: governance
+promise: "PR preflight evidence now validates its own report contract and protects the canonical repository map from truncation."
+diff_scope:
+  changed_files:
+    - path: ".claude/commit_acceptors/preflight-contract-guards.yaml"
+    - path: "tools/ci/pr_preflight.py"
+    - path: "tests/ci/test_pr_preflight_contracts.py"
+  forbidden_paths:
+    - "trading/"
+    - "execution/"
+    - "forecast/"
+    - "policy/"
+required_python_symbols:
+  - "tools.ci.pr_preflight.validate_report_contract"
+  - "tools.ci.pr_preflight.REQUIRED_REPORT_KEYS"
+  - "tools.ci.pr_preflight.REQUIRED_CHECK_KEYS"
+expected_signal: "Contract tests reject report schema drift and verify docs/REPOSITORY_SYSTEM.md retains all canonical sections."
+measurement_command: "python -m pytest tests/ci/test_pr_preflight_contracts.py tests/ci/test_pr_preflight_engine.py -q && bash -n scripts/test-pr-locally.sh"
+signal_artifact: "artifacts/pr_preflight/preflight_report.json"
+falsifier:
+  command: "python -m pytest tests/ci/test_pr_preflight_contracts.py -q"
+  description: "A bad report shape must raise ValueError instead of being trusted as evidence."
+rollback_command: "git checkout -- tools/ci/pr_preflight.py && git rm -f tests/ci/test_pr_preflight_contracts.py .claude/commit_acceptors/preflight-contract-guards.yaml"
+rollback_verification_command: "git diff --exit-code -- tools/ci/pr_preflight.py tests/ci/test_pr_preflight_contracts.py .claude/commit_acceptors/preflight-contract-guards.yaml"
+memory_update_type: none
+ledger_path: ".claude/commit_acceptors/preflight-contract-guards.yaml"
+report_path: "docs/reports/diff_bound_commit_acceptor_layer.md"
+evidence: []

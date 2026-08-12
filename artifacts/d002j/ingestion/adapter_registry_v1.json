@@ -1,0 +1,245 @@
+{
+  "adapters": [
+    {
+      "adapter_class": "official_api_adapter",
+      "adapter_id": "adapter_fred_vixcls_v1",
+      "source_id": "CBOE_VIX",
+      "status": "STUB_ONLY",
+      "window_ids": [
+        "CW1_GFC_2007_2009",
+        "CW2_EUROZONE_2011_2012",
+        "CW3_US_REPO_SPIKE_2019",
+        "CW4_COVID_DASH_FOR_CASH_2020",
+        "CW5_UK_GILT_LDI_2022",
+        "CW6_REGIONAL_BANKING_2023"
+      ]
+    },
+    {
+      "adapter_class": "official_api_adapter",
+      "adapter_id": "adapter_fred_stlfsi_v1",
+      "source_id": "STLFSI",
+      "status": "STUB_ONLY",
+      "window_ids": [
+        "CW1_GFC_2007_2009",
+        "CW2_EUROZONE_2011_2012",
+        "CW3_US_REPO_SPIKE_2019",
+        "CW4_COVID_DASH_FOR_CASH_2020",
+        "CW6_REGIONAL_BANKING_2023"
+      ]
+    },
+    {
+      "adapter_class": "official_api_adapter",
+      "adapter_id": "adapter_fred_kcfsi_v1",
+      "source_id": "KCFSI",
+      "status": "STUB_ONLY",
+      "window_ids": [
+        "CW1_GFC_2007_2009",
+        "CW2_EUROZONE_2011_2012",
+        "CW4_COVID_DASH_FOR_CASH_2020",
+        "CW6_REGIONAL_BANKING_2023"
+      ]
+    },
+    {
+      "adapter_class": "official_api_adapter",
+      "adapter_id": "adapter_fred_h15_treasury_v1",
+      "source_id": "FED_H15",
+      "status": "STUB_ONLY",
+      "window_ids": [
+        "CW1_GFC_2007_2009",
+        "CW2_EUROZONE_2011_2012",
+        "CW3_US_REPO_SPIKE_2019",
+        "CW4_COVID_DASH_FOR_CASH_2020",
+        "CW5_UK_GILT_LDI_2022",
+        "CW6_REGIONAL_BANKING_2023"
+      ]
+    },
+    {
+      "adapter_class": "official_api_adapter",
+      "adapter_id": "adapter_fred_michigan_inflation_expect_v1",
+      "source_id": "FRED",
+      "status": "STUB_ONLY",
+      "window_ids": [
+        "CW1_GFC_2007_2009",
+        "CW2_EUROZONE_2011_2012",
+        "CW4_COVID_DASH_FOR_CASH_2020",
+        "CW6_REGIONAL_BANKING_2023"
+      ]
+    },
+    {
+      "adapter_class": "official_api_adapter",
+      "adapter_id": "adapter_fred_ofr_fsi_v1",
+      "source_id": "OFR_FSI",
+      "status": "STUB_ONLY",
+      "window_ids": [
+        "CW1_GFC_2007_2009",
+        "CW2_EUROZONE_2011_2012",
+        "CW3_US_REPO_SPIKE_2019",
+        "CW4_COVID_DASH_FOR_CASH_2020",
+        "CW5_UK_GILT_LDI_2022",
+        "CW6_REGIONAL_BANKING_2023"
+      ]
+    },
+    {
+      "adapter_class": "official_api_adapter",
+      "adapter_id": "adapter_alfred_gdp_vintage_v1",
+      "source_id": "ALFRED",
+      "status": "STUB_ONLY",
+      "window_ids": [
+        "CW1_GFC_2007_2009",
+        "CW2_EUROZONE_2011_2012",
+        "CW3_US_REPO_SPIKE_2019",
+        "CW4_COVID_DASH_FOR_CASH_2020",
+        "CW6_REGIONAL_BANKING_2023"
+      ]
+    },
+    {
+      "adapter_class": "official_api_adapter",
+      "adapter_id": "adapter_alfred_unemp_vintage_v1",
+      "source_id": "ALFRED",
+      "status": "STUB_ONLY",
+      "window_ids": [
+        "CW1_GFC_2007_2009",
+        "CW4_COVID_DASH_FOR_CASH_2020",
+        "CW6_REGIONAL_BANKING_2023"
+      ]
+    },
+    {
+      "adapter_class": "static_csv_adapter",
+      "adapter_id": "adapter_philly_fed_rtdsm_gdp_v1",
+      "source_id": "PHILLY_FED_RTDSM",
+      "status": "REQUIRES_MANUAL_DOWNLOAD",
+      "window_ids": [
+        "CW1_GFC_2007_2009",
+        "CW2_EUROZONE_2011_2012",
+        "CW3_US_REPO_SPIKE_2019",
+        "CW4_COVID_DASH_FOR_CASH_2020",
+        "CW6_REGIONAL_BANKING_2023"
+      ]
+    },
+    {
+      "adapter_class": "static_csv_adapter",
+      "adapter_id": "adapter_bis_cbs_v1",
+      "source_id": "BIS_CBS",
+      "status": "REQUIRES_MANUAL_DOWNLOAD",
+      "window_ids": [
+        "CW1_GFC_2007_2009",
+        "CW2_EUROZONE_2011_2012",
+        "CW3_US_REPO_SPIKE_2019",
+        "CW4_COVID_DASH_FOR_CASH_2020",
+        "CW5_UK_GILT_LDI_2022",
+        "CW6_REGIONAL_BANKING_2023"
+      ]
+    },
+    {
+      "adapter_class": "official_api_adapter",
+      "adapter_id": "adapter_ecb_cbd_v1",
+      "source_id": "ECB_CBD",
+      "status": "STUB_ONLY",
+      "window_ids": [
+        "CW2_EUROZONE_2011_2012",
+        "CW4_COVID_DASH_FOR_CASH_2020",
+        "CW5_UK_GILT_LDI_2022"
+      ]
+    },
+    {
+      "adapter_class": "static_csv_adapter",
+      "adapter_id": "adapter_ofr_repo_dashboard_v1",
+      "source_id": "OFR_REPO_DATA",
+      "status": "STUB_ONLY",
+      "window_ids": [
+        "CW3_US_REPO_SPIKE_2019",
+        "CW4_COVID_DASH_FOR_CASH_2020",
+        "CW6_REGIONAL_BANKING_2023"
+      ]
+    },
+    {
+      "adapter_class": "metadata_only_adapter",
+      "adapter_id": "adapter_ecb_mmsr_metadata_v1",
+      "source_id": "ECB_MMSR",
+      "status": "REQUIRES_LICENSE_REVIEW",
+      "window_ids": [
+        "CW3_US_REPO_SPIKE_2019",
+        "CW4_COVID_DASH_FOR_CASH_2020",
+        "CW5_UK_GILT_LDI_2022"
+      ]
+    },
+    {
+      "adapter_class": "metadata_only_adapter",
+      "adapter_id": "adapter_icap_move_metadata_v1",
+      "source_id": "ICAP_MOVE",
+      "status": "REQUIRES_LICENSE_REVIEW",
+      "window_ids": [
+        "CW1_GFC_2007_2009",
+        "CW2_EUROZONE_2011_2012",
+        "CW5_UK_GILT_LDI_2022"
+      ]
+    },
+    {
+      "adapter_class": "literature_reference_adapter",
+      "adapter_id": "adapter_lit_interbank_contagion_v1",
+      "source_id": "LIT_INTERBANK_CONTAGION",
+      "status": "STUB_ONLY",
+      "window_ids": [
+        "CW1_GFC_2007_2009",
+        "CW2_EUROZONE_2011_2012"
+      ]
+    },
+    {
+      "adapter_class": "literature_reference_adapter",
+      "adapter_id": "adapter_lit_network_recon_v1",
+      "source_id": "LIT_NETWORK_RECON",
+      "status": "STUB_ONLY",
+      "window_ids": [
+        "CW1_GFC_2007_2009",
+        "CW2_EUROZONE_2011_2012",
+        "CW4_COVID_DASH_FOR_CASH_2020"
+      ]
+    },
+    {
+      "adapter_class": "manual_event_registry_adapter",
+      "adapter_id": "adapter_fed_timeline_events_v1",
+      "source_id": "FED_TIMELINE",
+      "status": "STUB_ONLY",
+      "window_ids": [
+        "CW1_GFC_2007_2009",
+        "CW3_US_REPO_SPIKE_2019",
+        "CW4_COVID_DASH_FOR_CASH_2020",
+        "CW6_REGIONAL_BANKING_2023"
+      ]
+    },
+    {
+      "adapter_class": "official_api_adapter",
+      "adapter_id": "adapter_fred_nber_recession_v1",
+      "source_id": "NBER_RECESSION",
+      "status": "STUB_ONLY",
+      "window_ids": [
+        "CW1_GFC_2007_2009",
+        "CW2_EUROZONE_2011_2012",
+        "CW4_COVID_DASH_FOR_CASH_2020"
+      ]
+    }
+  ],
+  "claim_boundary": "Adapter CONTRACTS ONLY. No data ingested. No fetching executed. No modelling. No canonical run authorisation. Every adapter binds to a P1B audit-surviving source (audit_status in {VERIFIED, PARTIAL}) and to one or more P2 window_ids. Point-in-time discipline encoded via vintage_required, forecast_required, and the per-adapter lookahead invariants (observation_date <= decision_date, release_date <= decision_date). No private microdata, no restricted microdata, no paywall scraping.",
+  "generated_at": "2026-05-15T00:00:00Z",
+  "parent_manifest_path": "artifacts/d002j/ingestion/ingestion_manifest_v1.json",
+  "pr_lineage": "D-002G -> D-002H REFUSED -> D-002I -> D-002J P0 -> P1 -> P1A REJECTED -> P1B PARTIALLY_VERIFIED -> P2 -> P2.5 -> P3",
+  "schema_version": "D002J-ADAPTER-REGISTRY-v1",
+  "study_id": "D-002J-P3",
+  "summary": {
+    "by_class": {
+      "literature_reference_adapter": 2,
+      "manual_event_registry_adapter": 1,
+      "metadata_only_adapter": 2,
+      "official_api_adapter": 10,
+      "static_csv_adapter": 3
+    },
+    "by_status": {
+      "REQUIRES_LICENSE_REVIEW": 2,
+      "REQUIRES_MANUAL_DOWNLOAD": 2,
+      "STUB_ONLY": 14
+    },
+    "forecast_count": 1,
+    "total_adapters": 18,
+    "vintage_aware_count": 3
+  }
+}

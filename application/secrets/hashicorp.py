@@ -1,9 +1,11 @@
+# Copyright (c) 2023-2026 Yaroslav Vasylenko (neuron7xLab)
+# SPDX-License-Identifier: MIT
 """HashiCorp Vault integration primitives.
 
 This module provides a battle-tested interface for interacting with
 HashiCorp Vault using short-lived credentials, audited access, and
 policy management utilities.  The implementation focuses on security
-controls that are critical for TradePulse where compromised secrets can
+controls that are critical for GeoSync where compromised secrets can
 impact market-facing infrastructure.
 """
 
@@ -106,8 +108,8 @@ class StaticTokenAuthenticator:
     def authenticate(
         self,
         *,
-        session: httpx.Client,  # noqa: ARG002 - part of the authenticator protocol
-        config: "VaultClientConfig",  # noqa: ARG002 - part of the authenticator protocol
+        session: httpx.Client,
+        config: "VaultClientConfig",
         clock: Callable[[], datetime],
     ) -> VaultToken:
         if not self.token:
@@ -132,16 +134,12 @@ class JWTOIDCAuthenticator:
     ) -> VaultToken:
         jwt = self.jwt_provider()
         if not jwt:
-            raise VaultRequestError(
-                "JWT provider returned empty token", status_code=401
-            )
+            raise VaultRequestError("JWT provider returned empty token", status_code=401)
         path = f"/v1/auth/{self.mount_path.strip('/')}/login"
         headers: MutableMapping[str, str] | None = None
         if config.namespace:
             headers = {"X-Vault-Namespace": config.namespace}
-        response = session.post(
-            path, json={"role": self.role, "jwt": jwt}, headers=headers
-        )
+        response = session.post(path, json={"role": self.role, "jwt": jwt}, headers=headers)
         if response.status_code >= 400:
             payload = _safe_json(response)
             raise VaultRequestError(
@@ -221,9 +219,7 @@ class DynamicSecretLease:
         current = _ensure_utc(now or _utc_now())
         return current + timedelta(seconds=margin) >= self.expires_at()
 
-    def renewed(
-        self, renewal: LeaseRenewal, *, issued_at: datetime
-    ) -> "DynamicSecretLease":
+    def renewed(self, renewal: LeaseRenewal, *, issued_at: datetime) -> "DynamicSecretLease":
         return DynamicSecretLease(
             lease_id=self.lease_id,
             data=dict(self.data),

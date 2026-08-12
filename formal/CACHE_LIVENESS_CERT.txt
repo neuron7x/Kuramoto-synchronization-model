@@ -1,0 +1,4 @@
+Cache eventual coherence liveness proof
+steps = 5
+solver_status = unsat
+Invariant IV: UNSAT (eventual read-through forces eventual coherence)

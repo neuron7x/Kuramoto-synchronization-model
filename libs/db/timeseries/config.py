@@ -1,3 +1,5 @@
+# Copyright (c) 2023-2026 Yaroslav Vasylenko (neuron7xLab)
+# SPDX-License-Identifier: MIT
 """Configuration primitives shared by ClickHouse and Timescale adapters."""
 
 from __future__ import annotations
@@ -92,7 +94,7 @@ class MeasureColumn:
 
 @dataclass(frozen=True, slots=True)
 class TimeSeriesSchema:
-    """Canonical representation of a TradePulse time-series table."""
+    """Canonical representation of a GeoSync time-series table."""
 
     table: str
     timestamp_column: str
@@ -189,9 +191,7 @@ class RollupMaterialization:
             raise ValueError("At least one aggregation must be provided")
         if self.materialized_view_name is not None:
             if not self.materialized_view_name:
-                raise ValueError(
-                    "materialized_view_name must be a non-empty string when provided"
-                )
+                raise ValueError("materialized_view_name must be a non-empty string when provided")
             _ensure_identifier(
                 self.materialized_view_name,
                 label="materialized view name",

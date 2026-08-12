@@ -1,0 +1,76 @@
+{
+  "schema_version": "D002H-GATE-G-v1",
+  "study_id": "D-002H",
+  "gate": "G",
+  "status": "CANONICAL_RUN_AUTHORIZED",
+  "canonical_run_authorized_final": true,
+  "authorisation_scope": "ricci_flow substrate only (per D-002H prereg substrate_scope)",
+  "conjunction_required": "A AND B AND C AND D AND E AND F AND G",
+  "conjunction_satisfied": "A AND B AND C AND D AND E AND F AND G",
+  "gate_chain": [
+    {
+      "gate": "A",
+      "pr": 683,
+      "name": "D-002H prereg lock",
+      "anchor_sha": "1b59ce5326a8e8bd8aaaf9666a06075d34b4f6a5",
+      "ci_verdict": "ALL_REQUIRED_PASS",
+      "ci_pass_count": 25,
+      "ci_fail_count": 0
+    },
+    {
+      "gate": "B",
+      "pr": 684,
+      "name": "ricci_flow M1/M3 eligibility reverification",
+      "anchor_sha": "b97daae8b554ab9960510564e19263adcc1fe71b",
+      "ci_verdict": "ALL_REQUIRED_PASS",
+      "ci_pass_count": 25,
+      "ci_fail_count": 0
+    },
+    {
+      "gate": "C",
+      "pr": 685,
+      "name": "canonical parameter grid declaration",
+      "anchor_sha": "a9d852d34258861809325df81bd7cba6d0e557ec",
+      "ci_verdict": "ALL_REQUIRED_PASS",
+      "ci_pass_count": 25,
+      "ci_fail_count": 0
+    },
+    {
+      "gate": "D",
+      "pr": 686,
+      "name": "forbidden-claim scanner",
+      "anchor_sha": "077073ee801c434840d64f911e7b1f39ce2ac0fa",
+      "ci_verdict": "ALL_REQUIRED_PASS",
+      "ci_pass_count": 25,
+      "ci_fail_count": 0
+    },
+    {
+      "gate": "E",
+      "pr": 687,
+      "name": "locked-ledger verification",
+      "anchor_sha": "e1d3ae304274e8b8f509edeb83b0a9adfeb43a77",
+      "ci_verdict": "ALL_REQUIRED_PASS",
+      "ci_pass_count": 25,
+      "ci_fail_count": 0
+    },
+    {
+      "gate": "F",
+      "pr": 688,
+      "name": "canonical-run authorisation artifact",
+      "anchor_sha": "0e598fff84308356fd93e953d4fdde0b7811ac53",
+      "ci_verdict": "ALL_REQUIRED_PASS",
+      "ci_pass_count": 15,
+      "ci_fail_count": 0,
+      "ci_note": "Gate F head-sha 57f58a87997c27d84f73d531c4dc9bcab5ad864d carried 15/15 success at merge time; merge-sha 0e598fff post-merge main-branch CI continued to run residual workflows with no failures observed."
+    }
+  ],
+  "canonical_run_execution_status": "NOT_STARTED",
+  "canonical_run_execution_artifact": "to be created by a SEPARATE downstream PR; this gate does NOT execute the sweep",
+  "d002c_ledger_byte_exact": "f96ba9b5a2057d2e0bff84afc28578ab316cff73f6dc6673fb0d6d543b8bd6dd",
+  "d002h_prereg_byte_exact": "44b18b5a40ce9d188a9c3bd49339621f81a65a15f97a683247902450dd54acec",
+  "substrate_byte_exact": "4b2e5d65c104a5be5a207951cd3c4ae099f31ce83b3f2c0766a160d8c9e80eca",
+  "mechanism_byte_exact": "c7e275191454e1e961d5a079a21b6e1dbfcbc1661d48ddf14d0d0c39a426f257",
+  "downstream_remaining": ["canonical_sweep_PR (separate artifact, not gated)"],
+  "anchor_main_sha": "0e598fff84308356fd93e953d4fdde0b7811ac53",
+  "anchor_description": "Gate F merge - last main commit before Gate G branch off"
+}

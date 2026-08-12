@@ -1,0 +1,15 @@
+{
+  "contract_manifest_generated_utc": "2026-04-21T23:59:35Z",
+  "contract_manifest_regenerated_utc": "2026-04-22T06:08:01Z",
+  "cpcv_pass": true,
+  "input_source": "daily_log_returns",
+  "jitter_is_placeholder": true,
+  "jitter_pass": false,
+  "label": "FAIL",
+  "label_qualifier": "FAIL_ON_DAILY_RETURNS",
+  "null_pass": false,
+  "reasons": [
+    "null: one or more families failed",
+    "jitter: placeholder evaluator \u2014 abstains from live \u2713/\u2717"
+  ]
+}

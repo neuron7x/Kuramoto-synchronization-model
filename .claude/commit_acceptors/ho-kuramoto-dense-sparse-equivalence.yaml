@@ -1,0 +1,101 @@
+# Diff-bound acceptor for the higher-order Kuramoto dense↔sparse equivalence
+# regression. TEST-ONLY, additive — no production code is touched.
+#
+# Closes a verification gap, not a code gap: the dense triadic accumulator
+# (core/physics/higher_order_kuramoto.py::_dtheta_dt L201-206) and the sparse
+# kernel (triadic_rhs_sparse L510-518) implement the algebraically identical
+# canonical Skardal–Arenas triadic term sin(2θ_j − θ_k − θ_i) — same σ₂, same
+# sign, same three rotations per triangle. The module CLAIMED the sparse path
+# "matches the dense reference engine" but the existing test deliberately
+# declined to compare RHS/trajectories (a pairwise edge-weight setup mismatch:
+# dense weights edges by |ρ|, sparse by 1.0). This adds two float-tolerance
+# regressions that PROVE the identity by computation:
+#   (1) kernel-level: dense triadic == triadic_rhs_sparse on a shared θ and
+#       shared triangle set to atol=1e-12 (algebraic, measured 2.2e-16).
+#   (2) trajectory-level: equalizing the pairwise weight (corr=1.0 on edges,
+#       threshold=0.5 ⟹ dense |ρ|=1.0 == sparse adj=1.0) makes both RK4
+#       integrators evaluate the same vector field; R(t) and phases agree to
+#       atol=1e-10 (measured ≤9e-16).
+#
+# No new invariant, no invariant-count change: the equivalence is algebraic and
+# the tests route under INV-K1 (Kuramoto order parameter ∈ [0,1] / shared-field
+# identity). INVARIANTS.yaml, CLAUDE.md, BASELINE.md, README untouched.
+
+id: ho-kuramoto-dense-sparse-equivalence
+status: ACTIVE
+claim_type: correctness
+promise: >-
+  The dense triadic accumulator in HigherOrderKuramotoEngine._dtheta_dt and the
+  sparse triadic_rhs_sparse kernel are the same ODE. Two additive regression
+  tests in tests/unit/physics/test_higher_order_kuramoto_sparse.py prove it:
+  test_dense_and_sparse_triadic_kernel_are_float_identical asserts the two
+  triadic RHS vectors agree to atol=1e-12 over 8 random graphs/phase vectors
+  (measured max|Δ| = 2.22e-16), and
+  test_dense_and_sparse_trajectories_agree_on_equalized_weights equalizes the
+  pairwise edge weighting and asserts order_parameter R(t) and phases agree to
+  atol=1e-10 over 4 random initial conditions (measured max|Δθ| ≤ 8.9e-16,
+  max|ΔR| ≤ 2.2e-16). Test-only and additive: no production module, no runtime
+  path, no trading surface, and no invariant registry is modified.
+diff_scope:
+  changed_files:
+    - path: ".claude/commit_acceptors/ho-kuramoto-dense-sparse-equivalence.yaml"
+    - path: "tests/unit/physics/test_higher_order_kuramoto_sparse.py"
+  forbidden_paths:
+    - "trading/"
+    - "execution/"
+    - "forecast/"
+    - "policy/"
+required_python_symbols:
+  - "triadic_rhs_sparse"
+  - "build_sparse_triangle_index"
+  - "build_triangle_index"
+  - "find_triangles"
+  - "HigherOrderKuramotoEngine"
+  - "run_sparse_higher_order"
+expected_signal: >-
+  All 12 tests in tests/unit/physics/test_higher_order_kuramoto_sparse.py pass
+  under pytest (10 pre-existing + 2 new); ruff format and ruff check clean on
+  the changed test file; mypy --strict reports no issues; validate_tests.py adds
+  no new L2-L5 issues attributable to the two new tests (the residual L3/L4/L5
+  on lines 49/96/102/111/159 are pre-existing on the original tests); the
+  physics-kernel self-check prints PASSED. Measured kernel max|Δ| = 2.22e-16
+  (≤ atol 1e-12); trajectory max|Δθ| ≤ 8.9e-16, max|ΔR| ≤ 2.2e-16 (≤ atol 1e-10).
+measurement_command: >-
+  python -m pytest tests/unit/physics/test_higher_order_kuramoto_sparse.py -q
+signal_artifact: "tmp/ho_kuramoto_dense_sparse_equivalence_pytest.log"
+falsifier:
+  command: >-
+    python -c "import numpy as np, sys;
+    from core.physics.higher_order_kuramoto import find_triangles,
+    build_triangle_index, build_sparse_triangle_index, triadic_rhs_sparse;
+    n=7; rng=np.random.default_rng(0);
+    up=rng.random((n,n))<0.6; A=np.triu(up,1); A=A|A.T;
+    np.fill_diagonal(A,False); A=A.astype(bool);
+    th=np.random.default_rng(1000).uniform(0,2*np.pi,n);
+    ti=build_triangle_index(n,find_triangles(A));
+    d=np.array([0.37*sum(np.sin(2*th[j]-th[k]-th[i]) for j,k in ti.get(i,[])) for i in range(n)]);
+    s=triadic_rhs_sparse(th,build_sparse_triangle_index(A),0.37);
+    np.testing.assert_allclose(d,s,atol=1e-12);
+    s_bad=s.copy(); s_bad[0]+=1e-3;
+    caught=not np.allclose(d,s_bad,rtol=1e-7,atol=1e-12);
+    print('green_diff', float(np.max(np.abs(d-s))), 'perturbed_caught', caught);
+    sys.exit(0 if caught else 1)"
+  description: >-
+    Inverse probe for the equivalence: it rebuilds the dense triadic
+    accumulator and the sparse triadic_rhs_sparse on a shared θ, confirms they
+    match at atol=1e-12 on the green tree (max|Δ| = 0), then perturbs one
+    component of the sparse vector by 1e-3 and asserts the SAME atol=1e-12
+    comparison the regression test uses would then RAISE. It exits non-zero iff
+    that perturbation is NOT caught — i.e. iff the test's tolerance is so loose
+    it cannot distinguish the two paths. This proves the regression is
+    genuinely falsifiable rather than vacuously true.
+rollback_command: >-
+  git checkout HEAD~1 --
+  tests/unit/physics/test_higher_order_kuramoto_sparse.py
+  .claude/commit_acceptors/ho-kuramoto-dense-sparse-equivalence.yaml
+rollback_verification_command: >-
+  git diff --exit-code tests/unit/physics/test_higher_order_kuramoto_sparse.py
+memory_update_type: none
+ledger_path: ".claude/commit_acceptors/ho-kuramoto-dense-sparse-equivalence.yaml"
+report_path: "docs/laws/T8_stochastic_thermodynamics.md"
+evidence: []

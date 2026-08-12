@@ -1,9 +1,11 @@
+# Copyright (c) 2023-2026 Yaroslav Vasylenko (neuron7xLab)
+# SPDX-License-Identifier: MIT
 import time
 from pathlib import Path
 
 import numpy as np
 
-from tradepulse.nlca_core import (
+from geosync.nlca_core import (
     NLCA,
     FiniteStateMachine,
     L2Collector,
@@ -139,7 +141,7 @@ def test_fsm_respects_refractory(monkeypatch):
         return 100.0  # Return a large value if we run out
 
     # Patch time.time in the nlca_core module's namespace
-    monkeypatch.setattr("tradepulse.nlca_core.time.time", fake_time)
+    monkeypatch.setattr("geosync.nlca_core.time.time", fake_time)
 
     fsm = FiniteStateMachine(refractory_period=1.0)
 

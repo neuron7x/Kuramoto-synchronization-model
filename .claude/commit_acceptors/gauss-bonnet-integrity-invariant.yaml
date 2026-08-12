@@ -1,0 +1,118 @@
+# Diff-bound commit acceptor for the discrete Gauss–Bonnet integrity invariant.
+#
+# Adds a first-principles topological verification operator to the geometry
+# layer: for the clique complex of any finite simple graph, the sum of Knill
+# vertex curvatures equals the Euler characteristic (Knill 2011),
+#   Σ_x K(x) = χ(G).
+# The residual is computed with exact fractions.Fraction arithmetic, so it is
+# either exactly 0 or a hard witness that an externally supplied curvature field
+# is inconsistent with the topology it claims to describe (corrupted/tampered
+# state). assert_gauss_bonnet rejects any non-zero residual fail-closed.
+#
+# This is an integrity gate, NOT a market claim and NOT a predictive model. It
+# binds a new catalog law `ricci.gauss_bonnet` (severity: block) witnessed by
+# tests/physics_contracts/test_gauss_bonnet_witness.py, which proves the
+# identity exactly across tree/cycle/complete/small-world/build_price_graph
+# families, guards against vacuity (≥3 distinct χ, higher-order simplices
+# exercised, genuinely fractional curvature), and demonstrates the gate fires on
+# a single tampered curvature value.
+#
+# Out-of-domain inputs (self-loops, multi/directed graphs) are refused, not
+# silently coerced; build_price_graph self-loops (level persistence) are
+# excluded explicitly in the witness per the law's validity clause.
+#
+# Adds NO dependency (stdlib fractions + existing networkx), NO numeric change
+# to any existing runtime path, NO type:ignore / noqa. Locally verified on
+# origin/main fork base (b8c9b52):
+#   * ruff check / black --check: clean on both changed code files
+#   * mypy --strict core/indicators/gauss_bonnet.py: no issues
+#   * pytest tests/physics_contracts/test_gauss_bonnet_witness.py: 3 passed
+#   * pytest tests/physics_contracts/: 69 passed (no catalog-parse regression)
+#   * tools/validate_tests.py: witness clean, ricci.gauss_bonnet now covered
+id: gauss-bonnet-integrity-invariant
+status: VERIFIED
+claim_type: fail_closed
+promise: >-
+  core.indicators.gauss_bonnet implements the discrete Gauss–Bonnet identity
+  Σ_x K(x) = χ(G) over the clique complex of a finite simple graph using exact
+  fractions.Fraction arithmetic, exposing euler_characteristic,
+  knill_vertex_curvature, gauss_bonnet_residual and the fail-closed
+  assert_gauss_bonnet gate that raises GaussBonnetViolation on any non-zero
+  rational residual or out-of-domain input. The new catalog law
+  ricci.gauss_bonnet (severity: block) is witnessed exactly — no float slack —
+  across tree, cycle, complete (K_5, exercising 4-simplices), small-world and
+  build_price_graph families, with anti-vacuity guards and a falsifiability leg
+  proving the gate rejects a single tampered curvature value. No claim tier is
+  promoted, no numeric runtime behaviour changes, no dependency is added.
+diff_scope:
+  changed_files:
+    - path: ".claude/commit_acceptors/gauss-bonnet-integrity-invariant.yaml"
+    - path: "core/indicators/gauss_bonnet.py"
+    - path: "physics_contracts/catalog.yaml"
+    - path: "tests/physics_contracts/test_gauss_bonnet_witness.py"
+    - path: "artifacts/gauss_bonnet/residuals.json"
+  forbidden_paths:
+    - "trading/"
+    - "execution/"
+    - "forecast/"
+    - "src/"
+required_python_symbols:
+  - "core/indicators/gauss_bonnet.py::euler_characteristic"
+  - "core/indicators/gauss_bonnet.py::knill_vertex_curvature"
+  - "core/indicators/gauss_bonnet.py::gauss_bonnet_residual"
+  - "core/indicators/gauss_bonnet.py::assert_gauss_bonnet"
+  - "core/indicators/gauss_bonnet.py::GaussBonnetViolation"
+expected_signal: >-
+  The deterministic evidence artifact artifacts/gauss_bonnet/residuals.json is
+  regenerated bit-for-bit (residual == "0" for every graph family, χ spanning
+  {−3, 0, 1, 2}); its sha256 matches the pinned evidence digest. A
+  non-reproducible pytest log is deliberately NOT used as the signal — pinning
+  its hash would be a vacuous oracle. The behavioural proof lives in the witness
+  test and the inverse falsifier below.
+measurement_command: |-
+  bash -c 'mkdir -p artifacts/gauss_bonnet && python -c "
+  import json, networkx as nx;
+  from core.indicators.gauss_bonnet import euler_characteristic, gauss_bonnet_residual;
+  fam = {\"path_8\": nx.path_graph(8), \"star_7\": nx.star_graph(7),
+  \"cycle_6\": nx.cycle_graph(6), \"complete_5\": nx.complete_graph(5),
+  \"triangle\": nx.complete_graph(3), \"two_edges\": nx.Graph([(0,1),(2,3)]),
+  \"watts_strogatz_12_seed7\": nx.connected_watts_strogatz_graph(12,4,0.3,seed=7)};
+  rec = {\"law\": \"ricci.gauss_bonnet\", \"identity\": \"sum_x K(x) == chi(G)\",
+  \"arithmetic\": \"exact rational (fractions.Fraction)\",
+  \"families\": {n: {\"chi\": euler_characteristic(g),
+  \"residual\": str(gauss_bonnet_residual(g))} for n, g in sorted(fam.items())}};
+  open(\"artifacts/gauss_bonnet/residuals.json\",\"w\").write(
+  json.dumps(rec, sort_keys=True, indent=2) + chr(10))"'
+signal_artifact: "artifacts/gauss_bonnet/residuals.json"
+falsifier:
+  command: |-
+    python -c 'import sys, networkx as nx;
+    from fractions import Fraction;
+    from core.indicators.gauss_bonnet import knill_vertex_curvature, assert_gauss_bonnet, GaussBonnetViolation;
+    g = nx.complete_graph(5);
+    c = dict(knill_vertex_curvature(g));
+    k = next(iter(c)); c[k] = c[k] + Fraction(1);
+    fired = False;
+    exec("try:\n assert_gauss_bonnet(g, curvature=c)\nexcept GaussBonnetViolation:\n fired = True");
+    sys.exit(1 if fired else 0)'
+  description: >-
+    Inverse probe of the fail-closed contract. On the green path the gate must
+    raise GaussBonnetViolation for a curvature field tampered by +1 on one
+    vertex, so the probe sets fired=True and exits 1 (does not fire). The probe
+    exits 0 (fires) only if assert_gauss_bonnet silently accepts an
+    inconsistent field — i.e. the residual stopped being an exact, enforced
+    invariant. An exit 0 means the gate went vacuous and must be repaired, not
+    patched green.
+rollback_command: >-
+  bash -c 'git rm -f core/indicators/gauss_bonnet.py
+  tests/physics_contracts/test_gauss_bonnet_witness.py
+  artifacts/gauss_bonnet/residuals.json
+  .claude/commit_acceptors/gauss-bonnet-integrity-invariant.yaml && git checkout origin/main -- physics_contracts/catalog.yaml'
+rollback_verification_command: >-
+  bash -c 'test ! -f core/indicators/gauss_bonnet.py && ! grep -q "ricci.gauss_bonnet" physics_contracts/catalog.yaml'
+memory_update_type: none
+ledger_path: ".claude/commit_acceptors/gauss-bonnet-integrity-invariant.yaml"
+report_path: "docs/reports/diff_bound_commit_acceptor_layer.md"
+evidence:
+  - path: "artifacts/gauss_bonnet/residuals.json"
+    sha256: "df396d5a77f03da04fae359a82e57696b14698711c6e8cabd178ac6e7cecf26c"  # pragma: allowlist secret

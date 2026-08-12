@@ -1,4 +1,5 @@
-# SPDX-License-Identifier: LicenseRef-TradePulse-Proprietary
+# Copyright (c) 2023-2026 Yaroslav Vasylenko (neuron7xLab)
+# SPDX-License-Identifier: MIT
 """Transformation pipeline for normalizing raw events to MFN requests.
 
 This module provides the transformation layer that converts RawEvent instances
@@ -154,12 +155,8 @@ class NormalizedEvent(BaseModel):
     )
     seeds: list[float] = Field(default_factory=list, description="Seed values")
     grid_size: int = Field(default=64, ge=8, le=1024, description="Grid dimension")
-    params: dict[str, Any] = Field(
-        default_factory=dict, description="Additional parameters"
-    )
-    raw_payload: dict[str, Any] = Field(
-        default_factory=dict, description="Original payload"
-    )
+    params: dict[str, Any] = Field(default_factory=dict, description="Additional parameters")
+    raw_payload: dict[str, Any] = Field(default_factory=dict, description="Original payload")
 
     @field_validator("timestamp", mode="before")
     @classmethod
@@ -209,19 +206,13 @@ class MFNRequest(BaseModel):
         extra="forbid",
     )
 
-    request_type: Literal["feature", "simulation"] = Field(
-        ..., description="Type of MFN operation"
-    )
+    request_type: Literal["feature", "simulation"] = Field(..., description="Type of MFN operation")
     request_id: str = Field(..., min_length=1, description="Unique request identifier")
     timestamp: datetime = Field(..., description="Request timestamp (UTC)")
     seeds: list[float] = Field(default_factory=list, description="Seed values")
     grid_size: int = Field(default=64, ge=8, le=1024, description="Grid dimension")
-    params: dict[str, Any] = Field(
-        default_factory=dict, description="Operation parameters"
-    )
-    source_event: NormalizedEvent | None = Field(
-        default=None, description="Originating event"
-    )
+    params: dict[str, Any] = Field(default_factory=dict, description="Operation parameters")
+    source_event: NormalizedEvent | None = Field(default=None, description="Originating event")
 
     @field_validator("timestamp", mode="before")
     @classmethod
@@ -289,9 +280,7 @@ class Transformer:
                     value = payload[field]
                     if isinstance(value, (list, tuple)):
                         seeds = [
-                            float(v)
-                            for v in value
-                            if isinstance(v, (int, float, Decimal, str))
+                            float(v) for v in value if isinstance(v, (int, float, Decimal, str))
                         ]
                         break
                     elif isinstance(value, (int, float, Decimal)):

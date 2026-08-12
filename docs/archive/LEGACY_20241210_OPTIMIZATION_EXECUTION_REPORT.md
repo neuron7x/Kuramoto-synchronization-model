@@ -15,7 +15,7 @@
 
 ## Executive Summary
 
-✅ **Successfully completed 100 iterations** of neuro-optimization for TradePulse's neuroscience-grounded AI trading system.
+✅ **Successfully completed 100 iterations** of neuro-optimization for GeoSync's neuroscience-grounded AI trading system.
 
 The optimization cycle ran the **Adaptive Calibrator** and **Cross-Neuromodulator Optimizer** to automatically tune neuromodulator parameters (dopamine, serotonin, GABA, NA/ACh) for optimal trading performance while maintaining homeostatic balance.
 
@@ -221,8 +221,8 @@ For extended optimization cycles, consider:
 
 ## References
 
-- **Implementation**: `src/tradepulse/core/neuro/adaptive_calibrator.py`
-- **Optimization**: `src/tradepulse/core/neuro/neuro_optimizer.py`
+- **Implementation**: `src/geosync/core/neuro/adaptive_calibrator.py`
+- **Optimization**: `src/geosync/core/neuro/neuro_optimizer.py`
 - **Documentation**: `docs/neuro_optimization_guide.md`
 - **Examples**: `examples/neuro_optimization_cycle.py`
 - **Execution Script**: `run_optimization_100_iterations.py`
@@ -243,4 +243,4 @@ The neuro-optimization system executed **100 iterations** as requested, performi
 ---
 
 *Generated: 2025-12-10*  
-*TradePulse Neuro-Optimization System*
+*GeoSync Neuro-Optimization System*

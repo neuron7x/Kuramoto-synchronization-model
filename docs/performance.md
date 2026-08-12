@@ -1,5 +1,5 @@
 ---
-owner: performance@tradepulse
+owner: performance@geosync
 review_cadence: quarterly
 last_reviewed: 2025-12-28
 links:
@@ -9,7 +9,7 @@ links:
 
 # Performance Optimization Guide
 
-This guide covers performance optimization techniques and best practices for TradePulse, including memory management, execution profiling, and GPU acceleration.
+This guide covers performance optimization techniques and best practices for GeoSync, including memory management, execution profiling, and GPU acceleration.
 
 ## Table of Contents
 
@@ -25,7 +25,7 @@ This guide covers performance optimization techniques and best practices for Tra
 
 ## Overview
 
-TradePulse provides several performance optimization features for resource-intensive computations:
+GeoSync provides several performance optimization features for resource-intensive computations:
 
 1. **Float32 precision**: Reduce memory usage by 50% with minimal accuracy loss
 2. **Chunked processing**: Handle large datasets efficiently by processing in batches
@@ -217,7 +217,7 @@ with logger.operation("custom_computation", data_size=len(prices)) as op:
 
 ### Sampling Profilers
 
-TradePulse includes `scalene` and `py-spy` in the development dependencies so
+GeoSync includes `scalene` and `py-spy` in the development dependencies so
 you can capture CPU and memory profiles without modifying source code.
 
 *Scalene*
@@ -292,7 +292,7 @@ land.
    `tests/performance/baselines/` and commit alongside the change.
 3. **Integrate ASV** – Initialise an Airspeed Velocity project with
    `asv quickstart` and point `asv.conf.json` at the `bench/` scripts. Pin the
-   `project_url` to the TradePulse repository and enable the `virtualenv`
+   `project_url` to the GeoSync repository and enable the `virtualenv`
    builder so CI can reproduce runs on tagged commits.
 4. **Gate regressions** – Configure CI to execute `pytest --benchmark-compare=baseline`
    and `asv run --quick` on each PR, failing if median runtime drifts by more
@@ -492,18 +492,18 @@ from core.indicators.entropy import EntropyFeature
 feature = EntropyFeature(bins=30, use_float32=True)
 
 # Transform automatically records:
-# - tradepulse_feature_transform_duration_seconds
-# - tradepulse_feature_transform_total
-# - tradepulse_feature_value
+# - geosync_feature_transform_duration_seconds
+# - geosync_feature_transform_total
+# - geosync_feature_value
 result = feature.transform(prices)
 ```
 
 ### Available Metrics
 
 **Feature Metrics:**
-- `tradepulse_feature_transform_duration_seconds`: Histogram of transform times
-- `tradepulse_feature_transform_total`: Counter of transforms by status
-- `tradepulse_feature_value`: Gauge of current feature values
+- `geosync_feature_transform_duration_seconds`: Histogram of transform times
+- `geosync_feature_transform_total`: Counter of transforms by status
+- `geosync_feature_value`: Gauge of current feature values
 
 **Custom Metrics:**
 ```python
@@ -526,8 +526,8 @@ metrics.record_feature_value("my_indicator", result)
 curl http://localhost:8000/metrics
 
 # Example output:
-# tradepulse_feature_transform_duration_seconds_sum{feature_name="entropy",feature_type="entropy"} 12.34
-# tradepulse_feature_transform_total{feature_name="entropy",feature_type="entropy",status="success"} 1000
+# geosync_feature_transform_duration_seconds_sum{feature_name="entropy",feature_type="entropy"} 12.34
+# geosync_feature_transform_total{feature_name="entropy",feature_type="entropy",status="success"} 1000
 ```
 
 ## Best Practices
@@ -758,7 +758,7 @@ while True:
 
 ## Frontend Performance (Next.js)
 
-TradePulse dashboards rely on Next.js for research and execution workflows. The
+GeoSync dashboards rely on Next.js for research and execution workflows. The
 following tactics keep interaction latency low while preserving real-time
 integrations.
 
@@ -788,7 +788,7 @@ integrations.
 ### API Cache Coordination
 
 - Back caching decisions with the observability platform. Tag responses with
-  `x-tradepulse-cache-hit` headers and export them to Grafana.
+  `x-geosync-cache-hit` headers and export them to Grafana.
 - For GraphQL endpoints, enable Apollo persisted queries and configure Redis
   TTLs to match ISR intervals.
 - Use SWR or React Query on the client with background revalidation to prevent
@@ -939,7 +939,7 @@ Build and install the extension in editable mode:
 
 ```bash
 pip install maturin
-maturin develop --manifest-path rust/tradepulse-accel/Cargo.toml --release
+maturin develop --manifest-path rust/geosync-accel/Cargo.toml --release
 ```
 
 Usage from Python:

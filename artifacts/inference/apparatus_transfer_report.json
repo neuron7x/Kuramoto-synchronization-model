@@ -1,0 +1,36 @@
+{
+  "schema": "geosync.apparatus_transfer_report.v1",
+  "boundary": "Within-repo transfer of the apparatus (tool->artifact->schema->fail-closed verdict + defect-sensitive tests + falsifier) across mathematically distinct domains (neuro ODE, apex logic, control-theoretic Lyapunov, physics phase transition). This demonstrates domain-generality; it is NOT an external benchmark against a competing baseline (that remains the open R5 rung).",
+  "distinct_domain_count": 3,
+  "domains": [
+    {
+      "domain": "neuro",
+      "object": "DA/5-HT homeostasis (opponent-process ODE + Kuramoto sync)",
+      "tool": "tools/audit_homeostasis_contract.py",
+      "artifact": "artifacts/neuro/homeostasis_contract.json",
+      "schema_path": "audit/schema/homeostasis_contract.schema.json"
+    },
+    {
+      "domain": "inference",
+      "object": "No-Ungrounded-Act apex invariant (H1..H4)",
+      "tool": "tools/audit_no_ungrounded_act.py",
+      "artifact": "artifacts/inference/no_ungrounded_act.json",
+      "schema_path": "audit/schema/no_ungrounded_act.schema.json"
+    },
+    {
+      "domain": "neuro",
+      "object": "DA/5-HT opponency Lyapunov stability",
+      "tool": "tools/audit_opponency_lyapunov.py",
+      "artifact": "artifacts/neuro/opponency_lyapunov.json",
+      "schema_path": "audit/schema/opponency_lyapunov.schema.json"
+    },
+    {
+      "domain": "physics",
+      "object": "Kuramoto phase-oscillator synchronisation",
+      "tool": "tools/audit_kuramoto_synchrony.py",
+      "artifact": "artifacts/physics/kuramoto_synchrony.json",
+      "schema_path": "audit/schema/kuramoto_synchrony.schema.json"
+    }
+  ],
+  "verdict": "PASS"
+}

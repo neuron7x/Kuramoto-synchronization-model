@@ -1,0 +1,48 @@
+id: production-readiness-stack
+status: ACTIVE
+claim_type: governance
+promise: >-
+  Adds a repository readiness stack, release verdict protocol, and verifier
+  script. The change defines machine-readable readiness evidence and keeps
+  readiness promotion tied to generated artifacts.
+diff_scope:
+  changed_files:
+    - path: ".claude/commit_acceptors/production-readiness-stack.yaml"
+    - path: "docs/PRODUCTION_READINESS_STACK.md"
+    - path: "docs/RELEASE_VERDICT_PROTOCOL.md"
+    - path: "scripts/verify_production_readiness.py"
+    - path: "results/production_readiness/READINESS_SUMMARY.json"
+    - path: "results/production_readiness/GATE_MATRIX.csv"
+    - path: "results/production_readiness/RELEASE_VERDICT.md"
+  forbidden_paths:
+    - "trading/"
+    - "execution/"
+    - "forecast/"
+    - "policy/"
+    - "core/kuramoto/"
+    - "src/geosync/core/neuro/dopamine/"
+required_python_symbols:
+  - "scripts/verify_production_readiness.py::ReadinessClaim"
+  - "scripts/verify_production_readiness.py::ReadinessRow"
+  - "scripts/verify_production_readiness.py::evaluate_claim"
+  - "scripts/verify_production_readiness.py::build_summary"
+  - "scripts/verify_production_readiness.py::write_outputs"
+expected_signal: >-
+  `python scripts/verify_production_readiness.py --write-results` exits 0 and
+  writes READINESS_SUMMARY.json, GATE_MATRIX.csv, and RELEASE_VERDICT.md.
+measurement_command: >-
+  python scripts/verify_production_readiness.py --write-results
+signal_artifact: "results/production_readiness/READINESS_SUMMARY.json"
+falsifier:
+  command: >-
+    python scripts/verify_production_readiness.py --write-results --enforce
+  description: >-
+    Enforce mode requires every readiness row to be PASS.
+rollback_command: >-
+  git checkout HEAD~1 -- .claude/commit_acceptors/production-readiness-stack.yaml docs/PRODUCTION_READINESS_STACK.md docs/RELEASE_VERDICT_PROTOCOL.md scripts/verify_production_readiness.py results/production_readiness
+rollback_verification_command: >-
+  git diff --exit-code .claude/commit_acceptors/production-readiness-stack.yaml docs/PRODUCTION_READINESS_STACK.md docs/RELEASE_VERDICT_PROTOCOL.md scripts/verify_production_readiness.py results/production_readiness
+memory_update_type: none
+ledger_path: ".claude/commit_acceptors/production-readiness-stack.yaml"
+report_path: "results/production_readiness/READINESS_SUMMARY.json"
+evidence: []

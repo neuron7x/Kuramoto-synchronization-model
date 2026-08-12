@@ -1,3 +1,5 @@
+# Copyright (c) 2023-2026 Yaroslav Vasylenko (neuron7xLab)
+# SPDX-License-Identifier: MIT
 from __future__ import annotations
 
 from pathlib import Path
@@ -6,9 +8,9 @@ import numpy as np
 import pytest
 
 from application import (
+    GeoSyncOrchestrator,
     LiveLoopSettings,
-    TradePulseOrchestrator,
-    build_tradepulse_system,
+    build_geosync_system,
 )
 from core.neuro.fractal_regulator import RegulatorMetrics
 
@@ -18,7 +20,7 @@ def _sample_csv() -> Path:
 
 
 def _build_system(tmp_path: Path):
-    return build_tradepulse_system(
+    return build_geosync_system(
         allowed_data_roots=[_sample_csv().parent],
         live_settings=LiveLoopSettings(state_dir=tmp_path / "state"),
     )
@@ -26,7 +28,7 @@ def _build_system(tmp_path: Path):
 
 def test_orchestrator_health_monitor_without_regulator(tmp_path):
     system = _build_system(tmp_path)
-    orchestrator = TradePulseOrchestrator(system)
+    orchestrator = GeoSyncOrchestrator(system)
 
     assert orchestrator.fractal_regulator is None
 
@@ -71,7 +73,7 @@ def test_orchestrator_fractal_regulator_callback(tmp_path, monkeypatch):
         DummyRegulator,
     )
 
-    orchestrator = TradePulseOrchestrator(
+    orchestrator = GeoSyncOrchestrator(
         system,
         enable_fractal_regulator=True,
         regulator_config={

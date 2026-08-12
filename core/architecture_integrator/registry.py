@@ -1,3 +1,5 @@
+# Copyright (c) 2023-2026 Yaroslav Vasylenko (neuron7xLab)
+# SPDX-License-Identifier: MIT
 """Component registry for architecture integration.
 
 This module provides a registry for managing components, their metadata,
@@ -121,9 +123,7 @@ class ComponentRegistry:
             for dep in component.get_dependencies():
                 # Check if dependency is satisfied by component name or capability
                 if not self.has_component(dep) and not self.has_capability(dep):
-                    errors.append(
-                        f"Component '{name}' depends on '{dep}' which is not available"
-                    )
+                    errors.append(f"Component '{name}' depends on '{dep}' which is not available")
         return errors
 
     def get_initialization_order(self) -> Sequence[str]:

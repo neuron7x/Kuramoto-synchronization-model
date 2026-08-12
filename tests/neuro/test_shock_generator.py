@@ -1,3 +1,5 @@
+# Copyright (c) 2023-2026 Yaroslav Vasylenko (neuron7xLab)
+# SPDX-License-Identifier: MIT
 from __future__ import annotations
 
 import contextlib
@@ -71,13 +73,9 @@ def test_build_scenario_clamps_to_risk_tolerance() -> None:
     metrics = {
         "novelty": torch.tensor([0.6], dtype=torch.float32, device=generator._device),
         "drawdown": torch.tensor([0.2], dtype=torch.float32, device=generator._device),
-        "correlation": torch.tensor(
-            [0.1], dtype=torch.float32, device=generator._device
-        ),
+        "correlation": torch.tensor([0.1], dtype=torch.float32, device=generator._device),
     }
-    sample = torch.tensor(
-        [0.2, 0.1, 0.05, 0.03], dtype=torch.float32, device=generator._device
-    )
+    sample = torch.tensor([0.2, 0.1, 0.05, 0.03], dtype=torch.float32, device=generator._device)
 
     scenario = generator._build_scenario(sample, metrics, 0)
 
@@ -108,18 +106,10 @@ def test_generate_reuses_best_and_clamps_new_scenarios(
     generator._best = best
 
     def _fake_evaluate(self, state, scenario):
-        drawdown = torch.full(
-            (state.size(0),), 0.2, dtype=torch.float32, device=self._device
-        )
-        novelty = torch.full(
-            (state.size(0),), 0.5, dtype=torch.float32, device=self._device
-        )
-        correlation = torch.zeros(
-            state.size(0), dtype=torch.float32, device=self._device
-        )
-        reward = torch.full(
-            (state.size(0),), 0.3, dtype=torch.float32, device=self._device
-        )
+        drawdown = torch.full((state.size(0),), 0.2, dtype=torch.float32, device=self._device)
+        novelty = torch.full((state.size(0),), 0.5, dtype=torch.float32, device=self._device)
+        correlation = torch.zeros(state.size(0), dtype=torch.float32, device=self._device)
+        reward = torch.full((state.size(0),), 0.3, dtype=torch.float32, device=self._device)
         return reward, {
             "novelty": novelty,
             "drawdown": drawdown,

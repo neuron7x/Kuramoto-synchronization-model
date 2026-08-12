@@ -1,4 +1,6 @@
-"""Unified initialization for the TradePulse control platform."""
+# Copyright (c) 2023-2026 Yaroslav Vasylenko (neuron7xLab)
+# SPDX-License-Identifier: MIT
+"""Unified initialization for the GeoSync control platform."""
 
 from __future__ import annotations
 
@@ -14,7 +16,7 @@ from pydantic import ValidationError
 from application.runtime.control_gates import evaluate_control_gates
 from application.settings import ApiServerSettings, BackendRuntimeSettings
 
-LOGGER = logging.getLogger("tradepulse.control_platform")
+LOGGER = logging.getLogger("geosync.control_platform")
 SettingsT = TypeVar("SettingsT", bound="BaseSettings")
 
 try:
@@ -69,7 +71,9 @@ def _extract_defaults_and_env(
     defaults = defaults_instance.model_dump()
     env_applied = env_instance.model_dump()
     env_overrides = {
-        key: value for key, value in env_applied.items() if env_applied.get(key) != defaults.get(key)
+        key: value
+        for key, value in env_applied.items()
+        if env_applied.get(key) != defaults.get(key)
     }
     return defaults, env_overrides
 
@@ -91,14 +95,10 @@ def _merge_precedence(
     if cli_overrides:
         merged.update({k: v for k, v in cli_overrides.items() if v is not None})
     local_default = not yaml_section and not cli_overrides and not env_overrides
-    if (
-        merged.get("tls") is None
-        and not merged.get("allow_plaintext", False)
-        and local_default
-    ):
+    if merged.get("tls") is None and not merged.get("allow_plaintext", False) and local_default:
         LOGGER.warning(
             "No TLS configuration detected; enabling allow_plaintext for local runs. "
-            "Provide TRADEPULSE_API_SERVER_TLS__* or --allow-plaintext to override."
+            "Provide GEOSYNC_API_SERVER_TLS__* or --allow-plaintext to override."
         )
         merged["allow_plaintext"] = True
     return settings_cls.model_validate(merged)
@@ -130,9 +130,33 @@ def initialize_control_platform(
 ) -> ControlPlatformInitResult:
     """Initialize config, controllers, observability, and app."""
 
-    # Provide benign defaults for local/test environments to avoid mandatory secret errors.
-    os.environ.setdefault("TRADEPULSE_AUDIT_SECRET", "test-audit-secret")
-    os.environ.setdefault("TRADEPULSE_TWO_FACTOR_SECRET", "JBSWY3DPEHPK3PXP")
+    # Provide benign admin-secret defaults ONLY for an EXPLICITLY declared
+    # dev-class profile. An unset or production-like profile MUST supply real
+    # secrets explicitly — never silently fall back to the public pyotp example
+    # TOTP seed (which would make the admin second factor forgeable by anyone).
+    # The profile previously defaulted to "dev", so a default production
+    # deployment (server.run -> here, with no profile set) silently injected the
+    # public seed; unset now means production-safe (no insecure default) and fails
+    # closed below. `AdminApiSettings` reads only the GEOSYNC_-prefixed names.
+    _profile = os.environ.get("GEOSYNC_PROFILE", os.environ.get("APP_ENV", "")).lower()
+    if _profile in {"dev", "development", "test", "ci", "local"}:
+        os.environ.setdefault("GEOSYNC_AUDIT_SECRET", "test-audit-secret")
+        os.environ.setdefault("GEOSYNC_TWO_FACTOR_SECRET", "JBSWY3DPEHPK3PXP")
+        os.environ.setdefault("ADMIN_API_SETTINGS__two_factor_secret", "JBSWY3DPEHPK3PXP")
+    else:
+        _missing = [
+            name
+            for name in ("GEOSYNC_TWO_FACTOR_SECRET", "GEOSYNC_AUDIT_SECRET")
+            if not os.environ.get(name)
+        ]
+        if _missing:
+            msg = (
+                "Admin secrets must be configured for non-development profiles "
+                f"(GEOSYNC_PROFILE={_profile or '<unset>'!r}); missing: "
+                f"{', '.join(_missing)}. Refusing to fall back to public "
+                "development defaults."
+            )
+            raise RuntimeError(msg)
 
     if app_factory is None:
         from application.api.service import create_app as _create_app
@@ -157,19 +181,19 @@ def initialize_control_platform(
     serotonin_config_path = _resolve_path_precedence(
         default="configs/serotonin.yaml",
         yaml_value=yaml_cfg.get("serotonin_config"),
-        env_value=os.getenv("TRADEPULSE_SEROTONIN_CONFIG"),
+        env_value=os.getenv("GEOSYNC_SEROTONIN_CONFIG"),
         cli_value=cli_serotonin_config,
     )
     thermo_config_path = _resolve_path_precedence(
         default="configs/thermo_config.yaml",
         yaml_value=yaml_cfg.get("thermo_config"),
-        env_value=os.getenv("TRADEPULSE_THERMO_CONFIG"),
+        env_value=os.getenv("GEOSYNC_THERMO_CONFIG"),
         cli_value=cli_thermo_config,
     )
 
     controllers: Dict[str, object] = {}
     if serotonin_factory is None:
-        from tradepulse.core.neuro.serotonin.serotonin_controller import (
+        from geosync.core.neuro.serotonin.serotonin_controller import (
             SerotoninController as _SerotoninController,
         )
 

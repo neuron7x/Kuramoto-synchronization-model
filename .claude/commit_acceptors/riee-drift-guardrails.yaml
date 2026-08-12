@@ -1,0 +1,49 @@
+id: riee-drift-guardrails
+status: ACTIVE
+claim_type: governance
+promise: >-
+  Epistemic drift guardrails bind invariant-count claims to executable checks
+  and fail closed through CI, pre-commit, and local interrupter surfaces.
+diff_scope:
+  changed_files:
+    - path: ".claude/commit_acceptors/riee-drift-guardrails.yaml"
+    - path: ".github/workflows/check_epistemic_drift.yml"
+    - path: ".github/workflows/fail_closed_guardians.yml"
+    - path: ".pre-commit-config.yaml"
+    - path: "INDEPENDENT_SIGNAL_NOISE_AUDIT_2026-05-26.md"
+    - path: "conftest.py"
+    - path: "scripts/check_epistemic_drift.py"
+    - path: "scripts/claims_lifecycle.py"
+    - path: "scripts/guards/zero_latency_interrupter.py"
+    - path: "tests/adversarial_invariants/test_invariant_fail_closed.py"
+    - path: "tests/tools/test_check_epistemic_drift.py"
+    - path: "tests/tools/test_zero_latency_interrupter.py"
+  forbidden_paths:
+    - "trading/"
+    - "execution/"
+    - "forecast/"
+    - "policy/"
+required_python_symbols:
+  - "main"
+  - "_run_count_script"
+  - "MAX_RUNTIME_SECONDS"
+expected_signal: >-
+  Epistemic drift CI and local checks fail closed on count mismatch or hung
+  invariant counter and pass when README, CLAIMS, and count script agree.
+measurement_command: >-
+  python scripts/check_epistemic_drift.py && python -m pytest -q tests/tools/test_check_epistemic_drift.py tests/tools/test_zero_latency_interrupter.py tests/adversarial_invariants/test_invariant_fail_closed.py
+signal_artifact: "tmp/riee_drift_guardrails.log"
+falsifier:
+  command: >-
+    python -m pytest -q tests/tools/test_check_epistemic_drift.py
+  description: >-
+    Break the invariant count contract or timeout path; the drift guard must
+    return non-zero rather than silently passing.
+rollback_command: >-
+  git checkout HEAD~1 -- .github/workflows/check_epistemic_drift.yml .github/workflows/fail_closed_guardians.yml .pre-commit-config.yaml scripts/check_epistemic_drift.py scripts/claims_lifecycle.py scripts/guards/zero_latency_interrupter.py
+rollback_verification_command: >-
+  python tools/commit_acceptor/validate_commit_acceptor.py
+memory_update_type: append
+ledger_path: ".claude/commit_acceptors/riee-drift-guardrails.yaml"
+report_path: "INDEPENDENT_SIGNAL_NOISE_AUDIT_2026-05-26.md"
+evidence: []

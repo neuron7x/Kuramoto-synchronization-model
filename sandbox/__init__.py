@@ -1,3 +1,5 @@
+# Copyright (c) 2023-2026 Yaroslav Vasylenko (neuron7xLab)
+# SPDX-License-Identifier: MIT
 """Sandbox package exposing demo service factories."""
 
 from .control.app import create_app as create_control_app

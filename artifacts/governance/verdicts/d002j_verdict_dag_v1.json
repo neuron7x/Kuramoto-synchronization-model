@@ -1,0 +1,61 @@
+{
+  "acyclic": true,
+  "canonical_run_authorized_anywhere": false,
+  "dag_self_verdict": {
+    "decision": "VERDICT_DAG_BOOTSTRAPPED",
+    "merge_sha": null,
+    "node_id": "D002J-P2.5"
+  },
+  "forbidden_claims_aggregate": [
+    "GeoSync predicts systemic crises",
+    "GeoSync is bank-level validated",
+    "D-002J rescues D-002H",
+    "cross-asset coherence proves interbank contagion",
+    "positive controls prove real-world performance",
+    "source registry proves data quality",
+    "crisis windows prove predictive power"
+  ],
+  "generated_at": "2026-05-15T00:00:00Z",
+  "lineage_transitions": {
+    "D002J-P7": {
+      "is_rescue": false,
+      "status": "TERMINAL_REFUSED",
+      "successor_lineage": "D-002K",
+      "successor_root": "D002K-P0"
+    }
+  },
+  "locked_governance_shas": {
+    "docs/governance/D002C_CLAIM_LEDGER.yaml": "eb0b7151d76e5409e6dc9bb4a023551de5e0704673d5ac9f726319ef84a32387",
+    "docs/governance/D002G_ACCEPTANCE_RULES.md": "875b1e3eb031b8e5333dc8b455454f0a30419ead1ebe787aa01d5882e7d6ad31",
+    "docs/governance/D002G_PREREGISTRATION.yaml": "1ab91f09370e4705a8b0849467bc1f56df2e58d58d5623d3b6d905cbd110bb04",
+    "docs/governance/D002H_PREREGISTRATION.yaml": "44b18b5a40ce9d188a9c3bd49339621f81a65a15f97a683247902450dd54acec",
+    "docs/governance/D002I_PREREGISTRATION.yaml": "b646989c032dc0e29f9b791e0b68209ff22b40f4757737712badc8656cf2db5f",
+    "docs/governance/D002J_PREREGISTRATION.yaml": "f3dc65b7e64b96eafe6f23ca8bdd0e05dc9bf95b12c2658b227bd0340f7975a0"
+  },
+  "next_legal_nodes_from_main_head": [],
+  "nodes_count": 15,
+  "orphans": [],
+  "rejected_nodes_retained": [
+    "D002J-P1A",
+    "D002J-P7",
+    "D002K-P4"
+  ],
+  "schema_version": "D002J-VERDICT-DAG-v1",
+  "topological_order": [
+    "D002J-P0",
+    "D002J-P1",
+    "D002J-P1A",
+    "D002J-P1B",
+    "D002J-P2",
+    "D002J-P3",
+    "D002J-P4",
+    "D002J-P5",
+    "D002J-P6",
+    "D002J-P7",
+    "D002K-P0",
+    "D002K-P1",
+    "D002K-P2",
+    "D002K-P3",
+    "D002K-P4"
+  ]
+}

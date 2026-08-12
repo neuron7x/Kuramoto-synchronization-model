@@ -1,0 +1,126 @@
+# SPDX-License-Identifier: MIT
+#
+# L2 Demo Gate — protect the canonical 10-axis Ricci edge stack.
+#
+# Runs on PRs that touch the L2 research surface. Verifies:
+#   * 300+ L2 unit/integration tests pass
+#   * demo-smoke gate still validates every artifact + figure exists
+#   * Makefile target set + CHANGELOG stay consistent
+#
+# Jobs are path-filtered: unrelated PRs exit immediately with a skip.
+name: L2 Demo Gate
+
+on:
+  pull_request:
+    branches: [main]
+    paths:
+      - "research/microstructure/**"
+      - "scripts/run_l2_*.py"
+      - "scripts/render_l2_*.py"
+      - "tests/test_l2_*.py"
+      - "tests/l2_artifacts.py"
+      - "results/gate_fixtures/**"
+      - "README.md"
+      - "Makefile"
+      - ".github/workflows/l2-demo-gate.yml"
+  merge_group:
+  workflow_dispatch:
+
+permissions:
+  contents: read
+
+concurrency:
+  group: l2-demo-gate-${{ github.event.pull_request.number || github.sha }}
+  cancel-in-progress: true
+
+jobs:
+  l2-test:
+    name: l2-test
+    runs-on: ubuntu-latest
+    timeout-minutes: 20
+    steps:
+      - name: Checkout
+        uses: actions/checkout@9c091bb21b7c1c1d1991bb908d89e4e9dddfe3e0 # v7.0.0
+        with:
+          persist-credentials: false
+
+      - name: Set up Python 3.12
+        uses: actions/setup-python@ece7cb06caefa5fff74198d8649806c4678c61a1 # v6
+        with:
+          python-version: "3.12"
+          cache: pip
+
+      - name: Install test dependencies
+        run: |
+          # Install from the pip-compiled, exact-pinned lockfiles (the same
+          # surface the shared setup-geosync action uses). Resolving the
+          # unpinned requirements*.txt here makes pip's backtracker explode
+          # with "resolution-too-deep"; the locks cannot backtrack.
+          python -m pip install --upgrade pip
+          python -m pip install -c constraints/security.txt -r requirements.lock
+          python -m pip install -c constraints/security.txt -r requirements-dev.lock
+
+      - name: Run full L2 test suite
+        run: make l2-test
+        env:
+          NO_COLOR: "1"
+
+  l2-smoke:
+    name: l2-smoke (demo-readiness gate)
+    runs-on: ubuntu-latest
+    timeout-minutes: 5
+    steps:
+      - name: Checkout
+        uses: actions/checkout@9c091bb21b7c1c1d1991bb908d89e4e9dddfe3e0 # v7.0.0
+        with:
+          persist-credentials: false
+
+      - name: Set up Python 3.12
+        uses: actions/setup-python@ece7cb06caefa5fff74198d8649806c4678c61a1 # v6
+        with:
+          python-version: "3.12"
+          cache: pip
+
+      - name: Install test dependencies
+        run: |
+          # Install from the pip-compiled, exact-pinned lockfiles (the same
+          # surface the shared setup-geosync action uses). Resolving the
+          # unpinned requirements*.txt here makes pip's backtracker explode
+          # with "resolution-too-deep"; the locks cannot backtrack.
+          python -m pip install --upgrade pip
+          python -m pip install -c constraints/security.txt -r requirements.lock
+          python -m pip install -c constraints/security.txt -r requirements-dev.lock
+
+      - name: Demo-readiness smoke gate
+        run: make l2-smoke
+        env:
+          NO_COLOR: "1"
+
+  l2-makefile-audit:
+    name: l2-makefile-audit
+    runs-on: ubuntu-latest
+    timeout-minutes: 3
+    steps:
+      - name: Checkout
+        uses: actions/checkout@9c091bb21b7c1c1d1991bb908d89e4e9dddfe3e0 # v7.0.0
+        with:
+          persist-credentials: false
+
+      - name: Set up Python 3.12
+        uses: actions/setup-python@ece7cb06caefa5fff74198d8649806c4678c61a1 # v6
+        with:
+          python-version: "3.12"
+          cache: pip
+
+      - name: Install pytest + conftest deps
+        # tests/conftest.py imports pandas (which pulls numpy), so the minimal
+        # audit env must have both installed even though the targeted test
+        # itself only uses subprocess/make.
+        run: |
+          python -m pip install --upgrade pip
+          python -m pip install pytest numpy pandas pyyaml
+
+      - name: Makefile + CHANGELOG integrity tests
+        run: python -m pytest tests/test_l2_makefile_targets.py -q
+        env:
+          NO_COLOR: "1"

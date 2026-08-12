@@ -1,4 +1,5 @@
-# SPDX-License-Identifier: LicenseRef-TradePulse-Proprietary
+# Copyright (c) 2023-2026 Yaroslav Vasylenko (neuron7xLab)
+# SPDX-License-Identifier: MIT
 """Tests for transformation pipeline: RawEvent -> NormalizedEvent -> MFNRequest.
 
 Validates normalization, mapping, and error handling.

@@ -1,4 +1,6 @@
-"""Demo сценарій для модулів TradePulse.
+# Copyright (c) 2023-2026 Yaroslav Vasylenko (neuron7xLab)
+# SPDX-License-Identifier: MIT
+"""Demo сценарій для модулів GeoSync.
 
 Запускайте: ``python -m modules.demo``
 """
@@ -41,9 +43,7 @@ def main() -> None:
     risk_manager = AdaptiveRiskManager(base_capital=1_000_000, risk_tolerance=0.02)
     risk_metrics = risk_manager.calculate_risk_metrics(market_state)
     position_limit = risk_manager.update_position_limits(market_state)
-    max_position = risk_manager.calculate_position_size(
-        market_state, confidence=0.7
-    )
+    max_position = risk_manager.calculate_position_size(market_state, confidence=0.7)
 
     position_sizer = DynamicPositionSizer(base_capital=1_000_000)
     sizing_result = position_sizer.calculate_adaptive_size(

@@ -1,3 +1,5 @@
+# Copyright (c) 2023-2026 Yaroslav Vasylenko (neuron7xLab)
+# SPDX-License-Identifier: MIT
 from __future__ import annotations
 
 import base64
@@ -15,12 +17,10 @@ from fastapi.security import HTTPAuthorizationCredentials
 from jwt.algorithms import OKPAlgorithm, RSAAlgorithm
 from starlette.requests import Request
 
-os.environ.setdefault("TRADEPULSE_AUDIT_SECRET", "test-audit-secret")
-os.environ.setdefault("TRADEPULSE_OAUTH2_ISSUER", "https://issuer.tradepulse.test")
-os.environ.setdefault("TRADEPULSE_OAUTH2_AUDIENCE", "tradepulse-api")
-os.environ.setdefault(
-    "TRADEPULSE_OAUTH2_JWKS_URI", "https://issuer.tradepulse.test/jwks"
-)
+os.environ.setdefault("GEOSYNC_AUDIT_SECRET", "test-audit-secret")
+os.environ.setdefault("GEOSYNC_OAUTH2_ISSUER", "https://issuer.geosync.test")
+os.environ.setdefault("GEOSYNC_OAUTH2_AUDIENCE", "geosync-api")
+os.environ.setdefault("GEOSYNC_OAUTH2_JWKS_URI", "https://issuer.geosync.test/jwks")
 
 from application.api.security import (
     get_api_security_settings,
@@ -33,7 +33,7 @@ from application.settings import ApiSecuritySettings
 from src.admin.remote_control import AdminIdentity
 
 TWO_FACTOR_HEADER = "X-Admin-OTP"
-TWO_FACTOR_SECRET = os.environ["TRADEPULSE_TWO_FACTOR_SECRET"]
+TWO_FACTOR_SECRET = os.environ["GEOSYNC_TWO_FACTOR_SECRET"]
 
 
 @dataclass(slots=True)
@@ -57,9 +57,9 @@ def oauth2_context(monkeypatch: pytest.MonkeyPatch) -> OAuthContext:
     jwk_dict.update({"kid": kid, "alg": "RS256", "use": "sig"})
 
     settings = ApiSecuritySettings(
-        oauth2_issuer="https://issuer.tradepulse.test",
-        oauth2_audience="tradepulse-api",
-        oauth2_jwks_uri="https://issuer.tradepulse.test/jwks",
+        oauth2_issuer="https://issuer.geosync.test",
+        oauth2_audience="geosync-api",
+        oauth2_jwks_uri="https://issuer.geosync.test/jwks",
     )
 
     private_pem = private_key.private_bytes(
@@ -122,8 +122,7 @@ def _make_request(
     }
     if headers:
         scope["headers"] = [
-            (key.lower().encode("ascii"), value.encode("utf-8"))
-            for key, value in headers.items()
+            (key.lower().encode("ascii"), value.encode("utf-8")) for key, value in headers.items()
         ]
     if scope_cert is not None:
         scope["client_cert"] = scope_cert
@@ -219,9 +218,9 @@ async def test_disallowed_algorithm_is_rejected(
         delattr(get_api_security_settings, "_instance")
 
     settings = ApiSecuritySettings(
-        oauth2_issuer="https://issuer.tradepulse.test",
-        oauth2_audience="tradepulse-api",
-        oauth2_jwks_uri="https://issuer.tradepulse.test/jwks",
+        oauth2_issuer="https://issuer.geosync.test",
+        oauth2_audience="geosync-api",
+        oauth2_jwks_uri="https://issuer.geosync.test/jwks",
     )
 
     kid = "oct-key"
@@ -273,9 +272,9 @@ async def test_oct_key_succeeds_when_algorithm_allowed(
 
     settings = ApiSecuritySettings(
         oauth2_algorithms=("HS256",),
-        oauth2_issuer="https://issuer.tradepulse.test",
-        oauth2_audience="tradepulse-api",
-        oauth2_jwks_uri="https://issuer.tradepulse.test/jwks",
+        oauth2_issuer="https://issuer.geosync.test",
+        oauth2_audience="geosync-api",
+        oauth2_jwks_uri="https://issuer.geosync.test/jwks",
     )
 
     kid = "oct-key"
@@ -332,9 +331,9 @@ async def test_eddsa_algorithm_preserves_canonical_casing(
 
     settings = ApiSecuritySettings(
         oauth2_algorithms=("EdDSA",),
-        oauth2_issuer="https://issuer.tradepulse.test",
-        oauth2_audience="tradepulse-api",
-        oauth2_jwks_uri="https://issuer.tradepulse.test/jwks",
+        oauth2_issuer="https://issuer.geosync.test",
+        oauth2_audience="geosync-api",
+        oauth2_jwks_uri="https://issuer.geosync.test/jwks",
     )
 
     async def fake_get_key(uri: str, request_kid: str) -> dict[str, Any] | None:
@@ -444,10 +443,7 @@ async def test_key_type_mismatch_is_rejected(
         await dependency(request, credentials, oauth2_context.settings)
 
     assert exc.value.status_code == 401
-    assert (
-        exc.value.detail
-        == "Signing key type is incompatible with bearer token algorithm."
-    )
+    assert exc.value.detail == "Signing key type is incompatible with bearer token algorithm."
 
 
 @pytest.mark.anyio
@@ -565,9 +561,7 @@ async def test_tampered_signature_is_rejected(oauth2_context: OAuthContext) -> N
     )
     tampered_token = ".".join([header, payload, tampered_signature])
     request = _make_request()
-    credentials = HTTPAuthorizationCredentials(
-        scheme="Bearer", credentials=tampered_token
-    )
+    credentials = HTTPAuthorizationCredentials(scheme="Bearer", credentials=tampered_token)
 
     with pytest.raises(HTTPException) as exc:
         await dependency(request, credentials, oauth2_context.settings)
@@ -636,10 +630,7 @@ async def test_unsupported_signing_key_type_is_rejected(
         await dependency(request, credentials, oauth2_context.settings)
 
     assert exc.value.status_code == 401
-    assert (
-        exc.value.detail
-        == "Signing key type is incompatible with bearer token algorithm."
-    )
+    assert exc.value.detail == "Signing key type is incompatible with bearer token algorithm."
 
 
 @pytest.mark.anyio
@@ -681,9 +672,7 @@ async def test_two_factor_dependency_rejects_missing_code() -> None:
         await dependency(request, identity)
 
     assert exc.value.status_code == 401
-    assert (
-        exc.value.detail == "Two-factor authentication code required for this endpoint."
-    )
+    assert exc.value.detail == "Two-factor authentication code required for this endpoint."
 
 
 @pytest.mark.anyio
@@ -746,9 +735,9 @@ def test_manual_override_survives_loader_replacement(
             delattr(get_api_security_settings, attribute)
 
     manual_settings = ApiSecuritySettings(
-        oauth2_issuer="https://override.tradepulse.test",
+        oauth2_issuer="https://override.geosync.test",
         oauth2_audience="override-api",
-        oauth2_jwks_uri="https://override.tradepulse.test/jwks",
+        oauth2_jwks_uri="https://override.geosync.test/jwks",
     )
 
     setattr(get_api_security_settings, "_instance", manual_settings)
@@ -758,9 +747,9 @@ def test_manual_override_survives_loader_replacement(
 
     def replacement_loader() -> ApiSecuritySettings:
         return ApiSecuritySettings(
-            oauth2_issuer="https://replacement.tradepulse.test",
+            oauth2_issuer="https://replacement.geosync.test",
             oauth2_audience="replacement-api",
-            oauth2_jwks_uri="https://replacement.tradepulse.test/jwks",
+            oauth2_jwks_uri="https://replacement.geosync.test/jwks",
         )
 
     monkeypatch.setattr(

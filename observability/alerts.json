@@ -2,12 +2,12 @@
   "version": 1,
   "groups": [
     {
-      "name": "tradepulse.execution",
+      "name": "geosync.execution",
       "interval": "1m",
       "rules": [
         {
-          "alert": "TradePulseOrderErrorRate",
-          "expr": "sum(rate(tradepulse_orders_placed_total{status=\"error\"}[5m])) / sum(rate(tradepulse_orders_placed_total[5m])) > 0.05",
+          "alert": "GeoSyncOrderErrorRate",
+          "expr": "sum(rate(geosync_orders_placed_total{status=\"error\"}[5m])) / sum(rate(geosync_orders_placed_total[5m])) > 0.05",
           "for": "5m",
           "labels": {
             "severity": "critical",
@@ -19,8 +19,8 @@
           }
         },
         {
-          "alert": "TradePulseOrderLatency",
-          "expr": "histogram_quantile(0.95, sum(rate(tradepulse_order_placement_duration_seconds_bucket[5m])) by (le)) > 2",
+          "alert": "GeoSyncOrderLatency",
+          "expr": "histogram_quantile(0.95, sum(rate(geosync_order_placement_duration_seconds_bucket[5m])) by (le)) > 2",
           "for": "10m",
           "labels": {
             "severity": "warning",
@@ -32,8 +32,8 @@
           }
         },
         {
-          "alert": "TradePulseOrderAckLatency",
-          "expr": "tradepulse_order_ack_latency_quantiles_seconds{quantile=\"0.95\"} > 0.4",
+          "alert": "GeoSyncOrderAckLatency",
+          "expr": "geosync_order_ack_latency_quantiles_seconds{quantile=\"0.95\"} > 0.4",
           "for": "5m",
           "labels": {
             "severity": "warning",
@@ -45,8 +45,8 @@
           }
         },
         {
-          "alert": "TradePulseSignalToFillLatency",
-          "expr": "tradepulse_signal_to_fill_latency_quantiles_seconds{quantile=\"0.99\"} > 0.65",
+          "alert": "GeoSyncSignalToFillLatency",
+          "expr": "geosync_signal_to_fill_latency_quantiles_seconds{quantile=\"0.99\"} > 0.65",
           "for": "5m",
           "labels": {
             "severity": "critical",
@@ -60,12 +60,12 @@
       ]
     },
     {
-      "name": "tradepulse.risk",
+      "name": "geosync.risk",
       "interval": "30s",
       "rules": [
         {
-          "alert": "TradePulseKillSwitchEngaged",
-          "expr": "tradepulse_risk_kill_switch == 1",
+          "alert": "GeoSyncKillSwitchEngaged",
+          "expr": "geosync_risk_kill_switch == 1",
           "for": "0m",
           "labels": {
             "severity": "critical",
@@ -78,8 +78,8 @@
           }
         },
         {
-          "alert": "TradePulseCircuitBreakerOpen",
-          "expr": "tradepulse_risk_circuit_state{state=\"open\"} == 1",
+          "alert": "GeoSyncCircuitBreakerOpen",
+          "expr": "geosync_risk_circuit_state{state=\"open\"} == 1",
           "for": "1m",
           "labels": {
             "severity": "warning",
@@ -92,8 +92,8 @@
           }
         },
         {
-          "alert": "TradePulseHighRejectionRate",
-          "expr": "rate(tradepulse_risk_rejections_total[5m]) > 10",
+          "alert": "GeoSyncHighRejectionRate",
+          "expr": "rate(geosync_risk_rejections_total[5m]) > 10",
           "for": "5m",
           "labels": {
             "severity": "warning",
@@ -106,8 +106,8 @@
           }
         },
         {
-          "alert": "TradePulseCircuitBreakerTrip",
-          "expr": "increase(tradepulse_risk_circuit_trips_total[5m]) > 0",
+          "alert": "GeoSyncCircuitBreakerTrip",
+          "expr": "increase(geosync_risk_circuit_trips_total[5m]) > 0",
           "for": "0m",
           "labels": {
             "severity": "warning",
@@ -119,8 +119,8 @@
           }
         },
         {
-          "alert": "TradePulseHighDrawdown",
-          "expr": "tradepulse_drawdown_percent > 5",
+          "alert": "GeoSyncHighDrawdown",
+          "expr": "geosync_drawdown_percent > 5",
           "for": "10m",
           "labels": {
             "severity": "warning",
@@ -132,8 +132,8 @@
           }
         },
         {
-          "alert": "TradePulseCriticalDrawdown",
-          "expr": "tradepulse_drawdown_percent > 10",
+          "alert": "GeoSyncCriticalDrawdown",
+          "expr": "geosync_drawdown_percent > 10",
           "for": "5m",
           "labels": {
             "severity": "critical",
@@ -147,12 +147,12 @@
       ]
     },
     {
-      "name": "tradepulse.mode",
+      "name": "geosync.mode",
       "interval": "1m",
       "rules": [
         {
-          "alert": "TradePulseModeTransition",
-          "expr": "increase(tradepulse_trading_mode_transitions_total[5m]) > 0",
+          "alert": "GeoSyncModeTransition",
+          "expr": "increase(geosync_trading_mode_transitions_total[5m]) > 0",
           "for": "0m",
           "labels": {
             "severity": "info",
@@ -164,8 +164,8 @@
           }
         },
         {
-          "alert": "TradePulseLiveModeActive",
-          "expr": "tradepulse_trading_mode{mode=\"LIVE\"} == 1",
+          "alert": "GeoSyncLiveModeActive",
+          "expr": "geosync_trading_mode{mode=\"LIVE\"} == 1",
           "for": "0m",
           "labels": {
             "severity": "info",
@@ -173,18 +173,18 @@
           },
           "annotations": {
             "summary": "System is in LIVE trading mode",
-            "description": "TradePulse is currently executing real trades. Ensure proper monitoring is active."
+            "description": "GeoSync is currently executing real trades. Ensure proper monitoring is active."
           }
         }
       ]
     },
     {
-      "name": "tradepulse.data",
+      "name": "geosync.data",
       "interval": "2m",
       "rules": [
         {
-          "alert": "TradePulseDataIngestionFailures",
-          "expr": "increase(tradepulse_data_ingestion_total{status=\"error\"}[10m]) > 0",
+          "alert": "GeoSyncDataIngestionFailures",
+          "expr": "increase(geosync_data_ingestion_total{status=\"error\"}[10m]) > 0",
           "for": "0m",
           "labels": {
             "severity": "critical",
@@ -196,8 +196,8 @@
           }
         },
         {
-          "alert": "TradePulseDataFreshness",
-          "expr": "max(time() - tradepulse_data_ingestion_duration_seconds_sum / tradepulse_data_ingestion_duration_seconds_count) > 300",
+          "alert": "GeoSyncDataFreshness",
+          "expr": "max(time() - geosync_data_ingestion_duration_seconds_sum / geosync_data_ingestion_duration_seconds_count) > 300",
           "for": "5m",
           "labels": {
             "severity": "warning",
@@ -211,12 +211,12 @@
       ]
     },
     {
-      "name": "tradepulse.strategy",
+      "name": "geosync.strategy",
       "interval": "1m",
       "rules": [
         {
-          "alert": "TradePulseBacktestFailures",
-          "expr": "increase(tradepulse_backtest_total{status=\"error\"}[30m]) > 0",
+          "alert": "GeoSyncBacktestFailures",
+          "expr": "increase(geosync_backtest_total{status=\"error\"}[30m]) > 0",
           "for": "0m",
           "labels": {
             "severity": "warning",
@@ -228,8 +228,8 @@
           }
         },
         {
-          "alert": "TradePulseOptimizationSlow",
-          "expr": "avg(rate(tradepulse_optimization_duration_seconds_sum[30m]) / rate(tradepulse_optimization_duration_seconds_count[30m])) > 120",
+          "alert": "GeoSyncOptimizationSlow",
+          "expr": "avg(rate(geosync_optimization_duration_seconds_sum[30m]) / rate(geosync_optimization_duration_seconds_count[30m])) > 120",
           "for": "30m",
           "labels": {
             "severity": "info",
@@ -243,12 +243,12 @@
       ]
     },
     {
-      "name": "tradepulse.model",
+      "name": "geosync.model",
       "interval": "1m",
       "rules": [
         {
-          "alert": "TradePulseModelLatencyHigh",
-          "expr": "tradepulse_model_inference_latency_quantiles_seconds{quantile=\"p99\"} > 0.5",
+          "alert": "GeoSyncModelLatencyHigh",
+          "expr": "geosync_model_inference_latency_quantiles_seconds{quantile=\"p99\"} > 0.5",
           "for": "5m",
           "labels": {
             "severity": "warning",
@@ -261,8 +261,8 @@
           }
         },
         {
-          "alert": "TradePulseModelErrorRateHigh",
-          "expr": "tradepulse_model_inference_error_ratio > 0.01",
+          "alert": "GeoSyncModelErrorRateHigh",
+          "expr": "geosync_model_inference_error_ratio > 0.01",
           "for": "5m",
           "labels": {
             "severity": "warning",
@@ -275,8 +275,8 @@
           }
         },
         {
-          "alert": "TradePulseModelDegradation",
-          "expr": "increase(tradepulse_model_quality_degradation_events_total[15m]) > 0",
+          "alert": "GeoSyncModelDegradation",
+          "expr": "increase(geosync_model_quality_degradation_events_total[15m]) > 0",
           "for": "0m",
           "labels": {
             "severity": "warning",
@@ -290,12 +290,12 @@
       ]
     },
     {
-      "name": "tradepulse.operations",
+      "name": "geosync.operations",
       "interval": "1m",
       "rules": [
         {
-          "alert": "TradePulseCriticalIncidentOpen",
-          "expr": "tradepulse_incidents_open{severity=\"critical\"} > 0",
+          "alert": "GeoSyncCriticalIncidentOpen",
+          "expr": "geosync_incidents_open{severity=\"critical\"} > 0",
           "for": "0m",
           "labels": {
             "severity": "critical",
@@ -307,8 +307,8 @@
           }
         },
         {
-          "alert": "TradePulseIncidentAckSLA",
-          "expr": "histogram_quantile(0.5, sum(rate(tradepulse_incident_ack_latency_seconds_bucket[5m])) by (le, severity)) > 300",
+          "alert": "GeoSyncIncidentAckSLA",
+          "expr": "histogram_quantile(0.5, sum(rate(geosync_incident_ack_latency_seconds_bucket[5m])) by (le, severity)) > 300",
           "for": "10m",
           "labels": {
             "severity": "warning",
@@ -320,8 +320,8 @@
           }
         },
         {
-          "alert": "TradePulseLifecycleCheckpointBlocked",
-          "expr": "max by (checkpoint) (tradepulse_lifecycle_checkpoint_status{status=\"blocked\"}) == 1",
+          "alert": "GeoSyncLifecycleCheckpointBlocked",
+          "expr": "max by (checkpoint) (geosync_lifecycle_checkpoint_status{status=\"blocked\"}) == 1",
           "for": "5m",
           "labels": {
             "severity": "critical",
@@ -333,8 +333,8 @@
           }
         },
         {
-          "alert": "TradePulseRunbookFailures",
-          "expr": "increase(tradepulse_runbook_executions_total{outcome=\"failed\"}[15m]) > 0",
+          "alert": "GeoSyncRunbookFailures",
+          "expr": "increase(geosync_runbook_executions_total{outcome=\"failed\"}[15m]) > 0",
           "for": "0m",
           "labels": {
             "severity": "warning",
@@ -346,8 +346,8 @@
           }
         },
         {
-          "alert": "TradePulseMetricsMissing",
-          "expr": "absent(up{job=\"tradepulse\"})",
+          "alert": "GeoSyncMetricsMissing",
+          "expr": "absent(up{job=\"geosync\"})",
           "for": "5m",
           "labels": {
             "severity": "critical",
@@ -355,8 +355,8 @@
             "runbook": "docs/INCIDENT_RUNBOOK.md#5-metrics-logs-missing"
           },
           "annotations": {
-            "summary": "TradePulse metrics are missing",
-            "description": "Prometheus cannot scrape metrics from TradePulse. Service may be down or unreachable."
+            "summary": "GeoSync metrics are missing",
+            "description": "Prometheus cannot scrape metrics from GeoSync. Service may be down or unreachable."
           }
         }
       ]

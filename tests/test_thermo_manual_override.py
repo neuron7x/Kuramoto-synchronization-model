@@ -1,3 +1,5 @@
+# Copyright (c) 2023-2026 Yaroslav Vasylenko (neuron7xLab)
+# SPDX-License-Identifier: MIT
 import logging
 import time
 
@@ -29,7 +31,7 @@ def test_manual_override_resets_circuit_breaker(caplog):
     controller.unresolved_rise_steps = 7
     controller.controller_state = CRITICAL_HALT_STATE
 
-    with caplog.at_level(logging.WARNING, logger="tradepulse.audit"):
+    with caplog.at_level(logging.WARNING, logger="geosync.audit"):
         controller.manual_override("operator acknowledged incident")
 
     assert controller.circuit_breaker_active is False
@@ -40,12 +42,8 @@ def test_manual_override_resets_circuit_breaker(caplog):
     assert time.time() - controller.override_time < 5
     assert controller.controller_state == CrisisMode.NORMAL
 
-    override_records = [
-        r for r in caplog.records if getattr(r, "manual_override", False)
-    ]
-    assert (
-        override_records
-    ), "manual override should be logged with manual_override flag"
+    override_records = [r for r in caplog.records if getattr(r, "manual_override", False)]
+    assert override_records, "manual override should be logged with manual_override flag"
     assert override_records[0].code == "B1"
     assert "manually overridden" in override_records[0].message
 

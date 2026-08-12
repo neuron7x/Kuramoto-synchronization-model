@@ -1,7 +1,8 @@
+# Copyright (c) 2023-2026 Yaroslav Vasylenko (neuron7xLab)
+# SPDX-License-Identifier: MIT
 from __future__ import annotations
 
 import csv
-from datetime import UTC
 from pathlib import Path
 
 import numpy as np
@@ -15,13 +16,14 @@ from analytics.signals.pipeline import (
     make_default_candidates,
 )
 from backtest.time_splits import WalkForwardSplitter
+from core.compat import UTC
 from core.data.ingestion import DataIngestor
 
 
 def _write_synthetic_csv(path: Path, *, periods: int = 80) -> None:
     start = pd.Timestamp("2024-01-01 00:00:00", tz=UTC)
     index = pd.date_range(start=start, periods=periods, freq="1min", tz=UTC)
-    rows = []
+    rows: list[dict[str, object]] = []
     base_price = 100.0
     rng = np.random.default_rng(seed=1234)
     noise = rng.normal(0.0, 0.2, size=periods)

@@ -1,0 +1,76 @@
+# Diff-bound commit acceptor for the Kuramoto frequency-entrainment witness.
+#
+# Adds ONE test module binding the previously-unwitnessed catalog law
+# kuramoto.frequency_entrainment to an executable @law witness using a
+# self-contained reference Kuramoto integrator. Promotes no claim, changes no
+# runtime behavior, touches no schema/guard, uses no real data.
+#
+#   kuramoto.frequency_entrainment — above K_c a locked cluster shares a common
+#                                    frequency within 0.05*<|w|> (INV-K4).
+#
+# Locally verified on origin/main base:
+#   * pytest tests/physics_contracts/test_kuramoto_entrainment_witness.py: 1 passed (~0.6s)
+#   * .claude/physics/validate_tests.py <file>: 0 issues (L1..L5), EXIT 0
+#   * ruff / mypy --strict clean ; zero new `# type: ignore`
+id: kuramoto-entrainment-witness
+status: ACTIVE
+claim_type: governance
+promise: >-
+  After this PR lands, tests/physics_contracts/test_kuramoto_entrainment_witness.py
+  binds kuramoto.frequency_entrainment to an @law witness that runs an independent
+  explicit-Euler Kuramoto integrator (Lorentzian omega, K_c = 2 gamma) at
+  K = 1.5 K_c and asserts the locked cluster's effective-frequency spread stays at
+  or below 0.05*<|w|> across several seeds, with a vacuity guard requiring genuine
+  entrainment (INV-K4). It passes validate_tests with zero issues. No market
+  claim; no runtime, schema, or guard change.
+diff_scope:
+  changed_files:
+    - path: ".claude/commit_acceptors/kuramoto-entrainment-witness.yaml"
+    - path: "tests/physics_contracts/test_kuramoto_entrainment_witness.py"
+  forbidden_paths:
+    - "trading/"
+    - "execution/"
+    - "forecast/"
+    - "policy/"
+    - "application/"
+    - "core/"
+    - "src/"
+    - "geosync_hpc/"
+    - "physics_contracts/catalog.yaml"
+    - ".claude/physics/INVARIANTS.yaml"
+required_python_symbols: []
+expected_signal: >-
+  pytest reports 1 passed; validate_tests exits 0 with no L1..L5 issues; ruff and
+  mypy --strict clean.
+measurement_command: >-
+  bash -c 'mkdir -p tmp && python -m pytest
+  tests/physics_contracts/test_kuramoto_entrainment_witness.py
+  > tmp/kuramoto_entrainment_witness.log 2>&1
+  && grep -q "1 passed" tmp/kuramoto_entrainment_witness.log'
+signal_artifact: "tmp/kuramoto_entrainment_witness.log"
+falsifier:
+  command: |-
+    bash -c 'python -c "
+    import numpy as np
+    from tests.physics_contracts.test_kuramoto_entrainment_witness import _simulate_effective_frequencies, K_C, LOCKED_SPREAD_COEFF
+    omega, eff, R = _simulate_effective_frequencies(1.5*K_C, 512, 0)
+    scale = float(np.mean(np.abs(omega))); centre = float(np.median(eff))
+    locked = np.abs(eff - centre) < 0.1*scale
+    spread = float(np.std(eff[locked]))
+    import sys; sys.exit(0 if spread > LOCKED_SPREAD_COEFF*scale else 1)"'
+  description: >-
+    Inverse probe of frequency entrainment. It exits 0 (fires) iff the locked
+    cluster's frequency spread exceeds 0.05*<|w|> at K = 1.5 K_c -- i.e. the
+    macroscopic cluster fails to share a common frequency, breaking INV-K4. While
+    entrainment holds the probe exits 1. If it ever exits 0, the witness is no
+    longer truthful and the change must be reverted, not patched green.
+rollback_command: >-
+  git rm -f
+  tests/physics_contracts/test_kuramoto_entrainment_witness.py
+  .claude/commit_acceptors/kuramoto-entrainment-witness.yaml
+rollback_verification_command: >-
+  bash -c 'test ! -f tests/physics_contracts/test_kuramoto_entrainment_witness.py'
+memory_update_type: none
+ledger_path: ".claude/commit_acceptors/kuramoto-entrainment-witness.yaml"
+report_path: "tmp/kuramoto_entrainment_witness.log"
+evidence: []

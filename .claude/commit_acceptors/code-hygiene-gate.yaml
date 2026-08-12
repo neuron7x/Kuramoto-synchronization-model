@@ -1,0 +1,103 @@
+# Diff-bound commit acceptor for the code-hygiene ratchet.
+#
+# Binds the deterministic code-hygiene + skip ratchets (ADR 0025) to their
+# evidence: stdlib-only AST checkers that freeze intra-module debt and fail
+# on anything new. Infra/governance only, no physics, read-only and offline.
+
+id: code-hygiene-gate
+status: ACTIVE
+claim_type: governance
+promise: >-
+  After this PR lands, scripts/ci/check_code_hygiene.py and
+  scripts/ci/check_skip_ratchet.py enforce a fail-closed, monotone-down
+  ratchet over the runtime roots in docs/CODE_QUALITY_MANIFEST.json: god
+  functions/classes, cyclomatic complexity, god files, broad excepts,
+  runtime print, ambient clock/RNG nondeterminism, and test skip/xfail
+  debt are frozen in docs/CODE_DEBT_BASELINE.json and
+  docs/SKIP_RATCHET_BASELINE.json. A new or grown violator fails the gate;
+  a paid-down entry left stale fails until --write retires it. This is a
+  gate only — no runtime behaviour, feature, claim, or physics maturity
+  changes; no empirical, market, or alpha claim is made.
+
+diff_scope:
+  changed_files:
+    - path: ".claude/commit_acceptors/code-hygiene-gate.yaml"
+    - path: ".github/workflows/code-hygiene-gate.yml"
+    - path: "INVENTORY.json"
+    - path: "Makefile"
+    - path: "docs/CODE_DEBT_BASELINE.json"
+    - path: "docs/CODE_QUALITY_MANIFEST.json"
+    - path: "docs/DETERMINISM_POLICY.md"
+    - path: "docs/SKIP_RATCHET_BASELINE.json"
+    - path: "docs/adr/0025-code-hygiene-ratchet.md"
+    - path: "docs/adr/index.md"
+    - path: "scripts/ci/check_code_hygiene.py"
+    - path: "scripts/ci/check_skip_ratchet.py"
+  forbidden_paths:
+    - "trading/"
+    - "execution/"
+    - "forecast/"
+    - "policy/"
+    - "core/"
+    - "runtime/"
+    - "application/"
+
+required_python_symbols:
+  - "scripts/ci/check_code_hygiene.py::main"
+  - "scripts/ci/check_code_hygiene.py::_scan"
+  - "scripts/ci/check_code_hygiene.py::_complexity"
+  - "scripts/ci/check_skip_ratchet.py::main"
+  - "scripts/ci/check_skip_ratchet.py::_scan"
+
+expected_signal: >-
+  python scripts/ci/check_code_hygiene.py prints "Code-hygiene ratchet
+  held: <S> over-budget symbols + <C> flagged call-sites (target 0)" and
+  exits 0; python scripts/ci/check_skip_ratchet.py prints "Skip ratchet
+  held: <N> markers in <F> files" and exits 0, against the committed
+  baselines.
+
+measurement_command: >-
+  bash -c '
+    mkdir -p tmp &&
+    python scripts/ci/check_code_hygiene.py | tee tmp/code_hygiene_gate.log &&
+    python scripts/ci/check_skip_ratchet.py | tee -a tmp/code_hygiene_gate.log
+  '
+
+signal_artifact: "tmp/code_hygiene_gate.log"
+
+falsifier:
+  command: >-
+    bash -c '
+      f="runtime/__acceptor_falsify_hygiene.py";
+      { printf "def __falsify_big():\n"; i=0; while [ "$i" -lt 90 ]; do printf "    x%d = %d\n" "$i" "$i"; i=$((i+1)); done; } > "$f";
+      python scripts/ci/check_code_hygiene.py >/dev/null 2>&1; rc=$?;
+      rm -f "$f";
+      test "$rc" -ne 0
+    '
+  description: >-
+    Injects a 90-line god function into a runtime root and asserts the
+    ratchet fails (exit non-zero). Succeeds only when new debt is caught,
+    proving the gate is non-vacuous; the temp file is always removed.
+
+rollback_command: >-
+  bash -c '
+    git rm -f
+      scripts/ci/check_code_hygiene.py
+      scripts/ci/check_skip_ratchet.py
+      .github/workflows/code-hygiene-gate.yml
+      docs/CODE_QUALITY_MANIFEST.json
+      docs/CODE_DEBT_BASELINE.json
+      docs/SKIP_RATCHET_BASELINE.json
+      docs/DETERMINISM_POLICY.md
+      docs/adr/0025-code-hygiene-ratchet.md
+      .claude/commit_acceptors/code-hygiene-gate.yaml
+  '
+
+rollback_verification_command: >-
+  bash -c '
+    test ! -e scripts/ci/check_code_hygiene.py
+  '
+
+memory_update_type: append
+ledger_path: ".claude/commit_acceptors/code-hygiene-gate.yaml"
+report_path: "tmp/code_hygiene_gate.log"

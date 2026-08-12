@@ -1,3 +1,5 @@
+# Copyright (c) 2023-2026 Yaroslav Vasylenko (neuron7xLab)
+# SPDX-License-Identifier: MIT
 """
 Dynamic Position Sizer Module
 
@@ -127,9 +129,7 @@ class DynamicPositionSizer:
 
         return kelly
 
-    def calculate_volatility_adjusted_size(
-        self, volatility: float, base_size: float
-    ) -> float:
+    def calculate_volatility_adjusted_size(self, volatility: float, base_size: float) -> float:
         """
         Коригування розміру на основі волатільності
 
@@ -218,15 +218,9 @@ class DynamicPositionSizer:
         kelly_size = base_size
         kelly_frac = 0.0
         if win_rate is not None and avg_win is not None and avg_loss is not None:
-            kelly_frac = self.calculate_kelly_size(
-                win_rate, avg_win, avg_loss, fractional=True
-            )
+            kelly_frac = self.calculate_kelly_size(win_rate, avg_win, avg_loss, fractional=True)
             kelly_size = self.base_capital * kelly_frac
-        elif (
-            symbol in self._win_rate
-            and symbol in self._avg_win
-            and symbol in self._avg_loss
-        ):
+        elif symbol in self._win_rate and symbol in self._avg_win and symbol in self._avg_loss:
             # Використовуємо накопичену статистику
             kelly_frac = self.calculate_kelly_size(
                 self._win_rate[symbol],
@@ -237,9 +231,7 @@ class DynamicPositionSizer:
             kelly_size = self.base_capital * kelly_frac
 
         # 2. Коригування на волатільність
-        vol_adjusted_size = self.calculate_volatility_adjusted_size(
-            volatility, base_size
-        )
+        vol_adjusted_size = self.calculate_volatility_adjusted_size(volatility, base_size)
 
         # 3. Коригування на впевненість сигналу
         confidence_adjusted = vol_adjusted_size * confidence
@@ -318,8 +310,7 @@ class DynamicPositionSizer:
 
         elif method == SizingMethod.VOLATILITY_ADJUSTED:
             recommended_size = (
-                self.calculate_volatility_adjusted_size(volatility, base_size)
-                * confidence
+                self.calculate_volatility_adjusted_size(volatility, base_size) * confidence
             )
 
         elif method == SizingMethod.KELLY or method == SizingMethod.FRACTIONAL_KELLY:
@@ -338,8 +329,7 @@ class DynamicPositionSizer:
         elif method == SizingMethod.RISK_PARITY:
             portfolio_vols = kwargs.get("portfolio_volatilities", {})
             recommended_size = (
-                self.calculate_risk_parity_size(symbol, volatility, portfolio_vols)
-                * confidence
+                self.calculate_risk_parity_size(symbol, volatility, portfolio_vols) * confidence
             )
 
         else:
@@ -386,9 +376,7 @@ class DynamicPositionSizer:
         # Оновлення win rate (експоненційна ковзна середня)
         alpha = 2.0 / (n + 1) if n < 100 else 0.1
         current_win = 1.0 if is_win else 0.0
-        self._win_rate[symbol] = (
-            alpha * current_win + (1 - alpha) * self._win_rate[symbol]
-        )
+        self._win_rate[symbol] = alpha * current_win + (1 - alpha) * self._win_rate[symbol]
 
         # Оновлення середніх виграшів/програшів
         if is_win:

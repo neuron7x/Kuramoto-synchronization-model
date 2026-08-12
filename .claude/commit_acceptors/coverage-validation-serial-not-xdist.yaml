@@ -1,0 +1,73 @@
+# Diff-bound commit acceptor: revert the post-merge coverage/validation gates
+# from xdist parallelism to SERIAL execution with a recalibrated timeout.
+#
+# Why (provable from CI history):
+#   PRs #1269/#1270 made the Coverage Intelligence Gate (release-coverage-90)
+#   and Main Validation (python-full-validation) COMPLETE by parallelizing the
+#   full ~18k-test suite with `-n auto`. That fixed the timeout vacuum but the
+#   first post-merge run (Main Validation run 27872709126) completed in ~26 min
+#   and FAILED with 16 xdist-ONLY failures the vacuum had hidden:
+#     * ~11 UnicodeDecodeError — xdist workers default to ASCII, so file reads
+#       of UTF-8 sources raised. (Fixed independently by PYTHONUTF8=1.)
+#     * 3 pytest-benchmark "did not provide timing" — benchmark is incompatible
+#       with xdist.
+#     * 2 module-scoped logging/caplog tests — fail by cross-worker ordering
+#       (pass serially and in isolation; reproduced locally).
+#   These are artifacts of PARALLEL execution, not real regressions.
+#
+# What lands:
+#   * .github/workflows/main-validation.yml — drop `-n auto`; run serially;
+#     timeout-minutes 60 -> 150; set PYTHONUTF8/PYTHONIOENCODING.
+#   * .github/workflows/coverage-intelligence.yml — release job
+#     timeout-minutes 60 -> 150; set PYTHONUTF8/PYTHONIOENCODING.
+#   * Makefile (coverage-baseline) — drop `-n auto` from the `tests/` run.
+#
+# Net: both gates keep the ORIGINAL serial test semantics (no xdist artifacts),
+# the measured surfaces and thresholds are unchanged, and they now COMPLETE
+# within a recalibrated cap so they actually enforce. PYTHONUTF8 mirrors the
+# fast-shard recipe (pr-gate.yml). A total hang still fails closed via the
+# job-level timeout-minutes.
+
+id: coverage-validation-serial-not-xdist
+status: ACTIVE
+claim_type: fail_closed
+promise: >-
+  After this PR lands, the Coverage Intelligence Gate (release-coverage-90) and
+  Main Validation (python-full-validation) run the full suite SERIALLY under a
+  150-min cap and conclude success/failure — they neither time out (cancelled)
+  nor fail on xdist-only artifacts. The measured coverage surfaces and the 90%
+  / critical-surface thresholds are unchanged; PYTHONUTF8 matches the fast-shard
+  recipe so file reads never hit the runner ASCII fallback.
+diff_scope:
+  changed_files:
+    - path: ".claude/commit_acceptors/coverage-validation-serial-not-xdist.yaml"
+    - path: ".github/workflows/main-validation.yml"
+    - path: ".github/workflows/coverage-intelligence.yml"
+    - path: "Makefile"
+  forbidden_paths:
+    - "configs/quality/release_90.coveragerc"
+    - "configs/quality/critical_surface.coveragerc"
+    - "configs/quality/critical_surface.toml"
+    - "configs/quality/coverage_targets.toml"
+    - "tools/coverage/"
+required_python_symbols: []
+expected_signal: >-
+  The release-coverage-90 and python-full-validation jobs run their enforce /
+  guardrail steps (no longer skipped) and conclude success or failure — never a
+  silent `cancelled` from the job cap, and no xdist-only UnicodeDecodeError /
+  pytest-benchmark / caplog-ordering failures.
+measurement_command: "make coverage-90"
+signal_artifact: "reports/coverage/coverage_summary.json"
+falsifier:
+  command: "make coverage-90"
+  description: >-
+    Fails if a gate is killed at its timeout before enforcing, or if the serial
+    run reintroduces an xdist-only failure class (UnicodeDecodeError,
+    pytest-benchmark timing, caplog cross-worker ordering), or if the measured
+    coverage surface/threshold changes.
+rollback_command: "git revert --no-edit HEAD"
+rollback_verification_command: "python tools/commit_acceptor/validate_commit_acceptor.py"
+memory_update_type: append
+ledger_path: ".claude/commit_acceptors/coverage-validation-serial-not-xdist.yaml"
+report_path: ".claude/commit_acceptors/coverage-validation-serial-not-xdist.yaml"
+evidence: []

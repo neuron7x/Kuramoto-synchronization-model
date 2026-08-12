@@ -1,0 +1,66 @@
+# Diff-bound acceptor for the claim-falsifier coverage gate.
+#
+# Binds the two files changed in PR feat/claims-falsifier-gate-fail-closed
+# (ADR 0021, Phase 1.1). The v3 falsifier-coverage check in
+# scripts/ci/check_claims.py main() is promoted from WARN-only to
+# FAIL-CLOSED for P0/P1 ANCHORED claims: an ANCHORED P0/P1 claim with no
+# v3 falsifier block now exits 1 and names the offending claim id.
+# Doctrine: "No falsifier means no claim."
+
+id: claims-falsifier-gate-fail-closed
+status: ACTIVE
+claim_type: fail_closed
+promise: >-
+  scripts.ci.check_claims main() fail-closes (exit 1) on any ANCHORED
+  P0/P1 claim that lacks a v3 falsifier block, naming the offending
+  claim id; the gate is scoped strictly to ANCHORED ∩ {P0, P1}, so
+  EXTRAPOLATED/SPECULATIVE/UNKNOWN tiers and all P2 claims are never
+  gated; structural presence only — test_id → live-node resolution
+  stays with compute_fps_audit.
+diff_scope:
+  changed_files:
+    - path: ".claude/commit_acceptors/claims-falsifier-gate-fail-closed.yaml"
+    - path: "scripts/ci/check_claims.py"
+    - path: "tests/scripts/test_check_claims.py"
+  forbidden_paths:
+    - "trading/"
+    - "execution/"
+    - "forecast/"
+    - "policy/"
+required_python_symbols:
+  - "PRIORITIES_GATED"
+  - "main"
+expected_signal: >-
+  All tests in tests/scripts/test_check_claims.py pass under pytest
+  (26 tests), including three main()-level cases that assert: a P0
+  ANCHORED claim with no falsifier exits 1; a P0 ANCHORED claim with a
+  falsifier exits 0; an EXTRAPOLATED claim with no falsifier is NOT
+  gated. The live registry (21/21 P0/P1 ANCHORED carry falsifiers)
+  passes the gate at exit 0.
+measurement_command: >-
+  python -m pytest tests/scripts/test_check_claims.py -q
+signal_artifact: "tmp/claims_falsifier_gate_pytest.log"
+falsifier:
+  command: >-
+    python -m pytest tests/scripts/test_check_claims.py -q -k
+    "anchored and (no_falsifier or missing)"
+  description: >-
+    Probe filters to the main()-level tests that directly assert the
+    fail-closed contract: a P0/P1 ANCHORED claim with no v3 falsifier
+    block must exit 1 and name the claim id. If these tests pass while
+    the gate is silently warn-only (or skips the priority filter), the
+    promise is unfalsifiable; the filter therefore acts as a coverage
+    probe over the fail-closed axis. The complementary green-path and
+    not-gated (EXTRAPOLATED) cases pin the scope so the gate cannot be
+    widened or narrowed without a test change.
+rollback_command: >-
+  git checkout HEAD~1 -- scripts/ci/check_claims.py
+  tests/scripts/test_check_claims.py
+  .claude/commit_acceptors/claims-falsifier-gate-fail-closed.yaml
+rollback_verification_command: >-
+  git diff --exit-code scripts/ci/check_claims.py
+  tests/scripts/test_check_claims.py
+memory_update_type: append
+ledger_path: ".claude/commit_acceptors/claims-falsifier-gate-fail-closed.yaml"
+report_path: "docs/reports/claims_falsifier_gate_fail_closed.md"
+evidence: []

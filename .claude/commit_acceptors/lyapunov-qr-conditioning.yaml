@@ -1,0 +1,103 @@
+# Diff-bound commit acceptor for the INV-LY4 QR-conditioning fail-closed guard.
+#
+# core/physics/lyapunov_spectrum.py implements the Benettin–Galgani–Strelcyn
+# (1980) full Lyapunov-spectrum estimator. Its continuous-Gram-Schmidt (QR)
+# step is valid ONLY while the tangent frame Q stays orthonormal — that is the
+# algorithm's precondition, not an incidental detail. The previous code masked
+# two orthonormality failures with a hardcoded ``maximum(|R_kk|, 1e-30)`` floor:
+#   * rank collapse — the smallest |R_kk| underflows toward zero relative to the
+#     largest, so a stretched direction drops below float64 relative resolution
+#     and ``log|R_kk|`` becomes rounding noise; and
+#   * orthonormality / finiteness loss — a non-finite Jacobian or a dt so large
+#     the variational step explodes yields a Q whose Gram matrix departs from I.
+# In both cases the floor returned a ≈ −69-bit garbage exponent dressed as a
+# physical Lyapunov number (e.g. true (40, −40) silently became ≈ (32, 0)).
+#
+# This change adds INV-LY4: after every reorthonormalisation the worst-case
+# orthonormality residual ``max|QᵀQ − I|`` and the worst-case R-diagonal ratio
+# ``min|R_kk| / max|R_kk|`` are carried out of the traced loop and asserted in
+# eager Python. If the residual exceeds _ORTHO_TOL (≈ 1e6·eps_float64), the
+# ratio drops to or below _RDIAG_REL_FLOOR (= numpy.finfo(float64).eps), or
+# either metric is non-finite, the run RAISES FloatingPointError(INV-LY4)
+# instead of flooring. Both thresholds are TIED to float64 — not tunable knobs.
+#
+# Well-conditioned systems are byte-unchanged on the admissible path: the guard
+# metrics never alter the accumulated log, so every INV-LY1 (linear) and INV-LY2
+# (Hamiltonian) anchor keeps its exact prior behaviour. The existing INV-LY3
+# ValueError contract (dt≤0, n_steps≤0, qr_every∤n_steps, n_exp∉[1,n], x0
+# non-1-D) is untouched.
+#
+# Adds NO dependency (numpy already a runtime dep), promotes NO claim tier into
+# financial/predictive space; this is a correctness / fail-closed guard on a
+# Physics-Law-T2 estimator.
+#
+# Locally verified on origin/main fork base (b146a1d):
+#   * python -m pytest tests/unit/physics/test_lyapunov_qr_conditioning.py: 12 passed
+#   * python -m pytest tests -k "lyapunov_full or T2 or lyapunov_spectrum": green
+#   * ruff format --check / ruff check / black --check: clean on both files
+#   * mypy --strict core/physics/lyapunov_spectrum.py + test file: no issues
+#   * zero added noqa / type-suppression directives (debt-ratchet neutral)
+id: lyapunov-qr-conditioning
+status: ACTIVE
+claim_type: correctness
+promise: >-
+  core.physics.lyapunov_spectrum enforces INV-LY4: the Benettin QR estimator
+  rejects any run whose tangent frame loses orthonormality rather than flooring
+  the collapsed singular value with 1e-30 and returning a garbage exponent.
+  After each reorthonormalisation the worst-case orthonormality residual
+  max|QᵀQ − I| and the worst-case R-diagonal ratio min|R_kk| / max|R_kk| are
+  carried out of the traced loop and checked eagerly: if the residual exceeds
+  _ORTHO_TOL (≈ 1e6·eps_float64 = 1e-10), the ratio reaches or falls below
+  _RDIAG_REL_FLOOR (= numpy.finfo(float64).eps ≈ 2.22e-16), or either metric is
+  non-finite, the run raises FloatingPointError tagged INV-LY4. Both thresholds
+  are tied to float64, not tunable. Well-conditioned systems are byte-unchanged:
+  the INV-LY1 linear-recovery and INV-LY2 harmonic-sum-zero anchors keep their
+  exact prior spectra, and the existing INV-LY3 ValueError contract is untouched.
+  No claim tier is promoted; no financial or predictive meaning is asserted.
+diff_scope:
+  changed_files:
+    - path: ".claude/commit_acceptors/lyapunov-qr-conditioning.yaml"
+    - path: "core/physics/lyapunov_spectrum.py"
+    - path: "tests/unit/physics/test_lyapunov_qr_conditioning.py"
+  forbidden_paths:
+    - "trading/"
+    - "execution/"
+    - "forecast/"
+    - "policy/"
+    - "src/"
+required_python_symbols:
+  - "core/physics/lyapunov_spectrum.py::lyapunov_spectrum"
+  - "core/physics/lyapunov_spectrum.py::LyapunovReport"
+expected_signal: >-
+  `python -m pytest tests/unit/physics/test_lyapunov_qr_conditioning.py` reports
+  12 passed; rank-collapse and blow-up-dt cases raise FloatingPointError(INV-LY4)
+  while the INV-LY1/LY2 anchors recover their spectra unchanged and INV-LY3
+  contract violations still raise ValueError.
+measurement_command: >-
+  bash -c 'mkdir -p tmp && python -m pytest
+  tests/unit/physics/test_lyapunov_qr_conditioning.py -v
+  > tmp/lyapunov_qr_conditioning_pytest.log 2>&1
+  && grep -qE "12 passed" tmp/lyapunov_qr_conditioning_pytest.log'
+signal_artifact: "tmp/lyapunov_qr_conditioning_pytest.log"
+falsifier:
+  command: >-
+    python -c 'exec("import sys, jax, jax.numpy as jnp\njax.config.update(\"jax_enable_x64\", True)\nfrom core.physics.lyapunov_spectrum import lyapunov_spectrum\nD = jnp.diag(jnp.array([40.0, -40.0]))\nrhs = lambda x: D @ x\ntry:\n    lyapunov_spectrum(rhs, jnp.array([1.0, 1.0]), dt=0.05, n_steps=80, qr_every=40)\n    sys.exit(1)\nexcept FloatingPointError as e:\n    sys.exit(0 if \"INV-LY4\" in str(e) else 1)")'
+  description: >-
+    Inverse probe of the INV-LY4 guard. It exits 0 (fires, i.e. the contract is
+    INTACT) iff the rank-collapsing diag(40, −40) trajectory at qr_every=40
+    raises FloatingPointError tagged INV-LY4. It exits 1 (the acceptor fails) if
+    the guard is removed or loosened so that the run silently returns a
+    1e-30-floored garbage spectrum instead of raising. A failure means the
+    estimator drifted back into emitting a ≈ −69-bit exponent dressed as a
+    Lyapunov number, and must be repaired (restore the fail-closed raise), not
+    patched green.
+rollback_command: >-
+  bash -c 'git checkout origin/main -- core/physics/lyapunov_spectrum.py
+  tests/unit/physics/test_lyapunov_qr_conditioning.py
+  && git rm -f .claude/commit_acceptors/lyapunov-qr-conditioning.yaml'
+rollback_verification_command: >-
+  bash -c 'test ! -f .claude/commit_acceptors/lyapunov-qr-conditioning.yaml'
+memory_update_type: none
+ledger_path: ".claude/commit_acceptors/lyapunov-qr-conditioning.yaml"
+report_path: "tmp/lyapunov_qr_conditioning_pytest.log"
+evidence: []

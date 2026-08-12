@@ -1,3 +1,5 @@
+# Copyright (c) 2023-2026 Yaroslav Vasylenko (neuron7xLab)
+# SPDX-License-Identifier: MIT
 """Unit tests for Jensen–Shannon divergence helpers."""
 
 from __future__ import annotations
@@ -13,16 +15,10 @@ from scipy.spatial.distance import jensenshannon
 
 
 def _load_drift_module():
-    """Import ``src.tradepulse.utils.drift`` without triggering heavy bootstraps."""
+    """Import ``src.geosync.utils.drift`` without triggering heavy bootstraps."""
 
-    module_name = "tradepulse_utils_drift_test"
-    path = (
-        Path(__file__).resolve().parents[2]
-        / "src"
-        / "tradepulse"
-        / "utils"
-        / "drift.py"
-    )
+    module_name = "geosync_utils_drift_test"
+    path = Path(__file__).resolve().parents[2] / "src" / "geosync" / "utils" / "drift.py"
     spec = importlib.util.spec_from_file_location(module_name, path)
     if spec is None or spec.loader is None:  # pragma: no cover - defensive guard.
         raise RuntimeError("Failed to load drift module for testing")

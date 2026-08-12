@@ -1,0 +1,38 @@
+id: null-comparison-harness
+status: ACTIVE
+claim_type: governance
+promise: >-
+  Governs descriptor-only analytics.signals null comparison and related
+  package-level signal exports without promoting predictive or financial claims.
+diff_scope:
+  changed_files:
+    - path: ".claude/commit_acceptors/null-comparison-harness.yaml"
+    - path: "analytics/signals/null_comparison.py"
+    - path: "analytics/signals/__init__.py"
+    - path: "tests/unit/analytics/test_null_comparison.py"
+    - path: "tests/unit/analytics/test_signals_lazy_imports.py"
+  forbidden_paths:
+    - "trading/"
+    - "execution/"
+    - "forecast/"
+    - "core/"
+    - "src/"
+required_python_symbols:
+  - "analytics/signals/null_comparison.py::compare_to_null"
+  - "analytics/signals/null_comparison.py::NullComparison"
+expected_signal: >-
+  Null comparison tests and the analytics.signals package import regression pass.
+measurement_command: "python -m pytest tests/unit/analytics/test_null_comparison.py tests/unit/analytics/test_signals_lazy_imports.py -q"
+signal_artifact: "tmp/null_comparison_pytest.log"
+falsifier:
+  command: "python -m pytest tests/unit/analytics/test_signals_lazy_imports.py -q"
+  description: >-
+    Fails if the analytics.signals package import regression fails.
+rollback_command: "true"
+rollback_verification_command: "true"
+memory_update_type: none
+ledger_path: ".claude/commit_acceptors/null-comparison-harness.yaml"
+report_path: "tmp/null_comparison_pytest.log"
+evidence:
+  - path: "tmp/null_comparison_pytest.log"
+    sha256: "34f997c3678c72addbe931af1f6917378f3c83a625f14a891e91a37e7ab1632c"  # pragma: allowlist secret

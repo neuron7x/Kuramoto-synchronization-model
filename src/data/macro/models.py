@@ -1,3 +1,5 @@
+# Copyright (c) 2023-2026 Yaroslav Vasylenko (neuron7xLab)
+# SPDX-License-Identifier: MIT
 """Domain models describing macroeconomic indicators and data points."""
 
 from __future__ import annotations

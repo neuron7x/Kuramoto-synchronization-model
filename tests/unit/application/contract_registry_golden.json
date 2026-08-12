@@ -1,0 +1,686 @@
+{
+  "api": {
+    "geosync.api.v1.features": {
+      "authorization": {
+        "audience": "geosync.api",
+        "description": "Signed JWT issued by the platform identity provider.",
+        "name": "service-jwt",
+        "scopes": [
+          "features:read",
+          "predictions:read"
+        ],
+        "token_type": "Bearer"
+      },
+      "description": "Generate engineered feature snapshots for a symbol.",
+      "idempotency": {
+        "enforce_replay_fingerprint": true,
+        "key": "Idempotency-Key",
+        "safe_methods": [
+          "POST"
+        ],
+        "ttl_seconds": 3600
+      },
+      "method": "POST",
+      "name": "geosync.api.v1.features",
+      "observability": {
+        "default_attributes": {
+          "api.version": "v1"
+        },
+        "metrics_namespace": "api.features",
+        "span_name": "api.features"
+      },
+      "path": "/api/v1/features",
+      "rate_limit_per_minute": 120,
+      "retry_policy": {
+        "backoff_multiplier": 2.0,
+        "initial_interval_seconds": 0.25,
+        "jitter_seconds": 0.05,
+        "max_attempts": 1,
+        "max_interval_seconds": 5.0
+      },
+      "sla": {
+        "description": "Online inference latency and availability objectives.",
+        "indicators": [
+          {
+            "description": "95th percentile latency must remain under 350ms.",
+            "metric": "p95_latency_ms",
+            "name": "p95_latency",
+            "target": 350.0,
+            "threshold_type": "lte"
+          },
+          {
+            "description": "Successful responses must exceed 99.5% per rolling hour.",
+            "metric": "success_rate",
+            "name": "success_rate",
+            "target": 0.995,
+            "threshold_type": "gte"
+          }
+        ],
+        "name": "api.v1.latency"
+      },
+      "versioning": {
+        "changelog_url": null,
+        "compatible_since": "1.0.0",
+        "current": "1.2.0",
+        "deprecated": false,
+        "lifecycle": "active",
+        "scheme": "semver"
+      }
+    },
+    "geosync.api.v1.predictions": {
+      "authorization": {
+        "audience": "geosync.api",
+        "description": "Signed JWT issued by the platform identity provider.",
+        "name": "service-jwt",
+        "scopes": [
+          "features:read",
+          "predictions:read"
+        ],
+        "token_type": "Bearer"
+      },
+      "description": "Produce a trading signal for the latest market bar.",
+      "idempotency": {
+        "enforce_replay_fingerprint": true,
+        "key": "Idempotency-Key",
+        "safe_methods": [
+          "POST"
+        ],
+        "ttl_seconds": 3600
+      },
+      "method": "POST",
+      "name": "geosync.api.v1.predictions",
+      "observability": {
+        "default_attributes": {
+          "api.version": "v1"
+        },
+        "metrics_namespace": "api.predictions",
+        "span_name": "api.predictions"
+      },
+      "path": "/api/v1/predictions",
+      "rate_limit_per_minute": 120,
+      "retry_policy": {
+        "backoff_multiplier": 2.0,
+        "initial_interval_seconds": 0.25,
+        "jitter_seconds": 0.05,
+        "max_attempts": 1,
+        "max_interval_seconds": 5.0
+      },
+      "sla": {
+        "description": "Online inference latency and availability objectives.",
+        "indicators": [
+          {
+            "description": "95th percentile latency must remain under 350ms.",
+            "metric": "p95_latency_ms",
+            "name": "p95_latency",
+            "target": 350.0,
+            "threshold_type": "lte"
+          },
+          {
+            "description": "Successful responses must exceed 99.5% per rolling hour.",
+            "metric": "success_rate",
+            "name": "success_rate",
+            "target": 0.995,
+            "threshold_type": "gte"
+          }
+        ],
+        "name": "api.v1.latency"
+      },
+      "versioning": {
+        "changelog_url": null,
+        "compatible_since": "1.0.0",
+        "current": "1.2.0",
+        "deprecated": false,
+        "lifecycle": "active",
+        "scheme": "semver"
+      }
+    }
+  },
+  "events": {
+    "geosync.events.feature-vectors": {
+      "authorization": {
+        "audience": null,
+        "description": "Mutual TLS service identity propagated via SPIFFE.",
+        "name": "internal-service",
+        "scopes": [
+          "system:internal"
+        ],
+        "token_type": "Bearer"
+      },
+      "content_type": "application/json",
+      "delivery_guarantee": "at-least-once",
+      "description": "Signals the availability of a new engineered feature vector.",
+      "name": "geosync.events.feature-vectors",
+      "observability": {
+        "default_attributes": {},
+        "metrics_namespace": "events.feature_vectors",
+        "span_name": "event.feature_vectors"
+      },
+      "retention_hours": 24,
+      "retry_policy": {
+        "backoff_multiplier": 2.0,
+        "initial_interval_seconds": 0.1,
+        "jitter_seconds": 0.05,
+        "max_attempts": 5,
+        "max_interval_seconds": 5.0
+      },
+      "schema_version": "1.0",
+      "topic": "geosync.market.bars",
+      "versioning": {
+        "changelog_url": null,
+        "compatible_since": null,
+        "current": "1.0.0",
+        "deprecated": false,
+        "lifecycle": "active",
+        "scheme": "semver"
+      }
+    },
+    "geosync.events.fills": {
+      "authorization": {
+        "audience": null,
+        "description": "Mutual TLS service identity propagated via SPIFFE.",
+        "name": "internal-service",
+        "scopes": [
+          "system:internal"
+        ],
+        "token_type": "Bearer"
+      },
+      "content_type": "application/json",
+      "delivery_guarantee": "at-least-once",
+      "description": "Captures fill confirmations returning from exchanges.",
+      "name": "geosync.events.fills",
+      "observability": {
+        "default_attributes": {},
+        "metrics_namespace": "events.fills",
+        "span_name": "event.fills"
+      },
+      "retention_hours": 168,
+      "retry_policy": {
+        "backoff_multiplier": 2.0,
+        "initial_interval_seconds": 0.1,
+        "jitter_seconds": 0.05,
+        "max_attempts": 5,
+        "max_interval_seconds": 5.0
+      },
+      "schema_version": "1.0",
+      "topic": "geosync.execution.fills",
+      "versioning": {
+        "changelog_url": null,
+        "compatible_since": null,
+        "current": "1.0.0",
+        "deprecated": false,
+        "lifecycle": "active",
+        "scheme": "semver"
+      }
+    },
+    "geosync.events.market-ticks": {
+      "authorization": {
+        "audience": null,
+        "description": "Mutual TLS service identity propagated via SPIFFE.",
+        "name": "internal-service",
+        "scopes": [
+          "system:internal"
+        ],
+        "token_type": "Bearer"
+      },
+      "content_type": "application/json",
+      "delivery_guarantee": "at-least-once",
+      "description": "Tick-level market data propagated to downstream consumers.",
+      "name": "geosync.events.market-ticks",
+      "observability": {
+        "default_attributes": {},
+        "metrics_namespace": "events.market_ticks",
+        "span_name": "event.market_ticks"
+      },
+      "retention_hours": 6,
+      "retry_policy": {
+        "backoff_multiplier": 2.0,
+        "initial_interval_seconds": 0.1,
+        "jitter_seconds": 0.05,
+        "max_attempts": 5,
+        "max_interval_seconds": 5.0
+      },
+      "schema_version": "1.0",
+      "topic": "geosync.market.ticks",
+      "versioning": {
+        "changelog_url": null,
+        "compatible_since": null,
+        "current": "1.0.0",
+        "deprecated": false,
+        "lifecycle": "active",
+        "scheme": "semver"
+      }
+    },
+    "geosync.events.orders": {
+      "authorization": {
+        "audience": null,
+        "description": "Mutual TLS service identity propagated via SPIFFE.",
+        "name": "internal-service",
+        "scopes": [
+          "system:internal"
+        ],
+        "token_type": "Bearer"
+      },
+      "content_type": "application/json",
+      "delivery_guarantee": "at-least-once",
+      "description": "Tracks orders submitted to execution venues.",
+      "name": "geosync.events.orders",
+      "observability": {
+        "default_attributes": {},
+        "metrics_namespace": "events.orders",
+        "span_name": "event.orders"
+      },
+      "retention_hours": 48,
+      "retry_policy": {
+        "backoff_multiplier": 2.0,
+        "initial_interval_seconds": 0.1,
+        "jitter_seconds": 0.05,
+        "max_attempts": 5,
+        "max_interval_seconds": 5.0
+      },
+      "schema_version": "1.0",
+      "topic": "geosync.execution.orders",
+      "versioning": {
+        "changelog_url": null,
+        "compatible_since": null,
+        "current": "1.0.0",
+        "deprecated": false,
+        "lifecycle": "active",
+        "scheme": "semver"
+      }
+    },
+    "geosync.events.signals": {
+      "authorization": {
+        "audience": null,
+        "description": "Mutual TLS service identity propagated via SPIFFE.",
+        "name": "internal-service",
+        "scopes": [
+          "system:internal"
+        ],
+        "token_type": "Bearer"
+      },
+      "content_type": "application/json",
+      "delivery_guarantee": "at-least-once",
+      "description": "Emitted whenever a trading signal crosses the execution boundary.",
+      "name": "geosync.events.signals",
+      "observability": {
+        "default_attributes": {},
+        "metrics_namespace": "events.signals",
+        "span_name": "event.signals"
+      },
+      "retention_hours": 48,
+      "retry_policy": {
+        "backoff_multiplier": 2.0,
+        "initial_interval_seconds": 0.1,
+        "jitter_seconds": 0.05,
+        "max_attempts": 5,
+        "max_interval_seconds": 5.0
+      },
+      "schema_version": "1.0",
+      "topic": "geosync.signals.generated",
+      "versioning": {
+        "changelog_url": null,
+        "compatible_since": null,
+        "current": "1.0.0",
+        "deprecated": false,
+        "lifecycle": "active",
+        "scheme": "semver"
+      }
+    }
+  },
+  "queues": {
+    "geosync.queues.execution-requests": {
+      "authorization": {
+        "audience": null,
+        "description": "Mutual TLS service identity propagated via SPIFFE.",
+        "name": "internal-service",
+        "scopes": [
+          "system:internal"
+        ],
+        "token_type": "Bearer"
+      },
+      "description": "Queue carrying execution requests between signal generation and OMS.",
+      "idempotency": {
+        "enforce_replay_fingerprint": true,
+        "key": "correlation-id",
+        "safe_methods": [
+          "POST"
+        ],
+        "ttl_seconds": 3600
+      },
+      "max_in_flight": 32,
+      "name": "geosync.queues.execution-requests",
+      "observability": {
+        "default_attributes": {},
+        "metrics_namespace": "queues.execution",
+        "span_name": "queue.execution_requests"
+      },
+      "queue": "geosync.execution.requests",
+      "retry_policy": {
+        "backoff_multiplier": 2.0,
+        "initial_interval_seconds": 0.5,
+        "jitter_seconds": 0.05,
+        "max_attempts": 8,
+        "max_interval_seconds": 5.0
+      },
+      "versioning": {
+        "changelog_url": null,
+        "compatible_since": null,
+        "current": "1.0.0",
+        "deprecated": false,
+        "lifecycle": "active",
+        "scheme": "semver"
+      },
+      "visibility_timeout_seconds": 120
+    }
+  },
+  "services": {
+    "geosync.service.backtesting.run": {
+      "authorization": {
+        "audience": null,
+        "description": "Mutual TLS service identity propagated via SPIFFE.",
+        "name": "internal-service",
+        "scopes": [
+          "system:internal"
+        ],
+        "token_type": "Bearer"
+      },
+      "channel": "sync",
+      "description": "Execute the canonical ingestion \u2192 features \u2192 strategy pipeline.",
+      "inputs": {
+        "source": "MarketDataSource",
+        "strategy": "Callable"
+      },
+      "name": "geosync.service.backtesting.run",
+      "observability": {
+        "default_attributes": {
+          "service": "backtesting"
+        },
+        "metrics_namespace": "service.backtesting",
+        "span_name": "service.backtesting.run"
+      },
+      "operation": "run_backtest",
+      "outputs": {
+        "run": "StrategyRun"
+      },
+      "retry_policy": {
+        "backoff_multiplier": 2.0,
+        "initial_interval_seconds": 0.5,
+        "jitter_seconds": 0.05,
+        "max_attempts": 2,
+        "max_interval_seconds": 5.0
+      },
+      "sla": {
+        "description": null,
+        "indicators": [
+          {
+            "description": null,
+            "metric": "success_rate",
+            "name": "backtest_success",
+            "target": 0.99,
+            "threshold_type": "gte"
+          }
+        ],
+        "name": "backtesting.run"
+      },
+      "versioning": {
+        "changelog_url": null,
+        "compatible_since": null,
+        "current": "1.0.0",
+        "deprecated": false,
+        "lifecycle": "active",
+        "scheme": "semver"
+      }
+    },
+    "geosync.service.execution.ensure_live_loop": {
+      "authorization": {
+        "audience": null,
+        "description": "Mutual TLS service identity propagated via SPIFFE.",
+        "name": "internal-service",
+        "scopes": [
+          "system:internal"
+        ],
+        "token_type": "Bearer"
+      },
+      "channel": "sync",
+      "description": "Provision the long-lived execution loop lazily.",
+      "inputs": {},
+      "name": "geosync.service.execution.ensure_live_loop",
+      "observability": {
+        "default_attributes": {
+          "service": "execution"
+        },
+        "metrics_namespace": "service.execution",
+        "span_name": "service.execution.ensure_live_loop"
+      },
+      "operation": "ensure_live_loop",
+      "outputs": {
+        "loop": "LiveExecutionLoop"
+      },
+      "retry_policy": {
+        "backoff_multiplier": 2.0,
+        "initial_interval_seconds": 0.25,
+        "jitter_seconds": 0.05,
+        "max_attempts": 3,
+        "max_interval_seconds": 5.0
+      },
+      "sla": {
+        "description": null,
+        "indicators": [
+          {
+            "description": null,
+            "metric": "success_rate",
+            "name": "loop_success",
+            "target": 0.999,
+            "threshold_type": "gte"
+          }
+        ],
+        "name": "execution.ensure_live_loop"
+      },
+      "versioning": {
+        "changelog_url": null,
+        "compatible_since": null,
+        "current": "1.0.0",
+        "deprecated": false,
+        "lifecycle": "active",
+        "scheme": "semver"
+      }
+    },
+    "geosync.service.execution.submit": {
+      "authorization": {
+        "audience": null,
+        "description": "Mutual TLS service identity propagated via SPIFFE.",
+        "name": "internal-service",
+        "scopes": [
+          "system:internal"
+        ],
+        "token_type": "Bearer"
+      },
+      "channel": "sync",
+      "description": "Transform trading signals into executable orders.",
+      "idempotency": {
+        "enforce_replay_fingerprint": true,
+        "key": "idempotency_key",
+        "safe_methods": [
+          "POST"
+        ],
+        "ttl_seconds": 3600
+      },
+      "inputs": {
+        "request": "ExecutionRequest"
+      },
+      "name": "geosync.service.execution.submit",
+      "observability": {
+        "default_attributes": {
+          "service": "execution"
+        },
+        "metrics_namespace": "service.execution",
+        "span_name": "service.execution.submit"
+      },
+      "operation": "submit",
+      "outputs": {
+        "order": "Order"
+      },
+      "retry_policy": {
+        "backoff_multiplier": 2.0,
+        "initial_interval_seconds": 0.5,
+        "jitter_seconds": 0.05,
+        "max_attempts": 3,
+        "max_interval_seconds": 5.0
+      },
+      "sla": {
+        "description": null,
+        "indicators": [
+          {
+            "description": "Order submission P95 latency must stay under 500ms.",
+            "metric": "p95_latency_ms",
+            "name": "execution_latency",
+            "target": 500.0,
+            "threshold_type": "lte"
+          },
+          {
+            "description": null,
+            "metric": "success_rate",
+            "name": "execution_success",
+            "target": 0.999,
+            "threshold_type": "gte"
+          }
+        ],
+        "name": "execution.submit"
+      },
+      "versioning": {
+        "changelog_url": null,
+        "compatible_since": "1.0.0",
+        "current": "1.1.0",
+        "deprecated": false,
+        "lifecycle": "active",
+        "scheme": "semver"
+      }
+    },
+    "geosync.service.market-data.features": {
+      "authorization": {
+        "audience": null,
+        "description": "Mutual TLS service identity propagated via SPIFFE.",
+        "name": "internal-service",
+        "scopes": [
+          "system:internal"
+        ],
+        "token_type": "Bearer"
+      },
+      "channel": "sync",
+      "description": "Derive feature vectors from normalized market frames.",
+      "inputs": {
+        "frame": "pd.DataFrame"
+      },
+      "name": "geosync.service.market-data.features",
+      "observability": {
+        "default_attributes": {
+          "service": "market-data"
+        },
+        "metrics_namespace": "service.market_data",
+        "span_name": "service.market_data.features"
+      },
+      "operation": "build_features",
+      "outputs": {
+        "features": "pd.DataFrame"
+      },
+      "retry_policy": {
+        "backoff_multiplier": 2.0,
+        "initial_interval_seconds": 0.25,
+        "jitter_seconds": 0.05,
+        "max_attempts": 2,
+        "max_interval_seconds": 5.0
+      },
+      "sla": {
+        "description": null,
+        "indicators": [
+          {
+            "description": "Ingestion P95 latency must stay under 250ms.",
+            "metric": "p95_latency_ms",
+            "name": "ingest_latency",
+            "target": 250.0,
+            "threshold_type": "lte"
+          },
+          {
+            "description": "Successful ingestions must exceed 99.9%.",
+            "metric": "success_rate",
+            "name": "ingest_success",
+            "target": 0.999,
+            "threshold_type": "gte"
+          }
+        ],
+        "name": "market-data.ingest"
+      },
+      "versioning": {
+        "changelog_url": null,
+        "compatible_since": null,
+        "current": "1.0.0",
+        "deprecated": false,
+        "lifecycle": "active",
+        "scheme": "semver"
+      }
+    },
+    "geosync.service.market-data.ingest": {
+      "authorization": {
+        "audience": null,
+        "description": "Mutual TLS service identity propagated via SPIFFE.",
+        "name": "internal-service",
+        "scopes": [
+          "system:internal"
+        ],
+        "token_type": "Bearer"
+      },
+      "channel": "sync",
+      "description": "Ingest CSV datasets into a normalized OHLCV frame.",
+      "inputs": {
+        "source": "MarketDataSource"
+      },
+      "name": "geosync.service.market-data.ingest",
+      "observability": {
+        "default_attributes": {
+          "service": "market-data"
+        },
+        "metrics_namespace": "service.market_data",
+        "span_name": "service.market_data.ingest"
+      },
+      "operation": "ingest",
+      "outputs": {
+        "frame": "pd.DataFrame"
+      },
+      "retry_policy": {
+        "backoff_multiplier": 2.0,
+        "initial_interval_seconds": 0.5,
+        "jitter_seconds": 0.05,
+        "max_attempts": 3,
+        "max_interval_seconds": 4.0
+      },
+      "sla": {
+        "description": null,
+        "indicators": [
+          {
+            "description": "Ingestion P95 latency must stay under 250ms.",
+            "metric": "p95_latency_ms",
+            "name": "ingest_latency",
+            "target": 250.0,
+            "threshold_type": "lte"
+          },
+          {
+            "description": "Successful ingestions must exceed 99.9%.",
+            "metric": "success_rate",
+            "name": "ingest_success",
+            "target": 0.999,
+            "threshold_type": "gte"
+          }
+        ],
+        "name": "market-data.ingest"
+      },
+      "versioning": {
+        "changelog_url": null,
+        "compatible_since": "1.0.0",
+        "current": "1.1.0",
+        "deprecated": false,
+        "lifecycle": "active",
+        "scheme": "semver"
+      }
+    }
+  }
+}

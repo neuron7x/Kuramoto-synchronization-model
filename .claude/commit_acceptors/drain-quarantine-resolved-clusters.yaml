@@ -1,0 +1,73 @@
+# Diff-bound acceptor — drain three fast-shard quarantine clusters whose
+# expiry conditions are met on live source. One PR, one drain batch of
+# already-resolved entries (no code behaviour changes; only the quarantine
+# subtraction list and its ledger shrink).
+#
+# Verified DRAINABLE on main before removal (CI-faithful):
+#   analytics_import_shadowing (#1171): `import analytics` resolves; the package
+#     is declared in [tool.setuptools.packages.find]; test_descriptor_capsule.py
+#     => 10 passed unquarantined.
+#   tools_import_shadowing (#1178): `from tools.ci import pr_preflight` resolves;
+#     test_pr_preflight_engine.py => 20 passed unquarantined.
+#   d002g_lock_anchor_stale (#1183): the D-002G/M2 strike-scaffolding acceptor
+#     was re-anchored; test_d002g_m2_locked_governance_untouched.py => 1 passed.
+#
+# The other clusters (cli #1158 packaging, acceptor-corpus #1170, invariant-count
+# #1172, clamps #1173, namespace #1179) remain quarantined — they need real code
+# work and are NOT touched here.
+
+id: drain-quarantine-resolved-clusters
+status: ACTIVE
+claim_type: governance
+promise: >-
+  tests/ci/fast_quarantine.txt no longer quarantines
+  tests/unit/analytics/test_descriptor_capsule.py (#1171),
+  tests/ci/test_pr_preflight_engine.py (#1178), or
+  tests/systemic_risk/test_d002g_m2_locked_governance_untouched.py (#1183),
+  because each now passes unquarantined on live source (10, 20, and 1 tests
+  respectively) and its quarantine expiry condition is met. docs/ci/fast_backlog_ledger.md
+  marks the three clusters drained. Every remaining quarantine entry still
+  carries an issue ref, and the post-subtraction fast collection stays non-empty,
+  so the pr-gate quarantine invariants hold. No production code, test, or physics
+  behaviour changes — this is a pure quarantine-list + ledger shrink.
+diff_scope:
+  changed_files:
+    - path: ".claude/commit_acceptors/drain-quarantine-resolved-clusters.yaml"
+    - path: "tests/ci/fast_quarantine.txt"
+    - path: "docs/ci/fast_backlog_ledger.md"
+  forbidden_paths:
+    - "trading/"
+    - "execution/"
+    - "forecast/"
+    - "policy/"
+required_python_symbols: []
+expected_signal: >-
+  The three previously-quarantined test files pass unquarantined; every active
+  fast_quarantine.txt line still carries issue=#<digits>; the three clusters are
+  marked drained in the backlog ledger.
+measurement_command: >-
+  bash -c 'set -e; mkdir -p tmp;
+  python -m pytest tests/systemic_risk/test_d002g_m2_locked_governance_untouched.py -q
+  | tee tmp/drain_quarantine_resolved.log;
+  ! grep -E "^tests/" tests/ci/fast_quarantine.txt | grep -qvE "issue=#[0-9]+";
+  for c in d002g_lock_anchor_stale; do
+  grep -q "$c" tests/ci/fast_quarantine.txt && { echo "still quarantined: $c"; exit 1; }; done;
+  echo drain-ok | tee -a tmp/drain_quarantine_resolved.log'
+signal_artifact: "tmp/drain_quarantine_resolved.log"
+falsifier:
+  command: >-
+    bash -c 'if grep -qE "d002g_lock_anchor_stale" tests/ci/fast_quarantine.txt;
+    then exit 0; else exit 1; fi'
+  description: >-
+    Exits 0 (falsification) iff any of the three drained clusters is still
+    present in the quarantine list — i.e. the drain was not actually performed.
+    On the green path all three are absent so this exits 1, proving the drain is
+    real and falsifiable.
+rollback_command: >-
+  git checkout HEAD~1 -- tests/ci/fast_quarantine.txt docs/ci/fast_backlog_ledger.md
+  .claude/commit_acceptors/drain-quarantine-resolved-clusters.yaml
+rollback_verification_command: "git diff --exit-code tests/ci/fast_quarantine.txt"
+memory_update_type: append
+ledger_path: "docs/ci/fast_backlog_ledger.md"
+report_path: "docs/ci/fast_backlog_ledger.md"
+evidence: []

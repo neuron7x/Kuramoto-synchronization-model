@@ -1,0 +1,108 @@
+# Diff-bound commit acceptor for Cognitive Operations Kernel v1.0.
+#
+# Purpose:
+#   Bind the cognitive-operations governance artifact to explicit files, JSON
+#   parseability, strict-schema validation, the closed verdict enum, the
+#   verbatim Issue #1136 claim boundary, and same-SHA CI proof. The falsifier
+#   proves the schema rejects a forbidden verdict token, so the governance gate
+#   is real rather than decorative.
+
+id: cognitive-operations-kernel
+status: ACTIVE
+claim_type: governance
+promise: >-
+  After this PR lands, GeoSync contains a human-readable and machine-readable
+  governance kernel for cognitive operations. It defines intent collapse,
+  atomic decomposition, signal/noise filtering, evidence binding, causal
+  chaining, constraint extraction, gate synthesis, failure localization,
+  counterfactual testing, decision compression, action synthesis, verification
+  commands, a self-audit loop, confidence calibration, quality scoring, state
+  transition, an acceptance gate, and a final verdict drawn from the closed
+  enum {PASS, FAIL, PARTIAL, UNKNOWN}. The PR also adds a strict schema and
+  contract tests. It does not claim that the kernel is a cognitive model of the
+  brain, scientific validation, a runtime correctness proof, or closure of the
+  SecondOrderStabilityAudit, Forman-Ricci provenance, or release scorecard
+  blockers.
+
+diff_scope:
+  changed_files:
+    - path: ".claude/commit_acceptors/cognitive-operations-kernel.yaml"
+    - path: "docs/prompts/cognitive_operations_kernel_v1_0.md"
+    - path: "data/governance/cognitive_operations_kernel_v1_0.json"
+    - path: "schemas/governance/cognitive_operations_kernel.schema.json"
+    - path: "tests/governance/test_cognitive_operations_kernel.py"
+  forbidden_paths:
+    - "trading/"
+    - "execution/"
+    - "forecast/"
+    - "policy/"
+    - "core/"
+    - "runtime/"
+    - "application/"
+    - "analytics/"
+    - "research/"
+
+required_python_symbols:
+  - "tests/governance/test_cognitive_operations_kernel.py::test_kernel_artifacts_exist_and_parse"
+  - "tests/governance/test_cognitive_operations_kernel.py::test_contract_validates_against_strict_schema"
+  - "tests/governance/test_cognitive_operations_kernel.py::test_final_verdict_enum_is_exactly_the_closed_set"
+  - "tests/governance/test_cognitive_operations_kernel.py::test_kernel_has_all_eighteen_functions"
+  - "tests/governance/test_cognitive_operations_kernel.py::test_output_contract_contains_required_cognitive_fields"
+  - "tests/governance/test_cognitive_operations_kernel.py::test_final_gate_blocks_pass_without_required_evidence"
+  - "tests/governance/test_cognitive_operations_kernel.py::test_claim_boundary_is_verbatim_from_issue_1136"
+  - "tests/governance/test_cognitive_operations_kernel.py::test_schema_required_keys_match_data_keys"
+  - "tests/governance/test_cognitive_operations_kernel.py::test_forbidden_verdict_token_is_rejected"
+
+expected_signal: >-
+  The cognitive operations kernel is present as governance-only prompt
+  documentation, machine-readable JSON, a strict schema, and contract tests.
+  The JSON parses and schema-validates, exposes all 18 kernel functions, draws
+  the final verdict from the closed enum {PASS, FAIL, PARTIAL, UNKNOWN},
+  reproduces the Issue #1136 claim boundary verbatim, and the strict schema
+  rejects any forbidden verdict token.
+
+measurement_command: >-
+  bash -c '
+    test -s docs/prompts/cognitive_operations_kernel_v1_0.md && python -m compileall -q data docs schemas tests && python -m pytest -q tests/governance/test_cognitive_operations_kernel.py
+  '
+
+signal_artifact: "tmp/cognitive_operations_kernel.log"
+
+falsifier:
+  command: >-
+    bash -c '
+      python - <<"PY"
+      import json
+      from jsonschema import Draft202012Validator
+      schema = json.load(open("schemas/governance/cognitive_operations_kernel.schema.json", encoding="utf-8"))
+      data = json.load(open("data/governance/cognitive_operations_kernel_v1_0.json", encoding="utf-8"))
+      validator = Draft202012Validator(schema)
+      assert validator.is_valid(data), "shipped contract must validate"
+      data["output_contract"]["final_verdict"] = ["PASS", "FAIL", "PARTIAL", "ship it"]
+      raise SystemExit(1 if validator.is_valid(data) else 0)
+      PY
+    '
+  description: >-
+    Probes that the strict schema accepts the shipped contract but rejects a
+    forbidden verdict token ("ship it"), proving the closed verdict enum is
+    enforced by the schema and not merely documented.
+
+rollback_command: >-
+  bash -c '
+    git rm -f
+      .claude/commit_acceptors/cognitive-operations-kernel.yaml
+      docs/prompts/cognitive_operations_kernel_v1_0.md
+      data/governance/cognitive_operations_kernel_v1_0.json
+      schemas/governance/cognitive_operations_kernel.schema.json
+      tests/governance/test_cognitive_operations_kernel.py
+  '
+
+rollback_verification_command: >-
+  bash -c '
+    test ! -e .claude/commit_acceptors/cognitive-operations-kernel.yaml && test ! -e docs/prompts/cognitive_operations_kernel_v1_0.md && test ! -e data/governance/cognitive_operations_kernel_v1_0.json && test ! -e schemas/governance/cognitive_operations_kernel.schema.json && test ! -e tests/governance/test_cognitive_operations_kernel.py
+  '
+
+memory_update_type: append
+ledger_path: ".claude/commit_acceptors/cognitive-operations-kernel.yaml"
+report_path: "tmp/cognitive_operations_kernel.log"
+evidence: []

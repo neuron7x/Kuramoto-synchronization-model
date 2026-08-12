@@ -1,0 +1,38 @@
+id: research-pandas-datetime-guard
+status: ACTIVE
+claim_type: fail_closed
+promise: >-
+  Installs a narrow research-package pandas datetime guard so a date-Series
+  conversion cannot crash the Research Integrity Gate before it emits a verdict.
+diff_scope:
+  changed_files:
+    - path: ".claude/commit_acceptors/research-pandas-datetime-guard.yaml"
+    - path: "research/__init__.py"
+    - path: "research/_pandas_datetime_guard.py"
+    - path: "research/systemic_risk/_pandas_datetime_guard.py"
+  forbidden_paths:
+    - "backtest/"
+    - "execution/"
+    - "analytics/"
+    - "core/"
+required_python_symbols:
+  - "research/_pandas_datetime_guard.py::install_safe_to_datetime_guard"
+expected_signal: >-
+  Importing research installs an idempotent pandas.to_datetime guard for Series
+  whose non-null values are already Python date/datetime objects. Other calls
+  still delegate to pandas.
+measurement_command: >-
+  python -c "import research; import pandas as pd; from datetime import date; s=pd.Series([date(2026,1,1)]); assert pd.to_datetime(s).dt.date.iloc[0] == date(2026,1,1)"
+signal_artifact: "tmp/research_pandas_datetime_guard.log"
+falsifier:
+  command: >-
+    python -c "import research; import pandas as pd; from datetime import date; s=pd.Series([date(2026,1,1)]); assert pd.to_datetime(s).dt.date.iloc[0] == date(2026,1,1)"
+  description: >-
+    Fails if the research package import no longer protects pandas date-Series
+    conversion.
+rollback_command: "python -c 'print(\"manual rollback\")'"
+rollback_verification_command: "python -c 'print(\"manual verification\")'"
+memory_update_type: none
+ledger_path: ".claude/commit_acceptors/research-pandas-datetime-guard.yaml"
+report_path: "tmp/research_pandas_datetime_guard.log"
+evidence: []

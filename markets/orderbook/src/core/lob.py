@@ -1,4 +1,5 @@
-# SPDX-License-Identifier: LicenseRef-TradePulse-Proprietary
+# Copyright (c) 2023-2026 Yaroslav Vasylenko (neuron7xLab)
+# SPDX-License-Identifier: MIT
 """Limit order book simulator with microstructure aware extensions.
 
 The module focuses on deterministic, testable components that can be used in
@@ -7,6 +8,7 @@ price–time priority queue, explicit level management and pluggable impact /
 slippage adapters so additional realism can be layered without modifying the
 matching logic.
 """
+
 from __future__ import annotations
 
 import heapq
@@ -69,7 +71,7 @@ class NullImpactModel:
 
     def adjusted_price(
         self, price: float, side: Side, executed_qty: float, level_index: int
-    ) -> float:  # noqa: D401
+    ) -> float:
         return price
 
 
@@ -83,7 +85,7 @@ class LinearImpactModel:
 
     def adjusted_price(
         self, price: float, side: Side, executed_qty: float, level_index: int
-    ) -> float:  # noqa: D401
+    ) -> float:
         if executed_qty <= 0:
             return price
         multiplier = self.coefficient * executed_qty
@@ -269,9 +271,7 @@ class PriceTimeOrderBook:
             while remaining > 0 and level.orders:
                 resting_order = level.orders[0]
                 take = min(remaining, resting_order.quantity)
-                impacted = self._impact_model.adjusted_price(
-                    level.price, side, take, level_index
-                )
+                impacted = self._impact_model.adjusted_price(level.price, side, take, level_index)
                 slippage = self._compute_slippage(
                     side=side,
                     base_price=level.price,

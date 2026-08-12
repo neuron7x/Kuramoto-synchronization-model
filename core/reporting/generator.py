@@ -1,3 +1,5 @@
+# Copyright (c) 2023-2026 Yaroslav Vasylenko (neuron7xLab)
+# SPDX-License-Identifier: MIT
 """Assemble markdown reports from a collection of artifacts."""
 
 from __future__ import annotations

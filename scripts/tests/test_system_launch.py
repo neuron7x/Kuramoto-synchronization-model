@@ -1,9 +1,11 @@
+# Copyright (c) 2023-2026 Yaroslav Vasylenko (neuron7xLab)
+# SPDX-License-Identifier: MIT
 import os
 from pathlib import Path
 
 import pytest
 
-os.environ.setdefault("TRADEPULSE_ADMIN__TWO_FACTOR_SECRET", "test-secret")
+os.environ.setdefault("GEOSYNC_ADMIN__TWO_FACTOR_SECRET", "test-secret")
 os.environ.setdefault("TWO_FACTOR_SECRET", "test-secret")
 os.environ.setdefault("AUDIT_SECRET", "test-audit-secret")
 
@@ -18,8 +20,8 @@ def test_validate_environment_reads_env_file(
     env_file.write_text(
         "\n".join(
             (
-                "TRADEPULSE_AUDIT_SECRET=audit",
-                "TRADEPULSE_RBAC_AUDIT_SECRET=rbac",
+                "GEOSYNC_AUDIT_SECRET=audit",
+                "GEOSYNC_RBAC_AUDIT_SECRET=rbac",
                 "EXTRA_FLAG=true",
             )
         ),
@@ -30,14 +32,14 @@ def test_validate_environment_reads_env_file(
 
     variables = system.validate_environment(env_file, system.REQUIRED_ENV_VARS)
 
-    assert variables["TRADEPULSE_AUDIT_SECRET"] == "audit"
-    assert variables["TRADEPULSE_RBAC_AUDIT_SECRET"] == "rbac"
+    assert variables["GEOSYNC_AUDIT_SECRET"] == "audit"
+    assert variables["GEOSYNC_RBAC_AUDIT_SECRET"] == "rbac"
     assert variables["OS_LEVEL"] == "available"
 
 
 def test_validate_environment_raises_for_missing_required(tmp_path: Path) -> None:
     env_file = tmp_path / "compose.env"
-    env_file.write_text("TRADEPULSE_AUDIT_SECRET=only-one\n", encoding="utf-8")
+    env_file.write_text("GEOSYNC_AUDIT_SECRET=only-one\n", encoding="utf-8")
 
     with pytest.raises(CommandError):
         system.validate_environment(env_file, system.REQUIRED_ENV_VARS)
@@ -47,9 +49,9 @@ def test_wait_for_healthy_services_eventually_succeeds(
     monkeypatch: pytest.MonkeyPatch,
 ) -> None:
     status_sequence = [
-        [system.ServiceStatus(name="tradepulse", state="running", health="starting")],
+        [system.ServiceStatus(name="geosync", state="running", health="starting")],
         [
-            system.ServiceStatus(name="tradepulse", state="running", health="healthy"),
+            system.ServiceStatus(name="geosync", state="running", health="healthy"),
             system.ServiceStatus(name="prometheus", state="running", health=None),
         ],
     ]
@@ -69,14 +71,12 @@ def test_wait_for_healthy_services_eventually_succeeds(
         status_fetcher=fake_fetch,
     )
 
-    assert [status.name for status in statuses] == ["tradepulse", "prometheus"]
+    assert [status.name for status in statuses] == ["geosync", "prometheus"]
 
 
 def test_wait_for_healthy_services_times_out(monkeypatch: pytest.MonkeyPatch) -> None:
     def fake_fetch(_: Path, __: object) -> list[system.ServiceStatus]:
-        return [
-            system.ServiceStatus(name="tradepulse", state="running", health="starting")
-        ]
+        return [system.ServiceStatus(name="geosync", state="running", health="starting")]
 
     monkeypatch.setattr(system.time, "sleep", lambda _: None)
 
@@ -90,7 +90,7 @@ def test_wait_for_healthy_services_times_out(monkeypatch: pytest.MonkeyPatch) ->
             status_fetcher=fake_fetch,
         )
 
-    assert "tradepulse=starting" in str(excinfo.value)
+    assert "geosync=starting" in str(excinfo.value)
 
 
 def test_wait_for_healthy_services_detects_missing_required(
@@ -105,10 +105,10 @@ def test_wait_for_healthy_services_detects_missing_required(
         system.wait_for_healthy_services(
             Path("docker-compose.yml"),
             profiles=None,
-            required_services=("tradepulse",),
+            required_services=("geosync",),
             timeout=0.05,
             interval=0.0,
             status_fetcher=fake_fetch,
         )
 
-    assert "tradepulse" in str(excinfo.value)
+    assert "geosync" in str(excinfo.value)

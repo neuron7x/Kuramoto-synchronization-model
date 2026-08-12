@@ -1,3 +1,5 @@
+# Copyright (c) 2023-2026 Yaroslav Vasylenko (neuron7xLab)
+# SPDX-License-Identifier: MIT
 """Ricci-flow inspired portfolio rebalancer."""
 
 from __future__ import annotations
@@ -82,8 +84,7 @@ class RicciFlowRebalancer:
         objective = (
             -ricci_mean
             + self._config.risk_aversion * float(weights @ (cov.to_numpy() @ weights))
-            + self._config.turnover_penalty
-            * float(np.linalg.norm(weights - prev, ord=1))
+            + self._config.turnover_penalty * float(np.linalg.norm(weights - prev, ord=1))
         )
 
         weight_series = pd.Series(weights, index=cov.index, name="weight")
@@ -136,9 +137,7 @@ def _forman_ricci(correlation: np.ndarray, *, beta: float) -> np.ndarray:
     return curvature
 
 
-def _project_simplex(
-    vector: Iterable[float], *, lower_bound: float = 0.0
-) -> np.ndarray:
+def _project_simplex(vector: Iterable[float], *, lower_bound: float = 0.0) -> np.ndarray:
     x = np.asarray(vector, dtype=float)
     if lower_bound < 0:
         raise ValueError("lower_bound must be non-negative")

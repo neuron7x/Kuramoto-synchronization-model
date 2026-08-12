@@ -1,11 +1,15 @@
+# Copyright (c) 2023-2026 Yaroslav Vasylenko (neuron7xLab)
+# SPDX-License-Identifier: MIT
 from __future__ import annotations
 
 import os
-from datetime import UTC, datetime
+from datetime import datetime
 
 from fastapi.testclient import TestClient
 from sqlalchemy import create_engine
 from sqlalchemy.pool import StaticPool
+
+from core.compat import UTC
 
 os.environ.setdefault("CORTEX__DATABASE__URL", "'sqlite+pysqlite:///:memory:'")
 os.environ.setdefault("CORTEX__DATABASE__POOL_SIZE", "1")
@@ -37,9 +41,7 @@ def _test_settings() -> CortexSettings:
         risk=RiskSettings(
             max_absolute_exposure=2.0, var_confidence=0.95, stress_scenarios=(0.8, 0.5)
         ),
-        regime=RegimeSettings(
-            decay=0.2, min_valence=-1.0, max_valence=1.0, confidence_floor=0.1
-        ),
+        regime=RegimeSettings(decay=0.2, min_valence=-1.0, max_valence=1.0, confidence_floor=0.1),
     )
 
 

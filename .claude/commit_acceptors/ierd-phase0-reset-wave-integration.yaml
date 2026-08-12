@@ -1,0 +1,111 @@
+# Diff-bound commit acceptor for the Wave-6 reset-wave integration.
+# Splits off from ierd-phase0-adoption.yaml because the Phase-0 PR
+# governance budget (documentation, cap 24) was already exhausted by
+# Wave 1-5 surface artefacts; Wave 6 introduces the reset-wave
+# numerical solver + its tests + its FACT/MODEL/ANALOGY scope docs.
+
+id: ierd-phase0-reset-wave-integration
+status: ACTIVE
+claim_type: documentation
+promise: >
+  GeoSync ships a damped phase-synchronization solver
+  (geosync.neuroeconomics.reset_wave_engine) with four numerical
+  invariants gated by a v3 falsifier block, FACT/MODEL/ANALOGY scope
+  discipline applied per IERD §4.2, Monte Carlo validation surface,
+  and explicit promotion of Q4-Q7 from UNKNOWN to EXTRAPOLATED via
+  partial reset-wave evidence.
+diff_scope:
+  changed_files:
+    - path: "geosync/neuroeconomics/homeostatic_stabilizer.py"
+    - path: "geosync/neuroeconomics/reset_wave_engine.py"
+    - path: "tests/test_homeostatic_stabilizer.py"
+    - path: "tests/test_reset_wave_engine.py"
+    - path: "tests/test_reset_wave_physics_laws.py"
+    - path: "tests/test_reset_wave_stress_validation.py"
+    - path: "docs/reset_wave_critical_centers.md"
+    - path: "docs/reset_wave_truth_value_function.md"
+    - path: "docs/reset_wave_validation_report.md"
+    - path: "docs/stability_bounds.md"
+    - path: "docs/adr/0022-reset-wave-engineering-model.md"
+    - path: "docs/adr/0023-reset-wave-distributed-resilience.md"
+    - path: "docs/validation/reset_wave_validation_summary.json"
+    - path: "geosync/neuroeconomics/reset_wave_distributed.py"
+    - path: "tests/test_reset_wave_distributed_resilience.py"
+    - path: ".claude/commit_acceptors/ierd-phase0-reset-wave-integration.yaml"
+  forbidden_paths:
+    - "trading/"
+    - "execution/"
+    - "forecast/"
+    - "policy/"
+required_python_symbols:
+  - "ResetWaveReport"
+  - "wrap_phase"
+  - "phase_distance"
+  - "phase_alignment_potential"
+  - "ResetWaveConfig"
+  - "ResetWaveState"
+  - "ResetWaveResult"
+  - "CriticalCenterAudit"
+  - "run_reset_wave"
+  - "latent_interpretive_forecast_layer"
+  - "audit_critical_centers"
+  - "JitterEnvelope"
+  - "StalenessGate"
+  - "ConcurrencyGuard"
+  - "PartialFailureDetector"
+  - "DiscontinuityMonitor"
+  - "DistributedResetWaveConfig"
+  - "DistributedResetWaveResult"
+  - "run_reset_wave_distributed"
+expected_signal: >
+  pytest tests/test_reset_wave_engine.py
+        tests/test_reset_wave_physics_laws.py
+        tests/test_reset_wave_stress_validation.py
+        tests/test_homeostatic_stabilizer.py  → 32 passed.
+  audit_critical_centers() returns 7/7 passed.
+  reset-wave-phase-synchronization claim in CLAIMS.yaml v3 with
+  falsifier block validates under check_claims.py.
+measurement_command: |-
+  python -m pytest tests/test_reset_wave_engine.py
+                   tests/test_reset_wave_physics_laws.py
+                   tests/test_reset_wave_stress_validation.py
+                   tests/test_homeostatic_stabilizer.py -v &&
+  python scripts/ci/check_claims.py &&
+  python scripts/ci/compute_fps_audit.py &&
+  python -c "from geosync.neuroeconomics.reset_wave_engine import audit_critical_centers; assert all(a.passed for a in audit_critical_centers())"
+signal_artifact: "tmp/reset_wave_integration_evidence.log"
+falsifier:
+  command: |-
+    python -c "
+    from geosync.neuroeconomics.reset_wave_engine import ResetWaveConfig, run_reset_wave;
+    out = run_reset_wave([10.0, -10.0], [0.0, 0.0], ResetWaveConfig(max_phase_error=0.5));
+    assert out.locked, 'INV-RESET3 falsified: lock did not fire on extreme drift';
+    assert out.final_potential == out.initial_potential, 'INV-RESET3 falsified: active update under lock'"
+  description: >
+    Probe asserts that an extreme phase drift trips the safety lock
+    (INV-RESET3) and that no active update happens under lock. If
+    either invariant breaks, the probe exits non-zero — proves the
+    lock is real and the invariant is falsifiable.
+rollback_command: >-
+  rm -f geosync/neuroeconomics/reset_wave_engine.py
+        tests/test_reset_wave_engine.py
+        tests/test_reset_wave_physics_laws.py
+        tests/test_reset_wave_stress_validation.py
+        docs/reset_wave_critical_centers.md
+        docs/reset_wave_truth_value_function.md
+        docs/reset_wave_validation_report.md
+        docs/stability_bounds.md
+        docs/adr/0022-reset-wave-engineering-model.md
+        docs/validation/reset_wave_validation_summary.json
+        .claude/commit_acceptors/ierd-phase0-reset-wave-integration.yaml &&
+  git checkout origin/main -- geosync/neuroeconomics/homeostatic_stabilizer.py
+                             tests/test_homeostatic_stabilizer.py
+rollback_verification_command: >-
+  test ! -f geosync/neuroeconomics/reset_wave_engine.py &&
+  git diff --exit-code origin/main --
+    geosync/neuroeconomics/homeostatic_stabilizer.py
+    tests/test_homeostatic_stabilizer.py
+memory_update_type: append
+ledger_path: ".claude/commit_acceptors/ierd-phase0-reset-wave-integration.yaml"
+report_path: "docs/reset_wave_validation_report.md"
+evidence: []

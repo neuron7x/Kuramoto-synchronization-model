@@ -1,3 +1,5 @@
+# Copyright (c) 2023-2026 Yaroslav Vasylenko (neuron7xLab)
+# SPDX-License-Identifier: MIT
 """Capital allocation optimiser considering portfolio risk interactions."""
 
 from __future__ import annotations
@@ -66,9 +68,7 @@ class AllocationConstraints:
         if self.max_allocation_per_pipeline is not None and (
             self.max_allocation_per_pipeline <= 0.0
         ):
-            raise ValueError(
-                "max_allocation_per_pipeline must be positive when provided"
-            )
+            raise ValueError("max_allocation_per_pipeline must be positive when provided")
         if self.min_allocation_per_pipeline < 0.0:
             raise ValueError("min_allocation_per_pipeline must be non-negative")
 
@@ -132,9 +132,7 @@ class CapitalAllocationOptimizer:
     def optimise(
         self,
         metrics: Mapping[str, PipelineMetrics],
-        correlations: (
-            Mapping[tuple[str, str], float] | Mapping[str, Mapping[str, float]]
-        ),
+        correlations: Mapping[tuple[str, str], float] | Mapping[str, Mapping[str, float]],
         *,
         target_profile: TargetProfile | None = None,
         previous_allocation: Mapping[str, float] | None = None,
@@ -151,9 +149,7 @@ class CapitalAllocationOptimizer:
         volatility = np.fromiter((metrics[name].volatility for name in names), float)
         drawdown = np.fromiter((metrics[name].max_drawdown for name in names), float)
 
-        lower_bounds = np.fromiter(
-            (metrics[name].min_allocation for name in names), float
-        )
+        lower_bounds = np.fromiter((metrics[name].min_allocation for name in names), float)
         upper_bounds = np.empty(size, dtype=float)
         for idx, name in enumerate(names):
             limit = metrics[name].risk_limit
@@ -161,26 +157,18 @@ class CapitalAllocationOptimizer:
 
         if constraints is not None:
             if constraints.max_allocation_per_pipeline is not None:
-                upper_bounds = np.minimum(
-                    upper_bounds, constraints.max_allocation_per_pipeline
-                )
+                upper_bounds = np.minimum(upper_bounds, constraints.max_allocation_per_pipeline)
             if constraints.min_allocation_per_pipeline:
-                lower_bounds = np.maximum(
-                    lower_bounds, constraints.min_allocation_per_pipeline
-                )
+                lower_bounds = np.maximum(lower_bounds, constraints.min_allocation_per_pipeline)
 
         if np.any(lower_bounds > upper_bounds + 1e-12):
-            raise ValueError(
-                "Lower bounds exceed upper bounds for one or more pipelines"
-            )
+            raise ValueError("Lower bounds exceed upper bounds for one or more pipelines")
 
         total_min = float(lower_bounds.sum())
         if total_min > 1.0 + 1e-9:
             raise ValueError("Sum of minimum allocations exceeds 100% of capital")
 
-        covariance = self._build_covariance_matrix(
-            names, metrics, correlations, volatility
-        )
+        covariance = self._build_covariance_matrix(names, metrics, correlations, volatility)
 
         weights = self._initialise_weights(
             names,
@@ -255,9 +243,7 @@ class CapitalAllocationOptimizer:
     def reallocate(
         self,
         metrics: Mapping[str, PipelineMetrics],
-        correlations: (
-            Mapping[tuple[str, str], float] | Mapping[str, Mapping[str, float]]
-        ),
+        correlations: Mapping[tuple[str, str], float] | Mapping[str, Mapping[str, float]],
         *,
         target_profile: TargetProfile | None = None,
         previous_allocation: Mapping[str, float] | None = None,
@@ -278,9 +264,7 @@ class CapitalAllocationOptimizer:
         self,
         names: list[str],
         metrics: Mapping[str, PipelineMetrics],
-        correlations: (
-            Mapping[tuple[str, str], float] | Mapping[str, Mapping[str, float]]
-        ),
+        correlations: Mapping[tuple[str, str], float] | Mapping[str, Mapping[str, float]],
         volatility: np.ndarray,
     ) -> np.ndarray:
         size = len(names)
@@ -331,9 +315,7 @@ class CapitalAllocationOptimizer:
     ) -> np.ndarray:
         size = len(names)
         if previous_allocation:
-            weights = np.fromiter(
-                (previous_allocation.get(name, 0.0) for name in names), float
-            )
+            weights = np.fromiter((previous_allocation.get(name, 0.0) for name in names), float)
             weights = self._project(weights, lower, upper)
             weights = self._blend_with_previous(weights, previous_allocation, names)
         else:
@@ -399,9 +381,7 @@ class CapitalAllocationOptimizer:
                     boost_index = int(np.argmax(expected))
                     capacity = upper[boost_index] - weights[boost_index]
                     if capacity > 0.0:
-                        adjustment = min(
-                            shortfall / max(expected[boost_index], 1e-9), capacity
-                        )
+                        adjustment = min(shortfall / max(expected[boost_index], 1e-9), capacity)
                         weights[boost_index] += adjustment
                         weights = self._project(weights, lower, upper)
 
@@ -420,9 +400,7 @@ class CapitalAllocationOptimizer:
         return weights
 
     # ------------------------------------------------------------------
-    def _project(
-        self, weights: np.ndarray, lower: np.ndarray, upper: np.ndarray
-    ) -> np.ndarray:
+    def _project(self, weights: np.ndarray, lower: np.ndarray, upper: np.ndarray) -> np.ndarray:
         weights = np.clip(weights, lower, upper)
 
         for _ in range(10):
@@ -513,10 +491,7 @@ class CapitalAllocationOptimizer:
             scaling_factors.append(limit / volatility)
 
         if target_profile and target_profile.max_drawdown is not None:
-            if (
-                simulated_drawdown > target_profile.max_drawdown
-                and simulated_drawdown > 0.0
-            ):
+            if simulated_drawdown > target_profile.max_drawdown and simulated_drawdown > 0.0:
                 scaling_factors.append(target_profile.max_drawdown / simulated_drawdown)
 
         if scaling_factors:

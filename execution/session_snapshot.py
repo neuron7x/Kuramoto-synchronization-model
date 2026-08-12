@@ -1,3 +1,5 @@
+# Copyright (c) 2023-2026 Yaroslav Vasylenko (neuron7xLab)
+# SPDX-License-Identifier: MIT
 """Utilities for capturing immutable pre-session state snapshots."""
 
 from __future__ import annotations
@@ -61,9 +63,7 @@ class SessionSnapshotter:
         self,
         connectors: Mapping[str, ExecutionConnector],
         *,
-        preloaded: (
-            Mapping[str, tuple[Sequence[Mapping[str, object]], Sequence[str]]] | None
-        ) = None,
+        preloaded: Mapping[str, tuple[Sequence[Mapping[str, object]], Sequence[str]]] | None = None,
     ) -> Path:
         """Persist an immutable snapshot for the provided *connectors*."""
 
@@ -74,9 +74,7 @@ class SessionSnapshotter:
             venues.append(self._build_venue_snapshot(name, connectors[name], cached))
 
         payload = {
-            "timestamp": timestamp.isoformat(timespec="milliseconds").replace(
-                "+00:00", "Z"
-            ),
+            "timestamp": timestamp.isoformat(timespec="milliseconds").replace("+00:00", "Z"),
             "mode": self._mode.value,
             "venues": [
                 {
@@ -116,9 +114,7 @@ class SessionSnapshotter:
                 try:
                     raw_positions = get_positions()
                 except Exception as exc:
-                    issues.append(
-                        f"positions_unavailable:{type(exc).__name__}:{exc}".rstrip(":")
-                    )
+                    issues.append(f"positions_unavailable:{type(exc).__name__}:{exc}".rstrip(":"))
                     raw_positions = []
                 positions_iter = [
                     payload for payload in raw_positions if isinstance(payload, Mapping)
@@ -135,9 +131,7 @@ class SessionSnapshotter:
             if parsed is None:
                 continue
             symbol, net_qty, avg_price, notional = parsed
-            asset_balances[symbol] = round(
-                asset_balances.get(symbol, 0.0) + net_qty, 12
-            )
+            asset_balances[symbol] = round(asset_balances.get(symbol, 0.0) + net_qty, 12)
             estimated_equity += abs(notional)
             record: dict[str, object] = {
                 "symbol": symbol,
@@ -167,10 +161,7 @@ class SessionSnapshotter:
         payload: Mapping[str, object],
     ) -> tuple[str, float, float | None, float] | None:
         symbol = str(
-            payload.get("symbol")
-            or payload.get("instrument")
-            or payload.get("asset")
-            or ""
+            payload.get("symbol") or payload.get("instrument") or payload.get("asset") or ""
         ).strip()
         if not symbol:
             return None
@@ -233,12 +224,8 @@ class SessionSnapshotter:
             "kill_switch_limit_multiplier": self._normalise_number(
                 limits.kill_switch_limit_multiplier
             ),
-            "kill_switch_violation_threshold": int(
-                limits.kill_switch_violation_threshold
-            ),
-            "kill_switch_rate_limit_threshold": int(
-                limits.kill_switch_rate_limit_threshold
-            ),
+            "kill_switch_violation_threshold": int(limits.kill_switch_violation_threshold),
+            "kill_switch_rate_limit_threshold": int(limits.kill_switch_rate_limit_threshold),
         }
 
     def _serialise_exposure(self) -> dict[str, dict[str, float]]:
@@ -270,9 +257,7 @@ class SessionSnapshotter:
             "reason": kill_switch.reason,
             "violation_threshold": int(limits.kill_switch_violation_threshold),
             "rate_limit_threshold": int(limits.kill_switch_rate_limit_threshold),
-            "limit_multiplier": self._normalise_number(
-                limits.kill_switch_limit_multiplier
-            ),
+            "limit_multiplier": self._normalise_number(limits.kill_switch_limit_multiplier),
         }
 
     @staticmethod
@@ -292,9 +277,7 @@ class SessionSnapshotter:
         filename = f"{timestamp.strftime('%Y%m%dT%H%M%S%fZ')}_{self._mode.value}_{digest[:12]}.json"
         destination = self._directory / filename
         if destination.exists():  # pragma: no cover - extremely unlikely
-            raise SessionSnapshotError(
-                f"snapshot file already exists: {destination.name}"
-            )
+            raise SessionSnapshotError(f"snapshot file already exists: {destination.name}")
 
         record = dict(payload)
         record["hash"] = digest

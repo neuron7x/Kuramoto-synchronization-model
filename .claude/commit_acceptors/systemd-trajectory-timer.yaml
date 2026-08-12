@@ -1,0 +1,87 @@
+# Diff-bound acceptor for FIX-5: shadow trajectory automation via systemd timer.
+#
+# Problem: 75 daily ticks until truth gate (2026-07-10) is high
+# operational failure probability under manual cadence. The shadow
+# timer file already exists (ops/systemd/cross_asset_kuramoto_shadow.timer);
+# what was missing was a single-script wrapper that does the full
+# ritual on each fire — tick → pipeline_status_refresh → eval +
+# shadow_live.json → CI-aware verdict → DP3 honest test → trajectory
+# log entry — and a service definition that runs that wrapper instead
+# of the bare evaluator.
+#
+# This acceptor lands the wrapper, updates the service unit to call
+# it, switches log capture to journal so the FIX-5 falsification gate
+# can observe terminal-state events, and is verified locally with a
+# manual `systemctl --user start cross_asset_kuramoto_shadow.service`
+# producing two journal entries containing "tick: ok" within the same
+# day window.
+
+id: systemd-trajectory-timer
+status: ACTIVE
+claim_type: governance
+promise: >-
+  scripts/shadow_daily_tick.sh runs end-to-end in approximately
+  20–30 s, executing in order: paper_trader.py --tick (FIX-1's
+  upstream evidence), python -m geosync.pipeline_status_check
+  (FIX-1), make eval-tick (FIX-2 self-write), python -m
+  geosync.verdict (FIX-4), python -m geosync.dp3_test (FIX-3), and
+  appending a single dated row to results/sharpe_trajectory.log.
+  Service unit ops/systemd/cross_asset_kuramoto_shadow.service is
+  updated to run the wrapper. Log capture uses StandardOutput=journal
+  so the falsification gate via journalctl --user-unit observes the
+  literal terminal "tick: ok" line. Idempotent on the same UTC day:
+  paper_trader is no-op if already ticked, pipeline_status overwrites
+  the same dated row, trajectory.log appends one line per
+  invocation.
+diff_scope:
+  changed_files:
+    - path: ".claude/commit_acceptors/systemd-trajectory-timer.yaml"
+    - path: "ops/systemd/geosync_shadow_daily_tick.service"
+    - path: "ops/systemd/geosync_shadow_daily_tick.timer"
+    - path: "scripts/shadow_daily_tick.sh"
+  forbidden_paths:
+    - "trading/"
+    - "execution/"
+    - "forecast/"
+    - "policy/"
+    - "core/physics/"
+    - "scripts/evaluate_cross_asset_kuramoto_shadow.py"
+    - "ops/systemd/cross_asset_kuramoto_shadow.service"
+    - "ops/systemd/cross_asset_kuramoto_shadow.timer"
+required_python_symbols: []
+expected_signal: >-
+  Locally:
+    $ systemctl --user is-active geosync_shadow_daily_tick.timer
+    active
+    $ systemctl --user start geosync_shadow_daily_tick.service
+    $ journalctl --user-unit=geosync_shadow_daily_tick.service --since='-1 day' | grep -c 'tick: ok'
+    >= 1
+  Confirms the wrapper terminated successfully (the "tick: ok" line is
+  emitted only on the final step of shadow_daily_tick.sh, after the
+  trajectory.log append). Note: --user-unit= (combined form) is the
+  canonical incantation on systemd 255+; --user -u SERVICE (separate
+  flags) does NOT match unit logs in this version. The new
+  geosync_shadow_daily_tick service+timer co-exist with the older
+  frozen cross_asset_kuramoto_shadow service; both fire at 22:00 UTC.
+measurement_command: >-
+  bash -c 'n=$(journalctl --user-unit=geosync_shadow_daily_tick.service --since="-1 day" --no-pager | grep -c "tick: ok"); test "$n" -ge 1'
+signal_artifact: "tmp/systemd_trajectory_timer.log"
+falsifier:
+  command: >-
+    bash -c 'systemctl --user is-active geosync_shadow_daily_tick.timer; rc=$?; test $rc -eq 0'
+  description: >-
+    Probe asserts the new daily-tick timer is active. If the timer is
+    disabled or masked, FIX-5 is broken — manual ticks become the only
+    path and the 75-day discipline is lost.
+rollback_command: >-
+  git checkout HEAD~1 --
+  ops/systemd/geosync_shadow_daily_tick.service
+  ops/systemd/geosync_shadow_daily_tick.timer
+  scripts/shadow_daily_tick.sh
+  .claude/commit_acceptors/systemd-trajectory-timer.yaml
+rollback_verification_command: >-
+  git diff --exit-code ops/systemd/geosync_shadow_daily_tick.service
+memory_update_type: append
+ledger_path: ".claude/commit_acceptors/systemd-trajectory-timer.yaml"
+report_path: "results/sharpe_trajectory.log"
+evidence: []

@@ -1,4 +1,6 @@
 #!/usr/bin/env python3
+# Copyright (c) 2023-2026 Yaroslav Vasylenko (neuron7xLab)
+# SPDX-License-Identifier: MIT
 """
 Thermodynamics Trend Analysis Tool
 
@@ -110,9 +112,7 @@ def analyze_topology_changes(entries: List[Dict[str, Any]]) -> Dict[str, Any]:
     return {
         "total_changes": total_changes,
         "changes_per_hour": (total_changes / len(entries) * 3600) if entries else 0,
-        "top_transitions": sorted(
-            bond_type_changes.items(), key=lambda x: x[1], reverse=True
-        )[:5],
+        "top_transitions": sorted(bond_type_changes.items(), key=lambda x: x[1], reverse=True)[:5],
     }
 
 
@@ -169,14 +169,12 @@ def generate_report(analysis: Dict[str, Any], output_path: Path = None) -> None:
 
 
 def main():
-    parser = argparse.ArgumentParser(
-        description="Analyze thermodynamic trends from audit logs"
-    )
+    parser = argparse.ArgumentParser(description="Analyze thermodynamic trends from audit logs")
 
     parser.add_argument(
         "--log-path",
         type=Path,
-        default=Path("/var/log/tradepulse/thermo_audit.jsonl"),
+        default=Path("/var/log/geosync/thermo_audit.jsonl"),
         help="Path to audit log file",
     )
 
@@ -195,9 +193,7 @@ def main():
     elif period_str.endswith("h"):
         period_days = int(period_str[:-1]) / 24
     else:
-        print(
-            f"Error: Invalid period format '{args.period}'. Use format like '7d' or '24h'"
-        )
+        print(f"Error: Invalid period format '{args.period}'. Use format like '7d' or '24h'")
         return 1
 
     print(f"Loading audit log from: {args.log_path}")

@@ -1,0 +1,33 @@
+id: phd-reference-inference-standard
+status: ACTIVE
+claim_type: governance
+promise: >-
+  Canonical reference standard for verified-inference discipline: seven
+  machine-enforced invariant laws, each bound to an existing fail-closed gate,
+  plus a conformance certificate derived from actual repo state. Evidence
+  discipline only — no new physics, no empirical-truth or market claim.
+diff_scope:
+  changed_files:
+    - path: "docs/phd/13_reference_inference_standard.md"
+    - path: "scripts/ci/gen_reference_conformance.py"
+    - path: "scripts/ci/phd_evidence.sh"
+    - path: "artifacts/academy_fellow/reference_conformance_certificate.json"
+    - path: ".claude/commit_acceptors/phd-reference-inference-standard.yaml"
+  forbidden_paths:
+    - "core/execution/"
+    - "core/strategies/"
+    - "interfaces/live_runner.py"
+    - "forecast/"
+required_python_symbols: []
+expected_signal: "Reference conformance certificate verdict is CONFORMANT (all invariant laws pass)."
+measurement_command: "python scripts/ci/gen_reference_conformance.py"
+signal_artifact: "artifacts/academy_fellow/reference_conformance_certificate.json"
+falsifier:
+  command: "python -c \"import json,sys; c=json.load(open('artifacts/academy_fellow/reference_conformance_certificate.json')); sys.exit(1 if c['verdict']=='CONFORMANT' else 0)\""
+  description: "Exits non-zero in the asserted healthy state (verdict CONFORMANT); flips to pass only if any invariant law regresses to NON_CONFORMANT."
+rollback_command: "git checkout -- docs/phd/13_reference_inference_standard.md scripts/ci/gen_reference_conformance.py scripts/ci/phd_evidence.sh artifacts/academy_fellow/reference_conformance_certificate.json"
+rollback_verification_command: "git diff --exit-code docs/phd/13_reference_inference_standard.md scripts/ci/gen_reference_conformance.py scripts/ci/phd_evidence.sh"
+memory_update_type: append
+ledger_path: ".claude/commit_acceptors/phd-reference-inference-standard.yaml"
+report_path: "docs/phd/13_reference_inference_standard.md"
+evidence: []

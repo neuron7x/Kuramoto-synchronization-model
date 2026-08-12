@@ -1,0 +1,37 @@
+{
+  "adf": {
+    "lag_used": 0,
+    "n_obs_used": 18780,
+    "pvalue": 5.906428760277774e-22,
+    "statistic": -11.889763872977428,
+    "verdict": "STATIONARY"
+  },
+  "bootstrap": {
+    "block_size": 3000,
+    "ci_hi_95": 0.20959666229584387,
+    "ci_lo_95": 0.02848218943773476,
+    "ic_mean_bootstrap": 0.12025066253711372,
+    "ic_point": 0.12229471858695447,
+    "ic_std_bootstrap": 0.04680167666518172,
+    "n_bootstraps": 1000,
+    "significant_at_95": true
+  },
+  "deflated_sharpe": {
+    "deflated_sharpe": 15.1219315350458,
+    "n_observations": 19081,
+    "n_trials": 15,
+    "probability_sharpe_is_real": 1.0,
+    "sharpe_expected_max": 0.012818929990497338,
+    "sharpe_observed": 0.12229471858695447
+  },
+  "horizon_sec": 180,
+  "mutual_information": {
+    "correlation_spearman": 0.12229471858695447,
+    "mutual_information_bits": 0.11305427767487487,
+    "mutual_information_nats": 0.07836325382058068,
+    "n_bins": 32,
+    "n_samples": 186010
+  },
+  "n_rows": 19081,
+  "n_symbols": 10
+}

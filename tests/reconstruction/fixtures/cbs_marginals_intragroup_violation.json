@@ -1,0 +1,14 @@
+{
+  "_doc": "NEGATIVE CBS fixture for issue #639. Identical to cbs_marginals_valid.json except it INCLUDES one intragroup position (DE->DE). CBS excludes intragroup positions by construction, so this row is a contract violation; the loader MUST reject it (exit non-zero). Accepting it would relabel LBS-style intragroup-inclusive data as CBS. Values are fabricated; not a market or product claim.",
+  "schema_version": "bis.cbs.marginals.v1",
+  "ontology": "nationality_parent_group",
+  "intragroup_excluded": true,
+  "reporting_period": "2023-Q4",
+  "positions": [
+    {"reporter_group": "DE", "counterparty_group": "US", "claim_usd_mn": 1850.0},
+    {"reporter_group": "DE", "counterparty_group": "DE", "claim_usd_mn": 9999.0},
+    {"reporter_group": "US", "counterparty_group": "DE", "claim_usd_mn": 1320.0},
+    {"reporter_group": "US", "counterparty_group": "GB", "claim_usd_mn": 1610.0},
+    {"reporter_group": "GB", "counterparty_group": "US", "claim_usd_mn": 1190.0}
+  ]
+}

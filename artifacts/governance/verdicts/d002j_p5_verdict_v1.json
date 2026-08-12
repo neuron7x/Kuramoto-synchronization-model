@@ -1,0 +1,26 @@
+{
+  "schema_version": "D002J-VERDICT-CAPSULE-v1",
+  "node_id": "D002J-P5",
+  "phase": "P5",
+  "pr_number": 703,
+  "merge_sha": "0000000000000000000000000000000000000000",
+  "parent_nodes": ["D002J-P4"],
+  "decision": "SUBSTRATE_CANDIDATES_READY",
+  "status": "TERMINAL_PASS",
+  "artifact_paths": [
+    "research/systemic_risk/substrates/d002j/__init__.py",
+    "research/systemic_risk/substrates/d002j/substrate_base.py",
+    "research/systemic_risk/substrates/d002j/funding_liquidity_rollover.py",
+    "research/systemic_risk/substrates/d002j/cross_exposure_contagion_proxy.py",
+    "research/systemic_risk/substrates/d002j/volatility_credit_spread_regime.py",
+    "artifacts/d002j/substrates/substrate_candidate_manifest_v1.json",
+    "artifacts/d002j/substrates/substrate_summary_v1.json",
+    "docs/research/D002J_FINANCIAL_SUBSTRATE_DESIGN_SPACE.md"
+  ],
+  "test_paths": ["tests/systemic_risk/test_d002j_substrate_candidates.py"],
+  "allowed_next_nodes": ["D002J-P6"],
+  "forbidden_next_nodes": ["D002J-P7", "D002J-P8", "D002J-P9"],
+  "claim_boundary": "3 financial-mechanistic substrate candidates admitted; each P1B-source-bound (>=2 VERIFIED/PARTIAL) + P2-window-bound + P3-adapter-bound + P4-control-compatible; cross-asset coherence != interbank funding proof (Brunetti e-MID); no real-bank validation; no canonical run.",
+  "failure_retention": null,
+  "source_summary_path": "artifacts/d002j/substrates/substrate_summary_v1.json"
+}

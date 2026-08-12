@@ -1,5 +1,5 @@
 ---
-owner: quant-systems@tradepulse
+owner: quant-systems@geosync
 review_cadence: quarterly
 last_reviewed: 2025-11-04
 links:
@@ -15,11 +15,11 @@ links:
 The `core/indicators` module provides advanced geometric and phase-synchrony indicators for algorithmic trading signal generation. This module implements cutting-edge mathematical techniques including Kuramoto oscillator analysis, Ricci flow curvature detection, multi-scale coherence analysis, and entropy-based market regime classification.
 
 **Key Objectives:**
-- Provide high-quality, deterministic market microstructure signals
+- Provide deterministic market microstructure signals
 - Enable multi-timeframe and multi-asset synchronization analysis
 - Support both CPU and GPU-accelerated computation paths
-- Deliver production-grade caching and feature persistence
-- Maintain sub-100ms latency for real-time signal generation
+- Provide filesystem-backed caching and feature persistence with fingerprinting
+- Target sub-100 ms latency for real-time signal generation (measured per-class; see indicator-specific tests)
 
 ## Key Responsibilities
 
@@ -35,10 +35,10 @@ The `core/indicators` module provides advanced geometric and phase-synchrony ind
 
 | Interface | Type | Location | Description |
 | --------- | ---- | -------- | ----------- |
-| `KuramotoIndicator` | Class | `trading.py` | Production-ready Kuramoto order parameter calculator with configurable coupling strength |
+| `KuramotoIndicator` | Class | `trading.py` | Kuramoto order-parameter calculator with configurable coupling strength (module-level production-scoped, INV-K1..K7 gated) |
 | `HurstIndicator` | Class | `trading.py` | Hurst exponent estimator for detecting mean-reversion vs trending regimes |
 | `VPINIndicator` | Class | `trading.py` | Volume-synchronized Probability of Informed Trading indicator |
-| `TradePulseCompositeEngine` | Class | `kuramoto_ricci_composite.py` | Primary signal generator combining Kuramoto, Ricci, and topology analysis |
+| `GeoSyncCompositeEngine` | Class | `kuramoto_ricci_composite.py` | Primary signal generator combining Kuramoto, Ricci, and topology analysis |
 | `MultiScaleKuramoto` | Class | `multiscale_kuramoto.py` | Multi-timeframe Kuramoto analysis with consensus detection |
 | `TemporalRicciAnalyzer` | Class | `temporal_ricci.py` | Temporal Ricci curvature flow analyzer for regime transitions |
 | `IndicatorPipeline` | Class | `pipeline.py` | DAG-based orchestration for multi-indicator workflows |
@@ -52,9 +52,9 @@ The `core/indicators` module provides advanced geometric and phase-synchrony ind
 ## Configuration
 
 ### Environment Variables:
-- `TRADEPULSE_INDICATOR_CACHE_DIR`: Base directory for cached indicator results (default: `~/.tradepulse/cache/indicators`)
-- `TRADEPULSE_USE_GPU`: Enable GPU acceleration when CuPy is available (default: `false`)
-- `TRADEPULSE_INDICATOR_WORKERS`: Number of parallel workers for indicator computation (default: CPU count)
+- `GEOSYNC_INDICATOR_CACHE_DIR`: Base directory for cached indicator results (default: `~/.geosync/cache/indicators`)
+- `GEOSYNC_USE_GPU`: Enable GPU acceleration when CuPy is available (default: `false`)
+- `GEOSYNC_INDICATOR_WORKERS`: Number of parallel workers for indicator computation (default: CPU count)
 
 ### Configuration Files:
 Indicators are configured via Hydra YAML files in `configs/indicators/`:
@@ -93,7 +93,7 @@ core/indicators/
 ├── ricci.py                         # Static Ricci curvature computation
 ├── temporal_ricci.py                # Temporal Ricci flow analyzer
 ├── multiscale_kuramoto.py           # Multi-timeframe Kuramoto analysis
-├── kuramoto_ricci_composite.py      # TradePulseCompositeEngine (main signal)
+├── kuramoto_ricci_composite.py      # GeoSyncCompositeEngine (main signal)
 ├── ensemble_divergence.py           # Multi-indicator divergence detection
 ├── hierarchical_features.py         # Multi-scale feature generation
 ├── pipeline.py                      # IndicatorPipeline orchestration
@@ -147,7 +147,7 @@ core/indicators/
 ### End-to-End Tests:
 - **Location**: `tests/e2e/test_backtest_with_indicators.py`
 - **Validation**:
-  - Full backtest using TradePulseCompositeEngine signals
+  - Full backtest using GeoSyncCompositeEngine signals
   - Reproducibility check: same data + same config = identical signals
   - Performance benchmark: 10,000 bars processed in < 5 seconds
 
@@ -177,11 +177,11 @@ print(f"Synchronization: {order_parameter:.3f}")  # 0.0 to 1.0
 
 ### Composite Signal Generation
 ```python
-from core.indicators import TradePulseCompositeEngine
+from core.indicators import GeoSyncCompositeEngine
 import pandas as pd
 
 # Initialize composite engine
-engine = TradePulseCompositeEngine()
+engine = GeoSyncCompositeEngine()
 
 # Prepare market data (OHLCV DataFrame)
 bars = pd.DataFrame({
@@ -277,7 +277,7 @@ assert np.allclose(result1, result2)
 
 | Date | Author | Change |
 | ---- | ------ | ------ |
-| 2025-11-04 | docs@tradepulse | Created comprehensive README following standardization playbook |
+| 2025-11-04 | docs@geosync | Created comprehensive README following standardization playbook |
 
 ## See Also
 

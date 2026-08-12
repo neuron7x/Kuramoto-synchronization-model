@@ -2,7 +2,7 @@
 
 ## Purpose and Scope
 
-TradePulse orchestrates quantitative research, signal generation, and execution services under a contracts-first
+GeoSync orchestrates quantitative research, signal generation, and execution services under a contracts-first
 mandate. This blueprint captures the current 2025 architecture baseline that all domain, application, and
 infrastructure teams align to when planning enhancements, incident response, or compliance audits.
 It complements the deep-dive assets located in [`docs/architecture/`](architecture/) and is reviewed every
@@ -18,7 +18,7 @@ Application-layer orchestration, bootstrap, and secret/security controls are det
 | **Decisioning & Alpha** | Strategy lifecycle, simulation sandbox, feature orchestration, policy routing. | Quant Systems Guild | `strategies.*`, `core.simulation`, protobuf strategy contracts, policy evaluation engine. |
 | **Execution Fabric** | Order routing, liquidity adapters, risk throttles, reconciliation, FIX/REST translation. | Execution Guild | `execution.gateway`, `execution.adapters.*`, FIX bridge, REST control plane. |
 | **Observability & Control** | Monitoring, SLO budgets, guardrails, compliance audit trail, operational runbooks. | Reliability Guild | Telemetry mesh (`observability.agent`), policy engine, governance APIs, incident playbooks. |
-| **Experience Layer** | Web dashboards, CLI, partner APIs, notification channels. | Product Experience Guild | Next.js dashboard, CLI (`tradepulse`), gRPC-web gateway, Webhook broker. |
+| **Experience Layer** | Web dashboards, CLI, partner APIs, notification channels. | Product Experience Guild | Next.js dashboard, CLI (`geosync`), gRPC-web gateway, Webhook broker. |
 
 Each pillar maintains an explicit backlog and architectural runway captured in the [Architecture Review Program](architecture/architecture_review_program.md).
 
@@ -26,10 +26,10 @@ Each pillar maintains an explicit backlog and architectural runway captured in t
 
 | Service / Package | Language & Runtime | Deployment Model | Upstream Dependencies | External Interfaces |
 | --- | --- | --- | --- | --- |
-| `tradepulse-api` | Python 3.11 (FastAPI) | Kubernetes deployment (`deploy/tradepulse-deployment.yaml`, `deploy/kustomize/base`) | OAuth2 issuer + JWKS, audit secret store, mTLS trust bundle | HTTPS/REST (`:8000`), Prometheus metrics (`:8001`) |
-| `admin` | Python 3.11 (FastAPI admin control) | Helm chart (`deploy/helm/tradepulse/charts/admin`) | Cluster admin secrets, audit logging policies | HTTP admin API (`:8000`) |
-| `sandbox` | Python 3.11 (sandbox harness) | Helm chart + HPA (`deploy/helm/tradepulse/charts/sandbox`) | Optional OpenTelemetry endpoint | HTTP API (`:8080`), health/ready probes |
-| `observability-stack` | OpenTelemetry Collector + Prometheus + Grafana | Helm chart (`deploy/helm/tradepulse/charts/observability`) | Service monitors, metrics/log pipelines | OTLP ingest, dashboards & alerting |
+| `geosync-api` | Python 3.11 (FastAPI) | Kubernetes deployment (`deploy/geosync-deployment.yaml`, `deploy/kustomize/base`) | OAuth2 issuer + JWKS, audit secret store, mTLS trust bundle | HTTPS/REST (`:8000`), Prometheus metrics (`:8001`) |
+| `admin` | Python 3.11 (FastAPI admin control) | Helm chart (`deploy/helm/geosync/charts/admin`) | Cluster admin secrets, audit logging policies | HTTP admin API (`:8000`) |
+| `sandbox` | Python 3.11 (sandbox harness) | Helm chart + HPA (`deploy/helm/geosync/charts/sandbox`) | Optional OpenTelemetry endpoint | HTTP API (`:8080`), health/ready probes |
+| `observability-stack` | OpenTelemetry Collector + Prometheus + Grafana | Helm chart (`deploy/helm/geosync/charts/observability`) | Service monitors, metrics/log pipelines | OTLP ingest, dashboards & alerting |
 
 Cross-cutting concerns such as authentication, tracing headers, and deployment safety are validated through
 the GitHub Actions workflows in `.github/workflows/` (notably `ci.yml`, `pr-release-gate.yml`,
@@ -45,7 +45,7 @@ the GitHub Actions workflows in `.github/workflows/` (notably `ci.yml`, `pr-rele
 | `execution/` | Order lifecycle orchestration, adapters, OMS/routing, and risk control surfaces defined in [`interfaces/execution/`](../interfaces/execution/) | `core/` | SemVer (`execution.api.v1`); adapter contracts must stay backward compatible |
 | `runtime/` | Runtime safety controls (kill switch, thermo control, recovery) and live runner interfaces in [`interfaces/live_runner.py`](../interfaces/live_runner.py) | `core/`, `execution/` | SemVer (`runtime.api.v1`); release gates run integration + property suites |
 | `observability/` | Metrics/logging/tracing, release gate telemetry, and dashboards in [`observability/`](../observability/) | `core/` (telemetry types only) | SemVer (`observability.telemetry.v1`); trace/metric shape changes require dual approval |
-| `ui/dashboard/` | gRPC-web/GraphQL DTOs derived from [`schemas/openapi/tradepulse-online-inference-v1.json`](../schemas/openapi/tradepulse-online-inference-v1.json) | Consumes only published APIs (no private imports) | Follows API SemVer; UI build blocks on schema diff |
+| `ui/dashboard/` | gRPC-web/GraphQL DTOs derived from [`schemas/openapi/geosync-online-inference-v1.json`](../schemas/openapi/geosync-online-inference-v1.json) | Consumes only published APIs (no private imports) | Follows API SemVer; UI build blocks on schema diff |
 | `tacl/` | Thermodynamic control hooks in [`tacl/`](../tacl/) + [`runtime/thermo_controller.py`](../runtime/thermo_controller.py); pre-action risk gating in [`tacl/risk_gating.py`](../tacl/risk_gating.py) | `runtime/`, `observability/` | SemVer (`tacl.control.v1`); adaptations blocked unless compatibility matrix passes |
 
 Links use `../` because this document lives under `docs/`; they resolve to the repo-root `schemas/`, `interfaces/`, and module directories listed above.
@@ -56,7 +56,7 @@ Links use `../` because this document lives under `docs/`; they resolve to the r
 - `observability` passively consumes metrics/traces/logs from every module; no reverse imports allowed.
 - `tacl` subscribes to latency/coherency/cost metrics and can only actuate `runtime` via the control API with human-approved gates.
 
-Schema and API diagrams live in [`docs/architecture/system_overview.md`](architecture/system_overview.md); any cross-module change must update the relevant schema version and cross-reference the change in [`DOCUMENTATION_SUMMARY.md`](../DOCUMENTATION_SUMMARY.md).
+Schema and API diagrams live in [`docs/architecture/system_overview.md`](architecture/system_overview.md); any cross-module change must update the relevant schema version and cross-reference the change in [`DOCUMENTATION_SUMMARY.md`](operations/DOCUMENTATION_SUMMARY.md).
 
 ## Data and Knowledge Fabric
 
@@ -94,7 +94,7 @@ Sequence and data flow diagrams backing this narrative are maintained in
 
 ## Neuro-primitive Catalog
 
-TradePulse exposes a small set of neuro-inspired primitives that are treated as reusable control blocks across
+GeoSync exposes a small set of neuro-inspired primitives that are treated as reusable control blocks across
 learning and decision loops. Each primitive is defined by a narrow contract, strict observability, and minimal
 cross-module dependencies.
 
@@ -114,7 +114,7 @@ cross-module dependencies.
 - **Compliance:** Trade surveillance, retention, and audit obligations referenced in
   [`docs/governance.md`](governance.md) and incident playbooks.
 - **Documentation:** Every architectural change must include updates to this blueprint, affected diagrams,
-  and cross-references tracked in [`DOCUMENTATION_SUMMARY.md`](../DOCUMENTATION_SUMMARY.md).
+  and cross-references tracked in [`DOCUMENTATION_SUMMARY.md`](operations/DOCUMENTATION_SUMMARY.md).
 
 ## Change Management & Documentation Map
 
@@ -129,7 +129,7 @@ navigation patterns, ownership, and versioning rules across the wider knowledge 
 
 ## Conceptual Architecture Visualization
 
-For a comprehensive visual guide to TradePulse conceptual elements and their relationships, including detailed
+For a comprehensive visual guide to GeoSync conceptual elements and their relationships, including detailed
 diagrams of neuromodulation systems, TACL thermodynamic control, and signal lifecycle, see the
 [Conceptual Architecture (Ukrainian)](CONCEPTUAL_ARCHITECTURE_UA.md) document and the
 [Architecture Diagrams](architecture/assets/README.md) catalog.

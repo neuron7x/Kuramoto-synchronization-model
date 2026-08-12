@@ -2,11 +2,18 @@
 
 ## Overview
 
-The dopamine module implements a production-grade neuromodulatory controller for trading decisions, based on TD(0) reinforcement learning with phasic/tonic dopamine dynamics, exploration temperature, and Go/Hold/No-Go gating. Evidence: [@SuttonBarto2018RL]
+The dopamine module is a TD(0) reinforcement-learning controller for
+trading decisions: it computes a reward-prediction-error (RPE), a phasic
+vs. tonic decomposition, an exploration temperature, and Go/Hold/No-Go
+release gating. The mathematical contract follows Schultz–Sutton–Barto
+TD(0) [@SuttonBarto2018RL]. The implementation is module-level
+production-scoped (see *Status* below); live-venue trading remains
+bound by `docs/KNOWN_LIMITATIONS.md` L-1 (paper-trading only).
 
-**Version:** 1.0.0  
-**Status:** Production  
-**Coverage:** 54 tests, comprehensive invariants
+**Version:** 1.0.0
+**Status:** module-level production-scoped (covers controller contract;
+not a live-venue capital-safety claim)
+**Coverage:** 54 tests against the controller's own invariants
 
 ## Architecture
 
@@ -218,7 +225,7 @@ With fixed inputs and RNG state, `step()` produces identical outputs.
 ### Basic Usage
 
 ```python
-from tradepulse.core.neuro.dopamine import DopamineController
+from geosync.core.neuro.dopamine import DopamineController
 
 # Initialize
 controller = DopamineController("config/dopamine.yaml")
@@ -298,7 +305,7 @@ python tools/migrate_dopamine_config.py old_config.yaml --dry-run
 pytest tests/core/neuro/dopamine/ -v
 
 # With coverage
-pytest tests/core/neuro/dopamine/ --cov=tradepulse.core.neuro.dopamine --cov-report=term-missing
+pytest tests/core/neuro/dopamine/ --cov=geosync.core.neuro.dopamine --cov-report=term-missing
 
 # Property tests only (when complete)
 pytest tests/core/neuro/dopamine/test_properties.py -v
@@ -311,7 +318,7 @@ pytest tests/core/neuro/dopamine/test_invariants.py -v
 
 **Current:** 54 tests passing
 - 20 controller tests
-- 34 invariants tests
+- 57 invariants tests
 - Property tests in progress
 
 **Target:** ≥95% line/branch coverage
@@ -349,7 +356,7 @@ JSON Schema: `schemas/dopamine.schema.json`
 ## Changelog
 
 ### v1.0.0 (2025-11-11)
-- **Added:** Production-grade numerical safety (`_invariants.py`)
+- **Added:** Numerical-safety scaffolding (`_invariants.py`) — bounded clamps, NaN/Inf rejection, range checks
 - **Added:** Comprehensive telemetry (TACL metrics)
 - **Added:** Three safety profiles (conservative/normal/aggressive)
 - **Added:** JSON schema validation

@@ -1,0 +1,25 @@
+version: 1
+program_name: cns_release_gate
+states:
+  - ingest
+  - validate
+  - render
+  - manifest
+  - verify
+  - report
+  - release_decision
+metrics:
+  quality_weights:
+    protocol_valid: 0.35
+    manifest_valid: 0.30
+    reports_valid: 0.20
+    deterministic_artifacts: 0.15
+thresholds:
+  quality_score_min: 0.80
+artifacts:
+  required:
+    - results/cns_deploy_gate.json
+    - results/cns_release_manifest.json
+    - results/cns_manifest_verification.json
+    - results/cns_reports_contract.json
+    - results/cns_quality_gate.json

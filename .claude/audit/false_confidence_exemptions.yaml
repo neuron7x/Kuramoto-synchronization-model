@@ -1,0 +1,312 @@
+schema_version: 1
+documented_at: '2026-04-27'
+rationale: 'Historical baseline of 71 false-confidence findings on the live tree at 2026-04-27. Each entry
+  below is an explicit waiver with a per-class reason. The detector remains a regression detector: any
+  NEW finding (a file crossing the threshold for the first time) is not on this manifest and will trip
+  the gate.'
+exemptions:
+- finding_id: C10-BROAD-EXCEPTION-application/api/service.py
+  reason: except Exception concentration on sandbox boundaries, plugin loaders, runtime telemetry, and
+    CLI top-level handlers where broad catch is the documented contract (preserve service stability, log
+    + degrade gracefully). Each handler audited 2026-04-27; narrower exception types are tracked per-module.
+- finding_id: C10-BROAD-EXCEPTION-application/api/system_access.py
+  reason: except Exception concentration on sandbox boundaries, plugin loaders, runtime telemetry, and
+    CLI top-level handlers where broad catch is the documented contract (preserve service stability, log
+    + degrade gracefully). Each handler audited 2026-04-27; narrower exception types are tracked per-module.
+- finding_id: C10-BROAD-EXCEPTION-application/microservices/base.py
+  reason: except Exception concentration on sandbox boundaries, plugin loaders, runtime telemetry, and
+    CLI top-level handlers where broad catch is the documented contract (preserve service stability, log
+    + degrade gracefully). Each handler audited 2026-04-27; narrower exception types are tracked per-module.
+- finding_id: C10-BROAD-EXCEPTION-application/runtime/decision_telemetry.py
+  reason: except Exception concentration on sandbox boundaries, plugin loaders, runtime telemetry, and
+    CLI top-level handlers where broad catch is the documented contract (preserve service stability, log
+    + degrade gracefully). Each handler audited 2026-04-27; narrower exception types are tracked per-module.
+- finding_id: C10-BROAD-EXCEPTION-core/agent/scheduler.py
+  reason: except Exception concentration on sandbox boundaries, plugin loaders, runtime telemetry, and
+    CLI top-level handlers where broad catch is the documented contract (preserve service stability, log
+    + degrade gracefully). Each handler audited 2026-04-27; narrower exception types are tracked per-module.
+- finding_id: C10-BROAD-EXCEPTION-core/architecture_integrator/lifecycle.py
+  reason: except Exception concentration on sandbox boundaries, plugin loaders, runtime telemetry, and
+    CLI top-level handlers where broad catch is the documented contract (preserve service stability, log
+    + degrade gracefully). Each handler audited 2026-04-27; narrower exception types are tracked per-module.
+- finding_id: C10-BROAD-EXCEPTION-core/data/async_ingestion.py
+  reason: except Exception concentration on sandbox boundaries, plugin loaders, runtime telemetry, and
+    CLI top-level handlers where broad catch is the documented contract (preserve service stability, log
+    + degrade gracefully). Each handler audited 2026-04-27; narrower exception types are tracked per-module.
+- finding_id: C10-BROAD-EXCEPTION-core/indicators/entropy.py
+  reason: except Exception concentration on sandbox boundaries, plugin loaders, runtime telemetry, and
+    CLI top-level handlers where broad catch is the documented contract (preserve service stability, log
+    + degrade gracefully). Each handler audited 2026-04-27; narrower exception types are tracked per-module.
+- finding_id: C10-BROAD-EXCEPTION-core/indicators/trading.py
+  reason: except Exception concentration on sandbox boundaries, plugin loaders, runtime telemetry, and
+    CLI top-level handlers where broad catch is the documented contract (preserve service stability, log
+    + degrade gracefully). Each handler audited 2026-04-27; narrower exception types are tracked per-module.
+- finding_id: C10-BROAD-EXCEPTION-core/utils/logging.py
+  reason: except Exception concentration on sandbox boundaries, plugin loaders, runtime telemetry, and
+    CLI top-level handlers where broad catch is the documented contract (preserve service stability, log
+    + degrade gracefully). Each handler audited 2026-04-27; narrower exception types are tracked per-module.
+- finding_id: C10-BROAD-EXCEPTION-core/utils/metrics.py
+  reason: except Exception concentration on sandbox boundaries, plugin loaders, runtime telemetry, and
+    CLI top-level handlers where broad catch is the documented contract (preserve service stability, log
+    + degrade gracefully). Each handler audited 2026-04-27; narrower exception types are tracked per-module.
+- finding_id: C10-BROAD-EXCEPTION-examples/neuro_optimization_validation.py
+  reason: except Exception concentration on sandbox boundaries, plugin loaders, runtime telemetry, and
+    CLI top-level handlers where broad catch is the documented contract (preserve service stability, log
+    + degrade gracefully). Each handler audited 2026-04-27; narrower exception types are tracked per-module.
+- finding_id: C10-BROAD-EXCEPTION-execution/live_loop.py
+  reason: except Exception concentration on sandbox boundaries, plugin loaders, runtime telemetry, and
+    CLI top-level handlers where broad catch is the documented contract (preserve service stability, log
+    + degrade gracefully). Each handler audited 2026-04-27; narrower exception types are tracked per-module.
+- finding_id: C10-BROAD-EXCEPTION-execution/oms.py
+  reason: except Exception concentration on sandbox boundaries, plugin loaders, runtime telemetry, and
+    CLI top-level handlers where broad catch is the documented contract (preserve service stability, log
+    + degrade gracefully). Each handler audited 2026-04-27; narrower exception types are tracked per-module.
+- finding_id: C10-BROAD-EXCEPTION-geosync_hpc/logging.py
+  reason: except Exception concentration on sandbox boundaries, plugin loaders, runtime telemetry, and
+    CLI top-level handlers where broad catch is the documented contract (preserve service stability, log
+    + degrade gracefully). Each handler audited 2026-04-27; narrower exception types are tracked per-module.
+- finding_id: C10-BROAD-EXCEPTION-interfaces/cli.py
+  reason: except Exception concentration on sandbox boundaries, plugin loaders, runtime telemetry, and
+    CLI top-level handlers where broad catch is the documented contract (preserve service stability, log
+    + degrade gracefully). Each handler audited 2026-04-27; narrower exception types are tracked per-module.
+- finding_id: C10-BROAD-EXCEPTION-observability/model_monitoring.py
+  reason: except Exception concentration on sandbox boundaries, plugin loaders, runtime telemetry, and
+    CLI top-level handlers where broad catch is the documented contract (preserve service stability, log
+    + degrade gracefully). Each handler audited 2026-04-27; narrower exception types are tracked per-module.
+- finding_id: C10-BROAD-EXCEPTION-runtime/link_activator.py
+  reason: except Exception concentration on sandbox boundaries, plugin loaders, runtime telemetry, and
+    CLI top-level handlers where broad catch is the documented contract (preserve service stability, log
+    + degrade gracefully). Each handler audited 2026-04-27; narrower exception types are tracked per-module.
+- finding_id: C10-BROAD-EXCEPTION-scripts/test_artifacts.py
+  reason: except Exception concentration on sandbox boundaries, plugin loaders, runtime telemetry, and
+    CLI top-level handlers where broad catch is the documented contract (preserve service stability, log
+    + degrade gracefully). Each handler audited 2026-04-27; narrower exception types are tracked per-module.
+- finding_id: C10-BROAD-EXCEPTION-src/audit/audit_logger.py
+  reason: except Exception concentration on sandbox boundaries, plugin loaders, runtime telemetry, and
+    CLI top-level handlers where broad catch is the documented contract (preserve service stability, log
+    + degrade gracefully). Each handler audited 2026-04-27; narrower exception types are tracked per-module.
+- finding_id: C10-BROAD-EXCEPTION-src/data/kafka_ingestion.py
+  reason: except Exception concentration on sandbox boundaries, plugin loaders, runtime telemetry, and
+    CLI top-level handlers where broad catch is the documented contract (preserve service stability, log
+    + degrade gracefully). Each handler audited 2026-04-27; narrower exception types are tracked per-module.
+- finding_id: C10-BROAD-EXCEPTION-src/geosync/nlca_core.py
+  reason: except Exception concentration on sandbox boundaries, plugin loaders, runtime telemetry, and
+    CLI top-level handlers where broad catch is the documented contract (preserve service stability, log
+    + degrade gracefully). Each handler audited 2026-04-27; narrower exception types are tracked per-module.
+- finding_id: C10-BROAD-EXCEPTION-src/mycelium_fractal_net/connectors/runner.py
+  reason: except Exception concentration on sandbox boundaries, plugin loaders, runtime telemetry, and
+    CLI top-level handlers where broad catch is the documented contract (preserve service stability, log
+    + degrade gracefully). Each handler audited 2026-04-27; narrower exception types are tracked per-module.
+- finding_id: C10-BROAD-EXCEPTION-tests/geosync_hpc/test_hpc_edge_cases.py
+  reason: except Exception concentration on sandbox boundaries, plugin loaders, runtime telemetry, and
+    CLI top-level handlers where broad catch is the documented contract (preserve service stability, log
+    + degrade gracefully). Each handler audited 2026-04-27; narrower exception types are tracked per-module.
+- finding_id: C10-BROAD-EXCEPTION-tools/production_gates/validator.py
+  reason: except Exception concentration on sandbox boundaries, plugin loaders, runtime telemetry, and
+    CLI top-level handlers where broad catch is the documented contract (preserve service stability, log
+    + degrade gracefully). Each handler audited 2026-04-27; narrower exception types are tracked per-module.
+- finding_id: C2-DOCKER-coherence_bridge-Dockerfile-requirements.txt
+  reason: "Pre-baseline Docker scanner path; manifest mismatch documented. Replacement requires unified\
+    \ scanner path across coherence_bridge, cortex_service, and sandbox Dockerfiles \u2014 out of scope\
+    \ for this PR."
+- finding_id: C2-DOCKER-cortex_service-Dockerfile-requirements.txt
+  reason: "Pre-baseline Docker scanner path; manifest mismatch documented. Replacement requires unified\
+    \ scanner path across coherence_bridge, cortex_service, and sandbox Dockerfiles \u2014 out of scope\
+    \ for this PR."
+- finding_id: C2-DOCKER-sandbox-Dockerfile-requirements.txt
+  reason: "Pre-baseline Docker scanner path; manifest mismatch documented. Replacement requires unified\
+    \ scanner path across coherence_bridge, cortex_service, and sandbox Dockerfiles \u2014 out of scope\
+    \ for this PR."
+- finding_id: C3-tests/core/indicators/test_flow_metrics.py-test_qilm_default_eps_is_safe
+  reason: Test name asserts safety/correctness behavior the test body checks indirectly via type-narrowing
+    or boundary input. Each case audited 2026-04-27; widening the test to add explicit attacker-input
+    negative cases is tracked separately.
+- finding_id: C3-tests/core/orchestrator/test_mode_orchestrator.py-test_hard_breach_forces_safe_exit
+  reason: Test name asserts safety/correctness behavior the test body checks indirectly via type-narrowing
+    or boundary input. Each case audited 2026-04-27; widening the test to add explicit attacker-input
+    negative cases is tracked separately.
+- finding_id: C3-tests/core/orchestrator/test_mode_orchestrator.py-test_safe_exit_unlocks_to_rest
+  reason: Test name asserts safety/correctness behavior the test body checks indirectly via type-narrowing
+    or boundary input. Each case audited 2026-04-27; widening the test to add explicit attacker-input
+    negative cases is tracked separately.
+- finding_id: C3-tests/formal/test_tla_specs_present.py-test_tla_spec_lists_required_safety_properties
+  reason: Test name asserts safety/correctness behavior the test body checks indirectly via type-narrowing
+    or boundary input. Each case audited 2026-04-27; widening the test to add explicit attacker-input
+    negative cases is tracked separately.
+- finding_id: C3-tests/test_l2_killtest.py-test_queue_imbalance_zero_sizes_safe
+  reason: Test name asserts safety/correctness behavior the test body checks indirectly via type-narrowing
+    or boundary input. Each case audited 2026-04-27; widening the test to add explicit attacker-input
+    negative cases is tracked separately.
+- finding_id: C3-tests/test_value_functions.py-test_dislocation_nan_safe
+  reason: Test name asserts safety/correctness behavior the test body checks indirectly via type-narrowing
+    or boundary input. Each case audited 2026-04-27; widening the test to add explicit attacker-input
+    negative cases is tracked separately.
+- finding_id: C3-tests/unit/config/test_experiment_config.py-test_postgres_rejects_insecure_sslmode
+  reason: Test name asserts safety/correctness behavior the test body checks indirectly via type-narrowing
+    or boundary input. Each case audited 2026-04-27; widening the test to add explicit attacker-input
+    negative cases is tracked separately.
+- finding_id: C3-tests/unit/core/test_compat.py-test_safe_isoformat_round_trip
+  reason: Test name asserts safety/correctness behavior the test body checks indirectly via type-narrowing
+    or boundary input. Each case audited 2026-04-27; widening the test to add explicit attacker-input
+    negative cases is tracked separately.
+- finding_id: C3-tests/unit/libs/test_db_postgres.py-test_factory_rejects_insecure_sslmode
+  reason: Test name asserts safety/correctness behavior the test body checks indirectly via type-narrowing
+    or boundary input. Each case audited 2026-04-27; widening the test to add explicit attacker-input
+    negative cases is tracked separately.
+- finding_id: C3-tests/unit/test_indicators_ricci.py-test_shortest_path_length_safe_returns_inf_when_unweighted_fails
+  reason: Test name asserts safety/correctness behavior the test body checks indirectly via type-narrowing
+    or boundary input. Each case audited 2026-04-27; widening the test to add explicit attacker-input
+    negative cases is tracked separately.
+- finding_id: C3-tests/unit/tracing/test_distributed.py-test_property_normalize_correlation_accepts_safe_text
+  reason: Test name asserts safety/correctness behavior the test body checks indirectly via type-narrowing
+    or boundary input. Each case audited 2026-04-27; widening the test to add explicit attacker-input
+    negative cases is tracked separately.
+- finding_id: C6-DELEGATE-DEPS-TRUTH
+  reason: 'C6 is a synthetic pointer to dependency-truth unifier (D6 class: direct-imports-of-transitive-deps
+    detection delegated to deptry). Cleared by tools/deps/validate_dependency_truth.py + #453 D7 detector.'
+- finding_id: C8-TYPE-IGNORE-conftest.py
+  reason: "Type-ignore concentration is a third-party typing gap (pandas, strawberry, prometheus, sqlalchemy\
+    \ stubs). Each # type: ignore audited 2026-04-27 against mypy --strict; tightening requires upstream\
+    \ stub fixes \u2014 out of scope."
+- finding_id: C8-TYPE-IGNORE-core/tracing/distributed.py
+  reason: "Type-ignore concentration is a third-party typing gap (pandas, strawberry, prometheus, sqlalchemy\
+    \ stubs). Each # type: ignore audited 2026-04-27 against mypy --strict; tightening requires upstream\
+    \ stub fixes \u2014 out of scope."
+- finding_id: C8-TYPE-IGNORE-observability/tracing.py
+  reason: "Type-ignore concentration is a third-party typing gap (pandas, strawberry, prometheus, sqlalchemy\
+    \ stubs). Each # type: ignore audited 2026-04-27 against mypy --strict; tightening requires upstream\
+    \ stub fixes \u2014 out of scope."
+- finding_id: C8-TYPE-IGNORE-tests/contracts/test_execution_pacts.py
+  reason: "Type-ignore concentration is a third-party typing gap (pandas, strawberry, prometheus, sqlalchemy\
+    \ stubs). Each # type: ignore audited 2026-04-27 against mypy --strict; tightening requires upstream\
+    \ stub fixes \u2014 out of scope."
+- finding_id: C8-TYPE-IGNORE-tests/integration/test_substrate_gate_chain.py
+  reason: "Type-ignore concentration is a third-party typing gap (pandas, strawberry, prometheus, sqlalchemy\
+    \ stubs). Each # type: ignore audited 2026-04-27 against mypy --strict; tightening requires upstream\
+    \ stub fixes \u2014 out of scope."
+- finding_id: C8-TYPE-IGNORE-tests/test_energy.py
+  reason: "Type-ignore concentration is a third-party typing gap (pandas, strawberry, prometheus, sqlalchemy\
+    \ stubs). Each # type: ignore audited 2026-04-27 against mypy --strict; tightening requires upstream\
+    \ stub fixes \u2014 out of scope."
+- finding_id: C8-TYPE-IGNORE-tests/unit/core/test_ricci_flow_iterated.py
+  reason: "Type-ignore concentration is a third-party typing gap (pandas, strawberry, prometheus, sqlalchemy\
+    \ stubs). Each # type: ignore audited 2026-04-27 against mypy --strict; tightening requires upstream\
+    \ stub fixes \u2014 out of scope."
+- finding_id: C8-TYPE-IGNORE-tests/unit/observability/test_health_checks.py
+  reason: "Type-ignore concentration is a third-party typing gap (pandas, strawberry, prometheus, sqlalchemy\
+    \ stubs). Each # type: ignore audited 2026-04-27 against mypy --strict; tightening requires upstream\
+    \ stub fixes \u2014 out of scope."
+- finding_id: C8-TYPE-IGNORE-tests/unit/observability/test_tracing.py
+  reason: "Type-ignore concentration is a third-party typing gap (pandas, strawberry, prometheus, sqlalchemy\
+    \ stubs). Each # type: ignore audited 2026-04-27 against mypy --strict; tightening requires upstream\
+    \ stub fixes \u2014 out of scope."
+- finding_id: C8-TYPE-IGNORE-tests/unit/runtime/test_rebus_gate.py
+  reason: "Type-ignore concentration is a third-party typing gap (pandas, strawberry, prometheus, sqlalchemy\
+    \ stubs). Each # type: ignore audited 2026-04-27 against mypy --strict; tightening requires upstream\
+    \ stub fixes \u2014 out of scope."
+- finding_id: C8-TYPE-IGNORE-tests/unit/test_data_ingestion.py
+  reason: "Type-ignore concentration is a third-party typing gap (pandas, strawberry, prometheus, sqlalchemy\
+    \ stubs). Each # type: ignore audited 2026-04-27 against mypy --strict; tightening requires upstream\
+    \ stub fixes \u2014 out of scope."
+- finding_id: C8-TYPE-IGNORE-tests/meta/test_feedback_guards_are_live.py
+  reason: 'Detector false-positive corrected, not masked. All 10 `type: ignore`
+    occurrences are STRING LITERALS / docstring text \u2014 synthetic source the G7
+    guard-efficacy test injects into temp files to prove the anti-`# type:
+    ignore[misc]` acceptor falsifier fires; none is a real directive silencing
+    this module. Verified 2026-05-18: `mypy --strict
+    tests/meta/test_feedback_guards_are_live.py` => Success, 0 issues (the
+    apparent_claim is TRUE); zero code-level `# type: ignore` outside strings.
+    Added with #772 (capstone); same audited pattern as the other
+    C8-TYPE-IGNORE test exemptions above.'
+- finding_id: C9-NO-COVER-analytics/signals/news_sentiment.py
+  reason: '# pragma: no cover concentration on platform-specific or environment-conditional branches (e.g.
+    async ingestion guards, kafka transports, fallback executors). Each pragma audited 2026-04-27; replacement
+    with explicit branch tests is tracked as coverage-deepening backlog.'
+- finding_id: C9-NO-COVER-analytics/signals/pipeline.py
+  reason: '# pragma: no cover concentration on platform-specific or environment-conditional branches (e.g.
+    async ingestion guards, kafka transports, fallback executors). Each pragma audited 2026-04-27; replacement
+    with explicit branch tests is tracked as coverage-deepening backlog.'
+- finding_id: C9-NO-COVER-application/api/metrics.py
+  reason: '# pragma: no cover concentration on platform-specific or environment-conditional branches (e.g.
+    async ingestion guards, kafka transports, fallback executors). Each pragma audited 2026-04-27; replacement
+    with explicit branch tests is tracked as coverage-deepening backlog.'
+- finding_id: C9-NO-COVER-application/api/service.py
+  reason: '# pragma: no cover concentration on platform-specific or environment-conditional branches (e.g.
+    async ingestion guards, kafka transports, fallback executors). Each pragma audited 2026-04-27; replacement
+    with explicit branch tests is tracked as coverage-deepening backlog.'
+- finding_id: C9-NO-COVER-core/accelerators/numeric.py
+  reason: '# pragma: no cover concentration on platform-specific or environment-conditional branches (e.g.
+    async ingestion guards, kafka transports, fallback executors). Each pragma audited 2026-04-27; replacement
+    with explicit branch tests is tracked as coverage-deepening backlog.'
+- finding_id: C9-NO-COVER-core/agent/sandbox.py
+  reason: '# pragma: no cover concentration on platform-specific or environment-conditional branches (e.g.
+    async ingestion guards, kafka transports, fallback executors). Each pragma audited 2026-04-27; replacement
+    with explicit branch tests is tracked as coverage-deepening backlog.'
+- finding_id: C9-NO-COVER-core/config/kuramoto_ricci.py
+  reason: '# pragma: no cover concentration on platform-specific or environment-conditional branches (e.g.
+    async ingestion guards, kafka transports, fallback executors). Each pragma audited 2026-04-27; replacement
+    with explicit branch tests is tracked as coverage-deepening backlog.'
+- finding_id: C9-NO-COVER-core/data/polars_pipeline.py
+  reason: '# pragma: no cover concentration on platform-specific or environment-conditional branches (e.g.
+    async ingestion guards, kafka transports, fallback executors). Each pragma audited 2026-04-27; replacement
+    with explicit branch tests is tracked as coverage-deepening backlog.'
+- finding_id: C9-NO-COVER-core/indicators/entropy.py
+  reason: '# pragma: no cover concentration on platform-specific or environment-conditional branches (e.g.
+    async ingestion guards, kafka transports, fallback executors). Each pragma audited 2026-04-27; replacement
+    with explicit branch tests is tracked as coverage-deepening backlog.'
+- finding_id: C9-NO-COVER-core/indicators/hurst.py
+  reason: '# pragma: no cover concentration on platform-specific or environment-conditional branches (e.g.
+    async ingestion guards, kafka transports, fallback executors). Each pragma audited 2026-04-27; replacement
+    with explicit branch tests is tracked as coverage-deepening backlog.'
+- finding_id: C9-NO-COVER-core/indicators/ricci.py
+  reason: '# pragma: no cover concentration on platform-specific or environment-conditional branches (e.g.
+    async ingestion guards, kafka transports, fallback executors). Each pragma audited 2026-04-27; replacement
+    with explicit branch tests is tracked as coverage-deepening backlog.'
+- finding_id: C9-NO-COVER-core/indicators/trading.py
+  reason: '# pragma: no cover concentration on platform-specific or environment-conditional branches (e.g.
+    async ingestion guards, kafka transports, fallback executors). Each pragma audited 2026-04-27; replacement
+    with explicit branch tests is tracked as coverage-deepening backlog.'
+- finding_id: C9-NO-COVER-core/utils/cache.py
+  reason: '# pragma: no cover concentration on platform-specific or environment-conditional branches (e.g.
+    async ingestion guards, kafka transports, fallback executors). Each pragma audited 2026-04-27; replacement
+    with explicit branch tests is tracked as coverage-deepening backlog.'
+- finding_id: C9-NO-COVER-core/utils/metrics.py
+  reason: '# pragma: no cover concentration on platform-specific or environment-conditional branches (e.g.
+    async ingestion guards, kafka transports, fallback executors). Each pragma audited 2026-04-27; replacement
+    with explicit branch tests is tracked as coverage-deepening backlog.'
+- finding_id: C9-NO-COVER-execution/live_loop.py
+  reason: '# pragma: no cover concentration on platform-specific or environment-conditional branches (e.g.
+    async ingestion guards, kafka transports, fallback executors). Each pragma audited 2026-04-27; replacement
+    with explicit branch tests is tracked as coverage-deepening backlog.'
+- finding_id: C9-NO-COVER-libs/db/access.py
+  reason: '# pragma: no cover concentration on platform-specific or environment-conditional branches (e.g.
+    async ingestion guards, kafka transports, fallback executors). Each pragma audited 2026-04-27; replacement
+    with explicit branch tests is tracked as coverage-deepening backlog.'
+- finding_id: C9-NO-COVER-observability/tracing.py
+  reason: '# pragma: no cover concentration on platform-specific or environment-conditional branches (e.g.
+    async ingestion guards, kafka transports, fallback executors). Each pragma audited 2026-04-27; replacement
+    with explicit branch tests is tracked as coverage-deepening backlog.'
+- finding_id: C9-NO-COVER-runtime/thermo_controller.py
+  reason: '# pragma: no cover concentration on platform-specific or environment-conditional branches (e.g.
+    async ingestion guards, kafka transports, fallback executors). Each pragma audited 2026-04-27; replacement
+    with explicit branch tests is tracked as coverage-deepening backlog.'
+- finding_id: C9-NO-COVER-src/audit/audit_logger.py
+  reason: '# pragma: no cover concentration on platform-specific or environment-conditional branches (e.g.
+    async ingestion guards, kafka transports, fallback executors). Each pragma audited 2026-04-27; replacement
+    with explicit branch tests is tracked as coverage-deepening backlog.'
+- finding_id: C9-NO-COVER-src/data/kafka_ingestion.py
+  reason: '# pragma: no cover concentration on platform-specific or environment-conditional branches (e.g.
+    async ingestion guards, kafka transports, fallback executors). Each pragma audited 2026-04-27; replacement
+    with explicit branch tests is tracked as coverage-deepening backlog.'
+- finding_id: C3-tests/unit/indicators/test_cache_locate_allowlist.py-test_locate_rejects_unsafe_modules
+  reason: >-
+    Parametrized security regression test from the JSON-cache allowlist fix (PR 907). The single
+    pytest.raises body executes across six attacker inputs (os, subprocess, builtins exec/eval, shutil,
+    importlib); the C3 assert-count heuristic miscounts parametrized bodies. Added 2026-06-10, postdating
+    the 2026-04-27 baseline; widening to explicit per-case asserts is tracked as test-clarity backlog.
+- finding_id: C3-tests/unit/indicators/test_cache_locate_allowlist.py-test_locate_allows_safe_modules
+  reason: >-
+    Parametrized positive-path test from the JSON-cache allowlist fix (PR 907). The single assert body
+    executes across three allowlisted inputs (decimal Decimal, pathlib PurePosixPath, collections
+    OrderedDict); the C3 assert-count heuristic miscounts parametrized bodies. Added 2026-06-10, postdating
+    the 2026-04-27 baseline; widening to explicit per-case asserts is tracked as test-clarity backlog.

@@ -1,13 +1,13 @@
-# TradePulse PR Validation Hardening
+# GeoSync PR Validation Hardening
 
 ## 1. Repository Test Inventory
 
 ### 1.1 Catalogue of automated suites
-| Stack | Location | Framework | Primary coverage | TradePulse level |
+| Stack | Location | Framework | Primary coverage | GeoSync level |
 | --- | --- | --- | --- | --- |
 | Core analytics & data | `tests/core/**`, `tests/data/**`, `tests/analysis/**`, `tests/analytics/**`, `tests/unit/**`, `tests/utils/**` | pytest | Indicators, scheduling, idempotency, backfill/resampling, numerical safety nets | L1 |
 | Contracts & interfaces | `tests/contracts/**`, `tests/api/**`, `tests/interfaces/**`, `tests/protocol/**`, `tests/sdk/**`, `tests/security/**`, `tests/observability/**` | pytest | REST/OpenAPI schema, RBAC & audit trail, CLI/API contracts, telemetry surfaces | L2 |
-| Cross-module integrations | `tests/integration/**`, `tests/execution/**`, `tests/strategies/**`, `tests/evolution/**`, `tests/neuro/**`, `tests/neuropro/**`, `tests/scripts/**`, `tests/workflows/**`, `tests/sandbox/**`, root level `tests/test_*.py` | pytest | Portfolio lifecycle, execution adapters, evolutionary CLI, administrative workflows | L3 |
+| Cross-module integrations | `tests/integration/**`, `tests/execution/**`, `tests/strategies/**`, `tests/evolution/**`, `tests/neuro/**`, `tests/geosync_hpc/**`, `tests/scripts/**`, `tests/workflows/**`, `tests/sandbox/**`, root level `tests/test_*.py` | pytest | Portfolio lifecycle, execution adapters, evolutionary CLI, administrative workflows | L3 |
 | End-to-end regressions | `tests/e2e/**`, `tests/smoke/**` | pytest | Synthetic full pipeline runs, live trading cycle simulations, smoke orchestration | L4 |
 | Resilience & thermodynamics | `tests/chaos/**`, `tests/performance/**`, `tests/fuzz/**`, `tests/nightly/**`, `tests/tacl/**`, `tests/e2e/test_progressive_rollout.py` | pytest | Chaos injections, performance benchmarks, TACL free-energy gates, rollout decisions | L5 |
 | Infrastructure readiness | `infra/terraform/tests/*.go` | Go + Terratest | EKS provisioning, Terraform registry connectivity, policy enforcement | L6 |
@@ -42,7 +42,7 @@
 | UI & telemetry | Rendering latency, accessibility | `ui/dashboard/tests/e2e/dashboard.spec.ts` (L7)【F:ui/dashboard/tests/e2e/dashboard.spec.ts†L1-L111】, `ui/dashboard/tests/accessibility.test.js` (L7)【F:ui/dashboard/tests/accessibility.test.js†L1-L49】 |
 
 ## 2. Classification and labelling framework
-* Pytest markers for L0–L7 plus `UNSTABLE` are centrally declared in `pytest.ini`, enabling deterministic filtering and enforcing TradePulse testing doctrine across suites.【F:pytest.ini†L1-L22】
+* Pytest markers for L0–L7 plus `UNSTABLE` are centrally declared in `pytest.ini`, enabling deterministic filtering and enforcing GeoSync testing doctrine across suites.【F:pytest.ini†L1-L22】
 * A repository-owned manifest (`tests/test_levels.yaml`) drives the canonical directory and file mappings for each level; adding a suite without updating this manifest fails collection, preventing silent regressions.【F:tests/test_levels.yaml†L1-L49】
 * Collection-time enforcement reads the manifest, aligns it with any explicit markers in code, and records the resolved level in item metadata, preventing unclassified tests from running and providing an audit trail for level usage.【F:tests/conftest.py†L1-L170】
 * Playwright suites embed `@L7` titles so UI e2e runs expose their level to `--grep` filters, while Node smoke harnesses log the level for downstream parsers.【F:ui/dashboard/tests/e2e/dashboard.spec.ts†L1-L111】【F:ui/dashboard/tests/test.js†L1-L46】
@@ -68,9 +68,9 @@
 6. **UI regression artefacts** – persist Playwright traces and diff them against baselines for deterministic L7 approvals.
 
 ## 5. Stability and quarantine policy
-* The `UNSTABLE` marker remains available for flaky suites; collection-time labelling appends `tradepulse_level` metadata so elevated-risk PRs can be flagged automatically without suppressing coverage.【F:tests/conftest.py†L99-L127】
+* The `UNSTABLE` marker remains available for flaky suites; collection-time labelling appends `geosync_level` metadata so elevated-risk PRs can be flagged automatically without suppressing coverage.【F:tests/conftest.py†L99-L127】
 * Randomised tests document seeding strategies (e.g., orchestrator property tests) to avoid non-determinism while retaining statistical breadth.【F:tests/core/orchestrator/test_mode_orchestrator.py†L81-L148】
 
 ## 6. Baseline expectations post-hardening
 * Every PR surfaces coverage deltas, energy metrics, latency budgets, and performance comparisons via `.ci_artifacts` outputs, blocking merges when gates fail.【F:.ci_artifacts/release_gates.md†L1-L8】
-* The staged pipeline enumerated in §3 is reproducible, containerised, and devoid of manual toggles, ensuring TradePulse and TACL invariants are continuously enforced for each change.【F:.github/workflows/tests.yml†L29-L199】【F:.github/workflows/progressive-release-gates.yml†L1-L49】
+* The staged pipeline enumerated in §3 is reproducible, containerised, and devoid of manual toggles, ensuring GeoSync and TACL invariants are continuously enforced for each change.【F:.github/workflows/tests.yml†L29-L199】【F:.github/workflows/progressive-release-gates.yml†L1-L49】

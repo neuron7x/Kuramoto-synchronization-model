@@ -1,5 +1,5 @@
 ---
-owner: docs@tradepulse
+owner: docs@geosync
 report_date: 2025-12-28
 scope: documentation-validation
 status: completed

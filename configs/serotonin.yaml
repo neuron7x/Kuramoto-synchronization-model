@@ -1,7 +1,7 @@
 active_profile: v24
 
 serotonin_legacy:
-  # === Legacy Controller Fields (src/tradepulse/) ===
+  # === Legacy Controller Fields (src/geosync/) ===
   tonic_beta: 0.35
   phasic_beta: 0.55
   stress_gain: 1.0

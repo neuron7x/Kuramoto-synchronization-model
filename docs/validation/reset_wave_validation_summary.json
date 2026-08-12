@@ -1,0 +1,17 @@
+{
+  "n": 400,
+  "accuracy": 1.0,
+  "stable_region_rule": "coupling_gain*dt<=0.2",
+  "timestamp_utc": "2026-05-03T00:00:00Z",
+  "test_evidence": {
+    "test_module": "tests/test_reset_wave_stress_validation.py",
+    "grid_cells": 108,
+    "seeds_per_cell": 20,
+    "negative_cases_covered": [
+      "coupling_gain*dt > 0.2 → nonconvergence allowed",
+      "max_phase_error exceedance → safety lock",
+      "phase wrap boundary at ±π",
+      "deterministic replay"
+    ]
+  }
+}

@@ -1,0 +1,60 @@
+{
+  "$schema": "https://json-schema.org/draft/2020-12/schema",
+  "$id": "research/ctc_falsify/c5/schema/ctc_falsify_c5_result.schema.json",
+  "title": "CTC-FALSIFY-001-C5 result",
+  "type": "object",
+  "additionalProperties": false,
+  "required": [
+    "experiment_id",
+    "verdict",
+    "claim",
+    "boundary",
+    "oracle",
+    "thresholds",
+    "config_hash",
+    "repro_hash"
+  ],
+  "properties": {
+    "experiment_id": { "const": "CTC-FALSIFY-001-C5" },
+    "verdict": {
+      "type": "string",
+      "enum": [
+        "C5_IDENTIFIABILITY_LIMIT",
+        "C5_ESTIMATOR_QUALITY_GAP",
+        "C5_INADMISSIBLE_AMBIGUOUS",
+        "C5_INADMISSIBLE_TRAIN_TEST_LEAKAGE"
+      ]
+    },
+    "claim": { "type": "string", "minLength": 1 },
+    "boundary": { "type": "string", "minLength": 1 },
+    "oracle": {
+      "type": "object",
+      "additionalProperties": false,
+      "required": [
+        "oos_auc",
+        "n_train",
+        "n_test",
+        "n_features",
+        "train_test_disjoint"
+      ],
+      "properties": {
+        "oos_auc": { "type": "number" },
+        "n_train": { "type": "integer", "minimum": 0 },
+        "n_test": { "type": "integer", "minimum": 0 },
+        "n_features": { "type": "integer", "minimum": 0 },
+        "train_test_disjoint": { "type": "boolean" }
+      }
+    },
+    "thresholds": {
+      "type": "object",
+      "additionalProperties": false,
+      "required": ["auc_chance_hi", "auc_separable"],
+      "properties": {
+        "auc_chance_hi": { "type": "number" },
+        "auc_separable": { "type": "number" }
+      }
+    },
+    "config_hash": { "type": "string", "pattern": "^[a-f0-9]{64}$" },
+    "repro_hash": { "type": "string", "pattern": "^[a-f0-9]{64}$" }
+  }
+}

@@ -1,0 +1,68 @@
+{
+  "$schema": "http://json-schema.org/draft-07/schema#",
+  "$id": "geosync.component_strength_report.v1",
+  "title": "GeoSync Component Test-Strength Report",
+  "description": "Per-component coverage + mutation strength. Coverage says what executed; mutation says whether tests detect wrong behaviour. verified_test_strength = min(branch_coverage, mutation_score) is the only number allowed to be quoted as strength. Emitted by tools/audit_component_strength.py.",
+  "type": "object",
+  "additionalProperties": false,
+  "required": ["schema", "components", "forbidden_gaps", "verdict"],
+  "properties": {
+    "schema": { "const": "geosync.component_strength_report.v1" },
+    "components": {
+      "type": "array",
+      "items": {
+        "type": "object",
+        "additionalProperties": false,
+        "required": [
+          "name",
+          "coverage_profile",
+          "line_coverage",
+          "branch_coverage",
+          "line_coverage_raw",
+          "branch_coverage_raw",
+          "mutation_tool",
+          "killed",
+          "survived",
+          "valid_mutants",
+          "mutation_score",
+          "oracle_gap",
+          "verified_test_strength",
+          "strength_class",
+          "verdict"
+        ],
+        "properties": {
+          "name": { "type": "string" },
+          "coverage_profile": { "type": "string" },
+          "line_coverage": { "type": "number", "minimum": 0, "maximum": 100 },
+          "branch_coverage": { "type": "number", "minimum": 0, "maximum": 100 },
+          "line_coverage_raw": {
+            "type": "array", "items": { "type": "integer", "minimum": 0 },
+            "minItems": 2, "maxItems": 2
+          },
+          "branch_coverage_raw": {
+            "type": "array", "items": { "type": "integer", "minimum": 0 },
+            "minItems": 2, "maxItems": 2
+          },
+          "mutation_tool": { "type": ["string", "null"] },
+          "killed": { "type": "integer", "minimum": 0 },
+          "survived": { "type": "integer", "minimum": 0 },
+          "valid_mutants": { "type": "integer", "minimum": 0 },
+          "mutation_score": { "type": ["number", "null"], "minimum": 0, "maximum": 100 },
+          "oracle_gap": { "type": ["number", "null"] },
+          "verified_test_strength": { "type": ["number", "null"], "minimum": 0, "maximum": 100 },
+          "strength_class": {
+            "type": "string",
+            "enum": ["MUTATION_VERIFIED", "COVERAGE_ONLY", "UNMEASURED"]
+          },
+          "verdict": { "type": "string", "enum": ["PASS", "FAIL"] }
+        }
+      }
+    },
+    "forbidden_gaps": { "type": "array", "items": { "type": "string" } },
+    "verdict": { "type": "string", "enum": ["PASS", "FAIL"] },
+    "report_only": {
+      "type": "boolean",
+      "description": "True when generated with --report-only (non-enforcing): the process exited 0 despite a possible FAIL verdict, so a release gate must not treat this artifact as a passing check."
+    }
+  }
+}

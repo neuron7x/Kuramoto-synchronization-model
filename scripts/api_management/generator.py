@@ -1,3 +1,5 @@
+# Copyright (c) 2023-2026 Yaroslav Vasylenko (neuron7xLab)
+# SPDX-License-Identifier: MIT
 """Artifact generation helpers for API governance."""
 
 from __future__ import annotations
@@ -52,18 +54,12 @@ class ApiArtifactGenerator:
         docs_dir.mkdir(parents=True, exist_ok=True)
         examples_dir.mkdir(parents=True, exist_ok=True)
 
-        python_client = self._generate_python_client(
-            clients_dir / "tradepulse_client.py"
-        )
-        typescript_client = self._generate_typescript_client(
-            clients_dir / "tradepulseClient.ts"
-        )
+        python_client = self._generate_python_client(clients_dir / "geosync_client.py")
+        typescript_client = self._generate_typescript_client(clients_dir / "geosyncClient.ts")
         overview = self._generate_overview(docs_dir / "overview.md")
         routes_index = self._generate_route_index(docs_dir / "routes.json")
         webhooks_doc = self._generate_webhook_doc(docs_dir / "webhooks.md")
-        smoke_tests_index = self._generate_smoke_tests_index(
-            docs_dir / "smoke_tests.json"
-        )
+        smoke_tests_index = self._generate_smoke_tests_index(docs_dir / "smoke_tests.json")
         changelog = self._generate_changelog(docs_dir / "CHANGELOG.md")
         deprecations = self._generate_deprecations(docs_dir / "deprecations.md")
         migrations = self._generate_migrations(docs_dir / "migrations.md")
@@ -106,9 +102,8 @@ class ApiArtifactGenerator:
         method_blocks: list[str] = []
         for route in routes:
             method_blocks.append(self._render_python_method(route))
-        client_template = textwrap.dedent(
-            """
-            \"\"\"Auto-generated TradePulse REST client.\"\"\"
+        client_template = textwrap.dedent("""
+            \"\"\"Auto-generated GeoSync REST client.\"\"\"
 
             from __future__ import annotations
 
@@ -117,8 +112,8 @@ class ApiArtifactGenerator:
             import httpx
 
 
-            class TradePulseAPIClient:
-                \"\"\"Minimal synchronous client for the TradePulse public API.\"\"\"
+            class GeoSyncAPIClient:
+                \"\"\"Minimal synchronous client for the GeoSync public API.\"\"\"
 
                 def __init__(
                     self,
@@ -128,7 +123,7 @@ class ApiArtifactGenerator:
                     timeout: float = 10.0,
                     transport: httpx.BaseTransport | None = None,
                 ) -> None:
-                    self._base_url = base_url.rstrip("/") or "https://api.tradepulse"
+                    self._base_url = base_url.rstrip("/") or "https://api.geosync"
                     self._default_headers = dict(default_headers or {})
                     self._client = httpx.Client(
                         base_url=self._base_url,
@@ -142,24 +137,21 @@ class ApiArtifactGenerator:
 
                     self._client.close()
 
-                def with_headers(self, headers: Mapping[str, str]) -> "TradePulseAPIClient":
+                def with_headers(self, headers: Mapping[str, str]) -> "GeoSyncAPIClient":
                     \"\"\"Return a shallow copy with additional default headers.\"\"\"
 
                     combined = dict(self._default_headers)
                     combined.update(headers)
-                    return TradePulseAPIClient(
+                    return GeoSyncAPIClient(
                         base_url=self._base_url,
                         default_headers=combined,
                         timeout=float(self._client.timeout.connect),
                     )
 
             {{METHODS}}
-            """
-        ).strip()
+            """).strip()
         method_source = textwrap.indent("\n\n".join(method_blocks), "    ")
-        client_source = (
-            client_template.replace("{{METHODS}}", method_source).rstrip() + "\n"
-        )
+        client_source = client_template.replace("{{METHODS}}", method_source).rstrip() + "\n"
         _write_if_changed(path, client_source)
         return path
 
@@ -185,11 +177,7 @@ class ApiArtifactGenerator:
         lines.append(f"Scope: {route.scope}")
         lines.append(f"Cache: {route.cache.strategy}; max-age={route.cache.max_age}s")
         if route.idempotency.required:
-            ttl = (
-                f" ttl={route.idempotency.ttl_seconds}s"
-                if route.idempotency.ttl_seconds
-                else ""
-            )
+            ttl = f" ttl={route.idempotency.ttl_seconds}s" if route.idempotency.ttl_seconds else ""
             lines.append(
                 f"Idempotency: required via {route.idempotency.header or self._registry.metadata.idempotency_header}{ttl}"
             )
@@ -197,9 +185,7 @@ class ApiArtifactGenerator:
             lines.append("Idempotency: optional")
         return "\n".join(lines)
 
-    def _render_python_request_builder(
-        self, route: ApiRoute, path_params: Sequence[str]
-    ) -> str:
+    def _render_python_request_builder(self, route: ApiRoute, path_params: Sequence[str]) -> str:
         path_expr = route.path
         for name in path_params:
             path_expr = path_expr.replace(f"{{{name}}}", "{" + name + "}")
@@ -231,12 +217,9 @@ class ApiArtifactGenerator:
         return textwrap.indent("\n".join(lines), "    ")
 
     def _generate_typescript_client(self, path: Path) -> Path:
-        method_blocks = [
-            self._render_typescript_method(route) for route in self._registry.routes
-        ]
-        template = textwrap.dedent(
-            """
-/* Auto-generated TradePulse REST client (TypeScript). */
+        method_blocks = [self._render_typescript_method(route) for route in self._registry.routes]
+        template = textwrap.dedent("""
+/* Auto-generated GeoSync REST client (TypeScript). */
 
 export type RequestOptions = {
     headers?: Record<string, string>;
@@ -249,17 +232,17 @@ export interface ClientConfig {
     defaultHeaders?: Record<string, string>;
 }
 
-export class TradePulseClient {
+export class GeoSyncClient {
     private readonly baseUrl: string;
     private readonly defaultHeaders: Record<string, string>;
 
     constructor(config: ClientConfig = {}) {
-        this.baseUrl = (config.baseUrl || "https://api.tradepulse").replace(/\\u002F$/, "");
+        this.baseUrl = (config.baseUrl || "https://api.geosync").replace(/\\u002F$/, "");
         this.defaultHeaders = { ...(config.defaultHeaders || {}) };
     }
 
-    withHeaders(headers: Record<string, string>): TradePulseClient {
-        return new TradePulseClient({
+    withHeaders(headers: Record<string, string>): GeoSyncClient {
+        return new GeoSyncClient({
             baseUrl: this.baseUrl,
             defaultHeaders: { ...this.defaultHeaders, ...headers },
         });
@@ -267,8 +250,7 @@ export class TradePulseClient {
 
 {{METHODS}}
 }
-            """
-        ).strip()
+            """).strip()
         method_source = textwrap.indent("\n\n".join(method_blocks), "    ")
         source = template.replace("{{METHODS}}", method_source) + "\n"
         _write_if_changed(path, source)
@@ -326,9 +308,8 @@ export class TradePulseClient {
 
     def _render_metadata_section(self) -> str:
         metadata = self._registry.metadata
-        return textwrap.dedent(
-            f"""
-            # TradePulse API Governance Overview
+        return textwrap.dedent(f"""
+            # GeoSync API Governance Overview
 
             * Service: **{metadata.service}**
             * Release: **{metadata.release}**
@@ -336,8 +317,7 @@ export class TradePulseClient {
             * Default signature algorithm: `{metadata.default_signature_algorithm}`
             * Default idempotency header: `{metadata.idempotency_header}`
             * Compatibility tier: `{metadata.compatibility.default}` (support window {metadata.compatibility.support_window_days} days)
-            """
-        ).strip()
+            """).strip()
 
     def _render_environment_section(self) -> str:
         if not self._registry.environments:
@@ -368,9 +348,7 @@ export class TradePulseClient {
         for route in self._registry.routes:
             cache = f"{route.cache.strategy}; max-age={route.cache.max_age}; swr={route.cache.stale_while_revalidate}"
             rate_limit = _format_rate_limit(route.rate_limit)
-            throttle = (
-                f"burst={route.throttle.burst} / {route.throttle.period_seconds}s"
-            )
+            throttle = f"burst={route.throttle.burst} / {route.throttle.period_seconds}s"
             if route.idempotency.required:
                 ttl = (
                     f" ttl={route.idempotency.ttl_seconds}s"
@@ -382,9 +360,7 @@ export class TradePulseClient {
                 idempotency = "optional"
             signature = "required" if route.signatures.required else "optional"
             suffix = f" {route.signatures.version}" if route.signatures.version else ""
-            signature += (
-                f" ({route.signatures.algorithm} via {route.signatures.header}{suffix})"
-            )
+            signature += f" ({route.signatures.algorithm} via {route.signatures.header}{suffix})"
             webhooks = ", ".join(route.webhooks) if route.webhooks else "—"
             rows.append(
                 "| "
@@ -449,8 +425,7 @@ export class TradePulseClient {
         if not maintainers:
             return "## Maintainers\n\n_No maintainer records available._"
         bullet_lines = [
-            f"- **{maintainer.name}** — {maintainer.contact}"
-            for maintainer in maintainers
+            f"- **{maintainer.name}** — {maintainer.contact}" for maintainer in maintainers
         ]
         return "## Maintainers\n\n" + "\n".join(bullet_lines)
 
@@ -488,12 +463,8 @@ export class TradePulseClient {
                     or self._registry.metadata.idempotency_header,
                     "ttl_seconds": route.idempotency.ttl_seconds,
                 },
-                "request_schema": self._normalise_schema_reference(
-                    route.request_schema
-                ),
-                "response_schema": self._normalise_schema_reference(
-                    route.response_schema
-                ),
+                "request_schema": self._normalise_schema_reference(route.request_schema),
+                "response_schema": self._normalise_schema_reference(route.response_schema),
                 "webhooks": list(route.webhooks),
             }
             route_index.append(entry)
@@ -535,9 +506,7 @@ export class TradePulseClient {
                         "headers": dict(test.request.headers),
                         "body": test.request.body,
                         "expected_status": test.expected_status,
-                        "response_schema": self._normalise_schema_reference(
-                            test.response_schema
-                        ),
+                        "response_schema": self._normalise_schema_reference(test.response_schema),
                     }
                 )
         _write_json_if_changed(path, tests)
@@ -592,7 +561,7 @@ export class TradePulseClient {
 
     def _generate_visualization(self, path: Path) -> Path:
         lines = [
-            "digraph TradePulseAPI {",
+            "digraph GeoSyncAPI {",
             "    rankdir=LR;",
             "    node [shape=box, style=rounded, fontname=Helvetica];",
         ]
@@ -636,9 +605,7 @@ def _write_if_changed(path: Path, content: str) -> None:
     path.write_text(content, encoding="utf-8")
 
 
-def _write_json_if_changed(
-    path: Path, payload: Mapping[str, object] | Sequence[object]
-) -> None:
+def _write_json_if_changed(path: Path, payload: Mapping[str, object] | Sequence[object]) -> None:
     serialized = json.dumps(payload, indent=2, sort_keys=True)
     existing = path.read_text(encoding="utf-8") if path.exists() else None
     if existing == serialized:

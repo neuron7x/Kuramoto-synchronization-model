@@ -1,0 +1,114 @@
+# Diff-bound commit acceptor for X-10R-1 PR #4 — MFI TSV/CSV loader.
+#
+# What lands:
+#   * research/reconstruction/allocator/mfi_loader.py
+#       load_mfi_registry: pure-stdlib parser for ECB-MFI-shape
+#       TSV/CSV files; emits canonical bank_country_map +
+#       optional bank_weights from a configurable total_assets
+#       column. Fail-closed at every parsing step with line
+#       numbers in the diagnostic.
+#   * tests/reconstruction/allocator/test_mfi_loader.py
+#       23 new tests pinning happy-path TSV/CSV parsing,
+#       inline-string vs file-on-disk, optional assets column
+#       behaviour, blank-row tolerance, round-trip into
+#       SizeWeightedPrior and CountryToBankAllocator, and the
+#       fail-closed contract (missing column / blank id /
+#       negative / non-finite / unknown dialect / empty
+#       registry / missing file).
+#
+# Locally verified:
+#   * pytest tests/reconstruction/allocator/: 108/108 passed
+#   * mypy --strict + ruff + black:           clean
+
+id: x10r-1-mfi-tsv-loader
+status: ACTIVE
+claim_type: chore
+promise: >-
+  After this PR lands, research/reconstruction/allocator/ ships a
+  pure-stdlib TSV/CSV ingestion path for ECB-MFI-shape registry
+  files. load_mfi_registry consumes either a path or an inline
+  string, parses (bank_id, country, optional total_assets) per
+  configurable column names, and returns an MFIRegistryLoad
+  carrying the canonical bank_country_map (alphabetical country
+  order, preserved within-country order via
+  registry_to_bank_country_map) plus the optional
+  bank_weights mapping populated only from rows with positive
+  finite total_assets. Fail-closed on missing required columns
+  (line number surfaced), blank bank_id / country, negative or
+  non-finite assets, unknown dialect, empty registries, missing
+  files. 23 new tests pin the contract: TSV + CSV parsing,
+  inline + on-disk, blank-row tolerance, optional column
+  override / disable via None, round-trip into SizeWeightedPrior
+  + CountryToBankAllocator, end-to-end conservation, falsifier
+  paths.
+diff_scope:
+  changed_files:
+    - path: ".claude/commit_acceptors/x10r-1-mfi-tsv-loader.yaml"
+    - path: "research/reconstruction/allocator/__init__.py"
+    - path: "research/reconstruction/allocator/mfi_loader.py"
+    - path: "tests/reconstruction/allocator/test_mfi_loader.py"
+  forbidden_paths:
+    - "trading/"
+    - "execution/"
+    - "forecast/"
+    - "policy/"
+    - "core/physics/"
+    - "core/kuramoto/"
+    - "application/governance/claim_ledger.py"
+    - "application/governance/commit_acceptor.py"
+required_python_symbols:
+  - "research/reconstruction/allocator/mfi_loader.py::MFIRegistryLoad"
+  - "research/reconstruction/allocator/mfi_loader.py::load_mfi_registry"
+expected_signal: >-
+  Local: `pytest tests/reconstruction/allocator/ -q` reports
+  "108 passed"; `mypy --strict` is clean on every file under
+  research/reconstruction/allocator/ and
+  tests/reconstruction/allocator/; `ruff check` and
+  `black --check` both pass on those paths.
+measurement_command: >-
+  bash -c 'mypy --strict --follow-imports=silent
+  research/reconstruction/allocator/ tests/reconstruction/allocator/
+  && ruff check research/reconstruction/allocator/ tests/reconstruction/allocator/
+  && black --check research/reconstruction/allocator/ tests/reconstruction/allocator/
+  && pytest tests/reconstruction/allocator/ -q'
+signal_artifact: "tmp/x10r_1_mfi_loader.log"
+falsifier:
+  command: |-
+    bash -c 'python -c "
+    from research.reconstruction.allocator import (
+        load_mfi_registry, SizeWeightedPrior,
+    )
+    fixture = (
+        \"bank_id\\tcountry\\ttotal_assets\\n\"
+        \"DE-001\\tDE\\t100000\\n\"
+        \"DE-002\\tDE\\t200000\\n\"
+        \"FR-001\\tFR\\t10\\n\"
+    )
+    out = load_mfi_registry(fixture)
+    assert out.n_rows == 3, f\"expected 3 rows, got {out.n_rows}\"
+    assert out.bank_weights[\"DE-002\"] == 200000.0
+    p = SizeWeightedPrior(
+        bank_country_map=out.bank_country_map,
+        bank_weights=out.bank_weights,
+    )
+    share = p.expected_share(country=\"DE\", bank_id=\"DE-001\")
+    assert abs(share - 1.0/3.0) < 1e-12, f\"expected 1/3, got {share}\"
+    "'
+  description: >-
+    Probes the loader → SizeWeightedPrior round trip end-to-end:
+    parsed weights must produce the closed-form share
+    weight / Σ_country_weights. If the share drifts from 1/3,
+    the loader is silently mangling the weight column.
+rollback_command: >-
+  bash -c 'git checkout HEAD~1 --
+  && rm -f research/reconstruction/allocator/mfi_loader.py
+  tests/reconstruction/allocator/test_mfi_loader.py
+  .claude/commit_acceptors/x10r-1-mfi-tsv-loader.yaml'
+rollback_verification_command: >-
+  bash -c 'test ! -f research/reconstruction/allocator/mfi_loader.py
+  && test ! -f tests/reconstruction/allocator/test_mfi_loader.py
+  && test ! -f .claude/commit_acceptors/x10r-1-mfi-tsv-loader.yaml'
+memory_update_type: append
+ledger_path: ".claude/commit_acceptors/x10r-1-mfi-tsv-loader.yaml"
+report_path: "tmp/x10r_1_mfi_loader.log"
+evidence: []

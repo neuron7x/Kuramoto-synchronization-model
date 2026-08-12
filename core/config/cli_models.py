@@ -1,4 +1,6 @@
-"""Lightweight Pydantic models for TradePulse CLI commands."""
+# Copyright (c) 2023-2026 Yaroslav Vasylenko (neuron7xLab)
+# SPDX-License-Identifier: MIT
+"""Lightweight Pydantic models for GeoSync CLI commands."""
 
 from __future__ import annotations
 
@@ -34,7 +36,7 @@ __all__ = [
     "PostgresTLSConfig",
     "ReportConfig",
     "StrategyConfig",
-    "TradePulseBaseConfig",
+    "GeoSyncBaseConfig",
     "VersioningConfig",
 ]
 
@@ -145,9 +147,7 @@ class ExperimentTrackingConfig(BaseModel):
     hyperparameters_filename: str = "hyperparameters.json"
     reports: ExperimentReportConfig = Field(default_factory=ExperimentReportConfig)
     archive: ExperimentArchiveConfig = Field(default_factory=ExperimentArchiveConfig)
-    alerts: ExperimentDeviationAlertConfig = Field(
-        default_factory=ExperimentDeviationAlertConfig
-    )
+    alerts: ExperimentDeviationAlertConfig = Field(default_factory=ExperimentDeviationAlertConfig)
     baseline: ExperimentBaselineConfig | None = None
     data_versioning: bool = True
     auto_log_config: bool = True
@@ -224,7 +224,7 @@ class StrategyConfig(BaseModel):
         return self
 
 
-class TradePulseBaseConfig(BaseModel):
+class GeoSyncBaseConfig(BaseModel):
     """Common metadata shared by CLI configurations."""
 
     name: str
@@ -233,7 +233,7 @@ class TradePulseBaseConfig(BaseModel):
     metadata: Dict[str, Any] = Field(default_factory=dict)
 
 
-class IngestConfig(TradePulseBaseConfig):
+class IngestConfig(GeoSyncBaseConfig):
     """Configuration driving the ingest command."""
 
     source: DataSourceConfig
@@ -249,7 +249,7 @@ class ExecutionConfig(BaseModel):
     fee_bps: float = 0.0
 
 
-class BacktestConfig(TradePulseBaseConfig):
+class BacktestConfig(GeoSyncBaseConfig):
     """Configuration for running a simple vectorized backtest."""
 
     data: DataSourceConfig
@@ -260,7 +260,7 @@ class BacktestConfig(TradePulseBaseConfig):
     versioning: VersioningConfig = Field(default_factory=VersioningConfig)
 
 
-class OptimizeConfig(TradePulseBaseConfig):
+class OptimizeConfig(GeoSyncBaseConfig):
     """Configuration for parameter search via grid search."""
 
     objective: str
@@ -275,7 +275,7 @@ class OptimizeConfig(TradePulseBaseConfig):
         return self
 
 
-class ExecConfig(TradePulseBaseConfig):
+class ExecConfig(GeoSyncBaseConfig):
     """Configuration for running a real-time signal evaluation."""
 
     data: DataSourceConfig
@@ -285,7 +285,7 @@ class ExecConfig(TradePulseBaseConfig):
     versioning: VersioningConfig = Field(default_factory=VersioningConfig)
 
 
-class ReportConfig(TradePulseBaseConfig):
+class ReportConfig(GeoSyncBaseConfig):
     """Configuration for aggregating CLI outputs into a report."""
 
     inputs: List[Path]
@@ -326,9 +326,7 @@ class FeatureParitySpecConfig(BaseModel):
         try:
             return pd.Timedelta(value)
         except (ValueError, TypeError) as exc:  # pragma: no cover - defensive
-            raise ValueError(
-                "timedelta fields must be pandas-compatible strings"
-            ) from exc
+            raise ValueError("timedelta fields must be pandas-compatible strings") from exc
 
     @model_validator(mode="after")
     def _validate_columns(self) -> "FeatureParitySpecConfig":
@@ -337,7 +335,7 @@ class FeatureParitySpecConfig(BaseModel):
         return self
 
 
-class FeatureParityConfig(TradePulseBaseConfig):
+class FeatureParityConfig(GeoSyncBaseConfig):
     """Top-level configuration driving the feature parity CLI command."""
 
     offline: FeatureFrameSourceConfig
@@ -382,18 +380,16 @@ class KubectlConfig(BaseModel):
     dry_run: Literal["none", "client", "server"] = "client"
 
 
-class DeploymentConfig(TradePulseBaseConfig):
-    """Configuration driving the TradePulse deployment CLI command."""
+class DeploymentConfig(GeoSyncBaseConfig):
+    """Configuration driving the GeoSync deployment CLI command."""
 
     model_config = ConfigDict(extra="forbid")
 
     environment: Environment
     strategy: str
     artifact: str
-    manifests: DeploymentManifestsConfig = Field(
-        default_factory=DeploymentManifestsConfig
-    )
-    deployment_name: str = "tradepulse-api"
+    manifests: DeploymentManifestsConfig = Field(default_factory=DeploymentManifestsConfig)
+    deployment_name: str = "geosync-api"
     wait_for_rollout: bool = True
     rollout_timeout_seconds: float = 600.0
     kubectl: KubectlConfig = Field(default_factory=KubectlConfig)
@@ -427,7 +423,5 @@ class DeploymentConfig(TradePulseBaseConfig):
         if not self.wait_for_rollout:
             return self
         if self.rollout_timeout_seconds <= 0.0:
-            raise ValueError(
-                "wait_for_rollout requires a positive rollout_timeout_seconds"
-            )
+            raise ValueError("wait_for_rollout requires a positive rollout_timeout_seconds")
         return self

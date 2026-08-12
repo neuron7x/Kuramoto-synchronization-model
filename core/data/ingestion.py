@@ -1,7 +1,8 @@
-# SPDX-License-Identifier: LicenseRef-TradePulse-Proprietary
+# Copyright (c) 2023-2026 Yaroslav Vasylenko (neuron7xLab)
+# SPDX-License-Identifier: MIT
 """Data ingestion infrastructure for market data and price feeds.
 
-This module provides the core data ingestion pipeline for TradePulse, handling:
+This module provides the core data ingestion pipeline for GeoSync, handling:
 - Real-time streaming data from exchanges (Binance, Alpaca, etc.)
 - Historical data loading from CSV and other formats
 - Data normalization and timestamp handling

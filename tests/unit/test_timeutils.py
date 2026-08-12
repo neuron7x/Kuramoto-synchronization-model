@@ -1,3 +1,5 @@
+# Copyright (c) 2023-2026 Yaroslav Vasylenko (neuron7xLab)
+# SPDX-License-Identifier: MIT
 from datetime import date, datetime, time, timedelta, timezone
 from zoneinfo import ZoneInfo
 
@@ -229,9 +231,7 @@ def test_is_market_open_session_boundaries(
     just_before_close_local = trading_day.replace(
         hour=close_time.hour, minute=close_time.minute
     ) - timedelta(minutes=1)
-    after_close_local = trading_day.replace(
-        hour=close_time.hour, minute=close_time.minute
-    )
+    after_close_local = trading_day.replace(hour=close_time.hour, minute=close_time.minute)
 
     before_open = to_utc(before_open_local)
     at_open = to_utc(open_local)
@@ -277,17 +277,13 @@ def test_market_calendar_ensures_weekend_defaults() -> None:
 
 
 def test_market_calendar_uses_exchange_calendar_metadata() -> None:
-    cal = MarketCalendar(
-        market="ALWAYS", calendar_name="ALWAYS_OPEN", weekend_closure=None
-    )
+    cal = MarketCalendar(market="ALWAYS", calendar_name="ALWAYS_OPEN", weekend_closure=None)
     assert cal.timezone == "UTC"
     assert cal.weekend_closure == frozenset()
 
 
 def test_market_calendar_tzinfo_requires_timezone() -> None:
-    cal = MarketCalendar(
-        market="ALWAYS", calendar_name="ALWAYS_OPEN", weekend_closure=None
-    )
+    cal = MarketCalendar(market="ALWAYS", calendar_name="ALWAYS_OPEN", weekend_closure=None)
     object.__setattr__(cal, "timezone", None)
 
     with pytest.raises(ValueError):
@@ -309,9 +305,7 @@ def test_load_exchange_calendar_falls_back_to_name(
         raise errors.InvalidCalendarName()
 
     monkeypatch.setattr(tu, "resolve_alias", fake_resolve)
-    monkeypatch.setattr(
-        tu, "get_calendar", lambda name: always_open.AlwaysOpenCalendar()
-    )
+    monkeypatch.setattr(tu, "get_calendar", lambda name: always_open.AlwaysOpenCalendar())
 
     calendar = tu._load_exchange_calendar("custom")
     assert isinstance(calendar, always_open.AlwaysOpenCalendar)
@@ -493,9 +487,7 @@ def test_validate_bar_alignment_with_manual_calendar() -> None:
 
     tu._registry.register(custom)
 
-    timestamps = pd.date_range(
-        "2024-01-01 00:00:00+00:00", periods=4, freq="15min", tz="UTC"
-    )
+    timestamps = pd.date_range("2024-01-01 00:00:00+00:00", periods=4, freq="15min", tz="UTC")
 
     validate_bar_alignment(timestamps, market="CUSTOM", frequency="15min")
 

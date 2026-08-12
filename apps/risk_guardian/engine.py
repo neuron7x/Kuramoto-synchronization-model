@@ -1,4 +1,5 @@
-# SPDX-License-Identifier: LicenseRef-TradePulse-Proprietary
+# Copyright (c) 2023-2026 Yaroslav Vasylenko (neuron7xLab)
+# SPDX-License-Identifier: MIT
 """Risk Guardian core engine — simulates trading with and without risk controls."""
 
 from __future__ import annotations
@@ -101,9 +102,7 @@ class RiskGuardian:
         signals = np.clip(signals, -1.0, 1.0)
 
         if timestamps is None:
-            timestamps = pd.date_range(
-                start="2024-01-01", periods=len(prices), freq="h"
-            )
+            timestamps = pd.date_range(start="2024-01-01", periods=len(prices), freq="h")
 
         return self._run_simulation(prices, signals, timestamps)
 
@@ -146,9 +145,7 @@ class RiskGuardian:
         elif isinstance(df.index, pd.DatetimeIndex):
             timestamps = df.index
         else:
-            timestamps = pd.date_range(
-                start="2024-01-01", periods=len(prices), freq="h"
-            )
+            timestamps = pd.date_range(start="2024-01-01", periods=len(prices), freq="h")
 
         return self._run_simulation(prices, signals, timestamps)
 
@@ -211,9 +208,7 @@ class RiskGuardian:
         baseline_max_loss = peak_baseline - trough_baseline
         protected_max_loss = peak_protected - trough_protected
         saved_capital = max(0.0, baseline_max_loss - protected_max_loss)
-        saved_capital_pct = (
-            (saved_capital / peak_baseline * 100) if peak_baseline > 0 else 0.0
-        )
+        saved_capital_pct = (saved_capital / peak_baseline * 100) if peak_baseline > 0 else 0.0
 
         return SimulationResult(
             baseline_pnl=baseline_pnl,
@@ -272,9 +267,7 @@ class RiskGuardian:
 
             # Update position based on signal
             target_position = (
-                signals[i]
-                * (equity[i] * self._config.max_position_pct / 100.0)
-                / prices[i]
+                signals[i] * (equity[i] * self._config.max_position_pct / 100.0) / prices[i]
             )
             position = target_position
 
@@ -332,10 +325,7 @@ class RiskGuardian:
 
                 # Reset kill-switch if we're at a new day and drawdown recovered
                 current_dd = self._get_drawdown(state.equity, state.peak_equity)
-                if (
-                    state.is_halted
-                    and current_dd < self._config.safe_mode_threshold_pct / 100
-                ):
+                if state.is_halted and current_dd < self._config.safe_mode_threshold_pct / 100:
                     state.is_halted = False
                     LOGGER.info("Kill-switch deactivated at %s", ts)
 
@@ -352,9 +342,7 @@ class RiskGuardian:
 
             # Check risk limits
             current_dd = self._get_drawdown(state.equity, state.peak_equity)
-            daily_loss_pct = (
-                -state.daily_pnl / day_start_equity if day_start_equity > 0 else 0
-            )
+            daily_loss_pct = -state.daily_pnl / day_start_equity if day_start_equity > 0 else 0
 
             # Kill-switch check
             if (
@@ -377,9 +365,7 @@ class RiskGuardian:
                 and current_dd >= self._config.safe_mode_threshold_pct / 100
             ):
                 state.is_safe_mode = True
-            elif (
-                current_dd < self._config.safe_mode_threshold_pct / 100 * 0.8
-            ):  # Hysteresis
+            elif current_dd < self._config.safe_mode_threshold_pct / 100 * 0.8:  # Hysteresis
                 state.is_safe_mode = False
 
             # Count periods spent in safe mode
@@ -397,15 +383,10 @@ class RiskGuardian:
                     risk_events["blocked"] += 1
             else:
                 position_multiplier = (
-                    self._config.safe_mode_position_multiplier
-                    if state.is_safe_mode
-                    else 1.0
+                    self._config.safe_mode_position_multiplier if state.is_safe_mode else 1.0
                 )
                 max_pos_value = (
-                    state.equity
-                    * self._config.max_position_pct
-                    / 100
-                    * position_multiplier
+                    state.equity * self._config.max_position_pct / 100 * position_multiplier
                 )
                 target_position = signals[i] * max_pos_value / prices[i]
 
@@ -438,9 +419,7 @@ class RiskGuardian:
         return float(np.max(drawdown))
 
     @staticmethod
-    def _calculate_sharpe(
-        daily_returns: list[float], periods_per_year: int = 252
-    ) -> float:
+    def _calculate_sharpe(daily_returns: list[float], periods_per_year: int = 252) -> float:
         """Calculate annualized Sharpe ratio from daily returns."""
         if len(daily_returns) < 2:
             return 0.0

@@ -1,5 +1,5 @@
 ---
-owner: neuro@tradepulse
+owner: neuro@geosync
 review_cadence: quarterly
 last_reviewed: 2026-01-01
 ---
@@ -32,7 +32,7 @@ last_reviewed: 2026-01-01
 ### Minimal Working Example
 
 ```python
-from tradepulse.core.neuro.serotonin.serotonin_controller import SerotoninController
+from geosync.core.neuro.serotonin.serotonin_controller import SerotoninController
 
 # Initialize controller
 controller = SerotoninController(config_path="configs/serotonin.yaml")
@@ -125,8 +125,8 @@ from core.neuro.serotonin.serotonin_controller import SerotoninController
 ### Method 2: Package Installation
 
 ```bash
-# If TradePulse is installed as a package
-pip install -e /path/to/TradePulse
+# If GeoSync is installed as a package
+pip install -e /path/to/GeoSync
 ```
 
 ### Dependencies
@@ -588,7 +588,7 @@ print(f"Average call time: {avg_us:.2f} μs")
 systemctl stop trading-system
 
 # 2. Revert code
-cd /path/to/TradePulse
+cd /path/to/GeoSync
 git checkout v2.3.1-tag  # Or specific commit
 
 # 3. Restore config backup (if modified)

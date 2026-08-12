@@ -1,3 +1,5 @@
+# Copyright (c) 2023-2026 Yaroslav Vasylenko (neuron7xLab)
+# SPDX-License-Identifier: MIT
 """Utilities for dataframe serialization with optional parquet backends."""
 
 from __future__ import annotations
@@ -172,14 +174,10 @@ def _select_backend(require_parquet: bool, allow_json_fallback: bool) -> _Backen
     for backend in _available_backends():
         if backend.suffix == _PARQUET_SUFFIX:
             return backend
-        if (
-            allow_json_fallback
-            and backend.suffix == _JSON_SUFFIX
-            and not require_parquet
-        ):
+        if allow_json_fallback and backend.suffix == _JSON_SUFFIX and not require_parquet:
             return backend
     raise MissingParquetDependencyError(
-        "No parquet backend available. Install 'tradepulse[feature_store]' for pyarrow support or install polars."
+        "No parquet backend available. Install 'geosync[feature_store]' for pyarrow support or install polars."
     )
 
 
@@ -206,9 +204,7 @@ def write_dataframe(
     suffix = destination.suffix.lower() if explicit_suffix else None
 
     if suffix not in (None, _PARQUET_SUFFIX, _JSON_SUFFIX):
-        raise ValueError(
-            "Unsupported dataframe suffix. Expected .parquet or .json"
-        )
+        raise ValueError("Unsupported dataframe suffix. Expected .parquet or .json")
 
     if suffix == _JSON_SUFFIX:
         backend = _json_backend()
@@ -245,8 +241,7 @@ def _drop_polars_index_columns(frame: pd.DataFrame, index_frame: pd.DataFrame) -
         return
 
     index_series = [
-        index_frame.iloc[:, i].reset_index(drop=True)
-        for i in range(index_frame.shape[1])
+        index_frame.iloc[:, i].reset_index(drop=True) for i in range(index_frame.shape[1])
     ]
     matched_levels: set[int] = set()
     drop_labels: list[str] = []
@@ -262,9 +257,7 @@ def _drop_polars_index_columns(frame: pd.DataFrame, index_frame: pd.DataFrame) -
     # Fall back to positional matching for legacy payloads where the column
     # names differ (e.g. ``level_0`` vs ``0`` for unnamed indexes).
     if len(matched_levels) < len(index_series):
-        remaining_levels = [
-            idx for idx in range(len(index_series)) if idx not in matched_levels
-        ]
+        remaining_levels = [idx for idx in range(len(index_series)) if idx not in matched_levels]
         for position, column in enumerate(frame.columns):
             if not remaining_levels or position >= len(index_series):
                 break
@@ -297,7 +290,7 @@ def read_dataframe(path: Path, *, allow_json_fallback: bool = False) -> pd.DataF
                     backend_name = "polars"
                 except MissingParquetDependencyError as exc:
                     raise MissingParquetDependencyError(
-                        "Unable to read parquet file without pyarrow or polars. Install 'tradepulse[feature_store]'."
+                        "Unable to read parquet file without pyarrow or polars. Install 'geosync[feature_store]'."
                     ) from exc
             index_path = path.with_suffix(".index.json")
             if index_path.exists():
@@ -315,9 +308,7 @@ def read_dataframe(path: Path, *, allow_json_fallback: bool = False) -> pd.DataF
                 if names_path.exists():
                     with names_path.open("r", encoding="utf-8") as handle:
                         raw_names = json.load(handle)
-                    index_names = [
-                        name if name is not None else None for name in raw_names
-                    ]
+                    index_names = [name if name is not None else None for name in raw_names]
                 if index_names and len(index_names) == index_frame.shape[1]:
                     index_frame.columns = index_names
                 if index_frame.shape[1] == 1:

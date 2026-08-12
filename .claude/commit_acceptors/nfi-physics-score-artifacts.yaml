@@ -1,0 +1,41 @@
+id: nfi-physics-score-artifacts
+status: DRAFT
+claim_type: correctness
+promise: "NFI physics score, schema, reproducibility manifest, CI evidence, calibration records, and validation artifacts are bound to deterministic scoring and blocker reporting."
+diff_scope:
+  changed_files:
+    - path: ".claude/commit_acceptors/nfi-physics-score-artifacts.yaml"
+    - path: "tools/physics_score.py"
+    - path: "tools/physics_ci_evidence.py"
+    - path: "schemas/physics_metrics.schema.json"
+    - path: "schemas/physics_maturity_calibration.schema.json"
+    - path: "artifacts/physics_validation/baseline_score.json"
+    - path: "artifacts/physics_validation/ci_evidence_summary.json"
+    - path: "artifacts/physics_validation/maturity_calibration_2026.json"
+    - path: "artifacts/physics_validation/uq_summary.json"
+    - path: "artifacts/physics_validation/replication_summary.json"
+    - path: "artifacts/physics_validation/ricci_bridge_summary.json"
+    - path: "reproducibility/manifest.json"
+    - path: "tests/test_physics_ci_evidence.py"
+    - path: "tests/test_physics_maturity_calibration.py"
+  forbidden_paths:
+    - "trading/"
+    - "execution/"
+    - "forecast/"
+    - "policy/"
+required_python_symbols:
+  - "build_score"
+  - "build_metrics"
+  - "validate_evidence"
+expected_signal: "physics score is computed from evidence carriers, CI evidence is validated, calibration records stay non-credit, and score remains below target while HIGH blockers remain"
+measurement_command: "python tools/physics_score.py --write && python tools/physics_ci_evidence.py && python -m pytest tests/test_physics_score.py tests/test_physics_ci_evidence.py tests/test_physics_maturity_calibration.py"
+signal_artifact: "artifacts/physics_validation/baseline_score.json"
+falsifier:
+  command: "python -c \"import json; s=json.load(open('artifacts/physics_validation/baseline_score.json')); raise SystemExit(0 if s['S_total'] < 88 and s['verdict'].startswith('FAIL') else 1)\""
+  description: "Fails if the score artifact claims target rank before HIGH blockers are closed."
+rollback_command: "git checkout -- tools/physics_score.py tools/physics_ci_evidence.py schemas/physics_metrics.schema.json schemas/physics_maturity_calibration.schema.json artifacts/physics_validation/baseline_score.json artifacts/physics_validation/ci_evidence_summary.json artifacts/physics_validation/maturity_calibration_2026.json artifacts/physics_validation/uq_summary.json artifacts/physics_validation/replication_summary.json artifacts/physics_validation/ricci_bridge_summary.json reproducibility/manifest.json tests/test_physics_ci_evidence.py tests/test_physics_maturity_calibration.py .claude/commit_acceptors/nfi-physics-score-artifacts.yaml"
+rollback_verification_command: "git diff --exit-code tools/physics_score.py tools/physics_ci_evidence.py schemas/physics_metrics.schema.json schemas/physics_maturity_calibration.schema.json artifacts/physics_validation/baseline_score.json artifacts/physics_validation/ci_evidence_summary.json artifacts/physics_validation/maturity_calibration_2026.json artifacts/physics_validation/uq_summary.json artifacts/physics_validation/replication_summary.json artifacts/physics_validation/ricci_bridge_summary.json reproducibility/manifest.json tests/test_physics_ci_evidence.py tests/test_physics_maturity_calibration.py .claude/commit_acceptors/nfi-physics-score-artifacts.yaml"
+memory_update_type: none
+ledger_path: ".claude/commit_acceptors/nfi-physics-score-artifacts.yaml"
+report_path: "VERDICT.md"
+evidence: []

@@ -1,3 +1,5 @@
+# Copyright (c) 2023-2026 Yaroslav Vasylenko (neuron7xLab)
+# SPDX-License-Identifier: MIT
 from __future__ import annotations
 
 from pathlib import Path
@@ -23,9 +25,7 @@ def _metric(
 
 
 def test_missing_description_triggers_issue() -> None:
-    catalog_metric = _metric(
-        "tradepulse_missing_total", description="short", metric_type="counter"
-    )
+    catalog_metric = _metric("geosync_missing_total", description="short", metric_type="counter")
     code_metric = mv.CodeMetric(
         name=catalog_metric.name,
         type="counter",
@@ -44,7 +44,7 @@ def test_missing_description_triggers_issue() -> None:
 
 def test_denylisted_label_detected() -> None:
     catalog_metric = _metric(
-        "tradepulse_with_denylist_total",
+        "geosync_with_denylist_total",
         labels=["request_id"],
     )
     code_metric = mv.CodeMetric(
@@ -68,7 +68,7 @@ def test_dead_metric_is_reported(tmp_path: Path) -> None:
         "\n".join(
             [
                 "from prometheus_client import Counter",
-                'dead = Counter("tradepulse_dead_total", "Dead metric")',
+                'dead = Counter("geosync_dead_total", "Dead metric")',
             ]
         ),
         encoding="utf-8",
@@ -77,7 +77,7 @@ def test_dead_metric_is_reported(tmp_path: Path) -> None:
     code_metrics = mv.discover_code_metrics(tmp_path)
     dead = mv.find_dead_metrics(tmp_path, code_metrics)
 
-    assert any(entry["metric"] == "tradepulse_dead_total" for entry in dead)
+    assert any(entry["metric"] == "geosync_dead_total" for entry in dead)
 
 
 def test_whitelisted_metrics_not_reported(tmp_path: Path) -> None:
@@ -86,7 +86,7 @@ def test_whitelisted_metrics_not_reported(tmp_path: Path) -> None:
         "\n".join(
             [
                 "from prometheus_client import Gauge",
-                'g = Gauge("tradepulse_api_requests_in_flight", "whitelisted", ["route", "method"])',
+                'g = Gauge("geosync_api_requests_in_flight", "whitelisted", ["route", "method"])',
             ]
         ),
         encoding="utf-8",
@@ -95,7 +95,7 @@ def test_whitelisted_metrics_not_reported(tmp_path: Path) -> None:
     code_metrics = mv.discover_code_metrics(tmp_path)
     dead = mv.find_dead_metrics(tmp_path, code_metrics)
 
-    assert all(entry["metric"] != "tradepulse_api_requests_in_flight" for entry in dead)
+    assert all(entry["metric"] != "geosync_api_requests_in_flight" for entry in dead)
 
 
 def test_known_good_catalog_subset_passes(tmp_path: Path) -> None:
@@ -104,7 +104,7 @@ def test_known_good_catalog_subset_passes(tmp_path: Path) -> None:
         "\n".join(
             [
                 "from prometheus_client import Counter",
-                'live = Counter("tradepulse_live_total", "Live metric with updates")',
+                'live = Counter("geosync_live_total", "Live metric with updates")',
                 "def tick():",
                 "    live.inc()",
             ]
@@ -113,11 +113,9 @@ def test_known_good_catalog_subset_passes(tmp_path: Path) -> None:
     )
 
     code_metrics = mv.discover_code_metrics(tmp_path)
-    catalog_metric = _metric("tradepulse_live_total")
+    catalog_metric = _metric("geosync_live_total")
 
-    issues = mv.structural_issues(
-        {catalog_metric.name: catalog_metric}, code_metrics
-    )
+    issues = mv.structural_issues({catalog_metric.name: catalog_metric}, code_metrics)
     dead = mv.find_dead_metrics(tmp_path, code_metrics)
 
     assert issues == []

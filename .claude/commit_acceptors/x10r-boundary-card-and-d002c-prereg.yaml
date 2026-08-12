@@ -1,0 +1,129 @@
+# Diff-bound commit acceptor for the X-10R governance documentation
+# bundle (boundary card + D-002C pre-registration + Disha-to-D-002C
+# connector + negative-result note + honest-minimum progress
+# report snapshot).
+#
+# What lands:
+#   * docs/governance/X10R_BOUNDARY_CARD.md
+#       Single-page reproducibility-grade transparency artifact:
+#       scoped state, four landed claims with tiers, sweep
+#       parameters, certification rule with rule-by-rule eval,
+#       three ledger SHA256, N=400 exploratory table, claim-tier
+#       lattice, open follow-ups (#654, #655, D-003 PR),
+#       forbidden-phrase boundaries.
+#   * docs/governance/D002C_PREREGISTRATION.yaml
+#       Pre-registered falsification protocol for D-002C
+#       (issue #654, Signal Amplification Sweep). Commits
+#       acceptance criteria BEFORE the sweep runs. Substrate
+#       grid (Ricci-flow / block-structured / temporal-K),
+#       metric grid (tau_onset / sync_auc / phase_lag), variance
+#       reduction (CRN / paired seeds / control variates),
+#       and the primary certification rule
+#       (|signal|/CI > 1 at N <= 200, FPR <= 0.05, direction
+#       stability >= 0.80). Anti-overclaim guardrails section.
+#   * docs/governance/DISHA_TO_D002C_CONNECTOR.md
+#       Architectural cross-reference: Disha co-movement
+#       corridors as predictive-prior for D-002C block-structured
+#       substrate design. Non-circular test specification.
+#   * docs/governance/X10R_NEGATIVE_RESULT_NOTE.md
+#       Honest negative-result essay on the D-002B-A boundary:
+#       what the 17 h compute bought, why N is the wrong lever,
+#       why the work was not wasted.
+#   * X10R_HONEST_MINIMUM_PROGRESS_REPORT.md
+#       Mid-session progress snapshot from 2026-05-10 (preserved
+#       as historical record; superseded by the boundary card
+#       and the D-002B-A report for current state).
+#
+# Strict scope:
+#   Documentation-only. NO source change. NO test change. NO
+#   acceptor schema change. NO claim promotion. NO real-data
+#   verdict. NO bank-level inference claim. NO INV-IDENTIFICATION-1
+#   lift.
+
+id: x10r-boundary-card-and-d002c-prereg
+status: ACTIVE
+claim_type: documentation
+promise: >-
+  After this PR lands, docs/governance/ carries five
+  documentation artifacts that record the X-10R boundary at
+  the close of D-002B-A and pre-register the D-002C signal-
+  amplification sweep. No new science is asserted; no
+  certification tier is emitted; the predecessors' verdicts
+  (D-001 D001_FULLY_REPAID, D-002A D002A_PILOT_INFRASTRUCTURE_MERGED,
+  D-002B-A GATE6_NOT_CERTIFIED_AT_TESTED_BUDGET_N_LE_200) are
+  cited from their merged reports, not re-derived.
+diff_scope:
+  changed_files:
+    - path: ".claude/commit_acceptors/x10r-boundary-card-and-d002c-prereg.yaml"
+    - path: "docs/governance/X10R_BOUNDARY_CARD.md"
+    - path: "docs/governance/D002C_PREREGISTRATION.yaml"
+    - path: "docs/governance/DISHA_TO_D002C_CONNECTOR.md"
+    - path: "docs/governance/X10R_NEGATIVE_RESULT_NOTE.md"
+    - path: "X10R_HONEST_MINIMUM_PROGRESS_REPORT.md"
+  forbidden_paths:
+    - "trading/"
+    - "execution/"
+    - "forecast/"
+    - "policy/"
+    - "core/"
+    - "research/reconstruction/"   # NO source change
+    - "scripts/run_x10r_"          # NO driver change
+    - "tests/"
+    - "application/governance/claim_ledger.py"
+    - "application/governance/commit_acceptor.py"
+required_python_symbols: []  # documentation PR; no symbols
+expected_signal: >-
+  `git ls-tree HEAD docs/governance/` shows the four new
+  artifacts; `git log --oneline -1 origin/main` contains the
+  squash commit for this PR; `grep -c "INV-IDENTIFICATION-1
+  remains globally active" docs/governance/X10R_BOUNDARY_CARD.md`
+  is positive; the boundary card's three ledger sha256 match
+  the D-002B-A merge artifact.
+measurement_command: >-
+  bash -c 'test -f docs/governance/X10R_BOUNDARY_CARD.md
+  && test -f docs/governance/D002C_PREREGISTRATION.yaml
+  && test -f docs/governance/DISHA_TO_D002C_CONNECTOR.md
+  && test -f docs/governance/X10R_NEGATIVE_RESULT_NOTE.md
+  && test -f X10R_HONEST_MINIMUM_PROGRESS_REPORT.md
+  && grep -q "GATE6_NOT_CERTIFIED_AT_TESTED_BUDGET_N_LE_200" docs/governance/X10R_BOUNDARY_CARD.md
+  && grep -q "INV-IDENTIFICATION-1" docs/governance/D002C_PREREGISTRATION.yaml'
+signal_artifact: "docs/governance/X10R_BOUNDARY_CARD.md"
+falsifier:
+  command: >-
+    bash -c 'set -e;
+    grep -q "GATE6_NOT_CERTIFIED_AT_TESTED_BUDGET_N_LE_200" docs/governance/X10R_BOUNDARY_CARD.md || exit 1;
+    grep -q "globally_active" docs/governance/D002C_PREREGISTRATION.yaml || exit 1;
+    grep -q "REAL_DOV_BLOCKED" docs/governance/X10R_BOUNDARY_CARD.md || exit 1;
+    grep -q "SYNTHETIC_GATE6_CERTIFIED_REDESIGN_N_LE_200" docs/governance/D002C_PREREGISTRATION.yaml || exit 1;
+    if grep -E "VALIDATED_REAL_BANK_LEVEL_RESULT|TESTED_POSITIVE_REAL|BANK_LEVEL_PRECURSOR_CONFIRMED" docs/governance/X10R_BOUNDARY_CARD.md docs/governance/D002C_PREREGISTRATION.yaml docs/governance/DISHA_TO_D002C_CONNECTOR.md docs/governance/X10R_NEGATIVE_RESULT_NOTE.md | grep -v "forbidden\|NOT emitted\|asserted absent\|does NOT" >/dev/null; then
+      echo "forbidden tier asserted outside forbidden-list context";
+      exit 2;
+    fi'
+  description: >-
+    Probes the governance bundle: each artifact must mention
+    the D-002B-A scoped tier, the INV-IDENTIFICATION-1
+    invariant, and the REAL_DOV_BLOCKED gate state. The
+    D-002C pre-reg must name the conditional success tier
+    SYNTHETIC_GATE6_CERTIFIED_REDESIGN_N_LE_200. No artifact
+    may assert any forbidden tier OUTSIDE the explicit
+    "forbidden" / "NOT emitted" / "asserted absent" / "does NOT"
+    framing.
+rollback_command: >-
+  bash -c 'git checkout HEAD~1 --
+  && rm -f docs/governance/X10R_BOUNDARY_CARD.md
+  docs/governance/D002C_PREREGISTRATION.yaml
+  docs/governance/DISHA_TO_D002C_CONNECTOR.md
+  docs/governance/X10R_NEGATIVE_RESULT_NOTE.md
+  X10R_HONEST_MINIMUM_PROGRESS_REPORT.md
+  .claude/commit_acceptors/x10r-boundary-card-and-d002c-prereg.yaml'
+rollback_verification_command: >-
+  bash -c 'test ! -f docs/governance/X10R_BOUNDARY_CARD.md
+  && test ! -f docs/governance/D002C_PREREGISTRATION.yaml
+  && test ! -f docs/governance/DISHA_TO_D002C_CONNECTOR.md
+  && test ! -f docs/governance/X10R_NEGATIVE_RESULT_NOTE.md
+  && test ! -f X10R_HONEST_MINIMUM_PROGRESS_REPORT.md
+  && test ! -f .claude/commit_acceptors/x10r-boundary-card-and-d002c-prereg.yaml'
+memory_update_type: append
+ledger_path: ".claude/commit_acceptors/x10r-boundary-card-and-d002c-prereg.yaml"
+report_path: "docs/governance/X10R_BOUNDARY_CARD.md"
+evidence: []

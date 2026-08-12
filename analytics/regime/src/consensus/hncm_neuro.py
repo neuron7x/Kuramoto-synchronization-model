@@ -1,6 +1,7 @@
-# SPDX-License-Identifier: LicenseRef-TradePulse-Proprietary
+# Copyright (c) 2023-2026 Yaroslav Vasylenko (neuron7xLab)
+# SPDX-License-Identifier: MIT
 """
-Neuro-inspired consensus adapter for TradePulse.
+Neuro-inspired consensus adapter for GeoSync.
 
 Implements:
 - Reward Prediction Error (RPE) with asymmetric learning rates (α+ / α−)
@@ -12,7 +13,7 @@ Implements:
 - Energy budget regularizer on weight updates
 - Reliability calibration (precision weighting) from running Brier-like score
 
-No external deps beyond stdlib. Compatible with TradePulse EWSResult and domain Signal.
+No external deps beyond stdlib. Compatible with GeoSync EWSResult and domain Signal.
 """
 
 from __future__ import annotations
@@ -86,7 +87,7 @@ _DEFAULT_STATE = {
 
 class _State:
     def __init__(self, path: str | Path | None):
-        self.path = Path(path or Path.home() / ".tradepulse" / "hncm_neuro_state.json")
+        self.path = Path(path or Path.home() / ".geosync" / "hncm_neuro_state.json")
         self.path.parent.mkdir(parents=True, exist_ok=True)
         self.s = json.loads(json.dumps(_DEFAULT_STATE))  # deep copy
         if self.path.exists():
@@ -176,9 +177,7 @@ class NeuroConsensusAdapter:
             learned_f = {k: max(0.0, float(v)) for k, v in learned.items()}
             total_learned = sum(learned_f.values())
             if total_learned > 0:
-                prior_total = sum(float(w.get(k, 1.0)) for k in learned_f) or float(
-                    len(learned_f)
-                )
+                prior_total = sum(float(w.get(k, 1.0)) for k in learned_f) or float(len(learned_f))
                 scale = prior_total / total_learned
                 for k, v in learned_f.items():
                     w[k] = v * scale
@@ -201,9 +200,7 @@ class NeuroConsensusAdapter:
         override_weights: Optional[Mapping[str, float]] = None,
     ) -> Tuple[float, Dict[str, float]]:
         votes = tuple(votes)
-        weights = self._effective_weights(
-            self.base_weights, learned_weights, override_weights
-        )
+        weights = self._effective_weights(self.base_weights, learned_weights, override_weights)
         num = 0.0
         den = 0.0
         for v in votes:
@@ -236,13 +233,9 @@ class NeuroConsensusAdapter:
         margin = max(0.0, score_abs - theta)
         return clamp(1.0 + 1.5 * margin, 0.5, 2.5)
 
-    def _update_activation_ma(
-        self, agent: str, score_abs: float, alpha: float = 0.05
-    ) -> None:
+    def _update_activation_ma(self, agent: str, score_abs: float, alpha: float = 0.05) -> None:
         prev = float(self.state.s["activation_ma"].get(agent, 0.3))
-        self.state.s["activation_ma"][agent] = clamp(
-            ema(prev, score_abs, alpha), 0.0, 1.0
-        )
+        self.state.s["activation_ma"][agent] = clamp(ema(prev, score_abs, alpha), 0.0, 1.0)
 
     def _update_eligibility(self, agent: str, score: float) -> float:
         e_prev = float(self.state.s["eligibility"].get(agent, 0.0))
@@ -290,8 +283,7 @@ class NeuroConsensusAdapter:
             return new
         budget = float(self.energy_budget)
         total_delta = sum(
-            abs(float(new.get(k, 0.0)) - float(old.get(k, 0.0)))
-            for k in set(old) | set(new)
+            abs(float(new.get(k, 0.0)) - float(old.get(k, 0.0))) for k in set(old) | set(new)
         )
         if total_delta <= budget or total_delta == 0.0:
             return new
@@ -326,9 +318,7 @@ class NeuroConsensusAdapter:
             for k in set(pre) | set(cons):
                 p = float(w_soft.get(k, 0.0))
                 c = float(cons.get(k, p))
-                w_out[k] = clamp(
-                    (1 - self.ewc_strength) * p + self.ewc_strength * c, 0.0, 1.0
-                )
+                w_out[k] = clamp((1 - self.ewc_strength) * p + self.ewc_strength * c, 0.0, 1.0)
             w_soft = w_out
         # ensure normalization
         s = sum(w_soft.values()) or 1.0

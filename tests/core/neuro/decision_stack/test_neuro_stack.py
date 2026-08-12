@@ -1,14 +1,16 @@
+# Copyright (c) 2023-2026 Yaroslav Vasylenko (neuron7xLab)
+# SPDX-License-Identifier: MIT
 from __future__ import annotations
 
 import random
 
 import pytest
 
-from tradepulse.core.neuro.dopamine.dopamine_controller import DopamineController
-from tradepulse.core.neuro.gaba.gaba_inhibition_gate import GABAInhibitionGate
-from tradepulse.core.neuro.na_ach.neuromods import NAACHNeuromodulator
-from tradepulse.core.neuro.serotonin.serotonin_controller import SerotoninController
-from tradepulse.policy.basal_ganglia import (
+from geosync.core.neuro.dopamine.dopamine_controller import DopamineController
+from geosync.core.neuro.gaba.gaba_inhibition_gate import GABAInhibitionGate
+from geosync.core.neuro.na_ach.neuromods import NAACHNeuromodulator
+from geosync.core.neuro.serotonin.serotonin_controller import SerotoninController
+from geosync.policy.basal_ganglia import (
     BasalGangliaDecisionStack,
     BasalGangliaPolicy,
     select_action,
@@ -83,9 +85,7 @@ def test_policy_temperature_remains_bounded_under_noise() -> None:
     for _ in range(120):
         reward = random.uniform(-0.1, 0.1)
         next_value = random.uniform(0.4, 0.6)
-        appetitive = ctrl.estimate_appetitive_state(
-            abs(reward), 0.2, 0.1, abs(next_value - value)
-        )
+        appetitive = ctrl.estimate_appetitive_state(abs(reward), 0.2, 0.1, abs(next_value - value))
         ctrl.step(
             reward=reward,
             value=value,

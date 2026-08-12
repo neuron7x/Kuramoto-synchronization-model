@@ -1,0 +1,31 @@
+{
+  "boundary": "Scoped to the pre-committed dataset and the rate/waveform/SNR/common-drive jointly-matched surrogate defined here. Pre-data: KILLED_SCOPED/SURVIVED_INITIAL are unreachable until a dataset is bound (C3).",
+  "claim": "On real paired LFP+spike data, the CTC causal claim (the gamma phase relation carries inter-areal routing) survives subtraction of a jointly-matched confound surrogate.",
+  "config_hash": "941455bb8dd06cb97c1aef75e79cd3392e4f1ca729052cb0cfd8bd842a1485b3",
+  "estimand": "standardized_residual_z = (SFC_obs - mean(SFC_surr)) / std(SFC_surr)",
+  "experiment_id": "CTC-FALSIFY-001-L2",
+  "joint_surrogate": "phase-randomized B, envelope-reimposed, A fixed (rate+power+common-drive matched)",
+  "primary_endpoint": "fraction of pair-directions with residual_z > Z_GATE",
+  "real_dataset_bound": false,
+  "repro_hash": "5cab499147b744454e106b39f39b1f3dee07ccb613c1f8a03c52165d5350177d",
+  "self_validation": {
+    "confounds_not_flagged": false,
+    "max_confound_residual_z": 2.6877233182064924,
+    "mean_nplus_residual_z": 1.5977325988836046,
+    "n_validation_seeds": 24,
+    "nplus_recovered": false,
+    "surrogate_all_matched": true,
+    "worst_power_rel_err": 0.00043979651298552114,
+    "worst_rate_rel_err": 2.6454102944415545e-10
+  },
+  "thresholds": {
+    "confound_residual_max_z": 1.96,
+    "mde_residual_z": 0.5,
+    "min_sessions": 8,
+    "nplus_residual_min_z": 3.0,
+    "symmetric_alpha": 0.01,
+    "symmetric_delta": 0.1,
+    "z_gate": 1.96
+  },
+  "verdict": "INADMISSIBLE_NPLUS_INSITU_BLIND"
+}

@@ -1,0 +1,249 @@
+{
+  "bundle_version": "release_evidence.v1",
+  "categories": {
+    "approvals": {
+      "artifacts": [
+        {
+          "path": "governance/remediation_ledger.v1.json",
+          "sha256": "d064a4ad015e3ea558713759d480f2a488ce9df82a424b60b30922074e5ebd76",
+          "status": "PRESENT"
+        }
+      ],
+      "description": "Governance remediation ledger (release sign-off is contingent on all mandatory receipts).",
+      "mandatory": true,
+      "status": "PRESENT"
+    },
+    "cleanroom_reproducible_build": {
+      "artifacts": [
+        {
+          "path": "artifacts/release/reproducible_build_report.json",
+          "sha256": "2a39f99a5e738a82408a6ee6661073d386ad15c0779690117acab244e995fafa",
+          "status": "PRESENT",
+          "task": "REL-010",
+          "verdict": "True"
+        },
+        {
+          "path": "artifacts/env/python312.json",
+          "sha256": "9c1cbe67eb0d9386c4f6005de706b9ba509f6a17d0d9d7ab97b07dcabceb9d9b",
+          "status": "PRESENT",
+          "task": "ENV"
+        }
+      ],
+      "description": "Cleanroom byte-identical rebuild (REL-010) + pinned Python 3.12 build env.",
+      "mandatory": true,
+      "status": "PRESENT"
+    },
+    "commit_tree_tag": {
+      "artifacts": [
+        {
+          "path": "manifests/research/release_provenance.v2.json",
+          "sha256": "18c1d89482c19ef12407dc6fd572c5d7daf06961bb4bb50cf04378688076c2a5",
+          "status": "PRESENT",
+          "task": "REL-005",
+          "verdict": "RECORDED"
+        }
+      ],
+      "description": "Canonical release commit/tree/tag pinned by the REL-005 signed-tag provenance manifest.",
+      "mandatory": true,
+      "status": "PRESENT"
+    },
+    "coverage": {
+      "artifacts": [
+        {
+          "path": "artifacts/release/coverage_report.json",
+          "sha256": null,
+          "status": "MISSING",
+          "task": "TST-003"
+        }
+      ],
+      "description": "Release coverage receipt (TST-003). Not produced yet.",
+      "mandatory": true,
+      "status": "MISSING"
+    },
+    "docs": {
+      "artifacts": [
+        {
+          "path": "docs/RELEASE_EVIDENCE_BUNDLE.md",
+          "sha256": "4f08d76d290970abeec50cf8ed845b87777c3777459a4b7cfbe0a6a882cf6b7f",
+          "status": "PRESENT",
+          "task": "REL-011"
+        }
+      ],
+      "description": "Human-facing release evidence documentation.",
+      "mandatory": false,
+      "status": "PRESENT"
+    },
+    "manifests": {
+      "artifacts": [
+        {
+          "path": "MANIFEST.sha256",
+          "sha256": "dc873bc3a257d1bdd39b4f0e85906f8b4aa5ff9ca761d63a94bbf70624bd8c34",
+          "status": "PRESENT"
+        },
+        {
+          "path": "artifacts/release/root_manifest_report.json",
+          "sha256": "bd4b5ebcfb9431d61c012300a1b3230ee9d3cc5ad6b49aa7095150b29f4c4eb6",
+          "status": "PRESENT"
+        }
+      ],
+      "description": "Root content manifest and its verification report.",
+      "mandatory": true,
+      "status": "PRESENT"
+    },
+    "mutation": {
+      "artifacts": [
+        {
+          "path": "artifacts/release/mutation_report.json",
+          "sha256": null,
+          "status": "MISSING",
+          "task": "TST-010"
+        }
+      ],
+      "description": "Release mutation-kill receipt (TST-010). Not produced yet.",
+      "mandatory": true,
+      "status": "MISSING"
+    },
+    "research_verdicts": {
+      "artifacts": [
+        {
+          "path": "benchmarks/flagship_baselines/comparison_report.json",
+          "sha256": "935410bad4d98c05fec94e02e055611a601d6cd0da420cad2307438fa76864f5",
+          "status": "PRESENT",
+          "task": "FLAGSHIP-RQ-001",
+          "verdict": "INSUFFICIENT_EVIDENCE"
+        },
+        {
+          "path": "artifacts/research/power_uq_report.json",
+          "sha256": "dd2f3a4238c57637df4256afd76f31031a418602364228d377a6043a38f6f62b",
+          "status": "PRESENT",
+          "verdict": "INSUFFICIENT_EVIDENCE"
+        },
+        {
+          "path": "artifacts/research/selection_bias_report.json",
+          "sha256": "ce0264eb1595cf685c98727b084596f752f53c24e5be5902c7a9505722f05453",
+          "status": "PRESENT",
+          "verdict": "INSUFFICIENT_EVIDENCE"
+        }
+      ],
+      "description": "Preregistered research verdicts shipped with the release (all INSUFFICIENT_EVIDENCE — honest).",
+      "mandatory": true,
+      "status": "PRESENT"
+    },
+    "sbom": {
+      "artifacts": [
+        {
+          "path": "artifacts/release/sbom.spdx.json",
+          "sha256": null,
+          "status": "MISSING",
+          "task": "SBOM"
+        }
+      ],
+      "description": "Software bill of materials for the release artifact. Receipt not produced yet.",
+      "mandatory": true,
+      "status": "MISSING"
+    },
+    "security_scan": {
+      "artifacts": [
+        {
+          "path": "artifacts/env/image_scan_report.json",
+          "sha256": "f5390e0956f39838152f044666ebb67185321faca128f7876a0c0a016e5f0910",
+          "status": "PRESENT",
+          "task": "ENV-005",
+          "verdict": "PASS"
+        },
+        {
+          "path": "artifacts/env/image_digest.json",
+          "sha256": "857db4c094d5ca6dae1572e799e85d4e3478e8ec2020993581df5996be1dd7dd",
+          "status": "PRESENT",
+          "task": "ENV-005"
+        }
+      ],
+      "description": "Hermetic image digest + trivy vulnerability scan (ENV-005).",
+      "mandatory": true,
+      "status": "PRESENT"
+    },
+    "tests": {
+      "artifacts": [
+        {
+          "path": "artifacts/release/full_test_suite_report.json",
+          "sha256": null,
+          "status": "MISSING",
+          "task": "TST-001"
+        }
+      ],
+      "description": "Canonical full-suite test run receipt (TST-001). Not produced yet.",
+      "mandatory": true,
+      "status": "MISSING"
+    },
+    "version": {
+      "artifacts": [
+        {
+          "path": "VERSION",
+          "sha256": "1575e1af4a95f12f70b4ee6a6adce8160953d93ea17dc2611b90883ccc3ad3b8",
+          "status": "PRESENT"
+        },
+        {
+          "path": "CITATION.cff",
+          "sha256": "87e758dc15b0535d1922720154a4f54b1604bdd31831b29c6143ed33314ebe73",
+          "status": "PRESENT"
+        }
+      ],
+      "description": "Version SSOT (VERSION + CITATION.cff), both pinned to 1.1.0.",
+      "mandatory": true,
+      "status": "PRESENT"
+    },
+    "wheel": {
+      "artifacts": [
+        {
+          "path": "artifacts/release/wheel_manifest.json",
+          "sha256": null,
+          "status": "MISSING",
+          "task": "PKG-001"
+        }
+      ],
+      "description": "Built wheel manifest / packaging receipt (PKG-001). Not produced yet.",
+      "mandatory": true,
+      "status": "MISSING"
+    }
+  },
+  "release_readiness": {
+    "mandatory_categories": [
+      "approvals",
+      "cleanroom_reproducible_build",
+      "commit_tree_tag",
+      "coverage",
+      "manifests",
+      "mutation",
+      "research_verdicts",
+      "sbom",
+      "security_scan",
+      "tests",
+      "version",
+      "wheel"
+    ],
+    "missing_mandatory": [
+      "coverage",
+      "mutation",
+      "sbom",
+      "tests",
+      "wheel"
+    ],
+    "present_mandatory": [
+      "approvals",
+      "cleanroom_reproducible_build",
+      "commit_tree_tag",
+      "manifests",
+      "research_verdicts",
+      "security_scan",
+      "version"
+    ],
+    "verdict": "NOT_READY"
+  },
+  "release_version": "1.1.0",
+  "source_ref": {
+    "commit": "8080e4b475efe054901804f25b37b80bd06203f4",
+    "provenance_ref": "manifests/research/release_provenance.v2.json",
+    "tag": "geosync-canonical-8080e4b4",
+    "tree": "9060de4a097ea467f7ab5d52ecb660ba345f671b"
+  }
+}

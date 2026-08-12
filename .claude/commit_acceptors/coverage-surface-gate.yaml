@@ -1,0 +1,73 @@
+# Diff-bound acceptor: packaged-surface ↔ measured-coverage-surface ratchet.
+#
+# Closes the false-denominator gap where a package ships in the wheel
+# ([tool.setuptools.packages.find].include) but appears in no coverage profile
+# source. Adds verification surface only — no runtime, physics, score,
+# shadow-rail, or trading/execution/forecast/policy change. Does NOT modify or
+# enforce any coverage percentage / fail_under; the named critical (98) and
+# release (90) gates own percentage enforcement.
+
+id: coverage-surface-gate
+status: ACTIVE
+claim_type: fail_closed
+promise: >-
+  Every packaged production root ([tool.setuptools.packages.find].include) is
+  bound to an explicit decision: measured by some coverage profile source
+  (pyproject [tool.coverage.run].source OR any *.coveragerc), or allowlisted in
+  tests/fixtures/coverage_surface_allowlist.json with a concrete reason from a
+  fixed category set (research, sandbox, generated, docs_only, deprecated,
+  governance_tooling, deferred_production). A NEW packaged package that is
+  neither measured nor allowlisted fails the gate closed. tools/
+  audit_coverage_surface.py emits artifacts/coverage_surface/
+  coverage_surface_report.json (verdict PASS iff forbidden_gaps empty) and flags
+  packaged roots with no source directory as stale_packaging_roots (geosync_agent
+  is a current stale include). Current residual deferred-production debt
+  (geosync_pro, libs, modules) and governance tooling (scripts, tools) are
+  allowlisted with tracked notes, NOT hidden.
+diff_scope:
+  changed_files:
+    - path: ".claude/commit_acceptors/coverage-surface-gate.yaml"
+    - path: "tools/audit_coverage_surface.py"
+    - path: "tests/fixtures/coverage_surface_allowlist.json"
+    - path: "tests/ci/test_coverage_source_matches_packaged_surface.py"
+    - path: "artifacts/coverage_surface/coverage_surface_report.json"
+    - path: "audit/schema/coverage_surface_report.schema.json"
+    - path: "data/testing/component_test_matrix.json"
+  forbidden_paths:
+    - "trading/"
+    - "execution/"
+    - "forecast/"
+    - "policy/"
+required_python_symbols: []
+expected_signal: >-
+  tests/ci/test_coverage_source_matches_packaged_surface.py passes: no forbidden
+  gaps, allowlist entries are honest (defend a real packaged+unmeasured root with
+  a concrete non-vague note), stale packaging roots are flagged and allowlisted,
+  and the committed report matches a fresh audit. No coverage percentage is
+  changed; no score, shadow-rail, or trading/execution/forecast/policy change.
+measurement_command: >-
+  python -m pytest tests/ci/test_coverage_source_matches_packaged_surface.py -q
+signal_artifact: "tmp/coverage_surface_gate_pytest.log"
+falsifier:
+  command: >-
+    python tools/audit_coverage_surface.py
+  description: >-
+    Exits non-zero when a packaged production root is neither measured by a
+    coverage profile nor allowlisted with a concrete reason — the shipped-but-
+    uncounted false-denominator gap.
+rollback_command: >-
+  bash -c 'set -e;
+  git rm -f tools/audit_coverage_surface.py
+  tests/fixtures/coverage_surface_allowlist.json
+  tests/ci/test_coverage_source_matches_packaged_surface.py
+  artifacts/coverage_surface/coverage_surface_report.json
+  .claude/commit_acceptors/coverage-surface-gate.yaml'
+rollback_verification_command: >-
+  bash -c 'test ! -e tools/audit_coverage_surface.py
+  && test ! -e tests/ci/test_coverage_source_matches_packaged_surface.py'
+memory_update_type: none
+ledger_path: ".claude/commit_acceptors/coverage-surface-gate.yaml"
+report_path: "artifacts/coverage_surface/coverage_surface_report.json"
+evidence:
+  - path: "artifacts/coverage_surface/coverage_surface_report.json"
+  - path: "tests/fixtures/coverage_surface_allowlist.json"

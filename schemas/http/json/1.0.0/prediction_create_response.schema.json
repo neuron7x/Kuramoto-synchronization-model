@@ -1,6 +1,6 @@
 {
   "$schema": "https://json-schema.org/draft/2020-12/schema",
-  "$id": "tradepulse.http.prediction_create_response.v1",
+  "$id": "geosync.http.prediction_create_response.v1",
   "title": "PredictionCreateResponse",
   "description": "Acknowledgement payload for asynchronous prediction requests.",
   "type": "object",
@@ -74,8 +74,8 @@
       "submitted_at": "2025-02-01T12:31:00Z",
       "estimated_completion_at": "2025-02-01T12:32:30Z",
       "links": {
-        "status": "https://api.tradepulse.example/v1/predictions/pred-20250201-001",
-        "webhook": "https://webhooks.tradepulse.example/predictions/pred-20250201-001"
+        "status": "https://api.geosync.example/v1/predictions/pred-20250201-001",
+        "webhook": "https://webhooks.geosync.example/predictions/pred-20250201-001"
       },
       "warnings": []
     }

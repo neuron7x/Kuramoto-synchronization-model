@@ -1,0 +1,62 @@
+# Diff-bound commit acceptor for the ricci_microstructure_v1 single-session
+# promotion-blocker negative control.
+#
+# ricci_preregistration_guard.evaluate_promotion implements the contract's
+# `real_multi_required_for: MEASURED` rule: a real, all-gate-passing session that
+# is NOT multi-session promotes only to TESTED_REAL_SINGLE, never MEASURED. The
+# suite had the positive control (real_multi -> MEASURED) but no negative control
+# pinning the single-session ceiling, so a regression that silently promoted a
+# single session to MEASURED would pass CI.
+#
+# This adds the missing negative control (test-only, no runtime change, no claim
+# promotion). Verified non-vacuous: the guard returns TESTED_REAL_SINGLE for
+# real_single and MEASURED for real_multi on the same dataset/result, so the
+# assertion genuinely distinguishes the two.
+
+id: ricci-single-session-promotion-blocker
+status: ACTIVE
+claim_type: fail_closed
+promise: >-
+  After this PR lands, the ricci_microstructure_v1 promotion guard is pinned on
+  both sides: a real multi-session run reaches MEASURED (existing positive
+  control) and a real single-session run that clears every falsifier caps at
+  TESTED_REAL_SINGLE (new negative control) — so MEASURED can never be reached
+  without multi-session evidence.
+diff_scope:
+  changed_files:
+    - path: ".claude/commit_acceptors/ricci-single-session-promotion-blocker.yaml"
+    - path: "tests/research_lines/test_ricci_microstructure_preregistration.py"
+  forbidden_paths:
+    - "trading/"
+    - "execution/"
+    - "forecast/"
+    - "policy/"
+    - "core/physics/"
+    - "core/kuramoto/"
+required_python_symbols: []
+expected_signal: >-
+  `pytest tests/research_lines/test_ricci_microstructure_preregistration.py`
+  passes including test_single_real_session_caps_below_measured; the guard
+  returns TESTED_REAL_SINGLE for data_source=real_single and MEASURED for
+  data_source=real_multi on the same passing dataset/result.
+measurement_command: >-
+  python -m pytest tests/research_lines/test_ricci_microstructure_preregistration.py -q
+signal_artifact: "tests/research_lines/test_ricci_microstructure_preregistration.py"
+falsifier:
+  command: >-
+    grep -qE "claim_tier == \"MEASURED\"" -A0
+    tests/research_lines/test_ricci_microstructure_preregistration.py
+    && ! grep -qE "TESTED_REAL_SINGLE"
+    tests/research_lines/test_ricci_microstructure_preregistration.py
+  description: >-
+    Succeeds only if the single-session negative control is removed, leaving the
+    MEASURED assertion unguarded; on the green path TESTED_REAL_SINGLE is present
+    so this probe exits non-zero, proving the blocker is falsifiable.
+rollback_command: >-
+  git revert --no-edit HEAD
+rollback_verification_command: >-
+  git diff --exit-code tests/research_lines/test_ricci_microstructure_preregistration.py
+memory_update_type: none
+ledger_path: ".claude/commit_acceptors/ricci-single-session-promotion-blocker.yaml"
+report_path: "docs/reports/diff_bound_commit_acceptor_layer.md"
+evidence: []

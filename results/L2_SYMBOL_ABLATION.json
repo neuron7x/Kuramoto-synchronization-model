@@ -1,0 +1,72 @@
+{
+  "baseline_ic": 0.12229471858695447,
+  "baseline_n_symbols": 10,
+  "cells": [
+    {
+      "ic_point": 0.06988641959546207,
+      "n_symbols_remaining": 9,
+      "relative_drop": 0.42854098359308,
+      "removed_symbol": "BTCUSDT"
+    },
+    {
+      "ic_point": 0.09825961478566049,
+      "n_symbols_remaining": 9,
+      "relative_drop": 0.1965342745705281,
+      "removed_symbol": "ETHUSDT"
+    },
+    {
+      "ic_point": 0.15096014099255162,
+      "n_symbols_remaining": 9,
+      "relative_drop": -0.23439624161051034,
+      "removed_symbol": "SOLUSDT"
+    },
+    {
+      "ic_point": 0.18179898924587018,
+      "n_symbols_remaining": 9,
+      "relative_drop": -0.4865645168201336,
+      "removed_symbol": "BNBUSDT"
+    },
+    {
+      "ic_point": 0.1392150396919345,
+      "n_symbols_remaining": 9,
+      "relative_drop": -0.13835692416225867,
+      "removed_symbol": "XRPUSDT"
+    },
+    {
+      "ic_point": 0.10936576130654124,
+      "n_symbols_remaining": 9,
+      "relative_drop": 0.10571966990725301,
+      "removed_symbol": "ADAUSDT"
+    },
+    {
+      "ic_point": 0.16599329624198483,
+      "n_symbols_remaining": 9,
+      "relative_drop": -0.35732187096828416,
+      "removed_symbol": "AVAXUSDT"
+    },
+    {
+      "ic_point": 0.09620462779908544,
+      "n_symbols_remaining": 9,
+      "relative_drop": 0.21333783739253098,
+      "removed_symbol": "LINKUSDT"
+    },
+    {
+      "ic_point": 0.14776032695038915,
+      "n_symbols_remaining": 9,
+      "relative_drop": -0.20823146459368996,
+      "removed_symbol": "DOTUSDT"
+    },
+    {
+      "ic_point": 0.11953447289159223,
+      "n_symbols_remaining": 9,
+      "relative_drop": 0.022570440712855754,
+      "removed_symbol": "POLUSDT"
+    }
+  ],
+  "concentrated_rel_drop_threshold": 0.6,
+  "horizon_sec": 180,
+  "max_relative_drop": 0.42854098359308,
+  "min_ic": 0.06988641959546207,
+  "robust_rel_drop_threshold": 0.3,
+  "verdict": "MIXED"
+}

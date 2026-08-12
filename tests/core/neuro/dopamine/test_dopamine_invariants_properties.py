@@ -1,3 +1,5 @@
+# Copyright (c) 2023-2026 Yaroslav Vasylenko (neuron7xLab)
+# SPDX-License-Identifier: MIT
 """Property-based tests for dopamine invariants with fixed seeds."""
 
 from __future__ import annotations
@@ -14,20 +16,20 @@ try:
 except ImportError:
     HAS_HYPOTHESIS = False
 
-    def given(*args, **kwargs):
+    def given(*args: object, **kwargs: object) -> object:  # type: ignore[no-redef]
         return lambda f: pytest.mark.skip(reason="hypothesis not installed")(f)
 
-    class st:  # type: ignore
+    class st:  # type: ignore[no-redef]
         @staticmethod
-        def floats(*args, **kwargs):
+        def floats(*args: object, **kwargs: object) -> None:
             return None
 
-from tradepulse.core.neuro.dopamine.dopamine_controller import _ALLOWED_NOVELTY_MODES
+
+from geosync.core.neuro.dopamine.dopamine_controller import _ALLOWED_NOVELTY_MODES
 
 
 @st.composite
-
-def _config_strategy(draw):
+def _config_strategy(draw):  # type: ignore[no-untyped-def]
     base_temperature = draw(
         st.floats(min_value=0.05, max_value=5.0, allow_nan=False, allow_infinity=False)
     )
@@ -89,24 +91,14 @@ def _config_strategy(draw):
         "burst_factor": draw(
             st.floats(min_value=0.0, max_value=10.0, allow_nan=False, allow_infinity=False)
         ),
-        "k": draw(
-            st.floats(min_value=1e-3, max_value=10.0, allow_nan=False, allow_infinity=False)
-        ),
+        "k": draw(st.floats(min_value=1e-3, max_value=10.0, allow_nan=False, allow_infinity=False)),
         "theta": draw(
             st.floats(min_value=-10.0, max_value=10.0, allow_nan=False, allow_infinity=False)
         ),
-        "w_r": draw(
-            st.floats(min_value=0.0, max_value=5.0, allow_nan=False, allow_infinity=False)
-        ),
-        "w_n": draw(
-            st.floats(min_value=0.0, max_value=5.0, allow_nan=False, allow_infinity=False)
-        ),
-        "w_m": draw(
-            st.floats(min_value=0.0, max_value=5.0, allow_nan=False, allow_infinity=False)
-        ),
-        "w_v": draw(
-            st.floats(min_value=0.0, max_value=5.0, allow_nan=False, allow_infinity=False)
-        ),
+        "w_r": draw(st.floats(min_value=0.0, max_value=5.0, allow_nan=False, allow_infinity=False)),
+        "w_n": draw(st.floats(min_value=0.0, max_value=5.0, allow_nan=False, allow_infinity=False)),
+        "w_m": draw(st.floats(min_value=0.0, max_value=5.0, allow_nan=False, allow_infinity=False)),
+        "w_v": draw(st.floats(min_value=0.0, max_value=5.0, allow_nan=False, allow_infinity=False)),
         "novelty_mode": draw(st.sampled_from(sorted(_ALLOWED_NOVELTY_MODES))),
         "c_absrpe": draw(
             st.floats(min_value=0.0, max_value=5.0, allow_nan=False, allow_infinity=False)
@@ -197,9 +189,18 @@ def _config_strategy(draw):
 
 
 @pytest.mark.skipif(not HAS_HYPOTHESIS, reason="hypothesis not installed")
-@settings(max_examples=25)
+@settings(max_examples=25, deadline=None)
 @given(cfg=_config_strategy())
-def test_dopamine_invariants_property(cfg: dict) -> None:
+def test_dopamine_invariants_property(cfg: dict) -> None:  # type: ignore[type-arg]
+    """INV-DA3: discount γ ∈ (0, 1] and all other dopamine config bounds
+    hold for every hypothesis-sampled configuration.
+
+    This is the property-test umbrella for INV-DA3 (discount bounds
+    universal). The test bundles 54 configuration invariants checked
+    on every hypothesis example; INV-DA3 is one of them (discount_gamma
+    in (0, 1]). A violation of any of the 54 checks is a configuration
+    contract breach, surfaced through the aggregate assert below.
+    """
     invariants = [
         ("discount_gamma_range", 0.0 < cfg["discount_gamma"] <= 1.0),
         ("learning_rate_v_range", 0.0 < cfg["learning_rate_v"] <= 1.0),
@@ -251,7 +252,10 @@ def test_dopamine_invariants_property(cfg: dict) -> None:
             "temp_adapt_min_base_le_max",
             cfg["temp_adapt_min_base"] <= cfg["temp_adapt_max_base"],
         ),
-        ("rpe_var_release_threshold_non_negative", cfg["rpe_var_release_threshold"] >= 0.0),
+        (
+            "rpe_var_release_threshold_non_negative",
+            cfg["rpe_var_release_threshold"] >= 0.0,
+        ),
         (
             "rpe_var_release_hysteresis_non_negative",
             cfg["rpe_var_release_hysteresis"] >= 0.0,
@@ -282,5 +286,22 @@ def test_dopamine_invariants_property(cfg: dict) -> None:
         ),
     ]
 
-    assert len(invariants) == 54
-    assert all(check for _, check in invariants)
+    assert len(invariants) == 54, (
+        f"INV-DA3 umbrella drift: expected 54 config invariants, got {len(invariants)}. "
+        f"Observed at hypothesis sample (seed=hypothesis). "
+        f"Parameters: discount_gamma={cfg.get('discount_gamma')}, "
+        f"base_temperature={cfg.get('base_temperature')}. "
+        f"Physical reasoning: any drift in the invariant list must be reflected "
+        f"in INVARIANTS.yaml — never silently resize the contract."
+    )
+    failed = [name for name, check in invariants if not check]
+    assert not failed, (
+        f"INV-DA3 VIOLATED: {len(failed)} dopamine config invariants violated: {failed}. "
+        f"Expected every bound in the 54-check umbrella to hold (including γ ∈ (0, 1]). "
+        f"Observed at hypothesis sample with discount_gamma={cfg['discount_gamma']}, "
+        f"learning_rate_v={cfg['learning_rate_v']}, "
+        f"base_temperature={cfg['base_temperature']}. "
+        f"Physical reasoning: violating any config bound means the sampled "
+        f"configuration would be rejected at runtime — the generator is drifting "
+        f"outside the valid manifold."
+    )

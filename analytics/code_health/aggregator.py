@@ -1,3 +1,5 @@
+# Copyright (c) 2023-2026 Yaroslav Vasylenko (neuron7xLab)
+# SPDX-License-Identifier: MIT
 """High-level orchestration for code health metrics collection."""
 
 from __future__ import annotations
@@ -47,9 +49,7 @@ class CodeMetricAggregator:
         self.file_globs = file_globs
         self.thresholds = thresholds or Thresholds()
         self.history_file = (
-            Path(history_file)
-            if history_file
-            else self.repo_root / ".code_metrics_history.json"
+            Path(history_file) if history_file else self.repo_root / ".code_metrics_history.json"
         )
         self.git = GitHistoryAnalyzer(self.repo_root)
 
@@ -91,22 +91,14 @@ class CodeMetricAggregator:
             total_lines = self._safe_line_count(path)
             coupling = CouplingAnalyzer(path).measure()
             fan_in = rolling_average(call_graph.fan_in(fn.qualname) for fn in functions)
-            fan_out = rolling_average(
-                call_graph.fan_out(fn.qualname) for fn in functions
-            )
+            fan_out = rolling_average(call_graph.fan_out(fn.qualname) for fn in functions)
             change_freq = self.git.file_change_frequency(path)
             churn = self.git.file_churn(path)
             stability = self.git.interface_instability(path)
-            function_metrics = self._build_function_metrics(
-                functions, call_graph, path_str
-            )
+            function_metrics = self._build_function_metrics(functions, call_graph, path_str)
 
-            avg_complexity = rolling_average(
-                fn.cyclomatic_complexity for fn in functions
-            )
-            max_complexity = max(
-                (fn.cyclomatic_complexity for fn in functions), default=0
-            )
+            avg_complexity = rolling_average(fn.cyclomatic_complexity for fn in functions)
+            max_complexity = max((fn.cyclomatic_complexity for fn in functions), default=0)
             hot_score = churn * 0.6 + change_freq * 0.4
             risk_profile = risk_calculator.evaluate(
                 avg_complexity=avg_complexity,
@@ -153,9 +145,7 @@ class CodeMetricAggregator:
                 direction="up" if curr > prev else ("down" if curr < prev else "flat"),
                 timestamp=datetime.now(timezone.utc),
             )
-            for path, prev, curr in compute_trends(
-                previous=previous_snapshot, current=snapshot
-            )
+            for path, prev, curr in compute_trends(previous=previous_snapshot, current=snapshot)
         ]
 
         developer_metrics = self.git.developer_activity()
@@ -209,9 +199,7 @@ class CodeMetricAggregator:
                     }
                 )
 
-    def build_pr_report(
-        self, metrics: RepositoryMetrics, *, base_ref: str = "origin/main"
-    ) -> str:
+    def build_pr_report(self, metrics: RepositoryMetrics, *, base_ref: str = "origin/main") -> str:
         """Generate a PR-friendly summary scoped to the current branch."""
 
         changed_files = self._changed_files(base_ref)
@@ -224,12 +212,8 @@ class CodeMetricAggregator:
             if not file_metrics:
                 continue
             lines.append(f"**{file}**")
-            factors = (
-                ", ".join(file_metrics.risk_profile.contributing_factors) or "stable"
-            )
-            lines.append(
-                f"- Risk score: {file_metrics.risk_profile.risk_score:.2f} ({factors})"
-            )
+            factors = ", ".join(file_metrics.risk_profile.contributing_factors) or "stable"
+            lines.append(f"- Risk score: {file_metrics.risk_profile.risk_score:.2f} ({factors})")
             violations = file_metrics.exceeding_thresholds(metrics.thresholds)
             if violations:
                 lines.append("- Threshold alerts:")
@@ -247,9 +231,7 @@ class CodeMetricAggregator:
 
         return {
             "generated_at": metrics.generated_at.isoformat(),
-            "risk_hotspots": [
-                self._serialize_file_metric(fm) for fm in metrics.most_risky()
-            ],
+            "risk_hotspots": [self._serialize_file_metric(fm) for fm in metrics.most_risky()],
             "hot_files": self.git.hot_files(),
             "developers": [asdict(dm) for dm in metrics.developer_metrics],
             "trends": [
@@ -268,12 +250,10 @@ class CodeMetricAggregator:
     def create_api(self, metrics: RepositoryMetrics) -> FastAPI:
         """Expose metrics via a FastAPI application."""
 
-        app = FastAPI(title="TradePulse Code Metrics", version="1.0.0")
+        app = FastAPI(title="GeoSync Code Metrics", version="1.0.0")
 
         @app.get("/metrics/files")
-        def list_files() -> (
-            List[Dict[str, object]]
-        ):  # pragma: no cover - FastAPI wiring
+        def list_files() -> List[Dict[str, object]]:  # pragma: no cover - FastAPI wiring
             return [self._serialize_file_metric(fm) for fm in metrics.iter_files()]
 
         @app.get("/metrics/files/{path:path}")
@@ -286,9 +266,7 @@ class CodeMetricAggregator:
             return self._serialize_file_metric(metric)
 
         @app.get("/metrics/developers")
-        def developer_overview() -> (
-            List[Dict[str, object]]
-        ):  # pragma: no cover - FastAPI wiring
+        def developer_overview() -> List[Dict[str, object]]:  # pragma: no cover - FastAPI wiring
             return [asdict(dm) for dm in metrics.developer_metrics]
 
         @app.get("/metrics/hot-files")
@@ -296,9 +274,7 @@ class CodeMetricAggregator:
             return self.git.hot_files()
 
         @app.get("/metrics/trends")
-        def trend_overview() -> (
-            List[Dict[str, object]]
-        ):  # pragma: no cover - FastAPI wiring
+        def trend_overview() -> List[Dict[str, object]]:  # pragma: no cover - FastAPI wiring
             return [
                 {
                     "metric": trend.metric,
@@ -360,17 +336,13 @@ class CodeMetricAggregator:
             )
         return result
 
-    def _identify_hotspots(
-        self, file_metrics: Mapping[str, FileMetrics]
-    ) -> List[FileMetrics]:
+    def _identify_hotspots(self, file_metrics: Mapping[str, FileMetrics]) -> List[FileMetrics]:
         candidates = [
             fm
             for fm in file_metrics.values()
             if fm.hot_spot_score > self.thresholds.max_hotspot_churn
         ]
-        return sorted(
-            candidates, key=lambda fm: fm.risk_profile.risk_score, reverse=True
-        )
+        return sorted(candidates, key=lambda fm: fm.risk_profile.risk_score, reverse=True)
 
     def _serialize_file_metric(self, metric: FileMetrics) -> Dict[str, object]:
         return {
@@ -408,8 +380,4 @@ class CodeMetricAggregator:
         result = self.git._run("diff", "--name-only", base_ref)
         if result.returncode != 0:
             return []
-        return [
-            line.strip()
-            for line in result.stdout.splitlines()
-            if line.strip().endswith(".py")
-        ]
+        return [line.strip() for line in result.stdout.splitlines() if line.strip().endswith(".py")]

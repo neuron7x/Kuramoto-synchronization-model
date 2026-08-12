@@ -1,0 +1,38 @@
+id: etalon-surface-contract-durable-realign
+status: ACTIVE
+claim_type: governance
+promise: >-
+  Make the repository-surface governance contract test durable against the
+  etalon line's ongoing rewrite of docs/REPOSITORY_SYSTEM.md (which renumbers
+  and renames sections over time). The test now asserts the STABLE contract
+  primitives — canonical governance file links (PRODUCT_CATEGORY / CLAIMS /
+  FORBIDDEN_CLAIMS / AGENTS) and the promotion/replay/RETIRED vocabulary —
+  instead of brittle exact section ordinals/names that came and went. Governance
+  intent is unchanged; the assertion is robust to renumbering.
+diff_scope:
+  changed_files:
+    - path: "tests/ci/test_repository_surface_contract.py"
+    - path: ".claude/commit_acceptors/etalon-surface-contract-durable-realign.yaml"
+  forbidden_paths:
+    - "core/execution/"
+    - "core/strategies/"
+    - "interfaces/live_runner.py"
+    - "forecast/"
+required_python_symbols: []
+expected_signal: >-
+  tests/ci/test_repository_surface_contract.py passes against the current
+  canonical surfaces (governance links + promotion/replay/RETIRED primitives all
+  present).
+measurement_command: "python -m pytest tests/ci/test_repository_surface_contract.py -q"
+signal_artifact: "docs/REPOSITORY_SYSTEM.md"
+falsifier:
+  command: "python -c \"import pathlib,sys; t=pathlib.Path('docs/REPOSITORY_SYSTEM.md').read_text(encoding='utf-8'); sys.exit(0 if 'AGENTS.md' not in t else 1)\""
+  description: >-
+    Exits non-zero in the asserted healthy state (the doc references AGENTS.md);
+    flips to pass only if that canonical governance link is missing (regression).
+rollback_command: "git checkout -- tests/ci/test_repository_surface_contract.py"
+rollback_verification_command: "git diff --exit-code tests/ci/test_repository_surface_contract.py"
+memory_update_type: append
+ledger_path: ".claude/commit_acceptors/etalon-surface-contract-durable-realign.yaml"
+report_path: "docs/phd/13_physics_runtime_hardening.md"
+evidence: []

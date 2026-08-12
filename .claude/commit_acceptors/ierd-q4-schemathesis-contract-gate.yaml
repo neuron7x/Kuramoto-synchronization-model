@@ -1,0 +1,100 @@
+# Diff-bound commit acceptor for IERD-Q4 Phase-3 ENTRY: Schemathesis
+# contract gate.
+#
+# Before: docs/CLAIMS.yaml claim `api-contract-openapi-coverage` declared
+# "Schemathesis contract suite" as missing evidence; no schemathesis
+# wiring existed in the repository, no CI gate ran property-based
+# verification of the OpenAPI 3.1 surface produced by
+# `application.api.service.create_app()`.
+#
+# After: schemathesis>=4 wired via `tests/api/test_schemathesis_contract.py`
+# against `create_app().openapi()` in-process; CI workflow
+# `.github/workflows/schemathesis-contract.yml` exercises the suite on
+# every PR touching `application/api/**` or `schemas/openapi/**` and
+# uploads junit.xml + run.log as artifacts. Phase-3 ENTRY only:
+# `continue-on-error: true`. Phase-3 EXIT (claim ANCHORED) is a
+# follow-up PR after the contract drift surfaced by this gate is
+# remediated.
+#
+# Locally verified: schemathesis 4.17.0 enumerates 13 operations from
+# the in-process app; mypy --strict + ruff clean on the new test;
+# `scripts/ci/check_claims.py` PASS schema v3 with the extended
+# evidence_paths.
+
+id: ierd-q4-schemathesis-contract-gate
+status: ACTIVE
+claim_type: correctness
+promise: >-
+  `pytest tests/api/test_schemathesis_contract.py` enumerates every
+  (path, method) declared in `application.api.service.create_app().openapi()`
+  and exercises six contract checks against the in-process ASGI app
+  (not_a_server_error, status_code_conformance, content_type_conformance,
+  response_headers_conformance, response_schema_conformance,
+  negative_data_rejection). The Schemathesis Contract workflow runs the
+  same suite on every PR matching the API surface path filter, uploads
+  junit.xml + run.log as `schemathesis-contract-results` artifact (14-day
+  retention), and emits a Step Summary. Phase-3 ENTRY is informational
+  (`continue-on-error: true`); Phase-3 EXIT flips it to fail-closed.
+diff_scope:
+  changed_files:
+    - path: ".claude/commit_acceptors/ierd-q4-schemathesis-contract-gate.yaml"
+    - path: ".github/workflows/schemathesis-contract.yml"
+    - path: "docs/CLAIMS.yaml"
+    - path: "pyproject.toml"
+    - path: "tests/api/test_schemathesis_contract.py"
+  forbidden_paths:
+    - "trading/"
+    - "execution/"
+    - "forecast/"
+    - "policy/"
+    - "core/physics/"
+    - "core/kuramoto/"
+    - "application/api/service.py"
+    - "application/api/errors.py"
+    - "application/api/middleware/"
+    - "schemas/openapi/"
+required_python_symbols:
+  - "tests/api/test_schemathesis_contract.py::test_api_operation_conforms_to_schema"
+expected_signal: >-
+  Local: `mypy --strict --follow-imports=silent
+  tests/api/test_schemathesis_contract.py` reports
+  "Success: no issues found in 1 source file"; `ruff check`
+  reports "All checks passed!"; `python -m pytest
+  tests/api/test_schemathesis_contract.py --co -q` collects 13
+  parametrized cases (one per declared operation in
+  `schemas/openapi/geosync-online-inference-v1.json`); `python
+  scripts/ci/check_claims.py` reports schema v3 with the
+  extended evidence_paths
+  (`tests/api/test_schemathesis_contract.py`,
+  `.github/workflows/schemathesis-contract.yml`,
+  `schemas/openapi/geosync-online-inference-v1.json`,
+  `application/api/errors.py`) all present.
+measurement_command: >-
+  bash -c 'mypy --strict --follow-imports=silent tests/api/test_schemathesis_contract.py
+  && ruff check tests/api/test_schemathesis_contract.py
+  && python scripts/ci/check_claims.py'
+signal_artifact: "tmp/ierd_q4_schemathesis_contract_gate.log"
+falsifier:
+  command: >-
+    bash -c 'python -c "import yaml,sys; spec=yaml.safe_load(open(\".github/workflows/schemathesis-contract.yml\")); steps=spec[\"jobs\"][\"schemathesis-contract\"][\"steps\"]; run_step=next(s for s in steps if s.get(\"id\")==\"run\"); sys.exit(0 if run_step.get(\"continue-on-error\") is not True else 1)"'
+  description: >-
+    Phase-3 EXIT (2026-05-07): the gate is now fail-closed. The
+    falsifier asserts the inverse invariant — `continue-on-error`
+    must NOT be True on the schemathesis run step. If a future
+    change flips the gate back to informational, the falsifier
+    exits non-zero, forcing the claim back to EXTRAPOLATED in
+    docs/CLAIMS.yaml. Prevents silent strictness regression.
+rollback_command: >-
+  git checkout HEAD~1 --
+  .claude/commit_acceptors/ierd-q4-schemathesis-contract-gate.yaml
+  .github/workflows/schemathesis-contract.yml
+  tests/api/test_schemathesis_contract.py
+  pyproject.toml
+  docs/CLAIMS.yaml
+rollback_verification_command: >-
+  git diff --exit-code tests/api/test_schemathesis_contract.py
+  .github/workflows/schemathesis-contract.yml
+memory_update_type: append
+ledger_path: ".claude/commit_acceptors/ierd-q4-schemathesis-contract-gate.yaml"
+report_path: "tmp/ierd_q4_schemathesis_contract_gate.log"
+evidence: []

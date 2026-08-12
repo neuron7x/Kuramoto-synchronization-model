@@ -1,0 +1,99 @@
+{
+  "$schema": "https://json-schema.org/draft/2020-12/schema",
+  "title": "remediation_ledger.v1",
+  "type": "object",
+  "required": [
+    "schema",
+    "version",
+    "generated_at",
+    "items"
+  ],
+  "properties": {
+    "schema": {
+      "const": "remediation_ledger.v1"
+    },
+    "version": {
+      "type": "string"
+    },
+    "generated_at": {
+      "type": "string"
+    },
+    "baseline_tree": {
+      "type": "string"
+    },
+    "ssot": {
+      "type": "boolean"
+    },
+    "item_count": {
+      "type": "integer"
+    },
+    "items": {
+      "type": "array",
+      "items": {
+        "type": "object",
+        "required": [
+          "id",
+          "severity",
+          "owner",
+          "source_evidence",
+          "due_gate",
+          "status"
+        ],
+        "properties": {
+          "id": {
+            "type": "string",
+            "pattern": "^[A-Z]{3}-[0-9]{3}$"
+          },
+          "severity": {
+            "enum": [
+              "critical",
+              "high",
+              "medium",
+              "unknown"
+            ]
+          },
+          "priority": {
+            "enum": [
+              "P0",
+              "P1",
+              "P2"
+            ]
+          },
+          "owner": {
+            "type": "string"
+          },
+          "source_evidence": {
+            "type": "string"
+          },
+          "due_gate": {
+            "type": "string"
+          },
+          "status": {
+            "enum": [
+              "open",
+              "in_progress",
+              "closed",
+              "waived"
+            ]
+          },
+          "waiver": {
+            "type": [
+              "string",
+              "null"
+            ]
+          },
+          "expiry": {
+            "type": [
+              "string",
+              "null"
+            ]
+          },
+          "residual_risk": {
+            "type": "string"
+          }
+        }
+      },
+      "uniqueItems": true
+    }
+  }
+}

@@ -1,0 +1,605 @@
+{
+  "$schema": "https://json-schema.org/draft/2020-12/schema",
+  "$id": "https://schemas.neuron7xlab.org/cme/physics_boundary_report.schema.json",
+  "title": "CME Physics Boundary Report",
+  "type": "object",
+  "additionalProperties": false,
+  "required": [
+    "report_version",
+    "agent_role",
+    "repo_snapshot",
+    "system_identity",
+    "state_model",
+    "constraints",
+    "invariants",
+    "operator_map",
+    "mechanism_residual_split",
+    "trajectory_model",
+    "measurement_model",
+    "verification_model",
+    "claim_audit",
+    "quality_score",
+    "first_missing_condition",
+    "role_2_handoff",
+    "verdict"
+  ],
+  "properties": {
+    "report_version": {
+      "type": "string",
+      "const": "1.0"
+    },
+    "agent_role": {
+      "type": "string",
+      "const": "FIRST_PRINCIPLES_PHYSICS_AUDITOR"
+    },
+    "repo_snapshot": {
+      "type": "object",
+      "additionalProperties": false,
+      "required": [
+        "files_scanned",
+        "missing_expected_files",
+        "detected_entrypoints",
+        "detected_tests",
+        "detected_schemas",
+        "detected_docs"
+      ],
+      "properties": {
+        "files_scanned": {
+          "type": "array",
+          "items": {
+            "type": "string"
+          }
+        },
+        "missing_expected_files": {
+          "type": "array",
+          "items": {
+            "type": "string"
+          }
+        },
+        "detected_entrypoints": {
+          "type": "array",
+          "items": {
+            "type": "string"
+          }
+        },
+        "detected_tests": {
+          "type": "array",
+          "items": {
+            "type": "string"
+          }
+        },
+        "detected_schemas": {
+          "type": "array",
+          "items": {
+            "type": "string"
+          }
+        },
+        "detected_docs": {
+          "type": "array",
+          "items": {
+            "type": "string"
+          }
+        }
+      }
+    },
+    "system_identity": {
+      "type": "object",
+      "additionalProperties": false,
+      "required": [
+        "system_type",
+        "core_transformation",
+        "input_state",
+        "output_state",
+        "validation_boundary"
+      ],
+      "properties": {
+        "system_type": {
+          "type": "string"
+        },
+        "core_transformation": {
+          "type": "string"
+        },
+        "input_state": {
+          "type": "string"
+        },
+        "output_state": {
+          "type": "string"
+        },
+        "validation_boundary": {
+          "type": "string"
+        }
+      }
+    },
+    "state_model": {
+      "type": "object",
+      "additionalProperties": false,
+      "required": [
+        "state_variables"
+      ],
+      "properties": {
+        "state_variables": {
+          "type": "array",
+          "minItems": 1,
+          "items": {
+            "type": "object",
+            "additionalProperties": false,
+            "required": [
+              "name",
+              "definition",
+              "repo_evidence",
+              "status"
+            ],
+            "properties": {
+              "name": {
+                "type": "string"
+              },
+              "definition": {
+                "type": "string"
+              },
+              "repo_evidence": {
+                "type": "array",
+                "items": {
+                  "type": "string"
+                }
+              },
+              "status": {
+                "type": "string",
+                "enum": [
+                  "S0_REPO_FACT",
+                  "S1_TESTED",
+                  "S2_LITERATURE",
+                  "S5_PROXY",
+                  "S6_SPECULATIVE",
+                  "UNSUPPORTED"
+                ]
+              }
+            }
+          }
+        }
+      }
+    },
+    "constraints": {
+      "type": "object",
+      "additionalProperties": false,
+      "required": [
+        "boundary_conditions",
+        "forbidden_claims",
+        "non_scope"
+      ],
+      "properties": {
+        "boundary_conditions": {
+          "type": "array",
+          "items": {
+            "type": "string"
+          }
+        },
+        "forbidden_claims": {
+          "type": "array",
+          "items": {
+            "type": "string"
+          }
+        },
+        "non_scope": {
+          "type": "array",
+          "items": {
+            "type": "string"
+          }
+        }
+      }
+    },
+    "invariants": {
+      "type": "array",
+      "minItems": 1,
+      "items": {
+        "type": "object",
+        "additionalProperties": false,
+        "required": [
+          "name",
+          "must_conserve",
+          "how_verified",
+          "failure_if_broken"
+        ],
+        "properties": {
+          "name": {
+            "type": "string"
+          },
+          "must_conserve": {
+            "type": "string"
+          },
+          "how_verified": {
+            "type": "string"
+          },
+          "failure_if_broken": {
+            "type": "string"
+          }
+        }
+      }
+    },
+    "operator_map": {
+      "type": "array",
+      "minItems": 1,
+      "items": {
+        "type": "object",
+        "additionalProperties": false,
+        "required": [
+          "operator_name",
+          "repo_location",
+          "input_state",
+          "operation",
+          "output_state",
+          "validator",
+          "failure_mode",
+          "decision"
+        ],
+        "properties": {
+          "operator_name": {
+            "type": "string"
+          },
+          "repo_location": {
+            "type": "string"
+          },
+          "input_state": {
+            "type": "string"
+          },
+          "operation": {
+            "type": "string"
+          },
+          "output_state": {
+            "type": "string"
+          },
+          "validator": {
+            "type": "string"
+          },
+          "failure_mode": {
+            "type": "string"
+          },
+          "decision": {
+            "type": "string",
+            "enum": [
+              "KEEP",
+              "MODIFY",
+              "REMOVE",
+              "CREATE"
+            ]
+          }
+        }
+      }
+    },
+    "mechanism_residual_split": {
+      "type": "object",
+      "additionalProperties": false,
+      "required": [
+        "deterministic_mechanisms",
+        "llm_residual_spaces",
+        "promotion_rule"
+      ],
+      "properties": {
+        "deterministic_mechanisms": {
+          "type": "array",
+          "items": {
+            "type": "string"
+          }
+        },
+        "llm_residual_spaces": {
+          "type": "array",
+          "items": {
+            "type": "string"
+          }
+        },
+        "promotion_rule": {
+          "type": "string"
+        }
+      }
+    },
+    "trajectory_model": {
+      "type": "object",
+      "additionalProperties": false,
+      "required": [
+        "required_trace_fields",
+        "current_trace_support",
+        "missing_trace_fields"
+      ],
+      "properties": {
+        "required_trace_fields": {
+          "type": "array",
+          "items": {
+            "type": "string"
+          }
+        },
+        "current_trace_support": {
+          "type": "string",
+          "enum": [
+            "FULL",
+            "PARTIAL",
+            "ABSENT"
+          ]
+        },
+        "missing_trace_fields": {
+          "type": "array",
+          "items": {
+            "type": "string"
+          }
+        }
+      }
+    },
+    "measurement_model": {
+      "type": "object",
+      "additionalProperties": false,
+      "required": [
+        "metrics"
+      ],
+      "properties": {
+        "metrics": {
+          "type": "array",
+          "minItems": 1,
+          "items": {
+            "type": "object",
+            "additionalProperties": false,
+            "required": [
+              "metric_name",
+              "definition",
+              "measurement_method",
+              "repo_location",
+              "threshold",
+              "status"
+            ],
+            "properties": {
+              "metric_name": {
+                "type": "string"
+              },
+              "definition": {
+                "type": "string"
+              },
+              "measurement_method": {
+                "type": "string"
+              },
+              "repo_location": {
+                "type": "string"
+              },
+              "threshold": {
+                "type": "string"
+              },
+              "status": {
+                "type": "string",
+                "enum": [
+                  "IMPLEMENTED",
+                  "MISSING",
+                  "PROXY"
+                ]
+              }
+            }
+          }
+        }
+      }
+    },
+    "verification_model": {
+      "type": "object",
+      "additionalProperties": false,
+      "required": [
+        "verifiers"
+      ],
+      "properties": {
+        "verifiers": {
+          "type": "array",
+          "minItems": 1,
+          "items": {
+            "type": "object",
+            "additionalProperties": false,
+            "required": [
+              "verifier_name",
+              "command_or_file",
+              "checks",
+              "current_status"
+            ],
+            "properties": {
+              "verifier_name": {
+                "type": "string"
+              },
+              "command_or_file": {
+                "type": "string"
+              },
+              "checks": {
+                "type": "string"
+              },
+              "current_status": {
+                "type": "string",
+                "enum": [
+                  "PASS",
+                  "FAIL",
+                  "MISSING",
+                  "UNKNOWN"
+                ]
+              }
+            }
+          }
+        }
+      }
+    },
+    "claim_audit": {
+      "type": "object",
+      "additionalProperties": false,
+      "required": [
+        "repo_facts",
+        "tested_claims",
+        "literature_claims",
+        "proxy_claims",
+        "speculative_claims",
+        "unsupported_claims",
+        "forbidden_claims_detected"
+      ],
+      "properties": {
+        "repo_facts": {
+          "type": "array",
+          "items": {
+            "type": "string"
+          }
+        },
+        "tested_claims": {
+          "type": "array",
+          "items": {
+            "type": "string"
+          }
+        },
+        "literature_claims": {
+          "type": "array",
+          "items": {
+            "type": "string"
+          }
+        },
+        "proxy_claims": {
+          "type": "array",
+          "items": {
+            "type": "string"
+          }
+        },
+        "speculative_claims": {
+          "type": "array",
+          "items": {
+            "type": "string"
+          }
+        },
+        "unsupported_claims": {
+          "type": "array",
+          "items": {
+            "type": "string"
+          }
+        },
+        "forbidden_claims_detected": {
+          "type": "array",
+          "items": {
+            "type": "string"
+          }
+        }
+      }
+    },
+    "quality_score": {
+      "type": "object",
+      "additionalProperties": false,
+      "required": [
+        "state_model",
+        "constraint_model",
+        "operator_model",
+        "mechanism_residual_split",
+        "trajectory_trace",
+        "measurement_model",
+        "verification_model",
+        "claim_governance",
+        "github_agent_readiness",
+        "total"
+      ],
+      "properties": {
+        "state_model": {
+          "type": "integer",
+          "minimum": 0,
+          "maximum": 10
+        },
+        "constraint_model": {
+          "type": "integer",
+          "minimum": 0,
+          "maximum": 10
+        },
+        "operator_model": {
+          "type": "integer",
+          "minimum": 0,
+          "maximum": 10
+        },
+        "mechanism_residual_split": {
+          "type": "integer",
+          "minimum": 0,
+          "maximum": 10
+        },
+        "trajectory_trace": {
+          "type": "integer",
+          "minimum": 0,
+          "maximum": 10
+        },
+        "measurement_model": {
+          "type": "integer",
+          "minimum": 0,
+          "maximum": 10
+        },
+        "verification_model": {
+          "type": "integer",
+          "minimum": 0,
+          "maximum": 10
+        },
+        "claim_governance": {
+          "type": "integer",
+          "minimum": 0,
+          "maximum": 10
+        },
+        "github_agent_readiness": {
+          "type": "integer",
+          "minimum": 0,
+          "maximum": 10
+        },
+        "total": {
+          "type": "integer",
+          "minimum": 0,
+          "maximum": 90
+        }
+      }
+    },
+    "first_missing_condition": {
+      "type": "string",
+      "minLength": 1
+    },
+    "role_2_handoff": {
+      "type": "object",
+      "additionalProperties": false,
+      "required": [
+        "role_name",
+        "task",
+        "files_to_create",
+        "files_to_modify",
+        "validation_commands",
+        "pass_fail_criteria"
+      ],
+      "properties": {
+        "role_name": {
+          "type": "string",
+          "minLength": 1
+        },
+        "task": {
+          "type": "string",
+          "minLength": 1
+        },
+        "files_to_create": {
+          "type": "array",
+          "minItems": 1,
+          "items": {
+            "type": "string"
+          }
+        },
+        "files_to_modify": {
+          "type": "array",
+          "minItems": 1,
+          "items": {
+            "type": "string"
+          }
+        },
+        "validation_commands": {
+          "type": "array",
+          "minItems": 1,
+          "items": {
+            "type": "string"
+          }
+        },
+        "pass_fail_criteria": {
+          "type": "array",
+          "minItems": 1,
+          "items": {
+            "type": "string"
+          }
+        }
+      }
+    },
+    "verdict": {
+      "type": "string",
+      "enum": [
+        "PASS",
+        "FAIL"
+      ]
+    }
+  }
+}

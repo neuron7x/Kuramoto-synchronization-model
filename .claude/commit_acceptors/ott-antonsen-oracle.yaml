@@ -1,0 +1,110 @@
+# Diff-bound commit acceptor — Ott-Antonsen INV-OA2 runtime fail-closed oracle.
+#
+# Before: core/kuramoto/ott_antonsen.py::integrate treated the exact analytical
+# steady state R_∞ = √(1 − 2Δ/K) (Ott & Antonsen 2008, Eq. 2.13) as a passive
+# property checked only by external tests, and guarded INV-OA1 (|z| ≤ 1) with a
+# MAGIC overshoot constant 1e-8 unrelated to the integrator's error order. A
+# CFL-violating dt past the RK4 stability limit could settle a supercritical run
+# on a stationary-but-WRONG value (e.g. K=4, Δ=0.5, dt=1.0 → 0.71 instead of the
+# exact 0.866) and return it silently as a "steady state".
+#
+# After (NO new physics, NO loosened bound):
+#   * INV-OA2 runtime oracle: after a supercritical (K>K_c), R0>0 run, integrate
+#     raises FloatingPointError(INV-OA2 ...) iff the SETTLED tail (peak-to-peak
+#     drift ≤ ORACLE_TOL/10, i.e. truly stationary) disagrees with √(1 − 2Δ/K)
+#     by more than ORACLE_TOL = 1e-3. The stationarity gate distinguishes a
+#     CFL-failed flat-but-wrong state (drift ≈ 0) from a numerically-stable but
+#     still-relaxing near-onset run (critical slowing-down, relaxation time
+#     ~ 1/(K−K_c)); the unstable incoherent fixed point R0=0 is excluded because
+#     the closed form binds only the stable branch.
+#   * INV-OA1 overshoot gate retied to RK4 local truncation error:
+#     overshoot_bound = max(8·ε_mach, (max(Δ,K)·dt)^5) replaces the magic 1e-8.
+#     A stable step lands inside its own O((L·dt)^5) local-error envelope; a true
+#     CFL blow-up (overshoot O(1)) still fails closed.
+#
+# Adds tests/unit/physics/test_ott_antonsen_oracle.py (adversarial): supercritical
+# R matches √(1 − 2Δ/K) ≤ 1e-4; subcritical → 0; a CFL-violating dt RAISES (both
+# the INV-OA2 stationary-wrong path and the INV-OA1 blow-up path) instead of
+# returning a wrong steady state; degenerate inputs (Δ≤0, NaN K/Δ, bad dt) raise;
+# |z| ≤ 1 over a (K,Δ,dt) sweep; R0=0 repeller does not false-raise.
+#
+# Distinct from ott-antonsen-analytical-anchor.yaml (tests-only, forbids core/)
+# and ott-antonsen-rhs-fix.yaml (RHS conjugate fix): this is the runtime-oracle +
+# overshoot-bound change and binds ONLY its three files.
+#
+# Locally verified on origin/main base (b146a1d):
+#   * pytest tests/unit/physics/test_ott_antonsen_oracle.py: all pass
+#   * pytest tests -k ott_antonsen: all pass (existing OA suite green)
+#   * ruff check / ruff format --check / black --check (module): clean
+#   * mypy --strict core/kuramoto/ott_antonsen.py: no issues
+#   * zero new noqa / type: ignore across both changed code files
+id: ott-antonsen-oracle
+status: ACTIVE
+claim_type: correctness
+promise: >-
+  core/kuramoto/ott_antonsen.py::OttAntonsenEngine.integrate enforces INV-OA2 as
+  a runtime fail-closed oracle: after a supercritical (K > 2Δ) run seeded at
+  R0 > 0, it raises FloatingPointError when the SETTLED order parameter
+  (peak-to-peak tail drift ≤ ORACLE_TOL/10) disagrees with the exact closed form
+  R_∞ = √(1 − 2Δ/K) by more than ORACLE_TOL = 1e-3 — a stationary mismatch is a
+  step-size/CFL failure, not tolerable drift. The INV-OA1 |z| ≤ 1 overshoot gate
+  is tied to RK4 local truncation error (bound max(8·ε_mach, (max(Δ,K)·dt)^5)),
+  replacing the magic 1e-8 constant; a stable step is tolerated within its own
+  local-error envelope while a true blow-up fails closed. Numerically-stable but
+  still-relaxing near-onset runs (critical slowing-down) and the unstable R0=0
+  incoherent fixed point are excluded by design, so the oracle binds only the
+  stable supercritical branch. tests/unit/physics/test_ott_antonsen_oracle.py
+  asserts a CFL-violating dt RAISES instead of returning a wrong steady state,
+  degenerate inputs (Δ≤0, NaN K/Δ, non-positive/non-finite dt) raise, the
+  supercritical closed form is recovered to ≤ 1e-4, the subcritical regime decays
+  to 0, and |z| ≤ 1 holds over a (K, Δ, dt) sweep. No new physics; no loosened
+  bound; no new invariant.
+diff_scope:
+  changed_files:
+    - path: ".claude/commit_acceptors/ott-antonsen-oracle.yaml"
+    - path: "core/kuramoto/ott_antonsen.py"
+    - path: "tests/unit/physics/test_ott_antonsen_oracle.py"
+  forbidden_paths:
+    - "trading/"
+    - "execution/"
+    - "forecast/"
+    - "policy/"
+    - "application/"
+    - "src/"
+required_python_symbols:
+  - "core/kuramoto/ott_antonsen.py::OttAntonsenEngine"
+  - "core/kuramoto/ott_antonsen.py::ORACLE_TOL"
+  - "tests/unit/physics/test_ott_antonsen_oracle.py::test_cfl_violating_dt_oracle_raises_instead_of_wrong_steady_state"
+  - "tests/unit/physics/test_ott_antonsen_oracle.py::test_supercritical_R_matches_closed_form"
+expected_signal: >-
+  Local: `mypy --strict --follow-imports=silent core/kuramoto/ott_antonsen.py`
+  reports "Success: no issues found"; `ruff check` and `black --check`
+  (module) clean; `python -m pytest
+  tests/unit/physics/test_ott_antonsen_oracle.py -q` passes with the
+  CFL-violating-dt cases RAISING FloatingPointError and the supercritical
+  closed-form recovery within 1e-4; `python -m pytest tests -k ott_antonsen -q`
+  passes the full existing OA suite.
+measurement_command: >-
+  bash -c 'mkdir -p tmp && python -m pytest tests/unit/physics/test_ott_antonsen_oracle.py -q > tmp/ott_antonsen_oracle_pytest.log 2>&1 && grep -qE "passed" tmp/ott_antonsen_oracle_pytest.log && ! grep -qE "failed|error" tmp/ott_antonsen_oracle_pytest.log'
+signal_artifact: "tmp/ott_antonsen_oracle_pytest.log"
+falsifier:
+  command: >-
+    python -c 'import sys; from core.kuramoto.ott_antonsen import OttAntonsenEngine; e = OttAntonsenEngine(K=4.0, delta=0.5); raised = False;
+    exec("try:\n e.integrate(T=50.0, dt=1.0, R0=0.1)\nexcept FloatingPointError:\n raised = True"); sys.exit(1 if raised else 0)'
+  description: >-
+    Inverse probe of the INV-OA2 runtime oracle. It integrates the supercritical
+    case K=4, Δ=0.5 with a CFL-violating dt=1.0 (which settles on a stationary
+    ≈0.71 plateau, far from the exact √(1 − 2Δ/K)=0.866) and exits 0 (FIRES) iff
+    integrate() returns that wrong steady state WITHOUT raising — i.e. the
+    fail-closed oracle has been removed or loosened. While the oracle holds, the
+    call raises FloatingPointError and the probe exits 1. An exit 0 means the
+    integrator can again fabricate a steady state past its stability limit and
+    must be repaired (restore the oracle), not patched green.
+rollback_command: >-
+  bash -c 'git checkout origin/main -- core/kuramoto/ott_antonsen.py && git rm -f tests/unit/physics/test_ott_antonsen_oracle.py .claude/commit_acceptors/ott-antonsen-oracle.yaml'
+rollback_verification_command: >-
+  bash -c 'test ! -f .claude/commit_acceptors/ott-antonsen-oracle.yaml && git diff --exit-code origin/main -- core/kuramoto/ott_antonsen.py'
+memory_update_type: none
+ledger_path: ".claude/commit_acceptors/ott-antonsen-oracle.yaml"
+report_path: "tmp/ott_antonsen_oracle_pytest.log"
+evidence: []

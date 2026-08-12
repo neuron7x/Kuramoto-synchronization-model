@@ -1,0 +1,122 @@
+{
+  "schema_version": "1.0",
+  "artifact_id": "rust-geosync-accel-ci-contract",
+  "owner": "platform@geosync",
+  "autonomy_level": "L2",
+  "value_function": "merge_readiness = verified_outcome * reproducibility * safety * maintainability / complexity",
+  "readiness": {
+    "status": "contract_specified",
+    "evidence_class": "specified_contract_runner_emits_pass_fail",
+    "critical_gaps": 0,
+    "rollback": "revert the PR or remove rust-accel-gate from required checks in branch protection only through documented break-glass review"
+  },
+  "status_semantics": {
+    "REST": "all required validation categories have executable evidence and no contract drift",
+    "ACTION": "one or more validation categories are missing, malformed, or drifted"
+  },
+  "acceptance_criteria": [
+    {
+      "id": "contract_rest_state",
+      "command": "python scripts/ci/check_pr_gate_contract.py",
+      "pass_condition": "state=REST action_potential=0"
+    },
+    {
+      "id": "rust_locked_tests",
+      "command": "cargo test --locked --manifest-path rust/geosync-accel/Cargo.toml --all-features",
+      "pass_condition": "all unit, property, fuzz-smoke, and PyO3-enabled tests pass"
+    },
+    {
+      "id": "rust_warnings_denied",
+      "command": "cargo clippy --locked --manifest-path rust/geosync-accel/Cargo.toml --all-targets --all-features -- -D warnings",
+      "pass_condition": "clippy exits without warnings"
+    },
+    {
+      "id": "benchmark_smoke",
+      "command": "cargo bench --locked --manifest-path rust/geosync-accel/Cargo.toml --bench numeric -- --sample-size 10 --warm-up-time 1 --measurement-time 2",
+      "pass_condition": "Criterion smoke benchmark exits successfully and emits timing evidence"
+    }
+  ],
+  "required_categories": [
+    "property_convolution",
+    "fuzz_numeric_primitives",
+    "workflow_ast",
+    "criterion_benchmark_smoke"
+  ],
+  "categories": [
+    {
+      "id": "property_convolution",
+      "category": "property-based testing",
+      "risk_level": "medium",
+      "purpose": "Verify convolution modes across generated finite signal/kernel pairs against an independent reference implementation.",
+      "command": "cargo test --locked --manifest-path rust/geosync-accel/Cargo.toml --all-features",
+      "evidence_paths": [
+        "rust/geosync-accel/src/lib.rs"
+      ],
+      "invariants": [
+        "full mode equals independent full-convolution reference",
+        "same mode equals centered slice of full reference",
+        "valid mode equals valid slice of full reference",
+        "fixed seed makes generated cases reproducible"
+      ],
+      "failure_action": "Block merge and inspect the smallest generated case printed by the Rust assertion failure."
+    },
+    {
+      "id": "fuzz_numeric_primitives",
+      "category": "fuzzing",
+      "risk_level": "medium",
+      "purpose": "Exercise numeric kernels with bounded byte-derived deterministic fuzz-smoke inputs to detect panics and invalid indexing under cargo test.",
+      "command": "cargo test --locked --manifest-path rust/geosync-accel/Cargo.toml --all-features",
+      "evidence_paths": [
+        "rust/geosync-accel/fuzz/Cargo.toml",
+        "rust/geosync-accel/fuzz/fuzz_targets/numeric_primitives.rs"
+      ],
+      "invariants": [
+        "fuzz-smoke execution is part of the locked cargo test command",
+        "cargo-fuzz deep harness remains available outside the release gate",
+        "input lengths are bounded before slices are formed",
+        "non-finite floats are normalized before kernel calls"
+      ],
+      "failure_action": "Preserve the failing byte-derived input, add it as a regression unit test, then patch."
+    },
+    {
+      "id": "workflow_ast",
+      "category": "structural workflow validation",
+      "risk_level": "medium",
+      "purpose": "Parse top-level workflow keys and job ids into a repository-owned AST before validating required merge-gate contracts.",
+      "command": "python scripts/ci/check_pr_gate_contract.py",
+      "evidence_paths": [
+        "scripts/ci/check_pr_gate_contract.py",
+        "tests/ci/test_pr_gate_contract_validator.py"
+      ],
+      "invariants": [
+        "duplicate top-level YAML keys are fatal",
+        "duplicate job ids are fatal",
+        "required jobs, triggers, dependency-review severity, and Rust gate commands are enforced"
+      ],
+      "failure_action": "Treat ACTION output as policy drift and repair workflow/docs before merge."
+    },
+    {
+      "id": "criterion_benchmark_smoke",
+      "category": "benchmark regression sentinel",
+      "risk_level": "low",
+      "purpose": "Run a bounded Criterion smoke benchmark in rust-accel-gate to surface CPU-regression evidence for numeric kernels.",
+      "command": "cargo bench --locked --manifest-path rust/geosync-accel/Cargo.toml --bench numeric -- --sample-size 10 --warm-up-time 1 --measurement-time 2",
+      "evidence_paths": [
+        ".github/workflows/pr-gate.yml",
+        "rust/geosync-accel/benches/numeric.rs"
+      ],
+      "invariants": [
+        "benchmark command is enforced by the PR-gate contract validator",
+        "sample size and measurement time are bounded for synchronous CI",
+        "Criterion output is emitted in the CI log"
+      ],
+      "failure_action": "Block merge, compare Criterion output against the last green run, and reduce or justify the regression."
+    }
+  ],
+  "automation": {
+    "runner": "python scripts/ci/run_rust_accel_contract.py --format json",
+    "dry_run": "python scripts/ci/run_rust_accel_contract.py --dry-run --format json",
+    "evidence": "JSON stdout with UTC timestamps, selected acceptance criteria, command strings, exit codes, durations, stdout/stderr hashes, raw stdout/stderr, and tool versions",
+    "failure_policy": "nonzero exit when any selected acceptance criterion exits nonzero or when the manifest is malformed; manifest readiness is contract_specified until runner status is PASS"
+  }
+}

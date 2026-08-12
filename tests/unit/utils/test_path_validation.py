@@ -1,3 +1,5 @@
+# Copyright (c) 2023-2026 Yaroslav Vasylenko (neuron7xLab)
+# SPDX-License-Identifier: MIT
 """Tests for path validation utilities."""
 
 import os
@@ -185,9 +187,7 @@ class TestEnsureDirectoryExists:
     def test_create_with_parents(self, tmp_path):
         """Test creation of nested directories."""
         nested_dir = tmp_path / "level1" / "level2" / "level3"
-        result = ensure_directory_exists(
-            "level1/level2/level3", tmp_path, create_parents=True
-        )
+        result = ensure_directory_exists("level1/level2/level3", tmp_path, create_parents=True)
 
         assert result == nested_dir
         assert nested_dir.exists()

@@ -1,3 +1,5 @@
+# Copyright (c) 2023-2026 Yaroslav Vasylenko (neuron7xLab)
+# SPDX-License-Identifier: MIT
 """Entrypoint for running the cortex service via ``python -m``."""
 
 from __future__ import annotations

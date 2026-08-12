@@ -1,3 +1,5 @@
+# Copyright (c) 2023-2026 Yaroslav Vasylenko (neuron7xLab)
+# SPDX-License-Identifier: MIT
 """Change point detection utilities used by the FHMC controller.
 
 These helpers normalise incoming series and compute lightweight signals for

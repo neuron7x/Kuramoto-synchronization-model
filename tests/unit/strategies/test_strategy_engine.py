@@ -1,3 +1,5 @@
+# Copyright (c) 2023-2026 Yaroslav Vasylenko (neuron7xLab)
+# SPDX-License-Identifier: MIT
 from __future__ import annotations
 
 from dataclasses import dataclass
@@ -49,9 +51,7 @@ class _BlockingRiskPolicy:
         )
         self.calls: list[tuple[StrategySignal, StrategyEngineMode]] = []
 
-    def assess(
-        self, signal: StrategySignal, *, mode: StrategyEngineMode
-    ) -> RiskAssessment:
+    def assess(self, signal: StrategySignal, *, mode: StrategyEngineMode) -> RiskAssessment:
         self.calls.append((signal, mode))
         return self._assessment
 
@@ -64,9 +64,7 @@ def _context(data: Mapping[str, object]) -> StrategyContext:
     )
 
 
-def _make_signal_event(
-    signal_id: str = "sig-1", strength: float = 1.0
-) -> StrategyEngineEvent:
+def _make_signal_event(signal_id: str = "sig-1", strength: float = 1.0) -> StrategyEngineEvent:
     signal = StrategySignal(
         signal_id=signal_id,
         symbol="BTCUSDT",
@@ -126,14 +124,10 @@ def test_engine_routes_signal_when_risk_approves() -> None:
 
     assert policy.calls and policy.calls[0][1] is StrategyEngineMode.PAPER
     assert len(events) == 2  # adjusted signal + risk advice
-    signal_event = next(
-        event for event in events if event.type is StrategyEventType.SIGNAL
-    )
+    signal_event = next(event for event in events if event.type is StrategyEventType.SIGNAL)
     assert signal_event.payload.strength == pytest.approx(0.5)
     assert routed[0][0].strength == pytest.approx(0.5)
-    advice_event = next(
-        event for event in events if event.type is StrategyEventType.RISK_ADVICE
-    )
+    advice_event = next(event for event in events if event.type is StrategyEventType.RISK_ADVICE)
     assert advice_event.payload.level is RiskAdviceLevel.WARN
     assert captured == list(events)
 

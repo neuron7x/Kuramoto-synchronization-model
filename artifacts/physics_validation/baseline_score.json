@@ -1,0 +1,153 @@
+{
+  "S_total": 81.5,
+  "blockers": [
+    {
+      "id": "BLOCK-PR-GATE-001",
+      "reason": "repository-level PR Gate is not fully green for the recorded physics lane",
+      "required_action": "close repo-policy and deterministic fast-test failures before rank promotion",
+      "severity": "HIGH"
+    },
+    {
+      "id": "BLOCK-RICCI-001",
+      "reason": "Ricci bridge has smoke tests but no full market graph provenance audit",
+      "required_action": "validate graph construction, curvature estimator, and matched nulls",
+      "severity": "HIGH"
+    },
+    {
+      "id": "BLOCK-BNSYN-MFN-001",
+      "reason": "BN-Syn and MFN+ source trees are not present in this GeoSync branch",
+      "required_action": "attach immutable source refs before validating those subsystems",
+      "severity": "HIGH"
+    }
+  ],
+  "branch": "nfi-physics-ci-evidence-v4",
+  "commit": "CONNECTOR_STATIC_ARTIFACT_PENDING_LOCAL_GIT_REV_PARSE",
+  "metrics": [
+    {
+      "evidence": ["docs/physics/geosync_core.md", "core/kuramoto/kuramoto_ricci_engine.py"],
+      "failure_condition": "no single canonical object or missing RHS/boundary/order parameter code",
+      "id": "S_math_object",
+      "measurement_fn": "exists(docs/physics/geosync_core.md) and contains(T1 code symbols)",
+      "metric": "canonical mathematical object has equation/code carriers",
+      "score": 75.0,
+      "status": "PARTIAL_PASS_TRACEABLE",
+      "threshold": ">= 90 for final rank",
+      "weight": 0.12,
+      "weighted_score": 9.0
+    },
+    {
+      "evidence": ["docs/physics/units_table.md", "tests/physics/test_dimensional_homogeneity.py"],
+      "failure_condition": "range guards are mistaken for dimensional analysis",
+      "id": "S_dimensional_consistency",
+      "measurement_fn": "docs/physics/units_table.md and tests/physics/test_dimensional_homogeneity.py",
+      "metric": "units declared and dimension tests present",
+      "score": 70.0,
+      "status": "PARTIAL_PASS_NO_TYPED_UNITS",
+      "threshold": ">= 85 for final rank",
+      "weight": 0.1,
+      "weighted_score": 7.0
+    },
+    {
+      "evidence": ["tests/physics/test_convergence.py", "tests/physics/test_replication.py", "artifacts/physics_validation/ci_evidence_summary.json"],
+      "failure_condition": "solver fabricates physics or dt refinement is not measured",
+      "id": "S_numerical_stability",
+      "measurement_fn": "T1 trajectory, dt refinement, independent NumPy reference, CI evidence ledger",
+      "metric": "trajectory implementation plus convergence and replication gates",
+      "score": 86.0,
+      "status": "RUNTIME_PARTIAL_PASS_PR_GATE_REQUIRED",
+      "threshold": ">= 85 for final rank",
+      "weight": 0.12,
+      "weighted_score": 10.32
+    },
+    {
+      "evidence": ["tests/unit/physics/test_T1_kuramoto_ricci_boundary.py", "tests/physics/test_invariants.py", "artifacts/physics_validation/ci_evidence_summary.json"],
+      "failure_condition": "R outside [0,1], invalid Phi/Kc, non-finite theta, silent repair",
+      "id": "S_invariant_preservation",
+      "measurement_fn": "static carriers plus physics CI evidence ledger",
+      "metric": "R bounds, boundary behavior, homogeneous potential, determinism",
+      "score": 88.0,
+      "status": "RUNTIME_PARTIAL_PASS_PR_GATE_REQUIRED",
+      "threshold": ">= 90 for final rank",
+      "weight": 0.12,
+      "weighted_score": 10.56
+    },
+    {
+      "evidence": ["tests/physics/test_geosync_nulls.py", "tests/physics/test_ricci_bridge.py", "artifacts/physics_validation/ci_evidence_summary.json"],
+      "failure_condition": "positive signal survives K=0/shuffle/randomized nulls",
+      "id": "S_falsifiability",
+      "measurement_fn": "T1 negative controls plus dedicated null/Ricci tests and CI evidence ledger",
+      "metric": "nulls, H0/H1, negative controls, Ricci bridge smoke tests",
+      "score": 86.0,
+      "status": "RUNTIME_PARTIAL_PASS_PR_GATE_REQUIRED",
+      "threshold": ">= 90 for final rank",
+      "weight": 0.14,
+      "weighted_score": 12.04
+    },
+    {
+      "evidence": ["tests/physics/test_geosync_nulls.py", "artifacts/physics_validation/ricci_bridge_summary.json"],
+      "failure_condition": "null model suite does not cover shuffled phases, ER graph, omega randomization",
+      "id": "S_baseline_models",
+      "measurement_fn": "K=0, phase shuffle, randomized omega, matched ER, Ricci bridge smoke",
+      "metric": "explicit null model factory coverage",
+      "score": 85.0,
+      "status": "RUNTIME_PARTIAL_PASS_PR_GATE_REQUIRED",
+      "threshold": ">= 85 for final rank",
+      "weight": 0.1,
+      "weighted_score": 8.5
+    },
+    {
+      "evidence": ["docs/physics/uq_plan.md", "tests/physics/test_uq_smoke.py", "artifacts/physics_validation/ci_evidence_summary.json"],
+      "failure_condition": "confidence interval exists without prior/IC/noise/tolerance model",
+      "id": "S_UQ",
+      "measurement_fn": "docs/physics/uq_plan.md, tests/physics/test_uq_smoke.py, uq_summary.json",
+      "metric": "uncertainty source, UQ smoke test, and artifact",
+      "score": 74.0,
+      "status": "RUNTIME_PARTIAL_PASS_PR_GATE_REQUIRED",
+      "threshold": ">= 70 for final rank",
+      "weight": 0.08,
+      "weighted_score": 5.92
+    },
+    {
+      "evidence": ["reproducibility/manifest.json", "reproducibility/reference_solvers/geosync_kuramoto_numpy.py", "artifacts/physics_validation/ci_evidence_summary.json"],
+      "failure_condition": "artifact cannot be rerun from commit and command",
+      "id": "S_reproducibility",
+      "measurement_fn": "reproducibility manifest plus independent reference solver artifact plus CI evidence ledger",
+      "metric": "manifest, command, seed, reference solver, generated artifacts",
+      "score": 83.0,
+      "status": "RUNTIME_PARTIAL_PASS_PR_GATE_REQUIRED",
+      "threshold": ">= 85 for final rank",
+      "weight": 0.08,
+      "weighted_score": 6.64
+    },
+    {
+      "evidence": ["docs/physics/interface_contracts.md", "tests/physics/test_interface_contracts.py", "artifacts/physics_validation/ci_evidence_summary.json"],
+      "failure_condition": "consumer accepts hidden or untyped conversion",
+      "id": "S_interface_contracts",
+      "measurement_fn": "docs/physics/interface_contracts.md, tests/physics/test_interface_contracts.py, CI evidence ledger",
+      "metric": "shape/unit/range/sampling contracts across subsystem boundaries",
+      "score": 78.0,
+      "status": "RUNTIME_PARTIAL_PASS_PR_GATE_REQUIRED",
+      "threshold": ">= 80 for final rank",
+      "weight": 0.08,
+      "weighted_score": 6.24
+    },
+    {
+      "evidence": ["docs/audit/claim_ledger.md", "docs/physics/equation_traceability.md", "artifacts/physics_validation/ci_evidence_summary.json"],
+      "failure_condition": "claim lacks a carrier or source/code/test disagree",
+      "id": "S_traceability",
+      "measurement_fn": "claim ledger, inventory, equation traceability index, CI evidence ledger",
+      "metric": "claim -> equation -> code -> test -> failure condition mapping",
+      "score": 88.0,
+      "status": "PARTIAL_PASS_WITH_CI_EVIDENCE",
+      "threshold": ">= 85 for final rank",
+      "weight": 0.06,
+      "weighted_score": 5.28
+    }
+  ],
+  "schema_version": "2026.06.18",
+  "score_type": "evidence_oracle_with_partial_ci_not_release_proof",
+  "status": "BOOTSTRAP_STATIC_SMOKE_AND_CI_EVIDENCE",
+  "target_interval": [88.0, 92.0],
+  "verdict": "FAIL_BELOW_TARGET_BLOCKED_FOR_VALIDATION",
+  "weights_sum": 1.0
+}

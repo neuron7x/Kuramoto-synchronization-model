@@ -1,0 +1,216 @@
+{
+  "schema_version": "D002J-NULL-HIERARCHY-MANIFEST-v1",
+  "study_id": "D-002J",
+  "phase": "P6",
+  "generated_at": "2026-05-15T00:00:00Z",
+  "parent_phase": "D002J-P5",
+  "pr_lineage": "D-002J prereg #694 -> P1 #695 -> P1A #697 REJECTED -> P1B #698 -> P2 #699 -> P2.5 #700 -> P3 #701 -> P4 #702 -> P5 #703 -> P6 (this)",
+  "philosophy": "A null model is a FALSIFIER targeting ONE named false explanation, NOT decorative rigor. A result that survives a null only counts as information if the null genuinely could have killed it. A null with no genuine target false explanation is decorative and is REJECTED.",
+  "p5_substrates": [
+    "funding_liquidity_rollover",
+    "cross_exposure_contagion_proxy",
+    "volatility_credit_spread_regime"
+  ],
+  "total_null_families": 10,
+  "h_i2_conditional_count": 2,
+  "no_canonical_run": true,
+  "no_real_data_null_execution": true,
+  "null_families": [
+    {
+      "null_id": "N1_label_permutation",
+      "class": "outcome_alignment",
+      "target_false_explanation": "The detected signal is merely an artifact of attaching any structure to the outcome labels, not of the specific outcome-aligned structure.",
+      "preserves": ["label_multiset", "label_count"],
+      "destroys": ["label_position_alignment"],
+      "applicable_substrates": [
+        "funding_liquidity_rollover",
+        "cross_exposure_contagion_proxy",
+        "volatility_credit_spread_regime"
+      ],
+      "non_applicable_substrates": [],
+      "non_applicable_reason": "label permutation applies to every substrate: each has an outcome series whose label-to-position alignment can be destroyed while the label multiset is preserved.",
+      "seed_policy": "deterministic; numpy.random.default_rng(seed); same seed -> same permutation",
+      "admission_test": "post-null sorted(labels) == pre-null sorted(labels) (exact multiset)",
+      "rejection_test": "if post-null preserves position-wise alignment -> null is a no-op -> REJECT",
+      "expected_failure_mode": "if substrate signal survives this null, the signal is NOT an artifact of arbitrary structure attachment",
+      "h_i2_conditional": false,
+      "implementation_path": "research/systemic_risk/nulls/d002j/null_families.py:N1LabelPermutationNull"
+    },
+    {
+      "null_id": "N2_time_window_shift_placebo",
+      "class": "temporal_alignment",
+      "target_false_explanation": "The signal is merely a window-alignment artifact; it would appear under any equally-sized window placement, not specifically the crisis window.",
+      "preserves": ["marginal_distribution", "series_length"],
+      "destroys": ["window_onset_alignment"],
+      "applicable_substrates": [
+        "funding_liquidity_rollover",
+        "volatility_credit_spread_regime"
+      ],
+      "non_applicable_substrates": ["cross_exposure_contagion_proxy"],
+      "non_applicable_reason": "the contagion-proxy substrate is a graph/cascade substrate without a single onset-aligned time window to shift; its applicable temporal null is the shock-time placebo (N9).",
+      "seed_policy": "deterministic; circular np.roll by a seed-derived shift in [1, n-1]",
+      "admission_test": "post-null sorted(series) == pre-null sorted(series) (marginal preserved)",
+      "rejection_test": "if shift maps the series onto itself (no-op roll) -> REJECT",
+      "expected_failure_mode": "if substrate signal survives this null, the signal is NOT a window-placement artifact",
+      "h_i2_conditional": false,
+      "implementation_path": "research/systemic_risk/nulls/d002j/null_families.py:N2TimeWindowShiftPlaceboNull"
+    },
+    {
+      "null_id": "N3_temporal_block_bootstrap",
+      "class": "temporal_dependence",
+      "target_false_explanation": "The signal is just iid noise; its apparent temporal dependence is a spurious artifact rather than genuine autocorrelated structure.",
+      "preserves": ["series_length", "autocorrelation_band_lag1"],
+      "destroys": ["global_trajectory_order"],
+      "applicable_substrates": [
+        "funding_liquidity_rollover",
+        "volatility_credit_spread_regime"
+      ],
+      "non_applicable_substrates": ["cross_exposure_contagion_proxy"],
+      "non_applicable_reason": "the contagion-proxy substrate output is a network-cascade observable, not an autocorrelated scalar time series; block bootstrap on it would not target the iid-noise false explanation honestly.",
+      "seed_policy": "deterministic; seeded moving-block resample (block_len default n/8)",
+      "admission_test": "lag-1 autocorrelation of the surrogate stays within the source autocorrelation band",
+      "rejection_test": "if the surrogate equals the source series -> no global reordering -> REJECT",
+      "expected_failure_mode": "if substrate signal survives this null, the signal carries dependence beyond iid noise",
+      "h_i2_conditional": false,
+      "implementation_path": "research/systemic_risk/nulls/d002j/null_families.py:N3TemporalBlockBootstrapNull"
+    },
+    {
+      "null_id": "N4_iaaft_surrogate",
+      "class": "spectral",
+      "target_false_explanation": "The signal is a linear-spectral artifact fully explained by its power spectrum and amplitude distribution, with no genuine nonlinear structure.",
+      "preserves": ["power_spectrum_band", "amplitude_distribution"],
+      "destroys": ["nonlinear_phase_structure"],
+      "applicable_substrates": [
+        "funding_liquidity_rollover",
+        "volatility_credit_spread_regime"
+      ],
+      "non_applicable_substrates": ["cross_exposure_contagion_proxy"],
+      "non_applicable_reason": "IAAFT operates on a scalar time series' periodogram; the contagion-proxy substrate is a graph-cascade substrate with no single periodogram to surrogate.",
+      "seed_policy": "deterministic; seeded initial permutation then iterative amplitude-adjusted FT (n_iter default 100)",
+      "admission_test": "spectral correlation(surrogate, source) >= 0.90 AND surrogate value distribution == source value distribution (exact)",
+      "rejection_test": "if surrogate == source series -> no phase randomisation -> REJECT",
+      "expected_failure_mode": "if substrate signal survives this null, the signal has nonlinear structure beyond its linear spectrum",
+      "h_i2_conditional": false,
+      "implementation_path": "research/systemic_risk/nulls/d002j/null_families.py:N4IAAFTSurrogateNull"
+    },
+    {
+      "null_id": "N5_degree_preserving_graph_null",
+      "class": "graph_degree",
+      "target_false_explanation": "The detected signal is merely an artifact of the node degree distribution, not of the specific edge placement.",
+      "preserves": ["degree_sequence", "node_count"],
+      "destroys": ["edge_placement"],
+      "applicable_substrates": ["cross_exposure_contagion_proxy"],
+      "non_applicable_substrates": [
+        "funding_liquidity_rollover",
+        "volatility_credit_spread_regime"
+      ],
+      "non_applicable_reason": "funding_liquidity_rollover and volatility_credit_spread_regime are time-series substrates with no graph adjacency to rewire; degree-preserving rewiring is undefined for them.",
+      "seed_policy": "deterministic; seeded double-edge-swap rewiring (n_swaps default 10n)",
+      "admission_test": "post-null degree sequence == pre-null degree sequence (EXACT, not approximate)",
+      "rejection_test": "if post-null preserves edge placement -> null is a no-op -> REJECT",
+      "expected_failure_mode": "if substrate signal survives this null, the signal is NOT degree-driven",
+      "h_i2_conditional": false,
+      "implementation_path": "research/systemic_risk/nulls/d002j/null_families.py:N5DegreePreservingGraphNull"
+    },
+    {
+      "null_id": "N6_weight_preserving_shuffle",
+      "class": "graph_weight",
+      "target_false_explanation": "The signal is driven only by the multiset of edge-weight magnitudes, not by which edge carries which weight.",
+      "preserves": ["weight_multiset", "binary_topology"],
+      "destroys": ["weight_placement"],
+      "applicable_substrates": ["cross_exposure_contagion_proxy"],
+      "non_applicable_substrates": [
+        "funding_liquidity_rollover",
+        "volatility_credit_spread_regime"
+      ],
+      "non_applicable_reason": "time-series substrates have no weighted edge set; permuting edge weights is undefined for them.",
+      "seed_policy": "deterministic; seeded permutation of the edge-weight vector over the fixed topology",
+      "admission_test": "post-null sorted(edge_weights) == pre-null sorted(edge_weights) AND binary topology unchanged",
+      "rejection_test": "if the weight vector is unchanged (no permutation) -> REJECT",
+      "expected_failure_mode": "if substrate signal survives this null, the signal depends on weight placement, not just magnitudes",
+      "h_i2_conditional": false,
+      "implementation_path": "research/systemic_risk/nulls/d002j/null_families.py:N6WeightPreservingShuffleNull"
+    },
+    {
+      "null_id": "N7_configuration_model",
+      "class": "graph_topology_conditioned",
+      "target_false_explanation": "The signal is generic to any random graph with this degree sequence, not specific to the observed network's edge structure.",
+      "preserves": ["degree_sequence", "node_count"],
+      "destroys": ["specific_edge_structure"],
+      "applicable_substrates": ["cross_exposure_contagion_proxy"],
+      "non_applicable_substrates": [
+        "funding_liquidity_rollover",
+        "volatility_credit_spread_regime"
+      ],
+      "non_applicable_reason": "time-series substrates have no degree sequence to match; the configuration model is undefined for them.",
+      "seed_policy": "deterministic; seeded stub-matching with self-loop/multi-edge rejection",
+      "admission_test": "post-null degree sequence == pre-null degree sequence (EXACT)",
+      "rejection_test": "if post-null edge set == observed edge set -> not a generic-graph draw -> REJECT",
+      "expected_failure_mode": "if substrate signal survives this null, the signal is specific to the observed network, not generic to its degree sequence",
+      "h_i2_conditional": true,
+      "h_i2_note": "D-002I H_I2 (M3 topology-conditioned over-fit) is UNKNOWN. This topology-conditioned null carries h_i2_conditional=true: if D-002I H_I2 is later SUPPORTED, this null requires fresh admissibility justification before canonical use (P8).",
+      "implementation_path": "research/systemic_risk/nulls/d002j/null_families.py:N7ConfigurationModelNull"
+    },
+    {
+      "null_id": "N8_sparse_maximum_entropy_reconstruction",
+      "class": "graph_topology_conditioned",
+      "target_false_explanation": "The signal is an artifact of a dense-network representation and disappears under a realistic sparsity budget.",
+      "preserves": ["total_edge_count", "node_count"],
+      "destroys": ["dense_edge_placement"],
+      "applicable_substrates": ["cross_exposure_contagion_proxy"],
+      "non_applicable_substrates": [
+        "funding_liquidity_rollover",
+        "volatility_credit_spread_regime"
+      ],
+      "non_applicable_reason": "time-series substrates have no network density to constrain; a sparse max-entropy reconstruction is undefined for them.",
+      "seed_policy": "deterministic; seeded uniform draw over sparse configurations with exactly the observed edge count",
+      "admission_test": "post-null total edge count == pre-null total edge count (sparsity budget held)",
+      "rejection_test": "if post-null edge set == observed edge set -> not a fresh max-ent draw -> REJECT",
+      "expected_failure_mode": "if substrate signal survives this null, the signal is NOT a dense-network artifact",
+      "h_i2_conditional": true,
+      "h_i2_note": "D-002I H_I2 (M3 topology-conditioned over-fit) is UNKNOWN. This topology-conditioned null carries h_i2_conditional=true: if D-002I H_I2 is later SUPPORTED, this null requires fresh admissibility justification before canonical use (P8).",
+      "implementation_path": "research/systemic_risk/nulls/d002j/null_families.py:N8SparseMaxEntReconstructionNull"
+    },
+    {
+      "null_id": "N9_shock_time_placebo",
+      "class": "temporal_alignment",
+      "target_false_explanation": "The signal exists at any arbitrary time, not specifically at the true crisis/shock onset time.",
+      "preserves": ["series_values_unchanged", "single_onset_count"],
+      "destroys": ["crisis_time_alignment"],
+      "applicable_substrates": [
+        "funding_liquidity_rollover",
+        "cross_exposure_contagion_proxy",
+        "volatility_credit_spread_regime"
+      ],
+      "non_applicable_substrates": [],
+      "non_applicable_reason": "every substrate has a true shock/onset index whose alignment can be relabelled to a random placebo; applies universally including the graph-cascade substrate.",
+      "seed_policy": "deterministic; seeded random placebo onset index distinct from the true onset",
+      "admission_test": "exactly one onset in the placebo indicator AND the underlying series values are unchanged",
+      "rejection_test": "if placebo onset == true onset -> not a placebo -> REJECT",
+      "expected_failure_mode": "if substrate signal survives this null, the signal is tied to the true crisis time, not arbitrary times",
+      "h_i2_conditional": false,
+      "implementation_path": "research/systemic_risk/nulls/d002j/null_families.py:N9ShockTimePlaceboNull"
+    },
+    {
+      "null_id": "N10_vintage_leakage_trap_null",
+      "class": "leakage_trap",
+      "target_false_explanation": "The signal is a look-ahead (vintage leakage) artifact that only exists because future information bled into the present feature.",
+      "preserves": ["marginal_distribution_present_arm", "series_length"],
+      "destroys": ["causal_information_boundary"],
+      "applicable_substrates": [
+        "funding_liquidity_rollover",
+        "cross_exposure_contagion_proxy",
+        "volatility_credit_spread_regime"
+      ],
+      "non_applicable_substrates": [],
+      "non_applicable_reason": "every substrate emits a causal observable into which a look-ahead trap can be injected; this is the P3/PC5 leakage-sentinel bridge null and applies universally.",
+      "seed_policy": "deterministic; fixed look-ahead shift (leak_lookahead default 1); no RNG draw needed",
+      "inverted_pass_semantics": true,
+      "admission_test": "the look-ahead arm differs from the causal arm (the trap is genuinely re-introducing leakage)",
+      "rejection_test": "if the look-ahead arm == causal arm -> trap is a no-op -> REJECT",
+      "expected_failure_mode": "INVERTED: PASS iff the signal DISAPPEARS in the leakage-free (causal) arm; a signal that persists only in the look-ahead arm is a leakage artifact (bridge to P3 leakage sentinel / PC5).",
+      "h_i2_conditional": false,
+      "implementation_path": "research/systemic_risk/nulls/d002j/null_families.py:N10VintageLeakageTrapNull"
+    }
+  ]
+}

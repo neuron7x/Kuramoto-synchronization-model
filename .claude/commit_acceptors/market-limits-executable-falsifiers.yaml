@@ -1,0 +1,101 @@
+# Diff-bound commit acceptor for INSTRUMENT F — executable market-limits
+# falsifier paths (audit task T7).
+#
+# A named falsifier is not a falsifier unless it can actually be run. This
+# change makes every promotion-relevant market-approximation limit reference an
+# EXECUTABLE falsifier: a runnable `falsifier_command` (a pytest node id) or a
+# `falsifier_artifact_path`. The contract loader now FAILS CLOSED on load when a
+# promotion-relevant limit declares neither. The point is executability /
+# locatability of the falsifier, NOT that it has already passed on real data.
+#
+# This change promotes NO claim, asserts NO new physics, changes NO runtime
+# signal behavior, adds NO dependency. It only tightens claim discipline:
+#   * physics_contracts/market_limits.yaml — adds promotion_relevant +
+#     falsifier_command to the eight market limits; each command points at an
+#     existing, passing falsifier pytest node (permutation_null,
+#     lag_sweep_no_future_data, cost_model, multi_session_replay → the
+#     ricci_microstructure_v1 falsifier suite). Known-falsifier vocabulary and
+#     all prior fields are preserved.
+#   * tools/research/market_limits.py — extends MarketLimit with
+#     promotion_relevant / falsifier_command / falsifier_artifact_path +
+#     has_executable_falsifier, and raises on load when a promotion-relevant
+#     limit lacks an executable falsifier path. Non-promotion limits unchanged.
+#   * tests/physics_contracts/test_market_limits.py — adds a shape witness that
+#     every promotion-relevant limit has an executable + locatable falsifier,
+#     and a NEGATIVE fixture proving a promotion-relevant limit missing both
+#     command and artifact fails contract load. All prior witnesses preserved.
+#
+# Locally verified on origin/main base:
+#   * python -m pytest tests/physics_contracts/test_market_limits.py -q: 20 pass
+#   * ruff check + black --check on tools/research/market_limits.py: clean
+#   * mypy --strict tools/research/market_limits.py: clean
+#   * scripts/ci/check_claims.py and scripts/ci/check_claim_boundary.py: exit 0
+id: market-limits-executable-falsifiers
+status: ACTIVE
+claim_type: governance
+promise: >-
+  After this PR lands, every promotion_relevant limit in
+  physics_contracts/market_limits.yaml carries an executable falsifier_command
+  (or falsifier_artifact_path) whose referenced pytest test file exists in the
+  working tree, and tools/research/market_limits.load_contract RAISES a
+  ValueError when a promotion_relevant limit declares neither a
+  falsifier_command nor a falsifier_artifact_path. The four registered nulls
+  (permutation_null, lag_sweep_no_future_data, cost_model, multi_session_replay)
+  remain the only allowed falsifier_required values. No claim is promoted; no
+  runtime signal behavior changes.
+diff_scope:
+  changed_files:
+    - path: ".claude/commit_acceptors/market-limits-executable-falsifiers.yaml"
+    - path: "physics_contracts/market_limits.yaml"
+    - path: "tools/research/market_limits.py"
+    - path: "tests/physics_contracts/test_market_limits.py"
+  forbidden_paths:
+    - "trading/"
+    - "execution/"
+    - "forecast/"
+    - "policy/"
+    - "core/physics/"
+    - "core/kuramoto/"
+    - "core/neuro/"
+    - "application/"
+    - "src/"
+    - "geosync_hpc/"
+required_python_symbols: []
+expected_signal: >-
+  `python -m pytest tests/physics_contracts/test_market_limits.py -q` reports
+  20 passed; `python tools/commit_acceptor/validate_commit_acceptor.py` exits 0;
+  `ruff check` + `black --check` + `mypy --strict` on
+  tools/research/market_limits.py are clean.
+measurement_command: >-
+  bash -c 'python -m pytest tests/physics_contracts/test_market_limits.py -q
+  > tmp/market_limits_executable_falsifiers.log 2>&1
+  && grep -q "20 passed" tmp/market_limits_executable_falsifiers.log'
+signal_artifact: "tmp/market_limits_executable_falsifiers.log"
+falsifier:
+  command: |-
+    bash -c 'python -c "
+    from tools.research.market_limits import load_contract;
+    c = load_contract();
+    broken = [l.limit_id for l in c.limits
+              if l.promotion_relevant and not l.has_executable_falsifier];
+    import sys; sys.exit(0 if broken else 1)"'
+  description: >-
+    Inverse probe of the executable-falsifier discipline. It exits 0 (falsifier
+    fires) iff any promotion_relevant limit lacks both falsifier_command and
+    falsifier_artifact_path — i.e. a promotion-bound limit's named falsifier is
+    not runnable/locatable. While the contract is well-formed the loader would
+    have already raised on such a limit, so a successful load with this probe
+    exiting 1 is the guarantee. If this ever exits 0, the discipline is broken
+    and the change must be reverted.
+rollback_command: >-
+  git checkout origin/main --
+  physics_contracts/market_limits.yaml
+  tools/research/market_limits.py
+  tests/physics_contracts/test_market_limits.py
+  && git rm -f .claude/commit_acceptors/market-limits-executable-falsifiers.yaml
+rollback_verification_command: >-
+  bash -c 'test ! -f .claude/commit_acceptors/market-limits-executable-falsifiers.yaml'
+memory_update_type: none
+ledger_path: ".claude/commit_acceptors/market-limits-executable-falsifiers.yaml"
+report_path: "tmp/market_limits_executable_falsifiers.log"
+evidence: []

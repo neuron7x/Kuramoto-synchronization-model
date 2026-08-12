@@ -1,0 +1,64 @@
+# SPDX-License-Identifier: MIT
+#
+# Descriptor-to-physics promotion firewall — fail-closed.
+#
+# A descriptor (correlation-graph Ricci, phase coherence, market proxy,
+# topology feature) is not a physical law, not the physical phase, not market
+# consensus, not predictive validity, and not alpha. This gate scans the
+# canonical doc + claim-bearing code surface and fails on any sentence that
+# silently promotes a descriptor into one of those stronger categories.
+# Reviewed mechanism / quotation references live in
+# .github/descriptor_promotion_allow.json. Composes with — does not duplicate
+# — claim-boundary-gate.yml (product-category) and claims-evidence-gate.yml
+# (status / registry). Stdlib-only; no install step.
+#
+# Path-filtered: a PR that touches no markdown, the checker, the allowlist,
+# the test, the policy doc, or this workflow skips the job entirely.
+name: Descriptor Promotion Gate
+
+concurrency:
+  group: ${{ github.workflow }}-${{ github.ref }}
+  cancel-in-progress: true
+
+on:
+  pull_request:
+    branches: [main]
+    paths:
+      - "**/*.md"
+      - "tools/claims/check_descriptor_promotion.py"
+      - ".github/descriptor_promotion_allow.json"
+      - "tests/tools/test_descriptor_promotion_firewall.py"
+      - "docs/claims/descriptor_promotion_policy.md"
+      - ".github/workflows/descriptor-promotion-gate.yml"
+      - "core/indicators/**"
+  merge_group:
+  push:
+    branches: [main]
+    paths:
+      - "**/*.md"
+      - "tools/claims/check_descriptor_promotion.py"
+      - ".github/descriptor_promotion_allow.json"
+      - "tests/tools/test_descriptor_promotion_firewall.py"
+      - "docs/claims/descriptor_promotion_policy.md"
+      - ".github/workflows/descriptor-promotion-gate.yml"
+      - "core/indicators/**"
+
+permissions:
+  contents: read
+
+jobs:
+  validate:
+    name: descriptor-promotion-gate
+    runs-on: ubuntu-latest
+    timeout-minutes: 5
+    steps:
+      - name: Checkout
+        uses: actions/checkout@9c091bb21b7c1c1d1991bb908d89e4e9dddfe3e0 # v7.0.0
+
+      - name: Setup Python
+        uses: actions/setup-python@ece7cb06caefa5fff74198d8649806c4678c61a1 # v6
+        with:
+          python-version: "3.12"
+
+      - name: Enforce descriptor-promotion firewall
+        run: python tools/claims/check_descriptor_promotion.py

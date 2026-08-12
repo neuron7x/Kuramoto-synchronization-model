@@ -1,3 +1,5 @@
+# Copyright (c) 2023-2026 Yaroslav Vasylenko (neuron7xLab)
+# SPDX-License-Identifier: MIT
 """Pivot-based divergence detection utilities.
 
 The module implements a lightweight pivot detection algorithm inspired by
@@ -248,9 +250,7 @@ def detect_pivot_divergences(
     price_scale = max(price_scale, tolerance)
     indicator_scale = max(indicator_scale, tolerance)
 
-    def match_pivot(
-        target: PivotPoint, candidates: Iterable[PivotPoint]
-    ) -> Optional[PivotPoint]:
+    def match_pivot(target: PivotPoint, candidates: Iterable[PivotPoint]) -> Optional[PivotPoint]:
         best: Optional[PivotPoint] = None
         best_dist = np.inf
         for candidate in candidates:
@@ -265,8 +265,7 @@ def detect_pivot_divergences(
                 continue
             candidate_score = dist - (0.25 if not is_forward else 0.0)
             if candidate_score < best_dist or (
-                np.isclose(candidate_score, best_dist)
-                and candidate.index <= target.index
+                np.isclose(candidate_score, best_dist) and candidate.index <= target.index
             ):
                 best = candidate
                 best_dist = candidate_score

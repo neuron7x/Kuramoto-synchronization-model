@@ -1,0 +1,164 @@
+# Copyright (c) 2023-2026 Yaroslav Vasylenko (neuron7xLab)
+# SPDX-License-Identifier: MIT
+#
+# GOV-005 — Formal ontology of project states and claims (SSOT).
+#
+# This file is the SINGLE SOURCE OF TRUTH for:
+#   1. the project's maturity ladder and its CURRENT position,
+#   2. the closed vocabulary of evidence classes a claim may cite,
+#   3. the forbidden-claim -> required-evidence map (a claim word may only
+#      appear when the surrounding claim declares a backing evidence class).
+#
+# Status surfaces (badges, README fragments, release notes) are GENERATED
+# from this file by scripts/ci/gen_status_surfaces.py — never hand-written.
+# The claim-boundary gate scripts/ci/check_state_ontology.py reads this file
+# and fails closed when a forbidden claim word is used without a backing
+# evidence class.
+#
+# Vocabulary reuse: the forbidden-claim words are drawn from
+# FORBIDDEN_CLAIMS.md ("Banned Status Language") and
+# scripts/ci/lint_forbidden_terms.py (IERD trigger terms). This file adds the
+# machine-readable claim -> evidence-class binding those documents lacked.
+#
+# Relationship to analytics/signals/claim_maturity.py: that module is the
+# per-descriptor 14-rung *evidence ladder* for individual research lines.
+# THIS file is the coarser *project-level* maturity state plus the claim-word
+# firewall. They are complementary, not duplicates.
+
+schema_version: 1
+ontology_id: geosync.project_state_ontology.v1
+
+# ---------------------------------------------------------------------------
+# Project maturity ladder (ascending). rank == height; no state may be
+# skipped. current_state names the rung the project as a whole honestly sits
+# at. GeoSync is verification-first and synthetic-only on its live claims
+# (PRODUCT_CATEGORY.md; NO_DEPLOY), so the honest project rung is RESEARCH_ALPHA.
+# ---------------------------------------------------------------------------
+current_state: RESEARCH_ALPHA
+
+maturity_states:
+  - name: RESEARCH_ALPHA
+    rank: 0
+    definition: >-
+      Exploratory. Instrumentation and gates exist; live claims rest on
+      synthetic or single-session evidence only. Nothing here is deployable.
+  - name: REPEATABLE
+    rank: 1
+    definition: >-
+      The same author on the same machine re-runs the pipeline and obtains a
+      bit-identical result (seed + replay digest). Determinism, not independence.
+  - name: REPRODUCIBLE
+    rank: 2
+    definition: >-
+      An independent operator reproduces the result from recorded provenance
+      (dataset SHA-256, config SHA-256, seed, UTC timestamp) on their own machine.
+  - name: REPLICATED
+    rank: 3
+    definition: >-
+      An independent dataset / session / venue confirms the effect against a
+      null baseline and a simpler baseline. Multi-session real-data evidence.
+  - name: RELEASE_CANDIDATE
+    rank: 4
+    definition: >-
+      All gates green, external replication present, negative evidence
+      preserved, cost model passed. Eligible for release but not yet operating.
+  - name: PRODUCTION
+    rank: 5
+    definition: >-
+      Deployed and operating on real data with live monitoring. Requires FACT
+      or MEASURED evidence; never reachable from synthetic-only evidence.
+
+# ---------------------------------------------------------------------------
+# Evidence classes — the CLOSED vocabulary a claim may cite. Ordered by
+# strength (strongest first). A claim word in the firewall below is admissible
+# only when the surrounding claim declares one of its required classes.
+# ---------------------------------------------------------------------------
+evidence_classes:
+  - name: FACT
+    strength: 4
+    definition: >-
+      Externally verifiable and deterministic, enforced by an executable gate
+      (e.g. registry counts, manifest hashes, contract violations that raise).
+      Not a market/predictive claim — a checkable state of the repository.
+  - name: MEASURED
+    strength: 3
+    definition: >-
+      A real-data measurement with full provenance: dataset SHA-256, config
+      SHA-256, deterministic seed, UTC timestamp, and a null-baseline result.
+  - name: SIMULATION
+    strength: 2
+    definition: >-
+      A synthetic or seeded measurement. Instrumentation boundary only —
+      synthetic evidence can never promote a claim past the instrumented rung.
+  - name: HYPOTHESIS
+    strength: 1
+    definition: >-
+      A proposed statement with a named falsifier but no executed measurement.
+      Carries no predictive or significance weight.
+  - name: RETIRED
+    strength: 0
+    definition: >-
+      A claim that was falsified or withdrawn, preserved as negative evidence
+      (a tombstone). Never backs any live assertion.
+
+# ---------------------------------------------------------------------------
+# Forbidden-claim -> required-evidence map (the claim-word firewall).
+#
+# Each `claim` is a marketing / status word that is INADMISSIBLE unless the
+# surrounding claim declares one of the evidence classes in `requires`.
+# HYPOTHESIS, SIMULATION and RETIRED can back NONE of these words — that is the
+# whole point: "validated" on synthetic data is a contradiction.
+#
+# `pattern` is a case-insensitive regex (word-boundary anchored by the gate).
+# Words and their spirit are taken from FORBIDDEN_CLAIMS.md and
+# lint_forbidden_terms.py.
+# ---------------------------------------------------------------------------
+forbidden_claims:
+  - claim: validated
+    pattern: '\bvalidated\b'
+    requires: [MEASURED, FACT]
+  - claim: proven
+    pattern: '\bproven\b'
+    requires: [FACT]
+  - claim: guaranteed
+    pattern: '\bguaranteed\b'
+    requires: [FACT]
+  - claim: production-grade
+    pattern: '\bproduction[\s\-]grade\b'
+    requires: [FACT]
+  - claim: production-ready
+    pattern: '\bproduction[\s\-]ready\b'
+    requires: [FACT]
+  - claim: deployable
+    pattern: '\bdeployable\b'
+    requires: [FACT]
+  - claim: risk-free
+    pattern: '\brisk[\s\-]free\b'
+    requires: [FACT]
+  - claim: validated-alpha
+    pattern: '\bvalidated\s+alpha\b'
+    requires: [MEASURED, FACT]
+  - claim: proven-predictor
+    pattern: '\bproven\s+predictor\b'
+    requires: [MEASURED, FACT]
+  - claim: market-physics-proven
+    pattern: '\bmarket\s+physics\s+proven\b'
+    requires: [FACT]
+
+# ---------------------------------------------------------------------------
+# Status-surface presentation metadata. Consumed by gen_status_surfaces.py.
+# ---------------------------------------------------------------------------
+status_surface:
+  project: GeoSync
+  badge_label: maturity
+  badge_color_by_rank:
+    RESEARCH_ALPHA: lightgrey
+    REPEATABLE: yellow
+    REPRODUCIBLE: yellowgreen
+    REPLICATED: green
+    RELEASE_CANDIDATE: brightgreen
+    PRODUCTION: blue
+  boundary_note: >-
+    GeoSync is a verification-first research platform, not a live-trading or
+    alpha product (PRODUCT_CATEGORY.md). Maturity refers to evidence
+    discipline, not asserted market edge.

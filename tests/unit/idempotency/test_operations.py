@@ -1,3 +1,5 @@
+# Copyright (c) 2023-2026 Yaroslav Vasylenko (neuron7xLab)
+# SPDX-License-Identifier: MIT
 from __future__ import annotations
 
 from dataclasses import dataclass
@@ -67,12 +69,8 @@ def test_coordinator_records_successful_replay(
     key_factory: IdempotencyKeyFactory,
 ) -> None:
     clock = ManualClock()
-    coordinator = IdempotencyCoordinator(
-        ack_ttl_seconds=10.0, record_ttl_seconds=60.0, clock=clock
-    )
-    key = key_factory.build(
-        service="orders", operation="submit", dedupe_fields={"id": 1}
-    )
+    coordinator = IdempotencyCoordinator(ack_ttl_seconds=10.0, record_ttl_seconds=60.0, clock=clock)
+    key = key_factory.build(service="orders", operation="submit", dedupe_fields={"id": 1})
 
     initial = coordinator.register_attempt(key)
     assert initial.status is OperationStatus.PENDING
@@ -94,9 +92,7 @@ def test_coordinator_detects_conflicting_payloads(
     key_factory: IdempotencyKeyFactory,
 ) -> None:
     coordinator = IdempotencyCoordinator()
-    key = key_factory.build(
-        service="orders", operation="submit", dedupe_fields={"id": 1}
-    )
+    key = key_factory.build(service="orders", operation="submit", dedupe_fields={"id": 1})
     coordinator.register_attempt(key)
     with pytest.raises(IdempotencyConflictError):
         coordinator.register_attempt(key, payload_fingerprint="different")
@@ -106,9 +102,7 @@ def test_coordinator_rejects_retry_after_failure(
     key_factory: IdempotencyKeyFactory,
 ) -> None:
     coordinator = IdempotencyCoordinator()
-    key = key_factory.build(
-        service="orders", operation="submit", dedupe_fields={"id": 1}
-    )
+    key = key_factory.build(service="orders", operation="submit", dedupe_fields={"id": 1})
     coordinator.register_attempt(key)
     coordinator.complete_failure(key, reason="insufficient_margin")
     with pytest.raises(IdempotencyInputError):
@@ -119,9 +113,7 @@ def test_coordinator_preserves_success_after_failure_attempt(
     key_factory: IdempotencyKeyFactory,
 ) -> None:
     coordinator = IdempotencyCoordinator()
-    key = key_factory.build(
-        service="orders", operation="submit", dedupe_fields={"id": 1}
-    )
+    key = key_factory.build(service="orders", operation="submit", dedupe_fields={"id": 1})
 
     coordinator.register_attempt(key)
     succeeded = coordinator.complete_success(key, {"status": "accepted"})
@@ -138,12 +130,8 @@ def test_coordinator_preserves_success_after_failure_attempt(
 
 def test_acknowledgement_ttl_expires(key_factory: IdempotencyKeyFactory) -> None:
     clock = ManualClock()
-    coordinator = IdempotencyCoordinator(
-        ack_ttl_seconds=5.0, record_ttl_seconds=120.0, clock=clock
-    )
-    key = key_factory.build(
-        service="orders", operation="submit", dedupe_fields={"id": 1}
-    )
+    coordinator = IdempotencyCoordinator(ack_ttl_seconds=5.0, record_ttl_seconds=120.0, clock=clock)
+    key = key_factory.build(service="orders", operation="submit", dedupe_fields={"id": 1})
     coordinator.register_attempt(key)
     coordinator.complete_success(key, {"status": "ok"})
 
@@ -158,9 +146,7 @@ def test_acknowledgement_ttl_expires(key_factory: IdempotencyKeyFactory) -> None
 def test_commutative_aggregation(key_factory: IdempotencyKeyFactory) -> None:
     clock = ManualClock()
     coordinator = IdempotencyCoordinator(clock=clock)
-    key = key_factory.build(
-        service="positions", operation="sync", dedupe_fields={"id": 1}
-    )
+    key = key_factory.build(service="positions", operation="sync", dedupe_fields={"id": 1})
 
     coordinator.register_attempt(key)
     coordinator.complete_success(key, ["A", "B"])
@@ -170,9 +156,7 @@ def test_commutative_aggregation(key_factory: IdempotencyKeyFactory) -> None:
     merged = coordinator.complete_success(
         key,
         ["B", "A"],
-        aggregator=lambda existing, incoming: sorted(
-            set((existing or [])) | set(incoming or [])
-        ),
+        aggregator=lambda existing, incoming: sorted(set((existing or [])) | set(incoming or [])),
     )
     assert merged.status is OperationStatus.SUCCEEDED
     assert merged.result == ["A", "B"]
@@ -181,9 +165,7 @@ def test_commutative_aggregation(key_factory: IdempotencyKeyFactory) -> None:
 
 def test_audit_trail_records_events(key_factory: IdempotencyKeyFactory) -> None:
     coordinator = IdempotencyCoordinator()
-    key = key_factory.build(
-        service="orders", operation="submit", dedupe_fields={"id": 1}
-    )
+    key = key_factory.build(service="orders", operation="submit", dedupe_fields={"id": 1})
     coordinator.register_attempt(key, metadata={"attempt": 1})
     coordinator.complete_success(key, {"status": "ok"}, metadata={"broker": "demo"})
     trail = coordinator.get_audit_trail(key.operation_id)
@@ -196,9 +178,7 @@ def test_metrics_track_duplicates_and_collisions(
     key_factory: IdempotencyKeyFactory,
 ) -> None:
     coordinator = IdempotencyCoordinator()
-    key = key_factory.build(
-        service="orders", operation="submit", dedupe_fields={"id": 1}
-    )
+    key = key_factory.build(service="orders", operation="submit", dedupe_fields={"id": 1})
     coordinator.register_attempt(key)
     coordinator.complete_success(key, {"status": "ok"})
     coordinator.register_attempt(key)

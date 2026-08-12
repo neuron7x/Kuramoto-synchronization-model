@@ -1,5 +1,5 @@
 ---
-owner: [your-email@tradepulse]
+owner: [your-email@geosync]
 review_cadence: [quarterly|monthly|as-needed]
 last_reviewed: [YYYY-MM-DD]
 status: [draft|review|active|deprecated]

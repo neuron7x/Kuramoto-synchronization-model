@@ -1,3 +1,5 @@
+# Copyright (c) 2023-2026 Yaroslav Vasylenko (neuron7xLab)
+# SPDX-License-Identifier: MIT
 from __future__ import annotations
 
 import importlib.util
@@ -13,8 +15,6 @@ import numpy as np
 import pytest
 import yaml
 
-# Add project root to path
-sys.path.insert(0, str(Path(__file__).parent.parent.parent.parent))
 
 # Direct import to avoid dependency issues in tests
 spec = importlib.util.spec_from_file_location(
@@ -276,7 +276,9 @@ def test_save_and_to_dict(controller, tmp_path):
     controller.save_config_to_yaml(str(out_path))
     assert out_path.exists()
     with open(out_path, "r", encoding="utf-8") as f:
-        cfg = yaml.safe_load(f)
+        raw = yaml.safe_load(f)
+    profile = raw.get("active_profile", "v24")
+    cfg = raw.get(f"serotonin_{profile}", raw)
     assert cfg["alpha"] == pytest.approx(controller.config["alpha"], rel=1e-6)
     state = controller.to_dict()
     assert "tonic_level" in state
@@ -313,7 +315,7 @@ def test_env_config_dir_fallback(tmp_path, config_dict, monkeypatch):
     cfg_path = env_dir / "serotonin.yaml"
     with open(cfg_path, "w", encoding="utf-8") as f:
         yaml.safe_dump({"active_profile": "v24", "serotonin_v24": config_dict}, f)
-    monkeypatch.setenv("TRADEPULSE_CONFIG_DIR", str(env_dir))
+    monkeypatch.setenv("GEOSYNC_CONFIG_DIR", str(env_dir))
     controller = SerotoninController("missing.yaml")
     assert controller.config_path == str(cfg_path)
 
@@ -345,9 +347,7 @@ def test_rho_loss_clamping(controller):
 
 
 def test_serotonin_monotonicity(controller):
-    responses = [
-        controller.compute_serotonin_signal(val) for val in np.linspace(0, 3, 15)
-    ]
+    responses = [controller.compute_serotonin_signal(val) for val in np.linspace(0, 3, 15)]
     assert responses == sorted(responses)
     assert all(0.0 <= r <= 1.0 for r in responses)
 
@@ -474,9 +474,7 @@ def test_check_cooldown_guard_overrides(controller):
 
 def test_step_basic_api(controller):
     """Test the step() API with basic inputs."""
-    hold, veto, cooldown_s, level = controller.step(
-        stress=1.2, drawdown=-0.03, novelty=0.8
-    )
+    hold, veto, cooldown_s, level = controller.step(stress=1.2, drawdown=-0.03, novelty=0.8)
     assert isinstance(hold, bool)
     assert isinstance(veto, bool)
     assert isinstance(cooldown_s, float)
@@ -496,9 +494,7 @@ def test_step_hold_trigger(controller):
 
     # High stress should eventually trigger HOLD
     for _ in range(50):
-        hold2, veto2, _, level2 = controller.step(
-            stress=3.0, drawdown=-0.1, novelty=2.0
-        )
+        hold2, veto2, _, level2 = controller.step(stress=3.0, drawdown=-0.1, novelty=2.0)
     assert hold2 or level2 > controller.config["cooldown_threshold"]
 
 
@@ -576,9 +572,9 @@ def test_step_validation(controller):
     with pytest.raises(ValueError):
         controller.step(stress=-1.0, drawdown=-0.05, novelty=0.5)
 
-    # Positive drawdown should raise
-    with pytest.raises(ValueError):
-        controller.step(stress=1.0, drawdown=0.05, novelty=0.5)
+    # Positive drawdown is coerced to negative (warning, not error)
+    hold, _, _, _ = controller.step(stress=1.0, drawdown=0.05, novelty=0.5)
+    assert isinstance(hold, bool)
 
     # Negative novelty should raise
     with pytest.raises(ValueError):
@@ -598,7 +594,9 @@ def test_step_with_overrides(controller):
     )
 
     hold2, _, _, level2 = controller.step(
-        stress=1.0, drawdown=-0.05, novelty=0.5  # No overrides
+        stress=1.0,
+        drawdown=-0.05,
+        novelty=0.5,  # No overrides
     )
 
     # Results should differ due to overrides
@@ -618,21 +616,22 @@ def test_step_tacl_telemetry(caplog, controller):
 
 
 def test_step_cooldown_exit(controller):
-    """Test cooldown timer resets when exiting HOLD state."""
+    """Test cooldown timer eventually reaches 0 after exiting HOLD state."""
     # Trigger HOLD
     for _ in range(50):
         controller.step(stress=3.0, drawdown=-0.1, novelty=2.0)
 
     hold1, _, cooldown1, _ = controller.step(stress=3.0, drawdown=-0.1, novelty=2.0)
 
-    # Exit HOLD by reducing stress
-    for _ in range(100):
+    # Exit HOLD by reducing stress — run enough iterations to drain
+    # desens_threshold_ticks (100) plus the hold-exit transition window
+    for _ in range(250):
         controller.step(stress=0.05, drawdown=0.0, novelty=0.05)
 
     hold2, _, cooldown2, _ = controller.step(stress=0.05, drawdown=0.0, novelty=0.05)
 
     if hold1 and not hold2:
-        # Cooldown should be 0 after exiting HOLD
+        # Cooldown should be 0 after enough low-stress iterations
         assert cooldown2 == 0.0
 
 
@@ -671,9 +670,7 @@ def test_step_monotonic_stress_response(controller):
         controller.sensitivity = 1.0
         # Run multiple steps to let tonic build up
         for _ in range(20):
-            _, _, _, level = controller.step(
-                stress=stress, drawdown=-0.02, novelty=stress * 0.4
-            )
+            _, _, _, level = controller.step(stress=stress, drawdown=-0.02, novelty=stress * 0.4)
         levels.append(level)
 
     # Higher stress should generally lead to higher levels
@@ -704,10 +701,7 @@ def test_save_and_load_state(controller, tmp_path):
     restored_state = controller.to_dict()
 
     # Verify key state is restored
-    assert (
-        abs(restored_state["serotonin_level"] - original_state["serotonin_level"])
-        < 0.01
-    )
+    assert abs(restored_state["serotonin_level"] - original_state["serotonin_level"]) < 0.01
     assert abs(restored_state["tonic_level"] - original_state["tonic_level"]) < 0.01
     assert abs(restored_state["sensitivity"] - original_state["sensitivity"]) < 0.01
 

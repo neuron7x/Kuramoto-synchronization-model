@@ -5,7 +5,7 @@ import { AppHeader } from './_components/app-header'
 
 export const metadata: Metadata = {
   title: {
-    template: '%s | TradePulse',
+    template: '%s | GeoSync',
     default: 'Dashboard',
   },
 }

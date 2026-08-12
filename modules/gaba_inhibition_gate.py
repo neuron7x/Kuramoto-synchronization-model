@@ -1,5 +1,5 @@
-# Copyright (c) 2025 TradePulse
-# SPDX-License-Identifier: Apache-2.0
+# Copyright (c) 2023-2026 Yaroslav Vasylenko (neuron7xLab)
+# SPDX-License-Identifier: MIT
 # Biophysical gate mapping GABAergic inhibition to risk-aware action modulation.
 # Primary sources: Buzsáki & Wang (2012); Bliss & Collingridge (1993);
 # Bi & Poo (1998); Bowery et al. (2002)
@@ -14,6 +14,7 @@ import torch
 import torch.nn as nn
 
 from modules.types import MarketState
+
 _MS_TO_SECONDS = 1000.0  # Conversion factor
 
 
@@ -179,37 +180,19 @@ class GABAInhibitionGate(nn.Module):
     decay_fast: torch.Tensor
     decay_slow: torch.Tensor
 
-    def __init__(
-        self, params: Optional[GateParams] = None, device: Optional[str] = None
-    ):
+    def __init__(self, params: Optional[GateParams] = None, device: Optional[str] = None):
         super().__init__()
         self.p = params or GateParams()
-        dev = (
-            device
-            if device is not None
-            else ("cuda" if torch.cuda.is_available() else "cpu")
-        )
+        dev = device if device is not None else ("cuda" if torch.cuda.is_available() else "cpu")
         self.device = torch.device(dev)
-        self.register_buffer(
-            "gaba_fast", torch.zeros(1, dtype=torch.float32, device=self.device)
-        )
-        self.register_buffer(
-            "gaba_slow", torch.zeros(1, dtype=torch.float32, device=self.device)
-        )
-        self.register_buffer(
-            "risk_weight", torch.ones(1, dtype=torch.float32, device=self.device)
-        )
-        self.register_buffer(
-            "t_ms", torch.zeros(1, dtype=torch.float32, device=self.device)
-        )
+        self.register_buffer("gaba_fast", torch.zeros(1, dtype=torch.float32, device=self.device))
+        self.register_buffer("gaba_slow", torch.zeros(1, dtype=torch.float32, device=self.device))
+        self.register_buffer("risk_weight", torch.ones(1, dtype=torch.float32, device=self.device))
+        self.register_buffer("t_ms", torch.zeros(1, dtype=torch.float32, device=self.device))
 
         # buffers reflect the latest decay factors (useful for inspection/tests)
-        self.register_buffer(
-            "decay_fast", torch.zeros(1, dtype=torch.float32, device=self.device)
-        )
-        self.register_buffer(
-            "decay_slow", torch.zeros(1, dtype=torch.float32, device=self.device)
-        )
+        self.register_buffer("decay_fast", torch.zeros(1, dtype=torch.float32, device=self.device))
+        self.register_buffer("decay_slow", torch.zeros(1, dtype=torch.float32, device=self.device))
         self._refresh_precomputed_buffers()
 
     # --- helpers -----------------------------------------------------------
@@ -232,21 +215,15 @@ class GABAInhibitionGate(nn.Module):
         if not self.p.cycle_modulation:
             return torch.tensor(1.0, device=self.device)
         t_seconds = t_ms / _MS_TO_SECONDS
-        gamma = self.p.gamma_cycle_amplitude * torch.sin(
-            2 * math.pi * self.p.gamma_hz * t_seconds
-        )
-        theta = self.p.theta_cycle_amplitude * torch.sin(
-            2 * math.pi * self.p.theta_hz * t_seconds
-        )
+        gamma = self.p.gamma_cycle_amplitude * torch.sin(2 * math.pi * self.p.gamma_hz * t_seconds)
+        theta = self.p.theta_cycle_amplitude * torch.sin(2 * math.pi * self.p.theta_hz * t_seconds)
         return 1.0 + gamma + theta
 
     def _refresh_precomputed_buffers(self) -> None:
         """Recompute decay coefficients and cached time step when params change."""
 
         with torch.no_grad():
-            base_dt = torch.tensor(
-                self.p.dt_ms, device=self.device, dtype=torch.float32
-            )
+            base_dt = torch.tensor(self.p.dt_ms, device=self.device, dtype=torch.float32)
             self.decay_fast.copy_(self._compute_decay(base_dt, self.p.tau_gaba_a_ms))
             self.decay_slow.copy_(self._compute_decay(base_dt, self.p.tau_gaba_b_ms))
 
@@ -328,9 +305,7 @@ class GABAInhibitionGate(nn.Module):
         )
 
         # 2) Inhibition proportional to GABA and action magnitude
-        firing_proxy = torch.clamp(
-            action.norm().unsqueeze(0), 0.0, self.p.firing_proxy_max
-        )
+        firing_proxy = torch.clamp(action.norm().unsqueeze(0), 0.0, self.p.firing_proxy_max)
         inhibition = self.p.k_inhibit * gaba_level * torch.tanh(firing_proxy)
         inhibition = torch.clamp(inhibition, 0.0, self.p.max_inhibition)
 
@@ -347,15 +322,11 @@ class GABAInhibitionGate(nn.Module):
         delta_t_scalar = delta_t_ms.squeeze()
         if (delta_t_scalar > 0).item():
             stdp_component = (
-                self.p.stdp_a_plus
-                * torch.exp(-delta_t_ms / self.p.stdp_tau_plus_ms)
-                * gaba_level
+                self.p.stdp_a_plus * torch.exp(-delta_t_ms / self.p.stdp_tau_plus_ms) * gaba_level
             )
         else:
             stdp_component = (
-                -self.p.stdp_a_minus
-                * torch.exp(delta_t_ms / self.p.stdp_tau_minus_ms)
-                * gaba_level
+                -self.p.stdp_a_minus * torch.exp(delta_t_ms / self.p.stdp_tau_minus_ms) * gaba_level
             )
         # LTP/LTD gated by vol*ret (pre*post)
         pre_post = vol * ret
@@ -457,9 +428,7 @@ class GABAInhibitionGate(nn.Module):
         self.gaba_fast.copy_(boosted_fast)
         self.gaba_slow.copy_(boosted_slow)
         damp = 1.0 / (1 + self.p.hedge_risk_damp * boost)
-        new_weight = torch.clamp(
-            self.risk_weight * damp, self.p.risk_min, self.p.risk_max
-        )
+        new_weight = torch.clamp(self.risk_weight * damp, self.p.risk_min, self.p.risk_max)
         self.risk_weight.copy_(new_weight)
 
     def configure(self, params: Optional[GateParams] = None, **overrides: Any) -> None:

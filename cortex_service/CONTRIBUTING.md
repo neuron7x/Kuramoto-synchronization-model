@@ -14,8 +14,8 @@ Thank you for your interest in contributing to the Cortex Service! This document
 
 1. Clone the repository:
 ```bash
-git clone https://github.com/neuron7x/TradePulse.git
-cd TradePulse/cortex_service
+git clone https://github.com/neuron7xLab/GeoSync.git
+cd GeoSync/cortex_service
 ```
 
 2. Install development dependencies:

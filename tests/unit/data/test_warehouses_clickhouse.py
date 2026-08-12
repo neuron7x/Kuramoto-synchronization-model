@@ -1,4 +1,5 @@
-# SPDX-License-Identifier: LicenseRef-TradePulse-Proprietary
+# Copyright (c) 2023-2026 Yaroslav Vasylenko (neuron7xLab)
+# SPDX-License-Identifier: MIT
 """Unit tests for ClickHouse warehouse integration."""
 
 from __future__ import annotations
@@ -25,7 +26,7 @@ class TestClickHouseConfig:
     def test_default_config_values(self) -> None:
         """Verify default configuration values."""
         config = ClickHouseConfig()
-        assert config.database == "tradepulse"
+        assert config.database == "geosync"
         assert config.raw_table == "raw_ticks"
         assert config.rollup_table == "minute_bars"
         assert config.retention_days == 30
@@ -100,6 +101,20 @@ class TestClickHouseIdentifiers:
         assert identifiers.timezone_literal == "'America/New_York'"
 
 
+def _mock_only_test_clickhouse(request: httpx.Request) -> bool:
+    """Confine httpx_mock to the warehouse's own `test-clickhouse` host.
+
+    An `execution.watchdog.Watchdog` default-instantiated elsewhere in the
+    process (default `health_url=http://127.0.0.1:8085/health/live`) races
+    the strict mock and triggers AssertionError("request not expected")
+    on ingest-error paths. Returning False for 127.0.0.1 lets the
+    watchdog probe pass through; the warehouse's own INSERT requests
+    still hit the mock.
+    """
+    return "test-clickhouse" in str(request.url)
+
+
+@pytest.mark.httpx_mock(should_mock=_mock_only_test_clickhouse)
 class TestClickHouseWarehouse:
     """Tests for ClickHouseWarehouse class."""
 
@@ -136,18 +151,14 @@ class TestClickHouseWarehouse:
         statements = warehouse.bootstrap_statements()
         assert len(statements) == 4
 
-    def test_bootstrap_statements_creates_database(
-        self, warehouse: ClickHouseWarehouse
-    ) -> None:
+    def test_bootstrap_statements_creates_database(self, warehouse: ClickHouseWarehouse) -> None:
         """Verify bootstrap creates database statement."""
         statements = warehouse.bootstrap_statements()
         db_statement = statements[0]
         assert "CREATE DATABASE IF NOT EXISTS" in db_statement.sql
-        assert "tradepulse" in db_statement.sql
+        assert "geosync" in db_statement.sql
 
-    def test_bootstrap_statements_creates_raw_table(
-        self, warehouse: ClickHouseWarehouse
-    ) -> None:
+    def test_bootstrap_statements_creates_raw_table(self, warehouse: ClickHouseWarehouse) -> None:
         """Verify bootstrap creates raw table statement."""
         statements = warehouse.bootstrap_statements()
         raw_statement = statements[1]
@@ -182,9 +193,7 @@ class TestClickHouseWarehouse:
         assert "OPTIMIZE" in jobs[0].statement.sql
         assert jobs[0].schedule_hint == "*/5 * * * *"
 
-    def test_maintenance_tasks_returns_tasks(
-        self, warehouse: ClickHouseWarehouse
-    ) -> None:
+    def test_maintenance_tasks_returns_tasks(self, warehouse: ClickHouseWarehouse) -> None:
         """Verify maintenance tasks are returned."""
         tasks = warehouse.maintenance_tasks()
         assert len(tasks) == 2
@@ -201,9 +210,7 @@ class TestClickHouseWarehouse:
         assert queries[1].name == "minute_bar_freshness"
         assert queries[2].name == "ingest_throughput"
 
-    def test_benchmark_scenarios_returns_scenarios(
-        self, warehouse: ClickHouseWarehouse
-    ) -> None:
+    def test_benchmark_scenarios_returns_scenarios(self, warehouse: ClickHouseWarehouse) -> None:
         """Verify benchmark scenarios are returned."""
         scenarios = warehouse.benchmark_scenarios()
         assert len(scenarios) == 2

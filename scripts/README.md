@@ -1,12 +1,12 @@
 ---
-owner: platform@tradepulse
+owner: platform@geosync
 review_cadence: quarterly
 last_reviewed: 2026-01-01
 ---
 
 # Scripts
 
-This directory hosts the consolidated command line tooling for TradePulse.
+This directory hosts the consolidated command line tooling for GeoSync.
 All commands are exposed through the Python module `scripts.cli`, which can be
 invoked with `python -m scripts` from the repository root.  The CLI provides
 consistent logging, deterministic defaults and optional environment variable
@@ -107,7 +107,7 @@ deprecated directories that are discovered during the run.
 
 ### Configuration & Schema
 
-- **[export_tradepulse_schema.py](README_export_tradepulse_schema.md)** - Export TradePulse configuration JSON schema
+- **[export_geosync_schema.py](README_export_geosync_schema.md)** - Export GeoSync configuration JSON schema
 
 ### Analysis & Testing
 
@@ -124,7 +124,7 @@ All scripts in this directory follow these standards:
 ### Python Scripts
 
 - **Shebang**: `#!/usr/bin/env python3` for executable scripts
-- **License**: SPDX-License-Identifier: LicenseRef-TradePulse-Proprietary header
+- **License**: SPDX-License-Identifier: MIT header
 - **Imports**: `from __future__ import annotations` for Python 3.11+
 - **Type hints**: Full typing annotations on all functions
 - **CLI**: argparse or typer with comprehensive help text
@@ -206,5 +206,5 @@ When adding new scripts:
 
 ## License
 
-All scripts in this directory are licensed under the TradePulse Proprietary License Agreement (TPLA). See the [LICENSE](../LICENSE) file for details.
+All scripts in this directory are licensed under the MIT License. See the [LICENSE](../LICENSE) file for details.
 

@@ -1,9 +1,14 @@
+# Copyright (c) 2023-2026 Yaroslav Vasylenko (neuron7xLab)
+# SPDX-License-Identifier: MIT
 from __future__ import annotations
 
 import pandas as pd
 
+import numpy as np
+
 from core.data.normalization_pipeline import (
     MarketNormalizationConfig,
+    _ensure_ohlcv_columns,
     normalize_market_data,
 )
 
@@ -100,3 +105,43 @@ def test_normalize_allows_empty_when_configured() -> None:
     result = normalize_market_data(empty, config=config)
     assert result.frame.empty
     assert result.metadata.rows == 0
+
+
+def test_ensure_ohlcv_columns_fills_volume_zero_and_prices_nan() -> None:
+    """`0.0 if column == "volume" else np.nan` -- only the volume gap is zero-filled.
+
+    A price column that is missing must be filled with NaN (an honest "no data"),
+    never a fabricated 0.0. Under Eq->NotEq the fills swap: a missing OPEN would
+    silently become 0.0 (a fake price) while volume routes through the NaN path.
+    """
+    idx = pd.date_range("2024-02-01T09:30:00Z", "2024-02-01T09:32:00Z", freq="1min", tz="UTC")
+    frame = pd.DataFrame({"high": [1.0, 2.0, 3.0], "low": [0.5, 1.0, 1.5], "close": [0.8, 1.8, 2.8]}, index=idx)
+
+    aligned = _ensure_ohlcv_columns(frame)
+
+    assert aligned["open"].isna().all(), "a missing price column must be NaN, not a fabricated 0.0"
+    assert (aligned["volume"] == 0.0).all(), "a missing volume column defaults to 0.0"
+
+
+def test_tick_frame_in_non_utc_timezone_aligns_counts_to_l1() -> None:
+    """`counts.tz is not None and l1.tz is not None and counts.tz != l1.tz` -> convert.
+
+    A tick frame in a non-UTC zone forces the empty-bin counts (in the source
+    zone) to be reconciled against the L1 index before they are indexed together.
+    Under And->Or / NotEq->Eq the reconciliation is skipped and the mismatched
+    indices misalign (KeyError or wrong empty bins). A correct UTC OHLCV result
+    proves the branch fired.
+    """
+    ts = pd.to_datetime(
+        ["2024-02-01T09:30:00", "2024-02-01T09:30:30", "2024-02-01T09:31:00",
+         "2024-02-01T09:33:00", "2024-02-01T09:34:30"]
+    ).tz_localize("America/New_York")
+    frame = pd.DataFrame({"price": [100.0, 101.0, 102.0, 101.5, 103.0],
+                          "volume": [5.0, 1.0, 1.5, 2.0, 3.0]}, index=ts)
+
+    result = normalize_market_data(frame, config=MarketNormalizationConfig(kind="tick", frequency="1min"))
+
+    assert str(result.frame.index.tz) == "UTC"
+    assert list(result.frame.columns) == ["open", "high", "low", "close", "volume"]
+    # The 09:32 bin (NY) has no ticks -> forward-filled price, zero volume, correctly aligned.
+    assert result.frame["close"].notna().all()

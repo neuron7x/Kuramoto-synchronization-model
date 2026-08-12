@@ -1,0 +1,111 @@
+# Diff-bound commit acceptor for issue #639 (X-10R CBS marginal loader slice).
+#
+# Adds tools/build_bis_cbs_dataset.py — a CBS (Consolidated Banking Statistics)
+# marginal ADAPTER that feeds the EXISTING, substrate-agnostic Cimini-Squartini
+# reconstruction engine (research/reconstruction/cimini_squartini.py::
+# fit_cimini_squartini). It does NOT reimplement the reconstruction maths or the
+# ReconstructionCapsule. CBS is nationality/parent-group based and EXCLUDES
+# intragroup positions, so the loader fails-closed on any intragroup row
+# (reporter_group == counterparty_group).
+#
+# HONESTY (X-10R boundary card): this slice introduces NO predictive, alpha,
+# tradeable, or bank-level inference claim, does NOT relabel CBS as LBS, and does
+# NOT lift INV-IDENTIFICATION-1 / INV-RECONSTRUCTION-2. Marginals here are
+# INPUT-side only. The full CBS-vs-LBS side-by-side study (DoD of #639) depends
+# on allocator epic #638 and is deferred to a follow-up.
+
+id: x10r-cbs-marginal-loader
+status: ACTIVE
+claim_type: fail_closed
+promise: >-
+  After this PR lands, tools/build_bis_cbs_dataset.py provides
+  parse_cbs_marginals / load_cbs_marginals — a fail-closed CBS adapter that
+  derives per-group (s_out, s_in) marginal-strength vectors from a
+  bis.cbs.marginals.v1 JSON document and feeds the EXISTING
+  fit_cimini_squartini engine. The loader RAISES CbsContractViolation on: a
+  wrong schema_version; a non-nationality_parent_group ontology; an
+  intragroup_excluded flag that is not true; an INTRAGROUP position
+  (reporter_group == counterparty_group); a negative/non-finite/non-numeric
+  claim; empty positions; or fewer than two distinct groups. main() exits
+  non-zero on any contract violation. The valid fixture
+  tests/reconstruction/fixtures/cbs_marginals_valid.json loads to 5 groups and
+  feeds the engine to a finite fitness object and a legal synthetic-path
+  ReconstructionCapsule; the negative fixture
+  tests/reconstruction/fixtures/cbs_marginals_intragroup_violation.json (which
+  includes a DE->DE intragroup row) is REJECTED. This is INPUT VALIDATION only:
+  it asserts no market, predictive, alpha, or bank-level inference claim and
+  does not relabel CBS as LBS.
+diff_scope:
+  changed_files:
+    - path: ".claude/commit_acceptors/x10r-cbs-marginal-loader.yaml"
+    - path: "tools/build_bis_cbs_dataset.py"
+    - path: "tests/reconstruction/test_cbs_loader.py"
+    - path: "tests/reconstruction/fixtures/cbs_marginals_valid.json"
+    - path: "tests/reconstruction/fixtures/cbs_marginals_intragroup_violation.json"
+    - path: "scripts/ci/x10r_cbs_loader_falsifier.py"
+    - path: "INVENTORY.json"
+    - path: ".github/bwheel_baseline.json"
+  forbidden_paths:
+    - "trading/"
+    - "execution/"
+    - "forecast/"
+    - "policy/"
+    - "core/physics/"
+    - "core/kuramoto/"
+    - "research/reconstruction/cimini_squartini.py"
+    - "research/reconstruction/reconstruction_capsule.py"
+    - "tools/build_bis_lbs_dataset.py"
+    - "application/governance/claim_ledger.py"
+    - "application/governance/commit_acceptor.py"
+required_python_symbols:
+  - "tools/build_bis_cbs_dataset.py::parse_cbs_marginals"
+  - "tools/build_bis_cbs_dataset.py::load_cbs_marginals"
+  - "tools/build_bis_cbs_dataset.py::CbsContractViolation"
+  - "tools/build_bis_cbs_dataset.py::CbsMarginals"
+expected_signal: >-
+  Local: mypy --strict is clean on tools/build_bis_cbs_dataset.py,
+  tests/reconstruction/test_cbs_loader.py, and
+  scripts/ci/x10r_cbs_loader_falsifier.py; ruff check and black --check pass on
+  those paths; `python -m pytest tests/reconstruction/test_cbs_loader.py -q`
+  reports 14 passed; the falsifier
+  `python -m scripts.ci.x10r_cbs_loader_falsifier` exits 0 (the valid CBS
+  fixture loads and feeds the engine AND the intragroup-including fixture is
+  rejected by both the loader and the CLI).
+measurement_command: >-
+  bash -c 'set -eo pipefail; mkdir -p tmp; mypy --strict --follow-imports=silent
+  tools/build_bis_cbs_dataset.py tests/reconstruction/test_cbs_loader.py
+  scripts/ci/x10r_cbs_loader_falsifier.py && ruff check
+  tools/build_bis_cbs_dataset.py tests/reconstruction/test_cbs_loader.py
+  scripts/ci/x10r_cbs_loader_falsifier.py && black --check
+  tools/build_bis_cbs_dataset.py tests/reconstruction/test_cbs_loader.py
+  scripts/ci/x10r_cbs_loader_falsifier.py && python -m pytest
+  tests/reconstruction/test_cbs_loader.py -q && python -m
+  scripts.ci.x10r_cbs_loader_falsifier | tee tmp/x10r_cbs_loader.log'
+signal_artifact: "tmp/x10r_cbs_loader.log"
+falsifier:
+  command: "bash -c 'python -m scripts.ci.x10r_cbs_loader_falsifier'"
+  description: >-
+    Runs the CBS-loader falsifier driver: it loads the valid CBS fixture,
+    asserts a >= 2-node positive-mass (s_out, s_in) pair, and feeds it to the
+    EXISTING fit_cimini_squartini engine; then it feeds the
+    intragroup-including fixture. If load_cbs_marginals fails OPEN and accepts
+    the intragroup position, OR the CLI exits zero on it, the driver exits
+    non-zero. Exit 0 proves the CBS ontology contract holds — intragroup
+    positions are rejected, so LBS-style data cannot be silently relabelled as
+    CBS.
+rollback_command: >-
+  bash -c 'git rm -f tools/build_bis_cbs_dataset.py
+  tests/reconstruction/test_cbs_loader.py
+  tests/reconstruction/fixtures/cbs_marginals_valid.json
+  tests/reconstruction/fixtures/cbs_marginals_intragroup_violation.json
+  scripts/ci/x10r_cbs_loader_falsifier.py
+  .claude/commit_acceptors/x10r-cbs-marginal-loader.yaml &&
+  python scripts/ci/update_inventory.py --write'
+rollback_verification_command: >-
+  bash -c 'test ! -e tools/build_bis_cbs_dataset.py && test !
+  -e scripts/ci/x10r_cbs_loader_falsifier.py && test !
+  -e .claude/commit_acceptors/x10r-cbs-marginal-loader.yaml'
+memory_update_type: append
+ledger_path: ".claude/commit_acceptors/x10r-cbs-marginal-loader.yaml"
+report_path: "tmp/x10r_cbs_loader.log"
+evidence: []

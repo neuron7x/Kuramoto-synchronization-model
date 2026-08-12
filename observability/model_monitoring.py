@@ -1,3 +1,5 @@
+# Copyright (c) 2023-2026 Yaroslav Vasylenko (neuron7xLab)
+# SPDX-License-Identifier: MIT
 """Comprehensive observability tooling for production model deployments."""
 
 from __future__ import annotations
@@ -9,7 +11,7 @@ import time
 from collections import defaultdict, deque
 from contextlib import contextmanager
 from dataclasses import dataclass, field
-from datetime import datetime, timezone
+from datetime import datetime
 from pathlib import Path
 from typing import (
     Callable,
@@ -21,6 +23,8 @@ from typing import (
     MutableMapping,
     Sequence,
 )
+
+from core.compat import utc_now
 
 try:  # pragma: no cover - optional dependency may not be available
     import psutil
@@ -36,7 +40,6 @@ from .incidents import IncidentManager, IncidentRecord
 from .tracing import pipeline_span
 
 LOGGER = logging.getLogger(__name__)
-UTC = timezone.utc
 
 
 @dataclass(slots=True)
@@ -58,7 +61,7 @@ class QualityConfidenceInterval:
     confidence_level: float
     sample_size: int
     stddev: float
-    timestamp: datetime = field(default_factory=lambda: datetime.now(UTC))
+    timestamp: datetime = field(default_factory=lambda: utc_now())
 
     @property
     def width(self) -> float:
@@ -86,7 +89,7 @@ class DegradationSignal:
     expected_value: float | None
     severity: float
     reason: str
-    timestamp: datetime = field(default_factory=lambda: datetime.now(UTC))
+    timestamp: datetime = field(default_factory=lambda: utc_now())
     incident: IncidentRecord | None = None
 
 
@@ -96,7 +99,7 @@ class EventLabel:
 
     name: str
     tags: Mapping[str, object] = field(default_factory=dict)
-    timestamp: datetime = field(default_factory=lambda: datetime.now(UTC))
+    timestamp: datetime = field(default_factory=lambda: utc_now())
 
 
 @dataclass(slots=True)
@@ -112,7 +115,7 @@ class ResourceSnapshot:
     cache_hit_ratio: float | None = None
     cache_entries: float | None = None
     cache_evictions: int | None = None
-    timestamp: datetime = field(default_factory=lambda: datetime.now(UTC))
+    timestamp: datetime = field(default_factory=lambda: utc_now())
 
 
 @dataclass(slots=True)
@@ -149,9 +152,7 @@ class PostmortemTemplate:
         lines.append("")
         lines.append("## Timeline")
         for label in self.timeline:
-            tag_repr = ", ".join(
-                f"{name}={value}" for name, value in sorted(label.tags.items())
-            )
+            tag_repr = ", ".join(f"{name}={value}" for name, value in sorted(label.tags.items()))
             payload = f" – {tag_repr}" if tag_repr else ""
             lines.append(f"- {label.timestamp.isoformat()} – {label.name}{payload}")
         lines.append("")
@@ -241,7 +242,7 @@ class ModelObservabilityOrchestrator:
         self._metrics = get_metrics_collector()
         self._perf_counter = perf_counter or time.perf_counter
         self._monotonic = monotonic or time.monotonic
-        self._now = now or (lambda: datetime.now(UTC))
+        self._now = now or (lambda: utc_now())
 
         if incident_manager is not None:
             self._incident_manager = incident_manager
@@ -289,14 +290,10 @@ class ModelObservabilityOrchestrator:
             "request.id": request_id,
         }
         if attributes:
-            span_attributes.update(
-                {str(key): value for key, value in attributes.items()}
-            )
+            span_attributes.update({str(key): value for key, value in attributes.items()})
 
         self.label_event("inference.start", {"request_id": request_id})
-        span = pipeline_span(
-            f"model.{self._config.model_name}.inference", **span_attributes
-        )
+        span = pipeline_span(f"model.{self._config.model_name}.inference", **span_attributes)
         with span as active_span:
             error: BaseException | None = None
             try:
@@ -331,9 +328,7 @@ class ModelObservabilityOrchestrator:
                     },
                 )
 
-    def record_quality_metric(
-        self, metric: str, value: float
-    ) -> QualityConfidenceInterval:
+    def record_quality_metric(self, metric: str, value: float) -> QualityConfidenceInterval:
         """Record a model quality metric observation and emit statistics."""
 
         samples = self._quality_samples[metric]
@@ -486,18 +481,14 @@ class ModelObservabilityOrchestrator:
             return None
         return coefficient
 
-    def label_event(
-        self, name: str, tags: Mapping[str, object] | None = None
-    ) -> EventLabel:
+    def label_event(self, name: str, tags: Mapping[str, object] | None = None) -> EventLabel:
         """Attach a label to an operational event and retain it in the timeline."""
 
         label = EventLabel(name=name, tags=dict(tags or {}), timestamp=self._now())
         self._events.append(label)
         return label
 
-    def generate_postmortem_template(
-        self, event: DegradationSignal
-    ) -> PostmortemTemplate:
+    def generate_postmortem_template(self, event: DegradationSignal) -> PostmortemTemplate:
         """Build a structured postmortem template for *event*."""
 
         incident_id = event.incident.identifier if event.incident else "(untriaged)"
@@ -518,8 +509,7 @@ class ModelObservabilityOrchestrator:
         template = PostmortemTemplate(
             incident_id=incident_id,
             summary=(
-                f"{self._config.model_name} {event.metric} degradation detected:"
-                f" {event.reason}"
+                f"{self._config.model_name} {event.metric} degradation detected: {event.reason}"
             ),
             started_at=event.timestamp,
             detected_by="model-observability-orchestrator",
@@ -605,9 +595,7 @@ class ModelObservabilityOrchestrator:
         self._check_latency_degradation(duration, now)
         self._check_error_rate_degradation(error_ratio, now)
 
-    def _update_inference_statistics(
-        self, now: float, success: bool
-    ) -> tuple[float, float]:
+    def _update_inference_statistics(self, now: float, success: bool) -> tuple[float, float]:
         window = float(self._config.throughput_window_seconds)
         self._inference_events.append((now, success))
         while self._inference_events and now - self._inference_events[0][0] > window:
@@ -664,8 +652,7 @@ class ModelObservabilityOrchestrator:
             return
 
         reason = (
-            "quality mean outside target band "
-            f"{baseline.target:.4f} ± {baseline.tolerance:.4f}"
+            f"quality mean outside target band {baseline.target:.4f} ± {baseline.tolerance:.4f}"
         )
         self._emit_degradation(metric, interval.mean, baseline.target, reason, now)
 

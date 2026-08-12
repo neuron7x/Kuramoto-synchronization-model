@@ -1,8 +1,10 @@
+# Copyright (c) 2023-2026 Yaroslav Vasylenko (neuron7xLab)
+# SPDX-License-Identifier: MIT
 """Implementation of the nightly regression automation."""
 
 from __future__ import annotations
 
-# SPDX-License-Identifier: LicenseRef-TradePulse-Proprietary
+# SPDX-License-Identifier: MIT
 import asyncio
 import json
 import logging
@@ -138,9 +140,7 @@ class NightlyRegressionRunner:
         self._history_path = Path(history_path or _DEFAULT_HISTORY_PATH)
         self._incident_manager = incident_manager or IncidentManager()
         self._notification_dispatcher = notification_dispatcher
-        self._backtests = tuple(
-            backtest_scenarios or create_default_backtest_scenarios()
-        )
+        self._backtests = tuple(backtest_scenarios or create_default_backtest_scenarios())
         self._e2e = tuple(e2e_scenarios or create_default_e2e_scenarios())
         self._logger = logger or LOGGER
 
@@ -303,9 +303,7 @@ class NightlyRegressionRunner:
             if threshold is None:
                 continue
             actual_value = float(outcome.metrics[metric])
-            evaluation: MetricEvaluation = threshold.evaluate(
-                baseline_value, actual_value
-            )
+            evaluation: MetricEvaluation = threshold.evaluate(baseline_value, actual_value)
             if not evaluation.passed:
                 deviations.append(
                     RegressionDeviation(
@@ -377,12 +375,8 @@ class NightlyRegressionRunner:
             "timestamp": timestamp.isoformat(),
             "artifact_dir": str(artifact_dir),
             "success": not deviations,
-            "backtests": {
-                result.name: _convert_metrics(result.metrics) for result in backtests
-            },
-            "e2e": {
-                result.name: _convert_metrics(result.metrics) for result in e2e_results
-            },
+            "backtests": {result.name: _convert_metrics(result.metrics) for result in backtests},
+            "e2e": {result.name: _convert_metrics(result.metrics) for result in e2e_results},
             "deviations": [
                 {
                     "stage": deviation.stage,
@@ -411,11 +405,7 @@ class NightlyRegressionRunner:
         if self._notification_dispatcher is None:
             return
 
-        subject = (
-            "Nightly regression: PASS"
-            if summary.success
-            else "Nightly regression: FAIL"
-        )
+        subject = "Nightly regression: PASS" if summary.success else "Nightly regression: FAIL"
         message = (
             f"Backtests: {len(backtests)} scenarios, E2E: {len(e2e_results)} scenarios."
             " Deviations detected."
@@ -467,17 +457,14 @@ def _serialise_details(details: Mapping[str, Any]) -> dict[str, Any]:
             serialised[key] = _serialise_details(value)
         elif isinstance(value, Sequence) and not isinstance(value, (str, bytes)):
             serialised[key] = [
-                item if isinstance(item, (str, int, float, bool)) else str(item)
-                for item in value
+                item if isinstance(item, (str, int, float, bool)) else str(item) for item in value
             ]
         else:
             serialised[key] = str(value)
     return serialised
 
 
-def _moving_average_signal(
-    prices: np.ndarray, fast: int = 10, slow: int = 40
-) -> np.ndarray:
+def _moving_average_signal(prices: np.ndarray, fast: int = 10, slow: int = 40) -> np.ndarray:
     arr = np.asarray(prices, dtype=float)
     signal = np.zeros_like(arr, dtype=float)
     if arr.size < slow:
@@ -488,9 +475,7 @@ def _moving_average_signal(
     slow_ma = np.convolve(arr, slow_kernel, mode="same")
     diff = fast_ma - slow_ma
     segment = diff[slow - 1 :]
-    signal[slow - 1 :] = np.where(
-        segment > 0.0, 1.0, np.where(segment < 0.0, -1.0, 0.0)
-    )
+    signal[slow - 1 :] = np.where(segment > 0.0, 1.0, np.where(segment < 0.0, -1.0, 0.0))
     previous = 0.0
     for idx in range(slow - 1, arr.size):
         if signal[idx] == 0.0:
@@ -634,6 +619,4 @@ def _run_smoke_pipeline() -> E2EOutcome:
         report_path = Path(report_path_raw)
         if report_path.exists():
             artifacts["performance_report"] = report_path
-    return E2EOutcome(
-        name="smoke_pipeline", metrics=metrics, details=details, artifacts=artifacts
-    )
+    return E2EOutcome(name="smoke_pipeline", metrics=metrics, details=details, artifacts=artifacts)

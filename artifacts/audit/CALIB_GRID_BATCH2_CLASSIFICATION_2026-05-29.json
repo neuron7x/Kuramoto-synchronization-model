@@ -1,0 +1,52 @@
+{
+  "schema_version": "1.0.0",
+  "generated_at_utc": "2026-05-29T11:35:00Z",
+  "file": "tests/research/calibration/test_grid_kuramoto.py",
+  "summary": {
+    "test_functions": 33,
+    "existing_registry_witnesses": 7,
+    "governance_pins": 15,
+    "candidate_registry_gap": 11,
+    "unclassified": 0
+  },
+  "existing_registry_witnesses": {
+    "test_calibration_deterministic": ["INV-HPC1"],
+    "test_ieee39_calibration_runs_and_is_scored": ["INV-HPC2"],
+    "test_r1_first_order_path_is_bit_stable": ["INV-HPC1"],
+    "test_swing_estimator_contract_fail_closed": ["INV-HPC2"],
+    "test_r1_results_json_matches_committed_artifact": ["INV-HPC1"],
+    "test_identifiability_results_json_matches_committed_artifact": ["INV-HPC1"],
+    "test_cg002_results_json_matches_committed_artifact": ["INV-HPC1"]
+  },
+  "governance_pins": [
+    "test_preregistration_matches_code",
+    "test_gate_thresholds_are_frozen_values",
+    "test_wscc9_verdict_is_negative_and_localized",
+    "test_ledger_is_machine_readable_and_sha_pinned",
+    "test_r1_swing_path_closes_noiseless_frobenius_gate",
+    "test_r1_ledger_is_machine_readable_and_sha_pinned",
+    "test_front_gate_accepts_noiseless_refuses_noisy",
+    "test_front_gate_does_not_close_frozen_noisy_gate",
+    "test_front_gate_first_order_path_bit_stable",
+    "test_cg002_preregistration_matches_code",
+    "test_cg002_gate_thresholds_are_frozen_values",
+    "test_cg002_does_not_touch_frozen_calib_grid_001_gates",
+    "test_cg002_verdict_is_negative_and_localized",
+    "test_cg002_front_gate_refuse_under_differential_and_integral",
+    "test_cg002_null_battery_specificity_reported"
+  ],
+  "candidate_registry_gap": [
+    "test_wscc9_contract_invariants",
+    "test_ieee39_contract_invariants",
+    "test_gridsystem_rejects_malformed",
+    "test_coupling_formula_exact",
+    "test_natural_frequency_mean_centred",
+    "test_dorfler_bullo_uniform_scale_invariance",
+    "test_dorfler_bullo_disconnected_fails_closed",
+    "test_property_weak_coupling_topology_recovered",
+    "test_identifiability_sweep_weak_regime",
+    "test_property_swing_exact_recovery_matched_noiseless",
+    "test_swing_pe_guard_fires_on_phase_locked_input"
+  ],
+  "decision": "Do not map candidate registry-gap tests to unrelated existing invariants. Add a dedicated registry family before strict promotion."
+}

@@ -1,3 +1,5 @@
+# Copyright (c) 2023-2026 Yaroslav Vasylenko (neuron7xLab)
+# SPDX-License-Identifier: MIT
 """Shared dataset governance contracts for repository-managed assets.
 
 The contracts defined here act as the single source of truth for provenance,
@@ -10,7 +12,7 @@ from __future__ import annotations
 
 from dataclasses import dataclass, field
 from pathlib import Path
-from typing import Dict, Iterable, List, Mapping, Sequence
+from typing import Iterable, List, Mapping, Sequence
 
 REPO_ROOT = Path(__file__).resolve().parents[2]
 

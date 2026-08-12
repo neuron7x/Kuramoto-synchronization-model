@@ -1,28 +1,42 @@
-# SPDX-License-Identifier: LicenseRef-TradePulse-Proprietary
+# Copyright (c) 2023-2026 Yaroslav Vasylenko (neuron7xLab)
+# SPDX-License-Identifier: MIT
+from __future__ import annotations
+
 import base64
 import hashlib
 import hmac
 import os
 import time
+from typing import Any, Mapping
 from urllib.parse import urlencode
 
-import requests
+import requests  # type: ignore[import-untyped,unused-ignore]
 
 DEFAULT_TIMEOUT = 15
 
 
 class HttpClient:
-    def __init__(self, base, headers=None, params=None):
+    def __init__(
+        self,
+        base: str,
+        headers: Mapping[str, str] | None = None,
+        params: Mapping[str, Any] | None = None,
+    ) -> None:
         self.base = base.rstrip("/")
-        self.headers = headers or {}
-        self.params = params or {}
+        self.headers: dict[str, str] = dict(headers or {})
+        self.params: dict[str, Any] = dict(params or {})
 
-    def get(self, path, params=None, headers=None):
-        p = {}
+    def get(
+        self,
+        path: str,
+        params: Mapping[str, Any] | None = None,
+        headers: Mapping[str, str] | None = None,
+    ) -> Any:
+        p: dict[str, Any] = {}
         p.update(self.params)
         if params:
             p.update(params)
-        h = {}
+        h: dict[str, str] = {}
         h.update(self.headers)
         if headers:
             h.update(headers)
@@ -30,35 +44,39 @@ class HttpClient:
         r.raise_for_status()
         return r.json()
 
-    def post(self, path, data=None, params=None, headers=None):
-        p = {}
+    def post(
+        self,
+        path: str,
+        data: Any = None,
+        params: Mapping[str, Any] | None = None,
+        headers: Mapping[str, str] | None = None,
+    ) -> Any:
+        p: dict[str, Any] = {}
         p.update(self.params)
         if params:
             p.update(params)
-        h = {}
+        h: dict[str, str] = {}
         h.update(self.headers)
         if headers:
             h.update(headers)
-        r = requests.post(
-            self.base + path, data=data, params=p, headers=h, timeout=DEFAULT_TIMEOUT
-        )
+        r = requests.post(self.base + path, data=data, params=p, headers=h, timeout=DEFAULT_TIMEOUT)
         r.raise_for_status()
         return r.json()
 
 
-def _binance_http():
+def _binance_http() -> HttpClient:
     return HttpClient("https://api.binance.com")
 
 
-def _coinbase_http():
+def _coinbase_http() -> HttpClient:
     return HttpClient("https://api.coinbase.com/api/v3")
 
 
-def _kraken_http():
+def _kraken_http() -> HttpClient:
     return HttpClient("https://api.kraken.com/0")
 
 
-def load_adapter_or_http_client(exchange: str):
+def load_adapter_or_http_client(exchange: str) -> HttpClient:
     """Load an HTTP client for the exchange.
 
     For canary tests, we use simple HTTP clients rather than full adapters
@@ -73,7 +91,7 @@ def load_adapter_or_http_client(exchange: str):
     raise ValueError(f"Unsupported exchange {exchange}")
 
 
-def get_server_time(subject) -> int:
+def get_server_time(subject: Any) -> int:
     for name in ("get_server_time", "server_time_ms", "time", "now_ms"):
         f = getattr(subject, name, None)
         if callable(f):
@@ -85,14 +103,14 @@ def get_server_time(subject) -> int:
             return int(j["serverTime"])
         if subject.base == "https://api.coinbase.com/api/v3":
             j = subject.get("/brokerage/time")
-            return int(j["epoch_seconds"]) * 1000
+            return int(j["epochSeconds"]) * 1000
         if subject.base == "https://api.kraken.com/0":
             j = subject.get("/public/Time")
             return int(float(j["result"]["unixtime"])) * 1000
     raise RuntimeError("Cannot obtain server time")
 
 
-def get_exchange_info_or_symbols(subject):
+def get_exchange_info_or_symbols(subject: Any) -> dict[str, Any]:
     for name in ("get_exchange_info", "exchange_info", "symbols", "list_symbols"):
         f = getattr(subject, name, None)
         if callable(f):
@@ -104,14 +122,10 @@ def get_exchange_info_or_symbols(subject):
     if isinstance(subject, HttpClient):
         if subject.base == "https://api.binance.com":
             j = subject.get("/api/v3/exchangeInfo")
-            symbols = [
-                s["symbol"]
-                for s in j.get("symbols", [])
-                if s.get("status") == "TRADING"
-            ]
+            symbols = [s["symbol"] for s in j.get("symbols", []) if s.get("status") == "TRADING"]
             return {"raw": j, "symbols": symbols}
         if subject.base == "https://api.coinbase.com/api/v3":
-            j = subject.get("/brokerage/products", params={"limit": 250})
+            j = subject.get("/brokerage/market/products", params={"limit": 250})
             products = j.get("products", [])
             symbols = [p["product_id"] for p in products if p.get("status") == "online"]
             return {"raw": j, "symbols": symbols}
@@ -123,11 +137,13 @@ def get_exchange_info_or_symbols(subject):
     raise RuntimeError("Cannot obtain exchange info/symbols")
 
 
-def get_authenticated_balance(subject):
+def get_authenticated_balance(subject: Any) -> dict[str, Any]:
     for name in ("get_balance", "balances", "account_balances", "spot_balance"):
         f = getattr(subject, name, None)
         if callable(f):
-            return f()
+            result = f()
+            assert isinstance(result, dict)
+            return result
     if isinstance(subject, HttpClient):
         if subject.base == "https://api.binance.com":
             key = os.getenv("BINANCE_API_KEY")
@@ -154,19 +170,17 @@ def get_authenticated_balance(subject):
             passphrase = os.getenv("COINBASE_API_PASSPHRASE", "")
             if not key or not secret:
                 raise RuntimeError("COINBASE_API_KEY/SECRET not set")
-            ts = str(int(time.time()))
+            ts_str = str(int(time.time()))
             method = "GET"
             path = "/api/v3/brokerage/accounts"
-            prehash = ts + method + path
+            prehash = ts_str + method + path
             sig = base64.b64encode(
-                hmac.new(
-                    base64.b64decode(secret), prehash.encode(), hashlib.sha256
-                ).digest()
+                hmac.new(base64.b64decode(secret), prehash.encode(), hashlib.sha256).digest()
             ).decode()
             headers = {
                 "CB-ACCESS-KEY": key,
                 "CB-ACCESS-SIGN": sig,
-                "CB-ACCESS-TIMESTAMP": ts,
+                "CB-ACCESS-TIMESTAMP": ts_str,
                 "CB-ACCESS-PASSPHRASE": passphrase,
             }
             # Use a separate client with the base URL (subject.base points to api.coinbase.com/api/v3)

@@ -1,16 +1,16 @@
 apiVersion: autoscaling/v2
 kind: HorizontalPodAutoscaler
 metadata:
-  name: tradepulse-api
+  name: geosync-api
   labels:
-    app.kubernetes.io/name: tradepulse-api
-    app.kubernetes.io/part-of: tradepulse
+    app.kubernetes.io/name: geosync-api
+    app.kubernetes.io/part-of: geosync
     app.kubernetes.io/component: api
 spec:
   scaleTargetRef:
     apiVersion: apps/v1
     kind: Deployment
-    name: tradepulse-api
+    name: geosync-api
   minReplicas: 3
   maxReplicas: 12
   behavior:
@@ -50,7 +50,7 @@ spec:
     - type: Pods
       pods:
         metric:
-          name: tradepulse_signal_to_fill_latency_quantiles_seconds
+          name: geosync_signal_to_fill_latency_quantiles_seconds
           selector:
             matchLabels:
               quantile: "0.95"
@@ -60,7 +60,7 @@ spec:
     - type: External
       external:
         metric:
-          name: tradepulse_orders_queue_depth
+          name: geosync_orders_queue_depth
         target:
           type: AverageValue
           averageValue: "80"

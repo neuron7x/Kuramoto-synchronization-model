@@ -1,5 +1,5 @@
 ---
-owner: mlops@tradepulse
+owner: mlops@geosync
 review_cadence: quarterly
 last_reviewed: 2025-12-28
 links:
@@ -13,7 +13,7 @@ links:
 ## Overview
 
 - **Owner:** MLOps Enablement
-- **Primary Contact:** mlops@tradepulse
+- **Primary Contact:** mlops@geosync
 - **Lifecycle Stage:** staging
 - **Model Type:** gradient boosting classifier
 - **Inference Interface:** batch + streaming
@@ -73,4 +73,4 @@ links:
 
 | Date | Author | Change |
 | ---- | ------ | ------ |
-| 2025-03-15 | tradepulse-mlops | Initial draft |
+| 2025-03-15 | geosync-mlops | Initial draft |

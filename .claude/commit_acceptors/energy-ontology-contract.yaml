@@ -1,0 +1,94 @@
+# Diff-bound commit acceptor for the energy-ontology / unit contradiction fix.
+#
+# core/energy.py named its TACL minimization objective `system_free_energy`,
+# implemented as F = internal + resource + (+entropy). That collided head-on
+# with the canonical thermodynamic free energy F = U − T·S (INV-FE2, CLAUDE.md,
+# and ThermodynamicState.gibbs_energy), where entropy LOWERS F. The same module
+# also claimed "dimensionless, normalised energy units" while multiplying by an
+# effective kT (1.38e-23 · 300) and citing "≈10⁻¹⁸ J" — a unit-claim collision.
+#
+# Resolution is ONTOLOGICAL, not numerical (no verdict flip):
+#   * Canonical name `operational_cost_energy` for the existing cost functional
+#     (entropy is a disorder PENALTY — correct sign for a minimization target).
+#   * `system_free_energy` retained as a true backward-compatible alias.
+#   * New `thermo_free_energy(U, T, S) = U − T·S` for the canonical physics form.
+#   * Explicit `ENERGY_UNITS = "dimensionless"` + UNIT CONTRACT docstring; the
+#     Boltzmann/temperature constants are declared a fixed normalization
+#     convention, NOT a joule claim.
+#   * tests/physics/test_energy_contract.py pins the OPPOSITE entropy signs and
+#     the alias identity.
+#
+# Locally verified:
+#   * pytest tests/physics/test_energy_contract.py: 6/6 pass
+#   * pytest tests/test_energy.py: 8/8 pass (alias preserves all behavior)
+#   * mypy --strict core/energy.py: 0 errors
+#   * ruff + black on changed files: clean
+
+id: energy-ontology-contract
+status: ACTIVE
+claim_type: correctness
+promise: >-
+  After this PR lands, core.energy exposes two non-conflatable energies with
+  documented opposite entropy conventions: `operational_cost_energy` (entropy
+  raises the cost objective, ∂/∂S ≥ 0) and `thermo_free_energy` (canonical
+  F = U − T·S, ∂F/∂S = −T ≤ 0, identical to ThermodynamicState.gibbs_energy).
+  `system_free_energy` remains a behavior-identical alias of
+  `operational_cost_energy`, so no existing caller changes numerically. The
+  module declares `ENERGY_UNITS == "dimensionless"` and makes no joule claim.
+
+diff_scope:
+  changed_files:
+    - path: ".claude/commit_acceptors/energy-ontology-contract.yaml"
+    - path: "core/energy.py"
+    - path: "tests/physics/test_energy_contract.py"
+  forbidden_paths:
+    - "trading/"
+    - "execution/"
+    - "forecast/"
+    - "runtime/"
+    - "application/"
+
+required_python_symbols:
+  - "core/energy.py::operational_cost_energy"
+  - "core/energy.py::thermo_free_energy"
+  - "tests/physics/test_energy_contract.py::test_two_energies_have_opposite_entropy_sign"
+
+expected_signal: >-
+  ``pytest tests/physics/test_energy_contract.py tests/test_energy.py -q``
+  reports 14 passed. Before this PR `thermo_free_energy` did not exist and the
+  operational cost functional was mislabeled `system_free_energy` with no unit
+  declaration.
+
+measurement_command: >-
+  bash -c '
+    mypy --strict core/energy.py && python -m pytest
+      tests/physics/test_energy_contract.py tests/test_energy.py -q
+  '
+
+signal_artifact: "tmp/energy_ontology_contract.log"
+
+falsifier:
+  command: |-
+    bash -c '
+      python -c "from core.energy import thermo_free_energy, operational_cost_energy, system_free_energy, ENERGY_UNITS; assert system_free_energy is operational_cost_energy; assert ENERGY_UNITS == \"dimensionless\"; assert thermo_free_energy(1.0,300.0,0.9) < thermo_free_energy(1.0,300.0,0.1)" 2>/dev/null && exit 1 || exit 0
+    '
+  description: >-
+    Probes that the canonical thermo free energy decreases in entropy, the
+    alias identity holds, and the unit declaration is dimensionless. The
+    falsifier inverts: it succeeds (exit 0) only when one of these regressed.
+
+rollback_command: >-
+  bash -c '
+    git checkout HEAD~1 -- core/energy.py && git rm -f tests/physics/test_energy_contract.py
+      .claude/commit_acceptors/energy-ontology-contract.yaml
+  '
+
+rollback_verification_command: |-
+  bash -c '
+    python -c "from core.energy import thermo_free_energy" 2>/dev/null && exit 1 || exit 0
+  '
+
+memory_update_type: append
+ledger_path: ".claude/commit_acceptors/energy-ontology-contract.yaml"
+report_path: "tmp/energy_ontology_contract.log"
+evidence: []

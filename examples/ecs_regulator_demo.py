@@ -1,3 +1,5 @@
+# Copyright (c) 2023-2026 Yaroslav Vasylenko (neuron7xLab)
+# SPDX-License-Identifier: MIT
 """Demonstrate ECSInspiredRegulator usage in a reproducible simulation."""
 
 import os
@@ -99,7 +101,7 @@ def calculate_performance_metrics(returns: np.ndarray, actions: list[int]) -> di
 def main():
     """Run ECS regulator simulation demo."""
     print("=" * 70)
-    print("ECS-Inspired Regulator Demo for TradePulse")
+    print("ECS-Inspired Regulator Demo for GeoSync")
     print("=" * 70)
     print()
 
@@ -144,15 +146,13 @@ def main():
 
     for i in range(n_steps):
         # Update stress with market conditions
-        regulator.update_stress(
-            market_returns[: i + 1], drawdowns[i] if i > 0 else 0.0, prev_fe
-        )
+        regulator.update_stress(market_returns[: i + 1], drawdowns[i] if i > 0 else 0.0, prev_fe)
         prev_fe = regulator.free_energy_proxy
 
         # Adapt parameters based on context
         regulator.adapt_parameters(context_phase=phases[i])
 
-        # Generate trading signal (from hypothetical TradePulseCompositeEngine)
+        # Generate trading signal (from hypothetical GeoSyncCompositeEngine)
         signal = market_returns[i] * rng.uniform(0.8, 1.2)
         signals.append(signal)
 
@@ -185,9 +185,9 @@ def main():
     # Action distribution
     action_counts = np.bincount(np.array(actions) + 1, minlength=3)
     print("\nAction Distribution:")
-    print(f"  Sells:  {action_counts[0]:4d} ({action_counts[0]/n_steps*100:.1f}%)")
-    print(f"  Holds:  {action_counts[1]:4d} ({action_counts[1]/n_steps*100:.1f}%)")
-    print(f"  Buys:   {action_counts[2]:4d} ({action_counts[2]/n_steps*100:.1f}%)")
+    print(f"  Sells:  {action_counts[0]:4d} ({action_counts[0] / n_steps * 100:.1f}%)")
+    print(f"  Holds:  {action_counts[1]:4d} ({action_counts[1] / n_steps * 100:.1f}%)")
+    print(f"  Buys:   {action_counts[2]:4d} ({action_counts[2] / n_steps * 100:.1f}%)")
 
     # Performance metrics
     performance = calculate_performance_metrics(market_returns, actions)
@@ -208,7 +208,7 @@ def main():
     chronic_periods = sum(1 for s in stress_history if s > regulator.stress_threshold)
     print("\nStress Analysis:")
     print(
-        f"  High Stress Periods: {chronic_periods}/{n_steps} ({chronic_periods/n_steps*100:.1f}%)"
+        f"  High Stress Periods: {chronic_periods}/{n_steps} ({chronic_periods / n_steps * 100:.1f}%)"
     )
     print(f"  Mean Stress: {np.mean(stress_history):.4f}")
     print(f"  Max Stress: {np.max(stress_history):.4f}")
@@ -218,7 +218,7 @@ def main():
     trace = regulator.get_trace()
     print(f"  Trace records: {len(trace)}")
 
-    # Save to Parquet for TradePulse integration (with CSV fallback)
+    # Save to Parquet for GeoSync integration (with CSV fallback)
     trace_file = output_dir / "ecs_regulator_trace.parquet"
     try:
         trace.to_parquet(trace_file)
@@ -250,9 +250,8 @@ def main():
     print("=" * 70)
     print("Integration Notes:")
     print("=" * 70)
-    print(
-        """
-The ECS-Inspired Regulator can be integrated with TradePulse components:
+    print("""
+The ECS-Inspired Regulator can be integrated with GeoSync components:
 
 1. FractalMotivationController Integration:
    - Pass ECS stress_level as additional signal to FractalMotivationController
@@ -260,7 +259,7 @@ The ECS-Inspired Regulator can be integrated with TradePulse components:
    - Combine ECS free_energy_proxy with TACL thermodynamic control
 
 2. Kuramoto-Ricci Phase Integration:
-   - Obtain context_phase from TradePulseCompositeEngine.analyze_market()
+   - Obtain context_phase from GeoSyncCompositeEngine.analyze_market()
    - Pass phase to adapt_parameters() and decide_action()
    - Use phase-dependent modulation for risk management
 
@@ -277,7 +276,7 @@ The ECS-Inspired Regulator can be integrated with TradePulse components:
 5. Logging and Compliance:
    - Export trace to Parquet for MiFID II compliance
    - Integrate with Hydra config system
-   - Store in TradePulse feature store
+   - Store in GeoSync feature store
 
 Example integration code:
 
@@ -297,8 +296,7 @@ Example integration code:
         state=[ecs_reg.stress_level, signal],
         signals={"risk_ok": ecs_reg.risk_threshold > 0.01}
     )
-"""
-    )
+""")
 
     print("=" * 70)
     print("Demo completed successfully!")

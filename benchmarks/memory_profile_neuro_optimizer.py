@@ -1,3 +1,5 @@
+# Copyright (c) 2023-2026 Yaroslav Vasylenko (neuron7xLab)
+# SPDX-License-Identifier: MIT
 """Run memory_profiler on a NeuroOptimizer loop."""
 
 from __future__ import annotations
@@ -12,6 +14,7 @@ from benchmarks._neuro_optimizer_loader import (
     load_validation,
 )
 from utils.seed import set_global_seed
+
 try:
     from memory_profiler import memory_usage
 except ImportError:  # pragma: no cover - optional dependency

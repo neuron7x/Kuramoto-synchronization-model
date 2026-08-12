@@ -1,3 +1,5 @@
+# Copyright (c) 2023-2026 Yaroslav Vasylenko (neuron7xLab)
+# SPDX-License-Identifier: MIT
 """Enforce coverage guardrails for reliability-critical modules."""
 
 from __future__ import annotations
@@ -40,9 +42,7 @@ def _load_targets(config_path: Path) -> list[CoverageTarget]:
             raw_path = entry["path"]
             raw_min_line_rate = entry["min_line_rate"]
         except KeyError as exc:
-            raise ValueError(
-                "Each coverage target requires 'path' and 'min_line_rate'."
-            ) from exc
+            raise ValueError("Each coverage target requires 'path' and 'min_line_rate'.") from exc
 
         min_line_rate = float(raw_min_line_rate)
         if not 0.0 <= min_line_rate <= 100.0:
@@ -95,9 +95,7 @@ def _load_coverage_map(report_path: Path) -> Mapping[str, CoverageSnapshot]:
                 continue
             line_rate = float(cls.get("line-rate", "0")) * 100.0
             branch_attr = cls.get("branch-rate")
-            branch_rate = (
-                float(branch_attr) * 100.0 if branch_attr is not None else None
-            )
+            branch_rate = float(branch_attr) * 100.0 if branch_attr is not None else None
             snapshot = CoverageSnapshot(line_rate=line_rate, branch_rate=branch_rate)
 
             for candidate in _resolve_filename(filename, sources):
@@ -125,9 +123,7 @@ def _evaluate_targets(
                 break
         if metrics is None:
             success = False
-            print(
-                f"✗ {target.path.as_posix()} — no coverage data found in {report_path}"
-            )
+            print(f"✗ {target.path.as_posix()} — no coverage data found in {report_path}")
             continue
 
         line_rate = metrics.line_rate

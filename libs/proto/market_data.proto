@@ -1,8 +1,8 @@
 syntax = "proto3";
 
-package tradepulse.market.v1;
+package geosync.market.v1;
 
-option go_package = "github.com/TradePulse/TradePulse/libs/proto/gen/go/market;marketpb";
+option go_package = "github.com/GeoSync/GeoSync/libs/proto/gen/go/market;marketpb";
 
 import "google/protobuf/timestamp.proto";
 

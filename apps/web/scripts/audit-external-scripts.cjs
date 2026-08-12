@@ -41,14 +41,18 @@ function inspectFile(filePath) {
     findings.push({
       file: relativePath,
       src: match[1],
-      snippet: contents.slice(Math.max(match.index - 40, 0), Math.min(match.index + 120, contents.length)).trim(),
+      snippet: contents
+        .slice(Math.max(match.index - 40, 0), Math.min(match.index + 120, contents.length))
+        .trim(),
     })
   }
   while ((match = nextScriptPattern.exec(contents)) !== null) {
     findings.push({
       file: relativePath,
       src: match[1],
-      snippet: contents.slice(Math.max(match.index - 40, 0), Math.min(match.index + 120, contents.length)).trim(),
+      snippet: contents
+        .slice(Math.max(match.index - 40, 0), Math.min(match.index + 120, contents.length))
+        .trim(),
     })
   }
 }

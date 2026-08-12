@@ -1,6 +1,8 @@
-"""Shim for canonical serotonin controller located under ``tradepulse.core``."""
+# Copyright (c) 2023-2026 Yaroslav Vasylenko (neuron7xLab)
+# SPDX-License-Identifier: MIT
+"""Shim for canonical serotonin controller located under ``geosync.core``."""
 
-from tradepulse.core.neuro.serotonin import serotonin_controller as _canonical
+from geosync.core.neuro.serotonin import serotonin_controller as _canonical
 
 __CANONICAL__ = False
 

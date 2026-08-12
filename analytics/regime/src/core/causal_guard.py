@@ -1,3 +1,5 @@
+# Copyright (c) 2023-2026 Yaroslav Vasylenko (neuron7xLab)
+# SPDX-License-Identifier: MIT
 """Causal guardrails for risk gating."""
 
 from __future__ import annotations
@@ -78,9 +80,7 @@ class CausalGuard:
 
         return CausalGuardResult(
             gates=pd.Series(gates, index=entities, name="gate"),
-            causal_strength=pd.Series(
-                causal_strength, index=entities, name="causal_strength"
-            ),
+            causal_strength=pd.Series(causal_strength, index=entities, name="causal_strength"),
         )
 
 
@@ -89,7 +89,5 @@ def _to_frame(data: Mapping[str, Mapping[str, float]] | pd.DataFrame) -> pd.Data
         return data
     frame = pd.DataFrame(data)
     if frame.shape[0] != frame.shape[1]:
-        frame = frame.reindex(
-            index=frame.columns, columns=frame.columns, fill_value=0.0
-        )
+        frame = frame.reindex(index=frame.columns, columns=frame.columns, fill_value=0.0)
     return frame.fillna(0.0)

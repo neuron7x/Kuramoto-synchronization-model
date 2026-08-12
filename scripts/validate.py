@@ -1,3 +1,5 @@
+# Copyright (c) 2023-2026 Yaroslav Vasylenko (neuron7xLab)
+# SPDX-License-Identifier: MIT
 """Comprehensive validation pipeline for NeuroTrade PRO demos."""
 
 from __future__ import annotations
@@ -9,13 +11,19 @@ import numpy as np
 import pandas as pd
 import yaml
 
-from neuropro.backtest import BacktesterCAL
-from neuropro.conformal import ConformalCQR
-from neuropro.cv import purged_kfold
-from neuropro.data import read_ticks_csv
-from neuropro.evaluation import cvar, deflated_sharpe, max_drawdown, sharpe
-from neuropro.execution import Execution
-from neuropro.walkforward import walkforward
+from geosync_hpc.backtest import BacktesterCAL
+from geosync_hpc.conformal import ConformalCQR
+from geosync_hpc.cv import purged_kfold
+from geosync_hpc.data import read_ticks_csv
+from geosync_hpc.evaluation import cvar, deflated_sharpe, max_drawdown, sharpe
+from geosync_hpc.execution import Execution
+from geosync_hpc.walkforward import walkforward
+
+
+def _load_yaml(path: str) -> dict:
+    """Load a YAML config, closing the file handle deterministically."""
+    with open(path, encoding="utf-8") as fh:
+        return yaml.safe_load(fh)
 
 
 def summarize(res_df: pd.DataFrame, label: str) -> dict[str, float | int | str]:
@@ -51,7 +59,7 @@ def main() -> None:
     parser = argparse.ArgumentParser()
     parser.add_argument("--config", required=True)
     args = parser.parse_args()
-    cfg = yaml.safe_load(open(args.config))
+    cfg = _load_yaml(args.config)
 
     unit: dict[str, str] = {}
     try:
@@ -95,16 +103,12 @@ def main() -> None:
     y_true = test_df[y_col].iloc[: len(res)].values if len(res) > 0 else np.array([])
     L_hat = res["L"].values if len(res) > 0 else np.array([])
     U_hat = res["U"].values if len(res) > 0 else np.array([])
-    coverage = (
-        float(np.mean((y_true >= L_hat) & (y_true <= U_hat))) if len(res) > 0 else 0.0
-    )
+    coverage = float(np.mean((y_true >= L_hat) & (y_true <= U_hat))) if len(res) > 0 else 0.0
     coverage_info = {
         "empirical_coverage": coverage,
         "target_alpha0": cfg["conformal"]["alpha"],
     }
-    assert (
-        coverage >= 1.0 - cfg["conformal"]["alpha"] - 0.03
-    ), "Coverage below expected tolerance"
+    assert coverage >= 1.0 - cfg["conformal"]["alpha"] - 0.03, "Coverage below expected tolerance"
 
     exec_sim = Execution(
         cfg["execution"]["fee_bps"],
@@ -121,9 +125,7 @@ def main() -> None:
         low_b = res["L"].iloc[i]
         high_b = res["U"].iloc[i]
         width = max(1e-9, high_b - low_b)
-        target = (
-            np.sign(m_hat) * min(1.0, abs(m_hat) / width) if abs(m_hat) > 0 else 0.0
-        )
+        target = np.sign(m_hat) * min(1.0, abs(m_hat) / width) if abs(m_hat) > 0 else 0.0
         costs = exec_sim.costs(res["spread"].iloc[i], test_df["vol10"].iloc[i])
         fill_p = exec_sim.fill(mid, res["spread"].iloc[i], target, pos)
         nxt = res["mid"].iloc[i + 1]
@@ -134,8 +136,8 @@ def main() -> None:
         eqs.append(eq)
     naive_res = pd.DataFrame({"pnl": pnls, "eq": eqs, "pos": np.nan})
 
-    wf_cfg = yaml.safe_load(open("configs/wf.yaml"))
-    base_cfg = yaml.safe_load(open(wf_cfg.get("extends", "configs/demo.yaml")))
+    wf_cfg = _load_yaml("configs/wf.yaml")
+    base_cfg = _load_yaml(wf_cfg.get("extends", "configs/demo.yaml"))
     base_cfg.update(wf_cfg.get("overrides", {}))
     wf_df = read_ticks_csv(base_cfg["data"]["path"], base_cfg["data"]["time_col"])
     wf_res = walkforward(

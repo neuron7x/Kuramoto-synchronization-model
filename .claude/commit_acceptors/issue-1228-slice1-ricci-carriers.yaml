@@ -1,0 +1,50 @@
+id: issue-1228-slice1-ricci-carriers
+status: ACTIVE
+claim_type: governance
+promise: >-
+  Issue #1228 tasks 1-11 are bound to durable carriers without granting score
+  credit: the Ricci bridge provenance artifact maps source inputs, graph rule,
+  estimator name and assumptions, transform, valid/excluded domain, test link,
+  completeness metric, and non-core flag. Score remains 81.5 and Ricci remains
+  experimental/non-canonical.
+
+diff_scope:
+  changed_files:
+    - path: ".claude/commit_acceptors/issue-1228-slice1-ricci-carriers.yaml"
+    - path: ".claude/commit_acceptors/issue-1228-slice2-unit-carriers.yaml"
+    - path: "artifacts/physics_validation/issue_1228_slice1_verdict.json"
+    - path: "artifacts/physics_validation/issue_1228_slice2_units_verdict.json"
+  forbidden_paths:
+    - "core/"
+    - "runtime/"
+    - "trading/"
+    - "execution/"
+    - "forecast/"
+    - "policy/"
+
+required_python_symbols: []
+
+expected_signal: >-
+  The added JSON verdict parses successfully and records the issue-1228 slice-1
+  carrier map. It is artifact-only and keeps score credit, final validation,
+  and target-interval claims disabled.
+
+measurement_command: >-
+  bash -c 'mkdir -p tmp && python -m json.tool artifacts/physics_validation/issue_1228_slice1_verdict.json > tmp/issue_1228_slice1_verdict.normalized.json'
+
+signal_artifact: "tmp/issue_1228_slice1_verdict.normalized.json"
+
+falsifier:
+  command: >-
+    bash -c 'python -m json.tool artifacts/physics_validation/issue_1228_slice1_verdict.json >/dev/null'
+  description: >-
+    Fails if the artifact-only verdict is not valid JSON.
+
+rollback_command: >-
+  bash -c 'git rm -f artifacts/physics_validation/issue_1228_slice1_verdict.json .claude/commit_acceptors/issue-1228-slice1-ricci-carriers.yaml'
+rollback_verification_command: >-
+  bash -c 'test ! -e artifacts/physics_validation/issue_1228_slice1_verdict.json'
+
+memory_update_type: append
+ledger_path: ".claude/commit_acceptors/issue-1228-slice1-ricci-carriers.yaml"
+report_path: "tmp/issue_1228_slice1_verdict.normalized.json"

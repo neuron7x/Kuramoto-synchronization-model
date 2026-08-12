@@ -1,3 +1,5 @@
+# Copyright (c) 2023-2026 Yaroslav Vasylenko (neuron7xLab)
+# SPDX-License-Identifier: MIT
 """Fractal cascade utilities for FHMC integration.
 
 These helpers power the fracto-hypothalamic meta-controller by sampling
@@ -118,9 +120,7 @@ class DyadicPMCascade:
         return -np.log(p_max) / np.log(2.0)
 
 
-def pink_noise(
-    n: int, beta: float = 1.0, rng: np.random.Generator | None = None
-) -> np.ndarray:
+def pink_noise(n: int, beta: float = 1.0, rng: np.random.Generator | None = None) -> np.ndarray:
     """Return real-valued 1/f^``beta`` noise generated via spectral shaping."""
 
     if n <= 0:

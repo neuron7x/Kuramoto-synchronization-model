@@ -1,0 +1,84 @@
+# Diff-bound commit acceptor for the INV-YV1 gradient-ontology quintessence witness.
+#
+# Adds ONE test module witnessing the system's ROOT AXIOM, INV-YV1
+# (ΔV > 0 ∧ dΔV/dt ≠ 0 — being is a sustained, dynamic potential difference),
+# across seven facets of the GradientHealthMonitor: bounded convex aggregate,
+# strictly positive under nominal drive, dynamic under varying drive (a process,
+# not a capacitor), protector-over-generator priority, per-channel sensitivity,
+# deterministic on replay, and an ordered maintenance ladder. Promotes no claim,
+# changes no runtime behavior, touches no schema/guard, uses no real data.
+#
+# INV-YV1 is a registry root axiom (not a physics_contracts catalog law), so the
+# witness binds it via INV-YV1 references rather than @law; it raises witness
+# DEPTH for the axiom, not catalog @law-coverage.
+#
+# Locally verified on origin/main base:
+#   * pytest tests/physics_contracts/test_gradient_ontology_quintessence.py: 7 passed
+#   * .claude/physics/validate_tests.py <file>: 0 issues (L1..L5), EXIT 0
+#   * ruff / mypy --strict clean ; zero new `# type: ignore`
+id: gradient-ontology-quintessence
+status: ACTIVE
+claim_type: governance
+promise: >-
+  After this PR lands, tests/physics_contracts/test_gradient_ontology_quintessence.py
+  witnesses INV-YV1 across seven falsifiable facets of GradientHealthMonitor: the
+  ΔV score is a convex aggregate in [0,1] with weights summing to 1; ΔV > 0 and
+  non-CRITICAL under a nominal regime; std(ΔV) > 1e-3 under an oscillating drive
+  (dΔV/dt ≠ 0); a maximal GABA protector zeroes risk_health and lowers ΔV below
+  the healthy value; each maintenance channel moves ΔV; replay is bit-stable; and
+  the critical threshold sits below the healthy threshold. It passes
+  .claude/physics/validate_tests with zero issues. No market claim; no runtime,
+  schema, or guard change.
+diff_scope:
+  changed_files:
+    - path: ".claude/commit_acceptors/gradient-ontology-quintessence.yaml"
+    - path: "tests/physics_contracts/test_gradient_ontology_quintessence.py"
+  forbidden_paths:
+    - "trading/"
+    - "execution/"
+    - "forecast/"
+    - "policy/"
+    - "application/"
+    - "core/"
+    - "src/"
+    - "geosync_hpc/"
+    - "physics_contracts/catalog.yaml"
+    - ".claude/physics/INVARIANTS.yaml"
+required_python_symbols: []
+expected_signal: >-
+  `python -m pytest tests/physics_contracts/test_gradient_ontology_quintessence.py`
+  reports 7 passed; `python .claude/physics/validate_tests.py
+  tests/physics_contracts/test_gradient_ontology_quintessence.py` exits 0 with no
+  L1..L5 issues; ruff and mypy --strict on the file are clean.
+measurement_command: >-
+  bash -c 'mkdir -p tmp && python -m pytest
+  tests/physics_contracts/test_gradient_ontology_quintessence.py
+  > tmp/gradient_ontology_quintessence.log 2>&1
+  && grep -q "7 passed" tmp/gradient_ontology_quintessence.log'
+signal_artifact: "tmp/gradient_ontology_quintessence.log"
+falsifier:
+  command: |-
+    bash -c 'python -c "
+    import numpy as np
+    from core.neuro.gradient_vital_signs import GradientHealthMonitor
+    m = GradientHealthMonitor()
+    scores = []
+    for i in range(80):
+        scores.append(m.update(R=0.5 + 0.4*np.sin(i/5.0), gaba=0.2, serotonin=0.3, ecs_free_energy=1.0).gvs_score)
+    import sys; sys.exit(0 if float(np.std(scores)) < 1e-3 else 1)"'
+  description: >-
+    Inverse probe of the living-gradient clause (dΔV/dt ≠ 0). It exits 0 (fires)
+    iff the ΔV trajectory is flat (std < 1e-3) under an oscillating drive — i.e.
+    the gradient behaves like a static capacitor, violating INV-YV1's second
+    clause. While ΔV genuinely varies the probe exits 1. If it ever exits 0, the
+    quintessence witness is no longer truthful and the change must be reverted.
+rollback_command: >-
+  git rm -f
+  tests/physics_contracts/test_gradient_ontology_quintessence.py
+  .claude/commit_acceptors/gradient-ontology-quintessence.yaml
+rollback_verification_command: >-
+  bash -c 'test ! -f tests/physics_contracts/test_gradient_ontology_quintessence.py'
+memory_update_type: none
+ledger_path: ".claude/commit_acceptors/gradient-ontology-quintessence.yaml"
+report_path: "tmp/gradient_ontology_quintessence.log"
+evidence: []

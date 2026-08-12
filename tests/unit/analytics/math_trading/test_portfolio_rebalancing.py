@@ -1,4 +1,5 @@
-# SPDX-License-Identifier: LicenseRef-TradePulse-Proprietary
+# Copyright (c) 2023-2026 Yaroslav Vasylenko (neuron7xLab)
+# SPDX-License-Identifier: MIT
 """Tests for portfolio rebalancing module."""
 
 from __future__ import annotations
@@ -226,12 +227,10 @@ class TestPortfolioRebalancer:
 
         # High penalty should track target more closely
         low_error = sum(
-            (low_result.final_weights[a] - request.target_weights[a]) ** 2
-            for a in ["A", "B"]
+            (low_result.final_weights[a] - request.target_weights[a]) ** 2 for a in ["A", "B"]
         )
         high_error = sum(
-            (high_result.final_weights[a] - request.target_weights[a]) ** 2
-            for a in ["A", "B"]
+            (high_result.final_weights[a] - request.target_weights[a]) ** 2 for a in ["A", "B"]
         )
 
         assert high_error <= low_error
@@ -243,11 +242,13 @@ class TestMinimumVarianceTrades:
     @pytest.fixture
     def simple_setup(self) -> tuple:
         asset_names = ["A", "B", "C"]
-        cov = np.array([
-            [0.04, 0.01, 0.005],
-            [0.01, 0.03, 0.01],
-            [0.005, 0.01, 0.02],
-        ])
+        cov = np.array(
+            [
+                [0.04, 0.01, 0.005],
+                [0.01, 0.03, 0.01],
+                [0.005, 0.01, 0.02],
+            ]
+        )
         current = {"A": 0.3, "B": 0.4, "C": 0.3}
         target = {"A": 0.4, "B": 0.3, "C": 0.3}
         return current, target, cov, asset_names

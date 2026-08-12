@@ -1,4 +1,4 @@
-# SPDX-License-Identifier: LicenseRef-TradePulse-Proprietary
+# SPDX-License-Identifier: MIT
 
 # =============================================================================
 # Stage 1: Lightweight scan stage (for security scanning only)

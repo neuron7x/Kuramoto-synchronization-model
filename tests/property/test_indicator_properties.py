@@ -1,4 +1,5 @@
-# SPDX-License-Identifier: LicenseRef-TradePulse-Proprietary
+# Copyright (c) 2023-2026 Yaroslav Vasylenko (neuron7xLab)
+# SPDX-License-Identifier: MIT
 from __future__ import annotations
 
 import math
@@ -70,18 +71,14 @@ def test_mean_ricci_accepts_non_finite_inputs(prices: list[float]) -> None:
     st.integers(min_value=32, max_value=128),
     st.lists(finite_floats, min_size=128, max_size=384),
 )
-def test_temporal_ricci_resilient_to_non_finite(
-    window: int, raw_prices: list[float]
-) -> None:
+def test_temporal_ricci_resilient_to_non_finite(window: int, raw_prices: list[float]) -> None:
     length = len(raw_prices)
-    index = pd.date_range("2023-01-01", periods=length, freq="T")
+    index = pd.date_range("2023-01-01", periods=length, freq="min")
     prices = np.asarray(raw_prices, dtype=float)
     volumes = np.linspace(1.0, 2.0, length)
     df = pd.DataFrame({"close": prices, "volume": volumes}, index=index)
     window = min(window, length)
-    analyzer = TemporalRicciAnalyzer(
-        window_size=window, n_snapshots=4, retain_history=False
-    )
+    analyzer = TemporalRicciAnalyzer(window_size=window, n_snapshots=4, retain_history=False)
     result = analyzer.analyze(df)
     assert np.isfinite(result.temporal_curvature)
     assert np.isfinite(result.structural_stability)
@@ -138,7 +135,7 @@ def _kuramoto_reference(phases: np.ndarray) -> float | np.ndarray:
     )
     clipped = np.clip(values, 0.0, 1.0)
     clipped = np.where(clipped < dtype.type(1e-12), dtype.type(0.0), clipped)
-    return clipped.astype(float)
+    return clipped.astype(float)  # type: ignore[no-any-return]
 
 
 def _hurst_reference(ts: np.ndarray, min_lag: int, max_lag: int) -> float:
@@ -173,9 +170,7 @@ def _hurst_reference(ts: np.ndarray, min_lag: int, max_lag: int) -> float:
     try:
         beta, *_ = np.linalg.lstsq(X, y, rcond=None)
     except TypeError:
-        beta, *_ = np.linalg.lstsq(
-            X.astype(np.float64), y.astype(np.float64), rcond=None
-        )
+        beta, *_ = np.linalg.lstsq(X.astype(np.float64), y.astype(np.float64), rcond=None)
     hurst = beta[1]
     return float(np.clip(hurst, 0.0, 1.0))
 
@@ -198,13 +193,9 @@ def _hurst_reference(ts: np.ndarray, min_lag: int, max_lag: int) -> float:
         min_size=3,
         max_size=64,
     ),
-    st.floats(
-        min_value=-100, max_value=100, allow_nan=False, allow_infinity=False, width=64
-    ),
+    st.floats(min_value=-100, max_value=100, allow_nan=False, allow_infinity=False, width=64),
 )
-def test_kuramoto_order_translation_invariant(
-    phases: list[float], shift: float
-) -> None:
+def test_kuramoto_order_translation_invariant(phases: list[float], shift: float) -> None:
     arr = np.asarray(phases, dtype=float)
     assume(np.isfinite(arr).all())
     base = kuramoto_order(arr)
@@ -308,9 +299,7 @@ def test_hurst_exponent_affine_invariance(data: st.DataObject) -> None:
     max_lag_cap = min(32, series.size // 2 - 1)
     assume(max_lag_cap >= 6)
     min_lag = data.draw(st.integers(min_value=2, max_value=5), label="min_lag")
-    max_lag = data.draw(
-        st.integers(min_value=min_lag + 1, max_value=max_lag_cap), label="max_lag"
-    )
+    max_lag = data.draw(st.integers(min_value=min_lag + 1, max_value=max_lag_cap), label="max_lag")
     shift = data.draw(
         st.floats(min_value=-1e4, max_value=1e4, allow_nan=False, allow_infinity=False),
         label="shift",
@@ -321,9 +310,7 @@ def test_hurst_exponent_affine_invariance(data: st.DataObject) -> None:
     )
     assume(abs(scale) > 1e-3)
     base_value = hurst_exponent(series, min_lag=min_lag, max_lag=max_lag)
-    transformed_value = hurst_exponent(
-        series * scale + shift, min_lag=min_lag, max_lag=max_lag
-    )
+    transformed_value = hurst_exponent(series * scale + shift, min_lag=min_lag, max_lag=max_lag)
     assume(np.isfinite(base_value) and np.isfinite(transformed_value))
     assert transformed_value == pytest.approx(base_value, rel=5e-5, abs=5e-5)
 
@@ -357,9 +344,7 @@ def test_hurst_matches_high_precision_reference(data: st.DataObject) -> None:
     max_lag_cap = min(48, series.size // 2 - 2)
     assume(max_lag_cap > 6)
     min_lag = data.draw(st.integers(min_value=2, max_value=5), label="min_lag")
-    max_lag = data.draw(
-        st.integers(min_value=min_lag + 2, max_value=max_lag_cap), label="max_lag"
-    )
+    max_lag = data.draw(st.integers(min_value=min_lag + 2, max_value=max_lag_cap), label="max_lag")
     indicator = hurst_exponent(series, min_lag=min_lag, max_lag=max_lag)
     reference = _hurst_reference(series, min_lag, max_lag)
     assume(np.isfinite(indicator) and np.isfinite(reference))
@@ -395,12 +380,8 @@ def test_hurst_float32_matches_float64(data: st.DataObject) -> None:
     max_lag_cap = min(32, series.size // 2 - 2)
     assume(max_lag_cap > 6)
     min_lag = data.draw(st.integers(min_value=2, max_value=5), label="min_lag")
-    max_lag = data.draw(
-        st.integers(min_value=min_lag + 2, max_value=max_lag_cap), label="max_lag"
-    )
-    value64 = hurst_exponent(
-        series, min_lag=min_lag, max_lag=max_lag, use_float32=False
-    )
+    max_lag = data.draw(st.integers(min_value=min_lag + 2, max_value=max_lag_cap), label="max_lag")
+    value64 = hurst_exponent(series, min_lag=min_lag, max_lag=max_lag, use_float32=False)
     value32 = hurst_exponent(series, min_lag=min_lag, max_lag=max_lag, use_float32=True)
     assume(np.isfinite(value64) and np.isfinite(value32))
     assert value32 == pytest.approx(value64, rel=5e-3, abs=5e-3)

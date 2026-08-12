@@ -1,3 +1,5 @@
+# Copyright (c) 2023-2026 Yaroslav Vasylenko (neuron7xLab)
+# SPDX-License-Identifier: MIT
 from __future__ import annotations
 
 from dataclasses import dataclass
@@ -94,9 +96,7 @@ def test_filter_helpers(coordinator: MarketCalendarCoordinator) -> None:
     ]
 
     assert coordinator.filter_timestamps(timestamps, mode="union") == timestamps[:2]
-    assert coordinator.filter_timestamps(timestamps, mode="intersection") == [
-        timestamps[1]
-    ]
+    assert coordinator.filter_timestamps(timestamps, mode="intersection") == [timestamps[1]]
 
     @dataclass
     class Signal:

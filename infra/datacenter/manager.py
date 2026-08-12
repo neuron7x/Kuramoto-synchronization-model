@@ -1,4 +1,5 @@
-# SPDX-License-Identifier: LicenseRef-TradePulse-Proprietary
+# Copyright (c) 2023-2026 Yaroslav Vasylenko (neuron7xLab)
+# SPDX-License-Identifier: MIT
 """Data center manager.
 
 Provides centralized management of multiple data centers with:
@@ -71,11 +72,7 @@ class DataCenterManager:
 
             dc = DataCenter(
                 config=config,
-                status=(
-                    DataCenterStatus.ACTIVE
-                    if config.is_primary
-                    else DataCenterStatus.STANDBY
-                ),
+                status=(DataCenterStatus.ACTIVE if config.is_primary else DataCenterStatus.STANDBY),
             )
 
             self._data_centers[config.id] = dc
@@ -86,9 +83,7 @@ class DataCenterManager:
                     old_primary = self._data_centers.get(self._primary_dc_id)
                     if old_primary:
                         old_primary.status = DataCenterStatus.STANDBY
-                        old_primary.config = old_primary.config.with_primary_status(
-                            False
-                        )
+                        old_primary.config = old_primary.config.with_primary_status(False)
                 self._primary_dc_id = config.id
 
             logger.info(
@@ -179,9 +174,7 @@ class DataCenterManager:
         with self._lock:
             return [dc for dc in self._data_centers.values() if dc.is_available]
 
-    def update_health(
-        self, dc_id: str, health: DataCenterHealth
-    ) -> Optional[DataCenter]:
+    def update_health(self, dc_id: str, health: DataCenterHealth) -> Optional[DataCenter]:
         """Update health metrics for a data center.
 
         Args:
@@ -311,8 +304,7 @@ class DataCenterManager:
             self._promote_to_primary(target_dc)
 
             logger.warning(
-                f"Failover executed: {source_dc_id} -> {target_dc_id} "
-                f"(reason: {reason})"
+                f"Failover executed: {source_dc_id} -> {target_dc_id} (reason: {reason})"
             )
 
             # Invoke callback
@@ -333,9 +325,7 @@ class DataCenterManager:
 
         logger.info(f"Data center {dc.id} promoted to primary")
 
-    def set_data_center_status(
-        self, dc_id: str, status: DataCenterStatus
-    ) -> Optional[DataCenter]:
+    def set_data_center_status(self, dc_id: str, status: DataCenterStatus) -> Optional[DataCenter]:
         """Manually set data center status.
 
         Args:
@@ -429,19 +419,13 @@ class DataCenterManager:
         with self._lock:
             total_dcs = len(self._data_centers)
             active_dcs = sum(
-                1
-                for dc in self._data_centers.values()
-                if dc.status == DataCenterStatus.ACTIVE
+                1 for dc in self._data_centers.values() if dc.status == DataCenterStatus.ACTIVE
             )
             degraded_dcs = sum(
-                1
-                for dc in self._data_centers.values()
-                if dc.status == DataCenterStatus.DEGRADED
+                1 for dc in self._data_centers.values() if dc.status == DataCenterStatus.DEGRADED
             )
             offline_dcs = sum(
-                1
-                for dc in self._data_centers.values()
-                if dc.status == DataCenterStatus.OFFLINE
+                1 for dc in self._data_centers.values() if dc.status == DataCenterStatus.OFFLINE
             )
 
             primary = self.get_primary_data_center()
@@ -455,9 +439,7 @@ class DataCenterManager:
                 "primary_dc": primary.id if primary else None,
                 "primary_dc_healthy": primary.health.is_healthy if primary else False,
                 "total_failovers": len(self._failover_history),
-                "regions_covered": list(
-                    set(dc.region.value for dc in self._data_centers.values())
-                ),
+                "regions_covered": list(set(dc.region.value for dc in self._data_centers.values())),
             }
 
     def get_data_center_summary(self) -> List[Dict]:

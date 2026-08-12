@@ -1,0 +1,72 @@
+id: canonical-action-result-comparator
+status: ACTIVE
+claim_type: correctness
+promise: AAR-PRO comparator, chronology, DRO-ARA energy, recovery, smoke, readiness, and governance surfaces remain diff-bound, replayable, and falsifiable.
+diff_scope:
+  changed_files:
+  - path: core/dro_ara/__init__.py
+  - path: core/dro_ara/engine.py
+  - path: geosync_hpc/control/__init__.py
+  - path: geosync_hpc/control/action_result_comparator.py
+  - path: geosync_hpc/control/control_episode.py
+  - path: geosync_hpc/control/self_healing.py
+  - path: nak_controller/aar/memory.py
+  - path: nak_controller/docs/AAR_SPEC.md
+  - path: scripts/aar_pro_readiness.py
+  - path: scripts/aar_pro_smoke.py
+  forbidden_paths:
+  - trading/
+  - execution/
+  - forecast/
+  - policy/
+required_python_symbols:
+- ActionResultComparator
+- ActionResultEvidence
+- ControlEpisode
+- AARTracker
+- accept_action_result
+- compare_action_result
+- seal_action_result_evidence
+- _ara_comparator_error
+- _CausalChronology
+- prescribe_recovery
+expected_signal: Scoped AAR-PRO validation and targeted falsification suite pass without unbound code changes or forbidden imports.
+measurement_command: python tools/commit_acceptor/validate_commit_acceptor.py .claude/commit_acceptors --acceptor-id canonical-action-result-comparator --acceptor-id aar-pro-verification-suite --acceptor-id aar-pro-operational-governance --summary-out tmp/commit_acceptor_validation_invariant_registry_scoped.json
+signal_artifact: artifacts/aar_pro/action_result_comparator_pytest.txt
+falsifier:
+  command: python -m pytest -q -W ignore::DeprecationWarning tests/unit/control/test_action_result_comparator.py::test_14b_precision_inversion_is_falsifiable tests/unit/control/test_precision_extremes.py tests/core/dro_ara/test_falsification.py
+  description: Must fail when comparator precision, DRO-ARA chronology, bounded energy, or scoped acceptor validation regress.
+rollback_command: git checkout -- geosync_hpc/control core/dro_ara/README.md core/dro_ara/__init__.py core/dro_ara/engine.py nak_controller/aar/memory.py nak_controller/docs/AAR_SPEC.md scripts/aar_pro_smoke.py scripts/aar_pro_readiness.py .claude/commit_acceptors/canonical-action-result-comparator.yaml
+rollback_verification_command: git diff --exit-code geosync_hpc/control core/dro_ara/README.md core/dro_ara/__init__.py core/dro_ara/engine.py nak_controller/aar/memory.py nak_controller/docs/AAR_SPEC.md scripts/aar_pro_smoke.py scripts/aar_pro_readiness.py .claude/commit_acceptors/canonical-action-result-comparator.yaml
+memory_update_type: append
+ledger_path: .claude/commit_acceptors/canonical-action-result-comparator.yaml
+report_path: artifacts/aar_pro/action_result_acceptor_audit.md
+evidence:
+- path: artifacts/aar_pro/action_result_acceptor_audit.md
+- path: artifacts/aar_pro/action_result_comparator_pytest.txt
+- path: tests/unit/control/test_action_result_comparator.py
+- path: tests/unit/control/test_control_episode.py
+- path: tests/unit/control/test_precision_extremes.py
+- path: tests/unit/control/test_self_healing.py
+- path: tests/core/dro_ara/test_falsification.py
+- path: tests/integration/control/test_action_result_comparator_integration.py
+- path: tests/integration/control/test_aar_pro_smoke_script.py
+- path: tests/integration/control/test_aar_pro_readiness_script.py
+- path: tests/formal/test_aar_pro_tla_spec.py
+- path: tests/formal/test_aar_pro_invariants_yaml.py
+- path: tools/commit_acceptor/validate_commit_acceptor.py
+- path: tests/unit/commit_acceptor/test_validate_commit_acceptor.py
+- path: geosync_hpc/control/action_result_comparator.py
+- path: geosync_hpc/control/__init__.py
+- path: geosync_hpc/control/control_episode.py
+- path: geosync_hpc/control/self_healing.py
+- path: core/dro_ara/engine.py
+- path: core/dro_ara/__init__.py
+- path: core/dro_ara/README.md
+- path: docs/physics/dro_ara_invariants.md
+- path: docs/operations/aar_pro_v1_operational_contract.md
+- path: docs/operations/aar_pro_v1_invariants.yaml
+- path: scripts/aar_pro_smoke.py
+- path: scripts/aar_pro_readiness.py
+- path: formal/AAR_PRO_V1.tla
+- path: formal/AAR_PRO_V1.cfg

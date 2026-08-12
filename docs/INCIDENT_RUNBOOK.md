@@ -1,8 +1,8 @@
-# TradePulse Incident Runbook
+# GeoSync Incident Runbook
 
 > **Коли все йде по пизді — відкривай цей документ.**
 >
-> Структурований план дій для типових інцидентів TradePulse.
+> Структурований план дій для типових інцидентів GeoSync.
 
 ---
 
@@ -24,21 +24,21 @@
 
 **Симптоми:**
 - Alert: `KillSwitchEngaged`
-- Metric: `tradepulse_risk_kill_switch == 1`
+- Metric: `geosync_risk_kill_switch == 1`
 - Всі ордери блокуються
 
 **Перші дії (< 5 хв):**
 
 1. **Перевір причину в логах:**
    ```bash
-   grep -i "kill.switch.trigger" /var/log/tradepulse/*.log | tail -20
+   grep -i "kill.switch.trigger" /var/log/geosync/*.log | tail -20
    ```
    Або в Kibana: `event: "kill_switch_triggered"`
 
 2. **Перевір метрики:**
-   - Grafana → TradePulse Risk Dashboard
-   - Подивись `tradepulse_risk_rejections_total` — що саме блокувалось?
-   - `tradepulse_drawdown_percent` — чи є drawdown breach?
+   - Grafana → GeoSync Risk Dashboard
+   - Подивись `geosync_risk_rejections_total` — що саме блокувалось?
+   - `geosync_drawdown_percent` — чи є drawdown breach?
 
 3. **Визнач root cause:**
    - Position limit exceeded?
@@ -58,7 +58,7 @@
 **Reset Kill-Switch:**
 ```bash
 # Через CLI
-tradepulse-admin kill-switch reset --reason "Manual reset after investigation"
+geosync-admin kill-switch reset --reason "Manual reset after investigation"
 
 # Або через API
 curl -X POST http://localhost:8080/admin/kill-switch/reset \
@@ -74,7 +74,7 @@ curl -X POST http://localhost:8080/admin/kill-switch/reset \
 ### 2. Немає Нових Ордерів
 
 **Симптоми:**
-- `rate(tradepulse_orders_placed_total[5m]) == 0`
+- `rate(geosync_orders_placed_total[5m]) == 0`
 - Alert: `NoOrdersPlaced`
 - Стратегія "мовчить"
 
@@ -88,25 +88,25 @@ curl -X POST http://localhost:8080/admin/kill-switch/reset \
 2. **Перевір data feed:**
    ```bash
    # Чи приходять тики?
-   grep "tick.processed" /var/log/tradepulse/data.log | tail -5
+   grep "tick.processed" /var/log/geosync/data.log | tail -5
    ```
-   Metric: `tradepulse_ticks_processed_total` — чи зростає?
+   Metric: `geosync_ticks_processed_total` — чи зростає?
 
 3. **Перевір signal generation:**
    ```bash
-   grep "signal.generated" /var/log/tradepulse/strategy.log | tail -5
+   grep "signal.generated" /var/log/geosync/strategy.log | tail -5
    ```
-   Metric: `tradepulse_signal_generation_total`
+   Metric: `geosync_signal_generation_total`
 
 4. **Перевір risk-engine:**
    ```bash
    # Чи все блокується?
-   grep "risk_validation.*rejected" /var/log/tradepulse/execution.log | tail -10
+   grep "risk_validation.*rejected" /var/log/geosync/execution.log | tail -10
    ```
 
 5. **Перевір exchange connectivity:**
    ```bash
-   tradepulse-admin exchange status
+   geosync-admin exchange status
    ```
 
 **Decision Tree:**
@@ -134,7 +134,7 @@ Exchange не відповідає?
 ### 3. Risk-Engine Блокує Все
 
 **Симптоми:**
-- Spike в `tradepulse_risk_rejections_total`
+- Spike в `geosync_risk_rejections_total`
 - Alert: `RiskRejectionsSpike`
 - Ордери створюються, але не йдуть на exchange
 
@@ -144,7 +144,7 @@ Exchange не відповідає?
    ```bash
    # Grafana: Risk Rejections by Reason
    # Або в логах:
-   grep "risk_validation.*rejected" /var/log/tradepulse/*.log | \
+   grep "risk_validation.*rejected" /var/log/geosync/*.log | \
      grep -oP 'reason="[^"]+"' | sort | uniq -c
    ```
 
@@ -160,7 +160,7 @@ Exchange не відповідає?
 
 3. **Перевір ліміти:**
    ```bash
-   tradepulse-admin risk limits show
+   geosync-admin risk limits show
    ```
 
 **Рішення:**
@@ -175,7 +175,7 @@ Exchange не відповідає?
 
 **Симптоми:**
 - Alert: `ModelLatencyHigh` або `ModelErrorRateHigh`
-- Metric: `tradepulse_model_inference_error_ratio > 0.01`
+- Metric: `geosync_model_inference_error_ratio > 0.01`
 - Логи: `model_inference.*error`
 
 **Diagnosis:**
@@ -187,7 +187,7 @@ Exchange не відповідає?
 
 2. **Перевір latency:**
    - Grafana → MLSDM Health Dashboard
-   - `tradepulse_model_inference_latency_seconds`
+   - `geosync_model_inference_latency_seconds`
 
 3. **Перевір ресурси:**
    ```bash
@@ -209,7 +209,7 @@ Exchange не відповідає?
 **Fallback:**
 ```bash
 # Переключити на fallback model
-tradepulse-admin model switch --to fallback
+geosync-admin model switch --to fallback
 ```
 
 ---
@@ -226,8 +226,8 @@ tradepulse-admin model switch --to fallback
 
 1. **Чи сервіс працює?**
    ```bash
-   systemctl status tradepulse
-   ps aux | grep tradepulse
+   systemctl status geosync
+   ps aux | grep geosync
    ```
 
 2. **Чи /metrics endpoint відповідає?**
@@ -236,11 +236,11 @@ tradepulse-admin model switch --to fallback
    ```
 
 3. **Чи Prometheus scrape працює?**
-   - Prometheus UI → Targets → перевір tradepulse target
+   - Prometheus UI → Targets → перевір geosync target
 
 4. **Чи логи пишуться?**
    ```bash
-   tail -f /var/log/tradepulse/app.log
+   tail -f /var/log/geosync/app.log
    # Якщо disk full:
    df -h
    ```
@@ -262,12 +262,12 @@ tradepulse-admin model switch --to fallback
 **Симптоми:**
 - Alert: `HighOrderLatency`
 - p95 > 2 seconds
-- Metric: `tradepulse_order_placement_duration_seconds`
+- Metric: `geosync_order_placement_duration_seconds`
 
 **Diagnosis:**
 
 1. **Де саме затримка?**
-   - `tradepulse_order_ack_latency_quantiles_seconds` — exchange slow?
+   - `geosync_order_ack_latency_quantiles_seconds` — exchange slow?
    - Signal generation slow?
    - Risk validation slow?
 
@@ -277,7 +277,7 @@ tradepulse-admin model switch --to fallback
    ```
 
 3. **Перевір internal queues:**
-   - Metric: `tradepulse_api_queue_depth`
+   - Metric: `geosync_api_queue_depth`
 
 **Рішення:**
 

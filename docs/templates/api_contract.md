@@ -1,5 +1,5 @@
 ---
-owner: integrations@tradepulse
+owner: integrations@geosync
 review_cadence: quarterly
 last_reviewed: 2025-12-28
 links:
@@ -49,7 +49,7 @@ links:
 
 ```http
 GET /path HTTP/1.1
-Host: api.tradepulse.example
+Host: api.geosync.example
 Authorization: Bearer <token>
 ```
 

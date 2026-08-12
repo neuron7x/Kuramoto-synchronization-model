@@ -1,0 +1,43 @@
+id: dependency-manifest-all-strict
+status: ACTIVE
+claim_type: security
+promise: >-
+  Closes the requirements*.txt advisory carve-out (PR #1111 has landed): the
+  manifest-consistency gate is strict by default for every manifest, the live
+  test asserts zero floor violations across pyproject.toml, requirements.txt and
+  requirements-backend.txt, and requirements.txt's fastapi floor is raised to the
+  constraints/security.txt pin (>=0.136.3). No install path can resolve a
+  security-critical package below its security floor.
+diff_scope:
+  changed_files:
+    - path: ".claude/commit_acceptors/dependency-manifest-all-strict.yaml"
+    - path: "tools/security/check_dependency_manifest_consistency.py"
+    - path: "tests/security/test_dependency_manifest_consistency.py"
+    - path: "docs/security/dependency_policy.md"
+    - path: "requirements.txt"
+    - path: "docs/reports/dependency_manifest_all_strict.md"
+  forbidden_paths:
+    - "trading/"
+    - "execution/"
+    - "forecast/"
+    - "policy/"
+required_python_symbols:
+  - "evaluate"
+  - "main"
+expected_signal: >-
+  `check_dependency_manifest_consistency.py` exits 0 with no --all-strict flag;
+  the security test suite is green including the all-manifests-strict invariant;
+  ruff + black + mypy --strict clean.
+measurement_command: "python tools/security/check_dependency_manifest_consistency.py && python -m pytest tests/security/test_dependency_manifest_consistency.py"
+signal_artifact: "tmp/dependency_manifest_all_strict.json"
+falsifier:
+  command: "python -c \"import sys; sys.argv=['x']; from pathlib import Path; import importlib.util as u; s=u.spec_from_file_location('m','tools/security/check_dependency_manifest_consistency.py'); m=u.module_from_spec(s); s.loader.exec_module(m); raise SystemExit(0 if m.main([])==0 else 1)\""
+  description: >-
+    Lowering any requirements*.txt security floor below constraints/security.txt
+    MUST make the default (strict) gate exit 1; if the strict default ever exits
+    0 on a below-floor manifest the all-strict promotion has regressed.
+rollback_command: "git revert --no-edit <merge_sha>"
+rollback_verification_command: "python -m pytest tests/security/test_dependency_manifest_consistency.py"
+memory_update_type: append
+ledger_path: ".claude/commit_acceptors/dependency-manifest-all-strict.yaml"
+report_path: "docs/reports/dependency_manifest_all_strict.md"

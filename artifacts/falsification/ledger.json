@@ -1,0 +1,120 @@
+{
+  "artifact_sha256": "c364e86a5f6245a6ae70b904c8e680799375fdfe3c311c5062f128a500d6deb4",
+  "controls": [
+    {
+      "command": "python -m scripts.ci.falsification_ledger --only permutation_null",
+      "detail": {
+        "N": 8,
+        "T": 256,
+        "failure_mode": "",
+        "n_shuffles": 200,
+        "p_coherent": 0.0,
+        "p_incoherent": 0.97,
+        "seed": 20260622
+      },
+      "failure_mode": "",
+      "input_sha256": "e5ba38d8306592aa2bf693c34a1b857216e6ae0976d1fff3e4cc64c54d69d9ec",
+      "name": "permutation_null",
+      "output_sha256": "ae023f979106bde61ad8717bd6c9fa419f2e2b71d6b011b4c1372b2bcf6358e5",
+      "verdict": "SURVIVED"
+    },
+    {
+      "command": "python -m scripts.ci.falsification_ledger --only phase_randomized_null",
+      "detail": {
+        "amplitude_max_err": 0.0,
+        "failure_mode": "",
+        "spectrum_rel_err": 0.005248018606991552
+      },
+      "failure_mode": "",
+      "input_sha256": "33955c93e3937cdc3ceb58300e03e2de9e83578a30de0e16f0712fbbd889a39a",
+      "name": "phase_randomized_null",
+      "output_sha256": "a39224e682518f92c6b80a497e0bac7896a44741f355923be7d86488fb70dd54",
+      "verdict": "SURVIVED"
+    },
+    {
+      "command": "python -m scripts.ci.falsification_ledger --only topology_preserving_null",
+      "detail": {
+        "degrees_preserved": true,
+        "failure_mode": "",
+        "topology_changed": true
+      },
+      "failure_mode": "",
+      "input_sha256": "fc3126c51ac7828ec48654f858af95a5f33fbb44fe286a49f66f4cfd1967ebfc",
+      "name": "topology_preserving_null",
+      "output_sha256": "07ac0238211abd95714d4592bf1950693728994e8f2adcf41eb95745fc637bd3",
+      "verdict": "SURVIVED"
+    },
+    {
+      "command": "python -m scripts.ci.falsification_ledger --only cost_model_falsifier",
+      "detail": {
+        "below_floor_rejected": true,
+        "failure_mode": "",
+        "feasible_tau": 21.70896096386479
+      },
+      "failure_mode": "",
+      "input_sha256": "5d715ca83029c096b548f04bcf91d8635775635ccdde48ac13bb90f9bfad2aad",
+      "name": "cost_model_falsifier",
+      "output_sha256": "5e39e21ef034dc72f9d3caed62a629459cdf158e08d5f90326b3d1c1a890408b",
+      "verdict": "SURVIVED"
+    },
+    {
+      "command": "python -m scripts.ci.falsification_ledger --only lookahead_leakage",
+      "detail": {
+        "clean_detected": false,
+        "failure_mode": "",
+        "leaky_detected": true
+      },
+      "failure_mode": "",
+      "input_sha256": "2db3f5a4f00884da63865781c40ca38181bfdcd538416ccd88944de736dedd57",
+      "name": "lookahead_leakage",
+      "output_sha256": "8f8af4430b12ca0b8f5707fbd8a806edf0f1565c4ccad9decb6ad2373a594ca1",
+      "verdict": "SURVIVED"
+    },
+    {
+      "command": "python -m scripts.ci.falsification_ledger --only timestamp_monotonicity",
+      "detail": {
+        "backwards_rejected": true,
+        "duplicate_rejected": true,
+        "failure_mode": "",
+        "monotone_accepted": true
+      },
+      "failure_mode": "",
+      "input_sha256": "93ed9006f30516950af0957635a3873cfa34ec1127a3e4a9f5f2e285a6f0a353",
+      "name": "timestamp_monotonicity",
+      "output_sha256": "aa742483f4551ce36f825a32c72ff36acd6e1e4f8daaf0c57ed0a8e9f30ab4e9",
+      "verdict": "SURVIVED"
+    },
+    {
+      "command": "python -m scripts.ci.falsification_ledger --only seed_reproducibility",
+      "detail": {
+        "failure_mode": "",
+        "one_ulp_differs": true,
+        "same_seed_equal": true
+      },
+      "failure_mode": "",
+      "input_sha256": "6a9e2a1ea1c633c522c8bb88e9689ff961da38bb790468d5bcfd1cb42fefc7ee",
+      "name": "seed_reproducibility",
+      "output_sha256": "6354d65102d5bbbd5ce8ace279a83b65029153b7772619e054eea99a1c78b0f3",
+      "verdict": "SURVIVED"
+    },
+    {
+      "command": "python -m scripts.ci.falsification_ledger --only schema_corruption",
+      "detail": {
+        "corrupt_rejected": true,
+        "failure_mode": "",
+        "required_fields": 14,
+        "valid_accepted": true
+      },
+      "failure_mode": "",
+      "input_sha256": "3ceb7766d4ec676f57d91fa99c008a88a6513ffac3654cf27da6bf5b8b89bcfe",
+      "name": "schema_corruption",
+      "output_sha256": "59eac255e4c094e1911159e20955f106495090167caad5b4f039625a4971268b",
+      "verdict": "SURVIVED"
+    }
+  ],
+  "git_dirty": true,
+  "git_sha": "9846a5501e4f8a2c4b583f159feae6c1c6e82df6",
+  "ledger_id": "geosync-falsification-ledger",
+  "promotion_allowed": true,
+  "schema_version": "1.0"
+}

@@ -1,4 +1,5 @@
-# SPDX-License-Identifier: LicenseRef-TradePulse-Proprietary
+# Copyright (c) 2023-2026 Yaroslav Vasylenko (neuron7xLab)
+# SPDX-License-Identifier: MIT
 """Integration tests for dopamine loop with real market feed recordings.
 
 Tests TD(0) RPE (Reward Prediction Error), DDM adaptation, and Go/No-Go
@@ -9,9 +10,9 @@ from pathlib import Path
 from typing import List
 
 from core.data.market_feed import MarketFeedRecord, MarketFeedRecording
-from tradepulse.core.neuro.dopamine import adapt_ddm_parameters
-from tradepulse.core.neuro.dopamine.action_gate import ActionGate, DopamineSnapshot
-from tradepulse.core.neuro.dopamine.dopamine_controller import DopamineController
+from geosync.core.neuro.dopamine import adapt_ddm_parameters
+from geosync.core.neuro.dopamine.action_gate import ActionGate, DopamineSnapshot
+from geosync.core.neuro.dopamine.dopamine_controller import DopamineController
 
 
 def calculate_simple_reward(
@@ -53,9 +54,7 @@ class TestDopamineTD0RPE:
 
     def test_td0_rpe_stable_market(self):
         """Test TD(0) RPE in stable market conditions."""
-        recording = MarketFeedRecording.read_jsonl(
-            FIXTURES_DIR / "stable_btcusd_100ticks.jsonl"
-        )
+        recording = MarketFeedRecording.read_jsonl(FIXTURES_DIR / "stable_btcusd_100ticks.jsonl")
 
         # Use default config path
         controller = DopamineController(config_path="config/dopamine.yaml")
@@ -82,17 +81,13 @@ class TestDopamineTD0RPE:
         assert len(dopamine_levels) == 100
 
         # In stable market, prediction errors should be small on average
-        avg_abs_error = sum(abs(pe) for pe in prediction_errors) / len(
-            prediction_errors
-        )
+        avg_abs_error = sum(abs(pe) for pe in prediction_errors) / len(prediction_errors)
         assert avg_abs_error < 0.5, "Prediction errors should be small in stable market"
 
         # Dopamine should remain in reasonable range
         assert all(0.0 <= d <= 1.0 for d in dopamine_levels)
         avg_dopamine = sum(dopamine_levels) / len(dopamine_levels)
-        assert (
-            0.3 < avg_dopamine < 0.7
-        ), "Average dopamine should be moderate in stable market"
+        assert 0.3 < avg_dopamine < 0.7, "Average dopamine should be moderate in stable market"
 
     def test_td0_rpe_trending_up_market(self):
         """Test TD(0) RPE in uptrending market."""
@@ -125,9 +120,7 @@ class TestDopamineTD0RPE:
         # Later dopamine should be higher than early (learning positive rewards)
         early_dopamine = sum(dopamine_levels[:50]) / 50
         late_dopamine = sum(dopamine_levels[-50:]) / 50
-        assert (
-            late_dopamine > early_dopamine * 0.9
-        ), "Dopamine should adapt to positive trend"
+        assert late_dopamine > early_dopamine * 0.9, "Dopamine should adapt to positive trend"
 
     def test_td0_rpe_trending_down_market(self):
         """Test TD(0) RPE in downtrending market."""
@@ -159,9 +152,7 @@ class TestDDMAdaptation:
 
     def test_ddm_adapts_to_dopamine_level(self):
         """Test that DDM parameters adapt based on dopamine levels."""
-        recording = MarketFeedRecording.read_jsonl(
-            FIXTURES_DIR / "volatile_btcusd_150ticks.jsonl"
-        )
+        recording = MarketFeedRecording.read_jsonl(FIXTURES_DIR / "volatile_btcusd_150ticks.jsonl")
 
         controller = DopamineController(config_path="config/dopamine.yaml")
 
@@ -199,9 +190,7 @@ class TestDDMAdaptation:
 
     def test_ddm_flash_crash_response(self):
         """Test DDM response to flash crash event."""
-        recording = MarketFeedRecording.read_jsonl(
-            FIXTURES_DIR / "flash_crash_5pct_mid.jsonl"
-        )
+        recording = MarketFeedRecording.read_jsonl(FIXTURES_DIR / "flash_crash_5pct_mid.jsonl")
 
         controller = DopamineController(config_path="config/dopamine.yaml")
 
@@ -235,9 +224,7 @@ class TestGoNoGoDecisions:
 
     def test_go_no_go_decisions_volatile_market(self):
         """Test Go/No-Go decisions in volatile market."""
-        recording = MarketFeedRecording.read_jsonl(
-            FIXTURES_DIR / "volatile_btcusd_150ticks.jsonl"
-        )
+        recording = MarketFeedRecording.read_jsonl(FIXTURES_DIR / "volatile_btcusd_150ticks.jsonl")
 
         controller = DopamineController(config_path="config/dopamine.yaml")
 
@@ -332,9 +319,7 @@ class TestGoNoGoDecisions:
 
             # Each phase should have some variety in decisions
             unique_decisions = len(set(decisions))
-            assert (
-                unique_decisions >= 1
-            ), f"Phase {phase} should have at least 1 decision type"
+            assert unique_decisions >= 1, f"Phase {phase} should have at least 1 decision type"
 
 
 class TestLatencyImpact:

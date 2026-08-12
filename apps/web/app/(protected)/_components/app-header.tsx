@@ -38,7 +38,7 @@ export function AppHeader() {
               color: 'text.primary',
             }}
           >
-            TradePulse
+            GeoSync
           </Typography>
           <Button
             color="inherit"

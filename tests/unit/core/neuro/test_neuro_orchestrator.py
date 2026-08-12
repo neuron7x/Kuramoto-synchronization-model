@@ -1,3 +1,5 @@
+# Copyright (c) 2023-2026 Yaroslav Vasylenko (neuron7xLab)
+# SPDX-License-Identifier: MIT
 """Tests for the Neuro-Orchestrator Agent."""
 
 from __future__ import annotations
@@ -7,7 +9,7 @@ import json
 
 import pytest
 
-from tradepulse.core.neuro.neuro_orchestrator import (
+from geosync.core.neuro.neuro_orchestrator import (
     LearningLoop,
     ModuleInstruction,
     NeuroOrchestrator,

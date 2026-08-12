@@ -1,4 +1,4 @@
-# License compatibility policy aligning with TradePulse's legal guardrails.
+# License compatibility policy for dependency auditing (project is MIT-licensed).
 # SPDX identifiers are preferred. Aliases map legacy classifier strings to
 # SPDX forms for consistent evaluation.
 allowed:

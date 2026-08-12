@@ -1,0 +1,109 @@
+# Diff-bound commit acceptor for the D-002G P1 adversarial-strike test scaffolding.
+#
+# Sibling of x10r-d002g-p1-implementation.yaml — splits scope so the
+# per-claim-type file cap is honoured. This acceptor binds ONLY the
+# 6 adversarial Strike-R1..R7 test files (R6 is a documented rung,
+# not a separate executable test). It does NOT bind any production
+# module, capsule, or governance document.
+#
+# Strict scope:
+#   * NO production module change.
+#   * NO governance document change.
+#   * NO ledger or pre-registration mutation.
+#   * NO tier claim.
+#   * NO canonical sweep execution.
+
+id: x10r-d002g-p1-strike-scaffolding
+status: ACTIVE
+claim_type: governance
+promise: >-
+  After this PR lands, tests/systemic_risk/ carries the six executable
+  adversarial-strike tests for D-002G P1: spectral-identity (R1), M6
+  conditional informativeness (R2), Phase 0b robustness vs Wilcoxon +
+  bootstrap CI (R3), Phase 0c power calibration (R4), seed-collision
+  sweep across 50 paired seeds on ricci_flow (R5), and the joint
+  rule-correlation matrix audit (R7). R6 (Bonferroni-216 conservatism)
+  is annotated in the adversarial-audit document rather than as a
+  separate executable test. R8 is the locked-governance untouched
+  test bound to the sibling implementation acceptor.
+
+  Strict scope: adversarial test scaffolding only. No production
+  module, capsule, or governance document is bound to this acceptor.
+  Each test asserts a falsifiable property of the D-002G
+  infrastructure; no test claims scientific PASS, no test runs a
+  canonical sweep, no test mutates locked governance.
+
+diff_scope:
+  changed_files:
+    - path: ".claude/commit_acceptors/x10r-d002g-p1-strike-scaffolding.yaml"
+    - path: "tests/systemic_risk/test_d002g_strike_R1_spectral_identity.py"
+    - path: "tests/systemic_risk/test_d002g_strike_R2_m6_conditional_informativeness.py"
+    - path: "tests/systemic_risk/test_d002g_strike_R3_phase0b_robust.py"
+    - path: "tests/systemic_risk/test_d002g_strike_R4_phase0c_power.py"
+    - path: "tests/systemic_risk/test_d002g_strike_R5_seed_collision.py"
+    - path: "tests/systemic_risk/test_d002g_strike_R7_joint_distribution.py"
+  forbidden_paths:
+    - "docs/governance/D002G_PREREGISTRATION.yaml"
+    - "docs/governance/D002G_NONDEGENERATE_NULL_DESIGN.md"
+    - "docs/governance/D002G_ACCEPTANCE_RULES.md"
+    - ".claude/commit_acceptors/x10r-d002g-nondegenerate-null-redesign.yaml"
+    - "docs/governance/D002C_PREREGISTRATION.yaml"
+    - "docs/governance/D002C_CLAIM_LEDGER.yaml"
+    - "docs/governance/D002C_CANONICAL_RUN_REPORT.md"
+    - "docs/governance/D002C_ATTEMPT_2_NULL_AUDIT_FALSIFICATION_REPORT.md"
+    - "application/governance/claim_ledger.py"
+    - "application/governance/commit_acceptor.py"
+required_python_symbols: []
+expected_signal: >-
+  All six strike test files exist; pytest collects and passes each
+  one; no test bound here imports or modifies production code outside
+  its dedicated scope.
+measurement_command: >-
+  bash -c 'set -e;
+  PYTHONPATH=. python -m pytest
+  tests/systemic_risk/test_d002g_strike_R1_spectral_identity.py
+  tests/systemic_risk/test_d002g_strike_R2_m6_conditional_informativeness.py
+  tests/systemic_risk/test_d002g_strike_R3_phase0b_robust.py
+  tests/systemic_risk/test_d002g_strike_R4_phase0c_power.py
+  tests/systemic_risk/test_d002g_strike_R5_seed_collision.py
+  tests/systemic_risk/test_d002g_strike_R7_joint_distribution.py -q'
+signal_artifact: "tests/systemic_risk/test_d002g_strike_R1_spectral_identity.py"
+falsifier:
+  command: |-
+    bash -c 'set -e;
+    for t in \
+      tests/systemic_risk/test_d002g_strike_R1_spectral_identity.py \
+      tests/systemic_risk/test_d002g_strike_R2_m6_conditional_informativeness.py \
+      tests/systemic_risk/test_d002g_strike_R3_phase0b_robust.py \
+      tests/systemic_risk/test_d002g_strike_R4_phase0c_power.py \
+      tests/systemic_risk/test_d002g_strike_R5_seed_collision.py \
+      tests/systemic_risk/test_d002g_strike_R7_joint_distribution.py;
+    do test -f "$t" || { echo "missing strike test: $t"; exit 1; }; done;
+    PYTHONPATH=. python -m pytest \
+      tests/systemic_risk/test_d002g_strike_R1_spectral_identity.py \
+      tests/systemic_risk/test_d002g_strike_R2_m6_conditional_informativeness.py \
+      tests/systemic_risk/test_d002g_strike_R3_phase0b_robust.py \
+      tests/systemic_risk/test_d002g_strike_R4_phase0c_power.py \
+      tests/systemic_risk/test_d002g_strike_R5_seed_collision.py \
+      tests/systemic_risk/test_d002g_strike_R7_joint_distribution.py -q || exit 2'
+  description: >-
+    Probes the adversarial-strike scaffolding: every R1..R5+R7 strike
+    test file exists at its pinned path AND pytest collects + passes
+    each. If a test is missing or red, the adversarial audit ladder
+    is broken and the implementation acceptor's claim that "every
+    rung is encoded as a failing-then-passing executable test" is
+    falsified.
+rollback_command: >-
+  bash -c 'git checkout HEAD~1 --
+  tests/systemic_risk/test_d002g_strike_R1_spectral_identity.py
+  tests/systemic_risk/test_d002g_strike_R2_m6_conditional_informativeness.py
+  tests/systemic_risk/test_d002g_strike_R3_phase0b_robust.py
+  tests/systemic_risk/test_d002g_strike_R4_phase0c_power.py
+  tests/systemic_risk/test_d002g_strike_R5_seed_collision.py
+  tests/systemic_risk/test_d002g_strike_R7_joint_distribution.py && rm -f .claude/commit_acceptors/x10r-d002g-p1-strike-scaffolding.yaml'
+rollback_verification_command: >-
+  bash -c 'test ! -f tests/systemic_risk/test_d002g_strike_R1_spectral_identity.py && test ! -f .claude/commit_acceptors/x10r-d002g-p1-strike-scaffolding.yaml'
+memory_update_type: append
+ledger_path: ".claude/commit_acceptors/x10r-d002g-p1-strike-scaffolding.yaml"
+report_path: "docs/governance/D002G_P1_DESIGN_ADVERSARIAL_AUDIT.md"
+evidence: []

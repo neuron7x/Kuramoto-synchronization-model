@@ -1,7 +1,9 @@
+# Copyright (c) 2023-2026 Yaroslav Vasylenko (neuron7xLab)
+# SPDX-License-Identifier: MIT
 """Guardrail: enforce single canonical entrypoint per major subsystem.
 
 Canonicals:
-- control CLI: ``cli/tradepulse_cli.py``
+- control CLI: ``geosync/cli/geosync_cli.py``
 - API server: ``cortex_service/app/__main__.py``
 - calibration tooling: ``scripts/calibrate_controllers.py``
 
@@ -17,20 +19,23 @@ from pathlib import Path
 REPO_ROOT = Path(__file__).resolve().parents[1]
 
 CANONICAL_ENTRYPOINTS = {
-    "control_cli": Path("cli/tradepulse_cli.py"),
+    "control_cli": Path("geosync/cli/geosync_cli.py"),
     "api_server": Path("cortex_service/app/__main__.py"),
     "calibration": Path("scripts/calibrate_controllers.py"),
 }
 
 LEGACY_ENTRYPOINTS = {
-    Path("cli/amm_cli.py"),
+    Path("geosync/cli/amm_cli.py"),
     Path("scripts/__main__.py"),
     Path("tacl/__main__.py"),
     Path("tools/vendor/fpma/__main__.py"),
-    Path("src/tradepulse/sdk/mlsdm/__main__.py"),
+    Path("tools/synthetic_l2/__main__.py"),
+    Path("src/geosync/sdk/mlsdm/__main__.py"),
 }
 
-ENTRYPOINT_DIRS = [Path("cli")]
+# The CLI package was re-homed from the repo-root ``cli/`` into the canonical
+# ``geosync.cli`` namespace (#1158, ADR-0024); discover its modules there.
+ENTRYPOINT_DIRS = [Path("geosync/cli")]
 
 
 @dataclass(frozen=True)
@@ -39,14 +44,24 @@ class Violation:
     reason: str
 
 
+_EXCLUDED_DIRS = frozenset({".venv", "venv", ".tox", "node_modules", "__pycache__"})
+
+
 def _discover_entrypoints(root: Path) -> set[Path]:
     discovered: set[Path] = set()
     for directory in ENTRYPOINT_DIRS:
         target = root / directory
         if target.is_dir():
             for candidate in target.glob("*.py"):
+                # A package initializer is never a CLI entrypoint; skip it so a
+                # plain `__init__.py` (package marker) is not mis-flagged.
+                if candidate.name == "__init__.py":
+                    continue
                 discovered.add(candidate.resolve())
     for main_file in root.rglob("__main__.py"):
+        # Skip files inside excluded directories (e.g. .venv third-party packages)
+        if any(part in _EXCLUDED_DIRS for part in main_file.parts):
+            continue
         discovered.add(main_file.resolve())
     return discovered
 
@@ -61,8 +76,10 @@ def check_single_entrypoint(repo_root: Path = REPO_ROOT) -> list[Violation]:
     if violations:
         return violations
 
-    canonical_paths = { (repo_root / p).resolve() for p in CANONICAL_ENTRYPOINTS.values() }
-    legacy_paths = { (repo_root / p).resolve() for p in LEGACY_ENTRYPOINTS if (repo_root / p).exists() }
+    canonical_paths = {(repo_root / p).resolve() for p in CANONICAL_ENTRYPOINTS.values()}
+    legacy_paths = {
+        (repo_root / p).resolve() for p in LEGACY_ENTRYPOINTS if (repo_root / p).exists()
+    }
     for extra in _discover_entrypoints(repo_root):
         if extra in canonical_paths or extra in legacy_paths:
             continue

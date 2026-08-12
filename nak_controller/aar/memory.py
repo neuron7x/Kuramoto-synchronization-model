@@ -1,3 +1,5 @@
+# Copyright (c) 2023-2026 Yaroslav Vasylenko (neuron7xLab)
+# SPDX-License-Identifier: MIT
 """Memory storage for AAR (Acceptor of Action Result).
 
 This module provides storage mechanisms for AAR entries:
@@ -104,39 +106,39 @@ class AARTracker:
         self,
         outcome: Outcome,
         mode: str = "GREEN",
-    ) -> AAREntry | None:
+    ) -> AAREntry:
         """Record an outcome and compute the complete AAR entry.
+
+        Fail-closed invariant: an outcome is admissible only when the
+        corresponding prediction was sealed before outcome receipt. This
+        method never fabricates a default prediction, because post-factum
+        expectation synthesis would invalidate the AAR chronology contract.
 
         Args:
             outcome: The outcome to record.
             mode: Current system mode for mode aggregation.
 
         Returns:
-            The completed AAREntry, or None if no matching prediction.
+            The completed AAREntry.
 
         Raises:
-            ValueError: If no action exists for this outcome.
+            ValueError: If no action exists for this outcome or if no
+                prediction was sealed for the action.
         """
         action_id = outcome.action_id
 
         if action_id not in self._pending_actions:
             raise ValueError(f"No pending action for outcome {action_id}")
 
+        if action_id not in self._pending_predictions:
+            raise ValueError(
+                "Missing prediction for outcome "
+                f"{action_id}; default prediction generation is forbidden"
+            )
+
         action = self._pending_actions.pop(action_id)
         context = self._pending_contexts.pop(action_id, {})
-
-        # If no prediction was recorded, create a default one
-        if action_id not in self._pending_predictions:
-            prediction = Prediction(
-                action_id=action_id,
-                expected_pnl=0.0,
-                expected_latency_ms=0.0,
-                expected_slippage=0.0,
-                confidence=0.0,
-                timestamp=action.timestamp,
-            )
-        else:
-            prediction = self._pending_predictions.pop(action_id)
+        prediction = self._pending_predictions.pop(action_id)
 
         # Compute error signal
         error_signal = compute_error(

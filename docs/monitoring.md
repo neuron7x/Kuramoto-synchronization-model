@@ -1,6 +1,6 @@
 # Monitoring Guide
 
-This guide covers monitoring, logging, alerting, and observability for TradePulse in both development and production environments.
+This guide covers monitoring, logging, alerting, and observability for GeoSync in both development and production environments.
 
 ---
 
@@ -19,7 +19,7 @@ This guide covers monitoring, logging, alerting, and observability for TradePuls
 
 ## Overview
 
-TradePulse provides comprehensive observability through:
+GeoSync provides comprehensive observability through:
 
 - **Metrics**: Prometheus-compatible metrics for quantitative monitoring
 - **Logs**: Structured logging for debugging and audit trails
@@ -36,7 +36,7 @@ TradePulse provides comprehensive observability through:
 
 ### Observability-as-Code workflow
 
-TradePulse keeps its monitoring stack in the repository under the
+GeoSync keeps its monitoring stack in the repository under the
 `observability/` directory to make dashboards, alerts, and metric catalogues
 reproducible across environments. Run the bundle builder after editing any of
 the JSON definitions:
@@ -56,7 +56,7 @@ changes to staging or production clusters.
 
 ### Metric Types
 
-TradePulse uses Prometheus metric types:
+GeoSync uses Prometheus metric types:
 
 #### Counters
 Monotonically increasing values (never decrease):
@@ -64,7 +64,7 @@ Monotonically increasing values (never decrease):
 from prometheus_client import Counter
 
 trades_executed = Counter(
-    'tradepulse_trades_executed_total',
+    'geosync_trades_executed_total',
     'Total number of trades executed',
     ['symbol', 'direction']
 )
@@ -79,7 +79,7 @@ Values that can go up and down:
 from prometheus_client import Gauge
 
 open_positions = Gauge(
-    'tradepulse_open_positions',
+    'geosync_open_positions',
     'Number of currently open positions',
     ['symbol']
 )
@@ -96,7 +96,7 @@ Distribution of values (e.g., latencies):
 from prometheus_client import Histogram
 
 order_latency = Histogram(
-    'tradepulse_order_latency_seconds',
+    'geosync_order_latency_seconds',
     'Time taken to execute orders',
     ['exchange', 'order_type'],
     buckets=[0.01, 0.05, 0.1, 0.5, 1.0, 5.0, 10.0]
@@ -118,7 +118,7 @@ Similar to histograms, but calculate quantiles on client:
 from prometheus_client import Summary
 
 trade_pnl = Summary(
-    'tradepulse_trade_pnl',
+    'geosync_trade_pnl',
     'Profit/loss per trade',
     ['strategy', 'symbol']
 )
@@ -127,7 +127,7 @@ trade_pnl = Summary(
 trade_pnl.labels(strategy='momentum', symbol='BTCUSD').observe(150.50)
 ```
 
-TradePulse additionally exports summary-based latency quantiles for the
+GeoSync additionally exports summary-based latency quantiles for the
 critical ingestion → signal → execution pipeline. These are enabled automatically
 through the `MetricsCollector` helpers:
 
@@ -137,14 +137,14 @@ with collector.measure_signal_generation('momentum'):
 ```
 
 This produces PromQL series such as
-`tradepulse_signal_generation_latency_quantiles_seconds{quantile="0.95"}` which map
+`geosync_signal_generation_latency_quantiles_seconds{quantile="0.95"}` which map
 directly to the p50/p95/p99 panels in Grafana.
 
 ### Unified Time and Latency Governance
 
-**Deterministic timestamps depend on a single time source.** All TradePulse
+**Deterministic timestamps depend on a single time source.** All GeoSync
 nodes (bare metal, VMs, containers) must synchronise against the same Stratum-1
-NTP pool (`time.tradepulse.net`) with `chronyd` configured for a 50 ms maximum
+NTP pool (`time.geosync.net`) with `chronyd` configured for a 50 ms maximum
 offset. Co-located exchange gateways additionally enable PTP hardware timestamp
 support so the matching engine and strategy hosts remain within 5 μs of one
 another. Configuration management (Ansible role `infra.time-sync`) enforces the
@@ -170,11 +170,11 @@ Grafana visualisations:
 Instrumentation emits dedicated gauges for each hop and the aggregate path:
 
 ```text
-tradepulse_signal_generation_latency_quantiles_seconds{quantile="0.95"}
-tradepulse_order_submission_latency_quantiles_seconds{quantile="0.95"}
-tradepulse_order_ack_latency_quantiles_seconds{quantile="0.95"}
-tradepulse_order_fill_latency_quantiles_seconds{quantile="0.95"}
-tradepulse_signal_to_fill_latency_quantiles_seconds{quantile="0.95"}
+geosync_signal_generation_latency_quantiles_seconds{quantile="0.95"}
+geosync_order_submission_latency_quantiles_seconds{quantile="0.95"}
+geosync_order_ack_latency_quantiles_seconds{quantile="0.95"}
+geosync_order_fill_latency_quantiles_seconds{quantile="0.95"}
+geosync_signal_to_fill_latency_quantiles_seconds{quantile="0.95"}
 ```
 
 The `quantile` label exposes p50/p95/p99 so alerts can target specific tiers.
@@ -200,17 +200,17 @@ trades_executed_total       # Counter: Total trades executed
 trade_errors_total          # Counter: Failed trades
 trade_pnl_usd               # Summary: P&L per trade
 trade_latency_seconds       # Histogram: Order execution time
-tradepulse_signal_generation_latency_quantiles_seconds  # Gauge: Signal engine latency (p50/p95/p99)
-tradepulse_order_submission_latency_quantiles_seconds   # Gauge: Order placement latency (p50/p95/p99)
-tradepulse_order_ack_latency_quantiles_seconds          # Gauge: Submission → acknowledgement latency (p50/p95/p99)
-tradepulse_order_fill_latency_quantiles_seconds         # Gauge: Fill latency (p50/p95/p99)
-tradepulse_signal_to_fill_latency_quantiles_seconds     # Gauge: Signal → fill aggregate latency (p50/p95/p99)
+geosync_signal_generation_latency_quantiles_seconds  # Gauge: Signal engine latency (p50/p95/p99)
+geosync_order_submission_latency_quantiles_seconds   # Gauge: Order placement latency (p50/p95/p99)
+geosync_order_ack_latency_quantiles_seconds          # Gauge: Submission → acknowledgement latency (p50/p95/p99)
+geosync_order_fill_latency_quantiles_seconds         # Gauge: Fill latency (p50/p95/p99)
+geosync_signal_to_fill_latency_quantiles_seconds     # Gauge: Signal → fill aggregate latency (p50/p95/p99)
 
 # Positions
 open_positions_count        # Gauge: Current open positions
 position_value_usd          # Gauge: Total position value
 position_exposure_percent   # Gauge: Portfolio exposure
-tradepulse_backtest_equity_curve              # Gauge: Equity curve samples per backtest run
+geosync_backtest_equity_curve              # Gauge: Equity curve samples per backtest run
 
 # Risk
 portfolio_value_usd         # Gauge: Current portfolio value
@@ -224,7 +224,7 @@ risk_per_trade_percent      # Gauge: Risk per trade
 indicator_computation_seconds  # Histogram: Time to compute indicators
 backtest_duration_seconds      # Histogram: Backtest execution time
 data_ingestion_rate           # Gauge: Ticks/bars per second
-tradepulse_data_ingestion_latency_quantiles_seconds    # Gauge: Data ingestion latency (p50/p95/p99)
+geosync_data_ingestion_latency_quantiles_seconds    # Gauge: Data ingestion latency (p50/p95/p99)
 
 # Health
 service_up                    # Gauge: Service health (1=up, 0=down)
@@ -251,19 +251,19 @@ from contextlib import contextmanager
 
 # Define metrics
 trades_counter = Counter(
-    'tradepulse_trades_total',
+    'geosync_trades_total',
     'Total trades executed',
     ['symbol', 'direction', 'strategy']
 )
 
 position_gauge = Gauge(
-    'tradepulse_open_positions',
+    'geosync_open_positions',
     'Open positions',
     ['symbol']
 )
 
 latency_histogram = Histogram(
-    'tradepulse_indicator_latency_seconds',
+    'geosync_indicator_latency_seconds',
     'Indicator computation latency',
     ['indicator_name']
 )
@@ -354,7 +354,7 @@ class JSONFormatter(logging.Formatter):
         return json.dumps(log_data)
 
 # Configure logging
-logger = logging.getLogger('tradepulse')
+logger = logging.getLogger('geosync')
 handler = logging.StreamHandler()
 handler.setFormatter(JSONFormatter())
 logger.addHandler(handler)
@@ -416,7 +416,7 @@ logger.critical('Database connection lost', extra={
 
 #### Trading Logs
 ```python
-trade_logger = logging.getLogger('tradepulse.trading')
+trade_logger = logging.getLogger('geosync.trading')
 
 # Log all trades
 trade_logger.info('ORDER_PLACED', extra={'extra_fields': {
@@ -437,7 +437,7 @@ trade_logger.info('ORDER_FILLED', extra={'extra_fields': {
 
 #### System Logs
 ```python
-sys_logger = logging.getLogger('tradepulse.system')
+sys_logger = logging.getLogger('geosync.system')
 
 sys_logger.info('SERVICE_START', extra={'extra_fields': {
     'service': 'execution_engine',
@@ -452,7 +452,7 @@ sys_logger.warning('HIGH_MEMORY_USAGE', extra={'extra_fields': {
 
 #### Audit Logs
 ```python
-audit_logger = logging.getLogger('tradepulse.audit')
+audit_logger = logging.getLogger('geosync.audit')
 
 audit_logger.info('CONFIG_CHANGED', extra={'extra_fields': {
     'user': 'admin',
@@ -484,13 +484,13 @@ clients:
   - url: http://loki:3100/loki/api/v1/push
 
 scrape_configs:
-  - job_name: tradepulse
+  - job_name: geosync
     static_configs:
       - targets:
           - localhost
         labels:
-          job: tradepulse
-          __path__: /var/log/tradepulse/*.log
+          job: geosync
+          __path__: /var/log/geosync/*.log
 ```
 
 ---
@@ -504,12 +504,12 @@ Define alerts for critical conditions:
 ```yaml
 # prometheus-alerts.yml
 groups:
-  - name: tradepulse_trading
+  - name: geosync_trading
     interval: 30s
     rules:
       # High error rate
       - alert: HighTradeErrorRate
-        expr: rate(tradepulse_trade_errors_total[5m]) > 0.1
+        expr: rate(geosync_trade_errors_total[5m]) > 0.1
         for: 5m
         labels:
           severity: critical
@@ -519,7 +519,7 @@ groups:
       
       # Large drawdown
       - alert: LargeDrawdown
-        expr: tradepulse_drawdown_percent > 10
+        expr: geosync_drawdown_percent > 10
         for: 1m
         labels:
           severity: warning
@@ -529,17 +529,17 @@ groups:
       
       # Service down
       - alert: ServiceDown
-        expr: up{job="tradepulse"} == 0
+        expr: up{job="geosync"} == 0
         for: 1m
         labels:
           severity: critical
         annotations:
-          summary: "TradePulse service is down"
+          summary: "GeoSync service is down"
           description: "Service {{ $labels.instance }} is down"
       
       # High latency
       - alert: HighOrderLatency
-        expr: histogram_quantile(0.95, tradepulse_order_latency_seconds_bucket) > 5
+        expr: histogram_quantile(0.95, geosync_order_latency_seconds_bucket) > 5
         for: 5m
         labels:
           severity: warning
@@ -549,7 +549,7 @@ groups:
       
       # Stale data
       - alert: StaleMarketData
-        expr: time() - tradepulse_last_data_timestamp > 300
+        expr: time() - geosync_last_data_timestamp > 300
         for: 1m
         labels:
           severity: critical
@@ -583,13 +583,13 @@ route:
 receivers:
   - name: 'default'
     email_configs:
-      - to: 'alerts@tradepulse.local'
+      - to: 'alerts@geosync.local'
   
   - name: 'slack'
     slack_configs:
       - api_url: 'YOUR_SLACK_WEBHOOK_URL'
-        channel: '#tradepulse-alerts'
-        title: 'TradePulse Alert'
+        channel: '#geosync-alerts'
+        title: 'GeoSync Alert'
         text: '{{ range .Alerts }}{{ .Annotations.summary }}\n{{ end }}'
   
   - name: 'pagerduty'
@@ -606,7 +606,7 @@ inhibit_rules:
 
 ### SLO-driven Auto Rollback
 
-TradePulse now ships with an ``AutoRollbackGuard`` helper that consumes error rate
+GeoSync now ships with an ``AutoRollbackGuard`` helper that consumes error rate
 and latency metrics to automatically revert unhealthy releases. Configure the
 guard with the expected SLO thresholds and wire a deployment specific callback
 that performs the rollback:
@@ -709,15 +709,15 @@ rule_files:
 
 # Scrape configurations
 scrape_configs:
-  # TradePulse Python services
-  - job_name: 'tradepulse-python'
+  # GeoSync Python services
+  - job_name: 'geosync-python'
     static_configs:
       - targets: ['localhost:8000']
         labels:
           service: 'execution-engine'
   
-  # TradePulse Go services
-  - job_name: 'tradepulse-go'
+  # GeoSync Go services
+  - job_name: 'geosync-go'
     static_configs:
       - targets:
           - 'localhost:8001'  # VPIN service
@@ -741,22 +741,22 @@ scrape_configs:
 
 ```promql
 # Total trades in last hour
-sum(increase(tradepulse_trades_total[1h]))
+sum(increase(geosync_trades_total[1h]))
 
 # Average order latency by exchange
-avg(tradepulse_order_latency_seconds) by (exchange)
+avg(geosync_order_latency_seconds) by (exchange)
 
 # Error rate
-rate(tradepulse_trade_errors_total[5m])
+rate(geosync_trade_errors_total[5m])
 
 # 95th percentile latency
-histogram_quantile(0.95, rate(tradepulse_order_latency_seconds_bucket[5m]))
+histogram_quantile(0.95, rate(geosync_order_latency_seconds_bucket[5m]))
 
 # Current drawdown
-tradepulse_drawdown_percent
+geosync_drawdown_percent
 
 # Trades per symbol
-sum(tradepulse_trades_total) by (symbol)
+sum(geosync_trades_total) by (symbol)
 ```
 
 ---
@@ -778,13 +778,13 @@ docker compose up grafana
 ```json
 {
   "dashboard": {
-    "title": "TradePulse Overview",
+    "title": "GeoSync Overview",
     "panels": [
       {
         "title": "Trades per Minute",
         "targets": [
           {
-            "expr": "rate(tradepulse_trades_total[1m]) * 60"
+            "expr": "rate(geosync_trades_total[1m]) * 60"
           }
         ],
         "type": "graph"
@@ -793,7 +793,7 @@ docker compose up grafana
         "title": "Current Drawdown",
         "targets": [
           {
-            "expr": "tradepulse_drawdown_percent"
+            "expr": "geosync_drawdown_percent"
           }
         ],
         "type": "singlestat"
@@ -802,7 +802,7 @@ docker compose up grafana
         "title": "Order Latency (p95)",
         "targets": [
           {
-            "expr": "histogram_quantile(0.95, rate(tradepulse_order_latency_seconds_bucket[5m]))"
+            "expr": "histogram_quantile(0.95, rate(geosync_order_latency_seconds_bucket[5m]))"
           }
         ],
         "type": "graph"
@@ -811,7 +811,7 @@ docker compose up grafana
         "title": "Open Positions by Symbol",
         "targets": [
           {
-            "expr": "tradepulse_open_positions"
+            "expr": "geosync_open_positions"
           }
         ],
         "type": "bargauge"
@@ -850,7 +850,7 @@ docker compose up grafana
 
 ### OpenTelemetry Integration
 
-TradePulse now ships a first-class tracing module under `observability.tracing`
+GeoSync now ships a first-class tracing module under `observability.tracing`
 that configures an OTLP exporter and exposes helpers for the ingest → features →
 signals → orders pipeline. Traces automatically correlate with structured logs
 when `JSONFormatter` is enabled.
@@ -861,7 +861,7 @@ from observability.tracing import TracingConfig, configure_tracing, pipeline_spa
 # Configure tracing once during application start-up. The exporter endpoint can
 # also be controlled via OTEL_EXPORTER_OTLP_ENDPOINT.
 configure_tracing(
-    TracingConfig(service_name="tradepulse-api", environment="production")
+    TracingConfig(service_name="geosync-api", environment="production")
 )
 
 def run_pipeline():
@@ -912,13 +912,13 @@ monitor.start()
 
 Two new metrics help track probe performance:
 
-* `tradepulse_health_check_latency_seconds` – histogram capturing the runtime
+* `geosync_health_check_latency_seconds` – histogram capturing the runtime
   of each periodic check.
-* `tradepulse_health_check_status` – gauge signalling the most recent outcome
+* `geosync_health_check_status` – gauge signalling the most recent outcome
   (1=healthy, 0=unhealthy).
 
 Operational metrics now also include
-`tradepulse_data_ingestion_throughput_ticks_per_second`, exposing how quickly
+`geosync_data_ingestion_throughput_ticks_per_second`, exposing how quickly
 the ingestion layer is processing raw ticks.
 
 ### Exporters in isolated processes
@@ -938,22 +938,22 @@ finally:
 
 ### Pipeline dashboards
 
-Grafana ships with `observability/dashboards/tradepulse-pipeline.json` which
+Grafana ships with `observability/dashboards/geosync-pipeline.json` which
 provides latency, throughput, and error-budget panels for the end-to-end
 pipeline. Import it alongside the existing overview dashboard to monitor SLOs.
 
 ### Shipping logs to Elasticsearch
 
 `docker-compose.yml` provisions Elasticsearch, Logstash, Filebeat, and Kibana to
-collect TradePulse container logs. Start the stack with:
+collect GeoSync container logs. Start the stack with:
 
 ```bash
-docker compose up tradepulse prometheus elasticsearch logstash kibana filebeat
+docker compose up geosync prometheus elasticsearch logstash kibana filebeat
 ```
 
 Filebeat autodiscovers containers labelled with `co.elastic.logs/enabled=true`
 and forwards their JSON log streams to Logstash, which normalises the payload
-before indexing it under the `tradepulse-logs-*` pattern. Kibana surfaces the
+before indexing it under the `geosync-logs-*` pattern. Kibana surfaces the
 data at <http://localhost:5601> for ad-hoc queries and dashboards.
 
 For Kubernetes environments the staging and production Kustomize overlays now

@@ -10,7 +10,7 @@ Compatibility: `stable`
 - Increased GET /v1/signals cache window and burst limits.
 
 ## 2024.4 — 2024-11-15
-Initial stable release of the TradePulse public API.
+Initial stable release of the GeoSync public API.
 
 Compatibility: `stable`
 

@@ -1,0 +1,68 @@
+# Diff-bound commit acceptor: wire the Protector veto into position sizing
+# (INV-YV1 maintenance hierarchy — "Protectors have unconditional priority
+# over Generators", CLAUDE.md Section 0, Layer 2).
+#
+# Gap (verified on main): NeuroSignalBus.should_hold() computes the serotonin
+# aversive veto and the crisis-regime veto, but NeuroSignalBus
+# .compute_position_multiplier() never consulted it — it returned
+# coherence * (1-gaba) * regime_scale only. The production decision surface
+# geosync_oracle.py multiplies that value directly
+# (final_mult = compute_position_multiplier() * cryptobiosis), so a firing
+# Protector (high serotonin / crisis) could not zero the Generator's position;
+# the veto was advisory only. CLAUDE.md Section 0 makes this the ROOT axiom:
+# Protectors are unconditional. The reference e2e pipeline already applied the
+# veto separately; the production oracle did not.
+#
+# Fix: compute_position_multiplier() returns 0.0 when should_hold() is true
+# (RLock is reentrant, so the call is safe). Strictly risk-reducing — the veto
+# can only zero/cut the position, never increase it. Crisis now HALTS (0.0)
+# rather than dampening to 0.1. No new dependency, no new public surface.
+
+id: cognitive-protector-veto-precedence
+status: ACTIVE
+claim_type: fail_closed
+promise: >-
+  After this PR, NeuroSignalBus.compute_position_multiplier returns 0.0 whenever
+  should_hold() is true (serotonin aversive veto OR crisis regime), so a firing
+  Protector zeroes the Generator's Kelly sizing — enforcing the INV-YV1
+  maintenance-hierarchy precedence "Protectors > Generators" in the production
+  path the oracle consumes. Strictly risk-reducing; non-veto behaviour is
+  unchanged.
+diff_scope:
+  changed_files:
+    - path: ".claude/commit_acceptors/cognitive-protector-veto-precedence.yaml"
+    - path: "core/neuro/signal_bus.py"
+    - path: "tests/unit/core/neuro/test_signal_bus.py"
+  forbidden_paths:
+    - "core/physics/"
+    - "core/kuramoto/"
+required_python_symbols:
+  - "tests/unit/core/neuro/test_signal_bus.py::TestPositionMultiplier::test_protector_veto_overrides_generator"
+expected_signal: >-
+  pytest tests/unit/core/neuro/test_signal_bus.py passes including
+  test_protector_veto_overrides_generator (high coherence + zero GABA + serotonin
+  above the hold threshold => multiplier == 0.0) and
+  test_crisis_regime_halts_position (crisis => 0.0); on the prior code the
+  multiplier returns a large positive size while a Protector is firing. ruff +
+  black + mypy --strict + physics validator clean; neuro integration tests
+  unaffected.
+measurement_command: >-
+  bash -c 'PYTHONPATH=. python -m pytest tests/unit/core/neuro/test_signal_bus.py -q'
+signal_artifact: "tmp/protector_veto_precedence.log"
+falsifier:
+  command: >-
+    bash -c 'PYTHONPATH=. python -m pytest
+    "tests/unit/core/neuro/test_signal_bus.py::TestPositionMultiplier::test_protector_veto_overrides_generator"
+    -q'
+  description: >-
+    With a firing serotonin veto (level above hold threshold) and a Generator
+    asking for full size (high coherence, zero GABA), the multiplier must be
+    exactly 0.0. The prior code returns a large positive size — a pass there
+    means the Protector>Generator precedence is not enforced and the falsifier
+    is vacuous.
+rollback_command: "git revert --no-edit HEAD"
+rollback_verification_command: "python tools/commit_acceptor/validate_commit_acceptor.py"
+memory_update_type: append
+ledger_path: ".claude/commit_acceptors/cognitive-protector-veto-precedence.yaml"
+report_path: ".claude/commit_acceptors/cognitive-protector-veto-precedence.yaml"
+evidence: []

@@ -1,15 +1,15 @@
 ---
-owner: integrations@tradepulse
+owner: integrations@geosync
 review_cadence: quarterly
 last_reviewed: 2026-01-01
 ---
 
-# TradePulse SDK API Reference
+# GeoSync SDK API Reference
 
 > **Version**: 0.1.0  
 > **Last Updated**: 2024-12-01
 
-This document provides comprehensive API documentation for the TradePulse SDK,
+This document provides comprehensive API documentation for the GeoSync SDK,
 including both the core Trading SDK and the MLSDM (Multi-Level Stochastic
 Decision Model) SDK.
 
@@ -19,7 +19,7 @@ Decision Model) SDK.
 - [Installation](#installation)
 - [Quick Start](#quick-start)
 - [Trading SDK](#trading-sdk)
-  - [TradePulseSDK](#tradepulsesdk)
+  - [GeoSyncSDK](#geosyncsdk)
   - [Data Contracts](#data-contracts)
 - [MLSDM SDK](#mlsdm-sdk)
   - [Entry Points](#entry-points)
@@ -37,7 +37,7 @@ Decision Model) SDK.
 
 ## Overview
 
-The TradePulse SDK provides two main modules:
+The GeoSync SDK provides two main modules:
 
 1. **Trading SDK**: Core trading operations including signal generation,
    order proposals, risk checks, and execution.
@@ -53,13 +53,13 @@ The TradePulse SDK provides two main modules:
 ## Installation
 
 ```bash
-pip install tradepulse
+pip install geosync
 ```
 
 For MLSDM features with GPU support:
 
 ```bash
-pip install tradepulse[gpu]
+pip install geosync[gpu]
 ```
 
 ---
@@ -69,11 +69,11 @@ pip install tradepulse[gpu]
 ### Trading SDK
 
 ```python
-from tradepulse.sdk import TradePulseSDK, MarketState, SDKConfig
-from application.system import TradePulseSystem
+from geosync.sdk import GeoSyncSDK, MarketState, SDKConfig
+from application.system import GeoSyncSystem
 
 # Initialize system
-system = TradePulseSystem(config)
+system = GeoSyncSystem(config)
 
 # Configure SDK
 config = SDKConfig(
@@ -83,7 +83,7 @@ config = SDKConfig(
 )
 
 # Create SDK instance
-sdk = TradePulseSDK(system, config)
+sdk = GeoSyncSDK(system, config)
 
 # Generate signal and execute trade
 state = MarketState(symbol="BTCUSDT", venue="BINANCE", market_frame=df)
@@ -97,7 +97,7 @@ if risk_result.approved:
 ### MLSDM SDK
 
 ```python
-from tradepulse.sdk.mlsdm import MLSDM, create_fhmc, create_agent
+from geosync.sdk.mlsdm import MLSDM, create_fhmc, create_agent
 
 # Quick start with defaults
 mlsdm = MLSDM.default()
@@ -125,19 +125,19 @@ print(f"Next decision window: {window:.1f} seconds")
 
 ## Trading SDK
 
-### TradePulseSDK
+### GeoSyncSDK
 
 The main orchestration class for trading operations.
 
 ```python
-class TradePulseSDK:
+class GeoSyncSDK:
     """Orchestrate trading operations via the public SDK contract."""
 
-    def __init__(self, system: TradePulseSystem, config: SDKConfig) -> None:
+    def __init__(self, system: GeoSyncSystem, config: SDKConfig) -> None:
         """Initialize the SDK.
 
         Args:
-            system: TradePulse system instance.
+            system: GeoSync system instance.
             config: SDK configuration.
         """
 
@@ -214,7 +214,7 @@ class MarketState:
 ```python
 @dataclass(slots=True)
 class SDKConfig:
-    """Runtime configuration for TradePulseSDK."""
+    """Runtime configuration for GeoSyncSDK."""
     default_venue: str
     signal_strategy: Callable[[np.ndarray], np.ndarray]
     position_sizer: Callable[[Signal], float]
@@ -243,7 +243,7 @@ Additionally, the `MLSDM` facade class provides a unified interface.
 ### MLSDM Facade
 
 ```python
-from tradepulse.sdk.mlsdm import MLSDM, MLSDMConfig
+from geosync.sdk.mlsdm import MLSDM, MLSDMConfig
 
 # Create from configuration file
 mlsdm = MLSDM.from_config("config/mlsdm.yaml")
@@ -340,7 +340,7 @@ class MLSDM:
 The Fracto-Hypothalamic Meta-Controller manages adaptive decision timing.
 
 ```python
-from tradepulse.sdk.mlsdm import create_fhmc, FHMCConfig
+from geosync.sdk.mlsdm import create_fhmc, FHMCConfig
 
 # From YAML file
 fhmc = create_fhmc("config/fhmc.yaml")
@@ -373,7 +373,7 @@ fhmc = create_fhmc()
 RL agent with FHMC biomarker feedback.
 
 ```python
-from tradepulse.sdk.mlsdm import create_agent, create_fhmc
+from geosync.sdk.mlsdm import create_agent, create_fhmc
 
 fhmc = create_fhmc()
 agent = create_agent(
@@ -397,7 +397,7 @@ for step in range(1000):
 Priority replay buffer with novelty-aware sampling.
 
 ```python
-from tradepulse.sdk.mlsdm import create_replay_engine
+from geosync.sdk.mlsdm import create_replay_engine
 
 engine = create_replay_engine(
     capacity=100_000,
@@ -425,7 +425,7 @@ batch = engine.sample(batch_size=64)
 Chaotic Fractal Grey Wolf Optimizer for crisis adaptation.
 
 ```python
-from tradepulse.sdk.mlsdm import create_optimizer
+from geosync.sdk.mlsdm import create_optimizer
 
 def objective(params):
     return np.sum((params - target) ** 2)
@@ -600,23 +600,23 @@ class TrainingStep:
 
 ## CLI Reference
 
-The TradePulse CLI provides commands for common workflows:
+The GeoSync CLI provides commands for common workflows:
 
 ```bash
 # Data ingestion
-tradepulse_cli ingest --config ingest.yaml
+geosync_cli ingest --config ingest.yaml
 
 # Run backtest
-tradepulse_cli backtest --config backtest.yaml --output table
+geosync_cli backtest --config backtest.yaml --output table
 
 # Parameter optimization
-tradepulse_cli optimize --config optimize.yaml
+geosync_cli optimize --config optimize.yaml
 
 # FETE backtest
-tradepulse_cli fete-backtest --csv data.csv --price-col price --out equity.csv
+geosync_cli fete-backtest --csv data.csv --price-col price --out equity.csv
 
 # Causal pipeline
-tradepulse_cli causal-pipeline --returns-csv returns.csv --output result.json
+geosync_cli causal-pipeline --returns-csv returns.csv --output result.json
 ```
 
 For MLSDM-specific CLI commands, see the extended documentation.
@@ -625,7 +625,7 @@ For MLSDM-specific CLI commands, see the extended documentation.
 
 ## HTTP API
 
-The TradePulse HTTP API is exposed via FastAPI. See `docs/api/` for OpenAPI
+The GeoSync HTTP API is exposed via FastAPI. See `docs/api/` for OpenAPI
 specifications and detailed endpoint documentation.
 
 ### Example Endpoints
@@ -642,7 +642,7 @@ specifications and detailed endpoint documentation.
 
 ## See Also
 
-- [Architecture Documentation](../CORE_ARCHITECTURE_IMPLEMENTATION.md)
-- [Neurodecision Stack](../docs/neurodecision_stack.md)
-- [FHMC Demo Script](../scripts/run_fhmc_demo.py)
-- [TradePulse CLI Reference](../docs/tradepulse_cli_reference.md)
+- [Architecture Documentation](../ARCHITECTURE.md)
+- [Neurodecision Stack](../neurodecision_stack.md)
+- [FHMC Demo Script](../../scripts/run_fhmc_demo.py)
+- [GeoSync CLI Reference](../geosync_cli_reference.md)

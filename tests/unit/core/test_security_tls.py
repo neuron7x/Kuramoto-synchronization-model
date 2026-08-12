@@ -1,3 +1,5 @@
+# Copyright (c) 2023-2026 Yaroslav Vasylenko (neuron7xLab)
+# SPDX-License-Identifier: MIT
 from __future__ import annotations
 
 import ssl
@@ -23,8 +25,8 @@ def _write_certificate_bundle(tmp_path: Path) -> tuple[Path, Path, Path]:
     root_subject = x509.Name(
         [
             x509.NameAttribute(NameOID.COUNTRY_NAME, "US"),
-            x509.NameAttribute(NameOID.ORGANIZATION_NAME, "TradePulse Test CA"),
-            x509.NameAttribute(NameOID.COMMON_NAME, "TradePulse Root CA"),
+            x509.NameAttribute(NameOID.ORGANIZATION_NAME, "GeoSync Test CA"),
+            x509.NameAttribute(NameOID.COMMON_NAME, "GeoSync Root CA"),
         ]
     )
     root_cert = (
@@ -43,8 +45,8 @@ def _write_certificate_bundle(tmp_path: Path) -> tuple[Path, Path, Path]:
     server_subject = x509.Name(
         [
             x509.NameAttribute(NameOID.COUNTRY_NAME, "US"),
-            x509.NameAttribute(NameOID.ORGANIZATION_NAME, "TradePulse Test Service"),
-            x509.NameAttribute(NameOID.COMMON_NAME, "tradepulse.test"),
+            x509.NameAttribute(NameOID.ORGANIZATION_NAME, "GeoSync Test Service"),
+            x509.NameAttribute(NameOID.COMMON_NAME, "geosync.test"),
         ]
     )
     server_cert = (
@@ -56,9 +58,7 @@ def _write_certificate_bundle(tmp_path: Path) -> tuple[Path, Path, Path]:
         .not_valid_before(now - one_day)
         .not_valid_after(now + timedelta(days=180))
         .add_extension(
-            x509.SubjectAlternativeName(
-                [x509.DNSName("tradepulse.test"), x509.DNSName("localhost")]
-            ),
+            x509.SubjectAlternativeName([x509.DNSName("geosync.test"), x509.DNSName("localhost")]),
             critical=False,
         )
         .add_extension(

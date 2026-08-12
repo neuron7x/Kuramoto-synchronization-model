@@ -1,5 +1,5 @@
 ---
-owner: integrations@tradepulse
+owner: integrations@geosync
 review_cadence: quarterly
 last_reviewed: 2026-01-01
 links:
@@ -12,7 +12,7 @@ links:
 
 ## Overview
 
-All TradePulse API errors follow a consistent JSON envelope. Clients should
+All GeoSync API errors follow a consistent JSON envelope. Clients should
 parse the `error` object, map it to retries or user messaging, and capture the
 `request_id` for support escalation.
 

@@ -1,3 +1,5 @@
+# Copyright (c) 2023-2026 Yaroslav Vasylenko (neuron7xLab)
+# SPDX-License-Identifier: MIT
 from __future__ import annotations
 
 from typing import Dict
@@ -5,8 +7,8 @@ from typing import Dict
 import pytest
 import yaml
 
-from tradepulse.core.neuro.dopamine import ActionGate, DopamineController
-from tradepulse.core.neuro.dopamine.action_gate import (
+from geosync.core.neuro.dopamine import ActionGate, DopamineController
+from geosync.core.neuro.dopamine.action_gate import (
     DopamineSnapshot,
     SerotoninSnapshot,
 )
@@ -70,9 +72,7 @@ def controller(tmp_path, config_dict: Dict[str, object]) -> DopamineController:
     return DopamineController(str(cfg_path))
 
 
-def _dopamine_snapshot(
-    controller: DopamineController, level: float
-) -> DopamineSnapshot:
+def _dopamine_snapshot(controller: DopamineController, level: float) -> DopamineSnapshot:
     controller.dopamine_level = level
     temperature = controller.compute_temperature(level)
     return DopamineSnapshot(

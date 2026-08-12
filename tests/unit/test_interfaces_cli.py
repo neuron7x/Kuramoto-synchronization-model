@@ -1,3 +1,5 @@
+# Copyright (c) 2023-2026 Yaroslav Vasylenko (neuron7xLab)
+# SPDX-License-Identifier: MIT
 from __future__ import annotations
 
 import numpy as np
@@ -21,9 +23,7 @@ def _reference_signal(
         delta_value = delta_entropy(prefix, window=window)
         graph = build_price_graph(prefix[-window:], delta=ricci_delta)
         curvature = mean_ricci(graph)
-        composite = composite_transition(
-            synchrony, delta_value, curvature, entropy_value
-        )
+        composite = composite_transition(synchrony, delta_value, curvature, entropy_value)
         if composite > 0.15 and delta_value < 0 and curvature < 0:
             sig[t] = 1
         elif composite < -0.15 and delta_value > 0:

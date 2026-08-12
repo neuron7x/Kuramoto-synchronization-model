@@ -1,0 +1,52 @@
+# SPDX-License-Identifier: MIT
+id: oos-split-provenance
+status: DRAFT
+claim_type: correctness
+promise: >-
+  Task 19. Every OOSResult carries a SplitProvenance (split_method, horizon,
+  embargo, n_total, train/val/test spans) so an OOS result is self-auditable for
+  leakage protection without re-running, and serializes via to_dict. A
+  green-stress pass surfaced a degenerate-split crash (a large embargo empties a
+  split and evaluate_oos indexed theta[test][0]); evaluate_oos now fails closed
+  with a clear ValueError when any split has < 2 rows. No predictive or market
+  claim; OOS-evidence provenance and a fail-closed guard only.
+diff_scope:
+  changed_files:
+    - path: ".claude/commit_acceptors/oos-split-provenance.yaml"
+    - path: "core/kuramoto/oos_validation.py"
+    - path: "tests/unit/core/test_kuramoto_validation.py"
+    - path: "tools/physics/clamp_registry.yaml"
+  forbidden_paths:
+    - "trading/"
+    - "execution/"
+    - "forecast/"
+    - "policy/"
+required_python_symbols:
+  - "tests/unit/core/test_kuramoto_validation.py::TestEvaluateOOS::test_degenerate_split_fails_closed"
+expected_signal: >-
+  evaluate_oos returns an OOSResult whose split_provenance records the horizon,
+  embargo and exact spans (verified under seed / window / horizon / embargo
+  perturbation) and to_dict serializes all seven keys; an embargo that empties a
+  split raises ValueError('degenerate split') instead of IndexError; pytest
+  tests/unit/core/test_kuramoto_validation.py passes.
+measurement_command: >-
+  bash -c 'PYTHONPATH=. python -m pytest -q tests/unit/core/test_kuramoto_validation.py'
+signal_artifact: "tmp/oos_split_provenance.log"
+falsifier:
+  command: |
+    python -c "import sys
+    from core.kuramoto.oos_validation import SplitProvenance
+    p = SplitProvenance('temporal_embargo', 1, 0, 100, (0, 60), (60, 80), (80, 100))
+    d = p.to_dict()
+    sys.exit(0 if 'test_span' not in d else 1)"
+  description: >-
+    Serializes a SplitProvenance and exits 0 only if 'test_span' is MISSING from
+    to_dict (the regressed state where provenance silently drops a span). On the
+    correct tree it is present, so the command exits non-zero — proving the
+    provenance serialization claim is falsifiable.
+rollback_command: "git revert --no-edit HEAD"
+rollback_verification_command: "git diff --exit-code core/kuramoto/oos_validation.py"
+memory_update_type: none
+ledger_path: ".claude/commit_acceptors/oos-split-provenance.yaml"
+report_path: "docs/reports/diff_bound_commit_acceptor_layer.md"
+evidence: []

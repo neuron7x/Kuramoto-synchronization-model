@@ -1,8 +1,9 @@
-# SPDX-License-Identifier: LicenseRef-TradePulse-Proprietary
+# Copyright (c) 2023-2026 Yaroslav Vasylenko (neuron7xLab)
+# SPDX-License-Identifier: MIT
 """Memory state validation utilities for production-grade memory hardening.
 
 This module provides validation functions and exception classes to ensure
-memory state integrity in TradePulse memory systems:
+memory state integrity in GeoSync memory systems:
 
 - StrategyMemory: Strategy episodic memory with decay
 - FractalPELMGPU: Phase-entangled lattice memory
@@ -76,9 +77,7 @@ class ValidationResult:
     def raise_if_invalid(self) -> None:
         """Raise InvariantError if validation failed."""
         if not self.is_valid:
-            raise InvariantError(
-                f"Memory state validation failed: {'; '.join(self.violations)}"
-            )
+            raise InvariantError(f"Memory state validation failed: {'; '.join(self.violations)}")
 
 
 @dataclass
@@ -169,16 +168,12 @@ def assert_finite_array(
         raise InvariantError(f"{name} must not be empty")
 
     if expected_dtype is not None and array.dtype != expected_dtype:
-        raise InvariantError(
-            f"{name} must have dtype {expected_dtype}, got {array.dtype}"
-        )
+        raise InvariantError(f"{name} must have dtype {expected_dtype}, got {array.dtype}")
 
     if array.size > 0 and not np.all(np.isfinite(array)):
         nan_count = np.sum(np.isnan(array))
         inf_count = np.sum(np.isinf(array))
-        raise InvariantError(
-            f"{name} contains non-finite values: {nan_count} NaN, {inf_count} Inf"
-        )
+        raise InvariantError(f"{name} contains non-finite values: {nan_count} NaN, {inf_count} Inf")
 
 
 # =============================================================================
@@ -229,14 +224,10 @@ def compute_state_checksum(
         return v
 
     # Filter and sort keys for determinism
-    filtered = {
-        k: _serialize_value(v) for k, v in sorted(data.items()) if k not in exclude_keys
-    }
+    filtered = {k: _serialize_value(v) for k, v in sorted(data.items()) if k not in exclude_keys}
 
     # Serialize to JSON with sorted keys
-    json_bytes = json.dumps(filtered, sort_keys=True, separators=(",", ":")).encode(
-        "utf-8"
-    )
+    json_bytes = json.dumps(filtered, sort_keys=True, separators=(",", ":")).encode("utf-8")
 
     # Compute hash
     hasher = hashlib.new(algorithm)
@@ -345,16 +336,12 @@ def validate_strategy_record(
                 if sig_field in sig:
                     val = sig[sig_field]
                     if not isinstance(val, (int, float)) or not np.isfinite(val):
-                        ctx.add_violation(
-                            f"Record {index}: signature.{sig_field} must be finite"
-                        )
+                        ctx.add_violation(f"Record {index}: signature.{sig_field} must be finite")
                         valid = False
         elif isinstance(sig, (list, tuple)) and len(sig) == 5:
             for i, val in enumerate(sig):
                 if not isinstance(val, (int, float)) or not np.isfinite(val):
-                    ctx.add_violation(
-                        f"Record {index}: signature[{i}] must be finite, got {val}"
-                    )
+                    ctx.add_violation(f"Record {index}: signature[{i}] must be finite, got {val}")
                     valid = False
 
     if not valid and not strict:
@@ -416,9 +403,7 @@ def validate_strategy_memory_state(
     else:
         # Check capacity constraint
         if isinstance(max_records, int) and len(records) > max_records:
-            ctx.add_violation(
-                f"len(records)={len(records)} exceeds max_records={max_records}"
-            )
+            ctx.add_violation(f"len(records)={len(records)} exceeds max_records={max_records}")
 
         # Validate each record
         for i, record in enumerate(records):
@@ -473,9 +458,7 @@ def validate_pelm_entry(
         if isinstance(vector, list):
             vector = np.array(vector)
         elif not isinstance(vector, np.ndarray):
-            ctx.add_violation(
-                f"Entry {index}: vector must be array, got {type(vector)}"
-            )
+            ctx.add_violation(f"Entry {index}: vector must be array, got {type(vector)}")
             valid = False
             vector = None
 
@@ -485,9 +468,7 @@ def validate_pelm_entry(
                 valid = False
 
             if len(vector) != dimension:
-                ctx.add_violation(
-                    f"Entry {index}: vector dimension {len(vector)} != {dimension}"
-                )
+                ctx.add_violation(f"Entry {index}: vector dimension {len(vector)} != {dimension}")
                 valid = False
 
     # Validate phase
@@ -577,9 +558,7 @@ def validate_pelm_state(
     else:
         # Check capacity constraint
         if isinstance(capacity, int) and len(entries) > capacity:
-            ctx.add_violation(
-                f"len(entries)={len(entries)} exceeds capacity={capacity}"
-            )
+            ctx.add_violation(f"len(entries)={len(entries)} exceeds capacity={capacity}")
 
         # Validate each entry
         for i, entry in enumerate(entries):

@@ -1,0 +1,84 @@
+# Diff-bound acceptor: turn the architecture-debt inference into a
+# fail-closed ratchet. Debt becomes a monotonic-non-increasing invariant —
+# the same fail-closed pattern the repo applies everywhere, now applied to
+# its own structural debt. Infra only, no physics.
+
+id: debt-ratchet-gate
+status: ACTIVE
+claim_type: correctness
+promise: >-
+  After this PR, architecture_debt_inference --check tools/debt_budget.json
+  is a fail-closed ratchet: it exits non-zero if any non-by_design debt
+  class exceeds its committed per-class ceiling, so debt may shrink but
+  never grow. A new CI gate (architecture-debt-ratchet.yml) enforces it on
+  every PR and push to main. The tool also stops counting its own
+  docstring mention of the type-ignore phrase (comment-form only) and uses
+  casts instead of suppressions. No empirical/market/alpha claim.
+
+diff_scope:
+  changed_files:
+    - path: ".claude/commit_acceptors/debt-ratchet-gate.yaml"
+    - path: "tools/architecture_debt_inference.py"
+    - path: "tools/debt_budget.json"
+    - path: "tests/ci/test_architecture_debt_inference.py"
+    - path: ".github/workflows/architecture-debt-ratchet.yml"
+    - path: ".claude/commit_acceptors/repo-health-sensor.yaml"
+    - path: ".claude/commit_acceptors/architecture-debt-inference.yaml"
+    - path: ".claude/commit_acceptors/debt-inference-precision.yaml"
+  forbidden_paths:
+    - "trading/"
+    - "execution/"
+    - "core/"
+    - "runtime/"
+    - "application/"
+
+required_python_symbols:
+  - "tools/architecture_debt_inference.py::ratchet"
+  - "tools/architecture_debt_inference.py::load_budget"
+  - "tools/architecture_debt_inference.py::main"
+
+expected_signal: >-
+  python tools/architecture_debt_inference.py --check tools/debt_budget.json
+  prints "debt ratchet: OK" and exits 0 on the current tree; lowering any
+  budget entry below its measured count makes it exit 1 with a REGRESSION
+  line; pytest reports the ratchet contract tests passing.
+
+measurement_command: >-
+  bash -c '
+    python tools/architecture_debt_inference.py --check tools/debt_budget.json && python -m pytest -q tests/ci/test_architecture_debt_inference.py
+  '
+
+signal_artifact: "tmp/debt_ratchet_gate.log"
+
+falsifier:
+  command: >-
+    bash -c '
+      python -m pytest -q
+        tests/ci/test_architecture_debt_inference.py::test_committed_budget_holds_on_current_tree
+        >/dev/null 2>&1 && exit 1 || exit 0
+    '
+  description: >-
+    Inverts the ratchet guarantee: succeeds only when the committed budget
+    no longer holds on the tree — i.e. debt grew unbudgeted, the exact
+    regression the gate exists to block.
+
+rollback_command: >-
+  bash -c '
+    git rm -f tools/debt_budget.json
+      .github/workflows/architecture-debt-ratchet.yml
+      .claude/commit_acceptors/debt-ratchet-gate.yaml && git checkout origin/main -- tools/architecture_debt_inference.py
+       tests/ci/test_architecture_debt_inference.py
+  '
+
+rollback_verification_command: >-
+  bash -c '
+    test ! -e tools/debt_budget.json
+  '
+
+memory_update_type: append
+ledger_path: ".claude/commit_acceptors/debt-ratchet-gate.yaml"
+report_path: "tmp/debt_ratchet_gate.log"
+evidence:
+- path: tools/debt_budget.json
+- path: .github/workflows/architecture-debt-ratchet.yml
+- path: tools/architecture_debt_inference.py

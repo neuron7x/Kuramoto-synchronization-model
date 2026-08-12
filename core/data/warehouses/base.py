@@ -1,3 +1,5 @@
+# Copyright (c) 2023-2026 Yaroslav Vasylenko (neuron7xLab)
+# SPDX-License-Identifier: MIT
 """Abstractions for describing time-series warehouse integrations."""
 
 from __future__ import annotations

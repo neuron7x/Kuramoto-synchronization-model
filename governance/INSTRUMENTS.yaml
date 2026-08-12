@@ -1,0 +1,174 @@
+# Copyright (c) 2023-2026 Yaroslav Vasylenko (neuron7xLab)
+# SPDX-License-Identifier: MIT
+#
+# Authoritative registry of the seven governance-locked methodology
+# instruments. This file — not the git history, not a heuristic over
+# `feat(methodology)` merges — is the single source of truth for WHICH
+# modules are governance-locked descriptor instruments.
+#
+# Each entry binds, machine-readably, the full evidence chain for one
+# instrument:
+#
+#   PR  ->  merge_commit  ->  module (+ source_sha256)  ->  test_file
+#       ->  falsifier pytest node(s)  ->  claim_boundary  ->  acceptor
+#       ->  provenance (evidence log + sha256)
+#
+# scripts/ci/check_instrument_evidence_chain.py fails closed if ANY link
+# in ANY entry dangles: a module that moved, a source that drifted without
+# an acceptor refresh, a merge commit that does not exist or did not touch
+# the module, a test file that vanished, a falsifier node that pytest can
+# no longer collect, a missing/incorrect claim boundary, an acceptor that
+# does not bind the module, or provenance evidence that does not resolve.
+#
+# The seven instruments are descriptor-only research infrastructure. None
+# emits a predictive, significance, or financial claim; every one declares
+# claim_boundary="descriptor_only_not_predictor". temporal_ricci (PR #1057)
+# is a hardening change to a pre-existing module and is NOT part of this
+# governance-lock surface; it would have to be added here explicitly to be
+# governed.
+schema_version: 1
+claim_boundary_required: "descriptor_only_not_predictor"
+instruments:
+  - id: state-quantization
+    pr: 1046
+    merge_commit: "d0bf7eea4f46447fa69f0eb4028b57db0d06b9e0"  # pragma: allowlist secret
+    module: "analytics/signals/state_quantization.py"
+    source_sha256: "93385960cf7cf8296efa1ea36552edde7ae6d2ce76e2d5c106d6a25eef20d1b1"  # pragma: allowlist secret
+    test_file: "tests/unit/analytics/test_state_quantization.py"
+    acceptor: ".claude/commit_acceptors/quantization-state-compiler.yaml"
+    claim_boundary: "descriptor_only_not_predictor"
+    falsifiers:
+      - "tests/unit/analytics/test_state_quantization.py::test_p1_deterministic_for_same_input_and_config"
+      - "tests/unit/analytics/test_state_quantization.py::test_failclosed_non_finite_threshold_rejected"
+
+  - id: threshold-calibration
+    pr: 1048
+    merge_commit: "2c3ea591d55ca2b292e4bb4a60544206074f0ea0"  # pragma: allowlist secret
+    module: "analytics/signals/threshold_calibration.py"
+    source_sha256: "2d0cf2e2bd51ed95eb6ed2c8f58daa337cb90b2d5e98699daefce450680b446c"  # pragma: allowlist secret
+    test_file: "tests/unit/analytics/test_threshold_calibration.py"
+    acceptor: ".claude/commit_acceptors/calibration-contract.yaml"
+    claim_boundary: "descriptor_only_not_predictor"
+    falsifiers:
+      - "tests/unit/analytics/test_threshold_calibration.py::test_p1_deterministic_selection"
+      - "tests/unit/analytics/test_threshold_calibration.py::test_p5_empty_candidates_rejected"
+
+  - id: null-baseline
+    pr: 1058
+    merge_commit: "4503a8b19dc35841a1ffc947ef95dc26d8fb4704"  # pragma: allowlist secret
+    module: "analytics/signals/null_baseline.py"
+    source_sha256: "e111e5c2b162bf26dcd093634877a075e4d04e4248c81f8c663fccda5ff043d5"  # pragma: allowlist secret
+    test_file: "tests/unit/analytics/test_null_baseline.py"
+    acceptor: ".claude/commit_acceptors/null-baseline-fixtures.yaml"
+    claim_boundary: "descriptor_only_not_predictor"
+    falsifiers:
+      - "tests/unit/analytics/test_null_baseline.py::test_gaussian_deterministic_for_same_seed"
+      - "tests/unit/analytics/test_null_baseline.py::test_surrogate_deterministic_for_same_seed"
+
+  - id: null-comparison
+    pr: 1065
+    merge_commit: "2b512a099e00073787563e6120eec76a0529da43"  # pragma: allowlist secret
+    module: "analytics/signals/null_comparison.py"
+    source_sha256: "cb63f8a7d96d3be19c2ba00cb64b4fa5d845c4cdfc6f52b59704439ba4927a9f"  # pragma: allowlist secret
+    test_file: "tests/unit/analytics/test_null_comparison.py"
+    acceptor: ".claude/commit_acceptors/null-comparison-harness.yaml"
+    claim_boundary: "descriptor_only_not_predictor"
+    falsifiers:
+      - "tests/unit/analytics/test_null_comparison.py::test_deterministic_for_equal_inputs"
+      - "tests/unit/analytics/test_null_comparison.py::test_fail_closed_on_empty_null"
+
+  - id: descriptor-metadata
+    pr: 1067
+    merge_commit: "8f1ee0039e71a368d0588c331b3fd53d7f87fba2"  # pragma: allowlist secret
+    module: "analytics/signals/descriptor_metadata.py"
+    source_sha256: "4a7027930c805416a1e698f61cca793bc42da345379683e81baba7c9c42df6f3"  # pragma: allowlist secret
+    test_file: "tests/unit/analytics/test_descriptor_metadata.py"
+    acceptor: ".claude/commit_acceptors/claim-metadata-factory.yaml"
+    claim_boundary: "descriptor_only_not_predictor"
+    falsifiers:
+      - "tests/unit/analytics/test_descriptor_metadata.py::test_stamps_three_claim_fields"
+      - "tests/unit/analytics/test_descriptor_metadata.py::test_rejects_each_forbidden_token_in_method"
+
+  - id: replay-descriptor-capsule
+    pr: 1069
+    merge_commit: "6a87942e399be25e3320e031c6b5b9a63c507349"  # pragma: allowlist secret
+    module: "scripts/replay_descriptor_capsule.py"
+    source_sha256: "b10c9b7a6243b2e2b1cc3070fe6beda8bb9715381de36d1c2e55186fe859e7fd"  # pragma: allowlist secret
+    test_file: "tests/unit/analytics/test_replay_descriptor_capsule.py"
+    acceptor: ".claude/commit_acceptors/public-replay-surface.yaml"
+    claim_boundary: "descriptor_only_not_predictor"
+    falsifiers:
+      - "tests/unit/analytics/test_replay_descriptor_capsule.py::test_manifest_digest_is_deterministic"
+      - "tests/unit/analytics/test_replay_descriptor_capsule.py::test_claim_boundary_fields_present_and_correct"
+
+  - id: market-state-contract
+    pr: 1055
+    merge_commit: "7737c2148d80996b348e4bc487676fe1e5c630b2"  # pragma: allowlist secret
+    module: "core/indicators/market_state_contract.py"
+    source_sha256: "d7cbd429ff753fafdc57a4d632d3a16c4aec9c8c6bf996edd98c01b816bcef92"  # pragma: allowlist secret
+    test_file: "tests/unit/indicators/test_market_state_provenance.py"
+    acceptor: ".claude/commit_acceptors/marketstate-provenance.yaml"
+    claim_boundary: "descriptor_only_not_predictor"
+    falsifiers:
+      - "tests/unit/indicators/test_market_state_provenance.py::test_provenance_is_deterministic"
+      - "tests/unit/indicators/test_market_state_provenance.py::test_claim_boundary_fields_present"
+
+  - id: descriptor-information-quality
+    pr: 1082
+    merge_commit: "e04453c0a7c9b5b2ac4bc703ce0851fa24dd75d4"  # pragma: allowlist secret
+    module: "analytics/signals/descriptor_information_quality.py"
+    source_sha256: "a4c9eceb5d94c0bcf02d3e087b6385459b994bfb0b2a6d2d449e149eaede0a55"  # pragma: allowlist secret
+    test_file: "tests/unit/analytics/test_descriptor_information_quality.py"
+    acceptor: ".claude/commit_acceptors/descriptor-information-quality.yaml"
+    claim_boundary: "descriptor_only_not_predictor"
+    falsifiers:
+      - "tests/unit/analytics/test_descriptor_information_quality.py::test_uniform_distribution_is_max_entropy"
+      - "tests/unit/analytics/test_descriptor_information_quality.py::test_fail_closed_empty_observed"
+
+  - id: descriptor-capsule
+    pr: 1082
+    merge_commit: "e04453c0a7c9b5b2ac4bc703ce0851fa24dd75d4"  # pragma: allowlist secret
+    module: "analytics/signals/descriptor_capsule.py"
+    source_sha256: "122615a0230dcefdee35d4e949341f1282dfd98b2dcb584618eb8c5380edc4cb"  # pragma: allowlist secret
+    test_file: "tests/unit/analytics/test_descriptor_capsule.py"
+    acceptor: ".claude/commit_acceptors/descriptor-capsule.yaml"
+    claim_boundary: "descriptor_only_not_predictor"
+    falsifiers:
+      - "tests/unit/analytics/test_descriptor_capsule.py::test_manifest_is_deterministic"
+      - "tests/unit/analytics/test_descriptor_capsule.py::test_fail_closed_on_bad_config"
+
+  - id: descriptor-scenarios
+    pr: 1082
+    merge_commit: "e04453c0a7c9b5b2ac4bc703ce0851fa24dd75d4"  # pragma: allowlist secret
+    module: "analytics/signals/descriptor_scenarios.py"
+    source_sha256: "a938398fe37eb1e00b45db87c964b2cbd41d7682f61764881ee8cea5dd75c364"  # pragma: allowlist secret
+    test_file: "tests/unit/analytics/test_descriptor_scenarios.py"
+    acceptor: ".claude/commit_acceptors/descriptor-scenarios.yaml"
+    claim_boundary: "descriptor_only_not_predictor"
+    falsifiers:
+      - "tests/unit/analytics/test_descriptor_scenarios.py::test_run_all_is_deterministic"
+      - "tests/unit/analytics/test_descriptor_scenarios.py::test_unknown_scenario_fails_closed"
+
+  - id: resolution-auditor
+    pr: 1090
+    merge_commit: "c5ac4aceaf45b1c923bb9cdc0427fe0d5ec002b7"  # pragma: allowlist secret
+    module: "analytics/signals/resolution_auditor.py"
+    source_sha256: "2212ce7195a7179733c1a470cb17972376224a8e791a73a959daee2b323d5a14"  # pragma: allowlist secret
+    test_file: "tests/unit/analytics/test_resolution_auditor.py"
+    acceptor: ".claude/commit_acceptors/resolution-auditor-contract.yaml"
+    claim_boundary: "descriptor_only_not_predictor"
+    falsifiers:
+      - "tests/unit/analytics/test_resolution_auditor.py::test_p1_deterministic_for_same_metadata"
+      - "tests/unit/analytics/test_resolution_auditor.py::test_failclosed_inconsistent_counts"
+
+  - id: claim-maturity
+    pr: 1094
+    merge_commit: "8175f53f87bb486f6902be04f2f4c534373525ac"  # pragma: allowlist secret
+    module: "analytics/signals/claim_maturity.py"
+    source_sha256: "19129ce9930cd5b1c169d1cf67afa1b0d559f0b83dbedbcc85c1ac9d6313a75a"  # pragma: allowlist secret
+    test_file: "tests/unit/analytics/test_claim_maturity.py"
+    acceptor: ".claude/commit_acceptors/claim-maturity-contract.yaml"
+    claim_boundary: "descriptor_only_not_predictor"
+    falsifiers:
+      - "tests/unit/analytics/test_claim_maturity.py::test_deterministic_for_same_arguments"
+      - "tests/unit/analytics/test_claim_maturity.py::test_failclosed_unknown_evidence_token"

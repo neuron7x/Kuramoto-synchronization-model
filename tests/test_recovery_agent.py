@@ -1,3 +1,5 @@
+# Copyright (c) 2023-2026 Yaroslav Vasylenko (neuron7xLab)
+# SPDX-License-Identifier: MIT
 """Tests for the adaptive recovery agent."""
 
 import numpy as np
@@ -14,9 +16,7 @@ def test_agent_initialises_with_defaults() -> None:
 
 def test_state_discretisation_bounds() -> None:
     agent = AdaptiveRecoveryAgent()
-    state = RecoveryState(
-        F_current=0.12, F_baseline=0.10, latency_spike=4.0, steps_in_crisis=20
-    )
+    state = RecoveryState(F_current=0.12, F_baseline=0.10, latency_spike=4.0, steps_in_crisis=20)
     discrete = agent.discretize_state(state)
     assert len(discrete) == 3
     assert all(isinstance(value, int) for value in discrete)
@@ -25,18 +25,14 @@ def test_state_discretisation_bounds() -> None:
 def test_choose_action_uses_epsilon_greedy() -> None:
     rng = np.random.default_rng(seed=42)
     agent = AdaptiveRecoveryAgent(epsilon=0.0, rng=rng)
-    state = RecoveryState(
-        F_current=0.11, F_baseline=0.10, latency_spike=2.0, steps_in_crisis=3
-    )
+    state = RecoveryState(F_current=0.11, F_baseline=0.10, latency_spike=2.0, steps_in_crisis=3)
     action = agent.choose_action(state)
     assert action in RecoveryAction.ALL
 
 
 def test_q_update_improves_value() -> None:
     agent = AdaptiveRecoveryAgent(alpha=0.5)
-    state = RecoveryState(
-        F_current=0.11, F_baseline=0.10, latency_spike=2.0, steps_in_crisis=3
-    )
+    state = RecoveryState(F_current=0.11, F_baseline=0.10, latency_spike=2.0, steps_in_crisis=3)
     next_state = RecoveryState(
         F_current=0.105, F_baseline=0.10, latency_spike=1.5, steps_in_crisis=4
     )

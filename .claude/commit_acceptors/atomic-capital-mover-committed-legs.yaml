@@ -1,0 +1,77 @@
+# Diff-bound commit acceptor: AtomicCapitalMover must not release committed legs.
+#
+# Bug: on a commit-phase failure, _rollback released ALL legs including ones
+# already committed — reversing a settled transfer and reporting committed=False,
+# so the caller believed nothing happened while capital was imbalanced. Fix rolls
+# back only the still-reserved legs and surfaces the partial outcome.
+
+id: atomic-capital-mover-committed-legs
+status: ACTIVE
+claim_type: correctness
+promise: >-
+  After this PR, AtomicCapitalMover.execute rolls back ONLY the reserved-but-
+  uncommitted legs on failure (legs[committed_count:]); a committed leg is never
+  released. A commit-phase failure after some legs settled returns
+  TransferResult(committed=False, partial=True, committed_legs=k) and logs a
+  reconciliation error, instead of silently reporting a clean no-op. A reserve-
+  phase failure rolls back all reservations and is partial=False.
+
+diff_scope:
+  changed_files:
+    - path: ".claude/commit_acceptors/atomic-capital-mover-committed-legs.yaml"
+    - path: "execution/arbitrage/capital.py"
+    - path: "execution/arbitrage/models.py"
+    - path: "tests/execution/test_capital_partial_commit.py"
+  forbidden_paths:
+    - "core/physics/"
+    - "core/kuramoto/"
+    - "execution/oms.py"
+
+required_python_symbols:
+  - "execution/arbitrage/capital.py::AtomicCapitalMover"
+  - "execution/arbitrage/models.py::TransferResult"
+
+expected_signal: >-
+  `python -m pytest --import-mode=importlib
+  tests/execution/test_capital_partial_commit.py -q` reports 2 passed: a
+  committed leg is not released on partial failure (partial=True, committed_legs
+  ==1), and a reserve-phase failure is clean (partial=False, all released).
+
+measurement_command: >-
+  bash -c '
+    python -m pytest --import-mode=importlib -p no:cacheprovider
+      tests/execution/test_capital_partial_commit.py
+      tests/execution/test_arbitrage.py -q
+  '
+
+signal_artifact: "tmp/atomic_capital_mover_committed_legs.log"
+
+falsifier:
+  command: |-
+    bash -c '
+      python -c "
+    from execution.arbitrage.models import TransferResult
+    from datetime import datetime, timezone
+    r = TransferResult(transfer_id=\"t\", committed=False, committed_at=datetime.now(timezone.utc), committed_legs=1, partial=True)
+    assert r.partial is True and r.committed_legs == 1 and r.committed is False
+    "
+    '
+  description: >-
+    Asserts TransferResult carries the partial/committed_legs surface. Per the
+    run_evidence green-state contract it exits 0 on the correct tree and non-zero
+    if the partial-commit surface is removed.
+
+rollback_command: >-
+  bash -c '
+    git rm -f .claude/commit_acceptors/atomic-capital-mover-committed-legs.yaml
+  '
+
+rollback_verification_command: >-
+  bash -c '
+    test ! -f .claude/commit_acceptors/atomic-capital-mover-committed-legs.yaml
+  '
+
+memory_update_type: append
+ledger_path: ".claude/commit_acceptors/atomic-capital-mover-committed-legs.yaml"
+report_path: "tmp/atomic_capital_mover_committed_legs.log"
+evidence: []

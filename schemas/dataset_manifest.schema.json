@@ -1,0 +1,177 @@
+{
+  "$schema": "https://json-schema.org/draft/2020-12/schema",
+  "$id": "https://neuron7xlab.dev/schemas/dataset_manifest.schema.json",
+  "title": "GeoSync Immutable Dataset Manifest",
+  "description": "One manifest per canonical committed dataset. Records immutable provenance (source, retrieval, license, checksum) plus the evidence class the dataset may back. The dataset-level checksum is the sha256 of the sorted per-file 'path  sha256' digest lines (see scripts/ci/check_dataset_manifests.py::dataset_digest). Task DAT-001.",
+  "type": "object",
+  "additionalProperties": false,
+  "required": [
+    "manifest_version",
+    "id",
+    "source",
+    "retrieval_time",
+    "query",
+    "license",
+    "checksum",
+    "bytes",
+    "schema",
+    "coverage",
+    "revision_status",
+    "access_restrictions",
+    "evidence_class",
+    "files"
+  ],
+  "properties": {
+    "manifest_version": {
+      "type": "string",
+      "const": "dataset_manifest.v1"
+    },
+    "id": {
+      "type": "string",
+      "pattern": "^[a-z0-9][a-z0-9._-]*$",
+      "description": "Stable, unique dataset id. A result citing this dataset references this id plus the checksum below."
+    },
+    "source": {
+      "type": "object",
+      "additionalProperties": false,
+      "required": ["vendor", "origin", "retrieval_method"],
+      "properties": {
+        "vendor": {
+          "type": "string",
+          "minLength": 1,
+          "description": "Who produced the raw bytes. 'neuron7xLab-generator' for synthetic; a named vendor/exchange for empirical data."
+        },
+        "origin": {
+          "type": "string",
+          "enum": [
+            "repository_generated",
+            "exchange_public",
+            "vendor_proprietary",
+            "vendor_unattributed",
+            "unknown"
+          ],
+          "description": "Provenance class of the bytes. 'repository_generated' == synthetic and thus SIMULATION-eligible."
+        },
+        "uri": {
+          "type": ["string", "null"],
+          "description": "Retrieval endpoint / vendor URI, or null when generated in-repo."
+        },
+        "retrieval_method": {
+          "type": "string",
+          "minLength": 1,
+          "description": "How the bytes were obtained (generator command, REST endpoint, vendor export, ...)."
+        }
+      }
+    },
+    "retrieval_time": {
+      "type": "string",
+      "minLength": 1,
+      "description": "UTC ISO-8601 retrieval timestamp for empirical data, or the literal 'SYNTHETIC_GENERATED' for repository-generated datasets."
+    },
+    "query": {
+      "type": "string",
+      "minLength": 1,
+      "description": "The exact selection/query/generation invocation that produced the dataset."
+    },
+    "license": {
+      "type": "string",
+      "minLength": 1,
+      "description": "License / redistribution status. An SPDX id (e.g. 'MIT') for cleared data. Empty, 'UNKNOWN', 'UNLICENSED', 'NONE', 'TBD', or 'PUBLIC_NO_LICENSE' are NOT cleared and cause the gate to fail closed (RED)."
+    },
+    "license_verified": {
+      "type": "boolean",
+      "description": "Set true only by an independent license audit (SEC-015). The manifest RECORDS the license; SEC-015 VERIFIES it. Absent/false == not yet independently verified."
+    },
+    "checksum": {
+      "type": "object",
+      "additionalProperties": false,
+      "required": ["algorithm", "value"],
+      "properties": {
+        "algorithm": {
+          "type": "string",
+          "const": "sha256"
+        },
+        "value": {
+          "type": "string",
+          "pattern": "^[0-9a-f]{64}$",
+          "description": "Dataset-level digest: sha256 over the sorted 'path  <file-sha256>' lines of files[] (dataset_digest())."
+        }
+      }
+    },
+    "bytes": {
+      "type": "integer",
+      "minimum": 0,
+      "description": "Total on-disk size of all files[] in bytes."
+    },
+    "schema": {
+      "type": "object",
+      "additionalProperties": false,
+      "required": ["format", "description"],
+      "properties": {
+        "format": {
+          "type": "string",
+          "enum": ["csv", "parquet", "npz", "npy", "feather", "arrow", "json"]
+        },
+        "columns": {
+          "type": "array",
+          "items": {"type": "string"}
+        },
+        "description": {"type": "string", "minLength": 1}
+      }
+    },
+    "coverage": {
+      "type": "object",
+      "additionalProperties": false,
+      "required": ["description"],
+      "properties": {
+        "rows": {"type": ["integer", "null"], "minimum": 0},
+        "start": {"type": ["string", "null"]},
+        "end": {"type": ["string", "null"]},
+        "assets": {"type": ["integer", "null"], "minimum": 0},
+        "description": {"type": "string", "minLength": 1}
+      }
+    },
+    "revision_status": {
+      "type": "string",
+      "enum": ["FROZEN", "MUTABLE", "DEPRECATED", "RETIRED"],
+      "description": "FROZEN datasets must never change bytes without a new id."
+    },
+    "access_restrictions": {
+      "type": "string",
+      "minLength": 1,
+      "description": "Redistribution / usage restrictions, or 'none' when unrestricted."
+    },
+    "evidence_class": {
+      "type": "string",
+      "enum": ["FACT", "MEASURED", "SIMULATION", "HYPOTHESIS", "RETIRED"],
+      "description": "The evidence class this dataset may back. Repository-generated == SIMULATION. Real market/vendor data == MEASURED (and MUST NOT be laundered as SIMULATION)."
+    },
+    "files": {
+      "type": "array",
+      "minItems": 1,
+      "items": {
+        "type": "object",
+        "additionalProperties": false,
+        "required": ["path", "checksum_sha256", "bytes"],
+        "properties": {
+          "path": {
+            "type": "string",
+            "minLength": 1,
+            "description": "Repo-root-relative POSIX path to the dataset file."
+          },
+          "checksum_sha256": {
+            "type": "string",
+            "pattern": "^[0-9a-f]{64}$"
+          },
+          "bytes": {"type": "integer", "minimum": 0}
+        }
+      }
+    },
+    "flags": {
+      "type": "array",
+      "items": {"type": "string"},
+      "description": "Governance flags. REAL_DATA_CONTRADICTS_SYNTHETIC_ONLY_BOUNDARY marks empirical data that violates the NO_DEPLOY / synthetic-only project boundary."
+    },
+    "notes": {"type": "string"}
+  }
+}

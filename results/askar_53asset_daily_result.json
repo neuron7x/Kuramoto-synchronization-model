@@ -1,0 +1,225 @@
+{
+  "test1_53assets": {
+    "n_assets": 53,
+    "target": "USA_500_Index",
+    "window": 60,
+    "threshold": 0.3,
+    "cost_bps": 5.0,
+    "n_train_bars": 1787,
+    "n_test_bars": 780,
+    "IC_train": 0.0151,
+    "IC_test": 0.0482,
+    "sharpe_train": 0.075,
+    "sharpe_test": -0.892,
+    "maxdd_test": -0.2756,
+    "permutation_p": 0.116,
+    "permutation_sigma": 1.19,
+    "overfit_ratio": -11.913,
+    "vs_baseline_0_106": -0.0578,
+    "vs_u4_prior_0_0661": -0.0179,
+    "beats_u4_prior": false,
+    "beats_yfinance_baseline": false
+  },
+  "test2_momentum_stack": {
+    "sign_ricci": 1.0,
+    "sign_momentum": 1.0,
+    "w_ricci": 0.0,
+    "w_momentum": 1.0,
+    "IC_train_ensemble": 0.181,
+    "IC_train_ensemble_grid_peak": 0.181,
+    "IC_test_ensemble": 0.1394,
+    "IC_train_ricci_alone": 0.0151,
+    "IC_train_momentum_alone": 0.181,
+    "IC_test_ricci_alone": 0.0482,
+    "IC_test_momentum_alone": 0.1394,
+    "sharpe_test": -0.619,
+    "maxdd_test": -0.203,
+    "permutation_p": 0.0,
+    "permutation_sigma": 3.71,
+    "ensemble_adds_value": false,
+    "ricci_share_of_blend": 0.0,
+    "momentum_dominated": true,
+    "w_ricci_floor": 0.3
+  },
+  "test3_sensitivity": {
+    "grid": [
+      {
+        "window": 40,
+        "threshold": 0.2,
+        "IC_train": 0.003
+      },
+      {
+        "window": 40,
+        "threshold": 0.25,
+        "IC_train": 0.0157
+      },
+      {
+        "window": 40,
+        "threshold": 0.3,
+        "IC_train": 0.003
+      },
+      {
+        "window": 40,
+        "threshold": 0.35,
+        "IC_train": -0.0025
+      },
+      {
+        "window": 40,
+        "threshold": 0.4,
+        "IC_train": 0.0003
+      },
+      {
+        "window": 40,
+        "threshold": 0.45,
+        "IC_train": -0.0018
+      },
+      {
+        "window": 40,
+        "threshold": 0.5,
+        "IC_train": -0.0044
+      },
+      {
+        "window": 60,
+        "threshold": 0.2,
+        "IC_train": 0.0178
+      },
+      {
+        "window": 60,
+        "threshold": 0.25,
+        "IC_train": 0.0114
+      },
+      {
+        "window": 60,
+        "threshold": 0.3,
+        "IC_train": 0.0151
+      },
+      {
+        "window": 60,
+        "threshold": 0.35,
+        "IC_train": 0.0216
+      },
+      {
+        "window": 60,
+        "threshold": 0.4,
+        "IC_train": 0.0148
+      },
+      {
+        "window": 60,
+        "threshold": 0.45,
+        "IC_train": 0.0004
+      },
+      {
+        "window": 60,
+        "threshold": 0.5,
+        "IC_train": -0.0056
+      },
+      {
+        "window": 80,
+        "threshold": 0.2,
+        "IC_train": 0.0299
+      },
+      {
+        "window": 80,
+        "threshold": 0.25,
+        "IC_train": 0.0222
+      },
+      {
+        "window": 80,
+        "threshold": 0.3,
+        "IC_train": 0.0333
+      },
+      {
+        "window": 80,
+        "threshold": 0.35,
+        "IC_train": 0.025
+      },
+      {
+        "window": 80,
+        "threshold": 0.4,
+        "IC_train": 0.0349
+      },
+      {
+        "window": 80,
+        "threshold": 0.45,
+        "IC_train": 0.0221
+      },
+      {
+        "window": 80,
+        "threshold": 0.5,
+        "IC_train": 0.0161
+      },
+      {
+        "window": 100,
+        "threshold": 0.2,
+        "IC_train": 0.0134
+      },
+      {
+        "window": 100,
+        "threshold": 0.25,
+        "IC_train": 0.0236
+      },
+      {
+        "window": 100,
+        "threshold": 0.3,
+        "IC_train": 0.0196
+      },
+      {
+        "window": 100,
+        "threshold": 0.35,
+        "IC_train": 0.0348
+      },
+      {
+        "window": 100,
+        "threshold": 0.4,
+        "IC_train": 0.0494
+      },
+      {
+        "window": 100,
+        "threshold": 0.45,
+        "IC_train": 0.0426
+      },
+      {
+        "window": 100,
+        "threshold": 0.5,
+        "IC_train": 0.0322
+      }
+    ],
+    "best_train_config": {
+      "window": 100,
+      "threshold": 0.4,
+      "IC_train": 0.0494
+    },
+    "IC_test_best_config": 0.0492,
+    "sharpe_test_best_config": -0.479,
+    "maxdd_test_best_config": -0.1964,
+    "permutation_p_best_config": null,
+    "IC_test_default_config": 0.0482
+  },
+  "test4_unity": {
+    "n_signal_bars": 2626,
+    "n_train_bars": 1846,
+    "n_test_bars": 780,
+    "window": 60,
+    "sign": 1.0,
+    "unity_train_mean": 0.376836,
+    "unity_train_std": 0.058193,
+    "IC_train_raw": 0.0071,
+    "IC_train_signed": 0.0071,
+    "IC_test": 0.0508,
+    "sharpe_train": 0.11,
+    "sharpe_test": 0.928,
+    "maxdd_test": -0.0802,
+    "permutation_p": 0.054,
+    "permutation_sigma": 1.45,
+    "vs_baseline_0_106": -0.0552,
+    "vs_u4_prior_0_0661": -0.0153,
+    "beats_u4_prior": false,
+    "beats_ricci_test1": true
+  },
+  "baseline_yfinance_IC": 0.106,
+  "u4_prior_IC": 0.0661,
+  "best_IC_test_across_tests": 0.0508,
+  "best_IC_test_source": "test4_unity",
+  "final_verdict": "MARGINAL",
+  "askar_message": "Ricci on your 53-asset daily panel: IC_test = +0.0508, below the 0.08 institutional bar but statistically positive (permutation p = 0.116). Gap to the yfinance baseline 0.106 is +0.0552 IC. The missing ingredient is a volatility-risk-pricing node. Do you have VIX / HYG / LQD / MOVE in your archive? Adding any one should push this over the line."
+}

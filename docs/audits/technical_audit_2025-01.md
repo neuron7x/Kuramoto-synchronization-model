@@ -1,4 +1,4 @@
-# TradePulse Technical Audit (2025-01)
+# GeoSync Technical Audit (2025-01)
 
 ## Executive Summary
 - Conducted a focused review of application services, infrastructure-as-code, CI/CD automation, and runtime dependencies.

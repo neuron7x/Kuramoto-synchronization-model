@@ -1,0 +1,57 @@
+id: backtest-coverage-paydown-1
+status: ACTIVE
+claim_type: correctness
+promise: >-
+  Adds deterministic, offline contract tests for the first TD-023 backtest
+  coverage slice. The tests target behavior, not cosmetic execution: regime
+  classification, Kuramoto bounded determinism, walk-forward calibration
+  determinism, non-finite signal fail-closed behavior, metric drawdown/trade
+  accounting, seeded Monte Carlo intervals, empty market-data fail-closed
+  behavior, integrated walk-forward cost accounting, and previous-bar trading
+  semantics with no live network.
+
+diff_scope:
+  changed_files:
+    - path: tests/unit/backtest/test_backtest_contracts.py
+    - path: .claude/commit_acceptors/backtest-coverage-paydown-1.yaml
+  forbidden_paths:
+    - configs/quality/release_90.coveragerc
+    - configs/quality/coverage_targets.toml
+    - configs/quality/critical_surface.toml
+    - pyproject.toml
+
+required_python_symbols:
+  - backtest.walk_forward.calibrate_thresholds
+  - backtest.walk_forward.compute_metrics
+  - backtest.walk_forward._monte_carlo_sharpe
+  - backtest.walk_forward.run_walk_forward
+  - backtest.geosync_equity_curve.classify_regime
+  - backtest.geosync_equity_curve.compute_kuramoto_r
+  - backtest.geosync_equity_curve.run_backtest
+
+expected_signal: >-
+  The targeted test slice collects and passes without external market data,
+  without live network, and without weakening coverage gates.
+
+measurement_command: >-
+  bash -c 'set -euo pipefail; mkdir -p tmp; PYTHONPATH=. python -m pytest tests/unit/backtest/test_backtest_contracts.py -q | tee tmp/backtest_coverage_paydown_1.log'
+
+signal_artifact: tmp/backtest_coverage_paydown_1.log
+
+falsifier:
+  command: >-
+    bash -c 'PYTHONPATH=. python -m pytest tests/unit/backtest/test_backtest_contracts.py -q'
+  description: >-
+    Fails if regime thresholds drift, Kuramoto output becomes non-finite or
+    unbounded, calibration becomes nondeterministic, non-finite signals start
+    producing live trades, Monte Carlo loses seeding, previous-bar semantics
+    regress into same-bar lookahead, or higher transaction costs improve the
+    walk-forward result.
+
+rollback_command: >-
+  bash -c 'git rm -f tests/unit/backtest/test_backtest_contracts.py .claude/commit_acceptors/backtest-coverage-paydown-1.yaml'
+rollback_verification_command: >-
+  bash -c 'test ! -f tests/unit/backtest/test_backtest_contracts.py && test ! -f .claude/commit_acceptors/backtest-coverage-paydown-1.yaml'
+memory_update_type: append
+ledger_path: .claude/commit_acceptors/backtest-coverage-paydown-1.yaml
+report_path: tmp/backtest_coverage_paydown_1.log

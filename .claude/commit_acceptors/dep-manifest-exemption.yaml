@@ -1,0 +1,70 @@
+# Diff-bound acceptor for the commit-acceptor validator's dep-manifest exemption.
+#
+# Adds a policy-controlled exemption from "code change without acceptor"
+# binding for canonical dependency-manifest filenames (package.json,
+# package-lock.json, yarn.lock, pnpm-lock.yaml). Closes the systemic
+# Dependabot blocker on PRs #496/#497/#499/#500/#502/#504/#506.
+# Workflow YAML and Python dependency declarations are intentionally
+# NOT exempt — the patch is a surgical, opt-in policy field.
+
+id: dep-manifest-exemption
+status: ACTIVE
+claim_type: governance
+promise: >-
+  tools.commit_acceptor.validate_commit_acceptor exposes a new helper
+  _is_dep_manifest(file_path, dep_manifest_basenames) that returns True
+  iff the file's basename is in the policy-supplied list. _file_is_code
+  now takes dep_manifest_basenames (default empty tuple) and treats
+  matching files as non-code for the purpose of acceptor binding.
+  validate_diff_binding reads dep_manifest_paths from the policy and
+  threads it through. The .claude/commit_acceptor_policy.yaml gains a
+  new dep_manifest_paths field defaulting to
+  [package.json, package-lock.json, yarn.lock, pnpm-lock.yaml]. Five
+  new unit tests pin: (1) lone package.json/package-lock.json bumps
+  pass without acceptor; (2) lone yarn.lock/pnpm-lock.yaml bumps
+  pass; (3) workflow YAML changes are NOT exempt; (4) arbitrary JSON
+  outside the basename list is NOT exempt; (5) mixed bumps still
+  require acceptors for the non-exempt files.
+diff_scope:
+  changed_files:
+    - path: ".claude/commit_acceptors/dep-manifest-exemption.yaml"
+    - path: ".claude/commit_acceptor_policy.yaml"
+    - path: "tools/commit_acceptor/validate_commit_acceptor.py"
+    - path: "tests/unit/commit_acceptor/test_validate_commit_acceptor.py"
+  forbidden_paths:
+    - "trading/"
+    - "execution/"
+    - "forecast/"
+    - "policy/"
+required_python_symbols:
+  - "_file_is_code"
+  - "_is_dep_manifest"
+  - "validate_diff_binding"
+expected_signal: >-
+  All 70 commit-acceptor unit tests pass under pytest; black, ruff,
+  mypy --strict --follow-imports=silent clean on validator and tests;
+  five new exemption tests pin both the positive (exempt) and
+  negative (not-exempt) cases.
+measurement_command: >-
+  python -m pytest tests/unit/commit_acceptor/test_validate_commit_acceptor.py -v
+signal_artifact: "tmp/dep_manifest_exemption_pytest.log"
+falsifier:
+  command: >-
+    python -m pytest tests/unit/commit_acceptor/test_validate_commit_acceptor.py
+    -v -k "dep_manifest"
+  description: >-
+    Probe filters to the five new exemption tests. If exemption logic
+    is broken in either direction (over-exempt: matches unintended
+    files, or under-exempt: rejects legitimate dep bumps), at least
+    one of these tests fails.
+rollback_command: >-
+  git checkout HEAD~1 -- tools/commit_acceptor/validate_commit_acceptor.py
+  tests/unit/commit_acceptor/test_validate_commit_acceptor.py
+  .claude/commit_acceptor_policy.yaml
+  .claude/commit_acceptors/dep-manifest-exemption.yaml
+rollback_verification_command: >-
+  git diff --exit-code tools/commit_acceptor/validate_commit_acceptor.py
+memory_update_type: append
+ledger_path: ".claude/commit_acceptors/dep-manifest-exemption.yaml"
+report_path: ".claude/commit_acceptors/dep-manifest-exemption.yaml"
+evidence: []

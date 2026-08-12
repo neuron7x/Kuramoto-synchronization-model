@@ -1,8 +1,10 @@
+# Copyright (c) 2023-2026 Yaroslav Vasylenko (neuron7xLab)
+# SPDX-License-Identifier: MIT
 """Execute the nightly regression battery including backtests and E2E flows."""
 
 from __future__ import annotations
 
-# SPDX-License-Identifier: LicenseRef-TradePulse-Proprietary
+# SPDX-License-Identifier: MIT
 import argparse
 import logging
 from pathlib import Path
@@ -65,7 +67,7 @@ def build_parser(subparsers: argparse._SubParsersAction[object]) -> None:
     parser.add_argument(
         "--slack-username",
         type=str,
-        default="tradepulse-nightly",
+        default="geosync-nightly",
         help="Displayed username for Slack notifications.",
     )
     parser.add_argument(
@@ -125,9 +127,7 @@ def handle(args: argparse.Namespace) -> int:
     except ValueError as exc:  # pragma: no cover - defensive
         raise CommandError(f"Invalid baseline configuration: {exc}") from exc
 
-    artifact_manager = create_artifact_manager(
-        "nightly_regression", root=args.artifact_root
-    )
+    artifact_manager = create_artifact_manager("nightly_regression", root=args.artifact_root)
     incident_manager = IncidentManager(args.incident_root)
     dispatcher = _build_dispatcher(args)
 
@@ -150,9 +150,7 @@ def handle(args: argparse.Namespace) -> int:
         },
     )
 
-    return (
-        EXIT_CODES["success"] if summary.success else EXIT_CODES["circuit_breaker_open"]
-    )
+    return EXIT_CODES["success"] if summary.success else EXIT_CODES["circuit_breaker_open"]
 
 
 def _build_dispatcher(args: argparse.Namespace) -> NotificationDispatcher | None:

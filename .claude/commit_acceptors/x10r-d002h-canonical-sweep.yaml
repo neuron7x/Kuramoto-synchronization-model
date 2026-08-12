@@ -1,0 +1,195 @@
+# Diff-bound commit acceptor for the D-002H canonical-sweep execution PR.
+#
+# This PR is the AUTHORISED EXECUTION downstream of the closed 7-gate
+# authorisation conjunction A AND B AND C AND D AND E AND F AND G (Gate G
+# terminal at PR #689, sha 4686455e...) and the R2-B inapplicability
+# clarification (PR #690, sha ee12a9e6...). It produces the SCIENTIFIC
+# VERDICT on the ricci_flow substrate -- whatever the data says. A
+# truthful FAIL is preserved as a negative artifact; the only failure
+# mode of this PR would be a forced PASS, which is forbidden.
+#
+# NO source-code edit. NO substrate / mechanism / acceptance-rule edit.
+# NO D-002C ledger touch. NO prior-gate artifact edit. NO D-002H prereg
+# edit. NO R2-B note edit. The PR adds: the canonical-sweep script, the
+# artifact tree under artifacts/d002h/canonical/results/<RUN_ID>/, the
+# top-level verdict capsule, the report doc, and the artifact-contract
+# tests.
+
+id: x10r-d002h-canonical-sweep
+status: ACTIVE
+claim_type: correctness
+promise: >-
+  After this PR lands,
+  artifacts/d002h/canonical/d002h_canonical_run_verdict.json exists
+  carrying schema_version=D002H-CANONICAL-RUN-VERDICT-v1, study_id=D-002H,
+  run_id=d002h_ricci_flow_canonical_v1_2026-05-14, anchor_main_sha=ee12a9e6...,
+  scope='ricci_flow substrate only', grid byte-exact from D-002H prereg,
+  n_cells_total=18, null_mechanisms_used=[M1_INDEPENDENT_SEED,
+  M3_TOPOLOGY_CONDITIONED] (NOT M6), acceptance_conjunction='R1 AND R2 AND
+  R3 AND NULL_AUDIT (R2-B INAPPLICABLE...)', bonferroni_n_cells=216,
+  tier_string in {SYNTHETIC_GATE6_CERTIFIED_D002H_REDESIGN,
+  MARGINAL_PASS_SYNTHETIC_D002H, D002H_REDESIGN_INSUFFICIENT_AT_TESTED_BUDGET,
+  REFUSED_NULL_AUDIT_FAIL_D002H}, aggregate_verdict in {PASS, FAIL,
+  MARGINAL_PASS, REFUSED}, d002c_ledger_touched=false,
+  d002c_ledger_sha_at_run=f96ba9b5a2057d2e0bff84afc28578ab316cff73f6dc6673fb0d6d543b8bd6dd.
+
+  artifacts/d002h/canonical/results/d002h_ricci_flow_canonical_v1_2026-05-14/
+  carries sweep_capsule_v1.json (per-cell payloads for both M1 and M3
+  null cohorts), null_audit_capsule.json (post-sweep permutation null
+  audit), and verdict.json (per-cell breakdown).
+
+  scripts/x10r_d002h_canonical_sweep.py is the canonical sweep entry
+  point; it verifies governance anchor sha256 byte-exact at the merged
+  anchor, executes the locked 18-cell ricci_flow grid under M1 and M3
+  null mechanisms with 20 seeds and 16 bootstrap resamples per cell, runs
+  the post-sweep null audit (n_shuffles=100, rng_seed=42), derives the
+  per-cell verdict via the 4-term conjunction R1 AND R2 AND R3 AND
+  NULL_AUDIT, applies anti-overclaim guards (MARGINAL_PASS,
+  SINGLE_PATH_PASS, NULL_AUDIT_FAIL), and emits the top-level verdict.
+
+  tests/systemic_risk/test_d002h_canonical_run_artifact.py carries the
+  10+ artifact-contract tests pinning schema, grid, mechanisms, R2-B
+  inapplicability, per-cell count, tier-string enum, verdict
+  consistency, D-002C ledger preservation, and anti-overclaim guards.
+
+  docs/governance/D002H_CANONICAL_RUN_REPORT.md records the report with
+  8 numbered sections: anchor + governance posture, grid, mechanism +
+  acceptance, runtime, per-cell verdict table reference, aggregate
+  verdict, claim boundary verbatim, forbidden interpretations.
+
+  D-002G acceptance rules byte-exact 875b1e3eb031b8e5333dc8b455454f0a30419ead1ebe787aa01d5882e7d6ad31.
+  D-002H prereg byte-exact 44b18b5a40ce9d188a9c3bd49339621f81a65a15f97a683247902450dd54acec.
+  D-002C claim ledger byte-exact f96ba9b5a2057d2e0bff84afc28578ab316cff73f6dc6673fb0d6d543b8bd6dd.
+
+  Pure execution: NO source code edit (substrate / mechanism /
+  acceptance rules unchanged), NO ledger touch, NO prior-gate artifact
+  edit, NO retroactive grid edit. Whatever the data verdict is, that IS
+  the result.
+
+diff_scope:
+  changed_files:
+    - path: "scripts/x10r_d002h_canonical_sweep.py"
+    - path: "tests/systemic_risk/test_d002h_canonical_run_artifact.py"
+    - path: ".claude/commit_acceptors/x10r-d002h-canonical-sweep.yaml"
+    - path: "docs/governance/D002H_CANONICAL_RUN_REPORT.md"
+    - path: "artifacts/d002h/canonical/d002h_canonical_run_verdict.json"
+    - path: "artifacts/d002h/canonical/results/d002h_ricci_flow_canonical_v1_2026-05-14/sweep_capsule_v1.json"
+    - path: "artifacts/d002h/canonical/results/d002h_ricci_flow_canonical_v1_2026-05-14/null_audit_capsule.json"
+    - path: "artifacts/d002h/canonical/results/d002h_ricci_flow_canonical_v1_2026-05-14/verdict.json"
+    - path: "docs/governance/D002G_CANONICAL_RUN_BLOCKERS.md"
+  forbidden_paths:
+    - "docs/governance/D002C_CLAIM_LEDGER.yaml"
+    - "docs/governance/D002C_PREREGISTRATION.yaml"
+    - "docs/governance/D002C_CANONICAL_RUN_REPORT.md"
+    - "docs/governance/D002C_ATTEMPT_2_NULL_AUDIT_FALSIFICATION_REPORT.md"
+    - "docs/governance/D002G_ACCEPTANCE_RULES.md"
+    - "docs/governance/D002G_PREREGISTRATION.yaml"
+    - "docs/governance/D002G_NONDEGENERATE_NULL_DESIGN.md"
+    - "docs/governance/D002G_P3_M3_PREREGISTRATION.md"
+    - "docs/governance/D002G_STRUCTURAL_CLOSURE_REPORT.md"
+    - "docs/governance/D002G_NEGATIVE_SPACE_MAP.md"
+    - "docs/governance/D002G_M3_ELIGIBILITY_MATRIX.md"
+    - "docs/governance/D002H_PREREGISTRATION.yaml"
+    - "docs/governance/D002H_SCOPE_RATIONALE.md"
+    - "docs/governance/D002H_CLAIM_BOUNDARY.md"
+    - "docs/governance/D002H_CANONICAL_RUN_AUTHORIZATION_GATES.md"
+    - "docs/governance/D002H_GATE_B_REPORT.md"
+    - "docs/governance/D002H_GATE_C_CANONICAL_GRID.md"
+    - "docs/governance/D002H_GATE_D_FORBIDDEN_CLAIM_SCAN.md"
+    - "docs/governance/D002H_GATE_E_LOCKED_FILE_REPORT.md"
+    - "docs/governance/D002H_GATE_F_AUTHORIZATION_REPORT.md"
+    - "docs/governance/D002H_GATE_G_CI_LOCK_REPORT.md"
+    - "docs/governance/D002H_R2B_INAPPLICABILITY_NOTE.md"
+    - "artifacts/d002h/prereg/d002h_preregistration_lock.json"
+    - "artifacts/d002h/eligibility/d002h_ricci_eligibility.json"
+    - "artifacts/d002h/canonical/d002h_canonical_grid.json"
+    - "artifacts/d002h/scans/d002h_forbidden_claim_scan.json"
+    - "artifacts/d002h/locks/d002h_locked_file_pins.json"
+    - "artifacts/d002h/authorization/d002h_canonical_run_authorisation.json"
+    - "artifacts/d002h/authorization/d002h_canonical_run_final_lock.json"
+    - "research/systemic_risk/d002c_substrates.py"
+    - "research/systemic_risk/d002g_null_mechanisms.py"
+    - "research/systemic_risk/d002c_sweep_runner.py"
+    - "research/systemic_risk/d002c_verdict.py"
+    - "research/systemic_risk/d002c_null_audit.py"
+    - "research/systemic_risk/d002c_preflight.py"
+    - "research/systemic_risk/d002c_metrics.py"
+    - "research/systemic_risk/d002c_preregistration.py"
+    - "artifacts/d002g/closure/"
+    - "artifacts/d002g/m3/"
+    - "artifacts/d002g/p3/"
+    - "artifacts/d002g/canonical/"
+required_python_symbols:
+  - "research.systemic_risk.d002c_sweep_runner.run_one_cell"
+  - "research.systemic_risk.d002c_null_audit.run_null_audit_all"
+  - "research.systemic_risk.d002c_substrates.RicciFlowSubstrate"
+  - "research.systemic_risk.d002c_metrics.METRIC_BY_ID"
+  - "research.systemic_risk.d002g_null_mechanisms.realize_null"
+expected_signal: >-
+  `PYTHONPATH=. python -m pytest
+  tests/systemic_risk/test_d002h_canonical_run_artifact.py -q` passes all
+  12 cases; the top-level verdict capsule exists with the locked schema,
+  grid, mechanisms, conjunction string, tier-string enum membership,
+  consistent aggregate verdict, preserved D-002C ledger sha, and applied
+  anti-overclaim guards. D-002G acceptance, D-002H prereg, D-002C
+  ledger, R2-B note, and all prior gate artifacts byte-exact UNCHANGED.
+measurement_command: >-
+  bash -c 'set -e;
+  PYTHONPATH=. python -m pytest tests/systemic_risk/test_d002h_canonical_run_artifact.py -q;
+  test -f artifacts/d002h/canonical/d002h_canonical_run_verdict.json;
+  test -f artifacts/d002h/canonical/results/d002h_ricci_flow_canonical_v1_2026-05-14/sweep_capsule_v1.json;
+  test -f artifacts/d002h/canonical/results/d002h_ricci_flow_canonical_v1_2026-05-14/null_audit_capsule.json;
+  test -f artifacts/d002h/canonical/results/d002h_ricci_flow_canonical_v1_2026-05-14/verdict.json;
+  test -f docs/governance/D002H_CANONICAL_RUN_REPORT.md;
+  test -f scripts/x10r_d002h_canonical_sweep.py;
+  grep -q "D002H-CANONICAL-RUN-VERDICT-v1" artifacts/d002h/canonical/d002h_canonical_run_verdict.json;
+  grep -q "ricci_flow substrate only" artifacts/d002h/canonical/d002h_canonical_run_verdict.json;
+  test "$(sha256sum docs/governance/D002G_ACCEPTANCE_RULES.md | awk "{print \$1}")" = "875b1e3eb031b8e5333dc8b455454f0a30419ead1ebe787aa01d5882e7d6ad31";
+  test "$(sha256sum docs/governance/D002H_PREREGISTRATION.yaml | awk "{print \$1}")" = "44b18b5a40ce9d188a9c3bd49339621f81a65a15f97a683247902450dd54acec";
+  test "$(sha256sum docs/governance/D002C_CLAIM_LEDGER.yaml | awk "{print \$1}")" = "f96ba9b5a2057d2e0bff84afc28578ab316cff73f6dc6673fb0d6d543b8bd6dd"'
+signal_artifact: "artifacts/d002h/canonical/d002h_canonical_run_verdict.json"
+falsifier:
+  command: >-
+    bash -c 'set -e;
+    PYTHONPATH=. python -m pytest tests/systemic_risk/test_d002h_canonical_run_artifact.py -q || exit 1;
+    test -f artifacts/d002h/canonical/d002h_canonical_run_verdict.json || exit 2;
+    test -f scripts/x10r_d002h_canonical_sweep.py || exit 3;
+    test -f docs/governance/D002H_CANONICAL_RUN_REPORT.md || exit 4;
+    grep -q "D002H-CANONICAL-RUN-VERDICT-v1" artifacts/d002h/canonical/d002h_canonical_run_verdict.json || exit 5;
+    grep -q "M1_INDEPENDENT_SEED" artifacts/d002h/canonical/d002h_canonical_run_verdict.json || exit 6;
+    grep -q "M3_TOPOLOGY_CONDITIONED" artifacts/d002h/canonical/d002h_canonical_run_verdict.json || exit 7;
+    ! grep -q "M6_PLACEBO_COUPLING" artifacts/d002h/canonical/d002h_canonical_run_verdict.json || exit 8;
+    grep -q "INAPPLICABLE" artifacts/d002h/canonical/d002h_canonical_run_verdict.json || exit 9;
+    test "$(sha256sum docs/governance/D002G_ACCEPTANCE_RULES.md | awk "{print \$1}")" = "875b1e3eb031b8e5333dc8b455454f0a30419ead1ebe787aa01d5882e7d6ad31" || exit 10;
+    test "$(sha256sum docs/governance/D002H_PREREGISTRATION.yaml | awk "{print \$1}")" = "44b18b5a40ce9d188a9c3bd49339621f81a65a15f97a683247902450dd54acec" || exit 11;
+    test "$(sha256sum docs/governance/D002C_CLAIM_LEDGER.yaml | awk "{print \$1}")" = "f96ba9b5a2057d2e0bff84afc28578ab316cff73f6dc6673fb0d6d543b8bd6dd" || exit 12'
+  description: >-
+    Probes the D-002H canonical-sweep execution PR: 12 artifact-contract
+    tests pass; the top-level verdict capsule + sweep capsule + null
+    audit capsule + per-run verdict exist on disk; the capsule schema is
+    D002H-CANONICAL-RUN-VERDICT-v1; the capsule references both
+    M1_INDEPENDENT_SEED and M3_TOPOLOGY_CONDITIONED but NEVER
+    M6_PLACEBO_COUPLING; the capsule marks R2-B INAPPLICABLE; D-002G
+    acceptance rules, D-002H prereg, and D-002C claim ledger sha256 are
+    all byte-exact at their locked anchors. Regression on any -> D-002H
+    canonical-run execution contract broken.
+rollback_command: >-
+  bash -c 'rm -rf
+  artifacts/d002h/canonical/results/d002h_ricci_flow_canonical_v1_2026-05-14
+  && rm -f
+  artifacts/d002h/canonical/d002h_canonical_run_verdict.json
+  scripts/x10r_d002h_canonical_sweep.py
+  tests/systemic_risk/test_d002h_canonical_run_artifact.py
+  docs/governance/D002H_CANONICAL_RUN_REPORT.md
+  .claude/commit_acceptors/x10r-d002h-canonical-sweep.yaml
+  && git checkout HEAD~1 -- docs/governance/D002G_CANONICAL_RUN_BLOCKERS.md'
+rollback_verification_command: >-
+  bash -c 'test ! -f artifacts/d002h/canonical/d002h_canonical_run_verdict.json
+  && test ! -f scripts/x10r_d002h_canonical_sweep.py
+  && test ! -f tests/systemic_risk/test_d002h_canonical_run_artifact.py
+  && test ! -f docs/governance/D002H_CANONICAL_RUN_REPORT.md
+  && test ! -d artifacts/d002h/canonical/results/d002h_ricci_flow_canonical_v1_2026-05-14'
+memory_update_type: append
+ledger_path: ".claude/commit_acceptors/x10r-d002h-canonical-sweep.yaml"
+report_path: "docs/governance/D002H_CANONICAL_RUN_REPORT.md"
+evidence: []

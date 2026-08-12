@@ -1,3 +1,5 @@
+# Copyright (c) 2023-2026 Yaroslav Vasylenko (neuron7xLab)
+# SPDX-License-Identifier: MIT
 """Enforce coverage regression guardrails against a stored baseline."""
 
 from __future__ import annotations
@@ -26,9 +28,7 @@ def _load_baseline(path: Path) -> CoverageBaseline:
         raise ValueError("baseline must include 'line_rate'")
     line_rate = _normalise_rate(float(payload["line_rate"]))
     branch_value = payload.get("branch_rate")
-    branch_rate = (
-        _normalise_rate(float(branch_value)) if branch_value is not None else None
-    )
+    branch_rate = _normalise_rate(float(branch_value)) if branch_value is not None else None
     return CoverageBaseline(line_rate=line_rate, branch_rate=branch_rate)
 
 
@@ -45,9 +45,7 @@ def _evaluate(baseline: CoverageBaseline, report_path: Path) -> int:
     failures = []
 
     if line_rate + 1e-9 < baseline.line_rate:
-        failures.append(
-            f"line coverage {line_rate:.2f}% below baseline {baseline.line_rate:.2f}%"
-        )
+        failures.append(f"line coverage {line_rate:.2f}% below baseline {baseline.line_rate:.2f}%")
 
     if baseline.branch_rate is not None:
         if branch_rate is None:

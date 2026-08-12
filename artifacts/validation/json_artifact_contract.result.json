@@ -1,0 +1,6 @@
+{
+  "errors": [],
+  "input": "examples/json_artifact_contract.candidate.json",
+  "schema_version": "json_artifact_contract_validator.v1",
+  "status": "OK"
+}

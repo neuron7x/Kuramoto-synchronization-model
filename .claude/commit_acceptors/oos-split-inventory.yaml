@@ -1,0 +1,51 @@
+# SPDX-License-Identifier: MIT
+id: oos-split-inventory
+status: DRAFT
+claim_type: governance
+promise: >-
+  Task 16. A machine-checked OOS/train-test split inventory maps every
+  claim-bearing split path and its leakage-protection mechanism, and a
+  fail-closed regression guard fails if a path declared protected loses its
+  protection marker. Preserved negative result: after #1288 no claim-bearing OOS
+  path lacks protection; the cross_asset_kuramoto regime split was inspected and
+  cleared (global quantile thresholds, no boundary predictor). No predictive or
+  market claim; leakage-regression infrastructure only.
+diff_scope:
+  changed_files:
+    - path: ".claude/commit_acceptors/oos-split-inventory.yaml"
+    - path: "tools/validation/check_oos_split_inventory.py"
+    - path: "docs/validation/OOS_SPLIT_INVENTORY.md"
+    - path: "tests/validation/test_oos_split_inventory.py"
+  forbidden_paths:
+    - "trading/"
+    - "execution/"
+    - "forecast/"
+    - "policy/"
+required_python_symbols: []
+expected_signal: >-
+  check_oos_split_inventory passes (5 split paths, all protected) and fails when
+  a declared embargo marker is removed; pytest
+  tests/validation/test_oos_split_inventory.py passes.
+measurement_command: >-
+  bash -c 'python -m pytest -q tests/validation/test_oos_split_inventory.py && python tools/validation/check_oos_split_inventory.py'
+signal_artifact: "tmp/oos_split_inventory.log"
+falsifier:
+  command: |
+    python -c "import importlib.util, sys, tempfile
+    from pathlib import Path
+    s = importlib.util.spec_from_file_location('c', 'tools/validation/check_oos_split_inventory.py')
+    c = importlib.util.module_from_spec(s); sys.modules['c'] = c; s.loader.exec_module(c)
+    d = tempfile.mkdtemp(); Path(d, 'split.py').write_text('def split(): pass')
+    e = c.evaluate({'splits': [{'path': 'split.py', 'protection': 'EMBARGO', 'marker': 'embargo'}]}, Path(d))
+    sys.exit(0 if not e else 1)"
+  description: >-
+    Points the guard at a split file that has lost its embargo marker and exits 0
+    only if the guard does NOT flag it (the regressed fail-open state). On the
+    correct tree the guard flags the lost protection, so the command exits
+    non-zero — proving the leakage-regression guard is real.
+rollback_command: "git revert --no-edit HEAD"
+rollback_verification_command: "git diff --exit-code tools/validation/check_oos_split_inventory.py"
+memory_update_type: none
+ledger_path: ".claude/commit_acceptors/oos-split-inventory.yaml"
+report_path: "docs/reports/diff_bound_commit_acceptor_layer.md"
+evidence: []

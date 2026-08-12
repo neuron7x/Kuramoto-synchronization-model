@@ -1,9 +1,11 @@
-# SPDX-License-Identifier: LicenseRef-TradePulse-Proprietary
+# Copyright (c) 2023-2026 Yaroslav Vasylenko (neuron7xLab)
+# SPDX-License-Identifier: MIT
 """Secure error handling utilities to prevent information leakage.
 
 This module provides error handling utilities that prevent sensitive
 information from being exposed in error messages and logs.
 """
+
 from __future__ import annotations
 
 import logging
@@ -136,9 +138,7 @@ class AuthorizationError(SecureError):
     def __init__(self, resource: Optional[str] = None, **context: Any):
         """Initialize an authorization error."""
         public_msg = "Access denied"
-        detail_msg = (
-            f"Access denied to resource: {resource}" if resource else "Access denied"
-        )
+        detail_msg = f"Access denied to resource: {resource}" if resource else "Access denied"
 
         super().__init__(
             public_message=public_msg,

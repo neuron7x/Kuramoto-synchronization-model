@@ -1,0 +1,33 @@
+[package]
+name = "geosync-accel"
+version = "0.1.0"
+edition = "2021"
+description = "Rust accelerators for GeoSync numeric primitives"
+authors = ["GeoSync Contributors"]
+license = "MIT"
+readme = "README.md"
+
+[features]
+default = []
+python-tests = []
+
+[lib]
+name = "geosync_accel"
+crate-type = ["cdylib", "rlib"]
+
+[dependencies]
+numpy = "0.29"
+pyo3 = { version = "0.29", features = ["extension-module"] }  # RUSTSEC: <0.29 buffer-overflow (GHSA-36hh-v3qg-5jq4)
+
+[dev-dependencies]
+criterion = { version = "0.5", features = ["html_reports"] }
+
+[build-dependencies]
+pyo3-build-config = "0.29"
+
+[[bench]]
+name = "numeric"
+harness = false
+
+[package.metadata.maturin]
+name = "geosync_accel"

@@ -1,3 +1,5 @@
+# Copyright (c) 2023-2026 Yaroslav Vasylenko (neuron7xLab)
+# SPDX-License-Identifier: MIT
 """Tests for the calibration utility script."""
 
 from __future__ import annotations
@@ -59,10 +61,9 @@ class TestCalibrationProfiles:
         for profile_name, profile_data in CALIBRATION_PROFILES.items():
             if "nak" in profile_data:
                 nak_params = set(profile_data["nak"].keys())
-                assert required_params.issubset(nak_params), (
-                    f"{profile_name} NAK config missing parameters: "
-                    f"{required_params - nak_params}"
-                )
+                assert required_params.issubset(
+                    nak_params
+                ), f"{profile_name} NAK config missing parameters: {required_params - nak_params}"
 
     def test_dopamine_profile_parameters(self):
         """Verify dopamine profiles have required parameters."""
@@ -145,25 +146,19 @@ class TestCalibrationProfiles:
             nak = profile_data["nak"]
 
             # EI thresholds
-            assert nak["EI_low"] < nak["EI_high"], (
-                f"{profile_name}: EI_low must be less than EI_high"
-            )
-            assert nak["EI_crit"] >= 0, (
-                f"{profile_name}: EI_crit must be non-negative"
-            )
-            assert nak["EI_crit"] <= nak["EI_low"], (
-                f"{profile_name}: EI_crit should be <= EI_low"
-            )
+            assert (
+                nak["EI_low"] < nak["EI_high"]
+            ), f"{profile_name}: EI_low must be less than EI_high"
+            assert nak["EI_crit"] >= 0, f"{profile_name}: EI_crit must be non-negative"
+            assert nak["EI_crit"] <= nak["EI_low"], f"{profile_name}: EI_crit should be <= EI_low"
 
             # Volatility thresholds
-            assert nak["vol_amber"] <= nak["vol_red"], (
-                f"{profile_name}: vol_amber must be <= vol_red"
-            )
+            assert (
+                nak["vol_amber"] <= nak["vol_red"]
+            ), f"{profile_name}: vol_amber must be <= vol_red"
 
             # Drawdown thresholds
-            assert nak["dd_amber"] <= nak["dd_red"], (
-                f"{profile_name}: dd_amber must be <= dd_red"
-            )
+            assert nak["dd_amber"] <= nak["dd_red"], f"{profile_name}: dd_amber must be <= dd_red"
 
             # Delta r limit
             assert (
@@ -179,19 +174,15 @@ class TestCalibrationProfiles:
             sero = profile_data["serotonin"]
 
             # Stress thresholds
-            assert sero["release_threshold"] <= sero["stress_threshold"], (
-                f"{profile_name}: release_threshold must be <= stress_threshold"
-            )
+            assert (
+                sero["release_threshold"] <= sero["stress_threshold"]
+            ), f"{profile_name}: release_threshold must be <= stress_threshold"
 
             # Hysteresis is reasonable
-            assert 0 <= sero["hysteresis"] <= 1.0, (
-                f"{profile_name}: hysteresis must be in [0, 1]"
-            )
+            assert 0 <= sero["hysteresis"] <= 1.0, f"{profile_name}: hysteresis must be in [0, 1]"
 
             # Cooldown is non-negative
-            assert sero["cooldown_ticks"] >= 0, (
-                f"{profile_name}: cooldown_ticks must be >= 0"
-            )
+            assert sero["cooldown_ticks"] >= 0, f"{profile_name}: cooldown_ticks must be >= 0"
 
     def test_risk_engine_invariants(self):
         """Verify Risk Engine parameters maintain valid relationships."""
@@ -202,24 +193,22 @@ class TestCalibrationProfiles:
             risk = profile_data["risk_engine"]
 
             # Loss percent is in (0, 1]
-            assert 0 < risk["max_daily_loss_percent"] <= 1.0, (
-                f"{profile_name}: max_daily_loss_percent must be in (0, 1]"
-            )
+            assert (
+                0 < risk["max_daily_loss_percent"] <= 1.0
+            ), f"{profile_name}: max_daily_loss_percent must be in (0, 1]"
 
             # Leverage is positive
-            assert risk["max_leverage"] > 0, (
-                f"{profile_name}: max_leverage must be > 0"
-            )
+            assert risk["max_leverage"] > 0, f"{profile_name}: max_leverage must be > 0"
 
             # Safe mode multiplier is in [0, 1]
-            assert 0 <= risk["safe_mode_position_multiplier"] <= 1.0, (
-                f"{profile_name}: safe_mode_position_multiplier must be in [0, 1]"
-            )
+            assert (
+                0 <= risk["safe_mode_position_multiplier"] <= 1.0
+            ), f"{profile_name}: safe_mode_position_multiplier must be in [0, 1]"
 
             # Kill switch streak is positive
-            assert risk["kill_switch_loss_streak"] >= 1, (
-                f"{profile_name}: kill_switch_loss_streak must be >= 1"
-            )
+            assert (
+                risk["kill_switch_loss_streak"] >= 1
+            ), f"{profile_name}: kill_switch_loss_streak must be >= 1"
 
     def test_regime_adaptive_threshold_ordering(self):
         """Verify Regime Adaptive thresholds maintain proper ordering."""
@@ -230,20 +219,20 @@ class TestCalibrationProfiles:
             regime = profile_data["regime_adaptive"]
 
             # Threshold ordering: calm < stressed < critical
-            assert regime["calm_threshold"] < regime["stressed_threshold"] < regime["critical_threshold"], (
-                f"{profile_name}: thresholds must satisfy calm < stressed < critical"
-            )
+            assert (
+                regime["calm_threshold"]
+                < regime["stressed_threshold"]
+                < regime["critical_threshold"]
+            ), f"{profile_name}: thresholds must satisfy calm < stressed < critical"
 
             # Multipliers are positive
-            assert regime["calm_multiplier"] > 0, (
-                f"{profile_name}: calm_multiplier must be > 0"
-            )
-            assert regime["stressed_multiplier"] > 0, (
-                f"{profile_name}: stressed_multiplier must be > 0"
-            )
-            assert regime["critical_multiplier"] > 0, (
-                f"{profile_name}: critical_multiplier must be > 0"
-            )
+            assert regime["calm_multiplier"] > 0, f"{profile_name}: calm_multiplier must be > 0"
+            assert (
+                regime["stressed_multiplier"] > 0
+            ), f"{profile_name}: stressed_multiplier must be > 0"
+            assert (
+                regime["critical_multiplier"] > 0
+            ), f"{profile_name}: critical_multiplier must be > 0"
 
 
 class TestConfigLoading:
@@ -377,6 +366,7 @@ class TestProfileApplication:
 
             # Need to mock the base config loading
             import calibrate_controllers
+
             original_load = calibrate_controllers.load_config
 
             def mock_load(path):

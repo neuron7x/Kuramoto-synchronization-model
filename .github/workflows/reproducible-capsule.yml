@@ -1,0 +1,83 @@
+# SPDX-License-Identifier: MIT
+#
+# Reproducible Capsule Gate (TASK 933) — external clean-clone verification.
+#
+# Proves capsule reproducibility OUTSIDE the developer working tree:
+#   * fresh checkout, Python 3.12, minimal install (only jsonschema);
+#   * schema validation of every capsule manifest;
+#   * byte-for-byte regeneration run from a FOREIGN cwd, so any reliance on
+#     working-directory import leakage fails here;
+#   * structural secret-boundary validation (the capsule is not an unscanned
+#     exclude zone — TASK 931);
+#   * a machine-readable JSON report uploaded as evidence.
+#
+# Fail-closed: if the capsule bytes change, the manifest drifts, or a smuggled
+# secret/disallowed file appears, this gate goes red. Required for any PR
+# touching capsule, MFN, schema, or manifest logic.
+name: Reproducible Capsule
+
+on:
+  pull_request:
+    branches: [main]
+    paths:
+      - "scripts/reproduce/mfn_capsule.py"
+      - "scripts/ci/check_capsule_schema.py"
+      - "scripts/ci/capsule_verification_report.py"
+      - "tools/security/validate_capsule_secret_boundary.py"
+      - "artifacts/reproducible_capsules/**"
+      - "schemas/reproducible_capsule.schema.json"
+      - "geosync/mfn/**"
+      - ".github/workflows/reproducible-capsule.yml"
+  push:
+    branches: [main]
+    paths:
+      - "scripts/reproduce/mfn_capsule.py"
+      - "scripts/ci/check_capsule_schema.py"
+      - "scripts/ci/capsule_verification_report.py"
+      - "tools/security/validate_capsule_secret_boundary.py"
+      - "artifacts/reproducible_capsules/**"
+      - "schemas/reproducible_capsule.schema.json"
+      - "geosync/mfn/**"
+      - ".github/workflows/reproducible-capsule.yml"
+  workflow_dispatch:
+
+permissions:
+  contents: read
+
+concurrency:
+  group: reproducible-capsule-${{ github.event.pull_request.number || github.sha }}
+  cancel-in-progress: true
+
+jobs:
+  reproducible-capsule:
+    name: reproducible-capsule
+    runs-on: ubuntu-latest
+    timeout-minutes: 10
+    steps:
+      - name: Checkout (fresh, no inherited cache)
+        uses: actions/checkout@9c091bb21b7c1c1d1991bb908d89e4e9dddfe3e0 # v7.0.0
+
+      - name: Setup Python
+        uses: actions/setup-python@ece7cb06caefa5fff74198d8649806c4678c61a1 # v6
+        with:
+          python-version: "3.12"
+
+      # Minimal install: the capsule layers are stdlib-only except schema
+      # validation, which needs jsonschema. No scientific stack, no cache.
+      - name: Minimal install
+        run: python -m pip install jsonschema
+
+      - name: Capsule verification report (schema + reproduction + secret boundary)
+        run: |
+          python scripts/ci/capsule_verification_report.py \
+            --out "$RUNNER_TEMP/capsule_verification.json"
+          echo "---- capsule_verification.json ----"
+          cat "$RUNNER_TEMP/capsule_verification.json"
+
+      - name: Upload verification evidence
+        if: always()
+        uses: actions/upload-artifact@043fb46d1a93c77aae656e7c1c64a875d1fc6a0a # v7.0.1
+        with:
+          name: capsule-verification-report
+          path: ${{ runner.temp }}/capsule_verification.json
+          if-no-files-found: warn

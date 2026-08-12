@@ -1,0 +1,57 @@
+{
+  "checks": [
+    {
+      "holds": true,
+      "id": "LYAP-1",
+      "name": "system matrix matches the real ODE Jacobian"
+    },
+    {
+      "holds": true,
+      "id": "LYAP-2",
+      "name": "A is Hurwitz (all eigenvalues have negative real part)"
+    },
+    {
+      "holds": true,
+      "id": "LYAP-3",
+      "name": "Lyapunov solution P is positive definite"
+    },
+    {
+      "holds": true,
+      "id": "LYAP-4",
+      "name": "A^T P + P A = -Q residual is zero"
+    },
+    {
+      "holds": true,
+      "id": "LYAP-5",
+      "name": "V(x)=x^T P x contracts from a grid of initial conditions"
+    }
+  ],
+  "component": "core.neuro.motivation.AllostaticRegulator (DA/5-HT opponent process)",
+  "eigenvalues_real": [
+    -0.2,
+    -0.1,
+    -0.1
+  ],
+  "gate": "STABLE",
+  "p_min_eigenvalue": 2.5,
+  "report_only": false,
+  "schema": "geosync.opponency_lyapunov.v1",
+  "system_matrix": [
+    [
+      -0.1,
+      0.0,
+      0.2
+    ],
+    [
+      0.0,
+      -0.2,
+      0.0
+    ],
+    [
+      0.0,
+      0.0,
+      -0.1
+    ]
+  ],
+  "verdict": "PASS"
+}

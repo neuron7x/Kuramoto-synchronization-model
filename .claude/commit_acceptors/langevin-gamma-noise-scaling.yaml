@@ -1,0 +1,60 @@
+# Diff-bound commit acceptor: fix the friction (gamma) scaling of the
+# Euler-Maruyama noise term in the overdamped Langevin integrator.
+#
+# Bug (proven numerically): core/physics/stochastic_thermodynamics.py wrote the
+# EM diffusion scale as sqrt(2 * gamma * kT * dt) — gamma in the NUMERATOR. The
+# module's own SDE (and the drift term dt/gamma) require sqrt(2 * kT * dt /
+# gamma). The wrong scale leaves the Boltzmann stationary variance
+# gamma^2-dependent (Var = gamma^2 * kT/k) instead of the
+# fluctuation-dissipation result kT/k. It was exact only at gamma=1, which every
+# existing T8 test uses, so the regression was fully masked. Reproduced:
+# Var at (gamma=0.5,1,2,4) = 0.13, 0.51, 2.04, 8.06 (target 0.50); patched form
+# gives 0.51 for all gamma.
+#
+# Fix: one-line correction (gamma -> denominator) + the two module docstrings
+# that documented the wrong scale, contradicting their own SDE. New falsifying
+# test asserts INV-ST1 equipartition is gamma-invariant across {0.5,1,2,4}.
+
+id: langevin-gamma-noise-scaling
+status: ACTIVE
+claim_type: correctness
+promise: >-
+  After this PR, core.physics.stochastic_thermodynamics.langevin_ensemble_step
+  uses the fluctuation-dissipation-correct Euler-Maruyama noise scale
+  sqrt(2*kT*dt/gamma), so the overdamped-Langevin stationary variance equals
+  kT/k independent of the friction gamma (INV-ST1). A new T8 test falsifies the
+  prior gamma-in-numerator regression by sweeping gamma in {0.5,1,2,4}.
+diff_scope:
+  changed_files:
+    - path: ".claude/commit_acceptors/langevin-gamma-noise-scaling.yaml"
+    - path: "core/physics/stochastic_thermodynamics.py"
+    - path: "tests/unit/physics/test_T8_stochastic_thermodynamics.py"
+  forbidden_paths:
+    - "core/kuramoto/"
+    - "runtime/"
+required_python_symbols:
+  - "tests/unit/physics/test_T8_stochastic_thermodynamics.py::test_INV_ST1_equipartition_is_gamma_invariant"
+expected_signal: >-
+  pytest tests/unit/physics/test_T8_stochastic_thermodynamics.py passes,
+  including test_INV_ST1_equipartition_is_gamma_invariant; on the pre-fix code
+  that new test FAILS (Var ~16x too large at gamma=4). ruff + mypy --strict
+  clean on the changed module.
+measurement_command: >-
+  bash -c 'PYTHONPATH=. python -m pytest
+  tests/unit/physics/test_T8_stochastic_thermodynamics.py -q'
+signal_artifact: "tmp/langevin_gamma_t8.log"
+falsifier:
+  command: >-
+    bash -c 'PYTHONPATH=. python -m pytest
+    tests/unit/physics/test_T8_stochastic_thermodynamics.py::test_INV_ST1_equipartition_is_gamma_invariant
+    -q'
+  description: >-
+    The gamma-sweep equipartition test must pass with the corrected noise scale
+    and must FAIL on the prior sqrt(2*gamma*kT*dt) form (stationary variance
+    scales as gamma^2). If it passes on the buggy code, the falsifier is vacuous.
+rollback_command: "git revert --no-edit HEAD"
+rollback_verification_command: "python tools/commit_acceptor/validate_commit_acceptor.py"
+memory_update_type: append
+ledger_path: ".claude/commit_acceptors/langevin-gamma-noise-scaling.yaml"
+report_path: ".claude/commit_acceptors/langevin-gamma-noise-scaling.yaml"
+evidence: []

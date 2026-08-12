@@ -1,0 +1,23 @@
+[2026-04-21T22:37:45Z] OK: shadow run for 2026-04-10 written to /home/neuro7/wave1_combo_v1/results/cross_asset_kuramoto/shadow_validation/daily/2026-04-10
+[2026-04-21T22:41:09Z] idempotent call: 2026-04-10 already written; idempotent no-op
+[2026-04-21T22:41:10Z] idempotent call: 2026-04-10 already written; idempotent no-op
+[2026-04-21T22:41:11Z] idempotent call: 2026-04-10 already written; idempotent no-op
+[2026-04-21T22:41:26Z] idempotent call: 2026-04-10 already written; idempotent no-op
+[2026-04-21T22:41:27Z] idempotent call: 2026-04-10 already written; idempotent no-op
+[2026-04-21T22:41:28Z] idempotent call: 2026-04-10 already written; idempotent no-op
+[2026-04-21T22:42:10Z] idempotent call: 2026-04-10 already written; idempotent no-op
+[2026-04-21T22:42:11Z] idempotent call: 2026-04-10 already written; idempotent no-op
+[2026-04-21T22:42:12Z] idempotent call: 2026-04-10 already written; idempotent no-op
+[2026-04-21T22:47:30Z] idempotent call: 2026-04-10 already written; idempotent no-op
+[2026-04-21T23:57:31Z] idempotent call: 2026-04-10 already written; idempotent no-op
+[2026-04-21T23:57:32Z] idempotent call: 2026-04-10 already written; idempotent no-op
+[2026-04-21T23:57:33Z] idempotent call: 2026-04-10 already written; idempotent no-op
+[2026-05-05T11:31:14Z] idempotent call: 2026-04-10 already written; idempotent no-op
+[2026-05-05T11:31:15Z] idempotent call: 2026-04-10 already written; idempotent no-op
+[2026-05-05T11:31:15Z] idempotent call: 2026-04-10 already written; idempotent no-op
+[2026-05-05T11:41:42Z] idempotent call: 2026-04-10 already written; idempotent no-op
+[2026-05-05T11:41:43Z] idempotent call: 2026-04-10 already written; idempotent no-op
+[2026-05-05T11:41:44Z] idempotent call: 2026-04-10 already written; idempotent no-op
+[2026-05-05T11:57:42Z] idempotent call: 2026-04-10 already written; idempotent no-op
+[2026-05-05T11:57:43Z] idempotent call: 2026-04-10 already written; idempotent no-op
+[2026-05-05T11:57:44Z] idempotent call: 2026-04-10 already written; idempotent no-op

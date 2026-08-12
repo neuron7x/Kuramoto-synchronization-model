@@ -1,0 +1,111 @@
+# Copyright (c) 2023-2026 Yaroslav Vasylenko (neuron7xLab)
+# SPDX-License-Identifier: MIT
+#
+# ============================================================================
+# TIER PROMOTION POLICY  (RES-020)  — policy-as-data
+# ============================================================================
+# Single source of truth for the contract: "what EXECUTED audit verdict must a
+# claim's self-declared `tier` in docs/CLAIMS.yaml have EARNED before it keeps
+# the right to assert that tier?" The gate scripts/ci/check_claim_promotion.py
+# reads THIS table plus the audit engine's per-claim verdicts and FAILS CLOSED
+# on any over-promotion. This file is the ONLY place the tier->min-verdict table
+# and the heavy/optional-dep allowlist live.
+#
+# WHY THIS EXISTS
+# ---------------
+# docs/CLAIMS.yaml carries a `tier` field (22 ANCHORED / 5 EXTRAPOLATED of 27)
+# that is today a SELF-DECLARED string. geosync/proof/audit.py already collects
+# and RUNS each claim's `falsifier.test_id` and produces a per-claim verdict
+# (SUPPORTED / REFUTED / DANGLING / NOT_TESTED / FORBIDDEN_LANGUAGE), but binds
+# tier to that verdict in exactly ONE narrow place (an ANCHORED claim that NAMES
+# no falsifier -> DANGLING). Everything else is unbound: an ANCHORED claim whose
+# falsifier is REFUTED, DANGLING, or merely parked NOT_TESTED still keeps its
+# self-asserted ANCHORED tier. This policy closes that gap.
+#
+# THIS IS NOT THE 14-RUNG MATURITY LADDER.
+# ----------------------------------------
+# analytics/signals/claim_maturity.py + governance/CLAIM_MATURITY.yaml govern
+# SELF-DECLARED evidence-TOKEN presence (evaluate_promotion: UNOBSERVED ..
+# BOUNDED_CLAIM_ALLOWED) over a SEPARATE descriptor registry and NEVER execute a
+# test (`FALSIFIER_EXECUTED` there is a trusted YAML string). This file is the
+# ORTHOGONAL axis: tier -> minimum EXECUTED audit-verdict over the real 27
+# docs/CLAIMS.yaml claims. Do not conflate them; neither the ladder module nor
+# governance/CLAIM_MATURITY.yaml is touched by this gate.
+#
+# STRENGTH ORDERING IS NOT SET HERE.
+# ----------------------------------
+# The ONLY source of truth for "how strong is a verdict" is
+# geosync.proof.audit._SEVERITY, imported verbatim by the gate:
+#   SUPPORTED(4) > NOT_TESTED(3) > DANGLING(2) > REFUTED(1) > FORBIDDEN_LANGUAGE(0)
+# A floor named below is satisfied by a claim iff
+#   severity(earned_verdict) >= severity(floor).
+# The ordering deliberately ranks NOT_TESTED (honest absence) ABOVE DANGLING
+# (a falsifier that CANNOT fire) and REFUTED (one that FIRED), so a NOT_TESTED
+# floor admits {NOT_TESTED, SUPPORTED} and EXCLUDES REFUTED / DANGLING /
+# FORBIDDEN_LANGUAGE.
+#
+# HARD CONTRACT MINIMUMS (this data file may not weaken them).
+# -----------------------------------------------------------
+# The gate pins in code (_CONTRACT_MIN):  ANCHORED >= SUPPORTED  and
+# EXTRAPOLATED >= NOT_TESTED. A floor set weaker HERE is rejected as an INVALID
+# policy (fail-closed) — the editable data file can never become the laundering
+# vector that lets NOT_TESTED back an ANCHORED assertion.
+
+policy_version: 1
+policy_id: geosync-tier-promotion-v1
+
+# Promoted tiers must additionally have every declared evidence_path present on
+# disk (a claim resting on deleted evidence is an over-promotion). Checked only
+# for tiers that carry a non-null floor.
+require_evidence_paths_exist: true
+
+# --- tier -> minimum earned audit-verdict ----------------------------------
+# Values are audit-engine verdict enum NAMES, or null for "no floor". The gate
+# rejects any name the engine does not define.
+tier_floor:
+
+  # ANCHORED = "evidence complete: a falsifying test exists, is referenced, ran,
+  # and HELD". The only verdict proving a falsifier ran and held is SUPPORTED.
+  # NOT_TESTED (parked/heavy/optional-dep/resolve), DANGLING (cannot-fire), and
+  # REFUTED (fired) all fall short -> gate RED.
+  ANCHORED: SUPPORTED
+
+  # EXTRAPOLATED = "evidence partial, limitation enumerated". It must not be
+  # actively broken: the floor forbids REFUTED (fired) and DANGLING
+  # (cannot-fire). NOT_TESTED is admissible — an EXTRAPOLATED claim may declare
+  # no executable falsifier by design (audit -> NOT_TESTED) or name one that is
+  # honestly parked.
+  EXTRAPOLATED: NOT_TESTED
+
+  # SPECULATIVE / UNKNOWN carry no audit floor: docs/CLAIMS.yaml already forbids
+  # them from README / product / API surfaces, so there is no "right to assert"
+  # to machine-earn here. A refuted SPECULATIVE hypothesis may stay filed as a
+  # negative result. (No claim currently declares these; kept forward-looking.)
+  SPECULATIVE: null
+  UNKNOWN: null
+
+# --- documented per-claim relaxations (NEVER silent) -----------------------
+# The ONLY legitimate reason an ANCHORED claim earns less than SUPPORTED is that
+# its falsifier is honestly PARKED, not broken: an optional-dependency skip
+# (see .github/falsifier_node_allowlist.json) or a heavy-marked node not run in
+# default mode. Such a claim earns NOT_TESTED. An allowlist entry relaxes THAT
+# ONE claim's floor to NOT_TESTED, WITH TEETH:
+#   * relaxed_floor MUST be exactly NOT_TESTED — a pardon may never admit a
+#     REFUTED (fired) or DANGLING (cannot-fire) falsifier.
+#   * `reason` is mandatory (empty -> invalid policy -> RED).
+#   * the claim id must exist in docs/CLAIMS.yaml (dead entry -> RED).
+#   * the pardon is STALE the moment the claim actually earns >= its tier floor:
+#     the gate then goes RED demanding removal. A pardon never silently outlives
+#     the condition it documents.
+allowlist:
+
+  api-contract-openapi-coverage:
+    relaxed_floor: NOT_TESTED
+    reason: >
+      Falsifier tests/api/test_schemathesis_contract.py::test_api_operation_conforms_to_schema
+      collects only when the optional `schemathesis` contract-test dependency is
+      installed (declared in .github/falsifier_node_allowlist.json). In default
+      CI it is honestly parked NOT_TESTED, not broken. Remove this entry once
+      schemathesis is in the CI base image and the node earns SUPPORTED — the
+      gate will then go RED (STALE-ALLOWLIST) demanding removal.
+    optional_dependency: schemathesis

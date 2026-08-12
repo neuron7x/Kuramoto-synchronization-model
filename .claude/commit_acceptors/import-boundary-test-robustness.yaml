@@ -1,0 +1,38 @@
+id: import-boundary-test-robustness
+status: ACTIVE
+claim_type: correctness
+promise: >-
+  Fixes a regression and a CI fragility in tests/workflows/test_import_boundaries.
+  The contract-count assertion hardcoded "5 kept"; adding .importlinter Contract 6
+  (core.indicators does not import core.data.feature_store) made it 6, so the test
+  failed. Derive the expected count from .importlinter instead of hardcoding it,
+  so a legitimate contract change never breaks the test again. Also force UTF-8
+  decoding of the lint-imports subprocess output — its box-drawing banner cannot
+  be decoded under an ascii-locale CI runner, which produced a UnicodeDecodeError.
+diff_scope:
+  changed_files:
+  - path: tests/workflows/test_import_boundaries.py
+  - path: .claude/commit_acceptors/import-boundary-test-robustness.yaml
+  forbidden_paths: []
+required_python_symbols: []
+expected_signal: >-
+  pytest tests/workflows/test_import_boundaries.py passes, and the assertion
+  tracks the real number of .importlinter contracts rather than a hardcoded 5.
+measurement_command: python -m pytest tests/workflows/test_import_boundaries.py -q
+signal_artifact: tests/workflows/test_import_boundaries.py
+falsifier:
+  command: python -m pytest tests/workflows/test_import_boundaries.py -q
+  description: >-
+    Must fail if lint-imports reports a broken contract, if the kept-count
+    diverges from the declared contracts, or if subprocess output decoding
+    regresses under a non-UTF-8 locale.
+rollback_command: >-
+  git checkout origin/main -- tests/workflows/test_import_boundaries.py &&
+  git rm -f .claude/commit_acceptors/import-boundary-test-robustness.yaml
+rollback_verification_command: >-
+  git diff --exit-code tests/workflows/test_import_boundaries.py
+memory_update_type: append
+ledger_path: .claude/commit_acceptors/import-boundary-test-robustness.yaml
+report_path: tests/workflows/test_import_boundaries.py
+evidence:
+- path: tests/workflows/test_import_boundaries.py

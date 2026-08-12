@@ -1,0 +1,122 @@
+E402 Module level import not at top of file
+ --> tests/test_gaba_inhibition_gate_smoke.py:7:1
+  |
+5 | torch = pytest.importorskip("torch")
+6 |
+7 | from modules.gaba_inhibition_gate import GABAInhibitionGate
+  | ^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^
+  |
+
+F841 Local variable `hpc_result` is assigned to but never used
+   --> tests/unit/core/neuro/test_hpc_neuro_bridge.py:126:9
+    |
+124 |     def test_hpc_to_decision_pipeline(self, bus, bridge):
+125 |         # 1. HPC produces output
+126 |         hpc_result = bridge.process_hpc_output(pwpe=1.5, action=2, state_entropy=0.3)
+    |         ^^^^^^^^^^
+127 |
+128 |         # 2. Check bus state
+    |
+help: Remove assignment to unused variable `hpc_result`
+
+E402 Module level import not at top of file
+  --> tests/unit/core/neuro/test_neuro_optimizer.py:18:1
+   |
+16 |       from hypothesis import strategies as st
+17 |
+18 | / from geosync.core.neuro._validation import (
+19 | |     BoundsSpec,
+20 | |     validate_neuro_invariants,
+21 | |     validate_neuro_metric_bounds,
+22 | | )
+   | |_^
+23 |   from geosync.core.neuro.neuro_optimizer import (
+24 |       BalanceMetrics,
+   |
+
+E402 Module level import not at top of file
+  --> tests/unit/core/neuro/test_neuro_optimizer.py:23:1
+   |
+21 |       validate_neuro_metric_bounds,
+22 |   )
+23 | / from geosync.core.neuro.neuro_optimizer import (
+24 | |     BalanceMetrics,
+25 | |     NeuroOptimizer,
+26 | |     NumericConfig,
+27 | |     OptimizationConfig,
+28 | | )
+   | |_^
+   |
+
+E402 Module level import not at top of file
+   --> tests/unit/core/test_core_deep_coverage.py:199:1
+    |
+197 |   # ═══════════════════════════════════════════════════════════════════
+198 |
+199 | / from core.kuramoto.phase_transition import (
+200 | |     PhaseTransitionAnalyzer,
+201 | |     PhaseTransitionReport,
+202 | | )
+    | |_^
+    |
+
+F841 Local variable `cfg` is assigned to but never used
+   --> tests/unit/core/test_kuramoto_modules.py:139:9
+    |
+138 |     def test_two_oscillators(self):
+139 |         cfg = _minimal_config()
+    |         ^^^
+140 |         result = EarlyStoppingEngine(
+141 |             KuramotoConfig(N=2, K=5.0, dt=0.01, steps=1000, seed=0),
+    |
+help: Remove assignment to unused variable `cfg`
+
+F841 Local variable `ctx` is assigned to but never used
+   --> tests/unit/core/test_telemetry_coverage.py:279:36
+    |
+277 |         tc = TelemetryClient(backend=backend, prefix="t")
+278 |         with pytest.raises(ValueError):
+279 |             with tc.timer("op") as ctx:
+    |                                    ^^^
+280 |                 raise ValueError("boom")
+281 |         backend.observe_histogram.assert_called_once()
+    |
+help: Remove assignment to unused variable `ctx`
+
+F841 Local variable `config` is assigned to but never used
+   --> tests/unit/execution/test_shadow_router_workflows.py:453:9
+    |
+452 |     def test_multiple_candidates_tracked_independently(self):
+453 |         config = ShadowDeploymentConfig(
+    |         ^^^^^^
+454 |             window_size=50, min_samples=3, promotion_stable_observations=3
+455 |         )
+    |
+help: Remove assignment to unused variable `config`
+
+F841 Local variable `result` is assigned to but never used
+   --> tests/unit/geosync/core/neuro/serotonin/test_serotonin_controller_simplified.py:133:13
+    |
+131 |         # High stress should trigger hold (v24 has a fast-path for stress >= 1.0)
+132 |         for _ in range(15):
+133 |             result = ctrl.step(stress=1.0, drawdown=0.0, novelty=0.0, dt=1.0)
+    |             ^^^^^^
+134 |             if ctrl._hold:
+135 |                 break
+    |
+help: Remove assignment to unused variable `result`
+
+F841 Local variable `result` is assigned to but never used
+   --> tests/unit/geosync/core/neuro/serotonin/test_serotonin_controller_simplified.py:155:13
+    |
+153 |         exited = False
+154 |         for _ in range(50):
+155 |             result = ctrl.step(stress=0.0, drawdown=0.0, novelty=0.0, dt=1.0)
+    |             ^^^^^^
+156 |             if not ctrl._hold_state:
+157 |                 exited = True
+    |
+help: Remove assignment to unused variable `result`
+
+Found 10 errors.
+No fixes available (6 hidden fixes can be enabled with the `--unsafe-fixes` option).

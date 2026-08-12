@@ -8,7 +8,7 @@ filebeat.autodiscover:
               docker.labels.co.elastic.logs/enabled: "true"
           config:
             - type: filestream
-              id: ${data.docker.container.labels.co.elastic.logs/module:tradepulse}-container-logs
+              id: ${data.docker.container.labels.co.elastic.logs/module:geosync}-container-logs
               paths:
                 - /var/lib/docker/containers/${data.docker.container.id}/*.log
               parsers:
@@ -26,7 +26,7 @@ filebeat.autodiscover:
                 - drop_fields:
                     fields: ["input", "agent"]
               fields:
-                service.name: ${data.docker.container.labels.co.elastic.logs/module:tradepulse}
+                service.name: ${data.docker.container.labels.co.elastic.logs/module:geosync}
                 environment: ${FILEBEAT_ENVIRONMENT:local}
               fields_under_root: true
               ignore_older: 72h

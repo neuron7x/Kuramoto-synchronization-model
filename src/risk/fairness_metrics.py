@@ -1,3 +1,5 @@
+# Copyright (c) 2023-2026 Yaroslav Vasylenko (neuron7xLab)
+# SPDX-License-Identifier: MIT
 """Fairness metrics used for compliance reporting and guardrail enforcement."""
 
 from __future__ import annotations
@@ -48,9 +50,7 @@ def _group_indices(
     if labels.ndim != 1:
         raise FairnessMetricError("Group labels must be one-dimensional")
     if expected_length is not None and labels.size != expected_length:
-        raise FairnessMetricError(
-            "Group labels must be the same length as predictions/targets"
-        )
+        raise FairnessMetricError("Group labels must be the same length as predictions/targets")
     unique_labels = np.unique(labels)
     group_indices: dict[str, np.ndarray] = {}
     for label in unique_labels:
@@ -168,12 +168,8 @@ def evaluate_fairness(
     """Calculate fairness metrics and optionally enforce provided thresholds."""
 
     normalised_thresholds = _normalise_thresholds(thresholds)
-    demographic = demographic_parity_difference(
-        y_pred, group, positive_label=positive_label
-    )
-    opportunity = equal_opportunity_difference(
-        y_true, y_pred, group, positive_label=positive_label
-    )
+    demographic = demographic_parity_difference(y_pred, group, positive_label=positive_label)
+    opportunity = equal_opportunity_difference(y_true, y_pred, group, positive_label=positive_label)
     return FairnessEvaluation(demographic, opportunity, normalised_thresholds)
 
 

@@ -1,0 +1,132 @@
+# SPDX-License-Identifier: MIT
+#
+# Lighthouse CI — IERD-Q6 network_TTFB regression-gated budget (#531).
+#
+# This is the Phase-4 EXIT deliverable for the `network_TTFB` latency
+# layer. The other three layers (server_compute, client_render, db_io)
+# already have regression gates; the only remaining gap documented in
+# tests/observability/test_latency_layer_coverage.py was a real-network
+# budget run. This workflow closes it the honest way:
+#
+#   1. builds the REAL Next.js production app (apps/web),
+#   2. serves it (`next start`),
+#   3. drives headless Chrome (Lighthouse) against the public /signin
+#      route — static prerender, no auth redirect — for 3 runs,
+#   4. asserts the §5 budgets fail-closed:
+#        * server-response-time (network_TTFB) < 300 ms  -> error
+#        * first-contentful-paint (client_render) < 1.0 s -> error
+#      LCP/CLS are advisory (warn).
+#
+# The gate is genuinely fail-closed: the `lhci autorun` step exits
+# non-zero on any `error`-level budget violation, failing the build.
+# The dedicated falsifier step proves the budget is NOT decorative by
+# tightening TTFB to 1 ms and asserting the run FAILS; if a 1 ms budget
+# were to pass, the gate is broken and the workflow fails.
+#
+# Tracked by GitHub issue IERD-Q6 (#531) and claim
+# `e2e-latency-budget-compliance` in `docs/CLAIMS.yaml`.
+name: Lighthouse CI — IERD-Q6 network_TTFB
+
+on:
+  pull_request:
+    branches: [main]
+    paths:
+      - 'apps/web/**'
+      - 'apps/web/lighthouserc.json'
+      - '.github/workflows/lighthouse-ci.yml'
+  merge_group:
+  push:
+    branches: [main]
+
+permissions:
+  contents: read
+
+concurrency:
+  group: lighthouse-ci-${{ github.event.pull_request.number || github.sha }}
+  cancel-in-progress: true
+
+jobs:
+  lighthouse-network-ttfb:
+    name: lighthouse-network-ttfb
+    runs-on: ubuntu-latest
+    timeout-minutes: 20
+    defaults:
+      run:
+        working-directory: apps/web
+    steps:
+      - name: Checkout
+        uses: actions/checkout@9c091bb21b7c1c1d1991bb908d89e4e9dddfe3e0 # v7.0.0
+
+      - name: Setup Node.js
+        uses: actions/setup-node@48b55a011bda9f5d6aeb4c2d9c7362e8dae4041e # v6.4.0
+        with:
+          node-version: '24'
+          cache: npm
+          cache-dependency-path: apps/web/package-lock.json
+
+      - name: Install web dependencies
+        run: npm ci
+
+      - name: Build production Next.js app
+        run: npm run build
+
+      - name: Install Lighthouse CI
+        run: npm install --no-save @lhci/cli@0.15.1
+
+      - name: Run Lighthouse CI budget gate (fail-closed)
+        id: lhci
+        env:
+          # Headless Chrome ships on ubuntu-latest runners; LHCI finds it.
+          LHCI_BUILD_CONTEXT__CURRENT_BRANCH: ${{ github.head_ref || github.ref_name }}
+        run: npx --no-install lhci autorun --config=lighthouserc.json
+
+      - name: Falsifier — 1 ms TTFB budget MUST fail the build
+        # Proves the budget is enforced, not decorative: a 1 ms TTFB
+        # budget is physically impossible for a real server, so the run
+        # MUST exit non-zero. If it exits zero, the gate is broken and
+        # we fail this step explicitly.
+        run: |
+          set -uo pipefail
+          node -e "
+            const fs = require('fs');
+            const c = JSON.parse(fs.readFileSync('lighthouserc.json', 'utf8'));
+            c.ci.assert.assertions['server-response-time'] =
+              ['error', { maxNumericValue: 1, aggregationMethod: 'median' }];
+            fs.writeFileSync('lighthouserc.falsifier.json', JSON.stringify(c, null, 2));
+          "
+          set +e
+          npx --no-install lhci autorun --config=lighthouserc.falsifier.json
+          code=$?
+          set -e
+          rm -f lighthouserc.falsifier.json
+          if [ "$code" -eq 0 ]; then
+            echo "::error::Falsifier breach: a 1 ms TTFB budget PASSED. The Lighthouse budget is decorative, not fail-closed." >&2
+            exit 1
+          fi
+          echo "Falsifier OK: 1 ms TTFB budget failed the build (exit ${code}); the gate is genuinely fail-closed."
+
+      - name: Upload Lighthouse reports
+        if: always()
+        uses: actions/upload-artifact@043fb46d1a93c77aae656e7c1c64a875d1fc6a0a # v7.0.1
+        with:
+          name: lighthouse-ci-reports
+          path: apps/web/.lighthouseci/
+          retention-days: 14
+
+      - name: Summarise Lighthouse budget result
+        if: always()
+        run: |
+          {
+            echo "## Lighthouse CI — IERD-Q6 network_TTFB (§5)";
+            echo "";
+            echo "Real Next build served via \`next start\`; headless Chrome, 3 runs on \`/signin\`.";
+            echo "";
+            echo "| layer | metric | budget | level |";
+            echo "|---|---|---|---|";
+            echo "| network_TTFB | server-response-time | < 300 ms | error (fail-closed) |";
+            echo "| client_render | first-contentful-paint | < 1.0 s | error (fail-closed) |";
+            echo "| (advisory) | largest-contentful-paint | < 2.5 s | warn |";
+            echo "| (advisory) | cumulative-layout-shift | < 0.1 | warn |";
+            echo "";
+            echo "Falsifier: a 1 ms TTFB budget is asserted to FAIL the build, proving the gate is not decorative.";
+          } >> "$GITHUB_STEP_SUMMARY"

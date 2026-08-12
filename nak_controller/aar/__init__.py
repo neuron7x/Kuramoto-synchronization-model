@@ -1,3 +1,5 @@
+# Copyright (c) 2023-2026 Yaroslav Vasylenko (neuron7xLab)
+# SPDX-License-Identifier: MIT
 """AAR (Acceptor of Action Result) - Feedback mechanism for neuro-controllers.
 
 The AAR module provides a formal feedback loop that:

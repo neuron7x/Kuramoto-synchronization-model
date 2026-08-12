@@ -1,3 +1,5 @@
+# Copyright (c) 2023-2026 Yaroslav Vasylenko (neuron7xLab)
+# SPDX-License-Identifier: MIT
 """Helpers for building hardened SQLAlchemy engines with pooling enabled."""
 
 from __future__ import annotations

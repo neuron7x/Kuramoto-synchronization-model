@@ -1,0 +1,20 @@
+{
+  "gate": "breakeven_maker_regime_q75_diurnal",
+  "value": 0.23166569020507446,
+  "tolerance": 1.0e-3,
+  "source": "scripts/run_l2_pnl.py --data-dir data/binance_l2_perp --cost-sweep --diurnal-filter results/L2_DIURNAL_PROFILE.json",
+  "source_method": "linear_interp_between_bracketing_rows",
+  "bracket_rows": [
+    {"maker_fraction": 0.0, "mean_net_bp": -2.7799882824608937},
+    {"maker_fraction": 0.25, "mean_net_bp": 0.22001171753910626}
+  ],
+  "strategy": "REGIME_Q75+DIURNAL",
+  "compares_to": {
+    "gate": "breakeven_maker_regime_q75",
+    "value": 0.4072465349699599,
+    "delta_absolute": -0.17558084476488544,
+    "delta_relative_pct": -43.1
+  },
+  "frozen_at_utc": "2026-04-18T15:08:06Z",
+  "frozen_from_sha": "3671781ba19242a156ad2b5c493d69347b22e015"
+}

@@ -1,0 +1,501 @@
+# GeoSync Physical Contracts — catalog of laws that the 10 core modules must obey.
+#
+# Each law is a first-class object. Tests become "mathematical witnesses" — they
+# prove that code respects a law. Test asserts MUST derive their numeric
+# tolerances from a law's formula/parameters, not from magic literals.
+#
+# Schema per entry:
+#   id              dotted stable identifier (module.short_name)
+#   module          one of the 10 core modules
+#   statement       one-line human-readable law
+#   formula         mathematical expression (LaTeX-lite, ASCII OK)
+#   variables       {name: description}
+#   tolerance       how strict a witness must be; expression may reference variables
+#   validity        preconditions under which the law holds
+#   source          paper / ADR / docstring location justifying the law
+#   severity        block | warn  (block = CI red, warn = report-only)
+---
+version: 1
+laws:
+
+  # ───────────────────────── Kuramoto ─────────────────────────
+  - id: kuramoto.order_parameter_bounds
+    module: kuramoto
+    statement: "The Kuramoto order parameter r is bounded in [0, 1] for every t."
+    formula: "r(t) = |(1/N) Σ_j exp(i θ_j(t))|  ⇒  0 ≤ r(t) ≤ 1"
+    variables: {N: oscillator count, theta_j: phase of oscillator j, r: order parameter}
+    tolerance: "strict — violation of either bound is a bug, not a numerical artefact"
+    validity: "all K, all N ≥ 1, real phases"
+    source: "Kuramoto (1975); core/kuramoto/metrics.py"
+    severity: block
+
+  - id: kuramoto.subcritical_finite_size
+    module: kuramoto
+    statement: "Below the critical coupling, the order parameter scales as 1/√N (finite-size noise floor)."
+    formula: "K < K_c  ⇒  ⟨r⟩ ≈ c / √N  with c ≈ √(π/2) for Lorentzian ω"
+    variables: {K: coupling, K_c: critical coupling, N: oscillator count}
+    tolerance: "witness must assert r < 3 / √N with p ≥ 0.99 over M ≥ 200 trials"
+    validity: "K ≤ 0.8·K_c, N ≥ 256, equilibration time t > 20/γ (γ = Lorentzian half-width)"
+    source: "Strogatz 2000; Daido 1990; Hong et al. PRE 2007"
+    severity: block
+
+  - id: kuramoto.critical_scaling
+    module: kuramoto
+    statement: "Near the transition, the order parameter follows mean-field critical scaling with exponent β = 1/2."
+    formula: "r ∝ sqrt((K − K_c) / K)  for K → K_c⁺"
+    variables: {K: coupling, K_c: critical coupling, beta: critical exponent = 0.5}
+    tolerance: "log-log fit slope within 0.5 ± 0.05 over K ∈ [K_c, 1.3·K_c]"
+    validity: "thermodynamic-limit proxy (N ≥ 1024), unimodal symmetric ω distribution"
+    source: "Kuramoto 1984; Strogatz Physica D 2000 §2.3"
+    severity: block
+
+  - id: kuramoto.frequency_entrainment
+    module: kuramoto
+    statement: "Above K_c a macroscopic cluster locks to a common mean frequency Ω."
+    formula: "K > K_c  ⇒  ∃ Ω : |⟨dθ_j/dt⟩_t − Ω| → 0 for j in locked set"
+    variables: {Omega: collective mean frequency, K_c: critical coupling}
+    tolerance: "std(locked frequencies) ≤ 0.05·⟨|ω_j|⟩ for K ≥ 1.5·K_c"
+    validity: "N ≥ 256, integration time > 50/γ"
+    source: "Acebrón et al., Rev. Mod. Phys. 77 (2005)"
+    severity: block
+
+  # ─────────────────────────── Ricci ───────────────────────────
+  - id: ricci.ollivier_bounds
+    module: ricci
+    statement: "Ollivier–Ricci edge curvature satisfies the universal upper bound κ ≤ 1; the symmetric band κ ∈ [−1, 1] holds only for build_price_graph output, not for arbitrary topologies."
+    formula: "κ(x,y) = 1 − W_1(m_x, m_y) / d(x,y)  ⇒  κ ≤ 1 always (W_1 ≥ 0). κ ≥ −1 holds only when the embedding distance matches the combinatorial metric (build_price_graph: consecutive integer node IDs)."
+    variables: {W_1: Wasserstein-1 distance, m_x: 1-step lazy random walk from x, d: graph distance}
+    tolerance: "strict on the universal upper bound κ ≤ 1; the lower bound −1 is conditional on build_price_graph output"
+    validity: "Universal upper bound κ ≤ 1: any connected graph, positive edge weights (INV-RC1, P0). Symmetric band κ ∈ [−1, 1]: build_price_graph output only — consecutive integer node IDs so the 1-D positional embedding equals the combinatorial distance (INV-RC3, P1). The implementation in core/indicators/ricci.py uses a 1-D positional embedding (offset/scale from graph attrs) with α = 1/(deg+1); under that embedding κ can descend below −1 for non-price-graph topologies with large positional spread (e.g. a 12-node cycle gives κ = −2 on the wrap-around edge whose endpoints are 11 apart in the integer embedding but graph-distance 1)."
+    source: "Ollivier J. Funct. Anal. 2009; .claude/physics/INVARIANTS.yaml ricci.curvature_bounds (INV-RC1) and ricci.price_graph_bounds (INV-RC3); core/indicators/ricci.py ricci_curvature_edge docstring"
+    severity: block
+
+  - id: ricci.flow_monotonicity
+    module: ricci
+    statement: "Under discrete Ricci flow, ∫R² dV is monotonically non-increasing (Perelman F-functional analogue)."
+    formula: "dF/dt ≤ 0  where  F = Σ_e κ_e² · w_e"
+    variables: {kappa_e: edge curvature, w_e: edge weight, F: Perelman-like functional}
+    tolerance: "F(t+1) ≤ F(t) · (1 + 1e-9) — numerical slack only"
+    validity: "closed graph, no external rewiring during the flow step, and positive Ricci curvature on active edges. Negative-curvature rewiring is an out-of-domain energy-injection regime and must be rejected by the executable witness, not counted as a valid monotonicity case."
+    source: "Perelman 2002; Ni–Lin–Luo 2019; core/kuramoto/ricci_flow.py::discrete_ricci_flow_step"
+    severity: block
+
+  - id: ricci.gauss_bonnet
+    module: ricci
+    statement: "For the clique complex of any finite simple graph, the sum of Knill vertex curvatures equals the Euler characteristic (discrete Gauss–Bonnet). A non-zero residual against an externally supplied curvature field is exact evidence of corrupted/tampered topology, rejected fail-closed."
+    formula: "Σ_{x∈V} K(x) = χ(G);  K(x) = Σ_k (−1)^k V_k(x)/(k+1);  χ(G) = Σ_k (−1)^k v_k  ⇒  residual = Σ_x K(x) − χ(G) = 0 exactly (over ℚ)"
+    variables:
+      K_x: "Knill vertex curvature of x, computed with exact Fraction arithmetic"
+      V_k_x: "number of (k+1)-cliques containing x (V_0=1, V_1=deg, V_2=triangles at x, …)"
+      v_k: "number of (k+1)-cliques in G (v_0=vertices, v_1=edges, v_2=triangles, …)"
+      chi: "Euler characteristic of the clique complex, an exact integer"
+    tolerance: "exact: residual == 0 over the rationals; no floating-point slack admitted (curvature carried as fractions.Fraction)"
+    validity: "finite simple undirected graph (no self-loops, no multi/directed edges); the clique complex is taken to the graph's clique number. Out-of-domain inputs are refused, not coerced."
+    source: "Knill O., 'A graph theoretical Gauss-Bonnet theorem', arXiv:1111.5395 (2011); core/indicators/gauss_bonnet.py"
+    severity: block
+
+  - id: kuramoto_ricci.semantics_split
+    module: ricci
+    statement: "Signed Ollivier-Ricci curvature is never silently destroyed (FP-2, issue #1096). Negative curvature is clipped ONLY on the named threshold path ricci_to_positive_adjacency and ONLY with audit metadata; ricci_to_signed_coupling preserves every negative value; a signed matrix passed to the Restrepo-Ott-Hunt onset boundary is rejected fail-closed."
+    formula: "A_pos = max(½(κ+κᵀ), 0), zero diag  (roh_compatible, clipped_for_threshold = (#neg>0));  C_signed = ½(κ+κᵀ), zero diag  (sign preserved, NOT roh_compatible);  assert_roh_compatible(A): any A_ij < 0 ⇒ ValueError"
+    variables:
+      kappa_ij: "Ollivier-Ricci edge curvature; κ_ij < 0 = anti-synchronising / repulsive edge (Ollivier 2009)"
+      negative_mass: "Σ |min(½(κ+κᵀ), 0)| over off-diagonal entries — the signed information the positive path discards"
+      Phi: "Restrepo-Ott-Hunt onset scalar Φ = K·λ_max(A) − 2γ, defined for non-negative weights only"
+    tolerance: "structural/exact: the positive path's clipped_for_threshold bit equals (#negative_edges > 0); the signed path retains every κ_ij < 0 bit-for-bit (atol 1e-12); a signed matrix raises ValueError at the boundary — no numeric slack, the contract is a fail-closed predicate not a measured quantity"
+    validity: "square (N×N) curvature matrices; the ROH onset claim is valid only on the non-negative (positive-path) adjacency; the signed path carries no onset-threshold claim by construction"
+    source: "Restrepo, Ott, Hunt PRE 2005 (Φ threshold); Ollivier J. Funct. Anal. 2009 (signed κ); .claude/physics/INVARIANTS.yaml kuramoto_ricci_semantics (INV-KR4); core/kuramoto/kuramoto_ricci_engine.py"
+    severity: block
+
+  # ────────────────────── Thermodynamics / ECS ──────────────────────
+  - id: thermo.second_law_closed
+    module: ecs
+    statement: "Entropy of a closed subsystem is non-decreasing."
+    formula: "dS/dt ≥ 0  for a closed subsystem with no external work"
+    variables: {S: Shannon/Boltzmann entropy, t: time}
+    tolerance: "S(t+1) − S(t) ≥ −1e-12 — bit-level numerical slack only"
+    validity: "isolated subsystem, ergodic assumption, coarse-graining scale fixed"
+    source: "Clausius; core/physics/thermodynamics.py; ECS regulator ADR"
+    severity: block
+
+  - id: thermo.free_energy_descent
+    module: ecs
+    statement: "Without external forcing, the free energy of the trading gate is non-increasing."
+    formula: "dF/dt ≤ 0   where  F = U − T·S"
+    variables: {F: free energy, U: internal energy, T: temperature proxy, S: entropy}
+    tolerance: "monotone within 1e-10 relative"
+    validity: "no exogenous regime shift within window; constant T"
+    source: "core/physics/free_energy_trading_gate.py"
+    severity: block
+
+  - id: thermo.landauer_bound
+    module: ecs
+    statement: "Erasing one bit of information costs ≥ kT ln 2 of free energy."
+    formula: "ΔF_erase ≥ k_B · T · ln 2"
+    variables: {k_B: Boltzmann constant, T: temperature proxy}
+    tolerance: "strict (physical lower bound)"
+    validity: "quasi-static erasure, thermalised reservoir"
+    source: "Landauer 1961; core/physics/landauer.py"
+    severity: block
+
+  - id: ecs.lyapunov_descent
+    module: ecs
+    statement: "The ECS regulator admits a Lyapunov function V(x) with dV/dt ≤ 0 along trajectories."
+    formula: "dV/dt = ∂V/∂x · f(x)  ≤  0  for all x in the operating set"
+    variables: {V: Lyapunov candidate, x: regulator state, f: vector field}
+    tolerance: "V(x_{t+1}) ≤ V(x_t) + ε, ε bounded by integrator order (O(Δt²) for RK4)"
+    validity: "no exogenous shocks; bounded input"
+    source: "core/neuro/ecs_lyapunov.py"
+    severity: block
+
+  # ───────────────────────── Serotonin ─────────────────────────
+  - id: serotonin.level_bounds
+    module: serotonin
+    statement: "5-HT level stays in the biologically-valid range [0, 1] for every t."
+    formula: "0 ≤ level(t) ≤ 1"
+    variables: {level: 5-HT concentration}
+    tolerance: "strict; integrator must clip or prove invariance"
+    validity: "all inputs, all t ≥ 0"
+    source: "core/neuro/serotonin_ode.py docstring"
+    severity: block
+
+  - id: serotonin.lyapunov_stability
+    module: serotonin
+    statement: "The serotonin ODE is Lyapunov-stable about (level=target, desens=0)."
+    formula: "V(l,d) = ½(l − target)² + λ d²;  dV/dt ≤ 0  with zero input"
+    variables: {l: level, d: desensitisation, target: baseline set-point, lambda: weighting}
+    tolerance: "V(t+1) − V(t) ≤ 1e-9 with stress=0 input"
+    validity: "zero exogenous stress, bounded initial state"
+    source: "core/neuro/serotonin_ode.py"
+    severity: block
+
+  # ───────────────────────── Dopamine ─────────────────────────
+  - id: dopamine.rpe_zero_steady_state
+    module: dopamine
+    statement: "Expected reward-prediction error converges to zero in a stationary reward environment."
+    formula: "E[δ_t] → 0  where  δ_t = r_t − V(s_t)"
+    variables: {delta: RPE, r: reward, V: value estimate, s: state}
+    tolerance: "|mean(δ) over last N/4 steps| ≤ 0.02 after N ≥ 500 updates"
+    validity: "stationary reward distribution, learning rate α satisfying Robbins–Monro"
+    source: "Schultz Dayan Montague 1997; core/neuro/dopamine_execution_adapter.py"
+    severity: block
+
+  - id: dopamine.bounded_signal
+    module: dopamine
+    statement: "The emitted dopamine signal is bounded per spec."
+    formula: "|DA(t)| ≤ DA_max"
+    variables: {DA: dopamine signal, DA_max: saturation cap}
+    tolerance: "strict"
+    validity: "all inputs"
+    source: "core/neuro/dopamine_execution_adapter.py"
+    severity: block
+
+  # ─────────────────────────── GABA ───────────────────────────
+  - id: gaba.gate_bounds
+    module: gaba
+    statement: "The GABA position gate multiplier lies in [0, 1]."
+    formula: "0 ≤ gate(inhibition) ≤ 1"
+    variables: {gate: multiplier, inhibition: GABA signal}
+    tolerance: "strict"
+    validity: "all inhibition ∈ [0, ∞)"
+    source: "core/neuro/gaba_position_gate.py"
+    severity: block
+
+  - id: gaba.monotone_inhibition
+    module: gaba
+    statement: "The gate is monotonically non-increasing in inhibition (more inhibition → smaller size)."
+    formula: "gate(i_1) ≥ gate(i_2)  ∀ i_1 ≤ i_2"
+    variables: {i: inhibition level}
+    tolerance: "strict"
+    validity: "held-fixed other inputs"
+    source: "Mink 1996; core/neuro/gaba_position_gate.py"
+    severity: block
+
+  # ───────────────────────── Kelly ─────────────────────────
+  - id: kelly.optimal_fraction_formula
+    module: kelly
+    statement: "The log-optimal betting fraction equals mean / variance for small-edge continuous returns."
+    formula: "f* = μ / σ²"
+    variables: {mu: expected excess return, sigma: volatility}
+    tolerance: "|f_computed − μ/σ²| ≤ 1e-8 on synthetic inputs with known μ, σ"
+    validity: "i.i.d. returns, no leverage cap binding, small-edge limit"
+    source: "Kelly 1956; Thorp 2006; core/neuro/kuramoto_kelly.py"
+    severity: block
+
+  - id: kelly.fraction_cap
+    module: kelly
+    statement: "Applied fraction never exceeds configured drawdown cap."
+    formula: "f_applied = min(f*, f_max)"
+    variables: {f_max: configured cap, f*: theoretical Kelly fraction}
+    tolerance: "strict"
+    validity: "all inputs"
+    source: "half-Kelly literature; internal risk ADR"
+    severity: block
+
+  - id: kelly.log_growth_optimality
+    module: kelly
+    statement: "Empirical log-growth at f* ≥ log-growth at any f' ≠ f* (Monte-Carlo)."
+    formula: "E[log(1 + f*·X)] ≥ E[log(1 + f'·X)]  ∀ f' ∈ [0,1]"
+    variables: {X: random return, f: fraction}
+    tolerance: "witness MC with ≥ 1e5 samples, gap > 3·SE"
+    validity: "bounded returns, f' sampled on a grid"
+    source: "Kelly 1956; Thorp 2006"
+    severity: warn
+
+  # ───────────────────────── OMS ─────────────────────────
+  - id: oms.position_conservation
+    module: oms
+    statement: "Total book value is conserved by every fill — no synthesis of positions or cash."
+    formula: "Σ_i (Δpos_i · price_i) + Δcash = 0  per fill, modulo fees"
+    variables: {Δpos_i: position change of instrument i, Δcash: cash change}
+    tolerance: "|residual − fees| ≤ 1e-8 · notional"
+    validity: "single fill event, accounting currency fixed"
+    source: "execution/oms.py; core/physics/portfolio_conservation.py"
+    severity: block
+
+  - id: oms.idempotency
+    module: oms
+    statement: "Submitting the same client_order_id twice produces the same side effect exactly once."
+    formula: "apply(order, order) ≡ apply(order)"
+    variables: {order: fully-qualified order with client_order_id}
+    tolerance: "state equality after N replays, N ≥ 5"
+    validity: "same client_order_id, deterministic clock"
+    source: "execution/oms.py"
+    severity: block
+
+  - id: oms.causal_order
+    module: oms
+    statement: "Per-instrument event timestamps are monotonically non-decreasing."
+    formula: "t_{k+1} ≥ t_k  per (instrument, venue)"
+    variables: {t_k: event timestamp k}
+    tolerance: "strict"
+    validity: "single venue; clock skew handled upstream"
+    source: "execution/oms.py"
+    severity: block
+
+  # ───────────────────────── SignalBus ─────────────────────────
+  - id: signalbus.acyclic_fanout
+    module: signalbus
+    statement: "Within a single tick the signal dependency graph is a DAG."
+    formula: "∄ cycle in (nodes=signals, edges=produces→consumes)  per tick"
+    variables: {tick: scheduler frame}
+    tolerance: "strict"
+    validity: "single tick; cross-tick feedback allowed and tracked separately"
+    source: "core/neuro/signal_bus.py"
+    severity: block
+
+  - id: signalbus.deterministic_fanout
+    module: signalbus
+    statement: "Under a fixed seed and identical input sequence, fanout order and emitted signals are bit-identical."
+    formula: "replay(seed, inputs) == replay(seed, inputs)"
+    variables: {seed: RNG seed, inputs: ordered input sequence}
+    tolerance: "bit-for-bit equality of emitted event hashes"
+    validity: "all subscribers pure or seeded"
+    source: "core/neuro/signal_bus.py"
+    severity: block
+
+  # ───────────────────────── HPC ─────────────────────────
+  - id: hpc.seeded_reproducibility
+    module: hpc
+    statement: "HPC kernels are bit-for-bit reproducible under identical seed and dtype."
+    formula: "kernel(seed, x, dtype) == kernel(seed, x, dtype)"
+    variables: {seed: RNG seed, x: input tensor, dtype: numeric dtype}
+    tolerance: "bit-for-bit on fixed hardware; 1 ULP across ISA"
+    validity: "same CPU/GPU ISA; no nondet reductions enabled"
+    source: "geosync_hpc/*.py"
+    severity: block
+
+  - id: hpc.numerical_stability
+    module: hpc
+    statement: "HPC kernels never propagate NaN/Inf from finite inputs, and condition numbers stay bounded."
+    formula: "x finite  ⇒  kernel(x) finite;  cond(A) ≤ κ_max"
+    variables: {kappa_max: configured condition-number ceiling}
+    tolerance: "no NaN, no Inf; κ(A) ≤ κ_max"
+    validity: "inputs within documented range"
+    source: "geosync_hpc/*.py"
+    severity: block
+
+  # ───────────────────────── DRO-ARA ─────────────────────────
+  - id: dro_ara.gamma_derivation
+    module: dro_ara
+    statement: "γ is derived from H, never assigned independently."
+    formula: "γ = 2·H + 1"
+    variables: {H: DFA-1 Hurst exponent on log-returns, gamma: derived scalar}
+    tolerance: "|γ − (2·H + 1)| < 1e-5 for all admissible inputs"
+    validity: "1-D finite non-constant price array, length ≥ window+step"
+    source: "Peng et al. 1994; core/dro_ara/engine.py::derive_gamma"
+    severity: block
+
+  - id: dro_ara.risk_scalar_bounds
+    module: dro_ara
+    statement: "The risk scalar is bounded in [0, 1] and Lipschitz-1 in γ."
+    formula: "rs(γ) = max(0, 1 − |γ − 1|)"
+    variables:
+      gamma: "derived scaling exponent"
+      rs: "risk scalar in [0, 1]"
+    tolerance: "strict; violation is a bug, not a numerical artefact"
+    validity: "all real γ"
+    source: "core/dro_ara/engine.py::risk_scalar"
+    severity: block
+
+  - id: dro_ara.invalid_regime_gate
+    module: dro_ara
+    statement: "INVALID is declared iff the series fails ADF OR R² of the DFA fit is below R2_MIN."
+    formula: "regime == INVALID ⇔ (!stationary ∨ r2 < R2_MIN)"
+    variables: {stationary: ADF rejection of unit root, r2: DFA linear-fit R², R2_MIN: 0.90}
+    tolerance: "strict; no tolerance relaxation"
+    validity: "admissible non-constant finite 1-D input"
+    source: "Dickey-Fuller 1979; Ng-Perron 2001; core/dro_ara/engine.py::classify"
+    severity: block
+
+  - id: dro_ara.long_signal_gate
+    module: dro_ara
+    statement: "A LONG signal requires CRITICAL regime, rs above threshold, and a converging/stable trend."
+    formula: "signal == LONG  =>  regime == CRITICAL AND rs > RS_LONG_THRESH AND trend in (CONVERGING, STABLE)"
+    variables:
+      RS_LONG_THRESH: 0.33
+      trend: "ARA trajectory classification"
+    tolerance: "strict logical conjunction; all three must hold"
+    validity: "geosync_observe output dict"
+    source: "core/dro_ara/engine.py::geosync_observe"
+    severity: block
+
+  - id: dro_ara.fail_closed_input
+    module: dro_ara
+    statement: "Degenerate input raises ValueError; no silent repair."
+    formula: "NaN ∨ Inf ∨ constant ∨ rank != 1 ∨ len < window+step  ⇒  raise ValueError"
+    variables: {price: input array, window: DFA window, step: ARA stride}
+    tolerance: "exact exception type; no fall-through to numeric path"
+    validity: "all inputs to geosync_observe"
+    source: "core/dro_ara/engine.py::_validate"
+    severity: block
+
+  # ───────────────────── PNCC (Physics-Native Cognitive Kernel) ─────────────────────
+  # Wave 1 landed invariants. Two-layer protocol per
+  # docs/research/pncc/CANONS.md §7. Mirror entries live in
+  # .claude/physics/INVARIANTS.yaml under the `pncc:` section.
+
+  - id: pncc.landauer_proxy_dominance
+    module: pncc
+    statement: "Irreversible action proxy cost dominates the reversible-alternative cost; strictly so when irreversibility_score > 0 (INV-LANDAUER-PROXY)."
+    formula: "C_irr ≥ C_rev,  with C_irr > C_rev iff irreversibility_score > 0"
+    variables:
+      C_irr: "aggregate proxy cost of an irreversible action (token + latency + entropy + irreversibility penalty)"
+      C_rev: "aggregate proxy cost of a reversible alternative with identical token/latency/entropy components"
+      irreversibility_score: "scalar in [0, 1] returned by classify_irreversibility"
+    tolerance: "strict — any reversible/irreversible pair with identical (token, latency, entropy) and irreversibility_score > 0 must satisfy C_irr > C_rev exactly; equality only when irreversibility_score == 0"
+    validity: "pure functional path: aggregate_entry → total_cost → reversible_alternative_cost; no global state, no RNG, no time call"
+    source: "Landauer 1961; core/physics/thermodynamic_budget.py; tests/unit/physics/test_thermodynamic_budget.py"
+    severity: warn
+
+  - id: pncc.reversible_gate_byte_exact
+    module: pncc
+    statement: "A reversible-tagged action's rollback recovers the byte-exact pre-state (INV-REVERSIBLE-GATE)."
+    formula: "irreversibility_score(action) ≤ cfg.irreversibility_threshold  ⇒  gate.rollback(trace.audit_hash).state_bytes == pre_state"
+    variables:
+      pre_state: "snapshot bytes captured before action dispatch"
+      audit_hash: "deterministic SHA-256 over canonical-JSON of (action, pre_state, post_state, score)"
+      cfg.irreversibility_threshold: "configured cutoff separating reversible from irreversible actions"
+    tolerance: "strict bit-equality of pre_state and rollback output across 1000 random reversible actions"
+    validity: "rollback called with the trace.audit_hash issued by the same gate instance; action classified reversible"
+    source: "Bennett 1973; core/physics/reversible_gate.py; tests/unit/physics/test_reversible_gate.py"
+    severity: warn
+
+  - id: pncc.no_bio_claim
+    module: tacl
+    statement: "Cognitive-performance language in non-test source must be paired with a registered EvidenceClaim or an allowed disclaimer phrase (INV-NO-BIO-CLAIM)."
+    formula: "for every match m of DEFAULT_FORBIDDEN_PATTERNS in non-test source: ∃ EvidenceClaim_registered(m) ∨ ∃ phrase ∈ allowed_disclaimer_phrases within scope(m)"
+    variables:
+      DEFAULT_FORBIDDEN_PATTERNS: "regex tuple in tacl.evidence_ledger guarding cognitive/medical claims"
+      allowed_disclaimer_phrases: "tuple including 'make no claim', 'is not a', 'no causal', 'correlation-only', 'no-bio-claim', 'does NOT', 'no medical'"
+      EvidenceClaim_registered: "claim recorded via EvidenceRegistry.register with content-addressable hash"
+    tolerance: "strict — zero naked violations across core/, tacl/, runtime/, geosync/ in non-test source"
+    validity: "AST-grep + runtime guard via tacl.evidence_ledger.scan_source_for_bio_claims; test files (tests/**) and explicit disclaimer paragraphs are excluded by construction"
+    source: "GeoSync PNCC CANONS §INV-NO-BIO-CLAIM; tacl/evidence_ledger.py; tests/tacl/test_evidence_ledger.py"
+    severity: warn
+
+  # ───────────────── Physics v2 — Universal Synchronization Manifold ─────────────────
+  # Candidate (draft) laws proposed by the Physics v2 architecture handoff
+  # (docs/architecture/physics_v2_universal_synchronization_manifold.md §1).
+  # ALL are severity: warn — non-blocking, report-only. They carry no witness in
+  # this first slice by design: blocking laws must never enter without a
+  # mathematical witness, and numerical witnesses for the flow/scaling laws need
+  # a solver that lands in a later PR (architecture doc §4: "Do not start with
+  # solvers. Start with inventory."). The structural laws are exercised by the
+  # typed contracts in physics_contracts/manifold/ and their synthetic tests.
+
+  - id: manifold.metric_snapshot_schema
+    module: manifold
+    statement: "A market causal-graph snapshot is well-formed: monotonic interval, valid edge indices, unique nodes, and finite non-negative edge weights."
+    formula: "timestamp_end ≥ timestamp_start ∧ ∀(u,v)∈E: 0≤u,v<|V| ∧ u≠v ∧ |E|=|w| ∧ ∀wᵢ: 0≤wᵢ<∞"
+    variables:
+      V: "node set of the snapshot"
+      E: "edge set (ordered pairs of node indices)"
+      w: "edge-weight vector aligned with E"
+    tolerance: "strict — any schema violation raises ValueError; no silent repair"
+    validity: "every MarketCausalGraphSnapshot construction; structural only, no market claim"
+    source: "Physics v2 handoff §2 P2; physics_contracts/manifold/contracts.py::MarketCausalGraphSnapshot"
+    severity: warn
+
+  - id: manifold.causal_cutoff
+    module: manifold
+    statement: "Information never propagates faster than the data substrate allows: the causal cutoff is at least the latency floor, and no source event used to build a snapshot lies in its future."
+    formula: "causal_cutoff_seconds ≥ latency_floor_seconds ≥ 0 ∧ ∀ t_event: t_event ≤ timestamp_end"
+    variables:
+      latency_floor_seconds: "lower bound on information arrival imposed by the data substrate"
+      causal_cutoff_seconds: "enforced information-causality horizon for the snapshot"
+      t_event: "timestamp of a source event consumed by the builder"
+    tolerance: "strict — negative latency, cutoff below floor, or look-ahead event raises ValueError"
+    validity: "relativistic-INSPIRED causal cutoff only; NOT a relativistic market law (architecture doc §5)"
+    source: "Physics v2 handoff §2 P2, §5; physics_contracts/manifold/contracts.py::MarketCausalGraphSnapshot.assert_no_lookahead"
+    severity: warn
+
+  - id: manifold.provenance_replay_identity
+    module: manifold
+    statement: "Identical canonical inputs produce an identical content-address; the run id is a deterministic function of config hash, dataset fingerprint, and code commit."
+    formula: "snapshot_id = SHA256(canonical_json(fields)) ∧ run_id = SHA256(canonical_json(config_hash, dataset_fingerprint, code_commit))"
+    variables:
+      canonical_json: "JSON with sorted keys and fixed separators"
+      config_hash: "hash of the construction configuration"
+      dataset_fingerprint: "hash of the source dataset (zero/empty ⇒ no real data)"
+      code_commit: "git commit of the producing code"
+    tolerance: "byte-identical digest under replay; empty provenance field raises ValueError"
+    validity: "all manifold contracts; same interpreter (digest is canonical-JSON stable)"
+    source: "Physics v2 handoff §2 P6; physics_contracts/manifold/contracts.py::canonical_digest"
+    severity: warn
+
+  - id: manifold.curvature_transport_balance
+    module: manifold
+    statement: "Edge transport weights on a causal snapshot are finite and non-negative, so curvature is computed on a physically admissible weighted graph."
+    formula: "∀ edge weight wᵢ: 0 ≤ wᵢ < ∞"
+    variables:
+      w: "edge-weight vector of the causal market graph"
+    tolerance: "strict — a negative or non-finite weight raises ValueError"
+    validity: "structural precondition for any later curvature-flow layer; no market claim"
+    source: "Physics v2 handoff §2 P2/P3; physics_contracts/manifold/contracts.py::MarketCausalGraphSnapshot"
+    severity: warn
+
+  - id: ricci.flow_energy_nonincrease_declared_domain
+    module: manifold
+    statement: "On a closed static graph with no rewiring, a discrete curvature-flow energy functional is non-increasing within its declared numerical domain and tolerance."
+    formula: "dF/dt ≤ 0 within declared domain, F = Σ_e κ_e² (static graph, no surgery)"
+    variables:
+      F: "curvature-flow energy functional"
+      kappa_e: "edge curvature"
+    tolerance: "to be derived from the solver step size in a later PR; declared-domain only, NOT universal"
+    validity: "DRAFT — witness deferred until the curvature-flow solver lands (architecture doc §2 P3). Discrete graph domain only; no Ricci-flow theorem claim beyond it (§5)."
+    source: "Physics v2 handoff §1, §2 P3; cf. existing core/kuramoto/ricci_flow.py (Hamilton 1982; Chow & Luo 2003)"
+    severity: warn
+
+  - id: kuramoto.finite_size_scaling_with_causal_cutoff
+    module: manifold
+    statement: "The finite-size synchronization noise floor grows when a causal cutoff prevents full coupling: the effective floor scales with the coupled fraction of oscillators."
+    formula: "ε_effective = √(N_total / N_coupled) · (c / √N_total),  N_coupled ≤ N_total"
+    variables:
+      N_total: "total oscillator count"
+      N_coupled: "oscillators coupled within the causal cutoff"
+      c: "finite-size constant ≈ √(π/2) for Lorentzian ω"
+    tolerance: "DRAFT — to be derived from N and the Lorentzian half-width once a solver exists"
+    validity: "DRAFT — witness deferred to a later PR; extends kuramoto.subcritical_finite_size under a causal-cutoff constraint"
+    source: "Physics v2 handoff §1, §2 P4; extends Strogatz 2000 / Hong et al. PRE 2007 under causal cutoff"
+    severity: warn

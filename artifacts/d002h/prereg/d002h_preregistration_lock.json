@@ -1,0 +1,21 @@
+{
+  "schema_version": "D002H-PREREGISTRATION-LOCK-v1",
+  "study_id": "D-002H",
+  "lineage_type": "fresh_preregistration",
+  "parent_closure": "D-002G_STRUCTURAL_CLOSURE",
+  "parent_merge_sha": "8cf5364a3f3b605d8b134bccbfe5170098e0e197",
+  "substrate_scope": {
+    "included": ["ricci_flow"],
+    "excluded": ["block_structured", "temporal_coupling"]
+  },
+  "null_mechanisms_allowed": ["M1_INDEPENDENT_SEED", "M3_TOPOLOGY_CONDITIONED"],
+  "canonical_run_authorized": false,
+  "requires_explicit_authorization_artifact": true,
+  "authorization_gates": ["A", "B", "C", "D", "E", "F", "G"],
+  "d002c_ledger_touched": false,
+  "d002g_amended": false,
+  "substrate_code_edited": false,
+  "mechanism_code_edited": false,
+  "edit_policy": "fresh_pre_registration_only",
+  "locked_at_merge": true
+}

@@ -1,0 +1,99 @@
+# Diff-bound commit acceptor: register INV-SAK1 + close the Sakaguchi
+# frustration-sign blind manifold.
+#
+# Before: the Sakaguchi phase-lag term sin(θ_j(t−τ) − θ_i − α) had NO
+# invariant in the registry and NO test exercising α≠0. Its sign is
+# canonical (verified on the real integrator), but a future −α→+α
+# regression would be invisible exactly like the Ott–Antonsen
+# conjugate defect (PR #745) was at ω₀=0 — the same blind-manifold
+# class. No invariant ⇒ no mandated coverage.
+#
+# After: INV-SAK1 (kuramoto/sakaguchi_frustration_sign) is registered
+# in .claude/physics/INVARIANTS.yaml; the registry count goes 96→97
+# and every documentation surface (README badge+prose, BASELINE.md,
+# CLAUDE.md header) is synced (invariant-count-sync gate OK).
+# tests/unit/physics/test_sakaguchi_frustration_alpha.py grounds
+# INV-SAK1 with a derivation-backed, maximally discriminative
+# falsifier on the REAL forward integrator
+# core.kuramoto.synthetic._simulate_sdde: identical all-to-all
+# oscillators must phase-lock and rotate at Ω = ω₀ − (N−1)·κ·sin(α);
+# the sign-flipped law differs by ~1.25 rad/s at the tested α. α=0 is
+# kept as the explicit blind-manifold control.
+#
+# Locally verified: count_invariants → 97; check_invariant_count_sync
+# → OK; physics validator grounding 1/1 (100%, L1/L2/L3 clean); pytest
+# 4/4; mypy --strict / black / ruff clean; registry has no duplicate
+# ids and INV-SAK1 present (97 total).
+
+id: sakaguchi-frustration-invariant
+status: ACTIVE
+claim_type: correctness
+promise: >-
+  .claude/physics/INVARIANTS.yaml declares INV-SAK1 (the Sakaguchi
+  phase-lag minus-α sign and the identical-oscillator collective
+  frequency Ω = ω₀ − (N−1)·κ·sin(α)).
+  tests/unit/physics/test_sakaguchi_frustration_alpha.py grounds it
+  (docstring cites INV-SAK1; physics validator L1/L2/L3 clean) and
+  falsifies the sign on the real _simulate_sdde integrator for α ≠ 0,
+  with α = 0 retained as the documented blind-manifold control. The
+  registry count is 97 and README/BASELINE/CLAUDE headline counts are
+  in sync (invariant-count-sync fail-closed gate).
+diff_scope:
+  changed_files:
+    - path: ".claude/commit_acceptors/sakaguchi-frustration-invariant.yaml"
+    - path: ".claude/physics/INVARIANTS.yaml"
+    - path: "tests/unit/physics/test_sakaguchi_frustration_alpha.py"
+    - path: "README.md"
+    - path: "BASELINE.md"
+    - path: "CLAUDE.md"
+  forbidden_paths:
+    - "trading/"
+    - "execution/"
+    - "forecast/"
+    - "policy/"
+    - "application/api/"
+    - "schemas/openapi/"
+    - "core/kuramoto/synthetic.py"
+required_python_symbols:
+  - "tests/unit/physics/test_sakaguchi_frustration_alpha.py::test_sakaguchi_collective_frequency_shift_sign"
+expected_signal: >-
+  Local: `python scripts/count_invariants.py` prints 97; `python
+  scripts/check_invariant_count_sync.py` reports "OK: 97 invariants,
+  all documentation surfaces in sync"; `python
+  .claude/physics/validate_tests.py
+  tests/unit/physics/test_sakaguchi_frustration_alpha.py` reports
+  "Physics grounding: 1/1 tests (100%)" with L1=L2=L3=0; `mypy
+  --strict --follow-imports=silent` + `ruff check` + `black --check`
+  clean; `pytest tests/unit/physics/test_sakaguchi_frustration_alpha.py
+  -q` reports 4 passed.
+measurement_command: >-
+  bash -c 'python scripts/count_invariants.py
+  && python scripts/check_invariant_count_sync.py
+  && python .claude/physics/validate_tests.py tests/unit/physics/test_sakaguchi_frustration_alpha.py
+  && mypy --strict --follow-imports=silent tests/unit/physics/test_sakaguchi_frustration_alpha.py
+  && ruff check tests/unit/physics/test_sakaguchi_frustration_alpha.py
+  && black --check tests/unit/physics/test_sakaguchi_frustration_alpha.py
+  && python -m pytest tests/unit/physics/test_sakaguchi_frustration_alpha.py -q'
+signal_artifact: "tmp/sakaguchi_frustration_invariant.log"
+falsifier:
+  command: >-
+    bash -c 'python -c "import re,sys; reg=open(\".claude/physics/INVARIANTS.yaml\").read(); tst=open(\"tests/unit/physics/test_sakaguchi_frustration_alpha.py\").read(); ok=(\"id: INV-SAK1\" in reg) and (\"INV-SAK1\" in tst) and (\"- α\" in reg or \"− α\" in reg or \"minus α\" in reg); sys.exit(0 if ok else 1)"'
+  description: >-
+    Asserts INV-SAK1 stays registered AND its grounding test keeps
+    citing it AND the registry statement keeps the minus-α form. If
+    the invariant is deleted, the test stops referencing it, or the
+    sign is silently changed in the registry, the falsifier exits
+    non-zero — the Sakaguchi blind manifold cannot silently reopen.
+rollback_command: >-
+  git checkout HEAD~1 --
+  .claude/commit_acceptors/sakaguchi-frustration-invariant.yaml
+  .claude/physics/INVARIANTS.yaml
+  tests/unit/physics/test_sakaguchi_frustration_alpha.py
+  README.md BASELINE.md CLAUDE.md
+rollback_verification_command: >-
+  git diff --exit-code .claude/physics/INVARIANTS.yaml
+  tests/unit/physics/test_sakaguchi_frustration_alpha.py
+memory_update_type: append
+ledger_path: ".claude/commit_acceptors/sakaguchi-frustration-invariant.yaml"
+report_path: "tmp/sakaguchi_frustration_invariant.log"
+evidence: []

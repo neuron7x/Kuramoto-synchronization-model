@@ -1,0 +1,75 @@
+# Diff-bound acceptor for the CodeQL security-board triage (PR #895).
+#
+# Binds the correctness fixes that resolve real defects surfaced by the
+# code-scanning board: four StructuredLogger positional-argument crashes
+# (py/call/wrong-arguments #288-#291) that would raise TypeError inside the
+# very error/fallback branches meant to log a failure, and one phantom
+# __all__ export (py/undefined-export) in core/orchestrator. Touches no
+# execution/forecast/policy/trading code; pure logging-call and export-name
+# corrections plus the entropy test whose DummyLogger had encoded the broken
+# positional signature.
+
+id: codeql-board-triage
+status: ACTIVE
+claim_type: correctness
+promise: >-
+  StructuredLogger.<level>(msg, **kwargs) accepts no positional args and does
+  no %-formatting; four error/fallback branches called it printf-style and
+  would raise "takes 2 positional arguments but N were given" the instant the
+  branch executed, masking the original error. All four are converted to
+  structured kwargs and empirically reproduced before/after. Separately,
+  core/orchestrator/__init__.py exported a phantom "ModePhase" in __all__ (a
+  typo for the imported ModulePhase), so `from core.orchestrator import *`
+  would AttributeError; corrected to export the real ModulePhase. No behaviour
+  changes beyond making the error paths and the star-export non-crashing.
+diff_scope:
+  changed_files:
+    - path: ".claude/commit_acceptors/codeql-board-triage.yaml"
+    - path: "core/data/preprocess.py"
+    - path: "core/indicators/cache.py"
+    - path: "core/indicators/entropy.py"
+    - path: "core/indicators/ricci.py"
+    - path: "core/orchestrator/__init__.py"
+    - path: "tests/unit/test_indicators_entropy.py"
+    - path: "docs/reports/codeql_board_triage.md"
+  forbidden_paths:
+    - "trading/"
+    - "execution/"
+    - "forecast/"
+    - "policy/"
+required_python_symbols:
+  - "normalize_df"
+  - "ModulePhase"
+expected_signal: >-
+  All four fixed StructuredLogger call shapes execute without TypeError;
+  core.orchestrator.__all__ is fully import-resolvable (UNRESOLVABLE=0) and
+  `from core.orchestrator import ModulePhase` succeeds; ruff / black /
+  mypy --strict clean on every changed module; the entropy and ricci unit
+  suites stay green.
+measurement_command: >-
+  PYTHONPATH=. python -m pytest tests/unit/test_indicators_entropy.py
+  tests/research/systemic_risk/test_sweep_checkpoint.py -q
+signal_artifact: "tmp/codeql_board_triage_pytest.log"
+falsifier:
+  command: >-
+    PYTHONPATH=. python -c "from core.utils.logging import get_logger as g;
+    lg=g('f'); lg.warning('m', trace_id='t'); lg.debug('d', error='e');
+    import core.orchestrator as o; assert not [n for n in o.__all__ if not
+    hasattr(o,n)], 'phantom export remains'"
+  description: >-
+    Probes the inverse of the fix: if any StructuredLogger call still rejected
+    structured kwargs, or if __all__ still listed an unresolvable name, this
+    command would raise and exit nonzero. It exits 0 only when both classes of
+    defect are actually gone.
+rollback_command: >-
+  git checkout origin/main -- core/data/preprocess.py core/indicators/cache.py
+  core/indicators/entropy.py core/indicators/ricci.py
+  core/orchestrator/__init__.py tests/unit/test_indicators_entropy.py
+rollback_verification_command: >-
+  git diff --exit-code origin/main -- core/data/preprocess.py
+  core/indicators/cache.py core/indicators/entropy.py core/indicators/ricci.py
+  core/orchestrator/__init__.py tests/unit/test_indicators_entropy.py
+memory_update_type: none
+ledger_path: ".claude/commit_acceptors/codeql-board-triage.yaml"
+report_path: "docs/reports/codeql_board_triage.md"
+evidence: []

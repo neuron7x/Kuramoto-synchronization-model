@@ -3,14 +3,14 @@
 **Document Type**: RFC  
 **Version**: 1.0.0  
 **Status**: Draft  
-**Author**: TradePulse Architecture Team  
+**Author**: GeoSync Architecture Team  
 **Date**: 2025-12-18  
 
 ---
 
 ## 1. Executive Summary
 
-- **TACL is the governing brain of system stability** for TradePulse, not a feature — it enforces safety invariants across all autonomous adaptations
+- **TACL is the governing brain of system stability** for GeoSync, not a feature — it enforces safety invariants across all autonomous adaptations
 - **Monotonic Free Energy Descent** is the core safety guarantee: no autonomous change may increase system free energy F without explicit human approval
 - The system implements **Helmholtz free energy** measurement: `F = U - T·S` where U is internal energy (weighted penalties), T is control temperature (0.60), and S is stability (headroom)
 - **7-year audit trail** for all decisions, configuration changes, model versions, and regime switches is designed into the architecture
@@ -24,7 +24,7 @@
 
 ### System Boundary
 
-TACL governs the TradePulse distributed execution graph, operating at the layer between:
+TACL governs the GeoSync distributed execution graph, operating at the layer between:
 - **Above**: Trading strategies, execution algorithms, and user-facing APIs
 - **Below**: Protocol layer (RDMA, CRDT, gRPC, shared memory), infrastructure, and market data feeds
 
@@ -32,7 +32,7 @@ TACL governs the TradePulse distributed execution graph, operating at the layer 
 
 | Assumption | Verification Plan |
 |------------|-------------------|
-| Control temperature T=0.60 is optimal for TradePulse workloads | **Verification**: Run A/B test comparing T∈{0.4, 0.6, 0.8} on staging cluster; measure false positive circuit breaker activations |
+| Control temperature T=0.60 is optimal for GeoSync workloads | **Verification**: Run A/B test comparing T∈{0.4, 0.6, 0.8} on staging cluster; measure false positive circuit breaker activations |
 | 7 metrics sufficiently characterize system health | **Verification**: Run principal component analysis on production telemetry; confirm >95% variance explained by current metric set |
 | Genetic algorithm converges within 10 generations | **Verification**: Measure fitness plateau timing in `tests/evolution/test_crisis_ga.py` |
 | Dual approval tokens expire after 1 hour | **Verification**: Operational audit showing no stale tokens used; implemented in `runtime/dual_approval.py` |
@@ -40,8 +40,8 @@ TACL governs the TradePulse distributed execution graph, operating at the layer 
 ### Namespace Resolution
 
 - **Authoritative namespace**: `tacl.*` and `runtime.*` for core TACL implementation
-- `src/tradepulse.*` is the public API surface for risk controls
-- Evidence: `pyproject.toml` declares `packages = ["tacl", "runtime", "core", "tradepulse"]`
+- `src/geosync.*` is the public API surface for risk controls
+- Evidence: `pyproject.toml` declares `packages = ["tacl", "runtime", "core", "geosync"]`
 
 ---
 
@@ -279,7 +279,7 @@ def detect(F_current, F_baseline, threshold):
 - dF/dt > 0.05 (rate alert)
 - Circuit breaker active (incident opened)
 
-**Evidence anchors:** `runtime/thermo_api.py`, `observability/dashboards/tradepulse-risk-engine.json`, `monitoring/grafana/risk_dashboard.json`
+**Evidence anchors:** `runtime/thermo_api.py`, `observability/dashboards/geosync-risk-engine.json`, `monitoring/grafana/risk_dashboard.json`
 
 ---
 
@@ -314,7 +314,7 @@ def detect(F_current, F_baseline, threshold):
 
 **Format**: JSONL (append-only)
 
-**Location**: `/var/log/tradepulse/thermo_audit.jsonl`
+**Location**: `/var/log/geosync/thermo_audit.jsonl`
 
 **Schema**:
 ```json
@@ -549,7 +549,7 @@ def tacl_gate(action_class, F_now, F_next, epsilon, dual_approved):
 
 ### Logs
 
-- **Location**: `/var/log/tradepulse/thermo_audit.jsonl`
+- **Location**: `/var/log/geosync/thermo_audit.jsonl`
 - **Format**: JSONL with structured fields
 - **Rotation**: Daily, compressed after 7 days
 - **Retention**: 7 years
@@ -569,7 +569,7 @@ def tacl_gate(action_class, F_now, F_next, epsilon, dual_approved):
 | Circuit breaker active > 5 min | Critical | Escalate to platform lead |
 | Audit log write failure | Critical | Halt system, manual intervention |
 
-**Evidence anchors:** `runtime/thermo_controller.py: _init_homeostasis_metrics`, `observability/dashboards/tradepulse-risk-engine.json`
+**Evidence anchors:** `runtime/thermo_controller.py: _init_homeostasis_metrics`, `observability/dashboards/geosync-risk-engine.json`
 
 ---
 
@@ -653,7 +653,7 @@ Each decision record includes:
 
 ## Decision Record
 
-**Decision**: Adopt TACL as the mandatory governance layer for all autonomous adaptations in TradePulse
+**Decision**: Adopt TACL as the mandatory governance layer for all autonomous adaptations in GeoSync
 
 **Alternatives**:
 1. Simple threshold alerting — Rejected: no optimization loop
@@ -734,4 +734,4 @@ Each decision record includes:
 
 ---
 
-*Document generated following TradePulse Documentation Architecture v1.1*
+*Document generated following GeoSync Documentation Architecture v1.1*

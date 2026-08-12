@@ -1,0 +1,93 @@
+# Diff-bound commit acceptor for the temporal-Ricci descriptor claim-boundary.
+#
+# This change adds an explicit, machine-readable descriptor-only claim-boundary
+# to core/indicators/temporal_ricci.py: a frozen CLAIM_BOUNDARY mapping plus a
+# TemporalRicciResult.descriptor_metadata() accessor that surfaces the method,
+# input-derived counts, and the descriptor_only_not_predictor boundary, and it
+# firewalls the module docstring to structural-descriptor wording. It promotes
+# no claim tier, adds no dependency, changes no runtime math, and adds no
+# predictive / trading / financial-advice labels. The Ricci INVARIANTS
+# (INV-RC1..3) in the registry are untouched.
+#
+# Locally verified on origin/main base (2c3ea591):
+#   * python -m compileall core/indicators/temporal_ricci.py: OK
+#   * pytest tests/unit/indicators/test_temporal_ricci_boundary.py: 9 passed
+#   * pytest tests/unit/indicators/test_temporal_ricci.py: 7 passed (unchanged)
+#   * ruff check / ruff format --check / black --check: clean (tests/ excluded
+#     from ruff+black by repo config — module file passes all three)
+#   * mypy --strict core/indicators/temporal_ricci.py: no issues
+#   * scripts/ci/check_claim_boundary.py: PASS ; scripts/ci/check_claims.py: PASS
+#   * zero new lint-suppression or typecheck-suppression pragmas
+id: temporal-ricci-boundary
+status: ACTIVE
+claim_type: governance
+promise: >-
+  After this PR lands, core/indicators/temporal_ricci.py exposes an explicit
+  descriptor-only claim boundary: the frozen CLAIM_BOUNDARY mapping declares
+  claim_boundary="descriptor_only_not_predictor" with not_predictive_claim,
+  not_financial_advice, and not_a_trading_signal all True, and
+  TemporalRicciResult.descriptor_metadata() returns that boundary verbatim
+  augmented with provenance counts (n_snapshots, n_edges_observed) derived from
+  the result's graph snapshots. The Ricci curvature stays a structural graph
+  descriptor bounded by the universal kappa <= 1 contract (INV-RC1); no runtime
+  math, public API, schema, guard, or invariant-registry file changes, and no
+  market / predictive claim is made.
+diff_scope:
+  changed_files:
+    - path: ".claude/commit_acceptors/temporal-ricci-boundary.yaml"
+    - path: "core/indicators/temporal_ricci.py"
+    - path: "tests/unit/indicators/test_temporal_ricci_boundary.py"
+  forbidden_paths:
+    - "trading/"
+    - "execution/"
+    - "forecast/"
+    - "policy/"
+    - "application/"
+    - "physics_contracts/catalog.yaml"
+    - ".claude/physics/INVARIANTS.yaml"
+required_python_symbols:
+  - "core.indicators.temporal_ricci.CLAIM_BOUNDARY"
+  - "core.indicators.temporal_ricci.TemporalRicciResult.descriptor_metadata"
+expected_signal: >-
+  `python -m pytest tests/unit/indicators/test_temporal_ricci_boundary.py`
+  reports 9 passed; the boundary tests assert CLAIM_BOUNDARY declares
+  descriptor_only_not_predictor and that descriptor_metadata() mirrors it while
+  adding non-negative input counts; ruff/black on the module and mypy --strict
+  on the module are clean.
+measurement_command: >-
+  bash -c 'mkdir -p tmp && python -m pytest
+  tests/unit/indicators/test_temporal_ricci_boundary.py
+  > tmp/temporal_ricci_boundary.log 2>&1
+  && grep -q "9 passed" tmp/temporal_ricci_boundary.log'
+signal_artifact: "tmp/temporal_ricci_boundary.log"
+falsifier:
+  command: |-
+    bash -c 'python -c "
+    from core.indicators.temporal_ricci import CLAIM_BOUNDARY;
+    import sys;
+    relaxed = (
+        CLAIM_BOUNDARY.get(\"claim_boundary\") != \"descriptor_only_not_predictor\"
+        or CLAIM_BOUNDARY.get(\"not_predictive_claim\") is not True
+        or CLAIM_BOUNDARY.get(\"not_financial_advice\") is not True
+        or CLAIM_BOUNDARY.get(\"not_a_trading_signal\") is not True
+    );
+    sys.exit(0 if relaxed else 1)"'
+  description: >-
+    Inverse probe of the descriptor-only claim boundary. It exits 0 (fires) iff
+    CLAIM_BOUNDARY no longer declares descriptor_only_not_predictor or any of the
+    not_predictive_claim / not_financial_advice / not_a_trading_signal negations
+    is dropped or flipped — i.e. the descriptor has been silently promoted toward
+    a predictive or trading claim. While the boundary holds the probe exits 1. If
+    it ever exits 0, the change must be reverted, not patched green.
+rollback_command: >-
+  bash -c 'git rm -f
+  tests/unit/indicators/test_temporal_ricci_boundary.py
+  .claude/commit_acceptors/temporal-ricci-boundary.yaml
+  && git checkout origin/main -- core/indicators/temporal_ricci.py'
+rollback_verification_command: >-
+  bash -c 'test ! -f tests/unit/indicators/test_temporal_ricci_boundary.py
+  && ! grep -q "descriptor_only_not_predictor" core/indicators/temporal_ricci.py'
+memory_update_type: none
+ledger_path: ".claude/commit_acceptors/temporal-ricci-boundary.yaml"
+report_path: "tmp/temporal_ricci_boundary.log"
+evidence: []

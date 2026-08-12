@@ -1,0 +1,38 @@
+{
+  "checks": [
+    {
+      "holds": true,
+      "id": "KURA-1",
+      "name": "strong coupling locks (r_steady >= r_lock)"
+    },
+    {
+      "holds": true,
+      "id": "KURA-2",
+      "name": "weak coupling is incoherent (r_steady < r_incoherent)"
+    },
+    {
+      "holds": true,
+      "id": "KURA-3",
+      "name": "a synchronisation phase transition exists (r_high - r_low >= gap)"
+    },
+    {
+      "holds": true,
+      "id": "KURA-4",
+      "name": "order parameter stays in [0, 1]"
+    },
+    {
+      "holds": true,
+      "id": "KURA-5",
+      "name": "same seed reproduces the same trajectory"
+    }
+  ],
+  "component": "core.kuramoto.KuramotoEngine (phase oscillators)",
+  "gate": "SYNCHRONISING",
+  "r_lock": 0.9,
+  "r_steady_high": 0.986911,
+  "r_steady_low": 0.250454,
+  "r_steady_mid": 0.244113,
+  "report_only": false,
+  "schema": "geosync.kuramoto_synchrony.v1",
+  "verdict": "PASS"
+}

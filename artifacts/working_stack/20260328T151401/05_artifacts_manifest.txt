@@ -13,8 +13,8 @@ artifacts/working_stack/20260328T151401/
 docs/WORKING_STACK.md          — canonical bootstrap/run/build/verify guide
 
 ## Build Artifacts
-dist/tradepulse-0.1.0-py3-none-any.whl  — Python wheel (2.0MB)
-dist/tradepulse-0.1.0.tar.gz            — Source distribution (1.7MB)
+dist/geosync-0.1.0-py3-none-any.whl  — Python wheel (2.0MB)
+dist/geosync-0.1.0.tar.gz            — Source distribution (1.7MB)
 
 ## Changed Files
 pytest.ini                     — maxfail=1→50, added --continue-on-collection-errors

@@ -1,3 +1,5 @@
+# Copyright (c) 2023-2026 Yaroslav Vasylenko (neuron7xLab)
+# SPDX-License-Identifier: MIT
 """Tests for algorithmic trading strategies."""
 
 import numpy as np
@@ -83,9 +85,7 @@ def test_hurst_vpin_empty_dataframe(sample_data: pd.DataFrame) -> None:
 def test_edge_cases_kuramoto() -> None:
     """Test KuramotoStrategy with edge cases (NaN, empty data)."""
 
-    strategy = KuramotoStrategy(
-        symbol="TEST", params={"window": 50, "sync_threshold": 0.5}
-    )
+    strategy = KuramotoStrategy(symbol="TEST", params={"window": 50, "sync_threshold": 0.5})
     empty = pd.DataFrame({"close": []})
     signals_empty = strategy.generate_signals(empty)
     assert signals_empty.empty
@@ -121,9 +121,7 @@ def test_kuramoto_strategy_signal_logic(monkeypatch: pytest.MonkeyPatch) -> None
         {"close": [100.0, 101.0, 102.0]},
         index=pd.date_range("2025-01-01", periods=3, freq="h"),
     )
-    strategy = KuramotoStrategy(
-        symbol="TEST", params={"sync_threshold": 0.7, "window": 1}
-    )
+    strategy = KuramotoStrategy(symbol="TEST", params={"sync_threshold": 0.7, "window": 1})
 
     def fake_compute(self: KuramotoIndicator, _: np.ndarray) -> np.ndarray:
         return np.array([0.9, 0.1, 0.5])

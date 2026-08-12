@@ -1,0 +1,97 @@
+{
+  "schema": "evidence_artifact_freshness@v1",
+  "generated_at_policy": "deterministic; no wall-clock, no RNG",
+  "artifacts": [
+    {
+      "artifact": "artifacts/academy_fellow/distinguished_evidence_table.json",
+      "determinism_class": "deterministic",
+      "generator_command": "python scripts/ci/gen_distinguished_evidence_table.py",
+      "sources": [
+        ".claude/neuro/NEURO_OPERATIONALIZATION_LEDGER.yaml"
+      ],
+      "exclusion_reason": "",
+      "artifact_sha256": "b29085df06962833b43263256a41e86936825f1661a3db11dd6891303e154264"
+    },
+    {
+      "artifact": "artifacts/academy_fellow/law_mechanism_witness_matrix.json",
+      "determinism_class": "deterministic",
+      "generator_command": "python scripts/ci/gen_law_mechanism_witness_matrix.py",
+      "sources": [
+        ".claude/physics/INVARIANTS.yaml"
+      ],
+      "exclusion_reason": "",
+      "artifact_sha256": "21a4860f237c5eba4fff14af7967a9652db3aa416f814cefa04b335518933460"
+    },
+    {
+      "artifact": "artifacts/academy_fellow/traceability_report.json",
+      "determinism_class": "deterministic",
+      "generator_command": "python scripts/ci/gen_law_mechanism_witness_matrix.py",
+      "sources": [
+        ".claude/physics/INVARIANTS.yaml"
+      ],
+      "exclusion_reason": "",
+      "artifact_sha256": "67ccf22f8197a6d1ea5d63479d9c169e1b922c7a388be6f35499ee304bcf67b7"
+    },
+    {
+      "artifact": "artifacts/academy_fellow/reference_conformance_certificate.json",
+      "determinism_class": "deterministic",
+      "generator_command": "python scripts/ci/gen_reference_conformance.py",
+      "sources": [
+        ".claude/neuro/NEURO_OPERATIONALIZATION_LEDGER.yaml"
+      ],
+      "exclusion_reason": "",
+      "artifact_sha256": "7e8d735750301c4532ce65dc80806feaa3178dab65b8e009c5f75e9a43a7d131"
+    },
+    {
+      "artifact": "artifacts/physics_v2/law_witness_index.json",
+      "determinism_class": "generated-but-excluded",
+      "generator_command": "python scripts/ci/check_physics_law_witness_index.py --write",
+      "sources": [
+        ".claude/physics/INVARIANTS.yaml"
+      ],
+      "exclusion_reason": "Produced by a VERDICT GATE (check_physics_law_witness_index.py), not a pure generator: --write is coupled to mutable on-disk state and can exit non-zero mid-pipeline. Byte-freshness is enforced by its own dedicated gate step in phd_evidence.sh, not by re-running the gate as a generator here.",
+      "artifact_sha256": "8b0c4c929989696b462137fb67baa1f4736036cce60f7d85f2b47909f050fe1d"
+    },
+    {
+      "artifact": "artifacts/physics_v2/inference_readiness.json",
+      "determinism_class": "generated-but-excluded",
+      "generator_command": "python scripts/ci/check_physics_inference_readiness.py --write",
+      "sources": [
+        "artifacts/physics_v2/law_witness_index.json"
+      ],
+      "exclusion_reason": "Produced by a VERDICT GATE (check_physics_inference_readiness.py) that recomputes from the law-witness index; re-running it as a generator is order/state-coupled and can exit non-zero. Byte-freshness is enforced by its own dedicated gate step in phd_evidence.sh.",
+      "artifact_sha256": "9f97e63ccfbc6e3e3b70f48221a953d282e4738208a2bab42d7889d6c3ea1889"
+    },
+    {
+      "artifact": "artifacts/claims_hashes.json",
+      "determinism_class": "deterministic",
+      "generator_command": "python scripts/generate_claim_hashes.py",
+      "sources": [
+        "CLAIMS.md"
+      ],
+      "exclusion_reason": "",
+      "artifact_sha256": "da3862905f42d2a457c6b1650a4da3400c77b0504aee1fc3869986b1e44f28da"
+    },
+    {
+      "artifact": "docs/architecture/claim_graph.json",
+      "determinism_class": "deterministic",
+      "generator_command": "python scripts/generate_claim_graph.py",
+      "sources": [
+        "CLAIMS.md"
+      ],
+      "exclusion_reason": "",
+      "artifact_sha256": "5c635f3dd12b1502ebd8bb3ad1689a0bd46b354316cb46b136ca6843fd53a6d0"
+    },
+    {
+      "artifact": "artifacts/physics_v2/REL-004_readiness_receipt.json",
+      "determinism_class": "generated-but-excluded",
+      "generator_command": "",
+      "sources": [
+        "scripts/ci/check_physics_law_witness_index.py",
+        ".claude/physics/INVARIANTS.yaml"
+      ],
+      "exclusion_reason": "Timestamped readiness RECEIPT emitted by a VERDICT GATE (check_physics_law_witness_index.py --write) \u2014 carries a mutable generated_utc field, so it is not bit-reproducible on re-run. Same rationale as physics_v2/law_witness_index.json and inference_readiness.json; freshness of the underlying index is enforced by that gate's own step, not by re-running it here.",
+      "artifact_sha256": "961e8fed59539cac240536553bbe1528435e7f237a3c01ded78a30e11bf31693"
+    }
+  ]
+}

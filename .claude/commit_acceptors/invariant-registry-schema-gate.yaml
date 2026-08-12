@@ -1,0 +1,23 @@
+id: invariant-registry-schema-gate
+status: ACTIVE
+claim_type: governance
+promise: "Invariant registry rows are validated by an executable schema gate before counting as evidence."
+diff_scope:
+  changed_files:
+    - path: "scripts/check_invariant_registry_schema.py"
+    - path: "tests/ci/test_invariant_registry_schema.py"
+    - path: ".claude/commit_acceptors/invariant-registry-schema-gate.yaml"
+  forbidden_paths: []
+required_python_symbols: []
+expected_signal: "live registry validates with quality_score=1.0 and malformed fixtures fail"
+measurement_command: "python scripts/check_invariant_registry_schema.py --min-quality-score 1.0"
+signal_artifact: "scripts/check_invariant_registry_schema.py"
+falsifier:
+  command: "python -m pytest tests/ci/test_invariant_registry_schema.py -q"
+  description: "Regression fixtures must fail on missing fields, duplicate IDs, and unresolved references."
+rollback_command: "git rm -f scripts/check_invariant_registry_schema.py tests/ci/test_invariant_registry_schema.py .claude/commit_acceptors/invariant-registry-schema-gate.yaml"
+rollback_verification_command: "test ! -f scripts/check_invariant_registry_schema.py"
+memory_update_type: none
+ledger_path: ".claude/commit_acceptors/invariant-registry-schema-gate.yaml"
+report_path: "scripts/check_invariant_registry_schema.py"
+evidence: []

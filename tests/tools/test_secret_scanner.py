@@ -1,3 +1,5 @@
+# Copyright (c) 2023-2026 Yaroslav Vasylenko (neuron7xLab)
+# SPDX-License-Identifier: MIT
 from __future__ import annotations
 
 from pathlib import Path
@@ -16,9 +18,7 @@ def test_secret_scanner_detects_api_key(tmp_path: Path) -> None:
 
 def test_secret_scanner_honors_ignore_file(tmp_path: Path) -> None:
     (tmp_path / ".secretsignore").write_text("config.env\n", encoding="utf-8")
-    (tmp_path / "config.env").write_text(
-        "API_KEY=ABCD1234ABCDEFGHIJKLMNOPQRSTUV", encoding="utf-8"
-    )
+    (tmp_path / "config.env").write_text("API_KEY=ABCD1234ABCDEFGHIJKLMNOPQRSTUV", encoding="utf-8")
     scanner = SecretScanner(min_entropy=3.5, min_length=20)
     findings = scanner.scan(tmp_path)
     assert not findings

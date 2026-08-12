@@ -1,0 +1,82 @@
+# Diff-bound commit acceptor: close a HIGH source-IP-spoofing rate-limit bypass.
+#
+# Both `_resolve_ip` helpers (src/admin/remote_control.py and
+# application/api/service.py) trusted `X-Forwarded-For` / `X-Real-IP`
+# unconditionally. An attacker rotates the header per request to land each
+# attempt in a new rate-limit bucket, defeating the admin AdminRateLimiter
+# (keyed on IP) and weakening the API limiter — enabling brute-force of the
+# admin 2FA code.
+#
+# Fix: add an `ApiSecuritySettings.trusted_proxies` allowlist (IPs/CIDRs) and
+# honour forwarded headers ONLY when the direct peer is a trusted proxy;
+# otherwise use the direct peer address. Default (empty) is fail-safe: forwarded
+# headers are ignored, so source IPs cannot be spoofed. Config is threaded into
+# the admin router and the API rate-limit call sites.
+#
+# Locally verified:
+#   * pytest tests/admin/test_remote_control.py tests/unit/api/test_service_helpers.py -> 27 passed
+#   * pytest tests/api -> 113 passed (1 optional skip); audit/settings tests green
+#   * bandit -ll src/admin/remote_control.py clean; black + ruff + mypy --strict clean
+
+id: rate-limit-trusted-proxy
+status: ACTIVE
+claim_type: security
+promise: >-
+  After this PR lands, _resolve_ip honours X-Forwarded-For / X-Real-IP only when
+  the direct peer is in the configured trusted_proxies allowlist; with no proxies
+  configured (default) forwarded headers are ignored and the direct peer address
+  is used, so a client cannot spoof its source IP to evade per-IP rate limiting on
+  the admin and API surfaces.
+diff_scope:
+  changed_files:
+    - path: ".claude/commit_acceptors/rate-limit-trusted-proxy.yaml"
+    - path: "application/settings.py"
+    - path: "src/admin/remote_control.py"
+    - path: "application/api/service.py"
+    - path: "tests/unit/api/test_service_helpers.py"
+    - path: "tests/admin/test_remote_control.py"
+  forbidden_paths:
+    - "trading/"
+    - "forecast/"
+    - "policy/"
+    - "core/physics/"
+    - "core/kuramoto/"
+required_python_symbols:
+  - "src/admin/remote_control.py::_peer_is_trusted"
+expected_signal: >-
+  `pytest tests/unit/api/test_service_helpers.py tests/admin/test_remote_control.py`
+  passes: forwarded headers are honoured from a trusted peer and IGNORED from an
+  untrusted peer (the direct peer address is returned). The wider tests/api suite
+  (113) stays green.
+measurement_command: >-
+  bash -c '
+    python -m pytest tests/unit/api/test_service_helpers.py tests/admin/test_remote_control.py -q
+  '
+signal_artifact: "tmp/rate_limit_trusted_proxy.log"
+falsifier:
+  command: >-
+    bash -c '
+      python -m pytest -q
+        "tests/admin/test_remote_control.py::test_resolve_ip_ignores_forwarded_header_from_untrusted_peer"
+        >/dev/null 2>&1
+      test "$?" -ne 0
+    '
+  description: >-
+    Runs the untrusted-peer assertion. The falsifier succeeds (exit 0) only if it
+    FAILS — i.e. only if a forwarded header from an untrusted peer is trusted
+    again, re-opening the spoofing bypass. With the fix the test passes (exit 0),
+    so `test $? -ne 0` exits 1 and the falsifier fails.
+rollback_command: >-
+  bash -c 'git checkout origin/main --
+    application/settings.py
+    src/admin/remote_control.py
+    application/api/service.py
+    tests/unit/api/test_service_helpers.py
+    tests/admin/test_remote_control.py
+    && rm -f .claude/commit_acceptors/rate-limit-trusted-proxy.yaml'
+rollback_verification_command: >-
+  bash -c '! test -f .claude/commit_acceptors/rate-limit-trusted-proxy.yaml'
+memory_update_type: append
+ledger_path: ".claude/commit_acceptors/rate-limit-trusted-proxy.yaml"
+report_path: "tmp/rate_limit_trusted_proxy.log"
+evidence: []

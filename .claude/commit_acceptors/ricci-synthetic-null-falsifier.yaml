@@ -1,0 +1,79 @@
+# Diff-bound commit acceptor for the ricci_microstructure_v1 synthetic-null
+# falsifier-adequacy test (work order W4).
+#
+# This change adds ONE deterministic test. It promotes no claim, changes no
+# runtime behavior, touches no schema/guard, and uses no real data. It proves
+# the pre-registered permutation_null can actually FIRE: the Ollivier-Ricci
+# microstructure descriptor does not beat the null on a structureless synthetic
+# depth-5 order book (a martingale mid, whose forward return is independent by
+# construction of any past-window descriptor). Claim tier stays
+# INSTRUMENTED / SYNTHETIC.
+#
+# Locally verified on origin/main base (3436f1e):
+#   * pytest tests/research_lines/test_ricci_microstructure_synthetic_falsifier.py
+#     -q: 3 passed (~0.2s)
+#   * descriptor_ic=0.0597 <= null_p95=0.1025 ; permutation p=0.2575 (>= 0.05)
+#   * ruff / mypy --strict clean ; zero new `# type: ignore`
+id: ricci-synthetic-null-falsifier
+status: ACTIVE
+claim_type: governance
+promise: >-
+  After this PR lands, tests/research_lines/test_ricci_microstructure_synthetic_falsifier.py
+  generates a structureless synthetic depth-5 order book from a fixed seed,
+  computes the existing read-only Ollivier-Ricci descriptor
+  (mean_ricci o build_price_graph) over rolling mid-price windows, and asserts
+  the descriptor's Spearman IC versus the one-step forward return does not
+  exceed the 95th percentile of a 500-draw permutation_null (permutation
+  p-value >= 0.05). The falsifier fires on noise; no market signal is claimed;
+  no claim tier is promoted; no schema, guard, or runtime file is modified.
+diff_scope:
+  changed_files:
+    - path: ".claude/commit_acceptors/ricci-synthetic-null-falsifier.yaml"
+    - path: "tests/research_lines/test_ricci_microstructure_synthetic_falsifier.py"
+  forbidden_paths:
+    - "trading/"
+    - "execution/"
+    - "forecast/"
+    - "policy/"
+    - "application/"
+    - "core/physics/"
+    - "core/kuramoto/"
+    - "src/"
+    - "geosync_hpc/"
+required_python_symbols: []
+expected_signal: >-
+  `python -m pytest tests/research_lines/test_ricci_microstructure_synthetic_falsifier.py -q`
+  reports 3 passed; the permutation_null fires (descriptor_ic <= null_p95,
+  p-value >= 0.05); ruff and mypy --strict on the test are clean.
+measurement_command: >-
+  bash -c 'mkdir -p tmp && python -m pytest
+  tests/research_lines/test_ricci_microstructure_synthetic_falsifier.py
+  > tmp/ricci_synthetic_null_falsifier.log 2>&1
+  && grep -q "3 passed" tmp/ricci_synthetic_null_falsifier.log'
+signal_artifact: "tmp/ricci_synthetic_null_falsifier.log"
+falsifier:
+  command: |-
+    bash -c 'python -c "
+    import numpy as np;
+    import tests.research_lines.test_ricci_microstructure_synthetic_falsifier as t;
+    _,_,mid = t._synthetic_depth5_book(t.DATA_SEED, t.N_STEPS);
+    d = t._descriptor_series(mid); f = t._forward_returns(mid);
+    ic = t._ic(d, f); p95 = float(np.percentile(t._permutation_null(d, f), 95));
+    import sys; sys.exit(0 if ic > p95 + t.PIN_TOLERANCE else 1)"'
+  description: >-
+    Inverse probe of falsifier adequacy. It exits 0 (fires) iff the descriptor IC
+    BEATS the 95th-percentile permutation null on synthetic noise — i.e. the
+    falsifier failed to fire (a look-ahead leak or a structure-encoding
+    generator). While the descriptor correctly stays inside the null band the
+    probe exits 1. If it ever exits 0, the synthetic-null discipline is broken
+    and the change must be reverted, not patched green.
+rollback_command: >-
+  git rm -f
+  tests/research_lines/test_ricci_microstructure_synthetic_falsifier.py
+  .claude/commit_acceptors/ricci-synthetic-null-falsifier.yaml
+rollback_verification_command: >-
+  bash -c 'test ! -f tests/research_lines/test_ricci_microstructure_synthetic_falsifier.py'
+memory_update_type: none
+ledger_path: ".claude/commit_acceptors/ricci-synthetic-null-falsifier.yaml"
+report_path: "tmp/ricci_synthetic_null_falsifier.log"
+evidence: []

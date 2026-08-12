@@ -1,3 +1,5 @@
+# Copyright (c) 2023-2026 Yaroslav Vasylenko (neuron7xLab)
+# SPDX-License-Identifier: MIT
 from __future__ import annotations
 
 from datetime import datetime, timezone
@@ -23,9 +25,7 @@ class DummyCollector:
             since_ts = since_ts.tz_localize("UTC")
         else:
             since_ts = since_ts.tz_convert("UTC")
-        return [
-            article for article in self._articles if article.published_at >= since_ts
-        ]
+        return [article for article in self._articles if article.published_at >= since_ts]
 
 
 class DummyModel:

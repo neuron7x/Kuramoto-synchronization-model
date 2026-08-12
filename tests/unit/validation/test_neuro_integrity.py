@@ -1,5 +1,7 @@
-# SPDX-License-Identifier: LicenseRef-TradePulse-Proprietary
+# Copyright (c) 2023-2026 Yaroslav Vasylenko (neuron7xLab)
+# SPDX-License-Identifier: MIT
 """Unit tests for core.validation.neuro_integrity module."""
+
 from __future__ import annotations
 
 import numpy as np
@@ -247,9 +249,7 @@ class TestValidateState:
         )
         report = validator.validate_state(state)
         assert not report.is_valid
-        assert any(
-            "E/I ratio" in v and "excitation dominant" in v for v in report.violations
-        )
+        assert any("E/I ratio" in v and "excitation dominant" in v for v in report.violations)
 
     def test_low_ei_imbalance(self) -> None:
         config = NeuroIntegrityConfig(max_ei_imbalance=3.0)
@@ -345,12 +345,8 @@ class TestValidateTransition:
 
     def test_invalid_dt(self) -> None:
         validator = NeuroIntegrity()
-        state_before = PathwayState(
-            dopamine=0.5, serotonin=0.5, excitation=0.5, inhibition=0.5
-        )
-        state_after = PathwayState(
-            dopamine=0.6, serotonin=0.5, excitation=0.5, inhibition=0.5
-        )
+        state_before = PathwayState(dopamine=0.5, serotonin=0.5, excitation=0.5, inhibition=0.5)
+        state_after = PathwayState(dopamine=0.6, serotonin=0.5, excitation=0.5, inhibition=0.5)
         with pytest.raises(ValueError, match="must be positive"):
             validator.validate_transition(state_before, state_after, dt=0)
 
@@ -394,12 +390,8 @@ class TestValidateTransition:
 
     def test_transition_metrics(self) -> None:
         validator = NeuroIntegrity()
-        state_before = PathwayState(
-            dopamine=0.5, serotonin=0.5, excitation=0.5, inhibition=0.5
-        )
-        state_after = PathwayState(
-            dopamine=0.6, serotonin=0.4, excitation=0.5, inhibition=0.5
-        )
+        state_before = PathwayState(dopamine=0.5, serotonin=0.5, excitation=0.5, inhibition=0.5)
+        state_after = PathwayState(dopamine=0.6, serotonin=0.4, excitation=0.5, inhibition=0.5)
         report = validator.validate_transition(state_before, state_after, dt=0.5)
         assert report.metrics["dt"] == 0.5
         assert report.metrics["dopamine_delta"] == pytest.approx(0.1)
@@ -414,9 +406,7 @@ class TestValidateTransition:
             inhibition=0.5,
             coherence=0.05,  # Below minimum
         )
-        state_after = PathwayState(
-            dopamine=0.5, serotonin=0.5, excitation=0.5, inhibition=0.5
-        )
+        state_after = PathwayState(dopamine=0.5, serotonin=0.5, excitation=0.5, inhibition=0.5)
         report = validator.validate_transition(state_before, state_after, dt=1.0)
         assert any("Initial:" in v for v in report.violations)
 
@@ -431,9 +421,7 @@ class TestValidateTrajectory:
 
     def test_single_state_trajectory(self) -> None:
         validator = NeuroIntegrity()
-        state = PathwayState(
-            dopamine=0.5, serotonin=0.5, excitation=0.5, inhibition=0.5
-        )
+        state = PathwayState(dopamine=0.5, serotonin=0.5, excitation=0.5, inhibition=0.5)
         report = validator.validate_trajectory([state])
         assert report.is_valid
 
@@ -521,6 +509,72 @@ class TestValidateTrajectory:
         assert "std_coherence" in report.metrics
         assert "min_coherence" in report.metrics
         assert "max_coherence" in report.metrics
+
+    def test_positive_correlation_violates_invariant(self) -> None:
+        """C-NEURO-003: dopamine/serotonin co-variation must be flagged.
+
+        Both channels rise together (corr ~ +1), the opposite of the expected
+        inverse antagonism, so the trajectory is invalid and the violation
+        names the invariant. This is the fail-before witness: with the
+        invariant unenforced (the prior dead-field state) this trajectory
+        passed silently.
+        """
+        validator = NeuroIntegrity()
+        states = [
+            PathwayState(
+                dopamine=0.40 + i * 0.04,
+                serotonin=0.40 + i * 0.04,
+                excitation=0.5,
+                inhibition=0.5,
+            )
+            for i in range(5)
+        ]
+        report = validator.validate_trajectory(states)
+        assert not report.is_valid
+        assert any("C-NEURO-003" in v for v in report.violations)
+        assert report.metrics["dopamine_serotonin_correlation"] > -0.8
+
+    def test_inverse_correlation_passes_invariant(self) -> None:
+        """C-NEURO-003: strong inverse correlation satisfies the invariant.
+
+        dopamine rises while serotonin falls (corr ~ -1 <= -0.8), the healthy
+        reward/risk antagonism, so no correlation violation is raised.
+        """
+        validator = NeuroIntegrity()
+        states = [
+            PathwayState(
+                dopamine=0.40 + i * 0.04,
+                serotonin=0.60 - i * 0.04,
+                excitation=0.5,
+                inhibition=0.5,
+            )
+            for i in range(5)
+        ]
+        report = validator.validate_trajectory(states)
+        assert report.metrics["dopamine_serotonin_correlation"] <= -0.8
+        assert not any("C-NEURO-003" in v for v in report.violations)
+        assert report.is_valid
+
+    def test_flat_channel_records_no_witness(self) -> None:
+        """A flat channel cannot evidence a correlation — no silent pass.
+
+        With serotonin constant the correlation is unfalsifiable, so the
+        invariant is neither asserted nor violated; the gap is recorded as NaN
+        rather than treated as healthy.
+        """
+        validator = NeuroIntegrity()
+        states = [
+            PathwayState(
+                dopamine=0.40 + i * 0.05,
+                serotonin=0.50,
+                excitation=0.5,
+                inhibition=0.5,
+            )
+            for i in range(5)
+        ]
+        report = validator.validate_trajectory(states)
+        assert np.isnan(report.metrics["dopamine_serotonin_correlation"])
+        assert not any("C-NEURO-003" in v for v in report.violations)
 
 
 class TestComputePathwayCorrelation:

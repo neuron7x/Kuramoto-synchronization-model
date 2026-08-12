@@ -1,5 +1,5 @@
 ---
-owner: execution@tradepulse
+owner: execution@geosync
 review_cadence: monthly
 artifacts:
   - path: artifacts/configs/binance_prod_template.yaml
@@ -194,32 +194,32 @@ execution:
 
 ```bash
 # Store credentials in Vault
-vault kv put secret/tradepulse/binance \
+vault kv put secret/geosync/binance \
   api_key="your_api_key_here" \
   api_secret="your_api_secret_here" \
   recv_window="5000"
 
 # Set environment variable
-export BINANCE_VAULT_PATH="secret/tradepulse/binance"
+export BINANCE_VAULT_PATH="secret/geosync/binance"
 ```
 
 #### Using Google Cloud KMS (Coinbase example)
 
 ```bash
 # Create KMS keyring (one-time setup)
-gcloud kms keyrings create tradepulse \
+gcloud kms keyrings create geosync \
   --location=global
 
 # Store encrypted credentials
 gcloud kms keys create coinbase \
-  --keyring=tradepulse \
+  --keyring=geosync \
   --location=global \
   --purpose=encryption
 
 # Encrypt and store credentials
 echo -n "your_api_key" | gcloud kms encrypt \
   --key=coinbase \
-  --keyring=tradepulse \
+  --keyring=geosync \
   --location=global \
   --plaintext-file=- \
   --ciphertext-file=coinbase_api_key.enc
@@ -259,13 +259,13 @@ sandbox: false  # Enable production mode
 
 ```bash
 # Validate configuration
-python -m tradepulse config validate config/exchanges/binance.yaml
+python -m geosync config validate config/exchanges/binance.yaml
 
 # Test connection (dry run)
-python -m tradepulse exchange test --venue binance --dry-run
+python -m geosync exchange test --venue binance --dry-run
 
 # Test with small order
-python -m tradepulse exchange test --venue binance --test-order
+python -m geosync exchange test --venue binance --test-order
 ```
 
 ## Security Best Practices
@@ -411,7 +411,7 @@ engine = ExecutionEngine(unified_config)
 - [Execution System Documentation](../../execution/)
 - [Application Settings](../../application/settings.py)
 - [Exchange Integration Guide](../../docs/integrations/)
-- [Security Framework](../../SECURITY_FRAMEWORK_SUMMARY.md)
+- [Security Framework](../security/SECURITY_FRAMEWORK_INDEX.md)
 
 ## Changelog
 

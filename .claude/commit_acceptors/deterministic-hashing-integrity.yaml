@@ -1,0 +1,81 @@
+# Diff-bound commit acceptor: determinism of hashing / dedup surfaces.
+#
+# Three round-2 defects:
+#  1. execution/order_ledger._coerce serialized sets by iterating them, leaking
+#     salted (PYTHONHASHSEED) set order into the tamper-evident state hash.
+#  2. core/idempotency/keys did not canonicalize floats: -0.0 and +0.0 produced
+#     different idempotency keys, and NaN/Inf emitted non-standard JSON.
+#  3. research/kernels/ofi_unity_live silently measured IC against a price LEVEL
+#     (df.columns[0]) when the return column was absent.
+
+id: deterministic-hashing-integrity
+status: ACTIVE
+claim_type: correctness
+promise: >-
+  After this PR: execution.order_ledger._coerce sorts sets/frozensets before
+  serialization (stable, PYTHONHASHSEED-independent state hash); core.idempotency
+  .keys collapses -0.0 to +0.0 and rejects non-finite floats (with allow_nan=False
+  in canonical_dumps), so logically-identical dedupe payloads share one key and
+  no invalid JSON is emitted; and research.kernels.ofi_unity_live.run raises
+  (fail-loud REJECT) instead of measuring IC against the first column when the
+  'mid_returns' column is missing.
+
+diff_scope:
+  changed_files:
+    - path: ".claude/commit_acceptors/deterministic-hashing-integrity.yaml"
+    - path: "core/idempotency/keys.py"
+    - path: "execution/order_ledger.py"
+    - path: "research/kernels/ofi_unity_live.py"
+    - path: "tests/unit/test_deterministic_hashing_integrity.py"
+  forbidden_paths:
+    - "core/physics/"
+    - "core/kuramoto/"
+    - "execution/oms.py"
+
+required_python_symbols:
+  - "core/idempotency/keys.py::canonical_dumps"
+  - "core/idempotency/keys.py::fingerprint_payload"
+  - "execution/order_ledger.py::_coerce"
+  - "research/kernels/ofi_unity_live.py::run"
+
+expected_signal: >-
+  `python -m pytest --import-mode=importlib
+  tests/unit/test_deterministic_hashing_integrity.py -q` reports 6 passed:
+  a set serializes sorted (order-independent), fingerprint_payload({'px':-0.0})
+  == fingerprint_payload({'px':0.0}), non-finite floats raise, and an OFI run
+  without a 'mid_returns' column returns FINAL==REJECT.
+
+measurement_command: >-
+  bash -c '
+    python -m pytest --import-mode=importlib -p no:cacheprovider
+      tests/unit/test_deterministic_hashing_integrity.py -q
+  '
+
+signal_artifact: "tmp/deterministic_hashing_integrity.log"
+
+falsifier:
+  command: |-
+    bash -c '
+      python -c "
+    from core.idempotency.keys import fingerprint_payload
+    assert fingerprint_payload({\"px\": -0.0}) == fingerprint_payload({\"px\": 0.0})
+      "
+    '
+  description: >-
+    Asserts -0.0 and +0.0 fingerprint identically. It asserts the fix invariant and, per the run_evidence green-state
+    contract, exits 0 on the correct (green) tree and non-zero if the fix
+    regresses or is rolled back.
+rollback_command: >-
+  bash -c '
+    git rm -f .claude/commit_acceptors/deterministic-hashing-integrity.yaml
+  '
+
+rollback_verification_command: >-
+  bash -c '
+    test ! -f .claude/commit_acceptors/deterministic-hashing-integrity.yaml
+  '
+
+memory_update_type: append
+ledger_path: ".claude/commit_acceptors/deterministic-hashing-integrity.yaml"
+report_path: "tmp/deterministic_hashing_integrity.log"
+evidence: []

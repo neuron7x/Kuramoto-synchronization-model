@@ -1,3 +1,5 @@
+# Copyright (c) 2023-2026 Yaroslav Vasylenko (neuron7xLab)
+# SPDX-License-Identifier: MIT
 """Database models for the cortex service."""
 
 from __future__ import annotations
@@ -15,9 +17,7 @@ class PortfolioExposure(Base):
 
     __tablename__ = "cortex_portfolio_exposures"
     __table_args__ = (
-        UniqueConstraint(
-            "portfolio_id", "instrument", "as_of", name="uq_cortex_exposure"
-        ),
+        UniqueConstraint("portfolio_id", "instrument", "as_of", name="uq_cortex_exposure"),
     )
 
     id: Mapped[int] = mapped_column(Integer, primary_key=True)

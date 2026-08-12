@@ -1,3 +1,5 @@
+# Copyright (c) 2023-2026 Yaroslav Vasylenko (neuron7xLab)
+# SPDX-License-Identifier: MIT
 from __future__ import annotations
 
 import types
@@ -9,7 +11,7 @@ from interfaces.streamlit_security import enforce_dev_only_dashboard
 
 
 def test_uvicorn_reload_blocked_in_production(monkeypatch: pytest.MonkeyPatch) -> None:
-    monkeypatch.setenv("TRADEPULSE_ENV", "production")
+    monkeypatch.setenv("GEOSYNC_ENV", "production")
     config = types.SimpleNamespace(reload=True)
 
     with pytest.raises(RuntimeError):
@@ -17,14 +19,14 @@ def test_uvicorn_reload_blocked_in_production(monkeypatch: pytest.MonkeyPatch) -
 
 
 def test_uvicorn_reload_allowed_when_disabled(monkeypatch: pytest.MonkeyPatch) -> None:
-    monkeypatch.setenv("TRADEPULSE_ENV", "production")
+    monkeypatch.setenv("GEOSYNC_ENV", "production")
     config = types.SimpleNamespace(reload=False)
 
     enforce_prod_server_flags(config)  # type: ignore[arg-type]
 
 
 def test_streamlit_dashboard_blocked_in_production(monkeypatch: pytest.MonkeyPatch) -> None:
-    monkeypatch.setenv("TRADEPULSE_ENV", "production")
+    monkeypatch.setenv("GEOSYNC_ENV", "production")
     monkeypatch.delenv("ALLOW_STREAMLIT_PROD", raising=False)
 
     with pytest.raises(RuntimeError):
@@ -32,7 +34,7 @@ def test_streamlit_dashboard_blocked_in_production(monkeypatch: pytest.MonkeyPat
 
 
 def test_streamlit_dashboard_opt_in_override(monkeypatch: pytest.MonkeyPatch) -> None:
-    monkeypatch.setenv("TRADEPULSE_ENV", "production")
+    monkeypatch.setenv("GEOSYNC_ENV", "production")
     monkeypatch.setenv("ALLOW_STREAMLIT_PROD", "1")
 
     enforce_dev_only_dashboard()

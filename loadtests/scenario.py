@@ -1,3 +1,5 @@
+# Copyright (c) 2023-2026 Yaroslav Vasylenko (neuron7xLab)
+# SPDX-License-Identifier: MIT
 """Market scenarios and property-based order generation for load tests."""
 
 from __future__ import annotations
@@ -96,9 +98,7 @@ class MarketScenario:
         bars = list(_ticks_to_bars(ticks, ticks_per_bar))
         if len(bars) < 4:
             raise ValueError("Recording does not contain enough ticks to derive bars")
-        returns = np.diff([bar.close for bar in bars]) / np.array(
-            [bar.close for bar in bars[:-1]]
-        )
+        returns = np.diff([bar.close for bar in bars]) / np.array([bar.close for bar in bars[:-1]])
         var_95 = float(np.percentile(returns, 5)) if returns.size else -0.02
         return cls(symbol=symbol, bars=bars, var_95=var_95)
 

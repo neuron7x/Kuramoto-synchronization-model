@@ -1,0 +1,33 @@
+{
+  "schema_version": "2026.06.18",
+  "status": "UQ_SMOKE_ARTIFACT_DECLARED",
+  "scope": "GeoSync canonical weighted Kuramoto lane",
+  "stochastic_sources": [
+    {
+      "source_id": "UQ-IC-001",
+      "type": "initial_condition_distribution",
+      "parameter": "theta_0",
+      "distribution": "uniform[-pi, pi]",
+      "observable": "late_mean_R",
+      "test_file": "tests/physics/test_uq_smoke.py"
+    },
+    {
+      "source_id": "UQ-SOLVER-001",
+      "type": "solver_time_step_refinement",
+      "parameter": "dt",
+      "values": [0.05, 0.025],
+      "observable": "max_abs_late_mean_R_drift",
+      "test_file": "tests/physics/test_uq_smoke.py"
+    }
+  ],
+  "measurement_command": "python -m pytest tests/physics/test_uq_smoke.py",
+  "computed_in_connector": false,
+  "ci_or_local_execution_required": true,
+  "stop_conditions": [
+    "UQ values are non-finite",
+    "initial-condition variation has zero spread",
+    "order parameter leaves [0,1]",
+    "dt refinement changes late mean R by >= 0.08"
+  ],
+  "verdict": "SOURCE_AND_TEST_DEFINED_RUNTIME_PROOF_PENDING"
+}

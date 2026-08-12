@@ -1,0 +1,157 @@
+# Diff-bound commit acceptor for the D-002G P1 implementation PR.
+#
+# Lands the non-degenerate-null infrastructure (M1 + M6 mechanisms,
+# Phase 0 hard-gate verifier with capsule, R2-B aggregator with capsule)
+# plus an 8-rung adversarial audit + failing-then-passing test scaffolding.
+#
+# Strict scope:
+#   * NO sweep execution.
+#   * NO ledger update.
+#   * NO tier promotion / cross-promotion.
+#   * NO mutation of any locked governance file.
+
+id: x10r-d002g-p1-implementation
+status: ACTIVE
+claim_type: governance
+promise: >-
+  After this PR lands, research/systemic_risk/ carries the four D-002G
+  P1 modules (null mechanisms, Phase 0 verification + capsule, R2-B
+  gate) plus the v1/v2 payload sha branching in d002c_sweep_runner.py.
+  tests/systemic_risk/ carries the locked-governance + payload-compat
+  + Phase 0 capsule schema + R2-B capsule schema tests and the four
+  defect-repair tests (M6 support exclusion, R2-B non-M6 rejection,
+  Phase 0b BCa→percentile contract consistency, substrate eligibility
+  blocker). The adversarial 8-rung Strike-R1..R7 tests are bound to a
+  sibling acceptor (x10r-d002g-p1-strike-scaffolding.yaml) to honour
+  the per-claim-type file cap. docs/governance/ gains an adversarial
+  audit document, an implementation report, and a canonical-run
+  blockers manifest — all NEW files, none mutate locked governance.
+  The eight locked-files shas (3 D-002G + 1 D-002G acceptor + 4
+  D-002C governance artefacts) are preserved byte-exact.
+
+  Strict scope: infrastructure + repair-test scaffolding only.
+  This PR does NOT establish D-002G scientific PASS. Phase 0
+  test-suite results are INFRASTRUCTURE SMOKE, not canonical Phase 0
+  verdict. A fresh canonical D-002G run on prereg-scoped substrates
+  is required before any tier-PASS claim, AND is BLOCKED for 2/3
+  substrates (block_structured + temporal_coupling are M1-INELIGIBLE)
+  until M2 topology-preserving shuffle ships in a separate downstream
+  PR.
+
+diff_scope:
+  changed_files:
+    - path: ".claude/commit_acceptors/x10r-d002g-p1-implementation.yaml"
+    - path: "research/systemic_risk/d002g_null_mechanisms.py"
+    - path: "research/systemic_risk/d002g_phase0_capsule.py"
+    - path: "research/systemic_risk/d002g_phase0_verification.py"
+    - path: "research/systemic_risk/d002g_r2b_gate.py"
+    - path: "research/systemic_risk/d002c_sweep_runner.py"
+    - path: "tests/systemic_risk/__init__.py"
+    - path: "tests/systemic_risk/conftest.py"
+    - path: "tests/systemic_risk/test_d002g_locked_governance_untouched.py"
+    - path: "tests/systemic_risk/test_d002g_payload_compat_v1_v2.py"
+    - path: "tests/systemic_risk/test_d002g_phase0_capsule_schema.py"
+    - path: "tests/systemic_risk/test_d002g_r2b_capsule_schema.py"
+    - path: "tests/systemic_risk/test_d002g_m6_placebo_support_exclusion.py"
+    - path: "tests/systemic_risk/test_d002g_r2b_requires_m6_payload.py"
+    - path: "tests/systemic_risk/test_d002g_phase0b_contract_consistency.py"
+    - path: "tests/systemic_risk/test_d002g_substrate_eligibility_blocker.py"
+    - path: "docs/governance/D002G_P1_DESIGN_ADVERSARIAL_AUDIT.md"
+    - path: "docs/governance/D002G_P1_IMPLEMENTATION_REPORT.md"
+    - path: "docs/governance/D002G_CANONICAL_RUN_BLOCKERS.md"
+  forbidden_paths:
+    - "docs/governance/D002G_PREREGISTRATION.yaml"
+    - "docs/governance/D002G_NONDEGENERATE_NULL_DESIGN.md"
+    - "docs/governance/D002G_ACCEPTANCE_RULES.md"
+    - ".claude/commit_acceptors/x10r-d002g-nondegenerate-null-redesign.yaml"
+    - "docs/governance/D002C_PREREGISTRATION.yaml"
+    - "docs/governance/D002C_CLAIM_LEDGER.yaml"
+    - "docs/governance/D002C_CANONICAL_RUN_REPORT.md"
+    - "docs/governance/D002C_ATTEMPT_2_NULL_AUDIT_FALSIFICATION_REPORT.md"
+    - "application/governance/claim_ledger.py"
+    - "application/governance/commit_acceptor.py"
+required_python_symbols:
+  - "research.systemic_risk.d002g_null_mechanisms.realize_null"
+  - "research.systemic_risk.d002g_null_mechanisms.NullRealization"
+  - "research.systemic_risk.d002g_null_mechanisms.NULL_SEED_OFFSET"
+  - "research.systemic_risk.d002g_phase0_verification.verify_phase_0"
+  - "research.systemic_risk.d002g_phase0_verification.phase0b_robust"
+  - "research.systemic_risk.d002g_phase0_verification.phase0c_power_calibration"
+  - "research.systemic_risk.d002g_phase0_capsule.write_phase0_capsule"
+  - "research.systemic_risk.d002g_r2b_gate.evaluate_r2b"
+  - "research.systemic_risk.d002g_r2b_gate.r2b_verdict_to_capsule"
+  - "research.systemic_risk.d002g_r2b_gate.R2B_INDETERMINATE_VERDICT"
+  - "research.systemic_risk.d002c_sweep_runner.PAYLOAD_SCHEMA_V1"
+  - "research.systemic_risk.d002c_sweep_runner.PAYLOAD_SCHEMA_V2"
+expected_signal: >-
+  `python -c "from research.systemic_risk import d002g_null_mechanisms,
+  d002g_phase0_verification, d002g_phase0_capsule, d002g_r2b_gate"`
+  succeeds; pytest tests/systemic_risk/ -k "d002g or d002c" passes the
+  full repair + capsule + locked-governance suite; the audit document
+  contains 8 rungs with verdicts (R1..R8); the implementation report
+  contains the claim-boundary block verbatim; every locked-file sha
+  matches the pinned anchor; D002G_CANONICAL_RUN_BLOCKERS.md pins
+  block_structured + temporal_coupling as M1-INELIGIBLE with M2
+  downstream task referenced.
+measurement_command: >-
+  bash -c 'set -e;
+  python -c "from research.systemic_risk import d002g_null_mechanisms, d002g_phase0_verification, d002g_phase0_capsule, d002g_r2b_gate";
+  PYTHONPATH=. python -m pytest tests/systemic_risk/test_d002g_locked_governance_untouched.py tests/systemic_risk/test_d002g_payload_compat_v1_v2.py tests/systemic_risk/test_d002g_phase0_capsule_schema.py tests/systemic_risk/test_d002g_r2b_capsule_schema.py tests/systemic_risk/test_d002g_m6_placebo_support_exclusion.py tests/systemic_risk/test_d002g_r2b_requires_m6_payload.py tests/systemic_risk/test_d002g_phase0b_contract_consistency.py tests/systemic_risk/test_d002g_substrate_eligibility_blocker.py -q;
+  grep -q "This PR implements D-002G infrastructure" docs/governance/D002G_P1_IMPLEMENTATION_REPORT.md;
+  grep -q "M1-INELIGIBLE" docs/governance/D002G_CANONICAL_RUN_BLOCKERS.md;
+  grep -q "block_structured" docs/governance/D002G_CANONICAL_RUN_BLOCKERS.md;
+  grep -q "temporal_coupling" docs/governance/D002G_CANONICAL_RUN_BLOCKERS.md'
+signal_artifact: "docs/governance/D002G_P1_IMPLEMENTATION_REPORT.md"
+falsifier:
+  command: >-
+    bash -c 'set -e;
+    python -c "from research.systemic_risk import d002g_null_mechanisms, d002g_phase0_verification, d002g_phase0_capsule, d002g_r2b_gate" || exit 1;
+    python -c "from research.systemic_risk.d002g_r2b_gate import R2B_INDETERMINATE_VERDICT, R2B_TOPOLOGY_COUPLING_FLOOR; assert R2B_INDETERMINATE_VERDICT == \"INDETERMINATE_R2B_TOPOLOGY_BLIND_METRIC\"" || exit 2;
+    python -c "from research.systemic_risk.d002c_sweep_runner import PAYLOAD_SCHEMA_V1, PAYLOAD_SCHEMA_V2; assert PAYLOAD_SCHEMA_V1 != PAYLOAD_SCHEMA_V2" || exit 3;
+    PYTHONPATH=. python -m pytest tests/systemic_risk/test_d002g_payload_compat_v1_v2.py tests/systemic_risk/test_d002g_locked_governance_untouched.py -q || exit 4;
+    grep -q "^## R1" docs/governance/D002G_P1_DESIGN_ADVERSARIAL_AUDIT.md || exit 5;
+    grep -q "^## R2" docs/governance/D002G_P1_DESIGN_ADVERSARIAL_AUDIT.md || exit 6;
+    grep -q "^## R3" docs/governance/D002G_P1_DESIGN_ADVERSARIAL_AUDIT.md || exit 7;
+    grep -q "^## R4" docs/governance/D002G_P1_DESIGN_ADVERSARIAL_AUDIT.md || exit 8;
+    grep -q "^## R5" docs/governance/D002G_P1_DESIGN_ADVERSARIAL_AUDIT.md || exit 9;
+    grep -q "^## R6" docs/governance/D002G_P1_DESIGN_ADVERSARIAL_AUDIT.md || exit 10;
+    grep -q "^## R7" docs/governance/D002G_P1_DESIGN_ADVERSARIAL_AUDIT.md || exit 11;
+    grep -q "^## R8" docs/governance/D002G_P1_DESIGN_ADVERSARIAL_AUDIT.md || exit 12;
+    grep -q "This PR implements D-002G infrastructure and adversarial test scaffolding only" docs/governance/D002G_P1_IMPLEMENTATION_REPORT.md || exit 13;
+    grep -q "INFRASTRUCTURE SMOKE, not canonical Phase 0 verdict" docs/governance/D002G_P1_IMPLEMENTATION_REPORT.md || exit 14;
+    if grep -E "VALIDATED_REAL_BANK_LEVEL_RESULT|TESTED_POSITIVE_REAL|BANK_LEVEL_PRECURSOR_CONFIRMED|real-data validated|bank-level confirmed" docs/governance/D002G_P1_DESIGN_ADVERSARIAL_AUDIT.md docs/governance/D002G_P1_IMPLEMENTATION_REPORT.md | grep -vE "forbidden|NOT|❌|absent|never|no_|cannot|D-002C" >/dev/null; then
+      echo "forbidden tier asserted outside forbidden-list context"; exit 15;
+    fi'
+  description: >-
+    Probes the D-002G P1 implementation:
+    (a) every D-002G module imports cleanly;
+    (b) Strike-R2 INDETERMINATE verdict literal is exposed at module
+        boundary and matches the locked string;
+    (c) v1 / v2 payload schema constants are distinct;
+    (d) the v1/v2 compat and locked-governance tests pass;
+    (e) the audit document contains all 8 rungs (R1..R8);
+    (f) the implementation report contains the claim-boundary block
+        verbatim;
+    (g) no forbidden D-002C tier strings leak outside the
+        forbidden-list / D-002C-reference context.
+    If any of these regress, the P1 contract is broken.
+rollback_command: >-
+  bash -c 'git checkout HEAD~1 --
+  research/systemic_risk/d002g_null_mechanisms.py
+  research/systemic_risk/d002g_phase0_capsule.py
+  research/systemic_risk/d002g_phase0_verification.py
+  research/systemic_risk/d002g_r2b_gate.py
+  research/systemic_risk/d002c_sweep_runner.py
+  && rm -rf tests/systemic_risk/
+  && rm -f docs/governance/D002G_P1_DESIGN_ADVERSARIAL_AUDIT.md
+  docs/governance/D002G_P1_IMPLEMENTATION_REPORT.md
+  .claude/commit_acceptors/x10r-d002g-p1-implementation.yaml'
+rollback_verification_command: >-
+  bash -c 'test ! -f tests/systemic_risk/test_d002g_strike_R1_spectral_identity.py
+  && test ! -f docs/governance/D002G_P1_DESIGN_ADVERSARIAL_AUDIT.md
+  && test ! -f docs/governance/D002G_P1_IMPLEMENTATION_REPORT.md
+  && test ! -f .claude/commit_acceptors/x10r-d002g-p1-implementation.yaml'
+memory_update_type: append
+ledger_path: ".claude/commit_acceptors/x10r-d002g-p1-implementation.yaml"
+report_path: "docs/governance/D002G_P1_IMPLEMENTATION_REPORT.md"
+evidence: []

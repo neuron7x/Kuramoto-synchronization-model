@@ -1,0 +1,40 @@
+id: stage2a-coverage-surface-contract
+status: ACTIVE
+claim_type: governance
+promise: "Stage 2A defines coverage surface targets and validation without promoting coverage claims."
+diff_scope:
+  changed_files:
+    - path: "configs/quality/coverage_targets.toml"
+    - path: "tools/coverage/surface_contract.py"
+    - path: "tools/coverage/validate_coverage_targets.py"
+    - path: "tests/tools/test_coverage_surface_contract.py"
+    - path: "tests/tools/fixtures/stage2a_unmapped_critical.txt"
+    - path: "docs/testing/coverage_closure.md"
+    - path: "docs/METRICS_CONTRACT.md"
+    - path: ".claude/commit_acceptors/stage2a-coverage-surface-contract.yaml"
+  forbidden_paths:
+    - "trading/"
+    - "execution/"
+    - "backtest/"
+    - "core/"
+    - "analytics/"
+    - "ingestion/"
+    - "risk/"
+required_python_symbols:
+  - "load_coverage_targets"
+  - "map_file_to_surface"
+  - "list_unmapped_files"
+  - "validate_target_contract"
+  - "main"
+expected_signal: "coverage target contract validator and tests pass"
+measurement_command: "python tools/coverage/validate_coverage_targets.py --targets configs/quality/coverage_targets.toml"
+signal_artifact: "tmp/stage2a_coverage_surface_contract.log"
+falsifier:
+  command: "python tools/coverage/validate_coverage_targets.py --targets configs/quality/coverage_targets.toml --files tests/tools/fixtures/stage2a_unmapped_critical.txt"
+  description: "The validator fails if coverage targets are malformed, thresholds are invalid, rationales are missing, or critical supplied files are unmapped."
+rollback_command: "git checkout -- configs/quality/coverage_targets.toml tools/coverage/surface_contract.py tools/coverage/validate_coverage_targets.py tests/tools/test_coverage_surface_contract.py tests/tools/fixtures/stage2a_unmapped_critical.txt docs/testing/coverage_closure.md docs/METRICS_CONTRACT.md .claude/commit_acceptors/stage2a-coverage-surface-contract.yaml"
+rollback_verification_command: "git diff --exit-code"
+memory_update_type: append
+ledger_path: ".claude/commit_acceptors/stage2a-coverage-surface-contract.yaml"
+report_path: "docs/testing/coverage_closure.md"
+evidence: []

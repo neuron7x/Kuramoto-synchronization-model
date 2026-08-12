@@ -1,0 +1,16 @@
+{
+  "autocorr_gap": 0.801311,
+  "autocorr_threshold": 0.2,
+  "autocorrelated_lag1_autocorr": 0.809608,
+  "iid_gaussian_is_inadequate_for_autocorrelated_series": true,
+  "iid_gaussian_lag1_autocorr": 0.008296,
+  "is_predictive_claim": false,
+  "reference": {
+    "kind": "AR1",
+    "n": 4096,
+    "phi": 0.8,
+    "seed": 7
+  },
+  "schema_version": 1,
+  "verdict": "i.i.d. Gaussian null does not preserve temporal autocorrelation; it is INADEQUATE as a null for autocorrelated phase/order-parameter series. Use a structure-preserving null (IAAFT, phase-shuffle, block-bootstrap) where phase structure matters."
+}

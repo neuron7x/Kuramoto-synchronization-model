@@ -1,0 +1,16 @@
+== DS-03 reviewer-1 bypass (intensifier negation) ==
+  [CLOSED] 'not merely validated' FLAGS
+  [CLOSED] 'not only validated' FLAGS
+  [CLOSED] 'is not validated' still clears
+== DS-01/02 reviewer-1 bypass (combining + Greek + table parity) ==
+  [CLOSED] fold tables byte-identical
+  [CLOSED] combining 'próven'->proven (ebsvap)
+  [CLOSED] combining 'próven'->proven (ci)
+  [CLOSED] Greek-tau 'validaτed' FLAGS via CI gate
+== DS-19/20 reviewer-1 bypass (opt-in -> fail-closed default) ==
+  [CLOSED] default gateway DENIES forged cert (empty registry)
+  [CLOSED] WP3 runner PASS with forged_unsigned_cert_denied
+== W13-N1 CI parity ==
+  [CLOSED] integrity-gates before_script installs jsonschema
+
+RE-ATTACK CLOSURE: 10 closed / 0 open

@@ -1,0 +1,48 @@
+id: namespace-policy-repair
+status: ACTIVE
+claim_type: refactor
+promise: >-
+  Repairs the canonical-namespace policy (audit T5). Three standalone-package
+  shims imported a top-level src.* that no longer existed — both a namespace
+  violation and a runtime ImportError. They now use fully-qualified local-src
+  imports (analytics.fpma.src.*, analytics.regime.src.*, markets.orderbook.src)
+  and import cleanly. risk_factory drops its TYPE_CHECKING src import in favour
+  of Any, consistent with its importlib-only design. No allowlist entry added;
+  the gate is satisfied by real fixes, not exemptions.
+diff_scope:
+  changed_files:
+  - path: analytics/fpma/geosync_fpma/__init__.py
+  - path: analytics/regime/geosync_regime/__init__.py
+  - path: markets/orderbook/geosync_orderbook/__init__.py
+  - path: application/api/risk_factory.py
+  - path: tests/unit/scripts/test_namespace_shims_importable.py
+  - path: .github/import_architecture_baseline.json
+  - path: .claude/commit_acceptors/namespace-policy-repair.yaml
+  forbidden_paths: []
+required_python_symbols: []
+expected_signal: >-
+  scripts/check_namespace_policy.py exits 0; the three repaired shims import
+  without ImportError.
+measurement_command: python scripts/check_namespace_policy.py
+signal_artifact: scripts/check_namespace_policy.py
+falsifier:
+  command: python scripts/check_namespace_policy.py
+  description: >-
+    Must fail if any production module reintroduces a bare top-level src.*
+    import outside the curated allowlist, or if a repaired shim regresses to a
+    broken src import.
+rollback_command: >-
+  git checkout origin/main -- analytics/fpma/geosync_fpma/__init__.py
+  analytics/regime/geosync_regime/__init__.py
+  markets/orderbook/geosync_orderbook/__init__.py
+  application/api/risk_factory.py &&
+  git rm -f tests/unit/scripts/test_namespace_shims_importable.py
+  .claude/commit_acceptors/namespace-policy-repair.yaml
+rollback_verification_command: >-
+  git diff --exit-code analytics/fpma/geosync_fpma/__init__.py
+  application/api/risk_factory.py
+memory_update_type: append
+ledger_path: .claude/commit_acceptors/namespace-policy-repair.yaml
+report_path: scripts/check_namespace_policy.py
+evidence:
+- path: scripts/check_namespace_policy.py

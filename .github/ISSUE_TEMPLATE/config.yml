@@ -1,14 +1,14 @@
 blank_issues_enabled: false
 contact_links:
   - name: 💬 Ask a Question
-    url: https://github.com/neuron7x/TradePulse/discussions/new?category=q-a
+    url: https://github.com/neuron7xLab/GeoSync/discussions/new?category=q-a
     about: Ask questions and get help from the community in GitHub Discussions.
   - name: 💡 Share an Idea
-    url: https://github.com/neuron7x/TradePulse/discussions/new?category=ideas
+    url: https://github.com/neuron7xLab/GeoSync/discussions/new?category=ideas
     about: Brainstorm ideas before creating a formal feature request.
   - name: 🔒 Security Vulnerability
-    url: mailto:security@tradepulse.local
+    url: mailto:security@geosync.local
     about: Please disclose security vulnerabilities privately so we can coordinate a fix.
   - name: 📖 Documentation Issue
-    url: https://github.com/neuron7x/TradePulse/issues/new?labels=documentation&template=BLANK.md&title=%5BDocs%5D+
+    url: https://github.com/neuron7xLab/GeoSync/issues/new?labels=documentation&template=BLANK.md&title=%5BDocs%5D+
     about: Report issues with documentation or suggest improvements.

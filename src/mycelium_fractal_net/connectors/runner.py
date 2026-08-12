@@ -1,4 +1,5 @@
-# SPDX-License-Identifier: LicenseRef-TradePulse-Proprietary
+# Copyright (c) 2023-2026 Yaroslav Vasylenko (neuron7xLab)
+# SPDX-License-Identifier: MIT
 """Ingestion runner and backend orchestration for MFN.
 
 This module provides the orchestrator that connects ingestors to MFN backends,
@@ -7,7 +8,7 @@ handling event flow, normalization, and request dispatch.
 Components:
 - MFNBackend: Abstract interface for MFN core operations
 - LocalBackend: Direct Python function calls to MFN core
-- RemoteBackend: gRPC/REST client to MFN service
+- RemoteBackend: REST client to MFN service
 - IngestionRunner: Main orchestrator
 
 Example:
@@ -40,6 +41,11 @@ __all__ = [
 
 logger = logging.getLogger(__name__)
 
+_SUPPORTED_REMOTE_PROTOCOL = "rest"
+_REMOTE_PROTOCOL_ERROR = (
+    "RemoteBackend protocol '{protocol}' is not supported. Use protocol='rest'."
+)
+
 
 @dataclass
 class BackendResult:
@@ -64,7 +70,7 @@ class MFNBackend(ABC):
     """Abstract interface for MFN core operations.
 
     Backends handle the actual execution of MFN requests, either
-    locally (direct function calls) or remotely (via gRPC/REST).
+    locally (direct function calls) or remotely (via REST).
     """
 
     @abstractmethod
@@ -141,9 +147,7 @@ class LocalBackend(MFNBackend):
 
             latency = (datetime.now(timezone.utc) - start).total_seconds() * 1000
 
-            logger.debug(
-                f"Feature extraction complete: {request.request_id} ({latency:.2f}ms)"
-            )
+            logger.debug(f"Feature extraction complete: {request.request_id} ({latency:.2f}ms)")
 
             return BackendResult(
                 success=True,
@@ -216,13 +220,13 @@ class LocalBackend(MFNBackend):
 
 
 class RemoteBackend(MFNBackend):
-    """gRPC/REST client for remote MFN service.
+    """REST client for remote MFN service.
 
     Connects to MFN core via network protocol.
 
     Attributes:
         endpoint: MFN service endpoint URL
-        protocol: Connection protocol ('grpc' or 'rest')
+        protocol: Connection protocol ('rest')
         api_key: Optional API key for authentication
     """
 
@@ -230,7 +234,7 @@ class RemoteBackend(MFNBackend):
         self,
         endpoint: str,
         *,
-        protocol: str = "grpc",
+        protocol: str = "rest",
         api_key: str | None = None,
         timeout: float = 30.0,
     ) -> None:
@@ -238,7 +242,7 @@ class RemoteBackend(MFNBackend):
 
         Args:
             endpoint: MFN service URL
-            protocol: 'grpc' or 'rest'
+            protocol: 'rest'
             api_key: Optional authentication key
             timeout: Request timeout in seconds
         """
@@ -247,11 +251,14 @@ class RemoteBackend(MFNBackend):
         self.api_key = api_key
         self.timeout = timeout
 
+        if self.protocol != _SUPPORTED_REMOTE_PROTOCOL:
+            raise ValueError(_REMOTE_PROTOCOL_ERROR.format(protocol=self.protocol))
+
         self._client: Any = None
         self._call_count = 0
 
     async def _get_client(self) -> Any:
-        """Get or create HTTP/gRPC client."""
+        """Get or create HTTP client."""
         if self._client is None:
             import httpx
 
@@ -281,21 +288,17 @@ class RemoteBackend(MFNBackend):
             self._call_count += 1
             client = await self._get_client()
 
-            if self.protocol == "rest":
-                response = await client.post(
-                    "/api/v1/features/extract",
-                    json={
-                        "request_id": request.request_id,
-                        "seeds": request.seeds,
-                        "grid_size": request.grid_size,
-                        "params": request.params,
-                    },
-                )
-                response.raise_for_status()
-                result = response.json()
-            else:
-                # gRPC stub - would use generated client
-                raise NotImplementedError("gRPC client not implemented")
+            response = await client.post(
+                "/api/v1/features/extract",
+                json={
+                    "request_id": request.request_id,
+                    "seeds": request.seeds,
+                    "grid_size": request.grid_size,
+                    "params": request.params,
+                },
+            )
+            response.raise_for_status()
+            result = response.json()
 
             latency = (datetime.now(timezone.utc) - start).total_seconds() * 1000
 
@@ -331,21 +334,17 @@ class RemoteBackend(MFNBackend):
             self._call_count += 1
             client = await self._get_client()
 
-            if self.protocol == "rest":
-                response = await client.post(
-                    "/api/v1/simulation/run",
-                    json={
-                        "request_id": request.request_id,
-                        "seeds": request.seeds,
-                        "grid_size": request.grid_size,
-                        "params": request.params,
-                    },
-                )
-                response.raise_for_status()
-                result = response.json()
-            else:
-                # gRPC stub
-                raise NotImplementedError("gRPC client not implemented")
+            response = await client.post(
+                "/api/v1/simulation/run",
+                json={
+                    "request_id": request.request_id,
+                    "seeds": request.seeds,
+                    "grid_size": request.grid_size,
+                    "params": request.params,
+                },
+            )
+            response.raise_for_status()
+            result = response.json()
 
             latency = (datetime.now(timezone.utc) - start).total_seconds() * 1000
 
@@ -367,7 +366,7 @@ class RemoteBackend(MFNBackend):
             )
 
     async def close(self) -> None:
-        """Close HTTP/gRPC client."""
+        """Close HTTP client."""
         if self._client is not None:
             await self._client.aclose()
             self._client = None
@@ -458,9 +457,7 @@ class IngestionRunner:
         self._running = True
         self._stats = IngestionStats()
 
-        logger.info(
-            f"Starting ingestion: mode={self.mode}, batch_size={self.batch_size}"
-        )
+        logger.info(f"Starting ingestion: mode={self.mode}, batch_size={self.batch_size}")
 
         try:
             await self.ingestor.connect()

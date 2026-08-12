@@ -1,3 +1,5 @@
+# Copyright (c) 2023-2026 Yaroslav Vasylenko (neuron7xLab)
+# SPDX-License-Identifier: MIT
 """Unit coverage for report generation helpers."""
 
 from __future__ import annotations
@@ -18,9 +20,7 @@ def test_generate_markdown_report_concatenates_inputs(tmp_path: Path) -> None:
     first.write_text('{\n  "value": 1\n}', encoding="utf-8")
     second.write_text('{\n  "latest_signal": 1.0\n}', encoding="utf-8")
 
-    cfg = ReportConfig(
-        name="unit", inputs=[first, second], output_path=tmp_path / "report.md"
-    )
+    cfg = ReportConfig(name="unit", inputs=[first, second], output_path=tmp_path / "report.md")
     report = generate_markdown_report(cfg)
 
     assert "### Backtest" in report

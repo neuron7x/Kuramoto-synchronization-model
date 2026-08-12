@@ -1,0 +1,54 @@
+id: kafka-eventbus-orphaned-consumer
+status: ACTIVE
+claim_type: correctness
+promise: >-
+  After this PR, KafkaEventBus keeps a LIST of consumer tasks per topic
+  (_consumer_tasks: Dict[str, list[Task]]); a repeated subscribe appends rather
+  than overwrites, so an earlier consumer is never orphaned (leaked socket +
+  double delivery), and stop() cancels AND awaits every task so each consumer's
+  finally: consumer.stop() runs.
+diff_scope:
+  changed_files:
+    - path: ".claude/commit_acceptors/kafka-eventbus-orphaned-consumer.yaml"
+    - path: "core/messaging/event_bus.py"
+    - path: "tests/unit/messaging/test_event_bus_extended.py"
+  forbidden_paths:
+    - "core/physics/"
+    - "core/kuramoto/"
+    - "execution/oms.py"
+required_python_symbols:
+  - "core/messaging/event_bus.py::KafkaEventBus"
+expected_signal: >-
+  `python -m pytest --import-mode=importlib
+  tests/unit/messaging/test_event_bus_extended.py -q` passes: subscribing a topic
+  twice keeps both consumer tasks and stop() cleans them all.
+measurement_command: >-
+  bash -c '
+    python -m pytest --import-mode=importlib -p no:cacheprovider
+      tests/unit/messaging/test_event_bus_extended.py -q
+  '
+signal_artifact: "tmp/kafka_eventbus_orphaned_consumer.log"
+falsifier:
+  command: |-
+    bash -c '
+      python -c "
+    import importlib
+    m = importlib.import_module(\"core.messaging.event_bus\")
+    import typing
+    # The per-topic task container must be a list (accumulates), not a bare Task.
+    src = open(\"core/messaging/event_bus.py\").read()
+    assert \"Dict[str, list[asyncio.Task[None]]]\" in src
+    "
+    '
+  description: >-
+    Asserts _consumer_tasks is a per-topic list. Exits 0 on the correct tree
+    (run_evidence green-state contract), non-zero if it reverts to a bare Task
+    map that can orphan a consumer.
+rollback_command: >-
+  bash -c 'git rm -f .claude/commit_acceptors/kafka-eventbus-orphaned-consumer.yaml'
+rollback_verification_command: >-
+  bash -c 'test ! -f .claude/commit_acceptors/kafka-eventbus-orphaned-consumer.yaml'
+memory_update_type: append
+ledger_path: ".claude/commit_acceptors/kafka-eventbus-orphaned-consumer.yaml"
+report_path: "tmp/kafka_eventbus_orphaned_consumer.log"
+evidence: []

@@ -1,3 +1,5 @@
+# Copyright (c) 2023-2026 Yaroslav Vasylenko (neuron7xLab)
+# SPDX-License-Identifier: MIT
 """Tests for ConfigLoader utility."""
 
 from __future__ import annotations
@@ -7,7 +9,7 @@ from pathlib import Path
 import pytest
 import yaml
 
-from tradepulse.sdk.mlsdm.utils.config_loader import ConfigLoader
+from geosync.sdk.mlsdm.utils.config_loader import ConfigLoader
 
 
 class TestConfigLoader:

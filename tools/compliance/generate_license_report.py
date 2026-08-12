@@ -1,4 +1,6 @@
 #!/usr/bin/env python3
+# Copyright (c) 2023-2026 Yaroslav Vasylenko (neuron7xLab)
+# SPDX-License-Identifier: MIT
 """Generate third-party license report from CycloneDX SBOM."""
 
 from __future__ import annotations
@@ -13,7 +15,7 @@ from urllib.request import urlopen
 HEADER = """# Third-Party Notices
 
 This document is generated from the `sbom/cyclonedx-sbom.json` file and lists the
-third-party dependencies bundled with TradePulse, including their discovered
+third-party dependencies bundled with GeoSync, including their discovered
 licenses. Regenerate this report after updating dependencies by running:
 
 ```bash
@@ -29,7 +31,7 @@ def _fetch_license_from_pypi(name: str, version: str) -> list[str]:
 
     url = f"https://pypi.org/pypi/{name}/{version}/json"
     try:
-        with urlopen(url, timeout=10) as response:  # noqa: S310 - controlled domain
+        with urlopen(url, timeout=10) as response:
             payload = json.load(response)
     except (HTTPError, URLError, TimeoutError, json.JSONDecodeError):
         return []

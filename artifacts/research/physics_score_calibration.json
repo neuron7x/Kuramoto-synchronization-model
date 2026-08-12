@@ -1,0 +1,172 @@
+{
+  "artifact_id": "RES-005.physics_score_calibration",
+  "schema_version": 1,
+  "generated_by": "scripts (RES-005 remediation); numbers reproduce tools/physics_score.py + weight-sensitivity sweep",
+  "source_of_score": "tools/physics_score.py::build_score (TARGET_INTERVAL=[88.0,92.0])",
+  "source_verdict_file": "VERDICT.md",
+  "project_state": "RESEARCH_ALPHA",
+  "evidence_class_of_score": "SIMULATION",
+  "evidence_class_note": "Synthetic/static-carrier oracle. Per governance/project_state.yaml, SIMULATION evidence can NEVER back the words 'validated'/'proven'. The score is therefore inadmissible as scientific validation by the repo's own claim firewall.",
+  "as_marketed_score": 81.5,
+  "weights_sum": 1.0,
+  "target_band": [
+    88.0,
+    92.0
+  ],
+  "target_band_origin": "hardcoded constant tools/physics_score.py::TARGET_INTERVAL \u2014 a self-set readiness threshold, NOT derived from any external criterion",
+  "components": [
+    {
+      "id": "S_math_object",
+      "weight": 0.12,
+      "score": 75.0,
+      "weighted": 9.0,
+      "measurement_fn": "tools/physics_score.py::build_metrics",
+      "kind": "editorial_literal_gated_on_file_existence",
+      "is_continuous_measurement_against_ground_truth": false,
+      "evidence": [
+        "docs/physics/geosync_core.md",
+        "core/kuramoto/kuramoto_ricci_engine.py"
+      ]
+    },
+    {
+      "id": "S_dimensional_consistency",
+      "weight": 0.1,
+      "score": 70.0,
+      "weighted": 7.0,
+      "measurement_fn": "tools/physics_score.py::build_metrics",
+      "kind": "editorial_literal_gated_on_file_existence",
+      "is_continuous_measurement_against_ground_truth": false,
+      "evidence": [
+        "docs/physics/units_table.md",
+        "tests/physics/test_dimensional_homogeneity.py"
+      ]
+    },
+    {
+      "id": "S_numerical_stability",
+      "weight": 0.12,
+      "score": 86.0,
+      "weighted": 10.32,
+      "measurement_fn": "tools/physics_score.py::build_metrics",
+      "kind": "gated_literal_86_82_0_switched_by_ci_and_file_presence",
+      "is_continuous_measurement_against_ground_truth": false,
+      "evidence": [
+        "tests/physics/test_convergence.py",
+        "tests/physics/test_replication.py"
+      ]
+    },
+    {
+      "id": "S_invariant_preservation",
+      "weight": 0.12,
+      "score": 88.0,
+      "weighted": 10.56,
+      "measurement_fn": "tools/physics_score.py::build_metrics",
+      "kind": "gated_literal_88_80_0_switched_by_ci_and_file_presence",
+      "is_continuous_measurement_against_ground_truth": false,
+      "evidence": [
+        "tests/unit/physics/test_T1_kuramoto_ricci_boundary.py",
+        "tests/physics/test_invariants.py"
+      ]
+    },
+    {
+      "id": "S_falsifiability",
+      "weight": 0.14,
+      "score": 86.0,
+      "weighted": 12.04,
+      "measurement_fn": "tools/physics_score.py::build_metrics",
+      "kind": "gated_literal_86_82_0_switched_by_ci_and_file_presence",
+      "is_continuous_measurement_against_ground_truth": false,
+      "evidence": [
+        "tests/physics/test_geosync_nulls.py",
+        "tests/physics/test_ricci_bridge.py"
+      ]
+    },
+    {
+      "id": "S_baseline_models",
+      "weight": 0.1,
+      "score": 85.0,
+      "weighted": 8.5,
+      "measurement_fn": "tools/physics_score.py::build_metrics",
+      "kind": "gated_literal_85_82_0_switched_by_ci_and_file_presence",
+      "is_continuous_measurement_against_ground_truth": false,
+      "evidence": [
+        "tests/physics/test_geosync_nulls.py",
+        "artifacts/physics_validation/ricci_bridge_summary.json"
+      ]
+    },
+    {
+      "id": "S_UQ",
+      "weight": 0.08,
+      "score": 74.0,
+      "weighted": 5.92,
+      "measurement_fn": "tools/physics_score.py::build_metrics",
+      "kind": "gated_literal_74_72_0_switched_by_ci_and_file_presence",
+      "is_continuous_measurement_against_ground_truth": false,
+      "evidence": [
+        "docs/physics/uq_plan.md",
+        "tests/physics/test_uq_smoke.py"
+      ]
+    },
+    {
+      "id": "S_reproducibility",
+      "weight": 0.08,
+      "score": 83.0,
+      "weighted": 6.64,
+      "measurement_fn": "tools/physics_score.py::build_metrics",
+      "kind": "gated_literal_83_78_0_switched_by_ci_and_file_presence",
+      "is_continuous_measurement_against_ground_truth": false,
+      "evidence": [
+        "reproducibility/manifest.json",
+        "reproducibility/reference_solvers/geosync_kuramoto_numpy.py"
+      ]
+    },
+    {
+      "id": "S_interface_contracts",
+      "weight": 0.08,
+      "score": 78.0,
+      "weighted": 6.24,
+      "measurement_fn": "tools/physics_score.py::build_metrics",
+      "kind": "gated_literal_78_70_0_switched_by_ci_and_file_presence",
+      "is_continuous_measurement_against_ground_truth": false,
+      "evidence": [
+        "docs/physics/interface_contracts.md",
+        "tests/physics/test_interface_contracts.py"
+      ]
+    },
+    {
+      "id": "S_traceability",
+      "weight": 0.06,
+      "score": 88.0,
+      "weighted": 5.28,
+      "measurement_fn": "tools/physics_score.py::build_metrics",
+      "kind": "gated_literal_88_0_switched_by_ci_and_file_presence",
+      "is_continuous_measurement_against_ground_truth": false,
+      "evidence": [
+        "docs/audit/claim_ledger.md",
+        "docs/physics/equation_traceability.md"
+      ]
+    }
+  ],
+  "traceability_finding": "Every component score is a hand-chosen constant switched on/off by presence of carrier files and CI-evidence booleans. No component is a continuous measurement against a physical ground truth. The aggregate therefore measures CARRIER/TEST/CI COVERAGE (a readiness checklist), not a physical property.",
+  "external_criterion": null,
+  "external_criterion_note": "No market outcome, no independent replication, no held-out ground truth predicts or is predicted by this score. Criterion validity is UNDEFINED (nothing to correlate against).",
+  "weight_sensitivity": {
+    "method": "reproduce component literals from VERDICT.md; renormalize under perturbed weight vectors",
+    "authored_weights_score": 81.5,
+    "equal_weights_score": 81.3,
+    "equal_vs_authored_delta": -0.2,
+    "one_at_a_time_double_weight_max_abs_delta": 1.05,
+    "monte_carlo_dirichlet_uniform_n": 20000,
+    "monte_carlo_min": 72.88,
+    "monte_carlo_max": 86.51,
+    "monte_carlo_mean": 81.3,
+    "monte_carlo_stdev": 1.85,
+    "monte_carlo_p05": 78.09,
+    "monte_carlo_p95": 84.2,
+    "fraction_of_random_weightings_landing_in_target_band_88_92": 0.0,
+    "max_score_reachable_under_any_weighting": 88.0,
+    "interpretation": "Score is ROBUST to weights (stdev 1.85; equal-weights shifts it 0.2). Weight choice is therefore NOT the dominant arbitrary lever. The arbitrariness lives elsewhere and is more serious: (a) the component point values are editorial constants, and (b) the 88-92 target band is UNREACHABLE under every weighting tested (0/20000 land in band; the best attainable score is 88.0, the ceiling of the single highest component). The band floats above the reachable range and is disconnected from the measurement."
+  },
+  "verdict": "INTERNAL_READINESS_RUBRIC_NOT_VALIDATION",
+  "verdict_detail": "The 'physics score' is an INTERNAL READINESS RUBRIC: a weighted self-assessment of invariant/test/CI coverage over the repo's own computation. It has NO external criterion validity. '88-92' is a self-set readiness threshold, not a scientific pass mark. It must NOT be presented as scientific validation of GeoSync's physics.",
+  "forbidden_claim_binding": "governance/project_state.yaml forbidden_claims: {validated,proven,guaranteed,...}. Applying any of these to this SIMULATION-class score is a claim-firewall contradiction."
+}

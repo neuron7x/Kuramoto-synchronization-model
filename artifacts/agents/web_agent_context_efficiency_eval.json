@@ -1,0 +1,17 @@
+{
+  "artifact_id": "WEB_AGENT_CONTEXT_EFFICIENCY_EVAL_002",
+  "status": "PASS_CONTEXT_WITHIN_SYNTHETIC_BUDGET_NOT_LIVE_RUNTIME",
+  "measurement_mode": "synthetic_context_trace_with_compaction_gate_not_provider_telemetry",
+  "context_efficiency": 1.1377,
+  "tokens_needed": 5300,
+  "tokens_used": 6030,
+  "noise_tokens_retained": 330,
+  "compaction_rate": 1.0,
+  "events_total": 5,
+  "target_ratio": 1.2,
+  "failure_conditions": [
+    "Do not treat synthetic token accounting as provider telemetry.",
+    "Do not mark context efficiency production-grade until real runtime traces exist.",
+    "If tokens_used_over_needed exceeds 1.2, the context gate remains below target."
+  ]
+}

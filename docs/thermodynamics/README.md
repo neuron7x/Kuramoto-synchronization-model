@@ -1,16 +1,16 @@
 ---
-owner: neuro@tradepulse
+owner: neuro@geosync
 review_cadence: quarterly
 last_reviewed: 2026-01-01
 ---
 
 # Thermodynamics (TACL) Documentation
 
-This directory contains comprehensive documentation for the **Thermodynamic Autonomic Control Layer (TACL)** in TradePulse.
+This directory contains comprehensive documentation for the **Thermodynamic Autonomic Control Layer (TACL)** in GeoSync.
 
 ## Overview
 
-TACL is a self-regulating control system that manages the TradePulse distributed topology as a physical system. It applies thermodynamic principles (specifically the Free Energy Principle from neuroscience) to autonomous system optimization while maintaining formal safety guarantees.
+TACL is a self-regulating control system that manages the GeoSync distributed topology as a physical system. It applies thermodynamic principles (specifically the Free Energy Principle from neuroscience) to autonomous system optimization while maintaining formal safety guarantees.
 
 ## Key Concepts
 
@@ -245,7 +245,7 @@ See [OPERATIONAL_RUNBOOK.md](./OPERATIONAL_RUNBOOK.md) for:
 
 ### Audit Logs
 
-Location: `/var/log/tradepulse/thermo_audit.jsonl`
+Location: `/var/log/geosync/thermo_audit.jsonl`
 
 Format:
 ```json
@@ -307,9 +307,8 @@ Format:
 
 ### Related Documentation
 
-- [PATENTS.md](../../PATENTS.md): Patent filing for TACL
 - [README.md](../../README.md): Main project README with TACL overview
-- [HPC_AI_FINAL_REPORT.md](../../HPC_AI_FINAL_REPORT.md): HPC-AI integration
+- [HPC_AI_FINAL_REPORT.md](OPTIMIZATION_GUIDE.md): HPC-AI integration
 
 ## Contributing
 

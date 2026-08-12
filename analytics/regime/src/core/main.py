@@ -1,3 +1,5 @@
+# Copyright (c) 2023-2026 Yaroslav Vasylenko (neuron7xLab)
+# SPDX-License-Identifier: MIT
 """Market regime detection core module.
 
 This module exposes the :class:`RegimeDetector` class which analyses recent
@@ -116,12 +118,8 @@ class RegimeDetector:
         self,
         prices: Mapping[str, Iterable[float]] | pd.DataFrame | pd.Series,
         *,
-        volumes: Optional[
-            Mapping[str, Iterable[float]] | pd.DataFrame | pd.Series
-        ] = None,
-        spreads: Optional[
-            Mapping[str, Iterable[float]] | pd.DataFrame | pd.Series
-        ] = None,
+        volumes: Optional[Mapping[str, Iterable[float]] | pd.DataFrame | pd.Series] = None,
+        spreads: Optional[Mapping[str, Iterable[float]] | pd.DataFrame | pd.Series] = None,
     ) -> MarketRegimeSnapshot:
         """Detect the current market regime.
 
@@ -186,12 +184,8 @@ class RegimeDetector:
         self,
         prices: Mapping[str, Iterable[float]] | pd.DataFrame | pd.Series,
         *,
-        volumes: Optional[
-            Mapping[str, Iterable[float]] | pd.DataFrame | pd.Series
-        ] = None,
-        spreads: Optional[
-            Mapping[str, Iterable[float]] | pd.DataFrame | pd.Series
-        ] = None,
+        volumes: Optional[Mapping[str, Iterable[float]] | pd.DataFrame | pd.Series] = None,
+        spreads: Optional[Mapping[str, Iterable[float]] | pd.DataFrame | pd.Series] = None,
         trending_quantile: float = 0.85,
         mean_reverting_quantile: float = 0.2,
         liquidity_high_quantile: float = 0.7,
@@ -269,21 +263,13 @@ class RegimeDetector:
 
         liquidity_high = _finite_quantile(liquidity_scores, liquidity_high_quantile)
         liquidity_low = _finite_quantile(liquidity_scores, liquidity_low_quantile)
-        if (
-            liquidity_high is None
-            or liquidity_low is None
-            or liquidity_high <= liquidity_low
-        ):
+        if liquidity_high is None or liquidity_low is None or liquidity_high <= liquidity_low:
             liquidity_high = self.config.liquidity_score_high
             liquidity_low = self.config.liquidity_score_low
 
         if correlation_values:
-            correlation_high = _finite_quantile(
-                correlation_values, correlation_high_quantile
-            )
-            correlation_low = _finite_quantile(
-                correlation_values, correlation_low_quantile
-            )
+            correlation_high = _finite_quantile(correlation_values, correlation_high_quantile)
+            correlation_low = _finite_quantile(correlation_values, correlation_low_quantile)
             if correlation_high is not None:
                 correlation_high = float(np.clip(correlation_high, 0.0, 1.0))
             if correlation_low is not None:
@@ -324,9 +310,7 @@ class RegimeDetector:
         window_prices = prices.tail(window)
         window_returns = returns.tail(max(window - 1, 1))
 
-        cumulative_return = (
-            window_prices.iloc[-1] / window_prices.iloc[0] - 1.0
-        ).astype(float)
+        cumulative_return = (window_prices.iloc[-1] / window_prices.iloc[0] - 1.0).astype(float)
         mean_cum_return = float(cumulative_return.mean())
         volatility = float(window_returns.std(ddof=0).replace(0.0, np.nan).mean())
         volatility = max(volatility, 1e-8)
@@ -430,9 +414,7 @@ class RegimeDetector:
             # not provided. Higher volatility generally implies lower
             # liquidity, hence the negative sign.
             volatility_proxy = fallback_returns.tail(window).std(ddof=0).mean()
-            volatility_series = (
-                fallback_returns.rolling(window).std(ddof=0).dropna(how="all")
-            )
+            volatility_series = fallback_returns.rolling(window).std(ddof=0).dropna(how="all")
             if volatility_series.empty:
                 volatility_series = fallback_returns.std(ddof=0).to_frame().T
             volatility_series = volatility_series.mean(axis=1)
@@ -464,9 +446,7 @@ class RegimeDetector:
         corr_matrix = returns.tail(window).corr()
         abs_corr = corr_matrix.abs()
         # Exclude the diagonal to avoid biasing the mean towards one.
-        upper_triangle = abs_corr.where(
-            np.triu(np.ones(abs_corr.shape), k=1).astype(bool)
-        )
+        upper_triangle = abs_corr.where(np.triu(np.ones(abs_corr.shape), k=1).astype(bool))
         upper_values = upper_triangle.stack()
         if upper_values.empty:
             # No pairwise correlations could be computed. Treat this as a
@@ -511,15 +491,11 @@ class RegimeDetector:
         if trend_regime is TrendRegime.TRENDING:
             # Encourage trend-following signals while keeping tail-risk in check.
             position_scale *= 1.15
-            parameter_overrides["trend_signal_sensitivity"] = min(
-                2.0, 1.0 + abs(trend_score)
-            )
+            parameter_overrides["trend_signal_sensitivity"] = min(2.0, 1.0 + abs(trend_score))
             notes.append("trend detected")
         elif trend_regime is TrendRegime.MEAN_REVERTING:
             position_scale *= 0.9
-            parameter_overrides["mean_reversion_entry_sigma"] = max(
-                1.0, 1.5 - trend_score
-            )
+            parameter_overrides["mean_reversion_entry_sigma"] = max(1.0, 1.5 - trend_score)
             notes.append("mean reversion bias")
         else:
             notes.append("range-bound behaviour")

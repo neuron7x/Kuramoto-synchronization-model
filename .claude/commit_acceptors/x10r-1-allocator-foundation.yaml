@@ -1,0 +1,127 @@
+# Diff-bound commit acceptor for X-10R-1 PR #1 — country-to-bank
+# allocator foundation (GH issue #638). The first PR of a 7-PR epic
+# that lifts X-10R reconstruction from country-aggregate to bank-
+# level marginals.
+#
+# What lands:
+#   * research/reconstruction/allocator/ package (4 modules):
+#     - prior.py        — AllocatorPrior protocol + UniformPrior
+#     - certificate.py  — BankLevelMarginalsCertificate + cert_id
+#     - allocator.py    — CountryToBankAllocator
+#     - synthetic.py    — synthetic country aggregates with KNOWN
+#                          bank-level ground truth + L1 metric
+#   * tests/reconstruction/allocator/ (3 test modules, 43 tests):
+#     test_prior, test_synthetic, test_allocator
+#
+# What does NOT land (subsequent epic PRs):
+#   * ECBMFIPrior, EBATransparencyPrior, BankFocusPrior
+#   * Real BIS LBS data ingestion
+#   * X-10R reconstruction composition (DoV gate composition)
+#   * E2E allocator → Gate 6
+#
+# Locally verified:
+#   * pytest tests/reconstruction/allocator/: 43/43 passed
+#   * mypy --strict + ruff + black:           clean
+
+id: x10r-1-allocator-foundation
+status: ACTIVE
+claim_type: chore
+promise: >-
+  After this PR lands, research/reconstruction/allocator/ ships a
+  protocol-driven country-to-bank marginal allocator. The
+  AllocatorPrior protocol (prior_id, banks_in, expected_share,
+  has_evidence) is the dependency-injection seam every concrete
+  prior must satisfy. UniformPrior implements 1/k shares — the
+  falsification anchor: if a candidate prior cannot beat
+  UniformPrior on synthetic ground-truth recovery, it is
+  uninformative. CountryToBankAllocator enforces four gates:
+  GATE_A1 conservation per country (Σ shares ≡ 1 to 1e-9 rel),
+  GATE_A2 coverage_ratio surfaced as evidence, GATE_A3 non-negative
+  shares, GATE_A4 bit-exact replay via sha256 cert_id. Synthetic
+  positive control generates country aggregates with known bank-
+  level truth across uniform / lognormal / pareto share
+  distributions; bank_level_recovery_l1 measures relative L1.
+  43 tests pin the contract: protocol satisfaction, cert_id
+  determinism, conservation, coverage, fallback policies
+  (uniform_within_country / drop_country / raise), AND the
+  falsification anchor — UniformPrior must NOT recover lognormal
+  shares (≥ 30% relative L1 error) AND must do strictly better
+  on a matched uniform substrate (< 70% of the lognormal error).
+diff_scope:
+  changed_files:
+    - path: ".claude/commit_acceptors/x10r-1-allocator-foundation.yaml"
+    - path: "research/reconstruction/allocator/__init__.py"
+    - path: "research/reconstruction/allocator/allocator.py"
+    - path: "research/reconstruction/allocator/certificate.py"
+    - path: "research/reconstruction/allocator/prior.py"
+    - path: "research/reconstruction/allocator/synthetic.py"
+    - path: "tests/reconstruction/allocator/__init__.py"
+    - path: "tests/reconstruction/allocator/test_allocator.py"
+    - path: "tests/reconstruction/allocator/test_prior.py"
+    - path: "tests/reconstruction/allocator/test_synthetic.py"
+  forbidden_paths:
+    - "trading/"
+    - "execution/"
+    - "forecast/"
+    - "policy/"
+    - "core/physics/"
+    - "core/kuramoto/"
+    - "application/governance/claim_ledger.py"
+    - "application/governance/commit_acceptor.py"
+required_python_symbols:
+  - "research/reconstruction/allocator/prior.py::AllocatorPrior"
+  - "research/reconstruction/allocator/prior.py::UniformPrior"
+  - "research/reconstruction/allocator/certificate.py::BankLevelMarginalsCertificate"
+  - "research/reconstruction/allocator/certificate.py::compute_cert_id"
+  - "research/reconstruction/allocator/allocator.py::CountryToBankAllocator"
+  - "research/reconstruction/allocator/synthetic.py::synthetic_country_aggregates"
+  - "research/reconstruction/allocator/synthetic.py::bank_level_recovery_l1"
+expected_signal: >-
+  Local: `pytest tests/reconstruction/allocator/ -q` reports
+  "43 passed"; `mypy --strict` is clean on every file under
+  research/reconstruction/allocator/ and
+  tests/reconstruction/allocator/; `ruff check` and
+  `black --check` both pass on those paths.
+measurement_command: >-
+  bash -c 'mypy --strict --follow-imports=silent
+  research/reconstruction/allocator/ tests/reconstruction/allocator/
+  && ruff check research/reconstruction/allocator/ tests/reconstruction/allocator/
+  && black --check research/reconstruction/allocator/ tests/reconstruction/allocator/
+  && pytest tests/reconstruction/allocator/ -q'
+signal_artifact: "tmp/x10r_1_allocator.log"
+falsifier:
+  command: |-
+    bash -c 'python -c "
+    from research.reconstruction.allocator import (
+        CountryToBankAllocator, UniformPrior,
+        bank_level_recovery_l1, synthetic_country_aggregates,
+    )
+    agg_in, agg_out, gt_in, _, bcm = synthetic_country_aggregates(
+        n_countries=4, n_banks_per_country=8,
+        share_distribution=\"lognormal\", seed=42,
+    )
+    cert = CountryToBankAllocator(
+        prior=UniformPrior(bank_country_map=bcm)
+    ).allocate(agg_in, agg_out, bank_country_map=bcm)
+    err = bank_level_recovery_l1(ground_truth=gt_in, allocated=cert.s_in)
+    assert err >= 0.30, f\"falsification anchor broken: err={err:.3f}\"
+    "'
+  description: >-
+    Probes the falsification anchor: UniformPrior on a lognormal-
+    share substrate at N=32 banks must leave ≥ 30% relative L1
+    error. If it falls below, the substrate is too easy / the
+    prior is conflated with something information-bearing — either
+    way, downstream priors would have nothing meaningful to beat.
+rollback_command: >-
+  bash -c 'git checkout HEAD~1 --
+  && rm -rf research/reconstruction/allocator/
+  tests/reconstruction/allocator/
+  .claude/commit_acceptors/x10r-1-allocator-foundation.yaml'
+rollback_verification_command: >-
+  bash -c 'test ! -d research/reconstruction/allocator
+  && test ! -d tests/reconstruction/allocator
+  && test ! -f .claude/commit_acceptors/x10r-1-allocator-foundation.yaml'
+memory_update_type: append
+ledger_path: ".claude/commit_acceptors/x10r-1-allocator-foundation.yaml"
+report_path: "tmp/x10r_1_allocator.log"
+evidence: []

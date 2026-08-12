@@ -1,0 +1,61 @@
+id: aesvp-2026-valuation-record
+status: ACTIVE
+claim_type: governance
+promise: >-
+  Diff-bound acceptor for the AESVP-2026 valuation evidence package. The change
+  preserves a bounded engineering work-product valuation record, a machine-readable
+  numeric summary, validation rationale, and hardening requirements without
+  claiming sale price, revenue value, startup valuation, strategic premium, or
+  official accounting capitalization.
+
+diff_scope:
+  changed_files:
+    - path: "docs/audit/AESVP_2026_VALUATION_APPENDIX.md"
+    - path: "docs/audit/AESVP_2026_VALIDATION_RATIONALE.md"
+    - path: "docs/audit/AESVP_2026_HARDENING_REQUIREMENTS.md"
+    - path: "artifacts/audit/aesvp_2026_valuation_summary.json"
+    - path: ".claude/commit_acceptors/aesvp-2026-valuation-record.yaml"
+  forbidden_paths:
+    - "application/"
+    - "backtest/"
+    - "core/"
+    - "execution/"
+    - "markets/"
+    - "modules/"
+    - "research/"
+    - "runtime/"
+    - "src/"
+    - "tests/"
+
+required_python_symbols: []
+
+expected_signal: >-
+  The AESVP package remains a bounded audit evidence package with a markdown
+  appendix, JSON numeric summary, validation rationale, and hardening requirements.
+  It must not mutate runtime code, trading code, tests, or production paths, and it
+  must not promote the valuation into sale-price, revenue, startup, or official
+  accounting claims.
+
+measurement_command: >-
+  python tools/commit_acceptor/validate_commit_acceptor.py --acceptor-id aesvp-2026-valuation-record
+
+signal_artifact: "artifacts/audit/aesvp_2026_valuation_summary.json"
+
+falsifier:
+  command: >-
+    python tools/commit_acceptor/validate_commit_acceptor.py --acceptor-id aesvp-2026-valuation-record
+  description: >-
+    The acceptor must fail if the diff binding is malformed, if the declared
+    evidence is missing, or if the package escapes its governance/documentation
+    and audit-artifact boundary.
+
+rollback_command: >-
+  git checkout -- docs/audit/AESVP_2026_VALUATION_APPENDIX.md docs/audit/AESVP_2026_VALIDATION_RATIONALE.md docs/audit/AESVP_2026_HARDENING_REQUIREMENTS.md artifacts/audit/aesvp_2026_valuation_summary.json .claude/commit_acceptors/aesvp-2026-valuation-record.yaml
+
+rollback_verification_command: >-
+  git diff --exit-code
+
+memory_update_type: append
+ledger_path: ".claude/commit_acceptors/aesvp-2026-valuation-record.yaml"
+report_path: "docs/audit/AESVP_2026_VALUATION_APPENDIX.md"
+evidence: []

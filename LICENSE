@@ -1,103 +1,21 @@
-TradePulse Proprietary License Agreement (TPLA)
-Version 1.0 — Effective 2024-01-01
+MIT License
 
-Copyright (c) 2024 TradePulse Technologies. All rights reserved.
+Copyright (c) 2023-2026 Yaroslav Vasylenko (neuron7xLab)
 
-IMPORTANT: PLEASE READ THIS LICENSE CAREFULLY BEFORE USING ANY PORTION OF THE
-SOFTWARE. BY INSTALLING, COPYING, ACCESSING, OR OTHERWISE USING THE SOFTWARE,
-YOU ACKNOWLEDGE THAT YOU HAVE READ THIS LICENSE, UNDERSTAND IT, AND AGREE TO BE
-BOUND BY ITS TERMS. IF YOU DO NOT AGREE TO THE TERMS OF THIS LICENSE, DO NOT
-USE THE SOFTWARE.
+Permission is hereby granted, free of charge, to any person obtaining a copy
+of this software and associated documentation files (the "Software"), to deal
+in the Software without restriction, including without limitation the rights
+to use, copy, modify, merge, publish, distribute, sublicense, and/or sell
+copies of the Software, and to permit persons to whom the Software is
+furnished to do so, subject to the following conditions:
 
-1. Definitions
-   1.1 "Software" means the TradePulse codebase, related assets, and any updates
-       or modifications provided by TradePulse Technologies.
-   1.2 "You" or "Licensee" means the individual or entity exercising rights
-       under this License.
+The above copyright notice and this permission notice shall be included in all
+copies or substantial portions of the Software.
 
-2. Grant of Limited Rights
-   2.1 Subject to the terms of this License, TradePulse Technologies grants You
-       a limited, personal, non-transferable, non-sublicensable, revocable
-       license to install and use the Software solely for internal,
-       non-commercial evaluation and development purposes.
-   2.2 No other rights are granted, whether express, implied, or otherwise.
-
-3. Commercial Use Restricted
-   3.1 Commercial use of the Software, including but not limited to offering
-       services, creating derivative works for sale, or using the Software in a
-       production environment, is strictly prohibited unless You obtain a
-       separate written agreement executed by an authorized representative of
-       TradePulse Technologies.
-   3.2 Any unauthorized commercial use will be considered a material breach of
-       this License.
-
-4. Restrictions
-   4.1 You shall not copy, distribute, disclose, sublicense, or otherwise make
-       the Software available to any third party without prior written consent
-       from TradePulse Technologies.
-   4.2 You shall not reverse engineer, decompile, disassemble, or otherwise
-       attempt to derive the source code of any portion of the Software that is
-       not already provided in source form, except to the extent expressly
-       permitted by applicable law.
-   4.3 You shall not remove, obscure, or alter any proprietary notices,
-       trademarks, or other identifying marks within the Software.
-
-5. Confidentiality
-   5.1 The Software and any related documentation are confidential and
-       proprietary to TradePulse Technologies. You shall protect the Software
-       with at least the same degree of care that You use to protect Your own
-       confidential information, but in no event less than a reasonable degree
-       of care.
-
-6. Ownership
-   6.1 TradePulse Technologies retains all right, title, and interest in and to
-       the Software, including all intellectual property rights. This License
-       does not convey any ownership rights to You.
-
-7. No Warranty
-   7.1 THE SOFTWARE IS PROVIDED "AS IS" WITHOUT WARRANTY OF ANY KIND, WHETHER
-       EXPRESS, IMPLIED, OR STATUTORY, INCLUDING BUT NOT LIMITED TO WARRANTIES
-       OF MERCHANTABILITY, FITNESS FOR A PARTICULAR PURPOSE, TITLE,
-       NON-INFRINGEMENT, OR THAT THE SOFTWARE WILL BE ERROR-FREE OR OPERATE
-       WITHOUT INTERRUPTION.
-
-8. Limitation of Liability
-   8.1 TO THE MAXIMUM EXTENT PERMITTED BY LAW, TRADEPULSE TECHNOLOGIES SHALL NOT
-       BE LIABLE FOR ANY INDIRECT, INCIDENTAL, SPECIAL, CONSEQUENTIAL, EXEMPLARY,
-       OR PUNITIVE DAMAGES, OR FOR ANY LOSS OF PROFITS OR REVENUE, ARISING OUT OF
-       OR IN CONNECTION WITH THIS LICENSE OR THE USE OF THE SOFTWARE, EVEN IF
-       ADVISED OF THE POSSIBILITY OF SUCH DAMAGES.
-   8.2 IN NO EVENT WILL TRADEPULSE TECHNOLOGIES' TOTAL LIABILITY TO YOU FOR ALL
-       CLAIMS ARISING OUT OF OR RELATING TO THIS LICENSE OR THE SOFTWARE EXCEED
-       ONE HUNDRED U.S. DOLLARS (US $100).
-
-9. Termination
-   9.1 This License is effective until terminated. TradePulse Technologies may
-       terminate this License immediately if You breach any provision of this
-       License.
-   9.2 Upon termination, You must cease all use of the Software and destroy all
-       copies in Your possession or control.
-
-10. Governing Law and Venue
-    10.1 This License shall be governed by and construed in accordance with the
-         laws of the State of Delaware, USA, without regard to its conflict of
-         law principles.
-    10.2 Any dispute arising out of or relating to this License shall be
-         resolved exclusively in the state or federal courts located in New
-         Castle County, Delaware, and You consent to the personal jurisdiction of
-         such courts.
-
-11. Entire Agreement
-    11.1 This License constitutes the entire agreement between the parties with
-         respect to the Software and supersedes all prior or contemporaneous
-         understandings, whether written or oral.
-
-12. Modifications
-    12.1 TradePulse Technologies may modify this License at any time by
-         providing updated terms with any subsequent release of the Software.
-         Continued use of the Software after such modifications constitutes Your
-         acceptance of the updated License.
-
-13. Contact
-    13.1 For commercial licensing inquiries or to request written permission,
-         please contact legal@tradepulse.tech.
+THE SOFTWARE IS PROVIDED "AS IS", WITHOUT WARRANTY OF ANY KIND, EXPRESS OR
+IMPLIED, INCLUDING BUT NOT LIMITED TO THE WARRANTIES OF MERCHANTABILITY,
+FITNESS FOR A PARTICULAR PURPOSE AND NONINFRINGEMENT. IN NO EVENT SHALL THE
+AUTHORS OR COPYRIGHT HOLDERS BE LIABLE FOR ANY CLAIM, DAMAGES OR OTHER
+LIABILITY, WHETHER IN AN ACTION OF CONTRACT, TORT OR OTHERWISE, ARISING FROM,
+OUT OF OR IN CONNECTION WITH THE SOFTWARE OR THE USE OR OTHER DEALINGS IN THE
+SOFTWARE.

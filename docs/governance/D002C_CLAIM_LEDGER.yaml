@@ -1,0 +1,332 @@
+# D-002C Claim Ledger
+# ----------------------------------------------------------------
+# Scoped evidence ledger for the D-002C canonical synthetic run.
+# This file records WHAT was claimed, WHAT was supported by evidence,
+# and WHAT scope limits apply. Each claim entry is content-addressed
+# and tied to a specific RUN_ID + archive sha256.
+#
+# Forbidden to:
+#   - promote a claim past its recorded scope
+#   - rewrite past claim entries (append-only)
+#   - delete known limitations
+# ----------------------------------------------------------------
+
+claims:
+  - claim_id: D002C_CANONICAL_SYNTHETIC_PASS_SYNC_AUC
+    status: SUPPORTED_SYNTHETIC_SCOPED
+    run_class: D002C_CANONICAL_SYNTHETIC_SWEEP_ATTEMPT_1
+    run_id: d002c_canonical_20260512T122837Z
+    exit_code: 0
+    tier: SYNTHETIC_GATE6_CERTIFIED_REDESIGN_N_LE_200
+    generated_at: "2026-05-12T13:11:12Z"
+
+    selected_cell_key:
+      N: 100
+      lambda: 0.05
+      substrate: block_structured
+      metric: sync_auc
+
+    passing_cells:
+      passed: 45
+      total: 45
+      marginal_pass: false
+      single_path_pass: false
+
+    scope:
+      data: synthetic
+      metric:
+        - sync_auc
+      substrates:
+        - block_structured
+        - ricci_flow
+        - temporal_coupling
+      N:
+        - 50
+        - 100
+        - 200
+      lambda_grid:
+        - 0.0
+        - 0.05
+        - 0.10
+        - 0.20
+        - 0.40
+        - 1.0
+
+    exclusions:
+      pos_preflight_combos:
+        - [block_structured, tau_onset]
+        - [block_structured, phase_lag]
+        - [ricci_flow, tau_onset]
+        - [ricci_flow, phase_lag]
+        - [temporal_coupling, tau_onset]
+        - [temporal_coupling, phase_lag]
+      neg_preflight_cells:
+        - [ricci_flow, tau_onset, 50]
+        - [ricci_flow, phase_lag, 50]
+        - [temporal_coupling, tau_onset, 50]
+        - [temporal_coupling, phase_lag, 50]
+      net_exclusion_note: >-
+        All 4 NEG-excluded cells are already POS-excluded combos; net
+        additional exclusions from NEG = 0 cells.
+
+    evidence:
+      preregistration_sha: "b1561ddde08a60a8eed416f2103655e0f3ee1ecd4e2b2037f4e7193c424a154e"  # pragma: allowlist secret
+      preflight_decision_sha: "a065d18223b9cd126c6839990e0877b436198c2424c771d09323b8fa30266a40"  # pragma: allowlist secret
+      sweep_sha: "54b1dd9d8059197f3463b9728d54adb632ec45b2459bcae001a08efe4dee2b16"  # pragma: allowlist secret
+      verdict_sha: "9380bb42db9e858e759ffacfd1906cd54023cae24e3d72ef83d1df8b8dbc9bd5"  # pragma: allowlist secret
+      archive_sha256: "c4f62f867f4aee6bb17ab6c768a6faf3791f2fedf17bd576490a2bb499566e1d"  # pragma: allowlist secret
+      archive_path: tmp/d002c_canonical_20260512T122837Z.tar.gz
+      manifest: docs/governance/evidence/D002C_CANONICAL_ARCHIVE_MANIFEST.txt
+      run_report: docs/governance/D002C_CANONICAL_RUN_REPORT.md
+      preflight_capsules:
+        pos_control_sha: "4de86ed462b77f4bd23fb8b04de276682877315a5b2861f3d6ee34d1a0470bb5"  # pragma: allowlist secret
+        neg_control_sha: "2d1f60008ac7624bb43cd098df489e3d6e0e754a9c9a58f2689460e69267d9fb"  # pragma: allowlist secret
+        smoke_test_sha: "927950f3a408c76666cd6409c0d3d0055a791a8e2761df4f9f629c7136354a6a"  # pragma: allowlist secret
+        null_audit_sha: "3376df404d3cd8fcb27ee7d358c31485615302389283e656186f871dd1f4c3dd"  # pragma: allowlist secret
+
+    code_provenance:
+      git_head: adc3726930bcee5d05a4317ef14fbd7a2fcb258b  # pragma: allowlist secret
+      branch_at_run: main
+      python_version: "3.12.3"
+      runtime_profile:
+        cores: "E-cores 8-13"
+        omp_num_threads: 1
+        mkl_num_threads: 1
+        openblas_num_threads: 1
+        numexpr_num_threads: 1
+        nice_level: 10
+        wallclock_seconds: 152.4
+
+    limitations:
+      - no_real_data_validation
+      - no_bank_level_inference
+      - no_production_certification
+      - no_universal_claim
+      - tau_onset_excluded_by_pos_preflight
+      - phase_lag_excluded_by_pos_preflight
+      - null_audit_execution_gap_pending_C2_4_A2
+      - R2_structurally_satisfied_under_lambda_zero_paired_CRN
+
+    limitation_references:
+      null_audit_gap: docs/governance/D002C_NULL_AUDIT_GAP_AND_C2_4_A2_SPEC.md
+      R2_structural: docs/governance/D002C_R2_STRUCTURAL_LIMITATION_NOTE.md
+
+    forbidden_interpretations:
+      - "D-002C proven universal law"
+      - "D-002C real-data validated"
+      - "D-002C real-market validated"
+      - "D-002C bank-level validated"
+      - "D-002C production-ready"
+      - "D-002C all-metrics validated"
+      - "D-002C false-positive rate independently demonstrated"
+      - "tau_onset metric supported"
+      - "phase_lag metric supported"
+      - "SYNTHETIC_GATE6_CERTIFIED (unqualified)"
+      - "REAL_DOV_READY"
+      - "VALIDATED_REAL_BANK_LEVEL_RESULT"
+      - "BANK_LEVEL_PRECURSOR_CONFIRMED"
+
+    next_required_actions:
+      P1:
+        id: C2.4-A2
+        description: >-
+          Extend sweep_runner / sweep_checkpoint to persist per-seed
+          precursor and null paired sample values so run_null_audit_all
+          can audit on real sweep output.
+        spec: docs/governance/D002C_NULL_AUDIT_GAP_AND_C2_4_A2_SPEC.md
+      P2:
+        id: D002C_CANONICAL_RERUN_AFTER_C2_4_A2
+        description: >-
+          New RUN_ID, fresh preflight, sweep with per-seed payloads,
+          real run_null_audit_all post-sweep, claim ledger update.
+      P3:
+        id: R2_REDESIGN_OR_SUPPLEMENT
+        description: >-
+          Separate research thread to either redesign R2 or add a
+          supplementary rule (R2') that genuinely tests false-positive
+          behavior under non-bit-identical null. Not a D-002C launch
+          blocker.
+      P4:
+        id: PR_670_CLOCK_DI
+        description: >-
+          Independent Clock DI reliability hardening PR. Not a D-002C
+          blocker, may be merged after canonical evidence is frozen.
+
+  # ---------------------------------------------------------------------
+  # Append-only — attempt-2 entry (2026-05-12).
+  # The C2.4-A2 data contract (#674) merged after attempt-1's freeze.
+  # Attempt-2 reran the canonical sweep under the new contract: per-cell
+  # NullAuditCellPayload now emitted, run_null_audit_all consumed real
+  # sweep output, and the post-sweep permutation null audit FALSIFIED
+  # the prior PASS-shape. The attempt-1 entry above remains in place
+  # (historically defensible — the executable safeguard did not yet
+  # exist). Attempt-2 ECLIPSES attempt-1 going forward.
+  # ---------------------------------------------------------------------
+
+  - claim_id: D002C_CANONICAL_SYNTHETIC_ATTEMPT_2_FALSIFIED
+    status: FALSIFIED_BY_EXECUTABLE_NULL_AUDIT
+    eclipses: D002C_CANONICAL_SYNTHETIC_PASS_SYNC_AUC
+    run_class: D002C_CANONICAL_SYNTHETIC_SWEEP_ATTEMPT_2_EXECUTABLE_NULL_AUDIT
+    run_id: d002c_canonical_attempt_2_20260512T160318Z
+    sweep_exit_code: 0
+    tier: D002C_REDESIGN_INSUFFICIENT_AT_TESTED_BUDGET
+    generated_at: "2026-05-12T16:23:16Z"
+
+    pre_null_audit_rule_summary:
+      r1_r2_r3_passing_cells: 45
+      r1_r2_r3_evaluated_cells: 45
+      note: >-
+        R1 ∧ R2 ∧ R3 PASS at 45/45 evaluated cells, identical pattern
+        to attempt-1. The PASS is voided by the post-sweep null audit
+        result below.
+
+    post_sweep_null_audit:
+      executed: true
+      aggregate_only: false
+      aggregate_verdict: FAIL
+      n_audited_cells: 54
+      n_pass: 45
+      n_fail: 9
+      n_shuffles_per_cell: 100
+      rng_seed: 42
+      fail_cells_lambda_distribution:
+        "0.0": 9
+        "non_zero": 0
+      mechanistic_explanation: >-
+        All 9 FAIL cells are λ=0. Under the locked paired-CRN protocol,
+        K_precursor == K_baseline bit-identically at λ=0 (substrate
+        invariant), so per-seed precursor_values == null_values. The
+        permutation test correctly reports p = 1.0 (zero
+        discriminability). This is the expected fail-closed behaviour
+        of a permutation null audit applied to a degenerate null
+        cohort — the result predicted by
+        docs/governance/D002C_R2_STRUCTURAL_LIMITATION_NOTE.md.
+
+    code_provenance:
+      git_head: 5c5393ed71fdc8b6b893503437318eb5ed7a4d45  # pragma: allowlist secret
+      branch_at_run: main
+      python_version: "3.12.3"
+      c2_4_a2_merge_sha: 5c5393e  # pragma: allowlist secret
+      contract_chain:
+        - "#671 C2.6 writer sha alignment"
+        - "#672 C2.4-C2 null audit aggregator"
+        - "#673 P0 docs freeze"
+        - "#674 C2.4-A2 per-seed payload data contract"
+
+    evidence:
+      preregistration_sha: "b1561ddde08a60a8eed416f2103655e0f3ee1ecd4e2b2037f4e7193c424a154e"  # pragma: allowlist secret
+      sweep_sha_pre_null_audit: "9abd7ca683f2c0f769496b471bad39462730a2971d7e17d05368fc1d13948473"  # pragma: allowlist secret
+      null_audit_capsule_sha: "7d5404d1e9714e79"  # pragma: allowlist secret
+      verdict_sha_final: "b427f22419bf7866b8913cd76bc31572d5dd6c48a64950dd597904829fd4df48"  # pragma: allowlist secret
+      archive_sha256: "f0fbea551dd0c4b74d1ec231a73c1f0917de16f6b15e24921e68c7706fc029f9"  # pragma: allowlist secret
+      archive_path: tmp/d002c_canonical_attempt_2_20260512T160318Z.tar.gz
+      run_report: docs/governance/D002C_ATTEMPT_2_NULL_AUDIT_FALSIFICATION_REPORT.md
+
+    limitations:
+      - no_real_data_validation
+      - no_bank_level_inference
+      - no_production_certification
+      - no_universal_claim
+      - null_cohort_is_degenerate_at_lambda_zero_under_paired_CRN
+      - D002G_redesign_required_before_any_new_canonical_PASS_claim
+
+    forbidden_interpretations:
+      - "attempt-1 PASS still holds — eclipsed by attempt-2"
+      - "sync_auc evidence survives null shuffle"
+      - "narratively rescue verdict by re-tuning thresholds"
+      - "edit D002C_PREREGISTRATION.yaml to flip verdict"
+      - "promote to real-data validation"
+      - "universal / cross-asset / bank-level inference"
+      - "production certification / external certification"
+      - "claim that R2 is a valid FPR safeguard"
+      - "D002C canonical PASS achieved (any unqualified phrasing)"
+
+    next_required_actions:
+      P2:
+        id: D-002G
+        description: >-
+          Redesign the null mechanism so λ=0 substrate dynamics are
+          mechanistically distinct from λ>0. Requires a FRESH
+          pre-registration document — never an edit to the locked
+          D002C_PREREGISTRATION.yaml. Five candidate mechanisms
+          specified in D002G_DEGENERATE_NULL_REDESIGN_SPEC.md.
+        spec: docs/governance/D002G_DEGENERATE_NULL_REDESIGN_SPEC.md
+      P3:
+        id: R2-B
+        description: >-
+          R2-B supplementary null (specified earlier under the original
+          attempt-1 ledger entry). Remains a valid alternative or
+          additive path; same fresh-pre-registration discipline applies.
+        spec: docs/governance/D002C_R2_B_SUPPLEMENTARY_NULL_SPEC.md
+
+  # ---------------------------------------------------------------------
+  # Append-only — D-002H scoped REFUSED entry (2026-05-14).
+  # D-002H is a new SCOPED lineage opened AFTER D-002G structural closure
+  # (PR #682 sha 8cf5364a...). The D-002H canonical sweep (PR #691 merge
+  # sha 250d8069...) executed on the ricci_flow substrate only. The
+  # post-sweep permutation null audit FAILED at 42/54 audited cells,
+  # triggering the NULL_AUDIT_FAIL anti-overclaim guard; 0/18 canonical
+  # cells satisfied the 4-term acceptance conjunction
+  # R1 AND R2 AND R3 AND NULL_AUDIT.
+  #
+  # This entry is NOT an eclipse — the D-002C attempt-1 (SUPPORTED) and
+  # attempt-2 (FALSIFIED) entries above are unrelated to the D-002H
+  # ricci_flow substrate-scoped REFUSED verdict. D-002C attempt-2 already
+  # eclipses attempt-1; D-002H opens a separate scoped lineage and is
+  # recorded as such (`eclipses: null`).
+  # ---------------------------------------------------------------------
+
+  - claim_id: D002H_RICCI_FLOW_SCOPED_REFUSED
+    status: REFUSED_BY_NULL_AUDIT_FAIL
+    tier: REFUSED_NULL_AUDIT_FAIL_D002H
+    scope: ricci_flow substrate only (per D-002H prereg)
+    asserted_at: "2026-05-14T02:13:54Z"
+    canonical_run_merge_sha: 250d8069d16ecabdb49b5a20b7cf1d622eddc925
+    canonical_run_pr: 691
+    parent_lineage: D-002H
+    parent_lineage_prereg_sha: 44b18b5a40ce9d188a9c3bd49339621f81a65a15f97a683247902450dd54acec
+    parent_closure_artifact: D-002G_STRUCTURAL_CLOSURE_PR682
+    parent_closure_sha: 8cf5364a3f3b605d8b134bccbfe5170098e0e197
+    acceptance_conjunction: "R1 ∧ R2 ∧ R3 ∧ NULL_AUDIT (R2-B INAPPLICABLE per D002H_R2B_INAPPLICABILITY_NOTE.md merge ee12a9e6)"
+    canonical_grid:
+      substrates: [ricci_flow]
+      N: [50, 100, 200]
+      lambda_values: [0.0, 0.05, 0.10, 0.20, 0.40, 1.0]
+      n_seeds: 20
+      n_bootstrap: 16
+      total_cells: 18
+    null_mechanisms_used: [M1_INDEPENDENT_SEED, M3_TOPOLOGY_CONDITIONED]
+    n_cells_total: 18
+    n_cells_pass: 0
+    n_cells_fail: 15
+    n_cells_indeterminate: 3
+    post_sweep_null_audit:
+      aggregate_verdict: FAIL
+      n_audited: 54
+      n_pass: 12
+      n_fail: 42
+      n_shuffles: 100
+      rng_seed: 42
+    anti_overclaim_guards_triggered: [NULL_AUDIT_FAIL]
+    artifact_path: artifacts/d002h/canonical/d002h_canonical_run_verdict.json
+    eclipses: null  # NOT an eclipse — D-002H is a new SCOPED lineage opened after D-002G structural closure
+    notes: >-
+      Canonical D-002H sweep on ricci_flow substrate produced verdict
+      REFUSED via NULL_AUDIT_FAIL anti-overclaim guard (42/54 audited
+      cells FAIL the post-sweep permutation null audit). 0/18 cells
+      satisfied the 4-term acceptance conjunction R1 ∧ R2 ∧ R3 ∧
+      NULL_AUDIT. Verdict SCOPED to ricci_flow only per D-002H
+      prereg substrate_scope; does NOT generalise to block_structured
+      or temporal_coupling (excluded by D-002G structural closure
+      PR #682). Truthful negative result preserved as scoped scientific
+      artifact. Does NOT change D-002C attempt-1 SUPPORTED status or
+      attempt-2 FALSIFIED status (both entries byte-exact above).
+    seven_gate_authorisation:
+      gate_a_anchor: 1b59ce5326a8e8bd8aaaf9666a06075d34b4f6a5
+      gate_b_anchor: b97daae8b554ab9960510564e19263adcc1fe71b
+      gate_c_anchor: a9d852d34258861809325df81bd7cba6d0e557ec
+      gate_d_anchor: 077073ee801c434840d64f911e7b1f39ce2ac0fa
+      gate_e_anchor: e1d3ae304274e8b8f509edeb83b0a9adfeb43a77
+      gate_f_anchor: 0e598fff84308356fd93e953d4fdde0b7811ac53
+      gate_g_anchor: 4686455ed8de3902ea5ad4040bfc4ca8c530bc39
+      r2b_clarification_anchor: ee12a9e6a08e5916109c99eec84796d1e1375cd0

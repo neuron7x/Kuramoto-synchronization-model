@@ -1,4 +1,5 @@
-# SPDX-License-Identifier: LicenseRef-TradePulse-Proprietary
+# Copyright (c) 2023-2026 Yaroslav Vasylenko (neuron7xLab)
+# SPDX-License-Identifier: MIT
 """Unit tests for feature base classes and composition patterns.
 
 This module tests the core feature transformation API, including:
@@ -9,6 +10,7 @@ This module tests the core feature transformation API, including:
 Related tests:
 - test_indicator_base.py: Focuses on metrics integration
 """
+
 from __future__ import annotations
 
 from dataclasses import dataclass
@@ -38,9 +40,7 @@ class IncrementFeature(BaseFeature):
         self.increment = increment
 
     def transform(self, data, **kwargs):
-        return FeatureResult(
-            name=self.name, value=float(data) + self.increment, metadata={}
-        )
+        return FeatureResult(name=self.name, value=float(data) + self.increment, metadata={})
 
 
 def test_base_feature_callable_contract() -> None:
@@ -83,9 +83,7 @@ def test_functional_feature_wraps_callable() -> None:
     - Wrapped function is executed during transform
     - Metadata is preserved through wrapping
     """
-    func_feature = FunctionalFeature(
-        lambda x: np.sum(x), name="sum", metadata={"kind": "agg"}
-    )
+    func_feature = FunctionalFeature(lambda x: np.sum(x), name="sum", metadata={"kind": "agg"})
     result = func_feature.transform(np.array([1, 2, 3]))
     assert result.value == 6, "Sum should be computed correctly"
     assert result.metadata["kind"] == "agg", "Metadata should be preserved"

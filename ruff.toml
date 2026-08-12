@@ -1,0 +1,29 @@
+line-length = 100
+extend-exclude = ["docs/notebooks", "tests", "**/tests"]
+force-exclude = true
+
+[lint]
+select = ["E", "F", "W", "I"]
+ignore = ["E203", "E501"]
+
+[lint.per-file-ignores]
+"examples/*.py" = ["E402"]
+"benchmarks/*.py" = ["E402"]
+"docs/archive/*.py" = ["E402"]
+"scripts/eval/*.py" = ["E402"]
+"scripts/aar_pro_*.py" = ["E402"]
+"scripts/serotonin_certify.py" = ["E402"]
+# Gates with a _ensure_pkg file-location bootstrap that MUST precede first-party
+# imports (import-architecture ratchet forbids sys.path hacks; the bootstrap is
+# the ratchet-compliant alternative, so its imports are intentionally late).
+"scripts/check_dopamine_contract.py" = ["E402"]
+"scripts/check_invariant_count_sync.py" = ["E402"]
+"scripts/check_l2_collector_health.py" = ["E402"]
+"scripts/ci/check_physics_inference_readiness.py" = ["E402"]
+"scripts/performance/generate_replay_report.py" = ["E402"]
+"interfaces/dashboard_streamlit.py" = ["E402"]
+"tests/core/agent/test_pqf_pscs.py" = ["E402"]
+"tests/scripts/test_calibrate_controllers.py" = ["E402"]
+"tests/sdk/mlsdm/test_replay_harness.py" = ["E402"]
+"coherence_bridge/generated/*.py" = ["ALL"]
+"coherence_bridge/*.py" = ["N802", "N806", "N818", "TC001", "TC002", "TC003", "PLC0415"]

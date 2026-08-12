@@ -1,0 +1,63 @@
+# Diff-bound commit acceptor for the wheel import-debt ledger entry that the
+# Physics v2 inference-readiness gate requires.
+#
+# scripts/ci/check_physics_inference_readiness.py is packaged into the wheel and
+# imports the first-party (non-shipped) physics_contracts.manifold contracts so
+# it can EXERCISE them fail-closed — that is the gate's whole purpose. This is the
+# same packaged-module → unpackaged-first-party class already tracked for 70 other
+# modules in .github/bwheel_baseline.json (ADR-0024 re-home pending). One honest
+# ledger entry is registered; the companion law-witness script was kept clean by
+# reading physics_contracts/catalog.yaml directly instead of importing the package.
+#
+# This is a second, minimal acceptor only because the governance file-count cap
+# (16) is already met by physics-inference-readiness.yaml; it binds nothing but
+# the baseline ledger and itself.
+#
+# Locally verified:
+#   * python scripts/ci/check_wheel_contract.py reports 71 latent imports
+#     (1 newly ledgered, 0 dead entrypoints, 0 new non-geosync packages)
+#   * import_debt list only grows by the single readiness-gate entry
+
+id: physics-inference-readiness-wheel-ledger
+status: ACTIVE
+claim_type: governance
+promise: >-
+  After this PR lands, .github/bwheel_baseline.json records exactly one new
+  import-debt entry — scripts/ci/check_physics_inference_readiness.py importing
+  physics_contracts — registering the inference-readiness gate's deliberate
+  in-process exercise of the manifold contracts under the established ADR-0024
+  wheel import-debt ledger. No packaging change, no new non-geosync package, no
+  dead entrypoint, and no behavioural claim.
+diff_scope:
+  changed_files:
+    - path: ".claude/commit_acceptors/physics-inference-readiness-wheel-ledger.yaml"
+    - path: ".github/bwheel_baseline.json"
+  forbidden_paths:
+    - "trading/"
+    - "execution/"
+    - "forecast/"
+    - "policy/"
+required_python_symbols: []
+expected_signal: >-
+  python scripts/ci/check_wheel_contract.py exits 0 — the only new latent import
+  is the ledgered scripts/ci/check_physics_inference_readiness.py::physics_contracts
+  entry; no new non-geosync package and no dead entrypoint.
+measurement_command: "python scripts/ci/check_wheel_contract.py"
+signal_artifact: "tmp/wheel_contract.log"
+falsifier:
+  command: |
+    python -c "import json, sys
+    debt = set(json.load(open('.github/bwheel_baseline.json'))['import_debt'])
+    key = 'scripts/ci/check_physics_inference_readiness.py::physics_contracts'
+    sys.exit(0 if key not in debt else 1)"
+  description: >-
+    Exits 0 only if the readiness-gate import-debt key is ABSENT from the ledger
+    (the regressed state where the wheel-contract gate would fail on an
+    unledgered new latent import). On the correct tree the key is present, so the
+    command exits non-zero — proving the ledger entry is real.
+rollback_command: "git revert --no-edit HEAD"
+rollback_verification_command: "git diff --exit-code .github/bwheel_baseline.json"
+memory_update_type: none
+ledger_path: ".claude/commit_acceptors/physics-inference-readiness-wheel-ledger.yaml"
+report_path: "docs/reports/diff_bound_commit_acceptor_layer.md"
+evidence: []

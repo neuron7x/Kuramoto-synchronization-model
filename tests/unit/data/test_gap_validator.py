@@ -1,4 +1,5 @@
-# SPDX-License-Identifier: LicenseRef-TradePulse-Proprietary
+# Copyright (c) 2023-2026 Yaroslav Vasylenko (neuron7xLab)
+# SPDX-License-Identifier: MIT
 """Tests for core/data/gap_validator.py module.
 
 This module provides comprehensive tests for the GapValidator class
@@ -310,3 +311,30 @@ class TestGapValidatorEdgeCases:
         validator = GapValidator(frequency="1min")
         result = validator._filter_acceptable_gaps([])
         assert result == []
+
+
+def test_weekend_gap_skip_requires_both_endpoints_on_weekend() -> None:
+    """`if gap.start.weekday() >= 5 and gap.end.weekday() >= 5: continue` -- a gap is excused as
+    a weekend gap ONLY when it lies wholly within the weekend.
+
+    Three mutants live here. `GtE -> Lt` on either endpoint flips which side counts as weekend;
+    `And -> Or` excuses a gap that merely TOUCHES the weekend -- so a Sat->Mon gap spanning a
+    real trading day would be silently accepted. Both weekday and straddling gaps must remain
+    unacceptable; only the fully-weekend gap is filtered out.
+    """
+    import pandas as pd
+
+    from core.data.backfill import Gap
+    from core.data.gap_validator import GapValidator
+
+    validator = GapValidator(frequency="1D", allow_weekend_gaps=True)
+
+    weekend = Gap(pd.Timestamp("2026-07-25"), pd.Timestamp("2026-07-26"))  # Sat -> Sun
+    weekday = Gap(pd.Timestamp("2026-07-21"), pd.Timestamp("2026-07-22"))  # Tue -> Wed
+    straddle = Gap(pd.Timestamp("2026-07-25"), pd.Timestamp("2026-07-27"))  # Sat -> Mon
+
+    unacceptable = validator._filter_acceptable_gaps([weekend, weekday, straddle])  # noqa: SLF001
+
+    assert weekend not in unacceptable, "a wholly-weekend gap should be excused"
+    assert weekday in unacceptable, "a weekday gap must never be excused"
+    assert straddle in unacceptable, "a gap touching a trading day must not be excused as weekend"

@@ -1,0 +1,90 @@
+{
+  "$schema": "https://json-schema.org/draft/2020-12/schema",
+  "$id": "research/ctc_falsify/l2/schema/ctc_falsify_l2_result.schema.json",
+  "title": "CTC-FALSIFY-001-L2 result",
+  "type": "object",
+  "additionalProperties": false,
+  "required": [
+    "experiment_id",
+    "verdict",
+    "claim",
+    "boundary",
+    "estimand",
+    "primary_endpoint",
+    "joint_surrogate",
+    "self_validation",
+    "thresholds",
+    "real_dataset_bound",
+    "config_hash",
+    "repro_hash"
+  ],
+  "properties": {
+    "experiment_id": { "const": "CTC-FALSIFY-001-L2" },
+    "verdict": {
+      "type": "string",
+      "enum": [
+        "INADMISSIBLE_NO_PAIRED_DATA",
+        "INADMISSIBLE_DATASET_UNSUITABLE",
+        "INADMISSIBLE_SURROGATE_MISMATCH",
+        "INADMISSIBLE_NPLUS_INSITU_BLIND",
+        "INADMISSIBLE_UNDERPOWERED",
+        "KILLED_SCOPED",
+        "SURVIVED_INITIAL"
+      ]
+    },
+    "claim": { "type": "string", "minLength": 1 },
+    "boundary": { "type": "string", "minLength": 1 },
+    "estimand": { "type": "string", "minLength": 1 },
+    "primary_endpoint": { "type": "string", "minLength": 1 },
+    "joint_surrogate": { "type": "string", "minLength": 1 },
+    "self_validation": {
+      "type": "object",
+      "additionalProperties": false,
+      "required": [
+        "surrogate_all_matched",
+        "mean_nplus_residual_z",
+        "max_confound_residual_z",
+        "nplus_recovered",
+        "confounds_not_flagged",
+        "n_validation_seeds",
+        "worst_rate_rel_err",
+        "worst_power_rel_err"
+      ],
+      "properties": {
+        "surrogate_all_matched": { "type": "boolean" },
+        "mean_nplus_residual_z": { "type": "number" },
+        "max_confound_residual_z": { "type": "number" },
+        "nplus_recovered": { "type": "boolean" },
+        "confounds_not_flagged": { "type": "boolean" },
+        "n_validation_seeds": { "type": "integer", "minimum": 0 },
+        "worst_rate_rel_err": { "type": "number" },
+        "worst_power_rel_err": { "type": "number" }
+      }
+    },
+    "thresholds": {
+      "type": "object",
+      "additionalProperties": false,
+      "required": [
+        "z_gate",
+        "nplus_residual_min_z",
+        "confound_residual_max_z",
+        "symmetric_alpha",
+        "symmetric_delta",
+        "mde_residual_z",
+        "min_sessions"
+      ],
+      "properties": {
+        "z_gate": { "type": "number" },
+        "nplus_residual_min_z": { "type": "number" },
+        "confound_residual_max_z": { "type": "number" },
+        "symmetric_alpha": { "type": "number" },
+        "symmetric_delta": { "type": "number" },
+        "mde_residual_z": { "type": "number" },
+        "min_sessions": { "type": "integer" }
+      }
+    },
+    "real_dataset_bound": { "type": "boolean" },
+    "config_hash": { "type": "string", "pattern": "^[a-f0-9]{64}$" },
+    "repro_hash": { "type": "string", "pattern": "^[a-f0-9]{64}$" }
+  }
+}

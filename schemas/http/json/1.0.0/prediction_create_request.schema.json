@@ -1,6 +1,6 @@
 {
   "$schema": "https://json-schema.org/draft/2020-12/schema",
-  "$id": "tradepulse.http.prediction_create_request.v1",
+  "$id": "geosync.http.prediction_create_request.v1",
   "title": "PredictionCreateRequest",
   "description": "Request payload for submitting features to the prediction service.",
   "type": "object",

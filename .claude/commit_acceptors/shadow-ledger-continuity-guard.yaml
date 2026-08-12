@@ -1,0 +1,68 @@
+# Diff-bound commit acceptor: fail-closed G1 ledger-continuity guard for the
+# cross-asset Kuramoto shadow evaluator.
+#
+# Gap (verified on the live ledger): the day-90 deployment verdict in
+# scripts/evaluate_cross_asset_kuramoto_shadow.py trusts the live bar count
+# without checking that the daily evaluator actually ran on every bar. The live
+# scoreboard shows a 22-bar stall (bar 15 on 2026-05-06 -> bar 37 on
+# 2026-06-13, the daily writer stuck on idempotent no-op), a counter reset, and
+# conflicting duplicate appends — yet status only softened to UNDERWATCH. That
+# violates ACCEPTANCE_GATES.md G1 ("daily run success rate = 100%"): "42 bars
+# completed" overstates the number of actually-evaluated bars.
+#
+# Fix (read-only; does NOT alter evidence): add audit_ledger_continuity(board)
+# — monotone bar count, no jump > MAX_BAR_STEP, no conflicting (date,bar) rows —
+# and fail closed in _decide_status_and_gate (discontinuous => OPERATIONALLY_UNSAFE
+# / ESCALATE_REVIEW, blocking the 90-bar deployment candidate). Emits a
+# deterministic LEDGER_CONTINUITY_AUDIT.json and adds ledger_continuous /
+# ledger_continuity_violations to LIVE_STATE. The scoreboard itself is never
+# rewritten or de-duplicated — the gap is surfaced, not hidden.
+
+id: shadow-ledger-continuity-guard
+status: ACTIVE
+claim_type: fail_closed
+promise: >-
+  After this PR, the shadow evaluator audits the live scoreboard for
+  continuity (G1) before deciding the gate: a non-monotone bar count, a
+  bar-count jump greater than MAX_BAR_STEP (un-evaluated bars), or conflicting
+  duplicate rows for one (eval_date, bar) force OPERATIONALLY_UNSAFE /
+  ESCALATE_REVIEW, so the 90-bar DEPLOYMENT_CANDIDATE verdict cannot be reached
+  on a discontinuous ledger. The audit is read-only — it never edits or
+  de-duplicates the scoreboard evidence.
+diff_scope:
+  changed_files:
+    - path: ".claude/commit_acceptors/shadow-ledger-continuity-guard.yaml"
+    - path: "scripts/evaluate_cross_asset_kuramoto_shadow.py"
+    - path: "tests/ops/test_shadow_ledger_continuity.py"
+    - path: "results/cross_asset_kuramoto/offline_robustness/SOURCE_HASHES.json"
+  forbidden_paths:
+    - "results/cross_asset_kuramoto/shadow_validation/live_scoreboard.csv"
+    - "core/"
+required_python_symbols:
+  - "tests/ops/test_shadow_ledger_continuity.py::test_multi_week_stall_is_flagged"
+  - "tests/ops/test_shadow_ledger_continuity.py::test_gate_blocks_deployment_candidate_on_discontinuity"
+expected_signal: >-
+  pytest tests/ops/test_shadow_ledger_continuity.py passes (clean +1/day ledger
+  continuous; the live 15->37 stall, counter reset, and conflicting duplicates
+  flagged; a clean 90-bar run reaches DEPLOYMENT_CANDIDATE while a discontinuous
+  one is forced to ESCALATE_REVIEW). Existing evaluator tests unaffected; ruff +
+  mypy --strict clean on the evaluator.
+measurement_command: >-
+  bash -c 'PYTHONPATH=. python -m pytest tests/ops/test_shadow_ledger_continuity.py -q'
+signal_artifact: "results/cross_asset_kuramoto/shadow_validation/LEDGER_CONTINUITY_AUDIT.json"
+falsifier:
+  command: >-
+    bash -c 'PYTHONPATH=. python -m pytest
+    tests/ops/test_shadow_ledger_continuity.py::test_multi_week_stall_is_flagged
+    tests/ops/test_shadow_ledger_continuity.py::test_gate_blocks_deployment_candidate_on_discontinuity -q'
+  description: >-
+    The stall test must flag a bar-count jump > MAX_BAR_STEP, and the gate test
+    must block DEPLOYMENT_CANDIDATE under ledger_discontinuous=True while a
+    continuous ledger reaches it. If a discontinuous ledger still deploys, the
+    guard is vacuous.
+rollback_command: "git revert --no-edit HEAD"
+rollback_verification_command: "python tools/commit_acceptor/validate_commit_acceptor.py"
+memory_update_type: append
+ledger_path: ".claude/commit_acceptors/shadow-ledger-continuity-guard.yaml"
+report_path: "results/cross_asset_kuramoto/shadow_validation/LEDGER_CONTINUITY_AUDIT.json"
+evidence: []

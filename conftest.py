@@ -1,4 +1,5 @@
-# SPDX-License-Identifier: LicenseRef-TradePulse-Proprietary
+# Copyright (c) 2023-2026 Yaroslav Vasylenko (neuron7xLab)
+# SPDX-License-Identifier: MIT
 """Pytest fixtures and environment setup.
 
 This module performs two responsibilities:
@@ -17,6 +18,7 @@ from __future__ import annotations
 
 import asyncio
 import importlib.util
+import inspect
 import json
 import os
 import pathlib
@@ -28,6 +30,14 @@ from typing import Iterable
 
 import pytest
 
+# GeoSync injects the benign development TOTP seed only for an EXPLICIT dev-class
+# ``GEOSYNC_PROFILE`` (see ``geosync/__init__.py``); an unset/production profile
+# stays fail-closed with no insecure default. The test session is a dev-class
+# environment — declare it here, before any test module imports ``geosync`` at
+# collection time, so the well-known test-vector secret is available to tests
+# without a real secret while production deployments remain fail-closed.
+os.environ.setdefault("GEOSYNC_PROFILE", "test")
+
 try:
     from core.utils.determinism import THREAD_BOUND_ENV_VARS, apply_thread_determinism
 except ImportError:  # pragma: no cover - fallback when optional deps missing
@@ -35,13 +45,9 @@ except ImportError:  # pragma: no cover - fallback when optional deps missing
     if not _determinism_path.is_file():
         msg = f"Determinism helpers missing at {_determinism_path.as_posix()}"
         raise ImportError(msg)
-    spec = importlib.util.spec_from_file_location(
-        "_tradepulse_determinism", _determinism_path
-    )
+    spec = importlib.util.spec_from_file_location("_geosync_determinism", _determinism_path)
     if spec is None or spec.loader is None:
-        msg = (
-            f"Unable to load determinism helpers from {_determinism_path.as_posix()}"
-        )
+        msg = f"Unable to load determinism helpers from {_determinism_path.as_posix()}"
         raise ImportError(msg)
     module = importlib.util.module_from_spec(spec)
     spec.loader.exec_module(module)
@@ -133,7 +139,15 @@ apply_thread_determinism(os.environ)
 # ---------------------------------------------------------------------------
 _TORCH_AVAILABLE = False
 try:
-    import torch as _torch_probe  # noqa: F401
+    # torch can emit an import-time DeprecationWarning (e.g. under Python 3.11);
+    # with pytest's ``-W error::DeprecationWarning`` that warning is raised as an
+    # exception that is NOT an ImportError/OSError/ValueError, so it would escape
+    # this probe and abort conftest collection (the whole fast lane reports
+    # "0 fast tests collected"). Suppress warnings for the probe import only —
+    # test-time warning strictness is unchanged.
+    with warnings.catch_warnings():
+        warnings.simplefilter("ignore")
+        import torch as _torch_probe
 
     _TORCH_AVAILABLE = True
     del _torch_probe
@@ -149,9 +163,7 @@ if SRC.exists() and str(SRC) not in sys.path:
     sys.path.append(str(SRC))
 
 
-if (
-    "exchange_calendars" not in sys.modules
-):  # pragma: no cover - optional dependency shim
+if "exchange_calendars" not in sys.modules:  # pragma: no cover - optional dependency shim
     stub = types.ModuleType("exchange_calendars")
 
     class _BaseCalendar:
@@ -176,12 +188,12 @@ if (
                 ts = ts.replace(tzinfo=timezone.utc)
             return ts.astimezone(ZoneInfo(self.tz.key))
 
-        def valid_days(self, start, end):  # noqa: D401 - mimic API
+        def valid_days(self, start, end):
             """Return continuous range between ``start`` and ``end``."""
 
             return []
 
-        def is_open_on_minute(self, ts):  # noqa: D401 - mirror API surface
+        def is_open_on_minute(self, ts):
             local = self._normalize(ts)
             if local.weekday() in self._weekend_closure:
                 return False
@@ -192,7 +204,7 @@ if (
                 return self._open_time <= current < self._close_time
             return current >= self._open_time or current < self._close_time
 
-        def minutes_in_range(self, start, end):  # noqa: D401 - mirror API surface
+        def minutes_in_range(self, start, end):
             start_local = self._normalize(start)
             end_local = self._normalize(end)
             if end_local < start_local:
@@ -217,15 +229,13 @@ if (
         def __init__(self) -> None:
             super().__init__("UTC", time(0, 0), time(23, 59, 59), tuple())
 
-        def is_open_on_minute(self, ts):  # noqa: D401 - mirror API surface
+        def is_open_on_minute(self, ts):
             """Always-open venues report every minute as tradable."""
 
             return True
 
     class _AlwaysOpenNamespace:
-        AlwaysOpenCalendar = (
-            _AlwaysOpenCalendar  # noqa: N803 - match third-party naming
-        )
+        AlwaysOpenCalendar = _AlwaysOpenCalendar
 
     class _ErrorsNamespace:
         class InvalidCalendarName(Exception):
@@ -258,7 +268,7 @@ if (
         ),
     }
 
-    def _get_calendar(name: str):  # noqa: D401 - mimic API signature
+    def _get_calendar(name: str):
         key = name.upper()
         return _CALENDARS.get(key, _AlwaysOpenCalendar())
 
@@ -284,7 +294,7 @@ def _register_noop_cov_options(parser: "pytest.Parser") -> None:
             "--cov",
             {
                 "action": "append",
-                "dest": "tradepulse_cov",
+                "dest": "geosync_cov",
                 "metavar": "PATH",
                 "default": [],
             },
@@ -293,7 +303,7 @@ def _register_noop_cov_options(parser: "pytest.Parser") -> None:
             "--cov-report",
             {
                 "action": "append",
-                "dest": "tradepulse_cov_report",
+                "dest": "geosync_cov_report",
                 "metavar": "TYPE",
                 "default": [],
             },
@@ -321,14 +331,12 @@ def pytest_addoption(parser):  # type: ignore[override]
 
 
 def pytest_configure(config):  # type: ignore[override]
-    if not hasattr(config, "_tradepulse_flaky_tracker"):
-        config._tradepulse_flaky_tracker = _FlakyTracker(
-            config.getoption("flaky_report")
-        )
+    if not hasattr(config, "_geosync_flaky_tracker"):
+        config._geosync_flaky_tracker = _FlakyTracker(config.getoption("flaky_report"))
     if config.pluginmanager.hasplugin("pytest_cov"):
         return
-    cov_targets = config.getoption("tradepulse_cov", default=None)
-    cov_reports = config.getoption("tradepulse_cov_report", default=None)
+    cov_targets = config.getoption("geosync_cov", default=None)
+    cov_reports = config.getoption("geosync_cov_report", default=None)
     if cov_targets or cov_reports:
         from _pytest.warning_types import PytestWarning
 
@@ -347,15 +355,13 @@ def pytest_pyfunc_call(pyfuncitem):  # type: ignore[override]
         return None
 
     testfunction = pyfuncitem.obj
-    if not asyncio.iscoroutinefunction(testfunction):
+    if not inspect.iscoroutinefunction(testfunction):
         return None
 
     loop = asyncio.new_event_loop()
     try:
         asyncio.set_event_loop(loop)
-        kwargs = {
-            arg: pyfuncitem.funcargs[arg] for arg in pyfuncitem._fixtureinfo.argnames
-        }
+        kwargs = {arg: pyfuncitem.funcargs[arg] for arg in pyfuncitem._fixtureinfo.argnames}
         loop.run_until_complete(testfunction(**kwargs))
     finally:
         try:
@@ -366,10 +372,8 @@ def pytest_pyfunc_call(pyfuncitem):  # type: ignore[override]
     return True
 
 
-def pytest_collection_modifyitems(
-    config: pytest.Config, items: list[pytest.Item]
-) -> None:
-    tracker = getattr(config, "_tradepulse_flaky_tracker", None)
+def pytest_collection_modifyitems(config: pytest.Config, items: list[pytest.Item]) -> None:
+    tracker = getattr(config, "_geosync_flaky_tracker", None)
     if tracker is None:
         return
     for item in items:
@@ -377,18 +381,16 @@ def pytest_collection_modifyitems(
             tracker.register(item)
 
 
-def pytest_runtest_makereport(
-    item: pytest.Item, call: pytest.CallInfo[object]
-) -> None:  # type: ignore[override]
+def pytest_runtest_makereport(item: pytest.Item, call: pytest.CallInfo[object]) -> None:  # type: ignore[override]
     if call.when != "call":
         return
-    tracker = getattr(item.config, "_tradepulse_flaky_tracker", None)
+    tracker = getattr(item.config, "_geosync_flaky_tracker", None)
     if tracker is None or item.get_closest_marker("flaky") is None:
         return
     tracker.record_call(item, call)
 
 
 def pytest_sessionfinish(session: pytest.Session, exitstatus: int) -> None:  # type: ignore[override]
-    tracker = getattr(session.config, "_tradepulse_flaky_tracker", None)
+    tracker = getattr(session.config, "_geosync_flaky_tracker", None)
     if tracker is not None:
         tracker.write_report()

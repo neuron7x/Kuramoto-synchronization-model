@@ -1,6 +1,6 @@
 # Offline↔Online Feature Store Parity and Model Registry Blueprint
 
-This blueprint defines the guardrails required to keep TradePulse's offline
+This blueprint defines the guardrails required to keep GeoSync's offline
 research environment aligned with the online scoring path and to formalise how
 models are registered, promoted, and rolled back. The controls apply to both
 feature pipelines and the lifecycle of ML models deployed into production.
@@ -11,7 +11,7 @@ feature pipelines and the lifecycle of ML models deployed into production.
 
 | Area | Control | Implementation Notes | Validation Signals |
 | --- | --- | --- | --- |
-| **Feature Definitions** | Version feature transformations with immutable hashes derived from source code, dependency versions, and configuration payloads. | Embed the hash in `FeatureManifest` records and inject into scoring payload headers. Reject online payloads whose hash is not present in the active manifest catalogue. | Metrics: `tradepulse_feature_manifest_mismatch_total` (counter) and `tradepulse_feature_manifest_active` (gauge with hash label). |
+| **Feature Definitions** | Version feature transformations with immutable hashes derived from source code, dependency versions, and configuration payloads. | Embed the hash in `FeatureManifest` records and inject into scoring payload headers. Reject online payloads whose hash is not present in the active manifest catalogue. | Metrics: `geosync_feature_manifest_mismatch_total` (counter) and `geosync_feature_manifest_active` (gauge with hash label). |
 | **Data Windows** | Align windowing semantics (look-back horizons, sampling cadence, timezone boundaries) between offline generation jobs and online streaming consumers. | Source canonical window specs from `configs/features/windows.yaml`. Compile specs into protobuf payloads consumed by both batch and streaming runners. | Automated diff job comparing offline parquet partitions vs. online cache snapshots with Wasserstein distance threshold ≤ 0.02. |
 | **Feature Value Drift** | Continuously compare live feature distributions to most recent backtest snapshots. | Persist offline feature histograms in MLflow artifacts; stream online histograms via Prometheus histograms. Run scheduled Kolmogorov–Smirnov test; alert when p-value < 0.01 for two consecutive windows. | Alert: `FeatureDriftAlert` routed to `#quant-ops`. |
 | **Dependency Pinning** | Ensure identical dependency sets (Python packages, model binaries) between offline training containers and live inference pods. | Publish lockfiles to OCI registry; deploy online services from the same digest used to run the offline pipeline. | CI job `make parity-verify` reconstructs containers and validates SHA256 digests. |
@@ -19,7 +19,7 @@ feature pipelines and the lifecycle of ML models deployed into production.
 
 ### 1.1 Synchronisation Workflows
 
-1. **Manifest Promotion** – Offline pipeline publishes manifests to `s3://tradepulse-feature-manifests/<hash>.json`. Deployment workflow promotes manifest by updating `configs/features/active_manifest.yaml` with hash + timestamp.
+1. **Manifest Promotion** – Offline pipeline publishes manifests to `s3://geosync-feature-manifests/<hash>.json`. Deployment workflow promotes manifest by updating `configs/features/active_manifest.yaml` with hash + timestamp.
 2. **Online Warm-Up** – Before switching manifests, run warm-up job that replays last N minutes of market data through the new manifest to confirm parity metrics remain within tolerance.
 3. **Gatekeeper Check** – Canary scoring pods subscribe to manifest change events. If feature parity checks fail, canary stays isolated and production keeps the previous manifest.
 
@@ -42,7 +42,7 @@ feature pipelines and the lifecycle of ML models deployed into production.
 
 Operational checklist:
 
-- Track metrics `tradepulse_signal_shadow_mape`, `tradepulse_signal_follow_latency_seconds`, and `tradepulse_signal_follow_replay_lag_seconds` in Grafana dashboard `Signal Following`.
+- Track metrics `geosync_signal_shadow_mape`, `geosync_signal_follow_latency_seconds`, and `geosync_signal_follow_replay_lag_seconds` in Grafana dashboard `Signal Following`.
 - Store test results under `reports/online_following/<date>.md` with summary tables and remediation actions.
 
 ---
@@ -61,7 +61,7 @@ Operational checklist:
 ### 3.1 Promotion Workflow
 
 1. **Staging Validation** – Deploy candidate model to staging with latest manifest; run regression + drift simulation suites.
-2. **Canary Release** – Spin up canary deployment serving a fraction (5–10%) of live traffic. Publish metrics to separate Prometheus job (`tradepulse_canary_*`).
+2. **Canary Release** – Spin up canary deployment serving a fraction (5–10%) of live traffic. Publish metrics to separate Prometheus job (`geosync_canary_*`).
 3. **Automated Guardrails** – If canary metrics breach thresholds (latency, drift, PnL deltas), trigger automatic rollback via registry event `rollback.requested`.
 4. **Promotion Decision** – Upon success, update registry stage to `Production` and tag deployment record with `approved_by` users.
 
@@ -88,6 +88,6 @@ Operational checklist:
 - Update `reports/models/registry_summary.md` with latest approved versions, outstanding actions, and audit findings.
 - Maintain confluence-style quick links in `docs/index.md` once available to surface manifest hashes, latest canary scorecards, and rollback logs.
 
-Following these practices ensures TradePulse maintains strong control over
+Following these practices ensures GeoSync maintains strong control over
 offline/online parity while delivering predictable and auditable model
 deployments.

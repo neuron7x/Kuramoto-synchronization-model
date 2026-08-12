@@ -1,7 +1,7 @@
-# Стратегія RLHF/RLAIF для TradePulse
+# Стратегія RLHF/RLAIF для GeoSync
 
 ## 1. Огляд програми
-- **Мета**: розвинути послідовний процес навчання моделей TradePulse з використанням RLHF (Reinforcement Learning from Human Feedback) та RLAIF (Reinforcement Learning from AI Feedback).
+- **Мета**: розвинути послідовний процес навчання моделей GeoSync з використанням RLHF (Reinforcement Learning from Human Feedback) та RLAIF (Reinforcement Learning from AI Feedback).
 - **Принципи**:
   1. Безпека та відповідність регуляторним вимогам фінансової галузі.
   2. Відтворюваність результатів і прозорість процесів прийняття рішень.

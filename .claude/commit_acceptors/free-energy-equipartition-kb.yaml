@@ -1,0 +1,103 @@
+# Diff-bound acceptor: first-principles dimensional fix of the free-energy
+# trading gate's equipartition temperature and the F = U − T·S composite.
+#
+# The prior code computed T = 2·KE/v.size, dropping the Boltzmann factor k_B
+# and dividing by the bare order-book LEVEL count (a mislabel for the
+# degree-of-freedom count). Equipartition is ⟨KE⟩ = (n_dof/2)·k_B·T, so the
+# correct inversion is T = 2·KE/(n_dof·k_B): the old result had units of
+# ENERGY, not temperature. The volatility fallback was dimensionless while
+# the LOB branch was energy-like, so the two T branches disagreed and
+# F = U − T·S was dimensionally incoherent. The 1e-6 floor was an undeclared
+# magic number, and is_calibrated (5–20%/N≥20) was presented as physics.
+#
+# This fix introduces a named reduced Boltzmann scale K_B_MARKET = 1.0,
+# documents the reduced-unit (nondimensional) convention that makes all three
+# F terms commensurable, renames the divisor n_dof, replaces the magic floor
+# with a named INV-FE2 lower bound T_LOB_FLOOR = 0.0, and demotes
+# is_calibrated to an explicitly-documented operational heuristic. Because
+# K_B_MARKET = 1.0 the arithmetic is unchanged: verdict allowed = (ΔF ≤ 0) is
+# preserved bit-for-bit (4000-input sweep, 0 flips, max|ΔF_old−ΔF_new| = 0).
+# No invariant added or changed — this is a fix within existing INV-FE1/FE2.
+
+id: free-energy-equipartition-kb
+status: ACTIVE
+claim_type: correctness
+promise: >-
+  FreeEnergyTradingGate's order-book temperature is now dimensionally
+  correct equipartition: a named module constant K_B_MARKET = 1.0 (reduced
+  Boltzmann scale) is folded into T_LOB = 2·KE/(n_dof·k_B), the divisor is
+  renamed n_dof (degree-of-freedom count, one quadratic DOF per level) in
+  code and docstring, and the module docstring documents the reduced-unit
+  nondimensional convention under which U, T·S and F share one unit and the
+  two compute_T_LOB branches are mutually consistent. The magic 1e-6 floor
+  is replaced by a named, INV-FE2-annotated lower bound T_LOB_FLOOR = 0.0
+  (bounds-noted). GateStatistics.is_calibrated is demoted to an explicitly
+  documented operational heuristic (not physics). No invariant is added or
+  changed (fix within INV-FE1/FE2); verdict allowed=(ΔF≤0) is preserved
+  bit-for-bit since k_B=1 rescales nothing. Two tests added: an equipartition
+  T-recovery witness on a Maxwell-Boltzmann velocity sample and a
+  reduced-unit F-linearity (dimensional consistency) witness; all prior
+  assertions stay green. mypy --strict / ruff / black clean on the module.
+diff_scope:
+  changed_files:
+    - path: ".claude/commit_acceptors/free-energy-equipartition-kb.yaml"
+    - path: "core/physics/free_energy_trading_gate.py"
+    - path: "tests/unit/physics/test_T6_free_energy_gate.py"
+  forbidden_paths:
+    - "trading/"
+    - "execution/"
+    - "forecast/"
+    - "policy/"
+required_python_symbols:
+  - "FreeEnergyTradingGate"
+  - "K_B_MARKET"
+  - "T_LOB_FLOOR"
+expected_signal: >-
+  All tests in tests/unit/physics/test_T6_free_energy_gate.py pass (37 across
+  the four-file free-energy battery), including the new
+  TestEquipartitionTemperature and TestFreeEnergyDimensionalConsistency
+  classes; the STRICT INV-FE1/FE2 suites (test_T13_free_energy_components.py,
+  test_T13_free_energy_monotonicity.py) and the physics-contract witness
+  (tests/physics_contracts/test_thermodynamics_witnesses.py) stay green;
+  mypy --strict, ruff, black, and validate_tests.py --audit-code (0 clamp/
+  bounds issues) are clean on the changed module; the kernel self-check
+  PASSES. Verdict preservation: 4000-input sweep (order-book equipartition,
+  volatility-fallback and default branches) vs the pre-change module at HEAD
+  reports 0 verdict flips, max|ΔF_old−ΔF_new| = 0.0, max|T_old−T_new| = 0.0.
+  Equipartition recovery: T_recovered = 3.70255 vs T_true = 3.7 (rel_err
+  ≈ 6.9e-4) on a 200_000-sample unit-mass Maxwell-Boltzmann draw at seed
+  424242.
+measurement_command: >-
+  PYTHONPATH=. python -m pytest tests/unit/physics/test_T6_free_energy_gate.py
+  -k "Equipartition or DimensionalConsistency" -v
+signal_artifact: "tmp/free_energy_equipartition_pytest.log"
+falsifier:
+  command: >-
+    python -c "import numpy as np, sys;
+    from core.physics.free_energy_trading_gate import FreeEnergyTradingGate, K_B_MARKET;
+    rng=np.random.default_rng(424242); n=200000; T_true=3.7;
+    v=rng.normal(0.0, np.sqrt(K_B_MARKET*T_true), n);
+    T=FreeEnergyTradingGate().compute_T_LOB(v, np.ones(n))/K_B_MARKET;
+    err=abs(T-T_true)/T_true; print('T_recovered', T, 'rel_err', err);
+    sys.exit(1 if err > 0.03 else 0)"
+  description: >-
+    Inverse probe for the equipartition factor: draws a large unit-mass
+    Maxwell-Boltzmann velocity sample at known reduced temperature T_true=3.7
+    (Var(v)=k_B·T_true), recomputes T = 2·KE/(n_dof·k_B) via compute_T_LOB,
+    and exits non-zero iff |T_recovered − T_true|/T_true exceeds the stated
+    3% sampling tolerance. Fires iff the equipartition factor or the k_B
+    nondimensionalization is wrong (e.g. the old 2·KE/v.size with the dropped
+    k_B and mislabeled divisor would still pass here only because k_B=1, but
+    any factor error such as a missing 2 or an n_dof→1 collapse fails it),
+    distinguishing a correct equipartition inversion from a passing witness.
+rollback_command: >-
+  git checkout HEAD~1 --
+  core/physics/free_energy_trading_gate.py
+  tests/unit/physics/test_T6_free_energy_gate.py
+  .claude/commit_acceptors/free-energy-equipartition-kb.yaml
+rollback_verification_command: >-
+  git diff --exit-code core/physics/free_energy_trading_gate.py
+memory_update_type: none
+ledger_path: ".claude/commit_acceptors/free-energy-equipartition-kb.yaml"
+report_path: "docs/reports/diff_bound_commit_acceptor_layer.md"
+evidence: []

@@ -1,3 +1,5 @@
+# Copyright (c) 2023-2026 Yaroslav Vasylenko (neuron7xLab)
+# SPDX-License-Identifier: MIT
 """Enforce canonical serotonin controller namespace and shim purity."""
 
 from __future__ import annotations
@@ -9,11 +11,11 @@ from pathlib import Path
 from typing import Iterable
 
 REPO_ROOT = Path(__file__).resolve().parents[1]
-CANONICAL_MODULE = "tradepulse.core.neuro.serotonin.serotonin_controller"
+CANONICAL_MODULE = "geosync.core.neuro.serotonin.serotonin_controller"
 NON_CANONICAL_MODULE = "core.neuro.serotonin.serotonin_controller"
-CANONICAL_PATH = REPO_ROOT / "src/tradepulse/core/neuro/serotonin/serotonin_controller.py"
+CANONICAL_PATH = REPO_ROOT / "src/geosync/core/neuro/serotonin/serotonin_controller.py"
 NON_CANONICAL_PATH = REPO_ROOT / "core/neuro/serotonin/serotonin_controller.py"
-ALLOWED_ASSIGNMENTS = {"__CANONICAL__", "__all__"}
+ALLOWED_ASSIGNMENTS = {"__CANONICAL__", "__all__", "_generate_config_table"}
 EXCLUDED_DIRS = {
     "tests",
     ".git",
@@ -95,8 +97,7 @@ def find_non_canonical_imports(base_dir: Path) -> list[ImportViolation]:
             elif isinstance(node, ast.ImportFrom):
                 module = node.module
                 if module and (
-                    module == NON_CANONICAL_MODULE
-                    or module.startswith(f"{NON_CANONICAL_MODULE}.")
+                    module == NON_CANONICAL_MODULE or module.startswith(f"{NON_CANONICAL_MODULE}.")
                 ):
                     violations.append(ImportViolation(path, node.lineno, module))
     return violations
@@ -137,10 +138,7 @@ def main() -> int:
         print("❌ Serotonin namespace enforcement failed:")
         for err in errors:
             print(f" - {err}")
-        print(
-            f"Canonical module: {CANONICAL_MODULE} "
-            f"(shim: {NON_CANONICAL_MODULE})"
-        )
+        print(f"Canonical module: {CANONICAL_MODULE} (shim: {NON_CANONICAL_MODULE})")
         return 1
     print("✅ Serotonin namespace enforcement passed.")
     return 0

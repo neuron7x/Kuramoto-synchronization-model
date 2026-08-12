@@ -1,5 +1,5 @@
 ---
-owner: dx@tradepulse
+owner: dx@geosync
 review_cadence: quarterly
 last_reviewed: 2025-02-14
 links:
@@ -26,7 +26,7 @@ Describe the integration goal and target SDK version.
 ## Installation
 
 ```bash
-pip install tradepulse-sdk
+pip install geosync-sdk
 ```
 
 ## Configuration

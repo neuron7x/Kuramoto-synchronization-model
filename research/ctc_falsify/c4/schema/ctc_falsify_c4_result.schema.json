@@ -1,0 +1,73 @@
+{
+  "$schema": "https://json-schema.org/draft/2020-12/schema",
+  "$id": "research/ctc_falsify/c4/schema/ctc_falsify_c4_result.schema.json",
+  "title": "CTC-FALSIFY-001-C4 result",
+  "type": "object",
+  "additionalProperties": false,
+  "required": [
+    "experiment_id",
+    "verdict",
+    "claim",
+    "boundary",
+    "audited_estimator",
+    "audit",
+    "thresholds",
+    "config_hash",
+    "repro_hash"
+  ],
+  "properties": {
+    "experiment_id": { "const": "CTC-FALSIFY-001-C4" },
+    "verdict": {
+      "type": "string",
+      "enum": [
+        "C4_INADMISSIBLE_ESTIMATOR_CANT_SEPARATE",
+        "C4_INADMISSIBLE_SIGNFLIP_BROKEN",
+        "C4_INADMISSIBLE_CONFOUND_FALSE_POSITIVE",
+        "C4_BOUNDARY_HARDENED"
+      ]
+    },
+    "claim": { "type": "string", "minLength": 1 },
+    "boundary": { "type": "string", "minLength": 1 },
+    "audited_estimator": { "type": "string", "minLength": 1 },
+    "audit": {
+      "type": "object",
+      "additionalProperties": false,
+      "required": [
+        "cohens_d",
+        "decision_boundary",
+        "confound_false_positive_rate",
+        "signflip_pass_fraction",
+        "sweep_false_positive_count",
+        "sweep_total",
+        "g1_separable",
+        "g2_confounds_rejected",
+        "g3_signflip_ok",
+        "g4_sweep_clean"
+      ],
+      "properties": {
+        "cohens_d": { "type": "number" },
+        "decision_boundary": { "type": "number" },
+        "confound_false_positive_rate": { "type": "number" },
+        "signflip_pass_fraction": { "type": "number" },
+        "sweep_false_positive_count": { "type": "integer", "minimum": 0 },
+        "sweep_total": { "type": "integer", "minimum": 0 },
+        "g1_separable": { "type": "boolean" },
+        "g2_confounds_rejected": { "type": "boolean" },
+        "g3_signflip_ok": { "type": "boolean" },
+        "g4_sweep_clean": { "type": "boolean" }
+      }
+    },
+    "thresholds": {
+      "type": "object",
+      "additionalProperties": false,
+      "required": ["d_min", "fp_max", "sign_frac"],
+      "properties": {
+        "d_min": { "type": "number" },
+        "fp_max": { "type": "number" },
+        "sign_frac": { "type": "number" }
+      }
+    },
+    "config_hash": { "type": "string", "pattern": "^[a-f0-9]{64}$" },
+    "repro_hash": { "type": "string", "pattern": "^[a-f0-9]{64}$" }
+  }
+}

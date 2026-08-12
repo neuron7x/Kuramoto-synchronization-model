@@ -1,0 +1,61 @@
+# Diff-bound acceptor for the 2026-05-03 repo consistency audit pass.
+#
+# Closes two P0 invariants (INV-DRO2 coverage, INV-DRO5 enforcement
+# bug + coverage), and ships the audit report as a frozen point-in-
+# time benchmark.
+
+id: repo-audit-close-p0-gaps
+status: ACTIVE
+claim_type: correctness
+promise: >-
+  derive_gamma enforces INV-DRO5 fail-closed semantics — NaN, ±Inf,
+  constant, non-1D, and below-64-sample inputs raise ValueError, no
+  silent numeric repair. INV-DRO2 risk_scalar bound (rs ∈ [0, 1])
+  and Lipschitz-1 property pinned by Hypothesis.
+diff_scope:
+  changed_files:
+    - path: ".claude/commit_acceptors/repo-audit-close-p0-gaps.yaml"
+    - path: "core/dro_ara/engine.py"
+    - path: "docs/reports/repo_consistency_audit_2026_05_03.md"
+    - path: "newsfragments/repo-audit-close-p0-gaps.feature.md"
+    - path: "tests/unit/physics/test_inv_dro2_risk_scalar.py"
+    - path: "tests/unit/physics/test_inv_dro5_fail_closed.py"
+  forbidden_paths:
+    - "trading/"
+    - "execution/"
+    - "forecast/"
+    - "policy/"
+required_python_symbols:
+  - "derive_gamma"
+  - "risk_scalar"
+expected_signal: >-
+  All 20 unit tests pass; full DRO regression (46 tests) shows
+  no regressions; mypy --strict and ruff clean on 3 source files.
+measurement_command: >-
+  python -m pytest tests/unit/physics/test_inv_dro2_risk_scalar.py
+  tests/unit/physics/test_inv_dro5_fail_closed.py
+  tests/core/dro_ara/
+  tests/test_dfa_gamma_estimator.py -v
+signal_artifact: "tmp/repo_audit_close_p0_gaps_pytest.log"
+falsifier:
+  command: >-
+    python -m pytest tests/unit/physics/test_inv_dro5_fail_closed.py
+    -v -k "rejects_nan or rejects_constant or rejects_too_short"
+  description: >-
+    Probe runs the three rejection tests that exercise the new
+    fail-closed boundary. If any fails, the _validate guard at
+    the top of derive_gamma was removed or relaxed; INV-DRO5 has
+    silently regressed to the prior pass-through behaviour.
+rollback_command: >-
+  git checkout HEAD~1 -- core/dro_ara/engine.py
+  tests/unit/physics/test_inv_dro2_risk_scalar.py
+  tests/unit/physics/test_inv_dro5_fail_closed.py
+  .claude/commit_acceptors/repo-audit-close-p0-gaps.yaml
+  docs/reports/repo_consistency_audit_2026_05_03.md
+  newsfragments/repo-audit-close-p0-gaps.feature.md
+rollback_verification_command: >-
+  git diff --exit-code core/dro_ara/engine.py
+memory_update_type: append
+ledger_path: ".claude/commit_acceptors/repo-audit-close-p0-gaps.yaml"
+report_path: "docs/reports/repo_consistency_audit_2026_05_03.md"
+evidence: []

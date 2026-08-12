@@ -1,14 +1,17 @@
-# SPDX-License-Identifier: LicenseRef-TradePulse-Proprietary
+# Copyright (c) 2023-2026 Yaroslav Vasylenko (neuron7xLab)
+# SPDX-License-Identifier: MIT
 """Unit tests for MiFID II compliance module."""
 
 from __future__ import annotations
 
 import json
-from datetime import UTC, datetime, timedelta
+from datetime import datetime, timedelta
 from pathlib import Path
+from typing import Any, cast
 
 import pytest
 
+from core.compat import UTC, utc_now
 from core.compliance.mifid2 import (
     ComplianceSnapshot,
     ExecutionQuality,
@@ -25,7 +28,7 @@ class TestOrderAuditTrail:
 
     def test_order_audit_trail_creation(self) -> None:
         """Verify OrderAuditTrail can be created."""
-        ts = datetime.now(UTC)
+        ts = utc_now()
         trail = OrderAuditTrail(
             order_id="order-123",
             timestamp=ts,
@@ -49,7 +52,7 @@ class TestOrderAuditTrail:
             venue="XNYS",
             actor="trader-1",
         )
-        result = trail.to_dict()
+        result: dict[str, Any] = cast("dict[str, Any]", trail.to_dict())
         assert result["order_id"] == "order-123"
         assert result["timestamp"] == "2024-01-15T10:30:00+00:00"
         assert result["payload"]["action"] == "submit"
@@ -83,7 +86,7 @@ class TestTransactionReport:
 
     def test_transaction_report_creation(self) -> None:
         """Verify TransactionReport can be created."""
-        ts = datetime.now(UTC)
+        ts = utc_now()
         report = TransactionReport(
             order_id="order-123",
             instrument="AAPL",
@@ -160,7 +163,7 @@ class TestComplianceSnapshot:
 
     def test_compliance_snapshot_with_data(self) -> None:
         """Verify ComplianceSnapshot with data."""
-        ts = datetime.now(UTC)
+        ts = utc_now()
         report = TransactionReport(
             order_id="order-1",
             instrument="AAPL",
@@ -244,9 +247,7 @@ class TestMiFID2Reporter:
         assert signals[0].order_id == "order-abuse"
         assert "suspicious" in signals[0].reason.lower()
 
-    def test_record_order_no_abuse_for_small_cancel(
-        self, reporter: MiFID2Reporter
-    ) -> None:
+    def test_record_order_no_abuse_for_small_cancel(self, reporter: MiFID2Reporter) -> None:
         """Verify small cancellations don't trigger abuse signals."""
         reporter.record_order(
             order_id="order-small",
@@ -257,9 +258,7 @@ class TestMiFID2Reporter:
         signals = reporter.market_abuse_signals()
         assert len(signals) == 0
 
-    def test_record_order_no_abuse_for_non_cancel(
-        self, reporter: MiFID2Reporter
-    ) -> None:
+    def test_record_order_no_abuse_for_non_cancel(self, reporter: MiFID2Reporter) -> None:
         """Verify non-cancel orders don't trigger abuse signals."""
         reporter.record_order(
             order_id="order-submit",
@@ -270,9 +269,7 @@ class TestMiFID2Reporter:
         signals = reporter.market_abuse_signals()
         assert len(signals) == 0
 
-    def test_record_execution_adds_report_and_quality(
-        self, reporter: MiFID2Reporter
-    ) -> None:
+    def test_record_execution_adds_report_and_quality(self, reporter: MiFID2Reporter) -> None:
         """Verify record_execution adds report and quality entries."""
         reporter.record_execution(
             order_id="order-1",
@@ -320,9 +317,7 @@ class TestMiFID2Reporter:
         assert len(breaches) == 1
         assert breaches[0].order_id == "order-breach"
 
-    def test_best_execution_no_breach_within_threshold(
-        self, reporter: MiFID2Reporter
-    ) -> None:
+    def test_best_execution_no_breach_within_threshold(self, reporter: MiFID2Reporter) -> None:
         """Verify no breaches when within threshold."""
         reporter.record_execution(
             order_id="order-good",
@@ -355,9 +350,7 @@ class TestMiFID2Reporter:
         breaches = reporter.position_limit_breaches(positions=positions, limits=limits)
         assert len(breaches) == 0
 
-    def test_position_limit_ignores_missing_limits(
-        self, reporter: MiFID2Reporter
-    ) -> None:
+    def test_position_limit_ignores_missing_limits(self, reporter: MiFID2Reporter) -> None:
         """Verify positions without limits are ignored."""
         positions = {"AAPL": 150.0}
         limits = {"GOOGL": 100.0}  # No limit for AAPL
@@ -403,9 +396,7 @@ class TestMiFID2Reporter:
         assert isinstance(snapshot, ComplianceSnapshot)
         assert len(snapshot.audit_trail) == 1
 
-    def test_export_creates_file(
-        self, reporter: MiFID2Reporter, storage_path: Path
-    ) -> None:
+    def test_export_creates_file(self, reporter: MiFID2Reporter, storage_path: Path) -> None:
         """Verify export creates JSON file."""
         reporter.record_order(
             order_id="order-1",
@@ -438,9 +429,7 @@ class TestMiFID2Reporter:
         assert len(content["reports"]) == 1
         assert len(content["audit_trail"]) == 1
 
-    def test_export_with_custom_prefix(
-        self, reporter: MiFID2Reporter, storage_path: Path
-    ) -> None:
+    def test_export_with_custom_prefix(self, reporter: MiFID2Reporter, storage_path: Path) -> None:
         """Verify export uses custom prefix."""
         export_path = reporter.export(prefix="custom")
         assert export_path.name.startswith("custom-")
@@ -469,4 +458,4 @@ class TestMiFID2Reporter:
         assert "health" in report
         assert "best_execution_breaches" in report
         assert "market_abuse_signals" in report
-        assert len(report["market_abuse_signals"]) == 1
+        assert len(cast("list[Any]", report["market_abuse_signals"])) == 1

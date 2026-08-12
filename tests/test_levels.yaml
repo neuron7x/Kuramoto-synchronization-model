@@ -1,12 +1,15 @@
-# SPDX-License-Identifier: LicenseRef-TradePulse-Proprietary
-# TradePulse test level mapping.
+# SPDX-License-Identifier: MIT
+# GeoSync test level mapping.
 # Each entry enumerates the canonical directory globs that map to the
-# TradePulse validation levels (L0–L7). Patterns are matched using
+# GeoSync validation levels (L0–L7). Patterns are matched using
 # pathlib.PurePosixPath.match, so ** and * wildcards are supported.
 # The fallback_level applies to any test under tests/ that does not
 # match a more specific pattern, ensuring we fail fast when adding new
 # suites without an explicit classification.
 fallback_level: L3
+fallback_roots:
+  - tests
+  - scripts/tests
 levels:
   - level: L5
     patterns:
@@ -25,12 +28,13 @@ levels:
       - tests/admin/**
       - tests/evolution/**
       - tests/execution/**
-      - tests/hydrobrain_v2/**
+      - tests/geosync_hydro/**
       - tests/integration/**
       - tests/neuro/**
-      - tests/neuropro/**
+      - tests/geosync_hpc/**
       - tests/sandbox/**
       - tests/scripts/**
+      - scripts/tests/**
       - tests/strategies/**
       - tests/tools/**
       - tests/workflows/**
@@ -51,6 +55,8 @@ levels:
       - tests/analytics/**
       - tests/core/**
       - core/**/tests/**
+      - nak_controller/tests/**
+      - tools/**/tests/**
       - tests/data/**
       - tests/generated/**
       - tests/property/**

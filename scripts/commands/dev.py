@@ -1,8 +1,10 @@
+# Copyright (c) 2023-2026 Yaroslav Vasylenko (neuron7xLab)
+# SPDX-License-Identifier: MIT
 """Manage local development infrastructure."""
 
 from __future__ import annotations
 
-# SPDX-License-Identifier: LicenseRef-TradePulse-Proprietary
+# SPDX-License-Identifier: MIT
 import logging
 from argparse import _SubParsersAction
 
@@ -20,9 +22,7 @@ def _ensure_docker_available() -> None:
 
 
 def build_parser(subparsers: _SubParsersAction[object]) -> None:
-    up = subparsers.add_parser(
-        "dev-up", help="Start local services defined in docker-compose.yml"
-    )
+    up = subparsers.add_parser("dev-up", help="Start local services defined in docker-compose.yml")
     up.set_defaults(command="dev-up", handler=handle_up)
 
     down = subparsers.add_parser(
@@ -32,7 +32,7 @@ def build_parser(subparsers: _SubParsersAction[object]) -> None:
 
 
 @register("dev-up")
-def handle_up(args: object) -> int:  # noqa: ARG001 - required signature
+def handle_up(args: object) -> int:
     _ensure_docker_available()
     LOGGER.info("Starting docker compose services…")
     run_subprocess([*DOCKER_COMPOSE_COMMAND, "up", "-d"])
@@ -41,7 +41,7 @@ def handle_up(args: object) -> int:  # noqa: ARG001 - required signature
 
 
 @register("dev-down")
-def handle_down(args: object) -> int:  # noqa: ARG001 - required signature
+def handle_down(args: object) -> int:
     _ensure_docker_available()
     LOGGER.info("Stopping docker compose services…")
     run_subprocess([*DOCKER_COMPOSE_COMMAND, "down"])

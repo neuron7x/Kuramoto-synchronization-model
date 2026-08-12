@@ -1,7 +1,9 @@
+# Copyright (c) 2023-2026 Yaroslav Vasylenko (neuron7xLab)
+# SPDX-License-Identifier: MIT
 import pandas as pd
 import pytest
 
-from tradepulse.features.causal import CausalGuard
+from geosync.features.causal import CausalGuard
 
 
 def test_non_numeric_drivers_are_skipped():

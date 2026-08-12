@@ -1,0 +1,115 @@
+# Diff-bound commit acceptor for the causal look-ahead leakage fix in two
+# research signal kernels (neurophase execution-gate exporter + PLV
+# market/spread significance test).
+#
+# Two confirmed defects are closed:
+#   1. neurophase_bridge exported a per-bar execution gate whose phase was a
+#      whole-array Hilbert of a globally-centered series, so phase[i] (and the
+#      gate at bar i) depended on future samples j>i — look-ahead that inflates
+#      any downstream backtest of the exported gate history. The fix computes a
+#      causal trailing-window analytic phase (_causal_phase), so phase[i] uses
+#      only samples j<=i.
+#   2. plv_market_spread built its significance null by i.i.d.-permuting the
+#      Hilbert phases, destroying the spread's autocorrelation and collapsing
+#      the null PLV to ~1/sqrt(N) — anti-conservative, flagging independent
+#      autocorrelated series as SIGNAL_READY. The fix draws an
+#      autocorrelation-preserving (FFT phase-randomised) surrogate of the spread
+#      signal via analytics.signals.null_baseline.make_phase_shuffled_surrogate.
+#
+# Additive and behaviour-narrowing only: output schemas (neurophase CSV columns
+# and PLV JSON keys) are unchanged; the change removes look-ahead / anti-
+# conservative bias, it never widens a claim.
+
+id: signal-kernels-causal-leakage
+status: ACTIVE
+claim_type: correctness
+promise: >-
+  After this PR lands, research/kernels/neurophase_bridge.py::run exports an
+  execution gate whose phase[i] and execution_allowed[i] are INVARIANT to any
+  change in bars after i (proven by
+  tests/test_signal_kernels_causal_leakage.py::test_neurophase_gate_is_invariant_to_future_bars),
+  and research/kernels/plv_market_spread.py::run computes its p-value against an
+  autocorrelation-preserving FFT phase-randomised null so that two
+  independent-but-autocorrelated series are NOT flagged SIGNAL_READY (proven by
+  test_plv_null_does_not_flag_independent_autocorrelated_series and contrasted
+  against the anti-conservative i.i.d.-permutation null by
+  test_permutation_null_would_have_flagged_the_uncoupled_pair). Both output
+  schemas (neurophase CSV columns; PLV plv/p_value/FINAL JSON keys) are
+  preserved.
+
+diff_scope:
+  changed_files:
+    - path: ".claude/commit_acceptors/signal-kernels-causal-leakage.yaml"
+    - path: "research/kernels/neurophase_bridge.py"
+    - path: "research/kernels/plv_market_spread.py"
+    - path: "tests/test_signal_kernels_causal_leakage.py"
+  forbidden_paths:
+    - "trading/"
+    - "execution/"
+    - "forecast/"
+    - "policy/"
+    - "core/"
+    - "runtime/"
+    - "application/"
+
+required_python_symbols:
+  - "research/kernels/neurophase_bridge.py::run"
+  - "research/kernels/neurophase_bridge.py::_causal_phase"
+  - "research/kernels/plv_market_spread.py::run"
+  - "tests/test_signal_kernels_causal_leakage.py::test_neurophase_gate_is_invariant_to_future_bars"
+  - "tests/test_signal_kernels_causal_leakage.py::test_plv_null_does_not_flag_independent_autocorrelated_series"
+
+expected_signal: >-
+  `python -m pytest -o addopts= --import-mode=importlib
+  tests/test_signal_kernels_causal_leakage.py tests/test_neurophase_bridge.py
+  tests/test_spread_kernels.py -q` reports 7 passed; ruff/black leave the two
+  kernels unchanged and `mypy --strict` on both kernels is clean.
+
+measurement_command: >-
+  bash -c '
+    python -m ruff check research/kernels/neurophase_bridge.py research/kernels/plv_market_spread.py tests/test_signal_kernels_causal_leakage.py &&
+    python -m mypy --strict research/kernels/neurophase_bridge.py research/kernels/plv_market_spread.py tests/test_signal_kernels_causal_leakage.py &&
+    python -m pytest -o addopts= --import-mode=importlib tests/test_signal_kernels_causal_leakage.py tests/test_neurophase_bridge.py tests/test_spread_kernels.py -q
+  '
+
+signal_artifact: "tmp/signal_kernels_causal_leakage.log"
+
+falsifier:
+  command: |-
+    bash -c '
+      python -c "
+    import importlib.util, pathlib, sys
+    def _load(rel):
+        spec = importlib.util.spec_from_file_location(\"m\", pathlib.Path(rel))
+        mod = importlib.util.module_from_spec(spec); sys.modules[\"m\"] = mod
+        spec.loader.exec_module(mod); return mod
+    nb = _load(\"research/kernels/neurophase_bridge.py\")
+    assert callable(nb._causal_phase)
+    plv_src = pathlib.Path(\"research/kernels/plv_market_spread.py\").read_text()
+    assert \"make_phase_shuffled_surrogate(spread_test\" in plv_src
+      "
+    '
+  description: >-
+    Loads neurophase_bridge and asserts the causal-phase helper (_causal_phase)
+    is present, and asserts plv_market_spread wires the autocorrelation-
+    preserving surrogate (make_phase_shuffled_surrogate applied to the spread
+    signal). It asserts the fix invariant and, per the run_evidence green-state
+    contract, exits 0 on the correct (green) tree and non-zero if the fix
+    regresses or is rolled back.
+rollback_command: >-
+  bash -c '
+    git checkout origin/main -- research/kernels/neurophase_bridge.py research/kernels/plv_market_spread.py &&
+    git rm -f tests/test_signal_kernels_causal_leakage.py .claude/commit_acceptors/signal-kernels-causal-leakage.yaml
+  '
+
+rollback_verification_command: >-
+  bash -c '
+    ! grep -q "_causal_phase" research/kernels/neurophase_bridge.py &&
+    ! grep -q "make_phase_shuffled_surrogate" research/kernels/plv_market_spread.py &&
+    test ! -f tests/test_signal_kernels_causal_leakage.py
+  '
+
+memory_update_type: append
+ledger_path: ".claude/commit_acceptors/signal-kernels-causal-leakage.yaml"
+report_path: "tmp/signal_kernels_causal_leakage.log"
+evidence: []

@@ -1,0 +1,116 @@
+# Diff-bound commit acceptor for L2 Ricci evidence-protocol hardening (P1-3).
+#
+# EXTENDS the merged #1116 L2 Ricci evidence-bearing session protocol. Strictly
+# additive: it tightens the semantic validator and adds a registry-resolution
+# gate; it relaxes nothing #1116 established. The line stays HYPOTHESIS-tier —
+# no real depth-5 capture exists, and registering reference objects is NOT
+# registering a result.
+
+id: p13-ricci-l2-hardening
+status: ACTIVE
+claim_type: correctness
+promise: >-
+  After this PR lands, an L2 (depth-5) Ricci session cannot reach
+  evidence-bearing / semantic PASS status with placeholder hashes, a missing
+  null-model or lookahead falsification axis, a non-executable-or-blocked
+  replay, or a baseline/null/falsifier id that does not resolve to
+  config/research/l2_ricci_registry.yaml. A PLACEHOLDER carrying any real
+  (non-zero) data/config/git hash is rejected: a real-data session cannot run
+  in placeholder mode. tools/research/check_l2_registry_refs.py rejects any
+  unresolved id, fail-closed, and the evidence gate in
+  tools/research/run_l2_ricci_session.py reuses that resolver.
+
+diff_scope:
+  changed_files:
+    - path: "schemas/research/l2_ricci_session.schema.json"
+    - path: "tools/research/run_l2_ricci_session.py"
+    - path: "tools/research/check_l2_registry_refs.py"
+    - path: "config/research/l2_ricci_registry.yaml"
+    - path: "docs/research/l2_ricci_evidence_protocol.md"
+    - path: "tests/research/test_l2_ricci_session_schema.py"
+    - path: "tests/research/test_l2_registry_refs.py"
+    - path: "docs/reports/ricci_l2_evidence_hardening.md"
+    - path: ".claude/commit_acceptors/p13-ricci-l2-hardening.yaml"
+  forbidden_paths:
+    - "application/"
+    - "backtest/"
+    - "execution/"
+    - "markets/"
+    - "runtime/"
+    - "core/"
+    - "policy/"
+
+required_python_symbols:
+  - "tools/research/check_l2_registry_refs.py::load_registry"
+  - "tools/research/check_l2_registry_refs.py::resolve_session_refs"
+  - "tools/research/check_l2_registry_refs.py::check_artifact"
+  - "tools/research/run_l2_ricci_session.py::validate_session_semantics"
+
+expected_signal: >-
+  python tools/research/run_l2_ricci_session.py --dry-run exits 0 and emits a
+  schema-valid PLACEHOLDER skeleton whose *_unset ids do NOT resolve; pytest
+  tests/research/test_l2_ricci_session_schema.py and
+  tests/research/test_l2_registry_refs.py report all tests passed, including
+  the assertions that an evidence claim on zero hashes, a missing falsification
+  axis, a blocked or non-executable replay, and an unresolved registry id are
+  each rejected.
+
+measurement_command: >-
+  bash -c '
+    python tools/research/run_l2_ricci_session.py --dry-run > /dev/null &&
+    python -m pytest -q tests/research/test_l2_ricci_session_schema.py
+      tests/research/test_l2_registry_refs.py -p no:cacheprovider
+  '
+
+signal_artifact: "tmp/l2_ricci_hardening.log"
+
+falsifier:
+  command: |-
+    bash -c 'python -c "
+    import importlib.util, json, sys, tempfile, pathlib;
+    spec = importlib.util.spec_from_file_location(\"m\", \"tools/research/run_l2_ricci_session.py\");
+    m = importlib.util.module_from_spec(spec); spec.loader.exec_module(m);
+    p = pathlib.Path(tempfile.mkdtemp()) / \"s.json\";
+    sk = m.skeleton();
+    sk[\"git_sha\"] = \"a\"*40; sk[\"data_sha256\"] = \"b\"*64; sk[\"config_sha256\"] = \"c\"*64;
+    sk[\"session_start_utc\"] = \"2026-06-16T09:00:00Z\"; sk[\"session_end_utc\"] = \"2026-06-16T10:00:00Z\";
+    sk[\"semantic_validation_status\"] = \"PASS\";
+    sk[\"replay_blocked\"] = False;
+    sk[\"replay_command\"] = \"python tools/research/run_l2_ricci_session.py --artifact s.json\";
+    sk[\"negative_evidence\"] = [
+      {\"claim\": \"depth-5 Ricci IC survives a permutation null model\", \"outcome\": \"SURVIVED\", \"detail\": \"null model run\"},
+      {\"claim\": \"depth-5 Ricci IC is not a lookahead artifact\", \"outcome\": \"SURVIVED\", \"detail\": \"lookahead lag sweep\"}];
+    sk[\"baseline_id\"] = \"baseline_unset\"; sk[\"null_model_id\"] = \"null_model_unset\"; sk[\"falsifier_id\"] = \"falsifier_unset\";
+    p.write_text(json.dumps(sk));
+    sys.exit(0 if m.validate_artifact(p) == [] else 1)"'
+  description: >-
+    Inverts the P1-3 invariant: it exits 0 (succeeds) only when the gate would
+    accept a PASS-claiming session whose baseline/null/falsifier ids are the
+    unregistered *_unset placeholders — i.e. registry resolution was weakened to
+    admit unresolved ids as evidence. With the gate intact the unresolved ids
+    are rejected, so this exits 1.
+
+rollback_command: >-
+  bash -c '
+    git rm -f
+      tools/research/check_l2_registry_refs.py
+      config/research/l2_ricci_registry.yaml
+      tests/research/test_l2_registry_refs.py
+      docs/reports/ricci_l2_evidence_hardening.md
+      .claude/commit_acceptors/p13-ricci-l2-hardening.yaml &&
+    git checkout origin/main --
+      schemas/research/l2_ricci_session.schema.json
+      tools/research/run_l2_ricci_session.py
+      docs/research/l2_ricci_evidence_protocol.md
+      tests/research/test_l2_ricci_session_schema.py
+  '
+
+rollback_verification_command: >-
+  bash -c '
+    test ! -e tools/research/check_l2_registry_refs.py
+  '
+
+memory_update_type: append
+ledger_path: ".claude/commit_acceptors/p13-ricci-l2-hardening.yaml"
+report_path: "docs/reports/ricci_l2_evidence_hardening.md"
+evidence: []

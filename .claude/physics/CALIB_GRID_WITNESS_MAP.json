@@ -1,0 +1,48 @@
+{
+  "schema_version": "1.0.0",
+  "registry": ".claude/physics/CALIB_GRID_INVARIANTS.yaml",
+  "validation_trigger": "calib-grid-check",
+  "files": {
+    "tests/research/calibration/test_grid_kuramoto.py": {
+      "witnesses": {
+        "test_wscc9_contract_invariants": ["INV-CALIB-GRID-CONTRACT"],
+        "test_ieee39_contract_invariants": ["INV-CALIB-GRID-CONTRACT"],
+        "test_gridsystem_rejects_malformed": ["INV-CALIB-GRID-FAIL-CLOSED"],
+        "test_coupling_formula_exact": ["INV-CALIB-GRID-DB-REDUCTION"],
+        "test_natural_frequency_mean_centred": ["INV-CALIB-GRID-GAUGE"],
+        "test_dorfler_bullo_uniform_scale_invariance": ["INV-CALIB-GRID-DB-SCALE"],
+        "test_dorfler_bullo_disconnected_fails_closed": ["INV-CALIB-GRID-DB-FAIL-CLOSED"],
+        "test_property_weak_coupling_topology_recovered": ["INV-CALIB-GRID-INSTRUMENT-SOUNDNESS"],
+        "test_identifiability_sweep_weak_regime": ["INV-CALIB-GRID-INSTRUMENT-SOUNDNESS"],
+        "test_property_swing_exact_recovery_matched_noiseless": ["INV-CALIB-GRID-SWING-RECOVERY"],
+        "test_swing_pe_guard_fires_on_phase_locked_input": ["INV-CALIB-GRID-PE-FAIL-CLOSED"]
+      },
+      "governance_pins": [
+        "test_preregistration_matches_code",
+        "test_gate_thresholds_are_frozen_values",
+        "test_wscc9_verdict_is_negative_and_localized",
+        "test_ledger_is_machine_readable_and_sha_pinned",
+        "test_r1_swing_path_closes_noiseless_frobenius_gate",
+        "test_r1_ledger_is_machine_readable_and_sha_pinned",
+        "test_front_gate_accepts_noiseless_refuses_noisy",
+        "test_front_gate_does_not_close_frozen_noisy_gate",
+        "test_front_gate_first_order_path_bit_stable",
+        "test_cg002_preregistration_matches_code",
+        "test_cg002_gate_thresholds_are_frozen_values",
+        "test_cg002_does_not_touch_frozen_calib_grid_001_gates",
+        "test_cg002_verdict_is_negative_and_localized",
+        "test_cg002_front_gate_refuse_under_differential_and_integral",
+        "test_cg002_null_battery_specificity_reported"
+      ],
+      "existing_registry_witnesses": {
+        "test_calibration_deterministic": ["INV-HPC1"],
+        "test_ieee39_calibration_runs_and_is_scored": ["INV-HPC2"],
+        "test_r1_first_order_path_is_bit_stable": ["INV-HPC1"],
+        "test_swing_estimator_contract_fail_closed": ["INV-HPC2"],
+        "test_r1_results_json_matches_committed_artifact": ["INV-HPC1"],
+        "test_identifiability_results_json_matches_committed_artifact": ["INV-HPC1"],
+        "test_cg002_results_json_matches_committed_artifact": ["INV-HPC1"]
+      }
+    }
+  }
+}

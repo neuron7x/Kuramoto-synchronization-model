@@ -1,0 +1,65 @@
+# Diff-bound acceptor: Ricci adapter dedicated deterministic claim-lock.
+#
+# Turns src/geosync/features/ricci.py from "just code" into executable proof by
+# adding a dedicated deterministic test file and linking the README claim ->
+# source -> test -> command. NO change to ricci.py itself; status stays
+# HYPOTHESIS for L2 microstructure (no real depth-5 session / falsifier /
+# baseline / replay evidence exists). Correlation-graph Ricci topology
+# descriptor, not evidence-bearing market physics.
+
+id: ricci-adapter-test-linkage
+status: ACTIVE
+claim_type: correctness
+promise: >-
+  Adds tests/features/test_ricci_curvature_graph.py, a dedicated deterministic
+  claim-lock for RicciCurvatureGraph: insufficient-window fail-closed
+  (ValueError), zero-edge neutral output (kappa_min==0.0 / edge_kappa=={}),
+  fixed two-node graph curvature == 0.5 exactly at alpha=0.5, non-finite input
+  excluded with no phantom edges and finite output, and a claim-boundary lock
+  asserting the result exposes no L2/microstructure/predictive field. Links the
+  README Ricci claim to source, this test, and its run command, while keeping
+  the L2 microstructure claim at HYPOTHESIS. No change to
+  src/geosync/features/ricci.py; no numeric behavior change; no invariant added.
+diff_scope:
+  changed_files:
+    - path: ".claude/commit_acceptors/ricci-adapter-test-linkage.yaml"
+    - path: "tests/features/test_ricci_curvature_graph.py"
+    - path: "README.md"
+  forbidden_paths:
+    - "trading/"
+    - "execution/"
+    - "forecast/"
+    - "policy/"
+required_python_symbols:
+  - "RicciCurvatureGraph"
+expected_signal: >-
+  pytest -q tests/features/test_ricci_curvature_graph.py passes 5/5; the
+  zero-edge branch returns neutral curvature, the fixed two-node graph returns
+  kappa==0.5 exactly, non-finite columns never form edges, and the result keys
+  are exactly {kappa_min, edge_kappa}. claim-boundary and check_claims gates
+  pass; ruff/black clean.
+measurement_command: >-
+  PYTHONPATH=. python -m pytest -q tests/features/test_ricci_curvature_graph.py -v
+signal_artifact: "tmp/ricci_curvature_graph_pytest.log"
+falsifier:
+  command: >-
+    PYTHONPATH=. python -m pytest tests/features/test_ricci_curvature_graph.py
+    -v -k "fixed_single_edge_curvature_is_half or zero_edge_returns_neutral_curvature or non_finite_input_excluded"
+  description: >-
+    If the adapter fabricated curvature on an edgeless graph
+    test_zero_edge_returns_neutral_curvature fails; if the Ollivier-Ricci
+    transport drifted from the documented alpha=0.5 single-edge result
+    test_fixed_single_edge_curvature_is_half fails; if a non-finite column leaked
+    an edge test_non_finite_input_excluded_no_phantom_edges fails. Each pins a
+    behavior the README advertises as executable proof.
+rollback_command: >-
+  git checkout HEAD~1 --
+  tests/features/test_ricci_curvature_graph.py
+  README.md
+  .claude/commit_acceptors/ricci-adapter-test-linkage.yaml
+rollback_verification_command: >-
+  git diff --exit-code tests/features/test_ricci_curvature_graph.py
+memory_update_type: none
+ledger_path: ".claude/commit_acceptors/ricci-adapter-test-linkage.yaml"
+report_path: "docs/reports/diff_bound_commit_acceptor_layer.md"
+evidence: []

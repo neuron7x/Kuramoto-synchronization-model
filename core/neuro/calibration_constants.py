@@ -1,8 +1,9 @@
-# SPDX-License-Identifier: LicenseRef-TradePulse-Proprietary
-"""Calibration constants and parameter ranges for all TradePulse controllers.
+# Copyright (c) 2023-2026 Yaroslav Vasylenko (neuron7xLab)
+# SPDX-License-Identifier: MIT
+"""Calibration constants and parameter ranges for all GeoSync controllers.
 
 This module serves as the single source of truth for all parameter ranges,
-thresholds, and calibration boundaries across the TradePulse system. All
+thresholds, and calibration boundaries across the GeoSync system. All
 controllers should reference these constants for validation and calibration.
 
 The constants are organized by controller type and follow the principle:
@@ -355,8 +356,7 @@ class DesensitizationParameterRanges:
 
 
 def validate_parameter_invariants(
-    controller_type: str,
-    params: Dict[str, Any]
+    controller_type: str, params: Dict[str, Any]
 ) -> Tuple[bool, list[str]]:
     """Validate parameter invariants for a specific controller type.
 
@@ -403,20 +403,14 @@ def _validate_nak_invariants(params: Dict[str, Any]) -> list[str]:
     # EI threshold relationships
     if "EI_low" in params and "EI_high" in params:
         if params["EI_low"] >= params["EI_high"]:
-            errors.append(
-                f"EI_low ({params['EI_low']}) must be < EI_high ({params['EI_high']})"
-            )
+            errors.append(f"EI_low ({params['EI_low']}) must be < EI_high ({params['EI_high']})")
 
     if "EI_crit" in params:
         if "EI_low" in params and params["EI_crit"] > params["EI_low"]:
-            errors.append(
-                f"EI_crit ({params['EI_crit']}) must be <= EI_low ({params['EI_low']})"
-            )
+            errors.append(f"EI_crit ({params['EI_crit']}) must be <= EI_low ({params['EI_low']})")
         ranges = NAKParameterRanges()
         if not (ranges.EI_RANGE[0] <= params["EI_crit"] <= ranges.EI_RANGE[1]):
-            errors.append(
-                f"EI_crit ({params['EI_crit']}) must be in range {ranges.EI_RANGE}"
-            )
+            errors.append(f"EI_crit ({params['EI_crit']}) must be in range {ranges.EI_RANGE}")
 
     # Volatility threshold ordering
     if "vol_amber" in params and "vol_red" in params:
@@ -428,25 +422,19 @@ def _validate_nak_invariants(params: Dict[str, Any]) -> list[str]:
     # Drawdown threshold ordering
     if "dd_amber" in params and "dd_red" in params:
         if params["dd_amber"] > params["dd_red"]:
-            errors.append(
-                f"dd_amber ({params['dd_amber']}) must be <= dd_red ({params['dd_red']})"
-            )
+            errors.append(f"dd_amber ({params['dd_amber']}) must be <= dd_red ({params['dd_red']})")
 
     # Rate limit
     if "delta_r_limit" in params:
         ranges = NAKParameterRanges()
         val = params["delta_r_limit"]
         if not (ranges.DELTA_R_RANGE[0] < val <= ranges.DELTA_R_RANGE[1]):
-            errors.append(
-                f"delta_r_limit ({val}) must be in range (0, {ranges.DELTA_R_RANGE[1]}]"
-            )
+            errors.append(f"delta_r_limit ({val}) must be in range (0, {ranges.DELTA_R_RANGE[1]}]")
 
     # r_min < r_max
     if "r_min" in params and "r_max" in params:
         if params["r_min"] >= params["r_max"]:
-            errors.append(
-                f"r_min ({params['r_min']}) must be < r_max ({params['r_max']})"
-            )
+            errors.append(f"r_min ({params['r_min']}) must be < r_max ({params['r_max']})")
 
     return errors
 
@@ -470,25 +458,19 @@ def _validate_dopamine_invariants(params: Dict[str, Any]) -> list[str]:
     if "learning_rate_v" in params:
         val = params["learning_rate_v"]
         if val <= ranges.LEARNING_RATE_MIN:
-            errors.append(
-                f"learning_rate_v ({val}) must be > {ranges.LEARNING_RATE_MIN}"
-            )
+            errors.append(f"learning_rate_v ({val}) must be > {ranges.LEARNING_RATE_MIN}")
 
     # Burst factor
     if "burst_factor" in params:
         val = params["burst_factor"]
         if val < ranges.BURST_FACTOR_MIN:
-            errors.append(
-                f"burst_factor ({val}) must be >= {ranges.BURST_FACTOR_MIN}"
-            )
+            errors.append(f"burst_factor ({val}) must be >= {ranges.BURST_FACTOR_MIN}")
 
     # Temperature
     if "base_temperature" in params:
         val = params["base_temperature"]
         if val <= ranges.TEMPERATURE_MIN:
-            errors.append(
-                f"base_temperature ({val}) must be > {ranges.TEMPERATURE_MIN}"
-            )
+            errors.append(f"base_temperature ({val}) must be > {ranges.TEMPERATURE_MIN}")
 
     if "min_temperature" in params and "base_temperature" in params:
         if params["min_temperature"] > params["base_temperature"]:
@@ -502,9 +484,7 @@ def _validate_dopamine_invariants(params: Dict[str, Any]) -> list[str]:
         if threshold_name in params:
             val = params[threshold_name]
             if not (ranges.THRESHOLD_RANGE[0] <= val <= ranges.THRESHOLD_RANGE[1]):
-                errors.append(
-                    f"{threshold_name} ({val}) must be in range {ranges.THRESHOLD_RANGE}"
-                )
+                errors.append(f"{threshold_name} ({val}) must be in range {ranges.THRESHOLD_RANGE}")
 
     return errors
 
@@ -519,9 +499,7 @@ def _validate_serotonin_invariants(params: Dict[str, Any]) -> list[str]:
         if beta_name in params:
             val = params[beta_name]
             if not (ranges.BETA_RANGE[0] <= val <= ranges.BETA_RANGE[1]):
-                errors.append(
-                    f"{beta_name} ({val}) must be in range {ranges.BETA_RANGE}"
-                )
+                errors.append(f"{beta_name} ({val}) must be in range {ranges.BETA_RANGE}")
 
     # Stress thresholds
     if "stress_threshold" in params:
@@ -542,9 +520,7 @@ def _validate_serotonin_invariants(params: Dict[str, Any]) -> list[str]:
     if "max_desensitization" in params:
         val = params["max_desensitization"]
         if not (ranges.MAX_DESENSITIZATION_RANGE[0] <= val < ranges.MAX_DESENSITIZATION_RANGE[1]):
-            errors.append(
-                f"max_desensitization ({val}) must be in range [0, 1) (less than 1)"
-            )
+            errors.append(f"max_desensitization ({val}) must be in range [0, 1) (less than 1)")
 
     # Floor
     if "floor_min" in params and "floor_max" in params:
@@ -564,18 +540,16 @@ def _validate_risk_engine_invariants(params: Dict[str, Any]) -> list[str]:
     # Loss percent
     if "max_daily_loss_percent" in params:
         val = params["max_daily_loss_percent"]
-        if not (ranges.MAX_DAILY_LOSS_PERCENT_RANGE[0] < val <= ranges.MAX_DAILY_LOSS_PERCENT_RANGE[1]):
-            errors.append(
-                f"max_daily_loss_percent ({val}) must be in range (0, 1]"
-            )
+        if not (
+            ranges.MAX_DAILY_LOSS_PERCENT_RANGE[0] < val <= ranges.MAX_DAILY_LOSS_PERCENT_RANGE[1]
+        ):
+            errors.append(f"max_daily_loss_percent ({val}) must be in range (0, 1]")
 
     # Leverage
     if "max_leverage" in params:
         val = params["max_leverage"]
         if val <= ranges.MAX_LEVERAGE_MIN:
-            errors.append(
-                f"max_leverage ({val}) must be > {ranges.MAX_LEVERAGE_MIN}"
-            )
+            errors.append(f"max_leverage ({val}) must be > {ranges.MAX_LEVERAGE_MIN}")
 
     # Order rates
     if "max_orders_per_minute" in params and "max_orders_per_hour" in params:
@@ -588,7 +562,11 @@ def _validate_risk_engine_invariants(params: Dict[str, Any]) -> list[str]:
     # Safe mode multiplier
     if "safe_mode_position_multiplier" in params:
         val = params["safe_mode_position_multiplier"]
-        if not (ranges.SAFE_MODE_POSITION_MULTIPLIER_RANGE[0] <= val <= ranges.SAFE_MODE_POSITION_MULTIPLIER_RANGE[1]):
+        if not (
+            ranges.SAFE_MODE_POSITION_MULTIPLIER_RANGE[0]
+            <= val
+            <= ranges.SAFE_MODE_POSITION_MULTIPLIER_RANGE[1]
+        ):
             errors.append(
                 f"safe_mode_position_multiplier ({val}) must be in range {ranges.SAFE_MODE_POSITION_MULTIPLIER_RANGE}"
             )

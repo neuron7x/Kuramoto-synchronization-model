@@ -1,3 +1,5 @@
+# Copyright (c) 2023-2026 Yaroslav Vasylenko (neuron7xLab)
+# SPDX-License-Identifier: MIT
 """Tests for performance budget loader."""
 
 from __future__ import annotations
@@ -78,18 +80,14 @@ def test_load_component_budget(budget_loader: BudgetLoader) -> None:
 def test_budget_priority(budget_loader: BudgetLoader) -> None:
     """Test budget priority selection."""
     # Scenario should take priority over exchange
-    scenario_budget = budget_loader.get_budget(
-        exchange="coinbase", scenario="flash_crash"
-    )
+    scenario_budget = budget_loader.get_budget(exchange="coinbase", scenario="flash_crash")
     flash_crash_only = budget_loader.get_scenario_budget("flash_crash")
 
     # Should match scenario budget, not exchange
     assert scenario_budget.latency_median_ms == flash_crash_only.latency_median_ms
 
     # Exchange should take priority over environment
-    exchange_budget = budget_loader.get_budget(
-        exchange="coinbase", environment="production"
-    )
+    exchange_budget = budget_loader.get_budget(exchange="coinbase", environment="production")
     coinbase_only = budget_loader.get_exchange_budget("coinbase")
 
     # Should match exchange budget

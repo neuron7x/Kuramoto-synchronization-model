@@ -1,0 +1,154 @@
+# GeoSync architectural-boundary contracts.
+#
+# These rules describe the dependency direction the architecture intends.
+# Each rule is enforced by `lint-imports`. Violations fail CI.
+#
+# When intentionally introducing a cross-layer import that breaks one of
+# these rules, EITHER add a new public abstraction in the lower layer
+# (preferred) or amend the contract here with a documented rationale.
+#
+# Discovered (audit 2026-04-26):
+#   core           -> application: 0
+#   core           -> apps:        0
+#   core           -> execution:   0
+#   core           -> runtime:     0
+#   core/physics   -> execution:   0
+#   core/physics   -> runtime:     0
+#   core/kuramoto  -> application: 0
+#   core/kuramoto  -> execution:   0
+#   apps           -> core:        0  (apps/risk_guardian; apps/web is TS)
+#
+# The contracts below codify those independence facts so that a future
+# accidental cross-layer import becomes a CI failure instead of a quiet
+# drift.
+
+[importlinter]
+root_packages =
+    core
+    application
+    execution
+    runtime
+    apps
+    interfaces
+    libs
+include_external_packages = False
+
+# ---------------------------------------------------------------------------
+# Contract 1 — core is independent of every I/O / web / scheduling layer.
+# ---------------------------------------------------------------------------
+#
+# Pre-existing violations (TRACKED, not BLESSED — paid down by PRs):
+#   - core.architecture_integrator.adapters reaches into application.system*
+#   - core.integration.adapters reaches into application.microservices.*
+#   - core.integration.system_integrator reaches into application.*
+#   - core.agent.registry reaches into runtime.misanthropic_agent
+#
+# Each ignore entry MUST have a rationale comment. New entries get review
+# pushback. The acceptable repayment is to introduce a public abstraction in
+# core that the application/runtime layer can register itself with, then
+# remove the ignore.
+[importlinter:contract:core-independence]
+name = core does not import from application / apps / execution / runtime
+type = forbidden
+source_modules =
+    core
+forbidden_modules =
+    application
+    apps
+    execution
+    runtime
+ignore_imports =
+    # core ↔ application — pre-existing tight coupling in the integrator/
+    # adapter modules; tracked for paydown:
+    core.architecture_integrator.adapters -> application.system
+    core.architecture_integrator.adapters -> application.system_orchestrator
+    core.integration.adapters -> application.microservices.base
+    core.integration.adapters -> application.microservices.registry
+    core.integration.system_integrator -> application.microservices.registry
+    core.integration.system_integrator -> application.system
+    core.integration.system_integrator -> application.system_orchestrator
+    # core ↔ runtime — registry shortcut to a runtime agent; tracked:
+    core.agent.registry -> runtime.misanthropic_agent
+    # core ↔ runtime — TYPE_CHECKING-only type-hint reference to the
+    # RebusGate primitive (used solely for typing; not imported at runtime).
+    # Tracked for eventual relocation of the RebusGate type into a shared
+    # `core/types` module so the type hint stops crossing the boundary.
+    core.neuro.epistemic_validation -> runtime.rebus_gate
+
+# ---------------------------------------------------------------------------
+# Contract 2 — core.physics is hardened: no I/O, scheduling, or HTTP.
+# ---------------------------------------------------------------------------
+[importlinter:contract:core-physics-hardened]
+name = core.physics does not import from application / apps / execution / runtime / interfaces / libs
+type = forbidden
+source_modules =
+    core.physics
+forbidden_modules =
+    application
+    apps
+    execution
+    runtime
+    interfaces
+    libs
+ignore_imports =
+    # No exemptions today.
+
+# ---------------------------------------------------------------------------
+# Contract 3 — core.kuramoto is hardened identically.
+# ---------------------------------------------------------------------------
+[importlinter:contract:core-kuramoto-hardened]
+name = core.kuramoto does not import from application / apps / execution
+type = forbidden
+source_modules =
+    core.kuramoto
+forbidden_modules =
+    application
+    apps
+    execution
+ignore_imports =
+    # No exemptions today.
+
+# ---------------------------------------------------------------------------
+# Contract 4 — apps (Python apps; apps/web is TS and out of scope) do not
+# reach down into core directly. They consume API / HTTP layers instead.
+# ---------------------------------------------------------------------------
+[importlinter:contract:apps-no-core]
+name = apps do not import from core directly
+type = forbidden
+source_modules =
+    apps
+forbidden_modules =
+    core
+ignore_imports =
+    # No exemptions today.
+
+# ---------------------------------------------------------------------------
+# Contract 5 — execution is independent of application (HTTP / API).
+# It may consume core; it may not call up the stack.
+# ---------------------------------------------------------------------------
+[importlinter:contract:execution-no-application]
+name = execution does not import from application
+type = forbidden
+source_modules =
+    execution
+forbidden_modules =
+    application
+ignore_imports =
+    # No exemptions today.
+
+# ---------------------------------------------------------------------------
+# Contract 6 — leaf indicator math is import-light. core.indicators must not
+# pull in the data/IO persistence layer (which transitively requires pydantic
+# + cryptography), so that pure-numerical modules such as
+# core.indicators.temporal_ricci import with only numpy/scipy/pandas/networkx.
+# Regression guard for the B3 dependency-direction fix.
+# ---------------------------------------------------------------------------
+[importlinter:contract:indicators-no-feature-store]
+name = core.indicators does not import core.data.feature_store
+type = forbidden
+source_modules =
+    core.indicators
+forbidden_modules =
+    core.data.feature_store
+ignore_imports =
+    # No exemptions today.

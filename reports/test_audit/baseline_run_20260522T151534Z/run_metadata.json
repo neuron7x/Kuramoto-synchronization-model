@@ -1,0 +1,14 @@
+{
+  "schema_version": "1.0",
+  "repo": "neuron7xLab/GeoSync",
+  "branch": "work",
+  "git_sha": "commit-redacted",
+  "dirty_worktree": true,
+  "generated_at_utc": "2026-05-22T15:15:47.857001Z",
+  "python_version": "3.14.4",
+  "platform": "Linux-6.12.47-x86_64-with-glibc2.39",
+  "command_profile": "coverage_baseline",
+  "ci": false,
+  "ci_run_id": null,
+  "exit_code": 4
+}

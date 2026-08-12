@@ -1,0 +1,19 @@
+{
+  "$schema": "https://json-schema.org/draft/2020-12/schema",
+  "title": "ProvenanceRecord",
+  "type": "object",
+  "required": ["record_id", "created_at", "agent", "source_id", "activity", "version"],
+  "properties": {
+    "record_id": {"type": "string"},
+    "created_at": {"type": "string", "format": "date-time"},
+    "agent": {"type": "string"},
+    "source_id": {"type": "string"},
+    "activity": {"type": "string", "enum": ["created", "measured", "imported", "normalized", "inferred", "reviewed", "updated", "deleted"]},
+    "version": {"type": "string"},
+    "input_hash": {"type": "string"},
+    "output_hash": {"type": "string"},
+    "signature": {"type": "string"},
+    "license": {"type": "string"}
+  },
+  "additionalProperties": false
+}

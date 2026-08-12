@@ -1,3 +1,5 @@
+# Copyright (c) 2023-2026 Yaroslav Vasylenko (neuron7xLab)
+# SPDX-License-Identifier: MIT
 import math
 from pathlib import Path
 
@@ -36,9 +38,7 @@ class DummyModel(TransactionCostModel):
         self.spread_calls.append((price, side))
         return price * 0.01
 
-    def get_slippage(
-        self, volume: float, price: float, side: str | None = None
-    ) -> float:
+    def get_slippage(self, volume: float, price: float, side: str | None = None) -> float:
         self.slippage_calls.append((volume, price, side))
         return volume * 0.1
 
@@ -48,12 +48,8 @@ class DummyModel(TransactionCostModel):
 
 
 def test_component_models_behaviour() -> None:
-    assert FixedBpsCommission(10).get_commission(5, 100) == pytest.approx(
-        5 * 100 * 10 * 1e-4
-    )
-    assert PercentVolumeCommission(0.5).get_commission(2, 50) == pytest.approx(
-        2 * 50 * 0.5 * 0.01
-    )
+    assert FixedBpsCommission(10).get_commission(5, 100) == pytest.approx(5 * 100 * 10 * 1e-4)
+    assert PercentVolumeCommission(0.5).get_commission(2, 50) == pytest.approx(2 * 50 * 0.5 * 0.01)
     assert PerUnitCommission(1.2).get_commission(3, 10) == pytest.approx(3.6)
 
     assert FixedSpread(0.25).get_spread(100, "buy") == pytest.approx(0.25)
@@ -72,12 +68,8 @@ def test_component_models_behaviour() -> None:
     assert linear_financing.get_financing(-2.0, 100.0) == pytest.approx(2.0)
 
     linear_reference = BorrowFinancing(long_rate_bps=10000, short_rate_bps=10000)
-    nonlinear_financing = BorrowFinancing(
-        long_rate_bps=10000, short_rate_bps=10000, exponent=1.5
-    )
-    assert nonlinear_financing.get_financing(
-        4.0, 50.0
-    ) > linear_reference.get_financing(4.0, 50.0)
+    nonlinear_financing = BorrowFinancing(long_rate_bps=10000, short_rate_bps=10000, exponent=1.5)
+    assert nonlinear_financing.get_financing(4.0, 50.0) > linear_reference.get_financing(4.0, 50.0)
 
 
 def test_composite_model_delegates() -> None:
@@ -121,10 +113,7 @@ def test_load_market_costs_from_mapping(tmp_path: Path) -> None:
 
     file_config = tmp_path / "markets.yaml"
     file_config.write_text(
-        "X-test:\n"
-        "  commission_bps: 10\n"
-        "  funding_long_bps: 100\n"
-        "  funding_short_bps: 200\n",
+        "X-test:\n  commission_bps: 10\n  funding_long_bps: 100\n  funding_short_bps: 200\n",
         encoding="utf8",
     )
     file_model = load_market_costs(file_config, "X-test")

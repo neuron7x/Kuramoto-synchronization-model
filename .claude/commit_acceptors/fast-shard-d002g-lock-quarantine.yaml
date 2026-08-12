@@ -1,0 +1,63 @@
+# Diff-bound commit acceptor — quarantine the D-002G lock-anchor test (layer 3).
+#
+# Re-enumerating the fast lane on main @ 04798776 (after #1182) found exactly ONE
+# remaining failure: tests/systemic_risk/test_d002g_m2_locked_governance_untouched.py.
+# Root: #1174 ('repair 139 corrupted commands') rewrote inline commands in the
+# D-002G/M2 LOCKED acceptor x10r-d002g-p1-strike-scaffolding.yaml to satisfy the
+# acceptor-command-syntax gate, but did not re-anchor the M2 lock SHA. The lock
+# test correctly fired. Resolution (re-anchor vs revert) is a governance decision
+# tracked in #1183; this PR only keeps main real-green while that is pending.
+#
+# Locally verified:
+#   * full kept-set enumeration on main @ 04798776: 1 failure, --maxfail not hit
+#   * every active fast_quarantine.txt line carries issue=#<n>
+
+id: fast-shard-d002g-lock-quarantine
+status: ACTIVE
+claim_type: governance
+promise: >-
+  The single layer-3 fast-lane failure (the D-002G/M2 lock test, broken by #1174
+  mutating a locked acceptor without re-anchoring) is quarantined issue-bound to
+  #1183 in tests/ci/fast_quarantine.txt and recorded in the backlog ledger, so
+  main's python-fast-shard is real-green while the re-anchor/revert governance
+  decision is pending. No silent quarantine; any unquarantined failure still
+  fails CI.
+
+diff_scope:
+  changed_files:
+    - path: ".claude/commit_acceptors/fast-shard-d002g-lock-quarantine.yaml"
+    - path: "docs/ci/fast_backlog_ledger.md"
+    - path: "tests/ci/fast_quarantine.txt"
+  forbidden_paths:
+    - "core/"
+    - "src/"
+    - "runtime/"
+    - "trading/"
+    - "execution/"
+
+required_python_symbols: []
+
+expected_signal: >-
+  Every active line of tests/ci/fast_quarantine.txt matches issue=#<n>; the
+  D-002G lock test file is present in the quarantine and the backlog-ledger lists
+  the d002g_lock_anchor_stale cluster owned by #1183.
+
+measurement_command: "bash -c 'set -e; test -f tests/ci/fast_quarantine.txt; ! { grep -vE \"^[[:space:]]*#|^[[:space:]]*$\" tests/ci/fast_quarantine.txt | grep -qvE \"issue=#[0-9]+\"; }; grep -q \"tests/systemic_risk/test_d002g_m2_locked_governance_untouched.py\" tests/ci/fast_quarantine.txt; grep -q \"d002g_lock_anchor_stale\" docs/ci/fast_backlog_ledger.md; echo \"fast-shard-d002g-lock-quarantine: lock test issue-bound + ledgered\" | tee tmp/fast_shard_d002g_lock_quarantine.log'"
+
+signal_artifact: "tmp/fast_shard_d002g_lock_quarantine.log"
+
+falsifier:
+  command: "bash -c 'if grep -vE \"^[[:space:]]*#|^[[:space:]]*$\" tests/ci/fast_quarantine.txt | grep -qvE \"issue=#[0-9]+\"; then exit 0; else exit 1; fi'"
+  description: >-
+    Succeeds (exit 0, falsification) only if some active quarantine line lacks an
+    issue ref — a silent, untracked quarantine. On the green ledger every line is
+    issue-bound, so this exits 1, proving the no-silent-quarantine promise holds.
+
+rollback_command: "bash -c 'git checkout HEAD~1 -- tests/ci/fast_quarantine.txt docs/ci/fast_backlog_ledger.md; git rm -f .claude/commit_acceptors/fast-shard-d002g-lock-quarantine.yaml'"
+
+rollback_verification_command: "bash -c 'test ! -e .claude/commit_acceptors/fast-shard-d002g-lock-quarantine.yaml'"
+
+memory_update_type: append
+ledger_path: "docs/ci/fast_backlog_ledger.md"
+report_path: "tmp/fast_shard_d002g_lock_quarantine.log"
+evidence: []

@@ -1,0 +1,20 @@
+{
+  "_doc": "Package-boundary debt ledger (RATCHET). Non-geosync top-level packages still shipped in the wheel surface. This set may ONLY shrink; check_package_boundary.py enforces it. Target: empty (single geosync* namespace, release-gate B.wheel GREEN).",
+  "version": 2,
+  "measured_by": "wheel-build (git archive HEAD)",
+  "non_geosync_packages": [
+    "analytics",
+    "application",
+    "backtest",
+    "core",
+    "domain",
+    "execution",
+    "interfaces",
+    "libs",
+    "modules",
+    "observability",
+    "scripts",
+    "src",
+    "tools"
+  ]
+}

@@ -1,0 +1,12 @@
+A:
+  definition: validated human clinical evidence, guideline, systematic review, or robust prospective cohort
+  allowed_use: primary score
+B:
+  definition: controlled human observational or experimental evidence, or strong physiological proxy
+  allowed_use: primary or modifier with caution
+C:
+  definition: animal, in vitro, organ-on-chip, mechanistic evidence
+  allowed_use: research flag
+D:
+  definition: expert heuristic or engineering assumption
+  allowed_use: non-clinical annotation only

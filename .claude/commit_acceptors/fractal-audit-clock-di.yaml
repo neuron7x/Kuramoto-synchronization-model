@@ -1,0 +1,126 @@
+# Diff-bound commit acceptor for the Class-A/D Clock-DI migration.
+#
+# Closes the §2 refutation condition from
+# ``formal/micro_dynamic_bug_fractal_audit.md`` for the six highest-impact
+# priority-path modules: kill_switch, rebus_gate, adaptive_system_manager,
+# thermo_controller, cryptobiosis, engine/core. Every bare
+# ``datetime.now``, ``time.time``, ``time.monotonic``, ``perf_counter``
+# call in those modules is replaced by ``geosync.core.compat.default_clock()``
+# so the audit trace becomes byte-identical under ``FrozenClock`` replay.
+#
+# Class B (entropy governance) and Class C (silent exception absorption)
+# audited clean across priority paths — §11 closure ledger in the audit
+# doc records ANCHORED-CLOSED with zero patch.
+#
+# Locally verified (Python 3.12):
+#   * ruff format --check + ruff check: clean on 7 touched files
+#   * black --check: clean
+#   * mypy --strict: 5 strict-clean modules; thermo_controller clean with
+#     --ignore-missing-imports (optional torch / deap)
+#   * pytest: 75 passed (3 new + 72 pre-existing kill_switch / rebus_gate /
+#     cryptobiosis suites)
+
+id: fractal-audit-clock-di
+status: ACTIVE
+claim_type: determinism
+promise: >-
+  After this PR lands, every wall-clock read in ``runtime/kill_switch.py``,
+  ``runtime/rebus_gate.py``, ``runtime/adaptive_system_manager.py``,
+  ``runtime/thermo_controller.py``, ``core/neuro/cryptobiosis.py``, and
+  ``core/engine/core.py`` routes through
+  ``geosync.core.compat.default_clock()``. The three refutation tests in
+  ``tests/integration/test_fractal_audit_determinism.py`` enforce that a
+  ``FrozenClock`` replay produces identical audit-event timestamps,
+  identical ``rebus_gate.utc_now`` readings, and an identical
+  cryptobiosis vitrification ``entry_timestamp``.
+
+diff_scope:
+  changed_files:
+    - path: ".claude/commit_acceptors/fractal-audit-clock-di.yaml"
+    - path: "formal/micro_dynamic_bug_fractal_audit.md"
+    - path: "core/engine/core.py"
+    - path: "core/neuro/cryptobiosis.py"
+    - path: "runtime/adaptive_system_manager.py"
+    - path: "runtime/kill_switch.py"
+    - path: "runtime/rebus_gate.py"
+    - path: "runtime/thermo_controller.py"
+    - path: "tests/integration/test_fractal_audit_determinism.py"
+  forbidden_paths:
+    - "trading/"
+    - "execution/"
+    - "forecast/"
+
+required_python_symbols:
+  - "geosync.core.compat.default_clock"
+  - "geosync.core.compat.FrozenClock"
+  - "geosync.core.compat.use_clock"
+
+expected_signal: >-
+  ``python -m pytest tests/integration/test_fractal_audit_determinism.py
+  -q`` reports ``3 passed`` on the branch tip; the same command on
+  ``main`` (pre-migration) cannot pass because there are no
+  Clock-injectable seams in the migrated modules.
+
+measurement_command: >-
+  bash -c '
+    python -m pytest tests/integration/test_fractal_audit_determinism.py -q
+  '
+
+signal_artifact: "tmp/fractal_audit_clock_di.log"
+
+falsifier:
+  command: |-
+    bash -c '
+      python -c "
+    import ast, pathlib, sys
+    OFFENDERS = (
+        \"runtime/kill_switch.py\",
+        \"runtime/rebus_gate.py\",
+        \"runtime/adaptive_system_manager.py\",
+        \"runtime/thermo_controller.py\",
+        \"core/neuro/cryptobiosis.py\",
+        \"core/engine/core.py\",
+    )
+    bad = []
+    for f in OFFENDERS:
+        src = pathlib.Path(f).read_text()
+        tree = ast.parse(src)
+        for node in ast.walk(tree):
+            if isinstance(node, ast.Attribute) and isinstance(node.value, ast.Name):
+                if node.value.id == \"time\" and node.attr in {\"time\", \"monotonic\", \"perf_counter\"}:
+                    bad.append((f, node.lineno))
+                if node.value.id == \"datetime\" and node.attr in {\"now\", \"utcnow\"}:
+                    bad.append((f, node.lineno))
+    sys.exit(0 if bad else 1)
+      "
+    '
+  description: >-
+    Inverted check: scans the six migrated modules with AST and exits 0
+    (falsifier WINS) if any bare ``time.time``, ``time.monotonic``,
+    ``time.perf_counter``, ``datetime.now`` or ``datetime.utcnow`` call
+    re-appears. Exit 1 (acceptor WINS) means the Clock-DI invariant is
+    intact.
+
+rollback_command: >-
+  bash -c '
+    git checkout HEAD~1 --
+      core/engine/core.py
+      core/neuro/cryptobiosis.py
+      runtime/adaptive_system_manager.py
+      runtime/kill_switch.py
+      runtime/rebus_gate.py
+      runtime/thermo_controller.py && git rm -f
+      formal/micro_dynamic_bug_fractal_audit.md
+      tests/integration/test_fractal_audit_determinism.py
+      .claude/commit_acceptors/fractal-audit-clock-di.yaml
+  '
+
+rollback_verification_command: >-
+  bash -c '
+    grep -Eq "(^|[^_a-zA-Z0-9])time\.time\(\)" runtime/kill_switch.py && grep -Eq "datetime\.now\(timezone\.utc\)" core/engine/core.py
+  '
+
+memory_update_type: append
+ledger_path: ".claude/commit_acceptors/fractal-audit-clock-di.yaml"
+report_path: "tmp/fractal_audit_clock_di.log"
+evidence: []

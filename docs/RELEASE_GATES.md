@@ -1,8 +1,16 @@
+---
+doc_status:
+  status: current
+  authoritative_for:
+    - release_gate_requirements
+  valid_from: 2026-07-19
+---
+
 # Release Gates - Dopamine Loop (TD(0) RPE, DDM, Go/No-Go)
 
 ## Overview
 
-This document describes the comprehensive release gate system for TradePulse, combining progressive rollout quality gates with dopamine-based reinforcement learning mechanisms (TD(0) Reward Prediction Error, Drift-Diffusion Models, and Go/No-Go decision making) to ensure the highest code quality and reliability.
+This document describes the comprehensive release gate system for GeoSync, combining progressive rollout quality gates with dopamine-based reinforcement learning mechanisms (TD(0) Reward Prediction Error, Drift-Diffusion Models, and Go/No-Go decision making) to ensure the highest code quality and reliability.
 
 ## Core Quality Requirements (NEW)
 
@@ -115,4 +123,36 @@ When any gate fails:
 - Consult `docs/OPERATIONS.md` for remediation guidance
 
 ---
+
+## Manifest integrity — two distinct gates (REL-002)
+
+Two independent gates verify two different things. A PASS of one is **not** a PASS
+of the other. Distinct IDs, distinct scopes, independent negative tests
+(`tests/ci/test_manifest_scope.py`).
+
+| Gate ID | Script | Scope | Covers root `MANIFEST.sha256`? |
+|---|---|---|---|
+| `G-ROOT-MANIFEST` | `scripts/ci/check_root_manifest.py` | Byte-for-byte cold-verify of **every tracked file** against the root source manifest `MANIFEST.sha256`. | **Yes — the only gate that does.** |
+| `G-ARTIFACT-MANIFESTS` | `scripts/ci/check_manifest_hashes.py` | SHA-256 of artifacts referenced inside each `manifest.json` found via `rglob('manifest.json')` (evidence-freshness manifests). | **No.** |
+
+**Why the split exists.** `check_manifest_hashes.py` only opens files literally
+named `manifest.json`; it never touches the root `MANIFEST.sha256`. Before this
+split the name "manifest hashes" was read as whole-repo source integrity — it was
+not, and the root manifest drifted 138 commits (192 mismatches + 1 stale entry)
+with no gate going red (see `artifacts/release/root_manifest_report.json`).
+
+**Regenerate the root manifest LAST** in any change set (after `INVENTORY.json`),
+so it reflects the final tree:
+
+```
+python scripts/ci/generate_manifest.py           # rewrite
+python scripts/ci/check_root_manifest.py          # gate G-ROOT-MANIFEST (exit 1 on drift)
+```
+
+Both gates must run in the active `.gitlab-ci.yml` — the integrity gates
+previously lived only in GitHub Actions and stopped executing after the platform
+move.
+
+---
+**Updated:** 2026-07-19 - Split root vs artifact manifest gates (REL-002)
 **Updated:** 2025-11-11 - Added dopamine loop quality gates (coverage 98%, mutation 90%, risk assessment)

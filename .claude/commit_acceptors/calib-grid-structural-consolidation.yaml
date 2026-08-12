@@ -1,0 +1,169 @@
+# Diff-bound commit acceptor for the CALIB-GRID structural consolidation.
+#
+# Behavior-preserving, zero-tech-debt structural cleanup of the fractal
+# data-structure duplication that accreted across the four CALIB-GRID
+# lineages (PR #749 / #751 / #755 / #757). NOT a feature, NOT a science
+# change, NOT a gate/threshold edit.
+#
+# What was consolidated (evidenced lapse inventory):
+#   H1 CONFIRMED  4 verbatim json.dumps(sort_keys)->sha256 copies, 2
+#                 _branch_sha copies, 3 frozen-sha literal copies, 2
+#                 byte-identical _topology_f1 -> one _substrate.py.
+#   H3 CONFIRMED  ~80-line copy-evolved symmetric-joint scaffold in
+#                 estimate_swing_coupling + estimate_swing_coupling_
+#                 integral -> one shared _solve_symmetric_joint back end.
+#   H4 CONFIRMED  3 copy-evolved gate dataclasses (GateVerdict /
+#                 GateResult / CG002Gate) -> one typed Gate/GateRow.
+#   H5 CONFIRMED  recurring detect-secrets UNION conflict root = hex
+#                 content-hashes in line-pinned sha-frozen RESULTS.json;
+#                 structurally excluded the immutable artifacts (source
+#                 still scanned) -> no more re-fold / rebase conflict.
+#
+# HARD behavior-preserving invariants verified:
+#   * 4 sha-pinned ledgers byte-identical: provenance-stripped
+#     structural sha256 ba10ed13.. / 8315eb0a.. / d0f89e24.. /
+#     b3f8afa1.. reproduced exactly (golden test).
+#   * both swing estimator classes bit-identical (K-hat / P-hat /
+#     verdict raw-byte hashes pinned) through the shared back end.
+#   * every pre-existing drift / no-peek / bit-stability test green
+#     WITHOUT modification (calib + integral + identifiability +
+#     coupling + systemic_risk: full fast+slow green; no test file in
+#     the existing suite was touched).
+#   * mypy --strict / ruff / black clean on every touched file
+#     (fresh-cache; the stale .mypy_cache `google` crash is an
+#     environmental cache corruption, not a code defect).
+#
+# Net: -145 duplicated LOC across the four lineages + a single shared
+# _substrate.py; -160 duplicated estimator LOC + one shared back end;
+# detect-secrets baseline -107 lines (line-pinned RESULTS.json entries
+# removed, replaced by one file-exclude regex). New regression suite
+# adds 7 tests pinning every consolidated structure to the legacy bytes.
+
+id: calib-grid-structural-consolidation
+status: ACTIVE
+claim_type: documentation
+promise: >-
+  After this PR lands, research/calibration/grid_kuramoto/_substrate.py
+  is the single source of the ledger sha-pinning (ledger_sha256), the
+  git-HEAD reader (branch_sha), the audited parent content-hash
+  constants (FROZEN_PREREG_SHA / PARENT_LEDGER_SHA256 /
+  PREREG_BRANCH_BASE_SHA), the typed gate primitive (Gate / GateRow)
+  and the thresholded-support F1 (topology_f1); the four CALIB-GRID
+  lineage modules import or thinly wrap it instead of carrying their
+  own copy. core.kuramoto.coupling_estimator ships one shared
+  _solve_symmetric_joint back end that both estimate_swing_coupling
+  (symmetric, differential) and estimate_swing_coupling_integral
+  (weak/integral) delegate the identical standardise->PE->lstsq->
+  unpack->identifiability->omega tail to. The detect-secrets baseline
+  excludes the immutable sha-pinned research/calibration/grid_kuramoto/
+  RESULTS.json artifacts at the file level (the emitting Python source
+  is still scanned). The change is byte-preserving: all four sha-pinned
+  ledgers and both estimator classes are bit-identical, and every
+  pre-existing drift / no-peek / bit-stability test stays green without
+  modification. No gate, threshold, seed, sigma, theta0 or decision
+  rule was touched; no science claim is promoted.
+diff_scope:
+  changed_files:
+    - path: ".claude/commit_acceptors/calib-grid-structural-consolidation.yaml"
+    - path: "core/kuramoto/coupling_estimator.py"
+    - path: "research/calibration/grid_kuramoto/_substrate.py"
+    - path: "research/calibration/grid_kuramoto/__init__.py"
+    - path: "research/calibration/grid_kuramoto/calibration.py"
+    - path: "research/calibration/grid_kuramoto/gates.py"
+    - path: "research/calibration/grid_kuramoto/run.py"
+    - path: "research/calibration/grid_kuramoto/cg002/cg002.py"
+    - path: "research/calibration/grid_kuramoto/identifiability/validate.py"
+    - path: "tests/research/calibration/test_calib_substrate_consolidation.py"
+    - path: ".github/detect-secrets.baseline"
+  forbidden_paths:
+    - "trading/"
+    - "execution/"
+    - "forecast/"
+    - "policy/"
+    - "core/physics/"
+    - "research/calibration/grid_kuramoto/PREREGISTRATION.md"
+    - "research/calibration/grid_kuramoto/RESULTS.json"
+    - "research/calibration/grid_kuramoto/RESULTS.md"
+    - "research/calibration/grid_kuramoto/r1/"
+    - "research/calibration/grid_kuramoto/cg002/RESULTS.json"
+    - "research/calibration/grid_kuramoto/cg002/RESULTS.md"
+    - "research/calibration/grid_kuramoto/cg002/PREREGISTRATION_002.yaml"
+    - "research/calibration/grid_kuramoto/identifiability/RESULTS.json"
+    - "research/calibration/grid_kuramoto/identifiability/THRESHOLD_PROVENANCE.md"
+    - "core/kuramoto/identifiability.py"
+    - "application/governance/claim_ledger.py"
+    - "application/governance/commit_acceptor.py"
+    - "tests/research/calibration/test_grid_kuramoto.py"
+required_python_symbols:
+  - "research/calibration/grid_kuramoto/_substrate.py::ledger_sha256"
+  - "research/calibration/grid_kuramoto/_substrate.py::branch_sha"
+  - "research/calibration/grid_kuramoto/_substrate.py::topology_f1"
+  - "research/calibration/grid_kuramoto/_substrate.py::Gate"
+  - "research/calibration/grid_kuramoto/_substrate.py::GateRow"
+  - "core/kuramoto/coupling_estimator.py::_solve_symmetric_joint"
+expected_signal: >-
+  `pytest tests/research/calibration/test_calib_substrate_consolidation.py
+  tests/research/calibration/test_grid_kuramoto.py
+  tests/unit/core/test_kuramoto_coupling_estimator.py
+  tests/unit/core/test_kuramoto_integral_estimator.py
+  tests/unit/core/test_kuramoto_identifiability.py -m "not slow"`
+  is green; the @slow suite is green; mypy --strict / ruff / black are
+  clean on the diff; the four lineage ledgers reproduce their frozen
+  provenance-stripped structural sha256 and both swing estimator
+  classes are bit-identical; the gates.py / r1 / cg002 / identifiability
+  RESULTS artifacts and PREREGISTRATION docs are byte-unchanged.
+measurement_command: >-
+  bash -c '
+    rm -rf .mypy_cache &&
+    mypy --strict --follow-imports=silent
+      core/kuramoto/coupling_estimator.py
+      research/calibration/grid_kuramoto/
+      tests/research/calibration/test_calib_substrate_consolidation.py && ruff check core/kuramoto/coupling_estimator.py
+       research/calibration/grid_kuramoto
+       tests/research/calibration/test_calib_substrate_consolidation.py && black --check core/kuramoto/coupling_estimator.py
+       research/calibration/grid_kuramoto
+       tests/research/calibration/test_calib_substrate_consolidation.py && python -m pytest
+       tests/research/calibration/test_calib_substrate_consolidation.py
+       tests/research/calibration/test_grid_kuramoto.py
+       tests/unit/core/test_kuramoto_coupling_estimator.py
+       tests/unit/core/test_kuramoto_integral_estimator.py
+       tests/unit/core/test_kuramoto_identifiability.py -q -m "not slow"
+  '
+signal_artifact: "tmp/calib_grid_structural_consolidation.log"
+falsifier:
+  command: >-
+    bash -c '
+      python -m pytest
+      "tests/research/calibration/test_calib_substrate_consolidation.py::test_both_swing_classes_bit_identical_through_shared_back_end"
+      "tests/research/calibration/test_calib_substrate_consolidation.py::test_substrate_is_single_source_no_surviving_duplicates"
+      "tests/research/calibration/test_grid_kuramoto.py::test_r1_results_json_matches_committed_artifact"
+      "tests/research/calibration/test_grid_kuramoto.py::test_cg002_results_json_matches_committed_artifact"
+      -q >/tmp/_calib_consol_rails.log 2>&1 && ! grep -q "4 passed" /tmp/_calib_consol_rails.log
+    '
+  description: >-
+    Probes the load-bearing behavior-preserving rails: both swing
+    estimator classes stay bit-identical through the shared back end;
+    the substrate is the single source (no surviving duplicate gate
+    dataclass / sha-pinning copy / topology_f1); and the pre-existing
+    R1 / CG002 sha-pinned-artifact reproduction tests still pass
+    unmodified. The falsifier succeeds (exit 0) only when one of these
+    rails fails — i.e. the refactor stopped being byte-preserving.
+rollback_command: >-
+  bash -c 'git checkout origin/main --
+    core/kuramoto/coupling_estimator.py
+    research/calibration/grid_kuramoto/__init__.py
+    research/calibration/grid_kuramoto/calibration.py
+    research/calibration/grid_kuramoto/gates.py
+    research/calibration/grid_kuramoto/run.py
+    research/calibration/grid_kuramoto/cg002/cg002.py
+    research/calibration/grid_kuramoto/identifiability/validate.py
+    .github/detect-secrets.baseline && rm -f
+    research/calibration/grid_kuramoto/_substrate.py
+    tests/research/calibration/test_calib_substrate_consolidation.py
+    .claude/commit_acceptors/calib-grid-structural-consolidation.yaml'
+rollback_verification_command: >-
+  bash -c '! test -f research/calibration/grid_kuramoto/_substrate.py && ! grep -q _solve_symmetric_joint core/kuramoto/coupling_estimator.py'
+memory_update_type: append
+ledger_path: ".claude/commit_acceptors/calib-grid-structural-consolidation.yaml"
+report_path: "tmp/calib_grid_structural_consolidation.log"
+evidence: []

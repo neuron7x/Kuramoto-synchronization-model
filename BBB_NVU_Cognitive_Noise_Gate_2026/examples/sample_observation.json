@@ -1,0 +1,26 @@
+{
+  "observation_id": "obs-001",
+  "subject_id": "S001",
+  "timestamp": "2026-06-03T08:00:00Z",
+  "source_type": "wearable",
+  "domain": "glymphatic_sleep",
+  "measure_code": "sleep_fragmentation_index",
+  "value": 0.42,
+  "unit": "ratio",
+  "method": "wearable-derived proxy",
+  "evidence_grade": "B",
+  "quality_score": 0.81,
+  "provenance": {
+    "record_id": "prov-obs-001",
+    "created_at": "2026-06-03T08:01:00Z",
+    "agent": "sensor-gateway",
+    "source_id": "wearable-abc",
+    "activity": "measured",
+    "version": "1.0.0",
+    "input_hash": "",
+    "output_hash": "",
+    "signature": "",
+    "license": "subject-consented-research"
+  },
+  "notes": "Example only; not a diagnostic measure."
+}

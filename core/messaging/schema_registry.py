@@ -1,4 +1,6 @@
-"""Local schema registry with compatibility validation for TradePulse events."""
+# Copyright (c) 2023-2026 Yaroslav Vasylenko (neuron7xLab)
+# SPDX-License-Identifier: MIT
+"""Local schema registry with compatibility validation for GeoSync events."""
 
 from __future__ import annotations
 
@@ -76,17 +78,13 @@ class EventSchemaRegistry:
         root = Path(base_path)
         registry_path = root / "registry.json"
         if not registry_path.exists():
-            raise FileNotFoundError(
-                f"Schema registry descriptor not found: {registry_path}"
-            )
+            raise FileNotFoundError(f"Schema registry descriptor not found: {registry_path}")
         with registry_path.open("r", encoding="utf-8") as handle:
             payload = json.load(handle)
         events: Dict[str, List[SchemaVersionInfo]] = {}
         subjects: Dict[str, Dict[Version, str]] = {}
         namespaces: Dict[str, Dict[Version, str]] = {}
-        versions_index: Dict[
-            str, Dict[Version, Dict[SchemaFormat, SchemaVersionInfo]]
-        ] = {}
+        versions_index: Dict[str, Dict[Version, Dict[SchemaFormat, SchemaVersionInfo]]] = {}
         for event_type, event_data in payload.get("events", {}).items():
             versions: List[SchemaVersionInfo] = []
             subject_map: Dict[Version, str] = {}
@@ -141,9 +139,7 @@ class EventSchemaRegistry:
                     proto_info = SchemaVersionInfo(
                         version=parsed_version,
                         version_str=raw_version,
-                        path=(
-                            root / version_info[SchemaFormat.PROTOBUF.value]
-                        ).resolve(),
+                        path=(root / version_info[SchemaFormat.PROTOBUF.value]).resolve(),
                         format=SchemaFormat.PROTOBUF,
                         subject=subject,
                         namespace=namespace,
@@ -172,9 +168,7 @@ class EventSchemaRegistry:
             raise KeyError(f"Unknown event type '{event_type}'")
         return sorted(self._versions[event_type].keys())
 
-    def get_versions(
-        self, event_type: str, fmt: SchemaFormat
-    ) -> List[SchemaVersionInfo]:
+    def get_versions(self, event_type: str, fmt: SchemaFormat) -> List[SchemaVersionInfo]:
         if event_type not in self._registry:
             raise KeyError(f"Unknown event type '{event_type}'")
         return [info for info in self._registry[event_type] if info.format is fmt]
@@ -195,9 +189,7 @@ class EventSchemaRegistry:
             raise KeyError(f"Unknown event type '{event_type}'")
         event_versions = self._versions[event_type]
         if version not in event_versions:
-            raise KeyError(
-                f"Version '{version}' not registered for event '{event_type}'"
-            )
+            raise KeyError(f"Version '{version}' not registered for event '{event_type}'")
         format_map = event_versions[version]
         if fmt not in format_map:
             raise KeyError(
@@ -222,9 +214,7 @@ class EventSchemaRegistry:
             version = Version(version)
         subject_map = self._subjects[event_type]
         if version not in subject_map:
-            raise KeyError(
-                f"No subject registered for version '{version}' of '{event_type}'"
-            )
+            raise KeyError(f"No subject registered for version '{version}' of '{event_type}'")
         return subject_map[version]
 
     def namespace(self, event_type: str, version: str | Version | None = None) -> str:
@@ -238,9 +228,7 @@ class EventSchemaRegistry:
             version = Version(version)
         namespace_map = self._namespaces[event_type]
         if version not in namespace_map:
-            raise KeyError(
-                f"No namespace registered for version '{version}' of '{event_type}'"
-            )
+            raise KeyError(f"No namespace registered for version '{version}' of '{event_type}'")
         return namespace_map[version]
 
     def validate_format_coverage(
@@ -313,9 +301,7 @@ class EventSchemaRegistry:
         for avro_info in avro_versions:
             schema = avro_info.load()
             _lint_avro_schema(schema, event_type, avro_info.version_str)
-            json_info = self._versions[event_type][avro_info.version].get(
-                SchemaFormat.JSON
-            )
+            json_info = self._versions[event_type][avro_info.version].get(SchemaFormat.JSON)
             if json_info:
                 json_schema = json_info.load()
                 _lint_json_schema_alignment(
@@ -324,9 +310,7 @@ class EventSchemaRegistry:
                     event_type,
                     avro_info.version_str,
                 )
-            proto_info = self._versions[event_type][avro_info.version].get(
-                SchemaFormat.PROTOBUF
-            )
+            proto_info = self._versions[event_type][avro_info.version].get(SchemaFormat.PROTOBUF)
             if proto_info:
                 _lint_protobuf_alignment(
                     schema,
@@ -341,9 +325,7 @@ class EventSchemaRegistry:
         summary: Dict[str, Dict[str, Any]] = {}
         for event in sorted(self.available_events()):
             versions = []
-            for version in sorted(
-                self._versions[event].items(), key=lambda item: item[0]
-            ):
+            for version in sorted(self._versions[event].items(), key=lambda item: item[0]):
                 version_id, formats = version
                 entry = {
                     "version": str(version_id),
@@ -450,8 +432,7 @@ def _is_nullable(field: Mapping[str, Any]) -> bool:
     avro_type = field["type"]
     if isinstance(avro_type, list):
         return any(
-            member == "null"
-            or (isinstance(member, Mapping) and member.get("type") == "null")
+            member == "null" or (isinstance(member, Mapping) and member.get("type") == "null")
             for member in avro_type
         )
     return False
@@ -459,9 +440,7 @@ def _is_nullable(field: Mapping[str, Any]) -> bool:
 
 def _lint_avro_schema(schema: Mapping[str, Any], event_type: str, version: str) -> None:
     if schema.get("type") != "record":
-        raise SchemaLintError(
-            f"{event_type}@{version}: root schema must be an Avro record"
-        )
+        raise SchemaLintError(f"{event_type}@{version}: root schema must be an Avro record")
     record_name = schema.get("name", "<unknown>")
     if not schema.get("doc"):
         raise SchemaLintError(
@@ -470,22 +449,16 @@ def _lint_avro_schema(schema: Mapping[str, Any], event_type: str, version: str) 
 
     fields = schema.get("fields", [])
     if not isinstance(fields, list) or not fields:
-        raise SchemaLintError(
-            f"{event_type}@{version}: record '{record_name}' defines no fields"
-        )
+        raise SchemaLintError(f"{event_type}@{version}: record '{record_name}' defines no fields")
 
     schema_field_names = {field.get("name") for field in fields}
     if "schema_version" not in schema_field_names:
         raise SchemaLintError(
             f"{event_type}@{version}: record '{record_name}' missing 'schema_version' field"
         )
-    schema_version_field = next(
-        field for field in fields if field.get("name") == "schema_version"
-    )
+    schema_version_field = next(field for field in fields if field.get("name") == "schema_version")
     if _normalise_avro_type(schema_version_field.get("type")) != ("string",):
-        raise SchemaLintError(
-            f"{event_type}@{version}: 'schema_version' must be a string"
-        )
+        raise SchemaLintError(f"{event_type}@{version}: 'schema_version' must be a string")
 
     for record in _iter_avro_records(schema):
         record_doc = record.get("doc")
@@ -519,9 +492,7 @@ def _lint_json_schema_alignment(
 ) -> None:
     properties = json_schema.get("properties", {})
     if not isinstance(properties, Mapping):
-        raise SchemaLintError(
-            f"{event_type}@{version}: JSON schema missing object properties"
-        )
+        raise SchemaLintError(f"{event_type}@{version}: JSON schema missing object properties")
 
     avro_fields = avro_schema.get("fields", [])
     avro_field_names = [field["name"] for field in avro_fields]

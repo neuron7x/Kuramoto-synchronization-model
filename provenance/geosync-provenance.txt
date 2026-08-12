@@ -1,0 +1,6 @@
+GeoSync — proof-of-existence timestamp
+Author: Yaroslav Vasylenko (neuron7xLab)
+GitLab: https://gitlab.com/neuron7x/GeoSync
+Branch: main
+HEAD commit SHA: 5b93d14e92e76e726aa3c37b0e543433557d750b
+Stamped (UTC): 2026-07-17T17:33:37Z

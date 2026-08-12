@@ -1,0 +1,91 @@
+# Diff-bound commit acceptor for the Canonical-Seven orchestrator.
+#
+# Capstone of the Canonical Seven foundation work. Adds a single
+# pure-function entry point that takes a bundle of pillar outputs
+# (firewall, leakage, ladder, fragility, replication) plus the
+# current GovernanceFSM, and returns the post-application FSM along
+# with the dominant TierTransition.
+#
+# This closes the gap between "every pillar exists" and "every pillar
+# is callable in one canonical round". After this PR, callers no
+# longer need to know about DeathState/DeathConditionsRegistry/
+# default_registry plumbing — they just call run_canonical_seven.
+#
+# Pure-function, no I/O, mypy --strict / ruff / black clean.
+#
+# Locally verified:
+#   * pytest tests/research/systemic_risk/test_canonical_seven.py: 10/10 pass
+#   * pytest tests/research/systemic_risk/: 388/388 pass
+#   * mypy --strict on orchestrator + test file: 0 errors
+#   * ruff + black on changed files: clean
+
+id: canonical-seven-orchestrator
+status: ACTIVE
+claim_type: governance
+promise: >-
+  After this PR lands, ``research.systemic_risk`` exposes
+  ``run_canonical_seven`` plus its frozen input/outcome dataclasses.
+  One call drives a claim through the canonical round (firewall →
+  leakage → ladder → fragility → replication → death engine → FSM)
+  and returns the new FSM state.
+
+diff_scope:
+  changed_files:
+    - path: ".claude/commit_acceptors/canonical-seven-orchestrator.yaml"
+    - path: "research/systemic_risk/__init__.py"
+    - path: "research/systemic_risk/canonical_seven.py"
+    - path: "tests/research/systemic_risk/test_canonical_seven.py"
+  forbidden_paths:
+    - "trading/"
+    - "execution/"
+    - "forecast/"
+    - "policy/"
+    - "core/"
+    - "runtime/"
+    - "application/"
+
+required_python_symbols:
+  - "research/systemic_risk/canonical_seven.py::run_canonical_seven"
+  - "research/systemic_risk/canonical_seven.py::CanonicalSevenInputs"
+  - "research/systemic_risk/canonical_seven.py::CanonicalSevenOutcome"
+  - "tests/research/systemic_risk/test_canonical_seven.py::TestCanonicalSevenOrchestrator"
+
+expected_signal: >-
+  ``pytest tests/research/systemic_risk/test_canonical_seven.py -q``
+  reports 10 passed; before this PR the same command fails with
+  ModuleNotFoundError on ``research.systemic_risk.canonical_seven``.
+
+measurement_command: >-
+  bash -c '
+    mypy --strict
+      research/systemic_risk/canonical_seven.py
+      tests/research/systemic_risk/test_canonical_seven.py && python -m pytest tests/research/systemic_risk/test_canonical_seven.py -q
+  '
+
+signal_artifact: "tmp/canonical_seven_orchestrator.log"
+
+falsifier:
+  command: |-
+    bash -c '
+      python -c "from research.systemic_risk import run_canonical_seven, CanonicalSevenInputs, GovernanceFSM; assert run_canonical_seven(inputs=CanonicalSevenInputs(), fsm_before=GovernanceFSM.initial()).fsm_after.state == \"IDEA\"" 2>/dev/null && exit 1 || exit 0
+    '
+  description: >-
+    Probes that the orchestrator runs end-to-end on empty inputs and
+    leaves the FSM at IDEA. Falsifier inverts: it succeeds (exit 0)
+    only when the import or the empty-pipeline assertion fails.
+
+rollback_command: >-
+  bash -c '
+    git rm -f
+      research/systemic_risk/canonical_seven.py
+      tests/research/systemic_risk/test_canonical_seven.py
+      .claude/commit_acceptors/canonical-seven-orchestrator.yaml && git checkout HEAD~1 -- research/systemic_risk/__init__.py
+  '
+
+rollback_verification_command: |-
+  python -c "import importlib.util,importlib,sys; _p=lambda m: all(importlib.util.find_spec('.'.join(m.split('.')[:i+1])) for i in range(len(m.split('.')))); present=_p('research.systemic_risk') and hasattr(importlib.import_module('research.systemic_risk'),'run_canonical_seven'); sys.exit(1 if present else 0)"
+
+memory_update_type: append
+ledger_path: ".claude/commit_acceptors/canonical-seven-orchestrator.yaml"
+report_path: "tmp/canonical_seven_orchestrator.log"
+evidence: []

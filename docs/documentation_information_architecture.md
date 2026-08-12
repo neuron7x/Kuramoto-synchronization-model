@@ -2,7 +2,7 @@
 
 ## Objective
 
-This reference defines the canonical structure, lifecycle, and ownership model for the TradePulse documentation
+This reference defines the canonical structure, lifecycle, and ownership model for the GeoSync documentation
 portfolio. It ensures that architecture, operations, and governance narratives remain consistent with the
 capability blueprint, that every page has a clear steward, and that contributors can quickly determine where
 to add or update content during a release cycle.
@@ -33,7 +33,7 @@ Each sphere inherits the contribution workflow defined below and maps to program
 | **Published** | Merged to `main`, site regenerated, navigation updated. | MkDocs build green, links verified by `make docs-check`. | Release note entry generated, documentation summary updated. |
 | **Operationalised** | Page referenced in runbooks, onboarding, or policy automation. | Quarterly validation, telemetry instrumentation if data-driven. | Remains evergreen or re-enters Draft upon scope change. |
 
-Lifecycle transitions are recorded in [`DOCUMENTATION_SUMMARY.md`](../DOCUMENTATION_SUMMARY.md) with links to
+Lifecycle transitions are recorded in [`DOCUMENTATION_SUMMARY.md`](operations/DOCUMENTATION_SUMMARY.md) with links to
 supporting issues, ADRs, and retrospectives.
 
 ## Ownership & Stewardship
@@ -88,5 +88,5 @@ including post-incident updates captured in [`docs/incident_playbooks.md`](incid
 - **Archival Policy** requires exporting superseded documents to `docs/archive/` with deprecation notices when
   major program shifts occur.
 
-Adhering to this information architecture keeps TradePulse documentation authoritative, traceable, and ready
+Adhering to this information architecture keeps GeoSync documentation authoritative, traceable, and ready
 for stakeholder scrutiny at any point in the delivery lifecycle.

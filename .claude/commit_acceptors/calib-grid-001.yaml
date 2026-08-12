@@ -1,0 +1,106 @@
+# Diff-bound commit acceptor for CALIB-GRID-001.
+#
+# Operationalises an external ground-truth calibration (NOT a
+# hypothesis) of the Kuramoto inverse-problem stack against the
+# Dörfler-Bullo power-grid reduction (PNAS 2013) on the canonical
+# WSCC 9-bus / IEEE-39 IEEE test systems. Pre-registered, fail-closed:
+# the gates in gates.py are mirrored byte-for-numeric by
+# PREREGISTRATION.md and the verdict is NEGATIVE (informative — the
+# miss localises to the first-order coupling_estimator applied to
+# second-order swing data; see RESULTS.md).
+#
+# Locally verified:
+#   * pytest tests/research/calibration/ -m "not slow": 16 passed
+#   * pytest tests/research/calibration/ -m slow: 1 passed (IEEE-39)
+#   * mypy --strict: clean on every new file (the 5 pre-existing
+#     core/kuramoto/jax_engine errors persist on origin/main and are
+#     out of scope)
+#   * ruff check + ruff format + black --check: clean on the diff
+#   * preregistration <-> gates.py drift test passes (fail-closed)
+
+id: calib-grid-001
+status: ACTIVE
+claim_type: documentation
+promise: >-
+  After this PR lands, research/calibration/grid_kuramoto/ ships a
+  pre-registered, fail-closed external ground-truth calibration of
+  GeoSync's Kuramoto coupling inverse-problem stack against the
+  Dörfler-Bullo power-grid reduction (PNAS 2013) on the canonical
+  WSCC 9-bus IEEE test system. The verdict is NEGATIVE and sha-pinned:
+  the estimator recovers grid topology support exactly (noiseless
+  F1=1.0) but not signed coupling weights, localising the miss to the
+  first-order coupling_estimator applied to second-order swing data.
+  No scientific claim is promoted; this is a calibration instrument.
+diff_scope:
+  changed_files:
+    - path: ".claude/commit_acceptors/calib-grid-001.yaml"
+    - path: ".github/detect-secrets.baseline"
+    - path: "research/calibration/grid_kuramoto/__init__.py"
+    - path: "research/calibration/grid_kuramoto/grid_data.py"
+    - path: "research/calibration/grid_kuramoto/calibration.py"
+    - path: "research/calibration/grid_kuramoto/gates.py"
+    - path: "research/calibration/grid_kuramoto/run.py"
+    - path: "research/calibration/grid_kuramoto/RESULTS.json"
+    - path: "research/calibration/grid_kuramoto/README.md"
+    - path: "research/calibration/grid_kuramoto/PREREGISTRATION.md"
+    - path: "research/calibration/grid_kuramoto/PROVENANCE.md"
+    - path: "research/calibration/grid_kuramoto/RESULTS.md"
+    - path: "tests/research/calibration/test_grid_kuramoto.py"
+  forbidden_paths:
+    - "trading/"
+    - "execution/"
+    - "forecast/"
+    - "policy/"
+    - "core/physics/"
+    - "core/kuramoto/"
+    - "application/governance/claim_ledger.py"
+    - "application/governance/commit_acceptor.py"
+required_python_symbols:
+  - "research/calibration/grid_kuramoto/grid_data.py::coupling_from_susceptance"
+  - "research/calibration/grid_kuramoto/grid_data.py::natural_frequency_from_injection"
+  - "research/calibration/grid_kuramoto/grid_data.py::dorfler_bullo_critical_coupling"
+  - "research/calibration/grid_kuramoto/grid_data.py::wscc_9_bus"
+  - "research/calibration/grid_kuramoto/grid_data.py::ieee_39_new_england"
+  - "research/calibration/grid_kuramoto/calibration.py::run_calibration"
+  - "research/calibration/grid_kuramoto/gates.py::evaluate_gates"
+  - "research/calibration/grid_kuramoto/gates.py::overall_verdict"
+  - "research/calibration/grid_kuramoto/run.py::build_ledger"
+expected_signal: >-
+  `pytest tests/research/calibration/ -m "not slow"` reports
+  "16 passed"; the @slow IEEE-39 test passes; mypy --strict / ruff /
+  black are clean on the diff; the preregistration<->gates drift test
+  passes; build_ledger emits verdict == "NEGATIVE" with a non-empty
+  localized_refinement_targets list.
+measurement_command: >-
+  bash -c '
+    mypy --strict --follow-imports=silent
+      research/calibration/grid_kuramoto/
+      tests/research/calibration/test_grid_kuramoto.py && ruff check research/calibration tests/research/calibration && black --check research/calibration tests/research/calibration && python -m pytest tests/research/calibration/ -q -m "not slow"
+  '
+signal_artifact: "tmp/calib_grid_001.log"
+falsifier:
+  command: >-
+    bash -c '
+      python -m pytest
+      tests/research/calibration/test_grid_kuramoto.py::test_wscc9_verdict_is_negative_and_localized
+      tests/research/calibration/test_grid_kuramoto.py::test_preregistration_matches_code
+      tests/research/calibration/test_grid_kuramoto.py::test_identifiability_sweep_weak_regime
+      -q >/tmp/_calib_rails.log 2>&1 && ! grep -q "3 passed" /tmp/_calib_rails.log
+    '
+  description: >-
+    Probes three load-bearing rails: the WSCC-9 verdict is NEGATIVE
+    with a concrete localisation string, the pre-registration mirrors
+    gates.py byte-for-numeric (no post-data drift), and the estimator
+    recovers K in its design regime (instrument soundness). The
+    falsifier succeeds (exit 0) only when one of these rails fails.
+rollback_command: >-
+  bash -c 'rm -rf
+    research/calibration/grid_kuramoto
+    tests/research/calibration/test_grid_kuramoto.py
+    .claude/commit_acceptors/calib-grid-001.yaml'
+rollback_verification_command: >-
+  bash -c '! test -d research/calibration/grid_kuramoto'
+memory_update_type: append
+ledger_path: ".claude/commit_acceptors/calib-grid-001.yaml"
+report_path: "tmp/calib_grid_001.log"
+evidence: []

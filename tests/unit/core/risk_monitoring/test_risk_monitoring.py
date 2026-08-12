@@ -1,4 +1,5 @@
-# SPDX-License-Identifier: LicenseRef-TradePulse-Proprietary
+# Copyright (c) 2023-2026 Yaroslav Vasylenko (neuron7xLab)
+# SPDX-License-Identifier: MIT
 """Tests for Risk Monitoring Framework."""
 
 from __future__ import annotations
@@ -228,12 +229,10 @@ class TestPerformanceTracker:
 
     def test_drawdown_calculation(self) -> None:
         """Test drawdown calculation."""
-        tracker = PerformanceTracker(
-            PerformanceTrackerConfig(initial_capital=100_000)
-        )
+        tracker = PerformanceTracker(PerformanceTrackerConfig(initial_capital=100_000))
 
         tracker.update_equity(110_000)  # New peak
-        tracker.update_equity(99_000)   # Drawdown
+        tracker.update_equity(99_000)  # Drawdown
 
         metrics = tracker.get_metrics()
         # Drawdown from 110k to 99k = 10%
@@ -292,11 +291,7 @@ class TestFailSafeController:
         """Test escalation to higher levels."""
         controller = FailSafeController()
 
-        state = controller.escalate_to(
-            FailSafeLevel.CAUTION,
-            "Test escalation",
-            source="test"
-        )
+        state = controller.escalate_to(FailSafeLevel.CAUTION, "Test escalation", source="test")
 
         assert state.level == FailSafeLevel.CAUTION
         assert state.active is True
@@ -474,9 +469,7 @@ class TestIntegration:
             )
         )
 
-    def test_stress_to_failsafe_escalation(
-        self, framework: RiskMonitoringFramework
-    ) -> None:
+    def test_stress_to_failsafe_escalation(self, framework: RiskMonitoringFramework) -> None:
         """Test that stress triggers fail-safe escalation."""
         # Simulate market crash with critical drawdown
         signals = MarketSignals(
@@ -499,9 +492,7 @@ class TestIntegration:
         assert assessment.requires_action is True
         assert assessment.risk_score > 0.3
 
-    def test_complete_assessment_cycle(
-        self, framework: RiskMonitoringFramework
-    ) -> None:
+    def test_complete_assessment_cycle(self, framework: RiskMonitoringFramework) -> None:
         """Test complete assessment cycle."""
         # 1. Update market data
         returns = np.random.normal(0, 0.01, 30)
@@ -527,9 +518,7 @@ class TestIntegration:
         if assessment.risk_score < 0.3:
             assert not assessment.requires_action
 
-    def test_compliance_audit_trail(
-        self, framework: RiskMonitoringFramework
-    ) -> None:
+    def test_compliance_audit_trail(self, framework: RiskMonitoringFramework) -> None:
         """Test compliance audit trail."""
         # Perform several operations
         framework.update_equity(105_000)

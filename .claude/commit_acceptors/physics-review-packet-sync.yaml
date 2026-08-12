@@ -1,0 +1,52 @@
+# ci-heartbeat: physics-review-packet-sync
+id: physics-review-packet-sync
+status: ACTIVE
+claim_type: governance
+promise: >-
+  Bind the generated physics review packet surface to a concrete governance
+  acceptor. The PR updates committed physics evidence documents, the packet
+  builder, and catalog reconciliation metadata so readers see the same law count
+  and witness surface that CI validates.
+diff_scope:
+  changed_files:
+    - path: ".claude/commit_acceptors/physics-review-packet-sync.yaml"
+    - path: "docs/PHYSICS_CLAIMS.md"
+    - path: "docs/PHYSICS_REVIEW_PACKET.md"
+    - path: "docs/PHYSICS_VERDICT.md"
+    - path: "tools/build_physics_review_packet.py"
+    - path: "physics_contracts/catalog.yaml"
+  forbidden_paths:
+    - "trading/"
+    - "execution/"
+    - "forecast/"
+    - "policy/"
+required_python_symbols: []
+expected_signal: >-
+  The physics review packet builder emits docs that match the executable
+  falsification catalog surface and the physics contract validator passes without
+  stale law-count claims.
+measurement_command: >-
+  PYTHONPATH=. python tools/build_physics_review_packet.py && PYTHONPATH=.
+  python tools/validate_physics_contracts.py
+signal_artifact: "tmp/physics_review_packet_sync.log"
+falsifier:
+  command: >-
+    PYTHONPATH=. python tools/build_physics_review_packet.py && PYTHONPATH=.
+    python tools/validate_physics_contracts.py
+  description: >-
+    Fails if generated physics packet documents drift from the executable catalog
+    or if catalog validation does not pass.
+rollback_command: >-
+  git checkout origin/main -- docs/PHYSICS_CLAIMS.md docs/PHYSICS_REVIEW_PACKET.md
+  docs/PHYSICS_VERDICT.md tools/build_physics_review_packet.py physics_contracts/catalog.yaml
+rollback_verification_command: >-
+  PYTHONPATH=. python tools/validate_physics_contracts.py
+memory_update_type: none
+ledger_path: ".claude/commit_acceptors/physics-review-packet-sync.yaml"
+report_path: ".claude/commit_acceptors/physics-review-packet-sync.yaml"
+evidence:
+  - path: "docs/PHYSICS_CLAIMS.md"
+  - path: "docs/PHYSICS_REVIEW_PACKET.md"
+  - path: "docs/PHYSICS_VERDICT.md"
+  - path: "tools/build_physics_review_packet.py"
+  - path: "physics_contracts/catalog.yaml"

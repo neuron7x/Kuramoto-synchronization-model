@@ -1,3 +1,5 @@
+# Copyright (c) 2023-2026 Yaroslav Vasylenko (neuron7xLab)
+# SPDX-License-Identifier: MIT
 """Agency and insula control network."""
 
 from __future__ import annotations
@@ -26,17 +28,13 @@ class AgencyControlNetwork:
         self._history: deque[Dict[str, Any]] = deque(maxlen=config.history_size)
         self._win_rate = 0.5
 
-    def update(
-        self, trade: TradeResult, market_context: MarketContext
-    ) -> Dict[str, float]:
+    def update(self, trade: TradeResult, market_context: MarketContext) -> Dict[str, float]:
         actual_control = self._compute_actual_control(trade, market_context)
         self._recent_controls.append(actual_control)
 
         delta = self._control_delta(trade, actual_control)
         delta -= market_context.volatility * self._volatility_impact
-        self._confidence = float(
-            np.clip((self._confidence + delta) * self._decay, 0.1, 0.95)
-        )
+        self._confidence = float(np.clip((self._confidence + delta) * self._decay, 0.1, 0.95))
 
         if trade.outcome == TradeOutcome.LOSS:
             penalty = abs(trade.loss_magnitude) * actual_control * 0.6
@@ -75,12 +73,8 @@ class AgencyControlNetwork:
         return float(np.clip(base * (1.0 - penalty), 0.3, 1.5))
 
     def state(self) -> Dict[str, Any]:
-        avg_control = (
-            float(np.mean(self._recent_controls)) if self._recent_controls else 0.5
-        )
-        confidence_trend = self._trend(
-            [entry["confidence"] for entry in self._history][-50:]
-        )
+        avg_control = float(np.mean(self._recent_controls)) if self._recent_controls else 0.5
+        confidence_trend = self._trend([entry["confidence"] for entry in self._history][-50:])
         return {
             "control_confidence": self._confidence,
             "insula_activation": self._insula_activation,
@@ -102,9 +96,7 @@ class AgencyControlNetwork:
         delta += self._cfg.aic.learning_sensitivity * (trade.signal_strength - 0.5)
         return delta
 
-    def _compute_actual_control(
-        self, trade: TradeResult, market_context: MarketContext
-    ) -> float:
+    def _compute_actual_control(self, trade: TradeResult, market_context: MarketContext) -> float:
         base = float(trade.signal_strength) / max(trade.strategy_complexity, 1e-6)
         trend_factor = 1.0 - min(abs(market_context.trend_strength) * 0.3, 0.9)
         volatility_factor = 1.0 - min(market_context.volatility * 0.2, 0.95)

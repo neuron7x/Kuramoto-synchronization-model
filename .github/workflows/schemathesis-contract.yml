@@ -1,0 +1,117 @@
+# SPDX-License-Identifier: MIT
+#
+# Schemathesis Contract Gate (IERD-Q4 Phase-3 entry).
+#
+# Property-based contract testing of the OpenAPI 3.1 surface produced by
+# `application.api.service.create_app()`. The suite exercises every declared
+# (path, method) pair against the schema and asserts:
+#
+#   * no 5xx responses,
+#   * status code is one of the declared codes for the operation,
+#   * response Content-Type matches the declared media type(s),
+#   * response body matches the declared schema for that status,
+#   * declared headers are present,
+#   * negative (schema-violating) inputs are rejected.
+#
+# Phase status (per ADR 0020):
+#   * Phase-3 ENTRY (PR #545, 2026-05-07) — gate landed informational.
+#   * Phase-3 EXIT  (this PR, 2026-05-07) — gate is fail-closed; OpenAPI
+#     contract drift on any non-GraphQL operation blocks merge. The
+#     `api-contract-openapi-coverage` claim is re-classified ANCHORED.
+#
+# Tracked by GitHub issue IERD-Q4 (#529) and claim
+# `api-contract-openapi-coverage` in `docs/CLAIMS.yaml`.
+name: Schemathesis Contract
+
+on:
+  pull_request:
+    branches: [main]
+    paths:
+      - 'application/api/**'
+      - 'src/geosync/api/**'
+      - 'schemas/openapi/**'
+      - 'tests/api/**'
+      - 'pyproject.toml'
+      - '.github/workflows/schemathesis-contract.yml'
+  merge_group:
+  push:
+    branches: [main]
+
+permissions:
+  contents: read
+
+concurrency:
+  group: schemathesis-contract-${{ github.event.pull_request.number || github.sha }}
+  cancel-in-progress: true
+
+jobs:
+  schemathesis-contract:
+    name: schemathesis-contract
+    runs-on: ubuntu-latest
+    timeout-minutes: 15
+    # Phase-3 ENTRY: this gate is informational. The pytest step is allowed
+    # to fail (`continue-on-error: true` on the test step below); the job
+    # itself is reported as success so the GitHub check resolves cleanly.
+    # On Phase-3 EXIT the step-level continue-on-error is removed and the
+    # gate becomes fail-closed (claim re-classified ANCHORED in CLAIMS.yaml).
+    env:
+      GEOSYNC_AUDIT_SECRET: schemathesis-ci-audit-secret-not-real  # pragma: allowlist secret
+      GEOSYNC_OAUTH2_ISSUER: https://schemathesis.test
+      GEOSYNC_OAUTH2_AUDIENCE: geosync-api
+      GEOSYNC_OAUTH2_JWKS_URI: https://schemathesis.test/jwks
+      GEOSYNC_RBAC_AUDIT_SECRET: schemathesis-ci-rbac-secret-not-real  # pragma: allowlist secret
+      GEOSYNC_SCHEMATHESIS_EXAMPLES: "8"
+      GEOSYNC_SCHEMATHESIS_DEADLINE_MS: "5000"
+    steps:
+      - name: Checkout
+        uses: actions/checkout@9c091bb21b7c1c1d1991bb908d89e4e9dddfe3e0 # v7.0.0
+
+      - name: Set up Python
+        uses: actions/setup-python@ece7cb06caefa5fff74198d8649806c4678c61a1 # v6
+        with:
+          python-version: '3.12'
+          cache: 'pip'
+
+      - name: Install runtime + contract dependencies
+        run: |
+          set -euo pipefail
+          python -m pip install --upgrade pip
+          # Project + the IERD-Q4 contract extra (schemathesis>=4).
+          pip install -e '.[contract]'
+          # Test infra needed by `tests/api/` fixtures.
+          pip install pytest pytest-asyncio hypothesis httpx
+
+      - name: Run Schemathesis contract suite (fail-closed)
+        id: run
+        # Phase-3 EXIT (2026-05-07): the gate is now fail-closed. Any
+        # contract drift discovered by Schemathesis on a public OpenAPI
+        # operation breaks the merge. The /graphql operations are
+        # excluded inside the test (GraphQL has its own typed schema).
+        run: |
+          set -o pipefail
+          mkdir -p artifacts/schemathesis
+          pytest tests/api/test_schemathesis_contract.py \
+            -q --tb=short --maxfail=0 \
+            --junitxml=artifacts/schemathesis/junit.xml \
+            2>&1 | tee artifacts/schemathesis/run.log
+          echo "exit_code=$?" >> "$GITHUB_OUTPUT"
+
+      - name: Upload contract-test artifact
+        if: always()
+        uses: actions/upload-artifact@043fb46d1a93c77aae656e7c1c64a875d1fc6a0a # v7.0.1
+        with:
+          name: schemathesis-contract-results
+          path: artifacts/schemathesis/
+          retention-days: 14
+
+      - name: Summarise contract findings
+        if: always()
+        run: |
+          set -euo pipefail
+          echo "## Schemathesis contract suite" >> "$GITHUB_STEP_SUMMARY"
+          echo "" >> "$GITHUB_STEP_SUMMARY"
+          if [ -f artifacts/schemathesis/run.log ]; then
+            tail -40 artifacts/schemathesis/run.log >> "$GITHUB_STEP_SUMMARY" || true
+          fi
+          echo "" >> "$GITHUB_STEP_SUMMARY"
+          echo "Phase status: **Phase-3 EXIT** — fail-closed. OpenAPI contract drift blocks merge." >> "$GITHUB_STEP_SUMMARY"

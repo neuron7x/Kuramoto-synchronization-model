@@ -1,0 +1,147 @@
+{
+  "artifact": "CALIB-GRID-001",
+  "branch_sha": "19806e08f387864b06cd1a2233abd38a9f8efc9d",
+  "citation": "Anderson&Fouad-2003-Ex2.6 / Dorfler-Bullo-PNAS-2013-Fig1",
+  "config": {
+    "coupling_scale": 8.0,
+    "dt": 0.01,
+    "keep_frac": 0.6,
+    "lambda_reg": 0.02,
+    "noise_sigma": 0.02,
+    "penalty": "mcp",
+    "seed": 42,
+    "steps": 8000,
+    "theta0_perturb": 0.6,
+    "topology_rel_threshold": 0.1
+  },
+  "estimator": "core.kuramoto.coupling_estimator.estimate_swing_coupling (symmetric joint solve, Savitzky-Golay window=7 polyorder=4, persistent-excitation guard active)",
+  "failed_gates": [
+    {
+      "localises_to": "end-to-end (K_hat propagated through D\u00f6rfler\u2013Bullo)",
+      "metric_key": "critical_coupling_rel_error",
+      "name": "noiseless.critical_coupling",
+      "observed": 0.4941712510408889,
+      "operator": "<=",
+      "passed": false,
+      "threshold": 0.15
+    },
+    {
+      "localises_to": "coupling_estimator noise robustness / standardisation",
+      "metric_key": "frobenius_rel_error",
+      "name": "noisy.frobenius",
+      "observed": 16.607054036168236,
+      "operator": "<=",
+      "passed": false,
+      "threshold": 0.25
+    },
+    {
+      "localises_to": "coupling_estimator support stability under \u03c3",
+      "metric_key": "topology_f1",
+      "name": "noisy.topology_f1",
+      "observed": 0.8,
+      "operator": ">=",
+      "passed": false,
+      "threshold": 0.9
+    }
+  ],
+  "frozen_preregistration_sha": "d170d48afa5066c13edeb40b2c1904b3fd708516",
+  "gates": [
+    {
+      "localises_to": "coupling_estimator row-regression bias / \u03bb_reg",
+      "metric_key": "frobenius_rel_error",
+      "name": "noiseless.frobenius",
+      "observed": 0.0665563875240445,
+      "operator": "<=",
+      "passed": true,
+      "threshold": 0.1
+    },
+    {
+      "localises_to": "coupling_estimator sparse-support thresholding",
+      "metric_key": "topology_f1",
+      "name": "noiseless.topology_f1",
+      "observed": 1.0,
+      "operator": ">=",
+      "passed": true,
+      "threshold": 0.95
+    },
+    {
+      "localises_to": "end-to-end (K_hat propagated through D\u00f6rfler\u2013Bullo)",
+      "metric_key": "critical_coupling_rel_error",
+      "name": "noiseless.critical_coupling",
+      "observed": 0.4941712510408889,
+      "operator": "<=",
+      "passed": false,
+      "threshold": 0.15
+    },
+    {
+      "localises_to": "coupling_estimator noise robustness / standardisation",
+      "metric_key": "frobenius_rel_error",
+      "name": "noisy.frobenius",
+      "observed": 16.607054036168236,
+      "operator": "<=",
+      "passed": false,
+      "threshold": 0.25
+    },
+    {
+      "localises_to": "coupling_estimator support stability under \u03c3",
+      "metric_key": "topology_f1",
+      "name": "noisy.topology_f1",
+      "observed": 0.8,
+      "operator": ">=",
+      "passed": false,
+      "threshold": 0.9
+    }
+  ],
+  "is_hypothesis": false,
+  "kind": "external-ground-truth-calibration",
+  "ledger_sha256": "c32011b89fc879ec75be1efa7235f9de8d9c20af723931ae810f0778db7b2362",
+  "lineage": "R1",
+  "localized_refinement_targets": [
+    "coupling_estimator noise robustness / standardisation",
+    "coupling_estimator support stability under \u03c3",
+    "end-to-end (K_hat propagated through D\u00f6rfler\u2013Bullo)"
+  ],
+  "metrics": {
+    "noiseless": {
+      "coupling_condition_number": 3.8153703466068563,
+      "critical_coupling_rel_error": 0.4941712510408889,
+      "extra": {
+        "antisymmetric_residual_fro": 0.0,
+        "fro_abs_error": 1.210555672154317,
+        "fro_true": 18.18842213629737
+      },
+      "frobenius_rel_error": 0.0665563875240445,
+      "n_nodes": 3,
+      "n_recovered_edges": 6,
+      "n_true_edges": 6,
+      "omega_rel_error": 0.47106881391725675,
+      "regime": "noiseless",
+      "s_crit_hat": 0.00989957251682181,
+      "s_crit_true": 0.01957099618634378,
+      "topology_f1": 1.0
+    },
+    "noisy": {
+      "coupling_condition_number": 3.8153703466068563,
+      "critical_coupling_rel_error": 0.5691215249135534,
+      "extra": {
+        "antisymmetric_residual_fro": 0.0,
+        "fro_abs_error": 302.0561092501289,
+        "fro_true": 18.18842213629737
+      },
+      "frobenius_rel_error": 16.607054036168236,
+      "n_nodes": 3,
+      "n_recovered_edges": 4,
+      "n_true_edges": 6,
+      "omega_rel_error": 5.388829113082503,
+      "regime": "noisy",
+      "s_crit_hat": 0.008432720992694471,
+      "s_crit_true": 0.01957099618634378,
+      "topology_f1": 0.8
+    }
+  },
+  "parent_ledger_sha256": "ed8d409b7b222eb053572d6bf9ab6e98c5f4918be1cae384864733a2b4d72aaf",
+  "python": "3.12.3",
+  "r1_scope": "estimator-only change (second-order swing path)",
+  "system": "WSCC-9",
+  "verdict": "NEGATIVE"
+}

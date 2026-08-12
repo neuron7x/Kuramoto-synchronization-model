@@ -1,0 +1,78 @@
+{
+  "ic_retention": 1.0111052717492468,
+  "reasons": [],
+  "retention_gate": 0.5,
+  "seed": 42,
+  "split_at_fraction": 0.5,
+  "test": {
+    "horizon_ic": {
+      "60": 0.09861058234316293,
+      "120": 0.08777503707144543,
+      "180": 0.11631097660705925,
+      "240": 0.10194053421797342,
+      "300": 0.13487148973349697
+    },
+    "ic_baselines": {
+      "plain_ofi": 0.015807865112275818,
+      "plain_return": 0.0033326892033151497,
+      "realized_vol": 0.12046264346339476
+    },
+    "ic_signal": 0.11631097660705925,
+    "metadata": {
+      "corr_step_sec": 30,
+      "corr_window_sec": 300,
+      "ic_gate": 0.03,
+      "n_levels": 5,
+      "primary_horizon_sec": 180,
+      "pvalue_gate": 0.05,
+      "ricci_threshold": 0.5
+    },
+    "n_samples": 9541,
+    "n_symbols": 10,
+    "null_test_pvalues": {
+      "circular_shift": 0.1596806387225549,
+      "permutation_shuffle": 0.001996007984031936
+    },
+    "reasons": [],
+    "residual_ic": 0.12282699535804158,
+    "residual_ic_pvalue": 0.001996007984031936,
+    "seed": 42,
+    "verdict": "PROCEED"
+  },
+  "train": {
+    "horizon_ic": {
+      "60": 0.08879940513218194,
+      "120": 0.11583539899472155,
+      "180": 0.11503349834764215,
+      "240": 0.0859333416605458,
+      "300": 0.05545965858670924
+    },
+    "ic_baselines": {
+      "plain_ofi": 0.02186922453279438,
+      "plain_return": 0.009779727534649327,
+      "realized_vol": -0.15795195466938017
+    },
+    "ic_signal": 0.11503349834764215,
+    "metadata": {
+      "corr_step_sec": 30,
+      "corr_window_sec": 300,
+      "ic_gate": 0.03,
+      "n_levels": 5,
+      "primary_horizon_sec": 180,
+      "pvalue_gate": 0.05,
+      "ricci_threshold": 0.5
+    },
+    "n_samples": 9540,
+    "n_symbols": 10,
+    "null_test_pvalues": {
+      "circular_shift": 0.13373253493013973,
+      "permutation_shuffle": 0.001996007984031936
+    },
+    "reasons": [],
+    "residual_ic": 0.0857961772165491,
+    "residual_ic_pvalue": 0.001996007984031936,
+    "seed": 42,
+    "verdict": "PROCEED"
+  },
+  "verdict": "PROCEED"
+}

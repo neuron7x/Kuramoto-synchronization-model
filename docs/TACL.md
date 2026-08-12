@@ -1,7 +1,7 @@
 # Thermodynamic Autonomic Control Layer (TACL)
 
 The Thermodynamic Autonomic Control Layer is responsible for validating that the
-TradePulse execution graph operates inside the safe energy envelope before a
+GeoSync execution graph operates inside the safe energy envelope before a
 rollout progresses beyond the laboratory environment.  The validator ingests a
 compact set of telemetry collected from the link activator and control plane and
 computes the Helmholtz free energy (Helmholtz definition and variational framing supported by [@Callen1985Thermodynamics; @Friston2010FreeEnergy])
@@ -14,7 +14,7 @@ where:
 
 - **U** is the internal energy composed of weighted penalties derived from the
   latency, coherency, and resource metrics.
-- **T** is the control temperature (fixed to 0.60 for TradePulse) representing
+- **T** is the control temperature (fixed to 0.60 for GeoSync) representing
   how aggressively we discount available slack.
 - **S** is the stability term, proportional to the headroom each metric keeps
   relative to its threshold.  Higher stability increases entropy and therefore

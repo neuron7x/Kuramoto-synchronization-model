@@ -1,3 +1,5 @@
+# Copyright (c) 2023-2026 Yaroslav Vasylenko (neuron7xLab)
+# SPDX-License-Identifier: MIT
 from __future__ import annotations
 
 from collections import OrderedDict
@@ -46,12 +48,8 @@ def test_generator_reproducible() -> None:
     for scenario_a, scenario_b in zip(first, second):
         np.testing.assert_allclose(scenario_a.prices, scenario_b.prices)
         np.testing.assert_allclose(scenario_a.returns, scenario_b.returns)
-        np.testing.assert_allclose(
-            scenario_a.volatility_series, scenario_b.volatility_series
-        )
-        np.testing.assert_allclose(
-            scenario_a.liquidity_series, scenario_b.liquidity_series
-        )
+        np.testing.assert_allclose(scenario_a.volatility_series, scenario_b.volatility_series)
+        np.testing.assert_allclose(scenario_a.liquidity_series, scenario_b.liquidity_series)
         assert scenario_a.seed == scenario_b.seed
 
 
@@ -92,9 +90,7 @@ def test_liquidity_shock_reduces_depth_and_widens_spread() -> None:
 
     scenario = generator.generate(liquidity_shocks=[shock])[0]
     liquidity_series = scenario.liquidity_series
-    assert liquidity_series[2] == pytest.approx(
-        config.liquidity * (1.0 - shock.severity)
-    )
+    assert liquidity_series[2] == pytest.approx(config.liquidity * (1.0 - shock.severity))
     assert liquidity_series[1] == pytest.approx(config.liquidity)
 
     pre_profile = scenario.order_book_profiles[1]
@@ -116,12 +112,8 @@ def test_structural_break_changes_drift_and_volatility() -> None:
     break_event = StructuralBreak(start=3, new_drift=0.05, new_volatility=0.1)
 
     scenario = generator.generate(structural_breaks=[break_event])[0]
-    np.testing.assert_allclose(
-        scenario.volatility_series[:3], np.full(3, config.volatility)
-    )
-    np.testing.assert_allclose(
-        scenario.volatility_series[3:], np.full(config.length - 4, 0.1)
-    )
+    np.testing.assert_allclose(scenario.volatility_series[:3], np.full(3, config.volatility))
+    np.testing.assert_allclose(scenario.volatility_series[3:], np.full(config.length - 4, 0.1))
     post_returns = scenario.returns[3:]
     pre_returns = scenario.returns[:3]
     assert np.all(post_returns > 0.0)
@@ -130,9 +122,7 @@ def test_structural_break_changes_drift_and_volatility() -> None:
 
 
 def test_controlled_experiments_evaluate_strategies() -> None:
-    config = SyntheticScenarioConfig(
-        length=6, drift=0.0, volatility=0.2, random_seed=21
-    )
+    config = SyntheticScenarioConfig(length=6, drift=0.0, volatility=0.2, random_seed=21)
     generator = SyntheticScenarioGenerator(config)
     scenario = generator.generate()[0]
 
@@ -143,15 +133,11 @@ def test_controlled_experiments_evaluate_strategies() -> None:
         }
     )
 
-    experiments = generator.run_controlled_experiments(
-        strategies=strategies, scenarios=[scenario]
-    )
+    experiments = generator.run_controlled_experiments(strategies=strategies, scenarios=[scenario])
     assert len(experiments) == 1
     experiment = experiments[0]
     assert experiment.scenario is scenario
-    metrics = {
-        evaluation.strategy: evaluation.metric for evaluation in experiment.evaluations
-    }
+    metrics = {evaluation.strategy: evaluation.metric for evaluation in experiment.evaluations}
     expected_terminal = scenario.prices[-1] / scenario.prices[0] - 1.0
     expected_vol = float(np.std(scenario.returns, ddof=1))
     assert metrics["terminal_return"] == pytest.approx(expected_terminal)

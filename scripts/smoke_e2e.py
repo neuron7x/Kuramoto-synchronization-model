@@ -1,5 +1,8 @@
 #!/usr/bin/env python3
-"""Nightly smoke end-to-end pipeline for TradePulse."""
+# Copyright (c) 2023-2026 Yaroslav Vasylenko (neuron7xLab)
+# SPDX-License-Identifier: MIT
+"""Nightly smoke end-to-end pipeline for GeoSync."""
+
 from __future__ import annotations
 
 import argparse
@@ -12,7 +15,7 @@ ROOT = Path(__file__).resolve().parents[1]
 if str(ROOT) not in sys.path:
     sys.path.insert(0, str(ROOT))
 
-os.environ.setdefault("TRADEPULSE_LIGHT_DATA_IMPORT", "1")
+os.environ.setdefault("GEOSYNC_LIGHT_DATA_IMPORT", "1")
 
 from core.data.dataset_contracts import contract_by_path  # noqa: E402
 from core.data.fingerprint import record_run_fingerprint  # noqa: E402
@@ -20,9 +23,7 @@ from core.pipelines import SmokeE2EConfig, SmokeE2EPipeline  # noqa: E402
 
 
 def parse_args() -> argparse.Namespace:
-    parser = argparse.ArgumentParser(
-        description="Run the TradePulse smoke E2E pipeline."
-    )
+    parser = argparse.ArgumentParser(description="Run the GeoSync smoke E2E pipeline.")
     parser.add_argument(
         "--csv",
         type=Path,

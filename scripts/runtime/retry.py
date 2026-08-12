@@ -1,8 +1,10 @@
+# Copyright (c) 2023-2026 Yaroslav Vasylenko (neuron7xLab)
+# SPDX-License-Identifier: MIT
 """HTTP retry helpers for scripts dealing with rate limits and transient failures."""
 
 from __future__ import annotations
 
-# SPDX-License-Identifier: LicenseRef-TradePulse-Proprietary
+# SPDX-License-Identifier: MIT
 from typing import Iterable
 
 import requests
@@ -10,9 +12,7 @@ from requests.adapters import HTTPAdapter
 from urllib3.util import Retry
 
 _DEFAULT_STATUSES = frozenset({429, 500, 502, 503, 504})
-_DEFAULT_METHODS = frozenset(
-    {"HEAD", "GET", "PUT", "DELETE", "OPTIONS", "TRACE", "POST"}
-)
+_DEFAULT_METHODS = frozenset({"HEAD", "GET", "PUT", "DELETE", "OPTIONS", "TRACE", "POST"})
 
 
 def create_resilient_session(

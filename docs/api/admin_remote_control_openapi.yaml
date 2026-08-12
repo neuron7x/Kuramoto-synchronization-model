@@ -1,15 +1,15 @@
-# SPDX-License-Identifier: LicenseRef-TradePulse-Proprietary
+# SPDX-License-Identifier: MIT
 openapi: 3.1.0
 info:
-  title: TradePulse Admin Remote Control API
+  title: GeoSync Admin Remote Control API
   version: 1.1.0
   description: >-
     Administrative endpoints that allow authenticated operators to inspect,
-    engage, and reset the TradePulse risk kill-switch.
-  x-owner: Platform Engineering (platform@tradepulse.example)
+    engage, and reset the GeoSync risk kill-switch.
+  x-owner: Platform Engineering (platform@geosync.example)
   x-last_reviewed: 2025-12-28
 servers:
-  - url: https://risk.tradepulse.example.com
+  - url: https://risk.geosync.example.com
 paths:
   /admin/kill-switch:
     get:
@@ -61,7 +61,7 @@ components:
       scheme: bearer
       bearerFormat: JWT
       description: >-
-        OAuth2 access token with the TradePulse API audience. Mutual TLS is enforced
+        OAuth2 access token with the GeoSync API audience. Mutual TLS is enforced
         at the ingress layer using the configured client CA bundle.
   schemas:
     KillSwitchRequest:

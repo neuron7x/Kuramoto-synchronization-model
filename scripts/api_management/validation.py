@@ -1,3 +1,5 @@
+# Copyright (c) 2023-2026 Yaroslav Vasylenko (neuron7xLab)
+# SPDX-License-Identifier: MIT
 """Validation helpers for API governance artifacts."""
 
 from __future__ import annotations
@@ -90,9 +92,7 @@ def _validate_routes(
     for route in registry.routes:
         key = (route.method.upper(), route.path)
         if key in seen:
-            report.add_error(
-                f"Duplicate route detected for {route.method} {route.path}."
-            )
+            report.add_error(f"Duplicate route detected for {route.method} {route.path}.")
         else:
             seen.add(key)
 
@@ -128,9 +128,7 @@ def _validate_routes(
                     report.add_error(
                         f"Smoke test {test.name} references missing schema {test.response_schema}."
                     )
-            report.add_check(
-                f"Route {route.name} exposes {len(route.smoke_tests)} smoke test(s)."
-            )
+            report.add_check(f"Route {route.name} exposes {len(route.smoke_tests)} smoke test(s).")
         else:
             report.add_warning(f"Route {route.name} does not declare smoke tests.")
 
@@ -156,17 +154,11 @@ def _validate_route_policies(route: ApiRoute, report: ApiValidationReport) -> No
     ):
         report.add_warning(f"Route {route.name} does not specify rate limits.")
     if route.idempotency.required and not route.idempotency.header:
-        report.add_error(
-            f"Route {route.name} requires idempotency but no header is configured."
-        )
+        report.add_error(f"Route {route.name} requires idempotency but no header is configured.")
     if route.idempotency.ttl_seconds is not None and route.idempotency.ttl_seconds <= 0:
-        report.add_error(
-            f"Idempotency TTL must be positive when provided for {route.name}."
-        )
+        report.add_error(f"Idempotency TTL must be positive when provided for {route.name}.")
     if route.signatures.required and not route.signatures.header:
-        report.add_error(
-            f"Route {route.name} requires signatures but no header is defined."
-        )
+        report.add_error(f"Route {route.name} requires signatures but no header is defined.")
     if not route.signatures.algorithm:
         report.add_warning(f"Signature algorithm missing for {route.name}.")
 
@@ -190,39 +182,27 @@ def _validate_webhooks(registry: ApiRegistry, report: ApiValidationReport) -> No
         _validate_webhook_contract(webhook, report)
 
 
-def _validate_webhook_contract(
-    webhook: WebhookContract, report: ApiValidationReport
-) -> None:
+def _validate_webhook_contract(webhook: WebhookContract, report: ApiValidationReport) -> None:
     if not webhook.schema.exists():
-        report.add_error(
-            f"Webhook {webhook.name} references missing schema {webhook.schema}."
-        )
+        report.add_error(f"Webhook {webhook.name} references missing schema {webhook.schema}.")
     if webhook.retry_max_attempts <= 0 or webhook.retry_backoff_seconds <= 0:
         report.add_error(f"Webhook {webhook.name} retry policy must be positive.")
     if not webhook.signature_header:
         report.add_error(f"Webhook {webhook.name} signature header is empty.")
     if not webhook.signature_algorithm:
-        report.add_warning(
-            f"Webhook {webhook.name} signature algorithm is not specified."
-        )
+        report.add_warning(f"Webhook {webhook.name} signature algorithm is not specified.")
 
 
-def _validate_cross_references(
-    registry: ApiRegistry, report: ApiValidationReport
-) -> None:
+def _validate_cross_references(registry: ApiRegistry, report: ApiValidationReport) -> None:
     route_names = {route.name for route in registry.routes}
     webhook_names = {item.name for item in registry.webhooks}
     for route in registry.routes:
         for webhook in route.webhooks:
             if webhook not in webhook_names:
-                report.add_error(
-                    f"Route {route.name} references unknown webhook {webhook}."
-                )
+                report.add_error(f"Route {route.name} references unknown webhook {webhook}.")
     for guard in registry.compatibility:
         if guard.route not in route_names:
-            report.add_error(
-                f"Compatibility guard references unknown route {guard.route}."
-            )
+            report.add_error(f"Compatibility guard references unknown route {guard.route}.")
     for migration in registry.migrations:
         for route in migration.applies_to:
             if route not in route_names:

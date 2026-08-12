@@ -1,0 +1,121 @@
+{
+  "$schema": "https://json-schema.org/draft/2020-12/schema",
+  "$id": "research/ctc_falsify/c_real/open_data/schema/open_data_manifest.schema.json",
+  "title": "C-real open-data candidate manifest",
+  "type": "object",
+  "additionalProperties": false,
+  "required": [
+    "schema_version",
+    "binding_tooling_present",
+    "binding_tooling_required",
+    "terminal_verdict",
+    "candidates"
+  ],
+  "properties": {
+    "schema_version": { "const": 1 },
+    "binding_tooling_present": { "type": "boolean" },
+    "binding_tooling_required": { "type": "array", "items": { "type": "string" } },
+    "terminal_verdict": {
+      "type": "string",
+      "enum": [
+        "DATASET_BOUND_READY_FOR_C_REAL",
+        "INADMISSIBLE_NO_OPEN_DATASET_FOUND",
+        "INADMISSIBLE_TOOLING_MISSING",
+        "INADMISSIBLE_DATASET_UNSUITABLE",
+        "INADMISSIBLE_NO_INDEPENDENT_ROUTING_LABEL",
+        "INADMISSIBLE_TOO_LARGE_FOR_ENVIRONMENT",
+        "INADMISSIBLE_LICENSE_OR_ACCESS_BLOCKED"
+      ]
+    },
+    "candidates": {
+      "type": "array",
+      "items": {
+        "type": "object",
+        "additionalProperties": false,
+        "required": [
+          "dataset_id",
+          "source",
+          "source_url",
+          "license_or_access_status",
+          "data_format",
+          "estimated_size_bytes",
+          "access_method",
+          "has_spikes",
+          "has_lfp",
+          "has_two_or_more_areas",
+          "has_trials",
+          "has_independent_routing_label",
+          "candidate_routing_label_name",
+          "sessions_count_estimate",
+          "subject_count_estimate",
+          "access_reproducible",
+          "checked_at_utc",
+          "evidence_urls",
+          "admissibility_verdict",
+          "blockers"
+        ],
+        "properties": {
+          "dataset_id": { "type": "string", "minLength": 1 },
+          "source": { "type": "string", "minLength": 1 },
+          "source_url": { "type": "string", "pattern": "^https://" },
+          "license_or_access_status": { "type": "string", "minLength": 1 },
+          "data_format": { "type": "string", "minLength": 1 },
+          "estimated_size_bytes": { "type": ["integer", "null"], "minimum": 0 },
+          "access_method": { "type": "string", "minLength": 1 },
+          "has_spikes": { "type": ["boolean", "null"] },
+          "has_lfp": { "type": ["boolean", "null"] },
+          "has_two_or_more_areas": { "type": ["boolean", "null"] },
+          "has_trials": { "type": ["boolean", "null"] },
+          "has_independent_routing_label": { "type": ["boolean", "null"] },
+          "candidate_routing_label_name": { "type": ["string", "null"] },
+          "sessions_count_estimate": { "type": ["integer", "null"], "minimum": 0 },
+          "subject_count_estimate": { "type": ["integer", "null"], "minimum": 0 },
+          "access_reproducible": { "type": ["boolean", "null"] },
+          "checked_at_utc": { "type": "string", "minLength": 1 },
+          "evidence_urls": { "type": "array", "items": { "type": "string" } },
+          "admissibility_verdict": {
+            "type": "string",
+            "enum": [
+              "ADMISSIBLE_BINDABLE",
+              "ADMISSIBLE_METADATA_ONLY",
+              "REJECT_NO_LFP",
+              "REJECT_NO_SPIKES",
+              "REJECT_SINGLE_AREA",
+              "REJECT_NO_INDEPENDENT_LABEL",
+              "REJECT_NO_TRIAL_STRUCTURE",
+              "REJECT_ACCESS_BLOCKED",
+              "REJECT_TOO_LARGE_FOR_ENV",
+              "UNKNOWN_NEEDS_MANUAL_REVIEW"
+            ]
+          },
+          "blockers": { "type": "array", "items": { "type": "string" } }
+        },
+        "allOf": [
+          {
+            "if": { "properties": { "admissibility_verdict": { "const": "ADMISSIBLE_BINDABLE" } } },
+            "then": {
+              "properties": {
+                "has_spikes": { "const": true },
+                "has_lfp": { "const": true },
+                "has_two_or_more_areas": { "const": true },
+                "has_trials": { "const": true },
+                "has_independent_routing_label": { "const": true },
+                "access_reproducible": { "const": true }
+              }
+            }
+          },
+          {
+            "if": {
+              "properties": {
+                "admissibility_verdict": {
+                  "pattern": "^REJECT_"
+                }
+              }
+            },
+            "then": { "properties": { "blockers": { "minItems": 1 } } }
+          }
+        ]
+      }
+    }
+  }
+}

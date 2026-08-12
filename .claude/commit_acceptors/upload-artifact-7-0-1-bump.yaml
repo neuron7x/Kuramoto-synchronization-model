@@ -1,0 +1,50 @@
+# Diff-bound acceptor for the actions/upload-artifact@v4.6.2 -> @v7.0.1 bump
+# (dependabot PR #1397, "bump actions/upload-artifact from 4.6.2 to 7.0.1").
+# Only 2 workflow files reference this action, well within the governance
+# cap=16 -- no split needed (contrast with the 57-file setup-python-6-bump
+# a/b/c/d split for PR #1396).
+
+id: upload-artifact-7-0-1-bump
+status: ACTIVE
+claim_type: governance
+promise: >-
+  Bumps actions/upload-artifact from the v4.6.2 SHA-pin
+  ea165f8d65b6e75b540449e92b4886f43607fa02 to the v7.0.1 SHA-pin
+  043fb46d1a93c77aae656e7c1c64a875d1fc6a0a in the 2 workflow files that
+  reference it: ricci-microstructure-gate.yml and wheel-contract-gate.yml.
+  No functional change beyond the version/SHA bump.
+diff_scope:
+  changed_files:
+    - path: ".claude/commit_acceptors/upload-artifact-7-0-1-bump.yaml"
+    - path: ".github/workflows/ricci-microstructure-gate.yml"
+    - path: ".github/workflows/wheel-contract-gate.yml"
+  forbidden_paths:
+    - "trading/"
+    - "execution/"
+    - "forecast/"
+    - "policy/"
+required_python_symbols: []
+expected_signal: >-
+  Both ricci-microstructure-gate.yml and wheel-contract-gate.yml reference
+  actions/upload-artifact@043fb46d1a93c77aae656e7c1c64a875d1fc6a0a (v7.0.1).
+measurement_command: >-
+  bash -c "for f in .github/workflows/ricci-microstructure-gate.yml .github/workflows/wheel-contract-gate.yml; do grep -E 'actions/upload-artifact@043fb46d1a93c77aae656e7c1c64a875d1fc6a0a' \"\$f\" >/dev/null || { echo MISSING \$f; exit 1; }; done"
+signal_artifact: "tmp/upload_artifact_7_0_1_bump.log"
+falsifier:
+  command: >-
+    bash -c "for f in .github/workflows/ricci-microstructure-gate.yml .github/workflows/wheel-contract-gate.yml; do grep -qE 'actions/upload-artifact@ea165f8d65b6e75b540449e92b4886f43607fa02' \"\$f\" && { echo STALE \$f; exit 1; }; done; echo OK"
+  description: >-
+    Probe verifies neither bound workflow file still references the
+    pre-bump v4.6.2 upload-artifact pin. A non-OK result means the
+    dependabot bump was reverted or partially applied.
+rollback_command: >-
+  git checkout HEAD~1 -- .github/workflows/ricci-microstructure-gate.yml
+  .github/workflows/wheel-contract-gate.yml
+  .claude/commit_acceptors/upload-artifact-7-0-1-bump.yaml
+rollback_verification_command: >-
+  git diff --exit-code .github/workflows/ricci-microstructure-gate.yml
+  .github/workflows/wheel-contract-gate.yml
+memory_update_type: append
+ledger_path: ".claude/commit_acceptors/upload-artifact-7-0-1-bump.yaml"
+report_path: ".claude/commit_acceptors/upload-artifact-7-0-1-bump.yaml"
+evidence: []

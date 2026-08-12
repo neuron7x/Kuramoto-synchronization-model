@@ -1,3 +1,5 @@
+# Copyright (c) 2023-2026 Yaroslav Vasylenko (neuron7xLab)
+# SPDX-License-Identifier: MIT
 from __future__ import annotations
 
 import argparse
@@ -127,9 +129,7 @@ def evolve_bonds(
     def mutate_wrapper(individual: nx.DiGraph) -> Tuple[nx.DiGraph]:
         return mutate_bond_type(individual)
 
-    def mate_wrapper(
-        ind1: nx.DiGraph, ind2: nx.DiGraph
-    ) -> Tuple[nx.DiGraph, nx.DiGraph]:
+    def mate_wrapper(ind1: nx.DiGraph, ind2: nx.DiGraph) -> Tuple[nx.DiGraph, nx.DiGraph]:
         return crossover_graphs(ind1, ind2)
 
     toolbox.register("evaluate", eval_ind)

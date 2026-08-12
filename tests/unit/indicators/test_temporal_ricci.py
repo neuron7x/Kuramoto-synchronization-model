@@ -1,4 +1,5 @@
-# SPDX-License-Identifier: LicenseRef-TradePulse-Proprietary
+# Copyright (c) 2023-2026 Yaroslav Vasylenko (neuron7xLab)
+# SPDX-License-Identifier: MIT
 from __future__ import annotations
 
 from datetime import timedelta
@@ -34,6 +35,34 @@ class TestLightGraph:
         assert graph.shortest_path_length(0, 3) == 3
         assert graph.is_connected()
 
+    def test_edge_count_and_cache_avoid_rebuild(self) -> None:
+        """TD-005: the graph utilities are cached, not recomputed per call.
+
+        ``number_of_edges`` must be O(1) off the running ``_edge_count`` without
+        materialising the edge list, and ``edges()`` must build its cache exactly
+        once and invalidate it only when the topology changes. This pins the
+        optimisation invariant deterministically — no wall-clock flake."""
+        graph = LightGraph(64)
+        for i in range(63):
+            graph.add_edge(i, i + 1, weight=1.0)
+
+        # Counting never materialises the edge-list cache.
+        assert graph.number_of_edges() == 63
+        assert graph._edges_cache is None
+
+        # First edges() builds the cache; second call reuses the same backing list.
+        first = graph.edges()
+        assert graph._edges_cache is not None
+        backing_after_first = graph._edges_cache
+        second = graph.edges()
+        assert graph._edges_cache is backing_after_first  # not rebuilt
+        assert first == second
+
+        # A topology change invalidates the cache (and only then).
+        graph.add_edge(0, 5, weight=1.0)
+        assert graph._edges_cache is None
+        assert graph.number_of_edges() == 64
+
 
 class TestPriceLevelGraph:
     def test_build_graph_with_volume_weights(self) -> None:
@@ -62,18 +91,14 @@ class TestPriceLevelGraph:
 
 
 class TestTemporalRicciAnalyzer:
-    def _build_dataframe(
-        self, start: str, periods: int, freq: str = "1min"
-    ) -> pd.DataFrame:
+    def _build_dataframe(self, start: str, periods: int, freq: str = "1min") -> pd.DataFrame:
         index = pd.date_range(start=start, periods=periods, freq=freq)
         prices = np.linspace(100.0, 110.0, periods)
         volumes = np.linspace(5.0, 50.0, periods)
         return pd.DataFrame({"close": prices, "volume": volumes}, index=index)
 
     def test_analyze_returns_metrics_with_history(self) -> None:
-        analyzer = TemporalRicciAnalyzer(
-            window_size=10, n_snapshots=3, retain_history=True
-        )
+        analyzer = TemporalRicciAnalyzer(window_size=10, n_snapshots=3, retain_history=True)
         df = self._build_dataframe("2024-01-01", periods=40)
 
         result = analyzer.analyze(df)
@@ -97,9 +122,7 @@ class TestTemporalRicciAnalyzer:
         assert result.graph_snapshots == []
 
     def test_non_monotonic_timestamps_reset_history(self) -> None:
-        analyzer = TemporalRicciAnalyzer(
-            window_size=5, n_snapshots=2, retain_history=True
-        )
+        analyzer = TemporalRicciAnalyzer(window_size=5, n_snapshots=2, retain_history=True)
         first = self._build_dataframe("2024-01-01", periods=10)
         analyzer.analyze(first)
 
@@ -110,6 +133,4 @@ class TestTemporalRicciAnalyzer:
             result = analyzer.analyze(later)
 
         assert len(result.graph_snapshots) > 0
-        assert result.graph_snapshots[0].timestamp >= later.index[0] + timedelta(
-            minutes=4
-        )
+        assert result.graph_snapshots[0].timestamp >= later.index[0] + timedelta(minutes=4)

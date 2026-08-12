@@ -1,3 +1,5 @@
+# Copyright (c) 2023-2026 Yaroslav Vasylenko (neuron7xLab)
+# SPDX-License-Identifier: MIT
 """
 Tests for Adaptive Risk Manager Module
 """
@@ -61,7 +63,7 @@ class TestAdaptiveRiskManager:
         manager = AdaptiveRiskManager(base_capital=100000.0, risk_tolerance=0.02)
 
         size = manager.calculate_position_size(
-            symbol="BTCUSD", price=50000.0, volatility=0.01, confidence=0.8
+            "BTCUSD", price=50000.0, volatility=0.01, confidence=0.8
         )
 
         assert size > 0

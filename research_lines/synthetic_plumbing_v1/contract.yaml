@@ -1,0 +1,49 @@
+schema_version: research-line-contract.v1
+line_id: synthetic_plumbing_v1
+sprint_focus: false
+owner: research-platform
+# INSTRUMENTED only: this line exists to prove the pipeline mechanics end to end
+# on deterministic SYNTHETIC data. Synthetic data may instrument plumbing; it can
+# never promote a claim to an empirical tier (README promotion rule). The artifact
+# carries a real computed score with falsification_status: NOT_APPLICABLE — no
+# evidence or market claim is made or implied.
+state: INSTRUMENTED
+terminal_state: null
+claim:
+  tier: INSTRUMENTED
+  status: Not Measured
+  statement: >-
+    Forward proof that the claim -> contract -> schema -> data hash -> computation
+    -> artifact -> validator -> test -> replay-command pipeline produces a real,
+    reproducible, fully-attributed artifact. The score is computed on a closed-form
+    synthetic panel and is NOT an empirical measurement of any market.
+substrate:
+  venue_class: synthetic
+  data_type: closed_form_synthetic_return_panel
+  immutability_required: true
+  required_hash: sha256
+inference_contract:
+  deterministic: true
+  seed_required: true
+  input_window_sec: 1
+  canonical_schema: schemas/research/research_inference_artifact.schema.json
+  allowed_decisions:
+    - OBSERVE
+    - REJECT
+falsification:
+  # Not applicable: a synthetic plumbing proof makes no falsifiable empirical
+  # claim. The artifact records a real cyclic-shift null baseline for lineage
+  # completeness, but falsification_status is NOT_APPLICABLE by construction.
+  required_nulls: []
+  required_invariants:
+    - INV-DET1
+promotion_limits:
+  synthetic_max_state: INSTRUMENTED
+  real_single_state: TESTED_REAL_SINGLE
+  real_multi_required_for: MEASURED
+  deployable_state_required: REPLICATED
+artifact:
+  required: true
+  immutable: true
+  proof_of_evidence: sha256
+  example: artifacts/runs/synthetic_plumbing_v1/artifact.json

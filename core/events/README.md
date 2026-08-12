@@ -1,5 +1,5 @@
 ---
-owner: platform-integration@tradepulse
+owner: platform-integration@geosync
 review_cadence: quarterly
 last_reviewed: 2025-11-04
 links:
@@ -11,7 +11,7 @@ links:
 
 ## Purpose
 
-The `core/events` module implements the **neural messaging fabric** of TradePulse, providing strongly-typed event schemas and event sourcing infrastructure for the distributed trading system. Analogous to how neurons communicate through synaptic transmission with precise neurotransmitter-receptor binding, this module ensures type-safe, versioned message passing between system components.
+The `core/events` module implements the **neural messaging fabric** of GeoSync, providing strongly-typed event schemas and event sourcing infrastructure for the distributed trading system. Analogous to how neurons communicate through synaptic transmission with precise neurotransmitter-receptor binding, this module ensures type-safe, versioned message passing between system components.
 
 **Neuroeconomic Mapping:**
 - **Synaptic Transmission**: Event publishing/subscription mirrors neurotransmitter release and receptor binding
@@ -58,12 +58,12 @@ The `core/events` module implements the **neural messaging fabric** of TradePuls
 ## Configuration
 
 ### Environment Variables:
-- `TRADEPULSE_EVENT_STORE_BACKEND`: Storage backend: `postgres`, `clickhouse`, `parquet` (default: `postgres`)
-- `TRADEPULSE_EVENT_BUS_BACKEND`: Message broker: `kafka`, `nats`, `redis`, `memory` (default: `kafka`)
-- `TRADEPULSE_KAFKA_BOOTSTRAP_SERVERS`: Kafka broker addresses
-- `TRADEPULSE_EVENT_RETENTION_DAYS`: Event log retention (default: `2555` = 7 years)
-- `TRADEPULSE_ENABLE_EVENT_REPLAY`: Enable replay API (default: `true`)
-- `TRADEPULSE_IDEMPOTENCY_TTL_SECONDS`: Deduplication window (default: `3600`)
+- `GEOSYNC_EVENT_STORE_BACKEND`: Storage backend: `postgres`, `clickhouse`, `parquet` (default: `postgres`)
+- `GEOSYNC_EVENT_BUS_BACKEND`: Message broker: `kafka`, `nats`, `redis`, `memory` (default: `kafka`)
+- `GEOSYNC_KAFKA_BOOTSTRAP_SERVERS`: Kafka broker addresses
+- `GEOSYNC_EVENT_RETENTION_DAYS`: Event log retention (default: `2555` = 7 years)
+- `GEOSYNC_ENABLE_EVENT_REPLAY`: Enable replay API (default: `true`)
+- `GEOSYNC_IDEMPOTENCY_TTL_SECONDS`: Deduplication window (default: `3600`)
 
 ### Configuration Files:
 Event infrastructure is configured via `configs/events/`:
@@ -165,7 +165,7 @@ if event_id in processed_cache:
 ### Runbooks:
 - [Event Bus Recovery](../../docs/operational_handbook.md#event-bus-recovery)
 - [Event Replay Procedure](../../docs/operational_handbook.md#event-replay)
-- [Schema Evolution Guide](../../docs/schemas/README.md)
+- [Schema Evolution Guide](../../docs/schemas/index.json)
 - [Dead Letter Queue Management](../../docs/operational_handbook.md#dlq-management)
 
 ## Testing Strategy
@@ -514,11 +514,11 @@ FillEvent(
 
 | Date | Author | Change |
 | ---- | ------ | ------ |
-| 2025-11-04 | platform-integration@tradepulse | Created comprehensive README with neuroeconomic principles |
+| 2025-11-04 | platform-integration@geosync | Created comprehensive README with neuroeconomic principles |
 
 ## See Also
 
 - [System Modules Reference](../../docs/architecture/system_modules_reference.md)
-- [Event Schema Registry](../../docs/schemas/README.md)
+- [Event Schema Registry](../../docs/schemas/index.json)
 - [Operational Handbook: Event Bus](../../docs/operational_handbook.md#event-bus)
-- [Testing Guide: Event-Driven Systems](../../docs/testing/event_driven.md)
+- [Testing Guide: Event-Driven Systems](../../docs/integrations/event_channels.md)

@@ -1,0 +1,160 @@
+# Diff-bound commit acceptor for D-003 — real BIS DoV-only
+# dry run. Strict scope: DoV gate only, NO Gate 6 invocation.
+#
+# What lands:
+#   * scripts/run_x10r_d003_dov_dry_run.py
+#       Dry-run driver. Loads marginals (representative synthetic
+#       BIS-LBS-shape by default; real BIS bulk path stays
+#       parameterised via --marginals). Calls
+#       `check_domain_of_validity`. Emits ONE of the three
+#       allowed scoped tiers
+#       (WITHIN_VALIDATED_DOMAIN / OUT_OF_VALIDATED_DOMAIN /
+#       INSUFFICIENT_CERTIFICATE). Persists a JSON capsule with
+#       provenance + verdict. Hard fail-closed: any other tier
+#       raises RuntimeError.
+#   * tests/reconstruction/test_x10r_d003_dov_dry_run.py
+#       8 fast unit tests pinning: (a) verdict tier ∈ allowed
+#       set on default + hand-crafted within / out / insufficient
+#       inputs; (b) static guarantee that the driver does NOT
+#       import any Gate 6 surface; (c) capsule schema; (d) the
+#       disciplined REAL_DOV_READY ↔ within / REAL_DOV_REJECTED
+#       ↔ out/insufficient mapping.
+#   * X10R_REAL_BIS_DOV_ONLY_REPORT.md
+#       DoV-only dry-run empirical record + reproduction recipe
+#       + explicit "What this PR does NOT do" section.
+#
+# Strict scope:
+#   * NO Gate 6 invocation by construction (statically enforced
+#     by test_driver_does_not_import_gate_6_module).
+#   * NO bank-level inference claim.
+#   * NO INV-IDENTIFICATION-1 lift.
+#   * NO real-data Gate 6 verdict.
+#   * NO `VALIDATED_REAL_BANK_LEVEL_RESULT` tier emitted.
+#
+# Allowed tier on capsule:
+#   WITHIN_VALIDATED_DOMAIN → claim_state REAL_DOV_READY
+#   OUT_OF_VALIDATED_DOMAIN → claim_state REAL_DOV_REJECTED
+#   INSUFFICIENT_CERTIFICATE → claim_state REAL_DOV_REJECTED
+#
+# REAL_DOV_READY is a permission tier (it permits the next
+# synthetic-with-real-parameter test). It is NOT
+# `VALIDATED_REAL_BANK_LEVEL_RESULT`. INV-IDENTIFICATION-1
+# remains globally active.
+
+id: x10r-d003-real-bis-dov-only
+status: ACTIVE
+claim_type: correctness
+promise: >-
+  After this PR lands, scripts/run_x10r_d003_dov_dry_run.py
+  exercises the domain-of-validity gate end-to-end on
+  real-shape interbank marginals and emits a JSON capsule with
+  the scoped tier verdict. The default path uses a
+  representative-synthetic-BIS-LBS-shape marginal set
+  (N=25 reporters, lognormal-heavy-tailed, mass-balanced) so
+  the gate path is exercised even when the BIS bulk-flat CSV
+  is not available on the runner. The real-BIS path stays
+  parameterised: passing `--marginals` pointing at
+  tools/build_bis_lbs_dataset.py output runs the same gate on
+  the real inputs.
+  Strict scope: DoV gate only. Gate 6 is NOT invoked
+  (statically enforced by test_driver_does_not_import_gate_6_module).
+  Allowed capsule scoped tiers: WITHIN_VALIDATED_DOMAIN /
+  OUT_OF_VALIDATED_DOMAIN / INSUFFICIENT_CERTIFICATE. Allowed
+  claim_state: REAL_DOV_READY (only when WITHIN) or
+  REAL_DOV_REJECTED (otherwise). NO real-data Gate 6 verdict
+  emitted. NO bank-level inference claim emitted.
+  INV-IDENTIFICATION-1 remains globally active.
+diff_scope:
+  changed_files:
+    - path: ".claude/commit_acceptors/x10r-d003-real-bis-dov-only.yaml"
+    - path: "scripts/run_x10r_d003_dov_dry_run.py"
+    - path: "tests/reconstruction/test_x10r_d003_dov_dry_run.py"
+    - path: "X10R_REAL_BIS_DOV_ONLY_REPORT.md"
+  forbidden_paths:
+    - "trading/"
+    - "execution/"
+    - "forecast/"
+    - "policy/"
+    - "core/physics/"
+    - "core/kuramoto/"
+    - "research/reconstruction/kuramoto_on_reconstruction.py"  # NO Gate 6 change
+    - "research/reconstruction/sensitivity_surface.py"  # NO sensitivity-surface change
+    - "research/reconstruction/recovery_audit.py"  # NO DoV gate change
+    - "research/reconstruction/positive_control.py"  # NO certificate change
+    - "application/governance/claim_ledger.py"
+    - "application/governance/commit_acceptor.py"
+required_python_symbols:
+  - "tests/reconstruction/test_x10r_d003_dov_dry_run.py::test_dry_run_emits_one_of_three_scoped_tiers_on_default_input"
+  - "tests/reconstruction/test_x10r_d003_dov_dry_run.py::test_within_domain_when_input_matches_envelope"
+  - "tests/reconstruction/test_x10r_d003_dov_dry_run.py::test_out_of_domain_when_n_nodes_below_envelope"
+  - "tests/reconstruction/test_x10r_d003_dov_dry_run.py::test_insufficient_certificate_when_envelope_empty"
+  - "tests/reconstruction/test_x10r_d003_dov_dry_run.py::test_driver_does_not_import_gate_6_module"
+expected_signal: >-
+  Local: `pytest tests/reconstruction/test_x10r_d003_dov_dry_run.py -q`
+  reports "8 passed"; `mypy --strict --follow-imports=silent`
+  clean on the new files; `ruff check` and `black --check`
+  both pass; the smoke run
+  `PYTHONPATH=. python scripts/run_x10r_d003_dov_dry_run.py --out tmp/d003.json`
+  emits a capsule with `scoped_tier ∈ {within_validated_domain,
+  out_of_validated_domain, insufficient_certificate}` and
+  `gate_6_invoked=false`, `bank_level_claim_emitted=false`,
+  `inv_identification_1_status=globally_active`.
+measurement_command: >-
+  bash -c 'mypy --strict --follow-imports=silent
+  scripts/run_x10r_d003_dov_dry_run.py
+  tests/reconstruction/test_x10r_d003_dov_dry_run.py
+  && ruff check
+  scripts/run_x10r_d003_dov_dry_run.py
+  tests/reconstruction/test_x10r_d003_dov_dry_run.py
+  && black --check
+  scripts/run_x10r_d003_dov_dry_run.py
+  tests/reconstruction/test_x10r_d003_dov_dry_run.py
+  && pytest tests/reconstruction/test_x10r_d003_dov_dry_run.py -q'
+signal_artifact: "tmp/x10r_d003_dov_dry_run_capsule.json"
+falsifier:
+  command: |-
+    bash -c 'PYTHONPATH=. python -c "
+    import importlib.util, json, tempfile
+    from pathlib import Path
+    spec = importlib.util.spec_from_file_location(
+        \"d\", \"scripts/run_x10r_d003_dov_dry_run.py\"
+    )
+    m = importlib.util.module_from_spec(spec)
+    spec.loader.exec_module(m)
+    with tempfile.TemporaryDirectory() as td:
+        out_path = Path(td) / \"capsule.json\"
+        capsule = m.run_dry_run(
+            marginals_path=None, certificate_path=None, out_path=out_path
+        )
+    tier = capsule[\"scoped_tier\"]
+    assert tier in {
+        \"within_validated_domain\",
+        \"out_of_validated_domain\",
+        \"insufficient_certificate\",
+    }, f\"forbidden tier emitted: {tier}\"
+    assert capsule[\"gate_6_invoked\"] is False, \"Gate 6 was invoked\"
+    assert capsule[\"bank_level_claim_emitted\"] is False, \"bank-level claim emitted\"
+    assert capsule[\"inv_identification_1_status\"] == \"globally_active\", \"INV-IDENTIFICATION-1 not globally_active\"
+    "'
+  description: >-
+    Probes the D-003 dry-run contract: the driver must emit a
+    capsule whose `scoped_tier` is exactly one of the three
+    allowed values, with `gate_6_invoked=false`,
+    `bank_level_claim_emitted=false`, and
+    `inv_identification_1_status=globally_active`. Any other
+    output is a contract breach.
+rollback_command: >-
+  bash -c 'git checkout HEAD~1 --
+  && rm -f scripts/run_x10r_d003_dov_dry_run.py
+  tests/reconstruction/test_x10r_d003_dov_dry_run.py
+  X10R_REAL_BIS_DOV_ONLY_REPORT.md
+  .claude/commit_acceptors/x10r-d003-real-bis-dov-only.yaml'
+rollback_verification_command: >-
+  bash -c 'test ! -f scripts/run_x10r_d003_dov_dry_run.py
+  && test ! -f tests/reconstruction/test_x10r_d003_dov_dry_run.py
+  && test ! -f X10R_REAL_BIS_DOV_ONLY_REPORT.md
+  && test ! -f .claude/commit_acceptors/x10r-d003-real-bis-dov-only.yaml'
+memory_update_type: append
+ledger_path: ".claude/commit_acceptors/x10r-d003-real-bis-dov-only.yaml"
+report_path: "tmp/x10r_d003_dov_dry_run_capsule.json"
+evidence: []

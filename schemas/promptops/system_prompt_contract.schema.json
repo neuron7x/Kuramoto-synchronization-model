@@ -1,0 +1,155 @@
+{
+  "$schema": "https://json-schema.org/draft/2020-12/schema",
+  "$id": "https://neuron7xlab.local/schemas/promptops/system_prompt_contract.schema.json",
+  "title": "PromptOps System Prompt Contract",
+  "type": "object",
+  "additionalProperties": true,
+  "required": [
+    "artifact_type",
+    "id",
+    "version",
+    "messages",
+    "unit_tests",
+    "shadow_tests"
+  ],
+  "properties": {
+    "artifact_type": {
+      "const": "system_prompt_contract"
+    },
+    "id": {
+      "type": "string",
+      "pattern": "^[A-Za-z][A-Za-z0-9_.-]{2,127}$"
+    },
+    "version": {
+      "type": "string",
+      "pattern": "^[0-9]+\\.[0-9]+\\.[0-9]+$"
+    },
+    "owner": {
+      "type": "string"
+    },
+    "objective": {
+      "type": "string",
+      "minLength": 16
+    },
+    "messages": {
+      "type": "array",
+      "minItems": 1,
+      "items": {
+        "type": "object",
+        "required": [
+          "role",
+          "content"
+        ],
+        "properties": {
+          "role": {
+            "enum": [
+              "system",
+              "developer",
+              "user",
+              "assistant",
+              "tool"
+            ]
+          },
+          "content": {
+            "type": "string",
+            "minLength": 1
+          }
+        }
+      }
+    },
+    "references": {
+      "type": "array",
+      "items": {
+        "type": "object",
+        "required": [
+          "id",
+          "href"
+        ],
+        "properties": {
+          "id": {
+            "type": "string",
+            "pattern": "^[A-Za-z0-9_.-]+$"
+          },
+          "href": {
+            "type": "string",
+            "format": "uri"
+          }
+        }
+      }
+    },
+    "unit_tests": {
+      "type": "array",
+      "minItems": 1,
+      "items": {
+        "type": "object",
+        "required": [
+          "id",
+          "input",
+          "assertions"
+        ],
+        "properties": {
+          "id": {
+            "type": "string",
+            "pattern": "^[A-Za-z0-9_.-]+$"
+          },
+          "input": {
+            "type": [
+              "string",
+              "object",
+              "array"
+            ]
+          },
+          "assertions": {
+            "type": "array",
+            "minItems": 1
+          }
+        }
+      }
+    },
+    "shadow_tests": {
+      "type": "array",
+      "minItems": 1,
+      "items": {
+        "type": "object",
+        "required": [
+          "id",
+          "input",
+          "baseline_expectations",
+          "quality_gates"
+        ],
+        "properties": {
+          "id": {
+            "type": "string",
+            "pattern": "^[A-Za-z0-9_.-]+$"
+          },
+          "input": {
+            "type": [
+              "string",
+              "object",
+              "array"
+            ]
+          },
+          "baseline_expectations": {
+            "type": "object",
+            "additionalProperties": true,
+            "properties": {
+              "must_fail": {
+                "type": "boolean"
+              },
+              "expected_issue": {
+                "type": "string"
+              },
+              "forbidden_issue": {
+                "type": "string"
+              }
+            }
+          },
+          "quality_gates": {
+            "type": "array",
+            "minItems": 1
+          }
+        }
+      }
+    }
+  }
+}

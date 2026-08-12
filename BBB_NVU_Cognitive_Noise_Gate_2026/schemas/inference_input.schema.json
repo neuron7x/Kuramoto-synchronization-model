@@ -1,0 +1,25 @@
+{
+  "$schema": "https://json-schema.org/draft/2020-12/schema",
+  "title": "InferenceInput",
+  "description": "Strict numeric input contract for deterministic demo inference. Values outside finite 0-100 domain bounds are fail-closed by the engine.",
+  "type": "object",
+  "required": ["subject_id", "critical_data_invalid", "confidence", "domain_indices", "degradations"],
+  "properties": {
+    "subject_id": {"type": "string"},
+    "critical_data_invalid": {"type": "boolean"},
+    "confidence": {"type": "number", "minimum": 0, "maximum": 1},
+    "domain_indices": {
+      "type": "object",
+      "properties": {
+        "BSI": {"type": "number", "minimum": 0, "maximum": 100},
+        "NRI": {"type": "number", "minimum": 0, "maximum": 100},
+        "VML": {"type": "number", "minimum": 0, "maximum": 100},
+        "GRS": {"type": "number", "minimum": 0, "maximum": 100},
+        "CNI": {"type": "number", "minimum": 0, "maximum": 100}
+      },
+      "additionalProperties": false
+    },
+    "degradations": {"type": "array", "items": {"type": "string"}}
+  },
+  "additionalProperties": false
+}

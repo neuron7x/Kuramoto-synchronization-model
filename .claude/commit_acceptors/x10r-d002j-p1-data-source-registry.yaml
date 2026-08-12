@@ -1,0 +1,250 @@
+# Diff-bound commit acceptor for the D-002J-P1 data source registry v1 PR.
+#
+# D-002J-P1 lands the financial data source registry v1 on top of the
+# D-002J prereg lineage (PR #694, branch
+# `docs/x10r-d002j-financial-benchmark-prereg`). P1 ships a
+# machine-readable JSON registry of 25 publicly-known sources, a JSON
+# summary breakdown, a crisis-window coverage matrix (§10), a
+# mechanism-coverage matrix (§11), 8 filled source cards, and a §9
+# selection rationale. P1 is registry-only: NO ingestion, NO real-bank
+# validation, NO canonical-run authorisation, NO edit of any locked
+# governance file.
+#
+# Pure governance: NO source-code edit, NO mechanism change, NO
+# canonical sweep run, NO D-002C ledger touch, NO D-002G or D-002H or
+# D-002I or D-002J prereg edit, NO research/systemic_risk/*.py edit,
+# NO scripts/x10r_d002*.py edit. D-002J-P1 does NOT claim D-002H
+# REFUSED was wrong (the verdict was truthful) and does NOT
+# retroactively flip that verdict.
+
+id: x10r-d002j-p1-data-source-registry
+status: ACTIVE
+claim_type: governance
+promise: >-
+  After this PR lands,
+  artifacts/d002j/data_registry/source_registry_v1.json exists with
+  schema_version D002J-SOURCE-REGISTRY-v1, total_sources 25, sources
+  list of 25 entries each carrying the full §6 schema (22 required
+  keys); artifacts/d002j/data_registry/source_registry_summary_v1.json
+  exists with schema_version D002J-SOURCE-REGISTRY-SUMMARY-v1,
+  decision DATA_REGISTRY_READY, usable_now_count 23, candidate_count
+  2, rejected_count 0, by_source_class banking 4 repo 4
+  macro_financial 5 market_structure 4 crisis_window 5
+  literature_support 3, by_crisis_window CW1 20 CW2 15 CW3 16 CW4 18
+  CW5 11 CW6 15, locked_anchors carrying the four byte-exact
+  governance sha pins, canonical_run_authorized false,
+  benchmark_only true, no_ingest_in_this_pr true.
+
+  docs/research/D002J_DATA_SOURCE_MATRIX.md gains the §10
+  crisis-window coverage matrix (all 6 windows CW1..CW6) and the §11
+  mechanism-coverage matrix (7 mechanism families), preserving the
+  original scaffold sections.
+
+  docs/research/D002J_DATA_SOURCE_CARD.md exists with the card
+  template plus 8 filled cards (BIS_CBS, FRED, OFR_REPO_DATA,
+  NYFED_SOFR, OFR_FSI, FDIC_CALL_REPORTS, BOE_LDI_REVIEW,
+  LIT_INTERBANK_CONTAGION).
+
+  docs/research/D002J_SOURCE_SELECTION_RATIONALE.md exists with
+  selection methodology + §9 selection matrix listing every one of
+  the 25 source_ids with why_include and why_not_enough_alone
+  boundary clauses.
+
+  tests/systemic_risk/test_d002j_data_source_registry.py carries 23
+  tests covering files-exist, per-entry schema, source_id uniqueness,
+  count parity, floors per source_class, status taxonomy, usable
+  floor, crisis-window coverage parity, mechanistic-relevance
+  vocabulary, license boundary, URL well-formedness, coverage window
+  strings, forbidden_use clauses, summary parity, decision taxonomy,
+  READY-conjunction, no canonical-run authorisation, locked
+  governance sha byte-exact, forbidden-claim parity with D-002J
+  prereg, doc-card parity, rationale parity, and BLOCKERS.md P1
+  lineage section.
+
+  docs/governance/D002G_CANONICAL_RUN_BLOCKERS.md gains an
+  append-only D-002J-P1 data source registry v1 landed section
+  naming the registry decision DATA_REGISTRY_READY, counts, scope
+  boundary, the four locked governance sha pins (D-002G prereg,
+  D-002G acceptance rules, D-002H prereg, D-002C claim ledger), and
+  the next legal PR tag D-002J-P2.
+
+  D-002G prereg byte-exact
+  1ab91f09370e4705a8b0849467bc1f56df2e58d58d5623d3b6d905cbd110bb04.
+  D-002G acceptance rules byte-exact
+  875b1e3eb031b8e5333dc8b455454f0a30419ead1ebe787aa01d5882e7d6ad31.
+  D-002H prereg byte-exact
+  44b18b5a40ce9d188a9c3bd49339621f81a65a15f97a683247902450dd54acec.
+  D-002C claim ledger byte-exact
+  eb0b7151d76e5409e6dc9bb4a023551de5e0704673d5ac9f726319ef84a32387.
+
+  Pure registry: NO source-code edit, NO data ingestion, NO
+  mechanism change, NO canonical sweep run, NO prior-gate or
+  prior-prereg artifact edit. D-002J-P1 is registry, not validation.
+  D-002H REFUSED remains the truthful canonical verdict; D-002J-P1
+  does NOT retroactively flip it. D-002J-P1 does NOT pre-empt
+  D-002I investigation outcomes.
+
+diff_scope:
+  changed_files:
+    - path: "artifacts/d002j/data_registry/source_registry_v1.json"
+    - path: "artifacts/d002j/data_registry/source_registry_summary_v1.json"
+    - path: "docs/research/D002J_DATA_SOURCE_MATRIX.md"
+    - path: "docs/research/D002J_DATA_SOURCE_CARD.md"
+    - path: "docs/research/D002J_SOURCE_SELECTION_RATIONALE.md"
+    - path: "tests/systemic_risk/test_d002j_data_source_registry.py"
+    - path: ".claude/commit_acceptors/x10r-d002j-p1-data-source-registry.yaml"
+    - path: "docs/governance/D002G_CANONICAL_RUN_BLOCKERS.md"
+    - path: ".github/detect-secrets.baseline"
+  forbidden_paths:
+    - "docs/governance/D002C_CLAIM_LEDGER.yaml"
+    - "docs/governance/D002C_PREREGISTRATION.yaml"
+    - "docs/governance/D002C_CANONICAL_RUN_REPORT.md"
+    - "docs/governance/D002C_ATTEMPT_2_NULL_AUDIT_FALSIFICATION_REPORT.md"
+    - "docs/governance/D002G_ACCEPTANCE_RULES.md"
+    - "docs/governance/D002G_PREREGISTRATION.yaml"
+    - "docs/governance/D002G_NONDEGENERATE_NULL_DESIGN.md"
+    - "docs/governance/D002G_P3_M3_PREREGISTRATION.md"
+    - "docs/governance/D002G_STRUCTURAL_CLOSURE_REPORT.md"
+    - "docs/governance/D002G_NEGATIVE_SPACE_MAP.md"
+    - "docs/governance/D002G_M3_ELIGIBILITY_MATRIX.md"
+    - "docs/governance/D002H_PREREGISTRATION.yaml"
+    - "docs/governance/D002H_SCOPE_RATIONALE.md"
+    - "docs/governance/D002H_CLAIM_BOUNDARY.md"
+    - "docs/governance/D002H_CANONICAL_RUN_AUTHORIZATION_GATES.md"
+    - "docs/governance/D002H_GATE_B_REPORT.md"
+    - "docs/governance/D002H_GATE_C_CANONICAL_GRID.md"
+    - "docs/governance/D002H_GATE_D_FORBIDDEN_CLAIM_SCAN.md"
+    - "docs/governance/D002H_GATE_E_LOCKED_FILE_REPORT.md"
+    - "docs/governance/D002H_GATE_F_AUTHORIZATION_REPORT.md"
+    - "docs/governance/D002H_GATE_G_CI_LOCK_REPORT.md"
+    - "docs/governance/D002H_R2B_INAPPLICABILITY_NOTE.md"
+    - "docs/governance/D002H_CANONICAL_RUN_REPORT.md"
+    - "docs/governance/D002I_PREREGISTRATION.yaml"
+    - "docs/governance/D002I_INVESTIGATION_RATIONALE.md"
+    - "docs/governance/D002I_CLAIM_BOUNDARY.md"
+    - "docs/governance/D002J_PREREGISTRATION.yaml"
+    - "artifacts/d002h/eligibility/"
+    - "artifacts/d002h/canonical/"
+    - "artifacts/d002h/scans/"
+    - "artifacts/d002h/locks/"
+    - "artifacts/d002h/authorization/"
+    - "artifacts/d002h/prereg/"
+    - "artifacts/d002i/prereg/"
+    - "artifacts/d002g/closure/"
+    - "artifacts/d002g/m3/"
+    - "artifacts/d002g/p3/"
+    - "artifacts/d002g/canonical/"
+    - "artifacts/d002j/prereg/"
+    - "research/systemic_risk/d002c_substrates.py"
+    - "research/systemic_risk/d002g_null_mechanisms.py"
+    - "research/systemic_risk/"
+    - "scripts/x10r_d002c_attempt_2_null_audit.py"
+    - "scripts/x10r_d002g_gate_d_scan.py"
+    - "scripts/x10r_d002h_gate_d_scan.py"
+    - "scripts/x10r_d002h_canonical_sweep.py"
+required_python_symbols:
+  - "tests.systemic_risk.test_d002j_data_source_registry.test_d002j_p1_registry_files_exist"
+  - "tests.systemic_risk.test_d002j_data_source_registry.test_d002j_p1_per_entry_schema_contract"
+  - "tests.systemic_risk.test_d002j_data_source_registry.test_d002j_p1_source_id_unique_and_nonempty"
+  - "tests.systemic_risk.test_d002j_data_source_registry.test_d002j_p1_total_sources_count_matches"
+  - "tests.systemic_risk.test_d002j_data_source_registry.test_d002j_p1_min_total_sources_floor"
+  - "tests.systemic_risk.test_d002j_data_source_registry.test_d002j_p1_per_source_class_floors"
+  - "tests.systemic_risk.test_d002j_data_source_registry.test_d002j_p1_status_taxonomy_enforced"
+  - "tests.systemic_risk.test_d002j_data_source_registry.test_d002j_p1_usable_or_candidate_floor"
+  - "tests.systemic_risk.test_d002j_data_source_registry.test_d002j_p1_crisis_window_coverage_parity"
+  - "tests.systemic_risk.test_d002j_data_source_registry.test_d002j_p1_mechanistic_relevance_nonempty"
+  - "tests.systemic_risk.test_d002j_data_source_registry.test_d002j_p1_license_boundary_explicit"
+  - "tests.systemic_risk.test_d002j_data_source_registry.test_d002j_p1_urls_well_formed"
+  - "tests.systemic_risk.test_d002j_data_source_registry.test_d002j_p1_coverage_window_strings_present"
+  - "tests.systemic_risk.test_d002j_data_source_registry.test_d002j_p1_forbidden_use_clauses_present"
+  - "tests.systemic_risk.test_d002j_data_source_registry.test_d002j_p1_summary_breakdown_parity_status_class"
+  - "tests.systemic_risk.test_d002j_data_source_registry.test_d002j_p1_decision_string_allowed"
+  - "tests.systemic_risk.test_d002j_data_source_registry.test_d002j_p1_data_registry_ready_conjunction"
+  - "tests.systemic_risk.test_d002j_data_source_registry.test_d002j_p1_no_canonical_run_authorisation"
+  - "tests.systemic_risk.test_d002j_data_source_registry.test_d002j_p1_locked_governance_shas_byte_exact"
+  - "tests.systemic_risk.test_d002j_data_source_registry.test_d002j_p1_forbidden_claims_parity_with_prereg"
+  - "tests.systemic_risk.test_d002j_data_source_registry.test_d002j_p1_doc_card_parity_top_sources"
+  - "tests.systemic_risk.test_d002j_data_source_registry.test_d002j_p1_rationale_parity_all_sources_present"
+  - "tests.systemic_risk.test_d002j_data_source_registry.test_d002j_p1_blockers_md_carries_p1_lineage_section"
+expected_signal: >-
+  `PYTHONPATH=. python -m pytest
+  tests/systemic_risk/test_d002j_data_source_registry.py -q` passes
+  all 23 cases; source_registry_v1.json declares schema_version
+  D002J-SOURCE-REGISTRY-v1 with 25 sources; summary JSON declares
+  schema_version D002J-SOURCE-REGISTRY-SUMMARY-v1 with decision
+  DATA_REGISTRY_READY, usable_now_count 23, candidate_count 2,
+  rejected_count 0; every source_class floor is satisfied; every
+  crisis_window has at least 5 corroborating sources;
+  D002G_CANONICAL_RUN_BLOCKERS.md gains the append-only D-002J-P1
+  data source registry v1 landed section; D-002G prereg sha256
+  byte-exact 1ab91f0...0bb04; D-002G acceptance rules sha256
+  byte-exact 875b1e3...d6ad31; D-002H prereg sha256 byte-exact
+  44b18b5...54acec; D-002C claim ledger sha256 byte-exact
+  eb0b715...32387.
+measurement_command: >-
+  bash -c 'set -e;
+  PYTHONPATH=. python -m pytest tests/systemic_risk/test_d002j_data_source_registry.py -q;
+  test -f artifacts/d002j/data_registry/source_registry_v1.json;
+  test -f artifacts/d002j/data_registry/source_registry_summary_v1.json;
+  test -f docs/research/D002J_DATA_SOURCE_MATRIX.md;
+  test -f docs/research/D002J_DATA_SOURCE_CARD.md;
+  test -f docs/research/D002J_SOURCE_SELECTION_RATIONALE.md;
+  test -f tests/systemic_risk/test_d002j_data_source_registry.py;
+  python -m json.tool artifacts/d002j/data_registry/source_registry_v1.json > /dev/null;
+  python -m json.tool artifacts/d002j/data_registry/source_registry_summary_v1.json > /dev/null;
+  grep -q "D002J-SOURCE-REGISTRY-v1" artifacts/d002j/data_registry/source_registry_v1.json;
+  grep -q "D002J-SOURCE-REGISTRY-SUMMARY-v1" artifacts/d002j/data_registry/source_registry_summary_v1.json;
+  grep -q "DATA_REGISTRY_READY" artifacts/d002j/data_registry/source_registry_summary_v1.json;
+  grep -q "D-002J-P1" docs/governance/D002G_CANONICAL_RUN_BLOCKERS.md;
+  test "$(sha256sum docs/governance/D002G_PREREGISTRATION.yaml | awk "{print \$1}")" = "1ab91f09370e4705a8b0849467bc1f56df2e58d58d5623d3b6d905cbd110bb04";
+  test "$(sha256sum docs/governance/D002G_ACCEPTANCE_RULES.md | awk "{print \$1}")" = "875b1e3eb031b8e5333dc8b455454f0a30419ead1ebe787aa01d5882e7d6ad31";
+  test "$(sha256sum docs/governance/D002H_PREREGISTRATION.yaml | awk "{print \$1}")" = "44b18b5a40ce9d188a9c3bd49339621f81a65a15f97a683247902450dd54acec";
+  test "$(sha256sum docs/governance/D002C_CLAIM_LEDGER.yaml | awk "{print \$1}")" = "eb0b7151d76e5409e6dc9bb4a023551de5e0704673d5ac9f726319ef84a32387"'
+signal_artifact: "artifacts/d002j/data_registry/source_registry_v1.json"
+falsifier:
+  command: >-
+    bash -c 'set -e;
+    PYTHONPATH=. python -m pytest tests/systemic_risk/test_d002j_data_source_registry.py -q || exit 1;
+    test -f artifacts/d002j/data_registry/source_registry_v1.json || exit 2;
+    test -f artifacts/d002j/data_registry/source_registry_summary_v1.json || exit 3;
+    test -f docs/research/D002J_DATA_SOURCE_MATRIX.md || exit 4;
+    test -f docs/research/D002J_DATA_SOURCE_CARD.md || exit 5;
+    test -f docs/research/D002J_SOURCE_SELECTION_RATIONALE.md || exit 6;
+    test -f tests/systemic_risk/test_d002j_data_source_registry.py || exit 7;
+    test -f .claude/commit_acceptors/x10r-d002j-p1-data-source-registry.yaml || exit 8;
+    grep -q "D002J-SOURCE-REGISTRY-v1" artifacts/d002j/data_registry/source_registry_v1.json || exit 9;
+    grep -q "DATA_REGISTRY_READY" artifacts/d002j/data_registry/source_registry_summary_v1.json || exit 10;
+    grep -q "D-002J-P1" docs/governance/D002G_CANONICAL_RUN_BLOCKERS.md || exit 11;
+    test "$(sha256sum docs/governance/D002G_PREREGISTRATION.yaml | awk "{print \$1}")" = "1ab91f09370e4705a8b0849467bc1f56df2e58d58d5623d3b6d905cbd110bb04" || exit 12;
+    test "$(sha256sum docs/governance/D002G_ACCEPTANCE_RULES.md | awk "{print \$1}")" = "875b1e3eb031b8e5333dc8b455454f0a30419ead1ebe787aa01d5882e7d6ad31" || exit 13;
+    test "$(sha256sum docs/governance/D002H_PREREGISTRATION.yaml | awk "{print \$1}")" = "44b18b5a40ce9d188a9c3bd49339621f81a65a15f97a683247902450dd54acec" || exit 14;
+    test "$(sha256sum docs/governance/D002C_CLAIM_LEDGER.yaml | awk "{print \$1}")" = "eb0b7151d76e5409e6dc9bb4a023551de5e0704673d5ac9f726319ef84a32387" || exit 15'
+  description: >-
+    Probes the D-002J-P1 financial data source registry v1: 23 tests
+    pass; 7 deliverable files plus the modified BLOCKERS.md exist on
+    disk; both JSON artifacts are valid JSON with their pinned
+    schema_version strings; summary decision is DATA_REGISTRY_READY;
+    BLOCKERS.md carries the D-002J-P1 lineage section; D-002G prereg,
+    D-002G acceptance rules, D-002H prereg, and D-002C claim ledger
+    sha256 all byte-exact at their locked anchors. Regression on any
+    -> D-002J-P1 registry contract broken.
+rollback_command: >-
+  bash -c 'rm -rf
+  artifacts/d002j/data_registry
+  docs/research/D002J_DATA_SOURCE_CARD.md
+  docs/research/D002J_SOURCE_SELECTION_RATIONALE.md
+  tests/systemic_risk/test_d002j_data_source_registry.py
+  .claude/commit_acceptors/x10r-d002j-p1-data-source-registry.yaml
+  && git checkout HEAD -- docs/research/D002J_DATA_SOURCE_MATRIX.md docs/governance/D002G_CANONICAL_RUN_BLOCKERS.md'
+rollback_verification_command: >-
+  bash -c 'test ! -f artifacts/d002j/data_registry/source_registry_v1.json
+  && test ! -f artifacts/d002j/data_registry/source_registry_summary_v1.json
+  && test ! -f docs/research/D002J_DATA_SOURCE_CARD.md
+  && test ! -f docs/research/D002J_SOURCE_SELECTION_RATIONALE.md
+  && test ! -f tests/systemic_risk/test_d002j_data_source_registry.py
+  && test ! -f .claude/commit_acceptors/x10r-d002j-p1-data-source-registry.yaml
+  && ! grep -q "D-002J-P1" docs/governance/D002G_CANONICAL_RUN_BLOCKERS.md'
+memory_update_type: append
+ledger_path: ".claude/commit_acceptors/x10r-d002j-p1-data-source-registry.yaml"
+report_path: "docs/research/D002J_SOURCE_SELECTION_RATIONALE.md"
+evidence: []

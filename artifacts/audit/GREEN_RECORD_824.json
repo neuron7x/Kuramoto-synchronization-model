@@ -1,0 +1,12 @@
+{
+  "schema_version": "1.0.0",
+  "pull_request": 824,
+  "merged": true,
+  "checks": [
+    "CALIB GRID Witness Map",
+    "Physics Invariants",
+    "Commit Acceptor Gate",
+    "PR Gate",
+    "Physics Kernel Gate"
+  ]
+}

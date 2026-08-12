@@ -1,3 +1,5 @@
+# Copyright (c) 2023-2026 Yaroslav Vasylenko (neuron7xLab)
+# SPDX-License-Identifier: MIT
 """Tests for the automated test generation utilities."""
 
 from __future__ import annotations
@@ -29,8 +31,7 @@ def sample_module(tmp_path: Path) -> Iterable[Tuple[str, Path]]:
     (package_dir / "__init__.py").write_text("", encoding="utf-8")
     module_path = package_dir / "pricing.py"
     module_path.write_text(
-        textwrap.dedent(
-            '''
+        textwrap.dedent('''
             """Sample pricing utilities."""
 
             from __future__ import annotations
@@ -55,8 +56,7 @@ def sample_module(tmp_path: Path) -> Iterable[Tuple[str, Path]]:
 
                 def scale(self, price: float) -> float:
                     return price * self._multiplier
-            '''
-        ),
+            '''),
         encoding="utf-8",
     )
 
@@ -103,16 +103,12 @@ def test_generate_unit_tests_produces_runnable_pytest_file(
 
     assert output_path.exists()
 
-    compiled = compile(
-        output_path.read_text(encoding="utf-8"), str(output_path), "exec"
-    )
+    compiled = compile(output_path.read_text(encoding="utf-8"), str(output_path), "exec")
     namespace: Dict[str, ModuleType | object] = {}
     exec(compiled, namespace)
 
     test_functions = [
-        value
-        for key, value in namespace.items()
-        if key.startswith("test_") and callable(value)
+        value for key, value in namespace.items() if key.startswith("test_") and callable(value)
     ]
     assert test_functions, "expected generated test functions"
 

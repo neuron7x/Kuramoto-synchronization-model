@@ -1,3 +1,5 @@
+# Copyright (c) 2023-2026 Yaroslav Vasylenko (neuron7xLab)
+# SPDX-License-Identifier: MIT
 from __future__ import annotations
 
 from dataclasses import dataclass, field
@@ -26,16 +28,12 @@ class AMMComboStrategy:
 
     def __init__(self, cfg: AMMStrategyConfig):
         self.cfg = cfg
-        self.amm = AdaptiveMarketMind(
-            cfg.amm, use_internal_entropy=not cfg.use_external_entropy
-        )
+        self.amm = AdaptiveMarketMind(cfg.amm, use_internal_entropy=not cfg.use_external_entropy)
         self._qlo = P2Quantile(cfg.q_lo)
         self._qhi = P2Quantile(cfg.q_hi)
         self._sigma = Float(1e-4)
 
-    def on_step(
-        self, x_t: float, R_t: float, kappa_t: float, H_t: float | None = None
-    ) -> dict:
+    def on_step(self, x_t: float, R_t: float, kappa_t: float, H_t: float | None = None) -> dict:
         out = self.amm.update(x_t, R_t, kappa_t, H_t)
         S = Float(out["amm_pulse"])
         qlo = self._qlo.update(S)

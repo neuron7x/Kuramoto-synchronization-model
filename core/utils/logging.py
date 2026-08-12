@@ -1,9 +1,11 @@
-# SPDX-License-Identifier: LicenseRef-TradePulse-Proprietary
-"""Structured JSON logging utilities for TradePulse.
+# Copyright (c) 2023-2026 Yaroslav Vasylenko (neuron7xLab)
+# SPDX-License-Identifier: MIT
+"""Structured JSON logging utilities for GeoSync.
 
 This module provides structured logging with JSON formatting, correlation IDs,
 and performance tracking capabilities.
 """
+
 from __future__ import annotations
 
 import json
@@ -59,11 +61,7 @@ class JSONFormatter(logging.Formatter):
                 context = None
             if context:
                 is_valid_attr = getattr(context, "is_valid", None)
-                is_valid = (
-                    bool(is_valid_attr())
-                    if callable(is_valid_attr)
-                    else bool(is_valid_attr)
-                )
+                is_valid = bool(is_valid_attr()) if callable(is_valid_attr) else bool(is_valid_attr)
                 if is_valid:
                     trace_id = getattr(context, "trace_id", 0)
                     span_id = getattr(context, "span_id", 0)
@@ -252,9 +250,7 @@ class StructuredLogger:
         else:
             duration = time.perf_counter() - start_time
             if emit_success:
-                resolved_success_level = (
-                    success_level if success_level is not None else level
-                )
+                resolved_success_level = success_level if success_level is not None else level
                 if self.logger.isEnabledFor(resolved_success_level):
                     self._log(
                         resolved_success_level,
@@ -278,11 +274,11 @@ def configure_logging(
     root_logger = logging.getLogger()
     root_logger.setLevel(_resolve_level(level))
 
-    # Remove handlers previously attached by TradePulse without disturbing
+    # Remove handlers previously attached by GeoSync without disturbing
     # external handlers such as pytest's log capture fixtures.
     managed: list[logging.Handler] = []
     for handler in list(root_logger.handlers):
-        if getattr(handler, "_tradepulse_managed", False):
+        if getattr(handler, "_geosync_managed", False):
             managed.append(handler)
             root_logger.removeHandler(handler)
     for handler in managed:
@@ -299,11 +295,9 @@ def configure_logging(
         json_formatter: logging.Formatter = JSONFormatter()
         handler.setFormatter(json_formatter)
     else:
-        formatter = logging.Formatter(
-            "%(asctime)s - %(name)s - %(levelname)s - %(message)s"
-        )
+        formatter = logging.Formatter("%(asctime)s - %(name)s - %(levelname)s - %(message)s")
         handler.setFormatter(formatter)
-    handler._tradepulse_managed = True  # type: ignore[attr-defined]
+    handler._geosync_managed = True  # type: ignore[attr-defined]
     root_logger.addHandler(handler)
 
 

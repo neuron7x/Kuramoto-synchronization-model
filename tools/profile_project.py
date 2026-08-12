@@ -1,4 +1,6 @@
-"""CLI utility to profile representative TradePulse workflows."""
+# Copyright (c) 2023-2026 Yaroslav Vasylenko (neuron7xLab)
+# SPDX-License-Identifier: MIT
+"""CLI utility to profile representative GeoSync workflows."""
 
 from __future__ import annotations
 
@@ -103,9 +105,7 @@ def profile_analytics_pipeline(
         meta["entropy"] = entropy_value
         meta["delta_entropy"] = delta_entropy_value
 
-    with collector.section(
-        "ricci-curvature", {"window": window, "delta": delta}
-    ) as meta:
+    with collector.section("ricci-curvature", {"window": window, "delta": delta}) as meta:
         graph = build_price_graph(window_prices, delta=delta)
         curvature = float(mean_ricci(graph))
         meta["mean_ricci"] = curvature
@@ -137,7 +137,7 @@ def profile_analytics_pipeline(
 
 def _parse_args(argv: list[str] | None = None) -> argparse.Namespace:
     parser = argparse.ArgumentParser(
-        description="Profile representative TradePulse workflows and output structured metrics.",
+        description="Profile representative GeoSync workflows and output structured metrics.",
     )
     parser.add_argument(
         "--data",

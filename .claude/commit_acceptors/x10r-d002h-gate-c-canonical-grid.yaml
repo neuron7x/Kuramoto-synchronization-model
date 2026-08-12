@@ -1,0 +1,195 @@
+# Diff-bound commit acceptor for the D-002H Gate C canonical-parameter-
+# grid declaration PR.
+#
+# Pure documentation: emits a machine-readable artifact at
+# artifacts/d002h/canonical/d002h_canonical_grid.json (schema
+# D002H-CANONICAL-GRID-v1) and a human-readable report at
+# docs/governance/D002H_GATE_C_CANONICAL_GRID.md. The grid is
+# byte-equivalent to the ``canonical_grid`` block of the locked D-002H
+# pre-registration (sha256 44b18b5a...0dd54acec, PR #683 anchor).
+#
+# Strict scope (per the operating law):
+#   * NO canonical run. NO sweep. NO results.
+#   * NO new mechanism family. NO new verdict literal. NO new salt.
+#   * NO D-002G prereg edit. NO D-002H prereg edit. NO locked-file edit.
+#   * NO D002C_CLAIM_LEDGER.yaml mutation (sha pinned byte-exact).
+#   * NO substrate code edit. NO mechanism code edit.
+#   * NO claim "Gate C PASS -> canonical run authorised"; the 7-gate
+#     conjunction A AND B AND C AND D AND E AND F AND G is the contract.
+
+id: x10r-d002h-gate-c-canonical-grid
+status: ACTIVE
+claim_type: governance
+promise: >-
+  After this PR lands,
+  artifacts/d002h/canonical/d002h_canonical_grid.json carries
+  schema_version "D002H-CANONICAL-GRID-v1" with study_id "D-002H",
+  gate "C", substrates == ["ricci_flow"], N == [50, 100, 200],
+  lambda_values == [0.0, 0.05, 0.10, 0.20, 0.40, 1.0], n_seeds == 20,
+  n_bootstrap == 16, base_seed == 42, null_seed_M3 == 12345,
+  total_cells == 18, canonical_run_authorized == false,
+  downstream_gates_remaining == ["D","E","F","G"], parent_prereg_sha
+  pinned at the D-002H prereg sha256
+  44b18b5a40ce9d188a9c3bd49339621f81a65a15f97a683247902450dd54acec.
+  The grid fields are byte-equivalent to the ``canonical_grid`` block
+  of docs/governance/D002H_PREREGISTRATION.yaml.
+
+  docs/governance/D002H_GATE_C_CANONICAL_GRID.md carries the 7-section
+  report (scope, prereg anchor, grid table, sampling parameters, claim
+  boundary verbatim, forbidden interpretations, reproduce);
+  tests/systemic_risk/test_d002h_gate_c_grid.py carries 10 fast
+  JSON/schema/sha invariant tests pinning the grid contract and the
+  D-002C ledger + D-002H prereg shas;
+  docs/governance/D002G_CANONICAL_RUN_BLOCKERS.md gains an append-only
+  "D-002H Gate C" section after the Gate B section.
+
+  Gate C is pure declaration: NO canonical run, NO sweep, NO results.
+  NO new mechanism. NO new verdict literal. NO substrate / mechanism /
+  locked governance edit. NO D-002C ledger mutation. NO D-002H prereg
+  edit. NO canonical D-002H run authorisation - this PR addresses Gate
+  C alone; Gates D..G remain open and the 7-gate conjunction is the
+  contract.
+
+diff_scope:
+  changed_files:
+    - path: ".claude/commit_acceptors/x10r-d002h-gate-c-canonical-grid.yaml"
+    - path: "tests/systemic_risk/test_d002h_gate_c_grid.py"
+    - path: "docs/governance/D002H_GATE_C_CANONICAL_GRID.md"
+    - path: "artifacts/d002h/canonical/d002h_canonical_grid.json"
+    - path: "docs/governance/D002G_CANONICAL_RUN_BLOCKERS.md"
+  forbidden_paths:
+    - "docs/governance/D002C_CLAIM_LEDGER.yaml"
+    - "docs/governance/D002C_PREREGISTRATION.yaml"
+    - "docs/governance/D002C_CANONICAL_RUN_REPORT.md"
+    - "docs/governance/D002C_ATTEMPT_2_NULL_AUDIT_FALSIFICATION_REPORT.md"
+    - "docs/governance/D002G_PREREGISTRATION.yaml"
+    - "docs/governance/D002G_NONDEGENERATE_NULL_DESIGN.md"
+    - "docs/governance/D002G_ACCEPTANCE_RULES.md"
+    - "docs/governance/D002G_P3_M3_PREREGISTRATION.md"
+    - "docs/governance/D002G_STRUCTURAL_CLOSURE_REPORT.md"
+    - "docs/governance/D002G_NEGATIVE_SPACE_MAP.md"
+    - "docs/governance/D002G_M3_ELIGIBILITY_MATRIX.md"
+    - "docs/governance/D002H_PREREGISTRATION.yaml"
+    - "docs/governance/D002H_SCOPE_RATIONALE.md"
+    - "docs/governance/D002H_CLAIM_BOUNDARY.md"
+    - "docs/governance/D002H_CANONICAL_RUN_AUTHORIZATION_GATES.md"
+    - "artifacts/d002h/prereg/d002h_preregistration_lock.json"
+    - "docs/governance/D002H_GATE_B_REPORT.md"
+    - "artifacts/d002h/eligibility/d002h_ricci_eligibility.json"
+    - "scripts/x10r_d002h_gate_b_eligibility.py"
+    - "tests/systemic_risk/test_d002h_gate_b_eligibility.py"
+    - ".claude/commit_acceptors/x10r-d002h-gate-b-eligibility.yaml"
+    - "research/systemic_risk/d002c_substrates.py"
+    - "research/systemic_risk/d002g_null_mechanisms.py"
+    - "artifacts/d002g/closure/"
+    - "artifacts/d002g/m3/"
+    - "artifacts/d002g/p3/"
+    - "artifacts/d002g/canonical/"
+    - "artifacts/d002h/canonical/results/"
+    - "artifacts/d002h/authorization/"
+required_python_symbols: []
+expected_signal: >-
+  `PYTHONPATH=. python -m pytest tests/systemic_risk/test_d002h_gate_c_grid.py
+  -q` passes all 10 tests; the artifact JSON parses and satisfies the
+  schema/invariant asserts; the grid block is byte-equivalent to the
+  D-002H prereg ``canonical_grid``; the D-002C claim ledger sha256
+  stays byte-exact at
+  f96ba9b5a2057d2e0bff84afc28578ab316cff73f6dc6673fb0d6d543b8bd6dd;
+  the D-002H prereg sha256 stays byte-exact at
+  44b18b5a40ce9d188a9c3bd49339621f81a65a15f97a683247902450dd54acec;
+  BLOCKERS.md gains the "D-002H Gate C - canonical parameter grid
+  declared" append-only section.
+measurement_command: >-
+  bash -c 'set -e;
+  PYTHONPATH=. python -m pytest tests/systemic_risk/test_d002h_gate_c_grid.py -q;
+  python -c "import json, yaml;
+  d=json.load(open(\"artifacts/d002h/canonical/d002h_canonical_grid.json\"));
+  p=yaml.safe_load(open(\"docs/governance/D002H_PREREGISTRATION.yaml\"))[\"canonical_grid\"];
+  assert d[\"schema_version\"]==\"D002H-CANONICAL-GRID-v1\";
+  assert d[\"study_id\"]==\"D-002H\";
+  assert d[\"gate\"]==\"C\";
+  assert d[\"substrates\"]==[\"ricci_flow\"];
+  assert d[\"N\"]==[50, 100, 200];
+  assert d[\"lambda_values\"]==[0.0, 0.05, 0.10, 0.20, 0.40, 1.0];
+  assert d[\"n_seeds\"]==20;
+  assert d[\"n_bootstrap\"]==16;
+  assert d[\"base_seed\"]==42;
+  assert d[\"null_seed_M3\"]==12345;
+  assert d[\"total_cells\"]==18;
+  assert d[\"canonical_run_authorized\"] is False;
+  assert d[\"downstream_gates_remaining\"]==[\"D\",\"E\",\"F\",\"G\"];
+  assert d[\"substrates\"]==p[\"substrates\"];
+  assert d[\"N\"]==p[\"N\"];
+  assert d[\"lambda_values\"]==p[\"lambda_values\"];
+  assert d[\"n_seeds\"]==p[\"n_seeds\"];
+  assert d[\"n_bootstrap\"]==p[\"n_bootstrap\"];
+  assert d[\"total_cells\"]==p[\"total_cells\"]";
+  grep -q "D-002H Gate C" docs/governance/D002G_CANONICAL_RUN_BLOCKERS.md;
+  grep -q "D002H-CANONICAL-GRID-v1" docs/governance/D002H_GATE_C_CANONICAL_GRID.md;
+  test ! -d artifacts/d002h/canonical/results;
+  test ! -d artifacts/d002h/authorization;
+  test "$(sha256sum docs/governance/D002C_CLAIM_LEDGER.yaml | awk "{print \$1}")" = "f96ba9b5a2057d2e0bff84afc28578ab316cff73f6dc6673fb0d6d543b8bd6dd";
+  test "$(sha256sum docs/governance/D002H_PREREGISTRATION.yaml | awk "{print \$1}")" = "44b18b5a40ce9d188a9c3bd49339621f81a65a15f97a683247902450dd54acec";
+  test "$(sha256sum docs/governance/D002H_CANONICAL_RUN_AUTHORIZATION_GATES.md | awk "{print \$1}")" = "75becc5c0d57eab9505ab00fe36e35ce1513126f8415d510f1c65dd7643bc0e6";
+  test "$(sha256sum research/systemic_risk/d002c_substrates.py | awk "{print \$1}")" = "4b2e5d65c104a5be5a207951cd3c4ae099f31ce83b3f2c0766a160d8c9e80eca";
+  test "$(sha256sum research/systemic_risk/d002g_null_mechanisms.py | awk "{print \$1}")" = "c7e275191454e1e961d5a079a21b6e1dbfcbc1661d48ddf14d0d0c39a426f257"'
+signal_artifact: "artifacts/d002h/canonical/d002h_canonical_grid.json"
+falsifier:
+  command: >-
+    bash -c 'set -e;
+    PYTHONPATH=. python -m pytest tests/systemic_risk/test_d002h_gate_c_grid.py -q || exit 1;
+    test -f artifacts/d002h/canonical/d002h_canonical_grid.json || exit 2;
+    test -f docs/governance/D002H_GATE_C_CANONICAL_GRID.md || exit 3;
+    test -f tests/systemic_risk/test_d002h_gate_c_grid.py || exit 4;
+    python -c "import json;
+    d=json.load(open(\"artifacts/d002h/canonical/d002h_canonical_grid.json\"));
+    assert d[\"schema_version\"]==\"D002H-CANONICAL-GRID-v1\";
+    assert d[\"substrates\"]==[\"ricci_flow\"];
+    assert d[\"total_cells\"]==18;
+    assert d[\"n_seeds\"]==20;
+    assert d[\"n_bootstrap\"]==16;
+    assert d[\"canonical_run_authorized\"] is False;
+    assert d[\"downstream_gates_remaining\"]==[\"D\",\"E\",\"F\",\"G\"];
+    assert \"results\" not in d;
+    assert \"sweep\" not in d" || exit 5;
+    grep -q "D-002H Gate C" docs/governance/D002G_CANONICAL_RUN_BLOCKERS.md || exit 6;
+    test "$(sha256sum docs/governance/D002C_CLAIM_LEDGER.yaml | awk "{print \$1}")" = "f96ba9b5a2057d2e0bff84afc28578ab316cff73f6dc6673fb0d6d543b8bd6dd" || exit 7;
+    test "$(sha256sum docs/governance/D002H_PREREGISTRATION.yaml | awk "{print \$1}")" = "44b18b5a40ce9d188a9c3bd49339621f81a65a15f97a683247902450dd54acec" || exit 8;
+    test "$(sha256sum research/systemic_risk/d002c_substrates.py | awk "{print \$1}")" = "4b2e5d65c104a5be5a207951cd3c4ae099f31ce83b3f2c0766a160d8c9e80eca" || exit 9;
+    test "$(sha256sum research/systemic_risk/d002g_null_mechanisms.py | awk "{print \$1}")" = "c7e275191454e1e961d5a079a21b6e1dbfcbc1661d48ddf14d0d0c39a426f257" || exit 10;
+    test ! -d artifacts/d002h/canonical/results || exit 11;
+    if grep -rE "canonical run authorised|canonical run authorized|Gate C authorises|D-002G rescued|D-002C rescued|cross-substrate robustness|general topology robustness|scientific PASS achieved|sweep complete|sweep result" docs/governance/D002H_GATE_C_CANONICAL_GRID.md tests/systemic_risk/test_d002h_gate_c_grid.py artifacts/d002h/canonical/d002h_canonical_grid.json | grep -vE "forbidden|NOT|never|cannot|does not|do not|out of scope|MUST NOT|alone does NOT|alone is one term|prohibited|disallowed|requires|impossible|deny|denied|reject|REJECT|attempt|FAIL|after explicit authorisation|after.*all.*7.*gates"; then
+      echo "forbidden promotional phrase leaked outside denial context"; exit 12;
+    fi'
+  description: >-
+    Probes the D-002H Gate C grid artifact: 10 Gate C tests pass; 3 new
+    files exist on disk (artifact + report + tests); artifact JSON has
+    the locked schema_version D002H-CANONICAL-GRID-v1,
+    substrates=[ricci_flow], total_cells=18, n_seeds=20, n_bootstrap=16,
+    canonical_run_authorized=False, downstream gates [D,E,F,G]; no
+    ``results`` or ``sweep`` field; BLOCKERS.md carries the new Gate C
+    append-only section; D-002C claim ledger byte-exact at the anchor
+    sha; D-002H prereg sha byte-exact at PR #683 anchor; substrate +
+    mechanism module shas byte-exact unchanged; no
+    artifacts/d002h/canonical/results/ directory exists (Gate C is
+    forbidden from running the sweep); no forbidden promotional phrase
+    leaks outside denial context. Regression on any -> Gate C contract
+    broken.
+rollback_command: >-
+  bash -c 'rm -f
+  tests/systemic_risk/test_d002h_gate_c_grid.py
+  docs/governance/D002H_GATE_C_CANONICAL_GRID.md
+  artifacts/d002h/canonical/d002h_canonical_grid.json
+  .claude/commit_acceptors/x10r-d002h-gate-c-canonical-grid.yaml
+  && rmdir artifacts/d002h/canonical 2>/dev/null || true
+  && git checkout HEAD~1 -- docs/governance/D002G_CANONICAL_RUN_BLOCKERS.md'
+rollback_verification_command: >-
+  bash -c 'test ! -f tests/systemic_risk/test_d002h_gate_c_grid.py
+  && test ! -f docs/governance/D002H_GATE_C_CANONICAL_GRID.md
+  && test ! -f artifacts/d002h/canonical/d002h_canonical_grid.json
+  && test ! -f .claude/commit_acceptors/x10r-d002h-gate-c-canonical-grid.yaml
+  && ! grep -q "D-002H Gate C" docs/governance/D002G_CANONICAL_RUN_BLOCKERS.md'
+memory_update_type: append
+ledger_path: ".claude/commit_acceptors/x10r-d002h-gate-c-canonical-grid.yaml"
+report_path: "docs/governance/D002H_GATE_C_CANONICAL_GRID.md"
+evidence: []

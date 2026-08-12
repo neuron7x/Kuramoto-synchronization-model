@@ -1,0 +1,53 @@
+id: coverage-intelligence-gate
+status: ACTIVE
+claim_type: governance
+promise: >
+  Establishes a single coverage authority (release_90.coveragerc + the
+  Coverage Intelligence instrument) that fails closed on missing, empty,
+  malformed, or stale evidence and reports an honest, recomputed coverage
+  number. It defines and enforces measurement; it does not itself promote any
+  coverage-percentage or alpha claim.
+diff_scope:
+  changed_files:
+    - path: "tools/coverage/geosync_coverage_intelligence.py"
+    - path: "tests/tools/test_coverage_intelligence.py"
+    - path: "tests/audit/test_coverage_honesty.py"
+    - path: "tests/test_coverage_threshold_sync.py"
+    - path: "configs/quality/release_90.coveragerc"
+    - path: "Makefile"
+    - path: ".github/workflows/coverage-intelligence.yml"
+    - path: ".claude/commit_acceptors/coverage-intelligence-gate.yaml"
+  forbidden_paths:
+    - "trading/"
+    - "execution/"
+    - "backtest/"
+    - "core/"
+    - "analytics/"
+    - "risk/"
+required_python_symbols:
+  - "parse_coverage_xml"
+  - "check_staleness"
+  - "aggregate_surfaces"
+  - "global_release_coverage"
+  - "risk_weighted_score"
+  - "untested_files"
+  - "diff_coverage"
+  - "claim_matrix"
+  - "run"
+  - "main"
+expected_signal: "the coverage authority self-check suite passes (fail-closed on bad evidence, honest recompute, risk weighting, diff coverage, claim matrix, exit codes)"
+measurement_command: "python -m pytest tests/tools/test_coverage_intelligence.py tests/audit/test_coverage_honesty.py tests/test_coverage_threshold_sync.py -q -p no:cacheprovider"
+signal_artifact: "tmp/coverage_intelligence_gate.log"
+falsifier:
+  command: "python -m pytest tests/tools/test_coverage_intelligence.py -q -p no:cacheprovider -k 'fail_closed or missing or malformed or stale'"
+  description: >
+    The instrument must emit HUMAN_REVIEW_ONLY and exit non-zero on missing,
+    empty, malformed, or stale coverage.xml. If any fail-closed test passes
+    when evidence is bad — i.e. the tool trusts an untrustworthy number — the
+    falsifier fails and the acceptor is invalid.
+rollback_command: "git checkout -- tools/coverage/geosync_coverage_intelligence.py tests/tools/test_coverage_intelligence.py tests/audit/test_coverage_honesty.py tests/test_coverage_threshold_sync.py configs/quality/release_90.coveragerc Makefile .github/workflows/coverage-intelligence.yml .claude/commit_acceptors/coverage-intelligence-gate.yaml"
+rollback_verification_command: "git diff --exit-code"
+memory_update_type: append
+ledger_path: ".claude/commit_acceptors/coverage-intelligence-gate.yaml"
+report_path: "docs/testing/coverage_closure.md"
+evidence: []

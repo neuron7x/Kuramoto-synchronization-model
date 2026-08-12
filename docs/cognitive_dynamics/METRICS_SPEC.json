@@ -1,0 +1,39 @@
+{
+  "prediction_error": {
+    "formula": "mean(abs(observed[t] - predicted[t]))",
+    "failure_trigger": "mae > 0.35 after warmup"
+  },
+  "state_entropy": {
+    "formula": "histogram_entropy(x_t, bins=24)",
+    "failure_trigger": "entropy < p10 while mae high OR entropy > p90 while realism_gain low"
+  },
+  "divergence_index": {
+    "formula": "slope(rolling_variance(x_t))",
+    "failure_trigger": "positive slope with high transition mismatch"
+  },
+  "convergence_index": {
+    "formula": "error_reduction + variance_reduction",
+    "failure_trigger": "high convergence while mae stays high"
+  },
+  "ei_balance": {
+    "formula": "mean(E_t / (I_t + 1e-9))",
+    "target_range": [0.75, 1.35],
+    "failure_trigger": "outside target for > 25% of timesteps"
+  },
+  "energy_cost": {
+    "formula": "steps * state_dim * update_density + memory_bytes_mb + wall_time_ms",
+    "failure_trigger": "cost increases while realism_gap does not improve"
+  },
+  "energy_efficiency": {
+    "formula": "(initial_error - final_error) / max(energy_cost, eps)",
+    "failure_trigger": "eta <= 0"
+  },
+  "realism_gap": {
+    "formula": "0.5*trajectory_mae + 0.3*distribution_distance + 0.2*transition_mismatch",
+    "failure_trigger": "gap > 0.45"
+  },
+  "stability_margin": {
+    "formula": "1 / (1 + variance_growth + abs(mean_ei - 1))",
+    "failure_trigger": "margin < 0.5"
+  }
+}

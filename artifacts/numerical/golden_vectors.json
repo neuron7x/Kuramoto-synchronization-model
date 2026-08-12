@@ -1,0 +1,75 @@
+{
+  "task": "ARC-017",
+  "description": "Frozen reference inputs \u2192 exact expected estimator outputs.",
+  "generator": "scripts/ci/check_numerical_stability.py::compute_golden",
+  "vectors": {
+    "mle_core_logistic": {
+      "input": "logistic_series(n=1500, r=4.0, x0=0.1, burn=1000)",
+      "config": {
+        "dim": 5,
+        "tau": 1,
+        "max_divergence_steps": 12
+      },
+      "expected_lambda": 0.6939147782189422,
+      "expected_r_squared": 0.9999945671645324,
+      "atol": 0.0001,
+      "reference": {
+        "value": 0.6931471805599453,
+        "tol": 0.05,
+        "meaning": "ln2, logistic r=4 analytic MLE"
+      }
+    },
+    "mle_geosync_logistic": {
+      "input": "logistic_series(n=500, r=4.0, x0=0.1, burn=1000)",
+      "expected_lambda": 0.617715,
+      "expected_is_valid": true,
+      "expected_is_chaotic": true,
+      "atol": 0.0001
+    },
+    "spectrum_linear": {
+      "input": "A=[[-0.2,1,0],[0,-0.5,0.3],[0,0,-1]], x0=[1,0.5,-0.3], dt=0.01, n_steps=5000",
+      "expected_spectrum": [
+        -0.19999986646652346,
+        -0.4999979088385249,
+        -0.9999832078333918
+      ],
+      "reference_eig": [
+        -0.2,
+        -0.5,
+        -1.0
+      ],
+      "atol": 1e-06,
+      "reference_tol": 0.001
+    },
+    "spectrum_harmonic": {
+      "input": "A=[[0,1],[-1,0]], x0=[1,0], dt=0.05, n_steps=2011",
+      "expected_spectrum": [
+        1.562498779298184e-05,
+        1.5624987792610845e-05
+      ],
+      "expected_sum": 3.124997558559268e-05,
+      "atol": 1e-06,
+      "reference_sum": 0.0,
+      "reference_tol": 0.001
+    },
+    "dfa_fgn_h05": {
+      "input": "fgn_series(n=8192, hurst=0.5, seed=42)",
+      "expected_hurst": 0.499403,
+      "expected_gamma": 1.998806,
+      "expected_r_squared": 0.994023,
+      "atol": 0.0001,
+      "reference": {
+        "value": 0.5,
+        "tol": 0.05
+      }
+    },
+    "dfa_white_noise": {
+      "input": "numpy.random.default_rng(20260719).standard_normal(4096)",
+      "expected_hurst": 0.439422,
+      "expected_gamma": 1.878844,
+      "expected_r_squared": 0.982167,
+      "atol": 0.0001,
+      "note": "DFA-1 at N=4096 underestimates H=0.5 (short-series bias); regression anchor, not accuracy claim."
+    }
+  }
+}

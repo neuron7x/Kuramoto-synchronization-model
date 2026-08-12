@@ -1,0 +1,42 @@
+id: rust-accel-ci-contract
+status: ACTIVE
+claim_type: refactor
+promise: >-
+  Binds PR #884 to explicit diff scope for Rust accelerator CI contract hardening.
+diff_scope:
+  changed_files:
+    - path: "commit_acceptors/rust-accel-ci-contract.yaml"
+    - path: ".github/BRANCH_PROTECTION_MAIN.md"
+    - path: ".github/workflows/README.md"
+    - path: ".github/workflows/pr-gate.yml"
+    - path: ".github/workflows/commit-acceptor-gate.yml"
+    - path: "INVENTORY.json"
+    - path: "rust-toolchain.toml"
+    - path: "rust/geosync-accel/Cargo.toml"
+    - path: "rust/geosync-accel/README.md"
+    - path: "rust/geosync-accel/fuzz/Cargo.toml"
+    - path: "rust/geosync-accel/fuzz/README.md"
+    - path: "rust/geosync-accel/fuzz/fuzz_targets/numeric_primitives.rs"
+    - path: "rust/geosync-accel/src/lib.rs"
+    - path: "rust/geosync-accel/validation_contract.json"
+    - path: "scripts/ci/check_pr_gate_contract.py"
+    - path: "scripts/ci/emit_pyo3_env.py"
+    - path: "scripts/ci/run_rust_accel_contract.py"
+    - path: "tests/ci/pytest.ini"
+    - path: "tests/ci/test_emit_pyo3_env.py"
+    - path: "tests/ci/test_pr_gate_contract_validator.py"
+    - path: "tests/ci/test_run_rust_accel_contract.py"
+  forbidden_paths: []
+required_python_symbols: []
+expected_signal: "PR Gate and Commit Acceptor Gate pass."
+measurement_command: "commit acceptor validation"
+signal_artifact: "tmp/rust_accel_ci_contract_acceptor.json"
+falsifier:
+  command: "commit acceptor validation"
+  description: "Fails on unbound PR files or malformed acceptor schema."
+rollback_command: "revert acceptor file"
+rollback_verification_command: "verify acceptor revert"
+memory_update_type: append
+ledger_path: "commit_acceptors/rust-accel-ci-contract.yaml"
+report_path: "commit_acceptors/rust-accel-ci-contract.yaml"
+evidence: []

@@ -1,5 +1,5 @@
 ---
-owner: mlops@tradepulse
+owner: mlops@geosync
 review_cadence: quarterly
 last_reviewed: 2025-12-28
 links:

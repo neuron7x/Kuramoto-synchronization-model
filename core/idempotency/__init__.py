@@ -1,3 +1,5 @@
+# Copyright (c) 2023-2026 Yaroslav Vasylenko (neuron7xLab)
+# SPDX-License-Identifier: MIT
 """Idempotency utilities for coordinating exactly-once semantics across services."""
 
 from .keys import IdempotencyKey, IdempotencyKeyFactory

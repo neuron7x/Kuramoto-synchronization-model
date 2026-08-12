@@ -1,3 +1,5 @@
+# Copyright (c) 2023-2026 Yaroslav Vasylenko (neuron7xLab)
+# SPDX-License-Identifier: MIT
 from __future__ import annotations
 
 from pathlib import Path
@@ -7,11 +9,11 @@ import numpy as np
 
 from application import (
     ExecutionRequest,
+    GeoSyncOrchestrator,
     LiveLoopSettings,
     MarketDataSource,
     ServiceRegistry,
-    TradePulseOrchestrator,
-    build_tradepulse_system,
+    build_geosync_system,
 )
 
 
@@ -20,7 +22,7 @@ def _sample_csv() -> Path:
 
 
 def _build_system(tmp_path: Path):
-    return build_tradepulse_system(
+    return build_geosync_system(
         allowed_data_roots=[_sample_csv().parent],
         live_settings=LiveLoopSettings(state_dir=tmp_path / "state"),
     )
@@ -66,7 +68,7 @@ def test_service_registry_provides_isolated_services(tmp_path):
 def test_orchestrator_reuses_microservices(tmp_path):
     system = _build_system(tmp_path)
     registry = ServiceRegistry.from_system(system)
-    orchestrator = TradePulseOrchestrator(system, services=registry)
+    orchestrator = GeoSyncOrchestrator(system, services=registry)
 
     source = MarketDataSource(path=_sample_csv(), symbol="BTCUSDT", venue="BINANCE")
 

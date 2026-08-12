@@ -1,3 +1,5 @@
+# Copyright (c) 2023-2026 Yaroslav Vasylenko (neuron7xLab)
+# SPDX-License-Identifier: MIT
 """Tests for the fractal motivation controller."""
 
 from __future__ import annotations
@@ -10,9 +12,7 @@ from core.neuro.advanced import FractalMotivationController
 
 
 def test_guardrail_violation_triggers_pause_and_audit() -> None:
-    controller = FractalMotivationController(
-        ["open_long", "hold"], rng=np.random.default_rng(1)
-    )
+    controller = FractalMotivationController(["open_long", "hold"], rng=np.random.default_rng(1))
 
     state = [0.1, 0.2, 0.3]
     signals = {"risk_ok": False, "compliance_ok": True, "PnL": 0.0}
@@ -68,7 +68,4 @@ def test_hazard_penalty_reduces_open_action_values() -> None:
     hazard_controller.get_recommended_action(state, hazard_signals)
 
     assert hazard_controller.total_count == 1
-    assert (
-        hazard_controller.ucb_scores()["open_long"]
-        <= safe_controller.ucb_scores()["open_long"]
-    )
+    assert hazard_controller.ucb_scores()["open_long"] <= safe_controller.ucb_scores()["open_long"]

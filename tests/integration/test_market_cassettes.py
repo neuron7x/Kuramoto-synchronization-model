@@ -1,3 +1,5 @@
+# Copyright (c) 2023-2026 Yaroslav Vasylenko (neuron7xLab)
+# SPDX-License-Identifier: MIT
 import json
 from pathlib import Path
 
@@ -12,10 +14,7 @@ from core.data.connectors.market import BaseMarketDataConnector
 @pytest.mark.asyncio
 async def test_polygon_adapter_replays_recorded_cassette(tmp_path):
     cassette_path = (
-        Path(__file__).resolve().parent.parent
-        / "fixtures"
-        / "cassettes"
-        / "polygon_agg.json"
+        Path(__file__).resolve().parent.parent / "fixtures" / "cassettes" / "polygon_agg.json"
     )
     payload = json.loads(cassette_path.read_text())
     requests: list[httpx.Request] = []
@@ -27,9 +26,7 @@ async def test_polygon_adapter_replays_recorded_cassette(tmp_path):
 
     transport = httpx.MockTransport(_handler)
 
-    async with httpx.AsyncClient(
-        base_url="https://mock.polygon", transport=transport
-    ) as client:
+    async with httpx.AsyncClient(base_url="https://mock.polygon", transport=transport) as client:
         adapter = PolygonIngestionAdapter(
             api_key="cassette", base_url="https://mock.polygon", client=client
         )

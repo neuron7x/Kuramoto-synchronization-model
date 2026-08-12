@@ -1,0 +1,173 @@
+{
+  "claim_boundary": "Byte-level reproducibility anchor. At P3 every entry is null; first verified ingest at P3.5+ populates expected_sha256_at_pin_time and pin_time_iso. Any ingestion downstream MUST match the pinned sha or refuse.",
+  "entries": [
+    {
+      "adapter_id": "adapter_fred_vixcls_v1",
+      "expected_sha256_at_pin_time": null,
+      "note": "sha pinned at first verified ingest (P3.5+). null at P3 contract emit time.",
+      "output_target": "artifacts/d002j/ingestion/staged/adapter_fred_vixcls_v1/data.csv",
+      "pin_time_iso": null,
+      "source_id": "CBOE_VIX",
+      "status_at_pin_time": "STUB_ONLY"
+    },
+    {
+      "adapter_id": "adapter_fred_stlfsi_v1",
+      "expected_sha256_at_pin_time": null,
+      "note": "sha pinned at first verified ingest (P3.5+). null at P3 contract emit time.",
+      "output_target": "artifacts/d002j/ingestion/staged/adapter_fred_stlfsi_v1/data.csv",
+      "pin_time_iso": null,
+      "source_id": "STLFSI",
+      "status_at_pin_time": "STUB_ONLY"
+    },
+    {
+      "adapter_id": "adapter_fred_kcfsi_v1",
+      "expected_sha256_at_pin_time": null,
+      "note": "sha pinned at first verified ingest (P3.5+). null at P3 contract emit time.",
+      "output_target": "artifacts/d002j/ingestion/staged/adapter_fred_kcfsi_v1/data.csv",
+      "pin_time_iso": null,
+      "source_id": "KCFSI",
+      "status_at_pin_time": "STUB_ONLY"
+    },
+    {
+      "adapter_id": "adapter_fred_h15_treasury_v1",
+      "expected_sha256_at_pin_time": null,
+      "note": "sha pinned at first verified ingest (P3.5+). null at P3 contract emit time.",
+      "output_target": "artifacts/d002j/ingestion/staged/adapter_fred_h15_treasury_v1/data.csv",
+      "pin_time_iso": null,
+      "source_id": "FED_H15",
+      "status_at_pin_time": "STUB_ONLY"
+    },
+    {
+      "adapter_id": "adapter_fred_michigan_inflation_expect_v1",
+      "expected_sha256_at_pin_time": null,
+      "note": "sha pinned at first verified ingest (P3.5+). null at P3 contract emit time.",
+      "output_target": "artifacts/d002j/ingestion/staged/adapter_fred_michigan_inflation_expect_v1/data.csv",
+      "pin_time_iso": null,
+      "source_id": "FRED",
+      "status_at_pin_time": "STUB_ONLY"
+    },
+    {
+      "adapter_id": "adapter_fred_ofr_fsi_v1",
+      "expected_sha256_at_pin_time": null,
+      "note": "sha pinned at first verified ingest (P3.5+). null at P3 contract emit time.",
+      "output_target": "artifacts/d002j/ingestion/staged/adapter_fred_ofr_fsi_v1/data.csv",
+      "pin_time_iso": null,
+      "source_id": "OFR_FSI",
+      "status_at_pin_time": "STUB_ONLY"
+    },
+    {
+      "adapter_id": "adapter_alfred_gdp_vintage_v1",
+      "expected_sha256_at_pin_time": null,
+      "note": "sha pinned at first verified ingest (P3.5+). null at P3 contract emit time.",
+      "output_target": "artifacts/d002j/ingestion/staged/adapter_alfred_gdp_vintage_v1/data.csv",
+      "pin_time_iso": null,
+      "source_id": "ALFRED",
+      "status_at_pin_time": "STUB_ONLY"
+    },
+    {
+      "adapter_id": "adapter_alfred_unemp_vintage_v1",
+      "expected_sha256_at_pin_time": null,
+      "note": "sha pinned at first verified ingest (P3.5+). null at P3 contract emit time.",
+      "output_target": "artifacts/d002j/ingestion/staged/adapter_alfred_unemp_vintage_v1/data.csv",
+      "pin_time_iso": null,
+      "source_id": "ALFRED",
+      "status_at_pin_time": "STUB_ONLY"
+    },
+    {
+      "adapter_id": "adapter_philly_fed_rtdsm_gdp_v1",
+      "expected_sha256_at_pin_time": null,
+      "note": "sha pinned at first verified ingest (P3.5+). null at P3 contract emit time.",
+      "output_target": "artifacts/d002j/ingestion/staged/adapter_philly_fed_rtdsm_gdp_v1/data.csv",
+      "pin_time_iso": null,
+      "source_id": "PHILLY_FED_RTDSM",
+      "status_at_pin_time": "REQUIRES_MANUAL_DOWNLOAD"
+    },
+    {
+      "adapter_id": "adapter_bis_cbs_v1",
+      "expected_sha256_at_pin_time": null,
+      "note": "sha pinned at first verified ingest (P3.5+). null at P3 contract emit time.",
+      "output_target": "artifacts/d002j/ingestion/staged/adapter_bis_cbs_v1/data.csv",
+      "pin_time_iso": null,
+      "source_id": "BIS_CBS",
+      "status_at_pin_time": "REQUIRES_MANUAL_DOWNLOAD"
+    },
+    {
+      "adapter_id": "adapter_ecb_cbd_v1",
+      "expected_sha256_at_pin_time": null,
+      "note": "sha pinned at first verified ingest (P3.5+). null at P3 contract emit time.",
+      "output_target": "artifacts/d002j/ingestion/staged/adapter_ecb_cbd_v1/data.csv",
+      "pin_time_iso": null,
+      "source_id": "ECB_CBD",
+      "status_at_pin_time": "STUB_ONLY"
+    },
+    {
+      "adapter_id": "adapter_ofr_repo_dashboard_v1",
+      "expected_sha256_at_pin_time": null,
+      "note": "sha pinned at first verified ingest (P3.5+). null at P3 contract emit time.",
+      "output_target": "artifacts/d002j/ingestion/staged/adapter_ofr_repo_dashboard_v1/data.csv",
+      "pin_time_iso": null,
+      "source_id": "OFR_REPO_DATA",
+      "status_at_pin_time": "STUB_ONLY"
+    },
+    {
+      "adapter_id": "adapter_ecb_mmsr_metadata_v1",
+      "expected_sha256_at_pin_time": null,
+      "note": "sha pinned at first verified ingest (P3.5+). null at P3 contract emit time.",
+      "output_target": "artifacts/d002j/ingestion/staged/adapter_ecb_mmsr_metadata_v1/metadata.json",
+      "pin_time_iso": null,
+      "source_id": "ECB_MMSR",
+      "status_at_pin_time": "REQUIRES_LICENSE_REVIEW"
+    },
+    {
+      "adapter_id": "adapter_icap_move_metadata_v1",
+      "expected_sha256_at_pin_time": null,
+      "note": "sha pinned at first verified ingest (P3.5+). null at P3 contract emit time.",
+      "output_target": "artifacts/d002j/ingestion/staged/adapter_icap_move_metadata_v1/metadata.json",
+      "pin_time_iso": null,
+      "source_id": "ICAP_MOVE",
+      "status_at_pin_time": "REQUIRES_LICENSE_REVIEW"
+    },
+    {
+      "adapter_id": "adapter_lit_interbank_contagion_v1",
+      "expected_sha256_at_pin_time": null,
+      "note": "sha pinned at first verified ingest (P3.5+). null at P3 contract emit time.",
+      "output_target": "artifacts/d002j/ingestion/staged/adapter_lit_interbank_contagion_v1/references.json",
+      "pin_time_iso": null,
+      "source_id": "LIT_INTERBANK_CONTAGION",
+      "status_at_pin_time": "STUB_ONLY"
+    },
+    {
+      "adapter_id": "adapter_lit_network_recon_v1",
+      "expected_sha256_at_pin_time": null,
+      "note": "sha pinned at first verified ingest (P3.5+). null at P3 contract emit time.",
+      "output_target": "artifacts/d002j/ingestion/staged/adapter_lit_network_recon_v1/references.json",
+      "pin_time_iso": null,
+      "source_id": "LIT_NETWORK_RECON",
+      "status_at_pin_time": "STUB_ONLY"
+    },
+    {
+      "adapter_id": "adapter_fed_timeline_events_v1",
+      "expected_sha256_at_pin_time": null,
+      "note": "sha pinned at first verified ingest (P3.5+). null at P3 contract emit time.",
+      "output_target": "artifacts/d002j/ingestion/staged/adapter_fed_timeline_events_v1/events.json",
+      "pin_time_iso": null,
+      "source_id": "FED_TIMELINE",
+      "status_at_pin_time": "STUB_ONLY"
+    },
+    {
+      "adapter_id": "adapter_fred_nber_recession_v1",
+      "expected_sha256_at_pin_time": null,
+      "note": "sha pinned at first verified ingest (P3.5+). null at P3 contract emit time.",
+      "output_target": "artifacts/d002j/ingestion/staged/adapter_fred_nber_recession_v1/data.csv",
+      "pin_time_iso": null,
+      "source_id": "NBER_RECESSION",
+      "status_at_pin_time": "STUB_ONLY"
+    }
+  ],
+  "generated_at": "2026-05-15T00:00:00Z",
+  "parent_manifest_path": "artifacts/d002j/ingestion/ingestion_manifest_v1.json",
+  "pr_lineage": "D-002G -> D-002H REFUSED -> D-002I -> D-002J P0 -> P1 -> P1A REJECTED -> P1B PARTIALLY_VERIFIED -> P2 -> P2.5 -> P3",
+  "schema_version": "D002J-SOURCE-HASH-MANIFEST-v1",
+  "study_id": "D-002J-P3",
+  "total_entries": 18
+}

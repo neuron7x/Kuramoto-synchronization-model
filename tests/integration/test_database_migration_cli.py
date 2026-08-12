@@ -1,3 +1,5 @@
+# Copyright (c) 2023-2026 Yaroslav Vasylenko (neuron7xLab)
+# SPDX-License-Identifier: MIT
 """Integration tests for the ``scripts.db_migrate`` CLI wrapper."""
 
 from __future__ import annotations
@@ -34,9 +36,7 @@ def test_cli_upgrade_and_downgrade(tmp_path: Path) -> None:
         current_result = runner.invoke(cli, ["current", "--database-url", url])
         assert current_result.exit_code == 0, current_result.output
 
-        downgrade_result = runner.invoke(
-            cli, ["downgrade", "base", "--database-url", url]
-        )
+        downgrade_result = runner.invoke(cli, ["downgrade", "base", "--database-url", url])
         assert downgrade_result.exit_code == 0, downgrade_result.output
 
         assert inspect(engine).has_table("kill_switch_state") is False

@@ -1,5 +1,6 @@
-# SPDX-License-Identifier: LicenseRef-TradePulse-Proprietary
-"""Shared utilities for TradePulse."""
+# Copyright (c) 2023-2026 Yaroslav Vasylenko (neuron7xLab)
+# SPDX-License-Identifier: MIT
+"""Shared utilities for GeoSync."""
 
 from .clock import freeze_time
 from .debug import VariableInspector

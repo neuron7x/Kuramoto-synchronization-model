@@ -1,6 +1,6 @@
 # Digital Risk Action Plan
 
-This playbook operationalizes confidentiality, integrity, availability, authentication/authorization hardening, and legal/ethical safeguards for TradePulse. It is structured for rapid execution and continuous coverage across technical, organizational, human, and legal layers.
+This playbook operationalizes confidentiality, integrity, availability, authentication/authorization hardening, and legal/ethical safeguards for GeoSync. It is structured for rapid execution and continuous coverage across technical, organizational, human, and legal layers.
 
 ## 0. First 72 Hours (Stabilize & Contain)
 - Enforce MFA for all admin and production-facing identities; disable dormant privileged accounts.

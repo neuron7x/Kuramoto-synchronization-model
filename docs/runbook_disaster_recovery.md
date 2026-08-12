@@ -3,7 +3,7 @@
 ## Purpose
 
 This runbook codifies the recovery plan for catastrophic failures that threaten
-TradePulse production availability or data integrity. It aligns teams on
+GeoSync production availability or data integrity. It aligns teams on
 recovery point objectives (RPO), recovery time objectives (RTO), and the
 operational playbooks required to restore trading safely across geographic
 regions with zero tolerance for uncontrolled data loss.
@@ -143,7 +143,7 @@ Grafana exports, audit logs, and sign-off from domain leads.
      the DR validation dataset (default `data/sample.csv` or region-specific
      snapshot) to confirm ingestion → signal → order flow.
    - Confirm SLO dashboards within tolerance (latency p95, order ack ratio) via
-     the Grafana exports in `observability/dashboards/tradepulse-overview.json`.
+     the Grafana exports in `observability/dashboards/geosync-overview.json`.
    - Ensure audit trail ingestion resumed by inspecting Kafka consumer lag
      panels and PostgreSQL replication status views.
 6. **Resume Trading**
@@ -181,7 +181,7 @@ Grafana exports, audit logs, and sign-off from domain leads.
 
 ## Communication & Escalation Plan
 
-1. **Alerting Stack** – PagerDuty services `tradepulse-sre` and `tradepulse-security` auto-page SEV-1 rotations. Slack channel `#inc-dr` mirrors incident updates and houses the bot-run timeline.
+1. **Alerting Stack** – PagerDuty services `geosync-sre` and `geosync-security` auto-page SEV-1 rotations. Slack channel `#inc-dr` mirrors incident updates and houses the bot-run timeline.
 2. **Stakeholder Updates** – Communications lead issues updates every 15 minutes to executives using the approved template in `docs/templates/incident_playbook.md` and refreshes the status page through the communications runbook in `docs/incident_playbooks.md`.
 3. **Client Outreach** – Customer success maintains pre-approved messaging for key tiers (HFT, institutional, retail). Primary contact list is stored in the encrypted CRM export referenced in `docs/scenarios/client_contact_roster.csv`.
 4. **Regulatory Notifications** – Compliance officer files regulatory notices (e.g., SEC Reg SCI) within mandated windows following the procedures captured in `docs/incident_playbooks.md`. Evidence and timestamps are appended to the incident ticket.

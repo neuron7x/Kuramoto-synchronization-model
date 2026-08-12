@@ -1,5 +1,5 @@
-docker-compose.yml:9:      TRADEPULSE_AUDIT_SECRET: ${TRADEPULSE_AUDIT_SECRET?tradepulse audit secret must be set}
-docker-compose.yml:10:      TRADEPULSE_RBAC_AUDIT_SECRET: ${TRADEPULSE_RBAC_AUDIT_SECRET?tradepulse RBAC audit secret must be set}
+docker-compose.yml:9:      GEOSYNC_AUDIT_SECRET: ${GEOSYNC_AUDIT_SECRET?geosync audit secret must be set}
+docker-compose.yml:10:      GEOSYNC_RBAC_AUDIT_SECRET: ${GEOSYNC_RBAC_AUDIT_SECRET?geosync RBAC audit secret must be set}
 docker-compose.yml:91:      - xpack.security.enabled=false
 scripts/__init__.py:9:helpers crash at import time when optional secrets were not configured.
 configs/rbac/policy.yaml:113:      - resource: secrets.vault
@@ -25,7 +25,7 @@ scripts/generate_thermo_token.py:94:    print("  - Log all token usage for audit
 scripts/scripts_manifest.json:142:    "path": "scripts/commands/secrets.py",
 scripts/scripts_manifest.json:480:    "path": "tools/compliance/secret_scanner.py",
 scripts/scripts_manifest.json:484:    "docstring": "Repository secret scanner for continuous compliance workflows."
-scripts/generate_openapi.py:16:os.environ.setdefault("TRADEPULSE_AUDIT_SECRET", "openapi-generation-secret")
+scripts/generate_openapi.py:16:os.environ.setdefault("GEOSYNC_AUDIT_SECRET", "openapi-generation-secret")
 scripts/cli.py:61:        secrets,
 scripts/cli.py:79:    secrets.build_parser(subparsers)
 scripts/commands/secrets.py:11:from application.secrets.hashicorp import (
@@ -55,16 +55,16 @@ scripts/commands/supply_chain.py:606:        command.extend(["--identity-token",
 scripts/commands/nightly.py:102:        "--email-password",
 scripts/commands/nightly.py:105:        help="SMTP password when authentication is required.",
 scripts/commands/nightly.py:180:            password=args.email_password,
-scripts/tests/test_bootstrap.py:11:os.environ.setdefault("TRADEPULSE_AUDIT_SECRET", "audit-secret-placeholder-1234")
-scripts/production_readiness_check.py:15:    TRADEPULSE_TWO_FACTOR_SECRET - Two-factor authentication secret
-scripts/production_readiness_check.py:16:    TRADEPULSE_AUDIT_SECRET - Audit logging secret (min 16 chars)
+scripts/tests/test_bootstrap.py:11:os.environ.setdefault("GEOSYNC_AUDIT_SECRET", "audit-secret-placeholder-1234")
+scripts/production_readiness_check.py:15:    GEOSYNC_TWO_FACTOR_SECRET - Two-factor authentication secret
+scripts/production_readiness_check.py:16:    GEOSYNC_AUDIT_SECRET - Audit logging secret (min 16 chars)
 scripts/test-pr-locally.sh:80:# 6. Check for secrets
 scripts/test-pr-locally.sh:81:echo -e "\n${YELLOW}[6/8] Scanning for secrets...${NC}"
 scripts/test-pr-locally.sh:82:if command -v detect-secrets &> /dev/null; then
 scripts/test-pr-locally.sh:83:    run_check "Detect secrets" "detect-secrets scan core backtest execution src application --baseline .secrets.baseline 2>/dev/null || true" || ((failures++))
 scripts/test-pr-locally.sh:85:    echo -e "${YELLOW}⚠️  detect-secrets not installed, skipping${NC}"
 configs/security/denylist.yaml:5:    reason: "Malicious typosquat of 'requests' that exfiltrates AWS keys and environment secrets."
-scripts/tests/test_system_launch.py:6:os.environ.setdefault("TRADEPULSE_ADMIN__TWO_FACTOR_SECRET", "test-secret")
+scripts/tests/test_system_launch.py:6:os.environ.setdefault("GEOSYNC_ADMIN__TWO_FACTOR_SECRET", "test-secret")
 scripts/tests/test_system_launch.py:7:os.environ.setdefault("TWO_FACTOR_SECRET", "test-secret")
 scripts/tests/test_system_launch.py:8:os.environ.setdefault("AUDIT_SECRET", "test-audit-secret")
 scripts/supply_chain.py:732:    tokens: list[str] = []

@@ -1,4 +1,5 @@
-# SPDX-License-Identifier: LicenseRef-TradePulse-Proprietary
+# Copyright (c) 2023-2026 Yaroslav Vasylenko (neuron7xLab)
+# SPDX-License-Identifier: MIT
 from __future__ import annotations
 
 from datetime import datetime, timedelta, timezone
@@ -62,9 +63,7 @@ def test_auto_rollback_guard_respects_cooldown(base_time: datetime) -> None:
         evaluation_period=timedelta(minutes=5),
         cooldown=timedelta(seconds=30),
     )
-    guard = AutoRollbackGuard(
-        config=config, rollback_callback=lambda r, s: triggered.append(r)
-    )
+    guard = AutoRollbackGuard(config=config, rollback_callback=lambda r, s: triggered.append(r))
 
     first_trigger_time = base_time + timedelta(seconds=1)
     guard.record_outcome(200.0, True, timestamp=base_time)
@@ -114,10 +113,7 @@ def test_prune_discards_old_samples(base_time: datetime) -> None:
     old_event = RequestSample(base_time - timedelta(seconds=60), 100.0, True)
     guard._events.append(old_event)
     guard.record_outcome(120.0, True, timestamp=base_time)
-    assert all(
-        sample.timestamp >= base_time - timedelta(seconds=30)
-        for sample in guard._events
-    )
+    assert all(sample.timestamp >= base_time - timedelta(seconds=30) for sample in guard._events)
 
 
 def test_burn_rate_rules_trigger_before_slo_breach(base_time: datetime) -> None:
@@ -178,9 +174,7 @@ def test_retention_expands_for_burn_rate_windows(base_time: datetime) -> None:
     config = SLOConfig(
         min_requests=1,
         evaluation_period=timedelta(seconds=30),
-        burn_rate_rules=(
-            SLOBurnRateRule(window=timedelta(minutes=2), max_burn_rate=2.0),
-        ),
+        burn_rate_rules=(SLOBurnRateRule(window=timedelta(minutes=2), max_burn_rate=2.0),),
     )
     guard = AutoRollbackGuard(config=config)
 
@@ -190,6 +184,4 @@ def test_retention_expands_for_burn_rate_windows(base_time: datetime) -> None:
     assert any(sample.timestamp == retained_event.timestamp for sample in guard._events)
 
     guard.record_outcome(95.0, True, timestamp=base_time + timedelta(seconds=121))
-    assert all(
-        sample.timestamp >= base_time + timedelta(seconds=1) for sample in guard._events
-    )
+    assert all(sample.timestamp >= base_time + timedelta(seconds=1) for sample in guard._events)

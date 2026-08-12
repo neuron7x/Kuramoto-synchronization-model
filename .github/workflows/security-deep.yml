@@ -1,0 +1,140 @@
+# SPDX-License-Identifier: MIT
+#
+# Security Deep Validation — scheduled out-of-band security scans.
+#
+# Runs weekly and on-demand. Results are informational for the security team
+# and do not block PR merges (that contract lives in pr-gate.yml).
+#
+# CodeQL lives in its own workflow (codeql.yml) because SARIF upload
+# infrastructure has different concurrency semantics and permissions.
+name: Security Deep Validation
+
+on:
+  schedule:
+    # Every Monday at 03:00 UTC — weekly cadence aligned with release rhythm.
+    - cron: '0 3 * * 1'
+  workflow_dispatch:
+
+permissions:
+  contents: read
+
+env:
+  FORCE_JAVASCRIPT_ACTIONS_TO_NODE24: 'true'
+
+concurrency:
+  group: security-deep-${{ github.ref }}
+  cancel-in-progress: false
+
+jobs:
+  # ---------------------------------------------------------------------------
+  # dependency-audit — pip-audit against locked requirements (HIGH/CRITICAL)
+  # ---------------------------------------------------------------------------
+  dependency-audit:
+    name: dependency-audit
+    runs-on: ubuntu-latest
+    timeout-minutes: 20
+    steps:
+      - name: Checkout
+        uses: actions/checkout@9c091bb21b7c1c1d1991bb908d89e4e9dddfe3e0 # v7.0.0
+
+      - name: Setup Python environment
+        uses: ./.github/actions/setup-geosync
+        with:
+          python-version: '3.11'
+          cache-prefix: security-deep
+
+      - name: Verify pip executable
+        run: .venv/bin/python -m pip --version
+
+      - name: Ensure pip-audit tooling
+        run: |
+          set -euo pipefail
+          if ! .venv/bin/python -m pip show pip-audit >/dev/null 2>&1; then
+            .venv/bin/python -m pip install -c constraints/security.txt pip-audit
+          fi
+
+      - name: Run pip-audit against locked dependency sets
+        run: |
+          set +e
+          .venv/bin/pip-audit -r requirements.lock -f json -o /tmp/pip-audit-runtime.json
+          runtime_rc=$?
+          .venv/bin/pip-audit -r requirements-dev.lock -f json -o /tmp/pip-audit-dev.json
+          dev_rc=$?
+          set -e
+
+          # pip-audit exit codes:
+          #   0 — no vulnerabilities
+          #   1 — vulnerabilities found (handled by our downstream gate script)
+          #   >1 — infrastructure error (fail fast)
+          if [[ "$runtime_rc" -gt 1 || "$dev_rc" -gt 1 ]]; then
+            echo "pip-audit execution error (runtime_rc=$runtime_rc, dev_rc=$dev_rc)."
+            exit 1
+          fi
+
+          .venv/bin/python .github/scripts/pip_audit_high_gate.py \
+            /tmp/pip-audit-runtime.json /tmp/pip-audit-dev.json
+
+  # ---------------------------------------------------------------------------
+  # gitleaks — full-history secret scan (catches what detect-secrets may miss)
+  # ---------------------------------------------------------------------------
+  gitleaks:
+    name: gitleaks
+    runs-on: ubuntu-latest
+    timeout-minutes: 15
+    steps:
+      - name: Checkout full history
+        uses: actions/checkout@9c091bb21b7c1c1d1991bb908d89e4e9dddfe3e0 # v7.0.0
+        with:
+          fetch-depth: 0
+
+      - name: Run gitleaks repository scan
+        run: |
+          set -euo pipefail
+          docker run --rm -v "$PWD":/repo -w /repo \
+            zricethezav/gitleaks:v8.24.2 \
+            detect --source . --redact --no-banner
+
+  # ---------------------------------------------------------------------------
+  # trivy-fs — filesystem vulnerability scan (HIGH/CRITICAL, fail-closed)
+  # ---------------------------------------------------------------------------
+  trivy-fs:
+    name: trivy-fs
+    runs-on: ubuntu-latest
+    timeout-minutes: 20
+    steps:
+      - name: Checkout
+        uses: actions/checkout@9c091bb21b7c1c1d1991bb908d89e4e9dddfe3e0 # v7.0.0
+
+      - name: Run Trivy filesystem scan (HIGH/CRITICAL)
+        run: |
+          set -euo pipefail
+          docker run --rm -v "$PWD":/repo -w /repo \
+            aquasec/trivy:0.64.1 fs \
+            --severity HIGH,CRITICAL \
+            --exit-code 1 \
+            --no-progress \
+            --scanners vuln,secret,misconfig \
+            .
+
+  # ---------------------------------------------------------------------------
+  # capsule-secret-boundary — deterministic structural validation of the
+  # reproducible-capsule tree (TASK 931). The capsule folder is excluded from the
+  # entropy-based detect-secrets scan (its digests are public content hashes), so
+  # this gate guarantees the exclude zone stays structurally clean: no private
+  # keys, credentials, binaries, hidden files, symlinks, or unbound tokens.
+  # ---------------------------------------------------------------------------
+  capsule-secret-boundary:
+    name: capsule-secret-boundary
+    runs-on: ubuntu-latest
+    timeout-minutes: 5
+    steps:
+      - name: Checkout
+        uses: actions/checkout@9c091bb21b7c1c1d1991bb908d89e4e9dddfe3e0 # v7.0.0
+
+      - name: Setup Python
+        uses: actions/setup-python@ece7cb06caefa5fff74198d8649806c4678c61a1 # v6
+        with:
+          python-version: '3.12'
+
+      - name: Validate capsule secret boundary (fail-closed, stdlib-only)
+        run: python tools/security/validate_capsule_secret_boundary.py

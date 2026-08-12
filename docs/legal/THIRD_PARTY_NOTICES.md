@@ -1,7 +1,7 @@
 # Third-Party Notices
 
 This document is generated from the `sbom/cyclonedx-sbom.json` file and lists the
-third-party dependencies bundled with TradePulse, including their discovered
+third-party dependencies bundled with GeoSync, including their discovered
 licenses. Regenerate this report after updating dependencies by running:
 
 ```bash

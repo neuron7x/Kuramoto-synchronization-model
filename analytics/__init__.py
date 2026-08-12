@@ -1,7 +1,8 @@
-# SPDX-License-Identifier: LicenseRef-TradePulse-Proprietary
+# Copyright (c) 2023-2026 Yaroslav Vasylenko (neuron7xLab)
+# SPDX-License-Identifier: MIT
 """Analytics helpers exposed as part of the public package API."""
 
-from .environment_parity import (  # noqa: F401
+from .environment_parity import (
     EnvironmentParityChecker,
     EnvironmentParityConfig,
     EnvironmentParityError,
@@ -12,7 +13,7 @@ from .environment_parity import (  # noqa: F401
     compute_code_digest,
     compute_parameters_digest,
 )
-from .liquidity_impact import (  # noqa: F401
+from .liquidity_impact import (
     ExecutionForecast,
     ExecutionParameters,
     LiquidityImpactConfig,
@@ -20,7 +21,7 @@ from .liquidity_impact import (  # noqa: F401
     LiquiditySnapshot,
     OrderBookLevel,
 )
-from .portfolio_attribution import (  # noqa: F401
+from .portfolio_attribution import (
     AttributionBreakdown,
     ConcentrationAlert,
     ExposureBreakdown,
@@ -31,7 +32,7 @@ from .portfolio_attribution import (  # noqa: F401
     RegimeMetric,
     StrategyRegimeStability,
 )
-from .portfolio_risk import (  # noqa: F401
+from .portfolio_risk import (
     PortfolioRiskMetrics,
     PortfolioStressReport,
     PortfolioStressTester,
@@ -42,7 +43,7 @@ from .portfolio_risk import (  # noqa: F401
     VolatilityScenario,
     VolatilityScenarioResult,
 )
-from .tca import (  # noqa: F401
+from .tca import (
     BenchmarkPriceSample,
     BrokerVenueBreakdown,
     CostBreakdown,

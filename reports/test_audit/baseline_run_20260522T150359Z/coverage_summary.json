@@ -1,0 +1,13 @@
+{
+  "schema_version": "1.0",
+  "coverage_xml": "reports/test_audit/baseline_run_20260522T150359Z/coverage.xml",
+  "line_rate": 0.0,
+  "branch_rate": 0.0,
+  "modules": {
+    "core": null,
+    "backtest": null,
+    "execution": null
+  },
+  "verdict": "blocked",
+  "notes": "coverage.xml unreadable/empty; module-level coverage unavailable"
+}

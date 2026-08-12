@@ -1,0 +1,40 @@
+{
+  "files": [
+    {
+      "bytes": 491,
+      "path": "compare.json",
+      "sha256": "0f3b75f20c3bab433d3690c739d29dceaf1f8862c068333e3db83951e2281d99"
+    },
+    {
+      "bytes": 358,
+      "path": "detect.json",
+      "sha256": "c9279a45aed4356f17a533eca6c573213282f5103870d447f755cbe472b0606f"
+    },
+    {
+      "bytes": 449,
+      "path": "extract.json",
+      "sha256": "dece7459a5b2644067abc57b5b5dc11935533e3ed0e903016403d7a1f08d4f0c"
+    },
+    {
+      "bytes": 404,
+      "path": "forecast.json",
+      "sha256": "5b46f23f3823d5b0e2fe2de34ee29db3bf3058eefa59d7c8b9a254a5c72a08f3"
+    },
+    {
+      "bytes": 441,
+      "path": "report.json",
+      "sha256": "2a2a311c4c7a56091fb65ec4eaff518bdf05b8e49b02ee7fabfe907ee57f30c0"
+    },
+    {
+      "bytes": 220,
+      "path": "runbook.md",
+      "sha256": "89734c013759077bca5b96842948f3644a1268632fe4a7e7f82a196f37a92199"
+    },
+    {
+      "bytes": 20867,
+      "path": "simulate.json",
+      "sha256": "5d8609fbbe7baec28923c1e9990696736eea0c935366e15f7c47d29447bf0d98"
+    }
+  ],
+  "schema_version": "mfn.bundle.v1"
+}

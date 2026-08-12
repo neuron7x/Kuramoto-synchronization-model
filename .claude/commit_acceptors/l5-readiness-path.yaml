@@ -1,0 +1,51 @@
+id: l5-readiness-path
+status: ACTIVE
+claim_type: governance
+promise: >-
+  Diff-bound governance acceptor for the readiness-path PR. The change adds a
+  human-readable readiness contract, a structured readiness register, a local
+  checker, and a pytest contract. It does not promote the repository beyond its
+  current evidence boundary.
+
+diff_scope:
+  changed_files:
+    - path: "docs/readiness_note.md"
+    - path: "governance/readiness_register.json"
+    - path: "tools/check_readiness_register.py"
+    - path: "tests/governance/test_readiness_register.py"
+    - path: ".claude/commit_acceptors/l5-readiness-path.yaml"
+  forbidden_paths:
+    - "application/"
+    - "backtest/"
+    - "core/"
+    - "markets/"
+    - "modules/"
+
+required_python_symbols:
+  - "tools.check_readiness_register"
+
+expected_signal: >-
+  The readiness register stays structured, non-promotional, and test-covered.
+  Closed entries require evidence artifacts.
+
+measurement_command: >-
+  python tools/check_readiness_register.py && python -m pytest -q tests/governance/test_readiness_register.py
+
+signal_artifact: "governance/readiness_register.json"
+
+falsifier:
+  command: >-
+    python tools/check_readiness_register.py
+  description: >-
+    The checker must fail if the register is malformed or a closed entry lacks evidence artifacts.
+
+rollback_command: >-
+  git checkout -- docs/readiness_note.md governance/readiness_register.json tools/check_readiness_register.py tests/governance/test_readiness_register.py .claude/commit_acceptors/l5-readiness-path.yaml
+
+rollback_verification_command: >-
+  git diff --exit-code
+
+memory_update_type: append
+ledger_path: ".claude/commit_acceptors/l5-readiness-path.yaml"
+report_path: "governance/readiness_register.json"
+evidence: []

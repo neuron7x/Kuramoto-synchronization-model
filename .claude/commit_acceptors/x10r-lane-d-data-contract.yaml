@@ -1,0 +1,109 @@
+# Diff-bound commit acceptor for issue #1168 Lane D (data-contract hardening).
+#
+# Adds research/reconstruction/data_contract.py — a fail-closed input-window
+# validator that sits in front of the EXISTING reconstruction-capsule machinery.
+# It is INPUT VALIDATION only: it rejects missing/invalid timestamps,
+# non-monotonic series, NaN/Inf values, invalid adjacency, and empty graphs, and
+# it emits a stable input_fingerprint on admissible input.
+#
+# HONESTY (issue #1168 §7 stop rules): this slice introduces NO PRODUCT_READY
+# verdict, NO market/readiness/profitability claim, and NO trade-execution
+# endpoint. A valid window means "structurally admissible for downstream
+# reconstruction", NOT validated, profitable, or product-ready. Lanes A/B/C/E/G
+# are oracle-blocked (#1153/#1167) and out of scope for this acceptor.
+
+id: x10r-lane-d-data-contract
+status: ACTIVE
+claim_type: fail_closed
+promise: >-
+  After this PR lands, research/reconstruction/data_contract.py provides
+  validate_input_window — a fail-closed Lane D validator wired into the existing
+  reconstruction package (__init__.py exports DataContractError,
+  InputWindowContract, validate_input_window). The validator RAISES
+  DataContractError on: missing/float/length-mismatched/non-monotonic
+  timestamps; NaN or Inf in the value series; an empty/degenerate graph
+  (< 2 nodes); and invalid adjacency (non-square, shape-mismatched, negative,
+  non-finite, or self-looping). On an admissible window it returns an
+  InputWindowContract carrying a deterministic 64-char sha256 input_fingerprint.
+  The golden fixture tests/reconstruction/fixtures/golden_input_window.json
+  validates and pins fingerprint
+  7dbdd5d1538bfe816bb0e0026a7238c29929851c3c717cfce7f994195e2219be. This is
+  INPUT VALIDATION only: it asserts no market, predictive, alpha, or
+  product-readiness claim and emits no PRODUCT_READY verdict.
+diff_scope:
+  changed_files:
+    - path: ".claude/commit_acceptors/x10r-lane-d-data-contract.yaml"
+    - path: "research/reconstruction/data_contract.py"
+    - path: "research/reconstruction/__init__.py"
+    - path: "tests/reconstruction/test_data_contract.py"
+    - path: "tests/reconstruction/fixtures/golden_input_window.json"
+    - path: "scripts/ci/x10r_lane_d_data_contract_falsifier.py"
+    # The falsifier driver imports research.* and is shipped in the wheel
+    # (scripts.* is a packaged top-level). The wheel-contract gate ratchets
+    # latent first-party imports of unpackaged namespaces; this entry records
+    # that known, pre-existing pattern (identical to gate6_sensitivity_surface
+    # _falsifier.py::research already in the ledger) so the ratchet stays green.
+    - path: ".github/bwheel_baseline.json"
+  forbidden_paths:
+    - "trading/"
+    - "execution/"
+    - "forecast/"
+    - "policy/"
+    - "core/physics/"
+    - "core/kuramoto/"
+    - "application/governance/claim_ledger.py"
+    - "application/governance/commit_acceptor.py"
+    - "research/reconstruction/x10r_reconstruct.py"
+    - "artifacts/x10r_reconstruction/"
+required_python_symbols:
+  - "research/reconstruction/data_contract.py::validate_input_window"
+  - "research/reconstruction/data_contract.py::DataContractError"
+  - "research/reconstruction/data_contract.py::InputWindowContract"
+expected_signal: >-
+  Local: mypy --strict is clean on research/reconstruction/data_contract.py,
+  tests/reconstruction/test_data_contract.py, and
+  scripts/ci/x10r_lane_d_data_contract_falsifier.py; ruff check and
+  black --check pass on those paths;
+  `python -m pytest tests/reconstruction/test_data_contract.py -q` reports
+  18 passed; the falsifier
+  `python scripts/ci/x10r_lane_d_data_contract_falsifier.py` exits 0 (golden
+  window validates with the pinned fingerprint AND an Inf-tampered window is
+  rejected with DataContractError).
+measurement_command: >-
+  bash -c 'set -e; mkdir -p tmp; mypy --strict --follow-imports=silent
+  research/reconstruction/data_contract.py
+  tests/reconstruction/test_data_contract.py
+  scripts/ci/x10r_lane_d_data_contract_falsifier.py && ruff check
+  research/reconstruction/data_contract.py
+  tests/reconstruction/test_data_contract.py
+  scripts/ci/x10r_lane_d_data_contract_falsifier.py && black --check
+  research/reconstruction/data_contract.py
+  tests/reconstruction/test_data_contract.py
+  scripts/ci/x10r_lane_d_data_contract_falsifier.py && python -m pytest
+  tests/reconstruction/test_data_contract.py -q && python
+  scripts/ci/x10r_lane_d_data_contract_falsifier.py | tee
+  tmp/x10r_lane_d_data_contract.log'
+signal_artifact: "tmp/x10r_lane_d_data_contract.log"
+falsifier:
+  command: "bash -c 'python scripts/ci/x10r_lane_d_data_contract_falsifier.py'"
+  description: >-
+    Runs the Lane D falsifier driver: it validates the golden admissible window
+    (asserting the pinned fingerprint) and then injects +Inf into a value of
+    that golden window. If validate_input_window fails OPEN and accepts the
+    Inf-tampered window, the driver exits non-zero. Exit 0 proves the validator
+    stays fail-closed on non-finite input — i.e. the no-fail-open promise holds.
+rollback_command: >-
+  bash -c 'git rm -f research/reconstruction/data_contract.py
+  tests/reconstruction/test_data_contract.py
+  tests/reconstruction/fixtures/golden_input_window.json
+  scripts/ci/x10r_lane_d_data_contract_falsifier.py
+  .claude/commit_acceptors/x10r-lane-d-data-contract.yaml &&
+  git checkout HEAD -- research/reconstruction/__init__.py'
+rollback_verification_command: >-
+  bash -c 'test ! -e research/reconstruction/data_contract.py && test !
+  -e .claude/commit_acceptors/x10r-lane-d-data-contract.yaml && test !
+  -e scripts/ci/x10r_lane_d_data_contract_falsifier.py'
+memory_update_type: append
+ledger_path: ".claude/commit_acceptors/x10r-lane-d-data-contract.yaml"
+report_path: "tmp/x10r_lane_d_data_contract.log"
+evidence: []

@@ -1,0 +1,68 @@
+# Diff-bound acceptor for the digital free-energy primitives.
+#
+# Ships two load-bearing FEP primitives (variational free energy +
+# surprise) on which Tasks 3-7 of the active-inference pack will
+# build. No production code outside core/physics/free_energy_variational.py.
+
+id: free-energy-active-inference
+status: ACTIVE
+claim_type: correctness
+promise: >-
+  core.physics.free_energy_variational provides closed-form
+  variational free energy F = D_KL[q || p] − E_q[log p(s|z)] for
+  univariate and diagonal-multivariate Gaussian beliefs, with
+  surprise = -log p(s) per-tick observable. All formulas are
+  algebraic-exact at machine epsilon (1e-12) on identity and
+  closed-form-shifted cases; KL ≥ 0 (Gibbs) holds across random
+  pair fuzz; F decomposition equals complexity − accuracy to ULP.
+diff_scope:
+  changed_files:
+    - path: ".claude/commit_acceptors/free-energy-active-inference.yaml"
+    - path: "core/physics/free_energy_variational.py"
+    - path: "docs/reports/free_energy_active_inference_2026_05_03.md"
+    - path: "newsfragments/free-energy-active-inference.feature.md"
+    - path: "tests/unit/physics/test_free_energy_variational.py"
+  forbidden_paths:
+    - "trading/"
+    - "execution/"
+    - "forecast/"
+    - "policy/"
+required_python_symbols:
+  - "DiagonalGaussianBelief"
+  - "GaussianBelief"
+  - "expected_log_likelihood"
+  - "kl_divergence"
+  - "kl_divergence_diagonal"
+  - "surprise"
+  - "variational_free_energy"
+expected_signal: >-
+  All 22 unit tests pass under pytest; black, ruff, mypy --strict
+  clean on 2 source files; closed-form KL identities verified to
+  1e-12.
+measurement_command: >-
+  python -m pytest tests/unit/physics/test_free_energy_variational.py -v
+signal_artifact: "tmp/free_energy_active_inference_pytest.log"
+falsifier:
+  command: >-
+    python -m pytest tests/unit/physics/test_free_energy_variational.py
+    -v -k "kl_self_distance or kl_mean_shift or kl_variance_only or
+    free_energy_equals_complexity_minus_accuracy"
+  description: >-
+    Probe filters to the four algebraic-exact identities that pin
+    the closed-form decomposition: KL self-distance = 0; KL under
+    pure mean-shift = μ²/2; KL under pure variance-shift =
+    0.5(σ² − 1 − log σ²); F = complexity − accuracy. If any
+    fails, the closed-form algebra has drifted and downstream
+    active-inference policies cannot be trusted.
+rollback_command: >-
+  git checkout HEAD~1 -- core/physics/free_energy_variational.py
+  tests/unit/physics/test_free_energy_variational.py
+  .claude/commit_acceptors/free-energy-active-inference.yaml
+  docs/reports/free_energy_active_inference_2026_05_03.md
+  newsfragments/free-energy-active-inference.feature.md
+rollback_verification_command: >-
+  git diff --exit-code core/physics/free_energy_variational.py
+memory_update_type: append
+ledger_path: ".claude/commit_acceptors/free-energy-active-inference.yaml"
+report_path: "docs/reports/free_energy_active_inference_2026_05_03.md"
+evidence: []

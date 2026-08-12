@@ -1,0 +1,14 @@
+field,type,required,description
+observation_id,string,yes,Unique observation identifier
+subject_id,string,yes,Pseudonymous subject identifier
+timestamp,datetime,yes,ISO-8601 event time
+source_type,enum,yes,lab / wearable / cognitive_test / imaging / bbb_on_chip / clinical_note / manual_entry
+domain,enum,yes,barrier / inflammation / vascular_metabolic / glymphatic_sleep / cognitive / environment / qc
+measure_code,string,yes,Canonical local or standard code
+value,number,yes,Measured numeric metric value
+unit,string,yes,Canonical unit
+method,string,yes,Measurement method
+evidence_grade,enum,no,A / B / C / D
+quality_score,number,no,0-1 quality score
+provenance,object,yes,ProvenanceRecord
+notes,string,no,Free-text annotation

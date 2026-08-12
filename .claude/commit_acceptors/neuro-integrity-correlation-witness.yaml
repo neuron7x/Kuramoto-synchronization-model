@@ -1,0 +1,93 @@
+# Diff-bound commit acceptor — neuro-integrity dopamine/serotonin correlation witness.
+#
+# Purpose:
+#   Give config.dopamine_serotonin_correlation_min a witness. The field was
+#   declared on NeuroIntegrityConfig but never checked (audit C-NEURO-003: a
+#   dead integrity invariant). Correlation is a trajectory property, so the
+#   check lives in NeuroIntegrity.validate_trajectory, not validate_state.
+
+id: neuro-integrity-correlation-witness
+status: ACTIVE
+claim_type: correctness
+promise: >-
+  NeuroIntegrity.validate_trajectory enforces the dopamine/serotonin inverse-
+  correlation invariant: a trajectory whose channels co-vary (corr above
+  config.dopamine_serotonin_correlation_min) is flagged invalid with a
+  C-NEURO-003 violation, while a strongly inverse trajectory passes and a flat
+  channel records the correlation as NaN (no witness) instead of silently
+  passing.
+
+diff_scope:
+  changed_files:
+    - path: ".claude/commit_acceptors/neuro-integrity-correlation-witness.yaml"
+    - path: "core/validation/neuro_integrity.py"
+    - path: "tests/unit/validation/test_neuro_integrity.py"
+    - path: "tests/core/validation/test_neuro_integrity.py"
+  forbidden_paths:
+    - "trading/"
+    - "execution/"
+    - "forecast/"
+    - "policy/"
+    - "runtime/"
+    - ".github/workflows/"
+
+required_python_symbols:
+  - "tests/unit/validation/test_neuro_integrity.py::TestValidateTrajectory::test_positive_correlation_violates_invariant"
+  - "tests/unit/validation/test_neuro_integrity.py::TestValidateTrajectory::test_inverse_correlation_passes_invariant"
+  - "tests/unit/validation/test_neuro_integrity.py::TestValidateTrajectory::test_flat_channel_records_no_witness"
+
+expected_signal: >-
+  The full neuro_integrity unit and core suites pass: positive correlation is
+  rejected, strong inverse correlation is accepted, and a flat channel yields a
+  NaN correlation metric with no C-NEURO-003 violation.
+
+measurement_command: >-
+  bash -c '
+    PYTHONPATH=. python -m pytest -q
+      tests/unit/validation/test_neuro_integrity.py
+      tests/core/validation/test_neuro_integrity.py | tee tmp/neuro_integrity_correlation_witness.log
+  '
+
+signal_artifact: "tmp/neuro_integrity_correlation_witness.log"
+
+falsifier:
+  command: >-
+    bash -c '
+      PYTHONPATH=. python - <<"PY"
+      from core.validation.neuro_integrity import NeuroIntegrity, PathwayState
+      # Positively-correlated trajectory: both channels rise together.
+      states = [
+          PathwayState(dopamine=0.4 + i * 0.04, serotonin=0.4 + i * 0.04,
+                       excitation=0.5, inhibition=0.5)
+          for i in range(5)
+      ]
+      report = NeuroIntegrity().validate_trajectory(states)
+      # Exit 0 (falsification detected) ONLY if the dead invariant is back:
+      # a co-varying trajectory passing validation. On green code the invariant
+      # fires (is_valid is False), so this exits 1 — the falsifier fails on the
+      # green path, proving the promise is falsifiable.
+      raise SystemExit(0 if report.is_valid else 1)
+      PY
+    '
+  description: >-
+    Probes whether a positively-correlated dopamine/serotonin trajectory still
+    passes validation (the dead-invariant state). It succeeds only when the
+    enforcement is absent; on the green tree it fails.
+
+rollback_command: >-
+  bash -c '
+    git checkout origin/main --
+      core/validation/neuro_integrity.py
+      tests/unit/validation/test_neuro_integrity.py
+      tests/core/validation/test_neuro_integrity.py && git rm -f .claude/commit_acceptors/neuro-integrity-correlation-witness.yaml
+  '
+
+rollback_verification_command: >-
+  bash -c '
+    test ! -e .claude/commit_acceptors/neuro-integrity-correlation-witness.yaml && git diff --exit-code origin/main -- core/validation/neuro_integrity.py
+  '
+
+memory_update_type: none
+ledger_path: "data/audit/neuro_physics_contradiction_ledger.json"
+report_path: "docs/audit/neuro_physics_contradiction_ledger.md"
+evidence: []

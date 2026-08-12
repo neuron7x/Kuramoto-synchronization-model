@@ -1,4 +1,4 @@
-# SPDX-License-Identifier: LicenseRef-TradePulse-Proprietary
+# SPDX-License-Identifier: MIT
 version: v2
 plugins:
   - plugin: buf.build/protocolbuffers/go

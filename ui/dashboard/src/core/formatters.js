@@ -55,11 +55,15 @@ export function formatCurrency(value, currency = 'USD') {
   }).format(value);
 }
 
-export function formatPercent(value) {
+export function formatPercent(value, options = {}) {
   if (!Number.isFinite(value)) {
     return '—';
   }
-  return `${(value * 100).toFixed(Math.abs(value) < 0.1 ? 2 : 1)}%`;
+  // Honour an explicit maximumFractionDigits (mirrors formatNumber's options
+  // contract); otherwise fall back to the magnitude-aware default precision.
+  const { maximumFractionDigits } = options;
+  const digits = maximumFractionDigits ?? (Math.abs(value) < 0.1 ? 2 : 1);
+  return `${(value * 100).toFixed(digits)}%`;
 }
 
 export function formatNumber(value, options = {}) {

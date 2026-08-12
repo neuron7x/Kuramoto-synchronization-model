@@ -1,0 +1,77 @@
+id: value-inference-pipeline-executable-gate
+status: ACTIVE
+claim_type: correctness
+promise: >-
+  The value-inference integration capstone is executable, not documentation. It
+  folds five named operations into one fail-closed verdict over the upstream
+  contract stages reduced to a typed StageVerdict shape: falsify returns the
+  stages that break the claim; normalize_weights projects heterogeneous weights
+  onto the probability simplex (proportions preserved, degenerate all-zero
+  handled, negative weight / out-of-range support rejected); calibrate aligns
+  confidence with weighted support and fail-closes to 0.0 on any break, with a
+  temperature that sharpens or damps confidence; adapt updates only the bounded
+  temperature toward a new distribution's observed accuracy and leaves the
+  falsification gate invariant; and run_pipeline integrates them into a
+  PipelineVerdict that promotes (INTEGRATED) only when stages exist, nothing
+  falsifies the claim, and confidence clears the floor, demoting (DEMOTED) on
+  any break or LOW_CONFIDENCE and NOT_RUN on an empty set, with a deterministic
+  provenance hash. No predictor claim is asserted.
+diff_scope:
+  changed_files:
+    - path: "core/indicators/value_inference_pipeline.py"
+    - path: "tests/unit/indicators/test_value_inference_pipeline.py"
+    - path: ".claude/commit_acceptors/value-inference-pipeline-executable-gate.yaml"
+  forbidden_paths:
+    - "trading/"
+    - "execution/"
+    - "forecast/"
+    - "policy/"
+required_python_symbols:
+  - "StageVerdict"
+  - "Calibration"
+  - "PipelineStatus"
+  - "PipelineVerdict"
+  - "falsify"
+  - "calibrate"
+  - "normalize_weights"
+  - "adapt"
+  - "run_pipeline"
+  - "PIPELINE_CLAIM_BOUNDARY"
+  - "BLOCKING_PIPELINE_STATUSES"
+expected_signal: >-
+  The value-inference pipeline test module passes (30 tests): normalize_weights
+  yields a simplex preserving proportions and rejects negative weights /
+  out-of-range support, falsify returns only broken stages, calibrate
+  fail-closes to 0 on any break and the temperature sharpens/damps confidence,
+  adapt tracks observed accuracy within bounds and leaves the falsification
+  gate invariant, run_pipeline integrates to INTEGRATED only with no falsifier
+  and confidence above the floor, demotes on a broken stage or LOW_CONFIDENCE,
+  NOT_RUN on empty, and the verdict hash is deterministic.
+measurement_command: >-
+  python -m pytest -q tests/unit/indicators/test_value_inference_pipeline.py
+signal_artifact: "tests/unit/indicators/test_value_inference_pipeline.py"
+falsifier:
+  command: >-
+    python -m pytest -q
+    tests/unit/indicators/test_value_inference_pipeline.py::test_calibrate_fail_closes_to_zero_on_any_break
+    tests/unit/indicators/test_value_inference_pipeline.py::test_pipeline_demotes_on_any_broken_stage
+    tests/unit/indicators/test_value_inference_pipeline.py::test_adapt_leaves_falsification_gate_invariant
+    tests/unit/indicators/test_value_inference_pipeline.py::test_pipeline_min_confidence_floor_demotes_low_confidence
+  description: >-
+    Inverse falsifier probe. Relax calibrate to report non-zero confidence when
+    a stage breaks, relax run_pipeline to promote a pipeline with a broken
+    stage or below the confidence floor, or let adapt mutate the falsification
+    gate. The fail-closed-confidence, broken-stage-demotion, adapt-invariance,
+    and low-confidence-floor tests must return non-zero rather than silently
+    passing, proving the integration gate is load-bearing.
+rollback_command: >-
+  git checkout HEAD~1 -- core/indicators/value_inference_pipeline.py
+  tests/unit/indicators/test_value_inference_pipeline.py
+rollback_verification_command: >-
+  python tools/commit_acceptor/validate_commit_acceptor.py
+memory_update_type: none
+ledger_path: ".claude/commit_acceptors/value-inference-pipeline-executable-gate.yaml"
+report_path: ".claude/commit_acceptors/value-inference-pipeline-executable-gate.yaml"
+evidence:
+  - path: "tests/unit/indicators/test_value_inference_pipeline.py"
+    sha256: "3fb64aa757edb19741001ff0a29e06ea23c772bd1f09adf5cd7d6e9c6b1daee9"  # pragma: allowlist secret

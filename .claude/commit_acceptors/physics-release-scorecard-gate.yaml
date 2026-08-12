@@ -1,0 +1,71 @@
+# Diff-bound acceptor: WP-03 physics release scorecard-as-gate.
+#
+# Turns the release scorecard from a description into a fail-closed gate:
+# readiness is RECOMPUTED from per-dimension states, and claiming READY while any
+# required dimension is below CI_VERIFIED fails closed. PARTIAL != READY.
+
+id: physics-release-scorecard-gate
+status: ACTIVE
+claim_type: correctness
+promise: >-
+  Adds physics_release_scorecard.yml (discrete states FALSE<UNTESTED<PARTIAL<
+  LOCAL_VERIFIED<CI_VERIFIED<EVIDENCE_BEARING), tools/release/
+  check_physics_release_scorecard.py exposing a pure evaluate(), and
+  tests/release/test_physics_release_scorecard.py. The gate recomputes readiness
+  from the dimension states and fails closed when claimed_ready is true while any
+  required dimension is below min_state_for_ready, when a verified state
+  (>=LOCAL_VERIFIED) has empty evidence, on an unknown state, or when no
+  dimension is required (decorative). The shipped scorecard is honestly NOT
+  release-ready and names its blocking dimensions. CI gate
+  physics-release-scorecard-gate runs the detector + suite fail-closed.
+diff_scope:
+  changed_files:
+    - path: ".claude/commit_acceptors/physics-release-scorecard-gate.yaml"
+    - path: ".github/workflows/physics-release-scorecard-gate.yml"
+    - path: "physics_release_scorecard.yml"
+    - path: "tools/release/check_physics_release_scorecard.py"
+    - path: "tests/release/test_physics_release_scorecard.py"
+    - path: "docs/release/physics_release_scorecard.md"
+  forbidden_paths:
+    - "trading/"
+    - "execution/"
+    - "forecast/"
+    - "policy/"
+required_python_symbols:
+  - "evaluate"
+expected_signal: >-
+  tests/release/test_physics_release_scorecard.py passes 7/7. The shipped
+  scorecard passes the gate as internally honest (computed_ready=False,
+  claimed_ready=False, blocking dims named). test_partial_claimed_ready_fails_closed
+  proves a required PARTIAL dim with claimed_ready=true fails with 'PARTIAL != READY';
+  test_verified_state_without_evidence_fails proves a CI_VERIFIED dim with empty
+  evidence fails. ruff/black/mypy --strict clean; zero new noqa/type-ignore.
+measurement_command: >-
+  PYTHONPATH=. python -m pytest tests/release/test_physics_release_scorecard.py -v --noconftest
+signal_artifact: "tmp/physics_release_scorecard_pytest.log"
+falsifier:
+  command: >-
+    PYTHONPATH=. python -m pytest tests/release/test_physics_release_scorecard.py
+    -v --noconftest -k "partial_claimed_ready_fails_closed or verified_state_without_evidence_fails
+    or no_required_dimension_is_decorative_and_fails"
+  description: >-
+    Trusting a hand-set ready flag instead of recomputing makes a required
+    PARTIAL dim pass as READY (test_partial_claimed_ready_fails_closed fails);
+    dropping the evidence requirement lets a CI_VERIFIED claim stand with no proof
+    (test_verified_state_without_evidence_fails fails); allowing zero required
+    dimensions makes the gate decorative (test_no_required_dimension fails). Each
+    guard fails before the implementation is correct.
+rollback_command: >-
+  git checkout HEAD~1 --
+  physics_release_scorecard.yml
+  tools/release/check_physics_release_scorecard.py
+  tests/release/test_physics_release_scorecard.py
+  .github/workflows/physics-release-scorecard-gate.yml
+  docs/release/physics_release_scorecard.md
+  .claude/commit_acceptors/physics-release-scorecard-gate.yaml
+rollback_verification_command: >-
+  git diff --exit-code tools/release/check_physics_release_scorecard.py
+memory_update_type: none
+ledger_path: ".claude/commit_acceptors/physics-release-scorecard-gate.yaml"
+report_path: "docs/reports/diff_bound_commit_acceptor_layer.md"
+evidence: []

@@ -1,0 +1,75 @@
+# Copyright (c) 2023-2026 Yaroslav Vasylenko (neuron7xLab)
+# SPDX-License-Identifier: MIT
+#
+# Runs the TLA+ TLC model checker against the admission-gate spec and
+# verifies the reproducibility manifest sha256s on every PR that
+# touches the formal surface.
+name: formal-verification
+
+concurrency:
+  group: ${{ github.workflow }}-${{ github.ref }}
+  cancel-in-progress: true
+
+on:
+  pull_request:
+    paths:
+      - "formal/**"
+      - "reproducibility/**"
+      - "core/events/admission.py"
+      - ".github/workflows/formal-verification.yml"
+  push:
+    branches: [main]
+    paths:
+      - "formal/**"
+      - "reproducibility/**"
+      - "core/events/admission.py"
+  workflow_dispatch:
+
+permissions:
+  contents: read
+
+jobs:
+  tlc:
+    name: TLC admission-gate model check
+    runs-on: ubuntu-24.04
+    timeout-minutes: 10
+    steps:
+      - uses: actions/checkout@9c091bb21b7c1c1d1991bb908d89e4e9dddfe3e0 # v7.0.0
+
+      - name: Install JRE
+        run: sudo apt-get update && sudo apt-get install -y --no-install-recommends default-jre-headless
+
+      - name: Fetch TLA+ tools (pinned v1.7.4)
+        env:
+          TLA_TOOLS_VERSION: v1.7.4
+          TLA_TOOLS_SHA256: 936a262061c914694dfd669a543be24573c45d5aa0ff20a8b96b23d01e050e88  # pragma: allowlist secret — sha256 of an upstream release jar, not a credential
+        run: |
+          curl -fsSL -o /tmp/tla2tools.jar \
+            "https://github.com/tlaplus/tlaplus/releases/download/${TLA_TOOLS_VERSION}/tla2tools.jar"
+          test -s /tmp/tla2tools.jar
+          echo "${TLA_TOOLS_SHA256}  /tmp/tla2tools.jar" | sha256sum --check --strict
+
+      - name: Run TLC
+        working-directory: formal/tla
+        run: |
+          set +e
+          OUTPUT="$(java -cp /tmp/tla2tools.jar tlc2.TLC -config MC.cfg AdmissionGate.tla 2>&1)"
+          TLC_RC=$?
+          set -e
+          echo "$OUTPUT"
+          echo "TLC exit code: ${TLC_RC}"
+          echo "$OUTPUT" | grep -q "Model checking completed. No error has been found" \
+            || (echo "::error::TLC did not report clean completion"; exit 1)
+          echo "$OUTPUT" | grep -q "853 states generated, 547 distinct states found" \
+            || (echo "::error::TLC state-space diverged from pinned expectation (853/547)"; exit 1)
+          test "${TLC_RC}" -eq 0 \
+            || (echo "::error::TLC exited non-zero (${TLC_RC}) despite producing the pinned summary"; exit 1)
+
+  manifest:
+    name: reproducibility sha256 manifest
+    runs-on: ubuntu-24.04
+    timeout-minutes: 5
+    steps:
+      - uses: actions/checkout@9c091bb21b7c1c1d1991bb908d89e4e9dddfe3e0 # v7.0.0
+      - name: Verify manifest
+        run: sha256sum --check --strict reproducibility/manifest.sha256

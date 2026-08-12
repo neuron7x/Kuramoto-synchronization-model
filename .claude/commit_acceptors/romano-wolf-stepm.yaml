@@ -1,0 +1,75 @@
+# Diff-bound acceptor: Romano-Wolf stepwise multiple testing (Phase 12 — FWER
+# control over a strategy set; "no result without correction").
+#
+# White's Reality Check (research/robustness/white_reality_check) and the
+# Kuramoto-scoped Hansen SPA (core/kuramoto/oos_validation.spa_test) answer the
+# COMPOSITE question (is the best strategy better?) with one p-value. Neither
+# tells you WHICH strategies have edge while controlling family-wise error. A
+# repo grep finds no Romano-Wolf / stepdown implementation. This adds it.
+
+id: romano-wolf-stepm
+status: ACTIVE
+claim_type: correctness
+promise: >-
+  Adds research/robustness/romano_wolf.py implementing the Romano & Wolf (2005,
+  Econometrica 73(4):1237-1282) studentised stepdown: given a (T, K) matrix of
+  per-period performance differentials vs a benchmark it returns a per-strategy
+  rejection mask controlling FWER = P(≥1 false discovery) ≤ alpha asymptotically,
+  with cross-strategy dependence captured by a circular-block bootstrap of the
+  centred studentised statistics. Zero-variance columns are driven to −inf and
+  never rejected. Returns a frozen RomanoWolfResult (rejected mask, studentised
+  statistics, per-step critical values, counts). Fail-closed on non-2-D / <2
+  periods / no strategies / non-finite input / alpha∉(0,1) / bad bootstrap or
+  block size. Deterministic by seed. Pure NumPy, mypy --strict clean, no
+  type:ignore / noqa. 13 tests incl. power (strong edges rejected), FWER control
+  far below the naive 1−(1−α)^K bound, zero-variance immunity, determinism, and
+  fail-closed validation. research/ is outside INVENTORY scope; no runtime path.
+diff_scope:
+  changed_files:
+    - path: ".claude/commit_acceptors/romano-wolf-stepm.yaml"
+    - path: "research/robustness/romano_wolf.py"
+    - path: "tests/research/robustness/test_romano_wolf.py"
+  forbidden_paths:
+    - "trading/"
+    - "execution/"
+    - "forecast/"
+    - "policy/"
+required_python_symbols:
+  - "romano_wolf_stepm"
+  - "RomanoWolfResult"
+expected_signal: >-
+  pytest tests/research/robustness/test_romano_wolf.py is green (13 cases): three
+  strong edges among 17 noise columns are all rejected with ≤ 1 false discovery
+  at alpha=0.05; over 120 pure-noise trials the empirical FWER stays ≤ 0.20 at
+  alpha=0.10 while the naive per-strategy bound is ≈ 0.88; identical seed ⇒
+  identical mask; a zero-variance column is never rejected; malformed input and
+  invalid parameters fail-closed. mypy --strict / ruff / black clean; no
+  INVENTORY change (research/ out of scope).
+measurement_command: >-
+  python -m pytest tests/research/robustness/test_romano_wolf.py -v
+signal_artifact: "tmp/romano_wolf_stepm_pytest.log"
+falsifier:
+  command: >-
+    python -c "import numpy as np, sys;
+    from research.robustness.romano_wolf import romano_wolf_stepm;
+    rng = np.random.default_rng(1);
+    edges = rng.normal(0.45, 1.0, (500, 3));
+    noise = rng.normal(0.0, 1.0, (500, 17));
+    r = romano_wolf_stepm(np.hstack([edges, noise]), alpha=0.05, n_bootstrap=1500, seed=0);
+    print('edges', r.rejected[:3].tolist(), 'noise_false', int(r.rejected[3:].sum()));
+    sys.exit(0 if (bool(r.rejected[:3].all()) and int(r.rejected[3:].sum()) <= 1) else 1)"
+  description: >-
+    Inverse probe: three ~10σ edges among 17 noise columns must ALL be rejected
+    (power) with ≤ 1 false discovery (FWER at alpha=0.05). Exits non-zero if the
+    stepdown loses power (fails to reject genuine edges) or over-rejects noise —
+    i.e. iff the bootstrap centring / stepdown critical-value logic is broken.
+rollback_command: >-
+  git rm -f research/robustness/romano_wolf.py
+  tests/research/robustness/test_romano_wolf.py
+  .claude/commit_acceptors/romano-wolf-stepm.yaml
+rollback_verification_command: >-
+  test ! -f research/robustness/romano_wolf.py
+memory_update_type: append
+ledger_path: ".claude/commit_acceptors/romano-wolf-stepm.yaml"
+report_path: ".claude/commit_acceptors/romano-wolf-stepm.yaml"
+evidence: []

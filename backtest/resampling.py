@@ -1,3 +1,5 @@
+# Copyright (c) 2023-2026 Yaroslav Vasylenko (neuron7xLab)
+# SPDX-License-Identifier: MIT
 """Statistical resampling utilities for backtest performance metrics."""
 
 from __future__ import annotations
@@ -192,9 +194,7 @@ def bootstrap_performance_metrics(
 
         for name in selected_metrics:
             value = values[name]
-            samples_by_metric[name][index] = (
-                float(value) if value is not None else np.nan
-            )
+            samples_by_metric[name][index] = float(value) if value is not None else np.nan
 
     metrics_result: dict[str, ResampledMetric] = {}
     for name in selected_metrics:
@@ -288,9 +288,7 @@ def bayesian_mcmc_performance_metrics(
         + (kappa_prior * n_obs * (sample_mean - mu_prior) ** 2) / (2.0 * kappa_post)
     )
 
-    sigma_squared = 1.0 / rng.gamma(
-        shape=alpha_post, scale=1.0 / beta_post, size=num_samples
-    )
+    sigma_squared = 1.0 / rng.gamma(shape=alpha_post, scale=1.0 / beta_post, size=num_samples)
     sigma = np.sqrt(sigma_squared)
     mu_samples = rng.normal(loc=mu_post, scale=np.sqrt(sigma_squared / kappa_post))
 
@@ -312,9 +310,7 @@ def bayesian_mcmc_performance_metrics(
 
         for name in selected_metrics:
             value = values[name]
-            samples_by_metric[name][index] = (
-                float(value) if value is not None else np.nan
-            )
+            samples_by_metric[name][index] = float(value) if value is not None else np.nan
 
     metrics_result: dict[str, ResampledMetric] = {}
     for name in selected_metrics:

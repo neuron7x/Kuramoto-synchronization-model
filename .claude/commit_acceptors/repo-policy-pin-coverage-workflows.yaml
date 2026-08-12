@@ -1,0 +1,29 @@
+# SPDX-License-Identifier: MIT
+id: repo-policy-pin-coverage-workflows
+status: DRAFT
+claim_type: governance
+promise: "Coverage workflows pin every GitHub Action by 40-char SHA (repo-policy invariant) and install project deps so their pytest conftest (numpy) loads; they pass when triggered."
+diff_scope:
+  changed_files:
+    - path: ".claude/commit_acceptors/repo-policy-pin-coverage-workflows.yaml"
+    - path: ".github/workflows/coverage-calibration-isolated.yml"
+    - path: ".github/workflows/coverage-calibration-loop.yml"
+    - path: ".github/workflows/coverage-control-plane.yml"
+  forbidden_paths:
+    - "trading/"
+    - "execution/"
+    - "forecast/"
+    - "policy/"
+required_python_symbols: []
+expected_signal: "repo-policy pinned-actions check finds zero unpinned `uses:` refs across .github/workflows/."
+measurement_command: "python -c \"import re,sys; from pathlib import Path; pat=re.compile(r'^\\s*uses:\\s*([^\\s#]+)'); v=[f'{w}:{n}' for w in Path('.github/workflows').glob('*.yml') for n,l in enumerate(w.read_text().splitlines(),1) if (m:=pat.search(l)) and not m.group(1).startswith(('./','docker://')) and not re.search(r'@[a-f0-9]{40}$',m.group(1))]; sys.exit(1 if v else 0)\""
+signal_artifact: "tmp/repo_policy_pins.log"
+falsifier:
+  command: "grep -REq '@v[0-9]+\\s*$' .github/workflows/coverage-calibration-isolated.yml .github/workflows/coverage-calibration-loop.yml .github/workflows/coverage-control-plane.yml"
+  description: "Greps for a floating @vN ref in the pinned files; on the green path this finds none and exits non-zero, proving the promise is falsifiable."
+rollback_command: "git revert --no-edit HEAD"
+rollback_verification_command: "git diff --exit-code .github/workflows/coverage-control-plane.yml"
+memory_update_type: none
+ledger_path: ".claude/commit_acceptors/repo-policy-pin-coverage-workflows.yaml"
+report_path: "docs/reports/diff_bound_commit_acceptor_layer.md"
+evidence: []

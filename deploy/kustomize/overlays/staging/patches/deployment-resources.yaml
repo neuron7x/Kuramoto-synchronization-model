@@ -1,21 +1,21 @@
 apiVersion: apps/v1
 kind: Deployment
 metadata:
-  name: tradepulse-api
+  name: geosync-api
 spec:
   replicas: 3
   template:
     metadata:
       annotations:
-        security.tradepulse.dev/log-level: "info"
-        security.tradepulse.dev/mtls-required: "true"
+        security.geosync.dev/log-level: "info"
+        security.geosync.dev/mtls-required: "true"
       labels:
         environment: staging
     spec:
       nodeSelector:
         environment: staging
       containers:
-        - name: tradepulse-api
+        - name: geosync-api
           resources:
             requests:
               cpu: 250m
@@ -24,7 +24,7 @@ spec:
               cpu: "1"
               memory: 1Gi
           env:
-            - name: TRADEPULSE_ENVIRONMENT
+            - name: GEOSYNC_ENVIRONMENT
               value: staging
       topologySpreadConstraints:
         - maxSkew: 1
@@ -32,7 +32,7 @@ spec:
           whenUnsatisfiable: ScheduleAnyway
           labelSelector:
             matchLabels:
-              app.kubernetes.io/name: tradepulse-api
+              app.kubernetes.io/name: geosync-api
       affinity:
         podAntiAffinity:
           preferredDuringSchedulingIgnoredDuringExecution:
@@ -40,5 +40,5 @@ spec:
               podAffinityTerm:
                 labelSelector:
                   matchLabels:
-                    app.kubernetes.io/name: tradepulse-api
+                    app.kubernetes.io/name: geosync-api
                 topologyKey: topology.kubernetes.io/zone

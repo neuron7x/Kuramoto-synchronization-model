@@ -1,5 +1,7 @@
-# SPDX-License-Identifier: LicenseRef-TradePulse-Proprietary
+# Copyright (c) 2023-2026 Yaroslav Vasylenko (neuron7xLab)
+# SPDX-License-Identifier: MIT
 """Nightly coverage for heavy indicator math, long backtests, and fuzzing."""
+
 from __future__ import annotations
 
 import math
@@ -83,9 +85,7 @@ def test_long_backtest_with_heavy_indicators() -> None:
         signal = np.tanh(phase_velocity * curvature_scale * entropy_scale * order_scale)
         return np.clip(signal, -1.0, 1.0)
 
-    result = walk_forward(
-        prices, heavy_signal, fee=0.0004, strategy_name="nightly-heavy"
-    )
+    result = walk_forward(prices, heavy_signal, fee=0.0004, strategy_name="nightly-heavy")
 
     assert result.trades > prices.size * 0.02
     assert np.isfinite(result.pnl)
@@ -121,12 +121,8 @@ def test_multi_asset_kuramoto_high_cardinality() -> None:
         compute_phase(_generate_price_path(seed=seed, steps=4096), use_float32=True)
         for seed in range(8)
     ]
-    shifted: Iterable[np.ndarray] = (
-        asset + rng.normal(0.0, 0.05, asset.shape) for asset in assets
-    )
-    order_value = multi_asset_kuramoto(
-        tuple(np.asarray(x, dtype=float) for x in shifted)
-    )
+    shifted: Iterable[np.ndarray] = (asset + rng.normal(0.0, 0.05, asset.shape) for asset in assets)
+    order_value = multi_asset_kuramoto(tuple(np.asarray(x, dtype=float) for x in shifted))
     assert 0.0 <= order_value <= 1.0 or np.isclose(order_value, 1.0)
 
 

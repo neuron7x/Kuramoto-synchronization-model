@@ -1,9 +1,10 @@
+# Copyright (c) 2023-2026 Yaroslav Vasylenko (neuron7xLab)
+# SPDX-License-Identifier: MIT
 """Execution-layer audit logging utilities."""
 
 from __future__ import annotations
 
 import json
-from datetime import datetime, timezone
 from pathlib import Path
 from threading import RLock
 from typing import Callable, Iterable, Mapping, MutableSequence, Optional
@@ -38,8 +39,13 @@ class ExecutionAuditLogger:
     def emit(self, payload: Mapping[str, object]) -> None:
         """Append an audit event and notify listeners."""
 
+        # Route through ``default_clock()`` so the execution audit shares
+        # a single time source with the rest of the stack — replay tests
+        # depend on the two trails staying in lock-step.
+        from geosync.core.compat import default_clock, safe_isoformat
+
         record = dict(payload)
-        record.setdefault("timestamp", datetime.now(timezone.utc).isoformat())
+        record.setdefault("timestamp", safe_isoformat(default_clock().now()))
         serialized = json.dumps(record, sort_keys=True)
         with self._lock:
             with self._path.open("a", encoding="utf-8") as handle:

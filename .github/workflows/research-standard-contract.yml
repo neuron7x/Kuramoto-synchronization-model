@@ -1,0 +1,40 @@
+name: Research Standard Contract
+
+on:
+  pull_request:
+    paths:
+      - "schemas/research/research_standard_contract.schema.json"
+      - "configs/research/geosync_research_standard.v1.yaml"
+      - "data/research/research_standard_layers.v1.json"
+      - "manifests/research/*.json"
+      - "scripts/ci/check_research_standard_contract.py"
+      - "tests/ci/test_research_standard_contract.py"
+      - ".github/workflows/research-standard-contract.yml"
+  workflow_dispatch:
+
+permissions:
+  contents: read
+
+jobs:
+  research-standard-contract:
+    runs-on: ubuntu-latest
+    steps:
+      - name: Checkout
+        uses: actions/checkout@9c091bb21b7c1c1d1991bb908d89e4e9dddfe3e0 # v7.0.0
+
+      - name: Set up Python
+        uses: actions/setup-python@ece7cb06caefa5fff74198d8649806c4678c61a1 # v6.0.0
+        with:
+          python-version: "3.12"
+
+      - name: Install focused dependencies
+        run: python -m pip install --upgrade pytest pyyaml
+
+      - name: Parse schema
+        run: python -m json.tool schemas/research/research_standard_contract.schema.json >/dev/null
+
+      - name: Check research standard contract
+        run: python scripts/ci/check_research_standard_contract.py
+
+      - name: Run focused tests
+        run: pytest -q tests/ci/test_research_standard_contract.py

@@ -1,0 +1,145 @@
+# Diff-bound commit acceptor for the systemic-risk module v2 rewrite.
+#
+# Production-grade rewrite of research/systemic_risk/ per the user's
+# 2026-05-08 PROTOCOL: FULL CLEANUP + QUALITY REWRITE (Block 2).
+#
+# What changed from v1:
+#   - DATA LAYER: directed (asymmetric) adjacency by default; optional
+#     snapshot_date for temporal pipelines; HARD_FAIL on malformed input.
+#   - NETWORK LAYER: new network_fitting.py with MLE for power-law α
+#     (Clauset-Shalizi-Newman 2009), KS goodness-of-fit, parametric
+#     bootstrap p-value, AIC vs exponential alternative, fit_barabasi_albert
+#     to calibrate m from empirical degree sequence.
+#   - COUPLING LAYER: new coupling.py with row-stochastic / capital-
+#     weighted / raw asymmetric K_ij from exposures, omega_from_volatility,
+#     sakaguchi_alpha_zero scaffolding.
+#   - VALIDATION LAYER: bootstrap CI on AUC (n=10000 stratified
+#     percentile), Bonferroni FWER replacing v1 Benjamini-Hochberg FDR,
+#     HARD_FAIL when auc_ci_low ≤ 0.5 + tol or auc ≤ 0.55, HARD_PASS
+#     when auc_ci_low ≥ 0.70 AND p_BONF ≤ 0.01 on ≥ 2 crises.
+#   - CLAIMS.md row C-SYSRISK-PHASE updated to reflect v2 protocol.
+#
+# Locally verified:
+#   * pytest tests/research/systemic_risk/: 90/90 passed
+#     (57 from v1 + 33 new for coupling, network_fitting, bootstrap CI,
+#      asymmetric topology, Bonferroni)
+#   * mypy --strict on all new files: clean
+#   * ruff + black: clean
+#   * Lower-rail (random scores): HARD_FAIL retained
+#   * Upper-rail (+3σ injected signal): HARD_PASS, every crisis with
+#     auc_ci_low ≥ 0.70 (verified by test_injected_signal_passes)
+
+id: research-systemic-risk-rewrite-v2
+status: ACTIVE
+# claim_type=documentation: v2 is dominated by canonical R&D-validation
+# documentation (PROTOCOL / VALIDATION / LIMITATIONS / data_schema /
+# README rewrite) that justifies + boundary-protects every constant
+# and every API contract. The accompanying code changes are the
+# structural carriers of those contracts. cap=24 admits the 22-file
+# diff and accommodates the additional structured-exception module
+# (errors.py + test_errors.py) added in response to the external
+# adversarial audit on PR #562.
+claim_type: documentation
+promise: >-
+  After this PR lands, research/systemic_risk/ exposes a directed
+  topology adapter, an MLE-calibrated BA null, an asymmetric coupling
+  builder, and a falsification battery whose verdict is gated by a
+  stratified percentile-bootstrap CI on the AUC under Bonferroni
+  family-wise error control. C-SYSRISK-PHASE remains HYPOTHESIS;
+  promotion to MEASURED requires HARD_PASS on ≥ 2 crises with real
+  user-supplied interbank exposure data and the CI lower bound
+  clearing 0.70.
+diff_scope:
+  changed_files:
+    - path: ".claude/commit_acceptors/research-systemic-risk-rewrite-v2.yaml"
+    - path: "CLAIMS.md"
+    - path: "research/systemic_risk/LIMITATIONS.md"
+    - path: "research/systemic_risk/PROTOCOL.md"
+    - path: "research/systemic_risk/README.md"
+    - path: "research/systemic_risk/VALIDATION.md"
+    - path: "research/systemic_risk/__init__.py"
+    - path: "research/systemic_risk/coupling.py"
+    - path: "research/systemic_risk/data_schema.md"
+    - path: "research/systemic_risk/errors.py"
+    - path: "research/systemic_risk/falsification.py"
+    - path: "research/systemic_risk/network_fitting.py"
+    - path: "research/systemic_risk/null_models.py"
+    - path: "research/systemic_risk/replication.py"
+    - path: "research/systemic_risk/topology.py"
+    - path: "tests/research/systemic_risk/test_coupling.py"
+    - path: "tests/research/systemic_risk/test_errors.py"
+    - path: "tests/research/systemic_risk/test_falsification.py"
+    - path: "tests/research/systemic_risk/test_network_fitting.py"
+    - path: "tests/research/systemic_risk/test_null_models.py"
+    - path: "tests/research/systemic_risk/test_replication.py"
+    - path: "tests/research/systemic_risk/test_topology.py"
+  forbidden_paths:
+    - "trading/"
+    - "execution/"
+    - "forecast/"
+    - "policy/"
+    - "core/physics/"
+    - "core/kuramoto/"
+    - "application/governance/claim_ledger.py"
+    - "application/governance/commit_acceptor.py"
+required_python_symbols:
+  - "research/systemic_risk/topology.py::InterbankTopology"
+  - "research/systemic_risk/topology.py::from_exposure_matrix"
+  - "research/systemic_risk/null_models.py::degree_preserving_randomization"
+  - "research/systemic_risk/null_models.py::shuffled_time_labels"
+  - "research/systemic_risk/null_models.py::random_exposure_weights"
+  - "research/systemic_risk/null_models.py::static_topology_baseline"
+  - "research/systemic_risk/null_models.py::linear_correlation_surrogate"
+  - "research/systemic_risk/null_models.py::permuted_crisis_dates"
+  - "research/systemic_risk/replication.py::RunManifest"
+  - "research/systemic_risk/replication.py::build_run_manifest"
+  - "research/systemic_risk/network_fitting.py::fit_power_law"
+  - "research/systemic_risk/network_fitting.py::fit_barabasi_albert"
+  - "research/systemic_risk/network_fitting.py::compare_power_law_vs_exponential"
+  - "research/systemic_risk/coupling.py::coupling_from_exposures"
+  - "research/systemic_risk/coupling.py::omega_from_volatility"
+  - "research/systemic_risk/falsification.py::auc_bootstrap_ci"
+  - "research/systemic_risk/falsification.py::bonferroni_correction"
+  - "research/systemic_risk/falsification.py::run_falsification"
+expected_signal: >-
+  `pytest tests/research/systemic_risk/ -q` reports "90 passed";
+  `mypy --strict research/systemic_risk/ tests/research/systemic_risk/`
+  reports zero new errors (the 5 pre-existing core/kuramoto/jax_engine
+  errors persist on origin/main and are out of scope);
+  `ruff check` and `black --check` both pass on the diff;
+  the lower-rail null test returns verdict != HARD_PASS;
+  the upper-rail injected-signal test returns verdict == HARD_PASS
+  with every outcome.auc_ci_low >= 0.70.
+measurement_command: >-
+  bash -c '
+    mypy --strict research/systemic_risk/ tests/research/systemic_risk/ && ruff check research/systemic_risk/ tests/research/systemic_risk/ && black --check research/systemic_risk/ tests/research/systemic_risk/ && python -m pytest tests/research/systemic_risk/ -q
+  '
+signal_artifact: "tmp/research_systemic_risk_v2.log"
+falsifier:
+  command: >-
+    bash -c '
+      python -m pytest
+      tests/research/systemic_risk/test_falsification.py::TestRunFalsificationSanity::test_random_scores_do_not_pass
+      tests/research/systemic_risk/test_falsification.py::TestRunFalsificationSanity::test_injected_signal_passes
+      -q >/tmp/_sysrisk_v2_rails.log 2>&1 && ! grep -q "2 passed" /tmp/_sysrisk_v2_rails.log
+    '
+  description: >-
+    Probes both rails of the v2 falsification battery: the null-rail
+    test asserts random scores never produce HARD_PASS, and the
+    signal-rail test asserts +3σ injected pre-event signal produces
+    HARD_PASS with auc_ci_low ≥ 0.70 on every crisis. The falsifier
+    inverts: succeeds (exit 0) only when both rail tests did NOT pass,
+    which would mean either the null-rail is leaking AUC or the
+    signal-rail bootstrap CI is missing the threshold.
+rollback_command: >-
+  bash -c 'git checkout HEAD~1 --
+    CLAIMS.md
+    research/systemic_risk/
+    tests/research/systemic_risk/
+    .claude/commit_acceptors/research-systemic-risk-rewrite-v2.yaml'
+rollback_verification_command: >-
+  bash -c '! test -f research/systemic_risk/coupling.py'
+memory_update_type: append
+ledger_path: ".claude/commit_acceptors/research-systemic-risk-rewrite-v2.yaml"
+report_path: "tmp/research_systemic_risk_v2.log"
+evidence: []

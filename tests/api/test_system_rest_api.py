@@ -1,3 +1,5 @@
+# Copyright (c) 2023-2026 Yaroslav Vasylenko (neuron7xLab)
+# SPDX-License-Identifier: MIT
 from __future__ import annotations
 
 from pathlib import Path
@@ -11,8 +13,8 @@ from application.security.rbac import AuthorizationGateway, build_authorization_
 from application.settings import ApiRateLimitSettings, RateLimitPolicy
 from application.system import (
     ExchangeAdapterConfig,
-    TradePulseSystem,
-    TradePulseSystemConfig,
+    GeoSyncSystem,
+    GeoSyncSystemConfig,
 )
 from domain import Order
 from execution.connectors import SimulatedExchangeConnector
@@ -48,12 +50,10 @@ class _EagerFillConnector(SimulatedExchangeConnector):
 
 
 @pytest.fixture()
-def system() -> TradePulseSystem:
+def system() -> GeoSyncSystem:
     connector = _EagerFillConnector()
-    config = TradePulseSystemConfig(
-        venues=(ExchangeAdapterConfig(name="dummy", connector=connector),)
-    )
-    return TradePulseSystem(config)
+    config = GeoSyncSystemConfig(venues=(ExchangeAdapterConfig(name="dummy", connector=connector),))
+    return GeoSyncSystem(config)
 
 
 @pytest.fixture()
@@ -73,18 +73,14 @@ def identity_dependency(authorized_identity: AdminIdentity):
 
 @pytest.fixture()
 def authorization_gateway() -> AuthorizationGateway:
-    policy_path = (
-        Path(__file__).resolve().parents[2] / "configs" / "rbac" / "policy.yaml"
-    )
+    policy_path = Path(__file__).resolve().parents[2] / "configs" / "rbac" / "policy.yaml"
     audit_logger = AuditLogger(secret="integration-rbac-secret")
-    return build_authorization_gateway(
-        policy_path=policy_path, audit_logger=audit_logger
-    )
+    return build_authorization_gateway(policy_path=policy_path, audit_logger=audit_logger)
 
 
 @pytest.fixture()
 def client(
-    system: TradePulseSystem,
+    system: GeoSyncSystem,
     identity_dependency: Callable[[], Awaitable[AdminIdentity]],
     authorization_gateway: AuthorizationGateway,
 ) -> TestClient:
@@ -175,13 +171,11 @@ def test_market_order_requires_reference_price(client: TestClient) -> None:
 
     assert response.status_code == 422
     detail = response.json()
-    assert any(
-        "reference_price" in error.get("msg", "") for error in detail.get("detail", [])
-    )
+    assert any("reference_price" in error.get("msg", "") for error in detail.get("detail", []))
 
 
 def test_market_order_uses_reference_price_for_risk_validation(
-    client: TestClient, system: TradePulseSystem, monkeypatch: pytest.MonkeyPatch
+    client: TestClient, system: GeoSyncSystem, monkeypatch: pytest.MonkeyPatch
 ) -> None:
     captured: dict[str, float] = {}
 
@@ -242,15 +236,12 @@ def test_trade_denied_when_desk_not_authorized(client: TestClient) -> None:
     assert "trading:operator" in required_roles
 
 
-def test_trader_role_is_required(system: TradePulseSystem) -> None:
+def test_trader_role_is_required(system: GeoSyncSystem) -> None:
     async def _limited_identity() -> AdminIdentity:
         return AdminIdentity(subject="integration-test", roles=("foundation:viewer",))
 
     gateway = build_authorization_gateway(
-        policy_path=Path(__file__).resolve().parents[2]
-        / "configs"
-        / "rbac"
-        / "policy.yaml",
+        policy_path=Path(__file__).resolve().parents[2] / "configs" / "rbac" / "policy.yaml",
         audit_logger=AuditLogger(secret="integration-rbac-secret"),
     )
     app = create_system_app(
@@ -281,7 +272,7 @@ def test_trader_role_is_required(system: TradePulseSystem) -> None:
 
 
 def test_order_submission_emits_notification(
-    system: TradePulseSystem,
+    system: GeoSyncSystem,
     identity_dependency: Callable[[], Awaitable[AdminIdentity]],
     authorization_gateway: AuthorizationGateway,
 ) -> None:
@@ -333,7 +324,7 @@ def test_order_submission_emits_notification(
 
 
 def test_rate_limit_blocks_excessive_requests(
-    system: TradePulseSystem,
+    system: GeoSyncSystem,
     identity_dependency: Callable[[], Awaitable[AdminIdentity]],
     authorization_gateway: AuthorizationGateway,
 ) -> None:

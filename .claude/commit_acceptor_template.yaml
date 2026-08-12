@@ -1,0 +1,59 @@
+# Canonical Commit Acceptor Template (schema definition)
+#
+# This file IS itself a valid acceptor (status: DRAFT, id: template).
+# Every commit-bound acceptor under .claude/commit_acceptors/ MUST follow this schema.
+#
+# Forbidden schema fields (rejected anywhere they appear):
+#   - forbidden_symbols
+#   - max_files_changed
+#   - generated_at
+#
+# Field semantics:
+#   - id              : kebab-case unique identifier (matches filename without .yaml)
+#   - status          : DRAFT | ACTIVE | VERIFIED | REJECTED
+#   - claim_type      : one of the keys in policy.max_changed_files_by_claim_type
+#   - promise         : single sentence stating the invariant the commit asserts
+#   - diff_scope      : exhaustive declaration of files this commit may touch
+#       changed_files : list of {path, sha256?} entries (sha256 optional for DRAFT)
+#       forbidden_paths: paths that, if present in diff, fail validation
+#   - required_python_symbols : exported callables that must exist after merge
+#   - expected_signal  : human-readable description of the success measurement
+#   - measurement_command : shell command that emits the signal
+#   - signal_artifact  : file produced by measurement_command (sha256 hashed for evidence)
+#   - falsifier        : adversarial probe that MUST fail on the green path
+#       command        : shell command
+#       description    : why running this proves the promise is falsifiable
+#   - rollback_command : reverts the commit's effect deterministically
+#   - rollback_verification_command : non-destructive command proving rollback restored state
+#   - memory_update_type : append | replace | none
+#   - ledger_path      : authoritative ledger file for this acceptor
+#   - report_path      : longer-form report under docs/reports/
+#   - evidence         : optional list of {path, sha256} pinning artefacts
+#
+# DRAFT acceptors warn (not error) on missing artefacts; VERIFIED acceptors error.
+
+id: template
+status: DRAFT
+claim_type: governance
+promise: "Template acceptor demonstrating the canonical schema; not bound to any real diff."
+diff_scope:
+  changed_files:
+    - path: ".claude/commit_acceptor_template.yaml"
+  forbidden_paths:
+    - "trading/"
+    - "execution/"
+    - "forecast/"
+    - "policy/"
+required_python_symbols: []
+expected_signal: "schema parses cleanly; validator emits no errors for DRAFT template"
+measurement_command: "python tools/commit_acceptor/validate_commit_acceptor.py"
+signal_artifact: "tmp/commit_acceptor_validation.json"
+falsifier:
+  command: "python -c \"raise SystemExit(1)\""
+  description: "Always-failing probe to confirm CI surfaces falsifier failure paths."
+rollback_command: "git checkout -- .claude/commit_acceptor_template.yaml"
+rollback_verification_command: "git diff --exit-code .claude/commit_acceptor_template.yaml"
+memory_update_type: none
+ledger_path: ".claude/commit_acceptor_template.yaml"
+report_path: "docs/reports/diff_bound_commit_acceptor_layer.md"
+evidence: []

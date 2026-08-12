@@ -1,0 +1,751 @@
+{
+  "schema": "academy-fellow/law_mechanism_witness_matrix@v1",
+  "source": ".claude/neuro/NEURO_OPERATIONALIZATION_LEDGER.yaml",
+  "generated_by": "scripts/ci/gen_law_mechanism_witness_matrix.py",
+  "non_claims": [
+    "No biological equivalence — all neuro names are engineering analogs.",
+    "No universal physics of markets; observers are not predictors.",
+    "No alpha/profitability claim.",
+    "Synthetic-only witnesses; no real L2 dataset/replay implied."
+  ],
+  "summary": {
+    "total_mechanisms": 32,
+    "classification_distribution": {
+      "OPERATIONAL": 21,
+      "PARTIAL": 3,
+      "DECORATIVE": 3,
+      "OVERCLAIM": 2,
+      "LEGACY": 2,
+      "REJECTED": 1
+    },
+    "operational_with_full_binding": 21,
+    "open_missing_tests": 0,
+    "partial_remaining": [
+      "neuro-optimizer-balance-metrics",
+      "neuro-validation-bounds",
+      "hebbian-plasticity-update"
+    ],
+    "quarantined": [
+      "neuro-orchestrator-scenario-builder",
+      "adaptive-calibrator-annealing",
+      "basal-ganglia-policy-legacy",
+      "neuro-optimization-guide-overclaim",
+      "docs-hpc-ai-v4-overclaim",
+      "legacy-optimization-execution-report",
+      "legacy-run-optimization-100",
+      "mycelium-research-timeline-mention"
+    ]
+  },
+  "mechanisms": [
+    {
+      "id": "kuramoto-order-parameter",
+      "domain": "physics",
+      "file": "core/kuramoto/engine.py",
+      "formula": "Standard Kuramoto oscillator integrator producing R(t) order parameter.",
+      "validity": "KuramotoConfig(N:int, omega:array[N], K:float, dt:float, steps:int); finite, dt > 0, K ≥ 0.",
+      "input_contract": "KuramotoConfig(N:int, omega:array[N], K:float, dt:float, steps:int); finite, dt > 0, K ≥ 0.",
+      "output_contract": "R: array[steps] with 0 ≤ R(t) ≤ 1; phases mod 2π; finite.",
+      "falsifier": "INV-K2: R > 3/√N after 10⁴ steps with K = 0.1·K_c, N > 100 ⇒ violation. INV-OA2 algebraic: K > 2Δ ⇒ R_∞ = √(1−2Δ/K) to float precision.",
+      "existing_tests": [
+        "tests/unit/physics/test_T18_kuramoto_p1.py",
+        "tests/unit/physics/test_T23_ott_antonsen_chimera.py",
+        "tests/unit/physics/test_T24_kuramoto_metrics_witness.py"
+      ],
+      "missing_tests": [],
+      "claim_status": "OPERATIONAL",
+      "promotion_allowed": true,
+      "inv_refs": [
+        "INV-K1",
+        "INV-K2",
+        "INV-K3",
+        "INV-K4",
+        "INV-K5",
+        "INV-K6",
+        "INV-K7"
+      ],
+      "remediation_action": "KEEP",
+      "witness_note": null
+    },
+    {
+      "id": "ott-antonsen-reduction",
+      "domain": "physics",
+      "file": "core/kuramoto/ott_antonsen.py",
+      "formula": "Low-dimensional Lorentzian-distribution Kuramoto manifold |z(t)| ≤ 1.",
+      "validity": "Δ (Lorentzian width) > 0, K ≥ 0, dt > 0.",
+      "input_contract": "Δ (Lorentzian width) > 0, K ≥ 0, dt > 0.",
+      "output_contract": "z(t) complex, |z| ≤ 1, R_∞ closed-form.",
+      "falsifier": "INV-OA1: |z| > 1 → violation. INV-OA2: |R_∞ − √(1−2Δ/K)| > 1e-12.",
+      "existing_tests": [
+        "tests/unit/physics/test_T23_ott_antonsen_chimera.py"
+      ],
+      "missing_tests": [],
+      "claim_status": "OPERATIONAL",
+      "promotion_allowed": true,
+      "inv_refs": [
+        "INV-OA1",
+        "INV-OA2",
+        "INV-OA3"
+      ],
+      "remediation_action": "KEEP",
+      "witness_note": null
+    },
+    {
+      "id": "lyapunov-mle",
+      "domain": "physics",
+      "file": "core/physics/lyapunov_exponent.py",
+      "formula": "Maximum Lyapunov exponent and spectral gap estimators.",
+      "validity": "bounded finite series x∈ℝ^T (T ≥ window).",
+      "input_contract": "bounded finite series x∈ℝ^T (T ≥ window).",
+      "output_contract": "MLE finite; λ₂ ≥ 0.",
+      "falsifier": "INV-LE1: non-finite MLE on bounded input ⇒ violation. INV-SG1: λ₂ < 0 ⇒ violation. INV-SG2: λ₂ = 0 on connected graph ⇒ violation.",
+      "existing_tests": [
+        "tests/unit/physics/test_T22_lyapunov_spectral.py"
+      ],
+      "missing_tests": [],
+      "claim_status": "OPERATIONAL",
+      "promotion_allowed": true,
+      "inv_refs": [
+        "INV-LE1",
+        "INV-LE2",
+        "INV-SG1",
+        "INV-SG2"
+      ],
+      "remediation_action": "KEEP",
+      "witness_note": null
+    },
+    {
+      "id": "serotonin-controller",
+      "domain": "neuroscience",
+      "file": "src/geosync/core/neuro/serotonin/serotonin_controller.py",
+      "formula": "Logistic risk-inhibition gate s = σ(k·(tonic-θ))·sensitivity with desensitisation, phasic burst, veto and SafetyMonitor invariants.",
+      "validity": "stress ∈ ℝ_≥0, drawdown ∈ ℝ_≥0 (sign-flipped negative drawdown consumed via -abs), novelty ∈ ℝ_≥0, dt > 0.",
+      "input_contract": "stress ∈ ℝ_≥0, drawdown ∈ ℝ_≥0 (sign-flipped negative drawdown consumed via -abs), novelty ∈ ℝ_≥0, dt > 0.",
+      "output_contract": "SerotoninStepResult(level∈[0,1], hold:bool, veto:bool, cooldown, temperature_floor, sensitivity∈[0.1,1.0]).",
+      "falsifier": "INV-5HT2: s∉[0,1] ⇒ violation. INV-5HT4: sensitivity∉[0.1,1.0] ⇒ violation. INV-5HT7: stress≥1.0 OR |dd|≥0.5 without veto ⇒ SAFETY violation. Lyapunov V(s) increase under zero-stress ⇒ INV-5HT1 violation.",
+      "existing_tests": [
+        "tests/unit/physics/test_T12_serotonin_stability.py",
+        "core/neuro/tests/test_serotonin_controller.py",
+        "examples/serotonin_validation_demo.py"
+      ],
+      "missing_tests": [],
+      "claim_status": "OPERATIONAL",
+      "promotion_allowed": true,
+      "inv_refs": [
+        "INV-5HT1",
+        "INV-5HT2",
+        "INV-5HT3",
+        "INV-5HT4",
+        "INV-5HT5",
+        "INV-5HT6",
+        "INV-5HT7"
+      ],
+      "remediation_action": "KEEP",
+      "witness_note": null
+    },
+    {
+      "id": "dopamine-controller-rpe",
+      "domain": "neuroscience",
+      "file": "src/geosync/core/neuro/dopamine/dopamine_controller.py",
+      "formula": "TD reward prediction error δ = r + γ·V' − V used by ActionGate.",
+      "validity": "r∈ℝ, V,V'∈ℝ, γ∈(0,1].",
+      "input_contract": "r∈ℝ, V,V'∈ℝ, γ∈(0,1].",
+      "output_contract": "δ∈ℝ; V→V*; ∂δ/∂r = 1 (raw, NOT tanh-adapter scope).",
+      "falsifier": "INV-DA3: γ∉(0,1] ⇒ violation. INV-DA7: ∂δ/∂r ≠ 1 (within DopamineController scope) ⇒ violation. INV-DA5: E[δ] not → 0 at equilibrium ⇒ violation.",
+      "existing_tests": [
+        "tests/unit/physics/test_T11_dopamine_algebraic.py"
+      ],
+      "missing_tests": [],
+      "claim_status": "OPERATIONAL",
+      "promotion_allowed": true,
+      "inv_refs": [
+        "INV-DA1",
+        "INV-DA2",
+        "INV-DA3",
+        "INV-DA4",
+        "INV-DA5",
+        "INV-DA6",
+        "INV-DA7"
+      ],
+      "remediation_action": "KEEP",
+      "witness_note": null
+    },
+    {
+      "id": "gaba-position-gate",
+      "domain": "neuroscience",
+      "file": "core/neuro/gaba_position_gate.py",
+      "formula": "Sigmoidal inhibition on (vix, vol, max(0,-rpe)) producing brake ∈[0,1] with multiplicative gating effective = base·(1−inhibition·scale).",
+      "validity": "vix ≥ 0, volatility ≥ 0, rpe ∈ ℝ, base_size ≥ 0; bus snapshot.",
+      "input_contract": "vix ≥ 0, volatility ≥ 0, rpe ∈ ℝ, base_size ≥ 0; bus snapshot.",
+      "output_contract": "gated_size ∈ [0, base_size]; inhibition ∈ [0,1].",
+      "falsifier": "INV-GABA1: inhibition ∉ [0,1] ⇒ violation. INV-GABA3: effective > raw ⇒ violation. INV-GABA4: vol→0 with vix=0,rpe=0 not yielding inhibition≈0 ⇒ violation.",
+      "existing_tests": [
+        "tests/unit/physics/test_T19_neuro_p1.py",
+        "tests/unit/physics/test_T19_gaba_stdp_monotone.py"
+      ],
+      "missing_tests": [],
+      "claim_status": "OPERATIONAL",
+      "promotion_allowed": true,
+      "inv_refs": [
+        "INV-GABA1",
+        "INV-GABA2",
+        "INV-GABA3",
+        "INV-GABA4",
+        "INV-GABA5"
+      ],
+      "remediation_action": "KEEP",
+      "witness_note": null
+    },
+    {
+      "id": "ricci-curvature-bounds",
+      "domain": "physics",
+      "file": "core/kuramoto/ricci_flow.py",
+      "formula": "Ollivier–Ricci κ on price/correlation graph with κ ≤ 1 universal bound.",
+      "validity": "connected weighted graph, finite weights ≥ 0.",
+      "input_contract": "connected weighted graph, finite weights ≥ 0.",
+      "output_contract": "κ_e ≤ 1 universal; κ_e ∈ [−1,1] for build_price_graph.",
+      "falsifier": "INV-RC1: κ > 1 on any edge ⇒ violation. INV-RC3: κ ∉ [−1,1] for build_price_graph output ⇒ violation.",
+      "existing_tests": [
+        "tests/unit/physics/test_T10_ricci_bounds.py",
+        "tests/unit/physics/test_T3_forman_ricci.py"
+      ],
+      "missing_tests": [],
+      "claim_status": "OPERATIONAL",
+      "promotion_allowed": true,
+      "inv_refs": [
+        "INV-RC1",
+        "INV-RC2",
+        "INV-RC3"
+      ],
+      "remediation_action": "KEEP",
+      "witness_note": null
+    },
+    {
+      "id": "ricci-flow-engine",
+      "domain": "physics",
+      "file": "core/kuramoto/ricci_flow_engine.py",
+      "formula": "Couples Kuramoto oscillators with curvature-modulated coupling K_ij(t) = K_base · φ(κ_ij) recomputed at intervals.",
+      "validity": "KuramotoConfig + ricci_update_interval, correlation_window.",
+      "input_contract": "KuramotoConfig + ricci_update_interval, correlation_window.",
+      "output_contract": "phases, R(t)∈[0,1], coupling_matrix_history, κ history.",
+      "falsifier": "INV-K1 + INV-OA1 hold throughout; ricci_update producing κ>1 ⇒ violation.",
+      "existing_tests": [
+        "tests/unit/physics/test_T18_kuramoto_p1.py",
+        "tests/unit/physics/test_ricci_flow_engine_invariants.py"
+      ],
+      "missing_tests": [],
+      "claim_status": "OPERATIONAL",
+      "promotion_allowed": true,
+      "inv_refs": [
+        "INV-K1",
+        "INV-OA1",
+        "INV-RC1"
+      ],
+      "remediation_action": "KEEP",
+      "witness_note": null
+    },
+    {
+      "id": "free-energy-ecs",
+      "domain": "physics",
+      "file": "core/neuro/ecs_lyapunov.py",
+      "formula": "Free-energy descent dF/dt ≤ 0 surface for the ECS regulator.",
+      "validity": "U ≥ 0, T ≥ 0, S_q ≥ 0, finite; ΔF computed against prior.",
+      "input_contract": "U ≥ 0, T ≥ 0, S_q ≥ 0, finite; ΔF computed against prior.",
+      "output_contract": "F∈ℝ (can be negative); dF/dt ≤ 0 under active inference.",
+      "falsifier": "INV-FE1: F(t+1) > F(t) under active inference ⇒ violation. INV-FE2: any of U,T,S < 0 ⇒ violation.",
+      "existing_tests": [
+        "tests/unit/physics/test_T13_free_energy_components.py",
+        "core/neuro/tests/test_ecs_regulator.py"
+      ],
+      "missing_tests": [],
+      "claim_status": "OPERATIONAL",
+      "promotion_allowed": true,
+      "inv_refs": [
+        "INV-FE1",
+        "INV-FE2"
+      ],
+      "remediation_action": "KEEP",
+      "witness_note": null
+    },
+    {
+      "id": "cryptobiosis-state-machine",
+      "domain": "runtime-governance",
+      "file": "core/neuro/cryptobiosis.py",
+      "formula": "ACTIVE→VITRIFYING→DORMANT→REHYDRATING phase machine with hysteresis; DORMANT multiplier == 0.0 EXACTLY.",
+      "validity": "T ∈ [0,1] (clamped on input); 0 < exit < entry ≤ 1.",
+      "input_contract": "T ∈ [0,1] (clamped on input); 0 < exit < entry ≤ 1.",
+      "output_contract": "state∈{ACTIVE,VITRIFYING,DORMANT,REHYDRATING}; multiplier∈{0.0, k/n, 1.0}; snapshot non-None in DORMANT.",
+      "falsifier": "INV-CB1: DORMANT with multiplier ≠ 0.0 EXACTLY ⇒ violation. INV-CB2: VITRIFYING→DORMANT not in one tick ⇒ violation. INV-CB7: exit ≥ entry config ⇒ ValueError. INV-CB8: T ≥ entry during REHYDRATING not aborting ⇒ violation.",
+      "existing_tests": [
+        "tests/unit/physics/test_T17_cryptobiosis.py"
+      ],
+      "missing_tests": [],
+      "claim_status": "OPERATIONAL",
+      "promotion_allowed": true,
+      "inv_refs": [
+        "INV-CB1",
+        "INV-CB2",
+        "INV-CB3",
+        "INV-CB4",
+        "INV-CB5",
+        "INV-CB6",
+        "INV-CB7",
+        "INV-CB8"
+      ],
+      "remediation_action": "KEEP",
+      "witness_note": null
+    },
+    {
+      "id": "kelly-sizing",
+      "domain": "neuroeconomics",
+      "file": "core/neuro/kuramoto_kelly.py",
+      "formula": "Continuous-limit Kelly fraction f* = μ/σ² with hard cap and growth-rate check.",
+      "validity": "μ ∈ ℝ, σ² > 0, cap ∈ (0, 1].",
+      "input_contract": "μ ∈ ℝ, σ² > 0, cap ∈ (0, 1].",
+      "output_contract": "applied fraction ≤ cap; log-growth optimal.",
+      "falsifier": "INV-KELLY1: |f* − μ/σ²| > 1e-12 ⇒ violation. INV-KELLY2: applied > cap ⇒ violation.",
+      "existing_tests": [
+        "tests/unit/physics/test_T19_neuro_p1.py",
+        "tests/unit/physics/test_kelly_sizing_growth.py"
+      ],
+      "missing_tests": [],
+      "claim_status": "OPERATIONAL",
+      "promotion_allowed": true,
+      "inv_refs": [
+        "INV-KELLY1",
+        "INV-KELLY2",
+        "INV-KELLY3"
+      ],
+      "remediation_action": "KEEP",
+      "witness_note": null
+    },
+    {
+      "id": "signal-bus-dag",
+      "domain": "runtime-governance",
+      "file": "core/neuro/signal_bus.py",
+      "formula": "Flat pub/sub bus latching dopamine/serotonin/gaba/kuramoto signals.",
+      "validity": "finite numeric signals, valid topic strings.",
+      "input_contract": "finite numeric signals, valid topic strings.",
+      "output_contract": "each subscriber fires once per publish; replay-deterministic.",
+      "falsifier": "INV-SB1: subscriber fires ≠ 1 per publish ⇒ violation. INV-SB2: differing replay outputs from identical inputs ⇒ violation.",
+      "existing_tests": [
+        "tests/unit/physics/test_T16_signalbus_dag.py"
+      ],
+      "missing_tests": [],
+      "claim_status": "OPERATIONAL",
+      "promotion_allowed": true,
+      "inv_refs": [
+        "INV-SB1",
+        "INV-SB2"
+      ],
+      "remediation_action": "KEEP",
+      "witness_note": null
+    },
+    {
+      "id": "gradient-vital-signs",
+      "domain": "runtime-governance",
+      "file": "core/neuro/gradient_vital_signs.py",
+      "formula": "Composite GVS health score combining sync/risk/energy/chaos/connectivity.",
+      "validity": "Rolling window of R(t), gaba, serotonin, ecs_free_energy, correlation matrix.",
+      "input_contract": "Rolling window of R(t), gaba, serotonin, ecs_free_energy, correlation matrix.",
+      "output_contract": "GradientVitalSigns(gvs_score∈[0,1], status∈{H,D,C}).",
+      "falsifier": "INV-YV1: ΔV ≤ 0 OR dΔV/dt = 0 with status≠CRITICAL ⇒ violation. Composite > 1 OR < 0 ⇒ aggregator violation.",
+      "existing_tests": [
+        "tests/integration/test_neurostack_integration.py",
+        "tests/unit/physics/test_gradient_vital_signs_invariants.py"
+      ],
+      "missing_tests": [],
+      "claim_status": "OPERATIONAL",
+      "promotion_allowed": true,
+      "inv_refs": [
+        "INV-YV1"
+      ],
+      "remediation_action": "KEEP",
+      "witness_note": null
+    },
+    {
+      "id": "dro-ara-engine",
+      "domain": "physics",
+      "file": "core/dro_ara/engine.py",
+      "formula": "γ = 2H+1 derivation with ADF stationarity + Lipschitz-1 rs in [0,1].",
+      "validity": "price series ≥ window, no NaN/Inf/constant/short.",
+      "input_contract": "price series ≥ window, no NaN/Inf/constant/short.",
+      "output_contract": "regime ∈ {VALID, INVALID, CRITICAL, TRANS}, signal, γ, H, rs∈[0,1].",
+      "falsifier": "INV-DRO1: |γ − (2H+1)| ≥ 1e-5 ⇒ violation. INV-DRO5: NaN/Inf/constant input not raising ValueError ⇒ violation.",
+      "existing_tests": [
+        "tests/unit/physics/test_T22_lyapunov_spectral.py",
+        "tests/integration/test_full_pipeline_e2e.py",
+        "tests/unit/physics/test_dro_ara_invariants.py"
+      ],
+      "missing_tests": [],
+      "claim_status": "OPERATIONAL",
+      "promotion_allowed": true,
+      "inv_refs": [
+        "INV-DRO1",
+        "INV-DRO2",
+        "INV-DRO3",
+        "INV-DRO4",
+        "INV-DRO5"
+      ],
+      "remediation_action": "KEEP",
+      "witness_note": null
+    },
+    {
+      "id": "adaptive-criticality-kappa",
+      "domain": "physics",
+      "file": "geosync/estimators/dfa_gamma_estimator.py",
+      "formula": "κ_critical = −ln(ΔH_max/ε)/(λ_local + δ) gating node isolation.",
+      "validity": "price series, window=256, ε=0.05 (env-overridable).",
+      "input_contract": "price series, window=256, ε=0.05 (env-overridable).",
+      "output_contract": "κ_critical ∈ ℝ, isolation flag bool.",
+      "falsifier": "INV-AC1-rev: κ(node) < κ_critical without isolation event ⇒ violation. Reactive vs proactive failure documented (see CLAUDE.md AC1 derivation).",
+      "existing_tests": [
+        "tests/unit/physics/test_T22_lyapunov_spectral.py",
+        "tests/unit/physics/test_adaptive_criticality_kappa.py"
+      ],
+      "missing_tests": [],
+      "claim_status": "OPERATIONAL",
+      "promotion_allowed": true,
+      "inv_refs": [
+        "INV-AC1-rev"
+      ],
+      "remediation_action": "KEEP",
+      "witness_note": "EXECUTED SOURCE: the κ_critical/isolation gate now lives in geosync/estimators/dfa_gamma_estimator.py (kappa_critical, should_isolate_node, assess_node, isolation_mask, aggregate_excluding_isolated, AdaptiveCriticalityGate) — no longer a test-local reference. The INV-AC1-rev closed form is mathematically identical to the CLAUDE.md derivation; the gate fail-closes on non-finite κ_node/λ_local (NON_FINITE_INPUT), singular denominator (SINGULAR_DENOMINATOR) and all-isolated ensembles, and raises on invalid shared ε/ΔH_max. Witness tests/unit/physics/test_adaptive_criticality_kappa.py now imports the source symbols (threshold crossing, equality boundary, non-finite input, ensemble exclusion). NON-CLAIM: criticality observer, not a predictor; synthetic-only."
+    },
+    {
+      "id": "explosive-sync-hysteresis",
+      "domain": "runtime-governance",
+      "file": "core/physics/explosive_sync.py",
+      "formula": "First-order Kuramoto with frequency-degree correlation.",
+      "validity": "positive degrees, dt > 0, sweep K range.",
+      "input_contract": "positive degrees, dt > 0, sweep K range.",
+      "output_contract": "forward_R(K), backward_R(K); hysteresis width ≥ 0.",
+      "falsifier": "INV-ES1: hysteresis_width < 0 ⇒ violation. INV-ES2: smooth transition under correlated coupling ⇒ qualitative violation.",
+      "existing_tests": [
+        "tests/unit/physics/test_T2_explosive_sync.py"
+      ],
+      "missing_tests": [],
+      "claim_status": "OPERATIONAL",
+      "promotion_allowed": true,
+      "inv_refs": [
+        "INV-ES1",
+        "INV-ES2"
+      ],
+      "remediation_action": "KEEP",
+      "witness_note": null
+    },
+    {
+      "id": "hpc-kernels-determinism",
+      "domain": "runtime-governance",
+      "file": "core/neuro/hpc_neuro_bridge.py",
+      "formula": "HPC Active-Inference outputs (PWPE, action, entropy) → bus signals.",
+      "validity": "finite PWPE, action ∈ ℝ, entropy ≥ 0, valid bus.",
+      "input_contract": "finite PWPE, action ∈ ℝ, entropy ≥ 0, valid bus.",
+      "output_contract": "finite normalised neuromodulator signals.",
+      "falsifier": "INV-HPC1: bit-different output for same seed ⇒ violation. INV-HPC2: NaN/Inf output on finite input ⇒ violation.",
+      "existing_tests": [
+        "tests/integration/test_full_pipeline_e2e.py",
+        "tests/unit/physics/test_hpc_neuro_bridge_determinism.py"
+      ],
+      "missing_tests": [],
+      "claim_status": "OPERATIONAL",
+      "promotion_allowed": true,
+      "inv_refs": [
+        "INV-HPC1",
+        "INV-HPC2"
+      ],
+      "remediation_action": "KEEP",
+      "witness_note": null
+    },
+    {
+      "id": "serotonin-ode-lyapunov",
+      "domain": "physics",
+      "file": "core/neuro/serotonin_ode.py",
+      "formula": "Two-state serotonin ODE with RK4 integration and Lyapunov certificate.",
+      "validity": "stress ≥ 0, dt > 0, params with α,β,γ,δ,η,μ ≥ 0.",
+      "input_contract": "stress ≥ 0, dt > 0, params with α,β,γ,δ,η,μ ≥ 0.",
+      "output_contract": "level ∈ [0,1] (clamped), desens ≥ 0, dV/dt ≤ 0 zero-stress.",
+      "falsifier": "INV-5HT1: V(t+1) > V(t) under zero stress ⇒ violation. INV-5HT2: level ∉ [0,1] ⇒ violation.",
+      "existing_tests": [
+        "tests/unit/physics/test_T12_serotonin_stability.py"
+      ],
+      "missing_tests": [],
+      "claim_status": "OPERATIONAL",
+      "promotion_allowed": true,
+      "inv_refs": [
+        "INV-5HT1",
+        "INV-5HT2",
+        "INV-5HT6"
+      ],
+      "remediation_action": "KEEP",
+      "witness_note": null
+    },
+    {
+      "id": "dopamine-execution-adapter-tanh",
+      "domain": "neuroscience",
+      "file": "core/neuro/dopamine_execution_adapter.py",
+      "formula": "tanh-normalized RPE = tanh(scale·((pnl − predicted) − slip_penalty)).",
+      "validity": "pnl,predicted,slippage finite; scales > 0.",
+      "input_contract": "pnl,predicted,slippage finite; scales > 0.",
+      "output_contract": "rpe ∈ [−1, 1] (tanh-saturated), finite ∀ finite input.",
+      "falsifier": "INV-DA8: |δ|=|tanh(scale·raw)| > 1 or non-finite δ on finite input ⇒ violation. NON-CLAIM: this is NOT raw TD-error and MUST NOT be passed to invariants restricted to DopamineController scope (∂δ/∂r = sech²(·) ≠ 1).",
+      "existing_tests": [
+        "tests/unit/physics/test_dopamine_execution_adapter_bounds.py"
+      ],
+      "missing_tests": [],
+      "claim_status": "OPERATIONAL",
+      "promotion_allowed": true,
+      "inv_refs": [
+        "INV-DA8"
+      ],
+      "remediation_action": "KEEP",
+      "witness_note": "PROMOTED PARTIAL→OPERATIONAL. The blocking gap (no INV-* binding) is closed: INV-DA8 (DopamineExecutionAdapter |δ|=|tanh(·)|≤1, finite ∀ finite input; ∂δ/∂r=sech²≠1, scope-distinct from INV-DA7) is now in CLAUDE.md + INVARIANTS.yaml with source/tests bindings. The |δ|≤1 bound is structural (tanh range) and witnessed by tests/unit/physics/test_dopamine_execution_adapter_bounds.py. NON-CLAIM: bounded engineering normaliser, NOT raw TD-error; never an INV-DA7-scoped quantity."
+    },
+    {
+      "id": "neuro-optimizer-balance-metrics",
+      "domain": "neuroeconomics",
+      "file": "src/geosync/core/neuro/neuro_optimizer.py",
+      "formula": "Multi-objective optimiser; reports DA/5HT ratio and E/I balance against hardcoded ranges [1.0,3.0] and [1.0,2.5].",
+      "validity": "OptimizationConfig + current_params + performance_score.",
+      "input_contract": "OptimizationConfig + current_params + performance_score.",
+      "output_contract": "updated params + BalanceMetrics(DA/5HT, E/I, AA, dev).",
+      "falsifier": "Hardcoded ranges have no neuroscience citation; null-model needed (random params should produce score below threshold by construction).",
+      "existing_tests": [
+        "tests/integration/test_neurostack_integration.py",
+        "benchmarks/neuro_optimizer_benchmark.py",
+        "tests/unit/neuro/test_neuro_optimizer_null_model.py"
+      ],
+      "missing_tests": [],
+      "claim_status": "PARTIAL",
+      "promotion_allowed": false,
+      "inv_refs": [],
+      "remediation_action": "QUARANTINE_DOC",
+      "witness_note": "KEPT PARTIAL BY DESIGN (no promotion). Null model (N=3000, seed 20260623) scores mean ~0.731 vs configured ~0.999 at T=0.95 (~2.7σ) — this is a statistical SEPARATION (admissibility evidence), NOT a falsifiable per-input hard contract, so it does not warrant an operational INV. DA/5HT and E/I are uncited engineering ratios with no physiological clamp (QUARANTINE_DOC: relabel as arithmetic ratios, do not promote). Promotion is DECLINED on epistemic grounds (no honest hard invariant exists), not merely pending an INV name."
+    },
+    {
+      "id": "neuro-validation-bounds",
+      "domain": "neuroscience",
+      "file": "src/geosync/core/neuro/_validation.py",
+      "formula": "Validation utilities for \"neuro invariants\" (DA/5HT, E/I).",
+      "validity": "numeric values, optional bounds spec.",
+      "input_contract": "numeric values, optional bounds spec.",
+      "output_contract": "bool valid; clamped value if behavior==\"clip\".",
+      "falsifier": "No null-model test; no documentation tying ranges to a citation.",
+      "existing_tests": [
+        "tests/test_metric_validations.py",
+        "tests/unit/neuro/test_validation_bounds_provenance.py"
+      ],
+      "missing_tests": [],
+      "claim_status": "PARTIAL",
+      "promotion_allowed": false,
+      "inv_refs": [],
+      "remediation_action": "QUARANTINE_DOC",
+      "witness_note": "Provenance witness pins bounds as engineering numeric guards (no biological citation). Remains PARTIAL per QUARANTINE_DOC remediation."
+    },
+    {
+      "id": "coherence-bridge-geosync-adapter",
+      "domain": "runtime-governance",
+      "file": "coherence_bridge/geosync_adapter.py",
+      "formula": "Adapter exposing Kuramoto/Ricci-derived signals to a fail-closed physics contract gate (coherence_bridge/physics_contract.py) for the risk layer.",
+      "validity": "relayed signal dict with order_parameter_R, gamma, ollivier_kappa (opt), augmented_forman_ricci (or ricci_curvature display alias).",
+      "input_contract": "relayed signal dict with order_parameter_R, gamma, ollivier_kappa (opt), augmented_forman_ricci (or ricci_curvature display alias).",
+      "output_contract": "ContractVerdict(status∈{VALID,INVALID_PHYSICS_CONTRACT}, decision∈{PASS,NO_GO}, safe_risk_scalar∈[0,1]); INVALID ⇒ NO_GO ∧ risk 0.0.",
+      "falsifier": "INV-CBR1: VALID for R∉[0,1], negative/non-finite gamma, or Ollivier κ>1+ε; OR INVALID for a Forman blend >1 with in-band R/gamma/Ollivier; OR INVALID verdict with non-zero safe_risk_scalar ⇒ violation.",
+      "existing_tests": [
+        "coherence_bridge/test_runner.py",
+        "tests/integration/test_coherence_bridge_invariants.py"
+      ],
+      "missing_tests": [],
+      "claim_status": "OPERATIONAL",
+      "promotion_allowed": true,
+      "inv_refs": [
+        "INV-K1",
+        "INV-RC1",
+        "INV-CBR1"
+      ],
+      "remediation_action": "KEEP",
+      "witness_note": "PROMOTED PARTIAL→OPERATIONAL. OPEN GAP closed: (1) the adapter now emits an explicit name split — ollivier_kappa (the κ≤1 operator INV-RC1 governs) vs augmented_forman_ricci (Forman blend, legitimately >1, never κ-bound evidence; ricci_curvature kept as display alias); (2) coherence_bridge/physics_contract.py::validate_physics_contract fail-closes a NEGATIVE/non-finite gamma and an Ollivier κ>1 to status=INVALID_PHYSICS_CONTRACT, decision=NO_GO, safe_risk_scalar=0.0, while a Forman value >1 is VALID. Bound to INV-CBR1 (CLAUDE.md + INVARIANTS.yaml). RUNTIME-ENFORCED: coherence_bridge/risk_gate.py::CoherenceRiskGate.apply calls validate_physics_contract FIRST and hard-blocks an INVALID signal before order sizing, sizing on verdict.safe_risk_scalar not the raw field (consumer-refusal tests in tests/test_risk_gate.py). NON-CLAIM: contract gate, not a trading signal; synthetic-only; the advisory relay itself stays read-only (the enforced verdict is computed by the consumer)."
+    },
+    {
+      "id": "hebbian-plasticity-update",
+      "domain": "neuroscience",
+      "file": "geosync/neuroeconomics/hebbian_plasticity.py",
+      "formula": "Hebbian-style weight update used in neuroeconomics layer.",
+      "validity": "pre, post finite; eligibility ∈ [0,1]^11 (fail-closed).",
+      "input_contract": "pre, post finite; eligibility ∈ [0,1]^11 (fail-closed).",
+      "output_contract": "updated weights; PER-STEP bounded only (cumulative upper bound NOT claimed — see test_hebbian_global_stability.py).",
+      "falsifier": "Per-step update exceeds lr·magnitude·eligibility envelope, OR weight falls below weight_floor, OR out-of-[0,1] eligibility is silently accepted ⇒ violation. NOTE: global (cumulative) upper bound is NOT claimed.",
+      "existing_tests": [
+        "tests/unit/neuro/test_hebbian_plasticity_bounds.py",
+        "tests/unit/neuro/test_hebbian_global_stability.py"
+      ],
+      "missing_tests": [],
+      "claim_status": "PARTIAL",
+      "promotion_allowed": false,
+      "inv_refs": [],
+      "remediation_action": "ADD_FALSIFIER",
+      "witness_note": "INPUT-CONTRACT HOLE CLOSED (this PR): caller-supplied eligibility is now validated fail-closed to [0,1]^11 finite (geosync/neuroeconomics/hebbian_plasticity.py::_validate_eligibility) — a component > 1 / non-finite / wrong-length now raises instead of silently inflating the update. Per-step growth matches the lr·magnitude·eligibility envelope (magnitude clamp min(1,|pnl|*10); weight_floor lower bound). REMAINS PARTIAL — NO promotion: the learning-rate floor (lr_floor) means sustained LTP grows weights LINEARLY without a global upper bound (the docstring's \"renormalize/sum preserved\" is NOT implemented), so global BIBO stability is unproven. That UNBOUNDEDNESS is now an executable negative witness (tests/unit/neuro/test_hebbian_global_stability.py: sustained LTP grows ~lr_floor/step without ceiling, monotone in horizon). Promotion is declined on epistemic grounds (no global bound exists), NOT merely pending an INV name."
+    },
+    {
+      "id": "homeostatic-stabilizer",
+      "domain": "neuroscience",
+      "file": "geosync/neuroeconomics/homeostatic_stabilizer.py",
+      "formula": "Pulls neuroeconomics state toward setpoints.",
+      "validity": "equal-length non-empty node/baseline phase lists, serotonin_gain > 0, max_phase_error > 0 (all violations raise ValueError).",
+      "input_contract": "equal-length non-empty node/baseline phase lists, serotonin_gain > 0, max_phase_error > 0 (all violations raise ValueError).",
+      "output_contract": "ResetWaveReport; common-mode post_reset_energy ≤ pre_reset_energy; |Δφ| > max_phase_error ⇒ safety_lock=True with no state advance.",
+      "falsifier": "INV-HOM1: post_reset_energy > pre_reset_energy + ε for a common-mode error within max_phase_error; OR a contract violation does not raise; OR an over-threshold error does not safety_lock ⇒ violation.",
+      "existing_tests": [
+        "tests/unit/neuro/test_homeostatic_stabilizer_setpoint.py"
+      ],
+      "missing_tests": [],
+      "claim_status": "OPERATIONAL",
+      "promotion_allowed": true,
+      "inv_refs": [
+        "INV-HOM1"
+      ],
+      "remediation_action": "KEEP",
+      "witness_note": "PROMOTED PARTIAL→OPERATIONAL. INV-HOM1 (conditional): the common-mode reset wave is Lyapunov-energy non-increasing (E_post ≤ E_pre, E=gain·mean(1−cosΔφ)); contract violations raise; over-threshold |Δφ| fail-closes to safety_lock. Bound to INV-HOM1 in CLAUDE.md + INVARIANTS.yaml. SCOPE/NON-CLAIM (kept explicit): ENGINEERING analogue, not neuroscience — energy descent is proven ONLY for coherent common-mode phase error; for heterogeneous error the scalar-mean correction is not a guaranteed descent direction. E/I, 'serotonin', 'GABA tone' are arithmetic proxies."
+    },
+    {
+      "id": "neuro-orchestrator-scenario-builder",
+      "domain": "runtime-governance",
+      "file": "src/geosync/core/neuro/neuro_orchestrator.py",
+      "formula": "Maps TradingScenario → module sequence + parameter bundles labelled \"basal ganglia\" / \"dopamine\" / \"TACL\".",
+      "validity": "TradingScenario dataclass.",
+      "input_contract": "TradingScenario dataclass.",
+      "output_contract": "OrchestrationOutput dataclass with module_sequence.",
+      "falsifier": "None: labels carry no algorithmic content. NON-CLAIM required: this is a configuration layer, not basal-ganglia simulation.",
+      "existing_tests": [
+        "tests/core/test_neuro_training.py",
+        "examples/neuro_orchestrator_demo.py"
+      ],
+      "missing_tests": [],
+      "claim_status": "DECORATIVE",
+      "promotion_allowed": false,
+      "inv_refs": [],
+      "remediation_action": "RENAME",
+      "witness_note": "QUARANTINED (this PR): explicit NON-CLAIM docstring added to NeuroOrchestrator stating it is a pure configuration aggregator (no striatum dynamics / pathways / gating); the bio labels name parameter bundles only. Neutral canonical alias ScenarioConfigurator = NeuroOrchestrator added to src/geosync/core/neuro/neuro_orchestrator.py __all__ — preferred for new code; legacy name retained for backward compatibility (imports unchanged). Stays DECORATIVE (correct tier; not a runtime mechanism)."
+    },
+    {
+      "id": "adaptive-calibrator-annealing",
+      "domain": "runtime-governance",
+      "file": "src/geosync/core/neuro/adaptive_calibrator.py",
+      "formula": "Simulated annealing labelled \"neuromodulator\" calibration.",
+      "validity": "CalibrationMetrics + neuromodulator-labelled bounds.",
+      "input_contract": "CalibrationMetrics + neuromodulator-labelled bounds.",
+      "output_contract": "updated parameter dict.",
+      "falsifier": "Algorithm is SA-correct; \"neuromodulator\" label is decorative.",
+      "existing_tests": [],
+      "missing_tests": [],
+      "claim_status": "DECORATIVE",
+      "promotion_allowed": false,
+      "inv_refs": [],
+      "remediation_action": "RENAME",
+      "witness_note": "QUARANTINED (this PR): class name AdaptiveCalibrator is already neutral; explicit NON-CLAIM docstring added stating the algorithm is standard simulated annealing and the \"neuromodulator\" parameter labels are decorative (SA correctness is not a neuroscience claim). Stays DECORATIVE."
+    },
+    {
+      "id": "basal-ganglia-policy-legacy",
+      "domain": "runtime-governance",
+      "file": "src/geosync/policy/basal_ganglia.py",
+      "formula": "BasalGangliaPolicy.decide — lookup over (ews_state, risk_state, R).",
+      "validity": "state Mapping with R∈[0,1], ews_state str, risk_state str.",
+      "input_contract": "state Mapping with R∈[0,1], ews_state str, risk_state str.",
+      "output_contract": "(decision, size_hint).",
+      "falsifier": "None — no biological mechanism modelled. NON-CLAIM required.",
+      "existing_tests": [
+        "tests/integration/test_neurostack_integration.py"
+      ],
+      "missing_tests": [],
+      "claim_status": "DECORATIVE",
+      "promotion_allowed": false,
+      "inv_refs": [],
+      "remediation_action": "RENAME",
+      "witness_note": "QUARANTINED (this PR): explicit NON-CLAIM docstring added to BasalGangliaPolicy stating it is a deterministic three-branch lookup (no striatal dynamics / pathways). Neutral canonical alias ActionSelectionPolicy = BasalGangliaPolicy added to src/geosync/policy/basal_ganglia.py __all__ — preferred for new code; legacy name retained for backward compatibility (imports unchanged). Stays DECORATIVE."
+    },
+    {
+      "id": "neuro-optimization-guide-overclaim",
+      "domain": "neuroscience",
+      "file": "docs/neuro_optimization_guide.md",
+      "formula": "Claims neuroscience-verified optimisation across 1235 lines.",
+      "validity": "n/a (docs).",
+      "input_contract": "n/a (docs).",
+      "output_contract": "n/a (docs).",
+      "falsifier": "Document references no peer-reviewed source establishing the DA/5HT [1.0,3.0] and E/I [1.0,2.5] ranges; needs explicit non-claim block.",
+      "existing_tests": [],
+      "missing_tests": [],
+      "claim_status": "OVERCLAIM",
+      "promotion_allowed": false,
+      "inv_refs": [],
+      "remediation_action": "QUARANTINE_DOC",
+      "witness_note": null
+    },
+    {
+      "id": "docs-hpc-ai-v4-overclaim",
+      "domain": "runtime-governance",
+      "file": "docs/HPC_AI_V4.md",
+      "formula": "Mixes neuro/physics claims without per-claim source links.",
+      "validity": "n/a.",
+      "input_contract": "n/a.",
+      "output_contract": "n/a.",
+      "falsifier": "Each \"active inference / neuro / kuramoto\" claim lacks a per-statement source/test reference.",
+      "existing_tests": [],
+      "missing_tests": [],
+      "claim_status": "OVERCLAIM",
+      "promotion_allowed": false,
+      "inv_refs": [],
+      "remediation_action": "QUARANTINE_DOC",
+      "witness_note": null
+    },
+    {
+      "id": "legacy-optimization-execution-report",
+      "domain": "neuroscience",
+      "file": "docs/archive/LEGACY_20241210_OPTIMIZATION_EXECUTION_REPORT.md",
+      "formula": "2024-12 historical execution report.",
+      "validity": "n/a.",
+      "input_contract": "n/a.",
+      "output_contract": "n/a.",
+      "falsifier": "n/a.",
+      "existing_tests": [],
+      "missing_tests": [],
+      "claim_status": "LEGACY",
+      "promotion_allowed": false,
+      "inv_refs": [],
+      "remediation_action": "KEEP",
+      "witness_note": null
+    },
+    {
+      "id": "legacy-run-optimization-100",
+      "domain": "neuroscience",
+      "file": "docs/archive/LEGACY_20241210_run_optimization_100_iterations.py",
+      "formula": "Historical demo script.",
+      "validity": "n/a.",
+      "input_contract": "n/a.",
+      "output_contract": "n/a.",
+      "falsifier": "n/a.",
+      "existing_tests": [],
+      "missing_tests": [],
+      "claim_status": "LEGACY",
+      "promotion_allowed": false,
+      "inv_refs": [],
+      "remediation_action": "KEEP",
+      "witness_note": null
+    },
+    {
+      "id": "mycelium-research-timeline-mention",
+      "domain": "runtime-governance",
+      "file": "docs/exocortex/RESEARCH_TIMELINE.md",
+      "formula": "\"Mycelium\" mention in a research-timeline document.",
+      "validity": "n/a.",
+      "input_contract": "n/a.",
+      "output_contract": "n/a.",
+      "falsifier": "No measurable graph optimisation contract for \"mycelium\" in GeoSync; cross-reference to neuron7xLab/mycelium-fractal-net required, with explicit declaration that GeoSync runtime does not depend on it.",
+      "existing_tests": [],
+      "missing_tests": [],
+      "claim_status": "REJECTED",
+      "promotion_allowed": false,
+      "inv_refs": [],
+      "remediation_action": "REJECT",
+      "witness_note": null
+    }
+  ]
+}

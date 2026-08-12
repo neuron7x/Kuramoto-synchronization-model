@@ -4,15 +4,15 @@ metadata:
   name: filebeat
   labels:
     app.kubernetes.io/name: filebeat
-    app.kubernetes.io/part-of: tradepulse
+    app.kubernetes.io/part-of: geosync
 ---
 apiVersion: rbac.authorization.k8s.io/v1
 kind: ClusterRole
 metadata:
-  name: tradepulse-filebeat
+  name: geosync-filebeat
   labels:
     app.kubernetes.io/name: filebeat
-    app.kubernetes.io/part-of: tradepulse
+    app.kubernetes.io/part-of: geosync
 rules:
   - apiGroups: [""]
     resources: ["pods", "namespaces", "nodes"]
@@ -24,10 +24,10 @@ rules:
 apiVersion: rbac.authorization.k8s.io/v1
 kind: ClusterRoleBinding
 metadata:
-  name: tradepulse-filebeat
+  name: geosync-filebeat
   labels:
     app.kubernetes.io/name: filebeat
-    app.kubernetes.io/part-of: tradepulse
+    app.kubernetes.io/part-of: geosync
 subjects:
   - kind: ServiceAccount
     name: filebeat
@@ -35,4 +35,4 @@ subjects:
 roleRef:
   apiGroup: rbac.authorization.k8s.io
   kind: ClusterRole
-  name: tradepulse-filebeat
+  name: geosync-filebeat

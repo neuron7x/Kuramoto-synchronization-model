@@ -1,10 +1,12 @@
+# Copyright (c) 2023-2026 Yaroslav Vasylenko (neuron7xLab)
+# SPDX-License-Identifier: MIT
 """Audit trail helpers for MiFID II compliant logging."""
 
 from __future__ import annotations
 
 import json
 import logging
-from datetime import datetime, timezone
+from datetime import datetime
 from pathlib import Path
 from threading import RLock
 from typing import Callable, Iterable, Mapping, MutableSequence
@@ -47,7 +49,12 @@ def _redact_sensitive_values(payload: Mapping[str, object]) -> dict[str, object]
 
 
 def _utc_now() -> datetime:
-    return datetime.now(timezone.utc)
+    # Routed through ``default_clock()`` so a FrozenClock installed via
+    # ``use_clock`` makes the audit trail deterministic in tests and
+    # correlates with the rest of the event stream.
+    from geosync.core.compat import default_clock
+
+    return default_clock().now()
 
 
 class AuditTrail:
@@ -62,7 +69,7 @@ class AuditTrail:
     ) -> None:
         self._path = Path(path)
         self._path.parent.mkdir(parents=True, exist_ok=True)
-        self._logger = logger or logging.getLogger("tradepulse.audit.trail")
+        self._logger = logger or logging.getLogger("geosync.audit.trail")
         self._clock = clock or _utc_now
         self._lock = RLock()
         self._listeners: MutableSequence[Callable[[dict[str, object]], None]] = []
@@ -107,9 +114,7 @@ class AuditTrail:
             with self._lock:
                 with self._path.open("a", encoding="utf-8") as handle:
                     handle.write(serialized + "\n")
-                listeners: Iterable[Callable[[dict[str, object]], None]] = tuple(
-                    self._listeners
-                )
+                listeners: Iterable[Callable[[dict[str, object]], None]] = tuple(self._listeners)
         except OSError as exc:  # pragma: no cover - filesystem errors are rare
             self._logger.error(
                 "audit.trail.write_failed",

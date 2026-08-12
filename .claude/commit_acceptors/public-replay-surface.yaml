@@ -1,0 +1,114 @@
+# Diff-bound commit acceptor for the public descriptor replay command surface.
+#
+# Adds scripts/replay_descriptor_capsule.py: a pure, deterministic replay
+# harness with an argparse CLI and a pure replay() function. Given a
+# descriptor config (a fixed-threshold rule, or a seeded null fixture) it
+# re-emits a bounded descriptor result and a replay manifest that pins
+# config_hash, input_count, method, output_digest, a top-level
+# manifest_digest fingerprint, and the boundary fields
+# claim_boundary="descriptor_only_not_predictor", not_predictive_claim,
+# not_financial_advice, research_only. The same config yields a
+# byte-identical manifest; a malformed config fails closed with a
+# ReplayConfigError. It reuses the merged building blocks
+# analytics/signals/state_quantization.py::quantize_states and
+# analytics/signals/null_baseline.py (imported, never modified). Adds the
+# matching contract test suite.
+#
+# Promotes NO claim tier, adds NO invariant, changes NO existing runtime
+# behaviour, adds NO dependency (stdlib + numpy only). Descriptor-only: the
+# re-emitted states reference no outcome/return and carry no predictive or
+# financial meaning. They are research replay infrastructure, not a
+# predictor and not financial advice. Does NOT live under scripts/ci/ and
+# touches NO INVENTORY.json / INVARIANTS.yaml / detect-secrets baseline.
+#
+# Locally verified on origin/main fork base:
+#   * compileall scripts/replay_descriptor_capsule.py: clean
+#   * pytest tests/unit/analytics/test_replay_descriptor_capsule.py: 18 passed
+#   * python scripts/replay_descriptor_capsule.py --help: CLI works
+#   * ruff check / ruff format --check / black --check (script): clean
+#   * mypy --strict scripts/replay_descriptor_capsule.py: no issues
+#   * mypy --strict tests/unit/analytics/test_replay_descriptor_capsule.py: no issues
+#   * python scripts/ci/check_claim_boundary.py: PASS
+#   * python scripts/ci/check_claims.py: PASS
+#   * detect-secrets-hook (baseline): clean
+#   * zero suppression tokens across both new files
+id: public-replay-surface
+status: ACTIVE
+claim_type: governance
+promise: >-
+  scripts.replay_descriptor_capsule exposes a pure replay() function and an
+  argparse CLI that, given a descriptor config (a fixed_threshold rule or a
+  seeded gaussian_null / constant_null fixture), re-emit a bounded
+  descriptor result and a replay manifest pinning config_hash, input_count,
+  method, output_digest, a top-level manifest_digest fingerprint, and the
+  boundary fields claim_boundary="descriptor_only_not_predictor",
+  not_predictive_claim=True, not_financial_advice=True, research_only=True.
+  The same config produces a byte-identical manifest (manifest_digest is a
+  complete reproducibility fingerprint); a config that is non-mapping,
+  omits a required key, names an unsupported method, or carries a malformed
+  descriptor rule fails closed with ReplayConfigError. The only randomness
+  flows through the reused null_baseline generators keyed on an explicit
+  seed. No claim tier is promoted; no runtime behaviour changes; the
+  re-emitted states are structural descriptors, not predictive or financial
+  signals.
+diff_scope:
+  changed_files:
+    - path: ".claude/commit_acceptors/public-replay-surface.yaml"
+    - path: "scripts/replay_descriptor_capsule.py"
+    - path: "tests/unit/analytics/test_replay_descriptor_capsule.py"
+  forbidden_paths:
+    - "scripts/ci/"
+    - "trading/"
+    - "execution/"
+    - "forecast/"
+    - "core/"
+    - "src/"
+required_python_symbols:
+  - "scripts/replay_descriptor_capsule.py::replay"
+  - "scripts/replay_descriptor_capsule.py::main"
+expected_signal: >-
+  `python -m pytest tests/unit/analytics/test_replay_descriptor_capsule.py`
+  reports 18 passed; replay() is deterministic for a fixed config, pins the
+  descriptor-only boundary in the manifest, exposes a working CLI, and
+  rejects malformed configs with ReplayConfigError.
+measurement_command: >-
+  bash -c 'mkdir -p tmp && python -m pytest
+  tests/unit/analytics/test_replay_descriptor_capsule.py -o addopts=""
+  --no-header -p no:cacheprovider 2>&1
+  | grep -oE "[0-9]+ passed"
+  > tmp/replay_descriptor_pytest.log
+  && grep -qxE "18 passed" tmp/replay_descriptor_pytest.log'
+signal_artifact: "tmp/replay_descriptor_pytest.log"
+falsifier:
+  command: >-
+    python -c 'import sys, subprocess;
+    from scripts.replay_descriptor_capsule import replay;
+    cfg = {"method": "gaussian_null", "n": 16, "seed": 7};
+    det = replay(cfg)["manifest_digest"] == replay(cfg)["manifest_digest"];
+    boundary_ok = replay(cfg).get("claim_boundary")
+    == "descriptor_only_not_predictor";
+    bad_fails_closed = subprocess.run([sys.executable, "-c",
+    "from scripts.replay_descriptor_capsule import replay;
+    replay({\"method\": \"does_not_exist\"})"]).returncode != 0;
+    sys.exit(0 if (not det or not boundary_ok or not bad_fails_closed) else 1)'
+  description: >-
+    Inverse probe of the replay-surface contract. It exits 0 (fires) iff a
+    fixed config stops yielding an identical manifest_digest, OR the
+    descriptor-only boundary disappears from the manifest, OR an unsupported
+    method is accepted instead of failing closed. While the contract holds,
+    the probe exits 1. An exit 0 means the replay surface has lost
+    determinism, its boundary disclaimer, or its fail-closed guarantee and
+    must be repaired, not patched green.
+rollback_command: >-
+  bash -c 'git rm -f scripts/replay_descriptor_capsule.py
+  tests/unit/analytics/test_replay_descriptor_capsule.py
+  .claude/commit_acceptors/public-replay-surface.yaml'
+rollback_verification_command: >-
+  bash -c 'test ! -f scripts/replay_descriptor_capsule.py
+  && test ! -f tests/unit/analytics/test_replay_descriptor_capsule.py'
+memory_update_type: none
+ledger_path: ".claude/commit_acceptors/public-replay-surface.yaml"
+report_path: "tmp/replay_descriptor_pytest.log"
+evidence:
+  - path: "tmp/replay_descriptor_pytest.log"
+    sha256: "0999bf073864175b241072d8679cd49fc1c3d495f7e1a2e34ed4c918677b46df"  # pragma: allowlist secret

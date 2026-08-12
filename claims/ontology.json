@@ -1,0 +1,66 @@
+{
+  "schema_version": "1.0.0",
+  "ontology_id": "geosync.claim_governance.v1",
+  "purpose": "Canonical claim-tier ontology for falsification-first GeoSync research governance.",
+  "tiers": [
+    {
+      "id": "THEOREM",
+      "meaning": "Derived from definitions or formal proof with a retrievable proof path.",
+      "requires_evidence_path": true,
+      "public_headline_allowed": true
+    },
+    {
+      "id": "INVARIANT",
+      "meaning": "Machine-checkable invariant with script or CI evidence.",
+      "requires_evidence_path": true,
+      "public_headline_allowed": true
+    },
+    {
+      "id": "EMPIRICAL",
+      "meaning": "Measured result with immutable artifact, hashes, protocol, falsifier, and verdict.",
+      "requires_evidence_path": true,
+      "public_headline_allowed": true
+    },
+    {
+      "id": "HYPOTHESIS",
+      "meaning": "Plausible, falsifiable, not yet promoted by evidence gates.",
+      "requires_evidence_path": false,
+      "public_headline_allowed": false
+    },
+    {
+      "id": "METAPHOR",
+      "meaning": "Analogy or explanatory language with no measurement authority.",
+      "requires_evidence_path": false,
+      "public_headline_allowed": false
+    },
+    {
+      "id": "RETIRED",
+      "meaning": "Former statement withdrawn under audit or replaced by stricter language.",
+      "requires_evidence_path": false,
+      "public_headline_allowed": false
+    },
+    {
+      "id": "QUARANTINED",
+      "meaning": "Statement or module blocked from public promotion until evidence exists.",
+      "requires_evidence_path": false,
+      "public_headline_allowed": false
+    }
+  ],
+  "default_new_claim_tier": "HYPOTHESIS",
+  "blocked_without_evidence": ["THEOREM", "INVARIANT", "EMPIRICAL"],
+  "forbidden_unsupported_language": [
+    "institutional-grade",
+    "production-ready",
+    "mathematically proven edge",
+    "proprietary signal",
+    "no heuristics"
+  ],
+  "allowed_default_status": [
+    "RESEARCH_ONLY",
+    "MEASUREMENT_SYSTEM",
+    "FALSIFICATION_FIRST",
+    "OPEN_RESEARCH_STANDARD_CANDIDATE",
+    "GEOMETRIC_REGIME_LAB",
+    "EVIDENCE_BOUND_ARCHITECTURE"
+  ]
+}

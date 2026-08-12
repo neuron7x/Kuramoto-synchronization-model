@@ -1,0 +1,49 @@
+# SPDX-License-Identifier: MIT
+#
+# Final inference-integrity verdict — release readiness is a COMPUTED verdict, not
+# a mood. This gate validates every substrate integrity artifact and then runs the
+# aggregator (tools/audit_final_inference_verdict.py), which exits non-zero unless
+# the final verdict is PASS. No continue-on-error: a non-PASS verdict fails the
+# job. It is a required check so it reports on every PR.
+name: Final Inference Verdict
+
+on:
+  pull_request:
+    branches: [main]
+  push:
+    branches: [main]
+
+permissions:
+  contents: read
+
+jobs:
+  final-inference-verdict:
+    name: final-inference-verdict
+    runs-on: ubuntu-latest
+    timeout-minutes: 10
+    steps:
+      - name: Checkout
+        uses: actions/checkout@9c091bb21b7c1c1d1991bb908d89e4e9dddfe3e0 # v7.0.0
+
+      - name: Setup Python
+        uses: actions/setup-python@ece7cb06caefa5fff74198d8649806c4678c61a1 # v6
+        with:
+          python-version: "3.12"
+
+      - name: Install validator deps
+        run: python -m pip install --quiet jsonschema
+
+      - name: Validate every substrate integrity artifact against its schema
+        run: python scripts/ci/validate_inference_artifacts.py
+
+      - name: Aggregate final inference verdict (fail-closed)
+        run: |
+          python tools/audit_final_inference_verdict.py \
+            --root . --out artifacts/inference/final_inference_verdict.ci.json
+
+      - name: Upload final verdict artifact
+        if: always()
+        uses: actions/upload-artifact@043fb46d1a93c77aae656e7c1c64a875d1fc6a0a # v7.0.1
+        with:
+          name: final-inference-verdict
+          path: artifacts/inference/final_inference_verdict.ci.json

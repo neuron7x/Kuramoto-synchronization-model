@@ -1,7 +1,7 @@
 # Incident Playbooks
 
 These playbooks codify our response to the highest-impact production incidents
-for TradePulse: execution lag, rejected orders, and data gaps. Each scenario
+for GeoSync: execution lag, rejected orders, and data gaps. Each scenario
 includes telemetry hooks, mitigation steps, and on-call simulation drills.
 
 ## Execution Lag
@@ -48,7 +48,7 @@ alerts `execution_latency_high` fire.
 1. Flip the strategy guardrail toggle `strategy.reject_guard=true` to pause new
    submissions.
 2. Page compliance if rejection reason indicates regulatory filters.
-3. Run `tradepulse-cli exec --output jsonl` to inspect the latest signal for
+3. Run `geosync-cli exec --output jsonl` to inspect the latest signal for
    out-of-bound sizes or throttles.
 4. Audit recent risk configuration changes (`configs/risk/allocations.yaml`).
 
@@ -73,11 +73,11 @@ alerts `execution_latency_high` fire.
 ## Data Gaps
 
 **Symptoms**: Missing ticks detected by backfill validator, data freshness lag
-> 1.5 s, or `tradepulse_market_data_gaps_total` increments unexpectedly.
+> 1.5 s, or `geosync_market_data_gaps_total` increments unexpectedly.
 
 **Immediate Actions**
 
-1. Execute `tradepulse-cli ingest --output jsonl` on the affected feed to confirm
+1. Execute `geosync-cli ingest --output jsonl` on the affected feed to confirm
    the most recent artifact checksum.
 2. Fail over to redundant feed handlers or cached snapshots.
 3. Notify quantitative leads to pause model retraining if gaps exceed thresholds.

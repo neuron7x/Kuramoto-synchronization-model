@@ -1,0 +1,96 @@
+# Diff-bound acceptor for the T3 portfolio-energy truth-in-labeling reframe.
+#
+# Branch B (math byte-identical): core/physics/portfolio_conservation.py was
+# titled "Conservation Laws for Portfolio Energy" and framed |ΔE| ≤ ε (ε=0.05)
+# as an energy "conservation" law the rebalance "preserves", with
+# compute_potential claiming it "mirrors gravitational potential". There is NO
+# continuous symmetry and NO Noether current — it is a tunable tolerance band
+# on a hand-assembled descriptive scalar.
+#
+# This commit reframes the docstrings/comments ONLY: the module is re-titled an
+# energy-BUDGET TOLERANCE check, the gravitational-potential claim is disowned,
+# ε is labeled a tunable threshold (not a derived constant), and the provenance
+# tier is stated EXTRAPOLATED. All public symbol names and all numeric math
+# (compute_kinetic / compute_potential / compute_total and the |ΔE| ≤ ε
+# comparison) are byte-identical, so every prior numeric assertion still passes
+# and no gate verdict flips. A new honest-framing test pins the budget-tolerance
+# semantics and the disowned conservation-law language.
+#
+# Pure labeling correctness. No trading/execution/forecast/policy surface, no
+# invariant count change (INVARIANTS.yaml untouched), no behavior change.
+
+id: portfolio-budget-tolerance-reframe
+status: ACTIVE
+claim_type: correctness
+promise: >-
+  core.physics.portfolio_conservation.PortfolioEnergyConservation is reframed in
+  docstrings/comments from a "conservation law" / "preserves energy" /
+  "mirrors gravitational potential" framing to an EXTRAPOLATED energy-BUDGET
+  TOLERANCE check: |ΔE| ≤ ε on a descriptive scalar, where ε is a tunable
+  threshold and NOT a derived physical constant, with an explicit note that
+  there is no continuous symmetry and no Noether current. compute_kinetic,
+  compute_potential, compute_total, check_conservation and their numeric
+  behavior are byte-identical (compute_kinetic([1,-2,0.5,3],[.01,-.02,.005,.03])
+  == 0.0018062500000000001; compute_potential(.,[.02,.01,-.015,.04]) ==
+  -0.11249999999999999; compute_total == -0.11069375; |ΔE|=0.05 allowed,
+  0.0500001 flagged), so no existing test assertion and no gate verdict change.
+diff_scope:
+  changed_files:
+    - path: ".claude/commit_acceptors/portfolio-budget-tolerance-reframe.yaml"
+    - path: "core/physics/portfolio_conservation.py"
+    - path: "tests/unit/physics/test_T3_conservation.py"
+  forbidden_paths:
+    - "trading/"
+    - "execution/"
+    - "forecast/"
+    - "policy/"
+required_python_symbols:
+  - "PortfolioEnergyConservation"
+expected_signal: >-
+  20 tests pass in tests/unit/physics/test_T3_conservation.py,
+  test_T14_portfolio_energy_conservation.py and test_T20_misc_p1.py; black,
+  ruff, mypy --strict clean on the changed Python; validate_tests.py
+  --audit-code on the module reports 0 clamp/bounds issues; validate_tests.py
+  --self-check prints PASSED. The module docstring no longer asserts a
+  conservation law (it disowns it) and the math is byte-identical to pre-commit.
+measurement_command: >-
+  python -m pytest tests/unit/physics/test_T3_conservation.py
+  tests/unit/physics/test_T14_portfolio_energy_conservation.py
+  tests/unit/physics/test_T20_misc_p1.py -q
+signal_artifact: "tmp/portfolio_budget_tolerance_pytest.log"
+falsifier:
+  command: >-
+    python -c "import numpy as np;
+    from core.physics.portfolio_conservation import PortfolioEnergyConservation as P;
+    import core.physics.portfolio_conservation as m; import sys;
+    c=P();
+    pos=np.array([1.0,-2.0,0.5,3.0]); ret=np.array([0.01,-0.02,0.005,0.03]);
+    er=np.array([0.02,0.01,-0.015,0.04]);
+    math_ok = repr(c.compute_total(pos,ret,er))=='-0.11069375'
+    and repr(c.compute_kinetic(pos,ret))=='0.0018062500000000001'
+    and repr(c.compute_potential(pos,er))=='-0.11249999999999999';
+    doc=' '.join((m.__doc__ or '').split()).lower();
+    label_ok = ('not a noether conservation law' in doc)
+    and ('preserves energy' not in doc) and ('budget tolerance' in doc)
+    and ('EXTRAPOLATED' in (m.__doc__ or ''));
+    print('math_ok', math_ok, 'label_ok', label_ok);
+    sys.exit(0 if (math_ok and label_ok) else 1)"
+  description: >-
+    Inverse probe: exits non-zero unless BOTH (a) the math is byte-identical to
+    the pre-commit baseline (compute_kinetic/potential/total on a fixed input)
+    AND (b) the module docstring carries the honest reframe — it disowns the
+    Noether conservation law, no longer claims to "preserve energy", states the
+    budget-tolerance framing, and declares the EXTRAPOLATED tier. Fires if a
+    later edit either silently changes the numeric law (a real bug) or reverts
+    the truth-in-labeling, distinguishing the kept promise from a regression.
+rollback_command: >-
+  git checkout HEAD~1 --
+  core/physics/portfolio_conservation.py
+  tests/unit/physics/test_T3_conservation.py
+  .claude/commit_acceptors/portfolio-budget-tolerance-reframe.yaml
+rollback_verification_command: >-
+  git diff --exit-code core/physics/portfolio_conservation.py
+memory_update_type: none
+ledger_path: ".claude/commit_acceptors/portfolio-budget-tolerance-reframe.yaml"
+report_path: "docs/laws/T3_lyapunov_calibration.md"
+evidence: []

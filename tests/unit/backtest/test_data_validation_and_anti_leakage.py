@@ -1,4 +1,5 @@
-# SPDX-License-Identifier: LicenseRef-TradePulse-Proprietary
+# Copyright (c) 2023-2026 Yaroslav Vasylenko (neuron7xLab)
+# SPDX-License-Identifier: MIT
 """Unit tests for data quality validation and anti-leakage in backtest engine."""
 
 from __future__ import annotations
@@ -12,7 +13,7 @@ from backtest.engine import (
     LatencyConfig,
     walk_forward,
 )
-from tradepulse.data_quality import DataQualityError
+from geosync.data_quality import DataQualityError
 
 
 def _simple_signal(prices: np.ndarray) -> np.ndarray:
@@ -526,10 +527,7 @@ class TestBacktestReportGeneration:
 
         assert result.performance is not None
         assert result.report_path is not None
-        assert (
-            result.performance.sharpe_ratio is not None
-            or result.performance.cagr is not None
-        )
+        assert result.performance.sharpe_ratio is not None or result.performance.cagr is not None
 
     def test_report_includes_cost_breakdown(self) -> None:
         """Report should include a breakdown of all costs."""

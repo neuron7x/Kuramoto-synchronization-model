@@ -1,3 +1,5 @@
+# Copyright (c) 2023-2026 Yaroslav Vasylenko (neuron7xLab)
+# SPDX-License-Identifier: MIT
 """Tests for thermodynamics optimization modules.
 
 This test suite validates the caching, memory management, and performance
@@ -13,6 +15,8 @@ from runtime.thermo_cache import ThermoCache, VectorizedOperations
 from runtime.thermo_memory_manager import OptimizedTelemetryManager, TelemetryWindow
 from runtime.thermo_performance import (
     Benchmark,
+    PerformanceMetrics,
+    PerformanceProfiler,
     PerformanceMonitor,
     get_performance_monitor,
     reset_performance_metrics,
@@ -78,6 +82,50 @@ class TestThermoCache:
         # Access after expiration - should miss
         result = cache.get_energy(topology, latencies, coherency, resource, entropy)
         assert result is None
+
+    def test_ttl_eviction_removes_only_aged_entries(self, monkeypatch):
+        """`current_time - ts > ttl` evicts aged entries and keeps fresh ones.
+
+        Pins both eviction guards (energy + topology) against Gt->LtE, which would
+        invert the age test and evict the fresh entry while keeping the stale one.
+        A monkeypatched clock makes the boundary exact rather than sleep-timed.
+        """
+        import runtime.thermo_cache as tc_mod
+
+        clock = {"t": 1000.0}
+        monkeypatch.setattr(tc_mod.time, "time", lambda: clock["t"])
+        cache = ThermoCache(ttl_seconds=5.0, max_size=100)
+
+        coherency = {("A", "B"): 0.8}
+        cache.set_energy(["bondA"], {("A", "B"): 0.5}, coherency, 0.3, 0.5, 1.5)
+        cache.set_topology("topoX", {"k": 1})
+        assert len(cache._energy_cache) == 1
+        assert len(cache._topology_cache) == 1
+
+        # Age both entries past the TTL, then trigger _evict via a fresh set_energy.
+        clock["t"] += 6.0
+        cache.set_energy(["bondB"], {("C", "D"): 1.0}, coherency, 0.4, 0.6, 2.5)
+
+        assert cache.evictions >= 2  # aged energy A + aged topology X
+        assert len(cache._energy_cache) == 1  # only the just-set B survives
+        assert len(cache._topology_cache) == 0  # aged topology X gone
+
+    def test_get_topology_hits_within_ttl(self, monkeypatch):
+        """`time.time() - ts <= ttl` returns the cached topology while fresh.
+
+        Pins the topology freshness guard against LtE->Gt, which would treat a
+        fresh entry (age <= ttl) as expired and miss it.
+        """
+        import runtime.thermo_cache as tc_mod
+
+        clock = {"t": 2000.0}
+        monkeypatch.setattr(tc_mod.time, "time", lambda: clock["t"])
+        cache = ThermoCache(ttl_seconds=5.0)
+
+        cache.set_topology("tX", {"v": 42})
+        clock["t"] += 2.0  # age 2 <= ttl 5 -> still fresh
+        assert cache.get_topology("tX") == {"v": 42}
+        assert cache.hits >= 1
 
     def test_cache_eviction(self):
         """Test LRU eviction when cache is full."""
@@ -489,3 +537,66 @@ class TestBenchmark:
 
 if __name__ == "__main__":
     pytest.main([__file__, "-v"])
+
+
+class TestPerformanceMetricsGuards:
+    """Ring-buffer cap, std/min guards, profiler stop, and benchmark speedup."""
+
+    def test_times_buffer_capped_above_1000(self):
+        """`if len(self.times) > 1000` caps the ring buffer.
+
+        Under Gt->LtE the cap never fires and the buffer grows unbounded (a
+        memory leak); a sub-1000 buffer would instead be truncated.
+        """
+        metrics = PerformanceMetrics("op")
+        for i in range(1001):
+            metrics.record(float(i))
+        assert len(metrics.times) == 1000
+
+    def test_std_time_needs_two_samples(self):
+        """`if len(self.times) < 2: return 0.0` -- a single sample has no spread.
+
+        Under Lt->GtE two distinct samples would report 0.0 std.
+        """
+        one = PerformanceMetrics("op")
+        one.record(0.005)
+        assert one.std_time == 0.0
+        two = PerformanceMetrics("op")
+        two.record(0.005)
+        two.record(0.003)
+        assert two.std_time > 0.0
+
+    def test_to_dict_reports_recorded_min_not_infinity(self):
+        """`min_time if min_time != inf else 0.0` -- a real min is reported.
+
+        Under NotEq->Eq a finite recorded min reads as inf and is zeroed.
+        """
+        metrics = PerformanceMetrics("op")
+        metrics.record(0.004)
+        assert metrics.to_dict()["min_time_ms"] == 4.0
+        # Empty metrics: min stays inf -> reported as 0.0.
+        assert PerformanceMetrics("op").to_dict()["min_time_ms"] == 0.0
+
+    def test_profiler_stop_returns_when_either_condition_holds(self):
+        """`if not is_active or profiler is None: return` -- EITHER guard exits.
+
+        The revealing state is active-but-no-profiler: `not is_active` is False,
+        so only the `profiler is None` disjunct fires. Under Or->And the guard
+        becomes False and stop() dereferences the missing profiler (AttributeError).
+        """
+        profiler = PerformanceProfiler()
+        profiler.is_active = True
+        profiler.profiler = None
+        profiler.stop()  # must not raise: the `profiler is None` disjunct returns
+
+    def test_compare_marks_speedup_only_off_the_fastest(self):
+        """`if name != fastest_name` -- non-fastest implementations get a >1 speedup.
+
+        Under NotEq->Eq the non-fastest ones are left at the fastest's 1.0 and the
+        comparison loses its meaning.
+        """
+        results = Benchmark().compare_implementations(
+            {"fast": lambda: 1, "slow": lambda: sum(range(2000))}, iterations=50
+        )
+        assert results["fastest"] == "fast"
+        assert results["results"]["slow"]["speedup_vs_fastest"] > 1.0

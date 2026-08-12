@@ -1,5 +1,5 @@
-const ACCESS_TOKEN_STORAGE_KEY = 'tp.auth.access'
-const ACCESS_TOKEN_KEY_STORAGE = 'tp.auth.crypto-key'
+const ACCESS_TOKEN_STORAGE_KEY = 'gs.auth.access'
+const ACCESS_TOKEN_KEY_STORAGE = 'gs.auth.crypto-key'
 
 type PersistedAccessToken = {
   accessToken: string

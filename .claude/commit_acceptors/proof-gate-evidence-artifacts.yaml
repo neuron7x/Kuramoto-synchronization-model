@@ -1,0 +1,65 @@
+id: proof-gate-evidence-artifacts
+status: ACTIVE
+claim_type: governance
+promise: >-
+  The executable proof-gate tribunals leave behind committed machine evidence:
+  each artifact carries a self-verifying artifact_sha256 over its canonical body
+  plus git provenance. clean_clone, falsification ledger (8 controls), execution
+  contract (OUT_OF_SCOPE + claim-boundary firewall), benchmark spine (determinism
+  + regression budget), reviewer packet + hash-lock, and the BLOCKED-honest
+  real_data manifest are recorded under artifacts/, with the release scorecard and
+  the service-manifest-audit workflow that gates them. That workflow pip-audits
+  every Dockerfile-installed requirements manifest, genuinely closing the C2
+  scanner-path-mismatch false-confidence finding on the live tree (the audit
+  test is realigned to assert closure; the detector mechanism stays proven by its
+  synthetic fire/silent cases). The wheel-contract import-debt baseline records
+  one new sanctioned latent import (falsification_ledger imports research.* /
+  core.* first-party modules that are not shipped in the geosync wheel, the same
+  accepted pattern as the existing scripts/ci CI generators). BLOCKED.md documents
+  the honest RED-by-design status (G.real_data blocked; pre-existing B/C/D blockers
+  out of scope). No new physics or neuroscience; no alpha; synthetic only.
+diff_scope:
+  changed_files:
+    - path: "artifacts/release_gate/clean_clone.json"
+    - path: "artifacts/release_gate/scorecard.json"
+    - path: "artifacts/falsification/ledger.json"
+    - path: "artifacts/execution/contract.json"
+    - path: "artifacts/benchmarks/baseline.json"
+    - path: "artifacts/benchmarks/last_run.json"
+    - path: "artifacts/replication/REVIEWER_PACKET.md"
+    - path: "artifacts/replication/expected_hashes.json"
+    - path: "artifacts/evidence/real_data_manifest.json"
+    - path: "BLOCKED.md"
+    - path: ".github/workflows/service-manifest-audit.yml"
+    - path: ".github/claim_boundary_allow.json"
+    - path: "tools/deps/validate_dependency_truth.py"
+    - path: "tests/audit/test_false_confidence_detector.py"
+    - path: ".github/bwheel_baseline.json"
+    - path: ".claude/commit_acceptors/proof-gate-evidence-artifacts.yaml"
+  forbidden_paths:
+    - "trading/"
+    - "execution/"
+    - "forecast/"
+    - "policy/"
+required_python_symbols:
+  - "scripts.ci.proof_common:verify_artifact_selfhash"
+  - "scripts.ci.proof_common:canonical_sha256"
+expected_signal: >-
+  Every committed proof-gate artifact verifies its own artifact_sha256 self-hash
+  against its canonical body, and the falsification ledger records 8 controls with
+  promotion_allowed=true.
+measurement_command: "python -c \"import json; from scripts.ci.proof_common import verify_artifact_selfhash; assert all(verify_artifact_selfhash(json.load(open(p))) for p in ['artifacts/falsification/ledger.json','artifacts/execution/contract.json','artifacts/release_gate/clean_clone.json','artifacts/benchmarks/baseline.json','artifacts/evidence/real_data_manifest.json']); print('OK')\""
+signal_artifact: "artifacts/release_gate/scorecard.json"
+falsifier:
+  command: "python -c \"import json,sys; from scripts.ci.proof_common import verify_artifact_selfhash; d=json.load(open('artifacts/falsification/ledger.json')); ok=verify_artifact_selfhash(d) and d.get('promotion_allowed') is True; sys.exit(0 if not ok else 1)\""
+  description: >-
+    Exits non-zero in the asserted healthy state (the falsification ledger's
+    artifact_sha256 self-hash matches its canonical body and promotion_allowed is
+    true); flips to pass (exit 0) only if the committed artifact was tampered with
+    or the controls regressed so the self-hash no longer attests the body.
+rollback_command: "git checkout -- artifacts/ BLOCKED.md .github/workflows/service-manifest-audit.yml .github/claim_boundary_allow.json .github/bwheel_baseline.json tools/deps/validate_dependency_truth.py tests/audit/test_false_confidence_detector.py"
+rollback_verification_command: "git diff --exit-code artifacts/ BLOCKED.md .github/workflows/service-manifest-audit.yml .github/claim_boundary_allow.json .github/bwheel_baseline.json tools/deps/validate_dependency_truth.py tests/audit/test_false_confidence_detector.py"
+memory_update_type: append
+ledger_path: ".claude/commit_acceptors/proof-gate-evidence-artifacts.yaml"
+report_path: "BLOCKED.md"
+evidence: []

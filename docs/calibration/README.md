@@ -1,14 +1,14 @@
 ---
-owner: quant-systems@tradepulse
+owner: quant-systems@geosync
 review_cadence: quarterly
 last_reviewed: 2026-01-01
 ---
 
-# TradePulse Calibration System
+# GeoSync Calibration System
 
 ## Overview
 
-The TradePulse Calibration System provides tools and workflows for configuring accuracy, thresholds, and sensitivity parameters across all controllers and modules.
+The GeoSync Calibration System provides tools and workflows for configuring accuracy, thresholds, and sensitivity parameters across all controllers and modules.
 
 ## Golden Path Example
 

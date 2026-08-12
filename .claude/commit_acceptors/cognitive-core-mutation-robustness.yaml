@@ -1,0 +1,48 @@
+# ci-heartbeat: cognitive-core-mutation-robustness
+id: cognitive-core-mutation-robustness
+status: ACTIVE
+claim_type: fail_closed
+promise: >-
+  Add the cognitive_core_mutation_robustness law: a mutation tribunal that
+  corrupts the REAL solver (parameters, input, or governing formula) for each
+  exact law in semantically distinct ways and proves the law's predicate kills
+  every mutant. The mutation kill-rate over >= 15 corruptions spanning
+  ott_antonsen, landauer, kelly, dro_ara and gauss_bonnet must be exactly 1.0; a
+  null mutant survives and a rubber-stamp predicate kills nothing, so the metric
+  measures real discrimination. No canonical catalog mutation, no
+  trading/execution/forecast/policy change.
+diff_scope:
+  changed_files:
+    - path: ".claude/commit_acceptors/cognitive-core-mutation-robustness.yaml"
+    - path: "tests/physics/test_cognitive_core_mutation_tribunal.py"
+  forbidden_paths:
+    - "trading/"
+    - "execution/"
+    - "forecast/"
+    - "policy/"
+required_python_symbols: []
+expected_signal: >-
+  tools/validate_physics_contracts.py reports 32 blocking laws fully witnessed
+  (was 31). The tribunal kills 16/16 real-solver physics mutations (kill-rate
+  1.0); the honesty control proves a rubber-stamp predicate kills 0 while the
+  real predicates kill all (1.0 vs 0.0 separation) and the null mutant survives.
+  No trading/execution/forecast/policy change.
+measurement_command: >-
+  PYTHONPATH=. python tools/validate_physics_contracts.py && PYTHONPATH=.
+  python -m pytest tests/physics/test_cognitive_core_mutation_tribunal.py -q
+signal_artifact: "tmp/cognitive_core_mutation_tribunal.log"
+falsifier:
+  command: >-
+    PYTHONPATH=. python -m pytest tests/physics/test_cognitive_core_mutation_tribunal.py -q
+  description: >-
+    Fails if any real-solver physics mutation survives (kill-rate < 1.0) or the
+    kill-rate metric stops separating real predicates from a rubber stamp.
+rollback_command: >-
+  git rm -f tests/physics/test_cognitive_core_mutation_tribunal.py
+rollback_verification_command: >-
+  PYTHONPATH=. python tools/validate_physics_contracts.py
+memory_update_type: none
+ledger_path: ".claude/commit_acceptors/cognitive-core-mutation-robustness.yaml"
+report_path: ".claude/commit_acceptors/cognitive-core-mutation-robustness.yaml"
+evidence:
+  - path: "tests/physics/test_cognitive_core_mutation_tribunal.py"

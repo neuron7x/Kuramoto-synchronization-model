@@ -1,0 +1,287 @@
+{
+  "data_source": "OTS Capital L2 hourly \u2014 Askar",
+  "universe_size": 53,
+  "universe_assets": [
+    "AUDCAD",
+    "AUDCHF",
+    "AUDJPY",
+    "AUDNZD",
+    "AUDUSD",
+    "Australia_200_Index",
+    "CADCHF",
+    "CADJPY",
+    "CHFJPY",
+    "EURAUD",
+    "EURCAD",
+    "EURCHF",
+    "EURGBP",
+    "EURJPY",
+    "EURNZD",
+    "EURUSD",
+    "Euro_Bund",
+    "Europe_50_Index",
+    "France_40_Index",
+    "GBPAUD",
+    "GBPCAD",
+    "GBPCHF",
+    "GBPJPY",
+    "GBPNZD",
+    "GBPUSD",
+    "Germany_40_Index",
+    "Hong_Kong_40_Index",
+    "Japan_225",
+    "NZDCAD",
+    "NZDCHF",
+    "NZDJPY",
+    "NZDUSD",
+    "PowerShares_QQQ_ETF",
+    "SPDR_Gold_Shares_ETF",
+    "SPDR_S_P_500_ETF",
+    "Spain_35_Index",
+    "Switzerland_20_Index",
+    "UK_100_Index",
+    "USA_100_Technical_Index",
+    "USA_30_Index",
+    "USA_500_Index",
+    "USDCAD",
+    "USDCHF",
+    "USDJPY",
+    "VanEck_Vectors_Gold_Miners_ETF",
+    "XAUUSD",
+    "iShares_20_Year_Treasury_Bond_ETF",
+    "iShares_China_Large_Cap_ETF",
+    "iShares_MSCI_EAFE_ETF",
+    "iShares_MSCI_Emerging_Markets_ETF",
+    "iShares_MSCI_Japan_ETF",
+    "iShares_Russell_2000_ETF",
+    "iShares_U_S_Real_Estate_ETF"
+  ],
+  "fx_universe_size": 14,
+  "fx_universe_assets": [
+    "AUDCAD",
+    "AUDCHF",
+    "AUDNZD",
+    "AUDUSD",
+    "CADCHF",
+    "EURGBP",
+    "EURJPY",
+    "EURNZD",
+    "EURUSD",
+    "GBPAUD",
+    "GBPCAD",
+    "NZDCAD",
+    "NZDUSD",
+    "USDCAD"
+  ],
+  "period_train": "2017-02-16 -> 2023-07-01",
+  "period_test": "2023-07-01 -> 2026-02-23",
+  "target_equity": "SPDR_S_P_500_ETF",
+  "target_fx": "EURUSD",
+  "daily_resample": {
+    "IC_raw_signal": -0.01,
+    "IC_realised": -0.037,
+    "IC_train": -0.004,
+    "IC_baseline_no_delta": 0.0243,
+    "sharpe_train": 0.004,
+    "sharpe_test": -0.483,
+    "maxdd_test": -0.2223,
+    "overfit_ratio": -116.249,
+    "permutation_p": 0.6333,
+    "permutation_ic": -0.01,
+    "return_2022": 0.1008,
+    "return_spy_2022": -0.2166,
+    "delta_2022": 0.3173,
+    "return_2024": -0.0639,
+    "return_2025": 0.0601,
+    "corr_momentum": -0.2861,
+    "corr_vol": 0.1165,
+    "corr_mean_reversion": 0.0339,
+    "baseline_yfinance_IC": 0.106,
+    "askar_IC_delta_vs_yfinance": -0.116,
+    "n_train_bars": 1847,
+    "n_test_bars": 781
+  },
+  "hourly_native": {
+    "IC_raw_signal": 0.013,
+    "IC_realised": 0.0039,
+    "IC_train": -0.0003,
+    "IC_baseline_no_delta": 0.0087,
+    "sharpe_train": -0.299,
+    "sharpe_test": -0.098,
+    "maxdd_test": -0.125,
+    "overfit_ratio": 0.329,
+    "permutation_p": 0.1033,
+    "permutation_ic": 0.013,
+    "return_2022": -0.0126,
+    "return_spy_2022": -0.2166,
+    "delta_2022": 0.204,
+    "return_2024": 0.0816,
+    "return_2025": -0.0646,
+    "corr_momentum": -0.0864,
+    "corr_vol": -0.0036,
+    "corr_mean_reversion": -0.0095,
+    "baseline_yfinance_IC": 0.106,
+    "askar_IC_delta_vs_yfinance": -0.093,
+    "n_train_bars": 18597,
+    "n_test_bars": 7852
+  },
+  "fx_only": {
+    "IC_raw_signal": 0.0115,
+    "IC_realised": 0.0042,
+    "IC_train": 0.0003,
+    "IC_baseline_no_delta": 0.001,
+    "sharpe_train": -0.884,
+    "sharpe_test": -0.916,
+    "maxdd_test": -0.146,
+    "overfit_ratio": 1.036,
+    "permutation_p": 0.0633,
+    "permutation_ic": 0.0115,
+    "return_2022": -0.1476,
+    "return_spy_2022": -0.0603,
+    "delta_2022": -0.0873,
+    "return_2024": -0.0271,
+    "return_2025": -0.0475,
+    "corr_momentum": -0.015,
+    "corr_vol": -0.0805,
+    "corr_mean_reversion": -0.0089,
+    "baseline_yfinance_IC": 0.106,
+    "askar_IC_delta_vs_yfinance": -0.0945,
+    "n_train_bars": 40394,
+    "n_test_bars": 16433
+  },
+  "sensitivity_daily": [
+    {
+      "window": 40,
+      "threshold": 0.2,
+      "IC_train": 0.0066
+    },
+    {
+      "window": 40,
+      "threshold": 0.25,
+      "IC_train": -0.0131
+    },
+    {
+      "window": 40,
+      "threshold": 0.3,
+      "IC_train": -0.0111
+    },
+    {
+      "window": 40,
+      "threshold": 0.35,
+      "IC_train": -0.0022
+    },
+    {
+      "window": 40,
+      "threshold": 0.4,
+      "IC_train": -0.0035
+    },
+    {
+      "window": 60,
+      "threshold": 0.2,
+      "IC_train": 0.0168
+    },
+    {
+      "window": 60,
+      "threshold": 0.25,
+      "IC_train": 0.0085
+    },
+    {
+      "window": 60,
+      "threshold": 0.3,
+      "IC_train": -0.004
+    },
+    {
+      "window": 60,
+      "threshold": 0.35,
+      "IC_train": -0.0127
+    },
+    {
+      "window": 60,
+      "threshold": 0.4,
+      "IC_train": 0.0159
+    },
+    {
+      "window": 80,
+      "threshold": 0.2,
+      "IC_train": 0.0275
+    },
+    {
+      "window": 80,
+      "threshold": 0.25,
+      "IC_train": 0.0471
+    },
+    {
+      "window": 80,
+      "threshold": 0.3,
+      "IC_train": 0.0402
+    },
+    {
+      "window": 80,
+      "threshold": 0.35,
+      "IC_train": 0.0176
+    },
+    {
+      "window": 80,
+      "threshold": 0.4,
+      "IC_train": -0.0004
+    }
+  ],
+  "walkforward_5fold": [
+    {
+      "fold": 1,
+      "train_end": "2018-10-11 00:00:00",
+      "test_start": "2018-10-12 00:00:00",
+      "test_end": "2020-03-27 00:00:00",
+      "IC_train": 0.0146,
+      "IC_test": -0.0324,
+      "sharpe_test": -0.871,
+      "n_train": 438,
+      "n_test": 438
+    },
+    {
+      "fold": 2,
+      "train_end": "2020-03-27 00:00:00",
+      "test_start": "2020-03-29 00:00:00",
+      "test_end": "2021-09-14 00:00:00",
+      "IC_train": -0.0171,
+      "IC_test": -0.002,
+      "sharpe_test": 1.111,
+      "n_train": 876,
+      "n_test": 438
+    },
+    {
+      "fold": 3,
+      "train_end": "2021-09-14 00:00:00",
+      "test_start": "2021-09-15 00:00:00",
+      "test_end": "2023-03-06 00:00:00",
+      "IC_train": -0.0139,
+      "IC_test": -0.0103,
+      "sharpe_test": 0.297,
+      "n_train": 1314,
+      "n_test": 438
+    },
+    {
+      "fold": 4,
+      "train_end": "2023-03-06 00:00:00",
+      "test_start": "2023-03-07 00:00:00",
+      "test_end": "2024-08-27 00:00:00",
+      "IC_train": -0.0081,
+      "IC_test": -0.0194,
+      "sharpe_test": -0.475,
+      "n_train": 1752,
+      "n_test": 438
+    },
+    {
+      "fold": 5,
+      "train_end": "2024-08-27 00:00:00",
+      "test_start": "2024-08-28 00:00:00",
+      "test_end": "2026-02-22 00:00:00",
+      "IC_train": -0.0093,
+      "IC_test": 0.0112,
+      "sharpe_test": 0.255,
+      "n_train": 2190,
+      "n_test": 438
+    }
+  ],
+  "verdict": "DEGRADED"
+}

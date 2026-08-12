@@ -1,3 +1,5 @@
+# Copyright (c) 2023-2026 Yaroslav Vasylenko (neuron7xLab)
+# SPDX-License-Identifier: MIT
 """Adaptive recovery agent for crisis mitigation."""
 
 from __future__ import annotations
@@ -71,9 +73,7 @@ class AdaptiveRecoveryAgent:
         F_bin = int(np.clip(deviation * 100, 0, 2 * self.state_bins - 1))
         spike_bin = int(np.clip(state.latency_spike - 1.0, 0, 2 * self.state_bins - 1))
         duration_bin = int(
-            np.clip(
-                state.steps_in_crisis / max(self.state_bins, 1), 0, self.state_bins - 1
-            )
+            np.clip(state.steps_in_crisis / max(self.state_bins, 1), 0, self.state_bins - 1)
         )
         return F_bin, spike_bin, duration_bin
 
@@ -84,10 +84,7 @@ class AdaptiveRecoveryAgent:
             action = self._rng.choice(RecoveryAction.ALL)
             logger.debug("Exploration step: action=%s state=%s", action, discrete_state)
         else:
-            values = {
-                action: self.Q[(discrete_state, action)]
-                for action in RecoveryAction.ALL
-            }
+            values = {action: self.Q[(discrete_state, action)] for action in RecoveryAction.ALL}
             action = max(values, key=values.get)
             logger.debug(
                 "Exploitation step: action=%s q=%.6f state=%s",
@@ -183,9 +180,7 @@ class AdaptiveRecoveryAgent:
                 )
 
         with open(path, "rb") as fh:
-            data = RestrictedUnpickler(
-                fh
-            ).load()  # nosec B301 - guarded by restricted unpickler
+            data = RestrictedUnpickler(fh).load()  # nosec B301 - guarded by restricted unpickler
         self.Q = defaultdict(float, data)
         logger.info("Loaded Q-table entries=%s path=%s", len(self.Q), path)
 

@@ -1,10 +1,10 @@
 apiVersion: chaos-mesh.org/v1alpha1
 kind: Workflow
 metadata:
-  name: tradepulse-chaos-suite
+  name: geosync-chaos-suite
   namespace: chaos-testing
   labels:
-    app.kubernetes.io/name: tradepulse
+    app.kubernetes.io/name: geosync
     app.kubernetes.io/part-of: chaos-validation
 spec:
   entry: orchestrate-chaos
@@ -62,5 +62,5 @@ spec:
             - '--metric=drawdown_pct'
             - '--lte=0.02'
             - '--window=15m'
-            - '--labels=experiment=tradepulse-chaos'
+            - '--labels=experiment=geosync-chaos'
   historyLimit: 5

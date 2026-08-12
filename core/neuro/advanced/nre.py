@@ -1,3 +1,5 @@
+# Copyright (c) 2023-2026 Yaroslav Vasylenko (neuron7xLab)
+# SPDX-License-Identifier: MIT
 """Neuroplastic reinforcement engine."""
 
 from __future__ import annotations
@@ -80,9 +82,7 @@ class NeuroplasticReinforcementEngine:
     def context_preference(self, strategy_id: str, context: Dict[str, Any]) -> float:
         regime = context.get("regime", "normal")
         volatility = float(context.get("volatility", 0.0))
-        volatility_bucket = (
-            "low" if volatility < 0.2 else ("med" if volatility < 0.5 else "high")
-        )
+        volatility_bucket = "low" if volatility < 0.2 else ("med" if volatility < 0.5 else "high")
         key = f"{regime}_{volatility_bucket}"
         return float(self._context_associations[strategy_id].get(key, 0.0))
 
@@ -92,24 +92,18 @@ class NeuroplasticReinforcementEngine:
     def state(self) -> Dict[str, Any]:
         weights = list(self._weights.values())
         avg_weight = float(np.mean(weights)) if weights else 0.5
-        top_strategies = sorted(
-            self._weights.items(), key=lambda item: item[1], reverse=True
-        )[:5]
+        top_strategies = sorted(self._weights.items(), key=lambda item: item[1], reverse=True)[:5]
         return {
             "num_strategies": len(self._weights),
             "avg_strategy_weight": avg_weight,
-            "top_strategies": [
-                (name, float(weight)) for name, weight in top_strategies
-            ],
+            "top_strategies": [(name, float(weight)) for name, weight in top_strategies],
             "strategy_weights": dict(self._weights),
             "success_rates": dict(self._success_rate),
             "episodic_memory_size": len(self._episodes),
             "consolidated_memories": len(self._consolidated),
         }
 
-    def _reinforcement_signal(
-        self, outcome: TradeResult, context: Dict[str, Any]
-    ) -> float:
+    def _reinforcement_signal(self, outcome: TradeResult, context: Dict[str, Any]) -> float:
         base = float(outcome.pnl_percentage)
         signal_strength = 0.5 + float(outcome.signal_strength) * 0.5
         context_fit = float(context.get("context_fit", 1.0))
@@ -134,11 +128,7 @@ class NeuroplasticReinforcementEngine:
         )
 
     def _consolidate(self, strategy_id: str) -> None:
-        related = [
-            episode
-            for episode in self._episodes
-            if episode["strategy_id"] == strategy_id
-        ]
+        related = [episode for episode in self._episodes if episode["strategy_id"] == strategy_id]
         if not related:
             return
         self._consolidated.append(
@@ -146,9 +136,7 @@ class NeuroplasticReinforcementEngine:
                 "strategy_id": strategy_id,
                 "time": datetime.now(),
                 "num_episodes": len(related),
-                "avg_weight": float(
-                    np.mean([episode["weight_after"] for episode in related])
-                ),
+                "avg_weight": float(np.mean([episode["weight_after"] for episode in related])),
                 "success_rate": float(self._success_rate[strategy_id]),
                 "usage_count": int(self._usage[strategy_id]),
             }
@@ -159,9 +147,7 @@ class NeuroplasticReinforcementEngine:
     ) -> None:
         regime = context.get("regime", "normal")
         volatility = float(context.get("volatility", 0.0))
-        volatility_bucket = (
-            "low" if volatility < 0.2 else ("med" if volatility < 0.5 else "high")
-        )
+        volatility_bucket = "low" if volatility < 0.2 else ("med" if volatility < 0.5 else "high")
         key = f"{regime}_{volatility_bucket}"
         alpha = 0.05
         current = self._context_associations[strategy_id][key]

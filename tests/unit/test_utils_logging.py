@@ -1,5 +1,7 @@
-# SPDX-License-Identifier: LicenseRef-TradePulse-Proprietary
+# Copyright (c) 2023-2026 Yaroslav Vasylenko (neuron7xLab)
+# SPDX-License-Identifier: MIT
 """Tests for the structured logging utilities."""
+
 from __future__ import annotations
 
 import io
@@ -8,12 +10,13 @@ import logging
 
 import pytest
 
+import core.utils.logging as log_mod
 from core.utils.logging import JSONFormatter, StructuredLogger, configure_logging
 
 
 def _make_record(**extra: object) -> logging.LogRecord:
     record = logging.LogRecord(
-        name="tradepulse.tests",
+        name="geosync.tests",
         level=logging.ERROR,
         pathname=__file__,
         lineno=42,
@@ -24,6 +27,62 @@ def _make_record(**extra: object) -> logging.LogRecord:
     for key, value in extra.items():
         setattr(record, key, value)
     return record
+
+
+def test_trace_fields_require_correlation_flag_and_span(
+    monkeypatch: pytest.MonkeyPatch,
+) -> None:
+    """`_TRACE_LOG_CORRELATION and get_current_span is not None` is conjunctive.
+
+    With correlation DISABLED, no trace_id/span_id may appear even when a live
+    span is importable. Under `And->Or` the mere presence of get_current_span
+    would satisfy the guard and leak trace fields the operator switched off.
+    """
+
+    class _Ctx:
+        is_valid = True
+        trace_id = 0x1234
+        span_id = 0xABCD
+
+    class _Span:
+        def get_span_context(self) -> _Ctx:
+            return _Ctx()
+
+    monkeypatch.setattr(log_mod, "_TRACE_LOG_CORRELATION", False)
+    monkeypatch.setattr(log_mod, "get_current_span", lambda: _Span(), raising=False)
+
+    payload = json.loads(JSONFormatter().format(_make_record()))
+    assert "trace_id" not in payload
+    assert "span_id" not in payload
+
+    # Positive control: with the flag ON the same span DOES inject trace fields,
+    # proving the omission above is the flag's doing, not a dead span.
+    monkeypatch.setattr(log_mod, "_TRACE_LOG_CORRELATION", True)
+    payload_on = json.loads(JSONFormatter().format(_make_record()))
+    assert payload_on["trace_id"] == f"{0x1234:032x}"
+
+
+def test_operation_start_log_requires_emit_start_even_when_level_enabled(
+    caplog: pytest.LogCaptureFixture,
+) -> None:
+    """`emit_start and isEnabledFor(level)` is conjunctive.
+
+    The prior suppression test runs at DEBUG under an INFO capture, so
+    isEnabledFor is False and both And/Or agree. Here the level IS enabled, so
+    only `emit_start` can gate the start line; under `And->Or` an enabled level
+    alone would emit 'Starting operation' despite emit_start=False.
+    """
+    caplog.set_level(logging.INFO)
+    logger = StructuredLogger("geosync.ops.l232", correlation_id="cid")
+
+    with logger.operation("quiet_op", level=logging.INFO, emit_start=False, emit_success=False):
+        pass
+    assert not any("Starting operation" in r.message for r in caplog.records)
+
+    # Positive control: emit_start=True at the same enabled level DOES log it.
+    with logger.operation("loud_op", level=logging.INFO, emit_start=True, emit_success=False):
+        pass
+    assert any("Starting operation: loud_op" in r.message for r in caplog.records)
 
 
 def test_json_formatter_includes_extras_and_exception() -> None:
@@ -51,7 +110,7 @@ def test_structured_logger_operation_success_emits_context(
 ) -> None:
     caplog.set_level(logging.INFO)
 
-    logger = StructuredLogger("tradepulse.ops", correlation_id="cid-success")
+    logger = StructuredLogger("geosync.ops", correlation_id="cid-success")
     with logger.operation("sync_data", asset="BTC-USDT") as ctx:
         ctx["result_value"] = 42
 
@@ -77,7 +136,7 @@ def test_structured_logger_operation_failure_logs_error(
 ) -> None:
     caplog.set_level(logging.INFO)
 
-    logger = StructuredLogger("tradepulse.ops", correlation_id="cid-failure")
+    logger = StructuredLogger("geosync.ops", correlation_id="cid-failure")
 
     with pytest.raises(RuntimeError):
         with logger.operation("rebalance", portfolio="alpha"):
@@ -102,7 +161,7 @@ def test_structured_logger_operation_can_disable_success_logging(
 ) -> None:
     caplog.set_level(logging.INFO)
 
-    logger = StructuredLogger("tradepulse.ops", correlation_id="cid-quiet")
+    logger = StructuredLogger("geosync.ops", correlation_id="cid-quiet")
     with logger.operation(
         "fast_path",
         level=logging.DEBUG,
@@ -120,7 +179,7 @@ def test_structured_logger_operation_failure_still_logs_when_suppressed(
 ) -> None:
     caplog.set_level(logging.ERROR)
 
-    logger = StructuredLogger("tradepulse.ops", correlation_id="cid-error")
+    logger = StructuredLogger("geosync.ops", correlation_id="cid-error")
 
     with pytest.raises(ValueError):
         with logger.operation(
@@ -146,7 +205,7 @@ def test_structured_logger_preserves_exc_info(caplog: pytest.LogCaptureFixture) 
 
     caplog.set_level(logging.WARNING)
 
-    logger = StructuredLogger("tradepulse.ops", correlation_id="cid-warning")
+    logger = StructuredLogger("geosync.ops", correlation_id="cid-warning")
     exc = RuntimeError("stream failure")
 
     logger.warning("Async stream terminated with error", stream="FLAKY", exc_info=exc)
@@ -165,7 +224,7 @@ def test_configure_logging_emits_json_payload() -> None:
     stream = io.StringIO()
     configure_logging(level="DEBUG", use_json=True, stream=stream)
 
-    logging.getLogger("tradepulse.tests").info("hello world")
+    logging.getLogger("geosync.tests").info("hello world")
 
     output = stream.getvalue().strip()
     assert output
@@ -173,7 +232,7 @@ def test_configure_logging_emits_json_payload() -> None:
     payload = json.loads(output)
 
     assert payload["level"] == "INFO"
-    assert payload["logger"] == "tradepulse.tests"
+    assert payload["logger"] == "geosync.tests"
     assert payload["message"] == "hello world"
     assert "timestamp" in payload
 
@@ -182,7 +241,7 @@ def test_configure_logging_accepts_numeric_level() -> None:
     stream = io.StringIO()
 
     configure_logging(level=logging.DEBUG, use_json=False, stream=stream)
-    logging.getLogger("tradepulse.tests").debug("debug message")
+    logging.getLogger("geosync.tests").debug("debug message")
 
     assert logging.getLogger().level == logging.DEBUG
     assert "debug message" in stream.getvalue()
@@ -192,7 +251,7 @@ def test_configure_logging_accepts_numeric_level_string() -> None:
     stream = io.StringIO()
 
     configure_logging(level="10", use_json=False, stream=stream)
-    logging.getLogger("tradepulse.tests").debug("debug message")
+    logging.getLogger("geosync.tests").debug("debug message")
 
     assert logging.getLogger().level == 10
     assert "debug message" in stream.getvalue()
@@ -202,7 +261,7 @@ def test_configure_logging_accepts_case_insensitive_level() -> None:
     stream = io.StringIO()
 
     configure_logging(level="info", use_json=False, stream=stream)
-    logging.getLogger("tradepulse.tests").info("hello lower")
+    logging.getLogger("geosync.tests").info("hello lower")
 
     assert logging.getLogger().level == logging.INFO
     assert "hello lower" in stream.getvalue()

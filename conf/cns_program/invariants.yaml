@@ -1,0 +1,19 @@
+version: 1
+owner: cns_program
+invariants:
+  - id: CNS-INV-001
+    name: quality_weights_sum_to_one
+    description: configured CNS quality weights must sum to 1.0 exactly within floating tolerance
+    source: conf/cns_program/default.yaml
+  - id: CNS-INV-002
+    name: required_state_coverage
+    description: release gate state sequence must include ingest validate render manifest verify report release_decision
+    source: conf/cns_program/default.yaml
+  - id: CNS-INV-003
+    name: manifest_hash_integrity
+    description: every manifest file digest must match the current workspace artifact
+    source: tools/cns_program/verify_release_manifest.py
+  - id: CNS-INV-004
+    name: reports_contract_fail_closed
+    description: required governance report must exist, be non-empty, and contain a markdown heading
+    source: tools/cns_program/verify_reports_contract.py

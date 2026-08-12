@@ -1,7 +1,7 @@
 service:
-  name: TradePulse Cortex Service
+  name: GeoSync Cortex Service
   version: 1.0.0
-  description: Cognitive signal orchestration for TradePulse portfolios
+  description: Cognitive signal orchestration for GeoSync portfolios
   metrics_path: /metrics
   log_level: INFO
   host: 0.0.0.0

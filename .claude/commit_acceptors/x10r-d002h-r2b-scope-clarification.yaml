@@ -1,0 +1,185 @@
+# Diff-bound commit acceptor for the D-002H R2-B scope-clarification PR.
+#
+# Pre-flight readiness check identified that R2-B (FPR under M6 placebo
+# coupling) is inherited from D-002G acceptance rules but M6 is excluded
+# from D-002H's null_mechanisms_allowed (which is [M1, M3] only). The
+# 7-gate authorisation chain A..G did NOT explicitly resolve this scope
+# drift. This PR resolves it as inherited-but-inapplicable, scoping the
+# D-002H canonical-run acceptance verdict to a 4-term conjunction
+# (R1 AND R2 AND R3 AND NULL_AUDIT) under D-002H scope only.
+#
+# Pure documentation + tests. NO source-code edit. NO canonical sweep
+# execution. NO authorisation re-claim (Gate G already authorised the
+# canonical sweep scoped to ricci_flow). NO D-002G acceptance rules
+# edit. NO D-002H prereg edit. NO D002C ledger touch. NO prior gate
+# artifact (A..G) edit.
+#
+# R2-B is dropped because the substrate AND mechanism conjunction it
+# requires (any AND M6) is empty under D-002H scope, NOT because the
+# rule has been weakened. Future M3-based R2-B analogue would be a
+# fresh D-002J pre-registration.
+
+id: x10r-d002h-r2b-scope-clarification
+status: ACTIVE
+claim_type: governance
+promise: >-
+  After this PR lands,
+  docs/governance/D002H_R2B_INAPPLICABILITY_NOTE.md exists carrying the
+  Section 4 verbatim R2-B INAPPLICABILITY UNDER D-002H SCOPE block with
+  the 4-term conjunction R1 AND R2 AND R3 AND NULL_AUDIT, a Section 5
+  verdict-applicability table with exactly 4 APPLICABLE rule rows
+  (R1, R2, R3, NULL_AUDIT) and exactly 1 bold INAPPLICABLE row (R2-B),
+  a Section 7 future-evolution clause naming D-002J + fresh
+  pre-registration, a Section 8 forbidden-interpretation block with
+  at least 4 forbidden lines, a Section 9 verbatim claim-boundary
+  block, and a Section 10 cryptographic-anchor table.
+
+  tests/systemic_risk/test_d002h_r2b_inapplicability.py carries the
+  10 required-by-brief tests with exact names: test_r2b_note_exists,
+  test_r2b_inapplicability_block_present,
+  test_r2b_verdict_table_lists_4_applicable_rules,
+  test_r2b_explicitly_marked_inapplicable,
+  test_r2b_does_not_modify_d002g_acceptance_rules,
+  test_r2b_does_not_modify_d002h_prereg,
+  test_r2b_preserves_d002c_ledger,
+  test_r2b_future_evolution_requires_fresh_prereg,
+  test_r2b_forbidden_interpretations_present,
+  test_r2b_no_canonical_sweep_authorisation_claim.
+
+  docs/governance/D002G_CANONICAL_RUN_BLOCKERS.md gains an append-only
+  D-002H R2-B scope-clarification section.
+
+  D-002G acceptance rules byte-exact 875b1e3eb031b8e5333dc8b455454f0a30419ead1ebe787aa01d5882e7d6ad31.
+  D-002H prereg byte-exact 44b18b5a40ce9d188a9c3bd49339621f81a65a15f97a683247902450dd54acec.
+  D-002C claim ledger byte-exact f96ba9b5a2057d2e0bff84afc28578ab316cff73f6dc6673fb0d6d543b8bd6dd.
+
+  Pure scope clarification: NO new source code, NO new acceptance
+  rule, NO canonical sweep run, NO prior-gate artifact edit. R2-B
+  is dropped because the substrate AND mechanism conjunction it
+  requires (any AND M6) is empty under D-002H scope, NOT because
+  the rule has been weakened.
+
+diff_scope:
+  changed_files:
+    - path: "docs/governance/D002H_R2B_INAPPLICABILITY_NOTE.md"
+    - path: "tests/systemic_risk/test_d002h_r2b_inapplicability.py"
+    - path: ".claude/commit_acceptors/x10r-d002h-r2b-scope-clarification.yaml"
+    - path: "docs/governance/D002G_CANONICAL_RUN_BLOCKERS.md"
+  forbidden_paths:
+    - "docs/governance/D002C_CLAIM_LEDGER.yaml"
+    - "docs/governance/D002C_PREREGISTRATION.yaml"
+    - "docs/governance/D002C_CANONICAL_RUN_REPORT.md"
+    - "docs/governance/D002C_ATTEMPT_2_NULL_AUDIT_FALSIFICATION_REPORT.md"
+    - "docs/governance/D002G_ACCEPTANCE_RULES.md"
+    - "docs/governance/D002G_PREREGISTRATION.yaml"
+    - "docs/governance/D002G_NONDEGENERATE_NULL_DESIGN.md"
+    - "docs/governance/D002G_P3_M3_PREREGISTRATION.md"
+    - "docs/governance/D002G_STRUCTURAL_CLOSURE_REPORT.md"
+    - "docs/governance/D002G_NEGATIVE_SPACE_MAP.md"
+    - "docs/governance/D002G_M3_ELIGIBILITY_MATRIX.md"
+    - "docs/governance/D002H_PREREGISTRATION.yaml"
+    - "docs/governance/D002H_SCOPE_RATIONALE.md"
+    - "docs/governance/D002H_CLAIM_BOUNDARY.md"
+    - "docs/governance/D002H_CANONICAL_RUN_AUTHORIZATION_GATES.md"
+    - "docs/governance/D002H_GATE_B_REPORT.md"
+    - "docs/governance/D002H_GATE_C_CANONICAL_GRID.md"
+    - "docs/governance/D002H_GATE_D_FORBIDDEN_CLAIM_SCAN.md"
+    - "docs/governance/D002H_GATE_E_LOCKED_FILE_REPORT.md"
+    - "docs/governance/D002H_GATE_F_AUTHORIZATION_REPORT.md"
+    - "docs/governance/D002H_GATE_G_CI_LOCK_REPORT.md"
+    - "artifacts/d002h/prereg/d002h_preregistration_lock.json"
+    - "artifacts/d002h/eligibility/d002h_ricci_eligibility.json"
+    - "artifacts/d002h/canonical/d002h_canonical_grid.json"
+    - "artifacts/d002h/scans/d002h_forbidden_claim_scan.json"
+    - "artifacts/d002h/locks/d002h_locked_file_pins.json"
+    - "artifacts/d002h/authorization/d002h_canonical_run_authorisation.json"
+    - "artifacts/d002h/authorization/d002h_canonical_run_final_lock.json"
+    - "research/systemic_risk/d002c_substrates.py"
+    - "research/systemic_risk/d002g_null_mechanisms.py"
+    - "artifacts/d002g/closure/"
+    - "artifacts/d002g/m3/"
+    - "artifacts/d002g/p3/"
+    - "artifacts/d002g/canonical/"
+    - "artifacts/d002h/canonical/results/"
+required_python_symbols:
+  - "tests/systemic_risk/test_d002h_r2b_inapplicability.py::test_r2b_note_exists"
+  - "tests/systemic_risk/test_d002h_r2b_inapplicability.py::test_r2b_inapplicability_block_present"
+  - "tests/systemic_risk/test_d002h_r2b_inapplicability.py::test_r2b_verdict_table_lists_4_applicable_rules"
+  - "tests/systemic_risk/test_d002h_r2b_inapplicability.py::test_r2b_explicitly_marked_inapplicable"
+  - "tests/systemic_risk/test_d002h_r2b_inapplicability.py::test_r2b_does_not_modify_d002g_acceptance_rules"
+  - "tests/systemic_risk/test_d002h_r2b_inapplicability.py::test_r2b_does_not_modify_d002h_prereg"
+  - "tests/systemic_risk/test_d002h_r2b_inapplicability.py::test_r2b_preserves_d002c_ledger"
+  - "tests/systemic_risk/test_d002h_r2b_inapplicability.py::test_r2b_future_evolution_requires_fresh_prereg"
+  - "tests/systemic_risk/test_d002h_r2b_inapplicability.py::test_r2b_forbidden_interpretations_present"
+  - "tests/systemic_risk/test_d002h_r2b_inapplicability.py::test_r2b_no_canonical_sweep_authorisation_claim"
+expected_signal: >-
+  `PYTHONPATH=. python -m pytest
+  tests/systemic_risk/test_d002h_r2b_inapplicability.py -q` passes all
+  10 cases; the note carries the Section 4 verbatim R2-B INAPPLICABILITY
+  UNDER D-002H SCOPE block with the 4-term conjunction
+  R1 AND R2 AND R3 AND NULL_AUDIT; the Section 5 verdict-table has
+  exactly 4 APPLICABLE rows + 1 bold INAPPLICABLE row; BLOCKERS.md
+  gains the append-only D-002H R2-B scope-clarification section; the
+  D-002G acceptance rules sha256 stays byte-exact at
+  875b1e3eb031b8e5333dc8b455454f0a30419ead1ebe787aa01d5882e7d6ad31;
+  the D-002H prereg sha256 stays byte-exact at
+  44b18b5a40ce9d188a9c3bd49339621f81a65a15f97a683247902450dd54acec;
+  the D-002C claim ledger sha256 stays byte-exact at
+  f96ba9b5a2057d2e0bff84afc28578ab316cff73f6dc6673fb0d6d543b8bd6dd.
+measurement_command: >-
+  bash -c 'set -e;
+  PYTHONPATH=. python -m pytest tests/systemic_risk/test_d002h_r2b_inapplicability.py -q;
+  test -f docs/governance/D002H_R2B_INAPPLICABILITY_NOTE.md;
+  grep -q "R2-B INAPPLICABILITY UNDER D-002H SCOPE" docs/governance/D002H_R2B_INAPPLICABILITY_NOTE.md;
+  grep -q "R1 ∧ R2 ∧ R3 ∧ NULL_AUDIT" docs/governance/D002H_R2B_INAPPLICABILITY_NOTE.md;
+  grep -q "\*\*INAPPLICABLE\*\*" docs/governance/D002H_R2B_INAPPLICABILITY_NOTE.md;
+  grep -q "D-002H R2-B scope clarification" docs/governance/D002G_CANONICAL_RUN_BLOCKERS.md;
+  test "$(sha256sum docs/governance/D002G_ACCEPTANCE_RULES.md | awk "{print \$1}")" = "875b1e3eb031b8e5333dc8b455454f0a30419ead1ebe787aa01d5882e7d6ad31";
+  test "$(sha256sum docs/governance/D002H_PREREGISTRATION.yaml | awk "{print \$1}")" = "44b18b5a40ce9d188a9c3bd49339621f81a65a15f97a683247902450dd54acec";
+  test "$(sha256sum docs/governance/D002C_CLAIM_LEDGER.yaml | awk "{print \$1}")" = "f96ba9b5a2057d2e0bff84afc28578ab316cff73f6dc6673fb0d6d543b8bd6dd";
+  test ! -d artifacts/d002h/canonical/results'
+signal_artifact: "docs/governance/D002H_R2B_INAPPLICABILITY_NOTE.md"
+falsifier:
+  command: >-
+    bash -c 'set -e;
+    PYTHONPATH=. python -m pytest tests/systemic_risk/test_d002h_r2b_inapplicability.py -q || exit 1;
+    test -f docs/governance/D002H_R2B_INAPPLICABILITY_NOTE.md || exit 2;
+    test -f tests/systemic_risk/test_d002h_r2b_inapplicability.py || exit 3;
+    test -f .claude/commit_acceptors/x10r-d002h-r2b-scope-clarification.yaml || exit 4;
+    grep -q "R2-B INAPPLICABILITY UNDER D-002H SCOPE" docs/governance/D002H_R2B_INAPPLICABILITY_NOTE.md || exit 5;
+    grep -q "R1 ∧ R2 ∧ R3 ∧ NULL_AUDIT" docs/governance/D002H_R2B_INAPPLICABILITY_NOTE.md || exit 6;
+    grep -q "\*\*INAPPLICABLE\*\*" docs/governance/D002H_R2B_INAPPLICABILITY_NOTE.md || exit 7;
+    grep -q "D-002J" docs/governance/D002H_R2B_INAPPLICABILITY_NOTE.md || exit 8;
+    grep -q "D-002H R2-B scope clarification" docs/governance/D002G_CANONICAL_RUN_BLOCKERS.md || exit 9;
+    test "$(sha256sum docs/governance/D002G_ACCEPTANCE_RULES.md | awk "{print \$1}")" = "875b1e3eb031b8e5333dc8b455454f0a30419ead1ebe787aa01d5882e7d6ad31" || exit 10;
+    test "$(sha256sum docs/governance/D002H_PREREGISTRATION.yaml | awk "{print \$1}")" = "44b18b5a40ce9d188a9c3bd49339621f81a65a15f97a683247902450dd54acec" || exit 11;
+    test "$(sha256sum docs/governance/D002C_CLAIM_LEDGER.yaml | awk "{print \$1}")" = "f96ba9b5a2057d2e0bff84afc28578ab316cff73f6dc6673fb0d6d543b8bd6dd" || exit 12;
+    test ! -d artifacts/d002h/canonical/results || exit 13'
+  description: >-
+    Probes the D-002H R2-B inapplicability note: 10 tests pass; 4
+    files exist on disk (note + test + acceptor + BLOCKERS append);
+    the note carries the verbatim R2-B INAPPLICABILITY UNDER D-002H
+    SCOPE block, the 4-term conjunction R1 ∧ R2 ∧ R3 ∧ NULL_AUDIT,
+    the bold INAPPLICABLE marker for the R2-B row, and the D-002J
+    fresh-pre-registration reference; BLOCKERS.md carries the new
+    append-only scope-clarification section; D-002G acceptance rules,
+    D-002H prereg, and D-002C claim ledger sha256 all byte-exact at
+    their locked anchors; no artifacts/d002h/canonical/results/
+    directory exists (Gate G remains the terminal authorisation;
+    canonical sweep is a separate downstream PR). Regression on any
+    -> R2-B scope clarification contract broken.
+rollback_command: >-
+  bash -c 'rm -f
+  docs/governance/D002H_R2B_INAPPLICABILITY_NOTE.md
+  tests/systemic_risk/test_d002h_r2b_inapplicability.py
+  .claude/commit_acceptors/x10r-d002h-r2b-scope-clarification.yaml
+  && git checkout HEAD~1 -- docs/governance/D002G_CANONICAL_RUN_BLOCKERS.md'
+rollback_verification_command: >-
+  bash -c 'test ! -f docs/governance/D002H_R2B_INAPPLICABILITY_NOTE.md
+  && test ! -f tests/systemic_risk/test_d002h_r2b_inapplicability.py
+  && test ! -f .claude/commit_acceptors/x10r-d002h-r2b-scope-clarification.yaml
+  && ! grep -q "D-002H R2-B scope clarification" docs/governance/D002G_CANONICAL_RUN_BLOCKERS.md'
+memory_update_type: append
+ledger_path: ".claude/commit_acceptors/x10r-d002h-r2b-scope-clarification.yaml"
+report_path: "docs/governance/D002H_R2B_INAPPLICABILITY_NOTE.md"
+evidence: []

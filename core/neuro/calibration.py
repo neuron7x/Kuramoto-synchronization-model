@@ -1,3 +1,5 @@
+# Copyright (c) 2023-2026 Yaroslav Vasylenko (neuron7xLab)
+# SPDX-License-Identifier: MIT
 """Automated calibration system for Adaptive Market Mind (AMM) parameters.
 
 This module provides random search-based hyperparameter optimization for the AMM

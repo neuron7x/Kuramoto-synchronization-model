@@ -1,3 +1,5 @@
+# Copyright (c) 2023-2026 Yaroslav Vasylenko (neuron7xLab)
+# SPDX-License-Identifier: MIT
 """Cryptographic integrity verification for artifacts and AI models.
 
 This module implements cryptographic controls aligned with:
@@ -40,9 +42,7 @@ class ChecksumManifest(BaseModel):
         default_factory=lambda: datetime.now(timezone.utc).isoformat(),
         description="Timestamp when checksum was created",
     )
-    metadata: dict[str, Any] = Field(
-        default_factory=dict, description="Additional metadata"
-    )
+    metadata: dict[str, Any] = Field(default_factory=dict, description="Additional metadata")
 
 
 class IntegrityVerifier:
@@ -111,9 +111,7 @@ class IntegrityVerifier:
 
             return hasher.hexdigest()
         except Exception as e:
-            raise IntegrityError(
-                f"Failed to compute checksum for {file_path}: {e}"
-            ) from e
+            raise IntegrityError(f"Failed to compute checksum for {file_path}: {e}") from e
 
     @classmethod
     def verify_file_checksum(
@@ -139,13 +137,9 @@ class IntegrityVerifier:
             actual_checksum = cls.compute_file_checksum(file_path, algorithm)
 
             # Constant-time comparison to prevent timing attacks
-            return hmac.compare_digest(
-                actual_checksum.lower(), expected_checksum.lower()
-            )
+            return hmac.compare_digest(actual_checksum.lower(), expected_checksum.lower())
         except Exception as e:
-            raise IntegrityError(
-                f"Checksum verification failed for {file_path}: {e}"
-            ) from e
+            raise IntegrityError(f"Checksum verification failed for {file_path}: {e}") from e
 
     @classmethod
     def create_manifest(
@@ -200,9 +194,7 @@ class IntegrityVerifier:
         Raises:
             IntegrityError: If verification fails
         """
-        if not cls.verify_file_checksum(
-            artifact_path, manifest.checksum, manifest.algorithm
-        ):
+        if not cls.verify_file_checksum(artifact_path, manifest.checksum, manifest.algorithm):
             raise IntegrityError(
                 f"Checksum mismatch for {artifact_path}. "
                 f"Expected: {manifest.checksum}, "
@@ -228,9 +220,7 @@ class IntegrityVerifier:
             with open(output_path, "w", encoding="utf-8") as f:
                 json.dump(manifest.model_dump(), f, indent=2, sort_keys=True)
         except Exception as e:
-            raise IntegrityError(
-                f"Failed to save manifest to {output_path}: {e}"
-            ) from e
+            raise IntegrityError(f"Failed to save manifest to {output_path}: {e}") from e
 
     @classmethod
     def load_manifest(cls, manifest_path: Path) -> ChecksumManifest:
@@ -251,9 +241,7 @@ class IntegrityVerifier:
 
             return ChecksumManifest(**data)
         except Exception as e:
-            raise IntegrityError(
-                f"Failed to load manifest from {manifest_path}: {e}"
-            ) from e
+            raise IntegrityError(f"Failed to load manifest from {manifest_path}: {e}") from e
 
 
 class HMACVerifier:
@@ -407,9 +395,7 @@ class ModelIntegrityChecker:
         elif expected_checksum is not None:
             return IntegrityVerifier.verify_file_checksum(model_path, expected_checksum)
         else:
-            raise ValueError(
-                "Either manifest_path or expected_checksum must be provided"
-            )
+            raise ValueError("Either manifest_path or expected_checksum must be provided")
 
     @staticmethod
     def create_model_manifest(

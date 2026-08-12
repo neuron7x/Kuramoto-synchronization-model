@@ -1,3 +1,5 @@
+# Copyright (c) 2023-2026 Yaroslav Vasylenko (neuron7xLab)
+# SPDX-License-Identifier: MIT
 """Memory regression tests for large indicator windows."""
 
 from __future__ import annotations
@@ -45,7 +47,7 @@ def test_compute_phase_peak_memory() -> None:
     # Allow up to ~48 MiB peak including FFT scratch buffers.
     assert (
         peak_bytes < 50 * 1024 * 1024
-    ), f"compute_phase peak {peak_bytes / (1024 ** 2):.2f} MiB exceeds budget"
+    ), f"compute_phase peak {peak_bytes / (1024**2):.2f} MiB exceeds budget"
 
 
 def test_indicator_pipeline_releases_buffers() -> None:
@@ -68,7 +70,7 @@ def test_indicator_pipeline_releases_buffers() -> None:
     # Pipeline reuses the underlying buffer; peak should stay comfortably below 64 MiB.
     assert (
         peak_bytes < 64 * 1024 * 1024
-    ), f"IndicatorPipeline peak {peak_bytes / (1024 ** 2):.2f} MiB exceeds budget"
+    ), f"IndicatorPipeline peak {peak_bytes / (1024**2):.2f} MiB exceeds budget"
 
 
 def test_hierarchical_features_memory_leak_free() -> None:
@@ -101,4 +103,4 @@ def test_hierarchical_features_memory_leak_free() -> None:
     peak_bytes = _measure_peak_bytes(_run, iterations=4)
     assert (
         peak_bytes < 80 * 1024 * 1024
-    ), f"Hierarchical features peak {peak_bytes / (1024 ** 2):.2f} MiB exceeds budget"
+    ), f"Hierarchical features peak {peak_bytes / (1024**2):.2f} MiB exceeds budget"

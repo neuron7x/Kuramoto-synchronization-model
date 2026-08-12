@@ -1,10 +1,11 @@
-# SPDX-License-Identifier: LicenseRef-TradePulse-Proprietary
-"""Core interfaces and protocols for TradePulse infrastructure.
+# Copyright (c) 2023-2026 Yaroslav Vasylenko (neuron7xLab)
+# SPDX-License-Identifier: MIT
+"""Core interfaces and protocols for GeoSync infrastructure.
 
 This module defines the foundational contracts (protocols/ABCs) that
 standardize interactions between core subsystems. These interfaces
 enable loose coupling, testability, and consistent behavior across
-the TradePulse platform.
+the GeoSync platform.
 
 Contracts defined:
     - DataSource: Data ingestion interface
@@ -36,9 +37,12 @@ if TYPE_CHECKING:
     pass
 
 # Type variables for generic interfaces
+# DataT / EventT use variance markers to satisfy Protocol position rules:
+# DataT is covariant (appears only in return positions, e.g. Iterable[DataT] from DataSource.fetch).
+# EventT is contravariant (appears only in input positions, e.g. payload: EventT on EventBus.publish).
 T = TypeVar("T")
-EventT = TypeVar("EventT")
-DataT = TypeVar("DataT")
+EventT = TypeVar("EventT", contravariant=True)
+DataT = TypeVar("DataT", covariant=True)
 FeatureT = TypeVar("FeatureT")
 
 

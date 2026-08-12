@@ -1,4 +1,5 @@
-# SPDX-License-Identifier: LicenseRef-TradePulse-Proprietary
+# Copyright (c) 2023-2026 Yaroslav Vasylenko (neuron7xLab)
+# SPDX-License-Identifier: MIT
 """Strategy memory and adaptive learning infrastructure.
 
 This module implements a memory system for trading agents that learn from past
@@ -30,6 +31,7 @@ Example:
     >>> state = memory.to_dict()
     >>> memory2 = StrategyMemory.from_dict(state, strict=True)
 """
+
 from __future__ import annotations
 
 import math
@@ -265,9 +267,7 @@ class StrategyMemory:
             raise InvariantError(f"score must be finite, got {score}")
 
         sig = (
-            signature
-            if isinstance(signature, StrategySignature)
-            else StrategySignature(*signature)
+            signature if isinstance(signature, StrategySignature) else StrategySignature(*signature)
         )
         key = sig.key()
         existing_index = next(
@@ -301,9 +301,7 @@ class StrategyMemory:
             min_score: Minimum decayed score to keep.
         """
         self._records = [
-            record
-            for record in self._records
-            if self._decayed_score(record) > min_score
+            record for record in self._records if self._decayed_score(record) > min_score
         ]
 
     def _evict(self) -> None:

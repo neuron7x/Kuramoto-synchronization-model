@@ -1,9 +1,11 @@
+# Copyright (c) 2023-2026 Yaroslav Vasylenko (neuron7xLab)
+# SPDX-License-Identifier: MIT
 import math
 
 import numpy as np
 import pytest
 
-from tradepulse.protocol import (
+from geosync.protocol import (
     DivConvSignal,
     DivConvSnapshot,
     aggregate_signals,
@@ -114,12 +116,8 @@ def test_portfolio_aggregation_preserves_divergence_for_short_weights():
     )
 
     signals = [
-        DivConvSignal(
-            asset_id="LONG", snapshot=long_snapshot, risk_weight=0.6, exposure=1.0
-        ),
-        DivConvSignal(
-            asset_id="SHORT", snapshot=short_snapshot, risk_weight=-0.4, exposure=1.0
-        ),
+        DivConvSignal(asset_id="LONG", snapshot=long_snapshot, risk_weight=0.6, exposure=1.0),
+        DivConvSignal(asset_id="SHORT", snapshot=short_snapshot, risk_weight=-0.4, exposure=1.0),
     ]
 
     aggregated = aggregate_signals(signals)

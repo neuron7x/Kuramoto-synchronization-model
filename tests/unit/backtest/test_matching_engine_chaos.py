@@ -1,3 +1,5 @@
+# Copyright (c) 2023-2026 Yaroslav Vasylenko (neuron7xLab)
+# SPDX-License-Identifier: MIT
 from __future__ import annotations
 
 import contextlib
@@ -37,12 +39,8 @@ def resilient_engine(monkeypatch):
         latency_model=lambda order: 2 if order.symbol == "XBTUSD" else 0,
         halt_model=halt_model,
     )
-    engine.add_passive_liquidity(
-        "XBTUSD", OrderSide.SELL, price=100.0, qty=200.0, timestamp=0
-    )
-    engine.add_passive_liquidity(
-        "XBTUSD", OrderSide.BUY, price=99.5, qty=200.0, timestamp=0
-    )
+    engine.add_passive_liquidity("XBTUSD", OrderSide.SELL, price=100.0, qty=200.0, timestamp=0)
+    engine.add_passive_liquidity("XBTUSD", OrderSide.BUY, price=99.5, qty=200.0, timestamp=0)
     return engine, captured
 
 

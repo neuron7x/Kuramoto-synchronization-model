@@ -1,0 +1,91 @@
+# Diff-bound commit acceptor for the architecture-debt inference tool.
+#
+# Surfaces structural debt (empty evidence ledgers, type/lint
+# suppressions, skipped/slow tests, deferral markers, sanctioned dual
+# layers) as a single deterministic machine-readable inference, so debt
+# is legible and addressable rather than implicit. Infra only, no physics,
+# read-only and offline.
+
+id: architecture-debt-inference
+status: ACTIVE
+claim_type: correctness
+promise: >-
+  After this PR lands, tools/architecture_debt_inference.py emits a
+  deterministic tiered debt inference: each debt class is measured from
+  the tree, compared against an explicit threshold, and assigned a
+  severity (HIGH/MEDIUM/LOW/INFO). A measure that cannot be computed is
+  UNKNOWN, never silently OK; by_design classes (the dual physics-contract
+  layers) are reported for visibility but never counted as actionable
+  debt. No empirical, market, or alpha claim is made.
+
+diff_scope:
+  changed_files:
+    - path: ".claude/commit_acceptors/architecture-debt-inference.yaml"
+    - path: "tools/architecture_debt_inference.py"
+    - path: "tests/ci/test_architecture_debt_inference.py"
+    - path: "tools/generate_json_contract_validation_bundle.py"
+    - path: "tools/json_contract_receipt.py"
+    - path: "tools/run_json_artifact_checks.py"
+    - path: "tools/run_autonomy_cycle.py"
+    - path: "tools/update_autonomy_trend.py"
+    - path: "tools/validate_json_artifact_contract.py"
+  forbidden_paths:
+    - "trading/"
+    - "execution/"
+    - "forecast/"
+    - "policy/"
+    - "core/"
+    - "runtime/"
+    - "application/"
+
+required_python_symbols:
+  - "tools/architecture_debt_inference.py::infer"
+  - "tools/architecture_debt_inference.py::main"
+  - "tools/architecture_debt_inference.py::m_empty_evidence_ledger"
+
+expected_signal: >-
+  python tools/architecture_debt_inference.py --json prints an object with
+  a "worst_severity" in {HIGH, MEDIUM, LOW, INFO, UNKNOWN}, a
+  "debt_classes" list where every entry has status in {OK, DEBT, UNKNOWN},
+  and an "actionable" list excluding by_design classes; pytest reports the
+  inference contract tests passing.
+
+measurement_command: >-
+  bash -c '
+    python tools/architecture_debt_inference.py --json >/dev/null && python -m pytest -q tests/ci/test_architecture_debt_inference.py
+  '
+
+signal_artifact: "tmp/architecture_debt_inference.log"
+
+falsifier:
+  command: >-
+    bash -c '
+      python -m pytest -q
+        tests/ci/test_architecture_debt_inference.py::test_failing_measure_is_unknown_not_ok
+        >/dev/null 2>&1 && exit 1 || exit 0
+    '
+  description: >-
+    Inverts the fail-closed guarantee: it succeeds (exit 0) only when the
+    UNKNOWN-not-OK test fails, which would mean a measure that crashed was
+    silently treated as zero debt — the exact failure the inference must
+    never make.
+
+rollback_command: >-
+  bash -c '
+    git rm -f
+      tools/architecture_debt_inference.py
+      tests/ci/test_architecture_debt_inference.py
+      .claude/commit_acceptors/architecture-debt-inference.yaml
+  '
+
+rollback_verification_command: >-
+  bash -c '
+    test ! -e tools/architecture_debt_inference.py
+  '
+
+memory_update_type: append
+ledger_path: ".claude/commit_acceptors/architecture-debt-inference.yaml"
+report_path: "tmp/architecture_debt_inference.log"
+evidence:
+- path: tools/architecture_debt_inference.py
+- path: tests/ci/test_architecture_debt_inference.py

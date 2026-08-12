@@ -1,4 +1,5 @@
-# SPDX-License-Identifier: LicenseRef-TradePulse-Proprietary
+# Copyright (c) 2023-2026 Yaroslav Vasylenko (neuron7xLab)
+# SPDX-License-Identifier: MIT
 """Volume profile analysis and order flow metrics.
 
 This module provides functions for analyzing volume distribution and order flow
@@ -20,6 +21,7 @@ Example:
     >>> cvd = cumulative_volume_delta(buys, sells)
     >>> imb = imbalance(buys, sells)
 """
+
 from __future__ import annotations
 
 import numpy as np

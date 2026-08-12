@@ -1,0 +1,33 @@
+{
+  "schema": "cross_asset_kuramoto_shadow_run_v1",
+  "run_utc": "2026-04-21T22:37:45Z",
+  "run_date": "2026-04-10",
+  "signal_bar_ts": "2026-04-10 00:00:00+00:00",
+  "regime": "high_sync",
+  "lock_sha256": "1afd9058f7b5e1512d0a58c7b760da4e75389602d0155b0d83f1a84e567e5132",
+  "input_contract_sha256": "9c6760860ec99de71c0ee92dca57213673ba4e1cd6a284cdd8efbadad0000c78",
+  "signal_module_sha256": "7b9bb3606959f07b1250fcb48c9d5090598a3a5c39867211493f70927d254985",
+  "engine_module_sha256": "2f1dc1c976e7c8f3a2e57c9e521541083fa568a0dc7b63e5aa40395ef9d8c59d",
+  "pipeline_summary": {
+    "run_date": "2026-04-10",
+    "latest_bar_json": "{\"BTC\": \"2026-04-11\", \"ETH\": \"2026-04-11\", \"SPY\": \"2026-04-10\", \"QQQ\": \"2026-04-10\", \"GLD\": \"2026-04-10\", \"TLT\": \"2026-04-10\", \"DXY\": \"2026-04-10\", \"VIX\": \"2026-04-10\"}",
+    "stale_assets_over_5bdays": "BTC,ETH,SPY,QQQ,GLD,TLT,DXY,VIX",
+    "missing_bars_before_ffill": 84,
+    "missing_bars_after_ffill": 0,
+    "misaligned_pct": 3.7218,
+    "forward_fill_count": 84,
+    "data_coverage_pct": 100.0,
+    "timezone_mismatch": false,
+    "operationally_unsafe": true
+  },
+  "target_weights": {
+    "BTC": 0.0,
+    "ETH": 0.0,
+    "SPY": 0.0,
+    "TLT": 0.9984703,
+    "GLD": 0.24895646
+  },
+  "R_last": 0.361075610046324,
+  "leverage": 1.247426760353587,
+  "paper_state_seen": true
+}

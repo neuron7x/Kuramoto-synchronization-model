@@ -1,3 +1,5 @@
+# Copyright (c) 2023-2026 Yaroslav Vasylenko (neuron7xLab)
+# SPDX-License-Identifier: MIT
 from __future__ import annotations
 
 import json
@@ -68,12 +70,12 @@ def test_build_cyclonedx_sbom_structure(tmp_path: Path) -> None:
 
     sbom = supply_chain.build_cyclonedx_sbom(
         [dependency],
-        component_name="TradePulse",
+        component_name="GeoSync",
         component_version="1.2.3",
     )
 
     assert sbom["bomFormat"] == "CycloneDX"
-    assert sbom["metadata"]["component"]["name"] == "TradePulse"
+    assert sbom["metadata"]["component"]["name"] == "GeoSync"
     assert sbom["components"][0]["name"] == "alpha"
 
 

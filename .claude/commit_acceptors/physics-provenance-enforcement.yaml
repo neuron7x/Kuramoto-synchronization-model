@@ -1,0 +1,74 @@
+# Diff-bound commit acceptor for the restored provenance-tier enforcement.
+#
+# Restores the honest-provenance contract that PR #414 (d48bacf3) shipped as
+# self-check 5 and a later validator rewrite silently regressed to an
+# unconditional `print(... PASS)`. Adds check_provenance() + wiring + a unit
+# regression test. Touches no runtime, schema, market, or guard surface.
+#
+# Locally verified on origin/main base (4bf119b3):
+#   * pytest tests/unit/physics/test_provenance_enforcement.py: 8 passed
+#   * python .claude/physics/validate_tests.py --self-check: PASSED (check 5 real)
+#   * ruff / black / mypy --strict clean ; zero new `# type: ignore` / noqa
+id: physics-provenance-enforcement
+status: ACTIVE
+claim_type: governance
+promise: >-
+  After this PR lands, .claude/physics/validate_tests.py exposes
+  check_provenance(reg) and self-check 5 fails closed: an invariant whose
+  provenance is outside {ANCHORED, EXTRAPOLATED, SPECULATIVE}, or a SPECULATIVE
+  invariant carrying P0/P1 authority, makes the physics kernel self-check exit
+  non-zero. The live INVARIANTS.yaml (106 invariants) stays green. No runtime,
+  schema, market, or guard change.
+diff_scope:
+  changed_files:
+    - path: ".claude/commit_acceptors/physics-provenance-enforcement.yaml"
+    - path: ".claude/physics/validate_tests.py"
+    - path: "tests/unit/physics/test_provenance_enforcement.py"
+  forbidden_paths:
+    - "trading/"
+    - "execution/"
+    - "forecast/"
+    - "policy/"
+    - "application/"
+    - "core/"
+    - "src/"
+    - "geosync_hpc/"
+required_python_symbols: []
+expected_signal: >-
+  `python -m pytest tests/unit/physics/test_provenance_enforcement.py` reports
+  8 passed; `python .claude/physics/validate_tests.py --self-check` prints
+  "5. Provenance OK: tiers discrete; no SPECULATIVE invariant at P0/P1" and
+  exits 0; ruff/black/mypy --strict on the changed files are clean.
+measurement_command: >-
+  bash -c 'mkdir -p tmp && python -m pytest
+  tests/unit/physics/test_provenance_enforcement.py
+  > tmp/physics_provenance_enforcement.log 2>&1
+  && grep -q "8 passed" tmp/physics_provenance_enforcement.log'
+signal_artifact: "tmp/physics_provenance_enforcement.log"
+falsifier:
+  command: |-
+    bash -c 'python -c "
+    import importlib.util
+    spec = importlib.util.spec_from_file_location(
+        \"vt\", \".claude/physics/validate_tests.py\")
+    vt = importlib.util.module_from_spec(spec); spec.loader.exec_module(vt)
+    reg = {\"INV-X\": {\"id\": \"INV-X\", \"provenance\": \"SPECULATIVE\", \"priority\": \"P0\"}}
+    import sys; sys.exit(0 if vt.check_provenance(reg) == [] else 1)"'
+  description: >-
+    Inverse probe of the honest-provenance contract. It exits 0 (fires) iff
+    check_provenance lets a SPECULATIVE invariant at P0 pass with no error —
+    i.e. the enforcement has regressed back to the silent no-op. While the
+    contract holds the probe exits 1. If it ever exits 0 the regression has
+    recurred and the change must be reverted, not patched green.
+rollback_command: >-
+  git rm -f
+  tests/unit/physics/test_provenance_enforcement.py
+  .claude/commit_acceptors/physics-provenance-enforcement.yaml
+  && git checkout origin/main -- .claude/physics/validate_tests.py
+rollback_verification_command: >-
+  bash -c 'test ! -f tests/unit/physics/test_provenance_enforcement.py
+  && git diff --exit-code origin/main -- .claude/physics/validate_tests.py'
+memory_update_type: none
+ledger_path: ".claude/commit_acceptors/physics-provenance-enforcement.yaml"
+report_path: "tmp/physics_provenance_enforcement.log"
+evidence: []

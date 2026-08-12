@@ -1,0 +1,147 @@
+{
+  "verdict": "RED",
+  "counts": {
+    "green": 12,
+    "red": 5,
+    "manual": 0,
+    "gating_total": 17
+  },
+  "results": [
+    {
+      "pid": "A.claim_files",
+      "section": "A",
+      "title": "Claim-boundary + forbidden-claims docs exist",
+      "gating": true,
+      "status": "GREEN",
+      "evidence": "claim-boundary + FORBIDDEN_CLAIMS docs present"
+    },
+    {
+      "pid": "A.claim_gate",
+      "section": "A",
+      "title": "Claim-boundary doc scanner passes",
+      "gating": true,
+      "status": "GREEN",
+      "evidence": "Claim-boundary gate passed: 623 canonical surfaces (docs + claim-bearing code) scanned, 127 reviewed mechanism/record references."
+    },
+    {
+      "pid": "B.src_imports",
+      "section": "B",
+      "title": "No first-party `src.*` imports",
+      "gating": true,
+      "status": "RED",
+      "evidence": "19 first-party files import `src.*` (e.g. application/api/authorization.py)"
+    },
+    {
+      "pid": "B.path_hacks",
+      "section": "B",
+      "title": "No runtime sys.path hacks",
+      "gating": true,
+      "status": "RED",
+      "evidence": "70 first-party files mutate sys.path (e.g. BBB_NVU_Cognitive_Noise_Gate_2026/scripts/adversarial_auditor.py)"
+    },
+    {
+      "pid": "B.single_pkg",
+      "section": "B",
+      "title": "Single canonical geosync package",
+      "gating": true,
+      "status": "RED",
+      "evidence": "both geosync/ and src/geosync/ exist (dual canonical package)"
+    },
+    {
+      "pid": "B.wheel",
+      "section": "B",
+      "title": "Wheel ships only geosync* (clean-room)",
+      "gating": true,
+      "status": "RED",
+      "evidence": "wheel ships 18 top-level packages, 16 outside geosync* (e.g. analytics, application, backtest, cli, core, domain)"
+    },
+    {
+      "pid": "C.lock",
+      "section": "C",
+      "title": "requirements.lock present",
+      "gating": true,
+      "status": "GREEN",
+      "evidence": "requirements.lock present"
+    },
+    {
+      "pid": "C.dep_truth",
+      "section": "C",
+      "title": "Dependency-truth validator clean",
+      "gating": true,
+      "status": "GREEN",
+      "evidence": "dependency-truth validator: no drift"
+    },
+    {
+      "pid": "D.manifest",
+      "section": "D",
+      "title": "MANIFEST.sha256 cold-verify clean",
+      "gating": true,
+      "status": "GREEN",
+      "evidence": "MANIFEST.sha256 cold-verify clean (6365 entries)"
+    },
+    {
+      "pid": "F.invariants",
+      "section": "F",
+      "title": "Invariant registry consistent",
+      "gating": true,
+      "status": "GREEN",
+      "evidence": "invariant registry consistent (108)"
+    },
+    {
+      "pid": "P.tests",
+      "section": "P",
+      "title": "Test suite present",
+      "gating": true,
+      "status": "GREEN",
+      "evidence": "1600 test files tracked"
+    },
+    {
+      "pid": "E.clean_clone",
+      "section": "E",
+      "title": "Clean-clone wheel install + CLI entrypoints run",
+      "gating": true,
+      "status": "GREEN",
+      "evidence": "clean archive \u2192 wheel \u2192 isolated install \u2192 import geosync \u2192 entrypoints wired"
+    },
+    {
+      "pid": "G.real_data",
+      "section": "G",
+      "title": "Multi-session/day/venue real-data evidence tracks",
+      "gating": true,
+      "status": "RED",
+      "evidence": "real-data tier BLOCKED: no real-market-data manifest present \u2014 repository contains only synthetic single-session fixtures (data/sample_ohlc.csv is marked forbidden_use: not for live trading; all ingestion adapters are stub-only). Cannot attest MEASURED_SINGLE without real data."
+    },
+    {
+      "pid": "H.falsification",
+      "section": "H",
+      "title": "Null/topology/cost/factor-neutral controls + kill-condition ledger",
+      "gating": true,
+      "status": "GREEN",
+      "evidence": "falsification ledger: 8/8 controls SURVIVED"
+    },
+    {
+      "pid": "K.execution",
+      "section": "K",
+      "title": "Execution contract: fills/slippage/adverse-selection/recovery",
+      "gating": true,
+      "status": "GREEN",
+      "evidence": "execution OUT_OF_SCOPE; claim-boundary firewall enforced"
+    },
+    {
+      "pid": "M.benchmarks",
+      "section": "M",
+      "title": "Latency/throughput/memory + CPU/GPU parity with regression budget",
+      "gating": true,
+      "status": "GREEN",
+      "evidence": "benchmark spine PASS (hardware 65686ba363d8c899)"
+    },
+    {
+      "pid": "Q.replication",
+      "section": "Q",
+      "title": "Reviewer packet + cold-rerun + signed verification + repro capsule",
+      "gating": true,
+      "status": "GREEN",
+      "evidence": "reviewer packet present; all artifact projections match hash-lock"
+    }
+  ]
+}

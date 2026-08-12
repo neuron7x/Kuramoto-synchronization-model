@@ -1,4 +1,5 @@
-# SPDX-License-Identifier: LicenseRef-TradePulse-Proprietary
+# Copyright (c) 2023-2026 Yaroslav Vasylenko (neuron7xLab)
+# SPDX-License-Identifier: MIT
 from __future__ import annotations
 
 import string
@@ -43,9 +44,7 @@ _TAG_VALUES = ("ops", "latency", "risk", "alpha", "beta", "compliance", "infra")
     symbol=st.sampled_from(_SYMBOLS),
     tags=st.lists(st.sampled_from(_TAG_VALUES), min_size=0, max_size=5),
     metadata=st.lists(
-        st.tuples(
-            st.sampled_from(_METADATA_KEYS), st.integers(min_value=0, max_value=1000)
-        ),
+        st.tuples(st.sampled_from(_METADATA_KEYS), st.integers(min_value=0, max_value=1000)),
         min_size=0,
         max_size=5,
     ).map(lambda items: {key: value for key, value in items}),

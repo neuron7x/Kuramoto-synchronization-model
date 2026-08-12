@@ -1,3 +1,5 @@
+# Copyright (c) 2023-2026 Yaroslav Vasylenko (neuron7xLab)
+# SPDX-License-Identifier: MIT
 """High-performance real-time feature store built on Redis Streams and TimescaleDB.
 
 The implementation focuses on the key requirements for the trading platform:
@@ -114,9 +116,7 @@ class FeatureRecord:
             "value": json.dumps(self.value, separators=(",", ":")),
         }
         if self.lineage is not None:
-            payload["lineage"] = json.dumps(
-                self.lineage.asdict(), separators=(",", ":")
-            )
+            payload["lineage"] = json.dumps(self.lineage.asdict(), separators=(",", ":"))
         return payload
 
     @classmethod
@@ -139,9 +139,7 @@ class FeatureRecord:
             descriptor=descriptor,
             entity_id=payload["entity_id"],
             value=json.loads(payload["value"]),
-            event_ts=datetime.fromisoformat(payload["event_ts"]).astimezone(
-                timezone.utc
-            ),
+            event_ts=datetime.fromisoformat(payload["event_ts"]).astimezone(timezone.utc),
             lineage=lineage,
         )
 
@@ -172,7 +170,16 @@ class _TTLCache:
             ttl_ms = 1_000
         expiry = asyncio.get_running_loop().time() + ttl_ms / 1_000.0
         async with self._lock:
-            if len(self._data) >= self._max_size:
+            existing = self._data.get(key)
+            if existing is not None:
+                _, existing_record = existing
+                # Monotonic guard (compare-and-set on event_ts): a later-arriving
+                # OLDER tick must never overwrite a newer cached feature. Without
+                # this, an out-of-order/retried publish is last-writer-wins and
+                # serves a stale feature on the hot read path.
+                if existing_record.event_ts > record.event_ts:
+                    return
+            if len(self._data) >= self._max_size and key not in self._data:
                 # Drop the stalest entry (simple heuristic sufficient for hot cache).
                 stale_key = min(self._data.items(), key=lambda item: item[1][0])[0]
                 self._data.pop(stale_key, None)
@@ -185,6 +192,24 @@ class _TTLCache:
     async def clear(self) -> None:
         async with self._lock:
             self._data.clear()
+
+
+# Compare-and-set the feature cache on event_ts. UTC ISO-8601 timestamps with a
+# fixed microsecond precision are lexicographically ordered, so a plain string
+# compare gives event-time ordering. The value key and a companion ``:ets`` key
+# are written together only when the incoming event_ts is not older than the
+# stored one — an out-of-order/retried publish cannot clobber a newer feature
+# across processes. Returns 1 if applied, 0 if skipped as stale.
+_CACHE_CAS_LUA = """
+local ets_key = KEYS[1] .. ':ets'
+local cur = redis.call('GET', ets_key)
+if cur and cur > ARGV[2] then
+  return 0
+end
+redis.call('SET', KEYS[1], ARGV[1], 'PX', ARGV[3])
+redis.call('SET', ets_key, ARGV[2], 'PX', ARGV[3])
+return 1
+"""
 
 
 class RealTimeFeatureStore:
@@ -208,6 +233,8 @@ class RealTimeFeatureStore:
         self._microcache = _TTLCache()
         self._registered_descriptors: dict[tuple[str, str, str], FeatureDescriptor] = {}
         self._write_retry_attempts = max(1, write_retry_attempts)
+        # Lazily-registered event_ts compare-and-set script for the Redis cache.
+        self._cache_cas_script: Any = None
 
     async def initialise(self) -> None:
         """Ensure metadata tables exist in TimescaleDB."""
@@ -216,8 +243,7 @@ class RealTimeFeatureStore:
             if self._registry_ready.is_set():
                 return
             async with self._db_pool.acquire() as conn:
-                await conn.execute(
-                    """
+                await conn.execute("""
                     CREATE TABLE IF NOT EXISTS feature_registry (
                         feature_name TEXT NOT NULL,
                         feature_version TEXT NOT NULL,
@@ -227,10 +253,8 @@ class RealTimeFeatureStore:
                         description TEXT,
                         PRIMARY KEY (feature_name, feature_version, entity)
                     );
-                    """
-                )
-                await conn.execute(
-                    """
+                    """)
+                await conn.execute("""
                     CREATE TABLE IF NOT EXISTS feature_values (
                         feature_name TEXT NOT NULL,
                         feature_version TEXT NOT NULL,
@@ -240,13 +264,10 @@ class RealTimeFeatureStore:
                         lineage JSONB,
                         PRIMARY KEY (feature_name, feature_version, entity_id, event_ts)
                     );
-                    """
-                )
-                await conn.execute(
-                    """
+                    """)
+                await conn.execute("""
                     SELECT create_hypertable('feature_values', 'event_ts', if_not_exists => TRUE);
-                    """
-                )
+                    """)
             self._registry_ready.set()
             _LOGGER.info("RealTimeFeatureStore metadata initialised")
 
@@ -271,11 +292,7 @@ class RealTimeFeatureStore:
                 descriptor.version,
                 descriptor.entity,
                 ttl_ms,
-                (
-                    json.dumps(descriptor.schema)
-                    if descriptor.schema is not None
-                    else None
-                ),
+                (json.dumps(descriptor.schema) if descriptor.schema is not None else None),
                 descriptor.description,
             )
         self._registered_descriptors[key] = descriptor
@@ -307,9 +324,7 @@ class RealTimeFeatureStore:
             lineage=lineage,
         )
         redis_payload = record.to_redis_payload()
-        ttl_ms = descriptor.ttl_milliseconds or int(
-            self._default_ttl.total_seconds() * 1000
-        )
+        ttl_ms = descriptor.ttl_milliseconds or int(self._default_ttl.total_seconds() * 1000)
 
         timescale_applied = await self._execute_with_retries(
             lambda: self._write_to_timescale(record),
@@ -318,9 +333,7 @@ class RealTimeFeatureStore:
         )
         try:
             await self._execute_with_retries(
-                lambda: self._write_to_redis(
-                    descriptor, entity_id, redis_payload, ttl_ms
-                ),
+                lambda: self._write_to_redis(descriptor, entity_id, redis_payload, ttl_ms),
                 attempts=self._write_retry_attempts,
                 op_name="redis write",
             )
@@ -328,18 +341,16 @@ class RealTimeFeatureStore:
             if timescale_applied:
                 try:
                     await self._delete_from_timescale(record)
-                except (
-                    Exception
-                ) as rollback_error:  # pragma: no cover - defensive logging
+                except Exception as rollback_error:  # pragma: no cover - defensive logging
                     _LOGGER.error(
-                        "Failed to rollback Timescale write for %s/%s after Redis error: %s",  # noqa: TRY400
+                        "Failed to rollback Timescale write for %s/%s after Redis error: %s",
                         descriptor.name,
                         entity_id,
                         rollback_error,
                     )
                 else:
                     _LOGGER.warning(
-                        "Rolled back Timescale write for %s/%s after Redis error",  # noqa: TRY400
+                        "Rolled back Timescale write for %s/%s after Redis error",
                         descriptor.name,
                         entity_id,
                     )
@@ -357,10 +368,16 @@ class RealTimeFeatureStore:
         stream_key = descriptor.stream_key
         cache_key = descriptor.cache_key(entity_id)
         payload_json = json.dumps(payload, separators=(",", ":"))
+        event_ts = str(payload["event_ts"])
+        # Stream append is history — always applied. The cache SET is compare-and-
+        # set on event_ts so an out-of-order/retried publish cannot overwrite a
+        # newer cached feature.
         async with self._redis.pipeline(transaction=False) as pipe:
             pipe.xadd(stream_key, payload, maxlen=self._stream_maxlen, approximate=True)
-            pipe.set(cache_key, payload_json, px=ttl_ms)
             await pipe.execute()
+        if self._cache_cas_script is None:
+            self._cache_cas_script = self._redis.register_script(_CACHE_CAS_LUA)
+        await self._cache_cas_script(keys=[cache_key], args=[payload_json, event_ts, ttl_ms])
 
     async def _write_to_timescale(self, record: FeatureRecord) -> bool:
         lineage_json = json.dumps(record.lineage.asdict()) if record.lineage else None
@@ -442,9 +459,7 @@ class RealTimeFeatureStore:
                 payload_text = payload_json
             payload = json.loads(payload_text)
             record = FeatureRecord.from_redis_payload(descriptor, payload)
-            ttl_ms = descriptor.ttl_milliseconds or int(
-                self._default_ttl.total_seconds() * 1000
-            )
+            ttl_ms = descriptor.ttl_milliseconds or int(self._default_ttl.total_seconds() * 1000)
             await self._microcache.set(cache_key, record, ttl_ms)
             return record
 
@@ -480,9 +495,7 @@ class RealTimeFeatureStore:
             event_ts=row["event_ts"].astimezone(timezone.utc),
             lineage=lineage,
         )
-        ttl_ms = descriptor.ttl_milliseconds or int(
-            self._default_ttl.total_seconds() * 1000
-        )
+        ttl_ms = descriptor.ttl_milliseconds or int(self._default_ttl.total_seconds() * 1000)
         await self._microcache.set(cache_key, record, ttl_ms)
         return record
 
@@ -581,9 +594,7 @@ class RealTimeFeatureStore:
                     ttl_ms = descriptor.ttl_milliseconds or int(
                         self._default_ttl.total_seconds() * 1000
                     )
-                    await self._write_to_redis(
-                        descriptor, record.entity_id, payload, ttl_ms
-                    )
+                    await self._write_to_redis(descriptor, record.entity_id, payload, ttl_ms)
                     await self._microcache.set(
                         descriptor.cache_key(record.entity_id), record, ttl_ms
                     )
@@ -647,9 +658,7 @@ class RealTimeFeatureStore:
                         payload_str[key_str] = value
                 record = FeatureRecord.from_redis_payload(descriptor, payload_str)
                 records.append(record)
-                _LOGGER.debug(
-                    "Consumed stream entry %s for %s", entry_id, descriptor.name
-                )
+                _LOGGER.debug("Consumed stream entry %s for %s", entry_id, descriptor.name)
         return records
 
 

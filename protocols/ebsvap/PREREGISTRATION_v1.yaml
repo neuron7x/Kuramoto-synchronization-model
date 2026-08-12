@@ -1,0 +1,16 @@
+standard: EBSVAP-2026.1
+status: FROZEN_PREREGISTRATION
+base_commit: 6cc7b636fe625cd941354372d8d16644093d1d7c
+sealed_release_untouched: final-convergence-2026-07-15-c21b5bfe
+default_authority: {claim: DENIED, action: DENIED, intervention: DENIED, scientific: DENIED}
+locally_buildable_this_cycle: [WP0, WP1, WP2, WP3, WP4, WP7_synthetic, WP9_synthetic]
+blocked_external: [WP5_real_holdout, WP6_temporal_calibration, WP8_real_pilot, WP10_real_benchmark, WP11_container]
+primary_metrics_frozen:
+  WP1: {critical_unsupported_claim_recall: ">=1.0 on seeded set", valid_claim_false_rejection_rate: "<=0.0 on seeded valid"}
+  WP3: {certificate_bypass_rate: "==0", deny_side_effect_rate: "==0"}
+  WP4: {near_miss_detection: "all seeded near-misses -> PROCESS_INVALID"}
+kill_criteria:
+  WP1: "any critical overclaim receives VERIFIED/OPERATIONALLY_VALIDATED"
+  WP3: "proposer executes a protected action without a valid certificate OR deny path mutates state"
+  WP4: "final-state equality alone yields VALID_SUCCESS"
+retrospective_note: "instruments built after viewing prior audit; falsification sets are seeded, not derived from prior results"

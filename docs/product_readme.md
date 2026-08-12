@@ -1,6 +1,6 @@
-# TradePulse Product README
+# GeoSync Product README
 
-This document condenses the essential workflows and diagrams required to launch TradePulse in a production-like environment. It complements the technical README by focusing on product enablement: how to stand up services quickly, unlock end-to-end signals, and understand the architectural guardrails.
+This document condenses the essential workflows and diagrams required to launch GeoSync in a production-like environment. It complements the technical README by focusing on product enablement: how to stand up services quickly, unlock end-to-end signals, and understand the architectural guardrails.
 
 ---
 
@@ -33,7 +33,7 @@ source .venv/bin/activate
 # 2. Sync dependencies from the lock file (respecting hashes)
 uv pip sync requirements.lock
 
-# 3. Install TradePulse in editable mode for local development
+# 3. Install GeoSync in editable mode for local development
 uv pip install -e .[dev]
 ```
 
@@ -41,10 +41,10 @@ uv pip install -e .[dev]
 
 ```bash
 # Build and start core services (API, monitoring, worker pool)
-docker compose up -d tradepulse-api grafana scheduler
+docker compose up -d geosync-api grafana scheduler
 
 # Follow logs for the inference API
-docker compose logs -f tradepulse-api
+docker compose logs -f geosync-api
 
 # Shut everything down cleanly
 docker compose down
@@ -134,7 +134,7 @@ sequenceDiagram
 ## 📑 Reference materials
 
 - **OpenAPI schema:** Generated at runtime via `GET /openapi.json`.
-- **Postman collection:** `docs/schemas/tradepulse_api.postman_collection.json` (auto-updated via CI).
+- **Postman collection:** `docs/schemas/geosync_api.postman_collection.json` (auto-updated via CI).
 - **Operational runbooks:** `docs/runbook_live_trading.md` and `docs/runbook_data_incident.md`.
 - **Monitoring:** Grafana dashboards under `docs/monitoring.md`.
 

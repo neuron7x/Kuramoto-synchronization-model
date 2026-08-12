@@ -1,0 +1,37 @@
+{
+  "numpy": "2.4.4",
+  "platform": "Linux-6.8.0-106-lowlatency-x86_64-with-glibc2.39",
+  "python": "3.12.3",
+  "repeats": 10,
+  "replay_hash": "5958c3626b52e9c50f34021239e1b2c457c7aedea9564ce8cbe790ca16c30bd3",
+  "schema": "dro_ara_bench.v1",
+  "seed": 42,
+  "step": 64,
+  "warmup": 2,
+  "windows": {
+    "1024": {
+      "length": 1088,
+      "max_sec": 0.000599402,
+      "mean_sec": 0.000572929,
+      "min_sec": 0.000555208,
+      "p50_sec": 0.000569576,
+      "p95_sec": 0.000597998
+    },
+    "256": {
+      "length": 320,
+      "max_sec": 0.000520499,
+      "mean_sec": 0.000492144,
+      "min_sec": 0.000473201,
+      "p50_sec": 0.000488451,
+      "p95_sec": 0.000517454
+    },
+    "512": {
+      "length": 576,
+      "max_sec": 0.000545807,
+      "mean_sec": 0.000523561,
+      "min_sec": 0.000511047,
+      "p50_sec": 0.000519419,
+      "p95_sec": 0.000544426
+    }
+  }
+}

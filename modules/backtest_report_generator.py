@@ -1,3 +1,5 @@
+# Copyright (c) 2023-2026 Yaroslav Vasylenko (neuron7xLab)
+# SPDX-License-Identifier: MIT
 """
 Backtest Report Generator Module
 
@@ -211,17 +213,13 @@ class BacktestReportGenerator:
 
         # Базові метрики
         total_return = (1 + returns).prod() - 1
-        annualized_return = (1 + total_return) ** (
-            self.annualization_factor / len(returns)
-        ) - 1
+        annualized_return = (1 + total_return) ** (self.annualization_factor / len(returns)) - 1
         volatility = returns.std() * np.sqrt(self.annualization_factor)
 
         # Sharpe Ratio
         excess_returns = returns - self.risk_free_rate / self.annualization_factor
         sharpe_ratio = (
-            excess_returns.mean()
-            / returns.std()
-            * np.sqrt(self.annualization_factor)
+            excess_returns.mean() / returns.std() * np.sqrt(self.annualization_factor)
             if returns.std() > 0
             else 0.0
         )
@@ -234,9 +232,7 @@ class BacktestReportGenerator:
             else volatility
         )
         sortino_ratio = (
-            (annualized_return - self.risk_free_rate) / downside_std
-            if downside_std > 0
-            else 0.0
+            (annualized_return - self.risk_free_rate) / downside_std if downside_std > 0 else 0.0
         )
 
         # Calmar Ratio
@@ -244,9 +240,7 @@ class BacktestReportGenerator:
         running_max = cumulative.cummax()
         drawdown = (cumulative - running_max) / running_max
         max_drawdown = abs(drawdown.min())
-        calmar_ratio = (
-            annualized_return / max_drawdown if max_drawdown > 0 else 0.0
-        )
+        calmar_ratio = annualized_return / max_drawdown if max_drawdown > 0 else 0.0
 
         # Omega Ratio
         threshold = self.risk_free_rate / self.annualization_factor
@@ -256,9 +250,11 @@ class BacktestReportGenerator:
 
         # VaR та CVaR
         var_95 = np.percentile(returns_array, 5)
-        cvar_95 = returns_array[returns_array <= var_95].mean() if len(
-            returns_array[returns_array <= var_95]
-        ) > 0 else var_95
+        cvar_95 = (
+            returns_array[returns_array <= var_95].mean()
+            if len(returns_array[returns_array <= var_95]) > 0
+            else var_95
+        )
 
         # Статистичні моменти
         skewness = float(pd.Series(returns_array).skew())
@@ -289,15 +285,13 @@ class BacktestReportGenerator:
                 )
 
                 # Information Ratio
-                tracking_error = (
-                    aligned["strategy"] - aligned["benchmark"]
-                ).std() * np.sqrt(self.annualization_factor)
-                active_return = annualized_return - aligned[
-                    "benchmark"
-                ].mean() * self.annualization_factor
-                information_ratio = (
-                    active_return / tracking_error if tracking_error > 0 else 0.0
+                tracking_error = (aligned["strategy"] - aligned["benchmark"]).std() * np.sqrt(
+                    self.annualization_factor
                 )
+                active_return = (
+                    annualized_return - aligned["benchmark"].mean() * self.annualization_factor
+                )
+                information_ratio = active_return / tracking_error if tracking_error > 0 else 0.0
 
         return PerformanceMetrics(
             total_return=float(total_return),
@@ -339,12 +333,8 @@ class BacktestReportGenerator:
         gross_loss = abs(sum(losses))
         profit_factor = gross_profit / gross_loss if gross_loss > 0 else float("inf")
 
-        payoff_ratio = (
-            abs(average_win / average_loss) if average_loss != 0 else 0.0
-        )
-        expectancy = (
-            win_rate * average_win + (1 - win_rate) * average_loss
-        )
+        payoff_ratio = abs(average_win / average_loss) if average_loss != 0 else 0.0
+        expectancy = win_rate * average_win + (1 - win_rate) * average_loss
 
         # Середня тривалість трейду
         durations = [t.duration for t in trades]
@@ -383,9 +373,7 @@ class BacktestReportGenerator:
             max_consecutive_losses=max_consecutive_losses,
         )
 
-    def _calculate_drawdown_statistics(
-        self, cumulative_returns: pd.Series
-    ) -> DrawdownStatistics:
+    def _calculate_drawdown_statistics(self, cumulative_returns: pd.Series) -> DrawdownStatistics:
         """Розрахунок статистики drawdown"""
         if len(cumulative_returns) < 2:
             return DrawdownStatistics()

@@ -1,0 +1,89 @@
+# Diff-bound commit acceptor for the bounded market-state compiler
+# contract. The runtime module core/indicators/market_state_contract.py
+# (added on this branch) compiles the existing CompositeSignal into a
+# strict MarketStateContract envelope. This PR proves that envelope with
+# an adversarial guard test and wires it as public indicator API so it is
+# no longer dead code. Signal computation (kuramoto_ricci_composite.py) is
+# untouched: behavior-preserving. Research signal contract only — not
+# financial advice, no profitability or market-prediction claim.
+
+id: market-state-contract-tested
+status: ACTIVE
+claim_type: correctness
+promise: >-
+  After this PR lands, compile_market_state(signal) returns a
+  MarketStateContract whose phase is bounded to [-pi, pi], confidence and
+  risk are bounded to [0, 1], regime is a MarketRegime enum, entry is an
+  EntryState enum, exit is a bool, and evidence carries exactly the
+  kuramoto/ricci/fusion/classification buckets. NaN and +/-inf in any
+  CompositeSignal field are clipped fail-closed so the envelope numerics
+  stay finite. The transform is deterministic (same input -> same dict)
+  and enforces the policy invariants confidence<0.5 -> FLAT, TRANSITION
+  -> HOLD, chaotic-low-sync -> NEUTRAL/FLAT. The contract is exported from
+  core.indicators as public API (MarketStateContract, MarketRegime,
+  EntryState, compile_market_state) and is therefore reachable, not dead
+  code. tests/unit/test_market_state_contract.py carries 7
+  tests (400 Hypothesis examples) fail-closing on any bound violation,
+  NaN/inf leak, determinism break, policy-mapping drift, or missing
+  public export.
+diff_scope:
+  changed_files:
+    - path: "core/indicators/market_state_contract.py"
+    - path: "src/geosync/indicators/__init__.py"
+    - path: "tests/unit/test_market_state_contract.py"
+    - path: ".claude/commit_acceptors/market-state-contract-tested.yaml"
+  forbidden_paths:
+    - "core/indicators/kuramoto_ricci_composite.py"
+    - "core/strategies/"
+    - "core/config/"
+required_python_symbols:
+  - "core.indicators.market_state_contract.MarketStateContract"
+  - "core.indicators.market_state_contract.MarketRegime"
+  - "core.indicators.market_state_contract.EntryState"
+  - "core.indicators.market_state_contract.compile_market_state"
+  - "tests.unit.test_market_state_contract.test_bounds_hold_under_adversarial_input"
+  - "tests.unit.test_market_state_contract.test_determinism_same_input_same_output"
+  - "tests.unit.test_market_state_contract.test_nan_everywhere_fails_closed"
+  - "tests.unit.test_market_state_contract.test_public_export_wired"
+expected_signal: >-
+  `PYTHONPATH=. python -m pytest
+  tests/unit/test_market_state_contract.py -q` reports
+  "7 passed"; `python -c "import core.indicators as ci;
+  print(ci.compile_market_state.__name__)"` prints
+  "compile_market_state"; `git diff --stat origin/main --
+  core/indicators/kuramoto_ricci_composite.py` returns empty.
+measurement_command: >-
+  bash -c 'set -e;
+  PYTHONPATH=. python -m pytest tests/unit/test_market_state_contract.py -q;
+  python -c "import core.indicators as ci; assert ci.compile_market_state.__name__ == \"compile_market_state\"";
+  test -z "$(git diff --stat origin/main -- core/indicators/kuramoto_ricci_composite.py)"'
+signal_artifact: "tests/unit/test_market_state_contract.py"
+falsifier:
+  command: >-
+    bash -c 'set -e;
+    PYTHONPATH=. python -m pytest tests/unit/test_market_state_contract.py -q || exit 1;
+    python -c "import core.indicators as ci; assert ci.compile_market_state.__name__ == \"compile_market_state\"" || exit 2;
+    test -z "$(git diff --stat origin/main -- core/indicators/kuramoto_ricci_composite.py)" || exit 3'
+  description: >-
+    Probes the bounded market-state contract: the 7-test adversarial guard
+    module passes (400 Hypothesis examples across NaN/inf/extreme inputs);
+    compile_market_state is reachable as public core.indicators API; and
+    the signal-computation module kuramoto_ricci_composite.py is unchanged
+    vs origin/main. Regression on any -> a bound leaked, the envelope went
+    non-finite or nondeterministic, the public export was dropped, or the
+    behavior-preserving guarantee on the underlying signal broke.
+rollback_command: >-
+  bash -c 'rm -f
+  core/indicators/market_state_contract.py
+  tests/unit/test_market_state_contract.py
+  .claude/commit_acceptors/market-state-contract-tested.yaml
+  && git checkout origin/main -- core/indicators/__init__.py
+  src/geosync/indicators/__init__.py'
+rollback_verification_command: >-
+  bash -c 'test ! -f core/indicators/market_state_contract.py
+  && test ! -f tests/unit/test_market_state_contract.py
+  && test ! -f .claude/commit_acceptors/market-state-contract-tested.yaml'
+memory_update_type: append
+ledger_path: ".claude/commit_acceptors/market-state-contract-tested.yaml"
+report_path: "tests/unit/test_market_state_contract.py"
+evidence: []

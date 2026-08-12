@@ -1,0 +1,9 @@
+{
+  "_doc": "Whole-tree gate meta-ratchet: currently-documented red gates (see docs/audit/FRACTAL_HEALTH_MAP_2026-07-21.md). run_all_gates.py fails on NEW red or on a listed gate that is now green (tighten). Shrink this set; never grow it silently. Curated from the 2026-07-21 whole-tree X-ray. Classes: G4 fail-closed (dataset licenses), G5 frozen/env evidence (release/dopamine/artifact receipts), G3 packaging (governance), env (feature_debt_lock uses stale origin/main; l2_collector needs a live collector), and a resolution/coverage mismatch (examples, audit_report_paths). check_examples_manifest fixed 2026-07-21 (registry sync). NOTE: check_audit_report_paths is an INVERTED tripwire (exit 1 = healthy) \u2014 listed as known-red because run_all_gates keys on exit!=0. 2026-07-21 P2/P3/P4: governance binding fixed (green), feature_debt_lock fails clean (needs --base-ref), audit_report_paths handled as inverted tripwire. 2026-07-21: check_l2_collector_health EXCLUDED from the sweep (runtime cron/systemd watchdog, not a repo-state gate).",
+  "known_red": [
+    "scripts/check_dopamine_contract.py",
+    "scripts/ci/check_dataset_manifests.py",
+    "scripts/ci/check_dopamine_claim_promotion.py",
+    "scripts/ci/check_release_evidence.py"
+  ]
+}

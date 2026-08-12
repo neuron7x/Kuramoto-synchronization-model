@@ -1,12 +1,12 @@
 # Memory Invariants Specification
 
 This document specifies the formal invariants, validation behavior, and recovery
-policies for TradePulse memory systems. These guarantees ensure memory state
+policies for GeoSync memory systems. These guarantees ensure memory state
 correctness and resilience against corruption.
 
 ## Overview
 
-TradePulse implements memory hardening for the following components:
+GeoSync implements memory hardening for the following components:
 
 1. **StrategyMemory** (`core/agent/memory.py`)  
    Episodic memory for trading strategies with time-based decay

@@ -1,0 +1,25 @@
+{
+  "schema_version": "1.0.0",
+  "generated_at_utc": "2026-05-29T11:45:00Z",
+  "validator": ".claude/physics/validate_calib_grid_witness_map.py",
+  "registry": ".claude/physics/CALIB_GRID_INVARIANTS.yaml",
+  "map": ".claude/physics/CALIB_GRID_WITNESS_MAP.json",
+  "expected": {
+    "extension_ids": 9,
+    "extension_witnesses": 11,
+    "existing_registry_witnesses": 7,
+    "governance_pins": 15,
+    "unmapped_functions": 0,
+    "bucket_overlap": 0
+  },
+  "status": "EXPECTED_PASS",
+  "ci_observation": {
+    "workflow_file_created": true,
+    "workflow_runs_for_direct_commit": 0,
+    "reason": "GitHub connector direct commits did not expose workflow runs in this channel"
+  },
+  "boundary": {
+    "artifact_is_audit_snapshot": true,
+    "requires_local_or_ci_revalidation_before_release": true
+  }
+}

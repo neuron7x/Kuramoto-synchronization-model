@@ -1,3 +1,5 @@
+# Copyright (c) 2023-2026 Yaroslav Vasylenko (neuron7xLab)
+# SPDX-License-Identifier: MIT
 """Regression tests for signal feature pipeline volume metrics."""
 
 from __future__ import annotations

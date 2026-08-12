@@ -1,0 +1,62 @@
+{
+  "title": "GeoSync — IERD-Q6 §5 Latency Budget (four layers)",
+  "templating": {
+    "list": [
+      {
+        "name": "route",
+        "type": "query",
+        "query": "label_values(http_request_duration_seconds_bucket, route)"
+      }
+    ]
+  },
+  "panels": [
+    {
+      "type": "timeseries",
+      "title": "client_render — Core Web Vitals (FCP budget < 1000 ms)",
+      "layer": "client_render",
+      "budget_ms": 1000,
+      "targets": [
+        {
+          "expr": "histogram_quantile(0.75, sum(rate(web_vitals_fcp_ms_bucket[5m])) by (le))",
+          "legendFormat": "FCP p75"
+        }
+      ]
+    },
+    {
+      "type": "timeseries",
+      "title": "network_TTFB — time to first byte (budget < 300 ms)",
+      "layer": "network_TTFB",
+      "budget_ms": 300,
+      "targets": [
+        {
+          "expr": "histogram_quantile(0.95, sum(rate(web_vitals_ttfb_ms_bucket[5m])) by (le))",
+          "legendFormat": "TTFB p95"
+        }
+      ]
+    },
+    {
+      "type": "timeseries",
+      "title": "server_compute — request p95 (simple < 100 ms, interactive < 200 ms)",
+      "layer": "server_compute",
+      "budget_ms": 200,
+      "targets": [
+        {
+          "expr": "histogram_quantile(0.95, sum(rate(http_request_duration_seconds_bucket{route=~\"$route\"}[5m])) by (le)) * 1000",
+          "legendFormat": "server p95 (ms)"
+        }
+      ]
+    },
+    {
+      "type": "timeseries",
+      "title": "db_io — database query latency (rolled into server p95)",
+      "layer": "db_io",
+      "budget_ms": 100,
+      "targets": [
+        {
+          "expr": "histogram_quantile(0.95, sum(rate(database_query_duration_seconds_bucket[5m])) by (le)) * 1000",
+          "legendFormat": "db_io p95 (ms)"
+        }
+      ]
+    }
+  ]
+}

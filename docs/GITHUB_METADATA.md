@@ -7,13 +7,13 @@ This file contains prepared content for GitHub repository settings.
 ### Short Description (for GitHub "About" section, ~140 chars)
 
 ```
-Enterprise-grade algorithmic trading platform with geometric market indicators — Kuramoto, Ricci flow, entropy analysis.
+Physics-first algorithmic trading research platform with geometric indicators — Kuramoto, Ricci flow, entropy.
 ```
 
 ### Long Description (for README overview)
 
 ```
-TradePulse is an enterprise-grade algorithmic trading platform that combines advanced geometric market indicators (Kuramoto synchronization, Ricci flow curvature, entropy measures) with production-ready infrastructure. Built for quantitative researchers, day traders, and financial institutions who need to transition seamlessly from research to live execution.
+GeoSync is a physics-first algorithmic trading research platform combining geometric market indicators (Kuramoto synchronization, Ricci flow curvature, entropy measures) with deterministic-replay infrastructure and a 87-invariant kernel. Live-venue trading is paper-only at this snapshot (see docs/KNOWN_LIMITATIONS.md L-1). Built for quantitative researchers transitioning from offline studies to evidence-bound execution scaffolding.
 ```
 
 ---
@@ -70,7 +70,7 @@ trading, algorithmic-trading, quantitative-finance, backtesting, market-analysis
 
 ## How to Apply
 
-1. Go to your GitHub repository: https://github.com/neuron7x/TradePulse
+1. Go to your GitHub repository: https://github.com/neuron7xLab/GeoSync
 2. Click **Settings** (gear icon)
 3. In the **General** section:
    - Paste the short description in the "Description" field
@@ -86,11 +86,11 @@ If you have a documentation site, add it in the "Website" field.
 Using GitHub Pages (recommended for open source):
 
 ```
-https://neuron7x.github.io/TradePulse
+https://neuron7xLab.github.io/GeoSync
 ```
 
 Or a custom domain (if configured):
 
 ```
-https://docs.tradepulse.io
+https://docs.geosync.io
 ```

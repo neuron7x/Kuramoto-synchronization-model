@@ -1,3 +1,5 @@
+# Copyright (c) 2023-2026 Yaroslav Vasylenko (neuron7xLab)
+# SPDX-License-Identifier: MIT
 """Integration checks for resampling ticks into OHLCV bars."""
 
 from __future__ import annotations
@@ -39,9 +41,7 @@ def test_tick_to_ohlcv_alignment() -> None:
     l1 = resample_ticks_to_l1(ticks, freq="1min")
     bars = resample_l1_to_ohlcv(l1, freq="5min")
 
-    expected_index = pd.date_range(
-        "2024-01-02T09:30:00Z", periods=2, freq="5min", tz="UTC"
-    )
+    expected_index = pd.date_range("2024-01-02T09:30:00Z", periods=2, freq="5min", tz="UTC")
     expected = pd.DataFrame(
         {
             "open": [101.0, 103.0],

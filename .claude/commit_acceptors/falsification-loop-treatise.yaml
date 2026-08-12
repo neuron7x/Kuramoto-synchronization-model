@@ -1,0 +1,60 @@
+# Diff-bound commit acceptor: materialize the falsification-loop treatise — a
+# meta-artifact that itself passes the loop it describes (truth-gate -> unfold
+# -> materialize -> kill -> verdict). Docs-only, no code/physics change.
+
+id: falsification-loop-treatise
+status: ACTIVE
+claim_type: documentation
+promise: >-
+  After this PR lands, docs/meta/FALSIFICATION_LOOP.md records the
+  falsification-loop thesis (intelligence is a property of the controlled
+  selection cycle, not of any node), grounded in this session's concrete
+  artifacts, and states its own refutation conditions. It is prose about the
+  development process — it makes no physics, empirical, market, or alpha claim;
+  the claim-boundary gate passes on it. No code or physics-source change.
+
+diff_scope:
+  changed_files:
+    - path: ".claude/commit_acceptors/falsification-loop-treatise.yaml"
+    - path: "docs/meta/FALSIFICATION_LOOP.md"
+  forbidden_paths:
+    - "trading/"
+    - "execution/"
+    - "forecast/"
+    - "policy/"
+    - "runtime/"
+    - "application/"
+    - "core/"
+    - "scripts/"
+
+required_python_symbols:
+  - "tools/mutation_probe.py::probe"
+
+expected_signal: >-
+  python scripts/ci/check_claim_boundary.py exits 0 with the treatise present;
+  docs/meta/FALSIFICATION_LOOP.md contains its own self-falsification section.
+
+measurement_command: >-
+  bash -c 'mkdir -p tmp && python scripts/ci/check_claim_boundary.py | tee tmp/treatise.log'
+
+signal_artifact: "tmp/treatise.log"
+
+falsifier:
+  command: >-
+    bash -c 'grep -q "Самофальсифікація" docs/meta/FALSIFICATION_LOOP.md && grep -q "Трактат хибний, якщо" docs/meta/FALSIFICATION_LOOP.md'
+  description: >-
+    Asserts the treatise carries its own death-criterion — a self-falsification
+    section naming the conditions under which the thesis is false. Succeeds (exit
+    0) only when the artifact obeys the rule it preaches: a claim that cannot
+    state its own refutation is a slogan, not a thesis. The treatise must pass
+    its own gate.
+
+rollback_command: >-
+  bash -c 'git rm -f docs/meta/FALSIFICATION_LOOP.md .claude/commit_acceptors/falsification-loop-treatise.yaml'
+
+rollback_verification_command: >-
+  bash -c 'test ! -e docs/meta/FALSIFICATION_LOOP.md'
+
+memory_update_type: append
+ledger_path: ".claude/commit_acceptors/falsification-loop-treatise.yaml"
+report_path: "tmp/treatise.log"

@@ -2,7 +2,7 @@ import type { NextRequest } from 'next/server'
 import { NextResponse } from 'next/server'
 
 const PUBLIC_FILE = /\.(.*)$/
-const PUBLIC_ROUTES = ['/signin']
+const PUBLIC_ROUTES = ['/signin', '/edge-probe']
 const REFRESH_COOKIE_NAME = 'tp.refreshToken'
 
 export function middleware(request: NextRequest) {

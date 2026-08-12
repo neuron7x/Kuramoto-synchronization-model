@@ -1,3 +1,5 @@
+# Copyright (c) 2023-2026 Yaroslav Vasylenko (neuron7xLab)
+# SPDX-License-Identifier: MIT
 """Entry point for running the load-test gRPC trading service."""
 
 from __future__ import annotations
@@ -26,7 +28,7 @@ def main() -> None:
     stop_signals = {signal.SIGINT, signal.SIGTERM}
     received = False
 
-    def _handle(signum: int, frame) -> None:  # noqa: ARG001 - required signature
+    def _handle(signum: int, frame) -> None:
         nonlocal received
         received = True
 

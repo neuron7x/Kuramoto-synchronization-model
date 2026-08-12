@@ -9,12 +9,12 @@ Accepted
 
 ## Context
 
-Runtime control in TradePulse must manage adaptive topology changes, risk throttling, and crisis responses without destabilizing live trading. Ad-hoc control actions can:
+Runtime control in GeoSync must manage adaptive topology changes, risk throttling, and crisis responses without destabilizing live trading. Ad-hoc control actions can:
 - Escalate system instability during degraded states.
 - Circumvent safety approvals for systemic changes.
 - Mask free-energy spikes that indicate unsafe adaptation.
 
-TradePulse already includes a thermodynamic controller and a behavioral contract layer (TACL). We need a formal ADR capturing the governance, gating, and safety semantics.
+GeoSync already includes a thermodynamic controller and a behavioral contract layer (TACL). We need a formal ADR capturing the governance, gating, and safety semantics.
 
 ## Decision
 

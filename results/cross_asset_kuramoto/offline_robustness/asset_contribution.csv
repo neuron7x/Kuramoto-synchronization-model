@@ -1,0 +1,6 @@
+asset,net_contrib_log_return,gross_contrib_log_return,cost_contrib_log_return,pct_of_portfolio_net,turnover_sum,bars_active,hit_rate_when_active
+GLD,0.382483,0.402837,-0.020354,0.627765,20.353872,472,0.5508
+BTC,0.174822,0.182533,-0.007711,0.286933,7.711056,332,0.5241
+ETH,0.133936,0.13928,-0.005344,0.219827,5.344039,332,0.5181
+SPY,0.0,0.0,-0.0,0.0,0.0,0,
+TLT,-0.081963,-0.060456,-0.021507,-0.134525,21.507174,472,0.4746

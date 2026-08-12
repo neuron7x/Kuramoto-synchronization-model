@@ -1,0 +1,218 @@
+# Diff-bound commit acceptor for the D-002H Gate B eligibility
+# reverification PR.
+#
+# Reuses the verifiers from research/systemic_risk/d002g_null_mechanisms.py
+# (sha-pinned at the D-002G M3 merge cced6e60) to evaluate
+# ricci_flow M1/M3 eligibility on the locked D-002H canonical grid
+# {N=50,100,200} × λ ∈ {0.0, 0.05, 0.10, 0.20, 0.40, 1.0}. Emits a
+# machine-readable verdict artifact at
+# artifacts/d002h/eligibility/d002h_ricci_eligibility.json (schema
+# D002H-GATE-B-v1).
+#
+# Strict scope (per the operating law):
+#   * NO new mechanism family. NO new verdict literal. NO new salt.
+#   * NO new tolerance constant — reuses M3 tolerances verbatim.
+#   * NO D-002G prereg edit. NO D-002H prereg edit. NO locked-file edit.
+#   * NO D002C_CLAIM_LEDGER.yaml mutation (sha pinned byte-exact).
+#   * NO substrate code edit. NO mechanism code edit.
+#   * NO canonical run start. NO canonical-run artifact.
+#   * NO claim "Gate B PASS → canonical run authorised"; the 7-gate
+#     conjunction A ∧ B ∧ C ∧ D ∧ E ∧ F ∧ G is the contract.
+
+id: x10r-d002h-gate-b-eligibility
+status: ACTIVE
+claim_type: governance
+promise: >-
+  After this PR lands,
+  artifacts/d002h/eligibility/d002h_ricci_eligibility.json carries the
+  schema_version "D002H-GATE-B-v1" with study_id "D-002H", gate "B",
+  substrate_scope == ["ricci_flow"], grid.N == [50, 100, 200],
+  grid.lambda_values == [0.0, 0.05, 0.10, 0.20, 0.40, 1.0],
+  grid.base_seed == 42, grid.null_seed_M3 == 12345, n_cells_evaluated
+  == 18, gate_b_verdict == "PASS", canonical_run_authorized == false,
+  downstream_gates_remaining == ["C","D","E","F","G"],
+  d002c_ledger_touched == false, substrate_code_edited == false,
+  mechanism_code_edited == false. Every λ=0 cell carries
+  m3_status "N/A_M3_REQUIRES_LAMBDA_GT_ZERO" per the M3 module's
+  contract; every λ>0 cell carries m1_status starting with
+  "ELIGIBLE_M1" AND m3_status starting with "ELIGIBLE_M3" with the
+  marginal match report inside the locked M3 tolerances.
+
+  docs/governance/D002H_GATE_B_REPORT.md carries the 9-section report
+  (scope, prereg anchor, method, 18-cell verdict matrix, Gate B verdict,
+  claim boundary, forbidden interpretations, reproduce command, next
+  gate); scripts/x10r_d002h_gate_b_eligibility.py is the compute
+  script invoked via `PYTHONPATH=. python
+  scripts/x10r_d002h_gate_b_eligibility.py`;
+  tests/systemic_risk/test_d002h_gate_b_eligibility.py carries 10
+  fast schema/invariant tests pinning the artifact contract and the
+  D-002C ledger sha; docs/governance/D002G_CANONICAL_RUN_BLOCKERS.md
+  gains an append-only "D-002H Gate B" section after the lineage
+  transition section.
+
+  Reuses the verifiers from research/systemic_risk/d002g_null_mechanisms.py
+  (verify_m3_eligibility imported + invoked; M1 admissibility encoded
+  inside _realize_m1 reused via realize_null). NO new mechanism. NO
+  new verdict literal. NO new salt. NO substrate / mechanism / locked
+  governance edit. NO D-002C ledger mutation. NO canonical D-002H run
+  authorisation — this PR addresses Gate B alone; Gates C..G remain
+  open and the 7-gate conjunction is the contract.
+
+diff_scope:
+  changed_files:
+    - path: ".claude/commit_acceptors/x10r-d002h-gate-b-eligibility.yaml"
+    - path: "scripts/x10r_d002h_gate_b_eligibility.py"
+    - path: "tests/systemic_risk/test_d002h_gate_b_eligibility.py"
+    - path: "docs/governance/D002H_GATE_B_REPORT.md"
+    - path: "artifacts/d002h/eligibility/d002h_ricci_eligibility.json"
+    - path: "docs/governance/D002G_CANONICAL_RUN_BLOCKERS.md"
+  forbidden_paths:
+    # D-002C locked governance + claim ledger
+    - "docs/governance/D002C_CLAIM_LEDGER.yaml"
+    - "docs/governance/D002C_PREREGISTRATION.yaml"
+    - "docs/governance/D002C_CANONICAL_RUN_REPORT.md"
+    - "docs/governance/D002C_ATTEMPT_2_NULL_AUDIT_FALSIFICATION_REPORT.md"
+    # D-002G locked governance + prior PR reports
+    - "docs/governance/D002G_PREREGISTRATION.yaml"
+    - "docs/governance/D002G_NONDEGENERATE_NULL_DESIGN.md"
+    - "docs/governance/D002G_ACCEPTANCE_RULES.md"
+    - "docs/governance/D002G_P3_M3_PREREGISTRATION.md"
+    - "docs/governance/D002G_STRUCTURAL_CLOSURE_REPORT.md"
+    - "docs/governance/D002G_NEGATIVE_SPACE_MAP.md"
+    - "docs/governance/D002G_M3_ELIGIBILITY_MATRIX.md"
+    # D-002H locked governance from PR #683
+    - "docs/governance/D002H_PREREGISTRATION.yaml"
+    - "docs/governance/D002H_SCOPE_RATIONALE.md"
+    - "docs/governance/D002H_CLAIM_BOUNDARY.md"
+    - "docs/governance/D002H_CANONICAL_RUN_AUTHORIZATION_GATES.md"
+    - "artifacts/d002h/prereg/d002h_preregistration_lock.json"
+    # Substrate code + null mechanism module
+    - "research/systemic_risk/d002c_substrates.py"
+    - "research/systemic_risk/d002g_null_mechanisms.py"
+    # Prior D-002G artifact tree
+    - "artifacts/d002g/closure/"
+    - "artifacts/d002g/m3/"
+    - "artifacts/d002g/p3/"
+    - "artifacts/d002g/canonical/"
+    # Downstream D-002H gate artifacts (Gate B owns only eligibility/)
+    - "artifacts/d002h/canonical/"
+    - "artifacts/d002h/authorization/"
+required_python_symbols:
+  - "research.systemic_risk.d002g_null_mechanisms.verify_m3_eligibility"
+  - "research.systemic_risk.d002g_null_mechanisms.realize_null"
+  - "research.systemic_risk.d002g_null_mechanisms.BitIdenticalNullError"
+  - "research.systemic_risk.d002c_substrates.RicciFlowSubstrate"
+expected_signal: >-
+  `PYTHONPATH=. python scripts/x10r_d002h_gate_b_eligibility.py` exits
+  0; `PYTHONPATH=. python -m pytest
+  tests/systemic_risk/test_d002h_gate_b_eligibility.py -q` passes all
+  10 tests; the artifact JSON parses and satisfies the schema/invariant
+  asserts; the D-002C claim ledger sha256 stays byte-exact at
+  f96ba9b5a2057d2e0bff84afc28578ab316cff73f6dc6673fb0d6d543b8bd6dd;
+  the substrate file sha256 stays byte-exact at
+  4b2e5d65c104a5be5a207951cd3c4ae099f31ce83b3f2c0766a160d8c9e80eca;
+  the mechanism module sha256 stays byte-exact at
+  c7e275191454e1e961d5a079a21b6e1dbfcbc1661d48ddf14d0d0c39a426f257;
+  the D-002H prereg sha256 stays byte-exact at
+  44b18b5a40ce9d188a9c3bd49339621f81a65a15f97a683247902450dd54acec;
+  BLOCKERS.md gains the "D-002H Gate B — ricci_flow M1/M3 eligibility
+  reverification" append-only section.
+measurement_command: >-
+  bash -c 'set -e;
+  PYTHONPATH=. python -m pytest tests/systemic_risk/test_d002h_gate_b_eligibility.py -q;
+  python -c "import json;
+  d=json.load(open(\"artifacts/d002h/eligibility/d002h_ricci_eligibility.json\"));
+  assert d[\"schema_version\"]==\"D002H-GATE-B-v1\";
+  assert d[\"study_id\"]==\"D-002H\";
+  assert d[\"gate\"]==\"B\";
+  assert d[\"substrate_scope\"]==[\"ricci_flow\"];
+  assert d[\"grid\"][\"N\"]==[50,100,200];
+  assert d[\"grid\"][\"lambda_values\"]==[0.0, 0.05, 0.10, 0.20, 0.40, 1.0];
+  assert d[\"grid\"][\"base_seed\"]==42;
+  assert d[\"grid\"][\"null_seed_M3\"]==12345;
+  assert d[\"n_cells_evaluated\"]==18;
+  assert d[\"gate_b_verdict\"] in {\"PASS\",\"FAIL\"};
+  assert d[\"canonical_run_authorized\"] is False;
+  assert set(d[\"downstream_gates_remaining\"])=={\"C\",\"D\",\"E\",\"F\",\"G\"};
+  assert d[\"d002c_ledger_touched\"] is False;
+  assert d[\"substrate_code_edited\"] is False;
+  assert d[\"mechanism_code_edited\"] is False;
+  lambda_zero=[c for c in d[\"cells\"] if c[\"lambda_value\"]==0.0];
+  assert len(lambda_zero)==3;
+  assert all(c[\"m3_status\"]==\"N/A_M3_REQUIRES_LAMBDA_GT_ZERO\" for c in lambda_zero);
+  lambda_pos=[c for c in d[\"cells\"] if c[\"lambda_value\"]>0.0];
+  assert len(lambda_pos)==15;
+  assert all(c[\"m1_status\"].startswith(\"ELIGIBLE_M1\") for c in lambda_pos);
+  assert all(c[\"m3_status\"].startswith(\"ELIGIBLE_M3\") for c in lambda_pos)";
+  grep -q "Gate B PASS certifies that ricci_flow is M1- and M3-eligible" docs/governance/D002H_GATE_B_REPORT.md;
+  grep -q "D-002H Gate B — ricci_flow M1/M3 eligibility reverification" docs/governance/D002G_CANONICAL_RUN_BLOCKERS.md;
+  test "$(sha256sum docs/governance/D002C_CLAIM_LEDGER.yaml | awk "{print \$1}")" = "f96ba9b5a2057d2e0bff84afc28578ab316cff73f6dc6673fb0d6d543b8bd6dd";
+  test "$(sha256sum research/systemic_risk/d002c_substrates.py | awk "{print \$1}")" = "4b2e5d65c104a5be5a207951cd3c4ae099f31ce83b3f2c0766a160d8c9e80eca";
+  test "$(sha256sum research/systemic_risk/d002g_null_mechanisms.py | awk "{print \$1}")" = "c7e275191454e1e961d5a079a21b6e1dbfcbc1661d48ddf14d0d0c39a426f257";
+  test "$(sha256sum docs/governance/D002H_PREREGISTRATION.yaml | awk "{print \$1}")" = "44b18b5a40ce9d188a9c3bd49339621f81a65a15f97a683247902450dd54acec";
+  test "$(sha256sum docs/governance/D002H_CANONICAL_RUN_AUTHORIZATION_GATES.md | awk "{print \$1}")" = "75becc5c0d57eab9505ab00fe36e35ce1513126f8415d510f1c65dd7643bc0e6"'
+signal_artifact: "artifacts/d002h/eligibility/d002h_ricci_eligibility.json"
+falsifier:
+  command: >-
+    bash -c 'set -e;
+    PYTHONPATH=. python -m pytest tests/systemic_risk/test_d002h_gate_b_eligibility.py -q || exit 1;
+    test -f artifacts/d002h/eligibility/d002h_ricci_eligibility.json || exit 2;
+    test -f docs/governance/D002H_GATE_B_REPORT.md || exit 3;
+    test -f scripts/x10r_d002h_gate_b_eligibility.py || exit 4;
+    python -c "import json;
+    d=json.load(open(\"artifacts/d002h/eligibility/d002h_ricci_eligibility.json\"));
+    assert d[\"schema_version\"]==\"D002H-GATE-B-v1\";
+    assert d[\"substrate_scope\"]==[\"ricci_flow\"];
+    assert d[\"n_cells_evaluated\"]==18;
+    assert d[\"canonical_run_authorized\"] is False;
+    assert set(d[\"downstream_gates_remaining\"])=={\"C\",\"D\",\"E\",\"F\",\"G\"};
+    lambda_zero=[c for c in d[\"cells\"] if c[\"lambda_value\"]==0.0];
+    assert len(lambda_zero)==3 and all(c[\"m3_status\"]==\"N/A_M3_REQUIRES_LAMBDA_GT_ZERO\" for c in lambda_zero);
+    lambda_pos=[c for c in d[\"cells\"] if c[\"lambda_value\"]>0.0];
+    assert len(lambda_pos)==15 and all(c[\"m1_status\"].startswith(\"ELIGIBLE_M1\") for c in lambda_pos);
+    assert all(c[\"m3_status\"].startswith(\"ELIGIBLE_M3\") for c in lambda_pos);
+    assert d[\"gate_b_verdict\"]==\"PASS\"" || exit 5;
+    grep -q "D-002H Gate B — ricci_flow M1/M3 eligibility reverification" docs/governance/D002G_CANONICAL_RUN_BLOCKERS.md || exit 6;
+    test "$(sha256sum docs/governance/D002C_CLAIM_LEDGER.yaml | awk "{print \$1}")" = "f96ba9b5a2057d2e0bff84afc28578ab316cff73f6dc6673fb0d6d543b8bd6dd" || exit 7;
+    test "$(sha256sum research/systemic_risk/d002c_substrates.py | awk "{print \$1}")" = "4b2e5d65c104a5be5a207951cd3c4ae099f31ce83b3f2c0766a160d8c9e80eca" || exit 8;
+    test "$(sha256sum research/systemic_risk/d002g_null_mechanisms.py | awk "{print \$1}")" = "c7e275191454e1e961d5a079a21b6e1dbfcbc1661d48ddf14d0d0c39a426f257" || exit 9;
+    test "$(sha256sum docs/governance/D002H_PREREGISTRATION.yaml | awk "{print \$1}")" = "44b18b5a40ce9d188a9c3bd49339621f81a65a15f97a683247902450dd54acec" || exit 10;
+    if grep -rE "Gate B authorises canonical run|canonical run authorised|canonical run authorized|D-002G rescued|D-002C rescued|cross-substrate robustness|general topology robustness|scientific PASS achieved|VALIDATED_REAL_BANK_LEVEL_RESULT|TESTED_POSITIVE_REAL|BANK_LEVEL_PRECURSOR_CONFIRMED" docs/governance/D002H_GATE_B_REPORT.md scripts/x10r_d002h_gate_b_eligibility.py tests/systemic_risk/test_d002h_gate_b_eligibility.py | grep -vE "❌|forbidden|NOT|never|cannot|does not|do not|out of scope|MUST NOT|alone does NOT|alone is one term|prohibited|disallowed|requires|impossible|deny|denied|reject|REJECT|attempt|FAIL"; then
+      echo "forbidden promotional phrase leaked outside denial context"; exit 11;
+    fi'
+  description: >-
+    Probes the D-002H Gate B verdict artifact:
+    (a) the 10 Gate B tests pass;
+    (b) all 3 new files exist on disk (artifact + report + script);
+    (c) artifact JSON has the locked schema_version D002H-GATE-B-v1,
+        substrate_scope=[ricci_flow], n_cells_evaluated=18,
+        canonical_run_authorized=False, downstream gates {C,D,E,F,G};
+        3 λ=0 cells with m3_status=N/A_M3_REQUIRES_LAMBDA_GT_ZERO;
+        15 λ>0 cells with m1_status starting ELIGIBLE_M1 AND
+        m3_status starting ELIGIBLE_M3; gate_b_verdict=PASS;
+    (d) BLOCKERS.md carries the new Gate B append-only section;
+    (e) D-002C claim ledger byte-exact at the anchor sha;
+    (f) substrate + mechanism module shas byte-exact unchanged;
+    (g) D-002H prereg sha byte-exact unchanged at PR #683 anchor;
+    (h) no forbidden phrase leaks outside denial context.
+    Regression on any → Gate B contract broken.
+rollback_command: >-
+  bash -c 'rm -f
+  scripts/x10r_d002h_gate_b_eligibility.py
+  tests/systemic_risk/test_d002h_gate_b_eligibility.py
+  docs/governance/D002H_GATE_B_REPORT.md
+  artifacts/d002h/eligibility/d002h_ricci_eligibility.json
+  .claude/commit_acceptors/x10r-d002h-gate-b-eligibility.yaml
+  && rmdir artifacts/d002h/eligibility 2>/dev/null || true
+  && git checkout HEAD~1 -- docs/governance/D002G_CANONICAL_RUN_BLOCKERS.md'
+rollback_verification_command: >-
+  bash -c 'test ! -f scripts/x10r_d002h_gate_b_eligibility.py
+  && test ! -f tests/systemic_risk/test_d002h_gate_b_eligibility.py
+  && test ! -f docs/governance/D002H_GATE_B_REPORT.md
+  && test ! -f artifacts/d002h/eligibility/d002h_ricci_eligibility.json
+  && test ! -f .claude/commit_acceptors/x10r-d002h-gate-b-eligibility.yaml
+  && ! grep -q "D-002H Gate B — ricci_flow M1/M3 eligibility reverification" docs/governance/D002G_CANONICAL_RUN_BLOCKERS.md'
+memory_update_type: append
+ledger_path: ".claude/commit_acceptors/x10r-d002h-gate-b-eligibility.yaml"
+report_path: "docs/governance/D002H_GATE_B_REPORT.md"
+evidence: []

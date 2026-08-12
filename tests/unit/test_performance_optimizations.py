@@ -1,4 +1,5 @@
-# SPDX-License-Identifier: LicenseRef-TradePulse-Proprietary
+# Copyright (c) 2023-2026 Yaroslav Vasylenko (neuron7xLab)
+# SPDX-License-Identifier: MIT
 """Tests for performance optimization features.
 
 This module tests the optional performance optimization parameters (use_float32, chunk_size)
@@ -22,6 +23,7 @@ Key testing principles:
 - Chunked processing should produce results similar to non-chunked
 - All optimizations should preserve the core algorithm behavior
 """
+
 from __future__ import annotations
 
 import numpy as np

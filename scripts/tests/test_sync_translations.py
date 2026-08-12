@@ -1,8 +1,9 @@
+# Copyright (c) 2023-2026 Yaroslav Vasylenko (neuron7xLab)
+# SPDX-License-Identifier: MIT
 from __future__ import annotations
 
-from pathlib import Path
-
 import json
+from pathlib import Path
 
 import scripts.localization.sync_translations as sync
 

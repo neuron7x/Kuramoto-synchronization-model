@@ -1,3 +1,5 @@
+# Copyright (c) 2023-2026 Yaroslav Vasylenko (neuron7xLab)
+# SPDX-License-Identifier: MIT
 """Liquidity impact and slippage forecasting utilities.
 
 This module bundles together a light–weight quantitative model that estimates
@@ -231,31 +233,21 @@ class LiquidityImpactModel:
             shortfall_penalty_bps=self._config.shortfall_penalty_bps,
         )
 
-        base_slippage = self._compute_base_slippage(
-            side_norm, snapshot.mid_price, avg_price
-        )
+        base_slippage = self._compute_base_slippage(side_norm, snapshot.mid_price, avg_price)
         effective_participation = min(max(participation_rate, 1e-6), 1.0)
         participation_component = (
             snapshot.mid_price
             * self._config.impact_sensitivity
             * (effective_participation**self._config.participation_exponent)
         )
-        realised_volatility = (
-            volatility if volatility is not None else snapshot.volatility or 0.0
-        )
+        realised_volatility = volatility if volatility is not None else snapshot.volatility or 0.0
         volatility_component = (
-            snapshot.mid_price
-            * self._config.volatility_sensitivity
-            * max(realised_volatility, 0.0)
+            snapshot.mid_price * self._config.volatility_sensitivity * max(realised_volatility, 0.0)
         )
 
-        expected_slippage = (
-            base_slippage + participation_component + volatility_component
-        )
+        expected_slippage = base_slippage + participation_component + volatility_component
         expected_slippage_bps = (
-            (expected_slippage / snapshot.mid_price) * 1e4
-            if snapshot.mid_price
-            else 0.0
+            (expected_slippage / snapshot.mid_price) * 1e4 if snapshot.mid_price else 0.0
         )
 
         if side_norm == "buy":
@@ -308,9 +300,7 @@ class LiquidityImpactModel:
             else:
                 shortfall = benchmark_price - forecast.expected_fill_price
             metrics["expected_implementation_shortfall"] = shortfall
-            metrics["expected_implementation_shortfall_bps"] = (
-                shortfall / benchmark_price
-            ) * 1e4
+            metrics["expected_implementation_shortfall_bps"] = (shortfall / benchmark_price) * 1e4
         return metrics
 
     def adjust_execution_params(
@@ -327,9 +317,7 @@ class LiquidityImpactModel:
         new_limit_offset = current.limit_offset_bps
 
         if slippage_bps > config.slippage_upper_band_bps or liquidity_score < 1.0:
-            new_participation = config.clamp_participation(
-                current.participation_rate * 0.75
-            )
+            new_participation = config.clamp_participation(current.participation_rate * 0.75)
             new_slice = max(
                 current.slice_volume * config.min_slice_multiplier,
                 current.slice_volume * 0.5,
@@ -341,9 +329,7 @@ class LiquidityImpactModel:
             slippage_bps < config.slippage_lower_band_bps
             and liquidity_score > config.liquidity_score_threshold
         ):
-            new_participation = config.clamp_participation(
-                current.participation_rate * 1.15
-            )
+            new_participation = config.clamp_participation(current.participation_rate * 1.15)
             new_slice = min(
                 current.slice_volume * config.max_slice_multiplier,
                 current.slice_volume * 1.25,

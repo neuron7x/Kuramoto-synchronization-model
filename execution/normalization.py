@@ -1,4 +1,5 @@
-# SPDX-License-Identifier: LicenseRef-TradePulse-Proprietary
+# Copyright (c) 2023-2026 Yaroslav Vasylenko (neuron7xLab)
+# SPDX-License-Identifier: MIT
 """Utilities for exchange-specific symbol and quantity normalization."""
 
 from __future__ import annotations
@@ -39,8 +40,7 @@ class SymbolNormalizer:
             self._canonical(k): v for k, v in (symbol_map or {}).items()
         }
         self._specs: Dict[str, SymbolSpecification] = {
-            self._canonical(spec.symbol): spec
-            for spec in (specifications or {}).values()
+            self._canonical(spec.symbol): spec for spec in (specifications or {}).values()
         }
 
     @staticmethod
@@ -78,9 +78,7 @@ class SymbolNormalizer:
             ctx.prec = cls._DECIMAL_PRECISION
             ctx.rounding = ROUND_HALF_UP
             value_decimal = cls._decimal(value)
-            steps = (value_decimal / step_decimal).to_integral_value(
-                rounding=ROUND_HALF_UP
-            )
+            steps = (value_decimal / step_decimal).to_integral_value(rounding=ROUND_HALF_UP)
             return steps * step_decimal
 
     @classmethod
@@ -129,9 +127,7 @@ class SymbolNormalizer:
             return price
         return self._round(price, spec.tick_size)
 
-    def validate(
-        self, symbol: str, quantity: float, price: float | None = None
-    ) -> None:
+    def validate(self, symbol: str, quantity: float, price: float | None = None) -> None:
         spec = self.specification(symbol)
         if spec is None:
             return

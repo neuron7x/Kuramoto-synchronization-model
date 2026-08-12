@@ -1,0 +1,51 @@
+# SPDX-License-Identifier: MIT
+id: clamp-void-predictor
+status: DRAFT
+claim_type: governance
+promise: >-
+  tools/physics/predict_clamp_voids.py turns the recurring clamp-registry void
+  (an edit shifts a clamp's line, the registry goes stale, CI fails AFTER the
+  commit) into a pre-commit forecast. It reuses the gate's own detector
+  (check_silent_clamps.scan_file) so the prediction equals the gate's behaviour,
+  classifies each drift, and with --write auto-re-pins ONLY pure line shifts
+  (same (path, shape) count). A genuinely new clamp is always reported as a
+  NEW_CLAMP hard void needing a human-declared reason — never silently fixed.
+  No predictive/scientific claim; repository-entropy prevention infrastructure.
+diff_scope:
+  changed_files:
+    - path: ".claude/commit_acceptors/clamp-void-predictor.yaml"
+    - path: "tools/physics/predict_clamp_voids.py"
+    - path: "tests/tools/test_predict_clamp_voids.py"
+  forbidden_paths:
+    - "trading/"
+    - "execution/"
+    - "forecast/"
+    - "policy/"
+required_python_symbols: []
+expected_signal: >-
+  predict_clamp_voids on the committed tree reports 'clean'; a pure line shift is
+  SAFE_LINE_SHIFT and --write re-pins it so check_silent_clamps then passes; a new
+  clamp is NEW_CLAMP and is NOT auto-fixed even with --write; pytest
+  tests/tools/test_predict_clamp_voids.py passes.
+measurement_command: >-
+  bash -c 'python -m pytest -q tests/tools/test_predict_clamp_voids.py && python tools/physics/predict_clamp_voids.py'
+signal_artifact: "tmp/clamp_void_predictor.log"
+falsifier:
+  command: |
+    python -c "import importlib.util, sys
+    s = importlib.util.spec_from_file_location('p', 'tools/physics/predict_clamp_voids.py')
+    p = importlib.util.module_from_spec(s); sys.modules['p'] = p; s.loader.exec_module(p)
+    b = p.classify({('x.py', 'floor_builtin'): {10}}, {})
+    sys.exit(0 if b['SAFE_LINE_SHIFT'] else 1)"
+  description: >-
+    Classifies a clamp with no registry entry and exits 0 only if it is wrongly
+    bucketed SAFE_LINE_SHIFT (the unsafe regression where a new clamp would be
+    auto-fixed). On the correct tree it is NEW_CLAMP, so SAFE is empty and the
+    command exits non-zero — proving the never-auto-fix-a-new-clamp safety
+    property is real.
+rollback_command: "git revert --no-edit HEAD"
+rollback_verification_command: "git diff --exit-code tools/physics/predict_clamp_voids.py"
+memory_update_type: none
+ledger_path: ".claude/commit_acceptors/clamp-void-predictor.yaml"
+report_path: "docs/reports/diff_bound_commit_acceptor_layer.md"
+evidence: []

@@ -1,8 +1,8 @@
 {
   "estimated_completion_at": "2025-02-01T12:32:30Z",
   "links": {
-    "status": "https://api.tradepulse.example/v1/predictions/pred-20250201-001",
-    "webhook": "https://webhooks.tradepulse.example/predictions/pred-20250201-001"
+    "status": "https://api.geosync.example/v1/predictions/pred-20250201-001",
+    "webhook": "https://webhooks.geosync.example/predictions/pred-20250201-001"
   },
   "request_id": "pred-20250201-001",
   "status": "accepted",

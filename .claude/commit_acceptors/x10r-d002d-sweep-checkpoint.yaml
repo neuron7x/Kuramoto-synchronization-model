@@ -1,0 +1,143 @@
+# Diff-bound commit acceptor for D-002D (issue #655) —
+# checkpoint / resume infrastructure for long sweeps.
+#
+# What lands:
+#   * research/systemic_risk/sweep_checkpoint.py
+#       Atomic per-cell checkpoint store. SweepCheckpoint +
+#       CellResult dataclasses + CheckpointManager. Atomic
+#       write via tmp+rename; config_sha enforces sweep
+#       identity; code_sha drift logged as warning, not fail;
+#       order-invariant ledger sha256.
+#   * tests/research/systemic_risk/test_sweep_checkpoint.py
+#       20 fast tests pinning gates G1-G5: atomic save,
+#       idempotent re-save, resume skips done cells exactly,
+#       config_sha mismatch raises CheckpointConfigMismatch,
+#       code_sha drift logs WARNING + records drift event,
+#       export_ledger sha is stable across managers and
+#       order-invariant, CellResult round-trip, corrupt-file
+#       handling, empty/full grid edge cases.
+#
+# Strict scope:
+#   Driver / infrastructure only. NO science change. NO test
+#   relaxation. NO threshold tuning. NO claim layer.
+#   The module is callable from any future sweep (D-002C,
+#   D-002C-extension, etc.); it emits no claim of its own.
+
+id: x10r-d002d-sweep-checkpoint
+status: ACTIVE
+claim_type: correctness
+promise: >-
+  After this PR lands, research/systemic_risk/sweep_checkpoint
+  exposes CheckpointManager — an atomic per-cell ledger store
+  that lets a long sweep (e.g. D-002C's 69 120-evaluation
+  signal-amplification grid) survive interrupts without RAM-
+  only critical state. Resume is a pure subtraction:
+  remaining_cells(full_grid) = full_grid - completed_cells.
+  Config_sha mismatch is a hard fail (refusing to merge
+  ledgers across different sweep configurations); code_sha
+  drift is a soft warning so a sweep can resume across a
+  refactor as long as the science contract is unchanged.
+  Ledger sha256 is order-invariant — two runs that complete
+  the same cells in different orders produce the same hash.
+  All operations atomic on POSIX via os.replace.
+
+  Strict scope: driver / infrastructure only. No science
+  change to existing modules. The module emits no claim of
+  its own — it is callable by downstream sweeps which retain
+  their own scoped-tier discipline (D-002C, etc.).
+diff_scope:
+  changed_files:
+    - path: ".claude/commit_acceptors/x10r-d002d-sweep-checkpoint.yaml"
+    - path: "research/systemic_risk/sweep_checkpoint.py"
+    - path: "tests/research/systemic_risk/test_sweep_checkpoint.py"
+  forbidden_paths:
+    - "trading/"
+    - "execution/"
+    - "forecast/"
+    - "policy/"
+    - "core/physics/"
+    - "core/kuramoto/"
+    - "research/reconstruction/"
+    - "scripts/run_x10r_"
+    - "application/governance/claim_ledger.py"
+    - "application/governance/commit_acceptor.py"
+required_python_symbols:
+  - "research/systemic_risk/sweep_checkpoint.py::CheckpointManager"
+  - "research/systemic_risk/sweep_checkpoint.py::SweepCheckpoint"
+  - "research/systemic_risk/sweep_checkpoint.py::CellResult"
+  - "research/systemic_risk/sweep_checkpoint.py::CheckpointConfigMismatch"
+  - "research/systemic_risk/sweep_checkpoint.py::stable_ledger_sha256"
+  - "tests/research/systemic_risk/test_sweep_checkpoint.py::test_g1_save_cell_writes_atomic_and_persists"
+  - "tests/research/systemic_risk/test_sweep_checkpoint.py::test_g2_resume_skips_completed_cells_exactly"
+  - "tests/research/systemic_risk/test_sweep_checkpoint.py::test_g3_config_mismatch_raises"
+  - "tests/research/systemic_risk/test_sweep_checkpoint.py::test_g4_code_drift_logs_warning_but_resumes"
+  - "tests/research/systemic_risk/test_sweep_checkpoint.py::test_g5_export_ledger_sha_stable_across_managers"
+  - "tests/research/systemic_risk/test_sweep_checkpoint.py::test_g5_export_ledger_sha_order_invariant"
+expected_signal: >-
+  Local: `pytest tests/research/systemic_risk/test_sweep_checkpoint.py -q`
+  reports "20 passed"; `mypy --strict --follow-imports=silent`
+  clean on the new files; `ruff check` and `black --check` both
+  pass on those paths.
+measurement_command: >-
+  bash -c 'mypy --strict --follow-imports=silent
+  research/systemic_risk/sweep_checkpoint.py
+  tests/research/systemic_risk/test_sweep_checkpoint.py
+  && ruff check
+  research/systemic_risk/sweep_checkpoint.py
+  tests/research/systemic_risk/test_sweep_checkpoint.py
+  && black --check
+  research/systemic_risk/sweep_checkpoint.py
+  tests/research/systemic_risk/test_sweep_checkpoint.py
+  && pytest tests/research/systemic_risk/test_sweep_checkpoint.py -q'
+signal_artifact: "tests/research/systemic_risk/test_sweep_checkpoint.py"
+falsifier:
+  command: |-
+    bash -c 'PYTHONPATH=. python -c "
+    import tempfile, json
+    from pathlib import Path
+    from research.systemic_risk.sweep_checkpoint import (
+        CellResult, CheckpointConfigMismatch, CheckpointManager,
+        cell_key, stable_ledger_sha256,
+    )
+    with tempfile.TemporaryDirectory() as td:
+        p = Path(td) / \"ckpt.json\"
+        cfg = {\"a\": 1, \"b\": [1, 2, 3]}
+        mgr = CheckpointManager(p, cfg, code_sha=\"x\")
+        ckpt = mgr.load_or_create()
+        assert ckpt.completed_cells == ()
+        k = cell_key((50, 0.5, \"block\", \"tau\"))
+        mgr.save_cell(k, CellResult(cell_key=k, payload={\"v\": 1.0}, duration_seconds=0.1))
+        assert mgr.is_done(k)
+        assert mgr.remaining_cells([k, cell_key((100, 0.5, \"b\", \"t\"))]) == [cell_key((100, 0.5, \"b\", \"t\"))]
+        sha = mgr.export_ledger_sha256()
+        # Re-open with same config: ledger sha stable
+        mgr2 = CheckpointManager(p, cfg, code_sha=\"x\")
+        mgr2.load_or_create()
+        assert mgr2.export_ledger_sha256() == sha, \"ledger sha unstable across re-open\"
+        # Different config: refuses to merge
+        try:
+            CheckpointManager(p, {\"a\": 2}, code_sha=\"x\").load_or_create()
+            raise AssertionError(\"should have raised\")
+        except CheckpointConfigMismatch:
+            pass
+    "'
+  description: >-
+    Probes the D-002D contract: fresh checkpoint emits empty
+    state, save_cell persists, is_done / remaining_cells
+    discriminate exactly, ledger sha256 is stable across
+    re-open, config_sha mismatch raises
+    CheckpointConfigMismatch. If any of these regress, the
+    sweep-resume contract is broken.
+rollback_command: >-
+  bash -c 'git checkout HEAD~1 --
+  && rm -f research/systemic_risk/sweep_checkpoint.py
+  tests/research/systemic_risk/test_sweep_checkpoint.py
+  .claude/commit_acceptors/x10r-d002d-sweep-checkpoint.yaml'
+rollback_verification_command: >-
+  bash -c 'test ! -f research/systemic_risk/sweep_checkpoint.py
+  && test ! -f tests/research/systemic_risk/test_sweep_checkpoint.py
+  && test ! -f .claude/commit_acceptors/x10r-d002d-sweep-checkpoint.yaml'
+memory_update_type: append
+ledger_path: ".claude/commit_acceptors/x10r-d002d-sweep-checkpoint.yaml"
+report_path: "tests/research/systemic_risk/test_sweep_checkpoint.py"
+evidence: []

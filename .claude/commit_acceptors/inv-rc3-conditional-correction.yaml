@@ -1,0 +1,81 @@
+# Diff-bound commit acceptor for the INV-RC3 honesty correction.
+#
+# INV-RC3 claimed κ ∈ [−1, 1] universally for every build_price_graph edge, and
+# asserted that consecutive integer node IDs with unit positional spacing are
+# "guaranteed by the price-graph constructor". That guarantee is FALSE: price
+# levels jump by >1 on volatile series, so W₁ (positional metric) and d (|Δp|+1
+# weighted geodesic) are incommensurate and κ = 1 − W₁/d reaches ≈ −6 at δ=0.05.
+# The invariant is provably falsified by its own stated falsification condition.
+#
+# This change corrects INV-RC3's statement / parameters / falsification to the
+# honest CONDITIONAL form (the bound holds only in the commensurate-metric
+# path-like regime, equivalent to W₁/d ≤ 2), removes the false guarantee, and
+# points at the machine-checked evidence. The invariant COUNT is unchanged by
+# this text-only edit and all documentation surfaces stay in sync. No code, schema, or runtime
+# behavior changes — this is a registry-text honesty fix.
+#
+# Locally verified on origin/main base:
+#   * scripts/check_invariant_count_sync.py -> OK, all surfaces in sync
+#   * scripts/check_epistemic_drift.py -> OK
+#   * INVARIANTS.yaml parses as valid YAML
+id: inv-rc3-conditional-correction
+status: ACTIVE
+claim_type: governance
+promise: >-
+  After this PR lands, INVARIANTS.yaml INV-RC3 states κ ∈ [−1, 1] as CONDITIONAL
+  on the commensurate-metric (path-like) regime rather than universal, removes
+  the false "guaranteed by the price-graph constructor" claim, documents the
+  W₁/d ≤ 2 equivalence and the out-of-regime κ < −1 behavior as expected/
+  witnessed, and references the identity/boundary witness as evidence. The
+  invariant count is unchanged by this PR (text-only edit) and all four
+  documentation surfaces remain in sync;
+  no code, schema, or runtime behavior changes.
+diff_scope:
+  changed_files:
+    - path: ".claude/commit_acceptors/inv-rc3-conditional-correction.yaml"
+    - path: ".claude/physics/INVARIANTS.yaml"
+  forbidden_paths:
+    - "trading/"
+    - "execution/"
+    - "forecast/"
+    - "policy/"
+    - "application/"
+    - "core/"
+    - "src/"
+    - "geosync_hpc/"
+    - "physics_contracts/catalog.yaml"
+required_python_symbols: []
+expected_signal: >-
+  `python scripts/count_invariants.py` is unchanged by this PR;
+  `PYTHONPATH=scripts python scripts/check_invariant_count_sync.py` reports
+  "all documentation surfaces in sync"; `python scripts/check_epistemic_drift.py`
+  exits 0; INVARIANTS.yaml parses as valid YAML.
+measurement_command: >-
+  bash -c 'mkdir -p tmp && PYTHONPATH=scripts python scripts/check_invariant_count_sync.py
+  > tmp/inv_rc3_correction.log 2>&1
+  && grep -q "in sync" tmp/inv_rc3_correction.log'
+signal_artifact: "tmp/inv_rc3_correction.log"
+falsifier:
+  command: |-
+    bash -c 'python -c "
+    import yaml
+    d = yaml.safe_load(open(\".claude/physics/INVARIANTS.yaml\"))
+    import json
+    s = json.dumps(d)
+    broken = \"guaranteed by the price-graph constructor\" in s
+    import sys; sys.exit(0 if broken else 1)"'
+  description: >-
+    Inverse probe of the correction. It exits 0 (fires) iff the false claim
+    "guaranteed by the price-graph constructor" is still present in the registry
+    — i.e. the over-stated universal guarantee survived. Once the correction
+    lands the phrase is gone and the probe exits 1. If it ever exits 0 again, the
+    pretender claim was reintroduced and must be removed, not re-asserted.
+rollback_command: >-
+  git checkout HEAD~1 -- .claude/physics/INVARIANTS.yaml
+  && git rm -f .claude/commit_acceptors/inv-rc3-conditional-correction.yaml
+rollback_verification_command: >-
+  bash -c 'PYTHONPATH=scripts python scripts/check_invariant_count_sync.py | grep -q "in sync"'
+memory_update_type: none
+ledger_path: ".claude/commit_acceptors/inv-rc3-conditional-correction.yaml"
+report_path: "tmp/inv_rc3_correction.log"
+evidence: []

@@ -1,3 +1,5 @@
+# Copyright (c) 2023-2026 Yaroslav Vasylenko (neuron7xLab)
+# SPDX-License-Identifier: MIT
 """Centralised role-based and attribute-based access control policies."""
 
 from __future__ import annotations
@@ -29,7 +31,7 @@ __all__ = [
 ]
 
 
-_LOGGER = logging.getLogger("tradepulse.rbac")
+_LOGGER = logging.getLogger("geosync.rbac")
 
 
 def _normalise_token(value: str, *, label: str) -> str:
@@ -226,9 +228,7 @@ class RBACPolicy:
         if not roles:
             raise ValueError("At least one RBAC role must be defined")
         self._roles: dict[str, RoleDefinition] = dict(roles)
-        self._resolved_permissions: MutableMapping[
-            str, tuple[ResolvedPermission, ...]
-        ] = {}
+        self._resolved_permissions: MutableMapping[str, tuple[ResolvedPermission, ...]] = {}
         self._permission_index: MutableMapping[tuple[str, str], set[str]] = {}
         self._build_indexes()
 
@@ -261,9 +261,7 @@ class RBACPolicy:
             )
 
         for parent in definition.inherits:
-            parent_permissions = self._resolve_role(
-                parent, _stack=_stack + (role_name,)
-            )
+            parent_permissions = self._resolve_role(parent, _stack=_stack + (role_name,))
             for entry in parent_permissions:
                 resolved.setdefault(entry.permission, entry)
 
@@ -378,9 +376,7 @@ class AuthorizationGateway:
             attribute_mismatch = True
 
         reason = "attribute_mismatch" if attribute_mismatch else "missing_role"
-        required_roles = self._policy.roles_granting(
-            normalised_resource, normalised_action
-        )
+        required_roles = self._policy.roles_granting(normalised_resource, normalised_action)
         return AuthorizationDecision(
             allowed=False,
             resource=normalised_resource,
@@ -506,9 +502,7 @@ class AuthorizationGateway:
                 "roles": sorted(identity.role_set),
                 "failure_reason": decision.failure_reason,
                 "required_roles": list(decision.required_roles),
-                "attributes": {
-                    key: sorted(value) for key, value in decision.attributes.items()
-                },
+                "attributes": {key: sorted(value) for key, value in decision.attributes.items()},
             },
         )
 
@@ -531,9 +525,7 @@ def _parse_attribute_constraints(
         values: Iterable[Any]
         if isinstance(raw_value, str):
             values = [raw_value]
-        elif isinstance(raw_value, Iterable) and not isinstance(
-            raw_value, (bytes, bytearray)
-        ):
+        elif isinstance(raw_value, Iterable) and not isinstance(raw_value, (bytes, bytearray)):
             values = raw_value
         else:
             values = [raw_value]
@@ -579,9 +571,7 @@ def _parse_role(name: str, payload: Mapping[str, Any]) -> RoleDefinition:
     if not isinstance(permissions_payload, Sequence) or not permissions_payload:
         raise ValueError(f"Role {name} must define at least one permission")
     permissions = tuple(
-        _parse_permission(entry)
-        for entry in permissions_payload
-        if isinstance(entry, Mapping)
+        _parse_permission(entry) for entry in permissions_payload if isinstance(entry, Mapping)
     )
     inherits_payload = payload.get("inherits", ())
     if isinstance(inherits_payload, str):
@@ -602,9 +592,7 @@ def _parse_temporary_grant(payload: Mapping[str, Any]) -> TemporaryAccessGrant:
         action = str(payload["action"])
         expires_at = str(payload["expires_at"])
     except KeyError as exc:
-        raise ValueError(
-            "Temporary grants require subject, resource, action, expires_at"
-        ) from exc
+        raise ValueError("Temporary grants require subject, resource, action, expires_at") from exc
 
     permission = _parse_permission(
         {

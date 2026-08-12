@@ -1,0 +1,17 @@
+{
+  "task": "REL-010",
+  "generated_utc": "2026-07-19T19:30:13.335183+00:00",
+  "ref": "HEAD",
+  "resolved_commit": "93ea3b3aa240a81d26625888d182764d0a20ef24",
+  "version": "1.1.0",
+  "prefix": "geosync-1.1.0/",
+  "source_date_epoch": 1784488015,
+  "build_1_sha256": "f067de12ed4b142c4a4dbd5c0fb48b1921a7e9f978315af8cecc068dfc1a588c",
+  "build_2_sha256": "f067de12ed4b142c4a4dbd5c0fb48b1921a7e9f978315af8cecc068dfc1a588c",
+  "match": true,
+  "archive_file_count": 7389,
+  "git_tracked_count": 7389,
+  "tracked_only": true,
+  "untracked_members": [],
+  "missing_members": []
+}

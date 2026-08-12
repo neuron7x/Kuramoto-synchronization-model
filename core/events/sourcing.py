@@ -1,4 +1,6 @@
-"""Domain event sourcing infrastructure for TradePulse.
+# Copyright (c) 2023-2026 Yaroslav Vasylenko (neuron7xLab)
+# SPDX-License-Identifier: MIT
+"""Domain event sourcing infrastructure for GeoSync.
 
 This module provides a minimal yet production-ready implementation of an
 append-only event store tailored for PostgreSQL JSONB storage, aggregate roots
@@ -14,7 +16,7 @@ import json
 import logging
 from contextlib import contextmanager
 from dataclasses import dataclass
-from datetime import UTC, datetime
+from datetime import datetime
 from typing import (
     Any,
     ClassVar,
@@ -44,11 +46,15 @@ from sqlalchemy import (
     select,
     text,
 )
+from sqlalchemy import inspect as sql_inspect
 from sqlalchemy.dialects.postgresql import JSONB, insert
 from sqlalchemy.engine import Engine
 from sqlalchemy.exc import IntegrityError
 from sqlalchemy.orm import Session, sessionmaker
 
+from core.compat import Clock, default_clock
+from core.events.admission import AdmissionGate
+from core.events.validation import DomainValidationError, EventValidator
 from domain.order import OrderSide, OrderStatus, OrderType
 
 LOGGER = logging.getLogger(__name__)
@@ -101,7 +107,7 @@ class DomainEvent(BaseModel):
     model_config = ConfigDict(extra="forbid")
 
     event_id: UUID = Field(default_factory=uuid4)
-    occurred_at: datetime = Field(default_factory=lambda: datetime.now(UTC))
+    occurred_at: datetime = Field(default_factory=lambda: default_clock().now())
     # ``stream_version`` is injected during hydration and excluded from persistence.
     stream_version: int | None = Field(default=None, exclude=True)
 
@@ -110,15 +116,13 @@ class DomainEvent(BaseModel):
     # historical rename is required.
     event_name: ClassVar[str]
 
-    def __init_subclass__(cls, **kwargs: Any) -> None:  # noqa: D401
+    def __init_subclass__(cls, **kwargs: Any) -> None:
         """Register subclasses for lookup during event hydration."""
 
         super().__init_subclass__(**kwargs)
         cls.event_name = getattr(cls, "event_name", cls.__name__)
         if cls.event_name in _EVENT_REGISTRY:
-            raise ValueError(
-                f"Duplicate domain event name registered: {cls.event_name}"
-            )
+            raise ValueError(f"Duplicate domain event name registered: {cls.event_name}")
         _EVENT_REGISTRY[cls.event_name] = cls
 
     @classmethod
@@ -146,6 +150,14 @@ class EventEnvelope:
     correlation_id: str | None
     causation_id: str | None
     stored_at: datetime
+    epoch_ns: int | None = None
+    """Wall-clock time at append in Unix-epoch nanoseconds.
+
+    Present on any event written after the Sprint-1 Clock migration.
+    ``None`` for historical rows persisted before the column was added
+    (rolling-forward migration: the ``epoch_ns`` column is nullable so
+    that existing tables can be upgraded without a backfill).
+    """
 
 
 @dataclass(slots=True)
@@ -239,9 +251,7 @@ class AggregateRoot:
             self.version += 1
         else:
             # For historic events the version is managed externally by the store.
-            self.version = max(
-                self.version, getattr(event, "stream_version", self.version)
-            )
+            self.version = max(self.version, getattr(event, "stream_version", self.version))
 
 
 # ---------------------------------------------------------------------------
@@ -327,9 +337,7 @@ class OrderAggregate(AggregateRoot):
     def mark_submitted(self, venue_order_id: str) -> None:
         if self.status not in {OrderStatus.PENDING, OrderStatus.OPEN}:
             raise ValueError(f"Cannot submit order in status {self.status}")
-        self._raise_event(
-            OrderSubmitted(order_id=self.id, venue_order_id=venue_order_id)
-        )
+        self._raise_event(OrderSubmitted(order_id=self.id, venue_order_id=venue_order_id))
 
     def record_fill(self, *, quantity: float, price: float) -> None:
         if quantity <= 0:
@@ -343,9 +351,7 @@ class OrderAggregate(AggregateRoot):
         if self.average_price is None:
             avg_price = price
         else:
-            avg_price = (
-                self.average_price * self.filled_quantity + price * quantity
-            ) / new_total
+            avg_price = (self.average_price * self.filled_quantity + price * quantity) / new_total
 
         status = (
             OrderStatus.FILLED
@@ -420,9 +426,7 @@ class OrderAggregate(AggregateRoot):
         self.side = OrderSide(state["side"]) if state.get("side") else None
         self.quantity = float(state.get("quantity", 0.0))
         self.price = state.get("price")
-        self.order_type = (
-            OrderType(state["order_type"]) if state.get("order_type") else None
-        )
+        self.order_type = OrderType(state["order_type"]) if state.get("order_type") else None
         self.status = OrderStatus(state.get("status", OrderStatus.PENDING.value))
         self.average_price = state.get("average_price")
         self.filled_quantity = float(state.get("filled_quantity", 0.0))
@@ -643,15 +647,11 @@ class PortfolioAggregate(AggregateRoot):
 
     def realise_pnl(self, position_id: str, realised_pnl: float) -> None:
         self._raise_event(
-            PnLRealized(
-                portfolio_id=self.id, position_id=position_id, realised_pnl=realised_pnl
-            )
+            PnLRealized(portfolio_id=self.id, position_id=position_id, realised_pnl=realised_pnl)
         )
 
     def update_exposure(self, exposures: Mapping[str, float]) -> None:
-        self._raise_event(
-            ExposureUpdated(portfolio_id=self.id, exposures=dict(exposures))
-        )
+        self._raise_event(ExposureUpdated(portfolio_id=self.id, exposures=dict(exposures)))
 
     # Event handlers -------------------------------------------------------------
 
@@ -708,18 +708,50 @@ class PostgresEventStore:
     """Event store persisting events and snapshots in PostgreSQL."""
 
     def __init__(
-        self, engine: Engine, *, schema: str = "public", table_prefix: str = "es_"
+        self,
+        engine: Engine,
+        *,
+        schema: str = "public",
+        table_prefix: str = "es_",
+        clock: Clock | None = None,
     ) -> None:
         self._engine = engine
         self._schema = schema
         self._metadata = MetaData(schema=schema)
         self._events = self._create_events_table(table_prefix)
         self._snapshots = self._create_snapshots_table(table_prefix)
-        self._session_factory = sessionmaker(
-            bind=engine, expire_on_commit=False, future=True
-        )
+        self._session_factory = sessionmaker(bind=engine, expire_on_commit=False, future=True)
+        # Dependency-injected clock — falls back to the process-wide default so
+        # that existing integrations keep working without code changes. Tests
+        # pass a FrozenClock to get byte-identical ``epoch_ns`` across replays.
+        self._clock: Clock = clock if clock is not None else default_clock()
+        # Rolling-forward migration guard: ``epoch_ns`` is a Sprint-1
+        # column. On a deployment upgraded by code-deploy but not yet
+        # by a DB migration, the column is absent in the live table.
+        # We detect that once at construction and elide the column
+        # from ``INSERT`` statements when missing so the deploy order
+        # (code-first, migration-second) does not break writes.
+        self._epoch_ns_available: bool = self._inspect_epoch_ns_available()
 
     # Table definitions ---------------------------------------------------------
+
+    def _inspect_epoch_ns_available(self) -> bool:
+        """Return True when the live events table already carries
+        ``epoch_ns``. On a fresh install (``create_schema`` has not
+        run yet), or on a dialect whose inspector cannot see the
+        table, we optimistically assume the column is available — the
+        subsequent ``create_all()`` will place it."""
+        try:
+            inspector = sql_inspect(self._engine)
+            table_name = self._events.name
+            if not inspector.has_table(table_name, schema=self._schema):
+                return True
+            columns = {
+                col["name"] for col in inspector.get_columns(table_name, schema=self._schema)
+            }
+            return "epoch_ns" in columns
+        except Exception:  # pragma: no cover — inspector quirks
+            return True
 
     def _create_events_table(self, prefix: str) -> Table:
         return Table(
@@ -733,9 +765,7 @@ class PostgresEventStore:
             Column("event_type", String(128), nullable=False),
             Column("correlation_id", String(64), nullable=True),
             Column("causation_id", String(64), nullable=True),
-            Column(
-                "metadata", JSONB, nullable=False, server_default=text("'{}'::jsonb")
-            ),
+            Column("metadata", JSONB, nullable=False, server_default=text("'{}'::jsonb")),
             Column("payload", JSONB, nullable=False),
             Column("occurred_at", DateTime(timezone=True), nullable=False),
             Column(
@@ -744,6 +774,12 @@ class PostgresEventStore:
                 nullable=False,
                 server_default=func.now(),
             ),
+            # ``epoch_ns`` is wall-clock Unix time in nanoseconds at the moment
+            # the store wrote the row. It is nullable so that existing
+            # deployments can be migrated with a simple ADD COLUMN (the back-
+            # fill is optional — TIMESTAMPTZ still provides ordering for
+            # historical rows). New rows always carry a non-null value.
+            Column("epoch_ns", BigInteger, nullable=True),
             UniqueConstraint(
                 "aggregate_id",
                 "aggregate_type",
@@ -751,6 +787,7 @@ class PostgresEventStore:
                 name="uq_event_stream_version",
             ),
             Index("ix_event_store_stream", "aggregate_type", "aggregate_id"),
+            Index("ix_event_store_epoch_ns", "epoch_ns"),
         )
 
     def _create_snapshots_table(self, prefix: str) -> Table:
@@ -768,9 +805,7 @@ class PostgresEventStore:
                 nullable=False,
                 server_default=func.now(),
             ),
-            UniqueConstraint(
-                "aggregate_id", "aggregate_type", name="uq_snapshot_latest"
-            ),
+            UniqueConstraint("aggregate_id", "aggregate_type", name="uq_snapshot_latest"),
             CheckConstraint("version >= 0", name="ck_snapshot_version_non_negative"),
         )
 
@@ -805,10 +840,27 @@ class PostgresEventStore:
         metadata: Mapping[str, Any] | None = None,
         correlation_id: str | None = None,
         causation_id: str | None = None,
+        validator: EventValidator | None = None,
+        admission_gate: AdmissionGate | None = None,
     ) -> int:
-        """Persist events for an aggregate applying optimistic concurrency."""
+        """Persist events for an aggregate applying optimistic concurrency.
+
+        Two complementary admission surfaces are available:
+
+        * ``validator`` — the Sprint-2 single-barrier surface. Legacy
+          callers migrating a single invariant should use this.
+        * ``admission_gate`` — the Phase-2 four-barrier surface
+          (structural → causal → state → invariant). A rejection from
+          the gate carries a structured ``RejectCode`` and
+          ``invariant_id`` in the raised :class:`DomainValidationError`
+          so incident response can file the failure without parsing
+          free-form text.
+
+        Passing neither preserves the pre-remediation behaviour.
+        """
 
         metadata_payload = dict(metadata or {})
+        events_list: list[DomainEvent] = list(events)
         with self._session() as session:
             current_version = self._current_stream_version(
                 session, aggregate.id, aggregate.aggregate_type
@@ -818,25 +870,67 @@ class PostgresEventStore:
                     f"Expected version {expected_version} but stream is at {current_version}"
                 )
 
+            if validator is not None or admission_gate is not None:
+                # Aggregate arriving here already has the pending events
+                # applied (``_raise_event`` eagerly folds them in). For
+                # the validator to see the PRE-event state we replay a
+                # shadow from the store's committed history and advance
+                # it event-by-event inside the loop. This makes the
+                # semantics match what the contract promises — "given
+                # state S and event E, is E admissible?"
+                shadow = type(aggregate)(aggregate.id)
+                committed = self._load_committed_history(
+                    session, aggregate.id, aggregate.aggregate_type
+                )
+                if committed:
+                    shadow.load_from_history(committed)
+                for event in events_list:
+                    if validator is not None:
+                        result = validator.validate(event, shadow)
+                        if not result.valid:
+                            raise DomainValidationError(
+                                f"Event {type(event).__name__} rejected: {result.reason}"
+                            )
+                    if admission_gate is not None:
+                        verdict = admission_gate.verdict(event, shadow)
+                        if not verdict.accepted:
+                            raise DomainValidationError(
+                                f"{verdict.code.value if verdict.code else 'REJECTED'} "
+                                f"[{verdict.barrier.value if verdict.barrier else '?'} "
+                                f"@ {verdict.invariant_id}]: {verdict.reason}"
+                            )
+                    # Advance shadow so the next event validates against
+                    # the state that includes this event's effects.
+                    # ``_apply(is_new=True)`` increments version without
+                    # touching the event's stream_version (which is None
+                    # for uncommitted events).
+                    shadow._apply(event, is_new=True)
+
             version = current_version
-            for event in events:
+            for event in events_list:
                 version += 1
                 payload = event.to_dict()
                 event_name = event.event_name
-                insert_stmt = self._events.insert().values(
-                    event_id=str(event.event_id),
-                    aggregate_id=aggregate.id,
-                    aggregate_type=aggregate.aggregate_type,
-                    version=version,
-                    event_type=event_name,
-                    correlation_id=correlation_id,
-                    causation_id=causation_id,
-                    metadata=metadata_payload,
-                    payload=payload,
-                    occurred_at=event.occurred_at,
-                )
+                values: dict[str, Any] = {
+                    "event_id": str(event.event_id),
+                    "aggregate_id": aggregate.id,
+                    "aggregate_type": aggregate.aggregate_type,
+                    "version": version,
+                    "event_type": event_name,
+                    "correlation_id": correlation_id,
+                    "causation_id": causation_id,
+                    "metadata": metadata_payload,
+                    "payload": payload,
+                    "occurred_at": event.occurred_at,
+                }
+                # Only include epoch_ns when the live table already
+                # carries the column. A deployment that has shipped the
+                # Sprint-1 code but not yet the ALTER TABLE migration
+                # keeps writing — the column is back-fill-free.
+                if self._epoch_ns_available:
+                    values["epoch_ns"] = self._clock.epoch_ns()
                 try:
-                    session.execute(insert_stmt)
+                    session.execute(self._events.insert().values(**values))
                 except IntegrityError as exc:  # pragma: no cover - requires DB
                     raise ConcurrencyError("Event insert violated constraints") from exc
             return version
@@ -878,13 +972,12 @@ class PostgresEventStore:
                     correlation_id=row.correlation_id,
                     causation_id=row.causation_id,
                     stored_at=row.recorded_at,
+                    epoch_ns=row.epoch_ns,
                 )
             )
         return envelopes
 
-    def iterate_all_events(
-        self, *, chunk_size: int = 1000
-    ) -> Iterator[list[EventEnvelope]]:
+    def iterate_all_events(self, *, chunk_size: int = 1000) -> Iterator[list[EventEnvelope]]:
         """Yield envelopes for all events in batches for projection rebuilds."""
 
         with self._session() as session:
@@ -919,6 +1012,33 @@ class PostgresEventStore:
                     last_id = row.id
                 yield envelopes
 
+    def _load_committed_history(
+        self, session: Session, aggregate_id: str, aggregate_type: str
+    ) -> list[DomainEvent]:
+        """Load the committed events for a stream within the given session.
+
+        Used by the admission pipeline to reconstruct a pre-batch shadow
+        aggregate so that validators see the state *before* the new
+        events are applied. Returns an empty list for new aggregates.
+        """
+        stmt = (
+            select(self._events)
+            .where(
+                and_(
+                    self._events.c.aggregate_id == aggregate_id,
+                    self._events.c.aggregate_type == aggregate_type,
+                )
+            )
+            .order_by(self._events.c.version.asc())
+        )
+        rows = session.execute(stmt).all()
+        events: list[DomainEvent] = []
+        for row in rows:
+            payload = self._hydrate_event(row.payload, row.event_type)
+            payload.stream_version = row.version
+            events.append(payload)
+        return events
+
     def _current_stream_version(
         self, session: Session, aggregate_id: str, aggregate_type: str
     ) -> int:
@@ -931,14 +1051,10 @@ class PostgresEventStore:
         version = session.execute(stmt).scalar_one_or_none()
         return int(version or 0)
 
-    def _hydrate_event(
-        self, payload: Mapping[str, Any], event_type: str
-    ) -> DomainEvent:
+    def _hydrate_event(self, payload: Mapping[str, Any], event_type: str) -> DomainEvent:
         model_cls = _EVENT_REGISTRY.get(event_type)
         if model_cls is None:
-            raise KeyError(
-                f"Unknown event type '{event_type}' encountered during hydration"
-            )
+            raise KeyError(f"Unknown event type '{event_type}' encountered during hydration")
         return model_cls.from_dict(payload)
 
     # Snapshot support -----------------------------------------------------------
@@ -1008,9 +1124,7 @@ class EventReplay:
     def __init__(self, store: PostgresEventStore) -> None:
         self._store = store
 
-    def rehydrate(
-        self, aggregate_cls: type[AggregateRoot], aggregate_id: str
-    ) -> AggregateRoot:
+    def rehydrate(self, aggregate_cls: type[AggregateRoot], aggregate_id: str) -> AggregateRoot:
         aggregate = aggregate_cls(aggregate_id)
         snapshot = self._store.load_latest_snapshot(
             aggregate_id=aggregate_id, aggregate_type=aggregate.aggregate_type
@@ -1029,9 +1143,7 @@ class EventReplay:
         aggregate.load_from_history([envelope.payload for envelope in envelopes])
         return aggregate
 
-    def print_timeline(
-        self, aggregate_cls: type[AggregateRoot], aggregate_id: str
-    ) -> list[str]:
+    def print_timeline(self, aggregate_cls: type[AggregateRoot], aggregate_id: str) -> list[str]:
         aggregate = aggregate_cls(aggregate_id)
         envelopes = self._store.load_stream(
             aggregate_id=aggregate_id,
@@ -1097,10 +1209,12 @@ class MaterializedViewManager:
     def ensure_exists(self, view: MaterializedView) -> None:
         """Create the materialized view if it is absent."""
 
-        create_sql = "CREATE MATERIALIZED VIEW IF NOT EXISTS {name} AS {definition} {with_data}".format(
-            name=view.name,
-            definition=view.definition_sql,
-            with_data="WITH DATA" if view.with_data else "WITH NO DATA",
+        create_sql = (
+            "CREATE MATERIALIZED VIEW IF NOT EXISTS {name} AS {definition} {with_data}".format(
+                name=view.name,
+                definition=view.definition_sql,
+                with_data="WITH DATA" if view.with_data else "WITH NO DATA",
+            )
         )
         with self._engine.begin() as connection:
             connection.execute(text(create_sql))
@@ -1129,7 +1243,7 @@ def take_snapshot(aggregate: AggregateRoot) -> AggregateSnapshot:
         aggregate_type=aggregate.aggregate_type,
         version=aggregate.version,
         state=dict(aggregate.snapshot_state()),
-        taken_at=datetime.now(UTC),
+        taken_at=default_clock().now(),
     )
 
 

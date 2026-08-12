@@ -1,0 +1,137 @@
+# Diff-bound commit acceptor for the Jarzynski 1/√N convergence proof and the
+# factor-2 work-convention guard on core/physics/stochastic_thermodynamics.py.
+#
+# The stochastic-thermodynamics module proved the Jarzynski equality
+# ⟨e^{−βW}⟩ = e^{−βΔF} (INV-ST2) and equipartition Var(x)=kT/k (INV-ST1), but
+# carried three weaknesses:
+#   * no PRE-RAMP equipartition witness — a mis-initialised initial ensemble
+#     (wrong σ² ≠ kT/k_i) would silently bias ⟨e^{−βW}⟩ before any work accrued;
+#   * the INV-ST2 tolerance 0.05 was an asserted constant, not shown to track
+#     the 1/√N Monte-Carlo sampling law (an overfit bound could pass by luck);
+#   * the Sekimoto ½ in dW = ½ x² dk was load-bearing but untested — dropping
+#     it ("off by a factor of 2", dW = x² dk) doubles every work value and
+#     collapses ⟨e^{−βW}⟩ from 0.5 to ≈0.31, a ~38 % bias.
+#
+# This change closes all three, fail-closed:
+#   * stiffness_ramp_work() now runs a PRE-RAMP equipartition witness
+#     (_assert_equipartition) that raises ValueError(INV-ST1...) when the drawn
+#     initial ensemble's variance deviates from kT/k_i beyond the
+#     n_sigma·sqrt(2/(M−1)) sampling band (grounded in 1/√M, not tuned), and
+#     refuses ensembles too small to carry the witness (M < 100, where the band
+#     would exceed 100 % and be vacuous);
+#   * jarzynski_average() gains an effective-sample-size underflow guard:
+#     ESS/M = (Σw)²/(M·Σw²) must clear a floor (default 1e-3), so a vanishing
+#     low-W tail cannot masquerade as a converged average; non-finite work is
+#     refused;
+#   * a new equipartition_band() exposes the 1/√M band as a public function.
+#
+# The adversarial test suite proves the rate, not just one tolerance:
+#   * INV-ST2 anchor (⟨e^{−βW}⟩ = 0.5 within 0.05 across 4 seeds);
+#   * CONVERGENCE-RATE — fit log(SE) vs log(N) over {1000,5000,20000,40000} and
+#     assert slope ≈ −0.5 ± 0.1 (measured ≈ −0.484), defeating an overfit bound;
+#   * FACTOR-2 ADVERSARIAL — re-derive the ramp with dW = Δk·x² (missing ½) and
+#     assert the INV-ST2 0.05 band DETECTS the wrong convention (it lands at
+#     ≈0.31, ~38 % off), so the factor-2 bug cannot pass silently;
+#   * equipartition fail-closed — tiny ensemble and wrong-init-variance both
+#     raise ValueError; ESS underflow and non-finite work both raise.
+#
+# Adds NO predictive or financial claim, NO dependency, NO market surface.
+# This is a fail-closed physics-witness hardening on a pure statistical-
+# mechanics module (no I/O, deterministic per seed). The heavy four-ensemble
+# convergence proof is @pytest.mark.heavy_math (PR-gating, deselectable from the
+# fast lane); a fast small-N variant keeps the convergence signal in the
+# default suite.
+#
+# Locally verified on origin/main fork base (b146a1d):
+#   * ruff check / ruff format --check / black --check: clean (module)
+#   * mypy --strict core/physics/stochastic_thermodynamics.py: no issues
+#   * pytest tests/unit/physics/test_jarzynski_convergence.py: 9 passed
+#   * pytest tests -k "T8 or stochastic_thermo or jarzynski": 21 passed
+#   * zero noqa / type: ignore across changed files
+id: jarzynski-convergence
+status: ACTIVE
+claim_type: fail_closed
+promise: >-
+  core.physics.stochastic_thermodynamics now fails closed on the two silent
+  failure modes of the Jarzynski estimator. stiffness_ramp_work() runs a
+  PRE-RAMP equipartition witness that raises ValueError(INV-ST1...) when the
+  drawn initial ensemble variance deviates from the equipartition value kT/k_i
+  beyond the n_sigma·sqrt(2/(M−1)) sampling band (grounded in 1/√M, default
+  6 σ), and refuses ensembles below M=100 where that band would be vacuous.
+  jarzynski_average() refuses non-finite work and raises when the normalised
+  effective sample size ESS/M=(Σw)²/(M·Σw²) collapses below a floor (default
+  1e-3), so low-W tail underflow cannot pass as a converged average; a public
+  equipartition_band() exposes the 1/√M band. The adversarial suite proves the
+  estimator converges at the Monte-Carlo rate (log(SE) vs log(N) slope ≈ −0.5
+  ± 0.1 over {1000,5000,20000,40000}; measured ≈ −0.484) and that re-deriving
+  the work with the wrong Sekimoto convention dW = Δk·x² (missing the ½, off by
+  a factor of 2) is DETECTED by the INV-ST2 0.05 band (it lands at ≈0.31). The
+  module asserts no predictive or financial meaning; this is fail-closed
+  physics-witness hardening, no claim tier promoted, no dependency added.
+diff_scope:
+  changed_files:
+    - path: ".claude/commit_acceptors/jarzynski-convergence.yaml"
+    - path: "core/physics/stochastic_thermodynamics.py"
+    - path: "tests/unit/physics/test_jarzynski_convergence.py"
+  forbidden_paths:
+    - "trading/"
+    - "execution/"
+    - "forecast/"
+    - "src/"
+required_python_symbols:
+  - "core/physics/stochastic_thermodynamics.py::stiffness_ramp_work"
+  - "core/physics/stochastic_thermodynamics.py::jarzynski_average"
+  - "core/physics/stochastic_thermodynamics.py::equipartition_band"
+expected_signal: >-
+  `python -m pytest tests/unit/physics/test_jarzynski_convergence.py` reports
+  9 passed; the INV-ST2 anchor holds (⟨e^{−βW}⟩=0.5 within 0.05), the
+  convergence-rate slope is ≈ −0.5 ± 0.1, the factor-2 wrong convention is
+  detected (rejected by the 0.05 band), and the equipartition / ESS / non-finite
+  fail-closed paths all raise ValueError.
+measurement_command: >-
+  bash -c 'mkdir -p tmp && python -m pytest
+  tests/unit/physics/test_jarzynski_convergence.py -v
+  > tmp/jarzynski_convergence_pytest.log 2>&1
+  && grep -qE "9 passed" tmp/jarzynski_convergence_pytest.log'
+signal_artifact: "tmp/jarzynski_convergence_pytest.log"
+falsifier:
+  command: >-
+    python -c 'import sys, numpy as np;
+    from core.physics.stochastic_thermodynamics import stiffness_ramp_work,
+    jarzynski_average;
+    target = 0.5;
+    correct = jarzynski_average(stiffness_ramp_work(7, ki=1.0, kf=4.0, kT=1.0));
+
+    def wrong(seed, ensemble=40000, tau=1.0, dt=0.005, ki=1.0, kf=4.0, kT=1.0, gamma=1.0):
+        rng = np.random.default_rng(seed); n = int(tau / dt);
+        x = rng.standard_normal(ensemble) * np.sqrt(kT / ki);
+        w = np.zeros(ensemble); ns = np.sqrt(2.0 * gamma * kT * dt);
+        for i in range(n):
+            kc = ki + (kf - ki) * i / n; kn = ki + (kf - ki) * (i + 1) / n;
+            w += (kn - kc) * x * x;
+            x = x - (dt / gamma) * kn * x + ns * rng.standard_normal(ensemble);
+        return w;
+    bad = jarzynski_average(wrong(7));
+    correct_ok = abs(correct - target) / target < 0.05;
+    wrong_detected = abs(bad - target) / target >= 0.05;
+    sys.exit(0 if (not correct_ok or not wrong_detected) else 1)'
+  description: >-
+    Inverse probe of the work-convention contract. It exits 0 (fires) iff the
+    correct Sekimoto convention dW = ½ x² dk STOPS matching e^{−βΔF}=0.5 within
+    the 0.05 band (the module's work convention drifted), OR the factor-2 wrong
+    convention dW = Δk·x² STOPS being detected by that band (the guard went
+    blind to the missing ½). While the contract holds — correct passes, wrong
+    is rejected — the probe exits 1. An exit 0 means the factor-2 work-convention
+    guard or the INV-ST2 anchor has regressed and must be repaired, not patched
+    green.
+rollback_command: >-
+  bash -c 'git checkout origin/main -- core/physics/stochastic_thermodynamics.py
+  && git rm -f tests/unit/physics/test_jarzynski_convergence.py
+  .claude/commit_acceptors/jarzynski-convergence.yaml'
+rollback_verification_command: >-
+  bash -c 'test ! -f .claude/commit_acceptors/jarzynski-convergence.yaml
+  && test ! -f tests/unit/physics/test_jarzynski_convergence.py'
+memory_update_type: none
+ledger_path: ".claude/commit_acceptors/jarzynski-convergence.yaml"
+report_path: "tmp/jarzynski_convergence_pytest.log"
+evidence: []

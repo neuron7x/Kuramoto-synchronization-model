@@ -1,0 +1,42 @@
+{
+  "schema": "geosync.causal_prefix_matrix.v1",
+  "verdict": "PASS",
+  "surfaces": [
+    {
+      "surface": "market_regime_analyzer",
+      "statement": "regime statistics over a prefix are unchanged by divergent futures",
+      "test": "tests/property/modules/test_modules_no_future_leakage.py::test_regime_statistics_do_not_leak_future_explicit",
+      "verdict": "PASS"
+    },
+    {
+      "surface": "performance_tracker.cumulative_metrics",
+      "statement": "cumulative performance metrics do not leak future trades",
+      "test": "tests/property/modules/test_modules_no_future_leakage.py::test_performance_metrics_do_not_leak_future_trades_explicit",
+      "verdict": "PASS"
+    },
+    {
+      "surface": "backtest.walk_forward",
+      "statement": "walk-forward backtest prevents future leakage",
+      "test": "tests/unit/backtest/test_engine.py::test_walk_forward_prevents_future_leakage",
+      "verdict": "PASS"
+    },
+    {
+      "surface": "market_regime_analyzer.hurst",
+      "statement": "Hurst exponent over a prefix is invariant to the future (property)",
+      "test": "tests/property/time/test_causal_prefix_invariance.py::test_regime_hurst_prefix_invariant_property",
+      "verdict": "PASS"
+    },
+    {
+      "surface": "performance_tracker.sharpe",
+      "statement": "cumulative Sharpe over a prefix is invariant to the future",
+      "test": "tests/property/time/test_causal_prefix_invariance.py::test_performance_sharpe_prefix_invariant_explicit",
+      "verdict": "PASS"
+    },
+    {
+      "surface": "core.features.realtime_store",
+      "statement": "a later out-of-order tick cannot change an earlier feature read (event-time monotonicity)",
+      "test": "tests/property/time/test_causal_prefix_invariance.py::test_realtime_feature_event_time_monotonicity_explicit",
+      "verdict": "PASS"
+    }
+  ]
+}

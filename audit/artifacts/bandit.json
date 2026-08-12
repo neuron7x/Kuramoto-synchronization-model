@@ -704,7 +704,7 @@
       "nosec": 0,
       "skipped_tests": 0
     },
-    "scripts/export_tradepulse_schema.py": {
+    "scripts/export_geosync_schema.py": {
       "CONFIDENCE.HIGH": 0,
       "CONFIDENCE.LOW": 0,
       "CONFIDENCE.MEDIUM": 0,
@@ -1406,7 +1406,7 @@
       "nosec": 0,
       "skipped_tests": 0
     },
-    "scripts/tests/test_export_tradepulse_schema.py": {
+    "scripts/tests/test_export_geosync_schema.py": {
       "CONFIDENCE.HIGH": 6,
       "CONFIDENCE.LOW": 0,
       "CONFIDENCE.MEDIUM": 0,
@@ -2459,7 +2459,7 @@
       "nosec": 0,
       "skipped_tests": 0
     },
-    "src/tradepulse/__init__.py": {
+    "src/geosync/__init__.py": {
       "CONFIDENCE.HIGH": 0,
       "CONFIDENCE.LOW": 0,
       "CONFIDENCE.MEDIUM": 0,
@@ -2472,7 +2472,7 @@
       "nosec": 0,
       "skipped_tests": 0
     },
-    "src/tradepulse/api/__init__.py": {
+    "src/geosync/api/__init__.py": {
       "CONFIDENCE.HIGH": 0,
       "CONFIDENCE.LOW": 0,
       "CONFIDENCE.MEDIUM": 0,
@@ -2485,7 +2485,7 @@
       "nosec": 0,
       "skipped_tests": 0
     },
-    "src/tradepulse/connectors/__init__.py": {
+    "src/geosync/connectors/__init__.py": {
       "CONFIDENCE.HIGH": 0,
       "CONFIDENCE.LOW": 0,
       "CONFIDENCE.MEDIUM": 0,
@@ -2498,7 +2498,7 @@
       "nosec": 0,
       "skipped_tests": 0
     },
-    "src/tradepulse/core/__init__.py": {
+    "src/geosync/core/__init__.py": {
       "CONFIDENCE.HIGH": 0,
       "CONFIDENCE.LOW": 0,
       "CONFIDENCE.MEDIUM": 0,
@@ -2511,7 +2511,7 @@
       "nosec": 0,
       "skipped_tests": 0
     },
-    "src/tradepulse/core/auth/__init__.py": {
+    "src/geosync/core/auth/__init__.py": {
       "CONFIDENCE.HIGH": 0,
       "CONFIDENCE.LOW": 0,
       "CONFIDENCE.MEDIUM": 0,
@@ -2524,7 +2524,7 @@
       "nosec": 0,
       "skipped_tests": 0
     },
-    "src/tradepulse/core/auth/mfa.py": {
+    "src/geosync/core/auth/mfa.py": {
       "CONFIDENCE.HIGH": 0,
       "CONFIDENCE.LOW": 0,
       "CONFIDENCE.MEDIUM": 0,
@@ -2537,7 +2537,7 @@
       "nosec": 0,
       "skipped_tests": 0
     },
-    "src/tradepulse/core/auth/rbac.py": {
+    "src/geosync/core/auth/rbac.py": {
       "CONFIDENCE.HIGH": 0,
       "CONFIDENCE.LOW": 0,
       "CONFIDENCE.MEDIUM": 0,
@@ -2550,7 +2550,7 @@
       "nosec": 0,
       "skipped_tests": 0
     },
-    "src/tradepulse/core/digital_governance.py": {
+    "src/geosync/core/digital_governance.py": {
       "CONFIDENCE.HIGH": 0,
       "CONFIDENCE.LOW": 0,
       "CONFIDENCE.MEDIUM": 0,
@@ -2563,7 +2563,7 @@
       "nosec": 0,
       "skipped_tests": 0
     },
-    "src/tradepulse/core/neuro/__init__.py": {
+    "src/geosync/core/neuro/__init__.py": {
       "CONFIDENCE.HIGH": 0,
       "CONFIDENCE.LOW": 0,
       "CONFIDENCE.MEDIUM": 0,
@@ -2576,7 +2576,7 @@
       "nosec": 0,
       "skipped_tests": 0
     },
-    "src/tradepulse/core/neuro/_validation.py": {
+    "src/geosync/core/neuro/_validation.py": {
       "CONFIDENCE.HIGH": 0,
       "CONFIDENCE.LOW": 0,
       "CONFIDENCE.MEDIUM": 0,
@@ -2589,7 +2589,7 @@
       "nosec": 0,
       "skipped_tests": 0
     },
-    "src/tradepulse/core/neuro/adaptive_calibrator.py": {
+    "src/geosync/core/neuro/adaptive_calibrator.py": {
       "CONFIDENCE.HIGH": 0,
       "CONFIDENCE.LOW": 0,
       "CONFIDENCE.MEDIUM": 0,
@@ -2602,7 +2602,7 @@
       "nosec": 0,
       "skipped_tests": 0
     },
-    "src/tradepulse/core/neuro/desensitization/__init__.py": {
+    "src/geosync/core/neuro/desensitization/__init__.py": {
       "CONFIDENCE.HIGH": 0,
       "CONFIDENCE.LOW": 0,
       "CONFIDENCE.MEDIUM": 0,
@@ -2615,7 +2615,7 @@
       "nosec": 0,
       "skipped_tests": 0
     },
-    "src/tradepulse/core/neuro/desensitization/gate.py": {
+    "src/geosync/core/neuro/desensitization/gate.py": {
       "CONFIDENCE.HIGH": 0,
       "CONFIDENCE.LOW": 0,
       "CONFIDENCE.MEDIUM": 0,
@@ -2628,7 +2628,7 @@
       "nosec": 0,
       "skipped_tests": 0
     },
-    "src/tradepulse/core/neuro/desensitization/integration.py": {
+    "src/geosync/core/neuro/desensitization/integration.py": {
       "CONFIDENCE.HIGH": 0,
       "CONFIDENCE.LOW": 0,
       "CONFIDENCE.MEDIUM": 0,
@@ -2641,7 +2641,7 @@
       "nosec": 0,
       "skipped_tests": 0
     },
-    "src/tradepulse/core/neuro/desensitization/manager.py": {
+    "src/geosync/core/neuro/desensitization/manager.py": {
       "CONFIDENCE.HIGH": 0,
       "CONFIDENCE.LOW": 0,
       "CONFIDENCE.MEDIUM": 0,
@@ -2654,7 +2654,7 @@
       "nosec": 0,
       "skipped_tests": 0
     },
-    "src/tradepulse/core/neuro/desensitization/reward_desensitizer.py": {
+    "src/geosync/core/neuro/desensitization/reward_desensitizer.py": {
       "CONFIDENCE.HIGH": 0,
       "CONFIDENCE.LOW": 0,
       "CONFIDENCE.MEDIUM": 0,
@@ -2667,7 +2667,7 @@
       "nosec": 0,
       "skipped_tests": 0
     },
-    "src/tradepulse/core/neuro/desensitization/sensory_habituation.py": {
+    "src/geosync/core/neuro/desensitization/sensory_habituation.py": {
       "CONFIDENCE.HIGH": 0,
       "CONFIDENCE.LOW": 0,
       "CONFIDENCE.MEDIUM": 0,
@@ -2680,7 +2680,7 @@
       "nosec": 0,
       "skipped_tests": 0
     },
-    "src/tradepulse/core/neuro/desensitization/threat_gating.py": {
+    "src/geosync/core/neuro/desensitization/threat_gating.py": {
       "CONFIDENCE.HIGH": 0,
       "CONFIDENCE.LOW": 0,
       "CONFIDENCE.MEDIUM": 0,
@@ -2693,7 +2693,7 @@
       "nosec": 0,
       "skipped_tests": 0
     },
-    "src/tradepulse/core/neuro/dopamine/__init__.py": {
+    "src/geosync/core/neuro/dopamine/__init__.py": {
       "CONFIDENCE.HIGH": 0,
       "CONFIDENCE.LOW": 0,
       "CONFIDENCE.MEDIUM": 0,
@@ -2706,7 +2706,7 @@
       "nosec": 0,
       "skipped_tests": 0
     },
-    "src/tradepulse/core/neuro/dopamine/_invariants.py": {
+    "src/geosync/core/neuro/dopamine/_invariants.py": {
       "CONFIDENCE.HIGH": 0,
       "CONFIDENCE.LOW": 0,
       "CONFIDENCE.MEDIUM": 0,
@@ -2719,7 +2719,7 @@
       "nosec": 0,
       "skipped_tests": 0
     },
-    "src/tradepulse/core/neuro/dopamine/action_gate.py": {
+    "src/geosync/core/neuro/dopamine/action_gate.py": {
       "CONFIDENCE.HIGH": 1,
       "CONFIDENCE.LOW": 0,
       "CONFIDENCE.MEDIUM": 0,
@@ -2732,7 +2732,7 @@
       "nosec": 0,
       "skipped_tests": 0
     },
-    "src/tradepulse/core/neuro/dopamine/ddm_adapter.py": {
+    "src/geosync/core/neuro/dopamine/ddm_adapter.py": {
       "CONFIDENCE.HIGH": 0,
       "CONFIDENCE.LOW": 0,
       "CONFIDENCE.MEDIUM": 0,
@@ -2745,7 +2745,7 @@
       "nosec": 0,
       "skipped_tests": 0
     },
-    "src/tradepulse/core/neuro/dopamine/dopamine_controller.py": {
+    "src/geosync/core/neuro/dopamine/dopamine_controller.py": {
       "CONFIDENCE.HIGH": 2,
       "CONFIDENCE.LOW": 0,
       "CONFIDENCE.MEDIUM": 0,
@@ -2758,7 +2758,7 @@
       "nosec": 0,
       "skipped_tests": 0
     },
-    "src/tradepulse/core/neuro/dopamine/dopamine_step_extension.py": {
+    "src/geosync/core/neuro/dopamine/dopamine_step_extension.py": {
       "CONFIDENCE.HIGH": 0,
       "CONFIDENCE.LOW": 0,
       "CONFIDENCE.MEDIUM": 0,
@@ -2771,7 +2771,7 @@
       "nosec": 0,
       "skipped_tests": 0
     },
-    "src/tradepulse/core/neuro/gaba/__init__.py": {
+    "src/geosync/core/neuro/gaba/__init__.py": {
       "CONFIDENCE.HIGH": 0,
       "CONFIDENCE.LOW": 0,
       "CONFIDENCE.MEDIUM": 0,
@@ -2784,7 +2784,7 @@
       "nosec": 0,
       "skipped_tests": 0
     },
-    "src/tradepulse/core/neuro/gaba/gaba_inhibition_gate.py": {
+    "src/geosync/core/neuro/gaba/gaba_inhibition_gate.py": {
       "CONFIDENCE.HIGH": 1,
       "CONFIDENCE.LOW": 0,
       "CONFIDENCE.MEDIUM": 0,
@@ -2797,7 +2797,7 @@
       "nosec": 0,
       "skipped_tests": 0
     },
-    "src/tradepulse/core/neuro/na_ach/__init__.py": {
+    "src/geosync/core/neuro/na_ach/__init__.py": {
       "CONFIDENCE.HIGH": 0,
       "CONFIDENCE.LOW": 0,
       "CONFIDENCE.MEDIUM": 0,
@@ -2810,7 +2810,7 @@
       "nosec": 0,
       "skipped_tests": 0
     },
-    "src/tradepulse/core/neuro/na_ach/neuromods.py": {
+    "src/geosync/core/neuro/na_ach/neuromods.py": {
       "CONFIDENCE.HIGH": 1,
       "CONFIDENCE.LOW": 0,
       "CONFIDENCE.MEDIUM": 0,
@@ -2823,7 +2823,7 @@
       "nosec": 0,
       "skipped_tests": 0
     },
-    "src/tradepulse/core/neuro/nak/__init__.py": {
+    "src/geosync/core/neuro/nak/__init__.py": {
       "CONFIDENCE.HIGH": 0,
       "CONFIDENCE.LOW": 0,
       "CONFIDENCE.MEDIUM": 0,
@@ -2836,7 +2836,7 @@
       "nosec": 0,
       "skipped_tests": 0
     },
-    "src/tradepulse/core/neuro/nak/controller.py": {
+    "src/geosync/core/neuro/nak/controller.py": {
       "CONFIDENCE.HIGH": 0,
       "CONFIDENCE.LOW": 0,
       "CONFIDENCE.MEDIUM": 0,
@@ -2849,7 +2849,7 @@
       "nosec": 0,
       "skipped_tests": 0
     },
-    "src/tradepulse/core/neuro/nak/desensitization.py": {
+    "src/geosync/core/neuro/nak/desensitization.py": {
       "CONFIDENCE.HIGH": 0,
       "CONFIDENCE.LOW": 0,
       "CONFIDENCE.MEDIUM": 0,
@@ -2862,7 +2862,7 @@
       "nosec": 0,
       "skipped_tests": 0
     },
-    "src/tradepulse/core/neuro/nak/integration.py": {
+    "src/geosync/core/neuro/nak/integration.py": {
       "CONFIDENCE.HIGH": 0,
       "CONFIDENCE.LOW": 0,
       "CONFIDENCE.MEDIUM": 0,
@@ -2875,7 +2875,7 @@
       "nosec": 0,
       "skipped_tests": 0
     },
-    "src/tradepulse/core/neuro/nak/metrics.py": {
+    "src/geosync/core/neuro/nak/metrics.py": {
       "CONFIDENCE.HIGH": 0,
       "CONFIDENCE.LOW": 0,
       "CONFIDENCE.MEDIUM": 0,
@@ -2888,7 +2888,7 @@
       "nosec": 0,
       "skipped_tests": 0
     },
-    "src/tradepulse/core/neuro/neuro_optimizer.py": {
+    "src/geosync/core/neuro/neuro_optimizer.py": {
       "CONFIDENCE.HIGH": 0,
       "CONFIDENCE.LOW": 0,
       "CONFIDENCE.MEDIUM": 0,
@@ -2901,7 +2901,7 @@
       "nosec": 0,
       "skipped_tests": 0
     },
-    "src/tradepulse/core/neuro/neuro_orchestrator.py": {
+    "src/geosync/core/neuro/neuro_orchestrator.py": {
       "CONFIDENCE.HIGH": 0,
       "CONFIDENCE.LOW": 0,
       "CONFIDENCE.MEDIUM": 0,
@@ -2914,7 +2914,7 @@
       "nosec": 0,
       "skipped_tests": 0
     },
-    "src/tradepulse/core/neuro/serotonin/__init__.py": {
+    "src/geosync/core/neuro/serotonin/__init__.py": {
       "CONFIDENCE.HIGH": 0,
       "CONFIDENCE.LOW": 0,
       "CONFIDENCE.MEDIUM": 0,
@@ -2927,7 +2927,7 @@
       "nosec": 0,
       "skipped_tests": 0
     },
-    "src/tradepulse/core/neuro/serotonin/observability.py": {
+    "src/geosync/core/neuro/serotonin/observability.py": {
       "CONFIDENCE.HIGH": 0,
       "CONFIDENCE.LOW": 0,
       "CONFIDENCE.MEDIUM": 0,
@@ -2940,7 +2940,7 @@
       "nosec": 0,
       "skipped_tests": 0
     },
-    "src/tradepulse/core/neuro/serotonin/serotonin_controller.py": {
+    "src/geosync/core/neuro/serotonin/serotonin_controller.py": {
       "CONFIDENCE.HIGH": 1,
       "CONFIDENCE.LOW": 0,
       "CONFIDENCE.MEDIUM": 0,
@@ -2953,7 +2953,7 @@
       "nosec": 0,
       "skipped_tests": 0
     },
-    "src/tradepulse/core/security/__init__.py": {
+    "src/geosync/core/security/__init__.py": {
       "CONFIDENCE.HIGH": 0,
       "CONFIDENCE.LOW": 0,
       "CONFIDENCE.MEDIUM": 0,
@@ -2966,7 +2966,7 @@
       "nosec": 0,
       "skipped_tests": 0
     },
-    "src/tradepulse/core/security/audit.py": {
+    "src/geosync/core/security/audit.py": {
       "CONFIDENCE.HIGH": 0,
       "CONFIDENCE.LOW": 0,
       "CONFIDENCE.MEDIUM": 0,
@@ -2979,7 +2979,7 @@
       "nosec": 0,
       "skipped_tests": 0
     },
-    "src/tradepulse/core/security/encryption.py": {
+    "src/geosync/core/security/encryption.py": {
       "CONFIDENCE.HIGH": 0,
       "CONFIDENCE.LOW": 0,
       "CONFIDENCE.MEDIUM": 0,
@@ -2992,7 +2992,7 @@
       "nosec": 0,
       "skipped_tests": 0
     },
-    "src/tradepulse/core/security/ids.py": {
+    "src/geosync/core/security/ids.py": {
       "CONFIDENCE.HIGH": 0,
       "CONFIDENCE.LOW": 0,
       "CONFIDENCE.MEDIUM": 0,
@@ -3005,7 +3005,7 @@
       "nosec": 0,
       "skipped_tests": 0
     },
-    "src/tradepulse/core/security/incident.py": {
+    "src/geosync/core/security/incident.py": {
       "CONFIDENCE.HIGH": 0,
       "CONFIDENCE.LOW": 0,
       "CONFIDENCE.MEDIUM": 0,
@@ -3018,7 +3018,7 @@
       "nosec": 0,
       "skipped_tests": 0
     },
-    "src/tradepulse/core/security/secrets.py": {
+    "src/geosync/core/security/secrets.py": {
       "CONFIDENCE.HIGH": 0,
       "CONFIDENCE.LOW": 0,
       "CONFIDENCE.MEDIUM": 0,
@@ -3031,7 +3031,7 @@
       "nosec": 0,
       "skipped_tests": 0
     },
-    "src/tradepulse/data/__init__.py": {
+    "src/geosync/data/__init__.py": {
       "CONFIDENCE.HIGH": 0,
       "CONFIDENCE.LOW": 0,
       "CONFIDENCE.MEDIUM": 0,
@@ -3044,7 +3044,7 @@
       "nosec": 0,
       "skipped_tests": 0
     },
-    "src/tradepulse/data/api.py": {
+    "src/geosync/data/api.py": {
       "CONFIDENCE.HIGH": 0,
       "CONFIDENCE.LOW": 0,
       "CONFIDENCE.MEDIUM": 0,
@@ -3057,7 +3057,7 @@
       "nosec": 0,
       "skipped_tests": 0
     },
-    "src/tradepulse/data/quality.py": {
+    "src/geosync/data/quality.py": {
       "CONFIDENCE.HIGH": 0,
       "CONFIDENCE.LOW": 0,
       "CONFIDENCE.MEDIUM": 0,
@@ -3070,7 +3070,7 @@
       "nosec": 0,
       "skipped_tests": 0
     },
-    "src/tradepulse/data/schema.py": {
+    "src/geosync/data/schema.py": {
       "CONFIDENCE.HIGH": 0,
       "CONFIDENCE.LOW": 0,
       "CONFIDENCE.MEDIUM": 0,
@@ -3083,7 +3083,7 @@
       "nosec": 0,
       "skipped_tests": 0
     },
-    "src/tradepulse/data/validation.py": {
+    "src/geosync/data/validation.py": {
       "CONFIDENCE.HIGH": 0,
       "CONFIDENCE.LOW": 0,
       "CONFIDENCE.MEDIUM": 0,
@@ -3096,7 +3096,7 @@
       "nosec": 0,
       "skipped_tests": 0
     },
-    "src/tradepulse/features/__init__.py": {
+    "src/geosync/features/__init__.py": {
       "CONFIDENCE.HIGH": 0,
       "CONFIDENCE.LOW": 0,
       "CONFIDENCE.MEDIUM": 0,
@@ -3109,7 +3109,7 @@
       "nosec": 0,
       "skipped_tests": 0
     },
-    "src/tradepulse/features/causal.py": {
+    "src/geosync/features/causal.py": {
       "CONFIDENCE.HIGH": 0,
       "CONFIDENCE.LOW": 0,
       "CONFIDENCE.MEDIUM": 0,
@@ -3122,7 +3122,7 @@
       "nosec": 0,
       "skipped_tests": 0
     },
-    "src/tradepulse/features/kuramoto.py": {
+    "src/geosync/features/kuramoto.py": {
       "CONFIDENCE.HIGH": 0,
       "CONFIDENCE.LOW": 0,
       "CONFIDENCE.MEDIUM": 0,
@@ -3135,7 +3135,7 @@
       "nosec": 0,
       "skipped_tests": 0
     },
-    "src/tradepulse/features/ricci.py": {
+    "src/geosync/features/ricci.py": {
       "CONFIDENCE.HIGH": 0,
       "CONFIDENCE.LOW": 0,
       "CONFIDENCE.MEDIUM": 0,
@@ -3148,7 +3148,7 @@
       "nosec": 0,
       "skipped_tests": 0
     },
-    "src/tradepulse/features/topo.py": {
+    "src/geosync/features/topo.py": {
       "CONFIDENCE.HIGH": 0,
       "CONFIDENCE.LOW": 0,
       "CONFIDENCE.MEDIUM": 0,
@@ -3161,7 +3161,7 @@
       "nosec": 0,
       "skipped_tests": 0
     },
-    "src/tradepulse/indicators/__init__.py": {
+    "src/geosync/indicators/__init__.py": {
       "CONFIDENCE.HIGH": 0,
       "CONFIDENCE.LOW": 0,
       "CONFIDENCE.MEDIUM": 0,
@@ -3174,7 +3174,7 @@
       "nosec": 0,
       "skipped_tests": 0
     },
-    "src/tradepulse/integration/__init__.py": {
+    "src/geosync/integration/__init__.py": {
       "CONFIDENCE.HIGH": 0,
       "CONFIDENCE.LOW": 0,
       "CONFIDENCE.MEDIUM": 0,
@@ -3187,7 +3187,7 @@
       "nosec": 0,
       "skipped_tests": 0
     },
-    "src/tradepulse/live/__init__.py": {
+    "src/geosync/live/__init__.py": {
       "CONFIDENCE.HIGH": 0,
       "CONFIDENCE.LOW": 0,
       "CONFIDENCE.MEDIUM": 0,
@@ -3200,7 +3200,7 @@
       "nosec": 0,
       "skipped_tests": 0
     },
-    "src/tradepulse/nlca_core.py": {
+    "src/geosync/nlca_core.py": {
       "CONFIDENCE.HIGH": 0,
       "CONFIDENCE.LOW": 0,
       "CONFIDENCE.MEDIUM": 0,
@@ -3213,7 +3213,7 @@
       "nosec": 0,
       "skipped_tests": 0
     },
-    "src/tradepulse/perf/__init__.py": {
+    "src/geosync/perf/__init__.py": {
       "CONFIDENCE.HIGH": 0,
       "CONFIDENCE.LOW": 0,
       "CONFIDENCE.MEDIUM": 0,
@@ -3226,7 +3226,7 @@
       "nosec": 0,
       "skipped_tests": 0
     },
-    "src/tradepulse/perf/golden_path.py": {
+    "src/geosync/perf/golden_path.py": {
       "CONFIDENCE.HIGH": 4,
       "CONFIDENCE.LOW": 0,
       "CONFIDENCE.MEDIUM": 0,
@@ -3239,7 +3239,7 @@
       "nosec": 0,
       "skipped_tests": 0
     },
-    "src/tradepulse/perf/io.py": {
+    "src/geosync/perf/io.py": {
       "CONFIDENCE.HIGH": 0,
       "CONFIDENCE.LOW": 0,
       "CONFIDENCE.MEDIUM": 0,
@@ -3252,7 +3252,7 @@
       "nosec": 0,
       "skipped_tests": 0
     },
-    "src/tradepulse/policy/__init__.py": {
+    "src/geosync/policy/__init__.py": {
       "CONFIDENCE.HIGH": 0,
       "CONFIDENCE.LOW": 0,
       "CONFIDENCE.MEDIUM": 0,
@@ -3265,7 +3265,7 @@
       "nosec": 0,
       "skipped_tests": 0
     },
-    "src/tradepulse/policy/basal_ganglia.py": {
+    "src/geosync/policy/basal_ganglia.py": {
       "CONFIDENCE.HIGH": 0,
       "CONFIDENCE.LOW": 0,
       "CONFIDENCE.MEDIUM": 0,
@@ -3278,7 +3278,7 @@
       "nosec": 0,
       "skipped_tests": 0
     },
-    "src/tradepulse/portfolio/__init__.py": {
+    "src/geosync/portfolio/__init__.py": {
       "CONFIDENCE.HIGH": 0,
       "CONFIDENCE.LOW": 0,
       "CONFIDENCE.MEDIUM": 0,
@@ -3291,7 +3291,7 @@
       "nosec": 0,
       "skipped_tests": 0
     },
-    "src/tradepulse/protocol/__init__.py": {
+    "src/geosync/protocol/__init__.py": {
       "CONFIDENCE.HIGH": 0,
       "CONFIDENCE.LOW": 0,
       "CONFIDENCE.MEDIUM": 0,
@@ -3304,7 +3304,7 @@
       "nosec": 0,
       "skipped_tests": 0
     },
-    "src/tradepulse/protocol/divconv.py": {
+    "src/geosync/protocol/divconv.py": {
       "CONFIDENCE.HIGH": 0,
       "CONFIDENCE.LOW": 0,
       "CONFIDENCE.MEDIUM": 0,
@@ -3317,7 +3317,7 @@
       "nosec": 0,
       "skipped_tests": 0
     },
-    "src/tradepulse/regime/__init__.py": {
+    "src/geosync/regime/__init__.py": {
       "CONFIDENCE.HIGH": 0,
       "CONFIDENCE.LOW": 0,
       "CONFIDENCE.MEDIUM": 0,
@@ -3330,7 +3330,7 @@
       "nosec": 0,
       "skipped_tests": 0
     },
-    "src/tradepulse/regime/ews.py": {
+    "src/geosync/regime/ews.py": {
       "CONFIDENCE.HIGH": 0,
       "CONFIDENCE.LOW": 0,
       "CONFIDENCE.MEDIUM": 0,
@@ -3343,7 +3343,7 @@
       "nosec": 0,
       "skipped_tests": 0
     },
-    "src/tradepulse/risk/__init__.py": {
+    "src/geosync/risk/__init__.py": {
       "CONFIDENCE.HIGH": 0,
       "CONFIDENCE.LOW": 0,
       "CONFIDENCE.MEDIUM": 0,
@@ -3356,7 +3356,7 @@
       "nosec": 0,
       "skipped_tests": 0
     },
-    "src/tradepulse/risk/automated_testing.py": {
+    "src/geosync/risk/automated_testing.py": {
       "CONFIDENCE.HIGH": 0,
       "CONFIDENCE.LOW": 0,
       "CONFIDENCE.MEDIUM": 0,
@@ -3369,7 +3369,7 @@
       "nosec": 0,
       "skipped_tests": 0
     },
-    "src/tradepulse/risk/risk_core.py": {
+    "src/geosync/risk/risk_core.py": {
       "CONFIDENCE.HIGH": 0,
       "CONFIDENCE.LOW": 0,
       "CONFIDENCE.MEDIUM": 0,
@@ -3382,7 +3382,7 @@
       "nosec": 0,
       "skipped_tests": 0
     },
-    "src/tradepulse/sdk/__init__.py": {
+    "src/geosync/sdk/__init__.py": {
       "CONFIDENCE.HIGH": 0,
       "CONFIDENCE.LOW": 0,
       "CONFIDENCE.MEDIUM": 0,
@@ -3395,7 +3395,7 @@
       "nosec": 0,
       "skipped_tests": 0
     },
-    "src/tradepulse/sdk/contracts.py": {
+    "src/geosync/sdk/contracts.py": {
       "CONFIDENCE.HIGH": 0,
       "CONFIDENCE.LOW": 0,
       "CONFIDENCE.MEDIUM": 0,
@@ -3408,7 +3408,7 @@
       "nosec": 0,
       "skipped_tests": 0
     },
-    "src/tradepulse/sdk/engine.py": {
+    "src/geosync/sdk/engine.py": {
       "CONFIDENCE.HIGH": 0,
       "CONFIDENCE.LOW": 0,
       "CONFIDENCE.MEDIUM": 0,
@@ -3421,7 +3421,7 @@
       "nosec": 0,
       "skipped_tests": 0
     },
-    "src/tradepulse/sdk/mlsdm/__init__.py": {
+    "src/geosync/sdk/mlsdm/__init__.py": {
       "CONFIDENCE.HIGH": 0,
       "CONFIDENCE.LOW": 0,
       "CONFIDENCE.MEDIUM": 0,
@@ -3434,7 +3434,7 @@
       "nosec": 0,
       "skipped_tests": 0
     },
-    "src/tradepulse/sdk/mlsdm/__main__.py": {
+    "src/geosync/sdk/mlsdm/__main__.py": {
       "CONFIDENCE.HIGH": 0,
       "CONFIDENCE.LOW": 0,
       "CONFIDENCE.MEDIUM": 1,
@@ -3447,7 +3447,7 @@
       "nosec": 0,
       "skipped_tests": 0
     },
-    "src/tradepulse/sdk/mlsdm/api/__init__.py": {
+    "src/geosync/sdk/mlsdm/api/__init__.py": {
       "CONFIDENCE.HIGH": 0,
       "CONFIDENCE.LOW": 0,
       "CONFIDENCE.MEDIUM": 0,
@@ -3460,7 +3460,7 @@
       "nosec": 0,
       "skipped_tests": 0
     },
-    "src/tradepulse/sdk/mlsdm/api/app.py": {
+    "src/geosync/sdk/mlsdm/api/app.py": {
       "CONFIDENCE.HIGH": 0,
       "CONFIDENCE.LOW": 0,
       "CONFIDENCE.MEDIUM": 0,
@@ -3473,7 +3473,7 @@
       "nosec": 0,
       "skipped_tests": 0
     },
-    "src/tradepulse/sdk/mlsdm/config.py": {
+    "src/geosync/sdk/mlsdm/config.py": {
       "CONFIDENCE.HIGH": 0,
       "CONFIDENCE.LOW": 0,
       "CONFIDENCE.MEDIUM": 0,
@@ -3486,7 +3486,7 @@
       "nosec": 0,
       "skipped_tests": 0
     },
-    "src/tradepulse/sdk/mlsdm/contracts.py": {
+    "src/geosync/sdk/mlsdm/contracts.py": {
       "CONFIDENCE.HIGH": 0,
       "CONFIDENCE.LOW": 0,
       "CONFIDENCE.MEDIUM": 0,
@@ -3499,7 +3499,7 @@
       "nosec": 0,
       "skipped_tests": 0
     },
-    "src/tradepulse/sdk/mlsdm/core/__init__.py": {
+    "src/geosync/sdk/mlsdm/core/__init__.py": {
       "CONFIDENCE.HIGH": 0,
       "CONFIDENCE.LOW": 0,
       "CONFIDENCE.MEDIUM": 0,
@@ -3512,7 +3512,7 @@
       "nosec": 0,
       "skipped_tests": 0
     },
-    "src/tradepulse/sdk/mlsdm/core/memory_manager.py": {
+    "src/geosync/sdk/mlsdm/core/memory_manager.py": {
       "CONFIDENCE.HIGH": 0,
       "CONFIDENCE.LOW": 0,
       "CONFIDENCE.MEDIUM": 0,
@@ -3525,7 +3525,7 @@
       "nosec": 0,
       "skipped_tests": 0
     },
-    "src/tradepulse/sdk/mlsdm/facade.py": {
+    "src/geosync/sdk/mlsdm/facade.py": {
       "CONFIDENCE.HIGH": 0,
       "CONFIDENCE.LOW": 0,
       "CONFIDENCE.MEDIUM": 0,
@@ -3538,7 +3538,7 @@
       "nosec": 0,
       "skipped_tests": 0
     },
-    "src/tradepulse/sdk/mlsdm/utils/__init__.py": {
+    "src/geosync/sdk/mlsdm/utils/__init__.py": {
       "CONFIDENCE.HIGH": 0,
       "CONFIDENCE.LOW": 0,
       "CONFIDENCE.MEDIUM": 0,
@@ -3551,7 +3551,7 @@
       "nosec": 0,
       "skipped_tests": 0
     },
-    "src/tradepulse/sdk/mlsdm/utils/config_loader.py": {
+    "src/geosync/sdk/mlsdm/utils/config_loader.py": {
       "CONFIDENCE.HIGH": 0,
       "CONFIDENCE.LOW": 0,
       "CONFIDENCE.MEDIUM": 0,
@@ -3564,7 +3564,7 @@
       "nosec": 0,
       "skipped_tests": 0
     },
-    "src/tradepulse/utils/__init__.py": {
+    "src/geosync/utils/__init__.py": {
       "CONFIDENCE.HIGH": 0,
       "CONFIDENCE.LOW": 0,
       "CONFIDENCE.MEDIUM": 0,
@@ -3577,7 +3577,7 @@
       "nosec": 0,
       "skipped_tests": 0
     },
-    "src/tradepulse/utils/drift.py": {
+    "src/geosync/utils/drift.py": {
       "CONFIDENCE.HIGH": 0,
       "CONFIDENCE.LOW": 0,
       "CONFIDENCE.MEDIUM": 0,
@@ -3590,7 +3590,7 @@
       "nosec": 0,
       "skipped_tests": 0
     },
-    "src/tradepulse/utils/time.py": {
+    "src/geosync/utils/time.py": {
       "CONFIDENCE.HIGH": 0,
       "CONFIDENCE.LOW": 0,
       "CONFIDENCE.MEDIUM": 0,
@@ -3603,7 +3603,7 @@
       "nosec": 0,
       "skipped_tests": 0
     },
-    "src/tradepulse_agent/__init__.py": {
+    "src/geosync_agent/__init__.py": {
       "CONFIDENCE.HIGH": 0,
       "CONFIDENCE.LOW": 0,
       "CONFIDENCE.MEDIUM": 0,
@@ -3616,7 +3616,7 @@
       "nosec": 0,
       "skipped_tests": 0
     },
-    "src/tradepulse_agent/config.py": {
+    "src/geosync_agent/config.py": {
       "CONFIDENCE.HIGH": 0,
       "CONFIDENCE.LOW": 0,
       "CONFIDENCE.MEDIUM": 0,
@@ -3629,7 +3629,7 @@
       "nosec": 0,
       "skipped_tests": 0
     },
-    "src/tradepulse_agent/data.py": {
+    "src/geosync_agent/data.py": {
       "CONFIDENCE.HIGH": 0,
       "CONFIDENCE.LOW": 0,
       "CONFIDENCE.MEDIUM": 0,
@@ -3642,7 +3642,7 @@
       "nosec": 0,
       "skipped_tests": 0
     },
-    "src/tradepulse_agent/environment.py": {
+    "src/geosync_agent/environment.py": {
       "CONFIDENCE.HIGH": 2,
       "CONFIDENCE.LOW": 0,
       "CONFIDENCE.MEDIUM": 0,
@@ -3655,7 +3655,7 @@
       "nosec": 0,
       "skipped_tests": 0
     },
-    "src/tradepulse_agent/integration.py": {
+    "src/geosync_agent/integration.py": {
       "CONFIDENCE.HIGH": 0,
       "CONFIDENCE.LOW": 0,
       "CONFIDENCE.MEDIUM": 0,
@@ -4823,7 +4823,7 @@
       "test_name": "assert_used"
     },
     {
-      "code": "59     overview_content = artifacts.overview.read_text()\n60     assert \"TradePulse API Governance Overview\" in overview_content\n",
+      "code": "59     overview_content = artifacts.overview.read_text()\n60     assert \"GeoSync API Governance Overview\" in overview_content\n",
       "col_offset": 4,
       "end_col_offset": 67,
       "filename": "scripts/tests/test_api_management.py",
@@ -6469,7 +6469,7 @@
       "code": "16 \n17     assert args.output is None\n18     assert args.indent == 2\n",
       "col_offset": 4,
       "end_col_offset": 30,
-      "filename": "scripts/tests/test_export_tradepulse_schema.py",
+      "filename": "scripts/tests/test_export_geosync_schema.py",
       "issue_confidence": "HIGH",
       "issue_cwe": {
         "id": 703,
@@ -6489,7 +6489,7 @@
       "code": "17     assert args.output is None\n18     assert args.indent == 2\n19 \n",
       "col_offset": 4,
       "end_col_offset": 27,
-      "filename": "scripts/tests/test_export_tradepulse_schema.py",
+      "filename": "scripts/tests/test_export_geosync_schema.py",
       "issue_confidence": "HIGH",
       "issue_cwe": {
         "id": 703,
@@ -6509,7 +6509,7 @@
       "code": "25 \n26     assert args.output == output\n27 \n",
       "col_offset": 4,
       "end_col_offset": 32,
-      "filename": "scripts/tests/test_export_tradepulse_schema.py",
+      "filename": "scripts/tests/test_export_geosync_schema.py",
       "issue_confidence": "HIGH",
       "issue_cwe": {
         "id": 703,
@@ -6529,7 +6529,7 @@
       "code": "32 \n33     assert args.indent == 4\n34 \n",
       "col_offset": 4,
       "end_col_offset": 27,
-      "filename": "scripts/tests/test_export_tradepulse_schema.py",
+      "filename": "scripts/tests/test_export_geosync_schema.py",
       "issue_confidence": "HIGH",
       "issue_cwe": {
         "id": 703,
@@ -6549,7 +6549,7 @@
       "code": "61     output_schema = json.loads(captured.out)\n62     assert output_schema == mock_schema\n63 \n",
       "col_offset": 4,
       "end_col_offset": 39,
-      "filename": "scripts/tests/test_export_tradepulse_schema.py",
+      "filename": "scripts/tests/test_export_geosync_schema.py",
       "issue_confidence": "HIGH",
       "issue_cwe": {
         "id": 703,
@@ -6569,7 +6569,7 @@
       "code": "77     # Verify indent is applied in output\n78     assert captured.out.count(\"    \") > 0  # 4-space indent\n",
       "col_offset": 4,
       "end_col_offset": 41,
-      "filename": "scripts/tests/test_export_tradepulse_schema.py",
+      "filename": "scripts/tests/test_export_geosync_schema.py",
       "issue_confidence": "HIGH",
       "issue_cwe": {
         "id": 703,
@@ -14986,7 +14986,7 @@
       "test_name": "assert_used"
     },
     {
-      "code": "74 \n75     assert sbom[\"bomFormat\"] == \"CycloneDX\"\n76     assert sbom[\"metadata\"][\"component\"][\"name\"] == \"TradePulse\"\n",
+      "code": "74 \n75     assert sbom[\"bomFormat\"] == \"CycloneDX\"\n76     assert sbom[\"metadata\"][\"component\"][\"name\"] == \"GeoSync\"\n",
       "col_offset": 4,
       "end_col_offset": 43,
       "filename": "scripts/tests/test_supply_chain.py",
@@ -15006,7 +15006,7 @@
       "test_name": "assert_used"
     },
     {
-      "code": "75     assert sbom[\"bomFormat\"] == \"CycloneDX\"\n76     assert sbom[\"metadata\"][\"component\"][\"name\"] == \"TradePulse\"\n77     assert sbom[\"components\"][0][\"name\"] == \"alpha\"\n",
+      "code": "75     assert sbom[\"bomFormat\"] == \"CycloneDX\"\n76     assert sbom[\"metadata\"][\"component\"][\"name\"] == \"GeoSync\"\n77     assert sbom[\"components\"][0][\"name\"] == \"alpha\"\n",
       "col_offset": 4,
       "end_col_offset": 64,
       "filename": "scripts/tests/test_supply_chain.py",
@@ -15026,7 +15026,7 @@
       "test_name": "assert_used"
     },
     {
-      "code": "76     assert sbom[\"metadata\"][\"component\"][\"name\"] == \"TradePulse\"\n77     assert sbom[\"components\"][0][\"name\"] == \"alpha\"\n78 \n",
+      "code": "76     assert sbom[\"metadata\"][\"component\"][\"name\"] == \"GeoSync\"\n77     assert sbom[\"components\"][0][\"name\"] == \"alpha\"\n78 \n",
       "col_offset": 4,
       "end_col_offset": 51,
       "filename": "scripts/tests/test_supply_chain.py",
@@ -15066,7 +15066,7 @@
       "test_name": "assert_used"
     },
     {
-      "code": "32 \n33     assert variables[\"TRADEPULSE_AUDIT_SECRET\"] == \"audit\"\n34     assert variables[\"TRADEPULSE_RBAC_AUDIT_SECRET\"] == \"rbac\"\n",
+      "code": "32 \n33     assert variables[\"GEOSYNC_AUDIT_SECRET\"] == \"audit\"\n34     assert variables[\"GEOSYNC_RBAC_AUDIT_SECRET\"] == \"rbac\"\n",
       "col_offset": 4,
       "end_col_offset": 58,
       "filename": "scripts/tests/test_system_launch.py",
@@ -15086,7 +15086,7 @@
       "test_name": "assert_used"
     },
     {
-      "code": "33     assert variables[\"TRADEPULSE_AUDIT_SECRET\"] == \"audit\"\n34     assert variables[\"TRADEPULSE_RBAC_AUDIT_SECRET\"] == \"rbac\"\n35     assert variables[\"OS_LEVEL\"] == \"available\"\n",
+      "code": "33     assert variables[\"GEOSYNC_AUDIT_SECRET\"] == \"audit\"\n34     assert variables[\"GEOSYNC_RBAC_AUDIT_SECRET\"] == \"rbac\"\n35     assert variables[\"OS_LEVEL\"] == \"available\"\n",
       "col_offset": 4,
       "end_col_offset": 62,
       "filename": "scripts/tests/test_system_launch.py",
@@ -15106,7 +15106,7 @@
       "test_name": "assert_used"
     },
     {
-      "code": "34     assert variables[\"TRADEPULSE_RBAC_AUDIT_SECRET\"] == \"rbac\"\n35     assert variables[\"OS_LEVEL\"] == \"available\"\n36 \n",
+      "code": "34     assert variables[\"GEOSYNC_RBAC_AUDIT_SECRET\"] == \"rbac\"\n35     assert variables[\"OS_LEVEL\"] == \"available\"\n36 \n",
       "col_offset": 4,
       "end_col_offset": 47,
       "filename": "scripts/tests/test_system_launch.py",
@@ -15126,7 +15126,7 @@
       "test_name": "assert_used"
     },
     {
-      "code": "71 \n72     assert [status.name for status in statuses] == [\"tradepulse\", \"prometheus\"]\n73 \n",
+      "code": "71 \n72     assert [status.name for status in statuses] == [\"geosync\", \"prometheus\"]\n73 \n",
       "col_offset": 4,
       "end_col_offset": 79,
       "filename": "scripts/tests/test_system_launch.py",
@@ -15146,7 +15146,7 @@
       "test_name": "assert_used"
     },
     {
-      "code": "92 \n93     assert \"tradepulse=starting\" in str(excinfo.value)\n94 \n",
+      "code": "92 \n93     assert \"geosync=starting\" in str(excinfo.value)\n94 \n",
       "col_offset": 4,
       "end_col_offset": 54,
       "filename": "scripts/tests/test_system_launch.py",
@@ -15166,7 +15166,7 @@
       "test_name": "assert_used"
     },
     {
-      "code": "113 \n114     assert \"tradepulse\" in str(excinfo.value)\n",
+      "code": "113 \n114     assert \"geosync\" in str(excinfo.value)\n",
       "col_offset": 4,
       "end_col_offset": 45,
       "filename": "scripts/tests/test_system_launch.py",
@@ -16785,7 +16785,7 @@
       "code": "69             self._logger(name, float(value))\n70         except Exception:  # pragma: no cover - defensive\n71             pass\n72 \n",
       "col_offset": 8,
       "end_col_offset": 16,
-      "filename": "src/tradepulse/core/neuro/dopamine/action_gate.py",
+      "filename": "src/geosync/core/neuro/dopamine/action_gate.py",
       "issue_confidence": "HIGH",
       "issue_cwe": {
         "id": 703,
@@ -16806,7 +16806,7 @@
       "code": "339             log_metric(name, float(value))\n340         except Exception:  # pragma: no cover - safeguard against telemetry errors.\n341             pass\n342 \n",
       "col_offset": 8,
       "end_col_offset": 16,
-      "filename": "src/tradepulse/core/neuro/dopamine/dopamine_controller.py",
+      "filename": "src/geosync/core/neuro/dopamine/dopamine_controller.py",
       "issue_confidence": "HIGH",
       "issue_cwe": {
         "id": 703,
@@ -16827,7 +16827,7 @@
       "code": "345             self._logger(name, float(value))\n346         except Exception:  # pragma: no cover - defensive logging guard.\n347             pass\n348 \n",
       "col_offset": 8,
       "end_col_offset": 16,
-      "filename": "src/tradepulse/core/neuro/dopamine/dopamine_controller.py",
+      "filename": "src/geosync/core/neuro/dopamine/dopamine_controller.py",
       "issue_confidence": "HIGH",
       "issue_cwe": {
         "id": 703,
@@ -16848,7 +16848,7 @@
       "code": "129             self._logger(name, float(value))\n130         except Exception:  # pragma: no cover - defensive\n131             pass\n132 \n",
       "col_offset": 8,
       "end_col_offset": 16,
-      "filename": "src/tradepulse/core/neuro/gaba/gaba_inhibition_gate.py",
+      "filename": "src/geosync/core/neuro/gaba/gaba_inhibition_gate.py",
       "issue_confidence": "HIGH",
       "issue_cwe": {
         "id": 703,
@@ -16869,7 +16869,7 @@
       "code": "105             self._logger(name, float(value))\n106         except Exception:  # pragma: no cover - defensive\n107             pass\n108 \n",
       "col_offset": 8,
       "end_col_offset": 16,
-      "filename": "src/tradepulse/core/neuro/na_ach/neuromods.py",
+      "filename": "src/geosync/core/neuro/na_ach/neuromods.py",
       "issue_confidence": "HIGH",
       "issue_cwe": {
         "id": 703,
@@ -16890,7 +16890,7 @@
       "code": "149             self._logger(name, float(value))\n150         except Exception:  # pragma: no cover - defensive\n151             pass\n152 \n",
       "col_offset": 8,
       "end_col_offset": 16,
-      "filename": "src/tradepulse/core/neuro/serotonin/serotonin_controller.py",
+      "filename": "src/geosync/core/neuro/serotonin/serotonin_controller.py",
       "issue_confidence": "HIGH",
       "issue_cwe": {
         "id": 703,
@@ -16911,7 +16911,7 @@
       "code": "14 import platform\n15 import subprocess\n16 import time\n",
       "col_offset": 0,
       "end_col_offset": 17,
-      "filename": "src/tradepulse/perf/golden_path.py",
+      "filename": "src/geosync/perf/golden_path.py",
       "issue_confidence": "HIGH",
       "issue_cwe": {
         "id": 78,
@@ -16931,7 +16931,7 @@
       "code": "30     try:\n31         result = subprocess.run(\n32             [\"git\", \"rev-parse\", \"--short\", \"HEAD\"],\n33             capture_output=True,\n34             text=True,\n35             timeout=5,\n36         )\n37         if result.returncode == 0:\n",
       "col_offset": 17,
       "end_col_offset": 9,
-      "filename": "src/tradepulse/perf/golden_path.py",
+      "filename": "src/geosync/perf/golden_path.py",
       "issue_confidence": "HIGH",
       "issue_cwe": {
         "id": 78,
@@ -16956,7 +16956,7 @@
       "code": "30     try:\n31         result = subprocess.run(\n32             [\"git\", \"rev-parse\", \"--short\", \"HEAD\"],\n33             capture_output=True,\n34             text=True,\n35             timeout=5,\n36         )\n37         if result.returncode == 0:\n",
       "col_offset": 17,
       "end_col_offset": 9,
-      "filename": "src/tradepulse/perf/golden_path.py",
+      "filename": "src/geosync/perf/golden_path.py",
       "issue_confidence": "HIGH",
       "issue_cwe": {
         "id": 78,
@@ -16981,7 +16981,7 @@
       "code": "38             return result.stdout.strip()\n39     except Exception:\n40         pass\n41     return \"unknown\"\n",
       "col_offset": 4,
       "end_col_offset": 12,
-      "filename": "src/tradepulse/perf/golden_path.py",
+      "filename": "src/geosync/perf/golden_path.py",
       "issue_confidence": "HIGH",
       "issue_cwe": {
         "id": 703,
@@ -17002,7 +17002,7 @@
       "code": "64         type=str,\n65         default=\"0.0.0.0\",\n66         help=\"Host for API server (used only with --api).\",\n",
       "col_offset": 16,
       "end_col_offset": 25,
-      "filename": "src/tradepulse/sdk/mlsdm/__main__.py",
+      "filename": "src/geosync/sdk/mlsdm/__main__.py",
       "issue_confidence": "MEDIUM",
       "issue_cwe": {
         "id": 605,
@@ -17022,7 +17022,7 @@
       "code": "139     def _build_observation(self) -> AgentObservation:\n140         assert self._data is not None\n141         start = self._cursor - self._env_config.lookback_window\n",
       "col_offset": 8,
       "end_col_offset": 37,
-      "filename": "src/tradepulse_agent/environment.py",
+      "filename": "src/geosync_agent/environment.py",
       "issue_confidence": "HIGH",
       "issue_cwe": {
         "id": 703,
@@ -17042,7 +17042,7 @@
       "code": "157     def _current_price(self) -> float:\n158         assert self._data is not None\n159         price_series = self._data.feature_frame[self._price_column]\n",
       "col_offset": 8,
       "end_col_offset": 37,
-      "filename": "src/tradepulse_agent/environment.py",
+      "filename": "src/geosync_agent/environment.py",
       "issue_confidence": "HIGH",
       "issue_cwe": {
         "id": 703,

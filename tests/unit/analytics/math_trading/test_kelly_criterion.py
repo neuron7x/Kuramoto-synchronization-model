@@ -1,4 +1,5 @@
-# SPDX-License-Identifier: LicenseRef-TradePulse-Proprietary
+# Copyright (c) 2023-2026 Yaroslav Vasylenko (neuron7xLab)
+# SPDX-License-Identifier: MIT
 """Tests for Kelly criterion module."""
 
 from __future__ import annotations
@@ -202,20 +203,20 @@ class TestMultiAssetKelly:
     @pytest.fixture
     def simple_params(self) -> MultiAssetKellyParams:
         mu = np.array([0.10, 0.08, 0.12])
-        sigma = np.array([
-            [0.04, 0.01, 0.02],
-            [0.01, 0.03, 0.01],
-            [0.02, 0.01, 0.05],
-        ])
+        sigma = np.array(
+            [
+                [0.04, 0.01, 0.02],
+                [0.01, 0.03, 0.01],
+                [0.02, 0.01, 0.05],
+            ]
+        )
         return MultiAssetKellyParams(
             expected_returns=mu,
             covariance_matrix=sigma,
             asset_names=("AAPL", "GOOG", "MSFT"),
         )
 
-    def test_optimization_returns_result(
-        self, simple_params: MultiAssetKellyParams
-    ) -> None:
+    def test_optimization_returns_result(self, simple_params: MultiAssetKellyParams) -> None:
         kelly = MultiAssetKelly()
         result = kelly.optimize(simple_params)
 
@@ -224,11 +225,13 @@ class TestMultiAssetKelly:
 
     def test_leverage_constraint_respected(self) -> None:
         mu = np.array([0.15, 0.15, 0.15])  # High returns
-        sigma = np.array([
-            [0.01, 0, 0],
-            [0, 0.01, 0],
-            [0, 0, 0.01],
-        ])  # Low variance = high kelly
+        sigma = np.array(
+            [
+                [0.01, 0, 0],
+                [0, 0.01, 0],
+                [0, 0, 0.01],
+            ]
+        )  # Low variance = high kelly
         params = MultiAssetKellyParams(
             expected_returns=mu,
             covariance_matrix=sigma,
@@ -256,16 +259,16 @@ class TestMultiAssetKelly:
         for pos in result.optimal_positions.values():
             assert abs(pos) <= 0.5 + 1e-3
 
-    def test_fractional_kelly_scales_positions(
-        self, simple_params: MultiAssetKellyParams
-    ) -> None:
+    def test_fractional_kelly_scales_positions(self, simple_params: MultiAssetKellyParams) -> None:
         # Use moderate returns so constraints don't bind for both cases
         mu = np.array([0.05, 0.04, 0.06])
-        sigma = np.array([
-            [0.04, 0.01, 0.02],
-            [0.01, 0.03, 0.01],
-            [0.02, 0.01, 0.05],
-        ])
+        sigma = np.array(
+            [
+                [0.04, 0.01, 0.02],
+                [0.01, 0.03, 0.01],
+                [0.02, 0.01, 0.05],
+            ]
+        )
         full_params = MultiAssetKellyParams(
             expected_returns=mu,
             covariance_matrix=sigma,
@@ -290,9 +293,7 @@ class TestMultiAssetKelly:
         # Half Kelly should have lower leverage (unless both hit max constraint)
         assert half_result.leverage <= full_result.leverage + 1e-6
 
-    def test_sharpe_ratio_calculation(
-        self, simple_params: MultiAssetKellyParams
-    ) -> None:
+    def test_sharpe_ratio_calculation(self, simple_params: MultiAssetKellyParams) -> None:
         kelly = MultiAssetKelly()
         result = kelly.optimize(simple_params)
 

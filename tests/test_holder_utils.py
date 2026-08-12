@@ -1,3 +1,5 @@
+# Copyright (c) 2023-2026 Yaroslav Vasylenko (neuron7xLab)
+# SPDX-License-Identifier: MIT
 import numpy as np
 
 from core.metrics.holder import _Q_ZERO_THRESHOLD, _clamp_q_values

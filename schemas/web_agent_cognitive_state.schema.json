@@ -1,0 +1,69 @@
+{
+  "$schema": "https://json-schema.org/draft/2020-12/schema",
+  "$id": "https://github.com/neuron7xLab/GeoSync/schemas/web_agent_cognitive_state.schema.json",
+  "title": "Web Agent Cognitive State",
+  "type": "object",
+  "additionalProperties": false,
+  "required": [
+    "perception_coverage",
+    "attention_precision",
+    "memory_minimization",
+    "reasoning_traceability",
+    "decision_safety",
+    "interpretation_error_rate",
+    "critical_interpretation_errors",
+    "baseline_commit",
+    "measurement_method"
+  ],
+  "properties": {
+    "perception_coverage": {
+      "type": "number",
+      "minimum": 0.0,
+      "maximum": 1.0,
+      "description": "recognized_required_signals / required_signals"
+    },
+    "attention_precision": {
+      "type": "number",
+      "minimum": 0.0,
+      "maximum": 1.0,
+      "description": "useful_context_items / selected_context_items"
+    },
+    "memory_minimization": {
+      "type": "number",
+      "minimum": 0.0,
+      "maximum": 1.0,
+      "description": "required_retained_fields / retained_fields"
+    },
+    "reasoning_traceability": {
+      "type": "number",
+      "minimum": 0.0,
+      "maximum": 1.0,
+      "description": "decisions_with_evidence / total_decisions"
+    },
+    "decision_safety": {
+      "type": "number",
+      "minimum": 0.0,
+      "maximum": 1.0,
+      "description": "safe_decisions / total_decisions"
+    },
+    "interpretation_error_rate": {
+      "type": "number",
+      "minimum": 0.0,
+      "maximum": 1.0,
+      "description": "detected_interpretation_errors / evaluated_decisions"
+    },
+    "critical_interpretation_errors": {
+      "type": "integer",
+      "minimum": 0,
+      "description": "Count of critical interpretation failures such as unsafe irreversible action or trust-zone collapse"
+    },
+    "baseline_commit": {
+      "type": "string",
+      "minLength": 1
+    },
+    "measurement_method": {
+      "type": "string",
+      "minLength": 1
+    }
+  }
+}

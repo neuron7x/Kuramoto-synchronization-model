@@ -1,3 +1,5 @@
+# Copyright (c) 2023-2026 Yaroslav Vasylenko (neuron7xLab)
+# SPDX-License-Identifier: MIT
 """PI control loop used to modulate risk exposure."""
 
 from __future__ import annotations
@@ -23,7 +25,7 @@ def pi_control(
     center, half_width = band_center_width(params, band_expand)
     error = (state.EI - center) / half_width
     tanh_error = math.tanh(error)
-    state.I = clip(state.I + tanh_error, -params.I_max, params.I_max)  # noqa: E741
+    state.I = clip(state.I + tanh_error, -params.I_max, params.I_max)
     integrator_term = math.tanh(state.I / max(1e-6, params.I_max / 2.0))
     control = params.Kp * tanh_error + params.Ki * integrator_term
     rate_target = clip(1.0 + control, params.r_min, params.r_max)

@@ -1,0 +1,4 @@
+HLC monotonicity proof
+solver_status = unsat
+encoding = (wall_time_ms << 20) | logical
+Invariant V: UNSAT (happened-before implies HLC increase)

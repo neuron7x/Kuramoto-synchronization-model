@@ -1,3 +1,5 @@
+# Copyright (c) 2023-2026 Yaroslav Vasylenko (neuron7xLab)
+# SPDX-License-Identifier: MIT
 from __future__ import annotations
 
 import importlib
@@ -28,9 +30,7 @@ def test_runtime_semantics_produce_deltas(tmp_path: Path) -> None:
     deltas = payload["metric_deltas"]
     invariants = payload["invariants"]
 
-    assert deltas["tradepulse_api_requests_total"] is None or deltas[
-        "tradepulse_api_requests_total"
-    ] >= 2
+    assert deltas["geosync_api_requests_total"] is None or deltas["geosync_api_requests_total"] >= 2
     assert invariants["health_counter_incremented"]
     assert invariants["health_latency_incremented"]
     assert invariants["latency_finite"]

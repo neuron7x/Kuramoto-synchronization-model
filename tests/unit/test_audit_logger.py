@@ -1,3 +1,5 @@
+# Copyright (c) 2023-2026 Yaroslav Vasylenko (neuron7xLab)
+# SPDX-License-Identifier: MIT
 from __future__ import annotations
 
 import logging
@@ -27,9 +29,7 @@ def _make_record() -> AuditRecord:
 
 def test_audit_logger_emits_signed_records() -> None:
     records: list[AuditRecord] = []
-    audit_logger = AuditLogger(
-        secret="unit-secret-value", sink=records.append, clock=_fixed_clock
-    )
+    audit_logger = AuditLogger(secret="unit-secret-value", sink=records.append, clock=_fixed_clock)
 
     record = audit_logger.log_event(
         event_type="kill_switch_engaged",
@@ -83,7 +83,7 @@ def test_http_audit_sink_posts_payload() -> None:
 
 
 def test_http_audit_sink_logs_failures(caplog: pytest.LogCaptureFixture) -> None:
-    caplog.set_level(logging.ERROR, logger="tradepulse.audit.http_sink")
+    caplog.set_level(logging.ERROR, logger="geosync.audit.http_sink")
 
     def handler(_: httpx.Request) -> httpx.Response:
         return httpx.Response(500)
@@ -104,9 +104,7 @@ def test_audit_logger_uses_rotated_secret(tmp_path: Path) -> None:
     secret_path = tmp_path / "audit_secret"
     secret_path.write_text("initial-managed-secret", encoding="utf-8")
     managed = ManagedSecret(
-        config=ManagedSecretConfig(
-            name="audit_secret", path=secret_path, min_length=16
-        ),
+        config=ManagedSecretConfig(name="audit_secret", path=secret_path, min_length=16),
         fallback=None,
         refresh_interval_seconds=0.0,
     )

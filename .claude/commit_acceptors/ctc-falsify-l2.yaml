@@ -1,0 +1,43 @@
+# Diff-bound commit acceptor for CTC-FALSIFY-001 L2.
+id: ctc-falsify-l2
+status: ACTIVE
+claim_type: governance
+promise: "CTC-FALSIFY-001 L2 is fail-closed pre-data: the v1 residual estimator is reported INADMISSIBLE_NPLUS_INSITU_BLIND by its own pre-registered positive-control gate; KILLED_SCOPED/SURVIVED_INITIAL are unreachable without a bound dataset and a non-blind estimator."
+diff_scope:
+  changed_files:
+    - path: "research/ctc_falsify/l2/__init__.py"
+    - path: "research/ctc_falsify/l2/config_l2.py"
+    - path: "research/ctc_falsify/l2/surrogate.py"
+    - path: "research/ctc_falsify/l2/residual.py"
+    - path: "research/ctc_falsify/l2/gates_l2.py"
+    - path: "research/ctc_falsify/l2/run.py"
+    - path: "research/ctc_falsify/l2/schema/ctc_falsify_l2_result.schema.json"
+    - path: "research/ctc_falsify/l2/evidence/ctc_falsify_l2_result.json"
+    - path: "tests/research/ctc_falsify/test_ctc_falsify_l2.py"
+    - path: ".github/detect-secrets.baseline"
+    - path: ".claude/commit_acceptors/ctc-falsify-l2.yaml"
+    - path: "docs/research/CTC_FALSIFY_001_L2_PREREGISTRATION.md"
+  forbidden_paths:
+    - "trading/"
+    - "execution/"
+    - "forecast/"
+    - "policy/"
+required_python_symbols:
+  - "run"
+  - "run_self_validation"
+  - "decide_l2"
+  - "standardized_residual"
+  - "build_joint_surrogate"
+  - "config_hash"
+expected_signal: "all L2 construct-validity tests pass; reference verdict is the fail-closed INADMISSIBLE_NPLUS_INSITU_BLIND"
+measurement_command: "python -m pytest tests/research/ctc_falsify/test_ctc_falsify_l2.py -q"
+signal_artifact: "tmp/ctc_falsify_l2_pytest.log"
+falsifier:
+  command: "python -c \"from research.ctc_falsify.l2.gates_l2 import decide_l2, L2SelfValidation; from research.ctc_falsify.l2 import config_l2 as c; decide_l2(L2SelfValidation(surrogate_all_matched=True, mean_nplus_residual_z=c.NPLUS_RESIDUAL_MIN_Z+1, max_confound_residual_z=0.0, nplus_recovered=True, confounds_not_flagged=True, n_validation_seeds=c.N_VALIDATION_SEEDS, worst_rate_rel_err=0.0, worst_power_rel_err=0.0), real_dataset_bound=True)\""
+  description: "With an admissible synthetic self-validation, the C3 real-data branch MUST raise NotImplementedError — proving terminal verdicts are gated behind a bound dataset and the promise is falsifiable."
+rollback_command: "git checkout -- research/ctc_falsify/l2 tests/research/ctc_falsify/test_ctc_falsify_l2.py .github/detect-secrets.baseline"
+rollback_verification_command: "git diff --exit-code research/ctc_falsify/l2 tests/research/ctc_falsify/test_ctc_falsify_l2.py"
+memory_update_type: append
+ledger_path: ".claude/commit_acceptors/ctc-falsify-l2.yaml"
+report_path: "docs/research/CTC_FALSIFY_001_L2_PREREGISTRATION.md"
+evidence: []

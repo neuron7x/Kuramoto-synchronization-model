@@ -1,0 +1,32 @@
+id: web-agent-evaluator-contract-tests
+status: DRAFT
+claim_type: correctness
+promise: "Web-agent evaluator contract tests bind injection, runtime trace, task completion, context efficiency, live evidence, and live adapter smoke behavior to reproducible assertions."
+diff_scope:
+  changed_files:
+    - path: ".claude/commit_acceptors/web-agent-evaluator-contract-tests.yaml"
+    - path: "tests/agents/test_context_efficiency_evaluator.py"
+    - path: "tests/agents/test_live_evidence_evaluator.py"
+    - path: "tests/agents/test_live_tool_adapter_smoke.py"
+    - path: "tests/agents/test_prompt_injection_evaluator.py"
+    - path: "tests/agents/test_prompt_injection_fixtures.py"
+    - path: "tests/agents/test_runtime_trace_evaluator.py"
+    - path: "tests/agents/test_task_completion_evaluator.py"
+  forbidden_paths:
+    - "trading/"
+    - "execution/"
+    - "forecast/"
+    - "policy/"
+required_python_symbols: []
+expected_signal: "web-agent evaluator tests execute and preserve fail-closed live-evidence boundaries"
+measurement_command: "python -m pytest tests/agents/test_prompt_injection_fixtures.py tests/agents/test_prompt_injection_evaluator.py tests/agents/test_runtime_trace_evaluator.py tests/agents/test_task_completion_evaluator.py tests/agents/test_context_efficiency_evaluator.py tests/agents/test_live_tool_adapter_smoke.py tests/agents/test_live_evidence_evaluator.py"
+signal_artifact: "artifacts/agents/web_agent_live_evidence_eval.json"
+falsifier:
+  command: "python -c \"raise SystemExit(1)\""
+  description: "Always-failing probe proving evaluator contract-test acceptor failures are surfaced by CI."
+rollback_command: "git checkout -- .claude/commit_acceptors/web-agent-evaluator-contract-tests.yaml tests/agents/test_context_efficiency_evaluator.py tests/agents/test_live_evidence_evaluator.py tests/agents/test_live_tool_adapter_smoke.py tests/agents/test_prompt_injection_evaluator.py tests/agents/test_prompt_injection_fixtures.py tests/agents/test_runtime_trace_evaluator.py tests/agents/test_task_completion_evaluator.py"
+rollback_verification_command: "git diff --exit-code tests/agents/test_context_efficiency_evaluator.py tests/agents/test_live_evidence_evaluator.py tests/agents/test_live_tool_adapter_smoke.py tests/agents/test_prompt_injection_evaluator.py tests/agents/test_prompt_injection_fixtures.py tests/agents/test_runtime_trace_evaluator.py tests/agents/test_task_completion_evaluator.py .claude/commit_acceptors/web-agent-evaluator-contract-tests.yaml"
+memory_update_type: none
+ledger_path: ".claude/commit_acceptors/web-agent-evaluator-contract-tests.yaml"
+report_path: "docs/agents/web_agent_readiness_verdict.md"
+evidence: []

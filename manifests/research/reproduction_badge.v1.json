@@ -1,0 +1,32 @@
+{
+  "schema_version": "1.0.0",
+  "manifest_id": "geosync.reproduction_badge.v1",
+  "status": "DRAFT",
+  "purpose": "Track public reproducibility state for research-standard release candidates.",
+  "states": [
+    "DOCUMENTED",
+    "EXERCISABLE",
+    "ARCHIVED",
+    "INDEPENDENT_REVIEW_REQUESTED",
+    "INDEPENDENTLY_REPRODUCED",
+    "BLOCKED"
+  ],
+  "minimum_release_state": "ARCHIVED",
+  "standard_release_state": "INDEPENDENTLY_REPRODUCED",
+  "required_fields": [
+    "artifact_id",
+    "git_sha",
+    "data_sha256",
+    "config_sha256",
+    "environment_digest",
+    "replay_command",
+    "tolerance_budget",
+    "reviewer_identity_policy"
+  ],
+  "rules": [
+    "availability is not the same as independent validation",
+    "agreement must be checked against a declared tolerance budget",
+    "negative reference runs are valid reproduction targets",
+    "manual screenshots are not reproduction evidence"
+  ]
+}

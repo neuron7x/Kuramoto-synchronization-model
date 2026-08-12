@@ -1,4 +1,6 @@
-"""Configuration helpers for TradePulse components."""
+# Copyright (c) 2023-2026 Yaroslav Vasylenko (neuron7xLab)
+# SPDX-License-Identifier: MIT
+"""Configuration helpers for GeoSync components."""
 
 from .cli_models import (
     BacktestConfig,
@@ -13,12 +15,12 @@ from .cli_models import (
     FeatureFrameSourceConfig,
     FeatureParityConfig,
     FeatureParitySpecConfig,
+    GeoSyncBaseConfig,
     IngestConfig,
     OptimizeConfig,
     PostgresTLSConfig,
     ReportConfig,
     StrategyConfig,
-    TradePulseBaseConfig,
     VersioningConfig,
 )
 from .hydra_profiles import (
@@ -32,14 +34,14 @@ from .kuramoto_ricci import (
     CompositeSignals,
     CompositeThresholds,
     ConfigError,
+    GeoSyncSettings,
     KuramotoConfig,
     KuramotoRicciIntegrationConfig,
     RicciConfig,
     RicciGraphConfig,
     RicciTemporalConfig,
-    TradePulseSettings,
     YamlSettingsSource,
-    export_tradepulse_settings_schema,
+    export_geosync_settings_schema,
     load_kuramoto_ricci_config,
     parse_cli_overrides,
 )
@@ -89,13 +91,13 @@ __all__ = [
     "OptimizeConfig",
     "PostgresTLSConfig",
     "ReportConfig",
-    "TradePulseSettings",
+    "GeoSyncSettings",
     "YamlSettingsSource",
-    "export_tradepulse_settings_schema",
+    "export_geosync_settings_schema",
     "load_kuramoto_ricci_config",
     "parse_cli_overrides",
     "StrategyConfig",
-    "TradePulseBaseConfig",
+    "GeoSyncBaseConfig",
     "VersioningConfig",
     "ExperimentProfileError",
     "ExperimentProfileRegistry",

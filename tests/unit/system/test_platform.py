@@ -1,3 +1,5 @@
+# Copyright (c) 2023-2026 Yaroslav Vasylenko (neuron7xLab)
+# SPDX-License-Identifier: MIT
 from __future__ import annotations
 
 from datetime import datetime, timedelta, timezone
@@ -10,8 +12,8 @@ import pytest
 
 from application.system import (
     ExchangeAdapterConfig,
-    TradePulseSystem,
-    TradePulseSystemConfig,
+    GeoSyncSystem,
+    GeoSyncSystemConfig,
 )
 from application.system_orchestrator import MarketDataSource
 from core.data.models import InstrumentType, PriceTick
@@ -21,9 +23,9 @@ from src.data.ingestion_service import DataIngestionCacheService
 from src.data.kafka_ingestion import KafkaIngestionConfig
 from src.data.pipeline import CacheRoute
 from src.system import (
+    GeoSyncPlatform,
     StreamingPipelineSettings,
-    TradePulsePlatform,
-    build_tradepulse_platform,
+    build_geosync_platform,
 )
 
 
@@ -40,9 +42,7 @@ class _StubStreamingPipeline:
     async def stop(self) -> None:
         self.stopped += 1
 
-    def create_aggregator(
-        self, route: CacheRoute, *, frequency: str | pd.Timedelta | None = None
-    ):
+    def create_aggregator(self, route: CacheRoute, *, frequency: str | pd.Timedelta | None = None):
         self.created.append((route, frequency))
         from src.data.streaming_aggregator import TickStreamAggregator
 
@@ -89,7 +89,7 @@ def _build_platform(
     cache_service: DataIngestionCacheService | None = None,
     streaming_pipeline: _StubStreamingPipeline | None = None,
     allowed_data_roots: Iterable[str | Path] | None = None,
-) -> TradePulsePlatform:
+) -> GeoSyncPlatform:
     kwargs: dict[str, object] = {}
     if cache_service is not None:
         kwargs["cache_service"] = cache_service
@@ -97,35 +97,35 @@ def _build_platform(
         kwargs["streaming_pipeline"] = streaming_pipeline
     if allowed_data_roots is not None:
         kwargs["allowed_data_roots"] = allowed_data_roots
-    return build_tradepulse_platform(
+    return build_geosync_platform(
         venues=_venues(),
         audit_secret=audit_secret,
         **kwargs,
     )
 
 
-def test_build_tradepulse_platform_requires_audit_credentials() -> None:
+def test_build_geosync_platform_requires_audit_credentials() -> None:
     with pytest.raises(ValueError):
-        build_tradepulse_platform(venues=_venues())
+        build_geosync_platform(venues=_venues())
 
 
-def test_build_tradepulse_platform_rejects_conflicting_audit_dependencies() -> None:
+def test_build_geosync_platform_rejects_conflicting_audit_dependencies() -> None:
     with pytest.raises(ValueError):
-        build_tradepulse_platform(
+        build_geosync_platform(
             venues=_venues(),
             audit_logger=AuditLogger(secret="explicit"),
             audit_secret="redundant",
         )
 
 
-def test_build_tradepulse_platform_allows_audit_secret_resolver() -> None:
+def test_build_geosync_platform_allows_audit_secret_resolver() -> None:
     secret_calls: list[str] = []
 
     def resolver() -> str:
         secret_calls.append("resolver")
         return "resolved-secret"
 
-    platform = build_tradepulse_platform(
+    platform = build_geosync_platform(
         venues=_venues(),
         audit_secret_resolver=resolver,
     )
@@ -190,9 +190,7 @@ def test_platform_ingest_csv_updates_cache_metadata() -> None:
     )
 
     assert not frame.empty
-    metadata = platform.metadata_for(
-        layer="raw", symbol="BTCUSD", venue="CSV", timeframe="1s"
-    )
+    metadata = platform.metadata_for(layer="raw", symbol="BTCUSD", venue="CSV", timeframe="1s")
     assert metadata is not None
     assert metadata.rows == frame.shape[0]
 
@@ -221,9 +219,7 @@ def test_platform_create_aggregator_without_pipeline_uses_shared_cache() -> None
         historical=[tick],
     )
 
-    metadata = platform.metadata_for(
-        layer="raw", symbol="BTCUSD", venue="CSV", timeframe="1min"
-    )
+    metadata = platform.metadata_for(layer="raw", symbol="BTCUSD", venue="CSV", timeframe="1min")
     assert metadata is not None
     assert metadata.rows == 1
     assert result.frame.shape[0] == 1
@@ -262,9 +258,7 @@ def test_platform_create_aggregator_with_pipeline_delegates() -> None:
         historical=ticks,
     )
 
-    metadata = platform.metadata_for(
-        layer="raw", symbol="BTCUSD", venue="CSV", timeframe="1s"
-    )
+    metadata = platform.metadata_for(layer="raw", symbol="BTCUSD", venue="CSV", timeframe="1s")
     assert metadata is not None
     assert metadata.rows == 2
 
@@ -344,23 +338,23 @@ def test_platform_kill_switch_round_trip() -> None:
     assert isinstance(current.reason, str)
 
 
-def test_build_tradepulse_platform_rejects_system_and_config() -> None:
-    config = TradePulseSystemConfig(venues=_venues())
-    system = TradePulseSystem(config)
+def test_build_geosync_platform_rejects_system_and_config() -> None:
+    config = GeoSyncSystemConfig(venues=_venues())
+    system = GeoSyncSystem(config)
 
     with pytest.raises(ValueError):
-        build_tradepulse_platform(
+        build_geosync_platform(
             system=system,
             system_config=config,
             audit_secret="integration-platform-secret",
         )
 
 
-def test_build_tradepulse_platform_accepts_existing_system() -> None:
-    config = TradePulseSystemConfig(venues=_venues())
-    system = TradePulseSystem(config)
+def test_build_geosync_platform_accepts_existing_system() -> None:
+    config = GeoSyncSystemConfig(venues=_venues())
+    system = GeoSyncSystem(config)
 
-    platform = build_tradepulse_platform(
+    platform = build_geosync_platform(
         system=system,
         audit_secret="integration-platform-secret",
     )
@@ -368,28 +362,26 @@ def test_build_tradepulse_platform_accepts_existing_system() -> None:
     assert platform.system is system
 
 
-def test_build_tradepulse_platform_uses_explicit_system_config(tmp_path: Path) -> None:
+def test_build_geosync_platform_uses_explicit_system_config(tmp_path: Path) -> None:
     allowed_root = tmp_path
-    config = TradePulseSystemConfig(
+    config = GeoSyncSystemConfig(
         venues=_venues(),
         allowed_data_roots=[allowed_root],
         max_csv_bytes=1234,
     )
 
-    platform = build_tradepulse_platform(
+    platform = build_geosync_platform(
         system_config=config,
         audit_secret="integration-platform-secret",
     )
 
     assert platform.system.connector_names == ("sim",)
-    path_guard = (
-        platform.system.data_ingestor._path_guard
-    )  # noqa: SLF001 - test introspection
+    path_guard = platform.system.data_ingestor._path_guard  # noqa: SLF001 - test introspection
     assert path_guard.allowed_roots == (allowed_root.resolve(),)
     assert path_guard.max_bytes == 1234
 
 
-def test_build_tradepulse_platform_rejects_conflicting_streaming_dependencies() -> None:
+def test_build_geosync_platform_rejects_conflicting_streaming_dependencies() -> None:
     cache_service = DataIngestionCacheService()
     pipeline = _StubStreamingPipeline(cache_service)
     settings = StreamingPipelineSettings(
@@ -401,7 +393,7 @@ def test_build_tradepulse_platform_rejects_conflicting_streaming_dependencies() 
     )
 
     with pytest.raises(ValueError):
-        build_tradepulse_platform(
+        build_geosync_platform(
             venues=_venues(),
             audit_secret="integration-platform-secret",
             cache_service=cache_service,
@@ -410,12 +402,12 @@ def test_build_tradepulse_platform_rejects_conflicting_streaming_dependencies() 
         )
 
 
-def test_build_tradepulse_platform_rejects_mismatched_streaming_cache() -> None:
+def test_build_geosync_platform_rejects_mismatched_streaming_cache() -> None:
     cache_service = DataIngestionCacheService()
     pipeline = _StubStreamingPipeline(DataIngestionCacheService())
 
     with pytest.raises(ValueError):
-        build_tradepulse_platform(
+        build_geosync_platform(
             venues=_venues(),
             audit_secret="integration-platform-secret",
             cache_service=cache_service,
@@ -424,7 +416,7 @@ def test_build_tradepulse_platform_rejects_mismatched_streaming_cache() -> None:
 
 
 @pytest.mark.asyncio
-async def test_build_tradepulse_platform_streaming_settings_create_pipeline() -> None:
+async def test_build_geosync_platform_streaming_settings_create_pipeline() -> None:
     cache_service = DataIngestionCacheService()
     factory_calls: list[_StubKafkaService] = []
 
@@ -454,7 +446,7 @@ async def test_build_tradepulse_platform_streaming_settings_create_pipeline() ->
         kafka_kwargs={"retries": 3},
     )
 
-    platform = build_tradepulse_platform(
+    platform = build_geosync_platform(
         venues=_venues(),
         audit_secret="integration-platform-secret",
         cache_service=cache_service,
@@ -469,9 +461,7 @@ async def test_build_tradepulse_platform_streaming_settings_create_pipeline() ->
     assert service.kwargs == {"retries": 3}
 
     aggregator = platform.create_aggregator(CacheRoute(layer="raw", timeframe="1s"))
-    assert (
-        aggregator._cache_service is cache_service
-    )  # noqa: SLF001 - test introspection
+    assert aggregator._cache_service is cache_service  # noqa: SLF001 - test introspection
 
     await platform.start_streaming()
     await platform.stop_streaming()

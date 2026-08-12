@@ -1,0 +1,38 @@
+id: academy-fellow-governance
+status: ACTIVE
+claim_type: governance
+promise: >-
+  Ledger reconciliation (missing->existing, honest PARTIAL->OPERATIONAL),
+  fail-closed neuro biological-equivalence claim-boundary gate, and a
+  machine-readable law/mechanism witness matrix. No runtime behavior change.
+diff_scope:
+  changed_files:
+    - path: "tests/integration/test_coherence_bridge_invariants.py"
+    - path: "scripts/ci/check_neuro_claim_boundary.py"
+    - path: "scripts/ci/gen_law_mechanism_witness_matrix.py"
+    - path: ".claude/neuro/NEURO_OPERATIONALIZATION_LEDGER.yaml"
+    - path: "artifacts/academy_fellow/law_mechanism_witness_matrix.json"
+    - path: "artifacts/academy_fellow/traceability_report.json"
+    - path: "INVENTORY.json"
+    - path: ".github/neuro_claim_boundary_allow.json"
+    - path: ".claude/commit_acceptors/academy-fellow-witness-tests.yaml"
+    - path: ".claude/commit_acceptors/academy-fellow-governance.yaml"
+    - path: "artifacts/academy_fellow/ACADEMY_FELLOW_REPORT.md"
+  forbidden_paths:
+    - "core/execution/"
+    - "core/strategies/"
+    - "interfaces/live_runner.py"
+    - "forecast/"
+required_python_symbols: []
+expected_signal: "Neuro claim-boundary gate passes (0 violations) and the witness matrix reports zero open missing_tests."
+measurement_command: "python scripts/ci/check_neuro_claim_boundary.py && python scripts/ci/gen_law_mechanism_witness_matrix.py"
+signal_artifact: "artifacts/academy_fellow/law_mechanism_witness_matrix.json"
+falsifier:
+  command: "python -c \"import json,sys; m=json.load(open('artifacts/academy_fellow/law_mechanism_witness_matrix.json')); sys.exit(1 if m['summary']['open_missing_tests']==0 else 0)\""
+  description: "Exits non-zero in the asserted healthy state (zero open missing_tests); flips to pass only if the ledger regresses an unbound mechanism."
+rollback_command: "git checkout -- .claude/neuro/NEURO_OPERATIONALIZATION_LEDGER.yaml scripts/ci/check_neuro_claim_boundary.py scripts/ci/gen_law_mechanism_witness_matrix.py artifacts/academy_fellow"
+rollback_verification_command: "git diff --exit-code .claude/neuro/NEURO_OPERATIONALIZATION_LEDGER.yaml scripts/ci/check_neuro_claim_boundary.py scripts/ci/gen_law_mechanism_witness_matrix.py"
+memory_update_type: append
+ledger_path: ".claude/commit_acceptors/academy-fellow-governance.yaml"
+report_path: "artifacts/academy_fellow/ACADEMY_FELLOW_REPORT.md"
+evidence: []

@@ -1,3 +1,5 @@
+# Copyright (c) 2023-2026 Yaroslav Vasylenko (neuron7xLab)
+# SPDX-License-Identifier: MIT
 """Utility to enumerate policy classes defined across the repository.
 
 This script performs a static analysis pass over Python sources in the
@@ -73,7 +75,7 @@ class _PolicyVisitor(ast.NodeVisitor):
         self._module = module
         self._definitions = definitions
 
-    def visit_ClassDef(self, node: ast.ClassDef) -> None:  # noqa: D401 - inherited doc
+    def visit_ClassDef(self, node: ast.ClassDef) -> None:
         if node.name.endswith("Policy"):
             bases = tuple(_render_base(base) for base in node.bases)
             doc = ast.get_docstring(node)

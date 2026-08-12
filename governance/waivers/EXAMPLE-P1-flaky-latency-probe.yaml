@@ -1,0 +1,28 @@
+# Example of a VALID P1 waiver.
+#
+# Copy this file, give it a real `id`, and fill every field. A P1 deviation
+# requires two distinct approvers and a dated expiry; when `expiry` passes the
+# gate returns RED on its own with no further human action. This example is
+# intentionally dated far in the future so it stays valid as a template — real
+# waivers MUST carry a near-term, honestly-scoped expiry.
+waiver:
+  id: WVR-2099-EXAMPLE
+  gate: check_latency_probe
+  priority: P1
+  rationale: >-
+    The p99 latency probe is intermittently exceeding its band on the shared CI
+    runner under contention; the regression is in the runner's noisy-neighbour
+    scheduling, not in GeoSync code, and a dedicated runner is being provisioned.
+  scope: >-
+    Only the `latency_probe::p99_under_load` assertion on the shared GitHub
+    runner. All other latency assertions and all dedicated-runner runs remain
+    fully enforced.
+  compensating_control: >-
+    p99 is still recorded and trend-charted every run; a hard ceiling at 2x the
+    band still fails closed, so only the soft band is relaxed, never the ceiling.
+  owner: yaroslav.vasylenko
+  approvers:
+    - yaroslav.vasylenko
+    - release-captain
+  expiry: "2099-12-31"
+  revalidation_command: python scripts/ci/check_latency_probe.py --now 2099-12-31

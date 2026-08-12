@@ -1,10 +1,10 @@
 # smoke_e2e.py
 
-Nightly smoke end-to-end pipeline for TradePulse integration testing.
+Nightly smoke end-to-end pipeline for GeoSync integration testing.
 
 ## Description
 
-This script runs a comprehensive end-to-end smoke test of the TradePulse system, validating:
+This script runs a comprehensive end-to-end smoke test of the GeoSync system, validating:
 
 - Data ingestion from CSV sources
 - CLI interface functionality
@@ -122,7 +122,7 @@ The script generates several artifacts in the output directory:
 ### Console Output
 
 ```
-=== TradePulse Smoke E2E Pipeline ===
+=== GeoSync Smoke E2E Pipeline ===
 
 Stage 1: Data Ingestion
   ✓ Loaded 5000 ticks from data/sample.csv
@@ -290,7 +290,7 @@ python --version
 - Python 3.11+
 - pandas
 - numpy
-- TradePulse modules:
+- GeoSync modules:
   - backtest.engine
   - core.data.ingestion
   - interfaces.cli
@@ -318,7 +318,7 @@ Typical execution times:
 
 The CI workflow sends alerts on failure:
 
-- **Slack**: Notification to `#tradepulse-alerts` channel
+- **Slack**: Notification to `#geosync-alerts` channel
 - **Email**: Alert to on-call engineer
 - **GitHub**: Failed workflow status
 

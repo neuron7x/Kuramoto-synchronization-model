@@ -1,0 +1,67 @@
+# SPDX-License-Identifier: MIT
+name: CNS Release Gate
+
+on:
+  pull_request:
+    branches: [main]
+    paths:
+      - ".github/workflows/cns-release-gate.yml"
+      - "conf/cns_program/**"
+      - "tools/cns_program/**"
+      - "tests/cns_program/**"
+      - "docs/governance/CNS_RELEASE_GATE.md"
+      - "reports/CNS_RELEASE_GATE_CONTRACT.md"
+  push:
+    branches: [main]
+    paths:
+      - ".github/workflows/cns-release-gate.yml"
+      - "conf/cns_program/**"
+      - "tools/cns_program/**"
+      - "tests/cns_program/**"
+      - "docs/governance/CNS_RELEASE_GATE.md"
+      - "reports/CNS_RELEASE_GATE_CONTRACT.md"
+
+permissions:
+  contents: read
+
+env:
+  FORCE_JAVASCRIPT_ACTIONS_TO_NODE24: 'true'
+  PYTHONPATH: .
+
+concurrency:
+  group: cns-release-gate-${{ github.event.pull_request.number || github.sha }}
+  cancel-in-progress: true
+
+jobs:
+  cns-release-gate:
+    name: cns-release-gate / python-${{ matrix.python-version }}
+    runs-on: ubuntu-latest
+    timeout-minutes: 10
+    strategy:
+      fail-fast: false
+      matrix:
+        python-version: ["3.11", "3.12"]
+    steps:
+      - name: Checkout
+        uses: actions/checkout@9c091bb21b7c1c1d1991bb908d89e4e9dddfe3e0 # v7.0.0
+
+      - name: Setup Python
+        uses: actions/setup-python@ece7cb06caefa5fff74198d8649806c4678c61a1 # v6
+        with:
+          python-version: ${{ matrix.python-version }}
+
+      - name: Install test dependency
+        if: matrix.python-version == '3.12'
+        run: python -m pip install pytest
+
+      - name: Run deterministic CNS release gate
+        run: |
+          python -m tools.cns_program.deploy_release_gate
+          python -m tools.cns_program.build_release_manifest
+          python -m tools.cns_program.verify_release_manifest
+          python -m tools.cns_program.verify_reports_contract
+          python -m tools.cns_program.quality_gate
+
+      - name: Run CNS tests
+        if: matrix.python-version == '3.12'
+        run: python -m pytest -q --confcutdir=tests/cns_program tests/cns_program

@@ -1,0 +1,22 @@
+{
+  "boundary": "Scoped to the pre-committed dataset and the rate/waveform/SNR/common-drive jointly-matched surrogate defined here. Pre-data: KILLED_SCOPED/SURVIVED_INITIAL are unreachable until a dataset is bound (C3).",
+  "claim": "On real paired LFP+spike data, the CTC causal claim (the gamma phase relation carries inter-areal routing) survives subtraction of a jointly-matched confound surrogate.",
+  "config_hash": "6f2021b840b9fcf523773f76f6fd3cccb285f8de577e28e0a8d700a0dbd9a527",
+  "estimator": "time-reversed-surrogate directed Phase-Slope Index (Nolte 2008)",
+  "experiment_id": "CTC-FALSIFY-001-L2V2",
+  "real_dataset_bound": false,
+  "repro_hash": "2e5c5aa99982a3ce33c2e279dba6d7fff862d0bd0f5585e1e43de922ad38222c",
+  "self_validation": {
+    "confounds_not_flagged": false,
+    "estimator_version": "v2_time_reversed_psi",
+    "max_confound_residual_z": 2.515518346084445,
+    "mean_nplus_residual_z": 0.14897414809154605,
+    "n_validation_seeds": 24,
+    "nplus_recovered": false
+  },
+  "thresholds": {
+    "confound_residual_max_z": 1.96,
+    "nplus_residual_min_z": 3.0
+  },
+  "verdict": "INADMISSIBLE_NPLUS_INSITU_BLIND"
+}

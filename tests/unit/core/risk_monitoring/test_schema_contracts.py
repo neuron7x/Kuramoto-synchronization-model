@@ -1,4 +1,5 @@
-# SPDX-License-Identifier: LicenseRef-TradePulse-Proprietary
+# Copyright (c) 2023-2026 Yaroslav Vasylenko (neuron7xLab)
+# SPDX-License-Identifier: MIT
 """Contract tests for schema stability.
 
 These tests verify that serialization formats (to_dict, JSON, etc.)
@@ -31,18 +32,20 @@ class TestFailSafeStateSchema:
     """Contract tests for FailSafeState serialization."""
 
     # Schema version: 1.0
-    REQUIRED_FIELDS = frozenset({
-        "level",
-        "active",
-        "reason",
-        "activated_at",
-        "source",
-        "position_multiplier",
-        "allow_new_orders",
-        "force_paper_trading",
-        "pending_actions",
-        "auto_recover_at",
-    })
+    REQUIRED_FIELDS = frozenset(
+        {
+            "level",
+            "active",
+            "reason",
+            "activated_at",
+            "source",
+            "position_multiplier",
+            "allow_new_orders",
+            "force_paper_trading",
+            "pending_actions",
+            "auto_recover_at",
+        }
+    )
 
     def test_schema_has_all_required_fields(self) -> None:
         """Contract: FailSafeState.to_dict includes all required fields."""
@@ -119,14 +122,16 @@ class TestFailSafeStateSchema:
 class TestFailSafeConfigSchema:
     """Contract tests for FailSafeConfig serialization."""
 
-    REQUIRED_FIELDS = frozenset({
-        "caution_position_multiplier",
-        "restricted_position_multiplier",
-        "auto_recover_delay_minutes",
-        "escalation_threshold_seconds",
-        "require_manual_recovery_levels",
-        "enable_emergency_liquidation",
-    })
+    REQUIRED_FIELDS = frozenset(
+        {
+            "caution_position_multiplier",
+            "restricted_position_multiplier",
+            "auto_recover_delay_minutes",
+            "escalation_threshold_seconds",
+            "require_manual_recovery_levels",
+            "enable_emergency_liquidation",
+        }
+    )
 
     def test_schema_has_all_required_fields(self) -> None:
         """Contract: FailSafeConfig.to_dict includes all required fields."""
@@ -147,17 +152,19 @@ class TestFailSafeConfigSchema:
 class TestAuditTrailEntrySchema:
     """Contract tests for AuditTrailEntry serialization."""
 
-    REQUIRED_FIELDS = frozenset({
-        "entry_id",
-        "timestamp",
-        "event_type",
-        "actor",
-        "action",
-        "details",
-        "risk_decision",
-        "regulation",
-        "hash_chain",
-    })
+    REQUIRED_FIELDS = frozenset(
+        {
+            "entry_id",
+            "timestamp",
+            "event_type",
+            "actor",
+            "action",
+            "details",
+            "risk_decision",
+            "regulation",
+            "hash_chain",
+        }
+    )
 
     def test_schema_has_all_required_fields(self) -> None:
         """Contract: AuditTrailEntry.to_dict includes all required fields."""
@@ -196,16 +203,18 @@ class TestAuditTrailEntrySchema:
 class TestComplianceViolationSchema:
     """Contract tests for ComplianceViolation serialization."""
 
-    REQUIRED_FIELDS = frozenset({
-        "violation_id",
-        "timestamp",
-        "regulation",
-        "rule",
-        "severity",
-        "description",
-        "remediation",
-        "resolved",
-    })
+    REQUIRED_FIELDS = frozenset(
+        {
+            "violation_id",
+            "timestamp",
+            "regulation",
+            "rule",
+            "severity",
+            "description",
+            "remediation",
+            "resolved",
+        }
+    )
 
     def test_schema_has_all_required_fields(self) -> None:
         """Contract: ComplianceViolation.to_dict includes all required fields."""
@@ -243,18 +252,20 @@ class TestComplianceViolationSchema:
 class TestRegulatoryReportSchema:
     """Contract tests for RegulatoryReport serialization."""
 
-    REQUIRED_FIELDS = frozenset({
-        "report_id",
-        "generated_at",
-        "regulation",
-        "period_start",
-        "period_end",
-        "audit_entries_count",
-        "violations_count",
-        "unresolved_violations",
-        "risk_metrics",
-        "executive_summary",
-    })
+    REQUIRED_FIELDS = frozenset(
+        {
+            "report_id",
+            "generated_at",
+            "regulation",
+            "period_start",
+            "period_end",
+            "audit_entries_count",
+            "violations_count",
+            "unresolved_violations",
+            "risk_metrics",
+            "executive_summary",
+        }
+    )
 
     def test_schema_has_all_required_fields(self) -> None:
         """Contract: RegulatoryReport.to_dict includes all required fields."""
@@ -293,16 +304,18 @@ class TestRegulatoryReportSchema:
 class TestLiquidityMetricsSchema:
     """Contract tests for LiquidityMetrics serialization."""
 
-    REQUIRED_FIELDS = frozenset({
-        "bid_depth_value",
-        "ask_depth_value",
-        "imbalance_ratio",
-        "spread_bps",
-        "market_impact_estimate",
-        "liquidity_score",
-        "depth_levels_analyzed",
-        "timestamp",
-    })
+    REQUIRED_FIELDS = frozenset(
+        {
+            "bid_depth_value",
+            "ask_depth_value",
+            "imbalance_ratio",
+            "spread_bps",
+            "market_impact_estimate",
+            "liquidity_score",
+            "depth_levels_analyzed",
+            "timestamp",
+        }
+    )
 
     def test_schema_has_all_required_fields(self) -> None:
         """Contract: LiquidityMetrics.to_dict includes all required fields."""

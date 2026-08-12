@@ -1,0 +1,122 @@
+# Diff-bound commit acceptor for issue #1096 First Principle FP-1:
+# "One equation, one owner of scale."
+#
+# Output-preserving refactor that relocates the Kuramoto scalar coupling gain K
+# OUT of the adjacency matrix and INTO the right-hand side. Before this PR the
+# engine baked K into the effective matrix (adj = K * cfg.adjacency, or K/N in
+# global mode) and the RHS summed (K*A)*sin with no separate K. After this PR:
+#
+#     θ̇_i = ω_i + K · Σ_j A_norm[i,j] · sin(θ_j − θ_i)
+#
+# K is the single scalar gain applied once in _dtheta_dt; _resolve_adjacency
+# returns topology-only A_norm (zero diagonal, no embedded K). A
+# legacy_pre_scaled_adjacency config flag preserves the pre-FP-1 path bit-for-bit
+# for callers that already pre-multiplied their matrix by K. Negative K is
+# rejected fail-closed on the canonical path. This changes WHERE K is applied,
+# not the dynamics: the canonical trajectory equals the pre-FP-1 trajectory to
+# IEEE-754 epsilon (~1e-15, multiplication associativity only), and the legacy
+# path reproduces it bit-for-bit (maxdiff 0.0, asserted by
+# test_legacy_path_is_bit_identical_to_pre_fp1_engine).
+#
+# Locally verified on this worktree:
+#   * pytest tests/unit/core/test_kuramoto_engine.py: 39 passed
+#   * pytest -k "kuramoto or early_stopping or sparse or jax": 850 passed, 0 failed
+#   * ruff format / ruff check / black --check / mypy --strict: clean
+#   * zero new `# type: ignore` / `noqa` (debt-ratchet safe)
+id: fp1-canonical-coupling-gain
+status: ACTIVE
+claim_type: refactor
+promise: >-
+  After this PR lands, core/kuramoto/engine.py implements the FP-1 canonical
+  single-owner-of-scale Kuramoto RHS θ̇_i = ω_i + K·Σ_j A_norm[i,j]·sin(θ_j−θ_i):
+  _resolve_adjacency returns topology-only A_norm with zero diagonal and NO
+  embedded K (explicit mode: the supplied matrix; global mode: 1/N off-diagonal),
+  and _dtheta_dt / _rk4_step apply the scalar gain K exactly once via a
+  keyword-only K parameter (default 1.0 for back-compat with already-scaled
+  matrices). The engine rejects a negative coupling gain fail-closed on the
+  canonical path. KuramotoConfig.legacy_pre_scaled_adjacency=True restores the
+  pre-FP-1 behaviour (K baked into the matrix, unit RHS gain) bit-for-bit. The
+  numerical trajectory is preserved: canonical equals the pre-FP-1 path to
+  IEEE-754 epsilon and the legacy path equals it exactly. No market claim; no
+  trading/execution/forecast/policy surface touched.
+diff_scope:
+  changed_files:
+    - path: ".claude/commit_acceptors/fp1-canonical-coupling-gain.yaml"
+    - path: "core/kuramoto/engine.py"
+    - path: "core/kuramoto/config.py"
+    - path: "tests/unit/core/test_kuramoto_engine.py"
+  forbidden_paths:
+    - "trading/"
+    - "execution/"
+    - "forecast/"
+    - "policy/"
+    - "application/"
+    - "src/"
+    - "geosync_hpc/"
+    - "physics_contracts/catalog.yaml"
+    - ".claude/physics/INVARIANTS.yaml"
+required_python_symbols:
+  - "core/kuramoto/engine.py::KuramotoEngine"
+  - "core/kuramoto/engine.py::_dtheta_dt"
+  - "core/kuramoto/engine.py::_rk4_step"
+expected_signal: >-
+  `python -m pytest tests/unit/core/test_kuramoto_engine.py` reports 39 passed,
+  including the seven FP-1 witnesses (test_negative_K_rejected,
+  test_K_not_embedded_in_adjacency, test_K_not_double_scaled,
+  test_global_mode_matches_K_over_N_contract,
+  test_explicit_adjacency_rhs_uses_single_K, test_boundary_rhs_consistency,
+  test_zero_diagonal_enforced_or_rejected) and the golden bit-identity and
+  numerical-equivalence tests. ruff, black --check and mypy --strict on the three
+  changed files are clean with zero new `# type: ignore`/`noqa`.
+measurement_command: >-
+  bash -c 'mkdir -p tmp && python -m pytest
+  tests/unit/core/test_kuramoto_engine.py
+  > tmp/fp1_canonical_coupling_gain.log 2>&1
+  && grep -q "39 passed" tmp/fp1_canonical_coupling_gain.log'
+signal_artifact: "tmp/fp1_canonical_coupling_gain.log"
+falsifier:
+  command: |-
+    bash -c 'python -c "
+    import numpy as np, sys
+    from core.kuramoto import KuramotoConfig, KuramotoEngine
+    fp1_broken = False
+    adj = np.array([[0.0, 0.4, 0.1], [0.4, 0.0, 0.7], [0.1, 0.7, 0.0]])
+    # 1) A_norm must NOT depend on K (no embedded gain).
+    a1 = KuramotoEngine._resolve_adjacency(KuramotoConfig(N=3, K=1.0, dt=0.01, steps=1, adjacency=adj.copy()))
+    a7 = KuramotoEngine._resolve_adjacency(KuramotoConfig(N=3, K=7.0, dt=0.01, steps=1, adjacency=adj.copy(), adjacency_kind=\"normalized_topology\"))
+    if not np.array_equal(a1, a7): fp1_broken = True
+    # 2) Resolved topology must have an exactly-zero diagonal.
+    if float(np.max(np.abs(np.diag(a7)))) != 0.0: fp1_broken = True
+    # 3) RHS must scale linearly in K (single gain, no double-scaling / K^2).
+    theta = np.array([0.4, -0.5, 1.0]); omega = np.array([0.1, 0.2, -0.3])
+    from core.kuramoto.engine import _dtheta_dt
+    base = _dtheta_dt(theta, omega, a7, K=2.0) - omega
+    dbl = _dtheta_dt(theta, omega, a7, K=4.0) - omega
+    if float(np.max(np.abs(dbl - 2.0 * base))) > 1e-12: fp1_broken = True
+    # 4) Negative gain on a signed-claim config must be rejected fail-closed.
+    from core.kuramoto.coupling_spec import CLAIM_SIGNED
+    try:
+        KuramotoEngine(KuramotoConfig(N=4, K=-1.0, dt=0.01, steps=2, claim_boundary=CLAIM_SIGNED))
+        fp1_broken = True
+    except ValueError:
+        pass
+    sys.exit(0 if fp1_broken else 1)"'
+  description: >-
+    Inverse probe of FP-1 in real engine code. Exits 0 (fires) iff any FP-1
+    invariant is violated: the resolved topology A_norm depends on K (hidden
+    embedded gain), the topology diagonal is non-zero, the RHS coupling term is
+    not linear in K (double-scaling / K^2 leakage), or a negative gain is not
+    rejected fail-closed. While FP-1 holds the probe exits 1. If it ever exits 0,
+    K is no longer the single owner of scale and the refactor must be corrected
+    or reverted, not patched green.
+rollback_command: >-
+  git checkout origin/main -- core/kuramoto/engine.py core/kuramoto/config.py
+  tests/unit/core/test_kuramoto_engine.py
+  && git rm -f .claude/commit_acceptors/fp1-canonical-coupling-gain.yaml
+rollback_verification_command: >-
+  bash -c 'test ! -f .claude/commit_acceptors/fp1-canonical-coupling-gain.yaml
+  && ! grep -q "coupling_gain" core/kuramoto/engine.py'
+memory_update_type: none
+ledger_path: ".claude/commit_acceptors/fp1-canonical-coupling-gain.yaml"
+report_path: "tmp/fp1_canonical_coupling_gain.log"
+evidence: []

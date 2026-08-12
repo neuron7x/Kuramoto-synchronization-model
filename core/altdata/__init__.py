@@ -1,3 +1,5 @@
+# Copyright (c) 2023-2026 Yaroslav Vasylenko (neuron7xLab)
+# SPDX-License-Identifier: MIT
 """Alternative data feature engineering utilities."""
 
 from .compliance import AltDataComplianceChecker, ComplianceIssue, ComplianceReport

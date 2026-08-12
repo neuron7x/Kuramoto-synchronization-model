@@ -1,0 +1,13 @@
+# Generated for offline environment (network-restricted).
+# Intended command when network is available:
+#   pip-compile --generate-hashes coherence_bridge/requirements.txt
+fastapi==0.115.0
+grpcio==1.79.3
+grpcio-health-checking==1.79.3
+kafka-python==2.2.15
+numpy==1.26.4
+prometheus-client==0.22.1
+pydantic==2.9.2
+python-dotenv==1.0.1
+questdb==2.0.4
+uvicorn==0.30.6

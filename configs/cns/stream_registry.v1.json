@@ -1,0 +1,30 @@
+{
+  "version": "v1.0.0",
+  "streams": {
+    "runtime.policy.intent": {
+      "producer": "runtime.policy_router",
+      "cadence_ms": 250,
+      "max_staleness_ms": 1000
+    },
+    "execution.loop.latency": {
+      "producer": "execution.loop",
+      "cadence_ms": 100,
+      "max_staleness_ms": 500
+    },
+    "tacl.free_energy.delta": {
+      "producer": "tacl.monitor",
+      "cadence_ms": 500,
+      "max_staleness_ms": 2000
+    },
+    "core.model.error_sigma": {
+      "producer": "core.model_quality",
+      "cadence_ms": 500,
+      "max_staleness_ms": 2000
+    },
+    "runtime.risk.gate_state": {
+      "producer": "runtime.risk_gate_fsm",
+      "cadence_ms": 100,
+      "max_staleness_ms": 500
+    }
+  }
+}

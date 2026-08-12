@@ -1,0 +1,235 @@
+# Diff-bound commit acceptor for the D-002H Gate F canonical-run
+# authorisation artifact PR.
+#
+# Pure declaration + ancestor verification. Emits a machine-readable
+# artifact at artifacts/d002h/authorization/d002h_canonical_run_authorisation.json
+# (schema D002H-CANONICAL-RUN-AUTHORISATION-v1) and a human-readable
+# report at docs/governance/D002H_GATE_F_AUTHORIZATION_REPORT.md. The
+# 5 prior-gate anchor shas are verified ancestors of origin/main via
+# git merge-base --is-ancestor (one probe per gate at PR time + inside
+# the test suite).
+#
+# Strict scope (per the operating law):
+#   * NO canonical run. NO sweep. NO results. NO sweep PR.
+#   * NO new mechanism family. NO new verdict literal. NO new salt.
+#   * NO D-002G prereg edit. NO D-002H prereg edit. NO locked-file edit.
+#   * NO D002C_CLAIM_LEDGER.yaml mutation (sha pinned byte-exact at
+#     f96ba9b5a2057d2e0bff84afc28578ab316cff73f6dc6673fb0d6d543b8bd6dd).
+#   * NO substrate code edit. NO mechanism code edit.
+#   * NO claim "Gate F PASS -> canonical run authorised"; the 7-gate
+#     conjunction A AND B AND C AND D AND E AND F AND G is the contract.
+#     Gate F is INTERMEDIATE authorisation; canonical_run_authorized_final
+#     is False; Gate G + a separate sweep PR are still required.
+
+id: x10r-d002h-gate-f-authorization
+status: ACTIVE
+claim_type: governance
+promise: >-
+  After this PR lands,
+  artifacts/d002h/authorization/d002h_canonical_run_authorisation.json
+  carries schema_version "D002H-CANONICAL-RUN-AUTHORISATION-v1" with
+  study_id "D-002H", gate "F", status "AUTHORISED",
+  canonical_run_authorized_at_gate_f True,
+  canonical_run_authorized_final False,
+  final_authorisation_pending_gate "G", prior_gate_chain of length 5
+  recording Gates A, B, C, D, E at the brief-specified shas with
+  verdict "PASS", conjunction_required
+  "A AND B AND C AND D AND E AND F AND G",
+  conjunction_satisfied_at_gate_f "A AND B AND C AND D AND E AND F",
+  conjunction_still_open "G", scope "ricci_flow only (per D-002H
+  prereg)", downstream_gates_remaining ["G"], the D-002C ledger pin
+  f96ba9b5a2057d2e0bff84afc28578ab316cff73f6dc6673fb0d6d543b8bd6dd,
+  and the D-002H prereg pin
+  44b18b5a40ce9d188a9c3bd49339621f81a65a15f97a683247902450dd54acec.
+
+  docs/governance/D002H_GATE_F_AUTHORIZATION_REPORT.md carries the
+  8-section report (scope, prior gate chain table, anchor verification
+  method, status, claim boundary verbatim, forbidden interpretations,
+  reproduce, downstream).
+
+  tests/systemic_risk/test_d002h_gate_f_authorization.py carries the
+  10 required-by-brief tests with exact names plus parametrised
+  ancestor + conjunction-string tests:
+  test_gate_f_artifact_exists, test_gate_f_schema_version,
+  test_gate_f_status_authorised,
+  test_gate_f_canonical_run_authorized_final_is_false,
+  test_gate_f_prior_gate_chain_has_5_entries,
+  test_gate_f_all_5_anchors_pinned_correctly,
+  test_gate_f_all_5_anchors_are_ancestors_of_main,
+  test_gate_f_final_authorisation_pending_gate_g,
+  test_gate_f_downstream_gates_remaining_is_g_only,
+  test_gate_f_preserves_d002c_ledger.
+
+  docs/governance/D002G_CANONICAL_RUN_BLOCKERS.md gains an append-only
+  "D-002H Gate F" section after the Gate E section.
+
+  Gate F is pure declaration + read-only ancestor + sha verification:
+  NO canonical run, NO sweep, NO results. NO new mechanism. NO new
+  verdict literal. NO substrate / mechanism / locked governance edit.
+  NO D-002C ledger mutation. NO D-002H prereg edit. NO absolute
+  canonical-run authorisation - this PR addresses Gate F alone; Gate G
+  remains open and the 7-gate conjunction is the contract.
+
+diff_scope:
+  changed_files:
+    - path: ".claude/commit_acceptors/x10r-d002h-gate-f-authorization.yaml"
+    - path: "tests/systemic_risk/test_d002h_gate_f_authorization.py"
+    - path: "docs/governance/D002H_GATE_F_AUTHORIZATION_REPORT.md"
+    - path: "artifacts/d002h/authorization/d002h_canonical_run_authorisation.json"
+    - path: "docs/governance/D002G_CANONICAL_RUN_BLOCKERS.md"
+    - path: ".github/detect-secrets.baseline"
+  forbidden_paths:
+    - "docs/governance/D002C_CLAIM_LEDGER.yaml"
+    - "docs/governance/D002C_PREREGISTRATION.yaml"
+    - "docs/governance/D002C_CANONICAL_RUN_REPORT.md"
+    - "docs/governance/D002C_ATTEMPT_2_NULL_AUDIT_FALSIFICATION_REPORT.md"
+    - "docs/governance/D002G_PREREGISTRATION.yaml"
+    - "docs/governance/D002G_NONDEGENERATE_NULL_DESIGN.md"
+    - "docs/governance/D002G_ACCEPTANCE_RULES.md"
+    - "docs/governance/D002G_P3_M3_PREREGISTRATION.md"
+    - "docs/governance/D002G_STRUCTURAL_CLOSURE_REPORT.md"
+    - "docs/governance/D002G_NEGATIVE_SPACE_MAP.md"
+    - "docs/governance/D002G_M3_ELIGIBILITY_MATRIX.md"
+    - "docs/governance/D002H_PREREGISTRATION.yaml"
+    - "docs/governance/D002H_SCOPE_RATIONALE.md"
+    - "docs/governance/D002H_CLAIM_BOUNDARY.md"
+    - "docs/governance/D002H_CANONICAL_RUN_AUTHORIZATION_GATES.md"
+    - "docs/governance/D002H_GATE_B_REPORT.md"
+    - "docs/governance/D002H_GATE_C_CANONICAL_GRID.md"
+    - "docs/governance/D002H_GATE_D_FORBIDDEN_CLAIM_SCAN.md"
+    - "docs/governance/D002H_GATE_E_LOCKED_FILE_REPORT.md"
+    - "artifacts/d002h/prereg/d002h_preregistration_lock.json"
+    - "artifacts/d002h/eligibility/d002h_ricci_eligibility.json"
+    - "artifacts/d002h/canonical/d002h_canonical_grid.json"
+    - "artifacts/d002h/scans/d002h_forbidden_claim_scan.json"
+    - "artifacts/d002h/locks/d002h_locked_file_pins.json"
+    - "scripts/x10r_d002h_gate_b_eligibility.py"
+    - "scripts/x10r_d002h_gate_d_scan.py"
+    - "tests/systemic_risk/test_d002h_gate_b_eligibility.py"
+    - "tests/systemic_risk/test_d002h_gate_c_grid.py"
+    - "tests/systemic_risk/test_d002h_gate_d_forbidden_claims.py"
+    - "tests/systemic_risk/test_d002h_gate_e_locked_files.py"
+    - "tests/systemic_risk/test_d002h_preregistration.py"
+    - ".claude/commit_acceptors/x10r-d002h-ricci-flow-prereg.yaml"
+    - ".claude/commit_acceptors/x10r-d002h-gate-b-eligibility.yaml"
+    - ".claude/commit_acceptors/x10r-d002h-gate-c-canonical-grid.yaml"
+    - ".claude/commit_acceptors/x10r-d002h-gate-d-forbidden-claim-scan.yaml"
+    - ".claude/commit_acceptors/x10r-d002h-gate-e-locked-files.yaml"
+    - "research/systemic_risk/d002c_substrates.py"
+    - "research/systemic_risk/d002g_null_mechanisms.py"
+    - "artifacts/d002g/closure/"
+    - "artifacts/d002g/m3/"
+    - "artifacts/d002g/p3/"
+    - "artifacts/d002g/canonical/"
+    - "artifacts/d002h/canonical/results/"
+required_python_symbols:
+  - "tests/systemic_risk/test_d002h_gate_f_authorization.py::test_gate_f_artifact_exists"
+  - "tests/systemic_risk/test_d002h_gate_f_authorization.py::test_gate_f_schema_version"
+  - "tests/systemic_risk/test_d002h_gate_f_authorization.py::test_gate_f_status_authorised"
+  - "tests/systemic_risk/test_d002h_gate_f_authorization.py::test_gate_f_canonical_run_authorized_final_is_false"
+  - "tests/systemic_risk/test_d002h_gate_f_authorization.py::test_gate_f_prior_gate_chain_has_5_entries"
+  - "tests/systemic_risk/test_d002h_gate_f_authorization.py::test_gate_f_all_5_anchors_pinned_correctly"
+  - "tests/systemic_risk/test_d002h_gate_f_authorization.py::test_gate_f_all_5_anchors_are_ancestors_of_main"
+  - "tests/systemic_risk/test_d002h_gate_f_authorization.py::test_gate_f_final_authorisation_pending_gate_g"
+  - "tests/systemic_risk/test_d002h_gate_f_authorization.py::test_gate_f_downstream_gates_remaining_is_g_only"
+  - "tests/systemic_risk/test_d002h_gate_f_authorization.py::test_gate_f_preserves_d002c_ledger"
+expected_signal: >-
+  `PYTHONPATH=. python -m pytest
+  tests/systemic_risk/test_d002h_gate_f_authorization.py -q` passes all
+  tests (10 base contract tests + 5 parametrised ancestor cases + 2
+  additional integrity tests); the artifact JSON parses and satisfies
+  the schema / status / counters / chain asserts; the D-002C claim
+  ledger sha256 stays byte-exact at
+  f96ba9b5a2057d2e0bff84afc28578ab316cff73f6dc6673fb0d6d543b8bd6dd;
+  the D-002H prereg sha256 stays byte-exact at
+  44b18b5a40ce9d188a9c3bd49339621f81a65a15f97a683247902450dd54acec;
+  BLOCKERS.md gains the "D-002H Gate F" append-only section after the
+  Gate E section.
+measurement_command: >-
+  bash -c 'set -e;
+  PYTHONPATH=. python -m pytest tests/systemic_risk/test_d002h_gate_f_authorization.py -q;
+  python -c "import json;
+  d=json.load(open(\"artifacts/d002h/authorization/d002h_canonical_run_authorisation.json\"));
+  assert d[\"schema_version\"]==\"D002H-CANONICAL-RUN-AUTHORISATION-v1\";
+  assert d[\"study_id\"]==\"D-002H\";
+  assert d[\"gate\"]==\"F\";
+  assert d[\"status\"]==\"AUTHORISED\";
+  assert d[\"canonical_run_authorized_at_gate_f\"] is True;
+  assert d[\"canonical_run_authorized_final\"] is False;
+  assert d[\"final_authorisation_pending_gate\"]==\"G\";
+  assert d[\"downstream_gates_remaining\"]==[\"G\"];
+  assert d[\"conjunction_required\"]==\"A AND B AND C AND D AND E AND F AND G\";
+  assert d[\"conjunction_satisfied_at_gate_f\"]==\"A AND B AND C AND D AND E AND F\";
+  assert d[\"conjunction_still_open\"]==\"G\";
+  assert len(d[\"prior_gate_chain\"])==5;
+  assert [e[\"gate\"] for e in d[\"prior_gate_chain\"]]==[\"A\",\"B\",\"C\",\"D\",\"E\"];
+  assert all(e[\"verdict\"]==\"PASS\" for e in d[\"prior_gate_chain\"]);
+  assert d[\"scope\"]==\"ricci_flow only (per D-002H prereg)\"";
+  grep -q "D-002H Gate F" docs/governance/D002G_CANONICAL_RUN_BLOCKERS.md;
+  grep -q "D002H-CANONICAL-RUN-AUTHORISATION-v1" docs/governance/D002H_GATE_F_AUTHORIZATION_REPORT.md;
+  test ! -d artifacts/d002h/canonical/results;
+  test "$(sha256sum docs/governance/D002C_CLAIM_LEDGER.yaml | awk "{print \$1}")" = "f96ba9b5a2057d2e0bff84afc28578ab316cff73f6dc6673fb0d6d543b8bd6dd";
+  test "$(sha256sum docs/governance/D002H_PREREGISTRATION.yaml | awk "{print \$1}")" = "44b18b5a40ce9d188a9c3bd49339621f81a65a15f97a683247902450dd54acec";
+  test "$(sha256sum research/systemic_risk/d002c_substrates.py | awk "{print \$1}")" = "4b2e5d65c104a5be5a207951cd3c4ae099f31ce83b3f2c0766a160d8c9e80eca";
+  test "$(sha256sum research/systemic_risk/d002g_null_mechanisms.py | awk "{print \$1}")" = "c7e275191454e1e961d5a079a21b6e1dbfcbc1661d48ddf14d0d0c39a426f257"'
+signal_artifact: "artifacts/d002h/authorization/d002h_canonical_run_authorisation.json"
+falsifier:
+  command: >-
+    bash -c 'set -e;
+    PYTHONPATH=. python -m pytest tests/systemic_risk/test_d002h_gate_f_authorization.py -q || exit 1;
+    test -f artifacts/d002h/authorization/d002h_canonical_run_authorisation.json || exit 2;
+    test -f docs/governance/D002H_GATE_F_AUTHORIZATION_REPORT.md || exit 3;
+    test -f tests/systemic_risk/test_d002h_gate_f_authorization.py || exit 4;
+    python -c "import json;
+    d=json.load(open(\"artifacts/d002h/authorization/d002h_canonical_run_authorisation.json\"));
+    assert d[\"schema_version\"]==\"D002H-CANONICAL-RUN-AUTHORISATION-v1\";
+    assert d[\"status\"]==\"AUTHORISED\";
+    assert d[\"canonical_run_authorized_final\"] is False;
+    assert d[\"final_authorisation_pending_gate\"]==\"G\";
+    assert d[\"downstream_gates_remaining\"]==[\"G\"];
+    assert len(d[\"prior_gate_chain\"])==5;
+    assert \"results\" not in d;
+    assert \"sweep\" not in d" || exit 5;
+    grep -q "D-002H Gate F" docs/governance/D002G_CANONICAL_RUN_BLOCKERS.md || exit 6;
+    test "$(sha256sum docs/governance/D002C_CLAIM_LEDGER.yaml | awk "{print \$1}")" = "f96ba9b5a2057d2e0bff84afc28578ab316cff73f6dc6673fb0d6d543b8bd6dd" || exit 7;
+    test "$(sha256sum docs/governance/D002H_PREREGISTRATION.yaml | awk "{print \$1}")" = "44b18b5a40ce9d188a9c3bd49339621f81a65a15f97a683247902450dd54acec" || exit 8;
+    test "$(sha256sum research/systemic_risk/d002c_substrates.py | awk "{print \$1}")" = "4b2e5d65c104a5be5a207951cd3c4ae099f31ce83b3f2c0766a160d8c9e80eca" || exit 9;
+    test "$(sha256sum research/systemic_risk/d002g_null_mechanisms.py | awk "{print \$1}")" = "c7e275191454e1e961d5a079a21b6e1dbfcbc1661d48ddf14d0d0c39a426f257" || exit 10;
+    test ! -d artifacts/d002h/canonical/results || exit 11;
+    if grep -rE "canonical run authorised|canonical run authorized|Gate F authorises|D-002G rescued|D-002C rescued|cross-substrate robustness|general topology robustness|scientific PASS achieved|sweep complete|sweep result" docs/governance/D002H_GATE_F_AUTHORIZATION_REPORT.md | grep -vE "forbidden|NOT|never|cannot|does not|do not|out of scope|MUST NOT|alone does NOT|alone is one term|prohibited|disallowed|requires|impossible|deny|denied|reject|REJECT|attempt|FAIL|after explicit authorisation|after.*all.*7.*gates|will pin|excluded|blocked|BLOCKED|absolute|intermediate"; then
+      echo "forbidden promotional phrase leaked outside denial context"; exit 12;
+    fi'
+  description: >-
+    Probes the D-002H Gate F authorisation artifact: Gate F tests pass
+    (10 base + 5 parametrised ancestor + 2 integrity); 4 new files
+    exist on disk (test + report + JSON artifact + acceptor); artifact
+    JSON has the locked schema_version
+    D002H-CANONICAL-RUN-AUTHORISATION-v1, status AUTHORISED,
+    canonical_run_authorized_final False,
+    final_authorisation_pending_gate G,
+    downstream_gates_remaining [G], prior_gate_chain length 5, no
+    ``results`` or ``sweep`` field; BLOCKERS.md carries the new Gate F
+    append-only section; D-002C claim ledger byte-exact at the anchor
+    sha; D-002H prereg sha byte-exact; substrate + mechanism module
+    shas byte-exact unchanged; no artifacts/d002h/canonical/results/
+    directory exists; no forbidden promotional phrase leaks outside
+    denial context inside the report. Regression on any -> Gate F
+    contract broken.
+rollback_command: >-
+  bash -c 'rm -f
+  tests/systemic_risk/test_d002h_gate_f_authorization.py
+  docs/governance/D002H_GATE_F_AUTHORIZATION_REPORT.md
+  artifacts/d002h/authorization/d002h_canonical_run_authorisation.json
+  .claude/commit_acceptors/x10r-d002h-gate-f-authorization.yaml
+  && rmdir artifacts/d002h/authorization 2>/dev/null || true
+  && git checkout HEAD~1 -- docs/governance/D002G_CANONICAL_RUN_BLOCKERS.md'
+rollback_verification_command: >-
+  bash -c 'test ! -f tests/systemic_risk/test_d002h_gate_f_authorization.py
+  && test ! -f docs/governance/D002H_GATE_F_AUTHORIZATION_REPORT.md
+  && test ! -f artifacts/d002h/authorization/d002h_canonical_run_authorisation.json
+  && test ! -f .claude/commit_acceptors/x10r-d002h-gate-f-authorization.yaml
+  && ! grep -q "D-002H Gate F" docs/governance/D002G_CANONICAL_RUN_BLOCKERS.md'
+memory_update_type: append
+ledger_path: ".claude/commit_acceptors/x10r-d002h-gate-f-authorization.yaml"
+report_path: "docs/governance/D002H_GATE_F_AUTHORIZATION_REPORT.md"
+evidence: []

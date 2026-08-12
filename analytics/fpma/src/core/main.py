@@ -1,4 +1,5 @@
-# SPDX-License-Identifier: LicenseRef-TradePulse-Proprietary
+# Copyright (c) 2023-2026 Yaroslav Vasylenko (neuron7xLab)
+# SPDX-License-Identifier: MIT
 """FPM-A (Fractal Portfolio Management - Analytics) core module.
 
 This module serves as the main entry point for the FPM-A analytics framework,
@@ -145,9 +146,7 @@ def compute_hurst_exponent(
     return float(np.clip(slope, 0.0, 1.0))
 
 
-def wavelet_decomposition(
-    series: np.ndarray, scales: Sequence[int]
-) -> Dict[int, np.ndarray]:
+def wavelet_decomposition(series: np.ndarray, scales: Sequence[int]) -> Dict[int, np.ndarray]:
     """Perform multi-scale wavelet-like decomposition using moving averages.
 
     This simplified wavelet approximation decomposes the series into

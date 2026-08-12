@@ -1,4 +1,5 @@
-# SPDX-License-Identifier: LicenseRef-TradePulse-Proprietary
+# Copyright (c) 2023-2026 Yaroslav Vasylenko (neuron7xLab)
+# SPDX-License-Identifier: MIT
 """Reliability tests for missing/invalid market data handling.
 
 Validates data validation and error handling:
@@ -8,6 +9,7 @@ Validates data validation and error handling:
 
 These tests ensure data quality issues are caught early and reported clearly.
 """
+
 from __future__ import annotations
 
 import numpy as np
@@ -17,7 +19,7 @@ import pytest
 from backtest.engine import (
     walk_forward,
 )
-from tradepulse.data_quality import (
+from geosync.data_quality import (
     DataQualityError,
     validate_historical_data,
 )
@@ -27,13 +29,16 @@ def test_nan_price_detection() -> None:
     """Test that NaN values in price data are detected (REL_DATA_MISSING_001)."""
 
     dates = pd.date_range("2020-01-01", periods=10, freq="D")
-    prices = pd.DataFrame({
-        "open": [100, 101, np.nan, 103, 104, 105, 106, 107, 108, 109],  # NaN on day 3
-        "high": [101, 102, 103, 104, 105, 106, 107, 108, 109, 110],
-        "low": [99, 100, 101, 102, 103, 104, 105, 106, 107, 108],
-        "close": [100.5, 101.5, 102.5, 103.5, 104.5, 105.5, 106.5, 107.5, 108.5, 109.5],
-        "volume": [1000] * 10,
-    }, index=dates)
+    prices = pd.DataFrame(
+        {
+            "open": [100, 101, np.nan, 103, 104, 105, 106, 107, 108, 109],  # NaN on day 3
+            "high": [101, 102, 103, 104, 105, 106, 107, 108, 109, 110],
+            "low": [99, 100, 101, 102, 103, 104, 105, 106, 107, 108],
+            "close": [100.5, 101.5, 102.5, 103.5, 104.5, 105.5, 106.5, 107.5, 108.5, 109.5],
+            "volume": [1000] * 10,
+        },
+        index=dates,
+    )
 
     # Validate data - should detect NaN
     report = validate_historical_data(prices)
@@ -48,18 +53,29 @@ def test_timestamp_gap_detection() -> None:
     """Test that gaps in timestamp sequence are detected (REL_DATA_MISSING_002)."""
 
     # Create data with a missing date (gap from Jan 5 to Jan 7)
-    dates = pd.to_datetime([
-        "2020-01-01", "2020-01-02", "2020-01-03", "2020-01-04",
-        # Gap: Jan 5 and 6 missing (weekend OK, but large gap)
-        "2020-01-07", "2020-01-08", "2020-01-09", "2020-01-10"
-    ])
-    prices = pd.DataFrame({
-        "open": [100, 101, 102, 103, 106, 107, 108, 109],
-        "high": [101, 102, 103, 104, 107, 108, 109, 110],
-        "low": [99, 100, 101, 102, 105, 106, 107, 108],
-        "close": [100.5, 101.5, 102.5, 103.5, 106.5, 107.5, 108.5, 109.5],
-        "volume": [1000] * 8,
-    }, index=dates)
+    dates = pd.to_datetime(
+        [
+            "2020-01-01",
+            "2020-01-02",
+            "2020-01-03",
+            "2020-01-04",
+            # Gap: Jan 5 and 6 missing (weekend OK, but large gap)
+            "2020-01-07",
+            "2020-01-08",
+            "2020-01-09",
+            "2020-01-10",
+        ]
+    )
+    prices = pd.DataFrame(
+        {
+            "open": [100, 101, 102, 103, 106, 107, 108, 109],
+            "high": [101, 102, 103, 104, 107, 108, 109, 110],
+            "low": [99, 100, 101, 102, 105, 106, 107, 108],
+            "close": [100.5, 101.5, 102.5, 103.5, 106.5, 107.5, 108.5, 109.5],
+            "volume": [1000] * 8,
+        },
+        index=dates,
+    )
 
     # Validate - gap should be detected
     report = validate_historical_data(prices)
@@ -71,13 +87,15 @@ def test_empty_dataset_handling() -> None:
     """Test that empty datasets are rejected clearly (REL_DATA_MISSING_003)."""
 
     # Create empty DataFrame with correct columns
-    prices = pd.DataFrame({
-        "open": [],
-        "high": [],
-        "low": [],
-        "close": [],
-        "volume": [],
-    })
+    prices = pd.DataFrame(
+        {
+            "open": [],
+            "high": [],
+            "low": [],
+            "close": [],
+            "volume": [],
+        }
+    )
 
     # Validate empty data - may pass validation but should be noted
     report = validate_historical_data(prices)
@@ -88,13 +106,16 @@ def test_negative_prices_detected() -> None:
     """Test that negative prices are flagged as invalid."""
 
     dates = pd.date_range("2020-01-01", periods=5, freq="D")
-    prices = pd.DataFrame({
-        "open": [100, 101, -102, 103, 104],  # Negative price
-        "high": [101, 102, 103, 104, 105],
-        "low": [99, 100, 101, 102, 103],
-        "close": [100.5, 101.5, 102.5, 103.5, 104.5],
-        "volume": [1000] * 5,
-    }, index=dates)
+    prices = pd.DataFrame(
+        {
+            "open": [100, 101, -102, 103, 104],  # Negative price
+            "high": [101, 102, 103, 104, 105],
+            "low": [99, 100, 101, 102, 103],
+            "close": [100.5, 101.5, 102.5, 103.5, 104.5],
+            "volume": [1000] * 5,
+        },
+        index=dates,
+    )
 
     # Should detect negative price
     report = validate_historical_data(prices)
@@ -106,14 +127,17 @@ def test_high_less_than_low_detected() -> None:
     """Test that invalid high/low relationships are caught."""
 
     dates = pd.date_range("2020-01-01", periods=5, freq="D")
-    prices = pd.DataFrame({
-        "open": [100, 101, 102, 103, 104],
-        # Day 3 (index 2): high=101 < low=103 (invalid OHLC)
-        "high": [101, 102, 101, 104, 105],
-        "low": [99, 100, 103, 102, 103],
-        "close": [100.5, 101.5, 102.5, 103.5, 104.5],
-        "volume": [1000] * 5,
-    }, index=dates)
+    prices = pd.DataFrame(
+        {
+            "open": [100, 101, 102, 103, 104],
+            # Day 3 (index 2): high=101 < low=103 (invalid OHLC)
+            "high": [101, 102, 101, 104, 105],
+            "low": [99, 100, 103, 102, 103],
+            "close": [100.5, 101.5, 102.5, 103.5, 104.5],
+            "volume": [1000] * 5,
+        },
+        index=dates,
+    )
 
     # Should detect invalid OHLC relationship
     report = validate_historical_data(prices)
@@ -169,12 +193,15 @@ def test_data_quality_report_structure() -> None:
     """Test that DataQualityReport has expected structure."""
 
     dates = pd.date_range("2020-01-01", periods=5, freq="D")
-    prices = pd.DataFrame({
-        "open": [100, 101, 102, 103, 104],
-        "high": [101, 102, 103, 104, 105],
-        "low": [99, 100, 101, 102, 103],
-        "close": [100.5, 101.5, 102.5, 103.5, 104.5],
-    }, index=dates)
+    prices = pd.DataFrame(
+        {
+            "open": [100, 101, 102, 103, 104],
+            "high": [101, 102, 103, 104, 105],
+            "low": [99, 100, 101, 102, 103],
+            "close": [100.5, 101.5, 102.5, 103.5, 104.5],
+        },
+        index=dates,
+    )
 
     report = validate_historical_data(prices)
 

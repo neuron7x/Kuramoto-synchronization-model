@@ -1,0 +1,15 @@
+[Unit]
+Description=Daily fire of geosync_shadow_daily_tick.service (FIX-5)
+# Co-exists with cross_asset_kuramoto_shadow.timer (frozen artefact).
+# This timer drives the tick wrapper; the older one drives the bare
+# evaluator. Both targets the same 22:00 UTC bar-close convention.
+
+[Timer]
+OnCalendar=*-*-* 22:00:00 UTC
+Persistent=true
+AccuracySec=60s
+RandomizedDelaySec=0
+Unit=geosync_shadow_daily_tick.service
+
+[Install]
+WantedBy=timers.target

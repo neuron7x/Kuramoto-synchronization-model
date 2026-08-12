@@ -1,3 +1,5 @@
+# Copyright (c) 2023-2026 Yaroslav Vasylenko (neuron7xLab)
+# SPDX-License-Identifier: MIT
 """Performance monitoring and optimization tools for thermodynamics system.
 
 This module provides comprehensive performance profiling, benchmarking,
@@ -74,9 +76,7 @@ class PerformanceMetrics:
             "call_count": self.call_count,
             "total_time_ms": self.total_time * 1000,
             "avg_time_ms": self.avg_time * 1000,
-            "min_time_ms": (
-                self.min_time * 1000 if self.min_time != float("inf") else 0.0
-            ),
+            "min_time_ms": (self.min_time * 1000 if self.min_time != float("inf") else 0.0),
             "max_time_ms": self.max_time * 1000,
             "std_time_ms": self.std_time * 1000,
             "p95_time_ms": self.p95_time * 1000,
@@ -375,9 +375,7 @@ class Benchmark:
         # Calculate speedup relative to fastest
         for name in results:
             if name != fastest_name:
-                results[name]["speedup_vs_fastest"] = (
-                    results[name]["avg_time_ms"] / fastest_time
-                )
+                results[name]["speedup_vs_fastest"] = results[name]["avg_time_ms"] / fastest_time
             else:
                 results[name]["speedup_vs_fastest"] = 1.0
 

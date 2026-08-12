@@ -1,0 +1,4975 @@
+{
+  "schema_version": "1.0",
+  "generated_by": "docs-inventory scan (root *.md + docs/**/*.md + canonical manifests)",
+  "totals": {
+    "documents": 708,
+    "by_role": {
+      "agent": 22,
+      "archive": 6,
+      "audit": 16,
+      "canonical": 86,
+      "evidence": 27,
+      "general": 430,
+      "ops": 71,
+      "research_draft": 50
+    }
+  },
+  "entries": [
+    {
+      "path": "AGENTS.md",
+      "role": "agent",
+      "domain": "agent",
+      "claim_bearing": false,
+      "authority": false
+    },
+    {
+      "path": "BASELINE.md",
+      "role": "general",
+      "domain": "general",
+      "claim_bearing": false,
+      "authority": false
+    },
+    {
+      "path": "BLOCKED.md",
+      "role": "general",
+      "domain": "general",
+      "claim_bearing": false,
+      "authority": false
+    },
+    {
+      "path": "CHANGELOG.md",
+      "role": "general",
+      "domain": "general",
+      "claim_bearing": false,
+      "authority": false
+    },
+    {
+      "path": "CLAIMS.md",
+      "role": "canonical",
+      "domain": "governance",
+      "claim_bearing": true,
+      "authority": true
+    },
+    {
+      "path": "CLAUDE.md",
+      "role": "general",
+      "domain": "general",
+      "claim_bearing": false,
+      "authority": false
+    },
+    {
+      "path": "CODE_OF_CONDUCT.md",
+      "role": "general",
+      "domain": "general",
+      "claim_bearing": false,
+      "authority": false
+    },
+    {
+      "path": "CONTRIBUTING.md",
+      "role": "general",
+      "domain": "general",
+      "claim_bearing": false,
+      "authority": false
+    },
+    {
+      "path": "CURRENT_DIFF_SUMMARY.md",
+      "role": "general",
+      "domain": "general",
+      "claim_bearing": false,
+      "authority": false
+    },
+    {
+      "path": "DELIVERY.md",
+      "role": "general",
+      "domain": "general",
+      "claim_bearing": false,
+      "authority": false
+    },
+    {
+      "path": "DESIGN.md",
+      "role": "general",
+      "domain": "general",
+      "claim_bearing": false,
+      "authority": false
+    },
+    {
+      "path": "DISHA_BA_CORRELATION_FINAL_REPORT.md",
+      "role": "general",
+      "domain": "general",
+      "claim_bearing": false,
+      "authority": false
+    },
+    {
+      "path": "DISHA_SAFE_120_WORDS_v2.md",
+      "role": "general",
+      "domain": "general",
+      "claim_bearing": false,
+      "authority": false
+    },
+    {
+      "path": "FORBIDDEN_CLAIMS.md",
+      "role": "canonical",
+      "domain": "governance",
+      "claim_bearing": true,
+      "authority": true
+    },
+    {
+      "path": "INDEPENDENT_SIGNAL_NOISE_AUDIT_2026-05-26.md",
+      "role": "general",
+      "domain": "general",
+      "claim_bearing": false,
+      "authority": false
+    },
+    {
+      "path": "ISSUE_DRAFTS_X10R.md",
+      "role": "research_draft",
+      "domain": "general",
+      "claim_bearing": true,
+      "authority": false
+    },
+    {
+      "path": "MODEL_AUDIT_BENCHMARK.md",
+      "role": "general",
+      "domain": "general",
+      "claim_bearing": false,
+      "authority": false
+    },
+    {
+      "path": "POST_AUDIT_EXECUTION_REPORT.md",
+      "role": "general",
+      "domain": "general",
+      "claim_bearing": false,
+      "authority": false
+    },
+    {
+      "path": "PRODUCT_CATEGORY.md",
+      "role": "canonical",
+      "domain": "governance",
+      "claim_bearing": true,
+      "authority": true
+    },
+    {
+      "path": "README.md",
+      "role": "canonical",
+      "domain": "general",
+      "claim_bearing": true,
+      "authority": true
+    },
+    {
+      "path": "ROADMAP.md",
+      "role": "general",
+      "domain": "general",
+      "claim_bearing": false,
+      "authority": false
+    },
+    {
+      "path": "SECURITY.md",
+      "role": "general",
+      "domain": "general",
+      "claim_bearing": false,
+      "authority": false
+    },
+    {
+      "path": "SELF_AUDIT_9_9_CANDIDATE.md",
+      "role": "general",
+      "domain": "general",
+      "claim_bearing": false,
+      "authority": false
+    },
+    {
+      "path": "VERDICT.md",
+      "role": "general",
+      "domain": "general",
+      "claim_bearing": false,
+      "authority": false
+    },
+    {
+      "path": "X10R_EMPIRICAL_RECOVERY_SUMMARY.md",
+      "role": "general",
+      "domain": "general",
+      "claim_bearing": false,
+      "authority": false
+    },
+    {
+      "path": "X10R_GATE6_CERTIFICATION_REPORT.md",
+      "role": "general",
+      "domain": "general",
+      "claim_bearing": false,
+      "authority": false
+    },
+    {
+      "path": "X10R_GATE6_SENSITIVITY_SURFACE.md",
+      "role": "general",
+      "domain": "general",
+      "claim_bearing": false,
+      "authority": false
+    },
+    {
+      "path": "X10R_HONEST_MINIMUM_PROGRESS_REPORT.md",
+      "role": "general",
+      "domain": "general",
+      "claim_bearing": false,
+      "authority": false
+    },
+    {
+      "path": "X10R_INSTRUMENTED_STATE.md",
+      "role": "general",
+      "domain": "general",
+      "claim_bearing": false,
+      "authority": false
+    },
+    {
+      "path": "X10R_REAL_BIS_DOV_ONLY_REPORT.md",
+      "role": "general",
+      "domain": "general",
+      "claim_bearing": false,
+      "authority": false
+    },
+    {
+      "path": "X10R_WEIGHTED_ALLOCATION_OPERATIONAL_REGIME_REPORT.md",
+      "role": "general",
+      "domain": "general",
+      "claim_bearing": false,
+      "authority": false
+    },
+    {
+      "path": "neuron7xLab.md",
+      "role": "general",
+      "domain": "general",
+      "claim_bearing": false,
+      "authority": false
+    },
+    {
+      "path": "docs/API.md",
+      "role": "general",
+      "domain": "general",
+      "claim_bearing": false,
+      "authority": false
+    },
+    {
+      "path": "docs/ARCHITECTURE.md",
+      "role": "canonical",
+      "domain": "general",
+      "claim_bearing": true,
+      "authority": true
+    },
+    {
+      "path": "docs/ARCHITECTURE_MAP.md",
+      "role": "general",
+      "domain": "general",
+      "claim_bearing": false,
+      "authority": false
+    },
+    {
+      "path": "docs/BIBLIOGRAPHY.md",
+      "role": "general",
+      "domain": "general",
+      "claim_bearing": false,
+      "authority": false
+    },
+    {
+      "path": "docs/CALIBRATION_GUIDE.md",
+      "role": "general",
+      "domain": "general",
+      "claim_bearing": false,
+      "authority": false
+    },
+    {
+      "path": "docs/CALIBRATION_PARAMETER_REFERENCE.md",
+      "role": "general",
+      "domain": "general",
+      "claim_bearing": false,
+      "authority": false
+    },
+    {
+      "path": "docs/CALIBRATION_QUICK_START.md",
+      "role": "general",
+      "domain": "general",
+      "claim_bearing": false,
+      "authority": false
+    },
+    {
+      "path": "docs/CITATION_MAP.md",
+      "role": "general",
+      "domain": "general",
+      "claim_bearing": false,
+      "authority": false
+    },
+    {
+      "path": "docs/CITATION_POLICY.md",
+      "role": "general",
+      "domain": "general",
+      "claim_bearing": false,
+      "authority": false
+    },
+    {
+      "path": "docs/CI_CD_OVERVIEW.md",
+      "role": "general",
+      "domain": "general",
+      "claim_bearing": false,
+      "authority": false
+    },
+    {
+      "path": "docs/CLAIM_INVENTORY.md",
+      "role": "general",
+      "domain": "general",
+      "claim_bearing": false,
+      "authority": false
+    },
+    {
+      "path": "docs/CME_PHYSICS_RND_LOOP.md",
+      "role": "general",
+      "domain": "physics",
+      "claim_bearing": false,
+      "authority": false
+    },
+    {
+      "path": "docs/CNS_ALIGNMENT_DEEP_TASKS.md",
+      "role": "general",
+      "domain": "general",
+      "claim_bearing": false,
+      "authority": false
+    },
+    {
+      "path": "docs/CONCEPTUAL_ARCHITECTURE_UA.md",
+      "role": "general",
+      "domain": "general",
+      "claim_bearing": false,
+      "authority": false
+    },
+    {
+      "path": "docs/Canary.md",
+      "role": "general",
+      "domain": "general",
+      "claim_bearing": false,
+      "authority": false
+    },
+    {
+      "path": "docs/DATA_GOVERNANCE.md",
+      "role": "canonical",
+      "domain": "governance",
+      "claim_bearing": true,
+      "authority": true
+    },
+    {
+      "path": "docs/DATA_INVENTORY.md",
+      "role": "general",
+      "domain": "data",
+      "claim_bearing": false,
+      "authority": false
+    },
+    {
+      "path": "docs/DATA_MODEL.md",
+      "role": "general",
+      "domain": "data",
+      "claim_bearing": false,
+      "authority": false
+    },
+    {
+      "path": "docs/DEPENDENCY_MANAGEMENT.md",
+      "role": "general",
+      "domain": "general",
+      "claim_bearing": false,
+      "authority": false
+    },
+    {
+      "path": "docs/DOCUMENTATION_ARCHITECTURE.md",
+      "role": "canonical",
+      "domain": "general",
+      "claim_bearing": true,
+      "authority": true
+    },
+    {
+      "path": "docs/DOC_MODULE_MAP.md",
+      "role": "general",
+      "domain": "general",
+      "claim_bearing": false,
+      "authority": false
+    },
+    {
+      "path": "docs/DRO_ARA_CALIBRATION_REPORT.md",
+      "role": "general",
+      "domain": "general",
+      "claim_bearing": false,
+      "authority": false
+    },
+    {
+      "path": "docs/DRO_ARA_CALIBRATION_REPORT_v2.md",
+      "role": "general",
+      "domain": "general",
+      "claim_bearing": false,
+      "authority": false
+    },
+    {
+      "path": "docs/DRO_ARA_CALIBRATION_v3_RIGOR.md",
+      "role": "general",
+      "domain": "general",
+      "claim_bearing": false,
+      "authority": false
+    },
+    {
+      "path": "docs/ENVIRONMENT_CHARTER.md",
+      "role": "general",
+      "domain": "general",
+      "claim_bearing": false,
+      "authority": false
+    },
+    {
+      "path": "docs/FORMALIZATION_INDEX.md",
+      "role": "general",
+      "domain": "general",
+      "claim_bearing": false,
+      "authority": false
+    },
+    {
+      "path": "docs/FPM-A.md",
+      "role": "general",
+      "domain": "general",
+      "claim_bearing": false,
+      "authority": false
+    },
+    {
+      "path": "docs/GABAInhibitionGate.md",
+      "role": "general",
+      "domain": "general",
+      "claim_bearing": false,
+      "authority": false
+    },
+    {
+      "path": "docs/GITHUB_METADATA.md",
+      "role": "general",
+      "domain": "data",
+      "claim_bearing": false,
+      "authority": false
+    },
+    {
+      "path": "docs/HPC_AI_V4.md",
+      "role": "general",
+      "domain": "general",
+      "claim_bearing": false,
+      "authority": false
+    },
+    {
+      "path": "docs/INCIDENT_RUNBOOK.md",
+      "role": "general",
+      "domain": "general",
+      "claim_bearing": false,
+      "authority": false
+    },
+    {
+      "path": "docs/INFERENCE_LEGEND_EXIT_WORK_ACT.md",
+      "role": "canonical",
+      "domain": "inference",
+      "claim_bearing": true,
+      "authority": true
+    },
+    {
+      "path": "docs/INFERENCE_LEGEND_WP_COVERAGE.md",
+      "role": "canonical",
+      "domain": "inference",
+      "claim_bearing": true,
+      "authority": true
+    },
+    {
+      "path": "docs/INFERENCE_OPERATION_PROTOCOL.md",
+      "role": "canonical",
+      "domain": "inference",
+      "claim_bearing": true,
+      "authority": true
+    },
+    {
+      "path": "docs/INFERENCE_READINESS.md",
+      "role": "canonical",
+      "domain": "inference",
+      "claim_bearing": true,
+      "authority": true
+    },
+    {
+      "path": "docs/INTERPRETABILITY_MODEL.md",
+      "role": "general",
+      "domain": "general",
+      "claim_bearing": false,
+      "authority": false
+    },
+    {
+      "path": "docs/KNOWN_LIMITATIONS.md",
+      "role": "general",
+      "domain": "general",
+      "claim_bearing": false,
+      "authority": false
+    },
+    {
+      "path": "docs/MA_v2_Roadmap.md",
+      "role": "general",
+      "domain": "general",
+      "claim_bearing": false,
+      "authority": false
+    },
+    {
+      "path": "docs/MEMORY_INVARIANTS.md",
+      "role": "general",
+      "domain": "general",
+      "claim_bearing": false,
+      "authority": false
+    },
+    {
+      "path": "docs/METRICS_CONTRACT.md",
+      "role": "general",
+      "domain": "general",
+      "claim_bearing": false,
+      "authority": false
+    },
+    {
+      "path": "docs/MFN_INGESTION_SPEC.md",
+      "role": "general",
+      "domain": "general",
+      "claim_bearing": false,
+      "authority": false
+    },
+    {
+      "path": "docs/ML_CRISIS_PREDICTOR.md",
+      "role": "general",
+      "domain": "general",
+      "claim_bearing": false,
+      "authority": false
+    },
+    {
+      "path": "docs/MODULE_INTERACTION_ORCHESTRATOR.md",
+      "role": "general",
+      "domain": "general",
+      "claim_bearing": false,
+      "authority": false
+    },
+    {
+      "path": "docs/NEGATIVE_RESULTS.md",
+      "role": "general",
+      "domain": "general",
+      "claim_bearing": false,
+      "authority": false
+    },
+    {
+      "path": "docs/NEURO-TO-DIGITAL-ONTOLOGY.md",
+      "role": "general",
+      "domain": "general",
+      "claim_bearing": false,
+      "authority": false
+    },
+    {
+      "path": "docs/NEURO_OPTIMIZATION_SUMMARY.md",
+      "role": "general",
+      "domain": "general",
+      "claim_bearing": false,
+      "authority": false
+    },
+    {
+      "path": "docs/OBSERVABILITY_SPEC.md",
+      "role": "general",
+      "domain": "general",
+      "claim_bearing": false,
+      "authority": false
+    },
+    {
+      "path": "docs/OPERATIONAL_ARTIFACTS_INDEX.md",
+      "role": "general",
+      "domain": "general",
+      "claim_bearing": false,
+      "authority": false
+    },
+    {
+      "path": "docs/OPERATIONS.md",
+      "role": "general",
+      "domain": "general",
+      "claim_bearing": false,
+      "authority": false
+    },
+    {
+      "path": "docs/P0_IMPLEMENTATION_SUMMARY.md",
+      "role": "general",
+      "domain": "general",
+      "claim_bearing": false,
+      "authority": false
+    },
+    {
+      "path": "docs/P0_PRODUCTION_READINESS.md",
+      "role": "general",
+      "domain": "general",
+      "claim_bearing": false,
+      "authority": false
+    },
+    {
+      "path": "docs/PERFORMANCE_LEDGER.md",
+      "role": "general",
+      "domain": "general",
+      "claim_bearing": false,
+      "authority": false
+    },
+    {
+      "path": "docs/PHYSICS_BOUNDARY_AUDIT.md",
+      "role": "general",
+      "domain": "physics",
+      "claim_bearing": false,
+      "authority": false
+    },
+    {
+      "path": "docs/PHYSICS_CANON.md",
+      "role": "canonical",
+      "domain": "physics",
+      "claim_bearing": true,
+      "authority": true
+    },
+    {
+      "path": "docs/PHYSICS_GLOSSARY.md",
+      "role": "canonical",
+      "domain": "physics",
+      "claim_bearing": true,
+      "authority": true
+    },
+    {
+      "path": "docs/PHYSICS_MATURITY_MATRIX.md",
+      "role": "canonical",
+      "domain": "physics",
+      "claim_bearing": true,
+      "authority": true
+    },
+    {
+      "path": "docs/PHYSICS_PROOF.md",
+      "role": "evidence",
+      "domain": "physics",
+      "claim_bearing": true,
+      "authority": false
+    },
+    {
+      "path": "docs/PHYSICS_RANK_EXTRAPOLATION_WORK_ACT.md",
+      "role": "general",
+      "domain": "physics",
+      "claim_bearing": false,
+      "authority": false
+    },
+    {
+      "path": "docs/PHYSICS_VERIFICATION_RUNBOOK.md",
+      "role": "canonical",
+      "domain": "physics",
+      "claim_bearing": true,
+      "authority": true
+    },
+    {
+      "path": "docs/POLICY_DECISION_CONTRACT.md",
+      "role": "general",
+      "domain": "general",
+      "claim_bearing": false,
+      "authority": false
+    },
+    {
+      "path": "docs/POSTMORTEM_TEMPLATE.md",
+      "role": "general",
+      "domain": "general",
+      "claim_bearing": false,
+      "authority": false
+    },
+    {
+      "path": "docs/PRODUCTION_READINESS_GUIDE.md",
+      "role": "general",
+      "domain": "general",
+      "claim_bearing": false,
+      "authority": false
+    },
+    {
+      "path": "docs/PR_PREFLIGHT_RUNBOOK.md",
+      "role": "general",
+      "domain": "general",
+      "claim_bearing": false,
+      "authority": false
+    },
+    {
+      "path": "docs/PR_PREFLIGHT_VERDICT.md",
+      "role": "general",
+      "domain": "general",
+      "claim_bearing": false,
+      "authority": false
+    },
+    {
+      "path": "docs/README_SURFACES.md",
+      "role": "general",
+      "domain": "general",
+      "claim_bearing": true,
+      "authority": false
+    },
+    {
+      "path": "docs/RELEASE_GATES.md",
+      "role": "general",
+      "domain": "release",
+      "claim_bearing": false,
+      "authority": false
+    },
+    {
+      "path": "docs/RELEASE_PROCESS.md",
+      "role": "general",
+      "domain": "release",
+      "claim_bearing": false,
+      "authority": false
+    },
+    {
+      "path": "docs/RELIABILITY_SCENARIOS.md",
+      "role": "general",
+      "domain": "general",
+      "claim_bearing": false,
+      "authority": false
+    },
+    {
+      "path": "docs/REPOSITORY_SYSTEM.md",
+      "role": "canonical",
+      "domain": "governance",
+      "claim_bearing": true,
+      "authority": true
+    },
+    {
+      "path": "docs/REPRODUCIBILITY.md",
+      "role": "general",
+      "domain": "general",
+      "claim_bearing": false,
+      "authority": false
+    },
+    {
+      "path": "docs/REPRODUCIBLE_CAPSULE_CONTRACT.md",
+      "role": "general",
+      "domain": "general",
+      "claim_bearing": false,
+      "authority": false
+    },
+    {
+      "path": "docs/RESEARCH_THESIS.md",
+      "role": "general",
+      "domain": "general",
+      "claim_bearing": false,
+      "authority": false
+    },
+    {
+      "path": "docs/RFC_DRO_ARA_STATIONARITY_CONVENTION.md",
+      "role": "general",
+      "domain": "general",
+      "claim_bearing": false,
+      "authority": false
+    },
+    {
+      "path": "docs/RFC_TACL_GOVERNANCE_LAYER.md",
+      "role": "general",
+      "domain": "governance",
+      "claim_bearing": false,
+      "authority": false
+    },
+    {
+      "path": "docs/RICCI_KURAMOTO_MANIFOLD_KERNEL_WORK_ACT.md",
+      "role": "general",
+      "domain": "physics",
+      "claim_bearing": false,
+      "authority": false
+    },
+    {
+      "path": "docs/RICCI_MICROSTRUCTURE.md",
+      "role": "general",
+      "domain": "physics",
+      "claim_bearing": true,
+      "authority": false
+    },
+    {
+      "path": "docs/SECURITY_DEPENDENCIES.md",
+      "role": "general",
+      "domain": "general",
+      "claim_bearing": false,
+      "authority": false
+    },
+    {
+      "path": "docs/SECURITY_REPORTS_GUIDE.md",
+      "role": "general",
+      "domain": "general",
+      "claim_bearing": false,
+      "authority": false
+    },
+    {
+      "path": "docs/SEMANTIC_CONTROL_LAYER.md",
+      "role": "canonical",
+      "domain": "inference",
+      "claim_bearing": true,
+      "authority": true
+    },
+    {
+      "path": "docs/SEROTONIN_DEPLOYMENT_GUIDE.md",
+      "role": "general",
+      "domain": "general",
+      "claim_bearing": false,
+      "authority": false
+    },
+    {
+      "path": "docs/SEROTONIN_IMPLEMENTATION_COMPLETE.md",
+      "role": "general",
+      "domain": "general",
+      "claim_bearing": false,
+      "authority": false
+    },
+    {
+      "path": "docs/SEROTONIN_IMPROVEMENTS_V2.4.0.md",
+      "role": "general",
+      "domain": "general",
+      "claim_bearing": false,
+      "authority": false
+    },
+    {
+      "path": "docs/SEROTONIN_OBSERVABILITY_IMPLEMENTATION.md",
+      "role": "general",
+      "domain": "general",
+      "claim_bearing": false,
+      "authority": false
+    },
+    {
+      "path": "docs/SEROTONIN_PRACTICAL_ASSESSMENT_UA.md",
+      "role": "general",
+      "domain": "general",
+      "claim_bearing": false,
+      "authority": false
+    },
+    {
+      "path": "docs/SEROTONIN_PRACTICAL_GUIDE.md",
+      "role": "general",
+      "domain": "general",
+      "claim_bearing": false,
+      "authority": false
+    },
+    {
+      "path": "docs/SEROTONIN_PRACTICAL_SUITABILITY_ASSESSMENT.md",
+      "role": "general",
+      "domain": "general",
+      "claim_bearing": false,
+      "authority": false
+    },
+    {
+      "path": "docs/SEROTONIN_RECEPTORS.md",
+      "role": "general",
+      "domain": "general",
+      "claim_bearing": false,
+      "authority": false
+    },
+    {
+      "path": "docs/STAGING_REPORT.md",
+      "role": "general",
+      "domain": "general",
+      "claim_bearing": false,
+      "authority": false
+    },
+    {
+      "path": "docs/STRUCTURE.md",
+      "role": "general",
+      "domain": "general",
+      "claim_bearing": false,
+      "authority": false
+    },
+    {
+      "path": "docs/TACL.md",
+      "role": "general",
+      "domain": "general",
+      "claim_bearing": false,
+      "authority": false
+    },
+    {
+      "path": "docs/TEST_ARCHITECTURE.md",
+      "role": "canonical",
+      "domain": "general",
+      "claim_bearing": true,
+      "authority": true
+    },
+    {
+      "path": "docs/TEST_OPTIMIZATION_RECOMMENDATIONS.md",
+      "role": "general",
+      "domain": "general",
+      "claim_bearing": false,
+      "authority": false
+    },
+    {
+      "path": "docs/TEST_QUALITY_IMPROVEMENTS.md",
+      "role": "general",
+      "domain": "general",
+      "claim_bearing": false,
+      "authority": false
+    },
+    {
+      "path": "docs/USER_INTERACTION_GUIDE.md",
+      "role": "general",
+      "domain": "general",
+      "claim_bearing": false,
+      "authority": false
+    },
+    {
+      "path": "docs/WORKFLOW_OPTIMIZATIONS.md",
+      "role": "general",
+      "domain": "general",
+      "claim_bearing": false,
+      "authority": false
+    },
+    {
+      "path": "docs/WORKING_STACK.md",
+      "role": "general",
+      "domain": "general",
+      "claim_bearing": false,
+      "authority": false
+    },
+    {
+      "path": "docs/_generated/serotonin_stats.md",
+      "role": "general",
+      "domain": "general",
+      "claim_bearing": false,
+      "authority": false
+    },
+    {
+      "path": "docs/_generated/thermo_stats.md",
+      "role": "general",
+      "domain": "general",
+      "claim_bearing": false,
+      "authority": false
+    },
+    {
+      "path": "docs/accelerator_observability.md",
+      "role": "general",
+      "domain": "general",
+      "claim_bearing": false,
+      "authority": false
+    },
+    {
+      "path": "docs/accessibility.md",
+      "role": "general",
+      "domain": "general",
+      "claim_bearing": false,
+      "authority": false
+    },
+    {
+      "path": "docs/admin_remote_control.md",
+      "role": "general",
+      "domain": "general",
+      "claim_bearing": false,
+      "authority": false
+    },
+    {
+      "path": "docs/adr/0001-fractal-indicator-composition-architecture.md",
+      "role": "ops",
+      "domain": "governance",
+      "claim_bearing": false,
+      "authority": false
+    },
+    {
+      "path": "docs/adr/0001-security-compliance-automation.md",
+      "role": "ops",
+      "domain": "governance",
+      "claim_bearing": false,
+      "authority": false
+    },
+    {
+      "path": "docs/adr/0002-serotonin-controller-architecture.md",
+      "role": "ops",
+      "domain": "governance",
+      "claim_bearing": false,
+      "authority": false
+    },
+    {
+      "path": "docs/adr/0002-versioned-market-data-storage.md",
+      "role": "ops",
+      "domain": "governance",
+      "claim_bearing": false,
+      "authority": false
+    },
+    {
+      "path": "docs/adr/0003-automated-data-quality-framework.md",
+      "role": "ops",
+      "domain": "governance",
+      "claim_bearing": false,
+      "authority": false
+    },
+    {
+      "path": "docs/adr/0003-principal-architect-security-framework.md",
+      "role": "ops",
+      "domain": "governance",
+      "claim_bearing": false,
+      "authority": false
+    },
+    {
+      "path": "docs/adr/0004-contract-first-modular-architecture.md",
+      "role": "ops",
+      "domain": "governance",
+      "claim_bearing": false,
+      "authority": false
+    },
+    {
+      "path": "docs/adr/0005-multi-exchange-adapter-framework.md",
+      "role": "ops",
+      "domain": "governance",
+      "claim_bearing": false,
+      "authority": false
+    },
+    {
+      "path": "docs/adr/0006-tacl-thermo-control-layer.md",
+      "role": "ops",
+      "domain": "governance",
+      "claim_bearing": false,
+      "authority": false
+    },
+    {
+      "path": "docs/adr/0007-core-state-lattice-canonical-features.md",
+      "role": "ops",
+      "domain": "governance",
+      "claim_bearing": false,
+      "authority": false
+    },
+    {
+      "path": "docs/adr/0008-execution-risk-aware-order-router.md",
+      "role": "ops",
+      "domain": "governance",
+      "claim_bearing": false,
+      "authority": false
+    },
+    {
+      "path": "docs/adr/0009-runtime-deterministic-scheduler.md",
+      "role": "ops",
+      "domain": "governance",
+      "claim_bearing": false,
+      "authority": false
+    },
+    {
+      "path": "docs/adr/0010-observability-unified-telemetry-fabric.md",
+      "role": "ops",
+      "domain": "governance",
+      "claim_bearing": false,
+      "authority": false
+    },
+    {
+      "path": "docs/adr/0011-tacl-adaptive-thermal-governor.md",
+      "role": "ops",
+      "domain": "governance",
+      "claim_bearing": false,
+      "authority": false
+    },
+    {
+      "path": "docs/adr/0012-contract-boundaries-control-plane.md",
+      "role": "ops",
+      "domain": "governance",
+      "claim_bearing": false,
+      "authority": false
+    },
+    {
+      "path": "docs/adr/0013-failure-mode-drills-and-fallbacks.md",
+      "role": "ops",
+      "domain": "governance",
+      "claim_bearing": false,
+      "authority": false
+    },
+    {
+      "path": "docs/adr/0017-core-to-src-migration.md",
+      "role": "ops",
+      "domain": "governance",
+      "claim_bearing": false,
+      "authority": false
+    },
+    {
+      "path": "docs/adr/0018-accelerator-observability.md",
+      "role": "ops",
+      "domain": "governance",
+      "claim_bearing": false,
+      "authority": false
+    },
+    {
+      "path": "docs/adr/0019-distributed-tracing-carrier-key-contract.md",
+      "role": "ops",
+      "domain": "governance",
+      "claim_bearing": false,
+      "authority": false
+    },
+    {
+      "path": "docs/adr/0020-ierd-adoption.md",
+      "role": "ops",
+      "domain": "governance",
+      "claim_bearing": false,
+      "authority": false
+    },
+    {
+      "path": "docs/adr/0021-falsifier-required-anchored-claims.md",
+      "role": "ops",
+      "domain": "governance",
+      "claim_bearing": false,
+      "authority": false
+    },
+    {
+      "path": "docs/adr/0022-reset-wave-engineering-model.md",
+      "role": "ops",
+      "domain": "governance",
+      "claim_bearing": false,
+      "authority": false
+    },
+    {
+      "path": "docs/adr/0023-reset-wave-distributed-resilience.md",
+      "role": "ops",
+      "domain": "governance",
+      "claim_bearing": false,
+      "authority": false
+    },
+    {
+      "path": "docs/adr/0024-import-architecture-canonicalization.md",
+      "role": "ops",
+      "domain": "governance",
+      "claim_bearing": false,
+      "authority": false
+    },
+    {
+      "path": "docs/adr/README.md",
+      "role": "ops",
+      "domain": "governance",
+      "claim_bearing": false,
+      "authority": false
+    },
+    {
+      "path": "docs/adr/index.md",
+      "role": "ops",
+      "domain": "governance",
+      "claim_bearing": false,
+      "authority": false
+    },
+    {
+      "path": "docs/adr/template.md",
+      "role": "ops",
+      "domain": "governance",
+      "claim_bearing": false,
+      "authority": false
+    },
+    {
+      "path": "docs/agent.md",
+      "role": "agent",
+      "domain": "agent",
+      "claim_bearing": false,
+      "authority": false
+    },
+    {
+      "path": "docs/agent_integration/agent_trading_requirements.md",
+      "role": "agent",
+      "domain": "agent",
+      "claim_bearing": false,
+      "authority": false
+    },
+    {
+      "path": "docs/agents/WEB_AGENT_ARCHITECTURE_PROTOCOL.md",
+      "role": "agent",
+      "domain": "agent",
+      "claim_bearing": false,
+      "authority": false
+    },
+    {
+      "path": "docs/agents/web_agent_baseline_report.md",
+      "role": "agent",
+      "domain": "agent",
+      "claim_bearing": false,
+      "authority": false
+    },
+    {
+      "path": "docs/agents/web_agent_cognitive_state_assessment.md",
+      "role": "agent",
+      "domain": "agent",
+      "claim_bearing": false,
+      "authority": false
+    },
+    {
+      "path": "docs/agents/web_agent_critical_vulnerability_register.md",
+      "role": "agent",
+      "domain": "agent",
+      "claim_bearing": false,
+      "authority": false
+    },
+    {
+      "path": "docs/agents/web_agent_operationalization_matrix.md",
+      "role": "agent",
+      "domain": "agent",
+      "claim_bearing": false,
+      "authority": false
+    },
+    {
+      "path": "docs/agents/web_agent_readiness_verdict.md",
+      "role": "agent",
+      "domain": "agent",
+      "claim_bearing": false,
+      "authority": false
+    },
+    {
+      "path": "docs/agents/web_agent_tool_contract_inventory.md",
+      "role": "agent",
+      "domain": "agent",
+      "claim_bearing": false,
+      "authority": false
+    },
+    {
+      "path": "docs/api/API_REFERENCE.md",
+      "role": "general",
+      "domain": "general",
+      "claim_bearing": false,
+      "authority": false
+    },
+    {
+      "path": "docs/api/CHANGELOG.md",
+      "role": "general",
+      "domain": "general",
+      "claim_bearing": false,
+      "authority": false
+    },
+    {
+      "path": "docs/api/authentication.md",
+      "role": "general",
+      "domain": "general",
+      "claim_bearing": false,
+      "authority": false
+    },
+    {
+      "path": "docs/api/contracts.md",
+      "role": "general",
+      "domain": "general",
+      "claim_bearing": false,
+      "authority": false
+    },
+    {
+      "path": "docs/api/deprecations.md",
+      "role": "general",
+      "domain": "general",
+      "claim_bearing": false,
+      "authority": false
+    },
+    {
+      "path": "docs/api/error_model.md",
+      "role": "general",
+      "domain": "general",
+      "claim_bearing": false,
+      "authority": false
+    },
+    {
+      "path": "docs/api/migrations.md",
+      "role": "general",
+      "domain": "general",
+      "claim_bearing": false,
+      "authority": false
+    },
+    {
+      "path": "docs/api/overview.md",
+      "role": "general",
+      "domain": "general",
+      "claim_bearing": false,
+      "authority": false
+    },
+    {
+      "path": "docs/api/pagination.md",
+      "role": "general",
+      "domain": "general",
+      "claim_bearing": false,
+      "authority": false
+    },
+    {
+      "path": "docs/api/rate_limits.md",
+      "role": "general",
+      "domain": "general",
+      "claim_bearing": false,
+      "authority": false
+    },
+    {
+      "path": "docs/api/webhooks.md",
+      "role": "general",
+      "domain": "general",
+      "claim_bearing": false,
+      "authority": false
+    },
+    {
+      "path": "docs/api.md",
+      "role": "general",
+      "domain": "general",
+      "claim_bearing": false,
+      "authority": false
+    },
+    {
+      "path": "docs/api_examples.md",
+      "role": "general",
+      "domain": "general",
+      "claim_bearing": false,
+      "authority": false
+    },
+    {
+      "path": "docs/api_messaging_integration.md",
+      "role": "general",
+      "domain": "general",
+      "claim_bearing": false,
+      "authority": false
+    },
+    {
+      "path": "docs/architecture/ADR-0001-connectome-gate.md",
+      "role": "general",
+      "domain": "general",
+      "claim_bearing": false,
+      "authority": false
+    },
+    {
+      "path": "docs/architecture/CONCEPTUAL_ARCHITECTURE.md",
+      "role": "canonical",
+      "domain": "general",
+      "claim_bearing": true,
+      "authority": true
+    },
+    {
+      "path": "docs/architecture/CONNECTOME_GATE.md",
+      "role": "general",
+      "domain": "general",
+      "claim_bearing": false,
+      "authority": false
+    },
+    {
+      "path": "docs/architecture/CONNECTOME_PR_AUDIT_PACKET.md",
+      "role": "general",
+      "domain": "general",
+      "claim_bearing": false,
+      "authority": false
+    },
+    {
+      "path": "docs/architecture/EPISTEMIC_DRIFT_ACT_2026-05-26.md",
+      "role": "general",
+      "domain": "general",
+      "claim_bearing": false,
+      "authority": false
+    },
+    {
+      "path": "docs/architecture/EPISTEMIC_DRIFT_SPEC_2026-05-26.md",
+      "role": "general",
+      "domain": "general",
+      "claim_bearing": false,
+      "authority": false
+    },
+    {
+      "path": "docs/architecture/EXTRAPOLATION_ACT_2026-05-26.md",
+      "role": "general",
+      "domain": "general",
+      "claim_bearing": false,
+      "authority": false
+    },
+    {
+      "path": "docs/architecture/REPOSITORY_STRUCTURE.md",
+      "role": "general",
+      "domain": "general",
+      "claim_bearing": false,
+      "authority": false
+    },
+    {
+      "path": "docs/architecture/RIEE_COMMERCIAL_AUTOMATION_2026-05-26.md",
+      "role": "general",
+      "domain": "general",
+      "claim_bearing": false,
+      "authority": false
+    },
+    {
+      "path": "docs/architecture/RIEE_OPERATIONAL_READINESS_2026-05-26.md",
+      "role": "general",
+      "domain": "general",
+      "claim_bearing": false,
+      "authority": false
+    },
+    {
+      "path": "docs/architecture/RIEE_PRODUCTION_RUNBOOK_2026-05-26.md",
+      "role": "general",
+      "domain": "general",
+      "claim_bearing": false,
+      "authority": false
+    },
+    {
+      "path": "docs/architecture/application_layer.md",
+      "role": "general",
+      "domain": "general",
+      "claim_bearing": false,
+      "authority": false
+    },
+    {
+      "path": "docs/architecture/architecture_integrator.md",
+      "role": "general",
+      "domain": "general",
+      "claim_bearing": false,
+      "authority": false
+    },
+    {
+      "path": "docs/architecture/architecture_review_program.md",
+      "role": "general",
+      "domain": "general",
+      "claim_bearing": false,
+      "authority": false
+    },
+    {
+      "path": "docs/architecture/assets/README.md",
+      "role": "general",
+      "domain": "general",
+      "claim_bearing": true,
+      "authority": false
+    },
+    {
+      "path": "docs/architecture/bwheel_zero_act.md",
+      "role": "general",
+      "domain": "general",
+      "claim_bearing": false,
+      "authority": false
+    },
+    {
+      "path": "docs/architecture/calibration.md",
+      "role": "general",
+      "domain": "general",
+      "claim_bearing": false,
+      "authority": false
+    },
+    {
+      "path": "docs/architecture/cns_ontology.md",
+      "role": "general",
+      "domain": "general",
+      "claim_bearing": false,
+      "authority": false
+    },
+    {
+      "path": "docs/architecture/configuration_structure.md",
+      "role": "general",
+      "domain": "general",
+      "claim_bearing": false,
+      "authority": false
+    },
+    {
+      "path": "docs/architecture/delivery_map.md",
+      "role": "general",
+      "domain": "general",
+      "claim_bearing": false,
+      "authority": false
+    },
+    {
+      "path": "docs/architecture/feature_store.md",
+      "role": "general",
+      "domain": "general",
+      "claim_bearing": false,
+      "authority": false
+    },
+    {
+      "path": "docs/architecture/fractal_neuro_cognitive_architecture_v2026_1.md",
+      "role": "general",
+      "domain": "general",
+      "claim_bearing": false,
+      "authority": false
+    },
+    {
+      "path": "docs/architecture/import_contracts.md",
+      "role": "general",
+      "domain": "general",
+      "claim_bearing": false,
+      "authority": false
+    },
+    {
+      "path": "docs/architecture/independent_models.md",
+      "role": "general",
+      "domain": "general",
+      "claim_bearing": false,
+      "authority": false
+    },
+    {
+      "path": "docs/architecture/map.md",
+      "role": "general",
+      "domain": "general",
+      "claim_bearing": false,
+      "authority": false
+    },
+    {
+      "path": "docs/architecture/module_interaction_orchestration.md",
+      "role": "general",
+      "domain": "general",
+      "claim_bearing": false,
+      "authority": false
+    },
+    {
+      "path": "docs/architecture/packaging.md",
+      "role": "general",
+      "domain": "general",
+      "claim_bearing": false,
+      "authority": false
+    },
+    {
+      "path": "docs/architecture/physics_v2_positioning.md",
+      "role": "general",
+      "domain": "physics",
+      "claim_bearing": false,
+      "authority": false
+    },
+    {
+      "path": "docs/architecture/physics_v2_universal_synchronization_manifold.md",
+      "role": "general",
+      "domain": "physics",
+      "claim_bearing": false,
+      "authority": false
+    },
+    {
+      "path": "docs/architecture/serving_resilience.md",
+      "role": "general",
+      "domain": "general",
+      "claim_bearing": false,
+      "authority": false
+    },
+    {
+      "path": "docs/architecture/substrate_signal_governance.md",
+      "role": "general",
+      "domain": "governance",
+      "claim_bearing": false,
+      "authority": false
+    },
+    {
+      "path": "docs/architecture/system_modules_reference.md",
+      "role": "general",
+      "domain": "general",
+      "claim_bearing": false,
+      "authority": false
+    },
+    {
+      "path": "docs/architecture/system_overview.md",
+      "role": "general",
+      "domain": "general",
+      "claim_bearing": false,
+      "authority": false
+    },
+    {
+      "path": "docs/architecture/technical_order_01.md",
+      "role": "general",
+      "domain": "general",
+      "claim_bearing": false,
+      "authority": false
+    },
+    {
+      "path": "docs/architecture/throughput.md",
+      "role": "general",
+      "domain": "general",
+      "claim_bearing": false,
+      "authority": false
+    },
+    {
+      "path": "docs/archive/LEGACY_20241210_OPTIMIZATION_EXECUTION_REPORT.md",
+      "role": "archive",
+      "domain": "general",
+      "claim_bearing": false,
+      "authority": false
+    },
+    {
+      "path": "docs/archive/LEGACY_20241211_CALIBRATION_SUMMARY.md",
+      "role": "archive",
+      "domain": "general",
+      "claim_bearing": false,
+      "authority": false
+    },
+    {
+      "path": "docs/archive/LEGACY_20241211_MODULE_ORCHESTRATION_SUMMARY.md",
+      "role": "archive",
+      "domain": "general",
+      "claim_bearing": false,
+      "authority": false
+    },
+    {
+      "path": "docs/archive/README.md",
+      "role": "archive",
+      "domain": "general",
+      "claim_bearing": false,
+      "authority": false
+    },
+    {
+      "path": "docs/archive/action_result_acceptor_salvage.md",
+      "role": "archive",
+      "domain": "general",
+      "claim_bearing": false,
+      "authority": false
+    },
+    {
+      "path": "docs/archive/old_repo_salvage_inventory.md",
+      "role": "archive",
+      "domain": "general",
+      "claim_bearing": false,
+      "authority": false
+    },
+    {
+      "path": "docs/askar_integration_guide.md",
+      "role": "general",
+      "domain": "general",
+      "claim_bearing": false,
+      "authority": false
+    },
+    {
+      "path": "docs/audit/2026-04-30-external-audit.md",
+      "role": "audit",
+      "domain": "general",
+      "claim_bearing": false,
+      "authority": false
+    },
+    {
+      "path": "docs/audit/2026-06-physics-depth-external-audit.md",
+      "role": "audit",
+      "domain": "physics",
+      "claim_bearing": false,
+      "authority": false
+    },
+    {
+      "path": "docs/audit/AESVP_2026_HARDENING_REQUIREMENTS.md",
+      "role": "audit",
+      "domain": "general",
+      "claim_bearing": false,
+      "authority": false
+    },
+    {
+      "path": "docs/audit/AESVP_2026_VALIDATION_RATIONALE.md",
+      "role": "audit",
+      "domain": "general",
+      "claim_bearing": false,
+      "authority": false
+    },
+    {
+      "path": "docs/audit/AESVP_2026_VALUATION_APPENDIX.md",
+      "role": "audit",
+      "domain": "general",
+      "claim_bearing": false,
+      "authority": false
+    },
+    {
+      "path": "docs/audit/CANONICAL_DOCUMENTATION_QUALITY_AUDIT.md",
+      "role": "audit",
+      "domain": "general",
+      "claim_bearing": false,
+      "authority": false
+    },
+    {
+      "path": "docs/audit/claim_ledger.md",
+      "role": "audit",
+      "domain": "general",
+      "claim_bearing": false,
+      "authority": false
+    },
+    {
+      "path": "docs/audit/false_confidence.md",
+      "role": "audit",
+      "domain": "general",
+      "claim_bearing": false,
+      "authority": false
+    },
+    {
+      "path": "docs/audit/file_inventory.md",
+      "role": "audit",
+      "domain": "general",
+      "claim_bearing": false,
+      "authority": false
+    },
+    {
+      "path": "docs/audit/ierd_phase0_findings.md",
+      "role": "audit",
+      "domain": "general",
+      "claim_bearing": false,
+      "authority": false
+    },
+    {
+      "path": "docs/audit/neuro_physics_contradiction_ledger.md",
+      "role": "audit",
+      "domain": "physics",
+      "claim_bearing": false,
+      "authority": false
+    },
+    {
+      "path": "docs/audit/neuro_symbolic_operationalization.md",
+      "role": "audit",
+      "domain": "general",
+      "claim_bearing": false,
+      "authority": false
+    },
+    {
+      "path": "docs/audit/nfi_operationalization_matrix_v3.md",
+      "role": "audit",
+      "domain": "general",
+      "claim_bearing": false,
+      "authority": false
+    },
+    {
+      "path": "docs/audit/nfi_operationalization_validation_v3.md",
+      "role": "audit",
+      "domain": "general",
+      "claim_bearing": false,
+      "authority": false
+    },
+    {
+      "path": "docs/audit/nfi_physics_validation_protocol_v3.md",
+      "role": "audit",
+      "domain": "physics",
+      "claim_bearing": false,
+      "authority": false
+    },
+    {
+      "path": "docs/audit/system_truth_report.md",
+      "role": "audit",
+      "domain": "general",
+      "claim_bearing": false,
+      "authority": false
+    },
+    {
+      "path": "docs/audits/ARCH_DECONSTRUCTION_2026-04-18.md",
+      "role": "general",
+      "domain": "general",
+      "claim_bearing": false,
+      "authority": false
+    },
+    {
+      "path": "docs/audits/technical_audit_2025-01.md",
+      "role": "general",
+      "domain": "general",
+      "claim_bearing": false,
+      "authority": false
+    },
+    {
+      "path": "docs/automated_risk_testing.md",
+      "role": "general",
+      "domain": "general",
+      "claim_bearing": false,
+      "authority": false
+    },
+    {
+      "path": "docs/backtest.md",
+      "role": "general",
+      "domain": "general",
+      "claim_bearing": false,
+      "authority": false
+    },
+    {
+      "path": "docs/backtest_execution_simulation.md",
+      "role": "general",
+      "domain": "general",
+      "claim_bearing": false,
+      "authority": false
+    },
+    {
+      "path": "docs/benchmarks.md",
+      "role": "general",
+      "domain": "general",
+      "claim_bearing": false,
+      "authority": false
+    },
+    {
+      "path": "docs/calibration/CONTROLLER_INVENTORY.md",
+      "role": "general",
+      "domain": "general",
+      "claim_bearing": false,
+      "authority": false
+    },
+    {
+      "path": "docs/calibration/README.md",
+      "role": "general",
+      "domain": "general",
+      "claim_bearing": true,
+      "authority": false
+    },
+    {
+      "path": "docs/canary_release_guardrails.md",
+      "role": "general",
+      "domain": "release",
+      "claim_bearing": false,
+      "authority": false
+    },
+    {
+      "path": "docs/change_point_detection.md",
+      "role": "general",
+      "domain": "general",
+      "claim_bearing": false,
+      "authority": false
+    },
+    {
+      "path": "docs/chaos_cost_controls.md",
+      "role": "general",
+      "domain": "general",
+      "claim_bearing": false,
+      "authority": false
+    },
+    {
+      "path": "docs/ci/fast_backlog_ledger.md",
+      "role": "general",
+      "domain": "general",
+      "claim_bearing": false,
+      "authority": false
+    },
+    {
+      "path": "docs/claims/descriptor_promotion_policy.md",
+      "role": "general",
+      "domain": "governance",
+      "claim_bearing": false,
+      "authority": false
+    },
+    {
+      "path": "docs/cli.md",
+      "role": "general",
+      "domain": "general",
+      "claim_bearing": false,
+      "authority": false
+    },
+    {
+      "path": "docs/cognitive_dynamics/BENCHMARKS.md",
+      "role": "general",
+      "domain": "general",
+      "claim_bearing": false,
+      "authority": false
+    },
+    {
+      "path": "docs/cognitive_dynamics/DEFINITIONS.md",
+      "role": "general",
+      "domain": "general",
+      "claim_bearing": false,
+      "authority": false
+    },
+    {
+      "path": "docs/cognitive_dynamics/HORYNYCH_FALSIFICATION_CYCLE.md",
+      "role": "general",
+      "domain": "general",
+      "claim_bearing": false,
+      "authority": false
+    },
+    {
+      "path": "docs/cognitive_dynamics/MODEL_SPEC.md",
+      "role": "general",
+      "domain": "general",
+      "claim_bearing": false,
+      "authority": false
+    },
+    {
+      "path": "docs/cognitive_dynamics/NEXT_ITERATION_PLAN.md",
+      "role": "general",
+      "domain": "general",
+      "claim_bearing": false,
+      "authority": false
+    },
+    {
+      "path": "docs/cognitive_dynamics/PR_WORKFLOW_TRIGGER.md",
+      "role": "general",
+      "domain": "general",
+      "claim_bearing": false,
+      "authority": false
+    },
+    {
+      "path": "docs/cognitive_dynamics/README.md",
+      "role": "general",
+      "domain": "general",
+      "claim_bearing": true,
+      "authority": false
+    },
+    {
+      "path": "docs/cognitive_dynamics/SIMULATION_PROTOCOL.md",
+      "role": "general",
+      "domain": "general",
+      "claim_bearing": false,
+      "authority": false
+    },
+    {
+      "path": "docs/cognitive_dynamics/STACK_COMPLETION_CHECK.md",
+      "role": "general",
+      "domain": "general",
+      "claim_bearing": false,
+      "authority": false
+    },
+    {
+      "path": "docs/cognitive_dynamics/WORKFLOW_TRIGGER.md",
+      "role": "general",
+      "domain": "general",
+      "claim_bearing": false,
+      "authority": false
+    },
+    {
+      "path": "docs/communication_strategy.md",
+      "role": "general",
+      "domain": "general",
+      "claim_bearing": false,
+      "authority": false
+    },
+    {
+      "path": "docs/configuration.md",
+      "role": "general",
+      "domain": "general",
+      "claim_bearing": false,
+      "authority": false
+    },
+    {
+      "path": "docs/contracts/data_contracts.md",
+      "role": "general",
+      "domain": "data",
+      "claim_bearing": false,
+      "authority": false
+    },
+    {
+      "path": "docs/contracts/execution_contracts.md",
+      "role": "general",
+      "domain": "general",
+      "claim_bearing": false,
+      "authority": false
+    },
+    {
+      "path": "docs/contracts/interface-contracts.md",
+      "role": "general",
+      "domain": "general",
+      "claim_bearing": false,
+      "authority": false
+    },
+    {
+      "path": "docs/contracts/observability_contracts.md",
+      "role": "general",
+      "domain": "general",
+      "claim_bearing": false,
+      "authority": false
+    },
+    {
+      "path": "docs/contracts/runtime_contracts.md",
+      "role": "general",
+      "domain": "general",
+      "claim_bearing": false,
+      "authority": false
+    },
+    {
+      "path": "docs/cookbook_backtest_live.md",
+      "role": "general",
+      "domain": "general",
+      "claim_bearing": false,
+      "authority": false
+    },
+    {
+      "path": "docs/core_engine_v1.md",
+      "role": "general",
+      "domain": "general",
+      "claim_bearing": false,
+      "authority": false
+    },
+    {
+      "path": "docs/data/README.md",
+      "role": "general",
+      "domain": "data",
+      "claim_bearing": true,
+      "authority": false
+    },
+    {
+      "path": "docs/data/cns_stabilizer_artifacts.md",
+      "role": "general",
+      "domain": "data",
+      "claim_bearing": false,
+      "authority": false
+    },
+    {
+      "path": "docs/data/exchange_configurations.md",
+      "role": "general",
+      "domain": "data",
+      "claim_bearing": false,
+      "authority": false
+    },
+    {
+      "path": "docs/data/extended_market_sample.md",
+      "role": "general",
+      "domain": "data",
+      "claim_bearing": false,
+      "authority": false
+    },
+    {
+      "path": "docs/data/orchestrator_configs.md",
+      "role": "general",
+      "domain": "data",
+      "claim_bearing": false,
+      "authority": false
+    },
+    {
+      "path": "docs/data/sample_market_data.md",
+      "role": "general",
+      "domain": "data",
+      "claim_bearing": false,
+      "authority": false
+    },
+    {
+      "path": "docs/dataset_catalog.md",
+      "role": "general",
+      "domain": "data",
+      "claim_bearing": false,
+      "authority": false
+    },
+    {
+      "path": "docs/datasets/market_feature_snapshot.md",
+      "role": "general",
+      "domain": "data",
+      "claim_bearing": false,
+      "authority": false
+    },
+    {
+      "path": "docs/deployment.md",
+      "role": "general",
+      "domain": "general",
+      "claim_bearing": false,
+      "authority": false
+    },
+    {
+      "path": "docs/deps/dependency_truth_model.md",
+      "role": "general",
+      "domain": "general",
+      "claim_bearing": false,
+      "authority": false
+    },
+    {
+      "path": "docs/developer_productivity_program.md",
+      "role": "general",
+      "domain": "general",
+      "claim_bearing": false,
+      "authority": false
+    },
+    {
+      "path": "docs/devops/mlops-orchestration.md",
+      "role": "general",
+      "domain": "general",
+      "claim_bearing": false,
+      "authority": false
+    },
+    {
+      "path": "docs/devops/smoke_e2e_report_20240615.md",
+      "role": "general",
+      "domain": "general",
+      "claim_bearing": false,
+      "authority": false
+    },
+    {
+      "path": "docs/digital_governance_framework.md",
+      "role": "general",
+      "domain": "governance",
+      "claim_bearing": false,
+      "authority": false
+    },
+    {
+      "path": "docs/digital_risk_action_plan.md",
+      "role": "general",
+      "domain": "general",
+      "claim_bearing": false,
+      "authority": false
+    },
+    {
+      "path": "docs/docker-quickstart.md",
+      "role": "general",
+      "domain": "general",
+      "claim_bearing": false,
+      "authority": false
+    },
+    {
+      "path": "docs/documentation-architecture.md",
+      "role": "canonical",
+      "domain": "general",
+      "claim_bearing": true,
+      "authority": true
+    },
+    {
+      "path": "docs/documentation_governance.md",
+      "role": "general",
+      "domain": "governance",
+      "claim_bearing": false,
+      "authority": false
+    },
+    {
+      "path": "docs/documentation_information_architecture.md",
+      "role": "canonical",
+      "domain": "general",
+      "claim_bearing": true,
+      "authority": true
+    },
+    {
+      "path": "docs/documentation_quality_metrics.md",
+      "role": "general",
+      "domain": "general",
+      "claim_bearing": false,
+      "authority": false
+    },
+    {
+      "path": "docs/documentation_standardisation_playbook.md",
+      "role": "general",
+      "domain": "general",
+      "claim_bearing": false,
+      "authority": false
+    },
+    {
+      "path": "docs/enablement/README.md",
+      "role": "general",
+      "domain": "general",
+      "claim_bearing": true,
+      "authority": false
+    },
+    {
+      "path": "docs/examples/README.md",
+      "role": "general",
+      "domain": "general",
+      "claim_bearing": true,
+      "authority": false
+    },
+    {
+      "path": "docs/examples/prediction_submission.md",
+      "role": "general",
+      "domain": "general",
+      "claim_bearing": false,
+      "authority": false
+    },
+    {
+      "path": "docs/examples/quickstart_signal_fetch.md",
+      "role": "general",
+      "domain": "general",
+      "claim_bearing": false,
+      "authority": false
+    },
+    {
+      "path": "docs/examples/sdk_integration.md",
+      "role": "general",
+      "domain": "general",
+      "claim_bearing": false,
+      "authority": false
+    },
+    {
+      "path": "docs/examples/webhook_consumer.md",
+      "role": "general",
+      "domain": "general",
+      "claim_bearing": false,
+      "authority": false
+    },
+    {
+      "path": "docs/exchanges.md",
+      "role": "general",
+      "domain": "general",
+      "claim_bearing": false,
+      "authority": false
+    },
+    {
+      "path": "docs/execution.md",
+      "role": "general",
+      "domain": "general",
+      "claim_bearing": false,
+      "authority": false
+    },
+    {
+      "path": "docs/execution_connector_secrets.md",
+      "role": "general",
+      "domain": "general",
+      "claim_bearing": false,
+      "authority": false
+    },
+    {
+      "path": "docs/exocortex/GLOSSARY.md",
+      "role": "general",
+      "domain": "general",
+      "claim_bearing": false,
+      "authority": false
+    },
+    {
+      "path": "docs/exocortex/INVARIANTS_INDEX.md",
+      "role": "general",
+      "domain": "general",
+      "claim_bearing": false,
+      "authority": false
+    },
+    {
+      "path": "docs/exocortex/METHODOLOGY.md",
+      "role": "general",
+      "domain": "general",
+      "claim_bearing": false,
+      "authority": false
+    },
+    {
+      "path": "docs/exocortex/README.md",
+      "role": "general",
+      "domain": "general",
+      "claim_bearing": true,
+      "authority": false
+    },
+    {
+      "path": "docs/exocortex/RESEARCH_TIMELINE.md",
+      "role": "general",
+      "domain": "general",
+      "claim_bearing": false,
+      "authority": false
+    },
+    {
+      "path": "docs/exocortex/VALIDATION.md",
+      "role": "general",
+      "domain": "general",
+      "claim_bearing": false,
+      "authority": false
+    },
+    {
+      "path": "docs/extending.md",
+      "role": "general",
+      "domain": "general",
+      "claim_bearing": false,
+      "authority": false
+    },
+    {
+      "path": "docs/falsification/serotonin_v2_3_1.md",
+      "role": "general",
+      "domain": "general",
+      "claim_bearing": false,
+      "authority": false
+    },
+    {
+      "path": "docs/faq.md",
+      "role": "general",
+      "domain": "general",
+      "claim_bearing": false,
+      "authority": false
+    },
+    {
+      "path": "docs/feature_catalog.md",
+      "role": "general",
+      "domain": "general",
+      "claim_bearing": false,
+      "authority": false
+    },
+    {
+      "path": "docs/feature_flag_platform_roadmap.md",
+      "role": "general",
+      "domain": "general",
+      "claim_bearing": false,
+      "authority": false
+    },
+    {
+      "path": "docs/feature_store_sync_and_registry.md",
+      "role": "general",
+      "domain": "general",
+      "claim_bearing": false,
+      "authority": false
+    },
+    {
+      "path": "docs/formal/README.md",
+      "role": "general",
+      "domain": "general",
+      "claim_bearing": true,
+      "authority": false
+    },
+    {
+      "path": "docs/formal/behavioral_invariants.md",
+      "role": "general",
+      "domain": "general",
+      "claim_bearing": false,
+      "authority": false
+    },
+    {
+      "path": "docs/fractal_cognition_sim_protocol.md",
+      "role": "general",
+      "domain": "general",
+      "claim_bearing": false,
+      "authority": false
+    },
+    {
+      "path": "docs/geosync_cli_reference.md",
+      "role": "general",
+      "domain": "general",
+      "claim_bearing": false,
+      "authority": false
+    },
+    {
+      "path": "docs/geosync_hydro_v2.md",
+      "role": "general",
+      "domain": "general",
+      "claim_bearing": false,
+      "authority": false
+    },
+    {
+      "path": "docs/geosync_protocol.md",
+      "role": "general",
+      "domain": "general",
+      "claim_bearing": false,
+      "authority": false
+    },
+    {
+      "path": "docs/github_actions_automation.md",
+      "role": "general",
+      "domain": "general",
+      "claim_bearing": false,
+      "authority": false
+    },
+    {
+      "path": "docs/glossary.md",
+      "role": "general",
+      "domain": "general",
+      "claim_bearing": false,
+      "authority": false
+    },
+    {
+      "path": "docs/governance/AUTONOMOUS_AGENT_EXECUTION_PROTOCOL.md",
+      "role": "canonical",
+      "domain": "governance",
+      "claim_bearing": true,
+      "authority": true
+    },
+    {
+      "path": "docs/governance/CNS_RELEASE_GATE.md",
+      "role": "canonical",
+      "domain": "release",
+      "claim_bearing": true,
+      "authority": true
+    },
+    {
+      "path": "docs/governance/D002C_ATTEMPT_2_NULL_AUDIT_FALSIFICATION_REPORT.md",
+      "role": "canonical",
+      "domain": "governance",
+      "claim_bearing": true,
+      "authority": true
+    },
+    {
+      "path": "docs/governance/D002C_CANONICAL_RUN_REPORT.md",
+      "role": "canonical",
+      "domain": "governance",
+      "claim_bearing": true,
+      "authority": true
+    },
+    {
+      "path": "docs/governance/D002C_LAUNCH_PROTOCOL.md",
+      "role": "canonical",
+      "domain": "governance",
+      "claim_bearing": true,
+      "authority": true
+    },
+    {
+      "path": "docs/governance/D002C_NULL_AUDIT_DATA_CONTRACT.md",
+      "role": "canonical",
+      "domain": "governance",
+      "claim_bearing": true,
+      "authority": true
+    },
+    {
+      "path": "docs/governance/D002C_NULL_AUDIT_GAP_AND_C2_4_A2_SPEC.md",
+      "role": "canonical",
+      "domain": "governance",
+      "claim_bearing": true,
+      "authority": true
+    },
+    {
+      "path": "docs/governance/D002C_PREFLIGHT_CONTRACT.md",
+      "role": "canonical",
+      "domain": "governance",
+      "claim_bearing": true,
+      "authority": true
+    },
+    {
+      "path": "docs/governance/D002C_R2_B_SUPPLEMENTARY_NULL_SPEC.md",
+      "role": "canonical",
+      "domain": "governance",
+      "claim_bearing": true,
+      "authority": true
+    },
+    {
+      "path": "docs/governance/D002C_R2_STRUCTURAL_LIMITATION_NOTE.md",
+      "role": "canonical",
+      "domain": "governance",
+      "claim_bearing": true,
+      "authority": true
+    },
+    {
+      "path": "docs/governance/D002E_METRIC_REHABILITATION_SPEC.md",
+      "role": "canonical",
+      "domain": "governance",
+      "claim_bearing": true,
+      "authority": true
+    },
+    {
+      "path": "docs/governance/D002G_ACCEPTANCE_RULES.md",
+      "role": "canonical",
+      "domain": "governance",
+      "claim_bearing": true,
+      "authority": true
+    },
+    {
+      "path": "docs/governance/D002G_CANONICAL_RUN_BLOCKERS.md",
+      "role": "canonical",
+      "domain": "governance",
+      "claim_bearing": true,
+      "authority": true
+    },
+    {
+      "path": "docs/governance/D002G_DEGENERATE_NULL_REDESIGN_SPEC.md",
+      "role": "canonical",
+      "domain": "governance",
+      "claim_bearing": true,
+      "authority": true
+    },
+    {
+      "path": "docs/governance/D002G_M2_REANCHOR_2026-06-18.md",
+      "role": "canonical",
+      "domain": "governance",
+      "claim_bearing": true,
+      "authority": true
+    },
+    {
+      "path": "docs/governance/D002G_M2_TOPOLOGY_PRESERVING_NULL.md",
+      "role": "canonical",
+      "domain": "governance",
+      "claim_bearing": true,
+      "authority": true
+    },
+    {
+      "path": "docs/governance/D002G_M3_ELIGIBILITY_MATRIX.md",
+      "role": "canonical",
+      "domain": "governance",
+      "claim_bearing": true,
+      "authority": true
+    },
+    {
+      "path": "docs/governance/D002G_M3_IMPLEMENTATION_REPORT.md",
+      "role": "canonical",
+      "domain": "governance",
+      "claim_bearing": true,
+      "authority": true
+    },
+    {
+      "path": "docs/governance/D002G_NEGATIVE_SPACE_MAP.md",
+      "role": "canonical",
+      "domain": "governance",
+      "claim_bearing": true,
+      "authority": true
+    },
+    {
+      "path": "docs/governance/D002G_NONDEGENERATE_NULL_DESIGN.md",
+      "role": "canonical",
+      "domain": "governance",
+      "claim_bearing": true,
+      "authority": true
+    },
+    {
+      "path": "docs/governance/D002G_P1_DESIGN_ADVERSARIAL_AUDIT.md",
+      "role": "canonical",
+      "domain": "governance",
+      "claim_bearing": true,
+      "authority": true
+    },
+    {
+      "path": "docs/governance/D002G_P1_IMPLEMENTATION_REPORT.md",
+      "role": "canonical",
+      "domain": "governance",
+      "claim_bearing": true,
+      "authority": true
+    },
+    {
+      "path": "docs/governance/D002G_P2_M2_IMPLEMENTATION_REPORT.md",
+      "role": "canonical",
+      "domain": "governance",
+      "claim_bearing": true,
+      "authority": true
+    },
+    {
+      "path": "docs/governance/D002G_P3_DISCOVERY_REPORT.md",
+      "role": "canonical",
+      "domain": "governance",
+      "claim_bearing": true,
+      "authority": true
+    },
+    {
+      "path": "docs/governance/D002G_P3_ELIGIBILITY_MATRIX.md",
+      "role": "canonical",
+      "domain": "governance",
+      "claim_bearing": true,
+      "authority": true
+    },
+    {
+      "path": "docs/governance/D002G_P3_IMPLEMENTATION_REPORT.md",
+      "role": "canonical",
+      "domain": "governance",
+      "claim_bearing": true,
+      "authority": true
+    },
+    {
+      "path": "docs/governance/D002G_P3_M3_PREREGISTRATION.md",
+      "role": "canonical",
+      "domain": "governance",
+      "claim_bearing": true,
+      "authority": true
+    },
+    {
+      "path": "docs/governance/D002G_P3_NULL_DOMAIN_CONTRACTS.md",
+      "role": "canonical",
+      "domain": "governance",
+      "claim_bearing": true,
+      "authority": true
+    },
+    {
+      "path": "docs/governance/D002G_STRUCTURAL_CLOSURE_REPORT.md",
+      "role": "canonical",
+      "domain": "governance",
+      "claim_bearing": true,
+      "authority": true
+    },
+    {
+      "path": "docs/governance/D002H_CANONICAL_RUN_AUTHORIZATION_GATES.md",
+      "role": "canonical",
+      "domain": "governance",
+      "claim_bearing": true,
+      "authority": true
+    },
+    {
+      "path": "docs/governance/D002H_CANONICAL_RUN_REPORT.md",
+      "role": "canonical",
+      "domain": "governance",
+      "claim_bearing": true,
+      "authority": true
+    },
+    {
+      "path": "docs/governance/D002H_CLAIM_BOUNDARY.md",
+      "role": "canonical",
+      "domain": "governance",
+      "claim_bearing": true,
+      "authority": true
+    },
+    {
+      "path": "docs/governance/D002H_GATE_B_REPORT.md",
+      "role": "canonical",
+      "domain": "governance",
+      "claim_bearing": true,
+      "authority": true
+    },
+    {
+      "path": "docs/governance/D002H_GATE_C_CANONICAL_GRID.md",
+      "role": "canonical",
+      "domain": "governance",
+      "claim_bearing": true,
+      "authority": true
+    },
+    {
+      "path": "docs/governance/D002H_GATE_D_FORBIDDEN_CLAIM_SCAN.md",
+      "role": "canonical",
+      "domain": "governance",
+      "claim_bearing": true,
+      "authority": true
+    },
+    {
+      "path": "docs/governance/D002H_GATE_E_LOCKED_FILE_REPORT.md",
+      "role": "canonical",
+      "domain": "governance",
+      "claim_bearing": true,
+      "authority": true
+    },
+    {
+      "path": "docs/governance/D002H_GATE_F_AUTHORIZATION_REPORT.md",
+      "role": "canonical",
+      "domain": "governance",
+      "claim_bearing": true,
+      "authority": true
+    },
+    {
+      "path": "docs/governance/D002H_GATE_G_CI_LOCK_REPORT.md",
+      "role": "canonical",
+      "domain": "governance",
+      "claim_bearing": true,
+      "authority": true
+    },
+    {
+      "path": "docs/governance/D002H_R2B_INAPPLICABILITY_NOTE.md",
+      "role": "canonical",
+      "domain": "governance",
+      "claim_bearing": true,
+      "authority": true
+    },
+    {
+      "path": "docs/governance/D002H_SCOPE_RATIONALE.md",
+      "role": "canonical",
+      "domain": "governance",
+      "claim_bearing": true,
+      "authority": true
+    },
+    {
+      "path": "docs/governance/D002I_CLAIM_BOUNDARY.md",
+      "role": "canonical",
+      "domain": "governance",
+      "claim_bearing": true,
+      "authority": true
+    },
+    {
+      "path": "docs/governance/D002I_INVESTIGATION_RATIONALE.md",
+      "role": "canonical",
+      "domain": "governance",
+      "claim_bearing": true,
+      "authority": true
+    },
+    {
+      "path": "docs/governance/DISHA_TO_D002C_CONNECTOR.md",
+      "role": "canonical",
+      "domain": "governance",
+      "claim_bearing": true,
+      "authority": true
+    },
+    {
+      "path": "docs/governance/IERD-PAI-FPS-UX-001.md",
+      "role": "canonical",
+      "domain": "governance",
+      "claim_bearing": true,
+      "authority": true
+    },
+    {
+      "path": "docs/governance/X10R_BOUNDARY_CARD.md",
+      "role": "canonical",
+      "domain": "governance",
+      "claim_bearing": true,
+      "authority": true
+    },
+    {
+      "path": "docs/governance/X10R_NEGATIVE_RESULT_NOTE.md",
+      "role": "canonical",
+      "domain": "governance",
+      "claim_bearing": true,
+      "authority": true
+    },
+    {
+      "path": "docs/governance/anti_goodhart_evidence.md",
+      "role": "canonical",
+      "domain": "governance",
+      "claim_bearing": true,
+      "authority": true
+    },
+    {
+      "path": "docs/governance/audit_records/2026-04-26-F01-resolver.md",
+      "role": "canonical",
+      "domain": "governance",
+      "claim_bearing": true,
+      "authority": true
+    },
+    {
+      "path": "docs/governance/audit_records/2026-04-26-F03-graphql-ws-reachability.md",
+      "role": "canonical",
+      "domain": "governance",
+      "claim_bearing": true,
+      "authority": true
+    },
+    {
+      "path": "docs/governance/audit_records/2026-04-26-F03-pip-audit.md",
+      "role": "canonical",
+      "domain": "governance",
+      "claim_bearing": true,
+      "authority": true
+    },
+    {
+      "path": "docs/governance/claim_ledger.md",
+      "role": "canonical",
+      "domain": "governance",
+      "claim_bearing": true,
+      "authority": true
+    },
+    {
+      "path": "docs/governance/claim_state_quantum_input.md",
+      "role": "canonical",
+      "domain": "governance",
+      "claim_bearing": true,
+      "authority": true
+    },
+    {
+      "path": "docs/governance/epistemic_rhombus_manifest.md",
+      "role": "canonical",
+      "domain": "governance",
+      "claim_bearing": true,
+      "authority": true
+    },
+    {
+      "path": "docs/governance/evidence_weight_model.md",
+      "role": "canonical",
+      "domain": "governance",
+      "claim_bearing": true,
+      "authority": true
+    },
+    {
+      "path": "docs/governance/fake_closure_scanner.md",
+      "role": "canonical",
+      "domain": "governance",
+      "claim_bearing": true,
+      "authority": true
+    },
+    {
+      "path": "docs/governance/methodology_stack_contract.md",
+      "role": "canonical",
+      "domain": "governance",
+      "claim_bearing": true,
+      "authority": true
+    },
+    {
+      "path": "docs/governance/pr_lane_collision_protocol.md",
+      "role": "canonical",
+      "domain": "governance",
+      "claim_bearing": true,
+      "authority": true
+    },
+    {
+      "path": "docs/governance/truth_gate_mutation.md",
+      "role": "canonical",
+      "domain": "governance",
+      "claim_bearing": true,
+      "authority": true
+    },
+    {
+      "path": "docs/governance/waiver_protocol.md",
+      "role": "canonical",
+      "domain": "governance",
+      "claim_bearing": true,
+      "authority": true
+    },
+    {
+      "path": "docs/governance.md",
+      "role": "general",
+      "domain": "governance",
+      "claim_bearing": false,
+      "authority": false
+    },
+    {
+      "path": "docs/improvement_plan.md",
+      "role": "general",
+      "domain": "general",
+      "claim_bearing": false,
+      "authority": false
+    },
+    {
+      "path": "docs/incident_coordination_procedures.md",
+      "role": "general",
+      "domain": "general",
+      "claim_bearing": false,
+      "authority": false
+    },
+    {
+      "path": "docs/incident_playbooks.md",
+      "role": "general",
+      "domain": "general",
+      "claim_bearing": false,
+      "authority": false
+    },
+    {
+      "path": "docs/index.md",
+      "role": "general",
+      "domain": "general",
+      "claim_bearing": false,
+      "authority": false
+    },
+    {
+      "path": "docs/indicators/amm.md",
+      "role": "general",
+      "domain": "general",
+      "claim_bearing": false,
+      "authority": false
+    },
+    {
+      "path": "docs/indicators.md",
+      "role": "general",
+      "domain": "general",
+      "claim_bearing": false,
+      "authority": false
+    },
+    {
+      "path": "docs/installation.md",
+      "role": "general",
+      "domain": "general",
+      "claim_bearing": false,
+      "authority": false
+    },
+    {
+      "path": "docs/integration-api.md",
+      "role": "general",
+      "domain": "general",
+      "claim_bearing": false,
+      "authority": false
+    },
+    {
+      "path": "docs/integrations/event_channels.md",
+      "role": "general",
+      "domain": "general",
+      "claim_bearing": false,
+      "authority": false
+    },
+    {
+      "path": "docs/kuramoto/ARCHITECTURE.md",
+      "role": "canonical",
+      "domain": "physics",
+      "claim_bearing": true,
+      "authority": true
+    },
+    {
+      "path": "docs/kuramoto/CALIBRATION.md",
+      "role": "general",
+      "domain": "physics",
+      "claim_bearing": false,
+      "authority": false
+    },
+    {
+      "path": "docs/kuramoto/FALSIFICATION_REPORT.md",
+      "role": "general",
+      "domain": "physics",
+      "claim_bearing": false,
+      "authority": false
+    },
+    {
+      "path": "docs/kuramoto/METHODOLOGY.md",
+      "role": "general",
+      "domain": "physics",
+      "claim_bearing": false,
+      "authority": false
+    },
+    {
+      "path": "docs/laws/T1_kuramoto_ricci_boundary.md",
+      "role": "evidence",
+      "domain": "physics",
+      "claim_bearing": true,
+      "authority": false
+    },
+    {
+      "path": "docs/laws/T2_lyapunov_spectrum.md",
+      "role": "evidence",
+      "domain": "physics",
+      "claim_bearing": true,
+      "authority": false
+    },
+    {
+      "path": "docs/laws/T3_lyapunov_calibration.md",
+      "role": "evidence",
+      "domain": "physics",
+      "claim_bearing": true,
+      "authority": false
+    },
+    {
+      "path": "docs/laws/T5_predictability_landauer.md",
+      "role": "evidence",
+      "domain": "physics",
+      "claim_bearing": true,
+      "authority": false
+    },
+    {
+      "path": "docs/laws/T6_determinism_kit.md",
+      "role": "evidence",
+      "domain": "physics",
+      "claim_bearing": true,
+      "authority": false
+    },
+    {
+      "path": "docs/laws/T7_pinning_control.md",
+      "role": "evidence",
+      "domain": "physics",
+      "claim_bearing": true,
+      "authority": false
+    },
+    {
+      "path": "docs/laws/T8_stochastic_thermodynamics.md",
+      "role": "evidence",
+      "domain": "physics",
+      "claim_bearing": true,
+      "authority": false
+    },
+    {
+      "path": "docs/legal/THIRD_PARTY_NOTICES.md",
+      "role": "general",
+      "domain": "general",
+      "claim_bearing": false,
+      "authority": false
+    },
+    {
+      "path": "docs/localization/review_checklist.md",
+      "role": "general",
+      "domain": "general",
+      "claim_bearing": false,
+      "authority": false
+    },
+    {
+      "path": "docs/localization/strategy.md",
+      "role": "general",
+      "domain": "general",
+      "claim_bearing": false,
+      "authority": false
+    },
+    {
+      "path": "docs/market_feed_recordings.md",
+      "role": "general",
+      "domain": "general",
+      "claim_bearing": false,
+      "authority": false
+    },
+    {
+      "path": "docs/math/inventory.md",
+      "role": "general",
+      "domain": "general",
+      "claim_bearing": false,
+      "authority": false
+    },
+    {
+      "path": "docs/math.md",
+      "role": "general",
+      "domain": "general",
+      "claim_bearing": false,
+      "authority": false
+    },
+    {
+      "path": "docs/metrics_discipline.md",
+      "role": "general",
+      "domain": "general",
+      "claim_bearing": false,
+      "authority": false
+    },
+    {
+      "path": "docs/model_cards/market_regime_classifier.md",
+      "role": "general",
+      "domain": "general",
+      "claim_bearing": false,
+      "authority": false
+    },
+    {
+      "path": "docs/modules/MODULES_OVERVIEW.md",
+      "role": "general",
+      "domain": "general",
+      "claim_bearing": false,
+      "authority": false
+    },
+    {
+      "path": "docs/monitoring.md",
+      "role": "general",
+      "domain": "general",
+      "claim_bearing": false,
+      "authority": false
+    },
+    {
+      "path": "docs/neuro_optimization_guide.md",
+      "role": "general",
+      "domain": "general",
+      "claim_bearing": false,
+      "authority": false
+    },
+    {
+      "path": "docs/neurodecision_stack.md",
+      "role": "general",
+      "domain": "general",
+      "claim_bearing": false,
+      "authority": false
+    },
+    {
+      "path": "docs/neuroecon.md",
+      "role": "general",
+      "domain": "general",
+      "claim_bearing": false,
+      "authority": false
+    },
+    {
+      "path": "docs/neuromodulators/dopamine.md",
+      "role": "general",
+      "domain": "general",
+      "claim_bearing": false,
+      "authority": false
+    },
+    {
+      "path": "docs/neuromodulators/dopamine_v1_enhancements.md",
+      "role": "general",
+      "domain": "general",
+      "claim_bearing": false,
+      "authority": false
+    },
+    {
+      "path": "docs/neuromodulators/serotonin.md",
+      "role": "general",
+      "domain": "general",
+      "claim_bearing": false,
+      "authority": false
+    },
+    {
+      "path": "docs/neuromodulators_dopamine.md",
+      "role": "general",
+      "domain": "general",
+      "claim_bearing": false,
+      "authority": false
+    },
+    {
+      "path": "docs/offline_simulation_protocol.md",
+      "role": "general",
+      "domain": "general",
+      "claim_bearing": false,
+      "authority": false
+    },
+    {
+      "path": "docs/onboarding.md",
+      "role": "general",
+      "domain": "general",
+      "claim_bearing": false,
+      "authority": false
+    },
+    {
+      "path": "docs/operational_handbook.md",
+      "role": "general",
+      "domain": "general",
+      "claim_bearing": false,
+      "authority": false
+    },
+    {
+      "path": "docs/operational_readiness_runbooks.md",
+      "role": "general",
+      "domain": "general",
+      "claim_bearing": false,
+      "authority": false
+    },
+    {
+      "path": "docs/operations/AUDIT_EXECUTIVE_SUMMARY.md",
+      "role": "ops",
+      "domain": "general",
+      "claim_bearing": false,
+      "authority": false
+    },
+    {
+      "path": "docs/operations/AUDIT_REPORT.md",
+      "role": "ops",
+      "domain": "general",
+      "claim_bearing": false,
+      "authority": false
+    },
+    {
+      "path": "docs/operations/CANONICAL_OBJECT.md",
+      "role": "ops",
+      "domain": "general",
+      "claim_bearing": false,
+      "authority": false
+    },
+    {
+      "path": "docs/operations/DEPLOYMENT.md",
+      "role": "ops",
+      "domain": "general",
+      "claim_bearing": false,
+      "authority": false
+    },
+    {
+      "path": "docs/operations/DOCUMENTATION_SUMMARY.md",
+      "role": "ops",
+      "domain": "general",
+      "claim_bearing": false,
+      "authority": false
+    },
+    {
+      "path": "docs/operations/INSTITUTIONAL_OVERVIEW.md",
+      "role": "ops",
+      "domain": "general",
+      "claim_bearing": false,
+      "authority": false
+    },
+    {
+      "path": "docs/operations/PHYSICS_IMPLEMENTATION_SUMMARY.md",
+      "role": "ops",
+      "domain": "physics",
+      "claim_bearing": false,
+      "authority": false
+    },
+    {
+      "path": "docs/operations/PRODUCT_PAIN_SOLUTION.md",
+      "role": "ops",
+      "domain": "general",
+      "claim_bearing": false,
+      "authority": false
+    },
+    {
+      "path": "docs/operations/PROJECT_DEVELOPMENT_STAGE.md",
+      "role": "ops",
+      "domain": "general",
+      "claim_bearing": false,
+      "authority": false
+    },
+    {
+      "path": "docs/operations/REMEDIATION_SUMMARY.md",
+      "role": "ops",
+      "domain": "general",
+      "claim_bearing": false,
+      "authority": false
+    },
+    {
+      "path": "docs/operations/SETUP.md",
+      "role": "ops",
+      "domain": "general",
+      "claim_bearing": false,
+      "authority": false
+    },
+    {
+      "path": "docs/operations/SYSTEM_OPTIMIZATION_SUMMARY.md",
+      "role": "ops",
+      "domain": "general",
+      "claim_bearing": false,
+      "authority": false
+    },
+    {
+      "path": "docs/operations/TESTING.md",
+      "role": "ops",
+      "domain": "general",
+      "claim_bearing": false,
+      "authority": false
+    },
+    {
+      "path": "docs/operations/aar_pro_v1_operational_contract.md",
+      "role": "ops",
+      "domain": "general",
+      "claim_bearing": false,
+      "authority": false
+    },
+    {
+      "path": "docs/operations/active_geosync_closure_protocol_20260617.md",
+      "role": "ops",
+      "domain": "general",
+      "claim_bearing": false,
+      "authority": false
+    },
+    {
+      "path": "docs/operations/active_geosync_closure_visualization_20260617.md",
+      "role": "ops",
+      "domain": "general",
+      "claim_bearing": false,
+      "authority": false
+    },
+    {
+      "path": "docs/operations/agent_cognitive_academic_prompt_protocol_20260617.md",
+      "role": "ops",
+      "domain": "agent",
+      "claim_bearing": false,
+      "authority": false
+    },
+    {
+      "path": "docs/operations/architecture_impossibility_principle_20260617.md",
+      "role": "ops",
+      "domain": "general",
+      "claim_bearing": false,
+      "authority": false
+    },
+    {
+      "path": "docs/operations/behavioral_programs_against_fake_determinism_20260617.md",
+      "role": "ops",
+      "domain": "general",
+      "claim_bearing": false,
+      "authority": false
+    },
+    {
+      "path": "docs/operations/cognitive_definition_contract_20260617.md",
+      "role": "ops",
+      "domain": "general",
+      "claim_bearing": false,
+      "authority": false
+    },
+    {
+      "path": "docs/operations/deployment_runtime_protocol_20260617.md",
+      "role": "ops",
+      "domain": "general",
+      "claim_bearing": false,
+      "authority": false
+    },
+    {
+      "path": "docs/operations/first_principles_closure_standard_20260617.md",
+      "role": "ops",
+      "domain": "general",
+      "claim_bearing": false,
+      "authority": false
+    },
+    {
+      "path": "docs/operations/intention_lock_protocol_20260617.md",
+      "role": "ops",
+      "domain": "general",
+      "claim_bearing": false,
+      "authority": false
+    },
+    {
+      "path": "docs/operations/iteration_resonance_architecture_20260617.md",
+      "role": "ops",
+      "domain": "general",
+      "claim_bearing": false,
+      "authority": false
+    },
+    {
+      "path": "docs/operations/neuron7x_operational_verb_map_20260618.md",
+      "role": "ops",
+      "domain": "general",
+      "claim_bearing": false,
+      "authority": false
+    },
+    {
+      "path": "docs/operations/promptops_validator_pr1.md",
+      "role": "ops",
+      "domain": "agent",
+      "claim_bearing": false,
+      "authority": false
+    },
+    {
+      "path": "docs/operations/verification_protocol_20260617.md",
+      "role": "ops",
+      "domain": "general",
+      "claim_bearing": false,
+      "authority": false
+    },
+    {
+      "path": "docs/operations/СТАН_РОЗВИТКУ_ПРОЄКТУ.md",
+      "role": "ops",
+      "domain": "general",
+      "claim_bearing": false,
+      "authority": false
+    },
+    {
+      "path": "docs/operators/INTEGRATE.md",
+      "role": "general",
+      "domain": "general",
+      "claim_bearing": false,
+      "authority": false
+    },
+    {
+      "path": "docs/operators/NORMALIZATION_OPERATOR.md",
+      "role": "general",
+      "domain": "general",
+      "claim_bearing": false,
+      "authority": false
+    },
+    {
+      "path": "docs/operators/NORMALIZE.md",
+      "role": "general",
+      "domain": "general",
+      "claim_bearing": false,
+      "authority": false
+    },
+    {
+      "path": "docs/operators/VALIDATE.md",
+      "role": "general",
+      "domain": "general",
+      "claim_bearing": false,
+      "authority": false
+    },
+    {
+      "path": "docs/path_to_score_9.md",
+      "role": "general",
+      "domain": "general",
+      "claim_bearing": false,
+      "authority": false
+    },
+    {
+      "path": "docs/performance.md",
+      "role": "general",
+      "domain": "general",
+      "claim_bearing": false,
+      "authority": false
+    },
+    {
+      "path": "docs/performance_testing.md",
+      "role": "general",
+      "domain": "general",
+      "claim_bearing": false,
+      "authority": false
+    },
+    {
+      "path": "docs/performance_testing_program.md",
+      "role": "general",
+      "domain": "general",
+      "claim_bearing": false,
+      "authority": false
+    },
+    {
+      "path": "docs/phd/00_thesis_statement.md",
+      "role": "general",
+      "domain": "general",
+      "claim_bearing": false,
+      "authority": false
+    },
+    {
+      "path": "docs/phd/01_research_questions.md",
+      "role": "general",
+      "domain": "general",
+      "claim_bearing": false,
+      "authority": false
+    },
+    {
+      "path": "docs/phd/02_contributions.md",
+      "role": "general",
+      "domain": "general",
+      "claim_bearing": false,
+      "authority": false
+    },
+    {
+      "path": "docs/phd/03_evidence_matrix.md",
+      "role": "general",
+      "domain": "general",
+      "claim_bearing": false,
+      "authority": false
+    },
+    {
+      "path": "docs/phd/04_limitation_ledger.md",
+      "role": "general",
+      "domain": "general",
+      "claim_bearing": false,
+      "authority": false
+    },
+    {
+      "path": "docs/phd/05_next_empirical_chapter.md",
+      "role": "general",
+      "domain": "general",
+      "claim_bearing": false,
+      "authority": false
+    },
+    {
+      "path": "docs/phd/06_methodology.md",
+      "role": "general",
+      "domain": "general",
+      "claim_bearing": false,
+      "authority": false
+    },
+    {
+      "path": "docs/phd/07_literature_gap.md",
+      "role": "general",
+      "domain": "general",
+      "claim_bearing": false,
+      "authority": false
+    },
+    {
+      "path": "docs/phd/08_evaluation_protocol.md",
+      "role": "general",
+      "domain": "general",
+      "claim_bearing": false,
+      "authority": false
+    },
+    {
+      "path": "docs/phd/09_threats_to_validity.md",
+      "role": "general",
+      "domain": "general",
+      "claim_bearing": false,
+      "authority": false
+    },
+    {
+      "path": "docs/phd/10_artifact_reproducibility_package.md",
+      "role": "general",
+      "domain": "general",
+      "claim_bearing": false,
+      "authority": false
+    },
+    {
+      "path": "docs/phd/11_distinguished_contribution_map.md",
+      "role": "general",
+      "domain": "general",
+      "claim_bearing": false,
+      "authority": false
+    },
+    {
+      "path": "docs/phd/12_negative_evidence.md",
+      "role": "general",
+      "domain": "general",
+      "claim_bearing": false,
+      "authority": false
+    },
+    {
+      "path": "docs/phd/13_physics_runtime_hardening.md",
+      "role": "general",
+      "domain": "physics",
+      "claim_bearing": false,
+      "authority": false
+    },
+    {
+      "path": "docs/phd/13_reference_inference_standard.md",
+      "role": "canonical",
+      "domain": "inference",
+      "claim_bearing": true,
+      "authority": true
+    },
+    {
+      "path": "docs/phd/README.md",
+      "role": "general",
+      "domain": "general",
+      "claim_bearing": true,
+      "authority": false
+    },
+    {
+      "path": "docs/physics/C1_C2_AUDIT_BLOCKING_PLAN.md",
+      "role": "evidence",
+      "domain": "physics",
+      "claim_bearing": true,
+      "authority": false
+    },
+    {
+      "path": "docs/physics/P0_MIGRATION_BACKLOG.md",
+      "role": "evidence",
+      "domain": "physics",
+      "claim_bearing": true,
+      "authority": false
+    },
+    {
+      "path": "docs/physics/P0_ROADMAP_CLOSURE.md",
+      "role": "evidence",
+      "domain": "physics",
+      "claim_bearing": true,
+      "authority": false
+    },
+    {
+      "path": "docs/physics/dro_ara_invariants.md",
+      "role": "evidence",
+      "domain": "physics",
+      "claim_bearing": true,
+      "authority": false
+    },
+    {
+      "path": "docs/physics/equation_traceability.md",
+      "role": "evidence",
+      "domain": "physics",
+      "claim_bearing": true,
+      "authority": false
+    },
+    {
+      "path": "docs/physics/evidence_matrix.md",
+      "role": "evidence",
+      "domain": "physics",
+      "claim_bearing": true,
+      "authority": false
+    },
+    {
+      "path": "docs/physics/geosync_core.md",
+      "role": "evidence",
+      "domain": "physics",
+      "claim_bearing": true,
+      "authority": false
+    },
+    {
+      "path": "docs/physics/interface_contracts.md",
+      "role": "evidence",
+      "domain": "physics",
+      "claim_bearing": true,
+      "authority": false
+    },
+    {
+      "path": "docs/physics/numerical_policy.md",
+      "role": "evidence",
+      "domain": "physics",
+      "claim_bearing": true,
+      "authority": false
+    },
+    {
+      "path": "docs/physics/reliability_contract.md",
+      "role": "evidence",
+      "domain": "physics",
+      "claim_bearing": true,
+      "authority": false
+    },
+    {
+      "path": "docs/physics/ricci_experimental.md",
+      "role": "evidence",
+      "domain": "physics",
+      "claim_bearing": true,
+      "authority": false
+    },
+    {
+      "path": "docs/physics/strict_witness_surface.md",
+      "role": "evidence",
+      "domain": "physics",
+      "claim_bearing": true,
+      "authority": false
+    },
+    {
+      "path": "docs/physics/theory/HPC_THEORY.md",
+      "role": "evidence",
+      "domain": "physics",
+      "claim_bearing": true,
+      "authority": false
+    },
+    {
+      "path": "docs/physics/theory/KELLY_THEORY.md",
+      "role": "evidence",
+      "domain": "physics",
+      "claim_bearing": true,
+      "authority": false
+    },
+    {
+      "path": "docs/physics/theory/OMS_THEORY.md",
+      "role": "evidence",
+      "domain": "physics",
+      "claim_bearing": true,
+      "authority": false
+    },
+    {
+      "path": "docs/physics/theory/README.md",
+      "role": "evidence",
+      "domain": "physics",
+      "claim_bearing": true,
+      "authority": false
+    },
+    {
+      "path": "docs/physics/theory/SIGNALBUS_THEORY.md",
+      "role": "evidence",
+      "domain": "physics",
+      "claim_bearing": true,
+      "authority": false
+    },
+    {
+      "path": "docs/physics/units_table.md",
+      "role": "evidence",
+      "domain": "physics",
+      "claim_bearing": true,
+      "authority": false
+    },
+    {
+      "path": "docs/physics/uq_plan.md",
+      "role": "evidence",
+      "domain": "physics",
+      "claim_bearing": true,
+      "authority": false
+    },
+    {
+      "path": "docs/physics_inspired_modeling.md",
+      "role": "general",
+      "domain": "physics",
+      "claim_bearing": false,
+      "authority": false
+    },
+    {
+      "path": "docs/pr333_pr_description.md",
+      "role": "general",
+      "domain": "general",
+      "claim_bearing": false,
+      "authority": false
+    },
+    {
+      "path": "docs/pr_financial_valuation_method.md",
+      "role": "general",
+      "domain": "general",
+      "claim_bearing": false,
+      "authority": false
+    },
+    {
+      "path": "docs/prod/deployment_protocol_v1.md",
+      "role": "general",
+      "domain": "general",
+      "claim_bearing": false,
+      "authority": false
+    },
+    {
+      "path": "docs/product/geosync_productization_map.md",
+      "role": "general",
+      "domain": "general",
+      "claim_bearing": false,
+      "authority": false
+    },
+    {
+      "path": "docs/product_readme.md",
+      "role": "general",
+      "domain": "general",
+      "claim_bearing": true,
+      "authority": false
+    },
+    {
+      "path": "docs/production-readiness-checklist.md",
+      "role": "general",
+      "domain": "general",
+      "claim_bearing": false,
+      "authority": false
+    },
+    {
+      "path": "docs/production-readiness.md",
+      "role": "general",
+      "domain": "general",
+      "claim_bearing": false,
+      "authority": false
+    },
+    {
+      "path": "docs/project-status.md",
+      "role": "general",
+      "domain": "general",
+      "claim_bearing": false,
+      "authority": false
+    },
+    {
+      "path": "docs/project_level_assessment_2026-05-03.md",
+      "role": "general",
+      "domain": "general",
+      "claim_bearing": false,
+      "authority": false
+    },
+    {
+      "path": "docs/prompts/README.md",
+      "role": "agent",
+      "domain": "agent",
+      "claim_bearing": true,
+      "authority": false
+    },
+    {
+      "path": "docs/prompts/cognitive_operations_kernel_v1_0.md",
+      "role": "agent",
+      "domain": "agent",
+      "claim_bearing": false,
+      "authority": false
+    },
+    {
+      "path": "docs/prompts/doc_pr_copilot_guide.md",
+      "role": "agent",
+      "domain": "agent",
+      "claim_bearing": false,
+      "authority": false
+    },
+    {
+      "path": "docs/prompts/fractal_neuro_cognitive_research_agent_v2026_1.md",
+      "role": "agent",
+      "domain": "agent",
+      "claim_bearing": false,
+      "authority": false
+    },
+    {
+      "path": "docs/prompts/fvps_agent_v2026_3.md",
+      "role": "agent",
+      "domain": "agent",
+      "claim_bearing": false,
+      "authority": false
+    },
+    {
+      "path": "docs/prompts/fvps_max_inference_rank_prompt_v2026_4.md",
+      "role": "agent",
+      "domain": "inference",
+      "claim_bearing": false,
+      "authority": false
+    },
+    {
+      "path": "docs/prompts/integration_systems_architect_kernel_v1_0.md",
+      "role": "agent",
+      "domain": "agent",
+      "claim_bearing": false,
+      "authority": false
+    },
+    {
+      "path": "docs/prompts/neuron7x_calibration_protocol_v2026_6.md",
+      "role": "agent",
+      "domain": "agent",
+      "claim_bearing": false,
+      "authority": false
+    },
+    {
+      "path": "docs/prompts/neuron7x_filter_protocol_v2026_7.md",
+      "role": "agent",
+      "domain": "agent",
+      "claim_bearing": false,
+      "authority": false
+    },
+    {
+      "path": "docs/prompts/neuron7x_value_functions_v2026_5.md",
+      "role": "agent",
+      "domain": "agent",
+      "claim_bearing": false,
+      "authority": false
+    },
+    {
+      "path": "docs/prompts/neuron7x_verification_protocol_v2026_8.md",
+      "role": "agent",
+      "domain": "agent",
+      "claim_bearing": false,
+      "authority": false
+    },
+    {
+      "path": "docs/prompts/system_prompt_principal_architect.md",
+      "role": "agent",
+      "domain": "agent",
+      "claim_bearing": false,
+      "authority": false
+    },
+    {
+      "path": "docs/quality/generated/coverage_evidence_snapshot_2026-06-14.md",
+      "role": "general",
+      "domain": "general",
+      "claim_bearing": false,
+      "authority": false
+    },
+    {
+      "path": "docs/quality/generated/merge_verification_2026-06-14.md",
+      "role": "general",
+      "domain": "general",
+      "claim_bearing": false,
+      "authority": false
+    },
+    {
+      "path": "docs/quality-dor-dod.md",
+      "role": "general",
+      "domain": "general",
+      "claim_bearing": false,
+      "authority": false
+    },
+    {
+      "path": "docs/quality_gates.md",
+      "role": "general",
+      "domain": "general",
+      "claim_bearing": false,
+      "authority": false
+    },
+    {
+      "path": "docs/queue_and_backpressure.md",
+      "role": "general",
+      "domain": "general",
+      "claim_bearing": false,
+      "authority": false
+    },
+    {
+      "path": "docs/quickstart.md",
+      "role": "general",
+      "domain": "general",
+      "claim_bearing": false,
+      "authority": false
+    },
+    {
+      "path": "docs/rate-limits-and-host-protection.md",
+      "role": "general",
+      "domain": "general",
+      "claim_bearing": false,
+      "authority": false
+    },
+    {
+      "path": "docs/readiness_note.md",
+      "role": "general",
+      "domain": "general",
+      "claim_bearing": false,
+      "authority": false
+    },
+    {
+      "path": "docs/rebus_ci_validation.md",
+      "role": "general",
+      "domain": "general",
+      "claim_bearing": false,
+      "authority": false
+    },
+    {
+      "path": "docs/release/physics_release_scorecard.md",
+      "role": "ops",
+      "domain": "physics",
+      "claim_bearing": false,
+      "authority": false
+    },
+    {
+      "path": "docs/releases/geosync-reality-validation-cycle-2026-04-27.md",
+      "role": "ops",
+      "domain": "release",
+      "claim_bearing": false,
+      "authority": false
+    },
+    {
+      "path": "docs/releases/release-notes.md",
+      "role": "ops",
+      "domain": "release",
+      "claim_bearing": false,
+      "authority": false
+    },
+    {
+      "path": "docs/releases/v0.1.0.md",
+      "role": "ops",
+      "domain": "release",
+      "claim_bearing": false,
+      "authority": false
+    },
+    {
+      "path": "docs/reliability.md",
+      "role": "general",
+      "domain": "general",
+      "claim_bearing": false,
+      "authority": false
+    },
+    {
+      "path": "docs/reports/ci_governance_lane_989.md",
+      "role": "general",
+      "domain": "governance",
+      "claim_bearing": false,
+      "authority": false
+    },
+    {
+      "path": "docs/reports/closure_ledger.md",
+      "role": "general",
+      "domain": "general",
+      "claim_bearing": false,
+      "authority": false
+    },
+    {
+      "path": "docs/reports/codeql_1114_import_compat.md",
+      "role": "general",
+      "domain": "general",
+      "claim_bearing": false,
+      "authority": false
+    },
+    {
+      "path": "docs/reports/codeql_board_triage.md",
+      "role": "general",
+      "domain": "general",
+      "claim_bearing": false,
+      "authority": false
+    },
+    {
+      "path": "docs/reports/codeql_real_bugs_wave4.md",
+      "role": "general",
+      "domain": "general",
+      "claim_bearing": false,
+      "authority": false
+    },
+    {
+      "path": "docs/reports/colocated_coverage_and_guard_robustness.md",
+      "role": "general",
+      "domain": "general",
+      "claim_bearing": false,
+      "authority": false
+    },
+    {
+      "path": "docs/reports/correctness_debt_wave2.md",
+      "role": "general",
+      "domain": "general",
+      "claim_bearing": false,
+      "authority": false
+    },
+    {
+      "path": "docs/reports/dead_elapsed_var.md",
+      "role": "general",
+      "domain": "general",
+      "claim_bearing": false,
+      "authority": false
+    },
+    {
+      "path": "docs/reports/dependency_manifest_all_strict.md",
+      "role": "general",
+      "domain": "general",
+      "claim_bearing": false,
+      "authority": false
+    },
+    {
+      "path": "docs/reports/diff_bound_commit_acceptor_layer.md",
+      "role": "general",
+      "domain": "general",
+      "claim_bearing": false,
+      "authority": false
+    },
+    {
+      "path": "docs/reports/epistemic_validation_fail_closed.md",
+      "role": "general",
+      "domain": "general",
+      "claim_bearing": false,
+      "authority": false
+    },
+    {
+      "path": "docs/reports/forbidden_torch_jit_gate.md",
+      "role": "general",
+      "domain": "governance",
+      "claim_bearing": false,
+      "authority": false
+    },
+    {
+      "path": "docs/reports/free_energy_active_inference_2026_05_03.md",
+      "role": "canonical",
+      "domain": "inference",
+      "claim_bearing": true,
+      "authority": true
+    },
+    {
+      "path": "docs/reports/kuramoto_coupling_config_guard.md",
+      "role": "general",
+      "domain": "physics",
+      "claim_bearing": false,
+      "authority": false
+    },
+    {
+      "path": "docs/reports/kuramoto_phase_correction.md",
+      "role": "general",
+      "domain": "physics",
+      "claim_bearing": false,
+      "authority": false
+    },
+    {
+      "path": "docs/reports/numerical_clamp_policy.md",
+      "role": "general",
+      "domain": "general",
+      "claim_bearing": false,
+      "authority": false
+    },
+    {
+      "path": "docs/reports/physics_calibration_harness.md",
+      "role": "general",
+      "domain": "physics",
+      "claim_bearing": false,
+      "authority": false
+    },
+    {
+      "path": "docs/reports/physics_invariant_tightening.md",
+      "role": "general",
+      "domain": "physics",
+      "claim_bearing": false,
+      "authority": false
+    },
+    {
+      "path": "docs/reports/repo_consistency_audit_2026_05_03.md",
+      "role": "general",
+      "domain": "general",
+      "claim_bearing": false,
+      "authority": false
+    },
+    {
+      "path": "docs/reports/ricci_l2_evidence_hardening.md",
+      "role": "general",
+      "domain": "physics",
+      "claim_bearing": false,
+      "authority": false
+    },
+    {
+      "path": "docs/reports/shadow_continuity_gap.md",
+      "role": "general",
+      "domain": "general",
+      "claim_bearing": false,
+      "authority": false
+    },
+    {
+      "path": "docs/reports/vulnerability_exception_ledger.md",
+      "role": "general",
+      "domain": "general",
+      "claim_bearing": false,
+      "authority": false
+    },
+    {
+      "path": "docs/requirements/product_specification.md",
+      "role": "general",
+      "domain": "general",
+      "claim_bearing": false,
+      "authority": false
+    },
+    {
+      "path": "docs/requirements/requirements-specification.md",
+      "role": "general",
+      "domain": "general",
+      "claim_bearing": false,
+      "authority": false
+    },
+    {
+      "path": "docs/requirements/traceability_matrix.md",
+      "role": "general",
+      "domain": "general",
+      "claim_bearing": false,
+      "authority": false
+    },
+    {
+      "path": "docs/research/ANTHROPIC_DESIGN_STACK_ADAPTATION.md",
+      "role": "research_draft",
+      "domain": "general",
+      "claim_bearing": true,
+      "authority": false
+    },
+    {
+      "path": "docs/research/CTC_FALSIFY_001_C3_PREREGISTRATION.md",
+      "role": "research_draft",
+      "domain": "general",
+      "claim_bearing": true,
+      "authority": false
+    },
+    {
+      "path": "docs/research/CTC_FALSIFY_001_C_REAL_PREREGISTRATION.md",
+      "role": "research_draft",
+      "domain": "general",
+      "claim_bearing": true,
+      "authority": false
+    },
+    {
+      "path": "docs/research/CTC_FALSIFY_001_L2_PREREGISTRATION.md",
+      "role": "research_draft",
+      "domain": "general",
+      "claim_bearing": true,
+      "authority": false
+    },
+    {
+      "path": "docs/research/CTC_FALSIFY_001_PREREGISTRATION.md",
+      "role": "research_draft",
+      "domain": "general",
+      "claim_bearing": true,
+      "authority": false
+    },
+    {
+      "path": "docs/research/D002J_CRISIS_WINDOW_REGISTRY.md",
+      "role": "research_draft",
+      "domain": "general",
+      "claim_bearing": true,
+      "authority": false
+    },
+    {
+      "path": "docs/research/D002J_CRISIS_WINDOW_SELECTION_RATIONALE.md",
+      "role": "research_draft",
+      "domain": "general",
+      "claim_bearing": true,
+      "authority": false
+    },
+    {
+      "path": "docs/research/D002J_DATA_SOURCE_CARD.md",
+      "role": "research_draft",
+      "domain": "data",
+      "claim_bearing": true,
+      "authority": false
+    },
+    {
+      "path": "docs/research/D002J_DATA_SOURCE_MATRIX.md",
+      "role": "research_draft",
+      "domain": "data",
+      "claim_bearing": true,
+      "authority": false
+    },
+    {
+      "path": "docs/research/D002J_FINANCIAL_SUBSTRATE_DESIGN_SPACE.md",
+      "role": "research_draft",
+      "domain": "general",
+      "claim_bearing": true,
+      "authority": false
+    },
+    {
+      "path": "docs/research/D002J_INGESTION_BOUNDARY.md",
+      "role": "research_draft",
+      "domain": "general",
+      "claim_bearing": true,
+      "authority": false
+    },
+    {
+      "path": "docs/research/D002J_LINEAGE_MAP.md",
+      "role": "research_draft",
+      "domain": "general",
+      "claim_bearing": true,
+      "authority": false
+    },
+    {
+      "path": "docs/research/D002J_NULL_MODEL_CONTRACTS.md",
+      "role": "research_draft",
+      "domain": "general",
+      "claim_bearing": true,
+      "authority": false
+    },
+    {
+      "path": "docs/research/D002J_NULL_MODEL_HIERARCHY.md",
+      "role": "research_draft",
+      "domain": "general",
+      "claim_bearing": true,
+      "authority": false
+    },
+    {
+      "path": "docs/research/D002J_P1A_AUDIT_BOUNDARY.md",
+      "role": "research_draft",
+      "domain": "general",
+      "claim_bearing": true,
+      "authority": false
+    },
+    {
+      "path": "docs/research/D002J_POINT_IN_TIME_DISCIPLINE.md",
+      "role": "research_draft",
+      "domain": "general",
+      "claim_bearing": true,
+      "authority": false
+    },
+    {
+      "path": "docs/research/D002J_POSITIVE_CONTROL_PROTOCOL.md",
+      "role": "research_draft",
+      "domain": "general",
+      "claim_bearing": true,
+      "authority": false
+    },
+    {
+      "path": "docs/research/D002J_POWER_FIRST_PROTOCOL.md",
+      "role": "research_draft",
+      "domain": "general",
+      "claim_bearing": true,
+      "authority": false
+    },
+    {
+      "path": "docs/research/D002J_POWER_FIRST_REPORT.md",
+      "role": "research_draft",
+      "domain": "general",
+      "claim_bearing": true,
+      "authority": false
+    },
+    {
+      "path": "docs/research/D002J_RESEARCH_PLAN.md",
+      "role": "research_draft",
+      "domain": "general",
+      "claim_bearing": true,
+      "authority": false
+    },
+    {
+      "path": "docs/research/D002J_SOURCE_DOWNGRADE_LOG.md",
+      "role": "research_draft",
+      "domain": "general",
+      "claim_bearing": true,
+      "authority": false
+    },
+    {
+      "path": "docs/research/D002J_SOURCE_PROVENANCE_AUDIT.md",
+      "role": "research_draft",
+      "domain": "general",
+      "claim_bearing": true,
+      "authority": false
+    },
+    {
+      "path": "docs/research/D002J_SOURCE_SELECTION_RATIONALE.md",
+      "role": "research_draft",
+      "domain": "general",
+      "claim_bearing": true,
+      "authority": false
+    },
+    {
+      "path": "docs/research/D002K_DESIGN_RATIONALE.md",
+      "role": "research_draft",
+      "domain": "general",
+      "claim_bearing": true,
+      "authority": false
+    },
+    {
+      "path": "docs/research/D002K_EVENT_METRIC_CONTRACT.md",
+      "role": "research_draft",
+      "domain": "general",
+      "claim_bearing": true,
+      "authority": false
+    },
+    {
+      "path": "docs/research/D002K_MATCHED_PLACEBO_PROTOCOL.md",
+      "role": "research_draft",
+      "domain": "general",
+      "claim_bearing": true,
+      "authority": false
+    },
+    {
+      "path": "docs/research/D002K_POWER_FIRST_REPORT.md",
+      "role": "research_draft",
+      "domain": "general",
+      "claim_bearing": true,
+      "authority": false
+    },
+    {
+      "path": "docs/research/D002K_SOURCE_OBSERVABLE_CONTRACT.md",
+      "role": "research_draft",
+      "domain": "general",
+      "claim_bearing": true,
+      "authority": false
+    },
+    {
+      "path": "docs/research/INFERENCE_TRANSFORMER_CONTROL_PLANE.md",
+      "role": "research_draft",
+      "domain": "inference",
+      "claim_bearing": true,
+      "authority": false
+    },
+    {
+      "path": "docs/research/INFERENCE_TRANSFORMER_IMPLEMENTATION_PLAN.md",
+      "role": "research_draft",
+      "domain": "inference",
+      "claim_bearing": true,
+      "authority": false
+    },
+    {
+      "path": "docs/research/N7X_CLAUDE_CODE_HANDOFF.md",
+      "role": "research_draft",
+      "domain": "general",
+      "claim_bearing": true,
+      "authority": false
+    },
+    {
+      "path": "docs/research/RESEARCH_STANDARD_CONTRACT.md",
+      "role": "research_draft",
+      "domain": "general",
+      "claim_bearing": true,
+      "authority": false
+    },
+    {
+      "path": "docs/research/RICCI_MICROSTRUCTURE_STATUS.md",
+      "role": "research_draft",
+      "domain": "physics",
+      "claim_bearing": true,
+      "authority": false
+    },
+    {
+      "path": "docs/research/SUTSKEVER_KARPATHY_ANTHROPIC_VALUE_SYNTHESIS.md",
+      "role": "research_draft",
+      "domain": "general",
+      "claim_bearing": true,
+      "authority": false
+    },
+    {
+      "path": "docs/research/capital_weighted_kuramoto.md",
+      "role": "research_draft",
+      "domain": "physics",
+      "claim_bearing": true,
+      "authority": false
+    },
+    {
+      "path": "docs/research/dr_free_tacl.md",
+      "role": "research_draft",
+      "domain": "general",
+      "claim_bearing": true,
+      "authority": false
+    },
+    {
+      "path": "docs/research/l2_ricci_evidence_protocol.md",
+      "role": "research_draft",
+      "domain": "physics",
+      "claim_bearing": true,
+      "authority": false
+    },
+    {
+      "path": "docs/research/ofi_unity_live_specification.md",
+      "role": "research_draft",
+      "domain": "general",
+      "claim_bearing": true,
+      "authority": false
+    },
+    {
+      "path": "docs/research/physics_2026/source_validation.md",
+      "role": "research_draft",
+      "domain": "physics",
+      "claim_bearing": true,
+      "authority": false
+    },
+    {
+      "path": "docs/research/physics_2026/translation_matrix.md",
+      "role": "research_draft",
+      "domain": "physics",
+      "claim_bearing": true,
+      "authority": false
+    },
+    {
+      "path": "docs/research/pncc/CANONS.md",
+      "role": "research_draft",
+      "domain": "general",
+      "claim_bearing": true,
+      "authority": false
+    },
+    {
+      "path": "docs/research/pncc/evidence_ledger.md",
+      "role": "research_draft",
+      "domain": "general",
+      "claim_bearing": true,
+      "authority": false
+    },
+    {
+      "path": "docs/research/pncc/physics_native_kernel.md",
+      "role": "research_draft",
+      "domain": "physics",
+      "claim_bearing": true,
+      "authority": false
+    },
+    {
+      "path": "docs/research/pncc/reversible_gate.md",
+      "role": "research_draft",
+      "domain": "general",
+      "claim_bearing": true,
+      "authority": false
+    },
+    {
+      "path": "docs/research/pncc/thermodynamic_budget.md",
+      "role": "research_draft",
+      "domain": "general",
+      "claim_bearing": true,
+      "authority": false
+    },
+    {
+      "path": "docs/research/ricci_flow_surgery.md",
+      "role": "research_draft",
+      "domain": "physics",
+      "claim_bearing": true,
+      "authority": false
+    },
+    {
+      "path": "docs/research/ricci_microstructure_v1_PREREGISTRATION.md",
+      "role": "research_draft",
+      "domain": "physics",
+      "claim_bearing": true,
+      "authority": false
+    },
+    {
+      "path": "docs/research/sentiment_ricci_interpretation.md",
+      "role": "research_draft",
+      "domain": "physics",
+      "claim_bearing": true,
+      "authority": false
+    },
+    {
+      "path": "docs/research/sparse_simplicial_kuramoto.md",
+      "role": "research_draft",
+      "domain": "physics",
+      "claim_bearing": true,
+      "authority": false
+    },
+    {
+      "path": "docs/reset_wave_async_resilience.md",
+      "role": "general",
+      "domain": "general",
+      "claim_bearing": false,
+      "authority": false
+    },
+    {
+      "path": "docs/reset_wave_critical_centers.md",
+      "role": "general",
+      "domain": "general",
+      "claim_bearing": false,
+      "authority": false
+    },
+    {
+      "path": "docs/reset_wave_maturity_assessment.md",
+      "role": "general",
+      "domain": "general",
+      "claim_bearing": false,
+      "authority": false
+    },
+    {
+      "path": "docs/reset_wave_third_law_engineering.md",
+      "role": "general",
+      "domain": "general",
+      "claim_bearing": false,
+      "authority": false
+    },
+    {
+      "path": "docs/reset_wave_truth_value_function.md",
+      "role": "general",
+      "domain": "general",
+      "claim_bearing": false,
+      "authority": false
+    },
+    {
+      "path": "docs/reset_wave_validation_report.md",
+      "role": "general",
+      "domain": "general",
+      "claim_bearing": false,
+      "authority": false
+    },
+    {
+      "path": "docs/resilience.md",
+      "role": "general",
+      "domain": "general",
+      "claim_bearing": false,
+      "authority": false
+    },
+    {
+      "path": "docs/responsible_ai_program.md",
+      "role": "general",
+      "domain": "general",
+      "claim_bearing": false,
+      "authority": false
+    },
+    {
+      "path": "docs/risk_controls.md",
+      "role": "general",
+      "domain": "general",
+      "claim_bearing": false,
+      "authority": false
+    },
+    {
+      "path": "docs/risk_ml_observability.md",
+      "role": "general",
+      "domain": "general",
+      "claim_bearing": false,
+      "authority": false
+    },
+    {
+      "path": "docs/rlhf_rlaif_strategy.md",
+      "role": "general",
+      "domain": "general",
+      "claim_bearing": false,
+      "authority": false
+    },
+    {
+      "path": "docs/roadmap/integration_ecosystem_roadmap.md",
+      "role": "general",
+      "domain": "general",
+      "claim_bearing": false,
+      "authority": false
+    },
+    {
+      "path": "docs/roadmap/platform_initiatives.md",
+      "role": "general",
+      "domain": "general",
+      "claim_bearing": false,
+      "authority": false
+    },
+    {
+      "path": "docs/roadmap.md",
+      "role": "general",
+      "domain": "general",
+      "claim_bearing": false,
+      "authority": false
+    },
+    {
+      "path": "docs/runbook_data_drift_response.md",
+      "role": "ops",
+      "domain": "data",
+      "claim_bearing": false,
+      "authority": false
+    },
+    {
+      "path": "docs/runbook_data_incident.md",
+      "role": "ops",
+      "domain": "data",
+      "claim_bearing": false,
+      "authority": false
+    },
+    {
+      "path": "docs/runbook_disaster_recovery.md",
+      "role": "ops",
+      "domain": "general",
+      "claim_bearing": false,
+      "authority": false
+    },
+    {
+      "path": "docs/runbook_inference_incident.md",
+      "role": "ops",
+      "domain": "inference",
+      "claim_bearing": false,
+      "authority": false
+    },
+    {
+      "path": "docs/runbook_kill_switch_failover.md",
+      "role": "ops",
+      "domain": "general",
+      "claim_bearing": false,
+      "authority": false
+    },
+    {
+      "path": "docs/runbook_latency_degradation.md",
+      "role": "ops",
+      "domain": "general",
+      "claim_bearing": false,
+      "authority": false
+    },
+    {
+      "path": "docs/runbook_live_trading.md",
+      "role": "ops",
+      "domain": "general",
+      "claim_bearing": false,
+      "authority": false
+    },
+    {
+      "path": "docs/runbook_model_rollback.md",
+      "role": "ops",
+      "domain": "general",
+      "claim_bearing": false,
+      "authority": false
+    },
+    {
+      "path": "docs/runbook_release_validation.md",
+      "role": "ops",
+      "domain": "release",
+      "claim_bearing": false,
+      "authority": false
+    },
+    {
+      "path": "docs/runbook_secret_leak.md",
+      "role": "ops",
+      "domain": "general",
+      "claim_bearing": false,
+      "authority": false
+    },
+    {
+      "path": "docs/runbook_secret_rotation.md",
+      "role": "ops",
+      "domain": "general",
+      "claim_bearing": false,
+      "authority": false
+    },
+    {
+      "path": "docs/runbook_time_synchronization.md",
+      "role": "ops",
+      "domain": "general",
+      "claim_bearing": false,
+      "authority": false
+    },
+    {
+      "path": "docs/scaling.md",
+      "role": "general",
+      "domain": "general",
+      "claim_bearing": false,
+      "authority": false
+    },
+    {
+      "path": "docs/scenario_template.md",
+      "role": "general",
+      "domain": "general",
+      "claim_bearing": false,
+      "authority": false
+    },
+    {
+      "path": "docs/scenarios.md",
+      "role": "general",
+      "domain": "general",
+      "claim_bearing": false,
+      "authority": false
+    },
+    {
+      "path": "docs/security/2025-10-penetration-review.md",
+      "role": "general",
+      "domain": "general",
+      "claim_bearing": false,
+      "authority": false
+    },
+    {
+      "path": "docs/security/SECURITY_FRAMEWORK_INDEX.md",
+      "role": "general",
+      "domain": "general",
+      "claim_bearing": false,
+      "authority": false
+    },
+    {
+      "path": "docs/security/SECURITY_OPERATIONS_GUIDE.md",
+      "role": "general",
+      "domain": "general",
+      "claim_bearing": false,
+      "authority": false
+    },
+    {
+      "path": "docs/security/architecture/secure-architecture-design.md",
+      "role": "general",
+      "domain": "general",
+      "claim_bearing": false,
+      "authority": false
+    },
+    {
+      "path": "docs/security/architecture.md",
+      "role": "canonical",
+      "domain": "general",
+      "claim_bearing": true,
+      "authority": true
+    },
+    {
+      "path": "docs/security/dependency_policy.md",
+      "role": "general",
+      "domain": "general",
+      "claim_bearing": false,
+      "authority": false
+    },
+    {
+      "path": "docs/security/devsecops/devsecops-integration-guide.md",
+      "role": "general",
+      "domain": "general",
+      "claim_bearing": false,
+      "authority": false
+    },
+    {
+      "path": "docs/security/dlp_and_retention.md",
+      "role": "general",
+      "domain": "general",
+      "claim_bearing": false,
+      "authority": false
+    },
+    {
+      "path": "docs/security/forbidden_torch_jit_policy.md",
+      "role": "general",
+      "domain": "governance",
+      "claim_bearing": false,
+      "authority": false
+    },
+    {
+      "path": "docs/security/hardening.md",
+      "role": "general",
+      "domain": "general",
+      "claim_bearing": false,
+      "authority": false
+    },
+    {
+      "path": "docs/security/iam.md",
+      "role": "general",
+      "domain": "general",
+      "claim_bearing": false,
+      "authority": false
+    },
+    {
+      "path": "docs/security/reachability_model.md",
+      "role": "general",
+      "domain": "general",
+      "claim_bearing": false,
+      "authority": false
+    },
+    {
+      "path": "docs/security/requirements/security-requirements-specification.md",
+      "role": "general",
+      "domain": "general",
+      "claim_bearing": false,
+      "authority": false
+    },
+    {
+      "path": "docs/security/risk-analysis/risk-identification-framework.md",
+      "role": "general",
+      "domain": "general",
+      "claim_bearing": false,
+      "authority": false
+    },
+    {
+      "path": "docs/security/security-tests-2025-10-21.md",
+      "role": "general",
+      "domain": "general",
+      "claim_bearing": false,
+      "authority": false
+    },
+    {
+      "path": "docs/security/vulnerability_exception_ledger.md",
+      "role": "general",
+      "domain": "general",
+      "claim_bearing": false,
+      "authority": false
+    },
+    {
+      "path": "docs/security/zero_trust_runbook.md",
+      "role": "general",
+      "domain": "general",
+      "claim_bearing": false,
+      "authority": false
+    },
+    {
+      "path": "docs/session_diff_value_100_words.md",
+      "role": "general",
+      "domain": "general",
+      "claim_bearing": false,
+      "authority": false
+    },
+    {
+      "path": "docs/sla_alert_playbooks.md",
+      "role": "general",
+      "domain": "general",
+      "claim_bearing": false,
+      "authority": false
+    },
+    {
+      "path": "docs/spec_fhmc.md",
+      "role": "general",
+      "domain": "general",
+      "claim_bearing": false,
+      "authority": false
+    },
+    {
+      "path": "docs/stability_bounds.md",
+      "role": "general",
+      "domain": "general",
+      "claim_bearing": false,
+      "authority": false
+    },
+    {
+      "path": "docs/stress_playbooks.md",
+      "role": "general",
+      "domain": "general",
+      "claim_bearing": false,
+      "authority": false
+    },
+    {
+      "path": "docs/substrate_oracle_specification.md",
+      "role": "general",
+      "domain": "general",
+      "claim_bearing": false,
+      "authority": false
+    },
+    {
+      "path": "docs/system_lifecycle_operations.md",
+      "role": "general",
+      "domain": "general",
+      "claim_bearing": false,
+      "authority": false
+    },
+    {
+      "path": "docs/technical-debt.md",
+      "role": "general",
+      "domain": "general",
+      "claim_bearing": false,
+      "authority": false
+    },
+    {
+      "path": "docs/templates/README.md",
+      "role": "general",
+      "domain": "general",
+      "claim_bearing": true,
+      "authority": false
+    },
+    {
+      "path": "docs/templates/adr.md",
+      "role": "general",
+      "domain": "general",
+      "claim_bearing": false,
+      "authority": false
+    },
+    {
+      "path": "docs/templates/api_authentication.md",
+      "role": "general",
+      "domain": "general",
+      "claim_bearing": false,
+      "authority": false
+    },
+    {
+      "path": "docs/templates/api_contract.md",
+      "role": "general",
+      "domain": "general",
+      "claim_bearing": false,
+      "authority": false
+    },
+    {
+      "path": "docs/templates/api_error_model.md",
+      "role": "general",
+      "domain": "general",
+      "claim_bearing": false,
+      "authority": false
+    },
+    {
+      "path": "docs/templates/api_pagination.md",
+      "role": "general",
+      "domain": "general",
+      "claim_bearing": false,
+      "authority": false
+    },
+    {
+      "path": "docs/templates/api_rate_limits.md",
+      "role": "general",
+      "domain": "general",
+      "claim_bearing": false,
+      "authority": false
+    },
+    {
+      "path": "docs/templates/argumentation.md",
+      "role": "general",
+      "domain": "general",
+      "claim_bearing": false,
+      "authority": false
+    },
+    {
+      "path": "docs/templates/compatibility_policy.md",
+      "role": "general",
+      "domain": "general",
+      "claim_bearing": false,
+      "authority": false
+    },
+    {
+      "path": "docs/templates/component_readme.md",
+      "role": "general",
+      "domain": "general",
+      "claim_bearing": true,
+      "authority": false
+    },
+    {
+      "path": "docs/templates/dataset_card.md",
+      "role": "general",
+      "domain": "data",
+      "claim_bearing": false,
+      "authority": false
+    },
+    {
+      "path": "docs/templates/diagram_sequence.md",
+      "role": "general",
+      "domain": "general",
+      "claim_bearing": false,
+      "authority": false
+    },
+    {
+      "path": "docs/templates/doc_review_checklist.md",
+      "role": "general",
+      "domain": "general",
+      "claim_bearing": false,
+      "authority": false
+    },
+    {
+      "path": "docs/templates/example_prediction_submission.md",
+      "role": "general",
+      "domain": "general",
+      "claim_bearing": false,
+      "authority": false
+    },
+    {
+      "path": "docs/templates/example_quickstart.md",
+      "role": "general",
+      "domain": "general",
+      "claim_bearing": false,
+      "authority": false
+    },
+    {
+      "path": "docs/templates/example_sdk_integration.md",
+      "role": "general",
+      "domain": "general",
+      "claim_bearing": false,
+      "authority": false
+    },
+    {
+      "path": "docs/templates/example_webhook_consumer.md",
+      "role": "general",
+      "domain": "general",
+      "claim_bearing": false,
+      "authority": false
+    },
+    {
+      "path": "docs/templates/glossary.md",
+      "role": "general",
+      "domain": "general",
+      "claim_bearing": false,
+      "authority": false
+    },
+    {
+      "path": "docs/templates/incident_playbook.md",
+      "role": "general",
+      "domain": "general",
+      "claim_bearing": false,
+      "authority": false
+    },
+    {
+      "path": "docs/templates/metrics_table.md",
+      "role": "general",
+      "domain": "general",
+      "claim_bearing": false,
+      "authority": false
+    },
+    {
+      "path": "docs/templates/model_card.md",
+      "role": "general",
+      "domain": "general",
+      "claim_bearing": false,
+      "authority": false
+    },
+    {
+      "path": "docs/templates/onboarding.md",
+      "role": "general",
+      "domain": "general",
+      "claim_bearing": false,
+      "authority": false
+    },
+    {
+      "path": "docs/templates/release_checklist.md",
+      "role": "general",
+      "domain": "release",
+      "claim_bearing": false,
+      "authority": false
+    },
+    {
+      "path": "docs/templates/run_example.md",
+      "role": "general",
+      "domain": "general",
+      "claim_bearing": false,
+      "authority": false
+    },
+    {
+      "path": "docs/templates/sample_data.md",
+      "role": "general",
+      "domain": "data",
+      "claim_bearing": false,
+      "authority": false
+    },
+    {
+      "path": "docs/templates/versioning_policy.md",
+      "role": "general",
+      "domain": "general",
+      "claim_bearing": false,
+      "authority": false
+    },
+    {
+      "path": "docs/testing/canonical_commands.md",
+      "role": "general",
+      "domain": "general",
+      "claim_bearing": false,
+      "authority": false
+    },
+    {
+      "path": "docs/testing/coverage_closure.md",
+      "role": "general",
+      "domain": "general",
+      "claim_bearing": false,
+      "authority": false
+    },
+    {
+      "path": "docs/testing/mutation_kill_ledger.md",
+      "role": "general",
+      "domain": "general",
+      "claim_bearing": false,
+      "authority": false
+    },
+    {
+      "path": "docs/testing/pr_validation_matrix.md",
+      "role": "general",
+      "domain": "general",
+      "claim_bearing": false,
+      "authority": false
+    },
+    {
+      "path": "docs/thermodynamics/INDEX.md",
+      "role": "general",
+      "domain": "general",
+      "claim_bearing": false,
+      "authority": false
+    },
+    {
+      "path": "docs/thermodynamics/METRICS_FORMALIZATION.md",
+      "role": "general",
+      "domain": "general",
+      "claim_bearing": false,
+      "authority": false
+    },
+    {
+      "path": "docs/thermodynamics/OPERATIONAL_RUNBOOK.md",
+      "role": "general",
+      "domain": "general",
+      "claim_bearing": false,
+      "authority": false
+    },
+    {
+      "path": "docs/thermodynamics/OPTIMIZATION_GUIDE.md",
+      "role": "general",
+      "domain": "general",
+      "claim_bearing": false,
+      "authority": false
+    },
+    {
+      "path": "docs/thermodynamics/README.md",
+      "role": "general",
+      "domain": "general",
+      "claim_bearing": true,
+      "authority": false
+    },
+    {
+      "path": "docs/training_enablement_program.md",
+      "role": "general",
+      "domain": "general",
+      "claim_bearing": false,
+      "authority": false
+    },
+    {
+      "path": "docs/troubleshooting.md",
+      "role": "general",
+      "domain": "general",
+      "claim_bearing": false,
+      "authority": false
+    },
+    {
+      "path": "docs/ui_logical_structure.md",
+      "role": "general",
+      "domain": "general",
+      "claim_bearing": false,
+      "authority": false
+    },
+    {
+      "path": "docs/ui_what_if.md",
+      "role": "general",
+      "domain": "general",
+      "claim_bearing": false,
+      "authority": false
+    },
+    {
+      "path": "docs/validation/NULL_PATH_INVENTORY.md",
+      "role": "general",
+      "domain": "general",
+      "claim_bearing": false,
+      "authority": false
+    },
+    {
+      "path": "docs/validation/OOS_SPLIT_INVENTORY.md",
+      "role": "general",
+      "domain": "general",
+      "claim_bearing": false,
+      "authority": false
+    },
+    {
+      "path": "docs/validation/pai_report_2026_05_03.md",
+      "role": "general",
+      "domain": "general",
+      "claim_bearing": false,
+      "authority": false
+    },
+    {
+      "path": "docs/value_uplift_7_tasks.md",
+      "role": "general",
+      "domain": "general",
+      "claim_bearing": false,
+      "authority": false
+    },
+    {
+      "path": "docs/yana-response.md",
+      "role": "general",
+      "domain": "general",
+      "claim_bearing": false,
+      "authority": false
+    },
+    {
+      "path": "docs/zero_downtime_schema_migrations.md",
+      "role": "general",
+      "domain": "general",
+      "claim_bearing": false,
+      "authority": false
+    },
+    {
+      "path": "docs/INFERENCE_CONTRACT.manifest.json",
+      "role": "canonical",
+      "domain": "inference",
+      "claim_bearing": true,
+      "authority": true
+    },
+    {
+      "path": "docs/PHYSICS_CANON.manifest.json",
+      "role": "canonical",
+      "domain": "physics",
+      "claim_bearing": true,
+      "authority": true
+    },
+    {
+      "path": "docs/DOCUMENTATION_INDEX.manifest.json",
+      "role": "general",
+      "domain": "general",
+      "claim_bearing": false,
+      "authority": false
+    }
+  ]
+}

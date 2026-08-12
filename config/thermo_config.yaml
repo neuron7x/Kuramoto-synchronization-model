@@ -89,7 +89,7 @@ link_activator:
 # Telemetry and observability
 telemetry:
   # Audit log path (must be writable)
-  audit_log_path: /var/log/tradepulse/thermo_audit.jsonl
+  audit_log_path: /var/log/geosync/thermo_audit.jsonl
   
   # Telemetry export directory
   telemetry_export_dir: .ci_artifacts

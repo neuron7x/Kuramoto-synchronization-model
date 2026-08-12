@@ -1,3 +1,5 @@
+# Copyright (c) 2023-2026 Yaroslav Vasylenko (neuron7xLab)
+# SPDX-License-Identifier: MIT
 """Topology-aware sentinel features for streaming anomaly detection."""
 
 from __future__ import annotations
@@ -75,9 +77,7 @@ class TopoSentinel:
         entropy = _entropy(barcode_array)
         count_long = int(np.sum(barcode_array > np.median(barcode_array)))
         euler_area = float(np.trapezoid(euler_curve.values, thresholds))
-        topo_score = float(
-            (count_long / max(len(thresholds), 1)) + entropy + euler_area
-        )
+        topo_score = float((count_long / max(len(thresholds), 1)) + entropy + euler_area)
 
         return TopoSentinelResult(
             topo_score=topo_score,

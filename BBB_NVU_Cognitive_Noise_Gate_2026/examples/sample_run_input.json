@@ -1,0 +1,15 @@
+{
+  "subject_id": "S001",
+  "critical_data_invalid": false,
+  "confidence": 0.74,
+  "domain_indices": {
+    "BSI": 42,
+    "NRI": 28,
+    "VML": 62,
+    "GRS": 48,
+    "CNI": 31
+  },
+  "degradations": [
+    "sleep_proxy_low_specificity"
+  ]
+}

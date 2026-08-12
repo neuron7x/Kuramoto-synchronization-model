@@ -1,0 +1,127 @@
+# Diff-bound commit acceptor for the RIP/ engineering graveyard.
+#
+# RIP/ is an INERT documentation register: a sober memorial of dead
+# hypotheses (TOMBSTONES.md), a machine-readable mirror (manifest.yaml)
+# and a sharply separated, admissibility-honest block of defensible
+# engineering/methodological results (HONORS.md). It introduces ZERO
+# Python, ZERO imports, is NOT under tests/, is NOT collected by pytest
+# (pytest.ini testpaths = tests, core/neuro/tests), and is referenced by
+# NO build/CI/runtime path. Markdown + one passive manifest YAML only.
+#
+# NON-INTERFERENCE INVARIANT (the primary constraint):
+#   * Every pre-existing sha-pinned CALIB-GRID artifact and the frozen
+#     calibration test stay BYTE-IDENTICAL and are in forbidden_paths.
+#   * pytest --collect-only is byte-for-byte unchanged (RIP/ is outside
+#     testpaths and has no test_*.py).
+#   * ZERO behavior change anywhere in the repo.
+#
+# Locally verified:
+#   * find RIP/ -name '*.py' -> 0 files
+#   * pytest --collect-only collected-item count unchanged (1252 -> 1252)
+#   * sha256 of RESULTS.json / r1/RESULTS.json / cg002/RESULTS.json /
+#     tests/research/calibration/test_grid_kuramoto.py UNCHANGED
+#   * git diff --exit-code tests/research/calibration/test_grid_kuramoto.py
+#     is EMPTY
+#   * ruff / black / mypy --strict: RIP/ has no .py to lint; no other
+#     file touched
+#   * brand guard: grep -rE "neuron7x[^L@]" RIP/ -> 0 lines
+#
+# Every tombstone is sha-anchored to a merged commit and carries a
+# falsifier (metric + procedure). Four entries carry success_score == 0
+# explicitly (CALIB-GRID-001 weights/omega/s_crit, CALIB-GRID-001-R1
+# falsified causal claim, CALIB-GRID-002 noisy target, CALIB-GRID-noisy
+# INFEASIBLE_BY_CONSTRUCTION); CTC-FALSIFY-001 and SYSTEMIC-RISK also
+# carry 0. HONORS.md is admissibility-tiered (ENGINEERING-VALIDATED /
+# METHODOLOGICAL) with the explicit non-science disclaimer at the top
+# and the unblurrable cemetery/honors separation enforced by file
+# boundary + header.
+
+id: rip-engineering-graveyard
+status: ACTIVE
+claim_type: documentation
+promise: >-
+  After this PR lands, RIP/ is an inert engineering-graveyard register:
+  README.md (postulate + non-interference contract), TOMBSTONES.md (6
+  sha-anchored canonical entries, each with NAME/LINEAGE+sha/BORN/CAUSE
+  OF DEATH with metric+procedure/SUCCESS SCORE/WHAT IT KILLED/REUSABLE
+  LESSON; the noisy.* INFEASIBLE_BY_CONSTRUCTION entry is the canonical
+  uspih=0 headstone), manifest.yaml (machine-readable mirror, integer
+  success_score, success_score=0 where zero, superseded_by for R1->CG002
+  and CG002), and HONORS.md (sharply separated, ENGINEERING-VALIDATED /
+  METHODOLOGICAL tiers, explicit non-science disclaimer, no promotion
+  words). RIP/ contains zero .py, is outside pytest testpaths, imported
+  by nothing, and changes no behavior. Every pre-existing sha-pinned
+  calibration artifact and tests/research/calibration/test_grid_kuramoto
+  .py stay byte-identical.
+diff_scope:
+  changed_files:
+    - path: ".claude/commit_acceptors/rip-engineering-graveyard.yaml"
+    - path: "RIP/README.md"
+    - path: "RIP/TOMBSTONES.md"
+    - path: "RIP/manifest.yaml"
+    - path: "RIP/HONORS.md"
+  forbidden_paths:
+    - "trading/"
+    - "execution/"
+    - "forecast/"
+    - "policy/"
+    - "core/"
+    - "research/calibration/grid_kuramoto/PREREGISTRATION.md"
+    - "research/calibration/grid_kuramoto/PREREGISTRATION_AMENDMENT_001.md"
+    - "research/calibration/grid_kuramoto/PREREGISTRATION_AMENDMENT_001.yaml"
+    - "research/calibration/grid_kuramoto/SUPERSESSIONS.md"
+    - "research/calibration/grid_kuramoto/SUPERSESSIONS.yaml"
+    - "research/calibration/grid_kuramoto/gates.py"
+    - "research/calibration/grid_kuramoto/calibration.py"
+    - "research/calibration/grid_kuramoto/grid_data.py"
+    - "research/calibration/grid_kuramoto/_substrate.py"
+    - "research/calibration/grid_kuramoto/run.py"
+    - "research/calibration/grid_kuramoto/RESULTS.json"
+    - "research/calibration/grid_kuramoto/RESULTS.md"
+    - "research/calibration/grid_kuramoto/r1/"
+    - "research/calibration/grid_kuramoto/cg002/"
+    - "research/calibration/grid_kuramoto/identifiability/"
+    - "research/ctc_falsify/"
+    - "research/systemic_risk/"
+    - "core/kuramoto/coupling_estimator.py"
+    - "application/governance/claim_ledger.py"
+    - "application/governance/commit_acceptor.py"
+    - "tests/research/calibration/test_grid_kuramoto.py"
+    - "tests/"
+required_python_symbols: []
+expected_signal: >-
+  `find RIP -name '*.py' | wc -l` == 0; `pytest --collect-only -q`
+  collected-item count is identical to origin/main (1252); `sha256sum
+  research/calibration/grid_kuramoto/RESULTS.json
+  research/calibration/grid_kuramoto/r1/RESULTS.json
+  research/calibration/grid_kuramoto/cg002/RESULTS.json
+  tests/research/calibration/test_grid_kuramoto.py` unchanged; `git diff
+  --exit-code tests/research/calibration/test_grid_kuramoto.py` empty;
+  `grep -rE "neuron7x[^L@]" RIP/` returns nothing.
+measurement_command: >-
+  bash -c '
+    test "$(find RIP -name "*.py" | wc -l)" = "0" && git diff --exit-code tests/research/calibration/test_grid_kuramoto.py && ! grep -rE "neuron7x[^L@]" RIP/ && python -m pytest --collect-only -q 2>/dev/null | grep -cE "::"
+  '
+signal_artifact: "tmp/rip_engineering_graveyard.log"
+falsifier:
+  command: >-
+    bash -c '
+      test "$(find RIP -name "*.py" | wc -l)" != "0" || ! git diff --quiet tests/research/calibration/test_grid_kuramoto.py || grep -rqE "neuron7x[^L@]" RIP/ || grep -riE "breakthrough|proven science|\bvalidated\b" RIP/HONORS.md | grep -viE "ENGINEERING-VALIDATED|\"validated\"|\"breakthrough\"|\"proven science\"|forbidden" | grep -q .
+    '
+  description: >-
+    The falsifier succeeds (exit 0) iff the non-interference invariant
+    is breached: a .py file appears under RIP/, the frozen calibration
+    test is modified, a brand-guard violation is introduced, or a
+    forbidden promotion word leaks into HONORS.md as a positive
+    predicate (the legitimate quoted forbidden-list, the
+    ENGINEERING-VALIDATED tier name and "forbidden" context are
+    excluded). Any of these means RIP/ is no longer inert / no longer
+    admissibility-honest and the diff must be rejected.
+rollback_command: >-
+  bash -c 'rm -rf RIP && rm -f .claude/commit_acceptors/rip-engineering-graveyard.yaml'
+rollback_verification_command: >-
+  bash -c '! test -d RIP && ! test -f .claude/commit_acceptors/rip-engineering-graveyard.yaml'
+memory_update_type: append
+ledger_path: ".claude/commit_acceptors/rip-engineering-graveyard.yaml"
+report_path: "tmp/rip_engineering_graveyard.log"
+evidence: []

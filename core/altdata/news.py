@@ -1,3 +1,5 @@
+# Copyright (c) 2023-2026 Yaroslav Vasylenko (neuron7xLab)
+# SPDX-License-Identifier: MIT
 """News ingestion and sentiment enrichment utilities."""
 
 from __future__ import annotations
@@ -60,12 +62,8 @@ class NewsSentimentAnalyzer:
         negative_tokens: Sequence[str] | None = None,
         emphasis_multiplier: float = 1.5,
     ) -> None:
-        self._positive = {
-            token.lower() for token in (positive_tokens or _DEFAULT_POSITIVE)
-        }
-        self._negative = {
-            token.lower() for token in (negative_tokens or _DEFAULT_NEGATIVE)
-        }
+        self._positive = {token.lower() for token in (positive_tokens or _DEFAULT_POSITIVE)}
+        self._negative = {token.lower() for token in (negative_tokens or _DEFAULT_NEGATIVE)}
         self._emphasis_multiplier = max(1.0, emphasis_multiplier)
 
     def _tokenise(self, text: str) -> list[str]:
@@ -119,9 +117,9 @@ class NewsFeatureBuilder:
                 }
             )
         if not enriched:
-            return pd.DataFrame(
-                columns=["timestamp", "headline", "source", "sentiment"]
-            ).set_index("timestamp")
+            return pd.DataFrame(columns=["timestamp", "headline", "source", "sentiment"]).set_index(
+                "timestamp"
+            )
         frame = pd.DataFrame(enriched)
         frame = frame.set_index("timestamp").sort_index()
         return frame
@@ -141,14 +139,10 @@ class NewsFeatureBuilder:
             )
 
         grouped = frame.resample(freq)
-        sentiment_mean = (
-            grouped["sentiment"].mean().fillna(0.0).rename("sentiment_mean")
-        )
+        sentiment_mean = grouped["sentiment"].mean().fillna(0.0).rename("sentiment_mean")
         sentiment_std = grouped["sentiment"].std().fillna(0.0).rename("sentiment_std")
         counts = grouped.size().rename("news_count").astype(int)
-        diversity = (
-            grouped["source"].nunique().fillna(0).astype(int).rename("source_diversity")
-        )
+        diversity = grouped["source"].nunique().fillna(0).astype(int).rename("source_diversity")
 
         features = pd.concat([counts, sentiment_mean, sentiment_std, diversity], axis=1)
         features["sentiment_mean"] = features["sentiment_mean"].astype(float)

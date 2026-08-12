@@ -1,3 +1,5 @@
+# Copyright (c) 2023-2026 Yaroslav Vasylenko (neuron7xLab)
+# SPDX-License-Identifier: MIT
 from __future__ import annotations
 
 import sys
@@ -18,7 +20,7 @@ def test_main_wires_cli_arguments(monkeypatch) -> None:
         sys,
         "argv",
         [
-            "tradepulse-server",
+            "geosync-server",
             "--config",
             "/tmp/config.yaml",
             "--host",

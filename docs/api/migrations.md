@@ -4,4 +4,4 @@
 Summary: New prediction outputs include scenario bands and distribution tails.
 Applies to: create-prediction
 Effective on: 2025-05-01
-Instructions: https://docs.tradepulse.example/migrations/prediction-v2
+Instructions: https://docs.geosync.example/migrations/prediction-v2

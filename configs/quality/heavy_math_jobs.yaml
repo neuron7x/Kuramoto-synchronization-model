@@ -1,4 +1,4 @@
-# SPDX-License-Identifier: LicenseRef-TradePulse-Proprietary
+# SPDX-License-Identifier: MIT
 jobs:
   kuramoto_validation:
     description: "Cross-check Kuramoto multi-scale outputs against golden dataset"

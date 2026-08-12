@@ -1,3 +1,5 @@
+# Copyright (c) 2023-2026 Yaroslav Vasylenko (neuron7xLab)
+# SPDX-License-Identifier: MIT
 """Authorization helpers for securing FastAPI endpoints."""
 
 from __future__ import annotations
@@ -18,8 +20,8 @@ from .security import verify_request_identity
 __all__ = ["require_roles", "require_permission", "get_authorization_gateway"]
 
 
-_POLICY_PATH_ENV = "TRADEPULSE_RBAC_POLICY_PATH"
-_AUDIT_SECRET_ENV = "TRADEPULSE_RBAC_AUDIT_SECRET"  # pragma: allowlist secret
+_POLICY_PATH_ENV = "GEOSYNC_RBAC_POLICY_PATH"
+_AUDIT_SECRET_ENV = "GEOSYNC_RBAC_AUDIT_SECRET"  # pragma: allowlist secret
 _PROJECT_ROOT = Path(__file__).resolve().parents[2]
 _DEFAULT_POLICY_PATH = _PROJECT_ROOT / "configs" / "rbac" / "policy.yaml"
 _REPO_ROOT = _PROJECT_ROOT
@@ -86,9 +88,7 @@ def require_roles(
 def _resolve_audit_secret() -> str:
     secret = os.getenv(_AUDIT_SECRET_ENV)
     if secret is None:
-        raise RuntimeError(
-            "TRADEPULSE_RBAC_AUDIT_SECRET must be set to enable audit logging"
-        )
+        raise RuntimeError("GEOSYNC_RBAC_AUDIT_SECRET must be set to enable audit logging")
     candidate = secret.strip()
     if not candidate:
         raise RuntimeError("RBAC audit secret cannot be empty or whitespace")
@@ -102,9 +102,7 @@ def _build_default_gateway() -> AuthorizationGateway:
     if not policy_path.is_absolute():
         policy_path = _REPO_ROOT / policy_path
     audit_logger = AuditLogger(secret=_resolve_audit_secret())
-    return build_authorization_gateway(
-        policy_path=policy_path, audit_logger=audit_logger
-    )
+    return build_authorization_gateway(policy_path=policy_path, audit_logger=audit_logger)
 
 
 def get_authorization_gateway() -> AuthorizationGateway:

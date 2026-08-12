@@ -1,0 +1,24 @@
+{
+  "schema_version": "D002J-VERDICT-CAPSULE-v1",
+  "node_id": "D002J-P6",
+  "phase": "P6",
+  "pr_number": 0,
+  "merge_sha": "0000000000000000000000000000000000000000",
+  "parent_nodes": ["D002J-P5"],
+  "decision": "NULL_HIERARCHY_READY",
+  "status": "TERMINAL_PASS",
+  "artifact_paths": [
+    "research/systemic_risk/nulls/d002j/__init__.py",
+    "research/systemic_risk/nulls/d002j/null_base.py",
+    "research/systemic_risk/nulls/d002j/null_families.py",
+    "artifacts/d002j/nulls/null_hierarchy_manifest_v1.json",
+    "artifacts/d002j/nulls/null_hierarchy_summary_v1.json",
+    "docs/research/D002J_NULL_MODEL_CONTRACTS.md"
+  ],
+  "test_paths": ["tests/systemic_risk/test_d002j_null_hierarchy.py"],
+  "allowed_next_nodes": ["D002J-P7"],
+  "forbidden_next_nodes": ["D002J-P8", "D002J-P9"],
+  "claim_boundary": "10 null families as falsifiers; each P5 substrate has >=2 applicable nulls; N7/N8 H_I2-conditional; no canonical run; no real-data null execution (P7/P8 territory).",
+  "failure_retention": null,
+  "source_summary_path": "artifacts/d002j/nulls/null_hierarchy_summary_v1.json"
+}

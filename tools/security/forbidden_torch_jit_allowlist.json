@@ -1,0 +1,4 @@
+{
+  "comment": "Reviewed exemptions for the forbidden torch JIT / deserialization gate (tools/security/check_forbidden_torch_jit.py). Each entry exempts an EXACT path::line::api triple and MUST carry a human reason describing why the guarded use is safe. The repository is currently clean: every torch.load call passes the literal weights_only=True, and there is no torch.jit.{script,trace,load} usage, so this list is intentionally empty.",
+  "entries": []
+}

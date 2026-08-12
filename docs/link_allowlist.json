@@ -1,0 +1,10 @@
+{
+  "$schema-note": "Allowlist of intentional outside-root Markdown links read by scripts/ci/check_links.py. Each entry permits a single link target that resolves outside the repository root. Keys documented in docs/LINK_POLICY.md.",
+  "outside_root_allowlist": [
+    {
+      "file": "docs/_EXAMPLE_ONLY_.md",
+      "target": "../../SOME_SIBLING_REPO/README.md",
+      "reason": "TEMPLATE ENTRY (inert): documents the schema. `file` is the tracked .md relpath, `target` is the raw link, `reason` is the human rationale. A bare {\"target\": ...} entry (no `file`) allowlists that target from any file. This row references a non-existent file, so it matches nothing."
+    }
+  ]
+}

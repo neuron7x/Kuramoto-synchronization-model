@@ -1,7 +1,7 @@
-# Canary Release Guardrails for TradePulse Deployments
+# Canary Release Guardrails for GeoSync Deployments
 
 ## Purpose and Scope
-This playbook defines the safety rails for promoting new versions of TradePulse services through staged, canary-based deployments. It aligns production risk management with business outcomes by specifying:
+This playbook defines the safety rails for promoting new versions of GeoSync services through staged, canary-based deployments. It aligns production risk management with business outcomes by specifying:
 
 - Quantitative thresholds for market-facing impact (PnL volatility, order execution latency, error budgets).
 - Technical guardrails that drive automated rollback and halt criteria.
@@ -62,7 +62,7 @@ To progress from one phase to the next, **all** of the following must be true fo
 
 1. No hard threshold breached.
 2. Fewer than two soft thresholds breached, and the cumulative guardrail risk score (see below) ≤ 2.
-3. No Sev-1 or Sev-2 incidents open in PagerDuty service `tradepulse-prod`.
+3. No Sev-1 or Sev-2 incidents open in PagerDuty service `geosync-prod`.
 4. Release commander has uploaded the metric diff snapshot to `reports/release_decisions/<deployment_id>/phase_<n>/`.
 
 The guardrail risk score is computed as the sum of risk weights for soft-breached metrics using `analytics/calc_guardrail_score.py`:
@@ -102,9 +102,9 @@ Rollback automation is tested quarterly in the chaos game day (see `docs/resilie
 
 ## Observability and Alerting Integration
 
-- **Dashboards:** Grafana folder `TradePulse/Canary` hosts phase-specific dashboards with synchronized time ranges for baseline vs. canary comparisons.
+- **Dashboards:** Grafana folder `GeoSync/Canary` hosts phase-specific dashboards with synchronized time ranges for baseline vs. canary comparisons.
 - **Alerting:**
-  - Critical guardrails use PagerDuty service `tradepulse-prod` with a 5-minute auto-escalation.
+  - Critical guardrails use PagerDuty service `geosync-prod` with a 5-minute auto-escalation.
   - Warning-level guardrails trigger Slack and create Jira ticket via OpsGenie integration.
 - **Tracing:** Enable 100% sampling for canary pods via `observability/tracing_config.yaml`. Retain spans for 72 hours.
 - **Log Enrichment:** Canary pods append `deployment_id`, `phase`, and `traffic_share` fields to structured logs to support post-mortems.
@@ -115,7 +115,7 @@ Every phase transition requires updating `reports/release_decisions/<deployment_
 
 ```yaml
 phase: canary_phase_2
-approver: jane.doe@tradepulse.ai
+approver: jane.doe@geosync.ai
 start_timestamp: 2024-05-16T21:15:00Z
 traffic_share:
   market_making: 0.05
@@ -145,4 +145,4 @@ Decision logs are immutable once GA is reached and retained for at least 12 mont
 - Any production incident attributable to a guardrail gap triggers an ADR to refine the framework.
 - Teams must document experiments that propose loosening thresholds, including Monte Carlo backtests demonstrating risk neutrality.
 
-Adhering to these guardrails ensures canary releases protect both client outcomes and TradePulse's PnL while enabling rapid, safe iteration.
+Adhering to these guardrails ensures canary releases protect both client outcomes and GeoSync's PnL while enabling rapid, safe iteration.

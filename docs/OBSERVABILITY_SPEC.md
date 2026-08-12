@@ -1,8 +1,8 @@
-# TradePulse Observability Specification
+# GeoSync Observability Specification
 
 > **Principal Observability & Incident Engineering Spec**
 >
-> Цей документ визначає "золоті сигнали" та телеметрію для TradePulse.
+> Цей документ визначає "золоті сигнали" та телеметрію для GeoSync.
 > Система після цього — прозорий організм: видно що вона думає, видно коли їй погано.
 
 ## 1. Golden Signals — Ключові Сигнали
@@ -11,61 +11,61 @@
 
 | Сигнал | Тип | Назва метрики | Threshold |
 |--------|-----|---------------|-----------|
-| **Latency** | Histogram | `tradepulse_order_placement_duration_seconds` | p95 < 2s, p99 < 5s |
-| **Latency** | Gauge | `tradepulse_order_ack_latency_quantiles_seconds` | p95 < 400ms |
-| **Latency** | Gauge | `tradepulse_signal_to_fill_latency_quantiles_seconds` | p99 < 650ms |
-| **Error Rate** | Counter | `tradepulse_orders_placed_total{status="error"}` | < 5% за 5 хв |
-| **Throughput** | Counter | `tradepulse_orders_placed_total` | baseline-specific |
-| **Saturation** | Gauge | `tradepulse_api_queue_depth` | < 1000 pending |
+| **Latency** | Histogram | `geosync_order_placement_duration_seconds` | p95 < 2s, p99 < 5s |
+| **Latency** | Gauge | `geosync_order_ack_latency_quantiles_seconds` | p95 < 400ms |
+| **Latency** | Gauge | `geosync_signal_to_fill_latency_quantiles_seconds` | p99 < 650ms |
+| **Error Rate** | Counter | `geosync_orders_placed_total{status="error"}` | < 5% за 5 хв |
+| **Throughput** | Counter | `geosync_orders_placed_total` | baseline-specific |
+| **Saturation** | Gauge | `geosync_api_queue_depth` | < 1000 pending |
 
 ### 1.2 Risk Engine
 
 | Сигнал | Тип | Назва метрики | Threshold |
 |--------|-----|---------------|-----------|
-| **Blocked Orders** | Counter | `tradepulse_risk_rejections_total` | alert if > 10/min |
-| **Kill Switch** | Gauge | `tradepulse_risk_kill_switch` | 1 = ENGAGED → CRITICAL |
-| **Circuit State** | Gauge | `tradepulse_risk_circuit_state` | 1 (open) = warn, 2 (half_open) = info |
-| **Circuit Trips** | Counter | `tradepulse_risk_circuit_trips_total` | alert on any trip |
-| **Gross Exposure** | Gauge | `tradepulse_risk_gross_exposure` | < configured limit |
-| **Daily Drawdown** | Gauge | `tradepulse_risk_daily_drawdown` | < configured limit |
-| **Risk Validation** | Counter | `tradepulse_risk_validations_total` | track pass/reject ratio |
-| **Drawdown** | Gauge | `tradepulse_drawdown_percent` | < configured % |
+| **Blocked Orders** | Counter | `geosync_risk_rejections_total` | alert if > 10/min |
+| **Kill Switch** | Gauge | `geosync_risk_kill_switch` | 1 = ENGAGED → CRITICAL |
+| **Circuit State** | Gauge | `geosync_risk_circuit_state` | 1 (open) = warn, 2 (half_open) = info |
+| **Circuit Trips** | Counter | `geosync_risk_circuit_trips_total` | alert on any trip |
+| **Gross Exposure** | Gauge | `geosync_risk_gross_exposure` | < configured limit |
+| **Daily Drawdown** | Gauge | `geosync_risk_daily_drawdown` | < configured limit |
+| **Risk Validation** | Counter | `geosync_risk_validations_total` | track pass/reject ratio |
+| **Drawdown** | Gauge | `geosync_drawdown_percent` | < configured % |
 
 ### 1.3 Trading Mode Transitions
 
 | Сигнал | Тип | Назва метрики | Threshold |
 |--------|-----|---------------|-----------|
-| **Current Mode** | Gauge | `tradepulse_trading_mode` | label: BACKTEST/PAPER/LIVE |
-| **Mode Switch** | Counter | `tradepulse_trading_mode_transitions_total` | audit trail |
-| **Time in Mode** | Gauge | `tradepulse_trading_mode_duration_seconds` | monitoring |
+| **Current Mode** | Gauge | `geosync_trading_mode` | label: BACKTEST/PAPER/LIVE |
+| **Mode Switch** | Counter | `geosync_trading_mode_transitions_total` | audit trail |
+| **Time in Mode** | Gauge | `geosync_trading_mode_duration_seconds` | monitoring |
 
 ### 1.4 Data Ingestion
 
 | Сигнал | Тип | Назва метрики | Threshold |
 |--------|-----|---------------|-----------|
-| **Latency** | Histogram | `tradepulse_data_ingestion_duration_seconds` | p95 < 1s |
-| **Error Rate** | Counter | `tradepulse_data_ingestion_total{status="error"}` | 0 errors |
-| **Throughput** | Gauge | `tradepulse_data_ingestion_throughput_ticks_per_second` | > 0 |
+| **Latency** | Histogram | `geosync_data_ingestion_duration_seconds` | p95 < 1s |
+| **Error Rate** | Counter | `geosync_data_ingestion_total{status="error"}` | 0 errors |
+| **Throughput** | Gauge | `geosync_data_ingestion_throughput_ticks_per_second` | > 0 |
 | **Freshness** | Gauge | _derived_ | data < 5 min old |
 
 ### 1.5 Backtest Pipeline
 
 | Сигнал | Тип | Назва метрики | Threshold |
 |--------|-----|---------------|-----------|
-| **Duration** | Histogram | `tradepulse_backtest_duration_seconds` | strategy-specific |
-| **Error Rate** | Counter | `tradepulse_backtest_total{status="error"}` | 0 errors |
-| **PnL** | Gauge | `tradepulse_backtest_pnl` | monitoring |
-| **Max Drawdown** | Gauge | `tradepulse_backtest_max_drawdown` | < threshold |
+| **Duration** | Histogram | `geosync_backtest_duration_seconds` | strategy-specific |
+| **Error Rate** | Counter | `geosync_backtest_total{status="error"}` | 0 errors |
+| **PnL** | Gauge | `geosync_backtest_pnl` | monitoring |
+| **Max Drawdown** | Gauge | `geosync_backtest_max_drawdown` | < threshold |
 
 ### 1.6 ML/Model Inference (якщо MLSDM підключено)
 
 | Сигнал | Тип | Назва метрики | Threshold |
 |--------|-----|---------------|-----------|
-| **Latency** | Histogram | `tradepulse_model_inference_latency_seconds` | p99 < 500ms |
-| **Error Rate** | Gauge | `tradepulse_model_inference_error_ratio` | < 1% |
-| **Throughput** | Gauge | `tradepulse_model_inference_throughput_per_second` | > 0 |
-| **Saturation** | Gauge | `tradepulse_model_saturation` | < 0.8 |
-| **Aphasia/Blocks** | Counter | `tradepulse_model_quality_degradation_events_total` | monitor |
+| **Latency** | Histogram | `geosync_model_inference_latency_seconds` | p99 < 500ms |
+| **Error Rate** | Gauge | `geosync_model_inference_error_ratio` | < 1% |
+| **Throughput** | Gauge | `geosync_model_inference_throughput_per_second` | > 0 |
+| **Saturation** | Gauge | `geosync_model_saturation` | < 0.8 |
+| **Aphasia/Blocks** | Counter | `geosync_model_quality_degradation_events_total` | monitor |
 
 ---
 
@@ -147,11 +147,11 @@
 
 | Alert | Expression | For | Description |
 |-------|------------|-----|-------------|
-| `KillSwitchEngaged` | `tradepulse_risk_kill_switch == 1` | 0m | Kill switch is ON |
+| `KillSwitchEngaged` | `geosync_risk_kill_switch == 1` | 0m | Kill switch is ON |
 | `HighOrderErrorRate` | `rate(orders{status="error"}[5m]) / rate(orders[5m]) > 0.05` | 5m | >5% orders failing |
-| `CircuitBreakerOpen` | `tradepulse_risk_circuit_state{state="open"} == 1` | 1m | Circuit breaker tripped |
+| `CircuitBreakerOpen` | `geosync_risk_circuit_state{state="open"} == 1` | 1m | Circuit breaker tripped |
 | `DataIngestionDown` | `rate(data_ingestion{status="error"}[10m]) > 0` | 0m | Data pipeline broken |
-| `CriticalIncidentOpen` | `tradepulse_incidents_open{severity="critical"} > 0` | 0m | Unmitigated incident |
+| `CriticalIncidentOpen` | `geosync_incidents_open{severity="critical"} > 0` | 0m | Unmitigated incident |
 
 ### 3.2 WARNING Alerts (можна ігнорувати деякий час)
 
@@ -159,15 +159,15 @@
 |-------|------------|-----|-------------|
 | `HighOrderLatency` | `histogram_quantile(0.95, order_latency[5m]) > 2` | 10m | p95 > 2 seconds |
 | `RiskRejectionsSpike` | `rate(risk_rejections[5m]) > 10` | 5m | Too many blocked orders |
-| `DrawdownWarning` | `tradepulse_drawdown_percent > 5` | 10m | Drawdown > 5% |
+| `DrawdownWarning` | `geosync_drawdown_percent > 5` | 10m | Drawdown > 5% |
 | `ModelLatencyHigh` | `model_latency{quantile="0.99"} > 0.5` | 5m | ML p99 > 500ms |
-| `MetricsMissing` | `absent(up{job="tradepulse"})` | 5m | Service unreachable |
+| `MetricsMissing` | `absent(up{job="geosync"})` | 5m | Service unreachable |
 
 ---
 
 ## 4. Dashboard Panels
 
-### 4.1 TradePulse Core Dashboard
+### 4.1 GeoSync Core Dashboard
 
 **Execution Panel:**
 - Order throughput (orders/sec)

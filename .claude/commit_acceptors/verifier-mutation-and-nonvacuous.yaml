@@ -1,0 +1,58 @@
+id: verifier-mutation-and-nonvacuous
+status: ACTIVE
+claim_type: correctness
+promise: >-
+  Two VA-1 self-audit gaps closed. G1 — the verifiers themselves are mutation-tested:
+  mutating the core predicate of each audit tool (apex conjunction, aggregator all(),
+  Lyapunov Hurwitz test, Kuramoto transition gap, homeostasis gate) flips its verdict,
+  proving the predicate is load-bearing (zero survivors), not a single-falsifier
+  witness. GAP-4 — a cross-cutting meta-gate AST-verifies every artifact-bound test
+  node actually asserts (assert / raises / _assert-helper), so a gutted test body
+  cannot satisfy a binding vacuously.
+diff_scope:
+  changed_files:
+    - path: ".claude/commit_acceptors/verifier-mutation-and-nonvacuous.yaml"
+    - path: "tests/tools/test_verifier_mutation_kill.py"
+    - path: "tests/ci/test_bound_tests_are_non_vacuous.py"
+  forbidden_paths:
+    - "execution/"
+    - "core/"
+required_python_symbols: []
+expected_signal: >-
+  `python -m pytest --import-mode=importlib tests/tools/test_verifier_mutation_kill.py
+  tests/ci/test_bound_tests_are_non_vacuous.py -q` passes; every verifier predicate
+  is mutation-killed and every bound test node asserts.
+measurement_command: >-
+  bash -c '
+    python -m pytest --import-mode=importlib -p no:cacheprovider
+      tests/tools/test_verifier_mutation_kill.py
+      tests/ci/test_bound_tests_are_non_vacuous.py -q
+  '
+signal_artifact: "tmp/verifier_mutation_and_nonvacuous.log"
+falsifier:
+  command: |-
+    bash -c '
+      python -c "
+    import importlib.util, ast, pathlib
+    spec = importlib.util.spec_from_file_location(\"nv\", \"tests/ci/test_bound_tests_are_non_vacuous.py\")
+    nv = importlib.util.module_from_spec(spec); spec.loader.exec_module(nv)
+    d = pathlib.Path(\"tests/tools/test_verifier_mutation_kill.py\")
+    src = d.read_text(encoding=\"utf-8\")
+    has_kill = \"MUTATION SURVIVED\" in src and \"_assert_killed\" in src
+    vac = pathlib.Path(\"/tmp/_vac_probe.py\"); vac.write_text(\"def test_x():\n    pass\n\")
+    rejects_vacuous = not nv._function_asserts(vac, \"test_x\")
+    accepts_real = nv._function_asserts(d, \"test_apex_conjunction_predicate_is_load_bearing\")
+    raise SystemExit(0 if has_kill and rejects_vacuous and accepts_real else \"mutation or non-vacuous check unsound\")
+    "
+    '
+  description: >-
+    Confirms the mutation harness asserts survivors are killed and the non-vacuous
+    check rejects an empty test while accepting a real one. Exits 0 when both hold.
+rollback_command: >-
+  bash -c 'git rm -f .claude/commit_acceptors/verifier-mutation-and-nonvacuous.yaml'
+rollback_verification_command: >-
+  bash -c 'test ! -f .claude/commit_acceptors/verifier-mutation-and-nonvacuous.yaml'
+memory_update_type: append
+ledger_path: ".claude/commit_acceptors/verifier-mutation-and-nonvacuous.yaml"
+report_path: "tmp/verifier_mutation_and_nonvacuous.log"
+evidence: []

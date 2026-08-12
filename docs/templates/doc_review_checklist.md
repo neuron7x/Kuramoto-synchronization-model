@@ -10,7 +10,7 @@
 
 ## Review Instructions
 
-Use this checklist to ensure documentation meets TradePulse quality standards. Check applicable items, add comments where needed, and provide overall assessment at the end.
+Use this checklist to ensure documentation meets GeoSync quality standards. Check applicable items, add comments where needed, and provide overall assessment at the end.
 
 **Legend:**
 - ✅ Pass - Meets standard

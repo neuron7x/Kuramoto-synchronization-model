@@ -1,3 +1,5 @@
+# Copyright (c) 2023-2026 Yaroslav Vasylenko (neuron7xLab)
+# SPDX-License-Identifier: MIT
 """Uvicorn bootstrapper that applies hardened TLS configuration."""
 
 from __future__ import annotations
@@ -24,14 +26,14 @@ _LOGGER = logging.getLogger(__name__)
 def enforce_prod_server_flags(config: uvicorn.Config) -> None:
     """Ensure production runs never enable uvicorn reload."""
 
-    env = os.getenv("TRADEPULSE_ENV", "").lower()
+    env = os.getenv("GEOSYNC_ENV", "").lower()
     if env in {"prod", "production"} and getattr(config, "reload", False):
         msg = "Uvicorn reload is not allowed in production deployments"
         raise RuntimeError(msg)
 
 
 def _build_cli_parser() -> argparse.ArgumentParser:
-    parser = argparse.ArgumentParser(description="TradePulse control-platform server")
+    parser = argparse.ArgumentParser(description="GeoSync control-platform server")
     parser.add_argument(
         "--config",
         dest="config_path",
@@ -89,7 +91,7 @@ def run(
     config_path: Optional[str] = None,
     cli_overrides: Optional[Dict[str, Any]] = None,
 ) -> None:
-    """Start the TradePulse API server with unified initialization."""
+    """Start the GeoSync API server with unified initialization."""
 
     cli_overrides = cli_overrides or {}
     dry_run = bool(cli_overrides.get("dry_run"))
@@ -164,9 +166,7 @@ def run(
         config_kwargs.update(
             ssl_certfile=str(tls_settings.certificate),
             ssl_keyfile=str(tls_settings.private_key),
-            ssl_ca_certs=(
-                str(tls_settings.client_ca) if tls_settings.client_ca else None
-            ),
+            ssl_ca_certs=(str(tls_settings.client_ca) if tls_settings.client_ca else None),
             ssl_cert_reqs=(
                 ssl.CERT_REQUIRED
                 if tls_settings.require_client_certificate
@@ -176,7 +176,7 @@ def run(
             ssl_version=ssl.PROTOCOL_TLS_SERVER,
         )
     elif not server_settings.allow_plaintext:
-        msg = "TLS configuration is required to start the TradePulse API server"
+        msg = "TLS configuration is required to start the GeoSync API server"
         raise RuntimeError(msg)
 
     config = uvicorn.Config(**config_kwargs)
@@ -190,7 +190,7 @@ def run(
 
     controllers_loaded = init_result.telemetry_meta.get("controllers_loaded", [])
     _LOGGER.info(
-        "Starting TradePulse API server on %s://%s:%s effective_config_source=%s controllers_loaded=%s",
+        "Starting GeoSync API server on %s://%s:%s effective_config_source=%s controllers_loaded=%s",
         scheme,
         server_settings.host,
         server_settings.port,

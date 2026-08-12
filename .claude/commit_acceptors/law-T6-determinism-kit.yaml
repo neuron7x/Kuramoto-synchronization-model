@@ -1,0 +1,89 @@
+# Diff-bound acceptor for Law T6: Bit-identical reproducibility kit.
+#
+# Constitutional law T6 of seven (CLAUDE.md GeoSync Physics Law Act).
+# Pure-NumPy; no JAX runtime dependency.
+
+id: law-T6-determinism-kit
+status: ACTIVE
+claim_type: correctness
+promise: >-
+  core.physics.determinism_kit ships pure-functional canonicalisation +
+  hashing utilities that make chaotic-trajectory reproducibility a
+  property of bytes, not just of numerics: canonicalize_state (IEEE-754
+  normalisation: NaN → canonical, denormals → 0, -0 → +0),
+  state_hash (SHA-256 over canonical bytes + dtype + shape — sensitive
+  to a single ULP), trajectory_hash (SHA-256 over per-row digests in
+  order — sensitive to row permutation), ReplayManifest (sealed audit
+  binding (integrator_id, seed, dt, n_steps, x0_hash, traj_hash)),
+  verify_replay (re-hash and compare). Adds three constitutional
+  invariants:
+    INV-DET1 | universal | identical canonical inputs ⇒ identical
+                          state_hash. Tested on 100 random states; all
+                          NaN bit-patterns collapse to one hash;
+                          ±0 unify; subnormals flush to +0.
+    INV-DET2 | universal | a 1-ULP perturbation in any component
+                          changes state_hash. Tested across 50 random
+                          states × 8 components. dtype-aliasing
+                          (float32 vs float64 same bytes) blocked.
+                          Shape-aliasing blocked. Trajectory row-order
+                          changes hash.
+    INV-DET3 | universal | every contract violation (non-floating dtype,
+                          empty input, unsupported precision e.g.
+                          float16, non-2-D trajectory, empty trajectory)
+                          raises ValueError; fail-closed.
+  Determinism: pure functions; identical inputs ⇒ identical outputs to
+  byte precision (INV-HPC1 compat).
+diff_scope:
+  changed_files:
+    - path: ".claude/commit_acceptors/law-T6-determinism-kit.yaml"
+    - path: "core/physics/determinism_kit.py"
+    - path: "tests/unit/physics/test_T6_determinism_kit.py"
+    - path: "docs/laws/T6_determinism_kit.md"
+    - path: "newsfragments/law-T6-determinism-kit.feature.md"
+    - path: "CLAUDE.md"
+  forbidden_paths:
+    - "trading/"
+    - "execution/"
+    - "forecast/"
+    - "policy/"
+required_python_symbols:
+  - "ReplayManifest"
+  - "canonicalize_state"
+  - "state_hash"
+  - "trajectory_hash"
+  - "verify_replay"
+expected_signal: >-
+  All 17 unit tests pass under pytest; black, ruff, mypy --strict clean;
+  qNaN/sNaN/-NaN collapse verified; ±0 collapse verified; subnormal
+  flush verified; 1-ULP sensitivity verified across 400 perturbations;
+  ReplayManifest round-trip + tampering detection verified.
+measurement_command: >-
+  python -m pytest tests/unit/physics/test_T6_determinism_kit.py -v
+signal_artifact: "tmp/law_T6_determinism_kit_pytest.log"
+falsifier:
+  command: >-
+    python -m pytest tests/unit/physics/test_T6_determinism_kit.py
+    -v -k "INV_DET1 or INV_DET2 or INV_DET3 or replay or negative_control"
+  description: >-
+    Probe filters to the load-bearing tests:
+    INV-DET1 (NaN-pattern collapse, ±0 unify, subnormal flush — proves
+    the canonicalisation is closed under IEEE-754 corner cases);
+    INV-DET2 (1-ULP sensitivity, dtype-aliasing block, shape-aliasing
+    block, trajectory order sensitivity);
+    INV-DET3 (every contract violation raises);
+    replay (ReplayManifest round-trips + detects tampering);
+    negative_control (proves canonicalisation does not vacuously
+    collapse all values of similar magnitude).
+rollback_command: >-
+  git checkout HEAD~1 -- core/physics/determinism_kit.py
+  tests/unit/physics/test_T6_determinism_kit.py
+  .claude/commit_acceptors/law-T6-determinism-kit.yaml
+  docs/laws/T6_determinism_kit.md
+  newsfragments/law-T6-determinism-kit.feature.md
+  CLAUDE.md
+rollback_verification_command: >-
+  git diff --exit-code core/physics/determinism_kit.py
+memory_update_type: append
+ledger_path: ".claude/commit_acceptors/law-T6-determinism-kit.yaml"
+report_path: "docs/laws/T6_determinism_kit.md"
+evidence: []

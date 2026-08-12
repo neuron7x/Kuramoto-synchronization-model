@@ -1,7 +1,8 @@
-from datetime import UTC
-
+# Copyright (c) 2023-2026 Yaroslav Vasylenko (neuron7xLab)
+# SPDX-License-Identifier: MIT
 import pandas as pd
 
+from core.compat import UTC
 from core.data.backfill import CacheKey, CacheRegistry, GapFillPlanner, normalise_index
 
 

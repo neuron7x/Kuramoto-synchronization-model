@@ -1,0 +1,71 @@
+# Diff-bound commit acceptor for the 2026-06 physics-depth external audit (#1186).
+#
+# The deliverable is a research/review report at
+# docs/audit/2026-06-physics-depth-external-audit.md. Markdown outside the
+# governance-markdown roots (.claude/, docs/governance/, docs/architecture/,
+# docs/operations/, docs/prompts/) is treated as CODE by the diff-binding
+# validator (tools/commit_acceptor/validate_commit_acceptor.py::_file_is_code,
+# line ~357), so docs/audit/*.md requires an acceptor. This acceptor binds the
+# report, its falsifier, and itself.
+#
+# An audit DESCRIBES; it must cite only paths that exist. The falsifier
+# scripts/ci/check_audit_report_paths.py parses the report, extracts every
+# backtick-quoted repo path, and fires (exit 0) iff any cited path is missing —
+# the inverse-polarity convention used across the acceptor corpus.
+#
+# Governance/review scope only: no physics code, no claim tier, no gate is
+# modified by this change set.
+id: physics-depth-external-audit-2026-06
+status: ACTIVE
+claim_type: documentation
+promise: >-
+  docs/audit/2026-06-physics-depth-external-audit.md is a physics-depth external
+  audit deliverable for issue #1186 in the issue's required VERDICT / TOP_10... /
+  FINAL_STATUS format, and every repository path it cites in backticks EXISTS in
+  the tree (no fabricated/invented file paths). The report only describes the
+  canonical post-#1096/#1123 surface; it asserts no alpha, market-law, or
+  physics-confirmed claim and promotes no claim tier.
+diff_scope:
+  changed_files:
+    - path: "docs/audit/2026-06-physics-depth-external-audit.md"
+    - path: "scripts/ci/check_audit_report_paths.py"
+    - path: ".claude/commit_acceptors/physics-depth-external-audit-2026-06.yaml"
+  forbidden_paths:
+    - "trading/"
+    - "execution/"
+    - "forecast/"
+    - "policy/"
+required_python_symbols:
+  - "scripts/ci/check_audit_report_paths.py::extract_cited_paths"
+  - "scripts/ci/check_audit_report_paths.py::missing_paths"
+  - "scripts/ci/check_audit_report_paths.py::main"
+expected_signal: >-
+  `python scripts/ci/check_audit_report_paths.py` prints the OK line ("all N
+  cited repository paths ... exist") and exits 1 (the green-state precondition
+  holds: the report cites only existing paths).
+measurement_command: >-
+  bash -c 'mkdir -p tmp && python scripts/ci/check_audit_report_paths.py
+  > tmp/physics_depth_external_audit_2026_06.log 2>&1; echo "falsifier_exit=$?"
+  >> tmp/physics_depth_external_audit_2026_06.log'
+signal_artifact: "tmp/physics_depth_external_audit_2026_06.log"
+falsifier:
+  command: "python scripts/ci/check_audit_report_paths.py"
+  description: >-
+    Inverse-polarity probe (exit 0 == green-state precondition BROKEN). It
+    parses docs/audit/2026-06-physics-depth-external-audit.md, extracts every
+    backtick-quoted token that names a repository-relative source/contract/
+    governance path, and verifies each EXISTS relative to the repo root. It
+    exits 0 (fires) iff at least one cited path is MISSING (a fabricated or
+    rotted citation) OR the report file is absent; it exits 1 while every cited
+    path resolves. An exit 0 means the audit cites a path that does not exist
+    and must be repaired, not patched green.
+rollback_command: >-
+  bash -c 'git rm -f docs/audit/2026-06-physics-depth-external-audit.md
+  scripts/ci/check_audit_report_paths.py
+  .claude/commit_acceptors/physics-depth-external-audit-2026-06.yaml'
+rollback_verification_command: |-
+  python -c "import os,sys; sys.exit(1 if os.path.exists('scripts/ci/check_audit_report_paths.py') else 0)"
+memory_update_type: none
+ledger_path: ".claude/commit_acceptors/physics-depth-external-audit-2026-06.yaml"
+report_path: "docs/audit/2026-06-physics-depth-external-audit.md"
+evidence: []

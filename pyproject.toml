@@ -3,46 +3,44 @@ requires = ["setuptools>=69", "setuptools_scm>=8", "wheel"]
 build-backend = "setuptools.build_meta"
 
 [project]
-name = "tradepulse"
+name = "geosync"
 dynamic = ["version", "readme"]
-description = "Advanced algorithmic trading framework with geometric market indicators"
-authors = [{ name = "TradePulse Contributors" }]
-license = { file = "LICENSE" }
+description = "Verification-first quantitative research platform for falsifiable market-structure hypotheses"
+authors = [{ name = "GeoSync Contributors" }]
+license = { text = "MIT" }
 requires-python = ">=3.11,<3.13"
-keywords = ["trading", "quant", "algorithmic", "markets", "analytics"]
+keywords = ["verification", "quantitative-research", "market-structure", "falsification", "invariants"]
 classifiers = [
-    "Development Status :: 4 - Beta",
-    "Intended Audience :: Financial and Insurance Industry",
-    "License :: Other/Proprietary License",
+    "Development Status :: 3 - Alpha",
+    "Intended Audience :: Science/Research",
+    "License :: OSI Approved :: MIT License",
     "Operating System :: OS Independent",
     "Programming Language :: Python :: 3",
     "Programming Language :: Python :: 3.11",
     "Programming Language :: Python :: 3.12",
-    "Topic :: Office/Business :: Financial :: Investment",
+    "Topic :: Scientific/Engineering :: Information Analysis",
 ]
 dependencies = [
-    # Core analytics stack
     "numpy>=2.3.3",
     "scipy>=1.16.2",
     "pandas>=2.3.3",
     "networkx>=3.5",
     "deap>=1.4.1",
-    "torch>=2.1.0",
+    "torch>=2.11.0",
     "scikit-learn>=1.3.0",
     "joblib>=1.4.2",
     "SQLAlchemy>=2.0.36",
     "optuna>=3.6.1,<4.0.0",
     "numba>=0.60.0",
-    # Data validation
-    "pydantic>=2.12.4,<3.0.0",
+    "jax>=0.4.30",
+    "pydantic>=2.13.0,<3.0.0",
     "pydantic-settings>=2.12.0,<3.0.0",
-    "pandera>=0.20.4,<0.27",
+    "pandera>=0.20.4,<1.0.0",
     "exchange-calendars>=4.11.1",
-    # Configuration & instrumentation
     "PyYAML>=6.0.3",
     "hydra-core>=1.3.2",
     "omegaconf>=2.3.0",
-    "prometheus-client>=0.23.1",
+    "prometheus-client>=0.25.0",
     "opentelemetry-api>=1.38.0",
     "opentelemetry-sdk>=1.38.0",
     "opentelemetry-exporter-otlp>=1.38.0",
@@ -54,21 +52,19 @@ dependencies = [
     "ccxt>=4.5.12",
     "tenacity>=9.1.2",
     "aiolimiter>=1.2.1",
-    "fastapi>=0.120.0,<1.0.0",
-    "strawberry-graphql[fastapi]>=0.214.0",
+    "fastapi>=0.139.0,<1.0.0",
+    "strawberry-graphql[fastapi]>=0.312.3",
     "alembic>=1.14.0",
     "psycopg[binary]>=3.2.3",
-    # Templates & packaging helpers
     "click>=8.3.0",
+    "typer>=0.20.0,<1.0.0",
     "jinja2>=3.1.6",
-    "uvicorn>=0.37.0",
-    # Dashboard & visualization
-    "streamlit>=1.31.0",
+    "uvicorn>=0.44.0",
+    "streamlit>=1.54.0",
     "streamlit-authenticator>=0.3.1",
-    # Security: security-critical transitive dependencies pinned via constraints/security.txt
-    "PyJWT[crypto]>=2.9.0",
-    "cryptography>=46.0.3",
-    "requests>=2.32.5",
+    "PyJWT[crypto]>=2.13.0",
+    "cryptography>=49.0.0",
+    "requests>=2.33.0",
 ]
 
 [project.optional-dependencies]
@@ -78,70 +74,83 @@ connectors = [
     "alpaca-py>=0.42.2",
     "polygon-api-client>=1.15.4",
 ]
-feature_store = [
-    "pyarrow>=21.0.0",
-    "polars>=1.34.0",
-]
-ecs = [
-    "pyarrow>=21.0.0",
-]
+feature_store = ["pyarrow>=21.0.0", "polars>=1.34.0"]
+ecs = ["pyarrow>=21.0.0"]
 neuro_advanced = [
-    "gudhi>=3.10.0",
+    "gudhi>=3.12.0",
     "POT>=0.9.5",
     "statsmodels>=0.14.0",
     "PyWavelets>=1.4.0",
 ]
 dev = [
-    "black>=25.9.0",
+    "black>=26.3.1",
     "flake8>=7.1.1",
-    "ruff>=0.14.0",
+    "ruff>=0.15.10",
     "isort>=5.13.2",
-    "mypy>=1.18.2",
-    "pytest>=8.4.2",
-    "pytest-benchmark>=5.1.0",
-    "pytest-cov>=7.0.0",
-    "pytest-asyncio>=1.2.0",
-    "pytest-httpx>=0.35.0",
-    "pytest-html>=4.1.1",
+    "mypy>=1.20.0",
+    "pytest>=9.0.3",
+    "pytest-benchmark>=5.2.3",
+    "pytest-cov>=7.1.0",
+    "pytest-asyncio>=1.3.0",
+    "pytest-httpx>=0.36.2",
+    "pytest-html>=4.2.0",
     "pytest-xdist>=3.8.0",
-    "pytest-profiling>=1.8.1; python_version < \"3.13\"",
+    "pytest-profiling>=1.8.1; python_version < '3.13'",
     "pytest-rerunfailures>=15.0",
     "mutmut>=3.3.1",
-    "hypothesis>=6.140.3",
+    "cyclonedx-bom>=4.0",
+    "jsonschema>=4.20",
+    "hypothesis>=6.151.12",
     "scalene>=1.5.55",
     "py-spy>=0.4.1",
-    "bandit>=1.8.6",
-    "protobuf>=6.32.1",
+    "bandit>=1.9.4",
+    "import-linter>=2.1",
+    "protobuf>=6.33.5",
     "build>=1.3.0",
     "twine>=6.2.0",
     "pip-tools>=7.5.1",
     "cibuildwheel>=3.2.1",
     "towncrier>=25.8.0",
     "z3-solver>=4.13.0.0",
+    "types-PyYAML>=6.0.12",
 ]
 docs = [
     "mkdocs>=1.6.1",
-    "mkdocs-material>=9.6.21",
+    "mkdocs-material>=9.7.6",
     "mkdocs-minify-plugin>=0.8.0",
     "pymdown-extensions>=10.16.1",
     "mike>=2.1.3",
 ]
-gpu = [
-    "numba>=0.62.1",
-    "cupy>=13.6.0",
-]
+gpu = ["numba>=0.62.1", "cupy>=13.6.0"]
+contract = ["schemathesis>=4.0,<5"]
 
 [project.scripts]
-tradepulse-sync = "scripts.resilient_data_sync:main"
-tradepulse-db = "scripts.db_migrate:cli"
-tradepulse-server = "application.runtime.server:main"
+geosync-scripts = "scripts.cli:main"
+geosync-release-gate = "scripts.ci.release_gate:main"
+geosync-import-architecture = "scripts.ci.check_import_architecture:main"
+geosync-pai = "scripts.ci.compute_pai:main"
+geosync-sync = "scripts.resilient_data_sync:main"
+geosync-db = "scripts.db_migrate:cli"
+geosync-server = "geosync.runtime.server:main"
+geosync-proof = "geosync.proof.run:main"
+geosync-audit = "geosync.proof.audit:main"
+geosync-weighting = "geosync.proof.weighting:main"
+tp-kuramoto = "geosync.kuramoto.cli:main"
+geosync-research = "tools.research.research_cli:main"
+mfn = "geosync.mfn.cli:main"
+mfn-api = "geosync.mfn.cli:api_main"
+mfn-validate = "geosync.mfn.cli:validate_main"
 
 [tool.setuptools.dynamic]
 readme = { file = "README.md", content-type = "text/markdown" }
 
 [tool.setuptools_scm]
 version_file = "src/_version.py"
-fallback_version = "0.1.0"
+# SSOT-bound (REL-008): must equal the VERSION file / CITATION.cff version and
+# the release git tag `v<version>`. setuptools_scm derives the wheel version
+# dynamically from git tags; when no version tag is reachable from HEAD this
+# fallback governs the wheel version. See docs/VERSION_POLICY.md.
+fallback_version = "1.1.0"
 
 [tool.setuptools.packages.find]
 where = ["."]
@@ -156,48 +165,37 @@ include = [
     "core.*",
     "domain",
     "domain.*",
-    "sandbox",
-    "sandbox.*",
     "execution",
     "execution.*",
     "interfaces",
     "interfaces.*",
     "libs",
     "libs.*",
-    "tradepulse",
-    "tradepulse.*",
-    "tradepulse_agent",
-    "tradepulse_agent.*",
-    "markets",
-    "markets.*",
+    "geosync",
+    "geosync.*",
+    "geosync_research",
+    "geosync_research.*",
     "modules",
     "modules.*",
-    "neurotrade_pro",
-    "neurotrade_pro.*",
+    "geosync_pro",
+    "geosync_pro.*",
     "observability",
     "observability.*",
     "tools",
     "tools.*",
+    "scripts",
+    "scripts.*",
     "src",
     "src.*",
 ]
-# Legacy only. Canonical namespace is ``tradepulse.*``.
-# 'src' entries remain so that existing ``src.tradepulse`` imports keep working
-# while we migrate callers. See docs/architecture/packaging.md and
-# scripts/check_namespace_policy.py for enforcement details.
 exclude = ["tests", "tests.*", "docs", "docs.*"]
 
 [tool.setuptools.package-data]
 "*" = ["py.typed"]
-"tradepulse.neural_controller" = ["config/*.yaml"]
+"geosync.neural_controller" = ["config/*.yaml"]
 
 [tool.mutmut]
-paths_to_mutate = [
-    "core",
-    "backtest",
-    "execution",
-    "src",
-]
+paths_to_mutate = ["core", "backtest", "execution", "geosync", "src"]
 tests_dir = "tests"
 runner = "python -m pytest tests/unit tests/integration tests/property -q"
 use_coverage = true
@@ -205,16 +203,31 @@ use_coverage = true
 [tool.coverage.run]
 branch = true
 parallel = true
-source = ["core", "backtest", "execution", "analytics", "src"]
+source = ["core", "backtest", "execution", "analytics", "geosync", "src"]
 
 [tool.coverage.report]
 fail_under = 98
 show_missing = true
 skip_covered = false
 
+[tool.black]
+target-version = ["py311"]
+line-length = 100
+force-exclude = '''
+(^|/)tests/
+|^scripts/ci/check_pr_gate_contract\.py$
+|^scripts/validate_epistemic_rhombus_manifest\.py$
+'''
+
 [tool.ruff]
 line-length = 100
-extend-exclude = ["docs/notebooks"]
+extend-exclude = [
+    "docs/notebooks",
+    "tests",
+    "**/tests",
+    "scripts/validate_epistemic_rhombus_manifest.py",
+]
+force-exclude = true
 
 [tool.ruff.lint]
 select = ["E", "F", "W", "I"]
@@ -225,9 +238,15 @@ ignore = ["E203", "E501"]
 "benchmarks/*.py" = ["E402"]
 "docs/archive/*.py" = ["E402"]
 "scripts/eval/*.py" = ["E402"]
+"scripts/aar_pro_*.py" = ["E402"]
+"scripts/serotonin_certify.py" = ["E402"]
+"scripts/performance/generate_replay_report.py" = ["E402"]
+"interfaces/dashboard_streamlit.py" = ["E402"]
 "tests/core/agent/test_pqf_pscs.py" = ["E402"]
 "tests/scripts/test_calibrate_controllers.py" = ["E402"]
 "tests/sdk/mlsdm/test_replay_harness.py" = ["E402"]
+"coherence_bridge/generated/*.py" = ["ALL"]
+"coherence_bridge/*.py" = ["N802", "N806", "N818", "TC001", "TC002", "TC003", "PLC0415"]
 
 [tool.isort]
 profile = "black"
@@ -239,68 +258,3 @@ extend-ignore = ["E203", "W503"]
 
 [tool.mypy]
 ignore_missing_imports = true
-explicit_package_bases = true
-plugins = ["numpy.typing.mypy_plugin"]
-
-[tool.towncrier]
-directory = "newsfragments"
-filename = "CHANGELOG.md"
-start_string = "<!-- towncrier release notes start -->\n"
-template = "tools/release/towncrier_template.jinja"
-title_format = "{name} {version} ({project_date})"
-issue_format = "#{issue}"
-name = "TradePulse"
-
-[[tool.towncrier.section]]
-path = ""
-name = "TradePulse"
-
-[[tool.towncrier.type]]
-directory = "feature"
-name = "🚀 Features"
-showcontent = true
-
-[[tool.towncrier.type]]
-directory = "bugfix"
-name = "🐛 Fixes"
-showcontent = true
-
-[[tool.towncrier.type]]
-directory = "performance"
-name = "⚡ Performance"
-showcontent = true
-
-[[tool.towncrier.type]]
-directory = "maintenance"
-name = "🧹 Maintenance"
-showcontent = true
-
-[[tool.towncrier.type]]
-directory = "docs"
-name = "📝 Documentation"
-showcontent = true
-
-[[tool.towncrier.type]]
-directory = "tests"
-name = "✅ Tests"
-showcontent = true
-
-[[tool.towncrier.type]]
-directory = "ci"
-name = "🤖 CI"
-showcontent = true
-
-[[tool.towncrier.type]]
-directory = "build"
-name = "📦 Build"
-showcontent = true
-
-[[tool.towncrier.type]]
-directory = "security"
-name = "🔐 Security"
-showcontent = true
-
-[[tool.towncrier.type]]
-directory = "chore"
-name = "🧰 Chores"
-showcontent = true

@@ -1,0 +1,65 @@
+# Diff-bound commit acceptor: clear two C3 (test-name-overclaim) false-confidence
+# findings the heuristic raised on the cache-allowlist tests added in #907.
+#
+# tools/audit/false_confidence_detector.py C3 flags a `test_*` function whose
+# name contains a security word ("safe"/"unsafe" — the latter via substring) but
+# whose body has fewer than two assertion-lines. Both flagged tests are correct
+# PARAMETRIZED tests where one assertion per case is the right count; the flag is
+# a heuristic false positive. Rather than add a permanent waiver, strengthen each
+# test with a second, genuinely meaningful assertion (the detector's own
+# preferred remedy: "add a negative case"), so the gate returns to baseline 0
+# without exemption debt and the tests are objectively stronger.
+#
+# Locally verified (CI view — no untracked build/ or .claude/worktrees):
+#   * python tools/audit/false_confidence_detector.py --exit-on-finding -> 0 findings, exit 0
+#   * pytest tests/unit/indicators/test_cache_locate_allowlist.py -> 19 passed
+#   * ruff clean
+
+id: false-confidence-c3-cache-tests
+status: ACTIVE
+claim_type: governance
+promise: >-
+  After this PR lands, the false-confidence detector returns to baseline 0 under
+  the default manifest: the two C3 findings on
+  tests/unit/indicators/test_cache_locate_allowlist.py are cleared by adding a
+  second meaningful assertion to each parametrized test (no exemption added), and
+  the tests still pass.
+diff_scope:
+  changed_files:
+    - path: ".claude/commit_acceptors/false-confidence-c3-cache-tests.yaml"
+    - path: "tests/unit/indicators/test_cache_locate_allowlist.py"
+  forbidden_paths:
+    - "trading/"
+    - "execution/"
+    - "forecast/"
+    - "policy/"
+    - "core/physics/"
+    - "core/kuramoto/"
+required_python_symbols: []
+expected_signal: >-
+  `python tools/audit/false_confidence_detector.py --exit-on-finding` exits 0 with
+  zero findings (CI view), and
+  `pytest tests/unit/indicators/test_cache_locate_allowlist.py` passes (19).
+measurement_command: >-
+  bash -c '
+    python -m pytest tests/unit/indicators/test_cache_locate_allowlist.py -q
+  '
+signal_artifact: "tmp/false_confidence_c3.log"
+falsifier:
+  command: >-
+    bash -c '
+      grep -c "assert _module_is_safe(symbol.split" tests/unit/indicators/test_cache_locate_allowlist.py | grep -q "^0$"
+    '
+  description: >-
+    Checks that the second strengthening assertion is present. The falsifier
+    succeeds (exit 0) only if the added assertion is gone — i.e. the test reverts
+    to a single assertion and would re-trip the C3 heuristic. With the fix in
+    place the grep count is non-zero, so the falsifier fails.
+rollback_command: >-
+  bash -c 'git checkout origin/main -- tests/unit/indicators/test_cache_locate_allowlist.py && rm -f .claude/commit_acceptors/false-confidence-c3-cache-tests.yaml'
+rollback_verification_command: >-
+  bash -c '! test -f .claude/commit_acceptors/false-confidence-c3-cache-tests.yaml'
+memory_update_type: append
+ledger_path: ".claude/commit_acceptors/false-confidence-c3-cache-tests.yaml"
+report_path: "tmp/false_confidence_c3.log"
+evidence: []

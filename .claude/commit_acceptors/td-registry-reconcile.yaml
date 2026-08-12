@@ -1,0 +1,81 @@
+# Diff-bound commit acceptor for the 2026-06-10 tech-debt registry reconciliation.
+#
+# The unified registry (reports/TECH_DEBT_REGISTRY.md) was dated 2025-12-19,
+# had no status column, and never marked closure — so it asserted a non-existent
+# state (TD-001 listed P0-CRITICAL "import breaks package" when import works).
+# A 4-cluster parallel audit reconciled all 22 TD items against current main.
+# Verdict: 17 RESOLVED, 5 PARTIAL, 0 STILL-OPEN. Two live items closed here:
+#   * TD-019 (P0 supply-chain): pinned 2 mutable-tag actions in
+#     calib-grid-witness-map.yml to the repo's canonical SHAs.
+#   * TD-016 (P2 risk): removed dead side/direction no-op under abs() in
+#     DefaultPortfolioRiskAnalyzer.heat; corrected docstrings to state the
+#     fail-closed gross-exposure contract. Behaviour unchanged.
+#
+# Locally verified:
+#   * mypy --strict / ruff / black: clean on execution/risk/core.py
+#   * test_portfolio_heat_sums_absolute_exposure: green (gross unchanged)
+#   * local pin-guard mirror of repo-policy: 0 violations across all workflows
+#   * import core.indicators smoke: OK (TD-001 stays resolved)
+
+id: td-registry-reconcile
+status: ACTIVE
+claim_type: chore
+promise: >-
+  After this PR lands, reports/TECH_DEBT_REGISTRY.md carries a 2026-06-10
+  code-verified status column for all 22 TD items (17 RESOLVED, 5 PARTIAL,
+  0 open), TD-019 is closed (calib-grid-witness-map.yml actions pinned to
+  canonical SHAs; pin-guard reports 0 violations), and TD-016 is closed
+  (heat is gross-by-design with the dead directional no-op removed and the
+  docstring corrected; portfolio_heat behaviour is unchanged and remains
+  fail-closed — long and short both add as positive exposure).
+diff_scope:
+  changed_files:
+    - path: ".claude/commit_acceptors/td-registry-reconcile.yaml"
+    - path: ".github/workflows/calib-grid-witness-map.yml"
+    - path: "execution/risk/core.py"
+    - path: "reports/TECH_DEBT_REGISTRY.md"
+  forbidden_paths:
+    - "trading/"
+    - "forecast/"
+    - "policy/"
+    - "core/physics/"
+    - "core/kuramoto/"
+required_python_symbols:
+  - "execution/risk/core.py::portfolio_heat"
+  - "execution/risk/core.py::DefaultPortfolioRiskAnalyzer"
+expected_signal: >-
+  `mypy --strict execution/risk/core.py` is clean; ruff + black are clean on
+  the diff; `test_portfolio_heat_sums_absolute_exposure` passes (gross heat
+  over a long+short pair equals 250.0, unchanged); the local pin-guard mirror
+  of repo-policy reports 0 unpinned `uses:` across .github/workflows/*.yml.
+measurement_command: |-
+  bash -c '
+    mypy --strict execution/risk/core.py && ruff check execution/risk/core.py && black --check execution/risk/core.py && python -m pytest tests/unit/test_execution.py -k heat -q && python -c "import re,sys;from pathlib import Path;p=re.compile(r\"^\s*uses:\s*([^\s#]+)\");v=[f\"{w}:{i}\" for w in sorted(Path(\".github/workflows\").glob(\"*.yml\")) for i,l in enumerate(w.read_text().splitlines(),1) if (m:=p.search(l)) and not m.group(1).startswith((\"./\",\"docker://\")) and not re.search(r\"@[a-f0-9]{40}$\",m.group(1))];sys.exit(1 if v else 0)"
+  '
+signal_artifact: "tmp/td_registry_reconcile.log"
+falsifier:
+  command: |-
+    bash -c '
+      python -c "
+    from execution.risk.core import portfolio_heat
+    h = portfolio_heat([{\"qty\": 2.0, \"price\": 100.0}, {\"qty\": -1.0, \"price\": 50.0}])
+    import sys
+    sys.exit(0 if abs(h - 250.0) > 1e-9 else 1)
+      "
+    '
+  description: >-
+    Probes the load-bearing gross-exposure contract: a long leg (2 @ 100) and
+    a short leg (-1 @ 50) must aggregate to 250.0 of gross heat. The falsifier
+    succeeds (exit 0) only if heat ever nets the legs (e.g. drifts toward 150),
+    which would under-state capital-at-risk and break the fail-closed contract.
+rollback_command: >-
+  bash -c 'git checkout origin/main --
+    execution/risk/core.py
+    .github/workflows/calib-grid-witness-map.yml
+    reports/TECH_DEBT_REGISTRY.md && rm -f .claude/commit_acceptors/td-registry-reconcile.yaml'
+rollback_verification_command: >-
+  bash -c '! test -f .claude/commit_acceptors/td-registry-reconcile.yaml'
+memory_update_type: append
+ledger_path: ".claude/commit_acceptors/td-registry-reconcile.yaml"
+report_path: "tmp/td_registry_reconcile.log"
+evidence: []

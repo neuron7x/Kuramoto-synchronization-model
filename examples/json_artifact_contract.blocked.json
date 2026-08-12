@@ -1,0 +1,124 @@
+{
+  "contract_type": "blocked_contract",
+  "objective": {
+    "target_state": "external validation blocked until runner output is provided",
+    "current_state": "required execution evidence is absent",
+    "transformation": "stop validation status promotion and request exact missing input",
+    "action_vector": "earn -> exit -> build systems",
+    "optimization": {
+      "minimize": [
+        "E_stress",
+        "H_entropy",
+        "epsilon_error",
+        "token_cost",
+        "ambiguity",
+        "fake_validation"
+      ],
+      "maximize": [
+        "V_system",
+        "V_autonomy",
+        "V_verified_progress"
+      ]
+    }
+  },
+  "inputs": {
+    "required": [
+      "external_runner_output"
+    ],
+    "provided": [
+      "contract_spec"
+    ],
+    "missing": [
+      "external_runner_output"
+    ],
+    "assumptions": [
+      "No runner evidence is attached."
+    ]
+  },
+  "definitions": [
+    {
+      "term": "blocked_contract",
+      "operational_definition": "Required input is absent and cannot be safely inferred.",
+      "failure_condition": "Any validated status or non-null score appears without evidence.",
+      "validation_method": "policy checker plus artifact validator"
+    }
+  ],
+  "execution_plan": [
+    {
+      "step_id": "P1",
+      "action": "provide external runner output",
+      "input": "external runner log",
+      "output": "unblocked validation artifact",
+      "tool_required": "external runner",
+      "failure_condition": "runner output is still missing"
+    }
+  ],
+  "python_runner_contract": {
+    "required": true,
+    "entrypoint": "tools/validate_json_artifact_contract.py",
+    "commands": [
+      "python tools/validate_json_artifact_contract.py examples/json_artifact_contract.blocked.json --out artifacts/validation/json_artifact_blocked.result.json",
+      "python tools/check_json_contract_evidence_policy.py examples/json_artifact_contract.blocked.json --out artifacts/validation/json_artifact_blocked_policy.result.json"
+    ],
+    "expected_artifacts": [
+      "artifacts/validation/json_artifact_blocked.result.json",
+      "artifacts/validation/json_artifact_blocked_policy.result.json"
+    ],
+    "timeout_seconds": 300,
+    "success_criteria": [
+      "validator accepts explicit blocked state"
+    ],
+    "failure_criteria": [
+      "validated status appears without evidence"
+    ]
+  },
+  "validation_tests": [
+    {
+      "test_id": "T_BLOCKED_STATE",
+      "test_type": "behavioral",
+      "input": "blocked contract json",
+      "expected_output": "BLOCKED",
+      "runner": "python",
+      "pass_criteria": "missing input is explicit and score is null",
+      "fail_criteria": "missing input is empty or score is non-null"
+    }
+  ],
+  "failure_register": [
+    {
+      "failure": "MISSING_EXTERNAL_RUNNER_OUTPUT",
+      "cause": "external runner output was not provided",
+      "impact": "validation cannot proceed",
+      "detection": "inputs.missing contains external_runner_output",
+      "mitigation": "run external validator and attach output",
+      "severity": "HIGH"
+    }
+  ],
+  "evidence_status": {
+    "external_evidence_available": false,
+    "evidence_source": "unavailable",
+    "tests_executed": [],
+    "tests_not_executed": [
+      "external_runner"
+    ],
+    "score": null,
+    "confidence": 0.65,
+    "status": "BLOCKED"
+  },
+  "output_constraints": {
+    "json_only": true,
+    "no_markdown": true,
+    "no_prose": true,
+    "no_self_scoring": true,
+    "no_simulated_tests": true,
+    "no_validation_without_evidence": true,
+    "minimize_tokens": true
+  },
+  "next_deterministic_action": "provide external_runner_output and rerun validator",
+  "final_verdict": {
+    "status": "BLOCKED",
+    "reason": "external_runner_output is missing",
+    "evidence_required": [
+      "external_runner_output"
+    ]
+  }
+}

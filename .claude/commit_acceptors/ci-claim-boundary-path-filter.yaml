@@ -1,0 +1,27 @@
+# SPDX-License-Identifier: MIT
+id: ci-claim-boundary-path-filter
+status: ACTIVE
+claim_type: governance
+promise: "Close the claim-boundary gate trigger gap: an edit to a core/indicators/** module ALONE now fires the claim-boundary-gate workflow on both pull_request and push, completing Instrument B's CI coverage (PR #1009). YAML-only change; gate logic and exit semantics unchanged."
+diff_scope:
+  changed_files:
+    - path: ".github/workflows/claim-boundary-gate.yml"
+    - path: ".claude/commit_acceptors/ci-claim-boundary-path-filter.yaml"
+  forbidden_paths:
+    - "trading/"
+    - "execution/"
+    - "forecast/"
+    - "policy/"
+required_python_symbols: []
+expected_signal: "claim-boundary-gate workflow `on.pull_request.paths` and `on.push.paths` both contain `core/indicators/**`; check_claim_boundary.py still exits 0."
+measurement_command: "python scripts/ci/check_claim_boundary.py"
+signal_artifact: "tmp/claim_boundary.log"
+falsifier:
+  command: "python -c \"import yaml,sys; d=yaml.safe_load(open('.github/workflows/claim-boundary-gate.yml')); on=d.get('on', d.get(True)); pr='core/indicators/**' in on['pull_request']['paths']; pu='core/indicators/**' in on['push']['paths']; sys.exit(0 if not (pr and pu) else 1)\""
+  description: "Asserts the trigger gap is OPEN (core/indicators/** absent from one or both path filters); on the patched green path this probe exits non-zero, proving the promise is falsifiable."
+rollback_command: "git revert --no-edit HEAD"
+rollback_verification_command: "python -c \"import yaml,sys; d=yaml.safe_load(open('.github/workflows/claim-boundary-gate.yml')); on=d.get('on', d.get(True)); sys.exit(0 if 'core/indicators/**' not in on['push']['paths'] else 1)\""
+memory_update_type: none
+ledger_path: ".claude/commit_acceptors/ci-claim-boundary-path-filter.yaml"
+report_path: ".claude/commit_acceptors/ci-claim-boundary-path-filter.yaml"
+evidence: []

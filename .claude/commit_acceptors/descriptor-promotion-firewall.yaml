@@ -1,0 +1,37 @@
+# Diff-bound acceptor for the descriptor-to-physics promotion firewall.
+# Binds the PR that introduces tools/claims/check_descriptor_promotion.py and
+# its gate so CI's --require-acceptor-for-code-change passes on this changeset.
+
+id: descriptor-promotion-firewall
+status: ACTIVE
+claim_type: governance
+promise: "Public docs/code that silently promotes a descriptor into a physical law, physical phase, market consensus, predictive validity, or alpha fails CI; honest descriptor-discipline prose passes."
+diff_scope:
+  changed_files:
+    - path: "tools/claims/check_descriptor_promotion.py"
+    - path: "tests/tools/test_descriptor_promotion_firewall.py"
+    - path: ".github/descriptor_promotion_allow.json"
+    - path: ".github/workflows/descriptor-promotion-gate.yml"
+    - path: "docs/claims/descriptor_promotion_policy.md"
+    - path: ".claude/commit_acceptors/descriptor-promotion-firewall.yaml"
+  forbidden_paths:
+    - "trading/"
+    - "execution/"
+    - "forecast/"
+    - "policy/"
+required_python_symbols:
+  - "scan_line"
+  - "evaluate"
+  - "main"
+expected_signal: "firewall passes on the shipped surface and all self-falsification tests pass"
+measurement_command: "python tools/claims/check_descriptor_promotion.py && python -m pytest -q tests/tools/test_descriptor_promotion_firewall.py"
+signal_artifact: "tmp/descriptor_promotion_firewall.log"
+falsifier:
+  command: "python -m pytest -q tests/tools/test_descriptor_promotion_firewall.py -k injected_promotion_fails"
+  description: "Probe asserts the firewall fails closed when an injected doc promotes a feature to alpha."
+rollback_command: "git checkout -- tools/claims/check_descriptor_promotion.py tests/tools/test_descriptor_promotion_firewall.py .github/descriptor_promotion_allow.json .github/workflows/descriptor-promotion-gate.yml docs/claims/descriptor_promotion_policy.md .claude/commit_acceptors/descriptor-promotion-firewall.yaml"
+rollback_verification_command: "git diff --exit-code"
+memory_update_type: append
+ledger_path: ".claude/commit_acceptors/descriptor-promotion-firewall.yaml"
+report_path: "docs/claims/descriptor_promotion_policy.md"
+evidence: []

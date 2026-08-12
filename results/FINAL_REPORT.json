@@ -1,0 +1,13 @@
+{
+  "FINAL_VERDICT": "REJECT",
+  "best_IC": 0.007,
+  "best_signal": "combined",
+  "combination_lift": 0.0,
+  "optimal_horizon": 1,
+  "regime_effect": false,
+  "replay_hash": "8e4ab6f0acde27e8aae20550679f537da0df39debedfe06f0b5aabd99d11354a",
+  "signals_passed": 0,
+  "signals_tested": 4,
+  "substrate": "BID_ASK_MICROSTRUCTURE",
+  "timestamp_utc": "2026-04-11T08:31:57.203411+00:00"
+}

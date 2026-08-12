@@ -1,4 +1,5 @@
-# SPDX-License-Identifier: LicenseRef-TradePulse-Proprietary
+# Copyright (c) 2023-2026 Yaroslav Vasylenko (neuron7xLab)
+# SPDX-License-Identifier: MIT
 """Almgren-Chriss optimal execution model implementation.
 
 This module provides an implementation of the Almgren-Chriss framework for
@@ -312,9 +313,7 @@ class AlmgrenChrissOptimizer:
 
         return permanent_cost + temporary_cost
 
-    def _compute_execution_risk(
-        self, trajectory: np.ndarray, time_step: float
-    ) -> float:
+    def _compute_execution_risk(self, trajectory: np.ndarray, time_step: float) -> float:
         """Compute variance of execution cost.
 
         Var[S] = sigma^2 * sum_k x_k^2 * tau

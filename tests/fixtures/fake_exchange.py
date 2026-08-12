@@ -1,3 +1,5 @@
+# Copyright (c) 2023-2026 Yaroslav Vasylenko (neuron7xLab)
+# SPDX-License-Identifier: MIT
 from __future__ import annotations
 
 import heapq
@@ -73,9 +75,7 @@ class FakeExchangeAdapter(ExecutionConnector):
 
     # ------------------------------------------------------------------
     # Order lifecycle
-    def place_order(
-        self, order: Order, *, idempotency_key: str | None = None
-    ) -> Order:  # type: ignore[override]
+    def place_order(self, order: Order, *, idempotency_key: str | None = None) -> Order:  # type: ignore[override]
         attempt_key = None
         if idempotency_key is not None:
             attempt_key = str(idempotency_key)

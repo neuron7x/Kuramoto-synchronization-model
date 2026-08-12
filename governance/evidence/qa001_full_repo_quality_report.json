@@ -1,0 +1,26 @@
+{
+  "artifact": "qa001_full_repo_quality_report",
+  "gap": "python-quality PR gate lints changed files only; this report sweeps the whole repository so accumulated drift in untouched modules is visible.",
+  "readiness_entry": "QA-001",
+  "repo_wide_clean": false,
+  "residual_debt": {
+    "black_reformats": 6,
+    "note": "Residual repo-wide lint debt is now SURFACED and CI-retained (report-only). Zeroing it is tracked separately; closing QA-001 establishes the missing whole-repo evidence, not a clean bill.",
+    "ruff_errors": 42
+  },
+  "schema": "readiness.evidence.v1",
+  "sweeps": [
+    {
+      "clean": false,
+      "error_count": 42,
+      "scope": "repository",
+      "tool": "ruff"
+    },
+    {
+      "clean": false,
+      "reformat_count": 6,
+      "scope": "repository",
+      "tool": "black"
+    }
+  ]
+}

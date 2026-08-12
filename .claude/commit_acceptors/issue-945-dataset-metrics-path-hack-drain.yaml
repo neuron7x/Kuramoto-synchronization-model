@@ -1,0 +1,54 @@
+id: issue-945-dataset-metrics-path-hack-drain
+status: ACTIVE
+claim_type: refactor
+promise: >-
+  The dataset-schema, dataset-provenance, and metrics validators resolve their
+  first-party dependencies (core.data.*, tools.observability.*) as packaged
+  imports from the installed wheel, with no runtime repo-root sys.path mutation,
+  and changing no validation behavior (#945).
+
+diff_scope:
+  changed_files:
+    - path: ".claude/commit_acceptors/issue-945-dataset-metrics-path-hack-drain.yaml"
+    - path: "scripts/validate_dataset_schema.py"
+    - path: "scripts/validate_datasets.py"
+    - path: "scripts/validate_metrics.py"
+    - path: "tests/scripts/test_packaging_smoke.py"
+    - path: ".github/import_architecture_baseline.json"
+  forbidden_paths:
+    - "application/"
+    - "backtest/"
+    - "core/"
+    - "execution/"
+    - "modules/"
+
+required_python_symbols: []
+
+expected_signal: >-
+  The packaging smoke contract asserts each migrated module imports by its
+  canonical dotted path and carries no sys.path mutation; the import-architecture
+  ratchet holds with the three drained entries removed from the path-hack ledger.
+
+measurement_command: >-
+  python -m pytest tests/scripts/test_packaging_smoke.py -q && python scripts/ci/check_import_architecture.py
+
+signal_artifact: ".github/import_architecture_baseline.json"
+
+falsifier:
+  command: >-
+    python -c "import re,sys; src=open('scripts/validate_datasets.py').read(); sys.exit(0 if re.search(r'sys\\.path\\.(insert|append)', src) else 1)"
+  description: >-
+    Re-introducing a sys.path mutation into a drained validator makes this probe
+    pass (exit 0) and breaks tests/scripts/test_packaging_smoke.py; on the green
+    path the probe fails (exit 1), proving the path hack is actually gone.
+
+rollback_command: >-
+  git checkout -- scripts/validate_dataset_schema.py scripts/validate_datasets.py scripts/validate_metrics.py tests/scripts/test_packaging_smoke.py .github/import_architecture_baseline.json .claude/commit_acceptors/issue-945-dataset-metrics-path-hack-drain.yaml
+
+rollback_verification_command: >-
+  git diff --exit-code
+
+memory_update_type: none
+ledger_path: ".github/import_architecture_baseline.json"
+report_path: "docs/reports/diff_bound_commit_acceptor_layer.md"
+evidence: []

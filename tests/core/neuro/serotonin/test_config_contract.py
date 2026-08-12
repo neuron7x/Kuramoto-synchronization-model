@@ -1,9 +1,11 @@
-# SPDX-License-Identifier: LicenseRef-TradePulse-Proprietary
+# Copyright (c) 2023-2026 Yaroslav Vasylenko (neuron7xLab)
+# SPDX-License-Identifier: MIT
 """Tests for serotonin configuration contract.
 
 This module tests the multi-profile config loading, validation, and
 backwards compatibility for the serotonin controller configuration.
 """
+
 from __future__ import annotations
 
 from pathlib import Path

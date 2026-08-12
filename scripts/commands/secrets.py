@@ -1,3 +1,5 @@
+# Copyright (c) 2023-2026 Yaroslav Vasylenko (neuron7xLab)
+# SPDX-License-Identifier: MIT
 """Secrets automation commands backed by HashiCorp Vault."""
 
 from __future__ import annotations
@@ -53,9 +55,7 @@ def _configure_issue_dynamic(parser: ArgumentParser) -> None:
         "--token-env",
         help="Environment variable containing a static Vault token",
     )
-    parser.add_argument(
-        "--oidc-mount", default="oidc", help="OIDC auth mount path (default: oidc)"
-    )
+    parser.add_argument("--oidc-mount", default="oidc", help="OIDC auth mount path (default: oidc)")
     parser.add_argument(
         "--oidc-role",
         help="OIDC auth role name (defaults to the dynamic credential role)",
@@ -121,9 +121,7 @@ def _load_jwt(args: object) -> str:
         if not jwt_path.exists():
             raise CommandError(f"JWT file {jwt_path} does not exist")
         return jwt_path.read_text(encoding="utf-8").strip()
-    raise CommandError(
-        "A JWT must be supplied via --jwt, --jwt-env, or --jwt-path for OIDC auth"
-    )
+    raise CommandError("A JWT must be supplied via --jwt, --jwt-env, or --jwt-path for OIDC auth")
 
 
 @register("secrets-issue-dynamic")

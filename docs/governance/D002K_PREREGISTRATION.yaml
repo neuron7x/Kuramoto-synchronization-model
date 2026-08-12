@@ -1,0 +1,243 @@
+# D-002K Pre-Registration — high-SNR event-conditioned funding-liquidity stress benchmark
+# ----------------------------------------------------------------
+# Class:  pre-registered falsification protocol (FRESH lineage AFTER
+#         the D-002J-P7 POWER_GATE_REFUSED_UNDERPOWERED terminal
+#         verdict). D-002K is NOT a D-002J rescue, mutation, or P8.
+# Date:   2026-05-15
+# Anchor: this file becomes content-addressed at PR merge. The
+#         sha256 of this file inside the merged git tree IS the
+#         contract identity. Do not edit after merge; any change
+#         after the anchor commit is a fresh pre-registration
+#         (D-002L or successor letter), NOT a patch.
+#
+# ----------------------------------------------------------------
+# Critical relationships (the no-rescue boundary, stated first)
+# ----------------------------------------------------------------
+# D-002K does NOT reopen, mutate, amend, or rescue D-002J.
+# D-002J remains terminally REFUSED at P7
+#   (POWER_GATE_REFUSED_UNDERPOWERED, refused_axis effect_too_small).
+# D-002K is NOT D-002J-P8 and does NOT authorise any D-002J P8.
+# D-002K does NOT claim the D-002J-P7 REFUSED verdict was wrong —
+#   that verdict remains the truthful terminal outcome and is the
+#   honest foundation D-002K is built on.
+# D-002K does NOT relax alpha, inflate the effect prior, or shrink
+#   any D-002J grid post-hoc — that is the exact failure axis being
+#   designed against, and doing it would be statistical laundering.
+# D-002K narrows the SCOPE (3 windows x 1 mechanism x 1 primary
+#   metric); it does NOT loosen the STATISTICS at fixed scope.
+# D-002K is a SEPARATE scientific contract opening a fresh
+#   pre-registered lineage explicitly designed against the
+#   inherited effect_too_small refusal axis.
+# ----------------------------------------------------------------
+
+schema_version: D002K-PREREG-v1
+study_id: D-002K
+title: High-SNR Event-Conditioned Funding-Liquidity Stress Benchmark
+date: "2026-05-15"
+merged_at_anchor: pending  # set by merge commit
+
+# ----------------------------------------------------------------
+# Parent lineage — D-002J terminal refusal, inherited not undone
+# ----------------------------------------------------------------
+parent_lineage: D-002J
+parent_status: TERMINAL_REFUSED
+parent_refusal_pr: 705
+parent_refusal_merge_sha: c5c4158bed639014ec35ab8f53ec70d98be660a2
+parent_refusal_decision: POWER_GATE_REFUSED_UNDERPOWERED
+parent_refusal_node: D002J-P7
+inherited_failure_axis: effect_too_small
+is_rescue: false
+no_rescue_boundary: >
+  D-002K does NOT reopen, mutate, or rescue D-002J. D-002J remains
+  terminally REFUSED at P7 (POWER_GATE_REFUSED_UNDERPOWERED). D-002K is
+  a fresh, narrower lineage designed against the effect_too_small axis.
+  Narrowing the scope (3 windows, 1 mechanism, 1 primary metric) is
+  legitimate design; loosening the statistics at fixed scope would be
+  laundering and is forbidden. The D-002J-P7 REFUSED verdict stays the
+  truthful terminal outcome.
+
+# ----------------------------------------------------------------
+# §1 — Central claim (pre-register exactly this scope, no broader)
+# ----------------------------------------------------------------
+central_claim: >
+  A narrow, event-conditioned funding-liquidity benchmark can produce
+  detectable crisis-transition signatures under point-in-time public
+  observables, scored against pre-registered matched placebo windows,
+  WITHOUT relying on a broad canonical sweep.
+
+# ----------------------------------------------------------------
+# §2 — Locked mechanism (single, the strongest P5 substrate)
+# ----------------------------------------------------------------
+primary_mechanism: funding_liquidity_rollover
+primary_mechanism_rationale: >
+  The funding_liquidity_rollover substrate has the most direct
+  point-in-time public observables (SOFR, OFR tri-party repo volumes,
+  FRED H.15 reference rates) and the lowest fake-network risk of the
+  three P5 substrates — it does not require a contagion-proxy or an
+  unobservable interbank network. It is the single locked mechanism;
+  no other P5 substrate is in scope for D-002K.
+
+# ----------------------------------------------------------------
+# §3 — Locked crisis windows (three, all funding-liquidity events)
+# ----------------------------------------------------------------
+primary_windows:
+  - CW3_US_REPO_SPIKE_2019
+  - CW4_COVID_DASH_FOR_CASH_2020
+  - CW5_UK_GILT_LDI_2022
+primary_windows_rationale: >
+  CW3 (2019 US repo spike), CW4 (2020 COVID dash-for-cash), and CW5
+  (2022 UK gilt/LDI crisis) are each a funding-liquidity stress event
+  with strong public point-in-time data and a direct observable path
+  to the funding_liquidity_rollover mechanism. They are exactly the
+  three crisis windows the P5 funding_liquidity_rollover substrate
+  declares; no broader window set is in scope.
+
+# ----------------------------------------------------------------
+# §4 — Observable families (point-in-time public only)
+# ----------------------------------------------------------------
+primary_observable_families:
+  - level_shift
+  - spread_widening
+  - volatility_burst
+  - recovery_time
+  - transition_steepness
+  - stress_persistence
+
+# ----------------------------------------------------------------
+# §5 — Primary metric (exactly ONE locked endpoint)
+# ----------------------------------------------------------------
+primary_metric: pre_post_standardized_mean_shift
+primary_metric_definition: >
+  pre_post_standardized_mean_shift := (mean(funding_stress_index over
+  the locked in-crisis window) - mean(funding_stress_index over the
+  locked matched pre-window baseline)) / pooled_std(pre-window
+  baseline). It is a single scalar standardized mean shift (Cohen's-d
+  form) of the funding_stress_index observable between the locked
+  pre-window baseline and the locked in-crisis window, computed
+  identically for every crisis window and every matched placebo
+  window. Exactly one primary endpoint; not "a few".
+
+# ----------------------------------------------------------------
+# §6 — Secondary metrics (exploratory ONLY, never confirmatory)
+# ----------------------------------------------------------------
+secondary_metrics:
+  - max_zscore
+  - area_under_stress_curve
+  - recovery_half_life
+  - slope_into_crisis
+  - volatility_ratio
+  - persistence_above_threshold
+secondary_metrics_status: exploratory_only
+secondary_metrics_note: >
+  Secondary metrics are exploratory ONLY. They never enter the primary
+  confirmatory decision, never enter the Bonferroni denominator, and
+  may not be promoted to a primary endpoint without a fresh D-002L
+  pre-registration.
+
+# ----------------------------------------------------------------
+# §7 — Matched-placebo policy (locked BEFORE any scoring)
+# ----------------------------------------------------------------
+matched_placebo_policy:
+  match_on:
+    - macro_period
+    - volatility_regime
+    - calendar_length
+    - data_availability
+    - pre_window_baseline_variance
+  n_placebo_per_crisis: 5
+  selection: deterministic_pre_registered_algorithm
+  selection_note: >
+    Placebo windows are selected by a deterministic pre-registered
+    algorithm seeded only by the locked crisis-window calendar and the
+    match_on covariates. They are NOT hand-picked. The selection
+    algorithm and its inputs are locked at this pre-registration and
+    may not be altered after scoring opens.
+  locked_before_scoring: true
+
+# ----------------------------------------------------------------
+# §8 — Power-gate policy (the D-002J lesson applied at P-power)
+# ----------------------------------------------------------------
+power_gate_policy:
+  must_run_before_any_scoring: true
+  power_target: 0.8
+  alpha_policy:
+    family: bonferroni
+    denominator_rule: "n_windows * n_primary_metrics"
+    denominator_value: 3
+    note: >
+      Narrow BY DESIGN — NOT relaxed. 3 crisis windows x 1 primary
+      metric = Bonferroni denominator 3. This is a legitimately smaller
+      denominator because there are honestly fewer pre-registered
+      hypotheses (3, not D-002J's 102), NOT because alpha was loosened
+      at a fixed hypothesis count. Fewer hypotheses honestly => a
+      legitimately smaller denominator. Loosening alpha at a fixed
+      hypothesis count is forbidden laundering.
+  refuse_if: "honest_effect_prior < minimum_detectable_effect at feasible n"
+  effect_prior_source: >
+    Must be honestly derived from the P4 positive-control ground-truth
+    magnitudes or new pre-registered ground truth; NO inflation; the
+    provenance must be documented. An inflated prior is the exact
+    failure being designed against and is forbidden.
+
+# ----------------------------------------------------------------
+# §9 — Authorisation gates (all closed at pre-registration)
+# ----------------------------------------------------------------
+canonical_run_authorized: false
+benchmark_only: true
+requires_power_first_approval: true
+zero_data_zero_scoring_zero_model_run: true
+
+# ----------------------------------------------------------------
+# §10 — Forbidden claims (fail-closed across the D-002K lineage)
+# ----------------------------------------------------------------
+forbidden_claims:
+  - "D-002K rescues D-002J"
+  - "D-002K reverses D-002J-P7 REFUSED"
+  - "GeoSync predicts systemic crises"
+  - "bank-level validated"
+  - "cross-asset coherence proves interbank contagion"
+  - "universal systemic-risk prediction"
+  - "cross-substrate generalization"
+  - "relaxed alpha is justified by D-002J refusal"
+
+# ----------------------------------------------------------------
+# §11 — Allowed claims (the only claims D-002K may state)
+# ----------------------------------------------------------------
+allowed_claims:
+  - "D-002K is a fresh high-SNR funding-liquidity benchmark lineage"
+  - "D-002K explicitly inherits and is designed against effect_too_small"
+  - "D-002K tests event-conditioned crisis-vs-matched-placebo contrast under point-in-time constraints"
+  - "D-002J remains the truthful terminal REFUSED verdict"
+
+# ----------------------------------------------------------------
+# §12 — Stop conditions (fail-closed halts)
+# ----------------------------------------------------------------
+stop_conditions:
+  - "P-power gate REFUSES => D-002K halts; no scoring; fresh D-002L required"
+  - "matched placebo contrast undefined before scoring => INVALID"
+  - "primary metric not locked before run => INVALID"
+
+# ----------------------------------------------------------------
+# §13 — Pre-registration lock (edit == fresh pre-registration)
+# ----------------------------------------------------------------
+prereg_lock:
+  locked_at_merge: true
+  edit_policy: fresh_pre_registration_only
+  edit_constitutes: D-002L pre-registration
+
+# ----------------------------------------------------------------
+# Relationship to prior lineage (closure-before-restart discipline)
+# ----------------------------------------------------------------
+relationship_to_d002j:
+  d002k_does_not_amend_d002j: true
+  d002k_does_not_rescue_d002j: true
+  d002k_does_not_undo_d002j_p7_refused: true
+  d002k_does_not_authorise_d002j_p8: true
+  d002k_inherits_effect_too_small_as_documented_parent_failure: true
+  lineage_discipline: >
+    Parallel to D-002G -> D-002H REFUSED -> D-002I -> D-002J P0..P7
+    REFUSED -> D-002K-P0: a failed pre-registered lineage lands as a
+    sha-pinned terminal negative artifact BEFORE the next lineage
+    opens. D-002J-P7's REFUSED capsule is retained verbatim; D-002K-P0
+    descends from D002J-P7 in the honest DAG because D-002K exists
+    BECAUSE D-002J-P7 refused.

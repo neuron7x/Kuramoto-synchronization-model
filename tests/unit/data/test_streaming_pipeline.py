@@ -1,3 +1,5 @@
+# Copyright (c) 2023-2026 Yaroslav Vasylenko (neuron7xLab)
+# SPDX-License-Identifier: MIT
 from __future__ import annotations
 
 from dataclasses import dataclass
@@ -210,7 +212,7 @@ async def test_pipeline_exposes_composed_services() -> None:
     config = KafkaIngestionConfig(
         topic="ticks",
         bootstrap_servers="kafka:9092",
-        group_id="tradepulse-test",
+        group_id="geosync-test",
     )
     route = CacheRoute(layer="raw", timeframe="1s")
     created: list[_StubKafkaService] = []
@@ -246,7 +248,7 @@ async def test_pipeline_aggregator_operates_on_shared_cache() -> None:
     config = KafkaIngestionConfig(
         topic="ticks",
         bootstrap_servers="kafka:9092",
-        group_id="tradepulse-test",
+        group_id="geosync-test",
     )
     cache_service = DataIngestionCacheService()
     route = CacheRoute(layer="raw", timeframe="1s")
@@ -278,7 +280,7 @@ async def test_pipeline_accepts_minimal_kafka_factory_signature() -> None:
     config = KafkaIngestionConfig(
         topic="ticks",
         bootstrap_servers="kafka:9092",
-        group_id="tradepulse-test",
+        group_id="geosync-test",
     )
     route = CacheRoute(layer="raw", timeframe="1s")
 
@@ -303,7 +305,7 @@ def test_pipeline_rejects_tick_handler_in_kafka_kwargs() -> None:
     config = KafkaIngestionConfig(
         topic="ticks",
         bootstrap_servers="kafka:9092",
-        group_id="tradepulse-test",
+        group_id="geosync-test",
     )
 
     with pytest.raises(ValueError, match="must not be provided"):
@@ -317,7 +319,7 @@ def test_pipeline_rejects_lag_handler_in_kafka_kwargs() -> None:
     config = KafkaIngestionConfig(
         topic="ticks",
         bootstrap_servers="kafka:9092",
-        group_id="tradepulse-test",
+        group_id="geosync-test",
     )
 
     with pytest.raises(ValueError, match="must not be provided"):
@@ -331,7 +333,7 @@ def test_pipeline_respects_explicit_lag_handler() -> None:
     config = KafkaIngestionConfig(
         topic="ticks",
         bootstrap_servers="kafka:9092",
-        group_id="tradepulse-test",
+        group_id="geosync-test",
     )
     lag_handler = object()
     created: list[_StubKafkaService] = []
@@ -365,7 +367,7 @@ def test_pipeline_overrides_none_lag_handler_attribute() -> None:
     config = KafkaIngestionConfig(
         topic="ticks",
         bootstrap_servers="kafka:9092",
-        group_id="tradepulse-test",
+        group_id="geosync-test",
     )
     lag_handler = object()
 
@@ -384,7 +386,7 @@ def test_pipeline_omits_lag_handler_when_factory_does_not_accept_it() -> None:
     config = KafkaIngestionConfig(
         topic="ticks",
         bootstrap_servers="kafka:9092",
-        group_id="tradepulse-test",
+        group_id="geosync-test",
     )
     lag_handler = object()
     captured_tick_handler: CacheWriterTickHandler | None = None
@@ -409,7 +411,7 @@ def test_pipeline_omits_tick_handler_when_factory_only_accepts_lag() -> None:
     config = KafkaIngestionConfig(
         topic="ticks",
         bootstrap_servers="kafka:9092",
-        group_id="tradepulse-test",
+        group_id="geosync-test",
     )
     lag_handler = object()
     captured_lag_handler: object | None = None

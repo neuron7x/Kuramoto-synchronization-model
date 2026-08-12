@@ -1,8 +1,12 @@
+# Copyright (c) 2023-2026 Yaroslav Vasylenko (neuron7xLab)
+# SPDX-License-Identifier: MIT
 from __future__ import annotations
 
 from dataclasses import dataclass
 from datetime import datetime, timedelta, timezone
 from pathlib import Path
+
+import logging
 
 import pytest
 
@@ -27,9 +31,7 @@ class _InMemoryAuditLogger:
     def __init__(self) -> None:
         self.events: list[_RecordedEvent] = []
 
-    def log_event(
-        self, *, event_type: str, actor: str, ip_address: str, details: dict
-    ) -> None:
+    def log_event(self, *, event_type: str, actor: str, ip_address: str, details: dict) -> None:
         self.events.append(_RecordedEvent(event_type, actor, dict(details)))
 
 
@@ -113,9 +115,7 @@ def test_secret_rotator_performs_rotation(tmp_path: Path) -> None:
     )
     clock.advance(timedelta(hours=1))
     rotated_metadata = rotator.evaluate()
-    assert (
-        rotated_metadata and rotated_metadata[0].version == metadata_before.version + 1
-    )
+    assert rotated_metadata and rotated_metadata[0].version == metadata_before.version + 1
 
 
 def test_secret_manager_resolves_vault_secret(tmp_path: Path) -> None:
@@ -155,3 +155,62 @@ def test_secure_channel_round_trip() -> None:
     assert decrypted == payload
     with pytest.raises(ValueError):
         channel.unwrap_json(encrypted, associated_data={"component": "different"})
+
+
+def test_rotator_preserves_constructor_policies() -> None:
+    """`list(policies or [])` must KEEP the policies passed at construction.
+
+    Under `Or -> And` it becomes `list(policies and [])` -> `[]` whenever a non-empty policy
+    list is supplied, silently discarding every rotation policy the caller registered. A
+    rotator that forgets its policies rotates nothing and reports success.
+    """
+    from unittest.mock import MagicMock
+
+    policy = SecretRotationPolicy(
+        secret_name="svc/token",
+        interval=timedelta(minutes=30),
+        generator=lambda: "value",
+    )
+    rotator = SecretRotator(MagicMock(), [policy], clock=lambda: datetime.now(timezone.utc))
+    assert list(rotator._policies) == [policy]  # noqa: SLF001 -- pinning constructor state
+
+
+def test_rotator_falls_back_to_a_real_logger_when_none_supplied() -> None:
+    """`logger or logging.getLogger(...)` must yield a usable logger, not None.
+
+    Under `Or -> And` the default (logger=None) collapses to `None and getLogger(...)` -> None,
+    so the first `self._logger.warning(...)` on the unknown-secret path raises AttributeError
+    instead of recording the skip. A custom logger, conversely, must be the one used.
+    """
+    from unittest.mock import MagicMock
+
+    default_rotator = SecretRotator(MagicMock(), clock=lambda: datetime.now(timezone.utc))
+    assert default_rotator._logger is not None  # noqa: SLF001 -- fallback must be a real logger
+
+    custom = logging.getLogger("test.rotation.custom")
+    injected = SecretRotator(MagicMock(), clock=lambda: datetime.now(timezone.utc), logger=custom)
+    assert injected._logger is custom  # noqa: SLF001 -- an injected logger must be used verbatim
+
+
+def test_register_policy_rejects_nonpositive_interval_only() -> None:
+    """`if policy.interval <= timedelta(0): raise` — a rotation interval must be positive.
+
+    Under `LtE -> Gt` the check inverts: a POSITIVE interval is rejected and a zero/negative
+    one is accepted, so every valid policy fails to register and an invalid never-rotates
+    policy sails through. Both directions are pinned.
+    """
+    from unittest.mock import MagicMock
+
+    rotator = SecretRotator(MagicMock(), clock=lambda: datetime.now(timezone.utc))
+
+    def _policy(interval: timedelta) -> SecretRotationPolicy:
+        return SecretRotationPolicy(secret_name="svc/token", interval=interval, generator=lambda: "v")
+
+    with pytest.raises(ValueError, match="interval must be positive"):
+        rotator.register_policy(_policy(timedelta(0)))
+    with pytest.raises(ValueError, match="interval must be positive"):
+        rotator.register_policy(_policy(timedelta(seconds=-1)))
+
+    # A positive interval must be accepted, not rejected.
+    rotator.register_policy(_policy(timedelta(minutes=30)))
+    assert len(rotator._policies) == 1  # noqa: SLF001 -- exactly the accepted policy

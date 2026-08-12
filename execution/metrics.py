@@ -1,3 +1,5 @@
+# Copyright (c) 2023-2026 Yaroslav Vasylenko (neuron7xLab)
+# SPDX-License-Identifier: MIT
 """Prometheus metrics for risk controls, circuit breaker, and trading modes.
 
 This module provides instrumentation for risk compliance checks,
@@ -49,49 +51,49 @@ class RiskMetrics:
         kwargs = {"registry": registry} if registry else {}
 
         self.kill_switch = Gauge(
-            "tradepulse_risk_kill_switch",
+            "geosync_risk_kill_switch",
             "Global kill switch state (1=enabled, 0=disabled)",
             labelnames=["env"],
             **kwargs,
         )
 
         self.gross_exposure = Gauge(
-            "tradepulse_risk_gross_exposure",
+            "geosync_risk_gross_exposure",
             "Current gross exposure in notional terms",
             labelnames=["env"],
             **kwargs,
         )
 
         self.daily_drawdown = Gauge(
-            "tradepulse_risk_daily_drawdown",
+            "geosync_risk_daily_drawdown",
             "Current daily drawdown (percentage or notional)",
             labelnames=["env", "mode"],
             **kwargs,
         )
 
         self.circuit_state = Gauge(
-            "tradepulse_risk_circuit_state",
+            "geosync_risk_circuit_state",
             "Circuit breaker state (0=closed, 1=open, 2=half_open)",
             labelnames=["state"],
             **kwargs,
         )
 
         self.rejections_total = Counter(
-            "tradepulse_risk_rejections_total",
+            "geosync_risk_rejections_total",
             "Total number of orders rejected by risk checks",
             labelnames=["reason"],
             **kwargs,
         )
 
         self.circuit_trips_total = Counter(
-            "tradepulse_risk_circuit_trips_total",
+            "geosync_risk_circuit_trips_total",
             "Total number of circuit breaker trips",
             labelnames=["reason"],
             **kwargs,
         )
 
         self.open_orders = Gauge(
-            "tradepulse_risk_open_orders",
+            "geosync_risk_open_orders",
             "Current number of open orders",
             labelnames=["env"],
             **kwargs,
@@ -222,28 +224,28 @@ class TradingModeMetrics:
         kwargs = {"registry": registry} if registry else {}
 
         self.trading_mode = Gauge(
-            "tradepulse_trading_mode",
+            "geosync_trading_mode",
             "Current trading mode (1 when active for that mode label)",
             labelnames=["mode"],
             **kwargs,
         )
 
         self.mode_transitions_total = Counter(
-            "tradepulse_trading_mode_transitions_total",
+            "geosync_trading_mode_transitions_total",
             "Total number of trading mode transitions",
             labelnames=["from_mode", "to_mode", "reason"],
             **kwargs,
         )
 
         self.mode_duration_seconds = Gauge(
-            "tradepulse_trading_mode_duration_seconds",
+            "geosync_trading_mode_duration_seconds",
             "Time spent in current trading mode",
             labelnames=["mode"],
             **kwargs,
         )
 
         self.mode_transition_latency = Histogram(
-            "tradepulse_trading_mode_transition_latency_seconds",
+            "geosync_trading_mode_transition_latency_seconds",
             "Latency of mode transitions",
             labelnames=["from_mode", "to_mode"],
             **kwargs,
@@ -281,9 +283,7 @@ class TradingModeMetrics:
         for m in ["BACKTEST", "PAPER", "LIVE"]:
             self.trading_mode.labels(mode=m).set(1.0 if m == mode_upper else 0.0)
 
-    def record_transition_latency(
-        self, from_mode: str, to_mode: str, latency: float
-    ) -> None:
+    def record_transition_latency(self, from_mode: str, to_mode: str, latency: float) -> None:
         """Record the latency of a mode transition.
 
         Args:

@@ -1,6 +1,6 @@
-# SPDX-License-Identifier: LicenseRef-TradePulse-Proprietary
+# SPDX-License-Identifier: MIT
 #
-# TradePulse Central Risk Engine Configuration
+# GeoSync Central Risk Engine Configuration
 # =============================================
 #
 # This file configures the central risk engine that governs all trading
@@ -12,9 +12,9 @@
 #   - LIVE: Real trading with actual order execution
 #
 # To override values via environment variables, use the prefix:
-#   TRADEPULSE_RISK_<SETTING_NAME>
+#   GEOSYNC_RISK_<SETTING_NAME>
 #
-# Example: TRADEPULSE_RISK_MAX_LEVERAGE=3.0
+# Example: GEOSYNC_RISK_MAX_LEVERAGE=3.0
 
 # Position Limits
 # ---------------

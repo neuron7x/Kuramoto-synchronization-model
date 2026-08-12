@@ -1,0 +1,372 @@
+{
+  "wheel_sha256": "7bb5fc449a63df60f27ee84e0e0a9c410b127a5a6c42565f87680273a0a8d38b",
+  "installed_packages": [
+    "analytics",
+    "application",
+    "backtest",
+    "core",
+    "domain",
+    "execution",
+    "geosync",
+    "geosync_pro",
+    "geosync_research",
+    "interfaces",
+    "libs",
+    "modules",
+    "observability",
+    "scripts",
+    "src",
+    "tools"
+  ],
+  "non_geosync_packages": [
+    "analytics",
+    "application",
+    "backtest",
+    "core",
+    "domain",
+    "execution",
+    "interfaces",
+    "libs",
+    "modules",
+    "observability",
+    "scripts",
+    "src",
+    "tools"
+  ],
+  "entrypoints": {
+    "geosync-scripts": "scripts.cli:main",
+    "geosync-release-gate": "scripts.ci.release_gate:main",
+    "geosync-import-architecture": "scripts.ci.check_import_architecture:main",
+    "geosync-pai": "scripts.ci.compute_pai:main",
+    "geosync-sync": "scripts.resilient_data_sync:main",
+    "geosync-db": "scripts.db_migrate:cli",
+    "geosync-server": "geosync.runtime.server:main",
+    "geosync-proof": "geosync.proof.run:main",
+    "geosync-audit": "geosync.proof.audit:main",
+    "geosync-weighting": "geosync.proof.weighting:main",
+    "tp-kuramoto": "geosync.kuramoto.cli:main",
+    "geosync-research": "tools.research.research_cli:main",
+    "mfn": "geosync.mfn.cli:main",
+    "mfn-api": "geosync.mfn.cli:api_main",
+    "mfn-validate": "geosync.mfn.cli:validate_main"
+  },
+  "import_failures": [
+    {
+      "module": "analytics/staging/flash_crash_replay.py",
+      "imports_unpackaged": "runtime"
+    },
+    {
+      "module": "application/runtime/init_control_platform.py",
+      "imports_unpackaged": "runtime"
+    },
+    {
+      "module": "core/agent/registry.py",
+      "imports_unpackaged": "runtime"
+    },
+    {
+      "module": "core/dro_ara/engine.py",
+      "imports_unpackaged": "geosync_hpc"
+    },
+    {
+      "module": "core/neuro/epistemic_validation.py",
+      "imports_unpackaged": "runtime"
+    },
+    {
+      "module": "geosync/neural_controller/integration/bridge.py",
+      "imports_unpackaged": "cortex_service"
+    },
+    {
+      "module": "geosync/neural_controller/integration/bridge.py",
+      "imports_unpackaged": "runtime"
+    },
+    {
+      "module": "interfaces/live_runner.py",
+      "imports_unpackaged": "tacl"
+    },
+    {
+      "module": "scripts/aar_pro_readiness.py",
+      "imports_unpackaged": "geosync_hpc"
+    },
+    {
+      "module": "scripts/aar_pro_smoke.py",
+      "imports_unpackaged": "geosync_hpc"
+    },
+    {
+      "module": "scripts/admission_check.py",
+      "imports_unpackaged": "runtime"
+    },
+    {
+      "module": "scripts/analysis_null_convergence.py",
+      "imports_unpackaged": "research"
+    },
+    {
+      "module": "scripts/benchmark_bonds.py",
+      "imports_unpackaged": "runtime"
+    },
+    {
+      "module": "scripts/check_l2_collector_health.py",
+      "imports_unpackaged": "research"
+    },
+    {
+      "module": "scripts/collect_binance_perp_l2.py",
+      "imports_unpackaged": "research"
+    },
+    {
+      "module": "scripts/l2_execution_cost_sweep.py",
+      "imports_unpackaged": "research"
+    },
+    {
+      "module": "scripts/l2_horizon_sweep.py",
+      "imports_unpackaged": "research"
+    },
+    {
+      "module": "scripts/l2_per_symbol_ic.py",
+      "imports_unpackaged": "research"
+    },
+    {
+      "module": "scripts/l2_rv_decile_analysis.py",
+      "imports_unpackaged": "research"
+    },
+    {
+      "module": "scripts/l2_trading_simulation.py",
+      "imports_unpackaged": "research"
+    },
+    {
+      "module": "scripts/render_l2_dashboard.py",
+      "imports_unpackaged": "research"
+    },
+    {
+      "module": "scripts/render_l2_figures.py",
+      "imports_unpackaged": "research"
+    },
+    {
+      "module": "scripts/run_backtest.py",
+      "imports_unpackaged": "geosync_hpc"
+    },
+    {
+      "module": "scripts/run_fhmc_demo.py",
+      "imports_unpackaged": "envs"
+    },
+    {
+      "module": "scripts/run_fhmc_demo.py",
+      "imports_unpackaged": "rl"
+    },
+    {
+      "module": "scripts/run_fhmc_demo.py",
+      "imports_unpackaged": "runtime"
+    },
+    {
+      "module": "scripts/run_kuramoto_robustness_v1.py",
+      "imports_unpackaged": "research"
+    },
+    {
+      "module": "scripts/run_l2_ablation_sensitivity.py",
+      "imports_unpackaged": "research"
+    },
+    {
+      "module": "scripts/run_l2_attribution.py",
+      "imports_unpackaged": "research"
+    },
+    {
+      "module": "scripts/run_l2_conditional_te.py",
+      "imports_unpackaged": "research"
+    },
+    {
+      "module": "scripts/run_l2_diurnal_profile.py",
+      "imports_unpackaged": "research"
+    },
+    {
+      "module": "scripts/run_l2_fee_stress.py",
+      "imports_unpackaged": "research"
+    },
+    {
+      "module": "scripts/run_l2_full_cycle.py",
+      "imports_unpackaged": "research"
+    },
+    {
+      "module": "scripts/run_l2_headline_metrics.py",
+      "imports_unpackaged": "research"
+    },
+    {
+      "module": "scripts/run_l2_hold_ablation.py",
+      "imports_unpackaged": "research"
+    },
+    {
+      "module": "scripts/run_l2_hurst.py",
+      "imports_unpackaged": "research"
+    },
+    {
+      "module": "scripts/run_l2_killtest.py",
+      "imports_unpackaged": "research"
+    },
+    {
+      "module": "scripts/run_l2_pnl.py",
+      "imports_unpackaged": "research"
+    },
+    {
+      "module": "scripts/run_l2_purged_cv.py",
+      "imports_unpackaged": "research"
+    },
+    {
+      "module": "scripts/run_l2_regime_conditional_ic.py",
+      "imports_unpackaged": "research"
+    },
+    {
+      "module": "scripts/run_l2_regime_markov.py",
+      "imports_unpackaged": "research"
+    },
+    {
+      "module": "scripts/run_l2_robustness.py",
+      "imports_unpackaged": "research"
+    },
+    {
+      "module": "scripts/run_l2_slippage_stress.py",
+      "imports_unpackaged": "research"
+    },
+    {
+      "module": "scripts/run_l2_spectral.py",
+      "imports_unpackaged": "research"
+    },
+    {
+      "module": "scripts/run_l2_symbol_ablation.py",
+      "imports_unpackaged": "research"
+    },
+    {
+      "module": "scripts/run_l2_transfer_entropy.py",
+      "imports_unpackaged": "research"
+    },
+    {
+      "module": "scripts/run_l2_walk_forward_summary.py",
+      "imports_unpackaged": "research"
+    },
+    {
+      "module": "scripts/run_x10r_d002c_signal_amplification_sweep.py",
+      "imports_unpackaged": "research"
+    },
+    {
+      "module": "scripts/run_x10r_d003_dov_dry_run.py",
+      "imports_unpackaged": "research"
+    },
+    {
+      "module": "scripts/run_x10r_gate6_certification_sweep.py",
+      "imports_unpackaged": "research"
+    },
+    {
+      "module": "scripts/validate.py",
+      "imports_unpackaged": "geosync_hpc"
+    },
+    {
+      "module": "scripts/validate_energy.py",
+      "imports_unpackaged": "runtime"
+    },
+    {
+      "module": "scripts/x10r_d002g_m3_eligibility_matrix.py",
+      "imports_unpackaged": "research"
+    },
+    {
+      "module": "scripts/x10r_d002h_canonical_sweep.py",
+      "imports_unpackaged": "research"
+    },
+    {
+      "module": "scripts/x10r_d002h_gate_b_eligibility.py",
+      "imports_unpackaged": "research"
+    },
+    {
+      "module": "scripts/ci/check_governance_kernel_binding.py",
+      "imports_unpackaged": "governance"
+    },
+    {
+      "module": "scripts/ci/check_physics_inference_readiness.py",
+      "imports_unpackaged": "physics_contracts"
+    },
+    {
+      "module": "scripts/ci/falsification_ledger.py",
+      "imports_unpackaged": "research"
+    },
+    {
+      "module": "scripts/ci/gate6_sensitivity_surface_falsifier.py",
+      "imports_unpackaged": "research"
+    },
+    {
+      "module": "scripts/ci/x10r_cbs_loader_falsifier.py",
+      "imports_unpackaged": "research"
+    },
+    {
+      "module": "scripts/ci/x10r_lane_d_data_contract_falsifier.py",
+      "imports_unpackaged": "research"
+    },
+    {
+      "module": "scripts/performance/generate_replay_report.py",
+      "imports_unpackaged": "tests"
+    },
+    {
+      "module": "scripts/research/dro_ara_backtest.py",
+      "imports_unpackaged": "research"
+    },
+    {
+      "module": "scripts/riee/chaos_engine.py",
+      "imports_unpackaged": "runtime"
+    },
+    {
+      "module": "src/geosync/sdk/mlsdm/facade.py",
+      "imports_unpackaged": "runtime"
+    },
+    {
+      "module": "src/geosync/sdk/mlsdm/facade.py",
+      "imports_unpackaged": "rl"
+    },
+    {
+      "module": "tools/build_disha_ba_correlation_figures.py",
+      "imports_unpackaged": "instrument_validation"
+    },
+    {
+      "module": "tools/check_public_symbol_matrix.py",
+      "imports_unpackaged": "research"
+    },
+    {
+      "module": "tools/generate_cns_metrics.py",
+      "imports_unpackaged": "runtime"
+    },
+    {
+      "module": "tools/validate_tests.py",
+      "imports_unpackaged": "physics_contracts"
+    },
+    {
+      "module": "tools/disha_artifact/discrimination_v2.py",
+      "imports_unpackaged": "instrument_validation"
+    },
+    {
+      "module": "tools/disha_artifact/summary_compiler.py",
+      "imports_unpackaged": "instrument_validation"
+    },
+    {
+      "module": "tools/readiness/run_recovery_drill.py",
+      "imports_unpackaged": "runtime"
+    },
+    {
+      "module": "tools/systemic_risk/design_d002j_power_grid.py",
+      "imports_unpackaged": "research"
+    }
+  ],
+  "script_failures": [],
+  "dynamic_smoke": [
+    {
+      "target": "geosync-scripts",
+      "kind": "NEEDS_EXTRA",
+      "detail": "yaml"
+    },
+    {
+      "target": "geosync-sync",
+      "kind": "NEEDS_EXTRA",
+      "detail": "numpy"
+    },
+    {
+      "target": "geosync-db",
+      "kind": "NEEDS_EXTRA",
+      "detail": "click"
+    }
+  ],
+  "new_import_debt": [],
+  "new_legacy_packages": [],
+  "verdict": "PASS"
+}

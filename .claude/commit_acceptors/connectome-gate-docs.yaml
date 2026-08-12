@@ -1,0 +1,51 @@
+id: connectome-gate-docs
+status: ACTIVE
+claim_type: documentation
+promise: >-
+  Diff-bound documentation acceptor for the architectural connectome gate. The
+  change adds ADR, protocol, and PR audit packet documentation that defines the
+  review boundary, evidence commands, negative controls, and claim boundary for
+  the connectome gate. It does not change runtime behavior.
+
+diff_scope:
+  changed_files:
+    - path: ".claude/commit_acceptors/connectome-gate-docs.yaml"
+    - path: "docs/architecture/ADR-0001-connectome-gate.md"
+    - path: "docs/architecture/CONNECTOME_GATE.md"
+    - path: "docs/architecture/CONNECTOME_PR_AUDIT_PACKET.md"
+  forbidden_paths:
+    - "application/"
+    - "backtest/"
+    - "core/"
+    - "markets/"
+    - "modules/"
+
+required_python_symbols: []
+
+expected_signal: >-
+  Reviewers receive a bounded architecture decision record, review protocol,
+  and audit packet for the connectome gate without expanding the claim beyond
+  static import topology.
+
+measurement_command: >-
+  python tools/architecture/check_connectome.py && python -m pytest tests/tools/architecture/test_check_connectome.py tests/tools/architecture/test_connectome_contract_shape.py -q
+
+signal_artifact: "docs/architecture/CONNECTOME_PR_AUDIT_PACKET.md"
+
+falsifier:
+  command: >-
+    test -f docs/architecture/CONNECTOME_PR_AUDIT_PACKET.md && test -f docs/architecture/ADR-0001-connectome-gate.md
+  description: >-
+    Documentation evidence must exist for the ADR and PR audit packet that
+    bound the connectome gate decision.
+
+rollback_command: >-
+  git checkout -- docs/architecture/ADR-0001-connectome-gate.md docs/architecture/CONNECTOME_GATE.md docs/architecture/CONNECTOME_PR_AUDIT_PACKET.md .claude/commit_acceptors/connectome-gate-docs.yaml
+
+rollback_verification_command: >-
+  git diff --exit-code
+
+memory_update_type: append
+ledger_path: ".claude/commit_acceptors/connectome-gate-docs.yaml"
+report_path: "docs/architecture/CONNECTOME_PR_AUDIT_PACKET.md"
+evidence: []

@@ -1,0 +1,108 @@
+{
+  "inputs": [
+    {
+      "name": "coverage_surface",
+      "passed": true,
+      "path": "artifacts/coverage_surface/coverage_surface_report.json",
+      "present": true,
+      "reason": "",
+      "report_only": false,
+      "tier": "substrate",
+      "verdict": "PASS"
+    },
+    {
+      "name": "mutable_state_registry",
+      "passed": true,
+      "path": "artifacts/state/mutable_state_registry.json",
+      "present": true,
+      "reason": "",
+      "report_only": false,
+      "tier": "substrate",
+      "verdict": "BOUND"
+    },
+    {
+      "name": "concurrency_matrix",
+      "passed": true,
+      "path": "artifacts/concurrency/concurrency_matrix.json",
+      "present": true,
+      "reason": "",
+      "report_only": false,
+      "tier": "substrate",
+      "verdict": "PASS"
+    },
+    {
+      "name": "causal_prefix_matrix",
+      "passed": true,
+      "path": "artifacts/time/causal_prefix_matrix.json",
+      "present": true,
+      "reason": "",
+      "report_only": false,
+      "tier": "substrate",
+      "verdict": "PASS"
+    },
+    {
+      "name": "runtime_failure_matrix",
+      "passed": true,
+      "path": "artifacts/runtime_failure_matrix/runtime_failure_matrix.json",
+      "present": true,
+      "reason": "",
+      "report_only": false,
+      "tier": "substrate",
+      "verdict": "PASS"
+    },
+    {
+      "name": "risk_reservation_lifecycle",
+      "passed": true,
+      "path": "artifacts/risk/reservation_lifecycle.json",
+      "present": true,
+      "reason": "",
+      "report_only": false,
+      "tier": "substrate",
+      "verdict": "BOUND"
+    },
+    {
+      "name": "feature_cache_freshness",
+      "passed": true,
+      "path": "artifacts/cache/feature_cache_freshness_matrix.json",
+      "present": true,
+      "reason": "",
+      "report_only": false,
+      "tier": "substrate",
+      "verdict": "PASS"
+    },
+    {
+      "name": "event_bus_lifecycle",
+      "passed": true,
+      "path": "artifacts/messaging/event_bus_lifecycle_matrix.json",
+      "present": true,
+      "reason": "",
+      "report_only": false,
+      "tier": "substrate",
+      "verdict": "PASS"
+    },
+    {
+      "name": "homeostasis_contract",
+      "passed": true,
+      "path": "artifacts/neuro/homeostasis_contract.json",
+      "present": true,
+      "reason": "",
+      "report_only": false,
+      "tier": "substrate",
+      "verdict": "PASS"
+    },
+    {
+      "name": "inference_provenance",
+      "passed": true,
+      "path": "artifacts/provenance/inference_provenance.json",
+      "present": true,
+      "reason": "",
+      "report_only": false,
+      "tier": "substrate",
+      "verdict": "PASS"
+    }
+  ],
+  "release": false,
+  "report_only": false,
+  "schema": "geosync.final_inference_verdict.v1",
+  "verdict": "PASS"
+}

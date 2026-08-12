@@ -1,6 +1,6 @@
-# Extending TradePulse
+# Extending GeoSync
 
-This guide explains how to extend TradePulse with custom indicators, strategies, data sources, and execution adapters.
+This guide explains how to extend GeoSync with custom indicators, strategies, data sources, and execution adapters.
 
 ---
 
@@ -18,7 +18,7 @@ This guide explains how to extend TradePulse with custom indicators, strategies,
 
 ## Overview
 
-TradePulse is designed to be extensible. The framework provides base classes and interfaces that you can extend to add custom functionality.
+GeoSync is designed to be extensible. The framework provides base classes and interfaces that you can extend to add custom functionality.
 
 ### Extension Points
 
@@ -714,7 +714,7 @@ See the [examples/](../examples/) directory for complete examples of:
 ## Getting Help
 
 - Review existing code in the repository
-- Check [GitHub Issues](https://github.com/neuron7x/TradePulse/issues)
+- Check [GitHub Issues](https://github.com/neuron7xLab/GeoSync/issues)
 - Read [CONTRIBUTING.md](../CONTRIBUTING.md)
 - Ask in GitHub Discussions
 

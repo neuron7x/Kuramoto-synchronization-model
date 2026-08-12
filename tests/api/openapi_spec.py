@@ -1,3 +1,5 @@
+# Copyright (c) 2023-2026 Yaroslav Vasylenko (neuron7xLab)
+# SPDX-License-Identifier: MIT
 """Shared helpers for accessing the canonical OpenAPI specification."""
 
 from __future__ import annotations
@@ -7,7 +9,7 @@ from functools import lru_cache
 from pathlib import Path
 from typing import Any
 
-_SPEC_RELATIVE_PATH = Path("schemas/openapi/tradepulse-online-inference-v1.json")
+_SPEC_RELATIVE_PATH = Path("schemas/openapi/geosync-online-inference-v1.json")
 EXPECTED_OPENAPI_VERSION = "0.2.0"
 
 

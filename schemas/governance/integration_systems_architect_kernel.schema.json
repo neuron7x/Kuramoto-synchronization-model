@@ -1,0 +1,30 @@
+{
+  "title": "Integration Systems Architect Kernel",
+  "type": "object",
+  "required": [
+    "artifact_id",
+    "version",
+    "artifact_type",
+    "role",
+    "mission",
+    "scope",
+    "input_classes",
+    "functions",
+    "output_contract",
+    "final_gate",
+    "linked_issue"
+  ],
+  "properties": {
+    "artifact_id": {"type": "string"},
+    "version": {"type": "string"},
+    "artifact_type": {"type": "string"},
+    "role": {"type": "string"},
+    "mission": {"type": "string"},
+    "scope": {"type": "object"},
+    "input_classes": {"type": "array"},
+    "functions": {"type": "array"},
+    "output_contract": {"type": "object"},
+    "final_gate": {"type": "object"},
+    "linked_issue": {"type": "integer"}
+  }
+}

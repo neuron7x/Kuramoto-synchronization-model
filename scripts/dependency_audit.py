@@ -1,3 +1,5 @@
+# Copyright (c) 2023-2026 Yaroslav Vasylenko (neuron7xLab)
+# SPDX-License-Identifier: MIT
 """Utility to run pip-audit with consistent settings and provide actionable summaries."""
 
 from __future__ import annotations
@@ -15,9 +17,7 @@ from typing import List, Sequence
 DEFAULT_REQUIREMENTS = ("requirements.txt",)
 DEFAULT_DEV_REQUIREMENTS = ("requirements-dev.txt",)
 SAFE_PATH_RE = re.compile(r"[A-Za-z0-9_./+-]+")
-SAFE_EXTRA_ARG_RE = re.compile(
-    r"-{1,2}[A-Za-z0-9][A-Za-z0-9_.-]*(?:=[A-Za-z0-9_./:+-]+)?"
-)
+SAFE_EXTRA_ARG_RE = re.compile(r"-{1,2}[A-Za-z0-9][A-Za-z0-9_.-]*(?:=[A-Za-z0-9_./:+-]+)?")
 
 
 class DependencyAuditError(RuntimeError):
@@ -153,7 +153,7 @@ def _is_mitigated(finding: dict[str, object]) -> bool:
     if version >= Version("25.3"):
         return True
 
-    return bool(getattr(unpacking, "_tradepulse_symlink_patch", False))
+    return bool(getattr(unpacking, "_geosync_symlink_patch", False))
 
 
 def _print_summary(findings: Sequence[dict[str, object]]) -> None:
@@ -175,11 +175,7 @@ def _print_summary(findings: Sequence[dict[str, object]]) -> None:
         for vuln in grouped[(name, version)]:
             fix = ", ".join(vuln["fix_versions"]) or "no patched release available"
             aliases = ", ".join(vuln["aliases"]) or "no aliases"
-            description = (
-                vuln["description"].strip().splitlines()[0]
-                if vuln["description"]
-                else ""
-            )
+            description = vuln["description"].strip().splitlines()[0] if vuln["description"] else ""
             print(f"  - {vuln['id']} (aliases: {aliases})")
             print(f"    ↳ upgrade to: {fix}")
             if description:
@@ -271,9 +267,7 @@ def main(argv: Sequence[str] | None = None) -> int:
     requirements = [_validate_requirement_path(str(req)) for req in args.requirements]
     pip_audit_bin = _validate_pip_audit_bin(str(args.pip_audit_bin))
     extra_args = [_validate_extra_arg(str(arg)) for arg in args.extra_args]
-    write_json = (
-        _validate_write_json_path(str(args.write_json)) if args.write_json else None
-    )
+    write_json = _validate_write_json_path(str(args.write_json)) if args.write_json else None
 
     requirements = list(requirements)
     if args.include_dev and DEFAULT_DEV_REQUIREMENTS[0] not in requirements:

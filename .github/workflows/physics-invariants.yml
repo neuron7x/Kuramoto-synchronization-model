@@ -1,0 +1,69 @@
+name: Physics Invariants
+
+concurrency:
+  group: ${{ github.workflow }}-${{ github.ref }}
+  cancel-in-progress: true
+
+on:
+  push:
+  pull_request:
+
+permissions:
+  contents: read
+
+env:
+  FORCE_JAVASCRIPT_ACTIONS_TO_NODE24: 'true'
+
+jobs:
+  physics-invariants:
+    name: physics-invariants
+    runs-on: ubuntu-latest
+    timeout-minutes: 5
+    steps:
+      - name: Checkout
+        uses: actions/checkout@9c091bb21b7c1c1d1991bb908d89e4e9dddfe3e0 # v7.0.0
+
+      - name: Set up Python
+        uses: actions/setup-python@ece7cb06caefa5fff74198d8649806c4678c61a1 # v6
+        with:
+          python-version: '3.11'
+
+      - name: Membrane check (geosync must not import coherence_bridge)
+        run: |
+          set -euo pipefail
+          python scripts/guards/membrane_ast_guard.py
+
+      - name: Runtime membrane check (coherence_bridge absent from isolated geosync path)
+        run: |
+          set -euo pipefail
+          python scripts/guards/runtime_membrane_guard.py
+
+      - name: Invariant source/test binding gate
+        run: |
+          set -euo pipefail
+          python scripts/ci/check_invariant_source_binding.py
+
+      - name: Invariant check (semantic gamma formula guard)
+        run: |
+          set -euo pipefail
+          python - <<'PY'
+          import ast
+          import pathlib
+
+          def uses_hurst(node: ast.AST) -> bool:
+              return any(isinstance(n, ast.Name) and n.id.lower() == 'hurst' for n in ast.walk(node))
+
+          def is_const_one(node: ast.AST) -> bool:
+              return isinstance(node, ast.Constant) and isinstance(node.value, (int, float)) and float(node.value) == 1.0
+
+          bad = []
+          for path in pathlib.Path('geosync').rglob('*.py'):
+              tree = ast.parse(path.read_text(encoding='utf-8'))
+              for n in ast.walk(tree):
+                  if isinstance(n, ast.BinOp) and isinstance(n.op, ast.Sub):
+                      if is_const_one(n.right) and uses_hurst(n.left):
+                          bad.append(f"{path}:{getattr(n, 'lineno', '?')} suspicious hurst-1 expression")
+          if bad:
+              raise SystemExit("Invalid gamma-pattern semantics detected:\n" + "\n".join(bad))
+          print('gamma semantic invariant scan passed')
+          PY

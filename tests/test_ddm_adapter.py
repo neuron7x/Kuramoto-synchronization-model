@@ -1,8 +1,10 @@
+# Copyright (c) 2023-2026 Yaroslav Vasylenko (neuron7xLab)
+# SPDX-License-Identifier: MIT
 from __future__ import annotations
 
 import pytest
 
-from tradepulse.core.neuro.dopamine import adapt_ddm_parameters
+from geosync.core.neuro.dopamine import adapt_ddm_parameters
 
 
 def test_ddm_adapter_increases_drift_and_reduces_boundary() -> None:

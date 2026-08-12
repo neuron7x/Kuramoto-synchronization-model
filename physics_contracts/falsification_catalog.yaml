@@ -1,0 +1,583 @@
+# Copyright (c) 2023-2026 Yaroslav Vasylenko (neuron7xLab)
+# SPDX-License-Identifier: MIT
+#
+# EXECUTABLE FALSIFICATION CONTRACT LAYER
+# =======================================
+# This file is the rich-format, evidence-bearing falsification layer. It is
+# SEPARATE from and DOES NOT replace the canonical 112-invariant source of truth
+# (`.claude/physics/INVARIANTS.yaml` / `physics_contracts/catalog.yaml`). It adds
+# one thing the canonical catalog does not enforce machine-side: every blocking
+# law here must carry BOTH a positive witness AND a negative control, and the
+# governance meta-law (LF10) makes that requirement itself a falsifiable law.
+#
+# Each law binds: hypothesis -> formal_invariant -> measured_quantity ->
+# threshold -> {positive_witness, negative_control} -> evidence_output.
+# The validator (tools/validate_physics_contracts.py) fails closed if any
+# blocking law lacks a collected positive witness, lacks a collected negative
+# control, or fails to emit its evidence artifact.
+schema_version: 1
+canonical_catalog_untouched: true
+laws:
+  - id: ricci_energy_nonincrease
+    domain: ricci_kuramoto
+    claim: "Discrete Ricci-flow smoothing never increases curvature-dispersion energy."
+    formal_invariant: "E(curv_{t+1}) <= E(curv_t) * (1 + tol), E(c) = sum_i (c_i - mean(c))^2"
+    measured_quantity: "max over a seeded flow trajectory of E(t+1) - E(t)*(1+tol)"
+    threshold: "tol = 1e-9 (relative); any positive excess violates"
+    positive_witness: "tests/physics/test_ricci_kuramoto.py::test_ricci_energy_nonincreases"
+    negative_control: "tests/physics/test_ricci_kuramoto.py::test_energy_injection_flow_is_rejected"
+    blocking: true
+    failure_message: "RICCI-ENERGY VIOLATED: dispersion energy increased under a contraction flow."
+    evidence_output: "evidence/physics/ricci_kuramoto_report.json"
+
+  - id: kuramoto_order_parameter_bounds
+    domain: ricci_kuramoto
+    claim: "The Kuramoto order parameter R(t) stays in [0, 1] for every step."
+    formal_invariant: "0 <= R(t) <= 1 for all t (INV-K1)"
+    measured_quantity: "min and max of R over a seeded mean-field trajectory"
+    threshold: "R in [0.0, 1.0]; any R<0 or R>1 violates"
+    positive_witness: "tests/physics/test_ricci_kuramoto.py::test_order_parameter_within_unit_interval"
+    negative_control: "tests/physics/test_ricci_kuramoto.py::test_out_of_range_order_parameter_is_rejected"
+    blocking: true
+    failure_message: "KURAMOTO-R VIOLATED: order parameter left [0,1]."
+    evidence_output: "evidence/physics/ricci_kuramoto_report.json"
+
+  - id: metric_distortion_bound
+    domain: metric_consistency
+    claim: "An embedding is admitted only if its bi-Lipschitz distortion stays within an explicit bound."
+    formal_invariant: "distortion(D_orig, D_emb) - 1 <= max_distortion"
+    measured_quantity: "multiplicative bi-Lipschitz distortion of the embedded distance matrix"
+    threshold: "max_distortion explicit per call (no magic constant); default probe 0.05"
+    positive_witness: "tests/physics/test_metric_consistency.py::test_isometric_embedding_passes"
+    negative_control: "tests/physics/test_metric_consistency.py::test_distorted_embedding_is_rejected"
+    blocking: true
+    failure_message: "METRIC-DISTORTION VIOLATED: embedding distortion exceeds declared bound."
+    evidence_output: "evidence/physics/metric_consistency_report.json"
+
+  - id: causal_no_lookahead
+    domain: causality
+    claim: "No read may consume a source observed after the read time."
+    formal_invariant: "source_time <= read_time for every admitted read"
+    measured_quantity: "max(source_time - read_time) over admitted reads"
+    threshold: "<= 0; any positive lookahead violates"
+    positive_witness: "tests/physics/test_causality.py::test_past_read_passes"
+    negative_control: "tests/physics/test_causality.py::test_future_read_is_rejected"
+    blocking: true
+    failure_message: "CAUSAL-LOOKAHEAD VIOLATED: a read consumed a future source."
+    evidence_output: "evidence/physics/causality_report.json"
+
+  - id: provenance_identity
+    domain: causality
+    claim: "A payload's provenance hash is identical iff its bytes are identical."
+    formal_invariant: "provenance_hash(observed) == expected <=> bytes unchanged"
+    measured_quantity: "equality of recomputed vs declared provenance hash"
+    threshold: "exact SHA-256 equality; any mismatch violates and tombstones"
+    positive_witness: "tests/physics/test_causality.py::test_provenance_identity_holds"
+    negative_control: "tests/physics/test_causality.py::test_rewritten_payload_breaks_provenance"
+    blocking: true
+    failure_message: "PROVENANCE VIOLATED: payload bytes changed without matching hash."
+    evidence_output: "evidence/physics/causality_report.json"
+
+  - id: landauer_nonzero_erasure_cost
+    domain: landauer
+    claim: "Erasing a positive number of bits at positive temperature has strictly positive cost."
+    formal_invariant: "bits > 0 and T > 0 => cost = k_B*T*ln2*bits > 0"
+    measured_quantity: "bit_erasure_cost(bits, T) for bits>0, T>0"
+    threshold: "> 0 strictly; a zero/negative cost violates"
+    positive_witness: "tests/physics/test_landauer.py::test_bit_erasure_cost_is_positive"
+    negative_control: "tests/physics/test_landauer.py::test_zero_cost_erasure_claim_is_rejected"
+    blocking: true
+    failure_message: "LANDAUER VIOLATED: claimed free erasure of information."
+    evidence_output: "evidence/physics/landauer_report.json"
+
+  - id: irreversible_cost_dominance
+    domain: landauer
+    claim: "An irreversible action costs at least its reversible baseline; strictly more when the irreversibility score is positive."
+    formal_invariant: "C_irr >= C_rev, strict when irreversibility_score > 0"
+    measured_quantity: "C_irr - C_rev over a seeded action sweep"
+    threshold: ">= 0 always; > 0 when score>0"
+    positive_witness: "tests/physics/test_landauer.py::test_irreversible_dominates_reversible"
+    negative_control: "tests/physics/test_landauer.py::test_fake_free_rollback_is_rejected"
+    blocking: true
+    failure_message: "IRREVERSIBLE-COST VIOLATED: reversible baseline exceeded irreversible cost."
+    evidence_output: "evidence/physics/landauer_report.json"
+
+  - id: empirical_synthetic_only_rejection
+    domain: falsification
+    claim: "A synthetic-only witness can never validate an empirical claim, and leaked/shuffled/unprovenanced data is rejected."
+    formal_invariant: "validate_empirical(witness) is True => witness.data_source == 'empirical' and provenance present and not leaked"
+    measured_quantity: "verdict of rejection_report on synthetic / shuffled / leaked / unprovenanced witnesses"
+    threshold: "all four adversarial witnesses must be REJECTED; only a clean provenanced empirical witness passes"
+    positive_witness: "tests/physics/test_falsification.py::test_clean_empirical_witness_passes"
+    negative_control: "tests/physics/test_falsification.py::test_synthetic_only_cannot_validate_empirical"
+    blocking: true
+    failure_message: "FALSIFICATION VIOLATED: an unverified/synthetic/leaked claim was admitted."
+    evidence_output: "evidence/physics/falsification_report.json"
+
+  - id: numerical_drift_bound
+    domain: precision
+    claim: "Seeded numerical pipelines are bit-reproducible and reject NaN/Inf and ill-conditioned inputs."
+    formal_invariant: "deterministic_hash(run(seed)) constant; assert_numerical_stability fails on NaN/Inf or cond(A) > kappa_max"
+    measured_quantity: "hash equality across repeats; cond(A) vs kappa_max; finiteness"
+    threshold: "hash identical; cond(A) <= kappa_max (explicit); no NaN/Inf"
+    positive_witness: "tests/physics/test_precision.py::test_seeded_hash_is_stable"
+    negative_control: "tests/physics/test_precision.py::test_ill_conditioned_input_is_rejected"
+    blocking: true
+    failure_message: "NUMERICAL-DRIFT VIOLATED: nondeterminism, NaN/Inf, or unbounded conditioning."
+    evidence_output: "evidence/physics/precision_report.json"
+
+  - id: kuramoto_critical_scaling
+    domain: ricci_kuramoto
+    claim: "Above onset (K > K_c = 2*delta) the Kuramoto order parameter converges to the exact Ott-Antonsen fixed point R_inf = sqrt(1 - 2*delta/K), with mean-field critical exponent beta = 1/2 near onset."
+    formal_invariant: "for K > 2*delta: |R_integrated(inf) - sqrt(1 - 2*delta/K)| <= 1e-9; and beta(log R vs log(K - K_c)) -> 1/2 +/- 0.05"
+    measured_quantity: "max over a supercritical K-sweep of |integrated R_inf - closed-form sqrt(1 - 2*delta/K)|"
+    threshold: "1e-9 absolute (supercritical); subcritical K <= K_c must decay to R < 1e-3"
+    positive_witness: "tests/physics/test_kuramoto_critical_scaling.py::test_supercritical_R_matches_closed_form"
+    negative_control: "tests/physics/test_kuramoto_critical_scaling.py::test_subcritical_and_invalid_are_rejected"
+    blocking: true
+    failure_message: "KURAMOTO CRITICAL-SCALING VIOLATED: integrated supercritical R_inf departs from the exact Ott-Antonsen fixed point sqrt(1 - 2*delta/K)."
+    evidence_output: "evidence/physics/kuramoto_critical_scaling_report.json"
+
+  - id: kuramoto_subcritical_finite_size
+    domain: ricci_kuramoto
+    claim: "Below the critical coupling the Kuramoto order parameter sits on a finite-size noise floor that scales as <r> ~ c/sqrt(N) (incoherent state) with c = O(1) for Lorentzian omega."
+    formal_invariant: "K < K_c => <r> = c/sqrt(N), c = O(1) (INV-K5); equivalently r < 3/sqrt(N) with p >= 0.99 over M >= 200 trials (INV-K2 finite-size bound)"
+    measured_quantity: "ensemble+time-averaged order parameter <r> at N in {256,384,512}, K=0.3*K_c, Lorentzian half-width gamma (K_c=2*gamma); coefficient c=<r>*sqrt(N) and the log<r>-vs-logN slope, after equilibration t=21 > 20/gamma"
+    threshold: "per-N c=<r>*sqrt(N) in [0.5, 1.8] with max/min < 2.0 (constant c <=> r ~ 1/sqrt(N)); P(r < 3/sqrt(N)) >= 0.99 over M >= 200; <r> strictly decreasing in N; log-log slope in [-1.45, -0.15]. Falsified supercritically (K=1.5*K_c): r=O(1) and c grows with N."
+    positive_witness: "tests/physics/test_kuramoto_subcritical_finite_size.py::test_subcritical_order_parameter_obeys_inverse_sqrt_n_noise_floor"
+    negative_control: "tests/physics/test_kuramoto_subcritical_finite_size.py::test_supercritical_breaks_noise_floor_and_invalid_inputs_fail_closed"
+    blocking: true
+    failure_message: "SUBCRITICAL-NOISE-FLOOR VIOLATED: a K<K_c order parameter departed the c/sqrt(N) finite-size floor (INV-K2 / INV-K5)."
+    evidence_output: "evidence/physics/kuramoto_subcritical_finite_size_report.json"
+
+  - id: kuramoto_frequency_entrainment
+    domain: ricci_kuramoto
+    claim: "Above K_c a macroscopic Kuramoto cluster locks to a common mean frequency Omega."
+    formal_invariant: "K > K_c => exists Omega : |<dtheta_j/dt>_t - Omega| -> 0 for j in locked set (INV-K3; Lorentzian K_c = 2*gamma)"
+    measured_quantity: "locked fraction, detuned-locked fraction, common-frequency spread, and Omega of the finite-N RK4 trajectory at K=3*K_c vs K=0.3*K_c (N=256, T>50/gamma)"
+    threshold: "supercritical: locked_fraction>0.5 AND detuned(|omega|>0.5*gamma)-locked>0.5 AND locked-set spread<0.05*gamma AND |Omega|<0.2*gamma; subcritical: detuned-locked<0.05 AND corr(<dtheta/dt>,omega_nat)>0.9"
+    positive_witness: "tests/physics/test_kuramoto_frequency_entrainment.py::test_supercritical_locks_detuned_oscillators_to_common_frequency"
+    negative_control: "tests/physics/test_kuramoto_frequency_entrainment.py::test_subcritical_entrainment_claim_is_falsified"
+    blocking: true
+    failure_message: "ENTRAINMENT VIOLATED: no macroscopic common-frequency cluster locked above K_c, or an entrainment claim survived below K_c."
+    evidence_output: "evidence/physics/kuramoto_frequency_entrainment_report.json"
+
+  - id: ollivier_ricci_universal_upper_bound
+    domain: ricci_kuramoto
+    claim: "Ollivier-Ricci edge curvature obeys the universal upper bound kappa <= 1; the symmetric band kappa in [-1, 1] holds ONLY for build_price_graph output, not arbitrary topologies."
+    formal_invariant: "kappa(x,y) = 1 - W_1(m_x,m_y)/d(x,y) => kappa <= 1 always (W_1 >= 0) [INV-RC1]; kappa >= -1 only when the positional embedding matches the combinatorial metric [INV-RC3, build_price_graph only]"
+    measured_quantity: "max kappa over a connected-graph fuzz; kappa range over build_price_graph edges; the 12-node-cycle wrap-around edge curvature"
+    threshold: "max kappa <= 1 + 1e-9 universally; price-graph kappa in [-1-1e-9, 1+1e-9]; the 12-cycle wrap edge kappa < -1 (measured ~ -2) refutes a universal symmetric band"
+    positive_witness: "tests/physics/test_ollivier_ricci_bounds.py::test_ollivier_upper_bound_is_universal"
+    negative_control: "tests/physics/test_ollivier_ricci_bounds.py::test_symmetric_band_is_not_universal"
+    blocking: true
+    failure_message: "OLLIVIER-RICCI VIOLATED: an edge curvature exceeded the universal upper bound kappa <= 1, or the price-graph-only symmetric band was asserted as universal."
+    evidence_output: "evidence/physics/ricci_kuramoto_report.json"
+
+  - id: ricci_flow_monotonicity
+    domain: ricci_kuramoto
+    claim: "Under discrete Ricci flow on a closed weighted graph, the Perelman F-functional F = sum_e kappa_e^2 * w_e is monotonically non-increasing (dF/dt <= 0)."
+    formal_invariant: "F(w_{t+1}) <= F(w_t) * (1 + tol), F(w) = sum_e kappa_e^2 * w_e; flow w_e^{n+1} = w_e^n - eta*kappa_e*w_e^n"
+    measured_quantity: "max over a seeded positive-curvature flow trajectory of F(t+1) - F(t)*(1+tol)"
+    threshold: "tol = 1e-9 (relative); any positive excess violates. Validity: positive Ricci curvature, no external rewiring of the curvature field during the step."
+    positive_witness: "tests/physics/test_ricci_flow_monotonicity.py::test_f_functional_nonincreases_under_positive_ricci_flow"
+    negative_control: "tests/physics/test_ricci_flow_monotonicity.py::test_negative_curvature_rewiring_injects_f_energy_is_rejected"
+    blocking: true
+    failure_message: "RICCI-F VIOLATED: Perelman F-functional Sum kappa^2 w increased under discrete Ricci flow (dF/dt > 0)."
+    evidence_output: "evidence/physics/ricci_flow_monotonicity_report.json"
+
+  - id: ricci_gauss_bonnet_exact
+    domain: ricci_kuramoto
+    claim: "For the clique complex of any finite simple graph, the sum of Knill vertex curvatures equals the Euler characteristic (discrete Gauss-Bonnet), exactly over the rationals."
+    formal_invariant: "sum_{x in V} K(x) - chi(G) == 0 exactly; K(x) = sum_k (-1)^k V_k(x)/(k+1); chi(G) = sum_k (-1)^k v_k (carried as fractions.Fraction, no float slack)"
+    measured_quantity: "exact rational residual Sum_x K(x) - chi(G) over a battery of finite simple graphs (trees, cycles, complete K_n, Petersen, small-world)"
+    threshold: "residual == 0 EXACTLY (over Q); any nonzero rational residual violates and is rejected fail-closed"
+    positive_witness: "tests/physics/test_gauss_bonnet.py::test_gauss_bonnet_residual_is_exactly_zero"
+    negative_control: "tests/physics/test_gauss_bonnet.py::test_gauss_bonnet_detects_corruption_and_rejects_bad_input"
+    blocking: true
+    failure_message: "GAUSS-BONNET VIOLATED: Sum_x K(x) - chi(G) != 0, or a non-simple graph was not refused."
+    evidence_output: "evidence/physics/ricci_kuramoto_report.json"
+
+  - id: ricci_semantics_split
+    domain: ricci_kuramoto
+    claim: "Signed Ollivier-Ricci curvature is never silently destroyed: it is preserved on the signed path, clipped ONLY with audit metadata on the threshold path, and a signed matrix is rejected fail-closed at the Restrepo-Ott-Hunt onset boundary."
+    formal_invariant: "ricci_to_signed_coupling preserves every kappa_ij<0 (roh_compatible=False); ricci_to_positive_adjacency clips with clipped_for_threshold=(#neg>0), negative_edges_count>0, negative_mass>0, roh_compatible=True; assert_roh_compatible(signed) raises; roh_compatible XOR signed_dynamics_compatible when negatives present (INV-KR4)"
+    measured_quantity: "preservation of negative entries on the signed path, audit fields on the positive path, and the fail-closed rejection of a signed matrix at the ROH boundary"
+    threshold: "exact/structural: signed path preserves negatives bit-for-bit (atol 0); positive path emits clipped_for_threshold=True with negative_mass>0; signed matrix at the ROH boundary raises ValueError"
+    positive_witness: "tests/physics/test_ricci_semantics_split.py::test_signed_curvature_split_preserves_and_audits"
+    negative_control: "tests/physics/test_ricci_semantics_split.py::test_signed_curvature_rejected_at_roh_boundary_fail_closed"
+    blocking: true
+    failure_message: "RICCI-SEMANTICS-SPLIT VIOLATED: signed curvature was silently dropped, clipped without audit, or a signed matrix was accepted at the ROH boundary."
+    evidence_output: "evidence/physics/ricci_kuramoto_report.json"
+
+  - id: second_law_closed
+    domain: thermodynamics
+    claim: "A closed subsystem with no external work has non-decreasing entropy (dS/dt >= 0); injected external work / negentropy that lowers entropy is detected."
+    formal_invariant: "free relaxation (dk=0, dW=0) of an overdamped Langevin ensemble in V=1/2 k x^2 has Gibbs entropy S=1/2 ln(2 pi e Var(x)) with dS/dt >= 0 (INV-TH2 / INV-ST3)"
+    measured_quantity: "min over a seeded relaxation trajectory of the block-to-block Gibbs-entropy increment dS"
+    threshold: "dS >= -tol, tol = 0.02 nats (~4x the 1/sqrt(M) finite-ensemble entropy-difference SE at M=40000); compression with injected work must breach -tol"
+    positive_witness: "tests/physics/test_second_law_closed.py::test_closed_subsystem_entropy_nondecreases"
+    negative_control: "tests/physics/test_second_law_closed.py::test_external_work_injection_is_detected"
+    blocking: true
+    failure_message: "SECOND-LAW VIOLATED: a closed (no-external-work) subsystem showed dS/dt < 0, or injected-work negentropy was not detected."
+    evidence_output: "evidence/physics/thermodynamics_report.json"
+
+  - id: free_energy_descent
+    domain: thermodynamics
+    claim: "Without external forcing, the free energy F = U - T*S of the trading gate is non-increasing."
+    formal_invariant: "dF/dt <= 0 for every unforced step (INV-FE1); components U>=0, T>=0, S_q>=0 (INV-FE2). F itself may be negative (Helmholtz)."
+    measured_quantity: "worst single-step F-increment over seeded unforced relaxation trajectories; plus delta_F and admission of a forced (leverage-growth) step"
+    threshold: "worst dF <= 1e-9 (float slack); a forced step must yield delta_F>0 AND allowed=False"
+    positive_witness: "tests/physics/test_free_energy_descent.py::test_unforced_free_energy_is_nonincreasing"
+    negative_control: "tests/physics/test_free_energy_descent.py::test_external_forcing_raising_free_energy_is_rejected"
+    blocking: true
+    failure_message: "FREE-ENERGY-DESCENT VIOLATED: unforced free energy increased, or a forcing step that raises F was admitted."
+    evidence_output: "evidence/physics/thermodynamics_report.json"
+
+  - id: landauer_bit_floor
+    domain: landauer
+    claim: "Erasing one bit of information costs at least k_B*T*ln2 of free energy, with equality at the reversible floor and linear scaling in temperature."
+    formal_invariant: "Delta_F_erase(n bits) = n*k_B*T*ln2; cost >= n*k_B*T*ln2 with equality at the reversible floor (INV-TAU2)"
+    measured_quantity: "bit_erasure_cost(n, T)/(n*k_B*T*ln2) over a T-sweep, and the floor/T slope vs k_B*ln2"
+    threshold: "ratio == 1.0 to 1e-12 (machine, equality at floor); any cost < n*k_B*T*ln2 violates"
+    positive_witness: "tests/physics/test_landauer_bit_floor.py::test_per_bit_erasure_floor_equals_kT_ln2"
+    negative_control: "tests/physics/test_landauer_bit_floor.py::test_sub_landauer_erasure_is_rejected"
+    blocking: true
+    failure_message: "LANDAUER-BIT-FLOOR VIOLATED: erasure cost fell below k_B*T*ln2 per bit or a sub-Landauer demand was admitted."
+    evidence_output: "evidence/physics/landauer_report.json"
+
+  - id: ecs_lyapunov_descent
+    domain: thermodynamics
+    claim: "The ECS free-energy regulator admits a Lyapunov function V(x) that is non-increasing along trajectories inside its operating set."
+    formal_invariant: "for V = 0.5*FE^2 + lambda*CF^2 + mu*SI^2: V_before > V_floor => V_after <= V_before (dV/dt <= 0); the corrected RK4 step fails closed to descent."
+    measured_quantity: "max over seeded autonomous trajectories of V(t+1) - V(t) for steps with V_before > V_floor"
+    threshold: "<= 1e-9 (V_floor = 1e-12); any larger increment violates descent"
+    positive_witness: "tests/physics/test_ecs_lyapunov_descent.py::test_ecs_lyapunov_monotone_descent_across_seeds"
+    negative_control: "tests/physics/test_ecs_lyapunov_descent.py::test_ecs_lyapunov_energy_injection_is_rejected"
+    blocking: true
+    failure_message: "ECS-LYAPUNOV-DESCENT VIOLATED: free-energy Lyapunov V increased along a trajectory inside the operating set (dV/dt > 0)."
+    evidence_output: "evidence/physics/ecs_lyapunov_report.json"
+
+  - id: "dro_ara_gamma_derivation"
+    domain: "dynamical_systems"
+    claim: "The DRO-ARA scaling exponent gamma is DERIVED from the DFA Hurst exponent H (gamma = 2*H + 1), never assigned independently."
+    formal_invariant: "gamma = 2*H + 1 with H = DFA-1 Hurst on diff(log(price)) (INV-DRO1); fail-closed on degenerate input (INV-DRO5)"
+    measured_quantity: "residual |gamma - (2*H+1)| from core.dro_ara.engine.derive_gamma over a seeded random-walk sweep"
+    threshold: "|gamma - (2*H+1)| < 1e-5; an independently-assigned gamma outside tolerance is rejected"
+    positive_witness: "tests/physics/test_dro_ara_gamma.py::test_gamma_derived_from_hurst_positive_witness"
+    negative_control: "tests/physics/test_dro_ara_gamma.py::test_independent_gamma_assignment_is_rejected"
+    blocking: true
+    failure_message: "DRO-ARA-GAMMA VIOLATED: gamma decoupled from H (|gamma-(2H+1)| >= 1e-5) or degenerate input did not fail closed (Peng et al. 1994; INV-DRO1/INV-DRO5)."
+    evidence_output: "evidence/physics/dro_ara_gamma_report.json"
+
+  - id: "kelly_optimal_fraction"
+    domain: "dynamical_systems"
+    claim: "The log-optimal betting fraction equals mean / variance in the small-edge continuous-return limit."
+    formal_invariant: "f* = mu / sigma^2 (INV-KELLY1, exact algebraic identity) and applied fraction <= configured cap (INV-KELLY2)"
+    measured_quantity: "max |kelly_from_edge_variance(mu, sigma^2) - mu/sigma^2| over a (mu, sigma) sweep; max(applied - cap); off-Kelly log-growth deficit"
+    threshold: "|residual| <= 1e-12 (machine-exact); applied - cap <= 0 always; E[log(1+f*X)] >= E[log(1+f'X)]"
+    positive_witness: "tests/physics/test_kelly_optimal_fraction.py::test_optimal_fraction_equals_mu_over_sigma_squared"
+    negative_control: "tests/physics/test_kelly_optimal_fraction.py::test_overbet_is_capped_and_degenerate_input_fails_closed"
+    blocking: true
+    failure_message: "KELLY-OPTIMAL VIOLATED: f* != mu/sigma^2, or an over-bet/degenerate input bypassed the INV-KELLY2 cap (Kelly 1956; Thorp 2006)."
+    evidence_output: "evidence/physics/dynamical_systems_report.json"
+
+  - id: "serotonin_level_bounds"
+    domain: "neuromodulation"
+    claim: "The serotonin (5-HT) ODE keeps level(t) in the biological range [0, 1] for every integration step, and the bound is enforced by the integrator guard rather than incidental to the dynamics."
+    formal_invariant: "0 <= level(t) <= 1 for all t (INV-5HT2); the step() clamp is load-bearing"
+    measured_quantity: "min and max of level over seeded zero-and-stress RK4 trajectories; and raw unclamped RK4 level vs the guarded level under extreme stress"
+    threshold: "level in [0.0, 1.0]; any level<0 or level>1 violates. Negative control: raw unclamped step exceeds 1 while guarded step stays <=1"
+    positive_witness: "tests/physics/test_serotonin_laws.py::test_level_stays_in_unit_interval"
+    negative_control: "tests/physics/test_serotonin_laws.py::test_unclamped_dynamics_would_leave_unit_interval"
+    blocking: true
+    failure_message: "SEROTONIN-LEVEL VIOLATED: 5-HT level left [0,1] (INV-5HT2)."
+    evidence_output: "evidence/physics/neuromodulation_report.json"
+
+  - id: "serotonin_lyapunov_stability"
+    domain: "neuromodulation"
+    claim: "Under zero exogenous stress the serotonin ODE is Lyapunov-stable about (level=target, desens=0): V is non-increasing along trajectories from perturbed states; a non-zero driving stress that raises V is detected."
+    formal_invariant: "V(l,d)=0.5*(l-target)^2 + lambda*d^2; dV/dt <= 0 with zero input (INV-5HT1)"
+    measured_quantity: "worst positive increment V(t+1)-V(t) over seeded zero-stress trajectories; and V increase under a non-zero driving stress"
+    threshold: "worst zero-stress increment <= 1e-9. Negative control: stress=1.0 from target raises V (verify_lyapunov is False)"
+    positive_witness: "tests/physics/test_serotonin_laws.py::test_lyapunov_nonincreasing_zero_stress"
+    negative_control: "tests/physics/test_serotonin_laws.py::test_driving_stress_violates_lyapunov_descent"
+    blocking: true
+    failure_message: "SEROTONIN-LYAPUNOV VIOLATED: V increased under zero input, or a V-raising drive went undetected (INV-5HT1)."
+    evidence_output: "evidence/physics/neuromodulation_report.json"
+
+  - id: "dopamine_rpe_zero_steady_state"
+    domain: "neuromodulation"
+    claim: "Expected reward-prediction error converges to zero in a stationary reward environment (TD(0) reaches V* = r/(1-gamma); E[delta] -> 0 by Robbins-Monro)."
+    formal_invariant: "E[delta_t] -> 0 where delta_t = r_t + gamma*V(s') - V(s), single recurrent state V(s')=V(s) (INV-DA5, INV-DA2)"
+    measured_quantity: "absolute tail running mean |mean(delta_t)| over the last 1500 of 6000 TD steps of the RAW DopamineController.compute_rpe (stationary vs non-stationary reward)"
+    threshold: "stationary: |E[delta]| < 5e-3 (measured 1.9e-4); non-stationary drift keeps |E[delta]| > 5e-3 (measured ~1.0)"
+    positive_witness: "tests/physics/test_dopamine_laws.py::test_rpe_converges_to_zero_under_stationary_reward"
+    negative_control: "tests/physics/test_dopamine_laws.py::test_nonstationary_reward_keeps_rpe_biased"
+    blocking: true
+    failure_message: "DOPAMINE-RPE-STEADY-STATE VIOLATED (INV-DA5): E[delta] did not converge to zero under a stationary reward, or a non-stationary reward failed to falsify the steady-state claim."
+    evidence_output: "evidence/physics/neuromodulation_report.json"
+
+  - id: "dopamine_bounded_signal"
+    domain: "neuromodulation"
+    claim: "The emitted dopamine signal is bounded per spec: the tanh-squashed DopamineExecutionAdapter keeps |DA(t)| <= DA_max for every finite input."
+    formal_invariant: "|DA(t)| = |tanh(scale*((pnl-pred)-|slippage|))| <= DA_max=1, finite for all finite input (INV-DA8); the RAW controller (d delta/d r = 1, INV-DA7) is unbounded by design"
+    measured_quantity: "max |DA| over a multi-decade finite fuzz of (realized_pnl, predicted_return, slippage) through the adapter, vs the raw TD delta magnitude for the same reward"
+    threshold: "|DA| <= 1.0 for all finite inputs (measured max 1.0); raw TD delta for r=50 overshoots to 50.0 > 1.0, so the bound is non-vacuous"
+    positive_witness: "tests/physics/test_dopamine_laws.py::test_adapter_signal_bounded_under_finite_fuzz"
+    negative_control: "tests/physics/test_dopamine_laws.py::test_unbounded_raw_signal_falsifies_bound_adapter_enforces"
+    blocking: true
+    failure_message: "DOPAMINE-BOUNDED-SIGNAL VIOLATED (INV-DA8): the adapter emitted |DA| > DA_max for a finite input, or the raw unbounded signal failed to demonstrate the tanh bound is load-bearing."
+    evidence_output: "evidence/physics/neuromodulation_report.json"
+
+  - id: "gaba_gate_bounds"
+    domain: "neuromodulation"
+    claim: "The GABA position gate multiplier lies in [0, 1] for every inhibition input."
+    formal_invariant: "0 <= gate(inhibition) <= 1 (INV-GABA1); gate = effective/base, effective clamped to [0, base] in gate_position_size"
+    measured_quantity: "min and max of the real GABAPositionGate.gate_position_size multiplier over a wide inhibition fuzz, plus the published fail-closed boundary"
+    threshold: "gate in [0.0, 1.0]; any multiplier < 0, > 1, or non-finite violates"
+    positive_witness: "tests/physics/test_gaba_laws.py::test_gate_multiplier_within_unit_interval"
+    negative_control: "tests/physics/test_gaba_laws.py::test_out_of_range_inhibition_fails_closed"
+    blocking: true
+    failure_message: "GABA-GATE-BOUNDS VIOLATED: position gate multiplier left [0,1] (INV-GABA1; Mink 1996)."
+    evidence_output: "evidence/physics/neuromodulation_report.json"
+
+  - id: "gaba_monotone_inhibition"
+    domain: "neuromodulation"
+    claim: "The GABA position gate is monotonically non-increasing in inhibition (more inhibition -> smaller size)."
+    formal_invariant: "gate(i_1) >= gate(i_2) for all i_1 <= i_2 (INV-GABA3; Mink 1996)"
+    measured_quantity: "worst positive jump max_k (gate(i_{k+1}) - gate(i_k)) over a dense increasing inhibition grid"
+    threshold: "worst positive jump <= 1e-12; any larger increase violates non-increase"
+    positive_witness: "tests/physics/test_gaba_laws.py::test_gate_monotone_nonincreasing_in_inhibition"
+    negative_control: "tests/physics/test_gaba_laws.py::test_fabricated_increasing_gate_is_detected"
+    blocking: true
+    failure_message: "GABA-MONOTONE VIOLATED: gate increased with inhibition (INV-GABA3; Mink 1996)."
+    evidence_output: "evidence/physics/neuromodulation_report.json"
+
+  - id: cognitive_core_soundness
+    domain: governance
+    claim: "The falsification core is a sound reality-detector: for the exact-law spine, each law's own predicate accepts the real solver output and FIRES (flips to violated) the instant the measured value leaves the invariant band; the soundness operator itself rejects rubber-stamp and always-reject gates."
+    formal_invariant: "for each exact gate P: P(real_measured)=True AND P(perturbed_measured)=False (perturbation beyond threshold); gate_fires(P,r,q)=P(r) and not P(q) is True for >=5 independent laws (gauss_bonnet, landauer, kelly, dro_ara, ott_antonsen) and False for a vacuous always-True or always-False predicate"
+    measured_quantity: "per-gate (predicate(real), predicate(perturbed)) over the exact-law spine, and gate_fires on planted vacuous/always-reject controls"
+    threshold: "every exact gate fires (accepts real, rejects divergence); no rubber-stamp or always-reject gate is scored sound; spine >= 5 laws"
+    positive_witness: "tests/physics/test_cognitive_core_soundness.py::test_exact_law_gates_fire_on_reality_divergence"
+    negative_control: "tests/physics/test_cognitive_core_soundness.py::test_soundness_operator_rejects_rubber_stamp_gate"
+    blocking: true
+    failure_message: "COGNITIVE-CORE SOUNDNESS VIOLATED: an exact-law gate failed to fire on reality-divergence, or the soundness operator was fooled by a vacuous gate."
+    evidence_output: "evidence/physics/governance_report.json"
+
+  - id: cognitive_core_admissibility
+    domain: governance
+    claim: "The cognitive core is one deterministic fail-closed value function over the invariant manifold: a nominal in-manifold snapshot is admissible (GO), every invariant gate is load-bearing (a single-invariant violation is rejected for that invariant alone), and the core never vacuously approves (empty/non-finite/violating snapshots yield NO_GO with the binding constraint named)."
+    formal_invariant: "V(snapshot)=GO iff snapshot in invariant manifold; for each gated field f, violating only f gives NO_GO with violations==(INV(f),) and binding_constraint==INV(f); empty->INSUFFICIENT->NO_GO; non-finite field->fail-closed NO_GO"
+    measured_quantity: "decision/status/violations/binding_constraint of CognitiveCore.admissibility over the nominal snapshot, the nine single-invariant violations, and empty/non-finite controls"
+    threshold: "nominal->GO with all gates active; each single violation->NO_GO with exactly that invariant; empty->INSUFFICIENT; non-finite->NO_GO (fail-closed); zero vacuous approvals"
+    positive_witness: "tests/physics/test_cognitive_core_admissibility.py::test_nominal_snapshot_is_admissible_and_every_gate_is_load_bearing"
+    negative_control: "tests/physics/test_cognitive_core_admissibility.py::test_core_never_vacuously_approves_and_fails_closed"
+    blocking: true
+    failure_message: "COGNITIVE-CORE ADMISSIBILITY VIOLATED: the value function admitted an out-of-manifold snapshot, vacuously approved, or a gate was not load-bearing."
+    evidence_output: "evidence/physics/governance_report.json"
+
+  - id: cognitive_core_mutation_robustness
+    domain: governance
+    claim: "The cognitive core kills 100% of a taxonomy of real-solver physics mutations: for each exact law, every parameter/input/formula corruption of the real solver is rejected by the law's predicate (mutation kill-rate == 1.0), while a null mutant survives and a rubber-stamp predicate kills nothing."
+    formal_invariant: "kill_rate = killed/total == 1.0 over >= 15 mutants spanning ott_antonsen, landauer, kelly, dro_ara, gauss_bonnet; null mutant (==real) survives every predicate; rubber-stamp predicate kills 0; real predicates kill all (1.0 vs 0.0 separation)"
+    measured_quantity: "mutation kill-rate over real-solver parameter/input/formula corruptions, plus null-mutant survival and rubber-stamp kill-count"
+    threshold: "kill_rate == 1.0 (>= 15 mutants); null mutant not killed; rubber-stamp kills 0; any survivor is an undetected physics corruption"
+    positive_witness: "tests/physics/test_cognitive_core_mutation_tribunal.py::test_mutation_tribunal_kills_every_physics_corruption"
+    negative_control: "tests/physics/test_cognitive_core_mutation_tribunal.py::test_kill_rate_metric_is_honest"
+    blocking: true
+    failure_message: "COGNITIVE-CORE MUTATION-ROBUSTNESS VIOLATED: a real-solver physics mutation survived (kill-rate < 1.0), or the kill-rate metric was dishonest."
+    evidence_output: "evidence/physics/governance_report.json"
+
+  - id: cognitive_core_runtime_enforcement
+    domain: governance
+    claim: "The cognitive core has runtime teeth: require_admissible returns the verdict for an in-manifold snapshot and raises InadmissibleStateError (fail-closed) for any violated, empty, or non-finite snapshot, naming the binding constraint; and the core's own source is mutation-ratcheted at a 100% logic kill-rate."
+    formal_invariant: "require_admissible(GO snapshot)->verdict; require_admissible(NO_GO/empty/non-finite)->raises InadmissibleStateError carrying the verdict with binding_constraint surfaced; a passed custom core is honoured (not the default); cognitive_core.py logic mutation kill-rate == 1.0 (floor in docs/MUTATION_KILL_BASELINE.json)"
+    measured_quantity: "decision of require_admissible over in-manifold / violated / empty / non-finite snapshots, the raised error's binding_constraint, custom-vs-default core routing, and the AST logic-mutation kill-rate of core/physics/cognitive_core.py"
+    threshold: "GO passes; every NO_GO raises (no silent actuation); error names the binding constraint; mutation kill-rate == 1.0 (12/12)"
+    positive_witness: "tests/physics/test_cognitive_core_runtime_gate.py::test_require_admissible_passes_in_manifold_state"
+    negative_control: "tests/physics/test_cognitive_core_runtime_gate.py::test_require_admissible_refuses_out_of_manifold_and_empty_states"
+    blocking: true
+    failure_message: "COGNITIVE-CORE RUNTIME-ENFORCEMENT VIOLATED: actuation was allowed outside the invariant manifold, or the core source regressed below its mutation-kill floor."
+    evidence_output: "evidence/physics/governance_report.json"
+
+  - id: property_based_order_parameter_bounds
+    domain: falsification
+    claim: "The Kuramoto order parameter stays in [0,1] over a WIDE Hypothesis-fuzzed distribution of finite phase arrays, not just hand-picked seeds."
+    formal_invariant: "for all finite theta arrays: 0 <= compute_order_parameter(theta) <= 1 (INV-K1, property-based)"
+    measured_quantity: "Hypothesis-drawn min/max of R = |mean(exp(i*theta))| over varied-N finite phase arrays (120 examples); plus fail-closed rejection of non-finite draws"
+    threshold: "R in [0.0, 1.0 + 1e-9]; any draw with R<0 or R>1+1e-9 violates, and the [0,1] predicate must reject a fabricated R=1.5"
+    positive_witness: "tests/physics/test_property_based_invariants.py::test_property_order_parameter_in_unit_interval"
+    negative_control: "tests/physics/test_property_based_invariants.py::test_negative_control_order_parameter_predicate"
+    blocking: true
+    failure_message: "PROPERTY-K1 VIOLATED: a fuzzed phase array drove the order parameter outside [0,1]."
+    evidence_output: "evidence/physics/falsification_report.json"
+
+  - id: property_based_kelly_fraction
+    domain: falsification
+    claim: "The applied Kelly fraction never exceeds its configured cap and the full optimum equals mu/sigma^2, over a WIDE Hypothesis-fuzzed distribution of finite mu, positive sigma^2, fraction and cap."
+    formal_invariant: "for all finite edge, sigma^2>0, frac in [0,1], cap>0: 0 <= kelly_from_edge_variance(...) <= cap (INV-KELLY2) and full f* == edge/sigma^2 (INV-KELLY1)"
+    measured_quantity: "Hypothesis-drawn applied fraction vs cap, and |full_kelly - edge/variance|, over 120 examples reusing kelly_from_edge_variance"
+    threshold: "applied in [0, cap] for every draw; |full_kelly - edge/variance| <= 1e-12 (rel); the cap predicate must reject a fabricated f=0.6 over cap=0.3"
+    positive_witness: "tests/physics/test_property_based_invariants.py::test_property_kelly_fraction_within_cap"
+    negative_control: "tests/physics/test_property_based_invariants.py::test_negative_control_kelly_fraction_predicate"
+    blocking: true
+    failure_message: "PROPERTY-KELLY VIOLATED: a fuzzed edge/variance/cap draw exceeded the sizing cap or broke f*=mu/sigma^2."
+    evidence_output: "evidence/physics/falsification_report.json"
+
+  - id: metamorphic_order_parameter_rotation_invariance
+    domain: falsification
+    claim: "The Kuramoto order parameter R is invariant under a global phase rotation of its inputs."
+    formal_invariant: "R = |mean(exp(i*theta))| satisfies R(theta) == R(theta + c) for any constant c (rotation factors out of the modulus; metamorphic strengthening of INV-K1)."
+    measured_quantity: "max over seeds/constants of |compute_order_parameter(phases) - compute_order_parameter(phases + c)|"
+    threshold: "<= 1e-12 (machine tolerance); any larger residual violates rotation invariance"
+    positive_witness: "tests/physics/test_metamorphic_relations.py::test_order_parameter_rotation_invariance_holds"
+    negative_control: "tests/physics/test_metamorphic_relations.py::test_order_parameter_rotation_with_amplitude_corruption_is_rejected"
+    blocking: true
+    failure_message: "METAMORPHIC ROTATION-INVARIANCE VIOLATED: order parameter R changed under a pure global phase shift."
+    evidence_output: "evidence/physics/falsification_report.json"
+
+  - id: metamorphic_landauer_temperature_linearity
+    domain: falsification
+    claim: "The Landauer erasure cost is exactly linear in temperature and additive in bits under input scaling."
+    formal_invariant: "cost = k_B*T*ln2*bits implies cost(1, a*T) == a*cost(1, T) for a>0 and cost(n, T) == n*cost(1, T) (metamorphic strengthening of the Landauer floor, INV-TAU2)."
+    measured_quantity: "max relative residual of |bit_erasure_cost(1, a*T) - a*bit_erasure_cost(1, T)| and |bit_erasure_cost(n, T) - n*bit_erasure_cost(1, T)|"
+    threshold: "<= 1e-12 relative (costs live at the k_B ~1e-23 scale; pure float-rounding budget); any larger residual violates linearity"
+    positive_witness: "tests/physics/test_metamorphic_relations.py::test_landauer_temperature_linearity_holds"
+    negative_control: "tests/physics/test_metamorphic_relations.py::test_landauer_wrong_scaling_factor_is_rejected"
+    blocking: true
+    failure_message: "METAMORPHIC LANDAUER-LINEARITY VIOLATED: erasure cost is not linear in temperature / additive in bits."
+    evidence_output: "evidence/physics/falsification_report.json"
+
+  - id: convergence_order_ott_antonsen_rk4
+    domain: precision
+    claim: "The Ott-Antonsen RK4 integrator converges to the true trajectory at its theoretical fourth order; a first-order Euler step on the same ODE does not."
+    formal_invariant: "Richardson order p of OttAntonsenEngine.integrate satisfies p in [3.5, 4.5] (RK4 global error O(dt^4)); Euler on the same RHS gives p in [0.6, 1.5]."
+    measured_quantity: "log-log slope of |z(T;dt) - z(T;dt/2)| vs dt over a 6-point dt ladder on the real OA RK4 integrator (and the Euler control on engine._dz_dt)"
+    threshold: "RK4 order in [3.5, 4.5]; Euler control strictly below 3.5 and within [0.6, 1.5]"
+    positive_witness: "tests/physics/test_convergence_order.py::test_ott_antonsen_rk4_is_fourth_order"
+    negative_control: "tests/physics/test_convergence_order.py::test_ott_antonsen_euler_is_not_fourth_order"
+    blocking: true
+    failure_message: "CONVERGENCE-ORDER VIOLATED: OA integrator order departed from RK4 (~4), or a first-order Euler step passed as fourth-order."
+    evidence_output: "evidence/physics/precision_report.json"
+
+  - id: convergence_order_lyapunov_benettin
+    domain: precision
+    claim: "The Benettin Sum(lambda) error obeys the exact law omega^4*dt^3/4, fixing an omega-refinement order ~4 (INV-LY2 O((omega*dt)^4)) and a dt-refinement step-size order ~3; a damped non-Hamiltonian system shows no such convergence to zero."
+    formal_invariant: "For the harmonic oscillator |Sum(lambda)| = omega^4*dt^3/4: omega-refine slope in [3.5, 4.5] AND dt-refine slope in [2.6, 3.4]; damped (trace=-2c) dt-slope < 2.6 with |Sum| -> 2c."
+    measured_quantity: "log-log slopes of |Sum(lambda)| vs omega*dt (fixed dt) and vs dt (fixed omega) from the real lyapunov_spectrum, plus the analytic-law ratio"
+    threshold: "omega order in [3.5, 4.5]; dt order in [2.6, 3.4]; measured |Sum| within 2% of omega^4*dt^3/4; damped control dt-slope < 2.6 and |Sum|->2c within 1e-3"
+    positive_witness: "tests/physics/test_convergence_order.py::test_lyapunov_sum_lambda_obeys_omega4_dt3_law"
+    negative_control: "tests/physics/test_convergence_order.py::test_lyapunov_damped_sum_does_not_converge_to_zero"
+    blocking: true
+    failure_message: "CONVERGENCE-ORDER VIOLATED: Benettin Sum(lambda) order departed from the omega^4*dt^3/4 law, or a non-Hamiltonian system showed spurious convergence to Sum=0."
+    evidence_output: "evidence/physics/precision_report.json"
+
+  - id: oracle_crossval_gauss_bonnet_vs_networkx
+    domain: falsification
+    claim: "The repo discrete Gauss-Bonnet Euler characteristic agrees EXACTLY with an independent networkx clique-enumeration f-vector, on a battery of graphs."
+    formal_invariant: "euler_characteristic(G) == sum_k (-1)^(k-1)*|k-cliques(G)| (independent networkx oracle) for every G; exact integer equality"
+    measured_quantity: "per-graph integer difference repo euler_characteristic - networkx f-vector chi over cycles/complete/petersen/path/tree"
+    threshold: "exact equality (residual == 0) on every graph; a cycle (chi=0) vs tree (chi=1) must be distinguished by the cross-check"
+    positive_witness: "tests/physics/test_independent_oracle_crossvalidation.py::test_gauss_bonnet_euler_matches_networkx_oracle"
+    negative_control: "tests/physics/test_independent_oracle_crossvalidation.py::test_gauss_bonnet_oracle_disagrees_on_different_graph"
+    blocking: true
+    failure_message: "ORACLE-CROSSVAL GAUSS-BONNET VIOLATED: repo Euler characteristic disagreed with the independent networkx oracle."
+    evidence_output: "evidence/physics/falsification_report.json"
+
+  - id: oracle_crossval_landauer_vs_scipy_constants
+    domain: falsification
+    claim: "The repo Landauer per-bit floor matches an independent scipy.constants Boltzmann-based k_B*T*ln2 to machine tolerance across a temperature sweep."
+    formal_invariant: "bit_erasure_cost(1,T) / (scipy.constants.Boltzmann * T * ln2) == 1 to 1e-12; repo K_BOLTZMANN == scipy.constants.Boltzmann (independent k_B source)"
+    measured_quantity: "ratio repo bit_erasure_cost(1,T) to scipy_constants Boltzmann*T*ln2 over T in {4.2,77,300,600,1000}"
+    threshold: "|ratio - 1| <= 1e-12 for every T; repo cost(T) vs oracle cost(2T) must diverge by > 0.1 (discriminating)"
+    positive_witness: "tests/physics/test_independent_oracle_crossvalidation.py::test_landauer_floor_matches_scipy_constants_oracle"
+    negative_control: "tests/physics/test_independent_oracle_crossvalidation.py::test_landauer_oracle_disagrees_on_different_temperature"
+    blocking: true
+    failure_message: "ORACLE-CROSSVAL LANDAUER VIOLATED: repo per-bit floor disagreed with the independent scipy.constants Boltzmann oracle."
+    evidence_output: "evidence/physics/falsification_report.json"
+
+  - id: numerical_calibration_certificate
+    domain: precision
+    claim: "Every exact law passes not merely within tolerance but CALIBRATED: the measured residual sits strictly inside its threshold with strictly positive margin (orders of magnitude of headroom), recorded as a deterministic certificate."
+    formal_invariant: "for each exact law: measured_residual < threshold AND margin_decades = log10(threshold/measured) > 0 (>= 5 laws); a measurement at the threshold has margin 0 and past it has margin < 0, both flagged NOT calibrated"
+    measured_quantity: "per-law (measured residual, threshold, margin_decades) for ott_antonsen/landauer/kelly/dro_ara/gauss_bonnet from the real solvers, emitted to evidence/physics/calibration_certificate.json"
+    threshold: "every law margin_decades > 0 (worst observed ~1.0 decade, dro_ara); the margin metric must score at-threshold as 0 and past-threshold as negative"
+    positive_witness: "tests/physics/test_calibration_certificate.py::test_every_exact_law_is_calibrated_with_positive_margin"
+    negative_control: "tests/physics/test_calibration_certificate.py::test_margin_metric_flags_uncalibrated_measurements"
+    blocking: true
+    failure_message: "CALIBRATION VIOLATED: an exact law sat at or past its tolerance (non-positive margin), or the margin metric mis-scored an uncalibrated measurement."
+    evidence_output: "evidence/physics/precision_report.json"
+
+  - id: cognitive_core_meta_gate
+    domain: governance
+    claim: "A single self-verifying meta-gate composes the whole invariant centre into one deterministic content-addressed GREEN/RED verdict (every blocking law witnessed + mutation floors well-formed + cognitive core at a 1.0 code-mutation floor), and it cannot rubber-stamp an incompletely-witnessed catalog."
+    formal_invariant: "verify_cognitive_core.verify() returns verdict==GREEN with all checks True and a reproducible verdict_sha256 across calls; a catalog with a stripped negative control makes promotion_gate FAIL (the meta-gate's load-bearing check)"
+    measured_quantity: "the composed verdict (GREEN/RED), the per-check booleans, the verdict_sha256 determinism across two calls, and the tampered-catalog promotion-gate status"
+    threshold: "verdict==GREEN, all checks True, identical sha256 across calls; tampered catalog -> promotion_gate status FAIL, intact -> PASS"
+    positive_witness: "tests/physics/test_cognitive_core_meta_gate.py::test_meta_gate_is_green_and_deterministic"
+    negative_control: "tests/physics/test_cognitive_core_meta_gate.py::test_meta_gate_rejects_a_tampered_catalog"
+    blocking: true
+    failure_message: "COGNITIVE-CORE META-GATE VIOLATED: the composed verdict was not GREEN/deterministic, or the gate rubber-stamped an incompletely-witnessed catalog."
+    evidence_output: "evidence/physics/governance_report.json"
+
+  - id: exhaustive_gauss_bonnet_atlas
+    domain: falsification
+    claim: "Discrete Gauss-Bonnet Sum_x K(x) == chi(G) holds EXACTLY (over Q) for EVERY non-isomorphic graph on up to 7 nodes — a finite exhaustive proof over the whole networkx Graph Atlas, not a sample."
+    formal_invariant: "for all G in graph_atlas_g() with n>=1: gauss_bonnet_residual(G) == Fraction(0); >= 1200 graphs checked; >= 5 distinct Euler characteristics present"
+    measured_quantity: "max |Sum_x K(x) - chi(G)| over all ~1252 atlas graphs (exact Fraction), and the count of distinct chi"
+    threshold: "residual == 0 EXACTLY for every atlas graph; a planted rational perturbation of a residual must be detected as non-zero"
+    positive_witness: "tests/physics/test_exhaustive_gauss_bonnet_atlas.py::test_gauss_bonnet_holds_exactly_over_entire_atlas"
+    negative_control: "tests/physics/test_exhaustive_gauss_bonnet_atlas.py::test_perturbed_curvature_breaks_exhaustive_identity"
+    blocking: true
+    failure_message: "EXHAUSTIVE-GAUSS-BONNET VIOLATED: a graph in the atlas broke Sum_x K(x)==chi(G), or the exact-zero check was vacuous."
+    evidence_output: "evidence/physics/falsification_report.json"
+
+  - id: stateful_cognitive_core_admissibility
+    domain: governance
+    claim: "Over arbitrary SEQUENCES of field mutations, the cognitive core's admissibility verdict always equals an independent model (admissible iff non-empty and no out-of-manifold field), with correct status and binding constraint."
+    formal_invariant: "for every Hypothesis-generated sequence of set_valid/set_invalid/clear operations: core.admissibility(snapshot).admissible == (snapshot non-empty AND model_violated empty); NO_GO status is INADMISSIBLE iff violated else INSUFFICIENT; binding_constraint in the model-violated set"
+    measured_quantity: "agreement of the cognitive core verdict with the model oracle after every transition of a RuleBasedStateMachine (120 examples x 24 steps)"
+    threshold: "verdict matches model on every transition; an out-of-manifold field must flip admissibility (discriminating control)"
+    positive_witness: "tests/physics/test_stateful_cognitive_core.py::test_stateful_admissibility_holds_over_sequences"
+    negative_control: "tests/physics/test_stateful_cognitive_core.py::test_stateful_model_oracle_is_discriminating"
+    blocking: true
+    failure_message: "STATEFUL-CORE VIOLATED: the admissibility verdict diverged from the model over a mutation sequence, or the model oracle could not discriminate states."
+    evidence_output: "evidence/physics/governance_report.json"
+
+  - id: adversarial_counterexample_search
+    domain: falsification
+    claim: "A global optimizer actively hunting for a counterexample cannot drive any bounded law past its bound: maximising max|z| (OA1) and the order parameter R (K1) over the input space stays <= 1; the same adversary DOES breach a deliberately-too-tight fake bound (so the search is a real falsifier)."
+    formal_invariant: "differential_evolution maximising the violation of INV-OA1 (max|z|<=1) and INV-K1 (R<=1) yields worst <= 1 + 1e-6; against a fake bound 0.5 on max|z| the optimizer finds worst > 0.5"
+    measured_quantity: "the worst (maximal) bound value found by scipy.optimize.differential_evolution over (K,delta,R0) for OA1 and over a phase vector for K1, and over the fake-bound control"
+    threshold: "adversarial worst <= 1 + 1e-6 for the real bounds; adversarial worst > 0.5 for the planted fake bound (capability proof)"
+    positive_witness: "tests/physics/test_adversarial_counterexample_search.py::test_adversary_cannot_break_ott_antonsen_unit_disk"
+    negative_control: "tests/physics/test_adversarial_counterexample_search.py::test_adversary_is_capable_of_finding_a_planted_violation"
+    blocking: true
+    failure_message: "ADVERSARIAL-SEARCH VIOLATED: a global optimizer drove a bounded law past its bound, or the adversary could not breach a planted-too-tight bound (vacuous search)."
+    evidence_output: "evidence/physics/falsification_report.json"
+
+  - id: interval_enclosure_certificate
+    domain: precision
+    claim: "The algebraic laws are certified by VERIFIED COMPUTING: an outward-rounded interval brackets the true mathematical value (mu/sigma^2, k_B*T*ln2), the repo float result lies inside, and the enclosure is tight (few ULP) — a machine-checked guarantee, not an arbitrary tolerance."
+    formal_invariant: "directed-rounding Interval (math.nextafter outward) for Kelly mu/sigma^2 and Landauer k_B*T*ln2 CONTAINS the repo result; relative enclosure width < 1e-12; a value shifted by 1e-9 (>> width) is provably NOT contained"
+    measured_quantity: "for each algebraic law: whether the repo float lies in the outward-rounded enclosure of the true value, the relative enclosure width, and exclusion of a planted wrong value"
+    threshold: "repo result in [lo,hi] for every case; relative width < 1e-12; a 1e-9-perturbed value excluded"
+    positive_witness: "tests/physics/test_interval_enclosure_certificate.py::test_kelly_value_is_certified_by_interval_enclosure"
+    negative_control: "tests/physics/test_interval_enclosure_certificate.py::test_enclosure_excludes_a_wrong_value"
+    blocking: true
+    failure_message: "INTERVAL-ENCLOSURE VIOLATED: a repo result fell outside its certified enclosure, the enclosure was not tight, or it failed to exclude a wrong value."
+    evidence_output: "evidence/physics/precision_report.json"
+
+  - id: law_requires_positive_and_negative_witness
+    domain: governance
+    claim: "Every blocking law in this catalog carries both a positive witness and a negative control, and the promotion gate fails closed otherwise."
+    formal_invariant: "for each blocking law L: collected(L.positive_witness) and collected(L.negative_control) and exists(L.evidence_output)"
+    measured_quantity: "count of blocking laws missing a witness, a negative control, or evidence"
+    threshold: "0 missing; any missing fails promotion"
+    positive_witness: "tests/physics/test_governance.py::test_full_catalog_passes_promotion_gate"
+    negative_control: "tests/physics/test_governance.py::test_law_without_negative_control_fails_gate"
+    blocking: true
+    failure_message: "GOVERNANCE VIOLATED: a blocking law lacks a witness, a negative control, or evidence."
+    evidence_output: "evidence/physics/governance_report.json"

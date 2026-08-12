@@ -1,3 +1,5 @@
+# Copyright (c) 2023-2026 Yaroslav Vasylenko (neuron7xLab)
+# SPDX-License-Identifier: MIT
 """Sleep-inspired replay buffer with novelty-aware prioritisation."""
 
 from __future__ import annotations
@@ -7,9 +9,7 @@ from typing import Any, Deque, List
 
 import numpy as np
 
-Transition = namedtuple(
-    "Transition", "state action reward next_state priority cp_score"
-)
+Transition = namedtuple("Transition", "state action reward next_state priority cp_score")
 
 
 class SleepReplayEngine:
@@ -61,9 +61,7 @@ class SleepReplayEngine:
             raise ValueError("batch_size must be positive")
         if not self.buffer:
             return []
-        priorities = np.array(
-            [transition.priority for transition in self.buffer], dtype=float
-        )
+        priorities = np.array([transition.priority for transition in self.buffer], dtype=float)
         total_priority = float(np.sum(priorities))
         if not np.isfinite(total_priority) or total_priority <= 0.0:
             probabilities = np.full(len(self.buffer), 1.0 / len(self.buffer))

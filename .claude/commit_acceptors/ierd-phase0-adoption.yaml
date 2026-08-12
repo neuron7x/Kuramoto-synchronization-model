@@ -1,0 +1,145 @@
+# Diff-bound commit acceptor for IERD-PAI-FPS-UX-001 Phase-0 adoption.
+# Binds the changeset that introduces the binding governance directive,
+# the schema-v2 claim ledger, the tier-aware check_claims.py, the
+# warn-mode forbidden-terminology lint, and the external-audit response.
+#
+# This acceptor is required by the diff-bound commit acceptor layer
+# (PR #491, see .claude/commit_acceptor_policy.yaml). Without it, the
+# `commit-acceptor-validation` CI gate fails on every code change.
+
+id: ierd-phase0-adoption
+status: ACTIVE
+claim_type: documentation
+promise: >
+  GeoSync adopts IERD-PAI-FPS-UX-001 as a binding standard, layered
+  on the existing CLAIMS.yaml registry: every claim now carries a
+  tier (ANCHORED/EXTRAPOLATED/SPECULATIVE/UNKNOWN); check_claims.py
+  is fail-closed on missing evidence for ANCHORED/EXTRAPOLATED P0/P1
+  claims and warn-only for SPECULATIVE/UNKNOWN; a forbidden-terminology
+  lint runs in warn mode in CI.
+diff_scope:
+  changed_files:
+    - path: ".github/workflows/claims-evidence-gate.yml"
+    - path: "README.md"
+    - path: "docs/CLAIMS.yaml"
+    - path: "docs/KNOWN_LIMITATIONS.md"
+    - path: "docs/adr/0020-ierd-adoption.md"
+    - path: "docs/adr/index.md"
+    - path: "docs/audit/ierd_phase0_findings.md"
+    - path: "docs/validation/pai_report_2026_05_03.md"
+    - path: "docs/yana-response.md"
+    - path: "scripts/ci/check_claims.py"
+    - path: "scripts/ci/lint_forbidden_terms.py"
+    - path: "scripts/ci/compute_pai.py"
+    - path: "scripts/ci/compute_fps_audit.py"
+    - path: "docs/validation/pai_latest.json"
+    - path: "docs/validation/fps_audit_latest.json"
+    - path: "tests/test_dfa_gamma_estimator.py"
+    - path: "tests/core/dro_ara/test_invariants.py"
+    - path: "tests/scripts/test_check_claims.py"
+    - path: "tests/scripts/test_compute_pai.py"
+    - path: "tests/scripts/test_compute_fps_audit.py"
+    - path: "docs/adr/0021-falsifier-required-anchored-claims.md"
+    - path: "scripts/ci/compute_fps_audit.py"
+    - path: "docs/governance/anti_goodhart_evidence.md"
+    - path: ".claude/commit_acceptors/ierd-phase0-adoption.yaml"
+    - path: "INVENTORY.json"
+  forbidden_paths:
+    - "trading/"
+    - "execution/"
+    - "forecast/"
+    - "policy/"
+required_python_symbols:
+  - "Claim"
+  - "Falsifier"
+  - "ValidationFailure"
+  - "TIERS_VALID"
+  - "TIER_DEFAULT_LEGACY"
+  - "FALSIFIER_REQUIRED_KEYS"
+  - "INV_PATTERN"
+  - "_resolve_schema_version"
+  - "_parse_claims"
+  - "_parse_falsifier"
+  - "_validate_evidence"
+  - "Finding"
+  - "FORBIDDEN_PATTERNS"
+  - "TRIGGER_PATTERNS"
+  - "EXCEPTION_PATTERNS"
+  - "ALLOWLIST_PATHS"
+  - "STRICT_SUBSET_GLOBS"
+  - "ModuleGroup"
+  - "ModuleScore"
+  - "PaiSnapshot"
+  - "compute_pai"
+  - "_relpath_or_abs"
+  - "_count_forbidden_assertions"
+  - "ClaimRow"
+  - "ClaimAudit"
+  - "FpsSnapshot"
+  - "compute_fps_audit"
+expected_signal: >
+  check_claims.py PASS on schema v2 with tier distribution
+  ANCHORED=19, EXTRAPOLATED=1, SPECULATIVE=0, UNKNOWN=4;
+  lint_forbidden_terms.py PASS warn-only over README + docs and
+  PASS strict on Phase-0.5 subset; compute_pai.py PASS at 19/19
+  modules covered (PAI = 1.00 ≥ threshold 0.90); compute_fps_audit.py
+  PASS at 20/20 ANCHORED+EXTRAPOLATED claims with test/artefact
+  evidence (FPS_audit = 1.00 ≥ threshold 1.00); 17/17
+  tests/scripts/test_check_claims.py green.
+measurement_command: >-
+  python scripts/ci/check_claims.py &&
+  python scripts/ci/lint_forbidden_terms.py &&
+  python scripts/ci/lint_forbidden_terms.py --phase0-strict-subset &&
+  python scripts/ci/compute_pai.py --write &&
+  python scripts/ci/compute_fps_audit.py --write &&
+  python -m pytest tests/scripts/test_check_claims.py -v
+signal_artifact: "tmp/ierd_phase0_adoption_evidence.log"
+falsifier:
+  command: |-
+    python -c "
+    import yaml, sys
+    from pathlib import Path
+    p = Path('docs/CLAIMS.yaml')
+    body = yaml.safe_load(p.read_text(encoding='utf-8'))
+    body['claims'][0].pop('tier', None)
+    tampered = Path('tmp/_tampered_claims.yaml')
+    tampered.parent.mkdir(parents=True, exist_ok=True)
+    tampered.write_text(yaml.safe_dump(body), encoding='utf-8')
+    import importlib.util
+    spec = importlib.util.spec_from_file_location('cc', 'scripts/ci/check_claims.py')
+    cc = importlib.util.module_from_spec(spec)
+    spec.loader.exec_module(cc)
+    reg = cc._load_registry(tampered)
+    try:
+        cc._parse_claims(reg)
+    except ValueError as e:
+        if 'tier' in str(e):
+            sys.exit(1)
+    sys.exit(0)
+    "
+  description: >
+    Removing the `tier` field from any v2 claim must raise a
+    schema-validation error. The probe tampers with a copy of
+    CLAIMS.yaml and asserts the parser fails-closed; if the parser
+    silently accepts a v2 claim missing `tier`, the falsifier
+    exits 1, which CI surfaces as a probe failure and proves the
+    schema gate is real.
+rollback_command: >-
+  git checkout origin/main -- .github/workflows/claims-evidence-gate.yml
+  README.md docs/CLAIMS.yaml docs/KNOWN_LIMITATIONS.md docs/adr/index.md
+  scripts/ci/check_claims.py &&
+  rm -f docs/adr/0020-ierd-adoption.md
+  docs/audit/ierd_phase0_findings.md
+  docs/governance/IERD-PAI-FPS-UX-001.md
+  docs/validation/pai_report_2026_05_03.md
+  docs/yana-response.md
+  scripts/ci/lint_forbidden_terms.py
+  .claude/commit_acceptors/ierd-phase0-adoption.yaml
+rollback_verification_command: >-
+  git diff --exit-code origin/main --
+  .github/workflows/claims-evidence-gate.yml README.md docs/CLAIMS.yaml
+  docs/KNOWN_LIMITATIONS.md docs/adr/index.md scripts/ci/check_claims.py
+memory_update_type: append
+ledger_path: ".claude/commit_acceptors/ierd-phase0-adoption.yaml"
+report_path: "docs/audit/ierd_phase0_findings.md"
+evidence: []

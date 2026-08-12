@@ -1,0 +1,119 @@
+# Diff-bound commit acceptor for the ⊛ RVG-1 Repository Verification Gate.
+#
+# Adds a deterministic, fail-closed audit harness (tools/rvg_*.py) that
+# computes a verified evidence vector — test pass rate, line/branch coverage,
+# mutation score, oracle_gap, verified_test_strength — plus static-quality and
+# supply-chain gates, recomputing every percentage from raw numerator/
+# denominator and failing closed on missing evidence or zero denominator.
+#
+# Additive and non-destructive: Makefile targets are namespaced rvg-* and never
+# touch the existing audit/verify/mutation-ratchet targets; runtime outputs are
+# isolated under the git-ignored artifacts/rvg/ tree; RVG thresholds are a floor
+# that never lowers coverage.report.fail_under = 98.
+
+id: rvg-1-verification-gate
+status: ACTIVE
+claim_type: governance
+promise: >-
+  After this PR lands, `tools/rvg_audit.py` emits a deterministic, fail-closed
+  RVG verdict (JSON + Markdown) whose every percentage is recomputed from raw
+  counts and independently cross-checked by `tools/rvg_verify_artifacts.py`
+  (fail on delta > 0.01). `verify_hash_manifest` recomputes every sha256 digest
+  and requires the verdict file to hash-match the manifest, so a post-hoc edit
+  to RVG_VERDICT.json fails closed. SBOM evidence must carry ≥1 real component;
+  mutation evidence is real, explicit, or explicitly bootstrap_report_only
+  (never a fabricated `tool: none` score). `tools/rvg_assert_verdict.py` gates CI
+  under an explicit mode: bootstrap (sound, hash-bound, placeholder-free; FAIL
+  verdict allowed) or enforce (verdict PASS + real mutation). The
+  self-verification suites in tests/tools/test_rvg_audit.py and
+  tests/tools/test_rvg_artifact_verifier.py prove formula correctness,
+  fail-closed behaviour, hash tamper-detection, threshold boundaries, and the
+  bootstrap/enforce assertions.
+
+diff_scope:
+  changed_files:
+    - path: ".claude/commit_acceptors/rvg-1-verification-gate.yaml"
+    - path: "tools/rvg_audit.py"
+    - path: "tools/rvg_normalize_mutation.py"
+    - path: "tools/rvg_verify_artifacts.py"
+    - path: "tools/rvg_assert_verdict.py"
+    - path: "tests/tools/test_rvg_audit.py"
+    - path: "tests/tools/test_rvg_artifact_verifier.py"
+    - path: "audit/thresholds.json"
+    - path: "audit/rvg.coveragerc"
+    - path: "audit/schema/coverage.schema.json"
+    - path: "audit/schema/mutation.schema.json"
+    - path: "audit/schema/verdict.schema.json"
+    - path: ".github/workflows/rvg.yml"
+    - path: "audit/RVG_PROTOCOL.md"
+    - path: "Makefile"
+    - path: "pyproject.toml"
+    - path: ".gitignore"
+  forbidden_paths:
+    - "trading/"
+    - "execution/"
+    - "forecast/"
+    - "policy/"
+    - "core/"
+    - "runtime/"
+    - "application/"
+
+required_python_symbols:
+  - "tools/rvg_audit.py::compute_verdict"
+  - "tools/rvg_audit.py::coverage_metrics"
+  - "tools/rvg_audit.py::mutation_metric"
+  - "tools/rvg_audit.py::sbom_present"
+  - "tools/rvg_normalize_mutation.py::normalize"
+  - "tools/rvg_normalize_mutation.py::bootstrap_report"
+  - "tools/rvg_verify_artifacts.py::cross_check_recompute"
+  - "tools/rvg_verify_artifacts.py::verify_hash_manifest"
+  - "tools/rvg_assert_verdict.py::assert_verdict"
+
+expected_signal: >-
+  `python -m pytest -o addopts= tests/tools/test_rvg_audit.py
+  tests/tools/test_rvg_artifact_verifier.py -q` reports 51 passed; a
+  demonstration `rvg_audit.py` run over the RVG tools subsystem produces a
+  reproducible (byte-identical across two runs) fail-closed verdict that
+  passes `rvg_assert_verdict.py --mode bootstrap` and fails `--mode enforce`.
+
+measurement_command: >-
+  bash -c '
+    python -m ruff check tools/rvg_audit.py tools/rvg_normalize_mutation.py tools/rvg_verify_artifacts.py tools/rvg_assert_verdict.py &&
+    python -m mypy --strict tools/rvg_audit.py tools/rvg_normalize_mutation.py tools/rvg_verify_artifacts.py tools/rvg_assert_verdict.py &&
+    python -m pytest -o addopts= tests/tools/test_rvg_audit.py tests/tools/test_rvg_artifact_verifier.py -q
+  '
+
+signal_artifact: "tmp/rvg_1_verification_gate.log"
+
+falsifier:
+  command: |-
+    bash -c '
+      python -c "
+    import importlib.util, pathlib
+    def _load(name):
+        spec = importlib.util.spec_from_file_location(name, pathlib.Path(\"tools\")/f\"{name}.py\")
+        import sys; mod = importlib.util.module_from_spec(spec); sys.modules[name]=mod
+        spec.loader.exec_module(mod); return mod
+    a=_load(\"rvg_audit\"); v=_load(\"rvg_verify_artifacts\")
+    assert callable(a.compute_verdict) and callable(v.cross_check_recompute)
+      "
+    '
+  description: >-
+    Loads the RVG tools and asserts compute_verdict + cross_check_recompute are
+    callable. It asserts the fix invariant and, per the run_evidence green-state
+    contract, exits 0 on the correct (green) tree and non-zero if the fix
+    regresses or is rolled back.
+rollback_command: >-
+  bash -c '
+    git rm -f .claude/commit_acceptors/rvg-1-verification-gate.yaml
+  '
+
+rollback_verification_command: >-
+  bash -c '
+    test ! -f .claude/commit_acceptors/rvg-1-verification-gate.yaml
+  '
+
+memory_update_type: append
+ledger_path: ".claude/commit_acceptors/rvg-1-verification-gate.yaml"
+report_path: "tmp/rvg_1_verification_gate.log"
+evidence: []

@@ -1,0 +1,95 @@
+# Diff-bound commit acceptor — neuro-physics contradiction ledger (Lane 1).
+#
+# Purpose:
+#   Bind the machine-readable contradiction ledger + JSON Schema + tests + doc.
+#   This is a governance/audit artifact only: it records and classifies existing
+#   neuro/physics contradictions with source evidence and owner lanes. It makes
+#   NO physics, runtime, numerical, or trading claim and fixes no module.
+
+id: neuro-physics-contradiction-ledger
+status: ACTIVE
+claim_type: governance
+promise: >-
+  A schema-validated, continuously-verifiable assurance case registers every
+  tracked neuro/physics contradiction as a Toulmin argument (warrant + backing +
+  rebuttal) with W3C-PROV provenance and an executable falsifier. CI runs every
+  falsifier and requires exit 0, so an invalidating code change forces a ledger
+  update (anti-staleness). Every HIGH/MEDIUM has an owner lane; no entry is
+  RESOLVED without a resolution_ref (no fake closure).
+
+diff_scope:
+  changed_files:
+    - path: ".claude/commit_acceptors/neuro-physics-contradiction-ledger.yaml"
+    - path: "schemas/audit/contradiction_ledger.schema.json"
+    - path: "data/audit/neuro_physics_contradiction_ledger.json"
+    - path: "docs/audit/neuro_physics_contradiction_ledger.md"
+    - path: "tests/audit/test_contradiction_ledger.py"
+  forbidden_paths:
+    - "core/"
+    - "src/"
+    - "runtime/"
+    - "trading/"
+    - "execution/"
+    - "forecast/"
+    - "policy/"
+    - ".github/workflows/"
+
+required_python_symbols:
+  - "tests/audit/test_contradiction_ledger.py::test_every_high_or_medium_has_owner_lane"
+  - "tests/audit/test_contradiction_ledger.py::test_no_fake_closure"
+  - "tests/audit/test_contradiction_ledger.py::test_jsonschema_conformance"
+  - "tests/audit/test_contradiction_ledger.py::test_every_entry_has_full_toulmin_argument"
+  - "tests/audit/test_contradiction_ledger.py::test_every_falsifier_confirms_its_claim_against_live_source"
+
+expected_signal: >-
+  The ledger validates against its JSON Schema, every claim has a status in the
+  canonical vocabulary, every HIGH/MEDIUM contradiction names a known owner lane,
+  the human-readable doc references every contradiction id, and a RESOLVED entry
+  without a resolution_ref is rejected by both the pure-Python guard and the
+  JSON Schema.
+
+measurement_command: |-
+  bash -c '
+    python -m compileall -q tests/audit/test_contradiction_ledger.py && python -c "import json; json.load(open(\"data/audit/neuro_physics_contradiction_ledger.json\")); json.load(open(\"schemas/audit/contradiction_ledger.schema.json\"))" && PYTHONPATH=. python -m pytest -q tests/audit/test_contradiction_ledger.py | tee tmp/neuro_physics_contradiction_ledger.log
+  '
+
+signal_artifact: "tmp/neuro_physics_contradiction_ledger.log"
+
+falsifier:
+  command: >-
+    bash -c '
+      PYTHONPATH=. python - <<"PY"
+      import json
+      from pathlib import Path
+      led = json.loads(Path("data/audit/neuro_physics_contradiction_ledger.json").read_text())
+      # Exits 0 (falsification detected) ONLY if some HIGH/MEDIUM entry lacks an
+      # owner lane. On the green ledger every HIGH/MEDIUM has one, so this exits 1.
+      bad = [e for e in led["contradictions"]
+             if e["severity"] in ("HIGH", "MEDIUM") and not e["owner_lane"].strip()]
+      raise SystemExit(0 if bad else 1)
+      PY
+    '
+  description: >-
+    Probes whether any HIGH/MEDIUM contradiction is unowned. Succeeds only when
+    the ledger violates its own ownership law; on the green ledger it fails,
+    proving the promise is falsifiable.
+
+rollback_command: >-
+  bash -c '
+    git rm -f
+      .claude/commit_acceptors/neuro-physics-contradiction-ledger.yaml
+      schemas/audit/contradiction_ledger.schema.json
+      data/audit/neuro_physics_contradiction_ledger.json
+      docs/audit/neuro_physics_contradiction_ledger.md
+      tests/audit/test_contradiction_ledger.py
+  '
+
+rollback_verification_command: >-
+  bash -c '
+    test ! -e data/audit/neuro_physics_contradiction_ledger.json && test ! -e schemas/audit/contradiction_ledger.schema.json && test ! -e tests/audit/test_contradiction_ledger.py
+  '
+
+memory_update_type: append
+ledger_path: "data/audit/neuro_physics_contradiction_ledger.json"
+report_path: "docs/audit/neuro_physics_contradiction_ledger.md"
+evidence: []

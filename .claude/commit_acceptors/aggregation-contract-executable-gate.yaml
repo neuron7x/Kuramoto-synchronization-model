@@ -1,0 +1,71 @@
+id: aggregation-contract-executable-gate
+status: ACTIVE
+claim_type: correctness
+promise: >-
+  The aggregation contract for fused signal artifacts is executable, not
+  documentation. A typed SignalArtifact carries per-signal schema, timestamps,
+  timestamp-alignment policy, provenance hash, and normalization status;
+  validate_aggregation fails closed on missing schema / provenance hash,
+  unknown alignment policy, missing or unsorted timestamps, timestamp
+  misalignment under the exact policy, and incomplete normalization;
+  aggregate_state_hash is deterministic and order-independent; evidence_gain
+  compares the fused score against the best standalone signal AND a
+  null-fusion baseline; and guard_aggregation_claim demotes a claim when gain
+  is absent or inputs are not fully normalized. No predictive-rank claim is
+  added.
+diff_scope:
+  changed_files:
+    - path: "core/indicators/aggregation_contract.py"
+    - path: "tests/unit/indicators/test_aggregation_contract.py"
+    - path: ".claude/commit_acceptors/aggregation-contract-executable-gate.yaml"
+  forbidden_paths:
+    - "trading/"
+    - "execution/"
+    - "forecast/"
+    - "policy/"
+required_python_symbols:
+  - "SignalArtifact"
+  - "AggregationStatus"
+  - "EvidenceGain"
+  - "validate_aggregation"
+  - "aggregate_state_hash"
+  - "evidence_gain"
+  - "guard_aggregation_claim"
+  - "AGGREGATION_CLAIM_BOUNDARY"
+  - "FUSED_SIGNAL_INPUTS"
+expected_signal: >-
+  The aggregation-contract test module passes (28 tests): clean normalized
+  inputs with evidence gain validate AGGREGATED, every fail-closed surface
+  (missing schema / provenance hash, unknown alignment policy, missing or
+  unsorted timestamps, exact-policy misalignment, incomplete normalization)
+  produces a finding, the aggregate hash is order-independent, evidence gain
+  is absent when fusion ties or loses to the best standalone or to the
+  null-fusion baseline, and the claim card demotes every unsupported case.
+measurement_command: >-
+  python -m pytest -q tests/unit/indicators/test_aggregation_contract.py
+signal_artifact: "tests/unit/indicators/test_aggregation_contract.py"
+falsifier:
+  command: >-
+    python -m pytest -q
+    tests/unit/indicators/test_aggregation_contract.py::test_timestamp_misalignment_under_exact_policy_fails_closed
+    tests/unit/indicators/test_aggregation_contract.py::test_no_gain_drives_no_evidence_gain_status
+    tests/unit/indicators/test_aggregation_contract.py::test_guard_demotes_no_evidence_gain_report
+  description: >-
+    Inverse falsifier probe. Weaken validate_aggregation to accept
+    exact-policy timestamp misalignment, relax evidence_gain to report gain
+    when the fused score ties the null-fusion baseline, or let
+    guard_aggregation_claim promote a NO_EVIDENCE_GAIN report. The alignment,
+    no-gain-status, and demotion tests must return non-zero rather than
+    silently passing, proving the fail-closed surfaces and the evidence-gain
+    demotion are load-bearing.
+rollback_command: >-
+  git checkout HEAD~1 -- core/indicators/aggregation_contract.py
+  tests/unit/indicators/test_aggregation_contract.py
+rollback_verification_command: >-
+  python tools/commit_acceptor/validate_commit_acceptor.py
+memory_update_type: none
+ledger_path: ".claude/commit_acceptors/aggregation-contract-executable-gate.yaml"
+report_path: ".claude/commit_acceptors/aggregation-contract-executable-gate.yaml"
+evidence:
+  - path: "tests/unit/indicators/test_aggregation_contract.py"
+    sha256: "2b3e4172f4d36f7a9a81b6948b4f0821d4bfc8599fe60fa5b273cb6c01789ade"  # pragma: allowlist secret

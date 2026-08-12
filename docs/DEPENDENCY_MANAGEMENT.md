@@ -1,10 +1,10 @@
 # Dependency Management Guide
 
-This document explains how TradePulse manages Python dependencies to ensure reproducible builds, security, and maintainability.
+This document explains how GeoSync manages Python dependencies to ensure reproducible builds, security, and maintainability.
 
 ## Overview
 
-TradePulse uses a **multi-layered dependency management approach**:
+GeoSync uses a **multi-layered dependency management approach**:
 
 1. **Abstract dependencies** in `pyproject.toml` (source of truth)
 2. **Concrete lock files** (`requirements.lock`, `requirements-dev.lock`)
@@ -13,7 +13,7 @@ TradePulse uses a **multi-layered dependency management approach**:
 ## File Structure
 
 ```
-TradePulse/
+GeoSync/
 ├── pyproject.toml              # Source of truth for dependencies
 ├── requirements.txt            # Runtime dependencies (abstract)
 ├── requirements-dev.txt        # Dev dependencies (abstract)
@@ -281,3 +281,13 @@ RUN pip install --no-cache-dir -c constraints/security.txt -r requirements.lock
 - [pip-audit Documentation](https://pypi.org/project/pip-audit/)
 - [Python Packaging Guide](https://packaging.python.org/)
 - [Security Best Practices](https://www.python.org/dev/security/)
+
+
+## Canonical CI gates
+
+Dependency safety is enforced in two layers:
+
+- **PR gate**: `dependency-review` check in `.github/workflows/pr-gate.yml` blocks risky dependency diffs before merge.
+- **Deep security**: scheduled `dependency-audit` job in `.github/workflows/security-deep.yml` runs `pip-audit` against `requirements.lock` and `requirements-dev.lock`.
+
+This split keeps PR gating fast and fail-closed while preserving deeper recurring security coverage.

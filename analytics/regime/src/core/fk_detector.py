@@ -1,3 +1,5 @@
+# Copyright (c) 2023-2026 Yaroslav Vasylenko (neuron7xLab)
+# SPDX-License-Identifier: MIT
 """Fractal–Kuramoto early warning detector.
 
 This module implements the FK-Detector described in the product brief.  It
@@ -111,8 +113,7 @@ class FKDetector:
         price_frame = _ensure_frame(prices)
         if price_frame.shape[0] < self._config.minimum_series_length:
             raise ValueError(
-                "FKDetector requires at least "
-                f"{self._config.minimum_series_length} observations.",
+                f"FKDetector requires at least {self._config.minimum_series_length} observations.",
             )
 
         log_returns = np.log(price_frame).diff().dropna()
@@ -124,10 +125,7 @@ class FKDetector:
             lag=self._config.kuramoto_lag,
         )
         hurst_values = np.array(
-            [
-                estimate_hurst_rs(log_returns[column].to_numpy())
-                for column in log_returns
-            ],
+            [estimate_hurst_rs(log_returns[column].to_numpy()) for column in log_returns],
             dtype=float,
         )
         hurst_mean, hurst_dispersion = _summarise_hurst(hurst_values)
@@ -172,9 +170,7 @@ class FKDetector:
     def calibrate_from_window(self, returns: pd.DataFrame) -> FKDetectorCalibration:
         """Calibrate the detector using the supplied returns window."""
 
-        features = _fk_feature_matrix(
-            returns.tail(self._config.window), self._config.kuramoto_lag
-        )
+        features = _fk_feature_matrix(returns.tail(self._config.window), self._config.kuramoto_lag)
         if features.size == 0:
             raise ValueError("Not enough data to calibrate FKDetector.")
 
@@ -182,9 +178,7 @@ class FKDetector:
         inv_h = features[:, 1]
         hurst_dispersion = features[:, 2]
 
-        trigger_threshold = float(
-            np.quantile(features[:, 3], self._config.trigger_quantile)
-        )
+        trigger_threshold = float(np.quantile(features[:, 3], self._config.trigger_quantile))
 
         calibration = FKDetectorCalibration(
             delta_r_mean=float(np.mean(delta_r)),
@@ -192,9 +186,7 @@ class FKDetector:
             inv_h_mean=float(np.mean(inv_h)),
             inv_h_std=float(np.std(inv_h, ddof=1) + self._config.epsilon),
             hurst_dispersion_mean=float(np.mean(hurst_dispersion)),
-            hurst_dispersion_std=float(
-                np.std(hurst_dispersion, ddof=1) + self._config.epsilon
-            ),
+            hurst_dispersion_std=float(np.std(hurst_dispersion, ddof=1) + self._config.epsilon),
             trigger_threshold=trigger_threshold,
         )
         self._calibration = calibration

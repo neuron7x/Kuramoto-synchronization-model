@@ -1,4 +1,5 @@
-# SPDX-License-Identifier: LicenseRef-TradePulse-Proprietary
+# Copyright (c) 2023-2026 Yaroslav Vasylenko (neuron7xLab)
+# SPDX-License-Identifier: MIT
 """Risk Monitoring Framework - Unified Interface.
 
 This module provides the main RiskMonitoringFramework class that integrates:
@@ -83,7 +84,7 @@ class RiskMonitoringConfig:
         elevated_drawdown_threshold: Drawdown threshold for elevated stress.
     """
 
-    entity_id: str = "TRADEPULSE"
+    entity_id: str = "GEOSYNC"
     storage_path: Path | str = Path("./risk_monitoring_data")
     initial_capital: float = 100_000.0
     periods_per_year: int = 252
@@ -144,7 +145,9 @@ class RiskAssessment:
         """Convert to dictionary representation."""
         return {
             "timestamp": self.timestamp.isoformat(),
-            "stress_assessment": self.stress_assessment.to_dict() if self.stress_assessment else None,
+            "stress_assessment": (
+                self.stress_assessment.to_dict() if self.stress_assessment else None
+            ),
             "thresholds": self.thresholds.to_dict() if self.thresholds else None,
             "performance": self.performance.to_dict() if self.performance else None,
             "fail_safe_state": self.fail_safe_state.to_dict() if self.fail_safe_state else None,
@@ -199,9 +202,7 @@ class RiskMonitoringFramework:
         # Initialize components
         self._threshold_calibrator: AdaptiveThresholdCalibrator | None = None
         if self._config.enable_adaptive_thresholds:
-            self._threshold_calibrator = AdaptiveThresholdCalibrator(
-                time_source=self._time
-            )
+            self._threshold_calibrator = AdaptiveThresholdCalibrator(time_source=self._time)
 
         self._stress_detector: StressDetector | None = None
         if self._config.enable_stress_detection:
@@ -220,9 +221,7 @@ class RiskMonitoringFramework:
                 initial_capital=self._config.initial_capital,
                 periods_per_year=self._config.periods_per_year,
             )
-            self._performance = PerformanceTracker(
-                perf_config, time_source=self._time
-            )
+            self._performance = PerformanceTracker(perf_config, time_source=self._time)
 
         self._fail_safe: FailSafeController | None = None
         if self._config.enable_fail_safe:
@@ -398,7 +397,9 @@ class RiskMonitoringFramework:
                     details={
                         "risk_score": risk_score,
                         "requires_action": requires_action,
-                        "stress_level": stress_assessment.stress_level.value if stress_assessment else None,
+                        "stress_level": (
+                            stress_assessment.stress_level.value if stress_assessment else None
+                        ),
                     },
                     risk_decision=recommended_action.value if requires_action else None,
                 )

@@ -1,4 +1,17 @@
-# TradePulse Release Readiness
+---
+doc_status:
+  status: historical
+  authoritative_for:
+    - release_readiness_snapshot
+  valid_from: 2025-12-19
+  valid_to: 2026-07-16
+  # "Production Ready" language below is a Dec-2025 readiness snapshot; the
+  # honest project rung is RESEARCH_ALPHA per governance/project_state.yaml.
+  # Preserved as historical release-truth, not deleted.
+  superseded_by: governance/project_state.yaml
+---
+
+# GeoSync Release Readiness
 
 ## Snapshot - 2025-12-19
 
@@ -8,7 +21,7 @@ block the v1.0 release. Values are updated whenever a milestone changes state.
 | Workstream            | Status        | Progress | Notes |
 |-----------------------|---------------|----------|-------|
 | Test coverage         | 🚧 In progress | 71% → 98% | Global coverage at ~71%; unit and property-based tests expanding across indicators and execution adapters. |
-| Documentation polish  | 🚧 In progress | 85% → 100% | Live trading operations and governance guides being rewritten for clarity and consistency. |
+| Documentation polish  | 🚧 In progress | 85% → 100% | Execution-harness operations and governance guides being rewritten for clarity and consistency. |
 | Dashboard hardening   | ⏳ Pending     | 50% → 100% | TypeScript dashboard (`ui/dashboard`) is canonical; Streamlit dashboard remains prototype/dev-only; production auth and observability outstanding. |
 | Release checklist     | ⏳ Pending     | 0% → 100% | Blocked until above items meet acceptance criteria. |
 | Security verification | ✅ Complete    | 100% | Zero critical vulnerabilities, CodeQL/Semgrep scanning active. |
@@ -26,7 +39,7 @@ block the v1.0 release. Values are updated whenever a milestone changes state.
 | Core Architecture | 95% | 32% | 351 | ✅ Production Ready |
 | Backtesting Engine | 90% | 74% | 150+ | ✅ Production Ready |
 | Execution Layer | 85% | 44% | 100+ | ✅ Production Ready |
-| Live Trading | 70% | N/A | 50+ | 🔄 Beta |
+| Execution-Realism Harness | research | N/A | 50+ | 🔄 paper/replay |
 | Dashboard/UI | 50% | N/A | 20+ | 🚧 Alpha (TypeScript canonical; Streamlit prototype) |
 | Documentation | 85% | N/A | N/A | 🔄 In Progress |
 
@@ -59,7 +72,7 @@ block the v1.0 release. Values are updated whenever a milestone changes state.
   new findings.
 
 For historical context and detailed documentation guidelines, refer to
-[`DOCUMENTATION_SUMMARY.md`](../DOCUMENTATION_SUMMARY.md) and
+[`DOCUMENTATION_SUMMARY.md`](operations/DOCUMENTATION_SUMMARY.md) and
 [`docs/scenarios.md`](scenarios.md).
 
 ---

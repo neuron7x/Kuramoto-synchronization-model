@@ -1,0 +1,124 @@
+# Diff-bound commit acceptor for the D-002J-P2 crisis window registry
+# v1 PR.
+#
+# D-002J-P2 is the W2 implementation gate following the merged P1B
+# repair (sha 5102b008ee9fb89545f22ebafc8289aa40c0571c) which landed
+# as `SOURCE_REGISTRY_PARTIALLY_VERIFIED`. P2 is registry-only: it
+# assembles the 6 locked crisis windows (CW1..CW6) on top of P1B-
+# surviving sources (audit_status VERIFIED or PARTIAL). P2 does NOT
+# ingest, does NOT model, does NOT execute any null, does NOT
+# authorise any canonical run, does NOT claim crisis prediction,
+# does NOT claim bank-level validation, does NOT overclaim cross-
+# asset/interbank causal inference.
+
+id: x10r-d002j-p2-crisis-window-registry
+status: ACTIVE
+claim_type: governance
+promise: >-
+  After this PR lands,
+  artifacts/d002j/crisis_windows/crisis_window_registry_v1.json
+  carries 6 windows (CW1_GFC_2007_2009, CW2_EUROZONE_2011_2012,
+  CW3_US_REPO_SPIKE_2019, CW4_COVID_DASH_FOR_CASH_2020,
+  CW5_UK_GILT_LDI_2022, CW6_REGIONAL_BANKING_2023) under schema
+  D002J-CRISIS-WINDOW-REGISTRY-v1; every source_id referenced is a
+  P1B-surviving source (audit_status VERIFIED or PARTIAL); each
+  window carries the 18 required fields including pre/post event
+  buffers, mechanism family mapping, observable signature, exclusion
+  notes, lookahead risk, data availability status, and claim
+  boundary. artifacts/d002j/crisis_windows/crisis_window_summary_v1.json
+  declares decision CRISIS_WINDOW_REGISTRY_READY under schema
+  D002J-CRISIS-WINDOW-SUMMARY-v1. The six locked governance shas
+  remain byte-exact. P1B audit verdict remains banked verbatim.
+  No source-code, prereg, ledger, ingestion, or canonical-run change.
+
+diff_scope:
+  changed_files:
+    - path: "artifacts/d002j/crisis_windows/crisis_window_registry_v1.json"
+    - path: "artifacts/d002j/crisis_windows/crisis_window_summary_v1.json"
+    - path: "docs/research/D002J_CRISIS_WINDOW_REGISTRY.md"
+    - path: "docs/research/D002J_CRISIS_WINDOW_SELECTION_RATIONALE.md"
+    - path: "docs/governance/D002G_CANONICAL_RUN_BLOCKERS.md"
+    - path: "tests/systemic_risk/test_d002j_crisis_window_registry.py"
+    - path: ".claude/commit_acceptors/x10r-d002j-p2-crisis-window-registry.yaml"
+    - path: ".github/detect-secrets.baseline"
+  forbidden_paths:
+    - "docs/governance/D002C_CLAIM_LEDGER.yaml"
+    - "docs/governance/D002C_PREREGISTRATION.yaml"
+    - "docs/governance/D002G_ACCEPTANCE_RULES.md"
+    - "docs/governance/D002G_PREREGISTRATION.yaml"
+    - "docs/governance/D002H_PREREGISTRATION.yaml"
+    - "docs/governance/D002I_PREREGISTRATION.yaml"
+    - "docs/governance/D002J_PREREGISTRATION.yaml"
+    - "artifacts/d002c/"
+    - "artifacts/d002g/"
+    - "artifacts/d002h/"
+    - "artifacts/d002i/"
+    - "artifacts/d002j/prereg/"
+    - "artifacts/d002j/data_registry/"
+    - "artifacts/d002j/ingestion/"
+    - "research/systemic_risk/"
+    - "scripts/x10r_d002c_attempt_2_null_audit.py"
+    - "scripts/x10r_d002g_gate_d_scan.py"
+    - "scripts/x10r_d002h_gate_d_scan.py"
+    - "scripts/x10r_d002h_canonical_sweep.py"
+required_python_symbols:
+  - "tests.systemic_risk.test_d002j_crisis_window_registry.test_p2_only_uses_p1b_verified_or_partial_sources"
+  - "tests.systemic_risk.test_d002j_crisis_window_registry.test_no_p2_source_id_missing_from_p1b_registry"
+  - "tests.systemic_risk.test_d002j_crisis_window_registry.test_no_p2_source_id_from_downgraded_or_rejected_sources"
+  - "tests.systemic_risk.test_d002j_crisis_window_registry.test_each_window_has_minimum_three_p1b_surviving_sources"
+  - "tests.systemic_risk.test_d002j_crisis_window_registry.test_each_window_has_expected_observable_signature"
+  - "tests.systemic_risk.test_d002j_crisis_window_registry.test_each_window_has_mechanism_family_mapping"
+  - "tests.systemic_risk.test_d002j_crisis_window_registry.test_each_window_has_valid_date_bounds"
+  - "tests.systemic_risk.test_d002j_crisis_window_registry.test_no_prediction_claim"
+  - "tests.systemic_risk.test_d002j_crisis_window_registry.test_no_bank_level_validation_claim"
+  - "tests.systemic_risk.test_d002j_crisis_window_registry.test_no_cross_asset_interbank_overclaim"
+  - "tests.systemic_risk.test_d002j_crisis_window_registry.test_no_ingestion"
+  - "tests.systemic_risk.test_d002j_crisis_window_registry.test_no_canonical_run_authorized"
+  - "tests.systemic_risk.test_d002j_crisis_window_registry.test_no_d002j_prereg_edit"
+  - "tests.systemic_risk.test_d002j_crisis_window_registry.test_no_research_systemic_risk_source_edit"
+  - "tests.systemic_risk.test_d002j_crisis_window_registry.test_blockers_append_only_p2_section"
+  - "tests.systemic_risk.test_d002j_crisis_window_registry.test_no_unresolved_merge_markers"
+expected_signal: >-
+  PYTHONPATH=. python -m pytest
+  tests/systemic_risk/test_d002j_crisis_window_registry.py -q passes
+  all 16 P2 guard cases; two crisis-window JSON artifacts validate
+  with pinned schema_version strings (D002J-CRISIS-WINDOW-REGISTRY-v1
+  / D002J-CRISIS-WINDOW-SUMMARY-v1); decision
+  CRISIS_WINDOW_REGISTRY_READY emitted; six locked governance shas
+  all byte-exact.
+measurement_command: >-
+  bash -c 'set -e;
+  PYTHONPATH=. python -m pytest tests/systemic_risk/test_d002j_crisis_window_registry.py -q;
+  test -f artifacts/d002j/crisis_windows/crisis_window_registry_v1.json;
+  test -f artifacts/d002j/crisis_windows/crisis_window_summary_v1.json;
+  python -m json.tool artifacts/d002j/crisis_windows/crisis_window_registry_v1.json > /dev/null;
+  python -m json.tool artifacts/d002j/crisis_windows/crisis_window_summary_v1.json > /dev/null;
+  grep -q "CRISIS_WINDOW_REGISTRY_READY" artifacts/d002j/crisis_windows/crisis_window_summary_v1.json;
+  grep -q "D002J-CRISIS-WINDOW-REGISTRY-v1" artifacts/d002j/crisis_windows/crisis_window_registry_v1.json;
+  grep -q "D-002J-P2" docs/governance/D002G_CANONICAL_RUN_BLOCKERS.md;
+  test ! -d artifacts/d002j/ingestion;
+  test "$(sha256sum docs/governance/D002J_PREREGISTRATION.yaml | awk "{print \$1}")" = "f3dc65b7e64b96eafe6f23ca8bdd0e05dc9bf95b12c2658b227bd0340f7975a0"'
+signal_artifact: "artifacts/d002j/crisis_windows/crisis_window_summary_v1.json"
+falsifier:
+  command: >-
+    bash -c 'set -e;
+    PYTHONPATH=. python -m pytest tests/systemic_risk/test_d002j_crisis_window_registry.py -q || exit 1;
+    grep -q "CRISIS_WINDOW_REGISTRY_READY" artifacts/d002j/crisis_windows/crisis_window_summary_v1.json || exit 2;
+    grep -q "D002J-CRISIS-WINDOW-REGISTRY-v1" artifacts/d002j/crisis_windows/crisis_window_registry_v1.json || exit 3;
+    grep -q "D-002J-P2" docs/governance/D002G_CANONICAL_RUN_BLOCKERS.md || exit 4;
+    test ! -d artifacts/d002j/ingestion || exit 5;
+    test "$(sha256sum docs/governance/D002J_PREREGISTRATION.yaml | awk "{print \$1}")" = "f3dc65b7e64b96eafe6f23ca8bdd0e05dc9bf95b12c2658b227bd0340f7975a0" || exit 6'
+  description: >-
+    Probes D-002J-P2 crisis window registry: 16 tests pass; summary
+    JSON declares CRISIS_WINDOW_REGISTRY_READY; registry JSON declares
+    schema D002J-CRISIS-WINDOW-REGISTRY-v1; BLOCKERS appended with
+    D-002J-P2 section; artifacts/d002j/ingestion/ does NOT exist
+    (P3 boundary); D-002J prereg sha byte-exact UNCHANGED.
+rollback_command: >-
+  bash -c 'git checkout HEAD -- docs/research/D002J_CRISIS_WINDOW_REGISTRY.md docs/research/D002J_CRISIS_WINDOW_SELECTION_RATIONALE.md docs/governance/D002G_CANONICAL_RUN_BLOCKERS.md tests/systemic_risk/test_d002j_crisis_window_registry.py && rm -rf artifacts/d002j/crisis_windows/ && rm -f .claude/commit_acceptors/x10r-d002j-p2-crisis-window-registry.yaml'
+rollback_verification_command: >-
+  bash -c 'test ! -f .claude/commit_acceptors/x10r-d002j-p2-crisis-window-registry.yaml && test ! -d artifacts/d002j/crisis_windows'
+memory_update_type: append
+ledger_path: ".claude/commit_acceptors/x10r-d002j-p2-crisis-window-registry.yaml"
+report_path: "docs/research/D002J_CRISIS_WINDOW_REGISTRY.md"
+evidence: []

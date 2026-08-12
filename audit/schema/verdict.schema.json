@@ -1,0 +1,30 @@
+{
+  "$schema": "http://json-schema.org/draft-07/schema#",
+  "title": "RVG Verdict",
+  "type": "object",
+  "required": ["repo", "verdict", "fail_reasons"],
+  "properties": {
+    "repo": { "type": "string" },
+    "commit": { "type": "string" },
+    "timestamp_utc": { "type": "string" },
+    "python_version": { "type": "string" },
+    "line_coverage": { "type": "number", "minimum": 0, "maximum": 100 },
+    "branch_coverage": { "type": "number", "minimum": 0, "maximum": 100 },
+    "mutation_score": { "type": "number", "minimum": 0, "maximum": 100 },
+    "mutation_tool": { "type": "string" },
+    "mutation_bootstrap_report_only": { "type": "boolean" },
+    "oracle_gap": { "type": "number" },
+    "verified_test_strength": { "type": "number", "minimum": 0, "maximum": 100 },
+    "test_pass_rate": { "type": "number", "minimum": 0, "maximum": 100 },
+    "tests_collected": { "type": "integer", "minimum": 0 },
+    "tests_passed": { "type": "integer", "minimum": 0 },
+    "ruff_errors": { "type": "integer", "minimum": 0 },
+    "mypy_errors": { "type": "integer", "minimum": 0 },
+    "high_vulnerabilities": { "type": "integer", "minimum": 0 },
+    "critical_vulnerabilities": { "type": "integer", "minimum": 0 },
+    "sbom_present": { "type": "boolean" },
+    "hash_manifest_present": { "type": "boolean" },
+    "verdict": { "type": "string", "enum": ["PASS", "FAIL"] },
+    "fail_reasons": { "type": "array", "items": { "type": "string" } }
+  }
+}

@@ -1,0 +1,89 @@
+# Diff-bound commit acceptor for issue #945 — batch 2 of redundant repo-root
+# sys.path-hack removal. Four more scripts whose first-party imports resolve
+# from the installed distribution; the bootstrap was dead weight. Verified-
+# safe only: examples that insert the legacy src/ fork were deliberately
+# excluded (removing those would change which package resolves). No behaviour
+# change. import-architecture ratchet 59 -> 55.
+
+id: 945-path-hacks-batch2
+status: ACTIVE
+claim_type: refactor
+promise: >-
+  After this PR lands, four more scripts (demo_cross_asset_kuramoto,
+  eval/run_redteam_policy, integrate_kuramoto_ricci, run_walkforward_phase5)
+  no longer mutate sys.path: their redundant repo-root (and REPO_ROOT/src)
+  inserts are removed. Each script's first-party imports resolve from the
+  installed distribution alone (verified from a neutral cwd), the
+  import-architecture ratchet shrinks from 55 to fewer path-hacks (baseline
+  totals 19 src.* + 55 after --write), and behaviour is unchanged — the
+  REPO/REPO_ROOT variables stay for artifact/file paths. No physics, runtime,
+  or forecasting change.
+
+diff_scope:
+  changed_files:
+    - path: ".claude/commit_acceptors/945-path-hacks-batch2.yaml"
+    - path: ".github/import_architecture_baseline.json"
+    - path: "scripts/demo_cross_asset_kuramoto.py"
+    - path: "scripts/eval/run_redteam_policy.py"
+    - path: "scripts/integrate_kuramoto_ricci.py"
+    - path: "scripts/run_walkforward_phase5.py"
+  forbidden_paths:
+    - "trading/"
+    - "execution/"
+    - "forecast/"
+    - "policy/"
+    - "core/"
+    - "runtime/"
+    - "application/"
+
+required_python_symbols:
+  - "scripts/demo_cross_asset_kuramoto.py::main"
+  - "scripts/integrate_kuramoto_ricci.py::main"
+  - "scripts/run_walkforward_phase5.py::main"
+
+expected_signal: >-
+  python -m py_compile of the four scripts succeeds; python
+  scripts/ci/check_import_architecture.py prints "Import-architecture ratchet
+  held: 19 src.* imports + 55 path-hacks (target 0)" and exits 0.
+
+measurement_command: >-
+  bash -c '
+    mkdir -p tmp &&
+    python -m py_compile
+      scripts/demo_cross_asset_kuramoto.py
+      scripts/eval/run_redteam_policy.py
+      scripts/integrate_kuramoto_ricci.py
+      scripts/run_walkforward_phase5.py &&
+    python scripts/ci/check_import_architecture.py | tee tmp/path_hacks_945_b2.log
+  '
+
+signal_artifact: "tmp/path_hacks_945_b2.log"
+
+falsifier:
+  command: >-
+    bash -c 'cd /tmp && python -c "import core.cross_asset_kuramoto.invariants"'
+  description: >-
+    From a neutral working directory (no repo-root on sys.path) imports a
+    core.* module the de-hacked scripts depend on. Succeeds (exit 0) only when
+    it resolves from the installed distribution — proving the removed bootstrap
+    was redundant and the scripts work after a normal install.
+
+rollback_command: >-
+  bash -c '
+    git checkout origin/main --
+      .github/import_architecture_baseline.json
+      scripts/demo_cross_asset_kuramoto.py
+      scripts/eval/run_redteam_policy.py
+      scripts/integrate_kuramoto_ricci.py
+      scripts/run_walkforward_phase5.py &&
+    git rm -f .claude/commit_acceptors/945-path-hacks-batch2.yaml
+  '
+
+rollback_verification_command: >-
+  bash -c '
+    grep -q "sys.path.insert" scripts/run_walkforward_phase5.py
+  '
+
+memory_update_type: append
+ledger_path: ".claude/commit_acceptors/945-path-hacks-batch2.yaml"
+report_path: "tmp/path_hacks_945_b2.log"

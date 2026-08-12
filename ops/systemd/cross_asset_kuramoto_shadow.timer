@@ -1,0 +1,16 @@
+[Unit]
+Description=Daily trigger for cross-asset Kuramoto shadow run
+# Fires at the locked bar-close convention (21:00 UTC, rebalance clock) + 1 bar lag.
+# The service runner is idempotent against an already-written dated directory,
+# so running twice on the same day is safe (second invocation is a no-op).
+
+[Timer]
+# 22:00 UTC every day — after the 21:00 UTC bar has finalised, with a
+# one-hour buffer for downstream data ingestion by the spike paper-trader.
+OnCalendar=*-*-* 22:00:00 UTC
+Persistent=true
+AccuracySec=60s
+RandomizedDelaySec=0
+
+[Install]
+WantedBy=timers.target

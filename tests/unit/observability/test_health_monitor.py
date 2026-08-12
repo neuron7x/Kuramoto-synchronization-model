@@ -1,3 +1,5 @@
+# Copyright (c) 2023-2026 Yaroslav Vasylenko (neuron7xLab)
+# SPDX-License-Identifier: MIT
 from __future__ import annotations
 
 from prometheus_client import CollectorRegistry
@@ -21,9 +23,7 @@ class _StubHealthServer:
     def set_ready(self, ready: bool) -> None:
         self.ready = ready
 
-    def update_component(
-        self, name: str, healthy: bool, message: str | None = None
-    ) -> None:
+    def update_component(self, name: str, healthy: bool, message: str | None = None) -> None:
         self.components[name] = (healthy, message)
 
 
@@ -33,16 +33,12 @@ def test_periodic_health_monitor_records_metrics(monkeypatch) -> None:
     from core.utils.metrics import MetricsCollector
 
     collector = MetricsCollector(registry)
-    monkeypatch.setattr(
-        "observability.health_monitor.get_metrics_collector", lambda: collector
-    )
+    monkeypatch.setattr("observability.health_monitor.get_metrics_collector", lambda: collector)
 
     server = _StubHealthServer()
 
     checks: list[HealthCheck] = [
-        HealthCheck(
-            name="healthy", probe=lambda: HealthCheckResult(True, "ok"), interval=1.0
-        ),
+        HealthCheck(name="healthy", probe=lambda: HealthCheckResult(True, "ok"), interval=1.0),
         HealthCheck(
             name="unhealthy",
             probe=lambda: HealthCheckResult(False, "failure"),
@@ -59,10 +55,10 @@ def test_periodic_health_monitor_records_metrics(monkeypatch) -> None:
     assert server.components["unhealthy"] == (False, "failure")
 
     healthy_count = registry.get_sample_value(
-        "tradepulse_health_check_latency_seconds_count", {"check_name": "healthy"}
+        "geosync_health_check_latency_seconds_count", {"check_name": "healthy"}
     )
     unhealthy_status = registry.get_sample_value(
-        "tradepulse_health_check_status", {"check_name": "unhealthy"}
+        "geosync_health_check_status", {"check_name": "unhealthy"}
     )
 
     assert healthy_count == 1.0

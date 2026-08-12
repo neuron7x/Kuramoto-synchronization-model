@@ -1,0 +1,186 @@
+{
+  "_doc": "Frozen debt: commands cited by documentation that do not exist. The gate fails if this grows. Fix a command (or delete the claim) and re-run with --write-baseline to ratchet it down.",
+  "count": 45,
+  "missing": [
+    {
+      "kind": "make",
+      "name": "build-fast"
+    },
+    {
+      "kind": "make",
+      "name": "chaos-suite"
+    },
+    {
+      "kind": "make",
+      "name": "chaos-test"
+    },
+    {
+      "kind": "make",
+      "name": "codegen"
+    },
+    {
+      "kind": "make",
+      "name": "data-init"
+    },
+    {
+      "kind": "make",
+      "name": "data-quality"
+    },
+    {
+      "kind": "make",
+      "name": "docs-architecture"
+    },
+    {
+      "kind": "make",
+      "name": "docs-build"
+    },
+    {
+      "kind": "make",
+      "name": "docs-c4"
+    },
+    {
+      "kind": "make",
+      "name": "docs-check"
+    },
+    {
+      "kind": "make",
+      "name": "docs-check-links"
+    },
+    {
+      "kind": "make",
+      "name": "docs-linkcheck"
+    },
+    {
+      "kind": "make",
+      "name": "docs-quality"
+    },
+    {
+      "kind": "make",
+      "name": "docs-serve"
+    },
+    {
+      "kind": "make",
+      "name": "docs-verify-snippets"
+    },
+    {
+      "kind": "make",
+      "name": "feature-catalog-export"
+    },
+    {
+      "kind": "make",
+      "name": "generate-dev-certs"
+    },
+    {
+      "kind": "make",
+      "name": "lint-fix"
+    },
+    {
+      "kind": "make",
+      "name": "migrate-dry-run"
+    },
+    {
+      "kind": "make",
+      "name": "observability-verify"
+    },
+    {
+      "kind": "make",
+      "name": "parity-verify"
+    },
+    {
+      "kind": "make",
+      "name": "profile-"
+    },
+    {
+      "kind": "make",
+      "name": "profile-backtest"
+    },
+    {
+      "kind": "make",
+      "name": "registry-validate"
+    },
+    {
+      "kind": "make",
+      "name": "release-validate"
+    },
+    {
+      "kind": "make",
+      "name": "research-budget-check"
+    },
+    {
+      "kind": "make",
+      "name": "retrain-model"
+    },
+    {
+      "kind": "make",
+      "name": "scaffold"
+    },
+    {
+      "kind": "make",
+      "name": "seed-data"
+    },
+    {
+      "kind": "make",
+      "name": "setup"
+    },
+    {
+      "kind": "make",
+      "name": "signals-lint"
+    },
+    {
+      "kind": "make",
+      "name": "stress-suite"
+    },
+    {
+      "kind": "make",
+      "name": "validate-budgets"
+    },
+    {
+      "kind": "make",
+      "name": "validate-features"
+    },
+    {
+      "kind": "python -m",
+      "name": "cme.cli"
+    },
+    {
+      "kind": "python -m",
+      "name": "geosync.main"
+    },
+    {
+      "kind": "script",
+      "name": "analytics/signals/train.py"
+    },
+    {
+      "kind": "script",
+      "name": "backtest/run_backtest.py"
+    },
+    {
+      "kind": "script",
+      "name": "cli/ingestion.py"
+    },
+    {
+      "kind": "script",
+      "name": "scripts/analyze_market_regime.py"
+    },
+    {
+      "kind": "script",
+      "name": "scripts/kill_switch_verify.py"
+    },
+    {
+      "kind": "script",
+      "name": "scripts/riee/package_scorecard.py"
+    },
+    {
+      "kind": "script",
+      "name": "src/your_entrypoint.py"
+    },
+    {
+      "kind": "script",
+      "name": "tools/data/download_bars.py"
+    },
+    {
+      "kind": "script",
+      "name": "tools/features/build_matrix.py"
+    }
+  ]
+}

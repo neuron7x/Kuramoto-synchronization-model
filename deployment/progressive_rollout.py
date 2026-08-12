@@ -1,3 +1,5 @@
+# Copyright (c) 2023-2026 Yaroslav Vasylenko (neuron7xLab)
+# SPDX-License-Identifier: MIT
 """Progressive rollout and canary deployment management.
 
 This module implements controlled deployment mechanisms including canary releases,
@@ -123,9 +125,7 @@ class ProgressiveRolloutManager:
             DeploymentPhase.FAILED,
             DeploymentPhase.ROLLED_BACK,
         ]:
-            logger.warning(
-                f"Deployment already in progress: {self.current_state.version}"
-            )
+            logger.warning(f"Deployment already in progress: {self.current_state.version}")
             return False
 
         # Pre-deployment validation
@@ -144,9 +144,7 @@ class ProgressiveRolloutManager:
         if self._traffic_router:
             self._traffic_router(version, self.config.canary_percentage)
 
-        logger.info(
-            f"Started canary deployment of {version} at {self.config.canary_percentage}%"
-        )
+        logger.info(f"Started canary deployment of {version} at {self.config.canary_percentage}%")
         return True
 
     def _validate_deployment(self, version: str) -> bool:
@@ -208,8 +206,7 @@ class ProgressiveRolloutManager:
         # Check if rollback needed
         if not health_check:
             self._trigger_rollback(
-                f"Health check failed: error_rate={error_rate:.2%}, "
-                f"latency={p99_latency_ms:.0f}ms"
+                f"Health check failed: error_rate={error_rate:.2%}, latency={p99_latency_ms:.0f}ms"
             )
 
     def _check_health(self, error_rate: float, latency_ms: float) -> bool:
@@ -289,9 +286,7 @@ class ProgressiveRolloutManager:
 
         self.deployment_history.append(self.current_state)
 
-        logger.info(
-            f"Deployment of {self.current_state.version} completed successfully"
-        )
+        logger.info(f"Deployment of {self.current_state.version} completed successfully")
 
     def _trigger_rollback(self, reason: str) -> bool:
         """Trigger automatic rollback.
@@ -341,9 +336,7 @@ class ProgressiveRolloutManager:
         if not self.current_state:
             return {"status": "no_deployment", "stable_version": self.stable_version}
 
-        recent_metrics = (
-            self.current_state.metrics[-10:] if self.current_state.metrics else []
-        )
+        recent_metrics = self.current_state.metrics[-10:] if self.current_state.metrics else []
 
         return {
             "version": self.current_state.version,

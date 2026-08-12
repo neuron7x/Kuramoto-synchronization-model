@@ -226,8 +226,8 @@ function renderHero(heroTranslations = {}, github = {}) {
   const title = heroTranslations.title || t('views.overview.hero.title');
   const subtitle = heroTranslations.subtitle || t('views.overview.hero.subtitle');
   const cta = heroTranslations.cta || t('views.overview.hero.cta');
-  const repo = github.repository || github.repo || 'tradepulse/TradePulse';
-  const org = github.organization || github.owner || 'TradePulse';
+  const repo = github.repository || github.repo || 'geosync/GeoSync';
+  const org = github.organization || github.owner || 'GeoSync';
   const url = safeExternalUrl(github.url || github.html_url);
 
   const repoLabel = `${org}/${repo}`.replace(/^\/+|\/+$/g, '');
@@ -260,7 +260,7 @@ function renderHero(heroTranslations = {}, github = {}) {
     <section class="tp-hero" data-role="overview-hero">
       <div class="tp-hero__content">
         <p class="tp-hero__eyebrow">${escapeHtml(String(eyebrow || repoLabel))}</p>
-        <h2 class="tp-hero__title">${escapeHtml(String(title || 'TradePulse Product Pulse'))}</h2>
+        <h2 class="tp-hero__title">${escapeHtml(String(title || 'GeoSync Product Pulse'))}</h2>
         <p class="tp-hero__subtitle">${escapeHtml(String(subtitle || 'Visualise adoption, cadence, and quality signals sourced from GitHub.'))}</p>
         <div class="tp-hero__meta">
           <span class="tp-hero__repo">${escapeHtml(repoLabel)}</span>

@@ -1,0 +1,45 @@
+# ci-heartbeat: adversarial-counterexample-search
+id: adversarial-counterexample-search
+status: ACTIVE
+claim_type: fail_closed
+promise: >-
+  Add the adversarial_counterexample_search law: a global optimizer
+  (scipy differential_evolution) actively hunts for inputs that violate the
+  bounded laws (OA1 unit disk, K1 order parameter) and cannot push them past
+  tolerance, while the same adversary breaches a planted-too-tight bound to prove
+  the search is a real falsifier. Reuses real solvers. No canonical catalog
+  mutation, no trading/execution/forecast/policy change.
+diff_scope:
+  changed_files:
+    - path: ".claude/commit_acceptors/adversarial-counterexample-search.yaml"
+    - path: "tests/physics/test_adversarial_counterexample_search.py"
+  forbidden_paths:
+    - "trading/"
+    - "execution/"
+    - "forecast/"
+    - "policy/"
+required_python_symbols: []
+expected_signal: >-
+  tools/validate_physics_contracts.py reports 46 blocking laws fully witnessed
+  (was 45). The adversary keeps max|z| and R <= 1 + 1e-6 under global search and
+  breaches the 0.5 fake bound. No trading/execution/forecast/policy change.
+measurement_command: >-
+  PYTHONPATH=. python tools/validate_physics_contracts.py && PYTHONPATH=.
+  python -m pytest tests/physics/test_adversarial_counterexample_search.py -q
+signal_artifact: "tmp/adversarial_counterexample_search.log"
+falsifier:
+  command: >-
+    PYTHONPATH=. python -m pytest
+    tests/physics/test_adversarial_counterexample_search.py -q
+  description: >-
+    Fails if a global optimizer breaks a bounded law, or cannot breach a planted
+    fake bound.
+rollback_command: >-
+  git rm -f tests/physics/test_adversarial_counterexample_search.py
+rollback_verification_command: >-
+  PYTHONPATH=. python tools/validate_physics_contracts.py
+memory_update_type: none
+ledger_path: ".claude/commit_acceptors/adversarial-counterexample-search.yaml"
+report_path: ".claude/commit_acceptors/adversarial-counterexample-search.yaml"
+evidence:
+  - path: "tests/physics/test_adversarial_counterexample_search.py"

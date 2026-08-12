@@ -1,3 +1,5 @@
+# Copyright (c) 2023-2026 Yaroslav Vasylenko (neuron7xLab)
+# SPDX-License-Identifier: MIT
 """AAR integration with NaK neuro-controllers.
 
 This module provides the integration layer between AAR error signals

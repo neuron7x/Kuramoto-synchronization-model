@@ -1,0 +1,123 @@
+# Diff-bound commit acceptor for the systemic-risk governance gates.
+#
+# Closes the post-merge review on PR #562 (canonical R&D checklist):
+#
+# 1. PR #562 title was renamed via gh API to remove "production-grade"
+#    (post-merge edit; the merge commit message is preserved as
+#    history but the public-facing title now reads "R&D hypothesis
+#    instrument v2 — directed coupling, MLE BA fit, bootstrap-CI
+#    falsification").
+# 2. README + PROTOCOL gain explicit score-level scope boundary —
+#    the executable falsification operates on a pre-computed score
+#    series; the full exposure → verdict pipeline is not yet
+#    end-to-end executable.
+# 3. New module governance.py exposes assert_claim_tier,
+#    build_validation_readiness_report, run_premerge_science_gate.
+#    The grep gate scans md/py for FORBIDDEN_OVERCLAIM_TERMS and
+#    fails-closed on any hit. A test asserts the real
+#    research/systemic_risk/ tree passes the grep at HYPOTHESIS /
+#    INSTRUMENTED tier.
+# 4. New module temporal_panel.py with validate_temporal_exposure_panel
+#    fail-closed boundary contract for the eventual end-to-end ingest.
+# 5. falsification.py exposes scope-explicit aliases:
+#      run_score_level_falsification — alias of run_falsification
+#      run_end_to_end_falsification  — NotImplementedError stub
+# 6. network_fitting.py adds fit_barabasi_albert_validation_from_topology
+#    — strict wrapper enforcing both n_tail ≥ 50 and σ_α/α ≤ 0.10.
+# 7. Tests cover every new path (24 new + 169 total passing).
+#
+# Locally verified:
+#   * pytest tests/research/systemic_risk/: 169/169 pass
+#   * mypy --strict on every new file: clean
+#   * ruff + black: clean
+
+id: systemic-risk-governance-gates
+status: ACTIVE
+claim_type: governance
+promise: >-
+  After this PR lands, the systemic-risk module ships
+  machine-checked governance gates — assert_claim_tier,
+  build_validation_readiness_report, run_premerge_science_gate —
+  that prevent any future commit from overclaiming beyond the
+  available evidence, plus a fail-closed temporal-exposure-panel
+  boundary contract and explicit score-level vs end-to-end
+  falsification scope tags. C-SYSRISK-PHASE remains HYPOTHESIS
+  per CLAIMS.md.
+diff_scope:
+  changed_files:
+    - path: ".claude/commit_acceptors/systemic-risk-governance-gates.yaml"
+    - path: "research/systemic_risk/PROTOCOL.md"
+    - path: "research/systemic_risk/README.md"
+    - path: "research/systemic_risk/__init__.py"
+    - path: "research/systemic_risk/falsification.py"
+    - path: "research/systemic_risk/governance.py"
+    - path: "research/systemic_risk/network_fitting.py"
+    - path: "research/systemic_risk/temporal_panel.py"
+    - path: "tests/research/systemic_risk/test_falsification.py"
+    - path: "tests/research/systemic_risk/test_governance.py"
+    - path: "tests/research/systemic_risk/test_network_fitting.py"
+    - path: "tests/research/systemic_risk/test_temporal_panel.py"
+  forbidden_paths:
+    - "trading/"
+    - "execution/"
+    - "forecast/"
+    - "policy/"
+    - "core/physics/"
+    - "core/kuramoto/"
+    - "application/governance/claim_ledger.py"
+    - "application/governance/commit_acceptor.py"
+required_python_symbols:
+  - "research/systemic_risk/governance.py::assert_claim_tier"
+  - "research/systemic_risk/governance.py::build_validation_readiness_report"
+  - "research/systemic_risk/governance.py::run_premerge_science_gate"
+  - "research/systemic_risk/governance.py::FORBIDDEN_OVERCLAIM_TERMS"
+  - "research/systemic_risk/temporal_panel.py::validate_temporal_exposure_panel"
+  - "research/systemic_risk/falsification.py::run_score_level_falsification"
+  - "research/systemic_risk/falsification.py::run_end_to_end_falsification"
+  - "research/systemic_risk/network_fitting.py::fit_barabasi_albert_validation_from_topology"
+expected_signal: >-
+  `pytest tests/research/systemic_risk/` reports "169 passed";
+  `mypy --strict research/systemic_risk/ tests/research/systemic_risk/`
+  is clean (the 5 pre-existing core/kuramoto/jax_engine errors
+  persist on origin/main and are out of scope); `ruff check` and
+  `black --check` both pass on the diff;
+  `run_premerge_science_gate(docs_root=research/systemic_risk/)`
+  returns passed=True with overclaim_hits=().
+measurement_command: >-
+  bash -c '
+    mypy --strict research/systemic_risk/ tests/research/systemic_risk/ && ruff check research/systemic_risk/ tests/research/systemic_risk/ && black --check research/systemic_risk/ tests/research/systemic_risk/ && python -m pytest tests/research/systemic_risk/ -q
+  '
+signal_artifact: "tmp/systemic_risk_governance_gates.log"
+falsifier:
+  command: >-
+    bash -c '
+      python -m pytest
+      tests/research/systemic_risk/test_governance.py::TestRunPremergeScienceGate::test_real_module_passes_overclaim_grep
+      tests/research/systemic_risk/test_falsification.py::TestScopeExplicitAliases::test_end_to_end_falsification_fails_closed
+      -q >/tmp/_governance_rails.log 2>&1 && ! grep -q "2 passed" /tmp/_governance_rails.log
+    '
+  description: >-
+    Probes the two load-bearing rails of the governance layer: the
+    overclaim grep against the real module tree, and the end-to-end
+    fail-closed stub. The falsifier inverts: it succeeds only when
+    both rail tests did NOT pass, which would mean either the
+    overclaim grep is leaking forbidden language or the end-to-end
+    stub is silently running a partial pipeline.
+rollback_command: >-
+  bash -c 'git checkout HEAD~1 --
+    research/systemic_risk/PROTOCOL.md
+    research/systemic_risk/README.md
+    research/systemic_risk/__init__.py
+    research/systemic_risk/falsification.py
+    research/systemic_risk/network_fitting.py && rm -f
+    research/systemic_risk/governance.py
+    research/systemic_risk/temporal_panel.py
+    tests/research/systemic_risk/test_governance.py
+    tests/research/systemic_risk/test_temporal_panel.py
+    .claude/commit_acceptors/systemic-risk-governance-gates.yaml'
+rollback_verification_command: >-
+  bash -c '! test -f research/systemic_risk/governance.py'
+memory_update_type: append
+ledger_path: ".claude/commit_acceptors/systemic-risk-governance-gates.yaml"
+report_path: "tmp/systemic_risk_governance_gates.log"
+evidence: []

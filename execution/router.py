@@ -1,10 +1,11 @@
-# SPDX-License-Identifier: LicenseRef-TradePulse-Proprietary
+# Copyright (c) 2023-2026 Yaroslav Vasylenko (neuron7xLab)
+# SPDX-License-Identifier: MIT
 """Resilient execution routing across multiple broker/exchange connectors.
 
 The module coordinates :class:`~execution.connectors.ExecutionConnector`
 implementations, layering venue specific normalisation, resilience primitives
 and portfolio aware routing decisions.  The router is designed for EMS use
-cases where TradePulse needs to balance fast failover with deterministic
+cases where GeoSync needs to balance fast failover with deterministic
 behaviour in sandbox environments.
 """
 
@@ -180,9 +181,7 @@ class ResilientExecutionRouter:
                 return future.result(timeout=timeout)
             except concurrent.futures.TimeoutError as exc:
                 future.cancel()
-                raise TimeoutError(
-                    f"Route '{route.name}' {timeout:.3f}s timeout"
-                ) from exc
+                raise TimeoutError(f"Route '{route.name}' {timeout:.3f}s timeout") from exc
 
     def _execute(
         self,
@@ -212,7 +211,7 @@ class ResilientExecutionRouter:
                 connector,
                 func,
             )
-        except Exception as exc:  # noqa: BLE001
+        except Exception as exc:
             translated = self._record_result(
                 route_key,
                 resilience,
@@ -236,7 +235,7 @@ class ResilientExecutionRouter:
                     backup.connector,
                     func,
                 )
-            except Exception as secondary_exc:  # noqa: BLE001
+            except Exception as secondary_exc:
                 secondary_translated = self._record_result(
                     failover_key,
                     backup.resilience,
@@ -245,9 +244,7 @@ class ResilientExecutionRouter:
                     error=secondary_exc,
                 )
                 primary_error = translated or route.translate_error(exc)
-                secondary_error = secondary_translated or backup.translate_error(
-                    secondary_exc
-                )
+                secondary_error = secondary_translated or backup.translate_error(secondary_exc)
                 raise secondary_error from primary_error
             else:
                 self._record_result(
@@ -290,9 +287,7 @@ class ResilientExecutionRouter:
 
         _, route = self._resolve_route(route_name)
 
-        def _place(
-            active_route: ExecutionRoute, connector: ExecutionConnector
-        ) -> Order:
+        def _place(active_route: ExecutionRoute, connector: ExecutionConnector) -> Order:
             adjusted = active_route.apply_slippage(order)
             return connector.place_order(adjusted, idempotency_key=idempotency_key)
 
@@ -320,11 +315,9 @@ class ResilientExecutionRouter:
                 lambda connector: connector.cancel_order(order_id),
                 route.connector,
             )
-        except Exception as exc:  # noqa: BLE001
+        except Exception as exc:
             error = exc
-            self._record_result(
-                route_key, resilience, started_at=started, success=False, error=exc
-            )
+            self._record_result(route_key, resilience, started_at=started, success=False, error=exc)
             failover_key = self._failover.get(route_key)
             if failover_key is None:
                 raise route.translate_error(exc)
@@ -339,7 +332,7 @@ class ResilientExecutionRouter:
                     lambda connector: connector.cancel_order(order_id),
                     backup.connector,
                 )
-            except Exception as secondary_exc:  # noqa: BLE001
+            except Exception as secondary_exc:
                 self._record_result(
                     failover_key,
                     backup.resilience,
@@ -347,9 +340,7 @@ class ResilientExecutionRouter:
                     success=False,
                     error=secondary_exc,
                 )
-                raise backup.translate_error(secondary_exc) from route.translate_error(
-                    error
-                )
+                raise backup.translate_error(secondary_exc) from route.translate_error(error)
             else:
                 self._record_result(
                     failover_key,
@@ -360,9 +351,7 @@ class ResilientExecutionRouter:
                 )
                 return result
         else:
-            self._record_result(
-                route_key, resilience, started_at=started, success=True, error=None
-            )
+            self._record_result(route_key, resilience, started_at=started, success=True, error=None)
             return result
 
     def fetch_order(self, route_name: str, order_id: str) -> NormalizedOrderState:

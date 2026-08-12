@@ -1,0 +1,63 @@
+id: metrics-no-numpy-sysmodules-leak-fix
+status: ACTIVE
+claim_type: correctness
+promise: >-
+  The numpy-absent degradation test for core/utils/metrics.py no longer leaks a
+  corrupted sys.modules state into the rest of the suite. The prior version
+  popped "numpy" from sys.modules and THEN called
+  monkeypatch.setitem(sys.modules, "numpy", None); monkeypatch recorded numpy as
+  absent and deleted the key at teardown, overriding the manual restore. A later
+  `import numpy` then re-imported a fresh module whose `random` attribute was
+  never bound (numpy.random stayed cached), so any downstream `np.random.<attr>`
+  recursed forever in numpy's lazy __getattr__ — which is what made
+  tests/validation/test_gaussian_null_sufficiency.py die with RecursionError in
+  Main Validation run 28126273069. The fix sets the override via
+  monkeypatch.setitem while numpy is present (capturing the real module) and
+  undoes it synchronously with monkeypatch.undo(), and adds a regression test
+  pinning that the no-numpy path leaves numpy.random usable. Behaviour change is
+  confined to test-state hygiene; no production module is touched.
+diff_scope:
+  changed_files:
+    - path: "tests/unit/test_metrics_optional_deps.py"
+    - path: ".claude/commit_acceptors/metrics-no-numpy-sysmodules-leak-fix.yaml"
+  forbidden_paths:
+    - "trading/"
+    - "execution/"
+    - "forecast/"
+    - "policy/"
+required_python_symbols:
+  - "_exec_metrics_without_numpy"
+  - "test_metrics_module_imports_without_numpy"
+  - "test_no_numpy_degradation_leaves_numpy_random_usable"
+expected_signal: >-
+  Running the formerly-failing ordering combination
+  (tests/unit/test_metrics_optional_deps.py followed by
+  tests/validation/test_gaussian_null_sufficiency.py) in one pytest session
+  passes with no RecursionError; the new regression test asserts
+  sys.modules["numpy"] is the real cached module and np.random.default_rng
+  resolves after the numpy-absent branch.
+measurement_command: >-
+  python -m pytest -q
+  tests/unit/test_metrics_optional_deps.py
+  tests/validation/test_gaussian_null_sufficiency.py
+signal_artifact: "tests/unit/test_metrics_optional_deps.py"
+falsifier:
+  command: >-
+    python -m pytest -q
+    tests/unit/test_metrics_optional_deps.py::test_no_numpy_degradation_leaves_numpy_random_usable
+  description: >-
+    Inverse falsifier probe. Revert the helper to the leaking pattern
+    (`sys.modules.pop("numpy", None)` followed by
+    `monkeypatch.setitem(sys.modules, "numpy", None)` with restore deferred to
+    fixture teardown). The regression test must then fail — either its
+    `sys.modules["numpy"] is real_numpy` assertion or the
+    `np.random.default_rng` call recursing — proving the guard is load-bearing
+    rather than vacuous.
+rollback_command: >-
+  git checkout HEAD~1 -- tests/unit/test_metrics_optional_deps.py
+rollback_verification_command: >-
+  python tools/commit_acceptor/validate_commit_acceptor.py
+memory_update_type: none
+ledger_path: ".claude/commit_acceptors/metrics-no-numpy-sysmodules-leak-fix.yaml"
+report_path: ".claude/commit_acceptors/metrics-no-numpy-sysmodules-leak-fix.yaml"
+evidence: []

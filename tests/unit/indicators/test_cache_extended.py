@@ -1,15 +1,18 @@
-# SPDX-License-Identifier: LicenseRef-TradePulse-Proprietary
+# Copyright (c) 2023-2026 Yaroslav Vasylenko (neuron7xLab)
+# SPDX-License-Identifier: MIT
 """Additional unit tests for indicator cache module to improve coverage."""
+
 from __future__ import annotations
 
 import tempfile
-from datetime import UTC, datetime
+from datetime import datetime
 from pathlib import Path
 
 import numpy as np
 import pandas as pd
 import pytest
 
+from core.compat import UTC
 from core.indicators.cache import (
     FileSystemIndicatorCache,
     hash_input_data,
@@ -110,34 +113,22 @@ class TestMakeFingerprint:
 
     def test_fingerprint_changes_with_params(self):
         """Test that fingerprints change when parameters change."""
-        fp1 = make_fingerprint(
-            "test_indicator", {"param": 10}, "data_hash", "v1.0.0"
-        )
-        fp2 = make_fingerprint(
-            "test_indicator", {"param": 20}, "data_hash", "v1.0.0"
-        )
+        fp1 = make_fingerprint("test_indicator", {"param": 10}, "data_hash", "v1.0.0")
+        fp2 = make_fingerprint("test_indicator", {"param": 20}, "data_hash", "v1.0.0")
 
         assert fp1 != fp2
 
     def test_fingerprint_changes_with_data_hash(self):
         """Test that fingerprints change when data hash changes."""
-        fp1 = make_fingerprint(
-            "test_indicator", {"param": 10}, "hash1", "v1.0.0"
-        )
-        fp2 = make_fingerprint(
-            "test_indicator", {"param": 10}, "hash2", "v1.0.0"
-        )
+        fp1 = make_fingerprint("test_indicator", {"param": 10}, "hash1", "v1.0.0")
+        fp2 = make_fingerprint("test_indicator", {"param": 10}, "hash2", "v1.0.0")
 
         assert fp1 != fp2
 
     def test_fingerprint_changes_with_version(self):
         """Test that fingerprints change when code version changes."""
-        fp1 = make_fingerprint(
-            "test_indicator", {"param": 10}, "hash", "v1.0.0"
-        )
-        fp2 = make_fingerprint(
-            "test_indicator", {"param": 10}, "hash", "v2.0.0"
-        )
+        fp1 = make_fingerprint("test_indicator", {"param": 10}, "hash", "v1.0.0")
+        fp2 = make_fingerprint("test_indicator", {"param": 10}, "hash", "v2.0.0")
 
         assert fp1 != fp2
 

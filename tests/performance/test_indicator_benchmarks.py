@@ -1,3 +1,5 @@
+# Copyright (c) 2023-2026 Yaroslav Vasylenko (neuron7xLab)
+# SPDX-License-Identifier: MIT
 """Micro-benchmarks for hot indicator paths to guard against regressions."""
 
 from __future__ import annotations
@@ -60,9 +62,7 @@ def _build_multi_timeframe_ohlcv(rows: int = 4096) -> dict[str, pd.DataFrame]:
 def test_compute_phase_hot_path(benchmark_guard) -> None:
     """Ensure the Hilbert transform implementation stays within latency budget."""
 
-    samples = (
-        np.random.default_rng(1337).normal(scale=1.0, size=131_072).astype(np.float32)
-    )
+    samples = np.random.default_rng(1337).normal(scale=1.0, size=131_072).astype(np.float32)
 
     result = benchmark_guard(
         compute_phase,
@@ -82,11 +82,7 @@ def test_compute_phase_hot_path(benchmark_guard) -> None:
 def test_kuramoto_order_matrix(benchmark_guard) -> None:
     """Benchmark the vectorised Kuramoto order for batched phase matrices."""
 
-    phases = (
-        np.random.default_rng(31415)
-        .uniform(-np.pi, np.pi, size=(4096, 12))
-        .astype(np.float32)
-    )
+    phases = np.random.default_rng(31415).uniform(-np.pi, np.pi, size=(4096, 12)).astype(np.float32)
 
     result = benchmark_guard(
         kuramoto_order,

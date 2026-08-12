@@ -1,0 +1,37 @@
+id: repo-integrity-gate
+status: ACTIVE
+claim_type: governance
+promise: >-
+  Wires the holistic one-command proof (scripts/ci/prove_repo_integrity.sh) as
+  its own CI job so "one clean clone, one command" is enforced on every PR — the
+  full chain must pass together on the sci-core stack alone. The individual
+  gates already run in research-integrity-gate; this closes the
+  test → CI gate → reproducible command link of the integrity chain.
+diff_scope:
+  changed_files:
+  - path: .github/workflows/repo-integrity-gate.yml
+  - path: .claude/commit_acceptors/repo-integrity-gate.yaml
+  forbidden_paths: []
+required_python_symbols: []
+expected_signal: >-
+  The repo-integrity-gate job runs bash scripts/ci/prove_repo_integrity.sh and
+  exits 0 with REPO_INTEGRITY: PROVEN (MANIFEST_PROOF: NOT_PROVEN reported
+  honestly).
+measurement_command: bash scripts/ci/prove_repo_integrity.sh
+signal_artifact: .github/workflows/repo-integrity-gate.yml
+falsifier:
+  command: bash scripts/ci/prove_repo_integrity.sh
+  description: >-
+    Must fail if any link of the integrity chain regresses — an artifact becomes
+    schema-valid but semantically fake, a claim loses its proof chain, or the
+    sci-core proof stops running on a clean clone.
+rollback_command: >-
+  git rm -f .github/workflows/repo-integrity-gate.yml
+  .claude/commit_acceptors/repo-integrity-gate.yaml
+rollback_verification_command: >-
+  test ! -f .github/workflows/repo-integrity-gate.yml
+memory_update_type: append
+ledger_path: .claude/commit_acceptors/repo-integrity-gate.yaml
+report_path: .github/workflows/repo-integrity-gate.yml
+evidence:
+- path: .github/workflows/repo-integrity-gate.yml

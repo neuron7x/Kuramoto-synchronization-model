@@ -1,0 +1,57 @@
+# ci-heartbeat: cognitive-core-admissibility
+id: cognitive-core-admissibility
+status: ACTIVE
+claim_type: fail_closed
+promise: >-
+  Add the cognitive core as production code: core/physics/cognitive_core.py is
+  one deterministic fail-closed value function over the physical-invariant
+  manifold. It generalises the three-invariant coherence_bridge seed to the full
+  live-state spine (INV-K1, INV-OA1, INV-RC1, INV-DRO2, INV-5HT2, INV-GABA1,
+  INV-DA8, INV-KELLY2, INV-FE2), routing a live snapshot through every applicable
+  gate and returning GO/NO_GO with the binding constraint named. The
+  cognitive_core_admissibility catalog law witnesses it: nominal snapshot -> GO
+  with every gate load-bearing, and empty / non-finite / single-violation
+  snapshots -> NO_GO (no vacuous approval, fail-closed). No canonical catalog
+  mutation, no trading/execution/forecast/policy change.
+diff_scope:
+  changed_files:
+    - path: ".claude/commit_acceptors/cognitive-core-admissibility.yaml"
+    - path: "core/physics/cognitive_core.py"
+    - path: "tests/physics/test_cognitive_core_admissibility.py"
+  forbidden_paths:
+    - "trading/"
+    - "execution/"
+    - "forecast/"
+    - "policy/"
+required_python_symbols:
+  - "CognitiveCore"
+  - "CoreVerdict"
+  - "Decision"
+expected_signal: >-
+  tools/validate_physics_contracts.py reports 31 blocking laws fully witnessed
+  (was 30). CognitiveCore.admissibility returns GO for a nominal in-manifold
+  snapshot, NO_GO with exactly the violated invariant for each of nine
+  single-invariant violations (every gate load-bearing), INSUFFICIENT NO_GO for
+  an empty snapshot, and fail-closed NO_GO for a non-finite field. No
+  trading/execution/forecast/policy change.
+measurement_command: >-
+  PYTHONPATH=. python tools/validate_physics_contracts.py && PYTHONPATH=.
+  python -m pytest tests/physics/test_cognitive_core_admissibility.py -q
+signal_artifact: "tmp/cognitive_core_admissibility.log"
+falsifier:
+  command: >-
+    PYTHONPATH=. python -m pytest tests/physics/test_cognitive_core_admissibility.py -q
+  description: >-
+    Fails if the value function admits an out-of-manifold snapshot, vacuously
+    approves an empty snapshot, fails to fail-closed on a non-finite field, or a
+    gate stops being load-bearing.
+rollback_command: >-
+  git rm -f core/physics/cognitive_core.py tests/physics/test_cognitive_core_admissibility.py
+rollback_verification_command: >-
+  PYTHONPATH=. python tools/validate_physics_contracts.py
+memory_update_type: none
+ledger_path: ".claude/commit_acceptors/cognitive-core-admissibility.yaml"
+report_path: ".claude/commit_acceptors/cognitive-core-admissibility.yaml"
+evidence:
+  - path: "core/physics/cognitive_core.py"
+  - path: "tests/physics/test_cognitive_core_admissibility.py"

@@ -1,0 +1,1 @@
+{"_doc":"Externally-defined make-like commands documented but defined outside the root Makefile (sub-Makefile / external tool). Empty = every documented make command must be a real root target or baselined.","allow":[]}

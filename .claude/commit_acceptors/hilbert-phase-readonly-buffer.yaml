@@ -1,0 +1,58 @@
+# Diff-bound acceptor: read-only-safe Hilbert phase working buffer.
+
+id: hilbert-phase-readonly-buffer
+status: ACTIVE
+claim_type: correctness
+promise: >-
+  core.indicators.multiscale_kuramoto._hilbert_phase mutates its working buffer
+  in place (putmask non-finite fill, in-place detrend + Hilbert multiplier) but
+  obtained that buffer via np.ascontiguousarray, which returns the caller's
+  array UNCHANGED when it is already C-contiguous float64 — including read-only
+  buffers. A read-only series therefore raised "putmask: output array is
+  read-only", which GeoSyncCompositeEngine swallowed and silently degraded to a
+  basic-feature fallback (forbidden silent repair), dropping the entire
+  Kuramoto/Ricci composite signal; a writable caller array was additionally
+  mutated as an aliasing side effect. This binds a one-time private writable
+  copy so the in-place ops are both safe and unaliased, with output numerically
+  identical (1e-12) to the prior writable-input path.
+
+diff_scope:
+  changed_files:
+    - path: ".claude/commit_acceptors/hilbert-phase-readonly-buffer.yaml"
+    - path: "core/indicators/multiscale_kuramoto.py"
+    - path: "tests/unit/test_indicators_kuramoto_multiscale.py"
+    # The 10-line read-only-copy insertion shifts two pre-existing np.clip
+    # saturate_clip sites down; the line-pinned numerical-policy clamp registry
+    # is re-synced to their new positions (373->383, 574->584).
+    - path: "tools/physics/clamp_registry.yaml"
+  forbidden_paths:
+    - "backtest/"
+    - "execution/"
+    - "analytics/"
+    - "research/systemic_risk/"
+
+required_python_symbols:
+  - "core.indicators.multiscale_kuramoto._hilbert_phase"
+expected_signal: >-
+  _hilbert_phase accepts a read-only / caller-owned series without raising and
+  without mutating the caller, returning phases identical to the writable-input
+  path; the regression test
+  tests/unit/test_indicators_kuramoto_multiscale.py::test_hilbert_phase_accepts_readonly_buffer_without_mutating_caller
+  passes.
+measurement_command: >-
+  bash -c 'set -euo pipefail; mkdir -p tmp; PYTHONPATH=. python -m pytest tests/unit/test_indicators_kuramoto_multiscale.py::test_hilbert_phase_accepts_readonly_buffer_without_mutating_caller -q | tee tmp/hilbert_readonly.log'
+signal_artifact: "tmp/hilbert_readonly.log"
+falsifier:
+  command: >-
+    bash -c 'PYTHONPATH=. python -c "import numpy as np; from core.indicators.multiscale_kuramoto import _hilbert_phase; a=np.linspace(1.0,9.0,32); a[3]=np.nan; a.setflags(write=False); _hilbert_phase(a)"'
+  description: >-
+    Fails (ValueError "output array is read-only") if _hilbert_phase reverts to
+    mutating a non-private buffer, i.e. if the read-only-safe copy is removed and
+    the silent GeoSyncCompositeEngine fallback regresses.
+rollback_command: >-
+  bash -c 'git checkout origin/main -- core/indicators/multiscale_kuramoto.py tests/unit/test_indicators_kuramoto_multiscale.py && git rm -f .claude/commit_acceptors/hilbert-phase-readonly-buffer.yaml'
+rollback_verification_command: >-
+  bash -c '! grep -q "copy=True" core/indicators/multiscale_kuramoto.py'
+memory_update_type: append
+ledger_path: ".claude/commit_acceptors/hilbert-phase-readonly-buffer.yaml"
+report_path: "tmp/hilbert_readonly.log"

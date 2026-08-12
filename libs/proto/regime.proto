@@ -1,16 +1,16 @@
 syntax = "proto3";
 
-package tradepulse.regime.v1;
+package geosync.regime.v1;
 
-option go_package = "github.com/TradePulse/TradePulse/libs/proto/gen/go/regime;regimepb";
+option go_package = "github.com/GeoSync/GeoSync/libs/proto/gen/go/regime;regimepb";
 
 import "google/protobuf/timestamp.proto";
 import "libs/proto/market_data.proto";
 
 message DetectRequest {
   string symbol = 1;
-  repeated tradepulse.market.v1.Trade trades = 2;
-  tradepulse.market.v1.OrderBook orderbook = 3;
+  repeated geosync.market.v1.Trade trades = 2;
+  geosync.market.v1.OrderBook orderbook = 3;
 }
 
 message FeatureVector {

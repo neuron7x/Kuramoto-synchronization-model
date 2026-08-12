@@ -1,3 +1,5 @@
+# Copyright (c) 2023-2026 Yaroslav Vasylenko (neuron7xLab)
+# SPDX-License-Identifier: MIT
 """Streaming feature extractors for neurobiologically-inspired market analysis.
 
 This module provides efficient, numerically stable implementations of common
@@ -45,9 +47,7 @@ def ema_update(prev: float, x: float, span: int) -> float:
 def ewvar_update(prev_var: float, pe: float, lam: float, eps: float = 1e-12) -> float:
     """EWMA variance update for residuals (float32, O(1))."""
     lam = Float(lam)
-    return Float(
-        lam * Float(prev_var) + (1.0 - lam) * (Float(pe) * Float(pe)) + Float(eps)
-    )
+    return Float(lam * Float(prev_var) + (1.0 - lam) * (Float(pe) * Float(pe)) + Float(eps))
 
 
 @dataclass
@@ -117,9 +117,7 @@ class EWMomentum:
             ValueError: If fast_span >= slow_span or either <= 0.
         """
         if fast_span >= slow_span:
-            raise ValueError(
-                f"fast_span ({fast_span}) must be < slow_span ({slow_span})"
-            )
+            raise ValueError(f"fast_span ({fast_span}) must be < slow_span ({slow_span})")
         if fast_span <= 0 or slow_span <= 0:
             raise ValueError("Spans must be positive")
 
@@ -176,9 +174,7 @@ class EWZScore:
 
     __slots__ = ("_span", "_lambda", "_mean", "_var", "_initialized", "_eps")
 
-    def __init__(
-        self, span: int = 50, lambda_var: float = 0.94, eps: float = 1e-8
-    ) -> None:
+    def __init__(self, span: int = 50, lambda_var: float = 0.94, eps: float = 1e-8) -> None:
         """Initialize z-score tracker.
 
         Args:
@@ -226,9 +222,7 @@ class EWZScore:
 
         # Update variance using prediction error
         pe = x_f - prev_mean
-        self._var = ewvar_update(
-            self._var, float(pe), float(self._lambda), float(self._eps)
-        )
+        self._var = ewvar_update(self._var, float(pe), float(self._lambda), float(self._eps))
 
         # Compute z-score
         std = Float(np.sqrt(self._var))
@@ -266,9 +260,7 @@ class EWSkewness:
 
     __slots__ = ("_span", "_lambda", "_mean", "_m2", "_m3", "_n", "_eps")
 
-    def __init__(
-        self, span: int = 50, lambda_decay: float = 0.94, eps: float = 1e-8
-    ) -> None:
+    def __init__(self, span: int = 50, lambda_decay: float = 0.94, eps: float = 1e-8) -> None:
         """Initialize skewness tracker.
 
         Args:

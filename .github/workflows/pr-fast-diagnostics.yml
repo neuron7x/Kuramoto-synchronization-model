@@ -1,0 +1,157 @@
+# SPDX-License-Identifier: MIT
+#
+# PR Fast Diagnostics — non-required observability lane for fast-shard failures.
+#
+# This workflow does not weaken PR Gate. It mirrors the deterministic fast-shard
+# selection logic and persists the evidence that PR Gate logs can fail to expose:
+# collected node ids, selected shard ids, pytest tail, return code, and changed files.
+name: PR Fast Diagnostics
+
+on:
+  pull_request:
+    branches: [main]
+  workflow_dispatch:
+
+permissions:
+  contents: read
+
+env:
+  FORCE_JAVASCRIPT_ACTIONS_TO_NODE24: 'true'
+
+concurrency:
+  group: pr-fast-diagnostics-${{ github.event.pull_request.number || github.sha }}
+  cancel-in-progress: true
+
+jobs:
+  fast-diagnostic-shard:
+    name: fast-diagnostic-shard
+    runs-on: ubuntu-latest
+    continue-on-error: false
+    timeout-minutes: 25
+    strategy:
+      fail-fast: false
+      matrix:
+        group: [3, 4]
+    steps:
+      - name: Checkout
+        uses: actions/checkout@9c091bb21b7c1c1d1991bb908d89e4e9dddfe3e0 # v7.0.0
+        with:
+          fetch-depth: 0
+
+      - name: Setup Python environment
+        uses: ./.github/actions/setup-geosync
+        with:
+          python-version: '3.11'
+          cache-prefix: pr-fast-diagnostics
+
+      - name: Run diagnostic fast shard
+        run: |
+          set -euo pipefail
+          out_dir="artifacts/pr-fast-diagnostics/group-${{ matrix.group }}"
+          mkdir -p "$out_dir"
+
+          if [[ "${GITHUB_EVENT_NAME}" == "pull_request" ]]; then
+            git fetch --no-tags origin "${{ github.base_ref }}"
+            base_ref="origin/${{ github.base_ref }}"
+            changed_files=$(git diff --name-only "$base_ref...$GITHUB_SHA")
+          else
+            changed_files=$(git diff-tree --no-commit-id --name-only -r "$GITHUB_SHA")
+          fi
+          printf '%s\n' "$changed_files" | tee "$out_dir/changed_files.txt"
+
+          [[ -x .venv/bin/pytest ]] || { echo ".venv/bin/pytest missing" | tee "$out_dir/failure.txt"; exit 1; }
+          export PYTHONUTF8=1
+          export PYTHONIOENCODING=utf-8
+          MARK="not slow and not heavy_math and not nightly and not flaky"
+
+          set +e
+          .venv/bin/pytest tests/ -m "$MARK" --collect-only \
+            > "$out_dir/collect_stdout.log" \
+            2> "$out_dir/collect_stderr.log"
+          collect_rc=$?
+          grep -E '^tests/.*::' "$out_dir/collect_stdout.log" > "$out_dir/all_nodeids.txt"
+          grep_rc=$?
+          set -e
+          echo "collect_rc=$collect_rc grep_rc=$grep_rc" | tee "$out_dir/collect_status.txt"
+          if [[ "$collect_rc" -ne 0 ]]; then
+            {
+              echo "FATAL: pytest collection failed."
+              echo "---- collect stderr tail ----"
+              tail -n 160 "$out_dir/collect_stderr.log" 2>/dev/null || true
+            } | tee -a "$out_dir/shard_summary.txt"
+            exit "$collect_rc"
+          fi
+
+          QUARANTINE="tests/ci/fast_quarantine.txt"
+          if [[ -f "$QUARANTINE" ]]; then
+            grep -vE '^\s*#|^\s*$' "$QUARANTINE" | awk '{print $1}' > "$out_dir/quarantine_paths.txt" || true
+            grep -vFf "$out_dir/quarantine_paths.txt" "$out_dir/all_nodeids.txt" > "$out_dir/all_nodeids.kept" || true
+            mv "$out_dir/all_nodeids.kept" "$out_dir/all_nodeids.txt"
+          else
+            : > "$out_dir/quarantine_paths.txt"
+          fi
+
+          total_ids=$(wc -l < "$out_dir/all_nodeids.txt" | tr -d ' ')
+          echo "total_ids=$total_ids" | tee "$out_dir/shard_summary.txt"
+          if [[ "$total_ids" -eq 0 ]]; then
+            {
+              echo "FATAL: diagnostic collected zero fast test ids."
+              echo "---- collect stderr tail ----"
+              tail -n 120 "$out_dir/collect_stderr.log" 2>/dev/null || true
+            } | tee -a "$out_dir/shard_summary.txt"
+            exit 1
+          fi
+
+          .venv/bin/python - <<'PY'
+          import binascii
+          import os
+          from pathlib import Path
+
+          group = int(os.environ["DIAGNOSTIC_GROUP"])
+          out_dir = Path(os.environ["DIAGNOSTIC_OUT_DIR"])
+          ids = [line.strip() for line in (out_dir / "all_nodeids.txt").read_text(encoding="utf-8").splitlines() if line.strip()]
+          selected = [node for node in ids if binascii.crc32(node.encode()) % 4 == group - 1]
+          (out_dir / "shard_nodeids.txt").write_text("\n".join(selected) + ("\n" if selected else ""), encoding="utf-8")
+          print(f"shard {group}/4: {len(selected)}/{len(ids)} selected tests")
+          PY
+        env:
+          DIAGNOSTIC_GROUP: ${{ matrix.group }}
+          DIAGNOSTIC_OUT_DIR: artifacts/pr-fast-diagnostics/group-${{ matrix.group }}
+
+      - name: Execute diagnostic fast shard
+        run: |
+          set -euo pipefail
+          out_dir="artifacts/pr-fast-diagnostics/group-${{ matrix.group }}"
+          if [[ ! -s "$out_dir/shard_nodeids.txt" ]]; then
+            echo "empty shard" | tee -a "$out_dir/shard_summary.txt"
+            exit 0
+          fi
+          mapfile -t SHARD_IDS < "$out_dir/shard_nodeids.txt"
+          echo "launching pytest on ${#SHARD_IDS[@]} node ids" | tee -a "$out_dir/shard_summary.txt"
+          set +e
+          timeout 1200s .venv/bin/pytest \
+            -m "not slow and not heavy_math and not nightly and not flaky" \
+            "${SHARD_IDS[@]}" \
+            --maxfail=3 \
+            -rA -q | tee "$out_dir/shard_run.log"
+          rc=${PIPESTATUS[0]}
+          set -e
+          echo "pytest_rc=$rc" | tee -a "$out_dir/shard_summary.txt"
+          if [[ "$rc" -ne 0 ]]; then
+            {
+              echo "---- FAILED/ERROR node lines ----"
+              grep -aE '^(FAILED|ERROR)' "$out_dir/shard_run.log" || true
+              echo "---- pytest tail ----"
+              tail -n 160 "$out_dir/shard_run.log" || true
+            } | tee -a "$out_dir/shard_summary.txt"
+          fi
+          exit "$rc"
+
+      - name: Upload diagnostic artifact
+        if: always()
+        uses: actions/upload-artifact@043fb46d1a93c77aae656e7c1c64a875d1fc6a0a # v7.0.1
+        with:
+          name: pr-fast-diagnostics-shard-${{ matrix.group }}
+          path: artifacts/pr-fast-diagnostics/group-${{ matrix.group }}/
+          if-no-files-found: warn
+          retention-days: 14

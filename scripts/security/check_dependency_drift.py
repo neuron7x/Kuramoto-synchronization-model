@@ -1,10 +1,13 @@
 #!/usr/bin/env python3
+# Copyright (c) 2023-2026 Yaroslav Vasylenko (neuron7xLab)
+# SPDX-License-Identifier: MIT
 """Detect dependency drift between declared inputs and locked requirements."""
 
 from __future__ import annotations
 
 import argparse
 import json
+import re
 import sys
 from dataclasses import dataclass
 from pathlib import Path
@@ -12,6 +15,10 @@ from typing import Iterable, List, Mapping, Sequence
 
 from packaging.requirements import Requirement
 from packaging.specifiers import SpecifierSet
+
+# pip treats a ``#`` preceded by whitespace as the start of an inline comment.
+# Full-line comments are filtered before this is applied.
+_INLINE_COMMENT_RE = re.compile(r"\s+#.*$")
 
 
 def _normalize(name: str) -> str:
@@ -30,8 +37,10 @@ def _parse_lock(lock_path: Path) -> Mapping[str, str]:
         if "==" not in line:
             continue
         pkg, version = line.split("==", 1)
-        # Drop any environment markers or hashes that follow the pin
-        version = version.split(";", 1)[0].strip()
+        # Drop any environment markers or hashes that follow the pin, then any
+        # pip-style inline comment (whitespace-preceded '#').
+        version = version.split(";", 1)[0]
+        version = _INLINE_COMMENT_RE.sub("", version).strip()
         locked[_normalize(pkg)] = version
     return locked
 
@@ -44,6 +53,9 @@ def _parse_requirements_file(path: Path) -> List[Requirement]:
     for raw in path.read_text(encoding="utf-8").splitlines():
         line = raw.strip()
         if not line or line.startswith("#") or line.startswith("-r"):
+            continue
+        line = _INLINE_COMMENT_RE.sub("", line).strip()
+        if not line:
             continue
         try:
             requirements.append(Requirement(line))
@@ -70,9 +82,7 @@ def _parse_pyproject_dependencies(pyproject_path: Path) -> List[Requirement]:
         try:
             requirements.append(Requirement(spec))
         except Exception as exc:  # pragma: no cover - defensive
-            raise ValueError(
-                f"Failed to parse dependency '{spec}' in {pyproject_path}"
-            ) from exc
+            raise ValueError(f"Failed to parse dependency '{spec}' in {pyproject_path}") from exc
     return requirements
 
 
@@ -131,9 +141,7 @@ def _check_requirements(
                 )
             )
             continue
-        if req.specifier and not req.specifier.contains(
-            locked_version, prereleases=True
-        ):
+        if req.specifier and not req.specifier.contains(locked_version, prereleases=True):
             issues.append(
                 DriftIssue(
                     package=req.name,

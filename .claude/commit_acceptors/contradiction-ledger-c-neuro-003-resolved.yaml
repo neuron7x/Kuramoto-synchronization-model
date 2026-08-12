@@ -1,0 +1,79 @@
+# Diff-bound acceptor — drain the contradiction_ledger_stale cluster (#1180).
+#
+# The neuro-physics contradiction ledger is self-verifying: each entry's
+# falsifier must exit its declared code against live source (crown invariant
+# test_every_falsifier_confirms_its_claim_against_live_source). Entry
+# C-NEURO-003 declared the dopamine/serotonin correlation invariant a DEAD
+# field; its rebuttal condition was "overturned when validate_* wires
+# compute_pathway_correlation (mentions rise above 2)". That has happened on
+# live source — the field is enforced at core/validation/neuro_integrity.py:
+# 412,433 (a C-NEURO-003 VIOLATED guard) and now appears 6 times. The old
+# falsifier ([ grep -c ... -le 2 ]) therefore returned 1 != expected 0,
+# failing the crown invariant and turning main's fast lane RED for every PR.
+#
+# This drains the cluster the honest way: flip C-NEURO-003 to RESOLVED with a
+# resolution_ref (schema requires it — no fake closure), rewrite its falsifier
+# to the anti-regression form ([ grep -c ... -ge 3 ], expect_exit 0) that
+# matches live source and reopens the entry if the enforcement is removed, and
+# remove the quarantine line so the full ledger suite runs unquarantined.
+
+id: contradiction-ledger-c-neuro-003-resolved
+status: ACTIVE
+claim_type: governance
+promise: >-
+  Entry C-NEURO-003 in data/audit/neuro_physics_contradiction_ledger.json is
+  marked resolution_state=RESOLVED with a non-empty resolution_ref pointing at
+  the live enforcement (core/validation/neuro_integrity.py:412,433) and the
+  correlation-witness acceptor; its falsifier is rewritten to
+  '[ "$(grep -c dopamine_serotonin_correlation_min core/validation/neuro_integrity.py)" -ge 3 ]'
+  with expect_exit 0, which passes against live source and flips iff the
+  enforcement is later removed. The quarantine line for
+  tests/audit/test_contradiction_ledger.py is removed from
+  tests/ci/fast_quarantine.txt and the cluster is marked drained in
+  docs/ci/fast_backlog_ledger.md and docs/audit/neuro_physics_contradiction_ledger.md.
+  All 17 contradiction-ledger tests pass unquarantined; the ledger JSON still
+  validates against schemas/audit/contradiction_ledger.schema.json (RESOLVED
+  requires resolution_ref). No source code or physics behaviour is changed.
+diff_scope:
+  changed_files:
+    - path: ".claude/commit_acceptors/contradiction-ledger-c-neuro-003-resolved.yaml"
+    - path: "data/audit/neuro_physics_contradiction_ledger.json"
+    - path: "docs/audit/neuro_physics_contradiction_ledger.md"
+    - path: "docs/ci/fast_backlog_ledger.md"
+    - path: "tests/ci/fast_quarantine.txt"
+  forbidden_paths:
+    - "trading/"
+    - "execution/"
+    - "forecast/"
+    - "policy/"
+required_python_symbols: []
+expected_signal: >-
+  pytest tests/audit/test_contradiction_ledger.py is all-green (17 passed)
+  with the quarantine line removed; the C-NEURO-003 falsifier exits 0 against
+  live source; the ledger JSON validates against its schema.
+measurement_command: >-
+  python -m pytest tests/audit/test_contradiction_ledger.py -q
+signal_artifact: "tmp/contradiction_ledger_pytest.log"
+falsifier:
+  command: >-
+    bash -c 'c=$(grep -c dopamine_serotonin_correlation_min core/validation/neuro_integrity.py);
+    test "$c" -ge 3'
+  description: >-
+    Reproduces the rewritten C-NEURO-003 falsifier against live source: exits 0
+    iff the dopamine/serotonin correlation field is wired into enforcement
+    (>=3 mentions). This is the resolution witness — if the enforcement is
+    removed (mentions drop to <=2) it exits non-zero, which the crown invariant
+    test would then surface, forcing the entry to reopen.
+rollback_command: >-
+  git checkout HEAD~1 --
+  data/audit/neuro_physics_contradiction_ledger.json
+  docs/audit/neuro_physics_contradiction_ledger.md
+  docs/ci/fast_backlog_ledger.md
+  tests/ci/fast_quarantine.txt
+  .claude/commit_acceptors/contradiction-ledger-c-neuro-003-resolved.yaml
+rollback_verification_command: >-
+  git diff --exit-code data/audit/neuro_physics_contradiction_ledger.json
+memory_update_type: append
+ledger_path: "data/audit/neuro_physics_contradiction_ledger.json"
+report_path: "docs/ci/fast_backlog_ledger.md"
+evidence: []

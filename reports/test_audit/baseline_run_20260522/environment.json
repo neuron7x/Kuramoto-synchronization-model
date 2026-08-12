@@ -1,0 +1,9 @@
+{
+  "timestamp_utc": "2026-05-22T13:44:05Z",
+  "python": "3.14.4 (main, May  1 2026, 05:51:55) [GCC 13.3.0]",
+  "platform": "Linux-6.12.47-x86_64-with-glibc2.39",
+  "system": "Linux",
+  "release": "6.12.47",
+  "machine": "x86_64",
+  "git_sha": "commit-redacted"
+}

@@ -1,0 +1,18 @@
+version: 1
+hard_constraints:
+  nan_abort: true
+  stale_feed_minutes: 30
+  schema_drift_quarantine: true
+  ohlc_only_blocks_precursor: true
+  no_fabricated_fallback: true
+substrate_types:
+  - OHLC_ONLY
+  - BID_ASK
+  - MICROSTRUCTURE
+  - UNKNOWN
+reason_codes:
+  - NAN_ABORT
+  - STALE_FEED
+  - SCHEMA_DRIFT
+  - SUBSTRATE_DEAD_OHLC_ONLY
+  - SUBSTRATE_LIVE

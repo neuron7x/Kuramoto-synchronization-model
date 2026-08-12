@@ -1,0 +1,51 @@
+id: risk-reservation-full-terminal-audit
+status: ACTIVE
+claim_type: correctness
+promise: >-
+  Every OMS terminal path now discharges the risk reservation, closing the
+  remaining leak surface behind reserve_risk_exposure. Added idempotent releases on
+  the submit failure/timeout path, on venue-reported cancel and reject via
+  sync_remote_state, and on requeue_order (fills already convert; placement-reject
+  and cancel already released). open_reservation_count() returns to zero after every
+  terminal outcome, so the flag is safe for operator rollout.
+diff_scope:
+  changed_files:
+    - path: ".claude/commit_acceptors/risk-reservation-full-terminal-audit.yaml"
+    - path: "execution/oms.py"
+    - path: "tests/integration/test_oms_reservation_terminal_paths.py"
+  forbidden_paths:
+    - "core/physics/"
+    - "core/kuramoto/"
+    - "execution/risk/core.py"
+required_python_symbols:
+  - "execution/oms.py::OrderManagementSystem"
+expected_signal: >-
+  `python -m pytest --import-mode=importlib
+  tests/integration/test_oms_reservation_terminal_paths.py -q` passes; sync cancel,
+  sync reject and requeue each leave open_reservation_count() == 0.
+measurement_command: >-
+  bash -c '
+    python -m pytest --import-mode=importlib -p no:cacheprovider
+      tests/integration/test_oms_reservation_terminal_paths.py
+      tests/integration/test_oms_risk_reservation_integration.py -q
+  '
+signal_artifact: "tmp/risk_reservation_full_terminal_audit.log"
+falsifier:
+  command: |-
+    bash -c '
+      python -m pytest --import-mode=importlib -p no:cacheprovider -q
+        "tests/integration/test_oms_reservation_terminal_paths.py::test_sync_remote_cancel_releases_reservation"
+      >/dev/null 2>&1 && exit 0 || exit 1
+    '
+  description: >-
+    Runs the sync-cancel terminal-path leak test. Exits 0 when the venue-reported
+    cancel releases the reservation (count 0); non-zero if the release is removed
+    and the hold leaks.
+rollback_command: >-
+  bash -c 'git rm -f .claude/commit_acceptors/risk-reservation-full-terminal-audit.yaml'
+rollback_verification_command: >-
+  bash -c 'test ! -f .claude/commit_acceptors/risk-reservation-full-terminal-audit.yaml'
+memory_update_type: append
+ledger_path: ".claude/commit_acceptors/risk-reservation-full-terminal-audit.yaml"
+report_path: "tmp/risk_reservation_full_terminal_audit.log"
+evidence: []

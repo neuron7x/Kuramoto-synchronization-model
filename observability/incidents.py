@@ -1,8 +1,10 @@
+# Copyright (c) 2023-2026 Yaroslav Vasylenko (neuron7xLab)
+# SPDX-License-Identifier: MIT
 """Incident management helpers for automated workflows."""
 
 from __future__ import annotations
 
-# SPDX-License-Identifier: LicenseRef-TradePulse-Proprietary
+# SPDX-License-Identifier: MIT
 import json
 from dataclasses import dataclass
 from datetime import datetime, timezone
@@ -43,9 +45,7 @@ class IncidentManager:
 
         date_prefix = timestamp.strftime("%Y%m%d")
         existing = sorted(
-            path
-            for path in year_directory.glob(f"INC-{date_prefix}-*")
-            if path.is_dir()
+            path for path in year_directory.glob(f"INC-{date_prefix}-*") if path.is_dir()
         )
         identifier = f"INC-{date_prefix}-{len(existing) + 1:03d}"
         incident_dir = year_directory / identifier

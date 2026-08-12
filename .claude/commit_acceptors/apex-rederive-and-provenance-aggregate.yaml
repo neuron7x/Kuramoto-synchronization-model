@@ -1,0 +1,66 @@
+id: apex-rederive-and-provenance-aggregate
+status: ACTIVE
+claim_type: correctness
+promise: >-
+  Two VA-1 self-audit gaps closed. G2 — the apex re-derives H1/H3 from the REAL
+  homeostasis controllers, not from the artifact's numeric fields, so a within-bound
+  forged number cannot ground an action. G3 — inference_provenance is a substrate
+  strand of the final verdict, so a PASS aggregate now requires the whole chain to
+  be reproducible and tamper-evident. A forged report-only homeostasis is still
+  defeated (via H4).
+diff_scope:
+  changed_files:
+    - path: ".claude/commit_acceptors/apex-rederive-and-provenance-aggregate.yaml"
+    - path: "tools/audit_no_ungrounded_act.py"
+    - path: "tools/audit_final_inference_verdict.py"
+    - path: "tests/unit/neuro/test_apex_adversarial.py"
+    - path: "artifacts/inference/no_ungrounded_act.json"
+    - path: "artifacts/inference/final_inference_verdict.json"
+    - path: "artifacts/inference/apex_adversarial_report.json"
+    - path: "artifacts/provenance/inference_provenance.json"
+  forbidden_paths:
+    - "execution/"
+    - "core/neuro/"
+required_python_symbols:
+  - "tools/audit_no_ungrounded_act.py::_rederive_homeostasis"
+  - "tools/audit_no_ungrounded_act.py::build_apex"
+expected_signal: >-
+  `python -m pytest --import-mode=importlib tests/unit/neuro/test_apex_adversarial.py
+  tests/tools/test_final_verdict_adversarial.py -q` passes; a forged homeostasis
+  number is ignored and a FAIL provenance sinks the aggregate.
+measurement_command: >-
+  bash -c '
+    python -m pytest --import-mode=importlib -p no:cacheprovider
+      tests/unit/neuro/test_apex_adversarial.py
+      tests/tools/test_final_verdict_adversarial.py -q
+  '
+signal_artifact: "tmp/apex_rederive_and_provenance.log"
+falsifier:
+  command: |-
+    bash -c '
+      python -c "
+    import importlib.util, json, shutil, tempfile, pathlib
+    spec = importlib.util.spec_from_file_location(\"nua\", \"tools/audit_no_ungrounded_act.py\")
+    nua = importlib.util.module_from_spec(spec); spec.loader.exec_module(nua)
+    afs = importlib.util.spec_from_file_location(\"afiv\", \"tools/audit_final_inference_verdict.py\")
+    afiv = importlib.util.module_from_spec(afs); afs.loader.exec_module(afiv)
+    provenance_wired = any(s[\"name\"]==\"inference_provenance\" for s in afiv.INPUTS)
+    tmp = pathlib.Path(tempfile.mkdtemp()); shutil.copytree(\"artifacts\", tmp/\"artifacts\"); shutil.copytree(\"tools\", tmp/\"tools\")
+    h = tmp/\"artifacts/neuro/homeostasis_contract.json\"; d=json.loads(h.read_text()); d[\"worst_allostatic_load\"]=0.1; h.write_text(json.dumps(d))
+    ignored = nua.build_apex(tmp)[\"gate\"] == \"ADMISSIBLE\"
+    pr = tmp/\"artifacts/provenance/inference_provenance.json\"; d=json.loads(pr.read_text()); d[\"verdict\"]=\"FAIL\"; pr.write_text(json.dumps(d))
+    sunk = afiv.build_verdict(tmp, release=False)[\"verdict\"] == \"FAIL\"
+    raise SystemExit(0 if provenance_wired and ignored and sunk else \"apex trusted a forged number or provenance not aggregated\")
+    "
+    '
+  description: >-
+    Confirms the apex ignores a within-bound forged homeostasis number (re-derived)
+    and that a FAIL provenance sinks the aggregate. Exits 0 when both hold.
+rollback_command: >-
+  bash -c 'git rm -f .claude/commit_acceptors/apex-rederive-and-provenance-aggregate.yaml'
+rollback_verification_command: >-
+  bash -c 'test ! -f .claude/commit_acceptors/apex-rederive-and-provenance-aggregate.yaml'
+memory_update_type: append
+ledger_path: ".claude/commit_acceptors/apex-rederive-and-provenance-aggregate.yaml"
+report_path: "tmp/apex_rederive_and_provenance.log"
+evidence: []

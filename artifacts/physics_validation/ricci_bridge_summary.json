@@ -1,0 +1,67 @@
+{
+  "schema_version": "2026.06.18",
+  "status": "RICCI_BRIDGE_PROVENANCE_SURFACE_DEFINED",
+  "scope": "Ricci-to-adjacency bridge feeding canonical weighted Kuramoto",
+  "canonical_status": "EXPERIMENTAL_BRIDGE_NOT_CANONICAL",
+  "bridge_non_core_flag": true,
+  "provenance_ledger": {
+    "source_inputs": [
+      "curvature_matrix_kappa: real-valued square matrix, shape=(N,N)",
+      "canonical_consumer: phase_transition_boundary after adjacency mapping"
+    ],
+    "graph_rule": "A = ricci_to_adjacency(kappa); output must be symmetric, non-negative, zero diagonal, and bounded by 1.0",
+    "curvature_estimator_name": "external_curvature_matrix_input",
+    "curvature_estimator_assumptions": [
+      "kappa is supplied as an already computed curvature-like matrix",
+      "this artifact does not audit how market data produced kappa",
+      "this artifact validates only the bridge from kappa to adjacency"
+    ],
+    "curvature_to_weight_transform": "implemented by core.kuramoto.kuramoto_ricci_engine.ricci_to_adjacency",
+    "bridge_valid_domain": [
+      "finite square matrix input",
+      "output adjacency used only after bridge mapping",
+      "weighted Kuramoto consumer expects non-negative adjacency"
+    ],
+    "bridge_excluded_domain": [
+      "raw signed curvature passed directly into phase_transition_boundary",
+      "canonical promotion without provenance evidence",
+      "market-data graph construction claims"
+    ],
+    "ricci_test_link": "tests/physics/test_ricci_bridge.py",
+    "bridge_completeness_metric": {
+      "required_fields": 11,
+      "present_fields": 11,
+      "ratio": 1.0,
+      "score_credit_allowed": false
+    }
+  },
+  "tested_properties": [
+    {
+      "property": "ricci_to_adjacency produces non-negative symmetric zero-diagonal A",
+      "test_file": "tests/physics/test_ricci_bridge.py"
+    },
+    {
+      "property": "curvature-like input must be mapped before boundary calculation",
+      "test_file": "tests/physics/test_ricci_bridge.py"
+    },
+    {
+      "property": "matched null comparison is represented as a bridge smoke test",
+      "test_file": "tests/physics/test_ricci_bridge.py"
+    },
+    {
+      "property": "provenance ledger exposes the eleven slice-1 carriers",
+      "test_file": "tests/physics/test_ricci_bridge.py"
+    }
+  ],
+  "measurement_command": "python -m pytest tests/physics/test_ricci_bridge.py",
+  "computed_in_connector": false,
+  "ci_or_local_execution_required": true,
+  "remaining_limits": [
+    "market-data graph construction is not audited here",
+    "curvature estimator provenance is named but not independently reproduced here",
+    "matched null smoke does not prove predictive value",
+    "Ricci must remain non-canonical until full bridge evidence exists"
+  ],
+  "issue_1228_tasks_completed": [1, 2, 3, 4, 5, 6, 7, 8, 9, 10, 11],
+  "verdict": "BRIDGE_PROVENANCE_SURFACE_DEFINED_CANONICAL_PROMOTION_FORBIDDEN"
+}

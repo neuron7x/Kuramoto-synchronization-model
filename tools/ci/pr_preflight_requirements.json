@@ -1,0 +1,172 @@
+{
+  "schema_version": 1,
+  "component": "pr_preflight",
+  "description": "Requirements traceability for the structured PR preflight evidence runner. Each MUST requirement is bound to live-engine tests and code on main; verification_method names how it is proven and failure_status names the fail-closed outcome.",
+  "not_claimed": [
+    "production validated",
+    "full CI parity",
+    "security guaranteed",
+    "release proof",
+    "all broad checks green"
+  ],
+  "requirements": [
+    {
+      "id": "REQ-PREFLIGHT-001",
+      "statement": "A structured JSON report is emitted on every execution, including failing and blocked runs.",
+      "priority": "MUST",
+      "verification_method": "behavioral_test",
+      "acceptance_criteria": [
+        "preflight_report.json exists after a failing run",
+        "report contains schema_version, status, checks, summary, first_file_to_open"
+      ],
+      "linked_tests": [
+        "tests/ci/test_pr_preflight_engine.py::test_engine_writes_report_json_on_failure"
+      ],
+      "linked_code": ["tools/ci/pr_preflight.py::run_preflight", "tools/ci/pr_preflight.py::build_report"],
+      "failure_status": "FAIL"
+    },
+    {
+      "id": "REQ-PREFLIGHT-002",
+      "statement": "Per-check stdout and stderr are preserved to on-disk log paths.",
+      "priority": "MUST",
+      "verification_method": "behavioral_test",
+      "acceptance_criteria": [
+        "each check declares stdout_log and stderr_log paths",
+        "captured stdout/stderr are written to those paths"
+      ],
+      "linked_tests": [
+        "tests/ci/test_pr_preflight_engine.py::test_engine_preserves_stdout_and_stderr_logs"
+      ],
+      "linked_code": ["tools/ci/pr_preflight.py::run_check"],
+      "failure_status": "FAIL"
+    },
+    {
+      "id": "REQ-PREFLIGHT-003",
+      "statement": "A critical check failure produces a nonzero exit; exit code is a pure function of final status.",
+      "priority": "MUST",
+      "verification_method": "behavioral_test",
+      "acceptance_criteria": [
+        "status PASS -> exit 0",
+        "status FAIL -> exit 1",
+        "status BLOCKED -> exit 1"
+      ],
+      "linked_tests": [
+        "tests/ci/test_pr_preflight_engine.py::test_engine_fails_when_ruff_fails",
+        "tests/ci/test_pr_preflight_engine.py::test_exit_code_matches_final_status"
+      ],
+      "linked_code": ["tools/ci/pr_preflight.py::main", "tools/ci/pr_preflight.py::final_status"],
+      "failure_status": "FAIL"
+    },
+    {
+      "id": "REQ-PREFLIGHT-004",
+      "statement": "A missing critical executable blocks (BLOCKED), never silently passes.",
+      "priority": "MUST",
+      "verification_method": "behavioral_test",
+      "acceptance_criteria": [
+        "missing critical tool -> status BLOCKED",
+        "tool_available is false",
+        "exit code 1"
+      ],
+      "linked_tests": [
+        "tests/ci/test_pr_preflight_engine.py::test_engine_blocks_when_critical_tool_is_missing"
+      ],
+      "linked_code": ["tools/ci/pr_preflight.py::run_check"],
+      "failure_status": "BLOCKED"
+    },
+    {
+      "id": "REQ-PREFLIGHT-005",
+      "statement": "A missing optional executable skips explicitly (SKIPPED_OPTIONAL) and is never critical.",
+      "priority": "MUST",
+      "verification_method": "behavioral_test",
+      "acceptance_criteria": [
+        "missing optional tool -> SKIPPED_OPTIONAL",
+        "a SKIPPED_OPTIONAL check is never critical"
+      ],
+      "linked_tests": [
+        "tests/ci/test_pr_preflight_engine.py::test_engine_skips_detect_secrets_when_hook_missing",
+        "tests/ci/test_pr_preflight_engine.py::test_critical_skipped_optional_is_impossible"
+      ],
+      "linked_code": ["tools/ci/pr_preflight.py::run_check"],
+      "failure_status": "BLOCKED"
+    },
+    {
+      "id": "REQ-PREFLIGHT-006",
+      "statement": "The shell wrapper holds no critical check logic; it only delegates to the Python runner.",
+      "priority": "MUST",
+      "verification_method": "shell_test",
+      "acceptance_criteria": [
+        "wrapper invokes tools/ci/pr_preflight.py",
+        "wrapper contains no inline ruff/black/mypy/pytest/detect-secrets logic"
+      ],
+      "linked_tests": [
+        "tests/ci/test_pr_preflight_gate.py::test_shell_gate_is_only_a_compatibility_wrapper"
+      ],
+      "linked_code": ["scripts/test-pr-locally.sh"],
+      "failure_status": "FAIL"
+    },
+    {
+      "id": "REQ-PREFLIGHT-007",
+      "statement": "The shell wrapper forwards the runner exit code and only advertises the report when it exists.",
+      "priority": "MUST",
+      "verification_method": "shell_test",
+      "acceptance_criteria": [
+        "wrapper exit code equals runner exit code",
+        "FIRST_FILE_TO_OPEN printed only when preflight_report.json exists"
+      ],
+      "linked_tests": [
+        "tests/ci/test_pr_preflight_engine.py::test_shell_wrapper_forwards_python_runner_exit_code",
+        "tests/ci/test_pr_preflight_engine.py::test_shell_wrapper_prints_first_file_only_when_report_written"
+      ],
+      "linked_code": ["scripts/test-pr-locally.sh"],
+      "failure_status": "FAIL"
+    },
+    {
+      "id": "REQ-PREFLIGHT-008",
+      "statement": "The report JSON schema matches generated reports and stays in lockstep with the engine status constants.",
+      "priority": "MUST",
+      "verification_method": "schema_test",
+      "acceptance_criteria": [
+        "an engine-built report validates against schemas/pr_preflight_report.schema.json",
+        "schema status enums equal ALLOWED_FINAL_STATUSES and ALLOWED_CHECK_STATUSES"
+      ],
+      "linked_tests": [
+        "tests/ci/test_pr_preflight_report_schema.py::test_engine_report_validates_against_schema",
+        "tests/ci/test_pr_preflight_report_schema.py::test_report_schema_status_enums_match_engine_constants"
+      ],
+      "linked_code": ["schemas/pr_preflight_report.schema.json", "tools/ci/pr_preflight.py::build_report"],
+      "failure_status": "FAIL"
+    },
+    {
+      "id": "REQ-PREFLIGHT-009",
+      "statement": "Fail-closed behavior is proven across the failure surface: report-write failure and invalid root both block with a nonzero exit and never emit a PASS.",
+      "priority": "MUST",
+      "verification_method": "behavioral_test",
+      "acceptance_criteria": [
+        "report-write failure -> stderr reason -> exit 1 -> no PASS",
+        "invalid root -> BLOCKED report with invalid_root check -> exit 1"
+      ],
+      "linked_tests": [
+        "tests/ci/test_pr_preflight_engine.py::test_engine_blocks_when_report_cannot_be_written",
+        "tests/ci/test_pr_preflight_engine.py::test_engine_blocks_invalid_root_and_writes_report"
+      ],
+      "linked_code": ["tools/ci/pr_preflight.py::main", "tools/ci/pr_preflight.py::run_preflight"],
+      "failure_status": "BLOCKED"
+    },
+    {
+      "id": "REQ-PREFLIGHT-010",
+      "statement": "An unspecified/unknown check status collapses to BLOCKED; no unknown status can appear in a valid report.",
+      "priority": "MUST",
+      "verification_method": "behavioral_test",
+      "acceptance_criteria": [
+        "_base_result default status is BLOCKED",
+        "a report with an unknown status is rejected by the schema and contract"
+      ],
+      "linked_tests": [
+        "tests/ci/test_pr_preflight_report_schema.py::test_schema_rejects_report_with_unknown_status",
+        "tests/ci/test_pr_preflight_engine.py::test_engine_report_preserves_execution_metadata"
+      ],
+      "linked_code": ["tools/ci/pr_preflight.py::_base_result", "tools/ci/pr_preflight.py::validate_report_contract"],
+      "failure_status": "BLOCKED"
+    }
+  ]
+}

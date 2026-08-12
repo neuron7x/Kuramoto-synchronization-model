@@ -1,0 +1,120 @@
+# SPDX-License-Identifier: MIT
+#
+# Latency Budget Gate — server_compute layer (IERD-Q6 Phase-4 ENTRY).
+#
+# Asserts that the in-process FastAPI app produced by
+# `application.api.service.create_app()` meets the IERD §5
+# server-compute latency budget on representative endpoints:
+#
+#     /health   interactive   p95 < 200 ms
+#     /metrics  simple        p95 < 100 ms
+#
+# Phase status (per ADR 0020):
+#   * Phase-4 ENTRY (this workflow lands)  — server_compute layer
+#     gated; client_render / network_TTFB / db_io tracked as
+#     follow-ups under the same claim.
+#   * Phase-4 EXIT (follow-up PRs)         — Lighthouse CI for
+#     client_render, HTTP-timing for network_TTFB, driver-telemetry
+#     for db_io. Then claim re-classified ANCHORED.
+#
+# Tracked by GitHub issue IERD-Q6 (#531) and claim
+# `e2e-latency-budget-compliance` in `docs/CLAIMS.yaml`.
+name: Latency Budget — server_compute
+
+on:
+  pull_request:
+    branches: [main]
+    paths:
+      - 'application/api/**'
+      - 'src/geosync/api/**'
+      - 'core/utils/metrics.py'
+      - 'tests/api/test_latency_budget_server_compute.py'
+      - 'pyproject.toml'
+      - '.github/workflows/latency-budget.yml'
+  merge_group:
+  push:
+    branches: [main]
+
+permissions:
+  contents: read
+
+concurrency:
+  group: latency-budget-${{ github.event.pull_request.number || github.sha }}
+  cancel-in-progress: true
+
+jobs:
+  latency-budget-server-compute:
+    name: latency-budget-server-compute
+    runs-on: ubuntu-latest
+    timeout-minutes: 10
+    env:
+      GEOSYNC_AUDIT_SECRET: latency-budget-ci-audit-secret-not-real  # pragma: allowlist secret
+      GEOSYNC_OAUTH2_ISSUER: https://latency.test
+      GEOSYNC_OAUTH2_AUDIENCE: geosync-api
+      GEOSYNC_OAUTH2_JWKS_URI: https://latency.test/jwks
+      GEOSYNC_RBAC_AUDIT_SECRET: latency-budget-ci-rbac-secret-not-real  # pragma: allowlist secret
+      GEOSYNC_LATENCY_SAMPLES: "200"
+      GEOSYNC_LATENCY_WARMUP: "20"
+      # Force a fresh CollectorRegistry so the warmup + sample requests
+      # do not inflate the histogram count series read by
+      # tests/observability/test_metrics_expectations.py (uniform
+      # max=100 rule applies across all histogram rows including _count).
+      GEOSYNC_DISABLE_METRICS: "1"
+      # CI-runner overhead can shift p95 by 1.2-1.6× vs bare metal; the
+      # budget itself is unchanged and the threshold below preserves the
+      # IERD §5 numbers verbatim. If a future PR raises these the claim
+      # MUST be re-classified accordingly.
+      GEOSYNC_BUDGET_SIMPLE_P95_MS: "100"
+      GEOSYNC_BUDGET_INTERACTIVE_P95_MS: "200"
+    steps:
+      - name: Checkout
+        uses: actions/checkout@9c091bb21b7c1c1d1991bb908d89e4e9dddfe3e0 # v7.0.0
+
+      - name: Set up Python
+        uses: actions/setup-python@ece7cb06caefa5fff74198d8649806c4678c61a1 # v6
+        with:
+          python-version: '3.12'
+          cache: 'pip'
+
+      - name: Install runtime + test dependencies
+        run: |
+          set -euo pipefail
+          python -m pip install --upgrade pip
+          pip install -e .
+          pip install pytest pytest-asyncio httpx
+
+      - name: Run server-compute latency budget gate
+        id: run
+        # Phase-4 ENTRY: server_compute layer is the only layer
+        # measured in-process; the gate runs informationally so the
+        # remaining three layers can land under the same claim
+        # without flipping the gate strictness mid-phase. Phase-4
+        # EXIT removes this and makes the gate fail-closed.
+        continue-on-error: true
+        run: |
+          set -o pipefail
+          mkdir -p artifacts/latency-budget
+          pytest tests/api/test_latency_budget_server_compute.py \
+            -q -s --tb=short \
+            --junitxml=artifacts/latency-budget/junit.xml \
+            2>&1 | tee artifacts/latency-budget/run.log
+
+      - name: Upload latency-budget artifact
+        if: always()
+        uses: actions/upload-artifact@043fb46d1a93c77aae656e7c1c64a875d1fc6a0a # v7.0.1
+        with:
+          name: latency-budget-results
+          path: artifacts/latency-budget/
+          retention-days: 14
+
+      - name: Summarise latency findings
+        if: always()
+        run: |
+          set -euo pipefail
+          echo "## Latency budget — server_compute layer" >> "$GITHUB_STEP_SUMMARY"
+          echo "" >> "$GITHUB_STEP_SUMMARY"
+          if [ -f artifacts/latency-budget/run.log ]; then
+            grep -E "^\[latency\]" artifacts/latency-budget/run.log >> "$GITHUB_STEP_SUMMARY" || true
+          fi
+          echo "" >> "$GITHUB_STEP_SUMMARY"
+          echo "Phase status: **Phase-4 ENTRY** — server_compute only. client_render / network_TTFB / db_io land in Phase-4 EXIT." >> "$GITHUB_STEP_SUMMARY"

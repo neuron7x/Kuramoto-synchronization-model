@@ -1,0 +1,91 @@
+# Copyright (c) 2023-2026 Yaroslav Vasylenko (neuron7xLab)
+# SPDX-License-Identifier: MIT
+#
+# PRE-REGISTRATION AMENDMENT 001 — CALIB-GRID-001 (append-only).
+#
+# Status: append-only epistemic-integrity amendment. This file is a
+# SEPARATE SUPERSEDING LAYER. It does NOT edit the frozen
+# PREREGISTRATION.md / PREREGISTRATION_002.yaml, gates.py, or any
+# sha-pinned RESULTS ledger. It does NOT change any threshold VALUE.
+# It supersedes, FORWARD ONLY (lineage #6+), the CLASSIFICATION of the
+# two frozen `noisy.*` gates: from pass/fail acceptance gates to
+# `infeasible_by_construction` 0-bit DIAGNOSTICS.
+#
+# The merged CALIB-GRID-001 / R1 / CALIB-GRID-002 RESULTS.json stay
+# BYTE-FROZEN with their historical NEGATIVE + FAIL. There is NO
+# retroactive recompute and NO rewrite. A no-peek drift test
+# (test_amendment_001_matches_code) binds these constants to the
+# amended-verdict substrate. The amendment path is frozen-after-commit
+# (commit-acceptor forbidden_paths).
+
+identifier: PREREGISTRATION-AMENDMENT-001
+kind: classification-amendment
+is_hypothesis: false
+is_science_claim: false
+
+amends:
+  document: research/calibration/grid_kuramoto/PREREGISTRATION.md
+  section: "§ 4 — Pre-registered acceptance gates (Noisy regime)"
+  # The frozen pre-registration sha this amendment supersedes the
+  # CLASSIFICATION (not the values) of. Verified commit ancestor.
+  # audited: frozen parent pre-registration git sha, not a credential
+  frozen_preregistration_sha: d170d48afa5066c13edeb40b2c1904b3fd708516  # pragma: allowlist secret
+  # The amendment is itself committed on this branch base (sha-binding
+  # is the commit that lands this file; see PROVENANCE / commit acceptor).
+  amendment_branch_base_sha: e6370fe3
+
+# --- Evidence anchor (the immutable justification) -----------------------
+# The CG002 sha-pinned NEGATIVE proves the reclassification. This is the
+# CITED, not re-derived, proof: regressor SNR < 0.6 on EVERY edge
+# (0.085 on edge (0,2)) at the frozen sigma=0.02, class-independent.
+evidence:
+  superseding_lineage: CALIB-GRID-002
+  # audited: CALIB-GRID-002 merge git sha, not a credential
+  superseding_sha: e71d1915233283452f3fb219aafabd2f19035371  # pragma: allowlist secret
+  # audited: CALIB-GRID-002 ledger content hash, not a credential
+  cg002_ledger_sha256: d0f89e24341b099598e2e5cc9809772ee2c47627f77bf3354f957fab860819b1  # pragma: allowlist secret
+  proof: >-
+    CALIB-GRID-002 cg002/RESULTS.md measures the clean
+    sin(theta_i-theta_j) coupling regressor (std 0.00244-0.01611) versus
+    the sigma=0.02-induced perturbation in the SAME regressor (std
+    ~0.0287) on the frozen WSCC-9 over-damped transient: regressor SNR
+    < 0.6 on every edge, 0.085 on edge (0,2), BEFORE any estimator
+    touches the data. The coupling signal is information-theoretically
+    below the measurement noise at the frozen theta0/record-length. No
+    estimator (differential, integral, or otherwise) can recover what
+    the sigma=0.02 noise has already destroyed: P(FAIL)=1 for all
+    estimators, so the gate carries H=0 bits about estimator quality.
+  cross_reference: SUPERSESSIONS.yaml::SUPERSEDE-001
+
+# --- The reclassification (classification only; values unchanged) --------
+reclassification:
+  rationale: >-
+    The two frozen `noisy.*` gates were pre-registered as if they tested
+    the estimator. CALIB-GRID-002 proved they sit at an information-
+    theoretically unreachable operating point: FAIL with probability 1
+    for every estimator class, so they carry zero bits about estimator
+    quality. Scored as pass/fail acceptance gates they make every future
+    lineage's NEGATIVE saturate to zero information. Reclassified to
+    `infeasible_by_construction` 0-bit DIAGNOSTICS: still RUN and still
+    REPORTED (the metric is informative as a regressor-floor witness),
+    but EXCLUDED from the overall lineage pass/fail verdict, which is
+    computed over the remaining genuine pass/fail gates only.
+  # The threshold VALUES are NOT touched. These names mirror gates.py
+  # NOISY_GATES verbatim; the amendment changes only their CLASS.
+  amended_verdict_state: INFEASIBLE_BY_CONSTRUCTION
+  amended_gate_names:
+    - noisy.frobenius
+    - noisy.topology_f1
+
+# --- Forward-only scope (the only behavioural change) --------------------
+forward_only:
+  applies_to: "lineage #6+ runs that explicitly opt into the amendment"
+  does_not_apply_to: >-
+    the merged CALIB-GRID-001 / R1 / CALIB-GRID-002 sha-pinned
+    RESULTS.json — they are byte-frozen with their historical NEGATIVE +
+    FAIL and are NOT recomputed under this amendment.
+  default_path_unchanged: >-
+    build_ledger / build_r1_ledger / build_cg002_ledger emit the exact
+    historical bytes when run WITHOUT the amendment flag; the existing
+    *_results_json_matches_committed_artifact reproduction tests pass
+    unmodified.

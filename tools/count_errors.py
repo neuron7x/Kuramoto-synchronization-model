@@ -1,3 +1,5 @@
+# Copyright (c) 2023-2026 Yaroslav Vasylenko (neuron7xLab)
+# SPDX-License-Identifier: MIT
 """Utilities for summarising error occurrences across a repository.
 
 The module provides a small CLI that walks a repository, counts the number of

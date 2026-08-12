@@ -1,0 +1,1784 @@
+# GeoSync Physics Invariants Registry
+# ====================================
+# This file defines HARD physics constraints that code MUST satisfy.
+# Claude Code: read this before writing or modifying ANY test.
+# Format: each invariant has type, condition, falsification criteria.
+
+# ═══════════════════════════════════════════════════
+# YAROSLAV'S GRADIENT ONTOLOGY — ROOT AXIOM (Layer 0)
+# ═══════════════════════════════════════════════════
+# CLAUDE.md §0: a system is a sustained potential difference; a static
+# gradient is a capacitor, a living gradient is a process. Intelligence
+# requires the second. Maintenance hierarchy Layers 0–3 = 40 percent;
+# Layer 4 (processing) computes noise if any of 0–3 fails. Registered
+# here so that `related:` cross-references from INV-CRITICALITY and
+# INV-BEKENSTEIN-COGNITIVE resolve under validator check 8.
+
+gradient_ontology:
+  living_gradient:
+    id: INV-YV1
+    type: universal
+    statement: "ΔV > 0 ∧ dΔV/dt ≠ 0 — gradient must be positive AND dynamic. A static gradient is a capacitor; a living gradient is a process. Intelligence requires the second."
+    test_type: property_test
+    falsification: "Any operating window in which ΔV ≤ 0 OR dΔV/dt ≡ 0 over a non-empty interval while the system claims live cognitive computation."
+    priority: P0
+    provenance: ANCHORED
+    source: core/neuro/gradient_vital_signs.py
+    tests: tests/integration/test_neurostack_integration.py
+    references:
+      - "Hodgkin, A. L. & Huxley, A. F. (1952). A quantitative description of membrane current and its application to conduction and excitation in nerve. J. Physiol. 117, 500."
+      - "Schrödinger, E. (1944). What Is Life? — negentropy as the substrate of organized matter."
+      - "Prigogine, I. (1977). Self-Organization in Nonequilibrium Systems. Wiley."
+    related: [INV-CRITICALITY, INV-BEKENSTEIN-COGNITIVE]
+
+# ═══════════════════════════════════════════════════
+# KURAMOTO SYNCHRONIZATION
+# ═══════════════════════════════════════════════════
+
+kuramoto:
+  order_parameter_bounds:
+    id: INV-K1
+    type: universal  # holds always, no exceptions
+    statement: "0 ≤ R(t) ≤ 1 for all t"
+    test_type: property_test  # hypothesis/fuzzing
+    falsification: "R outside [0,1] for ANY input"
+    priority: P0  # block release
+
+  subcritical_decay:
+    id: INV-K2
+    type: asymptotic  # holds in limit t→∞
+    statement: "K < K_c ⟹ R(t→∞) → 0"
+    test_type: convergence_test
+    parameters:
+      K_c_formula: "2 / (π · g(0))"
+      finite_size_correction: "R_incoherent ~ O(1/√N)"
+      epsilon: "C / √N where C ∈ [2, 3]"
+    falsification: "R stays above 3/√N after 10⁴ steps with K = 0.1·K_c and N > 100"
+    common_mistake: "Testing R < 0.01 for N=10. Fluctuations are O(0.32). Use ε = 3/√N."
+    priority: P0
+
+  supercritical_order:
+    id: INV-K3
+    type: asymptotic
+    statement: "K > K_c ⟹ R(t→∞) = R_∞ > 0"
+    test_type: convergence_test
+    parameters:
+      near_transition: "R_∞ ∝ √(K - K_c)"
+    falsification: "R → 0 with K = 2·K_c after sufficient time"
+    priority: P0
+
+  monotonicity_in_K:
+    id: INV-K4
+    type: conditional  # holds for standard model ONLY
+    statement: "R_∞(K₁) ≤ R_∞(K₂) if K₁ < K₂"
+    condition: "Standard Kuramoto (no frequency-degree correlation)"
+    does_NOT_hold: "Higher-order Kuramoto, explosive sync"
+    test_type: sweep_test
+    priority: P1
+
+  finite_size_scaling:
+    id: INV-K5
+    type: statistical  # holds in expectation over ensemble
+    statement: "⟨R⟩ ≈ O(1/√N) in incoherent regime"
+    test_type: ensemble_test
+    parameters:
+      n_realizations: "≥ 50 for statistical power"
+      confidence: "95%"
+    priority: P1
+
+  phase_uniformity:
+    id: INV-K6
+    type: distributional
+    statement: "K < K_c ⟹ phases uniform on [-π, π]"
+    test_type: statistical_test
+    parameters:
+      test_method: "Rayleigh test for circular uniformity"
+    priority: P2
+
+  lyapunov_energy:
+    id: INV-K7
+    type: monotonic  # Lyapunov function
+    statement: "V = -(K·N/2)·R² is non-increasing (zero-frequency case)"
+    test_type: trajectory_test
+    condition: "All ω_i = 0 (identical frequencies)"
+    priority: P1
+
+  swing_energy_balance:
+    id: INV-K8
+    type: conservation  # second-order (swing-equation) energy
+    statement: "Second-order (swing-equation) total energy E = ½·Σ mᵢ·θ̇ᵢ² + V(θ), with V(θ) = -½·Σ_ij A_ij·cos(θⱼ − θᵢ), obeys dE/dt = Σ ωᵢ·θ̇ᵢ − Σ dᵢ·θ̇ᵢ². With ωᵢ ≡ 0: E is conserved when dᵢ ≡ 0 and non-increasing when dᵢ ≥ 0. For the all-to-all coupling A_ij = K/N, V = -(K·N/2)·R² + const — the INV-K7 potential, so E is observable black-box from velocities and R alone."
+    test_type: conservation  # before/after + trajectory
+    condition: "ω_i ≡ 0. Undamped (conservation) clause requires d_i ≡ 0; damped (dissipation) clause requires d_i > 0. A transient must be forced via an unlocked θ0 and non-zero velocity0 — the conservation law is sharpest exactly at this degenerate slice (ω=0, d=0) that the suite never instantiated for energy."
+    falsification: "Replacing Störmer–Verlet with non-symplectic Euler injects secular energy growth (observed bounded-drift range/E_scale ≈ 0.39 vs Verlet ≈ 3e-5, a 4-order gap); flipping the damping sign (−d·θ̇ → +d·θ̇) converts dissipation into energy injection (E diverges by ~10⁶ over the same horizon). Both regressions survive every prior second-order assertion (R∈[0,1], finiteness, shapes) — the docstring claim 'symplectic, energy-conserving' had zero falsifiable backing before INV-K8. Same blind-manifold class as the Ott–Antonsen z̄ ω₀=0 conjugate defect (PR #745)."
+    priority: P1
+    source: core/kuramoto/second_order.py
+    tests: tests/unit/physics/test_T18_kuramoto_p1.py
+
+  swing_energy_convergence_order:
+    id: INV-K9
+    type: conservation  # backward-error / shadow-Hamiltonian convergence order
+    statement: "The Störmer–Verlet integrator of the second-order swing equation conserves a modified (shadow) Hamiltonian H̃ = H + O(dt²), so the true-energy error is BOUNDED (no secular trend) and scales as max|ΔE| ∝ dt^p with convergence order p = 2. The falsifiable signature is the least-squares log-log slope of max|ΔE| vs dt over a geometric ladder: symplectic ⟹ slope ≈ 2; any non-symplectic or order-degraded step ⟹ slope ≤ 1 and/or secular growth."
+    test_type: conservation  # dt-ladder sweep + bounded-drift comparison
+    condition: "ω_i ≡ 0, d_i ≡ 0 (autonomous conservative regime); unlocked θ0 + non-zero velocity0; dt swept over a geometric ×2 ladder at fixed physical horizon; order recovered as the log-log slope of bounded energy drift."
+    falsification: "Replacing Störmer–Verlet with explicit Euler collapses the recovered order from ≈2.01 to ≈0.81 and turns bounded drift into secular growth (|ΔE| larger by ~4 orders at equal dt). A fixed-dt amplitude test (INV-K8) can miss a subtle order degradation that still has small drift at the tested dt; INV-K9 measures the order directly and is strictly stronger. Theory: Hairer–Lubich–Wanner, Geometric Numerical Integration; Benettin–Giorgilli long-time energy bounds."
+    priority: P1
+    source: core/kuramoto/second_order.py
+    tests: tests/unit/physics/test_T18_kuramoto_p1.py
+
+  swing_integrator_symplecticity:
+    id: INV-K10
+    type: conservation  # symplectic 2-form preservation (root of K7/K8/K9)
+    statement: "The velocity-Verlet integrator of the undamped (ω=0, d=0) second-order swing equation is symplectic: the Jacobian M of one step preserves the standard symplectic form, MᵀJM = J with J = [[0, I], [−I, 0]], to machine precision; equivalently det(M) = 1 (Liouville phase-space-volume preservation). This is the ROOT property — energy conservation (INV-K8) and bounded O(dt²) error without secular drift (INV-K9) follow as theorems (Hairer–Lubich–Wanner). With damping d > 0 the map contracts phase-space volume at the dissipation rate, det(M) = exp(−(Σ dᵢ/mᵢ)·dt) + O(dt²)."
+    test_type: conservation  # complex-step Jacobian + symplectic-form residual
+    condition: "ω_i ≡ 0, d_i ≡ 0; Jacobian built by complex-step differentiation of one production integration step (machine-precision, no truncation), after binding the complex-safe replica to SecondOrderKuramotoEngine bit-exactly."
+    falsification: "A non-symplectic step (explicit Euler) gives an O(dt²) ≈ 1e-4 symplectic-form residual |MᵀJM − J| and det(M) ≠ 1, versus the velocity-Verlet machine-ε ≈ 2e-16 — a 12-order separation. Verified residual 2.22e-16, det(M) = 1.000000000000000; undamped OA-analogue linear-stability and damped Liouville contraction (det = exp(−(Σd/m)dt) to O(dt²)) cross-checked. Symplecticity is strictly more fundamental than the energy-drift signatures it implies."
+    priority: P1
+    source: core/kuramoto/second_order.py
+    tests: tests/unit/physics/test_T18_kuramoto_p1.py
+
+  sakaguchi_frustration_sign:
+    id: INV-SAK1
+    type: qualitative
+    statement: "The Sakaguchi phase-lag enters the coupling as sin(θ_j(t−τ_ij) − θ_i(t) − α_ij) (minus α). For N identical all-to-all oscillators (ω_i ≡ ω₀, K_ij = κ for i≠j, τ = 0, σ = 0) the phase-locked state rotates at the collective frequency Ω = ω₀ − (N−1)·κ·sin(α)."
+    test_type: sweep_test
+    condition: "Identical oscillators, uniform frustration α, zero delay and noise; Ω measured from the least-squares slope of the unwrapped mean phase. α = 0 is the blind manifold (both sign conventions agree) — falsification requires α ≠ 0."
+    falsification: "Observed collective frequency matches the sign-flipped law ω₀ + (N−1)·κ·sin(α) instead of the canonical minus-α form, i.e. |Ω − (ω₀ − (N−1)·κ·sin(α))| above integrator tolerance for any α ≠ 0. Registered because the absence of any frustration-sign invariant is precisely why no test mandated α ≠ 0 coverage — the blind manifold that hid the analogous Ott–Antonsen conjugate defect (PR #745)."
+    priority: P0
+    source: core/kuramoto/synthetic.py
+    tests: tests/unit/physics/test_sakaguchi_frustration_alpha.py
+
+# ═══════════════════════════════════════════════════
+# EXPLOSIVE SYNCHRONIZATION
+# ═══════════════════════════════════════════════════
+
+explosive_sync:
+  hysteresis_non_negative:
+    id: INV-ES1
+    type: universal
+    statement: "K_c^↑ - K_c^↓ ≥ 0 (forward threshold ≥ backward)"
+    test_type: property_test
+    falsification: "Negative hysteresis width"
+    priority: P0
+
+  discontinuous_transition:
+    id: INV-ES2
+    type: qualitative
+    statement: "With frequency-degree correlation, transition is discontinuous"
+    test_type: sweep_test
+    falsification: "R grows continuously through transition with ES-prone topology"
+    priority: P1
+
+# ═══════════════════════════════════════════════════
+# STUART-LANDAU ES (T2b — amplitude-preserving extension of T2)
+# ═══════════════════════════════════════════════════
+
+stuart_landau_es:
+  amplitude_non_negative:
+    id: INV-SL1
+    type: universal
+    statement: "Stuart-Landau amplitude A_i = |z_i| ≥ 0 always"
+    test_type: property_test
+    falsification: "Any A_i < 0 in fitted Stuart-Landau ensemble"
+    priority: P0
+    source: core/physics/stuart_landau_es.py
+    tests: tests/unit/physics/test_T2b_stuart_landau_es.py
+    references:
+      - "Lee, U. et al. (2025). PNAS 122(44). DOI: 10.1073/pnas.2505434122"
+      - "Stuart, J. T. (1960); Landau, L. D. (1944)."
+
+  es_proximity_bounded:
+    id: INV-SL2
+    type: universal
+    statement: "es_proximity ∈ [0, 1] always"
+    test_type: property_test
+    falsification: "es_proximity outside [0, 1] for any input"
+    priority: P0
+    source: core/physics/stuart_landau_es.py
+    tests: tests/unit/physics/test_T2b_stuart_landau_es.py
+
+  es_proximity_leads_r_peak:
+    id: INV-T2b
+    type: qualitative
+    statement: "REJECTED_DO_NOT_PROMOTE empirical hypothesis (NOT an active physics invariant): rolling ES proximity peak was hypothesized to precede R(t) peak by τ ≥ 1 bar in crisis episodes. The pre-registered 2026-04-10 OOS test REFUTED it (p_value 0.765 > 0.05); it is retained only for provenance and remains falsified unless a new pre-registration overturns it."
+    test_type: sweep_test
+    falsification: "REFUTED on the pre-registered 2026-04-10 OOS window: the criterion leads_rate < 0.6 OR p_value > 0.05 FIRED (p_value = 0.765 > 0.05). Claim is REJECTED_DO_NOT_PROMOTE; re-promotion requires a new pre-registration and independent OOS evidence."
+    priority: P1
+    source: core/physics/stuart_landau_es.py
+    tests: tests/unit/physics/test_T2b_stuart_landau_es.py
+    references:
+      - "Lee, U. et al. (2025). PNAS 122(44)."
+
+# ═══════════════════════════════════════════════════
+# SEROTONIN ODE
+# ═══════════════════════════════════════════════════
+
+serotonin:
+  lyapunov_stability:
+    id: INV-5HT1
+    type: monotonic
+    statement: "Lyapunov function V(s) is non-increasing along trajectories"
+    test_type: trajectory_test
+    falsification: "V(t+dt) > V(t) + numerical_tolerance"
+    priority: P0
+
+  bounded_output:
+    id: INV-5HT2
+    type: universal
+    statement: "Serotonin level s(t) ∈ [0, s_max] for all t"
+    test_type: property_test
+    priority: P0
+
+  patience_response:
+    id: INV-5HT3
+    type: qualitative
+    statement: "Increasing stress → increasing serotonin (aversive wait signal)"
+    test_type: monotonicity_test
+    priority: P1
+
+  desensitization_bounds:
+    id: INV-5HT4
+    type: universal
+    statement: "sensitivity ∈ [0.1, 1.0] always"
+    test_type: property_test
+    falsification: "sensitivity outside [0.1, 1.0] after any step sequence"
+    priority: P0
+
+  temperature_floor_bounds:
+    id: INV-5HT5
+    type: universal
+    statement: "temperature_floor ∈ [floor_min, floor_max] always"
+    test_type: property_test
+    priority: P1
+
+  tonic_stability:
+    id: INV-5HT6
+    type: universal
+    statement: "tonic_level remains finite and non-negative under bounded inputs"
+    test_type: property_test
+    falsification: "tonic_level → ∞ or NaN under finite inputs"
+    priority: P0
+
+  hard_veto:
+    id: INV-5HT7
+    type: conditional
+    statement: "stress ≥ 1.0 OR |drawdown| ≥ 0.5 → veto = True"
+    test_type: property_test
+    falsification: "veto = False when stress ≥ 1.0 or |drawdown| ≥ 0.5"
+    priority: P0
+
+# ═══════════════════════════════════════════════════
+# DOPAMINE TD-ERROR
+# ═══════════════════════════════════════════════════
+
+dopamine:
+  td_error_sign:
+    id: INV-DA1
+    type: conditional
+    statement: "δ = r + γ·V(s') - V(s). Sign of δ reflects surprise direction."
+    test_type: property_test
+    parameters:
+      better_than_expected: "δ > 0"
+      worse_than_expected: "δ < 0"
+      as_expected: "δ ≈ 0"
+    priority: P0
+
+  convergence:
+    id: INV-DA2
+    type: asymptotic
+    statement: "Under standard conditions, V → V* (optimal value function)"
+    test_type: convergence_test
+    priority: P1
+
+  discount_bounds:
+    id: INV-DA3
+    type: universal
+    statement: "γ ∈ (0, 1]. γ ≤ 0 or γ > 1 must raise ValueError."
+    test_type: property_test
+    falsification: "γ outside (0,1] accepted without error"
+    scope_note: "Enforced in geosync.core.neuro.dopamine.dopamine_controller.DopamineController.compute_rpe (line 766). NOT enforced in rl/core/reward_prediction_error.py which accepts any float gamma. Witnesses must target DopamineController."
+    priority: P0
+
+  value_convergence:
+    id: INV-DA4
+    type: asymptotic
+    statement: "V stabilizes within bounds after many updates with fixed reward"
+    test_type: convergence_test
+    priority: P1
+
+  rpe_zero_at_equilibrium:
+    id: INV-DA5
+    type: statistical
+    statement: "When V ≈ V*, E[δ] ≈ 0"
+    test_type: ensemble_test
+    priority: P1
+
+  learning_rate_tradeoff:
+    id: INV-DA6
+    type: qualitative
+    statement: "Larger α → faster adaptation but more variance"
+    test_type: sweep_test
+    priority: P2
+
+  rpe_linear_in_reward:
+    id: INV-DA7
+    type: algebraic
+    statement: "∂δ/∂r = 1 (RPE linear in reward, exact) on the raw TD formula δ = r + γV' − V"
+    test_type: property_test
+    falsification: "δ(r₂) - δ(r₁) ≠ r₂ - r₁ for fixed V, V', γ"
+    scope_note: "Holds for DopamineController.compute_rpe (raw TD, no normalisation). Does NOT hold for DopamineExecutionAdapter.compute_rpe which applies tanh(scale * raw_rpe) — that path has ∂δ/∂r = sech²(·) ≠ 1. Witnesses must target the controller, not the adapter."
+    priority: P0
+
+  adapter_bounded_signal:
+    id: INV-DA8
+    type: universal
+    statement: "The DopamineExecutionAdapter emits a saturating bounded signal: |δ| = |tanh(scale · raw_rpe)| ≤ 1 and δ is finite for every finite input (closed bound; tanh saturates to ±1 in float64 at extreme argument)."
+    test_type: property_test
+    falsification: "DopamineExecutionAdapter.compute_rpe returns |δ| > 1, or a non-finite δ, for some finite (realized_pnl, predicted_return, slippage) input."
+    scope_note: "Distinct from and complementary to INV-DA7: INV-DA7 governs the RAW controller (∂δ/∂r = 1, unbounded linear TD); INV-DA8 governs the ADAPTER output bound that the tanh squashing provides. The adapter is deliberately NOT linear-in-reward — that non-linearity is precisely why it needs its own bound invariant rather than inheriting INV-DA7."
+    priority: P0
+    provenance: ANCHORED
+    source: core/neuro/dopamine_execution_adapter.py
+    tests: tests/unit/physics/test_dopamine_execution_adapter_bounds.py
+
+# ═══════════════════════════════════════════════════
+# GABA INHIBITION GATE
+# ═══════════════════════════════════════════════════
+
+gaba:
+  gate_bounds:
+    id: INV-GABA1
+    type: universal
+    statement: "Inhibition gate output ∈ [0, 1]"
+    test_type: property_test
+    priority: P0
+
+  high_volatility_inhibits:
+    id: INV-GABA2
+    type: qualitative
+    statement: "Higher VIX/volatility → stronger inhibition (closer to 1)"
+    test_type: monotonicity_test
+    priority: P0
+
+  position_reduction:
+    id: INV-GABA3
+    type: universal
+    statement: "effective_position ≤ raw_position (inhibition only reduces)"
+    test_type: property_test
+    falsification: "effective_position > raw_position for any volatility"
+    priority: P0
+
+  zero_vol_limit:
+    id: INV-GABA4
+    type: asymptotic
+    statement: "vol → 0 implies inhibition → σ(-k·θ) ≈ 0 for typical θ > 0"
+    test_type: convergence_test
+    priority: P1
+
+  extreme_vol_limit:
+    id: INV-GABA5
+    type: asymptotic
+    statement: "vol → ∞ implies inhibition → 1"
+    test_type: convergence_test
+    priority: P1
+
+# ═══════════════════════════════════════════════════
+# FREE ENERGY / ECS
+# ═══════════════════════════════════════════════════
+
+free_energy:
+  lyapunov_monotonicity:
+    id: INV-FE1
+    type: monotonic
+    statement: "Free energy F(t) is non-increasing under active inference update"
+    test_type: trajectory_test
+    falsification: "F(t+1) > F(t) + ε where ε accounts for numerical precision"
+    priority: P0
+
+  components_non_negative:
+    id: INV-FE2
+    type: universal
+    statement: "Each free-energy component is non-negative: U ≥ 0, T ≥ 0, S ≥ 0 (Tsallis q>1). F = U − T·S itself can be either sign."
+    test_type: property_test
+    parameters:
+      rationale: "The original statement 'F ≥ 0' is physically incorrect — Helmholtz free energy is unbounded below (high-entropy systems at high temperature routinely have F < 0). What must hold is the non-negativity of the individual building blocks: the risk-exposure U = Σ|pos|·|ret|, the order-book temperature T_LOB, and the Tsallis entropy S_q for q > 1. A negative value in any of these indicates a bug in the corresponding subroutine, not a physics fluctuation."
+    falsification: "core.physics.free_energy_trading_gate.FreeEnergyTradingGate.check returns U_before or U_after < 0, or T_LOB < 0, or S_q_before or S_q_after < 0 on any valid input"
+    priority: P0
+
+  ecs_conditional_descent:
+    id: INV-FE3
+    type: conditional
+    statement: "ECSLyapunovRegulator.step enforces CONDITIONAL Lyapunov descent: whenever V_before > V_floor (=1e-12) the corrected RK4 update satisfies V_after ≤ V_before (dV/dt ≤ 0). At the floor V ≤ V_floor the guarantee is suspended by physics — V = 0.5·FE² + λ·CF² + μ·SI² ≥ 0 cannot descend below zero, so a stress injection from the origin necessarily raises V."
+    test_type: trajectory_test
+    falsification: "For any step taken from a state with V_before > 1e-12, V_after > V_before — i.e. the post-hoc binary-search correction (core/neuro/ecs_lyapunov.py) failed to enforce descent or the α=0 no-move fallback."
+    scope_note: "Sharper, honest sibling of INV-FE1: it states the explicit non-negativity-floor exclusion that makes the descent guarantee truthful (a universal 'dV/dt ≤ 0' claim is falsified at the origin where the only admissible move is up). The correction guarantees at worst α=0 (no move, dV=0) whenever V_before > 1e-12. Numerically verified: 9000 corrected steps, worst dV_dt = 0.0."
+    priority: P0
+
+# ═══════════════════════════════════════════════════
+# THERMODYNAMIC CONSTRAINTS
+# ═══════════════════════════════════════════════════
+
+thermodynamics:
+  energy_conservation:
+    id: INV-TH1
+    type: conservation
+    statement: "Total system energy change = work done + heat dissipated"
+    test_type: balance_test
+    priority: P1
+
+  second_law:
+    id: INV-TH2
+    type: universal
+    statement: "Entropy production ≥ 0 in irreversible processes"
+    test_type: property_test
+    priority: P1
+
+  landauer_erasure_floor:
+    id: INV-TH3
+    type: algebraic
+    statement: "Per-bit information erasure costs exactly the Landauer floor E_bit = k_B·T·ln 2, and the N-bit minimum E_min(N) = N·E_bit is a hard lower bound (N-bit cost ≥ N·k_B·T·ln 2, equality at the quasi-static limit)."
+    test_type: property_test
+    falsification: "core.physics.landauer.LandauerInferenceProfiler.landauer_per_bit ≠ k_B·T·ln 2 to float precision, or minimum_energy(N) < N·k_B·T·ln 2 for some integer N ≥ 0."
+    scope_note: "Quasi-static erasure against a thermalised reservoir at temperature proxy T (Landauer 1961). This is the per-bit identity plus the additive N-bit floor; it is distinct from INV-TAU2, which reuses the same k_B·T·ln 2 constant as a predictability-horizon energy budget E_min = k_B·T·ln(Δ/δ₀) rather than as a bit-erasure cost."
+    priority: P0
+
+# ═══════════════════════════════════════════════════
+# STOCHASTIC THERMODYNAMICS (Law T8 — exact fluctuation theorems)
+# Overdamped Langevin in a harmonic well V = ½ k x²; Euler-Maruyama,
+# Sekimoto work convention dW = ½ x² dk. Pure statistical mechanics —
+# NOT a market model, no financial claim. The free energy is the
+# Gaussian partition-function result F(k) = −(1/2β)·ln(2π/(βk)), so a
+# stiffness ramp k_i→k_f has ΔF = −(1/2β)·ln(k_i/k_f).
+# ═══════════════════════════════════════════════════
+
+stochastic_thermodynamics:
+  equipartition_boltzmann:
+    id: INV-ST1
+    type: statistical
+    statement: "Stationary samples of the overdamped Langevin in V = ½ k x² satisfy equipartition: Var(x) = kT/k (Boltzmann / detailed-balance steady state)."
+    test_type: statistical_test
+    parameters:
+      tolerance: "0.10 (relative; measured ≈0.017 at ensemble=40000, relax_steps=2000)"
+      relation: "Var(x) = kT/k = (1/βk); zero-mean Gaussian p(x) ∝ exp(−βV)"
+      ensemble: "40000 trajectories, dt=0.005, gamma=1.0, seeds {1,7,42}"
+    falsification: "|Var(x) − kT/k| / (kT/k) > 0.10 for any tested stiffness after relaxation to the stationary distribution."
+    priority: P0
+    provenance: ANCHORED
+    source: core/physics/stochastic_thermodynamics.py
+    tests: tests/unit/physics/test_T8_stochastic_thermodynamics.py
+    references:
+      - "Sekimoto, K. (1998). Langevin equation and thermodynamics. Prog. Theor. Phys. Suppl. 130, 17."
+    related: [INV-ST2, INV-ST3]
+
+  jarzynski_equality:
+    id: INV-ST2
+    type: statistical
+    statement: "Jarzynski equality holds exactly in expectation over the non-equilibrium work distribution: ⟨e^(−βW)⟩ = e^(−βΔF), with e^(−βΔF) = sqrt(k_i/k_f) for the harmonic stiffness ramp."
+    test_type: ensemble_test
+    parameters:
+      tolerance: "0.05 (relative to target e^(−βΔF); measured ≤0.004 at ensemble=40000)"
+      target: "e^(−βΔF) = sqrt(k_i/k_f) = 0.5000 for k_i=1, k_f=4, kT=1"
+      mean_estimator: "np.mean(np.exp(−βW)) over ensemble work array; ΔF = −(1/2β)·ln(k_i/k_f)"
+      ensemble: "40000 trajectories, tau=1.0, dt=0.005, gamma=1.0, seeds {1,7,42,123}"
+    falsification: "|⟨e^(−βW)⟩ − e^(−βΔF)| / e^(−βΔF) > 0.05 for the reference ramp on any tested seed."
+    priority: P0
+    provenance: ANCHORED
+    source: core/physics/stochastic_thermodynamics.py
+    tests: tests/unit/physics/test_T8_stochastic_thermodynamics.py
+    references:
+      - "Jarzynski, C. (1997). Nonequilibrium equality for free energy differences. Phys. Rev. Lett. 78, 2690."
+      - "Crooks, G. E. (1999). Entropy production fluctuation theorem and the nonequilibrium work relation for free energy differences. Phys. Rev. E 60, 2721."
+    related: [INV-ST1, INV-ST3]
+
+  second_law_dissipation:
+    id: INV-ST3
+    type: statistical
+    statement: "Second law (Jensen on Jarzynski): mean work ⟨W⟩ ≥ ΔF, and dissipated work is monotonic in protocol speed — ⟨W⟩ at tau=2.0 < ⟨W⟩ at tau=0.5 (slower ramp dissipates less)."
+    test_type: statistical_test
+    parameters:
+      relation: "⟨W⟩ ≥ ΔF (= 0.693 for the reference ramp); ⟨W⟩_slow < ⟨W⟩_fast"
+      measured: "⟨W⟩ ≈ 0.93 at tau=1.0; ⟨W⟩(tau=2.0) ≈ 0.84 < ⟨W⟩(tau=0.5) ≈ 1.08"
+      ensemble: "40000 trajectories, dt=0.005, gamma=1.0, seed=42"
+    falsification: "⟨W⟩ < ΔF on the reference ramp, OR ⟨W⟩(tau=2.0) ≥ ⟨W⟩(tau=0.5) (dissipation not monotonic in protocol speed)."
+    priority: P1
+    provenance: ANCHORED
+    source: core/physics/stochastic_thermodynamics.py
+    tests: tests/unit/physics/test_T8_stochastic_thermodynamics.py
+    references:
+      - "Jarzynski, C. (1997). Phys. Rev. Lett. 78, 2690 (⟨W⟩ ≥ ΔF by Jensen)."
+    related: [INV-ST1, INV-ST2]
+
+# ═══════════════════════════════════════════════════
+# GABOR TIME-FREQUENCY UNCERTAINTY LIMIT
+# Scope: core/physics/uncertainty.py, core/indicators/physics.py
+# ═══════════════════════════════════════════════════
+# Replaces the prior fabricated "Heisenberg ΔxΔp ≥ ℏ/2" framing (2026-06-17).
+# That code dressed the classical product std(price)·std(diff(price)) as the
+# quantum uncertainty relation using a fabricated ℏ=1.0 (constants.PLANCK_REDUCED),
+# so the "bound" ℏ/2 was just the number 0.5 — a category error: price and its
+# first difference are JOINTLY OBSERVABLE, with no commutator [x̂,p̂]=iℏ and no
+# Fourier-conjugate pairing. The Gabor limit is the correct, anchored uncertainty
+# theorem for a sampled time series: time and frequency ARE a Fourier-conjugate
+# pair, and 1/(4π) is an exact mathematical constant requiring no Planck constant.
+
+gabor_uncertainty:
+  time_frequency_limit:
+    id: INV-GABOR1
+    type: algebraic
+    statement: "Δt · Δf ≥ 1/(4π) for a WELL-RESOLVED finite-energy sampled signal (time-localized inside the window, band-limited away from Nyquist), with equality (saturation) for a Gaussian envelope. Δt = √(second moment of normalized time-domain power |x|² about its centroid, in sample units); Δf = √(second moment of normalized power spectrum |FFT(x)|² about its centroid, in cycles/sample, on the np.fft.fftfreq axis). 1/(4π) ≈ 0.0795774715 is an EXACT mathematical constant — no Planck constant, no fabricated ℏ/2. SCOPE NOTE: 1/(4π) is the CONTINUOUS Gabor bound; the naive discrete second-moment estimator can dip below it for under-resolved / near-Nyquist short signals because the fftfreq axis wraps at ±0.5 and underestimates true spectral spread. The implementation therefore FAIL-CLOSES on such windows (raises rather than returning a sub-bound product), so the invariant is asserted in — and the function only ever returns within — the well-resolved regime where the discrete estimator faithfully realizes the continuous theorem; it is NOT defined over arbitrary short noise."
+    test_type: property_test
+    parameters:
+      bound: "1/(4π) = 0.07957747154594767 (exact, defined as core.physics.uncertainty.GABOR_LIMIT)"
+      saturation: "Gaussian window x(n)=exp(-(n-c)²/(2σ²)), analyzed AS GIVEN (no mean removal — demeaning squares the negative lobes into side energy and breaks saturation), hits Δt·Δf → 1/(4π); scale-invariant in σ (Δt∝σ, Δf∝1/σ). Measured ≈0.0796 within atol 2e-3 at n=4096, σ∈{120,200,250,400}."
+      well_resolved_sweep: "200 Gaussian-windowed band-limited signals (seed 42, n∈[256,1024]) + 50 noisy sinusoids inside a Gaussian window (seed 7) + lowpass-smoothed noise all satisfy Δt·Δf ≥ 1/(4π)·(1−1e-9). Measured min ≈0.18."
+      fail_closed: "empty / <2 samples / non-1-D / non-finite / constant (zero variance) input → ValueError; AND any under-resolved / near-Nyquist window whose discrete product would land below 1/(4π)·(1−1e-2) → ValueError (no sub-bound product is ever returned). No silent numeric repair."
+    falsification: "time_frequency_spread returns Δt·Δf < 1/(4π) for any WELL-RESOLVED signal, OR a Gaussian envelope fails to saturate to 1/(4π) within tolerance, OR a degenerate / under-resolved / constant input fails to raise ValueError."
+    priority: P0
+    provenance: ANCHORED
+    source: core/physics/uncertainty.py
+    tests: tests/unit/physics/test_uncertainty.py
+    references:
+      - "Gabor, D. (1946). Theory of communication. J. Inst. Electr. Eng. 93(3), 429–457 (Δt·Δf ≥ 1/(4π), Gaussian minimizer)."
+      - "Folland, G. B. & Sitaram, A. (1997). The uncertainty principle: a mathematical survey. J. Fourier Anal. Appl. 3(3), 207–238."
+
+# ═══════════════════════════════════════════════════
+# RICCI CURVATURE
+# ═══════════════════════════════════════════════════
+
+ricci:
+  curvature_bounds:
+    id: INV-RC1
+    type: universal
+    statement: "Ollivier-Ricci curvature κ(i,j) ≤ 1 for every edge of every connected graph"
+    test_type: property_test
+    parameters:
+      rationale: "κ = 1 − W₁(m_x, m_y)/d(x,y) and W₁ ≥ 0 always, so κ ≤ 1 is a definitional upper bound independent of graph topology or walk laziness"
+      lower_bound_note: "The lower bound κ ≥ −1 holds only for lazy random walks (α ≥ 1/2) on a combinatorial metric. The implementation in core/indicators/ricci.py uses 1-D positional embedding (offset/scale from graph attrs) and α = 1/(deg+1), so κ can descend below −1 for non-price-graph topologies with large positional spread (e.g. cycle_12 gives κ=−2 on adjacent nodes separated by 9 in the integer embedding). Price graphs built via build_price_graph() produce adjacent integer node IDs and do satisfy κ ∈ [−1, 1]; that tighter bound is tracked as INV-RC3."
+    falsification: "ricci_curvature_edge returns κ > 1 for any edge of any connected graph"
+    priority: P0
+
+  positive_curvature_clustering:
+    id: INV-RC2
+    type: qualitative
+    statement: "κ > 0 indicates clustering / community structure"
+    test_type: correlation_test
+    priority: P2
+
+  price_graph_bounds:
+    id: INV-RC3
+    type: universal
+    statement: "κ(i,j) ∈ [−1, 1] for every edge of a build_price_graph output IN THE COMMENSURATE-METRIC REGIME (path-like graphs whose consecutive price levels differ by unit steps). The bound is CONDITIONAL, not universal: build_price_graph measures W₁ in the positional (price-level) metric but the geodesic d in the |Δp|+1 weighted-graph metric, so when those metrics diverge (large inter-step level jumps from volatile series or large δ) κ = 1 − W₁/d descends below −1."
+    test_type: property_test
+    parameters:
+      scope: "build_price_graph output in the path-like regime — short/low-jump series at default δ where the 1D positional embedding stays commensurate with the |Δp|+1 weighted geodesic"
+      conditional_not_universal: "Corrected 2026-06-15: the prior version asserted that consecutive integer node IDs and unit positional spacing are constructor-guaranteed; that is FALSE — price levels jump by >1 on volatile series, so the positional metric (W₁) and the weighted geodesic (d) are incommensurate and κ can reach ≈ −6 at δ=0.05. The [−1, 1] envelope holds only while W₁/d ≤ 2 (the algebraic equivalent of κ ≥ −1)."
+      tighter_than_RC1: "Where it holds, this is the tightened Ollivier bound; INV-RC1's κ ≤ 1 remains universal because W₁ ≥ 0."
+    evidence: "tests/physics_contracts/test_ricci_ollivier_identity_boundary.py — proves κ = 1 − W₁/d to 0.0 error and that W₁/d > 2 (κ < −1) occurs on real build_price_graph edges; tests/physics_contracts/test_ricci_geometry_witnesses.py asserts the bound only in the path-like regime with a vacuity guard."
+    falsification: "κ outside [−1, 1] on an edge of a build_price_graph() output WITHIN the declared path-like / commensurate-metric regime. Out-of-regime κ < −1 (jumpy/volatile series, large δ) is the EXPECTED, witnessed behavior, not a falsification."
+    priority: P1
+
+# ═══════════════════════════════════════════════════
+# KURAMOTO-RICCI SEMANTICS SPLIT (FP-2 — "No silent physics loss")
+# Issue #1096 Lane B. The Ollivier-Ricci κ-matrix is SIGNED (κ_ij < 0 = an
+# anti-synchronising / repulsive edge). Two NAMED paths keep the loss or
+# preservation of that sign explicit and auditable; a signed matrix may never
+# be passed to the Restrepo-Ott-Hunt onset boundary (Φ defined for κ ≥ 0 only).
+# Two-layer contract: this file is the assistant-facing layer; the runtime
+# layer is physics_contracts/catalog.yaml (kuramoto_ricci.semantics_split).
+# Both updated atomically in this commit.
+# Source: core/kuramoto/kuramoto_ricci_engine.py
+#         (ricci_to_positive_adjacency / ricci_to_signed_coupling /
+#          assert_roh_compatible).
+# Tests:  tests/unit/physics/test_KR4_ricci_semantics_split.py
+# ═══════════════════════════════════════════════════
+
+kuramoto_ricci_semantics:
+  positive_signed_split:
+    id: INV-KR4
+    type: universal
+    statement: "Ollivier-Ricci negative curvature is discarded ONLY on the named threshold path ricci_to_positive_adjacency, and ONLY with RicciAdjacencyAudit metadata (clipped_for_threshold=True, roh_compatible=True, signed_dynamics_compatible=False) recording negative_edges_count and negative_mass; ricci_to_signed_coupling preserves every negative value (clipped_for_threshold=False, roh_compatible=False, signed_dynamics_compatible=True); and a signed matrix passed to the Restrepo-Ott-Hunt onset boundary (assert_roh_compatible / phase_transition_boundary) is rejected fail-closed. No transform silently destroys signed curvature while claiming full physical dynamics."
+    test_type: property_test
+    parameters:
+      negative_edge: "κ_ij < 0 — an anti-correlated random walk (Ollivier 2009), i.e. an anti-synchronising / repulsive coupling edge"
+      roh_boundary: "Φ = K · λ_max(A_κ) − 2γ (Restrepo-Ott-Hunt 2005); derived for non-negative weights, so signed κ is a category error there"
+      audit_mass: "negative_mass = Σ |min(κ_sym, 0)| over off-diagonal entries — exactly the signed information the positive path discards"
+      mutual_exclusion: "with any negative curvature present, roh_compatible and signed_dynamics_compatible are mutually exclusive — a single matrix can never claim both"
+    falsification: "ricci_to_signed_coupling drops a negative κ; ricci_to_positive_adjacency clips without clipped_for_threshold=True or with negative_mass=0 while negatives were present; an all-positive κ trips clipped_for_threshold=True; a signed matrix passes assert_roh_compatible or yields a finite Φ from phase_transition_boundary; or any audit claims both roh_compatible and signed_dynamics_compatible."
+    priority: P0
+
+# ═══════════════════════════════════════════════════
+# KELLY SIZING
+# Physics: log-optimal betting in the small-edge continuous limit.
+# Source: Kelly 1956; Thorp 2006; core/neuro/kuramoto_kelly.py
+# ═══════════════════════════════════════════════════
+
+kelly:
+  optimal_fraction_formula:
+    id: INV-KELLY1
+    type: algebraic
+    statement: "f* = μ / σ² for log-optimal betting in the small-edge continuous limit"
+    test_type: property_test
+    parameters:
+      mu: "expected excess return"
+      sigma: "return volatility (std)"
+      small_edge_regime: "|μ/σ²| well inside (0, 1) so finite-sample MC argmax is stable"
+    falsification: "computed f* deviates from μ/σ² by more than one grid step on analytic inputs"
+    common_mistake: "Picking μ/σ² ≈ 1 puts f* at the grid boundary where the negative return tail biases the MC estimator low. Stay interior (e.g. μ=0.01, σ≈0.17 → f*≈0.33)."
+    scope_note: "INV-KELLY1 describes the THEORETICAL optimum f* = μ/σ². The production KuramotoKellyAdapter does NOT compute raw Kelly — it computes kelly_base * scale(R) where scale is a coherence-adjusted multiplier ∈ [floor, ceil]. The theoretical formula is witnessed on synthetic distributions (test_T8, test_T20). The adapter's output is bounded by INV-KELLY2 (fraction cap). These are two layers: theory (INV-KELLY1) + implementation (INV-KELLY2)."
+    priority: P0
+
+  fraction_cap:
+    id: INV-KELLY2
+    type: universal
+    statement: "The applied Kelly fraction is never larger than the configured drawdown cap"
+    test_type: property_test
+    parameters:
+      f_max: "configured cap from risk policy (half-Kelly typical, 0.25–0.5)"
+    falsification: "engine returns f_applied > f_max for any input"
+    priority: P0
+
+  log_growth_optimality:
+    id: INV-KELLY3
+    type: statistical
+    statement: "E[log(1 + f*·X)] ≥ E[log(1 + f'·X)] for any f' ≠ f* on bounded returns"
+    test_type: ensemble_test
+    parameters:
+      n_trials: "≥ 1e5 samples from a bounded distribution (Uniform, truncated Normal)"
+      grid_step: "1/200 over f ∈ [0, 1]"
+      boundedness: "|X| < 1/f_max so log1p(f·X) stays real for every tested f"
+    falsification: "argmax of empirical E[log(1+fX)] differs from μ/σ² by more than grid_step + one MC sigma"
+    common_mistake: "Using unbounded returns (Gaussian with large σ) yields log(negative) and corrupts the argmax — always truncate or use bounded distributions."
+    priority: P1
+
+# ═══════════════════════════════════════════════════
+# ORDER MANAGEMENT SYSTEM (OMS)
+# Physics: accounting conservation, idempotency, causal ordering.
+# Source: execution/oms.py; core/physics/portfolio_conservation.py
+# ═══════════════════════════════════════════════════
+
+oms:
+  portfolio_energy_conservation:
+    id: INV-OMS1
+    type: universal
+    statement: "Portfolio kinetic energy E_kinetic = ½·Σ|pos|·ret² ≥ 0 for every portfolio state"
+    test_type: property_test
+    parameters:
+      module: "core.physics.portfolio_conservation.PortfolioEnergyConservation"
+      scope: "Energy-level conservation check; per-fill accounting (Σ Δpos·price + Δcash = 0) still awaits a full OMS + book fixture and is tracked as future work."
+      rationale: "The universal conservation primitive the platform actually exposes today is the kinetic-energy non-negativity in PortfolioEnergyConservation. E_kinetic is a sum of non-negative products, so any negative return from compute_kinetic is a bug in the absolute-value path."
+    falsification: "PortfolioEnergyConservation.compute_kinetic returns a negative value on any (positions, returns) pair"
+    priority: P0
+
+  idempotency:
+    id: INV-OMS2
+    type: universal
+    statement: "apply(order) ≡ apply(order, order, ..., order) — same client_order_id produces at most one state change"
+    test_type: property_test
+    parameters:
+      n_replays: "≥ 5 submissions of the identical order"
+    falsification: "second submission of the same client_order_id changes book state"
+    priority: P0
+
+  causal_order:
+    id: INV-OMS3
+    type: universal
+    statement: "Lifecycle event timestamps are monotonically non-decreasing per order_id"
+    test_type: property_test
+    falsification: "t_{k+1} < t_k observed in lifecycle.history(order_id) sequence"
+    scope_note: "Monotonicity relies on the clock callable passed to OrderLifecycle (default: time.time() which is monotonic on Linux). The OMS itself does not validate timestamp ordering — it is a consequence of single-threaded synchronous event recording under RLock."
+    priority: P0
+
+# ═══════════════════════════════════════════════════
+# SIGNAL BUS
+# Physics: DAG structure per tick, deterministic replay under fixed seed.
+# Source: core/neuro/signal_bus.py
+# ═══════════════════════════════════════════════════
+
+signalbus:
+  acyclic_fanout:
+    id: INV-SB1
+    type: universal
+    statement: "The NeuroSignalBus supports DAG fanout: a linear chain of subscriber callbacks fires each node exactly once per root publish"
+    test_type: property_test
+    falsification: "any subscriber in a DAG-wired chain fires zero or more than once on a single root publish"
+    scope_note: "The bus is a flat pub/sub (signal_bus.py) with no built-in cycle detector or topological sort. Cyclic subscriptions (A→B→A) cause Python RecursionError, not a clean rejection. The invariant asserts correct DAG traversal when the subscription graph IS acyclic — it does not claim the bus prevents cycles."
+    priority: P0
+
+  deterministic_replay:
+    id: INV-SB2
+    type: universal
+    statement: "Publishing an identical sequence of values into fresh NeuroSignalBus instances produces bit-identical snapshots"
+    test_type: property_test
+    parameters:
+      n_runs: "≥ 3 fresh-bus replays of the same publish sequence"
+    falsification: "two fresh bus instances receiving the same publish sequence yield different snapshot values"
+    scope_note: "The bus is deterministic by construction — it is a pure latch with no RNG, no hash-dependent ordering, and no concurrency (all publishes happen under RLock). No explicit replay() method or seed parameter is needed; determinism is a structural property of the latch design."
+    priority: P0
+
+# ═══════════════════════════════════════════════════
+# HPC KERNELS
+# Physics: numerical reproducibility and stability.
+# Source: geosync_hpc/*.py
+# ═══════════════════════════════════════════════════
+
+hpc:
+  seeded_reproducibility:
+    id: INV-HPC1
+    type: universal
+    statement: "kernel(seed, x, dtype) == kernel(seed, x, dtype) bit-for-bit on fixed hardware"
+    test_type: property_test
+    parameters:
+      n_runs: "≥ 3"
+      tolerance_cross_isa: "1 ULP across different CPU/GPU ISAs; 0 ULP on identical hardware"
+    falsification: "two identical invocations on the same hardware differ by any ULP"
+    priority: P0
+
+  numerical_stability:
+    id: INV-HPC2
+    type: universal
+    statement: "Finite inputs within documented range produce finite outputs (no NaN/Inf propagation)"
+    test_type: property_test
+    parameters:
+      kappa_max: "condition-number ceiling configured per kernel"
+    falsification: "any finite input within spec yields NaN/Inf or cond(A) > kappa_max"
+    priority: P0
+
+  ledger_conservation:
+    id: INV-HPC3
+    type: conservation
+    statement: "For the fixed-point execution ledger, the conservation identity (cash + position·mark = invariant, modulo trade cost) holds to the cent on every (fill, qty, fee, mark) tuple within the int64 envelope. The identity is checked end-to-end via geosync_hpc.ledger.conservation_holds() after each apply_fill."
+    test_type: property_test
+    falsification: "Any (fill, qty, fee, mark) sequence within the int64 envelope where conservation_holds() returns False, OR where sequential apply_fill is non-commutative under permutation of independent fills."
+    priority: P0
+    provenance: ANCHORED
+    source: geosync_hpc/ledger.py
+    tests: tests/geosync_hpc/test_ledger.py
+    integration_test: tests/geosync_hpc/test_ledger.py
+    runtime_evaluable: yes
+    references:
+      - "Knuth, D. E. (1997). The Art of Computer Programming, Vol. 2 §4.2: Floating-Point Arithmetic. Addison-Wesley, 3rd ed."
+      - "Goldberg, D. (1991). What every computer scientist should know about floating-point arithmetic. ACM Comput. Surv. 23(1), 5–48."
+      - "Demmel, J. & Nguyen, H. D. (2013). Fast reproducible floating-point summation. 2013 IEEE 21st Symposium on Computer Arithmetic, 163–172."
+    related: [INV-HPC1, INV-HPC2]
+
+  state_envelope_integrity:
+    id: INV-HPC4
+    type: universal
+    statement: "Snapshot/restore envelopes carry an explicit envelope_version, schema_version, and SHA-256 checksum over the serialised payload. On load: tampered payload, mismatched schema_version, unknown envelope_version, or non-finite payload value all raise EnvelopeIntegrityError; bit-identical round-trip is guaranteed for canonical payloads. Key-order permutations of the same dict do NOT change the checksum (canonical serialisation)."
+    test_type: property_test
+    falsification: "A tampered payload that loads without raising; a non-canonical serialisation where two semantically identical payloads produce different checksums; a load that returns silently after schema_version mismatch; a non-finite payload value (NaN/Inf) accepted into the envelope."
+    priority: P0
+    provenance: ANCHORED
+    source: geosync_hpc/runtime_state.py
+    tests: tests/geosync_hpc/test_runtime_state.py
+    integration_test: tests/geosync_hpc/test_runtime_state.py
+    runtime_evaluable: yes
+    references:
+      - "Merkle, R. C. (1979). Secrecy, Authentication and Public Key Systems. Stanford PhD thesis (origin of hash-tree integrity proofs)."
+      - "Lamport, L. (1981). Password authentication with insecure communication. Comm. ACM 24(11), 770–772."
+      - "NIST (2015). FIPS 180-4: Secure Hash Standard (SHA-256). National Institute of Standards and Technology."
+    related: [INV-HPC1]
+
+  ierd_phase0_response_coverage:
+    id: INV-IERD-PHASE0
+    type: universal
+    statement: "The IERD-PAI-FPS-UX-001 Phase-0 audit response carries a documented contract surface: docs/yana-response.md declares one ``## Q{N}.`` heading and one ``**Tier: <T>**`` marker per question N ∈ 1..7; ADR 0020 (docs/adr/0020-ierd-adoption.md) contains a non-trivial ``## Decision`` section that ratifies adoption; scripts/ci/lint_forbidden_terms.py is runnable and exits 0 in warn mode (Phase-0 contract; strict mode lands at Phase-5)."
+    test_type: property_test
+    falsification: "yana-response.md missing or any of Q1..Q7 sections absent; OR any Q-section without a Tier marker; OR ADR 0020 missing or below substantive length without a Decision section; OR lint_forbidden_terms.py missing OR exiting non-zero in warn mode."
+    priority: P1
+    provenance: ANCHORED
+    source: scripts/ci/lint_forbidden_terms.py
+    tests: tests/governance/test_ierd_phase0_yana_response_coverage.py
+    integration_test: tests/governance/test_ierd_phase0_yana_response_coverage.py
+    runtime_evaluable: yes
+    references:
+      - "IERD-PAI-FPS-UX-001 (this repository, 2026-05-03). Institutional Engineering Remediation Directive — binding standard for documentation, CI, API, frontend, validation."
+      - "Popper, K. R. (1959). The Logic of Scientific Discovery. Hutchinson (claim → falsifying-test pairing as the demarcation criterion that backs ADR 0021)."
+      - "Lakatos, I. (1970). Falsification and the methodology of scientific research programmes. In Criticism and the Growth of Knowledge (progressive vs degenerative shift; the tier ladder ANCHORED/EXTRAPOLATED/SPECULATIVE/UNKNOWN derives from this)."
+    related: []
+
+  psr_hac_newey_west:
+    id: INV-PSR-HAC
+    type: monotonic
+    statement: "The HAC-adjusted Probabilistic Sharpe Ratio uses a Newey–West Bartlett-kernel HAC variance estimator with the NW(1994) automatic-bandwidth rule. The effective sample size n_eff shrinks under positive autocorrelation, equals n under zero autocorrelation, and grows under negative autocorrelation: n_eff(ρ > 0) < n; n_eff(ρ = 0) = n; n_eff(ρ < 0) > n. The auto-bandwidth output is a non-negative integer."
+    test_type: property_test
+    falsification: "Any AR(1) fixture with ρ > 0 yielding n_eff ≥ n; OR ρ = 0 yielding n_eff ≠ n; OR ρ < 0 yielding n_eff ≤ n; OR an auto-bandwidth output that is negative or non-integer."
+    priority: P1
+    provenance: ANCHORED
+    source: research/robustness/cpcv.py
+    tests: tests/research/robustness/test_hac_psr.py
+    integration_test: tests/research/robustness/test_hac_psr.py
+    runtime_evaluable: yes
+    references:
+      - "Newey, W. K. & West, K. D. (1987). A simple, positive semi-definite, heteroskedasticity and autocorrelation consistent covariance matrix. Econometrica 55(3), 703–708."
+      - "Newey, W. K. & West, K. D. (1994). Automatic lag selection in covariance matrix estimation. Rev. Economic Studies 61(4), 631–653."
+      - "Bailey, D. H. & López de Prado, M. (2014). The deflated Sharpe ratio: correcting for selection bias, backtest overfitting, and non-normality. J. Portfolio Management 40(5), 94–107."
+    related: []
+
+  session_fsm_totality:
+    id: INV-HPC5
+    type: universal
+    statement: "BacktesterCAL session lifecycle is an explicit finite-state machine with a frozen states-set, a frozen actions-set, a transition table that is total over (state, action) pairs, terminal-state absorption (terminal states have no outgoing transitions), and a serialisable envelope round-trip. Invalid (state, action) pairs raise InvalidTransitionError before any side effect."
+    test_type: property_test
+    falsification: "An (state, action) pair that produces a successor state not in the declared states-set; a terminal state with at least one outgoing transition; an InvalidTransitionError that fires AFTER a side effect; a serialise/deserialise round-trip that loses or mutates the FSM state."
+    priority: P1
+    provenance: ANCHORED
+    source: geosync_hpc/session_fsm.py
+    tests: tests/geosync_hpc/test_session_fsm.py
+    integration_test: tests/geosync_hpc/test_session_fsm.py
+    runtime_evaluable: yes
+    references:
+      - "Hopcroft, J. E. & Ullman, J. D. (1979). Introduction to Automata Theory, Languages, and Computation. Addison-Wesley (canonical FSM definitions: states, alphabet, transition function, initial state, accepting states)."
+      - "Pnueli, A. (1977). The temporal logic of programs. 18th Annual Symposium on Foundations of Computer Science, 46–57 (terminal-absorption + transition totality semantics)."
+      - "Harel, D. (1987). Statecharts: a visual formalism for complex systems. Sci. Comput. Programming 8(3), 231–274 (state hierarchy and transition algebra)."
+    related: [INV-HPC1, INV-HPC4]
+
+# ═══════════════════════════════════════════════════
+# CRYPTOBIOSIS — Phase-Transition Survival
+# Physics: tardigrade-inspired state machine. System exits threat space
+# rather than resisting. DORMANT = zero metabolism = zero computation.
+# Source: core/neuro/cryptobiosis.py
+# ═══════════════════════════════════════════════════
+
+cryptobiosis:
+  dormant_zero_multiplier:
+    id: INV-CB1
+    type: universal
+    statement: "DORMANT state produces multiplier == 0.0 EXACTLY (not approximately)"
+    test_type: property_test
+    falsification: "CryptobiosisController in DORMANT state returns multiplier != 0.0"
+    priority: P0
+
+  vitrification_o1:
+    id: INV-CB2
+    type: universal
+    statement: "Vitrification (ACTIVE → DORMANT) completes in O(1) ticks — no iterative wind-down"
+    test_type: property_test
+    parameters:
+      max_ticks: "2 (one tick VITRIFYING, next tick DORMANT)"
+    falsification: "System remains in VITRIFYING for more than 1 tick after entry"
+    priority: P0
+
+  snapshot_sufficiency:
+    id: INV-CB3
+    type: universal
+    statement: "The snapshot captured at vitrification contains all data required for recovery"
+    test_type: property_test
+    falsification: "snapshot is None while in DORMANT state"
+    priority: P1
+
+  rehydration_monotone:
+    id: INV-CB4
+    type: monotonic
+    statement: "Rehydration stages are non-decreasing: stage(t+1) ≥ stage(t) while T < entry"
+    test_type: trajectory_test
+    falsification: "rehydration_stage decreases between consecutive ticks with T < entry_threshold"
+    priority: P0
+
+  entry_above_modules:
+    id: INV-CB5
+    type: conditional
+    statement: "Cryptobiosis entry threshold exceeds individual module distress thresholds"
+    test_type: property_test
+    parameters:
+      rationale: "Cryptobiosis is a last resort — individual modules (GABA, Serotonin veto) should fire first"
+    falsification: "entry_threshold ≤ any individual module's crisis threshold"
+    priority: P1
+
+  distress_bounded:
+    id: INV-CB6
+    type: universal
+    statement: "Combined distress score T ∈ [0, 1] for every input"
+    test_type: property_test
+    falsification: "T outside [0, 1] after any update call"
+    priority: P0
+
+  hysteresis:
+    id: INV-CB7
+    type: universal
+    statement: "exit_threshold < entry_threshold (hysteresis prevents oscillation)"
+    test_type: property_test
+    falsification: "CryptobiosisConfig accepts exit >= entry without raising ValueError"
+    priority: P0
+
+  rehydration_abort:
+    id: INV-CB8
+    type: conditional
+    statement: "T ≥ entry_threshold during REHYDRATING → immediate return to DORMANT"
+    test_type: property_test
+    falsification: "System stays in REHYDRATING after receiving T ≥ entry_threshold"
+    priority: P0
+
+# ═══════════════════════════════════════════════════
+# LYAPUNOV EXPONENT — Chaos/Order Detection
+# Physics: Rosenstein (1993) MLE from scalar time series.
+# Source: core/physics/lyapunov_exponent.py
+# ═══════════════════════════════════════════════════
+
+lyapunov_exponent:
+  mle_finite:
+    id: INV-LE1
+    type: universal
+    statement: "MLE is finite for any finite bounded input series"
+    test_type: property_test
+    falsification: "maximal_lyapunov_exponent returns NaN/Inf on finite input"
+    priority: P0
+
+  mle_sign_semantics:
+    id: INV-LE2
+    type: qualitative
+    statement: "MLE(white noise) ≈ 0; MLE(stable logistic r=2.8) < 0; MLE(logistic map r=4) > 0"
+    test_type: sweep_test
+    parameters:
+      noise: "iid Gaussian → λ ≈ 0 (no predictable structure)"
+      stable: "logistic map r=2.8 → fixed-point convergence → λ < 0 (clean scaling region)"
+      chaotic: "logistic map x_{n+1} = 4x(1-x) → λ = ln(2) ≈ 0.693"
+    falsification: "sign of MLE disagrees with known dynamical regime"
+    priority: P0
+
+  mle_scaling_region_gate:
+    id: INV-LE3
+    type: algebraic
+    statement: >-
+      R²(log-divergence linear fit) ≥ R2_MIN (=0.80) OR the estimate is flagged
+      non-scaling and fails closed to the no-reliable-estimate sentinel 0.0
+    test_type: property_test
+    parameters:
+      r2_min: "0.80 — strong-linear-relationship floor for the Rosenstein scaling region"
+      fail_closed: "R² < R2_MIN ⟹ scaling_ok=0 AND return 0.0 (never a silent slope)"
+      observability: "diagnostics dict exposes r_squared, slope, n_fit, scaling_ok"
+    falsification: >-
+      maximal_lyapunov_exponent returns a non-zero λ for an input whose
+      log-divergence fit has R² < R2_MIN (a confident slope from a non-linear,
+      non-scaling region)
+    priority: P0
+
+# ═══════════════════════════════════════════════════
+# SPECTRAL GAP — Algebraic Connectivity
+# Physics: Fiedler eigenvalue λ₂ of graph Laplacian.
+# Source: core/physics/lyapunov_exponent.py (spectral_gap function)
+# ═══════════════════════════════════════════════════
+
+spectral_gap:
+  lambda2_non_negative:
+    id: INV-SG1
+    type: universal
+    statement: "λ₂ ≥ 0 always (Laplacian is positive semi-definite)"
+    test_type: property_test
+    falsification: "spectral_gap returns negative value on any adjacency matrix"
+    priority: P0
+
+  lambda2_connectivity:
+    id: INV-SG2
+    type: conditional
+    statement: "λ₂ > 0 ⟺ graph is connected; λ₂ = 0 ⟺ graph is disconnected"
+    test_type: property_test
+    falsification: "λ₂ > 0 for a disconnected graph, or λ₂ = 0 for a connected graph"
+    priority: P0
+
+# ═══════════════════════════════════════════════════
+# OTT-ANTONSEN REDUCTION — Exact Mean-Field Dynamics
+# Physics: Ott & Antonsen (2008) dimensionality reduction.
+# Source: core/kuramoto/ott_antonsen.py
+# ═══════════════════════════════════════════════════
+
+ott_antonsen:
+  order_parameter_bounded:
+    id: INV-OA1
+    type: universal
+    statement: "|z(t)| ≤ 1 for every step of the Ott-Antonsen trajectory"
+    test_type: property_test
+    falsification: "OttAntonsenEngine.integrate returns |z| > 1 at any step"
+    priority: P0
+
+  supercritical_steady_state:
+    id: INV-OA2
+    type: algebraic
+    statement: "K > 2Δ ⟹ R_∞ = √(1 − 2Δ/K); RK4 meets the exact normal form R_∞² = 1 − K_c/K to machine precision (< 1e-10); near onset R_∞ ∝ (K − K_c)^(1/2), mean-field β = 1/2"
+    test_type: property_test
+    parameters:
+      formula: "R_∞ = sqrt(1 - K_c/K) where K_c = 2Δ"
+      normal_form: "R_∞² = 1 − K_c/K (exact fixed point of dz/dt = -Δz + (K/2)(z − z|z|²) at ω₀=0)"
+      machine_precision_tol: "1e-10 (empirically ~1e-14)"
+      critical_exponent: "β = 1/2 over ε=(K−K_c)/K_c ∈ [1e-3, 3e-2]; near-onset excluded by critical slowing-down (relaxation ~ 1/(K−K_c))"
+      cross_validation: "N-body Kuramoto with Lorentzian ω matches within 3/√N"
+    falsification: "|R_numerical² - (1 − K_c/K)| > 1e-10, OR fitted β deviates from 1/2 by > 0.06, OR N-body R deviates from mean-field by > 3/√N"
+    priority: P0
+    source: core/kuramoto/ott_antonsen.py
+    tests:
+      - "tests/unit/physics/test_T23_ott_antonsen_chimera.py"
+      - "tests/unit/physics/test_T23b_ott_antonsen_analytical.py"
+
+  subcritical_decay:
+    id: INV-OA3
+    type: asymptotic
+    statement: "K < 2Δ ⟹ R → 0 exponentially (rate ∝ K_c − K)"
+    test_type: convergence_test
+    parameters:
+      critical_slowing: "at K → K_c, decay rate → 0 (excluded from test at K=0.99)"
+    falsification: "R stays above 1e-4 after T=100 with K ≤ 0.8·K_c"
+    priority: P0
+
+# ═══════════════════════════════════════════════════
+# DRO-ARA REGIME OBSERVER (Hurst + ADF + ARA loop)
+# Scope: core/dro_ara/*.py
+# ═══════════════════════════════════════════════════
+
+dro_ara:
+  gamma_derivation:
+    id: INV-DRO1
+    type: algebraic
+    statement: "γ = 2·H + 1 to floating-point precision for every admissible input"
+    test_type: property_test
+    parameters:
+      tolerance: "|γ − (2·H + 1)| < 1e-5"
+      source: "core/dro_ara/engine.py::derive_gamma"
+    falsification: "derive_gamma returns γ, H with |γ − (2·H + 1)| ≥ 1e-5"
+    priority: P0
+
+  risk_scalar_bounds:
+    id: INV-DRO2
+    type: universal
+    statement: "risk_scalar(γ) = max(0, 1 − |γ − 1|) ∈ [0, 1] for all γ ∈ ℝ"
+    test_type: property_test
+    parameters:
+      lipschitz_constant: "|rs(a) − rs(b)| ≤ |a − b|"
+    falsification: "risk_scalar returns value < 0 or > 1 for any γ"
+    priority: P0
+
+  invalid_regime_gate:
+    id: INV-DRO3
+    type: conditional
+    statement: "regime == INVALID iff (!stationary ∨ r2 < R2_MIN)"
+    condition: "R2_MIN = 0.90 (core/dro_ara/engine.py:R2_MIN)"
+    test_type: property_test
+    falsification: "classify(gamma, r2<0.90, stationary=True) != INVALID, or classify(gamma, r2, False) != INVALID"
+    priority: P0
+
+  long_signal_gate:
+    id: INV-DRO4
+    type: conditional
+    statement: "signal == LONG ⟹ regime == CRITICAL ∧ rs > RS_LONG_THRESH ∧ trend ∈ {CONVERGING, STABLE}"
+    condition: "RS_LONG_THRESH = 0.33"
+    test_type: property_test
+    falsification: "geosync_observe emits LONG with any of the three conjuncts false"
+    priority: P0
+
+  fail_closed_input:
+    id: INV-DRO5
+    type: universal
+    statement: "NaN ∨ Inf ∨ constant ∨ rank != 1 ∨ len < window+step ⟹ ValueError"
+    test_type: property_test
+    falsification: "geosync_observe returns silently on any degenerate input above"
+    priority: P0
+
+# ═══════════════════════════════════════════════════
+# PRIOR ATTENUATION EXPLORATION MODE
+# ═══════════════════════════════════════════════════
+
+rebus:
+  activation_guard:
+    id: INV-REBUS-1
+    type: conditional
+    statement: "Activation is allowed only from NOMINAL parent state with finite real coherence >= activation threshold and readable finite-real prior mapping"
+    test_type: unit_test
+    falsification: "can_activate() returns True for parent_nominal=False, non-real coherence, bool coherence, or coherence<threshold; OR activate() accepts unreadable/malformed prior mapping entries"
+    priority: P0
+
+  entropy_forces_reintegration:
+    id: INV-REBUS-3
+    type: universal
+    statement: "If current_entropy exceeds max_entropy, phase must become REINTEGRATION immediately and step() must reject further progression"
+    test_type: unit_test
+    falsification: "entropy ceiling breach does not set REINTEGRATION or step() continues afterward"
+    priority: P0
+
+  duration_forces_reintegration:
+    id: INV-REBUS-4
+    type: universal
+    statement: "If bars_elapsed reaches max_duration_bars, phase must become REINTEGRATION and progression is blocked until terminal restore"
+    test_type: unit_test
+    falsification: "duration cap reached but phase remains non-REINTEGRATION"
+    priority: P0
+
+  terminal_paths_are_closed:
+    id: INV-REBUS-5
+    type: universal
+    statement: "Only reintegrate(success/fail) or emergency_exit may terminate an active exploration cycle"
+    test_type: unit_test
+    falsification: "gate transitions to INACTIVE without reintegrate() or emergency_exit()"
+    priority: P0
+
+  exact_prior_restore:
+    id: INV-REBUS-6
+    type: universal
+    statement: "All terminal paths restore prior weights exactly from backup"
+    test_type: unit_test
+    falsification: "terminal callback applies priors that differ from stored backup"
+    priority: P0
+
+  safety_preemption:
+    id: INV-REBUS-7
+    type: conditional
+    statement: "kill_switch_active or stressed_state must preempt exploration via emergency_exit"
+    test_type: unit_test
+    falsification: "external safety signal leaves gate active"
+    priority: P0
+
+# ═══════════════════════════════════════════════════
+# RESEARCH EXTENSIONS (opt-in, experimental, no alpha claim)
+# ═══════════════════════════════════════════════════
+
+capital_weighted_kuramoto:
+  kbeta_bounds:
+    id: INV-KBETA
+    type: universal
+    statement: "K_ij^β finite, non-negative, symmetric, zero on diagonal; β ∈ [beta_min, beta_max]; K_ij invariant under uniform multiplicative depth scaling"
+    test_type: property_test
+    falsification: "K_ij contains NaN/Inf, becomes negative, loses symmetry, has nonzero diagonal, β leaves [beta_min, beta_max], or differs after multiplying all bid/ask sizes by c>0"
+    priority: P0
+
+ricci_flow:
+  flow_surgery_safety:
+    id: INV-RC-FLOW
+    type: universal
+    statement: "Discrete Ricci flow w_ij <- w_ij - eta·kappa·w_ij followed by neckpinch surgery preserves finiteness, non-negativity, symmetry, zero diagonal; with preserve_total_edge_mass=True total mass is conserved; with preserve_connectedness=True bridge edges are clamped not removed; surgery removes at most floor(max_surgery_fraction · n_active_edges) edges"
+    test_type: property_test
+    falsification: "Post-step weights are non-finite, negative, asymmetric, have nonzero diagonal; bridge edge removed under preserve_connectedness=True; surgery removes more than the cap"
+    priority: P0
+
+robust_free_energy:
+  robust_dominates_nominal:
+    id: INV-FE-ROBUST
+    type: universal
+    statement: "F_robust(metrics, ambiguity) ≥ F_nominal(metrics) for any non-negative box ambiguity set; equality holds when all radii are zero; F_robust is monotone non-decreasing in any single radius; unknown metrics and negative radii are rejected fail-closed; the base EnergyModel state is never mutated"
+    test_type: property_test
+    falsification: "F_robust < F_nominal; nonzero ambiguity yields F_robust = F_nominal trivially; increasing a radius decreases F_robust; unknown/negative radii silently accepted; base model output changes after a DR-FREE call"
+    priority: P0
+
+higher_order_kuramoto:
+  sparse_triadic_safety:
+    id: INV-HO-SPARSE
+    type: universal
+    statement: "Sparse triadic kernel preserves R(t) ∈ [0,1] over the trajectory, reduces to pairwise dynamics when sigma2=0, agrees with the dense reference engine in triangle count on small complete graphs, is deterministic under fixed inputs, and never allocates O(N^3) auxiliary tensors when dense_debug=False"
+    test_type: property_test
+    falsification: "R outside [0,1]; sigma2=0 produces nonzero triadic RHS; sparse triangle count differs from dense; identical inputs produce different outputs; peak heap exceeds the c·n_triangles ceiling for sparse graphs"
+    priority: P0
+
+
+# ═══════════════════════════════════════════════════
+# PNCC — PHYSICS-NATIVE COGNITIVE KERNEL (Wave 1)
+# ═══════════════════════════════════════════════════
+# Experimental / opt-in. Physics-first, not biology-first.
+# Canonical reference: docs/research/pncc/CANONS.md (7 CANONS, 5 pre-registered
+# hypotheses, 6 invariants). Two-layer protocol per CANONS §7: this file is the
+# assistant-facing layer; physics_contracts/catalog.yaml is the runtime layer.
+# Both updated atomically in this commit.
+#
+# Wave 1 landed: PNCC-A (#378), PNCC-E (#379), PNCC-C (#380).
+#   Three invariants registered here.
+# Wave 1 dropped: PNCC-B (Mpemba) — INV-MPEMBA-INIT not registered.
+# Wave 1 halted: PNCC-D (CNS proxy) — INV-CNS-SAFETY not registered, awaits real telemetry.
+# Wave 2 deferred: PNCC-F (free energy) — INV-FREE-ENERGY shadow-tracked by INV-FE1/FE2.
+
+pncc:
+  landauer_proxy:
+    id: INV-LANDAUER-PROXY
+    type: universal
+    statement: "Irreversible action proxy cost dominates reversible-alternative cost: C_irr >= C_rev with strict > whenever irreversibility_score > 0"
+    test_type: property_test
+    falsification: "Any pair of irreversible/reversible actions with identical (token, latency, entropy) where C_irr < C_rev"
+    priority: P0
+    source: core/physics/thermodynamic_budget.py
+    tests: tests/unit/physics/test_thermodynamic_budget.py
+
+  reversible_gate:
+    id: INV-REVERSIBLE-GATE
+    type: universal
+    statement: "Reversible-tagged action implies byte-exact pre-state recovery via rollback(audit_hash)"
+    test_type: property_test
+    falsification: "1000 random reversible actions where rollback(trace.audit_hash).state_bytes != pre_state"
+    priority: P0
+    source: core/physics/reversible_gate.py
+    tests: tests/unit/physics/test_reversible_gate.py
+
+  no_bio_claim:
+    id: INV-NO-BIO-CLAIM
+    type: universal
+    statement: "Cognitive-performance language must be paired with a registered EvidenceClaim or an explicit disclaimer phrase"
+    test_type: property_test
+    falsification: "AST-grep over core/, tacl/, runtime/, geosync/ returns >=1 naked violation in non-test source"
+    priority: P0
+    source: tacl/evidence_ledger.py
+    tests: tests/tacl/test_evidence_ledger.py
+
+  criticality:
+    id: INV-CRITICALITY
+    type: universal
+    statement: "Substrate is intelligence-capable iff γ ∈ [1−ε, 1+ε] where γ = 2·H + 1 (DFA-1 Hurst). Outside the metastable window, decisions must fail-closed to DORMANT. ε = cfg.criticality_epsilon."
+    test_type: property_test
+    falsification: "Any non-DORMANT decision registered with substrate_criticality_at_decision outside [1−ε, 1+ε] AND criticality_window_confirmed=False"
+    priority: P0
+    source: tacl/evidence_ledger.py
+    tests: tests/tacl/test_evidence_ledger.py
+    references:
+      - "Bak, P. (1996). How Nature Works: The Science of Self-Organized Criticality."
+      - "Langton, C. G. (1990). Computation at the edge of chaos. Physica D 42, 12."
+      - "Mora, T. & Bialek, W. (2011). Are biological systems poised at criticality? J. Stat. Phys. 144, 268."
+      - "Beggs, J. M. & Plenz, D. (2003). Neuronal avalanches in neocortical circuits. J. Neurosci. 23, 11167."
+    related: [INV-DRO1, INV-DRO2, INV-DRO4, INV-YV1]
+
+  bekenstein_cognitive:
+    id: INV-BEKENSTEIN-COGNITIVE
+    type: universal
+    statement: "Information capacity of any cognitive substrate is bounded by I ≤ 2π·E·R / (ℏ·c·ln 2) bits, where (R, E) are the substrate's bounding-sphere radius and total energy. Saturated by black holes (Bekenstein-Hawking entropy)."
+    test_type: property_test
+    falsification: "Any physical system that stably stores or processes I > 2π·E·R/(ℏ·c·ln 2) bits without forming an event horizon, OR an experimental violation of the holographic principle in the high-energy regime."
+    priority: P0
+    provenance: ANCHORED
+    source: core/physics/thermodynamic_budget.py
+    tests: tests/unit/physics/test_thermodynamic_budget.py
+    integration_test: tests/integration/test_substrate_gate_chain.py
+    runtime_evaluable: yes
+    references:
+      - "Bekenstein, J. D. (1981). Universal upper bound on the entropy-to-energy ratio for bounded systems. Phys. Rev. D 23, 287."
+      - "'t Hooft, G. (1993). Dimensional reduction in quantum gravity. arXiv:gr-qc/9310026."
+      - "Susskind, L. (1995). The world as a hologram. J. Math. Phys. 36, 6377."
+    related: [INV-CRITICALITY, INV-LANDAUER-PROXY, INV-YV1]
+
+  simulation_falsification:
+    id: INV-SIMULATION-FALSIFICATION
+    type: statistical
+    statement: "The simulation hypothesis is operationalized as an enumerable registry of physical signatures, each with a published prediction, an explicit detectability threshold, and a current observation status (NOT_OBSERVED / OPEN / RULED_OUT). Probability is not a field; only status against observation. Each signature carries a reasoning_tier (DERIVED or ANALOGICAL) reflecting whether the link from observable to simulation-hypothesis is published derivation (Beane/Davoudi/Savage 2014, 't Hooft 1993, Susskind 1995) or interpretive analogy. Currently: 4 DERIVED, 2 ANALOGICAL."
+    test_type: property_test
+    falsification: "Any positive detection at or above a registered signature's threshold without independent corroboration is rejected; a productive ladder must have at least one entry with a published null bound (NOT_OBSERVED) within current instrument reach."
+    priority: P1
+    source: core/physics/simulation_falsification.py
+    tests: tests/unit/physics/test_simulation_falsification.py
+    falsifier_test: tests/unit/physics/test_simulation_falsification.py::test_point_eval_above_threshold_rules_out_with_reason
+    references:
+      - "Bekenstein, J. D. (1981). Universal upper bound on the entropy-to-energy ratio for bounded systems. Phys. Rev. D 23, 287."
+      - "'t Hooft, G. (1993). Dimensional reduction in quantum gravity. arXiv:gr-qc/9310026."
+      - "Susskind, L. (1995). The world as a hologram. J. Math. Phys. 36, 6377."
+      - "Beane, S. R., Davoudi, Z., Savage, M. J. (2014). Constraints on the universe as a numerical simulation. Eur. Phys. J. A 50, 148. arXiv:1210.1847."
+    related: [INV-BEKENSTEIN-COGNITIVE, INV-CRITICALITY, INV-LANDAUER-PROXY]
+
+  arrow_of_time:
+    id: INV-ARROW-OF-TIME
+    type: monotonic
+    statement: "For any observer-coupled closed system, cumulative net entropy production over any non-empty window is non-negative: Σ_net = ΔS_system + ΔI_observer (bit-space proxy) ≥ 0. Apparent local reductions of S_system must be paid for by observer information cost (Maxwell-demon resolution)."
+    test_type: property_test
+    falsification: "Any observed sequence of (ΔS_system, ΔI_observer) with ΔS_system + ΔI_observer < 0 in any contiguous window."
+    priority: P0
+    provenance: ANCHORED
+    source: core/physics/arrow_of_time.py
+    tests: tests/unit/physics/test_arrow_of_time.py
+    integration_test: tests/integration/test_substrate_gate_chain.py
+    runtime_evaluable: yes
+    references:
+      - "Landauer, R. (1961). Irreversibility and Heat Generation in the Computing Process. IBM J. Res. Dev. 5, 183."
+      - "Bennett, C. H. (1982). The thermodynamics of computation — a review. Int. J. Theor. Phys. 21, 905."
+      - "Penrose, R. (1989). The Emperor's New Mind. Oxford University Press (cosmological-vs-thermodynamic arrow context)."
+    related: [INV-LANDAUER-PROXY, INV-CRITICALITY, INV-BEKENSTEIN-COGNITIVE]
+
+  observer_bandwidth:
+    id: INV-OBSERVER-BANDWIDTH
+    type: conditional
+    statement: "For any observer-system pair under decoherence coupling, the system's effective decoherence rate Γ (Hz) is bounded above by the observer's information-acquisition rate Σ̇ (bit/s, treated 1:1 with Hz of resolvable events): Γ ≤ Σ̇. Schema-only: the unit equivalence 1 bit/s ↔ 1 Hz of resolvable events is an ansatz, and the cited references (Zurek 2003, Lieb-Robinson 1972) provide adjacent context rather than direct derivation."
+    test_type: property_test
+    falsification: "A measured observer-system pair where Γ > Σ̇ in well-isolated conditions, with the observer's bandwidth independently characterized."
+    priority: P2
+    provenance: SPECULATIVE
+    source: core/physics/observer_bandwidth.py
+    tests: tests/unit/physics/test_observer_bandwidth.py
+    falsifier_test: tests/unit/physics/test_observer_bandwidth.py::test_bound_violated_when_gamma_above_bandwidth
+    references:
+      - "Zurek, W. H. (2003). Decoherence, einselection, and the quantum origins of the classical. Rev. Mod. Phys. 75, 715."
+      - "Lieb, E. H. & Robinson, D. W. (1972). The finite group velocity of quantum spin systems. Comm. Math. Phys. 28, 251."
+    related: [INV-LANDAUER-PROXY, INV-BEKENSTEIN-COGNITIVE, INV-ARROW-OF-TIME]
+
+  cosmological_compute:
+    id: INV-COSMOLOGICAL-COMPUTE
+    type: statistical
+    statement: "Useful reversible computation in any causal diamond is bounded above by A / (4 · ℓ_p² · ln 2) bits per Bekenstein-Hawking, where A is horizon area and ℓ_p is the Planck length. Caller-side discounting (de Sitter complexity efficiency) is the caller's responsibility, not part of this contract."
+    test_type: property_test
+    falsification: "A reproducible measurement of useful quantum computation inside a causal diamond exceeding the holographic ceiling A / (4 · ℓ_p² · ln 2)."
+    priority: P1
+    provenance: EXTRAPOLATED
+    source: core/physics/cosmological_compute_bound.py
+    tests: tests/unit/physics/test_cosmological_compute_bound.py
+    falsifier_test: tests/unit/physics/test_cosmological_compute_bound.py::test_compute_claim_above_budget_violation
+    references:
+      - "Bekenstein, J. D. (1973). Black holes and entropy. Phys. Rev. D 7, 2333."
+      - "'t Hooft, G. (1993). Dimensional reduction in quantum gravity. arXiv:gr-qc/9310026."
+      - "Susskind, L. (1995). The world as a hologram. J. Math. Phys. 36, 6377."
+      - "Susskind, L. (2014). Computational complexity and black hole horizons. Fortschr. Phys. 64, 24. arXiv:1402.5674."
+    related: [INV-BEKENSTEIN-COGNITIVE, INV-LANDAUER-PROXY, INV-SIMULATION-FALSIFICATION]
+
+  # INV-OBSERVER-CPT was demoted on 2026-04-26 (chore/honest-provenance-cleanup):
+  # the contract was tautological under any observer-asymmetric kernel and no
+  # peer-reviewed model of such a kernel for our universe was cited. The schema
+  # is preserved as a research demo at examples/observer_cpt_schema_demo.py and
+  # carries no registry weight.
+
+  jacobson_observer:
+    id: INV-JACOBSON-OBSERVER
+    type: conditional
+    statement: "Jacobson 1995 derived Einstein equations from local Clausius δQ = T·dS on causal horizons. An observer-coherence correction c, residual = δQ − T·dS − c, must satisfy: (i) c → 0 in the decoupled limit (pure Jacobson recovery), (ii) any non-zero c at observable scale is a falsifiable extension of GR."
+    test_type: property_test
+    falsification: "A measured local context where δQ = T·dS holds (Einstein gravity confirmed) but the proposed c is non-zero above tolerance, OR δQ ≠ T·dS at a scale where Einstein gravity is independently confirmed."
+    priority: P1
+    provenance: EXTRAPOLATED
+    source: core/physics/jacobson_observer_coherence.py
+    tests: tests/unit/physics/test_jacobson_observer_coherence.py
+    falsifier_test: tests/unit/physics/test_jacobson_observer_coherence.py::test_witness_extended_inconsistent_when_correction_breaks_balance
+    references:
+      - "Jacobson, T. (1995). Thermodynamics of spacetime: the Einstein equation of state. Phys. Rev. Lett. 75, 1260. arXiv:gr-qc/9504004."
+      - "Padmanabhan, T. (2010). Thermodynamical aspects of gravity: new insights. Rep. Prog. Phys. 73, 046901. arXiv:0911.5004."
+      - "Verlinde, E. (2011). On the origin of gravity and the laws of Newton. JHEP 04, 029."
+    related: [INV-BEKENSTEIN-COGNITIVE, INV-COSMOLOGICAL-COMPUTE, INV-ARROW-OF-TIME]
+
+  anchored_substrate_gate:
+    id: INV-ANCHORED-SUBSTRATE-GATE
+    type: conditional
+    statement: "A substrate is *thermodynamically admissible* iff both ANCHORED-tier physical bounds hold simultaneously: I_observed ≤ 2π·E·R/(ℏ·c·ln 2) (INV-BEKENSTEIN-COGNITIVE) AND Σ_net = ΔS_system + ΔI_observer ≥ 0 (INV-ARROW-OF-TIME). The gate names the failing axis (or both). NOTE: passing the gate is necessary but NOT sufficient for any cognitive claim — non-cognitive systems satisfy both bounds trivially."
+    test_type: property_test
+    falsification: "A substrate where both ingredient invariants pass independently but the composite gate reports inadmissible, OR where one ingredient fails but the composite reports admissible. Composition must be the AND of the two ANCHORED axes."
+    priority: P0
+    provenance: ANCHORED
+    source: core/physics/anchored_substrate_gate.py
+    tests: tests/unit/physics/test_anchored_substrate_gate.py
+    integration_test: tests/integration/test_substrate_gate_chain.py
+    runtime_evaluable: yes
+    references:
+      - "Bekenstein, J. D. (1981). Universal upper bound on the entropy-to-energy ratio for bounded systems. Phys. Rev. D 23, 287."
+      - "Landauer, R. (1961). Irreversibility and Heat Generation in the Computing Process. IBM J. Res. Dev. 5, 183."
+      - "Bennett, C. H. (1982). The thermodynamics of computation — a review. Int. J. Theor. Phys. 21, 905."
+    related: [INV-BEKENSTEIN-COGNITIVE, INV-ARROW-OF-TIME]
+
+# ═══════════════════════════════════════════════════
+# API CONTRACT — schemathesis-enforced OpenAPI 3.1 surface (Phase-3 EXIT)
+# ═══════════════════════════════════════════════════
+# IERD-PAI-FPS-UX-001 §5 + ADR 0020 (Phase-3 EXIT, 2026-05-07): every
+# response emitted by `application.api.service.create_app()` must conform
+# to the OpenAPI 3.1 contract published in `schemas/openapi/`. Schemathesis
+# property-based fuzz fires on every PR touching application/api/** with
+# fail-closed semantics (no continue-on-error; the gate blocks merge).
+
+api_contract:
+  openapi_conformance:
+    id: INV-API-CONTRACT
+    type: universal
+    statement: "For every (path, method) declared in schemas/openapi/geosync-online-inference-v1.json, runtime responses from `application.api.service.create_app()` satisfy: (a) HTTP status code ∈ declared response codes for that operation; (b) response body validates against the declared JSON Schema for that status; (c) Content-Type matches the declared media type; (d) declared headers are present; (e) schema-violating requests are rejected with one of the declared 4xx codes (no silent acceptance)."
+    test_type: property_test
+    falsification: "Any response from `create_app()` whose status code, body, Content-Type, or headers diverge from the declared OpenAPI 3.1 contract; OR any schema-violating request silently accepted. Schemathesis emits a structured FailureGroup naming one of: UndefinedStatusCode, JsonSchemaError, MalformedMediaType, MissingHeaders, AcceptedNegativeData, ServerError."
+    priority: P1
+    provenance: ANCHORED
+    source: application/api/service.py
+    tests: tests/api/test_schemathesis_contract.py
+    integration_test: tests/api/test_schemathesis_contract.py
+    runtime_evaluable: yes
+    references:
+      - "OpenAPI Initiative (2024). OpenAPI Specification 3.1.0. https://spec.openapis.org/oas/v3.1.0"
+      - "Hatfield-Dodds, Z. et al. Schemathesis: property-based API testing. https://schemathesis.readthedocs.io"
+      - "IERD-PAI-FPS-UX-001 §5 (this repository): Phase-3 EXIT contract for the HTTP API."
+    related: []
+
+# ═══════════════════════════════════════════════════
+# COHERENCE-BRIDGE RELAY CONTRACT (physics core → risk layer)
+# ═══════════════════════════════════════════════════
+# Closes the ledger OPEN GAP for `coherence-bridge-geosync-adapter`: the
+# advisory relay must hand the risk layer a fail-closed verdict, distinguishing
+# the Ollivier κ (INV-RC1, κ ≤ 1) from the augmented-Forman blend (legitimately
+# unbounded above; never κ-bound evidence). NON-CLAIM: contract gate, not a
+# trading signal — VALID means "physics contract preserved", not "trade".
+
+coherence_bridge:
+  relay_contract:
+    id: INV-CBR1
+    type: universal
+    statement: "The CoherenceBridge → risk handoff is VALID iff order_parameter_R ∈ [0,1] (INV-K1) ∧ (ollivier_kappa ≤ 1 when present, INV-RC1) ∧ gamma finite ∧ gamma ≥ 0 (accepted spectral domain). On any violation the verdict is status=INVALID_PHYSICS_CONTRACT, decision=NO_GO, safe_risk_scalar=0.0. The augmented_forman_ricci field is checked for FINITENESS ONLY — it may exceed 1 and is never compared against the κ ≤ 1 bound nor accepted as κ-bound evidence."
+    test_type: property_test
+    falsification: "validate_physics_contract returns VALID for a signal with R∉[0,1], a negative/non-finite gamma, or an Ollivier κ>1+ε; OR it returns INVALID for an augmented-Forman value >1 whose R, gamma and Ollivier κ are all in-band; OR an INVALID verdict carries a non-zero safe_risk_scalar."
+    priority: P0
+    provenance: ANCHORED
+    source: coherence_bridge/physics_contract.py::validate_physics_contract
+    tests: tests/integration/test_coherence_bridge_invariants.py
+    scope_note: "Forman vs Ollivier are DISTINCT operators. INV-RC1 (κ ≤ 1) governs the Ollivier operator only (core/indicators/ricci.py). Forman/augmented-Forman curvature is unbounded above by construction; treating a Forman value > 1 as an INV-RC1 violation is a category error, and passing it as κ-bound evidence downstream is forbidden."
+    related: [INV-K1, INV-RC1]
+
+# ═══════════════════════════════════════════════════
+# NEURO-HOMEOSTATIC STABILIZER (engineering control contract)
+# ═══════════════════════════════════════════════════
+# Engineering invariant (NOT a neurophysiology claim): the decentralized reset
+# wave is a Lyapunov-energy descent under the COMMON-MODE regime it is witnessed
+# in. The scalar-mean correction provably descends energy only for coherent
+# (common-mode) phase error; that scope restriction is the non-claim.
+
+neuro_homeostatic:
+  reset_wave_energy_descent:
+    id: INV-HOM1
+    type: conditional
+    statement: "For a common-mode phase error (all node phase-diffs equal) the NeuroHomeostaticStabilizer reset wave is Lyapunov-energy non-increasing: post_reset_energy ≤ pre_reset_energy (energy E = gain·mean(1−cos Δφ), corrected by the scalar reset_energy = gain·mean(sin Δφ)). Every input-contract violation (unequal/empty phase lists, gain ≤ 0, max_phase_error ≤ 0) raises ValueError; |Δφ| > max_phase_error fail-closes to safety_lock=True with no state advance."
+    test_type: property_test
+    falsification: "re_adaptation_to_baseline returns post_reset_energy > pre_reset_energy + ε for a common-mode error within max_phase_error; OR a contract violation does not raise; OR an over-threshold error does not safety_lock."
+    priority: P1
+    provenance: ANCHORED
+    source: geosync/neuroeconomics/homeostatic_stabilizer.py::NeuroHomeostaticStabilizer
+    tests: tests/unit/neuro/test_homeostatic_stabilizer_setpoint.py
+    scope_note: "ENGINEERING analogue, not neuroscience. Energy descent is proven ONLY for the common-mode (coherent) regime — for heterogeneous phase error the scalar-mean correction is not a guaranteed descent direction. E/I ratio, 'serotonin', 'GABA tone' are arithmetic proxies, not modelled neurotransmitter dynamics."
+    related: [INV-K1]
+
+# ═══════════════════════════════════════════════════
+# ADAPTIVE CRITICALITY (membrane isolation) — registry binding
+# ═══════════════════════════════════════════════════
+# INV-AC1-rev previously lived only in CLAUDE.md prose. Registered here so it is
+# an authoritative registry entry: the evidence-integrity gate now treats ONLY
+# this file as the invariant authority, never CLAUDE.md prose tokens. The
+# adversarial-audit derivation stays in CLAUDE.md as the doc mirror.
+
+adaptive_criticality:
+  membrane_isolation:
+    id: INV-AC1-rev
+    type: universal
+    statement: "κ(node) ≥ κ_critical OR the node is ISOLATED, where κ_critical = -ln(ΔH_max/ε)/(λ_local+δ) (λ_local = DFA Hurst per node, ε SNR tolerance, δ singularity floor 1e-4). The executed gate fail-closes: a non-finite κ_node/λ_local or singular denominator isolates the node; an all-isolated ensemble raises; invalid shared ε/ΔH_max raise (no silent fallback)."
+    test_type: property_test
+    falsification: "should_isolate_node returns False for κ_node < κ_critical, OR isolates a node with κ_node ≥ κ_critical; OR a non-finite/singular input is silently admitted instead of isolated; OR aggregate_excluding_isolated returns a value when every node is isolated."
+    priority: P0
+    provenance: ANCHORED
+    source: geosync/estimators/dfa_gamma_estimator.py::AdaptiveCriticalityGate
+    tests: tests/unit/physics/test_adaptive_criticality_kappa.py
+    scope_note: "Criticality OBSERVER, not predictor; synthetic-only. Source-available, fail-closed, unit-tested gate — NOT yet wired into a production ensemble consumer (no live caller). Original INV-AC1 (κ_critical = -dH/dt·τ) is REJECTED (Pesin-identity failure in non-ergodic systems); this revised form supersedes it."
+    related: [INV-CRITICALITY, INV-DRO1]
+
+# ═══════════════════════════════════════════════════
+# SEVEN-LAW CONSTITUTIONAL PHYSICS ACT (Laws T1–T7) — registry reconciliation
+# ═══════════════════════════════════════════════════
+# These invariants were authored as the constitutional GeoSync Physics Law Act
+# (CLAUDE.md §Laws T1–T7) and bound to diff-scoped commit acceptors
+# (.claude/commit_acceptors/law-T*.yaml) with executable witnesses, but they
+# were never mirrored into THIS authoritative registry. The validator
+# (.claude/physics/validate_tests.py) and the evidence-integrity gate treat
+# ONLY this file as the invariant authority, so the T-series witnesses raised
+# L2 "INV-* not found in INVARIANTS.yaml" and could not be honestly grounded
+# (issue #823 follow-up note: "registry/header drift … separate
+# registry-reconciliation task"). Each statement/type/falsification below is
+# copied verbatim-in-substance from CLAUDE.md and cross-checked against the
+# law doc (docs/laws/T*.md), the source module, and the law-T* acceptor. No
+# new physics is introduced; this is a pure registry-authority reconciliation.
+
+law_t1_kuramoto_ricci_sync_onset:
+  phi_sign_regime:
+    id: INV-KR1
+    type: algebraic
+    statement: "sign(Φ) determines the asymptotic order-parameter regime, where Φ = K·λ_max(A_κ) − 2γ on the non-negative sync-adjacency built from Ollivier-Ricci curvatures (Restrepo-Ott-Hunt 2005). Subcritical (Φ < 0): ⟨R⟩ ≤ 1.5·3/√N. Supercritical (Φ > 0): ⟨R⟩ > 0.5."
+    test_type: property_test
+    parameters:
+      phi: "Φ = K·λ_max(A_κ) − 2γ — the Restrepo-Ott-Hunt synchronisation-onset functional on the curvature graph"
+      finite_size_band: "⟨R⟩ ≤ 1.5·3/√N is the finite-N incoherent fluctuation band; complete-graph limit reproduces K_c = 2γ/(N−1) (Strogatz 2000)"
+    falsification: "A subcritical ensemble (Φ < 0) settles to ⟨R⟩ > 1.5·3/√N, or a supercritical ensemble (Φ > 0) fails to reach ⟨R⟩ > 0.5, at the documented N and γ."
+    priority: P0
+    provenance: ANCHORED
+    source: core/kuramoto/kuramoto_ricci_engine.py
+    tests: tests/unit/physics/test_T1_kuramoto_ricci_boundary.py
+    references:
+      - "Restrepo, J. G., Ott, E. & Hunt, B. R. (2005). Onset of synchronization in large networks of coupled oscillators. Phys. Rev. E 71, 036151."
+      - "Ollivier, Y. (2009). Ricci curvature of Markov chains on metric spaces. J. Funct. Anal. 256, 810–864."
+      - "Strogatz, S. H. (2000). From Kuramoto to Crawford. Physica D 143, 1–20."
+    related: [INV-KR4, INV-RC1, INV-K1]
+
+  mle_zero_crossing:
+    id: INV-KR2
+    type: qualitative
+    statement: "The variational maximal Lyapunov exponent crosses zero through the onset boundary Φ = 0 — the synchronised manifold becomes attracting exactly where the algebraic regime functional changes sign. Verified via the Law T2 lyapunov_spectrum estimator."
+    test_type: sweep_test
+    falsification: "The sign of the variational MLE does not change across Φ = 0 over a coupling sweep bracketing the onset, contradicting the INV-KR1 regime split."
+    priority: P0
+    provenance: ANCHORED
+    source: core/kuramoto/kuramoto_ricci_engine.py
+    tests: tests/unit/physics/test_T1_kuramoto_ricci_boundary.py
+    references:
+      - "Restrepo, J. G., Ott, E. & Hunt, B. R. (2005). Onset of synchronization in large networks of coupled oscillators. Phys. Rev. E 71, 036151."
+    related: [INV-KR1, INV-LY1]
+
+  identical_frequency_potential_descent:
+    id: INV-KR3
+    type: conservation
+    statement: "With ω_i = 0 the Kuramoto coupling potential V is non-increasing along midpoint (RK2) trajectories: max dV/dt ≤ 1e-9. The phase-locked state is a Lyapunov-stable energy minimum when frequency heterogeneity is removed."
+    test_type: conservation
+    parameters:
+      potential: "V = −Σ_{i<j} A_ij cos(θ_i − θ_j) — the gradient potential whose −∇V is the identical-frequency Kuramoto flow"
+      tolerance: "max dV/dt ≤ 1e-9 — midpoint-integrator discretisation floor, not a tunable knob"
+    falsification: "A run with ω_i = 0 shows dV/dt > 1e-9 at any midpoint step, i.e. the coupling potential increases along the gradient flow."
+    priority: P0
+    provenance: ANCHORED
+    source: core/kuramoto/kuramoto_ricci_engine.py
+    tests: tests/unit/physics/test_T1_kuramoto_ricci_boundary.py
+    references:
+      - "Strogatz, S. H. (2000). From Kuramoto to Crawford. Physica D 143, 1–20."
+    related: [INV-KR1]
+
+law_t2_lyapunov_full_spectrum:
+  linear_flow_recovers_eigenvalues:
+    id: INV-LY1
+    type: algebraic
+    statement: "For a linear flow ẋ = A x the Benettin QR spectrum recovers the real parts of the eigenvalues: sort_desc(spectrum) == sort_desc(Re(eigvals(A))) to 1e-3 at T = 50. The variational estimator reduces to spectral theory on its exactly-solvable limit."
+    test_type: property_test
+    falsification: "sort_desc(spectrum) deviates from sort_desc(Re(eigvals(A))) by more than 1e-3 for a linear flow integrated to T = 50."
+    priority: P0
+    provenance: ANCHORED
+    source: core/physics/lyapunov_spectrum.py
+    tests: tests/unit/physics/test_T2_lyapunov_full_spectrum.py
+    references:
+      - "Benettin, G., Galgani, L., Giorgilli, A. & Strelcyn, J.-M. (1980). Lyapunov characteristic exponents for smooth dynamical systems; a method for computing all of them. Meccanica 15, 9–30."
+    related: [INV-LY2, INV-LY3, INV-LY4, INV-KR2]
+
+  hamiltonian_sum_zero_when_resolved:
+    id: INV-LY2
+    type: conditional
+    statement: "RESOLVED Hamiltonian flow ⇒ Σ λ_k = 0 to 1e-3 (harmonic oscillator, ≈16 periods, ω·dt ≲ 0.05). NOT universal: the tangent integrator is non-symplectic, so the Σλ error grows as O((ω·dt)⁴) (measured slope 3.998); the conservation bound holds ONLY when the fastest mode is time-resolved. Corrected from false-universal 2026-06 (cf. INV-RC3 #1023)."
+    test_type: property_test
+    parameters:
+      resolution_condition: "ω·dt ≲ 0.05 — fastest-mode time-resolution precondition; outside it the non-symplectic tangent flow breaks the sum rule as O((ω·dt)⁴)"
+    falsification: "A time-resolved Hamiltonian flow yields |Σ λ_k| > 1e-3, OR the breakdown of the sum away from resolution does not scale as the fourth power of ω·dt."
+    priority: P0
+    provenance: ANCHORED
+    source: core/physics/lyapunov_spectrum.py
+    tests: tests/unit/physics/test_T2_lyapunov_full_spectrum.py
+    references:
+      - "Benettin, G., Galgani, L., Giorgilli, A. & Strelcyn, J.-M. (1980). Lyapunov characteristic exponents for smooth dynamical systems. Meccanica 15, 9–30."
+      - "Sandri, M. (1996). Numerical calculation of Lyapunov exponents. Mathematica J. 6, 78–84."
+    related: [INV-LY1, INV-RC3]
+
+  fail_closed_contract:
+    id: INV-LY3
+    type: universal
+    statement: "Every contract violation (dt ≤ 0, n_steps ≤ 0, qr_every ∤ n_steps, n_exp ∉ [1, n], non-1-D x0) raises ValueError. Fail-closed; no silent repair of an ill-posed spectrum request."
+    test_type: property_test
+    falsification: "Any of the enumerated contract violations returns a spectrum (or a repaired result) instead of raising ValueError."
+    priority: P0
+    provenance: ANCHORED
+    source: core/physics/lyapunov_spectrum.py
+    tests: tests/unit/physics/test_T2_lyapunov_full_spectrum.py
+    references:
+      - "Benettin, G., Galgani, L., Giorgilli, A. & Strelcyn, J.-M. (1980). Lyapunov characteristic exponents for smooth dynamical systems. Meccanica 15, 9–30."
+    related: [INV-LY4]
+
+  qr_conditioning_fail_closed:
+    id: INV-LY4
+    type: universal
+    statement: "QR conditioning is fail-closed. If at ANY reorthonormalisation step the tangent frame loses orthonormality (max|QᵀQ − I| > _ORTHO_TOL ≈ 1e6·eps_f64) or a direction collapses below float64 relative resolution (min|R_kk| / max|R_kk| ≤ eps_f64), or either metric is non-finite, the run raises FloatingPointError(INV-LY4) instead of flooring |R_kk| with 1e-30 and returning a ≈ −69-bit garbage exponent. Both thresholds are tied to float64, not tunable. Orthonormal Q is the Benettin (1980) precondition; well-conditioned systems are byte-unchanged."
+    test_type: property_test
+    parameters:
+      ortho_tol: "_ORTHO_TOL ≈ 1e6·numpy.finfo(float64).eps — orthonormality residual ceiling on max|QᵀQ − I|"
+      rdiag_floor: "_RDIAG_REL_FLOOR = numpy.finfo(float64).eps — minimum admissible min|R_kk|/max|R_kk| before rank collapse"
+    falsification: "A rank-collapsing or blow-up-dt run returns a floored finite spectrum instead of raising FloatingPointError tagged INV-LY4, OR a well-conditioned run's accumulated log is altered by the guard."
+    priority: P0
+    provenance: ANCHORED
+    source: core/physics/lyapunov_spectrum.py
+    tests: tests/unit/physics/test_T2_lyapunov_full_spectrum.py
+    references:
+      - "Benettin, G., Galgani, L., Giorgilli, A. & Strelcyn, J.-M. (1980). Lyapunov characteristic exponents for smooth dynamical systems. Meccanica 15, 9–30."
+      - "IEEE 754-2019 — IEEE Standard for Floating-Point Arithmetic."
+    related: [INV-LY1, INV-LY3]
+
+law_t3_coupling_calibration:
+  feasible_target_residual:
+    id: INV-CAL1
+    type: algebraic
+    statement: "A feasible target λ_1 ⇒ residual ≤ tolerance (default 5e-2). On the round-trip (synthesise λ from K_truth via Law T2, calibrate K back via SciPy bounded Brent) the calibrator recovers λ to ≤ 1e-12 — limited only by SciPy xatol and the T2 estimator finite-T noise."
+    test_type: property_test
+    parameters:
+      objective: "minimise |λ_1(K·A; ω) − target|² on a bounded interval (K_min, K_max) with Brent's derivative-free method"
+      tolerance: "default residual tolerance 5e-2; round-trip recovery ≤ 1e-12"
+    falsification: "A feasible target reports CONVERGED with residual > tolerance, OR the K_truth→λ→K* round-trip recovers λ to worse than 1e-12 on the documented synthetic input."
+    priority: P0
+    provenance: ANCHORED
+    source: core/kuramoto/lyapunov_calibration.py
+    tests: tests/unit/physics/test_T3_lyapunov_calibration.py
+    references:
+      - "Brent, R. P. (1973). Algorithms for Minimization Without Derivatives. Prentice-Hall."
+      - "Pyragas, K. (1992). Continuous control of chaos by self-controlling feedback. Phys. Lett. A 170, 421–428."
+    related: [INV-CAL2, INV-CAL3, INV-LY1]
+
+  infeasible_target_status:
+    id: INV-CAL2
+    type: conditional
+    statement: "An infeasible target ⇒ status INFEASIBLE, never a silent best-effort. Tested: target λ = 5.0 (physically out of reach for N = 6 supercritical Kuramoto) correctly reports INFEASIBLE rather than returning a spurious K*."
+    test_type: property_test
+    falsification: "A target known to be out of reach returns status CONVERGED with a fabricated K* instead of INFEASIBLE."
+    priority: P0
+    provenance: ANCHORED
+    source: core/kuramoto/lyapunov_calibration.py
+    tests: tests/unit/physics/test_T3_lyapunov_calibration.py
+    references:
+      - "Brent, R. P. (1973). Algorithms for Minimization Without Derivatives. Prentice-Hall."
+    related: [INV-CAL1]
+
+  positivity_hard_bound:
+    id: INV-CAL3
+    type: universal
+    statement: "K* > 0 always — positivity is a hard search bound (K_min > 0 enforced), never a soft penalty. Every contract violation (NaN/inf target, K_min ≤ 0, K_max ≤ K_min, tolerance ≤ 0, max_iter ≤ 0, signed adjacency, shape mismatch) raises ValueError; fail-closed."
+    test_type: property_test
+    falsification: "The calibrator returns K* ≤ 0, OR admits any enumerated contract violation instead of raising ValueError."
+    priority: P0
+    provenance: ANCHORED
+    source: core/kuramoto/lyapunov_calibration.py
+    tests: tests/unit/physics/test_T3_lyapunov_calibration.py
+    references:
+      - "Brent, R. P. (1973). Algorithms for Minimization Without Derivatives. Prentice-Hall."
+    related: [INV-CAL1, INV-CAL2]
+
+law_t5_predictability_landauer:
+  lorenz_horizon_formula:
+    id: INV-TAU1
+    type: algebraic
+    statement: "Predictability horizon τ(λ_1) = (1/λ_1)·ln(δ_tol/δ_0) (Lorenz 1969). τ → +∞ when λ_1 ≤ 0 (no exponential divergence), and τ halves under a doubled λ_1 (a twice-as-chaotic system is predictable half as long)."
+    test_type: property_test
+    parameters:
+      formula: "τ = (1/λ_1)·ln(δ_tol/δ_0) — error-doubling horizon for an exponentially separating flow"
+    falsification: "τ deviates from (1/λ_1)·ln(δ_tol/δ_0) on analytic inputs, fails to return +∞ for λ_1 ≤ 0, or does not halve when λ_1 is doubled."
+    priority: P0
+    provenance: ANCHORED
+    source: core/physics/predictability_horizon.py
+    tests: tests/unit/physics/test_T5_predictability_landauer.py
+    references:
+      - "Lorenz, E. N. (1969). The predictability of a flow which possesses many scales of motion. Tellus 21, 289–307."
+    related: [INV-TAU2, INV-TAU3]
+
+  landauer_energy_floor:
+    id: INV-TAU2
+    type: conservation
+    statement: "Landauer floor E_min = k_B·T·ln(Δ/δ_0) sets the physical energy cost of initialising the state to precision δ_0 over dynamic range Δ (Landauer 1961). An over-budget δ_0 request raises a 'physically unaffordable' ValueError — no silent repair to an affordable precision."
+    test_type: conservation
+    parameters:
+      floor: "E_min = k_B·T·ln(Δ/δ_0) — the per-initialisation Landauer energy budget; this reuses k_B·T·ln 2 as a predictability-horizon budget, distinct from INV-LANDAUER bit-erasure"
+    falsification: "A precision request whose E_min exceeds the supplied energy budget is silently honoured instead of raising ValueError, OR the computed floor deviates from k_B·T·ln(Δ/δ_0)."
+    priority: P0
+    provenance: ANCHORED
+    source: core/physics/predictability_horizon.py
+    tests: tests/unit/physics/test_T5_predictability_landauer.py
+    references:
+      - "Landauer, R. (1961). Irreversibility and heat generation in the computing process. IBM J. Res. Dev. 5, 183–191."
+      - "Bennett, C. H. (2003). Notes on Landauer's principle, reversible computation, and Maxwell's Demon. Stud. Hist. Phil. Mod. Phys. 34, 501–510."
+    related: [INV-TAU1, INV-LANDAUER-PROXY]
+
+  fail_closed_contract:
+    id: INV-TAU3
+    type: universal
+    statement: "Every contract violation (non-finite λ_1, non-positive δ_0/δ_tol/Δ/T, δ_tol ≤ δ_0, over-budget request) raises ValueError. Fail-closed through the master formula; no NaN/inf horizon is ever returned as a number."
+    test_type: property_test
+    falsification: "Any enumerated contract violation returns a finite-or-NaN horizon instead of raising ValueError."
+    priority: P0
+    provenance: ANCHORED
+    source: core/physics/predictability_horizon.py
+    tests: tests/unit/physics/test_T5_predictability_landauer.py
+    references:
+      - "Lorenz, E. N. (1969). The predictability of a flow which possesses many scales of motion. Tellus 21, 289–307."
+    related: [INV-TAU1, INV-TAU2]
+
+law_t6_determinism_kit:
+  identical_inputs_identical_hash:
+    id: INV-DET1
+    type: universal
+    statement: "Identical canonical inputs ⇒ identical hash. All NaN bit-patterns collapse to one canonical NaN; +0 and −0 unify; subnormals flush to +0. Canonicalisation removes the float64 representations that are numerically equal but bitwise distinct before hashing (FIPS 180-4)."
+    test_type: property_test
+    falsification: "Two numerically-identical canonical inputs (differing only in NaN payload, signed zero, or subnormal representation) produce different hashes."
+    priority: P0
+    provenance: ANCHORED
+    source: core/physics/determinism_kit.py
+    tests: tests/unit/physics/test_T6_determinism_kit.py
+    references:
+      - "IEEE 754-2019 — IEEE Standard for Floating-Point Arithmetic."
+      - "FIPS 180-4 (2015). Secure Hash Standard (SHS). NIST."
+    related: [INV-DET2, INV-DET3, INV-HPC1]
+
+  ulp_perturbation_distinct_hash:
+    id: INV-DET2
+    type: universal
+    statement: "A 1-ULP perturbation ⇒ a different hash. dtype, shape, and trajectory-order aliasing are blocked, so two genuinely different states can never collide under the canonical hash. The kit is sensitive at the floating-point resolution limit."
+    test_type: property_test
+    falsification: "A 1-ULP perturbation, a dtype/shape change, or a trajectory reordering produces the same hash as the unperturbed input."
+    priority: P0
+    provenance: ANCHORED
+    source: core/physics/determinism_kit.py
+    tests: tests/unit/physics/test_T6_determinism_kit.py
+    references:
+      - "IEEE 754-2019 — IEEE Standard for Floating-Point Arithmetic."
+    related: [INV-DET1]
+
+  fail_closed_contract:
+    id: INV-DET3
+    type: universal
+    statement: "Every contract violation (unsupported dtype, ragged/object array, non-array input) raises ValueError. Fail-closed; the kit never hashes an input it cannot canonicalise deterministically."
+    test_type: property_test
+    falsification: "Any unsupported or non-canonicalisable input is hashed instead of raising ValueError."
+    priority: P0
+    provenance: ANCHORED
+    source: core/physics/determinism_kit.py
+    tests: tests/unit/physics/test_T6_determinism_kit.py
+    references:
+      - "IEEE 754-2019 — IEEE Standard for Floating-Point Arithmetic."
+    related: [INV-DET1, INV-DET2]
+
+law_t7_pinning_control:
+  pinning_set_stabilises_or_insufficient:
+    id: INV-PIN1
+    type: universal
+    statement: "The returned pinning set P satisfies λ_2(L + Γ_P) > ε_pin (the pinned Laplacian gains a strictly positive algebraic connectivity margin) OR the call returns status INSUFFICIENT. Fail-closed: it never claims control it did not achieve."
+    test_type: property_test
+    parameters:
+      pinned_laplacian: "L + Γ_P — graph Laplacian plus diagonal pinning gain on the selected nodes; λ_2 > ε_pin is the controllability margin (Wang-Chen 2002)"
+    falsification: "A returned set P reports success while λ_2(L + Γ_P) ≤ ε_pin, or an uncontrollable configuration returns success instead of INSUFFICIENT."
+    priority: P0
+    provenance: ANCHORED
+    source: runtime/pinning_control.py
+    tests: tests/unit/physics/test_T7_pinning_control.py
+    references:
+      - "Wang, X. F. & Chen, G. (2002). Pinning control of scale-free dynamical networks. Physica A 310, 521–531."
+      - "Sorrentino, F. et al. (2007). Controllability of complex networks via pinning. Phys. Rev. E 75, 046103."
+    related: [INV-PIN2, INV-PIN3, INV-PIN4, INV-SG1]
+
+  contractive_in_linearised_regime:
+    id: INV-PIN2
+    type: conditional
+    statement: "pinning_step is contractive in the linearised regime when target = 0, λ_2(L + Γ_P) > 0, and dt < 2/λ_max(L + Γ_P). The explicit-Euler stability window ties the admissible step to the largest pinned-Laplacian eigenvalue."
+    test_type: property_test
+    parameters:
+      step_bound: "dt < 2/λ_max(L + Γ_P) — explicit-Euler stability ceiling for the linearised pinned flow"
+    falsification: "A step taken with dt < 2/λ_max(L + Γ_P) under the stated conditions fails to contract the error toward the pinned target."
+    priority: P0
+    provenance: ANCHORED
+    source: runtime/pinning_control.py
+    tests: tests/unit/physics/test_T7_pinning_control.py
+    references:
+      - "Sorrentino, F. et al. (2007). Controllability of complex networks via pinning. Phys. Rev. E 75, 046103."
+      - "Olfati-Saber, R. & Murray, R. M. (2004). Consensus problems in networks of agents. IEEE Trans. Autom. Control 49, 1520–1533."
+    related: [INV-PIN1]
+
+  topology_preservation:
+    id: INV-PIN3
+    type: universal
+    statement: "The adjacency matrix A is never mutated by pinning selection or stepping — topology is preserved. Pinning acts through the additive gain Γ_P on the diagonal, never by rewiring the underlying graph."
+    test_type: property_test
+    falsification: "Any pinning call mutates the input adjacency A (an edge is added, removed, or reweighted)."
+    priority: P0
+    provenance: ANCHORED
+    source: runtime/pinning_control.py
+    tests: tests/unit/physics/test_T7_pinning_control.py
+    references:
+      - "Wang, X. F. & Chen, G. (2002). Pinning control of scale-free dynamical networks. Physica A 310, 521–531."
+    related: [INV-PIN1]
+
+  fail_closed_contract:
+    id: INV-PIN4
+    type: universal
+    statement: "Every contract violation (non-square/asymmetric A, negative pinning gain, ε_pin ≤ 0, dt ≤ 0, empty graph) raises ValueError. Fail-closed; an ill-posed control request is never silently accepted."
+    test_type: property_test
+    falsification: "Any enumerated contract violation returns a pinning result instead of raising ValueError."
+    priority: P0
+    provenance: ANCHORED
+    source: runtime/pinning_control.py
+    tests: tests/unit/physics/test_T7_pinning_control.py
+    references:
+      - "Wang, X. F. & Chen, G. (2002). Pinning control of scale-free dynamical networks. Physica A 310, 521–531."
+    related: [INV-PIN1, INV-PIN2, INV-PIN3]

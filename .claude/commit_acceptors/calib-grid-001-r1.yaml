@@ -1,0 +1,122 @@
+# Diff-bound commit acceptor for CALIB-GRID-001 R1.
+#
+# Refinement lineage R1 of the closed, pre-registered calibration
+# CALIB-GRID-001 (parent PR #749). FROZEN-GATE DISCIPLINE: the
+# pre-registration, its five acceptance-gate thresholds, the embedded
+# IEEE data, the theta0 perturbation, sigma, the seeds and the decision
+# rule are the single source of truth from PR #749 and are NOT touched.
+# R1 is an estimator-only, additive, contract-preserving change; the
+# default first-order path stays bit-identical to the frozen NEGATIVE
+# artifact (verified by test_r1_first_order_path_is_bit_stable).
+#
+# Locally verified:
+#   * pytest tests/research/calibration/ -m "not slow": 26 passed
+#   * pytest tests/research/calibration/ (incl. slow): 24 passed
+#   * pytest tests/unit/core/test_kuramoto_coupling_estimator.py +
+#     tests/research/systemic_risk/test_coupling.py: 34 passed
+#   * mypy --strict: clean on every touched file
+#   * ruff check + ruff format + black --check: clean on the diff
+#   * frozen prereg<->gates drift tests pass (no post-data retune)
+#
+# R1 outcome (MEASURED, frozen gates, no retune): noiseless.frobenius
+# 1.0459 -> 0.0666 (PASS); antisymmetric residual 15.9 -> 0.0; omega
+# rel 1.000 -> 0.471. Verdict still NEGATIVE: noiseless.critical_coupling
+# 1.000 -> 0.494 (FAIL, pseudo-inverse ill-conditioning) and the noisy
+# regime FAIL (double-differentiation SNR / persistent-excitation
+# boundary, no consistent estimator at the frozen record length).
+
+id: calib-grid-001-r1
+status: ACTIVE
+claim_type: documentation
+promise: >-
+  After this PR lands, core.kuramoto.coupling_estimator ships an
+  additive second-order (swing) identification path
+  (estimate_swing_coupling) with a symmetric joint solver,
+  Savitzky-Golay derivatives, a fail-closed persistent-excitation guard
+  (PersistentExcitationError) and a joint natural-frequency estimate;
+  and research/calibration/grid_kuramoto/r1/ ships a sha-pinned R1
+  artifact (ATTEMPT.md, RESULTS.json, RESULTS.md) that re-runs the SAME
+  frozen CALIB-GRID-001 gates via the swing path. The verdict is
+  NEGATIVE and sha-pinned: the swing path closes the parent's
+  first-order / antisymmetric model-class defect (noiseless Frobenius
+  gate flips to PASS, antisymmetric residual eliminated) but two
+  further boundaries — Dorfler-Bullo pseudo-inverse ill-conditioning
+  in the critical-coupling propagation and the double-differentiation
+  SNR boundary in the noisy regime — keep the overall verdict NEGATIVE.
+  No scientific claim is promoted; this is a calibration instrument and
+  the frozen gates were not retuned.
+diff_scope:
+  changed_files:
+    - path: ".claude/commit_acceptors/calib-grid-001-r1.yaml"
+    - path: "core/kuramoto/coupling_estimator.py"
+    - path: "research/calibration/grid_kuramoto/calibration.py"
+    - path: "research/calibration/grid_kuramoto/run.py"
+    - path: "research/calibration/grid_kuramoto/r1/ATTEMPT.md"
+    - path: "research/calibration/grid_kuramoto/r1/RESULTS.json"
+    - path: "research/calibration/grid_kuramoto/r1/RESULTS.md"
+    - path: "tests/research/calibration/test_grid_kuramoto.py"
+  forbidden_paths:
+    - "trading/"
+    - "execution/"
+    - "forecast/"
+    - "policy/"
+    - "core/physics/"
+    - "research/calibration/grid_kuramoto/PREREGISTRATION.md"
+    - "research/calibration/grid_kuramoto/gates.py"
+    - "application/governance/claim_ledger.py"
+    - "application/governance/commit_acceptor.py"
+required_python_symbols:
+  - "core/kuramoto/coupling_estimator.py::estimate_swing_coupling"
+  - "core/kuramoto/coupling_estimator.py::PersistentExcitationError"
+  - "core/kuramoto/coupling_estimator.py::SwingCouplingEstimate"
+  - "research/calibration/grid_kuramoto/calibration.py::recover_coupling_swing"
+  - "research/calibration/grid_kuramoto/calibration.py::run_calibration"
+  - "research/calibration/grid_kuramoto/run.py::build_r1_ledger"
+expected_signal: >-
+  `pytest tests/research/calibration/ -m "not slow"` reports
+  "26 passed"; the @slow calibration tests pass; mypy --strict / ruff /
+  black are clean on the diff; the frozen prereg<->gates drift tests
+  pass (no post-data retune); build_r1_ledger emits verdict ==
+  "NEGATIVE" citing the frozen pre-registration sha and parent ledger
+  sha; the swing path flips noiseless.frobenius to PASS while the
+  overall verdict stays NEGATIVE.
+measurement_command: >-
+  bash -c '
+    mypy --strict --follow-imports=silent
+      core/kuramoto/coupling_estimator.py
+      research/calibration/grid_kuramoto/
+      tests/research/calibration/test_grid_kuramoto.py && ruff check core/kuramoto research/calibration tests/research/calibration && black --check core/kuramoto research/calibration tests/research/calibration && python -m pytest tests/research/calibration/ -q -m "not slow"
+  '
+signal_artifact: "tmp/calib_grid_001_r1.log"
+falsifier:
+  command: >-
+    bash -c '
+      python -m pytest
+      tests/research/calibration/test_grid_kuramoto.py::test_r1_swing_path_closes_noiseless_frobenius_gate
+      tests/research/calibration/test_grid_kuramoto.py::test_r1_first_order_path_is_bit_stable
+      tests/research/calibration/test_grid_kuramoto.py::test_gate_thresholds_are_frozen_values
+      tests/research/calibration/test_grid_kuramoto.py::test_swing_pe_guard_fires_on_phase_locked_input
+      -q >/tmp/_calib_r1_rails.log 2>&1 && ! grep -q "4 passed" /tmp/_calib_r1_rails.log
+    '
+  description: >-
+    Probes four load-bearing R1 rails: the swing path flips
+    noiseless.frobenius to PASS while the overall verdict stays
+    NEGATIVE; the default first-order path is bit-stable (frozen
+    artifact unchanged); the frozen gate thresholds are unchanged (no
+    post-data retune); and the persistent-excitation guard fires
+    fail-closed on a constructed phase-locked trajectory. The falsifier
+    succeeds (exit 0) only when one of these rails fails.
+rollback_command: >-
+  bash -c 'git checkout origin/main --
+    core/kuramoto/coupling_estimator.py
+    research/calibration/grid_kuramoto/calibration.py
+    research/calibration/grid_kuramoto/run.py
+    tests/research/calibration/test_grid_kuramoto.py && rm -rf
+    research/calibration/grid_kuramoto/r1
+    .claude/commit_acceptors/calib-grid-001-r1.yaml'
+rollback_verification_command: >-
+  bash -c '! test -d research/calibration/grid_kuramoto/r1 && ! grep -q estimate_swing_coupling core/kuramoto/coupling_estimator.py'
+memory_update_type: append
+ledger_path: ".claude/commit_acceptors/calib-grid-001-r1.yaml"
+report_path: "tmp/calib_grid_001_r1.log"
+evidence: []

@@ -1,6 +1,6 @@
 # Documentation Architecture Guide
 
-This guide explains how the TradePulse documentation set is organized so that contributors can locate the right place for updates and keep the knowledge base consistent.
+This guide explains how the GeoSync documentation set is organized so that contributors can locate the right place for updates and keep the knowledge base consistent.
 
 ## Top-Level Structure
 
@@ -14,7 +14,7 @@ This guide explains how the TradePulse documentation set is organized so that co
 
 ## Core Topics Inside `docs/`
 
-TradePulse documentation is segmented by the lifecycle of quantitative research and production trading:
+GeoSync documentation is segmented by the lifecycle of quantitative research and production trading:
 
 1. **Orientation** – Quick starts and FAQs that help readers gain familiarity fast (`docs/quickstart.md`, `docs/faq.md`).
 2. **Implementation** – Extensibility and integration guides that walk through adding indicators, connectors, and APIs (`docs/extending.md`, `docs/integration-api.md`).
@@ -29,7 +29,7 @@ To keep the documentation cohesive, apply the following principles whenever you 
 
 - **Audience clarity** – Identify whether the page serves researchers, DevOps teams, or compliance stakeholders and write to that skill level.
 - **Outcome-first headings** – Every H2 should state the action or decision the reader can make after reading the section.
-- **Versioned examples** – Label code blocks with the TradePulse release and dependency versions that were validated.
+- **Versioned examples** – Label code blocks with the GeoSync release and dependency versions that were validated.
 - **Traceable references** – Cross-link to configuration files, modules, or ADRs using repository-relative paths for long-term durability.
 - **Testing completeness** – Whenever you document a workflow, include the commands or scripts used to validate the procedure.
 
@@ -41,4 +41,4 @@ To keep the documentation cohesive, apply the following principles whenever you 
 4. Add screenshots or terminal output artifacts to `docs/assets/` when visual confirmation adds value.
 5. Request review from the Documentation Guild in CODEOWNERS for cross-checking terminology and tone.
 
-Following this structure keeps documentation discoverable and auditable as TradePulse evolves.
+Following this structure keeps documentation discoverable and auditable as GeoSync evolves.

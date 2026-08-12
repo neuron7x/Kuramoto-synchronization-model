@@ -1,3 +1,5 @@
+# Copyright (c) 2023-2026 Yaroslav Vasylenko (neuron7xLab)
+# SPDX-License-Identifier: MIT
 """
 Signal Strategy Registry Module
 
@@ -166,9 +168,7 @@ class SignalStrategyRegistry:
         if self.strict_validation:
             validation = self._validate_strategy_class(strategy_class)
             if not validation.is_valid:
-                raise ValueError(
-                    f"Strategy validation failed: {', '.join(validation.errors)}"
-                )
+                raise ValueError(f"Strategy validation failed: {', '.join(validation.errors)}")
 
         # Реєстрація
         self._strategies[strategy_name] = strategy_class
@@ -205,9 +205,7 @@ class SignalStrategyRegistry:
 
         return True
 
-    def get_strategy(
-        self, strategy_name: str, **kwargs: Any
-    ) -> Optional[StrategyInterface]:
+    def get_strategy(self, strategy_name: str, **kwargs: Any) -> Optional[StrategyInterface]:
         """
         Отримання екземпляра стратегії
 
@@ -287,9 +285,7 @@ class SignalStrategyRegistry:
 
         return sorted(result)
 
-    def update_status(
-        self, strategy_name: str, status: StrategyStatus
-    ) -> bool:
+    def update_status(self, strategy_name: str, status: StrategyStatus) -> bool:
         """
         Оновлення статусу стратегії
 
@@ -308,9 +304,7 @@ class SignalStrategyRegistry:
 
         return True
 
-    def validate_strategy(
-        self, strategy_name: str, data: pd.DataFrame
-    ) -> StrategyValidationResult:
+    def validate_strategy(self, strategy_name: str, data: pd.DataFrame) -> StrategyValidationResult:
         """
         Валідація стратегії з тестовими даними
 
@@ -326,17 +320,14 @@ class SignalStrategyRegistry:
 
         if strategy_name not in self._strategies:
             errors.append(f"Strategy '{strategy_name}' not found")
-            return StrategyValidationResult(
-                is_valid=False, errors=errors, warnings=warnings
-            )
+            return StrategyValidationResult(is_valid=False, errors=errors, warnings=warnings)
 
         metadata = self._metadata[strategy_name]
 
         # Перевірка мінімальної кількості даних
         if len(data) < metadata.min_data_points:
             warnings.append(
-                f"Data has {len(data)} points, "
-                f"recommended minimum is {metadata.min_data_points}"
+                f"Data has {len(data)} points, recommended minimum is {metadata.min_data_points}"
             )
 
         # Перевірка необхідних колонок
@@ -355,9 +346,7 @@ class SignalStrategyRegistry:
         except Exception as e:
             errors.append(f"Signal generation failed: {str(e)}")
 
-        return StrategyValidationResult(
-            is_valid=len(errors) == 0, errors=errors, warnings=warnings
-        )
+        return StrategyValidationResult(is_valid=len(errors) == 0, errors=errors, warnings=warnings)
 
     def _validate_strategy_class(
         self, strategy_class: Type[StrategyInterface]
@@ -395,13 +384,9 @@ class SignalStrategyRegistry:
             except Exception as e:
                 warnings.append(f"Validator error: {str(e)}")
 
-        return StrategyValidationResult(
-            is_valid=len(errors) == 0, errors=errors, warnings=warnings
-        )
+        return StrategyValidationResult(is_valid=len(errors) == 0, errors=errors, warnings=warnings)
 
-    def add_validator(
-        self, validator: Callable[[Type[StrategyInterface]], bool]
-    ) -> None:
+    def add_validator(self, validator: Callable[[Type[StrategyInterface]], bool]) -> None:
         """
         Додавання валідатора стратегій
 
@@ -582,7 +567,7 @@ def get_strategy_registry() -> SignalStrategyRegistry:
                 version="1.0.0",
                 category=StrategyCategory.MOMENTUM,
                 description="Momentum strategy based on moving average crossover",
-                author="TradePulse",
+                author="GeoSync",
                 required_features={"close"},
                 tags={"trend", "momentum", "ma"},
             ),
@@ -621,7 +606,7 @@ def get_strategy_registry() -> SignalStrategyRegistry:
                 version="1.0.0",
                 category=StrategyCategory.MEAN_REVERSION,
                 description="Mean reversion strategy based on Bollinger Bands",
-                author="TradePulse",
+                author="GeoSync",
                 required_features={"close"},
                 tags={"reversion", "bollinger", "volatility"},
             ),

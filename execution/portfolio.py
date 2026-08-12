@@ -1,4 +1,5 @@
-# SPDX-License-Identifier: LicenseRef-TradePulse-Proprietary
+# Copyright (c) 2023-2026 Yaroslav Vasylenko (neuron7xLab)
+# SPDX-License-Identifier: MIT
 """Portfolio level accounting utilities for realised/unrealised PnL."""
 
 from __future__ import annotations
@@ -98,24 +99,21 @@ class PortfolioAccounting:
         """Return total gross exposure in notional terms."""
 
         return sum(
-            abs(position.quantity * position.current_price)
-            for position in self._positions.values()
+            abs(position.quantity * position.current_price) for position in self._positions.values()
         )
 
     def net_exposure(self) -> float:
         """Return signed net exposure."""
 
         return sum(
-            position.quantity * position.current_price
-            for position in self._positions.values()
+            position.quantity * position.current_price for position in self._positions.values()
         )
 
     def equity(self) -> float:
         """Return portfolio equity (cash + market value)."""
 
         market_value = sum(
-            position.quantity * position.current_price
-            for position in self._positions.values()
+            position.quantity * position.current_price for position in self._positions.values()
         )
         return self._cash + market_value
 

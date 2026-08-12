@@ -1,3 +1,5 @@
+# Copyright (c) 2023-2026 Yaroslav Vasylenko (neuron7xLab)
+# SPDX-License-Identifier: MIT
 """Generic inductive proof engine backed by Z3.
 
 This module centralizes mathematical induction checks so that individual
@@ -59,9 +61,7 @@ class InductiveProofEngine:
     def _normalize(self, constraints: Any) -> list[Any]:
         if isinstance(constraints, self._z3.BoolRef):
             return [constraints]
-        if isinstance(constraints, Iterable) and not isinstance(
-            constraints, (str, bytes)
-        ):
+        if isinstance(constraints, Iterable) and not isinstance(constraints, (str, bytes)):
             return list(constraints)
         raise TypeError(
             "Inductive predicates must return a Z3 Boolean constraint or an iterable of such constraints"

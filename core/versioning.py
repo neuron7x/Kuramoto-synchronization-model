@@ -1,5 +1,6 @@
-# SPDX-License-Identifier: LicenseRef-TradePulse-Proprietary
-"""Build versioning and config provenance for TradePulse.
+# Copyright (c) 2023-2026 Yaroslav Vasylenko (neuron7xLab)
+# SPDX-License-Identifier: MIT
+"""Build versioning and config provenance for GeoSync.
 
 This module provides version metadata, build information, and configuration
 provenance hashing. It ensures reproducibility by tracking the exact
@@ -110,6 +111,7 @@ def _run_git_command(args: list[str], cwd: Path | None = None) -> str | None:
             text=True,
             check=True,
             timeout=10,
+            encoding="utf-8",
         )
         return result.stdout.strip()
     except (subprocess.CalledProcessError, FileNotFoundError, subprocess.TimeoutExpired):
@@ -153,15 +155,13 @@ def get_git_info(repo_path: Path | None = None) -> GitInfo | None:
 
     # Get commit date
     commit_date: datetime | None = None
-    date_str = _run_git_command(
-        ["show", "-s", "--format=%ci", "HEAD"], cwd
-    )
+    date_str = _run_git_command(["show", "-s", "--format=%ci", "HEAD"], cwd)
     if date_str:
         try:
             # Parse git date format: "2023-01-15 10:30:45 -0500"
-            commit_date = datetime.strptime(
-                date_str[:19], "%Y-%m-%d %H:%M:%S"
-            ).replace(tzinfo=timezone.utc)
+            commit_date = datetime.strptime(date_str[:19], "%Y-%m-%d %H:%M:%S").replace(
+                tzinfo=timezone.utc
+            )
         except ValueError:
             LOGGER.debug("Failed to parse git commit date: %s", date_str)
 
@@ -191,7 +191,7 @@ def get_package_version() -> str:
     try:
         from importlib.metadata import version
 
-        return version("tradepulse")
+        return version("geosync")
     except Exception:
         pass
 
@@ -199,7 +199,7 @@ def get_package_version() -> str:
     try:
         import pkg_resources
 
-        return pkg_resources.get_distribution("tradepulse").version
+        return pkg_resources.get_distribution("geosync").version
     except Exception:
         pass
 
@@ -227,7 +227,7 @@ def get_build_metadata(
     Returns:
         BuildMetadata with version and build information
     """
-    env = environment or os.environ.get("TRADEPULSE_ENV")
+    env = environment or os.environ.get("GEOSYNC_ENV")
 
     return BuildMetadata(
         version=get_package_version(),

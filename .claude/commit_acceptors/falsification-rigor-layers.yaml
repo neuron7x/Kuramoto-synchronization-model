@@ -1,0 +1,65 @@
+# ci-heartbeat: falsification-rigor-layers
+id: falsification-rigor-layers
+status: ACTIVE
+claim_type: fail_closed
+promise: >-
+  Raise the falsification ceiling with four orthogonal rigor layers over the
+  exact-law spine, each reusing real solvers: PROPERTY-based (Hypothesis-fuzzed
+  invariants over wide input distributions), METAMORPHIC relations (invariance/
+  scaling under input transforms), CONVERGENCE-ORDER verification (Richardson
+  slope == theoretical RK4/Benettin order), and INDEPENDENT-ORACLE
+  cross-validation (repo vs networkx / scipy.constants / closed form). Also
+  registers core/indicators/gauss_bonnet.py in the mutation-kill baseline at a
+  100% logic kill-rate. Eight new blocking falsification laws, each with a
+  positive witness and a discriminating negative control. No canonical catalog
+  mutation, no trading/execution/forecast/policy change.
+diff_scope:
+  changed_files:
+    - path: ".claude/commit_acceptors/falsification-rigor-layers.yaml"
+    - path: "docs/MUTATION_KILL_BASELINE.json"
+    - path: "tests/physics/test_property_based_invariants.py"
+    - path: "tests/physics/test_metamorphic_relations.py"
+    - path: "tests/physics/test_convergence_order.py"
+    - path: "tests/physics/test_independent_oracle_crossvalidation.py"
+  forbidden_paths:
+    - "trading/"
+    - "execution/"
+    - "forecast/"
+    - "policy/"
+required_python_symbols: []
+expected_signal: >-
+  tools/validate_physics_contracts.py reports 41 blocking laws fully witnessed
+  (was 33). Property tests fuzz K1/RC1/OA1/Kelly/DRO over 100+ examples each;
+  metamorphic relations hold to machine tolerance and their corruptions are
+  flagged; convergence orders measure RK4~4 / Euler~1 / Benettin omega-slope
+  ~3.998; oracle cross-checks agree exactly (networkx chi, scipy.constants k_B,
+  closed forms). gauss_bonnet.py probes at 100% logic kill-rate. No
+  trading/execution/forecast/policy change.
+measurement_command: >-
+  PYTHONPATH=. python tools/validate_physics_contracts.py && PYTHONPATH=.
+  python -m pytest tests/physics/test_property_based_invariants.py
+  tests/physics/test_metamorphic_relations.py
+  tests/physics/test_convergence_order.py
+  tests/physics/test_independent_oracle_crossvalidation.py -q
+signal_artifact: "tmp/falsification_rigor_layers.log"
+falsifier:
+  command: >-
+    PYTHONPATH=. python -m pytest
+    tests/physics/test_metamorphic_relations.py
+    tests/physics/test_independent_oracle_crossvalidation.py -q
+  description: >-
+    Fails if a fuzzed invariant escapes its bound, a metamorphic relation breaks
+    under input transform, a measured convergence order departs from theory, or
+    a repo result diverges from its independent oracle.
+rollback_command: >-
+  git checkout origin/main -- docs/MUTATION_KILL_BASELINE.json
+rollback_verification_command: >-
+  PYTHONPATH=. python tools/validate_physics_contracts.py
+memory_update_type: none
+ledger_path: ".claude/commit_acceptors/falsification-rigor-layers.yaml"
+report_path: ".claude/commit_acceptors/falsification-rigor-layers.yaml"
+evidence:
+  - path: "tests/physics/test_property_based_invariants.py"
+  - path: "tests/physics/test_metamorphic_relations.py"
+  - path: "tests/physics/test_convergence_order.py"
+  - path: "tests/physics/test_independent_oracle_crossvalidation.py"

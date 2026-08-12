@@ -1,4 +1,6 @@
 #!/usr/bin/env python3
+# Copyright (c) 2023-2026 Yaroslav Vasylenko (neuron7xLab)
+# SPDX-License-Identifier: MIT
 """Red-Team Policy Evaluation Harness.
 
 Offline evaluation of policy decisions against adversarial test cases.
@@ -23,8 +25,6 @@ import yaml
 
 # Add repository root to path for imports
 REPO_ROOT = Path(__file__).resolve().parent.parent.parent
-sys.path.insert(0, str(REPO_ROOT))
-sys.path.insert(0, str(REPO_ROOT / "src"))
 
 # Import directly using importlib to avoid triggering parent __init__.py
 import importlib.util
@@ -42,21 +42,21 @@ def _load_module_direct(name: str, path: Path):
 
 
 # Load policy modules directly
-_policy_path = REPO_ROOT / "src" / "tradepulse" / "policy"
+_policy_path = REPO_ROOT / "src" / "geosync" / "policy"
 _decision_types = _load_module_direct(
-    "tradepulse.policy.decision_types",
+    "geosync.policy.decision_types",
     _policy_path / "decision_types.py",
 )
 DecisionType = _decision_types.DecisionType
 
 _decision_trace = _load_module_direct(
-    "tradepulse.policy.decision_trace",
+    "geosync.policy.decision_trace",
     _policy_path / "decision_trace.py",
 )
 TraceScrubber = _decision_trace.TraceScrubber
 
 _policy_engine = _load_module_direct(
-    "tradepulse.policy.policy_engine",
+    "geosync.policy.policy_engine",
     _policy_path / "policy_engine.py",
 )
 PolicyEngine = _policy_engine.PolicyEngine

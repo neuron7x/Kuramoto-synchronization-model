@@ -1,0 +1,294 @@
+# GeoSync Claim Ledger
+#
+# Every high-impact repository claim that the codebase, docs, or governance
+# materials assert MUST be encoded here. The ledger is machine-validated by
+# .claude/claims/validate_claims.py and gates pull-request and pre-commit
+# pipelines.
+#
+# A claim is valid only if it identifies:
+#   1. the assumption being borrowed (statement)
+#   2. the surface where it can fail (owner_surface)
+#   3. the evidence that the risk exists (evidence_paths)
+#   4. the priority band justified by impact (class + tier)
+#   5. the smallest repayment action (implicit in test_paths + falsifier)
+#   6. the test or gate proving repayment (test_paths)
+#
+# Editing rules:
+#   - Add new claims by appending to `claims:` with a unique claim_id.
+#   - Never silently downgrade a tier; mark superseded entries with
+#     status: RETIRED and add a successor.
+#   - Never delete a claim that has been REJECTED — keep it as the negative
+#     reference so the same overclaim does not return.
+#   - Run `python .claude/claims/validate_claims.py` before commit.
+
+schema_version: 1
+
+# ---------------------------------------------------------------------------
+# Claim classes — one of:
+#   SECURITY, SCIENTIFIC, FINANCIAL, RELIABILITY, REPRODUCIBILITY,
+#   PERFORMANCE, ARCHITECTURE, GOVERNANCE
+#
+# Tiers — one of:
+#   FACT          (executed evidence; passes validator gates)
+#   EXTRAPOLATION (probable from evidence; needs follow-up)
+#   SPECULATION   (possible; not justified as operational finding)
+#
+# Status — one of:
+#   ACTIVE   (currently asserted; validator gates apply)
+#   PARTIAL  (closure incomplete; still gated)
+#   RETIRED  (superseded; kept for audit trail)
+#   REJECTED (claim falsified; kept as negative reference)
+
+claims:
+
+  # =========================================================================
+  # F01 — torch dependency-range hygiene (closed by PR #445)
+  # =========================================================================
+  - claim_id: SEC-DEP-TORCH-RANGE-DRIFT
+    statement: |
+      requirements.txt previously declared torch>=2.1.0 while pyproject.toml
+      requires torch>=2.11.0. The pip resolver picks 2.11.0+ today, so this
+      is a manifest-hygiene risk (range drift), not an active vulnerability.
+    class: SECURITY
+    tier: FACT
+    evidence_paths:
+      - type: FILE_DECLARATION
+        path: requirements.txt
+        capture: "torch>=2.11.0"
+      - type: FILE_DECLARATION
+        path: pyproject.toml
+        capture: '"torch>=2.11.0"'
+      - type: RESOLVER_OUTPUT
+        path: docs/governance/audit_records/2026-04-26-F01-resolver.md
+        capture: "torch==2.11.0 (pip --dry-run on requirements.txt)"
+    test_paths:
+      - tests/unit/governance/test_dependency_floor_alignment.py
+    falsifier: |
+      pyproject torch lower bound is numerically below the requirements.txt
+      torch lower bound, OR `pip install --dry-run -r requirements.txt`
+      resolves torch to a version below 2.11.0.
+    owner_surface: deps/python/runtime
+    last_verified_command: |
+      pip install --dry-run --ignore-installed --report - -r requirements.txt
+    status: ACTIVE
+    related_pr: 445
+
+  # =========================================================================
+  # F03 — Strawberry version risk (closed by PR #445); reachability open
+  # =========================================================================
+  - claim_id: SEC-DEP-STRAWBERRY-VERSION-RISK
+    statement: |
+      All three lockfiles (requirements.lock, requirements-dev.lock,
+      requirements-scan.lock) pin strawberry-graphql at or above 0.312.3,
+      the fix floor for GHSA-vpwc-v33q-mq89 (auth bypass via legacy
+      graphql-ws subprotocol) and GHSA-hv3w-m4g2-5x77 (DoS via unbounded
+      WebSocket subscriptions).
+    class: SECURITY
+    tier: FACT
+    evidence_paths:
+      - type: LOCKFILE_PIN
+        path: requirements.lock
+        capture: "strawberry-graphql[fastapi]==0.315.2"
+      - type: LOCKFILE_PIN
+        path: requirements-dev.lock
+        capture: "strawberry-graphql[fastapi]==0.315.2"
+      - type: LOCKFILE_PIN
+        path: requirements-scan.lock
+        capture: "strawberry-graphql==0.315.2"
+      - type: SCANNER_OUTPUT
+        path: docs/governance/audit_records/2026-04-26-F03-pip-audit.md
+        capture: "0 strawberry-graphql vulns on all three lockfiles"
+      - type: EXTERNAL_ADVISORY
+        path: docs/governance/audit_records/2026-04-26-F03-pip-audit.md
+        capture: "GHSA-vpwc-v33q-mq89 fix=0.312.3; GHSA-hv3w-m4g2-5x77 fix=0.312.3"
+    test_paths:
+      - tests/unit/governance/test_dependency_floor_alignment.py
+    falsifier: |
+      Any lockfile entry strawberry-graphql<0.312.3, OR pip-audit reports
+      GHSA-vpwc-v33q-mq89 / GHSA-hv3w-m4g2-5x77 against any locked manifest.
+    owner_surface: deps/python/runtime
+    last_verified_command: |
+      pip-audit -r requirements.lock --no-deps -f json
+    status: ACTIVE
+    related_pr: 445
+
+  - claim_id: SEC-GRAPHQL-WS-AUTHN-REACHABILITY
+    statement: |
+      The GHSA-vpwc-v33q-mq89 auth-bypass surface (legacy graphql-ws
+      WebSocket subprotocol) is operationally exploitable in this
+      repository's GraphQLRouter mount at /graphql.
+    class: SECURITY
+    tier: SPECULATION
+    evidence_paths:
+      - type: MANUAL_INSPECTION
+        path: application/api/graphql_api.py
+        capture: |
+          Schema defines only Query (no Subscription type); GraphQLRouter
+          auto-registers WS subprotocols by default.
+      - type: MANUAL_INSPECTION
+        path: application/api/service.py
+        capture: |
+          graphql_router mounted at /graphql with Depends(enforce_public_rate_limit);
+          WS handshake authn semantics not verified.
+    test_paths: []
+    falsifier: |
+      Integration test connecting to /graphql via WebSocket with no auth
+      header and Sec-WebSocket-Protocol: graphql-ws is rejected at handshake
+      (HTTP 401/403 or WS close 1008).
+    owner_surface: application/api/graphql
+    last_verified_command: ""
+    status: REJECTED
+    rejection_reason: |
+      Falsified by tests/integration/test_graphql_ws_reachability.py
+      (PR #452, audit record 2026-04-26-F03-graphql-ws-reachability.md).
+      The claim's framing assumed an authentication surface to bypass.
+      Integration witness shows /graphql is intentionally public:
+        - graphql-ws AND graphql-transport-ws handshakes both ACCEPTED
+        - rate-limit dep (enforce_public_rate_limit) IS invoked at WS upgrade
+        - schema declares no Subscription type; connection_init →
+          connection_ack succeeds but no subscription operations exist
+      GHSA-vpwc-v33q-mq89 (auth bypass via legacy graphql-ws): N/A —
+      no auth surface to bypass on this public endpoint.
+      GHSA-hv3w-m4g2-5x77 (DoS via unbounded subscriptions): N/A —
+      no Subscription type in the schema.
+      Replaced by SEC-GRAPHQL-WS-PUBLIC-SURFACE recording what was
+      actually proven. The original claim is preserved here as a
+      negative reference.
+    related_pr: 445
+    related_issue: 446
+    superseded_by: SEC-GRAPHQL-WS-PUBLIC-SURFACE
+
+  - claim_id: SEC-GRAPHQL-WS-PUBLIC-SURFACE
+    statement: |
+      /graphql exposes a public WebSocket endpoint that completes
+      both `graphql-ws` and `graphql-transport-ws` handshakes.
+      Rate-limit dependency `enforce_public_rate_limit` is invoked at
+      WS upgrade. The schema declares no Subscription type, so no
+      subscription operations exist for an attacker to subscribe to.
+      The endpoint is public by design; no authentication is required
+      and none is bypassed.
+    class: SECURITY
+    tier: FACT
+    evidence_paths:
+      - type: INTEGRATION_TEST
+        path: tests/integration/test_graphql_ws_reachability.py
+        capture: |
+          Both subprotocols → PROTOCOL_HANDSHAKE_ACCEPTED;
+          dependency_invoked=True; recv after connection_init =
+          {'type': 'connection_ack'}; subscription_type is None.
+      - type: MANUAL_INSPECTION
+        path: application/api/graphql_api.py
+        capture: |
+          create_graphql_router builds Schema(query=Query) with no
+          subscription= argument. GraphQLRouter constructed with
+          default subscription_protocols=('graphql-transport-ws',
+          'graphql-ws').
+      - type: MANUAL_INSPECTION
+        path: application/api/service.py
+        capture: |
+          app.include_router(graphql_router, prefix="/graphql",
+          dependencies=[Depends(enforce_public_rate_limit)]).
+      - type: EXTERNAL_ADVISORY
+        path: docs/governance/audit_records/2026-04-26-F03-graphql-ws-reachability.md
+        capture: |
+          GHSA-vpwc-v33q-mq89 fix=0.312.3; lockfile pinned at 0.315.2;
+          F03 version risk closed by PR #445. Reachability classified
+          here as N/A-by-design.
+    test_paths:
+      - tests/integration/test_graphql_ws_reachability.py
+    falsifier: |
+      Any of the following observable conditions would refute this
+      claim:
+        1. test_no_subscription_type_in_schema fails (a Subscription
+           type was added without re-deriving reachability).
+        2. test_dependency_is_invoked_on_http_route_baseline fails
+           (the rate-limit boundary regressed).
+        3. test_observed_reachability_matches_ledger_speculation_tier
+           records a tier outside the admissible set.
+    owner_surface: application/api/graphql
+    last_verified_command: |
+      python -m pytest tests/integration/test_graphql_ws_reachability.py -v
+    status: ACTIVE
+    related_pr: 452
+    related_issue: 446
+
+  # =========================================================================
+  # ARCHITECTURE — module boundary contracts (currently absent)
+  # =========================================================================
+  - claim_id: ARCH-IMPORT-LINTER-CONTRACTS
+    statement: |
+      Architectural module boundaries (e.g. core.physics independent of
+      execution.*; core.* may not import from application.*) are
+      declaratively enforced and validated in CI.
+    class: ARCHITECTURE
+    tier: SPECULATION
+    evidence_paths: []
+    test_paths: []
+    falsifier: |
+      No .importlinter config exists at repository root, OR lint-imports
+      reports 0 contracts loaded.
+    owner_surface: architecture/boundaries
+    last_verified_command: ""
+    status: REJECTED
+    rejection_reason: |
+      No .importlinter config in the repository as of 2026-04-26. Audit
+      report v2 (F04, MEDIUM) tracks this gap. Kept here as a negative
+      reference: do not assert architectural boundary enforcement until
+      contracts are introduced and lint-imports gates pr-gate.yml.
+
+  # =========================================================================
+  # GOVERNANCE — coverage measurement integrity
+  # =========================================================================
+  - claim_id: GOV-COVERAGE-MEASURES-WHAT-IT-CLAIMS
+    statement: |
+      Coverage reports produced by `pytest --cov` measure the subsystems
+      they purport to (core, backtest, execution, application, etc.).
+    class: GOVERNANCE
+    tier: SPECULATION
+    evidence_paths:
+      - type: FILE_DECLARATION
+        path: .coveragerc
+        capture: |
+          [run] source = core, backtest, execution
+          [omit] re-excludes most of core/* + all of application/, analytics/,
+          apps/, tools/, src/, observability/
+    test_paths: []
+    falsifier: |
+      A coverage run on the live config shows non-zero measured statements
+      for every directory listed under `source =` after the omit pattern is
+      applied.
+    owner_surface: governance/coverage
+    last_verified_command: ""
+    status: REJECTED
+    rejection_reason: |
+      Audit v2 finding F02: .coveragerc omit list excludes the same
+      subsystems declared under `source =`, making the reported coverage
+      number measure a small subset only. Kept REJECTED until .coveragerc
+      is rebuilt with per-subsystem floors.
+
+  # =========================================================================
+  # PHYSICS / SCIENTIFIC — invariant registry pointer
+  # =========================================================================
+  - claim_id: PHYS-INVARIANT-REGISTRY-PRESENT
+    statement: |
+      .claude/physics/INVARIANTS.yaml enumerates the physics-level invariants
+      that physics-invariants.yml CI workflow validates on every PR.
+    class: SCIENTIFIC
+    tier: FACT
+    evidence_paths:
+      - type: FILE_DECLARATION
+        path: .claude/physics/INVARIANTS.yaml
+        capture: "physics invariant registry"
+      - type: CI_STATUS
+        path: .github/workflows/physics-invariants.yml
+        capture: "physics-invariants job runs on pull_request"
+    test_paths:
+      - .github/workflows/physics-invariants.yml
+    falsifier: |
+      .claude/physics/INVARIANTS.yaml does not exist OR
+      physics-invariants.yml does not run on pull_request OR
+      physics-invariants.yml does not exit non-zero on invariant violation.
+    owner_surface: physics/contracts
+    last_verified_command: |
+      python .claude/physics/validate_tests.py --self-check
+    status: ACTIVE

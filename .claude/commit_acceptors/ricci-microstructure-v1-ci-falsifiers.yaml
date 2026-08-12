@@ -1,0 +1,63 @@
+# Diff-bound commit acceptor (4 of 4) for PR #1242 ricci_microstructure_v1.
+#
+# Scope: the three committed single-purpose falsifier scripts referenced by the
+# kernel / scaffolding / docs acceptors. They are extracted to scripts/ci/*.py
+# (instead of inline `python -c` payloads) so the YAML round-trip cannot reflow
+# them into a SyntaxError — the commit-acceptor command-syntax gate requires
+# every inline payload to parse. Each script exits 0 in the asserted-healthy
+# state and non-zero when its property breaks.
+
+id: ricci-microstructure-v1-ci-falsifiers
+status: ACTIVE
+claim_type: governance
+promise: >-
+  The three lane falsifier scripts are real, executable, diff-bound falsifiers:
+  the kernel falsifier exits non-zero iff the Ollivier-Ricci kernel goes vacuous
+  (a size change no longer moves curvature); the scaffolding falsifier exits
+  non-zero iff the artifact schema accepts a forbidden ALPHA_FOUND overclaim; the
+  docs falsifier exits non-zero iff the lane docs drop the negative-result
+  framing or gain a forbidden market-mythology promotion token.
+
+diff_scope:
+  changed_files:
+    - path: ".claude/commit_acceptors/ricci-microstructure-v1-ci-falsifiers.yaml"
+    - path: "scripts/ci/ricci_microstructure_kernel_falsifier.py"
+    - path: "scripts/ci/ricci_microstructure_scaffolding_falsifier.py"
+    - path: "scripts/ci/ricci_microstructure_docs_falsifier.py"
+  forbidden_paths:
+    - "trading/"
+    - "execution/"
+    - "forecast/"
+    - "policy/"
+
+required_python_symbols:
+  - "scripts/ci/ricci_microstructure_kernel_falsifier.py::main"
+  - "scripts/ci/ricci_microstructure_scaffolding_falsifier.py::main"
+  - "scripts/ci/ricci_microstructure_docs_falsifier.py::main"
+
+expected_signal: >-
+  All three scripts exit 0 on the asserted-healthy tree (kernel sensitive,
+  schema rejects overclaim, docs preserve the negative framing).
+
+measurement_command: |-
+  bash -c 'PYTHONPATH=. python scripts/ci/ricci_microstructure_kernel_falsifier.py && PYTHONPATH=. python scripts/ci/ricci_microstructure_scaffolding_falsifier.py && PYTHONPATH=. python scripts/ci/ricci_microstructure_docs_falsifier.py'
+
+signal_artifact: "tmp/ricci_microstructure_v1_ci_falsifiers.log"
+
+falsifier:
+  command: |-
+    bash -c 'PYTHONPATH=. python scripts/ci/ricci_microstructure_scaffolding_falsifier.py'
+  description: >-
+    The scaffolding falsifier inverts the no-overclaim contract: it exits 0 only
+    while the artifact schema rejects an ALPHA_FOUND payload. Weakening the
+    schema to admit the overclaim flips it to a non-zero exit.
+
+rollback_command: |-
+  bash -c 'git rm -f scripts/ci/ricci_microstructure_kernel_falsifier.py scripts/ci/ricci_microstructure_scaffolding_falsifier.py scripts/ci/ricci_microstructure_docs_falsifier.py .claude/commit_acceptors/ricci-microstructure-v1-ci-falsifiers.yaml'
+
+rollback_verification_command: |-
+  bash -c 'test ! -e scripts/ci/ricci_microstructure_kernel_falsifier.py'
+
+memory_update_type: none
+ledger_path: ".claude/commit_acceptors/ricci-microstructure-v1-ci-falsifiers.yaml"
+report_path: "docs/RICCI_MICROSTRUCTURE.md"

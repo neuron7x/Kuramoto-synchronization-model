@@ -1,0 +1,32 @@
+id: web-agent-docs-protocol
+status: DRAFT
+claim_type: documentation
+promise: "Web-agent architecture documentation is bound to explicit protocol, operational, cognitive, readiness, and vulnerability governance artifacts."
+diff_scope:
+  changed_files:
+    - path: ".claude/commit_acceptors/web-agent-docs-protocol.yaml"
+    - path: "docs/agents/WEB_AGENT_ARCHITECTURE_PROTOCOL.md"
+    - path: "docs/agents/web_agent_operationalization_matrix.md"
+    - path: "docs/agents/web_agent_cognitive_state_assessment.md"
+    - path: "docs/agents/web_agent_baseline_report.md"
+    - path: "docs/agents/web_agent_tool_contract_inventory.md"
+    - path: "docs/agents/web_agent_critical_vulnerability_register.md"
+    - path: "docs/agents/web_agent_readiness_verdict.md"
+  forbidden_paths:
+    - "trading/"
+    - "execution/"
+    - "forecast/"
+    - "policy/"
+required_python_symbols: []
+expected_signal: "web-agent documentation contract files exist and declare fail-closed non-production readiness boundaries"
+measurement_command: "python -m pytest tests/agents/test_web_agent_protocol_contract.py tests/agents/test_web_agent_cognitive_state_contract.py tests/agents/test_web_agent_readiness_verdict.py"
+signal_artifact: "docs/agents/web_agent_baseline_report.md"
+falsifier:
+  command: "python -c \"raise SystemExit(1)\""
+  description: "Always-failing probe proving CI surfaces documentation acceptor failures instead of silently accepting missing evidence."
+rollback_command: "git checkout -- .claude/commit_acceptors/web-agent-docs-protocol.yaml docs/agents/WEB_AGENT_ARCHITECTURE_PROTOCOL.md docs/agents/web_agent_operationalization_matrix.md docs/agents/web_agent_cognitive_state_assessment.md docs/agents/web_agent_baseline_report.md docs/agents/web_agent_tool_contract_inventory.md docs/agents/web_agent_critical_vulnerability_register.md docs/agents/web_agent_readiness_verdict.md"
+rollback_verification_command: "git diff --exit-code docs/agents .claude/commit_acceptors/web-agent-docs-protocol.yaml"
+memory_update_type: none
+ledger_path: ".claude/commit_acceptors/web-agent-docs-protocol.yaml"
+report_path: "docs/agents/web_agent_critical_vulnerability_register.md"
+evidence: []

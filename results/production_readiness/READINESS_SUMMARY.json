@@ -1,0 +1,94 @@
+{
+  "schema_version": 1,
+  "generated_at": "seed-artifact",
+  "commit_sha": "REGENERATE_ON_BRANCH",
+  "release_ready": false,
+  "verdict": "BLOCKED",
+  "counts": {
+    "PASS": 4,
+    "FAIL": 0,
+    "BLOCKED": 4
+  },
+  "rows": [
+    {
+      "claim_id": "production-readiness-doc",
+      "scope": "docs",
+      "check_command": "test -f docs/PRODUCTION_READINESS_STACK.md",
+      "expected_artifact": "docs/PRODUCTION_READINESS_STACK.md",
+      "artifact_hash": "seed",
+      "commit_sha": "REGENERATE_ON_BRANCH",
+      "verdict": "PASS",
+      "detail": "artifact present"
+    },
+    {
+      "claim_id": "release-verdict-protocol",
+      "scope": "docs",
+      "check_command": "test -f docs/RELEASE_VERDICT_PROTOCOL.md",
+      "expected_artifact": "docs/RELEASE_VERDICT_PROTOCOL.md",
+      "artifact_hash": "seed",
+      "commit_sha": "REGENERATE_ON_BRANCH",
+      "verdict": "PASS",
+      "detail": "artifact present"
+    },
+    {
+      "claim_id": "readiness-verifier",
+      "scope": "repository",
+      "check_command": "python scripts/verify_production_readiness.py --write-results",
+      "expected_artifact": "scripts/verify_production_readiness.py",
+      "artifact_hash": "seed",
+      "commit_sha": "REGENERATE_ON_BRANCH",
+      "verdict": "BLOCKED",
+      "detail": "command-backed claim must be regenerated locally or in CI"
+    },
+    {
+      "claim_id": "commit-acceptor",
+      "scope": "repository",
+      "check_command": "test -f .claude/commit_acceptors/production-readiness-stack.yaml",
+      "expected_artifact": ".claude/commit_acceptors/production-readiness-stack.yaml",
+      "artifact_hash": "seed",
+      "commit_sha": "REGENERATE_ON_BRANCH",
+      "verdict": "PASS",
+      "detail": "artifact present"
+    },
+    {
+      "claim_id": "test-suite-command",
+      "scope": "repository",
+      "check_command": "python -m pytest -q",
+      "expected_artifact": "results/production_readiness/READINESS_SUMMARY.json",
+      "artifact_hash": "seed",
+      "commit_sha": "REGENERATE_ON_BRANCH",
+      "verdict": "BLOCKED",
+      "detail": "not executed in seed artifact"
+    },
+    {
+      "claim_id": "lint-command",
+      "scope": "repository",
+      "check_command": "ruff check .",
+      "expected_artifact": "results/production_readiness/READINESS_SUMMARY.json",
+      "artifact_hash": "seed",
+      "commit_sha": "REGENERATE_ON_BRANCH",
+      "verdict": "BLOCKED",
+      "detail": "not executed in seed artifact"
+    },
+    {
+      "claim_id": "type-check-command",
+      "scope": "repository",
+      "check_command": "python -m mypy src tests --strict",
+      "expected_artifact": "results/production_readiness/READINESS_SUMMARY.json",
+      "artifact_hash": "seed",
+      "commit_sha": "REGENERATE_ON_BRANCH",
+      "verdict": "BLOCKED",
+      "detail": "not executed in seed artifact"
+    },
+    {
+      "claim_id": "release-verdict-artifact",
+      "scope": "artifact",
+      "check_command": "test -f results/production_readiness/RELEASE_VERDICT.md",
+      "expected_artifact": "results/production_readiness/RELEASE_VERDICT.md",
+      "artifact_hash": "seed",
+      "commit_sha": "REGENERATE_ON_BRANCH",
+      "verdict": "PASS",
+      "detail": "artifact present in seed set"
+    }
+  ]
+}

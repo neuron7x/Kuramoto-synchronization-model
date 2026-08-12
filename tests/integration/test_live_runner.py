@@ -1,4 +1,5 @@
-# SPDX-License-Identifier: LicenseRef-TradePulse-Proprietary
+# Copyright (c) 2023-2026 Yaroslav Vasylenko (neuron7xLab)
+# SPDX-License-Identifier: MIT
 """Integration tests covering the live trading runner wiring."""
 
 from __future__ import annotations
@@ -87,9 +88,7 @@ def test_runner_cold_start_and_reconciliation(tmp_path: Path) -> None:
     runner.start(cold_start=False)
 
     try:
-        second_start_snapshots = sorted(
-            (state_dir / "session_snapshots").glob("*.json")
-        )
+        second_start_snapshots = sorted((state_dir / "session_snapshots").glob("*.json"))
         assert len(second_start_snapshots) > len(first_start_snapshots)
 
         def adopted() -> bool:

@@ -1,0 +1,32 @@
+id: web-agent-runtime-fixtures
+status: DRAFT
+claim_type: security
+promise: "Web-agent adversarial, runtime, memory, context, and live GitHub connector fixtures are bound to explicit fail-closed evaluation inputs."
+diff_scope:
+  changed_files:
+    - path: ".claude/commit_acceptors/web-agent-runtime-fixtures.yaml"
+    - path: "tests/agents/fixtures/context_efficiency_trace.json"
+    - path: "tests/agents/fixtures/decision_runtime_trace.json"
+    - path: "tests/agents/fixtures/live_runtime_trace_github_connector.json"
+    - path: "tests/agents/fixtures/memory_runtime_trace.json"
+    - path: "tests/agents/fixtures/prompt_injection_cases.json"
+    - path: "tests/agents/fixtures/prompt_injection_runtime_trace_pass.json"
+    - path: "tests/agents/fixtures/task_completion_eval_cases.json"
+  forbidden_paths:
+    - "trading/"
+    - "execution/"
+    - "forecast/"
+    - "policy/"
+required_python_symbols: []
+expected_signal: "fixture set covers prompt injection, decision, memory, context, task, and GitHub live evidence boundaries"
+measurement_command: "python -m pytest tests/agents/test_prompt_injection_fixtures.py tests/agents/test_prompt_injection_evaluator.py tests/agents/test_runtime_trace_evaluator.py tests/agents/test_task_completion_evaluator.py tests/agents/test_context_efficiency_evaluator.py tests/agents/test_live_evidence_evaluator.py"
+signal_artifact: "tests/agents/fixtures/live_runtime_trace_github_connector.json"
+falsifier:
+  command: "python -c \"raise SystemExit(1)\""
+  description: "Always-failing probe proving security fixture acceptor failures are surfaced by CI."
+rollback_command: "git checkout -- .claude/commit_acceptors/web-agent-runtime-fixtures.yaml tests/agents/fixtures"
+rollback_verification_command: "git diff --exit-code tests/agents/fixtures .claude/commit_acceptors/web-agent-runtime-fixtures.yaml"
+memory_update_type: none
+ledger_path: ".claude/commit_acceptors/web-agent-runtime-fixtures.yaml"
+report_path: "docs/agents/web_agent_critical_vulnerability_register.md"
+evidence: []

@@ -1,5 +1,5 @@
 ---
-owner: neuro@tradepulse
+owner: neuro@geosync
 review_cadence: monthly
 artifacts:
   - path: artifacts/orchestrator_config_v1.json
@@ -11,7 +11,7 @@ artifacts:
 
 ## Overview
 
-This dataset contract defines validated configuration artifacts for the TradePulse Neuro-Orchestrator system. These configurations define module execution sequences, parameter settings, and neuromodulator configurations for various trading scenarios.
+This dataset contract defines validated configuration artifacts for the GeoSync Neuro-Orchestrator system. These configurations define module execution sequences, parameter settings, and neuromodulator configurations for various trading scenarios.
 
 ## Artifacts
 
@@ -248,9 +248,9 @@ with open('artifacts/orchestrator_config_aggressive.json', 'w') as f:
 ## Related Documentation
 
 - [Orchestrator Implementation](../../examples/orchestrator_output_example.json)
-- [Neuro-Orchestrator Guide](../../NEURO_ORCHESTRATOR_IMPLEMENTATION.md)
-- [Dopamine Loop Documentation](../../DOPAMINE_LOOP_IMPLEMENTATION.md)
-- [Risk Assessment](../../core/risk/)
+- [Neuro-Orchestrator Guide](../MODULE_INTERACTION_ORCHESTRATOR.md)
+- [Dopamine Loop Documentation](../neuromodulators/dopamine.md)
+- [Risk Assessment](../risk_controls.md)
 
 ## Troubleshooting
 

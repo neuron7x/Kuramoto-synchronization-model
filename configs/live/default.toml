@@ -1,4 +1,4 @@
-# Default live trading configuration for TradePulse
+# Default live trading configuration for GeoSync
 
 [loop]
 state_dir = "var/live_state"
@@ -49,7 +49,7 @@ sandbox = true
 
     [venues.credentials.secret_backend]
     adapter = "kms"
-    path = "projects/sample/locations/global/keyRings/tradepulse/cryptoKeys/coinbase"
+    path = "projects/sample/locations/global/keyRings/geosync/cryptoKeys/coinbase"
 
       [venues.credentials.secret_backend.field_mapping]
       API_KEY = "apiKey"

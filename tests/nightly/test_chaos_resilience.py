@@ -1,3 +1,5 @@
+# Copyright (c) 2023-2026 Yaroslav Vasylenko (neuron7xLab)
+# SPDX-License-Identifier: MIT
 """Chaos engineering regression tests covering resilience guardrails.
 
 These tests orchestrate a deterministic sequence of failure injections against
@@ -97,9 +99,7 @@ class _ChaosHandler:
 
         if event.name == "dns_failure":
             self._clock.advance(0.05)
-            raise httpx.ConnectError(
-                OSError("Name or service not known"), request=request
-            )
+            raise httpx.ConnectError(OSError("Name or service not known"), request=request)
         if event.name == "packet_loss":
             self._clock.advance(0.05)
             raise httpx.ReadError("Simulated packet loss", request=request)
@@ -140,11 +140,11 @@ class _ChaosConnector(AuthenticatedRESTExecutionConnector):
         max_retries: int = 5,
     ) -> None:
         transport = httpx.MockTransport(handler)
-        client = httpx.Client(base_url="https://chaos.tradepulse", transport=transport)
+        client = httpx.Client(base_url="https://chaos.geosync", transport=transport)
         super().__init__(
             "chaos",
             sandbox=True,
-            base_url="https://chaos.tradepulse",
+            base_url="https://chaos.geosync",
             http_client=client,
             credential_provider=_StaticCredentialProvider(),
             enable_stream=False,

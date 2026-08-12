@@ -1,0 +1,152 @@
+# Diff-bound commit acceptor for F3 — the last open residual of the
+# fractal/dynamical CALIB-GRID audit (audit PR #762, consolidation #759).
+#
+# F3 problem: the calibration-ledger reproduction tests compared metrics
+# at rel=1e-6 — ~6 orders of magnitude looser than the real reproduction
+# noise — so a genuine 1e-9..1e-6 numeric regression on a pinned metric
+# passed UNDETECTED. #762 killed the divergence of tolerance copies; the
+# ROOT (nondeterministic FP reduction across CI runners) was unaddressed.
+#
+# Branch taken: BRANCH B (bit-exact cross-runner reproduction proven
+# INFEASIBLE in-process). Evidence: numpy/scipy each bundle a private
+# static libscipy_openblas64 built DYNAMIC_ARCH; the OpenBLAS micro-kernel
+# is dispatched by the HOST CPU at library load, not by the thread pool —
+# present even single-threaded. Single-thread (OMP=1, OPENBLAS=1), only
+# OPENBLAS_CORETYPE varied over six kernels: worst-case pinned-metric
+# relative divergence 2.20e-9 (cg002 front_gate_score); pure-numpy
+# reductions bit-identical. Thread-pinning provably cannot make it
+# bit-exact cross-runner.
+#
+# Honest second-best shipped: a single-thread deterministic harness
+# (same-CPU bit-identical, verified N=5x), a DERIVED forward window
+# FORWARD_REL_TOL=1e-8 = ceil_decade(2.20e-9 x 4.5) — 100x tighter than
+# the legacy 1e-6 — a forcing test binding it, and a sha-anchored RIP
+# headstone (id CALIB-F3) for the proven impossibility.
+#
+# REGIME SPLIT (honesty rail): the merged sha-pinned ledgers were born
+# under the OLD nondeterministic regime; they are NOT recomputed, NOT
+# overwritten, NOT retro-claimed bit-exact — reproduced at the documented
+# LEGACY_REL_TOL=1e-6. Only forward computations run the tight window.
+# This PR edits NO frozen ledger and NO drift/forcing/bit-stability test;
+# it only APPENDS one tombstone to the inert RIP register.
+#
+# Locally verified:
+#   * pytest tests/research/calibration/: all passed (+3 new F3 rails)
+#   * mypy --strict / ruff / black: clean on every new file (the 5
+#     pre-existing core/kuramoto/jax_engine.py errors persist on
+#     origin/main and are out of scope — same precedent as the
+#     adversarial-ladder acceptor)
+#   * git diff --exit-code on test_grid_kuramoto.py +
+#     test_calib_lineage_forcing_functions.py +
+#     test_calib_substrate_consolidation.py: EMPTY (drift-clean)
+#   * RIP inert invariant held: 0 .py under RIP/, manifest.yaml valid
+#     YAML (7 tombstones, inert: true), pytest collects nothing from RIP/
+#   * empirical bit-stability: full ledger recomputes bit-identical 5x
+#     under deterministic_reduction() on a fixed CPU
+#   * behaviour-preservation: same-CPU harnessed == un-harnessed ledger
+#     (structural sha256 identical) — no pinned metric moved
+
+id: calib-deterministic-reduction-f3
+status: ACTIVE
+claim_type: governance
+promise: >-
+  After this PR lands, the F3 residual is canonically closed.
+  research/calibration/grid_kuramoto/_deterministic.py ships a single
+  threadpoolctl-scoped deterministic-reduction context manager and a
+  DERIVED forward reproduction window (FORWARD_REL_TOL=1e-8, 100x
+  tighter than the legacy 1e-6) with its derivation recorded. A new
+  forcing test proves same-CPU bit-stability (N=5x), binds the tightened
+  bound (forcing/no-peek), and asserts behaviour-preservation. The
+  proven impossibility of in-process bit-exact cross-runner reproduction
+  is filed as a sha-anchored RIP headstone (id CALIB-F3). NO frozen
+  sha-pinned ledger and NO drift/forcing/bit-stability test is edited;
+  the historical legacy-regime epsilon is documented, not hidden, not
+  retro-tightened.
+diff_scope:
+  changed_files:
+    - path: ".claude/commit_acceptors/calib-deterministic-reduction-f3.yaml"
+    - path: "research/calibration/grid_kuramoto/_deterministic.py"
+    - path: "tests/research/calibration/test_calib_deterministic_reduction_f3.py"
+    - path: "RIP/TOMBSTONES.md"
+    - path: "RIP/manifest.yaml"
+  forbidden_paths:
+    - "trading/"
+    - "execution/"
+    - "forecast/"
+    - "policy/"
+    - "core/physics/"
+    - "core/kuramoto/"
+    - "research/calibration/grid_kuramoto/calibration.py"
+    - "research/calibration/grid_kuramoto/run.py"
+    - "research/calibration/grid_kuramoto/gates.py"
+    - "research/calibration/grid_kuramoto/_substrate.py"
+    - "research/calibration/grid_kuramoto/grid_data.py"
+    - "research/calibration/grid_kuramoto/RESULTS.json"
+    - "research/calibration/grid_kuramoto/RESULTS.md"
+    - "research/calibration/grid_kuramoto/PREREGISTRATION.md"
+    - "research/calibration/grid_kuramoto/PREREGISTRATION_AMENDMENT_001.md"
+    - "research/calibration/grid_kuramoto/PREREGISTRATION_AMENDMENT_001.yaml"
+    - "research/calibration/grid_kuramoto/SUPERSESSIONS.md"
+    - "research/calibration/grid_kuramoto/SUPERSESSIONS.yaml"
+    - "research/calibration/grid_kuramoto/r1/RESULTS.json"
+    - "research/calibration/grid_kuramoto/r1/RESULTS.md"
+    - "research/calibration/grid_kuramoto/cg002/RESULTS.json"
+    - "research/calibration/grid_kuramoto/cg002/RESULTS.md"
+    - "research/calibration/grid_kuramoto/identifiability/THRESHOLD_PROVENANCE.md"
+    - "research/calibration/grid_kuramoto/identifiability/RESULTS.json"
+    - "tests/research/calibration/test_grid_kuramoto.py"
+    - "tests/research/calibration/test_calib_lineage_forcing_functions.py"
+    - "tests/research/calibration/test_calib_substrate_consolidation.py"
+    - "RIP/README.md"
+    - "RIP/HONORS.md"
+    - "application/governance/claim_ledger.py"
+    - "application/governance/commit_acceptor.py"
+required_python_symbols:
+  - "research/calibration/grid_kuramoto/_deterministic.py::deterministic_reduction"
+  - "research/calibration/grid_kuramoto/_deterministic.py::FORWARD_REL_TOL"
+  - "research/calibration/grid_kuramoto/_deterministic.py::LEGACY_REL_TOL"
+  - "research/calibration/grid_kuramoto/_deterministic.py::OBSERVED_WORST_CROSS_KERNEL_REL"
+expected_signal: >-
+  `pytest tests/research/calibration/` reports all passed including the
+  three new F3 rails; `mypy --strict` on the two new files is clean (the
+  5 pre-existing core/kuramoto/jax_engine.py errors are out of scope);
+  ruff + black clean on the diff; `git diff --exit-code` on the three
+  governed calibration test files is empty; RIP/ stays inert (0 .py,
+  valid manifest YAML, pytest collects nothing from RIP/).
+measurement_command: >-
+  bash -c '
+    mypy --strict research/calibration/grid_kuramoto/_deterministic.py
+      tests/research/calibration/test_calib_deterministic_reduction_f3.py && ruff check research/calibration/grid_kuramoto/_deterministic.py
+      tests/research/calibration/test_calib_deterministic_reduction_f3.py && black --check research/calibration/grid_kuramoto/_deterministic.py
+      tests/research/calibration/test_calib_deterministic_reduction_f3.py && git diff --exit-code tests/research/calibration/test_grid_kuramoto.py
+      tests/research/calibration/test_calib_lineage_forcing_functions.py
+      tests/research/calibration/test_calib_substrate_consolidation.py && python -m pytest tests/research/calibration/ -q
+  '
+signal_artifact: "tmp/calib_deterministic_reduction_f3.log"
+falsifier:
+  command: >-
+    bash -c '
+      python -m pytest
+      tests/research/calibration/test_calib_deterministic_reduction_f3.py::test_forward_tolerance_is_derived_single_valued_and_forcing
+      tests/research/calibration/test_calib_deterministic_reduction_f3.py::test_ledger_is_bit_identical_under_deterministic_reduction
+      tests/research/calibration/test_calib_deterministic_reduction_f3.py::test_harness_does_not_change_the_mathematical_result
+      -q >/tmp/_f3_rails.log 2>&1 && ! grep -q "3 passed" /tmp/_f3_rails.log
+    '
+  description: >-
+    Probes the three F3 load-bearing rails: the forward window is
+    derived/single-valued/sharp and strictly tighter than legacy;
+    the ledger is bit-identical N=5x under the harness on a fixed CPU;
+    the harness does not change the mathematical result. Falsifier
+    succeeds (exit 0) only when one of these fails — meaning the F3
+    closure contract is violated.
+rollback_command: >-
+  bash -c 'rm -f
+    research/calibration/grid_kuramoto/_deterministic.py
+    tests/research/calibration/test_calib_deterministic_reduction_f3.py
+    .claude/commit_acceptors/calib-deterministic-reduction-f3.yaml && git checkout HEAD -- RIP/TOMBSTONES.md RIP/manifest.yaml'
+rollback_verification_command: >-
+  bash -c '! test -f research/calibration/grid_kuramoto/_deterministic.py'
+memory_update_type: append
+ledger_path: ".claude/commit_acceptors/calib-deterministic-reduction-f3.yaml"
+report_path: "tmp/calib_deterministic_reduction_f3.log"
+evidence: []

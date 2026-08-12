@@ -1,0 +1,42 @@
+{
+  "policy_version": 1,
+  "stop_count": 2,
+  "stop_ids": [
+    "STOP-STALE-EVIDENCE",
+    "STOP-CRITICAL-VULN"
+  ],
+  "stops": [
+    {
+      "category": "safety",
+      "description": "One or more evidence artifacts backing the release are older than their freshness budget (regenerated before the code they attest to, or past the max age). Stale evidence attests to a tree that no longer exists.",
+      "id": "STOP-STALE-EVIDENCE",
+      "title": "Stale evidence",
+      "triggers": [
+        {
+          "expected": 0,
+          "field": "evidence.stale_count",
+          "observed": 2,
+          "op": "gt",
+          "why": "observed 2 gt 0"
+        }
+      ]
+    },
+    {
+      "category": "safety",
+      "description": "The dependency / SBOM scan reports at least one CRITICAL-severity vulnerability in the release closure.",
+      "id": "STOP-CRITICAL-VULN",
+      "title": "Critical vulnerability",
+      "triggers": [
+        {
+          "expected": 0,
+          "field": "security.critical_count",
+          "observed": 1,
+          "op": "gt",
+          "why": "observed 1 gt 0"
+        }
+      ]
+    }
+  ],
+  "task": "GOV-007",
+  "verdict": "NO_GO"
+}

@@ -1,4 +1,5 @@
-# SPDX-License-Identifier: LicenseRef-TradePulse-Proprietary
+# Copyright (c) 2023-2026 Yaroslav Vasylenko (neuron7xLab)
+# SPDX-License-Identifier: MIT
 """Tests for the central risk engine and safety flow.
 
 This test module validates the complete safety infrastructure:
@@ -17,7 +18,7 @@ from pathlib import Path
 
 import pytest
 
-from tradepulse.risk import (
+from geosync.risk import (
     CentralRiskEngine,
     EnvironmentConfig,
     EnvironmentMode,
@@ -32,14 +33,14 @@ from tradepulse.risk import (
     set_current_mode,
     validate_environment,
 )
-from tradepulse.risk.engine import (
+from geosync.risk.engine import (
     MarketState,
     OrderContext,
     PortfolioState,
     RiskViolation,
 )
-from tradepulse.risk.environment import EnvironmentError
-from tradepulse.risk.kill_switch import KillSwitchTriggeredError, SafetyMode
+from geosync.risk.environment import EnvironmentError
+from geosync.risk.kill_switch import KillSwitchTriggeredError, SafetyMode
 
 
 class TestEnvironmentModes:
@@ -47,17 +48,17 @@ class TestEnvironmentModes:
 
     def setup_method(self) -> None:
         """Reset global state before each test."""
-        import tradepulse.risk.environment as env_module
+        import geosync.risk.environment as env_module
 
         env_module._current_mode = None
-        os.environ.pop("TRADEPULSE_ENV_MODE", None)
+        os.environ.pop("GEOSYNC_ENV_MODE", None)
 
     def teardown_method(self) -> None:
         """Clean up after each test."""
-        import tradepulse.risk.environment as env_module
+        import geosync.risk.environment as env_module
 
         env_module._current_mode = None
-        os.environ.pop("TRADEPULSE_ENV_MODE", None)
+        os.environ.pop("GEOSYNC_ENV_MODE", None)
 
     def test_environment_mode_from_string(self) -> None:
         """Test parsing environment modes from strings."""
@@ -77,7 +78,7 @@ class TestEnvironmentModes:
 
     def test_mode_from_environment_variable(self) -> None:
         """Test that mode can be set via environment variable."""
-        os.environ["TRADEPULSE_ENV_MODE"] = "paper"
+        os.environ["GEOSYNC_ENV_MODE"] = "paper"
         mode = get_current_mode()
         assert mode == EnvironmentMode.PAPER
 
@@ -253,7 +254,7 @@ enable_risk_checks: true
 
     def test_symbol_limits(self) -> None:
         """Test per-symbol limit configuration."""
-        from tradepulse.risk.config import SymbolLimits
+        from geosync.risk.config import SymbolLimits
 
         config = RiskEngineConfig(
             max_position_size_default=100.0,
@@ -388,14 +389,14 @@ class TestCentralRiskEngine:
 
     def setup_method(self) -> None:
         """Set up test fixtures."""
-        import tradepulse.risk.environment as env_module
+        import geosync.risk.environment as env_module
 
         env_module._current_mode = None
         set_current_mode(EnvironmentMode.PAPER)
 
     def teardown_method(self) -> None:
         """Clean up after tests."""
-        import tradepulse.risk.environment as env_module
+        import geosync.risk.environment as env_module
 
         env_module._current_mode = None
 
@@ -643,14 +644,14 @@ class TestSafetyFlowIntegration:
 
     def setup_method(self) -> None:
         """Set up test fixtures."""
-        import tradepulse.risk.environment as env_module
+        import geosync.risk.environment as env_module
 
         env_module._current_mode = None
         set_current_mode(EnvironmentMode.PAPER)
 
     def teardown_method(self) -> None:
         """Clean up after tests."""
-        import tradepulse.risk.environment as env_module
+        import geosync.risk.environment as env_module
 
         env_module._current_mode = None
 
@@ -818,3 +819,45 @@ class TestSafetyFlowIntegration:
             market,
         )
         assert decision.allowed is True
+
+
+class TestRiskConfigGuards:
+    """Clamp bounds and empty-file fallbacks in risk configuration."""
+
+    def test_safe_mode_multiplier_clamped_below_zero(self) -> None:
+        """`if multiplier < 0: multiplier = 0.0` -- a negative multiplier clamps to 0.
+
+        Under Lt->GtE the clamp inverts and a valid 0.5 would be zeroed while a
+        negative value leaks through.
+        """
+        assert RiskEngineConfig(safe_mode_position_multiplier=-0.5).safe_mode_position_multiplier == 0.0
+        assert RiskEngineConfig(safe_mode_position_multiplier=0.5).safe_mode_position_multiplier == 0.5
+
+    def test_safe_mode_multiplier_clamped_above_one(self) -> None:
+        """`if multiplier > 1.0: multiplier = 1.0` -- a multiplier above 1 clamps.
+
+        Under Gt->LtE a valid 0.5 would be forced to 1.0 while 2.0 leaks through.
+        """
+        assert RiskEngineConfig(safe_mode_position_multiplier=2.0).safe_mode_position_multiplier == 1.0
+        assert RiskEngineConfig(safe_mode_position_multiplier=0.5).safe_mode_position_multiplier == 0.5
+
+    def test_load_empty_yaml_falls_back_to_default_config(self, tmp_path: Path) -> None:
+        """`yaml.safe_load(content) or {}` -- an empty YAML yields {} (defaults).
+
+        An empty file parses to None; Or->And turns `None or {}` into `None and
+        {}` == None, which crashes from_dict. The empty file must load defaults.
+        """
+        cfg_path = tmp_path / "empty.yaml"
+        cfg_path.write_text("", encoding="utf-8")
+        config = load_risk_config(cfg_path)
+        assert isinstance(config, RiskEngineConfig)
+
+    def test_load_empty_unknown_suffix_falls_back_to_default_config(self, tmp_path: Path) -> None:
+        """The else-branch `yaml.safe_load(content) or {}` also defaults on empty.
+
+        Same Or->And guard on the try-YAML-then-JSON fallback path.
+        """
+        cfg_path = tmp_path / "empty.conf"
+        cfg_path.write_text("", encoding="utf-8")
+        config = load_risk_config(cfg_path)
+        assert isinstance(config, RiskEngineConfig)

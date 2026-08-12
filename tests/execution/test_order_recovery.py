@@ -1,4 +1,5 @@
-# SPDX-License-Identifier: LicenseRef-TradePulse-Proprietary
+# Copyright (c) 2023-2026 Yaroslav Vasylenko (neuron7xLab)
+# SPDX-License-Identifier: MIT
 """Tests for order recovery, idempotent submission, and reconnection scenarios."""
 
 from __future__ import annotations
@@ -161,9 +162,7 @@ def test_idempotent_submitter_deduplication() -> None:
     assert submitter.seen("binance", "test-key")
 
     # Third submission with different key
-    submitter.submit(
-        "binance", order, idempotency_key="different-key", connector=connector
-    )
+    submitter.submit("binance", order, idempotency_key="different-key", connector=connector)
     assert connector.calls == 2  # Should increment
     assert submitter.seen("binance", "different-key")
 
@@ -236,9 +235,7 @@ def test_reconnect_with_jittered_backoff(
 
     reconnect_events = []
 
-    def on_reconnect(
-        venue: str, attempt: int, delay: float, exc: Exception | None
-    ) -> None:
+    def on_reconnect(venue: str, attempt: int, delay: float, exc: Exception | None) -> None:
         reconnect_events.append((venue, attempt, delay, exc))
 
     loop = LiveExecutionLoop(

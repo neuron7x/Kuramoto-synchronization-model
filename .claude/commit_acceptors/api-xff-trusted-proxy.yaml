@@ -1,0 +1,100 @@
+# Diff-bound commit acceptor: gate X-Forwarded-For behind a trusted-proxy check
+# in the system-access rate-limit key resolver, and stop indexing empty hops.
+#
+# Bug 1 (per-IP rate-limit bypass): application/api/system_access._resolve_ip
+# trusted client-supplied X-Forwarded-For / X-Real-IP unconditionally. The
+# pre-auth throttle keys its bucket on _resolve_ip, so an unauthenticated client
+# could send a fresh XFF every request -> fresh bucket -> the throttle never
+# tripped. The sibling resolvers (src/admin/remote_control, application/api/
+# service) already gate forwarded headers behind a trusted-proxy check;
+# system_access was the un-gated outlier.
+#
+# Bug 2 (unhandled 500): `part.strip().split()[0]` raised IndexError on an empty
+# / whitespace forwarded segment (header "   " or ",1.2.3.4"), surfacing as a
+# 500 on every endpoint through the rate-limit precheck. The same buggy line at
+# application/api/service.py is fixed identically.
+
+id: api-xff-trusted-proxy
+status: ACTIVE
+claim_type: security
+promise: >-
+  After this PR, application/api/system_access._resolve_ip only honours
+  X-Forwarded-For / X-Real-IP when the direct peer matches a configured
+  trusted proxy (threaded from resolved_security_settings.trusted_proxies into
+  _wrap_with_rate_limit); otherwise it returns the direct peer, so an
+  unauthenticated client can no longer mint a fresh per-IP rate-limit bucket by
+  rotating a spoofed forwarded header. Empty / whitespace forwarded segments are
+  skipped instead of indexed, so a malformed header can no longer raise
+  IndexError (500). The identical empty-segment guard is applied to
+  application/api/service._resolve_ip.
+
+diff_scope:
+  changed_files:
+    - path: ".claude/commit_acceptors/api-xff-trusted-proxy.yaml"
+    - path: "application/api/system_access.py"
+    - path: "application/api/service.py"
+    - path: "tests/unit/api/test_system_access_network_edges.py"
+    - path: "tests/unit/api/test_service_network_edges.py"
+  forbidden_paths:
+    - "core/physics/"
+    - "core/kuramoto/"
+    - "execution/oms.py"
+
+required_python_symbols:
+  - "application/api/system_access.py::_resolve_ip"
+  - "application/api/system_access.py::_peer_is_trusted_proxy"
+  - "application/api/service.py::_resolve_ip"
+
+expected_signal: >-
+  `python -m pytest --import-mode=importlib
+  tests/unit/api/test_system_access_network_edges.py
+  tests/unit/api/test_service_network_edges.py -q` reports all passed; a spoofed
+  X-Forwarded-For from an untrusted peer resolves to the direct peer, a trusted
+  proxy's first hop is honoured, and a blank / whitespace forwarded header does
+  not raise.
+
+measurement_command: >-
+  bash -c '
+    python -m pytest --import-mode=importlib -p no:cacheprovider
+      tests/unit/api/test_system_access_network_edges.py
+      tests/unit/api/test_service_network_edges.py -q
+  '
+
+signal_artifact: "tmp/api_xff_trusted_proxy.log"
+
+falsifier:
+  command: |-
+    bash -c '
+      python -c "
+    import os
+    os.environ.setdefault(\"GEOSYNC_ADMIN_TOKEN\", \"x\")
+    os.environ.setdefault(\"GEOSYNC_AUDIT_SECRET\", \"y\")
+    from starlette.requests import Request
+    from application.api.system_access import _resolve_ip
+    def req(peer, xff):
+        scope = {\"type\": \"http\", \"method\": \"GET\", \"path\": \"/\", \"headers\": [(b\"x-forwarded-for\", xff.encode())], \"server\": (\"t\", 80), \"scheme\": \"http\", \"client\": (peer, 1)}
+        return Request(scope)
+    assert _resolve_ip(req(\"198.51.100.44\", \"203.0.113.9, 10.0.0.5\")) == \"198.51.100.44\"
+    assert _resolve_ip(req(\"198.51.100.44\", \"   \")) == \"198.51.100.44\"
+      "
+    '
+  description: >-
+    Sends a spoofed X-Forwarded-For (and a whitespace-only header) from an
+    untrusted peer and asserts _resolve_ip returns the DIRECT peer without
+    raising. It asserts the fix invariant and, per the run_evidence green-state
+    contract, exits 0 on the correct (green) tree and non-zero if the fix
+    regresses or is rolled back.
+rollback_command: >-
+  bash -c '
+    git rm -f .claude/commit_acceptors/api-xff-trusted-proxy.yaml
+  '
+
+rollback_verification_command: >-
+  bash -c '
+    test ! -f .claude/commit_acceptors/api-xff-trusted-proxy.yaml
+  '
+
+memory_update_type: append
+ledger_path: ".claude/commit_acceptors/api-xff-trusted-proxy.yaml"
+report_path: "tmp/api_xff_trusted_proxy.log"
+evidence: []

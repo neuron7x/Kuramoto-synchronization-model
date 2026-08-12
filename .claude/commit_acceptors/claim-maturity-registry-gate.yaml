@@ -1,0 +1,98 @@
+# Diff-bound commit acceptor for the registry-driven claim-maturity gate.
+#
+# The executable maturity ladder (analytics/signals/claim_maturity.py,
+# evaluate_promotion) already landed in #1094. This adds the missing registry
+# layer: governance/CLAIM_MATURITY.yaml (the registry of actual claims) and
+# scripts/ci/check_claim_maturity.py (a fail-closed CI gate that runs the
+# ladder over the registry at PR time). The gate promotes each registered
+# claim from UNOBSERVED to its declared rung and rejects it unless the
+# cumulative evidence is present — no skipped state, no synthetic-to-real
+# promotion, no ALTERNATIVES_ELIMINATED without null + simpler-baseline, no
+# BOUNDED_CLAIM_ALLOWED without the replay/provenance/falsifier/negative-
+# evidence conjunction — and additionally rejects forbidden trading/alpha/
+# profit language and a non-canonical claim boundary.
+#
+# Does NOT modify analytics/signals/claim_maturity.py (the #1094 ladder); it
+# imports and runs it. Promotes NO claim tier, adds NO invariant, changes NO
+# runtime behaviour. The seeded claims sit honestly at MEASURED_SYNTHETIC.
+#
+# Locally verified on origin/main fork base:
+#   * python scripts/ci/check_claim_maturity.py: 3 PASS, exit 0
+#   * pytest tests/scripts/test_check_claim_maturity.py: 8 passed
+#   * ruff / ruff format / black: clean; mypy --strict: no issues
+#   * python scripts/ci/check_inventory_sync.py: PASS (52 files)
+id: claim-maturity-registry-gate
+status: ACTIVE
+claim_type: governance
+promise: >-
+  governance/CLAIM_MATURITY.yaml registers claims with a declared maturity rung
+  and evidence tokens, and scripts/ci/check_claim_maturity.py runs the
+  analytics.signals.claim_maturity ladder (evaluate_promotion from UNOBSERVED
+  to the declared rung) over the registry, failing closed (exit 1) unless every
+  claim's cumulative evidence is satisfied — rejecting skipped states,
+  synthetic-to-real promotion, ALTERNATIVES_ELIMINATED without null +
+  simpler-baseline comparison, BOUNDED_CLAIM_ALLOWED without the
+  replay/provenance/falsifier/negative-evidence conjunction, out-of-vocabulary
+  evidence tokens, forbidden trading/alpha/profit language, and any
+  claim_boundary other than descriptor_only_not_predictor; a missing/malformed
+  registry returns exit 2. The gate does not modify the ladder module; no claim
+  tier is promoted; no runtime behaviour changes.
+diff_scope:
+  changed_files:
+    - path: ".claude/commit_acceptors/claim-maturity-registry-gate.yaml"
+    - path: "governance/CLAIM_MATURITY.yaml"
+    - path: "scripts/ci/check_claim_maturity.py"
+    - path: "tests/scripts/test_check_claim_maturity.py"
+    - path: ".github/workflows/research-integrity-gate.yml"
+    - path: "INVENTORY.json"
+  forbidden_paths:
+    - "trading/"
+    - "execution/"
+    - "forecast/"
+required_python_symbols:
+  - "scripts/ci/check_claim_maturity.py::main"
+expected_signal: >-
+  `python scripts/ci/check_claim_maturity.py` prints one [PASS] line per claim
+  and `OK: all N claims sit at a fully-supported maturity rung`, exiting 0; the
+  gate suite reports 8 passed including skipped-state, synthetic-to-real,
+  forbidden-language, unknown-token, and wrong-boundary negatives.
+measurement_command: >-
+  bash -c 'mkdir -p tmp && python -m pytest
+  tests/scripts/test_check_claim_maturity.py -v --no-header -o addopts=""
+  -p no:cacheprovider 2>&1 | grep -E "PASSED|FAILED|ERROR" | sed -E "s/ +\[[0-9 ]+%\]//" > tmp/claim_maturity_gate_pytest.log && test "$(grep -c PASSED tmp/claim_maturity_gate_pytest.log)" = "8"'
+signal_artifact: "tmp/claim_maturity_gate_pytest.log"
+falsifier:
+  command: |-
+    bash -c 'python - <<'\''PY'\''
+    import sys, tempfile, pathlib, importlib.util, yaml
+    root = pathlib.Path(".").resolve()
+    spec = importlib.util.spec_from_file_location(
+        "cg", root / "scripts/ci/check_claim_maturity.py")
+    cg = importlib.util.module_from_spec(spec)
+    sys.modules["cg"] = cg
+    spec.loader.exec_module(cg)
+    bad = {"id": "x", "maturity_state": "BOUNDED_CLAIM_ALLOWED",
+           "evidence": ["observability", "synthetic_measurement"], "description": "s"}
+    with tempfile.TemporaryDirectory() as d:
+        p = pathlib.Path(d) / "c.yaml"
+        p.write_text(yaml.safe_dump({"schema_version": 1, "claims": [bad]}))
+        rc = cg.main(["--registry", str(p)])
+    sys.exit(0 if rc != 1 else 1)
+    PY'
+  description: >-
+    Inverse probe of the no-skip rule. It exits 0 (fires) iff a claim declaring
+    BOUNDED_CLAIM_ALLOWED with only synthetic-rung evidence is accepted — i.e.
+    the gate stopped enforcing cumulative evidence. While the rule holds the
+    probe exits 1.
+rollback_command: >-
+  bash -c 'git rm -f governance/CLAIM_MATURITY.yaml
+  scripts/ci/check_claim_maturity.py tests/scripts/test_check_claim_maturity.py
+  .claude/commit_acceptors/claim-maturity-registry-gate.yaml && git checkout .github/workflows/research-integrity-gate.yml INVENTORY.json'
+rollback_verification_command: >-
+  bash -c 'test ! -f scripts/ci/check_claim_maturity.py && test ! -f governance/CLAIM_MATURITY.yaml'
+memory_update_type: none
+ledger_path: ".claude/commit_acceptors/claim-maturity-registry-gate.yaml"
+report_path: "tmp/claim_maturity_gate_pytest.log"
+evidence:
+  - path: "tmp/claim_maturity_gate_pytest.log"
+    sha256: "cdd438c628afdcbd4ae38dd14727a6c29e606bfe57ab03de9318682731288086"  # pragma: allowlist secret

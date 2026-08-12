@@ -1,0 +1,33 @@
+{
+  "allowed_next_nodes": [
+    "D002J-P5"
+  ],
+  "artifact_paths": [
+    "research/systemic_risk/d002j_positive_controls.py",
+    "artifacts/d002j/positive_controls/positive_control_manifest_v1.json",
+    "artifacts/d002j/positive_controls/positive_control_summary_v1.json",
+    "docs/research/D002J_POSITIVE_CONTROL_PROTOCOL.md"
+  ],
+  "claim_boundary": "Synthetic positive controls with known ground truth. PASS on these controls does NOT prove real-world detection, does NOT prove bank-level validation, does NOT prove systemic-risk prediction. PC5 lookahead-trap enforces P3 point-in-time discipline (pass = leakage caught). P4 does NOT rescue D-002H. No canonical run authorized anywhere; canonical_run_authorized stays false.",
+  "decision": "POSITIVE_CONTROLS_READY",
+  "failure_retention": null,
+  "forbidden_next_nodes": [
+    "D002J-P6",
+    "D002J-P7",
+    "D002J-P8",
+    "D002J-P9"
+  ],
+  "merge_sha": "0000000000000000000000000000000000000000",
+  "node_id": "D002J-P4",
+  "parent_nodes": [
+    "D002J-P3"
+  ],
+  "phase": "P4",
+  "pr_number": 702,
+  "schema_version": "D002J-VERDICT-CAPSULE-v1",
+  "source_summary_path": "artifacts/d002j/positive_controls/positive_control_summary_v1.json",
+  "status": "TERMINAL_PASS",
+  "test_paths": [
+    "tests/systemic_risk/test_d002j_positive_controls.py"
+  ]
+}

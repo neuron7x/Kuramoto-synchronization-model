@@ -1,3 +1,5 @@
+# Copyright (c) 2023-2026 Yaroslav Vasylenko (neuron7xLab)
+# SPDX-License-Identifier: MIT
 from __future__ import annotations
 
 import hashlib
@@ -14,12 +16,15 @@ import numpy as np
 import pandas as pd
 from pydantic import BaseModel, ConfigDict, Field
 
-os.environ.setdefault("TRADEPULSE_AUDIT_SECRET", "contract-tests-placeholder")
+os.environ.setdefault("GEOSYNC_AUDIT_SECRET", "contract-tests-placeholder")
 
-_audit_logger = logging.getLogger("tradepulse.audit")
+_audit_logger = logging.getLogger("geosync.audit")
 if not _audit_logger.handlers:
     _audit_logger.addHandler(logging.NullHandler())
-_audit_logger.propagate = False
+# Propagation stays enabled by default so observability pipelines (stdout, SIEM,
+# pytest caplog) can capture audit events through the root logger. Production
+# deployments that want to silence the root handler chain should configure that
+# explicitly via logging.config — not as an import-time side effect.
 
 from application.api.service import (  # noqa: E402 - must follow env setup
     FeatureRequest,
@@ -420,7 +425,7 @@ class OrderFillEvent(BaseModel):
 
 
 class IntegrationContractRegistry:
-    """Registry exposing the canonical interaction contracts for TradePulse."""
+    """Registry exposing the canonical interaction contracts for GeoSync."""
 
     def __init__(self) -> None:
         self._api: MutableMapping[str, ApiContract] = {}
@@ -465,21 +470,15 @@ class IntegrationContractRegistry:
     # Introspection --------------------------------------------------------
     def snapshot(self) -> dict[str, Any]:
         return {
-            "api": {
-                name: self._api_metadata(contract)
-                for name, contract in self._api.items()
-            },
+            "api": {name: self._api_metadata(contract) for name, contract in self._api.items()},
             "events": {
-                name: self._event_metadata(contract)
-                for name, contract in self._events.items()
+                name: self._event_metadata(contract) for name, contract in self._events.items()
             },
             "queues": {
-                name: self._queue_metadata(contract)
-                for name, contract in self._queues.items()
+                name: self._queue_metadata(contract) for name, contract in self._queues.items()
             },
             "services": {
-                name: self._service_metadata(contract)
-                for name, contract in self._services.items()
+                name: self._service_metadata(contract) for name, contract in self._services.items()
             },
         }
 
@@ -546,55 +545,20 @@ def _schema_digest(model: type[BaseModel] | None) -> str | None:
 # Default registry configuration
 
 
-@lru_cache(maxsize=1)
-def default_contract_registry() -> IntegrationContractRegistry:
-    registry = IntegrationContractRegistry()
-
-    service_jwt = AuthorizationScheme(
-        name="service-jwt",
-        description="Signed JWT issued by the platform identity provider.",
-        scopes=("features:read", "predictions:read"),
-        audience="tradepulse.api",
-    )
-
-    internal_service = AuthorizationScheme(
-        name="internal-service",
-        description="Mutual TLS service identity propagated via SPIFFE.",
-        scopes=("system:internal",),
-    )
-
-    api_idempotency = IdempotencyPolicy(key="Idempotency-Key", ttl_seconds=3600)
-    api_retry = RetryPolicy(max_attempts=1)
-    api_sla = ServiceLevelAgreement(
-        name="api.v1.latency",
-        indicators=(
-            ServiceLevelIndicator(
-                name="p95_latency",
-                metric="p95_latency_ms",
-                target=350.0,
-                threshold_type="lte",
-                description="95th percentile latency must remain under 350ms.",
-            ),
-            ServiceLevelIndicator(
-                name="success_rate",
-                metric="success_rate",
-                target=0.995,
-                threshold_type="gte",
-                description="Successful responses must exceed 99.5% per rolling hour.",
-            ),
-        ),
-        description="Online inference latency and availability objectives.",
-    )
-
+def _register_api_contracts(
+    registry: IntegrationContractRegistry,
+    service_jwt: AuthorizationScheme,
+    api_idempotency: IdempotencyPolicy,
+    api_retry: RetryPolicy,
+    api_sla: ServiceLevelAgreement,
+) -> None:
     features_contract = ApiContract(
-        name="tradepulse.api.v1.features",
+        name="geosync.api.v1.features",
         method="POST",
         path="/api/v1/features",
         request_model=FeatureRequest,
         response_model=FeatureResponse,
-        versioning=VersioningPolicy(
-            scheme="semver", current="1.2.0", compatible_since="1.0.0"
-        ),
+        versioning=VersioningPolicy(scheme="semver", current="1.2.0", compatible_since="1.0.0"),
         authorization=service_jwt,
         idempotency=api_idempotency,
         retry_policy=api_retry,
@@ -614,14 +578,12 @@ def default_contract_registry() -> IntegrationContractRegistry:
     registry.register_api(features_contract)
 
     predictions_contract = ApiContract(
-        name="tradepulse.api.v1.predictions",
+        name="geosync.api.v1.predictions",
         method="POST",
         path="/api/v1/predictions",
         request_model=PredictionRequest,
         response_model=PredictionResponse,
-        versioning=VersioningPolicy(
-            scheme="semver", current="1.2.0", compatible_since="1.0.0"
-        ),
+        versioning=VersioningPolicy(scheme="semver", current="1.2.0", compatible_since="1.0.0"),
         authorization=service_jwt,
         idempotency=api_idempotency,
         retry_policy=api_retry,
@@ -640,10 +602,13 @@ def default_contract_registry() -> IntegrationContractRegistry:
     )
     registry.register_api(predictions_contract)
 
-    # Event contracts ------------------------------------------------------
+
+def _register_market_event_contracts(
+    registry: IntegrationContractRegistry, internal_service: AuthorizationScheme
+) -> None:
     registry.register_event(
         EventContract(
-            name="tradepulse.events.market-ticks",
+            name="geosync.events.market-ticks",
             topic=EventTopic.MARKET_TICKS,
             payload_model=MarketTickEvent,
             versioning=VersioningPolicy(scheme="semver", current="1.0.0"),
@@ -660,7 +625,7 @@ def default_contract_registry() -> IntegrationContractRegistry:
 
     registry.register_event(
         EventContract(
-            name="tradepulse.events.feature-vectors",
+            name="geosync.events.feature-vectors",
             topic=EventTopic.MARKET_BARS,
             payload_model=FeatureVectorComputedEvent,
             versioning=VersioningPolicy(scheme="semver", current="1.0.0"),
@@ -677,7 +642,7 @@ def default_contract_registry() -> IntegrationContractRegistry:
 
     registry.register_event(
         EventContract(
-            name="tradepulse.events.signals",
+            name="geosync.events.signals",
             topic=EventTopic.SIGNALS,
             payload_model=SignalGeneratedEvent,
             versioning=VersioningPolicy(scheme="semver", current="1.0.0"),
@@ -692,9 +657,13 @@ def default_contract_registry() -> IntegrationContractRegistry:
         )
     )
 
+
+def _register_execution_event_contracts(
+    registry: IntegrationContractRegistry, internal_service: AuthorizationScheme
+) -> None:
     registry.register_event(
         EventContract(
-            name="tradepulse.events.orders",
+            name="geosync.events.orders",
             topic=EventTopic.ORDERS,
             payload_model=OrderSubmittedEvent,
             versioning=VersioningPolicy(scheme="semver", current="1.0.0"),
@@ -711,7 +680,7 @@ def default_contract_registry() -> IntegrationContractRegistry:
 
     registry.register_event(
         EventContract(
-            name="tradepulse.events.fills",
+            name="geosync.events.fills",
             topic=EventTopic.FILLS,
             payload_model=OrderFillEvent,
             versioning=VersioningPolicy(scheme="semver", current="1.0.0"),
@@ -726,11 +695,14 @@ def default_contract_registry() -> IntegrationContractRegistry:
         )
     )
 
-    # Queue contract -------------------------------------------------------
+
+def _register_queue_contracts(
+    registry: IntegrationContractRegistry, internal_service: AuthorizationScheme
+) -> None:
     registry.register_queue(
         QueueContract(
-            name="tradepulse.queues.execution-requests",
-            queue="tradepulse.execution.requests",
+            name="geosync.queues.execution-requests",
+            queue="geosync.execution.requests",
             versioning=VersioningPolicy(scheme="semver", current="1.0.0"),
             authorization=internal_service,
             idempotency=IdempotencyPolicy(key="correlation-id", ttl_seconds=3600),
@@ -745,7 +717,10 @@ def default_contract_registry() -> IntegrationContractRegistry:
         )
     )
 
-    # Service interaction contracts ---------------------------------------
+
+def _register_data_service_contracts(
+    registry: IntegrationContractRegistry, internal_service: AuthorizationScheme
+) -> None:
     ingest_sla = ServiceLevelAgreement(
         name="market-data.ingest",
         indicators=(
@@ -768,11 +743,9 @@ def default_contract_registry() -> IntegrationContractRegistry:
 
     registry.register_service(
         ServiceInteractionContract(
-            name="tradepulse.service.market-data.ingest",
+            name="geosync.service.market-data.ingest",
             operation="ingest",
-            versioning=VersioningPolicy(
-                scheme="semver", current="1.1.0", compatible_since="1.0.0"
-            ),
+            versioning=VersioningPolicy(scheme="semver", current="1.1.0", compatible_since="1.0.0"),
             authorization=internal_service,
             retry_policy=RetryPolicy(
                 max_attempts=3, initial_interval_seconds=0.5, max_interval_seconds=4.0
@@ -791,7 +764,7 @@ def default_contract_registry() -> IntegrationContractRegistry:
 
     registry.register_service(
         ServiceInteractionContract(
-            name="tradepulse.service.market-data.features",
+            name="geosync.service.market-data.features",
             operation="build_features",
             versioning=VersioningPolicy(scheme="semver", current="1.0.0"),
             authorization=internal_service,
@@ -808,9 +781,13 @@ def default_contract_registry() -> IntegrationContractRegistry:
         )
     )
 
+
+def _register_backtest_service_contract(
+    registry: IntegrationContractRegistry, internal_service: AuthorizationScheme
+) -> None:
     registry.register_service(
         ServiceInteractionContract(
-            name="tradepulse.service.backtesting.run",
+            name="geosync.service.backtesting.run",
             operation="run_backtest",
             versioning=VersioningPolicy(scheme="semver", current="1.0.0"),
             authorization=internal_service,
@@ -837,13 +814,15 @@ def default_contract_registry() -> IntegrationContractRegistry:
         )
     )
 
+
+def _register_execution_service_contracts(
+    registry: IntegrationContractRegistry, internal_service: AuthorizationScheme
+) -> None:
     registry.register_service(
         ServiceInteractionContract(
-            name="tradepulse.service.execution.submit",
+            name="geosync.service.execution.submit",
             operation="submit",
-            versioning=VersioningPolicy(
-                scheme="semver", current="1.1.0", compatible_since="1.0.0"
-            ),
+            versioning=VersioningPolicy(scheme="semver", current="1.1.0", compatible_since="1.0.0"),
             authorization=internal_service,
             idempotency=IdempotencyPolicy(key="idempotency_key", ttl_seconds=3600),
             retry_policy=RetryPolicy(
@@ -880,7 +859,7 @@ def default_contract_registry() -> IntegrationContractRegistry:
 
     registry.register_service(
         ServiceInteractionContract(
-            name="tradepulse.service.execution.ensure_live_loop",
+            name="geosync.service.execution.ensure_live_loop",
             operation="ensure_live_loop",
             versioning=VersioningPolicy(scheme="semver", current="1.0.0"),
             authorization=internal_service,
@@ -907,6 +886,54 @@ def default_contract_registry() -> IntegrationContractRegistry:
         )
     )
 
+
+@lru_cache(maxsize=1)
+def default_contract_registry() -> IntegrationContractRegistry:
+    registry = IntegrationContractRegistry()
+
+    service_jwt = AuthorizationScheme(
+        name="service-jwt",
+        description="Signed JWT issued by the platform identity provider.",
+        scopes=("features:read", "predictions:read"),
+        audience="geosync.api",
+    )
+
+    internal_service = AuthorizationScheme(
+        name="internal-service",
+        description="Mutual TLS service identity propagated via SPIFFE.",
+        scopes=("system:internal",),
+    )
+
+    api_idempotency = IdempotencyPolicy(key="Idempotency-Key", ttl_seconds=3600)
+    api_retry = RetryPolicy(max_attempts=1)
+    api_sla = ServiceLevelAgreement(
+        name="api.v1.latency",
+        indicators=(
+            ServiceLevelIndicator(
+                name="p95_latency",
+                metric="p95_latency_ms",
+                target=350.0,
+                threshold_type="lte",
+                description="95th percentile latency must remain under 350ms.",
+            ),
+            ServiceLevelIndicator(
+                name="success_rate",
+                metric="success_rate",
+                target=0.995,
+                threshold_type="gte",
+                description="Successful responses must exceed 99.5% per rolling hour.",
+            ),
+        ),
+        description="Online inference latency and availability objectives.",
+    )
+
+    _register_api_contracts(registry, service_jwt, api_idempotency, api_retry, api_sla)
+    _register_market_event_contracts(registry, internal_service)
+    _register_execution_event_contracts(registry, internal_service)
+    _register_queue_contracts(registry, internal_service)
+    _register_data_service_contracts(registry, internal_service)
+    _register_backtest_service_contract(registry, internal_service)
+    _register_execution_service_contracts(registry, internal_service)
     return registry
 
 

@@ -1,0 +1,96 @@
+{
+  "schema_version": "readiness.v1",
+  "system": "GeoSync",
+  "current_level": "L4-minus",
+  "target_direction": "L5-candidate",
+  "entries": [
+    {
+      "id": "RD-001",
+      "status": "open",
+      "summary": "Real-data validation remains incomplete for stronger market-facing research claims.",
+      "required_artifacts": ["dataset_hash", "provenance_note", "evaluation_report"],
+      "evidence_artifacts": [
+        {
+          "kind": "acquisition_gate",
+          "path": "governance/evidence/rd001_acquisition_gate.md",
+          "verification_command": "python -m tools.readiness.verify_evidence --entry RD-001",
+          "sha256": "7a30d095878da92529aff673bb656725636dd88d13e8194c8dcac1290e405355"
+        }
+      ]
+    },
+    {
+      "id": "QA-001",
+      "status": "closed",
+      "summary": "Whole-repository quality evidence is not yet guaranteed by every content-aware pull-request check.",
+      "required_artifacts": ["full_repo_quality_report", "retained_ci_evidence"],
+      "evidence_artifacts": [
+        {
+          "kind": "full_repo_quality_report",
+          "path": "governance/evidence/qa001_full_repo_quality_report.json",
+          "verification_command": "python -m tools.readiness.verify_evidence --entry QA-001",
+          "sha256": "26270622ba4e274b91d7087b612b6eec76ca1b6231dadc8ef36f21516d3eac40"
+        }
+      ]
+    },
+    {
+      "id": "GOV-001",
+      "status": "closed",
+      "summary": "Report-only review surfaces need explicit closure rules before stronger readiness claims.",
+      "required_artifacts": ["blocking_check", "waiver_protocol"],
+      "evidence_artifacts": [
+        {
+          "kind": "blocking_check",
+          "path": "governance/evidence/gov001_blocking_check.json",
+          "verification_command": "python -m tools.readiness.verify_evidence --entry GOV-001",
+          "sha256": "692c12b6d331fad13dfd7f1db2e99f32ccf6ce25cfa9b8b6ee7df7b1e8251aab"
+        },
+        {
+          "kind": "waiver_protocol",
+          "path": "docs/governance/waiver_protocol.md",
+          "verification_command": "python -m tools.readiness.verify_evidence --entry GOV-001",
+          "sha256": "da8a6123d8237cf7eeeae599ee4e6a6d700ef40b14635dc7a6e692401f91bfa2"
+        }
+      ]
+    },
+    {
+      "id": "OPS-001",
+      "status": "closed",
+      "summary": "Operational readiness evidence needs retained drills and recovery documentation.",
+      "required_artifacts": ["runbook", "recovery_drill_report"],
+      "evidence_artifacts": [
+        {
+          "kind": "recovery_drill_report",
+          "path": "governance/evidence/ops001_recovery_drill_report.json",
+          "verification_command": "python -m tools.readiness.run_recovery_drill && python -m tools.readiness.verify_evidence --entry OPS-001",
+          "sha256": "e52ed7a6e76f7e0478bd41a84e6b5d694fc4a6a5b9721709891548893f35e607"
+        },
+        {
+          "kind": "runbook",
+          "path": "docs/runbook_disaster_recovery.md",
+          "verification_command": "test -f docs/runbook_disaster_recovery.md",
+          "sha256": "70f5081eaa2ff91fd37eb1a2900d3f23391b6e39179a1a70f48789b33cc11c63"
+        }
+      ]
+    },
+    {
+      "id": "EXT-001",
+      "status": "closed",
+      "summary": "Independent review should map findings to remediation evidence.",
+      "required_artifacts": ["review_report", "remediation_map"],
+      "evidence_artifacts": [
+        {
+          "kind": "review_report",
+          "path": "governance/evidence/ext001_review_report.md",
+          "verification_command": "python -m tools.readiness.verify_evidence --entry EXT-001",
+          "sha256": "374ed566d1e2f7b4bf1c535a7f158a9443de567cb13a409f810de731801f8ac6"
+        },
+        {
+          "kind": "remediation_map",
+          "path": "governance/evidence/ext001_remediation_map.json",
+          "verification_command": "python -m tools.readiness.verify_evidence --entry EXT-001",
+          "sha256": "5de34f39219d67c07897159714105af7a142a1cc107a66e731d98ca9ce29fd34"
+        }
+      ]
+    }
+  ]
+}

@@ -1,0 +1,254 @@
+# Diff-bound commit acceptor for the D-002G-M3 PR.
+#
+# Lands the M3 topology-conditioned independent-realisation null
+# admissibility infrastructure pre-registered at the merge commit of
+# PR #680 (sha 0f4433e04c7a594fc80c964eeec337a8b1128038), salt 523.
+#
+# Honest scientific outcome on the prereg substrate set: M3 is
+# ELIGIBLE for ricci_flow (which was already M1/M2-eligible) and
+# INELIGIBLE_M3_NON_PRECURSOR_SPECIFIC for block_structured and
+# temporal_coupling. The two blocked substrates have seed-deterministic
+# precursor lifts by construction; the locked M3 admissibility ladder
+# refuses them fail-closed at criterion 3. B1 stays OPEN, upgraded
+# from OPEN_REQUIRES_M3 to OPEN_REQUIRES_M4.
+#
+# Strict scope:
+#   * NO canonical D-002G run.
+#   * NO D-002G PASS claim.
+#   * NO D-002C ledger update (sha pinned).
+#   * NO M3 pre-reg edit (sha pinned at #680 merge anchor).
+#   * NO B2 closure.
+#   * NO M4 pre-registration in THIS PR (M4 PR owns its own pre-reg).
+#   * NO removal / weakening of any P1 / P2 / P3 verdict / test / invariant.
+
+id: x10r-d002g-m3-topology-conditioned-null
+status: ACTIVE
+claim_type: governance
+promise: >-
+  After this PR lands, research/systemic_risk/d002g_null_mechanisms.py
+  carries the M3 verifier (verify_m3_eligibility) + realiser
+  (realize_m3_null) + matched-density generator
+  (topology_matched_resample) + marginal-set extractor
+  (extract_m3_topology_summary) + 9 verdict literals
+  (ELIGIBLE_M3 + 8 INELIGIBLE / INDETERMINATE families) + M3
+  dataclasses (M3TopologySummary, M3MarginalMatchReport,
+  M3EligibilityVerdict) + exceptions (M3NotEligibleError,
+  M3GeneratorDivergentError) + locked salt
+  (M3_TOPOLOGY_CONDITIONED_SALT=523, distinct from prior 99/211/313/419)
+  + pre-declared tolerance band (tol_marginal=0.05,
+  tol_non_degenerate=1e-3, tol_density=0.02, tol_spectral_radius=0.05,
+  tol_degree_wasserstein=0.05) + multi-arg helper
+  deterministic_mix_multi.
+
+  realize_null dispatch gains an "M3_TOPOLOGY_CONDITIONED" strategy
+  branch; the prior strategy Literal is extended without removing
+  any entry.
+
+  tests/systemic_risk/ gains 5 new M3 test files (verdicts,
+  invariants, negative controls, traps, no_promotion) totalling
+  39 tests, all green. docs/governance/ gains
+  D002G_M3_IMPLEMENTATION_REPORT.md and D002G_M3_ELIGIBILITY_MATRIX.md.
+  D002G_CANONICAL_RUN_BLOCKERS.md gains a §B1.M3 subsection recording
+  the OPEN_REQUIRES_M3 → OPEN_REQUIRES_M4 upgrade.
+  artifacts/d002g/m3/m3_null_domain_verdicts.json is the
+  machine-readable verdict matrix; scripts/x10r_d002g_m3_eligibility_matrix.py
+  regenerates it deterministically.
+
+  Strict scope: M3 admissibility infrastructure + tests + docs only.
+  This PR does NOT establish D-002G scientific PASS, does NOT
+  authorise a canonical run, does NOT touch the D-002C ledger, does
+  NOT touch the M3 pre-reg (touching = fresh M4), does NOT close
+  B1 (block_structured and temporal_coupling remain INELIGIBLE
+  across M1/M2/M3), does NOT close B2. The empirical decision state
+  is M3_INELIGIBLE_M4_REQUIRED; next PR is the M4 pre-registration.
+
+diff_scope:
+  changed_files:
+    - path: ".claude/commit_acceptors/x10r-d002g-m3-topology-conditioned-null.yaml"
+    - path: "research/systemic_risk/d002g_null_mechanisms.py"
+    - path: "tests/systemic_risk/test_d002g_m3_verdicts.py"
+    - path: "tests/systemic_risk/test_d002g_m3_invariants.py"
+    - path: "tests/systemic_risk/test_d002g_m3_negative_controls.py"
+    - path: "tests/systemic_risk/test_d002g_m3_traps.py"
+    - path: "tests/systemic_risk/test_d002g_m3_no_promotion.py"
+    - path: "docs/governance/D002G_M3_IMPLEMENTATION_REPORT.md"
+    - path: "docs/governance/D002G_M3_ELIGIBILITY_MATRIX.md"
+    - path: "docs/governance/D002G_CANONICAL_RUN_BLOCKERS.md"
+    - path: "artifacts/d002g/m3/m3_null_domain_verdicts.json"
+    - path: "scripts/x10r_d002g_m3_eligibility_matrix.py"
+  forbidden_paths:
+    - "docs/governance/D002G_P3_M3_PREREGISTRATION.md"
+    - "docs/governance/D002G_P3_DISCOVERY_REPORT.md"
+    - "docs/governance/D002G_P3_NULL_DOMAIN_CONTRACTS.md"
+    - "docs/governance/D002G_P3_ELIGIBILITY_MATRIX.md"
+    - "docs/governance/D002G_P3_IMPLEMENTATION_REPORT.md"
+    - "docs/governance/D002G_PREREGISTRATION.yaml"
+    - "docs/governance/D002G_NONDEGENERATE_NULL_DESIGN.md"
+    - "docs/governance/D002G_ACCEPTANCE_RULES.md"
+    - "docs/governance/D002C_PREREGISTRATION.yaml"
+    - "docs/governance/D002C_CLAIM_LEDGER.yaml"
+    - "docs/governance/D002C_CANONICAL_RUN_REPORT.md"
+    - "docs/governance/D002C_ATTEMPT_2_NULL_AUDIT_FALSIFICATION_REPORT.md"
+    - ".claude/commit_acceptors/x10r-d002g-nondegenerate-null-redesign.yaml"
+    - ".claude/commit_acceptors/x10r-d002g-p1-implementation.yaml"
+    - ".claude/commit_acceptors/x10r-d002g-p1-strike-scaffolding.yaml"
+    - ".claude/commit_acceptors/x10r-d002g-p2-m2-topology-preserving-shuffle.yaml"
+    - ".claude/commit_acceptors/x10r-d002g-p3-constant-payload-null-recovery.yaml"
+    - "tests/systemic_risk/test_d002g_m2_topology_preserving_shuffle.py"
+    - "tests/systemic_risk/test_d002g_m2_locked_governance_untouched.py"
+    - "tests/systemic_risk/test_d002g_p3_node_payload_null.py"
+    - "tests/systemic_risk/test_d002g_p3_injection_sequence_null.py"
+    - "tests/systemic_risk/test_d002g_p3_constant_payload_blockers.py"
+    - "tests/systemic_risk/test_d002g_p3_no_canonical_promotion.py"
+    - "tests/systemic_risk/test_d002g_p3_traps.py"
+    - "application/governance/claim_ledger.py"
+    - "application/governance/commit_acceptor.py"
+required_python_symbols:
+  - "research.systemic_risk.d002g_null_mechanisms.M3_TOPOLOGY_CONDITIONED_SALT"
+  - "research.systemic_risk.d002g_null_mechanisms.M3_NULL_STRATEGY"
+  - "research.systemic_risk.d002g_null_mechanisms.M3_GENERATOR_MAX_ITERATIONS"
+  - "research.systemic_risk.d002g_null_mechanisms.M3_PRECURSOR_ENSEMBLE_SIZE"
+  - "research.systemic_risk.d002g_null_mechanisms.M3_TOL_MARGINAL"
+  - "research.systemic_risk.d002g_null_mechanisms.M3_TOL_NON_DEGENERATE"
+  - "research.systemic_risk.d002g_null_mechanisms.M3_TOL_DENSITY"
+  - "research.systemic_risk.d002g_null_mechanisms.M3_TOL_SPECTRAL_RADIUS"
+  - "research.systemic_risk.d002g_null_mechanisms.M3_TOL_DEGREE_WASSERSTEIN"
+  - "research.systemic_risk.d002g_null_mechanisms.M3EligibilityVerdict"
+  - "research.systemic_risk.d002g_null_mechanisms.M3TopologySummary"
+  - "research.systemic_risk.d002g_null_mechanisms.M3MarginalMatchReport"
+  - "research.systemic_risk.d002g_null_mechanisms.M3NotEligibleError"
+  - "research.systemic_risk.d002g_null_mechanisms.M3GeneratorDivergentError"
+  - "research.systemic_risk.d002g_null_mechanisms.verify_m3_eligibility"
+  - "research.systemic_risk.d002g_null_mechanisms.realize_m3_null"
+  - "research.systemic_risk.d002g_null_mechanisms.topology_matched_resample"
+  - "research.systemic_risk.d002g_null_mechanisms.extract_m3_topology_summary"
+  - "research.systemic_risk.d002g_null_mechanisms.deterministic_mix_multi"
+expected_signal: >-
+  `python -c "from research.systemic_risk.d002g_null_mechanisms import
+  M3_TOPOLOGY_CONDITIONED_SALT, verify_m3_eligibility,
+  realize_m3_null, extract_m3_topology_summary,
+  topology_matched_resample, M3EligibilityVerdict, M3TopologySummary,
+  M3MarginalMatchReport, M3NotEligibleError, M3GeneratorDivergentError,
+  deterministic_mix_multi"` succeeds with M3_TOPOLOGY_CONDITIONED_SALT
+  == 523; `pytest tests/systemic_risk/test_d002g_m3_*.py -q` passes
+  all 39 tests; the M3 implementation report contains the verbatim
+  claim-boundary block AND the M3_INELIGIBLE_M4_REQUIRED decision
+  state; the eligibility matrix doc records ELIGIBLE_M3 for
+  ricci_flow and INELIGIBLE_M3_NON_PRECURSOR_SPECIFIC for both
+  block_structured and temporal_coupling; the
+  D002G_CANONICAL_RUN_BLOCKERS.md contains a §B1.M3 subsection with
+  OPEN_REQUIRES_M4; D002C_CLAIM_LEDGER.yaml sha256 unchanged
+  (f96ba9b5a2057d2e0bff84afc28578ab316cff73f6dc6673fb0d6d543b8bd6dd);
+  D002G_P3_M3_PREREGISTRATION.md sha256 unchanged
+  (0f11a0c890374c35e4dedecc66caec52ae867f49a8f8b3be2374f1464712c1f8).
+measurement_command: >-
+  bash -c 'set -e;
+  python -c "from research.systemic_risk.d002g_null_mechanisms import
+  M3_TOPOLOGY_CONDITIONED_SALT, verify_m3_eligibility,
+  realize_m3_null, extract_m3_topology_summary,
+  topology_matched_resample, M3EligibilityVerdict, M3TopologySummary,
+  M3MarginalMatchReport, M3NotEligibleError, M3GeneratorDivergentError,
+  deterministic_mix_multi; assert M3_TOPOLOGY_CONDITIONED_SALT == 523";
+  PYTHONPATH=. python -m pytest
+  tests/systemic_risk/test_d002g_m3_verdicts.py
+  tests/systemic_risk/test_d002g_m3_invariants.py
+  tests/systemic_risk/test_d002g_m3_negative_controls.py
+  tests/systemic_risk/test_d002g_m3_no_promotion.py -q;
+  grep -q "This PR implements M3 null-admissibility infrastructure"
+  docs/governance/D002G_M3_IMPLEMENTATION_REPORT.md;
+  grep -q "M3_INELIGIBLE_M4_REQUIRED"
+  docs/governance/D002G_M3_IMPLEMENTATION_REPORT.md;
+  grep -q "B1.M3" docs/governance/D002G_CANONICAL_RUN_BLOCKERS.md;
+  grep -q "OPEN_REQUIRES_M4" docs/governance/D002G_CANONICAL_RUN_BLOCKERS.md;
+  grep -q "ELIGIBLE_M3" research/systemic_risk/d002g_null_mechanisms.py;
+  test "$(sha256sum docs/governance/D002C_CLAIM_LEDGER.yaml | cut -d\ -f1)" = "f96ba9b5a2057d2e0bff84afc28578ab316cff73f6dc6673fb0d6d543b8bd6dd";
+  test "$(sha256sum docs/governance/D002G_P3_M3_PREREGISTRATION.md | cut -d\ -f1)" = "0f11a0c890374c35e4dedecc66caec52ae867f49a8f8b3be2374f1464712c1f8"'
+signal_artifact: "docs/governance/D002G_M3_IMPLEMENTATION_REPORT.md"
+falsifier:
+  command: >-
+    bash -c 'set -e;
+    python -c "from research.systemic_risk.d002g_null_mechanisms import
+    M3_TOPOLOGY_CONDITIONED_SALT, verify_m3_eligibility,
+    realize_m3_null, extract_m3_topology_summary,
+    topology_matched_resample, M3EligibilityVerdict, M3TopologySummary,
+    M3MarginalMatchReport, M3NotEligibleError, M3GeneratorDivergentError,
+    deterministic_mix_multi; assert M3_TOPOLOGY_CONDITIONED_SALT == 523" || exit 1;
+    python -c "from research.systemic_risk.d002g_null_mechanisms import
+    M3_TOPOLOGY_CONDITIONED_SALT, M6_PLACEBO_SALT, M2_PLACEBO_SALT,
+    M2_NODE_PAYLOAD_SALT, M2_INJECTION_SEQUENCE_SALT, deterministic_mix;
+    assert M3_TOPOLOGY_CONDITIONED_SALT not in {M6_PLACEBO_SALT, M2_PLACEBO_SALT, M2_NODE_PAYLOAD_SALT, M2_INJECTION_SEQUENCE_SALT};
+    assert len({deterministic_mix(42, s) for s in (M6_PLACEBO_SALT, M2_PLACEBO_SALT, M2_NODE_PAYLOAD_SALT, M2_INJECTION_SEQUENCE_SALT, M3_TOPOLOGY_CONDITIONED_SALT)}) == 5" || exit 2;
+    PYTHONPATH=. python -m pytest
+    tests/systemic_risk/test_d002g_m3_verdicts.py
+    tests/systemic_risk/test_d002g_m3_invariants.py
+    tests/systemic_risk/test_d002g_m3_negative_controls.py
+    tests/systemic_risk/test_d002g_m3_no_promotion.py -q || exit 3;
+    PYTHONPATH=. python -m pytest
+    tests/systemic_risk/test_d002g_m2_topology_preserving_shuffle.py
+    tests/systemic_risk/test_d002g_m2_locked_governance_untouched.py
+    tests/systemic_risk/test_d002g_p3_node_payload_null.py
+    tests/systemic_risk/test_d002g_p3_injection_sequence_null.py -q || exit 4;
+    test -f tests/systemic_risk/test_d002g_m3_verdicts.py || exit 5;
+    test -f tests/systemic_risk/test_d002g_m3_invariants.py || exit 6;
+    test -f tests/systemic_risk/test_d002g_m3_negative_controls.py || exit 7;
+    test -f tests/systemic_risk/test_d002g_m3_traps.py || exit 8;
+    test -f tests/systemic_risk/test_d002g_m3_no_promotion.py || exit 9;
+    grep -q "This PR implements M3 null-admissibility infrastructure" docs/governance/D002G_M3_IMPLEMENTATION_REPORT.md || exit 10;
+    grep -q "M3_INELIGIBLE_M4_REQUIRED" docs/governance/D002G_M3_ELIGIBILITY_MATRIX.md || exit 11;
+    grep -q "B1.M3" docs/governance/D002G_CANONICAL_RUN_BLOCKERS.md || exit 12;
+    grep -q "OPEN_REQUIRES_M4" docs/governance/D002G_CANONICAL_RUN_BLOCKERS.md || exit 13;
+    grep -q "ELIGIBLE_M3" research/systemic_risk/d002g_null_mechanisms.py || exit 14;
+    test "$(sha256sum docs/governance/D002C_CLAIM_LEDGER.yaml | cut -d\ -f1)" = "f96ba9b5a2057d2e0bff84afc28578ab316cff73f6dc6673fb0d6d543b8bd6dd" || exit 15;
+    test "$(sha256sum docs/governance/D002G_P3_M3_PREREGISTRATION.md | cut -d\ -f1)" = "0f11a0c890374c35e4dedecc66caec52ae867f49a8f8b3be2374f1464712c1f8" || exit 16;
+    if grep -E "VALIDATED_REAL_BANK_LEVEL_RESULT|TESTED_POSITIVE_REAL|BANK_LEVEL_PRECURSOR_CONFIRMED|real-data validated|bank-level confirmed|SYNTHETIC_GATE6_CERTIFIED_D002G_REDESIGN|D-002G validated|canonical run unblocked|D-002C rescued|B1 closed by design|M3 proves" docs/governance/D002G_M3_*.md | grep -vE "forbidden|NOT|never|cannot|D-002C|out-of-scope|No |rejected"; then
+      echo "forbidden M3 PASS claim leaked outside forbidden-list context"; exit 17;
+    fi'
+  description: >-
+    Probes the D-002G-M3 implementation:
+    (a) every M3 symbol imports cleanly + salt is 523;
+    (b) M3 salt is distinct from prior salts AND deterministic_mix
+        produces pairwise-distinct seeds across all 5 salts;
+    (c) the 4 fast M3 test files pass on their dedicated subset
+        (the traps file is slow-marked; CI runs it on the slow lane);
+    (d) all prior M2 / P3 tests still pass unchanged (no regression);
+    (e) all 5 M3 test files exist on disk;
+    (f) the M3 implementation report carries the verbatim claim
+        boundary AND the M3_INELIGIBLE_M4_REQUIRED decision;
+    (g) the M3 eligibility matrix records M4_REQUIRED on the two
+        blocked substrates;
+    (h) the blockers manifest records B1.M3 + OPEN_REQUIRES_M4;
+    (i) production module exposes the ELIGIBLE_M3 literal;
+    (j) D002C_CLAIM_LEDGER.yaml is byte-exact unchanged at the
+        pinned sha256;
+    (k) D002G_P3_M3_PREREGISTRATION.md is byte-exact unchanged at
+        the #680 merge-anchor sha256;
+    (l) no forbidden D-002G PASS / D-002C rescue / canonical-run
+        authorisation strings leak outside forbidden-context.
+    If any of these regress, the M3 contract is broken.
+rollback_command: >-
+  bash -c 'git checkout HEAD~1 --
+  research/systemic_risk/d002g_null_mechanisms.py
+  docs/governance/D002G_CANONICAL_RUN_BLOCKERS.md
+  && rm -f tests/systemic_risk/test_d002g_m3_verdicts.py
+  tests/systemic_risk/test_d002g_m3_invariants.py
+  tests/systemic_risk/test_d002g_m3_negative_controls.py
+  tests/systemic_risk/test_d002g_m3_traps.py
+  tests/systemic_risk/test_d002g_m3_no_promotion.py
+  docs/governance/D002G_M3_IMPLEMENTATION_REPORT.md
+  docs/governance/D002G_M3_ELIGIBILITY_MATRIX.md
+  artifacts/d002g/m3/m3_null_domain_verdicts.json
+  scripts/x10r_d002g_m3_eligibility_matrix.py
+  .claude/commit_acceptors/x10r-d002g-m3-topology-conditioned-null.yaml'
+rollback_verification_command: >-
+  bash -c 'test ! -f tests/systemic_risk/test_d002g_m3_verdicts.py
+  && test ! -f tests/systemic_risk/test_d002g_m3_invariants.py
+  && test ! -f tests/systemic_risk/test_d002g_m3_negative_controls.py
+  && test ! -f tests/systemic_risk/test_d002g_m3_traps.py
+  && test ! -f tests/systemic_risk/test_d002g_m3_no_promotion.py
+  && test ! -f docs/governance/D002G_M3_IMPLEMENTATION_REPORT.md
+  && test ! -f docs/governance/D002G_M3_ELIGIBILITY_MATRIX.md
+  && test ! -f .claude/commit_acceptors/x10r-d002g-m3-topology-conditioned-null.yaml'
+memory_update_type: append
+ledger_path: ".claude/commit_acceptors/x10r-d002g-m3-topology-conditioned-null.yaml"
+report_path: "docs/governance/D002G_M3_IMPLEMENTATION_REPORT.md"
+evidence: []

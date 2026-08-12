@@ -1,4 +1,6 @@
-"""Advanced risk controls for TradePulse execution.
+# Copyright (c) 2023-2026 Yaroslav Vasylenko (neuron7xLab)
+# SPDX-License-Identifier: MIT
+"""Advanced risk controls for GeoSync execution.
 
 This module layers portfolio-level controls on top of the baseline
 :mod:`execution.risk` engine.  The focus is deterministic behaviour, clear
@@ -116,9 +118,7 @@ class RegimeAdaptiveExposureGuard:
         state = self._states.setdefault(symbol, _RegimeState())
         abs_return = abs(float(return_value))
         observation_time = (
-            float(timestamp)
-            if timestamp is not None
-            else datetime.now(timezone.utc).timestamp()
+            float(timestamp) if timestamp is not None else datetime.now(timezone.utc).timestamp()
         )
         if state.samples == 0:
             state.ewma_abs_return = abs_return
@@ -142,10 +142,7 @@ class RegimeAdaptiveExposureGuard:
             current_severity = self._severity(regime)
             if current_severity > previous_severity:
                 state.cooldown_until = observation_time + self._cooldown
-            elif (
-                current_severity < previous_severity
-                and observation_time < state.cooldown_until
-            ):
+            elif current_severity < previous_severity and observation_time < state.cooldown_until:
                 regime = previous_regime
 
         state.last_regime = regime
@@ -228,9 +225,7 @@ class KellyCriterionPositionSizer:
         """Return the fraction of capital to allocate to ``market``."""
 
         if market.win_probability is None or market.payoff_ratio is None:
-            raise ValueError(
-                "win_probability and payoff_ratio are required for Kelly sizing"
-            )
+            raise ValueError("win_probability and payoff_ratio are required for Kelly sizing")
 
         edge = (market.win_probability * (market.payoff_ratio + 1)) - 1
         if market.payoff_ratio == 0:
@@ -271,9 +266,7 @@ class RiskMetricsCalculator:
         losses = [-float(r) for r in returns if r < 0]
         return sorted(losses)
 
-    def value_at_risk(
-        self, returns: Sequence[float], *, horizon_days: int = 1
-    ) -> float:
+    def value_at_risk(self, returns: Sequence[float], *, horizon_days: int = 1) -> float:
         if not returns:
             return 0.0
         losses = self._loss_distribution(returns)
@@ -317,10 +310,7 @@ class MarginMonitor:
             raise ValueError("account_equity must be positive")
         utilisation = required_margin / account_equity
         self._utilisation = utilisation
-        return (
-            utilisation <= self._margin_limit
-            and utilisation <= self._maintenance_margin
-        )
+        return utilisation <= self._margin_limit and utilisation <= self._maintenance_margin
 
 
 class CorrelationLimitGuard:
@@ -402,16 +392,11 @@ class RiskParityAllocator:
         self._min_weight = max(0.0, minimum_weight)
 
     def weights(self, volatilities: Mapping[str, float]) -> Mapping[str, float]:
-        inv_vols = {
-            symbol: 1.0 / vol for symbol, vol in volatilities.items() if vol > 0
-        }
+        inv_vols = {symbol: 1.0 / vol for symbol, vol in volatilities.items() if vol > 0}
         total = sum(inv_vols.values())
         if total == 0:
             return {symbol: 0.0 for symbol in volatilities}
-        return {
-            symbol: max(self._min_weight, value / total)
-            for symbol, value in inv_vols.items()
-        }
+        return {symbol: max(self._min_weight, value / total) for symbol, value in inv_vols.items()}
 
 
 class LiquidationCascadePreventer:
@@ -481,9 +466,7 @@ class AdvancedRiskController:
     def register_market_condition(self, market: MarketCondition) -> None:
         self._state.market_data[market.symbol] = market
 
-    def record_return(
-        self, symbol: str, returns: Iterable[float | tuple[float, datetime]]
-    ) -> None:
+    def record_return(self, symbol: str, returns: Iterable[float | tuple[float, datetime]]) -> None:
         """Store historical returns and update adaptive risk telemetry."""
 
         history = self._state.returns_history.setdefault(symbol, [])
@@ -508,9 +491,7 @@ class AdvancedRiskController:
             if self._regime_guard is not None:
                 self._regime_guard.observe(symbol, value, timestamp.timestamp())
 
-    def evaluate_order(
-        self, request: PositionRequest, *, account_equity: float
-    ) -> bool:
+    def evaluate_order(self, request: PositionRequest, *, account_equity: float) -> bool:
         market = self._state.market_data.get(request.symbol)
         if market is None:
             raise ValueError(f"Missing market data for {request.symbol}")
@@ -520,9 +501,7 @@ class AdvancedRiskController:
         desired_notional = self._capital * kelly_fraction * volatility_scale
         if self._regime_guard is not None:
             desired_notional *= self._regime_guard.multiplier(request.symbol)
-        aggregated_notional = (
-            self._state.positions.get(request.symbol, 0.0) + request.notional
-        )
+        aggregated_notional = self._state.positions.get(request.symbol, 0.0) + request.notional
 
         positions_preview = dict(self._state.positions)
         positions_preview[request.symbol] = aggregated_notional
@@ -536,9 +515,7 @@ class AdvancedRiskController:
         if not self._margin_monitor.update(required_margin, account_equity):
             return False
 
-        exposure = self._exposure_tracker.update(
-            request.notional, request.timestamp.timestamp()
-        )
+        exposure = self._exposure_tracker.update(request.notional, request.timestamp.timestamp())
         if exposure > desired_notional:
             return False
 

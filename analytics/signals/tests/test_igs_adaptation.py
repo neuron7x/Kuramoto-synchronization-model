@@ -1,3 +1,5 @@
+# Copyright (c) 2023-2026 Yaroslav Vasylenko (neuron7xLab)
+# SPDX-License-Identifier: MIT
 import numpy as np
 import pandas as pd
 
@@ -23,7 +25,7 @@ def test_entropy_adaptation_changes_k_with_loose_threshold():
     np.random.seed(42)
     n = 500
     prices = 100 + np.cumsum(np.random.randn(n))
-    idx = pd.date_range("2024-01-01", periods=n, freq="T")
+    idx = pd.date_range("2024-01-01", periods=n, freq="min")
 
     k_values = set()
     for ts, price in zip(idx, prices):

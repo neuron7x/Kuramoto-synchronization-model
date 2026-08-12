@@ -1,3 +1,5 @@
+# Copyright (c) 2023-2026 Yaroslav Vasylenko (neuron7xLab)
+# SPDX-License-Identifier: MIT
 """Data models for the code health analytics domain."""
 
 from __future__ import annotations
@@ -128,6 +130,6 @@ class RepositoryMetrics:
         return self.files.values()
 
     def most_risky(self, limit: int = 10) -> List[FileMetrics]:
-        return sorted(
-            self.risk_hotspots, key=lambda fm: fm.risk_profile.risk_score, reverse=True
-        )[:limit]
+        return sorted(self.risk_hotspots, key=lambda fm: fm.risk_profile.risk_score, reverse=True)[
+            :limit
+        ]

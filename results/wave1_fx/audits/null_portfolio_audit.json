@@ -1,0 +1,141 @@
+{
+  "generated_utc": "2026-04-21T21:04:38Z",
+  "n_replications_per_null": 300,
+  "seed": 42,
+  "assets": [
+    "EURUSD",
+    "GBPUSD",
+    "USDJPY",
+    "AUDUSD",
+    "USDCAD",
+    "USDCHF",
+    "EURGBP",
+    "EURJPY"
+  ],
+  "costs_bps_b": {
+    "EURUSD": 1.0,
+    "GBPUSD": 1.0,
+    "USDJPY": 1.5,
+    "AUDUSD": 1.0,
+    "USDCAD": 1.5,
+    "USDCHF": 1.5,
+    "EURGBP": 1.5,
+    "EURJPY": 1.5
+  },
+  "fold_manifest": "results/wave1_fx/fold_manifest.csv",
+  "oos_lo_pos": 1148,
+  "oos_hi_pos": 5852,
+  "actual_combo_v1": {
+    "primary_median_fold_median_sharpe": -0.0437,
+    "positive_folds_frac": 0.4369,
+    "max_drawdown_oos": 0.4297
+  },
+  "nulls": [
+    {
+      "null_id": "N1_random_scores",
+      "n_reps": 300,
+      "sharpe_null": {
+        "p01": -0.7022,
+        "p05": -0.6441,
+        "p25": -0.5353,
+        "p50": -0.4601,
+        "p75": -0.3957,
+        "p95": -0.3114,
+        "p99": -0.2536
+      },
+      "dd_null": {
+        "p01": 0.6564,
+        "p05": 0.7413,
+        "p25": 0.8132,
+        "p50": 0.8597,
+        "p75": 0.8941,
+        "p95": 0.9328,
+        "p99": 0.9536
+      },
+      "pos_frac_null": {
+        "p01": 0.2027,
+        "p05": 0.2252,
+        "p25": 0.2658,
+        "p50": 0.2973,
+        "p75": 0.3288,
+        "p95": 0.3649,
+        "p99": 0.3919
+      },
+      "combo_sharpe_percentile_in_null": 1.0,
+      "combo_dd_percentile_in_null": 0.0
+    },
+    {
+      "null_id": "N2_sign_shuffled",
+      "n_reps": 300,
+      "sharpe_null": {
+        "p01": -0.6458,
+        "p05": -0.5832,
+        "p25": -0.4687,
+        "p50": -0.3932,
+        "p75": -0.3304,
+        "p95": -0.2356,
+        "p99": -0.1502
+      },
+      "dd_null": {
+        "p01": 0.5405,
+        "p05": 0.6317,
+        "p25": 0.7537,
+        "p50": 0.8057,
+        "p75": 0.8574,
+        "p95": 0.9112,
+        "p99": 0.9347
+      },
+      "pos_frac_null": {
+        "p01": 0.2252,
+        "p05": 0.2523,
+        "p25": 0.2928,
+        "p50": 0.3288,
+        "p75": 0.3559,
+        "p95": 0.3964,
+        "p99": 0.4235
+      },
+      "combo_sharpe_percentile_in_null": 1.0,
+      "combo_dd_percentile_in_null": 0.0
+    },
+    {
+      "null_id": "N3_block_shuffled",
+      "n_reps": 300,
+      "sharpe_null": {
+        "p01": -0.275,
+        "p05": -0.2173,
+        "p25": -0.1126,
+        "p50": -0.0543,
+        "p75": -0.0036,
+        "p95": 0.0624,
+        "p99": 0.0934
+      },
+      "dd_null": {
+        "p01": 0.1878,
+        "p05": 0.2458,
+        "p25": 0.3344,
+        "p50": 0.431,
+        "p75": 0.521,
+        "p95": 0.6477,
+        "p99": 0.6995
+      },
+      "pos_frac_null": {
+        "p01": 0.3423,
+        "p05": 0.3782,
+        "p25": 0.4234,
+        "p50": 0.4505,
+        "p75": 0.482,
+        "p95": 0.5315,
+        "p99": 0.5541
+      },
+      "combo_sharpe_percentile_in_null": 0.56,
+      "combo_dd_percentile_in_null": 0.4967
+    }
+  ],
+  "label_thresholds": {
+    "dd_supported_percentile_lo": 0.05,
+    "dd_supported_percentile_hi": 0.95
+  },
+  "dd_structural_label": "NOT_SUPPORTED",
+  "dd_structural_reason": "combo's max DD 0.4297 is a lower-tail event at percentile 0.0 \u2014 the signal actually reduced DD vs the null mechanics (which contradicts H2).",
+  "combo_sharpe_percentile_vs_N1": 1.0
+}

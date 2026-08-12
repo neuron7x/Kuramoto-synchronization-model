@@ -1,13 +1,15 @@
 #!/usr/bin/env python
-# SPDX-License-Identifier: LicenseRef-TradePulse-Proprietary
+# Copyright (c) 2023-2026 Yaroslav Vasylenko (neuron7xLab)
+# SPDX-License-Identifier: MIT
 """Performance optimization examples and benchmarks.
 
 This script demonstrates the performance improvements from using float32
-precision, chunked processing, and other optimizations in TradePulse.
+precision, chunked processing, and other optimizations in GeoSync.
 
 Run with:
     python examples/performance_demo.py
 """
+
 from __future__ import annotations
 
 import sys
@@ -52,9 +54,7 @@ def benchmark_entropy():
         start = time.time()
         h_baseline = entropy(data, bins=50)
         time_baseline = time.time() - start
-        print(
-            f"  Baseline (float64):           {time_baseline:.3f}s  H={h_baseline:.4f}"
-        )
+        print(f"  Baseline (float64):           {time_baseline:.3f}s  H={h_baseline:.4f}")
 
         # Float32 only
         start = time.time()
@@ -102,9 +102,7 @@ def benchmark_hurst():
         start = time.time()
         h_baseline = hurst_exponent(data, max_lag=50)
         time_baseline = time.time() - start
-        print(
-            f"  Baseline (float64):           {time_baseline:.3f}s  H={h_baseline:.4f}"
-        )
+        print(f"  Baseline (float64):           {time_baseline:.3f}s  H={h_baseline:.4f}")
 
         # Float32
         start = time.time()
@@ -139,9 +137,7 @@ def benchmark_ricci():
         start = time.time()
         r_baseline = mean_ricci(G)
         time_baseline = time.time() - start
-        print(
-            f"  Baseline (float64):           {time_baseline:.3f}s  κ={r_baseline:.4f}"
-        )
+        print(f"  Baseline (float64):           {time_baseline:.3f}s  κ={r_baseline:.4f}")
 
         # Float32 only
         start = time.time()
@@ -301,7 +297,7 @@ def main():
     seed_numpy(SEED)
     print("\n")
     print("╔" + "=" * 68 + "╗")
-    print("║" + " TradePulse Performance Optimization Demonstration ".center(68) + "║")
+    print("║" + " GeoSync Performance Optimization Demonstration ".center(68) + "║")
     print("╚" + "=" * 68 + "╝")
 
     print("\nThis demo shows the performance improvements from optimization features:")

@@ -1,3 +1,5 @@
+# Copyright (c) 2023-2026 Yaroslav Vasylenko (neuron7xLab)
+# SPDX-License-Identifier: MIT
 """Run static application security tests (SAST) using Bandit."""
 
 from __future__ import annotations
@@ -54,9 +56,7 @@ def _ensure_directory(path: Path) -> None:
     path.parent.mkdir(parents=True, exist_ok=True)
 
 
-def _run_bandit(
-    paths: Sequence[str], *, config: Path | None, destination: Path
-) -> Path:
+def _run_bandit(paths: Sequence[str], *, config: Path | None, destination: Path) -> Path:
     with tempfile.NamedTemporaryFile("w+", suffix=".json", delete=False) as handle:
         temp_path = Path(handle.name)
     command: list[str] = [
@@ -126,9 +126,7 @@ def main(argv: Sequence[str] | None = None) -> int:
     report_path = _run_bandit(args.paths, config=args.config, destination=args.output)
     summary = _collect_summary(report_path)
     summary_path = args.summary
-    summary_path.write_text(
-        json.dumps(summary, indent=2, sort_keys=True) + "\n", encoding="utf-8"
-    )
+    summary_path.write_text(json.dumps(summary, indent=2, sort_keys=True) + "\n", encoding="utf-8")
 
     highest = summary["highest_severity"]
     print("Bandit summary:", json.dumps(summary, indent=2, sort_keys=True))

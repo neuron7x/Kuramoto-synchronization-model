@@ -1,7 +1,7 @@
 # Execution
 
 The execution layer converts strategy intentions into orders while enforcing
-risk controls. TradePulse currently provides thin utility functions for sizing
+risk controls. GeoSync currently provides thin utility functions for sizing
 positions and estimating aggregate risk; these utilities are intended to be
 wrapped by exchange adapters or execution daemons.
 

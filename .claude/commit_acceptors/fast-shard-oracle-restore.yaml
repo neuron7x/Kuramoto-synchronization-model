@@ -1,0 +1,86 @@
+# Diff-bound commit acceptor — restore the fast-shard test oracle (real-green).
+#
+# python-fast-shard had been passing VACUOUSLY (0/0 collected) on main and every
+# PR: pytest.ini already carries -q, and the shard added a second -q to
+# --collect-only, flipping node-id output to a per-file summary so `grep '::'`
+# matched nothing. ~17.6k fast tests never ran for the lane's entire history.
+#
+# This PR restores the oracle and keeps it honest:
+#   * drop the second -q; anchor extraction to ^tests/.*::
+#   * fail-closed: zero TOTAL collection after the test-surface filter is FATAL
+#   * explicit, issue-referenced quarantine (tests/ci/fast_quarantine.txt): each
+#     active line MUST carry issue=#<n>; post-subtraction empty collection FATAL;
+#     a new UNQUARANTINED failure still fails CI (not fake-green)
+#   * docs/ci/fast_backlog_ledger.md records the measured backlog shape
+#
+# The cli_import_shadowing cluster (4 files) is quarantined to #1158 (its true
+# root cause — a module-level sys.path pollution in test_calibrate_controllers —
+# is fixed there, draining the quarantine to empty).
+#
+# Locally verified:
+#   * every active fast_quarantine.txt line carries issue=#<n>
+#   * pr-gate.yml carries the zero-collection FATAL guard
+#   * validate_commit_acceptor.py --require-acceptor-for-code-change: binds clean
+
+id: fast-shard-oracle-restore
+status: ACTIVE
+claim_type: governance
+promise: >-
+  The python-fast-shard gate collects REAL test node ids (not a per-file summary)
+  and treats zero total collection after the test-surface filter as FATAL, so no
+  shard can pass from 0/0. Known-broken files are removed only via an explicit
+  tests/ci/fast_quarantine.txt whose every active entry carries an issue ref;
+  post-subtraction empty collection is FATAL and any unquarantined failure still
+  fails CI. The gate is real-green, never fake-green.
+
+diff_scope:
+  changed_files:
+    - path: ".claude/commit_acceptors/fast-shard-oracle-restore.yaml"
+    - path: ".github/workflows/pr-gate.yml"
+    - path: "docs/ci/fast_backlog_ledger.md"
+    - path: "tests/ci/fast_quarantine.txt"
+  forbidden_paths:
+    - "core/"
+    - "src/"
+    - "runtime/"
+    - "trading/"
+    - "execution/"
+
+required_python_symbols: []
+
+expected_signal: >-
+  Every active line of tests/ci/fast_quarantine.txt matches issue=#<n>;
+  .github/workflows/pr-gate.yml contains the fail-closed zero-collection guard;
+  docs/ci/fast_backlog_ledger.md documents the cli_import_shadowing cluster and
+  its #1158 owner. Before this PR the shard logged '0/0 selected tests — shard
+  passes' and ran no tests.
+
+measurement_command: "bash -c 'set -e; test -f tests/ci/fast_quarantine.txt; ! { grep -vE \"^[[:space:]]*#|^[[:space:]]*$\" tests/ci/fast_quarantine.txt | grep -qvE \"issue=#[0-9]+\"; }; grep -q \"collected\" docs/ci/fast_backlog_ledger.md; grep -qiE \"0 .*collected|collection.*fatal|refusing to pass vacuously|FATAL\" .github/workflows/pr-gate.yml; echo \"fast-shard-oracle-restore: quarantine issue-bound + zero-collection guard present\" | tee tmp/fast_shard_oracle_restore.log'"
+
+signal_artifact: "tmp/fast_shard_oracle_restore.log"
+
+falsifier:
+  command: "bash -c 'if grep -vE \"^[[:space:]]*#|^[[:space:]]*$\" tests/ci/fast_quarantine.txt | grep -qvE \"issue=#[0-9]+\"; then exit 0; else exit 1; fi'"
+  description: >-
+    Succeeds (exit 0, falsification) only if some active quarantine line lacks an
+    issue ref — i.e. a silent, untracked quarantine. On the green ledger every
+    line is issue-bound, so this exits 1, proving the no-silent-quarantine promise
+    is falsifiable.
+
+rollback_command: >-
+  bash -c '
+    git checkout HEAD~1 -- .github/workflows/pr-gate.yml
+    && git rm -f docs/ci/fast_backlog_ledger.md tests/ci/fast_quarantine.txt
+      .claude/commit_acceptors/fast-shard-oracle-restore.yaml
+  '
+
+rollback_verification_command: >-
+  bash -c '
+    test ! -e tests/ci/fast_quarantine.txt
+    && test ! -e .claude/commit_acceptors/fast-shard-oracle-restore.yaml
+  '
+
+memory_update_type: append
+ledger_path: "docs/ci/fast_backlog_ledger.md"
+report_path: "tmp/fast_shard_oracle_restore.log"
+evidence: []

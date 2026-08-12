@@ -1,0 +1,272 @@
+{
+  "domains": {
+    "computational_physics_contract": {
+      "allowed_claim": "Thermodynamic / fluctuation / determinism identities are derived properties of the implementation, not empirical market facts.",
+      "forbidden_claim": "No claim that markets obey these identities.",
+      "invariants": [
+        "INV-FE-ROBUST",
+        "INV-FE1",
+        "INV-FE2",
+        "INV-FE3",
+        "INV-GABOR1",
+        "INV-ST1",
+        "INV-ST2",
+        "INV-ST3",
+        "INV-TAU1",
+        "INV-TAU2",
+        "INV-TAU3",
+        "INV-TH1",
+        "INV-TH2",
+        "INV-TH3"
+      ],
+      "kind": "derived_computational_property",
+      "laws": [
+        "ecs.lyapunov_descent",
+        "thermo.free_energy_descent",
+        "thermo.landauer_bound",
+        "thermo.second_law_closed"
+      ],
+      "maturity": "DERIVED_COMPUTATIONAL_PROPERTY",
+      "verification_command": "pytest -q tests/unit/physics -k 'thermo or determinism or uncertainty'"
+    },
+    "execution_infrastructure": {
+      "allowed_claim": "Sizing / order-management / bus / kernel invariants are machine-checkable contracts of the computation.",
+      "forbidden_claim": "Not a claim of profitability or live-venue readiness.",
+      "invariants": [
+        "INV-API-CONTRACT",
+        "INV-DET1",
+        "INV-DET2",
+        "INV-DET3",
+        "INV-HPC1",
+        "INV-HPC2",
+        "INV-HPC3",
+        "INV-HPC4",
+        "INV-HPC5",
+        "INV-IERD-PHASE0",
+        "INV-KELLY1",
+        "INV-KELLY2",
+        "INV-KELLY3",
+        "INV-OMS1",
+        "INV-OMS2",
+        "INV-OMS3",
+        "INV-PSR-HAC",
+        "INV-REBUS-1",
+        "INV-REBUS-3",
+        "INV-REBUS-4",
+        "INV-REBUS-5",
+        "INV-REBUS-6",
+        "INV-REBUS-7",
+        "INV-SB1",
+        "INV-SB2"
+      ],
+      "kind": "execution_contract",
+      "laws": [
+        "hpc.numerical_stability",
+        "hpc.seeded_reproducibility",
+        "kelly.fraction_cap",
+        "kelly.log_growth_optimality",
+        "kelly.optimal_fraction_formula",
+        "oms.causal_order",
+        "oms.idempotency",
+        "oms.position_conservation",
+        "signalbus.acyclic_fanout",
+        "signalbus.deterministic_fanout"
+      ],
+      "maturity": "INVARIANT",
+      "verification_command": "pytest -q tests/unit -k 'kelly or oms or signalbus or hpc'"
+    },
+    "graph_geometry": {
+      "allowed_claim": "Discrete graph-curvature theorems (Ollivier/Forman, Gauss-Bonnet) hold within their stated validity domain.",
+      "forbidden_claim": "No claim that market structure is governed by curvature.",
+      "invariants": [
+        "INV-KR4",
+        "INV-RC-FLOW",
+        "INV-RC1",
+        "INV-RC2",
+        "INV-RC3"
+      ],
+      "kind": "physics_law",
+      "laws": [
+        "kuramoto_ricci.semantics_split",
+        "ricci.flow_energy_nonincrease_declared_domain",
+        "ricci.flow_monotonicity",
+        "ricci.gauss_bonnet",
+        "ricci.ollivier_bounds"
+      ],
+      "maturity": "FORMAL_LAW",
+      "verification_command": "pytest -q tests/unit/physics -k 'ricci or curvature'"
+    },
+    "market_microstructure_hypothesis": {
+      "allowed_claim": "Microstructure descriptors are falsifiable research hypotheses; promotion needs real-data evidence with hashes and a null baseline.",
+      "forbidden_claim": "No out-of-sample edge, profitability, or rank is asserted.",
+      "invariants": [
+        "INV-AC1-rev",
+        "INV-CBR1",
+        "INV-DRO1",
+        "INV-DRO2",
+        "INV-DRO3",
+        "INV-DRO4",
+        "INV-DRO5"
+      ],
+      "kind": "research_hypothesis",
+      "laws": [
+        "dro_ara.fail_closed_input",
+        "dro_ara.gamma_derivation",
+        "dro_ara.invalid_regime_gate",
+        "dro_ara.long_signal_gate",
+        "dro_ara.risk_scalar_bounds",
+        "manifold.causal_cutoff",
+        "manifold.curvature_transport_balance",
+        "manifold.metric_snapshot_schema",
+        "manifold.provenance_replay_identity"
+      ],
+      "maturity": "HYPOTHESIS",
+      "verification_command": "pytest -q tests/unit -k 'dro_ara or manifold or coherence'"
+    },
+    "neuro_symbolic_analogy": {
+      "allowed_claim": "Neuro-modulator dynamics are engineering analogies used as risk instrumentation; the biological labels are arithmetic proxies.",
+      "forbidden_claim": "Not a biological claim and not a market-physics law.",
+      "invariants": [
+        "INV-5HT1",
+        "INV-5HT2",
+        "INV-5HT3",
+        "INV-5HT4",
+        "INV-5HT5",
+        "INV-5HT6",
+        "INV-5HT7",
+        "INV-CB1",
+        "INV-CB2",
+        "INV-CB3",
+        "INV-CB4",
+        "INV-CB5",
+        "INV-CB6",
+        "INV-CB7",
+        "INV-CB8",
+        "INV-DA1",
+        "INV-DA2",
+        "INV-DA3",
+        "INV-DA4",
+        "INV-DA5",
+        "INV-DA6",
+        "INV-DA7",
+        "INV-DA8",
+        "INV-GABA1",
+        "INV-GABA2",
+        "INV-GABA3",
+        "INV-GABA4",
+        "INV-GABA5",
+        "INV-HOM1"
+      ],
+      "kind": "non_claim_analogy",
+      "laws": [
+        "dopamine.bounded_signal",
+        "dopamine.rpe_zero_steady_state",
+        "gaba.gate_bounds",
+        "gaba.monotone_inhibition",
+        "serotonin.level_bounds",
+        "serotonin.lyapunov_stability"
+      ],
+      "maturity": "NON_CLAIM_ANALOGY",
+      "verification_command": "pytest -q tests/unit -k 'serotonin or dopamine or gaba or cryptobiosis'"
+    },
+    "nonlinear_synchronization": {
+      "allowed_claim": "Kuramoto / Ott-Antonsen / Lyapunov results hold for the stated coupling model and finite-size regime.",
+      "forbidden_claim": "No claim that asset returns synchronize as a market law.",
+      "invariants": [
+        "INV-CAL1",
+        "INV-CAL2",
+        "INV-CAL3",
+        "INV-ES1",
+        "INV-ES2",
+        "INV-HO-SPARSE",
+        "INV-K1",
+        "INV-K10",
+        "INV-K2",
+        "INV-K3",
+        "INV-K4",
+        "INV-K5",
+        "INV-K6",
+        "INV-K7",
+        "INV-K8",
+        "INV-K9",
+        "INV-KBETA",
+        "INV-KR1",
+        "INV-KR2",
+        "INV-KR3",
+        "INV-LE1",
+        "INV-LE2",
+        "INV-LE3",
+        "INV-LY1",
+        "INV-LY2",
+        "INV-LY3",
+        "INV-LY4",
+        "INV-OA1",
+        "INV-OA2",
+        "INV-OA3",
+        "INV-PIN1",
+        "INV-PIN2",
+        "INV-PIN3",
+        "INV-PIN4",
+        "INV-SAK1",
+        "INV-SG1",
+        "INV-SG2",
+        "INV-SL1",
+        "INV-SL2",
+        "INV-T2b"
+      ],
+      "kind": "physics_law",
+      "laws": [
+        "kuramoto.critical_scaling",
+        "kuramoto.finite_size_scaling_with_causal_cutoff",
+        "kuramoto.frequency_entrainment",
+        "kuramoto.order_parameter_bounds",
+        "kuramoto.subcritical_finite_size"
+      ],
+      "maturity": "FORMAL_LAW",
+      "verification_command": "pytest -q tests/unit/physics -k 'kuramoto or lyapunov'"
+    },
+    "personal_research_ontology": {
+      "allowed_claim": "Gradient-ontology and cosmological-compute axioms are the author's research framing, scoped to the system's own substrate.",
+      "forbidden_claim": "Not physics of markets and not an empirical claim.",
+      "invariants": [
+        "INV-ANCHORED-SUBSTRATE-GATE",
+        "INV-ARROW-OF-TIME",
+        "INV-BEKENSTEIN-COGNITIVE",
+        "INV-COSMOLOGICAL-COMPUTE",
+        "INV-CRITICALITY",
+        "INV-JACOBSON-OBSERVER",
+        "INV-LANDAUER-PROXY",
+        "INV-NO-BIO-CLAIM",
+        "INV-OBSERVER-BANDWIDTH",
+        "INV-REVERSIBLE-GATE",
+        "INV-SIMULATION-FALSIFICATION",
+        "INV-YV1"
+      ],
+      "kind": "research_ontology",
+      "laws": [
+        "pncc.landauer_proxy_dominance",
+        "pncc.no_bio_claim",
+        "pncc.reversible_gate_byte_exact"
+      ],
+      "maturity": "NON_CLAIM_ANALOGY",
+      "verification_command": "pytest -q tests/unit -k 'gradient or pncc'"
+    }
+  },
+  "generated_by": "scripts/ci/check_physics_docs_canon.py --write",
+  "maturity_vocabulary": [
+    "FORMAL_LAW",
+    "INVARIANT",
+    "DERIVED_COMPUTATIONAL_PROPERTY",
+    "HYPOTHESIS",
+    "NON_CLAIM_ANALOGY"
+  ],
+  "schema_version": "1.0",
+  "sources": {
+    "invariants": ".claude/physics/INVARIANTS.yaml",
+    "laws": "physics_contracts/catalog.yaml"
+  },
+  "totals": {
+    "invariants": 132,
+    "laws": 42
+  }
+}

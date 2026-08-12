@@ -1,0 +1,130 @@
+# Copyright (c) 2023-2026 Yaroslav Vasylenko (neuron7xLab)
+# SPDX-License-Identifier: MIT
+#
+# QUARANTINE / PARK LIST for the flagship-RQ selection (FLAGSHIP-RQ-001).
+#
+# GeoSync carries dozens of parallel research claims. Exactly ONE is promoted to
+# flagship (research/flagship/RQ.md); every other live research line is parked
+# here. This is a machine-readable *reference*, NOT a deletion: each entry points
+# at the existing artifact (which stays in the tree, with its own preregistration
+# and negative-evidence intact) and states why it is parked and the path back.
+#
+# Statuses:
+#   QUARANTINED — active research line, deliberately not-flagship this cycle.
+#   ARCHIVED    — negative/not-supported result preserved; do not rebuild.
+#   PARKED_INFRA — adjacent infrastructure RQ, honest but not selected flagship.
+#
+# Consumed by scripts/ci/check_flagship_rq.py (must be a non-empty list).
+
+flagship: FLAGSHIP-RQ-001
+generated_boundary: RESEARCH_ALPHA_SYNTHETIC_ONLY_NO_DEPLOY
+
+quarantined:
+  - id: C-SYSRISK-PHASE
+    claim: "Interbank phase-locking precedes banking-crisis events"
+    tier: HYPOTHESIS
+    path: research/systemic_risk/
+    reference: CLAIMS.md#C-SYSRISK-PHASE
+    status: QUARANTINED
+    reason: >-
+      Market-structure hypothesis; requires real crisis-window data + null
+      calibration. Out of scope for a single synthetic-only flagship this cycle.
+    path_back: Run its pre-registered Mann-Whitney/permutation battery on a signed artifact.
+
+  - id: C-RICCI-MICROSTRUCTURE-V1
+    claim: "Ollivier-Ricci curvature on real L2 order-book microstructure may contain falsifiable signal beyond null baselines"
+    tier: HYPOTHESIS
+    path: research_lines/ricci_microstructure_v1/
+    reference: CLAIMS.md#C-RICCI-MICROSTRUCTURE-V1
+    status: ARCHIVED
+    reason: >-
+      Canonical run is HYPOTHESIS_NOT_SUPPORTED; that negative result must be
+      preserved, not re-litigated. Not a flagship candidate.
+    path_back: New study id only; do NOT recompute the frozen negative.
+
+  - id: CTC-FALSIFY-001
+    claim: "CTC falsification lane (C3 / C_REAL / L2 preregistrations)"
+    tier: HYPOTHESIS
+    path: research/ctc_falsify/
+    reference: docs/research/CTC_FALSIFY_001_PREREGISTRATION.md
+    status: QUARANTINED
+    reason: Parallel falsification lane; multiple preregistrations, not selected as flagship.
+    path_back: Execute the preregistered gates; record verdict in the ledger.
+
+  - id: D002J
+    claim: "Crisis-window financial-substrate power-first study"
+    tier: HYPOTHESIS
+    path: docs/research/D002J_RESEARCH_PLAN.md
+    reference: docs/research/D002J_POWER_FIRST_REPORT.md
+    status: QUARANTINED
+    reason: Real-data crisis study; requires provenance-audited sources, out of synthetic-only flagship scope.
+    path_back: Complete power-first protocol on signed source-provenance artifact.
+
+  - id: D002K
+    claim: "Matched-placebo event-metric study"
+    tier: HYPOTHESIS
+    path: docs/research/D002K_DESIGN_RATIONALE.md
+    reference: docs/research/D002K_POWER_FIRST_REPORT.md
+    status: QUARANTINED
+    reason: Event-study design parallel to D002J; not selected as flagship.
+    path_back: Execute matched-placebo protocol; emit signed result.
+
+  - id: MICROSTRUCTURE-KERNELS-V1
+    claim: "Microstructure kernel registry (OFI Unity, Ricci-on-Spread, PLV, Spread Stress, Ricci Regime, Horizon Sweep, Signal Combiner, neurophase Bridge)"
+    tier: SYNTHETIC_DEMO
+    path: research/kernels/
+    reference: CLAUDE.md#Microstructure-Kernel-Registry
+    status: QUARANTINED
+    reason: >-
+      Bank of exploratory descriptors run via run_microstructure_cycle.py.
+      No out-of-sample edge asserted; parked as instrumentation, not flagship.
+    path_back: Individual kernel promotion requires real-data artifact + null baseline per PRODUCT_CATEGORY.md.
+
+  - id: L2-RICCI-EVIDENCE
+    claim: "L2 Ricci evidence protocol / Ricci-flow surgery microstructure status"
+    tier: HYPOTHESIS
+    path: docs/research/l2_ricci_evidence_protocol.md
+    reference: docs/research/RICCI_MICROSTRUCTURE_STATUS.md
+    status: QUARANTINED
+    reason: Adjacent Ricci-microstructure protocol; subsumed under archived C-RICCI-MICROSTRUCTURE-V1 lane.
+    path_back: Fold into a new Ricci study id if reopened.
+
+  - id: CAPITAL-WEIGHTED-KURAMOTO
+    claim: "Capital-weighted / sparse-simplicial Kuramoto market-synchrony descriptors"
+    tier: HYPOTHESIS
+    path: docs/research/capital_weighted_kuramoto.md
+    reference: docs/research/sparse_simplicial_kuramoto.md
+    status: QUARANTINED
+    reason: Phase-synchrony descriptors studied as microstructure observables; no edge asserted; not flagship.
+    path_back: Promotion requires signed real-data artifact with null baseline.
+
+  - id: DOPAMINE-RPE-EXTENSION
+    claim: "Dopamine RPE extension surface / dr-free TACL / PNCC exo-CNS lines"
+    tier: HYPOTHESIS
+    path: docs/research/dopamine_rpe_extension_surface.md
+    reference: docs/research/dr_free_tacl.md
+    status: QUARANTINED
+    reason: Neuromodulation research surfaces; parked as parallel lines, not selected flagship.
+    path_back: Independent preregistration + falsifier ledger entry.
+
+  - id: RQ1-CLAIM-GOVERNANCE
+    claim: "Can machine-enforced claim governance reduce false empirical promotion?"
+    tier: HYPOTHESIS
+    path: docs/phd/01_research_questions.md
+    reference: scripts/ci/check_claim_boundary.py
+    status: PARKED_INFRA
+    reason: >-
+      Honest adjacent infrastructure RQ (qualified-yes result recorded), but only
+      one infra RQ is promoted to flagship this cycle (RQ2-family, FLAGSHIP-RQ-001).
+    path_back: Re-nominate as flagship in a future cycle if selected.
+
+  - id: RQ3-CI-FALSIFIER-INTEGRITY
+    claim: "Can CI-gated falsifiers preserve negative-result integrity in market-structure research?"
+    tier: HYPOTHESIS
+    path: docs/phd/01_research_questions.md
+    reference: scripts/ci/check_falsifier_ledger.py
+    status: PARKED_INFRA
+    reason: >-
+      Mechanism affirmed; empirical (real-data) leg deferred. Parked as adjacent
+      infra RQ; not the selected flagship.
+    path_back: Run the deferred real-L2 falsification study under a new study id.

@@ -1,0 +1,82 @@
+# Diff-bound acceptor for Law T2: Full Lyapunov spectrum (Benettin QR).
+#
+# Constitutional law T2 of seven (CLAUDE.md GeoSync Physics Law Act).
+# Companion to the scalar Rosenstein MLE in core/physics/lyapunov_exponent.py:
+# T2 integrates the variational flow and returns the FULL spectrum of
+# exponents up to n_exp, in a JAX-pure jit-fusable kernel.
+
+id: law-T2-lyapunov-spectrum
+status: ACTIVE
+claim_type: correctness
+promise: >-
+  core.physics.lyapunov_spectrum exposes lyapunov_spectrum(rhs, x0, *, dt,
+  n_steps, n_exp, qr_every) implementing the Benettin–Galgani–Strelcyn
+  continuous-Gram-Schmidt algorithm for autonomous ODEs ẋ=rhs(x). The
+  algorithm co-integrates the augmented system (x, Q) under a midpoint
+  (Heun-RK2) integrator with reorthonormalisation every qr_every steps;
+  the spectrum is sorted descending, and bit-identical for repeated runs
+  with identical inputs (INV-HPC1). Jit-fused via lax.fori_loop. Adds
+  three constitutional invariants:
+    INV-LY1 | algebraic    | linear ẋ = A x: spectrum equals descending
+                              sort of Re(eigvals(A)) to 1e-3 at T=50.
+    INV-LY2 | conservation | Hamiltonian flow: Σ λ_k = 0 to 1e-3 on the
+                              harmonic oscillator at T=100.
+    INV-LY3 | universal    | every contract violation (dt≤0, n_steps≤0,
+                              qr_every∤n_steps, n_exp∉[1,n], x0 non-1D)
+                              is rejected with ValueError; no silent repair.
+  The Lorenz-63 reference (σ,ρ,β)=(10,28,8/3) recovers the published
+  spectrum (0.9056, 0, -14.5723) within 10 % on λ_1 and exact sign profile
+  (+, 0, -) at T=1000 (n_steps=200000, dt=0.005, qr_every=5).
+diff_scope:
+  changed_files:
+    - path: ".claude/commit_acceptors/law-T2-lyapunov-spectrum.yaml"
+    - path: "core/physics/lyapunov_spectrum.py"
+    - path: "tests/unit/physics/test_T2_lyapunov_full_spectrum.py"
+    - path: "docs/laws/T2_lyapunov_spectrum.md"
+    - path: "newsfragments/law-T2-lyapunov-spectrum.feature.md"
+    - path: "pyproject.toml"
+    - path: "CLAUDE.md"
+    - path: "requirements.lock"
+    - path: "requirements-dev.lock"
+  forbidden_paths:
+    - "trading/"
+    - "execution/"
+    - "forecast/"
+    - "policy/"
+required_python_symbols:
+  - "LyapunovReport"
+  - "lyapunov_spectrum"
+expected_signal: >-
+  All 16 unit tests pass under pytest; black, ruff, mypy --strict clean
+  on the source and test files; Lorenz-63 reference test recovers
+  λ_1 ∈ [0.815, 0.996], |λ_2| < 0.05, λ_3 < -10 in ≈1 s on 1 CPU core.
+measurement_command: >-
+  python -m pytest tests/unit/physics/test_T2_lyapunov_full_spectrum.py -v
+signal_artifact: "tmp/law_T2_lyapunov_spectrum_pytest.log"
+falsifier:
+  command: >-
+    python -m pytest tests/unit/physics/test_T2_lyapunov_full_spectrum.py
+    -v -k "INV_LY1 or INV_LY2 or lorenz63 or HPC1 or negative_control"
+  description: >-
+    Probe filters to the five physics-load-bearing tests:
+    INV-LY1 algebraic recovery on linear flows (positive control;
+    if this fails the integrator/QR pair is broken); INV-LY2 sum-zero
+    on Hamiltonian flow (catches non-symplectic drift); Lorenz-63
+    canonical reference (catches integrator timestep instability or
+    QR cadence too sparse); INV-HPC1 determinism (catches non-pure
+    side effects); negative_control (catches spurious positive
+    exponents on contractive systems — proves the Lorenz λ_1 > 0
+    result is informative, not vacuous).
+rollback_command: >-
+  git checkout HEAD~1 -- core/physics/lyapunov_spectrum.py
+  tests/unit/physics/test_T2_lyapunov_full_spectrum.py
+  .claude/commit_acceptors/law-T2-lyapunov-spectrum.yaml
+  docs/laws/T2_lyapunov_spectrum.md
+  newsfragments/law-T2-lyapunov-spectrum.feature.md
+  pyproject.toml
+rollback_verification_command: >-
+  git diff --exit-code core/physics/lyapunov_spectrum.py
+memory_update_type: append
+ledger_path: ".claude/commit_acceptors/law-T2-lyapunov-spectrum.yaml"
+report_path: "docs/laws/T2_lyapunov_spectrum.md"
+evidence: []

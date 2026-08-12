@@ -1,6 +1,6 @@
 # Chaos Testing (GameDay) Guide
 
-Ensure TradePulse stays resilient under failure by running structured GameDay exercises that simulate production incidents. This playbook covers planning, executing, and learning from controlled failure injections so teams can validate both system reliability and operational response.
+Ensure GeoSync stays resilient under failure by running structured GameDay exercises that simulate production incidents. This playbook covers planning, executing, and learning from controlled failure injections so teams can validate both system reliability and operational response.
 
 ---
 
@@ -164,4 +164,4 @@ Automate replay of high-value scenarios as part of CI/CD or nightly chaos suites
 | T+1 day | Publish retro report, track follow-up actions |
 | T+30 days | Review remediation progress, decide next scenario |
 
-Consistent, well-instrumented GameDays build confidence that TradePulse will withstand real-world market turbulence and infrastructure incidents.
+Consistent, well-instrumented GameDays build confidence that GeoSync will withstand real-world market turbulence and infrastructure incidents.

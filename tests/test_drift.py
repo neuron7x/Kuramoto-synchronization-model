@@ -1,3 +1,5 @@
+# Copyright (c) 2023-2026 Yaroslav Vasylenko (neuron7xLab)
+# SPDX-License-Identifier: MIT
 """Unit tests for data drift detection utilities.
 
 This module validates the drift detection mechanisms used to identify when
@@ -18,7 +20,7 @@ import numpy as np
 import pandas as pd
 import pytest
 
-from tradepulse.utils.drift import (
+from geosync.utils.drift import (
     DriftDetector,
     DriftMetric,
     DriftTestResult,
@@ -99,9 +101,9 @@ def test_ks_test(data1, data2, drifted):
     """
     result = compute_ks_test(np.array(data1), np.array(data2))
     assert result.valid, f"KS test should be valid but got: {result.message}"
-    assert (result.pvalue < 0.05) == drifted, (
-        f"Expected drift={drifted} but p-value={result.pvalue:.4f} " f"(threshold=0.05)"
-    )
+    assert (
+        result.pvalue < 0.05
+    ) == drifted, f"Expected drift={drifted} but p-value={result.pvalue:.4f} (threshold=0.05)"
 
 
 def test_ks_test_insufficient_data():
@@ -256,9 +258,7 @@ def test_parallel_drift_filters_coerced_nans():
         metric.js_divergence
     ), f"Expected finite JS divergence, got {metric.js_divergence}"
     assert np.isfinite(metric.psi), f"Expected finite PSI, got {metric.psi}"
-    assert (
-        metric.js_divergence > 0
-    ), "Expected positive divergence for different distributions"
+    assert metric.js_divergence > 0, "Expected positive divergence for different distributions"
 
 
 def test_drift_detector_summary():
@@ -369,8 +369,7 @@ def test_drift_metric_respects_thresholds_overrides():
     assert metric.drifted, "Legacy drift flag should remain permissive"
     assert metric.drifted_with_thresholds(thresholds=thresholds, feature="f0") is True
     assert (
-        metric.drifted_with_thresholds(thresholds=thresholds, feature="f0", alpha=0.01)
-        is False
+        metric.drifted_with_thresholds(thresholds=thresholds, feature="f0", alpha=0.01) is False
     ), "Alpha override should tighten KS detection"
 
 

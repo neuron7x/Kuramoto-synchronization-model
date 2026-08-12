@@ -1,0 +1,232 @@
+{
+  "schema": "academy-fellow/traceability_report@v1",
+  "gate": "every OPERATIONAL mechanism is invariant/contract/falsifier/test-bound; every PARTIAL has remediation; every quarantine entry is classified",
+  "verdict": "PASS",
+  "rationale": "0 open missing_tests across the ledger; PARTIAL entries carry explicit remediation_action and cannot promote claim tier.",
+  "rows": [
+    {
+      "id": "kuramoto-order-parameter",
+      "domain": "physics",
+      "verdict": "PASS",
+      "claim_status": "OPERATIONAL",
+      "remediation": "KEEP"
+    },
+    {
+      "id": "ott-antonsen-reduction",
+      "domain": "physics",
+      "verdict": "PASS",
+      "claim_status": "OPERATIONAL",
+      "remediation": "KEEP"
+    },
+    {
+      "id": "lyapunov-mle",
+      "domain": "physics",
+      "verdict": "PASS",
+      "claim_status": "OPERATIONAL",
+      "remediation": "KEEP"
+    },
+    {
+      "id": "serotonin-controller",
+      "domain": "neuroscience",
+      "verdict": "PASS",
+      "claim_status": "OPERATIONAL",
+      "remediation": "KEEP"
+    },
+    {
+      "id": "dopamine-controller-rpe",
+      "domain": "neuroscience",
+      "verdict": "PASS",
+      "claim_status": "OPERATIONAL",
+      "remediation": "KEEP"
+    },
+    {
+      "id": "gaba-position-gate",
+      "domain": "neuroscience",
+      "verdict": "PASS",
+      "claim_status": "OPERATIONAL",
+      "remediation": "KEEP"
+    },
+    {
+      "id": "ricci-curvature-bounds",
+      "domain": "physics",
+      "verdict": "PASS",
+      "claim_status": "OPERATIONAL",
+      "remediation": "KEEP"
+    },
+    {
+      "id": "ricci-flow-engine",
+      "domain": "physics",
+      "verdict": "PASS",
+      "claim_status": "OPERATIONAL",
+      "remediation": "KEEP"
+    },
+    {
+      "id": "free-energy-ecs",
+      "domain": "physics",
+      "verdict": "PASS",
+      "claim_status": "OPERATIONAL",
+      "remediation": "KEEP"
+    },
+    {
+      "id": "cryptobiosis-state-machine",
+      "domain": "runtime-governance",
+      "verdict": "PASS",
+      "claim_status": "OPERATIONAL",
+      "remediation": "KEEP"
+    },
+    {
+      "id": "kelly-sizing",
+      "domain": "neuroeconomics",
+      "verdict": "PASS",
+      "claim_status": "OPERATIONAL",
+      "remediation": "KEEP"
+    },
+    {
+      "id": "signal-bus-dag",
+      "domain": "runtime-governance",
+      "verdict": "PASS",
+      "claim_status": "OPERATIONAL",
+      "remediation": "KEEP"
+    },
+    {
+      "id": "gradient-vital-signs",
+      "domain": "runtime-governance",
+      "verdict": "PASS",
+      "claim_status": "OPERATIONAL",
+      "remediation": "KEEP"
+    },
+    {
+      "id": "dro-ara-engine",
+      "domain": "physics",
+      "verdict": "PASS",
+      "claim_status": "OPERATIONAL",
+      "remediation": "KEEP"
+    },
+    {
+      "id": "adaptive-criticality-kappa",
+      "domain": "physics",
+      "verdict": "PASS",
+      "claim_status": "OPERATIONAL",
+      "remediation": "KEEP"
+    },
+    {
+      "id": "explosive-sync-hysteresis",
+      "domain": "runtime-governance",
+      "verdict": "PASS",
+      "claim_status": "OPERATIONAL",
+      "remediation": "KEEP"
+    },
+    {
+      "id": "hpc-kernels-determinism",
+      "domain": "runtime-governance",
+      "verdict": "PASS",
+      "claim_status": "OPERATIONAL",
+      "remediation": "KEEP"
+    },
+    {
+      "id": "serotonin-ode-lyapunov",
+      "domain": "physics",
+      "verdict": "PASS",
+      "claim_status": "OPERATIONAL",
+      "remediation": "KEEP"
+    },
+    {
+      "id": "dopamine-execution-adapter-tanh",
+      "domain": "neuroscience",
+      "verdict": "PASS",
+      "claim_status": "OPERATIONAL",
+      "remediation": "KEEP"
+    },
+    {
+      "id": "neuro-optimizer-balance-metrics",
+      "domain": "neuroeconomics",
+      "verdict": "PARTIAL",
+      "claim_status": "PARTIAL",
+      "remediation": "QUARANTINE_DOC"
+    },
+    {
+      "id": "neuro-validation-bounds",
+      "domain": "neuroscience",
+      "verdict": "PARTIAL",
+      "claim_status": "PARTIAL",
+      "remediation": "QUARANTINE_DOC"
+    },
+    {
+      "id": "coherence-bridge-geosync-adapter",
+      "domain": "runtime-governance",
+      "verdict": "PASS",
+      "claim_status": "OPERATIONAL",
+      "remediation": "KEEP"
+    },
+    {
+      "id": "hebbian-plasticity-update",
+      "domain": "neuroscience",
+      "verdict": "PARTIAL",
+      "claim_status": "PARTIAL",
+      "remediation": "ADD_FALSIFIER"
+    },
+    {
+      "id": "homeostatic-stabilizer",
+      "domain": "neuroscience",
+      "verdict": "PASS",
+      "claim_status": "OPERATIONAL",
+      "remediation": "KEEP"
+    },
+    {
+      "id": "neuro-orchestrator-scenario-builder",
+      "domain": "runtime-governance",
+      "verdict": "QUARANTINE",
+      "claim_status": "DECORATIVE",
+      "remediation": "RENAME"
+    },
+    {
+      "id": "adaptive-calibrator-annealing",
+      "domain": "runtime-governance",
+      "verdict": "QUARANTINE",
+      "claim_status": "DECORATIVE",
+      "remediation": "RENAME"
+    },
+    {
+      "id": "basal-ganglia-policy-legacy",
+      "domain": "runtime-governance",
+      "verdict": "QUARANTINE",
+      "claim_status": "DECORATIVE",
+      "remediation": "RENAME"
+    },
+    {
+      "id": "neuro-optimization-guide-overclaim",
+      "domain": "neuroscience",
+      "verdict": "QUARANTINE",
+      "claim_status": "OVERCLAIM",
+      "remediation": "QUARANTINE_DOC"
+    },
+    {
+      "id": "docs-hpc-ai-v4-overclaim",
+      "domain": "runtime-governance",
+      "verdict": "QUARANTINE",
+      "claim_status": "OVERCLAIM",
+      "remediation": "QUARANTINE_DOC"
+    },
+    {
+      "id": "legacy-optimization-execution-report",
+      "domain": "neuroscience",
+      "verdict": "QUARANTINE",
+      "claim_status": "LEGACY",
+      "remediation": "KEEP"
+    },
+    {
+      "id": "legacy-run-optimization-100",
+      "domain": "neuroscience",
+      "verdict": "QUARANTINE",
+      "claim_status": "LEGACY",
+      "remediation": "KEEP"
+    },
+    {
+      "id": "mycelium-research-timeline-mention",
+      "domain": "runtime-governance",
+      "verdict": "QUARANTINE",
+      "claim_status": "REJECTED",
+      "remediation": "REJECT"
+    }
+  ]
+}

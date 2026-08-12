@@ -1,6 +1,6 @@
 # Changelog
 
-All notable changes to TradePulse are documented in this file.
+All notable changes to GeoSync are documented in this file.
 
 Format follows [Keep a Changelog](https://keepachangelog.com/) and [Semantic Versioning](https://semver.org/).
 
@@ -10,6 +10,18 @@ Add change fragments to `newsfragments/` for each Pull Request.
 <!-- towncrier release notes start -->
 
 ## [Unreleased]
+
+### 🔬 Physics Kernel
+- **57 machine-checkable invariants** across 15 modules (PR #138, #139)
+- **67 mathematical witness tests** with INV-* references and 5-field error messages
+- **Physics Kernel CI Gate**: self-check + L1-L5 validation + C1/C2 code audit
+- **C1/C2 code audit**: 69 → 5 silent clamps (0 physics), 0 undocumented bounds
+- **3 physics-law corrections**: RC1, FE2, OMS1 falsified and corrected by witnesses
+- **Gradient Constitution** (CLAUDE.md §0): maintenance hierarchy, INV-YV1
+
+### 🧬 New Modules
+- **Cryptobiosis** (`core/neuro/cryptobiosis.py`): phase-transition survival, 8 invariants (CB1-CB8)
+- **physics_contracts/**: parallel law-catalog with `@law()` decorator and AST validator
 
 ### 🚀 Features
 - DOC PR COPILOT v2: LLM-based documentation agent for automated documentation review and patch generation in Pull Requests.
@@ -37,6 +49,25 @@ Add change fragments to `newsfragments/` for each Pull Request.
 - Systems with non-deterministic `__repr__` implementations on cache keys should validate behaviour after the cache refactoring.
 
 ---
+
+## [1.1.0] - 2026-07-19
+
+Current released version and the single source of truth for the version string.
+The identical `1.1.0` appears in the `VERSION` file, `CITATION.cff`
+(`version` + `preferred-citation.version`), the `[tool.setuptools_scm]`
+`fallback_version` in `pyproject.toml`, and the release git tag `v1.1.0` from
+which the wheel / CLI `--version` derive. Enforced by
+`scripts/ci/check_version_ssot.py`; policy in `docs/VERSION_POLICY.md`.
+
+Change fragments accumulated under **[Unreleased]** above ship in this line.
+
+---
+
+<!-- HISTORICAL — legacy imported changelog (pre-SSOT). The 2.x.y entries below
+     predate the git-tag / CITATION version SSOT introduced by REL-008 and use a
+     numbering scheme inconsistent with the current release tags (v1.0.0,
+     v1.1.0). They are PRESERVED VERBATIM for provenance and are NOT the current
+     version. Do not treat any 2.x.y heading as the canonical version. -->
 
 ## [2.1.3] - 2025-10-05
 ### 🚀 Features
@@ -85,7 +116,7 @@ Add change fragments to `newsfragments/` for each Pull Request.
 ## [2.0.0] - 2025-10-05
 
 ### 🚀 Features
-- Initial TradePulse skeleton: protobuf contracts, Python/Next.js scaffolding, infrastructure files.
+- Initial GeoSync skeleton: protobuf contracts, Python/Next.js scaffolding, infrastructure files.
 
 ---
 
@@ -94,7 +125,7 @@ Add change fragments to `newsfragments/` for each Pull Request.
 ### 🚀 Features
 - **Core Indicators**: Kuramoto oscillators, Ricci flow curvature, Shannon entropy, Hurst exponent, 50+ technical indicators.
 - **Market Phase Detection**: Five-phase classification (CHAOTIC, PROTO_EMERGENT, STRONG_EMERGENT, TRANSITION, POST_EMERGENT).
-- **TradePulseCompositeEngine**: High-level API combining Kuramoto synchronization with Ricci flow geometry.
+- **GeoSyncCompositeEngine**: High-level API combining Kuramoto synchronization with Ricci flow geometry.
 - **Event-Driven Backtest Engine**: Walk-forward testing, Monte Carlo simulation, transaction cost modeling.
 - **CLI Interface**: `analyze`, `backtest`, `live` commands with JSON output and tracing.
 - **Streamlit Dashboard**: Interactive market analysis and visualization.
@@ -114,16 +145,16 @@ Add change fragments to `newsfragments/` for each Pull Request.
 - Synchronized versioning and configs.
 
 ### ⚠️ Known Limitations
-- Live trading is in beta; test thoroughly in paper mode before production.
+- Execution runs in the paper/replay realism harness only; live-venue execution is out of scope and unverified.
 - Web dashboard is in early preview (alpha).
 - Some advanced indicators require optional dependencies (`pip install ".[neuro_advanced]"`).
 
 ---
 
-[Unreleased]: https://github.com/neuron7x/TradePulse/compare/v2.1.3...HEAD
-[2.1.3]: https://github.com/neuron7x/TradePulse/compare/v2.1.2...v2.1.3
-[2.1.2]: https://github.com/neuron7x/TradePulse/compare/v2.1.1...v2.1.2
-[2.1.1]: https://github.com/neuron7x/TradePulse/compare/v2.1.0...v2.1.1
-[2.1.0]: https://github.com/neuron7x/TradePulse/compare/v2.0.0...v2.1.0
-[2.0.0]: https://github.com/neuron7x/TradePulse/compare/v0.1.0...v2.0.0
-[0.1.0]: https://github.com/neuron7x/TradePulse/releases/tag/v0.1.0
+[Unreleased]: https://github.com/neuron7xLab/GeoSync/compare/v2.1.3...HEAD
+[2.1.3]: https://github.com/neuron7xLab/GeoSync/compare/v2.1.2...v2.1.3
+[2.1.2]: https://github.com/neuron7xLab/GeoSync/compare/v2.1.1...v2.1.2
+[2.1.1]: https://github.com/neuron7xLab/GeoSync/compare/v2.1.0...v2.1.1
+[2.1.0]: https://github.com/neuron7xLab/GeoSync/compare/v2.0.0...v2.1.0
+[2.0.0]: https://github.com/neuron7xLab/GeoSync/compare/v0.1.0...v2.0.0
+[0.1.0]: https://github.com/neuron7xLab/GeoSync/releases/tag/v0.1.0

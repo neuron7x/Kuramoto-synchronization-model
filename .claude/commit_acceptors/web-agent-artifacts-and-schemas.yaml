@@ -1,0 +1,37 @@
+id: web-agent-artifacts-and-schemas
+status: DRAFT
+claim_type: governance
+promise: "Web-agent score, readiness, adapter, and evidence artifacts are bound to machine-readable schemas and fail-closed non-production status."
+diff_scope:
+  changed_files:
+    - path: ".claude/commit_acceptors/web-agent-artifacts-and-schemas.yaml"
+    - path: "artifacts/agents/live_tool_adapter_smoke.json"
+    - path: "artifacts/agents/web_agent_adapter_verification_matrix.json"
+    - path: "artifacts/agents/web_agent_baseline_score.json"
+    - path: "artifacts/agents/web_agent_context_efficiency_eval.json"
+    - path: "artifacts/agents/web_agent_live_evidence_eval.json"
+    - path: "artifacts/agents/web_agent_prompt_injection_eval.json"
+    - path: "artifacts/agents/web_agent_readiness_verdict.json"
+    - path: "artifacts/agents/web_agent_runtime_trace_eval.json"
+    - path: "artifacts/agents/web_agent_task_completion_eval.json"
+    - path: "artifacts/agents/web_agent_tool_contract_inventory.json"
+    - path: "schemas/web_agent_cognitive_state.schema.json"
+    - path: "schemas/web_agent_score.schema.json"
+  forbidden_paths:
+    - "trading/"
+    - "execution/"
+    - "forecast/"
+    - "policy/"
+required_python_symbols: []
+expected_signal: "baseline and readiness artifacts reproduce score 98.19 while keeping production readiness blocked"
+measurement_command: "python tools/web_agent_score.py artifacts/agents/web_agent_baseline_score.json"
+signal_artifact: "artifacts/agents/web_agent_baseline_score.json"
+falsifier:
+  command: "python -c \"raise SystemExit(1)\""
+  description: "Always-failing probe proving artifact/schema acceptor failures are surfaced by CI."
+rollback_command: "git checkout -- .claude/commit_acceptors/web-agent-artifacts-and-schemas.yaml artifacts/agents schemas/web_agent_cognitive_state.schema.json schemas/web_agent_score.schema.json"
+rollback_verification_command: "git diff --exit-code artifacts/agents schemas .claude/commit_acceptors/web-agent-artifacts-and-schemas.yaml"
+memory_update_type: none
+ledger_path: ".claude/commit_acceptors/web-agent-artifacts-and-schemas.yaml"
+report_path: "docs/agents/web_agent_baseline_report.md"
+evidence: []

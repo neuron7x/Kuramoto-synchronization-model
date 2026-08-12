@@ -1,0 +1,93 @@
+# Diff-bound commit acceptor for the fail-closed Kuramoto order parameter.
+#
+# core/kuramoto/engine.py::_order_parameter computed the order parameter as
+#   float(np.clip(np.abs(np.exp(1j*theta).mean()), 0.0, 1.0))
+# The clip is a SILENT REPAIR: by INV-K1 (Cauchy–Schwarz) the magnitude
+# R = |mean(exp(iθ))| is bounded by 1 exactly, with equality iff all phases are
+# equal, so the only legitimate >1 excursion is sub-ULP round-off. A bare clip
+# is mathematically invisible — an integrator that diverged to R≈1e9 (or to a
+# NaN/Inf state) and a true R=1.0 both collapse to 1.0, so a broken integrator
+# would report a perfect synchronisation plateau. This change makes the function
+# FAIL CLOSED:
+#   * non-finite magnitude (NaN/±Inf, e.g. NaN/Inf phases) raises ValueError;
+#   * magnitude beyond 1 + 1e-8 (documented round-off bound) raises
+#     FloatingPointError — beyond that floor it is integrator divergence, not
+#     arithmetic noise;
+#   * only genuine round-off (R ≤ 1 + 1e-8) is clipped back into [0, 1].
+# Valid-path behaviour is unchanged: identical phases → exactly 1.0, incoherent
+# phases → the O(1/√N) finite-size floor, every valid R is a finite float in
+# [0, 1].
+#
+# This is a fail-closed invariant hardening on a pure descriptor. It promotes
+# NO claim tier, asserts NO predictive or financial meaning, adds NO dependency,
+# and does NOT change any numeric output on valid integrator state.
+#
+# Locally verified on origin/main fork base (b146a1d):
+#   * ruff check / black --check: clean on both changed files
+#   * mypy --strict core/kuramoto/engine.py: no issues
+#   * pytest tests/unit/physics/test_order_parameter_failclosed.py: 11 passed
+#   * pytest -k "order_param or engine or kuramoto": green
+#   * zero noqa / type: ignore across both changed files
+id: order-parameter-failclosed
+status: ACTIVE
+claim_type: fail_closed
+promise: >-
+  core.kuramoto.engine._order_parameter computes the Kuramoto order parameter
+  R = |mean(exp(iθ))| and is fail-closed on INV-K1 (Cauchy–Schwarz: R ∈ [0,1],
+  R = 1 iff all phases equal). A non-finite magnitude raises ValueError; a
+  magnitude exceeding 1 + 1e-8 (the documented round-off tolerance) raises
+  FloatingPointError because beyond that bound it is integrator divergence, not
+  round-off; only genuine round-off (R ≤ 1 + 1e-8) is clipped into [0,1]. The
+  prior silent ``np.clip(|z|, 0, 1)`` masked divergence and is removed. Valid
+  integrator output is byte-unchanged: identical phases yield exactly 1.0,
+  incoherent phases yield the O(1/√N) floor, and every valid R is a finite float
+  in [0,1]. No claim tier is promoted; no predictive or financial meaning is
+  asserted.
+diff_scope:
+  changed_files:
+    - path: ".claude/commit_acceptors/order-parameter-failclosed.yaml"
+    - path: "core/kuramoto/engine.py"
+    - path: "tests/unit/physics/test_order_parameter_failclosed.py"
+  forbidden_paths:
+    - "trading/"
+    - "execution/"
+    - "forecast/"
+    - "src/"
+required_python_symbols:
+  - "core/kuramoto/engine.py::_order_parameter"
+  - "core/kuramoto/engine.py::_INV_K1_ROUNDOFF_TOL"
+expected_signal: >-
+  `python -m pytest tests/unit/physics/test_order_parameter_failclosed.py`
+  reports 11 passed; identical phases give R == 1.0 to 1e-12, incoherent phases
+  sit near the 1/√N floor, NaN/Inf phases raise ValueError, a magnitude beyond
+  1 + 1e-8 raises FloatingPointError (not a silent clip), round-off within the
+  tolerance is clipped, and a 1000-array sweep keeps R finite in [0, 1].
+measurement_command: >-
+  bash -c 'mkdir -p tmp && python -m pytest
+  tests/unit/physics/test_order_parameter_failclosed.py -v
+  > tmp/order_parameter_failclosed_pytest.log 2>&1
+  && grep -qE "11 passed" tmp/order_parameter_failclosed_pytest.log'
+signal_artifact: "tmp/order_parameter_failclosed_pytest.log"
+falsifier:
+  command: "python -c \"import sys, numpy as np\nfrom core.kuramoto import engine\nover = 1.0 + 4.0 * engine._INV_K1_ROUNDOFF_TOL\nengine.np.exp = lambda a: np.full_like(np.asarray(a, dtype=np.complex128), over + 0.0j)\nfired = False\ntry:\n    engine._order_parameter(np.zeros(4))\nexcept FloatingPointError:\n    fired = True\nprint('INV-K1 guard fired' if fired else 'SILENT CLIP: contract broken')\nsys.exit(0 if fired else 1)\""
+  description: >-
+    Inverse probe of the fail-closed INV-K1 contract. It monkeypatches the
+    module-local ``np.exp`` so that ``mean(exp(iθ))`` has magnitude
+    ``1 + 4·tol`` — comfortably beyond the round-off tolerance and thus a
+    deliberate INV-K1 violation. While the contract holds, ``_order_parameter``
+    raises ``FloatingPointError`` on this input; if the silent clip is ever
+    reintroduced it would instead return ``1.0``. The committed adversarial test
+    ``tests/unit/physics/test_order_parameter_failclosed.py::TestFailClosed::test_magnitude_above_tol_raises_not_clipped``
+    is the binding falsifier: it FAILS (the gate goes red) the moment an
+    out-of-tolerance magnitude is clipped instead of raised, so a silent repair
+    of a >1+tol value cannot pass. Repair means restoring the raise, never
+    widening the tolerance to swallow divergence.
+rollback_command: >-
+  bash -c 'git checkout origin/main -- core/kuramoto/engine.py
+  && git rm -f tests/unit/physics/test_order_parameter_failclosed.py
+  .claude/commit_acceptors/order-parameter-failclosed.yaml'
+rollback_verification_command: >-
+  bash -c 'test ! -f .claude/commit_acceptors/order-parameter-failclosed.yaml'
+memory_update_type: none
+ledger_path: ".claude/commit_acceptors/order-parameter-failclosed.yaml"
+report_path: "tmp/order_parameter_failclosed_pytest.log"

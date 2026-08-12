@@ -1,15 +1,17 @@
-"""Unified System Integration for TradePulse.
+# Copyright (c) 2023-2026 Yaroslav Vasylenko (neuron7xLab)
+# SPDX-License-Identifier: MIT
+"""Unified System Integration for GeoSync.
 
-This module provides a unified integration layer that combines all TradePulse
+This module provides a unified integration layer that combines all GeoSync
 modules and services into a single, cohesive system. It bridges:
 
 - Architecture Integrator (component lifecycle and coordination)
-- TradePulse Orchestrator (service orchestration)
+- GeoSync Orchestrator (service orchestration)
 - Service Registry (microservices management)
 - Agent Coordinator (agent coordination and task management)
 
 The SystemIntegrator serves as the primary entry point for bootstrapping
-and managing the entire TradePulse platform.
+and managing the entire GeoSync platform.
 
 Example:
     >>> from core.integration import SystemIntegrator

@@ -1,0 +1,103 @@
+# Diff-bound commit acceptor for the OMS idempotency + causal-order law witnesses.
+#
+# Adds ONE test module binding two previously-unwitnessed catalog laws to
+# executable @law witnesses, each citing an EXISTING registry invariant (no new
+# invariant, no count change). Promotes no claim, changes no runtime behavior,
+# touches no schema/guard, uses no real data, no disk and no network. The laws
+# are witnessed against pure platform primitives (core.idempotency and
+# geosync_hpc.control.control_episode) — the forbidden execution/ path is NOT
+# imported, mirroring the oms.position_conservation witness which binds to the
+# pure geosync_hpc ledger.
+#
+#   oms.idempotency  — apply(o, o, ..., o) ≡ apply(o): the same dedupe fields
+#                      build the same IdempotencyKey and replaying it through an
+#                      IdempotencyCoordinator returns the cached outcome with no
+#                      second record (INV-OMS2).
+#   oms.causal_order — per-episode event records carry a strictly increasing
+#                      sequence and an intact hash chain (INV-OMS3; t_{k+1} > t_k).
+#
+# Closes the last two blocking gaps in physics_contracts physical-law-coverage
+# (34/34 laws witnessed; blocking_missing == []).
+#
+# Locally verified on origin/main base:
+#   * pytest tests/physics_contracts/test_oms_idempotency_causal_witnesses.py: 2 passed
+#   * coverage_report(): laws_witnessed 34/34, blocking_missing [], coverage 1.0
+#   * mypy --strict clean ; zero new type-ignore pragmas ; tests/ excluded from ruff/black by repo config
+#   * commit-acceptor gate (diff-binding + forbidden-imports) clean: no execution/trading import
+id: oms-idempotency-causal-witnesses
+status: ACTIVE
+claim_type: governance
+promise: >-
+  After this PR lands, tests/physics_contracts/test_oms_idempotency_causal_witnesses.py
+  binds the catalog laws oms.idempotency and oms.causal_order to @law-decorated
+  witnesses that pass against pure platform primitives. The idempotency witness
+  asserts over n_orders=200 that the same dedupe fields build the same
+  core.idempotency IdempotencyKey, that the first registration is uncached while
+  every replay is served from cache with the identical operation id, and that the
+  IdempotencyCoordinator holds exactly one record per order (INV-OMS2). The
+  causal-order witness asserts over n_orders=200 that each
+  geosync_hpc.control.control_episode event log has a strictly increasing
+  sequence and a verifying hash chain across the full seven-phase chain
+  (INV-OMS3). Both cite existing invariants — the registry count is unchanged. No
+  market claim; no runtime, schema, or guard change; no execution/ import.
+diff_scope:
+  changed_files:
+    - path: ".claude/commit_acceptors/oms-idempotency-causal-witnesses.yaml"
+    - path: "tests/physics_contracts/test_oms_idempotency_causal_witnesses.py"
+  forbidden_paths:
+    - "trading/"
+    - "execution/"
+    - "forecast/"
+    - "policy/"
+    - "application/"
+    - "core/"
+    - "src/"
+    - "geosync_hpc/"
+    - "physics_contracts/catalog.yaml"
+    - ".claude/physics/INVARIANTS.yaml"
+required_python_symbols: []
+expected_signal: >-
+  `python -m pytest tests/physics_contracts/test_oms_idempotency_causal_witnesses.py`
+  reports 2 passed; the witnesses register in WITNESS_REGISTRY so coverage_report()
+  shows oms.idempotency and oms.causal_order witnessed and blocking_missing == [];
+  mypy --strict on the file is clean.
+measurement_command: >-
+  bash -c 'mkdir -p tmp && python -m pytest
+  tests/physics_contracts/test_oms_idempotency_causal_witnesses.py
+  > tmp/oms_idempotency_causal_witnesses.log 2>&1
+  && grep -q "2 passed" tmp/oms_idempotency_causal_witnesses.log'
+signal_artifact: "tmp/oms_idempotency_causal_witnesses.log"
+falsifier:
+  command: >-
+    bash -c 'python -c "import sys;
+    from core.idempotency.keys import IdempotencyKeyFactory;
+    from core.idempotency.operations import IdempotencyCoordinator;
+    from geosync_hpc.control import (ExpectedResultModel, ObservedActionResult, start_episode, seal_model, dispatch_action, receive_afferentation, compute_error, render_decision, persist_memory, verify_chain);
+    f = IdempotencyKeyFactory(); c = IdempotencyCoordinator(clock=lambda: 0.0);
+    ks = [f.build(service=\"oms\", operation=\"submit\", dedupe_fields={\"i\": i}) for i in range(200)];
+    _ = [c.register_attempt(k) for k in ks]; _ = [c.complete_success(k, {\"b\": 1}) for k in ks];
+    reps = [c.register_attempt(k).from_cache for k in ks for _ in range(4)];
+    idem_ok = all(reps) and c.metrics()[\"active_operations\"] == 200;
+    mk = lambda s: ExpectedResultModel(action_id=\"a\", action_type=\"trade\", expected_result=(1.0, 0.0), expected_result_variance=None, context_signature=(0.5, 0.5), model_created_seq=s[1], action_started_seq=s[2], error_threshold=0.1, rollback_threshold=0.5);
+    build = lambda i, s: persist_memory(render_decision(compute_error(receive_afferentation(dispatch_action(seal_model(start_episode(f\"e{i}\", b\"x\", s[0]), mk(s), s[1]), b\"a\", s[2]), ObservedActionResult(action_id=\"a\", observed_seq=s[3], observed_result=(1.0, 0.0)), s[3]), s[4]), s[5]), s[6]);
+    eps = [build(i, [1, 2, 3, 4, 5, 6, 7]) for i in range(50)];
+    causal_ok = all(verify_chain(e) and all(e.records[j + 1].seq > e.records[j].seq for j in range(len(e.records) - 1)) for e in eps);
+    broken = not (idem_ok and causal_ok);
+    sys.exit(0 if broken else 1)"'
+  description: >-
+    Inverse probe of the two witnessed laws in real pure code. It exits 0 (fires)
+    iff either holds false: replaying an idempotency key fails to collapse to one
+    cached record (idempotency broken), OR a control-episode sequence regresses or
+    its hash chain fails to verify (causal order broken). While both hold the
+    probe exits 1. If it ever exits 0, INV-OMS2 or INV-OMS3 is no longer truthful
+    and the witness must be corrected or reverted, not patched green.
+rollback_command: >-
+  git rm -f
+  tests/physics_contracts/test_oms_idempotency_causal_witnesses.py
+  .claude/commit_acceptors/oms-idempotency-causal-witnesses.yaml
+rollback_verification_command: >-
+  bash -c 'test ! -f tests/physics_contracts/test_oms_idempotency_causal_witnesses.py'
+memory_update_type: none
+ledger_path: ".claude/commit_acceptors/oms-idempotency-causal-witnesses.yaml"
+report_path: "tmp/oms_idempotency_causal_witnesses.log"
+evidence: []

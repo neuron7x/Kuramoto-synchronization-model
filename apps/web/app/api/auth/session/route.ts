@@ -2,9 +2,9 @@ import { timingSafeEqual } from 'node:crypto'
 import { NextResponse } from 'next/server'
 import type { NextRequest } from 'next/server'
 
-const REFRESH_COOKIE_NAME = 'tp.refreshToken'
-const CSRF_COOKIE_NAME = 'tp.csrfToken'
-const CSRF_HEADER_NAME = 'x-tradepulse-csrf'
+const REFRESH_COOKIE_NAME = 'gs.refreshToken'
+const CSRF_COOKIE_NAME = 'gs.csrfToken'
+const CSRF_HEADER_NAME = 'x-geosync-csrf'
 
 const invalidCsrf = () => NextResponse.json({ error: 'Invalid CSRF token' }, { status: 403 })
 

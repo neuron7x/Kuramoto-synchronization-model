@@ -1,0 +1,72 @@
+# Diff-bound acceptor for the actions/checkout@v4/v5 → @v6.0.2 bump.
+#
+# Replaces stuck dependabot PR #503 (which fails repo-policy on
+# INVENTORY sha256 mismatch + commit-acceptor-validation on missing
+# acceptor). This branch performs the same semantic bump as #503 with
+# the INVENTORY sha256 recomputed and a binding acceptor in place.
+
+id: checkout-v6-bump
+status: ACTIVE
+claim_type: governance
+promise: >-
+  Bumps GitHub Action actions/checkout from v4/v5 to v6.0.2 across all
+  13 workflow files. Two SHA-pinned forms collapse to the canonical
+  v6.0.2 SHA (de0fac2e4500dabe0009e67214ff5f5447ce83dd):
+  - actions/checkout@93cb6efe18208431cddfb8368fd83d5badbf9bfd # v5
+  - actions/checkout@08c6903cd8c0fde910a37f88322edcfb5dd907a8 # v5.0.0
+  And one bare ref bumps cleanly:
+  - uses: actions/checkout@v4 → uses: actions/checkout@v6
+  INVENTORY.json sha256 for .github/workflows/pr-gate.yml is
+  recomputed to ade879e8184317f263235a307c7c98f7ec3cd48e679d0fa0b7dab301ac1e5292
+  (was 61ffad694a85402b12c918a18fe86c989c830ff9f7b201882affb8614d734c35).
+  No other functional change. The acceptor binding closes the
+  systemic "code change without acceptor" failure mode that caused
+  dependabot PR #503 to be stuck.
+diff_scope:
+  changed_files:
+    - path: ".claude/commit_acceptors/checkout-v6-bump.yaml"
+    - path: "INVENTORY.json"
+    - path: ".github/workflows/claims-evidence-gate.yml"
+    - path: ".github/workflows/codeql.yml"
+    - path: ".github/workflows/commit-acceptor-gate.yml"
+    - path: ".github/workflows/formal-verification.yml"
+    - path: ".github/workflows/i18n.yml"
+    - path: ".github/workflows/l2-demo-gate.yml"
+    - path: ".github/workflows/main-validation.yml"
+    - path: ".github/workflows/physics-2026-gate.yml"
+    - path: ".github/workflows/physics-invariants.yml"
+    - path: ".github/workflows/physics-kernel-gate.yml"
+    - path: ".github/workflows/pr-gate.yml"
+    - path: ".github/workflows/reality-validators-gate.yml"
+    - path: ".github/workflows/security-deep.yml"
+  forbidden_paths:
+    - "trading/"
+    - "execution/"
+    - "forecast/"
+    - "policy/"
+required_python_symbols: []
+expected_signal: >-
+  All 13 workflow files reference actions/checkout@v6 or @v6.0.2;
+  INVENTORY.json sha256 for pr-gate.yml matches local sha256sum;
+  repo-policy CI gate passes; commit-acceptor-validation passes.
+measurement_command: >-
+  bash -c "grep -rE 'actions/checkout@' .github/workflows/ | grep -vE 'v6|v6\\.0\\.2' | wc -l | grep -q '^0$'"
+signal_artifact: "tmp/checkout_v6_bump.log"
+falsifier:
+  command: >-
+    bash -c "sha256sum .github/workflows/pr-gate.yml | awk '{print $1}' |
+    diff - <(jq -r '.files[] | select(.path==\".github/workflows/pr-gate.yml\") | .sha256' INVENTORY.json)"
+  description: >-
+    Probe verifies that the INVENTORY-recorded sha256 for pr-gate.yml
+    matches the actual file content. If the diff is non-empty, the
+    INVENTORY drifted from reality — which is exactly the failure
+    mode that caused dependabot PR #503 to be stuck on repo-policy.
+rollback_command: >-
+  git checkout HEAD~1 -- .github/workflows/ INVENTORY.json
+  .claude/commit_acceptors/checkout-v6-bump.yaml
+rollback_verification_command: >-
+  git diff --exit-code .github/workflows/ INVENTORY.json
+memory_update_type: append
+ledger_path: ".claude/commit_acceptors/checkout-v6-bump.yaml"
+report_path: ".claude/commit_acceptors/checkout-v6-bump.yaml"
+evidence: []

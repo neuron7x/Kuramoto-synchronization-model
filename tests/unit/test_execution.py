@@ -1,4 +1,5 @@
-# SPDX-License-Identifier: LicenseRef-TradePulse-Proprietary
+# Copyright (c) 2023-2026 Yaroslav Vasylenko (neuron7xLab)
+# SPDX-License-Identifier: MIT
 """Unit tests for execution and risk management components.
 
 This module validates the core execution infrastructure including:
@@ -15,6 +16,7 @@ controls work correctly under normal and edge case conditions.
 
 Coverage: execution/risk.py, execution/order.py, execution/audit.py
 """
+
 from __future__ import annotations
 
 import json
@@ -65,7 +67,7 @@ def test_position_sizing_never_exceeds_balance() -> None:
     risk = 0.1
     price = 50.0
     size = position_sizing(balance, risk, price)
-    assert size <= balance / price, f"Size {size} exceeds max {balance/price}"
+    assert size <= balance / price, f"Size {size} exceeds max {balance / price}"
     assert size >= 0.0, "Size must be non-negative"
 
 
@@ -182,9 +184,7 @@ def test_risk_manager_rate_limiter_blocks_excess_orders() -> None:
     manager.validate_order("ETH", "buy", qty=1.0, price=10.0)
 
 
-def test_risk_manager_does_not_accumulate_submissions_when_throttling_disabled() -> (
-    None
-):
+def test_risk_manager_does_not_accumulate_submissions_when_throttling_disabled() -> None:
     """Test that disabling throttling prevents memory accumulation.
 
     When rate limiting is disabled (max_orders_per_interval=0),
@@ -268,12 +268,8 @@ def test_risk_manager_trips_kill_switch_on_severe_violation(tmp_path) -> None:
     ), "Reason should mention position cap"
 
     # Verify audit log captured the event
-    entries = [
-        json.loads(line) for line in audit_path.read_text().splitlines() if line.strip()
-    ]
-    kill_events = [
-        entry for entry in entries if entry.get("event") == "kill_switch_triggered"
-    ]
+    entries = [json.loads(line) for line in audit_path.read_text().splitlines() if line.strip()]
+    kill_events = [entry for entry in entries if entry.get("event") == "kill_switch_triggered"]
     assert kill_events, "Kill switch event should be in audit log"
     assert (
         kill_events[0]["violation_type"] == "position_limit"
@@ -333,12 +329,8 @@ def test_risk_manager_drawdown_kill_switch(tmp_path) -> None:
     assert "drawdown" in reason
     assert "paper" in reason
 
-    entries = [
-        json.loads(line) for line in audit_path.read_text().splitlines() if line.strip()
-    ]
-    breach = [
-        entry for entry in entries if entry.get("event") == "portfolio_drawdown_breach"
-    ]
+    entries = [json.loads(line) for line in audit_path.read_text().splitlines() if line.strip()]
+    breach = [entry for entry in entries if entry.get("event") == "portfolio_drawdown_breach"]
     assert breach
     last = breach[-1]
     assert last["drawdown"] >= limits.max_relative_drawdown

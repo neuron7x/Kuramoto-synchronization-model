@@ -1,0 +1,175 @@
+symbol,module,role,invariant,test_file,property_test,failure_mode,ci_gate,status
+LadderConfig,adversarial_ladder,prosecutor sweep config,frozen-immutable,test_adversarial_ladder.py,no,wrong sweep parameters,pytest,locked
+LadderReport,adversarial_ladder,paired-bootstrap delta-AUC verdict,frozen-immutable,test_adversarial_ladder.py,no,reports false acquittal,pytest,locked
+ParameterFragilityReport,adversarial_ladder,parameter-sweep verdict-flip outcome,frozen-immutable,test_adversarial_ladder.py,no,fragility undetected,pytest,locked
+ProsecutorOutcome,adversarial_ladder,single prosecutor evaluation record,frozen-immutable,test_adversarial_ladder.py,no,prosecutor result lost,pytest,locked
+ProsecutorScore,adversarial_ladder,prosecutor scalar metric,finite-bounded,test_adversarial_ladder.py,no,non-finite score,pytest,locked
+parameter_fragility_audit,adversarial_ladder,knob-sweep audit,verdict-flip detection,test_adversarial_ladder.py,no,fragile claim accepted,pytest,locked
+run_adversarial_ladder,adversarial_ladder,canonical 8-prosecutor evaluator,paired-bootstrap delta-AUC,test_adversarial_ladder.py,no,baseline beats candidate undetected,pytest,locked
+run_null_audit,adversarial_ladder,null-surrogate evaluator,null-distribution-derived p,test_adversarial_ladder.py,no,null win undetected,pytest,locked
+edge_density_score,baselines,naive density baseline,scalar in [0_1],test_baselines.py,no,non-finite output,pytest,locked
+rolling_volatility_score,baselines,naive rolling-vol baseline,trailing-only no future,test_baselines.py,no,future-data leakage,pytest,locked
+auc_per_crisis_bf_rigorous,bayes_rigorous,Wagenmakers BIC-BF for AUC,Lindley penalty at AUC=0.5,test_bayes_rigorous.py,yes,ad-hoc-form regression,pytest,locked
+auc_to_z_under_null,bayes_rigorous,Bamber-1975 standardisation,z=0 at AUC=0.5,test_bayes_rigorous.py,no,null-variance miscalibration,pytest,locked
+cramer_rao_alpha_lower_bound,bayes_rigorous,Clauset-Shalizi-Newman lower bound,attained by MLE within 5pct (Monte Carlo),test_bayes_rigorous.py,yes,SE underestimation,pytest,locked
+derive_kill_threshold_log_odds,bayes_rigorous,Berger 1985 §4.4 Bayes-rule threshold,log(c_FK/c_FP) closed form,test_bayes_rigorous.py,no,asymmetric-cost miscalibration,pytest,locked
+mann_whitney_effective_n,bayes_rigorous,n_eff = mn/(m+n+1),balanced approximation,test_bayes_rigorous.py,no,effective-sample miscompute,pytest,locked
+mann_whitney_null_variance,bayes_rigorous,Mann-Whitney 1947 §3 eq.5,(m+n+1)/(12mn),test_bayes_rigorous.py,no,null-variance miscompute,pytest,locked
+wagenmakers_bic_bayes_factor,bayes_rigorous,BIC approximation log BF,closed form (z²-log n_eff)/2,test_bayes_rigorous.py,yes,clamping/saturation drift,pytest,locked
+CanonicalSevenInputs,canonical_seven,bundle of 5 pillar outputs,frozen-immutable,test_canonical_seven.py,no,silent dropping of evidence,pytest,locked
+CanonicalSevenOutcome,canonical_seven,orchestrator result,frozen-immutable,test_canonical_seven.py,no,result truncation,pytest,locked
+run_canonical_seven,canonical_seven,end-to-end orchestrator,KILL>INVALIDATE>QUARANTINE>DEMOTE>STOP precedence,test_canonical_seven.py,no,wrong precedence,pytest,locked
+coupling_from_exposures,coupling,asymmetric directed coupling,non-negative entries,test_coupling.py,no,negative coupling,pytest,locked
+omega_from_volatility,coupling,first-order ω estimator,finite per-bank ω,test_coupling.py,no,non-finite frequency,pytest,locked
+sakaguchi_alpha_zero,coupling,zero-frustration scaffold,zeros matrix,test_coupling.py,no,non-zero α slipping in,pytest,locked
+CSDConfig,critical_slowing_down,CSD indicator config,frozen-immutable,test_critical_slowing_down.py,no,bad parameters silent,pytest,locked
+CSDIndicators,critical_slowing_down,CSD indicator output,trailing-only window,test_critical_slowing_down.py,no,non-causal CSD,pytest,locked
+compute_csd_indicators,critical_slowing_down,variance/AR1/skewness CSD,strict-causal trailing,test_critical_slowing_down.py,no,future-data leakage,pytest,locked
+DataFirewallReport,data_firewall,8-gate firewall verdict,passed_all=conjunction,test_data_firewall.py,no,silent gate skip,pytest,locked
+GateOutcome,data_firewall,single firewall-gate result,frozen-immutable,test_data_firewall.py,no,wrong gate name,pytest,locked
+Provenance,data_firewall,provenance schema record,sha256 64-hex enforced,test_data_firewall.py,no,malformed provenance,pytest,locked
+gate_diagonal,data_firewall,G5 self-loop check,diag==0 strict,test_data_firewall.py,no,self-loops accepted,pytest,locked
+gate_finite,data_firewall,G3 NaN/Inf check,np.all(isfinite),test_data_firewall.py,no,non-finite slipping,pytest,locked
+gate_monotonic_time,data_firewall,G7 strictly-increasing dates,date1<date2,test_data_firewall.py,no,duplicate dates accepted,pytest,locked
+gate_provenance,data_firewall,G8 provenance-record check,4 fields validated,test_data_firewall.py,no,missing provenance,pytest,locked
+gate_schema_type,data_firewall,G1 ndarray[float64] check,dtype enforced,test_data_firewall.py,no,wrong dtype,pytest,locked
+gate_shape,data_firewall,G2 (N N) shape check,square N×N,test_data_firewall.py,no,non-square accepted,pytest,locked
+gate_sign,data_firewall,G4 ≥0 check,no negative entries,test_data_firewall.py,no,negative exposures,pytest,locked
+gate_sparsity,data_firewall,G6 non-zero check,exists nonzero,test_data_firewall.py,no,all-zero accepted,pytest,locked
+run_data_firewall,data_firewall,8-gate orchestrator,all gates execute,test_data_firewall.py,no,gate short-circuit,pytest,locked
+DataFirewallResultLike,death_conditions,structural protocol firewall,passed_all bool field,test_death_conditions.py,no,protocol drift,pytest,locked
+DeathConditionsRegistry,death_conditions,5-trigger registry,frozen extend()-only,test_death_conditions.py,no,silent in-place mutation,pytest,locked
+DeathState,death_conditions,trigger input bundle,frozen-immutable,test_death_conditions.py,no,state drift,pytest,locked
+FragilityResultLike,death_conditions,structural protocol fragility,fragile bool field,test_death_conditions.py,no,protocol drift,pytest,locked
+LadderResultLike,death_conditions,structural protocol ladder,losing_paths tuple,test_death_conditions.py,no,protocol drift,pytest,locked
+LeakageResultLike,death_conditions,structural protocol leakage,detected bool field,test_death_conditions.py,no,protocol drift,pytest,locked
+ReplicationResultLike,death_conditions,structural protocol replication,matched bool field,test_death_conditions.py,no,protocol drift,pytest,locked
+TierTransition,death_conditions,registry verdict record,frozen-immutable,test_death_conditions.py,no,wrong action,pytest,locked
+Trigger,death_conditions,registered trigger record,frozen-immutable,test_death_conditions.py,no,trigger duplication,pytest,locked
+TriggerOutcome,death_conditions,trigger fire record,frozen-immutable,test_death_conditions.py,no,fire flag wrong,pytest,locked
+default_registry,death_conditions,canonical 5-trigger registry,5 triggers exact,test_death_conditions.py,no,missing trigger,pytest,locked
+trigger_baseline_dominance,death_conditions,T1 → DEMOTE,fires on losing_paths≠()​,test_death_conditions.py,no,T1 silent fail,pytest,locked
+trigger_data_proxy_invalid,death_conditions,T5 → STOP,fires on firewall passed_all=False,test_death_conditions.py,no,T5 silent fail,pytest,locked
+trigger_leakage_positive,death_conditions,T2 → INVALIDATE,fires on leakage detected,test_death_conditions.py,no,T2 silent fail,pytest,locked
+trigger_parameter_fragility,death_conditions,T3 → QUARANTINE,fires on fragile=True,test_death_conditions.py,no,T3 silent fail,pytest,locked
+trigger_replication_mismatch,death_conditions,T4 → KILL,fires on matched=False,test_death_conditions.py,no,T4 silent fail,pytest,locked
+EarlyWarningConfig,early_warning,early-warning config,frozen-immutable,test_early_warning.py,no,bad parameters,pytest,locked
+EarlyWarningResult,early_warning,early-warning verdict,frozen-immutable,test_early_warning.py,no,result truncation,pytest,locked
+compute_early_warning,early_warning,score-time-series builder,trailing-only,test_early_warning.py,no,future leakage,pytest,locked
+kuramoto_order_parameter,early_warning,R(t) Kuramoto order,r∈[0_1],test_early_warning.py,no,invalid range,pytest,locked
+InvalidExposureMatrixError,errors,exposure-matrix contract violation,is ValueError subclass,test_errors.py,no,silent acceptance,pytest,locked
+InvalidNodeLabelsError,errors,node-label contract violation,is ValueError subclass,test_errors.py,no,silent acceptance,pytest,locked
+InvalidTemporalPanelError,errors,temporal-panel contract violation,is ValueError subclass,test_errors.py,no,silent acceptance,pytest,locked
+SystemicRiskInputError,errors,base input-error,is ValueError subclass,test_errors.py,no,silent acceptance,pytest,locked
+BankingCrisisEvent,event_ledger,crisis event record,frozen-immutable,test_event_ledger.py,no,wrong date,pytest,locked
+BankingCrisisLedger,event_ledger,crisis ledger,sorted by date,test_event_ledger.py,no,duplicate events,pytest,locked
+DEFAULT_LEDGER,event_ledger,canonical Laeven-Valencia ledger,non-empty,test_event_ledger.py,no,empty default,pytest,locked
+Evidence,evidence_ledger,Bayesian evidence record,BF finite ≥ 0; ≠ inf,test_evidence_ledger.py,no,bad BF,pytest,locked
+EvidenceLedger,evidence_ledger,append-only log-odds ledger,strict-chronological enforced,test_evidence_ledger.py,no,reorder allowed,pytest,locked
+LedgerEntry,evidence_ledger,per-claim ledger row,frozen-immutable,test_evidence_ledger.py,no,row drift,pytest,locked
+auc_per_crisis_bayes_factor,evidence_ledger,ad-hoc AUC BF (legacy),retained for back-compat,test_evidence_ledger.py,no,migration regression,pytest,locked
+baseline_dominance_bayes_factor,evidence_ledger,baseline-delta BF,sign tracks delta,test_evidence_ledger.py,no,sign flip,pytest,locked
+external_review_bayes_factor,evidence_ledger,polarized review BF,10/0.1 dichotomy,test_evidence_ledger.py,no,wrong polarity,pytest,locked
+replication_match_bayes_factor,evidence_ledger,replication BF,100 on match 0 on mismatch,test_evidence_ledger.py,no,non-binary,pytest,locked
+CrisisOutcome,falsification,per-crisis falsification record,frozen-immutable,test_falsification.py,no,outcome drift,pytest,locked
+FalsificationConfig,falsification,falsification battery config,frozen-immutable,test_falsification.py,no,bad parameters,pytest,locked
+FalsificationReport,falsification,full falsification verdict,frozen-immutable,test_falsification.py,no,result truncation,pytest,locked
+auc_bootstrap_ci,falsification,stratified percentile CI,coverage ≥ nominal,test_falsification.py,no,under-coverage,pytest,locked
+auc_mann_whitney,falsification,U-statistic AUC,Bamber 1975 form,test_falsification.py,no,U-statistic miscompute,pytest,locked
+bonferroni_correction,falsification,FWER correction,p_corrected = min(1 k·p),test_falsification.py,no,uncorrected p slipping,pytest,locked
+run_end_to_end_falsification,falsification,full pipeline (NotImpl by design),fail-closed NotImpl,test_falsification.py,no,silent partial-pipeline result,pytest,locked
+run_falsification,falsification,score-level battery,fail-closed,test_falsification.py,no,silent battery skip,pytest,locked
+run_score_level_falsification,falsification,explicit score-level wrapper,scope marker,test_falsification.py,no,scope confusion,pytest,locked
+PremergeGateReport,governance,pre-merge gate verdict,frozen-immutable,test_governance.py,no,gate skip,pytest,locked
+ValidationReadinessReport,governance,readiness profile,max_allowed_tier derived,test_governance.py,no,wrong tier cap,pytest,locked
+assert_claim_tier,governance,tier-vs-evidence assertion,raises on overclaim,test_governance.py,no,silent overclaim,pytest,locked
+build_validation_readiness_report,governance,readiness assembler,evidence-bound,test_governance.py,no,wrong readiness,pytest,locked
+run_premerge_science_gate,governance,composite verdict,overclaim grep + readiness,test_governance.py,no,gate skip,pytest,locked
+GovernanceFSM,governance_fsm,frozen lifecycle FSM,REJECTED absorbing,test_governance_fsm.py,no,resurrect from REJECTED,pytest,locked
+GovernanceTransitionRecord,governance_fsm,audit-trail row,frozen-immutable,test_governance_fsm.py,no,trail loss,pytest,locked
+InvalidTransitionError,governance_fsm,illegal-transition error,is ValueError subclass,test_governance_fsm.py,no,silent illegal transition,pytest,locked
+ExplosiveSyncReport,kuramoto_extensions,hysteresis-width verdict,is_explosive=width≥thr,test_kuramoto_extensions.py,no,wrong verdict,pytest,locked
+HigherOrderConfig,kuramoto_extensions,K2/K3 config,frozen-immutable,test_kuramoto_extensions.py,no,wrong coupling,pytest,locked
+explosive_sync_sweep,kuramoto_extensions,forward/reverse coupling sweep,Gómez-Gardeñes 2011,test_kuramoto_extensions.py,no,sweep miscompute,pytest,locked
+sakaguchi_kuramoto_step,kuramoto_extensions,SK step with α,phase-shift invariance,test_kuramoto_extensions.py,no,frustration ignored,pytest,locked
+triadic_kuramoto_step,kuramoto_extensions,higher-order Kuramoto step,O(N) Fourier-trick,test_kuramoto_extensions.py,no,triadic missing,pytest,locked
+LeakageOutcome,leakage_sentinel,single sentinel result,frozen-immutable,test_leakage_sentinel.py,no,outcome drift,pytest,locked
+LeakageReport,leakage_sentinel,6-sentinel disjunction,detected = OR of components,test_leakage_sentinel.py,no,quiet-fail path,pytest,locked
+OpRecord,leakage_sentinel,op-graph node,frozen-immutable,test_leakage_sentinel.py,no,wrong time index,pytest,locked
+check_centered_windows,leakage_sentinel,S3 centered-window check,forbids center=True/align=center,test_leakage_sentinel.py,no,centered window slipping,pytest,locked
+check_crisis_date_tuning,leakage_sentinel,S6 lock<eval check,lock<first_evaluation,test_leakage_sentinel.py,no,post-hoc tuning slipping,pytest,locked
+check_full_sample_normalisation,leakage_sentinel,S4 op-log scan,no full_sample_* op,test_leakage_sentinel.py,no,full-sample slipping,pytest,locked
+check_future_data_via_mutation,leakage_sentinel,S1 state-dependence,past score unchanged by future mutation,test_leakage_sentinel.py,no,state leak slipping,pytest,locked
+check_label_leakage,leakage_sentinel,S5 op-graph backwards-edge,no t_out<t_in,test_leakage_sentinel.py,no,label leak slipping,pytest,locked
+check_post_event_contamination,leakage_sentinel,S2 lead-time floor,min_lead_time≥1,test_leakage_sentinel.py,no,post-event slipping,pytest,locked
+run_leakage_audit,leakage_sentinel,sentinel aggregator,disjunction never-quiet-fail,test_leakage_sentinel.py,no,silent omission,pytest,locked
+ClassificationMetrics,metrics,binary metrics record,frozen-immutable,test_metrics.py,no,result drift,pytest,locked
+LeadTimeConfig,metrics,lead-time analysis config,frozen-immutable,test_metrics.py,no,bad parameters,pytest,locked
+LeadTimeMetrics,metrics,lead-time outcome,non-negative lead,test_metrics.py,no,negative lead,pytest,locked
+compute_classification_metrics,metrics,bool-or-binary classifier,strict bool/0_1 input,test_metrics.py,no,silent type coercion,pytest,locked
+compute_lead_time_metrics,metrics,lead-time aggregator,min_lead ≥ 1,test_metrics.py,no,wrong lead,pytest,locked
+MinimalClaim,minimal,single-file Claim NamedTuple,frozen-by-NamedTuple,test_minimal.py,yes,Claim drift,pytest,locked
+MinimalTierAction,minimal,IntEnum tier action,join=max correctness,test_minimal.py,yes,wrong precedence,pytest,locked
+minimal_evaluate,minimal,one-call canonical-seven,REJECTED absorbing,test_minimal.py,yes,resurrect from REJECTED,pytest,locked
+minimal_initial_claim,minimal,fresh Claim factory,prior_log_odds bound,test_minimal.py,no,wrong prior,pytest,locked
+ExponentialFit,network_fitting,exponential-fit record,frozen-immutable,test_network_fitting.py,no,fit drift,pytest,locked
+ModelComparison,network_fitting,model-vs-model compare,frozen-immutable,test_network_fitting.py,no,compare drift,pytest,locked
+PowerLawFit,network_fitting,power-law-fit record,Cramér-Rao SE bound,test_network_fitting.py,no,SE underestimation,pytest,locked
+compare_power_law_vs_exponential,network_fitting,Vuong-style comparator,returns winner ∈ {pl exp tied},test_network_fitting.py,no,wrong winner,pytest,locked
+fit_barabasi_albert,network_fitting,BA m MLE,m∈{1 2 3 4 5} integer,test_network_fitting.py,no,m doubling,pytest,locked
+fit_barabasi_albert_from_topology,network_fitting,BA from InterbankTopology,wraps fit_barabasi_albert,test_network_fitting.py,no,wrapper drift,pytest,locked
+fit_barabasi_albert_validation_from_topology,network_fitting,BA-fit + validation gates,SE/tail-size lower bounds,test_network_fitting.py,no,validation skipped,pytest,locked
+fit_exponential,network_fitting,exponential MLE,rate>0,test_network_fitting.py,no,non-positive rate,pytest,locked
+fit_power_law,network_fitting,power-law MLE,α>1,test_network_fitting.py,no,α≤1 accepted,pytest,locked
+fit_power_law_validation,network_fitting,power-law + validation,SE bounds enforced,test_network_fitting.py,no,validation bypass,pytest,locked
+NullSurrogate,null_models,surrogate enum,Literal-typed,test_null_models.py,no,unknown surrogate,pytest,locked
+degree_preserving_randomization,null_models,Maslov-Sneppen swap,degree sequence preserved,test_null_models.py,no,degree drift,pytest,locked
+linear_correlation_surrogate,null_models,linear-correlation null,non-Kuramoto comparator,test_null_models.py,no,Kuramoto bleed-through,pytest,locked
+permuted_crisis_dates,null_models,date permutation null,uniform over panel dates,test_null_models.py,no,non-uniform permutation,pytest,locked
+random_exposure_weights,null_models,weight-randomization null,density preserved,test_null_models.py,no,density drift,pytest,locked
+shuffled_time_labels,null_models,time-label shuffle null,date relabelling,test_null_models.py,no,non-bijective shuffle,pytest,locked
+static_topology_baseline,null_models,static-topology baseline,topology frozen at t0,test_null_models.py,no,dynamic leakage,pytest,locked
+aic_penalized_log_likelihood,occam_penalty,Akaike 1974 penalty,L_pen = L − k,test_occam_penalty.py,no,wrong penalty,pytest,locked
+bic_penalized_log_likelihood,occam_penalty,Schwarz 1978 penalty,L_pen = L − 0.5k log n,test_occam_penalty.py,no,wrong penalty,pytest,locked
+mdl_penalized_log_likelihood,occam_penalty,Rissanen 1978 MDL,equals BIC up to c0,test_occam_penalty.py,no,wrong penalty,pytest,locked
+occam_winner,occam_penalty,Bayes-rule arbiter,anti-symmetric margin,test_occam_penalty.py,yes,wrong winner,pytest,locked
+interbank_phase_extract,phase_extraction,band-pass + Hilbert phase,trailing-only,test_phase_extraction.py,no,future leakage,pytest,locked
+quick_round,quick_round,primitive-input wrapper,equivalent to run_canonical_seven,test_quick_round.py,no,divergence from canonical,pytest,locked
+RunManifest,replication,run-time provenance record,frozen-immutable,test_replication.py,no,manifest drift,pytest,locked
+build_run_manifest,replication,manifest builder,git_dirty=False for promotion,test_replication.py,no,dirty-tree promotion,pytest,locked
+ReplicationOutcome,replication_capsule,frozen comparator outcome,matched bool,test_replication_capsule.py,no,outcome drift,pytest,locked
+compare_run_outputs,replication_capsule,6-stage fail-closed comparator,first-failure wins reason,test_replication_capsule.py,no,silent close-enough,pytest,locked
+manifest_replication_sha,replication_capsule,manifest sha256,64-hex,test_replication_capsule.py,no,non-canonical sha,pytest,locked
+SyntheticPanelConfig,synthetic,synthetic-panel config,frozen-immutable,test_cli_and_synthetic.py,no,bad parameters,pytest,locked
+generate_panel,synthetic,deterministic panel generator,seed determinism,test_cli_and_synthetic.py,no,seed drift,pytest,locked
+DataContractReport,real_data_contract,frozen real-data contract verdict,three-status alphabet,test_real_data_contract.py,no,silent close-enough,pytest,locked
+validate_real_data_contract,real_data_contract,v1 ingest contract validator,fail-closed contract,test_real_data_contract.py,no,silent invalid panel,pytest,locked
+validate_temporal_exposure_panel,temporal_panel,temporal-panel validator,fail-closed contract,test_temporal_panel.py,no,silent invalid panel,pytest,locked
+InterbankTopology,topology,frozen topology record,frozen-immutable,test_topology.py,no,topology drift,pytest,locked
+barabasi_albert_null,topology,BA-null topology,m parameter respected,test_topology.py,no,wrong m,pytest,locked
+from_exposure_matrix,topology,topology builder,non-negative weights,test_topology.py,no,negative weight,pytest,locked
+EvidenceType,evidence_ledger,Evidence Literal type,9 canonical values,test_evidence_ledger.py,no,unknown type,pytest,locked
+GateName,data_firewall,firewall gate Literal,8 canonical names,test_data_firewall.py,no,unknown gate,pytest,locked
+GovernanceState,governance_fsm,FSM state Literal,10 canonical states,test_governance_fsm.py,no,unknown state,pytest,locked
+LeakageType,leakage_sentinel,sentinel Literal,6 canonical sentinels,test_leakage_sentinel.py,no,unknown sentinel,pytest,locked
+MismatchReason,replication_capsule,capsule reason Literal,7 canonical reasons,test_replication_capsule.py,no,unknown reason,pytest,locked
+ReplicationToleranceClass,replication_capsule,tolerance-class Literal,3 canonical classes,test_replication_capsule.py,no,unknown class,pytest,locked
+TierAction,death_conditions,tier-action Literal,6 canonical actions,test_death_conditions.py,no,unknown action,pytest,locked
+ASYMPTOTIC_BIC_PENALTY,bayes_rigorous,clamp on |log BF|,equals 20.0,test_bayes_rigorous.py,no,clamp drift,pytest,locked
+DEFAULT_BIT_IDENTICAL_TOLERANCE,replication_capsule,bit-identical tol,equals 0.0,test_replication_capsule.py,no,non-zero tol,pytest,locked
+DEFAULT_DETERMINISTIC_TOLERANCE,replication_capsule,drift tol,equals 1e-12,test_replication_capsule.py,no,wrong tol,pytest,locked
+DEFAULT_PRIOR_LOG_ODDS,evidence_ledger,prior log-odds,equals -1.0,test_evidence_ledger.py,no,prior drift,pytest,locked
+DOWNGRADE_TRIGGER_DELTA,evidence_ledger,DEMOTE delta,equals 1.0,test_evidence_ledger.py,no,delta drift,pytest,locked
+FIREWALL_GATES,data_firewall,8-gate roster,exactly 8 ordered names,test_data_firewall.py,no,roster drift,pytest,locked
+FORBIDDEN_OVERCLAIM_TERMS,governance,overclaim-term roster,non-empty,test_governance.py,no,roster missing,pytest,locked
+INITIAL_STATE,governance_fsm,FSM initial,equals IDEA,test_governance_fsm.py,no,initial drift,pytest,locked
+INTERBANK_DEFAULT_BAND,phase_extraction,default band-pass,(low high) tuple,test_phase_extraction.py,no,band drift,pytest,locked
+KILL_TRIGGER_LOG_ODDS,evidence_ledger,KILL log-odds threshold,equals -5.0,test_evidence_ledger.py,no,threshold drift,pytest,locked
+LADDER_RUNGS,adversarial_ladder,8-prosecutor roster,exactly 8 rungs,test_adversarial_ladder.py,no,roster drift,pytest,locked
+MIN_RELATIVE_SE_VALIDATION,network_fitting,SE bound for power-law,>0,test_network_fitting.py,no,bound drift,pytest,locked
+MIN_TAIL_SIZE_VALIDATION,network_fitting,tail-size bound,≥ small int,test_network_fitting.py,no,bound drift,pytest,locked
+PROMOTABLE_LADDER,governance_fsm,8 promotable states,IDEA→VALIDATED,test_governance_fsm.py,no,ladder drift,pytest,locked
+PROVENANCE_SCHEMA_VERSION,data_firewall,schema-version constant,equals interbank.panel.v1,test_data_firewall.py,no,version drift,pytest,locked
+TERMINAL_STATES,governance_fsm,absorbing-state roster,contains REJECTED,test_governance_fsm.py,no,roster drift,pytest,locked
+TierLattice,verdict_lattice,IntEnum action lattice,join=max axioms,test_verdict_lattice.py,yes,wrong precedence,pytest,locked
+aggregate_actions,verdict_lattice,reduce(join NONE),identity at NONE,test_verdict_lattice.py,yes,identity drift,pytest,locked

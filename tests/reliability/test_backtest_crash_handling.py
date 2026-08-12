@@ -1,4 +1,5 @@
-# SPDX-License-Identifier: LicenseRef-TradePulse-Proprietary
+# Copyright (c) 2023-2026 Yaroslav Vasylenko (neuron7xLab)
+# SPDX-License-Identifier: MIT
 """Reliability tests for backtest crash handling.
 
 Validates that the backtest engine handles internal exceptions gracefully:
@@ -8,6 +9,7 @@ Validates that the backtest engine handles internal exceptions gracefully:
 These tests ensure the system fails fast with clear error messages and
 no data corruption when unexpected errors occur.
 """
+
 from __future__ import annotations
 
 import numpy as np
@@ -91,8 +93,9 @@ def test_infinite_position_handled() -> None:
 
     # Verify error message is helpful
     error_msg = str(exc_info.value).lower()
-    assert "non-finite" in error_msg or "nan" in error_msg, \
-        f"Expected error message about non-finite values, got: {exc_info.value}"
+    assert (
+        "non-finite" in error_msg or "nan" in error_msg
+    ), f"Expected error message about non-finite values, got: {exc_info.value}"
 
 
 def test_strategy_returning_invalid_type() -> None:

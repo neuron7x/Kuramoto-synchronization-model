@@ -1,0 +1,87 @@
+{
+  "$schema": "https://json-schema.org/draft/2020-12/schema",
+  "title": "Observation",
+  "type": "object",
+  "required": [
+    "observation_id",
+    "subject_id",
+    "timestamp",
+    "source_type",
+    "domain",
+    "measure_code",
+    "value",
+    "unit",
+    "method",
+    "provenance"
+  ],
+  "properties": {
+    "observation_id": {
+      "type": "string"
+    },
+    "subject_id": {
+      "type": "string"
+    },
+    "timestamp": {
+      "type": "string",
+      "format": "date-time"
+    },
+    "source_type": {
+      "type": "string",
+      "enum": [
+        "lab",
+        "wearable",
+        "cognitive_test",
+        "imaging",
+        "bbb_on_chip",
+        "clinical_note",
+        "manual_entry"
+      ]
+    },
+    "domain": {
+      "type": "string",
+      "enum": [
+        "barrier",
+        "inflammation",
+        "vascular_metabolic",
+        "glymphatic_sleep",
+        "cognitive",
+        "environment",
+        "qc"
+      ]
+    },
+    "measure_code": {
+      "type": "string"
+    },
+    "value": {
+      "type": "number"
+    },
+    "unit": {
+      "type": "string"
+    },
+    "method": {
+      "type": "string"
+    },
+    "evidence_grade": {
+      "type": "string",
+      "enum": [
+        "A",
+        "B",
+        "C",
+        "D"
+      ]
+    },
+    "quality_score": {
+      "type": "number",
+      "minimum": 0,
+      "maximum": 1
+    },
+    "provenance": {
+      "$ref": "provenance.schema.json"
+    },
+    "notes": {
+      "type": "string"
+    }
+  },
+  "additionalProperties": false,
+  "description": "Numeric metric Observation contract. Non-numeric payloads must be rejected before inference or represented by a separate typed schema, never by a polymorphic value field."
+}

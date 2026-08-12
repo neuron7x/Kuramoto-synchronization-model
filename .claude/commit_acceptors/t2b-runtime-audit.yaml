@@ -1,0 +1,86 @@
+# ci-heartbeat: t2b-runtime-audit
+id: t2b-runtime-audit
+status: ACTIVE
+claim_type: fail_closed
+promise: >-
+  Close the runtime/model debt slice for Stuart-Landau T2b without changing
+  score, shadow-rail status, or the rejected real-data validation verdict.
+  The fitted-state sweep initializes from observed analytic state
+  z0=A*exp(i*theta) by default, mu clipping is auditable, rolling evidence
+  can fail closed, numerical-policy clamp registry sites stay current,
+  Stuart-Landau sweep-heavy tests run in the heavy_math CI lane rather than
+  the fast shard lane, fast-shard diagnostics can persist node/log evidence,
+  the invariant schema gate resolves the legacy Landauer alias to its
+  canonical executable registry row, and deterministic evidence artifacts stay
+  byte-fresh against CLAIMS.md.
+diff_scope:
+  changed_files:
+    - path: "core/physics/stuart_landau_es.py"
+    - path: "tests/unit/physics/test_T2b_runtime_audit.py"
+    - path: "tests/unit/physics/test_T2b_stuart_landau_es.py"
+    - path: "tools/physics/clamp_registry.yaml"
+    - path: "scripts/check_invariant_registry_schema.py"
+    - path: ".github/workflows/pr-fast-diagnostics.yml"
+    - path: "docs/architecture/claim_graph.json"
+    - path: "artifacts/.manifest.json"
+    - path: ".claude/commit_acceptors/t2b-runtime-audit.yaml"
+  forbidden_paths:
+    - "trading/"
+    - "execution/"
+    - "forecast/"
+    - "policy/"
+required_python_symbols:
+  - "StuartLandauResult"
+  - "fit_stuart_landau"
+  - "rolling_es_proximity"
+expected_signal: >-
+  Regression tests prove default fitted sweep is seed-invariant, mu clamp audit
+  fields are visible, fit results expose raw/clamped/clipped mu diagnostics,
+  and rolling fail-closed mode raises with a window index instead of hiding
+  evidence failures as NaN. The legacy Stuart-Landau T2b test module is marked
+  heavy_math because it runs repeated fitted sweeps and rolling crisis windows;
+  this preserves coverage in the heavy lane while keeping fast shards bounded.
+  The diagnostic workflow records fast-shard node ids and pytest logs only;
+  it does not change runtime behavior or PR Gate pass/fail semantics. The
+  invariant schema gate keeps missing related IDs fail-closed while resolving
+  the historical INV-LANDAUER spelling to INV-LANDAUER-PROXY. The claim graph
+  and evidence manifest are refreshed only to close deterministic artifact
+  freshness drift from CLAIMS.md. The slice makes no score increase, no
+  shadow-rail promotion, no final validation claim, and no
+  trading/execution/forecast/policy change.
+measurement_command: >-
+  python -m pytest tests/unit/physics/test_T2b_runtime_audit.py
+  tests/unit/physics/test_T2b_stuart_landau_es.py tests/tools/test_numerical_policy.py
+  tests/ci/test_invariant_registry_schema.py tests/ci/test_artifact_freshness_gate.py -q
+signal_artifact: "tmp/t2b_runtime_audit_pytest.log"
+falsifier:
+  command: >-
+    python -m pytest tests/unit/physics/test_T2b_runtime_audit.py
+    tests/unit/physics/test_T2b_stuart_landau_es.py -q
+  description: >-
+    Fails if fitted-state sweep depends on seed, mu clipping is hidden, legacy
+    T2b physics invariants regress, or rolling evidence mode silently converts
+    contract failures into NaN.
+rollback_command: >-
+  git checkout HEAD~1 -- core/physics/stuart_landau_es.py
+  tests/unit/physics/test_T2b_runtime_audit.py
+  tests/unit/physics/test_T2b_stuart_landau_es.py
+  tools/physics/clamp_registry.yaml
+  scripts/check_invariant_registry_schema.py
+  .github/workflows/pr-fast-diagnostics.yml
+  docs/architecture/claim_graph.json
+  artifacts/.manifest.json
+  .claude/commit_acceptors/t2b-runtime-audit.yaml
+rollback_verification_command: >-
+  git diff --exit-code core/physics/stuart_landau_es.py
+memory_update_type: append
+ledger_path: ".claude/commit_acceptors/t2b-runtime-audit.yaml"
+report_path: "results/cross_asset_kuramoto/SL_ES_PREREGISTRATION.md"
+evidence:
+  - path: "tests/unit/physics/test_T2b_runtime_audit.py"
+  - path: "tests/unit/physics/test_T2b_stuart_landau_es.py"
+  - path: "tools/physics/clamp_registry.yaml"
+  - path: "scripts/check_invariant_registry_schema.py"
+  - path: ".github/workflows/pr-fast-diagnostics.yml"
+  - path: "docs/architecture/claim_graph.json"
+  - path: "artifacts/.manifest.json"

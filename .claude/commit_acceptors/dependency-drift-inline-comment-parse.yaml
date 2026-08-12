@@ -1,0 +1,63 @@
+id: dependency-drift-inline-comment-parse
+status: ACTIVE
+claim_type: security
+promise: >-
+  Repair the PEP 508 inline-comment parsing in both dependency drift checkers
+  (scripts/dependency_health.py and scripts/security/check_dependency_drift.py).
+  Before this fix both crashed with a parse error on a valid pip inline comment
+  (e.g. `PyJWT[crypto]>=2.13.0  # GHSA-... vulnerable`, which is present in the
+  shipping requirements.txt), aborting the run before any lock/constraint drift
+  could be reported — silently defeating the stale-drift leg of the dependency
+  gate. Stripping the whitespace-preceded `#` comment makes the checkers
+  runnable on the real manifests and fail-closed on genuine drift. No runtime,
+  trading, physics, or neuro behavior is changed.
+
+diff_scope:
+  changed_files:
+    - path: "scripts/dependency_health.py"
+    - path: "scripts/security/check_dependency_drift.py"
+    - path: "tests/scripts/test_dependency_health_inline_comments.py"
+    - path: ".claude/commit_acceptors/dependency-drift-inline-comment-parse.yaml"
+  forbidden_paths:
+    - "application/"
+    - "execution/"
+    - "markets/"
+    - "runtime/"
+
+required_python_symbols:
+  - "_strip_inline_comment"
+
+expected_signal: >-
+  Both drift checkers parse a manifest line carrying a pip inline comment
+  instead of raising; the lock-version extractor returns the clean pin
+  ("6.5.7", not "6.5.7  # comment"). The regression suite fails if either
+  checker reverts to crashing on inline comments.
+
+measurement_command: >-
+  python -m pytest -q tests/scripts/test_dependency_health_inline_comments.py
+  -c tests/scripts/pytest.ini
+
+signal_artifact: "tests/scripts/test_dependency_health_inline_comments.py"
+
+falsifier:
+  command: >-
+    python -m pytest -q tests/scripts/test_dependency_health_inline_comments.py
+    -c tests/scripts/pytest.ini
+  description: >-
+    Removing the inline-comment stripping (so `Requirement(line)` is called on
+    `PyJWT[crypto]>=2.13.0  # ...`) makes the parser raise and the regression
+    suite fails — the crash-on-inline-comment defect class can no longer ship.
+
+rollback_command: >-
+  git checkout -- scripts/dependency_health.py
+  scripts/security/check_dependency_drift.py
+  tests/scripts/test_dependency_health_inline_comments.py
+  .claude/commit_acceptors/dependency-drift-inline-comment-parse.yaml
+
+rollback_verification_command: >-
+  git diff --exit-code
+
+memory_update_type: none
+ledger_path: ".claude/commit_acceptors/dependency-drift-inline-comment-parse.yaml"
+report_path: "tests/scripts/test_dependency_health_inline_comments.py"
+evidence: []

@@ -1,0 +1,30 @@
+{
+  "$schema": "http://json-schema.org/draft-07/schema#",
+  "$id": "geosync.apex_adversarial_report.v1",
+  "title": "GeoSync Apex Adversarial Soundness Report",
+  "description": "A taxonomy of attacks that try to make the No-Ungrounded-Act apex say ADMISSIBLE while a ground is actually violated. Each attack binds to a test proving the apex fails closed. Honest boundary: this is bounded adversarial evidence over a named attack family, not a formal soundness proof; substrate data artifacts are trusted-as-data (hash-gated).",
+  "type": "object",
+  "additionalProperties": false,
+  "required": ["schema", "boundary", "attacks", "verdict"],
+  "properties": {
+    "schema": { "const": "geosync.apex_adversarial_report.v1" },
+    "boundary": { "type": "string", "minLength": 1 },
+    "verdict": { "enum": ["PASS", "FAIL"] },
+    "attacks": {
+      "type": "array",
+      "minItems": 5,
+      "items": {
+        "type": "object",
+        "additionalProperties": false,
+        "required": ["id", "vector", "target_ground", "test", "defeated"],
+        "properties": {
+          "id": { "type": "string", "minLength": 1 },
+          "vector": { "type": "string", "minLength": 1 },
+          "target_ground": { "enum": ["H1", "H2", "H3", "H4", "any"] },
+          "test": { "type": "string", "minLength": 1 },
+          "defeated": { "type": "boolean" }
+        }
+      }
+    }
+  }
+}

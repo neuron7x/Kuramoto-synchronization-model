@@ -1,10 +1,10 @@
 syntax = "proto3";
 
-package tradepulse.events;
+package geosync.events;
 
 import "google/protobuf/wrappers.proto";
 
-option go_package = "github.com/tradepulse/gen/events";
+option go_package = "github.com/geosync/gen/events";
 
 message TickEventV1 {
   string event_id = 1;

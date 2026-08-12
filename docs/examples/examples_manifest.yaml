@@ -99,8 +99,8 @@ examples:
     seed: n/a
     dependencies: []
 
-  - path: examples/neuro_trade_pulse_backtest.py
-    description: NeuroTrade PRO backtest walkthrough.
+  - path: examples/neuro_geosync_backtest.py
+    description: GeoSync HPC backtest walkthrough.
     seed:
       - 42
       - 17
@@ -108,7 +108,7 @@ examples:
       - numpy==2.3.3
       - pandas==2.3.3
 
-  - path: examples/neuro_trade_pulse_snapshot.py
+  - path: examples/neuro_geosync_snapshot.py
     description: Market regime snapshot generation.
     seed: 42
     dependencies:
@@ -171,22 +171,40 @@ examples:
       - networkx==3.5
       - numpy==2.3.3
 
-  - path: docs/examples/quickstart_signal_fetch.md
-    description: Quickstart for fetching market signals via public API.
+  - path: examples/cognitive_bridge_demo.py
+    description: "End-to-end demo of the cognitive bridge."
     seed: n/a
     dependencies: []
 
-  - path: docs/examples/prediction_submission.md
-    description: Async prediction submission with idempotency handling.
+  - path: examples/observer_cpt_schema_demo.py
+    description: "DEMO ONLY \u2014 observer-induced effective asymmetry, schema (formerly P5)."
     seed: n/a
     dependencies: []
 
-  - path: docs/examples/webhook_consumer.md
-    description: Webhook consumer flow for signal and prediction events.
+  - path: examples/physics_alpha_proof.py
+    description: "Physics Alpha Proof \u2014 does Kuramoto R(t) generate real alpha?"
     seed: n/a
+    dependencies:
+      - numpy==2.3.3
+      - pandas==2.3.3
+      - scipy==1.16.2
+
+  - path: examples/physics_inspired_strategies.py
+    description: "Example: Physics-Inspired Trading Strategy"
+    seed: 42
+    dependencies:
+      - numpy==2.3.3
+
+  - path: examples/semantic_sieve_demo.py
+    description: "End-to-end semantic-sieve cycle on a GeoSync hypothesis."
+    seed: 42
     dependencies: []
 
-  - path: docs/examples/sdk_integration.md
-    description: SDK wrapper patterns for TradePulse API integration.
+  - path: examples/walk_forward_physics_backtest.py
+    description: "Walk-Forward Physics Backtest \u2014 out-of-sample validation of Kuramoto alpha."
     seed: n/a
-    dependencies: []
+    dependencies:
+      - numpy==2.3.3
+      - pandas==2.3.3
+      - scipy==1.16.2
+

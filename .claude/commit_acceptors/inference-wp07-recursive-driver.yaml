@@ -1,0 +1,47 @@
+# SPDX-License-Identifier: MIT
+id: inference-wp07-recursive-driver
+status: DRAFT
+claim_type: governance
+promise: >-
+  WP-07 of the Inference-Legend act gains its recursive falsification driver,
+  binding the EXISTING null-baseline generator and the canonical claim-maturity
+  ladder into one loop (observed -> null challenge -> claim classification ->
+  tighten -> next). The loop can refute its own hypothesis (a statistic
+  indistinguishable from the null terminates REFUTED) and can NEVER promote past
+  MEASURED_SYNTHETIC, because evaluate_promotion refuses a higher tier without
+  real-data evidence. Admissibility infrastructure run on a seeded synthetic
+  statistic; no predictive, physics, or market claim; rank unchanged.
+diff_scope:
+  changed_files:
+    - path: ".claude/commit_acceptors/inference-wp07-recursive-driver.yaml"
+    - path: "tools/inference/recursive_falsification_driver.py"
+    - path: "tests/tools/test_recursive_falsification_driver.py"
+    - path: "docs/INFERENCE_LEGEND_WP_COVERAGE.md"
+  forbidden_paths:
+    - "trading/"
+    - "execution/"
+    - "forecast/"
+    - "policy/"
+required_python_symbols: []
+expected_signal: >-
+  recursive_falsification_driver.run_loop terminates REFUTED on a statistic
+  pinned to the null centre and BOUNDED_STABLE on an extreme one; the claim
+  ceiling is MEASURED_SYNTHETIC across all seeds; is_predictive_claim is False;
+  pytest tests/tools/test_recursive_falsification_driver.py passes.
+measurement_command: >-
+  bash -c 'python -m pytest -q tests/tools/test_recursive_falsification_driver.py'
+signal_artifact: "tmp/wp07_driver.log"
+falsifier:
+  command: >-
+    python -c "import importlib.util,sys; s=importlib.util.spec_from_file_location('d','tools/inference/recursive_falsification_driver.py'); d=importlib.util.module_from_spec(s); sys.modules['d']=d; s.loader.exec_module(d); L=d.run_loop(seed=1, observed_statistic=lambda a,b:0.0); sys.exit(0 if L['terminal_verdict']!='REFUTED' else 1)"
+  description: >-
+    Pins the observed statistic to the null centre and exits 0 only if the loop
+    does NOT terminate REFUTED (the vacuous always-survive regression). On the
+    correct tree the loop refutes, so the command exits non-zero — proving the
+    falsification path is real, not decorative.
+rollback_command: "git revert --no-edit HEAD"
+rollback_verification_command: "git diff --exit-code tools/inference/recursive_falsification_driver.py"
+memory_update_type: none
+ledger_path: ".claude/commit_acceptors/inference-wp07-recursive-driver.yaml"
+report_path: "docs/reports/diff_bound_commit_acceptor_layer.md"
+evidence: []

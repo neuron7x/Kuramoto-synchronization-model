@@ -1,0 +1,49 @@
+name: Commit Acceptor Gate
+
+concurrency:
+  group: ${{ github.workflow }}-${{ github.ref }}
+  cancel-in-progress: true
+on:
+  pull_request:
+  merge_group:
+permissions:
+  contents: read
+jobs:
+  commit-acceptor-validation:
+    runs-on: ubuntu-latest
+    strategy:
+      fail-fast: false
+      matrix:
+        python-version: ["3.11", "3.12"]
+    steps:
+      - uses: actions/checkout@9c091bb21b7c1c1d1991bb908d89e4e9dddfe3e0 # v7.0.0
+        with:
+          fetch-depth: 0
+      - uses: actions/setup-python@ece7cb06caefa5fff74198d8649806c4678c61a1 # v6
+        with:
+          python-version: ${{ matrix.python-version }}
+      - name: Install
+        run: |
+          python -m pip install --upgrade pip
+          python -m pip install pyyaml types-PyYAML black ruff mypy pytest pydantic
+      - name: Validate acceptors (static schema)
+        run: python tools/commit_acceptor/validate_commit_acceptor.py
+      - name: Validate acceptor command syntax (python + bash)
+        run: python scripts/ci/check_acceptor_command_syntax.py
+      - name: Validate diff binding (require acceptor)
+        run: |
+          git fetch origin main:refs/remotes/origin/main || true
+          python tools/commit_acceptor/validate_commit_acceptor.py \
+            --base-ref origin/main \
+            --head-ref HEAD \
+            --require-acceptor-for-code-change
+      - name: Unit tests
+        run: python -m pytest tests/unit/commit_acceptor -v --confcutdir=tests/unit/commit_acceptor
+      - name: Ruff check
+        run: python -m ruff check tools/commit_acceptor tests/unit/commit_acceptor
+      - name: Ruff format check
+        run: python -m ruff format --check tools/commit_acceptor tests/unit/commit_acceptor
+      - name: Black check
+        run: python -m black --check tools/commit_acceptor tests/unit/commit_acceptor
+      - name: Mypy strict
+        run: python -m mypy --strict tools/commit_acceptor tests/unit/commit_acceptor

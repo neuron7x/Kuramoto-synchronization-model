@@ -1,4 +1,5 @@
-# SPDX-License-Identifier: LicenseRef-TradePulse-Proprietary
+# Copyright (c) 2023-2026 Yaroslav Vasylenko (neuron7xLab)
+# SPDX-License-Identifier: MIT
 """Unit tests for memory validation utilities.
 
 This module contains comprehensive tests for the memory validation layer,
@@ -252,33 +253,25 @@ class TestValidateStrategyMemoryState:
         assert result.is_valid
         assert len(result.violations) == 0
 
-    def test_rejects_negative_decay_lambda(
-        self, valid_strategy_state: Dict[str, Any]
-    ) -> None:
+    def test_rejects_negative_decay_lambda(self, valid_strategy_state: Dict[str, Any]) -> None:
         """Negative decay_lambda should be rejected."""
         valid_strategy_state["decay_lambda"] = -1.0
         with pytest.raises(InvariantError, match="decay_lambda must be >= 0"):
             validate_strategy_memory_state(valid_strategy_state, strict=True)
 
-    def test_rejects_nan_decay_lambda(
-        self, valid_strategy_state: Dict[str, Any]
-    ) -> None:
+    def test_rejects_nan_decay_lambda(self, valid_strategy_state: Dict[str, Any]) -> None:
         """NaN decay_lambda should be rejected."""
         valid_strategy_state["decay_lambda"] = float("nan")
         with pytest.raises(InvariantError, match="decay_lambda must be finite"):
             validate_strategy_memory_state(valid_strategy_state, strict=True)
 
-    def test_rejects_zero_max_records(
-        self, valid_strategy_state: Dict[str, Any]
-    ) -> None:
+    def test_rejects_zero_max_records(self, valid_strategy_state: Dict[str, Any]) -> None:
         """Zero max_records should be rejected."""
         valid_strategy_state["max_records"] = 0
         with pytest.raises(InvariantError, match="max_records must be > 0"):
             validate_strategy_memory_state(valid_strategy_state, strict=True)
 
-    def test_rejects_capacity_overflow(
-        self, valid_strategy_state: Dict[str, Any]
-    ) -> None:
+    def test_rejects_capacity_overflow(self, valid_strategy_state: Dict[str, Any]) -> None:
         """More records than max_records should be rejected."""
         valid_strategy_state["max_records"] = 1  # Only 1 allowed but we have 2
         with pytest.raises(InvariantError, match="exceeds max_records"):
@@ -290,17 +283,13 @@ class TestValidateStrategyMemoryState:
         with pytest.raises(InvariantError, match="score must be finite"):
             validate_strategy_memory_state(valid_strategy_state, strict=True)
 
-    def test_rejects_negative_timestamp(
-        self, valid_strategy_state: Dict[str, Any]
-    ) -> None:
+    def test_rejects_negative_timestamp(self, valid_strategy_state: Dict[str, Any]) -> None:
         """Negative timestamp should be rejected."""
         valid_strategy_state["records"][0]["ts"] = -100.0
         with pytest.raises(InvariantError, match="ts must be non-negative"):
             validate_strategy_memory_state(valid_strategy_state, strict=True)
 
-    def test_rejects_nan_in_signature(
-        self, valid_strategy_state: Dict[str, Any]
-    ) -> None:
+    def test_rejects_nan_in_signature(self, valid_strategy_state: Dict[str, Any]) -> None:
         """NaN in signature should be rejected."""
         valid_strategy_state["records"][0]["signature"]["R"] = float("nan")
         with pytest.raises(InvariantError, match="signature.R must be finite"):
@@ -342,9 +331,7 @@ class TestValidatePelmState:
         with pytest.raises(InvariantError, match="capacity must be > 0"):
             validate_pelm_state(valid_pelm_state, strict=True)
 
-    def test_rejects_fractal_weight_out_of_range(
-        self, valid_pelm_state: Dict[str, Any]
-    ) -> None:
+    def test_rejects_fractal_weight_out_of_range(self, valid_pelm_state: Dict[str, Any]) -> None:
         """Fractal weight outside [0,1] should be rejected."""
         valid_pelm_state["fractal_weight"] = 1.5
         with pytest.raises(InvariantError, match="fractal_weight must be in"):
@@ -362,9 +349,7 @@ class TestValidatePelmState:
         with pytest.raises(InvariantError, match="vector contains NaN"):
             validate_pelm_state(valid_pelm_state, strict=True)
 
-    def test_rejects_wrong_dimension_vector(
-        self, valid_pelm_state: Dict[str, Any]
-    ) -> None:
+    def test_rejects_wrong_dimension_vector(self, valid_pelm_state: Dict[str, Any]) -> None:
         """Vector with wrong dimension should be rejected."""
         valid_pelm_state["entries"][0]["vector"] = [1.0] * 32  # Wrong dimension
         with pytest.raises(InvariantError, match="vector dimension"):
@@ -376,9 +361,7 @@ class TestValidatePelmState:
         with pytest.raises(InvariantError, match="phase must be finite"):
             validate_pelm_state(valid_pelm_state, strict=True)
 
-    def test_recovery_mode_quarantines_bad_entries(
-        self, valid_pelm_state: Dict[str, Any]
-    ) -> None:
+    def test_recovery_mode_quarantines_bad_entries(self, valid_pelm_state: Dict[str, Any]) -> None:
         """Non-strict mode should quarantine bad entries."""
         valid_pelm_state["entries"][0]["vector"][0] = float("nan")
         result = validate_pelm_state(valid_pelm_state, strict=False)
@@ -450,9 +433,7 @@ class TestRecoveryFunctions:
         assert recovered["_recovered"] is True
         assert recovered["_quarantined_count"] == 1
 
-    def test_recover_pelm_removes_quarantined(
-        self, valid_pelm_state: Dict[str, Any]
-    ) -> None:
+    def test_recover_pelm_removes_quarantined(self, valid_pelm_state: Dict[str, Any]) -> None:
         """Recovery should remove quarantined entries."""
         result = ValidationResult(
             is_valid=False,

@@ -1,0 +1,49 @@
+{
+  "$schema": "https://json-schema.org/draft/2020-12/schema",
+  "$id": "https://schemas.neuron7xlab.org/research/ricci_microstructure_v1_dataset.schema.json",
+  "title": "Ricci Microstructure v1 — Dataset Contract",
+  "description": "Preregistered dataset contract for the ricci_microstructure_v1 research line. A real, promotable dataset is an immutable, sha256-pinned crypto-perp depth-5 order book of sufficient depth. A zero/placeholder data_sha256 or is_synthetic=true is treated as non-evidence. Unknown fields fail validation.",
+  "type": "object",
+  "additionalProperties": false,
+  "required": [
+    "schema_version",
+    "venue_class",
+    "data_type",
+    "immutability_required",
+    "hash_algorithm",
+    "data_sha256",
+    "min_data_depth_sec",
+    "observation_window_utc",
+    "is_synthetic"
+  ],
+  "properties": {
+    "schema_version": {"const": "ricci_microstructure_v1.dataset.v1"},
+    "venue_class": {"const": "crypto_perps"},
+    "data_type": {"const": "depth5_order_book_100ms_resampled_to_1s"},
+    "immutability_required": {"const": true},
+    "hash_algorithm": {"const": "sha256"},
+    "data_sha256": {
+      "type": "string",
+      "pattern": "^[0-9a-f]{64}$",
+      "description": "SHA-256 of the immutable session. The all-zero digest marks a placeholder (no real data)."
+    },
+    "min_data_depth_sec": {
+      "type": "integer",
+      "minimum": 0,
+      "description": "Observed contiguous depth in seconds; promotion requires >= 3600."
+    },
+    "observation_window_utc": {
+      "type": "object",
+      "additionalProperties": false,
+      "required": ["start", "end"],
+      "properties": {
+        "start": {"type": "string", "format": "date-time", "pattern": "Z$"},
+        "end": {"type": "string", "format": "date-time", "pattern": "Z$"}
+      }
+    },
+    "is_synthetic": {
+      "type": "boolean",
+      "description": "True for pipeline-instrumentation data; synthetic data can never promote the claim tier."
+    }
+  }
+}

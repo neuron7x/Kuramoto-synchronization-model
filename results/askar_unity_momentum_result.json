@@ -1,0 +1,133 @@
+{
+  "orthogonality": {
+    "corr_unity_momentum": 0.0157,
+    "corr_unity_vol": 0.3981,
+    "gate_threshold": 0.3,
+    "gate_passed": true,
+    "n_common_bars": 2626
+  },
+  "walk_forward_unity": {
+    "folds": [
+      {
+        "fold": 1,
+        "test_start": "2018-10-11 00:00:00",
+        "test_end": "2020-03-25 00:00:00",
+        "IC_train": 0.0518,
+        "IC_test": 0.0087,
+        "sign": 1.0,
+        "n_train": 437,
+        "n_test": 437
+      },
+      {
+        "fold": 2,
+        "test_start": "2020-03-26 00:00:00",
+        "test_end": "2021-09-12 00:00:00",
+        "IC_train": 0.0283,
+        "IC_test": 0.0462,
+        "sign": 1.0,
+        "n_train": 874,
+        "n_test": 437
+      },
+      {
+        "fold": 3,
+        "test_start": "2021-09-13 00:00:00",
+        "test_end": "2023-03-02 00:00:00",
+        "IC_train": 0.0412,
+        "IC_test": 0.0104,
+        "sign": 1.0,
+        "n_train": 1311,
+        "n_test": 437
+      },
+      {
+        "fold": 4,
+        "test_start": "2023-03-03 00:00:00",
+        "test_end": "2024-08-23 00:00:00",
+        "IC_train": 0.01,
+        "IC_test": 0.054,
+        "sign": 1.0,
+        "n_train": 1748,
+        "n_test": 437
+      },
+      {
+        "fold": 5,
+        "test_start": "2024-08-25 00:00:00",
+        "test_end": "2026-02-15 00:00:00",
+        "IC_train": 0.0114,
+        "IC_test": 0.0377,
+        "sign": 1.0,
+        "n_train": 2185,
+        "n_test": 437
+      }
+    ],
+    "fold_ics": [
+      0.0087,
+      0.0462,
+      0.0104,
+      0.054,
+      0.0377
+    ],
+    "fold_signs": [
+      1.0,
+      1.0,
+      1.0,
+      1.0,
+      1.0
+    ],
+    "positive_count": 5,
+    "pass_rate": 1.0,
+    "sign_consistent": true,
+    "last_fold_positive": true,
+    "promoted": true
+  },
+  "ensemble_unity_momentum": {
+    "w_unity": 0.1,
+    "w_momentum": 0.9,
+    "IC_train_ensemble": 0.1788,
+    "IC_train_grid_peak": 0.1788,
+    "IC_test_ensemble": 0.1404,
+    "IC_test_unity_alone": 0.0508,
+    "IC_test_momentum_alone": 0.1394,
+    "sharpe_train": -0.026,
+    "sharpe_test": -0.618,
+    "maxdd_test": -0.2086,
+    "overfit_ratio": 23.795,
+    "permutation_p": 0.0,
+    "permutation_sigma": 4.01,
+    "crisis_2022": 0.0161,
+    "corr_ensemble_vs_momentum": 0.9784,
+    "disqualified_by_weight": false,
+    "effectively_momentum": true,
+    "disqualified": true,
+    "disqual_threshold": 0.05,
+    "disqual_corr_ceil": 0.95,
+    "w_unity_grid": [
+      0.1,
+      0.2,
+      0.3,
+      0.4,
+      0.5
+    ],
+    "n_train_bars": 1846,
+    "n_test_bars": 780
+  },
+  "unity_standalone": {
+    "sign": 1.0,
+    "IC_train": 0.0071,
+    "IC_test": 0.0508,
+    "sharpe_test": 0.811,
+    "permutation_p": 0.089
+  },
+  "momentum_standalone": {
+    "sign": 1.0,
+    "IC_train": 0.1794,
+    "IC_test": 0.1394,
+    "sharpe_test": -0.788,
+    "permutation_p": 0.0
+  },
+  "baseline_geosync_yfinance": {
+    "IC_test": 0.106,
+    "sharpe_test": 1.737
+  },
+  "verdict": "MARGINAL",
+  "askar_message": ""
+}

@@ -1,0 +1,52 @@
+syntax = "proto3";
+
+package coherence_bridge.v1;
+
+option go_package = "github.com/neuron7xLab/coherence-bridge/proto/v1;cbv1";
+
+enum RegimeType {
+  REGIME_UNKNOWN = 0;
+  REGIME_COHERENT = 1;
+  REGIME_METASTABLE = 2;
+  REGIME_DECOHERENT = 3;
+  REGIME_CRITICAL = 4;
+}
+
+message RegimeSignal {
+  int64 timestamp_ns = 1;
+  string instrument = 2;
+  double gamma = 3;
+  double order_parameter_R = 4;
+  double ricci_curvature = 5;
+  double lyapunov_max = 6;
+  RegimeType regime = 7;
+  double regime_confidence = 8;
+  double regime_duration_s = 9;
+  double signal_strength = 10;
+  double risk_scalar = 11;
+  uint64 sequence_number = 12;
+}
+
+message SignalRequest {
+  repeated string instruments = 1;
+  int64 min_interval_ms = 2;
+}
+
+message SnapshotRequest {
+  string instrument = 1;
+}
+
+message HealthResponse {
+  bool healthy = 1;
+  int64 uptime_s = 2;
+  int64 signals_emitted = 3;
+  map<string, int64> last_signal_ts = 4;
+}
+
+message Empty {}
+
+service CoherenceBridge {
+  rpc StreamSignals(SignalRequest) returns (stream RegimeSignal);
+  rpc GetSnapshot(SnapshotRequest) returns (RegimeSignal);
+  rpc Health(Empty) returns (HealthResponse);
+}

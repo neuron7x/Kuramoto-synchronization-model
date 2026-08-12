@@ -1,3 +1,5 @@
+# Copyright (c) 2023-2026 Yaroslav Vasylenko (neuron7xLab)
+# SPDX-License-Identifier: MIT
 from __future__ import annotations
 
 import pytest
@@ -46,9 +48,7 @@ def test_contract_blocks_action_potential_without_approval() -> None:
 
 
 def test_contract_permits_dual_approval_override() -> None:
-    contract = BehavioralContract(
-        required_approvals=frozenset({"operations", "safety"})
-    )
+    contract = BehavioralContract(required_approvals=frozenset({"operations", "safety"}))
     report = contract.enforce(
         [_result(1.3), _result(1.37)],
         approvals={"operations", "safety", "observer"},

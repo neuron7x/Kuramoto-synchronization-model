@@ -23,7 +23,7 @@
     "scope": "signals:read",
     "signatures": {
       "algorithm": "ed25519",
-      "header": "X-TradePulse-Signature",
+      "header": "X-GeoSync-Signature",
       "required": true,
       "version": "v1"
     },
@@ -59,7 +59,7 @@
     "scope": "predictions:write",
     "signatures": {
       "algorithm": "ed25519",
-      "header": "X-TradePulse-Signature",
+      "header": "X-GeoSync-Signature",
       "required": true,
       "version": "v1"
     },

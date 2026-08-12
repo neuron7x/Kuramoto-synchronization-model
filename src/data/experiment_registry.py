@@ -1,3 +1,5 @@
+# Copyright (c) 2023-2026 Yaroslav Vasylenko (neuron7xLab)
+# SPDX-License-Identifier: MIT
 """File-backed registry for machine learning experiments and model artifacts."""
 
 from __future__ import annotations

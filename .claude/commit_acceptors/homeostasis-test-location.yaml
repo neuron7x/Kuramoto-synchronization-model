@@ -1,0 +1,49 @@
+id: homeostasis-test-location
+status: ACTIVE
+claim_type: correctness
+promise: >-
+  The homeostasis contract test is moved from tests/ci (collected by the minimal
+  repo-integrity env, which lacks pydantic) to tests/unit/neuro, and the artifact
+  invariant node paths are updated to match. tests/ci no longer imports the heavy
+  neuromodulatory stack, so repo-integrity collection succeeds; the contract still
+  drives the real controllers and stays PASS/GO.
+diff_scope:
+  changed_files:
+    - path: ".claude/commit_acceptors/homeostasis-test-location.yaml"
+    - path: "tools/audit_homeostasis_contract.py"
+    - path: "tests/unit/neuro/test_homeostasis_contract.py"
+    - path: "artifacts/neuro/homeostasis_contract.json"
+  forbidden_paths:
+    - "execution/"
+    - "core/neuro/"
+required_python_symbols:
+  - "tools/audit_homeostasis_contract.py::build_contract"
+expected_signal: >-
+  `python -m pytest --import-mode=importlib
+  tests/unit/neuro/test_homeostasis_contract.py -q` passes and tests/ci no longer
+  imports pydantic (repo-integrity collection succeeds).
+measurement_command: >-
+  bash -c '
+    python -m pytest --import-mode=importlib -p no:cacheprovider
+      tests/unit/neuro/test_homeostasis_contract.py -q
+  '
+signal_artifact: "tmp/homeostasis_test_location.log"
+falsifier:
+  command: |-
+    bash -c '
+      test ! -f tests/ci/test_homeostasis_contract.py &&
+      grep -q "tests/unit/neuro/test_homeostasis_contract.py" artifacts/neuro/homeostasis_contract.json &&
+      exit 0 || exit 1
+    '
+  description: >-
+    Asserts the heavy test left tests/ci and the artifact points at its new home.
+    Exits 0 when relocated; non-zero if the pydantic-importing test remains in the
+    minimal-env collection path.
+rollback_command: >-
+  bash -c 'git rm -f .claude/commit_acceptors/homeostasis-test-location.yaml'
+rollback_verification_command: >-
+  bash -c 'test ! -f .claude/commit_acceptors/homeostasis-test-location.yaml'
+memory_update_type: append
+ledger_path: ".claude/commit_acceptors/homeostasis-test-location.yaml"
+report_path: "tmp/homeostasis_test_location.log"
+evidence: []

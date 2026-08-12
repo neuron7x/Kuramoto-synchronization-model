@@ -1,0 +1,32 @@
+{
+  "boundary": "Scoped to the pre-committed dataset + pipeline. NOT a universal CTC-theory verdict. There is NO toggleable ground truth in real data: the routing label MUST come from an independent experimental manipulation (attention in/out with behavioural readout, or opto/microstim perturbation). Absent that, the line is UNTESTABLE by this protocol \u2014 reported, not forced.",
+  "claim": "On real paired LFP+spike data, the causal CTC claim (the gamma phase relation carries inter-areal routing) is supported iff the C5-validated full gamma cross-spectral discriminant separates an INDEPENDENTLY manipulated routing-ON vs routing-OFF condition out of sample, above a jointly-matched confound surrogate, while the standard scalar estimands do not.",
+  "config_hash": "460096d2428a439f8bec396108a3af321c4a8023bda331d187c64a8f1b1ead49",
+  "dataset_bound": false,
+  "dataset_selection_rule": {
+    "inclusion": [
+      "simultaneous LFP+spikes in >=2 areas",
+      "an independent routing manipulation (attention cue / opto / microstim)",
+      "open licence + versioned, content-addressable dump",
+      "trial structure permitting a jointly-matched confound surrogate"
+    ],
+    "source_order": [
+      "allen_visual_coding_neuropixels",
+      "crcns_pfc_2",
+      "crcns_v1_*",
+      "published_ctc_fries_lab_if_open"
+    ]
+  },
+  "estimator": "c5_full_gamma_cross_spectral_discriminant",
+  "experiment_id": "CTC-FALSIFY-001-C-REAL",
+  "primary_endpoint": "OOS ROC-AUC, routing-ON vs routing-OFF, train/test split-disjoint",
+  "repro_hash": "83598586a531d5af4216a371136a03131e74e803042780e1e58ef74ae3169953",
+  "thresholds": {
+    "auc_chance_hi": 0.6,
+    "auc_support_min": 0.7,
+    "holm_alpha": 0.01,
+    "mde_auc": 0.65,
+    "min_sessions": 8
+  },
+  "verdict": "INADMISSIBLE_NO_PAIRED_DATA"
+}

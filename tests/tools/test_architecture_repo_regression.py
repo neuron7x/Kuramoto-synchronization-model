@@ -1,3 +1,5 @@
+# Copyright (c) 2023-2026 Yaroslav Vasylenko (neuron7xLab)
+# SPDX-License-Identifier: MIT
 from __future__ import annotations
 
 from pathlib import Path
@@ -10,10 +12,12 @@ EXPECTED_ROOT_PACKAGES = {
     "backtest",
     "analytics",
     "application",
-    "tradepulse",
-    "tradepulse_agent",
+    "geosync",
+    "geosync_agent",
 }
-EXPECTED_MODULE_BASELINE = 1800  # Baseline module count captured on 2025-12-19; update if the repo size shifts materially.
+EXPECTED_MODULE_BASELINE = (
+    1800  # Baseline module count captured on 2025-12-19; update if the repo size shifts materially.
+)
 # Use an 80% floor to catch substantial drops while allowing normal growth or small reorganisations.
 MINIMUM_MODULE_COUNT_FLOOR = int(EXPECTED_MODULE_BASELINE * 0.8)
 

@@ -1,0 +1,25 @@
+id: nfi-physics-ci-verdict
+status: DRAFT
+claim_type: correctness
+promise: "NFI physics verdict report reflects the computed score artifact and keeps remaining blockers explicit."
+diff_scope:
+  changed_files:
+    - path: ".claude/commit_acceptors/nfi-physics-ci-verdict.yaml"
+    - path: "VERDICT.md"
+  forbidden_paths:
+    - "trading/"
+    - "execution/"
+    - "forecast/"
+required_python_symbols: []
+expected_signal: "VERDICT.md reports the computed score, target interval, and remaining blockers without changing runtime behavior"
+measurement_command: "python -m pytest tests/test_physics_score.py tests/test_physics_ci_evidence.py"
+signal_artifact: "VERDICT.md"
+falsifier:
+  command: "python -c \"from pathlib import Path; p=Path('VERDICT.md').read_text(); raise SystemExit(0 if 'S_total: `81.5`' in p and 'FINAL_PHYSICS_VALIDATION: NO' in p else 1)\""
+  description: "Fails if the verdict report does not match the current score and validation status."
+rollback_command: "git checkout -- VERDICT.md .claude/commit_acceptors/nfi-physics-ci-verdict.yaml"
+rollback_verification_command: "git diff --exit-code VERDICT.md .claude/commit_acceptors/nfi-physics-ci-verdict.yaml"
+memory_update_type: none
+ledger_path: ".claude/commit_acceptors/nfi-physics-ci-verdict.yaml"
+report_path: "VERDICT.md"
+evidence: []

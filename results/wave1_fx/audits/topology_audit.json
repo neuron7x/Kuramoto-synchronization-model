@@ -1,0 +1,120 @@
+{
+  "generated_utc": "2026-04-21T21:02:22Z",
+  "hypothesis": "H1: the FX correlation graph saturates the 0.30 |corr| edge gate, collapsing the variability that combo_v1 relies on.",
+  "window": 120,
+  "threshold": 0.3,
+  "universe": [
+    "EURUSD",
+    "GBPUSD",
+    "USDJPY",
+    "AUDUSD",
+    "USDCAD",
+    "USDCHF",
+    "EURGBP",
+    "EURJPY"
+  ],
+  "max_edges": 28,
+  "label_thresholds": {
+    "saturated_p5_floor": 0.75,
+    "saturated_median_floor": 0.85,
+    "unsaturated_median_ceil": 0.5
+  },
+  "global_stats": {
+    "n_bars_total": 5742,
+    "window": 120,
+    "threshold": 0.3,
+    "max_edges": 28,
+    "mean_edge_density": 0.6412,
+    "median_edge_density": 0.6429,
+    "p5_edge_density": 0.5,
+    "p95_edge_density": 0.7857,
+    "std_edge_density": 0.0888,
+    "mean_mean_abs_corr": 0.4059,
+    "frac_fully_connected_one_component": 0.9817,
+    "frac_at_max_edge_count": 0.0
+  },
+  "per_asset_degree_summary": [
+    {
+      "asset": "EURUSD",
+      "mean_degree": 5.9,
+      "median_degree": 6.0,
+      "p5_degree": 5,
+      "p95_degree": 7,
+      "max_possible": 7,
+      "frac_time_at_max_deg": 0.2443,
+      "frac_time_isolated": 0.0
+    },
+    {
+      "asset": "GBPUSD",
+      "mean_degree": 5.4169,
+      "median_degree": 6.0,
+      "p5_degree": 4,
+      "p95_degree": 6,
+      "max_possible": 7,
+      "frac_time_at_max_deg": 0.042,
+      "frac_time_isolated": 0.0
+    },
+    {
+      "asset": "USDJPY",
+      "mean_degree": 3.9925,
+      "median_degree": 4.0,
+      "p5_degree": 1,
+      "p95_degree": 6,
+      "max_possible": 7,
+      "frac_time_at_max_deg": 0.0143,
+      "frac_time_isolated": 0.0
+    },
+    {
+      "asset": "AUDUSD",
+      "mean_degree": 4.7409,
+      "median_degree": 5.0,
+      "p5_degree": 2,
+      "p95_degree": 6,
+      "max_possible": 7,
+      "frac_time_at_max_deg": 0.0084,
+      "frac_time_isolated": 0.0
+    },
+    {
+      "asset": "USDCAD",
+      "mean_degree": 4.4136,
+      "median_degree": 5.0,
+      "p5_degree": 2,
+      "p95_degree": 6,
+      "max_possible": 7,
+      "frac_time_at_max_deg": 0.0132,
+      "frac_time_isolated": 0.0
+    },
+    {
+      "asset": "USDCHF",
+      "mean_degree": 4.9873,
+      "median_degree": 5.0,
+      "p5_degree": 3,
+      "p95_degree": 7,
+      "max_possible": 7,
+      "frac_time_at_max_deg": 0.1118,
+      "frac_time_isolated": 0.0035
+    },
+    {
+      "asset": "EURGBP",
+      "mean_degree": 2.5425,
+      "median_degree": 3.0,
+      "p5_degree": 1,
+      "p95_degree": 5,
+      "max_possible": 7,
+      "frac_time_at_max_deg": 0.0,
+      "frac_time_isolated": 0.0031
+    },
+    {
+      "asset": "EURJPY",
+      "mean_degree": 3.9115,
+      "median_degree": 4.0,
+      "p5_degree": 1,
+      "p95_degree": 7,
+      "max_possible": 7,
+      "frac_time_at_max_deg": 0.0568,
+      "frac_time_isolated": 0.0
+    }
+  ],
+  "label": "WEAKLY_SUPPORTED",
+  "label_reason": "P5(edge_density)=0.5000, median=0.6429 \u2014 partial saturation only"
+}

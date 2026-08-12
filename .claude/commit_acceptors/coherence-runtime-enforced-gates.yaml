@@ -1,0 +1,49 @@
+id: coherence-runtime-enforced-gates
+status: ACTIVE
+claim_type: governance
+promise: >-
+  Close the #1314 review's central defect — tested source vs ENFORCED execution.
+  validate_physics_contract (INV-CBR1) is now runtime-enforced in the real
+  order-sizing consumer CoherenceRiskGate.apply (hard-block on NO_GO; sizing on
+  verdict.safe_risk_scalar, never the raw relayed field). The Ollivier-κ hot path
+  gains a typed-status / perf-budget / cache / degraded-ABSTAIN policy. The
+  repository-surface governance contract becomes manifest-driven
+  (docs/REPOSITORY_SYSTEM.contract.json), and a deterministic artifact-freshness
+  gate proves committed evidence artifacts equal their regeneration. No new
+  physics or neuroscience; no alpha; synthetic-only.
+diff_scope:
+  changed_files:
+    - path: "coherence_bridge/risk_gate.py"
+    - path: "scripts/ci/check_artifact_freshness.py"
+    - path: "docs/REPOSITORY_SYSTEM.contract.json"
+    - path: "artifacts/.manifest.json"
+    - path: "tests/test_risk_gate.py"
+    - path: "tests/test_ollivier_policy.py"
+    - path: "tests/ci/test_artifact_freshness_gate.py"
+    - path: ".claude/commit_acceptors/coherence-runtime-enforced-gates.yaml"
+  forbidden_paths:
+    - "core/execution/"
+    - "core/strategies/"
+    - "interfaces/live_runner.py"
+    - "forecast/"
+required_python_symbols:
+  - "coherence_bridge.risk_gate:CoherenceRiskGate"
+  - "scripts.ci.check_artifact_freshness:check"
+expected_signal: >-
+  CoherenceRiskGate.apply hard-blocks an out-of-band signal (consumer-refusal
+  tests green) and `make phd-evidence` is all-green including the new
+  artifact_freshness gate.
+measurement_command: "python -m pytest tests/test_risk_gate.py tests/test_ollivier_policy.py tests/ci/test_artifact_freshness_gate.py -q"
+signal_artifact: "artifacts/.manifest.json"
+falsifier:
+  command: "python -c \"import sys; from coherence_bridge.risk_gate import CoherenceRiskGate; from unittest.mock import MagicMock; e=MagicMock(); e.get_signal.return_value={'regime':'METASTABLE','gamma':-0.5,'order_parameter_R':0.5,'risk_scalar':1.0}; d=CoherenceRiskGate(e).apply('X',1.0); sys.exit(0 if d.allowed else 1)\""
+  description: >-
+    Exits non-zero in the asserted healthy state (the consumer REFUSES a negative
+    -gamma signal); flips to pass (exit 0) only if enforcement regressed and the
+    consumer allowed an out-of-band signal.
+rollback_command: "git checkout -- coherence_bridge/risk_gate.py scripts/ci/check_artifact_freshness.py"
+rollback_verification_command: "git diff --exit-code coherence_bridge/risk_gate.py scripts/ci/check_artifact_freshness.py"
+memory_update_type: append
+ledger_path: ".claude/commit_acceptors/coherence-runtime-enforced-gates.yaml"
+report_path: "docs/phd/13_physics_runtime_hardening.md"
+evidence: []

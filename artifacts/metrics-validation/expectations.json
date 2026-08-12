@@ -3,7 +3,7 @@
     {
       "code": "missing",
       "message": "metric missing from scrape",
-      "metric": "tradepulse_process_cpu_percent"
+      "metric": "geosync_process_cpu_percent"
     }
   ],
   "regression_baseline_errors": []

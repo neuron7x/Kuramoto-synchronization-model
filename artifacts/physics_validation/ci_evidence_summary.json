@@ -1,0 +1,109 @@
+{
+  "schema_version": "2026.06.18",
+  "evidence_type": "github_actions_runtime_summary",
+  "scope": "NFI GeoSync physics validation lane",
+  "source_prs": [
+    {
+      "pr_number": 1220,
+      "title": "docs/tests: add NFI v3 physics validation lane",
+      "head_ref": "github-pr-1220-head",
+      "merged": true,
+      "merge_ref": "github-pr-1220-merge",
+      "merge_sha": "a6558ea3"
+    },
+    {
+      "pr_number": 1223,
+      "title": "test: harden NFI physics score loader typing",
+      "head_ref": "github-pr-1223-head",
+      "merged": true,
+      "merge_ref": "github-pr-1223-merge",
+      "merge_sha": "3604a603"
+    }
+  ],
+  "workflow_runs": [
+    {
+      "name": "Physics Invariants",
+      "status": "completed",
+      "conclusion": "success",
+      "source_pr": 1220,
+      "head_sha": "a6558ea3"
+    },
+    {
+      "name": "Physics Kernel Gate",
+      "status": "completed",
+      "conclusion": "success",
+      "source_pr": 1220,
+      "head_sha": "a6558ea3"
+    },
+    {
+      "name": "Physics Reliability Gate",
+      "status": "completed",
+      "conclusion": "success",
+      "source_pr": 1220,
+      "head_sha": "a6558ea3"
+    },
+    {
+      "name": "Commit Acceptor Gate",
+      "status": "completed",
+      "conclusion": "success",
+      "source_pr": 1220,
+      "head_sha": "a6558ea3"
+    },
+    {
+      "name": "Repo Integrity Gate",
+      "status": "completed",
+      "conclusion": "success",
+      "source_pr": 1220,
+      "head_sha": "a6558ea3"
+    },
+    {
+      "name": "Readiness Gate",
+      "status": "completed",
+      "conclusion": "success",
+      "source_pr": 1220,
+      "head_sha": "a6558ea3"
+    },
+    {
+      "name": "Import Architecture Gate",
+      "status": "completed",
+      "conclusion": "success",
+      "source_pr": 1220,
+      "head_sha": "a6558ea3"
+    },
+    {
+      "name": "Claim Boundary Gate",
+      "status": "completed",
+      "conclusion": "success",
+      "source_pr": 1220,
+      "head_sha": "a6558ea3"
+    },
+    {
+      "name": "Docs Consistency Gate",
+      "status": "completed",
+      "conclusion": "success",
+      "source_pr": 1220,
+      "head_sha": "a6558ea3"
+    },
+    {
+      "name": "python-quality",
+      "status": "completed",
+      "conclusion": "success",
+      "source_pr": 1223,
+      "head_sha": "3604a603"
+    }
+  ],
+  "release_gate": {
+    "pr_gate_success": false,
+    "known_remaining_surfaces": [
+      "repo-policy workflow invariant",
+      "python-fast-shard deterministic tests"
+    ],
+    "interpretation": "Physics-specific gates are green, but the repository-level PR Gate is not fully green. This evidence can reduce the physics CI blocker but cannot close release readiness."
+  },
+  "score_implication": {
+    "may_upgrade_runtime_status": true,
+    "may_claim_target_interval": false,
+    "may_claim_final_physics_validation": false
+  },
+  "binding_note": "workflow_runs carry the head_sha they executed against. The validator (tools/physics_ci_evidence.py) counts a run only when its head_sha equals the scored commit (git rev-parse HEAD / $GITHUB_SHA); copied evidence from another PR is fail-closed and cannot strip the physics CI blocker."
+}

@@ -1,0 +1,96 @@
+# Diff-bound acceptor for the Law T1–T7 invariant registry reconciliation.
+#
+# The seven-law constitutional GeoSync Physics Law Act (CLAUDE.md §Laws T1–T7)
+# declared twenty invariants — INV-KR1..3 (Kuramoto-Ricci sync onset),
+# INV-LY1..4 (Benettin full Lyapunov spectrum), INV-CAL1..3 (coupling
+# calibration), INV-TAU1..3 (predictability horizon under a Landauer budget),
+# INV-DET1..3 (bit-identical reproducibility kit), INV-PIN1..4 (pinning control
+# of chaos) — each with a source module, a witness test, a law doc, and a
+# diff-bound law-T* acceptor. They were NEVER mirrored into the authoritative
+# registry .claude/physics/INVARIANTS.yaml. The validator and the
+# evidence-integrity gate treat ONLY that file as the invariant authority, so
+# the T-series witnesses raised L2 "INV-* not found in INVARIANTS.yaml" and
+# could not be honestly grounded (issue #823 follow-up note: "registry/header
+# drift … separate registry-reconciliation task").
+#
+# This change registers the twenty invariants with statements/types/falsifiers
+# copied verbatim-in-substance from CLAUDE.md and cross-checked against the law
+# doc, the source module, and the law-T* acceptor; adds the six new registry
+# sections to the physics-docs-canon classifier (synchronization-side laws →
+# nonlinear_synchronization, T5 → computational_physics_contract, T6 →
+# execution_infrastructure); regenerates the canon manifest and the law-witness
+# index; and syncs the five invariant-count surfaces (CLAUDE.md, README.md,
+# BASELINE.md, CLAIMS.md C-INV-COUNT, docs/PHYSICS_CANON.md) from 112 to 132.
+# NO new physics is introduced and NO production code under core/ or runtime/
+# is touched — this is a pure registry-authority reconciliation.
+
+id: registry-reconcile-law-T1-T7-invariants
+status: DRAFT
+claim_type: governance
+promise: >-
+  The twenty constitutional Law T1–T7 invariants (INV-KR1..3, INV-LY1..4,
+  INV-CAL1..3, INV-TAU1..3, INV-DET1..3, INV-PIN1..4) become authoritative
+  registry entries in .claude/physics/INVARIANTS.yaml. The canonical count
+  (python scripts/count_invariants.py) reads 132; the invariant source-binding
+  gate resolves every new source:/tests: path; the physics-docs-canon gate
+  classifies all 132 invariants across exactly seven domains with no
+  unclassified section; the law-witness index lists each new invariant as
+  COVERED; the validate_tests.py L2 "not found in INVARIANTS.yaml" backlog
+  falls by the T-series count (36 → 12) with no test masking. The five
+  invariant-count documentation surfaces agree at 132 and the
+  invariant-count-sync and epistemic-drift gates pass.
+diff_scope:
+  changed_files:
+    - path: ".claude/commit_acceptors/registry-reconcile-law-T1-T7-invariants.yaml"
+    - path: "scripts/ci/registry_reconcile_law_T1_T7_falsifier.py"
+    - path: ".claude/physics/INVARIANTS.yaml"
+    - path: "scripts/ci/check_physics_docs_canon.py"
+    - path: "docs/PHYSICS_CANON.manifest.json"
+    - path: "docs/PHYSICS_CANON.md"
+    - path: "artifacts/physics_v2/law_witness_index.json"
+    - path: "CLAUDE.md"
+    - path: "README.md"
+    - path: "BASELINE.md"
+    - path: "CLAIMS.md"
+  forbidden_paths:
+    - "core/"
+    - "runtime/"
+    - "trading/"
+    - "execution/"
+    - "forecast/"
+    - "policy/"
+required_python_symbols: []
+expected_signal: >-
+  python scripts/count_invariants.py prints 132; python
+  scripts/ci/check_invariant_source_binding.py exits 0 (PASS); python
+  scripts/ci/check_physics_docs_canon.py exits 0 (clean — 42 laws + 132
+  invariants across 7 domains); python scripts/ci/check_physics_law_witness_index.py
+  exits 0; python scripts/check_invariant_count_sync.py and python
+  scripts/check_epistemic_drift.py both report synchronized at 132; python
+  .claude/physics/validate_tests.py --self-check PASSES.
+measurement_command: >-
+  python scripts/ci/registry_reconcile_law_T1_T7_falsifier.py
+signal_artifact: "tmp/registry_reconcile_law_T1_T7.log"
+falsifier:
+  command: >-
+    python scripts/ci/registry_reconcile_law_T1_T7_falsifier.py
+  description: >-
+    Inverse probe: asserts every one of the twenty Law T1–T7 invariants is
+    present in the authoritative registry (not CLAUDE.md prose), that the
+    canonical count reads exactly 132, that the source/test binding gate
+    resolves every binding, and that the physics-docs-canon gate classifies
+    all registry sections into exactly one domain. Exits non-zero iff any
+    reconciled invariant is later dropped, miscounted, unbound, or left
+    unclassified — distinguishing a genuinely-registered constitutional
+    invariant from a decorative prose token.
+rollback_command: >-
+  git checkout origin/main -- .claude/physics/INVARIANTS.yaml
+  scripts/ci/check_physics_docs_canon.py docs/PHYSICS_CANON.manifest.json
+  docs/PHYSICS_CANON.md artifacts/physics_v2/law_witness_index.json CLAUDE.md
+  README.md BASELINE.md CLAIMS.md
+rollback_verification_command: >-
+  python scripts/check_invariant_count_sync.py
+memory_update_type: none
+ledger_path: ".claude/commit_acceptors/registry-reconcile-law-T1-T7-invariants.yaml"
+report_path: ".claude/commit_acceptors/registry-reconcile-law-T1-T7-invariants.yaml"
+evidence: []

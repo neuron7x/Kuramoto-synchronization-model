@@ -1,0 +1,87 @@
+{
+  "folds": [
+    {
+      "fold": 1,
+      "train_start": "2017-02-28 21:00:00",
+      "split_ts": "2018-05-16 18:00:00",
+      "test_end": "2018-11-28 21:00:00",
+      "n_train": 2209,
+      "n_test": 948,
+      "IC_train": -0.0471,
+      "IC_test": 0.0332,
+      "sharpe_test": 1.277,
+      "maxdd_test": -0.0616,
+      "train_mu": -1.116342,
+      "train_sd": 0.993434
+    },
+    {
+      "fold": 2,
+      "train_start": "2018-11-29 15:00:00",
+      "split_ts": "2020-03-06 17:00:00",
+      "test_end": "2020-09-17 18:00:00",
+      "n_train": 2209,
+      "n_test": 948,
+      "IC_train": 0.0067,
+      "IC_test": 0.0201,
+      "sharpe_test": -0.698,
+      "maxdd_test": -0.3524,
+      "train_mu": -0.974196,
+      "train_sd": 0.999893
+    },
+    {
+      "fold": 3,
+      "train_start": "2020-09-17 19:00:00",
+      "split_ts": "2021-12-20 19:00:00",
+      "test_end": "2022-07-06 20:00:00",
+      "n_train": 2209,
+      "n_test": 948,
+      "IC_train": 0.0102,
+      "IC_test": 0.0206,
+      "sharpe_test": 1.591,
+      "maxdd_test": -0.1465,
+      "train_mu": -1.298325,
+      "train_sd": 0.95468
+    },
+    {
+      "fold": 4,
+      "train_start": "2022-07-07 14:00:00",
+      "split_ts": "2023-10-10 20:00:00",
+      "test_end": "2024-04-25 19:00:00",
+      "n_train": 2209,
+      "n_test": 948,
+      "IC_train": -0.0376,
+      "IC_test": 0.0165,
+      "sharpe_test": 1.113,
+      "maxdd_test": -0.086,
+      "train_mu": -0.695337,
+      "train_sd": 0.952676
+    },
+    {
+      "fold": 5,
+      "train_start": "2024-04-25 20:00:00",
+      "split_ts": "2025-08-06 14:00:00",
+      "test_end": "2026-02-20 21:00:00",
+      "n_train": 2212,
+      "n_test": 948,
+      "IC_train": 0.0293,
+      "IC_test": 0.0083,
+      "sharpe_test": 0.077,
+      "maxdd_test": -0.1306,
+      "train_mu": -1.239602,
+      "train_sd": 0.971091
+    }
+  ],
+  "fold_ics_test": [
+    0.0332,
+    0.0201,
+    0.0206,
+    0.0165,
+    0.0083
+  ],
+  "positive_count": 5,
+  "all_positive": true,
+  "mean_ic_train": -0.0077,
+  "mean_ic_test": 0.0197,
+  "mean_sharpe_test": 0.672,
+  "overfit_ratio": -0.39
+}

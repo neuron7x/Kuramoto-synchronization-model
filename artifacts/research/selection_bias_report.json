@@ -1,0 +1,131 @@
+{
+  "schema": "flagship.selection_bias_report/v1",
+  "rq_id": "FLAGSHIP-RQ-001",
+  "prereg_id": "FLAGSHIP-PREREG-001",
+  "task": "RES-007",
+  "domain_kind": "infrastructure",
+  "boundary": "RESEARCH_ALPHA_SYNTHETIC_ONLY_NO_DEPLOY",
+  "source_of_record": "benchmarks/flagship_baselines/comparison_report.json (RES-008)",
+  "scope_note": "This is NOT a market backtest. Deflated-Sharpe / CSCV-PBO are market concepts and do NOT apply here. The multiplicity risk we control is the SELECTION-BIAS analogue: cherry-picking the best of several tried wheel-contract configurations, or running many comparisons against the null without correction. The decision variable is a deterministic census count D_marginal read from a frozen repository/build artifact, not a sampled return.",
+  "family": {
+    "definition": "The family of hypotheses = the set of tried wheel-contract configuration variants, each tested for MARGINAL detection over the preregistered null baseline (EXISTING_SUITE, the in-place gate suite). Every variant that could have been reported as the headline result is enumerated here, so no favourable run can be silently selected.",
+    "null_reference_tier": "EXISTING_SUITE",
+    "null_reference_rationale": "Preregistered primary null (protocols/flagship_preregistration.yaml -> nulls.primary_null / nulls.null_reference): the pre-existing CI gate suite (import-linter, unit tests, release-gate probes) resolving imports IN PLACE on snapshot S. A defect is marginal ONLY if this reference misses it.",
+    "members": [
+      "FLAGSHIP",
+      "NAIVE",
+      "ABLATED",
+      "SHUFFLED"
+    ],
+    "family_size": 4,
+    "excluded_from_family": {
+      "EXISTING_SUITE": "It is the NULL reference the family is tested against, not itself a tested variant."
+    }
+  },
+  "randomization_null": {
+    "name": "label-shuffle permutation null (SHUFFLED tier)",
+    "definition": "Each imported first-party namespace label is replaced by a random draw from a stdlib token pool (fixed seed); the flagship detection rule is then applied. Because the stdlib pool contains ZERO first-party namespaces, every relabeling yields 0 first-party hits by construction.",
+    "B_relabelings": 10000,
+    "one_sided_p_formula": "p = (#{perm_stat >= observed_stat} + 1) / (B + 1)",
+    "analytic_note": "Since every permutation statistic is deterministically 0, an observed statistic > 0 exceeds all B permutations -> p = (0 + 1)/(B + 1) = 1/10001; an observed statistic of 0 is tied with all B permutations -> p = (B + 1)/(B + 1) = 1.0. The p-values below are therefore exact, not Monte-Carlo estimates."
+  },
+  "comparisons": [
+    {
+      "name": "FLAGSHIP_vs_EXISTING_SUITE",
+      "intervention": "FLAGSHIP",
+      "null_baseline": "EXISTING_SUITE",
+      "role": "PRE-SPECIFIED PRIMARY",
+      "decision_stat_marginal_D": 70,
+      "p_value_kind": "one_sided_label_shuffle_permutation",
+      "raw_p_value": 9.999000099990002e-05
+    },
+    {
+      "name": "NAIVE_vs_EXISTING_SUITE",
+      "intervention": "NAIVE",
+      "null_baseline": "EXISTING_SUITE",
+      "role": "control variant (definitional D=0)",
+      "decision_stat_marginal_D": 0,
+      "p_value_kind": "one_sided_label_shuffle_permutation",
+      "raw_p_value": 1.0
+    },
+    {
+      "name": "ABLATED_vs_EXISTING_SUITE",
+      "intervention": "ABLATED",
+      "null_baseline": "EXISTING_SUITE",
+      "role": "ablation: clean-archive step removed",
+      "decision_stat_marginal_D": 0,
+      "p_value_kind": "one_sided_label_shuffle_permutation",
+      "raw_p_value": 1.0
+    },
+    {
+      "name": "SHUFFLED_vs_EXISTING_SUITE",
+      "intervention": "SHUFFLED",
+      "null_baseline": "EXISTING_SUITE",
+      "role": "permutation/label-shuffle null control",
+      "decision_stat_marginal_D": 0,
+      "p_value_kind": "one_sided_label_shuffle_permutation",
+      "raw_p_value": 1.0
+    }
+  ],
+  "selection_count": 4,
+  "selection_count_definition": "Number of comparisons made against the preregistered null = number of configuration variants tried (FLAGSHIP + NAIVE + ABLATED + SHUFFLED). No hidden scan over thresholds, subgroups, seeds, or horizons was performed; the population is fully enumerated in a single deterministic pass (prereg stopping_rules -> no optional stopping).",
+  "correction": {
+    "method": "holm-bonferroni",
+    "family_wise_alpha": 0.05,
+    "m": 4,
+    "also_reported": ["bonferroni", "benjamini-hochberg"],
+    "bonferroni_threshold": 0.0125,
+    "holm_thresholds_by_rank": {
+      "1": 0.0125,
+      "2": 0.016666666666666666,
+      "3": 0.025,
+      "4": 0.05
+    },
+    "benjamini_hochberg_thresholds_by_rank": {
+      "1": 0.0125,
+      "2": 0.025,
+      "3": 0.037500000000000006,
+      "4": 0.05
+    },
+    "sorted_raw_p_values_ascending": [
+      9.999000099990002e-05,
+      1.0,
+      1.0,
+      1.0
+    ],
+    "rejected_after_correction": ["FLAGSHIP_vs_EXISTING_SUITE"],
+    "not_rejected_after_correction": [
+      "NAIVE_vs_EXISTING_SUITE",
+      "ABLATED_vs_EXISTING_SUITE",
+      "SHUFFLED_vs_EXISTING_SUITE"
+    ],
+    "interpretation": "Exactly ONE hypothesis survives family-wise correction, and it is the PRE-SPECIFIED PRIMARY (FLAGSHIP vs EXISTING_SUITE). The ablation and the two null controls correctly FAIL to reject. This is the opposite of a best-of-N artifact: the surviving result is the one preregistered in advance, and the failing variants are recorded rather than hidden."
+  },
+  "prereg_multiple_testing_stance": {
+    "prereg_method": "none_required",
+    "prereg_rationale": "The frozen protocol (multiple_testing_corrections) declares exactly ONE preregistered primary hypothesis with a single pre-specified threshold, so no family-wise/FDR correction is strictly required. This report ADDS the correction machinery as defence-in-depth: it demonstrates that even if the four tried variants are (conservatively) treated as a multiple-testing family, the primary conclusion is unchanged. This is consistent with, and does not amend, the frozen preregistration (no new prereg_id opened).",
+    "consistency": "consistent_with_prereg"
+  },
+  "primary": {
+    "name": "FLAGSHIP_vs_EXISTING_SUITE",
+    "intervention": "FLAGSHIP",
+    "null_baseline": "EXISTING_SUITE",
+    "pre_specified": true,
+    "selection_basis": "preregistered_primary",
+    "prereg_ref": "protocols/flagship_preregistration.yaml :: nulls.primary_null + baselines.comparator (clean-archive wheel contract vs status-quo gate suite)",
+    "chosen_before_runs": true,
+    "not_best_of_n": true
+  },
+  "no_cherry_pick_attestation": {
+    "statement": "The FINAL inference uses the PRE-SPECIFIED primary comparison (FLAGSHIP vs the preregistered EXISTING_SUITE null), fixed BEFORE any run in FLAGSHIP-PREREG-001. It is NOT a post-hoc best-of-N pick. All 4 tried variants and their raw decision statistics / p-values are recorded above; the three non-primary variants correctly fail to reject and are NOT reinterpreted as the headline result.",
+    "tied_to_prereg_id": "FLAGSHIP-PREREG-001",
+    "tied_to_rq_id": "FLAGSHIP-RQ-001"
+  },
+  "final_verdict": "INSUFFICIENT_EVIDENCE",
+  "corrected_conclusion": {
+    "detection_leg": "The marginal-detection hypothesis (H1: D_marginal >= 1) SURVIVES family-wise (Holm-Bonferroni) and FDR (Benjamini-Hochberg) correction across the 4-member family: only the pre-specified FLAGSHIP comparison is rejected at alpha=0.05.",
+    "verdict_leg": "Surviving multiplicity correction does NOT upgrade the study verdict. FLAGSHIP-RQ-001 stays INSUFFICIENT_EVIDENCE (per RES-008) because the SEPARATE preregistered reproducibility-at-S leg is unverified (the committed snapshot-S artifact reports 70 defects at a stale wheel_sha; no same-S rerun was executed). Reproducibility is ORTHOGONAL to multiplicity; the correction machinery neither addresses nor can rescue it.",
+    "manufactured_significance": false
+  },
+  "honesty_note": "No significant CORRECTED verdict is manufactured. The correction machinery documents and controls SELECTION BIAS in the marginal-detection claim (the primary is preregistered, not cherry-picked; selection_count=4 is recorded; ablations fail honestly). The study-level verdict remains INSUFFICIENT_EVIDENCE, consistent with RES-008, and no SUPPORTED result is fabricated. The final holdout / frozen snapshot S is untouched by this analysis."
+}

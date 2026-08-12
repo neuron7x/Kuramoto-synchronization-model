@@ -1,0 +1,142 @@
+# Diff-bound commit acceptor for runtime/hyperdirect_veto.py.
+#
+# Salvaged kernel of closed PR #678 (Inference Extrapolation Validator).
+# That PR's value was the idea, not the code: a cortico-subthalamic
+# hyperdirect STOP analogue for inference promotion. The shipped IEV
+# buried it under a 7-dim conflict vector whose 5/7 channels were already
+# hard-gated upstream (dead), and faked the signature conflict-proportional
+# threshold with seed jitter independent of the score.
+#
+# This acceptor binds the honest kernel: a stateless, pure, fail-closed
+# disjunctive brake. Layer 2 (Sustainer): emits a VetoDecision, never
+# takes execution action; not wired into any live decision path.
+#
+# Locally verified:
+#   * pytest tests/unit/runtime/test_hyperdirect_veto.py: 36/36 passed
+#   * mypy --strict on module and test: clean
+#   * ruff check + black --check: clean
+
+id: hyperdirect-veto
+status: ACTIVE
+# claim_type=fail_closed: the module's entire purpose is a fail-closed
+# brake — every out-of-contract input raises rather than coercing to a
+# PASS, and promotion requires the conjunction of "no single-channel
+# STOP" and "evidence clears the conflict-proportional bar".
+claim_type: fail_closed
+promise: >-
+  After this PR lands, runtime/hyperdirect_veto.py ships HyperdirectVeto:
+  a stateless, pure, deterministic pre-promotion brake modelled on the
+  cortico-basal-ganglia hyperdirect pathway. It enforces two faithful
+  behaviours and nothing else. (1) Disjunctive single-channel STOP: the
+  aggregate over residual conflict channels is a max, never a mean or
+  sum, so one channel at or above hard_ceiling vetoes regardless of how
+  strong the evidence margin is — a single saturated red flag cannot be
+  averaged away. (2) Conflict-proportional decision threshold:
+  required_margin = base_margin + conflict_gain * mean(conflict), a pure
+  deterministic function of the supplied conflict with no RNG, so the
+  bar a claim must clear rises monotonically with conflict. Every
+  out-of-contract input (non-mapping, channel outside [0,1], non-finite
+  or bool value, empty/non-string channel name, non-finite margin)
+  fail-closes with HyperdirectVetoError; no clamping, no silent skip.
+  VetoDecision and its conflict_vector are immutable. The caller
+  contract (HDV-007) is that only residual — not already upstream-gated
+  — channels are supplied, which is what makes every channel here
+  load-bearing rather than theatre. The primitive is opt-in and is not
+  wired into any live decision path; integration into a specific
+  pipeline is a separate explicit decision on a fresh branch.
+diff_scope:
+  changed_files:
+    - path: ".claude/commit_acceptors/hyperdirect-veto.yaml"
+    - path: "runtime/hyperdirect_veto.py"
+    - path: "runtime/hyperdirect_veto_falsifier.py"
+    - path: "runtime/inference_promotion_brake.py"
+    - path: "bench/hyperdirect_veto_perf.py"
+    - path: "bench/hyperdirect_veto_calibration.py"
+    - path: "tests/unit/runtime/test_hyperdirect_veto.py"
+    - path: "tests/unit/runtime/test_inference_promotion_brake.py"
+  forbidden_paths:
+    - "trading/"
+    - "execution/"
+    - "forecast/"
+    - "policy/"
+    - "core/physics/"
+    - "core/kuramoto/"
+    - "application/governance/claim_ledger.py"
+    - "application/governance/commit_acceptor.py"
+    - "scripts/ci/check_claims.py"
+    - "tools/commit_acceptor/validate_commit_acceptor.py"
+required_python_symbols:
+  - "runtime/hyperdirect_veto.py::HyperdirectVetoError"
+  - "runtime/hyperdirect_veto.py::HyperdirectConfig"
+  - "runtime/hyperdirect_veto.py::VetoDecision"
+  - "runtime/hyperdirect_veto.py::HyperdirectVeto"
+  - "runtime/hyperdirect_veto_falsifier.py::run_battery"
+  - "runtime/inference_promotion_brake.py::InferenceClaim"
+  - "runtime/inference_promotion_brake.py::PromotionVerdict"
+  - "runtime/inference_promotion_brake.py::InferencePromotionBrake"
+  - "bench/hyperdirect_veto_perf.py::run_benchmark"
+  - "bench/hyperdirect_veto_calibration.py::characterise"
+  - "bench/hyperdirect_veto_calibration.py::recommend_gain"
+expected_signal: >-
+  Local: `python -m pytest tests/unit/runtime/test_hyperdirect_veto.py
+  tests/unit/runtime/test_inference_promotion_brake.py -q` reports
+  "48 passed"; `mypy --strict`, `ruff check` and `black --check` are
+  clean on all five module files and both test files. The standalone
+  falsifier battery exits 0 with every protected invariant SURVIVED and
+  only the documented A2 channel-split BOUNDARY surfaced (not hidden).
+  The synthetic calibration emits a monotone false-promote/false-veto
+  tradeoff surface and a procedure-derived (not magic) default,
+  explicitly tier-labelled EXTRAPOLATED. The InferencePromotionBrake
+  adapter is advisory-only: PromotionVerdict.advisory is True by
+  construction and nothing on a trading/execution path is touched.
+measurement_command: >-
+  bash -c 'mypy --strict runtime/hyperdirect_veto.py
+  runtime/hyperdirect_veto_falsifier.py runtime/inference_promotion_brake.py
+  bench/hyperdirect_veto_perf.py bench/hyperdirect_veto_calibration.py
+  tests/unit/runtime/test_hyperdirect_veto.py
+  tests/unit/runtime/test_inference_promotion_brake.py
+  && ruff check runtime/hyperdirect_veto.py runtime/hyperdirect_veto_falsifier.py
+  runtime/inference_promotion_brake.py bench/hyperdirect_veto_perf.py
+  bench/hyperdirect_veto_calibration.py tests/unit/runtime/test_hyperdirect_veto.py
+  tests/unit/runtime/test_inference_promotion_brake.py
+  && black --check runtime/hyperdirect_veto.py runtime/hyperdirect_veto_falsifier.py
+  runtime/inference_promotion_brake.py bench/hyperdirect_veto_perf.py
+  bench/hyperdirect_veto_calibration.py tests/unit/runtime/test_hyperdirect_veto.py
+  tests/unit/runtime/test_inference_promotion_brake.py
+  && python -m pytest tests/unit/runtime/test_hyperdirect_veto.py
+  tests/unit/runtime/test_inference_promotion_brake.py -q
+  && python runtime/hyperdirect_veto_falsifier.py'
+signal_artifact: "tmp/hyperdirect_veto.log"
+falsifier:
+  command: >-
+    bash -c 'python -m pytest
+    "tests/unit/runtime/test_hyperdirect_veto.py::test_single_channel_stop_cannot_be_laundered_by_strong_evidence"
+    -q >/tmp/_hdv_null.log 2>&1
+    && ! grep -q "1 passed" /tmp/_hdv_null.log'
+  description: >-
+    Probes the core invariant: a single conflict channel at the ceiling
+    must veto even with an arbitrarily large evidence margin. The
+    protected test asserts this. The falsifier inverts — it succeeds
+    (exit 0) only when the protected test did NOT pass, which would mean
+    a saturated red flag can be laundered by strong evidence, i.e. the
+    disjunctive STOP has degraded into an averaging gate.
+rollback_command: >-
+  rm -f runtime/hyperdirect_veto.py runtime/hyperdirect_veto_falsifier.py
+  runtime/inference_promotion_brake.py bench/hyperdirect_veto_perf.py
+  bench/hyperdirect_veto_calibration.py
+  tests/unit/runtime/test_hyperdirect_veto.py
+  tests/unit/runtime/test_inference_promotion_brake.py
+  .claude/commit_acceptors/hyperdirect-veto.yaml
+rollback_verification_command: >-
+  bash -c 'test ! -f runtime/hyperdirect_veto.py
+  && test ! -f runtime/hyperdirect_veto_falsifier.py
+  && test ! -f runtime/inference_promotion_brake.py
+  && test ! -f bench/hyperdirect_veto_perf.py
+  && test ! -f bench/hyperdirect_veto_calibration.py
+  && test ! -f tests/unit/runtime/test_hyperdirect_veto.py
+  && test ! -f tests/unit/runtime/test_inference_promotion_brake.py
+  && test ! -f .claude/commit_acceptors/hyperdirect-veto.yaml'
+memory_update_type: none
+ledger_path: ".claude/commit_acceptors/hyperdirect-veto.yaml"
+report_path: "tmp/hyperdirect_veto.log"
+evidence: []

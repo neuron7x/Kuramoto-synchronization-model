@@ -1,4 +1,6 @@
-"""Fractal Ethical Trading Engine (FETE) integration for TradePulse."""
+# Copyright (c) 2023-2026 Yaroslav Vasylenko (neuron7xLab)
+# SPDX-License-Identifier: MIT
+"""Fractal Ethical Trading Engine (FETE) integration for GeoSync."""
 
 from __future__ import annotations
 
@@ -29,9 +31,7 @@ class Regime(str, Enum):
 def binary_entropy(probabilities: ArrayLike) -> NDArray[np.float64]:
     """Compute binary entropy for probabilities with numerical stability."""
 
-    probs = np.clip(
-        np.asarray(probabilities, dtype=float), EPS_PROB_CLIP, 1.0 - EPS_PROB_CLIP
-    )
+    probs = np.clip(np.asarray(probabilities, dtype=float), EPS_PROB_CLIP, 1.0 - EPS_PROB_CLIP)
     return -(probs * np.log(probs) + (1.0 - probs) * np.log(1.0 - probs))
 
 
@@ -185,19 +185,9 @@ class AdvancedRegimeDetector:
         hurst_value = hurst_stats["hurst"]
         spectral_power = spectral_stats["spectral_power"]
         snr_db = emd_stats["snr_db"]
-        trending = (
-            (hurst_value > 0.55) * 0.4
-            + (spectral_power > 0.25) * 0.3
-            + (snr_db > 5) * 0.3
-        )
-        reverting = (
-            (hurst_value < 0.45) * 0.4
-            + (spectral_power < 0.2) * 0.3
-            + (snr_db < -5) * 0.3
-        )
-        noise = (0.45 <= hurst_value <= 0.55) * 0.5 + (
-            0.15 <= spectral_power <= 0.3
-        ) * 0.5
+        trending = (hurst_value > 0.55) * 0.4 + (spectral_power > 0.25) * 0.3 + (snr_db > 5) * 0.3
+        reverting = (hurst_value < 0.45) * 0.4 + (spectral_power < 0.2) * 0.3 + (snr_db < -5) * 0.3
+        noise = (0.45 <= hurst_value <= 0.55) * 0.5 + (0.15 <= spectral_power <= 0.3) * 0.5
         scores = {
             Regime.TRENDING.value: trending,
             Regime.MEAN_REVERTING.value: reverting,
@@ -305,10 +295,7 @@ class PositionSizer:
         b = 1.0 / max(0.01, volatility)
         raw_kelly = (p * b - q) / b if b > 0 else 0.0
         position = (
-            float(np.clip(raw_kelly, -1.0, 1.0))
-            * self.kelly_fraction
-            * scale
-            * self.leverage
+            float(np.clip(raw_kelly, -1.0, 1.0)) * self.kelly_fraction * scale * self.leverage
         )
         return float(np.clip(position, -1.0, 1.0))
 
@@ -466,9 +453,7 @@ class FETE:
             "prices": price_array,
             "returns": returns,
             "equity": equity_array,
-            "final_return": (
-                float((equity_array[-1] - 1.0) * 100) if equity_array.size else 0.0
-            ),
+            "final_return": (float((equity_array[-1] - 1.0) * 100) if equity_array.size else 0.0),
             "positions": np.asarray(self.position_history, dtype=float),
             "regimes": list(self.regime_history),
             "audit": self.sigma.audit(),

@@ -1,14 +1,14 @@
 ---
-owner: release@tradepulse
+owner: release@geosync
 review_cadence: quarterly
 last_reviewed: 2026-01-01
 ---
 
-# TradePulse Production Readiness Guide
+# GeoSync Production Readiness Guide
 
 ## Overview
 
-This guide provides comprehensive instructions for deploying and maintaining TradePulse in production environments with high availability, performance, and stability requirements.
+This guide provides comprehensive instructions for deploying and maintaining GeoSync in production environments with high availability, performance, and stability requirements.
 
 ## Table of Contents
 
@@ -43,7 +43,7 @@ This guide provides comprehensive instructions for deploying and maintaining Tra
 
 ### 1. Profiling and Bottleneck Detection
 
-TradePulse includes comprehensive profiling tools to identify performance bottlenecks:
+GeoSync includes comprehensive profiling tools to identify performance bottlenecks:
 
 ```python
 from observability.performance_monitor import PerformanceMonitor, PerformanceBaseline
@@ -116,7 +116,7 @@ pytest tests/performance -m "benchmark" -v
 
 ### 1. Real-Time Metrics Collection
 
-TradePulse provides comprehensive telemetry:
+GeoSync provides comprehensive telemetry:
 
 ```python
 from observability.performance_monitor import PerformanceMonitor
@@ -166,14 +166,14 @@ print(f"Mean: {stats['mean']:.2f}, StdDev: {stats['std']:.2f}")
 
 ### 3. OpenTelemetry Integration
 
-TradePulse integrates with OpenTelemetry for distributed tracing:
+GeoSync integrates with OpenTelemetry for distributed tracing:
 
 ```python
 from observability.tracing import setup_tracing
 
 # Configure tracing
 setup_tracing(
-    service_name="tradepulse",
+    service_name="geosync",
     endpoint="http://otel-collector:4317"
 )
 ```
@@ -393,18 +393,18 @@ manager.manual_rollback("Performance degradation detected")
 Configure HAProxy or Nginx for load balancing:
 
 ```nginx
-upstream tradepulse_backend {
+upstream geosync_backend {
     least_conn;
-    server tradepulse1:8000 max_fails=3 fail_timeout=30s;
-    server tradepulse2:8000 max_fails=3 fail_timeout=30s;
-    server tradepulse3:8000 max_fails=3 fail_timeout=30s;
+    server geosync1:8000 max_fails=3 fail_timeout=30s;
+    server geosync2:8000 max_fails=3 fail_timeout=30s;
+    server geosync3:8000 max_fails=3 fail_timeout=30s;
 }
 
 server {
     listen 80;
     
     location / {
-        proxy_pass http://tradepulse_backend;
+        proxy_pass http://geosync_backend;
         proxy_set_header Host $host;
         proxy_set_header X-Real-IP $remote_addr;
         proxy_connect_timeout 5s;
@@ -517,9 +517,9 @@ logging.basicConfig(level=logging.DEBUG)
 ### Support
 
 For production support:
-- Email: support@tradepulse.io
-- Documentation: https://docs.tradepulse.io
-- GitHub Issues: https://github.com/neuron7x/TradePulse/issues
+- Email: support@geosync.io
+- Documentation: https://docs.geosync.io
+- GitHub Issues: https://github.com/neuron7xLab/GeoSync/issues
 
 ## Appendix
 
@@ -549,4 +549,4 @@ See `docs/runbooks/` directory for operational runbooks:
 
 **Document Version**: 1.0.0  
 **Last Updated**: 2025-11-10  
-**Maintained By**: TradePulse Operations Team
+**Maintained By**: GeoSync Operations Team

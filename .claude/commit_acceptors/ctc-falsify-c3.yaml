@@ -1,0 +1,38 @@
+# Diff-bound commit acceptor for CTC-FALSIFY-001 C3 (v2 estimator).
+id: ctc-falsify-c3
+status: ACTIVE
+claim_type: governance
+promise: "C3 swaps the L2 estimator to a time-reversed-surrogate directed PSI without relaxing the gate; the honest reference verdict is INADMISSIBLE_NPLUS_INSITU_BLIND (v2 also blind), and the boundary probe shows the channel is recoverable in principle."
+diff_scope:
+  changed_files:
+    - path: "research/ctc_falsify/l2/config_l2.py"
+    - path: "research/ctc_falsify/l2/estimator_v2.py"
+    - path: "research/ctc_falsify/l2/run_v2.py"
+    - path: "research/ctc_falsify/l2/schema/ctc_falsify_l2v2_result.schema.json"
+    - path: "research/ctc_falsify/l2/evidence/ctc_falsify_l2v2_result.json"
+    - path: "tests/research/ctc_falsify/test_ctc_falsify_l2v2.py"
+    - path: ".github/detect-secrets.baseline"
+    - path: ".claude/commit_acceptors/ctc-falsify-c3.yaml"
+    - path: "docs/research/CTC_FALSIFY_001_C3_PREREGISTRATION.md"
+  forbidden_paths:
+    - "trading/"
+    - "execution/"
+    - "forecast/"
+    - "policy/"
+required_python_symbols:
+  - "directed_residual_v2"
+  - "time_reversed_surrogates"
+  - "run_self_validation_v2"
+  - "run"
+expected_signal: "all C3 construct-validity tests pass; reference verdict is the fail-closed INADMISSIBLE_NPLUS_INSITU_BLIND"
+measurement_command: "python -m pytest tests/research/ctc_falsify/test_ctc_falsify_l2v2.py -q"
+signal_artifact: "tmp/ctc_falsify_c3_pytest.log"
+falsifier:
+  command: "python -c \"from research.ctc_falsify.l2.run_v2 import run_self_validation_v2; from research.ctc_falsify.l2 import config_l2 as c; v=run_self_validation_v2(); raise SystemExit(0 if (v.mean_nplus_residual_z < c.NPLUS_RESIDUAL_MIN_Z or v.max_confound_residual_z > c.CONFOUND_RESIDUAL_MAX_Z) else 1)\""
+  description: "Probe asserts v2 is blind by its own gate; it exits 0 (blind, as honestly reported) and would exit 1 if v2 silently became admissible — surfacing any post-hoc tuning."
+rollback_command: "git checkout -- research/ctc_falsify/l2 tests/research/ctc_falsify/test_ctc_falsify_l2v2.py .github/detect-secrets.baseline"
+rollback_verification_command: "git diff --exit-code research/ctc_falsify/l2 tests/research/ctc_falsify/test_ctc_falsify_l2v2.py"
+memory_update_type: append
+ledger_path: ".claude/commit_acceptors/ctc-falsify-c3.yaml"
+report_path: "docs/research/CTC_FALSIFY_001_C3_PREREGISTRATION.md"
+evidence: []

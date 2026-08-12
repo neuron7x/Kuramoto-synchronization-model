@@ -1,0 +1,226 @@
+{
+  "claim_boundary": "SYNTHETIC positive controls with KNOWN ground truth. Each family has a paired negative sibling the pipeline MUST score below pass_threshold. PC5 pass rule is INVERTED (pass = lookahead caught). PASS on these controls does NOT prove real-world detection, does NOT prove bank-level validation, does NOT prove systemic-risk prediction, does NOT authorise any canonical run. No real data referenced.",
+  "control_families": [
+    {
+      "control_class": "liquidity_shock",
+      "control_family_id": "PC1_LIQUIDITY_SHOCK_INJECTION",
+      "expected_observable_signature": "worst-node post-onset mean-shift z (SEM-normalised) exceeds the n_nodes extreme-value null floor; magnitude scales with epsilon",
+      "fail_threshold": {
+        "comparison": "score_null >= value",
+        "interpretation": "FALSE_POSITIVE",
+        "metric": "null_sibling_worst_node_z",
+        "value": 5.0
+      },
+      "forbidden_claim_boundary": "Synthetic only. Pass on PC1 does NOT prove real-world liquidity-crisis detection, does NOT prove bank-level validation, does NOT authorise any canonical run.",
+      "ground_truth_fields": [
+        "onset_time",
+        "effect_size",
+        "propagation_radius",
+        "shocked_node"
+      ],
+      "hidden_until_scoring": true,
+      "implementation_path": "research/systemic_risk/d002j_positive_controls.py:PC1LiquidityShockInjectionFamily",
+      "inverted_pass_rule": false,
+      "mapped_p2_window_class": [
+        "liquidity_crisis",
+        "repo_market_dysfunction"
+      ],
+      "mapped_p5_substrate_candidates": [
+        "funding_liquidity_rollover",
+        "interbank_funding_topology"
+      ],
+      "negative_sibling_id": "PC1_NEGATIVE_SIBLING",
+      "pass_threshold": {
+        "comparison": "score_signal >= value",
+        "metric": "worst_node_post_onset_mean_shift_z",
+        "value": 5.0
+      },
+      "seed_policy": "deterministic; same seed -> same instance (numpy.random.default_rng); no wall-clock"
+    },
+    {
+      "control_class": "contagion_cascade",
+      "control_family_id": "PC2_CONTAGION_CASCADE_INJECTION",
+      "expected_observable_signature": "\u2265k nodes hit cumulative impairment > threshold at lag \u2264 L after T_onset; DebtRank-style cascade through exposure matrix W",
+      "fail_threshold": {
+        "comparison": "score_null >= value",
+        "interpretation": "FALSE_POSITIVE",
+        "metric": "null_sibling_cascade_extent",
+        "value": 0.3
+      },
+      "forbidden_claim_boundary": "Synthetic only. Pass on PC2 does NOT prove real-world contagion detection, does NOT prove DebtRank validation, does NOT authorise any canonical run.",
+      "ground_truth_fields": [
+        "onset_time",
+        "cascade_extent",
+        "cascade_speed",
+        "defaulted_node"
+      ],
+      "hidden_until_scoring": true,
+      "implementation_path": "research/systemic_risk/d002j_positive_controls.py:PC2ContagionCascadeInjectionFamily",
+      "inverted_pass_rule": false,
+      "mapped_p2_window_class": [
+        "contagion_event",
+        "interbank_default_chain"
+      ],
+      "mapped_p5_substrate_candidates": [
+        "interbank_exposure_cascade",
+        "debtrank_propagation"
+      ],
+      "negative_sibling_id": "PC2_NEGATIVE_SIBLING",
+      "pass_threshold": {
+        "comparison": "score_signal >= value",
+        "metric": "cascade_extent_fraction",
+        "value": 0.3
+      },
+      "seed_policy": "deterministic; same seed -> same instance (numpy.random.default_rng); no wall-clock"
+    },
+    {
+      "control_class": "balance_sheet_impairment",
+      "control_family_id": "PC3_BALANCE_SHEET_IMPAIRMENT_INJECTION",
+      "expected_observable_signature": "capital-distribution leftward shift on a defined subset of banks post T_onset; AFS/HTM unrealized-loss-like spike on impaired set",
+      "fail_threshold": {
+        "comparison": "score_null >= value",
+        "interpretation": "FALSE_POSITIVE",
+        "metric": "null_sibling_leftward_shift",
+        "value": 1.5
+      },
+      "forbidden_claim_boundary": "Synthetic only. Pass on PC3 does NOT prove real-world solvency-stress detection, does NOT prove regulatory capital-stress validation, does NOT authorise any canonical run.",
+      "ground_truth_fields": [
+        "onset_time",
+        "mark_down_magnitude",
+        "impaired_set"
+      ],
+      "hidden_until_scoring": true,
+      "implementation_path": "research/systemic_risk/d002j_positive_controls.py:PC3BalanceSheetImpairmentInjectionFamily",
+      "inverted_pass_rule": false,
+      "mapped_p2_window_class": [
+        "balance_sheet_impairment",
+        "afs_htm_unrealized_loss"
+      ],
+      "mapped_p5_substrate_candidates": [
+        "balance_sheet_solvency_proxy",
+        "capital_ratio_distribution_dynamics"
+      ],
+      "negative_sibling_id": "PC3_NEGATIVE_SIBLING",
+      "pass_threshold": {
+        "comparison": "score_signal >= value",
+        "metric": "leftward_shift_mean_diff",
+        "value": 1.5
+      },
+      "seed_policy": "deterministic; same seed -> same instance (numpy.random.default_rng); no wall-clock"
+    },
+    {
+      "control_class": "volatility_regime_switch",
+      "control_family_id": "PC4_MARKET_WIDE_VOLATILITY_REGIME_SWITCH",
+      "expected_observable_signature": "realised-vol breakpoint at T_switch; VIX-like proxy spike; GARCH-like variance jump from sigma_pre to sigma_post",
+      "fail_threshold": {
+        "comparison": "score_null >= value",
+        "interpretation": "FALSE_POSITIVE",
+        "metric": "null_sibling_vol_ratio",
+        "value": 2.0
+      },
+      "forbidden_claim_boundary": "Synthetic only. Pass on PC4 does NOT prove real-world volatility-regime detection, does NOT prove VIX-based crisis prediction, does NOT authorise any canonical run.",
+      "ground_truth_fields": [
+        "switch_time",
+        "vol_ratio",
+        "pre_vol",
+        "post_vol"
+      ],
+      "hidden_until_scoring": true,
+      "implementation_path": "research/systemic_risk/d002j_positive_controls.py:PC4MarketWideVolatilityRegimeSwitchFamily",
+      "inverted_pass_rule": false,
+      "mapped_p2_window_class": [
+        "market_wide_stress",
+        "vix_spike_regime"
+      ],
+      "mapped_p5_substrate_candidates": [
+        "realised_volatility_regime_observer",
+        "garch_breakpoint_detector"
+      ],
+      "negative_sibling_id": "PC4_NEGATIVE_SIBLING",
+      "pass_threshold": {
+        "comparison": "score_signal >= value",
+        "metric": "post_pre_realised_vol_ratio",
+        "value": 2.0
+      },
+      "seed_policy": "deterministic; same seed -> same instance (numpy.random.default_rng); no wall-clock"
+    },
+    {
+      "control_class": "information_delay_trap",
+      "control_family_id": "PC5_INFORMATION_DELAY_VINTAGE_LEAKAGE_TRAP",
+      "expected_observable_signature": "INVERTED: pass iff pipeline DETECTS that a candidate detector uses future-release-date data and REJECTS that detector under the P3 point-in-time contract (vintage_release_date <= decision_date)",
+      "fail_threshold": {
+        "comparison": "score_null >= value",
+        "interpretation": "FALSE_POSITIVE",
+        "metric": "null_sibling_leakage_flag",
+        "value": 1.0
+      },
+      "forbidden_claim_boundary": "Synthetic only. PC5 PASS proves the P3 point-in-time discipline CATCHES a constructed-leakage detector; it does NOT prove real-world leakage absence, does NOT prove vintage-correctness of any live adapter, does NOT authorise any canonical run.",
+      "ground_truth_fields": [
+        "leakage_delta",
+        "expected_failure_mode"
+      ],
+      "hidden_until_scoring": true,
+      "implementation_path": "research/systemic_risk/d002j_positive_controls.py:PC5InfoDelayLeakageTrap",
+      "inverted_pass_rule": true,
+      "mapped_p2_window_class": [
+        "vintage_anti_leakage_baseline",
+        "real_time_information_constraint"
+      ],
+      "mapped_p5_substrate_candidates": [
+        "point_in_time_vintage_enforcer",
+        "lookahead_violation_detector"
+      ],
+      "negative_sibling_id": "PC5_NEGATIVE_SIBLING",
+      "pass_threshold": {
+        "comparison": "score_signal >= value",
+        "metric": "leakage_detection_flag",
+        "value": 1.0
+      },
+      "seed_policy": "deterministic; same seed -> same instance (numpy.random.default_rng); no wall-clock"
+    },
+    {
+      "control_class": "official_response_event_shock",
+      "control_family_id": "PC6_OFFICIAL_RESPONSE_EVENT_SHOCK",
+      "expected_observable_signature": "post-intervention mean/variance regime shift; e.g. volatility drops by factor f post-event; structural breakpoint at T_event",
+      "fail_threshold": {
+        "comparison": "score_null >= value",
+        "interpretation": "FALSE_POSITIVE",
+        "metric": "null_sibling_vol_drop_ratio",
+        "value": 1.5
+      },
+      "forbidden_claim_boundary": "Synthetic only. Pass on PC6 does NOT prove real-world policy-response detection, does NOT prove intervention-effectiveness validation, does NOT authorise any canonical run.",
+      "ground_truth_fields": [
+        "intervention_time",
+        "shift_magnitude",
+        "pre_vol",
+        "post_vol"
+      ],
+      "hidden_until_scoring": true,
+      "implementation_path": "research/systemic_risk/d002j_positive_controls.py:PC6OfficialResponseEventShockFamily",
+      "inverted_pass_rule": false,
+      "mapped_p2_window_class": [
+        "official_response",
+        "policy_intervention"
+      ],
+      "mapped_p5_substrate_candidates": [
+        "policy_intervention_breakpoint_detector",
+        "post_event_regime_shift_observer"
+      ],
+      "negative_sibling_id": "PC6_NEGATIVE_SIBLING",
+      "pass_threshold": {
+        "comparison": "score_signal >= value",
+        "metric": "post_event_vol_drop_ratio",
+        "value": 1.5
+      },
+      "seed_policy": "deterministic; same seed -> same instance (numpy.random.default_rng); no wall-clock"
+    }
+  ],
+  "generated_at": "2026-05-15T00:00:00Z",
+  "negative_siblings_required": true,
+  "parent_ingestion_manifest_path": "artifacts/d002j/ingestion/ingestion_manifest_v1.json",
+  "parent_phase": "D002J-P3",
+  "pr_lineage": "D-002G -> D-002H REFUSED -> D-002I -> D-002J P0 -> P1 -> P1A REJECTED -> P1B PARTIALLY_VERIFIED -> P2 -> P2.5 -> P3 -> P4",
+  "schema_version": "D002J-POSITIVE-CONTROL-MANIFEST-v1",
+  "study_id": "D-002J-P4",
+  "total_control_families": 6
+}

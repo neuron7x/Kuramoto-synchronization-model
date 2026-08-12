@@ -1,0 +1,62 @@
+# Diff-bound acceptor for the verification-first release gate harness.
+#
+# Reduces the A–R release contract to machine probes (claim boundary,
+# package/import hygiene, dependency truth, MANIFEST cold-verify, invariant
+# registry, test presence) and emits a GREEN/RED/MANUAL scorecard, exiting
+# nonzero on RED. This is the single machine entrypoint the release contract
+# demands; it does NOT weaken any existing gate and touches no
+# execution/forecast/policy code. On the current tree it correctly reports
+# RED (package architecture + provenance MANIFEST drift), which is the truth.
+
+id: release-gate-harness
+status: ACTIVE
+claim_type: documentation
+promise: >-
+  scripts/ci/release_gate.py runs reproducible probes for the A–R release
+  contract and returns a machine verdict: GREEN only when every gating probe
+  is GREEN (no RED, no unresolved MANUAL), else exit 1. The MANIFEST.sha256
+  probe cold-verifies by content (a one-byte edit flips GREEN to RED); the
+  src.* / sys.path probes flag first-party import-architecture violations;
+  MANUAL items (real-data evidence, execution realism, benchmarks, external
+  replication) are surfaced honestly and hold the release RED until a real
+  artifact lands. RELEASE_STATUS.md is a generated snapshot; the script is
+  the authority.
+diff_scope:
+  changed_files:
+    - path: ".claude/commit_acceptors/release-gate-harness.yaml"
+    - path: "scripts/ci/release_gate.py"
+    - path: "tests/scripts/test_release_gate.py"
+    - path: ".github/workflows/release-gate.yml"
+  forbidden_paths:
+    - "trading/"
+    - "execution/"
+    - "forecast/"
+    - "policy/"
+required_python_symbols:
+  - "main"
+  - "evaluate"
+  - "probe_d_manifest_coldverify"
+expected_signal: >-
+  python scripts/ci/release_gate.py exits 1 with a rendered scorecard and a
+  VERDICT line; the 5-test mirror passes; ruff / black / mypy --strict are
+  clean on the harness and its test.
+measurement_command: >-
+  python scripts/ci/release_gate.py --json tmp/release_status.json;
+  python -m pytest tests/scripts/test_release_gate.py -q
+signal_artifact: "tmp/release_gate.log"
+falsifier:
+  command: "python -c \"import sys; sys.path.insert(0,'scripts/ci'); import release_gate as g; sys.exit(0 if any(r.status=='GREEN' for r in g.evaluate(False)) and g.main([])==0 else 1)\""
+  description: >-
+    Probes the inverse: the gate must NOT report all-GREEN on the current
+    tree. The command exits 0 only if the verdict were GREEN, which on the
+    known-RED tree it is not — proving the gate discriminates real state
+    rather than rubber-stamping.
+rollback_command: >-
+  git checkout origin/main -- scripts/ci/release_gate.py
+  .github/workflows/release-gate.yml
+rollback_verification_command: >-
+  git diff --exit-code origin/main -- scripts/ci/release_gate.py
+memory_update_type: append
+ledger_path: ".claude/commit_acceptors/release-gate-harness.yaml"
+report_path: "docs/reports/diff_bound_commit_acceptor_layer.md"
+evidence: []

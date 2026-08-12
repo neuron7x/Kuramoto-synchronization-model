@@ -1,3 +1,5 @@
+# Copyright (c) 2023-2026 Yaroslav Vasylenko (neuron7xLab)
+# SPDX-License-Identifier: MIT
 import pytest
 
 from domain.order import OrderSide
@@ -64,9 +66,7 @@ def test_plan_reduces_position_to_restore_margin() -> None:
     assert action.symbol == "ETH-PERP"
     assert action.side is OrderSide.SELL
     # Reduction should cover the deficit and achieve the 1.1 ratio.
-    assert action.maintenance_reduction == pytest.approx(
-        plan.required_reduction, rel=1e-6
-    )
+    assert action.maintenance_reduction == pytest.approx(plan.required_reduction, rel=1e-6)
     assert plan.post_margin_ratio >= 1.1
 
 

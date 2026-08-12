@@ -41,7 +41,7 @@ policy modulation + gate synthesis → telemetry & extras
 ## 3. Приклад використання
 
 ```python
-from tradepulse.core.neuro.dopamine import ActionGate, DopamineController
+from geosync.core.neuro.dopamine import ActionGate, DopamineController
 
 ctrl = DopamineController("config/dopamine.yaml")
 app = ctrl.estimate_appetitive_state(r_proxy, novelty, momentum, value_gap)

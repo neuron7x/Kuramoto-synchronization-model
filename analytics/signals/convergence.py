@@ -1,3 +1,5 @@
+# Copyright (c) 2023-2026 Yaroslav Vasylenko (neuron7xLab)
+# SPDX-License-Identifier: MIT
 """Utilities for measuring convergence between multiple trading signals.
 
 This module provides a light-weight "convergence detector" that evaluates whether
@@ -185,9 +187,7 @@ class ConvergenceDetector:
         self.config = config or ConvergenceConfig()
         self.config.validate()
 
-    def compute(
-        self, signals: Mapping[str, pd.Series] | pd.DataFrame
-    ) -> ConvergenceScores:
+    def compute(self, signals: Mapping[str, pd.Series] | pd.DataFrame) -> ConvergenceScores:
         """Evaluate convergence metrics for the provided signals."""
 
         cfg = self.config
@@ -198,9 +198,7 @@ class ConvergenceDetector:
 
         direction_changes: MutableMapping[str, pd.Series] = {}
         for column in frame.columns:
-            change = _directional_change(
-                frame[column], window=cfg.window, method=cfg.method
-            )
+            change = _directional_change(frame[column], window=cfg.window, method=cfg.method)
             change = _smooth(change, window=cfg.smoothing)
             direction_changes[column] = change
 

@@ -1,6 +1,6 @@
 # Agent System
 
-TradePulse agents coordinate strategy discovery, evaluation, and deployment.
+GeoSync agents coordinate strategy discovery, evaluation, and deployment.
 The system couples deterministic backtests with bandit-driven exploration so
 only robust parameter sets survive. This document outlines the lifecycle
 contracts, key classes, and extension points.
@@ -77,7 +77,7 @@ parameters before the next evaluation cycle. 【F:core/agent/strategy.py†L127-
 
 ## Exploration Policies
 
-TradePulse provides two lightweight bandits for selecting which strategy to test:
+GeoSync provides two lightweight bandits for selecting which strategy to test:
 
 - **`EpsilonGreedy`** – random exploration with probability `ε`, otherwise
   exploit the best average reward so far. 【F:core/agent/bandits.py†L1-L19】
@@ -99,7 +99,7 @@ bandit.update(arm, reward=0.42)
 
 ## Strategy Scheduler
 
-For automated experimentation TradePulse ships a deterministic scheduler that
+For automated experimentation GeoSync ships a deterministic scheduler that
 periodically evaluates strategy bundles. The scheduler deduplicates runtime
 state, applies jitter to avoid thundering herds, and backs off exponentially
 when data sources fail. 【F:core/agent/scheduler.py†L40-L216】【F:core/agent/scheduler.py†L327-L343】

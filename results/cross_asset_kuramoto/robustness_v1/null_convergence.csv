@@ -1,0 +1,9 @@
+n_trials,family_id,observed_sharpe,p_value,p_value_pass
+500,iid_bootstrap,0.48319185,0.08582834,False
+500,stationary_bootstrap,0.48319185,0.09580838,False
+1000,iid_bootstrap,0.48319185,0.08291708,False
+1000,stationary_bootstrap,0.48319185,0.1028971,False
+2000,iid_bootstrap,0.48319185,0.08095952,False
+2000,stationary_bootstrap,0.48319185,0.10044978,False
+5000,iid_bootstrap,0.48319185,0.0789842,False
+5000,stationary_bootstrap,0.48319185,0.09858028,False

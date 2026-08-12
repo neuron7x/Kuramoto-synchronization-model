@@ -1,0 +1,122 @@
+# Copyright (c) 2023-2026 Yaroslav Vasylenko (neuron7xLab)
+# SPDX-License-Identifier: MIT
+#
+# Post-vacuous-oracle Revalidation Ledger (DEBT_5).
+#
+# Doctrine: the `python-fast-shard` PR gate ran ZERO tests for the entire
+# history of the repository (a double `-q` collect bug). PR #1153 restores a
+# real fast oracle but is still OPEN. Every critical lane that merged before
+# #1153 terminalizes therefore merged under a VACUOUS green — the fast suite
+# reported success without executing a single test. Such a merge carries a
+# WEAKENED evidence-class: the code may be correct, but the gate that was
+# supposed to prove it was inert.
+#
+# A weakened-evidence lane is honest open debt. It must be either
+#   * REPLAYED under a real oracle (and the proof recorded), or
+#   * BOUNDED with an explicit residual,
+# but it must NEVER be silently relabelled "revalidated" with no proof a real
+# oracle existed. PENDING is the honest default — open debt is not laundered.
+#
+# scripts/ci/check_revalidation_ledger.py fails closed unless every entry is
+# well-formed AND the INTERLOCK holds: a `replay_status: REPLAYED` claim is
+# admissible ONLY when the entry also carries `oracle_terminal_sha` (the
+# 40-hex commit at which a real oracle was proven live) AND `replay_evidence`
+# (an in-repo artifact path that still EXISTS). Missing either => violation:
+# you cannot declare a lane revalidated without a real-oracle sha and a
+# preserved evidence artifact.
+#
+# This ledger is a SKELETON, not a closed census. It seeds the verified
+# critical physics/governance lanes merged under the vacuous oracle; the full
+# enumeration of the merged backlog is itself pending #1153 terminalization.
+# The partiality is declared in `coverage_bound`, not silently capped.
+schema_version: 1
+oracle_fix_pr: 1153
+coverage_bound: >-
+  SKELETON — seeds the 7 verified critical physics/governance lanes merged
+  2026-06-16..17 under the vacuous oracle. NOT exhaustive; full enumeration of
+  the merged backlog is pending #1153 terminalization. This bound is explicit,
+  not a silent cap.
+entries:
+  - id: resolution-auditor-1090
+    pr: 1090
+    merge_sha: "c5ac4aceaf45b1c923bb9cdc0427fe0d5ec002b7"  # pragma: allowlist secret
+    lane_class: governance
+    merged_under_vacuous_oracle: true
+    replay_status: PENDING
+    recorded_utc: "2026-06-17"
+    note: >-
+      Executable resolution auditor (descriptor-only) merged while the fast
+      shard executed no tests; the gate's green was inert and the lane awaits
+      replay under the #1153 oracle.
+
+  - id: second-order-stability-firewall-1115
+    pr: 1115
+    merge_sha: "3c3bb80a049c4213c9aa312daabc17bcd6b9b20c"  # pragma: allowlist secret
+    lane_class: physics
+    merged_under_vacuous_oracle: true
+    replay_status: PENDING
+    recorded_utc: "2026-06-17"
+    note: >-
+      SecondOrderStabilityAudit plus promotion firewall merged under the
+      vacuous oracle; the physics invariants were never exercised by the fast
+      shard and must be replayed once #1153 terminalizes.
+
+  - id: provenance-tier-enforcement-1131
+    pr: 1131
+    merge_sha: "f97b28449f777a1d8c7ac0e67f976e407fc36209"  # pragma: allowlist secret
+    lane_class: physics
+    merged_under_vacuous_oracle: true
+    replay_status: PENDING
+    recorded_utc: "2026-06-17"
+    note: >-
+      Restore fail-closed provenance-tier enforcement, merged while the fast
+      shard ran no tests; the fail-closed paths await execution under the real
+      oracle.
+
+  - id: free-energy-unit-contract-1146
+    pr: 1146
+    merge_sha: "3a510870f48159dacb1b102fd287aba81b9db558"  # pragma: allowlist secret
+    lane_class: physics
+    merged_under_vacuous_oracle: true
+    replay_status: PENDING
+    recorded_utc: "2026-06-17"
+    note: >-
+      Split operational-cost versus thermodynamic free energy plus the unit
+      contract, merged under the vacuous oracle; the unit-contract invariants
+      were not run by the fast shard.
+
+  - id: k-scaling-fail-closed-1150
+    pr: 1150
+    merge_sha: "dd016972a9aecef915dc8761426646579535ed90"  # pragma: allowlist secret
+    lane_class: physics
+    merged_under_vacuous_oracle: true
+    replay_status: PENDING
+    recorded_utc: "2026-06-17"
+    note: >-
+      Reject ambiguous K-scaling fail-closed at the config boundary, merged
+      while the fast shard executed no tests; the boundary-rejection paths
+      await replay under #1153.
+
+  - id: forman-ricci-margin-onset-1152
+    pr: 1152
+    merge_sha: "db6bd198cf93a663a6653723b73013a9075a6289"  # pragma: allowlist secret
+    lane_class: physics
+    merged_under_vacuous_oracle: true
+    replay_status: PENDING
+    recorded_utc: "2026-06-17"
+    note: >-
+      Name the Forman-Ricci margin escalation onset and drop the false
+      kappa_F bound, merged under the vacuous oracle; the corrected bound was
+      never exercised by the fast shard.
+
+  - id: gauss-bonnet-integrity-1161
+    pr: 1161
+    merge_sha: "196063b36512ba55048d3f49d08224c2c316ab16"  # pragma: allowlist secret
+    lane_class: physics
+    merged_under_vacuous_oracle: true
+    replay_status: PENDING
+    recorded_utc: "2026-06-17"
+    note: >-
+      Discrete Gauss-Bonnet integrity invariant merged while the fast shard
+      ran no tests; the integrity invariant awaits replay once the #1153
+      oracle is terminal.

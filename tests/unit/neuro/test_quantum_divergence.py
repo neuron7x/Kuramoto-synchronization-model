@@ -1,3 +1,5 @@
+# Copyright (c) 2023-2026 Yaroslav Vasylenko (neuron7xLab)
+# SPDX-License-Identifier: MIT
 """Tests for the quantum-active divergence computation stack."""
 
 from __future__ import annotations
@@ -30,13 +32,9 @@ def test_compute_divergence_quantum_mode_updates_phi() -> None:
     index = pd.RangeIndex(10)
     price = pd.Series(np.linspace(100.0, 101.8, len(index)), index=index)
     feature = pd.Series(np.linspace(0.2, 0.5, len(index)), index=index, name="momentum")
-    features = pd.DataFrame(
-        {"momentum": feature, "volume": np.linspace(1.0, 2.0, len(index))}
-    )
+    features = pd.DataFrame({"momentum": feature, "volume": np.linspace(1.0, 2.0, len(index))})
 
-    config = DivergenceConfig(
-        divergence_mode="quantum", learning_rate=0.2, entropy_weight=0.1
-    )
+    config = DivergenceConfig(divergence_mode="quantum", learning_rate=0.2, entropy_weight=0.1)
     output = compute_divergence_convergence_phi(price, features, config=config)
 
     assert not output.frame.empty
@@ -48,9 +46,7 @@ def test_granger_causality_detects_linear_dependence() -> None:
     base = np.linspace(0.0, 1.0, 200)
     noise = np.random.default_rng(7).normal(0.0, 0.05, size=200)
     driver = base + noise
-    response = 0.5 * np.roll(driver, 1) + np.random.default_rng(11).normal(
-        0.0, 0.01, size=200
-    )
+    response = 0.5 * np.roll(driver, 1) + np.random.default_rng(11).normal(0.0, 0.01, size=200)
 
     result = granger_causality(response, driver, max_lag=2, p_threshold=0.05)
 

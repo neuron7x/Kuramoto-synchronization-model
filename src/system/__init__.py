@@ -1,3 +1,5 @@
+# Copyright (c) 2023-2026 Yaroslav Vasylenko (neuron7xLab)
+# SPDX-License-Identifier: MIT
 """High-level platform assembly helpers."""
 
 from .action_control import (
@@ -25,9 +27,9 @@ from .api_messaging_integration import (
     RouteDispatchResult,
 )
 from .integration import (
+    GeoSyncPlatform,
     StreamingPipelineSettings,
-    TradePulsePlatform,
-    build_tradepulse_platform,
+    build_geosync_platform,
 )
 from .module_orchestrator import (
     ModuleDefinition,
@@ -60,8 +62,8 @@ __all__ = [
     "ModuleSynchronisationEntry",
     "ModuleTimelineEntry",
     "StreamingPipelineSettings",
-    "TradePulsePlatform",
-    "build_tradepulse_platform",
+    "GeoSyncPlatform",
+    "build_geosync_platform",
     "ActionAuditSink",
     "ActionClass",
     "ActionDecision",

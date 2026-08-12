@@ -1,0 +1,198 @@
+# Diff-bound commit acceptor for the CALIB-GRID supersession +
+# pre-registration-amendment governance correction (F1 + F2).
+#
+# Both correctives are append-only epistemic-integrity governance
+# corrections. ZERO estimator/numeric/algorithm change. The merged
+# sha-pinned artifacts of CALIB-GRID-001 / R1 / CALIB-GRID-002 (every
+# RESULTS.json, RESULTS.md, ledger_sha256, PREREGISTRATION.md/.yaml,
+# gates.py constants, THRESHOLD_PROVENANCE.md) stay BYTE-IDENTICAL and
+# are in forbidden_paths. tests/research/calibration/test_grid_kuramoto.py
+# git-diff is EMPTY (it is in forbidden_paths) and every pre-existing
+# drift / no-peek / bit-stability test passes UNMODIFIED.
+#
+# F1 — SUPERSESSION RECORD. R1's sha-pinned r1/RESULTS.md asserts a
+# causal claim ("double-differentiation second-derivative SNR boundary",
+# "No consistent estimator exists for the noisy regime") that
+# CALIB-GRID-002 (merge e71d1915, ledger d0f89e24341b0995...) FALSIFIED:
+# the true cause is a class-independent regressor-level SNR floor at the
+# frozen theta0/record-length, NOT a differentiation-operator/estimator-
+# class defect. SUPERSESSIONS.yaml + SUPERSESSIONS.md enumerate exactly
+# the 4 sha-pinned artifacts encoding the stale claim
+# (r1/RESULTS.md:74,79,97; r1/RESULTS.json:100; r1/ATTEMPT.md:77) and
+# the 2 citing it (identifiability/THRESHOLD_PROVENANCE.md:103;
+# cg002/PROVENANCE_002.md:55), with a superseded/superseding sha pair
+# (a5527708 R1 <- e71d1915 CG002, both verified commit ancestors). The
+# supersession resolves FORWARD only; no frozen artifact is edited or
+# recomputed.
+#
+# F2 — RECLASSIFY noisy.* AS infeasible_by_construction.
+# PREREGISTRATION_AMENDMENT_001.yaml/.md (append-only) supersede the
+# CLASSIFICATION (not threshold VALUES) of noisy.frobenius /
+# noisy.topology_f1: from pass/fail acceptance gates to
+# INFEASIBLE_BY_CONSTRUCTION 0-bit diagnostics, citing the CG002 proof
+# (regressor SNR < 0.6 every edge, class-independent) as the immutable
+# justification. The frozen PREREGISTRATION.md / gates.py constants are
+# NOT edited. Forward-only verdict logic: _substrate.py gains
+# INFEASIBLE_BY_CONSTRUCTION + amended_gate_names() +
+# overall_verdict_amended(); run.py gains build_amended_ledger +
+# --amended (a NEW forward-only lineage #6 artifact). The default
+# build_ledger / build_r1_ledger / build_cg002_ledger are UNTOUCHED and
+# byte-stable; the 3 historical lineages are NOT recomputed (proved by
+# test_historical_artifacts_not_recomputed_by_amendment).
+#
+# Locally verified:
+#   * pytest tests/research/calibration/test_calib_amendment_001.py
+#     tests/research/calibration/test_calib_lineage_forcing_functions.py:
+#     all green (fast + slow)
+#   * git diff --exit-code tests/research/calibration/test_grid_kuramoto.py
+#     is EMPTY; the historical reproduction tests pass UNMODIFIED
+#   * all frozen artifacts byte-untouched (git status clean on r1/,
+#     RESULTS.json, PREREGISTRATION.md, gates.py, cg002/, identifiability/)
+#   * mypy --strict / ruff / black clean on the diff (fresh cache; the
+#     stale .mypy_cache `google` crash is environmental, not a defect)
+#
+# Net effect: +2 append-only governance docs (F1) + 2 (F2), +2
+# forcing/semantics test modules, +1 forward-only opt-in builder + 1
+# verdict helper. ZERO estimator/numeric/algorithm change, ZERO
+# frozen-artifact change.
+
+id: calib-supersession-amendment
+status: ACTIVE
+claim_type: governance
+promise: >-
+  After this PR lands, research/calibration/grid_kuramoto/ carries two
+  append-only epistemic-integrity governance layers. (F1)
+  SUPERSESSIONS.yaml + SUPERSESSIONS.md record that R1's
+  double-differentiation / no-consistent-estimator noisy attribution is
+  superseded by CALIB-GRID-002's class-independent regressor-floor
+  proof, enumerating exactly the 4 encoding + 2 citing sha-pinned
+  artifacts with a verified superseded/superseding sha pair; a
+  forcing-function test (test_superseded_claims_resolve_via_registry)
+  fails closed if any NEW lineage doc inherits the falsified premise
+  without resolving the registry, and
+  test_supersession_registry_is_internally_consistent enforces every
+  enumerated path exists with its verbatim anchor and both shas are
+  real commit ancestors. (F2) PREREGISTRATION_AMENDMENT_001.yaml/.md
+  supersede the CLASSIFICATION (not threshold values) of the two frozen
+  noisy.* gates to INFEASIBLE_BY_CONSTRUCTION 0-bit diagnostics;
+  _substrate.overall_verdict_amended computes the overall verdict over
+  the remaining genuine pass/fail gates only and run.build_amended_
+  ledger / --amended emit a NEW forward-only lineage #6 artifact. The
+  default builders are byte-stable and the merged CALIB-GRID-001 / R1 /
+  CALIB-GRID-002 RESULTS.json are NOT recomputed (their historical
+  NEGATIVE + FAIL reproduce unmodified). No estimator, numeric,
+  algorithm, frozen pre-registration, gates.py constant, sha-pinned
+  RESULTS ledger, threshold value, seed, sigma, theta0 or decision rule
+  of a merged lineage is touched; tests/research/calibration/
+  test_grid_kuramoto.py is byte-unchanged.
+diff_scope:
+  changed_files:
+    - path: ".claude/commit_acceptors/calib-supersession-amendment.yaml"
+    - path: "research/calibration/grid_kuramoto/SUPERSESSIONS.yaml"
+    - path: "research/calibration/grid_kuramoto/SUPERSESSIONS.md"
+    - path: "research/calibration/grid_kuramoto/PREREGISTRATION_AMENDMENT_001.yaml"
+    - path: "research/calibration/grid_kuramoto/PREREGISTRATION_AMENDMENT_001.md"
+    - path: "research/calibration/grid_kuramoto/_substrate.py"
+    - path: "research/calibration/grid_kuramoto/run.py"
+    - path: "tests/research/calibration/test_calib_lineage_forcing_functions.py"
+    - path: "tests/research/calibration/test_calib_amendment_001.py"
+  forbidden_paths:
+    - "trading/"
+    - "execution/"
+    - "forecast/"
+    - "policy/"
+    - "core/"
+    - "research/calibration/grid_kuramoto/PREREGISTRATION.md"
+    - "research/calibration/grid_kuramoto/gates.py"
+    - "research/calibration/grid_kuramoto/calibration.py"
+    - "research/calibration/grid_kuramoto/grid_data.py"
+    - "research/calibration/grid_kuramoto/RESULTS.json"
+    - "research/calibration/grid_kuramoto/RESULTS.md"
+    - "research/calibration/grid_kuramoto/r1/"
+    - "research/calibration/grid_kuramoto/cg002/RESULTS.json"
+    - "research/calibration/grid_kuramoto/cg002/RESULTS.md"
+    - "research/calibration/grid_kuramoto/cg002/PREREGISTRATION_002.yaml"
+    - "research/calibration/grid_kuramoto/cg002/PROVENANCE_002.md"
+    - "research/calibration/grid_kuramoto/cg002/cg002.py"
+    - "research/calibration/grid_kuramoto/identifiability/"
+    - "application/governance/claim_ledger.py"
+    - "application/governance/commit_acceptor.py"
+    - "tests/research/calibration/test_grid_kuramoto.py"
+    - "tests/research/calibration/test_calib_substrate_consolidation.py"
+required_python_symbols:
+  - "research/calibration/grid_kuramoto/_substrate.py::overall_verdict_amended"
+  - "research/calibration/grid_kuramoto/_substrate.py::amended_gate_names"
+  - "research/calibration/grid_kuramoto/run.py::build_amended_ledger"
+expected_signal: >-
+  `pytest tests/research/calibration/test_calib_amendment_001.py
+  tests/research/calibration/test_calib_lineage_forcing_functions.py -q`
+  is green (fast + slow); mypy --strict / ruff / black clean on the
+  diff; `git diff --exit-code
+  tests/research/calibration/test_grid_kuramoto.py` is empty; the
+  historical reproduction tests
+  (test_r1_results_json_matches_committed_artifact,
+  test_cg002_results_json_matches_committed_artifact) pass UNMODIFIED;
+  build_amended_ledger emits per_gate_state with both noisy.* gates ==
+  INFEASIBLE_BY_CONSTRUCTION and a reduced NEGATIVE verdict resting on
+  noiseless.critical_coupling; build_ledger / build_r1_ledger carry NO
+  per_gate_state key and still emit the historical NEGATIVE.
+measurement_command: >-
+  bash -c '
+    rm -rf .mypy_cache &&
+    mypy --strict --follow-imports=silent
+      research/calibration/grid_kuramoto/_substrate.py
+      research/calibration/grid_kuramoto/run.py
+      tests/research/calibration/test_calib_amendment_001.py
+      tests/research/calibration/test_calib_lineage_forcing_functions.py && ruff check
+       research/calibration/grid_kuramoto/_substrate.py
+       research/calibration/grid_kuramoto/run.py
+       tests/research/calibration/test_calib_amendment_001.py
+       tests/research/calibration/test_calib_lineage_forcing_functions.py && black --check
+       research/calibration/grid_kuramoto/_substrate.py
+       research/calibration/grid_kuramoto/run.py
+       tests/research/calibration/test_calib_amendment_001.py
+       tests/research/calibration/test_calib_lineage_forcing_functions.py && git diff --exit-code tests/research/calibration/test_grid_kuramoto.py && python -m pytest
+       tests/research/calibration/test_calib_amendment_001.py
+       tests/research/calibration/test_calib_lineage_forcing_functions.py
+       tests/research/calibration/test_grid_kuramoto.py -q
+  '
+signal_artifact: "tmp/calib_supersession_amendment.log"
+falsifier:
+  command: >-
+    bash -c '
+      python -m pytest
+      "tests/research/calibration/test_calib_amendment_001.py::test_historical_artifacts_not_recomputed_by_amendment"
+      "tests/research/calibration/test_calib_amendment_001.py::test_fresh_amended_run_emits_infeasible_and_reduced_verdict"
+      "tests/research/calibration/test_calib_lineage_forcing_functions.py::test_supersession_registry_is_internally_consistent"
+      "tests/research/calibration/test_calib_lineage_forcing_functions.py::test_superseded_claims_resolve_via_registry"
+      -q >/tmp/_calib_sa_rails.log 2>&1 && ! grep -q "4 passed" /tmp/_calib_sa_rails.log
+    '
+  description: >-
+    Probes four load-bearing rails: (1) the 3 historical lineages are
+    NOT recomputed by the amendment (default builders byte-stable); (2)
+    a fresh --amended run emits INFEASIBLE_BY_CONSTRUCTION + a reduced
+    NEGATIVE resting on a genuine gate; (3) the supersession registry is
+    internally consistent (paths exist + verbatim anchors + ancestor
+    shas + audited 4/2 cardinality); (4) no new doc inherits R1's
+    falsified premise unresolved. The falsifier succeeds (exit 0) only
+    when one of these rails fails.
+rollback_command: >-
+  bash -c 'git checkout origin/main --
+    research/calibration/grid_kuramoto/_substrate.py
+    research/calibration/grid_kuramoto/run.py
+    tests/research/calibration/test_calib_lineage_forcing_functions.py && rm -f
+    research/calibration/grid_kuramoto/SUPERSESSIONS.yaml
+    research/calibration/grid_kuramoto/SUPERSESSIONS.md
+    research/calibration/grid_kuramoto/PREREGISTRATION_AMENDMENT_001.yaml
+    research/calibration/grid_kuramoto/PREREGISTRATION_AMENDMENT_001.md
+    tests/research/calibration/test_calib_amendment_001.py
+    .claude/commit_acceptors/calib-supersession-amendment.yaml'
+rollback_verification_command: >-
+  bash -c '! test -f
+    research/calibration/grid_kuramoto/SUPERSESSIONS.yaml && ! test -f
+    research/calibration/grid_kuramoto/PREREGISTRATION_AMENDMENT_001.yaml && ! grep -q overall_verdict_amended
+    research/calibration/grid_kuramoto/_substrate.py'
+memory_update_type: append
+ledger_path: ".claude/commit_acceptors/calib-supersession-amendment.yaml"
+report_path: "tmp/calib_supersession_amendment.log"
+evidence: []

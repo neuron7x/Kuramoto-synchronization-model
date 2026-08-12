@@ -1,7 +1,9 @@
-# SPDX-License-Identifier: LicenseRef-TradePulse-Proprietary
+# Copyright (c) 2023-2026 Yaroslav Vasylenko (neuron7xLab)
+# SPDX-License-Identifier: MIT
 from __future__ import annotations
 
 import time
+from collections.abc import Mapping
 
 import pytest
 
@@ -13,7 +15,12 @@ except ImportError:  # pragma: no cover
 
 from runtime.energy_validator import EnergyConfig, EnergyValidator
 from tacl.degradation import DegradationPolicy, apply_degradation
-from tacl.risk_gating import PreActionContext, RiskGatingConfig, RiskGatingEngine
+from tacl.risk_gating import (
+    PreActionContext,
+    PreActionDecision,
+    RiskGatingConfig,
+    RiskGatingEngine,
+)
 
 from .utils import property_seed, property_settings
 
@@ -54,9 +61,7 @@ def test_risk_gate_hard_volatility_blocks(volatility: float) -> None:
 
 
 @seed(property_seed("test_risk_gate_soft_volatility_enables_safe_mode"))
-@settings(
-    **property_settings("test_risk_gate_soft_volatility_enables_safe_mode", max_examples=60)
-)
+@settings(**property_settings("test_risk_gate_soft_volatility_enables_safe_mode", max_examples=60))
 @given(_finite_floats(min_value=_SOFT_VOL_MIN, max_value=_SOFT_VOL_MAX))
 def test_risk_gate_soft_volatility_enables_safe_mode(volatility: float) -> None:
     cfg = RiskGatingConfig()
@@ -93,12 +98,15 @@ def test_energy_penalty_monotonic(value_a: float, value_b: float) -> None:
 
     low, high = sorted([value_a, value_b])
 
-    penalty_low, headroom_low = validator.compute_penalty(
+    low_result = validator.compute_penalty(
         metric.name, low, metric_config=metric, total_weight=total_weight
     )
-    penalty_high, headroom_high = validator.compute_penalty(
+    high_result = validator.compute_penalty(
         metric.name, high, metric_config=metric, total_weight=total_weight
     )
+    assert low_result is not None and high_result is not None
+    penalty_low, headroom_low = low_result
+    penalty_high, headroom_high = high_result
 
     assert penalty_low >= 0.0
     assert penalty_high >= 0.0
@@ -110,14 +118,14 @@ class _SlowGate:
     def __init__(self, delay: float) -> None:
         self.delay = delay
 
-    def check(self, context: object):
+    def check(self, context: PreActionContext | Mapping[str, object]) -> PreActionDecision:
         time.sleep(self.delay)
-        return context
+        return PreActionDecision(allowed=True, reasons=())
 
 
 @seed(property_seed("test_degradation_timeout_fallback"))
 @settings(**property_settings("test_degradation_timeout_fallback", max_examples=25))
-@given(_finite_floats(min_value=0.002, max_value=0.01))
+@given(_finite_floats(min_value=0.05, max_value=0.15))
 def test_degradation_timeout_fallback(timeout_s: float) -> None:
     policy = DegradationPolicy(timeout_s=timeout_s)
     decision, report = apply_degradation(

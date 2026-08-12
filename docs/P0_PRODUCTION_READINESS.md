@@ -1,10 +1,10 @@
 # P0 Production Readiness Implementation
 
-This document describes the P0 (Priority Zero) production readiness features implemented for TradePulse before large-scale production deployment.
+This document describes the P0 (Priority Zero) production readiness features implemented for GeoSync before large-scale production deployment.
 
 ## Overview
 
-The P0 initiative ensures TradePulse meets enterprise-grade production requirements with:
+The P0 initiative ensures GeoSync meets enterprise-grade production requirements with:
 
 1. ✅ Git tag-based versioning with setuptools_scm
 2. ✅ Helm deployment charts with security hardening
@@ -60,7 +60,7 @@ python -m setuptools_scm
 ### Structure
 
 ```
-deploy/helm/tradepulse/
+deploy/helm/geosync/
 ├── Chart.yaml              # Umbrella chart
 ├── values.yaml             # Global configuration
 └── charts/
@@ -116,15 +116,15 @@ Tests include:
 
 ```bash
 # Install complete stack
-helm install tradepulse ./deploy/helm/tradepulse \
-  --namespace tradepulse \
+helm install geosync ./deploy/helm/geosync \
+  --namespace geosync \
   --create-namespace
 
 # Upgrade
-helm upgrade tradepulse ./deploy/helm/tradepulse
+helm upgrade geosync ./deploy/helm/geosync
 
 # Uninstall
-helm uninstall tradepulse -n tradepulse
+helm uninstall geosync -n geosync
 ```
 
 See `deploy/helm/README.md` for detailed documentation.
@@ -258,11 +258,11 @@ npm install
 
 ### Rust
 
-**File**: `rust/tradepulse-accel/Cargo.lock`
+**File**: `rust/geosync-accel/Cargo.lock`
 
 **Update**:
 ```bash
-cd rust/tradepulse-accel
+cd rust/geosync-accel
 cargo update
 ```
 
@@ -295,7 +295,7 @@ Enforces:
 apiVersion: v1
 kind: Namespace
 metadata:
-  name: tradepulse
+  name: geosync
   labels:
     pod-security.kubernetes.io/enforce: baseline
     pod-security.kubernetes.io/audit: restricted
@@ -443,7 +443,7 @@ Release (tag)
 
 ### Helm Charts
 
-1. Always lint before committing: `helm lint deploy/helm/tradepulse`
+1. Always lint before committing: `helm lint deploy/helm/geosync`
 2. Test in kind cluster before PR
 3. Update chart version in `Chart.yaml` for changes
 4. Document configuration changes in `values.yaml`

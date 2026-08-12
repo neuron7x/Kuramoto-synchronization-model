@@ -1,0 +1,180 @@
+{
+  "schema_version": "D002K-EVENT-METRIC-CONTRACT-v1",
+  "study_id": "D-002K",
+  "node_id": "D002K-P3",
+  "generated_at": "2026-05-15T00:00:00Z",
+  "parent_prereg_path": "docs/governance/D002K_PREREGISTRATION.yaml",
+  "parent_prereg_sha256": "2cd923810bf64547cd86ecb403bfd3f12a799cb16c3d10ebc07bc05865fee43f",
+  "parent_primary_metric_contract_path": "artifacts/d002k/prereg/d002k_primary_metric_contract_v1.json",
+  "parent_primary_metric_contract_sha256": "7effc088810ba5933850618312fcad369fdac0386b4a3cab6f14455feeb5a569",
+  "parent_observable_contract_path": "artifacts/d002k/observables/source_observable_contract_v1.json",
+  "parent_observable_contract_sha256": "952739cbfe4aa16a54eb5684be4bbd653e820eaf92113418e379a3bf8a2a71c3",
+  "parent_placebo_registry_path": "artifacts/d002k/placebo/matched_placebo_registry_v1.json",
+  "parent_placebo_registry_sha256": "435d41df868859f25811236fa4675d01f202682c693d06208922c263ace09413",
+  "primary_metric": "pre_post_standardized_mean_shift",
+  "n_primary_confirmatory": 1,
+  "implementation_module": "research/systemic_risk/d002k_event_metrics.py",
+  "no_scoring_on_real_data": true,
+  "canonical_run_authorized": false,
+  "no_rescue_boundary": "D-002K-P3 is part of fresh lineage D-002K and does NOT rescue D-002J; D-002J remains terminally REFUSED at P7. This phase locks the metric layer (definitions only); it sets no numeric decision threshold (power-gate territory) and scores no real data.",
+  "metrics": [
+    {
+      "metric_id": "pre_post_standardized_mean_shift",
+      "role": "primary_confirmatory",
+      "confirmatory": true,
+      "implementation_path": "research/systemic_risk/d002k_event_metrics.py:pre_post_standardized_mean_shift",
+      "definition": "The single K-P0-locked confirmatory endpoint (Cohen's-d form). Given the locked pre-window baseline segment B and the locked in-crisis segment I of the K-P1 funding-stress observable series: mu_pre = mean(B), mu_in = mean(I), sigma_pre = sample std of B (ddof=1, degrees of freedom fixed at pre-registration). The metric is the single scalar (mu_in - mu_pre) / sigma_pre. Byte-locked by K-P0 d002k_primary_metric_contract_v1.json::primary_metric_id; no swap, no second confirmatory metric, no post-hoc primary.",
+      "input_observable_families": [
+        "level_shift",
+        "spread_widening",
+        "volatility_burst",
+        "recovery_time",
+        "transition_steepness",
+        "stress_persistence"
+      ],
+      "pre_window_spec": "The pre_len samples ending immediately before crisis onset_idx (the locked matched pre-window baseline B, per the K-P2 matched-placebo policy calendar).",
+      "post_window_spec": "The post_len samples starting at crisis onset_idx (the locked in-crisis window I, per the K-P2 matched-placebo policy calendar).",
+      "standardization": "z-score vs pre-window baseline (mu_pre, sigma_pre with ddof=1)",
+      "contrast": "Delta = metric_crisis - mean(metric over K-P2 matched placebos)",
+      "decision_threshold_semantics": "deferred to D-002K power gate (P-power); NOT set here. This contract locks WHAT is measured and HOW, never the threshold VALUE.",
+      "deterministic": true,
+      "fail_closed_on": [
+        "sigma==0",
+        "insufficient pre/post length",
+        "NaN/Inf input"
+      ]
+    },
+    {
+      "metric_id": "max_zscore",
+      "role": "secondary_exploratory",
+      "confirmatory": false,
+      "implementation_path": "research/systemic_risk/d002k_event_metrics.py:max_zscore",
+      "definition": "EXPLORATORY ONLY. Peak in-crisis z-score: z-standardize the post-window with the pre-window (mu_pre, sigma_pre); return max(post_z). Never confirmatory; never enters the Bonferroni denominator; cannot be promoted to primary without a fresh D-002L pre-registration.",
+      "input_observable_families": [
+        "level_shift",
+        "volatility_burst",
+        "transition_steepness"
+      ],
+      "pre_window_spec": "pre_len samples ending before onset_idx (locked baseline).",
+      "post_window_spec": "post_len samples from onset_idx (locked in-crisis).",
+      "standardization": "z-score vs pre-window baseline (mu_pre, sigma_pre with ddof=1)",
+      "contrast": "Delta = metric_crisis - mean(metric over K-P2 matched placebos)",
+      "decision_threshold_semantics": "deferred to D-002K power gate (P-power); NOT set here.",
+      "deterministic": true,
+      "fail_closed_on": [
+        "sigma==0",
+        "insufficient pre/post length",
+        "NaN/Inf input"
+      ]
+    },
+    {
+      "metric_id": "area_under_stress_curve",
+      "role": "secondary_exploratory",
+      "confirmatory": false,
+      "implementation_path": "research/systemic_risk/d002k_event_metrics.py:area_under_stress_curve",
+      "definition": "EXPLORATORY ONLY. Composite-trapezoid integral (unit spacing) of the in-crisis z-curve (post-window standardized by the pre-window baseline). Cumulative-stress descriptor; never confirmatory; never in the Bonferroni denominator.",
+      "input_observable_families": [
+        "stress_persistence",
+        "volatility_burst"
+      ],
+      "pre_window_spec": "pre_len samples ending before onset_idx (locked baseline).",
+      "post_window_spec": "post_len samples from onset_idx (locked in-crisis).",
+      "standardization": "z-score vs pre-window baseline (mu_pre, sigma_pre with ddof=1)",
+      "contrast": "Delta = metric_crisis - mean(metric over K-P2 matched placebos)",
+      "decision_threshold_semantics": "deferred to D-002K power gate (P-power); NOT set here.",
+      "deterministic": true,
+      "fail_closed_on": [
+        "sigma==0",
+        "insufficient pre/post length",
+        "NaN/Inf input"
+      ]
+    },
+    {
+      "metric_id": "recovery_half_life",
+      "role": "secondary_exploratory",
+      "confirmatory": false,
+      "implementation_path": "research/systemic_risk/d002k_event_metrics.py:recovery_half_life",
+      "definition": "EXPLORATORY ONLY. Samples (post-peak) until the in-crisis z-curve first drops to <= half its peak; defined no-recovery sentinel == post_len when the half level is never re-crossed (honest censoring value, not silent repair). Recovery-speed descriptor; never confirmatory.",
+      "input_observable_families": [
+        "recovery_time",
+        "stress_persistence"
+      ],
+      "pre_window_spec": "pre_len samples ending before onset_idx (locked baseline).",
+      "post_window_spec": "post_len samples from onset_idx (locked in-crisis).",
+      "standardization": "z-score vs pre-window baseline (mu_pre, sigma_pre with ddof=1)",
+      "contrast": "Delta = metric_crisis - mean(metric over K-P2 matched placebos)",
+      "decision_threshold_semantics": "deferred to D-002K power gate (P-power); NOT set here.",
+      "deterministic": true,
+      "fail_closed_on": [
+        "sigma==0",
+        "insufficient pre/post length",
+        "NaN/Inf input"
+      ]
+    },
+    {
+      "metric_id": "slope_into_crisis",
+      "role": "secondary_exploratory",
+      "confirmatory": false,
+      "implementation_path": "research/systemic_risk/d002k_event_metrics.py:slope_into_crisis",
+      "definition": "EXPLORATORY ONLY. Ordinary-least-squares slope of the in-crisis z-trajectory (post-window standardized by the pre-window baseline) against unit-spaced sample index. Transition-steepness descriptor; never confirmatory.",
+      "input_observable_families": [
+        "transition_steepness",
+        "level_shift"
+      ],
+      "pre_window_spec": "pre_len samples ending before onset_idx (locked baseline).",
+      "post_window_spec": "post_len samples from onset_idx (locked in-crisis, >= 2 samples).",
+      "standardization": "z-score vs pre-window baseline (mu_pre, sigma_pre with ddof=1)",
+      "contrast": "Delta = metric_crisis - mean(metric over K-P2 matched placebos)",
+      "decision_threshold_semantics": "deferred to D-002K power gate (P-power); NOT set here.",
+      "deterministic": true,
+      "fail_closed_on": [
+        "sigma==0",
+        "insufficient pre/post length",
+        "NaN/Inf input"
+      ]
+    },
+    {
+      "metric_id": "volatility_ratio",
+      "role": "secondary_exploratory",
+      "confirmatory": false,
+      "implementation_path": "research/systemic_risk/d002k_event_metrics.py:volatility_ratio",
+      "definition": "EXPLORATORY ONLY. Ratio of in-crisis sample std to pre-window baseline sample std (both ddof=1). Variance-burst descriptor; never confirmatory; never in the Bonferroni denominator.",
+      "input_observable_families": [
+        "volatility_burst"
+      ],
+      "pre_window_spec": "pre_len samples ending before onset_idx (locked baseline, >= 2 samples).",
+      "post_window_spec": "post_len samples from onset_idx (locked in-crisis, >= 2 samples).",
+      "standardization": "z-score vs pre-window baseline (mu_pre, sigma_pre with ddof=1)",
+      "contrast": "Delta = metric_crisis - mean(metric over K-P2 matched placebos)",
+      "decision_threshold_semantics": "deferred to D-002K power gate (P-power); NOT set here.",
+      "deterministic": true,
+      "fail_closed_on": [
+        "sigma==0",
+        "insufficient pre/post length",
+        "NaN/Inf input"
+      ]
+    },
+    {
+      "metric_id": "persistence_above_threshold",
+      "role": "secondary_exploratory",
+      "confirmatory": false,
+      "implementation_path": "research/systemic_risk/d002k_event_metrics.py:persistence_above_threshold",
+      "definition": "EXPLORATORY ONLY. Fraction of in-crisis samples whose pre-window-standardized z strictly exceeds a fixed DESCRIPTIVE z-level (default 1.0; this is NOT the deferred decision threshold). Stress-persistence descriptor; never confirmatory.",
+      "input_observable_families": [
+        "stress_persistence",
+        "level_shift"
+      ],
+      "pre_window_spec": "pre_len samples ending before onset_idx (locked baseline).",
+      "post_window_spec": "post_len samples from onset_idx (locked in-crisis).",
+      "standardization": "z-score vs pre-window baseline (mu_pre, sigma_pre with ddof=1)",
+      "contrast": "Delta = metric_crisis - mean(metric over K-P2 matched placebos)",
+      "decision_threshold_semantics": "deferred to D-002K power gate (P-power); NOT set here. The fixed z=1.0 descriptive level is a metric-internal exploratory constant, not the confirmatory decision cut.",
+      "deterministic": true,
+      "fail_closed_on": [
+        "sigma==0",
+        "insufficient pre/post length",
+        "NaN/Inf input"
+      ]
+    }
+  ]
+}

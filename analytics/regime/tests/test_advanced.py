@@ -1,3 +1,5 @@
+# Copyright (c) 2023-2026 Yaroslav Vasylenko (neuron7xLab)
+# SPDX-License-Identifier: MIT
 """Tests for advanced regime analytics modules."""
 
 from __future__ import annotations
@@ -91,17 +93,13 @@ def test_regime_detector_calibration_updates_thresholds():
             != original.mean_reverting_autocorr_threshold,
             calibrated.liquidity_score_high != original.liquidity_score_high,
             calibrated.liquidity_score_low != original.liquidity_score_low,
-            calibrated.correlation_high_threshold
-            != original.correlation_high_threshold,
+            calibrated.correlation_high_threshold != original.correlation_high_threshold,
             calibrated.correlation_low_threshold != original.correlation_low_threshold,
         ]
     )
     assert calibrated.liquidity_score_high > calibrated.liquidity_score_low
     assert (
-        0.0
-        <= calibrated.correlation_low_threshold
-        <= calibrated.correlation_high_threshold
-        <= 1.0
+        0.0 <= calibrated.correlation_low_threshold <= calibrated.correlation_high_threshold <= 1.0
     )
 
 
@@ -131,9 +129,7 @@ def test_ricci_flow_rebalancer_projected_simplex():
         columns=["a", "b", "c"],
         index=["a", "b", "c"],
     )
-    rebalancer = RicciFlowRebalancer(
-        RicciFlowConfig(step_size=0.1, turnover_penalty=0.2)
-    )
+    rebalancer = RicciFlowRebalancer(RicciFlowConfig(step_size=0.1, turnover_penalty=0.2))
     result = rebalancer.rebalance(covariance)
 
     assert isinstance(result, RicciFlowResult)

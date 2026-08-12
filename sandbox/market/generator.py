@@ -1,3 +1,5 @@
+# Copyright (c) 2023-2026 Yaroslav Vasylenko (neuron7xLab)
+# SPDX-License-Identifier: MIT
 """Deterministic price generation for the sandbox market."""
 
 from __future__ import annotations
@@ -22,9 +24,7 @@ class MockMarketDataGenerator:
         for index in range(self._window):
             timestamp = now - timedelta(minutes=self._window - index)
             price = self._base_price + self._oscillation(symbol, index)
-            points.append(
-                PricePoint(symbol=symbol, timestamp=timestamp, price=round(price, 2))
-            )
+            points.append(PricePoint(symbol=symbol, timestamp=timestamp, price=round(price, 2)))
         return PriceSeries(symbol=symbol, points=points)
 
     def _oscillation(self, symbol: str, index: int) -> float:
@@ -45,8 +45,6 @@ class MarketDataset:
         data = {}
         for symbol in self._symbols:
             base_price = 50.0 + (sum(ord(char) for char in symbol) % 50)
-            generator = MockMarketDataGenerator(
-                window=self._window, base_price=base_price
-            )
+            generator = MockMarketDataGenerator(window=self._window, base_price=base_price)
             data[symbol] = generator.generate(symbol)
         return data

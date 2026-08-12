@@ -1,10 +1,12 @@
+# Copyright (c) 2023-2026 Yaroslav Vasylenko (neuron7xLab)
+# SPDX-License-Identifier: MIT
 """Tests for OHLCV data generation and validation utilities.
 
 This module tests the scripts/generate_sample_ohlcv.py module and validates
 that generated data meets quality requirements for trading analysis.
 """
 
-# SPDX-License-Identifier: LicenseRef-TradePulse-Proprietary
+# SPDX-License-Identifier: MIT
 
 import tempfile
 from pathlib import Path
@@ -166,9 +168,7 @@ class TestGenerateMultiAssetData:
 
     def test_multi_asset_generation(self):
         """Test multi-asset data generation."""
-        df = generate_multi_asset_data(
-            symbols=["BTC", "ETH"], days=1, timeframe="1h", seed=42
-        )
+        df = generate_multi_asset_data(symbols=["BTC", "ETH"], days=1, timeframe="1h", seed=42)
 
         # Should have data for both symbols
         assert set(df["symbol"].unique()) == {"BTC", "ETH"}

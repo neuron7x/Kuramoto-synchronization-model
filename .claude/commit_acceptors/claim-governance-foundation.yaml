@@ -1,0 +1,28 @@
+id: claim-governance-foundation
+status: DRAFT
+claim_type: documentation
+promise: Governance seed is bounded to thesis, ontology, verifier, tests, and focused workflow.
+diff_scope:
+  changed_files:
+    - path: docs/RESEARCH_THESIS.md
+    - path: claims/ontology.json
+    - path: scripts/ci/verify_claims.py
+    - path: tests/ci/test_verify_claims.py
+    - path: .github/workflows/claim-governance-foundation.yml
+    - path: .claude/commit_acceptors/claim-governance-foundation.yaml
+  forbidden_paths:
+    - runtime/
+required_python_symbols:
+  - validate
+expected_signal: Governance verifier passes.
+measurement_command: python scripts/ci/verify_claims.py && pytest -q tests/ci/test_verify_claims.py
+signal_artifact: tmp/claim_governance_foundation.log
+falsifier:
+  command: python scripts/ci/verify_claims.py
+  description: Fails if thesis, ontology, or scan contract is invalid.
+rollback_command: git checkout -- docs/RESEARCH_THESIS.md claims/ontology.json scripts/ci/verify_claims.py tests/ci/test_verify_claims.py .github/workflows/claim-governance-foundation.yml .claude/commit_acceptors/claim-governance-foundation.yaml
+rollback_verification_command: git diff --exit-code docs/RESEARCH_THESIS.md claims/ontology.json scripts/ci/verify_claims.py tests/ci/test_verify_claims.py .github/workflows/claim-governance-foundation.yml .claude/commit_acceptors/claim-governance-foundation.yaml
+memory_update_type: none
+ledger_path: .claude/commit_acceptors/claim-governance-foundation.yaml
+report_path: .claude/commit_acceptors/claim-governance-foundation.yaml
+evidence: []

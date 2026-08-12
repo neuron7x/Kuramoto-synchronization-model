@@ -1,24 +1,24 @@
 # Frequently Asked Questions (FAQ)
 
-Common questions and answers about TradePulse.
+Common questions and answers about GeoSync.
 
 ---
 
 ## General Questions
 
-### What is TradePulse?
+### What is GeoSync?
 
-TradePulse is an advanced algorithmic trading framework that combines geometric and topological market analysis (Kuramoto synchronization, Ricci curvature, entropy metrics) with modern backtesting and execution capabilities.
+GeoSync is an advanced algorithmic trading framework that combines geometric and topological market analysis (Kuramoto synchronization, Ricci curvature, entropy metrics) with modern backtesting and execution capabilities.
 
-### Is TradePulse free and open source?
+### Is GeoSync free and open source?
 
-TradePulse is distributed under the TradePulse Proprietary License Agreement (TPLA).
+GeoSync is distributed under the MIT License.
 You may evaluate and develop internally with the platform, but any commercial
-use requires a separate written agreement with TradePulse Technologies.
+use requires a separate written agreement with GeoSync Contributors.
 
-### What markets does TradePulse support?
+### What markets does GeoSync support?
 
-TradePulse is market-agnostic and can be used for:
+GeoSync is market-agnostic and can be used for:
 - Cryptocurrencies
 - Stocks
 - Forex
@@ -27,9 +27,9 @@ TradePulse is market-agnostic and can be used for:
 
 The framework provides interfaces for connecting to any market data provider and exchange.
 
-### Is TradePulse suitable for beginners?
+### Is GeoSync suitable for beginners?
 
-TradePulse is designed for developers and traders with programming experience (Python). While the framework provides comprehensive documentation, some understanding of:
+GeoSync is designed for developers and traders with programming experience (Python). While the framework provides comprehensive documentation, some understanding of:
 - Python programming
 - Trading concepts
 - Technical analysis
@@ -54,16 +54,16 @@ is recommended.
 - SSD storage
 - Multi-core CPU
 
-### Can I run TradePulse on Windows?
+### Can I run GeoSync on Windows?
 
-Yes, TradePulse runs on:
+Yes, GeoSync runs on:
 - Linux (recommended)
 - macOS
 - Windows (with WSL2 recommended)
 
 ### Do I need Docker?
 
-No, Docker is optional. You can run TradePulse with just Python. Docker is recommended for:
+No, Docker is optional. You can run GeoSync with just Python. Docker is recommended for:
 - Running the full stack (web dashboard, databases, monitoring)
 - Easy deployment
 - Consistent environments
@@ -88,7 +88,7 @@ See [Troubleshooting](troubleshooting.md) for more solutions.
 
 ## Indicators & Features
 
-### What indicators does TradePulse provide?
+### What indicators does GeoSync provide?
 
 **Built-in indicators:**
 - Kuramoto synchronization (phase coherence)
@@ -114,11 +114,11 @@ See the papers referenced in [docs/indicators.md](indicators.md) for mathematica
 
 ### Can I use traditional indicators like RSI and MACD?
 
-Yes! While TradePulse focuses on geometric indicators, you can easily add traditional indicators. See [Extending TradePulse](extending.md) for examples.
+Yes! While GeoSync focuses on geometric indicators, you can easily add traditional indicators. See [Extending GeoSync](extending.md) for examples.
 
 ### How do I create custom indicators?
 
-See [Extending TradePulse - Custom Indicators](extending.md#adding-custom-indicators) for a step-by-step guide.
+See [Extending GeoSync - Custom Indicators](extending.md#adding-custom-indicators) for a step-by-step guide.
 
 ---
 
@@ -126,7 +126,7 @@ See [Extending TradePulse - Custom Indicators](extending.md#adding-custom-indica
 
 ### How accurate is the backtesting?
 
-TradePulse uses walk-forward backtesting with:
+GeoSync uses walk-forward backtesting with:
 - Realistic slippage modeling
 - Commission costs
 - Position sizing
@@ -140,7 +140,7 @@ However, backtesting is always an approximation. Real trading will differ due to
 
 ### Can I use my own data for backtesting?
 
-Yes! TradePulse supports:
+Yes! GeoSync supports:
 - CSV files
 - Custom data sources
 - Database connections
@@ -177,7 +177,7 @@ This prevents look-ahead bias and provides more realistic results than training 
 
 ## Trading & Execution
 
-### Can I use TradePulse for live trading?
+### Can I use GeoSync for live trading?
 
 Yes, but:
 1. Test thoroughly with paper trading first
@@ -189,7 +189,7 @@ Yes, but:
 
 ### What exchanges are supported?
 
-TradePulse provides adapters for:
+GeoSync provides adapters for:
 - Binance (spot and futures)
 - More coming soon
 
@@ -210,7 +210,7 @@ adapter = SimulatedExecutionAdapter(
 
 ### What about risk management?
 
-TradePulse includes:
+GeoSync includes:
 - Position sizing
 - Stop-loss orders
 - Take-profit orders
@@ -235,9 +235,9 @@ Typical latencies:
 
 ## Performance & Optimization
 
-### Is TradePulse fast enough for high-frequency trading?
+### Is GeoSync fast enough for high-frequency trading?
 
-TradePulse is optimized for low to medium frequency trading (seconds to minutes). For sub-second HFT:
+GeoSync is optimized for low to medium frequency trading (seconds to minutes). For sub-second HFT:
 - Use the Go microservices for critical paths
 - Optimize indicator calculations
 - Consider compiled languages (Cython, Rust)
@@ -267,7 +267,7 @@ from core.indicators.kuramoto import compute_phase_gpu
 phases = compute_phase_gpu(prices)
 ```
 
-### How much memory does TradePulse use?
+### How much memory does GeoSync use?
 
 Memory usage depends on:
 - Dataset size
@@ -293,7 +293,7 @@ See [CONTRIBUTING.md](../CONTRIBUTING.md) for:
 
 ### Where should I report bugs?
 
-Report bugs on [GitHub Issues](https://github.com/neuron7x/TradePulse/issues) with:
+Report bugs on [GitHub Issues](https://github.com/neuron7xLab/GeoSync/issues) with:
 - Clear description
 - Steps to reproduce
 - Expected vs actual behavior
@@ -301,7 +301,7 @@ Report bugs on [GitHub Issues](https://github.com/neuron7x/TradePulse/issues) wi
 
 ### Can I request features?
 
-Yes! Open a [feature request](https://github.com/neuron7x/TradePulse/issues/new) with:
+Yes! Open a [feature request](https://github.com/neuron7xLab/GeoSync/issues/new) with:
 - Use case description
 - Proposed solution
 - Alternative approaches
@@ -310,7 +310,7 @@ Yes! Open a [feature request](https://github.com/neuron7x/TradePulse/issues/new)
 
 1. Check this FAQ
 2. Read the documentation
-3. Search [GitHub Issues](https://github.com/neuron7x/TradePulse/issues)
+3. Search [GitHub Issues](https://github.com/neuron7xLab/GeoSync/issues)
 4. Open a new issue
 5. Join discussions
 
@@ -340,7 +340,7 @@ pytest tests/integration/
 pytest tests/property/
 ```
 
-See [TESTING.md](../TESTING.md) for comprehensive testing documentation.
+See [TESTING.md](operations/TESTING.md) for comprehensive testing documentation.
 
 ### What is property-based testing?
 
@@ -388,9 +388,9 @@ open htmlcov/index.html
 
 ## Monitoring & Production
 
-### How do I monitor TradePulse in production?
+### How do I monitor GeoSync in production?
 
-TradePulse provides:
+GeoSync provides:
 - Prometheus metrics
 - Structured logging
 - Health checks
@@ -420,7 +420,7 @@ See [Monitoring - Alerting](monitoring.md#alerting).
 
 ### Can I integrate with Grafana?
 
-Yes! TradePulse exports Prometheus metrics that Grafana can visualize. See [Monitoring - Grafana](monitoring.md#grafana-dashboards) for dashboard templates.
+Yes! GeoSync exports Prometheus metrics that Grafana can visualize. See [Monitoring - Grafana](monitoring.md#grafana-dashboards) for dashboard templates.
 
 ---
 
@@ -435,9 +435,9 @@ Never commit API keys to git. Use:
 
 See [SECURITY.md](../SECURITY.md) for best practices.
 
-### Is TradePulse secure for production?
+### Is GeoSync secure for production?
 
-TradePulse follows security best practices, but you must:
+GeoSync follows security best practices, but you must:
 - Secure your API keys
 - Use HTTPS/TLS
 - Implement authentication
@@ -446,7 +446,7 @@ TradePulse follows security best practices, but you must:
 
 ### How do I report security vulnerabilities?
 
-Email: security@tradepulse.local
+Email: security@geosync.local
 
 Do not report security issues publicly. See [SECURITY.md](../SECURITY.md) for disclosure process.
 
@@ -488,7 +488,7 @@ See [Troubleshooting Guide](troubleshooting.md) for more solutions.
 
 ### What is FPM-A?
 
-Fractal Modular Architecture (FPM-A) is TradePulse's architectural pattern:
+Fractal Modular Architecture (FPM-A) is GeoSync's architectural pattern:
 - **Fractal**: Self-similar structure at different scales
 - **Modular**: Clean separation of concerns
 - **Ports & Adapters**: Interface-based design
@@ -503,9 +503,9 @@ Protocol Buffers (protobuf) provide:
 - Language interoperability
 - Efficient serialization
 
-This enables TradePulse's polyglot architecture (Python + Go + TypeScript).
+This enables GeoSync's polyglot architecture (Python + Go + TypeScript).
 
-### Can I use TradePulse without Go services?
+### Can I use GeoSync without Go services?
 
 Yes! The Go services (VPIN, orderbook analysis) are optional. The core Python framework is fully functional standalone.
 
@@ -513,7 +513,7 @@ Yes! The Go services (VPIN, orderbook analysis) are optional. The core Python fr
 
 ## Data & Formats
 
-### What data format does TradePulse use?
+### What data format does GeoSync use?
 
 For CSV data:
 - Timestamp column (ISO 8601 or Unix timestamp)
@@ -536,7 +536,7 @@ the observations without additional guards.
 
 ### Can I use 1-minute, hourly, or daily data?
 
-Yes! TradePulse is timeframe-agnostic. Specify your timeframe in analysis:
+Yes! GeoSync is timeframe-agnostic. Specify your timeframe in analysis:
 
 ```python
 # 1-minute bars
@@ -566,7 +566,7 @@ Paid sources:
 
 ## Performance Metrics
 
-### What metrics does TradePulse calculate?
+### What metrics does GeoSync calculate?
 
 - **Return metrics**: Total return, annualized return
 - **Risk metrics**: Sharpe ratio, Sortino ratio, max drawdown
@@ -589,14 +589,14 @@ Where:
 
 ## Bilingual Support / Підтримка двох мов
 
-### Does TradePulse support Ukrainian?
+### Does GeoSync support Ukrainian?
 
-TradePulse documentation is primarily in English, with Ukrainian translations in key areas:
+GeoSync documentation is primarily in English, with Ukrainian translations in key areas:
 - Main README (bilingual)
 - Contributing guidelines (bilingual)
 - Code comments (English)
 
-### Чи можу я використовувати TradePulse українською?
+### Чи можу я використовувати GeoSync українською?
 
 Так! Основна документація англійською, але ключові документи мають переклад:
 - README.md
@@ -609,7 +609,7 @@ TradePulse documentation is primarily in English, with Ukrainian translations in
 ## Still have questions?
 
 - Check [Documentation](index.md)
-- Search [GitHub Issues](https://github.com/neuron7x/TradePulse/issues)
+- Search [GitHub Issues](https://github.com/neuron7xLab/GeoSync/issues)
 - Read [Troubleshooting](troubleshooting.md)
 - Open a new issue
 

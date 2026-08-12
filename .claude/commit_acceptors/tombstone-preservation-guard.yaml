@@ -1,0 +1,83 @@
+# Diff-bound commit acceptor for the negative-evidence preservation guard
+# (Instrument G of the operational-methodology campaign).
+#
+# Generalizes the byte-exact negative-evidence pinning already proven for the
+# Ricci replay capsule to the whole RIP/TOMBSTONES.md ledger. A new CI gate
+# (scripts/ci/check_tombstone_preservation.py, wired into
+# research-integrity-gate.yml) fail-closes when any tombstone (a) loses its
+# 40-hex SHA anchor or (b) references an in-repo negative artifact that no
+# longer exists — i.e. a silent retraction. Also expands the one short-sha
+# anchor (CALIB-F3: 9c8f5396 -> full 40-hex) so the ledger is uniformly pinned.
+#
+# Runtime behavior: NONE (new CI gate + ledger sha expansion only). No physics,
+# no claim promotion, no negative evidence removed.
+#
+# Locally verified on origin/main base:
+#   * python scripts/ci/check_tombstone_preservation.py: PASS (7 tombstones,
+#     7 negative artifacts preserved)
+#   * pytest tests/scripts/test_check_tombstone_preservation.py -q: 7 passed
+#   * ruff + black + mypy --strict on the new script: clean
+#   * check_claims.py / check_claim_boundary.py / check_research_artifact_truth.py: exit 0
+id: tombstone-preservation-guard
+status: ACTIVE
+claim_type: governance
+promise: >-
+  After this PR lands, RIP/TOMBSTONES.md is CI-enforced as a negative-evidence
+  ledger: scripts/ci/check_tombstone_preservation.py fails closed if any
+  tombstone loses its 40-hex SHA anchor or references a deleted in-repo
+  negative artifact, and research-integrity-gate.yml runs both the guard and
+  its pytest on every change to the ledger, the guard, or its test. No runtime
+  behavior changes; no negative evidence is removed; no claim is promoted.
+diff_scope:
+  changed_files:
+    - path: ".claude/commit_acceptors/tombstone-preservation-guard.yaml"
+    - path: "scripts/ci/check_tombstone_preservation.py"
+    - path: "tests/scripts/test_check_tombstone_preservation.py"
+    - path: ".github/workflows/research-integrity-gate.yml"
+    - path: "RIP/TOMBSTONES.md"
+    - path: "INVENTORY.json"
+  forbidden_paths:
+    - "trading/"
+    - "execution/"
+    - "forecast/"
+    - "policy/"
+    - "application/"
+    - "core/"
+    - "src/"
+required_python_symbols: []
+expected_signal: >-
+  `python scripts/ci/check_tombstone_preservation.py` prints
+  "PASS: 7 tombstone(s) sha-anchored; 7 negative artifact(s) preserved on disk."
+  and `pytest tests/scripts/test_check_tombstone_preservation.py -q` reports
+  7 passed.
+measurement_command: >-
+  bash -c 'mkdir -p tmp && { python scripts/ci/check_tombstone_preservation.py
+  && python -m pytest tests/scripts/test_check_tombstone_preservation.py
+  --no-header -rN; } > tmp/tombstone_preservation_guard.log 2>&1
+  && grep -qE "negative artifact\(s\) preserved" tmp/tombstone_preservation_guard.log
+  && grep -qE "7 passed" tmp/tombstone_preservation_guard.log'
+signal_artifact: "tmp/tombstone_preservation_guard.log"
+falsifier:
+  command: >-
+    bash -c 'tmp=$(mktemp -d);
+    printf "## X — synthetic\n\n- **SHA** · `%s`\n- **ARTIFACT** · `research/gone/RESULTS.md`\n" \
+    9c8f539679a08e68c64cbc421907433a78e36b7a > "$tmp/TOMB.md";
+    python scripts/ci/check_tombstone_preservation.py --tombstones "$tmp/TOMB.md" --root "$tmp";
+    rc=$?; rm -rf "$tmp"; test "$rc" -eq 0'
+  description: >-
+    Inverse probe of the preservation invariant. Builds a synthetic tombstone
+    pointing at a non-existent artifact (research/gone/RESULTS.md) and exits 0
+    (fires) iff the guard WRONGLY returns 0 — i.e. it failed to catch a deleted
+    negative artifact. While the guard is correct the probe exits 1. If it ever
+    exits 0, the preservation gate is broken and must be fixed, not bypassed.
+rollback_command: >-
+  git checkout origin/main -- RIP/TOMBSTONES.md .github/workflows/research-integrity-gate.yml
+  && git rm -f scripts/ci/check_tombstone_preservation.py
+  tests/scripts/test_check_tombstone_preservation.py
+  .claude/commit_acceptors/tombstone-preservation-guard.yaml
+rollback_verification_command: >-
+  bash -c 'test ! -f scripts/ci/check_tombstone_preservation.py'
+memory_update_type: none
+ledger_path: ".claude/commit_acceptors/tombstone-preservation-guard.yaml"
+report_path: "tmp/tombstone_preservation_guard.log"
+evidence: []

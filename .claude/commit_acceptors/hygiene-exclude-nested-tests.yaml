@@ -1,0 +1,83 @@
+# Diff-bound commit acceptor for the nested-test miscount fix.
+#
+# Measurement-integrity fix: test files nested inside runtime packages
+# (core/neuro/tests/*, geosync/dp3_test.py, coherence_bridge/test_runner.py)
+# were scanned as runtime debt, so legitimate test-only random/time/broad-
+# except usage inflated the ledger. This excludes pytest-convention test
+# paths and tightens the baseline DOWN. Infra/governance only, no physics.
+
+id: hygiene-exclude-nested-tests
+status: ACTIVE
+claim_type: correctness
+promise: >-
+  After this PR lands, check_code_hygiene.py no longer counts pytest-
+  convention test files (a /tests/ or /test/ path segment, or a test_*.py /
+  *_test.py / conftest.py basename) nested inside runtime roots as runtime
+  debt. The baseline tightens strictly DOWN — 348->345 over-budget symbols
+  and 885->824 flagged call-sites — removing 3 symbols and 61 call-sites of
+  test code (notably 46 ambient random/time calls tests legitimately use).
+  The meta-gate confirms the move is a permitted decrease. Real runtime debt
+  is still caught; no runtime behaviour, feature, claim, or physics change.
+
+diff_scope:
+  changed_files:
+    - path: ".claude/commit_acceptors/hygiene-exclude-nested-tests.yaml"
+    - path: "INVENTORY.json"
+    - path: "docs/CODE_DEBT_BASELINE.json"
+    - path: "scripts/ci/check_code_hygiene.py"
+  forbidden_paths:
+    - "trading/"
+    - "execution/"
+    - "forecast/"
+    - "policy/"
+    - "core/"
+    - "runtime/"
+    - "application/"
+
+required_python_symbols:
+  - "scripts/ci/check_code_hygiene.py::_is_test_path"
+  - "scripts/ci/check_code_hygiene.py::_iter_py"
+
+expected_signal: >-
+  python scripts/ci/check_code_hygiene.py prints "Code-hygiene ratchet held:
+  345 over-budget symbols + 824 flagged call-sites (target 0)" and exits 0;
+  python scripts/ci/check_debt_baseline_monotonic.py confirms no total grew.
+
+measurement_command: >-
+  bash -c '
+    mkdir -p tmp &&
+    python scripts/ci/check_code_hygiene.py | tee tmp/hygiene_exclude_nested_tests.log &&
+    python scripts/ci/check_debt_baseline_monotonic.py --base-ref origin/main | tee -a tmp/hygiene_exclude_nested_tests.log
+  '
+
+signal_artifact: "tmp/hygiene_exclude_nested_tests.log"
+
+falsifier:
+  command: >-
+    bash -c '
+      python -c "open(\"core/test___hyg_falsify.py\",\"w\").write(\"def big():\n\" + \"\".join(\"    x%d=%d\n\" % (i,i) for i in range(90)))";
+      python scripts/ci/check_code_hygiene.py >/dev/null 2>&1;
+      rc=$?;
+      rm -f core/test___hyg_falsify.py;
+      test "$rc" -eq 0
+    '
+  description: >-
+    Writes a 90-line god function into a test_-named file under the runtime
+    root core/ and asserts the gate stays green. Succeeds (exit 0) only when
+    the test-path exclusion is live; if exclusion regressed the god function
+    would be caught and this would fail. Always removes the temp file.
+
+rollback_command: >-
+  bash -c '
+    git checkout origin/main -- scripts/ci/check_code_hygiene.py docs/CODE_DEBT_BASELINE.json &&
+    git rm -f .claude/commit_acceptors/hygiene-exclude-nested-tests.yaml
+  '
+
+rollback_verification_command: >-
+  bash -c '
+    ! grep -q _is_test_path scripts/ci/check_code_hygiene.py
+  '
+
+memory_update_type: append
+ledger_path: ".claude/commit_acceptors/hygiene-exclude-nested-tests.yaml"
+report_path: "tmp/hygiene_exclude_nested_tests.log"

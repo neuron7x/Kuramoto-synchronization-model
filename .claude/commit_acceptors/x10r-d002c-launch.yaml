@@ -1,0 +1,183 @@
+# Diff-bound commit acceptor for D-002C C2.5 (issue #654) —
+# Full sweep launch infrastructure + verdict derivation.
+#
+# What lands:
+#   * research/systemic_risk/d002c_verdict.py
+#       Verdict deriver: applies acceptance R1 / R2 / R3 to the
+#       completed SweepResult and returns a frozen VerdictResult
+#       carrying tier (SYNTHETIC_GATE6_CERTIFIED_REDESIGN_N_LE_200
+#       or D002C_REDESIGN_INSUFFICIENT_AT_TESTED_BUDGET), per-rule
+#       pass/fail breakdown, anti-overclaim guards (MARGINAL_PASS,
+#       SINGLE_PATH_PASS, NULL_AUDIT_FAIL), and a canonical
+#       sha256 over the load-bearing payload. Threshold constants
+#       are derived from the locked pre-registration YAML; no
+#       post-hoc tuning.
+#   * scripts/run_x10r_d002c_signal_amplification_sweep.py
+#       Operator-facing launch driver. CLI args: --preregistration,
+#       --preflight-dir, --checkpoint, --output-dir, --null-audit-failed.
+#       Pipeline: load_and_lock → build sweep_config → resolve
+#       preflight capsule paths → run_sweep (require_preflight=True) →
+#       derive_verdict → atomic verdict.json write → human-readable
+#       summary. Exit codes 0 (PASS) / 1 (FAIL) / 2 (REFUSED).
+#   * tests/research/systemic_risk/test_d002c_verdict.py
+#       15 fast tests: tier_pass, tier_fail (R1/R2/R3 paths),
+#       MARGINAL_PASS + SINGLE_PATH_PASS guards, null_audit
+#       refusal, sha determinism, frozen guards, input validation
+#       (non-SweepResult, non-preregistration, mismatched prereg
+#       sha), constants match locked YAML, non-finite robustness,
+#       empty-sweep fails.
+#   * docs/governance/D002C_LAUNCH_PROTOCOL.md
+#       Operator runbook: purpose, non-goals, pre-flight capsule
+#       checklist, launch command, resume protocol (Codex P1
+#       capsule-rotation discipline), expected wallclock,
+#       verdict semantics, anti-overclaim guards, required tests,
+#       CI requirements, rollback command, known limitations,
+#       claim boundary.
+#
+# Strict scope:
+#   Launch infrastructure + verdict derivation ONLY. NO sweep
+#   execution itself (the ~16h compute runs outside CI). NO claim
+#   promotion. NO threshold tuning. NO real-data invocation. The
+#   script emits a TIER per the locked acceptance rule and stops
+#   there; tier promotion requires operator action following the
+#   pre-registration anti-overclaim guards (§7 of the YAML).
+
+id: x10r-d002c-launch
+status: ACTIVE
+claim_type: correctness
+promise: >-
+  After this PR lands, the operator can launch the full D-002C
+  Signal Amplification Sweep via a single command, provided the
+  four preflight capsules (pos_control / neg_control / null_audit /
+  smoke_test) are present in the --preflight-dir. The launch
+  refuses if any capsule is missing, malformed, or sha-mismatched
+  (C2.4D preflight enforcement gate). On completion, the verdict
+  deriver applies the locked acceptance rule (R1: |signal|/CI > 1;
+  R2: FPR(λ=0) ≤ 0.05; R3: direction stability ≥ 0.80) and emits
+  one of the two pre-committed tiers — SYNTHETIC_GATE6_CERTIFIED_
+  REDESIGN_N_LE_200 or D002C_REDESIGN_INSUFFICIENT_AT_TESTED_BUDGET
+  — with anti-overclaim guards (MARGINAL_PASS / SINGLE_PATH_PASS /
+  NULL_AUDIT_FAIL) carried in the VerdictResult.
+
+  Strict scope: launch infrastructure + verdict derivation only.
+  No claim promotion. No threshold tuning. No real-data invocation.
+  The verdict is claim-neutral; tier promotion requires operator
+  action following the pre-registration anti-overclaim guardrails.
+diff_scope:
+  changed_files:
+    - path: ".claude/commit_acceptors/x10r-d002c-launch.yaml"
+    - path: "research/systemic_risk/d002c_verdict.py"
+    - path: "scripts/run_x10r_d002c_signal_amplification_sweep.py"
+    - path: "tests/research/systemic_risk/test_d002c_verdict.py"
+    - path: "docs/governance/D002C_LAUNCH_PROTOCOL.md"
+  forbidden_paths:
+    - "trading/"
+    - "execution/"
+    - "forecast/"
+    - "policy/"
+    - "core/physics/"
+    - "core/kuramoto/"
+    - "research/reconstruction/"
+    - "research/systemic_risk/sweep_checkpoint.py"
+    - "research/systemic_risk/d002c_preregistration.py"
+    - "research/systemic_risk/d002c_substrates.py"
+    - "research/systemic_risk/d002c_metrics.py"
+    - "research/systemic_risk/d002c_kuramoto.py"
+    - "research/systemic_risk/d002c_crn_validator.py"
+    - "research/systemic_risk/d002c_pos_control.py"
+    - "research/systemic_risk/d002c_neg_control.py"
+    - "research/systemic_risk/d002c_null_audit.py"
+    - "research/systemic_risk/d002c_smoke_test.py"
+    - "research/systemic_risk/d002c_sweep_runner.py"
+    - "research/systemic_risk/d002c_preflight.py"
+    - "application/governance/claim_ledger.py"
+    - "application/governance/commit_acceptor.py"
+required_python_symbols:
+  - "research/systemic_risk/d002c_verdict.py::TIER_PASS"
+  - "research/systemic_risk/d002c_verdict.py::TIER_FAIL"
+  - "research/systemic_risk/d002c_verdict.py::VerdictResult"
+  - "research/systemic_risk/d002c_verdict.py::RuleEvaluation"
+  - "research/systemic_risk/d002c_verdict.py::derive_verdict"
+  - "research/systemic_risk/d002c_verdict.py::VerdictInvalid"
+  - "scripts/run_x10r_d002c_signal_amplification_sweep.py::main"
+  - "tests/research/systemic_risk/test_d002c_verdict.py::test_tier_pass_when_single_strong_cell_passes_all_three_rules"
+  - "tests/research/systemic_risk/test_d002c_verdict.py::test_tier_fail_when_no_cell_passes_R1"
+  - "tests/research/systemic_risk/test_d002c_verdict.py::test_null_audit_failure_forces_TIER_FAIL_even_if_rules_pass"
+  - "tests/research/systemic_risk/test_d002c_verdict.py::test_single_path_pass_flagged_when_only_one_combo_passes"
+  - "tests/research/systemic_risk/test_d002c_verdict.py::test_derive_verdict_rejects_mismatched_preregistration_sha"
+  - "tests/research/systemic_risk/test_d002c_verdict.py::test_sha_deterministic_across_calls"
+expected_signal: >-
+  Local: `pytest tests/research/systemic_risk/test_d002c_verdict.py -q`
+  reports "15 passed"; `mypy --strict --follow-imports=silent` clean
+  on the 3 new Python files; `ruff check` and `black --check` both
+  pass; `docs/governance/D002C_LAUNCH_PROTOCOL.md` exists.
+measurement_command: >-
+  bash -c 'mypy --strict --follow-imports=silent
+  research/systemic_risk/d002c_verdict.py
+  scripts/run_x10r_d002c_signal_amplification_sweep.py
+  tests/research/systemic_risk/test_d002c_verdict.py
+  && ruff check
+  research/systemic_risk/d002c_verdict.py
+  scripts/run_x10r_d002c_signal_amplification_sweep.py
+  tests/research/systemic_risk/test_d002c_verdict.py
+  && black --check
+  research/systemic_risk/d002c_verdict.py
+  scripts/run_x10r_d002c_signal_amplification_sweep.py
+  tests/research/systemic_risk/test_d002c_verdict.py
+  && pytest tests/research/systemic_risk/test_d002c_verdict.py -q
+  && test -f docs/governance/D002C_LAUNCH_PROTOCOL.md'
+signal_artifact: "tests/research/systemic_risk/test_d002c_verdict.py"
+falsifier:
+  command: |-
+    bash -c 'PYTHONPATH=. python -c "
+    from pathlib import Path
+    from research.systemic_risk.d002c_preregistration import load_and_lock
+    from research.systemic_risk.d002c_sweep_runner import SweepCellOutput, SweepResult
+    from research.systemic_risk.d002c_verdict import (
+        TIER_PASS, TIER_FAIL, VerdictInvalid,
+        derive_verdict,
+    )
+    prereg = load_and_lock(Path('"'"'docs/governance/D002C_PREREGISTRATION.yaml'"'"'))
+    def mkcell(ckey, lam, sci, direction='"'"'up'"'"', sid='"'"'block_structured'"'"', mid='"'"'sync_auc'"'"'):
+        return SweepCellOutput(cell_key=ckey, substrate_id=sid, metric_id=mid, N=100, lambda_=lam, n_seeds=20, n_bootstrap=16, signal_mean=0.5, bca_ci_lo=0.0, bca_ci_hi=0.4, signal_over_ci=sci, direction=direction, censoring_fraction_precursor=0.0, censoring_fraction_null=0.0, wallclock_seconds=1.0, sha256='"'"'a'"'"'*64)
+    pre = mkcell('"'"'c1'"'"', 0.4, 3.0)
+    nul = mkcell('"'"'c2'"'"', 0.0, 0.1, direction='"'"'none'"'"')
+    sweep_pass = SweepResult(preregistration_sha=prereg.preregistration_sha, completed_cells=2, total_cells=2, results=(pre, nul), sha256='"'"'b'"'"'*64, generated_at='"'"'2026-05-12T00:00:00Z'"'"', wallclock_seconds=10.0)
+    v_pass = derive_verdict(sweep_pass, prereg)
+    assert v_pass.tier == TIER_PASS, v_pass.tier
+    # null-audit fail forces FAIL
+    v_audit_fail = derive_verdict(sweep_pass, prereg, null_audit_failed=True)
+    assert v_audit_fail.tier == TIER_FAIL
+    # mismatched preregistration sha refuses
+    sweep_bad = SweepResult(preregistration_sha='"'"'0'"'"'*64, completed_cells=1, total_cells=1, results=(pre,), sha256='"'"'c'"'"'*64, generated_at='"'"'x'"'"', wallclock_seconds=1.0)
+    try:
+        derive_verdict(sweep_bad, prereg)
+        raise AssertionError('"'"'should have raised'"'"')
+    except VerdictInvalid:
+        pass
+    "'
+  description: >-
+    Probes the D-002C C2.5 contract: the deriver returns TIER_PASS
+    on a strong-signal cell that satisfies R1/R2/R3; null_audit_failed
+    flag forces TIER_FAIL regardless of rule passes; a sweep whose
+    preregistration_sha disagrees with the prereg refuses with
+    VerdictInvalid. If any of these regress, the verdict layer is
+    broken — the sweep could silently promote an uncalibrated result
+    or refuse a legitimate pass.
+rollback_command: >-
+  bash -c 'git revert HEAD --no-edit
+  && rm -f research/systemic_risk/d002c_verdict.py
+  scripts/run_x10r_d002c_signal_amplification_sweep.py
+  tests/research/systemic_risk/test_d002c_verdict.py
+  docs/governance/D002C_LAUNCH_PROTOCOL.md
+  .claude/commit_acceptors/x10r-d002c-launch.yaml'
+rollback_verification_command: >-
+  bash -c 'test ! -f research/systemic_risk/d002c_verdict.py
+  && test ! -f scripts/run_x10r_d002c_signal_amplification_sweep.py
+  && test ! -f tests/research/systemic_risk/test_d002c_verdict.py
+  && test ! -f docs/governance/D002C_LAUNCH_PROTOCOL.md
+  && test ! -f .claude/commit_acceptors/x10r-d002c-launch.yaml'
+memory_update_type: append
+ledger_path: ".claude/commit_acceptors/x10r-d002c-launch.yaml"
+report_path: "tests/research/systemic_risk/test_d002c_verdict.py"
+evidence: []

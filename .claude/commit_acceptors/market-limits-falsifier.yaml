@@ -1,0 +1,99 @@
+# Diff-bound commit acceptor — Methodology Instrument F.
+#
+# Adds an executable falsifier *path* for the Landauer-budgeted
+# predictability bound (INV-TAU2) of the existing descriptor
+# core/physics/predictability_horizon.py. The descriptor's stated
+# bound — a precision claim below the Landauer floor
+#   δ_0 ≥ Δ · exp(−E_budget / (k_B T))
+# is physically unaffordable and must flip to the failing verdict
+# (ValueError) on every out-of-bound input.
+#
+# TEST FILE + ACCEPTOR ONLY. No descriptor source, no registry, no
+# invariant, no claim-tier change. INV-TAU2 is the descriptor's own
+# documented bound; nothing is added to INVARIANTS.yaml.
+#
+# Locally verified (worktree /tmp/gs-instr-mktlimits):
+#   * pytest tests/unit/physics/test_market_limits_falsifier.py -q: 10 passed
+#   * ruff check / black --check (isolated): clean
+#   * mypy --strict tests/unit/physics/test_market_limits_falsifier.py: clean
+#   * scripts/ci/check_claim_boundary.py: PASS
+#   * scripts/ci/check_claims.py: PASS
+#   * .claude/physics/validate_tests.py: exit 0 (100% physics grounding)
+
+id: market-limits-falsifier
+status: ACTIVE
+claim_type: governance
+promise: >-
+  After this PR lands, tests/unit/physics/test_market_limits_falsifier.py
+  exercises the VIOLATION path of the Landauer-budgeted predictability
+  bound (INV-TAU2) of core/physics/predictability_horizon.py. The nodes
+  drive the descriptor across its budget floor and assert the
+  unaffordability verdict as a hard cap: a sub-floor precision request
+  (single case + a 4-point sweep) raises "below the Landauer floor"; a
+  zero-budget request raises "budget too small"; an at-floor request is
+  accepted verbatim (saturated boundary); non-finite λ_1 and a negative
+  budget fail closed through the master formula; and the floor is
+  monotone-decreasing in the budget with the closed-form cross-check.
+  Each node would FAIL if the descriptor silently accepted an out-of-
+  bound input. The test asserts a bound, not a market prediction; no
+  invariant is registered and no claim tier is promoted.
+diff_scope:
+  changed_files:
+    - path: ".claude/commit_acceptors/market-limits-falsifier.yaml"
+    - path: "tests/unit/physics/test_market_limits_falsifier.py"
+  forbidden_paths:
+    - "core/"
+    - "trading/"
+    - "execution/"
+    - "forecast/"
+    - "policy/"
+    - ".claude/physics/INVARIANTS.yaml"
+    - "INVENTORY.json"
+    - ".github/detect-secrets.baseline"
+    - "application/governance/claim_ledger.py"
+    - "application/governance/commit_acceptor.py"
+required_python_symbols: []
+expected_signal: >-
+  Local: `pytest tests/unit/physics/test_market_limits_falsifier.py -q`
+  reports "10 passed"; ruff check and black --check are clean on the
+  test file; mypy --strict reports "Success: no issues found";
+  scripts/ci/check_claim_boundary.py and scripts/ci/check_claims.py
+  both PASS; .claude/physics/validate_tests.py exits 0 with 100%
+  physics grounding.
+measurement_command: >-
+  bash -c 'python -m pytest tests/unit/physics/test_market_limits_falsifier.py -q
+  && python scripts/ci/check_claim_boundary.py
+  && python scripts/ci/check_claims.py'
+signal_artifact: "tmp/market_limits_falsifier.log"
+falsifier:
+  command: |-
+    bash -c 'python -c "
+    from core.physics.predictability_horizon import (
+        landauer_min_initial_precision, predictability_horizon_under_budget,
+    )
+    floor = landauer_min_initial_precision(1e-19, dynamic_range=1.0, T_kelvin=300.0)
+    try:
+        predictability_horizon_under_budget(
+            lambda_1=1.0, delta_tol=0.1, dynamic_range=1.0,
+            energy_budget_J=1e-19, T_kelvin=300.0,
+            delta_0_request=floor * 0.5,
+        )
+    except ValueError:
+        raise SystemExit(0)
+    raise SystemExit(1)
+    "'
+  description: >-
+    Probes the INV-TAU2 budget bound directly: a precision request at half
+    the Landauer floor must raise ValueError (physically unaffordable). If
+    the descriptor accepted the sub-floor request the probe exits non-zero,
+    falsifying the gate.
+rollback_command: >-
+  bash -c 'rm -f tests/unit/physics/test_market_limits_falsifier.py
+  .claude/commit_acceptors/market-limits-falsifier.yaml'
+rollback_verification_command: >-
+  bash -c '! test -f tests/unit/physics/test_market_limits_falsifier.py
+  && ! test -f .claude/commit_acceptors/market-limits-falsifier.yaml'
+memory_update_type: append
+ledger_path: ".claude/commit_acceptors/market-limits-falsifier.yaml"
+report_path: "tmp/market_limits_falsifier.log"
+evidence: []

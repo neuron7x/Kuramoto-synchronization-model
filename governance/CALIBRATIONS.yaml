@@ -1,0 +1,42 @@
+# Copyright (c) 2023-2026 Yaroslav Vasylenko (neuron7xLab)
+# SPDX-License-Identifier: MIT
+#
+# Authoritative registry of governed calibration sites — thresholds,
+# tolerances, and sensitivity bands whose value is a controlled decision, not
+# a free parameter. This file is the single source of truth for WHICH
+# calibrations are governed and on what evidence.
+#
+# scripts/ci/check_calibration_drift.py fails closed unless every registered
+# calibration carries, and currently resolves:
+#
+#   * a documented sweep      (how the value was selected — never hand-tuned)
+#   * a selected value        (the chosen point, explicit)
+#   * a failure policy        (what happens on a contract violation)
+#   * a binding acceptor       (diff-bound, so the value cannot move silently)
+#   * a source_sha256 lock     (a silent edit to the calibration source drifts
+#                               the hash and fails CI until the registry and
+#                               its acceptor are refreshed under a diff-bound
+#                               change)
+#
+# A threshold that changes without an acceptor, loses its sweep, or drops its
+# failure policy is silent calibration drift — and silent drift is forbidden.
+schema_version: 1
+calibrations:
+  - id: threshold-calibration-band
+    module: "analytics/signals/threshold_calibration.py"
+    source_sha256: "2d0cf2e2bd51ed95eb6ed2c8f58daa337cb90b2d5e98699daefce450680b446c"  # pragma: allowlist secret
+    selected_value: >-
+      The decision threshold is selected per-protocol as the candidate from an
+      explicit grid whose calibration-sample upper share is closest to
+      target_upper_share (ties → smallest candidate); the sensitivity_band
+      default is 0.1. Selection never consults the validation split.
+    sweep: >-
+      ThresholdCalibrationResult.sensitivity_sweep records, for every
+      candidate, the calibration and validation upper share — a full recorded
+      sensitivity sweep. Verified by
+      tests/unit/analytics/test_threshold_calibration.py.
+    failure_policy: >-
+      fail-closed (ValueError) on empty/non-finite/non-distinct candidates,
+      target_upper_share outside [0, 1], or an empty calibration sample after
+      invalid observations are removed (module constant FAILURE_POLICY).
+    acceptor: ".claude/commit_acceptors/calibration-contract.yaml"

@@ -1,3 +1,5 @@
+# Copyright (c) 2023-2026 Yaroslav Vasylenko (neuron7xLab)
+# SPDX-License-Identifier: MIT
 """Tests for the thermodynamic energy model."""
 
 from __future__ import annotations
@@ -72,3 +74,23 @@ def test_gradient_descent_step_reduces_potential_energy() -> None:
 
     assert after <= before
     assert graph.edges["a", "b"]["distance"] >= MIN_DISTANCE
+
+
+def test_buffer_uncertainty_needs_two_points() -> None:
+    """`if values.size < 2: return 0.0` -- sample std is undefined below two observations.
+
+    Under `Lt -> GtE` the guard inverts: a populated buffer returns 0.0 (real dispersion erased)
+    and a single point drives np.std(ddof=1) to a divide-by-zero nan. Both directions pinned.
+    """
+    from core.engine.energy import PulseBuffer, buffer_uncertainty
+
+    empty = PulseBuffer()
+    assert buffer_uncertainty(empty) == 0.0
+    one = PulseBuffer()
+    one.observe(0.0, 5.0)
+    assert buffer_uncertainty(one) == 0.0
+
+    several = PulseBuffer()
+    for i, latency in enumerate((1.0, 3.0, 5.0, 7.0)):
+        several.observe(float(i), latency)
+    assert buffer_uncertainty(several) > 0.0

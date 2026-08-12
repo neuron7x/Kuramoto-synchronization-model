@@ -1,0 +1,58 @@
+id: marketstate-provenance
+status: ACTIVE
+claim_type: governance
+promise: >-
+  The market-state contract carries an additive, descriptor-only provenance /
+  evidence block (method and source descriptor names, input counts, and a
+  fixed claim_boundary="descriptor_only_not_predictor" plus not_predictive and
+  not_financial_advice declarations). The metadata is purely additive: no
+  runtime math changes, no public API removed, and no trading/forecast prose
+  enters the module. Tests fail closed if any provenance field, the claim
+  boundary, or the prose firewall is violated.
+diff_scope:
+  changed_files:
+    - path: "core/indicators/market_state_contract.py"
+    - path: "tests/unit/indicators/test_market_state_provenance.py"
+    - path: ".claude/commit_acceptors/marketstate-provenance.yaml"
+  forbidden_paths:
+    - "trading/"
+    - "execution/"
+    - "forecast/"
+    - "policy/"
+required_python_symbols:
+  - "ProvenanceMetadata"
+  - "build_provenance"
+  - "CLAIM_BOUNDARY"
+  - "PROVENANCE_METHOD_DESCRIPTORS"
+  - "PROVENANCE_SOURCE_DESCRIPTORS"
+expected_signal: >-
+  Six provenance tests pass; the compiled envelope exposes a provenance block
+  whose claim_boundary equals descriptor_only_not_predictor, the source module
+  contains no trading/forecast product prose, and every pre-existing public
+  field and helper is preserved with unchanged runtime math.
+measurement_command: >-
+  python -m pytest -q tests/unit/indicators/test_market_state_provenance.py &&
+  python scripts/ci/check_claim_boundary.py
+signal_artifact: "tests/unit/indicators/test_market_state_provenance.py"
+falsifier:
+  command: >-
+    python -m pytest -q
+    tests/unit/indicators/test_market_state_provenance.py::test_claim_boundary_fields_present
+    tests/unit/indicators/test_market_state_provenance.py::test_no_forbidden_product_prose
+  description: >-
+    Inverse falsifier probe: weaken the claim_boundary constant, drop a
+    provenance field, or reintroduce product-category prose
+    (e.g. "trading signal", "predictor", "alpha") into the module. The
+    boundary and prose-firewall tests must return non-zero rather than
+    silently passing, proving the firewall is load-bearing.
+rollback_command: >-
+  git checkout HEAD~1 -- core/indicators/market_state_contract.py
+  tests/unit/indicators/test_market_state_provenance.py
+rollback_verification_command: >-
+  python tools/commit_acceptor/validate_commit_acceptor.py
+memory_update_type: none
+ledger_path: ".claude/commit_acceptors/marketstate-provenance.yaml"
+report_path: ".claude/commit_acceptors/marketstate-provenance.yaml"
+evidence:
+  - path: "tests/unit/indicators/test_market_state_provenance.py"
+    sha256: "14b208f1bcf86cb104cb88157b0e0d21e8c7a9d2843f23dd2c44d6b3c50ddfb4"  # pragma: allowlist secret

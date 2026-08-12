@@ -1,0 +1,67 @@
+id: normalization-contract-executable-gate
+status: ACTIVE
+claim_type: correctness
+promise: >-
+  The normalization contract for claim-bearing fused-signal paths is
+  executable, not documentation. A typed NormalizationSpec carries raw units,
+  reference fit window, transform, fit scope, output schema, and raw /
+  transform-config / normalized hashes; validate_normalization fails closed on
+  missing units, missing/unknown transform, future-fit leakage, inconsistent
+  sampling, or a missing raw/output hash; raw_scale_ablation flags a fused
+  verdict that flips on raw scale as SCALE_SENSITIVE; and gate_claim_promotion
+  refuses promotion when status is NOT_RUN, PARTIAL, or SCALE_SENSITIVE. No
+  predictive-rank claim is added and no runtime math of the existing market
+  state contract is changed.
+diff_scope:
+  changed_files:
+    - path: "core/indicators/normalization_contract.py"
+    - path: "tests/unit/indicators/test_normalization_contract.py"
+    - path: ".claude/commit_acceptors/normalization-contract-executable-gate.yaml"
+  forbidden_paths:
+    - "trading/"
+    - "execution/"
+    - "forecast/"
+    - "policy/"
+required_python_symbols:
+  - "NormalizationSpec"
+  - "NormalizationStatus"
+  - "FitWindow"
+  - "validate_normalization"
+  - "raw_scale_ablation"
+  - "gate_claim_promotion"
+  - "NORMALIZATION_CLAIM_BOUNDARY"
+  - "CLAIM_BEARING_SIGNALS"
+  - "SCALE_INVARIANT_TRANSFORMS"
+expected_signal: >-
+  The normalization-contract test module passes (26 tests): clean specs
+  validate NORMALIZED, every fail-closed surface (missing units / transform /
+  hashes, future-fit leakage, inconsistent sampling) produces a finding, the
+  scale-domination regression keeps one structural verdict after
+  normalization, and promotion is blocked for every non-NORMALIZED status.
+measurement_command: >-
+  python -m pytest -q tests/unit/indicators/test_normalization_contract.py
+signal_artifact: "tests/unit/indicators/test_normalization_contract.py"
+falsifier:
+  command: >-
+    python -m pytest -q
+    tests/unit/indicators/test_normalization_contract.py::test_future_fit_leakage_fails_closed
+    tests/unit/indicators/test_normalization_contract.py::test_promotion_blocked_for_non_normalized
+    tests/unit/indicators/test_normalization_contract.py::test_scale_domination_regression_same_structure_different_amplitudes
+  description: >-
+    Inverse falsifier probe. Weaken validate_normalization to accept future-fit
+    leakage (fit_end > apply_start), relax gate_claim_promotion to promote a
+    SCALE_SENSITIVE claim, or let the toy fused kernel ignore amplitude after
+    normalization. The leakage, promotion, and scale-domination tests must
+    return non-zero rather than silently passing, proving the fail-closed
+    surfaces and the scale-invariance verdict are load-bearing.
+rollback_command: >-
+  git checkout HEAD~1 -- core/indicators/normalization_contract.py
+  tests/unit/indicators/test_normalization_contract.py
+rollback_verification_command: >-
+  python tools/commit_acceptor/validate_commit_acceptor.py
+memory_update_type: none
+ledger_path: ".claude/commit_acceptors/normalization-contract-executable-gate.yaml"
+report_path: ".claude/commit_acceptors/normalization-contract-executable-gate.yaml"
+evidence:
+  - path: "tests/unit/indicators/test_normalization_contract.py"
+    sha256: "42d1a73b6902fb1f2b8068857c5d55c1916e5d78a439bf0ee34ae15016f2ef13"  # pragma: allowlist secret

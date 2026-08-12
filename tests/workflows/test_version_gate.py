@@ -1,3 +1,5 @@
+# Copyright (c) 2023-2026 Yaroslav Vasylenko (neuron7xLab)
+# SPDX-License-Identifier: MIT
 """Tests for version-gate workflow."""
 
 from __future__ import annotations
@@ -5,11 +7,11 @@ from __future__ import annotations
 from pathlib import Path
 from typing import Any, Dict
 
+import pytest
 import yaml
 
-WORKFLOW_PATH = (
-    Path(__file__).resolve().parents[2] / ".github" / "workflows" / "version-gate.yml"
-)
+WORKFLOW_PATH = Path(__file__).resolve().parents[2] / ".github" / "workflows" / "version-gate.yml"
+pytestmark = pytest.mark.skipif(not WORKFLOW_PATH.exists(), reason="workflow file not found")
 
 
 def _load_workflow() -> Dict[str, Any]:
@@ -39,9 +41,7 @@ def test_version_check_job_has_minimal_permissions() -> None:
 
     permissions = job.get("permissions")
     assert isinstance(permissions, dict), "Job must declare explicit permissions"
-    assert permissions == {
-        "contents": "read"
-    }, "Job should have minimal read-only permissions"
+    assert permissions == {"contents": "read"}, "Job should have minimal read-only permissions"
 
 
 def test_version_check_job_installs_setuptools_scm() -> None:

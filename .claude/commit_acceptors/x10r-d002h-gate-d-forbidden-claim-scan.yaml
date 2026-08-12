@@ -1,0 +1,211 @@
+# Diff-bound commit acceptor for the D-002H Gate D forbidden-claim
+# scanner PR.
+#
+# Pure test scaffolding + scan report. Emits a machine-readable artifact
+# at artifacts/d002h/scans/d002h_forbidden_claim_scan.json (schema
+# D002H-GATE-D-v1) and a human-readable report at
+# docs/governance/D002H_GATE_D_FORBIDDEN_CLAIM_SCAN.md. The scanner
+# itself lives at scripts/x10r_d002h_gate_d_scan.py and is exercised by
+# tests/systemic_risk/test_d002h_gate_d_forbidden_claims.py (10 tests).
+#
+# Strict scope (per the operating law):
+#   * NO canonical run. NO sweep. NO results.
+#   * NO new mechanism family. NO new verdict literal. NO new salt.
+#   * NO D-002G prereg edit. NO D-002H prereg edit. NO locked-file edit.
+#   * NO D002C_CLAIM_LEDGER.yaml mutation (sha pinned byte-exact at
+#     f96ba9b5a2057d2e0bff84afc28578ab316cff73f6dc6673fb0d6d543b8bd6dd).
+#   * NO substrate code edit. NO mechanism code edit.
+#   * NO claim "Gate D PASS -> canonical run authorised"; the 7-gate
+#     conjunction A AND B AND C AND D AND E AND F AND G is the contract.
+
+id: x10r-d002h-gate-d-forbidden-claim-scan
+status: ACTIVE
+claim_type: governance
+promise: >-
+  After this PR lands,
+  artifacts/d002h/scans/d002h_forbidden_claim_scan.json carries
+  schema_version "D002H-GATE-D-v1" with study_id "D-002H", gate "D",
+  gate_d_verdict "PASS", n_leaks == 0, canonical_run_authorized ==
+  false, downstream_gates_remaining == ["E","F","G"], and a
+  reproducible scanned/exempt enumeration produced by
+  scripts/x10r_d002h_gate_d_scan.py. The artifact embeds the
+  forbidden_claims list verbatim from the D-002H prereg (sha256
+  44b18b5a40ce9d188a9c3bd49339621f81a65a15f97a683247902450dd54acec).
+
+  docs/governance/D002H_GATE_D_FORBIDDEN_CLAIM_SCAN.md carries the
+  8-section report (scope, forbidden-phrases table, exempt-files table,
+  scanner method, verdict, claim boundary verbatim, forbidden
+  interpretations, reproduce); the report is exempt from the scan by
+  design.
+
+  tests/systemic_risk/test_d002h_gate_d_forbidden_claims.py carries 10
+  fast JSON / sha / scan-invariant tests with the exact names required
+  by the Gate D brief: test_gate_d_artifact_exists,
+  test_gate_d_scans_all_d002h_docs,
+  test_gate_d_no_cross_substrate_robustness_claim,
+  test_gate_d_no_d002g_rescue_claim,
+  test_gate_d_no_d002c_rescue_claim,
+  test_gate_d_no_scientific_pass_claim,
+  test_gate_d_no_canonical_run_authorisation_claim,
+  test_gate_d_no_m4_inside_d002g_claim,
+  test_gate_d_block_structured_excluded,
+  test_gate_d_temporal_coupling_excluded.
+
+  docs/governance/D002G_CANONICAL_RUN_BLOCKERS.md gains an append-only
+  "D-002H Gate D" section after the Gate C section.
+
+  Gate D is pure declaration + scan: NO canonical run, NO sweep, NO
+  results. NO new mechanism. NO new verdict literal. NO substrate /
+  mechanism / locked governance edit. NO D-002C ledger mutation. NO
+  D-002H prereg edit. NO canonical D-002H run authorisation - this PR
+  addresses Gate D alone; Gates E, F, G remain open and the 7-gate
+  conjunction is the contract.
+
+diff_scope:
+  changed_files:
+    - path: ".claude/commit_acceptors/x10r-d002h-gate-d-forbidden-claim-scan.yaml"
+    - path: "tests/systemic_risk/test_d002h_gate_d_forbidden_claims.py"
+    - path: "scripts/x10r_d002h_gate_d_scan.py"
+    - path: "docs/governance/D002H_GATE_D_FORBIDDEN_CLAIM_SCAN.md"
+    - path: "artifacts/d002h/scans/d002h_forbidden_claim_scan.json"
+    - path: "docs/governance/D002G_CANONICAL_RUN_BLOCKERS.md"
+  forbidden_paths:
+    - "docs/governance/D002C_CLAIM_LEDGER.yaml"
+    - "docs/governance/D002C_PREREGISTRATION.yaml"
+    - "docs/governance/D002C_CANONICAL_RUN_REPORT.md"
+    - "docs/governance/D002C_ATTEMPT_2_NULL_AUDIT_FALSIFICATION_REPORT.md"
+    - "docs/governance/D002G_PREREGISTRATION.yaml"
+    - "docs/governance/D002G_NONDEGENERATE_NULL_DESIGN.md"
+    - "docs/governance/D002G_ACCEPTANCE_RULES.md"
+    - "docs/governance/D002G_P3_M3_PREREGISTRATION.md"
+    - "docs/governance/D002G_STRUCTURAL_CLOSURE_REPORT.md"
+    - "docs/governance/D002G_NEGATIVE_SPACE_MAP.md"
+    - "docs/governance/D002G_M3_ELIGIBILITY_MATRIX.md"
+    - "docs/governance/D002H_PREREGISTRATION.yaml"
+    - "docs/governance/D002H_SCOPE_RATIONALE.md"
+    - "docs/governance/D002H_CLAIM_BOUNDARY.md"
+    - "docs/governance/D002H_CANONICAL_RUN_AUTHORIZATION_GATES.md"
+    - "docs/governance/D002H_GATE_B_REPORT.md"
+    - "docs/governance/D002H_GATE_C_CANONICAL_GRID.md"
+    - "artifacts/d002h/prereg/d002h_preregistration_lock.json"
+    - "artifacts/d002h/eligibility/d002h_ricci_eligibility.json"
+    - "artifacts/d002h/canonical/d002h_canonical_grid.json"
+    - "scripts/x10r_d002h_gate_b_eligibility.py"
+    - "tests/systemic_risk/test_d002h_gate_b_eligibility.py"
+    - "tests/systemic_risk/test_d002h_gate_c_grid.py"
+    - "tests/systemic_risk/test_d002h_preregistration.py"
+    - ".claude/commit_acceptors/x10r-d002h-ricci-flow-prereg.yaml"
+    - ".claude/commit_acceptors/x10r-d002h-gate-b-eligibility.yaml"
+    - ".claude/commit_acceptors/x10r-d002h-gate-c-canonical-grid.yaml"
+    - "research/systemic_risk/d002c_substrates.py"
+    - "research/systemic_risk/d002g_null_mechanisms.py"
+    - "artifacts/d002g/closure/"
+    - "artifacts/d002g/m3/"
+    - "artifacts/d002g/p3/"
+    - "artifacts/d002g/canonical/"
+    - "artifacts/d002h/canonical/results/"
+    - "artifacts/d002h/authorization/"
+required_python_symbols: []
+expected_signal: >-
+  `PYTHONPATH=. python -m pytest tests/systemic_risk/test_d002h_gate_d_forbidden_claims.py
+  -q` passes all 10 tests; the scanner CLI
+  `PYTHONPATH=. python scripts/x10r_d002h_gate_d_scan.py` exits 0 with
+  "Gate D PASS: scanned=N exempt=M leaks=0"; the artifact JSON parses
+  and satisfies the schema / verdict / counters asserts; the D-002C
+  claim ledger sha256 stays byte-exact at
+  f96ba9b5a2057d2e0bff84afc28578ab316cff73f6dc6673fb0d6d543b8bd6dd;
+  the D-002H prereg sha256 stays byte-exact at
+  44b18b5a40ce9d188a9c3bd49339621f81a65a15f97a683247902450dd54acec;
+  BLOCKERS.md gains the "D-002H Gate D - forbidden-claim scanner"
+  append-only section after the Gate C section.
+measurement_command: >-
+  bash -c 'set -e;
+  PYTHONPATH=. python -m pytest tests/systemic_risk/test_d002h_gate_d_forbidden_claims.py -q;
+  PYTHONPATH=. python scripts/x10r_d002h_gate_d_scan.py;
+  python -c "import json;
+  d=json.load(open(\"artifacts/d002h/scans/d002h_forbidden_claim_scan.json\"));
+  assert d[\"schema_version\"]==\"D002H-GATE-D-v1\";
+  assert d[\"study_id\"]==\"D-002H\";
+  assert d[\"gate\"]==\"D\";
+  assert d[\"gate_d_verdict\"]==\"PASS\";
+  assert d[\"n_leaks\"]==0;
+  assert d[\"canonical_run_authorized\"] is False;
+  assert d[\"downstream_gates_remaining\"]==[\"E\",\"F\",\"G\"];
+  assert isinstance(d[\"scanned_files\"], list) and len(d[\"scanned_files\"])>0;
+  assert isinstance(d[\"exempt_files\"], list) and len(d[\"exempt_files\"])>0;
+  assert d[\"files_with_leaks\"]==[];
+  assert d[\"leaks\"]==[]";
+  grep -q "D-002H Gate D" docs/governance/D002G_CANONICAL_RUN_BLOCKERS.md;
+  grep -q "D002H-GATE-D-v1" docs/governance/D002H_GATE_D_FORBIDDEN_CLAIM_SCAN.md;
+  test ! -d artifacts/d002h/canonical/results;
+  test ! -d artifacts/d002h/authorization;
+  test "$(sha256sum docs/governance/D002C_CLAIM_LEDGER.yaml | awk "{print \$1}")" = "f96ba9b5a2057d2e0bff84afc28578ab316cff73f6dc6673fb0d6d543b8bd6dd";
+  test "$(sha256sum docs/governance/D002H_PREREGISTRATION.yaml | awk "{print \$1}")" = "44b18b5a40ce9d188a9c3bd49339621f81a65a15f97a683247902450dd54acec";
+  test "$(sha256sum docs/governance/D002H_CANONICAL_RUN_AUTHORIZATION_GATES.md | awk "{print \$1}")" = "75becc5c0d57eab9505ab00fe36e35ce1513126f8415d510f1c65dd7643bc0e6";
+  test "$(sha256sum research/systemic_risk/d002c_substrates.py | awk "{print \$1}")" = "4b2e5d65c104a5be5a207951cd3c4ae099f31ce83b3f2c0766a160d8c9e80eca";
+  test "$(sha256sum research/systemic_risk/d002g_null_mechanisms.py | awk "{print \$1}")" = "c7e275191454e1e961d5a079a21b6e1dbfcbc1661d48ddf14d0d0c39a426f257"'
+signal_artifact: "artifacts/d002h/scans/d002h_forbidden_claim_scan.json"
+falsifier:
+  command: >-
+    bash -c 'set -e;
+    PYTHONPATH=. python -m pytest tests/systemic_risk/test_d002h_gate_d_forbidden_claims.py -q || exit 1;
+    test -f artifacts/d002h/scans/d002h_forbidden_claim_scan.json || exit 2;
+    test -f docs/governance/D002H_GATE_D_FORBIDDEN_CLAIM_SCAN.md || exit 3;
+    test -f tests/systemic_risk/test_d002h_gate_d_forbidden_claims.py || exit 4;
+    test -f scripts/x10r_d002h_gate_d_scan.py || exit 5;
+    PYTHONPATH=. python scripts/x10r_d002h_gate_d_scan.py || exit 6;
+    python -c "import json;
+    d=json.load(open(\"artifacts/d002h/scans/d002h_forbidden_claim_scan.json\"));
+    assert d[\"schema_version\"]==\"D002H-GATE-D-v1\";
+    assert d[\"gate_d_verdict\"]==\"PASS\";
+    assert d[\"n_leaks\"]==0;
+    assert d[\"canonical_run_authorized\"] is False;
+    assert d[\"downstream_gates_remaining\"]==[\"E\",\"F\",\"G\"];
+    assert d[\"leaks\"]==[];
+    assert \"results\" not in d;
+    assert \"sweep\" not in d" || exit 7;
+    grep -q "D-002H Gate D" docs/governance/D002G_CANONICAL_RUN_BLOCKERS.md || exit 8;
+    test "$(sha256sum docs/governance/D002C_CLAIM_LEDGER.yaml | awk "{print \$1}")" = "f96ba9b5a2057d2e0bff84afc28578ab316cff73f6dc6673fb0d6d543b8bd6dd" || exit 9;
+    test "$(sha256sum docs/governance/D002H_PREREGISTRATION.yaml | awk "{print \$1}")" = "44b18b5a40ce9d188a9c3bd49339621f81a65a15f97a683247902450dd54acec" || exit 10;
+    test "$(sha256sum research/systemic_risk/d002c_substrates.py | awk "{print \$1}")" = "4b2e5d65c104a5be5a207951cd3c4ae099f31ce83b3f2c0766a160d8c9e80eca" || exit 11;
+    test "$(sha256sum research/systemic_risk/d002g_null_mechanisms.py | awk "{print \$1}")" = "c7e275191454e1e961d5a079a21b6e1dbfcbc1661d48ddf14d0d0c39a426f257" || exit 12;
+    test ! -d artifacts/d002h/canonical/results || exit 13;
+    test ! -d artifacts/d002h/authorization || exit 14;
+    if grep -rE "canonical run authorised|canonical run authorized|Gate D authorises|D-002G rescued|D-002C rescued|cross-substrate robustness|general topology robustness|scientific PASS achieved|sweep complete|sweep result" docs/governance/D002H_GATE_D_FORBIDDEN_CLAIM_SCAN.md | grep -vE "forbidden|NOT|never|cannot|does not|do not|out of scope|MUST NOT|alone does NOT|alone is one term|prohibited|disallowed|requires|impossible|deny|denied|reject|REJECT|attempt|FAIL|after explicit authorisation|after.*all.*7.*gates|will pin|excluded|blocked|BLOCKED"; then
+      echo "forbidden promotional phrase leaked outside denial context"; exit 15;
+    fi'
+  description: >-
+    Probes the D-002H Gate D scanner artifact: 10 Gate D tests pass; 4
+    new files exist on disk (scanner + test + report + JSON artifact);
+    scanner CLI exits 0 PASS; artifact JSON has the locked schema_version
+    D002H-GATE-D-v1, gate_d_verdict PASS, n_leaks 0,
+    canonical_run_authorized False, downstream_gates_remaining
+    [E,F,G], empty leaks list, no ``results`` or ``sweep`` field;
+    BLOCKERS.md carries the new Gate D append-only section; D-002C
+    claim ledger byte-exact at the anchor sha; D-002H prereg sha
+    byte-exact at PR #683 anchor; D002H_CANONICAL_RUN_AUTHORIZATION_GATES
+    sha byte-exact; substrate + mechanism module shas byte-exact
+    unchanged; no artifacts/d002h/canonical/results/ directory exists;
+    no artifacts/d002h/authorization/ directory exists; no forbidden
+    promotional phrase leaks outside denial context inside the report.
+    Regression on any -> Gate D contract broken.
+rollback_command: >-
+  bash -c 'rm -f
+  tests/systemic_risk/test_d002h_gate_d_forbidden_claims.py
+  scripts/x10r_d002h_gate_d_scan.py
+  docs/governance/D002H_GATE_D_FORBIDDEN_CLAIM_SCAN.md
+  artifacts/d002h/scans/d002h_forbidden_claim_scan.json
+  .claude/commit_acceptors/x10r-d002h-gate-d-forbidden-claim-scan.yaml
+  && rmdir artifacts/d002h/scans 2>/dev/null || true
+  && git checkout HEAD~1 -- docs/governance/D002G_CANONICAL_RUN_BLOCKERS.md'
+rollback_verification_command: >-
+  bash -c 'test ! -f tests/systemic_risk/test_d002h_gate_d_forbidden_claims.py
+  && test ! -f scripts/x10r_d002h_gate_d_scan.py
+  && test ! -f docs/governance/D002H_GATE_D_FORBIDDEN_CLAIM_SCAN.md
+  && test ! -f artifacts/d002h/scans/d002h_forbidden_claim_scan.json
+  && test ! -f .claude/commit_acceptors/x10r-d002h-gate-d-forbidden-claim-scan.yaml
+  && ! grep -q "D-002H Gate D" docs/governance/D002G_CANONICAL_RUN_BLOCKERS.md'
+memory_update_type: append
+ledger_path: ".claude/commit_acceptors/x10r-d002h-gate-d-forbidden-claim-scan.yaml"
+report_path: "docs/governance/D002H_GATE_D_FORBIDDEN_CLAIM_SCAN.md"
+evidence: []

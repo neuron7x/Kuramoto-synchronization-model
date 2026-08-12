@@ -1,0 +1,55 @@
+{
+  "$id": "https://github.com/neuron7xLab/GeoSync/schemas/cognitive_dynamics_falsification.schema.json",
+  "$schema": "https://json-schema.org/draft/2020-12/schema",
+  "items": {
+    "additionalProperties": false,
+    "properties": {
+      "ablation_score": {
+        "type": "number"
+      },
+      "amplification_score": {
+        "type": "number"
+      },
+      "baseline_score": {
+        "type": "number"
+      },
+      "risk_delta": {
+        "type": "number"
+      },
+      "signal_loss": {
+        "type": "number"
+      },
+      "value": {
+        "type": "number"
+      },
+      "verdict": {
+        "enum": [
+          "survive",
+          "reject_or_schedule"
+        ],
+        "type": "string"
+      },
+      "verification": {
+        "const": "deterministic_replay_only",
+        "type": "string"
+      },
+      "weight": {
+        "type": "string"
+      }
+    },
+    "required": [
+      "weight",
+      "value",
+      "baseline_score",
+      "ablation_score",
+      "amplification_score",
+      "signal_loss",
+      "risk_delta",
+      "verdict",
+      "verification"
+    ],
+    "type": "object"
+  },
+  "title": "Cognitive Dynamics Falsification Cycle",
+  "type": "array"
+}

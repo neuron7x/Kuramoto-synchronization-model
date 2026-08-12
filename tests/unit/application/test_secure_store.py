@@ -1,3 +1,5 @@
+# Copyright (c) 2023-2026 Yaroslav Vasylenko (neuron7xLab)
+# SPDX-License-Identifier: MIT
 from __future__ import annotations
 
 from dataclasses import dataclass
@@ -57,9 +59,7 @@ def store_components(
     )
     template_dir = tmp_path / "templates"
     template_dir.mkdir()
-    (template_dir / "deployment.yaml.j2").write_text(
-        "token={{ token }}\n", encoding="utf-8"
-    )
+    (template_dir / "deployment.yaml.j2").write_text("token={{ token }}\n", encoding="utf-8")
     store = CentralConfigurationStore(
         vault=vault,
         template_manager=ConfigTemplateManager(template_dir),
@@ -118,9 +118,7 @@ def test_namespace_access_hydrated_on_restart(tmp_path: Path):
     audit_logger = AuditLogger(secret="audit-secret-value", sink=audit_sink)
     template_dir = tmp_path / "templates"
     template_dir.mkdir()
-    (template_dir / "config.yaml.j2").write_text(
-        "value={{ value }}\n", encoding="utf-8"
-    )
+    (template_dir / "config.yaml.j2").write_text("value={{ value }}\n", encoding="utf-8")
 
     namespace = NamespaceDefinition(
         name="prod",
@@ -178,7 +176,7 @@ def test_configuration_round_trip(store_components):
     store.write_configuration(
         "prod",
         "service",
-        {"endpoint": "https://api.tradepulse.invalid", "retries": 3},
+        {"endpoint": "https://api.geosync.invalid", "retries": 3},
         actor="platform",
         ip_address="198.51.100.10",
     )
@@ -188,7 +186,7 @@ def test_configuration_round_trip(store_components):
         actor="deploy",
         ip_address="198.51.100.11",
     )
-    assert config["endpoint"] == "https://api.tradepulse.invalid"
+    assert config["endpoint"] == "https://api.geosync.invalid"
     assert config["retries"] == 3
 
 

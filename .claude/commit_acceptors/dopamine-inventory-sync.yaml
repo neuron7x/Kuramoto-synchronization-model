@@ -1,0 +1,22 @@
+id: dopamine-inventory-sync
+status: DRAFT
+claim_type: governance
+promise: "Inventory scope checker recognizes the dopamine CI helper added by this PR."
+diff_scope:
+  changed_files:
+    - path: ".claude/commit_acceptors/dopamine-inventory-sync.yaml"
+    - path: "scripts/ci/check_inventory_sync.py"
+  forbidden_paths: []
+required_python_symbols: []
+expected_signal: "inventory sync checker reports no missing managed files"
+measurement_command: "python scripts/ci/check_inventory_sync.py"
+signal_artifact: "INVENTORY.json"
+falsifier:
+  command: "python -c \"print('negative-control')\""
+  description: "Negative-control placeholder for draft validation."
+rollback_command: "git checkout -- scripts/ci/check_inventory_sync.py"
+rollback_verification_command: "git diff --exit-code scripts/ci/check_inventory_sync.py"
+memory_update_type: none
+ledger_path: ".claude/commit_acceptors/dopamine-inventory-sync.yaml"
+report_path: "docs/architecture/dopamine_contract.md"
+evidence: []

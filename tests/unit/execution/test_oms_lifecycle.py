@@ -1,3 +1,5 @@
+# Copyright (c) 2023-2026 Yaroslav Vasylenko (neuron7xLab)
+# SPDX-License-Identifier: MIT
 """Lifecycle orchestration integration tests for :mod:`execution.oms`."""
 
 from __future__ import annotations
@@ -69,9 +71,7 @@ def lifecycle(tmp_path) -> OrderLifecycle:
         dialect="sqlite",
     )
     store.ensure_schema()
-    return OrderLifecycle(
-        store, clock=lambda: datetime(2024, 1, 1, tzinfo=timezone.utc)
-    )
+    return OrderLifecycle(store, clock=lambda: datetime(2024, 1, 1, tzinfo=timezone.utc))
 
 
 def _make_oms(tmp_path, lifecycle: OrderLifecycle) -> OrderManagementSystem:

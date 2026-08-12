@@ -1,0 +1,29 @@
+{
+  "gate": "ADMISSIBLE",
+  "grounds": [
+    {
+      "holds": true,
+      "id": "H1",
+      "name": "homeostasis (drive bounded)"
+    },
+    {
+      "holds": true,
+      "id": "H2",
+      "name": "arrow-of-time (budget monotone)"
+    },
+    {
+      "holds": true,
+      "id": "H3",
+      "name": "synchrony (phase-locked)"
+    },
+    {
+      "holds": true,
+      "id": "H4",
+      "name": "verification (final verdict PASS)"
+    }
+  ],
+  "report_only": false,
+  "schema": "geosync.no_ungrounded_act.v1",
+  "theorem": "act \u21d4 H1 \u2227 H2 \u2227 H3 \u2227 H4",
+  "verdict": "PASS"
+}

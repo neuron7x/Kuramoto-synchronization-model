@@ -1,0 +1,35 @@
+id: bbb-nvu-cng-config-a
+status: ACTIVE
+claim_type: correctness
+promise: "Diff-bound acceptor for BBB NVU config and fixture files."
+diff_scope:
+  changed_files:
+    - path: ".claude/commit_acceptors/bbb-nvu-cng-config-a.yaml"
+    - path: "BBB_NVU_Cognitive_Noise_Gate_2026/config/evidence_grades.yaml"
+    - path: "BBB_NVU_Cognitive_Noise_Gate_2026/config/risk_rules.yaml"
+    - path: "BBB_NVU_Cognitive_Noise_Gate_2026/examples/sample_observation.json"
+    - path: "BBB_NVU_Cognitive_Noise_Gate_2026/examples/sample_run_input.json"
+    - path: "BBB_NVU_Cognitive_Noise_Gate_2026/invariants.yaml"
+    - path: "BBB_NVU_Cognitive_Noise_Gate_2026/tests/adversarial_golden_vectors.json"
+    - path: "BBB_NVU_Cognitive_Noise_Gate_2026/tests/test_adversarial_auditor.py"
+    - path: "BBB_NVU_Cognitive_Noise_Gate_2026/tests/test_vectors.md"
+    - path: "BBB_NVU_Cognitive_Noise_Gate_2026/scripts/adversarial_auditor.py"
+    - path: "BBB_NVU_Cognitive_Noise_Gate_2026/tools/verify_artifact.py"
+  forbidden_paths:
+    - "trading/"
+    - "execution/"
+    - "forecast/"
+    - "policy/"
+required_python_symbols: []
+expected_signal: "The focused verifier completes for config and fixture files."
+measurement_command: "python BBB_NVU_Cognitive_Noise_Gate_2026/tools/verify_artifact.py"
+signal_artifact: "tmp/bbb_nvu_cng_verify_artifact.json"
+falsifier:
+  command: "python BBB_NVU_Cognitive_Noise_Gate_2026/tools/verify_artifact.py --invalid-mode"
+  description: "Unknown verifier modes must fail."
+rollback_command: "git diff --exit-code"
+rollback_verification_command: "git diff --exit-code"
+memory_update_type: append
+ledger_path: ".claude/commit_acceptors/bbb-nvu-cng-config-a.yaml"
+report_path: "tmp/bbb_nvu_cng_verify_artifact.json"
+evidence: []

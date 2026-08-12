@@ -1,0 +1,57 @@
+id: physics-runtime-hardening-after-1309
+status: ACTIVE
+claim_type: governance
+promise: >-
+  Convert declared physics/neuro mechanisms from documented/partial/decorative
+  into executed, falsifiable, INV-bound source, or demote them honestly. No
+  claim tier is upgraded without invariant + source + test + falsifier. Adds the
+  executed adaptive-criticality isolation gate, a fail-closed coherence-bridge
+  physics-contract gate (Ollivier vs Forman split), an Ott-Antonsen repeller
+  domain restriction, INV-bound promotion of the dopamine adapter and the
+  homeostatic stabilizer, fail-closed Hebbian eligibility, decorative-name
+  quarantine with backward-compatible aliases, and an evidence-integrity gate
+  with teeth. No new physics or neuroscience; no alpha; synthetic-only.
+diff_scope:
+  changed_files:
+    - path: "coherence_bridge/geosync_adapter.py"
+    - path: "coherence_bridge/physics_contract.py"
+    - path: "core/kuramoto/ott_antonsen.py"
+    - path: "geosync/estimators/dfa_gamma_estimator.py"
+    - path: "geosync/neuroeconomics/hebbian_plasticity.py"
+    - path: "scripts/ci/check_evidence_integrity.py"
+    - path: "src/geosync/core/neuro/adaptive_calibrator.py"
+    - path: "src/geosync/core/neuro/neuro_orchestrator.py"
+    - path: "src/geosync/policy/basal_ganglia.py"
+    - path: "tests/ci/test_evidence_integrity_gate.py"
+    - path: "tests/unit/neuro/test_hebbian_global_stability.py"
+    - path: "docs/phd/13_physics_runtime_hardening.md"
+    - path: "docs/architecture/claim_graph.json"
+    - path: "scripts/ci/evidence_gate.sh"
+    - path: "scripts/ci/prove_repo_integrity.sh"
+    - path: ".claude/commit_acceptors/physics-runtime-hardening-after-1309.yaml"
+  forbidden_paths:
+    - "core/execution/"
+    - "core/strategies/"
+    - "interfaces/live_runner.py"
+    - "forecast/"
+required_python_symbols:
+  - "geosync.estimators.dfa_gamma_estimator:AdaptiveCriticalityGate"
+  - "coherence_bridge.physics_contract:validate_physics_contract"
+expected_signal: >-
+  make phd-evidence is all-green (including the new evidence_integrity gate) and
+  the distinguished evidence table reports OPERATIONAL >= 21 with no fake
+  promotion (every OPERATIONAL inv_ref/test resolves; no PARTIAL cites an INV).
+measurement_command: "bash scripts/ci/phd_evidence.sh"
+signal_artifact: "artifacts/academy_fellow/distinguished_evidence_table.json"
+falsifier:
+  command: "python -c \"import json,sys; d=json.load(open('artifacts/academy_fellow/distinguished_evidence_table.json')); sys.exit(0 if d['summary']['by_tier'].get('OPERATIONAL',0) < 21 else 1)\""
+  description: >-
+    Exits non-zero in the asserted healthy state (OPERATIONAL tier >= 21 after
+    the dopamine-adapter / coherence-bridge / homeostatic promotions); flips to
+    pass (exit 0) only if a promotion regressed below 21 — the negative control.
+rollback_command: "git checkout -- coherence_bridge/geosync_adapter.py coherence_bridge/physics_contract.py core/kuramoto/ott_antonsen.py geosync/estimators/dfa_gamma_estimator.py geosync/neuroeconomics/hebbian_plasticity.py scripts/ci/check_evidence_integrity.py src/geosync/core/neuro/adaptive_calibrator.py src/geosync/core/neuro/neuro_orchestrator.py src/geosync/policy/basal_ganglia.py"
+rollback_verification_command: "git diff --exit-code coherence_bridge/physics_contract.py geosync/estimators/dfa_gamma_estimator.py core/kuramoto/ott_antonsen.py"
+memory_update_type: append
+ledger_path: ".claude/commit_acceptors/physics-runtime-hardening-after-1309.yaml"
+report_path: "docs/phd/13_physics_runtime_hardening.md"
+evidence: []

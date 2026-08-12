@@ -1,6 +1,6 @@
 # Production Readiness Assessment
 
-TradePulse is feature-rich for research and backtesting workflows, but several critical capabilities are still missing before the platform can be considered production-grade. This document captures the current gaps and the work required to close them. Treat it as a living checklist that should be reviewed before promising live-trading availability to stakeholders.
+GeoSync is feature-rich for research and backtesting workflows, but several critical capabilities are still missing before the platform can be considered production-grade. This document captures the current gaps and the work required to close them. Treat it as a living checklist that should be reviewed before promising live-trading availability to stakeholders.
 
 ## Current Status
 
@@ -35,20 +35,20 @@ TradePulse is feature-rich for research and backtesting workflows, but several c
    - Build a UI dashboard that visualises strategy state, P&L, execution metrics, and alerts.
    - Integrate dashboards with historical drill-downs and anomaly detection overlays.
 
-## Module Production Contracts (TACL + HydroBrain v2)
+## Module Production Contracts (TACL + GeoSync Hydro v2)
 
 This section defines the minimum production contracts for the `tacl/` and
-`hydrobrain_v2/` modules. These contracts establish deterministic behavior,
+`geosync_hydro/` modules. These contracts establish deterministic behavior,
 bounded latency, and fail-safe behavior for degradation scenarios.
 
 ### Experimental Flags Review
 
 - **`tacl/`**: No `experimental` labels or feature flags detected in the module.
-- **`hydrobrain_v2/`**: No `experimental` labels or feature flags detected in the module.
+- **`geosync_hydro/`**: No `experimental` labels or feature flags detected in the module.
 
 ### Minimum Production Contracts
 
-| Contract | TACL (Thermodynamic Autonomic Control Layer) | HydroBrain v2 |
+| Contract | TACL (Thermodynamic Autonomic Control Layer) | GeoSync Hydro v2 |
 | --- | --- | --- |
 | Deterministic outputs | Energy scoring and risk gating are deterministic for identical inputs. | `RealTimeMonitor` executes in `eval()` mode; inference should be deterministic for identical inputs and weights. |
 | Bounded latency | Pre-action gating must complete within policy timeout; on breach, fallback returns fail-safe decision. | Window inference must complete within policy timeout; on breach, fallback emits fail-safe payload and alerts. |
@@ -57,10 +57,10 @@ bounded latency, and fail-safe behavior for degradation scenarios.
 ### Standard Degradation Handling
 
 - **Timeouts**: `tacl.degradation.DegradationPolicy.timeout_s` and
-  `hydrobrain_v2.degradation.DegradationPolicy.timeout_s` provide bounded latency
+  `geosync_hydro.degradation.DegradationPolicy.timeout_s` provide bounded latency
   for pre-action checks and inference.
 - **Fallback policy**: `tacl.degradation.apply_degradation` and
-  `hydrobrain_v2.degradation.apply_degradation` return conservative defaults and
+  `geosync_hydro.degradation.apply_degradation` return conservative defaults and
   structured degradation reports to keep pipelines fail-safe.
 
 ## Recommended Next Steps
@@ -77,4 +77,4 @@ bounded latency, and fail-safe behavior for degradation scenarios.
    - Add CI jobs for benchmark regression tracking and data-quality validation.
    - Require sign-off from risk/compliance stakeholders before promoting releases to production environments.
 
-Maintaining this checklist will keep TradePulse aligned with industry expectations for safety-critical trading systems and provide transparency on the work remaining before the first production deployment.
+Maintaining this checklist will keep GeoSync aligned with industry expectations for safety-critical trading systems and provide transparency on the work remaining before the first production deployment.

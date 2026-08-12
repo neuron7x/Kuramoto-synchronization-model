@@ -1,0 +1,182 @@
+{
+  "schema": "geosync.mutable_state_registry.v1",
+  "verdict": "BOUND",
+  "components": [
+    {
+      "component": "core.features.realtime_store",
+      "source": "core/features/realtime_store.py",
+      "state_surface": "feature_cache",
+      "state_owner": "RealTimeFeatureStore",
+      "state_key": ["entity_id", "feature_name"],
+      "ordering_field": "event_ts",
+      "write_rule": "compare-and-set by event_ts on both the in-process TTL cache and Redis",
+      "read_rule": "cache before database; a cached value is never older than its event_ts",
+      "conflict_rule": "an older event_ts is rejected (last-writer-wins is disallowed)",
+      "staleness_rule": "TTL expiry plus event_ts monotonicity; no resurrection of an older value",
+      "concurrency_guard": "in-process CAS in _TTLCache.set + Redis Lua CAS on a companion :ets key",
+      "concurrent": true,
+      "is_cache": true,
+      "tests": [
+        "tests/unit/core/test_realtime_store_event_ts_cas.py",
+        "tests/unit/core/test_realtime_store.py"
+      ],
+      "verdict": "BOUND"
+    },
+    {
+      "component": "execution.risk.core",
+      "source": "execution/risk/core.py",
+      "state_surface": "risk_exposure",
+      "state_owner": "RiskManager",
+      "state_key": ["canonical_symbol"],
+      "ordering_field": null,
+      "write_rule": "validate_order reserves pending atomically; register_fill converts; caps checked against actual+pending",
+      "read_rule": "current_position/current_notional/exposure_snapshot read under the state lock",
+      "conflict_rule": "reservation-lag bypass closed: a second order sees the first's pending hold",
+      "staleness_rule": "reservations discharged on reject/cancel/timeout; open_reservation_count leak detector",
+      "concurrency_guard": "threading.RLock (_state_lock) via @_synchronized on every mutator/reader",
+      "concurrent": true,
+      "is_cache": false,
+      "tests": [
+        "tests/unit/execution/test_risk_manager_concurrency.py",
+        "tests/unit/execution/test_risk_pending_reservations.py"
+      ],
+      "verdict": "BOUND"
+    },
+    {
+      "component": "core.messaging.event_bus",
+      "source": "core/messaging/event_bus.py",
+      "state_surface": "consumer_tasks",
+      "state_owner": "KafkaEventBus",
+      "state_key": ["topic_name"],
+      "ordering_field": null,
+      "write_rule": "each subscribe appends a tracked asyncio.Task to _consumer_tasks[topic]",
+      "read_rule": "tasks are enumerated only from the owning event loop",
+      "conflict_rule": "duplicate topic subscriptions track distinct tasks; none is orphaned",
+      "staleness_rule": "stop() cancels every tracked task, awaits cancellation, then clears the map",
+      "concurrency_guard": "single asyncio event loop confinement + explicit task tracking and cancel-on-stop",
+      "concurrent": true,
+      "is_cache": false,
+      "tests": [
+        "tests/unit/messaging/test_event_bus.py",
+        "tests/unit/messaging/test_event_bus_extended.py"
+      ],
+      "verdict": "BOUND"
+    },
+    {
+      "component": "execution.order_ledger",
+      "source": "execution/order_ledger.py",
+      "state_surface": "order_ledger_chain",
+      "state_owner": "OrderLedger",
+      "state_key": ["sequence"],
+      "ordering_field": "sequence",
+      "write_rule": "append under the lock; each event links prev_hash to form a hash chain",
+      "read_rule": "snapshot/replay read the chain under the lock",
+      "conflict_rule": "sequence is strictly monotonic; a broken prev_hash link is rejected",
+      "staleness_rule": "append-only; no in-place mutation, so no stale overwrite is possible",
+      "concurrency_guard": "threading.RLock (_lock) around append/snapshot/replay",
+      "concurrent": true,
+      "is_cache": false,
+      "tests": [
+        "tests/execution/test_order_ledger.py",
+        "tests/unit/test_deterministic_hashing_integrity.py"
+      ],
+      "verdict": "BOUND"
+    },
+    {
+      "component": "core.idempotency.keys",
+      "source": "core/idempotency/keys.py",
+      "state_surface": "idempotency_key_canonicalization",
+      "state_owner": "IdempotencyKeyFactory",
+      "state_key": ["payload_fingerprint"],
+      "ordering_field": null,
+      "write_rule": "keys are derived by pure canonicalization; the factory holds only an immutable namespace UUID",
+      "read_rule": "build() is a pure function of its inputs",
+      "conflict_rule": "canonicalization is deterministic (float -0.0->0.0, sorted keys) so equal payloads map to equal keys",
+      "staleness_rule": "no mutable runtime state; nothing can go stale",
+      "concurrency_guard": "stateless/pure (immutable factory, thread-safe by construction)",
+      "concurrent": false,
+      "is_cache": false,
+      "tests": [
+        "tests/unit/test_deterministic_hashing_integrity.py"
+      ],
+      "verdict": "BOUND"
+    },
+    {
+      "component": "libs.db.session",
+      "source": "libs/db/session.py",
+      "state_surface": "engine_and_monitor_registry",
+      "state_owner": "SessionManager",
+      "state_key": ["engine"],
+      "ordering_field": null,
+      "write_rule": "engine creation and monitor registration mutate shared state under the lock",
+      "read_rule": "session() acquires the lock to read the engine handle",
+      "conflict_rule": "single engine instance; concurrent initialisation is serialised",
+      "staleness_rule": "engine is created once and reused; disposal is explicit",
+      "concurrency_guard": "threading.Lock (_lock) around engine/monitor access",
+      "concurrent": true,
+      "is_cache": false,
+      "tests": [
+        "tests/unit/libs/test_db_engine_session_contracts.py"
+      ],
+      "verdict": "BOUND"
+    },
+    {
+      "component": "libs.db.repository",
+      "source": "libs/db/repository.py",
+      "state_surface": "repository_operations",
+      "state_owner": "SqlAlchemyRepository",
+      "state_key": ["entity_id"],
+      "ordering_field": null,
+      "write_rule": "each operation runs inside a SessionManager-scoped transaction with retry",
+      "read_rule": "reads run in a read_only session scope",
+      "conflict_rule": "transactional isolation is delegated to the database/session",
+      "staleness_rule": "no local cache; every read hits the session",
+      "concurrency_guard": "stateless (holds no mutable state; delegates to SessionManager's lock and DB transactions)",
+      "concurrent": false,
+      "is_cache": false,
+      "tests": [
+        "tests/unit/libs/test_db_repository_contracts.py"
+      ],
+      "verdict": "BOUND"
+    },
+    {
+      "component": "modules.data_quality_monitor",
+      "source": "modules/data_quality_monitor.py",
+      "state_surface": "rolling_quality_state",
+      "state_owner": "DataQualityMonitor",
+      "state_key": ["symbol"],
+      "ordering_field": "last_update_ts",
+      "write_rule": "each tick updates _data_history/_last_updates/_rolling_stats for its symbol",
+      "read_rule": "health reads the latest rolling stats per symbol",
+      "conflict_rule": "per-symbol last_update_ts orders updates; older ticks do not advance state",
+      "staleness_rule": "rolling window bounds history; a symbol with no recent update is flagged degraded",
+      "concurrency_guard": "single-writer (monitor is confined to one ingest thread; not shared across threads)",
+      "concurrent": false,
+      "is_cache": false,
+      "tests": [
+        "tests/unit/geosync/test_data_quality.py"
+      ],
+      "verdict": "BOUND"
+    },
+    {
+      "component": "modules.strategy_scheduler",
+      "source": "modules/strategy_scheduler.py",
+      "state_surface": "scheduled_task_registry",
+      "state_owner": "StrategyScheduler",
+      "state_key": ["task_id"],
+      "ordering_field": null,
+      "write_rule": "task registration and status transitions mutate _tasks under the lock",
+      "read_rule": "task lookups acquire the lock",
+      "conflict_rule": "duplicate task_id registration is rejected deterministically under the lock",
+      "staleness_rule": "terminal tasks are pruned; status transitions are guarded",
+      "concurrency_guard": "threading.Lock (_lock) around task registration and status transitions",
+      "concurrent": true,
+      "is_cache": false,
+      "tests": [
+        "tests/unit/test_agent_scheduler.py",
+        "tests/unit/modules/test_coordination_monitoring_contracts.py"
+      ],
+      "verdict": "BOUND"
+    }
+  ]
+}

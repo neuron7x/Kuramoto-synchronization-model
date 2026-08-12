@@ -1,6 +1,6 @@
 # Architecture Decision Records
 
-This directory captures significant technical and governance decisions for TradePulse.
+This directory captures significant technical and governance decisions for GeoSync.
 
 ## Records
 
@@ -20,6 +20,15 @@ This directory captures significant technical and governance decisions for Trade
 - [ADR 0001: Security, Compliance, and Documentation Automation](0001-security-compliance-automation.md)
 - [ADR 0002: Serotonin Controller - Hysteretic Hold Logic with SRE Observability](0002-serotonin-controller-architecture.md)
 - [ADR 0003: Principal System Architect Security Framework](0003-principal-architect-security-framework.md)
+- [ADR 0017: Core to src migration](0017-core-to-src-migration.md)
+- [ADR 0018: Accelerator Observability](0018-accelerator-observability.md)
+- [ADR 0019: Distributed Tracing Carrier-Key Contract](0019-distributed-tracing-carrier-key-contract.md)
+- [ADR 0020: IERD-PAI-FPS-UX-001 Adoption](0020-ierd-adoption.md)
+- [ADR 0021: Falsifier-required ANCHORED claims (Phase 1 entry gate)](0021-falsifier-required-anchored-claims.md)
+- [ADR 0022: Reset-Wave as Engineering Numerical Model (FACT/MODEL/ANALOGY)](0022-reset-wave-engineering-model.md)
+- [ADR 0023: Reset-Wave Distributed-Resilience Adapter (5 Async Failure Modes)](0023-reset-wave-distributed-resilience.md)
+- [ADR 0025: Code-hygiene ratchet](0025-code-hygiene-ratchet.md)
+- [ADR 0026: Code-hygiene keystone (anti-laundering, coverage, fail-closed parse)](0026-code-hygiene-keystone.md)
 
 ## Contributing
 

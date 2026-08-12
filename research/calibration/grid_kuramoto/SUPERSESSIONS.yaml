@@ -1,0 +1,115 @@
+# Copyright (c) 2023-2026 Yaroslav Vasylenko (neuron7xLab)
+# SPDX-License-Identifier: MIT
+#
+# CALIB-GRID supersession registry (append-only, machine-readable).
+#
+# This file is the SINGLE SOURCE OF TRUTH for "a sha-pinned CALIB-GRID
+# artifact encodes a causal premise that a LATER sha-pinned lineage has
+# FALSIFIED". It does NOT rewrite, recompute or edit any frozen artifact:
+# the historical NEGATIVE/FAIL records are immutable and stay byte-
+# identical. A supersession entry is a NEW ADDITIVE LAYER that resolves
+# FORWARD — every lineage #6+ that reads a superseded premise as ground
+# truth MUST also resolve this registry (enforced by the forcing-function
+# test test_superseded_claims_resolve_via_registry).
+#
+# Fail-closed contract: every `stale_artifacts[].path` must exist on
+# disk; every `superseded_sha` / `superseding_sha` must be a real commit
+# ancestor of the current branch. The frozen artifacts themselves are
+# NOT touched — this registry only records the supersession relation.
+
+version: 1
+registry: CALIB-GRID-SUPERSESSIONS
+
+supersessions:
+  - id: SUPERSEDE-001
+    title: >-
+      R1's "double-differentiation SNR / no-consistent-estimator" noisy
+      attribution is FALSIFIED by CALIB-GRID-002.
+    # The premise as R1 stated it (paraphrased; verbatim anchors are in
+    # stale_artifacts[].verbatim_anchor below).
+    stale_premise: >-
+      CALIB-GRID-001 R1 attributes the frozen sigma=0.02 noisy-regime
+      failure to a double-differentiation second-derivative SNR /
+      persistent-excitation boundary and asserts "no consistent
+      estimator exists for the noisy regime at this trajectory length
+      and excitation level" — i.e. an estimator-class /
+      differentiation-operator defect.
+    # The corrected attribution, verbatim-anchored to the superseding
+    # artifact (cg002/RESULTS.md) so the correction cannot drift.
+    corrected_attribution: >-
+      class-independent regressor-level SNR floor at frozen
+      theta0/record-length, NOT a differentiation-operator/estimator-
+      class defect. CALIB-GRID-002 proves by a direct regressor-level
+      SNR measurement on the SAME frozen sigma=0.02 trajectory that the
+      clean sin(theta_i-theta_j) coupling regressor sits below the
+      sigma=0.02 measurement noise on every edge (regressor SNR < 0.6
+      every edge, 0.085 on edge (0,2)) BEFORE any estimator touches the
+      data. The double-differentiation operator made the error worse
+      (16.6) but is NOT the cause; the cause is the frozen experiment's
+      signal-to-noise at this excitation and record length, and it is
+      class-independent (an estimator that never differentiates the
+      phase still fails at ~0.95).
+    # The superseding sha-pinned artifact (CALIB-GRID-002) and the
+    # superseded lineage (R1). Both are real commit ancestors; the
+    # forcing-function test verifies ancestry fail-closed.
+    superseded_lineage: CALIB-GRID-001-R1
+    # audited: CALIB-GRID-001 R1 merge git sha, not a credential
+    superseded_sha: a5527708833df308e67536aaa690b4f16e88dccd  # pragma: allowlist secret
+    superseding_lineage: CALIB-GRID-002
+    # audited: CALIB-GRID-002 merge git sha, not a credential
+    superseding_sha: e71d1915233283452f3fb219aafabd2f19035371  # pragma: allowlist secret
+    superseding_artifact: research/calibration/grid_kuramoto/cg002/RESULTS.md
+    # Evidence anchor: the superseding artifact's sha-pinned ledger
+    # (short content-hash prefix; full hash in cg002/RESULTS.json).
+    superseding_ledger_sha256: "d0f89e24341b0995"  # pragma: allowlist secret
+    # The EXACTLY FOUR sha-pinned artifacts that ENCODE the stale R1
+    # causal premise (found by grep; file:line + verbatim anchor).
+    stale_artifacts:
+      - path: research/calibration/grid_kuramoto/r1/RESULTS.md
+        line: 74
+        kind: encodes
+        verbatim_anchor: >-
+          second-derivative SNR / persistent-excitation
+      - path: research/calibration/grid_kuramoto/r1/RESULTS.md
+        line: 79
+        kind: encodes
+        verbatim_anchor: >-
+          No consistent estimator exists for the noisy regime
+      - path: research/calibration/grid_kuramoto/r1/RESULTS.md
+        line: 97
+        kind: encodes
+        verbatim_anchor: >-
+          double-differentiation SNR boundary in the noisy regime
+      - path: research/calibration/grid_kuramoto/r1/RESULTS.json
+        line: 100
+        kind: encodes
+        verbatim_anchor: >-
+          coupling_estimator noise robustness / standardisation
+      - path: research/calibration/grid_kuramoto/r1/ATTEMPT.md
+        line: 77
+        kind: encodes
+        verbatim_anchor: >-
+          one regime gate now passes, three still fail
+    # The TWO downstream sha-pinned artifacts that CITE the stale R1
+    # attribution as a premise (inherit it without resolving it).
+    citing_artifacts:
+      - path: research/calibration/grid_kuramoto/identifiability/THRESHOLD_PROVENANCE.md
+        line: 103
+        kind: cites
+        verbatim_anchor: >-
+          after double differentiation, measurement noise can inflate
+      - path: research/calibration/grid_kuramoto/cg002/PROVENANCE_002.md
+        line: 55
+        kind: cites
+        verbatim_anchor: >-
+          CALIB-GRID-001 R1 RESULTS.md: the swept Savitzky
+    # What this supersession does NOT do (honesty rail).
+    not_a_recompute: >-
+      No frozen artifact is edited, recomputed or rewritten. r1/
+      RESULTS.md, r1/RESULTS.json, r1/ATTEMPT.md and every other sha-
+      pinned file stay BYTE-IDENTICAL. R1's NEGATIVE verdict and its
+      differential-class boundary record remain the true historical
+      record. Only the CAUSAL ATTRIBUTION of the noisy failure is
+      superseded forward; R1 stands as the differential-class boundary
+      record, CALIB-GRID-002 as the class-independent regressor-floor
+      boundary record.

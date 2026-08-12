@@ -1,0 +1,90 @@
+# Diff-bound acceptor for INV-K9: backward-error convergence order of the
+# second-order (swing-equation) Störmer–Verlet integrator.
+#
+# INV-K8 proved energy is conserved at a fixed dt (amplitude bound). INV-K9 is
+# strictly stronger: it measures the *convergence order* of the energy error.
+# A symplectic integrator conserves a shadow Hamiltonian H~ = H + O(dt^2), so
+# max|dE| scales as dt^p with p = method order (2 for Verlet) and shows NO
+# secular trend. The falsifiable signature is the log-log slope of bounded
+# energy drift over a geometric dt-ladder. No production code is modified —
+# energy is observed black-box from velocities and R (all-to-all potential).
+#
+# Calibrated + mutation-verified before commit: Verlet recovers slope 2.012
+# (secular/E_scale 5.6e-6); Euler collapses slope to 0.81 with O(1) secular
+# drift. A fixed-dt amplitude check (INV-K8) can miss order degradation that
+# still has small drift at the tested dt; INV-K9 catches it directly.
+# Theory: Hairer–Lubich–Wanner, Geometric Numerical Integration.
+
+id: inv-k9-convergence-order
+status: ACTIVE
+claim_type: correctness
+promise: >-
+  Registers INV-K9 (conservation / backward-error order): the Störmer–Verlet
+  integrator of the second-order swing equation conserves a modified (shadow)
+  Hamiltonian H~ = H + O(dt^2), so the true-energy error is BOUNDED (no secular
+  trend) and scales as max|dE| ~ dt^p with convergence order p = 2. The
+  falsifiable signature is the least-squares log-log slope of max|dE| vs dt over
+  a geometric ladder: symplectic => slope ~ 2; any non-symplectic or
+  order-degraded step => slope <= 1 and/or secular growth. Strictly stronger
+  than the fixed-dt amplitude bound of INV-K8. One trajectory test added to
+  tests/unit/physics/test_T18_kuramoto_p1.py; zero production-code change.
+diff_scope:
+  changed_files:
+    - path: ".claude/commit_acceptors/inv-k9-convergence-order.yaml"
+    - path: ".claude/physics/INVARIANTS.yaml"
+    - path: "tests/unit/physics/test_T18_kuramoto_p1.py"
+    - path: "scripts/ci/prove_repo_integrity.sh"
+    - path: "scripts/ci/evidence_gate.sh"
+    - path: "CLAUDE.md"
+    - path: "BASELINE.md"
+    - path: "README.md"
+    - path: "CLAIMS.md"
+    - path: "artifacts/claims_hashes.json"
+  forbidden_paths:
+    - "trading/"
+    - "execution/"
+    - "forecast/"
+    - "policy/"
+required_python_symbols:
+  - "test_swing_energy_convergence_order_symplectic"
+expected_signal: >-
+  All 6 tests in tests/unit/physics/test_T18_kuramoto_p1.py pass under pytest,
+  including the new INV-K9 convergence-order test; the physics validator reports
+  0 issues on the file; mypy --strict clean; invariant-count-sync reports 99
+  invariants in sync across README/BASELINE/CLAUDE/CLAIMS/registry; both .sh
+  witness pins read 99. Calibration (recorded, not run in CI): Verlet recovers
+  order p=2.012 with max(secular/E_scale)=5.6e-6; Euler mutation collapses p to
+  0.81 with O(1) secular drift.
+measurement_command: >-
+  PYTHONPATH=. python -m pytest tests/unit/physics/test_T18_kuramoto_p1.py
+  -k convergence_order -v
+signal_artifact: "tmp/inv_k9_convergence_order_pytest.log"
+falsifier:
+  command: >-
+    PYTHONPATH=. python -m pytest tests/unit/physics/test_T18_kuramoto_p1.py
+    -v -k "swing_energy_convergence_order_symplectic"
+  description: >-
+    Filters to the INV-K9 convergence-order test. It is the falsifier for loss
+    of integrator order: the recovered log-log slope of energy drift must match
+    the theoretical Verlet order p=2 within a 0.3 band, and the drift must be
+    bounded (no secular trend). A non-symplectic step (Euler) collapses the
+    slope to ~0.8 and reintroduces secular growth, failing both assertions. The
+    band is calibrated to observed Verlet behaviour, not a magic number.
+rollback_command: >-
+  git checkout HEAD~1 --
+  tests/unit/physics/test_T18_kuramoto_p1.py
+  .claude/physics/INVARIANTS.yaml
+  scripts/ci/prove_repo_integrity.sh
+  scripts/ci/evidence_gate.sh
+  CLAUDE.md
+  BASELINE.md
+  README.md
+  CLAIMS.md
+  artifacts/claims_hashes.json
+  .claude/commit_acceptors/inv-k9-convergence-order.yaml
+rollback_verification_command: >-
+  git diff --exit-code tests/unit/physics/test_T18_kuramoto_p1.py
+memory_update_type: none
+ledger_path: ".claude/commit_acceptors/inv-k9-convergence-order.yaml"
+report_path: "docs/reports/diff_bound_commit_acceptor_layer.md"
+evidence: []

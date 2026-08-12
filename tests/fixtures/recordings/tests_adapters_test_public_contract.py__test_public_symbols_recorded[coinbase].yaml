@@ -1,0 +1,26 @@
+interactions:
+- request:
+    body: null
+    headers:
+      Accept:
+      - '*/*'
+      Accept-Encoding:
+      - gzip, deflate, br
+      Connection:
+      - keep-alive
+      User-Agent:
+      - python-requests/2.33.0
+    method: GET
+    uri: https://api.coinbase.com/api/v3/brokerage/market/products?limit=250
+  response:
+    body:
+      string: '{"products":[{"product_id":"BTC-USD","base_currency_id":"BTC","quote_currency_id":"USD","status":"online","product_type":"SPOT"},{"product_id":"ETH-USD","base_currency_id":"ETH","quote_currency_id":"USD","status":"online","product_type":"SPOT"},{"product_id":"SOL-USD","base_currency_id":"SOL","quote_currency_id":"USD","status":"online","product_type":"SPOT"}],"num_products":3}'
+    headers:
+      Cache-Control:
+      - no-store
+      Content-Type:
+      - application/json; charset=utf-8
+    status:
+      code: 200
+      message: OK
+version: 1

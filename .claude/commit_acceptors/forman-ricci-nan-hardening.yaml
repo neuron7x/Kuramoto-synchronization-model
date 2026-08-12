@@ -1,0 +1,120 @@
+# Diff-bound commit acceptor for the Forman-Ricci Layer-B + non-finite hardening.
+#
+# Follow-up to forman-ricci-honesty (#1098). Adds the remaining provenance and
+# non-finite-input discipline to core/physics/forman_ricci.py WITHOUT changing
+# any curvature output for finite inputs:
+#   * FormanRicciResult gains Layer-B / claim-boundary provenance fields
+#     layer="market_descriptor", physical_claim=False,
+#     claim_boundary="derived_unsigned_unweighted_topology_descriptor",
+#     projection_policy="abs_correlation_threshold_binary",
+#     nan_policy="nonfinite_excluded_and_recorded", and
+#     nonfinite_input_count (count of off-diagonal NaN/inf correlations);
+#   * _correlation_to_adjacency now requires finiteness, fixing a latent bug
+#     where np.abs(inf) > threshold == True fabricated a phantom edge from an
+#     undefined correlation; NaN and inf are excluded explicitly and counted;
+#   * compute_from_prices no longer silently nan_to_num(corr, 0.0) — the raw
+#     correlation flows through so non-finite entries are recorded, not hidden.
+#
+# Curvature output (edge_curvatures, kappa_min/mean/max, herding_index) is
+# byte-unchanged for finite inputs; all new dataclass fields are defaulted so
+# every existing constructor and downstream consumer (research/askar/*,
+# analytics/regime/*) is unaffected. The Layer-B / physical_claim fields are a
+# DECLARATIVE provenance contract, not hard enforcement: a consumer that reads
+# physical_claim learns the value is descriptor-only. DualTrackRicciMonitor now
+# names this boundary machine-readably via its `descriptor_consumer_boundary`
+# class attribute — its margin/herding outputs are declared advisory transforms
+# of a Layer-B descriptor, NOT a validated physical or trading claim. The
+# transform itself remains advisory (the monitor does not hard-block), so the
+# label names the descriptor->action boundary at the consumer rather than
+# silently promoting it.
+#
+# Promotes NO claim tier, adds NO invariant. Layer-B representation/honesty +
+# fail-visible non-finite handling; asserts no predictive or financial claim.
+#
+# Locally verified on origin/main fork base (43203a9f):
+#   * python -m compileall: clean
+#   * pytest tests/unit/physics/test_T3_forman_ricci.py: 25 passed
+#   * black --check / ruff check: clean
+#   * mypy --strict core/physics/forman_ricci.py: no issues
+#   * .claude/physics/validate_tests.py --audit-code: no clamp/bounds issues
+#   * zero noqa / type: ignore across both changed files
+id: forman-ricci-nan-hardening
+status: ACTIVE
+claim_type: governance
+promise: >-
+  core.physics.forman_ricci.FormanRicciResult declares Layer-B provenance
+  (layer="market_descriptor", physical_claim=False,
+  claim_boundary="derived_unsigned_unweighted_topology_descriptor",
+  projection_policy="abs_correlation_threshold_binary",
+  nan_policy="nonfinite_excluded_and_recorded") and a nonfinite_input_count.
+  _correlation_to_adjacency requires finiteness so a NaN or inf correlation is
+  never an edge (fixing np.abs(inf) > threshold fabricating a phantom edge) and
+  its count is recorded; compute_from_prices no longer silently coerces NaN to
+  zero. Curvature output is byte-unchanged for finite inputs; the new fields are
+  defaulted so existing constructors and consumers are unaffected; any result
+  exposing herding_index also exposes physical_claim=False and the descriptor
+  claim_boundary as a DECLARATIVE provenance contract (not hard enforcement);
+  DualTrackRicciMonitor exposes a machine-readable descriptor_consumer_boundary
+  class attribute naming its margin/herding outputs as advisory transforms of a
+  Layer-B descriptor, not a validated physical or trading claim. No claim tier
+  is promoted; no invariant is added; the descriptor asserts no predictive or
+  financial meaning.
+diff_scope:
+  changed_files:
+    - path: ".claude/commit_acceptors/forman-ricci-nan-hardening.yaml"
+    - path: "core/physics/forman_ricci.py"
+    - path: "tests/unit/physics/test_T3_forman_ricci.py"
+  forbidden_paths:
+    - "trading/"
+    - "execution/"
+    - "forecast/"
+    - "src/"
+required_python_symbols:
+  - "core/physics/forman_ricci.py::FormanRicciResult"
+  - "core/physics/forman_ricci.py::FormanRicciCurvature"
+expected_signal: >-
+  `python -m pytest tests/unit/physics/test_T3_forman_ricci.py` reports
+  25 passed; the result declares layer/physical_claim/claim_boundary/
+  projection_policy/nan_policy, a NaN/inf correlation is recorded in
+  nonfinite_input_count and is not an edge, and curvature for finite inputs is
+  unchanged.
+measurement_command: >-
+  bash -c 'mkdir -p tmp && python -m pytest
+  tests/unit/physics/test_T3_forman_ricci.py -v
+  > tmp/forman_ricci_nan_pytest.log 2>&1
+  && grep -qE "25 passed" tmp/forman_ricci_nan_pytest.log'
+signal_artifact: "tmp/forman_ricci_nan_pytest.log"
+falsifier:
+  command: >-
+    python -c 'import sys, numpy as np;
+    from core.physics.forman_ricci import FormanRicciCurvature;
+    frc = FormanRicciCurvature(threshold=0.5);
+    n = 3;
+    corr = np.full((n, n), 0.1); np.fill_diagonal(corr, 1.0);
+    corr[0, 1] = corr[1, 0] = np.inf;
+    r = frc.compute_from_correlation(corr);
+    inf_no_edge = (0, 1) not in r.edge_curvatures and r.edge_curvatures == {};
+    recorded = r.nonfinite_input_count == 2;
+    boundary_ok = (r.physical_claim is False
+    and r.layer == "market_descriptor"
+    and r.claim_boundary == "derived_unsigned_unweighted_topology_descriptor");
+    sys.exit(0 if (not inf_no_edge or not recorded or not boundary_ok) else 1)'
+  description: >-
+    Inverse probe of the non-finite + Layer-B contract. It exits 0 (fires) iff
+    an inf correlation creates an edge instead of being excluded, OR the
+    non-finite count stops being recorded, OR the Layer-B / physical_claim=False
+    / claim_boundary declaration disappears. While the contract holds the probe
+    exits 1. An exit 0 means the descriptor has regained a phantom-edge bug or
+    lost its descriptor-only boundary and must be repaired, not patched green.
+rollback_command: >-
+  bash -c 'git checkout origin/main -- core/physics/forman_ricci.py
+  tests/unit/physics/test_T3_forman_ricci.py
+  && git rm -f .claude/commit_acceptors/forman-ricci-nan-hardening.yaml'
+rollback_verification_command: >-
+  bash -c 'test ! -f .claude/commit_acceptors/forman-ricci-nan-hardening.yaml'
+memory_update_type: none
+ledger_path: ".claude/commit_acceptors/forman-ricci-nan-hardening.yaml"
+report_path: "tmp/forman_ricci_nan_pytest.log"
+evidence:
+  - path: "tmp/forman_ricci_nan_pytest.log"
+    sha256: "d56f66ecd3226bf953afe051e280bd1c14299b44d5d6862df98fa81beecab923"  # pragma: allowlist secret

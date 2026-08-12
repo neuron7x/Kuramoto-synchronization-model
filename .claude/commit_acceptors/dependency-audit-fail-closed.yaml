@@ -1,0 +1,58 @@
+id: dependency-audit-fail-closed
+status: ACTIVE
+claim_type: security
+promise: >-
+  DEBT_3 remediation: convert the Makefile `audit` and `deps-audit` targets
+  from soft-fail (|| true / || echo) pip-audit calls into fail-closed
+  invocations of the existing scripts/dependency_audit.py driver, which
+  returns non-zero on any vulnerability finding. Adds a regression test that
+  makes the soft-fail defect class structurally detectable: it fails if any
+  audit target reintroduces masking or stops routing through the fail-closed
+  driver. No runtime/trading behavior is changed.
+
+diff_scope:
+  changed_files:
+    - path: "Makefile"
+    - path: "tests/ci/test_makefile_audit_fail_closed.py"
+    - path: ".claude/commit_acceptors/dependency-audit-fail-closed.yaml"
+  forbidden_paths:
+    - "application/"
+    - "execution/"
+    - "markets/"
+    - "runtime/"
+
+required_python_symbols:
+  - "scripts.dependency_audit.main"
+
+expected_signal: >-
+  `make deps-audit` and `make audit` exit non-zero on active unmitigated
+  vulnerability findings (no || true / || echo masking), routing through
+  scripts/dependency_audit.py; the regression suite fails if soft-fail
+  masking is reintroduced.
+
+measurement_command: >-
+  python -m pytest -q tests/ci/test_makefile_audit_fail_closed.py
+  --confcutdir=tests/ci
+
+signal_artifact: "tests/ci/test_makefile_audit_fail_closed.py"
+
+falsifier:
+  command: >-
+    python -m pytest -q tests/ci/test_makefile_audit_fail_closed.py
+    --confcutdir=tests/ci
+  description: >-
+    Reintroducing `|| true` / `|| echo` masking on a dependency-audit target,
+    or removing the scripts/dependency_audit.py routing, fails the regression
+    suite — the soft-fail defect class can no longer return a green build.
+
+rollback_command: >-
+  git checkout -- Makefile tests/ci/test_makefile_audit_fail_closed.py
+  .claude/commit_acceptors/dependency-audit-fail-closed.yaml
+
+rollback_verification_command: >-
+  git diff --exit-code
+
+memory_update_type: none
+ledger_path: ".claude/commit_acceptors/dependency-audit-fail-closed.yaml"
+report_path: "tests/ci/test_makefile_audit_fail_closed.py"
+evidence: []

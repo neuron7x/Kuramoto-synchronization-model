@@ -1,0 +1,289 @@
+# SPDX-License-Identifier: MIT
+#
+# Research Integrity Gate.
+#
+# Closes audit task T8 of the 9.9 upgrade. Runs the canonical-seven
+# test suite, the metamorphic + negative-control packs, the public-
+# symbol-matrix audit, and the claims compiler. Fails closed on:
+#   * orphan public symbol (in __all__ but missing from the matrix)
+#   * phantom matrix row (in matrix but not in __all__)
+#   * floating claim (claim with zero evidence anchors)
+#   * any test failure
+#   * any mypy --strict error on the audited source set
+#   * any ruff or black diagnostic
+#
+# Hard rule: README claim without evidence anchor = CI fail.
+
+name: Research Integrity Gate
+
+on:
+  pull_request:
+    branches: [main]
+    paths:
+      - 'research/systemic_risk/**'
+      - 'tests/research/systemic_risk/**'
+      - 'tests/metamorphic/**'
+      - 'tests/negative_controls/**'
+      - 'tools/check_public_symbol_matrix.py'
+      - 'tools/compile_claims.py'
+      - '.github/workflows/research-integrity-gate.yml'
+      # Second-layer evidence-truth controls (post-audit hardening):
+      - 'scripts/ci/check_research_artifact_truth.py'
+      - 'scripts/ci/check_phd_traceability.py'
+      - 'docs/phd/**'
+      - 'scripts/ci/check_claim_artifact_graph.py'
+      - 'scripts/ci/check_manifest_hashes.py'
+      - 'scripts/ci/prove_repo_integrity.sh'
+      - 'tools/research/validate_ricci_artifact_schema.py'
+      - 'research_lines/**'
+      - 'artifacts/runs/**'
+      - 'schemas/research/**'
+      - 'tests/ci/**'
+      - 'tests/research_lines/**'
+      # Negative-evidence preservation (tombstone ledger):
+      - 'RIP/TOMBSTONES.md'
+      - 'scripts/ci/check_tombstone_preservation.py'
+      - 'tests/scripts/test_check_tombstone_preservation.py'
+      # Mainline instrument evidence-chain reconciliation (7 instruments):
+      - 'governance/INSTRUMENTS.yaml'
+      - 'scripts/ci/check_instrument_evidence_chain.py'
+      - 'tests/scripts/test_check_instrument_evidence_chain.py'
+      - 'analytics/signals/**'
+      - 'core/indicators/market_state_contract.py'
+      - 'scripts/replay_descriptor_capsule.py'
+      # Calibration sensitivity-drift gate:
+      - 'governance/CALIBRATIONS.yaml'
+      - 'scripts/ci/check_calibration_drift.py'
+      - 'tests/scripts/test_check_calibration_drift.py'
+      - 'analytics/signals/threshold_calibration.py'
+      # Negative-evidence registry (4 categories):
+      - 'governance/NEGATIVE_EVIDENCE.yaml'
+      - 'scripts/ci/check_negative_evidence.py'
+      - 'tests/scripts/test_check_negative_evidence.py'
+      # Claim-maturity promotion gate (registry over the #1094 ladder):
+      - 'governance/CLAIM_MATURITY.yaml'
+      - 'analytics/signals/claim_maturity.py'
+      - 'scripts/ci/check_claim_maturity.py'
+      - 'tests/scripts/test_check_claim_maturity.py'
+      # Post-vacuous-oracle revalidation ledger (DEBT_5):
+      - 'governance/REVALIDATION_LEDGER.yaml'
+      - 'scripts/ci/check_revalidation_ledger.py'
+      - 'tests/scripts/test_check_revalidation_ledger.py'
+  push:
+    branches: [main]
+  workflow_dispatch:
+
+permissions:
+  contents: read
+
+env:
+  FORCE_JAVASCRIPT_ACTIONS_TO_NODE24: 'true'
+
+concurrency:
+  # PR runs group by ref (a new push supersedes the old run). Main-push runs
+  # group by the EXACT commit SHA, never the shared `refs/heads/main` ref: a
+  # shared main group lets a later merge supersede an earlier SHA's still-QUEUED
+  # research-truth run (cancel-in-progress=false stops eviction of the
+  # in-progress run, but GitHub still drops superseded *pending* runs), leaving
+  # that SHA without a terminal verdict. A per-SHA group guarantees every main
+  # commit reaches a terminal research-integrity result.
+  group: research-integrity-gate-${{ github.event_name == 'pull_request' && github.ref || github.sha }}
+  # PR retries may be superseded; main push evidence must finish instead of
+  # being cancelled by the next merge before research truth gates emit verdicts.
+  cancel-in-progress: ${{ github.event_name == 'pull_request' }}
+
+jobs:
+  research-integrity-gate:
+    name: research-integrity-gate
+    runs-on: ubuntu-latest
+    timeout-minutes: 25
+    steps:
+      - name: Checkout
+        uses: actions/checkout@9c091bb21b7c1c1d1991bb908d89e4e9dddfe3e0
+        with:
+          # Full history: the instrument evidence-chain gate resolves each
+          # instrument's merge_commit against git history (cat-file + show).
+          fetch-depth: 0
+
+      - name: Setup Python
+        uses: actions/setup-python@ece7cb06caefa5fff74198d8649806c4678c61a1
+        with:
+          python-version: '3.12'
+
+      - name: Install runtime + test deps
+        run: |
+          set -euo pipefail
+          python -m pip install --upgrade pip
+          python -m pip install -r requirements.txt
+          python -m pip install pytest hypothesis pyyaml mypy ruff black
+          # The research-line contract pytest imports the POT-backed
+          # Ollivier-Ricci kernel, materialises parquet during L2 ingest, and
+          # imports the research CLI. These deps are deliberately explicit here
+          # so push-time integrity does not depend on optional extras resolution.
+          python -m pip install "POT>=0.9.5" "pyarrow>=15.0.0" "typer>=0.20.0,<1.0.0"
+
+      - name: Public-symbol matrix audit
+        run: python tools/check_public_symbol_matrix.py
+
+      - name: Claims compiler — fail on floating
+        run: python tools/compile_claims.py --fail-on-floating
+
+      - name: pytest — research/systemic_risk
+        run: |
+          set +e
+          python -m pytest tests/research/systemic_risk/ -q --maxfail=1 -rA --tb=short \
+            2>&1 | tee /tmp/research_systemic_risk.log
+          rc=${PIPESTATUS[0]}
+          set -e
+          if [[ "$rc" -ne 0 ]]; then
+            echo "::group::pytest short summary"
+            awk '/short test summary info/ {flag=1} flag {print}' /tmp/research_systemic_risk.log | tail -200 || true
+            echo "::endgroup::"
+            echo "::group::last traceback context"
+            tail -200 /tmp/research_systemic_risk.log || true
+            echo "::endgroup::"
+          fi
+          exit "$rc"
+
+      - name: Upload research systemic-risk pytest failure log
+        if: failure()
+        uses: actions/upload-artifact@043fb46d1a93c77aae656e7c1c64a875d1fc6a0a
+        with:
+          name: research-systemic-risk-pytest-log
+          path: /tmp/research_systemic_risk.log
+          if-no-files-found: ignore
+          retention-days: 7
+
+      - name: pytest — metamorphic
+        run: python -m pytest tests/metamorphic/ -q --maxfail=1
+
+      - name: pytest — negative_controls
+        run: python -m pytest tests/negative_controls/ -q --maxfail=1
+
+      # --- Second-layer evidence-truth controls (schema-valid != true) ---
+      - name: Research-artifact truth gate
+        run: python scripts/ci/check_research_artifact_truth.py
+
+      - name: PhD claim-traceability gate
+        run: python scripts/ci/check_phd_traceability.py
+
+      - name: Negative-evidence preservation gate (tombstones)
+        run: python scripts/ci/check_tombstone_preservation.py
+
+      - name: pytest — tombstone preservation gate
+        run: python -m pytest tests/scripts/test_check_tombstone_preservation.py -q
+
+      - name: Instrument evidence-chain reconciliation gate (7 instruments)
+        run: |
+          set +e
+          python scripts/ci/check_instrument_evidence_chain.py \
+            2>&1 | tee /tmp/instrument_evidence_chain.log
+          rc=${PIPESTATUS[0]}
+          set -e
+          if [[ "$rc" -ne 0 ]]; then
+            echo "::group::instrument evidence-chain failure"
+            tail -200 /tmp/instrument_evidence_chain.log || true
+            echo "::endgroup::"
+          fi
+          exit "$rc"
+
+      - name: Upload instrument evidence-chain failure log
+        if: failure()
+        uses: actions/upload-artifact@043fb46d1a93c77aae656e7c1c64a875d1fc6a0a
+        with:
+          name: instrument-evidence-chain-log
+          path: /tmp/instrument_evidence_chain.log
+          if-no-files-found: ignore
+          retention-days: 7
+
+      - name: pytest — instrument evidence-chain gate
+        run: python -m pytest tests/scripts/test_check_instrument_evidence_chain.py -q
+
+      - name: Calibration sensitivity-drift gate
+        run: python scripts/ci/check_calibration_drift.py
+
+      - name: pytest — calibration drift gate
+        run: python -m pytest tests/scripts/test_check_calibration_drift.py -q
+
+      - name: Negative-evidence registry gate (4 categories)
+        run: python scripts/ci/check_negative_evidence.py
+
+      - name: pytest — negative-evidence gate
+        run: python -m pytest tests/scripts/test_check_negative_evidence.py -q
+
+      - name: Claim-maturity promotion gate (registry)
+        run: python scripts/ci/check_claim_maturity.py
+
+      - name: pytest — claim-maturity registry gate
+        run: python -m pytest tests/scripts/test_check_claim_maturity.py -q
+
+      - name: Post-vacuous-oracle revalidation ledger gate (DEBT_5)
+        run: python scripts/ci/check_revalidation_ledger.py
+
+      - name: pytest — revalidation ledger gate
+        run: python -m pytest tests/scripts/test_check_revalidation_ledger.py -q
+
+      - name: Claim-to-artifact graph gate
+        run: python scripts/ci/check_claim_artifact_graph.py
+
+      - name: Semantic Ricci artifact validation
+        run: |
+          python tools/research/validate_ricci_artifact_schema.py --semantic \
+            --schema schemas/research/research_inference_artifact.schema.json \
+            --artifact artifacts/runs/ricci_microstructure_v1/example_artifact.json
+
+      - name: pytest — evidence-truth gates + research-line contracts
+        run: |
+          set +e
+          python -m pytest tests/ci tests/research_lines -q --maxfail=1 -rA --tb=short \
+            2>&1 | tee /tmp/evidence_truth_pytest.log
+          rc=${PIPESTATUS[0]}
+          set -e
+          if [[ "$rc" -ne 0 ]]; then
+            echo "::group::evidence-truth pytest short summary"
+            awk '/short test summary info/ {flag=1} flag {print}' /tmp/evidence_truth_pytest.log | tail -200 || true
+            echo "::endgroup::"
+            echo "::group::evidence-truth traceback tail"
+            tail -200 /tmp/evidence_truth_pytest.log || true
+            echo "::endgroup::"
+          fi
+          exit "$rc"
+
+      - name: Upload evidence-truth pytest failure log
+        if: failure()
+        uses: actions/upload-artifact@043fb46d1a93c77aae656e7c1c64a875d1fc6a0a
+        with:
+          name: evidence-truth-pytest-log
+          path: /tmp/evidence_truth_pytest.log
+          if-no-files-found: ignore
+          retention-days: 7
+
+      - name: mypy --strict on audited surface
+        run: |
+          set -euo pipefail
+          python -m mypy --strict --follow-imports=silent \
+            research/systemic_risk/death_conditions.py \
+            research/systemic_risk/evidence_ledger.py \
+            research/systemic_risk/leakage_sentinel.py \
+            research/systemic_risk/data_firewall.py \
+            research/systemic_risk/replication_capsule.py \
+            research/systemic_risk/governance_fsm.py \
+            research/systemic_risk/canonical_seven.py \
+            research/systemic_risk/quick_round.py \
+            research/systemic_risk/verdict_lattice.py \
+            research/systemic_risk/bayes_rigorous.py \
+            research/systemic_risk/kuramoto_extensions.py \
+            research/systemic_risk/occam_penalty.py \
+            research/systemic_risk/synthetic.py \
+            research/systemic_risk/cli.py \
+            research/systemic_risk/minimal.py \
+            research/systemic_risk/protocol_x9r.py \
+            research/systemic_risk/real_data_contract.py \
+            tools/check_public_symbol_matrix.py \
+            tools/compile_claims.py
+
+      - name: ruff
+        run: python -m ruff check research/systemic_risk/ tools/ tests/research/systemic_risk/ tests/metamorphic/ tests/negative_controls/
+
+      - name: black --check
+        run: python -m black --check research/systemic_risk/ tools/ tests/research/systemic_risk/ tests/metamorphic/ tests/negative_controls/

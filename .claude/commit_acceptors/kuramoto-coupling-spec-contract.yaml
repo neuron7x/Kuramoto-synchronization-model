@@ -1,0 +1,80 @@
+# Diff-bound acceptor: CouplingSpec — coupling appears exactly once (Stream 1).
+#
+# Closes the double-scaling path in the Kuramoto coupling representation. The
+# engine builds C = K*A from KuramotoConfig.adjacency with no contract on what
+# A means; a physical weight matrix W passed as `adjacency` with non-unit K
+# yields C = K*W (scale applied twice). CouplingSpec owns the representation,
+# fails closed on double-scaling, enforces sign discipline, and carries an
+# explicit attractive-vs-signed claim boundary. No invariant added or changed;
+# the legacy bare KuramotoConfig(K, adjacency) path is left intact.
+
+id: kuramoto-coupling-spec-contract
+status: ACTIVE
+claim_type: correctness
+promise: >-
+  Adds core/kuramoto/coupling_spec.py (CouplingSpec, CouplingMode,
+  CLAIM_ATTRACTIVE/CLAIM_SIGNED) — a Layer-A object owning the coupling
+  representation so the scale enters the Kuramoto RHS exactly once. Full-weight
+  modes require K == 1.0 (anti-double-scaling, fail-closed); negative K is
+  admissible only in REPULSIVE_OR_SIGNED_MODE; negative weights only in signed
+  modes; signed/repulsive couplings return CLAIM_SIGNED and can never advertise
+  CLAIM_ATTRACTIVE. KuramotoConfig.from_coupling_spec() pins K=1.0 so the engine
+  path K*adjacency reproduces the effective matrix with no second scaling.
+  Adds 20 regression tests and evidence artifacts. No invariant added or
+  changed; the bare KuramotoConfig(K, adjacency) path is unchanged.
+diff_scope:
+  changed_files:
+    - path: ".claude/commit_acceptors/kuramoto-coupling-spec-contract.yaml"
+    - path: "core/kuramoto/coupling_spec.py"
+    - path: "core/kuramoto/config.py"
+    - path: "core/kuramoto/__init__.py"
+    - path: "tests/unit/core/test_kuramoto_coupling_spec.py"
+    - path: "artifacts/lab_pilot/kuramoto_ricci/BASELINE.md"
+    - path: "artifacts/lab_pilot/kuramoto_ricci/FILES_INSPECTED.md"
+    - path: "artifacts/lab_pilot/kuramoto_ricci/SEMANTIC_RISK_MAP.md"
+    - path: "artifacts/lab_pilot/kuramoto_ricci/NEGATIVE_EVIDENCE.md"
+    - path: "artifacts/lab_pilot/kuramoto_ricci/VALIDATION_REPORT.json"
+    - path: "artifacts/lab_pilot/kuramoto_ricci/PR_ACCEPTANCE_REPORT.json"
+  forbidden_paths:
+    - "trading/"
+    - "execution/"
+    - "forecast/"
+    - "policy/"
+required_python_symbols:
+  - "CouplingSpec"
+  - "CouplingMode"
+expected_signal: >-
+  tests/unit/core/test_kuramoto_coupling_spec.py passes 20/20, including
+  test_k_a_equivalent_to_w_to_tolerance, test_double_scaling_rejected,
+  test_signed_mode_cannot_emit_attractive_claim_boundary, and
+  test_from_coupling_spec_applies_scale_exactly_once. ruff/black/mypy --strict
+  clean across core/kuramoto; the 332-test kuramoto unit regression stays green;
+  zero new noqa/type:ignore (debt-ratchet delta 0).
+measurement_command: >-
+  PYTHONPATH=. python -m pytest tests/unit/core/test_kuramoto_coupling_spec.py -v
+signal_artifact: "tmp/kuramoto_coupling_spec_pytest.log"
+falsifier:
+  command: >-
+    PYTHONPATH=. python -m pytest tests/unit/core/test_kuramoto_coupling_spec.py
+    -v -k "double_scaling_rejected or signed_mode_cannot_emit_attractive_claim_boundary
+    or k_a_equivalent_to_w_to_tolerance"
+  description: >-
+    Removing the anti-double-scaling guard (allowing non-unit K in
+    FULL_WEIGHT_MATRIX_W) makes test_double_scaling_rejected fail; collapsing the
+    claim boundary so signed modes report CLAIM_ATTRACTIVE fails
+    test_signed_mode_cannot_emit_attractive_claim_boundary; applying K twice
+    breaks the K*A == W equivalence. Each guard has a test that would fail
+    before the patch.
+rollback_command: >-
+  git checkout HEAD~1 --
+  core/kuramoto/coupling_spec.py
+  core/kuramoto/config.py
+  core/kuramoto/__init__.py
+  tests/unit/core/test_kuramoto_coupling_spec.py
+  .claude/commit_acceptors/kuramoto-coupling-spec-contract.yaml
+rollback_verification_command: >-
+  git diff --exit-code core/kuramoto/coupling_spec.py
+memory_update_type: none
+ledger_path: ".claude/commit_acceptors/kuramoto-coupling-spec-contract.yaml"
+report_path: "docs/reports/diff_bound_commit_acceptor_layer.md"
+evidence: []

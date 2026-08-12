@@ -1,0 +1,26 @@
+id: riee-validator-core
+status: ACTIVE
+claim_type: correctness
+promise: "Validator core and fixture artifacts are bound."
+diff_scope:
+  changed_files:
+    - path: ".claude/commit_acceptors/riee-validator-core.yaml"
+    - path: "scripts/validate_financial_contract.py"
+    - path: "artifacts/financial_verification_manifest.json"
+    - path: "docs/architecture/methodology/financial/FINANCIAL_DATA_CONTRACT.yaml"
+    - path: "docs/architecture/methodology/financial/sample_financial_data.csv"
+  forbidden_paths: []
+required_python_symbols:
+  - "main"
+expected_signal: "validator command returns zero on committed fixture"
+measurement_command: "python scripts/validate_financial_contract.py"
+signal_artifact: "tmp/riee_validator_core.log"
+falsifier:
+  command: "python scripts/validate_financial_contract.py"
+  description: "validator command must be executable"
+rollback_command: "git checkout HEAD~1 -- scripts/validate_financial_contract.py docs/architecture/methodology/financial artifacts/financial_verification_manifest.json"
+rollback_verification_command: "python tools/commit_acceptor/validate_commit_acceptor.py"
+memory_update_type: append
+ledger_path: ".claude/commit_acceptors/riee-validator-core.yaml"
+report_path: "docs/architecture/methodology/financial/FINANCIAL_DATA_CONTRACT.yaml"
+evidence: []

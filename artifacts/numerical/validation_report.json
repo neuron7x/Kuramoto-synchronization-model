@@ -1,0 +1,310 @@
+{
+  "task": "ARC-017",
+  "summary": {
+    "crosschecks_passed": 5,
+    "crosschecks_total": 5,
+    "adversarial_refused": 23,
+    "adversarial_total": 23,
+    "golden_ok": 6,
+    "golden_total": 6
+  },
+  "reference_crosschecks": [
+    {
+      "name": "mle_core_logistic_ln2",
+      "estimator": "core.physics.lyapunov_exponent.maximal_lyapunov_exponent",
+      "invariants": [
+        "INV-LE1",
+        "INV-LE2",
+        "INV-LE3"
+      ],
+      "achieved": 0.6939147782189422,
+      "expected": 0.6931471805599453,
+      "abs_error": 0.0007675976589969213,
+      "tol": 0.05,
+      "r_squared": 0.9999945671645324,
+      "r2_gate": 0.8,
+      "passed": true,
+      "note": "analytic MLE of logistic r=4 is exactly ln2; INV-LE3 R\u00b2\u22650.80 gate active."
+    },
+    {
+      "name": "mle_geosync_logistic_sign",
+      "estimator": "geosync.estimators.lyapunov_estimator.RosensteinLyapunov",
+      "invariants": [
+        "INV-LE2",
+        "INV-LE3"
+      ],
+      "achieved": 0.617715,
+      "expected": 0.6931471805599453,
+      "abs_error": 0.07543218055994527,
+      "tol_band": [
+        0.45,
+        0.85
+      ],
+      "is_valid": true,
+      "is_chaotic": true,
+      "passed": true,
+      "note": "coarse small-data estimator (m=3, first-10-step fit); recovers the chaotic sign but underestimates ln2 by ~11% \u2014 honest residual, sign/band test not exact ln2."
+    },
+    {
+      "name": "spectrum_linear_eig",
+      "estimator": "core.physics.lyapunov_spectrum.lyapunov_spectrum",
+      "invariants": [
+        "INV-LY1"
+      ],
+      "achieved": [
+        -0.19999986646652346,
+        -0.4999979088385249,
+        -0.9999832078333918
+      ],
+      "expected": [
+        -0.2,
+        -0.5,
+        -1.0
+      ],
+      "max_abs_error": 1.679216660821492e-05,
+      "tol": 0.001,
+      "passed": true,
+      "note": "Benettin QR spectrum equals Re(eig A) at T=50; INV-LY1 bound 1e-3."
+    },
+    {
+      "name": "spectrum_harmonic_sum_zero",
+      "estimator": "core.physics.lyapunov_spectrum.lyapunov_spectrum",
+      "invariants": [
+        "INV-LY2"
+      ],
+      "achieved_sum": 3.124997558559268e-05,
+      "expected_sum": 0.0,
+      "spectrum": [
+        1.562498779298184e-05,
+        1.5624987792610845e-05
+      ],
+      "omega_dt": 0.05,
+      "n_steps": 2011,
+      "tol": 0.001,
+      "passed": true,
+      "note": "non-symplectic tangent flow: \u03a3\u03bb error grows O((\u03c9\u00b7dt)\u2074); bound holds for \u03c9\u00b7dt\u22720.05."
+    },
+    {
+      "name": "dfa_hurst_fgn",
+      "estimator": "geosync.estimators.dfa_gamma_estimator.DFAGammaEstimator",
+      "invariants": [
+        "INV-DRO1",
+        "INV-AC1-rev"
+      ],
+      "rows": [
+        {
+          "H_true": 0.3,
+          "H_hat": 0.30692,
+          "gamma": 1.61384,
+          "r_squared": 0.992884,
+          "abs_error": 0.006920000000000037,
+          "within_tol": true,
+          "gamma_derived_ok": true
+        },
+        {
+          "H_true": 0.5,
+          "H_hat": 0.499403,
+          "gamma": 1.998806,
+          "r_squared": 0.994023,
+          "abs_error": 0.0005970000000000142,
+          "within_tol": true,
+          "gamma_derived_ok": true
+        },
+        {
+          "H_true": 0.7,
+          "H_hat": 0.695117,
+          "gamma": 2.390234,
+          "r_squared": 0.993388,
+          "abs_error": 0.004882999999999971,
+          "within_tol": true,
+          "gamma_derived_ok": true
+        }
+      ],
+      "max_abs_error": 0.006920000000000037,
+      "tol": 0.05,
+      "passed": true,
+      "note": "DFA-1 recovers target Hurst to <0.01; \u03b3=2H+1 derived, min_quality=0.95 enforced."
+    }
+  ],
+  "adversarial_refusals": [
+    {
+      "estimator": "core.physics.maximal_lyapunov_exponent",
+      "input": "nan",
+      "refused": true,
+      "mechanism": "ValueError"
+    },
+    {
+      "estimator": "core.physics.maximal_lyapunov_exponent",
+      "input": "inf",
+      "refused": true,
+      "mechanism": "ValueError"
+    },
+    {
+      "estimator": "core.physics.maximal_lyapunov_exponent",
+      "input": "constant",
+      "refused": true,
+      "mechanism": "ValueError"
+    },
+    {
+      "estimator": "core.physics.maximal_lyapunov_exponent",
+      "input": "all_zero",
+      "refused": true,
+      "mechanism": "ValueError"
+    },
+    {
+      "estimator": "core.physics.maximal_lyapunov_exponent",
+      "input": "too_short",
+      "refused": true,
+      "mechanism": "ValueError"
+    },
+    {
+      "estimator": "core.physics.maximal_lyapunov_exponent",
+      "input": "rank_deficient",
+      "refused": true,
+      "mechanism": "ValueError"
+    },
+    {
+      "estimator": "geosync.RosensteinLyapunov",
+      "input": "nan",
+      "refused": true,
+      "mechanism": "is_valid=False sentinel"
+    },
+    {
+      "estimator": "geosync.RosensteinLyapunov",
+      "input": "inf",
+      "refused": true,
+      "mechanism": "is_valid=False sentinel"
+    },
+    {
+      "estimator": "geosync.RosensteinLyapunov",
+      "input": "constant",
+      "refused": true,
+      "mechanism": "is_valid=False sentinel"
+    },
+    {
+      "estimator": "geosync.RosensteinLyapunov",
+      "input": "all_zero",
+      "refused": true,
+      "mechanism": "is_valid=False sentinel"
+    },
+    {
+      "estimator": "geosync.RosensteinLyapunov",
+      "input": "too_short",
+      "refused": true,
+      "mechanism": "is_valid=False sentinel"
+    },
+    {
+      "estimator": "geosync.RosensteinLyapunov",
+      "input": "rank_deficient",
+      "refused": true,
+      "mechanism": "is_valid=False sentinel"
+    },
+    {
+      "estimator": "geosync.DFAGammaEstimator",
+      "input": "nan",
+      "refused": true,
+      "mechanism": "ValueError | _invalid_estimate sentinel"
+    },
+    {
+      "estimator": "geosync.DFAGammaEstimator",
+      "input": "inf",
+      "refused": true,
+      "mechanism": "ValueError | _invalid_estimate sentinel"
+    },
+    {
+      "estimator": "geosync.DFAGammaEstimator",
+      "input": "constant",
+      "refused": true,
+      "mechanism": "ValueError | _invalid_estimate sentinel"
+    },
+    {
+      "estimator": "geosync.DFAGammaEstimator",
+      "input": "all_zero",
+      "refused": true,
+      "mechanism": "ValueError | _invalid_estimate sentinel"
+    },
+    {
+      "estimator": "geosync.DFAGammaEstimator",
+      "input": "too_short",
+      "refused": true,
+      "mechanism": "ValueError | _invalid_estimate sentinel"
+    },
+    {
+      "estimator": "geosync.DFAGammaEstimator",
+      "input": "rank_deficient",
+      "refused": true,
+      "mechanism": "ValueError | _invalid_estimate sentinel"
+    },
+    {
+      "estimator": "core.physics.lyapunov_spectrum",
+      "input": "dt<=0",
+      "refused": true,
+      "mechanism": "ValueError (INV-LY3)"
+    },
+    {
+      "estimator": "core.physics.lyapunov_spectrum",
+      "input": "n_steps<=0",
+      "refused": true,
+      "mechanism": "ValueError (INV-LY3)"
+    },
+    {
+      "estimator": "core.physics.lyapunov_spectrum",
+      "input": "qr_every_nondiv",
+      "refused": true,
+      "mechanism": "ValueError (INV-LY3)"
+    },
+    {
+      "estimator": "core.physics.lyapunov_spectrum",
+      "input": "x0_not_1d",
+      "refused": true,
+      "mechanism": "ValueError (INV-LY3)"
+    },
+    {
+      "estimator": "core.physics.lyapunov_spectrum",
+      "input": "n_exp_too_big",
+      "refused": true,
+      "mechanism": "ValueError (INV-LY3)"
+    }
+  ],
+  "error_bounds": {
+    "INV-LE3": "Rosenstein log-divergence fit R\u00b2 \u2265 0.80 or fail-closed to 0.0.",
+    "INV-LY1": "linear-system spectrum == Re(eig A) to 1e-3.",
+    "INV-LY2": "Hamiltonian \u03a3\u03bb = 0 to 1e-3; error ~ O((\u03c9\u00b7dt)\u2074), needs \u03c9\u00b7dt\u22720.05.",
+    "INV-LY4": "QR conditioning fail-closed: max|Q\u1d40Q\u2212I|\u22641e-10, min|R_kk|/max|R_kk|>eps_f64.",
+    "INV-DRO1": "\u03b3 = 2H+1 derived to <1e-5; DFA min_quality R\u00b2\u22650.95.",
+    "acceptance_TOL_MLE_LN2": 0.05,
+    "acceptance_TOL_HURST": 0.05
+  },
+  "golden_verification": [
+    {
+      "name": "mle_core_logistic",
+      "ok": true,
+      "detail": "\u03bb fresh=0.693915 frozen=0.693915"
+    },
+    {
+      "name": "mle_geosync_logistic",
+      "ok": true,
+      "detail": "\u03bb fresh=0.617715 frozen=0.617715"
+    },
+    {
+      "name": "spectrum_linear",
+      "ok": true,
+      "detail": "spectrum fresh=[-0.19999986646652346, -0.4999979088385249, -0.9999832078333918] frozen=[-0.19999986646652346, -0.4999979088385249, -0.9999832078333918]"
+    },
+    {
+      "name": "spectrum_harmonic",
+      "ok": true,
+      "detail": "spectrum fresh=[1.562498779298184e-05, 1.5624987792610845e-05] frozen=[1.562498779298184e-05, 1.5624987792610845e-05]"
+    },
+    {
+      "name": "dfa_fgn_h05",
+      "ok": true,
+      "detail": "H fresh=0.499403 frozen=0.499403"
+    },
+    {
+      "name": "dfa_white_noise",
+      "ok": true,
+      "detail": "H fresh=0.439422 frozen=0.439422"
+    }
+  ]
+}

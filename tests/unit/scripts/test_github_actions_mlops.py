@@ -1,3 +1,5 @@
+# Copyright (c) 2023-2026 Yaroslav Vasylenko (neuron7xLab)
+# SPDX-License-Identifier: MIT
 """Tests for the GitHub Actions oriented MLOps helpers."""
 
 from __future__ import annotations
@@ -79,9 +81,7 @@ def test_pipeline_copies_dataset_when_present(
 
     copied_dataset = config.artifact_root / "datasets" / dataset.name
     assert copied_dataset.exists()
-    assert copied_dataset.read_text(encoding="utf-8") == dataset.read_text(
-        encoding="utf-8"
-    )
+    assert copied_dataset.read_text(encoding="utf-8") == dataset.read_text(encoding="utf-8")
 
 
 def test_pipeline_is_deterministic_for_same_inputs(

@@ -1,0 +1,100 @@
+# Diff-bound commit acceptor for the adversarial ladder spine.
+#
+# Operationalises feedback_hypothesis_destruction_machine.md:
+# default verdict is GUILTY; acquittal requires the candidate to
+# beat every engaged prosecutor on a paired-bootstrap delta-AUC
+# with CI lower bound clearing delta_floor.
+#
+# Closes the PATH B deferral declared in null_models.py via the
+# new run_null_audit thin orchestrator.
+#
+# Locally verified:
+#   * pytest tests/research/systemic_risk/: 248 passed (+17 new)
+#   * mypy --strict / ruff / black: clean on every new/modified file
+#   * Default-GUILTY rail under random candidate vs injected prosecutor
+#   * ACQUITTED_ENGAGED rail under injected candidate vs random
+#   * Untested-rungs enumeration verified for partial audits
+#   * run_null_audit pins all surrogates to rung 2
+
+id: adversarial-ladder
+status: ACTIVE
+claim_type: governance
+promise: >-
+  After this PR lands, research/systemic_risk/ ships
+  adversarial_ladder.py — a verdict machine whose default output
+  is GUILTY across an 8-rung adversarial ladder. run_null_audit
+  becomes an executable thin orchestrator (PATH A) closing the
+  PATH B deferral declared in null_models.py. ACQUITTED_ENGAGED
+  is the strongest verdict any autonomous run can emit; full
+  ACQUITTED remains externally gated. C-SYSRISK-PHASE remains
+  HYPOTHESIS in CLAIMS.md.
+diff_scope:
+  changed_files:
+    - path: ".claude/commit_acceptors/adversarial-ladder.yaml"
+    - path: "research/systemic_risk/ADVERSARIAL_LADDER.md"
+    - path: "research/systemic_risk/CHANGELOG.md"
+    - path: "research/systemic_risk/__init__.py"
+    - path: "research/systemic_risk/adversarial_ladder.py"
+    - path: "tests/research/systemic_risk/test_adversarial_ladder.py"
+  forbidden_paths:
+    - "trading/"
+    - "execution/"
+    - "forecast/"
+    - "policy/"
+    - "core/physics/"
+    - "core/kuramoto/"
+    - "application/governance/claim_ledger.py"
+    - "application/governance/commit_acceptor.py"
+required_python_symbols:
+  - "research/systemic_risk/adversarial_ladder.py::run_adversarial_ladder"
+  - "research/systemic_risk/adversarial_ladder.py::run_null_audit"
+  - "research/systemic_risk/adversarial_ladder.py::parameter_fragility_audit"
+  - "research/systemic_risk/adversarial_ladder.py::LADDER_RUNGS"
+  - "research/systemic_risk/adversarial_ladder.py::ProsecutorScore"
+  - "research/systemic_risk/adversarial_ladder.py::LadderConfig"
+  - "research/systemic_risk/adversarial_ladder.py::LadderReport"
+expected_signal: >-
+  `pytest tests/research/systemic_risk/` reports "248 passed";
+  `mypy --strict research/systemic_risk/ tests/research/systemic_risk/`
+  is clean (the 5 formerly-tolerated core/kuramoto/jax_engine
+  unused-ignore / no-any-return errors were root-cause-fixed in
+  fix/jax-engine-mypy-strict-debt — they are no longer expected;
+  any recurrence is a genuine regression to surface, not absorb);
+  ruff + black
+  are clean on the diff; LADDER_RUNGS enumerates rungs 1..8
+  exactly once; the default-GUILTY rail and the ACQUITTED_ENGAGED
+  rail both pass.
+measurement_command: >-
+  bash -c '
+    mypy --strict research/systemic_risk/ tests/research/systemic_risk/ && ruff check research/systemic_risk/ tests/research/systemic_risk/ && black --check research/systemic_risk/ tests/research/systemic_risk/ && python -m pytest tests/research/systemic_risk/ -q
+  '
+signal_artifact: "tmp/adversarial_ladder.log"
+falsifier:
+  command: >-
+    bash -c '
+      python -m pytest
+      tests/research/systemic_risk/test_adversarial_ladder.py::TestLadderVerdictDefaults::test_default_verdict_is_guilty_under_random_signal
+      tests/research/systemic_risk/test_adversarial_ladder.py::TestLadderVerdictDefaults::test_one_loss_anywhere_yields_guilty
+      tests/research/systemic_risk/test_adversarial_ladder.py::TestRunNullAudit::test_pins_every_surrogate_to_rung_two
+      -q >/tmp/_ladder_rails.log 2>&1 && ! grep -q "3 passed" /tmp/_ladder_rails.log
+    '
+  description: >-
+    Probes three load-bearing rails: default-GUILTY under random
+    candidate, GUILTY when any prosecutor ties or beats the
+    candidate, and run_null_audit pinning to rung 2. Falsifier
+    succeeds (exit 0) only when one of these fails — meaning the
+    hypothesis-destruction contract is violated.
+rollback_command: >-
+  bash -c 'rm -f
+    research/systemic_risk/adversarial_ladder.py
+    research/systemic_risk/ADVERSARIAL_LADDER.md
+    tests/research/systemic_risk/test_adversarial_ladder.py
+    .claude/commit_acceptors/adversarial-ladder.yaml && git checkout HEAD --
+    research/systemic_risk/__init__.py
+    research/systemic_risk/CHANGELOG.md'
+rollback_verification_command: >-
+  bash -c '! test -f research/systemic_risk/adversarial_ladder.py'
+memory_update_type: append
+ledger_path: ".claude/commit_acceptors/adversarial-ladder.yaml"
+report_path: "tmp/adversarial_ladder.log"
+evidence: []

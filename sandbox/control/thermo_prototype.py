@@ -1,3 +1,5 @@
+# Copyright (c) 2023-2026 Yaroslav Vasylenko (neuron7xLab)
+# SPDX-License-Identifier: MIT
 """Synthetic thermodynamic prototype used for empirical validation.
 
 This module mirrors the experimental setup described in the research notes
@@ -133,7 +135,9 @@ def _build_graph(seed: int) -> nx.DiGraph:
     return graph
 
 
-def _snapshot_metrics(graph: nx.DiGraph) -> Tuple[
+def _snapshot_metrics(
+    graph: nx.DiGraph,
+) -> Tuple[
     Dict[Tuple[str, str], float],
     Dict[Tuple[str, str], float],
     float,
@@ -379,11 +383,7 @@ def run_backtest_on_synthetic_crises(
         if (true_positives + false_negatives) > 0
         else 0.0
     )
-    f1_score = (
-        2 * (precision * recall) / (precision + recall)
-        if (precision + recall) > 0
-        else 0.0
-    )
+    f1_score = 2 * (precision * recall) / (precision + recall) if (precision + recall) > 0 else 0.0
 
     false_positive_rate = (
         false_positives / (false_positives + true_negatives)

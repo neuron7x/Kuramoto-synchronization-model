@@ -1,0 +1,67 @@
+# Diff-bound acceptor: make the architecture-debt metric worktree-immune.
+#
+# tools/architecture_debt_inference.py scanned ROOT.rglob("*.py") excluding only
+# .venv, so nested git worktrees / agent checkouts under .claude/worktrees (other
+# branches' working copies) were double-counted. The same commit therefore
+# reported different debt on CI (no worktrees) than on a developer box mid
+# fan-out — locally type_ignore showed 2112 vs the true 704, and
+# test_committed_budget_holds_on_current_tree failed locally while passing on CI.
+# Fix excludes .venv/.git/.claude-worktrees so the metric is deterministic and
+# location-independent. No debt suppression removed; no budget changed.
+
+id: debt-scanner-worktree-immune
+status: ACTIVE
+claim_type: correctness
+promise: >-
+  Adds _is_excluded(path) and routes _py_files(), m_test_skips(), and
+  m_test_slow() through it so nested git worktrees (.claude/worktrees/*), the
+  local .venv, and .git internals are never counted as repository debt. Makes
+  architecture_debt_inference deterministic regardless of which local worktrees
+  exist; the previously location-dependent metric now equals the CI value
+  (type_ignore 704, noqa 510, skips 50, slow 37, todo 26 — matching
+  tools/debt_budget.json). Adds tests asserting no worktree/venv/git path leaks
+  into the scan and pinning the _is_excluded predicate. No suppression removed,
+  no budget changed, no other module touched.
+diff_scope:
+  changed_files:
+    - path: ".claude/commit_acceptors/debt-scanner-worktree-immune.yaml"
+    - path: "tools/architecture_debt_inference.py"
+    - path: "tests/ci/test_architecture_debt_inference.py"
+  forbidden_paths:
+    - "trading/"
+    - "execution/"
+    - "forecast/"
+    - "policy/"
+required_python_symbols:
+  - "_py_files"
+  - "_is_excluded"
+expected_signal: >-
+  tests/ci/test_architecture_debt_inference.py passes 18/18 including the newly
+  green test_committed_budget_holds_on_current_tree (was failing locally on
+  worktree inflation) and the new test_py_files_exclude_nested_worktrees_and_venv
+  / test_is_excluded_predicate. architecture_debt_inference --json reports counts
+  equal to tools/debt_budget.json. ruff/black/mypy --strict clean.
+measurement_command: >-
+  PYTHONPATH=. python -m pytest tests/ci/test_architecture_debt_inference.py -v
+signal_artifact: "tmp/debt_scanner_worktree_immune_pytest.log"
+falsifier:
+  command: >-
+    PYTHONPATH=. python -m pytest tests/ci/test_architecture_debt_inference.py
+    -v -k "py_files_exclude_nested_worktrees or committed_budget_holds"
+  description: >-
+    Reverting _is_excluded (restoring the bare ".venv not in parts" filter)
+    re-admits nested .claude/worktrees checkouts, inflating type_ignore/noqa/todo
+    counts above budget — test_py_files_exclude_nested_worktrees_and_venv and
+    test_committed_budget_holds_on_current_tree fail on any tree that has local
+    worktrees present.
+rollback_command: >-
+  git checkout HEAD~1 --
+  tools/architecture_debt_inference.py
+  tests/ci/test_architecture_debt_inference.py
+  .claude/commit_acceptors/debt-scanner-worktree-immune.yaml
+rollback_verification_command: >-
+  git diff --exit-code tools/architecture_debt_inference.py
+memory_update_type: none
+ledger_path: ".claude/commit_acceptors/debt-scanner-worktree-immune.yaml"
+report_path: "docs/reports/diff_bound_commit_acceptor_layer.md"
+evidence: []

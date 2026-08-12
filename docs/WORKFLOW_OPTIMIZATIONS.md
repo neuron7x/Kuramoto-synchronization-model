@@ -5,7 +5,7 @@
 
 ## Overview
 
-This document describes the optimizations applied to TradePulse GitHub Actions workflows to improve CI/CD efficiency, reduce costs, and speed up feedback loops.
+This document describes the optimizations applied to GeoSync GitHub Actions workflows to improve CI/CD efficiency, reduce costs, and speed up feedback loops.
 
 ## Implemented Optimizations
 

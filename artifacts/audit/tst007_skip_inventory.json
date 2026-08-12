@@ -1,0 +1,14 @@
+{
+  "total": 266,
+  "files": 144,
+  "by_category": {
+    "data-artifact-gated": 31,
+    "dependency-induced": 156,
+    "platform": 16,
+    "conditional-inapplicable": 26,
+    "by-design-xfail": 1,
+    "unclassified": 33,
+    "todo-wip": 1,
+    "env-or-slow-gated": 2
+  }
+}

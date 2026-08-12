@@ -1,5 +1,5 @@
 ---
-owner: docs@tradepulse
+owner: docs@geosync
 review_cadence: quarterly
 last_reviewed: 2026-01-01
 ---
@@ -29,7 +29,7 @@ For current, active documentation, see:
 - [README.md](../../README.md) - Project overview
 - [docs/](../) - Current documentation directory
 - [ARCHITECTURE.md](../ARCHITECTURE.md) - System architecture
-- [TESTING.md](../../TESTING.md) - Testing guide
+- [TESTING.md](../operations/TESTING.md) - Testing guide
 - [SECURITY.md](../../SECURITY.md) - Security documentation
 
 ## Retention Policy

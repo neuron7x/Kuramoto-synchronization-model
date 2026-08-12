@@ -1,0 +1,59 @@
+{
+  "status": "READY_FOR_PR",
+  "branch": "lab-pilot/kuramoto-ricci-contracts",
+  "remediation_streams_touched": ["1_coupling_contract"],
+  "layer_repaired": ["A_physical_ode_simulator"],
+  "mathematical_objects_protected": [
+    "effective coupling matrix C in dθ_i/dt = ω_i + Σ_j C_ij sin(θ_j − θ_i)",
+    "global coupling scalar K",
+    "coupling sign (attractive vs repulsive)"
+  ],
+  "semantic_violations_fixed": [
+    "double-scaling C = K·W when a physical weight matrix is passed with non-unit K",
+    "silent inconsistency between K/N (global) and K·A (adjacency) normalization conventions",
+    "signed/repulsive coupling implicitly claiming attractive-Kuramoto synchronization theorems"
+  ],
+  "files_changed": [
+    "core/kuramoto/coupling_spec.py",
+    "core/kuramoto/config.py",
+    "core/kuramoto/__init__.py",
+    "tests/unit/core/test_kuramoto_coupling_spec.py"
+  ],
+  "tests_added": [
+    "test_k_a_equivalent_to_w_to_tolerance",
+    "test_double_scaling_rejected",
+    "test_pre_scaled_w_passed_as_signed_weight_rejects_nonunit_k",
+    "test_negative_k_rejected_in_attractive_mode",
+    "test_negative_weight_rejected_in_attractive_full_weight",
+    "test_signed_negative_edges_allowed_only_in_signed_config",
+    "test_signed_mode_cannot_emit_attractive_claim_boundary",
+    "test_nonfinite_coupling_rejected",
+    "test_shape_mismatch_rejected",
+    "test_coupling_metadata_emitted",
+    "test_from_coupling_spec_applies_scale_exactly_once",
+    "(+9 more — 20 total)"
+  ],
+  "validation_commands": [
+    "ruff check", "black --check", "mypy core/kuramoto/",
+    "pytest tests/unit/core/test_kuramoto_coupling_spec.py",
+    "pytest tests/unit/core/ -k kuramoto"
+  ],
+  "negative_evidence_path": "artifacts/lab_pilot/kuramoto_ricci/NEGATIVE_EVIDENCE.md",
+  "claim_boundary_preserved": true,
+  "forbidden_claims_blocked": [
+    "signed_or_repulsive coupling -> physical_attractive_kuramoto_only",
+    "pre-scaled physical W -> normalized A re-scaled by K (double-scaling)"
+  ],
+  "acceptance_minimum": {
+    "enforceable_semantic_contract": "CouplingSpec (anti-double-scaling + sign discipline)",
+    "regression_test": "tests/unit/core/test_kuramoto_coupling_spec.py (20)",
+    "evidence_artifact": "artifacts/lab_pilot/kuramoto_ricci/",
+    "claim_boundary_guard": "CouplingSpec.claim_boundary (CLAIM_ATTRACTIVE vs CLAIM_SIGNED)"
+  },
+  "remaining_gaps": [
+    "bare KuramotoConfig(K, adjacency) path still permits double-scaling (legacy, intentionally not fail-closed in this slice)",
+    "engines do not yet consume claim_boundary to gate INV-K theorems",
+    "Streams 2,3,5,6,7,8 untouched"
+  ],
+  "next_action": "Open PR; follow-up PR to migrate call sites onto from_coupling_spec and fail-close the bare two-argument coupling path."
+}

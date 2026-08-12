@@ -1,7 +1,9 @@
+# Copyright (c) 2023-2026 Yaroslav Vasylenko (neuron7xLab)
+# SPDX-License-Identifier: MIT
 """Tests for experimental FractalPELMGPU memory backend.
 
 These tests validate the experimental phase-aware retrieval backend.
-Tests are marked with L3 as per the TradePulse test level mapping.
+Tests are marked with L3 as per the GeoSync test level mapping.
 """
 
 from __future__ import annotations
@@ -136,18 +138,14 @@ class TestFractalPELMGPUInitialization:
 class TestBatchEntangle:
     """Test batch_entangle method."""
 
-    def test_batch_entangle_with_numpy_arrays(
-        self, fractal_pelm, sample_vectors, sample_phases
-    ):
+    def test_batch_entangle_with_numpy_arrays(self, fractal_pelm, sample_vectors, sample_phases):
         """Test entangling vectors using numpy arrays."""
         fractal_pelm.batch_entangle(sample_vectors, sample_phases)
 
         assert len(fractal_pelm) == 10
         assert fractal_pelm.current_size == 10
 
-    def test_batch_entangle_with_torch_tensors(
-        self, fractal_pelm, sample_vectors, sample_phases
-    ):
+    def test_batch_entangle_with_torch_tensors(self, fractal_pelm, sample_vectors, sample_phases):
         """Test entangling vectors using torch tensors."""
         import torch
 
@@ -158,9 +156,7 @@ class TestBatchEntangle:
 
         assert len(fractal_pelm) == 10
 
-    def test_batch_entangle_with_metadata(
-        self, fractal_pelm, sample_vectors, sample_phases
-    ):
+    def test_batch_entangle_with_metadata(self, fractal_pelm, sample_vectors, sample_phases):
         """Test entangling vectors with metadata."""
         metadatas = [{"id": i, "label": f"entry_{i}"} for i in range(10)]
 
@@ -168,18 +164,14 @@ class TestBatchEntangle:
 
         assert len(fractal_pelm) == 10
 
-    def test_batch_entangle_mismatched_lengths_raises_error(
-        self, fractal_pelm, sample_vectors
-    ):
+    def test_batch_entangle_mismatched_lengths_raises_error(self, fractal_pelm, sample_vectors):
         """Test that mismatched vectors and phases raises ValueError."""
         phases = np.linspace(0, np.pi, 5)  # Only 5 phases for 10 vectors
 
         with pytest.raises(ValueError, match="must have same length"):
             fractal_pelm.batch_entangle(sample_vectors, phases)
 
-    def test_batch_entangle_wrong_dimension_raises_error(
-        self, fractal_pelm, sample_phases
-    ):
+    def test_batch_entangle_wrong_dimension_raises_error(self, fractal_pelm, sample_phases):
         """Test that wrong vector dimension raises ValueError."""
         wrong_dim_vectors = np.random.randn(10, 32).astype(np.float32)
 
@@ -202,9 +194,7 @@ class TestBatchEntangle:
 
         assert len(memory) == 10  # Should be capped at capacity
 
-    def test_batch_entangle_multiple_calls(
-        self, fractal_pelm, sample_vectors, sample_phases
-    ):
+    def test_batch_entangle_multiple_calls(self, fractal_pelm, sample_vectors, sample_phases):
         """Test multiple calls to batch_entangle accumulate entries."""
         fractal_pelm.batch_entangle(sample_vectors[:5], sample_phases[:5])
         assert len(fractal_pelm) == 5
@@ -225,9 +215,7 @@ class TestRetrieve:
 
         assert results == []
 
-    def test_retrieve_returns_expected_format(
-        self, fractal_pelm, sample_vectors, sample_phases
-    ):
+    def test_retrieve_returns_expected_format(self, fractal_pelm, sample_vectors, sample_phases):
         """Test that retrieve returns correctly formatted results."""
         fractal_pelm.batch_entangle(sample_vectors, sample_phases)
         query = sample_vectors[0]
@@ -242,9 +230,7 @@ class TestRetrieve:
             assert vector.shape == (64,)
             assert metadata is None  # No metadata was stored
 
-    def test_retrieve_finds_exact_match(
-        self, fractal_pelm, sample_vectors, sample_phases
-    ):
+    def test_retrieve_finds_exact_match(self, fractal_pelm, sample_vectors, sample_phases):
         """Test that exact match has highest score."""
         fractal_pelm.batch_entangle(sample_vectors, sample_phases)
         query = sample_vectors[0].copy()
@@ -267,9 +253,7 @@ class TestRetrieve:
 
         assert len(results) == 3
 
-    def test_retrieve_top_k_exceeds_size(
-        self, fractal_pelm, sample_vectors, sample_phases
-    ):
+    def test_retrieve_top_k_exceeds_size(self, fractal_pelm, sample_vectors, sample_phases):
         """Test retrieve when top_k exceeds memory size."""
         fractal_pelm.batch_entangle(sample_vectors[:3], sample_phases[:3])
         query = np.random.randn(64).astype(np.float32)
@@ -278,9 +262,7 @@ class TestRetrieve:
 
         assert len(results) == 3  # Should return all available
 
-    def test_retrieve_returns_metadata(
-        self, fractal_pelm, sample_vectors, sample_phases
-    ):
+    def test_retrieve_returns_metadata(self, fractal_pelm, sample_vectors, sample_phases):
         """Test that metadata is returned when available."""
         metadatas = [{"id": i} for i in range(10)]
         fractal_pelm.batch_entangle(sample_vectors, sample_phases, metadatas)
@@ -293,9 +275,7 @@ class TestRetrieve:
         assert metadata is not None
         assert "id" in metadata
 
-    def test_retrieve_scores_are_sorted(
-        self, fractal_pelm, sample_vectors, sample_phases
-    ):
+    def test_retrieve_scores_are_sorted(self, fractal_pelm, sample_vectors, sample_phases):
         """Test that results are sorted by descending score."""
         fractal_pelm.batch_entangle(sample_vectors, sample_phases)
         query = np.random.randn(64).astype(np.float32)
@@ -310,9 +290,7 @@ class TestRetrieve:
 class TestBatchRetrieve:
     """Test batch_retrieve method."""
 
-    def test_batch_retrieve_multiple_queries(
-        self, fractal_pelm, sample_vectors, sample_phases
-    ):
+    def test_batch_retrieve_multiple_queries(self, fractal_pelm, sample_vectors, sample_phases):
         """Test batch retrieval with multiple queries."""
         fractal_pelm.batch_entangle(sample_vectors, sample_phases)
 
@@ -325,9 +303,7 @@ class TestBatchRetrieve:
         for query_results in results:
             assert len(query_results) == 2  # top_k=2
 
-    def test_batch_retrieve_with_torch_tensors(
-        self, fractal_pelm, sample_vectors, sample_phases
-    ):
+    def test_batch_retrieve_with_torch_tensors(self, fractal_pelm, sample_vectors, sample_phases):
         """Test batch retrieval with torch tensors."""
         import torch
 
@@ -367,9 +343,7 @@ class TestReset:
         assert len(fractal_pelm) == 0
         assert fractal_pelm.current_size == 0
 
-    def test_reset_allows_new_entries(
-        self, fractal_pelm, sample_vectors, sample_phases
-    ):
+    def test_reset_allows_new_entries(self, fractal_pelm, sample_vectors, sample_phases):
         """Test that entries can be added after reset."""
         fractal_pelm.batch_entangle(sample_vectors, sample_phases)
         fractal_pelm.reset()
@@ -393,9 +367,7 @@ class TestPhaseAwareRetrieval:
             FractalPELMGPU,
         )
 
-        memory = FractalPELMGPU(
-            dimension=64, capacity=100, device="cpu", fractal_weight=0.0
-        )
+        memory = FractalPELMGPU(dimension=64, capacity=100, device="cpu", fractal_weight=0.0)
 
         np.random.seed(123)
         # Create two similar vectors with different phases
@@ -483,9 +455,7 @@ class TestNumericalStability:
 
     def test_handles_extreme_phases(self, fractal_pelm, sample_vectors):
         """Test handling of extreme phase values."""
-        extreme_phases = np.array(
-            [0, 100 * np.pi, -100 * np.pi, 1e10, -1e10], dtype=np.float32
-        )
+        extreme_phases = np.array([0, 100 * np.pi, -100 * np.pi, 1e10, -1e10], dtype=np.float32)
 
         # Use only first 5 vectors
         fractal_pelm.batch_entangle(sample_vectors[:5], extreme_phases)

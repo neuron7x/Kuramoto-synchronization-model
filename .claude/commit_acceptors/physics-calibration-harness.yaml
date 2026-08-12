@@ -1,0 +1,73 @@
+# Diff-bound acceptor for the physics-invariant calibration harness.
+#
+# Adds a one-call calibration tool that takes any P0 estimator,
+# generates synthetic data with known ground truth, runs the
+# estimator, and returns a self-describing CalibrationReport with
+# pass/fail verdict against the documented spec tolerance.
+#
+# This PR ALSO documents one finding the harness already produced:
+# core.dro_ara.engine.derive_gamma is calibrated for *price* input
+# (positive process via geometric model), not raw fBm paths. That
+# documentation lives inline in calibrate_dro_hurst.
+
+id: physics-calibration-harness
+status: ACTIVE
+claim_type: correctness
+promise: >-
+  core.physics.calibration provides a deterministic, pure-functional
+  calibration harness for two P0 invariants (INV-DRO1, INV-OA2),
+  emitting CalibrationReport rows with INV-ID, ground truth,
+  estimated value, abs error, spec tolerance, and pass verdict.
+  All 9 default-grid cases pass (4 INV-DRO1 + 5 INV-OA2);
+  fBm generator is exact under Davies-Harte circulant embedding
+  for H ∈ (0, 1).
+diff_scope:
+  changed_files:
+    - path: ".claude/commit_acceptors/physics-calibration-harness.yaml"
+    - path: "core/physics/calibration.py"
+    - path: "docs/reports/physics_calibration_harness.md"
+    - path: "newsfragments/physics-calibration-harness.feature.md"
+    - path: "tests/unit/physics/test_calibration_harness.py"
+  forbidden_paths:
+    - "trading/"
+    - "execution/"
+    - "forecast/"
+    - "policy/"
+required_python_symbols:
+  - "CalibrationReport"
+  - "calibrate_dro_hurst"
+  - "calibrate_ott_antonsen_steady"
+  - "format_markdown_table"
+  - "generate_fractional_brownian_motion"
+  - "run_calibration_suite"
+expected_signal: >-
+  All 21 unit tests in tests/unit/physics/test_calibration_harness.py
+  pass under pytest; the default suite (4 DRO1 + 5 OA2 cases)
+  reports 9/9 passes; mypy --strict and ruff clean.
+measurement_command: >-
+  python -m pytest tests/unit/physics/test_calibration_harness.py -v
+signal_artifact: "tmp/physics_calibration_harness_pytest.log"
+falsifier:
+  command: >-
+    python -m pytest tests/unit/physics/test_calibration_harness.py
+    -v -k "all_pass_on_default_grid or canonical_grid or supercritical_grid"
+  description: >-
+    Probe filters to the three cases that pin pass/fail on the
+    canonical grid: the per-H_target parametrize for DRO1, the
+    per-(K, delta) parametrize for OA2, and the suite-level
+    "no failing reports" assertion. If any of these fail, either
+    the underlying estimator has drifted or the fBm generator's
+    Hurst-targeting has drifted; the calibration tool is doing
+    its job by failing.
+rollback_command: >-
+  git checkout HEAD~1 -- core/physics/calibration.py
+  tests/unit/physics/test_calibration_harness.py
+  .claude/commit_acceptors/physics-calibration-harness.yaml
+  docs/reports/physics_calibration_harness.md
+  newsfragments/physics-calibration-harness.feature.md
+rollback_verification_command: >-
+  git diff --exit-code core/physics/calibration.py
+memory_update_type: append
+ledger_path: ".claude/commit_acceptors/physics-calibration-harness.yaml"
+report_path: "docs/reports/physics_calibration_harness.md"
+evidence: []

@@ -1,11 +1,11 @@
+# Copyright (c) 2023-2026 Yaroslav Vasylenko (neuron7xLab)
+# SPDX-License-Identifier: MIT
 import pytest
 
 from core.utils import metrics
 
 
-@pytest.mark.skipif(
-    not metrics.PROMETHEUS_AVAILABLE, reason="prometheus_client is not installed"
-)
+@pytest.mark.skipif(not metrics.PROMETHEUS_AVAILABLE, reason="prometheus_client is not installed")
 def test_get_metrics_collector_reinitialises_for_new_registry(monkeypatch):
     from prometheus_client import CollectorRegistry
 

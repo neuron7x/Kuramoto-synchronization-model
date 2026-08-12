@@ -1,3 +1,5 @@
+# Copyright (c) 2023-2026 Yaroslav Vasylenko (neuron7xLab)
+# SPDX-License-Identifier: MIT
 from __future__ import annotations
 
 import socket
@@ -6,9 +8,7 @@ from typing import Any, Mapping
 
 import pytest
 
-pactman = pytest.importorskip(
-    "pactman", reason="pactman is required for contract tests"
-)
+pactman = pytest.importorskip("pactman", reason="pactman is required for contract tests")
 mock_module = pytest.importorskip(
     "pactman.mock", reason="pactman.mock is required for contract tests"
 )
@@ -45,9 +45,7 @@ class _PactExecutionConnector(RESTWebSocketConnector):
     def __init__(self, *, base_url: str) -> None:
         super().__init__(name="pact-broker", base_url=base_url, sandbox=True)
 
-    def _resolve_credentials(
-        self, credentials: Mapping[str, str] | None
-    ) -> Mapping[str, str]:
+    def _resolve_credentials(self, credentials: Mapping[str, str] | None) -> Mapping[str, str]:
         return dict(credentials or {})
 
     def _sign_request(  # type: ignore[override]
@@ -84,23 +82,17 @@ class _PactExecutionConnector(RESTWebSocketConnector):
     ) -> Order:
         order_id = str(payload.get("orderId") or payload.get("id") or "")
         symbol = str(payload.get("symbol") or original.symbol if original else "")
-        side_value = str(
-            payload.get("side") or (original.side.value if original else "buy")
-        )
+        side_value = str(payload.get("side") or (original.side.value if original else "buy"))
         type_value = str(
             payload.get("type") or (original.order_type.value if original else "market")
         )
-        status_value = str(
-            payload.get("status") or (original.status.value if original else "open")
-        )
+        status_value = str(payload.get("status") or (original.status.value if original else "open"))
         quantity_raw = payload.get("quantity")
         price_raw = payload.get("price")
         filled_raw = payload.get("filled") or payload.get("filled_quantity") or 0
         average_raw = payload.get("average_price")
 
-        quantity = (
-            float(quantity_raw) if quantity_raw is not None else original.quantity
-        )
+        quantity = float(quantity_raw) if quantity_raw is not None else original.quantity
         price = float(price_raw) if price_raw is not None else original.price
         filled = float(filled_raw) if filled_raw is not None else 0.0
         average_price = (
@@ -146,7 +138,7 @@ class _PactExecutionConnector(RESTWebSocketConnector):
 @pytest.fixture()
 def execution_broker_pact(tmp_path_factory: pytest.TempPathFactory):
     port = _allocate_port()
-    pact = Consumer("TradePulseExecutionEngine").has_pact_with(
+    pact = Consumer("GeoSyncExecutionEngine").has_pact_with(
         Provider("SandboxExecutionBroker"),
         host_name="localhost",
         port=port,
@@ -192,9 +184,7 @@ def test_execution_order_contract(execution_broker_pact) -> None:
         execution_broker_pact.given("matching engine accepting limit orders")
         .upon_receiving("a limit order placement")
         .with_request("post", "/orders", query=request_payload)
-        .will_respond_with(
-            200, body=response_payload, headers={"Content-Type": "application/json"}
-        )
+        .will_respond_with(200, body=response_payload, headers={"Content-Type": "application/json"})
     )
 
     base_url = f"http://127.0.0.1:{execution_broker_pact.port}"
@@ -246,9 +236,7 @@ def test_execution_order_contract_rejects_negative_quantities(
         execution_broker_pact.given("provider violates quantity invariant")
         .upon_receiving("an order placement with invalid fill")
         .with_request("post", "/orders", query=request_payload)
-        .will_respond_with(
-            200, body=response_payload, headers={"Content-Type": "application/json"}
-        )
+        .will_respond_with(200, body=response_payload, headers={"Content-Type": "application/json"})
     )
 
     base_url = f"http://127.0.0.1:{execution_broker_pact.port}"

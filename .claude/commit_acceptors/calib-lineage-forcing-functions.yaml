@@ -1,0 +1,139 @@
+# Diff-bound commit acceptor for the CALIB-GRID fractal/dynamical
+# forcing-function set.
+#
+# The prior structural audit (#759) deduped the *instances* of the
+# fractal data-structure duplication. This change attacks the surviving
+# *generative mechanism*: the CALIB-GRID lineage family had no
+# architectural forcing function, so each new lineage could legally
+# re-derive a frozen-sha literal, a bespoke ledger schema, or its own
+# divergent numeric-tolerance window ad hoc (monotonic
+# architectural-entropy with no negative-feedback term).
+#
+# FIX-NOW set (pure-additive forcing functions + one behavior-preserving
+# tolerance unification):
+#   * test_no_frozen_sha_literal_outside_substrate_registry — fails
+#     closed if any 40/64-hex provenance literal appears in a lineage
+#     source module outside the _substrate registry (kills the F1/F5
+#     "re-paste the provenance hash" generator).
+#   * test_deep_close_tolerance_is_pinned_single_valued_and_sharp —
+#     pins the post-data-edit tolerance to one audited window, asserts a
+#     synthetic regression > the window is still detected, and asserts
+#     both _deep_close copies agree (kills the F3 divergent-copy /
+#     tolerance-creep generator). Surfaced a TRUE divergence:
+#     test_grid_kuramoto.py was rel=1e-6 (#760) while
+#     test_calib_substrate_consolidation.py was still rel=1e-9 (#759).
+#   * test_every_results_ledger_conforms_to_shared_schema — every
+#     build_*_ledger must emit the shared sha-pinning + honesty contract
+#     (kills the F4/F5 bespoke-RESULTS-schema generator).
+#
+# Behavior-preserving tolerance unification:
+#   tests/research/calibration/test_calib_substrate_consolidation.py
+#   _deep_close: rel 1e-9/abs 1e-12 -> rel 1e-6/abs 1e-9 (the single
+#   audited window already merged in #760 and pinned by the
+#   calib-cg002-determinism acceptor). That test only ever asserts
+#   reproduction (committed == fresh within tolerance); a *looser*
+#   window strictly preserves every currently-passing assertion, and
+#   sharpness against real post-data edits is now independently forced
+#   by the new tolerance forcing function. No frozen artifact, gate,
+#   threshold, seed, sigma, theta0 or decision rule is touched.
+#
+# HARD invariants verified:
+#   * tests/research/calibration/test_grid_kuramoto.py git diff EMPTY
+#     (every pre-existing drift/no-peek/bit-stability test green
+#     UNMODIFIED).
+#   * all four sha-pinned ledgers byte-stable: the slow
+#     *_results_json_matches_committed_artifact + consolidation
+#     reproduction tests pass unmodified.
+#   * estimator K-hat bit-identical all paths (consolidation
+#     shared-back-end test green unmodified).
+#   * mypy --strict / ruff / black clean on the diff (fresh cache; the
+#     stale .mypy_cache `google` crash is environmental cache
+#     corruption, not a code defect).
+#   * net effect: +1 forcing-function test module, ε unified in one
+#     copy; ZERO production-code change, ZERO frozen-artifact change.
+
+id: calib-lineage-forcing-functions
+status: ACTIVE
+claim_type: documentation
+promise: >-
+  After this PR lands the CALIB-GRID lineage family has an
+  architectural negative-feedback term:
+  tests/research/calibration/test_calib_lineage_forcing_functions.py
+  fails closed if a future lineage (a) re-derives a 40/64-hex
+  provenance literal outside the research/calibration/grid_kuramoto/
+  _substrate registry, (b) widens or diverges the _deep_close
+  post-data-edit tolerance past the single audited rel=1e-6/abs=1e-9
+  window or lets a >window regression pass, or (c) emits a build_*_
+  ledger missing the shared 64-hex ledger_sha256 / false-valued honesty
+  flag. The two _deep_close copies are unified to the one audited
+  window (test_calib_substrate_consolidation.py raised from rel=1e-9 to
+  the already-merged rel=1e-6); that test only asserts reproduction so
+  the looser window is behavior-preserving and sharpness is forced by
+  the new tolerance test. No production code, no frozen pre-registration,
+  RESULTS ledger, gate, threshold, seed, sigma, theta0 or decision rule
+  is touched; tests/research/calibration/test_grid_kuramoto.py is
+  byte-unchanged.
+diff_scope:
+  changed_files:
+    - path: ".claude/commit_acceptors/calib-lineage-forcing-functions.yaml"
+    - path: "tests/research/calibration/test_calib_lineage_forcing_functions.py"
+    - path: "tests/research/calibration/test_calib_substrate_consolidation.py"
+  forbidden_paths:
+    - "trading/"
+    - "execution/"
+    - "forecast/"
+    - "policy/"
+    - "core/"
+    - "research/calibration/grid_kuramoto/"
+    - "application/governance/claim_ledger.py"
+    - "application/governance/commit_acceptor.py"
+    - "tests/research/calibration/test_grid_kuramoto.py"
+required_python_symbols: []
+expected_signal: >-
+  `pytest tests/research/calibration/test_calib_lineage_forcing_functions.py
+  tests/research/calibration/test_grid_kuramoto.py
+  tests/research/calibration/test_calib_substrate_consolidation.py`
+  is green (fast + slow); mypy --strict / ruff / black clean on the
+  diff; `git diff --exit-code
+  tests/research/calibration/test_grid_kuramoto.py` is empty.
+measurement_command: >-
+  bash -c '
+    rm -rf .mypy_cache &&
+    mypy --strict --follow-imports=silent
+      tests/research/calibration/test_calib_lineage_forcing_functions.py
+      tests/research/calibration/test_calib_substrate_consolidation.py && ruff check
+       tests/research/calibration/test_calib_lineage_forcing_functions.py
+       tests/research/calibration/test_calib_substrate_consolidation.py && black --check
+       tests/research/calibration/test_calib_lineage_forcing_functions.py
+       tests/research/calibration/test_calib_substrate_consolidation.py && git diff --exit-code tests/research/calibration/test_grid_kuramoto.py && python -m pytest
+       tests/research/calibration/test_calib_lineage_forcing_functions.py
+       tests/research/calibration/test_grid_kuramoto.py
+       tests/research/calibration/test_calib_substrate_consolidation.py -q
+  '
+signal_artifact: "tmp/calib_lineage_forcing_functions.log"
+falsifier:
+  command: >-
+    bash -c '
+      python -m pytest
+      "tests/research/calibration/test_calib_lineage_forcing_functions.py::test_no_frozen_sha_literal_outside_substrate_registry"
+      "tests/research/calibration/test_calib_lineage_forcing_functions.py::test_deep_close_tolerance_is_pinned_single_valued_and_sharp"
+      -q >/tmp/_calib_ff_rails.log 2>&1 && ! grep -q "2 passed" /tmp/_calib_ff_rails.log
+    '
+  description: >-
+    Probes the two load-bearing forcing functions: the provenance-
+    literal single-source guard and the tolerance single-valued/sharp
+    guard. The falsifier succeeds (exit 0) only when one of them fails —
+    i.e. the generative mechanism re-opened.
+rollback_command: >-
+  bash -c 'git checkout origin/main --
+    tests/research/calibration/test_calib_substrate_consolidation.py && rm -f
+    tests/research/calibration/test_calib_lineage_forcing_functions.py
+    .claude/commit_acceptors/calib-lineage-forcing-functions.yaml'
+rollback_verification_command: >-
+  bash -c '! test -f
+    tests/research/calibration/test_calib_lineage_forcing_functions.py && git diff --exit-code origin/main --
+    tests/research/calibration/test_calib_substrate_consolidation.py'
+memory_update_type: append
+ledger_path: ".claude/commit_acceptors/calib-lineage-forcing-functions.yaml"
+report_path: "tmp/calib_lineage_forcing_functions.log"
+evidence: []

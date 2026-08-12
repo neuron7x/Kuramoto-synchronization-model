@@ -1,5 +1,5 @@
-name: tradepulse-deployment
-description: Deploy TradePulse to the requested Kubernetes environment.
+name: geosync-deployment
+description: Deploy GeoSync to the requested Kubernetes environment.
 tags:
   - deployment
 metadata:
@@ -10,7 +10,7 @@ environment: stage
 
 # Strategy identifier and artifact digest are recorded in annotations.
 strategy: example-strategy
-artifact: ghcr.io/neuron7x/tradepulse@sha256:CHANGE_ME
+artifact: ghcr.io/neuron7xLab/GeoSync@sha256:CHANGE_ME
 
 # Configure how manifests are resolved. By default this references the kustomize
 # overlays shipped with the repository (staging/production).
@@ -18,8 +18,8 @@ manifests:
   root: deploy/kustomize/overlays
   name: staging
 
-# Name of the Kubernetes Deployment that backs the TradePulse API.
-deployment_name: tradepulse-api
+# Name of the Kubernetes Deployment that backs the GeoSync API.
+deployment_name: geosync-api
 
 # Controls whether the CLI waits for the rollout to complete and how long it
 # should wait before timing out.
@@ -40,7 +40,7 @@ kubectl:
 # Additional annotations applied to the deployment alongside the artifact and
 # strategy metadata above. Keys must be valid Kubernetes annotation keys.
 annotations:
-  tradepulse.dev/change-ticket: CHG-0000
+  geosync.dev/change-ticket: CHG-0000
 
 # Destination for the JSON summary emitted after a successful deployment.
 summary_path: reports/live/deployments/latest.json

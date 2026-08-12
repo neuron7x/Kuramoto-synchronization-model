@@ -1,0 +1,64 @@
+# Diff-bound acceptor: long-horizon (Benettin-Giorgilli) energy bound for the
+# swing integrator — the long-time consequence of INV-K10 symplecticity.
+#
+# INV-K8 verifies energy conservation at a fixed dt (amplitude); INV-K9 verifies
+# the convergence order; INV-K10 verifies symplecticity (MᵀJM=J). Backward-error
+# analysis (Benettin-Giorgilli) then guarantees the energy error is BOUNDED over
+# exponentially long times, not secular. This adds a heavy-math test asserting
+# the bounded drift does NOT grow with the number of integration steps — the
+# signature that separates a symplectic integrator (ratio≈1 over a 4x horizon)
+# from a non-symplectic one (ratio≈4, linear secular growth). No invariant
+# added or changed.
+
+id: swing-energy-long-horizon-bound
+status: ACTIVE
+claim_type: correctness
+promise: >-
+  Adds a long-horizon (Benettin-Giorgilli) energy-bound test to
+  tests/unit/physics/test_T18_kuramoto_p1.py: the undamped swing integrator is
+  run at two horizons 4x apart and the bounded-drift ratio (long/short) is
+  asserted < 1.5 (Verlet gives ≈1.000; a non-symplectic Euler step grows ≈3.65),
+  with bounded absolute drift and negligible secular trend at the long horizon.
+  This is the long-time consequence of INV-K10 symplecticity, beyond the
+  fixed-dt amplitude (INV-K8) and order (INV-K9). No invariant added or changed;
+  zero production-code change (energy observed black-box from velocities and R).
+diff_scope:
+  changed_files:
+    - path: ".claude/commit_acceptors/swing-energy-long-horizon-bound.yaml"
+    - path: "tests/unit/physics/test_T18_kuramoto_p1.py"
+  forbidden_paths:
+    - "trading/"
+    - "execution/"
+    - "forecast/"
+    - "policy/"
+required_python_symbols:
+  - "test_swing_energy_bounded_over_long_horizon"
+expected_signal: >-
+  All tests in tests/unit/physics/test_T18_kuramoto_p1.py pass, including the new
+  heavy-math long-horizon test; physics validator reports 0 issues; mypy
+  --strict clean. Calibration (recorded): Verlet bounded-drift/E_scale = 2.343e-4
+  at both 20k and 80k steps (ratio 1.000); Euler ratio 3.65 over the same 4x
+  horizon. Runtime ~1.7 s.
+measurement_command: >-
+  PYTHONPATH=. python -m pytest tests/unit/physics/test_T18_kuramoto_p1.py
+  -k long_horizon -v
+signal_artifact: "tmp/swing_long_horizon_pytest.log"
+falsifier:
+  command: >-
+    PYTHONPATH=. python -m pytest tests/unit/physics/test_T18_kuramoto_p1.py
+    -v -k "long_horizon"
+  description: >-
+    Runs the same undamped system at two horizons 4x apart and asserts the
+    bounded-drift ratio < 1.5. A symplectic integrator keeps the drift bounded
+    (ratio≈1) over exponentially long times; a non-symplectic step injects
+    secular growth that scales with the step count (ratio≈4), failing the test.
+rollback_command: >-
+  git checkout HEAD~1 --
+  tests/unit/physics/test_T18_kuramoto_p1.py
+  .claude/commit_acceptors/swing-energy-long-horizon-bound.yaml
+rollback_verification_command: >-
+  git diff --exit-code tests/unit/physics/test_T18_kuramoto_p1.py
+memory_update_type: none
+ledger_path: ".claude/commit_acceptors/swing-energy-long-horizon-bound.yaml"
+report_path: "docs/reports/diff_bound_commit_acceptor_layer.md"
+evidence: []

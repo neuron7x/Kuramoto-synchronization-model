@@ -1,0 +1,59 @@
+{
+  "canonical_hold_sec": 180,
+  "cells": [
+    {
+      "bracketed": true,
+      "breakeven_maker_fraction": 0.2363929290372131,
+      "hold_sec": 60,
+      "mean_net_bp_at_f0": -2.836715148446558,
+      "n_trades": 18,
+      "profitable_at_f0": false,
+      "status": "BRACKET"
+    },
+    {
+      "bracketed": false,
+      "breakeven_maker_fraction": null,
+      "hold_sec": 90,
+      "mean_net_bp_at_f0": 0.7210570547956799,
+      "n_trades": 18,
+      "profitable_at_f0": true,
+      "status": "ALREADY_PROFITABLE"
+    },
+    {
+      "bracketed": true,
+      "breakeven_maker_fraction": 0.23166569020507446,
+      "hold_sec": 180,
+      "mean_net_bp_at_f0": -2.7799882824608937,
+      "n_trades": 18,
+      "profitable_at_f0": false,
+      "status": "BRACKET"
+    },
+    {
+      "bracketed": false,
+      "breakeven_maker_fraction": null,
+      "hold_sec": 300,
+      "mean_net_bp_at_f0": 5.42783724485069,
+      "n_trades": 17,
+      "profitable_at_f0": true,
+      "status": "ALREADY_PROFITABLE"
+    },
+    {
+      "bracketed": false,
+      "breakeven_maker_fraction": null,
+      "hold_sec": 600,
+      "mean_net_bp_at_f0": 10.142622634987156,
+      "n_trades": 15,
+      "profitable_at_f0": true,
+      "status": "ALREADY_PROFITABLE"
+    }
+  ],
+  "max_breakeven": 0.2363929290372131,
+  "n_already_profitable": 3,
+  "n_bracketed": 2,
+  "n_cells": 5,
+  "n_viable": 5,
+  "regime_quantile": 0.75,
+  "regime_window_sec": 300,
+  "robust_max_breakeven": 0.5,
+  "verdict": "ROBUST"
+}

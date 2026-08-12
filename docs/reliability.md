@@ -1,6 +1,6 @@
 # Reliability Targets, SLOs, and Escalation Policy
 
-This playbook aligns TradePulse engineering and operations teams on the
+This playbook aligns GeoSync engineering and operations teams on the
 service-level commitments we communicate to stakeholders. It converts product
 expectations into actionable SLOs with explicit error budgets, alerting rules,
 and escalation paths so reliability work can be prioritised alongside feature
@@ -21,7 +21,7 @@ cadence and provides tooling support.
 
 ## SLA Commitments
 
-TradePulse publishes the following externally visible SLAs. SLOs must be set
+GeoSync publishes the following externally visible SLAs. SLOs must be set
 with sufficient safety margin to guarantee the SLA when measured over a rolling
 90-day window.
 
@@ -133,7 +133,7 @@ defined in [`docs/chaos_cost_controls.md`](chaos_cost_controls.md).
 ### Escalation Flow
 
 1. **Detection** – Prometheus alerts, synthetic probes, or support cases detect
-   an issue and route to PagerDuty (`TradePulse/SRE` schedule).
+   an issue and route to PagerDuty (`GeoSync/SRE` schedule).
 2. **On-call response** – On-call acknowledges within 5 minutes (SEV-1/2) or the
    next business hour (SEV-3). They open an incident channel (`#inc-YYYYMMDD`) and
    start an incident log.
@@ -159,7 +159,7 @@ sign-off from SRE lead, affected domain owner, and product counterpart.
 ## Unified Timekeeping Requirements
 
 - **Clock synchronisation** – All production hosts run `chronyd` pointed at the
-  TradePulse Stratum-1 pool (`time.tradepulse.net`) with fallback to regional NTP
+  GeoSync Stratum-1 pool (`time.geosync.net`) with fallback to regional NTP
   peers. Co-located execution racks enable PTP (IEEE 1588) and expose hardware
   timestamps to NICs so trade plant remains aligned within ±5 μs.
 - **Configuration management** – The `infra.time-sync` automation role enforces

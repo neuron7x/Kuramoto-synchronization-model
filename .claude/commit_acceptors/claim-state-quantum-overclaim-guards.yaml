@@ -1,0 +1,70 @@
+# Diff-bound commit acceptor for the claim-state quantum overclaim guards (#1123).
+#
+# Closes the unenforced falsification targets of issue #1123:
+#   #7 a claim_boundary that ALLOWS physics/market/predictive/trading validity
+#      without a complete validation artifact must NOT promote;
+#   #2 LOCAL_VERIFIED requires recorded command output, not a bare command;
+#   #1 prose declared-states ("ready"/"ship it"/"green enough") fail closed.
+# Governance-only: changes no runtime, physics, market, or trading behavior.
+
+id: claim-state-quantum-overclaim-guards
+status: ACTIVE
+claim_type: governance
+promise: >-
+  The claim-state quantizer fails closed against three promotion attacks that
+  bypass the proof chain: an overclaiming claim_boundary (physics/market/
+  predictive/trading validity) without a validation artifact is capped at
+  PARTIAL; LOCAL_VERIFIED requires recorded command output (output_ref +
+  exit_code); and prose declared-states are rejected as upward drift. This is a
+  governance-only guard and changes no runtime/physics/market/trading behavior.
+
+diff_scope:
+  changed_files:
+    - path: ".claude/commit_acceptors/claim-state-quantum-overclaim-guards.yaml"
+    - path: "tools/governance/quantize_claim_state.py"
+    - path: "tests/governance/test_claim_state_quantum_input.py"
+  forbidden_paths:
+    - "trading/"
+    - "execution/"
+    - "forecast/"
+    - "core/"
+    - "runtime/"
+
+required_python_symbols:
+  - "tools/governance/quantize_claim_state.py::boundary_implies_unvalidated_domain_validity"
+  - "tools/governance/quantize_claim_state.py::quantize_claim_state"
+  - "tools/governance/quantize_claim_state.py::validate_declared_state"
+  - "tests/governance/test_claim_state_quantum_input.py::test_boundary_claiming_predictive_validity_without_artifact_is_blocked"
+  - "tests/governance/test_claim_state_quantum_input.py::test_local_verified_requires_recorded_command_output"
+  - "tests/governance/test_claim_state_quantum_input.py::test_forbidden_prose_declared_state_is_rejected"
+
+expected_signal: >-
+  A boundary asserting physics/market/predictive/trading validity without a
+  complete scientific-evidence vector quantizes to PARTIAL (not LOCAL/CI/
+  EVIDENCE_BEARING); commands lacking recorded output cannot reach
+  LOCAL_VERIFIED; and a prose declared-state is flagged forbidden_prose_state
+  with upward_drift=true.
+
+measurement_command: >-
+  bash -c 'python -m compileall -q tools/governance tests/governance && python -m pytest -q tests/governance/test_claim_state_quantum_input.py'
+
+signal_artifact: "tmp/claim_state_quantum_overclaim_guards.log"
+
+falsifier:
+  command: >-
+    python -c "import sys; from tools.governance.quantize_claim_state import quantize_claim_state as q, ClaimState as C; e={'claim_id':'x','claim_text':'t','source_refs':['a'],'test_refs':['a'],'commands':[{'cmd':'c','output_ref':'l','exit_code':0}],'artifacts':['a'],'ci_proof':{'same_sha':True,'required_checks_green':True},'failure_mode':'f','rollback':'r','claim_boundary':{'allowed':['predictive market validity'],'blocked':[]},'negative_evidence':['n']}; sys.exit(0 if q(e) is not C.PARTIAL else 1)"
+  description: >-
+    Exits non-zero in the asserted-healthy state (an overclaiming boundary with
+    same-SHA green CI but no validation artifact is capped at PARTIAL). Flips to
+    pass only if the #7 guard is removed and the claim promotes past PARTIAL.
+
+rollback_command: >-
+  bash -c 'git checkout HEAD~1 -- tools/governance/quantize_claim_state.py tests/governance/test_claim_state_quantum_input.py'
+
+rollback_verification_command: >-
+  bash -c 'python -m pytest -q tests/governance/test_claim_state_quantum_input.py'
+
+memory_update_type: append
+ledger_path: ".claude/commit_acceptors/claim-state-quantum-overclaim-guards.yaml"
+report_path: "tmp/claim_state_quantum_overclaim_guards.log"
+evidence: []

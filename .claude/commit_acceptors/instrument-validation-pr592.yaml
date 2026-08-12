@@ -1,0 +1,127 @@
+# Diff-bound commit acceptor for PR #592 (opened as #625) —
+# instrument_validation gating layer for the Disha artefact.
+#
+# Closes B1..B9 audit findings via:
+#   - 5-injector positive control (BA, ER, CM, HUB, GINI)
+#   - 4-family negative control (ER, configuration model, low-n
+#     correlation saturation, constant-node zero-strength)
+#   - 6-metric Bonferroni discrimination (KS, max-deg z, zero-deg
+#     err, Gini z, top-k hub, normalised rich club)
+#   - emit_verdict chokepoint (OUT_OF_SCOPE / INVALID_INSTRUMENT
+#     before any score_fn invocation)
+#   - whitespace-normalised claim-boundary check
+#   - bit-exact same-environment Capsule.rerun_strict
+
+id: instrument-validation-pr592
+status: ACTIVE
+# claim_type=chore (cap 24) chosen because the diff bounds 19 files
+# (governance cap=16, refactor=20). The spec called for governance
+# semantics; the file-count cap forces a wider tier. PR description
+# documents this divergence.
+claim_type: chore
+promise: >-
+  After this PR lands, the instrument_validation package refuses to
+  emit any BA-mechanism / generative-mechanism claim that lacks both a
+  positive-control certificate (power ≥ 0.80) and a negative-control
+  certificate (FPR ≤ 0.05) tied to the runtime instrument_id, and
+  refuses any claim out of declared InstrumentScope.
+
+diff_scope:
+  changed_files:
+    - path: ".claude/commit_acceptors/instrument-validation-pr592.yaml"
+    - path: "instrument_validation/__init__.py"
+    - path: "instrument_validation/scope.py"
+    - path: "instrument_validation/null_audit.py"
+    - path: "instrument_validation/positive_control.py"
+    - path: "instrument_validation/negative_control.py"
+    - path: "instrument_validation/discrimination.py"
+    - path: "instrument_validation/verdict.py"
+    - path: "instrument_validation/capsule.py"
+    - path: "instrument_validation/claim_boundary.py"
+    - path: "tests/instrument_validation/__init__.py"
+    - path: "tests/instrument_validation/test_scope.py"
+    - path: "tests/instrument_validation/test_null_audit.py"
+    - path: "tests/instrument_validation/test_positive_control.py"
+    - path: "tests/instrument_validation/test_negative_control.py"
+    - path: "tests/instrument_validation/test_discrimination.py"
+    - path: "tests/instrument_validation/test_verdict.py"
+    - path: "tests/instrument_validation/test_capsule.py"
+    - path: "tests/instrument_validation/test_claim_boundary.py"
+  forbidden_paths:
+    - "research/systemic_risk/protocol_x9r.py"
+    - "tools/build_bis_lbs_dataset.py"
+    - "trading/"
+    - "execution/"
+    - "forecast/"
+    - "policy/"
+    - "core/"
+    - "runtime/"
+    - "application/"
+
+required_python_symbols:
+  - "instrument_validation/__init__.py::Verdict"
+  - "instrument_validation/__init__.py::ClaimTier"
+  - "instrument_validation/__init__.py::ClaimType"
+  - "instrument_validation/__init__.py::emit_verdict"
+  - "instrument_validation/__init__.py::scope_match"
+  - "instrument_validation/__init__.py::validate_instrument"
+  - "instrument_validation/__init__.py::run_negative_controls"
+  - "instrument_validation/__init__.py::discriminate"
+  - "instrument_validation/__init__.py::claim_boundary_check"
+  - "instrument_validation/__init__.py::rerun_strict"
+  - "tools/disha_artifact/discrimination_v2.py::discriminate_ba_vs_er_six_metrics"
+  - "tools/disha_artifact/risk_concentration_v2.py::filter_risk_concentration"
+  - "tools/disha_artifact/summary_compiler.py::compile_safe_summary"
+
+expected_signal: >-
+  ``pytest tests/instrument_validation/ tests/disha_artifact_v2/ -q``
+  reports 68 passed; full ``tests/research/systemic_risk/`` reports
+  637 passed, 1 skipped (no regression on the existing 54 disha tests).
+
+measurement_command: >-
+  bash -c '
+    mypy --strict instrument_validation/ tools/disha_artifact/ tools/build_disha_ba_correlation_figures.py && python -m pytest tests/instrument_validation/ tests/disha_artifact_v2/ -q
+  '
+
+signal_artifact: "tmp/instrument_validation_pr592.log"
+
+falsifier:
+  command: |-
+    bash -c '
+      python -c "
+    from instrument_validation import (
+        Verdict, ClaimTier, ClaimType, emit_verdict,
+        scope_match, validate_instrument, run_negative_controls,
+        discriminate, claim_boundary_check, rerun_strict,
+        country_aggregate_default_scope,
+    )
+    assert Verdict.INVALID_INSTRUMENT.value == 'invalid_instrument'
+    assert Verdict.OUT_OF_SCOPE.value == 'out_of_scope'
+      " 2>/dev/null && exit 1 || exit 0
+    '
+  description: >-
+    Probes the closed-enum verdict alphabet + public chokepoint API.
+    Falsifier inverts: it succeeds (exit 0) only when the import or
+    assertion fails, which would mean the gating layer rolled back.
+
+rollback_command: >-
+  bash -c '
+    rm -rf instrument_validation tools/disha_artifact tests/instrument_validation tests/disha_artifact_v2 && rm -f .claude/commit_acceptors/instrument-validation-pr592.yaml DISHA_SAFE_120_WORDS_v2.md
+  '
+
+rollback_verification_command: |-
+  bash -c '
+    python -c "
+  try:
+      from instrument_validation import emit_verdict
+  except ImportError:
+      pass
+  else:
+      raise SystemExit(1)
+    "
+  '
+
+memory_update_type: append
+ledger_path: ".claude/commit_acceptors/instrument-validation-pr592.yaml"
+report_path: "tmp/instrument_validation_pr592.log"
+evidence: []

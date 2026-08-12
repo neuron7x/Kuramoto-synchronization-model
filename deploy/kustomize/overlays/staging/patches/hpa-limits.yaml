@@ -1,7 +1,7 @@
 apiVersion: autoscaling/v2
 kind: HorizontalPodAutoscaler
 metadata:
-  name: tradepulse-api
+  name: geosync-api
 spec:
   minReplicas: 2
   maxReplicas: 6

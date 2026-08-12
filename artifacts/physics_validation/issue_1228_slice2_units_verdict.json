@@ -1,0 +1,90 @@
+{
+  "schema_version": "2026.06.25",
+  "issue": 1228,
+  "slice_id": "issue_1228_tasks_12_17_unit_rows",
+  "status": "ARTIFACT_ONLY_UNIT_ROW_VERDICT",
+  "score_credit_granted": false,
+  "final_validation_complete": false,
+  "target_interval_claimed": false,
+  "canonical_score_before_slice": 81.5,
+  "score_behavior": "unchanged; unit-row carrier binding does not grant score credit",
+  "completed_tasks": [12, 13, 14, 15, 16, 17],
+  "explicitly_open_tasks": [18],
+  "source_document": "docs/physics/units_table.md",
+  "unit_contract_test": "tests/physics/test_dimensional_homogeneity.py",
+  "unit_rows": {
+    "12_theta_unit_row": {
+      "symbol": "theta_i",
+      "meaning": "phase",
+      "dimension": "rad",
+      "implementation_carrier": "theta",
+      "guard": "finite real",
+      "carrier_type": "documentation_row",
+      "path": "docs/physics/units_table.md"
+    },
+    "13_omega_unit_row": {
+      "symbol": "omega_i",
+      "meaning": "intrinsic angular frequency",
+      "dimension": "rad / time",
+      "implementation_carrier": "omega",
+      "guard": "finite real",
+      "carrier_type": "documentation_row",
+      "path": "docs/physics/units_table.md"
+    },
+    "14_K_unit_row": {
+      "symbol": "K",
+      "meaning": "coupling strength",
+      "dimension": "1 / time",
+      "implementation_carrier": "K or absorbed into scaled A in trajectory tests",
+      "guard": "finite, non-negative",
+      "carrier_type": "documentation_row",
+      "path": "docs/physics/units_table.md"
+    },
+    "15_A_unit_row": {
+      "symbol": "A_ij",
+      "meaning": "graph edge weight",
+      "dimension": "dimensionless in canonical lane",
+      "implementation_carrier": "A",
+      "guard": "non-negative, symmetric, zero diagonal",
+      "carrier_type": "documentation_row",
+      "path": "docs/physics/units_table.md"
+    },
+    "16_R_unit_row": {
+      "symbol": "R",
+      "meaning": "order parameter",
+      "dimension": "dimensionless",
+      "implementation_carrier": "order_parameter(theta)",
+      "guard": "[0,1]",
+      "carrier_type": "documentation_row",
+      "path": "docs/physics/units_table.md"
+    },
+    "17_Phi_unit_row": {
+      "symbol": "Phi",
+      "meaning": "onset scalar",
+      "dimension": "rad / time",
+      "implementation_carrier": "K*lambda_max(A)-2*gamma",
+      "guard": "finite",
+      "carrier_type": "documentation_row",
+      "path": "docs/physics/units_table.md"
+    }
+  },
+  "open_task_reason": {
+    "18_dt_unit_row": "Task 18 is deliberately not closed in this PR because docs/physics/units_table.md does not yet contain an explicit dt row. The existing UNIT_STATE test field is a static contract carrier, not a unit-row carrier. A later dedicated PR must add the dt row or change the task semantics."
+  },
+  "test_coverage": {
+    "static_contract": "tests/physics/test_dimensional_homogeneity.py::test_unit_state_contract_is_complete",
+    "expected_unit_state_keys": ["theta", "omega", "K", "A", "R", "Phi", "dt"],
+    "equation_contract": "tests/physics/test_dimensional_homogeneity.py::test_equation_unit_contract_is_complete",
+    "non_physics_boundary": "tests explicitly mark this as static unit-label bookkeeping, not a physics-invariant witness"
+  },
+  "measurement_command": "python -m json.tool artifacts/physics_validation/issue_1228_slice2_units_verdict.json",
+  "non_claims": [
+    "Does not claim score increase beyond 81.5.",
+    "Does not claim final physics validation.",
+    "Does not claim target interval reached.",
+    "Does not treat static unit labels as a physics-invariant witness.",
+    "Does not close task 18 until an explicit dt unit row carrier exists."
+  ],
+  "next_open_tasks": [18, 19, 20, 21, 22, 23, 24, 25],
+  "verdict": "TASKS_12_17_HAVE_UNIT_ROW_CARRIERS_SCORE_UNCHANGED"
+}

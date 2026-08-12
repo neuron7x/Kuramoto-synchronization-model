@@ -1,4 +1,4 @@
-# TradePulse Internal Penetration Review — 2025-10-28
+# GeoSync Internal Penetration Review — 2025-10-28
 
 ## Scope
 

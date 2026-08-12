@@ -1,0 +1,229 @@
+# Diff-bound commit acceptor for the D-002J-P4 planted-positive-controls PR.
+#
+# D-002J-P4 builds SYNTHETIC positive controls with KNOWN ground truth
+# before any real-data interpretation. Each of the six control families
+# (PC1 liquidity shock, PC2 contagion cascade, PC3 balance-sheet
+# impairment, PC4 volatility regime switch, PC5 information-delay /
+# vintage-leakage trap, PC6 official-response event shock) has a paired
+# NEGATIVE SIBLING the pipeline MUST score below pass_threshold. PC5 is
+# INVERTED: pass = the pipeline catches the planted lookahead violation
+# under the P3 point-in-time contract. P4 SYNTHESISES + SCORES; it does
+# NOT interpret real data, NOT ingest, NOT implement the P5 substrate,
+# NOT execute a P6 null, NOT authorise any P8 canonical run, NOT edit
+# the D-002J prereg, NOT promote any real-world performance claim.
+#
+# P4 is the SINGLE phase explicitly allowed to add one source file
+# under research/systemic_risk/ (d002j_positive_controls.py); every
+# other path under research/systemic_risk/ is forbidden.
+
+id: x10r-d002j-p4-positive-controls
+status: ACTIVE
+claim_type: governance
+promise: >-
+  After this PR lands, research/systemic_risk/d002j_positive_controls.py
+  implements six PositiveControlFamily subclasses (PC1..PC6) each with a
+  deterministic generate(seed, params) -> ControlInstance (numpy-only,
+  no wall-clock, no real-data reads) and a score(arr) observable.
+  artifacts/d002j/positive_controls/positive_control_manifest_v1.json
+  (schema D002J-POSITIVE-CONTROL-MANIFEST-v1) declares all 6 control
+  families with negative siblings, numeric pass/fail thresholds,
+  expected_observable_signature, ground_truth_fields,
+  mapped_p5_substrate_candidates, mapped_p2_window_class, and
+  forbidden_claim_boundary; positive_control_summary_v1.json (schema
+  D002J-POSITIVE-CONTROL-SUMMARY-v1) records counts by class + by
+  mapped_p5 + decision POSITIVE_CONTROLS_READY with
+  canonical_run_authorized=false. docs/research/
+  D002J_POSITIVE_CONTROL_PROTOCOL.md documents §0 why, §1 the six
+  families, §2 negative-sibling discipline, §3 PC5 inverted-pass rule,
+  §4 forbidden claims, §5 P5 substrate mapping, §6 P2 window mapping.
+  Over an 8-seed battery every family scores
+  min(signal) >= pass_threshold AND max(null) < pass_threshold (PC5
+  inverted: leakage caught == 1.0, point-in-time null == 0.0); no
+  threshold loosened to fit a leaking null. The D-002J-P4 capsule is
+  added under schema D002J-VERDICT-CAPSULE-v1 with
+  parent=['D002J-P3'] and allowed_next=['D002J-P5'] and forbidden_next
+  covering P6..P9. The DAG verdict regenerates to 7 nodes acyclic
+  (was 6), D002J_LINEAGE_MAP.md re-renders byte-deterministically,
+  D002G_CANONICAL_RUN_BLOCKERS.md appends a P4 section. The six locked
+  governance shas remain byte-exact. No real data, no canonical run
+  authorised, no D-002H rescue claim, no real-world performance claim.
+
+diff_scope:
+  changed_files:
+    - path: "research/systemic_risk/d002j_positive_controls.py"
+    - path: "artifacts/d002j/positive_controls/positive_control_manifest_v1.json"
+    - path: "artifacts/d002j/positive_controls/positive_control_summary_v1.json"
+    - path: "docs/research/D002J_POSITIVE_CONTROL_PROTOCOL.md"
+    - path: "tests/systemic_risk/test_d002j_positive_controls.py"
+    - path: "artifacts/governance/verdicts/d002j_p4_verdict_v1.json"
+    - path: "artifacts/governance/verdicts/d002j_verdict_dag_v1.json"
+    - path: "docs/research/D002J_LINEAGE_MAP.md"
+    - path: "docs/governance/D002G_CANONICAL_RUN_BLOCKERS.md"
+    - path: ".claude/commit_acceptors/x10r-d002j-p4-positive-controls.yaml"
+    - path: "tests/governance/test_verdict_dag_integrity.py"
+    - path: "tests/systemic_risk/test_d002j_ingestion_manifest.py"
+    - path: ".github/detect-secrets.baseline"
+  forbidden_paths:
+    - "docs/governance/D002C_CLAIM_LEDGER.yaml"
+    - "docs/governance/D002C_PREREGISTRATION.yaml"
+    - "docs/governance/D002G_ACCEPTANCE_RULES.md"
+    - "docs/governance/D002G_PREREGISTRATION.yaml"
+    - "docs/governance/D002H_PREREGISTRATION.yaml"
+    - "docs/governance/D002H_CANONICAL_RUN_REPORT.md"
+    - "docs/governance/D002H_CLAIM_BOUNDARY.md"
+    - "docs/governance/D002I_PREREGISTRATION.yaml"
+    - "docs/governance/D002I_CLAIM_BOUNDARY.md"
+    - "docs/governance/D002J_PREREGISTRATION.yaml"
+    - "research/systemic_risk/adversarial_ladder.py"
+    - "research/systemic_risk/baselines.py"
+    - "research/systemic_risk/bayes_rigorous.py"
+    - "research/systemic_risk/canonical_seven.py"
+    - "research/systemic_risk/cli.py"
+    - "research/systemic_risk/coupling.py"
+    - "research/systemic_risk/critical_slowing_down.py"
+    - "research/systemic_risk/d002c_crn_validator.py"
+    - "research/systemic_risk/d002c_kuramoto.py"
+    - "research/systemic_risk/d002c_metrics.py"
+    - "research/systemic_risk/d002c_neg_control.py"
+    - "research/systemic_risk/d002c_null_audit.py"
+    - "research/systemic_risk/d002c_pos_control.py"
+    - "research/systemic_risk/d002c_preflight.py"
+    - "research/systemic_risk/d002c_preregistration.py"
+    - "research/systemic_risk/d002c_smoke_test.py"
+    - "research/systemic_risk/d002c_substrates.py"
+    - "research/systemic_risk/d002c_sweep_runner.py"
+    - "research/systemic_risk/d002c_verdict.py"
+    - "research/systemic_risk/d002g_null_mechanisms.py"
+    - "research/systemic_risk/d002g_phase0_capsule.py"
+    - "research/systemic_risk/d002g_phase0_verification.py"
+    - "research/systemic_risk/d002g_r2b_gate.py"
+    - "research/systemic_risk/data_firewall.py"
+    - "research/systemic_risk/death_conditions.py"
+    - "research/systemic_risk/early_warning.py"
+    - "research/systemic_risk/errors.py"
+    - "research/systemic_risk/event_ledger.py"
+    - "research/systemic_risk/evidence_ledger.py"
+    - "research/systemic_risk/falsification.py"
+    - "research/systemic_risk/governance_fsm.py"
+    - "research/systemic_risk/governance.py"
+    - "research/systemic_risk/__init__.py"
+    - "research/systemic_risk/kuramoto_extensions.py"
+    - "research/systemic_risk/leakage_sentinel.py"
+    - "research/systemic_risk/metrics.py"
+    - "research/systemic_risk/minimal.py"
+    - "research/systemic_risk/network_fitting.py"
+    - "research/systemic_risk/null_models.py"
+    - "research/systemic_risk/occam_penalty.py"
+    - "research/systemic_risk/phase_extraction.py"
+    - "research/systemic_risk/protocol_x9r.py"
+    - "research/systemic_risk/quick_round.py"
+    - "research/systemic_risk/real_data_contract.py"
+    - "research/systemic_risk/replication_capsule.py"
+    - "research/systemic_risk/replication.py"
+    - "research/systemic_risk/sweep_checkpoint.py"
+    - "research/systemic_risk/synthetic.py"
+    - "research/systemic_risk/temporal_panel.py"
+    - "research/systemic_risk/topology.py"
+    - "research/systemic_risk/verdict_lattice.py"
+    - "scripts/x10r_d002c_attempt_2_null_audit.py"
+    - "scripts/x10r_d002g_gate_d_scan.py"
+    - "scripts/x10r_d002h_gate_d_scan.py"
+    - "scripts/x10r_d002h_canonical_sweep.py"
+    - "artifacts/d002c/"
+    - "artifacts/d002g/"
+    - "artifacts/d002h/"
+    - "artifacts/d002i/"
+    - "artifacts/d002j/prereg/"
+    - "artifacts/d002j/data_registry/"
+    - "artifacts/d002j/crisis_windows/"
+    - "artifacts/d002j/ingestion/"
+    - "artifacts/governance/verdicts/d002j_p0_verdict_v1.json"
+    - "artifacts/governance/verdicts/d002j_p1_verdict_v1.json"
+    - "artifacts/governance/verdicts/d002j_p1a_verdict_v1.json"
+    - "artifacts/governance/verdicts/d002j_p1b_verdict_v1.json"
+    - "artifacts/governance/verdicts/d002j_p2_verdict_v1.json"
+    - "artifacts/governance/verdicts/d002j_p3_verdict_v1.json"
+    - "tools/governance/verdict_dag.py"
+    - "tools/governance/render_lineage.py"
+required_python_symbols:
+  - "tests.systemic_risk.test_d002j_positive_controls.test_positive_control_manifest_exists"
+  - "tests.systemic_risk.test_d002j_positive_controls.test_summary_exists"
+  - "tests.systemic_risk.test_d002j_positive_controls.test_six_control_families_present"
+  - "tests.systemic_risk.test_d002j_positive_controls.test_each_family_has_negative_sibling"
+  - "tests.systemic_risk.test_d002j_positive_controls.test_each_family_has_ground_truth_metadata"
+  - "tests.systemic_risk.test_d002j_positive_controls.test_each_family_has_pass_threshold"
+  - "tests.systemic_risk.test_d002j_positive_controls.test_each_family_has_fail_threshold"
+  - "tests.systemic_risk.test_d002j_positive_controls.test_each_family_has_expected_observable_signature"
+  - "tests.systemic_risk.test_d002j_positive_controls.test_each_family_has_forbidden_claim_boundary"
+  - "tests.systemic_risk.test_d002j_positive_controls.test_seed_policy_deterministic_for_each_family"
+  - "tests.systemic_risk.test_d002j_positive_controls.test_pc1_signal_distinguishable_from_null_under_pass_threshold"
+  - "tests.systemic_risk.test_d002j_positive_controls.test_pc2_signal_distinguishable_from_null_under_pass_threshold"
+  - "tests.systemic_risk.test_d002j_positive_controls.test_pc3_signal_distinguishable_from_null_under_pass_threshold"
+  - "tests.systemic_risk.test_d002j_positive_controls.test_pc4_signal_distinguishable_from_null_under_pass_threshold"
+  - "tests.systemic_risk.test_d002j_positive_controls.test_pc5_lookahead_detector_caught_by_p3_invariant"
+  - "tests.systemic_risk.test_d002j_positive_controls.test_pc6_signal_distinguishable_from_null_under_pass_threshold"
+  - "tests.systemic_risk.test_d002j_positive_controls.test_negative_siblings_score_below_pass_threshold"
+  - "tests.systemic_risk.test_d002j_positive_controls.test_each_family_maps_to_p5_substrate_candidate"
+  - "tests.systemic_risk.test_d002j_positive_controls.test_no_real_world_performance_claim"
+  - "tests.systemic_risk.test_d002j_positive_controls.test_no_bank_level_validation_claim"
+  - "tests.systemic_risk.test_d002j_positive_controls.test_no_canonical_run_authorized"
+  - "tests.systemic_risk.test_d002j_positive_controls.test_no_d002j_prereg_edit"
+  - "tests.systemic_risk.test_d002j_positive_controls.test_no_unresolved_merge_markers"
+expected_signal: >-
+  PYTHONPATH=. python -m pytest
+  tests/systemic_risk/test_d002j_positive_controls.py -q passes all 23
+  P4 guard tests; all six control families synthesise deterministically
+  and over an 8-seed battery score min(signal) >= pass_threshold AND
+  max(null) < pass_threshold (PC5 inverted: leakage caught == 1.0,
+  point-in-time null == 0.0); the P4 capsule parses via
+  tools.governance.verdict_dag.load_capsule under schema
+  D002J-VERDICT-CAPSULE-v1 with parent=['D002J-P3'] and
+  allowed_next=['D002J-P5']; the DAG verdict regenerates to 7 nodes
+  acyclic, no orphans, leaf=D002J-P4,
+  next_legal_nodes_from_main_head=['D002J-P5'],
+  canonical_run_authorized_anywhere=false; the six locked governance
+  shas all byte-exact; render_lineage.py produces byte-identical output
+  on repeat runs.
+measurement_command: >-
+  bash -c 'set -e;
+  PYTHONPATH=. python -m pytest tests/systemic_risk/test_d002j_positive_controls.py -q;
+  PYTHONPATH=. python -m pytest tests/governance/test_verdict_dag_integrity.py -q;
+  PYTHONPATH=. python -m tools.governance.verdict_dag check -v;
+  PYTHONPATH=. python -m tools.governance.render_lineage --out /tmp/_d002j_p4_lm1.md;
+  PYTHONPATH=. python -m tools.governance.render_lineage --out /tmp/_d002j_p4_lm2.md;
+  diff /tmp/_d002j_p4_lm1.md /tmp/_d002j_p4_lm2.md;
+  test -f research/systemic_risk/d002j_positive_controls.py;
+  test -f artifacts/d002j/positive_controls/positive_control_manifest_v1.json;
+  test -f artifacts/d002j/positive_controls/positive_control_summary_v1.json;
+  test -f artifacts/governance/verdicts/d002j_p4_verdict_v1.json;
+  python -m json.tool artifacts/d002j/positive_controls/positive_control_manifest_v1.json > /dev/null;
+  grep -q "D002J-POSITIVE-CONTROL-MANIFEST-v1" artifacts/d002j/positive_controls/positive_control_manifest_v1.json;
+  grep -q "POSITIVE_CONTROLS_READY" artifacts/governance/verdicts/d002j_p4_verdict_v1.json;
+  grep -q "D-002J-P4" docs/governance/D002G_CANONICAL_RUN_BLOCKERS.md;
+  test "$(sha256sum docs/governance/D002J_PREREGISTRATION.yaml | awk "{print \$1}")" = "f3dc65b7e64b96eafe6f23ca8bdd0e05dc9bf95b12c2658b227bd0340f7975a0"'
+signal_artifact: "artifacts/d002j/positive_controls/positive_control_manifest_v1.json"
+falsifier:
+  command: >-
+    bash -c 'set -e;
+    PYTHONPATH=. python -m pytest tests/systemic_risk/test_d002j_positive_controls.py -q || exit 1;
+    PYTHONPATH=. python -m pytest tests/governance/test_verdict_dag_integrity.py -q || exit 2;
+    PYTHONPATH=. python -m tools.governance.verdict_dag check || exit 3;
+    grep -q "POSITIVE_CONTROLS_READY" artifacts/governance/verdicts/d002j_p4_verdict_v1.json || exit 4;
+    grep -q "D-002J-P4" docs/governance/D002G_CANONICAL_RUN_BLOCKERS.md || exit 5;
+    test "$(sha256sum docs/governance/D002J_PREREGISTRATION.yaml | awk "{print \$1}")" = "f3dc65b7e64b96eafe6f23ca8bdd0e05dc9bf95b12c2658b227bd0340f7975a0" || exit 6'
+  description: >-
+    Probes D-002J-P4 positive controls: 23 positive-control tests pass
+    (incl. 6 signal-vs-null synthesis tests over an 8-seed battery and
+    the inverted PC5 lookahead-trap); 16 verdict_dag_integrity tests
+    pass under the 7-node DAG; verdict_dag CLI validates the on-disk
+    DAG; the P4 capsule declares decision POSITIVE_CONTROLS_READY;
+    BLOCKERS appended with a D-002J-P4 section; D-002J prereg sha
+    byte-exact UNCHANGED.
+rollback_command: >-
+  bash -c 'rm -rf artifacts/d002j/positive_controls/ artifacts/governance/verdicts/d002j_p4_verdict_v1.json research/systemic_risk/d002j_positive_controls.py tests/systemic_risk/test_d002j_positive_controls.py docs/research/D002J_POSITIVE_CONTROL_PROTOCOL.md .claude/commit_acceptors/x10r-d002j-p4-positive-controls.yaml && git checkout HEAD -- docs/governance/D002G_CANONICAL_RUN_BLOCKERS.md docs/research/D002J_LINEAGE_MAP.md artifacts/governance/verdicts/d002j_verdict_dag_v1.json tests/governance/test_verdict_dag_integrity.py'
+rollback_verification_command: >-
+  bash -c 'test ! -f .claude/commit_acceptors/x10r-d002j-p4-positive-controls.yaml && test ! -d artifacts/d002j/positive_controls && test ! -f research/systemic_risk/d002j_positive_controls.py && test ! -f artifacts/governance/verdicts/d002j_p4_verdict_v1.json'
+memory_update_type: append
+ledger_path: ".claude/commit_acceptors/x10r-d002j-p4-positive-controls.yaml"
+report_path: "docs/research/D002J_POSITIVE_CONTROL_PROTOCOL.md"
+evidence: []

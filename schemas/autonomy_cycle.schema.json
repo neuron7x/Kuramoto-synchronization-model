@@ -1,0 +1,47 @@
+{
+  "$schema": "https://json-schema.org/draft/2020-12/schema",
+  "$id": "https://neuron7xlab.github.io/geosync/schemas/autonomy_cycle.schema.json",
+  "title": "Autonomy Cycle Result",
+  "type": "object",
+  "additionalProperties": false,
+  "required": ["schema_version", "objective", "phases", "decision"],
+  "properties": {
+    "schema_version": {"const": "autonomy_cycle.v1"},
+    "objective": {"type": "string", "minLength": 1},
+    "phases": {
+      "type": "array",
+      "minItems": 1,
+      "items": {
+        "type": "object",
+        "additionalProperties": false,
+        "required": ["phase", "status", "artifact", "command", "returncode", "stderr"],
+        "properties": {
+          "phase": {"type": "string", "minLength": 1},
+          "status": {"enum": ["OK", "WARN", "RED", "UNKNOWN", "ERROR"]},
+          "artifact": {"type": "string", "minLength": 1},
+          "command": {"type": "array", "items": {"type": "string"}},
+          "returncode": {"type": "integer"},
+          "stderr": {"type": "string"}
+        }
+      }
+    },
+    "decision": {
+      "type": "object",
+      "additionalProperties": false,
+      "required": ["state", "status_vector"],
+      "properties": {
+        "state": {"enum": ["READY_FOR_NEXT_CYCLE", "OBSERVE_WITH_DEBT", "EVIDENCE_GAP", "REPAIR_REQUIRED"]},
+        "status_vector": {"type": "array", "items": {"enum": ["OK", "WARN", "RED", "UNKNOWN", "ERROR"]}}
+      }
+    },
+    "trend_update": {
+      "type": "object",
+      "additionalProperties": false,
+      "required": ["returncode", "stderr"],
+      "properties": {
+        "returncode": {"type": "integer"},
+        "stderr": {"type": "string"}
+      }
+    }
+  }
+}

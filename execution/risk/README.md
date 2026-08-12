@@ -1,5 +1,5 @@
 ---
-owner: execution@tradepulse
+owner: execution@geosync
 review_cadence: quarterly
 last_reviewed: 2025-11-04
 links:
@@ -12,14 +12,28 @@ links:
 
 ## Purpose
 
-The `execution/risk` module implements the **amygdala and safety circuits** of TradePulse, providing pre-execution risk controls, kill-switch governance, and position/notional limits. Just as the amygdala triggers immediate defensive responses to threats, this module enforces hard stops on trading activity when risk limits are breached, preventing catastrophic losses.
+The `execution/risk` module is GeoSync's **pre-execution risk gateway** —
+a deterministic, fail-closed kill-switch + position/notional/rate-limit guard
+that runs ahead of every order. Functionally it is a standard kill-switch +
+hard-limit enforcer (sub-millisecond P99, 7-year audit retention).
 
-**Neuroeconomic Mapping:**
-- **Amygdala (Threat Detection)**: Real-time monitoring for limit violations, immediate trading halts
-- **Ventromedial PFC (Risk Assessment)**: Calculate risk metrics, evaluate position exposure
-- **Anterior Cingulate (Conflict Monitoring)**: Detect conflicts between desired action and risk constraints
-- **Freeze Response**: Kill-switch activation = immediate cessation of all trading activity
-- **Safety Margin**: Risk buffers analogous to homeostatic set points in biological systems
+> ⚠️ **SCOPE OF BIO-NAMING.** The "amygdala / vmPFC / ACC / freeze response"
+> labels below are **analogical shorthand** for the safety-circuit role this
+> module plays in the larger GeoSync stack — they are **not** a claim that
+> the implementation reproduces the cellular mechanisms of those brain
+> regions. Concretely: the kill-switch is a boolean latch with persistence,
+> the limits are scalar caps. The bio-mapping helps reasoning about
+> *layered safety* (Layers 2–3 of the maintenance hierarchy in `CLAUDE.md`)
+> but the contract that a buyer or auditor relies on is the engineering one:
+> P99 latency, enforcement rate, audit-trail format. The full neuroanatomy
+> map for GeoSync is `~/CANONICAL_NEURO_MAPPING_2026_05_05.md`.
+
+**Layered safety analogy (informal mapping):**
+- **Amygdala (Threat Detection)**: Real-time monitoring for limit violations, immediate trading halts.
+- **Ventromedial PFC (Risk Assessment)**: Calculate risk metrics, evaluate position exposure.
+- **Anterior Cingulate (Conflict Monitoring)**: Detect conflicts between desired action and risk constraints.
+- **Freeze Response**: Kill-switch activation = immediate cessation of all trading activity.
+- **Safety Margin**: Risk buffers analogous to homeostatic set points in biological systems.
 
 **Key Objectives:**
 - Enforce hard position and notional limits with zero exceptions (99.999% enforcement rate)
@@ -57,11 +71,11 @@ The `execution/risk` module implements the **amygdala and safety circuits** of T
 ## Configuration
 
 ### Environment Variables:
-- `TRADEPULSE_RISK_DB_PATH`: SQLite database path for risk state (default: `~/.tradepulse/risk/state.db`)
-- `TRADEPULSE_RISK_DB_TYPE`: Database backend: `sqlite`, `postgres` (default: `sqlite`)
-- `TRADEPULSE_KILL_SWITCH_ENABLED`: Enable kill-switch (default: `true`, disable only in testing)
-- `TRADEPULSE_RISK_AUDIT_RETENTION_DAYS`: Audit log retention (default: `2555` = 7 years)
-- `TRADEPULSE_ENABLE_RISK_METRICS`: Calculate advanced risk metrics (default: `true`, 10% overhead)
+- `GEOSYNC_RISK_DB_PATH`: SQLite database path for risk state (default: `~/.geosync/risk/state.db`)
+- `GEOSYNC_RISK_DB_TYPE`: Database backend: `sqlite`, `postgres` (default: `sqlite`)
+- `GEOSYNC_KILL_SWITCH_ENABLED`: Enable kill-switch (default: `true`, disable only in testing)
+- `GEOSYNC_RISK_AUDIT_RETENTION_DAYS`: Audit log retention (default: `2555` = 7 years)
+- `GEOSYNC_ENABLE_RISK_METRICS`: Calculate advanced risk metrics (default: `true`, 10% overhead)
 
 ### Configuration Files:
 Risk controls are configured via `configs/risk/`:
@@ -271,7 +285,7 @@ print(f"Timestamp: {state.timestamp}")
 
 # Admin override (requires confirmation)
 risk_mgr.deactivate_kill_switch(
-    deactivated_by="admin@tradepulse.com",
+    deactivated_by="admin@geosync.com",
     reason="Issue resolved, resuming trading",
     admin_confirmed=True,
 )
@@ -449,7 +463,7 @@ for decision in decisions:
 
 | Date | Author | Change |
 | ---- | ------ | ------ |
-| 2025-11-04 | execution@tradepulse | Created comprehensive README with amygdala/safety circuit mapping |
+| 2025-11-04 | execution@geosync | Created comprehensive README with amygdala/safety circuit mapping |
 
 ## See Also
 

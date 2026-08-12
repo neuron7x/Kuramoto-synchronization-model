@@ -1,0 +1,85 @@
+# Diff-bound commit acceptor for the recalibration-aware meta-gate.
+#
+# Closes the metric/policy conflation in check_debt_baseline_monotonic.py:
+# a baseline total may now grow ONLY as an isolated recalibration (detector/
+# manifest changed, no runtime code), unblocking detector hardening while
+# keeping laundering impossible. Infra/governance only, no physics.
+
+id: meta-gate-recalibration-aware
+status: ACTIVE
+claim_type: governance
+promise: >-
+  After this PR lands, check_debt_baseline_monotonic.py distinguishes a
+  measurement recalibration from real debt growth: a baseline total may grow
+  ONLY when the diff changes the detector/manifest (check_code_hygiene.py,
+  check_skip_ratchet.py, CODE_QUALITY_MANIFEST.json) AND touches no runtime
+  (non-test) code. Any baseline growth alongside a runtime-code edit — the
+  laundering attack — still fails closed. A 6-case falsification battery
+  (tests/ci/test_debt_baseline_recalibration.py) pins the boundary. No
+  physics, runtime, or forecasting change.
+
+diff_scope:
+  changed_files:
+    - path: ".claude/commit_acceptors/meta-gate-recalibration-aware.yaml"
+    - path: "INVENTORY.json"
+    - path: "scripts/ci/check_debt_baseline_monotonic.py"
+    - path: "tests/ci/test_debt_baseline_recalibration.py"
+  forbidden_paths:
+    - "trading/"
+    - "execution/"
+    - "forecast/"
+    - "policy/"
+    - "core/"
+    - "runtime/"
+    - "application/"
+
+required_python_symbols:
+  - "scripts/ci/check_debt_baseline_monotonic.py::_recalibration_allowed"
+  - "scripts/ci/check_debt_baseline_monotonic.py::_is_recalibration"
+  - "scripts/ci/check_debt_baseline_monotonic.py::main"
+
+expected_signal: >-
+  python -m pytest tests/ci/test_debt_baseline_recalibration.py reports 6
+  passed; python scripts/ci/check_debt_baseline_monotonic.py prints
+  "Debt-baseline monotonicity held" and exits 0 on a clean tree.
+
+measurement_command: >-
+  bash -c '
+    mkdir -p tmp &&
+    python -m pytest -q tests/ci/test_debt_baseline_recalibration.py | tee tmp/meta_gate_recalibration.log &&
+    python scripts/ci/check_debt_baseline_monotonic.py --base-ref origin/main | tee -a tmp/meta_gate_recalibration.log
+  '
+
+signal_artifact: "tmp/meta_gate_recalibration.log"
+
+falsifier:
+  command: >-
+    bash -c '
+      python -m pytest -q
+        tests/ci/test_debt_baseline_recalibration.py::test_runtime_code_growth_is_not_recalibration
+        tests/ci/test_debt_baseline_recalibration.py::test_mixed_detector_and_runtime_is_blocked
+        tests/ci/test_debt_baseline_recalibration.py::test_detector_only_change_is_recalibration
+    '
+  description: >-
+    Runs the three boundary cases: a runtime-code edit with growth is NOT a
+    recalibration (laundering stays blocked), a mixed detector+runtime change
+    is NOT, and a detector-only change IS. Succeeds (exit 0) only when all
+    three pass — if the carve-out ever rescued laundering, the first case
+    would fail and so would this.
+
+rollback_command: >-
+  bash -c '
+    git checkout origin/main -- scripts/ci/check_debt_baseline_monotonic.py &&
+    git rm -f
+      tests/ci/test_debt_baseline_recalibration.py
+      .claude/commit_acceptors/meta-gate-recalibration-aware.yaml
+  '
+
+rollback_verification_command: >-
+  bash -c '
+    ! grep -q _recalibration_allowed scripts/ci/check_debt_baseline_monotonic.py
+  '
+
+memory_update_type: append
+ledger_path: ".claude/commit_acceptors/meta-gate-recalibration-aware.yaml"
+report_path: "tmp/meta_gate_recalibration.log"

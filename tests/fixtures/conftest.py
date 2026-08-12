@@ -1,9 +1,17 @@
-# SPDX-License-Identifier: LicenseRef-TradePulse-Proprietary
+# Copyright (c) 2023-2026 Yaroslav Vasylenko (neuron7xLab)
+# SPDX-License-Identifier: MIT
 from __future__ import annotations
 
 import numpy as np
 import pandas as pd
 import pytest
+
+# Re-export X-axis scoped isolation helpers so that the tree-wide
+# conftest picks them up alongside the legacy shared fixtures.
+from tests.fixtures.isolation import (  # noqa: F401 — fixture re-export
+    isolated_env,
+    isolated_modules,
+)
 
 
 @pytest.fixture(autouse=True)

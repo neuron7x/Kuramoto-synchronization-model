@@ -1,4 +1,6 @@
-"""Helpers for building and rendering TradePulse reports."""
+# Copyright (c) 2023-2026 Yaroslav Vasylenko (neuron7xLab)
+# SPDX-License-Identifier: MIT
+"""Helpers for building and rendering GeoSync reports."""
 
 from __future__ import annotations
 

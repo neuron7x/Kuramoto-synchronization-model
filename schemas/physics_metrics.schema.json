@@ -1,0 +1,79 @@
+{
+  "$schema": "https://json-schema.org/draft/2020-12/schema",
+  "$id": "https://github.com/neuron7xLab/GeoSync/schemas/physics_metrics.schema.json",
+  "title": "GeoSync Physics Validation Score",
+  "type": "object",
+  "required": [
+    "schema_version",
+    "status",
+    "score_type",
+    "commit",
+    "branch",
+    "target_interval",
+    "S_total",
+    "weights_sum",
+    "metrics",
+    "blockers",
+    "verdict"
+  ],
+  "properties": {
+    "schema_version": {"type": "string"},
+    "status": {"type": "string"},
+    "score_type": {"type": "string"},
+    "commit": {"type": "string"},
+    "branch": {"type": "string"},
+    "target_interval": {
+      "type": "array",
+      "minItems": 2,
+      "maxItems": 2,
+      "items": {"type": "number"}
+    },
+    "S_total": {"type": "number", "minimum": 0, "maximum": 100},
+    "weights_sum": {"type": "number", "minimum": 0.999, "maximum": 1.001},
+    "metrics": {
+      "type": "array",
+      "minItems": 10,
+      "items": {
+        "type": "object",
+        "required": [
+          "id",
+          "weight",
+          "score",
+          "weighted_score",
+          "metric",
+          "measurement_fn",
+          "threshold",
+          "failure_condition",
+          "status"
+        ],
+        "properties": {
+          "id": {"type": "string"},
+          "weight": {"type": "number", "minimum": 0, "maximum": 1},
+          "score": {"type": "number", "minimum": 0, "maximum": 100},
+          "weighted_score": {"type": "number", "minimum": 0, "maximum": 100},
+          "metric": {"type": "string"},
+          "measurement_fn": {"type": "string"},
+          "threshold": {"type": "string"},
+          "failure_condition": {"type": "string"},
+          "status": {"type": "string"},
+          "evidence": {"type": "array", "items": {"type": "string"}}
+        }
+      }
+    },
+    "blockers": {
+      "type": "array",
+      "items": {
+        "type": "object",
+        "required": ["id", "severity", "reason", "required_action"],
+        "properties": {
+          "id": {"type": "string"},
+          "severity": {"type": "string"},
+          "reason": {"type": "string"},
+          "required_action": {"type": "string"}
+        }
+      }
+    },
+    "verdict": {"type": "string"}
+  },
+  "additionalProperties": true
+}

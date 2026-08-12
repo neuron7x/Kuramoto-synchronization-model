@@ -1,3 +1,5 @@
+# Copyright (c) 2023-2026 Yaroslav Vasylenko (neuron7xLab)
+# SPDX-License-Identifier: MIT
 """Tests for circuit breaker integration in exchange adapters."""
 
 from __future__ import annotations
@@ -25,9 +27,7 @@ class TestConnector(RESTWebSocketConnector):
             name="test",
             base_url="https://api.test.com",
             sandbox=True,
-            http_client=httpx.Client(
-                base_url="https://api.test.com", transport=transport
-            ),
+            http_client=httpx.Client(base_url="https://api.test.com", transport=transport),
             circuit_breaker_config=CircuitBreakerConfig(
                 failure_threshold=3,
                 recovery_timeout=1.0,
@@ -35,9 +35,7 @@ class TestConnector(RESTWebSocketConnector):
             ),
         )
 
-    def _resolve_credentials(
-        self, credentials: Mapping[str, str] | None
-    ) -> Mapping[str, str]:
+    def _resolve_credentials(self, credentials: Mapping[str, str] | None) -> Mapping[str, str]:
         return dict(credentials or {})
 
     def _sign_request(self, method: str, path: str, *, params, json_payload, headers):  # type: ignore[override]
@@ -46,9 +44,7 @@ class TestConnector(RESTWebSocketConnector):
     def _order_endpoint(self) -> str:
         return "/order"
 
-    def _build_place_payload(
-        self, order: Order, idempotency_key: str | None
-    ) -> dict[str, Any]:
+    def _build_place_payload(self, order: Order, idempotency_key: str | None) -> dict[str, Any]:
         return {
             "symbol": order.symbol,
             "side": order.side.value,
@@ -56,9 +52,7 @@ class TestConnector(RESTWebSocketConnector):
             "quantity": str(order.quantity),
         }
 
-    def _parse_order(
-        self, payload: Mapping[str, Any], *, original: Order | None = None
-    ) -> Order:
+    def _parse_order(self, payload: Mapping[str, Any], *, original: Order | None = None) -> Order:
         return Order(
             symbol=payload.get("symbol", "BTC/USDT"),
             side=OrderSide(payload.get("side", "buy")),
@@ -91,9 +85,7 @@ class TestCircuitBreakerIntegration:
 
     def test_circuit_breaker_initial_state(self) -> None:
         """Test circuit breaker starts in CLOSED state."""
-        transport = httpx.MockTransport(
-            lambda req: httpx.Response(200, json={"success": True})
-        )
+        transport = httpx.MockTransport(lambda req: httpx.Response(200, json={"success": True}))
         connector = TestConnector(transport)
         connector.connect()
 
@@ -284,9 +276,7 @@ class TestCircuitBreakerIntegration:
 
     def test_circuit_breaker_metrics(self) -> None:
         """Test circuit breaker metrics are exposed correctly."""
-        transport = httpx.MockTransport(
-            lambda req: httpx.Response(200, json={"success": True})
-        )
+        transport = httpx.MockTransport(lambda req: httpx.Response(200, json={"success": True}))
         connector = TestConnector(transport)
         connector.connect()
 
@@ -342,9 +332,7 @@ class TestCircuitBreakerIntegration:
 
     def test_successful_requests_do_not_trip_circuit(self) -> None:
         """Test successful requests keep circuit closed."""
-        transport = httpx.MockTransport(
-            lambda req: httpx.Response(200, json={"success": True})
-        )
+        transport = httpx.MockTransport(lambda req: httpx.Response(200, json={"success": True}))
         connector = TestConnector(transport)
         connector.connect()
 

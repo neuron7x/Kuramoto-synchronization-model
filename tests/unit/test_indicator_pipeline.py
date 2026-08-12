@@ -1,4 +1,5 @@
-# SPDX-License-Identifier: LicenseRef-TradePulse-Proprietary
+# Copyright (c) 2023-2026 Yaroslav Vasylenko (neuron7xLab)
+# SPDX-License-Identifier: MIT
 from __future__ import annotations
 
 import numpy as np
@@ -69,9 +70,7 @@ def test_indicator_pipeline_thread_execution_matches_sequential() -> None:
 
 def test_indicator_pipeline_close_reinitialises_executor() -> None:
     series = np.arange(16, dtype=np.float32)
-    pipeline = IndicatorPipeline(
-        [_SumFeature(name="sum")], execution="thread", max_workers=2
-    )
+    pipeline = IndicatorPipeline([_SumFeature(name="sum")], execution="thread", max_workers=2)
 
     first = pipeline.run(series)
     first.release()
@@ -107,9 +106,7 @@ def test_parallel_feature_block_process_uses_executor(
             return self._value
 
     class DummyExecutor:
-        def __init__(
-            self, *args, **kwargs
-        ) -> None:  # noqa: D401 - signature matches executor
+        def __init__(self, *args, **kwargs) -> None:  # noqa: D401 - signature matches executor
             self.args = args
             self.kwargs = kwargs
 
@@ -119,9 +116,7 @@ def test_parallel_feature_block_process_uses_executor(
         def __exit__(self, exc_type, exc, tb) -> None:
             return None
 
-        def submit(
-            self, fn, feature, data, kwargs
-        ):  # noqa: ANN001 - interface compatibility
+        def submit(self, fn, feature, data, kwargs):  # noqa: ANN001 - interface compatibility
             result = fn(feature, data, kwargs)
             captured.append(result)
             return ImmediateFuture(result)
@@ -135,21 +130,33 @@ def test_parallel_feature_block_process_uses_executor(
     assert captured and all(isinstance(item, FeatureResult) for item in captured)
 
 
-def test_parallel_feature_block_handles_running_event_loop(
-    monkeypatch: pytest.MonkeyPatch,
-) -> None:
-    import core.indicators.base as base_module
+def test_parallel_feature_block_is_loop_agnostic() -> None:
+    """A thread-mode block must evaluate identically in a bare script AND inside
+    an already-running event loop (Jupyter / FastAPI / Celery).
 
-    def fake_asyncio_run(coro):
-        coro.close()
-        raise RuntimeError("event loop is running")
+    Regression guard: the prior asyncio driver raised
+    ``RuntimeError: asyncio.run() cannot be called from a running event loop``
+    from any nested-loop runtime (its fallback tried to drive a second loop on
+    the same thread). The thread-pool implementation has no loop dependency.
+    """
+    import asyncio
 
-    monkeypatch.setattr(base_module.asyncio, "run", fake_asyncio_run)
+    block = ParallelFeatureBlock(
+        [_SumFeature(name="a"), _SumFeature(name="b")], mode="thread", max_workers=2
+    )
+    data = np.ones(5, dtype=np.float32)
 
-    block = ParallelFeatureBlock([_SumFeature(name="sum")], mode="thread")
-    outputs = block.run(np.ones(5, dtype=np.float32))
+    plain = block.run(data)
+    assert plain["a"] == pytest.approx(5.0, rel=FLOAT_REL_TOL, abs=FLOAT_ABS_TOL)
 
-    assert outputs["sum"] == pytest.approx(5.0, rel=FLOAT_REL_TOL, abs=FLOAT_ABS_TOL)
+    async def _nested() -> Mapping[str, Any]:
+        return block.run(data)
+
+    nested = asyncio.run(_nested())
+    assert nested == plain
+
+    with pytest.raises(RuntimeError):
+        asyncio.get_running_loop()
 
 
 def test_entropy_parallel_modes_match_cpu() -> None:
@@ -161,9 +168,7 @@ def test_entropy_parallel_modes_match_cpu() -> None:
     gpu_fallback = entropy(series, bins=64, backend="gpu")
 
     assert process == pytest.approx(base_chunked, rel=FLOAT_REL_TOL, abs=FLOAT_ABS_TOL)
-    assert async_value == pytest.approx(
-        base_chunked, rel=FLOAT_REL_TOL, abs=FLOAT_ABS_TOL
-    )
+    assert async_value == pytest.approx(base_chunked, rel=FLOAT_REL_TOL, abs=FLOAT_ABS_TOL)
     assert gpu_fallback == pytest.approx(
         entropy(series, bins=64), rel=FLOAT_REL_TOL, abs=FLOAT_ABS_TOL
     )
@@ -174,9 +179,7 @@ def test_mean_ricci_async_matches_sequential() -> None:
     graph = build_price_graph(prices, delta=0.01)
     sequential = mean_ricci(graph)
     async_result = mean_ricci(graph, parallel="async")
-    assert async_result == pytest.approx(
-        sequential, rel=FLOAT_REL_TOL, abs=FLOAT_ABS_TOL
-    )
+    assert async_result == pytest.approx(sequential, rel=FLOAT_REL_TOL, abs=FLOAT_ABS_TOL)
 
 
 def test_mean_ricci_feature_async_metadata() -> None:

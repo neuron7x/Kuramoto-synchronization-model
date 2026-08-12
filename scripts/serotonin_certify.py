@@ -1,4 +1,6 @@
 #!/usr/bin/env python
+# Copyright (c) 2023-2026 Yaroslav Vasylenko (neuron7xLab)
+# SPDX-License-Identifier: MIT
 from __future__ import annotations
 
 import argparse
@@ -23,18 +25,18 @@ try:
 except ImportError:
     pass
 
-os.environ.setdefault("TRADEPULSE_LIGHT_DATA_IMPORT", "1")
+os.environ.setdefault("GEOSYNC_LIGHT_DATA_IMPORT", "1")
 
-from tradepulse.core.neuro.serotonin.certify import (
+from core.data.dataset_contracts import contract_by_path
+from core.data.fingerprint import record_run_fingerprint
+from geosync.core.neuro.serotonin.certify import (
     RegimeMetrics,
     run_basal_ganglia_integration,
     run_regime,
     write_certificate,
 )
-from tradepulse.core.neuro.serotonin.regimes import build_regimes
-from tradepulse.core.neuro.serotonin.serotonin_controller import SerotoninController
-from core.data.dataset_contracts import contract_by_path
-from core.data.fingerprint import record_run_fingerprint
+from geosync.core.neuro.serotonin.regimes import build_regimes
+from geosync.core.neuro.serotonin.serotonin_controller import SerotoninController
 
 
 def _load_series(path: Path, *, fast: bool) -> np.ndarray:

@@ -1,3 +1,5 @@
+# Copyright (c) 2023-2026 Yaroslav Vasylenko (neuron7xLab)
+# SPDX-License-Identifier: MIT
 """Prompt management subsystem providing templating and experiment utilities."""
 
 from .exceptions import (

@@ -1,0 +1,55 @@
+# Diff-bound acceptor: scoped coverage paydown for two untested core modules.
+
+id: coverage-novelty-fractal-tests
+status: ACTIVE
+claim_type: correctness
+promise: >-
+  Scoped paydown of TD-023 (Coverage Intelligence Gate release-line deficit
+  85.03% < 90%). Two previously 0%-covered pure production modules in the `core`
+  surface gain falsifiable unit tests pinning their mathematical invariants:
+  core/indicators/novelty.py (KL-divergence: zero on identical, Gibbs-nonneg,
+  asymmetric, scale-invariant, closed-form two-point; cosine novelty: 0 on
+  identical, 2 on antiparallel, 1 on orthogonal, bounded, scale-invariant) and
+  core/metrics/fractal_dimension.py (box-counting slope: finite, deterministic,
+  ~0 on a constant signal, spread > constant, honours custom eps grid). Tests
+  assert analytic properties, never magic numbers or the module docstring's
+  aspirational dimension values. The remaining 14 untested files + surface gaps
+  stay tracked in reports/TECH_DEBT_REGISTRY.md as measured debt.
+
+diff_scope:
+  changed_files:
+    - path: ".claude/commit_acceptors/coverage-novelty-fractal-tests.yaml"
+    - path: "tests/unit/indicators/test_novelty.py"
+    - path: "tests/unit/metrics/test_fractal_dimension.py"
+    - path: "reports/TECH_DEBT_REGISTRY.md"
+  forbidden_paths:
+    - "backtest/"
+    - "execution/"
+    - "analytics/"
+    - "research/systemic_risk/"
+
+required_python_symbols:
+  - "core.indicators.novelty.kl_div"
+  - "core.indicators.novelty.novelty_score"
+  - "core.metrics.fractal_dimension.box_counting_dim"
+expected_signal: >-
+  The two new test modules collect and pass, exercising every line of
+  novelty.py and box_counting_dim, so both modules move from 0% to full
+  coverage on the release surface.
+measurement_command: >-
+  bash -c 'set -euo pipefail; mkdir -p tmp; PYTHONPATH=. python -m pytest tests/unit/indicators/test_novelty.py tests/unit/metrics/test_fractal_dimension.py -q | tee tmp/coverage_novelty_fractal.log'
+signal_artifact: "tmp/coverage_novelty_fractal.log"
+falsifier:
+  command: >-
+    bash -c 'PYTHONPATH=. python -c "import numpy as np; from core.indicators.novelty import kl_div, novelty_score; from core.metrics.fractal_dimension import box_counting_dim; p=np.array([0.2,0.3,0.5]); assert abs(kl_div(p,p))<1e-12; z=np.array([1.0,2.0,3.0]); assert abs(novelty_score(z,z))<1e-6; assert abs(novelty_score(z,-z)-2.0)<1e-6; assert abs(box_counting_dim(np.full(256,3.14)))<1e-6"'
+  description: >-
+    Fails if any pinned invariant breaks: KL(p,p)=0, novelty(z,z)=0,
+    novelty(z,-z)=2, or box_counting_dim(constant)~0 — i.e. if either module's
+    mathematical contract regresses or the tests stop covering it.
+rollback_command: >-
+  bash -c 'git rm -f tests/unit/indicators/test_novelty.py tests/unit/metrics/test_fractal_dimension.py .claude/commit_acceptors/coverage-novelty-fractal-tests.yaml && git checkout origin/main -- reports/TECH_DEBT_REGISTRY.md'
+rollback_verification_command: >-
+  bash -c 'test ! -f tests/unit/indicators/test_novelty.py'
+memory_update_type: append
+ledger_path: ".claude/commit_acceptors/coverage-novelty-fractal-tests.yaml"
+report_path: "tmp/coverage_novelty_fractal.log"

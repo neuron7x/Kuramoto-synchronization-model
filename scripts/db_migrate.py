@@ -1,4 +1,6 @@
-"""Command-line helpers for managing TradePulse database migrations."""
+# Copyright (c) 2023-2026 Yaroslav Vasylenko (neuron7xLab)
+# SPDX-License-Identifier: MIT
+"""Command-line helpers for managing GeoSync database migrations."""
 
 from __future__ import annotations
 
@@ -26,12 +28,12 @@ def _resolve_database_url(candidate: str | None) -> str:
     if candidate:
         return candidate
 
-    env_url = os.getenv("TRADEPULSE_DB_WRITER_DSN")
+    env_url = os.getenv("GEOSYNC_DB_WRITER_DSN")
     if env_url:
         return env_url
 
     raise click.UsageError(
-        "Database URL must be provided via --database-url or TRADEPULSE_DB_WRITER_DSN",
+        "Database URL must be provided via --database-url or GEOSYNC_DB_WRITER_DSN",
     )
 
 
@@ -44,7 +46,7 @@ def _base_config(database_url: str) -> Config:
     config.set_main_option("sqlalchemy.url", database_url)
 
     # Alembic's env.py expects this environment variable to be defined.
-    os.environ["TRADEPULSE_DB_WRITER_DSN"] = database_url
+    os.environ["GEOSYNC_DB_WRITER_DSN"] = database_url
     return config
 
 
@@ -72,7 +74,7 @@ def _configured_alembic(database_url: str) -> Iterator[Config]:
 
 @click.group()
 def cli() -> None:
-    """Manage database schema migrations for TradePulse."""
+    """Manage database schema migrations for GeoSync."""
 
 
 def _normalise_revision(revision: str | None, default: str) -> str:
@@ -84,8 +86,8 @@ def _normalise_revision(revision: str | None, default: str) -> str:
 @click.option(
     "database_url",
     "--database-url",
-    envvar="TRADEPULSE_DB_WRITER_DSN",
-    help="Target database URL. Defaults to TRADEPULSE_DB_WRITER_DSN if set.",
+    envvar="GEOSYNC_DB_WRITER_DSN",
+    help="Target database URL. Defaults to GEOSYNC_DB_WRITER_DSN if set.",
 )
 @click.option("--sql", "emit_sql", is_flag=True, help="Emit SQL without applying it.")
 def upgrade(revision: str | None, database_url: str | None, emit_sql: bool) -> None:
@@ -103,8 +105,8 @@ def upgrade(revision: str | None, database_url: str | None, emit_sql: bool) -> N
 @click.option(
     "database_url",
     "--database-url",
-    envvar="TRADEPULSE_DB_WRITER_DSN",
-    help="Target database URL. Defaults to TRADEPULSE_DB_WRITER_DSN if set.",
+    envvar="GEOSYNC_DB_WRITER_DSN",
+    help="Target database URL. Defaults to GEOSYNC_DB_WRITER_DSN if set.",
 )
 @click.option("--sql", "emit_sql", is_flag=True, help="Emit SQL without applying it.")
 def downgrade(revision: str | None, database_url: str | None, emit_sql: bool) -> None:
@@ -121,8 +123,8 @@ def downgrade(revision: str | None, database_url: str | None, emit_sql: bool) ->
 @click.option(
     "database_url",
     "--database-url",
-    envvar="TRADEPULSE_DB_WRITER_DSN",
-    help="Target database URL. Defaults to TRADEPULSE_DB_WRITER_DSN if set.",
+    envvar="GEOSYNC_DB_WRITER_DSN",
+    help="Target database URL. Defaults to GEOSYNC_DB_WRITER_DSN if set.",
 )
 @click.option("--verbose", is_flag=True, help="Display additional revision metadata.")
 @click.option(
@@ -143,12 +145,10 @@ def history(database_url: str | None, verbose: bool, rev_range: str | None) -> N
 @click.option(
     "database_url",
     "--database-url",
-    envvar="TRADEPULSE_DB_WRITER_DSN",
-    help="Target database URL. Defaults to TRADEPULSE_DB_WRITER_DSN if set.",
+    envvar="GEOSYNC_DB_WRITER_DSN",
+    help="Target database URL. Defaults to GEOSYNC_DB_WRITER_DSN if set.",
 )
-@click.option(
-    "--verbose", is_flag=True, help="Display revision context and environment info."
-)
+@click.option("--verbose", is_flag=True, help="Display revision context and environment info.")
 def current(database_url: str | None, verbose: bool) -> None:
     """Print the current database revision."""
 

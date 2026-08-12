@@ -1,0 +1,1917 @@
+{
+  "alpha_policy": {
+    "alpha_per_cell": 0.0004901960784313725,
+    "correction_class_note": "Same multiple-testing correction CLASS that gave D-002H its alpha = 0.05/216 = 2.31e-4. Here denominator = 102 canonical cells -> alpha = 4.901961e-04.",
+    "denominator": 102,
+    "derivation": "sum over 3 P5 substrates of (applicable P6 nulls x P5-declared P2 windows x P5 metrics) = funding_liquidity_rollover: 6 nulls x 3 windows x 2 metrics = 36 ; cross_exposure_contagion_proxy: 7 nulls x 3 windows x 2 metrics = 42 ; volatility_credit_spread_regime: 6 nulls x 2 windows x 2 metrics = 24 ; TOTAL = 102 canonical cells -> Bonferroni alpha = 0.05/102 = 4.901961e-04",
+    "family": "bonferroni",
+    "family_level": 0.05
+  },
+  "canonical_run_authorized": false,
+  "claim_boundary": "P7 is a power-DESIGN gate. It computes MDE, n_min, runtime budget and false-negative risk and decides whether a canonical sweep is LEGAL under a realistic budget. It does NOT execute a canonical run (P8), promote any claim (P9), fit real data, or edit the D-002J pre-registration. A POWER_GATE_REFUSED_UNDERPOWERED verdict is a truthful retained negative artifact -- a scientific win, not a failure to fix.",
+  "crisis_window_registry_sha256": "41f281d9e97fbf49725f0eb1a1bb7b45865c14cdc5c525ea96231ef0aa651e8f",
+  "d002i_anchor_note": "D-002I diagnosis (H_I3 CONFIRMED) median n_min ~= 93 at alpha=0.05/216=2.31e-4. P7 references this number as the sanity tie-point for the feasible-cap justification and the refusal axis.",
+  "d002i_n_min_anchor": 93,
+  "decision": "POWER_GATE_REFUSED_UNDERPOWERED",
+  "effect_size_assumption": {
+    "cross_exposure_contagion_proxy": {
+      "rationale": "Prior for 'cross_exposure_contagion_proxy' sourced from P4 'PC2_CONTAGION_CASCADE_INJECTION' (control_class='contagion_cascade'); P4 pass-threshold metric='cascade_extent_fraction' value=0.3 is the planted synthetic ground-truth detection magnitude. D-002I diagnosed the realistic per-cell substrate-vs-null separation as sub-threshold relative to that idealized synthetic SNR, so the magnitude is mapped to a conservative shrink-only standardized Cohen's d = 0.3 (never inflated; can only push the gate toward REFUSED). No effect size is invented.",
+      "source_pc_control_class": "contagion_cascade",
+      "source_pc_id": "PC2_CONTAGION_CASCADE_INJECTION",
+      "source_pc_pass_metric": "cascade_extent_fraction",
+      "source_pc_pass_value": 0.3,
+      "value": 0.3
+    },
+    "funding_liquidity_rollover": {
+      "rationale": "Prior for 'funding_liquidity_rollover' sourced from P4 'PC1_LIQUIDITY_SHOCK_INJECTION' (control_class='liquidity_shock'); P4 pass-threshold metric='worst_node_post_onset_mean_shift_z' value=5 is the planted synthetic ground-truth detection magnitude. D-002I diagnosed the realistic per-cell substrate-vs-null separation as sub-threshold relative to that idealized synthetic SNR, so the magnitude is mapped to a conservative shrink-only standardized Cohen's d = 0.5 (never inflated; can only push the gate toward REFUSED). No effect size is invented.",
+      "source_pc_control_class": "liquidity_shock",
+      "source_pc_id": "PC1_LIQUIDITY_SHOCK_INJECTION",
+      "source_pc_pass_metric": "worst_node_post_onset_mean_shift_z",
+      "source_pc_pass_value": 5.0,
+      "value": 0.5
+    },
+    "volatility_credit_spread_regime": {
+      "rationale": "Prior for 'volatility_credit_spread_regime' sourced from P4 'PC4_MARKET_WIDE_VOLATILITY_REGIME_SWITCH' (control_class='volatility_regime_switch'); P4 pass-threshold metric='post_pre_realised_vol_ratio' value=2 is the planted synthetic ground-truth detection magnitude. D-002I diagnosed the realistic per-cell substrate-vs-null separation as sub-threshold relative to that idealized synthetic SNR, so the magnitude is mapped to a conservative shrink-only standardized Cohen's d = 0.4 (never inflated; can only push the gate toward REFUSED). No effect size is invented.",
+      "source_pc_control_class": "volatility_regime_switch",
+      "source_pc_id": "PC4_MARKET_WIDE_VOLATILITY_REGIME_SWITCH",
+      "source_pc_pass_metric": "post_pre_realised_vol_ratio",
+      "source_pc_pass_value": 2.0,
+      "value": 0.4
+    }
+  },
+  "false_negative_risk": {
+    "at_capped_budget": 0.913832,
+    "at_n_min": 0.199315,
+    "interpretation": "at_capped_budget = worst-cell type-II error if the sweep ran at feasible_cap_n_seeds; at_n_min = residual type-II error at each cell's own n_min (~= 1 - power_target)."
+  },
+  "feasible_cap_justification": "D-002H ran at n_seeds=20 and REFUSED; D-002I diagnosed the median n_min~=93 (alpha=0.05/216). feasible_cap_n_seeds=100 is set just above the D-002I median anchor (93) and 5x the D-002H budget (20) -- the MOST generous per-cell budget that is still runtime-affordable. It is NOT inflated to manufacture a PASS.",
+  "feasible_cap_n_seeds": 100,
+  "generated_at": "2026-05-15T00:00:00Z",
+  "minimum_detectable_effect_global": 0.6120261610357957,
+  "n_bootstrap_candidate": 2000,
+  "n_seeds_candidate": 100,
+  "n_shuffles_candidate": 5000,
+  "no_canonical_run_executed": true,
+  "no_real_data": true,
+  "null_manifest_sha256": "ef0ee41a73f6ab08702a5bcc4539e50dfd3d747727f0ac93e3080c1a41f705d9",
+  "parent_phase": "D002J-P6",
+  "pc_manifest_sha256": "f1ff5f20b08639b076c7f42f0263d3acbb18a7496b4cc4278a124fa337ca038d",
+  "per_cell": [
+    {
+      "assumed_effect": 0.5,
+      "mde": 0.6120261610357957,
+      "metric": "funding_stress_index",
+      "n_min": 150,
+      "null": "N10_vintage_leakage_trap_null",
+      "power_at_n_min": 0.8006847890978015,
+      "substrate": "funding_liquidity_rollover",
+      "window": "CW3_US_REPO_SPIKE_2019"
+    },
+    {
+      "assumed_effect": 0.5,
+      "mde": 0.6120261610357957,
+      "metric": "rollover_failure_count",
+      "n_min": 150,
+      "null": "N10_vintage_leakage_trap_null",
+      "power_at_n_min": 0.8006847890978015,
+      "substrate": "funding_liquidity_rollover",
+      "window": "CW3_US_REPO_SPIKE_2019"
+    },
+    {
+      "assumed_effect": 0.5,
+      "mde": 0.6120261610357957,
+      "metric": "funding_stress_index",
+      "n_min": 150,
+      "null": "N10_vintage_leakage_trap_null",
+      "power_at_n_min": 0.8006847890978015,
+      "substrate": "funding_liquidity_rollover",
+      "window": "CW4_COVID_DASH_FOR_CASH_2020"
+    },
+    {
+      "assumed_effect": 0.5,
+      "mde": 0.6120261610357957,
+      "metric": "rollover_failure_count",
+      "n_min": 150,
+      "null": "N10_vintage_leakage_trap_null",
+      "power_at_n_min": 0.8006847890978015,
+      "substrate": "funding_liquidity_rollover",
+      "window": "CW4_COVID_DASH_FOR_CASH_2020"
+    },
+    {
+      "assumed_effect": 0.5,
+      "mde": 0.6120261610357957,
+      "metric": "funding_stress_index",
+      "n_min": 150,
+      "null": "N10_vintage_leakage_trap_null",
+      "power_at_n_min": 0.8006847890978015,
+      "substrate": "funding_liquidity_rollover",
+      "window": "CW5_UK_GILT_LDI_2022"
+    },
+    {
+      "assumed_effect": 0.5,
+      "mde": 0.6120261610357957,
+      "metric": "rollover_failure_count",
+      "n_min": 150,
+      "null": "N10_vintage_leakage_trap_null",
+      "power_at_n_min": 0.8006847890978015,
+      "substrate": "funding_liquidity_rollover",
+      "window": "CW5_UK_GILT_LDI_2022"
+    },
+    {
+      "assumed_effect": 0.5,
+      "mde": 0.6120261610357957,
+      "metric": "funding_stress_index",
+      "n_min": 150,
+      "null": "N1_label_permutation",
+      "power_at_n_min": 0.8006847890978015,
+      "substrate": "funding_liquidity_rollover",
+      "window": "CW3_US_REPO_SPIKE_2019"
+    },
+    {
+      "assumed_effect": 0.5,
+      "mde": 0.6120261610357957,
+      "metric": "rollover_failure_count",
+      "n_min": 150,
+      "null": "N1_label_permutation",
+      "power_at_n_min": 0.8006847890978015,
+      "substrate": "funding_liquidity_rollover",
+      "window": "CW3_US_REPO_SPIKE_2019"
+    },
+    {
+      "assumed_effect": 0.5,
+      "mde": 0.6120261610357957,
+      "metric": "funding_stress_index",
+      "n_min": 150,
+      "null": "N1_label_permutation",
+      "power_at_n_min": 0.8006847890978015,
+      "substrate": "funding_liquidity_rollover",
+      "window": "CW4_COVID_DASH_FOR_CASH_2020"
+    },
+    {
+      "assumed_effect": 0.5,
+      "mde": 0.6120261610357957,
+      "metric": "rollover_failure_count",
+      "n_min": 150,
+      "null": "N1_label_permutation",
+      "power_at_n_min": 0.8006847890978015,
+      "substrate": "funding_liquidity_rollover",
+      "window": "CW4_COVID_DASH_FOR_CASH_2020"
+    },
+    {
+      "assumed_effect": 0.5,
+      "mde": 0.6120261610357957,
+      "metric": "funding_stress_index",
+      "n_min": 150,
+      "null": "N1_label_permutation",
+      "power_at_n_min": 0.8006847890978015,
+      "substrate": "funding_liquidity_rollover",
+      "window": "CW5_UK_GILT_LDI_2022"
+    },
+    {
+      "assumed_effect": 0.5,
+      "mde": 0.6120261610357957,
+      "metric": "rollover_failure_count",
+      "n_min": 150,
+      "null": "N1_label_permutation",
+      "power_at_n_min": 0.8006847890978015,
+      "substrate": "funding_liquidity_rollover",
+      "window": "CW5_UK_GILT_LDI_2022"
+    },
+    {
+      "assumed_effect": 0.5,
+      "mde": 0.6120261610357957,
+      "metric": "funding_stress_index",
+      "n_min": 150,
+      "null": "N2_time_window_shift_placebo",
+      "power_at_n_min": 0.8006847890978015,
+      "substrate": "funding_liquidity_rollover",
+      "window": "CW3_US_REPO_SPIKE_2019"
+    },
+    {
+      "assumed_effect": 0.5,
+      "mde": 0.6120261610357957,
+      "metric": "rollover_failure_count",
+      "n_min": 150,
+      "null": "N2_time_window_shift_placebo",
+      "power_at_n_min": 0.8006847890978015,
+      "substrate": "funding_liquidity_rollover",
+      "window": "CW3_US_REPO_SPIKE_2019"
+    },
+    {
+      "assumed_effect": 0.5,
+      "mde": 0.6120261610357957,
+      "metric": "funding_stress_index",
+      "n_min": 150,
+      "null": "N2_time_window_shift_placebo",
+      "power_at_n_min": 0.8006847890978015,
+      "substrate": "funding_liquidity_rollover",
+      "window": "CW4_COVID_DASH_FOR_CASH_2020"
+    },
+    {
+      "assumed_effect": 0.5,
+      "mde": 0.6120261610357957,
+      "metric": "rollover_failure_count",
+      "n_min": 150,
+      "null": "N2_time_window_shift_placebo",
+      "power_at_n_min": 0.8006847890978015,
+      "substrate": "funding_liquidity_rollover",
+      "window": "CW4_COVID_DASH_FOR_CASH_2020"
+    },
+    {
+      "assumed_effect": 0.5,
+      "mde": 0.6120261610357957,
+      "metric": "funding_stress_index",
+      "n_min": 150,
+      "null": "N2_time_window_shift_placebo",
+      "power_at_n_min": 0.8006847890978015,
+      "substrate": "funding_liquidity_rollover",
+      "window": "CW5_UK_GILT_LDI_2022"
+    },
+    {
+      "assumed_effect": 0.5,
+      "mde": 0.6120261610357957,
+      "metric": "rollover_failure_count",
+      "n_min": 150,
+      "null": "N2_time_window_shift_placebo",
+      "power_at_n_min": 0.8006847890978015,
+      "substrate": "funding_liquidity_rollover",
+      "window": "CW5_UK_GILT_LDI_2022"
+    },
+    {
+      "assumed_effect": 0.5,
+      "mde": 0.6120261610357957,
+      "metric": "funding_stress_index",
+      "n_min": 150,
+      "null": "N3_temporal_block_bootstrap",
+      "power_at_n_min": 0.8006847890978015,
+      "substrate": "funding_liquidity_rollover",
+      "window": "CW3_US_REPO_SPIKE_2019"
+    },
+    {
+      "assumed_effect": 0.5,
+      "mde": 0.6120261610357957,
+      "metric": "rollover_failure_count",
+      "n_min": 150,
+      "null": "N3_temporal_block_bootstrap",
+      "power_at_n_min": 0.8006847890978015,
+      "substrate": "funding_liquidity_rollover",
+      "window": "CW3_US_REPO_SPIKE_2019"
+    },
+    {
+      "assumed_effect": 0.5,
+      "mde": 0.6120261610357957,
+      "metric": "funding_stress_index",
+      "n_min": 150,
+      "null": "N3_temporal_block_bootstrap",
+      "power_at_n_min": 0.8006847890978015,
+      "substrate": "funding_liquidity_rollover",
+      "window": "CW4_COVID_DASH_FOR_CASH_2020"
+    },
+    {
+      "assumed_effect": 0.5,
+      "mde": 0.6120261610357957,
+      "metric": "rollover_failure_count",
+      "n_min": 150,
+      "null": "N3_temporal_block_bootstrap",
+      "power_at_n_min": 0.8006847890978015,
+      "substrate": "funding_liquidity_rollover",
+      "window": "CW4_COVID_DASH_FOR_CASH_2020"
+    },
+    {
+      "assumed_effect": 0.5,
+      "mde": 0.6120261610357957,
+      "metric": "funding_stress_index",
+      "n_min": 150,
+      "null": "N3_temporal_block_bootstrap",
+      "power_at_n_min": 0.8006847890978015,
+      "substrate": "funding_liquidity_rollover",
+      "window": "CW5_UK_GILT_LDI_2022"
+    },
+    {
+      "assumed_effect": 0.5,
+      "mde": 0.6120261610357957,
+      "metric": "rollover_failure_count",
+      "n_min": 150,
+      "null": "N3_temporal_block_bootstrap",
+      "power_at_n_min": 0.8006847890978015,
+      "substrate": "funding_liquidity_rollover",
+      "window": "CW5_UK_GILT_LDI_2022"
+    },
+    {
+      "assumed_effect": 0.5,
+      "mde": 0.6120261610357957,
+      "metric": "funding_stress_index",
+      "n_min": 150,
+      "null": "N4_iaaft_surrogate",
+      "power_at_n_min": 0.8006847890978015,
+      "substrate": "funding_liquidity_rollover",
+      "window": "CW3_US_REPO_SPIKE_2019"
+    },
+    {
+      "assumed_effect": 0.5,
+      "mde": 0.6120261610357957,
+      "metric": "rollover_failure_count",
+      "n_min": 150,
+      "null": "N4_iaaft_surrogate",
+      "power_at_n_min": 0.8006847890978015,
+      "substrate": "funding_liquidity_rollover",
+      "window": "CW3_US_REPO_SPIKE_2019"
+    },
+    {
+      "assumed_effect": 0.5,
+      "mde": 0.6120261610357957,
+      "metric": "funding_stress_index",
+      "n_min": 150,
+      "null": "N4_iaaft_surrogate",
+      "power_at_n_min": 0.8006847890978015,
+      "substrate": "funding_liquidity_rollover",
+      "window": "CW4_COVID_DASH_FOR_CASH_2020"
+    },
+    {
+      "assumed_effect": 0.5,
+      "mde": 0.6120261610357957,
+      "metric": "rollover_failure_count",
+      "n_min": 150,
+      "null": "N4_iaaft_surrogate",
+      "power_at_n_min": 0.8006847890978015,
+      "substrate": "funding_liquidity_rollover",
+      "window": "CW4_COVID_DASH_FOR_CASH_2020"
+    },
+    {
+      "assumed_effect": 0.5,
+      "mde": 0.6120261610357957,
+      "metric": "funding_stress_index",
+      "n_min": 150,
+      "null": "N4_iaaft_surrogate",
+      "power_at_n_min": 0.8006847890978015,
+      "substrate": "funding_liquidity_rollover",
+      "window": "CW5_UK_GILT_LDI_2022"
+    },
+    {
+      "assumed_effect": 0.5,
+      "mde": 0.6120261610357957,
+      "metric": "rollover_failure_count",
+      "n_min": 150,
+      "null": "N4_iaaft_surrogate",
+      "power_at_n_min": 0.8006847890978015,
+      "substrate": "funding_liquidity_rollover",
+      "window": "CW5_UK_GILT_LDI_2022"
+    },
+    {
+      "assumed_effect": 0.5,
+      "mde": 0.6120261610357957,
+      "metric": "funding_stress_index",
+      "n_min": 150,
+      "null": "N9_shock_time_placebo",
+      "power_at_n_min": 0.8006847890978015,
+      "substrate": "funding_liquidity_rollover",
+      "window": "CW3_US_REPO_SPIKE_2019"
+    },
+    {
+      "assumed_effect": 0.5,
+      "mde": 0.6120261610357957,
+      "metric": "rollover_failure_count",
+      "n_min": 150,
+      "null": "N9_shock_time_placebo",
+      "power_at_n_min": 0.8006847890978015,
+      "substrate": "funding_liquidity_rollover",
+      "window": "CW3_US_REPO_SPIKE_2019"
+    },
+    {
+      "assumed_effect": 0.5,
+      "mde": 0.6120261610357957,
+      "metric": "funding_stress_index",
+      "n_min": 150,
+      "null": "N9_shock_time_placebo",
+      "power_at_n_min": 0.8006847890978015,
+      "substrate": "funding_liquidity_rollover",
+      "window": "CW4_COVID_DASH_FOR_CASH_2020"
+    },
+    {
+      "assumed_effect": 0.5,
+      "mde": 0.6120261610357957,
+      "metric": "rollover_failure_count",
+      "n_min": 150,
+      "null": "N9_shock_time_placebo",
+      "power_at_n_min": 0.8006847890978015,
+      "substrate": "funding_liquidity_rollover",
+      "window": "CW4_COVID_DASH_FOR_CASH_2020"
+    },
+    {
+      "assumed_effect": 0.5,
+      "mde": 0.6120261610357957,
+      "metric": "funding_stress_index",
+      "n_min": 150,
+      "null": "N9_shock_time_placebo",
+      "power_at_n_min": 0.8006847890978015,
+      "substrate": "funding_liquidity_rollover",
+      "window": "CW5_UK_GILT_LDI_2022"
+    },
+    {
+      "assumed_effect": 0.5,
+      "mde": 0.6120261610357957,
+      "metric": "rollover_failure_count",
+      "n_min": 150,
+      "null": "N9_shock_time_placebo",
+      "power_at_n_min": 0.8006847890978015,
+      "substrate": "funding_liquidity_rollover",
+      "window": "CW5_UK_GILT_LDI_2022"
+    },
+    {
+      "assumed_effect": 0.3,
+      "mde": 0.6120261610357957,
+      "metric": "cascade_impaired_fraction",
+      "n_min": 417,
+      "null": "N10_vintage_leakage_trap_null",
+      "power_at_n_min": 0.8011682472771663,
+      "substrate": "cross_exposure_contagion_proxy",
+      "window": "CW1_GFC_2007_2009"
+    },
+    {
+      "assumed_effect": 0.3,
+      "mde": 0.6120261610357957,
+      "metric": "systemic_loss_index",
+      "n_min": 417,
+      "null": "N10_vintage_leakage_trap_null",
+      "power_at_n_min": 0.8011682472771663,
+      "substrate": "cross_exposure_contagion_proxy",
+      "window": "CW1_GFC_2007_2009"
+    },
+    {
+      "assumed_effect": 0.3,
+      "mde": 0.6120261610357957,
+      "metric": "cascade_impaired_fraction",
+      "n_min": 417,
+      "null": "N10_vintage_leakage_trap_null",
+      "power_at_n_min": 0.8011682472771663,
+      "substrate": "cross_exposure_contagion_proxy",
+      "window": "CW2_EUROZONE_2011_2012"
+    },
+    {
+      "assumed_effect": 0.3,
+      "mde": 0.6120261610357957,
+      "metric": "systemic_loss_index",
+      "n_min": 417,
+      "null": "N10_vintage_leakage_trap_null",
+      "power_at_n_min": 0.8011682472771663,
+      "substrate": "cross_exposure_contagion_proxy",
+      "window": "CW2_EUROZONE_2011_2012"
+    },
+    {
+      "assumed_effect": 0.3,
+      "mde": 0.6120261610357957,
+      "metric": "cascade_impaired_fraction",
+      "n_min": 417,
+      "null": "N10_vintage_leakage_trap_null",
+      "power_at_n_min": 0.8011682472771663,
+      "substrate": "cross_exposure_contagion_proxy",
+      "window": "CW6_REGIONAL_BANKING_2023"
+    },
+    {
+      "assumed_effect": 0.3,
+      "mde": 0.6120261610357957,
+      "metric": "systemic_loss_index",
+      "n_min": 417,
+      "null": "N10_vintage_leakage_trap_null",
+      "power_at_n_min": 0.8011682472771663,
+      "substrate": "cross_exposure_contagion_proxy",
+      "window": "CW6_REGIONAL_BANKING_2023"
+    },
+    {
+      "assumed_effect": 0.3,
+      "mde": 0.6120261610357957,
+      "metric": "cascade_impaired_fraction",
+      "n_min": 417,
+      "null": "N1_label_permutation",
+      "power_at_n_min": 0.8011682472771663,
+      "substrate": "cross_exposure_contagion_proxy",
+      "window": "CW1_GFC_2007_2009"
+    },
+    {
+      "assumed_effect": 0.3,
+      "mde": 0.6120261610357957,
+      "metric": "systemic_loss_index",
+      "n_min": 417,
+      "null": "N1_label_permutation",
+      "power_at_n_min": 0.8011682472771663,
+      "substrate": "cross_exposure_contagion_proxy",
+      "window": "CW1_GFC_2007_2009"
+    },
+    {
+      "assumed_effect": 0.3,
+      "mde": 0.6120261610357957,
+      "metric": "cascade_impaired_fraction",
+      "n_min": 417,
+      "null": "N1_label_permutation",
+      "power_at_n_min": 0.8011682472771663,
+      "substrate": "cross_exposure_contagion_proxy",
+      "window": "CW2_EUROZONE_2011_2012"
+    },
+    {
+      "assumed_effect": 0.3,
+      "mde": 0.6120261610357957,
+      "metric": "systemic_loss_index",
+      "n_min": 417,
+      "null": "N1_label_permutation",
+      "power_at_n_min": 0.8011682472771663,
+      "substrate": "cross_exposure_contagion_proxy",
+      "window": "CW2_EUROZONE_2011_2012"
+    },
+    {
+      "assumed_effect": 0.3,
+      "mde": 0.6120261610357957,
+      "metric": "cascade_impaired_fraction",
+      "n_min": 417,
+      "null": "N1_label_permutation",
+      "power_at_n_min": 0.8011682472771663,
+      "substrate": "cross_exposure_contagion_proxy",
+      "window": "CW6_REGIONAL_BANKING_2023"
+    },
+    {
+      "assumed_effect": 0.3,
+      "mde": 0.6120261610357957,
+      "metric": "systemic_loss_index",
+      "n_min": 417,
+      "null": "N1_label_permutation",
+      "power_at_n_min": 0.8011682472771663,
+      "substrate": "cross_exposure_contagion_proxy",
+      "window": "CW6_REGIONAL_BANKING_2023"
+    },
+    {
+      "assumed_effect": 0.3,
+      "mde": 0.6120261610357957,
+      "metric": "cascade_impaired_fraction",
+      "n_min": 417,
+      "null": "N5_degree_preserving_graph_null",
+      "power_at_n_min": 0.8011682472771663,
+      "substrate": "cross_exposure_contagion_proxy",
+      "window": "CW1_GFC_2007_2009"
+    },
+    {
+      "assumed_effect": 0.3,
+      "mde": 0.6120261610357957,
+      "metric": "systemic_loss_index",
+      "n_min": 417,
+      "null": "N5_degree_preserving_graph_null",
+      "power_at_n_min": 0.8011682472771663,
+      "substrate": "cross_exposure_contagion_proxy",
+      "window": "CW1_GFC_2007_2009"
+    },
+    {
+      "assumed_effect": 0.3,
+      "mde": 0.6120261610357957,
+      "metric": "cascade_impaired_fraction",
+      "n_min": 417,
+      "null": "N5_degree_preserving_graph_null",
+      "power_at_n_min": 0.8011682472771663,
+      "substrate": "cross_exposure_contagion_proxy",
+      "window": "CW2_EUROZONE_2011_2012"
+    },
+    {
+      "assumed_effect": 0.3,
+      "mde": 0.6120261610357957,
+      "metric": "systemic_loss_index",
+      "n_min": 417,
+      "null": "N5_degree_preserving_graph_null",
+      "power_at_n_min": 0.8011682472771663,
+      "substrate": "cross_exposure_contagion_proxy",
+      "window": "CW2_EUROZONE_2011_2012"
+    },
+    {
+      "assumed_effect": 0.3,
+      "mde": 0.6120261610357957,
+      "metric": "cascade_impaired_fraction",
+      "n_min": 417,
+      "null": "N5_degree_preserving_graph_null",
+      "power_at_n_min": 0.8011682472771663,
+      "substrate": "cross_exposure_contagion_proxy",
+      "window": "CW6_REGIONAL_BANKING_2023"
+    },
+    {
+      "assumed_effect": 0.3,
+      "mde": 0.6120261610357957,
+      "metric": "systemic_loss_index",
+      "n_min": 417,
+      "null": "N5_degree_preserving_graph_null",
+      "power_at_n_min": 0.8011682472771663,
+      "substrate": "cross_exposure_contagion_proxy",
+      "window": "CW6_REGIONAL_BANKING_2023"
+    },
+    {
+      "assumed_effect": 0.3,
+      "mde": 0.6120261610357957,
+      "metric": "cascade_impaired_fraction",
+      "n_min": 417,
+      "null": "N6_weight_preserving_shuffle",
+      "power_at_n_min": 0.8011682472771663,
+      "substrate": "cross_exposure_contagion_proxy",
+      "window": "CW1_GFC_2007_2009"
+    },
+    {
+      "assumed_effect": 0.3,
+      "mde": 0.6120261610357957,
+      "metric": "systemic_loss_index",
+      "n_min": 417,
+      "null": "N6_weight_preserving_shuffle",
+      "power_at_n_min": 0.8011682472771663,
+      "substrate": "cross_exposure_contagion_proxy",
+      "window": "CW1_GFC_2007_2009"
+    },
+    {
+      "assumed_effect": 0.3,
+      "mde": 0.6120261610357957,
+      "metric": "cascade_impaired_fraction",
+      "n_min": 417,
+      "null": "N6_weight_preserving_shuffle",
+      "power_at_n_min": 0.8011682472771663,
+      "substrate": "cross_exposure_contagion_proxy",
+      "window": "CW2_EUROZONE_2011_2012"
+    },
+    {
+      "assumed_effect": 0.3,
+      "mde": 0.6120261610357957,
+      "metric": "systemic_loss_index",
+      "n_min": 417,
+      "null": "N6_weight_preserving_shuffle",
+      "power_at_n_min": 0.8011682472771663,
+      "substrate": "cross_exposure_contagion_proxy",
+      "window": "CW2_EUROZONE_2011_2012"
+    },
+    {
+      "assumed_effect": 0.3,
+      "mde": 0.6120261610357957,
+      "metric": "cascade_impaired_fraction",
+      "n_min": 417,
+      "null": "N6_weight_preserving_shuffle",
+      "power_at_n_min": 0.8011682472771663,
+      "substrate": "cross_exposure_contagion_proxy",
+      "window": "CW6_REGIONAL_BANKING_2023"
+    },
+    {
+      "assumed_effect": 0.3,
+      "mde": 0.6120261610357957,
+      "metric": "systemic_loss_index",
+      "n_min": 417,
+      "null": "N6_weight_preserving_shuffle",
+      "power_at_n_min": 0.8011682472771663,
+      "substrate": "cross_exposure_contagion_proxy",
+      "window": "CW6_REGIONAL_BANKING_2023"
+    },
+    {
+      "assumed_effect": 0.3,
+      "mde": 0.6120261610357957,
+      "metric": "cascade_impaired_fraction",
+      "n_min": 417,
+      "null": "N7_configuration_model",
+      "power_at_n_min": 0.8011682472771663,
+      "substrate": "cross_exposure_contagion_proxy",
+      "window": "CW1_GFC_2007_2009"
+    },
+    {
+      "assumed_effect": 0.3,
+      "mde": 0.6120261610357957,
+      "metric": "systemic_loss_index",
+      "n_min": 417,
+      "null": "N7_configuration_model",
+      "power_at_n_min": 0.8011682472771663,
+      "substrate": "cross_exposure_contagion_proxy",
+      "window": "CW1_GFC_2007_2009"
+    },
+    {
+      "assumed_effect": 0.3,
+      "mde": 0.6120261610357957,
+      "metric": "cascade_impaired_fraction",
+      "n_min": 417,
+      "null": "N7_configuration_model",
+      "power_at_n_min": 0.8011682472771663,
+      "substrate": "cross_exposure_contagion_proxy",
+      "window": "CW2_EUROZONE_2011_2012"
+    },
+    {
+      "assumed_effect": 0.3,
+      "mde": 0.6120261610357957,
+      "metric": "systemic_loss_index",
+      "n_min": 417,
+      "null": "N7_configuration_model",
+      "power_at_n_min": 0.8011682472771663,
+      "substrate": "cross_exposure_contagion_proxy",
+      "window": "CW2_EUROZONE_2011_2012"
+    },
+    {
+      "assumed_effect": 0.3,
+      "mde": 0.6120261610357957,
+      "metric": "cascade_impaired_fraction",
+      "n_min": 417,
+      "null": "N7_configuration_model",
+      "power_at_n_min": 0.8011682472771663,
+      "substrate": "cross_exposure_contagion_proxy",
+      "window": "CW6_REGIONAL_BANKING_2023"
+    },
+    {
+      "assumed_effect": 0.3,
+      "mde": 0.6120261610357957,
+      "metric": "systemic_loss_index",
+      "n_min": 417,
+      "null": "N7_configuration_model",
+      "power_at_n_min": 0.8011682472771663,
+      "substrate": "cross_exposure_contagion_proxy",
+      "window": "CW6_REGIONAL_BANKING_2023"
+    },
+    {
+      "assumed_effect": 0.3,
+      "mde": 0.6120261610357957,
+      "metric": "cascade_impaired_fraction",
+      "n_min": 417,
+      "null": "N8_sparse_maximum_entropy_reconstruction",
+      "power_at_n_min": 0.8011682472771663,
+      "substrate": "cross_exposure_contagion_proxy",
+      "window": "CW1_GFC_2007_2009"
+    },
+    {
+      "assumed_effect": 0.3,
+      "mde": 0.6120261610357957,
+      "metric": "systemic_loss_index",
+      "n_min": 417,
+      "null": "N8_sparse_maximum_entropy_reconstruction",
+      "power_at_n_min": 0.8011682472771663,
+      "substrate": "cross_exposure_contagion_proxy",
+      "window": "CW1_GFC_2007_2009"
+    },
+    {
+      "assumed_effect": 0.3,
+      "mde": 0.6120261610357957,
+      "metric": "cascade_impaired_fraction",
+      "n_min": 417,
+      "null": "N8_sparse_maximum_entropy_reconstruction",
+      "power_at_n_min": 0.8011682472771663,
+      "substrate": "cross_exposure_contagion_proxy",
+      "window": "CW2_EUROZONE_2011_2012"
+    },
+    {
+      "assumed_effect": 0.3,
+      "mde": 0.6120261610357957,
+      "metric": "systemic_loss_index",
+      "n_min": 417,
+      "null": "N8_sparse_maximum_entropy_reconstruction",
+      "power_at_n_min": 0.8011682472771663,
+      "substrate": "cross_exposure_contagion_proxy",
+      "window": "CW2_EUROZONE_2011_2012"
+    },
+    {
+      "assumed_effect": 0.3,
+      "mde": 0.6120261610357957,
+      "metric": "cascade_impaired_fraction",
+      "n_min": 417,
+      "null": "N8_sparse_maximum_entropy_reconstruction",
+      "power_at_n_min": 0.8011682472771663,
+      "substrate": "cross_exposure_contagion_proxy",
+      "window": "CW6_REGIONAL_BANKING_2023"
+    },
+    {
+      "assumed_effect": 0.3,
+      "mde": 0.6120261610357957,
+      "metric": "systemic_loss_index",
+      "n_min": 417,
+      "null": "N8_sparse_maximum_entropy_reconstruction",
+      "power_at_n_min": 0.8011682472771663,
+      "substrate": "cross_exposure_contagion_proxy",
+      "window": "CW6_REGIONAL_BANKING_2023"
+    },
+    {
+      "assumed_effect": 0.3,
+      "mde": 0.6120261610357957,
+      "metric": "cascade_impaired_fraction",
+      "n_min": 417,
+      "null": "N9_shock_time_placebo",
+      "power_at_n_min": 0.8011682472771663,
+      "substrate": "cross_exposure_contagion_proxy",
+      "window": "CW1_GFC_2007_2009"
+    },
+    {
+      "assumed_effect": 0.3,
+      "mde": 0.6120261610357957,
+      "metric": "systemic_loss_index",
+      "n_min": 417,
+      "null": "N9_shock_time_placebo",
+      "power_at_n_min": 0.8011682472771663,
+      "substrate": "cross_exposure_contagion_proxy",
+      "window": "CW1_GFC_2007_2009"
+    },
+    {
+      "assumed_effect": 0.3,
+      "mde": 0.6120261610357957,
+      "metric": "cascade_impaired_fraction",
+      "n_min": 417,
+      "null": "N9_shock_time_placebo",
+      "power_at_n_min": 0.8011682472771663,
+      "substrate": "cross_exposure_contagion_proxy",
+      "window": "CW2_EUROZONE_2011_2012"
+    },
+    {
+      "assumed_effect": 0.3,
+      "mde": 0.6120261610357957,
+      "metric": "systemic_loss_index",
+      "n_min": 417,
+      "null": "N9_shock_time_placebo",
+      "power_at_n_min": 0.8011682472771663,
+      "substrate": "cross_exposure_contagion_proxy",
+      "window": "CW2_EUROZONE_2011_2012"
+    },
+    {
+      "assumed_effect": 0.3,
+      "mde": 0.6120261610357957,
+      "metric": "cascade_impaired_fraction",
+      "n_min": 417,
+      "null": "N9_shock_time_placebo",
+      "power_at_n_min": 0.8011682472771663,
+      "substrate": "cross_exposure_contagion_proxy",
+      "window": "CW6_REGIONAL_BANKING_2023"
+    },
+    {
+      "assumed_effect": 0.3,
+      "mde": 0.6120261610357957,
+      "metric": "systemic_loss_index",
+      "n_min": 417,
+      "null": "N9_shock_time_placebo",
+      "power_at_n_min": 0.8011682472771663,
+      "substrate": "cross_exposure_contagion_proxy",
+      "window": "CW6_REGIONAL_BANKING_2023"
+    },
+    {
+      "assumed_effect": 0.4,
+      "mde": 0.6120261610357957,
+      "metric": "realised_volatility",
+      "n_min": 235,
+      "null": "N10_vintage_leakage_trap_null",
+      "power_at_n_min": 0.8022928161268983,
+      "substrate": "volatility_credit_spread_regime",
+      "window": "CW1_GFC_2007_2009"
+    },
+    {
+      "assumed_effect": 0.4,
+      "mde": 0.6120261610357957,
+      "metric": "credit_spread_level",
+      "n_min": 235,
+      "null": "N10_vintage_leakage_trap_null",
+      "power_at_n_min": 0.8022928161268983,
+      "substrate": "volatility_credit_spread_regime",
+      "window": "CW1_GFC_2007_2009"
+    },
+    {
+      "assumed_effect": 0.4,
+      "mde": 0.6120261610357957,
+      "metric": "realised_volatility",
+      "n_min": 235,
+      "null": "N10_vintage_leakage_trap_null",
+      "power_at_n_min": 0.8022928161268983,
+      "substrate": "volatility_credit_spread_regime",
+      "window": "CW4_COVID_DASH_FOR_CASH_2020"
+    },
+    {
+      "assumed_effect": 0.4,
+      "mde": 0.6120261610357957,
+      "metric": "credit_spread_level",
+      "n_min": 235,
+      "null": "N10_vintage_leakage_trap_null",
+      "power_at_n_min": 0.8022928161268983,
+      "substrate": "volatility_credit_spread_regime",
+      "window": "CW4_COVID_DASH_FOR_CASH_2020"
+    },
+    {
+      "assumed_effect": 0.4,
+      "mde": 0.6120261610357957,
+      "metric": "realised_volatility",
+      "n_min": 235,
+      "null": "N1_label_permutation",
+      "power_at_n_min": 0.8022928161268983,
+      "substrate": "volatility_credit_spread_regime",
+      "window": "CW1_GFC_2007_2009"
+    },
+    {
+      "assumed_effect": 0.4,
+      "mde": 0.6120261610357957,
+      "metric": "credit_spread_level",
+      "n_min": 235,
+      "null": "N1_label_permutation",
+      "power_at_n_min": 0.8022928161268983,
+      "substrate": "volatility_credit_spread_regime",
+      "window": "CW1_GFC_2007_2009"
+    },
+    {
+      "assumed_effect": 0.4,
+      "mde": 0.6120261610357957,
+      "metric": "realised_volatility",
+      "n_min": 235,
+      "null": "N1_label_permutation",
+      "power_at_n_min": 0.8022928161268983,
+      "substrate": "volatility_credit_spread_regime",
+      "window": "CW4_COVID_DASH_FOR_CASH_2020"
+    },
+    {
+      "assumed_effect": 0.4,
+      "mde": 0.6120261610357957,
+      "metric": "credit_spread_level",
+      "n_min": 235,
+      "null": "N1_label_permutation",
+      "power_at_n_min": 0.8022928161268983,
+      "substrate": "volatility_credit_spread_regime",
+      "window": "CW4_COVID_DASH_FOR_CASH_2020"
+    },
+    {
+      "assumed_effect": 0.4,
+      "mde": 0.6120261610357957,
+      "metric": "realised_volatility",
+      "n_min": 235,
+      "null": "N2_time_window_shift_placebo",
+      "power_at_n_min": 0.8022928161268983,
+      "substrate": "volatility_credit_spread_regime",
+      "window": "CW1_GFC_2007_2009"
+    },
+    {
+      "assumed_effect": 0.4,
+      "mde": 0.6120261610357957,
+      "metric": "credit_spread_level",
+      "n_min": 235,
+      "null": "N2_time_window_shift_placebo",
+      "power_at_n_min": 0.8022928161268983,
+      "substrate": "volatility_credit_spread_regime",
+      "window": "CW1_GFC_2007_2009"
+    },
+    {
+      "assumed_effect": 0.4,
+      "mde": 0.6120261610357957,
+      "metric": "realised_volatility",
+      "n_min": 235,
+      "null": "N2_time_window_shift_placebo",
+      "power_at_n_min": 0.8022928161268983,
+      "substrate": "volatility_credit_spread_regime",
+      "window": "CW4_COVID_DASH_FOR_CASH_2020"
+    },
+    {
+      "assumed_effect": 0.4,
+      "mde": 0.6120261610357957,
+      "metric": "credit_spread_level",
+      "n_min": 235,
+      "null": "N2_time_window_shift_placebo",
+      "power_at_n_min": 0.8022928161268983,
+      "substrate": "volatility_credit_spread_regime",
+      "window": "CW4_COVID_DASH_FOR_CASH_2020"
+    },
+    {
+      "assumed_effect": 0.4,
+      "mde": 0.6120261610357957,
+      "metric": "realised_volatility",
+      "n_min": 235,
+      "null": "N3_temporal_block_bootstrap",
+      "power_at_n_min": 0.8022928161268983,
+      "substrate": "volatility_credit_spread_regime",
+      "window": "CW1_GFC_2007_2009"
+    },
+    {
+      "assumed_effect": 0.4,
+      "mde": 0.6120261610357957,
+      "metric": "credit_spread_level",
+      "n_min": 235,
+      "null": "N3_temporal_block_bootstrap",
+      "power_at_n_min": 0.8022928161268983,
+      "substrate": "volatility_credit_spread_regime",
+      "window": "CW1_GFC_2007_2009"
+    },
+    {
+      "assumed_effect": 0.4,
+      "mde": 0.6120261610357957,
+      "metric": "realised_volatility",
+      "n_min": 235,
+      "null": "N3_temporal_block_bootstrap",
+      "power_at_n_min": 0.8022928161268983,
+      "substrate": "volatility_credit_spread_regime",
+      "window": "CW4_COVID_DASH_FOR_CASH_2020"
+    },
+    {
+      "assumed_effect": 0.4,
+      "mde": 0.6120261610357957,
+      "metric": "credit_spread_level",
+      "n_min": 235,
+      "null": "N3_temporal_block_bootstrap",
+      "power_at_n_min": 0.8022928161268983,
+      "substrate": "volatility_credit_spread_regime",
+      "window": "CW4_COVID_DASH_FOR_CASH_2020"
+    },
+    {
+      "assumed_effect": 0.4,
+      "mde": 0.6120261610357957,
+      "metric": "realised_volatility",
+      "n_min": 235,
+      "null": "N4_iaaft_surrogate",
+      "power_at_n_min": 0.8022928161268983,
+      "substrate": "volatility_credit_spread_regime",
+      "window": "CW1_GFC_2007_2009"
+    },
+    {
+      "assumed_effect": 0.4,
+      "mde": 0.6120261610357957,
+      "metric": "credit_spread_level",
+      "n_min": 235,
+      "null": "N4_iaaft_surrogate",
+      "power_at_n_min": 0.8022928161268983,
+      "substrate": "volatility_credit_spread_regime",
+      "window": "CW1_GFC_2007_2009"
+    },
+    {
+      "assumed_effect": 0.4,
+      "mde": 0.6120261610357957,
+      "metric": "realised_volatility",
+      "n_min": 235,
+      "null": "N4_iaaft_surrogate",
+      "power_at_n_min": 0.8022928161268983,
+      "substrate": "volatility_credit_spread_regime",
+      "window": "CW4_COVID_DASH_FOR_CASH_2020"
+    },
+    {
+      "assumed_effect": 0.4,
+      "mde": 0.6120261610357957,
+      "metric": "credit_spread_level",
+      "n_min": 235,
+      "null": "N4_iaaft_surrogate",
+      "power_at_n_min": 0.8022928161268983,
+      "substrate": "volatility_credit_spread_regime",
+      "window": "CW4_COVID_DASH_FOR_CASH_2020"
+    },
+    {
+      "assumed_effect": 0.4,
+      "mde": 0.6120261610357957,
+      "metric": "realised_volatility",
+      "n_min": 235,
+      "null": "N9_shock_time_placebo",
+      "power_at_n_min": 0.8022928161268983,
+      "substrate": "volatility_credit_spread_regime",
+      "window": "CW1_GFC_2007_2009"
+    },
+    {
+      "assumed_effect": 0.4,
+      "mde": 0.6120261610357957,
+      "metric": "credit_spread_level",
+      "n_min": 235,
+      "null": "N9_shock_time_placebo",
+      "power_at_n_min": 0.8022928161268983,
+      "substrate": "volatility_credit_spread_regime",
+      "window": "CW1_GFC_2007_2009"
+    },
+    {
+      "assumed_effect": 0.4,
+      "mde": 0.6120261610357957,
+      "metric": "realised_volatility",
+      "n_min": 235,
+      "null": "N9_shock_time_placebo",
+      "power_at_n_min": 0.8022928161268983,
+      "substrate": "volatility_credit_spread_regime",
+      "window": "CW4_COVID_DASH_FOR_CASH_2020"
+    },
+    {
+      "assumed_effect": 0.4,
+      "mde": 0.6120261610357957,
+      "metric": "credit_spread_level",
+      "n_min": 235,
+      "null": "N9_shock_time_placebo",
+      "power_at_n_min": 0.8022928161268983,
+      "substrate": "volatility_credit_spread_regime",
+      "window": "CW4_COVID_DASH_FOR_CASH_2020"
+    }
+  ],
+  "phase": "P7",
+  "power_target": 0.8,
+  "refusal_reason": "102/102 canonical benchmark cells have n_min > feasible_cap_n_seeds=100 at the Bonferroni alpha; the realistic budget cannot reach power>=0.8 for the P4-sourced effect priors. This is the SAME failure mode D-002I diagnosed for D-002H (n_seeds=20 vs median n_min~=93). Loosening alpha, inflating the effect prior, or shrinking the grid to force a PASS is forbidden. Lineage halts at P7; next legal node is a fresh D-002K pre-registration designed against this axis.",
+  "refusal_rule": "POWER-FIRST FAIL-CLOSED RULE: canonical_run_authorized is True IFF, for EVERY designated canonical benchmark cell, n_min(effect_prior, alpha_bonferroni, power=0.8) <= feasible_cap_n_seeds AND the total runtime budget at feasible_cap_n_seeds is finite. The effect-size prior comes ONLY from P4 positive-control ground-truth magnitudes under a documented shrink-only attenuation; alpha is the Bonferroni split over the explicit canonical-cell count; the cell grid is the full P5xP6xP2xmetric product. If any benchmark cell has n_min > feasible_cap_n_seeds the gate emits POWER_GATE_REFUSED_UNDERPOWERED, status TERMINAL_REFUSED, canonical_run_authorized False, halts the lineage at P7 (next legal = a fresh D-002K pre-registration), and retains this report as a truthful negative artifact. The gate NEVER loosens alpha, inflates the effect prior, or shrinks the grid to manufacture a PASS -- that is the exact self-deception D-002I diagnosed as the D-002H root cause.",
+  "refused_axis": "effect_too_small",
+  "runtime_budget": {
+    "cloud_assumption": "GCP c3-highcpu 88-core CPU-bound (NOT GPU) @ 85% efficiency; $300 GCP credit context",
+    "local_assumption": "16-core box @ 70% parallel efficiency",
+    "per_sim_seconds_measured": 4.31290827691555e-05,
+    "projected_cloud_c3_hours": 0.0082,
+    "projected_local_hours": 0.0546,
+    "sims_per_cell": 500100,
+    "total_cells": 102,
+    "total_sims": 51010200
+  },
+  "schema_version": "D002J-POWER-REPORT-v1",
+  "study_id": "D-002J-P7",
+  "substrate_manifest_sha256": "dcda5f5008f7f8977058e1afd699d934c0d4ee5ffbbe43fb5d2ff0d988d60db1",
+  "underpowered_cells": [
+    {
+      "feasible_cap_n_seeds": 100,
+      "metric": "funding_stress_index",
+      "n_min": 150,
+      "null": "N10_vintage_leakage_trap_null",
+      "substrate": "funding_liquidity_rollover",
+      "window": "CW3_US_REPO_SPIKE_2019"
+    },
+    {
+      "feasible_cap_n_seeds": 100,
+      "metric": "rollover_failure_count",
+      "n_min": 150,
+      "null": "N10_vintage_leakage_trap_null",
+      "substrate": "funding_liquidity_rollover",
+      "window": "CW3_US_REPO_SPIKE_2019"
+    },
+    {
+      "feasible_cap_n_seeds": 100,
+      "metric": "funding_stress_index",
+      "n_min": 150,
+      "null": "N10_vintage_leakage_trap_null",
+      "substrate": "funding_liquidity_rollover",
+      "window": "CW4_COVID_DASH_FOR_CASH_2020"
+    },
+    {
+      "feasible_cap_n_seeds": 100,
+      "metric": "rollover_failure_count",
+      "n_min": 150,
+      "null": "N10_vintage_leakage_trap_null",
+      "substrate": "funding_liquidity_rollover",
+      "window": "CW4_COVID_DASH_FOR_CASH_2020"
+    },
+    {
+      "feasible_cap_n_seeds": 100,
+      "metric": "funding_stress_index",
+      "n_min": 150,
+      "null": "N10_vintage_leakage_trap_null",
+      "substrate": "funding_liquidity_rollover",
+      "window": "CW5_UK_GILT_LDI_2022"
+    },
+    {
+      "feasible_cap_n_seeds": 100,
+      "metric": "rollover_failure_count",
+      "n_min": 150,
+      "null": "N10_vintage_leakage_trap_null",
+      "substrate": "funding_liquidity_rollover",
+      "window": "CW5_UK_GILT_LDI_2022"
+    },
+    {
+      "feasible_cap_n_seeds": 100,
+      "metric": "funding_stress_index",
+      "n_min": 150,
+      "null": "N1_label_permutation",
+      "substrate": "funding_liquidity_rollover",
+      "window": "CW3_US_REPO_SPIKE_2019"
+    },
+    {
+      "feasible_cap_n_seeds": 100,
+      "metric": "rollover_failure_count",
+      "n_min": 150,
+      "null": "N1_label_permutation",
+      "substrate": "funding_liquidity_rollover",
+      "window": "CW3_US_REPO_SPIKE_2019"
+    },
+    {
+      "feasible_cap_n_seeds": 100,
+      "metric": "funding_stress_index",
+      "n_min": 150,
+      "null": "N1_label_permutation",
+      "substrate": "funding_liquidity_rollover",
+      "window": "CW4_COVID_DASH_FOR_CASH_2020"
+    },
+    {
+      "feasible_cap_n_seeds": 100,
+      "metric": "rollover_failure_count",
+      "n_min": 150,
+      "null": "N1_label_permutation",
+      "substrate": "funding_liquidity_rollover",
+      "window": "CW4_COVID_DASH_FOR_CASH_2020"
+    },
+    {
+      "feasible_cap_n_seeds": 100,
+      "metric": "funding_stress_index",
+      "n_min": 150,
+      "null": "N1_label_permutation",
+      "substrate": "funding_liquidity_rollover",
+      "window": "CW5_UK_GILT_LDI_2022"
+    },
+    {
+      "feasible_cap_n_seeds": 100,
+      "metric": "rollover_failure_count",
+      "n_min": 150,
+      "null": "N1_label_permutation",
+      "substrate": "funding_liquidity_rollover",
+      "window": "CW5_UK_GILT_LDI_2022"
+    },
+    {
+      "feasible_cap_n_seeds": 100,
+      "metric": "funding_stress_index",
+      "n_min": 150,
+      "null": "N2_time_window_shift_placebo",
+      "substrate": "funding_liquidity_rollover",
+      "window": "CW3_US_REPO_SPIKE_2019"
+    },
+    {
+      "feasible_cap_n_seeds": 100,
+      "metric": "rollover_failure_count",
+      "n_min": 150,
+      "null": "N2_time_window_shift_placebo",
+      "substrate": "funding_liquidity_rollover",
+      "window": "CW3_US_REPO_SPIKE_2019"
+    },
+    {
+      "feasible_cap_n_seeds": 100,
+      "metric": "funding_stress_index",
+      "n_min": 150,
+      "null": "N2_time_window_shift_placebo",
+      "substrate": "funding_liquidity_rollover",
+      "window": "CW4_COVID_DASH_FOR_CASH_2020"
+    },
+    {
+      "feasible_cap_n_seeds": 100,
+      "metric": "rollover_failure_count",
+      "n_min": 150,
+      "null": "N2_time_window_shift_placebo",
+      "substrate": "funding_liquidity_rollover",
+      "window": "CW4_COVID_DASH_FOR_CASH_2020"
+    },
+    {
+      "feasible_cap_n_seeds": 100,
+      "metric": "funding_stress_index",
+      "n_min": 150,
+      "null": "N2_time_window_shift_placebo",
+      "substrate": "funding_liquidity_rollover",
+      "window": "CW5_UK_GILT_LDI_2022"
+    },
+    {
+      "feasible_cap_n_seeds": 100,
+      "metric": "rollover_failure_count",
+      "n_min": 150,
+      "null": "N2_time_window_shift_placebo",
+      "substrate": "funding_liquidity_rollover",
+      "window": "CW5_UK_GILT_LDI_2022"
+    },
+    {
+      "feasible_cap_n_seeds": 100,
+      "metric": "funding_stress_index",
+      "n_min": 150,
+      "null": "N3_temporal_block_bootstrap",
+      "substrate": "funding_liquidity_rollover",
+      "window": "CW3_US_REPO_SPIKE_2019"
+    },
+    {
+      "feasible_cap_n_seeds": 100,
+      "metric": "rollover_failure_count",
+      "n_min": 150,
+      "null": "N3_temporal_block_bootstrap",
+      "substrate": "funding_liquidity_rollover",
+      "window": "CW3_US_REPO_SPIKE_2019"
+    },
+    {
+      "feasible_cap_n_seeds": 100,
+      "metric": "funding_stress_index",
+      "n_min": 150,
+      "null": "N3_temporal_block_bootstrap",
+      "substrate": "funding_liquidity_rollover",
+      "window": "CW4_COVID_DASH_FOR_CASH_2020"
+    },
+    {
+      "feasible_cap_n_seeds": 100,
+      "metric": "rollover_failure_count",
+      "n_min": 150,
+      "null": "N3_temporal_block_bootstrap",
+      "substrate": "funding_liquidity_rollover",
+      "window": "CW4_COVID_DASH_FOR_CASH_2020"
+    },
+    {
+      "feasible_cap_n_seeds": 100,
+      "metric": "funding_stress_index",
+      "n_min": 150,
+      "null": "N3_temporal_block_bootstrap",
+      "substrate": "funding_liquidity_rollover",
+      "window": "CW5_UK_GILT_LDI_2022"
+    },
+    {
+      "feasible_cap_n_seeds": 100,
+      "metric": "rollover_failure_count",
+      "n_min": 150,
+      "null": "N3_temporal_block_bootstrap",
+      "substrate": "funding_liquidity_rollover",
+      "window": "CW5_UK_GILT_LDI_2022"
+    },
+    {
+      "feasible_cap_n_seeds": 100,
+      "metric": "funding_stress_index",
+      "n_min": 150,
+      "null": "N4_iaaft_surrogate",
+      "substrate": "funding_liquidity_rollover",
+      "window": "CW3_US_REPO_SPIKE_2019"
+    },
+    {
+      "feasible_cap_n_seeds": 100,
+      "metric": "rollover_failure_count",
+      "n_min": 150,
+      "null": "N4_iaaft_surrogate",
+      "substrate": "funding_liquidity_rollover",
+      "window": "CW3_US_REPO_SPIKE_2019"
+    },
+    {
+      "feasible_cap_n_seeds": 100,
+      "metric": "funding_stress_index",
+      "n_min": 150,
+      "null": "N4_iaaft_surrogate",
+      "substrate": "funding_liquidity_rollover",
+      "window": "CW4_COVID_DASH_FOR_CASH_2020"
+    },
+    {
+      "feasible_cap_n_seeds": 100,
+      "metric": "rollover_failure_count",
+      "n_min": 150,
+      "null": "N4_iaaft_surrogate",
+      "substrate": "funding_liquidity_rollover",
+      "window": "CW4_COVID_DASH_FOR_CASH_2020"
+    },
+    {
+      "feasible_cap_n_seeds": 100,
+      "metric": "funding_stress_index",
+      "n_min": 150,
+      "null": "N4_iaaft_surrogate",
+      "substrate": "funding_liquidity_rollover",
+      "window": "CW5_UK_GILT_LDI_2022"
+    },
+    {
+      "feasible_cap_n_seeds": 100,
+      "metric": "rollover_failure_count",
+      "n_min": 150,
+      "null": "N4_iaaft_surrogate",
+      "substrate": "funding_liquidity_rollover",
+      "window": "CW5_UK_GILT_LDI_2022"
+    },
+    {
+      "feasible_cap_n_seeds": 100,
+      "metric": "funding_stress_index",
+      "n_min": 150,
+      "null": "N9_shock_time_placebo",
+      "substrate": "funding_liquidity_rollover",
+      "window": "CW3_US_REPO_SPIKE_2019"
+    },
+    {
+      "feasible_cap_n_seeds": 100,
+      "metric": "rollover_failure_count",
+      "n_min": 150,
+      "null": "N9_shock_time_placebo",
+      "substrate": "funding_liquidity_rollover",
+      "window": "CW3_US_REPO_SPIKE_2019"
+    },
+    {
+      "feasible_cap_n_seeds": 100,
+      "metric": "funding_stress_index",
+      "n_min": 150,
+      "null": "N9_shock_time_placebo",
+      "substrate": "funding_liquidity_rollover",
+      "window": "CW4_COVID_DASH_FOR_CASH_2020"
+    },
+    {
+      "feasible_cap_n_seeds": 100,
+      "metric": "rollover_failure_count",
+      "n_min": 150,
+      "null": "N9_shock_time_placebo",
+      "substrate": "funding_liquidity_rollover",
+      "window": "CW4_COVID_DASH_FOR_CASH_2020"
+    },
+    {
+      "feasible_cap_n_seeds": 100,
+      "metric": "funding_stress_index",
+      "n_min": 150,
+      "null": "N9_shock_time_placebo",
+      "substrate": "funding_liquidity_rollover",
+      "window": "CW5_UK_GILT_LDI_2022"
+    },
+    {
+      "feasible_cap_n_seeds": 100,
+      "metric": "rollover_failure_count",
+      "n_min": 150,
+      "null": "N9_shock_time_placebo",
+      "substrate": "funding_liquidity_rollover",
+      "window": "CW5_UK_GILT_LDI_2022"
+    },
+    {
+      "feasible_cap_n_seeds": 100,
+      "metric": "cascade_impaired_fraction",
+      "n_min": 417,
+      "null": "N10_vintage_leakage_trap_null",
+      "substrate": "cross_exposure_contagion_proxy",
+      "window": "CW1_GFC_2007_2009"
+    },
+    {
+      "feasible_cap_n_seeds": 100,
+      "metric": "systemic_loss_index",
+      "n_min": 417,
+      "null": "N10_vintage_leakage_trap_null",
+      "substrate": "cross_exposure_contagion_proxy",
+      "window": "CW1_GFC_2007_2009"
+    },
+    {
+      "feasible_cap_n_seeds": 100,
+      "metric": "cascade_impaired_fraction",
+      "n_min": 417,
+      "null": "N10_vintage_leakage_trap_null",
+      "substrate": "cross_exposure_contagion_proxy",
+      "window": "CW2_EUROZONE_2011_2012"
+    },
+    {
+      "feasible_cap_n_seeds": 100,
+      "metric": "systemic_loss_index",
+      "n_min": 417,
+      "null": "N10_vintage_leakage_trap_null",
+      "substrate": "cross_exposure_contagion_proxy",
+      "window": "CW2_EUROZONE_2011_2012"
+    },
+    {
+      "feasible_cap_n_seeds": 100,
+      "metric": "cascade_impaired_fraction",
+      "n_min": 417,
+      "null": "N10_vintage_leakage_trap_null",
+      "substrate": "cross_exposure_contagion_proxy",
+      "window": "CW6_REGIONAL_BANKING_2023"
+    },
+    {
+      "feasible_cap_n_seeds": 100,
+      "metric": "systemic_loss_index",
+      "n_min": 417,
+      "null": "N10_vintage_leakage_trap_null",
+      "substrate": "cross_exposure_contagion_proxy",
+      "window": "CW6_REGIONAL_BANKING_2023"
+    },
+    {
+      "feasible_cap_n_seeds": 100,
+      "metric": "cascade_impaired_fraction",
+      "n_min": 417,
+      "null": "N1_label_permutation",
+      "substrate": "cross_exposure_contagion_proxy",
+      "window": "CW1_GFC_2007_2009"
+    },
+    {
+      "feasible_cap_n_seeds": 100,
+      "metric": "systemic_loss_index",
+      "n_min": 417,
+      "null": "N1_label_permutation",
+      "substrate": "cross_exposure_contagion_proxy",
+      "window": "CW1_GFC_2007_2009"
+    },
+    {
+      "feasible_cap_n_seeds": 100,
+      "metric": "cascade_impaired_fraction",
+      "n_min": 417,
+      "null": "N1_label_permutation",
+      "substrate": "cross_exposure_contagion_proxy",
+      "window": "CW2_EUROZONE_2011_2012"
+    },
+    {
+      "feasible_cap_n_seeds": 100,
+      "metric": "systemic_loss_index",
+      "n_min": 417,
+      "null": "N1_label_permutation",
+      "substrate": "cross_exposure_contagion_proxy",
+      "window": "CW2_EUROZONE_2011_2012"
+    },
+    {
+      "feasible_cap_n_seeds": 100,
+      "metric": "cascade_impaired_fraction",
+      "n_min": 417,
+      "null": "N1_label_permutation",
+      "substrate": "cross_exposure_contagion_proxy",
+      "window": "CW6_REGIONAL_BANKING_2023"
+    },
+    {
+      "feasible_cap_n_seeds": 100,
+      "metric": "systemic_loss_index",
+      "n_min": 417,
+      "null": "N1_label_permutation",
+      "substrate": "cross_exposure_contagion_proxy",
+      "window": "CW6_REGIONAL_BANKING_2023"
+    },
+    {
+      "feasible_cap_n_seeds": 100,
+      "metric": "cascade_impaired_fraction",
+      "n_min": 417,
+      "null": "N5_degree_preserving_graph_null",
+      "substrate": "cross_exposure_contagion_proxy",
+      "window": "CW1_GFC_2007_2009"
+    },
+    {
+      "feasible_cap_n_seeds": 100,
+      "metric": "systemic_loss_index",
+      "n_min": 417,
+      "null": "N5_degree_preserving_graph_null",
+      "substrate": "cross_exposure_contagion_proxy",
+      "window": "CW1_GFC_2007_2009"
+    },
+    {
+      "feasible_cap_n_seeds": 100,
+      "metric": "cascade_impaired_fraction",
+      "n_min": 417,
+      "null": "N5_degree_preserving_graph_null",
+      "substrate": "cross_exposure_contagion_proxy",
+      "window": "CW2_EUROZONE_2011_2012"
+    },
+    {
+      "feasible_cap_n_seeds": 100,
+      "metric": "systemic_loss_index",
+      "n_min": 417,
+      "null": "N5_degree_preserving_graph_null",
+      "substrate": "cross_exposure_contagion_proxy",
+      "window": "CW2_EUROZONE_2011_2012"
+    },
+    {
+      "feasible_cap_n_seeds": 100,
+      "metric": "cascade_impaired_fraction",
+      "n_min": 417,
+      "null": "N5_degree_preserving_graph_null",
+      "substrate": "cross_exposure_contagion_proxy",
+      "window": "CW6_REGIONAL_BANKING_2023"
+    },
+    {
+      "feasible_cap_n_seeds": 100,
+      "metric": "systemic_loss_index",
+      "n_min": 417,
+      "null": "N5_degree_preserving_graph_null",
+      "substrate": "cross_exposure_contagion_proxy",
+      "window": "CW6_REGIONAL_BANKING_2023"
+    },
+    {
+      "feasible_cap_n_seeds": 100,
+      "metric": "cascade_impaired_fraction",
+      "n_min": 417,
+      "null": "N6_weight_preserving_shuffle",
+      "substrate": "cross_exposure_contagion_proxy",
+      "window": "CW1_GFC_2007_2009"
+    },
+    {
+      "feasible_cap_n_seeds": 100,
+      "metric": "systemic_loss_index",
+      "n_min": 417,
+      "null": "N6_weight_preserving_shuffle",
+      "substrate": "cross_exposure_contagion_proxy",
+      "window": "CW1_GFC_2007_2009"
+    },
+    {
+      "feasible_cap_n_seeds": 100,
+      "metric": "cascade_impaired_fraction",
+      "n_min": 417,
+      "null": "N6_weight_preserving_shuffle",
+      "substrate": "cross_exposure_contagion_proxy",
+      "window": "CW2_EUROZONE_2011_2012"
+    },
+    {
+      "feasible_cap_n_seeds": 100,
+      "metric": "systemic_loss_index",
+      "n_min": 417,
+      "null": "N6_weight_preserving_shuffle",
+      "substrate": "cross_exposure_contagion_proxy",
+      "window": "CW2_EUROZONE_2011_2012"
+    },
+    {
+      "feasible_cap_n_seeds": 100,
+      "metric": "cascade_impaired_fraction",
+      "n_min": 417,
+      "null": "N6_weight_preserving_shuffle",
+      "substrate": "cross_exposure_contagion_proxy",
+      "window": "CW6_REGIONAL_BANKING_2023"
+    },
+    {
+      "feasible_cap_n_seeds": 100,
+      "metric": "systemic_loss_index",
+      "n_min": 417,
+      "null": "N6_weight_preserving_shuffle",
+      "substrate": "cross_exposure_contagion_proxy",
+      "window": "CW6_REGIONAL_BANKING_2023"
+    },
+    {
+      "feasible_cap_n_seeds": 100,
+      "metric": "cascade_impaired_fraction",
+      "n_min": 417,
+      "null": "N7_configuration_model",
+      "substrate": "cross_exposure_contagion_proxy",
+      "window": "CW1_GFC_2007_2009"
+    },
+    {
+      "feasible_cap_n_seeds": 100,
+      "metric": "systemic_loss_index",
+      "n_min": 417,
+      "null": "N7_configuration_model",
+      "substrate": "cross_exposure_contagion_proxy",
+      "window": "CW1_GFC_2007_2009"
+    },
+    {
+      "feasible_cap_n_seeds": 100,
+      "metric": "cascade_impaired_fraction",
+      "n_min": 417,
+      "null": "N7_configuration_model",
+      "substrate": "cross_exposure_contagion_proxy",
+      "window": "CW2_EUROZONE_2011_2012"
+    },
+    {
+      "feasible_cap_n_seeds": 100,
+      "metric": "systemic_loss_index",
+      "n_min": 417,
+      "null": "N7_configuration_model",
+      "substrate": "cross_exposure_contagion_proxy",
+      "window": "CW2_EUROZONE_2011_2012"
+    },
+    {
+      "feasible_cap_n_seeds": 100,
+      "metric": "cascade_impaired_fraction",
+      "n_min": 417,
+      "null": "N7_configuration_model",
+      "substrate": "cross_exposure_contagion_proxy",
+      "window": "CW6_REGIONAL_BANKING_2023"
+    },
+    {
+      "feasible_cap_n_seeds": 100,
+      "metric": "systemic_loss_index",
+      "n_min": 417,
+      "null": "N7_configuration_model",
+      "substrate": "cross_exposure_contagion_proxy",
+      "window": "CW6_REGIONAL_BANKING_2023"
+    },
+    {
+      "feasible_cap_n_seeds": 100,
+      "metric": "cascade_impaired_fraction",
+      "n_min": 417,
+      "null": "N8_sparse_maximum_entropy_reconstruction",
+      "substrate": "cross_exposure_contagion_proxy",
+      "window": "CW1_GFC_2007_2009"
+    },
+    {
+      "feasible_cap_n_seeds": 100,
+      "metric": "systemic_loss_index",
+      "n_min": 417,
+      "null": "N8_sparse_maximum_entropy_reconstruction",
+      "substrate": "cross_exposure_contagion_proxy",
+      "window": "CW1_GFC_2007_2009"
+    },
+    {
+      "feasible_cap_n_seeds": 100,
+      "metric": "cascade_impaired_fraction",
+      "n_min": 417,
+      "null": "N8_sparse_maximum_entropy_reconstruction",
+      "substrate": "cross_exposure_contagion_proxy",
+      "window": "CW2_EUROZONE_2011_2012"
+    },
+    {
+      "feasible_cap_n_seeds": 100,
+      "metric": "systemic_loss_index",
+      "n_min": 417,
+      "null": "N8_sparse_maximum_entropy_reconstruction",
+      "substrate": "cross_exposure_contagion_proxy",
+      "window": "CW2_EUROZONE_2011_2012"
+    },
+    {
+      "feasible_cap_n_seeds": 100,
+      "metric": "cascade_impaired_fraction",
+      "n_min": 417,
+      "null": "N8_sparse_maximum_entropy_reconstruction",
+      "substrate": "cross_exposure_contagion_proxy",
+      "window": "CW6_REGIONAL_BANKING_2023"
+    },
+    {
+      "feasible_cap_n_seeds": 100,
+      "metric": "systemic_loss_index",
+      "n_min": 417,
+      "null": "N8_sparse_maximum_entropy_reconstruction",
+      "substrate": "cross_exposure_contagion_proxy",
+      "window": "CW6_REGIONAL_BANKING_2023"
+    },
+    {
+      "feasible_cap_n_seeds": 100,
+      "metric": "cascade_impaired_fraction",
+      "n_min": 417,
+      "null": "N9_shock_time_placebo",
+      "substrate": "cross_exposure_contagion_proxy",
+      "window": "CW1_GFC_2007_2009"
+    },
+    {
+      "feasible_cap_n_seeds": 100,
+      "metric": "systemic_loss_index",
+      "n_min": 417,
+      "null": "N9_shock_time_placebo",
+      "substrate": "cross_exposure_contagion_proxy",
+      "window": "CW1_GFC_2007_2009"
+    },
+    {
+      "feasible_cap_n_seeds": 100,
+      "metric": "cascade_impaired_fraction",
+      "n_min": 417,
+      "null": "N9_shock_time_placebo",
+      "substrate": "cross_exposure_contagion_proxy",
+      "window": "CW2_EUROZONE_2011_2012"
+    },
+    {
+      "feasible_cap_n_seeds": 100,
+      "metric": "systemic_loss_index",
+      "n_min": 417,
+      "null": "N9_shock_time_placebo",
+      "substrate": "cross_exposure_contagion_proxy",
+      "window": "CW2_EUROZONE_2011_2012"
+    },
+    {
+      "feasible_cap_n_seeds": 100,
+      "metric": "cascade_impaired_fraction",
+      "n_min": 417,
+      "null": "N9_shock_time_placebo",
+      "substrate": "cross_exposure_contagion_proxy",
+      "window": "CW6_REGIONAL_BANKING_2023"
+    },
+    {
+      "feasible_cap_n_seeds": 100,
+      "metric": "systemic_loss_index",
+      "n_min": 417,
+      "null": "N9_shock_time_placebo",
+      "substrate": "cross_exposure_contagion_proxy",
+      "window": "CW6_REGIONAL_BANKING_2023"
+    },
+    {
+      "feasible_cap_n_seeds": 100,
+      "metric": "realised_volatility",
+      "n_min": 235,
+      "null": "N10_vintage_leakage_trap_null",
+      "substrate": "volatility_credit_spread_regime",
+      "window": "CW1_GFC_2007_2009"
+    },
+    {
+      "feasible_cap_n_seeds": 100,
+      "metric": "credit_spread_level",
+      "n_min": 235,
+      "null": "N10_vintage_leakage_trap_null",
+      "substrate": "volatility_credit_spread_regime",
+      "window": "CW1_GFC_2007_2009"
+    },
+    {
+      "feasible_cap_n_seeds": 100,
+      "metric": "realised_volatility",
+      "n_min": 235,
+      "null": "N10_vintage_leakage_trap_null",
+      "substrate": "volatility_credit_spread_regime",
+      "window": "CW4_COVID_DASH_FOR_CASH_2020"
+    },
+    {
+      "feasible_cap_n_seeds": 100,
+      "metric": "credit_spread_level",
+      "n_min": 235,
+      "null": "N10_vintage_leakage_trap_null",
+      "substrate": "volatility_credit_spread_regime",
+      "window": "CW4_COVID_DASH_FOR_CASH_2020"
+    },
+    {
+      "feasible_cap_n_seeds": 100,
+      "metric": "realised_volatility",
+      "n_min": 235,
+      "null": "N1_label_permutation",
+      "substrate": "volatility_credit_spread_regime",
+      "window": "CW1_GFC_2007_2009"
+    },
+    {
+      "feasible_cap_n_seeds": 100,
+      "metric": "credit_spread_level",
+      "n_min": 235,
+      "null": "N1_label_permutation",
+      "substrate": "volatility_credit_spread_regime",
+      "window": "CW1_GFC_2007_2009"
+    },
+    {
+      "feasible_cap_n_seeds": 100,
+      "metric": "realised_volatility",
+      "n_min": 235,
+      "null": "N1_label_permutation",
+      "substrate": "volatility_credit_spread_regime",
+      "window": "CW4_COVID_DASH_FOR_CASH_2020"
+    },
+    {
+      "feasible_cap_n_seeds": 100,
+      "metric": "credit_spread_level",
+      "n_min": 235,
+      "null": "N1_label_permutation",
+      "substrate": "volatility_credit_spread_regime",
+      "window": "CW4_COVID_DASH_FOR_CASH_2020"
+    },
+    {
+      "feasible_cap_n_seeds": 100,
+      "metric": "realised_volatility",
+      "n_min": 235,
+      "null": "N2_time_window_shift_placebo",
+      "substrate": "volatility_credit_spread_regime",
+      "window": "CW1_GFC_2007_2009"
+    },
+    {
+      "feasible_cap_n_seeds": 100,
+      "metric": "credit_spread_level",
+      "n_min": 235,
+      "null": "N2_time_window_shift_placebo",
+      "substrate": "volatility_credit_spread_regime",
+      "window": "CW1_GFC_2007_2009"
+    },
+    {
+      "feasible_cap_n_seeds": 100,
+      "metric": "realised_volatility",
+      "n_min": 235,
+      "null": "N2_time_window_shift_placebo",
+      "substrate": "volatility_credit_spread_regime",
+      "window": "CW4_COVID_DASH_FOR_CASH_2020"
+    },
+    {
+      "feasible_cap_n_seeds": 100,
+      "metric": "credit_spread_level",
+      "n_min": 235,
+      "null": "N2_time_window_shift_placebo",
+      "substrate": "volatility_credit_spread_regime",
+      "window": "CW4_COVID_DASH_FOR_CASH_2020"
+    },
+    {
+      "feasible_cap_n_seeds": 100,
+      "metric": "realised_volatility",
+      "n_min": 235,
+      "null": "N3_temporal_block_bootstrap",
+      "substrate": "volatility_credit_spread_regime",
+      "window": "CW1_GFC_2007_2009"
+    },
+    {
+      "feasible_cap_n_seeds": 100,
+      "metric": "credit_spread_level",
+      "n_min": 235,
+      "null": "N3_temporal_block_bootstrap",
+      "substrate": "volatility_credit_spread_regime",
+      "window": "CW1_GFC_2007_2009"
+    },
+    {
+      "feasible_cap_n_seeds": 100,
+      "metric": "realised_volatility",
+      "n_min": 235,
+      "null": "N3_temporal_block_bootstrap",
+      "substrate": "volatility_credit_spread_regime",
+      "window": "CW4_COVID_DASH_FOR_CASH_2020"
+    },
+    {
+      "feasible_cap_n_seeds": 100,
+      "metric": "credit_spread_level",
+      "n_min": 235,
+      "null": "N3_temporal_block_bootstrap",
+      "substrate": "volatility_credit_spread_regime",
+      "window": "CW4_COVID_DASH_FOR_CASH_2020"
+    },
+    {
+      "feasible_cap_n_seeds": 100,
+      "metric": "realised_volatility",
+      "n_min": 235,
+      "null": "N4_iaaft_surrogate",
+      "substrate": "volatility_credit_spread_regime",
+      "window": "CW1_GFC_2007_2009"
+    },
+    {
+      "feasible_cap_n_seeds": 100,
+      "metric": "credit_spread_level",
+      "n_min": 235,
+      "null": "N4_iaaft_surrogate",
+      "substrate": "volatility_credit_spread_regime",
+      "window": "CW1_GFC_2007_2009"
+    },
+    {
+      "feasible_cap_n_seeds": 100,
+      "metric": "realised_volatility",
+      "n_min": 235,
+      "null": "N4_iaaft_surrogate",
+      "substrate": "volatility_credit_spread_regime",
+      "window": "CW4_COVID_DASH_FOR_CASH_2020"
+    },
+    {
+      "feasible_cap_n_seeds": 100,
+      "metric": "credit_spread_level",
+      "n_min": 235,
+      "null": "N4_iaaft_surrogate",
+      "substrate": "volatility_credit_spread_regime",
+      "window": "CW4_COVID_DASH_FOR_CASH_2020"
+    },
+    {
+      "feasible_cap_n_seeds": 100,
+      "metric": "realised_volatility",
+      "n_min": 235,
+      "null": "N9_shock_time_placebo",
+      "substrate": "volatility_credit_spread_regime",
+      "window": "CW1_GFC_2007_2009"
+    },
+    {
+      "feasible_cap_n_seeds": 100,
+      "metric": "credit_spread_level",
+      "n_min": 235,
+      "null": "N9_shock_time_placebo",
+      "substrate": "volatility_credit_spread_regime",
+      "window": "CW1_GFC_2007_2009"
+    },
+    {
+      "feasible_cap_n_seeds": 100,
+      "metric": "realised_volatility",
+      "n_min": 235,
+      "null": "N9_shock_time_placebo",
+      "substrate": "volatility_credit_spread_regime",
+      "window": "CW4_COVID_DASH_FOR_CASH_2020"
+    },
+    {
+      "feasible_cap_n_seeds": 100,
+      "metric": "credit_spread_level",
+      "n_min": 235,
+      "null": "N9_shock_time_placebo",
+      "substrate": "volatility_credit_spread_regime",
+      "window": "CW4_COVID_DASH_FOR_CASH_2020"
+    }
+  ]
+}

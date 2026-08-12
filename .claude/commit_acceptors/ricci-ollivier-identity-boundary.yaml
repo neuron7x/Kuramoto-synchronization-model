@@ -1,0 +1,88 @@
+# Diff-bound commit acceptor for the Ollivier-Ricci identity + boundary witnesses.
+#
+# Adds ONE test module that goes a level deeper than a bound check: it certifies
+# the implemented edge curvature EQUALS its first-principles definition
+# kappa = 1 - W1/d (independent SciPy optimal transport + NetworkX geodesic) to
+# float precision, and characterises exactly when the [-1,1] envelope breaks
+# (W1/d > 2, driven by the positional-vs-weighted metric mismatch). Promotes no
+# claim, changes no runtime behavior, touches no schema/guard, uses no real data.
+#
+# Locally verified on origin/main base:
+#   * pytest tests/physics_contracts/test_ricci_ollivier_identity_boundary.py: 2 passed
+#   * identity error = 0.00e+00 over 1026 edges; 9 edges with W1/d>2 (kappa to -1.97)
+#   * .claude/physics/validate_tests.py <file>: 0 issues (L1..L5), EXIT 0
+#   * ruff / mypy --strict clean ; zero new `# type: ignore`
+id: ricci-ollivier-identity-boundary
+status: ACTIVE
+claim_type: governance
+promise: >-
+  After this PR lands, tests/physics_contracts/test_ricci_ollivier_identity_boundary.py
+  certifies (a) ricci_curvature_edge equals 1 - W1/d recomputed independently
+  from scipy.stats.wasserstein_distance over the positional embedding and the
+  NetworkX weighted geodesic, to within 1e-9, over a price-graph sweep
+  (INV-RC1); and (b) the lower bound kappa >= -1 is exactly the condition
+  W1/d <= 2, verified edge-by-edge, and shown non-vacuous because the
+  positional-vs-weighted metric mismatch drives W1/d above 2 on some edges
+  (INV-RC3 is conditional, not universal). No market claim; no runtime, schema,
+  or guard change.
+diff_scope:
+  changed_files:
+    - path: ".claude/commit_acceptors/ricci-ollivier-identity-boundary.yaml"
+    - path: "tests/physics_contracts/test_ricci_ollivier_identity_boundary.py"
+  forbidden_paths:
+    - "trading/"
+    - "execution/"
+    - "forecast/"
+    - "policy/"
+    - "application/"
+    - "core/"
+    - "src/"
+    - "geosync_hpc/"
+    - "physics_contracts/catalog.yaml"
+    - ".claude/physics/INVARIANTS.yaml"
+required_python_symbols: []
+expected_signal: >-
+  `python -m pytest tests/physics_contracts/test_ricci_ollivier_identity_boundary.py`
+  reports 2 passed; `python .claude/physics/validate_tests.py
+  tests/physics_contracts/test_ricci_ollivier_identity_boundary.py` exits 0 with
+  no L1..L5 issues; ruff and mypy --strict on the file are clean.
+measurement_command: >-
+  bash -c 'mkdir -p tmp && python -m pytest
+  tests/physics_contracts/test_ricci_ollivier_identity_boundary.py
+  > tmp/ricci_ollivier_identity_boundary.log 2>&1
+  && grep -q "2 passed" tmp/ricci_ollivier_identity_boundary.log'
+signal_artifact: "tmp/ricci_ollivier_identity_boundary.log"
+falsifier:
+  command: |-
+    bash -c 'python -c "
+    import numpy as np, networkx as nx
+    from scipy.stats import wasserstein_distance
+    from core.indicators.ricci import build_price_graph, ricci_curvature_edge, _build_node_distribution, _graph_geometry
+    rng = np.random.default_rng(7); worst = 0.0
+    for _ in range(40):
+        g = build_price_graph(100*np.exp(np.cumsum(rng.normal(0,0.01,128))), delta=0.01)
+        o, s = _graph_geometry(g)
+        for u, v in g.edges():
+            d = nx.shortest_path_length(g, u, v, weight=\"weight\")
+            if u == v or not np.isfinite(d) or d <= 0: continue
+            dx = _build_node_distribution(g, int(u), o, s); dy = _build_node_distribution(g, int(v), o, s)
+            w1 = wasserstein_distance(dx.positions, dy.positions, u_weights=dx.probabilities, v_weights=dy.probabilities)
+            worst = max(worst, abs(ricci_curvature_edge(g, int(u), int(v)) - (1 - w1/d)))
+    import sys; sys.exit(0 if worst > 1e-9 else 1)"'
+  description: >-
+    Inverse probe of the Ollivier-Ricci identity. It exits 0 (fires) iff the
+    code's edge curvature deviates from 1 - W1/d (independent SciPy/NetworkX
+    recomputation) beyond float round-off — i.e. the implementation no longer
+    computes the definitional curvature. While the identity holds exactly the
+    probe exits 1. If it ever exits 0, the witness is no longer truthful and the
+    change must be reverted, not patched green.
+rollback_command: >-
+  git rm -f
+  tests/physics_contracts/test_ricci_ollivier_identity_boundary.py
+  .claude/commit_acceptors/ricci-ollivier-identity-boundary.yaml
+rollback_verification_command: >-
+  bash -c 'test ! -f tests/physics_contracts/test_ricci_ollivier_identity_boundary.py'
+memory_update_type: none
+ledger_path: ".claude/commit_acceptors/ricci-ollivier-identity-boundary.yaml"
+report_path: "tmp/ricci_ollivier_identity_boundary.log"
+evidence: []

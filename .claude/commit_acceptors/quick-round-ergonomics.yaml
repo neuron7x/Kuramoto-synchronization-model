@@ -1,0 +1,101 @@
+# Diff-bound commit acceptor for the quick-round ergonomic API.
+#
+# Closes the speed-of-thought gap of the audit. The full canonical
+# pipeline normally requires constructing five protocol-shaped
+# dataclasses; that ceremony is appropriate for production audit
+# but slow during interactive research. This module ships a single
+# function `quick_round(*, fsm_before, ...)` that accepts plain
+# Python booleans / tuples for the five evidence channels.
+#
+# The slow path `run_canonical_seven` remains the production entry
+# point.
+#
+# Locally verified:
+#   * pytest tests/research/systemic_risk/test_quick_round.py: 10/10 pass
+#   * pytest tests/research/systemic_risk/: 451/451 pass
+#   * mypy --strict on quick_round + tests: 0 errors
+#   * ruff + black: clean
+
+id: quick-round-ergonomics
+status: ACTIVE
+claim_type: governance
+promise: >-
+  After this PR lands, ``research.systemic_risk`` exposes a single
+  ``quick_round(*, fsm_before, ...)`` function that wraps the full
+  canonical-seven pipeline. Researchers can drive a claim through
+  one round with primitive inputs (booleans, tuples) without
+  constructing five protocol-shaped dataclasses.
+
+diff_scope:
+  changed_files:
+    - path: ".claude/commit_acceptors/quick-round-ergonomics.yaml"
+    - path: "research/systemic_risk/__init__.py"
+    - path: "research/systemic_risk/quick_round.py"
+    - path: "tests/research/systemic_risk/test_quick_round.py"
+  forbidden_paths:
+    - "trading/"
+    - "execution/"
+    - "forecast/"
+    - "policy/"
+    - "core/"
+    - "runtime/"
+    - "application/"
+
+required_python_symbols:
+  - "research/systemic_risk/quick_round.py::quick_round"
+  - "tests/research/systemic_risk/test_quick_round.py::TestQuickRound"
+
+expected_signal: >-
+  ``pytest tests/research/systemic_risk/test_quick_round.py -q`` reports
+  10 passed; before this PR the same command fails with
+  ModuleNotFoundError on ``research.systemic_risk.quick_round``.
+
+measurement_command: >-
+  bash -c '
+    mypy --strict
+      research/systemic_risk/quick_round.py
+      tests/research/systemic_risk/test_quick_round.py && python -m pytest tests/research/systemic_risk/test_quick_round.py -q
+  '
+
+signal_artifact: "tmp/quick_round_ergonomics.log"
+
+falsifier:
+  command: |-
+    bash -c '
+      python -c "
+    from research.systemic_risk import quick_round, GovernanceFSM
+    out = quick_round(fsm_before=GovernanceFSM.initial(), replication_matched=False)
+    assert out.fsm_after.state == 'REJECTED'
+      " 2>/dev/null && exit 1 || exit 0
+    '
+  description: >-
+    Probes that quick_round wires the KILL path correctly: a
+    replication mismatch via the primitive flag drives the FSM to
+    REJECTED. Falsifier inverts: it succeeds (exit 0) only when
+    the import or the assertion fails, which would mean the
+    ergonomic wrapper rolled back.
+
+rollback_command: >-
+  bash -c '
+    git rm -f
+      research/systemic_risk/quick_round.py
+      tests/research/systemic_risk/test_quick_round.py
+      .claude/commit_acceptors/quick-round-ergonomics.yaml && git checkout HEAD~1 -- research/systemic_risk/__init__.py
+  '
+
+rollback_verification_command: |-
+  bash -c '
+    python -c "
+  try:
+      from research.systemic_risk import quick_round
+  except ImportError:
+      pass
+  else:
+      raise SystemExit(1)
+    "
+  '
+
+memory_update_type: append
+ledger_path: ".claude/commit_acceptors/quick-round-ergonomics.yaml"
+report_path: "tmp/quick_round_ergonomics.log"
+evidence: []

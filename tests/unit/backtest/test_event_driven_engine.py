@@ -1,3 +1,5 @@
+# Copyright (c) 2023-2026 Yaroslav Vasylenko (neuron7xLab)
+# SPDX-License-Identifier: MIT
 """Tests for the event-driven backtest engine."""
 
 from __future__ import annotations
@@ -77,9 +79,7 @@ def test_event_engine_matches_walk_forward() -> None:
 
 def test_event_engine_with_latency_matches_walk_forward() -> None:
     prices = np.linspace(100, 110, num=8)
-    latency = LatencyConfig(
-        signal_to_order=1, order_to_execution=1, execution_to_fill=1
-    )
+    latency = LatencyConfig(signal_to_order=1, order_to_execution=1, execution_to_fill=1)
 
     vector_engine = WalkForwardEngine()
     expected = vector_engine.run(
@@ -137,9 +137,7 @@ def test_csv_chunk_data_handler(tmp_path: Path) -> None:
     for chunk in handler.stream():
         total_events += len(chunk)
         steps.extend(event.step for event in chunk)
-        timestamps.extend(
-            event.timestamp for event in chunk if event.timestamp is not None
-        )
+        timestamps.extend(event.timestamp for event in chunk if event.timestamp is not None)
         assert all(event.symbol == "TEST" for event in chunk)
 
     assert total_events == len(frame)
@@ -154,9 +152,7 @@ def test_simulated_execution_partial_fill() -> None:
         fee_per_unit=0.0,
     )
     handler.on_market_event(MarketEvent(symbol="TEST", price=100.0, step=0))
-    fill = handler.execute(
-        OrderEvent(symbol="TEST", quantity=1.0, step=0), current_step=0
-    )
+    fill = handler.execute(OrderEvent(symbol="TEST", quantity=1.0, step=0), current_step=0)
     assert math.isclose(fill.quantity, 0.5)
     assert math.isclose(fill.slippage, 0.0)
     assert math.isclose(fill.spread_cost, 0.0)
@@ -171,17 +167,13 @@ def test_simulated_execution_applies_fixed_slippage_model() -> None:
         transaction_cost_model=cost_model,
     )
     handler.on_market_event(MarketEvent(symbol="TEST", price=100.0, step=0))
-    fill = handler.execute(
-        OrderEvent(symbol="TEST", quantity=1.0, step=0), current_step=0
-    )
+    fill = handler.execute(OrderEvent(symbol="TEST", quantity=1.0, step=0), current_step=0)
     assert math.isclose(fill.price, 100.05)
     assert math.isclose(fill.slippage, 0.05)
 
 
 def test_simulated_execution_applies_volume_slippage_model() -> None:
-    cost_model = CompositeTransactionCostModel(
-        slippage_model=VolumeProportionalSlippage(0.02)
-    )
+    cost_model = CompositeTransactionCostModel(slippage_model=VolumeProportionalSlippage(0.02))
     handler = SimulatedExecutionHandler(
         OrderBookConfig(spread_bps=0.0, depth_profile=(10.0,), infinite_depth=True),
         SlippageConfig(),
@@ -189,17 +181,13 @@ def test_simulated_execution_applies_volume_slippage_model() -> None:
         transaction_cost_model=cost_model,
     )
     handler.on_market_event(MarketEvent(symbol="TEST", price=100.0, step=0))
-    fill = handler.execute(
-        OrderEvent(symbol="TEST", quantity=2.0, step=0), current_step=0
-    )
+    fill = handler.execute(OrderEvent(symbol="TEST", quantity=2.0, step=0), current_step=0)
     assert math.isclose(fill.price, 100.04)
     assert math.isclose(fill.slippage, 0.08)
 
 
 def test_simulated_execution_applies_square_root_slippage_model() -> None:
-    cost_model = CompositeTransactionCostModel(
-        slippage_model=SquareRootSlippage(a=0.001, b=0.01)
-    )
+    cost_model = CompositeTransactionCostModel(slippage_model=SquareRootSlippage(a=0.001, b=0.01))
     handler = SimulatedExecutionHandler(
         OrderBookConfig(spread_bps=0.0, depth_profile=(10.0,), infinite_depth=True),
         SlippageConfig(),
@@ -207,9 +195,7 @@ def test_simulated_execution_applies_square_root_slippage_model() -> None:
         transaction_cost_model=cost_model,
     )
     handler.on_market_event(MarketEvent(symbol="TEST", price=100.0, step=0))
-    fill = handler.execute(
-        OrderEvent(symbol="TEST", quantity=4.0, step=0), current_step=0
-    )
+    fill = handler.execute(OrderEvent(symbol="TEST", quantity=4.0, step=0), current_step=0)
     expected_adjustment = 100.0 * (0.001 + 0.01 * math.sqrt(4.0))
     assert math.isclose(fill.price, 100.0 + expected_adjustment)
     assert math.isclose(fill.slippage, expected_adjustment * 4.0)
@@ -222,18 +208,14 @@ class _BuyOnceStrategy(Strategy):
     def on_market_event(self, event: MarketEvent):
         if not self._emitted:
             self._emitted = True
-            return (
-                SignalEvent(symbol=event.symbol, target_position=1.0, step=event.step),
-            )
+            return (SignalEvent(symbol=event.symbol, target_position=1.0, step=event.step),)
         return ()
 
 
 def test_event_engine_transaction_cost_breakdown() -> None:
     prices = np.array([100.0, 101.0, 102.0])
     strategy = _BuyOnceStrategy()
-    financing_model = BorrowFinancing(
-        long_rate_bps=50, short_rate_bps=50, periods_per_year=2
-    )
+    financing_model = BorrowFinancing(long_rate_bps=50, short_rate_bps=50, periods_per_year=2)
     cost_model = CompositeTransactionCostModel(
         commission_model=PerUnitCommission(0.1),
         spread_model=FixedSpread(0.02),
@@ -264,9 +246,7 @@ def test_portfolio_updates_history_on_fill() -> None:
     assert portfolio.position_history is not None
     assert portfolio.position_history[-1] == 0.0
 
-    fill = FillEvent(
-        symbol="TEST", quantity=1.5, price=100.0, fee=0.0, slippage=0.0, step=0
-    )
+    fill = FillEvent(symbol="TEST", quantity=1.5, price=100.0, fee=0.0, slippage=0.0, step=0)
     portfolio.on_fill(fill)
 
     assert portfolio.position == 1.5
@@ -321,9 +301,7 @@ def test_event_engine_financing_cost_matches_walk_forward() -> None:
     vector_engine = WalkForwardEngine()
     vector_cost_model = CompositeTransactionCostModel(
         commission_model=PerUnitCommission(0.05),
-        financing_model=BorrowFinancing(
-            long_rate_bps=120, short_rate_bps=80, periods_per_year=4
-        ),
+        financing_model=BorrowFinancing(long_rate_bps=120, short_rate_bps=80, periods_per_year=4),
     )
     expected = vector_engine.run(
         prices,
@@ -336,9 +314,7 @@ def test_event_engine_financing_cost_matches_walk_forward() -> None:
     engine = EventDrivenBacktestEngine()
     event_cost_model = CompositeTransactionCostModel(
         commission_model=PerUnitCommission(0.05),
-        financing_model=BorrowFinancing(
-            long_rate_bps=120, short_rate_bps=80, periods_per_year=4
-        ),
+        financing_model=BorrowFinancing(long_rate_bps=120, short_rate_bps=80, periods_per_year=4),
     )
     result = engine.run(
         prices,

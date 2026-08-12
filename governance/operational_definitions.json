@@ -1,0 +1,204 @@
+{
+  "schema_version": 1,
+  "ontology_id": "geosync.operational_definitions.v1",
+  "policy": {
+    "purpose": "Operational definitions of the physics/neuroscience vocabulary so a metaphor cannot be mistaken for a mechanism. Every ACTIVE mechanism term must carry a mathematical object, an observable->math mapping, units, a validity domain, alternative hypotheses, and a falsifier. Terms with no admissible operational mapping are RETIRED (tombstone) or explicitly labelled ANALOGUE (arithmetic proxy, non-claim).",
+    "statuses": {
+      "mechanism": "A rigorous mathematical object with an observable->math mapping and an executable falsifier. Backed by P0/P1 invariants in the registry. This IS a claim.",
+      "analogue": "An engineering/arithmetic proxy that borrows a biological or physical name. The name is metaphorical; no biological or physical mechanism is asserted or measured. NON-CLAIM (per INV-HOM1).",
+      "retired": "A former term whose framing was a category error or was falsified/withdrawn. Preserved as negative evidence (tombstone). Never backs a live claim."
+    },
+    "gate": "scripts/ci/check_terminology.py validates every term against schemas/operational_definition.schema.json and fail-closes when: an ACTIVE mechanism term lacks a math_object/observable_mapping/falsifier/alternatives; a metaphor-only term is labelled mechanism; or a term declares an unknown status.",
+    "source_of_truth": "CLAUDE.md INVARIANT REGISTRY; governance/project_state.yaml (current_state: RESEARCH_ALPHA); FORBIDDEN_CLAIMS.md."
+  },
+  "metaphor_only": [
+    "serotonin",
+    "dopamine",
+    "gaba",
+    "heisenberg_uncertainty"
+  ],
+  "terms": [
+    {
+      "name": "synchronization",
+      "status": "mechanism",
+      "is_claim": true,
+      "aliases": ["sync", "phase_synchronization", "order_parameter", "coherence"],
+      "math_object": "Kuramoto order parameter R(t) = |(1/N) * sum_{j=1..N} exp(i*theta_j(t))| in [0,1], complex form z = R*exp(i*psi). Critical coupling K_c = 2/(pi*g(0)); Lorentzian K_c = 2*gamma.",
+      "observable_mapping": "Per-node phase theta_j(t) is extracted from the analytic signal (Hilbert transform) of each detrended asset log-return series; R is the modulus of the mean phasor. Coupling K is estimated from the empirical coupling graph. z lives on the unit disk.",
+      "units": "dimensionless (R, z are pure numbers on the unit disk; phases in radians; K, K_c, gamma in inverse-time coupling units)",
+      "validity_domain": "Finite N ensembles of phase oscillators. Asymptotic laws (INV-K2/K3) hold as t->inf with a finite-size floor <R> ~ O(1/sqrt(N)); use epsilon = 3/sqrt(N), never a magic number. Not a claim about market predictability.",
+      "alternatives": [
+        "Spurious coherence driven by a common exogenous factor (market-wide beta) rather than endogenous oscillator coupling",
+        "Finite-size fluctuation: R ~ O(1/sqrt(N)) can masquerade as weak synchrony in small ensembles",
+        "Non-stationarity or phase-slip artifacts of the Hilbert phase extraction",
+        "A single dominant mode aliased as global synchrony"
+      ],
+      "falsifier": "INV-K2: R(t) > 3/sqrt(N) after 1e4 steps at K = 0.1*K_c with N > 100 (a subcritical ensemble must decohere to the finite-size floor). Also INV-K1: any R(t) outside [0,1].",
+      "invariants": ["INV-K1", "INV-K2", "INV-K3", "INV-K4", "INV-K5", "INV-K6", "INV-K7", "INV-K8", "INV-K9", "INV-K10", "INV-OA1", "INV-OA2", "INV-OA3"],
+      "source": "core/kuramoto/, core/kuramoto/ott_antonsen.py"
+    },
+    {
+      "name": "curvature",
+      "status": "mechanism",
+      "is_claim": true,
+      "aliases": ["ricci", "ollivier_kappa", "ollivier_ricci", "kappa"],
+      "math_object": "Ollivier-Ricci curvature kappa(x,y) = 1 - W_1(m_x, m_y)/d(x,y) on a weighted graph, where W_1 is the Wasserstein-1 distance between lazy-random-walk measures m_x, m_y and d is the graph metric.",
+      "observable_mapping": "Nodes = assets/price levels; edges carry an empirical distance (de)correlation or spread metric; kappa is computed per edge via optimal transport. build_price_graph uses consecutive-integer node IDs so the combinatorial distance matches the 1D positional embedding.",
+      "units": "dimensionless (kappa is a normalized transport ratio); kappa <= 1 universal",
+      "validity_domain": "kappa <= 1 for any connected graph (INV-RC1). kappa in [-1,1] ONLY for build_price_graph output (INV-RC3); the 1D positional embedding can drop below -1 for other topologies. Forman-Ricci is a DISTINCT object and is never kappa-bound evidence (category-error guard, INV-CBR1).",
+      "alternatives": [
+        "Metric-embedding artifact: the chosen 1D positional embedding, not market geometry, drives the sign",
+        "Sampling noise in the correlation matrix producing spurious negative curvature",
+        "Category confusion with Forman-Ricci, which is bounded differently and may exceed 1"
+      ],
+      "falsifier": "INV-RC1: kappa > 1 returned for a connected graph. INV-RC3: kappa outside [-1,1] for build_price_graph output. INV-KR4: a signed kappa silently clipped at the Restrepo-Ott-Hunt onset boundary without RicciAdjacencyAudit metadata.",
+      "invariants": ["INV-RC1", "INV-RC2", "INV-RC3", "INV-KR4", "INV-CBR1"],
+      "source": "core/kuramoto/kuramoto_ricci_engine.py, coherence_bridge/physics_contract.py"
+    },
+    {
+      "name": "energy",
+      "status": "mechanism",
+      "is_claim": true,
+      "aliases": ["potential", "lyapunov_functional", "free_energy", "swing_energy"],
+      "math_object": "Model energies: Kuramoto coupling potential V = -(K*N/2)*R^2 (all-to-all, omega=0); second-order swing energy E = 0.5*sum(m*thetadot^2) + V; variational free energy F = U - T*S_q (Helmholtz form).",
+      "observable_mapping": "Computed from the same phase state theta and coupling K as synchronization; free-energy components (U = precision-weighted prediction error, S_q = variational entropy) from the active-inference model state. No physical Joules -- these are chosen Lyapunov functionals of the model state.",
+      "units": "model-energy units (dimensionless under normalized coupling). F and V may be negative (Helmholtz); components U, T, S_q >= 0",
+      "validity_domain": "V is non-increasing only with omega_i = 0 (INV-K7); swing energy is conserved (omega=0, d=0) or non-increasing (omega=0, d>=0) (INV-K8/K9); F is non-increasing under active inference (INV-FE1). NOT the thermodynamic energy of the market.",
+      "alternatives": [
+        "Integrator artifact: Euler introduces secular growth that mimics energy injection",
+        "The 'energy' is a chosen Lyapunov functional, not a conserved physical quantity -- descent can be true by construction",
+        "A damping sign error that injects rather than dissipates"
+      ],
+      "falsifier": "INV-K8/K9: swing-energy secular growth (log-log slope collapse 2.01 -> 0.81) under a symplectic integrator, or +d*thetadot producing energy injection. INV-FE1: F(t) increasing under active inference. INV-FE2: any component U, T, S_q < 0.",
+      "invariants": ["INV-K7", "INV-K8", "INV-K9", "INV-K10", "INV-FE1", "INV-FE2", "INV-OMS1"],
+      "source": "core/kuramoto/second_order.py, ECS free-energy layer"
+    },
+    {
+      "name": "entropy",
+      "status": "mechanism",
+      "is_claim": true,
+      "aliases": ["entropy_production", "shannon_entropy", "variational_entropy"],
+      "math_object": "Thermodynamic entropy production sigma >= 0 (second law, INV-TH2); variational entropy component S_q >= 0 in F = U - T*S; Shannon/Rayleigh phase entropy for the incoherent-phase test.",
+      "observable_mapping": "Entropy production from the before/after state of a dissipative update; S_q from the approximate posterior over latent causes; phase entropy from the empirical phase histogram (uniform on [-pi,pi] under INV-K6 in the subcritical regime).",
+      "units": "nats (Shannon/variational, natural log) or dimensionless model units; entropy production >= 0",
+      "validity_domain": "Entropy production >= 0 holds for the modeled dissipative dynamics (INV-TH2). The Jarzynski/second-law bounds (INV-ST2/ST3) are pure statistical mechanics on the overdamped Langevin harness, NOT a market model.",
+      "alternatives": [
+        "Estimator bias: finite-sample entropy is biased low, so apparent production may be estimator drift",
+        "Binning/discretization artifact in the phase histogram",
+        "Non-stationarity mimicking entropy production"
+      ],
+      "falsifier": "INV-TH2: measured entropy production < 0. INV-ST2: Jarzynski <exp(-beta*W)> deviates from exp(-beta*dF) beyond tolerance. INV-K6: subcritical phases fail the Rayleigh uniformity test.",
+      "invariants": ["INV-TH1", "INV-TH2", "INV-ST1", "INV-ST2", "INV-ST3", "INV-K6", "INV-FE2"],
+      "source": "core/physics/stochastic_thermodynamics.py, ECS free-energy layer"
+    },
+    {
+      "name": "phase_transition",
+      "status": "mechanism",
+      "is_claim": true,
+      "aliases": ["bifurcation", "sync_onset", "critical_coupling", "explosive_sync", "hysteresis"],
+      "math_object": "Synchronization onset at K_c = 2/(pi*g(0)) (Lorentzian K_c = 2*gamma); order-parameter bifurcation R_inf proportional to sqrt(K - K_c); Restrepo-Ott-Hunt boundary Phi = K*lambda_max(A_kappa) - 2*gamma with sign(Phi) selecting the asymptotic regime; explosive-sync hysteresis width >= 0.",
+      "observable_mapping": "K_c from the natural-frequency dispersion g(0); Phi from coupling K and the leading eigenvalue of the kappa-adjacency A_kappa; regime read from asymptotic <R> (subcritical <R> <= 1.5*3/sqrt(N) vs supercritical > 0.5).",
+      "units": "K, K_c, gamma in coupling units (inverse time); R_inf, Phi dimensionless",
+      "validity_domain": "Asymptotic (t->inf) laws; mean-field / Ott-Antonsen reductions require the stated frequency distributions. Cryptobiosis DORMANT and the maintenance-hierarchy 'phase transition into noise' are engineering state machines, NOT the same bifurcation.",
+      "alternatives": [
+        "Finite-size rounding of the transition (no true singularity at finite N)",
+        "A smooth crossover mistaken for a sharp transition",
+        "Hysteresis arising from slow relaxation rather than genuine bistability"
+      ],
+      "falsifier": "INV-K2/K3: R(t->inf) fails the sub/supercritical prediction across K_c. INV-KR1: sign(Phi) fails to predict the <R> regime. INV-ES1: measured hysteresis width < 0.",
+      "invariants": ["INV-K2", "INV-K3", "INV-KR1", "INV-KR2", "INV-ES1", "INV-ES2", "INV-OA2", "INV-OA3"],
+      "source": "core/kuramoto/kuramoto_ricci_engine.py, core/kuramoto/ott_antonsen.py"
+    },
+    {
+      "name": "criticality",
+      "status": "mechanism",
+      "is_claim": true,
+      "aliases": ["kappa_critical", "adaptive_criticality", "hurst", "regime"],
+      "math_object": "Adaptive-criticality isolation threshold kappa_critical = -ln(dH_max/epsilon)/(lambda_local + delta) with lambda_local the DFA Hurst exponent; DRO regime scaling gamma = 2*H + 1 (Peng et al. 1994).",
+      "observable_mapping": "H from DFA-1 on diff(log price); dH_max = rolling max of |dH| over the last 256 steps; a node with kappa(node) < kappa_critical is ISOLATED and a fragmentation event is logged. epsilon = 0.05 (SNR tolerance), delta = 1e-4 (singularity floor).",
+      "units": "H, kappa, kappa_critical dimensionless; gamma = 2H+1 dimensionless",
+      "validity_domain": "Operational fragility/regime gate ONLY. Does NOT assert market self-organized criticality. gamma = 2H+1 is the fractional-Gaussian scaling identity (INV-DRO1), tested to |gamma-(2H+1)| < 1e-5. Documented limitation: reactive on jump-diffusion boundaries.",
+      "alternatives": [
+        "Estimator: DFA Hurst is biased under short windows / non-stationarity, moving kappa_critical spuriously",
+        "The gate is a control heuristic, not evidence of a physical critical point",
+        "The regime label reflects ADF/stationarity artifacts (INV-DRO3), not criticality"
+      ],
+      "falsifier": "INV-DRO1: |gamma - (2H+1)| >= 1e-5. INV-AC1-rev: a node with kappa(node) < kappa_critical is NOT isolated. INV-DRO5: NaN/Inf/constant input fails to raise ValueError (silent repair).",
+      "invariants": ["INV-AC1-rev", "INV-DRO1", "INV-DRO2", "INV-DRO3", "INV-DRO4", "INV-DRO5"],
+      "source": "geosync/estimators/dfa_gamma_estimator.py, core/dro_ara/engine.py"
+    },
+    {
+      "name": "serotonin",
+      "status": "analogue",
+      "is_claim": false,
+      "aliases": ["5ht", "serotonin_gate", "tonic_serotonin"],
+      "math_object": "Bounded sigmoidal control state s(t) = sigmoid(k*(tonic - theta)) * sensitivity with a Lyapunov functional V(s) non-increasing at zero stress; s in [0,1], sensitivity in [0.1,1.0].",
+      "observable_mapping": "Input = a scalar stress/drawdown proxy (drawdown enters NEGATIVE); output = a risk-tempering scalar. This is an arithmetic control proxy; the label 'serotonin' is metaphorical -- no neurotransmitter, receptor, or biological pathway is modeled or measured.",
+      "units": "dimensionless control scalar in [0,1]; 'stress' in normalized proxy units",
+      "validity_domain": "Engineering risk-control analogue only. Per INV-HOM1 the E/I/'serotonin' quantities are arithmetic proxies (non-claim). NOT a neuroscience or pharmacology claim.",
+      "alternatives": [
+        "The behavior is fully explained by a plain bounded sigmoid controller with no neuromodulatory content",
+        "Any monotone squashing function would give the same risk-tempering effect"
+      ],
+      "falsifier": "INV-5HT2: s(t) leaves [0,1]. INV-5HT1: V(s) increases at zero stress. INV-5HT7: stress >= 1.0 or |dd| >= 0.5 fails to trigger the safety veto.",
+      "invariants": ["INV-5HT1", "INV-5HT2", "INV-5HT3", "INV-5HT4", "INV-5HT5", "INV-5HT6", "INV-5HT7", "INV-HOM1"],
+      "source": "geosync/neuroeconomics/homeostatic_stabilizer.py",
+      "note": "ANALOGUE / non-claim. 'Serotonin' names an arithmetic risk-control proxy, not biological serotonin. Per INV-HOM1 the neuromodulator vocabulary is an engineering analogue; no biological mechanism is asserted or measured. The listed invariants govern the arithmetic (boundedness, descent, veto), NOT a neurophysiological claim."
+    },
+    {
+      "name": "dopamine",
+      "status": "analogue",
+      "is_claim": false,
+      "aliases": ["da", "rpe", "td_error", "reward_prediction_error"],
+      "math_object": "Temporal-difference error delta = r + gamma*V' - V (raw controller, d(delta)/dr = 1); execution-adapter variant |delta| = |tanh(.)| <= 1 (d(delta)/dr = sech^2(.) != 1 by design).",
+      "observable_mapping": "Input = a scalar reward/return-surprise proxy r; output = a TD error used to nudge a value estimate. 'Dopamine' is a metaphor for the RPE arithmetic; no dopaminergic biology is modeled or measured.",
+      "units": "delta dimensionless (same units as the reward proxy); gamma in (0,1] dimensionless",
+      "validity_domain": "Reinforcement-learning arithmetic analogue only. Scope split: INV-DA7 raw controller vs INV-DA8 tanh adapter. NOT a neuroscience claim.",
+      "alternatives": [
+        "Identical to a textbook TD(0) update with no biological content",
+        "Any bounded reward-surprise signal reproduces the observed behavior"
+      ],
+      "falsifier": "INV-DA7: d(delta)/dr != 1 for the raw controller. INV-DA3: gamma outside (0,1]. INV-DA8: adapter |delta| > 1 or non-finite for finite input.",
+      "invariants": ["INV-DA1", "INV-DA2", "INV-DA3", "INV-DA4", "INV-DA5", "INV-DA6", "INV-DA7", "INV-DA8"],
+      "source": "core/neuro/dopamine_execution_adapter.py, DopamineController",
+      "note": "ANALOGUE / non-claim. 'Dopamine' names a TD-error arithmetic proxy, not biological dopamine. Per INV-HOM1 the neuromodulator vocabulary is an engineering analogue; no biological mechanism is asserted or measured."
+    },
+    {
+      "name": "gaba",
+      "status": "analogue",
+      "is_claim": false,
+      "aliases": ["inhibition", "inhibition_gate", "gaba_gate"],
+      "math_object": "Inhibition gate g in [0,1] with effective = raw*(1 - inhibition); inhibition is monotone increasing in volatility, -> 0 as vol -> 0, -> 1 as vol -> inf.",
+      "observable_mapping": "Input = a volatility proxy; output = a multiplicative inhibition factor that can only REDUCE an upstream signal (effective <= raw). 'GABA' is a metaphor for the clamp arithmetic; no chloride channel or receptor is modeled.",
+      "units": "dimensionless gate in [0,1]; volatility proxy in normalized units",
+      "validity_domain": "Engineering inhibition analogue only. NOT a neuroscience claim.",
+      "alternatives": [
+        "Equivalent to a plain volatility-scaled down-weighting with no biological content",
+        "Any saturating monotone clamp reproduces the INV-GABA behavior"
+      ],
+      "falsifier": "INV-GABA1: gate outside [0,1]. INV-GABA3: effective > raw (inhibition amplifies instead of reducing). INV-GABA4/5: wrong asymptote as vol -> 0 or vol -> inf.",
+      "invariants": ["INV-GABA1", "INV-GABA2", "INV-GABA3", "INV-GABA4", "INV-GABA5", "INV-HOM1"],
+      "source": "GABA inhibition gate",
+      "note": "ANALOGUE / non-claim. 'GABA' names an inhibition-clamp arithmetic proxy, not biological GABA. Per INV-HOM1 the neuromodulator vocabulary is an engineering analogue; no biological mechanism is asserted or measured."
+    },
+    {
+      "name": "heisenberg_uncertainty",
+      "status": "retired",
+      "is_claim": false,
+      "aliases": ["heisenberg", "quantum_uncertainty", "price_momentum_uncertainty"],
+      "math_object": "(RETIRED) The prior framing asserted a Heisenberg bound dx*dp >= hbar/2 on price and its difference -- a category error with a fabricated hbar/2. Superseded by the exact Gabor time-frequency limit dt*df >= 1/(4*pi) (INV-GABOR1).",
+      "observable_mapping": "None valid. Price and diff(price) are jointly observable, NOT conjugate, and there is no Planck constant. The retired term had no admissible observable->math mapping.",
+      "units": "n/a (retired)",
+      "validity_domain": "RETIRED -- do not use as a mechanism. The live, operationally-defined object is the Gabor uncertainty limit 1/(4*pi) approx 0.0796 (dimensionless), not a Heisenberg inequality.",
+      "alternatives": [
+        "The correct object is the Gabor/Fourier time-frequency uncertainty (INV-GABOR1), which needs no hbar",
+        "The apparent 'quantum uncertainty' was an artifact of treating jointly-observable series as conjugate"
+      ],
+      "falsifier": "(Preserved as tombstone) INV-GABOR1: time_frequency_spread returning dt*df < 1/(4*pi) for a well-resolved signal would refute the REPLACEMENT object; the retired hbar/2 framing is unfalsifiable-as-stated and therefore withdrawn.",
+      "invariants": ["INV-GABOR1"],
+      "superseded_by": "gabor_time_frequency_limit (INV-GABOR1, core/physics/uncertainty.py)",
+      "source": "core/physics/uncertainty.py (replacement)",
+      "note": "RETIRED tombstone. The 'quantum/Heisenberg uncertainty' framing was a category error (fabricated hbar/2 on non-conjugate observables) and is withdrawn as negative evidence. Replaced by the Gabor time-frequency limit INV-GABOR1. Never backs a live claim."
+    }
+  ]
+}

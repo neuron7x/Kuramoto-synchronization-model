@@ -1,12 +1,12 @@
 ---
-title: TradePulse Serving Resilience Blueprint
+title: GeoSync Serving Resilience Blueprint
 ---
 
-# TradePulse Serving Resilience Blueprint
+# GeoSync Serving Resilience Blueprint
 
 ## Executive Summary
 
-The TradePulse online serving stack must deliver deterministic, low-latency forecasts for live trading while resisting network faults, dependency outages, or regional failures. This blueprint redefines the serving architecture around asynchronous boundaries, fault-containment zones, and observability-driven guardrails. It enumerates the critical request paths, highlights failure and saturation points, and prescribes queueing, pooling, timeout, retry, idempotency, circuit-breaking, rate limiting, and backpressure controls. The guidance aligns with the FastAPI surface defined in [`application/api/service.py`](../../application/api/service.py) and the supporting rate-limit and idempotency subsystems in [`application/api/rate_limit.py`](../../application/api/rate_limit.py) and [`application/api/idempotency.py`](../../application/api/idempotency.py).
+The GeoSync online serving stack must deliver deterministic, low-latency forecasts for live trading while resisting network faults, dependency outages, or regional failures. This blueprint redefines the serving architecture around asynchronous boundaries, fault-containment zones, and observability-driven guardrails. It enumerates the critical request paths, highlights failure and saturation points, and prescribes queueing, pooling, timeout, retry, idempotency, circuit-breaking, rate limiting, and backpressure controls. The guidance aligns with the FastAPI surface defined in [`application/api/service.py`](../../application/api/service.py) and the supporting rate-limit and idempotency subsystems in [`application/api/rate_limit.py`](../../application/api/rate_limit.py) and [`application/api/idempotency.py`](../../application/api/idempotency.py).
 
 ## Current Critical Paths
 
@@ -173,7 +173,7 @@ Automated lifecycle policies transition data between tiers. Warm tier acts as th
 ## Appendix: Configuration References
 
 - `application/settings.py` – Extend to include timeout, retry, and breaker thresholds.
-- `configs/helm/tradepulse-api/values.yaml` (future) – Document CDN, queue, and scaling defaults for deployments.
-- `observability/dashboards/tradepulse-overview.json` – Update panels for queue depth, breaker state, and regional SLOs.
+- `configs/helm/geosync-api/values.yaml` (future) – Document CDN, queue, and scaling defaults for deployments.
+- `observability/dashboards/geosync-overview.json` – Update panels for queue depth, breaker state, and regional SLOs.
 
-This blueprint provides the systematic guardrails needed to harden TradePulse serving against load spikes, dependency regressions, and regional failures while preserving deterministic trading signals.
+This blueprint provides the systematic guardrails needed to harden GeoSync serving against load spikes, dependency regressions, and regional failures while preserving deterministic trading signals.

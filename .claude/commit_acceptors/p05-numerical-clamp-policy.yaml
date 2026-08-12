@@ -1,0 +1,62 @@
+id: p05-numerical-clamp-policy
+status: ACTIVE
+claim_type: governance
+promise: >-
+  Bind the P0-5 no-silent-clamp physics numerical policy PR to explicit
+  governance. The PR adds a fail-closed scanner (tools/physics/check_silent_clamps.py)
+  and a machine-readable clamp registry (tools/physics/clamp_registry.yaml) that
+  together require every clamp-shaped operation in the scoped physics tree
+  (core/kuramoto, core/physics, core/indicators, core/config/kuramoto_ricci.py)
+  to declare its name, reason, physical_meaning, failure_mode, test_ref and
+  metadata_field. The PR registers the 172 real clamp sites found in an audit of
+  the tree (8 clamp classes), documents the policy in docs/physics/numerical_policy.md,
+  and adds tests/tools/test_numerical_policy.py (positive: an undeclared clamp is
+  flagged; negative: a declared clamp passes; the scanner runs over the real
+  physics tree at ZERO unregistered violations). No physics behaviour changes:
+  this PR is governance only --- it makes the existing clamps declared instead
+  of silent.
+diff_scope:
+  changed_files:
+    - path: ".claude/commit_acceptors/p05-numerical-clamp-policy.yaml"
+    - path: "tools/physics/check_silent_clamps.py"
+    - path: "tools/physics/clamp_registry.yaml"
+    - path: "tests/tools/test_numerical_policy.py"
+    - path: "docs/physics/numerical_policy.md"
+    - path: "docs/reports/numerical_clamp_policy.md"
+  forbidden_paths:
+    - "core/"
+    - "geosync/"
+required_python_symbols:
+  - "tools/physics/check_silent_clamps.py::build_report"
+  - "tools/physics/check_silent_clamps.py::scan_tree"
+  - "tools/physics/check_silent_clamps.py::validate_registry_schema"
+expected_signal: >-
+  PR checks show Commit Acceptor Gate success, Descriptor Promotion Firewall
+  success, python-quality (black + ruff) success, mypy --strict success, and
+  python-fast-tests success including tests/tools/test_numerical_policy.py.
+  Locally `python tools/physics/check_silent_clamps.py` prints RESULT: PASS and
+  exits 0 over 172 registered clamp sites with zero unregistered violations.
+measurement_command: >-
+  bash -c 'python tools/physics/check_silent_clamps.py &&
+  python -m pytest -q tests/tools/test_numerical_policy.py &&
+  python tools/commit_acceptor/validate_commit_acceptor.py --base origin/main --head HEAD'
+signal_artifact: "docs/reports/numerical_clamp_policy.md"
+falsifier:
+  command: >-
+    bash -c 'python tools/physics/check_silent_clamps.py >/tmp/p05_clamp_scan.log 2>&1 || exit 0; exit 1'
+  description: >-
+    Falsifies the gate if the silent-clamp scanner reports any unregistered or
+    stale clamp in the scoped physics tree (non-zero exit).
+rollback_command: >-
+  bash -c 'rm -f tools/physics/check_silent_clamps.py tools/physics/clamp_registry.yaml
+  tests/tools/test_numerical_policy.py docs/physics/numerical_policy.md
+  docs/reports/numerical_clamp_policy.md
+  .claude/commit_acceptors/p05-numerical-clamp-policy.yaml'
+rollback_verification_command: >-
+  bash -c '! test -f .claude/commit_acceptors/p05-numerical-clamp-policy.yaml'
+memory_update_type: append
+ledger_path: ".claude/commit_acceptors/p05-numerical-clamp-policy.yaml"
+report_path: "docs/reports/numerical_clamp_policy.md"
+evidence:
+  - path: "docs/reports/numerical_clamp_policy.md"
+    sha256: "b3e1febae875125249f2aaf55b0a55a32e4e69736426e94ab7c4c3bad93fc053"  # pragma: allowlist secret

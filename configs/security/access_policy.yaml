@@ -1,4 +1,4 @@
-# TradePulse access control matrix for privileged operations.
+# GeoSync access control matrix for privileged operations.
 #
 # The policy distinguishes between concrete subjects (service accounts or
 # automation) and human roles. Subjects may inherit permissions from other
@@ -12,7 +12,7 @@ subjects:
       - action: modify_risk_limits
       - action: engage_kill_switch
       - action: reset_kill_switch
-  tradepulse-live-runner:
+  geosync-live-runner:
     description: "Managed process responsible for the production execution loop."
     inherits:
       - operations

@@ -1,6 +1,6 @@
 aws_region  = "us-east-1"
 environment = "production"
-cluster_name = "tradepulse-production"
+cluster_name = "geosync-production"
 
 node_groups = {
   system = {
@@ -28,6 +28,6 @@ node_groups = {
 }
 
 tags = {
-  "CostCenter" = "tradepulse-production"
+  "CostCenter" = "geosync-production"
   "Availability" = "mission-critical"
 }

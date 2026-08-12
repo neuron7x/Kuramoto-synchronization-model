@@ -1,0 +1,68 @@
+id: cns-release-gate-rc
+status: ACTIVE
+claim_type: governance
+promise: >-
+  Diff-bound governance acceptor for the CNS release-gate release-candidate.
+  The PR adds a bounded release-readiness gate with deterministic manifest
+  generation, manifest verification, report-contract validation, weighted
+  quality scoring, evidence artifact upload, and evidence index provenance.
+  It does not promote clinical, biological, trading, or profitability claims.
+
+diff_scope:
+  changed_files:
+    - path: ".github/workflows/cns-release-gate.yml"
+    - path: ".claude/commit_acceptors/cns-release-gate-rc.yaml"
+    - path: "pyproject.toml"
+    - path: "conf/cns_program/default.yaml"
+    - path: "conf/cns_program/invariants.yaml"
+    - path: "docs/governance/CNS_RELEASE_GATE.md"
+    - path: "reports/CNS_RELEASE_GATE_CONTRACT.md"
+    - path: "tests/cns_program/test_release_gate.py"
+    - path: "tools/cns_program/__init__.py"
+    - path: "tools/cns_program/build_evidence_index.py"
+    - path: "tools/cns_program/build_release_manifest.py"
+    - path: "tools/cns_program/cns_contract.py"
+    - path: "tools/cns_program/deploy_release_gate.py"
+    - path: "tools/cns_program/quality_gate.py"
+    - path: "tools/cns_program/simple_yaml.py"
+    - path: "tools/cns_program/verify_release_manifest.py"
+    - path: "tools/cns_program/verify_reports_contract.py"
+  forbidden_paths:
+    - "trading/"
+    - "execution/"
+    - "forecast/"
+    - "runtime/"
+    - "application/"
+
+required_python_symbols:
+  - "tools.cns_program.deploy_release_gate.validate_protocol"
+  - "tools.cns_program.build_evidence_index.build_index"
+  - "tools.cns_program.build_evidence_index.main"
+  - "tools.cns_program.build_release_manifest.sha256_file"
+  - "tools.cns_program.verify_release_manifest.verify"
+
+expected_signal: >-
+  CNS release gate builds deterministic evidence artifacts and a provenance index
+  that binds run metadata, Python version, artifact name, digest, and generated JSON files.
+
+measurement_command: >-
+  python tools/cns_program/deploy_release_gate.py && python tools/cns_program/build_release_manifest.py && python tools/cns_program/verify_release_manifest.py && python tools/cns_program/verify_reports_contract.py && python tools/cns_program/quality_gate.py && python tools/cns_program/build_evidence_index.py --python-version 3.12 --artifact-name cns-evidence-python-3.12 --artifact-digest local-test
+
+signal_artifact: "results/cns_evidence_index.json"
+
+falsifier:
+  command: >-
+    python tools/cns_program/verify_release_manifest.py --manifest /tmp/nonexistent-cns-manifest.json
+  description: >-
+    Manifest verification must fail closed when the manifest is missing or hashes do not match current workspace artifacts.
+
+rollback_command: >-
+  git checkout -- .github/workflows/cns-release-gate.yml conf/cns_program docs/governance/CNS_RELEASE_GATE.md reports/CNS_RELEASE_GATE_CONTRACT.md tests/cns_program tools/cns_program .claude/commit_acceptors/cns-release-gate-rc.yaml
+
+rollback_verification_command: >-
+  git diff --exit-code
+
+memory_update_type: append
+ledger_path: ".claude/commit_acceptors/cns-release-gate-rc.yaml"
+report_path: "results/cns_evidence_index.json"
+evidence: []

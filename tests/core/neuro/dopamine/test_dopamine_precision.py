@@ -1,4 +1,5 @@
-# SPDX-License-Identifier: LicenseRef-TradePulse-Proprietary
+# Copyright (c) 2023-2026 Yaroslav Vasylenko (neuron7xLab)
+# SPDX-License-Identifier: MIT
 """Enhanced precision tests for DopamineController.
 
 This module provides comprehensive tests for numeric precision,
@@ -20,7 +21,7 @@ from typing import Dict
 import pytest
 import yaml
 
-from tradepulse.core.neuro.dopamine.dopamine_controller import DopamineController
+from geosync.core.neuro.dopamine.dopamine_controller import DopamineController
 
 
 @pytest.fixture
@@ -154,9 +155,7 @@ class TestTemperatureCalculationStability:
             temp = controller.compute_temperature(da_signal)
             assert min_temp <= temp <= max_temp
 
-    def test_temperature_monotonic_with_positive_rpe(
-        self, controller: DopamineController
-    ) -> None:
+    def test_temperature_monotonic_with_positive_rpe(self, controller: DopamineController) -> None:
         """Test temperature decreases monotonically with increasing DA (positive RPE)."""
         controller.last_rpe = 0.1  # Positive RPE
 
@@ -169,9 +168,7 @@ class TestTemperatureCalculationStability:
         for i in range(1, len(temps)):
             assert temps[i] <= temps[i - 1] + 1e-10  # Small tolerance
 
-    def test_temperature_boost_on_negative_rpe(
-        self, controller: DopamineController
-    ) -> None:
+    def test_temperature_boost_on_negative_rpe(self, controller: DopamineController) -> None:
         """Test temperature increases on negative RPE."""
         da_signal = 0.5
 
@@ -185,9 +182,7 @@ class TestTemperatureCalculationStability:
 
         assert temp_neg_rpe >= temp_baseline
 
-    def test_temperature_precision_extreme_da(
-        self, controller: DopamineController
-    ) -> None:
+    def test_temperature_precision_extreme_da(self, controller: DopamineController) -> None:
         """Test temperature calculation with extreme DA values."""
         controller.last_rpe = 0.0
 
@@ -218,9 +213,7 @@ class TestGateThresholdMonotonicity:
         assert go_threshold >= hold_threshold
         assert hold_threshold >= no_go_threshold
 
-    def test_gate_states_mutual_exclusivity(
-        self, controller: DopamineController
-    ) -> None:
+    def test_gate_states_mutual_exclusivity(self, controller: DopamineController) -> None:
         """Test gate states follow logical constraints."""
         # High DA - should trigger GO
         da_high = 0.9
@@ -243,9 +236,7 @@ class TestGateThresholdMonotonicity:
 class TestStatePersistencePrecision:
     """Tests for state persistence round-trip precision."""
 
-    def test_state_roundtrip_preserves_precision(
-        self, controller: DopamineController
-    ) -> None:
+    def test_state_roundtrip_preserves_precision(self, controller: DopamineController) -> None:
         """Test state dump/load preserves numeric precision."""
         # Set some state
         controller.tonic_level = 0.123456789
@@ -274,9 +265,7 @@ class TestStatePersistencePrecision:
         assert math.isclose(controller.value_estimate, -0.111111111, rel_tol=1e-10)
         assert math.isclose(controller.last_rpe, 0.222222222, rel_tol=1e-10)
 
-    def test_state_roundtrip_boundary_values(
-        self, controller: DopamineController
-    ) -> None:
+    def test_state_roundtrip_boundary_values(self, controller: DopamineController) -> None:
         """Test state roundtrip with boundary values."""
         # Set boundary values
         controller.tonic_level = 0.0
@@ -451,9 +440,7 @@ class TestMetaAdaptation:
         # Learning rate should decrease
         assert controller.config["learning_rate_v"] < initial_lr
 
-    def test_meta_adapt_cooldown_respected(
-        self, controller: DopamineController
-    ) -> None:
+    def test_meta_adapt_cooldown_respected(self, controller: DopamineController) -> None:
         """Test meta-adaptation respects cooldown."""
         # First adaptation (good performance)
         controller.meta_adapt({"drawdown": -0.03, "sharpe": 1.2})
@@ -488,9 +475,7 @@ class TestDopamineSignalBounds:
         assert da <= 1.0
         assert da >= 0.0
 
-    def test_dopamine_signal_finite_always(
-        self, controller: DopamineController
-    ) -> None:
+    def test_dopamine_signal_finite_always(self, controller: DopamineController) -> None:
         """Test dopamine signal is always finite."""
         test_cases = [
             (0.0, 0.0),

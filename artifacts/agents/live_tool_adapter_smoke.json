@@ -1,0 +1,68 @@
+{
+  "artifact_id": "WEB_AGENT_LIVE_TOOL_ADAPTER_SMOKE_001",
+  "status": "PARTIAL_LIVE_GITHUB_ADAPTER_VERIFIED_NOT_FULL_AGENT_RUNTIME",
+  "measurement_mode": "github_connector_live_actions_observed_in_pr_1221",
+  "repository": "neuron7xLab/GeoSync",
+  "branch": "web-agent-architecture-protocol",
+  "pr_number": 1221,
+  "observed_head_sha": "526a28b7d0d4572ab1c6597c1ca011adff16a9f6",
+  "verified_adapter_scope": [
+    "github_get_pr_info",
+    "github_fetch_file",
+    "github_create_file",
+    "github_update_file",
+    "github_update_pull_request",
+    "github_fetch_commit_workflow_runs"
+  ],
+  "live_adapter_checks": [
+    {
+      "adapter": "github_create_file",
+      "path": "tests/agents/fixtures/task_completion_eval_cases.json",
+      "observed_commit_sha": "9240776a1e24455bda48c81eebf31a4bde089be4",
+      "result": "PASS"
+    },
+    {
+      "adapter": "github_create_file",
+      "path": "tools/web_agent_task_eval.py",
+      "observed_commit_sha": "403c08cd13e2b853ab4a621371bdd5802cea897a",
+      "result": "PASS"
+    },
+    {
+      "adapter": "github_update_file",
+      "path": "tools/web_agent_score.py",
+      "observed_commit_sha": "a7d55fe30c8edd91a0234900da3e31d25c4525e9",
+      "result": "PASS"
+    },
+    {
+      "adapter": "github_update_file",
+      "path": "artifacts/agents/web_agent_baseline_score.json",
+      "observed_commit_sha": "45a031bb6ef7b491162a2ba956c0d690385a45c8",
+      "result": "PASS"
+    },
+    {
+      "adapter": "github_update_pull_request",
+      "path": "PR-1221-body",
+      "observed_head_sha_after_update": "526a28b7d0d4572ab1c6597c1ca011adff16a9f6",
+      "result": "PASS"
+    },
+    {
+      "adapter": "github_fetch_commit_workflow_runs",
+      "path": "PR-1221-head-workflows",
+      "observed_status": "queued_or_pending",
+      "result": "PASS_FETCH_ONLY"
+    }
+  ],
+  "coverage": {
+    "github_adapter_subset_verified": true,
+    "web_search_adapter_verified": false,
+    "web_fetch_adapter_verified": false,
+    "file_system_adapter_verified": false,
+    "code_exec_adapter_verified": false,
+    "full_live_tool_adapter_verification": false
+  },
+  "failure_conditions": [
+    "Do not treat GitHub adapter subset verification as full web-agent tool verification.",
+    "Do not mark live_tool_adapter_verification true until all production tool classes have live smoke traces.",
+    "Do not treat queued CI runs as passing CI evidence."
+  ]
+}

@@ -1,0 +1,66 @@
+# Diff-bound acceptor (part B) for actions/setup-python @v5-pinned
+# (a309ff8b426b58ec0e2a45f0f869d46889d02405) -> @v6 (dependabot PR #1396, semver-major bump "5 to 6"). Split
+# into a/b/c/d because the bump touches 57 workflow files (above governance
+# cap=16; pr-gate.yml and commit-acceptor-gate.yml are exempt via
+# dep_manifest_paths). This part binds 14 of 57 workflow files (alphabetical
+# slice), plus this acceptor file. Siblings: setup-python-6-bump-a.yaml, setup-python-6-bump-c.yaml, setup-python-6-bump-d.yaml.
+
+id: setup-python-6-bump-b
+status: ACTIVE
+claim_type: governance
+promise: >-
+  Bumps actions/setup-python from the v5-generation SHA-pin
+  a309ff8b426b58ec0e2a45f0f869d46889d02405 to the v6 SHA-pin ece7cb06caefa5fff74198d8649806c4678c61a1
+  (dependabot: "bump actions/setup-python from 5 to 6") in 14 of 57
+  affected workflow files (alphabetical slice, part B).
+  .github/workflows/service-manifest-audit.yml uses an unpinned
+  @v5 -> @v6 tag (that workflow was never SHA-pinned) rather than the
+  SHA-pin form used everywhere else in this slice. No functional change
+  beyond the version/SHA bump.
+diff_scope:
+  changed_files:
+    - path: ".claude/commit_acceptors/setup-python-6-bump-b.yaml"
+    - path: ".github/workflows/coverage-ratchet-edges.yml"
+    - path: ".github/workflows/descriptor-promotion-gate.yml"
+    - path: ".github/workflows/docs-consistency-gate.yml"
+    - path: ".github/workflows/edge-case-matrix.yml"
+    - path: ".github/workflows/epistemic-rhombus-gate.yml"
+    - path: ".github/workflows/evidence-grounding.yml"
+    - path: ".github/workflows/fail_closed_guardians.yml"
+    - path: ".github/workflows/feature-debt-lock.yml"
+    - path: ".github/workflows/forbidden-torch-jit-gate.yml"
+    - path: ".github/workflows/governance-schema-export-sync.yml"
+    - path: ".github/workflows/import-architecture-gate.yml"
+    - path: ".github/workflows/inference-transformer-contract.yml"
+    - path: ".github/workflows/invariant-count-sync.yml"
+    - path: ".github/workflows/l2-demo-gate.yml"
+  forbidden_paths:
+    - "trading/"
+    - "execution/"
+    - "forecast/"
+    - "policy/"
+required_python_symbols: []
+expected_signal: >-
+  Each of the 14 listed workflow files references actions/setup-python@v6
+  (SHA-pin ece7cb06caefa5fff74198d8649806c4678c61a1 or, for
+  service-manifest-audit.yml, the unpinned @v6 tag it already used
+  pre-bump for @v5).
+measurement_command: >-
+  bash -c "for f in .github/workflows/coverage-ratchet-edges.yml .github/workflows/descriptor-promotion-gate.yml .github/workflows/docs-consistency-gate.yml .github/workflows/edge-case-matrix.yml .github/workflows/epistemic-rhombus-gate.yml .github/workflows/evidence-grounding.yml .github/workflows/fail_closed_guardians.yml .github/workflows/feature-debt-lock.yml .github/workflows/forbidden-torch-jit-gate.yml .github/workflows/governance-schema-export-sync.yml .github/workflows/import-architecture-gate.yml .github/workflows/inference-transformer-contract.yml .github/workflows/invariant-count-sync.yml .github/workflows/l2-demo-gate.yml; do grep -E 'actions/setup-python@(ece7cb06caefa5fff74198d8649806c4678c61a1|v6)' \"\$f\" >/dev/null || { echo MISSING \$f; exit 1; }; done"
+signal_artifact: "tmp/setup_python_6_bump_b.log"
+falsifier:
+  command: >-
+    bash -c "for f in .github/workflows/coverage-ratchet-edges.yml .github/workflows/descriptor-promotion-gate.yml .github/workflows/docs-consistency-gate.yml .github/workflows/edge-case-matrix.yml .github/workflows/epistemic-rhombus-gate.yml .github/workflows/evidence-grounding.yml .github/workflows/fail_closed_guardians.yml .github/workflows/feature-debt-lock.yml .github/workflows/forbidden-torch-jit-gate.yml .github/workflows/governance-schema-export-sync.yml .github/workflows/import-architecture-gate.yml .github/workflows/inference-transformer-contract.yml .github/workflows/invariant-count-sync.yml .github/workflows/l2-demo-gate.yml; do grep -qE 'actions/setup-python@(a309ff8b426b58ec0e2a45f0f869d46889d02405|v5)' \"\$f\" && { echo STALE \$f; exit 1; }; done; echo OK"
+  description: >-
+    Probe verifies none of the bound workflow files still reference the
+    pre-bump v5-generation setup-python pin. A non-OK result means the
+    dependabot bump was reverted or partially applied in this slice.
+rollback_command: >-
+  git checkout HEAD~1 -- .github/workflows/
+  .claude/commit_acceptors/setup-python-6-bump-b.yaml
+rollback_verification_command: >-
+  git diff --exit-code .github/workflows/
+memory_update_type: append
+ledger_path: ".claude/commit_acceptors/setup-python-6-bump-b.yaml"
+report_path: ".claude/commit_acceptors/setup-python-6-bump-b.yaml"
+evidence: []

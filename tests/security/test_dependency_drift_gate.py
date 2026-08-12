@@ -1,9 +1,9 @@
+# Copyright (c) 2023-2026 Yaroslav Vasylenko (neuron7xLab)
+# SPDX-License-Identifier: MIT
 from __future__ import annotations
 
 import json
 from pathlib import Path
-
-import pytest
 
 from scripts.security.check_dependency_drift import (
     evaluate_drift,

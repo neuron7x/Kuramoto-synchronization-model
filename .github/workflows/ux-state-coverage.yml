@@ -1,0 +1,108 @@
+# SPDX-License-Identifier: MIT
+#
+# UX State-Coverage Gate (IERD-Q5 Phase-4 EXIT — fail-closed).
+#
+# Scores every public endpoint against the genuine, falsifiable
+# discriminator for each of the six IERD §5 UX states:
+#
+#     success  empty  partial  validation_error  server_error  timeout
+#
+# success/validation_error/server_error/timeout via declared status
+# codes; empty via the dedicated ApiErrorCode filter-mismatch enum +
+# 404; partial via pagination.next_cursor on the 200 model; timeout
+# additionally proven *emitted* by RequestTimeoutMiddleware behavioural
+# tests. States are scored only where semantically applicable
+# (collection/command/probe classes). UXRS = covered/applicable ≥ 0.95.
+# The suite also asserts every 4xx/5xx (incl. 504) $refs the canonical
+# ErrorResponse envelope.
+#
+# Phase status (per ADR 0020):
+#   * Phase-4 ENTRY (prior) — gated informationally while the genuine
+#     timeout state and the honest contract were built.
+#   * Phase-4 EXIT (this revision) — RequestTimeoutMiddleware emits a
+#     real 504 envelope; the contract is semantically correct (no
+#     metric-gaming); the run step is fail-closed and the claim
+#     `ux-readiness-state-coverage` is ANCHORED with INV-API-CONTRACT.
+#
+# Tracked by GitHub issue IERD-Q5 (#530) and claim
+# `ux-readiness-state-coverage` in `docs/CLAIMS.yaml`.
+name: UX State Coverage — IERD-Q5
+
+on:
+  pull_request:
+    branches: [main]
+    paths:
+      - 'schemas/openapi/**'
+      - 'application/api/**'
+      - 'tests/api/test_ux_state_coverage.py'
+      - 'pyproject.toml'
+      - '.github/workflows/ux-state-coverage.yml'
+  merge_group:
+  push:
+    branches: [main]
+
+permissions:
+  contents: read
+
+concurrency:
+  group: ux-state-coverage-${{ github.event.pull_request.number || github.sha }}
+  cancel-in-progress: true
+
+jobs:
+  ux-state-coverage:
+    name: ux-state-coverage
+    runs-on: ubuntu-latest
+    timeout-minutes: 10
+    steps:
+      - name: Checkout
+        uses: actions/checkout@9c091bb21b7c1c1d1991bb908d89e4e9dddfe3e0 # v7.0.0
+
+      - name: Set up Python
+        uses: actions/setup-python@ece7cb06caefa5fff74198d8649806c4678c61a1 # v6
+        with:
+          python-version: '3.12'
+          cache: 'pip'
+
+      - name: Install runtime + test dependencies
+        run: |
+          set -euo pipefail
+          python -m pip install --upgrade pip
+          pip install -e .
+          pip install pytest
+
+      - name: Run UX state-coverage gate
+        id: run
+        # Phase-4 EXIT: fail-closed. The genuine timeout state is
+        # emitted by RequestTimeoutMiddleware and the contract is
+        # semantically correct, so a UXRS regression, an unenveloped
+        # 4xx/5xx, or a timeout-middleware behavioural failure now
+        # blocks merge. The claim is ANCHORED; any future flip back to
+        # informational must co-ship an EXTRAPOLATED re-classification
+        # (guarded by the commit-acceptor falsifier).
+        run: |
+          set -o pipefail
+          mkdir -p artifacts/ux-state-coverage
+          pytest tests/api/test_ux_state_coverage.py \
+            -q -s --tb=short \
+            --junitxml=artifacts/ux-state-coverage/junit.xml \
+            2>&1 | tee artifacts/ux-state-coverage/run.log
+
+      - name: Upload ux-state-coverage artifact
+        if: always()
+        uses: actions/upload-artifact@043fb46d1a93c77aae656e7c1c64a875d1fc6a0a # v7.0.1
+        with:
+          name: ux-state-coverage-results
+          path: artifacts/ux-state-coverage/
+          retention-days: 14
+
+      - name: Summarise UX state coverage
+        if: always()
+        run: |
+          set -euo pipefail
+          echo "## UX state coverage — IERD-Q5 §5" >> "$GITHUB_STEP_SUMMARY"
+          echo "" >> "$GITHUB_STEP_SUMMARY"
+          if [ -f artifacts/ux-state-coverage/run.log ]; then
+            grep -E "^\[uxrs\]" artifacts/ux-state-coverage/run.log >> "$GITHUB_STEP_SUMMARY" || true
+          fi
+          echo "" >> "$GITHUB_STEP_SUMMARY"
+          echo "Phase status: **Phase-4 EXIT** — fail-closed; genuine 504 timeout state emitted by RequestTimeoutMiddleware; claim ANCHORED (INV-API-CONTRACT)." >> "$GITHUB_STEP_SUMMARY"

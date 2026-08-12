@@ -1,3 +1,5 @@
+# Copyright (c) 2023-2026 Yaroslav Vasylenko (neuron7xLab)
+# SPDX-License-Identifier: MIT
 from __future__ import annotations
 
 import math
@@ -46,9 +48,7 @@ class QuadraticComponent(TrainingComponent):
         metrics = {"grad_norm": grad_norm}
         # Trigger checkpoint if gradient norm explodes for edge cases.
         should_ckpt = not math.isfinite(grad_norm)
-        return TrainingStepResult(
-            loss=loss, metrics=metrics, should_checkpoint=should_ckpt
-        )
+        return TrainingStepResult(loss=loss, metrics=metrics, should_checkpoint=should_ckpt)
 
     def optimizer_step(self) -> None:
         self.weights -= self.lr * self._grad
@@ -73,9 +73,7 @@ class QuadraticComponent(TrainingComponent):
             self._grad = np.concatenate([self._grad, np.zeros_like(pad)])
 
 
-def _build_dataset(
-    samples: int, *, dim: int, noise: float = 0.0
-) -> list[dict[str, object]]:
+def _build_dataset(samples: int, *, dim: int, noise: float = 0.0) -> list[dict[str, object]]:
     rng = np.random.default_rng(42)
     weight = rng.standard_normal(dim)
     data: list[dict[str, object]] = []

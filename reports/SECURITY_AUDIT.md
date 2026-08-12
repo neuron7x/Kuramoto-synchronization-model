@@ -1,4 +1,4 @@
-# TradePulse — Consolidated Security Audit
+# GeoSync — Consolidated Security Audit
 
 **Audit Date:** 2025-12-07  
 **Audit Scope:** Full repository security posture review  
@@ -13,7 +13,7 @@
 - **Python:** 3.11, 3.12 (officially supported)
 - **Node.js:** Next.js 14.2.5, React 18.2.0
 - **Go:** Present in `go/services/vpin`
-- **Rust:** Present in `rust/tradepulse-accel`
+- **Rust:** Present in `rust/geosync-accel`
 
 ### Security Workflows Analyzed
 1. `.github/workflows/security.yml` - Multi-scanner security gate
@@ -93,12 +93,12 @@
 2. Run: `cd go/services/vpin && govulncheck ./...`
 3. Update vulnerable modules in go.mod
 
-### Rust Dependencies (rust/tradepulse-accel)
+### Rust Dependencies (rust/geosync-accel)
 **Status:** ℹ️ Manual audit required
 
 **Action Items:**
 1. Install cargo-audit: `cargo install cargo-audit`
-2. Run: `cd rust/tradepulse-accel && cargo audit`
+2. Run: `cd rust/geosync-accel && cargo audit`
 3. Update vulnerable crates in Cargo.toml
 
 ---
@@ -235,7 +235,7 @@
   - Update vulnerable Go modules
 
 - **[SEC-RUST-001]** Audit Rust dependencies
-  - Run cargo audit on rust/tradepulse-accel
+  - Run cargo audit on rust/geosync-accel
   - Update vulnerable Rust crates
 
 - **[SEC-CONTAINER-001]** Harden Dockerfile

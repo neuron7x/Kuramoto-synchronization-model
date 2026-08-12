@@ -516,7 +516,7 @@ def execute_trade(self, signal):
 3. **PATCH_ONLY** - Use for simple, focused fixes
 
 All outputs maintain:
-- Ukrainian language for consistency with TradePulse team
+- Ukrainian language for consistency with GeoSync team
 - Technical accuracy and specificity
 - Focus on trading/financial domain invariants
 - Clear risk assessment and decision guidance

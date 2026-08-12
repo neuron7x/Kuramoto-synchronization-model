@@ -1,0 +1,62 @@
+# Diff-bound acceptor: behavioural-compatibility proof for the #1114
+# cyclic-import fix (CodeQL py/unsafe-cyclic-import, alerts #893/#894).
+#
+# #1114 broke the multiscale_kuramoto <-> cache cycle by extracting the
+# TimeFrame enum into the leaf module core/indicators/timeframe.py
+# (multiscale_kuramoto re-exports it; cache imports it from the leaf).
+# Removing the alert is not the same as proving behaviour is unchanged.
+# This change adds executable tests (P0-4) that prove the refactor is
+# behaviour-preserving along every observable axis: import-path identity,
+# legacy-path resolution, cache-key stability, cycle removal, and zero
+# runtime drift in the affected indicator path. No production code changes.
+
+id: p04-codeql-1114-compat
+status: ACTIVE
+claim_type: correctness
+promise: >-
+  The #1114 multiscale_kuramoto<->cache import-cycle fix is proven
+  behaviour-preserving by executable tests: TimeFrame is the same object
+  across the leaf, legacy (multiscale_kuramoto), and package import paths;
+  every historical import path still resolves; the cache key derived from a
+  TimeFrame is stable across import paths (store/load round-trip preserved);
+  cache no longer imports multiscale_kuramoto (cycle gone, verified by AST
+  and by fresh-subprocess import isolation); and MultiScaleKuramoto.analyze
+  produces bit-exact identical output regardless of which import path the
+  TimeFrame key came from, locked against a recorded golden baseline.
+diff_scope:
+  changed_files:
+    - path: ".claude/commit_acceptors/p04-codeql-1114-compat.yaml"
+    - path: "tests/unit/indicators/test_timeframe_compatibility.py"
+    - path: "docs/reports/codeql_1114_import_compat.md"
+  forbidden_paths:
+    - "trading/"
+    - "execution/"
+    - "forecast/"
+    - "policy/"
+required_python_symbols:
+  - "TimeFrame"
+expected_signal: >-
+  pytest -q tests/unit/indicators/test_timeframe_compatibility.py reports 26
+  passed; python -m compileall core exits 0; the new test carries no
+  noqa/type:ignore suppressions; mypy --strict clean on the test module.
+measurement_command: >-
+  python -m pytest -q -W error::DeprecationWarning
+  tests/unit/indicators/test_timeframe_compatibility.py
+  && python -m compileall core
+  | tee tmp/codeql_1114_import_compat.log
+signal_artifact: "tmp/codeql_1114_import_compat.log"
+falsifier:
+  command: "git grep -n 'from .multiscale_kuramoto import TimeFrame' core/indicators/cache.py"
+  description: >-
+    A match means cache imports TimeFrame from multiscale_kuramoto again,
+    i.e. the cycle was reintroduced and the compatibility proof is void; the
+    green path must produce no match. The test suite asserts the same
+    invariant at runtime via AST inspection and subprocess import isolation.
+rollback_command: "git revert --no-edit HEAD"
+rollback_verification_command: >-
+  git diff --exit-code origin/main --
+  tests/unit/indicators/test_timeframe_compatibility.py
+memory_update_type: none
+ledger_path: ".claude/commit_acceptors/p04-codeql-1114-compat.yaml"
+report_path: "docs/reports/codeql_1114_import_compat.md"
+evidence: []

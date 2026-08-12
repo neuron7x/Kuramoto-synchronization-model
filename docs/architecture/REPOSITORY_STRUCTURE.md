@@ -1,10 +1,10 @@
-# TradePulse Repository Structure
+# GeoSync Repository Structure
 
 **Last Updated:** 2025-12-08  
 **Version:** 1.0.0  
 **Status:** ✅ Active
 
-This document provides a comprehensive overview of the TradePulse repository structure, explaining the purpose of each major directory and file organization principles.
+This document provides a comprehensive overview of the GeoSync repository structure, explaining the purpose of each major directory and file organization principles.
 
 ## Table of Contents
 
@@ -21,7 +21,7 @@ This document provides a comprehensive overview of the TradePulse repository str
 
 ## Overview
 
-TradePulse follows a **flat package structure** where major components live at the root level. This design supports:
+GeoSync follows a **flat package structure** where major components live at the root level. This design supports:
 
 - **Direct imports**: `from core import ...`, `from execution import ...`
 - **Component independence**: Each directory is a standalone package
@@ -33,7 +33,7 @@ TradePulse follows a **flat package structure** where major components live at t
 ## Root Directory Structure
 
 ```
-TradePulse/
+GeoSync/
 ├── analytics/              # Market analytics and signal generation
 ├── application/            # Application services (API, runtime, security)
 ├── apps/                   # User-facing applications (web dashboard, risk guardian)
@@ -45,8 +45,8 @@ TradePulse/
 ├── observability/          # Logging, metrics, tracing, health checks
 ├── runtime/                # Runtime controllers and lifecycle management
 ├── src/                    # Source package (SDK, protocol implementations)
-│   ├── tradepulse/         # Main SDK package
-│   └── tradepulse_agent/   # Agent framework
+│   ├── geosync/         # Main SDK package
+│   └── geosync_agent/   # Agent framework
 ├── tests/                  # Test suite (unit, integration, e2e, property-based)
 ├── docs/                   # Documentation
 ├── examples/               # Usage examples and demos
@@ -78,7 +78,7 @@ TradePulse/
 - **`monitoring/`** - Monitoring dashboards (Grafana)
 
 #### Development
-- **`src/`** - Python source packages (`tradepulse`, `tradepulse_agent`)
+- **`src/`** - Python source packages (`geosync`, `geosync_agent`)
 - **`tests/`** - Comprehensive test suite
 - **`tools/`** - Development tools (linting, testing, deployment utilities)
 - **`scripts/`** - Utility scripts for common tasks
@@ -86,8 +86,8 @@ TradePulse/
 #### Special Purpose
 - **`cortex_service/`** - Dedicated Cortex service entrypoint for control-plane orchestration
 - **`nak_controller/`** - Neuromodulator controller (standalone module)
-- **`neurotrade_pro/`** - Advanced trading models (legacy, being refactored)
-- **`neuropro/`** - Professional neuromodulation features
+- **`geosync_pro/`** - Advanced trading models (legacy, being refactored)
+- **`geosync_hpc/`** - Professional neuromodulation features
 - **`sandbox/`** - Isolated testing environment
 - **`formal/`** - Formal verification proofs
 
@@ -97,14 +97,14 @@ TradePulse/
 
 ### Main Packages
 
-#### `tradepulse/` (Root Shim)
-Backward compatibility shim that forwards to `src.tradepulse`:
-- `tradepulse/__init__.py` - Import forwarding logic
-- `tradepulse/neural_controller/` - Neural controller module (direct)
-- `tradepulse/analytics/` - Analytics utilities (direct)
-- `tradepulse/risk/` - Risk management (direct)
+#### `geosync/` (Root Shim)
+Backward compatibility shim that forwards to `src.geosync`:
+- `geosync/__init__.py` - Import forwarding logic
+- `geosync/neural_controller/` - Neural controller module (direct)
+- `geosync/analytics/` - Analytics utilities (direct)
+- `geosync/risk/` - Risk management (direct)
 
-#### `src/tradepulse/` (Main SDK)
+#### `src/geosync/` (Main SDK)
 The primary SDK package:
 - `api/` - API clients and interfaces
 - `connectors/` - Exchange connectors
@@ -123,7 +123,7 @@ The primary SDK package:
 - `sdk/` - SDK core modules
 - `utils/` - Utility functions
 
-#### `src/tradepulse_agent/`
+#### `src/geosync_agent/`
 Agent framework for autonomous trading:
 - Agent lifecycle management
 - Environment interaction
@@ -182,7 +182,7 @@ Agent framework for autonomous trading:
 
 ## Configuration Management
 
-TradePulse uses **three separate configuration directories** for different purposes:
+GeoSync uses **three separate configuration directories** for different purposes:
 
 ### `conf/` - Hydra Framework Configuration
 - **Purpose:** Hydra-based application configuration with composition and overrides
@@ -258,8 +258,7 @@ Key documentation files at repository root:
 - `DEPLOYMENT.md` - Deployment procedures
 - `SECURITY.md` - Security policy
 - `DOCUMENTATION_SUMMARY.md` - Documentation registry
-- `LICENSE` - License (TPLA)
-- `PATENTS.md` - Patent policy
+- `LICENSE` - License (MIT License)
 - `CODE_OF_CONDUCT.md` - Code of conduct
 - `CODEOWNERS` - Code ownership
 
@@ -347,14 +346,14 @@ Key packages included in distribution:
 - `modules` - Reusable modules
 - `observability` - Observability stack
 - `src` - Source packages
-- `tradepulse` - Main package shim
-- `tradepulse_agent` - Agent framework
+- `geosync` - Main package shim
+- `geosync_agent` - Agent framework
 - `tools` - Development tools
 
 ### Package Data
 
 - `py.typed` - Type information for all packages
-- `tradepulse.neural_controller/config/*.yaml` - Neural controller configs
+- `geosync.neural_controller/config/*.yaml` - Neural controller configs
 
 ---
 
@@ -364,13 +363,6 @@ Key packages included in distribution:
 Build and runtime artifacts (gitignored, has `.gitkeep`):
 - `cns_stabilizer/` - CNS stabilizer event logs
 - `configs/` - Generated configuration templates
-
-### `backlog/` - Requirements Management
-Project requirements and backlog:
-- `requirements.json` - Structured requirements
-- `requirements.csv` - Spreadsheet format
-- `jira_import.csv` - Jira import format
-- `report.md` - Requirements analysis report
 
 ### `reports/` - Generated Reports
 Generated analysis reports (gitignored with exceptions):
@@ -428,7 +420,7 @@ Towncrier fragments for changelog generation (has `.gitkeep`)
 2. Moved `project.md` → `docs/requirements/product_specification.md`
 3. Moved `release-notes.md` → `docs/releases/release-notes.md`
 4. Created `docs/architecture/configuration_structure.md`
-5. Added `tradepulse` package to `pyproject.toml` includes
+5. Added `geosync` package to `pyproject.toml` includes
 6. Updated all references to moved files
 7. Added missing `__init__.py` files:
    - `execution/resilience/__init__.py`
@@ -446,7 +438,7 @@ Towncrier fragments for changelog generation (has `.gitkeep`)
 
 - [Configuration Structure Guide](configuration_structure.md) - Detailed config directory documentation
 - [ARCHITECTURE.md](../ARCHITECTURE.md) - System architecture overview
-- [DOCUMENTATION_SUMMARY.md](../../DOCUMENTATION_SUMMARY.md) - Documentation registry
+- [DOCUMENTATION_SUMMARY.md](../operations/DOCUMENTATION_SUMMARY.md) - Documentation registry
 - [CONTRIBUTING.md](../../CONTRIBUTING.md) - Contribution guidelines
 
 ---

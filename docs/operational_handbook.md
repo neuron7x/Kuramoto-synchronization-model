@@ -1,6 +1,6 @@
 # Operational Excellence Handbook
 
-This handbook consolidates the operational artefacts that keep TradePulse
+This handbook consolidates the operational artefacts that keep GeoSync
 reliable, reproducible, and auditable. Each section links to the authoritative
 runbooks, test suites, and governance controls maintained in the repository so
 teams can reach production readiness without tribal knowledge.
@@ -87,7 +87,7 @@ teams can reach production readiness without tribal knowledge.
   [`docs/performance.md`](performance.md) to wire `pytest-benchmark` and Airspeed
   Velocity runs into CI. Profiling traces from `pytest-profiling` are already
   archived by the workflow in
-  [`.github/workflows/tests.yml`](../.github/workflows/tests.yml) for regression
+  [`.github/workflows/tests.yml`](../.github/workflows/component-test-router.yml) for regression
   triage.
 
 ## Data Lake Lifecycle (Iceberg and Delta)
@@ -155,13 +155,13 @@ teams can reach production readiness without tribal knowledge.
 - **Fuzz harnesses** – Randomised payloads ensure ingestion adapters and
   execution connectors remain defensive under malformed input in
   [`tests/fuzz/test_ingestion_fuzz.py`](../tests/fuzz/test_ingestion_fuzz.py).
-  Consult [`TESTING.md`](../TESTING.md) for commands that aggregate property and
+  Consult [`TESTING.md`](operations/TESTING.md) for commands that aggregate property and
   fuzz statistics in CI.
 
 ## Compatibility Matrix and Fallback Paths
 
 - **Python matrix** – CI exercises Python 3.11, 3.12, and 3.13 via the matrix in
-  [`.github/workflows/tests.yml`](../.github/workflows/tests.yml) to guarantee
+  [`.github/workflows/tests.yml`](../.github/workflows/component-test-router.yml) to guarantee
   forward compatibility before releases.
 - **GPU fallbacks** – Indicator kernels automatically downgrade to CPU when CuPy
   is unavailable, with explicit tests covering both code paths in
@@ -169,7 +169,7 @@ teams can reach production readiness without tribal knowledge.
   and the adaptive entropy backend selection in
   [`core/indicators/entropy.py`](../core/indicators/entropy.py).
 - **Distribution targets** – The wheel pipeline in
-  [`.github/workflows/build-wheels.yml`](../.github/workflows/build-wheels.yml)
+  [`.github/workflows/build-wheels.yml`](../.github/workflows/wheel-contract-gate.yml)
   packages manylinux and musllinux wheels so downstream systems can install on
   glibc- and musl-based distributions without manual rebuilding.
 

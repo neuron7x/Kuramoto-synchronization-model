@@ -1,21 +1,102 @@
-# Bibliography
+# GeoSync Bibliography Canon
 
-## Neuro-control (serotonin, dopamine, basal ganglia policy)
-- [@SuttonBarto2018RL] — Canonical TD(0)/RL formulation underpinning the dopamine controller’s reward prediction error and gating logic. Mapped to: NC-001.
-- [@JacobsAzmitia1992Serotonin] — Tonic/phasic serotonin dynamics grounding the serotonin stress gating model. Mapped to: NC-002.
-- [@BendaHerz2003Adaptation] — Spike-frequency adaptation model used to shape hysteresis and desensitization behaviour in serotonin controls. Mapped to: NC-002, NC-003.
-- [@Ferguson2001GPCR] — GPCR desensitization mechanisms informing serotonin veto/desensitization safeguards. Mapped to: NC-003.
+Canonical BIB-ID index for docs/claim_source_matrix.json.
 
-## Risk / Execution correctness (thermodynamics, governance)
-- [@Callen1985Thermodynamics] — Helmholtz free energy definition (F = U − T·S) providing the safety metric for TACL. Mapped to: TH-001.
-- [@Friston2010FreeEnergy] — Variational free-energy framing used for thermodynamic governance, crisis detection, and active inference control. Mapped to: TH-001, CM-001, NC-004.
+## Source map
 
-## Metrics / Observability
-- [@Prometheus2024Docs] — Prometheus exposition format and gauge/counter semantics used for neuromodulator telemetry. Mapped to: OBS-001.
+### BIB-SYNC-001
+Kuramoto 1975.
 
-## Backtesting & evaluation methodology
-- [@LopezDePrado2018AFML] — Walk-forward validation and financial ML evaluation patterns adopted in backtesting guides. Mapped to: BT-001.
+### BIB-SYNC-002
+Kuramoto 1984.
 
-## Security & supply-chain
-- [@NIST80061r2] — NIST SP 800-61r2 incident handling phases referenced by the security framework and runbooks. Mapped to: SEC-001.
-- [@ISO27001_2022] — ISO/IEC 27001:2022 control baseline referenced for security requirements alignment. Mapped to: SEC-001.
+### BIB-SYNC-003
+Strogatz 2000.
+
+### BIB-SYNC-004
+Arenas et al. 2008.
+
+### BIB-CRIT-001
+Scheffer et al. 2009.
+
+### BIB-CRIT-002
+Finite-size scaling canon.
+
+### BIB-FINNET-001
+Bardoscia et al. 2021.
+
+### BIB-FINNET-002
+Acemoglu, Ozdaglar, Tahbaz-Salehi 2015.
+
+### BIB-FINNET-003
+Boss et al. 2004.
+
+### BIB-FINNET-004
+Soramaki et al. 2007.
+
+### BIB-FINNET-005
+Laeven and Valencia 2018.
+
+### BIB-STATS-001
+Clauset, Shalizi, Newman 2009.
+
+### BIB-RL-001
+Schultz, Dayan, Montague 1997.
+
+### BIB-RL-002
+Sutton and Barto 2018.
+
+### BIB-RL-003
+Robbins and Monro 1951.
+
+### BIB-5HT-001
+Miyazaki et al. 2014.
+
+### BIB-GABA-001
+Mink 1996.
+
+### BIB-FEP-001
+Friston 2010.
+
+### BIB-GEOM-001
+Ollivier 2009.
+
+### BIB-GEOM-002
+Forman 2003.
+
+### BIB-GEOM-003
+Sandhu, Georgiou, Tannenbaum 2016, "Ricci curvature: An economic indicator for market fragility and systemic risk", Science Advances 2(5):e1501495.
+
+### BIB-GEOM-004
+Ni, Lin, Gao, Gu, Saucan 2015, "Ricci curvature of the Internet topology", IEEE INFOCOM (Ollivier-Ricci on weighted graphs via optimal transport).
+
+### BIB-STOCH-001
+Karatzas and Shreve 1991.
+
+### BIB-QUANT-001
+Kelly 1956.
+
+### BIB-QUANT-002
+Lo 2002.
+
+### BIB-QUANT-003
+White 2000.
+
+### BIB-QUANT-004
+Bailey and Lopez de Prado 2014/2017.
+
+### BIB-FORMAL-001
+Lamport TLA+.
+
+### BIB-SEC-001
+NIST SP 800-53 Rev. 5.
+
+### BIB-OBS-001
+OpenTelemetry.
+
+### BIB-CI-001
+GitHub Actions OIDC documentation.
+
+## Rule
+
+A bibliography source never promotes a claim by itself. Promotion requires local evidence and the claim governance gate.

@@ -1,0 +1,154 @@
+# Diff-bound commit acceptor for the D-002G non-degenerate null redesign
+# PRE-REGISTRATION lock.
+#
+# Documentation-only PR. Establishes the pre-registered contract for the
+# D-002G redesign protocol (a FRESH contract, not an edit of D-002C).
+# The merge commit of this PR IS the anchor; the YAML's content-addressed
+# sha after merge is the contract identity.
+#
+# What lands:
+#   * docs/governance/D002G_PREREGISTRATION.yaml
+#       Locked YAML: 4 hypotheses, M1 + M6 null mechanism, Phase 0
+#       verification (3 checks), formal acceptance rules R1+R2+R3+R2-B
+#       +NULL_AUDIT, forbidden_outputs (8 items), reproducibility
+#       envelope, anti-overclaim guards, append-only relationship to
+#       D-002C attempt-1/attempt-2.
+#   * docs/governance/D002G_NONDEGENERATE_NULL_DESIGN.md
+#       Long-form design: diagnosis of bit-identical paired-CRN collapse
+#       at λ=0, candidate mechanism matrix (M1-M6), selected primary
+#       (M1 + M6 R2-B), Phase 0 verification protocol, R2-B inside
+#       D-002G discipline, implementation cost estimate.
+#   * docs/governance/D002G_ACCEPTANCE_RULES.md
+#       Formal rule definitions: R1 (signal/CI), R2 (FPR under M1
+#       non-degenerate null), R3 (direction stability), R2-B (M6
+#       placebo coupling FPR), NULL_AUDIT (executable permutation).
+#       Phase 0 procedure with pseudocode. Cell-grid scope inherited.
+#       Verdict derivation steps.
+#
+# Strict scope:
+#   Documentation-only pre-registration lock. NO source change. NO
+#   test change. NO D002C_PREREGISTRATION.yaml edit. NO substrate /
+#   metric / runner / null_audit / preflight / verdict code change.
+#   NO threshold tuning. NO claim ledger modification. NO sweep
+#   execution. NO claim promotion. The implementation PR + Phase 0
+#   verification + canonical D-002G run are SEPARATE downstream PRs.
+
+id: x10r-d002g-nondegenerate-null-redesign
+status: ACTIVE
+claim_type: documentation
+promise: >-
+  After this PR lands, docs/governance/ carries the D-002G
+  pre-registration document set: locked YAML
+  D002G_PREREGISTRATION.yaml with 4 falsifiable hypotheses, the
+  M1 (independent-seed null cohort) + M6 (placebo coupling R2-B)
+  redesign, a hard 3-check Phase 0 pre-launch verification, formal
+  acceptance R1+R2+R3+R2-B+NULL_AUDIT, and 8 forbidden_outputs
+  including explicit blocks on cross-promotion from D-002G to
+  D-002C tier strings or to real-data/bank-level claims. The
+  long-form design and acceptance-rules companions explain
+  mechanism choice, diagnose the bit-identical collapse, and
+  pseudocode Phase 0.
+
+  The merge commit of this PR IS the anchor. After merge, the
+  pre-registration YAML is locked; any subsequent edit constitutes
+  a FRESH pre-registration (D-002H or similar), not a mutation
+  of D-002G.
+
+  Strict scope: documentation-only. No source / test / acceptor
+  semantics change for any other contract. No D002C_PREREGISTRATION
+  edit. No threshold tuning. No claim ledger modification. The
+  implementation PR + Phase 0 verification + canonical D-002G run
+  are SEPARATE downstream PRs.
+
+diff_scope:
+  changed_files:
+    - path: ".claude/commit_acceptors/x10r-d002g-nondegenerate-null-redesign.yaml"
+    - path: "docs/governance/D002G_PREREGISTRATION.yaml"
+    - path: "docs/governance/D002G_NONDEGENERATE_NULL_DESIGN.md"
+    - path: "docs/governance/D002G_ACCEPTANCE_RULES.md"
+  forbidden_paths:
+    - "trading/"
+    - "execution/"
+    - "forecast/"
+    - "policy/"
+    - "core/"
+    - "research/"
+    - "scripts/"
+    - "tests/"
+    - "docs/governance/D002C_PREREGISTRATION.yaml"
+    - "docs/governance/D002C_CLAIM_LEDGER.yaml"
+    - "docs/governance/D002C_CANONICAL_RUN_REPORT.md"
+    - "docs/governance/D002C_ATTEMPT_2_NULL_AUDIT_FALSIFICATION_REPORT.md"
+    - "application/governance/claim_ledger.py"
+    - "application/governance/commit_acceptor.py"
+required_python_symbols: []
+expected_signal: >-
+  `git ls-tree HEAD docs/governance/` shows the three new D-002G
+  artifacts; `python -c "import yaml; yaml.safe_load(open(\"docs/governance/D002G_PREREGISTRATION.yaml\"))"`
+  succeeds; the YAML carries 4 hypotheses, M1 as primary null,
+  M6 as R2-B mechanism, 3 Phase 0 checks, and 8
+  forbidden_outputs; D002C_PREREGISTRATION.yaml is untouched;
+  D002C_CLAIM_LEDGER.yaml is untouched.
+measurement_command: >-
+  bash -c 'test -f docs/governance/D002G_PREREGISTRATION.yaml
+  && test -f docs/governance/D002G_NONDEGENERATE_NULL_DESIGN.md
+  && test -f docs/governance/D002G_ACCEPTANCE_RULES.md
+  && grep -q "SYNTHETIC_GATE6_CERTIFIED_D002G_REDESIGN" docs/governance/D002G_PREREGISTRATION.yaml
+  && grep -q "D002G_REDESIGN_INSUFFICIENT_AT_TESTED_BUDGET" docs/governance/D002G_PREREGISTRATION.yaml
+  && grep -q "M1" docs/governance/D002G_NONDEGENERATE_NULL_DESIGN.md
+  && grep -q "R2_B" docs/governance/D002G_PREREGISTRATION.yaml
+  && grep -q "not_a_rescue_of_d002c: true" docs/governance/D002G_PREREGISTRATION.yaml
+  && grep -q "Phase 0a" docs/governance/D002G_ACCEPTANCE_RULES.md
+  && python -c "import yaml; d=yaml.safe_load(open(\"docs/governance/D002G_PREREGISTRATION.yaml\")); assert len(d[\"hypotheses\"]) == 4; assert d[\"null_mechanism\"][\"primary\"] == \"M1\"; assert d[\"supplementary_null\"][\"mechanism\"] == \"M6\"; assert len(d[\"phase_0_verification\"][\"checks\"]) == 3; assert len(d[\"forbidden_outputs\"]) == 8; assert d[\"relationship_to_d002c\"][\"d002g_does_not_resurrect_attempt_1\"] is True; assert d[\"relationship_to_d002c\"][\"d002g_does_not_walk_back_attempt_2\"] is True"'
+signal_artifact: "docs/governance/D002G_PREREGISTRATION.yaml"
+falsifier:
+  command: >-
+    bash -c 'set -e;
+    grep -q "tier_if_pass: SYNTHETIC_GATE6_CERTIFIED_D002G_REDESIGN" docs/governance/D002G_PREREGISTRATION.yaml || exit 1;
+    grep -q "tier_if_fail: D002G_REDESIGN_INSUFFICIENT_AT_TESTED_BUDGET" docs/governance/D002G_PREREGISTRATION.yaml || exit 1;
+    grep -q "primary: M1" docs/governance/D002G_PREREGISTRATION.yaml || exit 1;
+    grep -q "mechanism: M6" docs/governance/D002G_PREREGISTRATION.yaml || exit 1;
+    grep -q "phase_0_verification" docs/governance/D002G_PREREGISTRATION.yaml || exit 1;
+    grep -q "not_a_rescue_of_d002c: true" docs/governance/D002G_PREREGISTRATION.yaml || exit 1;
+    grep -q "D-002G does NOT rescue D-002C" docs/governance/D002G_NONDEGENERATE_NULL_DESIGN.md || exit 1;
+    if grep -E "VALIDATED_REAL_BANK_LEVEL_RESULT|TESTED_POSITIVE_REAL|BANK_LEVEL_PRECURSOR_CONFIRMED|real-data validated|bank-level confirmed" docs/governance/D002G_PREREGISTRATION.yaml docs/governance/D002G_NONDEGENERATE_NULL_DESIGN.md docs/governance/D002G_ACCEPTANCE_RULES.md | grep -vE "forbidden|NOT|❌|absent|never|no_|cannot" >/dev/null; then
+      echo "forbidden tier asserted outside forbidden-list context"; exit 2;
+    fi;
+    python -c "import yaml; d=yaml.safe_load(open(\"docs/governance/D002G_PREREGISTRATION.yaml\")); h=d[\"hypotheses\"]; assert len(h)==4; assert {x[\"id\"] for x in h}=={\"G1\",\"G2\",\"G3\",\"G4\"}; reqs={r[\"id\"] for r in d[\"acceptance\"][\"primary_certification_rule\"][\"requirements\"]}; assert reqs=={\"R1\",\"R2\",\"R3\",\"R2_B\",\"NULL_AUDIT\"}; assert d[\"null_mechanism\"][\"primary\"]==\"M1\"; assert d[\"null_mechanism\"][\"forbidden\"][0]==\"bit-identical paired CRN (the degenerate D-002C mechanism)\"; assert d[\"supplementary_null\"][\"id\"]==\"R2_B\"; assert len(d[\"phase_0_verification\"][\"checks\"])==3; assert d[\"reproducibility\"][\"null_seed_offset\"]==10000; assert d[\"reproducibility\"][\"r2_b_random_site_seed\"]==99; print(\"D-002G pre-registration schema PASS\")"'
+  description: >-
+    Probes the D-002G pre-registration contract:
+    (a) tier_if_pass is the new D-002G-specific tier
+        SYNTHETIC_GATE6_CERTIFIED_D002G_REDESIGN (NOT cross-promoted
+        from D-002C);
+    (b) tier_if_fail is the D-002G-specific
+        D002G_REDESIGN_INSUFFICIENT_AT_TESTED_BUDGET;
+    (c) primary null mechanism is M1 (independent-seed); fallback
+        is M2; bit-identical paired CRN is explicitly forbidden;
+    (d) R2-B supplementary gate is M6 (placebo coupling) with the
+        locked random_site_seed=99;
+    (e) Phase 0 verification has exactly 3 checks (bit-identity,
+        H0 preservation, permutation discriminability);
+    (f) 4 falsifiable hypotheses {G1..G4} pre-committed;
+    (g) acceptance rules are exactly {R1, R2, R3, R2_B, NULL_AUDIT};
+    (h) relationship_to_d002c flags assert no rescue of attempt-1
+        and no walk-back of attempt-2;
+    (i) no forbidden tier phrasing leaks outside ❌/forbidden-list
+        context.
+    If any of these regress, the pre-registration contract is
+    broken and the subsequent implementation PR would land on an
+    unanchored target.
+rollback_command: >-
+  bash -c 'git checkout HEAD~1 --
+  && rm -f docs/governance/D002G_PREREGISTRATION.yaml
+  docs/governance/D002G_NONDEGENERATE_NULL_DESIGN.md
+  docs/governance/D002G_ACCEPTANCE_RULES.md
+  .claude/commit_acceptors/x10r-d002g-nondegenerate-null-redesign.yaml'
+rollback_verification_command: >-
+  bash -c 'test ! -f docs/governance/D002G_PREREGISTRATION.yaml
+  && test ! -f docs/governance/D002G_NONDEGENERATE_NULL_DESIGN.md
+  && test ! -f docs/governance/D002G_ACCEPTANCE_RULES.md
+  && test ! -f .claude/commit_acceptors/x10r-d002g-nondegenerate-null-redesign.yaml'
+memory_update_type: append
+ledger_path: ".claude/commit_acceptors/x10r-d002g-nondegenerate-null-redesign.yaml"
+report_path: "docs/governance/D002G_NONDEGENERATE_NULL_DESIGN.md"
+evidence: []

@@ -1,0 +1,103 @@
+# Diff-bound commit acceptor for the 2026-05-07 audit-debt cleanup.
+#
+# Closes three findings from the codebase audit run after the IERD-Q4
+# Phase-3 EXIT (PR #551) + governance typed models (PR #552):
+#
+# 1. Invariant count drift — README.md badges and table claimed 87
+#    invariants while the registry returned 90 (the body already said
+#    90). The shields and the headline table now match the
+#    `python scripts/count_invariants.py` authority.
+#
+# 2. Workflow self-contradiction — `.github/workflows/commit-acceptor-gate.yml`
+#    used floating action tags (`actions/checkout@v6`, `actions/setup-python@v6`)
+#    while every other workflow pins by 40-char SHA per the repo-policy
+#    rule the gate itself enforces.
+#
+# 3. Test-isolation regression — the latency-budget test set five env
+#    vars at module import time (`os.environ["GEOSYNC_DISABLE_METRICS"] = "1"`
+#    + four `setdefault` calls) which polluted the pytest session for
+#    downstream test modules. Refactored to a module-scoped `client`
+#    fixture that snapshots → applies overrides → yields → restores;
+#    `create_app` is imported lazily through `importlib` inside the
+#    fixture window.
+#
+# Locally verified:
+#   * mypy --strict + ruff: clean on the touched test file
+#   * pytest tests/api/test_latency_budget_server_compute.py
+#       tests/observability/test_metrics_expectations.py: 6/6 pass when
+#     run together (was 3/6 with the leaking module-level env)
+#   * python scripts/count_invariants.py: 90
+
+id: debt-audit-cleanup-2026-05-07
+status: ACTIVE
+claim_type: governance
+promise: >-
+  After this PR lands the README invariant badges (lines 12 and 35)
+  and the headline table (line 175) declare 90, matching
+  `python scripts/count_invariants.py`. The
+  `.github/workflows/commit-acceptor-gate.yml` workflow pins both
+  `actions/checkout` and `actions/setup-python` by 40-char commit SHA
+  (matching the canonical pin used in pr-gate.yml,
+  schemathesis-contract.yml, and latency-budget.yml). The
+  latency-budget test no longer mutates `os.environ` at module
+  import time; the env-var window is bounded to the lifetime of the
+  module-scoped `client` fixture.
+diff_scope:
+  changed_files:
+    - path: ".claude/commit_acceptors/debt-audit-cleanup-2026-05-07.yaml"
+    - path: ".github/workflows/commit-acceptor-gate.yml"
+    - path: "README.md"
+    - path: "tests/api/test_latency_budget_server_compute.py"
+  forbidden_paths:
+    - "trading/"
+    - "execution/"
+    - "forecast/"
+    - "policy/"
+    - "core/physics/"
+    - "core/kuramoto/"
+    - "application/api/service.py"
+    - "application/api/errors.py"
+    - "scripts/ci/check_claims.py"
+    - "tools/commit_acceptor/validate_commit_acceptor.py"
+required_python_symbols:
+  - "tests/api/test_latency_budget_server_compute.py::client"
+  - "tests/api/test_latency_budget_server_compute.py::_REQUIRED_ENV"
+  - "tests/api/test_latency_budget_server_compute.py::test_endpoint_p95_within_budget"
+expected_signal: >-
+  Local: `python scripts/count_invariants.py` returns 90; `grep -E
+  "invariants-(87|90)" README.md` finds only invariants-90 hits;
+  `grep "actions/checkout@v6" .github/workflows/commit-acceptor-gate.yml`
+  is empty (replaced by SHA-pinned form);
+  `pytest tests/api/test_latency_budget_server_compute.py
+  tests/observability/test_metrics_expectations.py -q` exits 0 (was
+  failing before this PR with `AssertionError: expectations failed
+  with issues: [{'code': 'above_max', 'message': 'value 230.0
+  exceeds maximum 100.0', 'metric':
+  'geosync_api_request_latency_seconds'}]`).
+measurement_command: >-
+  bash -c 'python scripts/count_invariants.py && grep -L "invariants-87" README.md && grep -q "actions/checkout@de0fac2e4500dabe0009e67214ff5f5447ce83dd"
+       .github/workflows/commit-acceptor-gate.yml && python -m pytest tests/api/test_latency_budget_server_compute.py
+       tests/observability/test_metrics_expectations.py -q'
+signal_artifact: "tmp/debt_audit_cleanup_2026_05_07.log"
+falsifier:
+  command: >-
+    bash -c 'grep -q "invariants-87\|@v6\b" README.md
+    .github/workflows/commit-acceptor-gate.yml'
+  description: >-
+    Probes the union of the three remediated artefacts: shields
+    showing `invariants-87` OR a floating `@v6` action tag in the
+    commit-acceptor-gate workflow. If grep finds either pattern,
+    the falsifier exits 0 — drift has reappeared and the PR's
+    governance promise is broken.
+rollback_command: >-
+  git checkout HEAD~1 --
+  README.md
+  .github/workflows/commit-acceptor-gate.yml
+  tests/api/test_latency_budget_server_compute.py
+  .claude/commit_acceptors/debt-audit-cleanup-2026-05-07.yaml
+rollback_verification_command: >-
+  bash -c 'grep -q "invariants-87" README.md'
+memory_update_type: append
+ledger_path: ".claude/commit_acceptors/debt-audit-cleanup-2026-05-07.yaml"
+report_path: "tmp/debt_audit_cleanup_2026_05_07.log"
+evidence: []

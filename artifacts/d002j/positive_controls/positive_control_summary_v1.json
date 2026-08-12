@@ -1,0 +1,37 @@
+{
+  "all_families_have_negative_sibling": true,
+  "all_families_have_numeric_fail_threshold": true,
+  "all_families_have_numeric_pass_threshold": true,
+  "by_control_class": {
+    "balance_sheet_impairment": 1,
+    "contagion_cascade": 1,
+    "information_delay_trap": 1,
+    "liquidity_shock": 1,
+    "official_response_event_shock": 1,
+    "volatility_regime_switch": 1
+  },
+  "by_mapped_p5_substrate_candidate": {
+    "balance_sheet_solvency_proxy": 1,
+    "capital_ratio_distribution_dynamics": 1,
+    "debtrank_propagation": 1,
+    "funding_liquidity_rollover": 1,
+    "garch_breakpoint_detector": 1,
+    "interbank_exposure_cascade": 1,
+    "interbank_funding_topology": 1,
+    "lookahead_violation_detector": 1,
+    "point_in_time_vintage_enforcer": 1,
+    "policy_intervention_breakpoint_detector": 1,
+    "post_event_regime_shift_observer": 1,
+    "realised_volatility_regime_observer": 1
+  },
+  "canonical_run_authorized": false,
+  "claim_boundary": "Synthetic only. POSITIVE_CONTROLS_READY means the pipeline distinguishes planted signal from matched null for all 6 families (PC5 inverted). It does NOT prove real-world performance. Next legal phase: D002J-P5.",
+  "decision": "POSITIVE_CONTROLS_READY",
+  "determinism_policy": "numpy.random.default_rng(seed); same seed -> identical bytes; no wall-clock",
+  "generated_at": "2026-05-15T00:00:00Z",
+  "negative_siblings_present": 6,
+  "pc5_inverted_pass_present": true,
+  "schema_version": "D002J-POSITIVE-CONTROL-SUMMARY-v1",
+  "study_id": "D-002J-P4",
+  "total_control_families": 6
+}

@@ -1,5 +1,5 @@
 ---
-owner: data@tradepulse
+owner: data@geosync
 review_cadence: quarterly
 artifacts:
   - path: sample.csv
@@ -105,16 +105,16 @@ print(f"Price range: {df['price'].min():.2f} to {df['price'].max():.2f}")
 print(f"Average volume: {df['volume'].mean():.0f}")
 ```
 
-### Using with TradePulse Indicators
+### Using with GeoSync Indicators
 
 ```python
-from core.indicators.kuramoto_ricci_composite import TradePulseCompositeEngine
+from core.indicators.kuramoto_ricci_composite import GeoSyncCompositeEngine
 
 # Load data
 df = pd.read_csv("sample.csv")
 
 # Analyze with composite engine
-engine = TradePulseCompositeEngine()
+engine = GeoSyncCompositeEngine()
 snapshot = engine.analyze_market(df[['price', 'volume']])
 
 print(f"Detected regime: {snapshot.phase.value}")
@@ -182,7 +182,7 @@ This artifact should be:
 
 - [Sample Data Documentation](../templates/sample_data.md)
 - [Data Generation Guide](../../interfaces/generate_sample_data.py)
-- [Testing Documentation](../../TESTING.md)
+- [Testing Documentation](../operations/TESTING.md)
 - [Backtest Documentation](../../backtest/)
 
 ## Changelog

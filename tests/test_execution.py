@@ -1,4 +1,6 @@
-from neuropro.execution import Execution
+# Copyright (c) 2023-2026 Yaroslav Vasylenko (neuron7xLab)
+# SPDX-License-Identifier: MIT
+from geosync_hpc.execution import Execution
 
 
 def test_costs_monotonic_vol():

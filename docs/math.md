@@ -1,7 +1,7 @@
-# Mathematical Foundations of TradePulse
+# Mathematical Foundations of GeoSync
 
 This document provides a comprehensive mathematical overview of the core algorithms
-and indicators implemented in TradePulse. All formulas follow rigorous mathematical
+and indicators implemented in GeoSync. All formulas follow rigorous mathematical
 notation and include complexity analysis, numerical stability considerations, and
 theoretical foundations.
 
@@ -301,7 +301,7 @@ All algorithms document:
 
 ## Implementation Notes
 
-All mathematical implementations in TradePulse:
+All mathematical implementations in GeoSync:
 - ✓ Use IEEE 754 floating-point arithmetic
 - ✓ Document numerical stability guarantees
 - ✓ Include complexity analysis (time and space)

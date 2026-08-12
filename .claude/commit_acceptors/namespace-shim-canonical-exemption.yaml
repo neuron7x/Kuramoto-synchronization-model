@@ -1,0 +1,41 @@
+id: namespace-shim-canonical-exemption
+status: ACTIVE
+claim_type: correctness
+promise: >-
+  The namespace-integrity guard exempts explicitly-declared deprecated
+  re-export shims (__DEPRECATED_SHIM__ = True) from the __CANONICAL__ = True
+  requirement, so src/geosync/risk (a shim re-exporting the canonical
+  top-level geosync.risk) is no longer falsely required to claim canonical
+  authorship. The exemption is opt-in and cannot mask a genuine
+  missing-canonical violation.
+diff_scope:
+  changed_files:
+  - path: scripts/check_namespace_integrity.py
+  - path: src/geosync/risk/__init__.py
+  - path: .claude/commit_acceptors/namespace-shim-canonical-exemption.yaml
+  forbidden_paths:
+  - trading/
+  - execution/
+  - forecast/
+  - policy/
+required_python_symbols: []
+expected_signal: >-
+  check_namespace_integrity reports zero violations and
+  check_namespace_policy.main() returns 0.
+measurement_command: python scripts/check_namespace_integrity.py
+signal_artifact: scripts/check_namespace_integrity.py
+falsifier:
+  command: python scripts/check_namespace_integrity.py && python scripts/check_namespace_policy.py
+  description: >-
+    Exits 0 only if BOTH the namespace-integrity guard and the namespace-policy
+    gate report zero violations. Refires (non-zero exit) on any regression that
+    reintroduces a namespace or canonical-flag violation.
+rollback_command: git checkout -- scripts/check_namespace_integrity.py src/geosync/risk/__init__.py .claude/commit_acceptors/namespace-shim-canonical-exemption.yaml
+rollback_verification_command: git diff --exit-code scripts/check_namespace_integrity.py src/geosync/risk/__init__.py .claude/commit_acceptors/namespace-shim-canonical-exemption.yaml
+memory_update_type: append
+ledger_path: .claude/commit_acceptors/namespace-shim-canonical-exemption.yaml
+report_path: artifacts/namespace/shim_canonical_exemption_audit.md
+evidence:
+- path: scripts/check_namespace_integrity.py
+- path: src/geosync/risk/__init__.py
+- path: .claude/commit_acceptors/namespace-shim-canonical-exemption.yaml

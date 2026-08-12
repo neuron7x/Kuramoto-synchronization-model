@@ -1,0 +1,5 @@
+{
+  "required": ["request_id", "module", "status", "output", "artifacts", "errors", "warnings", "validation", "next_action"],
+  "statuses": ["PASS", "PARTIAL", "BLOCKED", "FAILED"],
+  "rule": "all module results use this envelope"
+}

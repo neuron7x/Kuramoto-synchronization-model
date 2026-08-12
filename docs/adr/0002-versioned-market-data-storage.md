@@ -51,7 +51,7 @@ We will implement a **Versioned Market Data Storage System** using:
 
 4. **Storage Organization:**
    ```
-   s3://tradepulse-data/
+   s3://geosync-data/
    ├── market-data/
    │   ├── raw/                    # Unprocessed market feeds
    │   │   ├── binance/

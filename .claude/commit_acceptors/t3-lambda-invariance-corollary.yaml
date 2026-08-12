@@ -1,0 +1,44 @@
+id: t3-lambda-invariance-corollary
+status: ACTIVE
+claim_type: correctness
+promise: >-
+  Formalizes Law T3 Corollary T3.1 — supercritical λ₁-invariance — as a
+  deterministic falsification battery plus a law-doc statement. Above K_c the
+  leading Lyapunov exponent is exactly K-invariant (verified witness: K spanning
+  3·K_c–8·K_c, i.e. 2.67×, yields λ₁ equal to ~4e-17 ≈ 2 ULP under x64), so the
+  λ→K inverse is non-injective by physics, not by numerical noise. This is the
+  mechanistic root cause behind the historical fragility of the T3 negative
+  control, turned into a guarded, falsifiable theorem. A theorem derived from
+  Laws T1+T2 — NOT a new constitutional invariant; the invariant count stays 97.
+diff_scope:
+  changed_files:
+  - path: tests/unit/physics/test_T3_noninjectivity.py
+  - path: docs/laws/T3_lyapunov_calibration.md
+  - path: .claude/commit_acceptors/t3-lambda-invariance-corollary.yaml
+  forbidden_paths: []
+required_python_symbols:
+  - "tests/unit/physics/test_T3_noninjectivity.py::test_T3_corollary_lambda1_is_K_invariant_on_synchronised_branch"
+expected_signal: >-
+  tests/unit/physics/test_T3_noninjectivity.py passes deterministically (x64,
+  fixed seed); λ₁ spread across a >2× coupling span is ≤ 1e-9; the calibrator
+  CONVERGES to an interior K for the plateau target. count_invariants == 97.
+measurement_command: python -m pytest tests/unit/physics/test_T3_noninjectivity.py -q
+signal_artifact: tests/unit/physics/test_T3_noninjectivity.py
+falsifier:
+  command: python -m pytest "tests/unit/physics/test_T3_noninjectivity.py::test_T3_corollary_lambda1_is_K_invariant_on_synchronised_branch" -q
+  description: >-
+    Must fail if λ₁ ever becomes K-dependent on the synchronised branch (spread
+    above the machine-precision ceiling) — i.e. if the centre-manifold exponent
+    stops being set purely by the frequency dispersion. That would refute
+    Corollary T3.1 and require re-deriving Law T3's well-posed slice.
+rollback_command: >-
+  git checkout origin/main -- docs/laws/T3_lyapunov_calibration.md &&
+  git rm -f tests/unit/physics/test_T3_noninjectivity.py
+  .claude/commit_acceptors/t3-lambda-invariance-corollary.yaml
+rollback_verification_command: >-
+  test ! -f tests/unit/physics/test_T3_noninjectivity.py
+memory_update_type: append
+ledger_path: .claude/commit_acceptors/t3-lambda-invariance-corollary.yaml
+report_path: docs/laws/T3_lyapunov_calibration.md
+evidence:
+- path: tests/unit/physics/test_T3_noninjectivity.py

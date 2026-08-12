@@ -1,3 +1,5 @@
+# Copyright (c) 2023-2026 Yaroslav Vasylenko (neuron7xLab)
+# SPDX-License-Identifier: MIT
 """Tests for Digital Governance Framework.
 
 Tests all 20 requirements of the digital transformation mandate.
@@ -8,7 +10,7 @@ from datetime import datetime, timezone
 
 import pytest
 
-from src.tradepulse.core.digital_governance import (
+from src.geosync.core.digital_governance import (
     ComplianceLevel,
     DataQualityCheck,
     DigitalAuditRecord,
@@ -396,9 +398,7 @@ class TestDigitalGovernanceFramework:
 
         # Data with spike
         values_with_spike = [1.0, 1.1, 1.05, 10.0, 1.08]
-        checks = governance.check_data_quality(
-            "price", values_with_spike, spike_threshold_std=1.5
-        )
+        checks = governance.check_data_quality("price", values_with_spike, spike_threshold_std=1.5)
 
         # Should detect spike
         assert any(c.check_type == "spikes" for c in checks)

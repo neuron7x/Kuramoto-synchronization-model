@@ -1,0 +1,63 @@
+# Diff-bound acceptor: re-pin the cross-asset-kuramoto frozen-artifact manifest.
+#
+# #1339/#1341 removed redundant repo-root sys.path hacks from four
+# cross-asset-kuramoto scripts (a sanctioned refactor: ONLY the
+# `if str(REPO) not in sys.path: sys.path.insert(...)` lines were deleted — no
+# logic/behaviour change, verified by diff) but did NOT update the frozen
+# SOURCE_HASHES.json, leaving main RED with FrozenArtifactMismatch in the
+# cross-asset-kuramoto suites (and poisoning sibling fast-shard tests via session
+# pollution). This re-pins the four stale sha256 entries to the post-refactor
+# bytes and stamps regenerated_utc, restoring the determinism contract.
+
+id: repin-cross-asset-kuramoto-frozen-manifest
+status: ACTIVE
+claim_type: governance
+promise: >-
+  Updates exactly the four script entries in
+  results/cross_asset_kuramoto/offline_robustness/SOURCE_HASHES.json
+  (demo/run/evaluate/render_cross_asset_kuramoto*.py) to their current sha256 and
+  sets regenerated_utc. The four scripts changed ONLY by sys.path-hack removal
+  (#1339/#1341), so the re-pin records a sanctioned source refactor — NOT a
+  results/behaviour change. No other manifest entry, source file, or RESULTS
+  artifact is touched. After the re-pin the frozen-artifact verification passes.
+diff_scope:
+  changed_files:
+    - path: "results/cross_asset_kuramoto/offline_robustness/SOURCE_HASHES.json"
+    - path: ".claude/commit_acceptors/repin-cross-asset-kuramoto-frozen-manifest.yaml"
+  forbidden_paths:
+    - "trading/"
+    - "execution/"
+    - "forecast/"
+    - "policy/"
+required_python_symbols: []
+expected_signal: >-
+  pytest tests/research/robustness/test_kuramoto_suites.py
+  tests/research/robustness/test_null_convergence_determinism.py is green
+  (FrozenArtifactMismatch no longer raised); FrozenArtifactManifest.verify_all()
+  passes.
+measurement_command: >-
+  PYTHONPATH=. python -m pytest tests/research/robustness/test_kuramoto_suites.py
+  tests/research/robustness/test_null_convergence_determinism.py -q
+signal_artifact: "tmp/repin_cross_asset_kuramoto_frozen_pytest.log"
+falsifier:
+  command: >-
+    PYTHONPATH=. python -c "import sys, hashlib, json;
+    d = json.load(open('results/cross_asset_kuramoto/offline_robustness/SOURCE_HASHES.json'));
+    rel = 'scripts/demo_cross_asset_kuramoto.py';
+    actual = hashlib.sha256(open(rel,'rb').read()).hexdigest();
+    print('manifest matches current bytes:', d['hashes'][rel] == actual);
+    sys.exit(0 if d['hashes'][rel] == actual else 1)"
+  description: >-
+    Inverse probe: recomputes the sha256 of demo_cross_asset_kuramoto.py and exits
+    non-zero unless the re-pinned manifest entry matches the on-disk bytes. Fires
+    iff the manifest drifts from the source it pins — the exact FrozenArtifactMismatch
+    this commit closes.
+rollback_command: >-
+  git checkout -- results/cross_asset_kuramoto/offline_robustness/SOURCE_HASHES.json
+  && git rm -f .claude/commit_acceptors/repin-cross-asset-kuramoto-frozen-manifest.yaml
+rollback_verification_command: >-
+  git diff --exit-code results/cross_asset_kuramoto/offline_robustness/SOURCE_HASHES.json
+memory_update_type: append
+ledger_path: ".claude/commit_acceptors/repin-cross-asset-kuramoto-frozen-manifest.yaml"
+report_path: ".claude/commit_acceptors/repin-cross-asset-kuramoto-frozen-manifest.yaml"
+evidence: []

@@ -1,4 +1,6 @@
 #!/usr/bin/env python3
+# Copyright (c) 2023-2026 Yaroslav Vasylenko (neuron7xLab)
+# SPDX-License-Identifier: MIT
 """Migration tool for dopamine configuration versions.
 
 Usage:
@@ -6,6 +8,7 @@ Usage:
 
 If output is not specified, prints to stdout.
 """
+
 from __future__ import annotations
 
 import argparse
@@ -80,9 +83,7 @@ def migrate_config(config: Dict[str, Any]) -> Dict[str, Any]:
 
 def main() -> int:
     """Main entry point."""
-    parser = argparse.ArgumentParser(
-        description="Migrate dopamine configuration to latest version"
-    )
+    parser = argparse.ArgumentParser(description="Migrate dopamine configuration to latest version")
     parser.add_argument(
         "input",
         type=Path,

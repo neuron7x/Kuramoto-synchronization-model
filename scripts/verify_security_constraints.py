@@ -1,4 +1,6 @@
 #!/usr/bin/env python3
+# Copyright (c) 2023-2026 Yaroslav Vasylenko (neuron7xLab)
+# SPDX-License-Identifier: MIT
 """
 Security Constraint Verification Script
 
@@ -25,9 +27,7 @@ from typing import Dict, List, Tuple
 class ConstraintViolation:
     """Represents a security constraint violation."""
 
-    def __init__(
-        self, package: str, installed: str, required: str, severity: str = "HIGH"
-    ):
+    def __init__(self, package: str, installed: str, required: str, severity: str = "HIGH"):
         self.package = package
         self.installed = installed
         self.required = required
@@ -99,22 +99,14 @@ def compare_versions(installed: str, operator: str, required: str) -> Tuple[bool
             # Fallback to simple string comparison if packaging not available
             # This is a simplified comparison that works for most semantic versions
             installed_v = (
-                tuple(map(int, installed.split(".")[:3]))
-                if "." in installed
-                else (0, 0, 0)
+                tuple(map(int, installed.split(".")[:3])) if "." in installed else (0, 0, 0)
             )
-            required_v = (
-                tuple(map(int, required.split(".")[:3]))
-                if "." in required
-                else (0, 0, 0)
-            )
+            required_v = tuple(map(int, required.split(".")[:3])) if "." in required else (0, 0, 0)
 
         if operator == "==":
             satisfied = installed_v == required_v
             reason = (
-                "versions match"
-                if satisfied
-                else f"exact version mismatch (required: {required})"
+                "versions match" if satisfied else f"exact version mismatch (required: {required})"
             )
         elif operator == ">=":
             satisfied = installed_v >= required_v
@@ -152,9 +144,7 @@ def check_constraints(
             # Package not installed - might be optional
             continue
 
-        satisfied, reason = compare_versions(
-            installed_version, operator, required_version
-        )
+        satisfied, reason = compare_versions(installed_version, operator, required_version)
 
         if not satisfied:
             violation = ConstraintViolation(
@@ -199,9 +189,7 @@ def fix_violations(violations: List[ConstraintViolation]) -> bool:
 
 def main():
     """Main entry point."""
-    parser = argparse.ArgumentParser(
-        description="Verify security constraints are satisfied"
-    )
+    parser = argparse.ArgumentParser(description="Verify security constraints are satisfied")
     parser.add_argument("--fix", action="store_true", help="Attempt to fix violations")
     args = parser.parse_args()
 

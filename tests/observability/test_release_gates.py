@@ -1,3 +1,5 @@
+# Copyright (c) 2023-2026 Yaroslav Vasylenko (neuron7xLab)
+# SPDX-License-Identifier: MIT
 from __future__ import annotations
 
 import json
@@ -99,9 +101,7 @@ def test_release_gate_config_matches_raw_evidence() -> None:
 
     perf_path = (PROJECT_ROOT / config["perf_budgets_file"]).resolve()
     assert perf_path.exists()
-    perf_budgets = yaml.safe_load(perf_path.read_text(encoding="utf-8")).get(
-        "components", {}
-    )
+    perf_budgets = yaml.safe_load(perf_path.read_text(encoding="utf-8")).get("components", {})
     assert perf_budgets
     for component, payload in perf_budgets.items():
         assert {"observed_ms", "budget_ms"} <= payload.keys()
@@ -109,9 +109,7 @@ def test_release_gate_config_matches_raw_evidence() -> None:
         assert isinstance(payload["budget_ms"], (int, float))
 
     scenario_path = (PROJECT_ROOT / config["scenario_file"]).resolve()
-    scenarios = yaml.safe_load(scenario_path.read_text(encoding="utf-8")).get(
-        "scenarios", {}
-    )
+    scenarios = yaml.safe_load(scenario_path.read_text(encoding="utf-8")).get("scenarios", {})
     assert config["energy_scenario"] in scenarios
     for name in config.get("energy_negative_tests", []):
         assert name in scenarios

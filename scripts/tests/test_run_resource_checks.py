@@ -1,3 +1,5 @@
+# Copyright (c) 2023-2026 Yaroslav Vasylenko (neuron7xLab)
+# SPDX-License-Identifier: MIT
 from __future__ import annotations
 
 import importlib
@@ -16,7 +18,9 @@ def _install_stub_modules(monkeypatch) -> None:
 
     strategy_mod = types.ModuleType("strategy")
     strategy_mod.Strategy = type(
-        "Strategy", (), {"__init__": lambda self, *a, **k: None, "simulate_performance": lambda self, frame: None}
+        "Strategy",
+        (),
+        {"__init__": lambda self, *a, **k: None, "simulate_performance": lambda self, frame: None},
     )
     monkeypatch.setitem(sys.modules, "core.agent.strategy", strategy_mod)
 
@@ -83,12 +87,8 @@ def test_main_writes_payload(tmp_path: Path, monkeypatch) -> None:
     mod = importlib.import_module("scripts.performance.run_resource_checks")
 
     output = tmp_path / "metrics.json"
-    monkeypatch.setattr(
-        mod, "_parse_args", lambda: types.SimpleNamespace(output=output)
-    )
-    metric = mod.Metric(
-        name="demo", value=1.0, unit="bytes", category="memory", budget=2.0
-    )
+    monkeypatch.setattr(mod, "_parse_args", lambda: types.SimpleNamespace(output=output))
+    metric = mod.Metric(name="demo", value=1.0, unit="bytes", category="memory", budget=2.0)
     monkeypatch.setattr(mod, "collect_metrics", lambda: [metric])
 
     mod.main()
@@ -106,9 +106,7 @@ def test_main_failure_when_output_parent_invalid(tmp_path: Path, monkeypatch) ->
     blocker = tmp_path / "blocked"
     blocker.write_text("file")
     output = blocker / "out.json"
-    monkeypatch.setattr(
-        mod, "_parse_args", lambda: types.SimpleNamespace(output=output)
-    )
+    monkeypatch.setattr(mod, "_parse_args", lambda: types.SimpleNamespace(output=output))
     monkeypatch.setattr(mod, "collect_metrics", lambda: [])
 
     with pytest.raises(FileExistsError):

@@ -1,3 +1,5 @@
+# Copyright (c) 2023-2026 Yaroslav Vasylenko (neuron7xLab)
+# SPDX-License-Identifier: MIT
 """Property-based tests using Hypothesis."""
 
 from __future__ import annotations
@@ -5,6 +7,7 @@ from __future__ import annotations
 from hypothesis import given
 from hypothesis import strategies as st
 
+from core.compat import utc_now
 from cortex_service.app.config import SignalSettings
 from cortex_service.app.core.signals import FeatureObservation, compute_signal
 from cortex_service.app.modulation.regime import RegimeModulator, RegimeSettings
@@ -80,9 +83,7 @@ def test_regime_valence_always_clipped(valence, min_valence, max_valence):
     )
     modulator = RegimeModulator(settings)
 
-    from datetime import UTC, datetime
-
-    state = modulator.update(None, valence, 0.1, datetime.now(UTC))
+    state = modulator.update(None, valence, 0.1, utc_now())
     assert min_valence <= state.valence <= max_valence
 
 
@@ -102,9 +103,7 @@ def test_regime_confidence_bounds(feedback, volatility, decay):
     )
     modulator = RegimeModulator(settings)
 
-    from datetime import UTC, datetime
-
-    state = modulator.update(None, feedback, volatility, datetime.now(UTC))
+    state = modulator.update(None, feedback, volatility, utc_now())
     assert confidence_floor <= state.confidence <= 1.0
 
 
@@ -126,9 +125,7 @@ def test_risk_score_non_negative(exposures):
 
     settings = RiskSettings()
     exposure_list = [
-        Exposure(
-            instrument=f"TEST{i}", exposure=e, limit=lim, volatility=v
-        )  # noqa: E741
+        Exposure(instrument=f"TEST{i}", exposure=e, limit=lim, volatility=v)  # noqa: E741
         for i, (e, lim, v) in enumerate(exposures)
     ]
     assessment = compute_risk(exposure_list, settings)

@@ -1,0 +1,101 @@
+# Diff-bound commit acceptor for the calibration sensitivity-drift gate.
+#
+# Adds governance/CALIBRATIONS.yaml — the authoritative registry of governed
+# calibration sites (thresholds, tolerances, sensitivity bands) — and
+# scripts/ci/check_calibration_drift.py, a fail-closed gate that rejects
+# silent calibration drift: for every registered calibration it requires the
+# module to exist, sha256(module) to equal the registered source_sha256
+# (drift lock), and the entry to carry a non-empty selected_value, a
+# documented sweep, a failure_policy, and an acceptor that binds the module.
+#
+# Seeds the registry with analytics/signals/threshold_calibration.py (the
+# sweep-backed exemplar already governed by calibration-contract.yaml). A
+# silent edit to a governed calibration source, a dropped sweep, or a missing
+# failure policy fails CI (exit 1); a missing/malformed registry returns 2.
+#
+# Promotes NO claim tier, adds NO invariant, changes NO runtime behaviour,
+# modifies NO calibration source (it only reads and hashes them).
+#
+# Locally verified on origin/main fork base:
+#   * python scripts/ci/check_calibration_drift.py: 1 PASS, exit 0
+#   * pytest tests/scripts/test_check_calibration_drift.py: 9 passed
+#   * ruff check / ruff format --check / black --check: clean
+#   * mypy --strict scripts/ci/check_calibration_drift.py: no issues
+#   * python scripts/ci/check_inventory_sync.py: PASS (50 files)
+id: calibration-drift-gate
+status: ACTIVE
+claim_type: governance
+promise: >-
+  governance/CALIBRATIONS.yaml is the authoritative registry of governed
+  calibration sites and scripts/ci/check_calibration_drift.py fails closed
+  unless every registered calibration resolves: the module exists,
+  sha256(module) equals the registered source_sha256 (drift lock), and the
+  entry carries a non-empty selected_value, a non-empty sweep, a non-empty
+  failure_policy, and an acceptor that exists and binds the module in
+  diff_scope.changed_files. A drifted source hash, a dropped sweep, a missing
+  selected value or failure policy, or an unbound calibration returns exit 1;
+  a missing/malformed registry returns exit 2. The registry is seeded with
+  analytics/signals/threshold_calibration.py. No claim tier is promoted; no
+  runtime behaviour changes; no calibration source is modified.
+diff_scope:
+  changed_files:
+    - path: ".claude/commit_acceptors/calibration-drift-gate.yaml"
+    - path: "governance/CALIBRATIONS.yaml"
+    - path: "scripts/ci/check_calibration_drift.py"
+    - path: "tests/scripts/test_check_calibration_drift.py"
+    - path: ".github/workflows/research-integrity-gate.yml"
+    - path: "INVENTORY.json"
+  forbidden_paths:
+    - "trading/"
+    - "execution/"
+    - "forecast/"
+required_python_symbols:
+  - "scripts/ci/check_calibration_drift.py::main"
+expected_signal: >-
+  `python scripts/ci/check_calibration_drift.py` prints one [PASS] line per
+  governed calibration and `OK: all N governed calibrations resolve; no silent
+  drift`, exiting 0; the behavioural suite reports 9 passed including the
+  source-drift, missing-sweep, missing-failure-policy, and unbound-acceptor
+  negatives.
+measurement_command: >-
+  bash -c 'mkdir -p tmp && python -m pytest
+  tests/scripts/test_check_calibration_drift.py -v --no-header -o addopts=""
+  -p no:cacheprovider 2>&1 | grep -E "PASSED|FAILED|ERROR" | sed -E "s/ +\[[0-9 ]+%\]//" > tmp/calibration_drift_pytest.log && test "$(grep -c PASSED tmp/calibration_drift_pytest.log)" = "9"'
+signal_artifact: "tmp/calibration_drift_pytest.log"
+falsifier:
+  command: |-
+    bash -c 'python - <<'\''PY'\''
+    import sys, tempfile, pathlib, importlib.util, yaml
+    root = pathlib.Path(".").resolve()
+    spec = importlib.util.spec_from_file_location(
+        "cd", root / "scripts/ci/check_calibration_drift.py")
+    cd = importlib.util.module_from_spec(spec)
+    sys.modules["cd"] = cd
+    spec.loader.exec_module(cd)
+    reg = yaml.safe_load((root / "governance/CALIBRATIONS.yaml").read_text())
+    cal = dict(reg["calibrations"][0])
+    cal["source_sha256"] = "0"*64
+    with tempfile.TemporaryDirectory() as d:
+        p = pathlib.Path(d) / "c.yaml"
+        p.write_text(yaml.safe_dump({"schema_version":1,"calibrations":[cal]}))
+        rc = cd.main(["--registry", str(p)])
+    sys.exit(0 if rc != 1 else 1)
+    PY'
+  description: >-
+    Inverse probe of the drift lock. It exits 0 (fires) iff a deliberately
+    corrupted source_sha256 is NOT rejected — i.e. the gate has stopped failing
+    closed on calibration drift. While the lock holds, a drifted hash returns
+    exit 1 and the probe exits 1. An exit 0 means the gate has lost its teeth.
+rollback_command: >-
+  bash -c 'git rm -f governance/CALIBRATIONS.yaml
+  scripts/ci/check_calibration_drift.py
+  tests/scripts/test_check_calibration_drift.py
+  .claude/commit_acceptors/calibration-drift-gate.yaml && git checkout .github/workflows/research-integrity-gate.yml INVENTORY.json'
+rollback_verification_command: >-
+  bash -c 'test ! -f scripts/ci/check_calibration_drift.py && test ! -f governance/CALIBRATIONS.yaml'
+memory_update_type: none
+ledger_path: ".claude/commit_acceptors/calibration-drift-gate.yaml"
+report_path: "tmp/calibration_drift_pytest.log"
+evidence:
+  - path: "tmp/calibration_drift_pytest.log"
+    sha256: "bc801aa929906eb768b312bd17b3c747d3470e3dbde541198ee50d6c72b4cf72"  # pragma: allowlist secret

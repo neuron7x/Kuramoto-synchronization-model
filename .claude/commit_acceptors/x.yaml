@@ -1,0 +1,24 @@
+id: x
+status: ACTIVE
+claim_type: governance
+promise: "Evidence graph projection."
+diff_scope:
+  changed_files:
+    - path: ".claude/commit_acceptors/x.yaml"
+    - path: "governance/__init__.py"
+    - path: "governance/evidence_graph.py"
+    - path: "tests/unit/governance/test_evidence_graph.py"
+  forbidden_paths: []
+required_python_symbols: []
+expected_signal: "test pass"
+measurement_command: "python -m pytest tests/unit/governance/test_evidence_graph.py -q"
+signal_artifact: "tmp/evidence_graph.log"
+falsifier:
+  command: "python -m pytest tests/unit/governance/test_evidence_graph.py -q"
+  description: "fails on missing evidence links"
+rollback_command: "git checkout -- governance/evidence_graph.py"
+rollback_verification_command: "git diff --exit-code"
+memory_update_type: none
+ledger_path: ".claude/commit_acceptors/x.yaml"
+report_path: "tmp/evidence_graph.log"
+evidence: []

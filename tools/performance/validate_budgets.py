@@ -1,3 +1,5 @@
+# Copyright (c) 2023-2026 Yaroslav Vasylenko (neuron7xLab)
+# SPDX-License-Identifier: MIT
 """Performance budget validation tool.
 
 Validates that component performance metrics stay within defined budgets.
@@ -27,9 +29,7 @@ def load_json(path: Path) -> dict[str, Any]:
         return json.load(f)
 
 
-def validate_budgets(
-    config_path: Path, results_path: Path, fail_on_breach: bool = False
-) -> int:
+def validate_budgets(config_path: Path, results_path: Path, fail_on_breach: bool = False) -> int:
     """Validate performance budgets against actual results.
 
     Args:
@@ -113,8 +113,7 @@ def validate_budgets(
         print("✅ **Passing Components:**")
         for item in passes:
             print(
-                f"  - {item['component']}: {item['observed_ms']:.1f}ms "
-                f"/ {item['budget_ms']:.1f}ms"
+                f"  - {item['component']}: {item['observed_ms']:.1f}ms / {item['budget_ms']:.1f}ms"
             )
         print()
 

@@ -1,4 +1,6 @@
-"""Run a docker-compose smoke test for TradePulse deployments."""
+# Copyright (c) 2023-2026 Yaroslav Vasylenko (neuron7xLab)
+# SPDX-License-Identifier: MIT
+"""Run a docker-compose smoke test for GeoSync deployments."""
 
 from __future__ import annotations
 
@@ -12,7 +14,6 @@ import subprocess
 import sys
 import time
 from pathlib import Path
-from urllib.parse import urlparse
 from typing import Iterable
 from urllib.parse import urlparse
 
@@ -52,9 +53,7 @@ def _validate_path(value: str, *, expected_file: bool) -> Path:
 def _validate_compose_file(value: str) -> Path:
     path = _validate_path(value, expected_file=True)
     if path.suffix.lower() not in {".yml", ".yaml"}:
-        raise argparse.ArgumentTypeError(
-            "Compose file must have a .yml or .yaml extension."
-        )
+        raise argparse.ArgumentTypeError("Compose file must have a .yml or .yaml extension.")
     return path
 
 
@@ -106,9 +105,7 @@ def _compose_cmd(compose_file: Path, project: str, *args: str) -> list[str]:
     return command
 
 
-def _wait_for_service(
-    project: str, compose_file: Path, service: str, timeout: float
-) -> None:
+def _wait_for_service(project: str, compose_file: Path, service: str, timeout: float) -> None:
     deadline = time.monotonic() + timeout
     last_status = "unknown"
     while time.monotonic() < deadline:
@@ -136,9 +133,7 @@ def _wait_for_service(
         last_status = status
         time.sleep(3.0)
 
-    raise TimeoutError(
-        f"service '{service}' did not become healthy (last status: {last_status})"
-    )
+    raise TimeoutError(f"service '{service}' did not become healthy (last status: {last_status})")
 
 
 def _port_is_available(port: int) -> bool:
@@ -236,40 +231,38 @@ def run_smoke_test(args: argparse.Namespace) -> None:
     env.setdefault("COMPOSE_DOCKER_CLI_BUILD", "1")
 
     default_http_port_env = (
-        os.environ.get("TRADEPULSE_HTTP_PORT")
-        or os.environ.get("HTTP_PORT")
-        or str(DEFAULT_HTTP_PORT)
+        os.environ.get("GEOSYNC_HTTP_PORT") or os.environ.get("HTTP_PORT") or str(DEFAULT_HTTP_PORT)
     )
     default_health_url = f"http://localhost:{default_http_port_env}/health"
     default_metrics_url = f"http://localhost:{default_http_port_env}/metrics"
 
     http_port = _resolve_port(
         env,
-        "TRADEPULSE_HTTP_PORT",
+        "GEOSYNC_HTTP_PORT",
         aliases=["HTTP_PORT"],
         default=DEFAULT_HTTP_PORT,
     )
     prometheus_port = _resolve_port(
         env,
-        "TRADEPULSE_PROMETHEUS_PORT",
+        "GEOSYNC_PROMETHEUS_PORT",
         aliases=["PROMETHEUS_PORT"],
         default=DEFAULT_PROMETHEUS_PORT,
     )
     _resolve_port(
         env,
-        "TRADEPULSE_ELASTICSEARCH_PORT",
+        "GEOSYNC_ELASTICSEARCH_PORT",
         aliases=["ELASTICSEARCH_PORT"],
         default=DEFAULT_ELASTICSEARCH_PORT,
     )
     _resolve_port(
         env,
-        "TRADEPULSE_LOGSTASH_PORT",
+        "GEOSYNC_LOGSTASH_PORT",
         aliases=["LOGSTASH_PORT"],
         default=DEFAULT_LOGSTASH_PORT,
     )
     _resolve_port(
         env,
-        "TRADEPULSE_KIBANA_PORT",
+        "GEOSYNC_KIBANA_PORT",
         aliases=["KIBANA_PORT"],
         default=DEFAULT_KIBANA_PORT,
     )
@@ -279,14 +272,10 @@ def run_smoke_test(args: argparse.Namespace) -> None:
     if args.metrics_url == default_metrics_url:
         args.metrics_url = f"http://localhost:{http_port}/metrics"
 
-    default_runtime_url = PROMETHEUS_RUNTIME_TEMPLATE.format(
-        port=DEFAULT_PROMETHEUS_PORT
-    )
+    default_runtime_url = PROMETHEUS_RUNTIME_TEMPLATE.format(port=DEFAULT_PROMETHEUS_PORT)
     default_up_url = PROMETHEUS_UP_TEMPLATE.format(port=DEFAULT_PROMETHEUS_PORT)
     if args.prometheus_runtime_url == default_runtime_url:
-        args.prometheus_runtime_url = PROMETHEUS_RUNTIME_TEMPLATE.format(
-            port=prometheus_port
-        )
+        args.prometheus_runtime_url = PROMETHEUS_RUNTIME_TEMPLATE.format(port=prometheus_port)
     if args.prometheus_up_url == default_up_url:
         args.prometheus_up_url = PROMETHEUS_UP_TEMPLATE.format(port=prometheus_port)
 
@@ -309,9 +298,7 @@ def run_smoke_test(args: argparse.Namespace) -> None:
         )
 
         try:
-            prom_runtime = _fetch_json(
-                args.prometheus_runtime_url, timeout=args.http_timeout
-            )
+            prom_runtime = _fetch_json(args.prometheus_runtime_url, timeout=args.http_timeout)
             prom_up = _fetch_json(args.prometheus_up_url, timeout=args.http_timeout)
         except (requests.Timeout, requests.RequestException, ValueError) as exc:
             raise RuntimeError(f"Failed to query Prometheus: {exc}") from exc
@@ -362,22 +349,20 @@ def build_argument_parser() -> argparse.ArgumentParser:
     )
     parser.add_argument(
         "--project-name",
-        default="tradepulse-smoke",
+        default="geosync-smoke",
         type=lambda value: _validate_name(value, label="Project name"),
         help="Docker compose project name used to isolate resources.",
     )
     parser.add_argument(
         "--service-name",
-        default="tradepulse",
+        default="geosync",
         type=lambda value: _validate_name(value, label="Service name"),
         help="Primary service to wait for before executing health checks.",
     )
 
-    # Use TRADEPULSE_HTTP_PORT/HTTP_PORT environment variables with fallback to DEFAULT_HTTP_PORT
+    # Use GEOSYNC_HTTP_PORT/HTTP_PORT environment variables with fallback to DEFAULT_HTTP_PORT
     http_port = (
-        os.environ.get("TRADEPULSE_HTTP_PORT")
-        or os.environ.get("HTTP_PORT")
-        or str(DEFAULT_HTTP_PORT)
+        os.environ.get("GEOSYNC_HTTP_PORT") or os.environ.get("HTTP_PORT") or str(DEFAULT_HTTP_PORT)
     )
     default_health = f"http://localhost:{http_port}/health"
     default_metrics = f"http://localhost:{http_port}/metrics"
@@ -386,13 +371,13 @@ def build_argument_parser() -> argparse.ArgumentParser:
         "--health-url",
         default=default_health,
         type=_validate_url,
-        help="HTTP URL used to validate API health. Can be overridden by TRADEPULSE_HTTP_PORT env var or --health-url.",
+        help="HTTP URL used to validate API health. Can be overridden by GEOSYNC_HTTP_PORT env var or --health-url.",
     )
     parser.add_argument(
         "--metrics-url",
         default=default_metrics,
         type=_validate_url,
-        help="HTTP URL used to download API metrics for diagnostics. Can be overridden by TRADEPULSE_HTTP_PORT env var or --metrics-url.",
+        help="HTTP URL used to download API metrics for diagnostics. Can be overridden by GEOSYNC_HTTP_PORT env var or --metrics-url.",
     )
     parser.add_argument(
         "--prometheus-runtime-url",

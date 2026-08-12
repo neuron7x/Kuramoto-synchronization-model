@@ -1,0 +1,202 @@
+# Diff-bound commit acceptor for the D-002J-P3 ingestion manifest PR.
+#
+# D-002J-P3 is the first PR shipping under the P2.5 verdict-DAG contract.
+# P3 defines WHAT may be ingested by WHICH adapter from WHICH P1B-audit-
+# surviving source for WHICH P2 crisis window, under WHAT license/access
+# boundary, with WHAT anti-lookahead constraints. P3 ships the CONTRACT,
+# not the pipeline: no bytes ingested, no fetching executed, no modelling,
+# no null execution, no canonical run authorisation, no D-002J prereg
+# edit, no source-code change under research/systemic_risk/. The vintage-
+# aware test (test_revisable_sources_require_vintage_adapter) makes
+# point-in-time discipline EXECUTABLE for the first time in the lineage.
+
+id: x10r-d002j-p3-ingestion-manifest
+status: ACTIVE
+claim_type: governance
+promise: >-
+  After this PR lands, artifacts/d002j/ingestion/ contains three
+  contract-only JSON artifacts (ingestion_manifest_v1.json under schema
+  D002J-INGESTION-MANIFEST-v1 with 18 adapters across 5 classes;
+  adapter_registry_v1.json under schema D002J-ADAPTER-REGISTRY-v1;
+  source_hash_manifest_v1.json under schema D002J-SOURCE-HASH-MANIFEST-v1
+  with all expected_sha256_at_pin_time fields null at P3 emit time) plus
+  two markdown contract documents (D002J_INGESTION_BOUNDARY.md and
+  D002J_POINT_IN_TIME_DISCIPLINE.md). Every adapter source_id is a member
+  of the P1B-surviving (VERIFIED or PARTIAL) source set; every adapter
+  window_id is declared in the P2 crisis window registry; both parent
+  registries are sha256-pinned in the manifest. The vintage-aware
+  test enforces that every P1B source whose mechanistic_relevance
+  contains real_time_information_constraint or
+  vintage_anti_leakage_baseline is bound by at least one adapter with
+  vintage_required=true, a non-null vintage_field, and the
+  vintage_release_date <= decision_date lookahead invariant. The DAG
+  verdict is regenerated to 6 nodes (was 5), the D-002J-P3 capsule is
+  added under schema D002J-VERDICT-CAPSULE-v1 with parent=['D002J-P2']
+  and allowed_next=['D002J-P4'] and forbidden_next covering P5..P9.
+  docs/research/D002J_LINEAGE_MAP.md is re-rendered byte-deterministically.
+  docs/governance/D002G_CANONICAL_RUN_BLOCKERS.md appends a P3 section.
+  The six locked governance shas remain byte-exact. No data ingested,
+  no canonical run authorised, no D-002H rescue claim.
+
+diff_scope:
+  changed_files:
+    - path: "artifacts/d002j/ingestion/ingestion_manifest_v1.json"
+    - path: "artifacts/d002j/ingestion/adapter_registry_v1.json"
+    - path: "artifacts/d002j/ingestion/source_hash_manifest_v1.json"
+    - path: "docs/research/D002J_INGESTION_BOUNDARY.md"
+    - path: "docs/research/D002J_POINT_IN_TIME_DISCIPLINE.md"
+    - path: "tests/systemic_risk/test_d002j_ingestion_manifest.py"
+    - path: "artifacts/governance/verdicts/d002j_p3_verdict_v1.json"
+    - path: "artifacts/governance/verdicts/d002j_verdict_dag_v1.json"
+    - path: "docs/research/D002J_LINEAGE_MAP.md"
+    - path: "docs/governance/D002G_CANONICAL_RUN_BLOCKERS.md"
+    - path: ".claude/commit_acceptors/x10r-d002j-p3-ingestion-manifest.yaml"
+    - path: "tests/governance/test_verdict_dag_integrity.py"
+    - path: "tests/systemic_risk/test_d002j_crisis_window_registry.py"
+    - path: ".github/detect-secrets.baseline"
+  forbidden_paths:
+    - "docs/governance/D002C_CLAIM_LEDGER.yaml"
+    - "docs/governance/D002C_PREREGISTRATION.yaml"
+    - "docs/governance/D002C_ATTEMPT_2_NULL_AUDIT_FALSIFICATION_REPORT.md"
+    - "docs/governance/D002C_CANONICAL_RUN_REPORT.md"
+    - "docs/governance/D002C_LAUNCH_PROTOCOL.md"
+    - "docs/governance/D002C_NULL_AUDIT_DATA_CONTRACT.md"
+    - "docs/governance/D002C_NULL_AUDIT_GAP_AND_C2_4_A2_SPEC.md"
+    - "docs/governance/D002C_PREFLIGHT_CONTRACT.md"
+    - "docs/governance/D002C_R2_B_SUPPLEMENTARY_NULL_SPEC.md"
+    - "docs/governance/D002C_R2_STRUCTURAL_LIMITATION_NOTE.md"
+    - "docs/governance/D002G_ACCEPTANCE_RULES.md"
+    - "docs/governance/D002G_PREREGISTRATION.yaml"
+    - "docs/governance/D002G_DEGENERATE_NULL_REDESIGN_SPEC.md"
+    - "docs/governance/D002G_M2_TOPOLOGY_PRESERVING_NULL.md"
+    - "docs/governance/D002G_M3_ELIGIBILITY_MATRIX.md"
+    - "docs/governance/D002G_M3_IMPLEMENTATION_REPORT.md"
+    - "docs/governance/D002G_NEGATIVE_SPACE_MAP.md"
+    - "docs/governance/D002G_NONDEGENERATE_NULL_DESIGN.md"
+    - "docs/governance/D002G_P1_DESIGN_ADVERSARIAL_AUDIT.md"
+    - "docs/governance/D002G_P1_IMPLEMENTATION_REPORT.md"
+    - "docs/governance/D002G_P2_M2_IMPLEMENTATION_REPORT.md"
+    - "docs/governance/D002G_P3_DISCOVERY_REPORT.md"
+    - "docs/governance/D002G_P3_ELIGIBILITY_MATRIX.md"
+    - "docs/governance/D002G_P3_IMPLEMENTATION_REPORT.md"
+    - "docs/governance/D002G_P3_M3_PREREGISTRATION.md"
+    - "docs/governance/D002G_P3_NULL_DOMAIN_CONTRACTS.md"
+    - "docs/governance/D002G_STRUCTURAL_CLOSURE_REPORT.md"
+    - "docs/governance/D002H_PREREGISTRATION.yaml"
+    - "docs/governance/D002H_CANONICAL_RUN_AUTHORIZATION_GATES.md"
+    - "docs/governance/D002H_CANONICAL_RUN_REPORT.md"
+    - "docs/governance/D002H_CLAIM_BOUNDARY.md"
+    - "docs/governance/D002H_GATE_B_REPORT.md"
+    - "docs/governance/D002H_GATE_C_CANONICAL_GRID.md"
+    - "docs/governance/D002H_GATE_D_FORBIDDEN_CLAIM_SCAN.md"
+    - "docs/governance/D002H_GATE_E_LOCKED_FILE_REPORT.md"
+    - "docs/governance/D002H_GATE_F_AUTHORIZATION_REPORT.md"
+    - "docs/governance/D002H_GATE_G_CI_LOCK_REPORT.md"
+    - "docs/governance/D002H_R2B_INAPPLICABILITY_NOTE.md"
+    - "docs/governance/D002H_SCOPE_RATIONALE.md"
+    - "docs/governance/D002I_CLAIM_BOUNDARY.md"
+    - "docs/governance/D002I_INVESTIGATION_RATIONALE.md"
+    - "docs/governance/D002I_PREREGISTRATION.yaml"
+    - "docs/governance/D002J_PREREGISTRATION.yaml"
+    - "research/systemic_risk/"
+    - "scripts/x10r_d002c_attempt_2_null_audit.py"
+    - "scripts/x10r_d002g_gate_d_scan.py"
+    - "scripts/x10r_d002h_gate_d_scan.py"
+    - "scripts/x10r_d002h_canonical_sweep.py"
+    - "artifacts/d002c/"
+    - "artifacts/d002g/"
+    - "artifacts/d002h/"
+    - "artifacts/d002i/"
+    - "artifacts/d002j/prereg/"
+    - "artifacts/d002j/data_registry/"
+    - "artifacts/d002j/crisis_windows/"
+    - "artifacts/governance/verdicts/d002j_p0_verdict_v1.json"
+    - "artifacts/governance/verdicts/d002j_p1_verdict_v1.json"
+    - "artifacts/governance/verdicts/d002j_p1a_verdict_v1.json"
+    - "artifacts/governance/verdicts/d002j_p1b_verdict_v1.json"
+    - "artifacts/governance/verdicts/d002j_p2_verdict_v1.json"
+    - "tools/governance/verdict_dag.py"
+    - "tools/governance/render_lineage.py"
+required_python_symbols:
+  - "tests.systemic_risk.test_d002j_ingestion_manifest.test_ingestion_manifest_exists"
+  - "tests.systemic_risk.test_d002j_ingestion_manifest.test_ingestion_manifest_schema_valid"
+  - "tests.systemic_risk.test_d002j_ingestion_manifest.test_adapter_registry_exists"
+  - "tests.systemic_risk.test_d002j_ingestion_manifest.test_source_hash_manifest_exists"
+  - "tests.systemic_risk.test_d002j_ingestion_manifest.test_minimum_twelve_adapters"
+  - "tests.systemic_risk.test_d002j_ingestion_manifest.test_minimum_six_fred_macro_financial_adapters"
+  - "tests.systemic_risk.test_d002j_ingestion_manifest.test_minimum_three_bis_ecb_ofr_adapters"
+  - "tests.systemic_risk.test_d002j_ingestion_manifest.test_minimum_two_metadata_only_adapters"
+  - "tests.systemic_risk.test_d002j_ingestion_manifest.test_minimum_two_literature_reference_adapters"
+  - "tests.systemic_risk.test_d002j_ingestion_manifest.test_every_adapter_source_id_exists_in_p1b_registry"
+  - "tests.systemic_risk.test_d002j_ingestion_manifest.test_every_adapter_source_id_is_p1b_verified_or_partial"
+  - "tests.systemic_risk.test_d002j_ingestion_manifest.test_every_adapter_window_id_exists_in_p2_registry"
+  - "tests.systemic_risk.test_d002j_ingestion_manifest.test_revisable_sources_require_vintage_adapter"
+  - "tests.systemic_risk.test_d002j_ingestion_manifest.test_forecast_sources_require_forecast_date_field"
+  - "tests.systemic_risk.test_d002j_ingestion_manifest.test_observation_date_lte_decision_date_invariant"
+  - "tests.systemic_risk.test_d002j_ingestion_manifest.test_release_date_lte_decision_date_invariant"
+  - "tests.systemic_risk.test_d002j_ingestion_manifest.test_no_private_data_adapters"
+  - "tests.systemic_risk.test_d002j_ingestion_manifest.test_no_restricted_microdata_ready_adapters"
+  - "tests.systemic_risk.test_d002j_ingestion_manifest.test_no_unclear_license_status_ready"
+  - "tests.systemic_risk.test_d002j_ingestion_manifest.test_max_download_size_capped"
+  - "tests.systemic_risk.test_d002j_ingestion_manifest.test_no_canonical_run_authorized"
+  - "tests.systemic_risk.test_d002j_ingestion_manifest.test_no_d002j_prereg_edit"
+  - "tests.systemic_risk.test_d002j_ingestion_manifest.test_no_research_systemic_risk_source_edit"
+  - "tests.systemic_risk.test_d002j_ingestion_manifest.test_no_unresolved_merge_markers"
+  - "tests.systemic_risk.test_d002j_ingestion_manifest.test_p3_capsule_under_dag_contract"
+  - "tests.systemic_risk.test_d002j_ingestion_manifest.test_p3_in_dag_verdict"
+  - "tests.systemic_risk.test_d002j_ingestion_manifest.test_ingestion_boundary_doc_present"
+expected_signal: >-
+  PYTHONPATH=. python -m pytest tests/systemic_risk/test_d002j_ingestion_manifest.py
+  -q passes all 27 P3 guard tests; the ingestion_manifest_v1.json declares
+  18 adapters across all 5 adapter classes with 3 vintage-aware and 1
+  forecast adapter, every adapter source_id is P1B-surviving and every
+  window_id is in the P2 registry, both parent shas (P1B registry and P2
+  window registry) are pinned byte-exact in the manifest, the P3 capsule
+  parses via tools.governance.verdict_dag.load_capsule under schema
+  D002J-VERDICT-CAPSULE-v1 with parent=['D002J-P2'] and
+  allowed_next=['D002J-P4'], the DAG verdict regenerates to 6 nodes
+  acyclic, no orphans, leaf=D002J-P3, next_legal_nodes_from_main_head=
+  ['D002J-P4'], canonical_run_authorized_anywhere=false; the six locked
+  governance shas all byte-exact; render_lineage.py produces byte-
+  identical output on repeat runs.
+measurement_command: >-
+  bash -c 'set -e;
+  PYTHONPATH=. python -m pytest tests/systemic_risk/test_d002j_ingestion_manifest.py -q;
+  PYTHONPATH=. python -m pytest tests/governance/test_verdict_dag_integrity.py -q;
+  PYTHONPATH=. python -m tools.governance.verdict_dag check -v;
+  PYTHONPATH=. python -m tools.governance.render_lineage --out /tmp/_d002j_p3_lm1.md;
+  PYTHONPATH=. python -m tools.governance.render_lineage --out /tmp/_d002j_p3_lm2.md;
+  diff /tmp/_d002j_p3_lm1.md /tmp/_d002j_p3_lm2.md;
+  test -f artifacts/d002j/ingestion/ingestion_manifest_v1.json;
+  test -f artifacts/d002j/ingestion/adapter_registry_v1.json;
+  test -f artifacts/d002j/ingestion/source_hash_manifest_v1.json;
+  test -f artifacts/governance/verdicts/d002j_p3_verdict_v1.json;
+  python -m json.tool artifacts/d002j/ingestion/ingestion_manifest_v1.json > /dev/null;
+  grep -q "D002J-INGESTION-MANIFEST-v1" artifacts/d002j/ingestion/ingestion_manifest_v1.json;
+  grep -q "INGESTION_MANIFEST_READY" artifacts/governance/verdicts/d002j_p3_verdict_v1.json;
+  grep -q "D-002J-P3" docs/governance/D002G_CANONICAL_RUN_BLOCKERS.md;
+  test "$(sha256sum docs/governance/D002J_PREREGISTRATION.yaml | awk "{print \$1}")" = "f3dc65b7e64b96eafe6f23ca8bdd0e05dc9bf95b12c2658b227bd0340f7975a0"'
+signal_artifact: "artifacts/d002j/ingestion/ingestion_manifest_v1.json"
+falsifier:
+  command: >-
+    bash -c 'set -e;
+    PYTHONPATH=. python -m pytest tests/systemic_risk/test_d002j_ingestion_manifest.py -q || exit 1;
+    PYTHONPATH=. python -m pytest tests/governance/test_verdict_dag_integrity.py -q || exit 2;
+    PYTHONPATH=. python -m tools.governance.verdict_dag check || exit 3;
+    grep -q "INGESTION_MANIFEST_READY" artifacts/governance/verdicts/d002j_p3_verdict_v1.json || exit 4;
+    grep -q "D-002J-P3" docs/governance/D002G_CANONICAL_RUN_BLOCKERS.md || exit 5;
+    test "$(sha256sum docs/governance/D002J_PREREGISTRATION.yaml | awk "{print \$1}")" = "f3dc65b7e64b96eafe6f23ca8bdd0e05dc9bf95b12c2658b227bd0340f7975a0" || exit 6'
+  description: >-
+    Probes D-002J-P3 ingestion manifest: 27 ingestion-manifest tests
+    pass; 16 verdict_dag_integrity tests pass under the 6-node DAG;
+    verdict_dag CLI validates the on-disk DAG; the P3 capsule declares
+    decision INGESTION_MANIFEST_READY; BLOCKERS appended with D-002J-P3
+    section; D-002J prereg sha byte-exact UNCHANGED.
+rollback_command: >-
+  bash -c 'rm -rf artifacts/d002j/ingestion/ artifacts/governance/verdicts/d002j_p3_verdict_v1.json && git checkout HEAD -- docs/governance/D002G_CANONICAL_RUN_BLOCKERS.md docs/research/D002J_LINEAGE_MAP.md artifacts/governance/verdicts/d002j_verdict_dag_v1.json tests/governance/test_verdict_dag_integrity.py tests/systemic_risk/test_d002j_crisis_window_registry.py && rm -f tests/systemic_risk/test_d002j_ingestion_manifest.py docs/research/D002J_INGESTION_BOUNDARY.md docs/research/D002J_POINT_IN_TIME_DISCIPLINE.md .claude/commit_acceptors/x10r-d002j-p3-ingestion-manifest.yaml'
+rollback_verification_command: >-
+  bash -c 'test ! -f .claude/commit_acceptors/x10r-d002j-p3-ingestion-manifest.yaml && test ! -d artifacts/d002j/ingestion && test ! -f artifacts/governance/verdicts/d002j_p3_verdict_v1.json'
+memory_update_type: append
+ledger_path: ".claude/commit_acceptors/x10r-d002j-p3-ingestion-manifest.yaml"
+report_path: "docs/research/D002J_INGESTION_BOUNDARY.md"
+evidence: []

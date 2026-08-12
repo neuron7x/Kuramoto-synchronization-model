@@ -1,4 +1,5 @@
-# SPDX-License-Identifier: LicenseRef-TradePulse-Proprietary
+# Copyright (c) 2023-2026 Yaroslav Vasylenko (neuron7xLab)
+# SPDX-License-Identifier: MIT
 """Tests for synthetic market feed generator."""
 
 
@@ -231,3 +232,69 @@ class TestSyntheticMarketFeedGenerator:
         prices = [float(r.last) for r in recording.records]
         avg_price = sum(prices) / len(prices)
         assert 90000 < avg_price < 110000  # Within 10% of base
+
+
+class TestGeneratorDecisionGuards:
+    """Regime dispatch, crash windows, and start-time fallback."""
+
+    def test_adjust_for_regime_dispatches_mean_reverting_and_volatile(self) -> None:
+        """`regime == "mean_reverting"` / `== "volatile"` select distinct params.
+
+        Under Eq->NotEq each branch is skipped for its own regime and falls
+        through to the stable default, erasing the regime's characteristic vol.
+        """
+        gen = SyntheticMarketFeedGenerator(seed=1)
+        assert gen._adjust_for_regime("mean_reverting", 0.5, 1.0) == (0.0, 0.6)
+        assert gen._adjust_for_regime("volatile", 0.5, 1.0) == (0.5, 3.0)
+        # Negative control: the stable default keeps drift and vol unchanged.
+        assert gen._adjust_for_regime("stable", 0.5, 1.0) == (0.5, 1.0)
+
+    def test_flash_crash_widens_spread_near_the_crash(self) -> None:
+        """`abs(i - crash_index) < 5` widens the spread around the crash.
+
+        Under Lt->GtE the window inverts: the crash bar would carry a NARROW
+        spread while calm bars widen. Pinned by requiring the crash-bar spread
+        ratio to exceed a far bar's.
+        """
+        gen = SyntheticMarketFeedGenerator(seed=3)
+        recording = gen.generate_flash_crash(num_records=60, crash_position=0.5)
+        records = recording.records
+        crash_index = int(60 * 0.5)
+
+        def ratio(rec) -> float:
+            return (rec.ask - rec.bid) / rec.mid_price
+
+        assert ratio(records[crash_index]) > ratio(records[0])
+
+    def test_flash_crash_spikes_volume_near_the_crash(self) -> None:
+        """`abs(i - crash_index) < 3` spikes volume around the crash.
+
+        Under Lt->GtE the window inverts: calm bars would get the high-volume
+        lognormal and the crash bars the low one. Pinned by mean volume in the
+        crash window exceeding a far window (the two lognormal means are ~3.7 vs
+        ~0.4, so the separation survives per-record noise).
+        """
+        gen = SyntheticMarketFeedGenerator(seed=5)
+        records = gen.generate_flash_crash(num_records=90, crash_position=0.5).records
+        crash_index = int(90 * 0.5)
+
+        near = [records[i].volume for i in range(crash_index - 2, crash_index + 3)]
+        far = [records[i].volume for i in range(0, 5)]
+        assert sum(near) / len(near) > sum(far) / len(far)
+
+    def test_regime_transition_honours_explicit_start_time(self) -> None:
+        """`current_time = start_time or <epoch>` uses a supplied start time.
+
+        Under Or->And a truthy start_time collapses to the default epoch, so the
+        first record would carry the wrong timestamp.
+        """
+        from datetime import datetime, timedelta, timezone
+
+        start = datetime(2030, 6, 1, 12, 0, 0, tzinfo=timezone.utc)
+        gen = SyntheticMarketFeedGenerator(seed=1)
+        recording = gen.generate_regime_transition(
+            num_records=30, regimes=["stable", "volatile"], start_time=start
+        )
+        # The first record sits within a second of the supplied start (small
+        # latency offset), NOT at the 2024 default epoch the And-mutant would use.
+        assert start <= recording.records[0].exchange_ts < start + timedelta(seconds=1)

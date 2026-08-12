@@ -1,0 +1,121 @@
+# Diff-bound acceptor for the explosive-sync K_c fail-closed correction.
+#
+# Closes SCIENTIFIC DEBT A2 in core/physics/explosive_sync.py:
+#  (i) A bare magic "* 100" factor on the return-derived natural frequencies
+#      ("scaled for Kuramoto dynamics") with no derivation. It is replaced by
+#      the documented unit bridge omega = mean_return / dt = mean_return *
+#      (1/_INTEGRATION_DT). At dt=0.01 this is exactly 100, NOT a tuning knob:
+#      a per-bar return is dimensionless per bar; one bar advances the
+#      integrator by _INTEGRATION_DT time-units, so the per-time-unit phase
+#      rate is mean_return/dt [rad / integration-time-unit], matching the units
+#      of the reference N(0,1) natural frequencies. Now named module constants
+#      _INTEGRATION_DT and _RETURN_TO_OMEGA (also reused for the engine dt so
+#      the two cannot silently diverge).
+#  (ii) _find_critical_K returned a sweep ENDPOINT (K_values[0] or
+#      K_values[-1]) when R(K) never crossed R_threshold, fabricating a K_c out
+#      of grid-boundary artifacts. The downstream hysteresis |K_c_fwd-K_c_bwd|
+#      was then computed from those artifacts and could trip the ESCircuitBreaker
+#      on a non-existent transition (fail-OPEN to RESTRICTED). The canonical
+#      K_c = 2/(pi*g(0)) (CLAUDE.md CRITICAL FORMULAS) was never referenced and
+#      remains out of scope here; the point is to STOP fabricating a K_c. The
+#      fix returns nan as a "transition not detected" sentinel; measure_proximity
+#      then sets transition_detected=False, hysteresis_width=nan, proximity=0.0,
+#      is_explosive=False — fail CLOSED (no fabricated transition), the safe
+#      direction. INV-ES1 (width >= 0) holds vacuously (a nan is never reported
+#      as a negative width) and INV-ES2 is unaffected; genuine S-curve crossings
+#      are bit-for-bit unchanged.
+#
+# Pure physics / signal correctness. NOT a market model and no market claim:
+# inputs are a sampled price array; outputs are R(K) sweeps and an ES-proximity
+# scalar. No runtime trading path is touched (forbidden_paths enforced below).
+
+id: explosive-sync-kc-failclosed
+status: ACTIVE
+claim_type: correctness
+promise: >-
+  core.physics.explosive_sync no longer fabricates an explosive-synchronization
+  transition. (1) The undocumented magic "* 100" on return-derived natural
+  frequencies is replaced by the named module constants _INTEGRATION_DT (the
+  KuramotoConfig integration dt, now sourced once) and
+  _RETURN_TO_OMEGA = 1.0 / _INTEGRATION_DT, with the derivation written in the
+  code: omega = mean_return / dt converts a per-bar return into an angular
+  velocity in [rad / integration-time-unit]; the former 100 is exactly 1/dt at
+  dt=0.01, not a free constant. (2) ExplosiveSyncDetector._find_critical_K now
+  returns math.nan (a "transition not detected" sentinel) when R(K) has no
+  upward crossing of R_threshold, instead of silently returning a sweep
+  endpoint K_values[0]/K_values[-1]. measure_proximity treats a nan K_c in
+  either sweep as fail-closed: transition_detected=False, hysteresis_width=nan,
+  proximity=0.0, is_explosive=False, so ESCircuitBreaker.check(proximity) cannot
+  fire on a non-existent transition (no fail-OPEN to RESTRICTED). A new
+  transition_detected: bool field is added to ESProximityResult to expose the
+  status. INV-ES1 (hysteresis width >= 0) and INV-ES2 are preserved unchanged;
+  genuine threshold crossings keep identical finite K_c, width, proximity and
+  verdict. No new invariant; INVARIANTS.yaml / CLAUDE.md / README / BASELINE are
+  untouched and the invariant count is unchanged. Pure NumPy, total/typed,
+  mypy --strict clean. No runtime trading path is touched.
+diff_scope:
+  changed_files:
+    - path: ".claude/commit_acceptors/explosive-sync-kc-failclosed.yaml"
+    - path: "core/physics/explosive_sync.py"
+    - path: "tests/unit/physics/test_T2_explosive_sync.py"
+  forbidden_paths:
+    - "trading/"
+    - "execution/"
+    - "forecast/"
+    - "policy/"
+required_python_symbols:
+  - "ExplosiveSyncDetector"
+  - "ESProximityResult"
+  - "ESCircuitBreaker"
+expected_signal: >-
+  All 17 tests in tests/unit/physics/test_T2_explosive_sync.py pass under pytest
+  (~ a few seconds), including the new TestCriticalKFailClosed class:
+  test_no_crossing_shapes_all_yield_nan (flat-low, saturated-high,
+  monotone-capped R(K) all give nan K_c), test_genuine_scurve_crossing_finite
+  (a real 0.15->0.85 jump gives a finite K_c inside the bracketing interval),
+  and test_no_crossing_yields_not_explosive_via_synthetic_R (a forced-nan K_c
+  yields transition_detected False, is_explosive False, proximity 0.0,
+  hysteresis_width nan). The updated INV-ES1 test_hysteresis_non_negative is
+  nan-aware: finite widths must be >= 0, nan widths must coincide with
+  transition_detected False. ruff format/check + black clean on
+  core/physics/explosive_sync.py; mypy --strict clean on it;
+  validate_tests.py --audit-code reports 0 clamp/bounds issues on
+  explosive_sync.py; the kernel self-check PASSES with 107 invariants (count
+  unchanged). Measured verdict-impact (N=5, K_range=(0.5,4.0), 10 steps,
+  seed 0..7): seed 7 flips from the OLD fabricated (width=1.437, proximity=0.410,
+  is_explosive=True, breaker FIRES) to the NEW safe (transition_detected=False,
+  proximity=0.0, is_explosive=False, breaker does not fire); seeds 0,1 lose a
+  fabricated endpoint width and become not-detected (verdict was already
+  is_explosive=False); seeds 2-6 (genuine crossings) are unchanged.
+measurement_command: >-
+  python -m pytest tests/unit/physics/test_T2_explosive_sync.py -q
+signal_artifact: "tmp/explosive_sync_kc_failclosed_pytest.log"
+falsifier:
+  command: >-
+    python -c "import numpy as np, sys;
+    from core.physics.explosive_sync import ExplosiveSyncDetector;
+    d=ExplosiveSyncDetector(K_range=(0.5,4.0), n_K_steps=10);
+    Kv=np.linspace(0.5,4.0,10);
+    shapes={'flat_low':np.full(10,0.1),'saturated_high':np.full(10,0.9),'monotone_capped':np.linspace(0.05,0.45,10)};
+    bad=[(n, d._find_critical_K(Kv,R)) for n,R in shapes.items() if np.isfinite(d._find_critical_K(Kv,R))];
+    print('no-crossing K_c finite-endpoint leaks:', bad);
+    sys.exit(1 if bad else 0)"
+  description: >-
+    Inverse probe for the fail-closed fix: feeds three R(K) sweeps that never
+    cross R_threshold (flat sub-threshold, saturated above with no upward
+    crossing, monotone rising but capped below threshold) and exits non-zero iff
+    _find_critical_K returns a FINITE K_c (a fabricated grid endpoint) for any of
+    them. It fires iff the old endpoint-fallback behaviour is present, proving
+    the no-crossing path is fail-closed (nan) and that no explosive verdict can
+    be synthesized from grid-boundary artifacts. Exits 0 on the fixed code.
+rollback_command: >-
+  git checkout HEAD~1 --
+  core/physics/explosive_sync.py
+  tests/unit/physics/test_T2_explosive_sync.py
+  .claude/commit_acceptors/explosive-sync-kc-failclosed.yaml
+rollback_verification_command: >-
+  git diff --exit-code core/physics/explosive_sync.py
+memory_update_type: append
+ledger_path: ".claude/commit_acceptors/explosive-sync-kc-failclosed.yaml"
+report_path: ".claude/commit_acceptors/explosive-sync-kc-failclosed.yaml"
+evidence: []

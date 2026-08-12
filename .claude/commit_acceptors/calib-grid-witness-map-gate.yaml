@@ -1,0 +1,40 @@
+id: calib-grid-witness-map-gate
+status: ACTIVE
+claim_type: governance
+promise: >-
+  Bind the CALIB-GRID witness-map validation PR to explicit governance.
+  The PR adds a validation trigger to CALIB_GRID_WITNESS_MAP.json and scopes
+  the physics code audit so non-core witness-map changes do not fail on
+  unrelated core audit debt. CALIB-GRID validation remains enforced by the
+  dedicated witness-map workflow and validator.
+diff_scope:
+  changed_files:
+    - path: ".claude/commit_acceptors/calib-grid-witness-map-gate.yaml"
+    - path: ".claude/physics/CALIB_GRID_WITNESS_MAP.json"
+    - path: ".github/workflows/physics-kernel-gate.yml"
+  forbidden_paths:
+    - "core/"
+    - "tests/research/calibration/test_grid_kuramoto.py"
+    - "research/calibration/grid_kuramoto/"
+required_python_symbols: []
+expected_signal: >-
+  PR checks show CALIB GRID Witness Map success, Physics Invariants success,
+  Physics Kernel Gate success, and Commit Acceptor Gate success.
+measurement_command: >-
+  bash -c 'python .claude/physics/validate_calib_grid_witness_map.py &&
+  python tools/commit_acceptor/validate_commit_acceptor.py --base origin/main --head HEAD'
+signal_artifact: "artifacts/audit/CALIB_GRID_WITNESS_MAP_EXPECTED_2026-05-29.json"
+falsifier:
+  command: >-
+    bash -c 'python .claude/physics/validate_calib_grid_witness_map.py >/tmp/calib_grid_witness_map_gate.log 2>&1 || exit 0; exit 1'
+  description: >-
+    Falsifies the gate if the CALIB-GRID witness-map validator fails.
+rollback_command: >-
+  bash -c 'git checkout origin/main -- .claude/physics/CALIB_GRID_WITNESS_MAP.json .github/workflows/physics-kernel-gate.yml && rm -f .claude/commit_acceptors/calib-grid-witness-map-gate.yaml'
+rollback_verification_command: >-
+  bash -c '! test -f .claude/commit_acceptors/calib-grid-witness-map-gate.yaml'
+memory_update_type: append
+ledger_path: ".claude/commit_acceptors/calib-grid-witness-map-gate.yaml"
+report_path: "artifacts/audit/CALIB_GRID_WITNESS_MAP_EXPECTED_2026-05-29.json"
+evidence:
+  - path: "artifacts/audit/CALIB_GRID_WITNESS_MAP_EXPECTED_2026-05-29.json"

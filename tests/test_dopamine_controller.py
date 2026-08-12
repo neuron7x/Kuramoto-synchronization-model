@@ -1,3 +1,5 @@
+# Copyright (c) 2023-2026 Yaroslav Vasylenko (neuron7xLab)
+# SPDX-License-Identifier: MIT
 """Unit tests for DopamineController neuromodulator system.
 
 This module validates the dopamine-based reinforcement learning controller
@@ -25,7 +27,7 @@ from typing import Dict, List, Tuple
 import pytest
 import yaml
 
-from tradepulse.core.neuro.dopamine.dopamine_controller import DopamineController
+from geosync.core.neuro.dopamine.dopamine_controller import DopamineController
 
 
 @pytest.fixture(autouse=True)
@@ -112,9 +114,7 @@ def test_configuration_validation_missing_key(tmp_path) -> None:
         DopamineController(str(cfg_path))
 
 
-def test_configuration_validation_ranges(
-    tmp_path, config_dict: Dict[str, object]
-) -> None:
+def test_configuration_validation_ranges(tmp_path, config_dict: Dict[str, object]) -> None:
     """Test that DopamineController validates parameter ranges.
 
     Parameters must be within valid ranges (e.g., delta_gain must be <= 1.0).
@@ -144,12 +144,7 @@ def test_estimate_appetitive_state_with_abs_rpe(controller: DopamineController) 
     appetitive = controller.estimate_appetitive_state(1.0, 0.5, 0.2, 0.3)
     cfg = controller.config
     novelty_eff = 0.5 + cfg["c_absrpe"] * abs(0.4)
-    expected = (
-        cfg["w_r"] * 1.0
-        + cfg["w_n"] * novelty_eff
-        + cfg["w_m"] * 0.2
-        + cfg["w_v"] * 0.3
-    )
+    expected = cfg["w_r"] * 1.0 + cfg["w_n"] * novelty_eff + cfg["w_m"] * 0.2 + cfg["w_v"] * 0.3
     assert appetitive == pytest.approx(
         expected, rel=1e-6
     ), f"Appetitive state mismatch: expected {expected}, got {appetitive}"
@@ -181,9 +176,7 @@ def test_compute_rpe_sign_and_magnitude(controller: DopamineController) -> None:
     assert math.copysign(1.0, rpe) == math.copysign(
         1.0, 0.39
     ), f"RPE sign mismatch: expected positive, got {rpe}"
-    assert rpe == pytest.approx(
-        0.39, rel=1e-6
-    ), f"RPE magnitude mismatch: expected 0.39, got {rpe}"
+    assert rpe == pytest.approx(0.39, rel=1e-6), f"RPE magnitude mismatch: expected 0.39, got {rpe}"
     updated_value = controller.update_value_estimate()
     expected_update = 0.0 + 0.1 * 0.39
     assert updated_value == pytest.approx(
@@ -204,14 +197,10 @@ def test_dopamine_signal_clamped_and_stable(controller: DopamineController) -> N
     """
     controller.compute_rpe(1e6, 0.0, 0.0)
     high = controller.compute_dopamine_signal(5.0, controller.last_rpe)
-    assert (
-        0.0 <= high <= 1.0
-    ), f"Dopamine signal should be in [0,1], got {high} for high RPE"
+    assert 0.0 <= high <= 1.0, f"Dopamine signal should be in [0,1], got {high} for high RPE"
     controller.compute_rpe(-1e6, 0.0, 0.0)
     low = controller.compute_dopamine_signal(0.0, controller.last_rpe)
-    assert (
-        0.0 <= low <= 1.0
-    ), f"Dopamine signal should be in [0,1], got {low} for low RPE"
+    assert 0.0 <= low <= 1.0, f"Dopamine signal should be in [0,1], got {low} for low RPE"
 
 
 def test_temperature_monotonic_decrease(controller: DopamineController) -> None:
@@ -371,9 +360,7 @@ def test_reset_and_state_roundtrip(controller: DopamineController) -> None:
     ), f"Reset state should be zero: expected {expected_reset}, got {reset_state}"
     controller.load_state(state)
     loaded_state = controller.dump_state()
-    assert (
-        loaded_state == state
-    ), f"State round-trip failed: expected {state}, got {loaded_state}"
+    assert loaded_state == state, f"State round-trip failed: expected {state}, got {loaded_state}"
 
 
 def test_load_state_validation(controller: DopamineController) -> None:

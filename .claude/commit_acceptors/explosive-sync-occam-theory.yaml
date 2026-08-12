@@ -1,0 +1,122 @@
+# Diff-bound commit acceptor for the explosive-sync + Occam + theory bundle.
+#
+# Closes audit tasks 7, 8, 9, 10, 11 from the Protocol X-7 Upgrade
+# Checklist:
+#   7. Sakaguchi-Kuramoto with phase frustration α (sakaguchi_kuramoto_step)
+#   8. Higher-order Kuramoto with triadic interactions (triadic_kuramoto_step
+#      + HigherOrderConfig); O(N) via Fourier-style sum trick
+#   9. Explosive synchronization detection via forward/reverse coupling
+#      sweep with hysteresis-width measurement (Gómez-Gardeñes 2011)
+#   10. Math proof sketch for the phase-locking precursor (THEORY_PROOFS.md)
+#   11. Occam penalty (AIC / BIC / MDL) for the Adversarial Ladder
+#
+# Pure-function APIs throughout. Each new module < 350 LoC.
+#
+# Locally verified:
+#   * pytest tests/research/systemic_risk/test_kuramoto_extensions.py: 14/14 pass
+#   * pytest tests/research/systemic_risk/test_occam_penalty.py: 15/15 pass
+#   * pytest tests/research/systemic_risk/: 524/524 pass
+#   * mypy --strict on new modules + tests: 0 errors
+#   * ruff + black: clean
+
+id: explosive-sync-occam-theory
+status: ACTIVE
+claim_type: governance
+promise: >-
+  After this PR lands, ``research.systemic_risk`` exposes
+  ``sakaguchi_kuramoto_step`` (Sakaguchi-Kuramoto with α frustration),
+  ``triadic_kuramoto_step`` + ``HigherOrderConfig`` (higher-order
+  Kuramoto with triadic interactions), ``explosive_sync_sweep`` +
+  ``ExplosiveSyncReport`` (Gómez-Gardeñes hysteresis detection),
+  and the Occam-penalty arbiters ``aic_/bic_/mdl_penalized_log_likelihood``
+  + ``occam_winner``. The accompanying THEORY_PROOFS.md sketches the
+  formal precursor claim with primary-source references.
+
+diff_scope:
+  changed_files:
+    - path: ".claude/commit_acceptors/explosive-sync-occam-theory.yaml"
+    - path: "research/systemic_risk/THEORY_PROOFS.md"
+    - path: "research/systemic_risk/__init__.py"
+    - path: "research/systemic_risk/kuramoto_extensions.py"
+    - path: "research/systemic_risk/occam_penalty.py"
+    - path: "tests/research/systemic_risk/test_kuramoto_extensions.py"
+    - path: "tests/research/systemic_risk/test_occam_penalty.py"
+  forbidden_paths:
+    - "trading/"
+    - "execution/"
+    - "forecast/"
+    - "policy/"
+    - "core/"
+    - "runtime/"
+    - "application/"
+
+required_python_symbols:
+  - "research/systemic_risk/kuramoto_extensions.py::sakaguchi_kuramoto_step"
+  - "research/systemic_risk/kuramoto_extensions.py::triadic_kuramoto_step"
+  - "research/systemic_risk/kuramoto_extensions.py::explosive_sync_sweep"
+  - "research/systemic_risk/occam_penalty.py::occam_winner"
+  - "tests/research/systemic_risk/test_kuramoto_extensions.py::TestExplosiveSync"
+  - "tests/research/systemic_risk/test_occam_penalty.py::TestOccamWinner"
+
+expected_signal: >-
+  ``pytest tests/research/systemic_risk/test_kuramoto_extensions.py
+  tests/research/systemic_risk/test_occam_penalty.py -q`` reports 29
+  passed; before this PR both files do not exist.
+
+measurement_command: >-
+  bash -c '
+    mypy --strict
+      research/systemic_risk/kuramoto_extensions.py
+      research/systemic_risk/occam_penalty.py
+      tests/research/systemic_risk/test_kuramoto_extensions.py
+      tests/research/systemic_risk/test_occam_penalty.py && python -m pytest
+      tests/research/systemic_risk/test_kuramoto_extensions.py
+      tests/research/systemic_risk/test_occam_penalty.py -q
+  '
+
+signal_artifact: "tmp/explosive_sync_occam_theory.log"
+
+falsifier:
+  command: |-
+    bash -c '
+      python -c "
+    from research.systemic_risk import (
+        sakaguchi_kuramoto_step, triadic_kuramoto_step,
+        explosive_sync_sweep, occam_winner,
+    )
+    assert all([sakaguchi_kuramoto_step, triadic_kuramoto_step,
+                explosive_sync_sweep, occam_winner])
+      " 2>/dev/null && exit 1 || exit 0
+    '
+  description: >-
+    Probes that all four headline functions are exposed on the public
+    package surface. Falsifier inverts: it succeeds (exit 0) only when
+    one of the imports fails, which would mean the bundle rolled back.
+
+rollback_command: >-
+  bash -c '
+    git rm -f
+      research/systemic_risk/kuramoto_extensions.py
+      research/systemic_risk/occam_penalty.py
+      research/systemic_risk/THEORY_PROOFS.md
+      tests/research/systemic_risk/test_kuramoto_extensions.py
+      tests/research/systemic_risk/test_occam_penalty.py
+      .claude/commit_acceptors/explosive-sync-occam-theory.yaml && git checkout HEAD~1 -- research/systemic_risk/__init__.py
+  '
+
+rollback_verification_command: |-
+  bash -c '
+    python -c "
+  try:
+      from research.systemic_risk import sakaguchi_kuramoto_step
+  except ImportError:
+      pass
+  else:
+      raise SystemExit(1)
+    "
+  '
+
+memory_update_type: append
+ledger_path: ".claude/commit_acceptors/explosive-sync-occam-theory.yaml"
+report_path: "tmp/explosive_sync_occam_theory.log"
+evidence: []

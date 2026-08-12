@@ -1,6 +1,6 @@
 # GitHub Actions Workflows Summary
 
-This document provides an overview of all active CI/CD workflows in the TradePulse repository.
+This document provides an overview of all active CI/CD workflows in the GeoSync repository.
 
 ## Core CI/CD Workflows
 
@@ -23,7 +23,7 @@ This document provides an overview of all active CI/CD workflows in the TradePul
 | **E2E Integration** | `e2e-integration.yml` | End-to-end integration tests | PRs touching tests/e2e or core modules |
 | **Helm** | `helm.yml` | Validate Helm charts | PRs touching deploy/helm |
 | **NAK CI** | `nak-ci.yml` | NAK controller specific tests | PRs touching nak_controller |
-| **Neural Controller CI** | `neural-controller-ci.yml` | Neural controller tests | PRs touching tradepulse/neural_controller |
+| **Neural Controller CI** | `neural-controller-ci.yml` | Neural controller tests | PRs touching geosync/neural_controller |
 | **Multi-Exchange Replay** | `multi-exchange-replay-regression.yml` | Replay tests for exchange compatibility | PRs touching fixtures/recordings or backtest |
 
 ### Main Branch Workflows (Post-Merge)

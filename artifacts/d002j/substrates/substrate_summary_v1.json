@@ -1,0 +1,66 @@
+{
+  "schema_version": "D002J-SUBSTRATE-SUMMARY-v1",
+  "study_id": "D-002J",
+  "phase": "P5",
+  "generated_at": "2026-05-15T00:00:00Z",
+  "parent_manifest_path": "artifacts/d002j/substrates/substrate_candidate_manifest_v1.json",
+  "total_substrates": 3,
+  "counts_by_mechanism_family": {
+    "liquidity_funding": 1,
+    "contagion": 1,
+    "market_wide_stress": 1
+  },
+  "counts_by_substrate_class": {
+    "funding_liquidity": 1,
+    "contagion": 1,
+    "market_information": 1
+  },
+  "class_coverage_check": {
+    "contagion_class_present": true,
+    "funding_liquidity_class_present": true,
+    "market_or_information_class_present": true
+  },
+  "crisis_window_coverage_matrix": {
+    "CW1_GFC_2007_2009": ["cross_exposure_contagion_proxy", "volatility_credit_spread_regime"],
+    "CW2_EUROZONE_2011_2012": ["cross_exposure_contagion_proxy"],
+    "CW3_US_REPO_SPIKE_2019": ["funding_liquidity_rollover"],
+    "CW4_COVID_DASH_FOR_CASH_2020": ["funding_liquidity_rollover", "volatility_credit_spread_regime"],
+    "CW5_UK_GILT_LDI_2022": ["funding_liquidity_rollover"],
+    "CW6_REGIONAL_BANKING_2023": ["cross_exposure_contagion_proxy"]
+  },
+  "windows_covered": [
+    "CW1_GFC_2007_2009",
+    "CW2_EUROZONE_2011_2012",
+    "CW3_US_REPO_SPIKE_2019",
+    "CW4_COVID_DASH_FOR_CASH_2020",
+    "CW5_UK_GILT_LDI_2022",
+    "CW6_REGIONAL_BANKING_2023"
+  ],
+  "windows_covered_count": 6,
+  "windows_total": 6,
+  "window_coverage_floor": 4,
+  "window_coverage_floor_met": true,
+  "positive_control_coverage": {
+    "PC1_LIQUIDITY_SHOCK_INJECTION": ["funding_liquidity_rollover"],
+    "PC2_CONTAGION_CASCADE_INJECTION": ["cross_exposure_contagion_proxy"],
+    "PC4_MARKET_WIDE_VOLATILITY_REGIME_SWITCH": ["volatility_credit_spread_regime"]
+  },
+  "positive_control_analogues_used": [
+    "PC1_LIQUIDITY_SHOCK_INJECTION",
+    "PC2_CONTAGION_CASCADE_INJECTION",
+    "PC4_MARKET_WIDE_VOLATILITY_REGIME_SWITCH"
+  ],
+  "required_null_families_forward_declared": [
+    "phase_shuffled_funding_rate_null",
+    "block_bootstrap_rollover_null",
+    "degree_preserving_rewired_network_null",
+    "constant_payload_no_cascade_null",
+    "single_regime_constant_variance_null",
+    "iid_shuffled_spread_null"
+  ],
+  "interbank_transaction_microdata_required_by_any_substrate": false,
+  "canonical_run_authorized": false,
+  "decision": "SUBSTRATE_CANDIDATES_READY",
+  "decision_rationale": "Exactly 3 substrates admitted; class coverage satisfied (>=1 contagion + >=1 funding/liquidity + >=1 market/information); collectively cover 6/6 P2 crisis windows (>=4 floor met); every substrate binds >=2 P1B-surviving sources, >=1 P2 window, >=1 P3 adapter, >=1 P4 positive control, and forward-declares >=2 P6 null families; no substrate requires real interbank transaction microdata.",
+  "claim_boundary": "Generative substrate candidates only. No real-data fit, no real-bank validation, no canonical run. Cross-asset coherence != interbank funding proof (Brunetti e-MID)."
+}

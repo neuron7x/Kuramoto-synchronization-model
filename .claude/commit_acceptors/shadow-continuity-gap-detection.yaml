@@ -1,0 +1,54 @@
+id: shadow-continuity-gap-detection
+status: ACTIVE
+claim_type: fail_closed
+promise: >-
+  The cross-asset Kuramoto shadow evaluator detects missing business-day
+  bars in the live equity ledger, logs each as an idempotent gap_detected
+  operational incident, and fails the deployment gate closed
+  (OPERATIONALLY_UNSAFE / NO_DEPLOY) whenever the validation sample
+  contains a continuity breach of two or more dropped business days, so a
+  discontinuous 90-bar sample can never advance to a deploy candidate.
+  The additive evaluator change is re-pinned in the offline-robustness
+  SOURCE_HASHES.json provenance manifest.
+diff_scope:
+  changed_files:
+    - path: ".claude/commit_acceptors/shadow-continuity-gap-detection.yaml"
+    - path: "scripts/evaluate_cross_asset_kuramoto_shadow.py"
+    - path: "tests/ops/test_shadow_continuity_gap.py"
+    - path: "docs/reports/shadow_continuity_gap.md"
+    - path: "results/cross_asset_kuramoto/offline_robustness/SOURCE_HASHES.json"
+  forbidden_paths:
+    - "core/"
+    - "geosync/"
+    - "trading/"
+    - "execution/"
+    - "forecast/"
+    - "policy/"
+required_python_symbols:
+  - "scripts/evaluate_cross_asset_kuramoto_shadow.py::_detect_ledger_gaps"
+  - "scripts/evaluate_cross_asset_kuramoto_shadow.py::_continuity_summary"
+  - "scripts/evaluate_cross_asset_kuramoto_shadow.py::_log_ledger_gaps"
+expected_signal: >-
+  python-fast-tests passes tests/ops/test_shadow_continuity_gap.py (10
+  cases) including test_gate_fails_closed_on_continuity_breach, and the
+  existing shadow/ops suites stay green. Locally
+  `python -m pytest -q tests/ops/test_shadow_continuity_gap.py` exits 0.
+measurement_command: "bash -c 'python -m pytest -q tests/ops/test_shadow_continuity_gap.py'"
+signal_artifact: "docs/reports/shadow_continuity_gap.md"
+falsifier:
+  command: "bash -c 'python -m pytest -q tests/ops/test_shadow_continuity_gap.py::test_gate_fails_closed_on_continuity_breach && exit 1 || exit 0'"
+  description: >-
+    Inverts the fail-closed test's exit status: on the green path the test
+    passes, so the probe exits 1 (the falsifier fires, as required). If the
+    continuity gate regressed and let a breached sample stay a deploy
+    candidate, the test would fail and the probe would exit 0 — surfacing
+    the regression.
+rollback_command: >-
+  bash -c 'git checkout -- scripts/evaluate_cross_asset_kuramoto_shadow.py &&
+  rm -f tests/ops/test_shadow_continuity_gap.py docs/reports/shadow_continuity_gap.md
+  .claude/commit_acceptors/shadow-continuity-gap-detection.yaml'
+rollback_verification_command: "bash -c '! test -f tests/ops/test_shadow_continuity_gap.py'"
+memory_update_type: none
+ledger_path: ".claude/commit_acceptors/shadow-continuity-gap-detection.yaml"
+report_path: "docs/reports/shadow_continuity_gap.md"
+evidence: []

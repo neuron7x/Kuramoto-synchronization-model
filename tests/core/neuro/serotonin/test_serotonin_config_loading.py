@@ -1,3 +1,5 @@
+# Copyright (c) 2023-2026 Yaroslav Vasylenko (neuron7xLab)
+# SPDX-License-Identifier: MIT
 from __future__ import annotations
 
 import logging
@@ -5,7 +7,7 @@ from pathlib import Path
 
 import yaml
 
-from tradepulse.core.neuro.serotonin.serotonin_controller import SerotoninController
+from geosync.core.neuro.serotonin.serotonin_controller import SerotoninController
 
 V24_TEMPLATE = {
     "alpha": 0.5,

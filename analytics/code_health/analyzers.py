@@ -1,3 +1,5 @@
+# Copyright (c) 2023-2026 Yaroslav Vasylenko (neuron7xLab)
+# SPDX-License-Identifier: MIT
 """Low-level analyzers used by the code health aggregator."""
 
 from __future__ import annotations
@@ -279,9 +281,7 @@ class GitHistoryAnalyzer:
             return self._change_cache[days]
         since = (datetime.now(timezone.utc) - timedelta(days=days)).isoformat()
         result = self._run("log", "--since", since, "--numstat", "--pretty=%H")
-        data: Dict[str, Dict[str, int]] = defaultdict(
-            lambda: {"frequency": 0, "churn": 0}
-        )
+        data: Dict[str, Dict[str, int]] = defaultdict(lambda: {"frequency": 0, "churn": 0})
         seen_in_commit: Set[str] = set()
         for line in result.stdout.splitlines():
             if not line:
@@ -342,10 +342,7 @@ class GitHistoryAnalyzer:
                 stripped = line[1:].strip()
                 if stripped.startswith("def ") or stripped.startswith("class "):
                     interface_changes[current_file] += 1
-        data = {
-            path: (interface_changes[path], total_changes[path])
-            for path in total_changes
-        }
+        data = {path: (interface_changes[path], total_changes[path]) for path in total_changes}
         self._interface_cache[days] = data
         return data
 
@@ -378,9 +375,7 @@ class RiskHeuristics:
 
         if avg_complexity > self.thresholds.get("complexity", 10):
             contributions.append("High average cyclomatic complexity")
-            score_components.append(
-                avg_complexity / (self.thresholds.get("complexity", 10) * 2)
-            )
+            score_components.append(avg_complexity / (self.thresholds.get("complexity", 10) * 2))
         if max_complexity > self.thresholds.get("max_complexity", 15):
             contributions.append("Elevated worst-case complexity")
             score_components.append(
@@ -425,21 +420,13 @@ class RiskHeuristics:
                 "Break large functions into smaller units and add focused tests."
             )
         if "High fan-in indicates coupling" in factor_set:
-            recommendations.append(
-                "Isolate responsibilities via facades or domain services."
-            )
+            recommendations.append("Isolate responsibilities via facades or domain services.")
         if "High fan-out indicates broad dependencies" in factor_set:
-            recommendations.append(
-                "Introduce abstractions to reduce direct dependency breadth."
-            )
+            recommendations.append("Introduce abstractions to reduce direct dependency breadth.")
         if "Significant churn in recent history" in factor_set:
-            recommendations.append(
-                "Pair refactoring with regression tests to stabilise behavior."
-            )
+            recommendations.append("Pair refactoring with regression tests to stabilise behavior.")
         if "Frequent modifications make this area unstable" in factor_set:
-            recommendations.append(
-                "Schedule dedicated hardening sprint for this module."
-            )
+            recommendations.append("Schedule dedicated hardening sprint for this module.")
         if interface_stability < 0.5:
             recommendations.append(
                 "Document contract changes and version interfaces to restore trust."

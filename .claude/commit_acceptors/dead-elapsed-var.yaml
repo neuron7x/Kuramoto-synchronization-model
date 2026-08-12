@@ -1,0 +1,52 @@
+# Diff-bound acceptor: remove a single dead local variable.
+#
+# get_performance_stats() assigned `elapsed = self._last_step_time` but never
+# used it (the returned dict reports a hardcoded avg_step_time_ms
+# approximation). This is the one CodeQL py/unused-local-variable that the
+# project's enforced linter (ruff F841) also flags as genuinely unused; every
+# other CodeQL unused-* finding is a false positive against ruff. Pure dead-code
+# removal, no behavioural change.
+
+id: dead-elapsed-var
+status: ACTIVE
+claim_type: correctness
+promise: >-
+  SerotoninController.get_performance_stats removed the dead local
+  'elapsed = self._last_step_time'; the returned statistics dict is byte-for-byte
+  unchanged (it never referenced elapsed). ruff F841 and CodeQL
+  py/unused-local-variable #195 both clear.
+diff_scope:
+  changed_files:
+    - path: ".claude/commit_acceptors/dead-elapsed-var.yaml"
+    - path: "src/geosync/core/neuro/serotonin/serotonin_controller.py"
+    - path: "docs/reports/dead_elapsed_var.md"
+  forbidden_paths:
+    - "trading/"
+    - "execution/"
+    - "forecast/"
+    - "policy/"
+required_python_symbols:
+  - "SerotoninController"
+expected_signal: >-
+  ruff check --select F841 reports no findings on the file; black --check and
+  mypy --strict are clean; the serotonin test suite stays green.
+measurement_command: >-
+  python -m ruff check --select F841
+  src/geosync/core/neuro/serotonin/serotonin_controller.py
+signal_artifact: "tmp/dead_elapsed_var_ruff.log"
+falsifier:
+  command: >-
+    python -c "import ast,sys;
+    src=open('src/geosync/core/neuro/serotonin/serotonin_controller.py').read();
+    sys.exit(0 if 'elapsed = self._last_step_time' not in src else 1)"
+  description: >-
+    Exits nonzero if the dead assignment is still present — confirming the
+    removal actually landed rather than the file being untouched.
+rollback_command: >-
+  git checkout origin/main -- src/geosync/core/neuro/serotonin/serotonin_controller.py
+rollback_verification_command: >-
+  git diff --exit-code origin/main -- src/geosync/core/neuro/serotonin/serotonin_controller.py
+memory_update_type: none
+ledger_path: ".claude/commit_acceptors/dead-elapsed-var.yaml"
+report_path: "docs/reports/dead_elapsed_var.md"
+evidence: []

@@ -1,4 +1,6 @@
-"""Architecture auditing utilities for TradePulse.
+# Copyright (c) 2023-2026 Yaroslav Vasylenko (neuron7xLab)
+# SPDX-License-Identifier: MIT
+"""Architecture auditing utilities for GeoSync.
 
 This module provides tooling to inspect Python packages inside the
 repository and build a representation of the current architecture. The
@@ -57,11 +59,7 @@ def _extract_imports(tree: ast.AST, module_name: str) -> set[str]:
             base_module = node.module or ""
             current_parts = module_name.split(".") if module_name else []
             if node.level:
-                prefix = (
-                    current_parts[: -node.level]
-                    if node.level <= len(current_parts)
-                    else []
-                )
+                prefix = current_parts[: -node.level] if node.level <= len(current_parts) else []
             else:
                 prefix = []
             base_parts = base_module.split(".") if base_module else []
@@ -98,9 +96,7 @@ def _extract_dataclasses(tree: ast.AST) -> dict[str, set[str]]:
             if "dataclass" in decorators:
                 fields: set[str] = set()
                 for stmt in node.body:
-                    if isinstance(stmt, ast.AnnAssign) and isinstance(
-                        stmt.target, ast.Name
-                    ):
+                    if isinstance(stmt, ast.AnnAssign) and isinstance(stmt.target, ast.Name):
                         fields.add(stmt.target.id)
                 dataclasses[node.name] = fields
     return dataclasses
@@ -111,16 +107,12 @@ def _extract_typeddicts(tree: ast.AST) -> dict[str, set[str]]:
     for node in tree.body if isinstance(tree, ast.Module) else []:
         if isinstance(node, ast.ClassDef):
             base_names = {
-                getattr(base, "id", None)
-                for base in node.bases
-                if isinstance(base, ast.Name)
+                getattr(base, "id", None) for base in node.bases if isinstance(base, ast.Name)
             }
             if "TypedDict" in base_names:
                 keys: set[str] = set()
                 for stmt in node.body:
-                    if isinstance(stmt, ast.AnnAssign) and isinstance(
-                        stmt.target, ast.Name
-                    ):
+                    if isinstance(stmt, ast.AnnAssign) and isinstance(stmt.target, ast.Name):
                         keys.add(stmt.target.id)
                 definitions[node.name] = keys
     return definitions
@@ -172,8 +164,7 @@ class ArchitectureReport:
                 for conf in self.conflicts
             ],
             "dangling_dependencies": {
-                module: sorted(deps)
-                for module, deps in self.dangling_dependencies.items()
+                module: sorted(deps) for module, deps in self.dangling_dependencies.items()
             },
         }
 
@@ -313,16 +304,14 @@ def run_audit(paths: Iterable[str]) -> ArchitectureReport:
 
 
 def main(argv: Sequence[str] | None = None) -> int:
-    parser = argparse.ArgumentParser(description="TradePulse architecture audit")
+    parser = argparse.ArgumentParser(description="GeoSync architecture audit")
     parser.add_argument(
         "paths",
         nargs="*",
         default=None,
         help="Optional list of root directories to inspect (defaults to key project packages)",
     )
-    parser.add_argument(
-        "--output", "-o", type=Path, help="Write JSON report to the specified file"
-    )
+    parser.add_argument("--output", "-o", type=Path, help="Write JSON report to the specified file")
     args = parser.parse_args(argv)
 
     report = run_audit(args.paths) if args.paths else ArchitectureAudit().analyze()

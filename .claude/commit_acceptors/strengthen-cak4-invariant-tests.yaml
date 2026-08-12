@@ -1,0 +1,59 @@
+# Diff-bound commit acceptor: close two INV-CAK4 mutation-survivor gaps found by
+# tools/mutation_probe.py. Test-only — no physics-source change (Rule Zero-safe).
+
+id: strengthen-cak4-invariant-tests
+status: ACTIVE
+claim_type: correctness
+promise: >-
+  After this PR lands, INV-CAK4 (assert_cak4_no_future_leak) has direct contract
+  tests pinning the two boundary behaviours mutation_probe found untested: the
+  `<= truncate_idx` window (test asserts post-truncate divergence does NOT
+  raise) and the empty-common early-return / leak detection (test asserts a
+  pre-truncate value change DOES raise INV-CAK4). Each test was verified to KILL
+  its target mutant (L137 `<=`->`>` and L138 `== 0`->`!= 0`) and to pass on the
+  unmutated function. No physics-source change — tests only.
+
+diff_scope:
+  changed_files:
+    - path: ".claude/commit_acceptors/strengthen-cak4-invariant-tests.yaml"
+    - path: "tests/core/cross_asset_kuramoto/test_invariants.py"
+  forbidden_paths:
+    - "trading/"
+    - "execution/"
+    - "forecast/"
+    - "policy/"
+    - "runtime/"
+    - "application/"
+    - "core/"
+
+required_python_symbols:
+  - "tests/core/cross_asset_kuramoto/test_invariants.py::test_cak4_compares_only_at_or_before_truncate"
+  - "tests/core/cross_asset_kuramoto/test_invariants.py::test_cak4_detects_pre_truncate_leak"
+
+expected_signal: >-
+  python -m pytest tests/core/cross_asset_kuramoto/test_invariants.py -k cak4
+  reports the two new tests passing.
+
+measurement_command: >-
+  bash -c 'mkdir -p tmp && python -m pytest -q -k cak4 tests/core/cross_asset_kuramoto/test_invariants.py | tee tmp/cak4_tests.log'
+
+signal_artifact: "tmp/cak4_tests.log"
+
+falsifier:
+  command: >-
+    bash -c 'python -m pytest -q tests/core/cross_asset_kuramoto/test_invariants.py::test_cak4_detects_pre_truncate_leak'
+  description: >-
+    Runs the leak-detection contract test, which asserts a pre-truncate value
+    change raises INV-CAK4. Succeeds (exit 0) only when the assertion actually
+    fires — proving the test is non-vacuous (it would fail if the check were
+    silently skipped, which is exactly the L138 mutant it was built to kill).
+
+rollback_command: >-
+  bash -c 'git checkout origin/main -- tests/core/cross_asset_kuramoto/test_invariants.py && git rm -f .claude/commit_acceptors/strengthen-cak4-invariant-tests.yaml'
+
+rollback_verification_command: >-
+  bash -c '! grep -q test_cak4_detects_pre_truncate_leak tests/core/cross_asset_kuramoto/test_invariants.py'
+
+memory_update_type: append
+ledger_path: ".claude/commit_acceptors/strengthen-cak4-invariant-tests.yaml"
+report_path: "tmp/cak4_tests.log"

@@ -1,0 +1,73 @@
+# Diff-bound acceptor: make the architecture-debt inference precise.
+#
+# Empirical finding (deps installed: hypothesis/z3/PyWavelets): every
+# dependency-gated property/formal/fuzz test passes, and the DTO schemas
+# declare required+examples — so marker-counting over-reported skip debt.
+# This recalibrates the skip measure to count only actionable (non
+# environment-gated) skips and clarifies that evidence: [] is schema-valid
+# (a policy gap against the populated-ledger invariant, not a violation).
+# Infra only, no physics.
+
+id: debt-inference-precision
+status: ACTIVE
+claim_type: correctness
+promise: >-
+  After this PR, architecture_debt_inference counts only actionable test
+  skips — skips whose reason is not an environment/availability gate
+  (optional dependency, absent fixture/data, platform capability) — and
+  documents that an empty evidence ledger is schema-valid and flagged as a
+  policy gap, not a schema violation. No empirical/market/alpha claim.
+
+diff_scope:
+  changed_files:
+    - path: ".claude/commit_acceptors/debt-inference-precision.yaml"
+    - path: "tools/architecture_debt_inference.py"
+  forbidden_paths:
+    - "trading/"
+    - "execution/"
+    - "core/"
+    - "runtime/"
+    - "application/"
+
+required_python_symbols:
+  - "tools/architecture_debt_inference.py::m_test_skips"
+  - "tools/architecture_debt_inference.py::infer"
+
+expected_signal: >-
+  python tools/architecture_debt_inference.py --json prints an
+  "actionable_test_skips" debt class whose count excludes environment-gated
+  skips; pytest reports the inference contract tests passing.
+
+measurement_command: >-
+  bash -c '
+    python tools/architecture_debt_inference.py --json >/dev/null && python -m pytest -q tests/ci/test_architecture_debt_inference.py
+  '
+
+signal_artifact: "tmp/debt_inference_precision.log"
+
+falsifier:
+  command: >-
+    bash -c '
+      python -m pytest -q
+        tests/ci/test_architecture_debt_inference.py::test_failing_measure_is_unknown_not_ok
+        >/dev/null 2>&1 && exit 1 || exit 0
+    '
+  description: >-
+    Inverts the fail-closed guarantee: succeeds only when a crashed measure
+    is silently treated as zero debt — the failure the inference must avoid.
+
+rollback_command: >-
+  bash -c '
+    git checkout origin/main -- tools/architecture_debt_inference.py && git rm -f .claude/commit_acceptors/debt-inference-precision.yaml
+  '
+
+rollback_verification_command: >-
+  bash -c '
+    ! grep -q actionable_test_skips tools/architecture_debt_inference.py
+  '
+
+memory_update_type: append
+ledger_path: ".claude/commit_acceptors/debt-inference-precision.yaml"
+report_path: "tmp/debt_inference_precision.log"
+evidence:
+- path: tools/architecture_debt_inference.py

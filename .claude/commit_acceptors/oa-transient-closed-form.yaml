@@ -1,0 +1,59 @@
+# Diff-bound acceptor: verify the OA integrator against the exact closed-form
+# transient R(t), deepening INV-OA2 from fixed point to full trajectory.
+#
+# INV-OA2 verifies the supercritical fixed point R_∞ = √(1−2Δ/K). For ω₀=0 the
+# entire OA transient has a closed-form Bernoulli/logistic solution, so the
+# integrator can be checked over the WHOLE trajectory, not just steady state —
+# a strictly stronger test. Observed max error ≈ 1e-13 (machine precision).
+
+id: oa-transient-closed-form
+status: ACTIVE
+claim_type: correctness
+promise: >-
+  Adds test_inv_oa2_full_transient_matches_closed_form to
+  test_T23_ott_antonsen_algebraic.py: for ω₀=0 the OA flow reduces to the
+  Bernoulli ODE dR/dt = (K/2−Δ)R − (K/2)R³, whose logistic solution gives the
+  exact R(t). The test integrates (T=20, dt=1e-3) and compares the entire
+  trajectory to the closed form across supercritical and subcritical cases,
+  asserting max|R_num − R_exact| < 1e-9 (observed ≈ 1e-13). Deepens INV-OA2 from
+  the fixed point to the full transient; no invariant added or changed; zero
+  production-code change.
+diff_scope:
+  changed_files:
+    - path: ".claude/commit_acceptors/oa-transient-closed-form.yaml"
+    - path: "tests/unit/physics/test_T23_ott_antonsen_algebraic.py"
+  forbidden_paths:
+    - "trading/"
+    - "execution/"
+    - "forecast/"
+    - "policy/"
+required_python_symbols:
+  - "test_inv_oa2_full_transient_matches_closed_form"
+expected_signal: >-
+  The full test_T23_ott_antonsen_algebraic.py suite passes (48 tests) including
+  the 3 parametrised transient cases; mypy --strict clean. Reproduced max
+  trajectory error: 2.27e-13 (K=6, Δ=0.5), 2.72e-14 (K=3, Δ=0.5), 1.41e-14
+  (K=1, Δ=2 subcritical).
+measurement_command: >-
+  PYTHONPATH=. python -m pytest tests/unit/physics/test_T23_ott_antonsen_algebraic.py
+  -k transient -v
+signal_artifact: "tmp/oa_transient_pytest.log"
+falsifier:
+  command: >-
+    PYTHONPATH=. python -m pytest tests/unit/physics/test_T23_ott_antonsen_algebraic.py
+    -v -k "full_transient_matches_closed_form"
+  description: >-
+    Compares the integrated OA order-parameter trajectory to the exact
+    Bernoulli/logistic closed form over the whole transient (not just R_∞). A
+    sign error or wrong cubic coefficient in the OA RHS would diverge from the
+    analytic R(t) and fail; the agreement is at machine precision.
+rollback_command: >-
+  git checkout HEAD~1 --
+  tests/unit/physics/test_T23_ott_antonsen_algebraic.py
+  .claude/commit_acceptors/oa-transient-closed-form.yaml
+rollback_verification_command: >-
+  git diff --exit-code tests/unit/physics/test_T23_ott_antonsen_algebraic.py
+memory_update_type: none
+ledger_path: ".claude/commit_acceptors/oa-transient-closed-form.yaml"
+report_path: "docs/reports/diff_bound_commit_acceptor_layer.md"
+evidence: []

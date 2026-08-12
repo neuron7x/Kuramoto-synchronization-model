@@ -1,0 +1,26 @@
+bank_id	country	name	total_assets
+DE-DEMO-001	DE	Deutsche Demo Holding AG	1850000
+DE-DEMO-002	DE	Frankfurt Demo Bank	920000
+DE-DEMO-003	DE	Munich Demo Privat	410000
+DE-DEMO-004	DE	Hamburg Demo Sparkasse	185000
+DE-DEMO-005	DE	Berlin Demo eG	95000
+FR-DEMO-001	FR	Paris Demo Banque SA	1620000
+FR-DEMO-002	FR	Lyon Demo Crédit	780000
+FR-DEMO-003	FR	Marseille Demo Mutuel	340000
+FR-DEMO-004	FR	Toulouse Demo Régional	160000
+FR-DEMO-005	FR	Bordeaux Demo Coopératif	72000
+IT-DEMO-001	IT	Roma Demo SpA	1180000
+IT-DEMO-002	IT	Milano Demo Group	610000
+IT-DEMO-003	IT	Napoli Demo Banca	280000
+IT-DEMO-004	IT	Torino Demo Popolare	125000
+IT-DEMO-005	IT	Bologna Demo Cooperativa	58000
+ES-DEMO-001	ES	Madrid Demo SA	980000
+ES-DEMO-002	ES	Barcelona Demo Caixa	490000
+ES-DEMO-003	ES	Sevilla Demo Banco	220000
+ES-DEMO-004	ES	Valencia Demo Cooperativa	98000
+ES-DEMO-005	ES	Bilbao Demo Caja	44000
+NL-DEMO-001	NL	Amsterdam Demo NV	820000
+NL-DEMO-002	NL	Rotterdam Demo Bank	380000
+NL-DEMO-003	NL	Den Haag Demo Coöperatief	150000
+NL-DEMO-004	NL	Utrecht Demo Spaar	68000
+NL-DEMO-005	NL	Eindhoven Demo Krediet	28000

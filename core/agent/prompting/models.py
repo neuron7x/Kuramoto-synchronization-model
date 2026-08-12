@@ -1,3 +1,5 @@
+# Copyright (c) 2023-2026 Yaroslav Vasylenko (neuron7xLab)
+# SPDX-License-Identifier: MIT
 """Domain models supporting the prompt management subsystem."""
 
 from __future__ import annotations
@@ -87,11 +89,7 @@ class PromptTemplate:
         object.__setattr__(self, "variant", variant)
         object.__setattr__(self, "version", version)
 
-        metadata = (
-            MappingProxyType(dict(self.metadata))
-            if self.metadata
-            else MappingProxyType({})
-        )
+        metadata = MappingProxyType(dict(self.metadata)) if self.metadata else MappingProxyType({})
         object.__setattr__(self, "metadata", metadata)
 
         parameter_names = {spec.name for spec in self.parameters}
@@ -122,22 +120,16 @@ class PromptTemplate:
         allowed = set(spec.name for spec in self.parameters)
         extra = provided.keys() - allowed
         if extra:
-            raise PromptGuardrailViolation(
-                f"Unexpected parameter(s): {', '.join(sorted(extra))}"
-            )
+            raise PromptGuardrailViolation(f"Unexpected parameter(s): {', '.join(sorted(extra))}")
 
         for spec in self.parameters:
             value = provided.get(spec.name)
             if value is None:
                 continue
             if not spec.allow_empty and not value.strip():
-                raise PromptGuardrailViolation(
-                    f"Parameter '{spec.name}' must not be empty"
-                )
+                raise PromptGuardrailViolation(f"Parameter '{spec.name}' must not be empty")
 
-    def apply_guardrails(
-        self, parameters: Mapping[str, str], context: "PromptContext"
-    ) -> None:
+    def apply_guardrails(self, parameters: Mapping[str, str], context: "PromptContext") -> None:
         """Execute guardrails registered on the template."""
 
         for guardrail in self.guardrails:
@@ -186,19 +178,13 @@ class PromptContext:
     def __post_init__(self) -> None:
         fragments = tuple(self.fragments)
         object.__setattr__(self, "fragments", fragments)
-        metadata = (
-            MappingProxyType(dict(self.metadata))
-            if self.metadata
-            else MappingProxyType({})
-        )
+        metadata = MappingProxyType(dict(self.metadata)) if self.metadata else MappingProxyType({})
         object.__setattr__(self, "metadata", metadata)
 
     def sorted_fragments(self) -> tuple[ContextFragment, ...]:
         """Return fragments sorted by priority (descending)."""
 
-        return tuple(
-            sorted(self.fragments, key=lambda fragment: fragment.priority, reverse=True)
-        )
+        return tuple(sorted(self.fragments, key=lambda fragment: fragment.priority, reverse=True))
 
 
 @dataclass(slots=True, frozen=True)
@@ -271,11 +257,7 @@ class PromptOutcome:
     metadata: Mapping[str, Any] = field(default_factory=dict)
 
     def __post_init__(self) -> None:
-        metadata = (
-            MappingProxyType(dict(self.metadata))
-            if self.metadata
-            else MappingProxyType({})
-        )
+        metadata = MappingProxyType(dict(self.metadata)) if self.metadata else MappingProxyType({})
         object.__setattr__(self, "metadata", metadata)
 
 

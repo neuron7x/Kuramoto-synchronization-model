@@ -1,8 +1,10 @@
+# Copyright (c) 2023-2026 Yaroslav Vasylenko (neuron7xLab)
+# SPDX-License-Identifier: MIT
 """Helpers for managing script output directories and artefacts."""
 
 from __future__ import annotations
 
-# SPDX-License-Identifier: LicenseRef-TradePulse-Proprietary
+# SPDX-License-Identifier: MIT
 from dataclasses import dataclass
 from datetime import datetime, timezone
 from pathlib import Path
@@ -47,9 +49,7 @@ class ArtifactManager:
         return destination
 
 
-def create_artifact_manager(
-    script_name: str, *, root: Path | None = None
-) -> ArtifactManager:
+def create_artifact_manager(script_name: str, *, root: Path | None = None) -> ArtifactManager:
     """Factory that selects a root directory when one is not supplied."""
 
     return ArtifactManager(script_name=script_name, root=root or DEFAULT_ARTIFACT_ROOT)

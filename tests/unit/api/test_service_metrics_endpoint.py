@@ -1,10 +1,12 @@
+# Copyright (c) 2023-2026 Yaroslav Vasylenko (neuron7xLab)
+# SPDX-License-Identifier: MIT
 from fastapi.testclient import TestClient
 
 
 def test_metrics_endpoint_exposes_prometheus_payload(monkeypatch):
-    monkeypatch.setenv("TRADEPULSE_AUDIT_SECRET", "0123456789abcdef")
+    monkeypatch.setenv("GEOSYNC_AUDIT_SECRET", "0123456789abcdef")
     monkeypatch.setenv(
-        "TRADEPULSE_RBAC_AUDIT_SECRET",
+        "GEOSYNC_RBAC_AUDIT_SECRET",
         "fedcba9876543210fedcba9876543210",
     )
 
@@ -20,6 +22,6 @@ def test_metrics_endpoint_exposes_prometheus_payload(monkeypatch):
     assert metrics_response.status_code == 200
     body = metrics_response.text
 
-    assert "tradepulse_health_check_status" in body
+    assert "geosync_health_check_status" in body
     assert "process_cpu_seconds_total" in body
     assert metrics_response.headers["content-type"].startswith("text/plain")

@@ -1,5 +1,7 @@
-# SPDX-License-Identifier: LicenseRef-TradePulse-Proprietary
+# Copyright (c) 2023-2026 Yaroslav Vasylenko (neuron7xLab)
+# SPDX-License-Identifier: MIT
 """Consistency validation utilities for order book ingestion."""
+
 from __future__ import annotations
 
 from dataclasses import dataclass
@@ -20,7 +22,7 @@ class ConsistencyError(Exception):
     instrument: str
     sequence: int | None
 
-    def __str__(self) -> str:  # noqa: D401 - provide rich error string
+    def __str__(self) -> str:
         return f"{self.instrument} seq={self.sequence}: {self.message}"
 
 
@@ -34,12 +36,8 @@ class ConsistencyValidator:
         self._min_quantity = min_quantity
 
     def validate_snapshot(self, snapshot: OrderBookSnapshot) -> None:
-        self._validate_levels(
-            snapshot.instrument, snapshot.sequence, snapshot.bids, Side.BUY
-        )
-        self._validate_levels(
-            snapshot.instrument, snapshot.sequence, snapshot.asks, Side.SELL
-        )
+        self._validate_levels(snapshot.instrument, snapshot.sequence, snapshot.bids, Side.BUY)
+        self._validate_levels(snapshot.instrument, snapshot.sequence, snapshot.asks, Side.SELL)
         self._validate_timestamps(snapshot.ts_event, snapshot.ts_arrival)
 
     def validate_diff(self, diff: OrderBookDiff) -> None:
@@ -54,9 +52,7 @@ class ConsistencyValidator:
     @staticmethod
     def _validate_timestamps(ts_event: datetime, ts_arrival: datetime) -> None:
         if ts_arrival < ts_event:
-            raise ConsistencyError(
-                "arrival timestamp earlier than event", "<unknown>", None
-            )
+            raise ConsistencyError("arrival timestamp earlier than event", "<unknown>", None)
 
     def _validate_levels(
         self,
@@ -86,9 +82,7 @@ class ConsistencyValidator:
             if qty < 0:
                 raise ConsistencyError(f"negative quantity {qty}", instrument, sequence)
             if not allow_zero and qty == 0:
-                raise ConsistencyError(
-                    "zero quantity in snapshot", instrument, sequence
-                )
+                raise ConsistencyError("zero quantity in snapshot", instrument, sequence)
             if prev_price is not None and not allow_zero:
                 if side is Side.BUY and price >= prev_price:
                     raise ConsistencyError(

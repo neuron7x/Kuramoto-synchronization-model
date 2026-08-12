@@ -1,8 +1,10 @@
+# Copyright (c) 2023-2026 Yaroslav Vasylenko (neuron7xLab)
+# SPDX-License-Identifier: MIT
 """Clock helpers used to keep tests reproducible."""
 
 from __future__ import annotations
 
-# SPDX-License-Identifier: LicenseRef-TradePulse-Proprietary
+# SPDX-License-Identifier: MIT
 from contextlib import ExitStack, contextmanager
 from datetime import date, datetime, timezone
 from typing import Iterator
@@ -47,9 +49,7 @@ def freeze_time(target: FrozenTimeInput) -> Iterator[datetime]:
 
     with ExitStack() as stack:
         stack.enter_context(mock.patch("time.time", lambda: frozen_epoch))
-        stack.enter_context(
-            mock.patch("time.time_ns", lambda: int(frozen_epoch * 1_000_000_000))
-        )
+        stack.enter_context(mock.patch("time.time_ns", lambda: int(frozen_epoch * 1_000_000_000)))
         stack.enter_context(mock.patch("time.monotonic", lambda: 1.0))
         stack.enter_context(mock.patch("time.monotonic_ns", lambda: 1_000_000_000))
         stack.enter_context(mock.patch("time.perf_counter", lambda: 1.0))

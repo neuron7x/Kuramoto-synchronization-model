@@ -1,0 +1,1 @@
+Tightened seven P0 physics invariants (INV-OA2, INV-FE1, INV-LE1, INV-RC1, INV-DRO1, INV-CB1, INV-K2) with companion test files that strengthen existing coverage to algebraic exact at machine epsilon, Hypothesis property fuzz, IEEE-754 bit-pattern identity, or finite-size sweep with `1/√N` scaling. 70 new tests, no production code changed, all gates clean.

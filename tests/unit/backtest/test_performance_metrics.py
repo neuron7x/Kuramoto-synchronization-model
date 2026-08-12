@@ -1,3 +1,5 @@
+# Copyright (c) 2023-2026 Yaroslav Vasylenko (neuron7xLab)
+# SPDX-License-Identifier: MIT
 from __future__ import annotations
 
 import json
@@ -33,9 +35,7 @@ def test_compute_performance_metrics_basic() -> None:
     assert report.sharpe_p_value is not None
     assert report.certainty_equivalent is not None
     assert report.max_drawdown == -4.0
-    assert pytest.approx(report.turnover, rel=1e-9) == float(
-        np.sum(np.abs(position_changes))
-    )
+    assert pytest.approx(report.turnover, rel=1e-9) == float(np.sum(np.abs(position_changes)))
     assert pytest.approx(report.hit_ratio, rel=1e-9) == 2.0 / 3.0
     assert report.expected_shortfall is not None
 

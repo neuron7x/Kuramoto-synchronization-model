@@ -1,0 +1,62 @@
+id: no-ungrounded-act-apex
+status: ACTIVE
+claim_type: correctness
+promise: >-
+  The No-Ungrounded-Act apex invariant unifies the four grounds into one theorem:
+  ACT-ADMISSIBLE iff H1 homeostasis (drive bounded) ∧ H2 arrow-of-time (real
+  epistemic budget monotone) ∧ H3 synchrony (Kuramoto phase-lock) ∧ H4
+  verification (final inference verdict PASS). It consumes system truth (reads the
+  homeostasis contract and final verdict) and computes H2 on the real
+  epistemic-audit register. Any single missing ground forces FORBIDDEN;
+  FORBIDDEN exits non-zero.
+diff_scope:
+  changed_files:
+    - path: ".claude/commit_acceptors/no-ungrounded-act-apex.yaml"
+    - path: "tools/audit_no_ungrounded_act.py"
+    - path: "scripts/ci/validate_inference_artifacts.py"
+    - path: "tests/unit/neuro/test_no_ungrounded_act.py"
+    - path: "artifacts/inference/no_ungrounded_act.json"
+    - path: "audit/schema/no_ungrounded_act.schema.json"
+  forbidden_paths:
+    - "execution/"
+    - "core/neuro/"
+required_python_symbols:
+  - "tools/audit_no_ungrounded_act.py::act_admissible"
+  - "tools/audit_no_ungrounded_act.py::build_apex"
+  - "tools/audit_no_ungrounded_act.py::budget_monotone_under_real_audit"
+expected_signal: >-
+  `python -m pytest --import-mode=importlib tests/unit/neuro/test_no_ungrounded_act.py
+  -q` passes; the apex is ADMISSIBLE over the committed artifacts and any single
+  missing ground forces FORBIDDEN.
+measurement_command: >-
+  bash -c '
+    python -m pytest --import-mode=importlib -p no:cacheprovider
+      tests/unit/neuro/test_no_ungrounded_act.py -q
+  '
+signal_artifact: "tmp/no_ungrounded_act_apex.log"
+falsifier:
+  command: |-
+    bash -c '
+      python -c "
+    import importlib.util, tempfile, pathlib
+    spec = importlib.util.spec_from_file_location(\"nua\", \"tools/audit_no_ungrounded_act.py\")
+    nua = importlib.util.module_from_spec(spec); spec.loader.exec_module(nua)
+    admissible = nua.build_apex(pathlib.Path(\".\"))
+    forbidden = nua.build_apex(pathlib.Path(tempfile.mkdtemp()))
+    single = nua.act_admissible(h1=True, h2=True, h3=False, h4=True)
+    ok = admissible[\"gate\"]==\"ADMISSIBLE\" and forbidden[\"gate\"]==\"FORBIDDEN\" and single==\"FORBIDDEN\"
+    raise SystemExit(0 if ok else \"apex not fail-closed on a missing ground\")
+    "
+    '
+  description: >-
+    Asserts the apex is ADMISSIBLE over real artifacts, FORBIDDEN over an empty
+    root, and FORBIDDEN when any single ground (here H3) drops. Exits 0 when the
+    theorem is fail-closed; non-zero otherwise.
+rollback_command: >-
+  bash -c 'git rm -f .claude/commit_acceptors/no-ungrounded-act-apex.yaml'
+rollback_verification_command: >-
+  bash -c 'test ! -f .claude/commit_acceptors/no-ungrounded-act-apex.yaml'
+memory_update_type: append
+ledger_path: ".claude/commit_acceptors/no-ungrounded-act-apex.yaml"
+report_path: "tmp/no_ungrounded_act_apex.log"
+evidence: []

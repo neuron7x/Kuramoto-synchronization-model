@@ -1,3 +1,5 @@
+# Copyright (c) 2023-2026 Yaroslav Vasylenko (neuron7xLab)
+# SPDX-License-Identifier: MIT
 """Core analytics exports."""
 
 from .causal_guard import CausalGuard, CausalGuardConfig, CausalGuardResult
@@ -8,6 +10,26 @@ from .fk_detector import (
     FKDetectorConfig,
     FKDetectorResult,
     estimate_hurst_rs,
+)
+from .geosync_v21 import (
+    BacktestConfig,
+    BacktestSummary,
+    EnsembleConfig,
+    FeatureBuilderConfig,
+    GeoSyncV21Pipeline,
+    LogisticIsotonicTrainer,
+    LogisticModelArtifacts,
+    ModelPerformance,
+    ModelTrainingConfig,
+    PipelineResult,
+    ProbabilityBacktester,
+    ProbabilityOutputs,
+    RegimeHMMAdapter,
+    RegimeHMMConfig,
+    StressTestSummary,
+    StrictCausalFeatureBuilder,
+    StrictCausalFeatures,
+    result_to_json,
 )
 from .main import (
     CorrelationRegime,
@@ -21,26 +43,6 @@ from .main import (
 )
 from .ricci_flow import RicciFlowConfig, RicciFlowRebalancer, RicciFlowResult
 from .topo_sentinel import TopoSentinel, TopoSentinelConfig, TopoSentinelResult
-from .tradepulse_v21 import (
-    BacktestConfig,
-    BacktestSummary,
-    EnsembleConfig,
-    FeatureBuilderConfig,
-    LogisticIsotonicTrainer,
-    LogisticModelArtifacts,
-    ModelPerformance,
-    ModelTrainingConfig,
-    PipelineResult,
-    ProbabilityBacktester,
-    ProbabilityOutputs,
-    RegimeHMMAdapter,
-    RegimeHMMConfig,
-    StressTestSummary,
-    StrictCausalFeatureBuilder,
-    StrictCausalFeatures,
-    TradePulseV21Pipeline,
-    result_to_json,
-)
 
 __all__ = [
     "CausalGuard",
@@ -85,6 +87,6 @@ __all__ = [
     "StrictCausalFeatureBuilder",
     "StrictCausalFeatures",
     "StressTestSummary",
-    "TradePulseV21Pipeline",
+    "GeoSyncV21Pipeline",
     "result_to_json",
 ]

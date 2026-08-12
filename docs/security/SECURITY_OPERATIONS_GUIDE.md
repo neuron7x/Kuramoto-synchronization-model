@@ -35,10 +35,10 @@ class SplunkSecurityLogger:
             'event': {
                 'type': event_type,
                 'timestamp': datetime.utcnow().isoformat(),
-                'source': 'tradepulse',
+                'source': 'geosync',
                 **details
             },
-            'sourcetype': 'tradepulse:security',
+            'sourcetype': 'geosync:security',
             'index': 'security'
         }
         self.collector.sendEvent(event)
@@ -804,7 +804,7 @@ class RegulatoryChangeAssessment:
     """Assess impact of regulatory changes."""
 
     def assess_impact(self, regulation: dict) -> dict:
-        """Assess impact of new regulation on TradePulse."""
+        """Assess impact of new regulation on GeoSync."""
         assessment = {
             'regulation_id': regulation['id'],
             'name': regulation['name'],

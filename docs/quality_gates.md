@@ -56,7 +56,7 @@ criteria across testing, performance, and reliability domains.
 
 - CLI commands emit SHA256 hashes and JSONL streams; quality bots record these to
   prove that benchmark inputs/outputs were unchanged.
-- When running `tradepulse-cli backtest --output jsonl`, the pipeline pipes the
+- When running `geosync-cli backtest --output jsonl`, the pipeline pipes the
   results through `jq` scripts that calculate regression deltas and post them to
   the run summary.
 

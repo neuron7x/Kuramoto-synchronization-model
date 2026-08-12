@@ -1,0 +1,61 @@
+id: retire-pr-diagnostic-workflows
+status: ACTIVE
+claim_type: governance
+promise: >-
+  Retire the per-PR diagnostic workflows pr1400-fast-diagnostic.yml and
+  pr1412-diagnostic.yml (and the now-orphaned pr1412-diagnostic-evidence
+  acceptor) whose host PRs are merged. They duplicate the permanent
+  python-fast-shard fast lane in pr-gate.yml and re-run it on every future PR
+  for artifacts nobody consumes. Removal changes no required PR Gate
+  pass/fail semantics and deletes no production code.
+diff_scope:
+  changed_files:
+    - path: ".claude/commit_acceptors/retire-pr-diagnostic-workflows.yaml"
+    - path: ".claude/commit_acceptors/pr1412-diagnostic-evidence.yaml"
+    - path: ".claude/commit_acceptors/second-order-energy-stream-clean.yaml"
+    - path: ".github/workflows/pr1400-fast-diagnostic.yml"
+    - path: ".github/workflows/pr1412-diagnostic.yml"
+  forbidden_paths:
+    - "core/"
+    - "src/"
+    - "runtime/"
+    - "trading/"
+    - "execution/"
+    - "forecast/"
+    - "policy/"
+    - "scripts/"
+    - "tests/"
+required_python_symbols: []
+expected_signal: >-
+  Both per-PR diagnostic workflows and the pr1412 evidence acceptor are absent,
+  the second-order acceptor no longer references the deleted workflow, and the
+  permanent python-fast-shard fast lane in pr-gate.yml is retained.
+measurement_command: >-
+  bash -c 'test ! -e .github/workflows/pr1400-fast-diagnostic.yml && test ! -e
+  .github/workflows/pr1412-diagnostic.yml && test ! -e
+  .claude/commit_acceptors/pr1412-diagnostic-evidence.yaml && ! grep -q
+  pr1400-fast-diagnostic .claude/commit_acceptors/second-order-energy-stream-clean.yaml
+  && grep -q "python-fast-shard" .github/workflows/pr-gate.yml'
+signal_artifact: "tmp/retire_pr_diagnostic_workflows.log"
+falsifier:
+  command: >-
+    bash -c 'test -e .github/workflows/pr1400-fast-diagnostic.yml || test -e
+    .github/workflows/pr1412-diagnostic.yml || test -e
+    .claude/commit_acceptors/pr1412-diagnostic-evidence.yaml'
+  description: >-
+    Fails the promise if either retired diagnostic workflow or the orphaned
+    pr1412 evidence acceptor still exists after the change.
+rollback_command: >-
+  git checkout origin/main -- .github/workflows/pr1400-fast-diagnostic.yml
+  .github/workflows/pr1412-diagnostic.yml
+  .claude/commit_acceptors/pr1412-diagnostic-evidence.yaml
+  .claude/commit_acceptors/second-order-energy-stream-clean.yaml
+rollback_verification_command: >-
+  bash -c 'test -e .github/workflows/pr1400-fast-diagnostic.yml && test -e
+  .github/workflows/pr1412-diagnostic.yml'
+memory_update_type: none
+ledger_path: ".claude/commit_acceptors/retire-pr-diagnostic-workflows.yaml"
+report_path: "tmp/retire_pr_diagnostic_workflows.log"
+evidence:
+  - path: ".github/workflows/pr-gate.yml"
+  - path: ".claude/commit_acceptors/retire-pr-diagnostic-workflows.yaml"

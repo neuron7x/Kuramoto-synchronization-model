@@ -1,0 +1,39 @@
+id: research-standard-governance-contracts
+status: DRAFT
+claim_type: governance
+promise: "Research standard governance changes remain bounded to draft contracts, seed manifests, focused validation, and review handoff without promoting evidence status."
+diff_scope:
+  changed_files:
+    - path: ".claude/commit_acceptors/research-standard-governance-contracts.yaml"
+    - path: ".claude/handoffs/research-standard-governance-contract.md"
+    - path: ".github/workflows/research-standard-contract.yml"
+    - path: "configs/research/geosync_research_standard.v1.yaml"
+    - path: "data/research/research_standard_layers.v1.json"
+    - path: "docs/research/RESEARCH_STANDARD_CONTRACT.md"
+    - path: "manifests/research/cost_latency_assumptions.v1.json"
+    - path: "manifests/research/dynamic_universe.v1.json"
+    - path: "manifests/research/release_provenance.v1.json"
+    - path: "manifests/research/reproduction_badge.v1.json"
+    - path: "review/research_standard_review_packet.md"
+    - path: "schemas/research/research_standard_contract.schema.json"
+    - path: "scripts/ci/check_research_standard_contract.py"
+    - path: "tests/ci/test_research_standard_contract.py"
+  forbidden_paths:
+    - "trading/"
+    - "execution/"
+    - "forecast/"
+    - "policy/"
+required_python_symbols:
+  - "validate_standard"
+expected_signal: "Research standard focused workflow validates schema parsing, contract seed checks, and pytest coverage."
+measurement_command: "python -m json.tool schemas/research/research_standard_contract.schema.json >/dev/null && python scripts/ci/check_research_standard_contract.py && pytest -q tests/ci/test_research_standard_contract.py"
+signal_artifact: "tmp/commit_acceptor_validation.json"
+falsifier:
+  command: "python -c \"import yaml, pathlib; d=yaml.safe_load(pathlib.Path('configs/research/geosync_research_standard.v1.yaml').read_text()); raise SystemExit(0 if d.get('scope', {}).get('evidence_level') == 'HYPOTHESIS' else 1)\""
+  description: "The draft standard must remain at HYPOTHESIS evidence level until independent evidence gates exist."
+rollback_command: "git checkout origin/codex/inference-transformer-control-plane -- .claude/commit_acceptors/research-standard-governance-contracts.yaml || rm -f .claude/commit_acceptors/research-standard-governance-contracts.yaml"
+rollback_verification_command: "git diff --exit-code .claude/commit_acceptors/research-standard-governance-contracts.yaml || true"
+memory_update_type: none
+ledger_path: ".claude/commit_acceptors/research-standard-governance-contracts.yaml"
+report_path: "docs/research/RESEARCH_STANDARD_CONTRACT.md"
+evidence: []

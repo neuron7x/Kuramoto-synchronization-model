@@ -1,0 +1,29 @@
+{
+  "$schema": "http://json-schema.org/draft-07/schema#",
+  "$id": "geosync.apparatus_transfer_report.v1",
+  "title": "GeoSync Verification-Apparatus Transfer Report",
+  "description": "Evidence of generalisation: the same apparatus (tool -> artifact -> schema -> fail-closed verdict, with defect-sensitive tests and a falsifier) is applied across multiple mathematically distinct domains. Honest boundary: this is within-repo transfer across domains, not an external benchmark against a competing baseline.",
+  "type": "object",
+  "additionalProperties": false,
+  "required": ["schema", "boundary", "domains", "distinct_domain_count", "verdict"],
+  "properties": {
+    "schema": { "const": "geosync.apparatus_transfer_report.v1" },
+    "boundary": { "type": "string", "minLength": 1 },
+    "distinct_domain_count": { "type": "integer", "minimum": 2 },
+    "verdict": { "enum": ["PASS", "FAIL"] },
+    "domains": {
+      "type": "array", "minItems": 2,
+      "items": {
+        "type": "object", "additionalProperties": false,
+        "required": ["domain", "object", "tool", "artifact", "schema_path"],
+        "properties": {
+          "domain": { "type": "string", "minLength": 1 },
+          "object": { "type": "string", "minLength": 1 },
+          "tool": { "type": "string", "minLength": 1 },
+          "artifact": { "type": "string", "minLength": 1 },
+          "schema_path": { "type": "string", "minLength": 1 }
+        }
+      }
+    }
+  }
+}

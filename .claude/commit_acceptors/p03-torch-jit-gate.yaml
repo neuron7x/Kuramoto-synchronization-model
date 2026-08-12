@@ -1,0 +1,104 @@
+# Diff-bound commit acceptor for P0-3: the forbidden torch JIT /
+# deserialization gate.
+#
+# A torch dependency advisory was dismissed on the assumption that the repo's
+# TorchScript JIT and unguarded pickle-deserialization paths are unused. This
+# PR converts that assumption into an enforced, fail-closed, repo-wide static
+# invariant: any reintroduction of torch.jit.{script,trace,load}, or any
+# torch.load lacking the literal weights_only=True, fails the gate (and CI).
+#
+# Locally verified:
+#   * python tools/security/check_forbidden_torch_jit.py -> exit 0
+#     (scanned 3569 python files; 0 unreviewed, 0 allowlisted)
+#   * pytest -q tests/tools/test_forbidden_torch_jit.py -> 18 passed
+#   * mypy --strict tools/security/check_forbidden_torch_jit.py -> clean
+#   * ruff + black on the scanner: clean
+#   * descriptor-promotion firewall -> pass
+#   * pr-gate contract validator -> pass
+
+id: p03-torch-jit-gate
+status: ACTIVE
+claim_type: security
+promise: >-
+  After this PR lands, a repo-wide AST gate fails closed on any use of
+  ``torch.jit.script``, ``torch.jit.trace``, ``torch.jit.load``, or a
+  ``torch.load`` call that does not pass the literal keyword
+  ``weights_only=True``. The torch deserialization-advisory dismissal is thus
+  enforced across every call site, not merely assumed. The current repository
+  scans to zero unreviewed findings.
+
+diff_scope:
+  changed_files:
+    - path: ".claude/commit_acceptors/p03-torch-jit-gate.yaml"
+    - path: "tools/security/check_forbidden_torch_jit.py"
+    - path: "tools/security/forbidden_torch_jit_allowlist.json"
+    - path: "tests/tools/test_forbidden_torch_jit.py"
+    - path: ".github/workflows/forbidden-torch-jit-gate.yml"
+    - path: "docs/security/forbidden_torch_jit_policy.md"
+    - path: "docs/security/dependency_policy.md"
+    - path: "docs/reports/forbidden_torch_jit_gate.md"
+  forbidden_paths:
+    - "trading/"
+    - "execution/"
+    - "forecast/"
+    - "policy/"
+    - "core/"
+    - "research/"
+
+required_python_symbols:
+  - "tools/security/check_forbidden_torch_jit.py::scan_source"
+  - "tools/security/check_forbidden_torch_jit.py::scan_repo"
+  - "tools/security/check_forbidden_torch_jit.py::main"
+  - "tests/tools/test_forbidden_torch_jit.py::test_repo_wide_scan_has_zero_unreviewed_findings"
+
+expected_signal: >-
+  ``python tools/security/check_forbidden_torch_jit.py`` exits 0 and prints
+  "scanned 3569 python file(s); 0 unreviewed finding(s)". ``pytest -q
+  tests/tools/test_forbidden_torch_jit.py`` reports 18 passed, including the
+  positive cases where each forbidden API form is detected and the repo-wide
+  zero-findings assertion.
+
+measurement_command: >-
+  bash -c '
+    mypy --strict tools/security/check_forbidden_torch_jit.py && python tools/security/check_forbidden_torch_jit.py && python -m pytest tests/tools/test_forbidden_torch_jit.py -q
+  '
+
+signal_artifact: "tmp/p03_torch_jit_gate.log"
+
+falsifier:
+  command: |-
+    bash -c '
+      printf "import torch\nm = torch.jit.script(f)\n" > /tmp/p03_probe.py && python -c "
+    import sys
+    from tools.security import check_forbidden_torch_jit as g
+    src = open(\"/tmp/p03_probe.py\").read()
+    sys.exit(0 if g.scan_source(src, \"probe.py\") else 1)
+    "
+    '
+  description: >-
+    Constructs a torch.jit.script call and asserts the scanner detects it
+    (exit 0 = detected). The falsifier is the gate's own teeth: if the scanner
+    stopped detecting the forbidden API, this command would exit non-zero,
+    flagging that the control regressed.
+
+rollback_command: >-
+  bash -c '
+    git rm -f
+      tools/security/check_forbidden_torch_jit.py
+      tools/security/forbidden_torch_jit_allowlist.json
+      tests/tools/test_forbidden_torch_jit.py
+      .github/workflows/forbidden-torch-jit-gate.yml
+      docs/security/forbidden_torch_jit_policy.md
+      docs/reports/forbidden_torch_jit_gate.md
+      .claude/commit_acceptors/p03-torch-jit-gate.yaml
+  '
+
+rollback_verification_command: >-
+  bash -c '
+    test ! -f tools/security/check_forbidden_torch_jit.py
+  '
+
+memory_update_type: append
+ledger_path: ".claude/commit_acceptors/p03-torch-jit-gate.yaml"
+report_path: "docs/reports/forbidden_torch_jit_gate.md"
+evidence: []

@@ -1,0 +1,64 @@
+# Diff-bound commit acceptor: coverage batch 1 (previously-untested production
+# modules). Test-only change — adds 213 genuine tests raising ten 0%/near-0%
+# production modules to >=90% line+branch coverage under the release_90 profile,
+# advancing the Release coverage gate (90%) toward its target. No production
+# source is modified; every test asserts real behavior (no skip/xfail/pragma
+# fakery). This is batch 1 of a multi-batch coverage ascent.
+
+id: coverage-untested-batch1
+status: ACTIVE
+claim_type: correctness
+promise: >-
+  After this PR lands, ten previously untested (0% / near-0%) production modules
+  are covered to >=90% line+branch under configs/quality/release_90.coveragerc by
+  213 new, genuine tests: core/utils/secure_errors.py (100%), core/errors.py
+  (100%), application/api/errors.py (99.19%), analytics/code_health/models.py
+  (100%), analytics/code_health/widgets.py (100%), analytics/code_health/
+  aggregator.py (98.64%), analytics/code_health/analyzers.py (97.37%),
+  analytics/regime/src/adapters/local.py (99.07%),
+  analytics/regime/src/core/_sklearn_compat.py (99.60%), and
+  execution/hft/ultra_low_latency.py (100%). No production source file is
+  modified; every test asserts real behavior with no skip/xfail/pragma coverage
+  fakery. This raises the release-surface line coverage toward the 90% gate.
+diff_scope:
+  changed_files:
+    - path: ".claude/commit_acceptors/coverage-untested-batch1.yaml"
+    - path: "tests/coverage_batch_a/test_secure_errors.py"
+    - path: "tests/coverage_batch_a/test_core_errors.py"
+    - path: "tests/coverage_batch_a/test_api_errors.py"
+    - path: "tests/coverage_batch_b/test_models.py"
+    - path: "tests/coverage_batch_b/test_widgets.py"
+    - path: "tests/coverage_batch_b/test_aggregator.py"
+    - path: "tests/coverage_batch_b/test_analyzers.py"
+    - path: "tests/coverage_batch_c/test_regime_local_adapters.py"
+    - path: "tests/coverage_batch_c/test_sklearn_compat.py"
+    - path: "tests/coverage_batch_c/test_ultra_low_latency.py"
+  forbidden_paths:
+    - "trading/"
+    - "forecast/"
+    - "policy/"
+required_python_symbols: []
+expected_signal: >-
+  `python -m pytest tests/coverage_batch_a tests/coverage_batch_b
+  tests/coverage_batch_c -q` reports "213 passed"; each of the ten target
+  production modules reaches >=90% line+branch coverage under
+  configs/quality/release_90.coveragerc.
+measurement_command: >-
+  bash -c 'set -e; python -m pytest tests/coverage_batch_a tests/coverage_batch_b tests/coverage_batch_c -q -p no:cacheprovider'
+signal_artifact: "tests/coverage_batch_a/test_secure_errors.py"
+falsifier:
+  command: >-
+    bash -c '! grep -rEq "pytest\.mark\.(skip|xfail)|pragma: no cover" tests/coverage_batch_a tests/coverage_batch_b tests/coverage_batch_c'
+  description: >-
+    Greps the new tests for skip/xfail/pragma coverage fakery. On the green path
+    none exist, so the negated grep exits non-zero — proving the "genuine tests,
+    no fakery" promise is falsifiable: if a fabricated-coverage marker were
+    introduced, the grep would match and the falsifier would flip.
+rollback_command: >-
+  bash -c 'rm -rf tests/coverage_batch_a tests/coverage_batch_b tests/coverage_batch_c .claude/commit_acceptors/coverage-untested-batch1.yaml'
+rollback_verification_command: >-
+  bash -c 'test ! -d tests/coverage_batch_a && test ! -d tests/coverage_batch_b && test ! -d tests/coverage_batch_c'
+memory_update_type: none
+ledger_path: ".claude/commit_acceptors/coverage-untested-batch1.yaml"
+report_path: "tests/coverage_batch_a/test_secure_errors.py"
+evidence: []

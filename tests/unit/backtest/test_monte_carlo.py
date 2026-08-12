@@ -1,3 +1,5 @@
+# Copyright (c) 2023-2026 Yaroslav Vasylenko (neuron7xLab)
+# SPDX-License-Identifier: MIT
 from __future__ import annotations
 
 import math
@@ -70,7 +72,5 @@ def test_monte_carlo_regime_shifts_are_reproducible() -> None:
         assert math.isclose(scenario_a.dropout_ratio, scenario_b.dropout_ratio)
         assert 0.0 <= scenario_a.dropout_ratio <= 1.0
         assert (
-            config.volatility_scale[0]
-            <= scenario_a.volatility_scale
-            <= config.volatility_scale[1]
+            config.volatility_scale[0] <= scenario_a.volatility_scale <= config.volatility_scale[1]
         )

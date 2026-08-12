@@ -1,3 +1,5 @@
+# Copyright (c) 2023-2026 Yaroslav Vasylenko (neuron7xLab)
+# SPDX-License-Identifier: MIT
 """Progressive blue/green rollout controller with canary guardrails.
 
 The orchestrator coordinates staged traffic shifting between the incumbent
@@ -182,6 +184,4 @@ class BlueGreenRolloutOrchestrator:
         if self._rollback_callback is not None:
             self._rollback_callback(decision.reason, metrics, decision)
         self._controller.reset()
-        raise RolloutAbortedError(
-            reason=decision.reason, decision=decision, metrics=metrics
-        )
+        raise RolloutAbortedError(reason=decision.reason, decision=decision, metrics=metrics)

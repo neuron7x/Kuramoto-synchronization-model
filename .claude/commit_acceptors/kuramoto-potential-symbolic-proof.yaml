@@ -1,0 +1,61 @@
+# Diff-bound acceptor: symbolic (sympy) proof of the all-to-all Kuramoto
+# potential identity underpinning INV-K7/K8 — formal-proof escalation.
+#
+# INV-K7/K8 rely on two algebraic facts usually only numerically corroborated:
+#   (1) V = -(K·N/2)·R² + K/2  for the all-to-all potential V = -½ Σ A_ij cos.
+#   (2) -∂V/∂θ_i = Σ_j A_ij sin(θ_j−θ_i)  (the swing coupling is a gradient
+#       force — the reason the autonomous flow conserves energy).
+# This proves both EXACTLY with sympy (no numerical tolerance), elevating them
+# from numerically-consistent to algebraically-proven.
+
+id: kuramoto-potential-symbolic-proof
+status: ACTIVE
+claim_type: correctness
+promise: >-
+  Adds tests/unit/core/test_kuramoto_potential_symbolic.py: a sympy proof that
+  for the all-to-all Kuramoto model (A_ij = K/N) the potential satisfies
+  V = -(K·N/2)·R² + K/2 exactly, and that -∂V/∂θ_i equals the
+  Σ_j A_ij·sin(θ_j−θ_i) coupling force, for N ∈ {3,4,5} — symbolic residual = 0
+  (no numerical tolerance). This is the algebraic root of INV-K7 (Lyapunov
+  potential) and INV-K8 (energy conservation): the coupling is a conservative
+  gradient force. Guarded by pytest.importorskip("sympy"); no invariant added or
+  changed; zero production-code change.
+diff_scope:
+  changed_files:
+    - path: ".claude/commit_acceptors/kuramoto-potential-symbolic-proof.yaml"
+    - path: "tests/unit/core/test_kuramoto_potential_symbolic.py"
+  forbidden_paths:
+    - "trading/"
+    - "execution/"
+    - "forecast/"
+    - "policy/"
+required_python_symbols:
+  - "test_potential_equals_minus_half_kn_r_squared"
+expected_signal: >-
+  tests/unit/core/test_kuramoto_potential_symbolic.py passes (6 cases: 3 N-values
+  x 2 identities) where sympy is available, skips cleanly otherwise; mypy
+  --strict, ruff clean; no new lint suppressions (debt-safe). Symbolic residual
+  is exactly 0 for V = -(K·N/2)R² + K/2 and for -∂V/∂θ_i = coupling.
+measurement_command: >-
+  PYTHONPATH=. python -m pytest tests/unit/core/test_kuramoto_potential_symbolic.py -v
+signal_artifact: "tmp/kuramoto_potential_symbolic_pytest.log"
+falsifier:
+  command: >-
+    PYTHONPATH=. python -m pytest tests/unit/core/test_kuramoto_potential_symbolic.py
+    -v -k "potential_equals or coupling_is_minus_gradient"
+  description: >-
+    Proves both algebraic identities symbolically: the all-to-all potential
+    equals -(K·N/2)R² + K/2, and the coupling force equals -∂V/∂θ. A sign error
+    or wrong factor in either the potential or the coupling would leave a
+    non-zero symbolic residual and fail — a stronger guarantee than any
+    numerical tolerance.
+rollback_command: >-
+  git checkout HEAD~1 --
+  tests/unit/core/test_kuramoto_potential_symbolic.py
+  .claude/commit_acceptors/kuramoto-potential-symbolic-proof.yaml
+rollback_verification_command: >-
+  git diff --exit-code tests/unit/core/test_kuramoto_potential_symbolic.py
+memory_update_type: none
+ledger_path: ".claude/commit_acceptors/kuramoto-potential-symbolic-proof.yaml"
+report_path: "docs/reports/diff_bound_commit_acceptor_layer.md"
+evidence: []

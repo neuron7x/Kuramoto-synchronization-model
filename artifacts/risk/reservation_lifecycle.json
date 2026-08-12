@@ -1,0 +1,115 @@
+{
+  "schema": "geosync.risk_reservation_lifecycle.v1",
+  "component": "execution.risk.core.RiskManager",
+  "config_flag": "OMSConfig.reserve_risk_exposure",
+  "default_enabled": false,
+  "leak_detector": "RiskManager.open_reservation_count",
+  "states": [
+    "none",
+    "reserved",
+    "partially_converted",
+    "converted",
+    "released"
+  ],
+  "transitions": [
+    {
+      "from": "none",
+      "to": "reserved",
+      "trigger": "validate_order(reserve=True, reservation_id)",
+      "effect": "pending_position += side_sign*qty; pending_notional += |qty*price|; hold recorded"
+    },
+    {
+      "from": "reserved",
+      "to": "partially_converted",
+      "trigger": "register_fill(reservation_id, qty<remaining)",
+      "effect": "pending -= filled; actual += filled; remaining -= filled"
+    },
+    {
+      "from": "reserved",
+      "to": "converted",
+      "trigger": "register_fill(reservation_id, qty>=remaining)",
+      "effect": "pending -= remaining; actual += filled; hold dropped"
+    },
+    {
+      "from": "partially_converted",
+      "to": "converted",
+      "trigger": "register_fill(reservation_id, remainder)",
+      "effect": "pending -= remainder; actual += remainder; hold dropped"
+    },
+    {
+      "from": "reserved",
+      "to": "released",
+      "trigger": "release_reservation(reservation_id)",
+      "effect": "pending -= remaining; hold dropped (reject/cancel/timeout)"
+    },
+    {
+      "from": "partially_converted",
+      "to": "released",
+      "trigger": "release_reservation(reservation_id)",
+      "effect": "pending -= remaining; hold dropped"
+    }
+  ],
+  "invariants": [
+    {
+      "id": "RESV-1",
+      "statement": "Validation evaluates caps against actual + pending exposure.",
+      "test": "tests/unit/execution/test_risk_pending_reservations.py::test_combined_pending_exceeds_cap_second_rejects"
+    },
+    {
+      "id": "RESV-2",
+      "statement": "Reservation is atomic with validation (same locked section).",
+      "test": "tests/concurrency/test_risk_reservation_race.py::test_two_concurrent_orders_below_cap_but_combined_above_cannot_both_pass"
+    },
+    {
+      "id": "RESV-3",
+      "statement": "Reservation releases on reject/cancel/timeout; idempotent.",
+      "test": "tests/unit/execution/test_risk_pending_reservations.py::test_release_reservation_is_idempotent"
+    },
+    {
+      "id": "RESV-4",
+      "statement": "Fill converts the filled amount without double-counting exposure.",
+      "test": "tests/unit/execution/test_risk_pending_reservations.py::test_full_fill_converts_pending_to_actual_no_double_count"
+    },
+    {
+      "id": "RESV-5",
+      "statement": "Partial fill converts only the filled amount; remainder stays reserved.",
+      "test": "tests/unit/execution/test_risk_pending_reservations.py::test_partial_fill_converts_only_filled_amount"
+    },
+    {
+      "id": "RESV-6",
+      "statement": "A rejected order reserves nothing.",
+      "test": "tests/unit/execution/test_risk_pending_reservations.py::test_rejected_order_reserves_nothing"
+    },
+    {
+      "id": "RESV-7",
+      "statement": "Reservation id is caller-owned and traceable; must be fresh.",
+      "test": "tests/unit/execution/test_risk_pending_reservations.py::test_reserve_requires_fresh_reservation_id"
+    },
+    {
+      "id": "RESV-8",
+      "statement": "Snapshot exposes actual, pending, and total exposure.",
+      "test": "tests/unit/execution/test_risk_pending_reservations.py::test_snapshot_include_pending_exposes_actual_pending_total"
+    },
+    {
+      "id": "RESV-9",
+      "statement": "End-to-end through OMS: fills/rejects/cancels leave zero open reservations.",
+      "test": "tests/integration/test_oms_risk_reservation_integration.py::test_full_fill_converts_and_leaves_no_reservation"
+    },
+    {
+      "id": "RESV-10",
+      "statement": "The cap-bypass is closed through the OMS admission path.",
+      "test": "tests/integration/test_oms_risk_reservation_integration.py::test_two_orders_over_cap_second_submit_rejected"
+    }
+  ],
+  "terminal_release_paths": [
+    "execution.oms.OrderManagementSystem.process_next transient-reject (retries exhausted)",
+    "execution.oms.OrderManagementSystem.process_next OrderError-reject",
+    "execution.oms.OrderManagementSystem.cancel"
+  ],
+  "tests": [
+    "tests/unit/execution/test_risk_pending_reservations.py",
+    "tests/concurrency/test_risk_reservation_race.py",
+    "tests/integration/test_oms_risk_reservation_integration.py"
+  ],
+  "verdict": "BOUND"
+}

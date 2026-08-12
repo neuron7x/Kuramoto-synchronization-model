@@ -1,0 +1,44 @@
+{
+  "$schema": "https://raw.githubusercontent.com/GoogleChrome/lighthouse-ci/main/docs/configuration.md",
+  "ci": {
+    "collect": {
+      "//": "IERD-Q6 network_TTFB regression gate. Builds the real Next app and serves it; Lighthouse drives headless Chrome against the public /signin route (static prerender, no auth redirect) so the network_TTFB and client_render budgets are measured against a genuine production server — not faked.",
+      "startServerCommand": "npm run start -- --port=3123",
+      "startServerReadyPattern": "Ready in",
+      "startServerReadyTimeout": 60000,
+      "url": ["http://localhost:3123/signin"],
+      "numberOfRuns": 3,
+      "settings": {
+        "preset": "desktop",
+        "chromeFlags": "--no-sandbox --headless=new --disable-gpu --disable-dev-shm-usage",
+        "onlyCategories": ["performance"],
+        "maxWaitForLoad": 45000
+      }
+    },
+    "assert": {
+      "//": "§5 latency budgets. server-response-time IS the network_TTFB layer (origin TTFB) and MUST fail the build on violation (< 300 ms). first-contentful-paint is the client_render budget (< 1.0 s). LCP/CLS optional (warn). The TTFB / FCP assertions are the load-bearing, fail-closed gate for issue #531.",
+      "assertions": {
+        "server-response-time": [
+          "error",
+          { "maxNumericValue": 300, "aggregationMethod": "median" }
+        ],
+        "first-contentful-paint": [
+          "error",
+          { "maxNumericValue": 1000, "aggregationMethod": "median" }
+        ],
+        "largest-contentful-paint": [
+          "warn",
+          { "maxNumericValue": 2500, "aggregationMethod": "median" }
+        ],
+        "cumulative-layout-shift": [
+          "warn",
+          { "maxNumericValue": 0.1, "aggregationMethod": "median" }
+        ]
+      }
+    },
+    "upload": {
+      "target": "filesystem",
+      "outputDir": "./.lighthouseci"
+    }
+  }
+}

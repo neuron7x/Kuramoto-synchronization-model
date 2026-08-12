@@ -1,0 +1,52 @@
+{
+  "schema": "remediation_state.v1",
+  "task": "GOV-001",
+  "generated_at": "2026-07-19",
+  "baseline": {
+    "tree": "9060de4a097ea467f7ab5d52ecb660ba345f671b",
+    "merge_commit": "8080e4b475efe054901804f25b37b80bd06203f4",
+    "content_commits": [
+      "449f439c5605f89a1beeaac73e5eca8b7cfe1112",
+      "8080e4b475efe054901804f25b37b80bd06203f4"
+    ],
+    "baseline_tag": "remediation-baseline-2026-07-19"
+  },
+  "freeze_policy": {
+    "allowed": [
+      "remediation",
+      "tests",
+      "evidence",
+      "documentation-corrections"
+    ],
+    "blocked": [
+      "feature-merges",
+      "schema-expansion",
+      "claim-promotion"
+    ],
+    "enforced_until": "Gate G1-G4 closed",
+    "change_requirement": "every change carries a task ID and an evidence link"
+  },
+  "gates": {
+    "G1": "open",
+    "G2": "open",
+    "G3": "open",
+    "G4": "open"
+  },
+  "register": {
+    "total": 142,
+    "P0": 66,
+    "source": "GeoSync_Remediation_Task_Register_2026-07-19.json"
+  },
+  "wave1_closed": [
+    "GOV-001",
+    "GOV-003",
+    "REL-001",
+    "REL-002",
+    "REL-003"
+  ],
+  "reviewer_signoff": {
+    "wave": 1,
+    "verdict": "5/5 PASS",
+    "reviewer": "independent-agent"
+  }
+}

@@ -1,3 +1,5 @@
+# Copyright (c) 2023-2026 Yaroslav Vasylenko (neuron7xLab)
+# SPDX-License-Identifier: MIT
 from __future__ import annotations
 
 import logging
@@ -20,7 +22,7 @@ def test_audit_logger_redacts_sensitive_values_from_logs(
         ],
     }
 
-    with caplog.at_level(logging.INFO, logger="tradepulse.audit"):
+    with caplog.at_level(logging.INFO, logger="geosync.audit"):
         audit = AuditLogger(secret="unit-secret-value")
         record = audit.log_event(
             event_type="test",

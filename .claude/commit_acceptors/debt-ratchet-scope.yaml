@@ -1,0 +1,73 @@
+# Diff-bound acceptor: scope the debt ratchet to monotonic-reducible
+# classes only. empty_evidence_ledger grows with every new acceptor by
+# construction, so hard-gating it would punish every PR that adds one;
+# it becomes tracked-only (ratchet=False). Infra only, no physics.
+
+id: debt-ratchet-scope
+status: ACTIVE
+claim_type: correctness
+promise: >-
+  After this PR, the debt ratchet hard-gates only classes flagged
+  ratchet=True (type/lint suppressions, actionable skips, slow tests,
+  todo markers). empty_evidence_ledger is tracked-only and removed from
+  the budget, so adding a new acceptor no longer trips the ratchet on
+  main. No empirical/market/alpha claim.
+
+diff_scope:
+  changed_files:
+    - path: ".claude/commit_acceptors/debt-ratchet-scope.yaml"
+    - path: "tools/architecture_debt_inference.py"
+    - path: "tools/debt_budget.json"
+    - path: "tests/ci/test_architecture_debt_inference.py"
+  forbidden_paths:
+    - "trading/"
+    - "execution/"
+    - "core/"
+    - "runtime/"
+    - "application/"
+
+required_python_symbols:
+  - "tools/architecture_debt_inference.py::ratchet"
+  - "tools/architecture_debt_inference.py::infer"
+
+expected_signal: >-
+  python tools/architecture_debt_inference.py --check tools/debt_budget.json
+  exits 0 on the current tree even though empty_evidence_ledger exceeds any
+  zero budget; pytest reports the ratchet-scope tests passing.
+
+measurement_command: >-
+  bash -c '
+    python tools/architecture_debt_inference.py --check tools/debt_budget.json && python -m pytest -q tests/ci/test_architecture_debt_inference.py
+  '
+
+signal_artifact: "tmp/debt_ratchet_scope.log"
+
+falsifier:
+  command: >-
+    bash -c '
+      python -m pytest -q
+        tests/ci/test_architecture_debt_inference.py::test_evidence_ledger_is_tracked_not_ratcheted
+        >/dev/null 2>&1 && exit 1 || exit 0
+    '
+  description: >-
+    Inverts the scoping guarantee: succeeds only when empty_evidence_ledger
+    is treated as a hard-ratcheted regression again — the over-tight gate
+    this PR removes.
+
+rollback_command: >-
+  bash -c '
+    git checkout origin/main -- tools/architecture_debt_inference.py
+      tools/debt_budget.json tests/ci/test_architecture_debt_inference.py && git rm -f .claude/commit_acceptors/debt-ratchet-scope.yaml
+  '
+
+rollback_verification_command: >-
+  bash -c '
+    grep -q "\"empty_evidence_ledger\"" tools/debt_budget.json
+  '
+
+memory_update_type: append
+ledger_path: ".claude/commit_acceptors/debt-ratchet-scope.yaml"
+report_path: "tmp/debt_ratchet_scope.log"
+evidence:
+- path: tools/architecture_debt_inference.py
+- path: tools/debt_budget.json

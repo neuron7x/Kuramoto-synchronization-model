@@ -1,4 +1,5 @@
-# SPDX-License-Identifier: LicenseRef-TradePulse-Proprietary
+# Copyright (c) 2023-2026 Yaroslav Vasylenko (neuron7xLab)
+# SPDX-License-Identifier: MIT
 """Math accuracy tests for the advanced risk management module.
 
 This module validates the mathematical correctness and numerical stability
@@ -10,7 +11,7 @@ MATH CONTRACT:
 - Edge cases (constant series, zero baseline, etc.) are handled safely
 - Results fall within documented bounds
 
-Tests follow the TradePulse math accuracy guidelines:
+Tests follow the GeoSync math accuracy guidelines:
 - T1: Unit tests with hand-computed expected values
 - T2: Invariant tests (bounds, non-negativity, finite outputs)
 - T3: Regression tests with golden values
@@ -101,9 +102,7 @@ class TestVolatilityCalculationAccuracy:
         assert assessment is not None
         assert np.isfinite(assessment.risk_score)
 
-    def test_volatility_with_known_values(
-        self, manager: AdvancedRiskManager
-    ) -> None:
+    def test_volatility_with_known_values(self, manager: AdvancedRiskManager) -> None:
         """T1.2: Test volatility calculation with known standard deviation.
 
         Hand-computed example:
@@ -123,9 +122,7 @@ class TestVolatilityCalculationAccuracy:
         assessment = manager.assess_risk(returns=returns)
         assert np.isfinite(assessment.risk_score)
 
-    def test_free_energy_precision_calculation(
-        self, manager: AdvancedRiskManager
-    ) -> None:
+    def test_free_energy_precision_calculation(self, manager: AdvancedRiskManager) -> None:
         """T1.3: Verify free energy precision uses unbiased variance.
 
         Precision = base / (variance + epsilon)
@@ -146,9 +143,7 @@ class TestVolatilityCalculationAccuracy:
         assert 0.01 <= fe_state.precision <= 100.0
         assert np.isfinite(fe_state.precision)
 
-    def test_stability_metric_variance_calculation(
-        self, manager: AdvancedRiskManager
-    ) -> None:
+    def test_stability_metric_variance_calculation(self, manager: AdvancedRiskManager) -> None:
         """T1.4: Verify stability metric uses unbiased variance.
 
         Stability = 1 / (1 + variance)
@@ -170,9 +165,7 @@ class TestVolatilityCalculationAccuracy:
 class TestEdgeCaseHandling:
     """Tests for edge case handling in math operations."""
 
-    def test_constant_series_returns_zero_volatility(
-        self, manager: AdvancedRiskManager
-    ) -> None:
+    def test_constant_series_returns_zero_volatility(self, manager: AdvancedRiskManager) -> None:
         """T1.5: Constant series (std=0) should not produce NaN.
 
         When all returns are identical, std with ddof=1 would be 0,
@@ -185,9 +178,7 @@ class TestEdgeCaseHandling:
         assert np.isfinite(assessment.risk_score)
         assert np.isfinite(assessment.volatility_contribution)
 
-    def test_single_return_value_handled(
-        self, manager: AdvancedRiskManager
-    ) -> None:
+    def test_single_return_value_handled(self, manager: AdvancedRiskManager) -> None:
         """T1.6: Single value input should not crash.
 
         With only one return, std(ddof=1) would be undefined.
@@ -229,18 +220,14 @@ class TestMathInvariants:
                 f"vol={vol}, peak={peak}, current={current}"
             )
 
-    def test_volatility_contribution_non_negative(
-        self, manager: AdvancedRiskManager
-    ) -> None:
+    def test_volatility_contribution_non_negative(self, manager: AdvancedRiskManager) -> None:
         """T2.2: Volatility contribution must always be >= 0."""
         for volatility in [0.0, 0.001, 0.01, 0.1, 0.5]:
             assessment = manager.assess_risk(volatility=volatility)
             assert assessment.volatility_contribution >= 0.0
             assert assessment.volatility_contribution <= 1.0
 
-    def test_free_energy_fields_finite(
-        self, manager: AdvancedRiskManager
-    ) -> None:
+    def test_free_energy_fields_finite(self, manager: AdvancedRiskManager) -> None:
         """T2.3: All FreeEnergyState fields must be finite."""
         # Generate varied inputs
         for i in range(10):
@@ -258,9 +245,7 @@ class TestMathInvariants:
         assert np.isfinite(fe_state.stability_metric)
         assert np.isfinite(fe_state.descent_rate)
 
-    def test_precision_bounds_enforced(
-        self, manager: AdvancedRiskManager
-    ) -> None:
+    def test_precision_bounds_enforced(self, manager: AdvancedRiskManager) -> None:
         """T2.4: Precision must be clamped to [0.01, 100.0]."""
         # Test with extreme variance (low precision)
         for i in range(20):
@@ -282,9 +267,7 @@ class TestMathInvariants:
 class TestRegressionGoldenValues:
     """Regression tests with known golden output values."""
 
-    def test_volatility_risk_assessment_golden(
-        self, time_source
-    ) -> None:
+    def test_volatility_risk_assessment_golden(self, time_source) -> None:
         """T3.1: Regression test for volatility risk assessment.
 
         Golden values computed with verified implementation.
@@ -305,9 +288,7 @@ class TestRegressionGoldenValues:
         assert assessment.volatility_contribution <= 1.0
         assert np.isfinite(assessment.risk_score)
 
-    def test_drawdown_risk_assessment_golden(
-        self, time_source
-    ) -> None:
+    def test_drawdown_risk_assessment_golden(self, time_source) -> None:
         """T3.2: Regression test for drawdown risk assessment.
 
         Default thresholds:
@@ -329,9 +310,7 @@ class TestRegressionGoldenValues:
         assert assessment.drawdown_contribution <= 0.6
         assert np.isfinite(assessment.risk_score)
 
-    def test_historical_statistics_golden(
-        self, manager: AdvancedRiskManager
-    ) -> None:
+    def test_historical_statistics_golden(self, manager: AdvancedRiskManager) -> None:
         """T3.3: Regression test for historical statistics calculation.
 
         Verify stats use unbiased estimators and produce correct values.
@@ -351,9 +330,7 @@ class TestRegressionGoldenValues:
         assert vol_stats["mean"] == pytest.approx(expected_mean, rel=1e-10)
         assert vol_stats["std"] == pytest.approx(expected_std, rel=1e-10)
 
-    def test_free_energy_statistics_golden(
-        self, manager: AdvancedRiskManager
-    ) -> None:
+    def test_free_energy_statistics_golden(self, manager: AdvancedRiskManager) -> None:
         """T3.4: Regression test for free energy statistics.
 
         Verify FE history stats use unbiased estimators.
@@ -411,9 +388,7 @@ class TestNonFiniteInputHandling:
         result = manager._assess_volatility_risk(-0.01)
         assert result == 0.3
 
-    def test_returns_with_nan_values_filtered(
-        self, manager: AdvancedRiskManager
-    ) -> None:
+    def test_returns_with_nan_values_filtered(self, manager: AdvancedRiskManager) -> None:
         """Returns array with NaN values should be filtered."""
         returns = np.array([0.01, np.nan, 0.02, np.inf, 0.03, -np.inf])
         assessment = manager.assess_risk(returns=returns)
@@ -421,9 +396,7 @@ class TestNonFiniteInputHandling:
         # Should complete without error, filtering non-finite values
         assert np.isfinite(assessment.risk_score)
 
-    def test_nan_volatility_keeps_state_finite(
-        self, manager: AdvancedRiskManager
-    ) -> None:
+    def test_nan_volatility_keeps_state_finite(self, manager: AdvancedRiskManager) -> None:
         """NaN volatility should not poison free energy state or risk score."""
         # Establish baseline with a finite observation
         manager.assess_risk(volatility=0.02)
@@ -447,9 +420,7 @@ class TestNonFiniteInputHandling:
 class TestDeterminism:
     """Tests for deterministic behavior."""
 
-    def test_identical_inputs_produce_identical_outputs(
-        self, time_source
-    ) -> None:
+    def test_identical_inputs_produce_identical_outputs(self, time_source) -> None:
         """Same inputs should always produce same outputs."""
         results = []
 
@@ -468,9 +439,7 @@ class TestDeterminism:
         # All results should be identical
         assert results[0] == results[1] == results[2]
 
-    def test_volatility_calculation_deterministic(
-        self, time_source
-    ) -> None:
+    def test_volatility_calculation_deterministic(self, time_source) -> None:
         """Volatility calculation should be deterministic."""
         results = []
 

@@ -1,4 +1,6 @@
 #!/usr/bin/env python3
+# Copyright (c) 2023-2026 Yaroslav Vasylenko (neuron7xLab)
+# SPDX-License-Identifier: MIT
 """
 Validation script for Fractal Tech Debt Engine v2.0 agent configuration.
 
@@ -111,9 +113,7 @@ def validate_agent_prompt(prompt_file: Path) -> tuple[bool, list[str]]:
     return len(errors) == 0, errors
 
 
-def validate_documentation(
-    doc_file: Path, required_sections: list[str]
-) -> tuple[bool, list[str]]:
+def validate_documentation(doc_file: Path, required_sections: list[str]) -> tuple[bool, list[str]]:
     """Validate that documentation contains required sections."""
     errors = []
 

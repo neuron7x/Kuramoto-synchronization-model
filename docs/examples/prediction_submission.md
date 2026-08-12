@@ -1,5 +1,5 @@
 ---
-owner: dx@tradepulse
+owner: dx@geosync
 review_cadence: quarterly
 last_reviewed: 2026-01-01
 ---
@@ -11,17 +11,17 @@ Submit an asynchronous prediction request to `POST /v1/predictions` using the
 
 ## Prerequisites
 
-- **API base URL**: `https://api.tradepulse.example` (or staging).
-- **ed25519 signing key** for `X-TradePulse-Signature`.
+- **API base URL**: `https://api.geosync.example` (or staging).
+- **ed25519 signing key** for `X-GeoSync-Signature`.
 - **Idempotency key generator** (UUID recommended).
 - **Webhook endpoint** (optional) for `prediction.completed` events.
 
 ## Request
 
 ```bash
-curl -sS -X POST https://api.tradepulse.example/v1/predictions \
+curl -sS -X POST https://api.geosync.example/v1/predictions \
   -H "Content-Type: application/json" \
-  -H "X-TradePulse-Signature: v1=<ed25519_signature>" \
+  -H "X-GeoSync-Signature: v1=<ed25519_signature>" \
   -H "X-Idempotency-Key: 0a6b5c2b-5338-4f0d-8b85-887d9306a63f" \
   -d @- <<'JSON'
 {
@@ -46,8 +46,8 @@ JSON
 {
   "estimated_completion_at": "2025-02-01T12:32:30Z",
   "links": {
-    "status": "https://api.tradepulse.example/v1/predictions/pred-20250201-001",
-    "webhook": "https://webhooks.tradepulse.example/predictions/pred-20250201-001"
+    "status": "https://api.geosync.example/v1/predictions/pred-20250201-001",
+    "webhook": "https://webhooks.geosync.example/predictions/pred-20250201-001"
   },
   "request_id": "pred-20250201-001",
   "status": "accepted",

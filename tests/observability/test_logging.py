@@ -1,3 +1,5 @@
+# Copyright (c) 2023-2026 Yaroslav Vasylenko (neuron7xLab)
+# SPDX-License-Identifier: MIT
 from __future__ import annotations
 
 import logging
@@ -33,7 +35,7 @@ def test_configure_logging_emits_structured_payload(
     records: list[dict[str, object]] = []
     configure_logging(level="DEBUG", sink=records.append)
 
-    logger = logging.getLogger("tradepulse.test")
+    logger = logging.getLogger("geosync.test")
     logger.debug("debug event", extra={"component": "test"})
     logger.error("error event", extra={"error_code": 500})
 
@@ -53,7 +55,7 @@ def test_configure_logging_accepts_numeric_string_level(
 
     configure_logging(level="20", sink=records.append)
 
-    logger = logging.getLogger("tradepulse.test")
+    logger = logging.getLogger("geosync.test")
     logger.info("info event")
 
     restore_logging()

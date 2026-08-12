@@ -1,4 +1,5 @@
-# SPDX-License-Identifier: LicenseRef-TradePulse-Proprietary
+# Copyright (c) 2023-2026 Yaroslav Vasylenko (neuron7xLab)
+# SPDX-License-Identifier: MIT
 from __future__ import annotations
 
 import math
@@ -32,9 +33,7 @@ def _finite_floats(*, min_value: float, max_value: float) -> st.SearchStrategy[f
     )
 
 
-def _risk_aware_reference(
-    balance: float, risk: float, price: float, max_leverage: float
-) -> float:
+def _risk_aware_reference(balance: float, risk: float, price: float, max_leverage: float) -> float:
     if price <= 0.0:
         raise ValueError("price must be positive")
     clipped_risk = max(0.0, min(risk, 1.0))
@@ -106,9 +105,7 @@ def _constraint_strategy() -> st.SearchStrategy[PositionSizingConstraints]:
         cppi_floor=_finite_floats(min_value=0.0, max_value=0.95),
         volatility_buffer=_finite_floats(min_value=0.0, max_value=0.2),
         min_order_size=_finite_floats(min_value=0.0, max_value=5.0),
-        max_order_size=st.one_of(
-            st.none(), _finite_floats(min_value=0.1, max_value=10.0)
-        ),
+        max_order_size=st.one_of(st.none(), _finite_floats(min_value=0.1, max_value=10.0)),
         max_leverage=_finite_floats(min_value=1.0, max_value=20.0),
     )
 
@@ -158,8 +155,7 @@ def _portfolio_state_request(
         risk_exposures = None
     else:
         risk_exposures = {
-            key: draw(_finite_floats(min_value=-1.0, max_value=2.0))
-            for key in positions
+            key: draw(_finite_floats(min_value=-1.0, max_value=2.0)) for key in positions
         }
 
     state = PortfolioState(
@@ -173,21 +169,15 @@ def _portfolio_state_request(
     )
 
     leverage_limit = draw(
-        st.one_of(
-            st.none(), _finite_floats(min_value=0.5, max_value=constraints.max_leverage)
-        )
+        st.one_of(st.none(), _finite_floats(min_value=0.5, max_value=constraints.max_leverage))
     )
     risk_fraction = draw(_finite_floats(min_value=-0.5, max_value=1.5))
     confidence = draw(_finite_floats(min_value=0.0, max_value=1.0))
     edge = draw(st.one_of(st.none(), _finite_floats(min_value=-0.5, max_value=0.5)))
     variance = draw(st.one_of(st.none(), _finite_floats(min_value=0.0, max_value=2.0)))
-    instrument_vol = draw(
-        st.one_of(st.none(), _finite_floats(min_value=0.0, max_value=3.0))
-    )
+    instrument_vol = draw(st.one_of(st.none(), _finite_floats(min_value=0.0, max_value=3.0)))
     min_trade_qty = draw(_finite_floats(min_value=0.0, max_value=10.0))
-    max_trade_qty = draw(
-        st.one_of(st.none(), _finite_floats(min_value=0.1, max_value=20.0))
-    )
+    max_trade_qty = draw(st.one_of(st.none(), _finite_floats(min_value=0.1, max_value=20.0)))
 
     request = PositionSizingRequest(
         symbol=symbol,
@@ -208,9 +198,7 @@ def _portfolio_state_request(
 
 @seed(property_seed("test_constrained_matches_risk_aware_when_unbounded"))
 @settings(
-    **property_settings(
-        "test_constrained_matches_risk_aware_when_unbounded", max_examples=120
-    )
+    **property_settings("test_constrained_matches_risk_aware_when_unbounded", max_examples=120)
 )
 @given(
     _finite_floats(min_value=0.0, max_value=1e9),
@@ -254,9 +242,7 @@ def test_constrained_matches_risk_aware_when_unbounded(
 
 
 @seed(property_seed("test_constrained_sizer_respects_invariants"))
-@settings(
-    **property_settings("test_constrained_sizer_respects_invariants", max_examples=140)
-)
+@settings(**property_settings("test_constrained_sizer_respects_invariants", max_examples=140))
 @given(_portfolio_state_request())
 def test_constrained_sizer_respects_invariants(
     payload: tuple[PositionSizingRequest, PortfolioState, PositionSizingConstraints],
@@ -298,11 +284,7 @@ def test_constrained_sizer_respects_invariants(
         if constraints.max_order_size is not None:
             cap = constraints.max_order_size
         if request.max_trade_qty is not None:
-            cap = (
-                request.max_trade_qty
-                if cap is None
-                else min(cap, request.max_trade_qty)
-            )
+            cap = request.max_trade_qty if cap is None else min(cap, request.max_trade_qty)
         if cap is None or cap >= min_size - 1e-12:
             assert math.isclose(result.order_quantity, 0.0, abs_tol=1e-12)
 

@@ -1,0 +1,26 @@
+{
+  "assumption_attacks": [
+    "If prediction error is high because observation is noisy, excitation must not increase indefinitely.",
+    "If entropy is low and prediction error is high, convergence is probably premature.",
+    "If realism gap improves only on baseline, model is overfitted to static dynamics.",
+    "If update density is reduced, transition recovery must remain bounded.",
+    "If confidence exceeds simulation evidence, claim is invalid. Humans keep trying this anyway. Very inspiring."
+  ],
+  "stress_scenarios": [
+    "noise burst over a bounded interval",
+    "latent transition direction change at midpoint",
+    "delayed feedback with stale observations",
+    "hidden state shock not directly observed",
+    "energy budget cut to 35 percent"
+  ],
+  "minimum_viable_experiments": ["EXP-001", "EXP-002", "EXP-005", "EXP-007"],
+  "confidence_limit": 0.75,
+  "blocked_claims": [
+    "AGI",
+    "brain-equivalent cognition",
+    "real-world validation",
+    "production readiness",
+    "external generalization"
+  ],
+  "next_patch": "Add event-triggered sparse update scheduler with balance-aware inhibition."
+}

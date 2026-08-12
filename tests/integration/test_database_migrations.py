@@ -1,3 +1,5 @@
+# Copyright (c) 2023-2026 Yaroslav Vasylenko (neuron7xLab)
+# SPDX-License-Identifier: MIT
 """Integration tests ensuring database migrations remain safe and repeatable."""
 
 from __future__ import annotations
@@ -100,12 +102,10 @@ def test_migration_preserves_data_integrity(
     inserted_at = datetime(1970, 1, 1, tzinfo=timezone.utc).isoformat()
     with migration_context.engine.begin() as connection:
         connection.execute(
-            text(
-                """
+            text("""
                 INSERT INTO kill_switch_state (id, engaged, reason, updated_at)
                 VALUES (:id, :engaged, :reason, :updated_at)
-                """
-            ),
+                """),
             {
                 "id": 1,
                 "engaged": True,
@@ -114,15 +114,11 @@ def test_migration_preserves_data_integrity(
             },
         )
 
-        row = connection.execute(
-            text(
-                """
+        row = connection.execute(text("""
                 SELECT id, engaged, reason, updated_at
                 FROM kill_switch_state
                 WHERE id = 1
-                """
-            )
-        ).one()
+                """)).one()
         assert row._mapping["id"] == 1
         assert bool(row._mapping["engaged"]) is True
         assert row._mapping["reason"] == "migration test"
@@ -130,12 +126,10 @@ def test_migration_preserves_data_integrity(
 
         with pytest.raises(IntegrityError):
             connection.execute(
-                text(
-                    """
+                text("""
                     INSERT INTO kill_switch_state (id, engaged, reason, updated_at)
                     VALUES (:id, :engaged, :reason, :updated_at)
-                    """
-                ),
+                    """),
                 {
                     "id": 2,
                     "engaged": False,
@@ -219,9 +213,7 @@ def test_migration_rolls_back_on_failure(
         assert _table_exists(migration_context.engine, "kill_switch_state") is False
     else:
         with migration_context.engine.begin() as connection:
-            connection.execute(
-                text("DROP INDEX IF EXISTS idx_kill_switch_state_updated_at")
-            )
+            connection.execute(text("DROP INDEX IF EXISTS idx_kill_switch_state_updated_at"))
             connection.execute(text("DROP TABLE IF EXISTS kill_switch_state"))
 
     migration_context.upgrade("head")

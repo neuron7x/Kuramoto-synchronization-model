@@ -4,7 +4,7 @@
     "size_bytes": 137,
     "executable": false,
     "modified": "2025-10-21T22:11:21",
-    "docstring": "Utility scripts bundled with the TradePulse repository."
+    "docstring": "Utility scripts bundled with the GeoSync repository."
   },
   {
     "path": "scripts/__main__.py",
@@ -25,7 +25,7 @@
     "size_bytes": 424,
     "executable": false,
     "modified": "2025-10-21T22:11:21",
-    "docstring": "High-level utilities for governing TradePulse API contracts."
+    "docstring": "High-level utilities for governing GeoSync API contracts."
   },
   {
     "path": "scripts/api_management/config.py",
@@ -199,14 +199,14 @@
     "size_bytes": 7231,
     "executable": false,
     "modified": "2025-10-21T22:38:10",
-    "docstring": "Run a docker-compose smoke test for TradePulse deployments."
+    "docstring": "Run a docker-compose smoke test for GeoSync deployments."
   },
   {
-    "path": "scripts/export_tradepulse_schema.py",
+    "path": "scripts/export_geosync_schema.py",
     "size_bytes": 1118,
     "executable": false,
     "modified": "2025-10-21T22:11:21",
-    "docstring": "Utility for exporting the TradePulse configuration JSON schema."
+    "docstring": "Utility for exporting the GeoSync configuration JSON schema."
   },
   {
     "path": "scripts/gen_synth_amm_data.py",
@@ -220,7 +220,7 @@
     "size_bytes": 1374,
     "executable": false,
     "modified": "2025-10-21T22:11:21",
-    "docstring": "Generate the TradePulse OpenAPI specification on disk."
+    "docstring": "Generate the GeoSync OpenAPI specification on disk."
   },
   {
     "path": "scripts/generate_stakeholder_assets.py",
@@ -240,14 +240,14 @@
     "size_bytes": 43,
     "executable": false,
     "modified": "2025-10-21T22:11:21",
-    "docstring": "Localization tooling for TradePulse."
+    "docstring": "Localization tooling for GeoSync."
   },
   {
     "path": "scripts/localization/sync_translations.py",
     "size_bytes": 9060,
     "executable": false,
     "modified": "2025-10-21T22:11:21",
-    "docstring": "Synchronise TradePulse dashboard localization assets."
+    "docstring": "Synchronise GeoSync dashboard localization assets."
   },
   {
     "path": "scripts/nightly/__init__.py",
@@ -275,7 +275,7 @@
     "size_bytes": 16970,
     "executable": false,
     "modified": "2025-10-21T22:11:21",
-    "docstring": "Requirement extraction utility for TradePulse."
+    "docstring": "Requirement extraction utility for GeoSync."
   },
   {
     "path": "scripts/resilient_data_sync.py",
@@ -401,14 +401,14 @@
     "size_bytes": 5645,
     "executable": false,
     "modified": "2025-10-21T22:11:21",
-    "docstring": "Nightly smoke end-to-end pipeline for TradePulse."
+    "docstring": "Nightly smoke end-to-end pipeline for GeoSync."
   },
   {
     "path": "scripts/supply_chain.py",
     "size_bytes": 30980,
     "executable": false,
     "modified": "2025-10-21T22:11:21",
-    "docstring": "Utilities that keep TradePulse's software supply chain trustworthy."
+    "docstring": "Utilities that keep GeoSync's software supply chain trustworthy."
   },
   {
     "path": "scripts/tests/__init__.py",
@@ -424,11 +424,11 @@
     "modified": "2025-10-21T22:11:21"
   },
   {
-    "path": "scripts/tests/test_export_tradepulse_schema.py",
+    "path": "scripts/tests/test_export_geosync_schema.py",
     "size_bytes": 2681,
     "executable": false,
     "modified": "2025-10-21T22:11:21",
-    "docstring": "Tests for export_tradepulse_schema.py script."
+    "docstring": "Tests for export_geosync_schema.py script."
   },
   {
     "path": "scripts/tests/test_gen_synth_amm_data.py",
@@ -467,7 +467,7 @@
     "size_bytes": 62,
     "executable": false,
     "modified": "2025-10-21T22:11:21",
-    "docstring": "Utility scripts packaged with TradePulse."
+    "docstring": "Utility scripts packaged with GeoSync."
   },
   {
     "path": "tools/compliance/generate_license_report.py",
@@ -488,7 +488,7 @@
     "size_bytes": 76,
     "executable": false,
     "modified": "2025-10-21T22:11:21",
-    "docstring": "Coverage guardrail utilities for TradePulse."
+    "docstring": "Coverage guardrail utilities for GeoSync."
   },
   {
     "path": "tools/coverage/guardrail.py",
@@ -512,11 +512,11 @@
     "docstring": "Validate that dependency declarations stay aligned across manifests."
   },
   {
-    "path": "tools/docs/generate_tradepulse_cli_docs.py",
+    "path": "tools/docs/generate_geosync_cli_docs.py",
     "size_bytes": 3870,
     "executable": false,
     "modified": "2025-10-21T22:11:21",
-    "docstring": "Generate Markdown documentation for the TradePulse CLI commands."
+    "docstring": "Generate Markdown documentation for the GeoSync CLI commands."
   },
   {
     "path": "tools/fpma_runner.py",
@@ -536,7 +536,7 @@
     "size_bytes": 546,
     "executable": false,
     "modified": "2025-10-21T22:11:21",
-    "docstring": "Observability-as-code helpers for TradePulse."
+    "docstring": "Observability-as-code helpers for GeoSync."
   },
   {
     "path": "tools/observability/builder.py",
@@ -550,7 +550,7 @@
     "size_bytes": 5761,
     "executable": false,
     "modified": "2025-10-21T22:11:21",
-    "docstring": "Generate Conventional Commit release notes for TradePulse."
+    "docstring": "Generate Conventional Commit release notes for GeoSync."
   },
   {
     "path": "tools/schema/generate_event_types.py",
@@ -578,7 +578,7 @@
     "size_bytes": 359,
     "executable": false,
     "modified": "2025-10-21T22:38:10",
-    "docstring": "Utilities for generating automated tests across the TradePulse codebase."
+    "docstring": "Utilities for generating automated tests across the GeoSync codebase."
   },
   {
     "path": "tools/testing/test_generator.py",

@@ -1,0 +1,132 @@
+# Diff-bound commit acceptor for the final closure of the
+# named-but-unfalsifiable ANCHORED set in docs/CLAIMS.yaml.
+#
+# Closes the governance-discipline arc that started with PR #556
+# (api-contract-openapi-coverage falsifier) and continued with PR #558
+# (hpc-* cluster). After this PR, the floating list is EMPTY:
+#   falsifier coverage: 19/19 ANCHORED.
+#
+# Five claims gain v3 falsifier-blocks pointing at real pytest nodes:
+#   robustness-hac-psr-newey-west       (NEW INV-PSR-HAC)
+#   serotonin-controller-bounded-veto   (existing INV-5HT1/2/4/7)
+#   kelly-sizing-cap-enforced           (existing INV-KELLY1/2)
+#   oms-conservation-idempotency-monotone (existing INV-OMS1/2/3)
+#   signalbus-deterministic-fanout      (existing INV-SB1/2)
+#
+# Two claims are honestly downgraded ANCHORED → EXTRAPOLATED because
+# their evidence is paper-tier or documentation-only — no pytest node
+# currently re-runs the assertion under the ADR 0021 v3 falsifier shape:
+#   ricci-microstructure-ten-axis-falsification
+#   ierd-phase0-yana-response
+#
+# Each downgrade declares the missing-evidence path explicitly:
+#   "Re-classify ANCHORED on addition of tests/.../test_X.py with
+#    [N] parametrised tests / one assertion per question + a new
+#    INV-* registry entry."
+#
+# This is the inverse of marketing "everything's done" — it admits
+# the residual gap as the right tier and points at the exact
+# remediation path.
+#
+# Locally verified:
+#   * python scripts/count_invariants.py: 95 (was 94, +1 INV-PSR-HAC)
+#   * python scripts/check_invariant_count_sync.py: OK at 95
+#   * python .claude/physics/validate_tests.py --self-check: PASSED
+#   * python scripts/ci/check_claims.py:
+#       PASS schema v3 — 27 gated claims, 0 P2, all evidence present
+#       tier distribution: ANCHORED=19, EXTRAPOLATED=8
+#       falsifier coverage: 19/19 ANCHORED  ← 100%
+#   * python scripts/export_governance_schemas.py --check: PASS
+#   * pytest tests/governance/ tests/scripts/test_export_governance_schemas.py: 80/80
+
+id: falsifier-final-cluster
+status: ACTIVE
+claim_type: governance
+promise: >-
+  After this PR lands, every ANCHORED claim in docs/CLAIMS.yaml
+  declares a v3 falsifier-block. check_claims.py reports
+  "falsifier coverage: 19/19 ANCHORED" with no claims on the
+  missing-falsifier WARN list. Tier distribution is
+  ANCHORED=19, EXTRAPOLATED=8, SPECULATIVE=0, UNKNOWN=0. The new
+  INV-PSR-HAC invariant is registered with NW(1987, 1994) +
+  Bailey-López de Prado (2014) references and a resolving
+  source/tests/integration_test triplet under
+  research/robustness/. The two paper-tier / documentation-only
+  claims (ricci-microstructure-ten-axis-falsification,
+  ierd-phase0-yana-response) are downgraded to EXTRAPOLATED with
+  an explicit missing-evidence path that names the future
+  test_id + new INV required for re-promotion. Registry count
+  goes 94 → 95 with all four documentation surfaces resynced.
+diff_scope:
+  changed_files:
+    - path: ".claude/commit_acceptors/falsifier-final-cluster.yaml"
+    - path: ".claude/physics/INVARIANTS.yaml"
+    - path: "BASELINE.md"
+    - path: "CLAUDE.md"
+    - path: "README.md"
+    - path: "docs/CLAIMS.yaml"
+  forbidden_paths:
+    - "trading/"
+    - "execution/"
+    - "forecast/"
+    - "policy/"
+    - "core/physics/"
+    - "core/kuramoto/"
+    - "core/neuro/"
+    - "application/"
+    - "src/"
+    - "geosync_hpc/"
+    - "research/"
+    - "tools/commit_acceptor/"
+    - "scripts/ci/"
+    - "scripts/check_invariant_count_sync.py"
+    - "scripts/count_invariants.py"
+required_python_symbols: []
+expected_signal: >-
+  `python scripts/count_invariants.py` returns 95;
+  `python scripts/check_invariant_count_sync.py` reports
+  "OK: 95 invariants, all documentation surfaces in sync.";
+  `python .claude/physics/validate_tests.py --self-check` reports
+  "Self-check PASSED";
+  `python scripts/ci/check_claims.py` includes
+  "falsifier coverage: 19/19 ANCHORED" and the line
+  "tier distribution: ANCHORED=19, EXTRAPOLATED=8, SPECULATIVE=0,
+  UNKNOWN=0" with NO "WARN(v3): X/Y ANCHORED claim(s) lack
+  falsifier block" message;
+  `python scripts/export_governance_schemas.py --check` exits 0;
+  the on-disk JSON Schema artefacts under docs/schemas/governance/
+  are unchanged (the typed model is unchanged; only data is added).
+measurement_command: >-
+  bash -c 'python scripts/count_invariants.py | grep -q "^95$"
+  && PYTHONPATH=scripts python scripts/check_invariant_count_sync.py
+  && python .claude/physics/validate_tests.py --self-check
+  && python scripts/ci/check_claims.py 2>&1 | grep -q "19/19 ANCHORED"
+  && ! python scripts/ci/check_claims.py 2>&1 | grep -q "WARN(v3):"
+  && python scripts/export_governance_schemas.py --check'
+signal_artifact: "tmp/falsifier_final_cluster.log"
+falsifier:
+  command: >-
+    bash -c 'python scripts/ci/check_claims.py 2>&1
+    | grep -q "WARN(v3):.*ANCHORED claim.*lack falsifier"'
+  description: >-
+    Probes the missing-falsifier WARN line. After this PR, that
+    line MUST NOT appear (every ANCHORED claim has a falsifier).
+    If a future change adds a new ANCHORED claim without a
+    falsifier-block, OR strips a falsifier-block from an existing
+    ANCHORED, check_claims.py re-emits the WARN, the falsifier
+    exits 0, and the regression is flagged. Inverse-probe:
+    successful exit means the discipline has broken.
+rollback_command: >-
+  git checkout HEAD~1 --
+  .claude/physics/INVARIANTS.yaml
+  README.md
+  BASELINE.md
+  CLAUDE.md
+  docs/CLAIMS.yaml
+  .claude/commit_acceptors/falsifier-final-cluster.yaml
+rollback_verification_command: >-
+  bash -c 'python scripts/count_invariants.py | grep -q "^94$"'
+memory_update_type: append
+ledger_path: ".claude/commit_acceptors/falsifier-final-cluster.yaml"
+report_path: "tmp/falsifier_final_cluster.log"
+evidence: []

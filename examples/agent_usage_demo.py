@@ -1,4 +1,6 @@
 #!/usr/bin/env python3
+# Copyright (c) 2023-2026 Yaroslav Vasylenko (neuron7xLab)
+# SPDX-License-Identifier: MIT
 """
 Demonstration of core.agent module functionality.
 
@@ -9,7 +11,6 @@ This example shows how to use the various components of the agent system:
 - Orchestration for concurrent evaluation
 - Scheduling for periodic execution
 """
-
 
 import numpy as np
 import pandas as pd
@@ -45,7 +46,7 @@ def demo_bandits():
         reward = np.random.normal(0.5, 0.2)
         eg_bandit.update(arm, reward)
         print(
-            f"  Round {i+1}: Selected {arm}, Reward: {reward:.3f}, "
+            f"  Round {i + 1}: Selected {arm}, Reward: {reward:.3f}, "
             f"Estimate: {eg_bandit.estimate(arm):.3f}, "
             f"Pulls: {eg_bandit.pulls(arm)}"
         )
@@ -60,7 +61,7 @@ def demo_bandits():
         reward = np.random.normal(0.5, 0.2)
         ucb_bandit.update(arm, reward)
         print(
-            f"  Round {i+1}: Selected {arm}, Reward: {reward:.3f}, "
+            f"  Round {i + 1}: Selected {arm}, Reward: {reward:.3f}, "
             f"Estimate: {ucb_bandit.estimate(arm):.3f}, "
             f"Pulls: {ucb_bandit.pulls(arm)}"
         )
@@ -104,8 +105,7 @@ def demo_strategy_evaluation():
         status = "✓" if result.succeeded else "✗"
         score = f"{result.score:.4f}" if result.score is not None else "N/A"
         print(
-            f"  {status} {result.strategy.name:20s} Score: {score:>8s} "
-            f"Time: {result.duration:.3f}s"
+            f"  {status} {result.strategy.name:20s} Score: {score:>8s} Time: {result.duration:.3f}s"
         )
 
 
@@ -134,20 +134,14 @@ def demo_strategy_memory():
     for name, sig_tuple, score in strategies_data:
         sig = StrategySignature(*sig_tuple)
         memory.add(name, sig, score)
-        print(
-            f"  Added: {name:20s} Score: {score:.2f} "
-            f"R={sig.R:.2f} ΔH={sig.delta_H:.2f}"
-        )
+        print(f"  Added: {name:20s} Score: {score:.2f} R={sig.R:.2f} ΔH={sig.delta_H:.2f}")
 
     # Retrieve top performers
     print("\nTop 3 strategies:")
     print("-" * 60)
     top_strategies = memory.topk(k=3)
     for i, record in enumerate(top_strategies, 1):
-        print(
-            f"  #{i} {record.name:20s} Score: {record.score:.2f} "
-            f"R={record.signature.R:.2f}"
-        )
+        print(f"  #{i} {record.name:20s} Score: {record.score:.2f} R={record.signature.R:.2f}")
 
 
 def demo_orchestration():
@@ -164,13 +158,11 @@ def demo_orchestration():
 
     # Create strategy batches
     spy_strategies = [
-        Strategy(name=f"spy_strat_{i}", params={"lookback": 20 + i * 10})
-        for i in range(3)
+        Strategy(name=f"spy_strat_{i}", params={"lookback": 20 + i * 10}) for i in range(3)
     ]
 
     qqq_strategies = [
-        Strategy(name=f"qqq_strat_{i}", params={"lookback": 15 + i * 10})
-        for i in range(3)
+        Strategy(name=f"qqq_strat_{i}", params={"lookback": 15 + i * 10}) for i in range(3)
     ]
 
     # Create flows
@@ -309,7 +301,7 @@ def main():
     print("\n")
     print("╔" + "=" * 58 + "╗")
     print("║" + " " * 58 + "║")
-    print("║" + "  TradePulse Core Agent Module - Usage Demonstration".center(58) + "║")
+    print("║" + "  GeoSync Core Agent Module - Usage Demonstration".center(58) + "║")
     print("║" + " " * 58 + "║")
     print("╚" + "=" * 58 + "╝")
 

@@ -1,0 +1,57 @@
+[
+  {
+    "asset": "spdr_sp500",
+    "n_folds": 69,
+    "active_cells": 159,
+    "active_folds": 17,
+    "best_H": 0.4,
+    "best_rs": 0.1,
+    "best_mean_sharpe": -0.0114,
+    "best_n_folds": 3,
+    "passing_pairs": 0
+  },
+  {
+    "asset": "xauusd",
+    "n_folds": 286,
+    "active_cells": 619,
+    "active_folds": 62,
+    "best_H": 0.3,
+    "best_rs": 0.1,
+    "best_mean_sharpe": 0.0051,
+    "best_n_folds": 1,
+    "passing_pairs": 0
+  },
+  {
+    "asset": "usa500",
+    "n_folds": 150,
+    "active_cells": 562,
+    "active_folds": 49,
+    "best_H": 0.5,
+    "best_rs": 0.35,
+    "best_mean_sharpe": -0.0081,
+    "best_n_folds": 3,
+    "passing_pairs": 0
+  },
+  {
+    "asset": "eurgbp",
+    "n_folds": 297,
+    "active_cells": 1251,
+    "active_folds": 115,
+    "best_H": 0.35,
+    "best_rs": 0.1,
+    "best_mean_sharpe": -0.0199,
+    "best_n_folds": 7,
+    "passing_pairs": 0
+  },
+  {
+    "asset": "eurusd",
+    "n_folds": 301,
+    "active_cells": 599,
+    "active_folds": 68,
+    "best_H": 0.5,
+    "best_rs": 0.35,
+    "best_mean_sharpe": -0.0096,
+    "best_n_folds": 1,
+    "passing_pairs": 0
+  }
+]

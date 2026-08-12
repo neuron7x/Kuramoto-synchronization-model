@@ -1,6 +1,6 @@
 # GitHub Actions MLOps Orchestration
 
-This document describes the event-driven CI/CD system that governs the TradePulse
+This document describes the event-driven CI/CD system that governs the GeoSync
 MLOps pipeline. The workflow is implemented in
 `.github/workflows/mlops-orchestration.yml` and promotes deterministic training,
 automated validation, artifact governance, and staged delivery across AWS, GCP,

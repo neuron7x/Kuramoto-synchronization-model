@@ -1,23 +1,23 @@
 ---
 title: Data Loss Prevention and Retention Policies
-description: Classification, retention, deletion automation, leakage detection, and minimisation controls for TradePulse data assets.
+description: Classification, retention, deletion automation, leakage detection, and minimisation controls for GeoSync data assets.
 ---
 
 # Data Loss Prevention and Retention Policies
 
-TradePulse processes market, telemetry, and limited personal data to operate the trading platform. This guide defines how we
+GeoSync processes market, telemetry, and limited personal data to operate the trading platform. This guide defines how we
 classify sensitive information, assign retention periods, automate secure deletion, detect leakage, and minimise personal data
 handling to uphold compliance obligations (GDPR, SOC 2, ISO 27001) without constraining engineering velocity.
 
 ## Scope and Objectives
 
-- Cover datasets under the control of TradePulse product engineering, observability, support, and operational analytics.
+- Cover datasets under the control of GeoSync product engineering, observability, support, and operational analytics.
 - Align classification and retention rules with the [Governance and Data Controls](../governance.md) guardrails already adopted by the wider organisation.
 - Provide actionable runbooks for platform teams to embed DLP protections into services, storage, and CI/CD pipelines.
 
 ## Data Classification Framework
 
-TradePulse uses a four-tier classification model. Each tier combines contextual sensitivity with objective detection patterns and control baselines.
+GeoSync uses a four-tier classification model. Each tier combines contextual sensitivity with objective detection patterns and control baselines.
 
 | Tier | Label | Typical Examples | Detection Signals | Required Controls |
 | --- | --- | --- | --- | --- |
@@ -29,7 +29,7 @@ TradePulse uses a four-tier classification model. Each tier combines contextual 
 **Classification workflow**
 
 1. **Inventory** sources via the central data catalog and infrastructure-as-code manifests (Terraform tags `data_classification`), ensuring every dataset inherits a baseline label.
-2. **Detect** sensitive elements at ingestion using the DLP scanner (GitHub action `tradepulse/dlp-scan@v2`) configured with custom detectors for market account IDs and platform secrets.
+2. **Detect** sensitive elements at ingestion using the DLP scanner (GitHub action `geosync/dlp-scan@v2`) configured with custom detectors for market account IDs and platform secrets.
 3. **Override** classification through schema annotations (`classification="restricted"`) in Pydantic models or database migrations when automated heuristics mislabel data.
 4. **Audit** quarterly: security governance reviews `classification_drift` dashboards comparing declared vs detected sensitivity; exceptions require CISO approval.
 
@@ -41,7 +41,7 @@ Retention periods enforce least-privilege temporal access. Timeframes below repr
 | --- | --- | --- | --- | --- | --- |
 | Authentication & audit logs | Restricted | SIEM (Elastic) | 400 days | Vault-managed shredding job with cryptographic erasure | Shorter (180 days) in low-jurisdiction regions when regulatory exemptions apply |
 | Trading orders & fills | Confidential | PostgreSQL (production) | 7 years | Partition drop with `pg_purge_partition` workflow | Meets MiFID II retention; legal hold overrides via `legal_hold=true` flag |
-| Strategy backtests | Internal | Object storage (`s3://tradepulse-backtests`) | 365 days | Lifecycle transition to Glacier after 90 days, permanent delete at 365 | Hash-based dedup avoids storing redundant runs |
+| Strategy backtests | Internal | Object storage (`s3://geosync-backtests`) | 365 days | Lifecycle transition to Glacier after 90 days, permanent delete at 365 | Hash-based dedup avoids storing redundant runs |
 | Telemetry metrics & traces | Internal | Observability stack (Prometheus, Tempo) | 14 days | Rolling window eviction | Aggregated KPI exports stored separately under 180-day policy |
 | Support tickets | Restricted | CRM (Zendesk) | 24 months | Vendor automated deletion | Tickets anonymised after closure; attachments scrubbed via webhook |
 
@@ -87,4 +87,4 @@ Retention logic is codified in the **Data Retention Registry** (`configs/data-re
 - **Product Owners** – Approve data collection and retention exceptions, coordinate with Legal for holds or regulatory changes.
 - **Compliance** – Review evidence packs monthly and handle regulator data requests within SLA.
 
-Embedding these practices across pipelines, storage, and operational workflows ensures TradePulse keeps sensitive data safe, honours retention promises, and remains inspection-ready for regulators and customers alike.
+Embedding these practices across pipelines, storage, and operational workflows ensures GeoSync keeps sensitive data safe, honours retention promises, and remains inspection-ready for regulators and customers alike.

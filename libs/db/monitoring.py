@@ -1,3 +1,5 @@
+# Copyright (c) 2023-2026 Yaroslav Vasylenko (neuron7xLab)
+# SPDX-License-Identifier: MIT
 """Database observability helpers for engine instrumentation and monitoring."""
 
 from __future__ import annotations
@@ -56,15 +58,15 @@ def instrument_engine_metrics(engine: Engine, *, dsn: str | None = None) -> None
     def _before_cursor_execute(
         conn, cursor, statement, parameters, context, executemany
     ) -> None:  # pragma: no cover - exercised in integration tests
-        context._tradepulse_query_start = time.perf_counter()
-        context._tradepulse_statement_type = _infer_statement_type(statement)
+        context._geosync_query_start = time.perf_counter()
+        context._geosync_statement_type = _infer_statement_type(statement)
 
     @event.listens_for(engine, "after_cursor_execute")
     def _after_cursor_execute(
         conn, cursor, statement, parameters, context, executemany
     ) -> None:  # pragma: no cover - exercised in integration tests
-        start = getattr(context, "_tradepulse_query_start", None)
-        statement_type = getattr(context, "_tradepulse_statement_type", "other")
+        start = getattr(context, "_geosync_query_start", None)
+        statement_type = getattr(context, "_geosync_statement_type", "other")
         if start is None:
             return
         metrics.observe_database_query(
@@ -80,8 +82,8 @@ def instrument_engine_metrics(engine: Engine, *, dsn: str | None = None) -> None
         context = exception_context.execution_context
         if context is None:
             return
-        start = getattr(context, "_tradepulse_query_start", None)
-        statement_type = getattr(context, "_tradepulse_statement_type", "other")
+        start = getattr(context, "_geosync_query_start", None)
+        statement_type = getattr(context, "_geosync_statement_type", "other")
         duration = 0.0 if start is None else time.perf_counter() - start
         metrics.observe_database_query(
             database=database,
@@ -165,9 +167,7 @@ class DatabaseMonitor:
         try:
             if dialect.startswith("postgres"):
                 with self._engine.connect() as connection:
-                    result = connection.execute(
-                        text("SELECT pg_database_size(current_database())")
-                    )
+                    result = connection.execute(text("SELECT pg_database_size(current_database())"))
                     value = result.scalar_one()
                 return float(value)
 
@@ -215,10 +215,8 @@ def _normalise_host_label(url: URL) -> str:
 
 def _get_engine_metadata(engine: Engine) -> dict[str, object]:
     info = getattr(engine, "info", None)
-    if isinstance(
-        info, dict
-    ):  # pragma: no branch - attribute available on modern SQLAlchemy
-        return info.setdefault("tradepulse", {})
+    if isinstance(info, dict):  # pragma: no branch - attribute available on modern SQLAlchemy
+        return info.setdefault("geosync", {})
     return _ENGINE_METADATA.setdefault(engine, {})
 
 

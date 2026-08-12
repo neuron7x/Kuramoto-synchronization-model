@@ -1,3 +1,5 @@
+# Copyright (c) 2023-2026 Yaroslav Vasylenko (neuron7xLab)
+# SPDX-License-Identifier: MIT
 """FastAPI application orchestrating sandbox control operations."""
 
 from __future__ import annotations
@@ -29,7 +31,7 @@ def create_app(
     config = settings or control_settings()
     control_state = state or create_state(config)
 
-    app = FastAPI(title="TradePulse Sandbox Control API", version="1.0.0")
+    app = FastAPI(title="GeoSync Sandbox Control API", version="1.0.0")
 
     @app.get("/health")
     async def health() -> dict[str, Any]:

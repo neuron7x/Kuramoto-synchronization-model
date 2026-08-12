@@ -1,0 +1,58 @@
+[global]
+final_aspirational_gate = 98
+current_release_gate = 90
+diff_coverage_gate = 90
+
+[surfaces.core]
+paths = ["core/"]
+short_term = 80
+mid_term = 90
+final = 95
+claim_risk = "high"
+rationale = "Core logic supports system-level claims and must not rely on shallow execution coverage."
+
+[surfaces.backtest]
+paths = ["backtest/"]
+short_term = 90
+mid_term = 95
+final = 98
+claim_risk = "critical"
+rationale = "Backtest determinism and replay claims depend on high path and branch coverage."
+
+[surfaces.execution]
+paths = ["execution/"]
+short_term = 80
+mid_term = 90
+final = 95
+claim_risk = "critical"
+rationale = "Execution failures may create unsafe orders, stale states, or invalid runtime behavior."
+
+[surfaces.analytics]
+paths = ["analytics/"]
+short_term = 75
+mid_term = 85
+final = 90
+claim_risk = "medium"
+rationale = "Analytics supports reporting claims but is less safety-critical than execution."
+
+[surfaces.ingestion]
+paths = ["core/data/", "src/data/", "tools/market_data/"]
+short_term = 85
+mid_term = 92
+final = 95
+claim_risk = "high"
+rationale = "Invalid market data must fail closed, not silently poison downstream tests."
+
+[surfaces.risk]
+paths = ["geosync/risk/", "execution/risk/"]
+short_term = 90
+mid_term = 95
+final = 98
+claim_risk = "critical"
+rationale = "Risk controls must be tested harder than happy-path strategy code."
+
+[weights]
+# Operational weighting for divergence/convergence governance checks
+divergence = 0.5
+convergence = 0.5
+

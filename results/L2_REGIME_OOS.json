@@ -1,0 +1,57 @@
+{
+  "results": [
+    {
+      "frac_on": 1.0,
+      "ic_signal": 0.11631097660705925,
+      "name": "TEST_UNCONDITIONAL",
+      "perm_p": 0.001996007984031936,
+      "residual_ic": 0.12282699535804158,
+      "residual_p": 0.001996007984031936,
+      "verdict": "PROCEED"
+    },
+    {
+      "frac_on": 0.5127345142018657,
+      "ic_signal": 0.17137677380871186,
+      "name": "TEST_q25_thr_from_train",
+      "perm_p": 0.001996007984031936,
+      "residual_ic": 0.17909010169074235,
+      "residual_p": 0.001996007984031936,
+      "verdict": "PROCEED"
+    },
+    {
+      "frac_on": 0.4388428885861021,
+      "ic_signal": 0.2015023257381273,
+      "name": "TEST_q50_thr_from_train",
+      "perm_p": 0.001996007984031936,
+      "residual_ic": 0.19268860505596913,
+      "residual_p": 0.001996007984031936,
+      "verdict": "PROCEED"
+    },
+    {
+      "frac_on": 0.3634839115396709,
+      "ic_signal": 0.23638402111955653,
+      "name": "TEST_q75_thr_from_train",
+      "perm_p": 0.001996007984031936,
+      "residual_ic": 0.23299219106799687,
+      "residual_p": 0.001996007984031936,
+      "verdict": "PROCEED"
+    },
+    {
+      "frac_on": 1.0,
+      "ic_signal": 0.11503349834764215,
+      "name": "TRAIN_UNCONDITIONAL",
+      "perm_p": 0.001996007984031936,
+      "residual_ic": 0.0857961772165491,
+      "residual_p": 0.001996007984031936,
+      "verdict": "PROCEED"
+    }
+  ],
+  "test_rows": 9541,
+  "thresholds_from_train": {
+    "0.25": 8.586448002105261e-05,
+    "0.5": 9.91327034512701e-05,
+    "0.75": 0.00011800075037257931
+  },
+  "train_rows": 9540,
+  "window_rows": 300
+}

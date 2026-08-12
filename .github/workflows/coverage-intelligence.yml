@@ -1,0 +1,227 @@
+# SPDX-License-Identifier: MIT
+#
+# Coverage Intelligence Gate.
+#
+# Two jobs with deliberately different cadence:
+#
+#   instrument-selfcheck  (every PR + push)
+#       Guards the coverage AUTHORITY itself — the instrument, the canonical
+#       release_90.coveragerc, and the gate-relationship tests. Cheap: it runs
+#       only the tool's own falsification suite, so it cannot break the PR
+#       latency budget (the fast-test lane has a ~20-min cap).
+#
+#   release-coverage-90  (push to main + nightly + manual)
+#       Runs the FULL production-surface measurement and enforces the 90%
+#       release gate, the critical surface, and the claim falsifier matrix.
+#       This is intentionally NOT on every PR: a full-surface coverage run is
+#       too heavy for the PR gate, so it runs where latency is not the
+#       constraint. This tradeoff is explicit on purpose — a silent "covered
+#       everywhere" that only ran a subset is the exact lie this gate exists
+#       to prevent.
+
+name: Coverage Intelligence Gate
+
+# Concurrency is deliberately NOT set at workflow level: the two jobs have
+# opposite cancellation semantics and a shared cancel-in-progress would be
+# wrong for one of them. It is therefore declared per-job below.
+#
+#   instrument-selfcheck  -> cancel-in-progress: true
+#       A cheap PR/push self-check. A superseded commit's run carries no
+#       value, so killing it the moment a newer commit lands is correct.
+#
+#   release-coverage-90   -> cancel-in-progress: false
+#       The heavy push-to-main ENFORCEMENT lane (~25 min full-surface run).
+#       Cancelling it mid-flight is exactly the failure that produced
+#       run 27791727376: a busy main branch supersedes the gate before it
+#       ever measures the surface or emits coverage evidence, leaving a
+#       silent "covered everywhere" that never actually ran. An enforcement
+#       gate must COMPLETE. With cancel-in-progress:false the running gate is
+#       never killed; only the queued (not-yet-started) run is superseded by
+#       the newest main, so HEAD-of-main is always the one that gets measured.
+
+on:
+  pull_request:
+    branches: [main]
+    paths:
+      - "tools/coverage/**"
+      - "configs/quality/**coverage**"
+      - "configs/quality/release_90.coveragerc"
+      - "configs/quality/critical_surface.toml"
+      - "tests/tools/test_coverage_intelligence.py"
+      - "tests/audit/test_coverage_honesty.py"
+      - "tests/test_coverage_threshold_sync.py"
+      - ".github/workflows/coverage-intelligence.yml"
+  push:
+    branches: [main]
+  schedule:
+    - cron: "0 4 * * *"
+  workflow_dispatch:
+
+permissions:
+  contents: read
+
+jobs:
+  instrument-selfcheck:
+    name: Coverage authority self-check
+    runs-on: ubuntu-latest
+    timeout-minutes: 15
+    concurrency:
+      group: ${{ github.workflow }}-selfcheck-${{ github.ref }}
+      cancel-in-progress: true
+    steps:
+      - uses: actions/checkout@9c091bb21b7c1c1d1991bb908d89e4e9dddfe3e0 # v7.0.0
+      - uses: actions/setup-python@ece7cb06caefa5fff74198d8649806c4678c61a1 # v6
+        with:
+          python-version: "3.12"
+          cache: pip
+      - name: Install sci-core deps
+        # The repo conftest imports the sci-core stack at collection time, so
+        # even this lightweight job needs it loadable.
+        run: pip install numpy scipy pandas networkx pyyaml jsonschema pytest
+      - name: Falsify the coverage authority
+        run: |
+          python -m pytest \
+            tests/tools/test_coverage_intelligence.py \
+            tests/audit/test_coverage_honesty.py \
+            tests/test_coverage_threshold_sync.py \
+            tests/tools/test_coverage_surface_contract.py \
+            -q -p no:cacheprovider
+
+  release-coverage-90:
+    name: Release coverage gate (90%)
+    if: github.event_name != 'pull_request'
+    runs-on: ubuntu-latest
+    # The full-surface measurement is ~18k tests / ~94 min of serial CPU. The
+    # old 50-min cap killed the measure step mid-flight on EVERY push (enforce
+    # step skipped, conclusion `cancelled` — a silent non-enforcement for days).
+    # The measurement runs SERIALLY (a `-n auto` attempt surfaced xdist-only
+    # failures the vacuum had hidden — pytest-benchmark/caplog under parallel —
+    # so parallelism was reverted); the fix is this recalibrated cap with
+    # headroom over the ~94-min serial run, so a healthy run completes and
+    # enforces while a genuine hang still fails closed under the 6-hour default.
+    timeout-minutes: 150
+    concurrency:
+      group: ${{ github.workflow }}-release-${{ github.ref }}
+      cancel-in-progress: false
+    env:
+      # Force UTF-8 (matches the fast-shard recipe in pr-gate.yml): repo
+      # source/tests contain UTF-8 (— ≤ κ → …), so a file open() without
+      # encoding= would hit the runner ASCII fallback and raise.
+      PYTHONUTF8: '1'
+      PYTHONIOENCODING: 'utf-8'
+    steps:
+      - uses: actions/checkout@9c091bb21b7c1c1d1991bb908d89e4e9dddfe3e0 # v7.0.0
+        with:
+          fetch-depth: 0
+      - uses: actions/setup-python@ece7cb06caefa5fff74198d8649806c4678c61a1 # v6
+        with:
+          python-version: "3.12"
+          cache: pip
+      - name: Install dependencies (fail-closed environment)
+        run: |
+          set -euo pipefail
+          python -m pip install --upgrade pip
+          # Fail-closed, NOT optimistic. The previous form was an "install
+          # soup":
+          #   pip install -e ".[dev,contract]" || pip install -e ".[dev]" \
+          #     || pip install -r requirements.txt || true
+          # Each fallback masks the one before it and the trailing `|| true`
+          # swallows total failure, so the gate could go on to MEASURE
+          # coverage against a half-installed surface. A missing dependency
+          # silently shrinks the importable production surface, which INFLATES
+          # the coverage ratio (fewer modules measured -> higher %). That is
+          # the same vacuum lie this gate exists to prevent. One deterministic
+          # path; if it cannot resolve, the gate fails HERE.
+          #
+          # [contract] pulls schemathesis (NOT carried in requirements*.lock)
+          # so the api-contract claim falsifier
+          # (tests/api/test_schemathesis_contract.py) is actually collected —
+          # otherwise the claim matrix reports api-contract-openapi-coverage
+          # as incomplete.
+          python -m pip install -e ".[dev,contract]"
+          python -m pip install pytest pytest-cov pyyaml
+          # POT (optimal transport) backs the Ollivier-Ricci kernel imported by
+          # tests/research_lines/test_ricci_microstructure_v1.py, which THIS gate
+          # collects as part of the full suite. POT lives in the pyproject
+          # `neuro_advanced` optional group, deliberately excluded from the
+          # pip-compiled base/dev locks AND from [dev,contract], so neither path
+          # installs `ot`. Without it the module ImportErrors at COLLECTION
+          # (pytest exit 2) — and, worse for this gate's purpose, a missing
+          # dependency would silently shrink the measured surface and INFLATE the
+          # coverage ratio. Install it explicitly (matching pyproject's floor),
+          # mirroring repo-integrity-gate / ricci-microstructure-gate; never
+          # importorskip, which would vacuously drop the kernel from coverage.
+          python -m pip install "POT>=0.9.5"
+          # Dependency-consistency gate: surface any broken or incompatible
+          # requirement set BEFORE measurement, complementing the import
+          # preflight below.
+          python -m pip check
+      - name: Prepare coverage evidence directory
+        run: |
+          set -euo pipefail
+          mkdir -p reports/coverage
+          printf '%s\n' "coverage measurement has not completed" > reports/coverage/coverage_gap_map.md
+      - name: Verify measurement environment (fail-closed preflight)
+        run: |
+          set -euo pipefail
+          # Provenance for the number this gate is about to trust: assert the
+          # surface it intends to measure is importable BEFORE measuring it. A
+          # dependency that silently failed to install would otherwise drop
+          # whole modules from the measured surface and inflate coverage %.
+          python - <<'PY'
+          import importlib
+          import sys
+
+          required = [
+              # measurement instrument + api-contract claim falsifier
+              "coverage",
+              "pytest_cov",
+              "schemathesis",
+              # sci-core production surface (conftest imports these at collection)
+              "numpy",
+              "scipy",
+              "pandas",
+              "networkx",
+              "jax",
+          ]
+          missing = []
+          for mod in required:
+              try:
+                  importlib.import_module(mod)
+              except Exception as exc:
+                  missing.append(f"{mod}: {exc!r}")
+
+          if missing:
+              print("FATAL: measurement environment incomplete — refusing to")
+              print("measure coverage against a half-installed surface:")
+              for entry in missing:
+                  print(f"  - {entry}")
+              sys.exit(1)
+          print("Measurement environment verified: required modules importable.")
+          PY
+      - name: Measure full production surface
+        run: make coverage-baseline
+      - name: Enforce release gate + critical surface
+        run: |
+          python -m tools.coverage.geosync_coverage_intelligence \
+            --coverage reports/coverage/coverage.xml \
+            --junit reports/coverage/junit.xml \
+            --targets configs/quality/coverage_targets.toml \
+            --critical configs/quality/critical_surface.toml \
+            --claims docs/CLAIMS.yaml \
+            --out reports/coverage \
+            --no-check-staleness \
+            --enforce-release-90 --enforce-critical
+      - name: Upload coverage evidence
+        if: always()
+        uses: actions/upload-artifact@043fb46d1a93c77aae656e7c1c64a875d1fc6a0a # v4
+        with:
+          name: coverage-intelligence-reports
+          path: |
+            reports/coverage/coverage.xml
+            reports/coverage/junit.xml
+            reports/coverage/coverage_summary.json
+            reports/coverage/coverage_gap_map.md
+            reports/coverage/risk_weighted_coverage.json
+            reports/coverage/claim_test_matrix.json
+            reports/coverage/next_tests.md

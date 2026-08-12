@@ -1,4 +1,4 @@
-# Security Audit - TradePulse
+# Security Audit - GeoSync
 
 **Audit Date:** 2025-12-13  
 **Auditor:** Independent Security Auditor (Principal AppSec + Supply-Chain + CI Security)  
@@ -15,7 +15,7 @@
 
 ## Quick Links
 
-- **[AUDIT_REPORT.md](../AUDIT_REPORT.md)** - Full 27KB report with detailed findings
+- **[AUDIT_REPORT.md](../docs/operations/AUDIT_REPORT.md)** - Full 27KB report with detailed findings
 - **[findings.json](findings.json)** - Machine-readable findings (10 items)
 - **[artifacts/](artifacts/)** - Raw tool outputs (675KB)
 
@@ -86,7 +86,7 @@ bandit -r src backtest scripts -ll -f csv | grep ',MEDIUM,'
 
 ```bash
 # Re-run audit
-cd /home/runner/work/TradePulse/TradePulse
+cd /home/runner/work/GeoSync/GeoSync
 
 # Secret scan
 gitleaks detect --source . --report-format json --report-path gitleaks-verify.json

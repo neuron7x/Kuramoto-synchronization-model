@@ -1,3 +1,5 @@
+# Copyright (c) 2023-2026 Yaroslav Vasylenko (neuron7xLab)
+# SPDX-License-Identifier: MIT
 from __future__ import annotations
 
 from unittest.mock import MagicMock
@@ -12,13 +14,11 @@ from src.audit.audit_logger import AuditLogger
 
 
 def test_admin_settings_reads_environment(monkeypatch):
-    monkeypatch.setenv("TRADEPULSE_AUDIT_SECRET", "env-secret-value")
-    monkeypatch.setenv("TRADEPULSE_ADMIN_SUBJECT", "env-operator")
-    monkeypatch.setenv("TRADEPULSE_ADMIN_RATE_LIMIT_MAX_ATTEMPTS", "7")
-    monkeypatch.setenv("TRADEPULSE_ADMIN_RATE_LIMIT_INTERVAL_SECONDS", "15")
-    monkeypatch.setenv(
-        "TRADEPULSE_AUDIT_WEBHOOK_URL", "https://audit.example.com/ingest"
-    )
+    monkeypatch.setenv("GEOSYNC_AUDIT_SECRET", "env-secret-value")
+    monkeypatch.setenv("GEOSYNC_ADMIN_SUBJECT", "env-operator")
+    monkeypatch.setenv("GEOSYNC_ADMIN_RATE_LIMIT_MAX_ATTEMPTS", "7")
+    monkeypatch.setenv("GEOSYNC_ADMIN_RATE_LIMIT_INTERVAL_SECONDS", "15")
+    monkeypatch.setenv("GEOSYNC_AUDIT_WEBHOOK_URL", "https://audit.example.com/ingest")
 
     settings = AdminApiSettings()
 
@@ -30,7 +30,7 @@ def test_admin_settings_reads_environment(monkeypatch):
 
 
 def test_admin_settings_accepts_explicit_values(monkeypatch):
-    monkeypatch.delenv("TRADEPULSE_AUDIT_SECRET", raising=False)
+    monkeypatch.delenv("GEOSYNC_AUDIT_SECRET", raising=False)
 
     settings = AdminApiSettings(
         audit_secret="explicit-secret-value",
@@ -94,7 +94,7 @@ def test_siem_secret_path_satisfies_validation(tmp_path):
 
 
 def test_missing_siem_secret_raises(monkeypatch):
-    monkeypatch.delenv("TRADEPULSE_AUDIT_SECRET", raising=False)
+    monkeypatch.delenv("GEOSYNC_AUDIT_SECRET", raising=False)
     with pytest.raises(ValueError):
         AdminApiSettings(
             audit_secret="explicit-secret-value",
@@ -104,7 +104,7 @@ def test_missing_siem_secret_raises(monkeypatch):
 
 
 def test_invalid_two_factor_secret_rejected(monkeypatch):
-    monkeypatch.delenv("TRADEPULSE_TWO_FACTOR_SECRET", raising=False)
+    monkeypatch.delenv("GEOSYNC_TWO_FACTOR_SECRET", raising=False)
     with pytest.raises(ValueError):
         AdminApiSettings(
             audit_secret="explicit-secret-value",
@@ -233,9 +233,7 @@ def test_build_configuration_store_provisions_namespaces(tmp_path):
     master_key = SecretVault.generate_key().decode("utf-8")
     template_dir = tmp_path / "templates"
     template_dir.mkdir()
-    (template_dir / "config.yaml.j2").write_text(
-        "endpoint={{ endpoint }}\n", encoding="utf-8"
-    )
+    (template_dir / "config.yaml.j2").write_text("endpoint={{ endpoint }}\n", encoding="utf-8")
 
     settings = AdminApiSettings(
         audit_secret="audit-secret-value",
@@ -254,7 +252,7 @@ def test_build_configuration_store_provisions_namespaces(tmp_path):
     store.write_configuration(
         "prod",
         "service",
-        {"endpoint": "https://api.tradepulse.invalid"},
+        {"endpoint": "https://api.geosync.invalid"},
         actor="ops",
         ip_address="198.51.100.10",
     )
@@ -264,7 +262,7 @@ def test_build_configuration_store_provisions_namespaces(tmp_path):
         actor="deploy",
         ip_address="198.51.100.11",
     )
-    assert config["endpoint"] == "https://api.tradepulse.invalid"
+    assert config["endpoint"] == "https://api.geosync.invalid"
 
     store.write_secret(
         "prod",

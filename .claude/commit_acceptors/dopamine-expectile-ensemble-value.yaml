@@ -1,0 +1,56 @@
+id: dopamine-expectile-ensemble-value
+status: ACTIVE
+claim_type: governance
+promise: >-
+  PR #1374 adds a STRUCTURAL, NON_PRODUCTION expectile value learner alongside
+  the experimental RPE helper surface. It is a deterministic online
+  distributional value learner only. It does not route into trading, execution,
+  forecast, policy, application, or DopamineController production paths. It
+  promotes no market claim and adds no evaluation artifacts; evaluation belongs
+  to the required follow-up PR.
+diff_scope:
+  changed_files:
+    - path: ".claude/commit_acceptors/dopamine-expectile-ensemble-value.yaml"
+    - path: ".claude/commit_acceptors/dopamine-rpe-extension-surface.yaml"
+    - path: "docs/research/dopamine_rpe_extension_surface.md"
+    - path: "src/geosync/core/neuro/dopamine/expectile_value.py"
+    - path: "src/geosync/core/neuro/dopamine/experimental_rpe.py"
+    - path: "tests/core/neuro/dopamine/test_expectile_value.py"
+    - path: "tests/core/neuro/dopamine/test_experimental_rpe.py"
+  forbidden_paths:
+    - "trading/"
+    - "execution/"
+    - "forecast/"
+    - "policy/"
+    - "application/"
+    - "geosync_hpc/"
+    - "physics_contracts/catalog.yaml"
+    - "claim_registry/"
+    - "claims/"
+    - "results/dopamine_rpe_extension/"
+    - "scripts/evaluate_dopamine_rpe_extension.py"
+required_python_symbols:
+  - "ExpectileChannel"
+  - "ExpectileEnsembleValue"
+  - "expectile_of_samples"
+expected_signal: >-
+  `python -m pytest tests/core/neuro/dopamine/test_expectile_value.py`
+  reports all passed; ruff check is clean; mypy --strict on the source file exits
+  0. The tests cover expectile residuals, quantile substitution, alpha direction,
+  constant-stream dispersion collapse, extreme tau stability, deterministic
+  replay, and finite-output guards.
+measurement_command: >-
+  python -m pytest tests/core/neuro/dopamine/test_expectile_value.py -q
+signal_artifact: "tmp/dopamine_expectile_ensemble_value.log"
+falsifier:
+  command: >-
+    python -m pytest tests/core/neuro/dopamine/test_expectile_value.py -q
+  description: >-
+    The expectile suite is the falsifier for residual identity, alpha direction,
+    finite guards, monotonicity, hull bounds, and deterministic replay.
+rollback_command: "manual scope revert"
+rollback_verification_command: "manual scope verification"
+memory_update_type: none
+ledger_path: ".claude/commit_acceptors/dopamine-expectile-ensemble-value.yaml"
+report_path: "tmp/dopamine_expectile_ensemble_value.log"
+evidence: []

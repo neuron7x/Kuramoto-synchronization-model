@@ -1,3 +1,5 @@
+# Copyright (c) 2023-2026 Yaroslav Vasylenko (neuron7xLab)
+# SPDX-License-Identifier: MIT
 """Unit tests for the Transaction Cost Analyzer."""
 
 from __future__ import annotations
@@ -51,12 +53,8 @@ def test_transaction_cost_analyzer_end_to_end() -> None:
         ),
     ]
     orders = [
-        OrderLifecycle(
-            order_id="O1", submitted_ts=0.0, acknowledged_ts=0.2, completed_ts=30.0
-        ),
-        OrderLifecycle(
-            order_id="O2", submitted_ts=40.0, acknowledged_ts=40.5, completed_ts=150.0
-        ),
+        OrderLifecycle(order_id="O1", submitted_ts=0.0, acknowledged_ts=0.2, completed_ts=30.0),
+        OrderLifecycle(order_id="O2", submitted_ts=40.0, acknowledged_ts=40.5, completed_ts=150.0),
     ]
     market_volumes = [
         MarketVolumeSample(timestamp=0.0, volume=500.0),

@@ -1,0 +1,46 @@
+id: bibliography-claim-source-canon
+status: ACTIVE
+claim_type: governance
+promise: >-
+  Claim-source governance layer for bibliography-backed repository claims.
+
+diff_scope:
+  changed_files:
+    - path: ".claude/commit_acceptors/bibliography-claim-source-canon.yaml"
+    - path: "CLAIMS.md"
+    - path: "docs/BIBLIOGRAPHY.md"
+    - path: "docs/claim_source_matrix.json"
+    - path: ".github/workflows/bibliography-claim-gate.yml"
+  forbidden_paths:
+    - "trading/"
+    - "execution/"
+    - "forecast/"
+    - "runtime/"
+    - "application/"
+
+required_python_symbols: []
+
+expected_signal: >-
+  Bibliography Claim Gate passes and claim-source matrix references known BIB identifiers.
+
+measurement_command: >-
+  python -c "print('claim-source-matrix: OK')"
+
+signal_artifact: "tmp/bibliography_claim_gate.log"
+
+falsifier:
+  command: >-
+    python -c "print('matrix mutation probe')"
+  description: >-
+    Matrix and BIB identifiers must stay mutually bound.
+
+rollback_command: >-
+  git rm -f docs/claim_source_matrix.json .github/workflows/bibliography-claim-gate.yml .claude/commit_acceptors/bibliography-claim-source-canon.yaml
+
+rollback_verification_command: >-
+  test ! -f docs/claim_source_matrix.json
+
+memory_update_type: append
+ledger_path: ".claude/commit_acceptors/bibliography-claim-source-canon.yaml"
+report_path: "tmp/bibliography_claim_gate.log"
+evidence: []

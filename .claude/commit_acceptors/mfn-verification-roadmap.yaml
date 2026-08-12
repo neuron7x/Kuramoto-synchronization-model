@@ -1,0 +1,84 @@
+# Diff-bound commit acceptor for the MFN verification roadmap contract.
+#
+# Binds the machine-readable MFN verification roadmap, the four JSON
+# Schemas that constrain its evidence artifacts, the REPOSITORY_SYSTEM
+# surface link, and the contract tests that enforce them. Infra/governance
+# only, no physics, no predictive or alpha claim.
+
+id: mfn-verification-roadmap
+status: ACTIVE
+claim_type: governance
+promise: >-
+  After this PR lands, docs/MFN_VERIFICATION_ROADMAP.json is a schema-valid
+  repository_repair_contract whose evidence_status and final_verdict stay
+  CANDIDATE_NOT_VALIDATED (score null, confidence <= 0.65) until external
+  runner logs exist; the four MFN JSON Schemas reject malformed instances;
+  and the contract tests fail closed on any claim-tier promotion. No
+  empirical, market, or alpha claim is made.
+
+diff_scope:
+  changed_files:
+    - path: ".claude/commit_acceptors/mfn-verification-roadmap.yaml"
+    - path: "docs/MFN_VERIFICATION_ROADMAP.json"
+    - path: "docs/REPOSITORY_SYSTEM.md"
+    - path: "schemas/mfn_verification_roadmap.schema.json"
+    - path: "schemas/mfn_evidence_bundle.schema.json"
+    - path: "schemas/mfn_multi_agent_cycle.schema.json"
+    - path: "schemas/pre_release_convergence_task_graph.schema.json"
+    - path: "tests/ci/test_mfn_roadmap_contract.py"
+    - path: "tests/ci/test_mfn_multi_agent_cycle.py"
+    - path: "tests/ci/test_pre_release_convergence_task_graph.py"
+  forbidden_paths:
+    - "trading/"
+    - "execution/"
+    - "forecast/"
+    - "policy/"
+    - "core/"
+    - "runtime/"
+    - "application/"
+
+required_python_symbols: []
+
+expected_signal: >-
+  pytest tests/ci/test_mfn_roadmap_contract.py
+  tests/ci/test_mfn_multi_agent_cycle.py
+  tests/ci/test_pre_release_convergence_task_graph.py reports passing; the
+  roadmap validates against schemas/mfn_verification_roadmap.schema.json and
+  keeps final_verdict.status == CANDIDATE_NOT_VALIDATED.
+
+measurement_command: >-
+  python -m pytest --noconftest -p no:cacheprovider -q
+  tests/ci/test_mfn_roadmap_contract.py
+  tests/ci/test_mfn_multi_agent_cycle.py
+  tests/ci/test_pre_release_convergence_task_graph.py
+
+signal_artifact: "docs/MFN_VERIFICATION_ROADMAP.json"
+
+falsifier:
+  command: >-
+    python -c "import json; d=json.load(open('docs/MFN_VERIFICATION_ROADMAP.json'));
+    raise SystemExit(0 if d['final_verdict']['status']=='CANDIDATE_NOT_VALIDATED' else 1)"
+  description: >-
+    Succeeds only while the roadmap final verdict stays CANDIDATE_NOT_VALIDATED;
+    any silent promotion to a validated/release tier flips it to exit 1, which
+    is the exact drift the schema and tests must forbid.
+
+rollback_command: >-
+  git rm -f
+  docs/MFN_VERIFICATION_ROADMAP.json
+  schemas/mfn_verification_roadmap.schema.json
+  schemas/mfn_evidence_bundle.schema.json
+  schemas/mfn_multi_agent_cycle.schema.json
+  schemas/pre_release_convergence_task_graph.schema.json
+  tests/ci/test_mfn_roadmap_contract.py
+  tests/ci/test_mfn_multi_agent_cycle.py
+  tests/ci/test_pre_release_convergence_task_graph.py
+  .claude/commit_acceptors/mfn-verification-roadmap.yaml
+
+rollback_verification_command: >-
+  bash -c 'test ! -e docs/MFN_VERIFICATION_ROADMAP.json'
+
+memory_update_type: append
+ledger_path: ".claude/commit_acceptors/mfn-verification-roadmap.yaml"
+report_path: "docs/MFN_VERIFICATION_ROADMAP.json"
+evidence: []

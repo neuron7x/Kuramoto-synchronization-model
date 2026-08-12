@@ -1,4 +1,5 @@
-# SPDX-License-Identifier: LicenseRef-TradePulse-Proprietary
+# Copyright (c) 2023-2026 Yaroslav Vasylenko (neuron7xLab)
+# SPDX-License-Identifier: MIT
 """Physics-inspired prompt templates for AI-driven trading strategies.
 
 This module extends the core prompt library with templates that incorporate
@@ -33,7 +34,7 @@ Market Context: {market_context}
 Timeframe: {timeframe}
 Risk Tolerance: {risk_tolerance}
 
-Generate the strategy code following TradePulse conventions.
+Generate the strategy code following GeoSync conventions.
 """
 
 PHYSICS_GRAVITY_STRATEGY: Final[str] = """
@@ -59,7 +60,7 @@ Market Context: {market_context}
 Timeframe: {timeframe}
 Risk Tolerance: {risk_tolerance}
 
-Generate the strategy code following TradePulse conventions.
+Generate the strategy code following GeoSync conventions.
 """
 
 PHYSICS_CONSERVATION_STRATEGY: Final[str] = """
@@ -85,7 +86,7 @@ Market Context: {market_context}
 Assets: {assets}
 Risk Tolerance: {risk_tolerance}
 
-Generate the strategy code following TradePulse conventions.
+Generate the strategy code following GeoSync conventions.
 """
 
 PHYSICS_THERMODYNAMIC_STRATEGY: Final[str] = """
@@ -112,7 +113,7 @@ Market Context: {market_context}
 Timeframe: {timeframe}
 Risk Tolerance: {risk_tolerance}
 
-Generate the strategy code following TradePulse conventions.
+Generate the strategy code following GeoSync conventions.
 """
 
 PHYSICS_WAVE_STRATEGY: Final[str] = """
@@ -139,7 +140,7 @@ Market Context: {market_context}
 Timeframe: {timeframe}
 Risk Tolerance: {risk_tolerance}
 
-Generate the strategy code following TradePulse conventions.
+Generate the strategy code following GeoSync conventions.
 """
 
 PHYSICS_RELATIVITY_STRATEGY: Final[str] = """
@@ -166,7 +167,7 @@ Market Context: {market_context}
 Timeframes: {timeframes}
 Risk Tolerance: {risk_tolerance}
 
-Generate the strategy code following TradePulse conventions.
+Generate the strategy code following GeoSync conventions.
 """
 
 PHYSICS_UNCERTAINTY_STRATEGY: Final[str] = """
@@ -193,7 +194,7 @@ Market Context: {market_context}
 Timeframe: {timeframe}
 Risk Tolerance: {risk_tolerance}
 
-Generate the strategy code following TradePulse conventions.
+Generate the strategy code following GeoSync conventions.
 """
 
 # Composite physics strategy
@@ -244,7 +245,7 @@ Assets: {assets}
 Timeframes: {timeframes}
 Risk Tolerance: {risk_tolerance}
 
-Generate the strategy code following TradePulse conventions.
+Generate the strategy code following GeoSync conventions.
 """
 
 

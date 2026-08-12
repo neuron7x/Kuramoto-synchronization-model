@@ -1,7 +1,8 @@
-# SPDX-License-Identifier: LicenseRef-TradePulse-Proprietary
-"""TradePulse Risk Guardian — Automated risk control for trading strategies.
+# Copyright (c) 2023-2026 Yaroslav Vasylenko (neuron7xLab)
+# SPDX-License-Identifier: MIT
+"""GeoSync Risk Guardian — Automated risk control for trading strategies.
 
-This module provides a simplified product layer that wraps TradePulse's
+This module provides a simplified product layer that wraps GeoSync's
 sophisticated risk engine into a single, easy-to-use interface for traders
 who want automatic drawdown protection without building complex systems.
 

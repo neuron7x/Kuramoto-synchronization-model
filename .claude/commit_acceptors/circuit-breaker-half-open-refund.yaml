@@ -1,0 +1,60 @@
+# Diff-bound commit acceptor: half-open probe refund prevents breaker wedge.
+id: circuit-breaker-half-open-refund
+status: ACTIVE
+claim_type: correctness
+promise: >-
+  After this PR, CircuitBreaker.refund_half_open_probe() returns a half-open
+  budget consumed by allow_request when the composed ExchangeResilienceProfile
+  admits a request through the breaker but rejects it downstream (leaky bucket /
+  bulkhead / token bucket). Admitted-but-rejected probes no longer exhaust
+  half_open_max_calls, so the breaker cannot wedge HALF_OPEN forever and recovery
+  can still complete.
+diff_scope:
+  changed_files:
+    - path: ".claude/commit_acceptors/circuit-breaker-half-open-refund.yaml"
+    - path: "execution/resilience/circuit_breaker.py"
+    - path: "tests/execution/test_circuit_breaker_half_open_refund.py"
+  forbidden_paths:
+    - "core/physics/"
+    - "core/kuramoto/"
+    - "execution/oms.py"
+required_python_symbols:
+  - "execution/resilience/circuit_breaker.py::CircuitBreaker"
+  - "execution/resilience/circuit_breaker.py::ExchangeResilienceProfile"
+expected_signal: >-
+  `python -m pytest --import-mode=importlib
+  tests/execution/test_circuit_breaker_half_open_refund.py -q` reports 3 passed:
+  admit-then-refund never wedges the breaker; refund is a no-op when closed;
+  admitting without refunding exhausts the budget (documented failure mode).
+measurement_command: >-
+  bash -c '
+    python -m pytest --import-mode=importlib -p no:cacheprovider
+      tests/execution/test_circuit_breaker_half_open_refund.py
+      tests/execution/test_circuit_breaker_new.py -q
+  '
+signal_artifact: "tmp/circuit_breaker_half_open_refund.log"
+falsifier:
+  command: |-
+    bash -c '
+      python -c "
+    import importlib
+    cb = importlib.import_module(\"execution.resilience.circuit_breaker\")
+    b = cb.CircuitBreaker(cb.CircuitBreakerConfig(failure_threshold=1, recovery_timeout=0.0, half_open_max_calls=2))
+    b.record_failure()
+    for _ in range(6):
+        assert b.allow_request() is True
+        b.refund_half_open_probe()
+    "
+    '
+  description: >-
+    Admits and refunds probes far past half_open_max_calls; each admit must still
+    succeed. Exits 0 on the correct tree (run_evidence green-state contract),
+    non-zero if the refund is removed and the breaker wedges.
+rollback_command: >-
+  bash -c 'git rm -f .claude/commit_acceptors/circuit-breaker-half-open-refund.yaml'
+rollback_verification_command: >-
+  bash -c 'test ! -f .claude/commit_acceptors/circuit-breaker-half-open-refund.yaml'
+memory_update_type: append
+ledger_path: ".claude/commit_acceptors/circuit-breaker-half-open-refund.yaml"
+report_path: "tmp/circuit_breaker_half_open_refund.log"
+evidence: []

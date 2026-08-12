@@ -1,3 +1,5 @@
+# Copyright (c) 2023-2026 Yaroslav Vasylenko (neuron7xLab)
+# SPDX-License-Identifier: MIT
 from __future__ import annotations
 
 import json
@@ -28,8 +30,8 @@ def test_registry_loads_known_events() -> None:
 
 def test_registry_exposes_subject_and_namespace() -> None:
     registry = EventSchemaRegistry.from_directory("schemas/events")
-    assert registry.subject("ticks") == "tradepulse.market.ticks.v1_0_0"
-    assert registry.namespace("ticks") == "tradepulse.events.marketdata.v1_0_0"
+    assert registry.subject("ticks") == "geosync.market.ticks.v1_0_0"
+    assert registry.namespace("ticks") == "geosync.events.marketdata.v1_0_0"
 
 
 def test_format_coverage_requires_declared_formats(tmp_path: Path) -> None:
@@ -59,9 +61,7 @@ def test_backward_compatibility_violation_detected(tmp_path: Path) -> None:
     tick_v2_path.parent.mkdir(parents=True, exist_ok=True)
     with tick_v1_path.open("r", encoding="utf-8") as handle:
         schema = json.load(handle)
-    schema["fields"] = [
-        field for field in schema["fields"] if field["name"] != "symbol"
-    ]
+    schema["fields"] = [field for field in schema["fields"] if field["name"] != "symbol"]
     with tick_v2_path.open("w", encoding="utf-8") as handle:
         json.dump(schema, handle)
 
@@ -92,9 +92,7 @@ def test_forward_compatibility_allows_nullable_fields(tmp_path: Path) -> None:
 
     with tick_v1_path.open("r", encoding="utf-8") as handle:
         schema = json.load(handle)
-    schema["fields"].append(
-        {"name": "new_nullable", "type": ["null", "string"], "default": None}
-    )
+    schema["fields"].append({"name": "new_nullable", "type": ["null", "string"], "default": None})
     with tick_v2_path.open("w", encoding="utf-8") as handle:
         json.dump(schema, handle)
 

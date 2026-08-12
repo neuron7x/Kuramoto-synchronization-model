@@ -9,9 +9,9 @@ signal generation, or model inference pipelines.
 
 - SLO burn rate alerts for latency in Prometheus/Grafana.
 - p95 or p99 latency breaches in:
-  - `tradepulse_order_ack_latency_quantiles_seconds`
-  - `tradepulse_signal_to_fill_latency_quantiles_seconds`
-  - `tradepulse_model_inference_latency_quantiles_seconds`
+  - `geosync_order_ack_latency_quantiles_seconds`
+  - `geosync_signal_to_fill_latency_quantiles_seconds`
+  - `geosync_model_inference_latency_quantiles_seconds`
 - Queue depth surges with sustained throughput drops.
 - Hard-timeout events for execution or inference paths (see thresholds below).
 
@@ -42,7 +42,7 @@ the corresponding configuration source-of-truth.
 ## Diagnostic Steps
 
 1. **Review latency breakdown** in
-   `observability/dashboards/tradepulse-latency-insights.json`.
+   `observability/dashboards/geosync-latency-insights.json`.
 2. **Check for saturation**
    - CPU/memory on execution workers.
    - GPU utilization for model serving.

@@ -1,0 +1,30 @@
+{
+  "allowed_next_nodes": [
+    "D002J-P1B"
+  ],
+  "artifact_paths": [
+    "artifacts/d002j/data_registry/source_provenance_audit_v1.json",
+    "artifacts/d002j/data_registry/source_access_smoke_v1.json",
+    "artifacts/d002j/data_registry/source_evidence_lock_v1.json",
+    "artifacts/d002j/data_registry/source_registry_audit_summary_v1.json"
+  ],
+  "claim_boundary": "Audit cannot promote sources beyond their evidence; REJECTED outcomes retained as truthful negative artifacts; no canonical run authorization at any audit verdict.",
+  "decision": "SOURCE_REGISTRY_REJECTED",
+  "failure_retention": "information_constraint mechanism family had only 1 verified_or_partial source (ALFRED, audit_status PARTIAL); 5 broken provenance URLs (ECB_CBD sdw.ecb DNS NXDOMAIN; ICAP_MOVE methodology PDF 404; BIS_QR_NETWORK 404; FED_TIMELINE financial-crisis-timeline 404; BOE_LDI_REVIEW FSR 2022 + working paper 404). Retained verbatim in docs/research/D002J_SOURCE_DOWNGRADE_LOG.md (P1A section preserved through P1B append).",
+  "forbidden_next_nodes": [
+    "D002J-P2"
+  ],
+  "merge_sha": "4b64faf67f4c1bec48a66d20eeddbdf6931e762d",
+  "node_id": "D002J-P1A",
+  "parent_nodes": [
+    "D002J-P1"
+  ],
+  "phase": "P1A",
+  "pr_number": 697,
+  "schema_version": "D002J-VERDICT-CAPSULE-v1",
+  "source_summary_path": "artifacts/d002j/data_registry/source_registry_audit_summary_v1.json",
+  "status": "TERMINAL_REJECTED",
+  "test_paths": [
+    "tests/systemic_risk/test_d002j_source_provenance_audit.py"
+  ]
+}

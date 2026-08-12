@@ -1,3 +1,5 @@
+# Copyright (c) 2023-2026 Yaroslav Vasylenko (neuron7xLab)
+# SPDX-License-Identifier: MIT
 """Unit tests for risk compliance checks."""
 
 from __future__ import annotations
@@ -444,9 +446,7 @@ class TestRiskCompliance:
         value, mode, _env = metrics.daily_drawdowns[-1]
         assert mode == "percent"
         assert value == pytest.approx(0.10, rel=1e-6)
-        assert {"max_notional_per_order", "daily_max_drawdown"}.issubset(
-            set(metrics.rejections)
-        )
+        assert {"max_notional_per_order", "daily_max_drawdown"}.issubset(set(metrics.rejections))
 
     def test_update_config_validates_keys(self):
         """Partial config updates should be validated and applied atomically."""

@@ -1,0 +1,25 @@
+name: Check Epistemic Drift
+
+concurrency:
+  group: ${{ github.workflow }}-${{ github.ref }}
+  cancel-in-progress: true
+
+on:
+  pull_request:
+  push:
+    branches: [main]
+
+permissions:
+  contents: read
+
+jobs:
+  drift-check:
+    runs-on: ubuntu-latest
+    timeout-minutes: 2
+    steps:
+      - uses: actions/checkout@9c091bb21b7c1c1d1991bb908d89e4e9dddfe3e0 # pragma: allowlist secret
+      - uses: actions/setup-python@ece7cb06caefa5fff74198d8649806c4678c61a1 # pragma: allowlist secret
+        with:
+          python-version: '3.12'
+      - name: Verify claim/code invariants sync
+        run: python scripts/check_epistemic_drift.py

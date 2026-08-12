@@ -1,3 +1,5 @@
+# Copyright (c) 2023-2026 Yaroslav Vasylenko (neuron7xLab)
+# SPDX-License-Identifier: MIT
 """Tests for cross-neuromodulator optimization system."""
 
 from __future__ import annotations
@@ -10,19 +12,19 @@ import pytest
 
 HYPOTHESIS_AVAILABLE = importlib.util.find_spec("hypothesis") is not None
 if HYPOTHESIS_AVAILABLE:  # pragma: no branch
-    from hypothesis import given, settings
+    from hypothesis import HealthCheck, given, settings
     from hypothesis import strategies as st
 
-from tradepulse.core.neuro.neuro_optimizer import (
+from geosync.core.neuro._validation import (
+    BoundsSpec,
+    validate_neuro_invariants,
+    validate_neuro_metric_bounds,
+)
+from geosync.core.neuro.neuro_optimizer import (
     BalanceMetrics,
     NeuroOptimizer,
     NumericConfig,
     OptimizationConfig,
-)
-from tradepulse.core.neuro._validation import (
-    BoundsSpec,
-    validate_neuro_invariants,
-    validate_neuro_metric_bounds,
 )
 
 
@@ -43,22 +45,22 @@ def opt_config():
 def sample_params():
     """Fixture providing sample neuromodulator parameters."""
     return {
-        'dopamine': {
-            'discount_gamma': 0.99,
-            'learning_rate': 0.01,
-            'burst_factor': 1.5,
+        "dopamine": {
+            "discount_gamma": 0.99,
+            "learning_rate": 0.01,
+            "burst_factor": 1.5,
         },
-        'serotonin': {
-            'stress_threshold': 0.15,
-            'release_threshold': 0.10,
+        "serotonin": {
+            "stress_threshold": 0.15,
+            "release_threshold": 0.10,
         },
-        'gaba': {
-            'k_inhibit': 0.4,
-            'impulse_threshold': 0.5,
+        "gaba": {
+            "k_inhibit": 0.4,
+            "impulse_threshold": 0.5,
         },
-        'na_ach': {
-            'arousal_gain': 1.2,
-            'attention_gain': 1.0,
+        "na_ach": {
+            "arousal_gain": 1.2,
+            "attention_gain": 1.0,
         },
     }
 
@@ -67,11 +69,11 @@ def sample_params():
 def sample_state():
     """Fixture providing sample neuromodulator state."""
     return {
-        'dopamine_level': 0.6,
-        'serotonin_level': 0.3,
-        'gaba_inhibition': 0.4,
-        'na_arousal': 1.1,
-        'ach_attention': 0.7,
+        "dopamine_level": 0.6,
+        "serotonin_level": 0.3,
+        "gaba_inhibition": 0.4,
+        "na_arousal": 1.1,
+        "ach_attention": 0.7,
     }
 
 
@@ -256,10 +258,10 @@ class TestNeuroOptimizer:
 
         setpoints = optimizer._setpoints
 
-        assert 'dopamine_level' in setpoints
-        assert 'serotonin_level' in setpoints
-        assert 'da_5ht_ratio' in setpoints
-        assert 'excitation_inhibition' in setpoints
+        assert "dopamine_level" in setpoints
+        assert "serotonin_level" in setpoints
+        assert "da_5ht_ratio" in setpoints
+        assert "excitation_inhibition" in setpoints
 
     def test_calculate_balance_metrics(self, opt_config, sample_state):
         """Test balance metrics calculation."""
@@ -421,7 +423,11 @@ class TestNeuroOptimizer:
 
     if HYPOTHESIS_AVAILABLE:
 
-        @settings(max_examples=50, deadline=None)
+        @settings(
+            max_examples=50,
+            deadline=None,
+            suppress_health_check=[HealthCheck.function_scoped_fixture],
+        )
         @given(
             dopamine=st.floats(
                 min_value=0.01, max_value=3.0, allow_nan=False, allow_infinity=False
@@ -429,12 +435,8 @@ class TestNeuroOptimizer:
             serotonin=st.floats(
                 min_value=0.01, max_value=3.0, allow_nan=False, allow_infinity=False
             ),
-            gaba=st.floats(
-                min_value=0.01, max_value=3.0, allow_nan=False, allow_infinity=False
-            ),
-            arousal=st.floats(
-                min_value=0.01, max_value=5.0, allow_nan=False, allow_infinity=False
-            ),
+            gaba=st.floats(min_value=0.01, max_value=3.0, allow_nan=False, allow_infinity=False),
+            arousal=st.floats(min_value=0.01, max_value=5.0, allow_nan=False, allow_infinity=False),
             attention=st.floats(
                 min_value=0.01, max_value=5.0, allow_nan=False, allow_infinity=False
             ),
@@ -591,12 +593,8 @@ class TestNeuroOptimizer:
         wide_optimizer = NeuroOptimizer(wide_config)
 
         performance = 1.5
-        narrow_objective = narrow_optimizer._calculate_objective(
-            performance, balance, sample_state
-        )
-        wide_objective = wide_optimizer._calculate_objective(
-            performance, balance, sample_state
-        )
+        narrow_objective = narrow_optimizer._calculate_objective(performance, balance, sample_state)
+        wide_objective = wide_optimizer._calculate_objective(performance, balance, sample_state)
 
         assert narrow_objective > wide_objective
 
@@ -635,12 +633,8 @@ class TestNeuroOptimizer:
         baseline_optimizer = NeuroOptimizer(baseline_config)
         stricter_optimizer = NeuroOptimizer(stricter_config)
 
-        objective_baseline = baseline_optimizer._calculate_objective(
-            1.0, balance, sample_state
-        )
-        objective_stricter = stricter_optimizer._calculate_objective(
-            1.0, balance, sample_state
-        )
+        objective_baseline = baseline_optimizer._calculate_objective(1.0, balance, sample_state)
+        objective_stricter = stricter_optimizer._calculate_objective(1.0, balance, sample_state)
 
         assert objective_baseline > objective_stricter
 
@@ -648,12 +642,10 @@ class TestNeuroOptimizer:
         stricter_health = stricter_optimizer._assess_health(balance)
 
         assert all(
-            'Poor arousal-attention coherence' not in issue
-            for issue in baseline_health['issues']
+            "Poor arousal-attention coherence" not in issue for issue in baseline_health["issues"]
         )
         assert any(
-            'Poor arousal-attention coherence' in issue
-            for issue in stricter_health['issues']
+            "Poor arousal-attention coherence" in issue for issue in stricter_health["issues"]
         )
 
     def test_objective_monotonic_with_weight_increase_fixed_components(self, sample_state):
@@ -692,15 +684,9 @@ class TestNeuroOptimizer:
         mid_optimizer._performance_history = flat_history
         high_optimizer._performance_history = flat_history
 
-        objective_low = low_optimizer._calculate_objective(
-            performance, balance, sample_state
-        )
-        objective_mid = mid_optimizer._calculate_objective(
-            performance, balance, sample_state
-        )
-        objective_high = high_optimizer._calculate_objective(
-            performance, balance, sample_state
-        )
+        objective_low = low_optimizer._calculate_objective(performance, balance, sample_state)
+        objective_mid = mid_optimizer._calculate_objective(performance, balance, sample_state)
+        objective_high = high_optimizer._calculate_objective(performance, balance, sample_state)
 
         assert objective_low < objective_mid < objective_high
 
@@ -729,12 +715,8 @@ class TestNeuroOptimizer:
         low_optimizer = NeuroOptimizer(low_perf_weight)
         high_optimizer = NeuroOptimizer(high_perf_weight)
 
-        objective_low = low_optimizer._calculate_objective(
-            performance, balance, sample_state
-        )
-        objective_high = high_optimizer._calculate_objective(
-            performance, balance, sample_state
-        )
+        objective_low = low_optimizer._calculate_objective(performance, balance, sample_state)
+        objective_high = high_optimizer._calculate_objective(performance, balance, sample_state)
 
         assert objective_high > objective_low
 
@@ -941,12 +923,8 @@ class TestNeuroOptimizer:
         low_balance = low_optimizer._calculate_balance_metrics(state)
         high_balance = high_optimizer._calculate_balance_metrics(state)
 
-        expected_ratio_low = state["dopamine_level"] / (
-            state["serotonin_level"] + low_eps
-        )
-        expected_ratio_high = state["dopamine_level"] / (
-            state["serotonin_level"] + high_eps
-        )
+        expected_ratio_low = state["dopamine_level"] / (state["serotonin_level"] + low_eps)
+        expected_ratio_high = state["dopamine_level"] / (state["serotonin_level"] + high_eps)
         assert low_balance.dopamine_serotonin_ratio == pytest.approx(expected_ratio_low)
         assert high_balance.dopamine_serotonin_ratio == pytest.approx(expected_ratio_high)
 
@@ -955,12 +933,8 @@ class TestNeuroOptimizer:
         high_optimizer._performance_history = history.copy()
         mean_perf = np.mean(history)
         std_perf = np.std(history)
-        expected_stability_low = np.clip(
-            1 - std_perf / max(abs(mean_perf), low_eps), 0, 1
-        )
-        expected_stability_high = np.clip(
-            1 - std_perf / max(abs(mean_perf), high_eps), 0, 1
-        )
+        expected_stability_low = np.clip(1 - std_perf / max(abs(mean_perf), low_eps), 0, 1)
+        expected_stability_high = np.clip(1 - std_perf / max(abs(mean_perf), high_eps), 0, 1)
 
         stability_low = low_optimizer._calculate_objective(0.0, low_balance, state)
         stability_high = high_optimizer._calculate_objective(0.0, high_balance, state)
@@ -969,30 +943,20 @@ class TestNeuroOptimizer:
         assert stability_high == pytest.approx(expected_stability_high)
 
         gradients_low = low_optimizer._estimate_gradients(params, state, performance=0.0)
-        gradients_high = high_optimizer._estimate_gradients(
-            params, state, performance=0.0
+        gradients_high = high_optimizer._estimate_gradients(params, state, performance=0.0)
+        ratio_value_low = state["dopamine_level"] / (state["serotonin_level"] + low_eps)
+        ratio_value_high = state["dopamine_level"] / (state["serotonin_level"] + high_eps)
+        ratio_deviation_low = (ratio_value_low - low_optimizer._setpoints["da_5ht_ratio"]) / (
+            low_optimizer._setpoints["da_5ht_ratio"] + low_eps
         )
-        ratio_value_low = state["dopamine_level"] / (
-            state["serotonin_level"] + low_eps
+        ratio_deviation_high = (ratio_value_high - high_optimizer._setpoints["da_5ht_ratio"]) / (
+            high_optimizer._setpoints["da_5ht_ratio"] + high_eps
         )
-        ratio_value_high = state["dopamine_level"] / (
-            state["serotonin_level"] + high_eps
-        )
-        ratio_deviation_low = (
-            ratio_value_low - low_optimizer._setpoints["da_5ht_ratio"]
-        ) / (low_optimizer._setpoints["da_5ht_ratio"] + low_eps)
-        ratio_deviation_high = (
-            ratio_value_high - high_optimizer._setpoints["da_5ht_ratio"]
-        ) / (high_optimizer._setpoints["da_5ht_ratio"] + high_eps)
         expected_grad_low = -ratio_deviation_low * low_optimizer._current_lr
         expected_grad_high = -ratio_deviation_high * high_optimizer._current_lr
 
-        assert gradients_low["dopamine"]["learning_rate"] == pytest.approx(
-            expected_grad_low
-        )
-        assert gradients_high["dopamine"]["learning_rate"] == pytest.approx(
-            expected_grad_high
-        )
+        assert gradients_low["dopamine"]["learning_rate"] == pytest.approx(expected_grad_low)
+        assert gradients_high["dopamine"]["learning_rate"] == pytest.approx(expected_grad_high)
 
     def test_optimize_updates_state(self, opt_config, sample_params, sample_state):
         """Test that optimize() updates optimizer state."""
@@ -1032,7 +996,7 @@ class TestNeuroOptimizer:
 
         assert len(optimizer._performance_history) == config.history_window
         assert optimizer._performance_history == pytest.approx(
-            expected_objectives[-config.history_window:]
+            expected_objectives[-config.history_window :]
         )
 
     def test_optimize_tracks_best_objective(self, opt_config, sample_params, sample_state):
@@ -1117,7 +1081,7 @@ class TestNeuroOptimizer:
         )
 
         assert isinstance(gradients, dict)
-        assert 'dopamine' in gradients or 'serotonin' in gradients
+        assert "dopamine" in gradients or "serotonin" in gradients
 
     def test_estimate_gradients_scales_with_deviation_dopamine(
         self,
@@ -1127,8 +1091,8 @@ class TestNeuroOptimizer:
     ):
         """Test dopamine gradients scale with deviation magnitude."""
         optimizer = NeuroOptimizer(opt_config)
-        setpoint = optimizer._setpoints['da_5ht_ratio']
-        serotonin_level = sample_state['serotonin_level']
+        setpoint = optimizer._setpoints["da_5ht_ratio"]
+        serotonin_level = sample_state["serotonin_level"]
 
         small_state = dict(
             sample_state,
@@ -1150,8 +1114,8 @@ class TestNeuroOptimizer:
             performance=1.0,
         )
 
-        small_mag = abs(small_gradients['dopamine']['learning_rate'])
-        large_mag = abs(large_gradients['dopamine']['learning_rate'])
+        small_mag = abs(small_gradients["dopamine"]["learning_rate"])
+        large_mag = abs(large_gradients["dopamine"]["learning_rate"])
 
         assert large_mag > small_mag
 
@@ -1163,8 +1127,8 @@ class TestNeuroOptimizer:
     ):
         """Test serotonin gradients scale with deviation magnitude."""
         optimizer = NeuroOptimizer(opt_config)
-        setpoint = optimizer._setpoints['da_5ht_ratio']
-        serotonin_level = sample_state['serotonin_level']
+        setpoint = optimizer._setpoints["da_5ht_ratio"]
+        serotonin_level = sample_state["serotonin_level"]
 
         small_state = dict(
             sample_state,
@@ -1186,8 +1150,8 @@ class TestNeuroOptimizer:
             performance=1.0,
         )
 
-        small_mag = abs(small_gradients['serotonin']['stress_threshold'])
-        large_mag = abs(large_gradients['serotonin']['stress_threshold'])
+        small_mag = abs(small_gradients["serotonin"]["stress_threshold"])
+        large_mag = abs(large_gradients["serotonin"]["stress_threshold"])
 
         assert large_mag > small_mag
 
@@ -1199,11 +1163,9 @@ class TestNeuroOptimizer:
     ):
         """Test GABA gradients scale with deviation magnitude."""
         optimizer = NeuroOptimizer(opt_config)
-        setpoint = optimizer._setpoints['gaba_inhibition']
+        setpoint = optimizer._setpoints["gaba_inhibition"]
 
-        optimizer._balance_history.append(
-            optimizer._calculate_balance_metrics(sample_state)
-        )
+        optimizer._balance_history.append(optimizer._calculate_balance_metrics(sample_state))
 
         small_state = dict(sample_state, gaba_inhibition=setpoint + 0.02)
         large_state = dict(sample_state, gaba_inhibition=setpoint + 0.2)
@@ -1220,8 +1182,8 @@ class TestNeuroOptimizer:
             performance=1.0,
         )
 
-        small_mag = abs(small_gradients['gaba']['k_inhibit'])
-        large_mag = abs(large_gradients['gaba']['k_inhibit'])
+        small_mag = abs(small_gradients["gaba"]["k_inhibit"])
+        large_mag = abs(large_gradients["gaba"]["k_inhibit"])
 
         assert large_mag > small_mag
 
@@ -1233,7 +1195,7 @@ class TestNeuroOptimizer:
     ):
         """Test NA/ACh arousal gradients scale with deviation magnitude."""
         optimizer = NeuroOptimizer(opt_config)
-        setpoint = optimizer._setpoints['na_arousal']
+        setpoint = optimizer._setpoints["na_arousal"]
 
         small_state = dict(sample_state, na_arousal=setpoint + 0.05)
         large_state = dict(sample_state, na_arousal=setpoint + 0.3)
@@ -1249,8 +1211,8 @@ class TestNeuroOptimizer:
             performance=1.0,
         )
 
-        small_mag = abs(small_gradients['na_ach']['arousal_gain'])
-        large_mag = abs(large_gradients['na_ach']['arousal_gain'])
+        small_mag = abs(small_gradients["na_ach"]["arousal_gain"])
+        large_mag = abs(large_gradients["na_ach"]["arousal_gain"])
 
         assert large_mag > small_mag
 
@@ -1280,11 +1242,11 @@ class TestNeuroOptimizer:
 
         max_grad = config.learning_rate * config.gradient_clip
 
-        assert abs(gradients['dopamine']['learning_rate']) <= max_grad
-        assert abs(gradients['serotonin']['stress_threshold']) <= max_grad
-        assert abs(gradients['gaba']['k_inhibit']) <= max_grad
-        assert abs(gradients['na_ach']['arousal_gain']) <= max_grad
-        assert abs(gradients['na_ach']['attention_gain']) <= max_grad
+        assert abs(gradients["dopamine"]["learning_rate"]) <= max_grad
+        assert abs(gradients["serotonin"]["stress_threshold"]) <= max_grad
+        assert abs(gradients["gaba"]["k_inhibit"]) <= max_grad
+        assert abs(gradients["na_ach"]["arousal_gain"]) <= max_grad
+        assert abs(gradients["na_ach"]["attention_gain"]) <= max_grad
 
     def test_estimate_gradients_respects_gradient_clip(self, sample_params, sample_state):
         """Ensure gradient clip bounds deviations before learning rate scaling."""
@@ -1312,11 +1274,11 @@ class TestNeuroOptimizer:
 
         max_grad = config.learning_rate * config.gradient_clip
 
-        assert abs(gradients['dopamine']['learning_rate']) <= max_grad
-        assert abs(gradients['serotonin']['stress_threshold']) <= max_grad
-        assert abs(gradients['gaba']['k_inhibit']) <= max_grad
-        assert abs(gradients['na_ach']['arousal_gain']) <= max_grad
-        assert abs(gradients['na_ach']['attention_gain']) <= max_grad
+        assert abs(gradients["dopamine"]["learning_rate"]) <= max_grad
+        assert abs(gradients["serotonin"]["stress_threshold"]) <= max_grad
+        assert abs(gradients["gaba"]["k_inhibit"]) <= max_grad
+        assert abs(gradients["na_ach"]["arousal_gain"]) <= max_grad
+        assert abs(gradients["na_ach"]["attention_gain"]) <= max_grad
 
     def test_apply_updates_with_momentum(self, opt_config, sample_params):
         """Test parameter updates with momentum."""
@@ -1324,15 +1286,15 @@ class TestNeuroOptimizer:
 
         # Create some gradients
         gradients = {
-            'dopamine': {
-                'learning_rate': 0.001,
-                'burst_factor': 0.01,
+            "dopamine": {
+                "learning_rate": 0.001,
+                "burst_factor": 0.01,
             },
         }
 
         updated = optimizer._apply_updates(sample_params, gradients)
 
-        assert updated['dopamine']['learning_rate'] != sample_params['dopamine']['learning_rate']
+        assert updated["dopamine"]["learning_rate"] != sample_params["dopamine"]["learning_rate"]
 
     def test_gradient_clipping_limits_step(self):
         """Test that gradient clipping constrains update magnitude."""
@@ -1346,17 +1308,17 @@ class TestNeuroOptimizer:
         )
         optimizer = NeuroOptimizer(config)
 
-        params = {'dopamine': {'learning_rate': 1.0}}
-        gradients = {'dopamine': {'learning_rate': 5.0}}
+        params = {"dopamine": {"learning_rate": 1.0}}
+        gradients = {"dopamine": {"learning_rate": 5.0}}
 
         updated = optimizer._apply_updates(params, gradients)
 
         # Max step should be capped at 1% of the parameter value
-        assert updated['dopamine']['learning_rate'] <= 1.01
-        assert updated['dopamine']['learning_rate'] >= 0.99
+        assert updated["dopamine"]["learning_rate"] <= 1.01
+        assert updated["dopamine"]["learning_rate"] >= 0.99
 
         assert isinstance(updated, dict)
-        assert 'dopamine' in updated
+        assert "dopamine" in updated
 
     def test_parameter_clipping(self, opt_config, sample_params):
         """Test that parameter updates are clipped."""
@@ -1364,16 +1326,16 @@ class TestNeuroOptimizer:
 
         # Large gradients that would cause big changes
         gradients = {
-            'dopamine': {
-                'learning_rate': 10.0,  # Very large update
+            "dopamine": {
+                "learning_rate": 10.0,  # Very large update
             },
         }
 
         updated = optimizer._apply_updates(sample_params, gradients)
 
         # Should be clipped to 120% of original
-        original_lr = sample_params['dopamine']['learning_rate']
-        updated_lr = updated['dopamine']['learning_rate']
+        original_lr = sample_params["dopamine"]["learning_rate"]
+        updated_lr = updated["dopamine"]["learning_rate"]
         assert updated_lr <= original_lr * 1.2
 
     def test_apply_updates_respects_bounds_spec_clip(self):
@@ -1382,8 +1344,8 @@ class TestNeuroOptimizer:
             numeric=NumericConfig(max_gradient_norm=1.0),
             momentum=0.0,
             bounds_spec={
-                'dopamine': {
-                    'learning_rate': BoundsSpec(
+                "dopamine": {
+                    "learning_rate": BoundsSpec(
                         min_value=0.55,
                         max_value=0.65,
                         behavior="clip",
@@ -1392,15 +1354,15 @@ class TestNeuroOptimizer:
             },
         )
         optimizer = NeuroOptimizer(config)
-        params = {'dopamine': {'learning_rate': 0.6}}
+        params = {"dopamine": {"learning_rate": 0.6}}
 
-        high_gradients = {'dopamine': {'learning_rate': 0.5}}
+        high_gradients = {"dopamine": {"learning_rate": 0.5}}
         high_updated = optimizer._apply_updates(params, high_gradients)
-        assert high_updated['dopamine']['learning_rate'] == pytest.approx(0.65)
+        assert high_updated["dopamine"]["learning_rate"] == pytest.approx(0.65)
 
-        low_gradients = {'dopamine': {'learning_rate': -0.5}}
+        low_gradients = {"dopamine": {"learning_rate": -0.5}}
         low_updated = optimizer._apply_updates(params, low_gradients)
-        assert low_updated['dopamine']['learning_rate'] == pytest.approx(0.55)
+        assert low_updated["dopamine"]["learning_rate"] == pytest.approx(0.55)
 
     def test_apply_updates_respects_bounds_spec_raise(self):
         """Ensure bounds_spec with raise triggers error when out of bounds."""
@@ -1408,8 +1370,8 @@ class TestNeuroOptimizer:
             numeric=NumericConfig(max_gradient_norm=1.0),
             momentum=0.0,
             bounds_spec={
-                'dopamine': {
-                    'learning_rate': BoundsSpec(
+                "dopamine": {
+                    "learning_rate": BoundsSpec(
                         min_value=0.59,
                         max_value=0.61,
                         behavior="raise",
@@ -1418,8 +1380,8 @@ class TestNeuroOptimizer:
             },
         )
         optimizer = NeuroOptimizer(config)
-        params = {'dopamine': {'learning_rate': 0.6}}
-        gradients = {'dopamine': {'learning_rate': 0.5}}
+        params = {"dopamine": {"learning_rate": 0.6}}
+        gradients = {"dopamine": {"learning_rate": 0.5}}
 
         with pytest.raises(ValueError, match="dopamine.learning_rate"):
             optimizer._apply_updates(params, gradients)
@@ -1430,7 +1392,7 @@ class TestNeuroOptimizer:
 
         report = optimizer.get_optimization_report()
 
-        assert report['status'] == 'no_data'
+        assert report["status"] == "no_data"
 
     def test_get_optimization_report_with_data(self, opt_config, sample_params, sample_state):
         """Test optimization report with data."""
@@ -1442,26 +1404,26 @@ class TestNeuroOptimizer:
 
         report = optimizer.get_optimization_report()
 
-        assert report['status'] == 'active'
-        assert 'iteration' in report
-        assert 'best_objective' in report
-        assert 'avg_balance_score' in report
-        assert 'convergence' in report
-        assert 'health_status' in report
+        assert report["status"] == "active"
+        assert "iteration" in report
+        assert "best_objective" in report
+        assert "avg_balance_score" in report
+        assert "convergence" in report
+        assert "health_status" in report
 
     def test_get_optimization_report_detects_drift(self, opt_config, sample_state):
         """Test drift detection triggers health warning."""
         optimizer = NeuroOptimizer(opt_config)
 
         for step in range(12):
-            params = {'dopamine': {'learning_rate': 0.1 + step * 1.0}}
+            params = {"dopamine": {"learning_rate": 0.1 + step * 1.0}}
             optimizer.optimize(params, sample_state, performance_score=1.2)
 
         report = optimizer.get_optimization_report()
 
-        assert report['parameter_drift']['window'] > 0
-        assert report['health_status']['drift_risk']['status'] == 'warning'
-        assert any('drift' in issue.lower() for issue in report['health_status']['issues'])
+        assert report["parameter_drift"]["window"] > 0
+        assert report["health_status"]["drift_risk"]["status"] == "warning"
+        assert any("drift" in issue.lower() for issue in report["health_status"]["issues"])
 
     def test_check_convergence_insufficient_data(self, opt_config):
         """Test convergence check with insufficient data."""
@@ -1469,8 +1431,8 @@ class TestNeuroOptimizer:
 
         convergence = optimizer._check_convergence()
 
-        assert convergence['converged'] is False
-        assert convergence['reason'] == 'insufficient_data'
+        assert convergence["converged"] is False
+        assert convergence["reason"] == "insufficient_data"
 
     def test_check_convergence_converged(self, opt_config, sample_params, sample_state):
         """Test convergence detection."""
@@ -1483,8 +1445,8 @@ class TestNeuroOptimizer:
         convergence = optimizer._check_convergence()
 
         # With stable performance, should converge
-        assert 'converged' in convergence
-        assert 'variance' in convergence
+        assert "converged" in convergence
+        assert "variance" in convergence
 
     def test_assess_health_no_data(self, opt_config):
         """Test health assessment with no data."""
@@ -1492,7 +1454,7 @@ class TestNeuroOptimizer:
 
         health = optimizer._assess_health(None)
 
-        assert health['status'] == 'unknown'
+        assert health["status"] == "unknown"
 
     def test_assess_health_healthy_system(self, opt_config, sample_state):
         """Test health assessment for healthy system."""
@@ -1511,9 +1473,9 @@ class TestNeuroOptimizer:
 
         health = optimizer._assess_health(balance)
 
-        assert health['status'] == 'healthy'
-        assert 'balance_score' in health
-        assert 'issues' in health
+        assert health["status"] == "healthy"
+        assert "balance_score" in health
+        assert "issues" in health
 
     def test_assess_health_acceptable_system(self, opt_config):
         """Test health assessment for acceptable system."""
@@ -1529,7 +1491,7 @@ class TestNeuroOptimizer:
 
         health = optimizer._assess_health(balance)
 
-        assert health['status'] == 'acceptable'
+        assert health["status"] == "acceptable"
 
     def test_assess_health_imbalanced_system(self, opt_config):
         """Test health assessment for imbalanced system."""
@@ -1538,7 +1500,7 @@ class TestNeuroOptimizer:
         # Create imbalanced metrics
         balance = BalanceMetrics(
             dopamine_serotonin_ratio=0.5,  # Too low
-            gaba_excitation_balance=3.0,   # Too high
+            gaba_excitation_balance=3.0,  # Too high
             arousal_attention_coherence=0.3,  # Poor coherence
             overall_balance_score=0.4,
             homeostatic_deviation=0.6,
@@ -1546,8 +1508,8 @@ class TestNeuroOptimizer:
 
         health = optimizer._assess_health(balance)
 
-        assert health['status'] == 'warning'
-        assert len(health['issues']) > 0
+        assert health["status"] == "warning"
+        assert len(health["issues"]) > 0
 
     def test_assess_health_respects_configured_ranges(self):
         """Ensure health checks use configured ratio ranges."""
@@ -1570,16 +1532,9 @@ class TestNeuroOptimizer:
 
         health = optimizer._assess_health(balance)
 
-        assert any(
-            'High dopamine/serotonin ratio' in issue for issue in health['issues']
-        )
-        assert any(
-            'Excessive inhibition' in issue for issue in health['issues']
-        )
-        assert any(
-            'Poor arousal-attention coherence' in issue
-            for issue in health['issues']
-        )
+        assert any("High dopamine/serotonin ratio" in issue for issue in health["issues"])
+        assert any("Excessive inhibition" in issue for issue in health["issues"])
+        assert any("Poor arousal-attention coherence" in issue for issue in health["issues"])
 
     def test_assess_health_thresholds_from_config(self):
         """Ensure health thresholds are derived from configuration values."""
@@ -1607,14 +1562,9 @@ class TestNeuroOptimizer:
 
         health = optimizer._assess_health(balance)
 
-        assert any(
-            'High dopamine/serotonin ratio' in issue for issue in health['issues']
-        )
-        assert any('Excessive inhibition' in issue for issue in health['issues'])
-        assert any(
-            'Poor arousal-attention coherence' in issue
-            for issue in health['issues']
-        )
+        assert any("High dopamine/serotonin ratio" in issue for issue in health["issues"])
+        assert any("Excessive inhibition" in issue for issue in health["issues"])
+        assert any("Poor arousal-attention coherence" in issue for issue in health["issues"])
 
     def test_reset(self, opt_config, sample_params, sample_state):
         """Test optimizer reset."""
@@ -1646,7 +1596,7 @@ class TestNeuroOptimizer:
 
         # Should have logged several metrics
         assert len(logged_metrics) > 0
-        assert any('objective' in name for name, _ in logged_metrics)
+        assert any("objective" in name for name, _ in logged_metrics)
 
     def test_gpu_backend_avoids_numpy_ops(self, sample_state, monkeypatch):
         """Test GPU backend uses cupy operations when available."""
@@ -1679,12 +1629,12 @@ class TestNeuroOptimizer:
         optimizer._performance_history = [cp.asarray(1.0)] * 20
         convergence = optimizer._check_convergence()
 
-        assert 'converged' in convergence
+        assert "converged" in convergence
 
         optimizer._balance_history = [balance] * 10
         report = optimizer.get_optimization_report()
 
-        assert report['status'] == 'active'
+        assert report["status"] == "active"
 
 
 @pytest.mark.integration
@@ -1710,7 +1660,7 @@ class TestNeuroOptimizerIntegration:
 
         report = optimizer.get_optimization_report()
 
-        assert report['status'] == 'active'
+        assert report["status"] == "active"
         assert optimizer._iteration == 20
 
     def test_handles_varying_performance(self, opt_config, sample_params, sample_state):
@@ -1738,11 +1688,11 @@ class TestNeuroOptimizerIntegration:
 
         # Start with imbalanced state
         imbalanced_state = {
-            'dopamine_level': 0.9,  # Very high
-            'serotonin_level': 0.1,  # Very low
-            'gaba_inhibition': 0.2,  # Low inhibition
-            'na_arousal': 1.8,       # High arousal
-            'ach_attention': 0.4,    # Low attention
+            "dopamine_level": 0.9,  # Very high
+            "serotonin_level": 0.1,  # Very low
+            "gaba_inhibition": 0.2,  # Low inhibition
+            "na_arousal": 1.8,  # High arousal
+            "ach_attention": 0.4,  # Low attention
         }
 
         deviations = []

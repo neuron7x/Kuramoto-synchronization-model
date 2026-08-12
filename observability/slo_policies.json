@@ -1,7 +1,7 @@
 {
   "slos": [
     {
-      "name": "tradepulse-api-latency",
+      "name": "geosync-api-latency",
       "description": "HTTP API availability and latency objective for live trading clients.",
       "error_rate_threshold": 0.015,
       "latency_threshold_ms": 350.0,
@@ -23,7 +23,7 @@
       ]
     },
     {
-      "name": "tradepulse-ingestion-availability",
+      "name": "geosync-ingestion-availability",
       "description": "Ingestion jobs must succeed reliably to refresh market data.",
       "error_rate_threshold": 0.01,
       "latency_threshold_ms": 500.0,
@@ -42,7 +42,7 @@
       ]
     },
     {
-      "name": "tradepulse-signal-latency",
+      "name": "geosync-signal-latency",
       "description": "Signal pipeline latency must keep p95 under 250 ms to honour SLAs.",
       "error_rate_threshold": 0.02,
       "latency_threshold_ms": 250.0,
@@ -62,7 +62,7 @@
       ]
     },
     {
-      "name": "tradepulse-model-inference-availability",
+      "name": "geosync-model-inference-availability",
       "description": "Model inference availability must remain at or above 99.8%.",
       "error_rate_threshold": 0.002,
       "latency_threshold_ms": 200.0,
@@ -84,7 +84,7 @@
       ]
     },
     {
-      "name": "tradepulse-model-inference-latency",
+      "name": "geosync-model-inference-latency",
       "description": "Model inference latency must keep p95 under 150 ms to honor SLOs.",
       "error_rate_threshold": 0.01,
       "latency_threshold_ms": 150.0,

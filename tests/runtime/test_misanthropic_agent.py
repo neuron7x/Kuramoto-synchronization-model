@@ -1,3 +1,5 @@
+# Copyright (c) 2023-2026 Yaroslav Vasylenko (neuron7xLab)
+# SPDX-License-Identifier: MIT
 """Tests for the risk-sensitive MisanthropicAgent runtime component."""
 
 from __future__ import annotations
@@ -95,9 +97,7 @@ def test_repose_raises_lambda_on_cvar_violation(agent: MisanthropicAgent) -> Non
     assert agent.replay.priorities[0] != initial_priorities[0]
 
 
-def test_train_updates_metrics(
-    agent: MisanthropicAgent, env: SyntheticMarketEnv
-) -> None:
+def test_train_updates_metrics(agent: MisanthropicAgent, env: SyntheticMarketEnv) -> None:
     agent.batch_size = 8
     agent.train(env, episodes=1, save_artifacts=False)
 

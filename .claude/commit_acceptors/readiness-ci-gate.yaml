@@ -1,0 +1,47 @@
+id: readiness-ci-gate
+status: ACTIVE
+claim_type: governance
+promise: >-
+  Diff-bound governance acceptor for the readiness CI gate. The change adds a
+  small workflow that runs the readiness register checker and the readiness
+  register pytest contract on pull requests and merge groups. It does not
+  promote repository readiness claims.
+
+diff_scope:
+  changed_files:
+    - path: ".github/workflows/readiness-gate.yml"
+    - path: ".claude/commit_acceptors/readiness-ci-gate.yaml"
+  forbidden_paths:
+    - "application/"
+    - "backtest/"
+    - "core/"
+    - "markets/"
+    - "modules/"
+
+required_python_symbols: []
+
+expected_signal: >-
+  Pull requests receive a dedicated readiness-register check that fails closed
+  when the structured readiness register or its pytest contract is invalid.
+
+measurement_command: >-
+  python tools/check_readiness_register.py && python -m pytest -q tests/governance/test_readiness_register.py
+
+signal_artifact: "governance/readiness_register.json"
+
+falsifier:
+  command: >-
+    python tools/check_readiness_register.py
+  description: >-
+    The workflow must expose malformed readiness-register state as a failing check.
+
+rollback_command: >-
+  git checkout -- .github/workflows/readiness-gate.yml .claude/commit_acceptors/readiness-ci-gate.yaml
+
+rollback_verification_command: >-
+  git diff --exit-code
+
+memory_update_type: append
+ledger_path: ".claude/commit_acceptors/readiness-ci-gate.yaml"
+report_path: "governance/readiness_register.json"
+evidence: []

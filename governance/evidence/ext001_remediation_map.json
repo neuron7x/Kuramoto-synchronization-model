@@ -1,0 +1,74 @@
+{
+  "artifact": "ext001_remediation_map",
+  "readiness_entry": "EXT-001",
+  "schema": "readiness.evidence.v1",
+  "review_source": "GitHub CodeQL code-scanning (independent automated reviewer)",
+  "snapshot_date": "2026-06-10",
+  "snapshot_open_alerts_before_remediation": 21,
+  "severity_breakdown": {"error": 5, "warning": 3, "note": 13},
+  "error_tier_disposition": [
+    {
+      "alert": 870,
+      "rule": "py/unsafe-cyclic-import",
+      "severity": "error",
+      "path": "core/indicators/multiscale_kuramoto.py",
+      "disposition": "DISMISSED_FALSE_POSITIVE",
+      "evidence": "cache.py:44 imports TimeFrame only under `if TYPE_CHECKING`; no runtime cycle (`import core.indicators` succeeds). Dismissed via code-scanning API with reason 'false positive'."
+    },
+    {
+      "alert": 871,
+      "rule": "py/unsafe-cyclic-import",
+      "severity": "error",
+      "path": "core/indicators/multiscale_kuramoto.py",
+      "disposition": "DISMISSED_FALSE_POSITIVE",
+      "evidence": "Same TYPE_CHECKING-guarded import as #870; dismissed via code-scanning API."
+    },
+    {
+      "alert": 221,
+      "rule": "py/unreachable-except",
+      "severity": "error",
+      "path": "execution/live_loop.py",
+      "disposition": "REMEDIATED",
+      "evidence": "Fixed in PR #900 (merged) — 'fix(execution): unreachable transient-error handler + 4 call/return defects (CodeQL tail)'."
+    },
+    {
+      "alert": 285,
+      "rule": "py/call/wrong-named-argument",
+      "severity": "error",
+      "path": "bench/bench_indicators.py",
+      "disposition": "REMEDIATED",
+      "evidence": "Fixed in PR #900 (merged); bench/bench_indicators.py in its diff."
+    },
+    {
+      "alert": 286,
+      "rule": "py/call/wrong-named-argument",
+      "severity": "error",
+      "path": "examples/integrated_risk_management_example.py",
+      "disposition": "REMEDIATED",
+      "evidence": "Fixed in PR #900 (merged); examples/integrated_risk_management_example.py in its diff."
+    }
+  ],
+  "lower_tier_disposition": [
+    {
+      "rules": ["js/superfluous-trailing-arguments", "js/unused-local-variable"],
+      "severity": ["warning", "note"],
+      "count": 13,
+      "path_scope": "ui/dashboard/demo.html",
+      "disposition": "TRACKED_NON_SHIPPING",
+      "evidence": "Confined to the non-shipping dashboard demo asset; no runtime or financial path. Tracked, not gating."
+    },
+    {
+      "rules": ["py/mixed-returns", "py/import-and-import-from"],
+      "severity": ["note"],
+      "count": 3,
+      "path_scope": "test/support and example modules",
+      "disposition": "ACCEPTED_STYLE_NOTE",
+      "evidence": "Note-severity stylistic findings outside production execution paths; accepted with no behaviour risk."
+    }
+  ],
+  "post_remediation_residual": {
+    "error": 0,
+    "note_warning_tracked": 16,
+    "claim": "All 5 error-severity CodeQL findings are resolved (2 dismissed verified-FP + 3 remediated in PR #900). Residual 16 are note/warning-tier in non-shipping UI/test/example scope, explicitly tracked — not promoted to a clean-bill claim."
+  }
+}

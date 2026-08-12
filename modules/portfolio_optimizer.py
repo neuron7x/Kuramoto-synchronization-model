@@ -1,3 +1,5 @@
+# Copyright (c) 2023-2026 Yaroslav Vasylenko (neuron7xLab)
+# SPDX-License-Identifier: MIT
 """
 Portfolio Optimizer Module
 
@@ -137,14 +139,19 @@ class PortfolioOptimizer:
         Returns:
             Результат оптимізації
         """
+        # Fail closed on non-finite input. A NaN/Inf return poisons the
+        # covariance matrix: pandas silently drops NaN pairwise (a false
+        # denominator) and an all-NaN column makes pinv/SVD raise an opaque
+        # LinAlgError deep in the solver. Reject the input explicitly so the
+        # covariance is always defined over the full, finite return surface.
+        self._reject_nonfinite_returns(returns)
+
         # Розрахунок ковариаційної матриці
         self._covariance_matrix = returns.cov().values * self.annualization_factor
 
         # Розрахунок очікуваних повернень
         if expected_returns is None:
-            self._expected_returns = (
-                returns.mean().values * self.annualization_factor
-            )
+            self._expected_returns = returns.mean().values * self.annualization_factor
         else:
             self._expected_returns = expected_returns
 
@@ -170,9 +177,7 @@ class PortfolioOptimizer:
 
         # Розрахунок характеристик портфеля
         portfolio_return = np.dot(weights, self._expected_returns)
-        portfolio_volatility = np.sqrt(
-            np.dot(weights.T, np.dot(self._covariance_matrix, weights))
-        )
+        portfolio_volatility = np.sqrt(np.dot(weights.T, np.dot(self._covariance_matrix, weights)))
         sharpe_ratio = (
             (portfolio_return - self.risk_free_rate) / portfolio_volatility
             if portfolio_volatility > 0
@@ -183,9 +188,7 @@ class PortfolioOptimizer:
         asset_volatilities = np.sqrt(np.diag(self._covariance_matrix))
         weighted_avg_volatility = np.dot(weights, asset_volatilities)
         diversification_ratio = (
-            weighted_avg_volatility / portfolio_volatility
-            if portfolio_volatility > 0
-            else 1.0
+            weighted_avg_volatility / portfolio_volatility if portfolio_volatility > 0 else 1.0
         )
 
         # Effective N
@@ -224,6 +227,21 @@ class PortfolioOptimizer:
 
         self._last_result = result
         return result
+
+    @staticmethod
+    def _reject_nonfinite_returns(returns: pd.DataFrame) -> None:
+        """Reject a return matrix that carries NaN/Inf (fail closed).
+
+        The covariance estimate is only defined over finite observations; a
+        non-finite cell either silently biases the pairwise covariance or
+        crashes the linear-algebra solver. Rejecting here turns an opaque
+        numeric failure into an explicit, testable contract.
+        """
+        if returns.empty:
+            raise ValueError("returns must be non-empty")
+        values = returns.to_numpy(dtype=float)
+        if not np.isfinite(values).all():
+            raise ValueError("returns contains NaN or Inf; covariance is undefined")
 
     def _equal_weight(self, n_assets: int) -> np.ndarray:
         """Рівномірні ваги"""
@@ -270,9 +288,7 @@ class PortfolioOptimizer:
 
         for _ in range(max_iterations):
             # Розрахунок marginal risk contributions
-            portfolio_vol = np.sqrt(
-                np.dot(weights.T, np.dot(self._covariance_matrix, weights))
-            )
+            portfolio_vol = np.sqrt(np.dot(weights.T, np.dot(self._covariance_matrix, weights)))
             if portfolio_vol < 1e-10:
                 break
 
@@ -294,9 +310,7 @@ class PortfolioOptimizer:
 
         return weights
 
-    def _mean_variance(
-        self, target_return: Optional[float] = None
-    ) -> np.ndarray:
+    def _mean_variance(self, target_return: Optional[float] = None) -> np.ndarray:
         """
         Mean-Variance Optimization (Markowitz)
 
@@ -348,9 +362,7 @@ class PortfolioOptimizer:
         Returns:
             Масив внесків у ризик
         """
-        portfolio_vol = np.sqrt(
-            np.dot(weights.T, np.dot(self._covariance_matrix, weights))
-        )
+        portfolio_vol = np.sqrt(np.dot(weights.T, np.dot(self._covariance_matrix, weights)))
 
         if portfolio_vol < 1e-10:
             return np.zeros_like(weights)
@@ -407,6 +419,10 @@ class PortfolioOptimizer:
         Returns:
             DataFrame з точками ефективної границі
         """
+        # Same fail-closed contract as optimize(): the frontier is undefined
+        # over a non-finite return surface.
+        self._reject_nonfinite_returns(returns)
+
         # Розрахунок ковариаційної матриці
         self._covariance_matrix = returns.cov().values * self.annualization_factor
         self._expected_returns = returns.mean().values * self.annualization_factor
@@ -424,9 +440,7 @@ class PortfolioOptimizer:
                 weights = self._apply_constraints(weights)
 
                 portfolio_return = np.dot(weights, self._expected_returns)
-                portfolio_vol = np.sqrt(
-                    np.dot(weights.T, np.dot(self._covariance_matrix, weights))
-                )
+                portfolio_vol = np.sqrt(np.dot(weights.T, np.dot(self._covariance_matrix, weights)))
                 sharpe = (
                     (portfolio_return - self.risk_free_rate) / portfolio_vol
                     if portfolio_vol > 0
@@ -471,9 +485,7 @@ class PortfolioOptimizer:
             return {"error": "No matching symbols"}
 
         filtered_returns = returns[available_symbols]
-        filtered_weights = np.array(
-            [weights[symbols.index(s)] for s in available_symbols]
-        )
+        filtered_weights = np.array([weights[symbols.index(s)] for s in available_symbols])
         filtered_weights = filtered_weights / np.sum(filtered_weights)
 
         # Портфельні повернення
@@ -481,16 +493,11 @@ class PortfolioOptimizer:
 
         # Метрики
         total_return = (1 + portfolio_returns).prod() - 1
-        annualized_return = (
-            (1 + total_return) ** (self.annualization_factor / len(portfolio_returns))
-            - 1
-        )
+        annualized_return = (1 + total_return) ** (
+            self.annualization_factor / len(portfolio_returns)
+        ) - 1
         volatility = portfolio_returns.std() * np.sqrt(self.annualization_factor)
-        sharpe = (
-            (annualized_return - self.risk_free_rate) / volatility
-            if volatility > 0
-            else 0.0
-        )
+        sharpe = (annualized_return - self.risk_free_rate) / volatility if volatility > 0 else 0.0
 
         # Maximum Drawdown
         cumulative = (1 + portfolio_returns).cumprod()
@@ -506,9 +513,7 @@ class PortfolioOptimizer:
             else volatility
         )
         sortino = (
-            (annualized_return - self.risk_free_rate) / downside_std
-            if downside_std > 0
-            else 0.0
+            (annualized_return - self.risk_free_rate) / downside_std if downside_std > 0 else 0.0
         )
 
         return {

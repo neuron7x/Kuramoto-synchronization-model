@@ -1,6 +1,6 @@
 # Technical Debt Management Playbook
 
-Effective technical debt management keeps TradePulse teams nimble without
+Effective technical debt management keeps GeoSync teams nimble without
 sacrificing platform stability. This playbook formalises how we identify,
 prioritise, and retire debt across services, data pipelines, and research
 artifacts.
@@ -128,4 +128,37 @@ trends on the engineering operations dashboard so deviations trigger alerts.
   quantitative metrics to maintain stakeholder support.
 
 By institutionalising these practices we keep innovation velocity high while
-ensuring the TradePulse platform remains reliable, observable, and compliant.
+ensuring the GeoSync platform remains reliable, observable, and compliant.
+
+## External CI Repair Intake Gate
+
+External run repair is a distinct tooling debt class: an agent can receive a
+GitHub Actions run from another repository while the mounted workspace points at
+a different checkout. That state must be detected before code changes, because a
+patch in the wrong repository creates false evidence and cannot repair the red
+CI blocks.
+
+Use this deterministic intake before external-run work; the target may be an
+`owner/repository` slug, a repository URL, or a GitHub Actions run URL:
+
+```bash
+python scripts/ci/external_run_intake.py --target-repo neuron7xLab/bive
+python scripts/ci/external_run_intake.py --target-repo https://github.com/neuron7xLab/bive/actions/runs/27351344416
+```
+
+The gate reads local repository identity from `pyproject.toml`, branch state from
+`git branch --show-current`, git SHA/dirty state from local git commands, and
+configured remotes from `git remote -v`. It does not fetch network resources.
+`PASS` means the mounted workspace identity is parseable, the worktree is clean,
+and an exact `owner/repository` remote on an allowed Git host matches the
+requested repository. `FAIL` means repair is blocked and the emitted JSON lists
+exact blockers, for example `INVALID_TARGET_REPO`, `UNTRUSTED_TARGET_HOST`,
+`UNREADABLE_PYPROJECT`, `REPOSITORY_IDENTITY_MISMATCH`, `DIRTY_WORKTREE`,
+`MISSING_GIT_REMOTE`, or `TARGET_REMOTE_NOT_CONFIGURED`.
+
+Acceptance invariant: external CI repair may not patch files until this intake
+returns `repair_allowed: true` for the target repository. UNKNOWN or missing
+network state remains outside this gate and must be recorded separately in the
+release evidence bundle. Dirty worktrees are blocked by default; `--allow-dirty`
+may be used only for read-only audits where the dirty state is still recorded in
+the JSON payload.

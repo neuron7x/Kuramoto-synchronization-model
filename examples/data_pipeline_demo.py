@@ -1,4 +1,6 @@
 #!/usr/bin/env python3
+# Copyright (c) 2023-2026 Yaroslav Vasylenko (neuron7xLab)
+# SPDX-License-Identifier: MIT
 """Data Pipeline Demo: Generate, Validate, and Analyze OHLCV Data.
 
 This example demonstrates the complete data pipeline workflow:
@@ -7,14 +9,15 @@ This example demonstrates the complete data pipeline workflow:
 3. Perform basic market analysis
 4. Export analysis results
 
-This is a good starting point for understanding TradePulse's data handling
+This is a good starting point for understanding GeoSync's data handling
 and validation capabilities.
 
 Usage:
     python examples/data_pipeline_demo.py
     python examples/data_pipeline_demo.py --symbols BTC ETH --days 30
 """
-# SPDX-License-Identifier: LicenseRef-TradePulse-Proprietary
+
+# SPDX-License-Identifier: MIT
 
 from __future__ import annotations
 
@@ -32,14 +35,14 @@ sys.path.insert(0, str(project_root))
 
 # Import data generation utilities
 # Import validation utilities
-from core.data.validation import validate_ohlcv  # noqa: E402
+from core.data.validation import validate_ohlcv
 
 # Import analysis engine
 from core.indicators.kuramoto_ricci_composite import (
-    TradePulseCompositeEngine,
-)  # noqa: E402
-from core.utils.determinism import DEFAULT_SEED  # noqa: E402
-from scripts.generate_sample_ohlcv import generate_multi_asset_data  # noqa: E402
+    GeoSyncCompositeEngine,
+)
+from core.utils.determinism import DEFAULT_SEED
+from scripts.generate_sample_ohlcv import generate_multi_asset_data
 
 # Configure logging
 logging.basicConfig(
@@ -49,9 +52,7 @@ logging.basicConfig(
 logger = logging.getLogger(__name__)
 
 
-def generate_data(
-    symbols: list[str], days: int, timeframe: str, seed: int
-) -> pd.DataFrame:
+def generate_data(symbols: list[str], days: int, timeframe: str, seed: int) -> pd.DataFrame:
     """Generate synthetic OHLCV data.
 
     Args:
@@ -142,7 +143,7 @@ def analyze_market(df: pd.DataFrame, symbol: str) -> dict:
         )
 
     # Run analysis
-    engine = TradePulseCompositeEngine()
+    engine = GeoSyncCompositeEngine()
     snapshot = engine.analyze_market(symbol_df)
 
     results = {
@@ -294,7 +295,7 @@ def main(argv: Sequence[str] | None = None) -> int:
         logging.getLogger().setLevel(logging.DEBUG)
 
     print("\n" + "=" * 70)
-    print("TRADEPULSE DATA PIPELINE DEMO")
+    print("GEOSYNC DATA PIPELINE DEMO")
     print("=" * 70 + "\n")
 
     try:

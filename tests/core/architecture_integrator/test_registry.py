@@ -1,3 +1,5 @@
+# Copyright (c) 2023-2026 Yaroslav Vasylenko (neuron7xLab)
+# SPDX-License-Identifier: MIT
 """Tests for component registry."""
 
 import pytest
@@ -6,9 +8,7 @@ from core.architecture_integrator.component import Component, ComponentMetadata
 from core.architecture_integrator.registry import ComponentRegistry
 
 
-def create_test_component(
-    name: str, deps: list[str] = None, provides: list[str] = None
-):
+def create_test_component(name: str, deps: list[str] = None, provides: list[str] = None):
     """Helper to create test components."""
     metadata = ComponentMetadata(
         name=name,

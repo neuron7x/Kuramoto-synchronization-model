@@ -1,0 +1,44 @@
+{
+  "allostatic_bound": 1.0,
+  "coherence_locked": 1.0,
+  "coherence_min": 0.9,
+  "coherence_spread": 0.0,
+  "component": "core.neuro (dopamine/serotonin opponent process + kuramoto sync)",
+  "gate": "GO",
+  "invariants": [
+    {
+      "id": "HOMEO-1",
+      "passed": true,
+      "statement": "opponent-process allostatic load stays within [-1, 1] under an adversarial drive trajectory",
+      "test": "tests/unit/neuro/test_homeostasis_contract.py::test_allostatic_load_is_bounded"
+    },
+    {
+      "id": "HOMEO-2",
+      "passed": true,
+      "statement": "dopamine controller parameters are admissible and out-of-bound params are rejected",
+      "test": "tests/unit/neuro/test_homeostasis_contract.py::test_dopamine_parameter_invariants"
+    },
+    {
+      "id": "HOMEO-3",
+      "passed": true,
+      "statement": "serotonin controller parameters are admissible and out-of-bound params are rejected",
+      "test": "tests/unit/neuro/test_homeostasis_contract.py::test_serotonin_parameter_invariants"
+    },
+    {
+      "id": "HOMEO-4",
+      "passed": true,
+      "statement": "phase coherence is locked (r>=r_min) for synchronised phases and low for desynchronised phases",
+      "test": "tests/unit/neuro/test_homeostasis_contract.py::test_phase_coherence_gate"
+    },
+    {
+      "id": "HOMEO-5",
+      "passed": true,
+      "statement": "No-Ungrounded-Act: GO only when the drive is bounded, in-spec and coherent",
+      "test": "tests/unit/neuro/test_homeostasis_contract.py::test_no_ungrounded_act_gate"
+    }
+  ],
+  "report_only": false,
+  "schema": "geosync.homeostasis_contract.v1",
+  "verdict": "PASS",
+  "worst_allostatic_load": 1.0
+}

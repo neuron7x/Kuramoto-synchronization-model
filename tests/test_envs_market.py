@@ -1,3 +1,5 @@
+# Copyright (c) 2023-2026 Yaroslav Vasylenko (neuron7xLab)
+# SPDX-License-Identifier: MIT
 import numpy as np
 
 from envs.market_env import RegimeShiftEnv, ToyMarketEnv, _max_drawdown

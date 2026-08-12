@@ -1,0 +1,83 @@
+# Diff-bound commit acceptor: connector response-handling guards.
+#
+# Two defects in AuthenticatedRESTExecutionConnector._request:
+#  1. clock-skew guard was defeated on a 2xx response — `except RuntimeError:
+#     response.raise_for_status()` is a no-op on 2xx, so a stale/skewed but
+#     successful response was silently accepted.
+#  2. a successful (2xx) response carrying exhausted-quota headers
+#     (x-ratelimit-remaining<=0 / Retry-After) was treated as a rate-limit
+#     FAILURE and, once retries were spent, surfaced as RuntimeError — the caller
+#     believes the order failed and may double-submit while it actually executed.
+
+id: connector-response-guards
+status: ACTIVE
+claim_type: correctness
+promise: >-
+  After this PR, interfaces.execution.common.AuthenticatedRESTExecutionConnector
+  ._request re-raises a clock-skew RuntimeError instead of swallowing it on a 2xx
+  response, and only treats a rate-limit condition as a failure when the response
+  is NOT successful (an actual 429 / non-2xx). A successful response carrying
+  exhausted-quota headers is returned as success, never converted into a
+  RuntimeError, removing the double-submit hazard.
+
+diff_scope:
+  changed_files:
+    - path: ".claude/commit_acceptors/connector-response-guards.yaml"
+    - path: "interfaces/execution/common.py"
+    - path: "tests/execution/test_authenticated_common.py"
+  forbidden_paths:
+    - "core/physics/"
+    - "core/kuramoto/"
+    - "execution/oms.py"
+
+required_python_symbols:
+  - "interfaces/execution/common.py::ensure_timestamp_skew"
+  - "interfaces/execution/common.py::is_rate_limited"
+  - "interfaces/execution/common.py::AuthenticatedRESTExecutionConnector"
+
+expected_signal: >-
+  `python -m pytest --import-mode=importlib
+  tests/execution/test_authenticated_common.py -q` reports all passed; a 2xx
+  response with a wildly skewed server clock raises RuntimeError, and a 2xx
+  response with x-ratelimit-remaining=0 returns successfully instead of raising.
+
+measurement_command: >-
+  bash -c '
+    python -m pytest --import-mode=importlib -p no:cacheprovider
+      tests/execution/test_authenticated_common.py
+      tests/execution/test_adapter_circuit_breaker.py -q
+  '
+
+signal_artifact: "tmp/connector_response_guards.log"
+
+falsifier:
+  command: |-
+    bash -c '
+      python -c "
+    import httpx, importlib
+    c = importlib.import_module(\"interfaces.execution.common\")
+    r = httpx.Response(200, json={\"ok\": True}, headers={\"x-ratelimit-remaining\": \"0\"})
+    # With the fix, a successful 2xx quota-exhausted response is NOT a rate-limit failure.
+    assert c.is_rate_limited(r) is True and r.is_success is True
+      "
+    '
+  description: >-
+    Confirms the load-bearing precondition: a 2xx response can be flagged
+    is_rate_limited yet be successful, so the failure branch must gate on
+    `not response.is_success`. It asserts the fix invariant and, per the run_evidence green-state
+    contract, exits 0 on the correct (green) tree and non-zero if the fix
+    regresses or is rolled back.
+rollback_command: >-
+  bash -c '
+    git rm -f .claude/commit_acceptors/connector-response-guards.yaml
+  '
+
+rollback_verification_command: >-
+  bash -c '
+    test ! -f .claude/commit_acceptors/connector-response-guards.yaml
+  '
+
+memory_update_type: append
+ledger_path: ".claude/commit_acceptors/connector-response-guards.yaml"
+report_path: "tmp/connector_response_guards.log"
+evidence: []

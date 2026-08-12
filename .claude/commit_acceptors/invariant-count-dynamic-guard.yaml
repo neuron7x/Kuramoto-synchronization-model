@@ -1,0 +1,77 @@
+# Diff-bound commit acceptor for the dynamic invariant-count guard.
+#
+# Removes the frozen `== 97` count literal in the adversarial fail-closed
+# test and replaces it with a comparison against the canonical registry size
+# (scripts.count_invariants.collect_invariant_ids — the same INV-* parser the
+# CI invariant-count gate uses). The test's real purpose (every registered
+# invariant carries a negative vector that fails closed in <50ms) is preserved;
+# only the count guard now tracks the registry instead of a literal, so it
+# cannot re-drift on the next invariant addition. Infra/test only, no physics,
+# no market or alpha claim.
+
+id: invariant-count-dynamic-guard
+status: ACTIVE
+claim_type: correctness
+promise: >-
+  After this PR lands, the count guard in
+  tests/adversarial_invariants/test_invariant_fail_closed.py asserts that the
+  number of registered invariant IDs equals the canonical registry size derived
+  from scripts.count_invariants.collect_invariant_ids, not a hardcoded integer
+  literal. The fail-closed-under-50ms behaviour for every registered invariant
+  is preserved. The guard tracks the registry and cannot re-drift when
+  invariants are added or removed.
+
+diff_scope:
+  changed_files:
+    - path: ".claude/commit_acceptors/invariant-count-dynamic-guard.yaml"
+    - path: "tests/adversarial_invariants/test_invariant_fail_closed.py"
+  forbidden_paths:
+    - "trading/"
+    - "execution/"
+    - "forecast/"
+    - "policy/"
+
+required_python_symbols:
+  - "scripts/count_invariants.py::collect_invariant_ids"
+
+expected_signal: >-
+  python -m pytest -q
+  tests/adversarial_invariants/test_invariant_fail_closed.py passes at the
+  current canonical invariant count, and the count the test computes equals
+  python scripts/count_invariants.py.
+
+measurement_command: >-
+  bash -c '
+    python -m pytest -q tests/adversarial_invariants/test_invariant_fail_closed.py
+  '
+
+signal_artifact: "tmp/invariant_count_dynamic_guard.log"
+
+falsifier:
+  command: >-
+    bash -c '
+      python -c "import re,sys; t=open(\"tests/adversarial_invariants/test_invariant_fail_closed.py\").read(); m=re.search(r\"len\(invariant_ids\)\s*==\s*[0-9]+\", t); sys.exit(1) if m else sys.exit(0)"
+    '
+  description: >-
+    Asserts no frozen integer count literal remains in the count assertion:
+    greps for `len(invariant_ids) == <int>` and exits non-zero if a hardcoded
+    count literal is still present. On the green path the literal is gone, so
+    the probe exits 0; if the frozen `== 97`-style guard were reintroduced the
+    probe exits non-zero, surfacing the regression.
+
+rollback_command: >-
+  bash -c '
+    git checkout -- tests/adversarial_invariants/test_invariant_fail_closed.py &&
+    git rm -f .claude/commit_acceptors/invariant-count-dynamic-guard.yaml
+  '
+
+rollback_verification_command: >-
+  bash -c '
+    test ! -e .claude/commit_acceptors/invariant-count-dynamic-guard.yaml
+  '
+
+memory_update_type: append
+ledger_path: ".claude/commit_acceptors/invariant-count-dynamic-guard.yaml"
+report_path: "tmp/invariant_count_dynamic_guard.log"
+evidence:
+  - path: tests/adversarial_invariants/test_invariant_fail_closed.py

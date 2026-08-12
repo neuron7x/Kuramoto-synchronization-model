@@ -1,3 +1,5 @@
+# Copyright (c) 2023-2026 Yaroslav Vasylenko (neuron7xLab)
+# SPDX-License-Identifier: MIT
 """Utilities for governing model and dataset versions across their lifecycle.
 
 This module provides a single in-memory implementation that can be leveraged by

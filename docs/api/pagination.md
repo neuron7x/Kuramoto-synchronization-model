@@ -1,5 +1,5 @@
 ---
-owner: integrations@tradepulse
+owner: integrations@geosync
 review_cadence: quarterly
 last_reviewed: 2026-01-01
 links:
@@ -12,7 +12,7 @@ links:
 
 ## Overview
 
-TradePulse uses cursor-based pagination for endpoints that return collections,
+GeoSync uses cursor-based pagination for endpoints that return collections,
 including feature extraction and prediction query APIs. Pagination state is
 returned inside the response `pagination` object.
 
@@ -64,8 +64,8 @@ returned inside the response `pagination` object.
 
 ```http
 POST /v1/features?limit=100&cursor=eyJvZmZzZXQiOjEwMH0= HTTP/1.1
-Host: api.tradepulse.example
-X-TradePulse-Signature: v1=<ed25519_signature>
+Host: api.geosync.example
+X-GeoSync-Signature: v1=<ed25519_signature>
 X-Idempotency-Key: 7f79c786-1f7d-4f77-a3c8-4c8f460b6d43
 ```
 

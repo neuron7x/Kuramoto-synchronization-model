@@ -67,7 +67,7 @@ if metrics is not None:
 - Streaming updates expect strictly increasing timestamps. If a new tick arrives with a timestamp that is not greater than the previous one, the engine logs a warning, clears all buffers, and waits for the next monotonic sample. Downstream feeds should pre-sort data or drop out-of-order ticks before calling `StreamingIGS.update`.
 
 ## Pipeline Integration
-Use the adapter for TradePulse pipelines:
+Use the adapter for GeoSync pipelines:
 ```python
 from analytics.signals.irreversibility_adapter import IGSFeatureProvider
 

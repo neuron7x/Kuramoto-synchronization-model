@@ -55,7 +55,7 @@
     }
   },
   "description": "Real-time market tick update for a single symbol.",
-  "$id": "tradepulse.events.marketdata.v1_0_0.TickEvent",
+  "$id": "geosync.events.marketdata.v1_0_0.TickEvent",
   "required": [
     "event_id",
     "schema_version",

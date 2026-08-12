@@ -1,0 +1,100 @@
+# Diff-bound commit acceptor: clamp observability/annotation hygiene.
+#
+# Scope is evidence-bounded, NOT the briefed "~25 annotations". The
+# real `--audit-code` pass over core/physics + core/kuramoto (40
+# files) flagged exactly 3 C1 / 0 C2 — all `max(int_floor, …)`
+# algorithm-parameter guards in lyapunov_exponent.py
+# (max_divergence_steps, min_temporal_separation, n_use), zero physics
+# masking. The ~50 np.maximum ε-guards are not in the audit's clamp
+# definition and are self-evidently numerical; mass-annotating them
+# would be fabricated churn (symmetrically to "do not fabricate
+# severity": do not fabricate scope). lyapunov:270/287 were already
+# INV-HPC2/INV-SG1 annotated — not debt.
+#
+# This change therefore: (a) adds the CLAUDE.md-mandated `# bounds:`
+# justification to the 3 genuine audit hits (algorithmic minimums, no
+# INV-* applies); (b) adds zero-behaviour observability logging to the
+# four genuine *physical-quantity* silent-repair clamps the audit
+# regex misses but the Ott–Antonsen lesson says must be surfaced —
+# negative graph adjacency before the Laplacian
+# (lyapunov_exponent.py), and negative probability density / negative
+# realised volatility (diffusion_predictor.py ×2, wave_propagation.py).
+# Each log fires ONLY when the clamp actually repairs a value; the
+# clamped output is unchanged. Honest label: hygiene + observability,
+# NOT a critical physics bug (only the OA RHS, PR #745, was critical).
+#
+# Locally verified: `--audit-code` 3→0 C1, 0 C2 (40 files); mypy
+# --strict / black / ruff clean on the 3 modules; 50+ tests across
+# spectral_gap / diffusion_predictor / wave_propagation /
+# maximal_lyapunov / T22 pass — zero behaviour change. (T2/T3 collect-
+# error locally on missing jax: pre-existing, CI-only, unrelated.)
+
+id: clamp-observability-hygiene
+status: ACTIVE
+claim_type: correctness
+promise: >-
+  `python .claude/physics/validate_tests.py core/physics core/kuramoto
+  --audit-code` reports 0 C1 and 0 C2 (was 3 C1). The three
+  algorithm-parameter guards in core/physics/lyapunov_exponent.py
+  carry a `# bounds:` justification; the four physical-quantity
+  silent-repair clamps (negative adjacency in spectral_gap; negative
+  density in diffusion `_propagate` and wave `propagate`; negative
+  realised volatility in diffusion `predict`) emit a WARNING only when
+  they actually repair a value, with the clamped numerical output
+  unchanged.
+diff_scope:
+  changed_files:
+    - path: ".claude/commit_acceptors/clamp-observability-hygiene.yaml"
+    - path: "core/physics/lyapunov_exponent.py"
+    - path: "core/physics/diffusion_predictor.py"
+    - path: "core/physics/wave_propagation.py"
+  forbidden_paths:
+    - "trading/"
+    - "execution/"
+    - "forecast/"
+    - "policy/"
+    - "application/api/"
+    - "schemas/openapi/"
+    - "core/kuramoto/"
+required_python_symbols:
+  - "core/physics/lyapunov_exponent.py::spectral_gap"
+  - "core/physics/diffusion_predictor.py::VolatilityDiffusionPredictor"
+  - "core/physics/wave_propagation.py::WavePropagator"
+expected_signal: >-
+  Local: `python .claude/physics/validate_tests.py core/physics
+  core/kuramoto --audit-code` prints "Total: 0"; `mypy --strict
+  --follow-imports=silent core/physics/lyapunov_exponent.py
+  core/physics/diffusion_predictor.py core/physics/wave_propagation.py`
+  reports "Success: no issues found in 3 source files"; `black
+  --check` and `ruff check` clean; targeted pytest across
+  spectral_gap / diffusion / wave / maximal_lyapunov / T22 (≥50 tests)
+  passes with zero behaviour change.
+measurement_command: >-
+  bash -c 'python .claude/physics/validate_tests.py core/physics core/kuramoto --audit-code | grep -E "Total: *0"
+  && mypy --strict --follow-imports=silent core/physics/lyapunov_exponent.py core/physics/diffusion_predictor.py core/physics/wave_propagation.py
+  && black --check core/physics/lyapunov_exponent.py core/physics/diffusion_predictor.py core/physics/wave_propagation.py
+  && ruff check core/physics/lyapunov_exponent.py core/physics/diffusion_predictor.py core/physics/wave_propagation.py'
+signal_artifact: "tmp/clamp_observability_hygiene.log"
+falsifier:
+  command: >-
+    bash -c 'python .claude/physics/validate_tests.py core/physics core/kuramoto --audit-code 2>&1 | grep -qE "Total: *0" && exit 0 || exit 1'
+  description: >-
+    Asserts the production-code audit stays clean (0 C1/C2) over
+    core/physics + core/kuramoto. If a future change reintroduces an
+    unannotated/unlogged silent clamp, the audit count rises and the
+    falsifier exits non-zero — the silent-repair masking class cannot
+    silently reopen, the same guarantee the OA fix established for the
+    ω₀=0 blind manifold.
+rollback_command: >-
+  git checkout HEAD~1 --
+  .claude/commit_acceptors/clamp-observability-hygiene.yaml
+  core/physics/lyapunov_exponent.py
+  core/physics/diffusion_predictor.py
+  core/physics/wave_propagation.py
+rollback_verification_command: >-
+  git diff --exit-code core/physics/lyapunov_exponent.py
+  core/physics/diffusion_predictor.py core/physics/wave_propagation.py
+memory_update_type: append
+ledger_path: ".claude/commit_acceptors/clamp-observability-hygiene.yaml"
+report_path: "tmp/clamp_observability_hygiene.log"
+evidence: []

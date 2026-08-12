@@ -1,0 +1,30 @@
+{
+    "schema_version": "D002J-VERDICT-CAPSULE-v1",
+    "node_id": "D002K-P3",
+    "phase": "P3",
+    "pr_number": 0,
+    "merge_sha": "0000000000000000000000000000000000000000",
+    "parent_nodes": [
+        "D002K-P2"
+    ],
+    "decision": "D002K_EVENT_METRICS_READY",
+    "status": "TERMINAL_PASS",
+    "artifact_paths": [
+        "artifacts/d002k/metrics/event_metric_contract_v1.json",
+        "artifacts/d002k/metrics/event_metric_summary_v1.json",
+        "docs/research/D002K_EVENT_METRIC_CONTRACT.md",
+        "research/systemic_risk/d002k_event_metrics.py"
+    ],
+    "test_paths": [
+        "tests/systemic_risk/test_d002k_event_metrics.py"
+    ],
+    "allowed_next_nodes": [
+        "D002K-P4"
+    ],
+    "forbidden_next_nodes": [
+        "D002K-P5"
+    ],
+    "claim_boundary": "One primary confirmatory endpoint (pre_post_standardized_mean_shift, == K-P0 lock); rest exploratory_only; numeric threshold deferred to power gate; crisis-vs-K-P2-placebo contrast; no scoring on real data; no canonical run; canonical_run_authorized=false; D-002K does not rescue D-002J; D-002J stays REFUSED.",
+    "failure_retention": null,
+    "source_summary_path": "artifacts/d002k/metrics/event_metric_summary_v1.json"
+}

@@ -1,0 +1,109 @@
+<svg xmlns="http://www.w3.org/2000/svg" width="900" height="320" viewBox="0 0 900 320">
+  <defs>
+    <radialGradient id="core-glow-l" cx="50%" cy="50%" r="50%">
+      <stop offset="0%" stop-color="#d97706" stop-opacity="0.7">
+        <animate attributeName="stop-opacity" values="0.7;0.4;0.7" dur="4s" repeatCount="indefinite"/>
+      </stop>
+      <stop offset="40%" stop-color="#f59e0b" stop-opacity="0.2"/>
+      <stop offset="100%" stop-color="#fafafa" stop-opacity="0"/>
+    </radialGradient>
+    <radialGradient id="nebula-1-l" cx="25%" cy="40%" r="35%">
+      <stop offset="0%" stop-color="#8b5cf6" stop-opacity="0.08"/>
+      <stop offset="100%" stop-color="#fafafa" stop-opacity="0"/>
+    </radialGradient>
+    <radialGradient id="nebula-2-l" cx="75%" cy="60%" r="30%">
+      <stop offset="0%" stop-color="#06b6d4" stop-opacity="0.06"/>
+      <stop offset="100%" stop-color="#fafafa" stop-opacity="0"/>
+    </radialGradient>
+    <filter id="glow-l" x="-50%" y="-50%" width="200%" height="200%">
+      <feGaussianBlur stdDeviation="2" result="blur"/>
+      <feMerge><feMergeNode in="blur"/><feMergeNode in="SourceGraphic"/></feMerge>
+    </filter>
+    <filter id="glow-strong-l" x="-50%" y="-50%" width="200%" height="200%">
+      <feGaussianBlur stdDeviation="4" result="blur"/>
+      <feMerge><feMergeNode in="blur"/><feMergeNode in="SourceGraphic"/></feMerge>
+    </filter>
+  </defs>
+
+  <rect width="900" height="320" fill="#fafafa"/>
+  <rect width="900" height="320" fill="url(#nebula-1-l)"/>
+  <rect width="900" height="320" fill="url(#nebula-2-l)"/>
+
+  <circle cx="450" cy="140" r="120" fill="url(#core-glow-l)">
+    <animate attributeName="r" values="115;125;115" dur="5s" repeatCount="indefinite"/>
+  </circle>
+
+  <ellipse cx="450" cy="140" rx="200" ry="90" fill="none" stroke="#2563eb" stroke-width="0.6" stroke-dasharray="4 8" opacity="0.2">
+    <animate attributeName="stroke-dashoffset" values="0;24" dur="3s" repeatCount="indefinite"/>
+  </ellipse>
+  <ellipse cx="450" cy="140" rx="280" ry="110" fill="none" stroke="#7c3aed" stroke-width="0.5" stroke-dasharray="3 10" opacity="0.15">
+    <animate attributeName="stroke-dashoffset" values="0;-26" dur="4s" repeatCount="indefinite"/>
+  </ellipse>
+
+  <circle cx="250" cy="100" r="14" fill="#2563eb" opacity="0.8" filter="url(#glow-l)">
+    <animateTransform attributeName="transform" type="translate" values="0,0;3,-2;0,0;-3,2;0,0" dur="5s" repeatCount="indefinite"/>
+  </circle>
+  <text x="250" y="104" font-family="'Courier New', monospace" font-size="8" fill="#fff" text-anchor="middle" font-weight="bold">DATA</text>
+
+  <circle cx="340" cy="65" r="13" fill="#7c3aed" opacity="0.8" filter="url(#glow-l)">
+    <animateTransform attributeName="transform" type="translate" values="0,0;-2,3;0,0;2,-3;0,0" dur="4.5s" repeatCount="indefinite"/>
+  </circle>
+  <text x="340" y="69" font-family="'Courier New', monospace" font-size="7" fill="#fff" text-anchor="middle" font-weight="bold">FEAT</text>
+
+  <circle cx="560" cy="65" r="13" fill="#059669" opacity="0.8" filter="url(#glow-l)">
+    <animateTransform attributeName="transform" type="translate" values="0,0;2,3;0,0;-2,-3;0,0" dur="5.2s" repeatCount="indefinite"/>
+  </circle>
+  <text x="560" y="69" font-family="'Courier New', monospace" font-size="6.5" fill="#fff" text-anchor="middle" font-weight="bold">STRAT</text>
+
+  <circle cx="650" cy="100" r="14" fill="#dc2626" opacity="0.8" filter="url(#glow-l)">
+    <animateTransform attributeName="transform" type="translate" values="0,0;-3,-2;0,0;3,2;0,0" dur="4.8s" repeatCount="indefinite"/>
+  </circle>
+  <text x="650" y="104" font-family="'Courier New', monospace" font-size="7" fill="#fff" text-anchor="middle" font-weight="bold">RISK</text>
+
+  <circle cx="640" cy="195" r="13" fill="#d97706" opacity="0.8" filter="url(#glow-l)">
+    <animateTransform attributeName="transform" type="translate" values="0,0;3,2;0,0;-3,-2;0,0" dur="5.5s" repeatCount="indefinite"/>
+  </circle>
+  <text x="640" y="199" font-family="'Courier New', monospace" font-size="7" fill="#fff" text-anchor="middle" font-weight="bold">EXEC</text>
+
+  <circle cx="260" cy="195" r="13" fill="#0891b2" opacity="0.8" filter="url(#glow-l)">
+    <animateTransform attributeName="transform" type="translate" values="0,0;-2,-3;0,0;2,3;0,0" dur="4.7s" repeatCount="indefinite"/>
+  </circle>
+  <text x="260" y="199" font-family="'Courier New', monospace" font-size="6" fill="#fff" text-anchor="middle" font-weight="bold">OBSRV</text>
+
+  <circle cx="355" cy="210" r="12" fill="#db2777" opacity="0.8" filter="url(#glow-l)">
+    <animateTransform attributeName="transform" type="translate" values="0,0;2,-2;0,0;-2,2;0,0" dur="5.7s" repeatCount="indefinite"/>
+  </circle>
+  <text x="355" y="214" font-family="'Courier New', monospace" font-size="7" fill="#fff" text-anchor="middle" font-weight="bold">TACL</text>
+
+  <circle cx="545" cy="210" r="12" fill="#059669" opacity="0.8" filter="url(#glow-l)">
+    <animateTransform attributeName="transform" type="translate" values="0,0;-3,1;0,0;3,-1;0,0" dur="4.3s" repeatCount="indefinite"/>
+  </circle>
+  <text x="545" y="214" font-family="'Courier New', monospace" font-size="5.5" fill="#fff" text-anchor="middle" font-weight="bold">KRMTO</text>
+
+  <circle r="2" fill="#d97706" opacity="0.6" filter="url(#glow-l)">
+    <animateMotion dur="3s" repeatCount="indefinite" path="M250,100 Q350,60 450,140"/>
+  </circle>
+  <circle r="2" fill="#059669" opacity="0.6" filter="url(#glow-l)">
+    <animateMotion dur="3.5s" repeatCount="indefinite" path="M450,140 Q550,60 650,100"/>
+  </circle>
+  <circle r="1.5" fill="#dc2626" opacity="0.5" filter="url(#glow-l)">
+    <animateMotion dur="4s" repeatCount="indefinite" path="M650,100 Q650,150 640,195"/>
+  </circle>
+
+  <text x="450" y="135" font-family="Georgia, serif" font-size="32" fill="#92400e" text-anchor="middle" filter="url(#glow-strong-l)" font-weight="bold" letter-spacing="8">
+    GeoSync
+  </text>
+  <text x="450" y="158" font-family="'Courier New', monospace" font-size="10" fill="#64748b" text-anchor="middle" letter-spacing="2">
+    GEOMETRIC MARKET INTELLIGENCE
+  </text>
+
+  <line x1="200" y1="265" x2="700" y2="265" stroke="#d1d5db" stroke-width="0.5"/>
+  <text x="300" y="285" font-family="'Courier New', monospace" font-size="8" fill="#6b7280" text-anchor="middle">Kuramoto | Ricci | Entropy</text>
+  <text x="450" y="285" font-family="'Courier New', monospace" font-size="8" fill="#9ca3af" text-anchor="middle">v0.1.0</text>
+  <text x="600" y="285" font-family="'Courier New', monospace" font-size="8" fill="#6b7280" text-anchor="middle">neuron7xLab</text>
+
+  <line x1="200" y1="300" x2="700" y2="300" stroke="#d1d5db" stroke-width="0.8"/>
+  <line x1="200" y1="300" x2="700" y2="300" stroke="#059669" stroke-width="0.8" opacity="0.4" stroke-dasharray="3 6">
+    <animate attributeName="stroke-dashoffset" values="0;18" dur="2s" repeatCount="indefinite"/>
+  </line>
+</svg>

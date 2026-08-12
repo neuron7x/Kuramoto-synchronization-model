@@ -1,0 +1,59 @@
+id: research-release-quarantine
+status: ACTIVE
+claim_type: governance
+promise: >-
+  geosync_research is quarantined from release truth: it may be absent from
+  release coverage only with reason 'research', no production package
+  (execution/application/interfaces/core/backtest) may import it, and no release
+  artifact may count it as measured production signal. Research entering the
+  runtime import graph fails CI.
+diff_scope:
+  changed_files:
+    - path: ".claude/commit_acceptors/research-release-quarantine.yaml"
+    - path: "tests/ci/test_research_release_quarantine.py"
+  forbidden_paths:
+    - "execution/"
+    - "core/"
+required_python_symbols: []
+expected_signal: >-
+  `python -m pytest --import-mode=importlib tests/ci/test_research_release_quarantine.py
+  -q` passes; research is not measured, not imported by production, and absent from
+  coverage only with reason 'research'.
+measurement_command: >-
+  bash -c '
+    python -m pytest --import-mode=importlib -p no:cacheprovider
+      tests/ci/test_research_release_quarantine.py -q
+  '
+signal_artifact: "tmp/research_release_quarantine.log"
+falsifier:
+  command: |-
+    bash -c '
+      python -c "
+    import ast, pathlib
+    root = pathlib.Path(\".\")
+    offenders = []
+    for r in (\"execution\",\"application\",\"interfaces\",\"core\",\"backtest\"):
+        base = root / r
+        if not base.is_dir(): continue
+        for p in base.rglob(\"*.py\"):
+            try: tree = ast.parse(p.read_text(encoding=\"utf-8\"))
+            except Exception: continue
+            for n in ast.walk(tree):
+                if isinstance(n, ast.ImportFrom) and n.module and n.module.split(\".\")[0]==\"geosync_research\": offenders.append(str(p))
+                if isinstance(n, ast.Import):
+                    for a in n.names:
+                        if a.name.split(\".\")[0]==\"geosync_research\": offenders.append(str(p))
+    raise SystemExit(0 if not offenders else f\"research imported by production: {offenders[:3]}\")
+    "
+    '
+  description: >-
+    AST-scans production roots for a geosync_research import. Exits 0 when research
+    stays quarantined; non-zero if production imports research (runtime leak).
+rollback_command: >-
+  bash -c 'git rm -f .claude/commit_acceptors/research-release-quarantine.yaml'
+rollback_verification_command: >-
+  bash -c 'test ! -f .claude/commit_acceptors/research-release-quarantine.yaml'
+memory_update_type: append
+ledger_path: ".claude/commit_acceptors/research-release-quarantine.yaml"
+report_path: "tmp/research_release_quarantine.log"
+evidence: []

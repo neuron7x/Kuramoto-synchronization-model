@@ -1,0 +1,57 @@
+id: runtime-concurrency-matrix
+status: ACTIVE
+claim_type: determinism
+promise: >-
+  artifacts/concurrency/concurrency_matrix.json binds every runtime concurrency
+  failure class (lost update, torn read, orphaned task, double submit, duplicate
+  fill, stale cache write, missed cancellation, deadlock, timeout path) to a
+  deterministic test proving the owning component is safe. New deterministic tests
+  cover kafka stop-cancel, scheduler id-race, rate-limit no-lost-hit, and db
+  session close-on-exception; the gate fails closed on a missing node or a
+  non-deterministic/non-PASS row.
+diff_scope:
+  changed_files:
+    - path: ".claude/commit_acceptors/runtime-concurrency-matrix.yaml"
+    - path: "artifacts/concurrency/concurrency_matrix.json"
+    - path: "audit/schema/concurrency_matrix.schema.json"
+    - path: "tests/concurrency/test_runtime_concurrency_matrix.py"
+    - path: "tests/ci/test_concurrency_matrix.py"
+  forbidden_paths:
+    - "execution/"
+    - "core/"
+required_python_symbols: []
+expected_signal: >-
+  `python -m pytest --import-mode=importlib
+  tests/concurrency/test_runtime_concurrency_matrix.py tests/ci/test_concurrency_matrix.py
+  -q` passes; every matrix row binds an existing deterministic PASS test.
+measurement_command: >-
+  bash -c '
+    python -m pytest --import-mode=importlib -p no:cacheprovider
+      tests/concurrency/test_runtime_concurrency_matrix.py
+      tests/ci/test_concurrency_matrix.py -q
+  '
+signal_artifact: "tmp/runtime_concurrency_matrix.log"
+falsifier:
+  command: |-
+    bash -c '
+      python -c "
+    import json
+    m = json.load(open(\"artifacts/concurrency/concurrency_matrix.json\"))
+    req = {\"lost update\",\"torn read\",\"orphaned task\",\"double submit\",\"duplicate fill\",\"stale cache write\",\"missed cancellation\",\"timeout path\"}
+    covered = {r[\"failure_class\"] for r in m[\"rows\"]}
+    ok = not (req - covered) and all(r[\"deterministic\"] and r[\"verdict\"]==\"PASS\" for r in m[\"rows\"]) and m[\"verdict\"]==\"PASS\"
+    raise SystemExit(0 if ok else \"concurrency matrix incomplete or non-deterministic\")
+    "
+    '
+  description: >-
+    Asserts every critical failure class is covered by a deterministic PASS row.
+    Exits 0 on the complete matrix; non-zero if a class is dropped or a row is
+    non-deterministic.
+rollback_command: >-
+  bash -c 'git rm -f .claude/commit_acceptors/runtime-concurrency-matrix.yaml'
+rollback_verification_command: >-
+  bash -c 'test ! -f .claude/commit_acceptors/runtime-concurrency-matrix.yaml'
+memory_update_type: append
+ledger_path: ".claude/commit_acceptors/runtime-concurrency-matrix.yaml"
+report_path: "tmp/runtime_concurrency_matrix.log"
+evidence: []

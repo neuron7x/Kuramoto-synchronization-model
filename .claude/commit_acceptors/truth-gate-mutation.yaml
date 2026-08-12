@@ -1,0 +1,75 @@
+# Diff-bound acceptor: keystone — mutation testing for truth gates.
+#
+# A green gate is not a proven gate. This injects a named lie into each truth
+# gate's source and asserts the gate's guard test fails (mutant killed). It also
+# closes the one hole this harness found on first run: the reliability gate's
+# phantom-invariant detection was not exercised by any test.
+
+id: truth-gate-mutation
+status: ACTIVE
+claim_type: correctness
+promise: >-
+  Adds tools/governance/mutate_truth_gates.py (run_one()/run_all() + Mutation),
+  injecting a named lie into each truth gate on main (collision detection,
+  reliability phantom-invariant check, dependency floor comparison, release
+  scorecard PARTIAL-as-READY) and asserting the gate's guard test fails — mutant
+  killed. A stale anchor (find not present
+  exactly once) fails closed so mutations can never become silent no-ops. The
+  harness self-test (tests/governance/test_truth_gate_mutation.py) proves it
+  classifies killed/survived/stale on a hermetic toy gate. Also closes the hole
+  the harness found: check_physics_reliability.check() now accepts an injected
+  contract and tests/physics/test_physics_reliability_contract.py gains
+  test_phantom_invariant_is_rejected_by_checker. Mutation score 3/3.
+diff_scope:
+  changed_files:
+    - path: ".claude/commit_acceptors/truth-gate-mutation.yaml"
+    - path: ".github/workflows/truth-gate-mutation.yml"
+    - path: "tools/governance/mutate_truth_gates.py"
+    - path: "tests/governance/test_truth_gate_mutation.py"
+    - path: "tools/physics/check_physics_reliability.py"
+    - path: "tests/physics/test_physics_reliability_contract.py"
+    - path: "docs/governance/truth_gate_mutation.md"
+  forbidden_paths:
+    - "trading/"
+    - "execution/"
+    - "forecast/"
+    - "policy/"
+required_python_symbols:
+  - "run_one"
+  - "Mutation"
+expected_signal: >-
+  python tools/governance/mutate_truth_gates.py exits 0 with mutation score 4/4
+  (every named lie killed). tests/governance/test_truth_gate_mutation.py passes
+  3/3 (killed/survived/stale classification on a toy gate).
+  tests/physics/test_physics_reliability_contract.py passes 10/10 including the
+  new test_phantom_invariant_is_rejected_by_checker. ruff/black/mypy --strict
+  clean; zero new noqa/type-ignore.
+measurement_command: >-
+  python tools/governance/mutate_truth_gates.py --json
+signal_artifact: "tmp/truth_gate_mutation.json"
+falsifier:
+  command: >-
+    PYTHONPATH=. python -m pytest tests/governance/test_truth_gate_mutation.py
+    -v --noconftest -k "detects_survivor or flags_stale_anchor"
+  description: >-
+    If the harness could not detect a surviving mutant
+    (test_harness_detects_survivor) or a stale anchor
+    (test_harness_flags_stale_anchor), it would rubber-stamp decorative gates —
+    those tests fail against a harness that only ever reports KILLED. Reverting
+    the reliability check() injection point makes the phantom-invariant mutant
+    survive and mutate_truth_gates.py exits non-zero.
+rollback_command: >-
+  git checkout HEAD~1 --
+  tools/governance/mutate_truth_gates.py
+  tests/governance/test_truth_gate_mutation.py
+  tools/physics/check_physics_reliability.py
+  tests/physics/test_physics_reliability_contract.py
+  .github/workflows/truth-gate-mutation.yml
+  docs/governance/truth_gate_mutation.md
+  .claude/commit_acceptors/truth-gate-mutation.yaml
+rollback_verification_command: >-
+  git diff --exit-code tools/governance/mutate_truth_gates.py
+memory_update_type: none
+ledger_path: ".claude/commit_acceptors/truth-gate-mutation.yaml"
+report_path: "docs/reports/diff_bound_commit_acceptor_layer.md"
+evidence: []

@@ -1,5 +1,7 @@
-# SPDX-License-Identifier: LicenseRef-TradePulse-Proprietary
+# Copyright (c) 2023-2026 Yaroslav Vasylenko (neuron7xLab)
+# SPDX-License-Identifier: MIT
 """Deterministic scheduler that periodically evaluates trading strategies."""
+
 from __future__ import annotations
 
 import logging
@@ -140,11 +142,7 @@ class CronExpression:
 
             for item in range(start, end + 1, step):
                 normalized = item
-                if (
-                    field == "weekday"
-                    and sunday_alias is not None
-                    and item == sunday_alias
-                ):
+                if field == "weekday" and sunday_alias is not None and item == sunday_alias:
                     normalized = 0
                 if normalized < min_value or normalized > max_value:
                     raise ValueError(f"Cron field '{field}' value {item} out of range")
@@ -200,9 +198,7 @@ class CronExpression:
         year = moment.year + (1 if moment.month == 12 else 0)
         month = 1 if moment.month == 12 else moment.month + 1
         next_month = datetime(year=year, month=month, day=1, tzinfo=moment.tzinfo)
-        delta = next_month - moment.replace(
-            day=1, hour=0, minute=0, second=0, microsecond=0
-        )
+        delta = next_month - moment.replace(day=1, hour=0, minute=0, second=0, microsecond=0)
         return delta if delta > timedelta(0) else timedelta(days=1)
 
 
@@ -252,9 +248,7 @@ class StrategyJob:
                 raise ValueError("StrategyJob must include at least one strategy")
             for strategy in strategies:
                 if not isinstance(strategy, Strategy):
-                    raise TypeError(
-                        "StrategyJob.strategies must contain Strategy instances"
-                    )
+                    raise TypeError("StrategyJob.strategies must contain Strategy instances")
             object.__setattr__(self, "strategies", tuple(strategies))
         if not callable(self.data_provider):
             # Allow static payloads (e.g., DataFrame, ndarray, or None).
@@ -305,9 +299,7 @@ class StrategyJob:
         else:
             strategies = list(self.strategies)
         if not strategies:
-            raise ValueError(
-                f"Strategy job '{self.name}' did not produce any strategies"
-            )
+            raise ValueError(f"Strategy job '{self.name}' did not produce any strategies")
         for strategy in strategies:
             if not isinstance(strategy, Strategy):
                 raise TypeError("Strategy factories must return Strategy instances")
@@ -418,9 +410,7 @@ class StrategyScheduler:
                 raise ValueError(f"Job '{job.name}' is already registered")
             for dependency in job.depends_on:
                 if dependency not in self._jobs:
-                    raise ValueError(
-                        f"Unknown dependency '{dependency}' for job '{job.name}'"
-                    )
+                    raise ValueError(f"Unknown dependency '{dependency}' for job '{job.name}'")
 
             now = self._time()
             state = _JobState(job=job)
@@ -521,9 +511,7 @@ class StrategyScheduler:
                 due_time = state.next_run
                 state.in_flight = True
                 state.sla_deadline = (
-                    now + state.job.sla_seconds
-                    if state.job.sla_seconds is not None
-                    else None
+                    now + state.job.sla_seconds if state.job.sla_seconds is not None else None
                 )
                 if (
                     state.pending_events > 0
@@ -637,9 +625,7 @@ class StrategyScheduler:
 
         try:
             evaluations = tuple(
-                self._evaluator.evaluate(
-                    strategies, dataset, raise_on_error=job.raise_on_error
-                )
+                self._evaluator.evaluate(strategies, dataset, raise_on_error=job.raise_on_error)
             )
         except Exception as exc:
             self._handle_failure(state, exc, started_at=started_at)
@@ -655,9 +641,7 @@ class StrategyScheduler:
             )
             return None
 
-        self._handle_success(
-            state, evaluations, started_at=started_at, duration=duration
-        )
+        self._handle_success(state, evaluations, started_at=started_at, duration=duration)
         return evaluations
 
     def _handle_success(
@@ -680,18 +664,14 @@ class StrategyScheduler:
             state.sla_deadline = None
             self._schedule_interval(state, base=completed_at)
             self._schedule_cron(state, after=self._wall_datetime())
-            self._finalize_event_consumption(
-                state, completed_at=completed_at, success=True
-            )
+            self._finalize_event_consumption(state, completed_at=completed_at, success=True)
             state.update_next_run()
 
         if job.on_complete is not None:
             try:
                 job.on_complete(job, results)
             except Exception:  # pragma: no cover - defensive callback guard
-                LOGGER.exception(
-                    "Strategy job completion handler failed", extra={"job": job.name}
-                )
+                LOGGER.exception("Strategy job completion handler failed", extra={"job": job.name})
 
     def _handle_failure(
         self,
@@ -733,16 +713,12 @@ class StrategyScheduler:
             try:
                 job.on_error(job, error)
             except Exception:  # pragma: no cover - defensive callback guard
-                LOGGER.exception(
-                    "Strategy job error handler failed", extra={"job": job.name}
-                )
+                LOGGER.exception("Strategy job error handler failed", extra={"job": job.name})
         else:
             LOGGER.warning("Strategy job '%s' failed", job.name, exc_info=error)
 
     def _compute_backoff(self, state: _JobState) -> float:
-        base = (
-            state.job.interval if state.job.interval is not None else self._idle_sleep
-        )
+        base = state.job.interval if state.job.interval is not None else self._idle_sleep
         exponent = max(state.consecutive_failures - 1, 0)
         return min(base * (2**exponent), self._max_backoff)
 
@@ -753,25 +729,19 @@ class StrategyScheduler:
         base: float,
         interval_override: float | None = None,
     ) -> None:
-        interval = (
-            state.job.interval if interval_override is None else interval_override
-        )
+        interval = state.job.interval if interval_override is None else interval_override
         if interval is None:
             state.next_interval_run = None
             return
         delay = max(0.0, interval)
         if state.job.jitter:
-            delay = max(
-                0.0, delay + self._rng.uniform(-state.job.jitter, state.job.jitter)
-            )
+            delay = max(0.0, delay + self._rng.uniform(-state.job.jitter, state.job.jitter))
         next_time = base + delay
         if state.start_at is not None:
             next_time = max(next_time, state.start_at)
         state.next_interval_run = next_time
 
-    def _schedule_cron(
-        self, state: _JobState, *, after: datetime | None = None
-    ) -> None:
+    def _schedule_cron(self, state: _JobState, *, after: datetime | None = None) -> None:
         cron = state.job.cron
         if cron is None:
             state.next_cron_run = None

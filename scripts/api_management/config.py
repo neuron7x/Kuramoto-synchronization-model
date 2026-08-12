@@ -1,3 +1,5 @@
+# Copyright (c) 2023-2026 Yaroslav Vasylenko (neuron7xLab)
+# SPDX-License-Identifier: MIT
 """Configuration models for API governance workflows."""
 
 from __future__ import annotations
@@ -235,9 +237,7 @@ def _require(mapping: Mapping[str, object], key: str) -> object:
     try:
         return mapping[key]
     except KeyError as exc:  # pragma: no cover - defensive guard
-        raise KeyError(
-            f"Missing required key '{key}' in registry configuration"
-        ) from exc
+        raise KeyError(f"Missing required key '{key}' in registry configuration") from exc
 
 
 def _load_metadata(raw: Mapping[str, object]) -> ApiMetadata:
@@ -284,9 +284,7 @@ def _load_throttle(raw: Mapping[str, object]) -> ThrottlePolicy:
 
 def _load_rate_limit(raw: Mapping[str, object]) -> RateLimitPolicy:
     return RateLimitPolicy(
-        per_minute=(
-            int(raw["per_minute"]) if raw.get("per_minute") is not None else None
-        ),
+        per_minute=(int(raw["per_minute"]) if raw.get("per_minute") is not None else None),
         per_hour=int(raw["per_hour"]) if raw.get("per_hour") is not None else None,
         per_day=int(raw["per_day"]) if raw.get("per_day") is not None else None,
     )
@@ -305,9 +303,7 @@ def _load_idempotency(raw: Mapping[str, object]) -> IdempotencyPolicy:
     return IdempotencyPolicy(
         required=bool(_require(raw, "required")),
         header=str(raw.get("header")) if raw.get("header") is not None else None,
-        ttl_seconds=(
-            int(raw["ttl_seconds"]) if raw.get("ttl_seconds") is not None else None
-        ),
+        ttl_seconds=(int(raw["ttl_seconds"]) if raw.get("ttl_seconds") is not None else None),
     )
 
 
@@ -321,10 +317,7 @@ def _load_simulator(raw: Mapping[str, object]) -> SimulatorExample:
 
 def _load_smoke_test(raw: Mapping[str, object], base_dir: Path) -> SmokeTest:
     request_raw = _require(raw, "request")
-    headers = {
-        str(key): str(value)
-        for key, value in dict(request_raw.get("headers", {})).items()
-    }
+    headers = {str(key): str(value) for key, value in dict(request_raw.get("headers", {})).items()}
     body = request_raw.get("body")
     request = SmokeTestRequest(
         method=str(_require(request_raw, "method")),
@@ -353,9 +346,7 @@ def _load_route(raw: Mapping[str, object], base_dir: Path) -> ApiRoute:
     request_schema = _as_path(raw.get("request_schema"), base_dir)
     response_schema = _as_path(_require(raw, "response_schema"), base_dir)
     simulators = tuple(_load_simulator(item) for item in raw.get("simulators", []))
-    smoke_tests = tuple(
-        _load_smoke_test(item, base_dir) for item in raw.get("smoke_tests", [])
-    )
+    smoke_tests = tuple(_load_smoke_test(item, base_dir) for item in raw.get("smoke_tests", []))
     return ApiRoute(
         name=str(_require(raw, "name")),
         method=str(_require(raw, "method")),
@@ -413,9 +404,7 @@ def _load_deprecation(raw: Mapping[str, object]) -> DeprecationNotice:
         route=str(_require(raw, "route")),
         sunset_date=str(_require(raw, "sunset_date")),
         reason=str(_require(raw, "reason")),
-        replacement=(
-            str(raw.get("replacement")) if raw.get("replacement") is not None else None
-        ),
+        replacement=(str(raw.get("replacement")) if raw.get("replacement") is not None else None),
         status=str(_require(raw, "status")),
     )
 
@@ -449,18 +438,12 @@ def load_registry(path: Path, *, repo_root: Path | None = None) -> ApiRegistry:
     base_dir = repo_root or path.resolve().parent.parent
 
     metadata = _load_metadata(_require(data, "metadata"))
-    environments = tuple(
-        _load_environment(item) for item in data.get("environments", [])
-    )
+    environments = tuple(_load_environment(item) for item in data.get("environments", []))
     routes = tuple(_load_route(item, base_dir) for item in data.get("routes", []))
     webhooks = tuple(_load_webhook(item, base_dir) for item in data.get("webhooks", []))
-    compatibility = tuple(
-        _load_compatibility(item) for item in data.get("compatibility", [])
-    )
+    compatibility = tuple(_load_compatibility(item) for item in data.get("compatibility", []))
     migrations = tuple(_load_migration(item) for item in data.get("migrations", []))
-    deprecations = tuple(
-        _load_deprecation(item) for item in data.get("deprecations", [])
-    )
+    deprecations = tuple(_load_deprecation(item) for item in data.get("deprecations", []))
     changelog = tuple(_load_changelog_entry(item) for item in data.get("changelog", []))
 
     return ApiRegistry(

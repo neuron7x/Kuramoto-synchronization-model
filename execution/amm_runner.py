@@ -1,3 +1,5 @@
+# Copyright (c) 2023-2026 Yaroslav Vasylenko (neuron7xLab)
+# SPDX-License-Identifier: MIT
 from __future__ import annotations
 
 from prometheus_client import start_http_server
@@ -19,9 +21,7 @@ class AMMRunner:
         self.amm = AdaptiveMarketMind(cfg or AMMConfig())
         start_http_server(metrics_port)
 
-    async def on_tick(
-        self, x: float, R: float, kappa: float, H: float | None = None
-    ) -> dict:
+    async def on_tick(self, x: float, R: float, kappa: float, H: float | None = None) -> dict:
         with timed_update(self.symbol, self.tf):
             out = await self.amm.aupdate(x, R, kappa, H, offload=False)
         publish_metrics(

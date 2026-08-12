@@ -66,7 +66,7 @@ const BASE_TEMPLATE = `
   <html lang="en">
     <head>
       <meta charset="utf-8" />
-      <title>TradePulse Signals Fixture</title>
+      <title>GeoSync Signals Fixture</title>
       <meta name="viewport" content="width=device-width, initial-scale=1" />
       <style>
         body {

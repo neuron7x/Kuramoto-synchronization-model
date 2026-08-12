@@ -1,3 +1,5 @@
+# Copyright (c) 2023-2026 Yaroslav Vasylenko (neuron7xLab)
+# SPDX-License-Identifier: MIT
 """Utilities for sampling runtime metrics for the API service."""
 
 from __future__ import annotations
@@ -23,7 +25,7 @@ except ImportError:  # pragma: no cover - gracefully degrade on non-POSIX system
     resource = None  # type: ignore[assignment]
 
 
-LOGGER = logging.getLogger("tradepulse.api.metrics")
+LOGGER = logging.getLogger("geosync.api.metrics")
 
 
 class MetricsSampler:
@@ -38,7 +40,7 @@ class MetricsSampler:
     ) -> None:
         self._collector = collector
         self._process_label = process_label
-        default_interval = float(os.getenv("TRADEPULSE_METRICS_SAMPLER_INTERVAL", "5"))
+        default_interval = float(os.getenv("GEOSYNC_METRICS_SAMPLER_INTERVAL", "5"))
         interval = sample_interval if sample_interval is not None else default_interval
         self._interval = max(1.0, float(interval))
         self._task: asyncio.Task[None] | None = None

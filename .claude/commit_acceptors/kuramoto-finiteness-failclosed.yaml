@@ -1,0 +1,76 @@
+# Diff-bound acceptor: fail-closed finiteness guards at the Kuramoto layer.
+#
+# A computational manifold audit (sweeping degenerate slices ω₀=0, K=K_c,
+# Δ→0, large dt, NaN/Inf) found that NaN-blind comparison guards
+# (`abs(z) > 1.0` is False for NaN) let non-finite state propagate silently
+# past documented order-parameter bounds, and that the Ott-Antonsen RK4
+# integrator silently renormalised a blown-up step onto the unit circle —
+# inverting the synchronization verdict (subcritical K<2Δ returned R=1.0,
+# full sync). Both violate the CLAUDE.md doctrine "no silent numeric repair;
+# fail-closed". No invariant is added or changed; this hardens the existing
+# INV-OA1 (|z|≤1) and INV-K1 (R∈[0,1]) enforcement.
+
+id: kuramoto-finiteness-failclosed
+status: ACTIVE
+claim_type: correctness
+promise: >-
+  Replaces NaN-blind / silently-repairing guards at the Kuramoto layer with
+  fail-closed finiteness contracts. OttAntonsenEngine.__init__ rejects
+  non-finite K/delta/omega0; OttAntonsenEngine.integrate rejects non-finite
+  T/dt/R0/psi0 and <1-step horizons, and replaces the silent unit-disk
+  renormalisation with a fail-closed check that raises FloatingPointError on a
+  non-finite or genuinely blown-up |z| (>1+1e-8) while still projecting pure
+  round-off drift — enforcing INV-OA1 (|z|≤1) and removing the subcritical->
+  full-sync verdict inversion (INV-OA3). metrics.order_parameter raises on
+  non-finite phases instead of leaking NaN past INV-K1 (R∈[0,1]). No invariant
+  added or changed; six reproduction tests added (4 fail-closed + 2 regression).
+diff_scope:
+  changed_files:
+    - path: ".claude/commit_acceptors/kuramoto-finiteness-failclosed.yaml"
+    - path: "core/kuramoto/ott_antonsen.py"
+    - path: "core/kuramoto/metrics.py"
+    - path: "tests/unit/core/test_kuramoto_modules.py"
+  forbidden_paths:
+    - "trading/"
+    - "execution/"
+    - "forecast/"
+    - "policy/"
+required_python_symbols:
+  - "order_parameter"
+  - "OttAntonsenEngine"
+expected_signal: >-
+  All tests in tests/unit/core/test_kuramoto_modules.py pass, including the new
+  TestFinitenessFailClosed class (4 fail-closed + 2 regression); the existing
+  Ott-Antonsen algebraic/chimera suites and the broad kuramoto/metrics suites
+  stay green (122 tests, no regression); mypy --strict, ruff, black clean on
+  the two changed modules. Reproduced before/after: subcritical K=0.5<K_c=4 with
+  dt=2.5 returned R[-1]=1.0 (silent full-sync) -> now raises FloatingPointError;
+  order_parameter with one NaN returned [nan, 0.997] -> now raises ValueError.
+measurement_command: >-
+  PYTHONPATH=. python -m pytest tests/unit/core/test_kuramoto_modules.py
+  -k Finiteness -v
+signal_artifact: "tmp/kuramoto_finiteness_failclosed_pytest.log"
+falsifier:
+  command: >-
+    PYTHONPATH=. python -m pytest tests/unit/core/test_kuramoto_modules.py
+    -v -k "Finiteness"
+  description: >-
+    Filters to the fail-closed reproduction tests. Each asserts that a
+    previously-leaking non-finite / unstable input now raises (OA unstable step
+    -> FloatingPointError; NaN R0 / non-finite params -> ValueError; NaN phase
+    -> ValueError), plus two regression tests confirming a legitimate
+    supercritical run still matches INV-OA2 to 1e-3 and finite phases stay in
+    [0,1]. Reverting any guard re-introduces the silent NaN leak / verdict
+    inversion and fails the corresponding test.
+rollback_command: >-
+  git checkout HEAD~1 --
+  core/kuramoto/ott_antonsen.py
+  core/kuramoto/metrics.py
+  tests/unit/core/test_kuramoto_modules.py
+  .claude/commit_acceptors/kuramoto-finiteness-failclosed.yaml
+rollback_verification_command: >-
+  git diff --exit-code core/kuramoto/ott_antonsen.py
+memory_update_type: none
+ledger_path: ".claude/commit_acceptors/kuramoto-finiteness-failclosed.yaml"
+report_path: "docs/reports/diff_bound_commit_acceptor_layer.md"
+evidence: []

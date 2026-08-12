@@ -1,16 +1,16 @@
-# SPDX-License-Identifier: LicenseRef-TradePulse-Proprietary
+# SPDX-License-Identifier: MIT
 version: '3.9'
 services:
-  tradepulse:
+  geosync:
     build: .
     env_file:
       - .env
     environment:
-      TRADEPULSE_AUDIT_SECRET: ${TRADEPULSE_AUDIT_SECRET?tradepulse audit secret must be set}
-      TRADEPULSE_RBAC_AUDIT_SECRET: ${TRADEPULSE_RBAC_AUDIT_SECRET?tradepulse RBAC audit secret must be set}
-      TRADEPULSE_API_SERVER_ALLOW_PLAINTEXT: "true"
+      GEOSYNC_AUDIT_SECRET: ${GEOSYNC_AUDIT_SECRET?geosync audit secret must be set}
+      GEOSYNC_RBAC_AUDIT_SECRET: ${GEOSYNC_RBAC_AUDIT_SECRET?geosync RBAC audit secret must be set}
+      GEOSYNC_API_SERVER_ALLOW_PLAINTEXT: "true"
     ports:
-      - "${TRADEPULSE_HTTP_PORT:-8000}:8000"
+      - "${GEOSYNC_HTTP_PORT:-8000}:8000"
     restart: unless-stopped
     healthcheck:
       test:
@@ -26,7 +26,7 @@ services:
       start_period: 20s
     labels:
       - "co.elastic.logs/enabled=true"
-      - "co.elastic.logs/module=tradepulse"
+      - "co.elastic.logs/module=geosync"
     depends_on:
       - prometheus
       - logstash
@@ -35,7 +35,7 @@ services:
     volumes:
       - ./deploy/prometheus.yml:/etc/prometheus/prometheus.yml
     ports:
-      - "${TRADEPULSE_PROMETHEUS_PORT:-9090}:9090"
+      - "${GEOSYNC_PROMETHEUS_PORT:-9090}:9090"
   cortex:
     build:
       context: .
@@ -47,7 +47,7 @@ services:
       - ./cortex_service/config/service.yaml:/service/cortex_service/config/service.yaml:ro
       - ./configs/tls/dev:/service/tls:ro
     ports:
-      - "${TRADEPULSE_CORTEX_PORT:-8001}:8001"
+      - "${GEOSYNC_CORTEX_PORT:-8001}:8001"
     depends_on:
       cortex-db:
         condition: service_healthy
@@ -58,7 +58,7 @@ services:
       POSTGRES_USER: cortex
       POSTGRES_PASSWORD: cortex
     ports:
-      - "${TRADEPULSE_CORTEX_DB_PORT:-5433}:5432"
+      - "${GEOSYNC_CORTEX_DB_PORT:-5433}:5432"
     command: >
       postgres -c config_file=/etc/postgresql/postgresql.conf -c hba_file=/etc/postgresql/pg_hba.conf
     healthcheck:
@@ -78,7 +78,7 @@ services:
       - xpack.security.enabled=false
       - ES_JAVA_OPTS=-Xms512m -Xmx512m
     ports:
-      - "${TRADEPULSE_ELASTICSEARCH_PORT:-9200}:9200"
+      - "${GEOSYNC_ELASTICSEARCH_PORT:-9200}:9200"
     volumes:
       - elasticsearch-data:/usr/share/elasticsearch/data
   logstash:
@@ -88,7 +88,7 @@ services:
     volumes:
       - ./observability/logstash/pipeline:/usr/share/logstash/pipeline:ro
     ports:
-      - "${TRADEPULSE_LOGSTASH_PORT:-5044}:5044"
+      - "${GEOSYNC_LOGSTASH_PORT:-5044}:5044"
     depends_on:
       - elasticsearch
   kibana:
@@ -96,7 +96,7 @@ services:
     environment:
       - ELASTICSEARCH_HOSTS=http://elasticsearch:9200
     ports:
-      - "${TRADEPULSE_KIBANA_PORT:-5601}:5601"
+      - "${GEOSYNC_KIBANA_PORT:-5601}:5601"
     depends_on:
       - elasticsearch
   filebeat:

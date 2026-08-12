@@ -1,6 +1,6 @@
 # Deployment Guide
 
-This guide outlines the production deployment requirements for TradePulse, including infrastructure, secret management, and operation of the live trading runner. It complements the [Production Cutover Readiness Checklist](../reports/prod_cutover_readiness_checklist.md).
+This guide outlines the production deployment requirements for GeoSync, including infrastructure, secret management, and operation of the live trading runner. It complements the [Production Cutover Readiness Checklist](../reports/prod_cutover_readiness_checklist.md).
 
 ## Infrastructure Requirements
 
@@ -8,7 +8,7 @@ This guide outlines the production deployment requirements for TradePulse, inclu
 |-----------|---------|----------------------|
 | **PostgreSQL 15+** | Stores strategy state, OMS snapshots, and execution audit trails. | Highly available cluster (e.g., managed Postgres, Patroni) with point-in-time recovery enabled. |
 | **Kafka 3.5+** (or compatible message bus) | Distributes ticks, signals, and order events between ingestion, strategy, and execution services. | Three-broker cluster with replication factor ≥ 3, rack-aware placement, and topic-level ACLs. |
-| **Prometheus + Alertmanager** | Scrapes metrics from TradePulse services, including the live trading loop heartbeat. | Dedicated metrics namespace with 15 s scrape interval and long-term storage via Thanos or Cortex. |
+| **Prometheus + Alertmanager** | Scrapes metrics from GeoSync services, including the live trading loop heartbeat. | Dedicated metrics namespace with 15 s scrape interval and long-term storage via Thanos or Cortex. |
 | **Object storage (S3/GCS/MinIO)** | Optional for historical data snapshots and strategy artifacts. | Versioned bucket with lifecycle policies to control retention. |
 | **Secrets backend (Vault, AWS Secrets Manager, GCP Secret Manager)** | Centralised distribution of exchange credentials and API tokens. | Configure per-environment namespaces and audit logging. |
 
@@ -24,14 +24,14 @@ identity requirements that underpin these controls.
 
 ### Kafka Broker Security Configuration
 
-- TradePulse expects Kafka clusters to expose TLS endpoints (`security_protocol` of `SSL` or `SASL_SSL`). Provide the CA bundle path via `EventBusConfig.ssl_cafile` and, when using mutual TLS, supply the signed client certificate and key files.
+- GeoSync expects Kafka clusters to expose TLS endpoints (`security_protocol` of `SSL` or `SASL_SSL`). Provide the CA bundle path via `EventBusConfig.ssl_cafile` and, when using mutual TLS, supply the signed client certificate and key files.
 - Rotate broker and client certificates on a fixed cadence (e.g., quarterly). Deploy new files alongside the old ones, then restart services to reload credentials before revoking the previous certificates.
-- When SASL is enabled, configure ACLs per topic and per consumer group. Bind the SASL principal used by TradePulse to the event topics defined in `core/messaging/event_bus.py` and deny wild-card access to minimise blast radius.
+- When SASL is enabled, configure ACLs per topic and per consumer group. Bind the SASL principal used by GeoSync to the event topics defined in `core/messaging/event_bus.py` and deny wild-card access to minimise blast radius.
 - Document the certificate and ACL owners in your runbooks so incident responders know who to contact when a rotation or ACL change is required.
 
 ## Secret Management Expectations
 
-TradePulse loads sensitive credentials exclusively from environment variables or injected secret files.
+GeoSync loads sensitive credentials exclusively from environment variables or injected secret files.
 
 1. **Source of truth** – Store live venue keys in your secret manager; do not commit them to Git.
 2. **Rotation** – Align key rotation policies with venue requirements. The live trading loop supports hot credential reloads when files in the `state_dir` change.
@@ -40,14 +40,14 @@ TradePulse loads sensitive credentials exclusively from environment variables or
 
 ## Horizontal Pod Autoscaling
 
-The `tradepulse-api` deployment now ships with a production-grade Horizontal Pod Autoscaler (HPA) defined in
+The `geosync-api` deployment now ships with a production-grade Horizontal Pod Autoscaler (HPA) defined in
 [`deploy/kustomize/base/hpa.yaml`](../deploy/kustomize/base/hpa.yaml). The controller uses multiple signals to balance
 latency SLOs against compute cost:
 
 - **CPU utilisation**: target 60% average utilisation across pods. This keeps per-core headroom for GC pauses and order routing bursts.
 - **Memory utilisation**: target 70% average utilisation to guard against Python heap growth while avoiding premature scale-out.
 - **Signal-to-fill latency (p95)**: pods metric filtered on `quantile="0.95"` with a 400 ms target. Breaches indicate exchange latency or strategy slowdowns that demand extra workers.
-- **Order queue depth**: external Prometheus metric `tradepulse_orders_queue_depth` with a target value of 80 messages. This prevents cascading backlog when upstream venues throttle.
+- **Order queue depth**: external Prometheus metric `geosync_orders_queue_depth` with a target value of 80 messages. This prevents cascading backlog when upstream venues throttle.
 
 ### Anti-spike behaviour
 
@@ -66,20 +66,20 @@ To prevent thrashing during volatile market windows the HPA enforces aggressive 
 2. **Generate synthetic load** with k6 using the maintained scenario in [`deploy/loadtests/hpa-k6.js`](../deploy/loadtests/hpa-k6.js):
    ```bash
    k6 run \
-     --env TRADEPULSE_BASE_URL="http://tradepulse-api.tradepulse-<environment>.svc.cluster.local" \
-     --env TRADEPULSE_LATENCY_SLO_MS=400 \
+     --env GEOSYNC_BASE_URL="http://geosync-api.geosync-<environment>.svc.cluster.local" \
+     --env GEOSYNC_LATENCY_SLO_MS=400 \
      deploy/loadtests/hpa-k6.js
    ```
    Run the scenario for at least 15 minutes so that all HPA policies trigger.
-3. **Backlog drill**: follow the procedure in [Queue and Backpressure](queue_and_backpressure.md) to temporarily throttle order consumers and drive `tradepulse_orders_queue_depth` above 80. Observe the queue depth and latency metrics in Grafana.
+3. **Backlog drill**: follow the procedure in [Queue and Backpressure](queue_and_backpressure.md) to temporarily throttle order consumers and drive `geosync_orders_queue_depth` above 80. Observe the queue depth and latency metrics in Grafana.
 4. **Validate scaling**:
    ```bash
-   kubectl get hpa tradepulse-api --watch
+   kubectl get hpa geosync-api --watch
    ```
    Confirm replica counts climb smoothly without exceeding policy caps, then decay only after queue depth and latency recover.
 5. **Document results** in the runbook, capturing replica timelines, latency plots, and queue depth recovery to prove resilience under cascading peaks.
 
-The administrative FastAPI surface consumes the `TRADEPULSE_AUDIT_SECRET` via a managed file watcher that honours rotations at runtime. When you mount `TRADEPULSE_AUDIT_SECRET_PATH` (and, optionally, `TRADEPULSE_SIEM_CLIENT_SECRET_PATH`) into the container, the service refreshes the keys according to `TRADEPULSE_SECRET_REFRESH_INTERVAL_SECONDS` without restarts. Ensure your secret manager agent keeps the files up to date and enforces length policies that satisfy the defaults (16+ characters for audit signatures).
+The administrative FastAPI surface consumes the `GEOSYNC_AUDIT_SECRET` via a managed file watcher that honours rotations at runtime. When you mount `GEOSYNC_AUDIT_SECRET_PATH` (and, optionally, `GEOSYNC_SIEM_CLIENT_SECRET_PATH`) into the container, the service refreshes the keys according to `GEOSYNC_SECRET_REFRESH_INTERVAL_SECONDS` without restarts. Ensure your secret manager agent keeps the files up to date and enforces length policies that satisfy the defaults (16+ characters for audit signatures).
 
 ## Configuring the Live Trading Runner
 
@@ -102,7 +102,7 @@ The live runner is implemented in [`execution/live_loop.py`](../execution/live_l
 
 ## Rollback Procedures
 
-TradePulse rollbacks tie directly to the [Production Cutover Readiness Checklist](../reports/prod_cutover_readiness_checklist.md):
+GeoSync rollbacks tie directly to the [Production Cutover Readiness Checklist](../reports/prod_cutover_readiness_checklist.md):
 
 1. **Trigger conditions** – Monitor the SLO guardrails defined in the checklist (error rate > 2%, p95 latency > 500 ms, or metric gaps). When a breach occurs, the AutoRollbackGuard should emit the rollback callback.
 2. **Execution** – Stop the live runner (`LiveExecutionLoop.shutdown()`), scale down new versions, and redeploy the previous tagged release from your artifact registry.

@@ -1,6 +1,6 @@
 # Feature Flag and Dynamic Configuration Platform Roadmap
 
-This roadmap details the phased rollout of a resilient feature flag and configuration platform for TradePulse. It covers architecture, governance, safety controls, and operational practices required for regulated trading workloads.
+This roadmap details the phased rollout of a resilient feature flag and configuration platform for GeoSync. It covers architecture, governance, safety controls, and operational practices required for regulated trading workloads.
 
 ## 1. Vision and Guiding Principles
 
@@ -62,7 +62,7 @@ This roadmap details the phased rollout of a resilient feature flag and configur
 
 ## 5. Developer Experience and Tooling
 
-* CLI integration (`tradepulse flag`) for flag lifecycle management, templates, and CI checks.
+* CLI integration (`geosync flag`) for flag lifecycle management, templates, and CI checks.
 * IDE plugins providing inline flag metadata and experiment status.
 * Sample applications in `examples/feature-flags/` demonstrating best practices, including fallback handling and telemetry hooks.
 * Documentation updates: tutorials, SDK reference, troubleshooting guides.
@@ -87,4 +87,4 @@ This roadmap details the phased rollout of a resilient feature flag and configur
 * Feature Flag Council (representatives from engineering, product, risk, compliance) meets monthly to review roadmap and safety posture.
 * Post-launch maturity assessments (bronze/silver/gold tiers) ensure continuous improvement.
 
-All implementation artifacts must adhere to TradePulse secure development lifecycle, including code reviews, automated testing, and observability standards.
+All implementation artifacts must adhere to GeoSync secure development lifecycle, including code reviews, automated testing, and observability standards.

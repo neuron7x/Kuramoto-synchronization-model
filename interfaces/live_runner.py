@@ -1,4 +1,5 @@
-# SPDX-License-Identifier: LicenseRef-TradePulse-Proprietary
+# Copyright (c) 2023-2026 Yaroslav Vasylenko (neuron7xLab)
+# SPDX-License-Identifier: MIT
 """Orchestration helpers for running the live execution loop."""
 
 from __future__ import annotations
@@ -105,16 +106,10 @@ class CredentialSettings(BaseModel):
     @model_validator(mode="after")
     def _normalise(self) -> "CredentialSettings":
         object.__setattr__(self, "env_prefix", str(self.env_prefix).upper())
-        object.__setattr__(
-            self, "required", tuple(str(key).upper() for key in self.required)
-        )
-        object.__setattr__(
-            self, "optional", tuple(str(key).upper() for key in self.optional)
-        )
+        object.__setattr__(self, "required", tuple(str(key).upper() for key in self.required))
+        object.__setattr__(self, "optional", tuple(str(key).upper() for key in self.optional))
         if self.secret_backend is None and self.vault_path_env:
-            backend = SecretBackendSettings(
-                adapter="vault", path_env=self.vault_path_env
-            )
+            backend = SecretBackendSettings(adapter="vault", path_env=self.vault_path_env)
             object.__setattr__(self, "secret_backend", backend)
         return self
 
@@ -142,9 +137,7 @@ def _import_string(path: str) -> type[ExecutionConnector]:
     try:
         obj = getattr(module, attribute)
     except AttributeError as exc:  # pragma: no cover - defensive
-        raise ImportError(
-            f"Module '{module_path}' does not define '{attribute}'"
-        ) from exc
+        raise ImportError(f"Module '{module_path}' does not define '{attribute}'") from exc
     if not isinstance(obj, type) or not issubclass(obj, ExecutionConnector):
         raise TypeError(f"{path} is not an ExecutionConnector class")
     return obj
@@ -170,9 +163,7 @@ class LiveTradingRunner:
     ) -> None:
         self._config_path = (config_path or DEFAULT_CONFIG_PATH).expanduser()
         if not self._config_path.exists():
-            raise FileNotFoundError(
-                f"Live trading config not found: {self._config_path}"
-            )
+            raise FileNotFoundError(f"Live trading config not found: {self._config_path}")
         raw_config = _load_toml(self._config_path)
         self._config_dir = self._config_path.parent
         self._raw_loop = dict(raw_config.get("loop", {}))
@@ -190,11 +181,7 @@ class LiveTradingRunner:
                 raise ValueError("Each venue must provide 'name' and 'class'")
             if requested and name.lower() not in requested:
                 continue
-            options = {
-                k: v
-                for k, v in entry.items()
-                if k not in {"name", "class", "credentials"}
-            }
+            options = {k: v for k, v in entry.items() if k not in {"name", "class", "credentials"}}
             credentials_cfg = entry.get("credentials")
             credentials: CredentialSettings | None = None
             if credentials_cfg:
@@ -316,9 +303,7 @@ class LiveTradingRunner:
         self._stop_event.set()
         if self._loop is None:
             return
-        LOGGER.info(
-            "Shutting down live trading runner", extra={"event": "live_runner.shutdown"}
-        )
+        LOGGER.info("Shutting down live trading runner", extra={"event": "live_runner.shutdown"})
         try:
             self._loop.shutdown()
         finally:
@@ -434,9 +419,7 @@ class LiveTradingRunner:
         for name, resolver in backends.items():
             self._inline_secret_backends.setdefault(name, resolver)
 
-    def _wrap_backend_resolver(
-        self, venue: str, backend: SecretBackendSettings
-    ) -> VaultResolver:
+    def _wrap_backend_resolver(self, venue: str, backend: SecretBackendSettings) -> VaultResolver:
         base_resolver = self._get_backend_resolver(backend.adapter)
         field_mapping = dict(backend.field_mapping)
 
@@ -588,9 +571,7 @@ class LiveTradingRunner:
             payload["error"] = str(exc)
         LOGGER.warning("Connector reconnect triggered", extra=payload)
 
-    def _handle_position_snapshot(
-        self, venue: str, positions: Iterable[Mapping[str, Any]]
-    ) -> None:
+    def _handle_position_snapshot(self, venue: str, positions: Iterable[Mapping[str, Any]]) -> None:
         count = sum(1 for _ in positions)
         LOGGER.debug(
             "Position snapshot received",

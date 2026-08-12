@@ -1,3 +1,5 @@
+# Copyright (c) 2023-2026 Yaroslav Vasylenko (neuron7xLab)
+# SPDX-License-Identifier: MIT
 r"""Quantum-inspired utilities for the advanced neuroeconomic toolkit.
 
 The helpers contained in this module provide lightweight linear-algebra based

@@ -1,3 +1,5 @@
+# Copyright (c) 2023-2026 Yaroslav Vasylenko (neuron7xLab)
+# SPDX-License-Identifier: MIT
 """Pre-trade compliance checks against exchange minimums and risk limits."""
 
 from __future__ import annotations
@@ -28,9 +30,7 @@ __all__ = [
 class ComplianceViolation(NormalizationError):
     """Raised when an order violates venue-level minimums."""
 
-    def __init__(
-        self, message: str, *, report: "ComplianceReport" | None = None
-    ) -> None:
+    def __init__(self, message: str, *, report: "ComplianceReport" | None = None) -> None:
         super().__init__(message)
         self.report = report
 
@@ -78,13 +78,9 @@ class ComplianceMonitor:
         self._strict = strict
         self._auto_round = auto_round
 
-    def check(
-        self, symbol: str, quantity: float, price: float | None = None
-    ) -> ComplianceReport:
+    def check(self, symbol: str, quantity: float, price: float | None = None) -> ComplianceReport:
         normalized_qty = (
-            self._normalizer.round_quantity(symbol, quantity)
-            if self._auto_round
-            else quantity
+            self._normalizer.round_quantity(symbol, quantity) if self._auto_round else quantity
         )
         normalized_price = (
             (None if price is None else self._normalizer.round_price(symbol, price))
@@ -106,16 +102,12 @@ class ComplianceMonitor:
             requested_quantity=float(quantity),
             requested_price=None if price is None else float(price),
             normalized_quantity=float(normalized_qty),
-            normalized_price=(
-                None if normalized_price is None else float(normalized_price)
-            ),
+            normalized_price=(None if normalized_price is None else float(normalized_price)),
             violations=tuple(violations),
             blocked=blocked,
         )
         if violation_exc is not None and self._strict:
-            raise ComplianceViolation(
-                str(violation_exc), report=report
-            ) from violation_exc
+            raise ComplianceViolation(str(violation_exc), report=report) from violation_exc
         return report
 
 
@@ -134,9 +126,7 @@ class RiskDecision:
             "allowed": self.allowed,
             "reasons": list(self.reasons),
             "breached_limits": dict(self.breached_limits),
-            "next_reset_at": (
-                self.next_reset_at.isoformat() if self.next_reset_at else None
-            ),
+            "next_reset_at": (self.next_reset_at.isoformat() if self.next_reset_at else None),
         }
 
 
@@ -178,9 +168,7 @@ class RiskCompliance:
         self._open_orders_count: int = 0
         self._metrics: RiskMetrics | None = metrics or get_risk_metrics()
 
-        self._record_metric(
-            lambda collector: collector.record_kill_switch(config.kill_switch)
-        )
+        self._record_metric(lambda collector: collector.record_kill_switch(config.kill_switch))
         self._record_open_orders_metric()
 
     def set_kill_switch(self, enabled: bool) -> None:
@@ -264,9 +252,7 @@ class RiskCompliance:
                 current_position = 0.0
 
             side = OrderSide(order.side)
-            position_delta = (
-                order.quantity if side == OrderSide.BUY else -order.quantity
-            )
+            position_delta = order.quantity if side == OrderSide.BUY else -order.quantity
             new_position = current_position + position_delta
 
             cap = self._config.per_symbol_position_cap_default
@@ -292,9 +278,7 @@ class RiskCompliance:
             gross_exposure = float(portfolio_state.get("gross_exposure", 0.0))
             position_notional_before = abs(current_position * price)
             position_notional_after = abs(new_position * price)
-            projected_gross = (
-                gross_exposure + position_notional_after - position_notional_before
-            )
+            projected_gross = gross_exposure + position_notional_after - position_notional_before
             if self._config.max_gross_exposure > 0:
                 if projected_gross > self._config.max_gross_exposure:
                     reasons.append(
@@ -325,9 +309,7 @@ class RiskCompliance:
                     next_reset = self._next_daily_reset(self._daily_reset_time)
 
                 if self._daily_high_equity > 0:
-                    drawdown = (
-                        self._daily_high_equity - equity
-                    ) / self._daily_high_equity
+                    drawdown = (self._daily_high_equity - equity) / self._daily_high_equity
 
                     if self._config.daily_max_drawdown_mode == "percent":
                         if drawdown > self._config.daily_max_drawdown_threshold:
@@ -422,14 +404,10 @@ class RiskCompliance:
 
     def _record_open_orders_metric(self) -> None:
         self._record_metric(
-            lambda collector, count=self._open_orders_count: collector.record_open_orders(
-                count
-            )
+            lambda collector, count=self._open_orders_count: collector.record_open_orders(count)
         )
 
-    def _record_rejections(
-        self, breached: Mapping[str, float], reasons: Iterable[str]
-    ) -> None:
+    def _record_rejections(self, breached: Mapping[str, float], reasons: Iterable[str]) -> None:
         labels = list(breached.keys())
         if not labels:
             reason_text = "; ".join(reasons)
@@ -437,9 +415,7 @@ class RiskCompliance:
             if normalised:
                 labels = [normalised]
         for label in labels:
-            self._record_metric(
-                lambda collector, reason=label: collector.record_rejection(reason)
-            )
+            self._record_metric(lambda collector, reason=label: collector.record_rejection(reason))
 
     @staticmethod
     def _normalise_rejection_reason(reason: str) -> str:

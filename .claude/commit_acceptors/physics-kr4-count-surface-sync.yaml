@@ -1,0 +1,35 @@
+id: physics-kr4-count-surface-sync
+status: ACTIVE
+claim_type: governance
+promise: >-
+  INV-KR4 took the invariant registry from 111 to 112; the two shell CI gates
+  that pin the count as a literal (prove_repo_integrity.sh step [1/13],
+  evidence_gate.sh invariant_witness) are synced to 112 so the count witness
+  agrees with scripts/count_invariants.py across every surface (#1096).
+diff_scope:
+  changed_files:
+    - path: ".claude/commit_acceptors/physics-kr4-count-surface-sync.yaml"
+    - path: "scripts/ci/prove_repo_integrity.sh"
+    - path: "scripts/ci/evidence_gate.sh"
+  forbidden_paths:
+    - "trading/"
+    - "execution/"
+    - "forecast/"
+required_python_symbols: []
+expected_signal: >-
+  Both shell gates assert the live count (112) equals scripts/count_invariants.py
+  output; the repo-integrity gate passes its [1/13] invariant-witness step.
+measurement_command: >-
+  test "$(python3 scripts/count_invariants.py)" = "112"
+signal_artifact: "tmp/physics_kr4_count_surface_sync_acceptor.json"
+falsifier:
+  command: "test \"$(python3 scripts/count_invariants.py)\" = \"111\""
+  description: >-
+    Asserting the OLD count 111 must now fail, proving the shell literals track
+    the registry and a stale count is caught rather than silently accepted.
+rollback_command: "git revert --no-edit HEAD"
+rollback_verification_command: "test \"$(python3 scripts/count_invariants.py)\" = \"112\""
+memory_update_type: append
+ledger_path: ".claude/commit_acceptors/physics-kr4-count-surface-sync.yaml"
+report_path: ".claude/commit_acceptors/physics-kr4-count-surface-sync.yaml"
+evidence: []

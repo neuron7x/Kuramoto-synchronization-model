@@ -1,0 +1,210 @@
+# Copyright (c) 2023-2026 Yaroslav Vasylenko (neuron7xLab)
+# SPDX-License-Identifier: MIT
+#
+# GOV-002 — Remediation RACI and two-signature closure contract.
+#
+# Purpose: assign a single technical owner plus an independent verifier to
+# every remediation workstream so that the author of a P0 fix can NEVER
+# unilaterally close their own P0. Every workstream has exactly one
+# Accountable owner and every P0 closure requires two distinct signatures:
+# the author AND an independent approver who is not the author.
+#
+# Machine-readable contract enforced by scripts/ci/check_raci.py.
+
+version: 1
+task_id: GOV-002
+
+# ---------------------------------------------------------------------------
+# Roles — the seven functions across which accountability is distributed.
+# `id` values are the stable keys referenced by the RACI matrix below.
+# ---------------------------------------------------------------------------
+roles:
+  - id: remediation_lead
+    title: Remediation Lead
+    description: >
+      Single technical owner of the remediation programme. Sequences P0 work,
+      holds the ledger, and is accountable for governance/architecture
+      workstreams. May author fixes but may never be the sole closer of a P0
+      they authored.
+  - id: release_authority
+    title: Release Authority
+    description: >
+      Owns the release/packaging gate. Final go/no-go on cutting a release;
+      accountable that no unverified P0 ships.
+  - id: security_owner
+    title: Security Owner
+    description: >
+      Owns the security workstream and the threat model. Accountable for SEC
+      P0s and is a mandatory independent approver for security-sensitive
+      closures authored by others.
+  - id: research_methodologist
+    title: Research Methodologist
+    description: >
+      Owns research claims, falsification discipline, and documentation of
+      method. Accountable for RES and DOC workstreams.
+  - id: data_steward
+    title: Data Steward
+    description: >
+      Owns data provenance, lineage, retention, and dataset integrity.
+      Accountable for the DAT workstream.
+  - id: qa_evals_lead
+    title: QA/Evals Lead
+    description: >
+      Owns the test and evaluation surface. Accountable for the TST and ENV
+      workstreams; ensures gates are non-vacuous.
+  - id: independent_reproducer
+    title: Independent Reproducer
+    description: >
+      Independent verifier who reproduces a fix from scratch on a clean
+      environment. Structurally barred from authoring the P0 they sign off.
+      Default independent approver of last resort.
+
+# ---------------------------------------------------------------------------
+# Workstreams — the 11 remediation lanes. Every one MUST appear in raci below.
+# ---------------------------------------------------------------------------
+workstreams:
+  - id: GOV
+    name: Governance
+    description: RACI, sign-off contracts, conflict-of-interest controls.
+  - id: REL
+    name: Release
+    description: Release gating, versioning, cut/rollback authority.
+  - id: ENV
+    name: Environment
+    description: Toolchain, dependency locks, reproducible build environment.
+  - id: TST
+    name: Testing
+    description: Test suites, coverage, non-vacuity, mutation ratchets.
+  - id: ARC
+    name: Architecture
+    description: Package boundaries, import architecture, canonical roots.
+  - id: PKG
+    name: Packaging
+    description: Wheel/manifest contract, distributed surface parity.
+  - id: SEC
+    name: Security
+    description: Threat model, fail-closed controls, secret hygiene.
+  - id: DOC
+    name: Documentation
+    description: Docs consistency, claim boundaries, canonical references.
+  - id: RES
+    name: Research
+    description: Research artifacts, falsification ledgers, claim maturity.
+  - id: DAT
+    name: Data
+    description: Data provenance, lineage, retention, dataset integrity.
+  - id: OPS
+    name: Operations
+    description: CI/CD operations, runtime health, incident response.
+
+# ---------------------------------------------------------------------------
+# RACI matrix — one entry per workstream.
+#   responsible: role(s) who do the work.
+#   accountable: EXACTLY ONE role who owns the outcome (the single owner).
+#   consulted:   role(s) whose input is sought (two-way).
+#   informed:    role(s) kept in the loop (one-way).
+# Invariant: `accountable` is a single role id; `approver` names the mandatory
+# independent verifier for that workstream and is ALWAYS distinct from the
+# accountable owner (checked structurally).
+# ---------------------------------------------------------------------------
+raci:
+  GOV:
+    responsible: [remediation_lead]
+    accountable: remediation_lead
+    consulted: [security_owner, release_authority]
+    informed: [qa_evals_lead, research_methodologist, data_steward]
+    approver: release_authority
+  REL:
+    responsible: [release_authority]
+    accountable: release_authority
+    consulted: [remediation_lead, qa_evals_lead, security_owner]
+    informed: [research_methodologist, data_steward]
+    approver: remediation_lead
+  ENV:
+    responsible: [qa_evals_lead]
+    accountable: qa_evals_lead
+    consulted: [remediation_lead, release_authority]
+    informed: [security_owner]
+    approver: independent_reproducer
+  TST:
+    responsible: [qa_evals_lead]
+    accountable: qa_evals_lead
+    consulted: [remediation_lead, research_methodologist]
+    informed: [release_authority, security_owner]
+    approver: independent_reproducer
+  ARC:
+    responsible: [remediation_lead]
+    accountable: remediation_lead
+    consulted: [qa_evals_lead, release_authority]
+    informed: [security_owner, research_methodologist]
+    approver: release_authority
+  PKG:
+    responsible: [release_authority]
+    accountable: release_authority
+    consulted: [qa_evals_lead, remediation_lead]
+    informed: [security_owner]
+    approver: qa_evals_lead
+  SEC:
+    responsible: [security_owner]
+    accountable: security_owner
+    consulted: [remediation_lead, release_authority]
+    informed: [qa_evals_lead, data_steward]
+    approver: independent_reproducer
+  DOC:
+    responsible: [research_methodologist]
+    accountable: research_methodologist
+    consulted: [remediation_lead, qa_evals_lead]
+    informed: [release_authority, security_owner, data_steward]
+    approver: remediation_lead
+  RES:
+    responsible: [research_methodologist]
+    accountable: research_methodologist
+    consulted: [qa_evals_lead, data_steward]
+    informed: [remediation_lead, release_authority]
+    approver: independent_reproducer
+  DAT:
+    responsible: [data_steward]
+    accountable: data_steward
+    consulted: [research_methodologist, security_owner]
+    informed: [remediation_lead, qa_evals_lead]
+    approver: independent_reproducer
+  OPS:
+    responsible: [release_authority]
+    accountable: release_authority
+    consulted: [remediation_lead, security_owner, qa_evals_lead]
+    informed: [research_methodologist, data_steward]
+    approver: security_owner
+
+# ---------------------------------------------------------------------------
+# Two-signature rule — the closure contract for every P0.
+# ---------------------------------------------------------------------------
+two_signature_rule:
+  id: TWO_SIGNATURE_P0_CLOSURE
+  statement: >
+    No P0 may be closed on a single signature. Closing a P0 requires two
+    distinct sign-offs recorded in governance/approval_records.yaml: (1) the
+    author of the fix, and (2) an independent approver who is NOT the author.
+  requires:
+    - author_signoff
+    - independent_approver_signoff
+  distinctness: author != independent_approver
+  applies_to: all P0 remediation tasks across all 11 workstreams
+  default_independent_approver: independent_reproducer
+  recorded_in: governance/approval_records.yaml
+
+# ---------------------------------------------------------------------------
+# Conflict-of-interest clause.
+# ---------------------------------------------------------------------------
+conflict_of_interest:
+  id: COI_AUTHOR_NOT_SOLE_CLOSER
+  rule: author != sole_closer_of_own_P0
+  statement: >
+    The author of a P0 fix MUST NOT be the sole closer of that P0. A P0 is
+    only closed when an independent approver — a different person than the
+    author, and per-workstream the designated approver (never equal to the
+    accountable owner when that owner authored the fix) — signs off after
+    independent verification. This structurally prevents self-approval.
+  enforcement: >
+    check_raci.py asserts the clause and the two-signature rule are present
+    and that each workstream's approver differs from a self-authored close;
+    approval_records.yaml is the ledger where the distinct signatures land.

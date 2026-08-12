@@ -1,3 +1,5 @@
+# Copyright (c) 2023-2026 Yaroslav Vasylenko (neuron7xLab)
+# SPDX-License-Identifier: MIT
 """SQLAlchemy ORM models used by the shared data access layer."""
 
 from __future__ import annotations
@@ -19,7 +21,7 @@ __all__ = ["Base", "KillSwitchState"]
 
 
 class Base(DeclarativeBase):
-    """Declarative base for TradePulse ORM models."""
+    """Declarative base for GeoSync ORM models."""
 
 
 class KillSwitchState(Base):
@@ -29,9 +31,7 @@ class KillSwitchState(Base):
 
     id: Mapped[int] = mapped_column(SmallInteger, primary_key=True)
     engaged: Mapped[bool] = mapped_column(Boolean, nullable=False)
-    reason: Mapped[str] = mapped_column(
-        String(length=2048), nullable=False, server_default=""
-    )
+    reason: Mapped[str] = mapped_column(String(length=2048), nullable=False, server_default="")
     updated_at: Mapped[datetime] = mapped_column(
         DateTime(timezone=True),
         nullable=False,

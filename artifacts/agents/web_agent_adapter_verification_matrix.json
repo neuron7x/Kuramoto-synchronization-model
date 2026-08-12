@@ -1,0 +1,92 @@
+{
+  "artifact_id": "WEB_AGENT_ADAPTER_VERIFICATION_MATRIX_001",
+  "status": "CRITICAL_ADAPTER_RISK_MITIGATED_BY_DISABLE_UNVERIFIED_POLICY",
+  "measurement_mode": "mixed_live_github_connector_and_fail_closed_policy",
+  "policy": {
+    "unverified_adapter_runtime_status": "DISABLED_UNTIL_VERIFIED",
+    "enabled_adapter_requirement": "live_trace and contract_match and side_effect_report",
+    "destructive_action_requirement": "explicit_confirmation",
+    "unsafe_default": "block"
+  },
+  "adapters": [
+    {
+      "tool_id": "github_fetch_file",
+      "contract_status": "DEFINED",
+      "live_status": "VERIFIED",
+      "runtime_status": "ENABLED",
+      "trace_ids": ["LIVE-GH-001"],
+      "critical_risk": "mitigated"
+    },
+    {
+      "tool_id": "github_create_file",
+      "contract_status": "DEFINED",
+      "live_status": "VERIFIED_FOR_BRANCH_SCOPED_CREATES",
+      "runtime_status": "ENABLED_BRANCH_ONLY",
+      "trace_ids": ["LIVE-GH-003"],
+      "critical_risk": "mitigated"
+    },
+    {
+      "tool_id": "github_update_file",
+      "contract_status": "DEFINED",
+      "live_status": "VERIFIED_FOR_SHA_GUARDED_BRANCH_UPDATES",
+      "runtime_status": "ENABLED_BRANCH_ONLY",
+      "trace_ids": ["LIVE-GH-002"],
+      "critical_risk": "mitigated"
+    },
+    {
+      "tool_id": "web_search",
+      "contract_status": "DEFINED",
+      "live_status": "NOT_VERIFIED_IN_THIS_CONNECTOR_PASS",
+      "runtime_status": "DISABLED_UNTIL_VERIFIED",
+      "trace_ids": [],
+      "critical_risk": "blocked_not_verified"
+    },
+    {
+      "tool_id": "web_fetch",
+      "contract_status": "DEFINED",
+      "live_status": "NOT_VERIFIED_IN_THIS_CONNECTOR_PASS",
+      "runtime_status": "DISABLED_UNTIL_VERIFIED",
+      "trace_ids": [],
+      "critical_risk": "blocked_not_verified"
+    },
+    {
+      "tool_id": "file_read",
+      "contract_status": "DEFINED",
+      "live_status": "NOT_VERIFIED_IN_THIS_CONNECTOR_PASS",
+      "runtime_status": "DISABLED_UNTIL_VERIFIED",
+      "trace_ids": [],
+      "critical_risk": "blocked_not_verified"
+    },
+    {
+      "tool_id": "file_write",
+      "contract_status": "DEFINED",
+      "live_status": "NOT_VERIFIED_IN_THIS_CONNECTOR_PASS",
+      "runtime_status": "DISABLED_UNTIL_VERIFIED",
+      "trace_ids": [],
+      "critical_risk": "blocked_not_verified"
+    },
+    {
+      "tool_id": "code_exec",
+      "contract_status": "DEFINED",
+      "live_status": "NOT_VERIFIED_IN_THIS_CONNECTOR_PASS",
+      "runtime_status": "DISABLED_UNTIL_VERIFIED",
+      "trace_ids": [],
+      "critical_risk": "blocked_not_verified"
+    }
+  ],
+  "coverage": {
+    "declared_adapters": 8,
+    "live_verified_adapters": 3,
+    "disabled_until_verified": 5,
+    "unverified_enabled_adapters": 0,
+    "critical_unmitigated_adapters": 0,
+    "full_live_adapter_verification": false,
+    "critical_adapter_policy_passed": true
+  },
+  "failure_conditions": [
+    "If any adapter has live_status NOT_VERIFIED and runtime_status not DISABLED_UNTIL_VERIFIED, fail.",
+    "If any enabled adapter lacks trace_ids, fail.",
+    "If any side-effecting adapter lacks branch/scope constraints, fail.",
+    "Do not call full live adapter verification true until every adapter is live verified."
+  ]
+}

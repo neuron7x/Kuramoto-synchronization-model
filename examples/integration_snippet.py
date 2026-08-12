@@ -1,8 +1,10 @@
+# Copyright (c) 2023-2026 Yaroslav Vasylenko (neuron7xLab)
+# SPDX-License-Identifier: MIT
 """Example policy loop integration for the dopamine controller."""
 
 from __future__ import annotations
 
-from tradepulse.core.neuro.dopamine import (
+from geosync.core.neuro.dopamine import (
     ActionGate,
     DopamineController,
     adapt_ddm_parameters,
@@ -30,9 +32,7 @@ def policy_step(
     da_ctrl.update_value_estimate(rpe)
 
     # 2. DA сигнал
-    appetitive = da_ctrl.estimate_appetitive_state(
-        reward_proxy, novelty, momentum, value_gap
-    )
+    appetitive = da_ctrl.estimate_appetitive_state(reward_proxy, novelty, momentum, value_gap)
     DA = da_ctrl.compute_dopamine_signal(appetitive, rpe)
 
     # 3. Модуляція Q, температура, адаптація DDM

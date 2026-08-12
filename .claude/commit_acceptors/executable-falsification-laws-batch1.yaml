@@ -1,0 +1,75 @@
+# ci-heartbeat: executable-falsification-laws-batch1
+id: executable-falsification-laws-batch1
+status: ACTIVE
+claim_type: fail_closed
+promise: >-
+  Transform five declaration-only canonical physics laws into executable
+  falsification contracts: kuramoto.critical_scaling (exact Ott-Antonsen
+  steady state R_inf=sqrt(1-2*delta/K)), kuramoto.subcritical_finite_size
+  (1/sqrt(N) noise floor), kuramoto.frequency_entrainment (macroscopic
+  common-frequency locking above K_c), ricci.ollivier_bounds (universal
+  kappa<=1; price-graph-only symmetric band), and ricci.flow_monotonicity
+  (Perelman F-functional non-increase). Each gains a positive witness that
+  asserts the law against the real solver and a negative control that plants
+  a genuine violation and proves it is refuted or fails closed. The canonical
+  catalog.yaml declarations are untouched; only the executable falsification
+  layer and its governance count surface change.
+diff_scope:
+  changed_files:
+    - path: ".claude/commit_acceptors/executable-falsification-laws-batch1.yaml"
+    - path: "physics_contracts/falsification_catalog.yaml"
+    - path: "tests/physics/test_governance.py"
+    - path: "tests/physics/test_kuramoto_critical_scaling.py"
+    - path: "tests/physics/test_kuramoto_subcritical_finite_size.py"
+    - path: "tests/physics/test_kuramoto_frequency_entrainment.py"
+    - path: "tests/physics/test_ollivier_ricci_bounds.py"
+    - path: "tests/physics/test_ricci_flow_monotonicity.py"
+  forbidden_paths:
+    - "trading/"
+    - "execution/"
+    - "forecast/"
+    - "policy/"
+required_python_symbols: []
+expected_signal: >-
+  tools/validate_physics_contracts.py reports these 5 added laws fully
+  witnessed (catalog total >= 15; further batches raise it) with every
+  positive witness and negative control collected and per-law evidence emitted. Each new witness test passes: positive witnesses
+  confirm the law numerically against the real Kuramoto/Ricci solvers, and
+  negative controls confirm the instrument refutes a planted violation or
+  fails closed on invalid input. No score increase, no canonical catalog
+  mutation, no trading/execution/forecast/policy change.
+measurement_command: >-
+  PYTHONPATH=. python tools/validate_physics_contracts.py && PYTHONPATH=.
+  python -m pytest tests/physics/test_kuramoto_critical_scaling.py
+  tests/physics/test_kuramoto_subcritical_finite_size.py
+  tests/physics/test_kuramoto_frequency_entrainment.py
+  tests/physics/test_ollivier_ricci_bounds.py
+  tests/physics/test_ricci_flow_monotonicity.py
+  tests/physics/test_governance.py -q
+signal_artifact: "tmp/executable_falsification_laws_batch1.log"
+falsifier:
+  command: >-
+    PYTHONPATH=. python -m pytest
+    tests/physics/test_kuramoto_critical_scaling.py
+    tests/physics/test_ollivier_ricci_bounds.py
+    tests/physics/test_ricci_flow_monotonicity.py
+    tests/physics/test_governance.py -q
+  description: >-
+    Fails if any new law's positive witness stops confirming the law against
+    the real solver, if a negative control stops refuting its planted
+    violation, or if the promotion gate count surface drifts from the
+    catalog's blocking-law count.
+rollback_command: >-
+  git checkout origin/main -- physics_contracts/falsification_catalog.yaml
+  tests/physics/test_governance.py
+rollback_verification_command: >-
+  PYTHONPATH=. python tools/validate_physics_contracts.py
+memory_update_type: none
+ledger_path: ".claude/commit_acceptors/executable-falsification-laws-batch1.yaml"
+report_path: ".claude/commit_acceptors/executable-falsification-laws-batch1.yaml"
+evidence:
+  - path: "tests/physics/test_kuramoto_critical_scaling.py"
+  - path: "tests/physics/test_kuramoto_subcritical_finite_size.py"
+  - path: "tests/physics/test_kuramoto_frequency_entrainment.py"
+  - path: "tests/physics/test_ollivier_ricci_bounds.py"
+  - path: "tests/physics/test_ricci_flow_monotonicity.py"

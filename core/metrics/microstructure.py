@@ -1,4 +1,5 @@
-# SPDX-License-Identifier: LicenseRef-TradePulse-Proprietary
+# Copyright (c) 2023-2026 Yaroslav Vasylenko (neuron7xLab)
+# SPDX-License-Identifier: MIT
 """Market microstructure metrics for order flow analysis and price formation.
 
 Mathematical Foundation:
@@ -72,6 +73,7 @@ References:
       in a specialist market with heterogeneously informed traders.
       Journal of Financial Economics, 14(1), 71-100.
 """
+
 from __future__ import annotations
 
 from dataclasses import asdict, dataclass
@@ -306,9 +308,7 @@ def build_symbol_microstructure_report(
     rows = []
     for symbol, group in grouped:
         qi = queue_imbalance(group[bid_col].to_numpy(), group[ask_col].to_numpy())
-        k_lambda = kyles_lambda(
-            group[returns_col].to_numpy(), group[signed_volume_col].to_numpy()
-        )
+        k_lambda = kyles_lambda(group[returns_col].to_numpy(), group[signed_volume_col].to_numpy())
         impulse = hasbrouck_information_impulse(
             group[returns_col].to_numpy(), group[signed_volume_col].to_numpy()
         )

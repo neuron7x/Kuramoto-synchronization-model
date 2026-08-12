@@ -1,0 +1,92 @@
+{
+  "all_passed": true,
+  "artifact": "ops001_recovery_drill_report",
+  "drills": [
+    {
+      "checks": {
+        "INV-CB1_dormant_multiplier_exact_zero": true,
+        "INV-CB4_rehydration_ramp_non_decreasing": true,
+        "INV-CB7_hysteresis_exit_below_entry": true,
+        "reached_dormant_under_shock": true,
+        "recovered_to_active_full_size": true
+      },
+      "drill": "cryptobiosis_phase_transition_survival",
+      "passed": true,
+      "runbook": "docs/runbook_disaster_recovery.md",
+      "trajectory": [
+        {
+          "distress": 0.1,
+          "multiplier": 1.0,
+          "state": "ACTIVE",
+          "tick": 0
+        },
+        {
+          "distress": 0.95,
+          "multiplier": 1.0,
+          "state": "VITRIFYING",
+          "tick": 1
+        },
+        {
+          "distress": 0.95,
+          "multiplier": 0.0,
+          "state": "DORMANT",
+          "tick": 2
+        },
+        {
+          "distress": 0.1,
+          "multiplier": 0.0,
+          "state": "REHYDRATING",
+          "tick": 3
+        },
+        {
+          "distress": 0.1,
+          "multiplier": 0.25,
+          "state": "REHYDRATING",
+          "tick": 4
+        },
+        {
+          "distress": 0.1,
+          "multiplier": 0.5,
+          "state": "REHYDRATING",
+          "tick": 5
+        },
+        {
+          "distress": 0.1,
+          "multiplier": 0.75,
+          "state": "REHYDRATING",
+          "tick": 6
+        },
+        {
+          "distress": 0.1,
+          "multiplier": 1.0,
+          "state": "ACTIVE",
+          "tick": 7
+        },
+        {
+          "distress": 0.1,
+          "multiplier": 1.0,
+          "state": "ACTIVE",
+          "tick": 8
+        }
+      ]
+    },
+    {
+      "audit_actions": [
+        "activate",
+        "deactivate"
+      ],
+      "checks": {
+        "activate_event_audited": true,
+        "activation_halts_system": true,
+        "deactivate_event_audited": true,
+        "deactivation_recovers_system": true,
+        "starts_inactive": true
+      },
+      "drill": "kill_switch_failover",
+      "passed": true,
+      "runbook": "docs/runbook_kill_switch_failover.md"
+    }
+  ],
+  "readiness_entry": "OPS-001",
+  "schema": "readiness.evidence.v1"
+}

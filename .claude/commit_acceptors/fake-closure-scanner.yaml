@@ -1,0 +1,108 @@
+# Diff-bound commit acceptor — advisory fake-closure scanner.
+#
+# Purpose:
+#   Bind the advisory scanner that flags PR-body closure claims (Closes #N)
+#   referencing issues with unchecked non-waivable requirements. This is a
+#   governance/closure-integrity tool only. It makes NO runtime, physics,
+#   numerical, trading, or "all closures correct" claim, and never blocks merge.
+
+id: fake-closure-scanner
+status: ACTIVE
+claim_type: governance
+promise: >-
+  An offline-deterministic advisory scanner detects PR-body closure claims that
+  reference issues with unsatisfied non-waivable checklist requirements,
+  returning PASS / ADVISORY_FAIL / UNKNOWN / OUT_OF_SCOPE without ever blocking
+  merge. Closure keywords inside code spans are ignored and normal checklists
+  do not false-fail.
+
+diff_scope:
+  changed_files:
+    - path: ".claude/commit_acceptors/fake-closure-scanner.yaml"
+    - path: "tools/governance/check_fake_closure_claims.py"
+    - path: "tests/governance/test_fake_closure_claims.py"
+    - path: "docs/governance/fake_closure_scanner.md"
+    - path: "docs/reports/closure_ledger.md"
+    - path: "tests/fixtures/fake_closure/pr_body_closes_1109.md"
+    - path: "tests/fixtures/fake_closure/pr_body_refs_1109.md"
+    - path: "tests/fixtures/fake_closure/pr_body_no_closure.md"
+    - path: "tests/fixtures/fake_closure/pr_body_closes_two.md"
+    - path: "tests/fixtures/fake_closure/issue_1109_non_waivable.md"
+    - path: "tests/fixtures/fake_closure/issue_all_checked.md"
+    - path: "tests/fixtures/fake_closure/issue_normal_checklist.md"
+    - path: "tests/fixtures/fake_closure/issue_ambiguous_marker_no_boxes.md"
+    - path: "tests/fixtures/fake_closure/issue_1101_satisfied.md"
+  forbidden_paths:
+    - "core/"
+    - "src/"
+    - "runtime/"
+    - "trading/"
+    - "execution/"
+    - "forecast/"
+    - "policy/"
+    - "tests/unit/core/"
+    - "physics/"
+    - ".github/workflows/"
+
+required_python_symbols:
+  - "tools/governance/check_fake_closure_claims.py::scan"
+  - "tools/governance/check_fake_closure_claims.py::evaluate_issue"
+  - "tools/governance/check_fake_closure_claims.py::extract_closure_refs"
+  - "tools/governance/check_fake_closure_claims.py::ScanState"
+  - "tests/governance/test_fake_closure_claims.py::test_1_closes_with_unchecked_nonwaivable_is_advisory_fail"
+  - "tests/governance/test_fake_closure_claims.py::test_8_false_positive_guard_normal_checklist_does_not_fail"
+
+expected_signal: >-
+  The offline test suite passes: the #1109/#1140 fixture (Closes + unchecked
+  non-waivable checklist) yields ADVISORY_FAIL; an all-checked issue and a
+  normal marker-free checklist yield PASS; a Refs-only body and a keyword-free
+  body yield OUT_OF_SCOPE; an unfetchable or prose-only issue yields UNKNOWN;
+  closure keywords inside code spans are ignored.
+
+measurement_command: >-
+  bash -c '
+    python -m compileall -q tools/governance/check_fake_closure_claims.py && PYTHONPATH=. python -m pytest -q tests/governance/test_fake_closure_claims.py | tee tmp/fake_closure_scanner.log
+  '
+
+signal_artifact: "tmp/fake_closure_scanner.log"
+
+falsifier:
+  command: >-
+    bash -c '
+      PYTHONPATH=. python - <<"PY"
+      from pathlib import Path
+      from tools.governance.check_fake_closure_claims import scan, ScanState
+      base = Path("tests/fixtures/fake_closure")
+      body = (base / "pr_body_closes_1109.md").read_text()
+      issue = (base / "issue_1109_non_waivable.md").read_text()
+      state = scan(body, {1109: issue}).state
+      # Exits 0 (falsification detected) ONLY if the scanner FAILS to flag the
+      # canonical #1109 fake closure. On the green path it returns ADVISORY_FAIL,
+      # so this probe exits 1 (fails) as required.
+      raise SystemExit(0 if state is not ScanState.ADVISORY_FAIL else 1)
+      PY
+    '
+  description: >-
+    Probes whether the scanner still detects the canonical #1109/#1140 fake
+    closure. Succeeds only when detection is broken; on the working scanner it
+    fails, proving the promise is falsifiable.
+
+rollback_command: >-
+  bash -c '
+    git rm -f
+      tools/governance/check_fake_closure_claims.py
+      tests/governance/test_fake_closure_claims.py
+      .claude/commit_acceptors/fake-closure-scanner.yaml
+      docs/governance/fake_closure_scanner.md
+      docs/reports/closure_ledger.md && git rm -rf tests/fixtures/fake_closure
+  '
+
+rollback_verification_command: >-
+  bash -c '
+    test ! -e tools/governance/check_fake_closure_claims.py && test ! -e tests/governance/test_fake_closure_claims.py && test ! -e .claude/commit_acceptors/fake-closure-scanner.yaml
+  '
+
+memory_update_type: append
+ledger_path: "docs/reports/closure_ledger.md"
+report_path: "docs/governance/fake_closure_scanner.md"
+evidence: []

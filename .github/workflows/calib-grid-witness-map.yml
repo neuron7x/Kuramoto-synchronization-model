@@ -1,0 +1,34 @@
+name: CALIB GRID Witness Map
+
+concurrency:
+  group: ${{ github.workflow }}-${{ github.ref }}
+  cancel-in-progress: true
+
+on:
+  pull_request:
+    branches: [main]
+    paths:
+      - '.claude/physics/CALIB_GRID_INVARIANTS.yaml'
+      - '.claude/physics/CALIB_GRID_WITNESS_MAP.json'
+      - '.claude/physics/validate_calib_grid_witness_map.py'
+      - 'tests/research/calibration/test_grid_kuramoto.py'
+  push:
+    branches: [main]
+    paths:
+      - '.claude/physics/CALIB_GRID_INVARIANTS.yaml'
+      - '.claude/physics/CALIB_GRID_WITNESS_MAP.json'
+      - '.claude/physics/validate_calib_grid_witness_map.py'
+      - 'tests/research/calibration/test_grid_kuramoto.py'
+
+permissions:
+  contents: read
+
+jobs:
+  calib-grid-witness-map:
+    runs-on: ubuntu-latest
+    steps:
+      - uses: actions/checkout@9c091bb21b7c1c1d1991bb908d89e4e9dddfe3e0 # v7.0.0
+      - uses: actions/setup-python@ece7cb06caefa5fff74198d8649806c4678c61a1 # v6
+        with:
+          python-version: '3.12'
+      - run: python .claude/physics/validate_calib_grid_witness_map.py

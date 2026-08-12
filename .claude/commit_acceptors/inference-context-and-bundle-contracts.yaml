@@ -1,0 +1,53 @@
+# SPDX-License-Identifier: MIT
+id: inference-context-and-bundle-contracts
+status: DRAFT
+claim_type: governance
+promise: >-
+  WP-01 and WP-09 of the Inference-Legend act gain their contract layer, wiring
+  the EXISTING claim-maturity ladder and null-baseline generator rather than
+  rebuilding them. WP-01: a fail-closed context-manifest schema + validator that
+  binds claim_tier to analytics/signals/claim_maturity.LADDER (single source).
+  WP-09: an evidence-bundle assembler that binds a validated manifest + a real
+  make_gaussian_null computation + a claim card whose tier is checked by the
+  real evaluate_promotion — a bundle cannot claim a tier its evidence tokens do
+  not earn, and the bundle is content-hashed against tampering. Admissibility
+  infrastructure only; no scientific or predictive claim; rank unchanged.
+diff_scope:
+  changed_files:
+    - path: ".claude/commit_acceptors/inference-context-and-bundle-contracts.yaml"
+    - path: "schemas/inference/context_manifest.schema.json"
+    - path: "schemas/inference/examples/context_manifest.example.json"
+    - path: "tools/inference/validate_context_manifest.py"
+    - path: "tools/inference/assemble_evidence_bundle.py"
+    - path: "tests/tools/test_context_manifest.py"
+    - path: "tests/tools/test_evidence_bundle.py"
+    - path: "docs/INFERENCE_LEGEND_WP_COVERAGE.md"
+  forbidden_paths:
+    - "trading/"
+    - "execution/"
+    - "forecast/"
+    - "policy/"
+required_python_symbols: []
+expected_signal: >-
+  validate_context_manifest.py accepts the example and rejects an off-ladder
+  tier / inverted window; assemble_evidence_bundle.py emits a content-hashed
+  MEASURED_SYNTHETIC bundle from a real null and REFUSES a manifest claiming an
+  unearned tier; pytest tests/tools/test_context_manifest.py
+  tests/tools/test_evidence_bundle.py passes.
+measurement_command: >-
+  bash -c 'python -m pytest -q tests/tools/test_context_manifest.py tests/tools/test_evidence_bundle.py'
+signal_artifact: "tmp/inference_contracts.log"
+falsifier:
+  command: >-
+    python -c "import importlib.util,sys; s=importlib.util.spec_from_file_location('a','tools/inference/assemble_evidence_bundle.py'); m=importlib.util.module_from_spec(s); sys.modules['a']=m; s.loader.exec_module(m); cm=m._load_module('analytics/signals/claim_maturity.py','_cmf'); v=m._claim_card_violations({'tier':'REAL_DATA_SINGLE_SESSION','evidence_tokens':['observability','synthetic_measurement'],'boundary':'descriptor_only_not_predictor'}, cm); sys.exit(0 if not v else 1)"
+  description: >-
+    Feeds the bundle gate a claim card at REAL_DATA_SINGLE_SESSION backed only by
+    synthetic-tier tokens and exits 0 only if the gate ALLOWS it (the regressed,
+    fail-open state). On the correct tree the gate refuses it, so the command
+    exits non-zero — proving the tier check is falsifiable.
+rollback_command: "git revert --no-edit HEAD"
+rollback_verification_command: "git diff --exit-code tools/inference/assemble_evidence_bundle.py"
+memory_update_type: none
+ledger_path: ".claude/commit_acceptors/inference-context-and-bundle-contracts.yaml"
+report_path: "docs/reports/diff_bound_commit_acceptor_layer.md"
+evidence: []

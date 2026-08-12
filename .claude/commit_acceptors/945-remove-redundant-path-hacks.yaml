@@ -1,0 +1,104 @@
+# Diff-bound commit acceptor for issue #945 — remove redundant repo-root
+# sys.path hacks from the cross-asset-kuramoto script cluster.
+#
+# Each script imported only the packaged `core.*` namespace, so the
+# `sys.path.insert(0, REPO)` bootstrap was redundant: the imports already
+# resolve from the installed distribution. Removing it satisfies the #945
+# acceptance "no required command depends on accidental repository-root
+# PYTHONPATH" and shrinks the import-architecture ratchet 66 -> 59. No
+# behaviour change (REPO, derived from __file__, still drives file paths).
+
+id: 945-remove-redundant-path-hacks
+status: ACTIVE
+claim_type: refactor
+promise: >-
+  After this PR lands, the seven cross-asset-kuramoto scripts no longer
+  mutate sys.path: the redundant `if str(REPO) not in sys.path:
+  sys.path.insert(0, str(REPO))` bootstrap (and the now-unused `import sys`
+  where applicable) is removed. Their first-party imports (core.*) resolve
+  from the installed distribution alone, the import-architecture ratchet
+  baseline shrinks from 66 to 59 path-hacks, and behaviour is unchanged —
+  REPO is still computed from __file__ for artifact paths. No physics,
+  runtime, or forecasting logic changes.
+
+diff_scope:
+  changed_files:
+    - path: ".claude/commit_acceptors/945-remove-redundant-path-hacks.yaml"
+    - path: ".github/import_architecture_baseline.json"
+    - path: "scripts/analysis_cak_asset_attribution.py"
+    - path: "scripts/analysis_cak_benchmark_family.py"
+    - path: "scripts/analysis_cak_data_treatment.py"
+    - path: "scripts/analysis_cak_leave_one_out.py"
+    - path: "scripts/evaluate_cross_asset_kuramoto_shadow.py"
+    - path: "scripts/render_cross_asset_kuramoto_shadow_report.py"
+    - path: "scripts/run_cross_asset_kuramoto_shadow.py"
+  forbidden_paths:
+    - "trading/"
+    - "execution/"
+    - "forecast/"
+    - "policy/"
+    - "core/"
+    - "runtime/"
+    - "application/"
+
+required_python_symbols:
+  - "scripts/run_cross_asset_kuramoto_shadow.py::main"
+  - "scripts/render_cross_asset_kuramoto_shadow_report.py::main"
+  - "scripts/analysis_cak_asset_attribution.py::main"
+
+expected_signal: >-
+  python -m py_compile of the seven scripts succeeds; python
+  scripts/ci/check_import_architecture.py prints "Import-architecture
+  ratchet held: 19 src.* imports + 59 path-hacks (target 0)" and exits 0.
+
+measurement_command: >-
+  bash -c '
+    mkdir -p tmp &&
+    python -m py_compile
+      scripts/run_cross_asset_kuramoto_shadow.py
+      scripts/evaluate_cross_asset_kuramoto_shadow.py
+      scripts/render_cross_asset_kuramoto_shadow_report.py
+      scripts/analysis_cak_asset_attribution.py
+      scripts/analysis_cak_benchmark_family.py
+      scripts/analysis_cak_data_treatment.py
+      scripts/analysis_cak_leave_one_out.py &&
+    python scripts/ci/check_import_architecture.py | tee tmp/path_hacks_945.log
+  '
+
+signal_artifact: "tmp/path_hacks_945.log"
+
+falsifier:
+  command: >-
+    bash -c '
+      cd /tmp &&
+      python -c "import core.cross_asset_kuramoto.engine, core.cross_asset_kuramoto.invariants, core.cross_asset_kuramoto.signal"
+    '
+  description: >-
+    From a neutral working directory (no repo-root on sys.path), imports the
+    exact core.* modules the scripts depend on. Succeeds (exit 0) only when
+    they resolve from the installed distribution — proving the removed
+    sys.path bootstrap was redundant and the scripts work after a normal
+    install. Fails if the package is not properly installed.
+
+rollback_command: >-
+  bash -c '
+    git checkout origin/main --
+      .github/import_architecture_baseline.json
+      scripts/analysis_cak_asset_attribution.py
+      scripts/analysis_cak_benchmark_family.py
+      scripts/analysis_cak_data_treatment.py
+      scripts/analysis_cak_leave_one_out.py
+      scripts/evaluate_cross_asset_kuramoto_shadow.py
+      scripts/render_cross_asset_kuramoto_shadow_report.py
+      scripts/run_cross_asset_kuramoto_shadow.py &&
+    git rm -f .claude/commit_acceptors/945-remove-redundant-path-hacks.yaml
+  '
+
+rollback_verification_command: >-
+  bash -c '
+    grep -q "sys.path.insert" scripts/run_cross_asset_kuramoto_shadow.py
+  '
+
+memory_update_type: append
+ledger_path: ".claude/commit_acceptors/945-remove-redundant-path-hacks.yaml"
+report_path: "tmp/path_hacks_945.log"

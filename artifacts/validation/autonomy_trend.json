@@ -1,0 +1,32 @@
+{
+  "entries": [
+    {
+      "cycle_schema_version": "autonomy_cycle.v1",
+      "cycle_sha256": "2b00fbd8c4a83420c8bccae951b0e5a9fc740c1985c21b5d838ddaa44908b573",
+      "decision_state": "READY_FOR_NEXT_CYCLE",
+      "phase_count": 3,
+      "sequence": 1,
+      "status_counts": {
+        "OK": 3
+      },
+      "status_vector": [
+        "OK",
+        "OK",
+        "OK"
+      ]
+    }
+  ],
+  "schema_version": "autonomy_trend.v1",
+  "summary": {
+    "decision_counts": {
+      "READY_FOR_NEXT_CYCLE": 1
+    },
+    "latest_cycle_sha256": "2b00fbd8c4a83420c8bccae951b0e5a9fc740c1985c21b5d838ddaa44908b573",
+    "latest_decision_state": "READY_FOR_NEXT_CYCLE",
+    "phase_count_total": 3,
+    "status_counts": {
+      "OK": 3
+    },
+    "total_cycles": 1
+  }
+}

@@ -1,3 +1,5 @@
+# Copyright (c) 2023-2026 Yaroslav Vasylenko (neuron7xLab)
+# SPDX-License-Identifier: MIT
 """Adaptive Market Mind (AMM) - precision-weighted prediction error analyzer.
 
 This module implements a neurobiologically-inspired market prediction system that
@@ -123,9 +125,7 @@ class AdaptiveMarketMind:
         pi = float(pi0 * gamma * hric)
         return float(min(max(pi, self.cfg.pi_min), self.cfg.pi_max))
 
-    def update(
-        self, x_t: float, R_t: float, kappa_t: float, H_t: float | None = None
-    ) -> dict:
+    def update(self, x_t: float, R_t: float, kappa_t: float, H_t: float | None = None) -> dict:
         x = Float(x_t)
         R = Float(R_t)
         kappa = Float(kappa_t)
@@ -154,9 +154,7 @@ class AdaptiveMarketMind:
         burst = Float(max(0.0, float(a) - float(self._theta)))
         self._S = Float(self.cfg.lam_S) * self._S + Float(1.0 - self.cfg.lam_S) * burst
 
-        self._k = Float(
-            float(self._k) * math.exp(self.cfg.eta_k * (float(self._S) - self.cfg.rho))
-        )
+        self._k = Float(float(self._k) * math.exp(self.cfg.eta_k * (float(self._S) - self.cfg.rho)))
         self._theta = Float(
             float(self._theta) + self.cfg.eta_theta * (float(self._S) - self.cfg.rho)
         )
@@ -182,9 +180,7 @@ class AdaptiveMarketMind:
         async with self._alock:
             if offload:
                 loop = asyncio.get_running_loop()
-                return await loop.run_in_executor(
-                    None, lambda: self.update(x_t, R_t, kappa_t, H_t)
-                )
+                return await loop.run_in_executor(None, lambda: self.update(x_t, R_t, kappa_t, H_t))
             return self.update(x_t, R_t, kappa_t, H_t)
 
     @staticmethod

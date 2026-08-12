@@ -1,0 +1,71 @@
+# Diff-bound acceptor — add a goodness-of-fit (R²) scaling-region gate to the
+# Rosenstein maximum-Lyapunov-exponent estimator (INV-LE3).
+#
+# Closes a scientific-debt gap: lyapunov_exponent.py returned the least-squares
+# slope of ln(divergence) vs time over a hard-coded "first 40%" window with NO
+# goodness-of-fit gate. Rosenstein (1993) is valid only on the linear scaling
+# region; a noisy/curved region yielded a meaningless lambda that silently
+# passed. The fix computes R² of the fit and fails closed when R² < R2_MIN
+# (the curve is not in a clean scaling region), registering INV-LE3.
+
+id: lyapunov-r2-scaling-gate
+status: ACTIVE
+claim_type: correctness
+promise: >-
+  core.physics.lyapunov_exponent gates the Rosenstein MLE slope on the
+  coefficient of determination R² of the ln(divergence)-vs-time least-squares
+  fit: when R² < R2_MIN the divergence curve is not a clean linear scaling
+  region and the estimator fails closed (no confident lambda is emitted) rather
+  than returning a slope from a non-scaling region. New invariant INV-LE3
+  (algebraic) registers this; the invariant count moves 107 -> 108 and is in
+  sync across INVARIANTS.yaml, CLAUDE.md, README.md, BASELINE.md, and the two CI
+  witnesses. INV-LE1 (finite) and INV-LE2 (sign) behaviour is preserved; a clean
+  chaotic series still yields R² >= R2_MIN and lambda > 0, while pure noise / a
+  curved divergence is flagged non-scaling.
+diff_scope:
+  changed_files:
+    - path: ".claude/commit_acceptors/lyapunov-r2-scaling-gate.yaml"
+    - path: ".claude/physics/INVARIANTS.yaml"
+    - path: "core/physics/lyapunov_exponent.py"
+    - path: "tests/unit/physics/test_T22_lyapunov_spectral.py"
+    - path: "tests/unit/physics/test_mle_finite_guard.py"
+    - path: "scripts/ci/prove_repo_integrity.sh"
+    - path: "scripts/ci/evidence_gate.sh"
+    - path: "CLAIMS.md"
+    - path: "artifacts/claims_hashes.json"
+    - path: "docs/architecture/claim_graph.json"
+  forbidden_paths:
+    - "trading/"
+    - "execution/"
+    - "forecast/"
+    - "policy/"
+required_python_symbols: []
+expected_signal: >-
+  pytest tests/unit/physics/test_T22_lyapunov_spectral.py passes (clean chaos ->
+  R² >= R2_MIN and lambda > 0; non-scaling input -> flagged); count_invariants.py
+  prints 108 and check_invariant_count_sync exits 0; validate_tests --self-check
+  PASSED; mypy --strict + ruff + black clean.
+measurement_command: >-
+  bash -c 'set -e; mkdir -p tmp;
+  python -m pytest tests/unit/physics/test_T22_lyapunov_spectral.py -q | tee tmp/lyapunov_r2_gate.log;
+  python scripts/check_invariant_count_sync.py | tee -a tmp/lyapunov_r2_gate.log'
+signal_artifact: "tmp/lyapunov_r2_gate.log"
+falsifier:
+  command: >-
+    bash -c 'python -c "import numpy as np; from core.physics.lyapunov_exponent import *" 2>/dev/null;
+    grep -q "INV-LE3" .claude/physics/INVARIANTS.yaml && grep -qiE "r2_min|R2_MIN" core/physics/lyapunov_exponent.py && exit 1 || exit 0'
+  description: >-
+    Exits 0 (falsification) iff INV-LE3 / the R2_MIN scaling gate is absent from
+    the registry or the module — i.e. the gate was removed. On the green path
+    both are present so this exits 1, proving the gate is real and falsifiable.
+rollback_command: >-
+  git checkout HEAD~1 -- core/physics/lyapunov_exponent.py
+  tests/unit/physics/test_T22_lyapunov_spectral.py .claude/physics/INVARIANTS.yaml
+  CLAUDE.md README.md BASELINE.md scripts/ci/prove_repo_integrity.sh
+  scripts/ci/evidence_gate.sh .claude/physics/LYAPUNOV_EXPONENT_THEORY.md
+  .claude/commit_acceptors/lyapunov-r2-scaling-gate.yaml
+rollback_verification_command: "git diff --exit-code core/physics/lyapunov_exponent.py"
+memory_update_type: append
+ledger_path: ".claude/commit_acceptors/lyapunov-r2-scaling-gate.yaml"
+report_path: ".claude/physics/LYAPUNOV_EXPONENT_THEORY.md"
+evidence: []

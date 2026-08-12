@@ -1,0 +1,280 @@
+{
+  "checks": [
+    {
+      "access_method": "public_bulk_download",
+      "bytes_downloaded": 0,
+      "content_type": "text/html; charset=utf-8",
+      "http_status": 200,
+      "official_url": "https://www.bis.org/statistics/consstats.htm",
+      "reason": "HTTP 200 on HEAD probe",
+      "smoke_result": "PASS",
+      "source_id": "BIS_CBS"
+    },
+    {
+      "access_method": "public_per_bank_download",
+      "bytes_downloaded": 0,
+      "content_type": "text/html; charset=utf-8",
+      "http_status": 200,
+      "official_url": "https://cdr.ffiec.gov/public/",
+      "reason": "HTTP 200 on HEAD probe",
+      "smoke_result": "PASS",
+      "source_id": "FDIC_CALL_REPORTS"
+    },
+    {
+      "access_method": "public_ecb_data_portal_api",
+      "bytes_downloaded": 0,
+      "content_type": "text/html",
+      "http_status": 200,
+      "official_url": "https://data.ecb.europa.eu/data/datasets/CBD2",
+      "reason": "HTTP 200 on HEAD probe (P1B repair)",
+      "smoke_result": "PASS",
+      "source_id": "ECB_CBD"
+    },
+    {
+      "access_method": "public_ffiec_nic_download",
+      "bytes_downloaded": 0,
+      "content_type": "text/html; charset=utf-8",
+      "http_status": 200,
+      "official_url": "https://www.federalreserve.gov/apps/mdrm/data-dictionary",
+      "reason": "HTTP 200 on HEAD probe",
+      "smoke_result": "PASS",
+      "source_id": "FED_Y9C"
+    },
+    {
+      "access_method": "public_daily_publication",
+      "bytes_downloaded": 0,
+      "content_type": "text/html; charset=utf-8",
+      "http_status": 200,
+      "official_url": "https://www.newyorkfed.org/markets/reference-rates/sofr",
+      "reason": "HTTP 200 on HEAD probe",
+      "smoke_result": "PASS",
+      "source_id": "NYFED_SOFR"
+    },
+    {
+      "access_method": "public_dashboard_plus_csv_export",
+      "bytes_downloaded": 0,
+      "content_type": "text/html",
+      "http_status": 200,
+      "official_url": "https://www.financialresearch.gov/short-term-funding-monitor/",
+      "reason": "HTTP 200 on HEAD probe",
+      "smoke_result": "PASS",
+      "source_id": "OFR_REPO_DATA"
+    },
+    {
+      "access_method": "public_daily_publication_plus_FRED_mirror",
+      "bytes_downloaded": 0,
+      "content_type": "text/html",
+      "http_status": 200,
+      "official_url": "https://www.federalreserve.gov/releases/h15/",
+      "reason": "HTTP 200 on HEAD probe",
+      "smoke_result": "PASS",
+      "source_id": "FED_H15"
+    },
+    {
+      "access_method": "public_aggregates_only_micro_data_restricted",
+      "bytes_downloaded": 0,
+      "content_type": "text/html; charset=UTF-8",
+      "http_status": 200,
+      "official_url": "https://www.ecb.europa.eu/stats/financial_markets_and_interest_rates/money_market/html/index.en.html",
+      "reason": "license boundary requires manual review; HEAD probe ran but no data fetched",
+      "smoke_result": "SKIPPED_LICENSE",
+      "source_id": "ECB_MMSR"
+    },
+    {
+      "access_method": "public_api_with_free_key",
+      "bytes_downloaded": 0,
+      "content_type": "text/html; charset=UTF-8",
+      "http_status": 200,
+      "official_url": "https://fred.stlouisfed.org/",
+      "reason": "HTTP 200 on HEAD probe",
+      "smoke_result": "PASS",
+      "source_id": "FRED"
+    },
+    {
+      "access_method": "public_api_with_free_key",
+      "bytes_downloaded": 0,
+      "content_type": "text/html; charset=UTF-8",
+      "http_status": 200,
+      "official_url": "https://alfred.stlouisfed.org/",
+      "reason": "HTTP 200 on HEAD probe",
+      "smoke_result": "PASS",
+      "source_id": "ALFRED"
+    },
+    {
+      "access_method": "public_bulk_download_xlsx_csv",
+      "bytes_downloaded": 0,
+      "content_type": "text/html",
+      "http_status": 200,
+      "official_url": "https://www.philadelphiafed.org/surveys-and-data/real-time-data-research/real-time-data-set-for-macroeconomists",
+      "reason": "HTTP 200 on HEAD probe (P1B new source)",
+      "smoke_result": "PASS",
+      "source_id": "PHILLY_FED_RTDSM"
+    },
+    {
+      "access_method": "public_csv_download",
+      "bytes_downloaded": 0,
+      "content_type": "text/html",
+      "http_status": 200,
+      "official_url": "https://www.financialresearch.gov/financial-stress-index/",
+      "reason": "HTTP 200 on HEAD probe",
+      "smoke_result": "PASS",
+      "source_id": "OFR_FSI"
+    },
+    {
+      "access_method": "public_via_FRED",
+      "bytes_downloaded": 0,
+      "content_type": "text/html; charset=UTF-8",
+      "http_status": 200,
+      "official_url": "https://fred.stlouisfed.org/series/STLFSI4",
+      "reason": "HTTP 200 on HEAD probe",
+      "smoke_result": "PASS",
+      "source_id": "STLFSI"
+    },
+    {
+      "access_method": "public_via_FRED",
+      "bytes_downloaded": 0,
+      "content_type": "text/html; charset=UTF-8",
+      "http_status": 200,
+      "official_url": "https://fred.stlouisfed.org/series/KCFSI",
+      "reason": "HTTP 200 on HEAD probe",
+      "smoke_result": "PASS",
+      "source_id": "KCFSI"
+    },
+    {
+      "access_method": "public_daily_via_FRED",
+      "bytes_downloaded": 0,
+      "content_type": "text/html; charset=UTF-8",
+      "http_status": 200,
+      "official_url": "https://fred.stlouisfed.org/series/VIXCLS",
+      "reason": "HTTP 200 on HEAD probe",
+      "smoke_result": "PASS",
+      "source_id": "CBOE_VIX"
+    },
+    {
+      "access_method": "public_summary_full_history_licensed",
+      "bytes_downloaded": 0,
+      "content_type": "text/html",
+      "http_status": 200,
+      "official_url": "https://www.theice.com/iba",
+      "reason": "HTTP 200 on HEAD probe (P1B repair); license boundary requires manual review",
+      "smoke_result": "SKIPPED_LICENSE",
+      "source_id": "ICAP_MOVE"
+    },
+    {
+      "access_method": "public_pdf_plus_associated_csv_data",
+      "bytes_downloaded": 0,
+      "content_type": "text/html",
+      "http_status": 200,
+      "official_url": "https://www.bis.org/publ/quarterly.htm",
+      "reason": "HTTP 200 on HEAD probe (P1B repair; redirects to current issue r_qt2603.htm)",
+      "smoke_result": "PASS",
+      "source_id": "BIS_QR_NETWORK"
+    },
+    {
+      "access_method": "public_pdf_download",
+      "bytes_downloaded": 0,
+      "content_type": "text/html",
+      "http_status": 200,
+      "official_url": "https://www.financialresearch.gov/working-papers/",
+      "reason": "HTTP 200 on HEAD probe",
+      "smoke_result": "PASS",
+      "source_id": "OFR_WP_NETWORK"
+    },
+    {
+      "access_method": "public_announcement_plus_FRED_mirror_USREC",
+      "bytes_downloaded": 0,
+      "content_type": "text/html; charset=UTF-8",
+      "http_status": 200,
+      "official_url": "https://www.nber.org/research/business-cycle-dating",
+      "reason": "HTTP 200 on HEAD probe",
+      "smoke_result": "PASS",
+      "source_id": "NBER_RECESSION"
+    },
+    {
+      "access_method": "public_pdf_plus_html",
+      "bytes_downloaded": 0,
+      "content_type": "text/html",
+      "http_status": 200,
+      "official_url": "https://www.federalreserve.gov/publications/financial-stability-report.htm",
+      "reason": "HTTP 200/206 on HEAD probe (P1B repair)",
+      "smoke_result": "PASS",
+      "source_id": "FED_TIMELINE"
+    },
+    {
+      "access_method": "public_pdf",
+      "bytes_downloaded": 0,
+      "content_type": "text/html; charset=UTF-8",
+      "http_status": 200,
+      "official_url": "https://www.ecb.europa.eu/pub/financial-stability/fsr/html/index.en.html",
+      "reason": "HTTP 200 on HEAD probe",
+      "smoke_result": "PASS",
+      "source_id": "ECB_FSR"
+    },
+    {
+      "access_method": "public_pdf_html",
+      "bytes_downloaded": 0,
+      "content_type": "text/html",
+      "http_status": 200,
+      "official_url": "https://www.bankofengland.co.uk/financial-stability-report/2022/december-2022",
+      "reason": "HTTP 200 on HEAD probe (P1B repair; canonical FSR Dec 2022)",
+      "smoke_result": "PASS",
+      "source_id": "BOE_LDI_REVIEW"
+    },
+    {
+      "access_method": "public_preprint_plus_published_journals",
+      "bytes_downloaded": 0,
+      "content_type": "text/html; charset=utf-8",
+      "http_status": 200,
+      "official_url": "https://www.jstor.org/",
+      "reason": "HTTP 200 on HEAD probe",
+      "smoke_result": "PASS",
+      "source_id": "LIT_INTERBANK_CONTAGION"
+    },
+    {
+      "access_method": "public_pdf",
+      "bytes_downloaded": 0,
+      "content_type": "text/html",
+      "http_status": 200,
+      "official_url": "https://www.fdicoig.gov/",
+      "reason": "HTTP 200 on HEAD probe (P1B incidental repair; specific MLR path unrecoverable)",
+      "smoke_result": "PASS",
+      "source_id": "FDIC_SVB_POSTMORTEM"
+    },
+    {
+      "access_method": "public_preprint_plus_published",
+      "bytes_downloaded": 0,
+      "content_type": "text/html;charset=UTF-8",
+      "http_status": 200,
+      "official_url": "https://www.bundesbank.de/en/publications/research/discussion-papers",
+      "reason": "HTTP 200 on HEAD probe",
+      "smoke_result": "PASS",
+      "source_id": "LIT_NETWORK_RECON"
+    },
+    {
+      "access_method": "public_preprint_plus_published",
+      "bytes_downloaded": 0,
+      "content_type": "text/html; charset=UTF-8",
+      "http_status": 200,
+      "official_url": "https://www.nber.org/papers",
+      "reason": "HTTP 200 on HEAD probe",
+      "smoke_result": "PASS",
+      "source_id": "LIT_REPO_FUNDING"
+    }
+  ],
+  "counts": {
+    "FAIL": 0,
+    "PARTIAL": 0,
+    "PASS": 24,
+    "SKIPPED_LICENSE": 2,
+    "SKIPPED_MANUAL": 0
+  },
+  "generated_at": "2026-05-14T20:00:00Z",
+  "max_bytes_per_probe": 4096,
+  "no_large_downloads": true,
+  "no_private_data": true,
+  "pr_lineage": "D-002J-P1B",
+  "probe_method": "urllib.request HEAD (10s timeout) with GET-Range fallback bounded at 4 KB",
+  "schema_version": "D002J-SOURCE-ACCESS-SMOKE-v1",
+  "study_id": "D-002J",
+  "total_bytes_downloaded": 0
+}

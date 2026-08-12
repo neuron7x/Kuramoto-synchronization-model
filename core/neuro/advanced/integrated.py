@@ -1,3 +1,5 @@
+# Copyright (c) 2023-2026 Yaroslav Vasylenko (neuron7xLab)
+# SPDX-License-Identifier: MIT
 """Integrated neuro trading system built on top of DPA/AIC/NRE."""
 
 from __future__ import annotations
@@ -54,10 +56,7 @@ class MultiscaleFractalAnalyzer:
         if not asset_series:
             raise ValueError("asset_series must contain at least one asset")
 
-        tasks = [
-            self.analyze(np.asarray(series, dtype=float))
-            for series in asset_series.values()
-        ]
+        tasks = [self.analyze(np.asarray(series, dtype=float)) for series in asset_series.values()]
         assets = list(asset_series.keys())
         results = await asyncio.gather(*tasks)
         per_asset = {asset: result for asset, result in zip(assets, results)}
@@ -116,9 +115,7 @@ class MultiscaleFractalAnalyzer:
             "stability": float(np.clip(stability, 0.0, 1.0)),
         }
 
-    def _aggregate_features(
-        self, features: Mapping[str, Dict[str, Any]]
-    ) -> Dict[str, Any]:
+    def _aggregate_features(self, features: Mapping[str, Dict[str, Any]]) -> Dict[str, Any]:
         if not features:
             raise ValueError("Cannot aggregate empty feature mapping")
 
@@ -219,12 +216,8 @@ class CandidateGenerator:
         for asset, features in asset_features.items():
             trend = float(features.get("trend_strength", global_trend))
             volatility = float(features.get("volatility", global_volatility))
-            scaling = float(
-                features.get("dynamics", {}).get("scaling_exponent", global_scaling)
-            )
-            stability = float(
-                features.get("dynamics", {}).get("stability", global_stability)
-            )
+            scaling = float(features.get("dynamics", {}).get("scaling_exponent", global_scaling))
+            stability = float(features.get("dynamics", {}).get("stability", global_stability))
 
             persistence_bias = float(1.0 + (scaling - 0.5) * 0.6)
             stability_bias = float(0.8 + 0.4 * stability)
@@ -236,8 +229,7 @@ class CandidateGenerator:
                 (1.0 - abs(trend)) * 0.02 * stability_bias
                 + (
                     0.015
-                    if features.get("regime", aggregated_features.get("regime"))
-                    == "choppy"
+                    if features.get("regime", aggregated_features.get("regime")) == "choppy"
                     else 0.0
                 )
             )
@@ -288,9 +280,7 @@ class NeuroRiskManager:
         confidence = float(neuro_context.get("overall_confidence", 0.6))
         volatility = float(market_context.get("volatility", 0.0))
 
-        damping = max(0.35, min(1.0, 0.95 / (1.0 + 5.0 * volatility))) * max(
-            0.4, confidence
-        )
+        damping = max(0.35, min(1.0, 0.95 / (1.0 + 5.0 * volatility))) * max(0.4, confidence)
         asset = decision.get("asset")
         asset_context = None
         if asset:
@@ -303,9 +293,7 @@ class NeuroRiskManager:
             damping *= self._cfg.slo_emergency_downscale
 
         bounds = self._cfg.policy_bounds
-        new_size = float(
-            np.clip(size * damping, bounds.min_position, bounds.max_position)
-        )
+        new_size = float(np.clip(size * damping, bounds.min_position, bounds.max_position))
         new_risk = float(np.clip(risk, bounds.min_risk, bounds.max_risk))
 
         sl_dist = float(np.clip(2.5 * volatility, 0.003, 0.08))
@@ -325,37 +313,27 @@ class NeuroRiskManager:
         if asset_context:
             context.update(asset_context)
 
-        scaling = float(
-            context.get("fractal_scaling", market_context.get("fractal_scaling", 0.5))
-        )
+        scaling = float(context.get("fractal_scaling", market_context.get("fractal_scaling", 0.5)))
         stability = float(
             np.clip(
-                context.get(
-                    "fractal_stability", market_context.get("fractal_stability", 0.5)
-                ),
+                context.get("fractal_stability", market_context.get("fractal_stability", 0.5)),
                 0.0,
                 1.0,
             )
         )
-        dimension = float(
-            context.get("fractal_dim", market_context.get("fractal_dim", 1.5))
-        )
+        dimension = float(context.get("fractal_dim", market_context.get("fractal_dim", 1.5)))
 
         persistence = float(np.clip(1.0 + (scaling - 0.5) * 1.4, 0.6, 1.4))
         stability_factor = 0.6 + 0.4 * stability
         dimension_factor = float(np.clip(1.0 - 0.25 * abs(dimension - 1.5), 0.5, 1.1))
 
-        return float(
-            np.clip(persistence * stability_factor * dimension_factor, 0.5, 1.25)
-        )
+        return float(np.clip(persistence * stability_factor * dimension_factor, 0.5, 1.25))
 
 
 class NeuroDecisionIntegrator:
     """Ranks modulated decisions using configurable weights."""
 
-    def __init__(
-        self, config: NeuroAdvancedConfig, nre: NeuroplasticReinforcementEngine
-    ):
+    def __init__(self, config: NeuroAdvancedConfig, nre: NeuroplasticReinforcementEngine):
         self._cfg = config
         self._nre = nre
 
@@ -374,12 +352,8 @@ class NeuroDecisionIntegrator:
             edge = float(decision.get("expected_edge", 0.0))
             size = float(decision.get("position_size", 0.0))
             inverse_risk = 1.0 / (float(decision.get("risk_level", 1.0)) + 1e-9)
-            confidence = float(
-                modulation.get("final_confidence", decision.get("confidence", 0.6))
-            )
-            context_pref = self._nre.context_preference(
-                decision["strategy"], market_context
-            )
+            confidence = float(modulation.get("final_confidence", decision.get("confidence", 0.6)))
+            context_pref = self._nre.context_preference(decision["strategy"], market_context)
 
             score = (
                 weights.edge * edge
@@ -419,9 +393,7 @@ class EnhancedFractalNeuroeconomicCore:
                 "stabilize",
                 "pause_and_audit",
             ),
-            exploration_coef=max(
-                0.6, min(1.4, config.decision_weights.confidence + 0.5)
-            ),
+            exploration_coef=max(0.6, min(1.4, config.decision_weights.confidence + 0.5)),
         )
 
     @property
@@ -459,9 +431,7 @@ class EnhancedFractalNeuroeconomicCore:
                 ),
                 "fractal_dim": data.get("fractal_dim", fractal.get("fractal_dim", 1.5)),
                 "volatility": data.get("volatility", fractal.get("volatility", 0.0)),
-                "trend_strength": data.get(
-                    "trend_strength", fractal.get("trend_strength", 0.0)
-                ),
+                "trend_strength": data.get("trend_strength", fractal.get("trend_strength", 0.0)),
                 "regime": data.get("regime", fractal.get("regime", "normal")),
             }
             for asset, data in asset_features.items()
@@ -498,17 +468,13 @@ class EnhancedFractalNeuroeconomicCore:
                 "trend_strength": fractal["trend_strength"],
             },
         )
-        candidates = self._candidate_generator.generate(
-            asset_features, fractal, base_strategies
-        )
+        candidates = self._candidate_generator.generate(asset_features, fractal, base_strategies)
 
         modulated: List[Dict[str, Any]] = []
         for candidate in candidates:
             asset = candidate["asset"]
             strategy = candidate["strategy"]
-            dopamine_risk = neuro_context["dopamine_states"].get(
-                f"{asset}_{strategy}", 1.0
-            )
+            dopamine_risk = neuro_context["dopamine_states"].get(f"{asset}_{strategy}", 1.0)
             size_mod = neuro_context["agency_modulator"]
             strategy_weight = float(self._nre.get_strategy_weight(strategy))
 
@@ -532,18 +498,12 @@ class EnhancedFractalNeuroeconomicCore:
                 "strategy_weight": strategy_weight,
                 "final_confidence": adjusted["confidence"],
             }
-            adjusted.setdefault(
-                "fractal_features", candidate.get("fractal_features", {})
-            )
-            adjusted = await self._risk_manager.apply(
-                adjusted, neuro_context, market_context
-            )
+            adjusted.setdefault("fractal_features", candidate.get("fractal_features", {}))
+            adjusted = await self._risk_manager.apply(adjusted, neuro_context, market_context)
             self._apply_motivation_modulation(adjusted, motivation_state)
             modulated.append(adjusted)
 
-        final_decision = await self._integrator.integrate(
-            modulated, neuro_context, market_context
-        )
+        final_decision = await self._integrator.integrate(modulated, neuro_context, market_context)
         return {
             "final_decision": final_decision,
             "modulated_candidates": modulated,
@@ -606,9 +566,7 @@ class EnhancedFractalNeuroeconomicCore:
                 )
             ),
             "fractal_stability": float(
-                fractal.get("dynamics", {}).get(
-                    "stability", fractal.get("fractal_stability", 0.5)
-                )
+                fractal.get("dynamics", {}).get("stability", fractal.get("fractal_stability", 0.5))
             ),
             "persistence_index": float(fractal.get("persistence_index", 0.5)),
             "asset_fractal_features": dict(asset_fractals),
@@ -640,9 +598,7 @@ class EnhancedFractalNeuroeconomicCore:
             profit_magnitude=float(max(0.0, trade_data.get("pnl_percentage", 0.0))),
         )
 
-    def _extract_price_series(
-        self, market_data: Dict[str, Any]
-    ) -> Dict[str, np.ndarray]:
+    def _extract_price_series(self, market_data: Dict[str, Any]) -> Dict[str, np.ndarray]:
         series: Dict[str, np.ndarray] = {}
         if isinstance(market_data.get("prices"), list):
             series["ASSET"] = np.asarray(market_data["prices"], dtype=float)
@@ -673,13 +629,9 @@ class EnhancedFractalNeuroeconomicCore:
         )
         signal = motivation.motivation_signal
         if motivation.action == "exploit":
-            candidate["expected_edge"] = float(
-                candidate["expected_edge"] * (1.0 + 0.1 * signal)
-            )
+            candidate["expected_edge"] = float(candidate["expected_edge"] * (1.0 + 0.1 * signal))
         elif motivation.action == "explore":
-            candidate["confidence"] = float(
-                candidate["confidence"] * (1.0 + 0.05 * abs(signal))
-            )
+            candidate["confidence"] = float(candidate["confidence"] * (1.0 + 0.05 * abs(signal)))
         elif motivation.action == "deepen":
             candidate["position_size"] = float(
                 np.clip(
@@ -708,9 +660,7 @@ class IntegratedNeuroTradingSystem:
     def __init__(self, config: Optional[NeuroAdvancedConfig] = None):
         self._cfg = config or NeuroAdvancedConfig()
         self._core = EnhancedFractalNeuroeconomicCore(self._cfg)
-        self._monitor = (
-            NeuroStateMonitor(self._cfg) if self._cfg.monitoring_enabled else None
-        )
+        self._monitor = NeuroStateMonitor(self._cfg) if self._cfg.monitoring_enabled else None
         self._last_update: Optional[str] = None
 
     async def process_trading_cycle(
@@ -722,9 +672,7 @@ class IntegratedNeuroTradingSystem:
             self._monitor.record(
                 "decision",
                 {
-                    "confidence": result["neuro_context"].get(
-                        "overall_confidence", 0.0
-                    ),
+                    "confidence": result["neuro_context"].get("overall_confidence", 0.0),
                     "volatility": result["fractal_features"].get("volatility", 0.0),
                 },
             )
@@ -735,9 +683,7 @@ class IntegratedNeuroTradingSystem:
             "system_health": self._health_snapshot(),
         }
 
-    async def update_from_execution(
-        self, execution_results: Dict[str, Any]
-    ) -> Dict[str, Any]:
+    async def update_from_execution(self, execution_results: Dict[str, Any]) -> Dict[str, Any]:
         await self._core.update_neuro_states(execution_results)
         updates = {
             "dpa": self._core.dopamine.state(),
@@ -765,20 +711,12 @@ class IntegratedNeuroTradingSystem:
                 payload = json.load(file)
             if "dpa" in payload:
                 dopamine_state = payload["dpa"]
-                self._core.dopamine._expected = dopamine_state.get(
-                    "expected_rewards", {}
-                )
-                self._core.dopamine._dopamine_levels = dopamine_state.get(
-                    "dopamine_levels", {}
-                )
+                self._core.dopamine._expected = dopamine_state.get("expected_rewards", {})
+                self._core.dopamine._dopamine_levels = dopamine_state.get("dopamine_levels", {})
             if "aic" in payload:
                 agency_state = payload["aic"]
-                self._core.agency._confidence = agency_state.get(
-                    "control_confidence", 0.7
-                )
-                self._core.agency._insula_activation = agency_state.get(
-                    "insula_activation", 0.0
-                )
+                self._core.agency._confidence = agency_state.get("control_confidence", 0.7)
+                self._core.agency._insula_activation = agency_state.get("insula_activation", 0.0)
             if "nre" in payload:
                 nre_state = payload["nre"]
                 self._core.neuroplasticity._weights = defaultdict(
@@ -820,19 +758,12 @@ class IntegratedNeuroTradingSystem:
             health["aic"] = "critical"
         elif aic_state.get("control_confidence", 0.6) < 0.4:
             health["aic"] = "warning"
-        if (
-            nre_state.get("avg_strategy_weight", 0.5)
-            < thresholds["strategy_stagnation"]
-        ):
+        if nre_state.get("avg_strategy_weight", 0.5) < thresholds["strategy_stagnation"]:
             health["nre"] = "warning"
 
-        if any(
-            status == "critical" for status in health.values() if status != "healthy"
-        ):
+        if any(status == "critical" for status in health.values() if status != "healthy"):
             health["overall"] = "critical"
-        elif any(
-            status == "warning" for status in health.values() if status != "healthy"
-        ):
+        elif any(status == "warning" for status in health.values() if status != "healthy"):
             health["overall"] = "warning"
         return health
 

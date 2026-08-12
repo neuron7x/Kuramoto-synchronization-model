@@ -1,0 +1,63 @@
+# Diff-bound commit acceptor for the ricci_microstructure_v1
+# external-reproducibility guard capsule.
+#
+# PR #998 added an `external_reproducibility` block to the line contract (a
+# credential-free public-placeholder fallback + replay command) but committed no
+# test that exercises it. The block could rot (artifact deleted / command
+# renamed) or be silently upgraded into a real-reproducibility claim by swapping
+# in non-zero hashes. Doctrine: "No public fallback -> No external
+# reproducibility." This adds the missing guard — test-only, no runtime change,
+# no claim promotion. It pins the BLOCKED/INSTRUMENTED verdict, not a result.
+#
+# The guard asserts: the declared fallback artifact replays clean via the exact
+# contract command (V4/V2); the artifact is a zero-hash HYPOTHESIS/NOT_RUN
+# placeholder that can never masquerade as real (V9 negative-evidence); and the
+# contract keeps status PARTIAL / PUBLIC_PLACEHOLDER with the synthetic ceiling
+# pinned at INSTRUMENTED (V1 claim safety). Verified non-vacuous: mutating the
+# artifact to a non-zero hash / promoted tier, or the contract to status FULL,
+# fails the capsule.
+
+id: ricci-external-repro-capsule-guard
+status: ACTIVE
+claim_type: fail_closed
+promise: >-
+  After this PR lands, the ricci_microstructure_v1 external_reproducibility block
+  is fail-closed guarded: the declared public placeholder artifact must exist and
+  replay clean via its contract command, must remain a zero-hash HYPOTHESIS/
+  NOT_RUN placeholder, and the contract must keep status PARTIAL /
+  PUBLIC_PLACEHOLDER with synthetic_max_state INSTRUMENTED — so the fallback can
+  neither rot nor be promoted into a real-reproducibility claim.
+diff_scope:
+  changed_files:
+    - path: ".claude/commit_acceptors/ricci-external-repro-capsule-guard.yaml"
+    - path: "tests/research_lines/test_ricci_external_reproducibility_capsule.py"
+  forbidden_paths:
+    - "trading/"
+    - "execution/"
+    - "forecast/"
+    - "policy/"
+    - "core/physics/"
+    - "core/kuramoto/"
+required_python_symbols: []
+expected_signal: >-
+  `pytest tests/research_lines/test_ricci_external_reproducibility_capsule.py`
+  reports 4 passing tests; mutating the placeholder artifact (non-zero
+  data_sha256 / promoted tier) or the contract (status FULL) fails the capsule.
+measurement_command: >-
+  python -m pytest tests/research_lines/test_ricci_external_reproducibility_capsule.py -q
+signal_artifact: "tests/research_lines/test_ricci_external_reproducibility_capsule.py"
+falsifier:
+  command: >-
+    grep -qE "status:\s*FULL" research_lines/ricci_microstructure_v1/contract.yaml
+  description: >-
+    Succeeds only if the line falsely declares FULL external reproducibility;
+    on the green path the status is PARTIAL so this probe exits non-zero,
+    proving the promotion-blocker is falsifiable.
+rollback_command: >-
+  git revert --no-edit HEAD
+rollback_verification_command: >-
+  git diff --exit-code tests/research_lines/test_ricci_external_reproducibility_capsule.py
+memory_update_type: none
+ledger_path: ".claude/commit_acceptors/ricci-external-repro-capsule-guard.yaml"
+report_path: "docs/reports/diff_bound_commit_acceptor_layer.md"
+evidence: []

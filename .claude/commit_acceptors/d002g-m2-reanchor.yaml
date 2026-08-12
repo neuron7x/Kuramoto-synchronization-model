@@ -1,0 +1,72 @@
+# Diff-bound commit acceptor — D-002G/M2 lock re-anchor after #1174 (#1183).
+#
+# The restored fast oracle (#1182) surfaced a real, unquarantined failure:
+# test_d002g_m2_locked_governance_untouched.py went red because PR #1174's
+# CI-mandated acceptor-command syntax repair rewrote
+# x10r-d002g-p1-strike-scaffolding.yaml (folded >- -> literal |-) without
+# updating the M2 lock anchor. This is a governance decision, not test debt.
+#
+# DECISION: RE-ANCHOR (Option A). The mutation is purely syntactic and
+# semantics-preserving; reverting would re-introduce the folded scalar the
+# #1174 syntax gate rejects, putting two required gates in contradiction.
+# Full rationale: docs/governance/D002G_M2_REANCHOR_2026-06-18.md.
+#
+# This acceptor binds the two changed test files and proves the decision is
+# enforced: the lock anchor is reset AND the acceptor's governance meaning is
+# independently pinned style-agnostically.
+
+id: d002g-m2-reanchor
+status: ACTIVE
+claim_type: governance
+promise: >-
+  The M2 lock anchor for x10r-d002g-p1-strike-scaffolding.yaml is reset from
+  4a65261f...d735e9608 to the post-#1174 content sha 55889886...2aa88415, and a
+  new semantic-invariant test pins the acceptor's meaning (identity, the six
+  R1..R5+R7 strike tests, fail-closed exit codes, rollback target,
+  forbidden-paths set) independently of YAML scalar style. The re-anchor is
+  admissible because the semantic invariant passes across it; any future
+  re-anchor that also mutates governance semantics fails even with the SHA
+  updated. No pre-registration, acceptance rule, or claim ledger is touched.
+
+diff_scope:
+  changed_files:
+    - path: ".claude/commit_acceptors/d002g-m2-reanchor.yaml"
+    - path: "tests/systemic_risk/test_d002g_m2_locked_governance_untouched.py"
+    - path: "tests/systemic_risk/test_d002g_strike_scaffolding_semantic_invariant.py"
+    - path: "docs/governance/D002G_M2_REANCHOR_2026-06-18.md"
+  forbidden_paths:
+    - "core/"
+    - "src/"
+    - "runtime/"
+    - "execution/"
+    - "docs/governance/D002G_PREREGISTRATION.yaml"
+    - "docs/governance/D002G_ACCEPTANCE_RULES.md"
+    - ".claude/commit_acceptors/x10r-d002g-p1-strike-scaffolding.yaml"
+
+required_python_symbols: []
+
+expected_signal: >-
+  Both tests/systemic_risk/test_d002g_m2_locked_governance_untouched.py and
+  tests/systemic_risk/test_d002g_strike_scaffolding_semantic_invariant.py pass;
+  the new anchor 55889886...2aa88415 is present and the stale anchor
+  4a65261f...d735e9608 is absent from the lock test.
+
+measurement_command: "bash -c 'set -e; mkdir -p tmp; PYTHONPATH=. python -m pytest tests/systemic_risk/test_d002g_m2_locked_governance_untouched.py tests/systemic_risk/test_d002g_strike_scaffolding_semantic_invariant.py -q; grep -q 55889886a93b21dced2b2c4060b1c65f66e5521ba67d06882ec0b9672aa88415 tests/systemic_risk/test_d002g_m2_locked_governance_untouched.py; ! grep -q 4a65261f8baf530ab307d138135b8771ffa20b81bd044781a14b91dd735e9608 tests/systemic_risk/test_d002g_m2_locked_governance_untouched.py; echo d002g-m2-reanchor-ok | tee tmp/d002g_m2_reanchor.log'"
+
+signal_artifact: "tmp/d002g_m2_reanchor.log"
+
+falsifier:
+  command: "bash -c 'if grep -q 4a65261f8baf530ab307d138135b8771ffa20b81bd044781a14b91dd735e9608 tests/systemic_risk/test_d002g_m2_locked_governance_untouched.py; then exit 0; else exit 1; fi'"
+  description: >-
+    Succeeds (exit 0, falsification) only if the stale P1 anchor is still pinned
+    in the lock test — i.e. the re-anchor was not applied. On the green branch
+    the stale anchor is gone, so this exits 1, proving the re-anchor landed.
+
+rollback_command: "bash -c 'git checkout HEAD~1 -- tests/systemic_risk/test_d002g_m2_locked_governance_untouched.py; git rm -f tests/systemic_risk/test_d002g_strike_scaffolding_semantic_invariant.py docs/governance/D002G_M2_REANCHOR_2026-06-18.md .claude/commit_acceptors/d002g-m2-reanchor.yaml'"
+
+rollback_verification_command: "bash -c 'test ! -e .claude/commit_acceptors/d002g-m2-reanchor.yaml && test ! -e tests/systemic_risk/test_d002g_strike_scaffolding_semantic_invariant.py'"
+
+memory_update_type: append
+ledger_path: "docs/governance/D002G_M2_REANCHOR_2026-06-18.md"
+report_path: "tmp/d002g_m2_reanchor.log"
+evidence: []

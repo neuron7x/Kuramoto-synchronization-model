@@ -2,7 +2,7 @@
 
 > **World-Leading Best Practices for Pull Request Quality Assurance**
 
-This guide outlines the comprehensive PR testing methodology implemented in TradePulse, aligned with 2025 industry standards from organizations like CNCF, OSSF, SLSA, and major tech companies (Google, Microsoft, Meta).
+This guide outlines the comprehensive PR testing methodology implemented in GeoSync, aligned with 2025 industry standards from organizations like CNCF, OSSF, SLSA, and major tech companies (Google, Microsoft, Meta).
 
 ## Table of Contents
 - [Overview](#overview)
@@ -17,7 +17,7 @@ This guide outlines the comprehensive PR testing methodology implemented in Trad
 
 ## Overview
 
-Every PR in TradePulse undergoes a multi-layered quality assurance process designed to ensure:
+Every PR in GeoSync undergoes a multi-layered quality assurance process designed to ensure:
 - **Security**: Zero critical vulnerabilities make it to production
 - **Reliability**: 98%+ code coverage with 90%+ mutation kill rate
 - **Performance**: No regressions >10% in critical paths
@@ -475,7 +475,7 @@ Checks:
 - [OPA](https://www.openpolicyagent.org/docs/)
 
 ### Internal Documentation
-- [TESTING.md](../TESTING.md) - Testing strategy
+- [TESTING.md](../docs/operations/TESTING.md) - Testing strategy
 - [SECURITY.md](../SECURITY.md) - Security policy
 - [CONTRIBUTING.md](../CONTRIBUTING.md) - Contribution guide
 - [CODE_OF_CONDUCT.md](../CODE_OF_CONDUCT.md) - Community standards
@@ -490,4 +490,4 @@ Checks:
 
 **Last Updated**: 2025-11-11
 **Version**: 2.0
-**Maintained by**: TradePulse DevSecOps Team
+**Maintained by**: GeoSync DevSecOps Team

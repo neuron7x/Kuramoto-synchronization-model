@@ -1,0 +1,45 @@
+version: 1
+as_of_utc: "2026-05-26T00:00:00Z"
+owner: governance-maintainers
+purpose: Required financial dataset contract for automated methodology execution.
+required_fields:
+  - name: symbol
+    type: string
+    example: BTCUSDT
+  - name: venue
+    type: string
+    example: binance
+  - name: ts_utc
+    type: string
+    format: date-time
+  - name: open
+    type: number
+  - name: high
+    type: number
+  - name: low
+    type: number
+  - name: close
+    type: number
+  - name: volume
+    type: number
+  - name: spread_bps
+    type: number
+  - name: fee_bps
+    type: number
+invariants:
+  - high >= low
+  - open > 0
+  - close > 0
+  - volume >= 0
+  - spread_bps >= 0
+  - fee_bps >= 0
+quality_gates:
+  - no_missing_required_fields
+  - monotonic_timestamps_per_symbol
+  - utc_only_timestamps
+  - schema_validation_pass
+failure_policy:
+  mode: fail_closed
+  action:
+    - block_pipeline
+    - emit_structured_error

@@ -1,4 +1,4 @@
-# SPDX-License-Identifier: LicenseRef-TradePulse-Proprietary
+# SPDX-License-Identifier: MIT
 # Production deployment Hydra profile.
 
 defaults:
@@ -7,9 +7,9 @@ defaults:
 name: prod
 db_uri: "postgresql://prod:${PROD_DB_PASSWORD:-secure}@host/prod?sslmode=verify-full"
 db_tls:
-  ca_file: ${PROD_DB_CA_FILE:-/etc/tradepulse/db/root-ca.pem}
-  cert_file: ${PROD_DB_CERT_FILE:-/etc/tradepulse/db/client.crt}
-  key_file: ${PROD_DB_KEY_FILE:-/etc/tradepulse/db/client.key}
+  ca_file: ${PROD_DB_CA_FILE:-/etc/geosync/db/root-ca.pem}
+  cert_file: ${PROD_DB_CERT_FILE:-/etc/geosync/db/client.crt}
+  key_file: ${PROD_DB_KEY_FILE:-/etc/geosync/db/client.key}
 log_level: WARNING
 random_seed: 7
 

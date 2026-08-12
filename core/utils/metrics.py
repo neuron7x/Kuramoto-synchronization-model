@@ -1,9 +1,11 @@
-# SPDX-License-Identifier: LicenseRef-TradePulse-Proprietary
-"""Prometheus metrics collection for TradePulse.
+# Copyright (c) 2023-2026 Yaroslav Vasylenko (neuron7xLab)
+# SPDX-License-Identifier: MIT
+"""Prometheus metrics collection for GeoSync.
 
 This module provides instrumentation for all critical entrypoints and
 performance-sensitive operations.
 """
+
 from __future__ import annotations
 
 import math
@@ -52,9 +54,7 @@ except ImportError:
     PROMETHEUS_AVAILABLE = False
 
 
-def _fallback_quantiles(
-    values: list[float], quantiles: tuple[float, ...]
-) -> Dict[float, float]:
+def _fallback_quantiles(values: list[float], quantiles: tuple[float, ...]) -> Dict[float, float]:
     """Compute quantiles without numpy."""
 
     if not values:
@@ -90,13 +90,17 @@ if TYPE_CHECKING:  # pragma: no cover - import cycle guard for type hints
 
 
 class MetricsCollector:
-    """Centralized metrics collection for TradePulse."""
+    """Centralized metrics collection for GeoSync."""
 
     def __init__(self, registry: Optional[Any] = None):
         """Initialize metrics collector.
 
         Args:
-            registry: Prometheus registry (uses default if None)
+            registry: Prometheus registry (uses default if None).  When None
+                and prometheus_client is available the implicit global
+                ``REGISTRY`` is resolved and stored so that subsequent
+                registry-identity checks (e.g. in the service factory) behave
+                correctly without attempting to re-register metrics.
         """
         if not PROMETHEUS_AVAILABLE:
             self._enabled = False
@@ -104,6 +108,18 @@ class MetricsCollector:
             return
 
         self._enabled = True
+        # Resolve the effective registry so self.registry is never None when
+        # prometheus_client is available.  This prevents service-layer checks
+        # (``if collector.registry is None:``) from incorrectly triggering a
+        # second MetricsCollector instantiation against the same global registry
+        # which would raise ``ValueError: Duplicated timeseries``.
+        if registry is None:
+            try:
+                from prometheus_client import REGISTRY as _global_registry
+
+                registry = _global_registry
+            except ImportError:  # pragma: no cover - prometheus_client not installed
+                pass
         self.registry = registry
         if self.registry is not None:
             multiprocess_dir = os.environ.get("PROMETHEUS_MULTIPROC_DIR")
@@ -148,62 +164,60 @@ class MetricsCollector:
                     # If collector registration fails we still expose custom metrics
                     # rather than breaking application startup.
                     pass
-        self._equity_curve_max_points = int(
-            os.getenv("TRADEPULSE_METRICS_MAX_EQUITY_POINTS", "1024")
-        )
+        self._equity_curve_max_points = int(os.getenv("GEOSYNC_METRICS_MAX_EQUITY_POINTS", "1024"))
 
         # API/service metrics
         self.api_request_latency = Histogram(
-            "tradepulse_api_request_latency_seconds",
+            "geosync_api_request_latency_seconds",
             "Latency observed for HTTP API requests",
             ["route", "method"],
             registry=registry,
         )
 
         self.api_requests_total = Counter(
-            "tradepulse_api_requests_total",
+            "geosync_api_requests_total",
             "Total number of HTTP API requests grouped by status",
             ["route", "method", "status"],
             registry=registry,
         )
 
         self.api_requests_in_flight = Gauge(
-            "tradepulse_api_requests_in_flight",
+            "geosync_api_requests_in_flight",
             "Number of HTTP API requests currently being processed",
             ["route", "method"],
             registry=registry,
         )
 
         self.api_queue_depth = Gauge(
-            "tradepulse_api_queue_depth",
+            "geosync_api_queue_depth",
             "Depth of internal queues servicing the API",
             ["queue"],
             registry=registry,
         )
 
         self.api_queue_latency = Histogram(
-            "tradepulse_api_queue_latency_seconds",
+            "geosync_api_queue_latency_seconds",
             "Observed latency experienced by API servicing queues",
             ["queue"],
             registry=registry,
         )
 
         self.process_cpu_percent = Gauge(
-            "tradepulse_process_cpu_percent",
+            "geosync_process_cpu_percent",
             "CPU utilisation percent for the serving process",
             ["process"],
             registry=registry,
         )
 
         self.process_memory_bytes = Gauge(
-            "tradepulse_process_memory_bytes",
+            "geosync_process_memory_bytes",
             "Resident memory footprint of the serving process in bytes",
             ["process"],
             registry=registry,
         )
 
         self.process_memory_percent = Gauge(
-            "tradepulse_process_memory_percent",
+            "geosync_process_memory_percent",
             "Memory utilisation percent for the serving process",
             ["process"],
             registry=registry,
@@ -211,63 +225,63 @@ class MetricsCollector:
 
         # Feature/Indicator metrics
         self.feature_transform_duration = Histogram(
-            "tradepulse_feature_transform_duration_seconds",
+            "geosync_feature_transform_duration_seconds",
             "Time spent computing feature transformations",
             ["feature_name", "feature_type"],
             registry=registry,
         )
 
         self.feature_transform_total = Counter(
-            "tradepulse_feature_transform_total",
+            "geosync_feature_transform_total",
             "Total number of feature transformations",
             ["feature_name", "feature_type", "status"],
             registry=registry,
         )
 
         self.feature_value = Gauge(
-            "tradepulse_feature_value",
+            "geosync_feature_value",
             "Current feature value",
             ["feature_name"],
             registry=registry,
         )
 
         self.indicator_compute_duration = Histogram(
-            "tradepulse_indicator_compute_duration_seconds",
+            "geosync_indicator_compute_duration_seconds",
             "Time spent computing indicator values",
             ["indicator_name"],
             registry=registry,
         )
 
         self.indicator_compute_total = Counter(
-            "tradepulse_indicator_compute_total",
+            "geosync_indicator_compute_total",
             "Total number of indicator computations",
             ["indicator_name", "status"],
             registry=registry,
         )
 
         self.indicator_value = Gauge(
-            "tradepulse_indicator_value",
+            "geosync_indicator_value",
             "Latest computed value for an indicator",
             ["indicator_name"],
             registry=registry,
         )
 
         self.indicator_sample_size = Gauge(
-            "tradepulse_indicator_sample_size",
+            "geosync_indicator_sample_size",
             "Number of samples processed during the last indicator computation",
             ["indicator_name"],
             registry=registry,
         )
 
         self.indicator_window_size = Gauge(
-            "tradepulse_indicator_window_size",
+            "geosync_indicator_window_size",
             "Sliding window or bucket span configured for the indicator",
             ["indicator_name"],
             registry=registry,
         )
 
         self.indicator_quality_ratio = Gauge(
-            "tradepulse_indicator_quality_ratio",
+            "geosync_indicator_quality_ratio",
             "Quality ratios emitted by indicators (e.g. finite input share, valid coverage)",
             ["indicator_name", "metric"],
             registry=registry,
@@ -275,35 +289,35 @@ class MetricsCollector:
 
         # Backtest metrics
         self.backtest_duration = Histogram(
-            "tradepulse_backtest_duration_seconds",
+            "geosync_backtest_duration_seconds",
             "Time spent running backtests",
             ["strategy"],
             registry=registry,
         )
 
         self.backtest_total = Counter(
-            "tradepulse_backtest_total",
+            "geosync_backtest_total",
             "Total number of backtests run",
             ["strategy", "status"],
             registry=registry,
         )
 
         self.backtest_pnl = Gauge(
-            "tradepulse_backtest_pnl",
+            "geosync_backtest_pnl",
             "Backtest profit and loss",
             ["strategy"],
             registry=registry,
         )
 
         self.backtest_max_drawdown = Gauge(
-            "tradepulse_backtest_max_drawdown",
+            "geosync_backtest_max_drawdown",
             "Backtest maximum drawdown",
             ["strategy"],
             registry=registry,
         )
 
         self.backtest_trades = Gauge(
-            "tradepulse_backtest_trades",
+            "geosync_backtest_trades",
             "Number of trades in backtest",
             ["strategy"],
             registry=registry,
@@ -312,14 +326,14 @@ class MetricsCollector:
 
         # Environment parity metrics
         self.environment_parity_checks = Counter(
-            "tradepulse_environment_parity_checks_total",
+            "geosync_environment_parity_checks_total",
             "Total number of environment parity evaluations grouped by status",
             ["strategy", "status"],
             registry=registry,
         )
 
         self.environment_parity_metric_deviation = Gauge(
-            "tradepulse_environment_parity_metric_deviation",
+            "geosync_environment_parity_metric_deviation",
             "Absolute deviation observed between environment metric pairs",
             ["strategy", "metric", "baseline", "comparison"],
             registry=registry,
@@ -327,35 +341,35 @@ class MetricsCollector:
 
         # Model observability metrics
         self.model_inference_latency = Histogram(
-            "tradepulse_model_inference_latency_seconds",
+            "geosync_model_inference_latency_seconds",
             "Latency observed for model inference requests",
             ["model_name", "deployment"],
             registry=registry,
         )
 
         self.model_inference_latency_quantiles = Gauge(
-            "tradepulse_model_inference_latency_quantiles_seconds",
+            "geosync_model_inference_latency_quantiles_seconds",
             "Latency quantiles for model inference requests",
             ["model_name", "deployment", "quantile"],
             registry=registry,
         )
 
         self.model_inference_total = Counter(
-            "tradepulse_model_inference_total",
+            "geosync_model_inference_total",
             "Total number of model inference requests grouped by outcome",
             ["model_name", "deployment", "status"],
             registry=registry,
         )
 
         self.model_inference_throughput = Gauge(
-            "tradepulse_model_inference_throughput_per_second",
+            "geosync_model_inference_throughput_per_second",
             "Rolling throughput of model inference requests",
             ["model_name", "deployment"],
             registry=registry,
         )
 
         self.model_inference_error_ratio = Gauge(
-            "tradepulse_model_inference_error_ratio",
+            "geosync_model_inference_error_ratio",
             "Observed error ratio for model inference requests",
             ["model_name", "deployment"],
             registry=registry,
@@ -363,56 +377,56 @@ class MetricsCollector:
 
         # Response quality metrics
         self.response_quality_run_total = Counter(
-            "tradepulse_response_quality_run_total",
+            "geosync_response_quality_run_total",
             "Total number of response quality verification runs",
             ["model_name", "deployment", "dataset", "mode", "status"],
             registry=registry,
         )
 
         self.response_quality_run_duration = Histogram(
-            "tradepulse_response_quality_run_duration_seconds",
+            "geosync_response_quality_run_duration_seconds",
             "Duration of response quality verification runs",
             ["model_name", "deployment", "dataset", "mode"],
             registry=registry,
         )
 
         self.response_quality_contract_violations = Counter(
-            "tradepulse_response_quality_contract_violations_total",
+            "geosync_response_quality_contract_violations_total",
             "Number of response quality contract violations observed",
             ["model_name", "deployment", "dataset", "contract"],
             registry=registry,
         )
 
         self.response_quality_degradation_events = Counter(
-            "tradepulse_response_quality_degradation_events_total",
+            "geosync_response_quality_degradation_events_total",
             "Number of response quality degradations emitted",
             ["model_name", "deployment", "dataset", "reason"],
             registry=registry,
         )
 
         self.response_quality_pending_reviews = Gauge(
-            "tradepulse_response_quality_pending_reviews",
+            "geosync_response_quality_pending_reviews",
             "Number of pending human reviews for response quality",
             ["model_name", "deployment"],
             registry=registry,
         )
 
         self.response_quality_complaints = Counter(
-            "tradepulse_response_quality_complaints_total",
+            "geosync_response_quality_complaints_total",
             "Number of complaints routed for response quality",
             ["model_name", "deployment", "category", "route"],
             registry=registry,
         )
 
         self.response_quality_reason_total = Counter(
-            "tradepulse_response_quality_reason_total",
+            "geosync_response_quality_reason_total",
             "Count of reasons identified during response quality assurance",
             ["model_name", "deployment", "reason"],
             registry=registry,
         )
 
         self.model_saturation = Gauge(
-            "tradepulse_model_saturation",
+            "geosync_model_saturation",
             "Saturation level of model serving infrastructure",
             ["model_name", "deployment"],
             registry=registry,
@@ -420,154 +434,154 @@ class MetricsCollector:
 
         # RL stability metrics
         self.rl_update_scale = Gauge(
-            "tradepulse_rl_update_scale",
+            "geosync_rl_update_scale",
             "Applied scaling factor for RL parameter updates",
             ["agent", "component"],
             registry=registry,
         )
 
         self.rl_grad_norm = Gauge(
-            "tradepulse_rl_grad_norm",
+            "geosync_rl_grad_norm",
             "Gradient norm observed during RL updates",
             ["agent", "component"],
             registry=registry,
         )
 
         self.rl_policy_kl = Gauge(
-            "tradepulse_rl_policy_kl",
+            "geosync_rl_policy_kl",
             "Observed KL divergence between successive policy updates",
             ["agent"],
             registry=registry,
         )
 
         self.rl_policy_drift = Gauge(
-            "tradepulse_rl_policy_drift",
+            "geosync_rl_policy_drift",
             "Relative parameter drift from the last stable checkpoint",
             ["agent"],
             registry=registry,
         )
 
         self.rl_rollback_total = Counter(
-            "tradepulse_rl_rollback_total",
+            "geosync_rl_rollback_total",
             "Total number of RL policy rollbacks",
             ["agent", "reason"],
             registry=registry,
         )
 
         self.rl_modulation_scale = Gauge(
-            "tradepulse_rl_modulation_scale",
+            "geosync_rl_modulation_scale",
             "Effective modulation scale applied to RL updates",
             ["agent", "component", "signal"],
             registry=registry,
         )
 
         self.rl_modulation_risk = Gauge(
-            "tradepulse_rl_modulation_risk",
+            "geosync_rl_modulation_risk",
             "Risk score derived for RL modulation controllers",
             ["agent", "signal"],
             registry=registry,
         )
 
         self.rl_modulation_arousal = Gauge(
-            "tradepulse_rl_modulation_arousal",
+            "geosync_rl_modulation_arousal",
             "Arousal boost component for RL modulation controllers",
             ["agent", "signal"],
             registry=registry,
         )
 
         self.model_cpu_percent = Gauge(
-            "tradepulse_model_cpu_percent",
+            "geosync_model_cpu_percent",
             "Process CPU utilisation percent for model serving",
             ["model_name", "deployment"],
             registry=registry,
         )
 
         self.model_gpu_percent = Gauge(
-            "tradepulse_model_gpu_percent",
+            "geosync_model_gpu_percent",
             "GPU utilisation percent for model serving workloads",
             ["model_name", "deployment"],
             registry=registry,
         )
 
         self.model_memory_bytes = Gauge(
-            "tradepulse_model_memory_bytes",
+            "geosync_model_memory_bytes",
             "Resident memory footprint of the model serving process",
             ["model_name", "deployment"],
             registry=registry,
         )
 
         self.model_memory_percent = Gauge(
-            "tradepulse_model_memory_percent",
+            "geosync_model_memory_percent",
             "Memory utilisation percent for the model serving process",
             ["model_name", "deployment"],
             registry=registry,
         )
 
         self.model_cache_hit_ratio = Gauge(
-            "tradepulse_model_cache_hit_ratio",
+            "geosync_model_cache_hit_ratio",
             "Hit ratio observed for model-specific caches",
             ["model_name", "deployment", "cache_name"],
             registry=registry,
         )
 
         self.model_cache_entries = Gauge(
-            "tradepulse_model_cache_entries",
+            "geosync_model_cache_entries",
             "Number of live entries stored in model caches",
             ["model_name", "deployment", "cache_name"],
             registry=registry,
         )
 
         self.model_cache_evictions = Counter(
-            "tradepulse_model_cache_evictions_total",
+            "geosync_model_cache_evictions_total",
             "Total number of cache evictions triggered for model caches",
             ["model_name", "deployment", "cache_name"],
             registry=registry,
         )
 
         self.model_quality_interval_lower = Gauge(
-            "tradepulse_model_quality_interval_lower",
+            "geosync_model_quality_interval_lower",
             "Lower bound of quality metric confidence interval",
             ["model_name", "deployment", "metric", "confidence"],
             registry=registry,
         )
 
         self.model_quality_interval_upper = Gauge(
-            "tradepulse_model_quality_interval_upper",
+            "geosync_model_quality_interval_upper",
             "Upper bound of quality metric confidence interval",
             ["model_name", "deployment", "metric", "confidence"],
             registry=registry,
         )
 
         self.model_quality_interval_mean = Gauge(
-            "tradepulse_model_quality_interval_mean",
+            "geosync_model_quality_interval_mean",
             "Mean value for quality metric confidence interval",
             ["model_name", "deployment", "metric", "confidence"],
             registry=registry,
         )
 
         self.model_quality_interval_width = Gauge(
-            "tradepulse_model_quality_interval_width",
+            "geosync_model_quality_interval_width",
             "Width of the quality metric confidence interval",
             ["model_name", "deployment", "metric", "confidence"],
             registry=registry,
         )
 
         self.model_quality_degradation_events = Counter(
-            "tradepulse_model_quality_degradation_events_total",
+            "geosync_model_quality_degradation_events_total",
             "Number of quality degradation signals emitted for a model",
             ["model_name", "deployment", "metric", "reason"],
             registry=registry,
         )
 
         self.model_triage_total = Counter(
-            "tradepulse_model_triage_total",
+            "geosync_model_triage_total",
             "Number of automated triage workflows launched for model incidents",
             ["model_name", "deployment", "metric", "reason"],
             registry=registry,
         )
 
         self.model_metric_correlation = Gauge(
-            "tradepulse_model_metric_correlation",
+            "geosync_model_metric_correlation",
             "Pearson correlation coefficient between pairs of model metrics",
             ["model_name", "deployment", "metric_a", "metric_b"],
             registry=registry,
@@ -575,35 +589,35 @@ class MetricsCollector:
 
         # Data ingestion metrics
         self.data_ingestion_duration = Histogram(
-            "tradepulse_data_ingestion_duration_seconds",
+            "geosync_data_ingestion_duration_seconds",
             "Time spent ingesting data",
             ["source", "symbol"],
             registry=registry,
         )
 
         self.data_ingestion_total = Counter(
-            "tradepulse_data_ingestion_total",
+            "geosync_data_ingestion_total",
             "Total number of data ingestion operations",
             ["source", "symbol", "status"],
             registry=registry,
         )
 
         self.data_ingestion_latency_quantiles = Gauge(
-            "tradepulse_data_ingestion_latency_quantiles_seconds",
+            "geosync_data_ingestion_latency_quantiles_seconds",
             "Data ingestion latency quantiles",
             ["source", "symbol", "quantile"],
             registry=registry,
         )
 
         self.data_ingestion_throughput = Gauge(
-            "tradepulse_data_ingestion_throughput_ticks_per_second",
+            "geosync_data_ingestion_throughput_ticks_per_second",
             "Instantaneous ingestion throughput expressed as ticks per second",
             ["source", "symbol"],
             registry=registry,
         )
 
         self.ticks_processed = Counter(
-            "tradepulse_ticks_processed_total",
+            "geosync_ticks_processed_total",
             "Total number of ticks processed",
             ["source", "symbol"],
             registry=registry,
@@ -611,21 +625,21 @@ class MetricsCollector:
 
         # Watchdog metrics
         self.watchdog_worker_restarts = Counter(
-            "tradepulse_watchdog_worker_restarts_total",
+            "geosync_watchdog_worker_restarts_total",
             "Total number of worker restarts triggered by watchdog supervision",
             ["watchdog", "worker"],
             registry=registry,
         )
 
         self.watchdog_live_probe_status = Gauge(
-            "tradepulse_watchdog_live_probe_status",
+            "geosync_watchdog_live_probe_status",
             "Outcome of the most recent watchdog live probe (1=healthy, 0=unhealthy)",
             ["watchdog"],
             registry=registry,
         )
 
         self.watchdog_last_heartbeat = Gauge(
-            "tradepulse_watchdog_last_heartbeat_timestamp",
+            "geosync_watchdog_last_heartbeat_timestamp",
             "Unix timestamp of the last watchdog heartbeat publish",
             ["watchdog"],
             registry=registry,
@@ -633,83 +647,83 @@ class MetricsCollector:
 
         # Execution metrics
         self.order_placement_duration = Histogram(
-            "tradepulse_order_placement_duration_seconds",
+            "geosync_order_placement_duration_seconds",
             "Time spent placing orders",
             ["exchange", "symbol"],
             registry=registry,
         )
 
         self.orders_placed = Counter(
-            "tradepulse_orders_placed_total",
+            "geosync_orders_placed_total",
             "Total number of orders placed",
             ["exchange", "symbol", "order_type", "status"],
             registry=registry,
         )
 
         self.order_submission_latency_quantiles = Gauge(
-            "tradepulse_order_submission_latency_quantiles_seconds",
+            "geosync_order_submission_latency_quantiles_seconds",
             "Order submission latency quantiles",
             ["exchange", "symbol", "quantile"],
             registry=registry,
         )
 
         self.order_ack_latency_quantiles = Gauge(
-            "tradepulse_order_ack_latency_quantiles_seconds",
+            "geosync_order_ack_latency_quantiles_seconds",
             "Latency between order submission and broker acknowledgement",
             ["exchange", "symbol", "quantile"],
             registry=registry,
         )
 
         self.risk_validation_total = Counter(
-            "tradepulse_risk_validations_total",
+            "geosync_risk_validations_total",
             "Total risk validation outcomes",
             ["symbol", "outcome"],
             registry=registry,
         )
 
         self.kill_switch_triggers_total = Counter(
-            "tradepulse_kill_switch_triggers_total",
+            "geosync_kill_switch_triggers_total",
             "Kill switch triggers grouped by reason",
             ["reason"],
             registry=registry,
         )
 
         self.drawdown_percent = Gauge(
-            "tradepulse_drawdown_percent",
+            "geosync_drawdown_percent",
             "Current portfolio drawdown expressed as a percentage",
             registry=registry,
         )
 
         self.compliance_checks_total = Counter(
-            "tradepulse_compliance_checks_total",
+            "geosync_compliance_checks_total",
             "Compliance check outcomes",
             ["symbol", "status"],
             registry=registry,
         )
 
         self.compliance_violations_total = Counter(
-            "tradepulse_compliance_violations_total",
+            "geosync_compliance_violations_total",
             "Compliance violations by type",
             ["symbol", "violation_type"],
             registry=registry,
         )
 
         self.order_fill_latency_quantiles = Gauge(
-            "tradepulse_order_fill_latency_quantiles_seconds",
+            "geosync_order_fill_latency_quantiles_seconds",
             "Order fill latency quantiles",
             ["exchange", "symbol", "quantile"],
             registry=registry,
         )
 
         self.signal_to_fill_latency_quantiles = Gauge(
-            "tradepulse_signal_to_fill_latency_quantiles_seconds",
+            "geosync_signal_to_fill_latency_quantiles_seconds",
             "Aggregate latency from signal emission to final fill",
             ["strategy", "exchange", "symbol", "quantile"],
             registry=registry,
         )
 
         self.open_positions = Gauge(
-            "tradepulse_open_positions",
+            "geosync_open_positions",
             "Number of open positions",
             ["exchange", "symbol"],
             registry=registry,
@@ -717,49 +731,49 @@ class MetricsCollector:
 
         # Incident and lifecycle metrics
         self.incidents_open = Gauge(
-            "tradepulse_incidents_open",
+            "geosync_incidents_open",
             "Number of open incidents grouped by severity",
             ["severity"],
             registry=registry,
         )
 
         self.incident_ack_latency = Histogram(
-            "tradepulse_incident_ack_latency_seconds",
+            "geosync_incident_ack_latency_seconds",
             "Time between alert trigger and acknowledgement",
             ["severity"],
             registry=registry,
         )
 
         self.incident_resolution_latency = Histogram(
-            "tradepulse_incident_resolution_latency_seconds",
+            "geosync_incident_resolution_latency_seconds",
             "Time between incident declaration and resolution",
             ["severity"],
             registry=registry,
         )
 
         self.runbook_executions_total = Counter(
-            "tradepulse_runbook_executions_total",
+            "geosync_runbook_executions_total",
             "Runbook executions grouped by outcome",
             ["runbook", "outcome"],
             registry=registry,
         )
 
         self.lifecycle_phase_state = Gauge(
-            "tradepulse_lifecycle_phase_state",
+            "geosync_lifecycle_phase_state",
             "Lifecycle phase state (1 when phase is in the given state)",
             ["phase", "state"],
             registry=registry,
         )
 
         self.lifecycle_checkpoint_status = Gauge(
-            "tradepulse_lifecycle_checkpoint_status",
+            "geosync_lifecycle_checkpoint_status",
             "Lifecycle checkpoint status (1 when checkpoint is in the given status)",
             ["checkpoint", "status"],
             registry=registry,
         )
 
         self.lifecycle_transition_total = Counter(
-            "tradepulse_lifecycle_transition_total",
+            "geosync_lifecycle_transition_total",
             "Lifecycle transitions grouped by from/to phase and outcome",
             ["from_phase", "to_phase", "outcome"],
             registry=registry,
@@ -767,55 +781,55 @@ class MetricsCollector:
 
         # Strategy metrics
         self.strategy_score = Gauge(
-            "tradepulse_strategy_score",
+            "geosync_strategy_score",
             "Strategy performance score",
             ["strategy_name"],
             registry=registry,
         )
 
         self.strategy_memory_size = Gauge(
-            "tradepulse_strategy_memory_size",
+            "geosync_strategy_memory_size",
             "Number of strategies in memory",
             registry=registry,
         )
 
         self.backtest_equity_curve = Gauge(
-            "tradepulse_backtest_equity_curve",
+            "geosync_backtest_equity_curve",
             "Equity curve samples for backtests",
             ["strategy", "step"],
             registry=registry,
         )
 
         self.regression_metrics = Gauge(
-            "tradepulse_regression_metric",
+            "geosync_regression_metric",
             "Regression quality metrics (e.g. MAE, RMSE, R2)",
             ["model", "metric"],
             registry=registry,
         )
 
         self.signal_generation_latency_quantiles = Gauge(
-            "tradepulse_signal_generation_latency_quantiles_seconds",
+            "geosync_signal_generation_latency_quantiles_seconds",
             "Signal generation latency quantiles",
             ["strategy", "quantile"],
             registry=registry,
         )
 
         self.signal_generation_total = Counter(
-            "tradepulse_signal_generation_total",
+            "geosync_signal_generation_total",
             "Total number of signal generation calls",
             ["strategy", "status"],
             registry=registry,
         )
 
         self.health_check_latency = Histogram(
-            "tradepulse_health_check_latency_seconds",
+            "geosync_health_check_latency_seconds",
             "Latency of periodic system health probes",
             ["check_name"],
             registry=registry,
         )
 
         self.health_check_status = Gauge(
-            "tradepulse_health_check_status",
+            "geosync_health_check_status",
             "Outcome of the latest health probe (1=healthy, 0=unhealthy)",
             ["check_name"],
             registry=registry,
@@ -823,28 +837,28 @@ class MetricsCollector:
 
         # Database metrics
         self.database_size_bytes = Gauge(
-            "tradepulse_database_size_bytes",
+            "geosync_database_size_bytes",
             "Current size of the database in bytes",
             ["database", "host"],
             registry=registry,
         )
 
         self.database_size_growth = Gauge(
-            "tradepulse_database_size_growth_bytes",
+            "geosync_database_size_growth_bytes",
             "Growth in database size since the previous measurement",
             ["database", "host"],
             registry=registry,
         )
 
         self.database_query_latency = Histogram(
-            "tradepulse_database_query_latency_seconds",
+            "geosync_database_query_latency_seconds",
             "Latency observed for database queries",
             ["database", "host", "statement_type", "status"],
             registry=registry,
         )
 
         self.database_query_total = Counter(
-            "tradepulse_database_query_total",
+            "geosync_database_query_total",
             "Total database queries executed grouped by outcome",
             ["database", "host", "statement_type", "status"],
             registry=registry,
@@ -852,49 +866,49 @@ class MetricsCollector:
 
         # Cache warm-up and cold-start metrics
         self.cache_warmup_duration = Histogram(
-            "tradepulse_cache_warmup_duration_seconds",
+            "geosync_cache_warmup_duration_seconds",
             "Latency of cache warm-up executions",
             ["cache_name", "strategy"],
             registry=registry,
         )
 
         self.cache_warmup_rows = Gauge(
-            "tradepulse_cache_warmup_rows",
+            "geosync_cache_warmup_rows",
             "Number of rows materialised during cache warm-up",
             ["cache_name", "strategy"],
             registry=registry,
         )
 
         self.cache_readiness_status = Gauge(
-            "tradepulse_cache_readiness_status",
+            "geosync_cache_readiness_status",
             "Readiness state of managed caches (1=ready, 0=not ready)",
             ["cache_name"],
             registry=registry,
         )
 
         self.cache_hit_rate = Gauge(
-            "tradepulse_cache_hit_rate",
+            "geosync_cache_hit_rate",
             "Rolling hit rate observed for caches",
             ["cache_name"],
             registry=registry,
         )
 
         self.cache_cold_latency = Histogram(
-            "tradepulse_cache_cold_latency_seconds",
+            "geosync_cache_cold_latency_seconds",
             "Latency observed when serving cold cache requests",
             ["cache_name"],
             registry=registry,
         )
 
         self.cache_cold_requests = Counter(
-            "tradepulse_cache_cold_requests_total",
+            "geosync_cache_cold_requests_total",
             "Count of cold cache requests grouped by outcome",
             ["cache_name", "outcome"],
             registry=registry,
         )
 
         self.cache_degradation_events = Counter(
-            "tradepulse_cache_degradation_events_total",
+            "geosync_cache_degradation_events_total",
             "Number of cache degradation signals emitted grouped by reason",
             ["cache_name", "reason"],
             registry=registry,
@@ -903,36 +917,36 @@ class MetricsCollector:
         self._model_latency_samples: Dict[tuple[str, str], deque[float]] = defaultdict(
             lambda: deque(maxlen=512)
         )
-        self._ingestion_latency_samples: Dict[tuple[str, str], deque[float]] = (
-            defaultdict(lambda: deque(maxlen=256))
+        self._ingestion_latency_samples: Dict[tuple[str, str], deque[float]] = defaultdict(
+            lambda: deque(maxlen=256)
         )
         self._signal_latency_samples: Dict[str, deque[float]] = defaultdict(
             lambda: deque(maxlen=256)
         )
-        self._order_submission_latency_samples: Dict[tuple[str, str], deque[float]] = (
+        self._order_submission_latency_samples: Dict[tuple[str, str], deque[float]] = defaultdict(
+            lambda: deque(maxlen=256)
+        )
+        self._order_ack_latency_samples: Dict[tuple[str, str], deque[float]] = defaultdict(
+            lambda: deque(maxlen=256)
+        )
+        self._order_fill_latency_samples: Dict[tuple[str, str], deque[float]] = defaultdict(
+            lambda: deque(maxlen=256)
+        )
+        self._signal_to_fill_latency_samples: Dict[tuple[str, str, str], deque[float]] = (
             defaultdict(lambda: deque(maxlen=256))
         )
-        self._order_ack_latency_samples: Dict[tuple[str, str], deque[float]] = (
-            defaultdict(lambda: deque(maxlen=256))
-        )
-        self._order_fill_latency_samples: Dict[tuple[str, str], deque[float]] = (
-            defaultdict(lambda: deque(maxlen=256))
-        )
-        self._signal_to_fill_latency_samples: Dict[
-            tuple[str, str, str], deque[float]
-        ] = defaultdict(lambda: deque(maxlen=256))
         self._database_size_cache: Dict[tuple[str, str], float] = {}
 
         # Agent/optimization metrics
         self.optimization_duration = Histogram(
-            "tradepulse_optimization_duration_seconds",
+            "geosync_optimization_duration_seconds",
             "Time spent on strategy optimization",
             ["optimizer_type"],
             registry=registry,
         )
 
         self.optimization_iterations = Counter(
-            "tradepulse_optimization_iterations_total",
+            "geosync_optimization_iterations_total",
             "Total number of optimization iterations",
             ["optimizer_type"],
             registry=registry,
@@ -994,9 +1008,7 @@ class MetricsCollector:
 
         route_label = self._normalise_label(route, default="unknown")
         method_label = self._normalise_label(method, default="other").upper()
-        gauge = self.api_requests_in_flight.labels(
-            route=route_label, method=method_label
-        )
+        gauge = self.api_requests_in_flight.labels(route=route_label, method=method_label)
         change = float(delta)
         if change > 0:
             gauge.inc(change)
@@ -1039,9 +1051,7 @@ class MetricsCollector:
         process_label = self._normalise_label(process_name, default="main")
 
         if cpu_percent is not None:
-            self.process_cpu_percent.labels(process=process_label).set(
-                max(0.0, float(cpu_percent))
-            )
+            self.process_cpu_percent.labels(process=process_label).set(max(0.0, float(cpu_percent)))
 
         if memory_bytes is not None:
             self.process_memory_bytes.labels(process=process_label).set(
@@ -1091,9 +1101,7 @@ class MetricsCollector:
             ).inc()
 
     @contextmanager
-    def measure_indicator_compute(
-        self, indicator_name: str
-    ) -> Iterator[Dict[str, Any]]:
+    def measure_indicator_compute(self, indicator_name: str) -> Iterator[Dict[str, Any]]:
         """Context manager for measuring indicator computations."""
 
         if not self._enabled:
@@ -1111,12 +1119,8 @@ class MetricsCollector:
             raise
         finally:
             duration = time.time() - start_time
-            self.indicator_compute_duration.labels(
-                indicator_name=indicator_name
-            ).observe(duration)
-            self.indicator_compute_total.labels(
-                indicator_name=indicator_name, status=status
-            ).inc()
+            self.indicator_compute_duration.labels(indicator_name=indicator_name).observe(duration)
+            self.indicator_compute_total.labels(indicator_name=indicator_name, status=status).inc()
             if status == "success":
                 value = ctx.get("value")
                 if value is not None:
@@ -1125,9 +1129,7 @@ class MetricsCollector:
                     except (TypeError, ValueError):
                         numeric = None
                     if numeric is not None and math.isfinite(numeric):
-                        self.indicator_value.labels(indicator_name=indicator_name).set(
-                            numeric
-                        )
+                        self.indicator_value.labels(indicator_name=indicator_name).set(numeric)
                 diagnostics = ctx.get("diagnostics")
                 if diagnostics:
                     self.record_indicator_diagnostics(indicator_name, diagnostics)
@@ -1172,9 +1174,7 @@ class MetricsCollector:
                 if "pnl" in ctx:
                     self.backtest_pnl.labels(strategy=strategy).set(ctx["pnl"])
                 if "max_dd" in ctx:
-                    self.backtest_max_drawdown.labels(strategy=strategy).set(
-                        abs(ctx["max_dd"])
-                    )
+                    self.backtest_max_drawdown.labels(strategy=strategy).set(abs(ctx["max_dd"]))
                 if "trades" in ctx:
                     self.backtest_trades.labels(strategy=strategy).set(ctx["trades"])
 
@@ -1218,16 +1218,12 @@ class MetricsCollector:
         sample_size = diagnostics.get("sample_size") or diagnostics.get("samples")
         numeric_sample = _as_float(sample_size) if sample_size is not None else None
         if numeric_sample is not None and numeric_sample >= 0.0:
-            self.indicator_sample_size.labels(indicator_name=indicator_name).set(
-                numeric_sample
-            )
+            self.indicator_sample_size.labels(indicator_name=indicator_name).set(numeric_sample)
 
         window = diagnostics.get("window") or diagnostics.get("span")
         numeric_window = _as_float(window) if window is not None else None
         if numeric_window is not None and numeric_window >= 0.0:
-            self.indicator_window_size.labels(indicator_name=indicator_name).set(
-                numeric_window
-            )
+            self.indicator_window_size.labels(indicator_name=indicator_name).set(numeric_window)
 
         ratios: Dict[str, float] = {}
         ratio_container = diagnostics.get("ratios") or diagnostics.get("quality")
@@ -1273,8 +1269,7 @@ class MetricsCollector:
                 return
             accelerated = _accelerated_quantiles(arr, quantiles)
             quantile_values = {
-                q: float(value)
-                for q, value in zip(quantiles, accelerated, strict=False)
+                q: float(value) for q, value in zip(quantiles, accelerated, strict=False)
             }
         else:
             quantile_values = _fallback_quantiles(values, quantiles)
@@ -1297,9 +1292,9 @@ class MetricsCollector:
             return
 
         bounded_duration = max(0.0, float(duration))
-        self.model_inference_latency.labels(
-            model_name=model_name, deployment=deployment
-        ).observe(bounded_duration)
+        self.model_inference_latency.labels(model_name=model_name, deployment=deployment).observe(
+            bounded_duration
+        )
 
         samples = self._model_latency_samples[(model_name, deployment)]
         samples.append(bounded_duration)
@@ -1328,9 +1323,9 @@ class MetricsCollector:
 
         if not self._enabled:
             return
-        self.model_inference_throughput.labels(
-            model_name=model_name, deployment=deployment
-        ).set(max(0.0, float(throughput)))
+        self.model_inference_throughput.labels(model_name=model_name, deployment=deployment).set(
+            max(0.0, float(throughput))
+        )
 
     def set_model_inference_error_ratio(
         self, model_name: str, deployment: str, error_ratio: float
@@ -1340,21 +1335,17 @@ class MetricsCollector:
         if not self._enabled:
             return
         bounded = max(0.0, min(1.0, float(error_ratio)))
-        self.model_inference_error_ratio.labels(
-            model_name=model_name, deployment=deployment
-        ).set(bounded)
+        self.model_inference_error_ratio.labels(model_name=model_name, deployment=deployment).set(
+            bounded
+        )
 
-    def set_model_saturation(
-        self, model_name: str, deployment: str, saturation: float
-    ) -> None:
+    def set_model_saturation(self, model_name: str, deployment: str, saturation: float) -> None:
         """Record the saturation level of the serving infrastructure."""
 
         if not self._enabled:
             return
         bounded = max(0.0, min(1.0, float(saturation)))
-        self.model_saturation.labels(model_name=model_name, deployment=deployment).set(
-            bounded
-        )
+        self.model_saturation.labels(model_name=model_name, deployment=deployment).set(bounded)
 
     def set_model_resource_usage(
         self,
@@ -1372,22 +1363,22 @@ class MetricsCollector:
             return
 
         if cpu_percent is not None:
-            self.model_cpu_percent.labels(
-                model_name=model_name, deployment=deployment
-            ).set(max(0.0, float(cpu_percent)))
+            self.model_cpu_percent.labels(model_name=model_name, deployment=deployment).set(
+                max(0.0, float(cpu_percent))
+            )
         if gpu_percent is not None:
-            self.model_gpu_percent.labels(
-                model_name=model_name, deployment=deployment
-            ).set(max(0.0, float(gpu_percent)))
+            self.model_gpu_percent.labels(model_name=model_name, deployment=deployment).set(
+                max(0.0, float(gpu_percent))
+            )
         if memory_bytes is not None:
-            self.model_memory_bytes.labels(
-                model_name=model_name, deployment=deployment
-            ).set(max(0.0, float(memory_bytes)))
+            self.model_memory_bytes.labels(model_name=model_name, deployment=deployment).set(
+                max(0.0, float(memory_bytes))
+            )
         if memory_percent is not None:
             bounded = max(0.0, min(100.0, float(memory_percent)))
-            self.model_memory_percent.labels(
-                model_name=model_name, deployment=deployment
-            ).set(bounded)
+            self.model_memory_percent.labels(model_name=model_name, deployment=deployment).set(
+                bounded
+            )
 
     def set_model_cache_metrics(
         self,
@@ -1609,9 +1600,7 @@ class MetricsCollector:
             route=route,
         ).inc()
 
-    def record_response_quality_reason(
-        self, model_name: str, deployment: str, reason: str
-    ) -> None:
+    def record_response_quality_reason(self, model_name: str, deployment: str, reason: str) -> None:
         """Track reason map statistics for response quality operations."""
 
         if not self._enabled:
@@ -1649,9 +1638,7 @@ class MetricsCollector:
                 {"strategy": strategy},
                 samples,
             )
-            self.signal_generation_total.labels(
-                strategy=strategy, status=final_status
-            ).inc()
+            self.signal_generation_total.labels(strategy=strategy, status=final_status).inc()
 
     @contextmanager
     def measure_data_ingestion(
@@ -1701,9 +1688,7 @@ class MetricsCollector:
                 status=final_status,
             ).inc()
 
-    def set_ingestion_throughput(
-        self, source: str, symbol: str, throughput: float
-    ) -> None:
+    def set_ingestion_throughput(self, source: str, symbol: str, throughput: float) -> None:
         """Record instantaneous ingestion throughput."""
 
         if not self._enabled:
@@ -1819,13 +1804,9 @@ class MetricsCollector:
 
         severity_label = self._normalise_label(severity, default="unknown")
         bounded_duration = max(0.0, float(duration))
-        self.incident_ack_latency.labels(severity=severity_label).observe(
-            bounded_duration
-        )
+        self.incident_ack_latency.labels(severity=severity_label).observe(bounded_duration)
 
-    def observe_incident_resolution_latency(
-        self, severity: str, duration: float
-    ) -> None:
+    def observe_incident_resolution_latency(self, severity: str, duration: float) -> None:
         """Observe the resolution latency for an incident."""
 
         if not self._enabled:
@@ -1833,13 +1814,9 @@ class MetricsCollector:
 
         severity_label = self._normalise_label(severity, default="unknown")
         bounded_duration = max(0.0, float(duration))
-        self.incident_resolution_latency.labels(severity=severity_label).observe(
-            bounded_duration
-        )
+        self.incident_resolution_latency.labels(severity=severity_label).observe(bounded_duration)
 
-    def record_runbook_execution(
-        self, runbook: str, outcome: str, count: float = 1.0
-    ) -> None:
+    def record_runbook_execution(self, runbook: str, outcome: str, count: float = 1.0) -> None:
         """Record the execution of a production runbook."""
 
         if not self._enabled:
@@ -1850,9 +1827,9 @@ class MetricsCollector:
 
         runbook_label = self._normalise_label(runbook, default="unknown")
         outcome_label = self._normalise_label(outcome, default="unknown")
-        self.runbook_executions_total.labels(
-            runbook=runbook_label, outcome=outcome_label
-        ).inc(float(count))
+        self.runbook_executions_total.labels(runbook=runbook_label, outcome=outcome_label).inc(
+            float(count)
+        )
 
     def set_lifecycle_phase_state(self, phase: str, state: str) -> None:
         """Update lifecycle phase state gauges."""
@@ -1872,13 +1849,9 @@ class MetricsCollector:
         )
         for candidate in known_states:
             value = 1.0 if candidate == state_label else 0.0
-            self.lifecycle_phase_state.labels(phase=phase_label, state=candidate).set(
-                value
-            )
+            self.lifecycle_phase_state.labels(phase=phase_label, state=candidate).set(value)
         if state_label not in known_states:
-            self.lifecycle_phase_state.labels(phase=phase_label, state=state_label).set(
-                1.0
-            )
+            self.lifecycle_phase_state.labels(phase=phase_label, state=state_label).set(1.0)
 
     def set_lifecycle_checkpoint_status(self, checkpoint: str, status: str) -> None:
         """Update lifecycle checkpoint status gauges."""
@@ -1914,9 +1887,7 @@ class MetricsCollector:
             from_phase=from_label, to_phase=to_label, outcome=outcome_label
         ).inc()
 
-    def record_order_fill_latency(
-        self, exchange: str, symbol: str, duration: float
-    ) -> None:
+    def record_order_fill_latency(self, exchange: str, symbol: str, duration: float) -> None:
         """Observe latency from order submission to fill."""
 
         if not self._enabled:
@@ -1929,9 +1900,7 @@ class MetricsCollector:
             samples,
         )
 
-    def record_order_ack_latency(
-        self, exchange: str, symbol: str, duration: float
-    ) -> None:
+    def record_order_ack_latency(self, exchange: str, symbol: str, duration: float) -> None:
         """Observe latency between order submission and venue acknowledgement."""
 
         if not self._enabled:
@@ -1987,9 +1956,7 @@ class MetricsCollector:
         for name, value in metrics.items():
             if value is None:
                 continue
-            self.regression_metrics.labels(model=model, metric=str(name)).set(
-                float(value)
-            )
+            self.regression_metrics.labels(model=model, metric=str(name)).set(float(value))
 
     def record_equity_point(self, strategy: str, step: int, value: float) -> None:
         """Record a sample on the equity curve gauge."""
@@ -2047,9 +2014,7 @@ class MetricsCollector:
         self._clear_equity_curve(strategy)
 
         for step_label, value in zip(sampled_steps, sampled_values, strict=True):
-            self.backtest_equity_curve.labels(strategy=strategy, step=step_label).set(
-                float(value)
-            )
+            self.backtest_equity_curve.labels(strategy=strategy, step=step_label).set(float(value))
 
         self._equity_curve_cache[strategy] = sampled_steps
 
@@ -2092,9 +2057,7 @@ class MetricsCollector:
         if not self._enabled:
             return ""
 
-        payload_bytes = (
-            generate_latest(self.registry) if self.registry else generate_latest()
-        )
+        payload_bytes = generate_latest(self.registry) if self.registry else generate_latest()
         payload = payload_bytes.decode("utf-8")
         if "process_cpu_seconds_total" not in payload:
             cpu_seconds = time.process_time()
@@ -2165,13 +2128,9 @@ class MetricsCollector:
 
         if not self._enabled:
             return
-        self.watchdog_live_probe_status.labels(watchdog=watchdog).set(
-            1.0 if healthy else 0.0
-        )
+        self.watchdog_live_probe_status.labels(watchdog=watchdog).set(1.0 if healthy else 0.0)
 
-    def set_watchdog_heartbeat(
-        self, watchdog: str, timestamp: float | None = None
-    ) -> None:
+    def set_watchdog_heartbeat(self, watchdog: str, timestamp: float | None = None) -> None:
         """Record the timestamp associated with the latest watchdog heartbeat."""
 
         if not self._enabled:
@@ -2186,9 +2145,7 @@ class MetricsCollector:
         if not self._enabled:
             return
 
-        self.health_check_latency.labels(check_name=check_name).observe(
-            max(0.0, float(duration))
-        )
+        self.health_check_latency.labels(check_name=check_name).observe(max(0.0, float(duration)))
 
     def set_health_check_status(self, check_name: str, healthy: bool) -> None:
         """Update the status gauge tracking the latest health probe outcome."""
@@ -2196,9 +2153,7 @@ class MetricsCollector:
         if not self._enabled:
             return
 
-        self.health_check_status.labels(check_name=check_name).set(
-            1.0 if healthy else 0.0
-        )
+        self.health_check_status.labels(check_name=check_name).set(1.0 if healthy else 0.0)
 
     def observe_database_size(
         self,
@@ -2266,9 +2221,9 @@ class MetricsCollector:
         if not self._enabled:
             return
 
-        self.cache_warmup_duration.labels(
-            cache_name=cache_name, strategy=strategy
-        ).observe(max(0.0, float(duration)))
+        self.cache_warmup_duration.labels(cache_name=cache_name, strategy=strategy).observe(
+            max(0.0, float(duration))
+        )
 
         if rows is not None:
             self.cache_warmup_rows.labels(cache_name=cache_name, strategy=strategy).set(
@@ -2281,9 +2236,7 @@ class MetricsCollector:
         if not self._enabled:
             return
 
-        self.cache_readiness_status.labels(cache_name=cache_name).set(
-            1.0 if ready else 0.0
-        )
+        self.cache_readiness_status.labels(cache_name=cache_name).set(1.0 if ready else 0.0)
 
     def update_cache_hit_rate(self, cache_name: str, hit_rate: float) -> None:
         """Observe the current hit rate of a cache."""
@@ -2300,9 +2253,7 @@ class MetricsCollector:
         if not self._enabled:
             return
 
-        self.cache_cold_latency.labels(cache_name=cache_name).observe(
-            max(0.0, float(latency))
-        )
+        self.cache_cold_latency.labels(cache_name=cache_name).observe(max(0.0, float(latency)))
 
     def increment_cache_cold_request(self, cache_name: str, outcome: str) -> None:
         """Increment counters describing cold cache request outcomes."""
@@ -2331,43 +2282,59 @@ class MetricsCollector:
         return candidate or default
 
 
-# Global metrics collector instance
+# Global metrics collector instance and per-registry cache.
+# The cache prevents duplicate metric registration when create_app() is called
+# multiple times (e.g. in different tests) with the same Prometheus registry.
 _collector: Optional[MetricsCollector] = None
+_collector_cache: dict[int, "MetricsCollector"] = {}
+
+
+_NO_PROMETHEUS_KEY: int = -1  # Sentinel cache key when prometheus_client is absent
+
+
+def _registry_cache_key(registry: Optional[Any]) -> int:
+    """Return a stable cache key for the effective registry.
+
+    When *registry* is ``None`` the prometheus_client default global
+    ``REGISTRY`` is used implicitly, so we resolve it here so that
+    ``get_metrics_collector(None)`` and
+    ``get_metrics_collector(REGISTRY)`` map to the same cache slot.
+    """
+    if registry is not None:
+        return id(registry)
+    try:
+        from prometheus_client import REGISTRY as _default_registry
+
+        return id(_default_registry)
+    except ImportError:  # pragma: no cover - prometheus_client not installed
+        return _NO_PROMETHEUS_KEY
 
 
 def get_metrics_collector(registry: Optional[Any] = None) -> MetricsCollector:
     """Get the global metrics collector instance.
 
+    Returns the same :class:`MetricsCollector` for a given Prometheus registry,
+    preventing duplicate metric registration when the factory is invoked
+    multiple times with the same (or equivalent) registry.
+
     Args:
-        registry: Prometheus registry (uses default if None)
+        registry: Prometheus registry (uses default global if None)
 
     Returns:
         MetricsCollector instance
     """
-    global _collector
-    if _collector is None:
-        _collector = MetricsCollector(registry)
-        return _collector
+    global _collector, _collector_cache
 
-    if registry is None:
-        return _collector
+    key = _registry_cache_key(registry)
+    cached = _collector_cache.get(key)
+    if cached is not None:
+        _collector = cached
+        return cached
 
-    try:  # pragma: no cover - optional dependency guard
-        from prometheus_client import REGISTRY as _default_registry
-    except Exception:  # pragma: no cover - defensive fallback
-        _default_registry = None
-
-    current_registry = _collector.registry
-    if registry is current_registry:
-        return _collector
-
-    # Treat a collector built with the implicit default registry as equivalent
-    # to the explicit global REGISTRY to avoid duplicate metric registration.
-    if current_registry is None and registry is _default_registry:
-        return _collector
-
-    _collector = MetricsCollector(registry)
-    return _collector
+    new_collector = MetricsCollector(registry)
+    _collector_cache[key] = new_collector
+    _collector = new_collector
+    return new_collector
 
 
 def start_metrics_server(port: int = 8000, addr: str = "") -> None:
@@ -2382,9 +2349,7 @@ def start_metrics_server(port: int = 8000, addr: str = "") -> None:
     start_http_server(port, addr)
 
 
-def start_metrics_exporter_process(
-    port: int = 8000, addr: str = ""
-) -> multiprocessing.Process:
+def start_metrics_exporter_process(port: int = 8000, addr: str = "") -> multiprocessing.Process:
     """Spawn a Prometheus exporter in a dedicated process."""
 
     if not PROMETHEUS_AVAILABLE:

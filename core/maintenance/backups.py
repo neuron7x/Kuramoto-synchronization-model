@@ -1,3 +1,5 @@
+# Copyright (c) 2023-2026 Yaroslav Vasylenko (neuron7xLab)
+# SPDX-License-Identifier: MIT
 """Helpers for database backups and archival retention policies."""
 
 from __future__ import annotations
@@ -26,9 +28,7 @@ def _default_runner(
     handling ``CompletedProcess.returncode`` when ``check`` is disabled.
     """
 
-    return subprocess.run(
-        list(command), env=None if env is None else dict(env), check=True
-    )
+    return subprocess.run(list(command), env=None if env is None else dict(env), check=True)
 
 
 def _default_clock() -> datetime:
@@ -152,9 +152,7 @@ class DatabaseBackupManager:
                 continue
             if candidate.suffixes and candidate.suffixes[-2:] == [".tar", ".gz"]:
                 continue
-            modified = datetime.fromtimestamp(
-                candidate.stat().st_mtime, tz=timezone.utc
-            )
+            modified = datetime.fromtimestamp(candidate.stat().st_mtime, tz=timezone.utc)
             if modified > cutoff:
                 continue
             archive_path = self._archive_dir / f"{candidate.name}.tar.gz"
@@ -171,9 +169,7 @@ class DatabaseBackupManager:
         for candidate in sorted(self._archive_dir.glob("*.tar.gz")):
             if not candidate.is_file():
                 continue
-            modified = datetime.fromtimestamp(
-                candidate.stat().st_mtime, tz=timezone.utc
-            )
+            modified = datetime.fromtimestamp(candidate.stat().st_mtime, tz=timezone.utc)
             if modified > cutoff:
                 continue
             if not self.dry_run:

@@ -1,3 +1,5 @@
+# Copyright (c) 2023-2026 Yaroslav Vasylenko (neuron7xLab)
+# SPDX-License-Identifier: MIT
 """Unit tests for the documentation linting helper."""
 
 from __future__ import annotations
@@ -88,7 +90,9 @@ def test_forbidden_phrase_detection(tmp_path: Path) -> None:
 
 
 def test_forbidden_phrase_ignored_in_code(tmp_path: Path) -> None:
-    document = """# Title\n\n`reports/todo.md` should not alert.\n\n```python\n# TODO: sample\n```\n"""
+    document = (
+        """# Title\n\n`reports/todo.md` should not alert.\n\n```python\n# TODO: sample\n```\n"""
+    )
     path = _write(tmp_path, "code.md", document)
 
     issues = list(ForbiddenPhraseRule().check(path, document.splitlines()))

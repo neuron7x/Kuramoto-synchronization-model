@@ -1,4 +1,5 @@
-# SPDX-License-Identifier: LicenseRef-TradePulse-Proprietary
+# Copyright (c) 2023-2026 Yaroslav Vasylenko (neuron7xLab)
+# SPDX-License-Identifier: MIT
 from __future__ import annotations
 
 import numpy as np
@@ -75,9 +76,7 @@ def test_temporal_ricci_analyzer_reports_metrics() -> None:
     )
     volumes = np.abs(np.sin(np.linspace(0, 4 * np.pi, prices.size - 1))) + 0.1
     dates = pd.date_range("2024-01-01", periods=prices.size, freq="1min")
-    df = pd.DataFrame(
-        {"close": prices, "volume": np.append(volumes, volumes[-1])}, index=dates
-    )
+    df = pd.DataFrame({"close": prices, "volume": np.append(volumes, volumes[-1])}, index=dates)
 
     analyzer = TemporalRicciAnalyzer(window_size=32, n_snapshots=5, n_levels=8)
     result = analyzer.analyze(df)
@@ -133,14 +132,17 @@ def test_temporal_transition_score_reacts_to_regime_change() -> None:
     dates_vol = pd.date_range("2024-01-01", periods=volatile_prices.size, freq="1min")
     volatile_df = pd.DataFrame({"close": volatile_prices}, index=dates_vol)
 
-    analyzer = TemporalRicciAnalyzer(window_size=48, n_snapshots=4, n_levels=8)
+    # Use separate analyzers to avoid non-monotonic timestamp warning
+    # (both DataFrames start from 2024-01-01, so reusing one analyzer
+    # triggers a legitimate reset-on-overlap warning).
+    steady_analyzer = TemporalRicciAnalyzer(window_size=48, n_snapshots=4, n_levels=8)
+    volatile_analyzer = TemporalRicciAnalyzer(window_size=48, n_snapshots=4, n_levels=8)
 
-    steady_result = analyzer.analyze(steady_df)
-    volatile_result = analyzer.analyze(volatile_df)
+    steady_result = steady_analyzer.analyze(steady_df)
+    volatile_result = volatile_analyzer.analyze(volatile_df)
 
     assert (
-        volatile_result.topological_transition_score
-        >= steady_result.topological_transition_score
+        volatile_result.topological_transition_score >= steady_result.topological_transition_score
     )
 
 

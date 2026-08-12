@@ -1,5 +1,6 @@
-# SPDX-License-Identifier: LicenseRef-TradePulse-Proprietary
-"""Vendor-agnostic telemetry interface for TradePulse.
+# Copyright (c) 2023-2026 Yaroslav Vasylenko (neuron7xLab)
+# SPDX-License-Identifier: MIT
+"""Vendor-agnostic telemetry interface for GeoSync.
 
 This module provides a telemetry abstraction that supports multiple
 backends (Prometheus, StatsD, OpenTelemetry, etc.) without vendor lock-in.
@@ -178,9 +179,9 @@ class PrometheusBackend:
             registry: Prometheus registry (uses default if None)
         """
         self._registry = registry
-        self._counters: dict[str, Any] = {}
-        self._gauges: dict[str, Any] = {}
-        self._histograms: dict[str, Any] = {}
+        self._counters: dict[tuple[str, tuple[str, ...]], Any] = {}
+        self._gauges: dict[tuple[str, tuple[str, ...]], Any] = {}
+        self._histograms: dict[tuple[str, tuple[str, ...]], Any] = {}
         self._prometheus_available = self._check_prometheus()
 
     def _check_prometheus(self) -> bool:
@@ -193,9 +194,7 @@ class PrometheusBackend:
             LOGGER.warning("prometheus_client not installed, metrics disabled")
             return False
 
-    def _get_or_create_counter(
-        self, name: str, tags: Mapping[str, str] | None
-    ) -> Any:
+    def _get_or_create_counter(self, name: str, tags: Mapping[str, str] | None) -> Any:
         """Get or create a counter metric."""
         if not self._prometheus_available:
             return None
@@ -214,9 +213,7 @@ class PrometheusBackend:
             )
         return self._counters[key]
 
-    def _get_or_create_gauge(
-        self, name: str, tags: Mapping[str, str] | None
-    ) -> Any:
+    def _get_or_create_gauge(self, name: str, tags: Mapping[str, str] | None) -> Any:
         """Get or create a gauge metric."""
         if not self._prometheus_available:
             return None
@@ -235,9 +232,7 @@ class PrometheusBackend:
             )
         return self._gauges[key]
 
-    def _get_or_create_histogram(
-        self, name: str, tags: Mapping[str, str] | None
-    ) -> Any:
+    def _get_or_create_histogram(self, name: str, tags: Mapping[str, str] | None) -> Any:
         """Get or create a histogram metric."""
         if not self._prometheus_available:
             return None
@@ -319,7 +314,7 @@ class TelemetryClient:
         self,
         backend: MetricsBackend | None = None,
         sampling: SamplingConfig | None = None,
-        prefix: str = "tradepulse",
+        prefix: str = "geosync",
     ) -> None:
         """Initialize telemetry client.
 
@@ -486,7 +481,7 @@ def get_telemetry(
 def configure_telemetry(
     backend: MetricsBackend | None = None,
     sampling: SamplingConfig | None = None,
-    prefix: str = "tradepulse",
+    prefix: str = "geosync",
 ) -> TelemetryClient:
     """Configure and return the global telemetry client.
 

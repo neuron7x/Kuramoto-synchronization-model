@@ -1,0 +1,49 @@
+id: bbb-nvu-cng-docs-a
+status: ACTIVE
+claim_type: documentation
+promise: >-
+  Diff-bound documentation acceptor for the first BBB-NVU Cognitive Noise Gate
+  documentation surface. The bound files describe a deterministic research-grade
+  artifact and do not promote clinical diagnosis, treatment, or autonomous
+  medical action.
+diff_scope:
+  changed_files:
+    - path: ".claude/commit_acceptors/bbb-nvu-cng-docs-a.yaml"
+    - path: "BBB_NVU_Cognitive_Noise_Gate_2026/CHANGELOG.md"
+    - path: "BBB_NVU_Cognitive_Noise_Gate_2026/DATA_LICENSE.md"
+    - path: "BBB_NVU_Cognitive_Noise_Gate_2026/README.md"
+    - path: "BBB_NVU_Cognitive_Noise_Gate_2026/docs/architecture.md"
+    - path: "BBB_NVU_Cognitive_Noise_Gate_2026/docs/audit_replay.md"
+    - path: "BBB_NVU_Cognitive_Noise_Gate_2026/docs/bibliography.bib"
+    - path: "BBB_NVU_Cognitive_Noise_Gate_2026/docs/bibliography.md"
+    - path: "BBB_NVU_Cognitive_Noise_Gate_2026/docs/data_dictionary.csv"
+    - path: "BBB_NVU_Cognitive_Noise_Gate_2026/docs/generated_traceability_matrix.csv"
+    - path: "BBB_NVU_Cognitive_Noise_Gate_2026/docs/integration_readiness_tasks.md"
+    - path: "BBB_NVU_Cognitive_Noise_Gate_2026/docs/integration_status_2026-06-03.md"
+    - path: "BBB_NVU_Cognitive_Noise_Gate_2026/docs/l1_data_quality_gate.md"
+    - path: "BBB_NVU_Cognitive_Noise_Gate_2026/docs/methodology.md"
+    - path: "BBB_NVU_Cognitive_Noise_Gate_2026/docs/observability_incidents.md"
+    - path: "BBB_NVU_Cognitive_Noise_Gate_2026/docs/operational_kernel.md"
+    - path: "BBB_NVU_Cognitive_Noise_Gate_2026/docs/relative_maturity_assessment.md"
+  forbidden_paths:
+    - "trading/"
+    - "execution/"
+    - "forecast/"
+    - "policy/"
+required_python_symbols: []
+expected_signal: >-
+  The documentation remains bounded to research-grade deterministic operation
+  with explicit human-review and non-clinical limitations.
+measurement_command: "python BBB_NVU_Cognitive_Noise_Gate_2026/tools/verify_artifact.py"
+signal_artifact: "tmp/bbb_nvu_cng_verify_artifact.json"
+falsifier:
+  command: "python BBB_NVU_Cognitive_Noise_Gate_2026/tools/verify_artifact.py --invalid-mode"
+  description: >-
+    Unknown verifier modes must fail instead of silently passing.
+rollback_command: >-
+  git checkout -- BBB_NVU_Cognitive_Noise_Gate_2026/CHANGELOG.md BBB_NVU_Cognitive_Noise_Gate_2026/DATA_LICENSE.md BBB_NVU_Cognitive_Noise_Gate_2026/README.md BBB_NVU_Cognitive_Noise_Gate_2026/docs .claude/commit_acceptors/bbb-nvu-cng-docs-a.yaml
+rollback_verification_command: "git diff --exit-code"
+memory_update_type: append
+ledger_path: ".claude/commit_acceptors/bbb-nvu-cng-docs-a.yaml"
+report_path: "tmp/bbb_nvu_cng_verify_artifact.json"
+evidence: []

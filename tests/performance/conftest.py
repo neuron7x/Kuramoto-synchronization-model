@@ -1,3 +1,5 @@
+# Copyright (c) 2023-2026 Yaroslav Vasylenko (neuron7xLab)
+# SPDX-License-Identifier: MIT
 """Pytest fixtures and utilities for performance regression enforcement."""
 
 from __future__ import annotations
@@ -195,9 +197,7 @@ def _persist_benchmark_artifacts(records: list[_BenchmarkRecord]) -> None:
         "generated_at": timestamp.isoformat(),
         "records": [_serialize_record(record) for record in records],
     }
-    artifact_path = (
-        artifact_dir / f"benchmark-summary-{timestamp.strftime('%Y%m%dT%H%M%SZ')}.json"
-    )
+    artifact_path = artifact_dir / f"benchmark-summary-{timestamp.strftime('%Y%m%dT%H%M%SZ')}.json"
     artifact_path.write_text(json.dumps(payload, indent=2, sort_keys=True))
 
     if _ARTIFACT_TTL_DAYS <= 0:
@@ -206,10 +206,7 @@ def _persist_benchmark_artifacts(records: list[_BenchmarkRecord]) -> None:
     cutoff = timestamp - timedelta(days=_ARTIFACT_TTL_DAYS)
     for existing in artifact_dir.glob("benchmark-summary-*.json"):
         try:
-            if (
-                datetime.fromtimestamp(existing.stat().st_mtime, tz=timezone.utc)
-                < cutoff
-            ):
+            if datetime.fromtimestamp(existing.stat().st_mtime, tz=timezone.utc) < cutoff:
                 existing.unlink()
         except OSError:  # pragma: no cover - best-effort cleanup
             continue

@@ -1,14 +1,14 @@
 ---
-owner: data@tradepulse
+owner: data@geosync
 review_cadence: quarterly
 last_reviewed: 2026-01-01
 ---
 
-# TradePulse Data Artifact Contracts
+# GeoSync Data Artifact Contracts
 
 ## Overview
 
-This directory contains **dataset contracts** that formally document, validate, and maintain all sample data artifacts used throughout the TradePulse repository. Each contract specifies:
+This directory contains **dataset contracts** that formally document, validate, and maintain all sample data artifacts used throughout the GeoSync repository. Each contract specifies:
 
 - **Artifact locations and checksums**: For integrity verification
 - **Schema definitions**: Structure and data types
@@ -69,14 +69,14 @@ python scripts/validate_sample_data.py --format json
 - **Size**: 500-300 data points
 - **Format**: CSV (price/volume and OHLC)
 - **Use Cases**: Basic testing, demos, documentation examples
-- **Owner**: data@tradepulse
+- **Owner**: data@geosync
 
 #### [Extended Market Sample](./extended_market_sample.md)
 - **Artifacts**: `sample.csv` (root)
 - **Size**: 2001 data points
 - **Format**: CSV (price/volume)
 - **Use Cases**: Extended backtesting, statistical analysis, performance testing
-- **Owner**: data@tradepulse
+- **Owner**: data@geosync
 
 ### System Artifacts
 
@@ -84,7 +84,7 @@ python scripts/validate_sample_data.py --format json
 - **Artifacts**: Event logs, heatmap data from CNS Stabilizer
 - **Format**: JSON, CSV
 - **Use Cases**: Thermodynamic monitoring, stability analysis, neuromodulation testing
-- **Owner**: neuro@tradepulse
+- **Owner**: neuro@geosync
 
 ## Contract Format
 
@@ -92,7 +92,7 @@ Each contract is a Markdown file with YAML front matter following this structure
 
 ```markdown
 ---
-owner: team@tradepulse
+owner: team@geosync
 review_cadence: monthly|quarterly|annually
 artifacts:
   - path: relative/path/to/artifact.csv
@@ -268,7 +268,7 @@ WARNING: size mismatch: expected 1234 bytes, got 5678
 
 - [Validation Script](../../scripts/validate_sample_data.py): Implementation details
 - [Sample Data Generation](../templates/sample_data.md): How to generate new samples
-- [Testing Guide](../../TESTING.md): Using samples in tests
+- [Testing Guide](../operations/TESTING.md): Using samples in tests
 - [Data Templates](../templates/): Additional data documentation
 
 ## FAQ
@@ -322,10 +322,10 @@ To add or update data contracts:
 4. Include clear motivation in PR description
 5. Ensure CI passes with your changes
 
-For questions or issues with data contracts, contact the data platform team at data@tradepulse.
+For questions or issues with data contracts, contact the data platform team at data@geosync.
 
 ---
 
 **Last Updated**: 2025-11-17  
-**Maintainer**: TradePulse Data Platform Team  
+**Maintainer**: GeoSync Data Platform Team  
 **Review Cadence**: Quarterly

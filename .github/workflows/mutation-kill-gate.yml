@@ -1,0 +1,72 @@
+# SPDX-License-Identifier: MIT
+#
+# Mutation-kill ratchet — the falsification loop's K operator as an enforced
+# gate. For every claim-critical module in docs/MUTATION_KILL_BASELINE.json,
+# when that module's SOURCE or its TESTS change in a PR, this RE-PROBES it with
+# tools/mutation_probe.py --only-logic and fails if the comparison/boolean
+# logic kill-rate dropped below the frozen floor. Floors are monotone-up.
+#
+# No path filter: this is a (to-be) branch-protection REQUIRED check, so it
+# must report on every PR — a path-filtered required check that never runs is
+# reported "Expected" forever and dead-locks the merge. The checker is cheap by
+# construction: when no ledgered module changed it returns immediately without
+# probing; it pays the probe cost only when a claim-critical module is edited.
+name: Mutation Kill Gate
+
+on:
+  pull_request:
+    branches: [main]
+  push:
+    branches: [main]
+
+permissions:
+  contents: read
+
+jobs:
+  validate:
+    name: mutation-kill-gate
+    runs-on: ubuntu-latest
+    timeout-minutes: 15
+    steps:
+      - name: Checkout
+        uses: actions/checkout@9c091bb21b7c1c1d1991bb908d89e4e9dddfe3e0 # v7.0.0
+        with:
+          fetch-depth: 0 # the ratchet diffs changed files + floors against origin/main
+
+      - name: Setup Python
+        uses: actions/setup-python@ece7cb06caefa5fff74198d8649806c4678c61a1 # v6
+        with:
+          python-version: '3.12'
+
+      - name: Install probe + physics test runtime
+        run: |
+          set -euo pipefail
+          # The ratchet re-runs claim-critical physics tests under mutation, so
+          # it needs the same runtime as the physics suites (pinned to the
+          # requirements.txt contract). Importing ANY core.physics submodule
+          # (e.g. core.physics.stuart_landau_es, the T2b baseline) executes
+          # core/physics/__init__.py, which eagerly imports scipy-backed
+          # siblings (diffusion_predictor -> scipy.linalg.expm, wave_propagation,
+          # tsallis_gate). scipy is therefore a hard import-time dependency of
+          # the physics test runtime, not an optional extra: without it the
+          # mutation_probe baseline cannot even import the module and the gate
+          # fails closed (exit 2) on a pure environment defect. Pinned to the
+          # requirements.txt floor (scipy>=1.16.2). KuramotoConfig is
+          # Pydantic-backed and core/kuramoto/ricci_flow.py imports networkx
+          # for bridge detection, so pydantic and networkx are likewise part
+          # of the baseline import/runtime contract here, not optional extras.
+          python -m pip install --upgrade pip
+          python -m pip install \
+            'pytest>=8.4' \
+            'numpy>=2.3.3' \
+            'pandas>=2.3.3' \
+            'PyYAML>=6.0.3' \
+            'scipy>=1.16.2' \
+            'networkx>=3.5' \
+            'pydantic>=2.12.4,<3.0.0'
+
+      - name: Mutation-kill ratchet
+        run: |
+          set -euo pipefail
+          git fetch origin main --quiet || true
+          python scripts/ci/check_mutation_kill_ratchet.py --base-ref origin/main

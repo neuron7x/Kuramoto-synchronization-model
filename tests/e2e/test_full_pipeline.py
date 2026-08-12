@@ -1,3 +1,5 @@
+# Copyright (c) 2023-2026 Yaroslav Vasylenko (neuron7xLab)
+# SPDX-License-Identifier: MIT
 """End-to-end regression covering ingest → features → signal → report."""
 
 from __future__ import annotations
@@ -8,7 +10,7 @@ import numpy as np
 import pandas as pd
 import pytest
 
-from cli.tradepulse_cli import (
+from geosync.cli.geosync_cli import (
     _load_prices,
     _resolve_strategy,
     _run_backtest,
@@ -124,9 +126,7 @@ def test_pipeline_from_scratch(tmp_path) -> None:
 
     assert len(signals) == len(prices_array)
     assert "### Backtest" in markdown_report
-    assert report_cfg.html_output_path.read_text(encoding="utf-8").startswith(
-        "<!doctype html>"
-    )
+    assert report_cfg.html_output_path.read_text(encoding="utf-8").startswith("<!doctype html>")
     pdf_bytes = report_cfg.pdf_output_path.read_bytes()
     assert pdf_bytes.startswith(b"%PDF")
     assert pdf_bytes.rstrip().endswith(b"%%EOF")

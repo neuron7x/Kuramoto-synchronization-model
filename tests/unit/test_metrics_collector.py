@@ -1,3 +1,5 @@
+# Copyright (c) 2023-2026 Yaroslav Vasylenko (neuron7xLab)
+# SPDX-License-Identifier: MIT
 from __future__ import annotations
 
 import math
@@ -76,9 +78,7 @@ def _p2_quantile(samples: Iterable[float], probability: float) -> float:
                 d <= -1 and positions[i - 1] - positions[i] < -1
             ):
                 d_sign = 1 if d > 0 else -1
-                new_height = ordered[i] + d_sign / (
-                    positions[i + 1] - positions[i - 1]
-                ) * (
+                new_height = ordered[i] + d_sign / (positions[i + 1] - positions[i - 1]) * (
                     (positions[i] - positions[i - 1] + d_sign)
                     * (ordered[i + 1] - ordered[i])
                     / (positions[i + 1] - positions[i])
@@ -113,22 +113,22 @@ def test_measure_data_ingestion_records_duration_and_status() -> None:
 
     count = _sample_value(
         registry,
-        "tradepulse_data_ingestion_duration_seconds_count",
+        "geosync_data_ingestion_duration_seconds_count",
         {"source": "csv", "symbol": "BTC-USDT"},
     )
     total = _sample_value(
         registry,
-        "tradepulse_data_ingestion_total",
+        "geosync_data_ingestion_total",
         {"source": "csv", "symbol": "BTC-USDT", "status": "success"},
     )
     throughput = _sample_value(
         registry,
-        "tradepulse_data_ingestion_throughput_ticks_per_second",
+        "geosync_data_ingestion_throughput_ticks_per_second",
         {"source": "csv", "symbol": "BTC-USDT"},
     )
     latency_quantile = _sample_value(
         registry,
-        "tradepulse_data_ingestion_latency_quantiles_seconds",
+        "geosync_data_ingestion_latency_quantiles_seconds",
         {"source": "csv", "symbol": "BTC-USDT", "quantile": "p50"},
     )
 
@@ -149,18 +149,16 @@ def test_order_placement_context_uses_custom_status_and_updates_gauges() -> None
     collector.set_strategy_score("alpha", 0.87)
     collector.set_strategy_memory_size(4)
     collector.record_tick_processed("csv", "ETH-USDT", count=3)
-    collector.record_order_placed(
-        "binance", "ETH-USDT", "market", status="success", count=2
-    )
+    collector.record_order_placed("binance", "ETH-USDT", "market", status="success", count=2)
 
     duration_count = _sample_value(
         registry,
-        "tradepulse_order_placement_duration_seconds_count",
+        "geosync_order_placement_duration_seconds_count",
         {"exchange": "binance", "symbol": "ETH-USDT"},
     )
     rejected_total = _sample_value(
         registry,
-        "tradepulse_orders_placed_total",
+        "geosync_orders_placed_total",
         {
             "exchange": "binance",
             "symbol": "ETH-USDT",
@@ -170,23 +168,23 @@ def test_order_placement_context_uses_custom_status_and_updates_gauges() -> None
     )
     open_positions = _sample_value(
         registry,
-        "tradepulse_open_positions",
+        "geosync_open_positions",
         {"exchange": "binance", "symbol": "ETH-USDT"},
     )
     strategy_score = _sample_value(
         registry,
-        "tradepulse_strategy_score",
+        "geosync_strategy_score",
         {"strategy_name": "alpha"},
     )
-    memory_size = _sample_value(registry, "tradepulse_strategy_memory_size")
+    memory_size = _sample_value(registry, "geosync_strategy_memory_size")
     ticks_processed = _sample_value(
         registry,
-        "tradepulse_ticks_processed_total",
+        "geosync_ticks_processed_total",
         {"source": "csv", "symbol": "ETH-USDT"},
     )
     market_orders = _sample_value(
         registry,
-        "tradepulse_orders_placed_total",
+        "geosync_orders_placed_total",
         {
             "exchange": "binance",
             "symbol": "ETH-USDT",
@@ -198,7 +196,7 @@ def test_order_placement_context_uses_custom_status_and_updates_gauges() -> None
     assert duration_count == 1.0
     submission_quantile = _sample_value(
         registry,
-        "tradepulse_order_submission_latency_quantiles_seconds",
+        "geosync_order_submission_latency_quantiles_seconds",
         {"exchange": "binance", "symbol": "ETH-USDT", "quantile": "p50"},
     )
     assert submission_quantile is not None
@@ -226,12 +224,12 @@ def test_data_ingestion_context_ignores_none_and_blank_status_overrides() -> Non
 
     success_total = _sample_value(
         registry,
-        "tradepulse_data_ingestion_total",
+        "geosync_data_ingestion_total",
         {"source": "api", "symbol": "BTC-USDT", "status": "success"},
     )
     none_total = _sample_value(
         registry,
-        "tradepulse_data_ingestion_total",
+        "geosync_data_ingestion_total",
         {"source": "api", "symbol": "BTC-USDT", "status": "None"},
     )
 
@@ -248,17 +246,17 @@ def test_health_check_metrics_capture_latency_and_status() -> None:
 
     latency_count = _sample_value(
         registry,
-        "tradepulse_health_check_latency_seconds_count",
+        "geosync_health_check_latency_seconds_count",
         {"check_name": "data-pipeline"},
     )
     latency_sum = _sample_value(
         registry,
-        "tradepulse_health_check_latency_seconds_sum",
+        "geosync_health_check_latency_seconds_sum",
         {"check_name": "data-pipeline"},
     )
     status = _sample_value(
         registry,
-        "tradepulse_health_check_status",
+        "geosync_health_check_status",
         {"check_name": "data-pipeline"},
     )
 
@@ -274,12 +272,12 @@ def test_health_check_metrics_capture_latency_and_status() -> None:
 
     blank_success = _sample_value(
         second_registry,
-        "tradepulse_data_ingestion_total",
+        "geosync_data_ingestion_total",
         {"source": "api", "symbol": "ETH-USDT", "status": "success"},
     )
     blank_override = _sample_value(
         second_registry,
-        "tradepulse_data_ingestion_total",
+        "geosync_data_ingestion_total",
         {"source": "api", "symbol": "ETH-USDT", "status": ""},
     )
 
@@ -298,7 +296,7 @@ def test_order_placement_context_forces_error_status_on_exception() -> None:
 
     error_total = _sample_value(
         registry,
-        "tradepulse_orders_placed_total",
+        "geosync_orders_placed_total",
         {
             "exchange": "binance",
             "symbol": "BTC-USDT",
@@ -308,7 +306,7 @@ def test_order_placement_context_forces_error_status_on_exception() -> None:
     )
     filled_total = _sample_value(
         registry,
-        "tradepulse_orders_placed_total",
+        "geosync_orders_placed_total",
         {
             "exchange": "binance",
             "symbol": "BTC-USDT",
@@ -343,7 +341,7 @@ def test_latency_quantiles_without_numpy(monkeypatch: pytest.MonkeyPatch) -> Non
 
     quantile = _sample_value(
         registry,
-        "tradepulse_data_ingestion_latency_quantiles_seconds",
+        "geosync_data_ingestion_latency_quantiles_seconds",
         {"source": "csv", "symbol": "BTC-USDT", "quantile": "p95"},
     )
 
@@ -366,32 +364,32 @@ def test_signal_generation_latency_and_equity_curve_gauge() -> None:
 
     signal_total = _sample_value(
         registry,
-        "tradepulse_signal_generation_total",
+        "geosync_signal_generation_total",
         {"strategy": "trend", "status": "success"},
     )
     signal_quantile = _sample_value(
         registry,
-        "tradepulse_signal_generation_latency_quantiles_seconds",
+        "geosync_signal_generation_latency_quantiles_seconds",
         {"strategy": "trend", "quantile": "p50"},
     )
     fill_quantile = _sample_value(
         registry,
-        "tradepulse_order_fill_latency_quantiles_seconds",
+        "geosync_order_fill_latency_quantiles_seconds",
         {"exchange": "demo", "symbol": "trend", "quantile": "p50"},
     )
     ack_quantile = _sample_value(
         registry,
-        "tradepulse_order_ack_latency_quantiles_seconds",
+        "geosync_order_ack_latency_quantiles_seconds",
         {"exchange": "demo", "symbol": "trend", "quantile": "p50"},
     )
     signal_fill_quantile = _sample_value(
         registry,
-        "tradepulse_signal_to_fill_latency_quantiles_seconds",
+        "geosync_signal_to_fill_latency_quantiles_seconds",
         {"strategy": "trend", "exchange": "demo", "symbol": "trend", "quantile": "p50"},
     )
     equity_gauge = _sample_value(
         registry,
-        "tradepulse_backtest_equity_curve",
+        "geosync_backtest_equity_curve",
         {"strategy": "trend", "step": "0"},
     )
 
@@ -415,7 +413,7 @@ def test_record_equity_curve_downsamples_and_resets() -> None:
     for step in expected_steps:
         value = _sample_value(
             registry,
-            "tradepulse_backtest_equity_curve",
+            "geosync_backtest_equity_curve",
             {"strategy": "trend", "step": step},
         )
         assert value is not None
@@ -426,7 +424,7 @@ def test_record_equity_curve_downsamples_and_resets() -> None:
     assert (
         _sample_value(
             registry,
-            "tradepulse_backtest_equity_curve",
+            "geosync_backtest_equity_curve",
             {"strategy": "trend", "step": "99"},
         )
         is None
@@ -434,7 +432,7 @@ def test_record_equity_curve_downsamples_and_resets() -> None:
     assert (
         _sample_value(
             registry,
-            "tradepulse_backtest_equity_curve",
+            "geosync_backtest_equity_curve",
             {"strategy": "trend", "step": "2"},
         )
         == 30.0
@@ -492,17 +490,17 @@ def test_record_regression_metrics_sets_gauges() -> None:
 
     mae_value = _sample_value(
         registry,
-        "tradepulse_regression_metric",
+        "geosync_regression_metric",
         {"model": "kuramoto", "metric": "mae"},
     )
     rmse_value = _sample_value(
         registry,
-        "tradepulse_regression_metric",
+        "geosync_regression_metric",
         {"model": "kuramoto", "metric": "rmse"},
     )
     r2_value = _sample_value(
         registry,
-        "tradepulse_regression_metric",
+        "geosync_regression_metric",
         {"model": "kuramoto", "metric": "r2"},
     )
 
@@ -515,22 +513,18 @@ def test_database_metrics_track_size_growth_and_latency() -> None:
     registry = CollectorRegistry()
     collector = MetricsCollector(registry)
 
-    collector.observe_database_size(
-        database="tradepulse", host="db-primary", size_bytes=1024
-    )
-    collector.observe_database_size(
-        database="tradepulse", host="db-primary", size_bytes=2048
-    )
+    collector.observe_database_size(database="geosync", host="db-primary", size_bytes=1024)
+    collector.observe_database_size(database="geosync", host="db-primary", size_bytes=2048)
 
     collector.observe_database_query(
-        database="tradepulse",
+        database="geosync",
         host="db-primary",
         statement_type="SELECT",
         status="SUCCESS",
         duration=0.123,
     )
     collector.observe_database_query(
-        database="tradepulse",
+        database="geosync",
         host="db-primary",
         statement_type="insert",
         status="error",
@@ -539,20 +533,20 @@ def test_database_metrics_track_size_growth_and_latency() -> None:
 
     size_value = _sample_value(
         registry,
-        "tradepulse_database_size_bytes",
-        {"database": "tradepulse", "host": "db-primary"},
+        "geosync_database_size_bytes",
+        {"database": "geosync", "host": "db-primary"},
     )
     growth_value = _sample_value(
         registry,
-        "tradepulse_database_size_growth_bytes",
-        {"database": "tradepulse", "host": "db-primary"},
+        "geosync_database_size_growth_bytes",
+        {"database": "geosync", "host": "db-primary"},
     )
 
     select_latency_count = _sample_value(
         registry,
-        "tradepulse_database_query_latency_seconds_count",
+        "geosync_database_query_latency_seconds_count",
         {
-            "database": "tradepulse",
+            "database": "geosync",
             "host": "db-primary",
             "statement_type": "select",
             "status": "success",
@@ -560,9 +554,9 @@ def test_database_metrics_track_size_growth_and_latency() -> None:
     )
     select_latency_sum = _sample_value(
         registry,
-        "tradepulse_database_query_latency_seconds_sum",
+        "geosync_database_query_latency_seconds_sum",
         {
-            "database": "tradepulse",
+            "database": "geosync",
             "host": "db-primary",
             "statement_type": "select",
             "status": "success",
@@ -570,9 +564,9 @@ def test_database_metrics_track_size_growth_and_latency() -> None:
     )
     insert_latency_count = _sample_value(
         registry,
-        "tradepulse_database_query_latency_seconds_count",
+        "geosync_database_query_latency_seconds_count",
         {
-            "database": "tradepulse",
+            "database": "geosync",
             "host": "db-primary",
             "statement_type": "insert",
             "status": "error",
@@ -580,9 +574,9 @@ def test_database_metrics_track_size_growth_and_latency() -> None:
     )
     total_success = _sample_value(
         registry,
-        "tradepulse_database_query_total",
+        "geosync_database_query_total",
         {
-            "database": "tradepulse",
+            "database": "geosync",
             "host": "db-primary",
             "statement_type": "select",
             "status": "success",
@@ -590,9 +584,9 @@ def test_database_metrics_track_size_growth_and_latency() -> None:
     )
     total_error = _sample_value(
         registry,
-        "tradepulse_database_query_total",
+        "geosync_database_query_total",
         {
-            "database": "tradepulse",
+            "database": "geosync",
             "host": "db-primary",
             "statement_type": "insert",
             "status": "error",
@@ -618,17 +612,17 @@ def test_api_metrics_capture_requests_and_resources() -> None:
 
     latency_count = _sample_value(
         registry,
-        "tradepulse_api_request_latency_seconds_count",
+        "geosync_api_request_latency_seconds_count",
         {"route": "/health", "method": "GET"},
     )
     total_requests = _sample_value(
         registry,
-        "tradepulse_api_requests_total",
+        "geosync_api_requests_total",
         {"route": "/health", "method": "GET", "status": "200"},
     )
     in_flight = _sample_value(
         registry,
-        "tradepulse_api_requests_in_flight",
+        "geosync_api_requests_in_flight",
         {"route": "/health", "method": "GET"},
     )
 
@@ -641,17 +635,17 @@ def test_api_metrics_capture_requests_and_resources() -> None:
 
     cpu_gauge = _sample_value(
         registry,
-        "tradepulse_process_cpu_percent",
+        "geosync_process_cpu_percent",
         {"process": "inference_api"},
     )
     memory_bytes = _sample_value(
         registry,
-        "tradepulse_process_memory_bytes",
+        "geosync_process_memory_bytes",
         {"process": "inference_api"},
     )
     memory_percent = _sample_value(
         registry,
-        "tradepulse_process_memory_percent",
+        "geosync_process_memory_percent",
         {"process": "inference_api"},
     )
 
@@ -672,12 +666,12 @@ def test_queue_metrics_record_depth_and_latency() -> None:
 
     depth_value = _sample_value(
         registry,
-        "tradepulse_api_queue_depth",
+        "geosync_api_queue_depth",
         {"queue": "event_loop_ready"},
     )
     latency_count = _sample_value(
         registry,
-        "tradepulse_api_queue_latency_seconds_count",
+        "geosync_api_queue_latency_seconds_count",
         {"queue": "event_loop_ready"},
     )
 
@@ -696,63 +690,61 @@ def test_incident_and_lifecycle_metrics() -> None:
     collector.record_runbook_execution("runbook_live_trading", "failed", count=2)
     collector.set_lifecycle_phase_state("active_operations", "active")
     collector.set_lifecycle_checkpoint_status("daily-risk-review", "passed")
-    collector.record_lifecycle_transition(
-        "startup", "active_operations", outcome="success"
-    )
+    collector.record_lifecycle_transition("startup", "active_operations", outcome="success")
 
     open_incidents = _sample_value(
         registry,
-        "tradepulse_incidents_open",
+        "geosync_incidents_open",
         {"severity": "critical"},
     )
     ack_count = _sample_value(
         registry,
-        "tradepulse_incident_ack_latency_seconds_count",
+        "geosync_incident_ack_latency_seconds_count",
         {"severity": "critical"},
     )
     ack_sum = _sample_value(
         registry,
-        "tradepulse_incident_ack_latency_seconds_sum",
+        "geosync_incident_ack_latency_seconds_sum",
         {"severity": "critical"},
     )
     resolution_count = _sample_value(
         registry,
-        "tradepulse_incident_resolution_latency_seconds_count",
+        "geosync_incident_resolution_latency_seconds_count",
         {"severity": "critical"},
     )
     lifecycle_active = _sample_value(
         registry,
-        "tradepulse_lifecycle_phase_state",
+        "geosync_lifecycle_phase_state",
         {"phase": "active_operations", "state": "active"},
     )
     lifecycle_standby = _sample_value(
         registry,
-        "tradepulse_lifecycle_phase_state",
+        "geosync_lifecycle_phase_state",
         {"phase": "active_operations", "state": "standby"},
     )
     checkpoint_passed = _sample_value(
         registry,
-        "tradepulse_lifecycle_checkpoint_status",
+        "geosync_lifecycle_checkpoint_status",
         {"checkpoint": "daily-risk-review", "status": "passed"},
     )
     checkpoint_blocked = _sample_value(
         registry,
-        "tradepulse_lifecycle_checkpoint_status",
+        "geosync_lifecycle_checkpoint_status",
         {"checkpoint": "daily-risk-review", "status": "blocked"},
     )
     runbook_success = _sample_value(
         registry,
-        "tradepulse_runbook_executions_total",
+        "geosync_runbook_executions_total",
         {"runbook": "runbook_live_trading", "outcome": "success"},
     )
     runbook_failed = _sample_value(
         registry,
-        "tradepulse_runbook_executions_total",
+        "geosync_runbook_executions_total",
         {"runbook": "runbook_live_trading", "outcome": "failed"},
     )
     lifecycle_transition = _sample_value(
         registry,
-        "tradepulse_lifecycle_transition_total",
+        "geosync_lifecycle_transition_total",
         {
             "from_phase": "startup",
             "to_phase": "active_operations",

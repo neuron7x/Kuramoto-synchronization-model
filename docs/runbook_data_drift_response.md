@@ -8,7 +8,7 @@ protect inference quality and trading outcomes.
 ## Triggers
 
 - Drift alerts from `observability/drift.py` (PSI/KS thresholds exceeded).
-- Elevated `tradepulse_model_quality_degradation_events_total`.
+- Elevated `geosync_model_quality_degradation_events_total`.
 - Feature distribution shifts observed in model monitoring dashboards.
 
 ## Triage Checklist

@@ -1,0 +1,118 @@
+{
+  "schema": "geosync.runtime_failure_matrix.v1",
+  "rows": [
+    {
+      "component": "execution.oms",
+      "failure_class": "threshold boundary",
+      "test": "tests/execution/test_oms_notional_fail_closed.py::test_market_order_rejected_when_notional_cap_active",
+      "expected_behavior": "fail_closed",
+      "observed_behavior": "fail_closed",
+      "verdict": "PASS"
+    },
+    {
+      "component": "execution.oms",
+      "failure_class": "missing dependency",
+      "test": "tests/execution/test_oms_notional_fail_closed.py::test_no_reference_price_with_cap_fails_closed",
+      "expected_behavior": "fail_closed",
+      "observed_behavior": "fail_closed",
+      "verdict": "PASS"
+    },
+    {
+      "component": "execution.arbitrage.capital",
+      "failure_class": "non-atomic commit",
+      "test": "tests/execution/test_capital_partial_commit.py::test_partial_commit_does_not_release_committed_leg",
+      "expected_behavior": "fail_closed",
+      "observed_behavior": "fail_closed",
+      "verdict": "PASS"
+    },
+    {
+      "component": "execution.resilience.circuit_breaker",
+      "failure_class": "resource wedge",
+      "test": "tests/execution/test_circuit_breaker_half_open_refund.py::test_admitted_but_refunded_probes_never_wedge_the_breaker",
+      "expected_behavior": "fail_closed",
+      "observed_behavior": "fail_closed",
+      "verdict": "PASS"
+    },
+    {
+      "component": "execution.connector",
+      "failure_class": "stale artifact",
+      "test": "tests/execution/test_authenticated_common.py::test_clock_skew_on_success_aborts_not_silently_accepted",
+      "expected_behavior": "fail_closed",
+      "observed_behavior": "fail_closed",
+      "verdict": "PASS"
+    },
+    {
+      "component": "messaging.kafka",
+      "failure_class": "duplicate id",
+      "test": "tests/unit/messaging/test_event_bus_extended.py::test_kafka_repeated_subscribe_does_not_orphan_the_earlier_consumer",
+      "expected_behavior": "fail_closed",
+      "observed_behavior": "fail_closed",
+      "verdict": "PASS"
+    },
+    {
+      "component": "libs.db.config",
+      "failure_class": "missing dependency",
+      "test": "tests/unit/libs/test_db_config_contracts.py::test_missing_writer_dsn_fails_closed",
+      "expected_behavior": "fail_closed",
+      "observed_behavior": "fail_closed",
+      "verdict": "PASS"
+    },
+    {
+      "component": "libs.db.config",
+      "failure_class": "secret leakage",
+      "test": "tests/unit/libs/test_db_config_contracts.py::test_secret_absent_from_repr_and_str",
+      "expected_behavior": "fail_closed",
+      "observed_behavior": "fail_closed",
+      "verdict": "PASS"
+    },
+    {
+      "component": "core.idempotency",
+      "failure_class": "NaN/Infinity",
+      "test": "tests/unit/test_deterministic_hashing_integrity.py::test_non_finite_float_is_rejected",
+      "expected_behavior": "fail_closed",
+      "observed_behavior": "fail_closed",
+      "verdict": "PASS"
+    },
+    {
+      "component": "tools.rvg",
+      "failure_class": "wrong hash",
+      "test": "tests/tools/test_rvg_artifact_verifier.py::test_hash_manifest_rejects_tampered_verdict",
+      "expected_behavior": "fail_closed",
+      "observed_behavior": "fail_closed",
+      "verdict": "PASS"
+    },
+    {
+      "component": "modules",
+      "failure_class": "future leakage",
+      "test": "tests/property/modules/test_modules_no_future_leakage.py::test_regime_statistics_do_not_leak_future_explicit",
+      "expected_behavior": "fail_closed",
+      "observed_behavior": "fail_closed",
+      "verdict": "PASS"
+    },
+    {
+      "component": "modules.market_regime_analyzer",
+      "failure_class": "empty input",
+      "test": "tests/unit/modules/test_market_regime_analyzer_contract.py::test_empty_data_yields_explicit_insufficient_data",
+      "expected_behavior": "fail_closed",
+      "observed_behavior": "fail_closed",
+      "verdict": "PASS"
+    },
+    {
+      "component": "modules.order_validator",
+      "failure_class": "unknown enum/status",
+      "test": "tests/unit/modules/test_risk_sizing_contracts.py::test_order_validator_rejects_bad_quantity_and_symbol",
+      "expected_behavior": "fail_closed",
+      "observed_behavior": "fail_closed",
+      "verdict": "PASS"
+    },
+    {
+      "component": "modules.gaba_inhibition_gate",
+      "failure_class": "threshold boundary",
+      "test": "tests/unit/modules/test_risk_sizing_contracts.py::test_gaba_gate_enforces_magnitude_fidelity_when_elevated",
+      "expected_behavior": "fail_closed",
+      "observed_behavior": "fail_closed",
+      "verdict": "PASS"
+    }
+  ],
+  "verdict": "PASS"
+}

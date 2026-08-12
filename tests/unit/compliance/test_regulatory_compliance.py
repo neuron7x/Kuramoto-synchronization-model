@@ -1,3 +1,5 @@
+# Copyright (c) 2023-2026 Yaroslav Vasylenko (neuron7xLab)
+# SPDX-License-Identifier: MIT
 import pytest
 
 from core.compliance import ComplianceIssue, RegulatoryComplianceValidator
@@ -12,14 +14,14 @@ def sample_metadata() -> dict[str, object]:
         "ccpa_compliant": True,
         "iso_certifications": ["ISO27001", "ISO27701"],
         "nist_alignment": ["NIST-CSF"],
-        "data_ownership": "TradePulse",
+        "data_ownership": "GeoSync",
         "confidentiality": "Confidential",
         "retention_policy_days": 365,
         "retention_policy_reference": "policy://retention/market-data",
         "training_restrictions": ["no_personal_data", "approved_sources_only"],
-        "license": "TradePulse Proprietary License Agreement (TPLA)",
+        "license": "MIT License",
         "intended_domains": ["quant_research"],
-        "user_request_process": "https://intranet.tradepulse/privacy-portal",
+        "user_request_process": "https://intranet.geosync/privacy-portal",
         "user_request_sla_hours": 48,
         "consent_logging": True,
         "independent_audit": {"independent": True, "frequency_days": 180},
@@ -42,6 +44,8 @@ def test_helper_normalisation_functions() -> None:
     assert reg._normalise_bool("maybe") is None
 
     assert reg._normalise_positive_int(5) == 5
+    assert reg._normalise_positive_int(1) == 1  # boundary: > 0, not > 1
+    assert reg._normalise_positive_int("1") == 1  # str path boundary
     assert reg._normalise_positive_int("10") == 10
     assert reg._normalise_positive_int(0) is None
     assert reg._normalise_positive_int("  ") is None
@@ -124,7 +128,7 @@ def test_validator_detects_broad_failures() -> None:
             "confidentiality": "Top Secret",
             "retention_policy_days": 0,
             "training_restrictions": [],
-            "license": "Proprietary",
+            "license": "proprietary",
             "intended_domains": ["mass_surveillance"],
             "user_request_sla_hours": 200,
             "consent_logging": "disabled",
@@ -146,16 +150,14 @@ def test_validator_detects_broad_failures() -> None:
     assert "Retention policy does not specify a positive duration" in messages
     assert any("Retention policy lacks" in message for message in messages)
     assert "Training restrictions are incomplete or missing" in messages
-    assert any("License Proprietary" in message for message in messages)
+    assert any("License proprietary" in message for message in messages)
     assert any("forbidden areas" in message for message in messages)
     assert "Process for user data requests is undefined" in messages
     assert any("User request SLA exceeds one week" in message for message in messages)
     assert any("Consent logging must be enabled" in message for message in messages)
     assert "Independent audit coverage is not confirmed" in messages
     assert "Audit frequency exceeds configured maximum interval" in messages
-    assert any(
-        "Remediation commitments are not aligned" in message for message in messages
-    )
+    assert any("Remediation commitments are not aligned" in message for message in messages)
     assert "Remediation plan reference is missing" in messages
 
 
@@ -168,6 +170,60 @@ def test_validator_requires_audit_frequency(sample_metadata: dict[str, object]) 
 
     assert not report.compliant
     assert any("Audit cadence" in issue.message for issue in report.issues)
+
+
+def test_explicit_false_independent_not_overridden_by_enabled(
+    sample_metadata: dict[str, object],
+) -> None:
+    """DEFECT 5: `{independent: false, enabled: true}` must read as non-independent.
+
+    The old `independent or enabled` let a truthy secondary key resurrect an
+    explicitly-disabled primary flag, greenlighting an un-audited system.
+    """
+
+    sample_metadata["independent_audit"] = {
+        "independent": False,
+        "enabled": True,
+        "frequency_days": 180,
+    }
+    validator = RegulatoryComplianceValidator()
+    report = validator.validate(sample_metadata)
+
+    assert not report.compliant
+    assert "Independent audit coverage is not confirmed" in {
+        issue.message for issue in report.issues
+    }
+
+
+def test_explicit_false_aligned_not_overridden_by_approved(
+    sample_metadata: dict[str, object],
+) -> None:
+    """DEFECT 5: `{aligned: false, approved: true}` must read as not-aligned."""
+
+    sample_metadata["remediation_alignment"] = {
+        "aligned": False,
+        "approved": True,
+        "reference": "jira://risk-123",
+    }
+    validator = RegulatoryComplianceValidator()
+    report = validator.validate(sample_metadata)
+
+    assert not report.compliant
+    assert any(
+        "Remediation commitments are not aligned" in issue.message for issue in report.issues
+    )
+
+
+def test_enabled_fallback_used_only_when_independent_absent(
+    sample_metadata: dict[str, object],
+) -> None:
+    """Fallback still works: `enabled` counts when `independent` is ABSENT."""
+
+    sample_metadata["independent_audit"] = {"enabled": True, "frequency_days": 180}
+    validator = RegulatoryComplianceValidator()
+    report = validator.validate(sample_metadata)
+
+    assert report.compliant
 
 
 def test_validator_accepts_string_remediation_reference(
@@ -231,9 +287,7 @@ def test_validator_accepts_compliant_metadata(
     report = validator.validate(sample_metadata)
     assert report.compliant
     assert report.issues == ()
-    assert (
-        report.metadata["license"] == "TradePulse Proprietary License Agreement (TPLA)"
-    )
+    assert report.metadata["license"] == "MIT License"
     assert "GDPR" in report.metadata["privacy_regimes"]
 
 

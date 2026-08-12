@@ -1,0 +1,100 @@
+{
+  "by_crisis_window_verified_or_partial": {
+    "CW1": 21,
+    "CW2": 16,
+    "CW3": 17,
+    "CW4": 19,
+    "CW5": 12,
+    "CW6": 16
+  },
+  "by_mechanistic_relevance_verified_or_partial": {
+    "balance_sheet": 4,
+    "contagion": 5,
+    "information_constraint": 2,
+    "liquidity_funding": 7,
+    "market_wide_stress": 7,
+    "official_response": 7
+  },
+  "by_source_class": {
+    "banking": 4,
+    "crisis_window": 5,
+    "literature_support": 3,
+    "macro_financial": 6,
+    "market_structure": 4,
+    "repo": 4
+  },
+  "canonical_run_authorized": false,
+  "decision": "SOURCE_REGISTRY_PARTIALLY_VERIFIED",
+  "decision_rationale": "P1B repair audit of 26 sources (P1A 25 + 1 new): 18 VERIFIED, 8 PARTIAL, 0 DOWNGRADED, 0 REJECTED. verified_or_partial=26 (floor 18 -> PASS). verified_usable_now=18 (floor 12 -> PASS). All six crisis windows retain >=12 verified/partial sources (floor 3). All 6 mechanism families retain >=2 verified/partial sources (floor 2 -> PASS). Decision=SOURCE_REGISTRY_PARTIALLY_VERIFIED. P1B repair outcomes: ECB_CBD REPIN to data.ecb.europa.eu/data/datasets/CBD2; ICAP_MOVE REPIN to theice.com/iba (PARTIAL because MOVE-specific methodology PDF not relocatable, license boundary unchanged); BIS_QR_NETWORK REPIN to bis.org/publ/quarterly.htm; FED_TIMELINE REPIN to federalreserve.gov/publications/financial-stability-report.htm + federalreservehistory.org/essays/great-recession-of-200709; BOE_LDI_REVIEW REPIN to bankofengland.co.uk/financial-stability-report/2022/december-2022; PHILLY_FED_RTDSM ADDED as canonical vintage US macro source satisfying information_constraint floor. Old P1A SOURCE_REGISTRY_REJECTED verdict remains visible in docs/research/D002J_SOURCE_DOWNGRADE_LOG.md (P1A entries preserved verbatim).",
+  "downgraded": 0,
+  "downgraded_or_rejected_source_ids": [],
+  "floor_checks": {
+    "crisis_window_min_three_pass": true,
+    "mech_family_min_two_pass": true,
+    "mechanism_family_counts_verified_or_partial": {
+      "balance_sheet": 4,
+      "contagion": 5,
+      "information_constraint": 2,
+      "liquidity_funding": 7,
+      "market_wide_stress": 7,
+      "official_response": 7
+    },
+    "mechanism_family_definitions": {
+      "balance_sheet": "uninsured deposits / AFS-HTM losses / capital / derivatives concentration",
+      "contagion": "interbank exposure / cross-border / DebtRank / reconstruction-methodology",
+      "information_constraint": "real-time vintage information lookahead constraint",
+      "liquidity_funding": "repo collateral / rollover / rehypothecation / maturity mismatch / LDI collateral / gilt dysfunction",
+      "market_wide_stress": "FSI composites / VIX / credit spreads / term structure / MOVE / risk-off",
+      "official_response": "facility announcements / event studies / supervisory post-mortems / discount window / external anchors / NBFI"
+    },
+    "total_sources_audited": 26,
+    "total_sources_audited_floor": 25,
+    "total_sources_audited_pass": true,
+    "verified_or_partial": 26,
+    "verified_or_partial_floor": 18,
+    "verified_or_partial_pass": true,
+    "verified_usable_now": 18,
+    "verified_usable_now_floor": 12,
+    "verified_usable_now_pass": true
+  },
+  "generated_at": "2026-05-14T20:00:00Z",
+  "mechanism_family_definitions": {
+    "balance_sheet": "uninsured deposits / AFS-HTM losses / capital / derivatives concentration",
+    "contagion": "interbank exposure / cross-border / DebtRank / reconstruction-methodology",
+    "information_constraint": "real-time vintage information lookahead constraint",
+    "liquidity_funding": "repo collateral / rollover / rehypothecation / maturity mismatch / LDI collateral / gilt dysfunction",
+    "market_wide_stress": "FSI composites / VIX / credit spreads / term structure / MOVE / risk-off",
+    "official_response": "facility announcements / event studies / supervisory post-mortems / discount window / external anchors / NBFI"
+  },
+  "p1b_lineage": "D-002G -> D-002H REFUSED -> D-002I -> D-002J prereg #694 -> P1 #695 -> P1A #697 REJECTED -> P1B this PR",
+  "p1b_repair_outcomes": {
+    "BIS_QR_NETWORK": "REPIN_CANONICAL_URL",
+    "BOE_LDI_REVIEW": "REPIN_CANONICAL_URL",
+    "ECB_CBD": "REPIN_CANONICAL_URL",
+    "FDIC_SVB_POSTMORTEM": "REPIN_CANONICAL_URL",
+    "FED_TIMELINE": "REPIN_CANONICAL_URL",
+    "ICAP_MOVE": "REPIN_CANONICAL_URL",
+    "PHILLY_FED_RTDSM": "ADDED_NEW_INFORMATION_CONSTRAINT_SOURCE"
+  },
+  "parent_registry_path": "artifacts/d002j/data_registry/source_registry_v1.json",
+  "parent_registry_sha256": "f1899b7a882b4b3efbebb54e3dc942c079839f77f981273e2dd09757973b14ec",
+  "partial": 8,
+  "partial_source_ids": [
+    "FED_Y9C",
+    "ECB_MMSR",
+    "ALFRED",
+    "KCFSI",
+    "CBOE_VIX",
+    "ICAP_MOVE",
+    "FDIC_SVB_POSTMORTEM",
+    "LIT_REPO_FUNDING"
+  ],
+  "pr_lineage": "D-002J-P1B",
+  "rejected": 0,
+  "schema_version": "D002J-SOURCE-REGISTRY-AUDIT-SUMMARY-v1",
+  "source_code_changed": false,
+  "study_id": "D-002J",
+  "total_sources": 26,
+  "verified": 18,
+  "verified_or_partial": 26
+}

@@ -1,3 +1,5 @@
+# Copyright (c) 2023-2026 Yaroslav Vasylenko (neuron7xLab)
+# SPDX-License-Identifier: MIT
 """Performance tests for golden path backtest workflow.
 
 This module validates that the performance measurement system works correctly
@@ -10,8 +12,9 @@ import pytest
 
 # Import with fallback for CI/testing
 try:
-    from tradepulse.perf.golden_path import run_golden_path_bench
-    from tradepulse.perf.io import format_summary, write_perf_report
+    from geosync.perf.golden_path import run_golden_path_bench
+    from geosync.perf.io import format_summary, write_perf_report
+
     PERF_MODULE_AVAILABLE = True
 except ImportError:
     PERF_MODULE_AVAILABLE = False
@@ -83,7 +86,8 @@ def test_write_perf_report_creates_json(tmp_path):
 
     # Verify file can be read back
     import json
-    with open(output_path, 'r') as f:
+
+    with open(output_path, "r") as f:
         loaded = json.load(f)
 
     # Verify structure preserved

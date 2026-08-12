@@ -1,4 +1,5 @@
-# SPDX-License-Identifier: LicenseRef-TradePulse-Proprietary
+# Copyright (c) 2023-2026 Yaroslav Vasylenko (neuron7xLab)
+# SPDX-License-Identifier: MIT
 from __future__ import annotations
 
 import math
@@ -83,9 +84,7 @@ class TestStrategyProperties:
             ),
         )
     )
-    def test_simulate_performance_returns_finite_score(
-        self, prices: np.ndarray
-    ) -> None:
+    def test_simulate_performance_returns_finite_score(self, prices: np.ndarray) -> None:
         """simulate_performance should return a finite score for valid data."""
         strategy = Strategy(
             name="test",
@@ -115,9 +114,7 @@ class TestStrategyProperties:
             ),
         )
     )
-    def test_simulate_performance_sets_metrics_in_params(
-        self, prices: np.ndarray
-    ) -> None:
+    def test_simulate_performance_sets_metrics_in_params(self, prices: np.ndarray) -> None:
         """simulate_performance should add max_drawdown and trades to params."""
         strategy = Strategy(name="test", params={"lookback": 20})
         df = pd.DataFrame({"close": prices})
@@ -144,9 +141,7 @@ class TestPiAgentProperties:
         self, R: float, delta_H: float, kappa_mean: float
     ) -> None:
         """detect_instability should return a boolean value."""
-        agent = PiAgent(
-            strategy=Strategy(name="test", params={"instability_threshold": 0.5})
-        )
+        agent = PiAgent(strategy=Strategy(name="test", params={"instability_threshold": 0.5}))
         state = {"R": R, "delta_H": delta_H, "kappa_mean": kappa_mean}
         result = agent.detect_instability(state)
         assert isinstance(result, bool)
@@ -168,9 +163,7 @@ class TestPiAgentProperties:
 
     def test_mutate_creates_different_agent(self) -> None:
         """mutate should create a new agent with different strategy."""
-        agent = PiAgent(
-            strategy=Strategy(name="original", params={"alpha": 1.0, "beta": 2.0})
-        )
+        agent = PiAgent(strategy=Strategy(name="original", params={"alpha": 1.0, "beta": 2.0}))
         mutant = agent.mutate()
 
         assert isinstance(mutant, PiAgent)
@@ -185,9 +178,7 @@ class TestPiAgentProperties:
     )
     def test_repair_fixes_nan(self, alpha: float, beta: float) -> None:
         """repair should convert NaN values to 0.0."""
-        agent = PiAgent(
-            strategy=Strategy(name="test", params={"alpha": alpha, "beta": beta})
-        )
+        agent = PiAgent(strategy=Strategy(name="test", params={"alpha": alpha, "beta": beta}))
         agent.repair()
 
         # After repair, no NaN should remain
@@ -197,9 +188,7 @@ class TestPiAgentProperties:
     def test_cooldown_prevents_rapid_triggers(self) -> None:
         """Cooldown mechanism should prevent immediate re-triggers."""
         agent = PiAgent(
-            strategy=Strategy(
-                name="test", params={"instability_threshold": 0.1, "hysteresis": 0.0}
-            )
+            strategy=Strategy(name="test", params={"instability_threshold": 0.1, "hysteresis": 0.0})
         )
 
         # High instability state
@@ -220,6 +209,45 @@ class TestPiAgentProperties:
         assert result1 is True
         # During cooldown, should return False
         # After cooldown, could trigger again
+
+    def test_subthreshold_jitter_does_not_flip_flop(self) -> None:
+        """TD-009: hysteresis (EMA-smoothed score + cooldown debounce) keeps the
+        agent stable under small jitter — a sub-threshold state perturbed by noise
+        must not produce a rapid sequence of state flips."""
+        agent = PiAgent(
+            strategy=Strategy(name="test", params={"instability_threshold": 0.5}),
+            hysteresis=0.05,
+        )
+        rng = np.random.default_rng(7)
+        triggers = 0
+        for _ in range(200):
+            jitter = float(rng.normal(0.0, 0.01))
+            # R just below the contribution needed to cross threshold 0.5
+            state = {"R": 0.78 + jitter, "delta_H": 0.0, "kappa_mean": 0.0}
+            if agent.detect_instability(state):
+                triggers += 1
+        # Without hysteresis/cooldown this near-boundary input would chatter on
+        # most steps; the debounce must keep flips sparse.
+        assert triggers <= 200 // 3
+
+    def test_instability_trigger_emits_log(self, monkeypatch: pytest.MonkeyPatch) -> None:
+        """TD-009: a threshold crossing is observable — it emits an attributable
+        transition record rather than flipping silently."""
+        events: list[tuple[str, dict[str, object]]] = []
+        monkeypatch.setattr(
+            "core.agent.strategy._logger.warning",
+            lambda event, **fields: events.append((event, fields)),
+        )
+
+        agent = PiAgent(
+            strategy=Strategy(name="test", params={"instability_threshold": 0.1, "hysteresis": 0.0})
+        )
+        triggered = agent.detect_instability({"R": 0.95, "delta_H": -0.5, "kappa_mean": -0.5})
+
+        assert triggered is True
+        trigger_events = [e for e in events if e[0] == "agent_instability_triggered"]
+        assert trigger_events, "expected an instability-trigger log"
+        assert "instability_score" in trigger_events[0][1]
 
 
 class TestStrategyEdgeCases:

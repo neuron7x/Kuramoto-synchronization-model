@@ -1,3 +1,5 @@
+# Copyright (c) 2023-2026 Yaroslav Vasylenko (neuron7xLab)
+# SPDX-License-Identifier: MIT
 """Paper trading engine with latency simulation and telemetry analysis."""
 
 from __future__ import annotations
@@ -48,7 +50,7 @@ class DeterministicLatencyModel:
         if self.ack_delay < 0 or self.fill_delay < 0:
             raise ValueError("latency components must be non-negative")
 
-    def sample(self, order: Order) -> LatencySample:  # noqa: D401 - short delegation
+    def sample(self, order: Order) -> LatencySample:
         """See :class:`LatencyModel`."""
 
         return LatencySample(self.ack_delay, self.fill_delay)
@@ -118,12 +120,8 @@ class PaperTradingEngine:
         if telemetry_listeners:
             self._listeners.extend(telemetry_listeners)
 
-    def _record_event(
-        self, event: str, timestamp: float, **attributes: object
-    ) -> TelemetryEvent:
-        payload = TelemetryEvent(
-            timestamp=timestamp, event=event, attributes=dict(attributes)
-        )
+    def _record_event(self, event: str, timestamp: float, **attributes: object) -> TelemetryEvent:
+        payload = TelemetryEvent(timestamp=timestamp, event=event, attributes=dict(attributes))
         for listener in self._listeners:
             listener(payload)
         return payload

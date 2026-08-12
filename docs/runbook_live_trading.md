@@ -31,7 +31,7 @@ state is intentionally discarded.
    from execution.live_loop import LiveExecutionLoop, LiveLoopConfig
    from execution.risk import RiskLimits, RiskManager
 
-   config = LiveLoopConfig(state_dir="/var/lib/tradepulse/live")
+   config = LiveLoopConfig(state_dir="/var/lib/geosync/live")
    risk = RiskManager(RiskLimits(...))
    loop = LiveExecutionLoop({"binance": binance_connector}, risk, config=config)
    loop.start(cold_start=True)

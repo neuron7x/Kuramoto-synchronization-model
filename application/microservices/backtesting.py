@@ -1,3 +1,5 @@
+# Copyright (c) 2023-2026 Yaroslav Vasylenko (neuron7xLab)
+# SPDX-License-Identifier: MIT
 """Microservice coordinating backtesting workflows."""
 
 from __future__ import annotations
@@ -13,7 +15,7 @@ from application.microservices.contracts import (
     StrategyRun,
     default_contract_registry,
 )
-from application.system import TradePulseSystem
+from application.system import GeoSyncSystem
 from application.trading import signal_to_dto
 from domain import Signal
 
@@ -35,7 +37,7 @@ class BacktestingService(Microservice):
 
     def __init__(
         self,
-        system: TradePulseSystem,
+        system: GeoSyncSystem,
         *,
         market_data_service: "MarketDataService | None" = None,
         contracts: IntegrationContractRegistry | None = None,
@@ -47,7 +49,7 @@ class BacktestingService(Microservice):
         self._contracts = contracts or default_contract_registry()
         try:
             self._operation_contracts["run_backtest"] = self._contracts.get_service(
-                "tradepulse.service.backtesting.run"
+                "geosync.service.backtesting.run"
             )
         except KeyError:  # pragma: no cover - defensive
             pass
@@ -57,9 +59,7 @@ class BacktestingService(Microservice):
         from application.microservices.market_data import MarketDataService
 
         if self._market_data_service is None:
-            self._market_data_service = MarketDataService(
-                self._system, contracts=self._contracts
-            )
+            self._market_data_service = MarketDataService(self._system, contracts=self._contracts)
             if self.state is not ServiceState.STOPPED:
                 self._market_data_service.start()
         return self._market_data_service
@@ -109,9 +109,7 @@ class BacktestingService(Microservice):
             signals=signals,
             payloads=payloads,
         )
-        self._last_result = BacktestResult(
-            source=source, strategy_name=strategy_name, run=run
-        )
+        self._last_result = BacktestResult(source=source, strategy_name=strategy_name, run=run)
         self._mark_healthy()
         return run
 

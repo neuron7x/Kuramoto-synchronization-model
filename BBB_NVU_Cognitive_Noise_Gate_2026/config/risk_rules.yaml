@@ -1,0 +1,67 @@
+rules_version: BBB-NVU-CNG-2026.1.0
+
+engine_contract:
+  deterministic: true
+  fail_closed: true
+  prohibit_hidden_imputation: true
+
+domains:
+  BSI:
+    warning: 35
+    risk: 60
+    critical: 80
+    evidence_min: B
+  NRI:
+    warning: 30
+    risk: 55
+    critical: 75
+    evidence_min: B
+  VML:
+    warning: 35
+    risk: 60
+    critical: 80
+    evidence_min: B
+  GRS:
+    warning_low: 55
+    risk_low: 40
+    critical_low: 25
+    direction: lower_is_worse
+    evidence_min: B
+  CNI:
+    warning: 30
+    risk: 55
+    critical: 75
+    evidence_min: B
+
+composite_logic:
+  BLACK_INVALID: critical_data_invalid == true
+  RED_CRITICAL: any_domain_critical == true or count_risk_domains >= 3
+  ORANGE_RISK: count_risk_domains >= 2
+  YELLOW_WATCH: count_warning_domains >= 1 or confidence < 0.70
+  GREEN_STABLE: otherwise
+
+confidence:
+  base: 1.0
+  missing_noncritical_penalty: 0.1
+  unknown_provenance_penalty: 0.25
+  low_quality_penalty: 0.2
+  conflict_penalty: 0.3
+
+actions:
+  BLACK_INVALID:
+    - quarantine_input
+    - repair_schema_or_units
+    - rerun_after_validation
+  RED_CRITICAL:
+    - human_review_required
+    - clinical_escalation_flag_if_applicable
+    - freeze_autonomous_actions
+  ORANGE_RISK:
+    - repeat_measurement
+    - human_review
+    - activate_mitigation_protocol
+  YELLOW_WATCH:
+    - collect_more_data
+    - repeat_low_quality_measurements
+  GREEN_STABLE:
+    - continue_monitoring

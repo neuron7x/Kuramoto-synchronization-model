@@ -1,0 +1,248 @@
+# Diff-bound commit acceptor for D-002C C2.4-C (issue #654) —
+# Null audit (permutation test) + mini-grid smoke pre-flight.
+#
+# What lands:
+#   * research/systemic_risk/d002c_null_audit.py
+#       Paired-difference permutation test. Take per-seed
+#       (precursor, null) values, randomly swap the labels
+#       n_shuffles times under a Bernoulli(0.5) mask per pair,
+#       recompute |signal_mean|. Empirical p-value = fraction
+#       of shuffles with |shuffled| >= |unshuffled|. PASS iff
+#       p_value < 0.05 (locked threshold). NullAuditResult is
+#       frozen; sha256 over canonical-JSON of load-bearing fields.
+#       run_null_audit_from_capsule consumes a sweep capsule and
+#       audits every cell that carries per-seed arrays — cells
+#       that only carry aggregate stats are skipped cleanly with
+#       a logger.info line, never raise.
+#   * research/systemic_risk/d002c_smoke_test.py
+#       Mini-grid pre-flight: N=[50,100], λ=[0.0,0.5], all 9
+#       substrate×metric combos, n_seeds=5, n_bootstrap=4.
+#       Total cells: 36. Iterates every cell, captures wallclock,
+#       records per-cell ok / error text WITHOUT propagating any
+#       exception. Verdict PASS iff every cell ok AND total
+#       wallclock <= 60s (locked budget; the spec allows 30 min,
+#       we are aggressive on purpose). Atomic JSON capsule.
+#   * tests/research/systemic_risk/test_d002c_null_audit.py
+#       21 tests pinning the contract:
+#         - locked defaults (N_SHUFFLES=100, p_thr=0.05, ...)
+#         - strong signal → PASS, low p-value
+#         - centred pure noise → FAIL, p-value≈1
+#         - p-value bounded [0, 1]
+#         - deterministic in (arrays, n_shuffles, rng_seed)
+#         - rejects empty / mismatched / non-1D / non-finite /
+#           too-few-seeds / sub-floor n_shuffles / bad threshold
+#         - shuffled |signal| median sane vs std-of-mean
+#         - capsule path: skips stub cells, audits per-seed cells,
+#           rejects missing path + malformed JSON
+#         - atomic write leaves no orphan .tmp (success + exception)
+#         - frozen dataclass
+#   * tests/research/systemic_risk/test_d002c_smoke_test.py
+#       28 tests pinning the contract:
+#         - locked defaults match spec
+#         - tiny 1×1×1 grid runs to PASS
+#         - full 9-cell registry on a single (N, λ) point
+#         - max_wallclock_seconds=0.001 forces FAIL (budget gate)
+#         - synthetic raising metric → cell records ok=False +
+#           error text; other cells continue
+#         - sha256 deterministic, changes with grid
+#         - input validation (empty grids / metrics / substrates /
+#           bad budget / bad n_seeds)
+#         - atomic capsule round-trip; no orphan .tmp on success
+#           or exception
+#         - λ=0 ⇒ signal_mean exactly 0; n_seeds=1 ⇒ std=0
+#         - frozen result + cell records
+#   * .claude/commit_acceptors/x10r-d002c-null-audit-smoke.yaml
+#       This file.
+#
+# Strict scope:
+#   Permutation test + smoke-grid execution + capsule emission ONLY.
+#   NO sweep launch. NO claim layer. NO promotion into any tier —
+#   the sweep runner (C2.4 session A) reads both capsules and
+#   refuses to launch if null_audit FAIL or smoke_test FAIL.
+
+id: x10r-d002c-null-audit-smoke
+status: ACTIVE
+claim_type: correctness
+promise: >-
+  After this PR lands, research/systemic_risk/d002c_null_audit
+  exposes run_null_audit(precursor_values, null_values, ...) — a
+  paired-difference permutation test for the Signal Amplification
+  Sweep's headline signal — and run_null_audit_from_capsule(path)
+  which audits every per-cell entry that carries per-seed arrays.
+  PASS iff empirical p-value < 0.05 (locked).
+
+  Co-lands research/systemic_risk/d002c_smoke_test which executes a
+  mini-grid (N=[50,100], λ=[0.0,0.5], 9 substrate×metric combos,
+  n_seeds=5) end-to-end and verifies (a) every cell completes
+  without raising and (b) the total wallclock stays under the locked
+  60s budget. Failed cells DO NOT short-circuit the run — every cell
+  is exercised in a single pass so the full diagnostic picture lands
+  in one capsule.
+
+  Both modules write atomic JSON capsules (tmp + fsync + os.replace,
+  mirrors C2.3 / D-002D discipline) with canonical sha256. Strict
+  scope: statistical audit + smoke execution + capsule emission
+  only. No sweep launch. No claim layer. No promotion of a PASS
+  verdict into any tier — the sweep runner reads the capsule and
+  refuses to launch on FAIL.
+diff_scope:
+  changed_files:
+    - path: ".claude/commit_acceptors/x10r-d002c-null-audit-smoke.yaml"
+    - path: "research/systemic_risk/d002c_null_audit.py"
+    - path: "research/systemic_risk/d002c_smoke_test.py"
+    - path: "tests/research/systemic_risk/test_d002c_null_audit.py"
+    - path: "tests/research/systemic_risk/test_d002c_smoke_test.py"
+  forbidden_paths:
+    - "trading/"
+    - "execution/"
+    - "forecast/"
+    - "policy/"
+    - "core/physics/"
+    - "core/kuramoto/"
+    - "research/reconstruction/"
+    - "research/systemic_risk/sweep_checkpoint.py"
+    - "research/systemic_risk/d002c_sweep_runner.py"
+    - "research/systemic_risk/d002c_pos_control.py"
+    - "research/systemic_risk/d002c_neg_control.py"
+    - "research/systemic_risk/d002c_crn_validator.py"
+    - "research/systemic_risk/d002c_kuramoto.py"
+    - "research/systemic_risk/d002c_metrics.py"
+    - "research/systemic_risk/d002c_substrates.py"
+    - "research/systemic_risk/d002c_preregistration.py"
+    - "scripts/run_x10r_"
+    - "application/governance/claim_ledger.py"
+    - "application/governance/commit_acceptor.py"
+required_python_symbols:
+  - "research/systemic_risk/d002c_null_audit.py::NullAuditResult"
+  - "research/systemic_risk/d002c_null_audit.py::NullAuditInvalid"
+  - "research/systemic_risk/d002c_null_audit.py::run_null_audit"
+  - "research/systemic_risk/d002c_null_audit.py::run_null_audit_from_capsule"
+  - "research/systemic_risk/d002c_smoke_test.py::SmokeCellResult"
+  - "research/systemic_risk/d002c_smoke_test.py::SmokeTestResult"
+  - "research/systemic_risk/d002c_smoke_test.py::SmokeTestInvalid"
+  - "research/systemic_risk/d002c_smoke_test.py::run_smoke_test"
+  - "tests/research/systemic_risk/test_d002c_null_audit.py::test_strong_signal_yields_pass_low_p_value"
+  - "tests/research/systemic_risk/test_d002c_null_audit.py::test_pure_noise_yields_fail_high_p_value"
+  - "tests/research/systemic_risk/test_d002c_null_audit.py::test_run_null_audit_deterministic_in_seed"
+  - "tests/research/systemic_risk/test_d002c_null_audit.py::test_run_null_audit_from_capsule_skips_stub_cells"
+  - "tests/research/systemic_risk/test_d002c_smoke_test.py::test_tiny_grid_returns_pass_with_all_cells_ok"
+  - "tests/research/systemic_risk/test_d002c_smoke_test.py::test_impossibly_tight_budget_yields_fail"
+  - "tests/research/systemic_risk/test_d002c_smoke_test.py::test_raising_cell_records_error_does_not_short_circuit"
+  - "tests/research/systemic_risk/test_d002c_smoke_test.py::test_atomic_capsule_round_trips"
+expected_signal: >-
+  Local: `pytest tests/research/systemic_risk/test_d002c_null_audit.py
+  tests/research/systemic_risk/test_d002c_smoke_test.py -q` reports
+  "49 passed"; `mypy --strict --follow-imports=silent` clean on the
+  four new files; `ruff check` and `black --check` both pass.
+measurement_command: >-
+  bash -c 'mypy --strict --follow-imports=silent
+  research/systemic_risk/d002c_null_audit.py
+  research/systemic_risk/d002c_smoke_test.py
+  tests/research/systemic_risk/test_d002c_null_audit.py
+  tests/research/systemic_risk/test_d002c_smoke_test.py
+  && ruff check
+  research/systemic_risk/d002c_null_audit.py
+  research/systemic_risk/d002c_smoke_test.py
+  tests/research/systemic_risk/test_d002c_null_audit.py
+  tests/research/systemic_risk/test_d002c_smoke_test.py
+  && black --check
+  research/systemic_risk/d002c_null_audit.py
+  research/systemic_risk/d002c_smoke_test.py
+  tests/research/systemic_risk/test_d002c_null_audit.py
+  tests/research/systemic_risk/test_d002c_smoke_test.py
+  && pytest tests/research/systemic_risk/test_d002c_null_audit.py
+  tests/research/systemic_risk/test_d002c_smoke_test.py -q'
+signal_artifact: "tests/research/systemic_risk/test_d002c_null_audit.py"
+falsifier:
+  command: |-
+    bash -c 'PYTHONPATH=. python -c "
+    import numpy as np
+    from research.systemic_risk.d002c_null_audit import (
+        run_null_audit, NullAuditInvalid,
+        DEFAULT_N_SHUFFLES, DEFAULT_P_VALUE_THRESHOLD,
+    )
+    from research.systemic_risk.d002c_smoke_test import (
+        run_smoke_test, SmokeTestInvalid,
+    )
+    from research.systemic_risk.d002c_substrates import BlockStructuredSubstrate
+    from research.systemic_risk.d002c_metrics import AucPreEventMetric
+    # Strong signal → PASS, low p-value
+    precursor = np.ones(20, dtype=np.float64)
+    null = np.zeros(20, dtype=np.float64)
+    r1 = run_null_audit(precursor, null, n_shuffles=200, rng_seed=0)
+    assert r1.verdict == '"'"'PASS'"'"', r1.verdict
+    assert r1.p_value_empirical < 0.05, r1.p_value_empirical
+    # Noise-only (centred so unshuffled signal ≈ 0) → FAIL, p≈1
+    rng = np.random.default_rng(7)
+    p = rng.normal(0, 1, size=40).astype(np.float64)
+    n = rng.normal(0, 1, size=40).astype(np.float64)
+    p = p - float(p.mean())
+    n = n - float(n.mean())
+    r2 = run_null_audit(p, n, n_shuffles=200, rng_seed=0)
+    assert r2.verdict == '"'"'FAIL'"'"', r2.verdict
+    assert r2.p_value_empirical > 0.5, r2.p_value_empirical
+    # Sha determinism
+    a = run_null_audit(precursor, null, n_shuffles=50, rng_seed=11)
+    b = run_null_audit(precursor, null, n_shuffles=50, rng_seed=11)
+    assert a.sha256 == b.sha256
+    # Default constants locked
+    assert DEFAULT_N_SHUFFLES == 100
+    assert DEFAULT_P_VALUE_THRESHOLD == 0.05
+    # Validation fail-closed
+    try:
+        run_null_audit(np.array([]), np.array([]), n_shuffles=20)
+        raise AssertionError('"'"'should have raised'"'"')
+    except NullAuditInvalid:
+        pass
+    # Smoke tiny grid → PASS
+    r3 = run_smoke_test(
+        substrates=(BlockStructuredSubstrate(),),
+        metrics=(AucPreEventMetric(),),
+        N_grid=(20,), lambda_grid=(0.0,), n_seeds=2,
+        steps_per_quarter=3, max_wallclock_seconds=120.0,
+    )
+    assert r3.verdict == '"'"'PASS'"'"', r3.verdict
+    assert r3.n_cells_failed == 0
+    # Smoke with impossibly tight budget → FAIL
+    r4 = run_smoke_test(
+        substrates=(BlockStructuredSubstrate(),),
+        metrics=(AucPreEventMetric(),),
+        N_grid=(20,), lambda_grid=(0.0,), n_seeds=2,
+        steps_per_quarter=3, max_wallclock_seconds=0.001,
+    )
+    assert r4.verdict == '"'"'FAIL'"'"', r4.verdict
+    # Smoke fail-closed on empty grid
+    try:
+        run_smoke_test(N_grid=(), lambda_grid=(0.0,))
+        raise AssertionError('"'"'should have raised'"'"')
+    except SmokeTestInvalid:
+        pass
+    "'
+  description: >-
+    Probes the D-002C C2.4-C contract: strong synthetic signal yields
+    PASS with empirical p-value < 0.05; centred pure-noise yields
+    FAIL with p-value near 1.0; sha256 of the audit result is
+    deterministic across calls; default constants are at their
+    locked values; empty input raises NullAuditInvalid; the smoke
+    test on a tiny grid returns PASS; the smoke test with
+    max_wallclock_seconds=0.001 returns FAIL on the budget gate;
+    empty grid raises SmokeTestInvalid. If any of these regress,
+    the sweep gate is broken — the 200+-hour run would launch
+    without a permutation-test cross-check or a pre-flight harness.
+rollback_command: >-
+  bash -c 'git checkout HEAD~1 --
+  && rm -f research/systemic_risk/d002c_null_audit.py
+  research/systemic_risk/d002c_smoke_test.py
+  tests/research/systemic_risk/test_d002c_null_audit.py
+  tests/research/systemic_risk/test_d002c_smoke_test.py
+  .claude/commit_acceptors/x10r-d002c-null-audit-smoke.yaml'
+rollback_verification_command: >-
+  bash -c 'test ! -f research/systemic_risk/d002c_null_audit.py
+  && test ! -f research/systemic_risk/d002c_smoke_test.py
+  && test ! -f tests/research/systemic_risk/test_d002c_null_audit.py
+  && test ! -f tests/research/systemic_risk/test_d002c_smoke_test.py
+  && test ! -f .claude/commit_acceptors/x10r-d002c-null-audit-smoke.yaml'
+memory_update_type: append
+ledger_path: ".claude/commit_acceptors/x10r-d002c-null-audit-smoke.yaml"
+report_path: "tests/research/systemic_risk/test_d002c_null_audit.py"
+evidence: []

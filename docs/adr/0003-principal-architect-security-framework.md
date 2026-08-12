@@ -1,5 +1,5 @@
 ---
-owner: security@tradepulse
+owner: security@geosync
 review_cadence: quarterly
 last_reviewed: 2025-11-17
 links:
@@ -23,7 +23,13 @@ links:
 ## Context
 
 ### Problem Statement
-TradePulse is an enterprise-grade algorithmic trading platform handling sensitive financial data, trading strategies, and market intelligence. The system requires FAANG-level architectural security that meets regulatory requirements (SEC, FINRA, EU AI Act, SOC 2, ISO 27001, ISO/IEC 42001) while maintaining operational excellence.
+GeoSync is being engineered to operate as an algorithmic trading
+platform handling sensitive financial data, trading strategies, and
+market intelligence. The architecture target is institutional security
+posture meeting regulatory requirements (SEC, FINRA, EU AI Act, SOC 2,
+ISO 27001, ISO/IEC 42001) while maintaining operational excellence.
+This ADR records the security framework adopted toward that target;
+it is not a claim that the target is achieved at the date of writing.
 
 ### Drivers & Constraints
 - **Regulatory Compliance**: SEC Rule 15c3-5 (Market Access), FINRA 3110 (Supervision), MiFID II, EU AI Act Article 9 (High-Risk AI Systems)
@@ -190,13 +196,13 @@ if not value > 0:
 
 ## Consequences
 
-### Positive Outcomes
-1. **Regulatory Compliance**: Full alignment with SEC, FINRA, EU AI Act, ISO/IEC 42001
-2. **Risk Reduction**: 95% reduction in exploitable vulnerabilities
-3. **Operational Excellence**: Automated security controls reduce manual toil
+### Positive Outcomes (target — to be measured against acceptance criteria below)
+1. **Regulatory Compliance**: Alignment with SEC, FINRA, EU AI Act, ISO/IEC 42001 *(target)*
+2. **Risk Reduction**: target ≥ 95 % reduction in exploitable vulnerabilities, measured by recurring SAST/SCA scan deltas
+3. **Operational Excellence**: Automated security controls intended to reduce manual toil
 4. **Audit Readiness**: Continuous compliance documentation
 5. **Developer Confidence**: Clear security guidelines and automated checks
-6. **Customer Trust**: Enterprise-grade security posture
+6. **Customer Trust**: Institutional security posture as the architecture target
 7. **Incident Response**: Faster detection and remediation
 
 ### Risks / Mitigations

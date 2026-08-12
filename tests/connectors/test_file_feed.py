@@ -1,4 +1,5 @@
-# SPDX-License-Identifier: LicenseRef-TradePulse-Proprietary
+# Copyright (c) 2023-2026 Yaroslav Vasylenko (neuron7xLab)
+# SPDX-License-Identifier: MIT
 """Tests for FileFeedIngestor file-based connector.
 
 Tests JSONL and CSV file parsing with various scenarios.
@@ -124,11 +125,7 @@ class TestFileFeedIngestor:
         """Test that invalid JSON lines are logged and skipped."""
         data_file = tmp_path / "data.jsonl"
         data_file.write_text(
-            json.dumps({"id": 1})
-            + "\n"
-            + "not valid json\n"
-            + json.dumps({"id": 2})
-            + "\n"
+            json.dumps({"id": 1}) + "\n" + "not valid json\n" + json.dumps({"id": 2}) + "\n"
         )
 
         ingestor = FileFeedIngestor(path=data_file, format="jsonl")
@@ -147,7 +144,7 @@ class TestFileFeedIngestor:
     async def test_read_csv_file(self, tmp_path: Path) -> None:
         """Test reading CSV file."""
         data_file = tmp_path / "data.csv"
-        data_file.write_text("id,name,value\n" "1,first,100\n" "2,second,200\n")
+        data_file.write_text("id,name,value\n1,first,100\n2,second,200\n")
 
         ingestor = FileFeedIngestor(path=data_file, format="csv")
         await ingestor.connect()
@@ -167,7 +164,7 @@ class TestFileFeedIngestor:
     async def test_csv_field_mapping(self, tmp_path: Path) -> None:
         """Test CSV field mapping."""
         data_file = tmp_path / "data.csv"
-        data_file.write_text("col_a,col_b,col_c\n" "1,hello,3.14\n")
+        data_file.write_text("col_a,col_b,col_c\n1,hello,3.14\n")
 
         ingestor = FileFeedIngestor(
             path=data_file,

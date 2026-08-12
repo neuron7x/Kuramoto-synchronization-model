@@ -1,0 +1,64 @@
+# SPDX-License-Identifier: MIT
+name: Readiness Gate
+
+concurrency:
+  group: ${{ github.workflow }}-${{ github.ref }}
+  cancel-in-progress: true
+
+on:
+  pull_request:
+    branches: [main]
+  merge_group:
+
+permissions:
+  contents: read
+
+jobs:
+  readiness-register:
+    name: readiness-register
+    runs-on: ubuntu-latest
+    continue-on-error: false
+    timeout-minutes: 5
+    steps:
+      - name: Checkout
+        uses: actions/checkout@9c091bb21b7c1c1d1991bb908d89e4e9dddfe3e0 # v7.0.0
+
+      - name: Install test runner
+        run: |
+          set -euo pipefail
+          python -m pip install --user pytest
+
+      - name: Check readiness register
+        run: |
+          set -euo pipefail
+          python tools/check_readiness_register.py
+
+      - name: Verify readiness evidence integrity (fail-closed)
+        run: |
+          set -euo pipefail
+          python -m tools.readiness.verify_evidence
+
+      - name: Re-execute OPS-001 recovery drill (fail-closed + deterministic)
+        run: |
+          set -euo pipefail
+          python -m tools.readiness.run_recovery_drill
+          git diff --exit-code governance/evidence/ops001_recovery_drill_report.json
+
+      - name: QA-001 whole-repo quality snapshot (report-only)
+        id: repo_quality
+        continue-on-error: true
+        run: |
+          set -uo pipefail
+          python -m tools.readiness.full_repo_quality
+
+      - name: Retain whole-repo quality evidence
+        uses: actions/upload-artifact@043fb46d1a93c77aae656e7c1c64a875d1fc6a0a # v4
+        with:
+          name: qa001-full-repo-quality-report
+          path: governance/evidence/qa001_full_repo_quality_report.json
+          retention-days: 90
+
+      - name: Test readiness register contract
+        run: |
+          set -euo pipefail
+          python -m pytest -q tests/governance/test_readiness_register.py --confcutdir=tests/governance

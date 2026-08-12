@@ -1,15 +1,17 @@
-"""Unified System Integrator for TradePulse.
+# Copyright (c) 2023-2026 Yaroslav Vasylenko (neuron7xLab)
+# SPDX-License-Identifier: MIT
+"""Unified System Integrator for GeoSync.
 
-This module provides the SystemIntegrator class that unifies all TradePulse
+This module provides the SystemIntegrator class that unifies all GeoSync
 modules and services into a single, cohesive system. It combines:
 
 - Architecture Integrator for component lifecycle and coordination
-- TradePulse Orchestrator for service orchestration
+- GeoSync Orchestrator for service orchestration
 - Service Registry for microservices management
 - Agent Coordinator for agent coordination and task management
 
 The SystemIntegrator serves as the primary entry point for bootstrapping
-and managing the entire TradePulse platform.
+and managing the entire GeoSync platform.
 """
 
 from __future__ import annotations
@@ -31,8 +33,8 @@ from core.integration.adapters import (
 
 if TYPE_CHECKING:
     from application.microservices.registry import ServiceRegistry
-    from application.system import TradePulseSystem
-    from application.system_orchestrator import TradePulseOrchestrator
+    from application.system import GeoSyncSystem
+    from application.system_orchestrator import GeoSyncOrchestrator
     from modules.agent_coordinator import AgentCoordinator
 
 logger = logging.getLogger(__name__)
@@ -43,7 +45,7 @@ class IntegrationConfig:
     """Configuration for the unified system integration.
 
     Attributes:
-        enable_orchestrator: Whether to integrate the TradePulse orchestrator
+        enable_orchestrator: Whether to integrate the GeoSync orchestrator
         enable_agent_coordinator: Whether to integrate the agent coordinator
         enable_fractal_regulator: Whether to enable the fractal regulator
         auto_start_services: Whether to automatically start services on bootstrap
@@ -56,14 +58,14 @@ class IntegrationConfig:
     enable_fractal_regulator: bool = False
     auto_start_services: bool = True
     health_check_interval: float = 30.0
-    component_tags: List[str] = field(default_factory=lambda: ["tradepulse"])
+    component_tags: List[str] = field(default_factory=lambda: ["geosync"])
     regulator_config: Dict[str, float] = field(default_factory=dict)
 
 
 class SystemIntegrator:
-    """Unified system integrator for TradePulse.
+    """Unified system integrator for GeoSync.
 
-    Combines all TradePulse modules and services into a single, cohesive
+    Combines all GeoSync modules and services into a single, cohesive
     system with unified lifecycle management, health monitoring, and
     coordination capabilities.
 
@@ -95,8 +97,8 @@ class SystemIntegrator:
         self._arch_integrator = ArchitectureIntegrator()
 
         # Subsystem references
-        self._system: Optional[TradePulseSystem] = None
-        self._orchestrator: Optional[TradePulseOrchestrator] = None
+        self._system: Optional[GeoSyncSystem] = None
+        self._orchestrator: Optional[GeoSyncOrchestrator] = None
         self._service_registry: Optional[ServiceRegistry] = None
         self._agent_coordinator: Optional[AgentCoordinator] = None
 
@@ -137,22 +139,22 @@ class SystemIntegrator:
 
     def register_system(
         self,
-        system: TradePulseSystem,
+        system: GeoSyncSystem,
         *,
-        name: str = "tradepulse_system",
-        description: str = "Core TradePulse system",
+        name: str = "geosync_system",
+        description: str = "Core GeoSync system",
     ) -> None:
-        """Register the core TradePulse system.
+        """Register the core GeoSync system.
 
         Args:
-            system: TradePulseSystem instance
+            system: GeoSyncSystem instance
             name: Component name for registration
             description: Component description
         """
-        from core.architecture_integrator.adapters import TradePulseSystemAdapter
+        from core.architecture_integrator.adapters import GeoSyncSystemAdapter
 
         self._system = system
-        adapter = TradePulseSystemAdapter(system)
+        adapter = GeoSyncSystemAdapter(system)
 
         self._arch_integrator.register_component(
             name=name,
@@ -166,27 +168,27 @@ class SystemIntegrator:
             stop_hook=adapter.stop,
             health_hook=adapter.health_check,
         )
-        logger.info(f"Registered TradePulse system as '{name}'")
+        logger.info(f"Registered GeoSync system as '{name}'")
         self._emit_event("system_registered", name=name)
 
     def register_orchestrator(
         self,
-        orchestrator: TradePulseOrchestrator,
+        orchestrator: GeoSyncOrchestrator,
         *,
-        name: str = "tradepulse_orchestrator",
-        description: str = "TradePulse service orchestrator",
+        name: str = "geosync_orchestrator",
+        description: str = "GeoSync service orchestrator",
     ) -> None:
-        """Register the TradePulse orchestrator.
+        """Register the GeoSync orchestrator.
 
         Args:
-            orchestrator: TradePulseOrchestrator instance
+            orchestrator: GeoSyncOrchestrator instance
             name: Component name for registration
             description: Component description
         """
-        from core.architecture_integrator.adapters import TradePulseOrchestratorAdapter
+        from core.architecture_integrator.adapters import GeoSyncOrchestratorAdapter
 
         self._orchestrator = orchestrator
-        adapter = TradePulseOrchestratorAdapter(orchestrator)
+        adapter = GeoSyncOrchestratorAdapter(orchestrator)
 
         # Also register the service registry from the orchestrator
         self._service_registry = orchestrator.services
@@ -197,14 +199,14 @@ class SystemIntegrator:
             version="1.0.0",
             description=description,
             tags=self._config.component_tags + ["orchestrator"],
-            dependencies=["tradepulse_system"] if self._system else [],
+            dependencies=["geosync_system"] if self._system else [],
             provides=["orchestration", "backtest", "execution"],
             init_hook=adapter.initialize,
             start_hook=adapter.start,
             stop_hook=adapter.stop,
             health_hook=adapter.health_check,
         )
-        logger.info(f"Registered TradePulse orchestrator as '{name}'")
+        logger.info(f"Registered GeoSync orchestrator as '{name}'")
         self._emit_event("orchestrator_registered", name=name)
 
     def register_service_registry(
@@ -334,7 +336,7 @@ class SystemIntegrator:
             logger.warning("System already bootstrapped")
             return
 
-        logger.info("Bootstrapping unified TradePulse system...")
+        logger.info("Bootstrapping unified GeoSync system...")
         self._emit_event("bootstrap_started")
 
         try:
@@ -344,9 +346,7 @@ class SystemIntegrator:
                 blocking = validation.get_blocking_issues()
                 if blocking:
                     error_msgs = [issue.message for issue in blocking]
-                    raise RuntimeError(
-                        f"Architecture validation failed: {'; '.join(error_msgs)}"
-                    )
+                    raise RuntimeError(f"Architecture validation failed: {'; '.join(error_msgs)}")
 
             # Initialize all components
             initialized = self._arch_integrator.initialize_all()
@@ -380,7 +380,7 @@ class SystemIntegrator:
             logger.warning("System already started")
             return []
 
-        logger.info("Starting unified TradePulse system...")
+        logger.info("Starting unified GeoSync system...")
         self._emit_event("startup_started")
 
         try:
@@ -404,7 +404,7 @@ class SystemIntegrator:
             logger.warning("System not started")
             return []
 
-        logger.info("Stopping unified TradePulse system...")
+        logger.info("Stopping unified GeoSync system...")
         self._emit_event("shutdown_started")
 
         stopped = self._arch_integrator.stop_all()
@@ -418,7 +418,7 @@ class SystemIntegrator:
 
         Stops all components and starts them again in dependency order.
         """
-        logger.info("Restarting unified TradePulse system...")
+        logger.info("Restarting unified GeoSync system...")
         self._emit_event("restart_started")
 
         if self._started:
@@ -443,12 +443,10 @@ class SystemIntegrator:
         total_components = len(health_map)
         healthy_components = sum(1 for h in health_map.values() if h.healthy)
         degraded_components = sum(
-            1 for h in health_map.values()
-            if h.status == ComponentStatus.DEGRADED
+            1 for h in health_map.values() if h.status == ComponentStatus.DEGRADED
         )
         failed_components = sum(
-            1 for h in health_map.values()
-            if h.status == ComponentStatus.FAILED
+            1 for h in health_map.values() if h.status == ComponentStatus.FAILED
         )
 
         # Calculate overall health score (0-100)
@@ -531,12 +529,12 @@ class SystemIntegrator:
     # ------------------------------------------------------------------
 
     @property
-    def system(self) -> Optional[TradePulseSystem]:
-        """Access the registered TradePulse system."""
+    def system(self) -> Optional[GeoSyncSystem]:
+        """Access the registered GeoSync system."""
         return self._system
 
     @property
-    def orchestrator(self) -> Optional[TradePulseOrchestrator]:
+    def orchestrator(self) -> Optional[GeoSyncOrchestrator]:
         """Access the registered orchestrator."""
         return self._orchestrator
 
@@ -640,8 +638,8 @@ class SystemIntegratorBuilder:
     def __init__(self) -> None:
         """Initialize the builder with default configuration."""
         self._config = IntegrationConfig()
-        self._system: Optional[TradePulseSystem] = None
-        self._orchestrator: Optional[TradePulseOrchestrator] = None
+        self._system: Optional[GeoSyncSystem] = None
+        self._orchestrator: Optional[GeoSyncOrchestrator] = None
         self._service_registry: Optional[ServiceRegistry] = None
         self._agent_coordinator: Optional[AgentCoordinator] = None
         self._custom_components: List[Dict[str, Any]] = []
@@ -658,11 +656,11 @@ class SystemIntegratorBuilder:
         self._config = config
         return self
 
-    def with_system(self, system: TradePulseSystem) -> SystemIntegratorBuilder:
-        """Set the TradePulse system.
+    def with_system(self, system: GeoSyncSystem) -> SystemIntegratorBuilder:
+        """Set the GeoSync system.
 
         Args:
-            system: TradePulseSystem instance
+            system: GeoSyncSystem instance
 
         Returns:
             Self for method chaining
@@ -670,13 +668,11 @@ class SystemIntegratorBuilder:
         self._system = system
         return self
 
-    def with_orchestrator(
-        self, orchestrator: TradePulseOrchestrator
-    ) -> SystemIntegratorBuilder:
-        """Set the TradePulse orchestrator.
+    def with_orchestrator(self, orchestrator: GeoSyncOrchestrator) -> SystemIntegratorBuilder:
+        """Set the GeoSync orchestrator.
 
         Args:
-            orchestrator: TradePulseOrchestrator instance
+            orchestrator: GeoSyncOrchestrator instance
 
         Returns:
             Self for method chaining
@@ -684,9 +680,7 @@ class SystemIntegratorBuilder:
         self._orchestrator = orchestrator
         return self
 
-    def with_service_registry(
-        self, registry: ServiceRegistry
-    ) -> SystemIntegratorBuilder:
+    def with_service_registry(self, registry: ServiceRegistry) -> SystemIntegratorBuilder:
         """Set the service registry.
 
         Args:
@@ -698,9 +692,7 @@ class SystemIntegratorBuilder:
         self._service_registry = registry
         return self
 
-    def with_agent_coordinator(
-        self, coordinator: AgentCoordinator
-    ) -> SystemIntegratorBuilder:
+    def with_agent_coordinator(self, coordinator: AgentCoordinator) -> SystemIntegratorBuilder:
         """Set the agent coordinator.
 
         Args:
@@ -757,11 +749,13 @@ class SystemIntegratorBuilder:
         Returns:
             Self for method chaining
         """
-        self._custom_components.append({
-            "name": name,
-            "instance": instance,
-            **kwargs,
-        })
+        self._custom_components.append(
+            {
+                "name": name,
+                "instance": instance,
+                **kwargs,
+            }
+        )
         return self
 
     def build(self) -> SystemIntegrator:

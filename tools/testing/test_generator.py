@@ -1,3 +1,5 @@
+# Copyright (c) 2023-2026 Yaroslav Vasylenko (neuron7xLab)
+# SPDX-License-Identifier: MIT
 """Helpers for automatically generating pytest suites with component explanations."""
 
 from __future__ import annotations
@@ -157,17 +159,13 @@ def _format_function_signature(node: ast.FunctionDef | ast.AsyncFunctionDef) -> 
     if node.args.posonlyargs:
         parts.append("/")
     if node.args.vararg:
-        parts.append(
-            f"*{node.args.vararg.arg}{_format_annotation(node.args.vararg.annotation)}"
-        )
+        parts.append(f"*{node.args.vararg.arg}{_format_annotation(node.args.vararg.annotation)}")
     elif node.args.kwonlyargs:
         parts.append("*")
     for arg, default in zip(node.args.kwonlyargs, node.args.kw_defaults):
         parts.append(_format_argument(arg, default))
     if node.args.kwarg:
-        parts.append(
-            f"**{node.args.kwarg.arg}{_format_annotation(node.args.kwarg.annotation)}"
-        )
+        parts.append(f"**{node.args.kwarg.arg}{_format_annotation(node.args.kwarg.annotation)}")
     joined = ", ".join(part for part in parts if part)
     signature = f"{node.name}({joined})"
     if node.returns is not None:
@@ -238,9 +236,7 @@ def _build_class_explanation(node: ast.ClassDef) -> str:
         parts.append(doc.strip().splitlines()[0])
     bases = [ast.unparse(base) for base in node.bases] or ["object"]
     parts.append(
-        "The class inherits from "
-        + (", ".join(bases) if len(bases) > 1 else bases[0])
-        + "."
+        "The class inherits from " + (", ".join(bases) if len(bases) > 1 else bases[0]) + "."
     )
     public_methods = [
         child.name
@@ -262,10 +258,7 @@ def _describe_control_flow(
     control_features: list[str] = []
     if any(isinstance(child, ast.If) for child in ast.walk(node)):
         control_features.append("performs conditional branching")
-    if any(
-        isinstance(child, (ast.For, ast.AsyncFor, ast.While))
-        for child in ast.walk(node)
-    ):
+    if any(isinstance(child, (ast.For, ast.AsyncFor, ast.While)) for child in ast.walk(node)):
         control_features.append("iterates over sequences or generators")
     if any(isinstance(child, ast.Try) for child in ast.walk(node)):
         control_features.append("handles exceptions via try/except blocks")
@@ -300,8 +293,7 @@ def _describe_calls(node: ast.FunctionDef | ast.AsyncFunctionDef) -> str:
 
 def _contains_return(node: ast.FunctionDef | ast.AsyncFunctionDef) -> bool:
     return any(
-        isinstance(child, ast.Return) and child.value is not None
-        for child in ast.walk(node)
+        isinstance(child, ast.Return) and child.value is not None for child in ast.walk(node)
     )
 
 
@@ -318,8 +310,7 @@ def _join_features(features: Sequence[str]) -> str:
 
 
 def _render_pytest_file(analysis: ModuleAnalysis) -> str:
-    header = textwrap.dedent(
-        f'''\
+    header = textwrap.dedent(f'''\
         """Auto-generated tests for {analysis.module}.
 
         This file was created by :mod:`tools.testing.test_generator`.
@@ -333,8 +324,7 @@ def _render_pytest_file(analysis: ModuleAnalysis) -> str:
 
         MODULE_UNDER_TEST = "{analysis.module}"
         SOURCE_PATH = {str(analysis.path)!r}
-        '''
-    ).strip()
+        ''').strip()
 
     component_blocks = [
         _render_component_test(component) for component in analysis.iter_components()
@@ -343,14 +333,12 @@ def _render_pytest_file(analysis: ModuleAnalysis) -> str:
     if component_blocks:
         body = "\n\n\n".join(component_blocks)
     else:
-        body = textwrap.dedent(
-            '''\
+        body = textwrap.dedent('''\
             def test_module_contains_no_top_level_components() -> None:
                 """Ensure modules without callables remain tracked."""
                 analysis = analyze_module(MODULE_UNDER_TEST)
                 assert analysis.components == ()
-            '''
-        ).strip()
+            ''').strip()
 
     return f"{header}\n\n\n{body}\n"
 
@@ -410,9 +398,7 @@ def _parse_args(argv: Sequence[str] | None = None) -> argparse.Namespace:
 
 def main(argv: Sequence[str] | None = None) -> int:
     args = _parse_args(argv)
-    destination = generate_unit_tests(
-        args.module, Path(args.output_dir), filename=args.filename
-    )
+    destination = generate_unit_tests(args.module, Path(args.output_dir), filename=args.filename)
     print(f"Generated tests written to {destination}")
     return 0
 

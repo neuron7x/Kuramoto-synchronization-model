@@ -1,10 +1,11 @@
-# SPDX-License-Identifier: LicenseRef-TradePulse-Proprietary
+# Copyright (c) 2023-2026 Yaroslav Vasylenko (neuron7xLab)
+# SPDX-License-Identifier: MIT
 """Prototype Streamlit dashboard (dev-only); canonical UI lives in ui/dashboard (TypeScript).
 
-Enhanced TradePulse Streamlit Dashboard with comprehensive analysis features.
+Enhanced GeoSync Streamlit Dashboard with comprehensive analysis features.
 
 This module provides a web-based interface for analyzing market data using
-TradePulse's geometric indicators. Features include:
+GeoSync's geometric indicators. Features include:
 - CSV data upload and validation
 - Multi-indicator analysis (Kuramoto, Entropy, Ricci, Hurst)
 - Interactive visualizations with time-series charts
@@ -12,6 +13,7 @@ TradePulse's geometric indicators. Features include:
 - Historical comparison capabilities
 - Configuration persistence
 """
+
 import json
 import os
 from datetime import datetime
@@ -53,17 +55,13 @@ def load_auth_config():
         # Default hash for 'admin123' (ONLY for development/example)
         "$2b$12$EixZaYVK1fsbw1ZfbX3OXe.RKjKWbFUZYWbAKpKnvGmcPNW3OL2K6",
     )
-    cookie_name = os.getenv("DASHBOARD_COOKIE_NAME", "tradepulse_auth")
-    cookie_key = os.getenv(
-        "DASHBOARD_COOKIE_KEY", "default_cookie_key_change_in_production"
-    )
+    cookie_name = os.getenv("DASHBOARD_COOKIE_NAME", "geosync_auth")
+    cookie_key = os.getenv("DASHBOARD_COOKIE_KEY", "default_cookie_key_change_in_production")
     cookie_expiry_days = int(os.getenv("DASHBOARD_COOKIE_EXPIRY_DAYS", "30"))
 
     return {
         "credentials": {
-            "usernames": {
-                username: {"name": username.capitalize(), "password": password_hash}
-            }
+            "usernames": {username: {"name": username.capitalize(), "password": password_hash}}
         },
         "cookie": {
             "name": cookie_name,
@@ -97,7 +95,7 @@ else:
     authenticator.logout("Logout", "sidebar")
     st.sidebar.write(f"Welcome *{name}*")
 
-    st.title("TradePulse — Real-time Indicators Dashboard")
+    st.title("GeoSync — Real-time Indicators Dashboard")
 
     st.sidebar.header("Configuration")
     window_size = st.sidebar.slider(
@@ -136,9 +134,7 @@ else:
 
     with tab1:
         st.header("Data Upload & Preview")
-        uploaded = st.file_uploader(
-            "Upload CSV with columns: ts, price, volume", type=["csv"]
-        )
+        uploaded = st.file_uploader("Upload CSV with columns: ts, price, volume", type=["csv"])
 
         if uploaded:
             try:
@@ -186,13 +182,11 @@ else:
                     missing_prices = df["price"].isna().sum()
                     if missing_prices > 0:
                         st.warning(
-                            f"⚠️ Found {missing_prices} missing price values ({missing_prices/len(df)*100:.1f}%)"
+                            f"⚠️ Found {missing_prices} missing price values ({missing_prices / len(df) * 100:.1f}%)"
                         )
                         if st.button("Remove rows with missing prices"):
                             df = df.dropna(subset=["price"])
-                            st.success(
-                                f"Removed {missing_prices} rows. New total: {len(df)}"
-                            )
+                            st.success(f"Removed {missing_prices} rows. New total: {len(df)}")
                     else:
                         st.success("✅ No missing price values")
 
@@ -203,9 +197,7 @@ else:
                         st.error("❌ Price data has no variation (constant values)")
                         validation_passed = False
                     else:
-                        st.success(
-                            f"✅ Price variation detected (std: {price_stats['std']:.4f})"
-                        )
+                        st.success(f"✅ Price variation detected (std: {price_stats['std']:.4f})")
 
                 if validation_passed:
                     st.success(
@@ -214,9 +206,7 @@ else:
 
             except Exception as e:
                 st.error(f"❌ Error loading CSV file: {str(e)}")
-                st.info(
-                    "Please ensure your CSV file is properly formatted with a 'price' column."
-                )
+                st.info("Please ensure your CSV file is properly formatted with a 'price' column.")
 
     with tab2:
         st.header("Indicator Analysis")
@@ -325,9 +315,7 @@ else:
 
                 # Kuramoto-based regime
                 if R > 0.7:
-                    kuramoto_regime = (
-                        "🟢 High Coherence - Strong trend or pattern detected"
-                    )
+                    kuramoto_regime = "🟢 High Coherence - Strong trend or pattern detected"
                     regime_color = "green"
                 elif R > 0.4:
                     kuramoto_regime = "🟡 Moderate Coherence - Mixed signals"
@@ -340,30 +328,28 @@ else:
 
                 # Comprehensive analysis summary
                 with st.expander("📊 Detailed Analysis Summary"):
-                    st.markdown(
-                        f"""
+                    st.markdown(f"""
                     **Analysis Window:** {analysis_window} periods
                     **Data Points Analyzed:** {len(prices)}
 
                     **Synchronization Analysis:**
                     - Kuramoto Order Parameter: {R:.4f}
-                    - Interpretation: {'High synchronization' if R > 0.7 else 'Moderate synchronization' if R > 0.4 else 'Low synchronization'}
+                    - Interpretation: {"High synchronization" if R > 0.7 else "Moderate synchronization" if R > 0.4 else "Low synchronization"}
 
                     **Information Theory:**
                     - Shannon Entropy: {H:.4f}
                     - Delta Entropy: {dH:.4f}
-                    - Entropy Trend: {'Increasing uncertainty' if dH > 0 else 'Decreasing uncertainty'}
+                    - Entropy Trend: {"Increasing uncertainty" if dH > 0 else "Decreasing uncertainty"}
 
                     **Long-term Memory:**
                     - Hurst Exponent: {Hs:.4f}
                     - Market Behavior: {regime_type}
-                    - Predictability: {'High' if abs(Hs - 0.5) > 0.15 else 'Moderate' if abs(Hs - 0.5) > 0.05 else 'Low'}
+                    - Predictability: {"High" if abs(Hs - 0.5) > 0.15 else "Moderate" if abs(Hs - 0.5) > 0.05 else "Low"}
 
                     **Geometric Properties:**
                     - Mean Ricci Curvature: {kappa:.6f}
-                    - Price Manifold: {'Contracting' if kappa > 0 else 'Expanding' if kappa < -0.001 else 'Stable'}
-                    """
-                    )
+                    - Price Manifold: {"Contracting" if kappa > 0 else "Expanding" if kappa < -0.001 else "Stable"}
+                    """)
 
                 # Store analysis in history
                 analysis_record = {
@@ -390,30 +376,22 @@ else:
                 )
 
         else:
-            st.info(
-                "📥 Upload data in the 'Data Upload' tab to see indicator analysis."
-            )
+            st.info("📥 Upload data in the 'Data Upload' tab to see indicator analysis.")
             st.write("### What You'll Get:")
-            st.markdown(
-                """
+            st.markdown("""
             - **Kuramoto Order Parameter**: Phase synchronization analysis
             - **Shannon Entropy**: Information content and uncertainty measures
             - **Hurst Exponent**: Long-term memory and trend detection
             - **Ricci Curvature**: Geometric market manifold analysis
             - **Interactive Visualizations**: Price charts with moving averages
             - **Regime Classification**: Automated market state detection
-            """
-            )
+            """)
 
     with tab3:
         st.header("Export & Analysis History")
 
         # Export current analysis
-        if (
-            uploaded
-            and "price" in df.columns
-            and len(st.session_state.analysis_history) > 0
-        ):
+        if uploaded and "price" in df.columns and len(st.session_state.analysis_history) > 0:
             st.write("### Export Current Analysis")
 
             latest_analysis = st.session_state.analysis_history[-1]
@@ -426,7 +404,7 @@ else:
                 st.download_button(
                     label="📥 Download as JSON",
                     data=json_str,
-                    file_name=f"tradepulse_analysis_{datetime.now().strftime('%Y%m%d_%H%M%S')}.json",
+                    file_name=f"geosync_analysis_{datetime.now().strftime('%Y%m%d_%H%M%S')}.json",
                     mime="application/json",
                     help="Download analysis results in JSON format",
                 )
@@ -439,7 +417,7 @@ else:
                 st.download_button(
                     label="📥 Download as CSV",
                     data=csv_buffer.getvalue(),
-                    file_name=f"tradepulse_analysis_{datetime.now().strftime('%Y%m%d_%H%M%S')}.csv",
+                    file_name=f"geosync_analysis_{datetime.now().strftime('%Y%m%d_%H%M%S')}.csv",
                     mime="text/csv",
                     help="Download analysis results in CSV format",
                 )
@@ -480,7 +458,7 @@ else:
                     st.download_button(
                         label="📥 Download Enhanced Dataset",
                         data=csv_buffer.getvalue(),
-                        file_name=f"tradepulse_enhanced_{datetime.now().strftime('%Y%m%d_%H%M%S')}.csv",
+                        file_name=f"geosync_enhanced_{datetime.now().strftime('%Y%m%d_%H%M%S')}.csv",
                         mime="text/csv",
                         help="Download original data with computed indicators",
                     )
@@ -498,9 +476,9 @@ else:
 
             # Display history table
             st.dataframe(
-                history_df[
-                    ["timestamp", "filename", "R", "H", "Hs", "regime"]
-                ].sort_values("timestamp", ascending=False),
+                history_df[["timestamp", "filename", "R", "H", "Hs", "regime"]].sort_values(
+                    "timestamp", ascending=False
+                ),
                 use_container_width=True,
                 hide_index=True,
             )
@@ -515,9 +493,7 @@ else:
                     help="Choose which indicator to plot over analysis history",
                 )
 
-                chart_df = history_df[["timestamp", metric_choice]].set_index(
-                    "timestamp"
-                )
+                chart_df = history_df[["timestamp", metric_choice]].set_index("timestamp")
                 st.line_chart(chart_df, use_container_width=True)
 
             # Clear history button
@@ -531,7 +507,7 @@ else:
             st.download_button(
                 label="📥 Download All History (JSON)",
                 data=history_json,
-                file_name=f"tradepulse_history_{datetime.now().strftime('%Y%m%d_%H%M%S')}.json",
+                file_name=f"geosync_history_{datetime.now().strftime('%Y%m%d_%H%M%S')}.json",
                 mime="application/json",
                 help="Download complete analysis history",
             )
@@ -541,9 +517,8 @@ else:
             )
 
     with tab4:
-        st.header("About TradePulse Indicators")
-        st.markdown(
-            """
+        st.header("About GeoSync Indicators")
+        st.markdown("""
         ### Kuramoto Order Parameter (R)
         The Kuramoto model describes synchronization of coupled oscillators. In trading:
         - **R ≈ 1**: Strong phase synchronization (trending market)
@@ -581,9 +556,9 @@ else:
 
         ---
 
-        ### How TradePulse Works
+        ### How GeoSync Works
 
-        **TradePulse** combines geometric indicators with traditional technical analysis
+        **GeoSync** combines geometric indicators with traditional technical analysis
         for robust market regime detection and signal generation. The platform uses:
 
         1. **Multi-scale Analysis**: Examines patterns at different timeframes
@@ -594,12 +569,10 @@ else:
 
         ### Best Practices
 
-        """
-        )
+        """)
 
         st.write("### Quick Tips")
-        st.markdown(
-            """
+        st.markdown("""
         1. **Upload** your price/volume CSV data with at least a 'price' column
         2. **Adjust** the analysis window using the sidebar slider (recommend 100-300 periods)
         3. **Interpret** the indicators in context of your strategy and market conditions
@@ -635,21 +608,18 @@ else:
 
         ### Resources
 
-        - [TradePulse Documentation](https://github.com/neuron7x/TradePulse)
-        - [Indicator Theory](https://github.com/neuron7x/TradePulse/docs/indicators.md)
-        - [API Reference](https://docs.tradepulse.io/api)
-        """
-        )
+        - [GeoSync Documentation](https://github.com/neuron7xLab/GeoSync)
+        - [Indicator Theory](https://github.com/neuron7xLab/GeoSync/docs/indicators.md)
+        - [API Reference](https://docs.geosync.io/api)
+        """)
 
         # System info
         with st.expander("🔧 System Information"):
-            st.markdown(
-                f"""
+            st.markdown(f"""
             **Dashboard Version:** 2.0.0
             **Analysis Window:** {window_size} periods
             **Entropy Bins:** {entropy_bins}
             **Ricci Delta:** {ricci_delta}
             **Session Analyses:** {len(st.session_state.analysis_history)}
             **User:** {name}
-            """
-            )
+            """)

@@ -1,3 +1,5 @@
+# Copyright (c) 2023-2026 Yaroslav Vasylenko (neuron7xLab)
+# SPDX-License-Identifier: MIT
 from __future__ import annotations
 
 import json
@@ -55,11 +57,7 @@ def sample_project(tmp_path: Path) -> list[Path]:
     )
     _write(
         package_root / "inventory.py",
-        "from typing import TypedDict\n"
-        "\n"
-        "class Product(TypedDict):\n"
-        "    id: int\n"
-        "    stock: int\n",
+        "from typing import TypedDict\n\nclass Product(TypedDict):\n    id: int\n    stock: int\n",
     )
     _write(
         package_root / "inventory_sync.py",

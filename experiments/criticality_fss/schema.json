@@ -1,0 +1,30 @@
+{
+  "$schema": "https://json-schema.org/draft/2020-12/schema",
+  "title": "Criticality FSS Result",
+  "type": "object",
+  "required": [
+    "schema_version",
+    "status",
+    "claim_status",
+    "generated_at_utc",
+    "config_hash",
+    "data_hash",
+    "seeds",
+    "system_sizes",
+    "null_models",
+    "pass_flags"
+  ],
+  "properties": {
+    "schema_version": {"type": "string"},
+    "status": {"enum": ["NOT_RUN", "PASS", "FAIL", "INVALID"]},
+    "claim_status": {"enum": ["RETIRED", "HYPOTHESIS", "MEASURED"]},
+    "generated_at_utc": {"type": "string"},
+    "config_hash": {"type": "string"},
+    "data_hash": {"type": "string"},
+    "seeds": {"type": "array", "items": {"type": "integer"}},
+    "system_sizes": {"type": "array", "items": {"type": "integer"}},
+    "null_models": {"type": "array", "items": {"type": "string"}},
+    "pass_flags": {"type": "object", "additionalProperties": {"type": "boolean"}}
+  },
+  "additionalProperties": true
+}

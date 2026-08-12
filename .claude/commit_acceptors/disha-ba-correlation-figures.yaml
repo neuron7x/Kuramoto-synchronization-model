@@ -1,0 +1,134 @@
+# Diff-bound commit acceptor for the Disha BA + Pearson-correlation
+# article artefact.
+#
+# This PR adds a clean, honest, reproducible Barabási-Albert-style
+# topology comparison + Pearson correlation analysis on BIS LBS
+# country-level banking-system exposure data, for use as a macro
+# network illustration in Disha's article. Explicitly orthogonal
+# to the X-9R Kuramoto pipeline (no Kuramoto used), and explicitly
+# does NOT make bank-level or causal contagion claims.
+
+id: disha-ba-correlation-figures
+status: ACTIVE
+claim_type: documentation
+promise: >-
+  After this PR lands, ``tools/build_disha_ba_correlation_figures.py``
+  produces an article-grade artefact with BA-style topology comparison,
+  Pearson correlation heatmaps (levels + log-changes), risk concentration
+  ranking, article summary and reproducibility notes from a BIS LBS
+  ``dataset_dir``. The accompanying test module verifies all 16 expected
+  output files, the BA fit pipeline on a synthetic 4-country fixture,
+  Pearson correlation invariants, constant-node handling, and the
+  forbidden-wording self-check.
+
+diff_scope:
+  changed_files:
+    - path: ".claude/commit_acceptors/disha-ba-correlation-figures.yaml"
+    - path: "tools/build_disha_ba_correlation_figures.py"
+    - path: "tests/research/systemic_risk/test_disha_ba_correlation_figures.py"
+    - path: "DISHA_BA_CORRELATION_FINAL_REPORT.md"
+    - path: "figures/disha_ba_correlation/DISHA_ARTICLE_SUMMARY.md"
+    - path: "figures/disha_ba_correlation/REPRODUCIBILITY.md"
+    - path: "figures/disha_ba_correlation/ba_fit_summary.csv"
+    - path: "figures/disha_ba_correlation/data_quality_summary.csv"
+    - path: "figures/disha_ba_correlation/risk_concentration_summary.csv"
+    - path: "figures/disha_ba_correlation/top_correlated_pairs_changes.csv"
+    - path: "figures/disha_ba_correlation/top_correlated_pairs_levels.csv"
+    - path: "figures/disha_ba_correlation/network_normal.png"
+    - path: "figures/disha_ba_correlation/network_lehman.png"
+    - path: "figures/disha_ba_correlation/correlation_levels_normal.png"
+    - path: "figures/disha_ba_correlation/correlation_levels_lehman.png"
+    - path: "figures/disha_ba_correlation/correlation_levels_delta.png"
+    - path: "figures/disha_ba_correlation/correlation_changes_normal.png"
+    - path: "figures/disha_ba_correlation/correlation_changes_lehman.png"
+    - path: "figures/disha_ba_correlation/correlation_changes_delta.png"
+    - path: "figures/disha_ba_correlation/risk_concentration_bar.png"
+    - path: "figures/disha_ba_correlation/AUDIT_RESPONSE.md"
+    - path: "figures/disha_ba_correlation/CLAIM_BOUNDARY.md"
+    - path: "figures/disha_ba_correlation/DISHA_SAFE_120_WORDS.md"
+    - path: "figures/disha_ba_correlation/correlation_validity_summary.csv"
+    - path: "figures/disha_ba_correlation/model_comparison_full.csv"
+    - path: "figures/disha_ba_correlation/model_comparison_summary.csv"
+    - path: "figures/disha_ba_correlation/reporter_status_summary.csv"
+    - path: "figures/disha_ba_correlation/risk_concentration_article_grade.csv"
+    - path: "figures/disha_ba_correlation/repro_capsule/MANIFEST.json"
+    - path: "figures/disha_ba_correlation/repro_capsule/COMMANDS.sh"
+    - path: "figures/disha_ba_correlation/repro_capsule/ENVIRONMENT.txt"
+    - path: "figures/disha_ba_correlation/repro_capsule/INPUT_DATASET_MANIFEST_COPY.json"
+    - path: "figures/disha_ba_correlation/repro_capsule/OUTPUT_SHA256SUMS.txt"
+    - path: "figures/disha_ba_correlation/repro_capsule/QUALITY_GATES.txt"
+    - path: "figures/disha_ba_correlation/repro_capsule/CLAIM_BOUNDARY.md"
+  forbidden_paths:
+    - "trading/"
+    - "execution/"
+    - "forecast/"
+    - "policy/"
+    - "core/"
+    - "runtime/"
+    - "application/"
+    - "research/systemic_risk/protocol_x9r.py"
+
+required_python_symbols:
+  - "tools/build_disha_ba_correlation_figures.py::build_article_artifact"
+  - "tools/build_disha_ba_correlation_figures.py::compute_ba_comparison"
+  - "tools/build_disha_ba_correlation_figures.py::build_correlation_matrix"
+  - "tools/build_disha_ba_correlation_figures.py::compute_risk_concentration"
+  - "tools/build_disha_ba_correlation_figures.py::main"
+
+expected_signal: >-
+  ``pytest tests/research/systemic_risk/test_disha_ba_correlation_figures.py -q``
+  reports 24 passed; full ``tests/research/systemic_risk/`` suite reports
+  607 passed (583 prior + 24 new) with zero regressions.
+
+measurement_command: >-
+  bash -c '
+    mypy --strict tools/build_disha_ba_correlation_figures.py && python -m pytest tests/research/systemic_risk/test_disha_ba_correlation_figures.py -q
+  '
+
+signal_artifact: "tmp/disha_ba_correlation.log"
+
+falsifier:
+  command: |-
+    bash -c '
+      python -c "
+    from tools.build_disha_ba_correlation_figures import (
+        build_article_artifact, compute_ba_comparison,
+        build_correlation_matrix, compute_risk_concentration,
+    )
+    assert callable(build_article_artifact)
+    assert callable(compute_ba_comparison)
+    assert callable(build_correlation_matrix)
+    assert callable(compute_risk_concentration)
+      " 2>/dev/null && exit 1 || exit 0
+    '
+  description: >-
+    Probes that the public BA + correlation API symbols are exposed
+    at the documented names. Falsifier inverts: it succeeds (exit 0)
+    only when the import or assertion fails, which would mean the
+    artefact rolled back.
+
+rollback_command: >-
+  bash -c '
+    git rm -f
+      tools/build_disha_ba_correlation_figures.py
+      tests/research/systemic_risk/test_disha_ba_correlation_figures.py
+      .claude/commit_acceptors/disha-ba-correlation-figures.yaml
+      DISHA_BA_CORRELATION_FINAL_REPORT.md && rm -rf figures/disha_ba_correlation/
+  '
+
+rollback_verification_command: |-
+  bash -c '
+    python -c "
+  try:
+      from tools.build_disha_ba_correlation_figures import build_article_artifact
+  except ImportError:
+      pass
+  else:
+      raise SystemExit(1)
+    "
+  '
+
+memory_update_type: append
+ledger_path: ".claude/commit_acceptors/disha-ba-correlation-figures.yaml"
+report_path: "tmp/disha_ba_correlation.log"
+evidence: []

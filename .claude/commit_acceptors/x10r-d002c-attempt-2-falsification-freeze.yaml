@@ -1,0 +1,140 @@
+# Diff-bound commit acceptor for the D-002C attempt-2 falsification freeze.
+#
+# Documentation-only PR. Records that the executable null-audit safeguard
+# (delivered by C2.4-A2 in #674) was exercised on a fresh canonical sweep
+# and FALSIFIED the prior attempt-1 PASS-shape result. Append-only claim
+# ledger; attempt-1 entry preserved. New spec doc D-002G specifies the
+# null-mechanism redesign required before any future canonical PASS.
+#
+# What lands:
+#   * docs/governance/D002C_ATTEMPT_2_NULL_AUDIT_FALSIFICATION_REPORT.md
+#       Run report: cryptographic anchors, stage-by-stage outcome,
+#       mechanistic explanation of the 9 λ=0 FAIL cells, relationship
+#       to attempt-1, claim boundary, reproducibility note.
+#   * docs/governance/D002C_CLAIM_LEDGER.yaml
+#       Append-only update — adds claim_id
+#       D002C_CANONICAL_SYNTHETIC_ATTEMPT_2_FALSIFIED with
+#       eclipses=D002C_CANONICAL_SYNTHETIC_PASS_SYNC_AUC. Original
+#       attempt-1 entry preserved verbatim.
+#   * docs/governance/D002G_DEGENERATE_NULL_REDESIGN_SPEC.md
+#       Five candidate null mechanisms (independent-seed cohort,
+#       phase-randomized, bounded perturbation, amplitude-preserving
+#       shuffled, topology-randomised). Acceptance criteria, scope
+#       boundaries, forbidden actions, and the requirement that any
+#       D-002G run uses a FRESH pre-registration document (no
+#       D002C_PREREGISTRATION.yaml edit).
+#   * docs/governance/evidence/D002C_ATTEMPT_2_ARCHIVE_MANIFEST.txt
+#       29-entry archive manifest.
+#   * docs/governance/evidence/D002C_ATTEMPT_2_ARCHIVE_SHA256.txt
+#       Content-addressed archive sha
+#       f0fbea551dd0c4b74d1ec231a73c1f0917de16f6b15e24921e68c7706fc029f9.
+#
+# Strict scope:
+#   Documentation-only. NO source change. NO test change. NO
+#   pre-registration edit. NO threshold tuning. NO retroactive
+#   reinterpretation of attempt-1. The previous claim_id entry is
+#   preserved unchanged; the new entry ECLIPSES it via the
+#   `eclipses:` field, recording the scientific evolution honestly.
+
+id: x10r-d002c-attempt-2-falsification-freeze
+status: ACTIVE
+claim_type: documentation
+promise: >-
+  After this PR lands, docs/governance/ carries the attempt-2
+  falsification record: the C2.4-A2 + C2.4-C2 + C2.4-D contract
+  chain produced a real executable post-sweep null audit, and that
+  audit FALSIFIED the prior attempt-1 PASS-shape verdict by
+  reporting 9 / 54 cells FAIL — all at λ=0 — driven by the
+  bit-identical paired-CRN null cohort. The claim ledger entry
+  D002C_CANONICAL_SYNTHETIC_ATTEMPT_2_FALSIFIED is appended with
+  status=FALSIFIED_BY_EXECUTABLE_NULL_AUDIT and explicit
+  eclipses=D002C_CANONICAL_SYNTHETIC_PASS_SYNC_AUC. The D-002G
+  spec records five candidate null-mechanism redesigns under fresh
+  pre-registration discipline.
+
+  Strict scope: documentation-only. No source/test change. No
+  pre-registration edit. No threshold tuning. No claim promotion.
+  No retroactive removal of attempt-1.
+
+diff_scope:
+  changed_files:
+    - path: ".claude/commit_acceptors/x10r-d002c-attempt-2-falsification-freeze.yaml"
+    - path: "docs/governance/D002C_ATTEMPT_2_NULL_AUDIT_FALSIFICATION_REPORT.md"
+    - path: "docs/governance/D002C_CLAIM_LEDGER.yaml"
+    - path: "docs/governance/D002G_DEGENERATE_NULL_REDESIGN_SPEC.md"
+    - path: "docs/governance/evidence/D002C_ATTEMPT_2_ARCHIVE_MANIFEST.txt"
+    - path: "docs/governance/evidence/D002C_ATTEMPT_2_ARCHIVE_SHA256.txt"
+  forbidden_paths:
+    - "trading/"
+    - "execution/"
+    - "forecast/"
+    - "policy/"
+    - "core/"
+    - "research/"
+    - "scripts/"
+    - "tests/"
+    - "docs/governance/D002C_PREREGISTRATION.yaml"
+    - "application/governance/claim_ledger.py"
+    - "application/governance/commit_acceptor.py"
+required_python_symbols: []
+expected_signal: >-
+  `git ls-tree HEAD docs/governance/` shows the three new D-002C/G
+  artifacts; the claim ledger YAML parses cleanly with EXACTLY two
+  claim_id entries, the second carrying status
+  FALSIFIED_BY_EXECUTABLE_NULL_AUDIT and an `eclipses` field
+  pointing at the first; the archive sha file pins
+  f0fbea551dd0c4b74d1ec231a73c1f0917de16f6b15e24921e68c7706fc029f9.
+measurement_command: >-
+  bash -c 'test -f docs/governance/D002C_ATTEMPT_2_NULL_AUDIT_FALSIFICATION_REPORT.md
+  && test -f docs/governance/D002C_CLAIM_LEDGER.yaml
+  && test -f docs/governance/D002G_DEGENERATE_NULL_REDESIGN_SPEC.md
+  && test -f docs/governance/evidence/D002C_ATTEMPT_2_ARCHIVE_MANIFEST.txt
+  && test -f docs/governance/evidence/D002C_ATTEMPT_2_ARCHIVE_SHA256.txt
+  && grep -q "D002C_CANONICAL_SYNTHETIC_ATTEMPT_2_FALSIFIED" docs/governance/D002C_CLAIM_LEDGER.yaml
+  && grep -q "FALSIFIED_BY_EXECUTABLE_NULL_AUDIT" docs/governance/D002C_CLAIM_LEDGER.yaml
+  && grep -q "eclipses: D002C_CANONICAL_SYNTHETIC_PASS_SYNC_AUC" docs/governance/D002C_CLAIM_LEDGER.yaml
+  && grep -q "f0fbea551dd0c4b74d1ec231a73c1f0917de16f6b15e24921e68c7706fc029f9" docs/governance/evidence/D002C_ATTEMPT_2_ARCHIVE_SHA256.txt
+  && python -c "import yaml; d = yaml.safe_load(open(\"docs/governance/D002C_CLAIM_LEDGER.yaml\")); assert len(d[\"claims\"]) == 2; assert d[\"claims\"][0][\"status\"] == \"SUPPORTED_SYNTHETIC_SCOPED\"; assert d[\"claims\"][1][\"status\"] == \"FALSIFIED_BY_EXECUTABLE_NULL_AUDIT\"; assert d[\"claims\"][1].get(\"eclipses\") == d[\"claims\"][0][\"claim_id\"]"'
+signal_artifact: "docs/governance/D002C_ATTEMPT_2_NULL_AUDIT_FALSIFICATION_REPORT.md"
+falsifier:
+  command: >-
+    bash -c 'set -e;
+    grep -q "tier: D002C_REDESIGN_INSUFFICIENT_AT_TESTED_BUDGET" docs/governance/D002C_CLAIM_LEDGER.yaml || exit 1;
+    grep -q "status: FALSIFIED_BY_EXECUTABLE_NULL_AUDIT" docs/governance/D002C_CLAIM_LEDGER.yaml || exit 1;
+    grep -q "null_cohort_is_degenerate_at_lambda_zero_under_paired_CRN" docs/governance/D002C_CLAIM_LEDGER.yaml || exit 1;
+    grep -q "D002G_redesign_required_before_any_new_canonical_PASS_claim" docs/governance/D002C_CLAIM_LEDGER.yaml || exit 1;
+    grep -q "FALSIFIED_BY_EXECUTABLE_NULL_AUDIT" docs/governance/D002C_ATTEMPT_2_NULL_AUDIT_FALSIFICATION_REPORT.md || exit 1;
+    grep -q "9 / 54 cells FAIL" docs/governance/D002C_ATTEMPT_2_NULL_AUDIT_FALSIFICATION_REPORT.md || true;
+    if grep -E "VALIDATED_REAL_BANK_LEVEL_RESULT|TESTED_POSITIVE_REAL|BANK_LEVEL_PRECURSOR_CONFIRMED|real-data validated|bank-level confirmed" docs/governance/D002C_ATTEMPT_2_NULL_AUDIT_FALSIFICATION_REPORT.md docs/governance/D002G_DEGENERATE_NULL_REDESIGN_SPEC.md | grep -vE "forbidden|NOT|❌|absent|never|no_real|no_bank|cannot" >/dev/null; then
+      echo "forbidden tier asserted outside forbidden-list context";
+      exit 2;
+    fi;
+    python -c "import yaml; d = yaml.safe_load(open(\"docs/governance/D002C_CLAIM_LEDGER.yaml\")); a1 = d[\"claims\"][0]; a2 = d[\"claims\"][1]; assert a1[\"status\"] == \"SUPPORTED_SYNTHETIC_SCOPED\", a1[\"status\"]; assert a2[\"status\"] == \"FALSIFIED_BY_EXECUTABLE_NULL_AUDIT\", a2[\"status\"]; assert a2[\"eclipses\"] == a1[\"claim_id\"]; assert a2[\"tier\"] == \"D002C_REDESIGN_INSUFFICIENT_AT_TESTED_BUDGET\"; assert a2[\"post_sweep_null_audit\"][\"aggregate_verdict\"] == \"FAIL\"; assert a2[\"post_sweep_null_audit\"][\"n_fail\"] == 9; assert a2[\"post_sweep_null_audit\"][\"fail_cells_lambda_distribution\"][\"0.0\"] == 9; print(\"attempt-2 ledger schema PASS\")"'
+  description: >-
+    Probes the attempt-2 freeze contract: (a) ledger has TWO claim
+    entries; (b) second entry status=FALSIFIED_BY_EXECUTABLE_NULL_AUDIT
+    eclipses the first; (c) tier=D002C_REDESIGN_INSUFFICIENT_AT_TESTED_BUDGET;
+    (d) post_sweep_null_audit reports aggregate_verdict=FAIL with
+    n_fail=9 all at λ=0; (e) no forbidden tier phrasing leaks outside
+    forbidden-list/❌ context; (f) the limitation about λ=0
+    degenerate null is present; (g) D-002G redesign is required
+    before any new canonical PASS. If any of these regress, the
+    falsification record is broken and the claim boundary leaks.
+rollback_command: >-
+  bash -c 'git checkout HEAD~1 --
+  && rm -f docs/governance/D002C_ATTEMPT_2_NULL_AUDIT_FALSIFICATION_REPORT.md
+  docs/governance/D002G_DEGENERATE_NULL_REDESIGN_SPEC.md
+  docs/governance/evidence/D002C_ATTEMPT_2_ARCHIVE_MANIFEST.txt
+  docs/governance/evidence/D002C_ATTEMPT_2_ARCHIVE_SHA256.txt
+  .claude/commit_acceptors/x10r-d002c-attempt-2-falsification-freeze.yaml
+  && git checkout HEAD~1 -- docs/governance/D002C_CLAIM_LEDGER.yaml'
+rollback_verification_command: >-
+  bash -c 'test ! -f docs/governance/D002C_ATTEMPT_2_NULL_AUDIT_FALSIFICATION_REPORT.md
+  && test ! -f docs/governance/D002G_DEGENERATE_NULL_REDESIGN_SPEC.md
+  && test ! -f docs/governance/evidence/D002C_ATTEMPT_2_ARCHIVE_MANIFEST.txt
+  && test ! -f docs/governance/evidence/D002C_ATTEMPT_2_ARCHIVE_SHA256.txt
+  && test ! -f .claude/commit_acceptors/x10r-d002c-attempt-2-falsification-freeze.yaml'
+memory_update_type: append
+ledger_path: ".claude/commit_acceptors/x10r-d002c-attempt-2-falsification-freeze.yaml"
+report_path: "docs/governance/D002C_ATTEMPT_2_NULL_AUDIT_FALSIFICATION_REPORT.md"
+evidence: []

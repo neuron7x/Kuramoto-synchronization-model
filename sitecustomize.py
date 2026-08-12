@@ -1,4 +1,6 @@
-"""TradePulse site customizations.
+# Copyright (c) 2023-2026 Yaroslav Vasylenko (neuron7xLab)
+# SPDX-License-Identifier: MIT
+"""GeoSync site customizations.
 
 This module is automatically imported by Python when present on the import
 path. We use it to apply security hardening patches as soon as an interpreter
@@ -14,9 +16,22 @@ import shutil
 import tarfile
 from typing import TYPE_CHECKING
 
-os.environ.setdefault("TRADEPULSE_LIGHT_IMPORT", "1")
+os.environ.setdefault("GEOSYNC_LIGHT_IMPORT", "1")
+
+# ── Compute maximization ──────────────────────��──────────────────────
+# Expose all CPU cores to OpenMP/MKL/torch threading backends.
+_cpu_count = str(os.cpu_count() or 4)
+os.environ.setdefault("OMP_NUM_THREADS", _cpu_count)
+os.environ.setdefault("MKL_NUM_THREADS", _cpu_count)
+os.environ.setdefault("OPENBLAS_NUM_THREADS", _cpu_count)
+os.environ.setdefault("NUMEXPR_MAX_THREADS", _cpu_count)
+# Enable CUDA TF32 for RTX 30xx+ (2x throughput on matmuls with negligible accuracy loss)
+os.environ.setdefault("NVIDIA_TF32_OVERRIDE", "1")
+os.environ.setdefault("TORCH_ALLOW_TF32_CUBLAS_OVERRIDE", "1")
+# cuDNN auto-tuner: benchmark kernels to find fastest for fixed-size inputs
+os.environ.setdefault("CUDNN_BENCHMARK", "1")
 # Ensure local and CI test environments have a benign default for the
-# administrative two-factor secret so that importing ``tradepulse.sdk`` (which
+# administrative two-factor secret so that importing ``geosync.sdk`` (which
 # bootstraps the FastAPI stack) does not raise configuration errors when the
 # sensitive value is not provided via environment variables.
 os.environ.setdefault("ADMIN_API_SETTINGS__two_factor_secret", "test-secret")
@@ -27,6 +42,7 @@ os.environ.setdefault("ADMIN_API_SETTINGS__two_factor_secret", "test-secret")
 # Conditionally import pandas to avoid breaking environments without it (e.g., semgrep Docker)
 try:
     import pandas as _pd
+
     if not hasattr(_pd, "_pandas_datetime_CAPI"):  # pragma: no cover - import-time guard
         _pd._pandas_datetime_CAPI = None
 except ImportError:  # pragma: no cover - defensive guard; pandas may be absent
@@ -64,7 +80,7 @@ def _patch_pip_symlink_extraction() -> None:
         return
 
     # Avoid re-applying the patch when sitecustomize is imported repeatedly.
-    if getattr(unpacking, "_tradepulse_symlink_patch", False):
+    if getattr(unpacking, "_geosync_symlink_patch", False):
         return
 
     ensure_dir = unpacking.ensure_dir
@@ -74,9 +90,7 @@ def _patch_pip_symlink_extraction() -> None:
     set_mode = unpacking.set_extracted_file_to_default_mode_plus_executable
     split_leading_dir = unpacking.split_leading_dir
 
-    def _is_symlink_target_in_tar(
-        tar: tarfile.TarFile, tarinfo: tarfile.TarInfo
-    ) -> bool:
+    def _is_symlink_target_in_tar(tar: tarfile.TarFile, tarinfo: tarfile.TarInfo) -> bool:
         linkname = os.path.join(os.path.dirname(tarinfo.name), tarinfo.linkname)
         linkname = os.path.normpath(linkname)
         # Normalise backslashes so Windows style separators are handled.
@@ -115,9 +129,7 @@ def _patch_pip_symlink_extraction() -> None:
                         "The tar file ({}) has a file ({}) trying to install "
                         "outside target directory ({})"
                     )
-                    raise installation_error(
-                        message.format(filename, member.name, member.linkname)
-                    )
+                    raise installation_error(message.format(filename, member.name, member.linkname))
                 try:
                     tar._extract_member(member, path)
                 except Exception as exc:  # pragma: no cover - mirrors pip logic.
@@ -153,7 +165,7 @@ def _patch_pip_symlink_extraction() -> None:
     # expected and pip unit tests (if run) continue to function.
     unpacking.is_symlink_target_in_tar = _is_symlink_target_in_tar  # type: ignore[attr-defined]
     unpacking._untar_without_filter = _patched_untar_without_filter  # type: ignore[attr-defined]
-    unpacking._tradepulse_symlink_patch = True
+    unpacking._geosync_symlink_patch = True
 
 
 def _apply_patches() -> None:

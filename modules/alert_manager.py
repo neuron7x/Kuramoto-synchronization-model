@@ -1,3 +1,5 @@
+# Copyright (c) 2023-2026 Yaroslav Vasylenko (neuron7xLab)
+# SPDX-License-Identifier: MIT
 """
 Alert Manager Module
 
@@ -161,9 +163,7 @@ class AlertManager:
 
         # Канали сповіщень
         self._notification_configs: Dict[NotificationChannel, NotificationConfig] = {}
-        self._notification_handlers: Dict[
-            NotificationChannel, Callable[[Alert], bool]
-        ] = {}
+        self._notification_handlers: Dict[NotificationChannel, Callable[[Alert], bool]] = {}
 
         # Підписники
         self._subscribers: List[Callable[[Alert], None]] = []
@@ -264,9 +264,7 @@ class AlertManager:
 
         return alert
 
-    def acknowledge_alert(
-        self, alert_id: str, acknowledged_by: str
-    ) -> bool:
+    def acknowledge_alert(self, alert_id: str, acknowledged_by: str) -> bool:
         """
         Підтвердження алерта
 
@@ -388,9 +386,7 @@ class AlertManager:
 
             # Перевірка cooldown
             if rule.last_triggered:
-                cooldown_end = rule.last_triggered + timedelta(
-                    seconds=rule.cooldown_seconds
-                )
+                cooldown_end = rule.last_triggered + timedelta(seconds=rule.cooldown_seconds)
                 if datetime.now() < cooldown_end:
                     continue
 
@@ -420,9 +416,7 @@ class AlertManager:
 
         return created_alerts
 
-    def configure_notification_channel(
-        self, config: NotificationConfig
-    ) -> None:
+    def configure_notification_channel(self, config: NotificationConfig) -> None:
         """
         Налаштування каналу сповіщення
 
@@ -550,9 +544,7 @@ class AlertManager:
 
         return stats
 
-    def _generate_dedup_key(
-        self, title: str, category: AlertCategory, source: str
-    ) -> str:
+    def _generate_dedup_key(self, title: str, category: AlertCategory, source: str) -> str:
         """Генерація ключа дедуплікації"""
         key_string = f"{title}:{category.value}:{source}"
         return hashlib.md5(key_string.encode()).hexdigest()
@@ -576,9 +568,7 @@ class AlertManager:
 
         # Очищення старих записів
         cutoff = datetime.now() - timedelta(seconds=self.deduplication_window_seconds * 2)
-        self._dedup_cache = {
-            k: v for k, v in self._dedup_cache.items() if v > cutoff
-        }
+        self._dedup_cache = {k: v for k, v in self._dedup_cache.items() if v > cutoff}
 
     def _get_alert_by_dedup_key(self, dedup_key: str) -> Optional[Alert]:
         """Отримання алерта за ключем дедуплікації"""
@@ -618,9 +608,7 @@ class AlertManager:
                 AlertSeverity.ERROR,
                 AlertSeverity.CRITICAL,
             ]
-            if severity_order.index(alert.severity) < severity_order.index(
-                config.min_severity
-            ):
+            if severity_order.index(alert.severity) < severity_order.index(config.min_severity):
                 continue
 
             # Виклик обробника

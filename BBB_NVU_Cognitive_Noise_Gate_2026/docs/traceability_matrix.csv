@@ -1,0 +1,6 @@
+requirement_id,requirement,protocol,test,evidence_artifact
+R001,All inputs must have timestamp and provenance,P01,missing timestamp / provenance test,test_vectors.md
+R002,Critical invalid data must fail closed,P02 / P03,critical invalid input test,deterministic engine output
+R003,Inference must be deterministic,P03,repeat-run hash test,run_hash
+R004,Degradation must be explicit,P05,missing domain test,degradations[]
+R005,High-risk state requires human review,P04,RED / ORANGE action test,action.requires_human_review

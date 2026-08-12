@@ -1,0 +1,98 @@
+# Diff-bound acceptor for Law T7: Operational pinning control of chaos.
+#
+# Constitutional law T7 of seven (CLAUDE.md GeoSync Physics Law Act).
+# Pure NumPy. No external models. No ML. Self-contained physics-based.
+
+id: law-T7-pinning-control
+status: ACTIVE
+claim_type: correctness
+promise: >-
+  runtime.pinning_control ships pure-NumPy primitives implementing
+  Wang-Chen (2002) pinning control of complex networks: graph_laplacian
+  (L = D − A), algebraic_connectivity (Fiedler λ_2), pinning_gain_margin
+  (λ_2(L + Γ_P) for a given P + γ), select_pinning_set (greedy O(N²·k)
+  selection that maximises gain margin under hard cap k_max),
+  pinning_step (one explicit-Euler step of ẋ = −L·x − Γ_P·(x − x_target)).
+  Returns PinningReport(status, pinned_indices, gain_margin, iterations)
+  with PinningStatus ∈ {SUFFICIENT, INSUFFICIENT}. Adds four
+  constitutional invariants:
+    INV-PIN1 | universal   | returned P satisfies λ_2(L + Γ_P) > ε_pin
+                            OR status == INSUFFICIENT (fail-closed;
+                            never silently report "control on" when
+                            gain margin is non-positive). Verified
+                            with strong gain on path P_8 (SUFFICIENT)
+                            and gain=1e-6 + k_max=2 (INSUFFICIENT).
+    INV-PIN2 | conditional | pinning step is contractive in the
+                            linearised regime: ||x||² strictly
+                            decreases under one pinning_step with
+                            target=0, λ_2(L+Γ_P) > 0, and dt below
+                            stability bound 2 / λ_max(L+Γ_P). Negative
+                            control: pure Laplacian flow (no pinning)
+                            preserves mean — does NOT contract.
+    INV-PIN3 | universal   | A is never mutated by any operation in
+                            this module. Snapshot-and-array-equal
+                            verified after select + 5 pinning_steps.
+    INV-PIN4 | universal   | every contract violation (non-square A,
+                            signed A entries, gain ≤ 0, ε_pin < 0,
+                            k_max ∉ [1,N], dt ≤ 0, shape mismatch,
+                            out-of-range pin indices) raises
+                            ValueError; fail-closed.
+  Determinism: greedy selection is deterministic for given inputs;
+  identical calls return identical reports (INV-HPC1 compat).
+diff_scope:
+  changed_files:
+    - path: ".claude/commit_acceptors/law-T7-pinning-control.yaml"
+    - path: "runtime/pinning_control.py"
+    - path: "tests/unit/physics/test_T7_pinning_control.py"
+    - path: "docs/laws/T7_pinning_control.md"
+    - path: "newsfragments/law-T7-pinning-control.feature.md"
+    - path: "CLAUDE.md"
+  forbidden_paths:
+    - "trading/"
+    - "execution/"
+    - "forecast/"
+    - "policy/"
+required_python_symbols:
+  - "PinningReport"
+  - "PinningStatus"
+  - "algebraic_connectivity"
+  - "graph_laplacian"
+  - "pinning_gain_margin"
+  - "pinning_step"
+  - "select_pinning_set"
+expected_signal: >-
+  All 23 unit tests pass under pytest; black, ruff, mypy --strict
+  clean; complete-graph K_N λ_2 = N matches textbook to 1e-10 for
+  N ∈ {3,5,8}; disconnected graph λ_2 = 0; pinning K_N with one
+  node, gain=1.0 ⇒ λ_2 ≥ 1; one pinning_step on K_5 with x∼N(0,1)
+  reduces ||x||²; same A snapshot-equal after 5 pinning_steps.
+measurement_command: >-
+  python -m pytest tests/unit/physics/test_T7_pinning_control.py -v
+signal_artifact: "tmp/law_T7_pinning_control_pytest.log"
+falsifier:
+  command: >-
+    python -m pytest tests/unit/physics/test_T7_pinning_control.py
+    -v -k "INV_PIN1 or INV_PIN2 or INV_PIN3 or INV_PIN4 or HPC1 or negative_control"
+  description: >-
+    Probe filters to the load-bearing tests:
+    INV-PIN1 (gain margin guarantee — operational claim of the law);
+    INV-PIN2 (contraction under pinning + negative control proving
+    contraction is due to pinning, not pure Laplacian flow);
+    INV-PIN3 (topology preservation — A never mutated);
+    INV-PIN4 (every contract violation raises);
+    HPC1 (greedy selection deterministic);
+    negative_control (greedy does NOT pin all N nodes when fewer
+    suffice — proves the law is non-vacuous).
+rollback_command: >-
+  git checkout HEAD~1 -- runtime/pinning_control.py
+  tests/unit/physics/test_T7_pinning_control.py
+  .claude/commit_acceptors/law-T7-pinning-control.yaml
+  docs/laws/T7_pinning_control.md
+  newsfragments/law-T7-pinning-control.feature.md
+  CLAUDE.md
+rollback_verification_command: >-
+  git diff --exit-code runtime/pinning_control.py
+memory_update_type: append
+ledger_path: ".claude/commit_acceptors/law-T7-pinning-control.yaml"
+report_path: "docs/laws/T7_pinning_control.md"
+evidence: []

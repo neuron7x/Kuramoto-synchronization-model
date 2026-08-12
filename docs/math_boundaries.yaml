@@ -1,0 +1,110 @@
+# Operating-domain registry — machine-checked validity boundaries for callers.
+#
+# This is NOT a restatement of the physics invariants (those live, with their
+# proofs and falsifiers, in .claude/physics/INVARIANTS.yaml). It is the
+# orthogonal, caller-facing contract: under WHICH input conditions each estimator
+# is trustworthy (valid), usable-with-caution (degraded), or must be refused
+# (invalid). A result computed outside its declared valid domain is not a finding
+# — it is an artefact. Enforced structurally by scripts/ci/check_math_boundaries.py
+# (every source exists; every referenced invariant exists in the registry; every
+# kernel declares all three domains and a falsifier).
+version: 1
+kernels:
+  - id: rosenstein_mle
+    name: Maximum Lyapunov exponent (Rosenstein)
+    source: core/physics/lyapunov_exponent.py
+    invariants: [INV-LE1, INV-LE3]
+    valid: >-
+      A linear scaling region exists in the mean log-divergence curve with
+      R² ≥ 0.80; series long enough to embed (≫ embedding dimension × lag).
+    degraded: >-
+      R² in [0.50, 0.80): a slope is returned but flagged scaling_ok=False; treat
+      as qualitative sign only, never as a calibrated rate.
+    invalid: >-
+      R² < 0.50, no identifiable scaling region, or non-finite/too-short input —
+      the estimate fails closed to 0.0 (never a silent slope).
+    falsifier: >-
+      A non-scaling (e.g. pure-noise) series returns a non-zero λ with
+      scaling_ok=True.
+  - id: gabor_time_frequency
+    name: Gabor time-frequency uncertainty product
+    source: core/physics/uncertainty.py
+    invariants: [INV-GABOR1]
+    valid: >-
+      Well-resolved finite-energy signal: time-localised inside the window and
+      band-limited away from Nyquist (discrete product Δt·Δf ≥ 1/(4π)).
+    degraded: >-
+      None — the discrete estimator has no trustworthy degraded band; it is
+      either well-resolved (valid) or refused.
+    invalid: >-
+      Under-resolved / near-Nyquist windows whose product would dip below
+      1/(4π)·(1−1e-2), constant, non-finite, or <2-sample input — refused
+      (ValueError); no sub-bound product is ever returned.
+    falsifier: >-
+      time_frequency_spread returns Δt·Δf < 1/(4π) for a well-resolved signal,
+      or fails to raise on an under-resolved window.
+  - id: ricci_price_graph
+    name: Ollivier-Ricci curvature on the price graph
+    source: core/indicators/ricci.py
+    invariants: [INV-RC1, INV-RC3]
+    valid: >-
+      build_price_graph output (consecutive integer node IDs whose combinatorial
+      distance matches the 1-D embedding): κ ∈ [−1, 1] (INV-RC3), certified by
+      RicciRegimeCertificate.
+    degraded: >-
+      Connected non-price-graph topologies: only the upper bound κ ≤ 1 (INV-RC1)
+      holds; the lower bound may fall below −1 and the tight band must not be
+      claimed.
+    invalid: >-
+      Disconnected graphs, zero-edge graphs, or non-finite weights — no curvature
+      claim; the certificate withholds the INV-RC3 band.
+    falsifier: >-
+      A build_price_graph output reports κ outside [−1, 1] while the certificate
+      still asserts the INV-RC3 band.
+  - id: ott_antonsen_reduction
+    name: Ott-Antonsen low-dimensional Kuramoto manifold
+    source: core/kuramoto/ott_antonsen.py
+    invariants: [INV-OA1, INV-OA2, INV-OA3]
+    valid: >-
+      Lorentzian frequency distribution, supercritical K > 2Δ with a time-resolved
+      step (CFL-stable): R_∞ = √(1 − 2Δ/K) to float precision; |z(t)| ≤ 1 always.
+    degraded: >-
+      Near-critical K ≈ 2Δ: convergence slows and finite-step bias grows; reduce
+      dt before trusting the steady state.
+    invalid: >-
+      R0 at the unstable incoherent fixed point (R0 → 0) or a step too large for
+      the fastest mode — the trajectory settles on the wrong (sub-bound) value.
+    falsifier: >-
+      A supercritical run settles on a stationary R that disagrees with
+      √(1 − 2Δ/K) beyond tolerance while reporting convergence.
+  - id: kuramoto_order_parameter
+    name: Kuramoto order parameter R(t)
+    source: core/kuramoto/metrics.py
+    invariants: [INV-K1]
+    valid: >-
+      Finite phase matrix: R(t) = |mean exp(iθ)| ∈ [0, 1] for all t.
+    degraded: >-
+      Very small ensembles (N small): R carries an O(1/√N) finite-size floor;
+      interpret incoherent R against ε = C/√N, not against 0.
+    invalid: >-
+      Non-finite phases — refused (ValueError); a NaN order parameter would slip
+      past the [0, 1] range check and is rejected by the finiteness guard.
+    falsifier: >-
+      order_parameter returns a value outside [0, 1] or a NaN on finite input.
+  - id: dro_ara_regime
+    name: DRO-ARA regime observer (Hurst + ADF)
+    source: core/dro_ara/engine.py
+    invariants: [INV-DRO1, INV-DRO3, INV-DRO5]
+    valid: >-
+      Stationary series with ADF-confirmed mean reversion and DFA fit R² ≥ 0.90:
+      γ = 2H + 1 to float precision; regime and signal are admissible.
+    degraded: >-
+      Borderline stationarity or DFA R² near 0.90: regime may flip between runs;
+      treat the signal as low-confidence.
+    invalid: >-
+      Non-stationary, DFA R² < 0.90, constant, rank-deficient, non-finite, or
+      too-short input — regime == INVALID; NaN/Inf/constant input is refused
+      (ValueError).
+    falsifier: >-
+      A non-stationary or constant input yields a non-INVALID regime, or
+      |γ − (2H + 1)| exceeds 1e-5.

@@ -1,0 +1,37 @@
+{
+  "version": "2026.1",
+  "status": "calibration_defined_not_score_credit",
+  "score_credit_allowed": false,
+  "adaptations": [
+    {"id": "ADAPT-1", "name": "evidence_first_execution", "metric": "artifact_coverage", "gate": "CP_EVIDENCE", "limit": "missing_artifact"},
+    {"id": "ADAPT-2", "name": "reversible_change_discipline", "metric": "reversible_change_ratio", "gate": "CP_REVERSIBLE", "limit": "missing_review_record"},
+    {"id": "ADAPT-3", "name": "small_batch_ci_repair", "metric": "gate_specific_patch_ratio", "gate": "CP_CI", "limit": "missing_current_ci_record"},
+    {"id": "ADAPT-4", "name": "physics_core_isolation", "metric": "canonical_boundary_integrity", "gate": "CP_CORE", "limit": "bridge_scored_as_core"},
+    {"id": "ADAPT-5", "name": "runtime_evidence_separation", "metric": "runtime_evidence_ratio", "gate": "CP_RUNTIME", "limit": "static_record_used_as_runtime_record"},
+    {"id": "ADAPT-6", "name": "fixture_hygiene", "metric": "fixture_noise_rate", "gate": "CP_HYGIENE", "limit": "fixture_noise"},
+    {"id": "ADAPT-7", "name": "reviewer_traceability", "metric": "trace_consistency", "gate": "CP_REVIEW", "limit": "review_text_mismatch"}
+  ],
+  "intentions": [
+    {"id": "INTENT-1", "name": "testable_claims", "metric": "testable_claim_ratio", "owner": "physics_formalizer", "resource": "claim_ledger"},
+    {"id": "INTENT-2", "name": "reproducible_score", "metric": "score_reproducibility", "owner": "scoring_engineer", "resource": "tools/physics_score.py"},
+    {"id": "INTENT-3", "name": "meaningful_ci_evidence", "metric": "ci_relevance_ratio", "owner": "ci_evidence_engineer", "resource": "workflow_runs"},
+    {"id": "INTENT-4", "name": "bounded_experimental_bridge", "metric": "bridge_boundary_integrity", "owner": "mathematical_auditor", "resource": "bridge_tests"},
+    {"id": "INTENT-5", "name": "honest_uncertainty", "metric": "uq_source_validity", "owner": "uq_engineer", "resource": "uq_artifact"},
+    {"id": "INTENT-6", "name": "independent_replication", "metric": "replication_tolerance_pass", "owner": "reproducibility_engineer", "resource": "reference_solver"},
+    {"id": "INTENT-7", "name": "factual_readiness", "metric": "readiness_truthfulness", "owner": "release_critic", "resource": "VERDICT.md"}
+  ],
+  "evolutions": [
+    {"id": "EVO-1", "name": "claim_maturity", "from": "statement", "to": "measured_record", "signal": "claim_ledger_status"},
+    {"id": "EVO-2", "name": "physics_maturity", "from": "description", "to": "equation_backed_mechanism", "signal": "equation_traceability"},
+    {"id": "EVO-3", "name": "numerical_maturity", "from": "single_run", "to": "refinement_aware_validation", "signal": "dt_refinement_record"},
+    {"id": "EVO-4", "name": "ci_maturity", "from": "check_status", "to": "gate_specific_evidence", "signal": "ci_evidence_ledger"},
+    {"id": "EVO-5", "name": "bridge_maturity", "from": "coupling_idea", "to": "bounded_experimental_bridge", "signal": "bridge_summary"},
+    {"id": "EVO-6", "name": "release_maturity", "from": "score_only", "to": "audited_readiness", "signal": "verdict_artifact"},
+    {"id": "EVO-7", "name": "operator_maturity", "from": "more_changes", "to": "information_gain", "signal": "batch_audit_trail"}
+  ],
+  "non_claims": [
+    "not_final_validation",
+    "not_target_rank",
+    "not_release_ready"
+  ]
+}

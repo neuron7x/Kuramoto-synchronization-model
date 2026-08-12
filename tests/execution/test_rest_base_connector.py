@@ -1,3 +1,5 @@
+# Copyright (c) 2023-2026 Yaroslav Vasylenko (neuron7xLab)
+# SPDX-License-Identifier: MIT
 from __future__ import annotations
 
 from typing import Any, Mapping
@@ -18,14 +20,10 @@ class DummyRESTConnector(RESTWebSocketConnector):
             name="dummy",
             base_url="https://example.com",
             sandbox=True,
-            http_client=httpx.Client(
-                base_url="https://example.com", transport=transport
-            ),
+            http_client=httpx.Client(base_url="https://example.com", transport=transport),
         )
 
-    def _resolve_credentials(
-        self, credentials: Mapping[str, str] | None
-    ) -> Mapping[str, str]:
+    def _resolve_credentials(self, credentials: Mapping[str, str] | None) -> Mapping[str, str]:
         return dict(credentials or {})
 
     def _sign_request(self, method: str, path: str, *, params, json_payload, headers):  # type: ignore[override]
@@ -34,9 +32,7 @@ class DummyRESTConnector(RESTWebSocketConnector):
     def _order_endpoint(self) -> str:
         return "/order"
 
-    def _build_place_payload(
-        self, order: Order, idempotency_key: str | None
-    ) -> dict[str, Any]:
+    def _build_place_payload(self, order: Order, idempotency_key: str | None) -> dict[str, Any]:
         payload = {
             "symbol": order.symbol,
             "side": order.side.value,
@@ -49,21 +45,15 @@ class DummyRESTConnector(RESTWebSocketConnector):
             payload["price"] = f"{order.price:.2f}"
         return payload
 
-    def _parse_order(
-        self, payload: Mapping[str, Any], *, original: Order | None = None
-    ) -> Order:
+    def _parse_order(self, payload: Mapping[str, Any], *, original: Order | None = None) -> Order:
         symbol = str(payload.get("symbol") or (original.symbol if original else ""))
         if not symbol:
             raise ValueError("order payload missing symbol")
-        side_value = str(
-            payload.get("side") or (original.side.value if original else "buy")
-        )
+        side_value = str(payload.get("side") or (original.side.value if original else "buy"))
         order_type_value = str(
             payload.get("type") or (original.order_type.value if original else "market")
         )
-        order_id = str(
-            payload.get("id") or payload.get("orderId") or payload.get("order_id") or ""
-        )
+        order_id = str(payload.get("id") or payload.get("orderId") or payload.get("order_id") or "")
         if not order_id:
             raise ValueError("order payload missing id")
         price = payload.get("price")
@@ -84,9 +74,7 @@ class DummyRESTConnector(RESTWebSocketConnector):
         return Order(
             symbol=symbol,
             side=OrderSide(side_value),
-            quantity=(
-                quantity if quantity > 0 else (original.quantity if original else 0.0)
-            ),
+            quantity=(quantity if quantity > 0 else (original.quantity if original else 0.0)),
             price=price,
             order_type=OrderType(order_type_value),
             order_id=order_id,
@@ -107,9 +95,7 @@ class DummyRESTConnector(RESTWebSocketConnector):
     def _positions_endpoint(self) -> tuple[str, dict[str, Any]]:
         return "/positions", {}
 
-    def _parse_positions(
-        self, payload: Mapping[str, Any] | list
-    ) -> list[dict[str, Any]]:
+    def _parse_positions(self, payload: Mapping[str, Any] | list) -> list[dict[str, Any]]:
         if isinstance(payload, list):
             return [dict(position) for position in payload]
         return [dict(position) for position in payload.get("positions", [])]
@@ -131,9 +117,7 @@ def test_sliding_window_rate_limiter_blocks(monkeypatch: pytest.MonkeyPatch) -> 
         sleep_calls.append(duration)
         current["value"] += duration
 
-    limiter = SlidingWindowRateLimiter(
-        max_requests=2, interval_seconds=1.0, clock=clock
-    )
+    limiter = SlidingWindowRateLimiter(max_requests=2, interval_seconds=1.0, clock=clock)
     monkeypatch.setattr("execution.adapters.base.time.sleep", fake_sleep)
 
     limiter.acquire()
@@ -251,9 +235,7 @@ def test_rest_connector_error_handling() -> None:
 
     connector = DummyRESTConnector(httpx.MockTransport(rate_limited))
     connector.connect({})
-    order = Order(
-        symbol="BTCUSDT", side=OrderSide.BUY, quantity=1.0, order_type=OrderType.MARKET
-    )
+    order = Order(symbol="BTCUSDT", side=OrderSide.BUY, quantity=1.0, order_type=OrderType.MARKET)
     with pytest.raises(TransientOrderError):
         connector.place_order(order)
     connector.disconnect()

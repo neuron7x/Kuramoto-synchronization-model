@@ -1,0 +1,1130 @@
+{
+  "schema_version": "D002J-SOURCE-REGISTRY-v1",
+  "generated_at": "2026-05-14T20:00:00Z",
+  "study_id": "D-002J",
+  "pr_lineage": "D-002J-P1B",
+  "registry_scope": "documentation_only_no_ingest",
+  "total_sources": 26,
+  "sources": [
+    {
+      "source_id": "BIS_CBS",
+      "name": "BIS Consolidated Banking Statistics",
+      "provider": "Bank for International Settlements (BIS)",
+      "source_class": "banking",
+      "status": "USABLE_NOW",
+      "official_url": "https://www.bis.org/statistics/consstats.htm",
+      "documentation_url": "https://www.bis.org/statistics/consbankstatsguide.htm",
+      "access_method": "public_bulk_download",
+      "coverage_start": "1983-Q4",
+      "coverage_end": "ongoing",
+      "frequency": "quarterly",
+      "geography": "global_31_reporting_jurisdictions",
+      "variables": [
+        "cross_border_claims",
+        "local_claims",
+        "international_claims",
+        "ultimate_risk_basis_exposures",
+        "sectoral_breakdown_bank_nonbank_official"
+      ],
+      "crisis_window_relevance": ["CW1", "CW2", "CW3", "CW4", "CW5", "CW6"],
+      "mechanistic_relevance": [
+        "interbank_exposure_concentration",
+        "cross_border_contagion"
+      ],
+      "license_boundary": "public_domain_with_attribution_required",
+      "known_limitations": [
+        "quarterly_frequency_misses_intra_window_dynamics",
+        "ultimate_risk_basis_revision_lag_up_to_3_quarters",
+        "no_counterparty_level_resolution_only_jurisdiction_aggregates"
+      ],
+      "data_quality_risks": [
+        "reporting_perimeter_changes_in_2014_and_2020",
+        "non_reporting_jurisdictions_create_blind_spots"
+      ],
+      "ingestion_readiness": "fully_documented_ready_for_W1_downstream_pr",
+      "recommended_use": [
+        "interbank_exposure_reconstruction_baseline",
+        "long_horizon_cross_border_concentration_index"
+      ],
+      "forbidden_use": [
+        "intra_quarter_contagion_dynamics",
+        "individual_bank_attribution"
+      ],
+      "evidence_notes": "Anand_et_al_2018_max_entropy_reconstruction uses BIS_CBS as canonical input cross-border layer."
+    },
+    {
+      "source_id": "FDIC_CALL_REPORTS",
+      "name": "FDIC Quarterly Call Reports",
+      "provider": "Federal Deposit Insurance Corporation (FDIC)",
+      "source_class": "banking",
+      "status": "USABLE_NOW",
+      "official_url": "https://cdr.ffiec.gov/public/",
+      "documentation_url": "https://www.fdic.gov/resources/bankers/call-reports/",
+      "access_method": "public_per_bank_download",
+      "coverage_start": "1976-Q1",
+      "coverage_end": "ongoing",
+      "frequency": "quarterly",
+      "geography": "US_commercial_banks",
+      "variables": [
+        "total_assets",
+        "total_deposits",
+        "uninsured_deposits",
+        "available_for_sale_securities",
+        "held_to_maturity_securities",
+        "wholesale_funding_share",
+        "loan_loss_provisions"
+      ],
+      "crisis_window_relevance": ["CW1", "CW6"],
+      "mechanistic_relevance": [
+        "funding_maturity_mismatch",
+        "uninsured_deposit_run_risk",
+        "AFS_HTM_unrealised_loss_overhang"
+      ],
+      "license_boundary": "public_domain_us_government_work",
+      "known_limitations": [
+        "us_only_no_international_coverage",
+        "quarterly_misses_silicon_valley_bank_speed_of_run",
+        "off_balance_sheet_only_partially_reported"
+      ],
+      "data_quality_risks": [
+        "schedule_RC_redesigns_break_time_series_continuity",
+        "small_bank_exemptions_change_panel_size_periodically"
+      ],
+      "ingestion_readiness": "fully_documented_ready_for_W1_downstream_pr",
+      "recommended_use": [
+        "2023_regional_banking_stress_balance_sheet_signal",
+        "deposit_concentration_proxy"
+      ],
+      "forbidden_use": [
+        "intra_day_run_dynamics",
+        "non_US_banks"
+      ],
+      "evidence_notes": "FDIC_SVB_post_mortem_2023 explicitly uses Call Reports as primary public attribute source."
+    },
+    {
+      "source_id": "ECB_CBD",
+      "name": "ECB Consolidated Banking Data",
+      "provider": "European Central Bank",
+      "source_class": "banking",
+      "status": "USABLE_NOW",
+      "official_url": "https://data.ecb.europa.eu/data/datasets/CBD2",
+      "documentation_url": "https://data.ecb.europa.eu/methodology/consolidated-banking-data",
+      "access_method": "public_ecb_data_portal_api",
+      "coverage_start": "2007-Q1",
+      "coverage_end": "ongoing",
+      "frequency": "quarterly_and_semiannual",
+      "geography": "euro_area_banking_groups",
+      "variables": [
+        "consolidated_total_assets",
+        "common_equity_tier_1",
+        "non_performing_loans",
+        "liquidity_coverage_ratio",
+        "net_stable_funding_ratio"
+      ],
+      "crisis_window_relevance": ["CW2", "CW4"],
+      "mechanistic_relevance": [
+        "interbank_exposure_concentration",
+        "capital_buffer_distribution"
+      ],
+      "license_boundary": "public_domain_with_attribution_required",
+      "known_limitations": [
+        "post_2007_coverage_only_no_GFC_run_up_history",
+        "semi_annual_for_some_indicators",
+        "consolidated_basis_hides_subsidiary_level_stress"
+      ],
+      "data_quality_risks": [
+        "CBD1_to_CBD2_schema_break_in_2014",
+        "small_significant_institution_threshold_changes_panel"
+      ],
+      "ingestion_readiness": "fully_documented_ready_for_W1_downstream_pr",
+      "recommended_use": [
+        "euro_area_capital_distribution_for_eurozone_sovereign_window",
+        "covid_period_npl_signal"
+      ],
+      "forbidden_use": [
+        "pre_2007_history",
+        "non_euro_area_jurisdictions"
+      ],
+      "evidence_notes": "ECB_FSR_Eurozone_2011_2012 references CBD for cross-border euro-area exposure aggregates. P1B repair (2026-05-14): SDW domain decommissioned; official_url repinned to ECB Data Portal CBD2 dataset (https://data.ecb.europa.eu/data/datasets/CBD2 HEAD 200) and documentation_url to ECB CBD methodology page (https://data.ecb.europa.eu/methodology/consolidated-banking-data HEAD 200); access_method updated to public_ecb_data_portal_api."
+    },
+    {
+      "source_id": "FED_Y9C",
+      "name": "Federal Reserve Y-9C Consolidated Financial Statements for Holding Companies",
+      "provider": "Federal Reserve Board",
+      "source_class": "banking",
+      "status": "USABLE_NOW",
+      "official_url": "https://www.federalreserve.gov/apps/mdrm/data-dictionary",
+      "documentation_url": "https://www.ffiec.gov/nicpubweb/nicweb/Y9CMain.aspx",
+      "access_method": "public_ffiec_nic_download",
+      "coverage_start": "1986-Q1",
+      "coverage_end": "ongoing",
+      "frequency": "quarterly",
+      "geography": "US_bank_holding_companies_above_threshold",
+      "variables": [
+        "consolidated_holding_company_assets",
+        "trading_book_exposures",
+        "derivatives_notional",
+        "off_balance_sheet_commitments",
+        "intercompany_funding"
+      ],
+      "crisis_window_relevance": ["CW1", "CW3", "CW6"],
+      "mechanistic_relevance": [
+        "derivatives_exposure_concentration",
+        "rehypothecation_chain_proxy_via_trading_book"
+      ],
+      "license_boundary": "public_domain_us_government_work",
+      "known_limitations": [
+        "reporting_threshold_raised_from_500M_to_3B_in_2015_breaks_panel",
+        "off_balance_sheet_buckets_aggregated_not_named_counterparties"
+      ],
+      "data_quality_risks": [
+        "form_redesigns_break_time_series",
+        "trading_book_classification_changes_with_basel_revisions"
+      ],
+      "ingestion_readiness": "fully_documented_ready_for_W1_downstream_pr",
+      "recommended_use": [
+        "GFC_dealer_bank_trading_book_evolution",
+        "2019_repo_period_bank_holding_company_positions"
+      ],
+      "forbidden_use": [
+        "small_community_bank_dynamics",
+        "non_US_subsidiaries_in_detail"
+      ],
+      "evidence_notes": "Brunnermeier_2009 references holding-company trading book as funding-fragility channel."
+    },
+    {
+      "source_id": "NYFED_SOFR",
+      "name": "Secured Overnight Financing Rate (SOFR)",
+      "provider": "Federal Reserve Bank of New York",
+      "source_class": "repo",
+      "status": "USABLE_NOW",
+      "official_url": "https://www.newyorkfed.org/markets/reference-rates/sofr",
+      "documentation_url": "https://www.newyorkfed.org/markets/reference-rates/sofr-method",
+      "access_method": "public_daily_publication",
+      "coverage_start": "2018-04-02",
+      "coverage_end": "ongoing",
+      "frequency": "daily",
+      "geography": "US_repo_market",
+      "variables": [
+        "SOFR_rate",
+        "1st_percentile_25th_75th_99th",
+        "transaction_volume"
+      ],
+      "crisis_window_relevance": ["CW3", "CW4", "CW6"],
+      "mechanistic_relevance": [
+        "liquidity_rollover_stress",
+        "repo_collateral_haircut_propagation"
+      ],
+      "license_boundary": "public_domain_with_attribution_required",
+      "known_limitations": [
+        "post_2018_coverage_only_no_GFC_history",
+        "rate_aggregates_three_underlying_repo_segments_blurs_segment_signal"
+      ],
+      "data_quality_risks": [
+        "underlying_methodology_change_in_2020_volume_floor",
+        "intra_day_intra_segment_dynamics_lost_in_daily_aggregate"
+      ],
+      "ingestion_readiness": "fully_documented_ready_for_W1_downstream_pr",
+      "recommended_use": [
+        "2019_us_repo_spike_canonical_signal",
+        "covid_dash_for_cash_short_funding_signal"
+      ],
+      "forbidden_use": [
+        "pre_2018_repo_history_use_LIBOR_OIS_instead",
+        "individual_counterparty_attribution"
+      ],
+      "evidence_notes": "BIS_QR_2019_Q4 explicitly anchors the 2019 spike narrative on SOFR percentiles."
+    },
+    {
+      "source_id": "OFR_REPO_DATA",
+      "name": "OFR Short-Term Funding Monitor and Repo Data",
+      "provider": "Office of Financial Research (OFR), US Treasury",
+      "source_class": "repo",
+      "status": "USABLE_NOW",
+      "official_url": "https://www.financialresearch.gov/short-term-funding-monitor/",
+      "documentation_url": "https://www.financialresearch.gov/data/",
+      "access_method": "public_dashboard_plus_csv_export",
+      "coverage_start": "2014-01-01",
+      "coverage_end": "ongoing",
+      "frequency": "daily_and_monthly",
+      "geography": "US_short_term_funding_markets",
+      "variables": [
+        "tri_party_repo_volumes_by_collateral_class",
+        "dealer_to_money_fund_volumes",
+        "haircut_distributions_by_collateral_class"
+      ],
+      "crisis_window_relevance": ["CW3", "CW4", "CW6"],
+      "mechanistic_relevance": [
+        "repo_collateral_haircut_propagation",
+        "rehypothecation_chain",
+        "liquidity_rollover_stress"
+      ],
+      "license_boundary": "public_domain_us_government_work",
+      "known_limitations": [
+        "tri_party_only_GCF_and_bilateral_partial_coverage",
+        "haircut_distribution_aggregated_not_per_collateral_isin"
+      ],
+      "data_quality_risks": [
+        "methodology_revisions_documented_but_break_continuity",
+        "dealer_perimeter_changes_with_market_structure"
+      ],
+      "ingestion_readiness": "fully_documented_ready_for_W1_downstream_pr",
+      "recommended_use": [
+        "2019_us_repo_spike_dealer_money_fund_decomposition",
+        "haircut_shock_propagation_baseline"
+      ],
+      "forbidden_use": [
+        "bilateral_uncleared_repo_segments_in_detail",
+        "european_repo_markets"
+      ],
+      "evidence_notes": "OFR_Working_Paper_19_06 documents methodology for tri-party haircut series."
+    },
+    {
+      "source_id": "FED_H15",
+      "name": "Federal Reserve H.15 Selected Interest Rates",
+      "provider": "Federal Reserve Board",
+      "source_class": "repo",
+      "status": "USABLE_NOW",
+      "official_url": "https://www.federalreserve.gov/releases/h15/",
+      "documentation_url": "https://www.federalreserve.gov/releases/h15/about.htm",
+      "access_method": "public_daily_publication_plus_FRED_mirror",
+      "coverage_start": "1962-01-02",
+      "coverage_end": "ongoing",
+      "frequency": "daily_business_days",
+      "geography": "US_interest_rate_universe",
+      "variables": [
+        "fed_funds_effective",
+        "discount_window_rate",
+        "treasury_constant_maturity_par_yields",
+        "commercial_paper_rates_AA_A2P2",
+        "EFFR_OBFR_TGCR_BGCR_SOFR_post_2014"
+      ],
+      "crisis_window_relevance": ["CW1", "CW2", "CW3", "CW4", "CW5", "CW6"],
+      "mechanistic_relevance": [
+        "term_structure_signal",
+        "discount_window_use_signal"
+      ],
+      "license_boundary": "public_domain_us_government_work",
+      "known_limitations": [
+        "LIBOR_discontinued_after_2023_creates_break",
+        "CP_rate_quality_depends_on_thin_market_episodes"
+      ],
+      "data_quality_risks": [
+        "rate_definitions_revised_at_libor_cessation",
+        "weekend_holiday_handling_documented_but_can_alias"
+      ],
+      "ingestion_readiness": "fully_documented_ready_for_W1_downstream_pr",
+      "recommended_use": [
+        "all_six_crisis_windows_term_premium_anchor",
+        "TED_spread_proxy_when_libor_data_available"
+      ],
+      "forbidden_use": [
+        "post_libor_continuity_without_explicit_methodology_note"
+      ],
+      "evidence_notes": "FRED mirrors H.15 series under symbols DGS10, DFF, DPRIME, etc."
+    },
+    {
+      "source_id": "ECB_MMSR",
+      "name": "ECB Money Market Statistical Reporting (MMSR) Aggregates",
+      "provider": "European Central Bank",
+      "source_class": "repo",
+      "status": "CANDIDATE_REQUIRES_LICENSE_REVIEW",
+      "official_url": "https://www.ecb.europa.eu/stats/financial_markets_and_interest_rates/money_market/html/index.en.html",
+      "documentation_url": "https://www.ecb.europa.eu/stats/financial_markets_and_interest_rates/money_market/mmsr/html/index.en.html",
+      "access_method": "public_aggregates_only_micro_data_restricted",
+      "coverage_start": "2016-07-01",
+      "coverage_end": "ongoing",
+      "frequency": "daily_aggregates",
+      "geography": "euro_area_money_market",
+      "variables": [
+        "euro_area_secured_lending_volumes",
+        "euro_area_unsecured_volumes",
+        "estr_rate"
+      ],
+      "crisis_window_relevance": ["CW5"],
+      "mechanistic_relevance": [
+        "liquidity_rollover_stress",
+        "secured_unsecured_spread"
+      ],
+      "license_boundary": "public_aggregates_only_micro_data_not_redistributable",
+      "known_limitations": [
+        "post_2016_coverage_only",
+        "only_aggregate_layer_is_public_micro_data_blocked"
+      ],
+      "data_quality_risks": [
+        "panel_changes_with_reporting_agent_set"
+      ],
+      "ingestion_readiness": "public_aggregates_pipeline_ok_micro_blocked",
+      "recommended_use": [
+        "2022_uk_gilt_ldi_window_euro_area_secured_funding_proxy",
+        "estr_baseline_post_libor"
+      ],
+      "forbidden_use": [
+        "redistribution_of_micro_data",
+        "pre_2016_history"
+      ],
+      "evidence_notes": "ECB_FSR_2022_Nov references aggregate MMSR for euro-area money-market resilience narrative."
+    },
+    {
+      "source_id": "FRED",
+      "name": "Federal Reserve Economic Data (FRED)",
+      "provider": "Federal Reserve Bank of St. Louis",
+      "source_class": "macro_financial",
+      "status": "USABLE_NOW",
+      "official_url": "https://fred.stlouisfed.org/",
+      "documentation_url": "https://fred.stlouisfed.org/docs/api/fred/",
+      "access_method": "public_api_with_free_key",
+      "coverage_start": "varies_per_series_back_to_1947",
+      "coverage_end": "ongoing",
+      "frequency": "varies_daily_to_annual",
+      "geography": "global_aggregator_us_centric",
+      "variables": [
+        "TEDRATE_through_2022",
+        "VIXCLS",
+        "BAMLH0A0HYM2_high_yield_spread",
+        "T10Y2Y_yield_curve_slope",
+        "STLFSI_stress_index",
+        "many_others"
+      ],
+      "crisis_window_relevance": ["CW1", "CW2", "CW3", "CW4", "CW5", "CW6"],
+      "mechanistic_relevance": [
+        "market_wide_deleveraging",
+        "credit_spread_signal",
+        "term_premium_signal"
+      ],
+      "license_boundary": "public_redistribution_permitted_with_attribution",
+      "known_limitations": [
+        "FRED_is_aggregator_so_upstream_revision_propagates",
+        "some_series_subject_to_attribution_only_redistribution"
+      ],
+      "data_quality_risks": [
+        "TEDRATE_discontinued_2022_at_libor_cessation",
+        "vintage_vs_revised_must_use_ALFRED_for_real_time"
+      ],
+      "ingestion_readiness": "fully_documented_ready_for_W1_downstream_pr",
+      "recommended_use": [
+        "primary_macro_financial_aggregator_for_all_six_crisis_windows",
+        "stress_index_quick_baseline"
+      ],
+      "forbidden_use": [
+        "real_time_decision_use_without_ALFRED_vintage_lookup",
+        "claim_of_underlying_methodology_owned_by_fred"
+      ],
+      "evidence_notes": "FRED is the de facto public macro-financial backbone for research replication."
+    },
+    {
+      "source_id": "ALFRED",
+      "name": "ALFRED Archival Federal Reserve Economic Data",
+      "provider": "Federal Reserve Bank of St. Louis",
+      "source_class": "macro_financial",
+      "status": "USABLE_NOW",
+      "official_url": "https://alfred.stlouisfed.org/",
+      "documentation_url": "https://alfred.stlouisfed.org/docs/api/alfred/",
+      "access_method": "public_api_with_free_key",
+      "coverage_start": "varies_per_series",
+      "coverage_end": "ongoing",
+      "frequency": "vintage_dated",
+      "geography": "us_macro_real_time_lens",
+      "variables": [
+        "real_time_vintages_of_fred_series"
+      ],
+      "crisis_window_relevance": ["CW1", "CW2", "CW3", "CW4", "CW5", "CW6"],
+      "mechanistic_relevance": [
+        "real_time_information_constraint"
+      ],
+      "license_boundary": "public_redistribution_permitted_with_attribution",
+      "known_limitations": [
+        "vintages_only_back_to_first_release_date_of_each_series",
+        "non_FRED_native_series_not_vintaged"
+      ],
+      "data_quality_risks": [
+        "revision_propagation_from_FRED",
+        "vintage_alignment_with_decision_dates_must_be_explicit"
+      ],
+      "ingestion_readiness": "fully_documented_ready_for_W1_downstream_pr",
+      "recommended_use": [
+        "real_time_validation_to_avoid_lookahead_bias",
+        "pre_crisis_precursor_signal_only_with_vintage_data"
+      ],
+      "forbidden_use": [
+        "post_hoc_revised_data_used_for_in_window_prediction"
+      ],
+      "evidence_notes": "Croushore_2011 lookahead-bias arguments require ALFRED for honest replication."
+    },
+    {
+      "source_id": "PHILLY_FED_RTDSM",
+      "name": "Philadelphia Fed Real-Time Data Set for Macroeconomists",
+      "provider": "Federal Reserve Bank of Philadelphia",
+      "source_class": "macro_financial",
+      "status": "USABLE_NOW",
+      "official_url": "https://www.philadelphiafed.org/surveys-and-data/real-time-data-research/real-time-data-set-for-macroeconomists",
+      "documentation_url": "https://www.philadelphiafed.org/surveys-and-data/real-time-data-research/real-time-data-set-full-documentation",
+      "access_method": "public_bulk_download_xlsx_csv",
+      "coverage_start": "1965-Q4",
+      "coverage_end": "ongoing",
+      "frequency": "quarterly_vintage_dated",
+      "geography": "US_macro_real_time_lens",
+      "variables": [
+        "real_GNP_GDP_vintages",
+        "nominal_GNP_GDP_vintages",
+        "industrial_production_vintages",
+        "civilian_unemployment_rate_vintages",
+        "CPI_vintages",
+        "PCE_vintages",
+        "payroll_employment_vintages",
+        "real_personal_consumption_expenditures_vintages",
+        "fixed_investment_vintages",
+        "money_stock_M1_M2_vintages"
+      ],
+      "crisis_window_relevance": ["CW1", "CW2", "CW3", "CW4", "CW5", "CW6"],
+      "mechanistic_relevance": [
+        "real_time_information_constraint",
+        "vintage_anti_leakage_baseline"
+      ],
+      "license_boundary": "public_redistribution_permitted_with_attribution",
+      "known_limitations": [
+        "US_only_no_international_coverage",
+        "macro_only_no_financial_micro_data",
+        "quarterly_vintage_release_cadence_no_daily_granularity",
+        "non_RTDSM_native_series_not_vintaged"
+      ],
+      "data_quality_risks": [
+        "vintage_definitions_differ_across_release_dates",
+        "definitional_revisions_require_explicit_alignment_notes",
+        "Croushore_Stark_methodology_required_for_proper_vintage_use"
+      ],
+      "ingestion_readiness": "fully_documented_ready_for_W1_downstream_pr",
+      "recommended_use": [
+        "real_time_validation_to_avoid_lookahead_bias_at_macro_layer",
+        "pre_crisis_precursor_signal_only_with_vintage_data",
+        "canonical_us_vintage_pair_with_ALFRED"
+      ],
+      "forbidden_use": [
+        "post_hoc_revised_data_used_for_in_window_prediction",
+        "redistribution_without_Philadelphia_Fed_attribution",
+        "claim_of_owning_the_methodology"
+      ],
+      "evidence_notes": "Philadelphia Fed RTDSM is the canonical academic source for vintage US macro data since Croushore & Stark (1999, 2003) established the dataset; complements ALFRED for FRED-native series with non-FRED-native macro variables (GNP-era pre-1992 definitions, multiple GDP definitional regimes). Selected in P1B (2026-05-14) to satisfy the information_constraint mechanism-family floor (≥2 verified/partial sources). official_url + documentation_url HEAD 200 verified."
+    },
+    {
+      "source_id": "OFR_FSI",
+      "name": "OFR Financial Stress Index",
+      "provider": "Office of Financial Research (OFR), US Treasury",
+      "source_class": "macro_financial",
+      "status": "USABLE_NOW",
+      "official_url": "https://www.financialresearch.gov/financial-stress-index/",
+      "documentation_url": "https://www.financialresearch.gov/financial-stress-index/files/indicators/index.html",
+      "access_method": "public_csv_download",
+      "coverage_start": "2000-01-04",
+      "coverage_end": "ongoing",
+      "frequency": "daily",
+      "geography": "global_five_regions",
+      "variables": [
+        "ofr_fsi_global",
+        "ofr_fsi_us",
+        "ofr_fsi_other_advanced",
+        "ofr_fsi_emerging",
+        "ofr_fsi_credit_equity_safe_assets_funding_volatility"
+      ],
+      "crisis_window_relevance": ["CW1", "CW2", "CW3", "CW4", "CW5", "CW6"],
+      "mechanistic_relevance": [
+        "market_wide_stress_aggregate",
+        "crisis_window_external_anchor"
+      ],
+      "license_boundary": "public_domain_us_government_work",
+      "known_limitations": [
+        "composite_construction_means_decomposition_required",
+        "weights_periodically_revised"
+      ],
+      "data_quality_risks": [
+        "methodology_revisions_documented_but_must_be_tracked"
+      ],
+      "ingestion_readiness": "fully_documented_ready_for_W1_downstream_pr",
+      "recommended_use": [
+        "crisis_window_external_anchor_for_all_six_windows",
+        "five_subcomponents_for_mechanism_routing"
+      ],
+      "forbidden_use": [
+        "use_as_y_label_when_constructed_from_same_underlying_series_as_x"
+      ],
+      "evidence_notes": "Monin_2017_OFR_paper documents construction."
+    },
+    {
+      "source_id": "STLFSI",
+      "name": "St. Louis Fed Financial Stress Index",
+      "provider": "Federal Reserve Bank of St. Louis",
+      "source_class": "macro_financial",
+      "status": "USABLE_NOW",
+      "official_url": "https://fred.stlouisfed.org/series/STLFSI4",
+      "documentation_url": "https://research.stlouisfed.org/publications/economic-synopses/2010/09/24/measuring-financial-market-stress/",
+      "access_method": "public_via_FRED",
+      "coverage_start": "1993-12-31",
+      "coverage_end": "ongoing",
+      "frequency": "weekly",
+      "geography": "us_financial_stress",
+      "variables": [
+        "stlfsi_composite",
+        "constituent_18_series"
+      ],
+      "crisis_window_relevance": ["CW1", "CW2", "CW3", "CW4", "CW6"],
+      "mechanistic_relevance": [
+        "us_financial_stress_anchor"
+      ],
+      "license_boundary": "public_redistribution_permitted_with_attribution",
+      "known_limitations": [
+        "weekly_frequency_misses_intra_week_dynamics",
+        "STLFSI_replaced_with_STLFSI2_then_STLFSI4_breaks_continuity"
+      ],
+      "data_quality_risks": [
+        "constituent_series_LIBOR_replaced_post_2022",
+        "redesigns_change_composite_dynamics"
+      ],
+      "ingestion_readiness": "fully_documented_ready_for_W1_downstream_pr",
+      "recommended_use": [
+        "us_specific_crisis_window_external_anchor",
+        "complement_OFR_FSI_for_cross_check"
+      ],
+      "forbidden_use": [
+        "continuous_series_pre_post_2022_libor_break_without_methodology_note"
+      ],
+      "evidence_notes": "Kliesen_Smith_2010 documents construction."
+    },
+    {
+      "source_id": "KCFSI",
+      "name": "Kansas City Fed Financial Stress Index",
+      "provider": "Federal Reserve Bank of Kansas City",
+      "source_class": "macro_financial",
+      "status": "USABLE_NOW",
+      "official_url": "https://fred.stlouisfed.org/series/KCFSI",
+      "documentation_url": "https://www.kansascityfed.org/research/research-publications/measuring-financial-stress/",
+      "access_method": "public_via_FRED",
+      "coverage_start": "1990-02-28",
+      "coverage_end": "ongoing",
+      "frequency": "monthly",
+      "geography": "us_financial_stress",
+      "variables": [
+        "kcfsi_composite"
+      ],
+      "crisis_window_relevance": ["CW1", "CW2"],
+      "mechanistic_relevance": [
+        "us_financial_stress_alternative_construction"
+      ],
+      "license_boundary": "public_redistribution_permitted_with_attribution",
+      "known_limitations": [
+        "monthly_frequency_too_coarse_for_2019_repo_spike_dynamics",
+        "different_constituent_basket_than_STLFSI"
+      ],
+      "data_quality_risks": [
+        "constituent_revisions_change_index"
+      ],
+      "ingestion_readiness": "fully_documented_ready_for_W1_downstream_pr",
+      "recommended_use": [
+        "long_history_GFC_eurozone_external_anchor",
+        "cross_check_for_STLFSI_and_OFR_FSI"
+      ],
+      "forbidden_use": [
+        "intra_month_dynamics",
+        "post_2019_high_frequency_event_identification"
+      ],
+      "evidence_notes": "Hakkio_Keeton_2009 documents construction."
+    },
+    {
+      "source_id": "CBOE_VIX",
+      "name": "CBOE Volatility Index (VIX) Public Series",
+      "provider": "CBOE (republished publicly via FRED VIXCLS)",
+      "source_class": "market_structure",
+      "status": "USABLE_NOW",
+      "official_url": "https://fred.stlouisfed.org/series/VIXCLS",
+      "documentation_url": "https://www.cboe.com/tradable_products/vix/vix_historical_data/",
+      "access_method": "public_daily_via_FRED",
+      "coverage_start": "1990-01-02",
+      "coverage_end": "ongoing",
+      "frequency": "daily",
+      "geography": "us_equity_implied_volatility",
+      "variables": [
+        "vix_close"
+      ],
+      "crisis_window_relevance": ["CW1", "CW2", "CW3", "CW4", "CW5", "CW6"],
+      "mechanistic_relevance": [
+        "market_wide_deleveraging",
+        "risk_off_episode_detection"
+      ],
+      "license_boundary": "public_daily_history_redistributable_via_FRED",
+      "known_limitations": [
+        "vix_implied_not_realised_volatility",
+        "us_equity_focus_only"
+      ],
+      "data_quality_risks": [
+        "vix_methodology_revised_in_2003_breaks_pre_2003_continuity_with_VXO"
+      ],
+      "ingestion_readiness": "fully_documented_ready_for_W1_downstream_pr",
+      "recommended_use": [
+        "fast_market_wide_stress_proxy_all_windows",
+        "covid_dash_for_cash_spike_canonical_marker"
+      ],
+      "forbidden_use": [
+        "fixed_income_specific_stress_use_MOVE_instead",
+        "credit_specific_stress_use_credit_spreads_instead"
+      ],
+      "evidence_notes": "BIS_QR_2020_Q2 uses VIX as canonical COVID dash-for-cash marker."
+    },
+    {
+      "source_id": "ICAP_MOVE",
+      "name": "ICE BofA MOVE Index (Treasury Implied Volatility)",
+      "provider": "ICE BofA (public daily series via FRED partial coverage)",
+      "source_class": "market_structure",
+      "status": "CANDIDATE_REQUIRES_LICENSE_REVIEW",
+      "official_url": "https://www.theice.com/iba",
+      "documentation_url": "https://www.ice.com/products",
+      "access_method": "public_summary_full_history_licensed",
+      "coverage_start": "1988-04-01",
+      "coverage_end": "ongoing",
+      "frequency": "daily",
+      "geography": "us_treasury_implied_volatility",
+      "variables": [
+        "move_index"
+      ],
+      "crisis_window_relevance": ["CW1", "CW2", "CW3", "CW4", "CW5", "CW6"],
+      "mechanistic_relevance": [
+        "fixed_income_specific_stress_signal"
+      ],
+      "license_boundary": "vendor_licence_required_for_full_history",
+      "known_limitations": [
+        "full_history_behind_vendor_licence",
+        "us_treasuries_only"
+      ],
+      "data_quality_risks": [
+        "methodology_revisions_documented_but_vendor_owned"
+      ],
+      "ingestion_readiness": "candidate_pipeline_requires_licence_review_before_W1_downstream_pr",
+      "recommended_use": [
+        "uk_gilt_ldi_2022_cross_check_against_us_treasury_vol",
+        "fixed_income_stress_anchor"
+      ],
+      "forbidden_use": [
+        "redistribution_of_full_history_without_licence",
+        "claim_of_owning_the_methodology"
+      ],
+      "evidence_notes": "Restricted by vendor licence for full history; partial coverage may be public. P1B repair (2026-05-14): legacy URLs /iba/move-index + /publicdocs/MOVE_Index_Methodology.pdf both HTTP 404; repinned to live ICE Benchmark Administration landing https://www.theice.com/iba (HEAD 200, redirects to ice.com/iba) and ICE products index https://www.ice.com/products (HEAD 200). Specific MOVE methodology PDF not relocatable on live ICE site as of P1B HEAD probe — full methodology now lives in ICE Indices subscriber portal; vendor-licence boundary unchanged."
+    },
+    {
+      "source_id": "BIS_QR_NETWORK",
+      "name": "BIS Quarterly Review Network and Cross-Border Banking Sections",
+      "provider": "Bank for International Settlements",
+      "source_class": "market_structure",
+      "status": "USABLE_NOW",
+      "official_url": "https://www.bis.org/publ/quarterly.htm",
+      "documentation_url": "https://www.bis.org/statistics/",
+      "access_method": "public_pdf_plus_associated_csv_data",
+      "coverage_start": "1994",
+      "coverage_end": "ongoing",
+      "frequency": "quarterly",
+      "geography": "global",
+      "variables": [
+        "cross_border_banking_network_aggregates",
+        "global_liquidity_indicators",
+        "non_bank_financial_intermediation_aggregates"
+      ],
+      "crisis_window_relevance": ["CW1", "CW2", "CW3", "CW4", "CW5", "CW6"],
+      "mechanistic_relevance": [
+        "global_banking_network_descriptive_statistics",
+        "non_bank_financial_intermediation_signal"
+      ],
+      "license_boundary": "public_domain_with_attribution_required",
+      "known_limitations": [
+        "narrative_pdf_format_requires_extraction",
+        "associated_csv_subset_only"
+      ],
+      "data_quality_risks": [
+        "discontinued_or_renamed_indicators_across_issues"
+      ],
+      "ingestion_readiness": "narrative_extraction_pipeline_required",
+      "recommended_use": [
+        "qualitative_narrative_anchor_for_all_six_crisis_windows",
+        "cross_check_for_quantitative_BIS_CBS_series"
+      ],
+      "forbidden_use": [
+        "claim_of_machine_readable_full_dataset_underlying_narrative"
+      ],
+      "evidence_notes": "BIS_QR_2019_Q4 is the canonical 2019 repo spike narrative; BIS_QR_2020_Q2 for COVID. P1B repair (2026-05-14): legacy directory listing /publ/qtrpdf/ HTTP 404 after BIS site reorganisation; repinned to canonical BIS Quarterly Review landing https://www.bis.org/publ/quarterly.htm (HEAD 200, redirects to current issue r_qt2603.htm)."
+    },
+    {
+      "source_id": "OFR_WP_NETWORK",
+      "name": "OFR Working Papers on Interbank Network Reconstruction",
+      "provider": "Office of Financial Research (OFR), US Treasury",
+      "source_class": "market_structure",
+      "status": "USABLE_NOW",
+      "official_url": "https://www.financialresearch.gov/working-papers/",
+      "documentation_url": "https://www.financialresearch.gov/working-papers/",
+      "access_method": "public_pdf_download",
+      "coverage_start": "2012",
+      "coverage_end": "ongoing",
+      "frequency": "ad_hoc_per_paper",
+      "geography": "us_and_global_per_paper",
+      "variables": [
+        "methodology_references_max_entropy_reconstruction",
+        "sparse_reconstruction",
+        "agent_based_simulation_designs"
+      ],
+      "crisis_window_relevance": ["CW1", "CW2", "CW3", "CW4"],
+      "mechanistic_relevance": [
+        "interbank_exposure_reconstruction_methodology"
+      ],
+      "license_boundary": "public_domain_us_government_work",
+      "known_limitations": [
+        "methodology_references_not_raw_data",
+        "associated_code_quality_varies_by_paper"
+      ],
+      "data_quality_risks": [
+        "methodology_papers_not_real_time_data_streams"
+      ],
+      "ingestion_readiness": "literature_reference_only_no_ingest_pipeline",
+      "recommended_use": [
+        "methodology_anchor_for_max_entropy_and_sparse_reconstruction",
+        "agent_based_simulation_design_inputs"
+      ],
+      "forbidden_use": [
+        "treating_paper_results_as_raw_data_series"
+      ],
+      "evidence_notes": "Glasserman_Young_2015_contagion is OFR working paper #29."
+    },
+    {
+      "source_id": "NBER_RECESSION",
+      "name": "NBER Business Cycle Dating Committee Recession Timeline",
+      "provider": "National Bureau of Economic Research (NBER)",
+      "source_class": "crisis_window",
+      "status": "USABLE_NOW",
+      "official_url": "https://www.nber.org/research/business-cycle-dating",
+      "documentation_url": "https://www.nber.org/research/business-cycle-dating/business-cycle-dating-procedure-frequently-asked-questions",
+      "access_method": "public_announcement_plus_FRED_mirror_USREC",
+      "coverage_start": "1854",
+      "coverage_end": "ongoing",
+      "frequency": "ad_hoc_committee_decisions",
+      "geography": "us_business_cycle",
+      "variables": [
+        "us_recession_start_end_dates"
+      ],
+      "crisis_window_relevance": ["CW1", "CW4"],
+      "mechanistic_relevance": [
+        "external_crisis_window_anchor"
+      ],
+      "license_boundary": "public_domain_with_attribution_required",
+      "known_limitations": [
+        "us_only",
+        "dating_lag_means_real_time_uncertainty",
+        "covers_recessions_not_all_financial_stress_episodes"
+      ],
+      "data_quality_risks": [
+        "ex_post_dating_means_no_real_time_signal"
+      ],
+      "ingestion_readiness": "fully_documented_ready_for_W1_downstream_pr",
+      "recommended_use": [
+        "us_recession_anchor_for_GFC_and_covid_windows",
+        "external_label_for_supervised_validation"
+      ],
+      "forbidden_use": [
+        "real_time_recession_prediction_use",
+        "non_us_business_cycles"
+      ],
+      "evidence_notes": "NBER recession USREC FRED series is the standard ex-post label."
+    },
+    {
+      "source_id": "FED_TIMELINE",
+      "name": "Federal Reserve Crisis Response Timelines and Post-Mortems",
+      "provider": "Federal Reserve Board / FRBNY / FRBSF / Federal Reserve History",
+      "source_class": "crisis_window",
+      "status": "USABLE_NOW",
+      "official_url": "https://www.federalreserve.gov/publications/financial-stability-report.htm",
+      "documentation_url": "https://www.federalreservehistory.org/essays/great-recession-of-200709",
+      "access_method": "public_pdf_plus_html",
+      "coverage_start": "2007",
+      "coverage_end": "ongoing",
+      "frequency": "ad_hoc_per_window",
+      "geography": "us_with_global_context",
+      "variables": [
+        "official_us_central_bank_action_dates",
+        "facility_announcement_dates",
+        "post_mortem_narrative"
+      ],
+      "crisis_window_relevance": ["CW1", "CW3", "CW4", "CW6"],
+      "mechanistic_relevance": [
+        "official_intervention_event_studies",
+        "facility_announcement_effect_anchors"
+      ],
+      "license_boundary": "public_domain_us_government_work",
+      "known_limitations": [
+        "narrative_not_machine_readable_raw",
+        "us_centric_view"
+      ],
+      "data_quality_risks": [
+        "publication_lag_revisions_with_full_disclosure_releases"
+      ],
+      "ingestion_readiness": "narrative_extraction_pipeline_required",
+      "recommended_use": [
+        "GFC_facility_announcement_event_study_anchors",
+        "covid_facility_anchors",
+        "2023_regional_banking_BTFP_anchors"
+      ],
+      "forbidden_use": [
+        "claim_of_underlying_decision_internals_beyond_public_record"
+      ],
+      "evidence_notes": "FRBSF_Williams_2020 covid timeline + FRBNY post-mortems are canonical. P1B repair (2026-05-14): legacy URLs /aboutthefed/educational-tools/foia-financial-crisis-timeline.htm and /monetarypolicy/financial-stability.htm both HTTP 404 after FRB site reorganisation; repinned to canonical Federal Reserve Financial Stability Report https://www.federalreserve.gov/publications/financial-stability-report.htm (HEAD 200/206) and Federal Reserve History Great Recession essay https://www.federalreservehistory.org/essays/great-recession-of-200709 (HEAD 200, peer-reviewed FRB historical research)."
+    },
+    {
+      "source_id": "ECB_FSR",
+      "name": "ECB Financial Stability Review",
+      "provider": "European Central Bank",
+      "source_class": "crisis_window",
+      "status": "USABLE_NOW",
+      "official_url": "https://www.ecb.europa.eu/pub/financial-stability/fsr/html/index.en.html",
+      "documentation_url": "https://www.ecb.europa.eu/pub/financial-stability/fsr/html/index.en.html",
+      "access_method": "public_pdf",
+      "coverage_start": "2004",
+      "coverage_end": "ongoing",
+      "frequency": "semi_annual",
+      "geography": "euro_area_with_global_context",
+      "variables": [
+        "official_ecb_financial_stability_narrative",
+        "vulnerability_assessments",
+        "scenario_analysis_summaries"
+      ],
+      "crisis_window_relevance": ["CW1", "CW2", "CW4", "CW5"],
+      "mechanistic_relevance": [
+        "official_european_crisis_window_narrative",
+        "vulnerability_anchor"
+      ],
+      "license_boundary": "public_domain_with_attribution_required",
+      "known_limitations": [
+        "narrative_pdf_format",
+        "euro_area_focus"
+      ],
+      "data_quality_risks": [
+        "narrative_can_drift_from_underlying_data_must_cross_check"
+      ],
+      "ingestion_readiness": "narrative_extraction_pipeline_required",
+      "recommended_use": [
+        "eurozone_sovereign_2011_2012_canonical_narrative",
+        "uk_gilt_ldi_2022_euro_area_spillover_view"
+      ],
+      "forbidden_use": [
+        "claim_of_underlying_supervisory_data_beyond_public_record"
+      ],
+      "evidence_notes": "ECB FSR Nov 2022 covers UK LDI spillover."
+    },
+    {
+      "source_id": "BOE_LDI_REVIEW",
+      "name": "Bank of England Working Paper and Financial Policy Committee Reports on 2022 LDI Episode",
+      "provider": "Bank of England",
+      "source_class": "crisis_window",
+      "status": "USABLE_NOW",
+      "official_url": "https://www.bankofengland.co.uk/financial-stability-report/2022/december-2022",
+      "documentation_url": "https://www.bankofengland.co.uk/working-paper/staff-working-papers",
+      "access_method": "public_pdf_html",
+      "coverage_start": "2022",
+      "coverage_end": "ongoing",
+      "frequency": "ad_hoc",
+      "geography": "uk_with_euro_area_spillover_view",
+      "variables": [
+        "uk_gilt_yield_dynamics_narrative",
+        "ldi_fund_collateral_call_chronology",
+        "ofci_temporary_purchase_facility_dates"
+      ],
+      "crisis_window_relevance": ["CW5"],
+      "mechanistic_relevance": [
+        "ldi_collateral_call_spiral",
+        "pension_fund_liquidity_stress",
+        "gilt_market_dysfunction"
+      ],
+      "license_boundary": "public_domain_with_attribution_required",
+      "known_limitations": [
+        "narrative_format",
+        "post_mortem_only_no_real_time_data"
+      ],
+      "data_quality_risks": [
+        "post_hoc_framing_subject_to_revision"
+      ],
+      "ingestion_readiness": "narrative_extraction_pipeline_required",
+      "recommended_use": [
+        "2022_uk_gilt_ldi_canonical_chronology",
+        "pension_fund_collateral_call_anchor"
+      ],
+      "forbidden_use": [
+        "claim_of_individual_pension_fund_attribution"
+      ],
+      "evidence_notes": "BoE FSR Dec 2022 + BoE Working Paper 1019 (Czech_Huang_Silva_Vause_2022) are canonical. P1B repair (2026-05-14): legacy URLs /financial-stability-report/2022 and /working-paper both HTTP 404 after BoE slug reorganisation; repinned to canonical BoE FSR December 2022 issue https://www.bankofengland.co.uk/financial-stability-report/2022/december-2022 (HEAD 200, title 'Financial Stability Report - December 2022') and BoE Staff Working Papers index https://www.bankofengland.co.uk/working-paper/staff-working-papers (HEAD 200)."
+    },
+    {
+      "source_id": "LIT_INTERBANK_CONTAGION",
+      "name": "Seminal Literature on Interbank Contagion Mechanisms",
+      "provider": "Academic publishers / NBER / SSRN preprint mirrors",
+      "source_class": "literature_support",
+      "status": "USABLE_NOW",
+      "official_url": "https://www.jstor.org/",
+      "documentation_url": "https://www.nber.org/papers",
+      "access_method": "public_preprint_plus_published_journals",
+      "coverage_start": "2001",
+      "coverage_end": "ongoing",
+      "frequency": "ad_hoc",
+      "geography": "global_methodology",
+      "variables": [
+        "Eisenberg_Noe_2001_clearing_vectors",
+        "Battiston_DebtRank_2012",
+        "Glasserman_Young_2015_contagion",
+        "Anand_2018_max_entropy",
+        "Aldasoro_Alves_2018_multiplex",
+        "Brunnermeier_2009_repo_funding_fragility"
+      ],
+      "crisis_window_relevance": ["CW1", "CW2", "CW3", "CW4"],
+      "mechanistic_relevance": [
+        "interbank_exposure_reconstruction_methodology",
+        "DebtRank_contagion",
+        "max_entropy_and_sparse_reconstruction",
+        "repo_funding_fragility"
+      ],
+      "license_boundary": "preprint_redistribution_ok_published_version_may_be_restricted",
+      "known_limitations": [
+        "methodology_references_not_data",
+        "published_versions_may_be_paywalled"
+      ],
+      "data_quality_risks": [
+        "preprint_vs_published_version_can_differ"
+      ],
+      "ingestion_readiness": "literature_reference_only_no_ingest_pipeline",
+      "recommended_use": [
+        "methodology_anchor_for_W4_substrate_design",
+        "external_validity_anchor_for_claims"
+      ],
+      "forbidden_use": [
+        "treating_paper_results_as_raw_data_series",
+        "redistribution_of_paywalled_published_versions"
+      ],
+      "evidence_notes": "Eisenberg_Noe_2001, Battiston_et_al_2012, Glasserman_Young_2015, Anand_et_al_2018, Aldasoro_Alves_2018, Brunnermeier_2009 — all preprint or open-access available."
+    },
+    {
+      "source_id": "FDIC_SVB_POSTMORTEM",
+      "name": "FDIC Material Loss Reviews and SVB / First Republic Post-Mortems",
+      "provider": "FDIC Office of Inspector General",
+      "source_class": "crisis_window",
+      "status": "USABLE_NOW",
+      "official_url": "https://www.fdicoig.gov/",
+      "documentation_url": "https://www.fdic.gov/news/news/press/2023/index.html",
+      "access_method": "public_pdf",
+      "coverage_start": "2008",
+      "coverage_end": "ongoing",
+      "frequency": "ad_hoc_per_failure",
+      "geography": "us_failed_banks",
+      "variables": [
+        "supervisory_post_mortem_narrative",
+        "loss_attribution_chronology",
+        "deposit_run_dynamics_descriptions"
+      ],
+      "crisis_window_relevance": ["CW1", "CW6"],
+      "mechanistic_relevance": [
+        "uninsured_deposit_run_dynamics",
+        "supervisory_failure_attribution"
+      ],
+      "license_boundary": "public_domain_us_government_work",
+      "known_limitations": [
+        "narrative_pdf_format",
+        "publication_lag_after_failure"
+      ],
+      "data_quality_risks": [
+        "supervisory_framing_subject_to_political_context"
+      ],
+      "ingestion_readiness": "narrative_extraction_pipeline_required",
+      "recommended_use": [
+        "2023_svb_first_republic_canonical_post_mortem",
+        "GFC_failed_bank_post_mortem_anchor"
+      ],
+      "forbidden_use": [
+        "claim_of_real_time_supervisory_decisions"
+      ],
+      "evidence_notes": "FDIC OIG MLRs are the canonical public source for failed-bank post-mortems. P1B incidental repair (2026-05-14): legacy /publications/material-loss-reviews path HTTP 404 across all candidate paths (/publications, /reports, /our-work/material-loss-reviews, /audits, etc. all 404); the substantive FDIC OIG product is only reachable via the agency root https://www.fdicoig.gov/ (HEAD 200). Repinned official_url to FDIC OIG root to keep USABLE_NOW honest; specific MLR landing must be navigated from the root."
+    },
+    {
+      "source_id": "LIT_NETWORK_RECON",
+      "name": "Seminal Literature on Interbank Network Reconstruction Methods",
+      "provider": "Academic publishers / Deutsche Bundesbank Working Papers / SSRN",
+      "source_class": "literature_support",
+      "status": "USABLE_NOW",
+      "official_url": "https://www.bundesbank.de/en/publications/research/discussion-papers",
+      "documentation_url": "https://www.ssrn.com/",
+      "access_method": "public_preprint_plus_published",
+      "coverage_start": "2004",
+      "coverage_end": "ongoing",
+      "frequency": "ad_hoc",
+      "geography": "global_methodology",
+      "variables": [
+        "Upper_Worms_2004_max_entropy",
+        "Mistrulli_2011_actual_vs_estimated_italian_interbank",
+        "Anand_Craig_von_Peter_2015_filling_in_the_blanks",
+        "Battiston_et_al_2016_complexity_theory_for_economists"
+      ],
+      "crisis_window_relevance": ["CW1", "CW2"],
+      "mechanistic_relevance": [
+        "interbank_exposure_reconstruction_methodology",
+        "max_entropy_vs_minimum_density_baseline"
+      ],
+      "license_boundary": "preprint_redistribution_ok_published_version_may_be_restricted",
+      "known_limitations": [
+        "methodology_references_not_data",
+        "italian_actual_vs_estimated_paper_is_specific_to_one_jurisdiction"
+      ],
+      "data_quality_risks": [
+        "max_entropy_underestimates_contagion_per_Mistrulli_2011"
+      ],
+      "ingestion_readiness": "literature_reference_only_no_ingest_pipeline",
+      "recommended_use": [
+        "W4_substrate_design_methodology_anchor_for_network_reconstruction",
+        "max_entropy_baseline_with_known_bias_correction"
+      ],
+      "forbidden_use": [
+        "max_entropy_reconstruction_as_sole_basis_without_Mistrulli_bias_acknowledgement"
+      ],
+      "evidence_notes": "Mistrulli 2011 is the canonical real-vs-estimated bias paper."
+    },
+    {
+      "source_id": "LIT_REPO_FUNDING",
+      "name": "Seminal Literature on Repo and Short-Term Funding Fragility",
+      "provider": "Academic publishers / NBER / Federal Reserve working papers",
+      "source_class": "literature_support",
+      "status": "USABLE_NOW",
+      "official_url": "https://www.nber.org/papers",
+      "documentation_url": "https://www.federalreserve.gov/econres/feds.htm",
+      "access_method": "public_preprint_plus_published",
+      "coverage_start": "2009",
+      "coverage_end": "ongoing",
+      "frequency": "ad_hoc",
+      "geography": "global_methodology",
+      "variables": [
+        "Brunnermeier_2009_repo_runs",
+        "Gorton_Metrick_2012_securitized_banking_and_run_on_repo",
+        "Krishnamurthy_Nagel_Orlov_2014_sizing_up_repo",
+        "Copeland_Martin_Walker_2014_tri_party_repo"
+      ],
+      "crisis_window_relevance": ["CW1", "CW3", "CW4"],
+      "mechanistic_relevance": [
+        "repo_collateral_haircut_propagation",
+        "liquidity_rollover_stress",
+        "rehypothecation_chain"
+      ],
+      "license_boundary": "preprint_redistribution_ok_published_version_may_be_restricted",
+      "known_limitations": [
+        "methodology_references_not_data",
+        "Gorton_Metrick_focuses_on_tri_party_blind_to_bilateral"
+      ],
+      "data_quality_risks": [
+        "pre_2014_tri_party_data_difficult_to_reconstruct_from_secondary_sources"
+      ],
+      "ingestion_readiness": "literature_reference_only_no_ingest_pipeline",
+      "recommended_use": [
+        "W4_substrate_design_anchor_for_repo_funding_mechanism",
+        "GFC_repo_run_canonical_reference"
+      ],
+      "forbidden_use": [
+        "treating_paper_results_as_raw_data_series"
+      ],
+      "evidence_notes": "Brunnermeier 2009, Gorton-Metrick 2012, Krishnamurthy-Nagel-Orlov 2014, Copeland-Martin-Walker 2014 — all preprint available."
+    }
+  ]
+}

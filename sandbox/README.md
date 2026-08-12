@@ -1,7 +1,7 @@
-# TradePulse Sandbox Demonstration Stack
+# GeoSync Sandbox Demonstration Stack
 
 This directory contains an isolated docker-compose specification that boots a
-self-contained TradePulse demonstration environment. The stack wires a mock
+self-contained GeoSync demonstration environment. The stack wires a mock
 market data feed, signal generation core, risk engine, paper execution service,
 and a control plane offering kill-switch, health, and audit capabilities. No
 external market connectivity or production secrets are required; the entire

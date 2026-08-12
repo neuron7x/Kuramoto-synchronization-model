@@ -1,3 +1,5 @@
+# Copyright (c) 2023-2026 Yaroslav Vasylenko (neuron7xLab)
+# SPDX-License-Identifier: MIT
 """Supply chain security automation commands."""
 
 from __future__ import annotations
@@ -112,7 +114,7 @@ def build_generate_parser(subparsers: _SubParsersAction[object]) -> None:
     )
     sbom.add_argument(
         "--project-name",
-        default="TradePulse",
+        default="GeoSync",
         help="Name of the root component represented by the SBOM.",
     )
     sbom.add_argument(
@@ -171,9 +173,7 @@ def build_verify_parser(subparsers: _SubParsersAction[object]) -> None:
         "--report",
         type=Path,
         default=DEFAULT_REPORT_PATH,
-        help=(
-            "Path to write a JSON transparency report. Use '-' to disable file output."
-        ),
+        help=("Path to write a JSON transparency report. Use '-' to disable file output."),
     )
     verify.set_defaults(action="verify")
 
@@ -283,7 +283,7 @@ def build_compliance_parser(subparsers: _SubParsersAction[object]) -> None:
     )
     compliance.add_argument(
         "--project-name",
-        default="TradePulse",
+        default="GeoSync",
         help="Name of the root component represented by the SBOM.",
     )
     compliance.add_argument(
@@ -351,17 +351,11 @@ def _log_issues(report) -> None:
 def _log_license_issues(issues) -> None:
     for issue in issues:
         if issue.severity == Severity.WARNING:
-            LOGGER.warning(
-                "License policy – %s: %s", issue.dependency.name, issue.message
-            )
+            LOGGER.warning("License policy – %s: %s", issue.dependency.name, issue.message)
         elif issue.severity == Severity.ERROR:
-            LOGGER.error(
-                "License policy – %s: %s", issue.dependency.name, issue.message
-            )
+            LOGGER.error("License policy – %s: %s", issue.dependency.name, issue.message)
         else:
-            LOGGER.critical(
-                "License policy – %s: %s", issue.dependency.name, issue.message
-            )
+            LOGGER.critical("License policy – %s: %s", issue.dependency.name, issue.message)
         if getattr(issue, "exception_reason", None):
             LOGGER.debug(
                 "Exception rationale for %s: %s (expires: %s)",
@@ -409,7 +403,7 @@ def _handle_generate_sbom(namespace: Namespace) -> int:
     except DependencyError as exc:
         raise CommandError(str(exc)) from exc
 
-    project_name = getattr(namespace, "project_name", "TradePulse")
+    project_name = getattr(namespace, "project_name", "GeoSync")
     project_version = _resolve_version(namespace)
     description = getattr(namespace, "description", None)
     output_path: Path = Path(getattr(namespace, "output", DEFAULT_SBOM_PATH))
@@ -494,7 +488,7 @@ def _handle_compliance_report(namespace: Namespace) -> int:
     )
     _log_issues(dependency_report)
 
-    project_name = getattr(namespace, "project_name", "TradePulse")
+    project_name = getattr(namespace, "project_name", "GeoSync")
     project_version = _resolve_version(namespace)
     description = getattr(namespace, "description", None)
     sbom_output = Path(getattr(namespace, "sbom_output", DEFAULT_SBOM_PATH))
@@ -529,15 +523,11 @@ def _handle_compliance_report(namespace: Namespace) -> int:
         except json.JSONDecodeError as exc:
             raise CommandError(f"Failed to parse SBOM {candidate}: {exc}") from exc
 
-    license_issues = evaluate_license_compliance(
-        dependencies, license_source, license_policy
-    )
+    license_issues = evaluate_license_compliance(dependencies, license_source, license_policy)
     _log_license_issues(license_issues)
 
     raw_vulnerability_path = getattr(namespace, "vulnerability_report", None)
-    vulnerability_path = (
-        Path(raw_vulnerability_path) if raw_vulnerability_path else None
-    )
+    vulnerability_path = Path(raw_vulnerability_path) if raw_vulnerability_path else None
     try:
         vulnerabilities = load_vulnerability_report(vulnerability_path)
     except DependencyError as exc:
@@ -561,8 +551,7 @@ def _handle_compliance_report(namespace: Namespace) -> int:
         LOGGER.info("Appended compliance snapshot to %s", archive)
 
     license_blocking = any(
-        issue.severity in {Severity.ERROR, Severity.CRITICAL}
-        for issue in license_issues
+        issue.severity in {Severity.ERROR, Severity.CRITICAL} for issue in license_issues
     )
     vulnerabilities_blocking = bool(vulnerabilities) and not bool(
         getattr(namespace, "ignore_vulnerabilities", False)
@@ -576,9 +565,7 @@ def _handle_compliance_report(namespace: Namespace) -> int:
             reasons.append("license policy violations")
         if vulnerabilities_blocking:
             reasons.append("vulnerabilities detected")
-        raise CommandError(
-            "Compliance report contains blocking findings: " + ", ".join(reasons)
-        )
+        raise CommandError("Compliance report contains blocking findings: " + ", ".join(reasons))
 
     LOGGER.info(
         "Compliance report generated for %d dependencies (dependency issues: %d, license issues: %d, vulnerabilities: %d).",

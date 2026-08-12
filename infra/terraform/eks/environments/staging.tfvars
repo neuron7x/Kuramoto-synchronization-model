@@ -1,6 +1,6 @@
 aws_region  = "us-east-1"
 environment = "staging"
-cluster_name = "tradepulse-staging"
+cluster_name = "geosync-staging"
 
 node_groups = {
   general = {
@@ -17,5 +17,5 @@ node_groups = {
 }
 
 tags = {
-  "CostCenter" = "tradepulse-staging"
+  "CostCenter" = "geosync-staging"
 }

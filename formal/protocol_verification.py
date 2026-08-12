@@ -1,7 +1,9 @@
+# Copyright (c) 2023-2026 Yaroslav Vasylenko (neuron7xLab)
+# SPDX-License-Identifier: MIT
 """Formal verification of cryptographic protocol security.
 
 This module provides formal verification for cryptographic protocols used
-in the TradePulse system, including key exchange, authentication, and
+in the GeoSync system, including key exchange, authentication, and
 secure channel establishment.
 
 Aligned with:
@@ -94,9 +96,7 @@ class ProtocolVerificationReport:
 
     protocol_name: str
     results: list[ProtocolProofResult] = field(default_factory=list)
-    timestamp: str = field(
-        default_factory=lambda: datetime.now(timezone.utc).isoformat()
-    )
+    timestamp: str = field(default_factory=lambda: datetime.now(timezone.utc).isoformat())
     total_time_ms: float = 0.0
 
     @property
@@ -120,8 +120,7 @@ class TLSProtocolVerifier:
         """
         if not HAS_Z3:
             raise RuntimeError(
-                "Z3 solver required for protocol verification. "
-                "Install with: pip install z3-solver"
+                "Z3 solver required for protocol verification. Install with: pip install z3-solver"
             )
 
         self.timeout_ms = timeout_ms
@@ -129,9 +128,7 @@ class TLSProtocolVerifier:
         import z3
 
         self._z3 = z3
-        self._inductive_engine = InductiveProofEngine(
-            timeout_ms=timeout_ms, z3_module=self._z3
-        )
+        self._inductive_engine = InductiveProofEngine(timeout_ms=timeout_ms, z3_module=self._z3)
 
     def _create_solver(self) -> Any:
         """Create configured Z3 solver."""
@@ -328,6 +325,7 @@ class TLSProtocolVerifier:
         Returns:
             ProtocolProofResult with replay resistance verification
         """
+
         def base_case_predicate(z3m: Any) -> list[Any]:
             nonce = z3m.Int("nonce_base")
             count0 = z3m.Function("count0", z3m.IntSort(), z3m.IntSort())
@@ -341,13 +339,9 @@ class TLSProtocolVerifier:
             nonce_new = z3m.Int("nonce_new")
             idx = z3m.Int("idx")
 
-            safe_k = z3m.ForAll(
-                idx, z3m.And(count_k(idx) >= 0, count_k(idx) <= 1)
-            )
+            safe_k = z3m.ForAll(idx, z3m.And(count_k(idx) >= 0, count_k(idx) <= 1))
             fresh_nonce = count_k(nonce_new) == 0
-            transition = z3m.ForAll(
-                idx, count_k1(idx) == z3m.If(idx == nonce_new, 1, count_k(idx))
-            )
+            transition = z3m.ForAll(idx, count_k1(idx) == z3m.If(idx == nonce_new, 1, count_k(idx)))
             violation = z3m.Exists(idx, count_k1(idx) > 1)
             return [safe_k, fresh_nonce, transition, violation]
 
@@ -370,8 +364,7 @@ class TLSProtocolVerifier:
             property=ProtocolProperty.REPLAY_RESISTANCE,
             holds=False,
             certificate=(
-                "Replay resistance induction inconclusive.\n"
-                f"{induction_result.certificate}"
+                f"Replay resistance induction inconclusive.\n{induction_result.certificate}"
             ),
         )
 
@@ -475,9 +468,7 @@ class TLSProtocolVerifier:
 
         return report
 
-    def _save_certificate(
-        self, report: ProtocolVerificationReport, output_path: Path
-    ) -> None:
+    def _save_certificate(self, report: ProtocolVerificationReport, output_path: Path) -> None:
         """Save protocol verification certificate."""
         lines = [
             "=" * 80,

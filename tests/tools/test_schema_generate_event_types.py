@@ -1,3 +1,5 @@
+# Copyright (c) 2023-2026 Yaroslav Vasylenko (neuron7xLab)
+# SPDX-License-Identifier: MIT
 import json
 
 from tools.schema.generate_event_types import AvroSchemaCollector
@@ -61,12 +63,8 @@ def test_collector_marks_optional_and_defaults():
     collector.collect(build_schema())
 
     trade_event = collector.records["TradeEvent"]
-    metadata_field = next(
-        field for field in trade_event.fields if field.name == "metadata"
-    )
-    payload_field = next(
-        field for field in trade_event.fields if field.name == "payload"
-    )
+    metadata_field = next(field for field in trade_event.fields if field.name == "metadata")
+    payload_field = next(field for field in trade_event.fields if field.name == "payload")
     count_field = next(field for field in trade_event.fields if field.name == "count")
 
     assert metadata_field.optional is True
@@ -75,9 +73,7 @@ def test_collector_marks_optional_and_defaults():
 
     metadata_record = collector.records["Metadata"]
     tags_field = next(field for field in metadata_record.fields if field.name == "tags")
-    dims_field = next(
-        field for field in metadata_record.fields if field.name == "dimensions"
-    )
+    dims_field = next(field for field in metadata_record.fields if field.name == "dimensions")
 
     assert tags_field.default_factory == "list"
     assert dims_field.default_factory == "dict"

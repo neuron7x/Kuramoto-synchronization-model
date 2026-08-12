@@ -1,0 +1,84 @@
+# Diff-bound commit acceptor for the SignalBus fanout law witnesses.
+#
+# Adds ONE test module binding two previously-unwitnessed catalog laws to
+# executable @law witnesses. Promotes no claim, changes no runtime behavior,
+# touches no schema/guard, uses no real data.
+#
+#   signalbus.acyclic_fanout       — each subscriber fires once per publish
+#                                    (INV-SB1).
+#   signalbus.deterministic_fanout — identical sequence -> identical signal
+#                                    payload, timestamp excluded as wall-clock
+#                                    metadata (INV-SB2).
+#
+# Locally verified on origin/main base:
+#   * pytest tests/physics_contracts/test_signalbus_fanout_witnesses.py: 2 passed
+#   * .claude/physics/validate_tests.py <file>: 0 issues (L1..L5), EXIT 0
+#   * ruff / mypy --strict clean ; zero new `# type: ignore`
+id: signalbus-fanout-law-witnesses
+status: ACTIVE
+claim_type: governance
+promise: >-
+  After this PR lands, tests/physics_contracts/test_signalbus_fanout_witnesses.py
+  binds the catalog laws signalbus.acyclic_fanout and signalbus.deterministic_fanout
+  to @law-decorated witnesses that pass .claude/physics/validate_tests with zero
+  issues. The fanout witness asserts every subscriber fires exactly once per
+  publish (INV-SB1); the determinism witness asserts replaying an identical
+  publish sequence into fresh NeuroSignalBus instances yields a bit-identical
+  signal payload, excluding the wall-clock timestamp as documented non-
+  deterministic metadata (INV-SB2). No market claim; no runtime, schema, or guard
+  change.
+diff_scope:
+  changed_files:
+    - path: ".claude/commit_acceptors/signalbus-fanout-law-witnesses.yaml"
+    - path: "tests/physics_contracts/test_signalbus_fanout_witnesses.py"
+  forbidden_paths:
+    - "trading/"
+    - "execution/"
+    - "forecast/"
+    - "policy/"
+    - "application/"
+    - "core/"
+    - "src/"
+    - "geosync_hpc/"
+    - "physics_contracts/catalog.yaml"
+    - ".claude/physics/INVARIANTS.yaml"
+required_python_symbols: []
+expected_signal: >-
+  `python -m pytest tests/physics_contracts/test_signalbus_fanout_witnesses.py`
+  reports 2 passed; `python .claude/physics/validate_tests.py
+  tests/physics_contracts/test_signalbus_fanout_witnesses.py` exits 0 with no
+  L1..L5 issues; ruff and mypy --strict on the file are clean.
+measurement_command: >-
+  bash -c 'mkdir -p tmp && python -m pytest
+  tests/physics_contracts/test_signalbus_fanout_witnesses.py
+  > tmp/signalbus_fanout_law_witnesses.log 2>&1
+  && grep -q "2 passed" tmp/signalbus_fanout_law_witnesses.log'
+signal_artifact: "tmp/signalbus_fanout_law_witnesses.log"
+falsifier:
+  command: |-
+    bash -c 'python -c "
+    from dataclasses import asdict, fields
+    from core.neuro.signal_bus import NeuroSignalBus
+    payload = tuple(f.name for f in fields(NeuroSignalBus().snapshot()) if f.name != \"timestamp\")
+    seq = ((\"dopamine\", 0.25), (\"serotonin\", 0.6), (\"gaba\", 0.4), (\"kuramoto\", 0.8))
+    def run():
+        b = NeuroSignalBus()
+        for k, v in seq: getattr(b, \"publish_\" + k)(v)
+        s = asdict(b.snapshot()); return {p: s[p] for p in payload}
+    import sys; sys.exit(0 if run() != run() else 1)"'
+  description: >-
+    Inverse probe of fanout determinism. It exits 0 (fires) iff replaying the
+    same publish sequence into fresh buses yields a DIFFERENT signal payload —
+    i.e. the fanout became non-deterministic in real code. While the payload is
+    bit-identical the probe exits 1. If it ever exits 0, the SignalBus witness is
+    no longer truthful and the change must be reverted, not patched green.
+rollback_command: >-
+  git rm -f
+  tests/physics_contracts/test_signalbus_fanout_witnesses.py
+  .claude/commit_acceptors/signalbus-fanout-law-witnesses.yaml
+rollback_verification_command: >-
+  bash -c 'test ! -f tests/physics_contracts/test_signalbus_fanout_witnesses.py'
+memory_update_type: none
+ledger_path: ".claude/commit_acceptors/signalbus-fanout-law-witnesses.yaml"
+report_path: "tmp/signalbus_fanout_law_witnesses.log"
+evidence: []

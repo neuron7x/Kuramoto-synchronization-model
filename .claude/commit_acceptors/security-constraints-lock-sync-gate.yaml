@@ -1,0 +1,76 @@
+# Diff-bound acceptor for the constraint/lock divergence (D8) root fix.
+#
+# Closes the systemic Dependabot blocker on PRs #717/#718/#720/#723/#741:
+# every /constraints ecosystem bump desyncs the pip-compiled lock files,
+# and the shared setup step `pip install -c constraints/security.txt -r
+# requirements.lock` aborts with ResolutionImpossible BEFORE any gate
+# runs (python-quality + secrets-supply-chain fail at setup; fast/heavy
+# tests SKIPPED). This patch adds drift class D8 to the dependency-truth
+# validator, a fail-closed pr-gate job, and a forcing-function test
+# trio. No scanner is weakened; secret detection is untouched.
+
+id: security-constraints-lock-sync-gate
+status: ACTIVE
+claim_type: governance
+promise: >-
+  tools.deps.validate_dependency_truth gains drift class D8: a
+  constraints/security.txt exact-pin disagreeing with a
+  requirements*.lock exact-pin for the same package is detected as a
+  HIGH-priority, actionable drift whose fix message points at
+  `make deps-update`. The detector is silent when the pins agree and
+  when the package is not security-constrained. A new fail-closed
+  pr-gate job `constraints-lock-sync` runs the validator and fails
+  when any D8 finding exists, but only when constraints/security.txt
+  or a requirements*.lock changed (content-aware). Six new tests in
+  tests/deps/test_validate_dependency_truth.py pin: (1) the exact
+  PR #717/#718/#720/#723/#741 divergence is detected; (2)
+  --exit-on-drift fails on it; (3) silent when constraint and lock
+  agree; (4) silent when the package is not constrained; (5) the
+  live shipping tree has no D8 divergence (regression guard). No
+  secret-detection coverage is reduced and no existing check is
+  weakened or skipped.
+diff_scope:
+  changed_files:
+    - path: ".claude/commit_acceptors/security-constraints-lock-sync-gate.yaml"
+    - path: "tools/deps/validate_dependency_truth.py"
+    - path: "tests/deps/test_validate_dependency_truth.py"
+    - path: ".github/workflows/pr-gate.yml"
+    - path: "INVENTORY.json"
+  forbidden_paths:
+    - "trading/"
+    - "execution/"
+    - "forecast/"
+    - "policy/"
+    - "RIP/"
+required_python_symbols:
+  - "collect"
+  - "_is_actionable"
+expected_signal: >-
+  All dependency-truth unit tests pass under pytest (23 total,
+  including 6 new D8 tests); black, ruff, mypy --strict clean on the
+  validator and tests; the validator's report-only invocation still
+  exits 0 on the live tree (reality-dependency-truth unchanged); D8 is
+  silent on consistent main and fires on a synthetic divergence.
+measurement_command: >-
+  python -m pytest tests/deps/test_validate_dependency_truth.py -v
+signal_artifact: "tmp/constraints_lock_sync_pytest.log"
+falsifier:
+  command: >-
+    python -m pytest tests/deps/test_validate_dependency_truth.py
+    -v -k "d8"
+  description: >-
+    Probe filters to the D8 forcing-function tests. If the detector is
+    broken in either direction (over-detects: fires when pins agree or
+    on unconstrained packages, or under-detects: misses the
+    constraint/lock divergence) at least one of these tests fails.
+rollback_command: >-
+  git checkout HEAD~1 -- tools/deps/validate_dependency_truth.py
+  tests/deps/test_validate_dependency_truth.py
+  .github/workflows/pr-gate.yml
+  .claude/commit_acceptors/security-constraints-lock-sync-gate.yaml
+rollback_verification_command: >-
+  git diff --exit-code tools/deps/validate_dependency_truth.py
+memory_update_type: append
+ledger_path: ".claude/commit_acceptors/security-constraints-lock-sync-gate.yaml"
+report_path: ".claude/commit_acceptors/security-constraints-lock-sync-gate.yaml"
+evidence: []

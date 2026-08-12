@@ -1,0 +1,64 @@
+{
+  "$schema": "https://json-schema.org/draft/2020-12/schema",
+  "$id": "https://neuron7xlab.dev/geosync/physics_contracts/falsification_schema.json",
+  "title": "GeoSync executable falsification-contract catalog",
+  "description": "Schema for physics_contracts/falsification_catalog.yaml. SEPARATE from the canonical 112-invariant catalog.yaml; adds machine-enforced positive-witness + negative-control coverage per blocking law.",
+  "type": "object",
+  "additionalProperties": false,
+  "required": ["schema_version", "laws"],
+  "properties": {
+    "schema_version": {"type": "integer", "const": 1},
+    "canonical_catalog_untouched": {"type": "boolean"},
+    "laws": {
+      "type": "array",
+      "minItems": 1,
+      "items": {"$ref": "#/$defs/law"}
+    }
+  },
+  "$defs": {
+    "law": {
+      "type": "object",
+      "additionalProperties": false,
+      "required": [
+        "id",
+        "domain",
+        "claim",
+        "formal_invariant",
+        "measured_quantity",
+        "threshold",
+        "positive_witness",
+        "negative_control",
+        "blocking",
+        "failure_message",
+        "evidence_output"
+      ],
+      "properties": {
+        "id": {"type": "string", "pattern": "^[a-z0-9_]+$"},
+        "domain": {
+          "type": "string",
+          "enum": [
+            "ricci_kuramoto",
+            "metric_consistency",
+            "causality",
+            "landauer",
+            "thermodynamics",
+            "dynamical_systems",
+            "neuromodulation",
+            "falsification",
+            "precision",
+            "governance"
+          ]
+        },
+        "claim": {"type": "string", "minLength": 8},
+        "formal_invariant": {"type": "string", "minLength": 4},
+        "measured_quantity": {"type": "string", "minLength": 4},
+        "threshold": {"type": "string", "minLength": 1},
+        "positive_witness": {"type": "string", "pattern": "^tests/physics/.+::.+$"},
+        "negative_control": {"type": "string", "pattern": "^tests/physics/.+::.+$"},
+        "blocking": {"type": "boolean"},
+        "failure_message": {"type": "string", "minLength": 8},
+        "evidence_output": {"type": "string", "pattern": "^evidence/physics/.+\\.json(l)?$"}
+      }
+    }
+  }
+}

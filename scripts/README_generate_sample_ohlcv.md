@@ -136,12 +136,12 @@ df = generate_multi_asset_data(
 
 ```python
 import pandas as pd
-from core.indicators.kuramoto_ricci_composite import TradePulseCompositeEngine
+from core.indicators.kuramoto_ricci_composite import GeoSyncCompositeEngine
 
 df = pd.read_csv("data/sample_crypto_ohlcv.csv")
 btc = df[df["symbol"] == "BTC"].copy()
 
-engine = TradePulseCompositeEngine()
+engine = GeoSyncCompositeEngine()
 snapshot = engine.analyze_market(btc)
 print(f"Phase: {snapshot.phase.value}")
 ```

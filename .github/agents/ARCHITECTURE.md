@@ -387,7 +387,7 @@ DOC_AGENT_ENABLED=true
 ## Support
 
 ### Documentation
-- [User Guide](../docs/DOC_PR_COPILOT_GUIDE.md)
+- [User Guide](doc-pr-copilot-v2.md)
 - [Integration Guide](INTEGRATION.md)
 - [4C Principles](4C-PRINCIPLES.md)
 

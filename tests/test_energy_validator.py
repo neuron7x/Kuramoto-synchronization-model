@@ -1,3 +1,5 @@
+# Copyright (c) 2023-2026 Yaroslav Vasylenko (neuron7xLab)
+# SPDX-License-Identifier: MIT
 """Tests for energy validator module."""
 
 import json
@@ -245,13 +247,37 @@ class TestEnergyValidatorEdgeCases:
     """Test edge cases for energy validator."""
 
     def test_empty_metrics(self):
-        """Test with empty metrics dict."""
+        """Test with empty metrics dict.
+
+        The numeric decomposition is still F = 0 - T*0 = 0, but with NO evidence
+        the validator must fail closed: passed is False (see
+        test_empty_metrics_fails_closed).
+        """
         validator = EnergyValidator()
         result = validator.compute_free_energy({})
         # Should compute F = 0 - T*0 = 0
         assert result.free_energy == 0.0
         assert result.internal_energy == 0.0
         assert result.stability == 0.0
+
+    def test_empty_metrics_fails_closed(self):
+        """Empty metrics = no evidence, must NOT pass.
+
+        Regression for a fail-open defect: validate({}) previously returned True
+        because free_energy=0.0 <= threshold. Absent required metrics are not
+        evidence of safety; validation must fail closed.
+        """
+        validator = EnergyValidator()
+        result = validator.compute_free_energy({})
+        assert result.passed is False, "empty metrics must fail closed (no evidence)"
+        assert validator.validate({}) is False
+
+    def test_partial_metrics_fails_closed(self):
+        """A partial metric dict (missing required dimensions) must fail closed."""
+        validator = EnergyValidator()
+        # Only one of the seven required metrics, well below threshold.
+        result = validator.compute_free_energy({"latency_p95": 10.0})
+        assert result.passed is False, "partial coverage must fail closed"
 
     def test_unknown_metric(self):
         """Test with unknown metric name."""

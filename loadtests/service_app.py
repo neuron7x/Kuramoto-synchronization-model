@@ -1,3 +1,5 @@
+# Copyright (c) 2023-2026 Yaroslav Vasylenko (neuron7xLab)
+# SPDX-License-Identifier: MIT
 """FastAPI application configured for deterministic load testing."""
 
 from __future__ import annotations
@@ -18,7 +20,7 @@ def build_app() -> FastAPI:
     """Create a FastAPI instance with deterministic credentials for load tests."""
 
     configure_security_overrides()
-    state_dir = Path("/tmp/tradepulse-loadtest")
+    state_dir = Path("/tmp/geosync-loadtest")
     state_dir.mkdir(parents=True, exist_ok=True)
     audit_secret = os.getenv("LOADTEST_AUDIT_SECRET", token_urlsafe(32))
     two_factor_secret = os.getenv("LOADTEST_TWO_FACTOR_SECRET")

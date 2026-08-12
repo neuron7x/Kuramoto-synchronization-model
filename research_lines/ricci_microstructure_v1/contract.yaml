@@ -1,0 +1,78 @@
+schema_version: research-line-contract.v1
+line_id: ricci_microstructure_v1
+sprint_focus: true
+owner: research-platform
+# INSTRUMENTED, not TESTED_REAL_SINGLE: no real order-book session has been
+# committed. The gateway (tools/research/research_cli.py) stamps provenance and
+# emits a schema-valid HYPOTHESIS artifact; it runs no empirical inference.
+state: INSTRUMENTED
+terminal_state: null
+claim:
+  tier: HYPOTHESIS
+  status: Not Measured
+  statement: >-
+    Ricci curvature features over crypto perpetual order-book microstructure are
+    proposed as a falsifiable predictor candidate. No real order-book session has
+    been recorded or evaluated; the line is provenance-instrumented only and
+    cannot promote past HYPOTHESIS until a real, hash-pinned session passes the
+    falsification gates below.
+  falsifier: >-
+    Reject or block promotion if multi-session validation fails, if a null
+    baseline matches or exceeds the signal, or if net PnL after the declared
+    cost model is negative.
+substrate:
+  venue_class: crypto_perps
+  data_type: depth5_order_book_100ms_resampled_to_1s
+  immutability_required: true
+  required_hash: sha256
+inference_contract:
+  deterministic: true
+  seed_required: true
+  input_window_sec: 30
+  canonical_schema: schemas/research/research_inference_artifact.schema.json
+  allowed_decisions:
+    - ABSTAIN
+    - OBSERVE
+    - REJECT
+falsification:
+  required_nulls:
+    - permutation_null
+    - lag_sweep_no_future_data
+    - cost_model
+    - multi_session_replay
+  required_invariants:
+    - INV-RC1
+    - INV-NFD1
+    - INV-DET1
+promotion_limits:
+  synthetic_max_state: INSTRUMENTED
+  real_single_state: TESTED_REAL_SINGLE
+  real_multi_required_for: MEASURED
+  deployable_state_required: REPLICATED
+external_reproducibility:
+  status: PARTIAL
+  fallback_quality: PUBLIC_PLACEHOLDER
+  public_or_cached_input: artifacts/runs/ricci_microstructure_v1/example_artifact.json
+  schema: schemas/research/research_inference_artifact.schema.json
+  replay_command: >-
+    python tools/research/validate_ricci_artifact_schema.py --semantic
+    --artifact artifacts/runs/ricci_microstructure_v1/example_artifact.json
+  expected_result: >-
+    Placeholder artifact passes schema and semantic-truth checks while preserving
+    HYPOTHESIS / NOT_RUN status; this proves the public fallback path, not a real
+    L2 microstructure result.
+  known_limits:
+    - placeholder artifact uses zero data hash and zero git hash by design
+    - public fallback validates provenance discipline, not empirical Ricci signal quality
+    - promotion remains blocked until real hash-pinned order-book sessions exist
+  promotion_locked_until:
+    - real depth5 order-book session with non-zero data_sha256
+    - non-zero git_sha, config_sha256, env_sha256, and output_sha256
+    - replay_command for the real artifact
+    - null baseline and multi-session replay
+    - human witness review for L2 microstructure interpretation
+artifact:
+  required: true
+  immutable: true
+  proof_of_evidence: sha256
+  example: artifacts/runs/ricci_microstructure_v1/example_artifact.json

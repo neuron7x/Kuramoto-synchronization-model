@@ -1,4 +1,6 @@
-"""Architecture scanning utilities for TradePulse.
+# Copyright (c) 2023-2026 Yaroslav Vasylenko (neuron7xLab)
+# SPDX-License-Identifier: MIT
+"""Architecture scanning utilities for GeoSync.
 
 This module inspects the Python source tree and builds a dependency graph that
 can be used to reason about architectural boundaries.  It intentionally keeps
@@ -165,9 +167,7 @@ class ArchitectureScanner:
         dependencies: Dict[str, Set[str]] = defaultdict(set)
         reverse_dependencies: Dict[str, Set[str]] = defaultdict(set)
 
-        module_paths = {
-            self._module_name(path): path for path in self._iter_python_files()
-        }
+        module_paths = {self._module_name(path): path for path in self._iter_python_files()}
         module_names = {name for name in module_paths.keys() if name}
 
         for name, path in module_paths.items():
@@ -264,9 +264,7 @@ class ArchitectureScanner:
 
         external.add(target.split(".")[0])
 
-    def _resolve_internal_target(
-        self, target: str, known_modules: Set[str]
-    ) -> str | None:
+    def _resolve_internal_target(self, target: str, known_modules: Set[str]) -> str | None:
         if target in known_modules:
             return target
 
@@ -277,9 +275,7 @@ class ArchitectureScanner:
                 return target
         return None
 
-    def _resolve_from_import(
-        self, current_module: str, node: ast.ImportFrom
-    ) -> Set[str]:
+    def _resolve_from_import(self, current_module: str, node: ast.ImportFrom) -> Set[str]:
         results: Set[str] = set()
         base_module = node.module or ""
         level = node.level or 0
@@ -340,7 +336,7 @@ class ArchitectureScanner:
 
 
 def _parse_args(argv: Sequence[str] | None = None) -> argparse.Namespace:
-    parser = argparse.ArgumentParser(description="Analyze the TradePulse architecture")
+    parser = argparse.ArgumentParser(description="Analyze the GeoSync architecture")
     parser.add_argument("--root", type=Path, default=Path.cwd(), help="Repository root")
     parser.add_argument(
         "--summary",

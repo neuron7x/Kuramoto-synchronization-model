@@ -1,8 +1,10 @@
+# Copyright (c) 2023-2026 Yaroslav Vasylenko (neuron7xLab)
+# SPDX-License-Identifier: MIT
 """Tests for scripts/sanity_cleanup package."""
 
 from __future__ import annotations
 
-# SPDX-License-Identifier: LicenseRef-TradePulse-Proprietary
+# SPDX-License-Identifier: MIT
 import json
 import tempfile
 from pathlib import Path
@@ -170,12 +172,8 @@ class TestRunner:
     def test_cleanup_result_exit_code_success(self, tmp_path: Path) -> None:
         """Test CleanupResult.exit_code with all successful tasks."""
         reports = [
-            models.TaskReport(
-                name="task1", status=models.TaskStatus.SUCCESS, summary="OK"
-            ),
-            models.TaskReport(
-                name="task2", status=models.TaskStatus.SKIPPED, summary="Skipped"
-            ),
+            models.TaskReport(name="task1", status=models.TaskStatus.SUCCESS, summary="OK"),
+            models.TaskReport(name="task2", status=models.TaskStatus.SKIPPED, summary="Skipped"),
         ]
         result = runner.CleanupResult(root=tmp_path, reports=reports)
 
@@ -184,12 +182,8 @@ class TestRunner:
     def test_cleanup_result_exit_code_failure(self, tmp_path: Path) -> None:
         """Test CleanupResult.exit_code with failed task."""
         reports = [
-            models.TaskReport(
-                name="task1", status=models.TaskStatus.SUCCESS, summary="OK"
-            ),
-            models.TaskReport(
-                name="task2", status=models.TaskStatus.FAILED, summary="Error"
-            ),
+            models.TaskReport(name="task1", status=models.TaskStatus.SUCCESS, summary="OK"),
+            models.TaskReport(name="task2", status=models.TaskStatus.FAILED, summary="Error"),
         ]
         result = runner.CleanupResult(root=tmp_path, reports=reports)
 
@@ -229,9 +223,7 @@ class TestRunner:
                 summary="Completed",
             )
 
-        context = models.TaskContext(
-            root=tmp_path, options=models.CleanupOptions()
-        )
+        context = models.TaskContext(root=tmp_path, options=models.CleanupOptions())
 
         report = runner._execute_task(successful_task, context)
 
@@ -244,9 +236,7 @@ class TestRunner:
         def failing_task(ctx: models.TaskContext) -> models.TaskReport:
             raise ValueError("Something went wrong")
 
-        context = models.TaskContext(
-            root=tmp_path, options=models.CleanupOptions()
-        )
+        context = models.TaskContext(root=tmp_path, options=models.CleanupOptions())
 
         report = runner._execute_task(failing_task, context)
 

@@ -1,0 +1,70 @@
+id: risk-manager-hotpath-lock
+status: ACTIVE
+claim_type: correctness
+promise: >-
+  After this PR, RiskManager serialises every exposure mutator/reader on a
+  reentrant instance lock (_state_lock, via the _synchronized decorator), so the
+  live runner's concurrent watchdog threads (order-submission validate_order,
+  fill-poller register_fill, heartbeat exposure_snapshot) can no longer interleave
+  a read-modify-write on _positions/_last_notional. Two fills that read the same
+  prior position both land instead of one being lost.
+diff_scope:
+  changed_files:
+    - path: ".claude/commit_acceptors/risk-manager-hotpath-lock.yaml"
+    - path: "execution/risk/core.py"
+    - path: "tests/unit/execution/test_risk_manager_concurrency.py"
+  forbidden_paths:
+    - "core/physics/"
+    - "core/kuramoto/"
+    - "execution/oms.py"
+required_python_symbols:
+  - "execution/risk/core.py::RiskManager"
+  - "execution/risk/core.py::_synchronized"
+expected_signal: >-
+  `python -m pytest --import-mode=importlib
+  tests/unit/execution/test_risk_manager_concurrency.py -q` reports 3 passed;
+  the deterministic rendezvous test proves two concurrent fills both land.
+measurement_command: >-
+  bash -c '
+    python -m pytest --import-mode=importlib -p no:cacheprovider
+      tests/unit/execution/test_risk_manager_concurrency.py -q
+  '
+signal_artifact: "tmp/risk_manager_hotpath_lock.log"
+falsifier:
+  command: |-
+    bash -c '
+      python -c "
+    import threading
+    from execution.risk import RiskManager, RiskLimits
+    class _R(dict):
+        def __init__(self):
+            super().__init__(); self.b = threading.Barrier(2, timeout=1.0); self.armed = True
+        def get(self, k, d=0.0):
+            v = dict.get(self, k, d)
+            if self.armed:
+                try: self.b.wait()
+                except threading.BrokenBarrierError: self.armed = False
+            return v
+    m = RiskManager(RiskLimits(max_notional=float(\"inf\"), max_position=float(\"inf\")))
+    m._positions = _R()
+    def f(): m.register_fill(\"BTC-USD\", \"buy\", 1.0, 10.0)
+    ts = [threading.Thread(target=f) for _ in range(2)]
+    [t.start() for t in ts]; [t.join(5) for t in ts]
+    m._positions.armed = False
+    got = m.current_position(\"BTC-USD\")
+    assert got == 2.0, f\"lost update: {got}\"
+    "
+    '
+  description: >-
+    Rendezvouses two concurrent register_fill calls between the position read and
+    write. Exits 0 on the guarded tree (both fills land -> 2.0); non-zero if the
+    _synchronized guard is removed (both read 0.0, one write lost -> 1.0), honouring
+    the run_evidence green-state exit-0 contract.
+rollback_command: >-
+  bash -c 'git rm -f .claude/commit_acceptors/risk-manager-hotpath-lock.yaml'
+rollback_verification_command: >-
+  bash -c 'test ! -f .claude/commit_acceptors/risk-manager-hotpath-lock.yaml'
+memory_update_type: append
+ledger_path: ".claude/commit_acceptors/risk-manager-hotpath-lock.yaml"
+report_path: "tmp/risk_manager_hotpath_lock.log"
+evidence: []

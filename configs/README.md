@@ -1,6 +1,6 @@
 # Configuration Guide
 
-This directory contains YAML configuration presets for TradePulse components.
+This directory contains YAML configuration presets for GeoSync components.
 
 - `default.yaml` – minimal dataset and execution defaults used by quick-start examples.
 - `kuramoto_ricci_composite.yaml` – reference configuration for the Kuramoto–Ricci composite integration workflow.

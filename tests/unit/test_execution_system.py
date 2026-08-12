@@ -1,4 +1,5 @@
-# SPDX-License-Identifier: LicenseRef-TradePulse-Proprietary
+# Copyright (c) 2023-2026 Yaroslav Vasylenko (neuron7xLab)
+# SPDX-License-Identifier: MIT
 """Tests for the execution order management stack."""
 
 from __future__ import annotations
@@ -54,9 +55,7 @@ def test_risk_state_persists_across_restarts(tmp_path) -> None:
         restarted.validate_order("BTCUSDT", "buy", 2.0, 20_000)
 
 
-def test_oms_idempotent_submission_and_recovery(
-    tmp_path, risk_manager: RiskManager
-) -> None:
+def test_oms_idempotent_submission_and_recovery(tmp_path, risk_manager: RiskManager) -> None:
     state_path = tmp_path / "oms_state.json"
     config = OMSConfig(state_path=state_path)
     connector = BinanceConnector()
@@ -84,9 +83,7 @@ def test_oms_idempotent_submission_and_recovery(
     assert processed.order_id in {o.order_id for o in oms_reload.outstanding()}
 
 
-def test_oms_rejects_mismatched_idempotency_payload(
-    tmp_path, risk_manager: RiskManager
-) -> None:
+def test_oms_rejects_mismatched_idempotency_payload(tmp_path, risk_manager: RiskManager) -> None:
     state_path = tmp_path / "oms_idempotency.json"
     config = OMSConfig(state_path=state_path)
     connector = BinanceConnector()
@@ -212,9 +209,7 @@ def test_oms_retries_on_timeout(tmp_path, risk_manager: RiskManager) -> None:
             super().__init__()
             self.calls = 0
 
-        def place_order(
-            self, order: Order, *, idempotency_key: str | None = None
-        ) -> Order:
+        def place_order(self, order: Order, *, idempotency_key: str | None = None) -> Order:
             self.calls += 1
             if self.calls == 1:
                 time.sleep(0.2)
@@ -250,9 +245,7 @@ def test_oms_compliance_blocking_triggers_audit(tmp_path) -> None:
     }
     normalizer = SymbolNormalizer(specifications=specs)
     compliance = ComplianceMonitor(normalizer, strict=True)
-    risk = RiskManager(
-        RiskLimits(max_notional=1_000_000, max_position=1_000), audit_logger=audit
-    )
+    risk = RiskManager(RiskLimits(max_notional=1_000_000, max_position=1_000), audit_logger=audit)
     config = OMSConfig(state_path=state_path)
     connector = BinanceConnector()
     oms = OrderManagementSystem(
@@ -274,12 +267,8 @@ def test_oms_compliance_blocking_triggers_audit(tmp_path) -> None:
     with pytest.raises(ComplianceViolation):
         oms.submit(order, correlation_id="compliance-block")
 
-    entries = [
-        json.loads(line) for line in audit_path.read_text().splitlines() if line.strip()
-    ]
-    compliance_events = [
-        entry for entry in entries if entry.get("event") == "compliance_check"
-    ]
+    entries = [json.loads(line) for line in audit_path.read_text().splitlines() if line.strip()]
+    compliance_events = [entry for entry in entries if entry.get("event") == "compliance_check"]
     assert compliance_events
     last_event = compliance_events[-1]
     assert last_event["status"] == "blocked"
@@ -297,9 +286,7 @@ def test_oms_audit_records_successful_flow(tmp_path) -> None:
     }
     normalizer = SymbolNormalizer(specifications=specs)
     compliance = ComplianceMonitor(normalizer, strict=True)
-    risk = RiskManager(
-        RiskLimits(max_notional=1_000_000, max_position=1_000), audit_logger=audit
-    )
+    risk = RiskManager(RiskLimits(max_notional=1_000_000, max_position=1_000), audit_logger=audit)
     config = OMSConfig(state_path=state_path)
     connector = BinanceConnector()
     oms = OrderManagementSystem(
@@ -319,12 +306,8 @@ def test_oms_audit_records_successful_flow(tmp_path) -> None:
     )
     oms.submit(order, correlation_id="audit-pass")
 
-    entries = [
-        json.loads(line) for line in audit_path.read_text().splitlines() if line.strip()
-    ]
-    compliance_event = next(
-        entry for entry in entries if entry.get("event") == "compliance_check"
-    )
+    entries = [json.loads(line) for line in audit_path.read_text().splitlines() if line.strip()]
+    compliance_event = next(entry for entry in entries if entry.get("event") == "compliance_check")
     risk_event = next(
         entry
         for entry in entries
@@ -348,25 +331,17 @@ def test_execution_algorithms_split_quantities() -> None:
     twap = TWAPAlgorithm(duration=timedelta(minutes=4), slices=4)
     children = twap.schedule(parent)
     assert len(children) == 4
-    assert sum(child.order.quantity for child in children) == pytest.approx(
-        parent.quantity
-    )
+    assert sum(child.order.quantity for child in children) == pytest.approx(parent.quantity)
 
     vwap = VWAPAlgorithm(volume_profile=[1, 2, 1], duration=timedelta(minutes=3))
     vwap_children = vwap.schedule(parent)
     assert len(vwap_children) == 3
-    assert sum(child.order.quantity for child in vwap_children) == pytest.approx(
-        parent.quantity
-    )
+    assert sum(child.order.quantity for child in vwap_children) == pytest.approx(parent.quantity)
 
-    pov = POVAlgorithm(
-        participation=0.25, forecast_volume=[4, 4, 8], duration=timedelta(minutes=3)
-    )
+    pov = POVAlgorithm(participation=0.25, forecast_volume=[4, 4, 8], duration=timedelta(minutes=3))
     pov_children = pov.schedule(parent)
     assert len(pov_children) == 3
-    assert sum(child.order.quantity for child in pov_children) == pytest.approx(
-        parent.quantity
-    )
+    assert sum(child.order.quantity for child in pov_children) == pytest.approx(parent.quantity)
 
     for child in pov_children:
         child.order.record_fill(child.order.quantity, parent.price)
@@ -399,9 +374,7 @@ def test_symbol_normalizer_handles_symbol_aliases_and_notional_checks() -> None:
             "BTC-USD", min_qty=0.0001, min_notional=5, step_size=0.0001, tick_size=0.01
         )
     }
-    normalizer = SymbolNormalizer(
-        symbol_map={"BTCUSD": "BTC-USD"}, specifications=specs
-    )
+    normalizer = SymbolNormalizer(symbol_map={"BTCUSD": "BTC-USD"}, specifications=specs)
 
     assert normalizer.exchange_symbol("btc_usd") == "BTC-USD"
     assert normalizer.specification("BTCUSD").min_qty == pytest.approx(0.0001)
@@ -425,9 +398,7 @@ def test_simulated_exchange_connector_lifecycle() -> None:
 
     placed = connector.place_order(order)
     assert placed is not order
-    assert placed.order_id is not None and placed.order_id.startswith(
-        "BinanceConnector-"
-    )
+    assert placed.order_id is not None and placed.order_id.startswith("BinanceConnector-")
     assert placed.quantity == pytest.approx(0.0025)
 
     fetched = connector.fetch_order(placed.order_id)
@@ -457,13 +428,9 @@ def test_execution_algorithm_parameter_validation() -> None:
     with pytest.raises(ValueError):
         VWAPAlgorithm(volume_profile=[-1, 1], duration=timedelta(minutes=1))
     with pytest.raises(ValueError):
-        POVAlgorithm(
-            participation=0, forecast_volume=[1], duration=timedelta(minutes=1)
-        )
+        POVAlgorithm(participation=0, forecast_volume=[1], duration=timedelta(minutes=1))
     with pytest.raises(ValueError):
-        POVAlgorithm(
-            participation=0.5, forecast_volume=[], duration=timedelta(minutes=1)
-        )
+        POVAlgorithm(participation=0.5, forecast_volume=[], duration=timedelta(minutes=1))
 
     algorithm = POVAlgorithm(
         participation=0.5, forecast_volume=[1, 1, 1], duration=timedelta(minutes=3)
@@ -478,9 +445,7 @@ def test_execution_algorithm_parameter_validation() -> None:
     children = algorithm.schedule(parent)
     assert len(children) == 3
     assert children[-1].order.quantity == pytest.approx(4.0)
-    assert sum(child.order.quantity for child in children) == pytest.approx(
-        parent.quantity
-    )
+    assert sum(child.order.quantity for child in children) == pytest.approx(parent.quantity)
 
 
 def test_vwap_algorithm_backfills_rounding_residuals() -> None:
@@ -503,13 +468,9 @@ def test_vwap_algorithm_backfills_rounding_residuals() -> None:
     assert children[-1].order.quantity > baseline
 
 
-def test_oms_rejection_and_empty_queue_behaviour(
-    tmp_path, risk_manager: RiskManager
-) -> None:
+def test_oms_rejection_and_empty_queue_behaviour(tmp_path, risk_manager: RiskManager) -> None:
     class FailingConnector(BinanceConnector):
-        def place_order(
-            self, order: Order, *, idempotency_key: str | None = None
-        ) -> Order:
+        def place_order(self, order: Order, *, idempotency_key: str | None = None) -> Order:
             raise OrderError("venue unavailable")
 
     state_path = tmp_path / "reject_state.json"
@@ -617,9 +578,7 @@ def test_oms_sync_remote_terminal_state(
     assert stored[placed.order_id]["status"] == status.value
 
 
-def test_oms_requeue_and_adopt_recovery_paths(
-    tmp_path, risk_manager: RiskManager
-) -> None:
+def test_oms_requeue_and_adopt_recovery_paths(tmp_path, risk_manager: RiskManager) -> None:
     state_path = tmp_path / "recovery_state.json"
     config = OMSConfig(state_path=state_path)
     connector = BinanceConnector()
@@ -688,9 +647,7 @@ def test_oms_retries_transient_failures(tmp_path, risk_manager: RiskManager) -> 
     assert duplicate is placed
 
 
-def test_oms_rejects_after_exhausting_retries(
-    tmp_path, risk_manager: RiskManager
-) -> None:
+def test_oms_rejects_after_exhausting_retries(tmp_path, risk_manager: RiskManager) -> None:
     state_path = tmp_path / "retry_fail_state.json"
     config = OMSConfig(state_path=state_path, max_retries=2)
     connector = BinanceConnector(failure_plan=["429", "timeout", "network"])
@@ -713,9 +670,7 @@ def test_oms_rejects_after_exhausting_retries(
     assert not oms._queue
 
 
-def test_oms_submit_is_idempotent_for_pending_orders(
-    tmp_path, risk_manager: RiskManager
-) -> None:
+def test_oms_submit_is_idempotent_for_pending_orders(tmp_path, risk_manager: RiskManager) -> None:
     state_path = tmp_path / "pending_state.json"
     config = OMSConfig(state_path=state_path)
     connector = BinanceConnector()

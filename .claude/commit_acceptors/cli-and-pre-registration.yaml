@@ -1,0 +1,97 @@
+# Diff-bound commit acceptor for the CLI + synthetic + pre-registration bundle.
+#
+# Closes audit tasks 19, 22, 26, 30:
+#   19. CLI command `python -m research.systemic_risk.cli evaluate ...`
+#   22. PRE_REGISTRATION_TEMPLATE.md
+#   26. REPRODUCIBILITY_QUICKSTART.md (≤400 words)
+#   30. Synthetic data generator (synthetic.py)
+#
+# Locally verified:
+#   * pytest tests/research/systemic_risk/test_cli_and_synthetic.py: 8/8 pass
+#   * pytest tests/research/systemic_risk/: 532/532 pass
+#   * mypy --strict on cli + synthetic + tests: 0 errors
+#   * ruff + black: clean
+#   * Smoke-tested CLI: python -m research.systemic_risk.cli evaluate \
+#       --claim-id CLAIM_DEMO --data synthetic produces a structured
+#       JSON report on stdout
+
+id: cli-and-pre-registration
+status: ACTIVE
+claim_type: governance
+promise: >-
+  After this PR lands, ``research.systemic_risk`` exposes the CLI
+  entry point ``python -m research.systemic_risk.cli evaluate``, a
+  deterministic synthetic-panel generator
+  (``generate_panel`` + ``SyntheticPanelConfig``), and the
+  ``PRE_REGISTRATION_TEMPLATE.md`` + ``REPRODUCIBILITY_QUICKSTART.md``
+  documentation artefacts.
+
+diff_scope:
+  changed_files:
+    - path: ".claude/commit_acceptors/cli-and-pre-registration.yaml"
+    - path: "research/systemic_risk/PRE_REGISTRATION_TEMPLATE.md"
+    - path: "research/systemic_risk/REPRODUCIBILITY_QUICKSTART.md"
+    - path: "research/systemic_risk/__init__.py"
+    - path: "research/systemic_risk/cli.py"
+    - path: "research/systemic_risk/synthetic.py"
+    - path: "tests/research/systemic_risk/test_cli_and_synthetic.py"
+  forbidden_paths:
+    - "trading/"
+    - "execution/"
+    - "forecast/"
+    - "policy/"
+    - "core/"
+    - "runtime/"
+    - "application/"
+
+required_python_symbols:
+  - "research/systemic_risk/cli.py::main"
+  - "research/systemic_risk/synthetic.py::generate_panel"
+  - "research/systemic_risk/synthetic.py::SyntheticPanelConfig"
+  - "tests/research/systemic_risk/test_cli_and_synthetic.py::TestCLI"
+
+expected_signal: >-
+  ``pytest tests/research/systemic_risk/test_cli_and_synthetic.py -q``
+  reports 8 passed; before this PR the test file does not exist.
+
+measurement_command: >-
+  bash -c '
+    mypy --strict
+      research/systemic_risk/cli.py
+      research/systemic_risk/synthetic.py
+      tests/research/systemic_risk/test_cli_and_synthetic.py && python -m pytest tests/research/systemic_risk/test_cli_and_synthetic.py -q
+  '
+
+signal_artifact: "tmp/cli_and_pre_registration.log"
+
+falsifier:
+  command: >-
+    bash -c '
+      python -m research.systemic_risk.cli evaluate \
+          --claim-id CLAIM_FALSIFIER_PROBE --data synthetic --seed 7 \
+          --n-banks 8 --n-days 5 > /dev/null 2>&1 && exit 1 || exit 0
+    '
+  description: >-
+    Probes that the CLI runs end-to-end on synthetic data. Falsifier
+    inverts: it succeeds (exit 0) only when the CLI invocation fails,
+    which would mean the entry point or the synthetic generator
+    rolled back.
+
+rollback_command: >-
+  bash -c '
+    git rm -f
+      research/systemic_risk/cli.py
+      research/systemic_risk/synthetic.py
+      research/systemic_risk/PRE_REGISTRATION_TEMPLATE.md
+      research/systemic_risk/REPRODUCIBILITY_QUICKSTART.md
+      tests/research/systemic_risk/test_cli_and_synthetic.py
+      .claude/commit_acceptors/cli-and-pre-registration.yaml && git checkout HEAD~1 -- research/systemic_risk/__init__.py
+  '
+
+rollback_verification_command: |-
+  python -c "import importlib.util,importlib,sys; _p=lambda m: all(importlib.util.find_spec('.'.join(m.split('.')[:i+1])) for i in range(len(m.split('.')))); present=_p('research.systemic_risk.cli') and hasattr(importlib.import_module('research.systemic_risk.cli'),'main'); sys.exit(1 if present else 0)"
+
+memory_update_type: append
+ledger_path: ".claude/commit_acceptors/cli-and-pre-registration.yaml"
+report_path: "tmp/cli_and_pre_registration.log"
+evidence: []

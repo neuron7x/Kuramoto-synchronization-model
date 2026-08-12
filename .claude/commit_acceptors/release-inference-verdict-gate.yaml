@@ -1,0 +1,55 @@
+id: release-inference-verdict-gate
+status: ACTIVE
+claim_type: governance
+promise: >-
+  .github/workflows/final-inference-verdict.yml validates every substrate
+  integrity artifact and runs tools/audit_final_inference_verdict.py, which exits
+  non-zero unless the final verdict is PASS. No continue-on-error and no '|| true'
+  on the aggregate step, so release readiness is a computed verdict, not a mood.
+diff_scope:
+  changed_files:
+    - path: ".claude/commit_acceptors/release-inference-verdict-gate.yaml"
+    - path: ".github/workflows/final-inference-verdict.yml"
+    - path: "scripts/ci/validate_inference_artifacts.py"
+    - path: "tests/ci/test_final_inference_verdict_workflow.py"
+    - path: "INVENTORY.json"
+  forbidden_paths:
+    - "execution/"
+    - "core/"
+required_python_symbols: []
+expected_signal: >-
+  `python -m pytest --import-mode=importlib
+  tests/ci/test_final_inference_verdict_workflow.py -q` passes; the workflow runs
+  the aggregator, never swallows its exit, and uploads the verdict artifact.
+measurement_command: >-
+  bash -c '
+    python -m pytest --import-mode=importlib -p no:cacheprovider
+      tests/ci/test_final_inference_verdict_workflow.py -q
+  '
+signal_artifact: "tmp/release_inference_verdict_gate.log"
+falsifier:
+  command: |-
+    bash -c '
+      python -c "
+    import yaml
+    wf = yaml.safe_load(open(\".github/workflows/final-inference-verdict.yml\"))
+    steps = wf[\"jobs\"][\"final-inference-verdict\"][\"steps\"]
+    blob = chr(10).join(str(s.get(\"run\",\"\")) for s in steps)
+    text = open(\".github/workflows/final-inference-verdict.yml\").read()
+    ok = \"tools/audit_final_inference_verdict.py\" in blob and \"continue-on-error: true\" not in text
+    ok = ok and all(not (\"audit_final_inference_verdict.py\" in str(s.get(\"run\",\"\")) and (\"|| true\" in str(s.get(\"run\",\"\")))) for s in steps)
+    raise SystemExit(0 if ok else \"release gate does not fail closed on the verdict\")
+    "
+    '
+  description: >-
+    Asserts the workflow runs the aggregator and never swallows its exit. Exits 0
+    when the gate is fail-closed; non-zero if a continue-on-error or '|| true'
+    downgrades the verdict.
+rollback_command: >-
+  bash -c 'git rm -f .claude/commit_acceptors/release-inference-verdict-gate.yaml'
+rollback_verification_command: >-
+  bash -c 'test ! -f .claude/commit_acceptors/release-inference-verdict-gate.yaml'
+memory_update_type: append
+ledger_path: ".claude/commit_acceptors/release-inference-verdict-gate.yaml"
+report_path: "tmp/release_inference_verdict_gate.log"
+evidence: []

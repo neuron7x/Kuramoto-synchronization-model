@@ -4,7 +4,7 @@ metadata:
   name: timescale-backup
   labels:
     app.kubernetes.io/name: timescale-backup
-    app.kubernetes.io/part-of: tradepulse
+    app.kubernetes.io/part-of: geosync
 spec:
   schedule: "0 2 * * *"
   successfulJobsHistoryLimit: 3
@@ -17,12 +17,12 @@ spec:
             app.kubernetes.io/name: timescale-backup
         spec:
           restartPolicy: Never
-          serviceAccountName: tradepulse-api
+          serviceAccountName: geosync-api
           securityContext:
             runAsNonRoot: false
           containers:
             - name: backup
-              image: ghcr.io/neuron7x/tradepulse:stable
+              image: ghcr.io/neuron7xLab/GeoSync:stable
               imagePullPolicy: IfNotPresent
               command:
                 - /bin/sh
@@ -44,7 +44,7 @@ spec:
                 - name: DATABASE_URL
                   valueFrom:
                     secretKeyRef:
-                      name: tradepulse-timescale
+                      name: geosync-timescale
                       key: url
                 - name: ARCHIVE_AFTER_DAYS
                   value: "14"

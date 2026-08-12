@@ -1,3 +1,5 @@
+# Copyright (c) 2023-2026 Yaroslav Vasylenko (neuron7xLab)
+# SPDX-License-Identifier: MIT
 """Mathematical logic validation for data integrity and formal constraints.
 
 This module provides validators that enforce mathematical constraints on trading
@@ -101,7 +103,9 @@ class DataIntegrityReport:
         """Generate summary string."""
         total = len(self.checks)
         passed = total - self.errors - self.warnings
-        return f"Validation: {passed}/{total} passed, {self.errors} errors, {self.warnings} warnings"
+        return (
+            f"Validation: {passed}/{total} passed, {self.errors} errors, {self.warnings} warnings"
+        )
 
 
 class MathematicalLogicValidator:
@@ -427,11 +431,7 @@ class MathematicalLogicValidator:
             ValidationResult(
                 name=f"{name}_non_negative",
                 passed=non_neg_passed,
-                level=(
-                    ValidationLevel.ERROR
-                    if not non_neg_passed
-                    else ValidationLevel.INFO
-                ),
+                level=(ValidationLevel.ERROR if not non_neg_passed else ValidationLevel.INFO),
                 message=f"Probabilities non-negative: min={min_val:.6g}",
                 value=min_val,
                 expected=">= 0",
@@ -519,11 +519,7 @@ class MathematicalLogicValidator:
                 ValidationResult(
                     name=f"{name}_mean",
                     passed=mean_passed,
-                    level=(
-                        ValidationLevel.WARNING
-                        if not mean_passed
-                        else ValidationLevel.INFO
-                    ),
+                    level=(ValidationLevel.WARNING if not mean_passed else ValidationLevel.INFO),
                     message=f"Mean: actual={actual_mean:.6g}, expected={expected_mean:.6g}, "
                     f"rel_diff={mean_diff:.6g}",
                     value=actual_mean,
@@ -542,11 +538,7 @@ class MathematicalLogicValidator:
                 ValidationResult(
                     name=f"{name}_std",
                     passed=std_passed,
-                    level=(
-                        ValidationLevel.WARNING
-                        if not std_passed
-                        else ValidationLevel.INFO
-                    ),
+                    level=(ValidationLevel.WARNING if not std_passed else ValidationLevel.INFO),
                     message=f"Std: actual={actual_std:.6g}, expected={expected_std:.6g}, "
                     f"rel_diff={std_diff:.6g}",
                     value=actual_std,
@@ -652,9 +644,7 @@ class MathematicalLogicValidator:
             )
 
 
-def validate_positive_definite(
-    matrix: np.ndarray, name: str = "matrix"
-) -> ValidationResult:
+def validate_positive_definite(matrix: np.ndarray, name: str = "matrix") -> ValidationResult:
     """Check if a matrix is positive definite.
 
     Args:
@@ -758,9 +748,7 @@ def validate_correlation_matrix(
             ValidationResult(
                 name=f"{name}_bounds",
                 passed=bounds_passed,
-                level=(
-                    ValidationLevel.ERROR if not bounds_passed else ValidationLevel.INFO
-                ),
+                level=(ValidationLevel.ERROR if not bounds_passed else ValidationLevel.INFO),
                 message=f"{name} in [-1,1]: min={min_val:.6g}, max={max_val:.6g}",
             )
         )

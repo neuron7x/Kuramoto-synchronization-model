@@ -1,0 +1,174 @@
+# Copyright (c) 2023-2026 Yaroslav Vasylenko (neuron7xLab); MIT
+#
+# GOV-007 — Stop-the-line release policy (machine-readable).
+#
+# This file is the SINGLE SOURCE OF TRUTH for the conditions that HALT a
+# release. `scripts/ci/check_release_policy.py` is a pure interpreter of the
+# rules below: it reads a release-state JSON and emits GO iff ZERO stop rules
+# fire. There is no rule, flag, or field anywhere that converts a fired stop
+# into GO.
+#
+# Design axioms:
+#   * NO "MANUAL-as-GREEN" path. A condition is either machine-proven clear
+#     (its evidence field is present and within bound) or it STOPS the release.
+#     Prose, sign-off, or a human note never counts as GREEN.
+#   * FAIL-CLOSED on absence. A required evidence field that is missing from the
+#     release-state is treated as a STOP, not as "assume clear". Absence of
+#     evidence is not evidence of safety.
+#   * RECOVERY, NOT OVERRIDE. A live stop is cleared ONLY by a fresh rerun that
+#     produces a new clean release-state which is then approved. Approval and
+#     freshness are themselves fail-closed preconditions (see category:
+#     governance) — they are necessary for GO but can NEVER flip a fired safety
+#     stop to GO.
+#
+# Detector semantics (interpreted by check_release_policy.py):
+#   Each rule fires if ANY clause in `fires_if_any` fires.
+#   A clause is {field, op, value}. `field` is a dot-path into the state.
+#   A clause FIRES when:
+#     - the field is absent (fail-closed), OR
+#     - the field is present and `op` against `value` is satisfied.
+#   Supported ops: gt, gte, lt, lte, eq, ne, in, not_in.
+
+version: 1
+task: GOV-007
+
+recovery:
+  clears_a_stop_by:
+    - "fresh rerun of the release pipeline producing a NEW release-state"
+    - "that new state is machine-clean (zero stop rules fire)"
+    - "the clean state is explicitly approved (approval.approved == true)"
+  never_by:
+    - "any override / force / skip flag"
+    - "a human note, sign-off comment, or MANUAL marker asserting the item is fine"
+
+stop_rules:
+
+  # ---- Required safety stops (the eight stop-the-line conditions) ----------
+
+  - id: STOP-INTEGRITY-MISMATCH
+    category: safety
+    title: "Integrity mismatch"
+    description: >
+      The released tree does not match its signed manifest: at least one file
+      hash differs, a manifested file is missing, or an unexpected file is
+      present. A release whose bytes are not provably the bytes that were
+      verified must not ship.
+    detected_by: >
+      Any nonzero mismatch_count / missing_count / unexpected_count reported by
+      the manifest cold-verify stage (integrity.*).
+    fires_if_any:
+      - {field: "integrity.mismatch_count", op: "gt", value: 0}
+      - {field: "integrity.missing_count", op: "gt", value: 0}
+      - {field: "integrity.unexpected_count", op: "gt", value: 0}
+
+  - id: STOP-STALE-EVIDENCE
+    category: safety
+    title: "Stale evidence"
+    description: >
+      One or more evidence artifacts backing the release are older than their
+      freshness budget (regenerated before the code they attest to, or past the
+      max age). Stale evidence attests to a tree that no longer exists.
+    detected_by: >
+      evidence.stale_count > 0, as computed by the artifact-freshness stage.
+    fires_if_any:
+      - {field: "evidence.stale_count", op: "gt", value: 0}
+
+  - id: STOP-UNSUPPORTED-ENV
+    category: safety
+    title: "Unsupported environment"
+    description: >
+      The build/verify environment (interpreter, OS, arch, locked deps) is not
+      on the supported matrix. Results from an unsupported environment are not
+      admissible evidence for the release.
+    detected_by: >
+      environment.supported == false, as asserted by the environment-probe.
+    fires_if_any:
+      - {field: "environment.supported", op: "eq", value: false}
+
+  - id: STOP-CRITICAL-VULN
+    category: safety
+    title: "Critical vulnerability"
+    description: >
+      The dependency / SBOM scan reports at least one CRITICAL-severity
+      vulnerability in the release closure.
+    detected_by: >
+      security.critical_count > 0 from the vulnerability scan.
+    fires_if_any:
+      - {field: "security.critical_count", op: "gt", value: 0}
+
+  - id: STOP-CLAIM-EVIDENCE-CONTRADICTION
+    category: safety
+    title: "Claim/evidence contradiction"
+    description: >
+      A shipped claim is contradicted by its own evidence artifact (the claim
+      graph found a claim whose attached evidence does not support — or
+      refutes — it). Shipping a refuted claim is a governance breach.
+    detected_by: >
+      claims.contradiction_count > 0 from the claim-artifact graph check.
+    fires_if_any:
+      - {field: "claims.contradiction_count", op: "gt", value: 0}
+
+  - id: STOP-DATA-LEAKAGE
+    category: safety
+    title: "Data leakage"
+    description: >
+      Secret-scan / leakage detection found credentials, keys, or restricted
+      data in the release closure, or train/test leakage in a reported result.
+    detected_by: >
+      data_leakage.leak_count > 0 from the leakage / secret scan.
+    fires_if_any:
+      - {field: "data_leakage.leak_count", op: "gt", value: 0}
+
+  - id: STOP-EXTERNAL-REPRO-FAILED
+    category: safety
+    title: "Failed external reproduction"
+    description: >
+      An independent external reproduction of the release's headline result did
+      not pass. Any status other than an explicit PASS (including PENDING or a
+      missing field) stops the release fail-closed.
+    detected_by: >
+      reproduction.external_status != "PASS".
+    fires_if_any:
+      - {field: "reproduction.external_status", op: "ne", value: "PASS"}
+
+  - id: STOP-NONDETERMINISTIC-CANONICAL
+    category: safety
+    title: "Non-deterministic canonical result"
+    description: >
+      The canonical result hash was not bit-stable across repeated runs
+      (Law T6 / determinism kit). A result that does not reproduce to the bit
+      is not a verified artifact.
+    detected_by: >
+      determinism.canonical_hash_stable == false.
+    fires_if_any:
+      - {field: "determinism.canonical_hash_stable", op: "eq", value: false}
+
+  # ---- Governance preconditions (fail-closed; NEVER override a safety stop) --
+  #
+  # These make approval + a fresh rerun NECESSARY for GO. They are evaluated as
+  # ordinary fail-closed stops, so they can only ADD a NO_GO reason — there is
+  # no code path in which setting approval/freshness true removes any safety
+  # stop above.
+
+  - id: GOV-RERUN-NOT-FRESH
+    category: governance
+    title: "Release-state is not from a fresh rerun"
+    description: >
+      GO requires a release-state produced by a genuine fresh execution of the
+      pipeline, not a cached, replayed, or hand-edited verdict. Recovery from a
+      prior NO_GO is a fresh rerun — not a re-submission of an old state.
+    detected_by: >
+      run.fresh == false (or the field is absent).
+    fires_if_any:
+      - {field: "run.fresh", op: "eq", value: false}
+
+  - id: GOV-APPROVAL-ABSENT
+    category: governance
+    title: "Release is not approved"
+    description: >
+      GO requires an explicit approval on the clean, fresh state. Approval is a
+      NECESSARY precondition; it is never sufficient to clear a safety stop.
+    detected_by: >
+      approval.approved == false (or the field is absent).
+    fires_if_any:
+      - {field: "approval.approved", op: "eq", value: false}

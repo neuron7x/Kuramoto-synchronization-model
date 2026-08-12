@@ -1,0 +1,85 @@
+# Diff-bound acceptor: machine-checked operating-domain registry (Phase 4 —
+# "math doesn't live without a declared validity domain").
+#
+# This is NOT a restatement of the physics invariants (those, with proofs and
+# falsifiers, live in .claude/physics/INVARIANTS.yaml). It is the orthogonal,
+# caller-facing contract: the input conditions under which each estimator is
+# valid / degraded / invalid. A result computed outside its valid domain is an
+# artefact, not a finding. A fail-closed gate keeps the registry wired to
+# reality (sources exist; referenced invariants exist; all domains declared).
+
+id: math-boundaries-registry
+status: ACTIVE
+claim_type: governance
+promise: >-
+  Adds docs/math_boundaries.yaml — a caller-facing operating-domain registry for
+  6 estimators (Rosenstein MLE, Gabor time-frequency, Ollivier-Ricci on the price
+  graph, Ott-Antonsen, Kuramoto order parameter, DRO-ARA regime) declaring per
+  kernel its source, referenced invariants, and non-empty valid / degraded /
+  invalid domains plus a falsifier — and scripts/ci/check_math_boundaries.py, a
+  fail-closed gate that verifies every entry is structurally complete, every
+  source path exists, every referenced INV-* exists in the canonical invariant
+  registry (via scripts.count_invariants.collect_invariant_ids), and every id is
+  unique. The canonical invariant set is loaded from scripts/count_invariants.py
+  by absolute file path (importlib) rather than a `scripts.*` package import, so
+  the gate runs identically under pytest, `python -m`, and the documented
+  `python scripts/ci/check_math_boundaries.py` path invocation (whose sys.path[0]
+  is scripts/ci, not the repo root) — with no sys.path mutation (the release-gate
+  probe_b_path_hacks fail-closes on that) and no parser duplication (count_invariants
+  stays the single source of truth). The gate is orthogonal to INVARIANTS.yaml
+  (operating preconditions for callers, not the mathematical invariants). Registered
+  in INVENTORY.json. mypy --strict clean, no type:ignore / noqa.
+  tests/scripts/test_check_math_boundaries.py adds 9 cases incl. the shipped registry
+  passing its own gate, each failure mode (missing field, unknown invariant, missing
+  source, duplicate id), and a subprocess regression that runs the documented path
+  invocation end-to-end. No runtime path touched.
+diff_scope:
+  changed_files:
+    - path: ".claude/commit_acceptors/math-boundaries-registry.yaml"
+    - path: "docs/math_boundaries.yaml"
+    - path: "scripts/ci/check_math_boundaries.py"
+    - path: "tests/scripts/test_check_math_boundaries.py"
+  forbidden_paths:
+    - "trading/"
+    - "execution/"
+    - "forecast/"
+    - "policy/"
+required_python_symbols:
+  - "check_registry"
+  - "main"
+expected_signal: >-
+  python scripts/ci/check_math_boundaries.py exits 0 with "6 kernels, all sources
+  + invariants resolved" — INCLUDING when run as a bare file path from the repo
+  root (sys.path[0] == scripts/ci), not only under pytest / python -m; pytest
+  tests/scripts/test_check_math_boundaries.py is green (9 cases) including the
+  shipped registry passing, every failure mode (empty kernels, missing text field,
+  unknown invariant, missing source path, duplicate id) being caught, and the
+  subprocess path-invocation regression; mypy --strict / ruff / black clean;
+  check_inventory_sync exits 0 with check_math_boundaries.py registered.
+measurement_command: >-
+  python -m pytest tests/scripts/test_check_math_boundaries.py -v
+signal_artifact: "tmp/math_boundaries_pytest.log"
+falsifier:
+  command: >-
+    python -c "import sys, pathlib;
+    from scripts.ci.check_math_boundaries import check_registry;
+    reg = {'kernels': [{'id': 'x', 'name': 'n', 'source': 'scripts/ci/check_math_boundaries.py', 'invariants': ['INV-NOPE'], 'valid': 'v', 'degraded': 'd', 'invalid': 'i', 'falsifier': 'f'}]};
+    errs = check_registry(reg, known_invariants={'INV-REAL'}, root=pathlib.Path('.'));
+    print(errs);
+    sys.exit(0 if any('unknown invariant' in e for e in errs) else 1)"
+  description: >-
+    Inverse probe: a registry entry referencing a non-existent invariant
+    (INV-NOPE) must be flagged. Exits non-zero unless the gate reports an
+    'unknown invariant' error — i.e. iff the cross-reference against the
+    canonical invariant registry is broken, which is exactly the dangling-domain
+    drift the gate exists to prevent.
+rollback_command: >-
+  git rm -f docs/math_boundaries.yaml scripts/ci/check_math_boundaries.py
+  tests/scripts/test_check_math_boundaries.py
+  .claude/commit_acceptors/math-boundaries-registry.yaml
+rollback_verification_command: >-
+  test ! -f scripts/ci/check_math_boundaries.py
+memory_update_type: append
+ledger_path: ".claude/commit_acceptors/math-boundaries-registry.yaml"
+report_path: ".claude/commit_acceptors/math-boundaries-registry.yaml"
+evidence: []

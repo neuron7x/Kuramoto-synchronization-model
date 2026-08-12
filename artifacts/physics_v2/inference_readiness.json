@@ -1,0 +1,26 @@
+{
+  "blocker_path": "",
+  "checks": {
+    "capsule_integrity": {
+      "blocker": "",
+      "ok": true
+    },
+    "causality": {
+      "blocker": "",
+      "ok": true
+    },
+    "synthetic_promotion": {
+      "blocker": "",
+      "ok": true
+    },
+    "witness_index": {
+      "blocker": "",
+      "ok": true
+    }
+  },
+  "declared_tier": "SYNTHETIC_ONLY",
+  "generated_by": "scripts/ci/check_physics_inference_readiness.py",
+  "real_dataset_fingerprint": "",
+  "schema_version": 1,
+  "verdict": "READY_SYNTHETIC_ONLY"
+}

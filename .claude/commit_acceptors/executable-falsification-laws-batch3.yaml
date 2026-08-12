@@ -1,0 +1,68 @@
+# ci-heartbeat: executable-falsification-laws-batch3
+id: executable-falsification-laws-batch3
+status: ACTIVE
+claim_type: fail_closed
+promise: >-
+  Third batch transforming declaration-only canonical laws into executable
+  falsification contracts across two new physics domains (dynamical_systems,
+  neuromodulation): dro_ara.gamma_derivation (gamma = 2H+1 exact, INV-DRO1),
+  kelly.optimal_fraction_formula (f* = mu/sigma^2, INV-KELLY1/2), serotonin
+  level_bounds + lyapunov_stability (INV-5HT2/5HT1), dopamine
+  rpe_zero_steady_state + bounded_signal (INV-DA5/DA8), and gaba gate_bounds +
+  monotone_inhibition (INV-GABA1/3). Each reuses the REAL solver (derive_gamma,
+  kelly_from_edge_variance, SerotoninODE, DopamineController/adapter,
+  GABAPositionGate) with a positive witness and a discriminating negative
+  control. Strengthens the physics-contracts CI gate to require every emitted
+  evidence report (thermodynamics, ecs_lyapunov, dro_ara_gamma,
+  dynamical_systems, neuromodulation). Canonical catalog.yaml is untouched.
+diff_scope:
+  changed_files:
+    - path: ".claude/commit_acceptors/executable-falsification-laws-batch3.yaml"
+    - path: ".github/workflows/physics-contracts.yml"
+    - path: "tests/physics/test_dro_ara_gamma.py"
+    - path: "tests/physics/test_kelly_optimal_fraction.py"
+    - path: "tests/physics/test_serotonin_laws.py"
+    - path: "tests/physics/test_dopamine_laws.py"
+    - path: "tests/physics/test_gaba_laws.py"
+  forbidden_paths:
+    - "trading/"
+    - "execution/"
+    - "forecast/"
+    - "policy/"
+required_python_symbols: []
+expected_signal: >-
+  tools/validate_physics_contracts.py reports 29 blocking laws fully witnessed
+  (was 21) with every positive witness and negative control collected. Each new
+  witness passes: positive witnesses confirm the law against the real solver,
+  negative controls refute a planted violation or fail closed. The CI gate now
+  fails closed if any of the eight domain evidence reports is not emitted. No
+  canonical catalog mutation, no trading/execution/forecast/policy change.
+measurement_command: >-
+  PYTHONPATH=. python tools/validate_physics_contracts.py && PYTHONPATH=.
+  python -m pytest tests/physics/test_dro_ara_gamma.py
+  tests/physics/test_kelly_optimal_fraction.py
+  tests/physics/test_serotonin_laws.py tests/physics/test_dopamine_laws.py
+  tests/physics/test_gaba_laws.py -q
+signal_artifact: "tmp/executable_falsification_laws_batch3.log"
+falsifier:
+  command: >-
+    PYTHONPATH=. python -m pytest tests/physics/test_dro_ara_gamma.py
+    tests/physics/test_kelly_optimal_fraction.py
+    tests/physics/test_gaba_laws.py -q
+  description: >-
+    Fails if any new law's positive witness stops confirming the law against
+    its real solver, or if a negative control stops refuting its planted
+    violation.
+rollback_command: >-
+  git checkout origin/main -- .github/workflows/physics-contracts.yml
+rollback_verification_command: >-
+  PYTHONPATH=. python tools/validate_physics_contracts.py
+memory_update_type: none
+ledger_path: ".claude/commit_acceptors/executable-falsification-laws-batch3.yaml"
+report_path: ".claude/commit_acceptors/executable-falsification-laws-batch3.yaml"
+evidence:
+  - path: "tests/physics/test_dro_ara_gamma.py"
+  - path: "tests/physics/test_kelly_optimal_fraction.py"
+  - path: "tests/physics/test_serotonin_laws.py"
+  - path: "tests/physics/test_dopamine_laws.py"
+  - path: "tests/physics/test_gaba_laws.py"

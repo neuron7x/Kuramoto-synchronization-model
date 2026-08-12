@@ -1,3 +1,5 @@
+# Copyright (c) 2023-2026 Yaroslav Vasylenko (neuron7xLab)
+# SPDX-License-Identifier: MIT
 """Cryptographically secure random number generation.
 
 This module provides secure random number generation for security-sensitive operations,

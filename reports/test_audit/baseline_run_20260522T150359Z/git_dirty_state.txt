@@ -1,0 +1,3 @@
+ M go.work.sum
+ M reports/test_audit/baseline_run_20260522T145545Z/artifact_manifest.sha256
+?? reports/test_audit/baseline_run_20260522T150359Z/

@@ -1,0 +1,84 @@
+# Diff-bound commit acceptor (3 of 3) for PR #1242 ricci_microstructure_v1.
+#
+# Scope: the DOCUMENTATION surface of the lane — the CLAIMS.md entry and the
+# three lane docs (negative-results contract, reproducibility instructions, and
+# the lane overview). These root/non-governance .md files are treated as
+# acceptor-bound code by the commit-acceptor policy, so they are bound here under
+# the documentation claim_type (cap 24) rather than inflating the correctness or
+# governance acceptors.
+
+id: ricci-microstructure-v1-docs
+status: ACTIVE
+claim_type: documentation
+promise: >-
+  The lane documentation states the falsification contract honestly and never
+  promotes a negative result: docs/NEGATIVE_RESULTS.md defines support strictly
+  (p_value < 0.01 AND |cliffs_delta| >= 0.147) and labels HYPOTHESIS_NOT_SUPPORTED
+  a successful falsification (not a pipeline failure); CLAIMS.md carries the lane
+  claim at tier T3 (exploratory / falsifiable), with no alpha, market-law,
+  production, or physics-confirmed language; docs/REPRODUCIBILITY.md and
+  docs/RICCI_MICROSTRUCTURE.md describe the ingest -> run -> verify capsule on the
+  committed honest Binance substrate.
+
+diff_scope:
+  changed_files:
+    - path: "CLAIMS.md"
+    - path: "docs/NEGATIVE_RESULTS.md"
+    - path: "docs/REPRODUCIBILITY.md"
+    - path: "docs/RICCI_MICROSTRUCTURE.md"
+    # Claim-derived artifacts regenerated from the CLAIMS.md entry above
+    # (HYPOTHESIS tier) by the artifact-freshness gate; bound with their source.
+    - path: "docs/architecture/claim_graph.json"
+    - path: "artifacts/.manifest.json"
+    # Bibliography + claim-source matrix entries backing the new CLAIMS.md claim.
+    - path: "docs/BIBLIOGRAPHY.md"
+    - path: "docs/claim_source_matrix.json"
+    # Dataset provenance sidecar for the committed Binance public-depth substrate
+    # (honest origin/forbidden-use record; required by the dataset-metadata gate).
+    - path: "data/raw/binance_btcusdt_depth10.csv.meta.json"
+  forbidden_paths:
+    - "trading/"
+    - "execution/"
+    - "forecast/"
+    - "policy/"
+
+required_python_symbols: []
+
+expected_signal: >-
+  docs/NEGATIVE_RESULTS.md contains the strict support criterion and frames
+  HYPOTHESIS_NOT_SUPPORTED as a successful falsification; no doc contains a
+  forbidden promotion token (ALPHA_FOUND / MARKET_SIGNAL_PROVEN / PRODUCTION_READY
+  / PHYSICS_CONFIRMED).
+
+measurement_command: |-
+  bash -c 'grep -q "p_value < 0.01" docs/NEGATIVE_RESULTS.md && grep -qi "successful falsification" docs/NEGATIVE_RESULTS.md'
+
+signal_artifact: "tmp/ricci_microstructure_v1_docs.log"
+
+falsifier:
+  # Extracted to a committed single-purpose script (reflow-proof; see the
+  # commit-acceptor command-syntax gate).
+  command: |-
+    bash -c 'PYTHONPATH=. python scripts/ci/ricci_microstructure_docs_falsifier.py'
+  description: >-
+    Inverts the honesty contract: the lane docs MUST keep the negative-result
+    framing ("successful falsification") and MUST NOT contain any forbidden
+    market-mythology promotion token. Rewriting NEGATIVE_RESULTS.md to drop the
+    falsification framing, or injecting an ALPHA_FOUND-style promotion into the
+    docs, flips this command to a non-zero exit.
+
+rollback_command: >-
+  bash -c '
+    git rm -f docs/NEGATIVE_RESULTS.md docs/REPRODUCIBILITY.md docs/RICCI_MICROSTRUCTURE.md
+      .claude/commit_acceptors/ricci-microstructure-v1-docs.yaml
+    && git checkout origin/main -- CLAIMS.md
+  '
+
+rollback_verification_command: >-
+  bash -c '
+    test ! -e docs/NEGATIVE_RESULTS.md && test ! -e docs/RICCI_MICROSTRUCTURE.md
+  '
+
+memory_update_type: none
+ledger_path: ".claude/commit_acceptors/ricci-microstructure-v1-docs.yaml"
+report_path: "docs/NEGATIVE_RESULTS.md"

@@ -3,7 +3,7 @@
 ## Purpose
 
 This runbook codifies the steps required to rotate all credentials managed by
-HashiCorp Vault for TradePulse services. It ensures rotations are performed
+HashiCorp Vault for GeoSync services. It ensures rotations are performed
 consistently, audited, and validated across dynamic and static secret
 workflows.
 
@@ -12,7 +12,7 @@ workflows.
 - **Systems** – Trading execution connectors, ingestion services, analytics
   workers, CI pipelines, and supporting databases that authenticate via Vault.
 - **Secret Classes** – KV v2 static secrets, database dynamic credentials, JWT
-  issuer keys, and API tokens used by TradePulse adapters.
+  issuer keys, and API tokens used by GeoSync adapters.
 - **Environments** – Production, staging, and disaster recovery regions.
 
 ## Pre-Rotation Checklist
@@ -22,7 +22,7 @@ workflows.
 2. Verify the on-call SRE has `update` capabilities on the target mounts via
    `vault token capabilities secret/data/<path>`.
 3. Ensure CI is green and no live deployment is running.
-4. Announce the rotation window in the `#tradepulse-ops` channel and tag the
+4. Announce the rotation window in the `#geosync-ops` channel and tag the
    security liaison.
 
 ## Static Secret Rotation (KV v2)
@@ -44,16 +44,16 @@ workflows.
 
 ## Dynamic Credential Rotation
 
-TradePulse services prefer dynamic credentials. Use the bundled automation to
+GeoSync services prefer dynamic credentials. Use the bundled automation to
 issue a fresh lease and distribute it to the runtime environment.
 
 ```bash
 python -m scripts.cli \
   --env-file scripts/.env \
   secrets-issue-dynamic \
-  --address https://vault.tradepulse.internal:8200 \
+  --address https://vault.geosync.internal:8200 \
   --mount database \
-  --role tradepulse-execution \
+  --role geosync-execution \
   --token-env VAULT_TOKEN \
   --output state/vault/dynamic_execution.json \
   --refresh-margin 120

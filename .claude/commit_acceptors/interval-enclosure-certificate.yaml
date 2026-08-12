@@ -1,0 +1,46 @@
+# ci-heartbeat: interval-enclosure-certificate
+id: interval-enclosure-certificate
+status: ACTIVE
+claim_type: fail_closed
+promise: >-
+  Add the interval_enclosure_certificate law: verified computing for the
+  algebraic laws. A minimal directed-rounding Interval (math.nextafter, no deps)
+  brackets the true mu/sigma^2 (Kelly) and k_B*T*ln2 (Landauer); the repo float
+  result is proven to lie inside a tight (few-ULP) enclosure, and a wrong value
+  is provably excluded. No canonical catalog mutation, no
+  trading/execution/forecast/policy change.
+diff_scope:
+  changed_files:
+    - path: ".claude/commit_acceptors/interval-enclosure-certificate.yaml"
+    - path: "tests/physics/test_interval_enclosure_certificate.py"
+  forbidden_paths:
+    - "trading/"
+    - "execution/"
+    - "forecast/"
+    - "policy/"
+required_python_symbols: []
+expected_signal: >-
+  tools/validate_physics_contracts.py reports 47 blocking laws fully witnessed
+  (was 46). Repo Kelly and Landauer results lie inside outward-rounded enclosures
+  of width < 1e-12 relative; a 1e-9-perturbed value is excluded. No
+  trading/execution/forecast/policy change.
+measurement_command: >-
+  PYTHONPATH=. python tools/validate_physics_contracts.py && PYTHONPATH=.
+  python -m pytest tests/physics/test_interval_enclosure_certificate.py -q
+signal_artifact: "tmp/interval_enclosure_certificate.log"
+falsifier:
+  command: >-
+    PYTHONPATH=. python -m pytest
+    tests/physics/test_interval_enclosure_certificate.py -q
+  description: >-
+    Fails if a repo result falls outside its certified enclosure or the enclosure
+    fails to exclude a wrong value.
+rollback_command: >-
+  git rm -f tests/physics/test_interval_enclosure_certificate.py
+rollback_verification_command: >-
+  PYTHONPATH=. python tools/validate_physics_contracts.py
+memory_update_type: none
+ledger_path: ".claude/commit_acceptors/interval-enclosure-certificate.yaml"
+report_path: ".claude/commit_acceptors/interval-enclosure-certificate.yaml"
+evidence:
+  - path: "tests/physics/test_interval_enclosure_certificate.py"

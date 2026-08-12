@@ -1,0 +1,122 @@
+# Diff-bound commit acceptor for the Canonical Seven foundation layer.
+#
+# Adds three new pure-function modules under research/systemic_risk/
+# that operationalise pillars 1, 2, and 5 of the Canonical Seven:
+#
+#   1. death_conditions.py  — typed kill / demote trigger registry
+#                              with KILL > INVALIDATE > QUARANTINE
+#                              > DEMOTE > STOP precedence.
+#   2. evidence_ledger.py   — Bayesian append-only log-odds ledger
+#                              with chronological-order enforcement
+#                              and BF=0 / posterior-floor kill paths.
+#   3. leakage_sentinel.py  — six runnable leakage / causality
+#                              sentinels (future_data,
+#                              post_event_contamination,
+#                              centered_windows, full_sample_norm,
+#                              label_leakage, crisis_date_tuning).
+#
+# Each ships a dedicated test file. All three are mypy --strict /
+# ruff / black clean; no I/O; no global state.
+#
+# Locally verified:
+#   * pytest tests/research/systemic_risk/test_evidence_ledger.py
+#           tests/research/systemic_risk/test_death_conditions.py
+#           tests/research/systemic_risk/test_leakage_sentinel.py: 56/56 pass
+#   * mypy --strict on the six new files: 0 errors
+#   * ruff check + black --check: all clean
+
+id: canonical-seven-foundation
+status: ACTIVE
+claim_type: governance
+promise: >-
+  After this PR lands, ``research.systemic_risk`` exposes three new
+  fail-closed primitives — ``EvidenceLedger`` (Bayesian update),
+  ``DeathConditionsRegistry`` (kill / demote trigger arbiter), and
+  the six ``check_*`` leakage sentinels with ``run_leakage_audit`` —
+  along with their dataclasses and protocols. The package public
+  surface grows without breaking any pre-existing import.
+
+diff_scope:
+  changed_files:
+    - path: ".claude/commit_acceptors/canonical-seven-foundation.yaml"
+    - path: "research/systemic_risk/__init__.py"
+    - path: "research/systemic_risk/CANON.md"
+    - path: "research/systemic_risk/death_conditions.py"
+    - path: "research/systemic_risk/evidence_ledger.py"
+    - path: "research/systemic_risk/leakage_sentinel.py"
+    - path: "tests/research/systemic_risk/test_death_conditions.py"
+    - path: "tests/research/systemic_risk/test_evidence_ledger.py"
+    - path: "tests/research/systemic_risk/test_leakage_sentinel.py"
+  forbidden_paths:
+    - "trading/"
+    - "execution/"
+    - "forecast/"
+    - "policy/"
+    - "core/"
+    - "runtime/"
+    - "application/"
+
+required_python_symbols:
+  - "research/systemic_risk/evidence_ledger.py::EvidenceLedger"
+  - "research/systemic_risk/evidence_ledger.py::Evidence"
+  - "research/systemic_risk/evidence_ledger.py::auc_per_crisis_bayes_factor"
+  - "research/systemic_risk/death_conditions.py::DeathConditionsRegistry"
+  - "research/systemic_risk/death_conditions.py::default_registry"
+  - "research/systemic_risk/death_conditions.py::TierTransition"
+  - "research/systemic_risk/leakage_sentinel.py::run_leakage_audit"
+  - "research/systemic_risk/leakage_sentinel.py::check_future_data_via_mutation"
+
+expected_signal: >-
+  ``pytest tests/research/systemic_risk/test_evidence_ledger.py
+  tests/research/systemic_risk/test_death_conditions.py
+  tests/research/systemic_risk/test_leakage_sentinel.py -q`` reports
+  56 passed; before this PR the same command fails with
+  ModuleNotFoundError on the three new module imports.
+
+measurement_command: >-
+  bash -c '
+    mypy --strict
+      research/systemic_risk/death_conditions.py
+      research/systemic_risk/evidence_ledger.py
+      research/systemic_risk/leakage_sentinel.py
+      tests/research/systemic_risk/test_death_conditions.py
+      tests/research/systemic_risk/test_evidence_ledger.py
+      tests/research/systemic_risk/test_leakage_sentinel.py && python -m pytest
+      tests/research/systemic_risk/test_death_conditions.py
+      tests/research/systemic_risk/test_evidence_ledger.py
+      tests/research/systemic_risk/test_leakage_sentinel.py -q
+  '
+
+signal_artifact: "tmp/canonical_seven_foundation.log"
+
+falsifier:
+  command: |-
+    bash -c '
+      python -c "from research.systemic_risk import EvidenceLedger, DeathConditionsRegistry, run_leakage_audit; assert EvidenceLedger is not None and DeathConditionsRegistry is not None and run_leakage_audit is not None" 2>/dev/null && exit 1 || exit 0
+    '
+  description: >-
+    Probes that the three foundation primitives are exported from the
+    public package surface. The falsifier inverts: it succeeds
+    (exit 0) only when one of the three imports fails, which would
+    mean the foundation layer rolled back.
+
+rollback_command: >-
+  bash -c '
+    git rm -f
+      research/systemic_risk/CANON.md
+      research/systemic_risk/death_conditions.py
+      research/systemic_risk/evidence_ledger.py
+      research/systemic_risk/leakage_sentinel.py
+      tests/research/systemic_risk/test_death_conditions.py
+      tests/research/systemic_risk/test_evidence_ledger.py
+      tests/research/systemic_risk/test_leakage_sentinel.py
+      .claude/commit_acceptors/canonical-seven-foundation.yaml && git checkout HEAD~1 -- research/systemic_risk/__init__.py
+  '
+
+rollback_verification_command: |-
+  python -c "import importlib.util,importlib,sys; _p=lambda m: all(importlib.util.find_spec('.'.join(m.split('.')[:i+1])) for i in range(len(m.split('.')))); present=_p('research.systemic_risk') and hasattr(importlib.import_module('research.systemic_risk'),'EvidenceLedger'); sys.exit(1 if present else 0)"
+
+memory_update_type: append
+ledger_path: ".claude/commit_acceptors/canonical-seven-foundation.yaml"
+report_path: "tmp/canonical_seven_foundation.log"
+evidence: []

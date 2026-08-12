@@ -1,0 +1,149 @@
+{
+  "configured": 0,
+  "providers": [
+    {
+      "configured": false,
+      "covers_assets": [
+        "XAUUSD",
+        "XAGUSD",
+        "EURUSD",
+        "GBPUSD",
+        "USDJPY",
+        "USA_500_Index",
+        "GER_40_Index"
+      ],
+      "docs_url": "https://www.dukascopy.com/swiss/english/marketwatch/historical/",
+      "env_var": "DUKASCOPY_DOWNLOAD_DIR",
+      "notes": "Free tick-level bid/ask for FX, metals and indices back to 2003. Use the `dukascopy-python` package to materialise raw ticks into parquet. L1 only (no depth), but it IS the cleanest free source for XAUUSD bid/ask hourly.",
+      "provider": "Dukascopy Bank SA",
+      "source_id": "dukascopy_historical",
+      "supports_bid_ask": true,
+      "supports_depth": false,
+      "supports_trades": false,
+      "transport": "file"
+    },
+    {
+      "configured": false,
+      "covers_assets": [
+        "XAUUSD",
+        "XAGUSD",
+        "EURUSD",
+        "GBPUSD",
+        "USDJPY",
+        "AUDUSD",
+        "USDCAD"
+      ],
+      "docs_url": "https://developer.oanda.com/rest-live-v20/introduction/",
+      "env_var": "OANDA_API_TOKEN",
+      "notes": "Free practice account gives live FX + XAU/XAG bid/ask via /v3/instruments/{instrument}/candles?price=BA. L1 only but updates every 5 s. Paid production feed for live trading.",
+      "provider": "OANDA Corp",
+      "source_id": "oanda_v20",
+      "supports_bid_ask": true,
+      "supports_depth": false,
+      "supports_trades": false,
+      "transport": "rest"
+    },
+    {
+      "configured": false,
+      "covers_assets": [
+        "USA_500_Index",
+        "SPDR_S_P_500_ETF",
+        "ES_FUT",
+        "NQ_FUT",
+        "GC_FUT",
+        "CL_FUT",
+        "ZB_FUT"
+      ],
+      "docs_url": "https://databento.com/docs",
+      "env_var": "DATABENTO_API_KEY",
+      "notes": "Institutional tick data for CME / ICE / NASDAQ. Full L2 book, trades, OFI derivable. Priced per-byte; ~$500-2000/month for the Askar universe. This is the reference L2 source.",
+      "provider": "Databento Inc.",
+      "source_id": "databento",
+      "supports_bid_ask": true,
+      "supports_depth": true,
+      "supports_trades": true,
+      "transport": "rest"
+    },
+    {
+      "configured": false,
+      "covers_assets": [
+        "SPDR_S_P_500_ETF",
+        "QQQ",
+        "VIX",
+        "HYG",
+        "TLT",
+        "XAUUSD_via_GLD"
+      ],
+      "docs_url": "https://polygon.io/docs",
+      "env_var": "POLYGON_API_KEY",
+      "notes": "US equities + options + FX + crypto. Tick data with NBBO bid/ask, trades, aggregate bars. $29-199/month. Cheaper than Databento, no L2 depth.",
+      "provider": "Polygon.io",
+      "source_id": "polygon_io",
+      "supports_bid_ask": true,
+      "supports_depth": false,
+      "supports_trades": true,
+      "transport": "rest"
+    },
+    {
+      "configured": false,
+      "covers_assets": [
+        "SPDR_S_P_500_ETF",
+        "ES_FUT",
+        "GC_FUT",
+        "XAUUSD",
+        "EURUSD",
+        "USDJPY",
+        "QQQ",
+        "HYG",
+        "VIX"
+      ],
+      "docs_url": "https://interactivebrokers.github.io/tws-api/",
+      "env_var": "IBKR_GATEWAY_HOST",
+      "notes": "Full L2 depth across equities, futures, FX via TWS/Gateway. Requires funded IBKR account (~$10k minimum) + market-data subscriptions ($1-10/month per exchange). Covers Askar's universe end-to-end.",
+      "provider": "Interactive Brokers LLC",
+      "source_id": "interactive_brokers",
+      "supports_bid_ask": true,
+      "supports_depth": true,
+      "supports_trades": true,
+      "transport": "websocket"
+    },
+    {
+      "configured": false,
+      "covers_assets": [
+        "BTCUSDT",
+        "ETHUSDT",
+        "SOLUSDT",
+        "BNBUSDT"
+      ],
+      "docs_url": "https://binance-docs.github.io/apidocs/futures/en/",
+      "env_var": "BINANCE_WS_ENDPOINT",
+      "notes": "Free public stream with full L2 depth, aggregate trades and funding rates. Covers crypto only \u2014 NOT Askar's equity/gold universe \u2014 but is the cheapest way to validate the pipeline end-to-end on real microstructure before wiring paid vendors.",
+      "provider": "Binance USDT-M Futures",
+      "source_id": "binance_futures",
+      "supports_bid_ask": true,
+      "supports_depth": true,
+      "supports_trades": true,
+      "transport": "websocket"
+    },
+    {
+      "configured": false,
+      "covers_assets": [
+        "USA_500_Index",
+        "SPDR_S_P_500_ETF",
+        "XAUUSD",
+        "EURUSD",
+        "USDJPY"
+      ],
+      "docs_url": "internal \u2014 request directly from OTS Capital",
+      "env_var": "ASKAR_L2_ENDPOINT",
+      "notes": "Askar's original claim was L2 data; what we received was resampled OHLC close bars. The agent should escalate this as a P0 stakeholder task: request raw tick/depth stream from OTS Capital's primary feed, not the bar export.",
+      "provider": "Ali H. Askar / OTS Capital",
+      "source_id": "askar_ots_raw_l2",
+      "supports_bid_ask": true,
+      "supports_depth": true,
+      "supports_trades": true,
+      "transport": "internal_api"
+    }
+  ],
+  "total": 7
+}

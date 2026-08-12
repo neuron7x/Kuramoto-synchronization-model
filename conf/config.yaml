@@ -5,8 +5,8 @@ defaults:
   - _self_
 
 project:
-  name: "TradePulse"
-  description: "Unified Hydra configuration for TradePulse analytics experiments."
+  name: "GeoSync"
+  description: "Unified Hydra configuration for GeoSync analytics experiments."
 
 reproducibility:
   enforce_python_hash_seed: true
@@ -20,5 +20,5 @@ hydra:
     subdir: ${hydra.job.num}
   job:
     chdir: true
-    name: tradepulse_${experiment.name}
+    name: geosync_${experiment.name}
   output_subdir: ${experiment.name}

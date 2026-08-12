@@ -1,0 +1,81 @@
+{
+  "artifacts": [
+    {
+      "generator": null,
+      "path": "artifacts/cache/feature_cache_freshness_matrix.json",
+      "reproducible": null,
+      "sha256": "68cdbb6b27a631c548c9510121e9d74f26dfb013d5e1bf2fc0965b38604462b4"
+    },
+    {
+      "generator": null,
+      "path": "artifacts/concurrency/concurrency_matrix.json",
+      "reproducible": null,
+      "sha256": "e49a7808521aeb5c4abb4ada7edc74b5eae0868fd09158acecf929b425a70067"
+    },
+    {
+      "generator": null,
+      "path": "artifacts/inference/apex_adversarial_report.json",
+      "reproducible": null,
+      "sha256": "fd94b155cc321ed6213d81f6916c3962c8c0237fe1ec4e50db8d3c9b26e3fff4"
+    },
+    {
+      "generator": null,
+      "path": "artifacts/inference/apparatus_transfer_report.json",
+      "reproducible": null,
+      "sha256": "c812d91231cefeee2d59986833e3687a60228d11c7c8aa5b6f05fb695a80a991"
+    },
+    {
+      "generator": "tools/audit_final_inference_verdict.py",
+      "path": "artifacts/inference/final_inference_verdict.json",
+      "reproducible": true,
+      "sha256": "f30aa7886276ed5f425f4cfdd81c43558878314864520c8e386b4080fb2e0443"
+    },
+    {
+      "generator": "tools/audit_no_ungrounded_act.py",
+      "path": "artifacts/inference/no_ungrounded_act.json",
+      "reproducible": true,
+      "sha256": "418068219af65f02079c7ad0a624b207115073edd66a117c90c6f0e59cee893b"
+    },
+    {
+      "generator": null,
+      "path": "artifacts/messaging/event_bus_lifecycle_matrix.json",
+      "reproducible": null,
+      "sha256": "1d7f136a121fed6b8b12592304a398d1a378e5a287e0e5fd2597be596a74a40e"
+    },
+    {
+      "generator": "tools/audit_homeostasis_contract.py",
+      "path": "artifacts/neuro/homeostasis_contract.json",
+      "reproducible": true,
+      "sha256": "0346a7231180c2bc7c67c4b966d7d54c2d55477da6f3d6b775be053fbaf840a4"
+    },
+    {
+      "generator": "tools/audit_opponency_lyapunov.py",
+      "path": "artifacts/neuro/opponency_lyapunov.json",
+      "reproducible": true,
+      "sha256": "7bbc43a4b235e320148379959f65c38e63070727f3049ca5bd556cd2d7f02cf5"
+    },
+    {
+      "generator": "tools/audit_kuramoto_synchrony.py",
+      "path": "artifacts/physics/kuramoto_synchrony.json",
+      "reproducible": true,
+      "sha256": "512fb6a33303382465e72e3249271b79ace3f545ada3abf9df169d03352ce51b"
+    },
+    {
+      "generator": null,
+      "path": "artifacts/state/mutable_state_registry.json",
+      "reproducible": null,
+      "sha256": "3553f80fd956648b43a695d34a8e1475743202e431c44e00825defc1423d9129"
+    },
+    {
+      "generator": null,
+      "path": "artifacts/time/causal_prefix_matrix.json",
+      "reproducible": null,
+      "sha256": "26dba23aad0db4a4f26f02a01b59e1c3a6d7f4923e76761c9a34e5b86ee749ca"
+    }
+  ],
+  "boundary": "Content-addressed tamper-evident provenance (SLSA/in-toto style hash chain), not a PKI signature. A KMS-backed signature over provenance_root is a deploy-time step, out of repo scope.",
+  "provenance_root": "2fa19cf37f34d7f0eb28aa21353ae64af003af140e60739d325e809e96b9b4d0",
+  "report_only": false,
+  "schema": "geosync.inference_provenance.v1",
+  "verdict": "PASS"
+}

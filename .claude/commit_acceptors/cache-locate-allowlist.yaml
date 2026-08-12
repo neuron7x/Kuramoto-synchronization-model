@@ -1,0 +1,77 @@
+# Diff-bound commit acceptor: close a MEDIUM arbitrary-import in the JSON cache
+# decoder.
+#
+# `core/indicators/cache.py::_locate` imported an arbitrary `module:Class` named
+# in a JSON cache payload (via the `dataclass` / `enum` markers) with NO
+# allowlist, while the sibling pickle path (`_restricted_unpickle`) was already
+# guarded by `_SafeUnpickler.find_class`. A writer of the cache directory could
+# name `os:system` (etc.) to trigger an import — import-time side effects — and
+# instantiation.
+#
+# Fix: hoist the unpickler's allowlist to module scope (single source of truth)
+# and enforce it in `_locate`, failing closed on any non-allowlisted module or
+# unsafe builtin. The restricted unpickler now reuses the same constants, so both
+# deserialisation paths share one rule set with no behaviour change.
+#
+# Locally verified:
+#   * pytest tests/unit/indicators/test_cache_locate_allowlist.py -> 13 passed
+#   * pytest tests/unit/test_indicator_cache.py tests/unit/indicators/test_cache_extended.py
+#       tests/unit/test_cache_system.py -> 33 passed (no regression)
+#   * bandit -ll core/indicators/cache.py clean; black + ruff + mypy --strict clean
+
+id: cache-locate-allowlist
+status: ACTIVE
+claim_type: security
+promise: >-
+  After this PR lands, core/indicators/cache.py::_locate imports only allowlisted
+  modules / safe builtins, so a tampered JSON cache payload cannot name an
+  arbitrary module:Class to import or instantiate via the dataclass/enum markers.
+  The restricted unpickler shares the same module-level allowlist; legitimate
+  cached structures still round-trip.
+diff_scope:
+  changed_files:
+    - path: ".claude/commit_acceptors/cache-locate-allowlist.yaml"
+    - path: "core/indicators/cache.py"
+    - path: "tests/unit/indicators/test_cache_locate_allowlist.py"
+  forbidden_paths:
+    - "trading/"
+    - "execution/"
+    - "forecast/"
+    - "policy/"
+    - "core/physics/"
+    - "core/kuramoto/"
+required_python_symbols:
+  - "core/indicators/cache.py::_module_is_safe"
+expected_signal: >-
+  `pytest tests/unit/indicators/test_cache_locate_allowlist.py` passes (13):
+  _locate rejects os/subprocess/builtins:exec etc., allows decimal/pathlib/
+  collections, and _decode_structure raises on malicious dataclass/enum markers
+  while still decoding safe markers. The existing cache suites stay green.
+measurement_command: >-
+  bash -c '
+    python -m pytest tests/unit/indicators/test_cache_locate_allowlist.py -q && python -m pytest tests/unit/test_indicator_cache.py tests/unit/indicators/test_cache_extended.py -q
+  '
+signal_artifact: "tmp/cache_locate_allowlist.log"
+falsifier:
+  command: >-
+    bash -c '
+      python -m pytest -q
+        "tests/unit/indicators/test_cache_locate_allowlist.py::test_decode_structure_rejects_malicious_dataclass_marker"
+        >/dev/null 2>&1
+      test "$?" -ne 0
+    '
+  description: >-
+    Runs the malicious-dataclass-marker rejection. The falsifier succeeds (exit 0)
+    only if it FAILS — i.e. only if _locate imports an arbitrary module again.
+    With the allowlist in place the test passes (exit 0), so `test $? -ne 0` exits
+    1 and the falsifier fails, confirming the import is gated.
+rollback_command: >-
+  bash -c 'git checkout origin/main -- core/indicators/cache.py && rm -f
+    tests/unit/indicators/test_cache_locate_allowlist.py
+    .claude/commit_acceptors/cache-locate-allowlist.yaml'
+rollback_verification_command: >-
+  bash -c '! test -f .claude/commit_acceptors/cache-locate-allowlist.yaml'
+memory_update_type: append
+ledger_path: ".claude/commit_acceptors/cache-locate-allowlist.yaml"
+report_path: "tmp/cache_locate_allowlist.log"
+evidence: []

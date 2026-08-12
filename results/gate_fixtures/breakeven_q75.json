@@ -1,0 +1,13 @@
+{
+  "gate": "breakeven_maker_regime_q75",
+  "value": 0.4072465349699599,
+  "tolerance": 1.0e-3,
+  "source": "scripts/l2_execution_cost_sweep.py --data-dir data/binance_l2_perp",
+  "source_method": "linear_interp_between_bracketing_rows",
+  "bracket_rows": [
+    {"maker_fraction": 0.25, "mean_net_bp": -1.8869584196395202},
+    {"maker_fraction": 0.50, "mean_net_bp": 1.1130415803604814}
+  ],
+  "frozen_at_utc": "2026-04-18T09:57:27Z",
+  "frozen_from_sha": "f04624295de74844f6b0c9e7595c5719e8a2ed5a"
+}

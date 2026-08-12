@@ -1,0 +1,98 @@
+# Diff-bound commit acceptor for the deterministic quantization state contract.
+#
+# Adds analytics/signals/state_quantization.py: a pure, deterministic
+# continuous-to-discrete state compiler with a fixed-threshold rule,
+# explicit non-finite handling (counted, never silently absorbed into a
+# real band), declared information loss, a replay config hash, and complete
+# provenance metadata. Adds the matching contract test suite covering
+# determinism, bounded output, tie behaviour, NaN/inf, empty/constant/
+# outlier inputs, metadata completeness, fail-closed rule validation, and
+# the no-future-leakage guarantee.
+#
+# Promotes NO claim tier, adds NO invariant, changes NO existing runtime
+# behaviour (the streaming quantizers in irreversibility.py are untouched),
+# adds NO dependency. Descriptor-only: the states carry no directional or
+# financial meaning.
+#
+# Locally verified on origin/main fork base:
+#   * pytest tests/unit/analytics/test_state_quantization.py: 19 passed
+#   * pytest --doctest-modules analytics/signals/state_quantization.py: passed
+#   * ruff check / black --check: clean
+#   * mypy --strict analytics/signals/state_quantization.py: no issues
+#   * python scripts/ci/check_claim_boundary.py: PASS
+#   * detect-secrets-hook (baseline): clean
+id: quantization-state-compiler
+status: ACTIVE
+claim_type: governance
+promise: >-
+  analytics.signals.state_quantization.quantize_states is a deterministic,
+  pure continuous-to-discrete state compiler: for a fixed (thresholds, labels)
+  rule it maps finite observations into bounded ordered descriptor states,
+  maps every non-finite observation to a counted ``invalid`` state instead of
+  a real band, declares the discarded within-band information, pins the rule
+  with a config hash, and fails closed on a malformed rule (non-finite or
+  non-monotonic thresholds, mismatched label cardinality). No claim tier is
+  promoted; no existing runtime behaviour changes; the output is a structural
+  descriptor and not a predictive or financial signal.
+diff_scope:
+  changed_files:
+    - path: ".claude/commit_acceptors/quantization-state-compiler.yaml"
+    - path: "analytics/signals/state_quantization.py"
+    - path: "tests/unit/analytics/test_state_quantization.py"
+  forbidden_paths:
+    - "trading/"
+    - "execution/"
+    - "forecast/"
+    - "core/"
+    - "src/"
+required_python_symbols:
+  - "analytics/signals/state_quantization.py::quantize_states"
+  - "analytics/signals/state_quantization.py::QuantizationStateResult"
+expected_signal: >-
+  `python -m pytest tests/unit/analytics/test_state_quantization.py` reports
+  19 passed; quantize_states is deterministic for fixed config, emits only
+  declared labels plus the counted invalid sentinel, and rejects malformed
+  rules with ValueError.
+measurement_command: >-
+  bash -c 'mkdir -p tmp && python -m pytest
+  tests/unit/analytics/test_state_quantization.py -v
+  > tmp/state_quantization_pytest.log 2>&1
+  && grep -qE "19 passed" tmp/state_quantization_pytest.log'
+signal_artifact: "tmp/state_quantization_pytest.log"
+falsifier:
+  command: |-
+    bash -c 'python -c "
+    from analytics.signals.state_quantization import quantize_states
+    import math, sys
+    # 1) a non-finite observation must be counted as invalid, never a real band
+    r = quantize_states([0.0, math.nan, 0.0], thresholds=[-0.5, 0.5], labels=[\"low\",\"neutral\",\"high\"])
+    toothless = False
+    if r.metadata[\"invalid_count\"] != 1: toothless = True
+    if sum(r.metadata[\"state_counts\"].values()) != 2: toothless = True
+    # 2) a malformed (non-monotonic) rule must fail closed
+    try:
+        quantize_states([0.0], thresholds=[0.5, -0.5], labels=[\"a\",\"b\",\"c\"])
+        toothless = True
+    except ValueError:
+        pass
+    sys.exit(0 if toothless else 1)"'
+  description: >-
+    Inverse probe of the quantization contract. It exits 0 (fires) iff the
+    compiler either silently absorbs a non-finite observation into a real band
+    (invalid_count drift / band-count inflation) or accepts a non-monotonic
+    threshold rule instead of failing closed. While the contract holds, the
+    probe exits 1. An exit 0 means the state compiler has lost determinism or
+    its fail-closed guarantee and must be repaired, not patched green.
+rollback_command: >-
+  bash -c 'git rm -f analytics/signals/state_quantization.py
+  tests/unit/analytics/test_state_quantization.py
+  .claude/commit_acceptors/quantization-state-compiler.yaml'
+rollback_verification_command: >-
+  bash -c 'test ! -f analytics/signals/state_quantization.py
+  && test ! -f tests/unit/analytics/test_state_quantization.py'
+memory_update_type: none
+ledger_path: ".claude/commit_acceptors/quantization-state-compiler.yaml"
+report_path: "tmp/state_quantization_pytest.log"
+evidence:
+  - path: "tmp/state_quantization_pytest.log"
+    sha256: "9941153c2350ed751220e3cecb953beb3cb7930abd152f5312e0b46054ba2860"  # pragma: allowlist secret

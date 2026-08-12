@@ -1,3 +1,5 @@
+# Copyright (c) 2023-2026 Yaroslav Vasylenko (neuron7xLab)
+# SPDX-License-Identifier: MIT
 """Command line entry point for running NaK validation."""
 
 from __future__ import annotations
@@ -12,15 +14,11 @@ from ..validate.cv_runner import run_validation
 
 def build_parser() -> argparse.ArgumentParser:
     parser = argparse.ArgumentParser(description="Run NaK controller validation")
-    parser.add_argument(
-        "--config", type=Path, required=True, help="Path to configuration YAML"
-    )
+    parser.add_argument("--config", type=Path, required=True, help="Path to configuration YAML")
     parser.add_argument(
         "--steps", type=int, default=200, help="Number of simulation steps per seed"
     )
-    parser.add_argument(
-        "--seeds", type=int, default=3, help="Number of RNG seeds to evaluate"
-    )
+    parser.add_argument("--seeds", type=int, default=3, help="Number of RNG seeds to evaluate")
     parser.add_argument(
         "--seed",
         type=int,
@@ -33,9 +31,7 @@ def build_parser() -> argparse.ArgumentParser:
 def main(argv: list[str] | None = None) -> int:
     parser = build_parser()
     args = parser.parse_args(argv)
-    results = run_validation(
-        str(args.config), steps=args.steps, seeds=args.seeds, seed=args.seed
-    )
+    results = run_validation(str(args.config), steps=args.steps, seeds=args.seeds, seed=args.seed)
     json.dump(results, sys.stdout, indent=2, sort_keys=True)
     sys.stdout.write("\n")
     return 0

@@ -1,3 +1,5 @@
+# Copyright (c) 2023-2026 Yaroslav Vasylenko (neuron7xLab)
+# SPDX-License-Identifier: MIT
 """Synthetic scenario generation for stress-testing trading strategies.
 
 This module provides deterministic, parameterised scenario generation that models
@@ -58,9 +60,7 @@ class LiquidityShock:
         if not 0.0 <= self.severity <= 1.0:
             raise ValueError("severity must be between 0 and 1")
         if self.spread_widening < -0.99:
-            raise ValueError(
-                "spread_widening cannot shrink the spread below 1% of base"
-            )
+            raise ValueError("spread_widening cannot shrink the spread below 1% of base")
 
     def is_active(self, index: int) -> bool:
         return self.start <= index < self.start + self.duration
@@ -233,9 +233,7 @@ class SyntheticScenarioGenerator:
         cfg = self._config
         base_seed = random_seed if random_seed is not None else cfg.random_seed
         seed_sequence = (
-            np.random.SeedSequence(base_seed)
-            if base_seed is not None
-            else np.random.SeedSequence()
+            np.random.SeedSequence(base_seed) if base_seed is not None else np.random.SeedSequence()
         )
         scenarios: list[SyntheticScenario] = []
         if n_scenarios <= 0:
@@ -275,9 +273,7 @@ class SyntheticScenarioGenerator:
             for name, strategy in strategies.items():
                 metric = float(strategy(scenario))
                 evaluations.append(
-                    StrategyEvaluation(
-                        strategy=name, scenario=scenario.name, metric=metric
-                    )
+                    StrategyEvaluation(strategy=name, scenario=scenario.name, metric=metric)
                 )
             results.append(
                 ControlledExperiment(
@@ -357,9 +353,7 @@ class SyntheticScenarioGenerator:
             prices[t + 1] = float(np.exp(log_price))
             returns[t] = prices[t + 1] / prices[t] - 1.0
 
-            volatility_factor = 1.0 + spread_sensitivity * (
-                volatility_multiplier[t] - 1.0
-            )
+            volatility_factor = 1.0 + spread_sensitivity * (volatility_multiplier[t] - 1.0)
             spread = base_spread * spread_multiplier[t] * max(volatility_factor, 1e-3)
             imbalance = float(imbalance_series[t])
             bid_multiplier = max(1e-6, 1.0 + imbalance)

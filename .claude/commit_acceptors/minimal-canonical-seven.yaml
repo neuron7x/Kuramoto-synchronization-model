@@ -1,0 +1,116 @@
+# Diff-bound commit acceptor for the Minimal Canonical Seven module.
+#
+# Single-file (446 LoC) reimplementation of the seven canonical
+# pillars using NamedTuple value types and a single state-machine
+# function `evaluate(...)`. Closes audit task 6 ("Minimal Canonical
+# Seven <800 LoC") and tasks 1, 2, 3 by demonstrating that the full
+# semantics fit in <500 LoC of NamedTuple-only code with zero
+# `dataclass(frozen=True, slots=True)` ceremony.
+#
+# Architectural relationship to the verbose modules:
+#   * minimal.py is the *front door* for interactive research, REPL,
+#     notebooks, teaching artefacts.
+#   * The seven verbose modules (death_conditions, evidence_ledger,
+#     leakage_sentinel, data_firewall, replication_capsule,
+#     adversarial_ladder, governance_fsm) remain the *forensic*
+#     audit-grade implementation with full Provenance objects,
+#     property-tested invariants, and rich audit trails.
+#   * Both produce identical canonical actions and tier transitions;
+#     this is enforced by the shared TierAction lattice (max-as-join).
+#
+# Locally verified:
+#   * pytest tests/research/systemic_risk/test_minimal.py: 44/44 pass
+#     (incl. 2 Hypothesis property-tests of demote-clamp + evidence-add)
+#   * pytest tests/research/systemic_risk/: 495/495 pass
+#   * mypy --strict on minimal + tests: 0 errors
+#   * ruff + black: clean
+#   * wc -l research/systemic_risk/minimal.py: 446 (target: <800)
+
+id: minimal-canonical-seven
+status: ACTIVE
+claim_type: governance
+promise: >-
+  After this PR lands, ``research.systemic_risk.minimal`` ships a
+  single-file canonical-seven implementation with public surface
+  ``{Claim, TierAction, evaluate, initial_claim, KILL, INVALIDATE,
+  QUARANTINE, DEMOTE, STOP, NONE}`` plus the helper functions
+  ``firewall``, ``leakage``, ``rerun``, ``auc_bf``,
+  ``replication_bf``. NamedTuple-based; <800 LoC; zero dataclass
+  ceremony.
+
+diff_scope:
+  changed_files:
+    - path: ".claude/commit_acceptors/minimal-canonical-seven.yaml"
+    - path: "research/systemic_risk/__init__.py"
+    - path: "research/systemic_risk/minimal.py"
+    - path: "tests/research/systemic_risk/test_minimal.py"
+  forbidden_paths:
+    - "trading/"
+    - "execution/"
+    - "forecast/"
+    - "policy/"
+    - "core/"
+    - "runtime/"
+    - "application/"
+
+required_python_symbols:
+  - "research/systemic_risk/minimal.py::Claim"
+  - "research/systemic_risk/minimal.py::TierAction"
+  - "research/systemic_risk/minimal.py::evaluate"
+  - "research/systemic_risk/minimal.py::initial_claim"
+  - "tests/research/systemic_risk/test_minimal.py::TestEvaluate"
+
+expected_signal: >-
+  ``pytest tests/research/systemic_risk/test_minimal.py -q`` reports
+  44 passed. ``wc -l research/systemic_risk/minimal.py`` reports
+  ≤ 800.
+
+measurement_command: >-
+  bash -c '
+    mypy --strict
+      research/systemic_risk/minimal.py
+      tests/research/systemic_risk/test_minimal.py && python -m pytest tests/research/systemic_risk/test_minimal.py -q && [ "$(wc -l < research/systemic_risk/minimal.py)" -le 800 ]
+  '
+
+signal_artifact: "tmp/minimal_canonical_seven.log"
+
+falsifier:
+  command: |-
+    bash -c '
+      python -c "
+    from research.systemic_risk.minimal import (
+        Claim, evaluate, initial_claim, KILL, REJECTED,
+    )
+    c = evaluate(initial_claim('C'), replication_matched=False)
+    assert c.tier == REJECTED and c.last_action == KILL
+      " 2>/dev/null && exit 1 || exit 0
+    '
+  description: >-
+    Probes that the minimal evaluate wires KILL→REJECTED. Falsifier
+    inverts: it succeeds (exit 0) only when the import or assertion
+    fails, which would mean the minimal front-door rolled back.
+
+rollback_command: >-
+  bash -c '
+    git rm -f
+      research/systemic_risk/minimal.py
+      tests/research/systemic_risk/test_minimal.py
+      .claude/commit_acceptors/minimal-canonical-seven.yaml && git checkout HEAD~1 -- research/systemic_risk/__init__.py
+  '
+
+rollback_verification_command: |-
+  bash -c '
+    python -c "
+  try:
+      from research.systemic_risk.minimal import evaluate
+  except ImportError:
+      pass
+  else:
+      raise SystemExit(1)
+    "
+  '
+
+memory_update_type: append
+ledger_path: ".claude/commit_acceptors/minimal-canonical-seven.yaml"
+report_path: "tmp/minimal_canonical_seven.log"
+evidence: []

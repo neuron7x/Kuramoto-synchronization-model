@@ -1,0 +1,168 @@
+{
+  "schema_version": "1.1.0",
+  "repository": "neuron7xLab/GeoSync",
+  "contract": "inference_readiness",
+  "status": "canonical_control_surface",
+  "purpose": "Convert repository meaning into bounded, replayable, falsifiable agent execution.",
+  "prime_rule": "Only role-bound meaning that changes execution is operational context.",
+  "semantic_control_layer": "docs/SEMANTIC_CONTROL_LAYER.md",
+  "authority_files": [
+    "PRODUCT_CATEGORY.md",
+    "FORBIDDEN_CLAIMS.md",
+    "CLAIMS.md",
+    "README.md",
+    "docs/REPOSITORY_SYSTEM.md",
+    "docs/SEMANTIC_CONTROL_LAYER.md",
+    "docs/INFERENCE_READINESS.md",
+    "docs/INFERENCE_OPERATION_PROTOCOL.md",
+    "docs/INFERENCE_CONTRACT.manifest.json",
+    "AGENTS.md"
+  ],
+  "reading_order": [
+    "PRODUCT_CATEGORY.md",
+    "FORBIDDEN_CLAIMS.md",
+    "CLAIMS.md",
+    "README.md",
+    "docs/REPOSITORY_SYSTEM.md",
+    "docs/SEMANTIC_CONTROL_LAYER.md",
+    "docs/INFERENCE_READINESS.md",
+    "docs/INFERENCE_OPERATION_PROTOCOL.md",
+    "docs/INFERENCE_CONTRACT.manifest.json",
+    "AGENTS.md",
+    "schemas/",
+    "scripts/ci/",
+    "artifacts/"
+  ],
+  "file_roles": {
+    "filter": ["PRODUCT_CATEGORY.md", "FORBIDDEN_CLAIMS.md"],
+    "context": ["README.md", "docs/REPOSITORY_SYSTEM.md", "docs/SEMANTIC_CONTROL_LAYER.md"],
+    "claim": ["CLAIMS.md"],
+    "boundary": ["AGENTS.md", "FORBIDDEN_CLAIMS.md"],
+    "protocol": ["docs/INFERENCE_OPERATION_PROTOCOL.md"],
+    "manifest": ["docs/INFERENCE_CONTRACT.manifest.json"],
+    "schema": ["schemas/"],
+    "test": ["tests/", "scripts/ci/"],
+    "verdict": ["artifacts/", "release evidence"],
+    "replay": ["logs", "manifests", "checksums", "commands"]
+  },
+  "operational_steps": [
+    {
+      "id": 1,
+      "name": "resolve_intent",
+      "operation": "Classify the request as documentation, schema, gate, artifact, code, benchmark, release, or claim-status change.",
+      "required_output": "intent_record",
+      "blocking_condition": "The request implies promotion but does not name evidence."
+    },
+    {
+      "id": 2,
+      "name": "load_canonical_context",
+      "operation": "Read the smallest authority set needed for the intent and preserve the role of each loaded file.",
+      "required_output": "context_set",
+      "blocking_condition": "The required authority file is missing, stale, contradicted, or role-ambiguous."
+    },
+    {
+      "id": 3,
+      "name": "compress_semantic_core",
+      "operation": "Remove prose that does not constrain execution; preserve invariants, boundaries, commands, hashes, schemas, and falsifiers.",
+      "required_output": "semantic_core",
+      "blocking_condition": "Critical meaning depends on human memory or chat-only context."
+    },
+    {
+      "id": 4,
+      "name": "bind_claims_to_evidence",
+      "operation": "Attach every claim to tier, evidence pointer, falsifier, and replay path.",
+      "required_output": "claim_binding",
+      "blocking_condition": "Claim language outruns committed evidence."
+    },
+    {
+      "id": 5,
+      "name": "select_executable_path",
+      "operation": "Choose method, config, dataset, schema, command, and artifact target.",
+      "required_output": "execution_plan",
+      "blocking_condition": "No deterministic command or schema exists."
+    },
+    {
+      "id": 6,
+      "name": "verify_and_falsify",
+      "operation": "Run or define tests, schema validation, null baseline, cost model, replay check, and falsifier path.",
+      "required_output": "verification_record",
+      "blocking_condition": "Nulls are absent, schema fails, or replay is impossible."
+    },
+    {
+      "id": 7,
+      "name": "emit_replayable_artifact",
+      "operation": "Persist result, decision, evidence, logs, checksums, git state, and remaining blockers.",
+      "required_output": "evidence_artifact",
+      "blocking_condition": "Result exists only as prose, screenshot, memory, or terminal impression."
+    }
+  ],
+  "readiness_gates": [
+    "file_role_binding",
+    "context_addressability",
+    "semantic_compression",
+    "claim_boundary",
+    "agent_control",
+    "method_binding",
+    "artifact_validity",
+    "falsification",
+    "release_evidence"
+  ],
+  "required_agent_state": [
+    "intent_type",
+    "canonical_files_used",
+    "file_roles_used",
+    "claim_tier_before",
+    "claim_tier_after",
+    "changed_surface_type",
+    "allowed_method",
+    "blocked_claims",
+    "verification_command",
+    "evidence_artifact_path",
+    "remaining_blocker"
+  ],
+  "evidence_artifact_minimum": [
+    "run_id",
+    "git_sha",
+    "git_dirty",
+    "data_sha256",
+    "config_sha256",
+    "seed",
+    "timestamp_utc",
+    "method_version",
+    "score",
+    "score_source",
+    "uncertainty",
+    "baseline",
+    "falsification_status",
+    "decision",
+    "claim_tier",
+    "artifact_role",
+    "replay_command"
+  ],
+  "metrics": [
+    "file_role_coverage",
+    "context_addressability_score",
+    "context_retention_rate",
+    "context_token_waste_ratio",
+    "schema_validation_pass_rate",
+    "replay_success_rate",
+    "claim_drift_incidents",
+    "forbidden_claim_violations",
+    "null_baseline_superiority_rate",
+    "artifact_hash_coverage",
+    "agent_boundary_violation_count",
+    "manual_interpretation_dependency"
+  ],
+  "stop_conditions": [
+    "file_role_is_ambiguous",
+    "claim_has_no_tier",
+    "claim_has_tier_but_no_evidence",
+    "artifact_has_evidence_but_no_schema",
+    "schema_passes_but_replay_path_is_absent",
+    "replay_path_exists_but_falsifier_is_absent",
+    "null_baseline_is_not_recorded",
+    "result_requires_manual_interpretation",
+    "agent_must_invent_missing_context"
+  ],
+  "final_rule": "No role-bound file, no bounded context, no deterministic method, no checked artifact, no falsifiable replay — no inference."
+}

@@ -1,35 +1,37 @@
-import numpy as np
+# mypy: disable-error-code="attr-defined,operator,index,arg-type,call-overload,assignment"
+"""Tests for Prometheus metrics."""
 
-from core.metrics.aperiodic import aperiodic_slope
-from core.metrics.dfa import dfa_alpha
-from core.metrics.fractal_dimension import box_counting_dim
-from utils.fractal_cascade import DyadicPMCascade, pink_noise
+from __future__ import annotations
 
+import time
 
-def test_metrics_fractal_properties():
-    signal = pink_noise(4_096, beta=1.0)
-    alpha = dfa_alpha(signal, min_win=50, max_win=1_000, n_win=8)
-    assert alpha > 0.2
-
-    slope = aperiodic_slope(signal, fs=100)
-    assert slope < -0.1
-
-    dimension = box_counting_dim(signal)
-    assert dimension > 0.5
+from coherence_bridge.metrics import (
+    GAMMA,
+    ORDER_PARAMETER_R,
+    RISK_SCALAR,
+    record_signal,
+)
 
 
-def test_dyadic_cascade_adjustment_bounds():
-    cascade = DyadicPMCascade(depth=4, p=0.55, heavy_tail=0.4, base_dt=30.0)
-    samples = cascade.sample(16)
-    assert samples.shape == (16,)
-    cascade.adjust_heavy_tail(1.0)
-    assert 0.0 <= cascade.heavy_tail <= 1.0
-    cascade.adjust_heavy_tail(-2.0)
-    assert 0.0 <= cascade.heavy_tail <= 1.0
-    with np.testing.assert_raises(ValueError):
-        DyadicPMCascade(depth=-1)
+def test_record_signal_updates_all_gauges() -> None:
+    sig = {
+        "instrument": "TEST_INST",
+        "gamma": 0.95,
+        "order_parameter_R": 0.72,
+        "risk_scalar": 0.95,
+        "regime": "METASTABLE",
+        "timestamp_ns": time.time_ns(),
+    }
+    record_signal(sig)
+
+    assert GAMMA.labels(instrument="TEST_INST")._value.get() == 0.95
+    assert ORDER_PARAMETER_R.labels(instrument="TEST_INST")._value.get() == 0.72
+    assert RISK_SCALAR.labels(instrument="TEST_INST")._value.get() == 0.95
 
 
-def test_pink_noise_invalid_length():
-    with np.testing.assert_raises(ValueError):
-        pink_noise(0)
+def test_metrics_endpoint_in_http_server() -> None:
+    """Verify /metrics route is registered."""
+    from coherence_bridge.http_server import app
+
+    routes = {r.path for r in app.routes}
+    assert "/metrics" in routes

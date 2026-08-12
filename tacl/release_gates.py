@@ -1,3 +1,5 @@
+# Copyright (c) 2023-2026 Yaroslav Vasylenko (neuron7xLab)
+# SPDX-License-Identifier: MIT
 """CLI utilities mirroring the Progressive Rollout quality gates."""
 
 from __future__ import annotations

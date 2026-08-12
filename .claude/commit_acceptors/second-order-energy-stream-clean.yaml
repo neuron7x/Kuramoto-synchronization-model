@@ -1,0 +1,39 @@
+id: second-order-energy-stream-clean
+status: ACTIVE
+claim_type: performance
+promise: "Stream second-order audit swing-energy evaluation with O(N^2) peak pairwise memory while preserving the existing formula."
+diff_scope:
+  changed_files:
+    - path: ".claude/commit_acceptors/second-order-energy-stream-clean.yaml"
+    - path: ".github/workflows/mutation-kill-gate.yml"
+    - path: ".github/workflows/pr-gate.yml"
+    - path: "core/kuramoto/second_order.py"
+    - path: "docs/ENGINEERING_RESEARCH_QUALITY_CODE.md"
+    - path: "docs/PR_1400_COGNITIVE_RECOVERY_KERNEL.md"
+    - path: "docs/PR_1400_VERIFICATION_MATRIX.md"
+    - path: "pyproject.toml"
+    - path: "scripts/ci/check_mutation_kill_ratchet.py"
+    - path: "tests/ci/test_mutation_kill_ratchet.py"
+    - path: "tests/unit/physics/test_second_order_stability_audit.py"
+    - path: "tools/mutation_probe.py"
+    - path: "tools/physics/clamp_registry.yaml"
+  forbidden_paths: []
+required_python_symbols:
+  - "SecondOrderKuramotoEngine"
+  - "SecondOrderStabilityReport"
+expected_signal: "Physics, mutation, PR, research, hygiene, import, repo-integrity, and readiness gates pass without lowering floors or expanding scientific claims."
+measurement_command: "python -m pytest tests/unit/physics/test_second_order_stability_audit.py tests/ci/test_mutation_kill_ratchet.py -q"
+signal_artifact: "tmp/second_order_energy_stream_clean_pytest.log"
+falsifier:
+  command: "python scripts/ci/check_mutation_kill_ratchet.py --base-ref origin/main"
+  description: "Reject if mutation ratchet fails, mutation floors are lowered, baseline tests fail, or the probe emits no parseable report."
+rollback_command: "git checkout -- .claude/commit_acceptors/second-order-energy-stream-clean.yaml .github/workflows/mutation-kill-gate.yml core/kuramoto/second_order.py docs/ENGINEERING_RESEARCH_QUALITY_CODE.md docs/PR_1400_VERIFICATION_MATRIX.md pyproject.toml scripts/ci/check_mutation_kill_ratchet.py tests/ci/test_mutation_kill_ratchet.py tests/unit/physics/test_second_order_stability_audit.py tools/mutation_probe.py tools/physics/clamp_registry.yaml"
+rollback_verification_command: "git diff --exit-code"
+memory_update_type: append
+ledger_path: ".claude/commit_acceptors/second-order-energy-stream-clean.yaml"
+report_path: "docs/PR_1400_VERIFICATION_MATRIX.md"
+evidence:
+  - path: "docs/PR_1400_COGNITIVE_RECOVERY_KERNEL.md"
+  - path: "docs/PR_1400_VERIFICATION_MATRIX.md"
+  - path: ".github/workflows/pr-gate.yml"
+  - path: "tools/physics/clamp_registry.yaml"

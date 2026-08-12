@@ -1,4 +1,6 @@
-"""Security dependencies for validating TradePulse API requests."""
+# Copyright (c) 2023-2026 Yaroslav Vasylenko (neuron7xLab)
+# SPDX-License-Identifier: MIT
+"""Security dependencies for validating GeoSync API requests."""
 
 from __future__ import annotations
 
@@ -15,7 +17,7 @@ from fastapi import Depends, HTTPException, Request, Security, status
 from fastapi.security import HTTPAuthorizationCredentials, HTTPBearer
 
 from application.secrets.manager import SecretManagerError
-from application.security.two_factor import verify_totp_code
+from application.security.two_factor import TotpReplayGuard, find_totp_counter
 from application.settings import ApiSecuritySettings
 from src.admin.remote_control import AdminIdentity
 
@@ -28,6 +30,10 @@ __all__ = [
 
 
 _bearer_scheme = HTTPBearer(auto_error=False, scheme_name="OAuth2Bearer")
+
+# Safe, idempotent HTTP methods that verify the TOTP but do not consume it, so a
+# single in-window code can serve a read and a subsequent state-changing write.
+_REPLAY_EXEMPT_METHODS = frozenset({"GET", "HEAD", "OPTIONS"})
 
 
 @dataclass(slots=True)
@@ -62,9 +68,7 @@ class _JWKSResolver:
             now = datetime.now(timezone.utc)
             if entry is None or entry.expires_at <= now:
                 keys = await self._fetch(jwks_uri)
-                self._entries[jwks_uri] = _JWKSCacheEntry(
-                    expires_at=now + self._ttl, keys=keys
-                )
+                self._entries[jwks_uri] = _JWKSCacheEntry(expires_at=now + self._ttl, keys=keys)
                 return keys
             return entry.keys
 
@@ -405,6 +409,7 @@ def require_two_factor(
     algorithm: str,
     identity_dependency: Callable[..., Awaitable[AdminIdentity]] | None = None,
     clock: Callable[[], datetime] | None = None,
+    replay_guard: TotpReplayGuard | None = None,
 ) -> Callable[[Request, AdminIdentity], Awaitable[AdminIdentity]]:
     """Return a dependency that enforces TOTP-based two-factor authentication."""
 
@@ -415,6 +420,11 @@ def require_two_factor(
     if drift_windows < 0:
         raise ValueError("drift_windows must be non-negative")
     dependency = identity_dependency or verify_request_identity()
+    # One guard instance per dependency (per app), shared across requests, so an
+    # accepted code is single-use until its time window expires.
+    guard = replay_guard or TotpReplayGuard(
+        period_seconds=period_seconds, drift_windows=drift_windows
+    )
 
     async def _dependency(
         request: Request,
@@ -434,7 +444,7 @@ def require_two_factor(
                 detail="Two-factor authentication secret is unavailable.",
             ) from exc
         moment = clock() if clock is not None else datetime.now(timezone.utc)
-        if not verify_totp_code(
+        matched_counter = find_totp_counter(
             secret,
             code,
             timestamp=moment,
@@ -442,19 +452,30 @@ def require_two_factor(
             digits=digits,
             drift_windows=drift_windows,
             algorithm=algorithm,
-        ):
+        )
+        if matched_counter is None:
             raise HTTPException(
                 status_code=status.HTTP_401_UNAUTHORIZED,
                 detail="Invalid or expired two-factor authentication code.",
             )
+        # Single-use enforcement applies to STATE-CHANGING requests only. A TOTP
+        # code is constant within its ~30s window, so consuming it on safe,
+        # idempotent reads (GET/HEAD/OPTIONS) would make it impossible to perform
+        # a read and a write in the same window. Reads verify the code but do not
+        # burn it; writes register it, so a captured code cannot be replayed into
+        # a second state change.
+        if request.method.upper() not in _REPLAY_EXEMPT_METHODS:
+            if not guard.register(identity.subject, matched_counter, now=moment):
+                raise HTTPException(
+                    status_code=status.HTTP_401_UNAUTHORIZED,
+                    detail="Two-factor authentication code has already been used.",
+                )
         return identity
 
     return _dependency
 
 
-def verify_optional_request_identity(
-    *, require_client_certificate: bool = False
-) -> Callable[
+def verify_optional_request_identity(*, require_client_certificate: bool = False) -> Callable[
     [Request, HTTPAuthorizationCredentials | None, ApiSecuritySettings],
     Awaitable[AdminIdentity | None],
 ]:

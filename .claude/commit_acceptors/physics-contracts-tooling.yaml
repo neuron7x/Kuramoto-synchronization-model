@@ -1,0 +1,83 @@
+# Diff-bound acceptor: falsification-contract tooling, witnesses, CI and packet.
+#
+# The executable + CI half of the falsification-contract layer: the validator,
+# the review-packet builder, the positive-witness + negative-control test suite,
+# the fail-closed CI workflow, the generated review docs, and the two acceptors
+# (this one and physics-falsification-contracts) themselves.
+
+id: physics-contracts-tooling
+status: ACTIVE
+claim_type: governance
+promise: >-
+  Adds tools/validate_physics_contracts.py (schema + witness + negative-control +
+  evidence gate, fail-closed) and tools/build_physics_review_packet.py
+  (deterministic VERDICT/CLAIMS/REVIEW_PACKET), a tests/physics/ suite where every
+  blocking law has a collected positive witness AND a negative control, a
+  fail-closed .github/workflows/physics-contracts.yml, and the generated review
+  docs. The governance meta-law makes "no law without a positive witness and a
+  negative control" itself CI-blocking. No sys.path mutation (import-architecture
+  ratchet); no trading/execution/forecast/policy path touched.
+diff_scope:
+  changed_files:
+    - path: "tools/validate_physics_contracts.py"
+    - path: "tools/build_physics_review_packet.py"
+    - path: "tests/physics/test_ricci_kuramoto.py"
+    - path: "tests/physics/test_metric_consistency.py"
+    - path: "tests/physics/test_causality.py"
+    - path: "tests/physics/test_landauer.py"
+    - path: "tests/physics/test_falsification.py"
+    - path: "tests/physics/test_precision.py"
+    - path: "tests/physics/test_governance.py"
+    - path: ".github/workflows/physics-contracts.yml"
+    - path: "docs/PHYSICS_VERDICT.md"
+    - path: "docs/PHYSICS_CLAIMS.md"
+    - path: "docs/PHYSICS_REVIEW_PACKET.md"
+    - path: ".claude/commit_acceptors/physics-falsification-contracts.yaml"
+    - path: ".claude/commit_acceptors/physics-contracts-tooling.yaml"
+  forbidden_paths:
+    - "trading/"
+    - "execution/"
+    - "forecast/"
+    - "policy/"
+required_python_symbols:
+  - "validate"
+  - "build_review_packet"
+  - "load_catalog"
+  - "check_witness_coverage"
+  - "check_negative_controls"
+  - "promotion_gate"
+expected_signal: >-
+  python -m pytest tests/physics -q is green (positive witnesses pass, negative
+  controls fail their law and are caught); validate_physics_contracts.py PASS;
+  build_physics_review_packet.py writes docs/PHYSICS_VERDICT.md with Status: PASS.
+measurement_command: >-
+  PYTHONPATH=. python -m pytest tests/physics -q
+signal_artifact: "tmp/physics_contracts_pytest.log"
+falsifier:
+  command: >-
+    PYTHONPATH=. python -c "import sys, copy;
+    from pathlib import Path;
+    from core.physics.governance import load_catalog, promotion_gate;
+    c = copy.deepcopy(load_catalog());
+    c['laws'][0]['negative_control'] = 'tests/physics/test_ricci_kuramoto.py::does_not_exist';
+    gate = promotion_gate(c, Path('.'), require_evidence=False);
+    print('gate status with stripped negative control:', gate['status']);
+    sys.exit(0 if gate['status'] == 'FAIL' else 1)"
+  description: >-
+    Inverse probe for the governance meta-law: removes a law's negative control
+    and exits non-zero unless promotion_gate fails closed. Fires iff a blocking
+    law is allowed to exist without a collected negative control — the exact
+    laundering the meta-law exists to reject.
+rollback_command: >-
+  git rm -f tools/validate_physics_contracts.py tools/build_physics_review_packet.py
+  tests/physics/test_ricci_kuramoto.py tests/physics/test_metric_consistency.py
+  tests/physics/test_causality.py tests/physics/test_landauer.py
+  tests/physics/test_falsification.py tests/physics/test_precision.py
+  tests/physics/test_governance.py .github/workflows/physics-contracts.yml
+  docs/PHYSICS_VERDICT.md docs/PHYSICS_CLAIMS.md docs/PHYSICS_REVIEW_PACKET.md
+rollback_verification_command: >-
+  test ! -f tools/validate_physics_contracts.py
+memory_update_type: append
+ledger_path: ".claude/commit_acceptors/physics-contracts-tooling.yaml"
+report_path: "docs/PHYSICS_REVIEW_PACKET.md"
+evidence: []

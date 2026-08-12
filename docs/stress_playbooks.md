@@ -1,6 +1,6 @@
 # Stress Scenario and Portfolio Resilience Playbooks
 
-TradePulse must stay responsive when markets dislocate, infrastructure falters, or
+GeoSync must stay responsive when markets dislocate, infrastructure falters, or
 strategy capital allocations need fast rebalancing. This playbook curates
 high-impact stress replays, targeted fault injections, and multi-strategy
 portfolio allocation recipes so engineering and quant teams can validate the
@@ -21,13 +21,13 @@ platform end-to-end before shipping changes.
 
 Use deterministic backtest replays to reproduce known market regimes with
 realistic execution and risk telemetry. All scenarios leverage the
-`tradepulse_cli backtest` entrypoint with configuration bundles stored under
+`geosync_cli backtest` entrypoint with configuration bundles stored under
 `configs/stress/`. Each replay exports JSON stats to `reports/stress/` and feeds
 latency-aware fills through [`backtest/execution_simulation.py`](backtest_execution_simulation.md).
 
 | Scenario | Window (UTC) | Required Data | Core Metrics | Expected System Signals |
 | --- | --- | --- | --- | --- |
-| **Flash Crash 2010 (U.S. Equities)** | 2010-05-06 13:00–15:00 | Level II order-book + trade ticks for `/ES` and SPY. Snapshot to Parquet via [`tradepulse_cli ingest`](../cli/tradepulse_cli.py). | Queue depth deviation, fill latency percentiles, limit-order cancel ratio. | Execution simulator must trigger `HaltMode.PARTIAL` when order-book liquidity collapses, and risk controls clamp Kelly utilization to ≤50% after `max_drawdown` breaches 5%. |
+| **Flash Crash 2010 (U.S. Equities)** | 2010-05-06 13:00–15:00 | Level II order-book + trade ticks for `/ES` and SPY. Snapshot to Parquet via [`geosync_cli ingest`](../geosync/cli/geosync_cli.py). | Queue depth deviation, fill latency percentiles, limit-order cancel ratio. | Execution simulator must trigger `HaltMode.PARTIAL` when order-book liquidity collapses, and risk controls clamp Kelly utilization to ≤50% after `max_drawdown` breaches 5%. |
 | **COVID-19 Selloff (Global FX)** | 2020-03-09 00:00–2020-03-13 23:59 | Minute bars + volatility surface for EURUSD, AUDUSD. Register artefacts with `FeatureCatalog`. | Realized volatility spike, VaR/CVaR exceedances, circuit-breaker activations. | Portfolio heat-check raises alert when 1-day CVaR > configured limit; volatility-target module shrinks exposure to keep annualized vol ≤ 18%. |
 | **FTX Collapse (Crypto Perpetuals)** | 2022-11-08 00:00–2022-11-11 23:59 | WebSocket trade/mark price replay for BTC-PERP, SOL-PERP with funding rates. Persist delta snapshots every 250ms. | Funding rate swings, mark vs. spot divergence, liquidation cascade counts. | Market data adapter must fall back to cached book when WS stalls >1s and trigger `MarketHalt.DELAY`; strategy governance flags models relying on stale funding feeds for manual review. |
 
@@ -35,15 +35,15 @@ latency-aware fills through [`backtest/execution_simulation.py`](backtest_execut
 
 1. **Provision datasets** – coordinate with the data team to stage raw feeds in
    object storage. Update `configs/stress/<scenario>.ingest.yaml` with the
-   bucket URL and desired time window, then run `tradepulse_cli ingest`.
+   bucket URL and desired time window, then run `geosync_cli ingest`.
 2. **Generate stress backtest config** – render a template via
-   `tradepulse_cli backtest --generate-config --output configs/stress/<scenario>.backtest.yaml`
+   `geosync_cli backtest --generate-config --output configs/stress/<scenario>.backtest.yaml`
    and update:
    - `data.path` to the ingested Parquet/CSV artifact.
    - `execution.latency_profile` to reference latency/halt presets.
    - `risk.stress_checks` to enable Kelly caps and VaR/CVaR tripwires.
 3. **Replay with execution simulation** – call
-   `tradepulse_cli backtest --config configs/stress/<scenario>.backtest.yaml` and
+   `geosync_cli backtest --config configs/stress/<scenario>.backtest.yaml` and
    store outputs in `reports/stress/<scenario>.json`.
 4. **Review diagnostics** – load the results into the observability dashboards
    referenced in [`docs/monitoring.md`](monitoring.md) to compare replay metrics
@@ -63,7 +63,7 @@ suite is wired into CI.
 
 | Injection | Method | Observability Hooks | Expected Platform Response |
 | --- | --- | --- | --- |
-| **Market data gaps** | Drop 5–30 consecutive ticks in the feed handler via feature-flag toggle. | Prometheus counter `tradepulse_market_data_gaps_total`, data freshness lag, incident log. | Backtest engine applies forward-fill only within allowable tolerance, marks replay as degraded, and raises `DataGapDetected` event for downstream consumers. |
+| **Market data gaps** | Drop 5–30 consecutive ticks in the feed handler via feature-flag toggle. | Prometheus counter `geosync_market_data_gaps_total`, data freshness lag, incident log. | Backtest engine applies forward-fill only within allowable tolerance, marks replay as degraded, and raises `DataGapDetected` event for downstream consumers. |
 | **WebSocket latency spike** | Introduce 1–3s delay using `toxiproxy` latency filter on WS endpoint. | Grafana panel for WS RTT, alert `ws_latency_high` firing within 60s. | Execution service transitions to degraded mode, throttles order submissions, and emits `execution.latency_mode=DEGRADED` to logs. Portfolio risk module temporarily widens slippage buffers. |
 | **Event reorder** | Shuffle order-book deltas using middleware that buffers and reorders 10% of messages. | Sequence gap detector metric, Jaeger trace of replay worker, structured log warnings. | Event stream normalizer reorders events using timestamp + sequence; if unable, it quarantines the batch and replays from last checkpoint without crashing the pipeline. |
 
@@ -101,7 +101,7 @@ limits in `configs/risk/allocations.yaml`.
 - **Constraints**:
   - Enforce portfolio leverage ≤ 1.2× gross exposure.
   - Concentration: any single strategy ≤ 35% of capital post-normalisation.
-- **Observability**: Publish `tradepulse_kelly_utilization{strategy=...}` gauges;
+- **Observability**: Publish `geosync_kelly_utilization{strategy=...}` gauges;
   trigger alerts when utilisation > 90% of cap.
 
 ### 2. Volatility Targeting
@@ -116,7 +116,7 @@ limits in `configs/risk/allocations.yaml`.
   - Require correlation-adjusted diversification: if pairwise correlation > 0.8,
     cap combined allocation to 45%.
 - **Observability**: Record realised vs. target volatility to
-  `tradepulse_vol_target_error` histogram for each strategy cluster.
+  `geosync_vol_target_error` histogram for each strategy cluster.
 
 ### 3. CVaR Minimisation
 

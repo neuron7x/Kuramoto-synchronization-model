@@ -1,6 +1,6 @@
 # Docker Quick Start Guide
 
-Get TradePulse running with Docker in minutes.
+Get GeoSync running with Docker in minutes.
 
 ---
 
@@ -33,20 +33,20 @@ Download [Docker Desktop for Windows](https://www.docker.com/products/docker-des
 ### 1. Clone Repository
 
 ```bash
-git clone https://github.com/neuron7x/TradePulse.git
-cd TradePulse
+git clone https://github.com/neuron7xLab/GeoSync.git
+cd GeoSync
 ```
 
 ### 2. Prepare Environment Variables
 
-TradePulse requires audit secrets for signing audit logs and RBAC audit events. Generate strong secrets (64 hexadecimal characters or longer) and store them in a `.env` file before starting Docker Compose:
+GeoSync requires audit secrets for signing audit logs and RBAC audit events. Generate strong secrets (64 hexadecimal characters or longer) and store them in a `.env` file before starting Docker Compose:
 
 ```bash
 # Generate cryptographically secure secrets
 python - <<'PY'
 import secrets
-print('TRADEPULSE_AUDIT_SECRET=' + secrets.token_hex(32))
-print('TRADEPULSE_RBAC_AUDIT_SECRET=' + secrets.token_hex(32))
+print('GEOSYNC_AUDIT_SECRET=' + secrets.token_hex(32))
+print('GEOSYNC_RBAC_AUDIT_SECRET=' + secrets.token_hex(32))
 PY
 
 # Save the output in .env together with any other settings you need
@@ -64,14 +64,14 @@ docker compose logs -f
 
 > ℹ️ Docker Compose automatically reads a `.env` file from the project root. Passing `--env-file .env` makes it explicit that the generated secrets should be loaded before the containers start.
 
-The `tradepulse` service defined in `docker-compose.yml` consumes the `.env` file, so `TRADEPULSE_AUDIT_SECRET` and `TRADEPULSE_RBAC_AUDIT_SECRET` are injected into the container environment. You can verify they are present with:
+The `geosync` service defined in `docker-compose.yml` consumes the `.env` file, so `GEOSYNC_AUDIT_SECRET` and `GEOSYNC_RBAC_AUDIT_SECRET` are injected into the container environment. You can verify they are present with:
 
 ```bash
-docker compose exec tradepulse env | grep TRADEPULSE_.*AUDIT_SECRET
+docker compose exec geosync env | grep GEOSYNC_.*AUDIT_SECRET
 ```
 
 Services started:
-- **TradePulse**: Main application
+- **GeoSync**: Main application
 - **Prometheus**: Metrics collection (port 9090)
 - **Grafana**: Dashboards (port 3000)
 - **PostgreSQL**: Database (port 5432)
@@ -83,10 +83,10 @@ Services started:
 docker compose ps
 
 # Should show:
-# tradepulse-app      running
-# tradepulse-prometheus running
-# tradepulse-grafana   running
-# tradepulse-db        running
+# geosync-app      running
+# geosync-prometheus running
+# geosync-grafana   running
+# geosync-db        running
 ```
 
 ### 5. Access Services
@@ -99,7 +99,7 @@ docker compose ps
 **Prometheus:**
 - URL: http://localhost:9090
 
-**TradePulse API:**
+**GeoSync API:**
 - URL: http://localhost:8000
 
 ---
@@ -142,10 +142,10 @@ docker compose down -v
 docker compose logs -f
 
 # Specific service
-docker compose logs -f tradepulse
+docker compose logs -f geosync
 
 # Last 100 lines
-docker compose logs --tail=100 tradepulse
+docker compose logs --tail=100 geosync
 ```
 
 ### Restart Services
@@ -155,37 +155,37 @@ docker compose logs --tail=100 tradepulse
 docker compose restart
 
 # Restart specific service
-docker compose restart tradepulse
+docker compose restart geosync
 ```
 
 ---
 
-## Running TradePulse Commands
+## Running GeoSync Commands
 
 ### Execute Commands in Container
 
 ```bash
 # Analyze data
-docker compose exec tradepulse python -m interfaces.cli analyze --csv /data/sample.csv
+docker compose exec geosync python -m interfaces.cli analyze --csv /data/sample.csv
 
 # Run backtest
-docker compose exec tradepulse python -m interfaces.cli backtest --csv /data/sample.csv
+docker compose exec geosync python -m interfaces.cli backtest --csv /data/sample.csv
 
 # Run tests
-docker compose exec tradepulse pytest tests/
+docker compose exec geosync pytest tests/
 
 # Open shell
-docker compose exec tradepulse /bin/bash
+docker compose exec geosync /bin/bash
 ```
 
 ### Using Docker Run
 
 ```bash
 # One-off command
-docker compose run --rm tradepulse python -m interfaces.cli analyze --csv /data/sample.csv
+docker compose run --rm geosync python -m interfaces.cli analyze --csv /data/sample.csv
 
 # Interactive shell
-docker compose run --rm tradepulse /bin/bash
+docker compose run --rm geosync /bin/bash
 ```
 
 ---
@@ -198,19 +198,19 @@ Create `.env` file in project root. Be sure to include the audit secrets you gen
 
 ```bash
 # .env
-POSTGRES_USER=tradepulse
+POSTGRES_USER=geosync
 POSTGRES_PASSWORD=secure_password
-POSTGRES_DB=tradepulse
+POSTGRES_DB=geosync
 
 # Exchange API keys
 BINANCE_API_KEY=your_api_key
 BINANCE_API_SECRET=your_api_secret
 
-# TradePulse settings
-TRADEPULSE_ENV=production
-TRADEPULSE_LOG_LEVEL=INFO
-TRADEPULSE_AUDIT_SECRET=replace_with_output_from_secrets_generator
-TRADEPULSE_RBAC_AUDIT_SECRET=replace_with_output_from_secrets_generator
+# GeoSync settings
+GEOSYNC_ENV=production
+GEOSYNC_LOG_LEVEL=INFO
+GEOSYNC_AUDIT_SECRET=replace_with_output_from_secrets_generator
+GEOSYNC_RBAC_AUDIT_SECRET=replace_with_output_from_secrets_generator
 ```
 
 Load environment variables:
@@ -225,7 +225,7 @@ Mount local directories for data and logs:
 ```yaml
 # docker-compose.yml
 services:
-  tradepulse:
+  geosync:
     volumes:
       - ./data:/data           # Data directory
       - ./logs:/logs           # Log files
@@ -239,7 +239,7 @@ Override docker-compose.yml:
 ```yaml
 # docker-compose.override.yml
 services:
-  tradepulse:
+  geosync:
     environment:
       - LOG_LEVEL=DEBUG
     ports:
@@ -257,9 +257,9 @@ services:
 version: '3.8'
 
 services:
-  tradepulse:
+  geosync:
     build: .
-    container_name: tradepulse-app
+    container_name: geosync-app
     ports:
       - "8000:8000"
     volumes:
@@ -267,7 +267,7 @@ services:
       - ./logs:/logs
     environment:
       - PYTHONUNBUFFERED=1
-      - TRADEPULSE_ENV=production
+      - GEOSYNC_ENV=production
     depends_on:
       - db
       - prometheus
@@ -275,20 +275,20 @@ services:
 
   db:
     image: postgres:15
-    container_name: tradepulse-db
+    container_name: geosync-db
     ports:
       - "5432:5432"
     environment:
-      - POSTGRES_USER=tradepulse
-      - POSTGRES_PASSWORD=tradepulse
-      - POSTGRES_DB=tradepulse
+      - POSTGRES_USER=geosync
+      - POSTGRES_PASSWORD=geosync
+      - POSTGRES_DB=geosync
     volumes:
       - postgres_data:/var/lib/postgresql/data
     restart: unless-stopped
 
   prometheus:
     image: prom/prometheus:latest
-    container_name: tradepulse-prometheus
+    container_name: geosync-prometheus
     ports:
       - "9090:9090"
     volumes:
@@ -301,7 +301,7 @@ services:
 
   grafana:
     image: grafana/grafana:latest
-    container_name: tradepulse-grafana
+    container_name: geosync-grafana
     ports:
       - "3000:3000"
     environment:
@@ -364,13 +364,13 @@ CMD ["python", "-m", "interfaces.cli", "live", "--source", "csv", "--path", "/da
 
 ```bash
 # Build image
-docker build -t tradepulse:latest .
+docker build -t geosync:latest .
 
 # Build with tag
-docker build -t tradepulse:v1.0.0 .
+docker build -t geosync:v1.0.0 .
 
 # Build without cache
-docker build --no-cache -t tradepulse:latest .
+docker build --no-cache -t geosync:latest .
 ```
 
 ---
@@ -384,7 +384,7 @@ Mount source code as volume:
 ```yaml
 # docker-compose.dev.yml
 services:
-  tradepulse:
+  geosync:
     volumes:
       - .:/app  # Mount source code
     command: python -m interfaces.cli live --reload
@@ -399,16 +399,16 @@ docker compose -f docker-compose.yml -f docker-compose.dev.yml up
 
 ```bash
 # Run all tests
-docker compose exec tradepulse pytest tests/
+docker compose exec geosync pytest tests/
 
 # Run with coverage
-docker compose exec tradepulse pytest tests/ \
+docker compose exec geosync pytest tests/ \
   --cov=core --cov=backtest --cov=execution \
   --cov-config=configs/quality/critical_surface.coveragerc \
   --cov-report=html
 
 # Run specific test
-docker compose exec tradepulse pytest tests/unit/test_indicators.py
+docker compose exec geosync pytest tests/unit/test_indicators.py
 ```
 
 ### Debugging
@@ -416,7 +416,7 @@ docker compose exec tradepulse pytest tests/unit/test_indicators.py
 ```yaml
 # docker-compose.debug.yml
 services:
-  tradepulse:
+  geosync:
     ports:
       - "5678:5678"  # Debugger port
     command: python -m debugpy --listen 0.0.0.0:5678 --wait-for-client -m interfaces.cli
@@ -449,7 +449,7 @@ docker compose -f docker-compose.yml -f docker-compose.prod.yml up -d
 
 ```yaml
 services:
-  tradepulse:
+  geosync:
     deploy:
       resources:
         limits:
@@ -464,7 +464,7 @@ services:
 
 ```yaml
 services:
-  tradepulse:
+  geosync:
     healthcheck:
       test: ["CMD", "curl", "-f", "http://localhost:8000/health"]
       interval: 30s
@@ -477,7 +477,7 @@ services:
 
 ```yaml
 services:
-  tradepulse:
+  geosync:
     logging:
       driver: "json-file"
       options:
@@ -493,7 +493,7 @@ services:
 
 ```bash
 # Check logs
-docker compose logs tradepulse
+docker compose logs geosync
 
 # Check system resources
 docker system df
@@ -519,7 +519,7 @@ docker compose up -d --force-recreate
 sudo chown -R $USER:$USER .
 
 # Or run as current user
-docker compose run --user $(id -u):$(id -g) tradepulse
+docker compose run --user $(id -u):$(id -g) geosync
 ```
 
 ### Out of Disk Space
@@ -540,7 +540,7 @@ docker system df -v
 
 ```yaml
 services:
-  tradepulse:
+  geosync:
     networks:
       - frontend
       - backend
@@ -555,7 +555,7 @@ networks:
 
 ```yaml
 services:
-  tradepulse:
+  geosync:
     secrets:
       - db_password
       - api_key
@@ -571,7 +571,7 @@ secrets:
 
 ```bash
 # Scale service
-docker compose up -d --scale tradepulse=3
+docker compose up -d --scale geosync=3
 
 # Load balancing required for multiple instances
 ```
@@ -585,14 +585,14 @@ docker compose up -d --scale tradepulse=3
 docker stats
 
 # Inspect container
-docker inspect tradepulse-app
+docker inspect geosync-app
 
 # Copy files to/from container
-docker cp data.csv tradepulse-app:/data/
-docker cp tradepulse-app:/logs/ ./logs/
+docker cp data.csv geosync-app:/data/
+docker cp geosync-app:/logs/ ./logs/
 
 # Execute shell command
-docker compose exec tradepulse ls -la /data
+docker compose exec geosync ls -la /data
 
 # Remove all stopped containers
 docker container prune
@@ -609,7 +609,7 @@ docker volume prune
 ## Summary
 
 You've learned how to:
-- ✅ Start TradePulse with Docker
+- ✅ Start GeoSync with Docker
 - ✅ Use Docker Compose commands
 - ✅ Configure services
 - ✅ Run commands in containers

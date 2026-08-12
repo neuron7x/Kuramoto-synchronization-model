@@ -1,0 +1,79 @@
+# Diff-bound commit acceptor: resolve the 14 residual CodeQL findings left after
+# the EXT-001 review (the 5 error-tier were already closed). All real fixes — no
+# dismissals, no suppression.
+#
+#   * 10× js/unused-local-variable (ui/dashboard/demo.html): removed a dead block
+#     of leftover `$('…')` lookups + `iso`/`fmtPct`/`fmtRatio` helpers stranded by
+#     the earlier truth-mode refactor. Live consts (pnlHead/pnlPct/pnlRate/pad/fmt)
+#     retained and verified still referenced; i18n + html_strip validators pass.
+#   * 3× js/superfluous-trailing-arguments (ui/dashboard/src/views/overview.js):
+#     formatPercent(value) ignored a second options arg three callers were passing.
+#     Made formatPercent accept `options` and honour maximumFractionDigits —
+#     mirroring the sibling formatNumber(value, options={}) contract — so the calls
+#     are legitimate and caller intent (1 fractional digit) is honoured.
+#   * 1× py/import-and-import-from (tests/property/test_strategy_properties.py): a
+#     dual `import core.agent.strategy as strategy_mod` collided with the module's
+#     top-level `from core.agent.strategy import …` (introduced in the TD-009 test);
+#     replaced with a string-path monkeypatch, dropping the redundant import.
+#
+# Locally verified:
+#   * tests/property/test_strategy_properties.py -k "trigger_emits_log or jitter": passed
+#   * node --check formatters.js: valid; formatPercent(0.05,{maximumFractionDigits:1})="5.0%"
+#   * html_strip.test.js 34/0, validate_i18n: "demo.html clean"
+#   (pre-existing accessibility.test.js / test.js harness failures are node-22
+#    `assert`/ESM incompatibilities, unrelated to this diff.)
+
+id: codeql-residual-14-clean
+status: ACTIVE
+claim_type: correctness
+promise: >-
+  After this PR lands, all 14 residual open CodeQL findings (10 js/unused-local-
+  variable, 3 js/superfluous-trailing-arguments, 1 py/import-and-import-from) are
+  resolved by real code fixes — dead code removed, formatPercent made to honour an
+  options arg consistent with formatNumber, and a redundant test import dropped.
+  No CodeQL alert is dismissed or suppressed; the next scan closes them.
+diff_scope:
+  changed_files:
+    - path: ".claude/commit_acceptors/codeql-residual-14-clean.yaml"
+    - path: "tests/property/test_strategy_properties.py"
+    - path: "ui/dashboard/demo.html"
+    - path: "ui/dashboard/src/core/formatters.js"
+  forbidden_paths:
+    - "trading/"
+    - "forecast/"
+    - "policy/"
+    - "execution/"
+    - "core/physics/"
+    - "core/kuramoto/"
+required_python_symbols: []
+expected_signal: >-
+  `pytest tests/property/test_strategy_properties.py -k "trigger_emits_log or jitter"`
+  passes; `node --check ui/dashboard/src/core/formatters.js` is clean and
+  formatPercent honours maximumFractionDigits; node --test html_strip.test.js is
+  34/0 and validate_i18n reports "demo.html clean".
+measurement_command: >-
+  bash -c '
+    python -m pytest tests/property/test_strategy_properties.py -k "trigger_emits_log or jitter" -q && node --check ui/dashboard/src/core/formatters.js && node --test ui/dashboard/tests/html_strip.test.js && node ui/dashboard/scripts/validate_i18n.js
+  '
+signal_artifact: "tmp/codeql_residual_14.log"
+falsifier:
+  command: >-
+    bash -c '
+      node -e "import(\"./ui/dashboard/src/core/formatters.js\").then(m => { const r = m.formatPercent(0.05, { maximumFractionDigits: 1 }); process.exit(r === \"5.0%\" ? 1 : 0); })"
+    '
+  description: >-
+    Probes the formatPercent options contract: with maximumFractionDigits=1 the
+    output must be "5.0%" (one fractional digit). The falsifier succeeds (exit 0)
+    only if formatPercent reverts to ignoring the options arg, re-opening the
+    superfluous-trailing-arguments finding.
+rollback_command: >-
+  bash -c 'git checkout origin/main --
+    tests/property/test_strategy_properties.py
+    ui/dashboard/demo.html
+    ui/dashboard/src/core/formatters.js && rm -f .claude/commit_acceptors/codeql-residual-14-clean.yaml'
+rollback_verification_command: >-
+  bash -c '! test -f .claude/commit_acceptors/codeql-residual-14-clean.yaml'
+memory_update_type: append
+ledger_path: ".claude/commit_acceptors/codeql-residual-14-clean.yaml"
+report_path: "tmp/codeql_residual_14.log"
+evidence: []

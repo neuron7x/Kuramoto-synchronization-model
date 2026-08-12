@@ -2,7 +2,7 @@
 
 ## Overview
 
-This document defines comprehensive security requirements for TradePulse based on NIST, ISO 27001, and industry best practices. These requirements ensure confidentiality, integrity, and availability of data and services.
+This document defines comprehensive security requirements for GeoSync based on NIST, ISO 27001, and industry best practices. These requirements ensure confidentiality, integrity, and availability of data and services.
 
 ## 1. Security Objectives
 

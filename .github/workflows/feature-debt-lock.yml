@@ -1,0 +1,37 @@
+name: Feature-Debt Lock
+
+# Fail-closed on new features that ignore the coverage deficit (TD-023). A PR that
+# adds new production feature code to a tracked surface must also add tests for a
+# deficit surface (backtest/, analytics/) or declare an audited 'Debt-Exempt:'
+# trailer. This is the process-level realisation of the system's Fail-Closed
+# philosophy. Promote to an ABSOLUTE block by adding this check to the branch
+# protection required-checks once the in-flight backlog has cleared.
+
+concurrency:
+  group: ${{ github.workflow }}-${{ github.ref }}
+  cancel-in-progress: true
+
+on:
+  pull_request:
+
+permissions:
+  contents: read
+
+jobs:
+  feature-debt-lock:
+    runs-on: ubuntu-latest
+    steps:
+      - uses: actions/checkout@9c091bb21b7c1c1d1991bb908d89e4e9dddfe3e0 # v7.0.0
+        with:
+          fetch-depth: 0
+      - uses: actions/setup-python@ece7cb06caefa5fff74198d8649806c4678c61a1 # v6
+        with:
+          python-version: "3.12"
+      - name: New features must pay down the coverage deficit
+        env:
+          BASE_REF: ${{ github.base_ref }}
+        run: |
+          set -euo pipefail
+          git fetch --no-tags origin "$BASE_REF"
+          PYTHONPATH=. python scripts/ci/check_feature_debt_lock.py \
+            --base-ref "origin/$BASE_REF"

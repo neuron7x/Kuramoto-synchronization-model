@@ -1,10 +1,11 @@
-# SPDX-License-Identifier: LicenseRef-TradePulse-Proprietary
+# Copyright (c) 2023-2026 Yaroslav Vasylenko (neuron7xLab)
+# SPDX-License-Identifier: MIT
 """Risk-gating pre-action filter for live execution."""
 
 from __future__ import annotations
 
 from dataclasses import dataclass, field
-from typing import TYPE_CHECKING, Mapping, Protocol, Sequence
+from typing import TYPE_CHECKING, Mapping, Protocol
 
 if TYPE_CHECKING:
     from .degradation import DegradationPolicy, DegradationReport

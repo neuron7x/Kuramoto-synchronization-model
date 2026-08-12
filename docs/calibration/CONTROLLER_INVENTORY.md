@@ -1,6 +1,6 @@
 # Controller Calibration Inventory
 
-Complete inventory of all TradePulse controllers with calibration parameters.
+Complete inventory of all GeoSync controllers with calibration parameters.
 
 ## Summary
 
@@ -17,7 +17,7 @@ Complete inventory of all TradePulse controllers with calibration parameters.
 
 ## NAK Controller
 
-**Location**: `nak_controller/`, `src/tradepulse/core/neuro/nak/`
+**Location**: `nak_controller/`, `src/geosync/core/neuro/nak/`
 
 **Purpose**: Manages neuro-energetic state and trading limits through engagement index monitoring.
 
@@ -43,7 +43,7 @@ Complete inventory of all TradePulse controllers with calibration parameters.
 
 ## Dopamine Controller
 
-**Location**: `src/tradepulse/core/neuro/dopamine/`
+**Location**: `src/geosync/core/neuro/dopamine/`
 
 **Purpose**: Implements reward prediction error (RPE) and action selection with exploration/exploitation balance.
 
@@ -70,7 +70,7 @@ Complete inventory of all TradePulse controllers with calibration parameters.
 
 ## Serotonin Controller
 
-**Location**: `src/tradepulse/core/neuro/serotonin/`
+**Location**: `src/geosync/core/neuro/serotonin/`
 
 **Purpose**: Models chronic stress dynamics and produces hold decisions for the trading system.
 
@@ -98,7 +98,7 @@ Complete inventory of all TradePulse controllers with calibration parameters.
 
 ## Risk Engine
 
-**Location**: `tradepulse/risk/`, `execution/risk/`
+**Location**: `geosync/risk/`, `execution/risk/`
 
 **Purpose**: Enforces hard limits to protect capital through position, notional, and rate limits.
 
@@ -172,7 +172,7 @@ Complete inventory of all TradePulse controllers with calibration parameters.
 
 ## GABA Controller
 
-**Location**: `modules/gaba_inhibition_gate.py`, `src/tradepulse/core/neuro/gaba/`
+**Location**: `modules/gaba_inhibition_gate.py`, `src/geosync/core/neuro/gaba/`
 
 **Purpose**: Provides inhibitory control to prevent impulsive actions.
 
@@ -193,7 +193,7 @@ Complete inventory of all TradePulse controllers with calibration parameters.
 
 ## Desensitization
 
-**Location**: `src/tradepulse/core/neuro/desensitization/`
+**Location**: `src/geosync/core/neuro/desensitization/`
 
 **Purpose**: Manages receptor desensitization under repeated stimulation.
 

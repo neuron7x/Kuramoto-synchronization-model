@@ -1,9 +1,0 @@
-# Контрольні суми пакету (v1.0.0)
-source_file  docs/responsible_ai_program.md  2b0e3039c1fa04699c63c6121690eba9379c331771bb504a194156c0a4c51a46
-artifact     summary/responsible_ai_program_summary.md  74b89b33aed31a42bd3471f28403cc205e4d29134935f20795316e123d771803
-artifact     questions/open_questions.md  f7840271276213f96f65434c189e5b4128e1896f9d82b0ff40c571e343a8968a
-artifact     tracker/requirements.csv  d4d41139e7e24f61d30526f2ef4180353c9d23567b7796cfaa29422bc1c28d21
-artifact     tracker/tasks.csv  bbb9e9cae1112ad42a66a204bc881b9e5006e3c6a300d9f75d8d577c59d49b96
-artifact     tracker/tests.csv  33655ddae80d4d05ab50f46c2dc7316da961ffc564f1e0a8fd84cd7b4f11bb41
-artifact     tracker/milestones.csv  2a72816cb9b3e84f1bab66358007a004779b441ab1e9ec3867226c2253d0195c
-artifact     checks/acceptance_checklist.md  f73e1c02390480869b488fd085b5b0154b2952909d4c0512b987c4ebdaf70f2e

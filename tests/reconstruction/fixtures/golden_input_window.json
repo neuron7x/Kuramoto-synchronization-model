@@ -1,0 +1,11 @@
+{
+  "_doc": "Golden admissible X-10R input window for Lane D data-contract tests (issue #1168). INPUT VALIDATION fixture only: structurally admissible for downstream reconstruction. NOT a market, predictive, or product-readiness claim.",
+  "timestamps": [1718000000, 1718000060, 1718000120, 1718000180],
+  "values": [101.25, 101.5, 100.75, 102.0],
+  "adjacency": [
+    [0.0, 0.4, 0.0, 0.1],
+    [0.4, 0.0, 0.2, 0.0],
+    [0.0, 0.2, 0.0, 0.3],
+    [0.1, 0.0, 0.3, 0.0]
+  ]
+}

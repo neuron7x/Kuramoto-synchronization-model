@@ -1,3 +1,5 @@
+# Copyright (c) 2023-2026 Yaroslav Vasylenko (neuron7xLab)
+# SPDX-License-Identifier: MIT
 """Repository abstractions built on top of SQLAlchemy sessions."""
 
 from __future__ import annotations
@@ -77,6 +79,4 @@ class KillSwitchStateRepository(SqlAlchemyRepository[KillSwitchState]):
                 self._session_manager.writer_engine, tables=[KillSwitchState.__table__]
             )
         except Exception as exc:  # pragma: no cover - defensive guard for engine issues
-            raise DatabaseError(
-                "Failed to initialise kill_switch_state schema"
-            ) from exc
+            raise DatabaseError("Failed to initialise kill_switch_state schema") from exc

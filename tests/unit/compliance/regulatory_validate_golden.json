@@ -1,0 +1,1641 @@
+{
+  "audit_boundary_365": {
+    "input": {
+      "ccpa_compliant": true,
+      "confidentiality": "Confidential",
+      "consent_logging": true,
+      "data_ownership": "GeoSync",
+      "gdpr_compliant": true,
+      "independent_audit": {
+        "frequency_days": 365,
+        "independent": true
+      },
+      "intended_domains": [
+        "quant_research"
+      ],
+      "iso_certifications": [
+        "ISO27001",
+        "ISO27701"
+      ],
+      "license": "MIT License",
+      "nist_alignment": [
+        "NIST-CSF"
+      ],
+      "privacy_regulations": [
+        "GDPR",
+        "CCPA"
+      ],
+      "remediation_alignment": {
+        "aligned": true,
+        "reference": "jira://risk-123"
+      },
+      "retention_policy_days": 365,
+      "retention_policy_reference": "policy://retention/market-data",
+      "training_restrictions": [
+        "no_personal_data",
+        "approved_sources_only"
+      ],
+      "user_request_process": "https://intranet.geosync/privacy-portal",
+      "user_request_sla_hours": 48
+    },
+    "output": {
+      "compliant": true,
+      "issues": [],
+      "metadata_view": {
+        "audit_frequency_days": "365",
+        "confidentiality": "Confidential",
+        "iso_controls": "ISO27001, ISO27701",
+        "license": "MIT License",
+        "nist_controls": "NIST-CSF",
+        "owner": "GeoSync",
+        "privacy_regimes": "CCPA, GDPR",
+        "retention_days": "365",
+        "training_restrictions": "approved_sources_only, no_personal_data",
+        "user_request_process": "https://intranet.geosync/privacy-portal"
+      }
+    }
+  },
+  "audit_boundary_366": {
+    "input": {
+      "ccpa_compliant": true,
+      "confidentiality": "Confidential",
+      "consent_logging": true,
+      "data_ownership": "GeoSync",
+      "gdpr_compliant": true,
+      "independent_audit": {
+        "frequency_days": 366,
+        "independent": true
+      },
+      "intended_domains": [
+        "quant_research"
+      ],
+      "iso_certifications": [
+        "ISO27001",
+        "ISO27701"
+      ],
+      "license": "MIT License",
+      "nist_alignment": [
+        "NIST-CSF"
+      ],
+      "privacy_regulations": [
+        "GDPR",
+        "CCPA"
+      ],
+      "remediation_alignment": {
+        "aligned": true,
+        "reference": "jira://risk-123"
+      },
+      "retention_policy_days": 365,
+      "retention_policy_reference": "policy://retention/market-data",
+      "training_restrictions": [
+        "no_personal_data",
+        "approved_sources_only"
+      ],
+      "user_request_process": "https://intranet.geosync/privacy-portal",
+      "user_request_sla_hours": 48
+    },
+    "output": {
+      "compliant": true,
+      "issues": [
+        "warning:Audit frequency exceeds configured maximum interval"
+      ],
+      "metadata_view": {
+        "audit_frequency_days": "366",
+        "confidentiality": "Confidential",
+        "iso_controls": "ISO27001, ISO27701",
+        "license": "MIT License",
+        "nist_controls": "NIST-CSF",
+        "owner": "GeoSync",
+        "privacy_regimes": "CCPA, GDPR",
+        "retention_days": "365",
+        "training_restrictions": "approved_sources_only, no_personal_data",
+        "user_request_process": "https://intranet.geosync/privacy-portal"
+      }
+    }
+  },
+  "bad_confidentiality": {
+    "input": {
+      "ccpa_compliant": true,
+      "confidentiality": "ultra-top-secret-not-allowed",
+      "consent_logging": true,
+      "data_ownership": "GeoSync",
+      "gdpr_compliant": true,
+      "independent_audit": {
+        "frequency_days": 180,
+        "independent": true
+      },
+      "intended_domains": [
+        "quant_research"
+      ],
+      "iso_certifications": [
+        "ISO27001",
+        "ISO27701"
+      ],
+      "license": "MIT License",
+      "nist_alignment": [
+        "NIST-CSF"
+      ],
+      "privacy_regulations": [
+        "GDPR",
+        "CCPA"
+      ],
+      "remediation_alignment": {
+        "aligned": true,
+        "reference": "jira://risk-123"
+      },
+      "retention_policy_days": 365,
+      "retention_policy_reference": "policy://retention/market-data",
+      "training_restrictions": [
+        "no_personal_data",
+        "approved_sources_only"
+      ],
+      "user_request_process": "https://intranet.geosync/privacy-portal",
+      "user_request_sla_hours": 48
+    },
+    "output": {
+      "compliant": false,
+      "issues": [
+        "error:Confidentiality level 'ultra-top-secret-not-allowed' is not permitted"
+      ],
+      "metadata_view": {
+        "audit_frequency_days": "180",
+        "confidentiality": "ultra-top-secret-not-allowed",
+        "iso_controls": "ISO27001, ISO27701",
+        "license": "MIT License",
+        "nist_controls": "NIST-CSF",
+        "owner": "GeoSync",
+        "privacy_regimes": "CCPA, GDPR",
+        "retention_days": "365",
+        "training_restrictions": "approved_sources_only, no_personal_data",
+        "user_request_process": "https://intranet.geosync/privacy-portal"
+      }
+    }
+  },
+  "ccpa_false": {
+    "input": {
+      "ccpa_compliant": false,
+      "confidentiality": "Confidential",
+      "consent_logging": true,
+      "data_ownership": "GeoSync",
+      "gdpr_compliant": true,
+      "independent_audit": {
+        "frequency_days": 180,
+        "independent": true
+      },
+      "intended_domains": [
+        "quant_research"
+      ],
+      "iso_certifications": [
+        "ISO27001",
+        "ISO27701"
+      ],
+      "license": "MIT License",
+      "nist_alignment": [
+        "NIST-CSF"
+      ],
+      "privacy_regulations": [
+        "GDPR",
+        "CCPA"
+      ],
+      "remediation_alignment": {
+        "aligned": true,
+        "reference": "jira://risk-123"
+      },
+      "retention_policy_days": 365,
+      "retention_policy_reference": "policy://retention/market-data",
+      "training_restrictions": [
+        "no_personal_data",
+        "approved_sources_only"
+      ],
+      "user_request_process": "https://intranet.geosync/privacy-portal",
+      "user_request_sla_hours": 48
+    },
+    "output": {
+      "compliant": false,
+      "issues": [
+        "error:CCPA compliance explicitly flagged as non-compliant"
+      ],
+      "metadata_view": {
+        "audit_frequency_days": "180",
+        "confidentiality": "Confidential",
+        "iso_controls": "ISO27001, ISO27701",
+        "license": "MIT License",
+        "nist_controls": "NIST-CSF",
+        "owner": "GeoSync",
+        "privacy_regimes": "CCPA, GDPR",
+        "retention_days": "365",
+        "training_restrictions": "approved_sources_only, no_personal_data",
+        "user_request_process": "https://intranet.geosync/privacy-portal"
+      }
+    }
+  },
+  "compliant": {
+    "input": {
+      "ccpa_compliant": true,
+      "confidentiality": "Confidential",
+      "consent_logging": true,
+      "data_ownership": "GeoSync",
+      "gdpr_compliant": true,
+      "independent_audit": {
+        "frequency_days": 180,
+        "independent": true
+      },
+      "intended_domains": [
+        "quant_research"
+      ],
+      "iso_certifications": [
+        "ISO27001",
+        "ISO27701"
+      ],
+      "license": "MIT License",
+      "nist_alignment": [
+        "NIST-CSF"
+      ],
+      "privacy_regulations": [
+        "GDPR",
+        "CCPA"
+      ],
+      "remediation_alignment": {
+        "aligned": true,
+        "reference": "jira://risk-123"
+      },
+      "retention_policy_days": 365,
+      "retention_policy_reference": "policy://retention/market-data",
+      "training_restrictions": [
+        "no_personal_data",
+        "approved_sources_only"
+      ],
+      "user_request_process": "https://intranet.geosync/privacy-portal",
+      "user_request_sla_hours": 48
+    },
+    "output": {
+      "compliant": true,
+      "issues": [],
+      "metadata_view": {
+        "audit_frequency_days": "180",
+        "confidentiality": "Confidential",
+        "iso_controls": "ISO27001, ISO27701",
+        "license": "MIT License",
+        "nist_controls": "NIST-CSF",
+        "owner": "GeoSync",
+        "privacy_regimes": "CCPA, GDPR",
+        "retention_days": "365",
+        "training_restrictions": "approved_sources_only, no_personal_data",
+        "user_request_process": "https://intranet.geosync/privacy-portal"
+      }
+    }
+  },
+  "empty": {
+    "input": {},
+    "output": {
+      "compliant": false,
+      "issues": [
+        "error:Audit cadence must specify frequency in days",
+        "error:Confidentiality classification missing",
+        "error:Consent logging must be enabled and verifiable",
+        "error:Data ownership is unspecified",
+        "error:ISO alignment missing required certifications",
+        "error:Independent audit coverage is not confirmed",
+        "error:License metadata is missing",
+        "error:Missing attestation for CCPA compliance",
+        "error:Missing attestation for GDPR compliance",
+        "error:NIST alignment missing required control frameworks",
+        "error:Process for user data requests is undefined",
+        "error:Remediation commitments are not aligned with compliance controls",
+        "error:Retention policy does not specify a positive duration",
+        "error:Training restrictions are incomplete or missing",
+        "warning:Remediation plan reference is missing",
+        "warning:Retention policy lacks documented legal basis or reference"
+      ],
+      "metadata_view": {
+        "audit_frequency_days": "unspecified",
+        "confidentiality": "unspecified",
+        "iso_controls": "",
+        "license": "unspecified",
+        "nist_controls": "",
+        "owner": "unspecified",
+        "privacy_regimes": "",
+        "retention_days": "unspecified",
+        "training_restrictions": "",
+        "user_request_process": "unspecified"
+      }
+    }
+  },
+  "forbidden_domain": {
+    "input": {
+      "ccpa_compliant": true,
+      "confidentiality": "Confidential",
+      "consent_logging": true,
+      "data_ownership": "GeoSync",
+      "gdpr_compliant": true,
+      "independent_audit": {
+        "frequency_days": 180,
+        "independent": true
+      },
+      "intended_domains": [
+        "biometric_tracking"
+      ],
+      "iso_certifications": [
+        "ISO27001",
+        "ISO27701"
+      ],
+      "license": "MIT License",
+      "nist_alignment": [
+        "NIST-CSF"
+      ],
+      "privacy_regulations": [
+        "GDPR",
+        "CCPA"
+      ],
+      "remediation_alignment": {
+        "aligned": true,
+        "reference": "jira://risk-123"
+      },
+      "retention_policy_days": 365,
+      "retention_policy_reference": "policy://retention/market-data",
+      "training_restrictions": [
+        "no_personal_data",
+        "approved_sources_only"
+      ],
+      "user_request_process": "https://intranet.geosync/privacy-portal",
+      "user_request_sla_hours": 48
+    },
+    "output": {
+      "compliant": false,
+      "issues": [
+        "error:Intended domains include forbidden areas: biometric tracking"
+      ],
+      "metadata_view": {
+        "audit_frequency_days": "180",
+        "confidentiality": "Confidential",
+        "iso_controls": "ISO27001, ISO27701",
+        "license": "MIT License",
+        "nist_controls": "NIST-CSF",
+        "owner": "GeoSync",
+        "privacy_regimes": "CCPA, GDPR",
+        "retention_days": "365",
+        "training_restrictions": "approved_sources_only, no_personal_data",
+        "user_request_process": "https://intranet.geosync/privacy-portal"
+      }
+    }
+  },
+  "gdpr_false": {
+    "input": {
+      "ccpa_compliant": true,
+      "confidentiality": "Confidential",
+      "consent_logging": true,
+      "data_ownership": "GeoSync",
+      "gdpr_compliant": false,
+      "independent_audit": {
+        "frequency_days": 180,
+        "independent": true
+      },
+      "intended_domains": [
+        "quant_research"
+      ],
+      "iso_certifications": [
+        "ISO27001",
+        "ISO27701"
+      ],
+      "license": "MIT License",
+      "nist_alignment": [
+        "NIST-CSF"
+      ],
+      "privacy_regulations": [
+        "GDPR",
+        "CCPA"
+      ],
+      "remediation_alignment": {
+        "aligned": true,
+        "reference": "jira://risk-123"
+      },
+      "retention_policy_days": 365,
+      "retention_policy_reference": "policy://retention/market-data",
+      "training_restrictions": [
+        "no_personal_data",
+        "approved_sources_only"
+      ],
+      "user_request_process": "https://intranet.geosync/privacy-portal",
+      "user_request_sla_hours": 48
+    },
+    "output": {
+      "compliant": false,
+      "issues": [
+        "error:GDPR compliance explicitly flagged as non-compliant"
+      ],
+      "metadata_view": {
+        "audit_frequency_days": "180",
+        "confidentiality": "Confidential",
+        "iso_controls": "ISO27001, ISO27701",
+        "license": "MIT License",
+        "nist_controls": "NIST-CSF",
+        "owner": "GeoSync",
+        "privacy_regimes": "CCPA, GDPR",
+        "retention_days": "365",
+        "training_restrictions": "approved_sources_only, no_personal_data",
+        "user_request_process": "https://intranet.geosync/privacy-portal"
+      }
+    }
+  },
+  "high_audit_freq": {
+    "input": {
+      "ccpa_compliant": true,
+      "confidentiality": "Confidential",
+      "consent_logging": true,
+      "data_ownership": "GeoSync",
+      "gdpr_compliant": true,
+      "independent_audit": {
+        "frequency_days": 99999,
+        "independent": true
+      },
+      "intended_domains": [
+        "quant_research"
+      ],
+      "iso_certifications": [
+        "ISO27001",
+        "ISO27701"
+      ],
+      "license": "MIT License",
+      "nist_alignment": [
+        "NIST-CSF"
+      ],
+      "privacy_regulations": [
+        "GDPR",
+        "CCPA"
+      ],
+      "remediation_alignment": {
+        "aligned": true,
+        "reference": "jira://risk-123"
+      },
+      "retention_policy_days": 365,
+      "retention_policy_reference": "policy://retention/market-data",
+      "training_restrictions": [
+        "no_personal_data",
+        "approved_sources_only"
+      ],
+      "user_request_process": "https://intranet.geosync/privacy-portal",
+      "user_request_sla_hours": 48
+    },
+    "output": {
+      "compliant": true,
+      "issues": [
+        "warning:Audit frequency exceeds configured maximum interval"
+      ],
+      "metadata_view": {
+        "audit_frequency_days": "99999",
+        "confidentiality": "Confidential",
+        "iso_controls": "ISO27001, ISO27701",
+        "license": "MIT License",
+        "nist_controls": "NIST-CSF",
+        "owner": "GeoSync",
+        "privacy_regimes": "CCPA, GDPR",
+        "retention_days": "365",
+        "training_restrictions": "approved_sources_only, no_personal_data",
+        "user_request_process": "https://intranet.geosync/privacy-portal"
+      }
+    }
+  },
+  "high_user_sla": {
+    "input": {
+      "ccpa_compliant": true,
+      "confidentiality": "Confidential",
+      "consent_logging": true,
+      "data_ownership": "GeoSync",
+      "gdpr_compliant": true,
+      "independent_audit": {
+        "frequency_days": 180,
+        "independent": true
+      },
+      "intended_domains": [
+        "quant_research"
+      ],
+      "iso_certifications": [
+        "ISO27001",
+        "ISO27701"
+      ],
+      "license": "MIT License",
+      "nist_alignment": [
+        "NIST-CSF"
+      ],
+      "privacy_regulations": [
+        "GDPR",
+        "CCPA"
+      ],
+      "remediation_alignment": {
+        "aligned": true,
+        "reference": "jira://risk-123"
+      },
+      "retention_policy_days": 365,
+      "retention_policy_reference": "policy://retention/market-data",
+      "training_restrictions": [
+        "no_personal_data",
+        "approved_sources_only"
+      ],
+      "user_request_process": "https://intranet.geosync/privacy-portal",
+      "user_request_sla_hours": 200
+    },
+    "output": {
+      "compliant": true,
+      "issues": [
+        "warning:User request SLA exceeds one week; review regulatory commitments"
+      ],
+      "metadata_view": {
+        "audit_frequency_days": "180",
+        "confidentiality": "Confidential",
+        "iso_controls": "ISO27001, ISO27701",
+        "license": "MIT License",
+        "nist_controls": "NIST-CSF",
+        "owner": "GeoSync",
+        "privacy_regimes": "CCPA, GDPR",
+        "retention_days": "365",
+        "training_restrictions": "approved_sources_only, no_personal_data",
+        "user_request_process": "https://intranet.geosync/privacy-portal"
+      }
+    }
+  },
+  "insufficient_training": {
+    "input": {
+      "ccpa_compliant": true,
+      "confidentiality": "Confidential",
+      "consent_logging": true,
+      "data_ownership": "GeoSync",
+      "gdpr_compliant": true,
+      "independent_audit": {
+        "frequency_days": 180,
+        "independent": true
+      },
+      "intended_domains": [
+        "quant_research"
+      ],
+      "iso_certifications": [
+        "ISO27001",
+        "ISO27701"
+      ],
+      "license": "MIT License",
+      "nist_alignment": [
+        "NIST-CSF"
+      ],
+      "privacy_regulations": [
+        "GDPR",
+        "CCPA"
+      ],
+      "remediation_alignment": {
+        "aligned": true,
+        "reference": "jira://risk-123"
+      },
+      "retention_policy_days": 365,
+      "retention_policy_reference": "policy://retention/market-data",
+      "training_restrictions": [],
+      "user_request_process": "https://intranet.geosync/privacy-portal",
+      "user_request_sla_hours": 48
+    },
+    "output": {
+      "compliant": false,
+      "issues": [
+        "error:Training restrictions are incomplete or missing"
+      ],
+      "metadata_view": {
+        "audit_frequency_days": "180",
+        "confidentiality": "Confidential",
+        "iso_controls": "ISO27001, ISO27701",
+        "license": "MIT License",
+        "nist_controls": "NIST-CSF",
+        "owner": "GeoSync",
+        "privacy_regimes": "CCPA, GDPR",
+        "retention_days": "365",
+        "training_restrictions": "",
+        "user_request_process": "https://intranet.geosync/privacy-portal"
+      }
+    }
+  },
+  "misaligned_remediation": {
+    "input": {
+      "ccpa_compliant": true,
+      "confidentiality": "Confidential",
+      "consent_logging": true,
+      "data_ownership": "GeoSync",
+      "gdpr_compliant": true,
+      "independent_audit": {
+        "frequency_days": 180,
+        "independent": true
+      },
+      "intended_domains": [
+        "quant_research"
+      ],
+      "iso_certifications": [
+        "ISO27001",
+        "ISO27701"
+      ],
+      "license": "MIT License",
+      "nist_alignment": [
+        "NIST-CSF"
+      ],
+      "privacy_regulations": [
+        "GDPR",
+        "CCPA"
+      ],
+      "remediation_alignment": {
+        "aligned": false
+      },
+      "retention_policy_days": 365,
+      "retention_policy_reference": "policy://retention/market-data",
+      "training_restrictions": [
+        "no_personal_data",
+        "approved_sources_only"
+      ],
+      "user_request_process": "https://intranet.geosync/privacy-portal",
+      "user_request_sla_hours": 48
+    },
+    "output": {
+      "compliant": false,
+      "issues": [
+        "error:Remediation commitments are not aligned with compliance controls",
+        "warning:Remediation plan reference is missing"
+      ],
+      "metadata_view": {
+        "audit_frequency_days": "180",
+        "confidentiality": "Confidential",
+        "iso_controls": "ISO27001, ISO27701",
+        "license": "MIT License",
+        "nist_controls": "NIST-CSF",
+        "owner": "GeoSync",
+        "privacy_regimes": "CCPA, GDPR",
+        "retention_days": "365",
+        "training_restrictions": "approved_sources_only, no_personal_data",
+        "user_request_process": "https://intranet.geosync/privacy-portal"
+      }
+    }
+  },
+  "missing_audit": {
+    "input": {
+      "ccpa_compliant": true,
+      "confidentiality": "Confidential",
+      "consent_logging": true,
+      "data_ownership": "GeoSync",
+      "gdpr_compliant": true,
+      "intended_domains": [
+        "quant_research"
+      ],
+      "iso_certifications": [
+        "ISO27001",
+        "ISO27701"
+      ],
+      "license": "MIT License",
+      "nist_alignment": [
+        "NIST-CSF"
+      ],
+      "privacy_regulations": [
+        "GDPR",
+        "CCPA"
+      ],
+      "remediation_alignment": {
+        "aligned": true,
+        "reference": "jira://risk-123"
+      },
+      "retention_policy_days": 365,
+      "retention_policy_reference": "policy://retention/market-data",
+      "training_restrictions": [
+        "no_personal_data",
+        "approved_sources_only"
+      ],
+      "user_request_process": "https://intranet.geosync/privacy-portal",
+      "user_request_sla_hours": 48
+    },
+    "output": {
+      "compliant": false,
+      "issues": [
+        "error:Audit cadence must specify frequency in days",
+        "error:Independent audit coverage is not confirmed"
+      ],
+      "metadata_view": {
+        "audit_frequency_days": "unspecified",
+        "confidentiality": "Confidential",
+        "iso_controls": "ISO27001, ISO27701",
+        "license": "MIT License",
+        "nist_controls": "NIST-CSF",
+        "owner": "GeoSync",
+        "privacy_regimes": "CCPA, GDPR",
+        "retention_days": "365",
+        "training_restrictions": "approved_sources_only, no_personal_data",
+        "user_request_process": "https://intranet.geosync/privacy-portal"
+      }
+    }
+  },
+  "missing_confidentiality": {
+    "input": {
+      "ccpa_compliant": true,
+      "consent_logging": true,
+      "data_ownership": "GeoSync",
+      "gdpr_compliant": true,
+      "independent_audit": {
+        "frequency_days": 180,
+        "independent": true
+      },
+      "intended_domains": [
+        "quant_research"
+      ],
+      "iso_certifications": [
+        "ISO27001",
+        "ISO27701"
+      ],
+      "license": "MIT License",
+      "nist_alignment": [
+        "NIST-CSF"
+      ],
+      "privacy_regulations": [
+        "GDPR",
+        "CCPA"
+      ],
+      "remediation_alignment": {
+        "aligned": true,
+        "reference": "jira://risk-123"
+      },
+      "retention_policy_days": 365,
+      "retention_policy_reference": "policy://retention/market-data",
+      "training_restrictions": [
+        "no_personal_data",
+        "approved_sources_only"
+      ],
+      "user_request_process": "https://intranet.geosync/privacy-portal",
+      "user_request_sla_hours": 48
+    },
+    "output": {
+      "compliant": false,
+      "issues": [
+        "error:Confidentiality classification missing"
+      ],
+      "metadata_view": {
+        "audit_frequency_days": "180",
+        "confidentiality": "unspecified",
+        "iso_controls": "ISO27001, ISO27701",
+        "license": "MIT License",
+        "nist_controls": "NIST-CSF",
+        "owner": "GeoSync",
+        "privacy_regimes": "CCPA, GDPR",
+        "retention_days": "365",
+        "training_restrictions": "approved_sources_only, no_personal_data",
+        "user_request_process": "https://intranet.geosync/privacy-portal"
+      }
+    }
+  },
+  "missing_iso": {
+    "input": {
+      "ccpa_compliant": true,
+      "confidentiality": "Confidential",
+      "consent_logging": true,
+      "data_ownership": "GeoSync",
+      "gdpr_compliant": true,
+      "independent_audit": {
+        "frequency_days": 180,
+        "independent": true
+      },
+      "intended_domains": [
+        "quant_research"
+      ],
+      "license": "MIT License",
+      "nist_alignment": [
+        "NIST-CSF"
+      ],
+      "privacy_regulations": [
+        "GDPR",
+        "CCPA"
+      ],
+      "remediation_alignment": {
+        "aligned": true,
+        "reference": "jira://risk-123"
+      },
+      "retention_policy_days": 365,
+      "retention_policy_reference": "policy://retention/market-data",
+      "training_restrictions": [
+        "no_personal_data",
+        "approved_sources_only"
+      ],
+      "user_request_process": "https://intranet.geosync/privacy-portal",
+      "user_request_sla_hours": 48
+    },
+    "output": {
+      "compliant": false,
+      "issues": [
+        "error:ISO alignment missing required certifications"
+      ],
+      "metadata_view": {
+        "audit_frequency_days": "180",
+        "confidentiality": "Confidential",
+        "iso_controls": "",
+        "license": "MIT License",
+        "nist_controls": "NIST-CSF",
+        "owner": "GeoSync",
+        "privacy_regimes": "CCPA, GDPR",
+        "retention_days": "365",
+        "training_restrictions": "approved_sources_only, no_personal_data",
+        "user_request_process": "https://intranet.geosync/privacy-portal"
+      }
+    }
+  },
+  "missing_license": {
+    "input": {
+      "ccpa_compliant": true,
+      "confidentiality": "Confidential",
+      "consent_logging": true,
+      "data_ownership": "GeoSync",
+      "gdpr_compliant": true,
+      "independent_audit": {
+        "frequency_days": 180,
+        "independent": true
+      },
+      "intended_domains": [
+        "quant_research"
+      ],
+      "iso_certifications": [
+        "ISO27001",
+        "ISO27701"
+      ],
+      "nist_alignment": [
+        "NIST-CSF"
+      ],
+      "privacy_regulations": [
+        "GDPR",
+        "CCPA"
+      ],
+      "remediation_alignment": {
+        "aligned": true,
+        "reference": "jira://risk-123"
+      },
+      "retention_policy_days": 365,
+      "retention_policy_reference": "policy://retention/market-data",
+      "training_restrictions": [
+        "no_personal_data",
+        "approved_sources_only"
+      ],
+      "user_request_process": "https://intranet.geosync/privacy-portal",
+      "user_request_sla_hours": 48
+    },
+    "output": {
+      "compliant": false,
+      "issues": [
+        "error:License metadata is missing"
+      ],
+      "metadata_view": {
+        "audit_frequency_days": "180",
+        "confidentiality": "Confidential",
+        "iso_controls": "ISO27001, ISO27701",
+        "license": "unspecified",
+        "nist_controls": "NIST-CSF",
+        "owner": "GeoSync",
+        "privacy_regimes": "CCPA, GDPR",
+        "retention_days": "365",
+        "training_restrictions": "approved_sources_only, no_personal_data",
+        "user_request_process": "https://intranet.geosync/privacy-portal"
+      }
+    }
+  },
+  "missing_nist": {
+    "input": {
+      "ccpa_compliant": true,
+      "confidentiality": "Confidential",
+      "consent_logging": true,
+      "data_ownership": "GeoSync",
+      "gdpr_compliant": true,
+      "independent_audit": {
+        "frequency_days": 180,
+        "independent": true
+      },
+      "intended_domains": [
+        "quant_research"
+      ],
+      "iso_certifications": [
+        "ISO27001",
+        "ISO27701"
+      ],
+      "license": "MIT License",
+      "privacy_regulations": [
+        "GDPR",
+        "CCPA"
+      ],
+      "remediation_alignment": {
+        "aligned": true,
+        "reference": "jira://risk-123"
+      },
+      "retention_policy_days": 365,
+      "retention_policy_reference": "policy://retention/market-data",
+      "training_restrictions": [
+        "no_personal_data",
+        "approved_sources_only"
+      ],
+      "user_request_process": "https://intranet.geosync/privacy-portal",
+      "user_request_sla_hours": 48
+    },
+    "output": {
+      "compliant": false,
+      "issues": [
+        "error:NIST alignment missing required control frameworks"
+      ],
+      "metadata_view": {
+        "audit_frequency_days": "180",
+        "confidentiality": "Confidential",
+        "iso_controls": "ISO27001, ISO27701",
+        "license": "MIT License",
+        "nist_controls": "",
+        "owner": "GeoSync",
+        "privacy_regimes": "CCPA, GDPR",
+        "retention_days": "365",
+        "training_restrictions": "approved_sources_only, no_personal_data",
+        "user_request_process": "https://intranet.geosync/privacy-portal"
+      }
+    }
+  },
+  "missing_owner": {
+    "input": {
+      "ccpa_compliant": true,
+      "confidentiality": "Confidential",
+      "consent_logging": true,
+      "gdpr_compliant": true,
+      "independent_audit": {
+        "frequency_days": 180,
+        "independent": true
+      },
+      "intended_domains": [
+        "quant_research"
+      ],
+      "iso_certifications": [
+        "ISO27001",
+        "ISO27701"
+      ],
+      "license": "MIT License",
+      "nist_alignment": [
+        "NIST-CSF"
+      ],
+      "privacy_regulations": [
+        "GDPR",
+        "CCPA"
+      ],
+      "remediation_alignment": {
+        "aligned": true,
+        "reference": "jira://risk-123"
+      },
+      "retention_policy_days": 365,
+      "retention_policy_reference": "policy://retention/market-data",
+      "training_restrictions": [
+        "no_personal_data",
+        "approved_sources_only"
+      ],
+      "user_request_process": "https://intranet.geosync/privacy-portal",
+      "user_request_sla_hours": 48
+    },
+    "output": {
+      "compliant": false,
+      "issues": [
+        "error:Data ownership is unspecified"
+      ],
+      "metadata_view": {
+        "audit_frequency_days": "180",
+        "confidentiality": "Confidential",
+        "iso_controls": "ISO27001, ISO27701",
+        "license": "MIT License",
+        "nist_controls": "NIST-CSF",
+        "owner": "unspecified",
+        "privacy_regimes": "CCPA, GDPR",
+        "retention_days": "365",
+        "training_restrictions": "approved_sources_only, no_personal_data",
+        "user_request_process": "https://intranet.geosync/privacy-portal"
+      }
+    }
+  },
+  "missing_privacy": {
+    "input": {
+      "confidentiality": "Confidential",
+      "consent_logging": true,
+      "data_ownership": "GeoSync",
+      "independent_audit": {
+        "frequency_days": 180,
+        "independent": true
+      },
+      "intended_domains": [
+        "quant_research"
+      ],
+      "iso_certifications": [
+        "ISO27001",
+        "ISO27701"
+      ],
+      "license": "MIT License",
+      "nist_alignment": [
+        "NIST-CSF"
+      ],
+      "remediation_alignment": {
+        "aligned": true,
+        "reference": "jira://risk-123"
+      },
+      "retention_policy_days": 365,
+      "retention_policy_reference": "policy://retention/market-data",
+      "training_restrictions": [
+        "no_personal_data",
+        "approved_sources_only"
+      ],
+      "user_request_process": "https://intranet.geosync/privacy-portal",
+      "user_request_sla_hours": 48
+    },
+    "output": {
+      "compliant": false,
+      "issues": [
+        "error:Missing attestation for CCPA compliance",
+        "error:Missing attestation for GDPR compliance"
+      ],
+      "metadata_view": {
+        "audit_frequency_days": "180",
+        "confidentiality": "Confidential",
+        "iso_controls": "ISO27001, ISO27701",
+        "license": "MIT License",
+        "nist_controls": "NIST-CSF",
+        "owner": "GeoSync",
+        "privacy_regimes": "",
+        "retention_days": "365",
+        "training_restrictions": "approved_sources_only, no_personal_data",
+        "user_request_process": "https://intranet.geosync/privacy-portal"
+      }
+    }
+  },
+  "missing_remediation_ref": {
+    "input": {
+      "ccpa_compliant": true,
+      "confidentiality": "Confidential",
+      "consent_logging": true,
+      "data_ownership": "GeoSync",
+      "gdpr_compliant": true,
+      "independent_audit": {
+        "frequency_days": 180,
+        "independent": true
+      },
+      "intended_domains": [
+        "quant_research"
+      ],
+      "iso_certifications": [
+        "ISO27001",
+        "ISO27701"
+      ],
+      "license": "MIT License",
+      "nist_alignment": [
+        "NIST-CSF"
+      ],
+      "privacy_regulations": [
+        "GDPR",
+        "CCPA"
+      ],
+      "remediation_alignment": {
+        "aligned": true
+      },
+      "retention_policy_days": 365,
+      "retention_policy_reference": "policy://retention/market-data",
+      "training_restrictions": [
+        "no_personal_data",
+        "approved_sources_only"
+      ],
+      "user_request_process": "https://intranet.geosync/privacy-portal",
+      "user_request_sla_hours": 48
+    },
+    "output": {
+      "compliant": true,
+      "issues": [
+        "warning:Remediation plan reference is missing"
+      ],
+      "metadata_view": {
+        "audit_frequency_days": "180",
+        "confidentiality": "Confidential",
+        "iso_controls": "ISO27001, ISO27701",
+        "license": "MIT License",
+        "nist_controls": "NIST-CSF",
+        "owner": "GeoSync",
+        "privacy_regimes": "CCPA, GDPR",
+        "retention_days": "365",
+        "training_restrictions": "approved_sources_only, no_personal_data",
+        "user_request_process": "https://intranet.geosync/privacy-portal"
+      }
+    }
+  },
+  "missing_retention_basis": {
+    "input": {
+      "ccpa_compliant": true,
+      "confidentiality": "Confidential",
+      "consent_logging": true,
+      "data_ownership": "GeoSync",
+      "gdpr_compliant": true,
+      "independent_audit": {
+        "frequency_days": 180,
+        "independent": true
+      },
+      "intended_domains": [
+        "quant_research"
+      ],
+      "iso_certifications": [
+        "ISO27001",
+        "ISO27701"
+      ],
+      "license": "MIT License",
+      "nist_alignment": [
+        "NIST-CSF"
+      ],
+      "privacy_regulations": [
+        "GDPR",
+        "CCPA"
+      ],
+      "remediation_alignment": {
+        "aligned": true,
+        "reference": "jira://risk-123"
+      },
+      "retention_policy_days": 365,
+      "training_restrictions": [
+        "no_personal_data",
+        "approved_sources_only"
+      ],
+      "user_request_process": "https://intranet.geosync/privacy-portal",
+      "user_request_sla_hours": 48
+    },
+    "output": {
+      "compliant": true,
+      "issues": [
+        "warning:Retention policy lacks documented legal basis or reference"
+      ],
+      "metadata_view": {
+        "audit_frequency_days": "180",
+        "confidentiality": "Confidential",
+        "iso_controls": "ISO27001, ISO27701",
+        "license": "MIT License",
+        "nist_controls": "NIST-CSF",
+        "owner": "GeoSync",
+        "privacy_regimes": "CCPA, GDPR",
+        "retention_days": "365",
+        "training_restrictions": "approved_sources_only, no_personal_data",
+        "user_request_process": "https://intranet.geosync/privacy-portal"
+      }
+    }
+  },
+  "missing_retention_days": {
+    "input": {
+      "ccpa_compliant": true,
+      "confidentiality": "Confidential",
+      "consent_logging": true,
+      "data_ownership": "GeoSync",
+      "gdpr_compliant": true,
+      "independent_audit": {
+        "frequency_days": 180,
+        "independent": true
+      },
+      "intended_domains": [
+        "quant_research"
+      ],
+      "iso_certifications": [
+        "ISO27001",
+        "ISO27701"
+      ],
+      "license": "MIT License",
+      "nist_alignment": [
+        "NIST-CSF"
+      ],
+      "privacy_regulations": [
+        "GDPR",
+        "CCPA"
+      ],
+      "remediation_alignment": {
+        "aligned": true,
+        "reference": "jira://risk-123"
+      },
+      "retention_policy_reference": "policy://retention/market-data",
+      "training_restrictions": [
+        "no_personal_data",
+        "approved_sources_only"
+      ],
+      "user_request_process": "https://intranet.geosync/privacy-portal",
+      "user_request_sla_hours": 48
+    },
+    "output": {
+      "compliant": false,
+      "issues": [
+        "error:Retention policy does not specify a positive duration"
+      ],
+      "metadata_view": {
+        "audit_frequency_days": "180",
+        "confidentiality": "Confidential",
+        "iso_controls": "ISO27001, ISO27701",
+        "license": "MIT License",
+        "nist_controls": "NIST-CSF",
+        "owner": "GeoSync",
+        "privacy_regimes": "CCPA, GDPR",
+        "retention_days": "unspecified",
+        "training_restrictions": "approved_sources_only, no_personal_data",
+        "user_request_process": "https://intranet.geosync/privacy-portal"
+      }
+    }
+  },
+  "missing_user_process": {
+    "input": {
+      "ccpa_compliant": true,
+      "confidentiality": "Confidential",
+      "consent_logging": true,
+      "data_ownership": "GeoSync",
+      "gdpr_compliant": true,
+      "independent_audit": {
+        "frequency_days": 180,
+        "independent": true
+      },
+      "intended_domains": [
+        "quant_research"
+      ],
+      "iso_certifications": [
+        "ISO27001",
+        "ISO27701"
+      ],
+      "license": "MIT License",
+      "nist_alignment": [
+        "NIST-CSF"
+      ],
+      "privacy_regulations": [
+        "GDPR",
+        "CCPA"
+      ],
+      "remediation_alignment": {
+        "aligned": true,
+        "reference": "jira://risk-123"
+      },
+      "retention_policy_days": 365,
+      "retention_policy_reference": "policy://retention/market-data",
+      "training_restrictions": [
+        "no_personal_data",
+        "approved_sources_only"
+      ],
+      "user_request_sla_hours": 48
+    },
+    "output": {
+      "compliant": false,
+      "issues": [
+        "error:Process for user data requests is undefined"
+      ],
+      "metadata_view": {
+        "audit_frequency_days": "180",
+        "confidentiality": "Confidential",
+        "iso_controls": "ISO27001, ISO27701",
+        "license": "MIT License",
+        "nist_controls": "NIST-CSF",
+        "owner": "GeoSync",
+        "privacy_regimes": "CCPA, GDPR",
+        "retention_days": "365",
+        "training_restrictions": "approved_sources_only, no_personal_data",
+        "user_request_process": "unspecified"
+      }
+    }
+  },
+  "nested_forms": {
+    "input": {
+      "audit": {
+        "enabled": true,
+        "interval_days": 30
+      },
+      "classification": "Confidential",
+      "consent": {
+        "logging": true
+      },
+      "data_subject_access": {
+        "process": "portal",
+        "sla_hours": 24
+      },
+      "governance": {
+        "ownership": "GeoSync"
+      },
+      "privacy": {
+        "frameworks": {
+          "ccpa": true,
+          "gdpr": true
+        },
+        "regulations": [
+          "GDPR",
+          "CCPA"
+        ]
+      },
+      "remediation": {
+        "approved": true,
+        "plan": "plan://x"
+      },
+      "retention": {
+        "basis": "law",
+        "days": 90
+      },
+      "standards": {
+        "iso": [
+          "ISO27001"
+        ],
+        "nist": [
+          "NIST-CSF"
+        ]
+      },
+      "usage": {
+        "domains": [
+          "research"
+        ],
+        "license": "MIT",
+        "training_restrictions": [
+          "a",
+          "b"
+        ]
+      }
+    },
+    "output": {
+      "compliant": true,
+      "issues": [],
+      "metadata_view": {
+        "audit_frequency_days": "30",
+        "confidentiality": "Confidential",
+        "iso_controls": "ISO27001",
+        "license": "MIT",
+        "nist_controls": "NIST-CSF",
+        "owner": "GeoSync",
+        "privacy_regimes": "CCPA, GDPR",
+        "retention_days": "90",
+        "training_restrictions": "a, b",
+        "user_request_process": "portal"
+      }
+    }
+  },
+  "no_consent_logging": {
+    "input": {
+      "ccpa_compliant": true,
+      "confidentiality": "Confidential",
+      "consent_logging": false,
+      "data_ownership": "GeoSync",
+      "gdpr_compliant": true,
+      "independent_audit": {
+        "frequency_days": 180,
+        "independent": true
+      },
+      "intended_domains": [
+        "quant_research"
+      ],
+      "iso_certifications": [
+        "ISO27001",
+        "ISO27701"
+      ],
+      "license": "MIT License",
+      "nist_alignment": [
+        "NIST-CSF"
+      ],
+      "privacy_regulations": [
+        "GDPR",
+        "CCPA"
+      ],
+      "remediation_alignment": {
+        "aligned": true,
+        "reference": "jira://risk-123"
+      },
+      "retention_policy_days": 365,
+      "retention_policy_reference": "policy://retention/market-data",
+      "training_restrictions": [
+        "no_personal_data",
+        "approved_sources_only"
+      ],
+      "user_request_process": "https://intranet.geosync/privacy-portal",
+      "user_request_sla_hours": 48
+    },
+    "output": {
+      "compliant": false,
+      "issues": [
+        "error:Consent logging must be enabled and verifiable"
+      ],
+      "metadata_view": {
+        "audit_frequency_days": "180",
+        "confidentiality": "Confidential",
+        "iso_controls": "ISO27001, ISO27701",
+        "license": "MIT License",
+        "nist_controls": "NIST-CSF",
+        "owner": "GeoSync",
+        "privacy_regimes": "CCPA, GDPR",
+        "retention_days": "365",
+        "training_restrictions": "approved_sources_only, no_personal_data",
+        "user_request_process": "https://intranet.geosync/privacy-portal"
+      }
+    }
+  },
+  "restricted_license": {
+    "input": {
+      "ccpa_compliant": true,
+      "confidentiality": "Confidential",
+      "consent_logging": true,
+      "data_ownership": "GeoSync",
+      "gdpr_compliant": true,
+      "independent_audit": {
+        "frequency_days": 180,
+        "independent": true
+      },
+      "intended_domains": [
+        "quant_research"
+      ],
+      "iso_certifications": [
+        "ISO27001",
+        "ISO27701"
+      ],
+      "license": "internal use only",
+      "nist_alignment": [
+        "NIST-CSF"
+      ],
+      "privacy_regulations": [
+        "GDPR",
+        "CCPA"
+      ],
+      "remediation_alignment": {
+        "aligned": true,
+        "reference": "jira://risk-123"
+      },
+      "retention_policy_days": 365,
+      "retention_policy_reference": "policy://retention/market-data",
+      "training_restrictions": [
+        "no_personal_data",
+        "approved_sources_only"
+      ],
+      "user_request_process": "https://intranet.geosync/privacy-portal",
+      "user_request_sla_hours": 48
+    },
+    "output": {
+      "compliant": false,
+      "issues": [
+        "error:License internal use only is restricted from use"
+      ],
+      "metadata_view": {
+        "audit_frequency_days": "180",
+        "confidentiality": "Confidential",
+        "iso_controls": "ISO27001, ISO27701",
+        "license": "internal use only",
+        "nist_controls": "NIST-CSF",
+        "owner": "GeoSync",
+        "privacy_regimes": "CCPA, GDPR",
+        "retention_days": "365",
+        "training_restrictions": "approved_sources_only, no_personal_data",
+        "user_request_process": "https://intranet.geosync/privacy-portal"
+      }
+    }
+  },
+  "sla_boundary_168": {
+    "input": {
+      "ccpa_compliant": true,
+      "confidentiality": "Confidential",
+      "consent_logging": true,
+      "data_ownership": "GeoSync",
+      "gdpr_compliant": true,
+      "independent_audit": {
+        "frequency_days": 180,
+        "independent": true
+      },
+      "intended_domains": [
+        "quant_research"
+      ],
+      "iso_certifications": [
+        "ISO27001",
+        "ISO27701"
+      ],
+      "license": "MIT License",
+      "nist_alignment": [
+        "NIST-CSF"
+      ],
+      "privacy_regulations": [
+        "GDPR",
+        "CCPA"
+      ],
+      "remediation_alignment": {
+        "aligned": true,
+        "reference": "jira://risk-123"
+      },
+      "retention_policy_days": 365,
+      "retention_policy_reference": "policy://retention/market-data",
+      "training_restrictions": [
+        "no_personal_data",
+        "approved_sources_only"
+      ],
+      "user_request_process": "https://intranet.geosync/privacy-portal",
+      "user_request_sla_hours": 168
+    },
+    "output": {
+      "compliant": true,
+      "issues": [],
+      "metadata_view": {
+        "audit_frequency_days": "180",
+        "confidentiality": "Confidential",
+        "iso_controls": "ISO27001, ISO27701",
+        "license": "MIT License",
+        "nist_controls": "NIST-CSF",
+        "owner": "GeoSync",
+        "privacy_regimes": "CCPA, GDPR",
+        "retention_days": "365",
+        "training_restrictions": "approved_sources_only, no_personal_data",
+        "user_request_process": "https://intranet.geosync/privacy-portal"
+      }
+    }
+  },
+  "sla_boundary_169": {
+    "input": {
+      "ccpa_compliant": true,
+      "confidentiality": "Confidential",
+      "consent_logging": true,
+      "data_ownership": "GeoSync",
+      "gdpr_compliant": true,
+      "independent_audit": {
+        "frequency_days": 180,
+        "independent": true
+      },
+      "intended_domains": [
+        "quant_research"
+      ],
+      "iso_certifications": [
+        "ISO27001",
+        "ISO27701"
+      ],
+      "license": "MIT License",
+      "nist_alignment": [
+        "NIST-CSF"
+      ],
+      "privacy_regulations": [
+        "GDPR",
+        "CCPA"
+      ],
+      "remediation_alignment": {
+        "aligned": true,
+        "reference": "jira://risk-123"
+      },
+      "retention_policy_days": 365,
+      "retention_policy_reference": "policy://retention/market-data",
+      "training_restrictions": [
+        "no_personal_data",
+        "approved_sources_only"
+      ],
+      "user_request_process": "https://intranet.geosync/privacy-portal",
+      "user_request_sla_hours": 169
+    },
+    "output": {
+      "compliant": true,
+      "issues": [
+        "warning:User request SLA exceeds one week; review regulatory commitments"
+      ],
+      "metadata_view": {
+        "audit_frequency_days": "180",
+        "confidentiality": "Confidential",
+        "iso_controls": "ISO27001, ISO27701",
+        "license": "MIT License",
+        "nist_controls": "NIST-CSF",
+        "owner": "GeoSync",
+        "privacy_regimes": "CCPA, GDPR",
+        "retention_days": "365",
+        "training_restrictions": "approved_sources_only, no_personal_data",
+        "user_request_process": "https://intranet.geosync/privacy-portal"
+      }
+    }
+  },
+  "training_exactly_min": {
+    "input": {
+      "ccpa_compliant": true,
+      "confidentiality": "Confidential",
+      "consent_logging": true,
+      "data_ownership": "GeoSync",
+      "gdpr_compliant": true,
+      "independent_audit": {
+        "frequency_days": 180,
+        "independent": true
+      },
+      "intended_domains": [
+        "quant_research"
+      ],
+      "iso_certifications": [
+        "ISO27001",
+        "ISO27701"
+      ],
+      "license": "MIT License",
+      "nist_alignment": [
+        "NIST-CSF"
+      ],
+      "privacy_regulations": [
+        "GDPR",
+        "CCPA"
+      ],
+      "remediation_alignment": {
+        "aligned": true,
+        "reference": "jira://risk-123"
+      },
+      "retention_policy_days": 365,
+      "retention_policy_reference": "policy://retention/market-data",
+      "training_restrictions": [
+        "only_one"
+      ],
+      "user_request_process": "https://intranet.geosync/privacy-portal",
+      "user_request_sla_hours": 48
+    },
+    "output": {
+      "compliant": true,
+      "issues": [],
+      "metadata_view": {
+        "audit_frequency_days": "180",
+        "confidentiality": "Confidential",
+        "iso_controls": "ISO27001, ISO27701",
+        "license": "MIT License",
+        "nist_controls": "NIST-CSF",
+        "owner": "GeoSync",
+        "privacy_regimes": "CCPA, GDPR",
+        "retention_days": "365",
+        "training_restrictions": "only_one",
+        "user_request_process": "https://intranet.geosync/privacy-portal"
+      }
+    }
+  }
+}

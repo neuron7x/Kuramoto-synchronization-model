@@ -1,4 +1,5 @@
-# SPDX-License-Identifier: LicenseRef-TradePulse-Proprietary
+# Copyright (c) 2023-2026 Yaroslav Vasylenko (neuron7xLab)
+# SPDX-License-Identifier: MIT
 """Sandbox execution utilities for isolating strategy evaluations."""
 
 from __future__ import annotations
@@ -113,9 +114,7 @@ class StrategySandbox:
         return result
 
     # ------------------------------------------------------------------
-    def _wait_for_payload(
-        self, conn: Connection, timeout: float | None
-    ) -> Dict[str, Any] | None:
+    def _wait_for_payload(self, conn: Connection, timeout: float | None) -> Dict[str, Any] | None:
         if timeout is not None:
             timeout = max(0.0, float(timeout))
 
@@ -244,11 +243,7 @@ def _running_without_main_file() -> bool:
     if not main_file:
         return True
 
-    if (
-        isinstance(main_file, str)
-        and main_file.startswith("<")
-        and main_file.endswith(">")
-    ):
+    if isinstance(main_file, str) and main_file.startswith("<") and main_file.endswith(">"):
         return True
 
     return not os.path.exists(main_file)

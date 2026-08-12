@@ -1,3 +1,5 @@
+# Copyright (c) 2023-2026 Yaroslav Vasylenko (neuron7xLab)
+# SPDX-License-Identifier: MIT
 """Streaming quantile estimation with multiple algorithms.
 
 This module provides streaming quantile estimators for real-time analytics:
@@ -232,7 +234,6 @@ class P2Algorithm:
             if (d >= 1.0 and self._n[i + 1] - self._n[i] > 1) or (
                 d <= -1.0 and self._n[i - 1] - self._n[i] < -1
             ):
-
                 sign = 1.0 if d > 0 else -1.0
 
                 # Try parabolic formula

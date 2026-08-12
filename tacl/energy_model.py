@@ -1,3 +1,5 @@
+# Copyright (c) 2023-2026 Yaroslav Vasylenko (neuron7xLab)
+# SPDX-License-Identifier: MIT
 """Energy validation primitives used by Thermodynamic Validation workflows.
 
 The original post-merge regression was traced to an incorrect aggregation of
@@ -93,7 +95,7 @@ class EnergyValidationError(RuntimeError):
 
 
 class EnergyModel:
-    """Compute Helmholtz free energy for TradePulse metrics.
+    """Compute Helmholtz free energy for GeoSync metrics.
 
     The model treats each metric as a penalty scaled by an importance weight.
     Penalties are normalised by the sum of weights to avoid overshooting the
@@ -182,9 +184,7 @@ class EnergyModel:
         free_energy = internal - self._temperature * entropy
         return free_energy, internal, entropy, penalties
 
-    def evaluate(
-        self, metrics: EnergyMetrics, *, max_free_energy: float
-    ) -> EnergyValidationResult:
+    def evaluate(self, metrics: EnergyMetrics, *, max_free_energy: float) -> EnergyValidationResult:
         free_energy, internal, entropy, penalties = self.free_energy(metrics)
         passed = free_energy <= max_free_energy
         reason = None
@@ -237,9 +237,7 @@ class EnergyValidator:
     def validate(self, metrics: EnergyMetrics) -> EnergyValidationResult:
         result = self.evaluate(metrics)
         if not result.passed:
-            raise EnergyValidationError(
-                result.reason or "energy validation failed", result
-            )
+            raise EnergyValidationError(result.reason or "energy validation failed", result)
         return result
 
     def enforce_contract(

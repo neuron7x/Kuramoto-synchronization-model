@@ -1,3 +1,5 @@
+# Copyright (c) 2023-2026 Yaroslav Vasylenko (neuron7xLab)
+# SPDX-License-Identifier: MIT
 """TLS helpers shared across API and microservices."""
 
 from __future__ import annotations
@@ -84,13 +86,9 @@ def create_server_ssl_context(
             context.set_ciphers(":".join(suites))
 
     if trusted_client_ca is not None:
-        trusted_client_ca = _ensure_file(
-            trusted_client_ca, description="Trusted client CA bundle"
-        )
+        trusted_client_ca = _ensure_file(trusted_client_ca, description="Trusted client CA bundle")
         context.load_verify_locations(cafile=str(trusted_client_ca))
-        context.verify_mode = (
-            ssl.CERT_REQUIRED if require_client_certificate else ssl.CERT_OPTIONAL
-        )
+        context.verify_mode = ssl.CERT_REQUIRED if require_client_certificate else ssl.CERT_OPTIONAL
     else:
         if require_client_certificate:
             msg = "Client certificate verification requested without a CA bundle"

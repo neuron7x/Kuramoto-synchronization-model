@@ -1,0 +1,30 @@
+{
+  "$schema": "http://json-schema.org/draft-07/schema#",
+  "$id": "geosync.no_ungrounded_act.v1",
+  "title": "GeoSync No-Ungrounded-Act Apex Invariant",
+  "description": "The single apex theorem: an action is admissible iff the drive is homeostatic (H1), the epistemic budget is monotone (H2, arrow of time), components are phase-locked (H3), and the final inference verdict is PASS (H4). Sits above the aggregator: consumes system truth, is not part of it. FORBIDDEN unless all four grounds hold.",
+  "type": "object",
+  "additionalProperties": false,
+  "required": ["schema", "theorem", "grounds", "gate", "verdict"],
+  "properties": {
+    "schema": { "const": "geosync.no_ungrounded_act.v1" },
+    "theorem": { "type": "string", "minLength": 1 },
+    "gate": { "enum": ["ADMISSIBLE", "FORBIDDEN"] },
+    "verdict": { "enum": ["PASS", "FAIL"] },
+    "report_only": { "type": "boolean" },
+    "grounds": {
+      "type": "array",
+      "minItems": 4,
+      "items": {
+        "type": "object",
+        "additionalProperties": false,
+        "required": ["id", "name", "holds"],
+        "properties": {
+          "id": { "enum": ["H1", "H2", "H3", "H4"] },
+          "name": { "type": "string", "minLength": 1 },
+          "holds": { "type": "boolean" }
+        }
+      }
+    }
+  }
+}

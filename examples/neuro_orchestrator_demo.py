@@ -1,4 +1,6 @@
 #!/usr/bin/env python
+# Copyright (c) 2023-2026 Yaroslav Vasylenko (neuron7xLab)
+# SPDX-License-Identifier: MIT
 """Demo script for the Neuro-Orchestrator Agent.
 
 This script demonstrates how to use the NeuroOrchestrator to generate
@@ -15,20 +17,18 @@ src_path = Path(__file__).parent.parent / "src"
 sys.path.insert(0, str(src_path))
 
 # Import directly from module to avoid triggering full app initialization
-import importlib.util  # noqa: E402
+import importlib.util
 
 spec = importlib.util.spec_from_file_location(
     "neuro_orchestrator",
-    src_path / "tradepulse" / "core" / "neuro" / "neuro_orchestrator.py",
+    src_path / "geosync" / "core" / "neuro" / "neuro_orchestrator.py",
 )
 neuro_orchestrator = importlib.util.module_from_spec(spec)
 spec.loader.exec_module(neuro_orchestrator)
 
 NeuroOrchestrator = neuro_orchestrator.NeuroOrchestrator
 TradingScenario = neuro_orchestrator.TradingScenario
-create_orchestration_from_scenario = (
-    neuro_orchestrator.create_orchestration_from_scenario
-)
+create_orchestration_from_scenario = neuro_orchestrator.create_orchestration_from_scenario
 
 
 def demo_basic_usage():
@@ -168,9 +168,7 @@ def demo_tacl_integration():
     print(f"Protocol Options: {', '.join(tacl_config['protocol_options'])}")
 
     print("\nTACL ensures:")
-    print(
-        "  • Monotonic free-energy descent (no action increases system F without override)"
-    )
+    print("  • Monotonic free-energy descent (no action increases system F without override)")
     print("  • Hot-swapping of communication protocols (RDMA, CRDT, gRPC, etc.)")
     print("  • Crisis-aware adaptive recovery")
     print("  • 7-year audit trail for compliance")
@@ -295,7 +293,7 @@ def main():
     print("\n")
     print("╔" + "=" * 78 + "╗")
     print("║" + " " * 78 + "║")
-    print("║" + "  Neuro-Orchestrator Agent for TradePulse".center(78) + "║")
+    print("║" + "  Neuro-Orchestrator Agent for GeoSync".center(78) + "║")
     print("║" + "  Biologically-Inspired Module Coordination Demo".center(78) + "║")
     print("║" + " " * 78 + "║")
     print("╚" + "=" * 78 + "╝")

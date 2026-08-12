@@ -1,0 +1,76 @@
+# Diff-bound commit acceptor for the HPC numerical-stability witness.
+#
+# Adds ONE test module binding the previously-unwitnessed catalog law
+# hpc.numerical_stability to an executable @law witness over the
+# geosync_hpc.evaluation kernels (an allowed import). Promotes no claim, changes
+# no runtime behavior, touches no schema/guard, uses no real data.
+#
+#   hpc.numerical_stability — finite inputs produce finite outputs, no NaN/Inf
+#                             (INV-HPC2).
+#
+# Locally verified on origin/main base:
+#   * pytest tests/physics_contracts/test_hpc_numerical_stability_witness.py: 1 passed
+#   * .claude/physics/validate_tests.py <file>: 0 issues (L1..L5), EXIT 0
+#   * ruff / mypy --strict clean ; zero new `# type: ignore`
+id: hpc-numerical-stability-witness
+status: ACTIVE
+claim_type: governance
+promise: >-
+  After this PR lands, tests/physics_contracts/test_hpc_numerical_stability_witness.py
+  binds hpc.numerical_stability to an @law witness asserting the
+  sharpe/cvar/max_drawdown/deflated_sharpe kernels return finite values for finite
+  return and equity series across nine orders of magnitude plus the zero-variance
+  edge (INV-HPC2), and passes validate_tests with zero issues. No market claim; no
+  runtime, schema, or guard change.
+diff_scope:
+  changed_files:
+    - path: ".claude/commit_acceptors/hpc-numerical-stability-witness.yaml"
+    - path: "tests/physics_contracts/test_hpc_numerical_stability_witness.py"
+  forbidden_paths:
+    - "trading/"
+    - "execution/"
+    - "forecast/"
+    - "policy/"
+    - "application/"
+    - "core/"
+    - "src/"
+    - "geosync_hpc/"
+    - "physics_contracts/catalog.yaml"
+    - ".claude/physics/INVARIANTS.yaml"
+required_python_symbols: []
+expected_signal: >-
+  pytest reports 1 passed; validate_tests exits 0 with no L1..L5 issues; ruff and
+  mypy --strict clean.
+measurement_command: >-
+  bash -c 'mkdir -p tmp && python -m pytest
+  tests/physics_contracts/test_hpc_numerical_stability_witness.py
+  > tmp/hpc_numerical_stability_witness.log 2>&1
+  && grep -q "1 passed" tmp/hpc_numerical_stability_witness.log'
+signal_artifact: "tmp/hpc_numerical_stability_witness.log"
+falsifier:
+  command: |-
+    bash -c 'python -c "
+    import math, numpy as np
+    from geosync_hpc.evaluation import sharpe, cvar, max_drawdown
+    rng = np.random.default_rng(0); breached = False
+    for scale in (1e-8, 1e-3, 1.0, 1e3, 1e6, 1e9):
+        r = rng.normal(0, scale, 500); eq = 100.0 + np.cumsum(rng.normal(0, scale, 500))
+        for v in (sharpe(r), cvar(r), max_drawdown(eq)):
+            if not math.isfinite(float(v)): breached = True
+    import sys; sys.exit(0 if breached else 1)"'
+  description: >-
+    Inverse probe of numerical stability. It exits 0 (fires) iff any kernel
+    returns a non-finite value for finite in-range inputs -- i.e. NaN/Inf is
+    synthesized in real code. While every output stays finite the probe exits 1.
+    If it ever exits 0, the witness is no longer truthful and the change must be
+    reverted, not patched green.
+rollback_command: >-
+  git rm -f
+  tests/physics_contracts/test_hpc_numerical_stability_witness.py
+  .claude/commit_acceptors/hpc-numerical-stability-witness.yaml
+rollback_verification_command: >-
+  bash -c 'test ! -f tests/physics_contracts/test_hpc_numerical_stability_witness.py'
+memory_update_type: none
+ledger_path: ".claude/commit_acceptors/hpc-numerical-stability-witness.yaml"
+report_path: "tmp/hpc_numerical_stability_witness.log"
+evidence: []

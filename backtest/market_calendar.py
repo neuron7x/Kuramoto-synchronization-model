@@ -1,3 +1,5 @@
+# Copyright (c) 2023-2026 Yaroslav Vasylenko (neuron7xLab)
+# SPDX-License-Identifier: MIT
 """Trading calendar utilities for deterministic backtests.
 
 The calendar tracks regular trading hours, exchange holidays, and ad-hoc
@@ -126,9 +128,7 @@ class MarketCalendar:
                 search_dt.date() - timedelta(days=1), time(23, 59, 59, 999999)
             )
 
-    def sessions_between(
-        self, start: datetime, end: datetime
-    ) -> list[tuple[datetime, datetime]]:
+    def sessions_between(self, start: datetime, end: datetime) -> list[tuple[datetime, datetime]]:
         """Enumerate sessions intersecting the inclusive ``[start, end]`` window."""
 
         if end < start:
@@ -288,9 +288,7 @@ class MarketCalendarCoordinator:
                         )
                     )
 
-        events.sort(
-            key=lambda evt: (evt.timestamp, 0 if evt.kind == "open" else 1, evt.market)
-        )
+        events.sort(key=lambda evt: (evt.timestamp, 0 if evt.kind == "open" else 1, evt.market))
         return events
 
     # ------------------------------------------------------------------
@@ -356,9 +354,7 @@ class MarketCalendarCoordinator:
             last_ts = max(last_ts, timestamp)
 
         if condition() and last_ts < end_utc:
-            windows.append(
-                TradingWindow(start=last_ts, end=end_utc, markets=frozenset(active))
-            )
+            windows.append(TradingWindow(start=last_ts, end=end_utc, markets=frozenset(active)))
 
         return windows
 
@@ -453,9 +449,7 @@ class MarketCalendarCoordinator:
             return any(calendar.is_open(timestamp) for calendar in calendars.values())
         return all(calendar.is_open(timestamp) for calendar in calendars.values())
 
-    def _select_markets(
-        self, markets: Iterable[str] | None
-    ) -> Mapping[str, MarketCalendar]:
+    def _select_markets(self, markets: Iterable[str] | None) -> Mapping[str, MarketCalendar]:
         if markets is None:
             return self._calendars
         subset = {name: self._calendars[name] for name in markets}
@@ -463,9 +457,7 @@ class MarketCalendarCoordinator:
             raise ValueError("markets must reference at least one configured calendar")
         return subset
 
-    def _normalize_range(
-        self, start: datetime, end: datetime
-    ) -> tuple[datetime, datetime]:
+    def _normalize_range(self, start: datetime, end: datetime) -> tuple[datetime, datetime]:
         self._ensure_aware(start)
         self._ensure_aware(end)
         if end < start:

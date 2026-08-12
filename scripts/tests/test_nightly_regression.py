@@ -1,3 +1,5 @@
+# Copyright (c) 2023-2026 Yaroslav Vasylenko (neuron7xLab)
+# SPDX-License-Identifier: MIT
 """Unit tests for nightly regression orchestration."""
 
 from __future__ import annotations
@@ -71,33 +73,25 @@ def test_runner_records_history_and_notifications(tmp_path: Path) -> None:
             "backtests": {
                 "alpha": {
                     "baseline": {"pnl": 1.0},
-                    "thresholds": {
-                        "pnl": {"higher_is_better": True, "max_relative_change": 0.2}
-                    },
+                    "thresholds": {"pnl": {"higher_is_better": True, "max_relative_change": 0.2}},
                 }
             },
             "e2e": {
                 "omega": {
                     "baseline": {"pnl": 2.0},
-                    "thresholds": {
-                        "pnl": {"higher_is_better": True, "max_relative_change": 0.5}
-                    },
+                    "thresholds": {"pnl": {"higher_is_better": True, "max_relative_change": 0.5}},
                 }
             },
         },
     )
 
     def _backtest_runner() -> BacktestOutcome:
-        return BacktestOutcome(
-            name="alpha", metrics={"pnl": 1.1}, details={"trades": 3}
-        )
+        return BacktestOutcome(name="alpha", metrics={"pnl": 1.1}, details={"trades": 3})
 
     def _e2e_runner() -> E2EOutcome:
         return E2EOutcome(name="omega", metrics={"pnl": 2.5}, details={})
 
-    artifact_manager = create_artifact_manager(
-        "test-nightly", root=tmp_path / "artifacts"
-    )
+    artifact_manager = create_artifact_manager("test-nightly", root=tmp_path / "artifacts")
     dispatcher = _StubDispatcher()
     incident_root = tmp_path / "incidents"
 
@@ -129,17 +123,13 @@ def test_runner_triggers_incident_on_regression(tmp_path: Path) -> None:
             "backtests": {
                 "alpha": {
                     "baseline": {"pnl": 10.0},
-                    "thresholds": {
-                        "pnl": {"higher_is_better": True, "max_relative_change": 0.1}
-                    },
+                    "thresholds": {"pnl": {"higher_is_better": True, "max_relative_change": 0.1}},
                 }
             },
             "e2e": {
                 "omega": {
                     "baseline": {"pnl": 12.0},
-                    "thresholds": {
-                        "pnl": {"higher_is_better": True, "max_relative_change": 0.1}
-                    },
+                    "thresholds": {"pnl": {"higher_is_better": True, "max_relative_change": 0.1}},
                 }
             },
         },
@@ -151,9 +141,7 @@ def test_runner_triggers_incident_on_regression(tmp_path: Path) -> None:
     def _e2e_runner() -> E2EOutcome:
         return E2EOutcome(name="omega", metrics={"pnl": 1.0}, details={})
 
-    artifact_manager = create_artifact_manager(
-        "test-nightly", root=tmp_path / "artifacts"
-    )
+    artifact_manager = create_artifact_manager("test-nightly", root=tmp_path / "artifacts")
     dispatcher = _StubDispatcher()
     incident_root = tmp_path / "incidents"
 

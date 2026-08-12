@@ -1,6 +1,8 @@
+# Copyright (c) 2023-2026 Yaroslav Vasylenko (neuron7xLab)
+# SPDX-License-Identifier: MIT
 from __future__ import annotations
 
-# SPDX-License-Identifier: LicenseRef-TradePulse-Proprietary
+# SPDX-License-Identifier: MIT
 import io
 import os
 import threading
@@ -36,7 +38,7 @@ def test_artifact_manager_creates_timestamped_directory(tmp_path: Path) -> None:
 
 def test_checksum_roundtrip(tmp_path: Path) -> None:
     sample = tmp_path / "payload.bin"
-    sample.write_bytes(b"tradepulse" * 8)
+    sample.write_bytes(b"geosync" * 8)
     digest = compute_checksum(sample)
     verify_checksum(sample, digest)
     with pytest.raises(ChecksumMismatchError):
@@ -68,9 +70,7 @@ def test_transfer_with_resume_restarts_when_server_ignores_range(
     destination.write_bytes(payload[: len(payload) // 2])
 
     class _StubResponse:
-        def __init__(
-            self, status_code: int, headers: dict[str, str], data: bytes = b""
-        ) -> None:
+        def __init__(self, status_code: int, headers: dict[str, str], data: bytes = b"") -> None:
             self.status_code = status_code
             self.headers = headers
             self._data = data
@@ -107,9 +107,7 @@ def test_transfer_with_resume_rejects_incorrect_resume_offset(tmp_path: Path) ->
     destination.write_bytes(payload[: len(payload) // 2])
 
     class _StubResponse:
-        def __init__(
-            self, status_code: int, headers: dict[str, str], data: bytes = b""
-        ) -> None:
+        def __init__(self, status_code: int, headers: dict[str, str], data: bytes = b"") -> None:
             self.status_code = status_code
             self.headers = headers
             self._data = data

@@ -1,0 +1,31 @@
+{
+  "schema_version": "D002G-STRUCTURAL-CLOSURE-v1",
+  "status": "STRUCTURALLY_BLOCKED",
+  "scope": "D-002G locked substrate grid × locked marginal set × M1/M2/M3 mechanism families",
+  "canonical_run_authorized": false,
+  "scientific_pass_claimed": false,
+  "d002g_globally_falsified_claimed": false,
+  "d002c_ledger_touched": false,
+  "ricci_flow_invalid_claimed": false,
+  "b1_status": "OPEN_STRUCTURALLY_BLOCKED_UNDER_D002G",
+  "b2_status": "OPEN_UNTOUCHED",
+  "merge_chain": [
+    {"pr": 677, "merge_sha": "d3400c2e981d947449c7457fd163c71e7abc0dab", "mechanism": "M1 independent-seed", "verdict_blocked_substrates": "INELIGIBLE_M1_BIT_IDENTICAL"},
+    {"pr": 679, "merge_sha": "7b386ef3e95311c93147d97ebb23ec2d085a3650", "mechanism": "M2 edge-weight permutation", "verdict_blocked_substrates": "INELIGIBLE_M2_DEGENERATE_SHUFFLE_POOL"},
+    {"pr": 680, "merge_sha": "0f4433e04c7a594fc80c964eeec337a8b1128038", "mechanism": "M2 node-payload + injection-sequence", "verdict_blocked_substrates": "INELIGIBLE_M2_NODE_PAYLOAD_TOPOLOGY_COUPLED + INELIGIBLE_M2_INJECTION_SEQUENCE_DEGENERATE/CONTRACT_VIOLATION"},
+    {"pr": 681, "merge_sha": "cced6e60f3b448878d51cb9848c990ab5133da28", "mechanism": "M3 topology-conditioned independent realisation", "verdict_blocked_substrates": "INELIGIBLE_M3_NON_PRECURSOR_SPECIFIC"}
+  ],
+  "bottom_turtle": {
+    "file": "research/systemic_risk/d002c_substrates.py",
+    "line": 401,
+    "fact": "BlockStructuredSubstrate.realize() explicitly discards its seed parameter",
+    "evidence_quote": "_ = seed  # block substrate is fully deterministic in N, lambda_",
+    "downstream": "TemporalKtSubstrate.realize() inherits the discard via delegation at line 481-483"
+  },
+  "legal_next_paths": [
+    {"id": "D002H_SCOPE_NARROWING", "description": "Fresh pre-registration restricting canonical grid to ricci_flow only"},
+    {"id": "D002H_SUBSTRATE_REDESIGN", "description": "Fresh pre-registration replacing block_structured + temporal_coupling spec with seed-dependent variants"},
+    {"id": "D002G_NEGATIVE_ARTIFACT_RETENTION", "description": "Retain D-002G as structurally-blocked; do NOT attempt B1 closure"}
+  ],
+  "decision_among_legal_paths": "DEFERRED_TO_FRESH_PRE_REGISTRATION"
+}

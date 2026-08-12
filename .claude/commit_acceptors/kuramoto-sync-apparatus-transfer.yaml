@@ -1,0 +1,69 @@
+id: kuramoto-sync-apparatus-transfer
+status: ACTIVE
+claim_type: correctness
+promise: >-
+  N6: the verification apparatus (tool -> artifact -> schema -> fail-closed verdict
+  + defect-sensitive tests + falsifier) transfers to a second, mathematically
+  distinct domain. The real KuramotoEngine is certified to exhibit the
+  synchronisation phase transition (strong coupling locks r>=0.9, weak coupling
+  incoherent, a >=0.5 transition gap, bounded order parameter, seeded determinism).
+  apparatus_transfer_report.json binds >=2 distinct domains (neuro, inference,
+  physics), each with the full apparatus. Honest boundary: within-repo cross-domain
+  transfer, not an external benchmark.
+diff_scope:
+  changed_files:
+    - path: ".claude/commit_acceptors/kuramoto-sync-apparatus-transfer.yaml"
+    - path: "tools/audit_kuramoto_synchrony.py"
+    - path: "scripts/ci/validate_inference_artifacts.py"
+    - path: "tests/unit/physics/test_kuramoto_synchrony_certificate.py"
+    - path: "tests/ci/test_kuramoto_synchrony_gate.py"
+    - path: "tests/ci/test_apparatus_transfer_report.py"
+    - path: "artifacts/physics/kuramoto_synchrony.json"
+    - path: "artifacts/inference/apparatus_transfer_report.json"
+    - path: "audit/schema/kuramoto_synchrony.schema.json"
+    - path: "audit/schema/apparatus_transfer_report.schema.json"
+  forbidden_paths:
+    - "execution/"
+    - "core/kuramoto/"
+required_python_symbols:
+  - "tools/audit_kuramoto_synchrony.py::build_certificate"
+  - "tools/audit_kuramoto_synchrony.py::r_steady"
+expected_signal: >-
+  `python -m pytest --import-mode=importlib
+  tests/unit/physics/test_kuramoto_synchrony_certificate.py
+  tests/ci/test_kuramoto_synchrony_gate.py tests/ci/test_apparatus_transfer_report.py -q`
+  passes; the Kuramoto engine synchronises and the apparatus spans >=2 distinct domains.
+measurement_command: >-
+  bash -c '
+    python -m pytest --import-mode=importlib -p no:cacheprovider
+      tests/unit/physics/test_kuramoto_synchrony_certificate.py
+      tests/ci/test_kuramoto_synchrony_gate.py
+      tests/ci/test_apparatus_transfer_report.py -q
+  '
+signal_artifact: "tmp/kuramoto_sync_apparatus_transfer.log"
+falsifier:
+  command: |-
+    bash -c '
+      python -c "
+    import importlib.util, json, pathlib
+    spec = importlib.util.spec_from_file_location(\"ks\", \"tools/audit_kuramoto_synchrony.py\")
+    ks = importlib.util.module_from_spec(spec); spec.loader.exec_module(ks)
+    cert = ks.build_certificate()
+    tr = json.load(open(\"artifacts/inference/apparatus_transfer_report.json\"))
+    distinct = len({d[\"domain\"] for d in tr[\"domains\"]})
+    ok = cert[\"gate\"] == \"SYNCHRONISING\" and (cert[\"r_steady_high\"] - cert[\"r_steady_low\"]) >= 0.5 and distinct >= 2
+    raise SystemExit(0 if ok else \"kuramoto not synchronising or apparatus not transferred\")
+    "
+    '
+  description: >-
+    Builds the Kuramoto certificate on the real engine (SYNCHRONISING, transition
+    gap >= 0.5) and checks the apparatus spans >= 2 distinct domains. Exits 0 when
+    the transfer holds; non-zero otherwise.
+rollback_command: >-
+  bash -c 'git rm -f .claude/commit_acceptors/kuramoto-sync-apparatus-transfer.yaml'
+rollback_verification_command: >-
+  bash -c 'test ! -f .claude/commit_acceptors/kuramoto-sync-apparatus-transfer.yaml'
+memory_update_type: append
+ledger_path: ".claude/commit_acceptors/kuramoto-sync-apparatus-transfer.yaml"
+report_path: "tmp/kuramoto_sync_apparatus_transfer.log"
+evidence: []

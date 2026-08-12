@@ -1,0 +1,138 @@
+# Diff-bound commit acceptor for the second-order Kuramoto fail-closed guards.
+#
+# Adds two MINIMAL, ADDITIVE numerical guards to
+# core.kuramoto.second_order.SecondOrderKuramotoEngine.run() under the
+# INV-HPC2 "finite in -> finite out, else fail closed" discipline, WITHOUT
+# touching the Stoermer-Verlet symplectic integrator math or its
+# INV-K8/K9/K10 energy/symplectic invariants:
+#
+#   1. Non-finite fail-closed guard: if an integrated phase or velocity
+#      becomes non-finite (NaN/Inf) at any step, run() raises
+#      SecondOrderDivergenceError (a ValueError subclass) naming the step
+#      index and the divergence kind, instead of letting NaN/Inf propagate
+#      silently into phases/summary.
+#   2. Optional RoCoF bound: a new constructor parameter rocof_max
+#      (default None = OFF, byte-identical behaviour) that, when set to a
+#      finite positive value and exceeded by a step's
+#      max_i |theta_dot_i(k+1) - theta_dot_i(k)| / dt, raises
+#      SecondOrderDivergenceError(kind="rocof_exceeded"). The same quantity
+#      was previously computed as the descriptive-only summary key
+#      max_rocof; the guard makes the bound actually checked.
+#
+# A healthy run with rocof_max=None is byte-identical to the pre-guard
+# engine (the regression test asserts bit-for-bit identical phases,
+# velocities, order parameter and summary): the guards fire only on
+# already-broken (non-finite) or opted-in-bound-exceeded states.
+#
+# Promotes NO claim tier, adds NO invariant (defends existing INV-HPC2),
+# changes NO existing default runtime behaviour, adds NO dependency
+# (numpy only).
+#
+# Locally verified on origin/main fork base:
+#   * pytest tests/unit/physics/test_T18b_second_order_stability_guard.py: 10 passed
+#   * pytest tests/unit/physics/test_T18_kuramoto_p1.py (INV-K8/K9/K10 regression): 9 passed
+#   * ruff format / ruff check / black --check: clean on both files
+#   * mypy --strict core/kuramoto/second_order.py + the test: no issues
+#   * python .claude/physics/validate_tests.py core/kuramoto/second_order.py --audit-code: 0 issues
+#   * python scripts/ci/check_claim_boundary.py: PASS
+#   * python scripts/ci/check_claims.py: PASS
+#   * zero `noqa` / `type: ignore` suppressions across both changed files
+id: second-order-stability-guard
+status: ACTIVE
+claim_type: governance
+promise: >-
+  core.kuramoto.second_order.SecondOrderKuramotoEngine.run gains two
+  additive fail-closed numerical guards (INV-HPC2) that defend the existing
+  symplectic INV-K8/K9/K10 core without altering its integrator math.
+  (1) If an integrated phase or velocity becomes non-finite (NaN/Inf) at any
+  step, run raises SecondOrderDivergenceError (a ValueError subclass) that
+  names the offending step index and carries kind="non_finite", instead of
+  emitting a non-finite trajectory or summary. (2) A new constructor
+  parameter rocof_max defaults to None (guards OFF, byte-identical run); when
+  set to a finite positive float and exceeded by a step's
+  rate-of-change-of-frequency, run raises SecondOrderDivergenceError with
+  kind="rocof_exceeded"; a non-positive or non-finite rocof_max fails closed
+  at construction with ValueError. A healthy run with rocof_max=None is
+  bit-for-bit identical to the pre-guard engine in phases, velocities, order
+  parameter and summary. No claim tier is promoted; no invariant is added;
+  no existing default behaviour changes.
+diff_scope:
+  changed_files:
+    - path: ".claude/commit_acceptors/second-order-stability-guard.yaml"
+    - path: "core/kuramoto/second_order.py"
+    - path: "tests/unit/physics/test_T18b_second_order_stability_guard.py"
+  forbidden_paths:
+    - "trading/"
+    - "execution/"
+    - "forecast/"
+    - "src/"
+required_python_symbols:
+  - "core/kuramoto/second_order.py::SecondOrderDivergenceError"
+  - "core/kuramoto/second_order.py::SecondOrderKuramotoEngine"
+expected_signal: >-
+  `python -m pytest tests/unit/physics/test_T18b_second_order_stability_guard.py`
+  reports 10 passed; a non-finite (NaN/Inf) integrated state and an exceeded
+  opted-in rocof_max each raise SecondOrderDivergenceError naming the step,
+  while a healthy run with rocof_max=None is byte-identical to the pre-guard
+  engine and a non-positive/non-finite rocof_max fails closed at construction.
+measurement_command: >-
+  bash -c 'mkdir -p tmp && python -m pytest
+  tests/unit/physics/test_T18b_second_order_stability_guard.py -v
+  > tmp/second_order_stability_guard_pytest.log 2>&1
+  && grep -qE "10 passed" tmp/second_order_stability_guard_pytest.log'
+signal_artifact: "tmp/second_order_stability_guard_pytest.log"
+falsifier:
+  command: >-
+    python -c 'import sys, math, numpy as np;
+    from core.kuramoto.config import KuramotoConfig;
+    from core.kuramoto.second_order import SecondOrderKuramotoEngine,
+    SecondOrderDivergenceError;
+    rng = np.random.default_rng(0);
+    th = rng.uniform(0.0, 2.0 * math.pi, 8);
+    v = np.zeros(8); v[3] = np.nan;
+    cfg = KuramotoConfig(N=8, K=2.0, omega=np.zeros(8), theta0=th, dt=0.01,
+    steps=20, seed=0);
+    nf_closed = False;
+    eng = SecondOrderKuramotoEngine(cfg, mass=1.0, damping=0.1, velocity0=v);
+    fault = "nan path did not fail closed";
+    nf_closed = False;
+    import builtins;
+    res = None;
+    exec("try:\n eng.run()\nexcept SecondOrderDivergenceError as e:\n globals()[\"nf_closed\"] = (e.kind == \"non_finite\")");
+    cfg2 = KuramotoConfig(N=12, K=3.0, omega=np.zeros(12),
+    theta0=rng.uniform(0.0, 2.0 * math.pi, 12), dt=0.01, steps=50, seed=9);
+    v2 = 0.3 * rng.standard_normal(12);
+    base = SecondOrderKuramotoEngine(cfg2, mass=1.0, damping=0.1, velocity0=v2,
+    rocof_max=None).run();
+    rocof_closed = False;
+    exec("try:\n SecondOrderKuramotoEngine(cfg2, mass=1.0, damping=0.1, velocity0=v2, rocof_max=1e-6).run()\nexcept SecondOrderDivergenceError as e:\n globals()[\"rocof_closed\"] = (e.kind == \"rocof_exceeded\")");
+    bad_bound_closed = False;
+    exec("try:\n SecondOrderKuramotoEngine(cfg2, rocof_max=-1.0)\nexcept ValueError:\n globals()[\"bad_bound_closed\"] = True");
+    guarded = SecondOrderKuramotoEngine(cfg2, mass=1.0, damping=0.1,
+    velocity0=v2, rocof_max=1e9).run();
+    byte_ident = np.array_equal(base.phases, guarded.phases) and
+    np.array_equal(base.velocities, guarded.velocities);
+    sys.exit(0 if not (nf_closed and rocof_closed and bad_bound_closed and byte_ident) else 1)'
+  description: >-
+    Inverse probe of the second-order stability-guard contract. It exits 0
+    (fires) iff ANY leg breaks: a NaN integrated state is NOT reported as a
+    non_finite SecondOrderDivergenceError, OR an exceeded rocof_max=1e-6 is
+    NOT reported as a rocof_exceeded divergence, OR a negative rocof_max is
+    accepted instead of failing closed at construction, OR a generous
+    rocof_max=1e9 perturbs the healthy phases/velocities (the guard must be
+    read-only). While every leg holds, the probe exits 1. An exit 0 means a
+    guard lost its fail-closed behaviour or stopped being byte-identical on a
+    healthy run and must be repaired, not patched green.
+rollback_command: >-
+  bash -c 'git rm -f tests/unit/physics/test_T18b_second_order_stability_guard.py
+  .claude/commit_acceptors/second-order-stability-guard.yaml
+  && git checkout origin/main -- core/kuramoto/second_order.py'
+rollback_verification_command: >-
+  bash -c 'test ! -f tests/unit/physics/test_T18b_second_order_stability_guard.py
+  && ! grep -q SecondOrderDivergenceError core/kuramoto/second_order.py'
+memory_update_type: none
+ledger_path: ".claude/commit_acceptors/second-order-stability-guard.yaml"
+report_path: "tmp/second_order_stability_guard_pytest.log"
+evidence:
+  - path: "tmp/second_order_stability_guard_pytest.log"
+    sha256: "29872a03b84d46f4ddba11928331c84d82e01cdd58e47f0659a1f6d5150ded8b"  # pragma: allowlist secret

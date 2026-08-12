@@ -1,0 +1,14 @@
+{
+  "base_image_digest": "sha256:423ed6ab25b1921a477529254bfeeabf5855151dc2c3141699a1bfc852199fbf",
+  "base_image_ref": "python:3.12-slim@sha256:423ed6ab25b1921a477529254bfeeabf5855151dc2c3141699a1bfc852199fbf",
+  "build_args": {
+    "SOURCE_DATE_EPOCH": "0"
+  },
+  "built_at_utc": "1970-01-01T00:00:00Z",
+  "image_id": "sha256:dbc46a66727cd389d2eb5a4277c74d62e4c4eec64f90e7a243e753c39857b24b",
+  "image_tag": "geosync-hermetic:repro",
+  "note": "repo_digest is null: image is local-only (not pushed to a registry), so no manifest RepoDigest exists yet. image_id is the pinned local content id. base_image_digest is the immutable pin from Dockerfile.repro.",
+  "repo_digest": null,
+  "schema": "geosync.env.image_digest/v1",
+  "task": "ENV-005"
+}

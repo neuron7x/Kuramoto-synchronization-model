@@ -1,0 +1,93 @@
+# CoherenceBridge stack: Kafka → Bridge → QuestDB → Grafana
+#
+# Ports:
+#   9092  Kafka (signals topic: coherence.signals.v1)
+#   9000  QuestDB console + ILP ingestion
+#   8812  QuestDB PGWire (SQL queries)
+#   50051 gRPC (StreamSignals, GetSnapshot, Health)
+#   8080  HTTP/SSE (/health, /signal, /stream, /metrics)
+#   3000  Grafana (6-panel regime dashboard)
+#
+# Usage:
+#   docker compose up -d
+#   curl localhost:8080/health
+#   grpcurl -plaintext localhost:50051 coherence_bridge.v1.CoherenceBridge/Health
+
+services:
+
+  kafka:
+    image: bitnami/kafka:3.7
+    ports:
+      - "9092:9092"
+    environment:
+      KAFKA_CFG_NODE_ID: "0"
+      KAFKA_CFG_PROCESS_ROLES: controller,broker
+      KAFKA_CFG_CONTROLLER_QUORUM_VOTERS: 0@kafka:9093
+      KAFKA_CFG_LISTENERS: PLAINTEXT://:9092,CONTROLLER://:9093
+      KAFKA_CFG_ADVERTISED_LISTENERS: PLAINTEXT://kafka:9092
+      KAFKA_CFG_LISTENER_SECURITY_PROTOCOL_MAP: CONTROLLER:PLAINTEXT,PLAINTEXT:PLAINTEXT
+      KAFKA_CFG_CONTROLLER_LISTENER_NAMES: CONTROLLER
+      KAFKA_CFG_AUTO_CREATE_TOPICS_ENABLE: "true"
+    volumes:
+      - kafka_data:/bitnami/kafka
+    healthcheck:
+      test: ["CMD-SHELL", "kafka-broker-api-versions.sh --bootstrap-server localhost:9092 || exit 1"]
+      interval: 10s
+      timeout: 5s
+      retries: 5
+
+  questdb:
+    image: questdb/questdb:9.0.0
+    ports:
+      - "9000:9000"
+      - "8812:8812"
+      - "9009:9009"
+    volumes:
+      - questdb_data:/var/lib/questdb
+    environment:
+      QDB_HTTP_ENABLED: "true"
+    healthcheck:
+      test: ["CMD-SHELL", "curl -sf http://localhost:9000/exec?query=SELECT%201 || exit 1"]
+      interval: 5s
+      timeout: 3s
+      retries: 5
+
+  coherence-bridge:
+    build:
+      context: ..
+      dockerfile: coherence_bridge/Dockerfile
+    ports:
+      - "50051:50051"
+      - "8080:8080"
+    environment:
+      QUESTDB_HOST: questdb
+      QUESTDB_PORT: "9000"
+      KAFKA_BOOTSTRAP_SERVERS: kafka:9092
+      GRPC_PORT: "50051"
+      HTTP_PORT: "8080"
+      ENGINE_MODE: mock
+    depends_on:
+      kafka:
+        condition: service_healthy
+      questdb:
+        condition: service_healthy
+    restart: on-failure
+
+  grafana:
+    image: grafana/grafana:11.4-oss
+    ports:
+      - "3000:3000"
+    volumes:
+      - ../grafana/provisioning:/etc/grafana/provisioning:ro
+      - grafana_data:/var/lib/grafana
+    environment:
+      GF_SECURITY_ADMIN_PASSWORD: ${GF_ADMIN_PASSWORD:-admin}  # pragma: allowlist secret
+      GF_DASHBOARDS_DEFAULT_HOME_DASHBOARD_PATH: /etc/grafana/provisioning/dashboards/coherence_signals.json
+    depends_on:
+      questdb:
+        condition: service_healthy
+
+volumes:
+  kafka_data:
+  questdb_data:
+  grafana_data:

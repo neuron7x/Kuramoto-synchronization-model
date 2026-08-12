@@ -1,0 +1,67 @@
+{
+  "algorithm": "sha256",
+  "count": 6,
+  "encoding": "hex_chunks_8",
+  "hashes": {
+    "C-EPI-RHOMBUS": [
+      "41d30546",
+      "976537ae",
+      "c0983c3d",
+      "a3d85248",
+      "242081f3",
+      "dd84cb11",
+      "e0e4f8f6",
+      "63f12af8"
+    ],
+    "C-INV-COUNT": [
+      "12727a5e",
+      "cc163134",
+      "daec8e64",
+      "83ea5a14",
+      "475936c5",
+      "86e7e36c",
+      "3e1ca0d5",
+      "083e3147"
+    ],
+    "C-PHYS-KERNEL": [
+      "c3ec6f4b",
+      "733b4d5f",
+      "4c2fec61",
+      "9923c9d5",
+      "5fece29a",
+      "0c2dff14",
+      "e4040a38",
+      "698cf2c4"
+    ],
+    "C-RICCI-MICROSTRUCTURE-V1": [
+      "98b4d9f0",
+      "798e3bbd",
+      "25f8867a",
+      "02c5bc73",
+      "beae87da",
+      "197c7500",
+      "de2b6db0",
+      "52b101c6"
+    ],
+    "C-SYSRISK-PHASE": [
+      "6f9137f9",
+      "5a704eef",
+      "13c4a5f3",
+      "b8027f67",
+      "ba256cf6",
+      "87eab3d9",
+      "a594f82e",
+      "904d02e3"
+    ],
+    "C-TLA-PROOF": [
+      "ff08f6f4",
+      "34eee095",
+      "dc0a4fa8",
+      "ce571e6c",
+      "7264329b",
+      "84a8f004",
+      "5b854d18",
+      "8ce594f3"
+    ]
+  }
+}

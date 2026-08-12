@@ -1,0 +1,23 @@
+{
+  "error_count": 0,
+  "item_count": 2,
+  "items": [
+    {
+      "bytes": 2588,
+      "errors": [],
+      "path": "examples/json_artifact_contract.candidate.json",
+      "sha256": "23efe750fc37754eefaf8279b6f9fab50e0d5fa51b6c576ac79dd2e6febc943f",
+      "status": "OK"
+    },
+    {
+      "bytes": 3804,
+      "errors": [],
+      "path": "examples/json_artifact_contract.blocked.json",
+      "sha256": "0616c41dba5dc78bd589d35dc1a806b5ee33717143ef8e7b9c0df87a745f438f",
+      "status": "OK"
+    }
+  ],
+  "ok_count": 2,
+  "schema_version": "json_contract_receipt.v1",
+  "status": "OK"
+}

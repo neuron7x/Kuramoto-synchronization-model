@@ -1,4 +1,6 @@
-"""Alembic environment configuration for TradePulse."""
+# Copyright (c) 2023-2026 Yaroslav Vasylenko (neuron7xLab)
+# SPDX-License-Identifier: MIT
+"""Alembic environment configuration for GeoSync."""
 
 from __future__ import annotations
 
@@ -29,21 +31,21 @@ target_metadata = Base.metadata
 
 
 def _reader_dsns_from_env() -> tuple[str, ...]:
-    raw = os.getenv("TRADEPULSE_DB_READER_DSNS", "").strip()
+    raw = os.getenv("GEOSYNC_DB_READER_DSNS", "").strip()
     if not raw:
         return ()
     return tuple(dsn.strip() for dsn in raw.split(",") if dsn.strip())
 
 
 def _tls_from_env() -> PostgresTLSConfig | None:
-    ca = os.getenv("TRADEPULSE_DB_TLS_CA")
-    cert = os.getenv("TRADEPULSE_DB_TLS_CERT")
-    key = os.getenv("TRADEPULSE_DB_TLS_KEY")
+    ca = os.getenv("GEOSYNC_DB_TLS_CA")
+    cert = os.getenv("GEOSYNC_DB_TLS_CERT")
+    key = os.getenv("GEOSYNC_DB_TLS_KEY")
     if not any([ca, cert, key]):
         return None
     if not all([ca, cert, key]):
         raise RuntimeError(
-            "TRADEPULSE_DB_TLS_CA, TRADEPULSE_DB_TLS_CERT and TRADEPULSE_DB_TLS_KEY must all be provided"
+            "GEOSYNC_DB_TLS_CA, GEOSYNC_DB_TLS_CERT and GEOSYNC_DB_TLS_KEY must all be provided"
         )
     return PostgresTLSConfig(
         ca_file=Path(ca).expanduser(),
@@ -53,11 +55,9 @@ def _tls_from_env() -> PostgresTLSConfig | None:
 
 
 def _load_database_settings() -> DatabaseSettings:
-    writer_dsn = os.getenv("TRADEPULSE_DB_WRITER_DSN")
+    writer_dsn = os.getenv("GEOSYNC_DB_WRITER_DSN")
     if not writer_dsn:
-        raise RuntimeError(
-            "TRADEPULSE_DB_WRITER_DSN must be set for Alembic migrations"
-        )
+        raise RuntimeError("GEOSYNC_DB_WRITER_DSN must be set for Alembic migrations")
     ensure_secure_postgres_uri(writer_dsn)
     reader_dsns = _reader_dsns_from_env()
     tls = _tls_from_env()

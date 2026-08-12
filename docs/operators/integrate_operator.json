@@ -1,0 +1,51 @@
+{
+  "operator_id": "CME-OP-INTEGRATE-0001",
+  "name": "integrate",
+  "ukrainian_name": "інтегрувати",
+  "repository": "neuron7xLab/GeoSync",
+  "status_tags": ["S0_REPO_FACT", "S5_PROXY"],
+  "definition": "Connect separate modules or services into one coherent system through explicit contracts, validated boundaries, and observable runtime behavior.",
+  "operator_form": "input_modules + interface_contracts + validation_gates -> integration_operation -> coherent_system + evidence_bundle + rollback_path",
+  "inputs": [
+    "modules_or_services",
+    "owned_interfaces",
+    "input_output_contracts",
+    "dependency_reasons",
+    "validation_commands",
+    "failure_modes",
+    "rollback_plan"
+  ],
+  "outputs": [
+    "system_boundary",
+    "module_map",
+    "integration_contract",
+    "dependency_graph",
+    "smoke_path",
+    "validation_report",
+    "rollback_path"
+  ],
+  "acceptance_gates": [
+    "No module without a purpose.",
+    "No service without an owner interface.",
+    "No dependency without a reason.",
+    "No interface without input/output contract.",
+    "No integration without at least one smoke command.",
+    "No PASS without persisted evidence."
+  ],
+  "failure_modes": [
+    "Components are colocated but not integrated.",
+    "Shared state appears without ownership.",
+    "Service boundary is unclear.",
+    "Module import path works only locally.",
+    "CLI path bypasses API contract.",
+    "API path bypasses validation.",
+    "Integration creates hidden dependency cycles.",
+    "Rollback cannot restore previous behavior."
+  ],
+  "validation_commands": [
+    "python tools/research/validate_operator_contract.py docs/operators/integrate_operator.json",
+    "python -m pytest tests/research/test_integrate_operator_contract.py -q"
+  ],
+  "next_target": "Bind CLI command -> service function -> schema contract -> evidence artifact -> verdict file.",
+  "evidence_policy": "Remain S0_REPO_FACT plus S5_PROXY until validation commands run and evidence is persisted."
+}

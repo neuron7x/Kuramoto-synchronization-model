@@ -1,4 +1,4 @@
-# TradePulse Requirements Specification
+# GeoSync Requirements Specification
 
 **Version:** 1.0.0
 **Date:** 2025-11-18
@@ -7,7 +7,7 @@
 
 ## Document Purpose
 
-This document provides a formal specification of TradePulse platform requirements extracted from `docs/requirements/product_specification.md`. Each requirement includes:
+This document provides a formal specification of GeoSync platform requirements extracted from `docs/requirements/product_specification.md`. Each requirement includes:
 - Unique identifier and traceability
 - Formal description and rationale
 - Acceptance criteria with measurable metrics
@@ -1432,7 +1432,6 @@ spec:
 ### B. References
 
 - [docs/requirements/product_specification.md](../../docs/requirements/product_specification.md) - Original requirements source
-- [backlog/requirements.json](../../backlog/requirements.json) - Structured requirements
 - [docs/ARCHITECTURE.md](../ARCHITECTURE.md) - System architecture
 - [MiFID II Regulation](https://www.esma.europa.eu/policy-rules/mifid-ii)
 - [ISO 27001](https://www.iso.org/isoiec-27001-information-security.html)

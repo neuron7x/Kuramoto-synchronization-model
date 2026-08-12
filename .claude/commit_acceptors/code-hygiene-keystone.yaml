@@ -1,0 +1,94 @@
+# Diff-bound commit acceptor for the code-hygiene keystone hardening.
+#
+# Closes three proven degradation vectors of the ADR-0025 ratchet: --write
+# laundering (anti-laundering meta-gate), silent coverage shrink (complete
+# top-level package classification), and silent-zero on unparseable runtime
+# files. Infra/governance only, no physics, read-only and offline.
+
+id: code-hygiene-keystone
+status: ACTIVE
+claim_type: governance
+promise: >-
+  After this PR lands, scripts/ci/check_debt_baseline_monotonic.py fails any
+  change in which a docs/CODE_DEBT_BASELINE.json or
+  docs/SKIP_RATCHET_BASELINE.json per-dimension total grows versus
+  origin/main, so the gate's own --write can no longer launder debt upward;
+  check_code_hygiene.py fails on any top-level package containing .py that is
+  classified in neither runtime_roots nor excluded_roots; and a runtime file
+  that fails to AST-parse is recorded as `unparseable` debt instead of
+  contributing a silent zero. Gate only — no runtime behaviour, feature,
+  claim, or physics maturity change; no empirical, market, or alpha claim.
+
+diff_scope:
+  changed_files:
+    - path: ".claude/commit_acceptors/code-hygiene-keystone.yaml"
+    - path: ".github/workflows/code-hygiene-gate.yml"
+    - path: "INVENTORY.json"
+    - path: "Makefile"
+    - path: "docs/CODE_DEBT_BASELINE.json"
+    - path: "docs/CODE_QUALITY_MANIFEST.json"
+    - path: "docs/adr/0026-code-hygiene-keystone.md"
+    - path: "docs/adr/index.md"
+    - path: "scripts/ci/check_code_hygiene.py"
+    - path: "scripts/ci/check_debt_baseline_monotonic.py"
+  forbidden_paths:
+    - "trading/"
+    - "execution/"
+    - "forecast/"
+    - "policy/"
+    - "core/"
+    - "runtime/"
+    - "application/"
+
+required_python_symbols:
+  - "scripts/ci/check_debt_baseline_monotonic.py::main"
+  - "scripts/ci/check_debt_baseline_monotonic.py::_hygiene_totals"
+  - "scripts/ci/check_code_hygiene.py::_classification_gaps"
+
+expected_signal: >-
+  python scripts/ci/check_debt_baseline_monotonic.py prints "Debt-baseline
+  monotonicity held: no baseline total grew vs origin/main" and exits 0 on a
+  clean tree; check_code_hygiene.py prints "Code-hygiene ratchet held" with
+  no "unclassified top-level package" error and exits 0.
+
+measurement_command: >-
+  bash -c '
+    mkdir -p tmp &&
+    python scripts/ci/check_code_hygiene.py | tee tmp/code_hygiene_keystone.log &&
+    python scripts/ci/check_debt_baseline_monotonic.py --base-ref origin/main | tee -a tmp/code_hygiene_keystone.log
+  '
+
+signal_artifact: "tmp/code_hygiene_keystone.log"
+
+falsifier:
+  command: >-
+    bash -c '
+      printf "\ntry:\n    pass\nexcept Exception:\n    pass\n" >> core/__init__.py;
+      python scripts/ci/check_code_hygiene.py --write >/dev/null 2>&1;
+      python scripts/ci/check_debt_baseline_monotonic.py --base-ref HEAD >/dev/null 2>&1;
+      rc=$?;
+      git checkout -q -- core/__init__.py docs/CODE_DEBT_BASELINE.json;
+      test "$rc" -ne 0
+    '
+  description: >-
+    Injects a broad-except into a runtime file and re-baselines via the
+    gate's own --write, then runs the meta-gate against HEAD. Succeeds (exit
+    0) only when the meta-gate rejects the laundered, larger total — proving
+    the anti-laundering guarantee is live. Always restores the mutated files.
+
+rollback_command: >-
+  bash -c '
+    git rm -f
+      scripts/ci/check_debt_baseline_monotonic.py
+      docs/adr/0026-code-hygiene-keystone.md
+      .claude/commit_acceptors/code-hygiene-keystone.yaml
+  '
+
+rollback_verification_command: >-
+  bash -c '
+    test ! -e scripts/ci/check_debt_baseline_monotonic.py
+  '
+
+memory_update_type: append
+ledger_path: ".claude/commit_acceptors/code-hygiene-keystone.yaml"
+report_path: "tmp/code_hygiene_keystone.log"

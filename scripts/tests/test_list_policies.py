@@ -1,8 +1,10 @@
+# Copyright (c) 2023-2026 Yaroslav Vasylenko (neuron7xLab)
+# SPDX-License-Identifier: MIT
 """Tests for list_policies.py script."""
 
 from __future__ import annotations
 
-# SPDX-License-Identifier: LicenseRef-TradePulse-Proprietary
+# SPDX-License-Identifier: MIT
 import ast
 from pathlib import Path
 
@@ -106,7 +108,7 @@ def test_discover_policies_extracts_bases(tmp_path: Path) -> None:
     """Test that discover_policies extracts base classes."""
     module = tmp_path / "policies.py"
     module.write_text(
-        '''
+        """
 from abc import ABC
 
 class BasePolicy(ABC):
@@ -114,7 +116,7 @@ class BasePolicy(ABC):
 
 class DerivedPolicy(BasePolicy):
     pass
-''',
+""",
         encoding="utf-8",
     )
 
@@ -149,10 +151,10 @@ def test_discover_policies_handles_no_docstring(tmp_path: Path) -> None:
     """Test that discover_policies handles missing docstrings."""
     module = tmp_path / "policies.py"
     module.write_text(
-        '''
+        """
 class UndocumentedPolicy:
     pass
-''',
+""",
         encoding="utf-8",
     )
 
@@ -296,13 +298,13 @@ def test_discover_policies_sorts_results(tmp_path: Path) -> None:
     """Test that discover_policies returns sorted results."""
     module = tmp_path / "policies.py"
     module.write_text(
-        '''
+        """
 class ZPolicy:
     pass
 
 class APolicy:
     pass
-''',
+""",
         encoding="utf-8",
     )
 

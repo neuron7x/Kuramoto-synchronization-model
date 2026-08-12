@@ -1,0 +1,18 @@
+{
+  "$comment": "RVG-1 fail-closed gate thresholds. Independent of repo-wide coverage fail_under (98) in pyproject.toml; RVG is an additive verification layer and never weakens existing gates.",
+  "critical_gates": {
+    "line_coverage": 90.0,
+    "branch_coverage": 85.0,
+    "mutation_score": 75.0,
+    "oracle_gap": 15.0,
+    "high_critical_vulnerabilities": 0,
+    "ruff_errors": 0,
+    "mypy_errors": 0
+  },
+  "elite_target": {
+    "line_coverage": 95.0,
+    "branch_coverage": 90.0,
+    "mutation_score": 85.0,
+    "oracle_gap": 7.0
+  }
+}

@@ -1,6 +1,6 @@
 # Backtest Execution Simulation Protocol
 
-This protocol standardises how TradePulse models exchange microstructure within
+This protocol standardises how GeoSync models exchange microstructure within
 its backtesting environment. It complements the deterministic walk-forward
 engine by introducing order-driven mechanics—latency, queueing, partial fills,
 market halts, and multiple time-in-force policies—so strategies can be assessed

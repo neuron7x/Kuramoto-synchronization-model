@@ -1,0 +1,49 @@
+# Copyright (c) 2023-2026 Yaroslav Vasylenko (neuron7xLab)
+# SPDX-License-Identifier: MIT
+#
+# Authoritative registry of claim maturity. Each claim declares the rung it
+# sits at on the maturity ladder and the evidence tokens it holds.
+# scripts/ci/check_claim_maturity.py evaluates every claim through the
+# executable ladder in analytics/signals/claim_maturity.py
+# (evaluate_promotion from UNOBSERVED to the declared rung) and fails closed
+# unless the cumulative evidence for that rung and every rung below it is
+# present — no state skipping, no synthetic-to-real promotion, no
+# alternatives-eliminated without null + simpler-baseline comparison, no
+# bounded claim without the replay/provenance/falsifier/negative-evidence
+# conjunction. The registry layer additionally forbids promotion language and
+# requires the descriptor-only boundary.
+#
+# Evidence tokens are drawn from EVIDENCE_VOCABULARY in
+# analytics/signals/claim_maturity.py. The descriptor methodology instruments
+# are synthetic-structural and sit honestly at MEASURED_SYNTHETIC.
+schema_version: 1
+claims:
+  - id: descriptor-capsule-structural
+    maturity_state: MEASURED_SYNTHETIC
+    description: >-
+      The integrated descriptor capsule deterministically chains the
+      descriptor-only instruments into one reproducible manifest. A structural
+      descriptor of seeded synthetic inputs; not a market claim.
+    evidence:
+      - observability
+      - synthetic_measurement
+
+  - id: null-comparison-structural
+    maturity_state: MEASURED_SYNTHETIC
+    description: >-
+      compare_to_null locates an observed scalar within a declared null
+      ensemble by mid-rank percentile. Structural position against a synthetic
+      null; not a significance, predictive, or financial claim.
+    evidence:
+      - observability
+      - synthetic_measurement
+
+  - id: information-quality-structural
+    maturity_state: MEASURED_SYNTHETIC
+    description: >-
+      Descriptor information-quality measures (entropy, perplexity, JS
+      divergence, distinguishability) quantify the content of an already
+      computed state sequence. Structural descriptors of synthetic inputs only.
+    evidence:
+      - observability
+      - synthetic_measurement

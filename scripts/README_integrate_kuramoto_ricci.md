@@ -184,7 +184,7 @@ python scripts/integrate_kuramoto_ricci.py --data data/sample.csv
 - scipy
 - networkx
 - pyyaml
-- TradePulse core modules (core.indicators, core.config)
+- GeoSync core modules (core.indicators, core.config)
 
 ## Performance
 

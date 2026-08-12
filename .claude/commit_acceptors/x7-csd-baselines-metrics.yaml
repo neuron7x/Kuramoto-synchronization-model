@@ -1,0 +1,118 @@
+# Diff-bound commit acceptor for Protocol X-7 — score-level
+# instrumentation extension: CSD indicators, naive baselines,
+# extended metrics, audit-grade documentation.
+#
+# Locally verified:
+#   * pytest tests/research/systemic_risk/: 218 passed (+49 new)
+#   * mypy --strict / ruff / black: clean on every new file
+#   * run_premerge_science_gate against the live module tree:
+#     passed=True, overclaim_hits=()
+#   * critical_slowing_down.py::test_no_lookahead_leakage: PASS
+#     (mutating future segment leaves past indicators bit-identical)
+#
+# This PR is documentation-heavy by design — 7 new audit
+# artefacts pin every numerical contract. claim_type=documentation
+# (cap=24) admits the 16-file diff.
+
+id: x7-csd-baselines-metrics
+status: ACTIVE
+claim_type: documentation
+promise: >-
+  After this PR lands, research/systemic_risk/ ships score-level
+  CSD indicators (variance + lag-1 autocorrelation + skewness)
+  with a leakage-regression contract, two naive baselines
+  (rolling volatility + edge density) the candidate must beat,
+  classification + lead-time metrics with NaN-not-zero on every
+  undefined denominator, and 7 audit-grade documentation files
+  (BASELINES, METRICS, NULL_MODELS, FAILURE_MODES,
+  REPRODUCIBILITY, BOOTSTRAP_PROTOCOL, CHANGELOG). The status
+  remains HYPOTHESIS / SCORE-LEVEL INSTRUMENTATION EXTENSION ONLY;
+  end-to-end validation remains pending.
+diff_scope:
+  changed_files:
+    - path: ".claude/commit_acceptors/x7-csd-baselines-metrics.yaml"
+    - path: "research/systemic_risk/BASELINES.md"
+    - path: "research/systemic_risk/BOOTSTRAP_PROTOCOL.md"
+    - path: "research/systemic_risk/CHANGELOG.md"
+    - path: "research/systemic_risk/FAILURE_MODES.md"
+    - path: "research/systemic_risk/METRICS.md"
+    - path: "research/systemic_risk/NULL_MODELS.md"
+    - path: "research/systemic_risk/REPRODUCIBILITY.md"
+    - path: "research/systemic_risk/__init__.py"
+    - path: "research/systemic_risk/baselines.py"
+    - path: "research/systemic_risk/critical_slowing_down.py"
+    - path: "research/systemic_risk/metrics.py"
+    - path: "tests/research/systemic_risk/test_baselines.py"
+    - path: "tests/research/systemic_risk/test_critical_slowing_down.py"
+    - path: "tests/research/systemic_risk/test_metrics.py"
+  forbidden_paths:
+    - "trading/"
+    - "execution/"
+    - "forecast/"
+    - "policy/"
+    - "core/physics/"
+    - "core/kuramoto/"
+    - "application/governance/claim_ledger.py"
+    - "application/governance/commit_acceptor.py"
+required_python_symbols:
+  - "research/systemic_risk/critical_slowing_down.py::CSDConfig"
+  - "research/systemic_risk/critical_slowing_down.py::CSDIndicators"
+  - "research/systemic_risk/critical_slowing_down.py::compute_csd_indicators"
+  - "research/systemic_risk/baselines.py::rolling_volatility_score"
+  - "research/systemic_risk/baselines.py::edge_density_score"
+  - "research/systemic_risk/metrics.py::ClassificationMetrics"
+  - "research/systemic_risk/metrics.py::LeadTimeConfig"
+  - "research/systemic_risk/metrics.py::LeadTimeMetrics"
+  - "research/systemic_risk/metrics.py::compute_classification_metrics"
+  - "research/systemic_risk/metrics.py::compute_lead_time_metrics"
+expected_signal: >-
+  `pytest tests/research/systemic_risk/` reports "218 passed";
+  `mypy --strict research/systemic_risk/ tests/research/systemic_risk/`
+  is clean (the 5 pre-existing core/kuramoto/jax_engine errors
+  persist on origin/main and are out of scope); ruff + black are
+  clean on the diff; running run_premerge_science_gate against
+  research/systemic_risk/ at the HYPOTHESIS / INSTRUMENTED tier
+  returns passed=True with overclaim_hits=().
+measurement_command: >-
+  bash -c '
+    mypy --strict research/systemic_risk/ tests/research/systemic_risk/ && ruff check research/systemic_risk/ tests/research/systemic_risk/ && black --check research/systemic_risk/ tests/research/systemic_risk/ && python -m pytest tests/research/systemic_risk/ -q
+  '
+signal_artifact: "tmp/x7_csd_baselines_metrics.log"
+falsifier:
+  command: >-
+    bash -c '
+      python -m pytest
+      tests/research/systemic_risk/test_critical_slowing_down.py::TestNoLookaheadLeakage::test_csd_has_no_lookahead_leakage
+      tests/research/systemic_risk/test_governance.py::TestRunPremergeScienceGate::test_real_module_passes_overclaim_grep
+      -q >/tmp/_x7_rails.log 2>&1 && ! grep -q "2 passed" /tmp/_x7_rails.log
+    '
+  description: >-
+    Probes the two load-bearing rails: the no-lookahead-leakage
+    contract on the new CSD module, and the docs-overclaim grep
+    against the live module tree (now including 7 new docs +
+    CHANGELOG). The falsifier inverts: it succeeds (exit 0) only
+    when both rail tests did NOT pass, which would mean either
+    leakage has been introduced in CSD or one of the new docs
+    contains forbidden language.
+rollback_command: >-
+  bash -c 'rm -f
+    research/systemic_risk/baselines.py
+    research/systemic_risk/critical_slowing_down.py
+    research/systemic_risk/metrics.py
+    research/systemic_risk/BASELINES.md
+    research/systemic_risk/BOOTSTRAP_PROTOCOL.md
+    research/systemic_risk/CHANGELOG.md
+    research/systemic_risk/FAILURE_MODES.md
+    research/systemic_risk/METRICS.md
+    research/systemic_risk/NULL_MODELS.md
+    research/systemic_risk/REPRODUCIBILITY.md
+    tests/research/systemic_risk/test_baselines.py
+    tests/research/systemic_risk/test_critical_slowing_down.py
+    tests/research/systemic_risk/test_metrics.py
+    .claude/commit_acceptors/x7-csd-baselines-metrics.yaml && git checkout HEAD -- research/systemic_risk/__init__.py'
+rollback_verification_command: >-
+  bash -c '! test -f research/systemic_risk/critical_slowing_down.py'
+memory_update_type: append
+ledger_path: ".claude/commit_acceptors/x7-csd-baselines-metrics.yaml"
+report_path: "tmp/x7_csd_baselines_metrics.log"
+evidence: []

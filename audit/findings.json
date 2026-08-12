@@ -56,7 +56,7 @@
           "configs/tls/dev/cortex-db-client.key.pem",
           "configs/tls/dev/cortex-db-server.key.pem",
           "configs/tls/dev/cortex-server.key.pem",
-          "configs/tls/dev/tradepulse-server.key.pem"
+          "configs/tls/dev/geosync-server.key.pem"
         ]
       },
       "impact": "Development TLS keys are tracked in version control. While these are dev-only keys, tracking private keys is discouraged.",

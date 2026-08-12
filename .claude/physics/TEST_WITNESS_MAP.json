@@ -1,0 +1,139 @@
+{
+  "schema_version": "1.0.0",
+  "files": {
+    "tests/core/neuro/serotonin/test_serotonin_controller.py": {
+      "witnesses": {
+        "test_estimate_aversive_state_matches_formula": ["INV-5HT3"],
+        "test_estimate_aversive_state_with_override_weights": ["INV-5HT3"],
+        "test_estimate_aversive_state_rejects_negative_inputs": ["INV-5HT3"],
+        "test_compute_serotonin_signal_updates_floor": ["INV-5HT2", "INV-5HT5"],
+        "test_compute_serotonin_signal_rejects_negative": ["INV-5HT2"],
+        "test_modulate_action_prob_applies_inhibition": ["INV-5HT2"],
+        "test_modulate_action_prob_rejects_invalid_probability": ["INV-5HT2"],
+        "test_apply_internal_shift_tempering": ["INV-5HT1"],
+        "test_apply_internal_shift_requires_non_negative_gradient": ["INV-5HT1"],
+        "test_check_cooldown_hysteresis": ["INV-5HT7"],
+        "test_check_cooldown_guard_can_block": ["INV-5HT7"],
+        "test_step_validates_inputs": ["INV-5HT3"],
+        "test_step_returns_cooldown_tuple": ["INV-5HT2", "INV-5HT7"],
+        "test_to_dict_reports_current_state": ["INV-5HT5"],
+        "test_dual_compatibility_config_loads_successfully": ["INV-5HT4", "INV-5HT6"],
+        "test_risk_budget_monotone_in_stress": ["INV-5HT3"],
+        "test_serotonin_signal_stays_bounded": ["INV-5HT2"]
+      },
+      "non_physics": [
+        "test_resolve_config_path_direct_file",
+        "test_resolve_config_path_prefers_env_dir",
+        "test_resolve_config_path_missing",
+        "test_config_profile_mismatch_rejected",
+        "test_config_unknown_root_rejected",
+        "test_config_missing_profile_section",
+        "test_multi_document_config_rejected",
+        "test_save_state_persists_json",
+        "test_config_rejects_extra_fields",
+        "test_config_validates_required_fields",
+        "test_config_field_types_are_validated",
+        "test_config_constraints_are_enforced"
+      ]
+    },
+    "tests/unit/test_kuramoto_ricci_composite.py": {
+      "witnesses": {
+        "test_kuramoto_order_parameter_bounds": ["INV-K1"],
+        "test_perfect_synchronisation": ["INV-K1"],
+        "test_multiscale_consensus": ["INV-K1"],
+        "test_complete_graph_positive_curvature": ["INV-RC2"],
+        "test_entry_signal_range": ["INV-HPC2"],
+        "test_exit_signal_range": ["INV-HPC2"],
+        "test_risk_multiplier_range": ["INV-HPC2"],
+        "test_full_pipeline": ["INV-HPC2"],
+        "test_kuramoto_robustness": ["INV-K1"],
+        "test_engine_handles_various_volatilities": ["INV-HPC2"]
+      },
+      "non_physics": [
+        "test_random_phases_low_R",
+        "test_adaptive_window_selection",
+        "test_ollivier_ricci_symmetry",
+        "test_temporal_ricci_detects_regime_change",
+        "test_stable_market_high_stability",
+        "test_phase_detection_strong_emergent",
+        "test_phase_detection_transition",
+        "test_phase_detection_proto_emergent_branch",
+        "test_phase_detection_post_emergent_branch",
+        "test_phase_detection_defaults_to_chaotic",
+        "test_confidence_range",
+        "test_confidence_penalised_near_threshold",
+        "test_post_emergent_entry_signal_biases_short",
+        "test_low_confidence_zero_entry",
+        "test_analyze_serialises_skipped_timeframes",
+        "test_signal_history_idempotent_retries",
+        "test_signal_history_appends_newer_data",
+        "test_analyze_market_replay_returns_cached_signal",
+        "test_analyze_market_backwards_resets_state",
+        "test_get_signal_dataframe_empty_history",
+        "test_record_signal_overwrites_same_timestamp"
+      ]
+    },
+    "tests/unit/core/test_kuramoto_modules.py": {
+      "witnesses": {
+        "test_order_parameter_bounded": ["INV-K1"],
+        "test_phases_finite": ["INV-HPC2"],
+        "test_zero_delay_matches_standard_behavior": ["INV-K1"],
+        "test_heterogeneous_delay_matrix": ["INV-K1"],
+        "test_custom_history_function": ["INV-HPC2"],
+        "test_early_stop_happens_under_strong_coupling": ["INV-K3"],
+        "test_explicit_sparse_adjacency": ["INV-K1"],
+        "test_phases_and_velocities_finite": ["INV-HPC2"],
+        "test_heterogeneous_mass_and_damping": ["INV-HPC2"],
+        "test_invalid_mass_raises": ["INV-HPC2"],
+        "test_negative_damping_raises": ["INV-HPC2"],
+        "test_custom_initial_velocity": ["INV-HPC2"],
+        "test_strong_coupling_convergence": ["INV-K3"],
+        "test_multiple_methods": ["INV-HPC2"],
+        "test_identical_phases_give_R_one": ["INV-K1"],
+        "test_seed_reproducibility": ["INV-HPC1"]
+      },
+      "non_physics": [
+        "test_output_shapes",
+        "test_two_oscillators",
+        "test_summary_keys_present",
+        "test_no_early_stop_with_tiny_patience",
+        "test_dense_adjacency_auto_converted",
+        "test_summary_has_frequency_metrics",
+        "test_time_monotonically_increasing"
+      ]
+    },
+    "tests/core/neuro/serotonin/test_serotonin_runtime_safety.py": {
+      "witnesses": {
+        "test_serotonin_bounds_random": ["INV-5HT2"],
+        "test_stress_monotonic_risk_budget": ["INV-5HT3"],
+        "test_defensive_gate_blocks_actions": ["INV-5HT7"],
+        "test_cooldown_persists_when_hold_active": ["INV-5HT7"],
+        "test_hysteresis_not_flip_flop": ["INV-5HT7"],
+        "test_invalid_input_triggers_safe_mode": ["INV-HPC2"],
+        "test_numeric_stability_extremes": ["INV-5HT2"],
+        "test_invariants_flags_and_clamp_recorded": ["INV-5HT2", "INV-HPC2"],
+        "test_regression_cooldown_reentry": ["INV-5HT7"],
+        "test_risk_gate_reduces_exposure": ["INV-5HT7"],
+        "test_ecs_alignment_monotone_stress": ["INV-5HT3"],
+        "test_crisis_priority_overrides_modes": ["INV-HPC2"],
+        "test_positive_drawdown_triggers_spike": ["INV-5HT7"]
+      },
+      "non_physics": [
+        "test_state_roundtrip",
+        "test_reason_codes_whitelist_only",
+        "test_trace_schema_stable_keys",
+        "test_update_not_using_pandas",
+        "test_update_constant_time_complexity",
+        "test_micro_benchmark_latency",
+        "test_reason_codes_flow_to_trace",
+        "test_no_cyclic_imports",
+        "test_config_validation_error_message",
+        "test_deterministic_timestamp",
+        "test_jsonl_export_stable_order"
+      ]
+    },
+    "tests/core/neuro/dopamine/test_invariants.py": {
+      "non_physics_file": true
+    }
+  }
+}

@@ -1,0 +1,106 @@
+# Diff-bound commit acceptor for the hierarchical repository-health
+# sensor and the MFN-surface drift resolution.
+#
+# This PR adds tools/repo_health_sensor.py — one machine-readable JSON
+# state for repository health (OK/WARN/RED/UNKNOWN, worst-wins, fail
+# closed) — resolves stale markers in tools/mfn_surface_check.py that
+# produced a false RED, and fixes a pre-existing Python 3.12 import
+# portability bug in the MFN surface-checker test loaders. Infra only,
+# no physics, read-only and offline.
+
+id: repo-health-sensor
+status: ACTIVE
+claim_type: refactor
+promise: >-
+  After this PR lands, tools/repo_health_sensor.py rolls the independent
+  surface sub-sensors (mfn_surface, reproducible_capsules,
+  package_entrypoints) into a single fail-closed status with worst-wins
+  precedence (RED > UNKNOWN > WARN > OK; empty -> UNKNOWN), so the
+  repository can read its own drift without promoting the unknown into a
+  pass. The MFN surface checker reflects the current code (validate_bundle
+  /_parse_sha256_manifest /_is_sha256_hex; cli prefix mfn-validate:)
+  instead of stale markers, and the two surface-checker test loaders run
+  on Python 3.12. No empirical, market, or alpha claim is made.
+
+diff_scope:
+  changed_files:
+    - path: ".claude/commit_acceptors/repo-health-sensor.yaml"
+    - path: "tools/repo_health_sensor.py"
+    - path: "tools/mfn_surface_check.py"
+    - path: "tests/ci/test_repo_health_sensor.py"
+    - path: "tests/ci/test_mfn_surface_check.py"
+    - path: "tests/ci/test_mfn_surface_payload_contract.py"
+    - path: "scripts/check_epistemic_drift.py"
+    - path: ".github/claim_boundary_allow.json"
+    - path: "tools/patch_makefile_geosync_coverage.py"
+    - path: "tests/ci/test_patch_makefile_geosync_coverage.py"
+    - path: "scripts/ci/prove_repo_integrity.sh"
+    - path: "Makefile"
+    - path: "docs/operations/TESTING.md"
+  forbidden_paths:
+    - "trading/"
+    - "execution/"
+    - "forecast/"
+    - "policy/"
+    - "core/"
+    - "runtime/"
+    - "application/"
+
+required_python_symbols:
+  - "tools/repo_health_sensor.py::worst"
+  - "tools/repo_health_sensor.py::collect"
+  - "tools/repo_health_sensor.py::payload"
+  - "tools/repo_health_sensor.py::main"
+
+expected_signal: >-
+  python tools/repo_health_sensor.py prints a JSON object with a
+  top-level "status" in {OK, WARN, RED, UNKNOWN} and a "sections" list;
+  and pytest reports the surface-sensor contract tests passing on
+  Python 3.12.
+
+measurement_command: >-
+  bash -c '
+    python tools/repo_health_sensor.py --root . >/dev/null && python -m pytest -q
+       tests/ci/test_repo_health_sensor.py
+       tests/ci/test_mfn_surface_check.py
+       tests/ci/test_mfn_surface_payload_contract.py
+  '
+
+signal_artifact: "tmp/repo_health_sensor.log"
+
+falsifier:
+  command: >-
+    bash -c '
+      python -m pytest -q
+        tests/ci/test_repo_health_sensor.py::test_worst_wins_precedence
+        >/dev/null 2>&1 && exit 1 || exit 0
+    '
+  description: >-
+    Inverts the worst-wins guarantee: it succeeds (exit 0) only when the
+    precedence test fails, which would mean RED no longer dominates
+    UNKNOWN/WARN/OK and a red sub-sensor could be averaged away — the
+    exact fail-closed property the sensor exists to hold.
+
+rollback_command: >-
+  bash -c '
+    git rm -f
+      tools/repo_health_sensor.py
+      tests/ci/test_repo_health_sensor.py
+      .claude/commit_acceptors/repo-health-sensor.yaml && git checkout origin/main --
+      tools/mfn_surface_check.py
+      tests/ci/test_mfn_surface_check.py
+      tests/ci/test_mfn_surface_payload_contract.py
+  '
+
+rollback_verification_command: >-
+  bash -c '
+    test ! -e tools/repo_health_sensor.py
+  '
+
+memory_update_type: append
+ledger_path: ".claude/commit_acceptors/repo-health-sensor.yaml"
+report_path: "tmp/repo_health_sensor.log"
+evidence:
+- path: tools/repo_health_sensor.py
+- path: tests/ci/test_repo_health_sensor.py
+- path: tools/mfn_surface_check.py

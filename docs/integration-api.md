@@ -1,5 +1,5 @@
 ---
-owner: integrations@tradepulse
+owner: integrations@geosync
 review_cadence: quarterly
 last_reviewed: 2025-10-25
 links:
@@ -9,7 +9,7 @@ links:
 
 # Integration API Reference
 
-This document provides a comprehensive reference for integrating TradePulse with external systems, exchanges, and data providers.
+This document provides a comprehensive reference for integrating GeoSync with external systems, exchanges, and data providers.
 
 ---
 
@@ -29,7 +29,7 @@ This document provides a comprehensive reference for integrating TradePulse with
 
 ## Overview
 
-TradePulse provides multiple integration points for connecting with external systems:
+GeoSync provides multiple integration points for connecting with external systems:
 
 - **Data Ingestion**: Connect market data providers
 - **Execution**: Route orders to exchanges
@@ -41,7 +41,7 @@ TradePulse provides multiple integration points for connecting with external sys
 
 ```
 ┌─────────────┐      ┌──────────────┐      ┌─────────────┐
-│  Data       │─────>│  TradePulse  │─────>│  Execution  │
+│  Data       │─────>│  GeoSync  │─────>│  Execution  │
 │  Sources    │      │    Core      │      │  Adapters   │
 └─────────────┘      └──────────────┘      └─────────────┘
       │                     │                      │
@@ -578,11 +578,11 @@ class Strategy(ABC):
         pass
 ```
 
-See [Extending TradePulse](extending.md) for detailed strategy implementation examples.
+See [Extending GeoSync](extending.md) for detailed strategy implementation examples.
 
 ### End-to-end orchestration helper
 
-TradePulse ships with :class:`TradePulseOrchestrator`, a high-level façade that
+GeoSync ships with :class:`GeoSyncOrchestrator`, a high-level façade that
 assembles ingestion, feature engineering, strategy execution, and live order
 submission behind a single interface. This makes it straightforward to stitch
 the Python analytics loop to UI or API layers without rewriting the wiring in
@@ -595,13 +595,13 @@ import numpy as np
 from application.system_orchestrator import (
     ExecutionRequest,
     MarketDataSource,
-    TradePulseOrchestrator,
-    build_tradepulse_system,
+    GeoSyncOrchestrator,
+    build_geosync_system,
 )
 
 data_root = Path("data")
-system = build_tradepulse_system(allowed_data_roots=[data_root])
-orchestrator = TradePulseOrchestrator(system)
+system = build_geosync_system(allowed_data_roots=[data_root])
+orchestrator = GeoSyncOrchestrator(system)
 
 source = MarketDataSource(
     path=data_root / "sample.csv",
@@ -674,8 +674,8 @@ import asyncio
 import websockets
 import json
 
-async def tradepulse_websocket():
-    """Connect to TradePulse WebSocket for real-time updates."""
+async def geosync_websocket():
+    """Connect to GeoSync WebSocket for real-time updates."""
     uri = "ws://localhost:8080/ws"
     
     async with websockets.connect(uri) as websocket:
@@ -691,7 +691,7 @@ async def tradepulse_websocket():
             print(f"Received: {data}")
 
 # Run
-asyncio.run(tradepulse_websocket())
+asyncio.run(geosync_websocket())
 ```
 
 ---
@@ -832,23 +832,23 @@ for ticker in stub.StreamTickers(symbols):
 ### Error Types
 
 ```python
-class TradePulseError(Exception):
-    """Base exception for TradePulse."""
+class GeoSyncError(Exception):
+    """Base exception for GeoSync."""
     pass
 
-class ConnectionError(TradePulseError):
+class ConnectionError(GeoSyncError):
     """Data source or exchange connection error."""
     pass
 
-class OrderError(TradePulseError):
+class OrderError(GeoSyncError):
     """Order placement or management error."""
     pass
 
-class ValidationError(TradePulseError):
+class ValidationError(GeoSyncError):
     """Input validation error."""
     pass
 
-class InsufficientDataError(TradePulseError):
+class InsufficientDataError(GeoSyncError):
     """Insufficient historical data for calculation."""
     pass
 ```
@@ -952,7 +952,7 @@ def api_call():
 
 ## Examples
 
-See [examples/integrations/](../examples/integrations/) for complete examples:
+See [examples/integrations/](../examples/) for complete examples:
 - Exchange connectors (Binance, Coinbase, etc.)
 - Data providers (IEX, Alpha Vantage, etc.)
 - Custom strategies
@@ -962,8 +962,8 @@ See [examples/integrations/](../examples/integrations/) for complete examples:
 
 ## Support
 
-- [GitHub Issues](https://github.com/neuron7x/TradePulse/issues)
-- [API Documentation](https://docs.tradepulse.local)
+- [GitHub Issues](https://github.com/neuron7xLab/GeoSync/issues)
+- [API Documentation](https://docs.geosync.local)
 - [Examples Repository](../examples/)
 
 ---

@@ -1,0 +1,80 @@
+{
+  "$schema": "https://json-schema.org/draft/2020-12/schema",
+  "$id": "https://schemas.neuron7xlab.org/research/research_standard_contract.schema.json",
+  "title": "GeoSync Research Standard Contract",
+  "description": "Machine-checkable contract for public research-standard governance around data lineage, method certification, evidence discipline, reproduction, and release provenance.",
+  "type": "object",
+  "additionalProperties": false,
+  "required": [
+    "schema_version",
+    "standard_id",
+    "status",
+    "scope",
+    "layers",
+    "required_manifests",
+    "release_gates",
+    "handoff"
+  ],
+  "properties": {
+    "schema_version": {"type": "string", "pattern": "^[0-9]+\\.[0-9]+\\.[0-9]+$"},
+    "standard_id": {"type": "string", "pattern": "^[a-z][a-z0-9_.-]{2,127}$"},
+    "status": {"type": "string", "enum": ["DRAFT", "CANDIDATE", "ACTIVE", "RETIRED"]},
+    "scope": {
+      "type": "object",
+      "additionalProperties": false,
+      "required": ["research_line", "evidence_level", "non_goals"],
+      "properties": {
+        "research_line": {"type": "string"},
+        "evidence_level": {"type": "string"},
+        "non_goals": {"type": "array", "items": {"type": "string"}, "minItems": 1}
+      }
+    },
+    "layers": {"type": "array", "items": {"$ref": "#/$defs/layer"}, "minItems": 4},
+    "required_manifests": {"type": "array", "items": {"$ref": "#/$defs/manifest"}, "minItems": 3},
+    "release_gates": {"type": "array", "items": {"$ref": "#/$defs/gate"}, "minItems": 3},
+    "handoff": {
+      "type": "object",
+      "additionalProperties": false,
+      "required": ["primary_agent", "entrypoint", "required_first_reads"],
+      "properties": {
+        "primary_agent": {"type": "string"},
+        "entrypoint": {"type": "string"},
+        "required_first_reads": {"type": "array", "items": {"type": "string"}, "minItems": 1}
+      }
+    }
+  },
+  "$defs": {
+    "layer": {
+      "type": "object",
+      "additionalProperties": false,
+      "required": ["id", "purpose", "owner_role", "required_artifacts", "exit_gate"],
+      "properties": {
+        "id": {"type": "string", "pattern": "^[a-z][a-z0-9_]{2,63}$"},
+        "purpose": {"type": "string", "minLength": 1},
+        "owner_role": {"type": "string", "minLength": 1},
+        "required_artifacts": {"type": "array", "items": {"type": "string"}, "minItems": 1},
+        "exit_gate": {"type": "string", "minLength": 1}
+      }
+    },
+    "manifest": {
+      "type": "object",
+      "additionalProperties": false,
+      "required": ["path", "role", "must_exist"],
+      "properties": {
+        "path": {"type": "string", "minLength": 1},
+        "role": {"type": "string", "minLength": 1},
+        "must_exist": {"type": "boolean"}
+      }
+    },
+    "gate": {
+      "type": "object",
+      "additionalProperties": false,
+      "required": ["id", "command", "blocks_release"],
+      "properties": {
+        "id": {"type": "string", "pattern": "^[a-z][a-z0-9_.-]{2,127}$"},
+        "command": {"type": "string", "minLength": 1},
+        "blocks_release": {"type": "boolean"}
+      }
+    }
+  }
+}

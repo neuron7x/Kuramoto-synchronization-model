@@ -1,0 +1,54 @@
+id: physics-kr4-ricci-semantics-split
+status: ACTIVE
+claim_type: correctness
+promise: >-
+  FP-2 (issue #1096): signed Ollivier-Ricci curvature is never silently
+  destroyed — negative κ is clipped ONLY on ricci_to_positive_adjacency with
+  RicciAdjacencyAudit metadata, ricci_to_signed_coupling preserves sign, and a
+  signed matrix on the Restrepo-Ott-Hunt onset boundary fails closed (INV-KR4).
+diff_scope:
+  changed_files:
+    - path: ".claude/commit_acceptors/physics-kr4-ricci-semantics-split.yaml"
+    - path: "core/kuramoto/kuramoto_ricci_engine.py"
+    - path: ".claude/physics/INVARIANTS.yaml"
+    - path: "physics_contracts/catalog.yaml"
+    - path: "tests/unit/physics/test_KR4_ricci_semantics_split.py"
+    - path: "tests/physics_contracts/test_kuramoto_ricci_semantics_split_witness.py"
+    - path: "tools/physics/clamp_registry.yaml"
+    - path: "artifacts/claims_hashes.json"
+    - path: "artifacts/physics_v2/law_witness_index.json"
+    - path: "artifacts/invariant_source_binding.json"
+    - path: "artifacts/.manifest.json"
+    - path: "docs/architecture/claim_graph.json"
+  forbidden_paths:
+    - "trading/"
+    - "execution/"
+    - "forecast/"
+required_python_symbols:
+  - "core.kuramoto.kuramoto_ricci_engine.ricci_to_positive_adjacency"
+  - "core.kuramoto.kuramoto_ricci_engine.ricci_to_signed_coupling"
+  - "core.kuramoto.kuramoto_ricci_engine.assert_roh_compatible"
+  - "core.kuramoto.kuramoto_ricci_engine.RicciAdjacencyAudit"
+expected_signal: >-
+  INV-KR4 falsification battery and runtime witness pass; a signed matrix is
+  rejected fail-closed at the ROH boundary and the positive-path audit reports
+  the exact clipped negative mass.
+measurement_command: >-
+  python -m pytest tests/unit/physics/test_KR4_ricci_semantics_split.py
+  tests/physics_contracts/test_kuramoto_ricci_semantics_split_witness.py -q
+signal_artifact: "tmp/physics_kr4_ricci_semantics_split_acceptor.json"
+falsifier:
+  command: >-
+    python -m pytest
+    tests/unit/physics/test_KR4_ricci_semantics_split.py::test_signed_ricci_preserves_negative_values
+    tests/unit/physics/test_KR4_ricci_semantics_split.py::test_roh_boundary_rejects_signed_matrix -q
+  description: >-
+    These two tests fail if signed curvature is silently dropped or a signed
+    matrix is accepted on the onset boundary — the exact physics-loss the
+    contract forbids, proving INV-KR4 is falsifiable.
+rollback_command: "git revert --no-edit HEAD"
+rollback_verification_command: "python scripts/check_invariant_count_sync.py"
+memory_update_type: append
+ledger_path: ".claude/commit_acceptors/physics-kr4-ricci-semantics-split.yaml"
+report_path: ".claude/commit_acceptors/physics-kr4-ricci-semantics-split.yaml"
+evidence: []

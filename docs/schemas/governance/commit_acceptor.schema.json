@@ -1,0 +1,241 @@
+{
+  "$defs": {
+    "AcceptorFalsifier": {
+      "additionalProperties": false,
+      "description": "Inverse probe: the acceptor's invariant is broken iff this exits 0.\n\nDistinct from the claim-ledger ``Falsifier`` (which points at a\npytest node). An acceptor falsifier is a one-shot shell command;\nits non-zero exit means the invariant holds. Used by\n``compute_fps_audit`` and the local pre-PR loop.",
+      "properties": {
+        "command": {
+          "minLength": 1,
+          "title": "Command",
+          "type": "string"
+        },
+        "description": {
+          "minLength": 1,
+          "title": "Description",
+          "type": "string"
+        }
+      },
+      "required": [
+        "command",
+        "description"
+      ],
+      "title": "AcceptorFalsifier",
+      "type": "object"
+    },
+    "ChangedFile": {
+      "additionalProperties": false,
+      "description": "One entry under ``diff_scope.changed_files:``.\n\nSchema is ``{path, sha256?}`` per the acceptor template: ``sha256`` is an\noptional content pin (used by VERIFIED acceptors; absent/None for DRAFT).",
+      "properties": {
+        "path": {
+          "minLength": 1,
+          "title": "Path",
+          "type": "string"
+        },
+        "sha256": {
+          "anyOf": [
+            {
+              "type": "string"
+            },
+            {
+              "type": "null"
+            }
+          ],
+          "default": null,
+          "title": "Sha256"
+        }
+      },
+      "required": [
+        "path"
+      ],
+      "title": "ChangedFile",
+      "type": "object"
+    },
+    "ClaimType": {
+      "description": "Maps the acceptor to a policy file-count cap.\n\n``commit_acceptor_policy.yaml::max_changed_files_by_claim_type``\nenforces a per-type ceiling so a 50-file refactor cannot ship\nunder ``correctness`` (cap 12) without explicit re-classification.",
+      "enum": [
+        "correctness",
+        "determinism",
+        "fail_closed",
+        "security",
+        "performance",
+        "governance",
+        "refactor",
+        "documentation",
+        "chore"
+      ],
+      "title": "ClaimType",
+      "type": "string"
+    },
+    "DiffScope": {
+      "additionalProperties": false,
+      "description": "The set of paths the acceptor binds.\n\n``changed_files``     \u2014 every file the PR is allowed to modify; the\n                        validator rejects any modified file outside\n                        this list (or another acceptor's list).\n``forbidden_paths``   \u2014 extra path-prefix denylist on top of the\n                        global policy. Any modified file under one\n                        of these prefixes is rejected.",
+      "properties": {
+        "changed_files": {
+          "items": {
+            "$ref": "#/$defs/ChangedFile"
+          },
+          "minItems": 1,
+          "title": "Changed Files",
+          "type": "array"
+        },
+        "forbidden_paths": {
+          "items": {
+            "type": "string"
+          },
+          "title": "Forbidden Paths",
+          "type": "array"
+        }
+      },
+      "required": [
+        "changed_files"
+      ],
+      "title": "DiffScope",
+      "type": "object"
+    },
+    "EvidenceEntry": {
+      "additionalProperties": false,
+      "description": "Optional evidence attachment under ``evidence:``.",
+      "properties": {
+        "path": {
+          "minLength": 1,
+          "title": "Path",
+          "type": "string"
+        },
+        "sha256": {
+          "anyOf": [
+            {
+              "type": "string"
+            },
+            {
+              "type": "null"
+            }
+          ],
+          "default": null,
+          "title": "Sha256"
+        }
+      },
+      "required": [
+        "path"
+      ],
+      "title": "EvidenceEntry",
+      "type": "object"
+    },
+    "MemoryUpdateType": {
+      "enum": [
+        "append",
+        "replace",
+        "none"
+      ],
+      "title": "MemoryUpdateType",
+      "type": "string"
+    },
+    "Status": {
+      "description": "Acceptor lifecycle status.\n\nACTIVE        \u2014 currently enforced.\nDRAFT         \u2014 author iterating; gate is permissive.\nVERIFIED      \u2014 landed and the falsifier has fired at least once.\nREJECTED      \u2014 superseded; kept as audit trail.",
+      "enum": [
+        "ACTIVE",
+        "DRAFT",
+        "VERIFIED",
+        "REJECTED"
+      ],
+      "title": "Status",
+      "type": "string"
+    }
+  },
+  "additionalProperties": false,
+  "description": "Top-level shape of one acceptor YAML file.\n\nField-by-field mirror of the on-disk format. The ``model_config``\n``extra='forbid'`` guarantees that any unknown top-level key\nraises a structured error rather than being silently dropped.",
+  "properties": {
+    "claim_type": {
+      "$ref": "#/$defs/ClaimType"
+    },
+    "diff_scope": {
+      "$ref": "#/$defs/DiffScope"
+    },
+    "evidence": {
+      "items": {
+        "$ref": "#/$defs/EvidenceEntry"
+      },
+      "title": "Evidence",
+      "type": "array"
+    },
+    "expected_signal": {
+      "minLength": 1,
+      "title": "Expected Signal",
+      "type": "string"
+    },
+    "falsifier": {
+      "$ref": "#/$defs/AcceptorFalsifier"
+    },
+    "id": {
+      "minLength": 1,
+      "pattern": "^[A-Za-z0-9]+(?:-[A-Za-z0-9]+)*$",
+      "title": "Id",
+      "type": "string"
+    },
+    "ledger_path": {
+      "minLength": 1,
+      "title": "Ledger Path",
+      "type": "string"
+    },
+    "measurement_command": {
+      "minLength": 1,
+      "title": "Measurement Command",
+      "type": "string"
+    },
+    "memory_update_type": {
+      "$ref": "#/$defs/MemoryUpdateType",
+      "default": "append"
+    },
+    "promise": {
+      "minLength": 1,
+      "title": "Promise",
+      "type": "string"
+    },
+    "report_path": {
+      "minLength": 1,
+      "title": "Report Path",
+      "type": "string"
+    },
+    "required_python_symbols": {
+      "items": {
+        "type": "string"
+      },
+      "title": "Required Python Symbols",
+      "type": "array"
+    },
+    "rollback_command": {
+      "minLength": 1,
+      "title": "Rollback Command",
+      "type": "string"
+    },
+    "rollback_verification_command": {
+      "minLength": 1,
+      "title": "Rollback Verification Command",
+      "type": "string"
+    },
+    "signal_artifact": {
+      "minLength": 1,
+      "title": "Signal Artifact",
+      "type": "string"
+    },
+    "status": {
+      "$ref": "#/$defs/Status"
+    }
+  },
+  "required": [
+    "id",
+    "status",
+    "claim_type",
+    "promise",
+    "diff_scope",
+    "expected_signal",
+    "measurement_command",
+    "signal_artifact",
+    "falsifier",
+    "rollback_command",
+    "rollback_verification_command",
+    "ledger_path",
+    "report_path"
+  ],
+  "title": "CommitAcceptor",
+  "type": "object"
+}

@@ -1,3 +1,5 @@
+# Copyright (c) 2023-2026 Yaroslav Vasylenko (neuron7xLab)
+# SPDX-License-Identifier: MIT
 """Risk management utilities with advanced controls."""
 
 from __future__ import annotations
@@ -14,7 +16,7 @@ from .advanced import (  # noqa: F401 - re-exported in __all__
     TimeWeightedExposureTracker,
     VolatilityAdjustedSizer,
 )
-from .core import *  # noqa: F401,F403 - re-export legacy API
+from .core import *  # noqa: F403 - re-export legacy API
 from .core import __all__ as _core_all
 
 __all__ = sorted(

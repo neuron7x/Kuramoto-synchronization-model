@@ -1,0 +1,30 @@
+{
+  "allowed_next_nodes": [
+    "D002J-P2"
+  ],
+  "artifact_paths": [
+    "artifacts/d002j/data_registry/source_registry_v1.json",
+    "artifacts/d002j/data_registry/source_provenance_audit_v1.json",
+    "artifacts/d002j/data_registry/source_access_smoke_v1.json",
+    "artifacts/d002j/data_registry/source_evidence_lock_v1.json",
+    "artifacts/d002j/data_registry/source_registry_audit_summary_v1.json",
+    "docs/research/D002J_SOURCE_DOWNGRADE_LOG.md"
+  ],
+  "claim_boundary": "26 sources total (P1B added PHILLY_FED_RTDSM); 18 VERIFIED + 8 PARTIAL + 0 DOWNGRADED + 0 REJECTED; all 5 P1A broken URLs repaired (REPIN_CANONICAL_URL outcome); information_constraint floor = 2 (ALFRED PARTIAL + PHILLY_FED_RTDSM VERIFIED); no canonical run; P1A REJECTED retained in downgrade log.",
+  "decision": "SOURCE_REGISTRY_PARTIALLY_VERIFIED",
+  "failure_retention": null,
+  "forbidden_next_nodes": [],
+  "merge_sha": "5102b008ee9fb89545f22ebafc8289aa40c0571c",
+  "node_id": "D002J-P1B",
+  "parent_nodes": [
+    "D002J-P1A"
+  ],
+  "phase": "P1B",
+  "pr_number": 698,
+  "schema_version": "D002J-VERDICT-CAPSULE-v1",
+  "source_summary_path": "artifacts/d002j/data_registry/source_registry_audit_summary_v1.json",
+  "status": "TERMINAL_PARTIAL",
+  "test_paths": [
+    "tests/systemic_risk/test_d002j_source_provenance_audit.py"
+  ]
+}

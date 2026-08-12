@@ -1,5 +1,5 @@
 ---
-owner: docs@tradepulse
+owner: docs@geosync
 review_cadence: quarterly
 last_reviewed: 2025-12-08
 status: active
@@ -11,11 +11,11 @@ links:
   - docs/FORMALIZATION_INDEX.md
 ---
 
-# TradePulse Documentation Architecture
+# GeoSync Documentation Architecture
 
-**Purpose:** This document describes the architecture, organization, and design decisions behind TradePulse's documentation system. It explains how different documentation components work together to support engineering excellence, regulatory compliance, and operational reliability.
+**Purpose:** This document describes the architecture, organization, and design decisions behind GeoSync's documentation system. It explains how different documentation components work together to support engineering excellence, regulatory compliance, and operational reliability.
 
-**Audience:** Documentation authors, technical writers, architects, and anyone contributing to or maintaining TradePulse documentation.
+**Audience:** Documentation authors, technical writers, architects, and anyone contributing to or maintaining GeoSync documentation.
 
 ---
 
@@ -35,7 +35,7 @@ links:
 
 ## Overview
 
-TradePulse documentation architecture follows a **hub-and-spoke model** with formalized governance:
+GeoSync documentation architecture follows a **hub-and-spoke model** with formalized governance:
 
 ```mermaid
 graph TB
@@ -198,7 +198,7 @@ python -m interfaces.cli generate --output data/sample.csv --bars 100
 
 ### Three-Tier Architecture
 
-TradePulse documentation follows a three-tier model:
+GeoSync documentation follows a three-tier model:
 
 #### Tier 1: Canonical References (Authoritative)
 **Purpose:** Single source of truth for specifications and decisions
@@ -482,7 +482,7 @@ graph LR
 - **Extensibility:** CommonMark + extensions
 
 **Why MkDocs over Sphinx/Docusaurus?**
-- **Python ecosystem fit:** TradePulse is Python-heavy
+- **Python ecosystem fit:** GeoSync is Python-heavy
 - **Material theme:** Professional, accessible design
 - **Fast builds:** Sub-second incremental rebuilds
 - **Plugin ecosystem:** Search, versioning, PDF export
@@ -771,7 +771,7 @@ This architecture is not static. It evolves based on:
 - **User Feedback:** What's working, what's not
 - **Metrics:** Data-driven improvements
 - **Technology:** New tooling and capabilities
-- **Scale:** As TradePulse grows
+- **Scale:** As GeoSync grows
 
 **Review Schedule:** Quarterly architectural reviews with Documentation Steward and stakeholders.
 
@@ -786,7 +786,7 @@ This architecture is not static. It evolves based on:
 
 ## References
 
-- [DOCUMENTATION_SUMMARY.md](../DOCUMENTATION_SUMMARY.md) - Central registry
+- [DOCUMENTATION_SUMMARY.md](operations/DOCUMENTATION_SUMMARY.md) - Central registry
 - [Documentation Governance](documentation_governance.md) - Governance framework
 - [Standardisation Playbook](documentation_standardisation_playbook.md) - Standards
 - [Quality Metrics](documentation_quality_metrics.md) - Metrics handbook
@@ -798,4 +798,4 @@ This architecture is not static. It evolves based on:
 **Next Review:** 2026-03-08  
 **Status:** 🟢 Active
 
-*This document describes the "how and why" of TradePulse documentation architecture. For the "what" (inventory), see [DOCUMENTATION_SUMMARY.md](../DOCUMENTATION_SUMMARY.md).*
+*This document describes the "how and why" of GeoSync documentation architecture. For the "what" (inventory), see [DOCUMENTATION_SUMMARY.md](operations/DOCUMENTATION_SUMMARY.md).*

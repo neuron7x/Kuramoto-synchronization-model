@@ -1,3 +1,5 @@
+# Copyright (c) 2023-2026 Yaroslav Vasylenko (neuron7xLab)
+# SPDX-License-Identifier: MIT
 """Exploration noise processes used by FHMC agents."""
 
 from __future__ import annotations
@@ -33,10 +35,7 @@ class OUProcess:
 
     def sample(self) -> np.ndarray:
         noise = self._rng.normal(size=self.x.shape)
-        dx = (
-            self.theta * (self.mu - self.x) * self.dt
-            + self.sigma * np.sqrt(self.dt) * noise
-        )
+        dx = self.theta * (self.mu - self.x) * self.dt + self.sigma * np.sqrt(self.dt) * noise
         self.x = self.x + dx
         return self.x.copy()
 

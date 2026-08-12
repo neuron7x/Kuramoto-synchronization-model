@@ -1,0 +1,94 @@
+# SPDX-License-Identifier: MIT
+name: Repo Integrity Gate
+
+on:
+  pull_request:
+    branches: [main]
+    paths:
+      - 'README.md'
+      - 'PRODUCT_CATEGORY.md'
+      - 'CLAIMS.md'
+      - 'FORBIDDEN_CLAIMS.md'
+      - 'AGENTS.md'
+      - 'BASELINE.md'
+      - 'docs/**/*.md'
+      - 'examples/**/*.json'
+      - 'scripts/ci/prove_repo_integrity.sh'
+      - 'scripts/ci/check_research_artifact_truth.py'
+      - 'scripts/ci/check_claim_artifact_graph.py'
+      - 'scripts/ci/check_manifest_hashes.py'
+      - 'scripts/reproduce/mfn_capsule.py'
+      - 'artifacts/reproducible_capsules/**'
+      - 'scripts/ci/check_claim_boundary.py'
+      - 'scripts/ci/check_physics_docs_canon.py'
+      - 'docs/PHYSICS_CANON.manifest.json'
+      - 'docs/DOCUMENTATION_INDEX.manifest.json'
+      - 'physics_contracts/catalog.yaml'
+      - '.claude/physics/INVARIANTS.yaml'
+      - 'scripts/check_python_matrix.py'
+      - 'scripts/check_namespace_policy.py'
+      - 'scripts/count_invariants.py'
+      - 'schemas/research/**'
+      - 'schemas/autonomy_cycle.schema.json'
+      - 'research_lines/**'
+      - 'artifacts/runs/**'
+      - 'tools/research/**'
+      - 'tools/mfn_surface_check.py'
+      - 'tools/patch_makefile_geosync_coverage.py'
+      - 'tools/validate_json_artifact_contract.py'
+      - 'tools/check_json_contract_evidence_policy.py'
+      - 'tools/json_contract_receipt.py'
+      - 'tools/run_autonomy_cycle.py'
+      - 'tests/ci/**'
+      - 'tests/research_lines/**'
+      - '.github/workflows/repo-integrity-gate.yml'
+  push:
+    branches: [main]
+  workflow_dispatch:
+
+permissions:
+  contents: read
+
+concurrency:
+  # PR runs group by ref (a new push to the PR supersedes the old run — cheap
+  # retries). Main-push runs group by the EXACT commit SHA, never by the shared
+  # `refs/heads/main` ref: a shared main group lets a later merge supersede an
+  # earlier SHA's still-QUEUED integrity run (cancel-in-progress=false stops
+  # eviction of the in-progress run, but GitHub still drops superseded *pending*
+  # runs), so that intermediate SHA would never emit a terminal verdict. A
+  # per-SHA group guarantees every main commit reaches a terminal integrity
+  # result.
+  group: repo-integrity-gate-${{ github.event_name == 'pull_request' && github.ref || github.sha }}
+  # PR retries may be superseded; main push evidence must finish instead of
+  # being cancelled by the next merge before the integrity proof can emit truth.
+  cancel-in-progress: ${{ github.event_name == 'pull_request' }}
+
+jobs:
+  repo-integrity-gate:
+    name: repo-integrity-gate
+    runs-on: ubuntu-latest
+    timeout-minutes: 15
+    steps:
+      - name: Checkout
+        uses: actions/checkout@9c091bb21b7c1c1d1991bb908d89e4e9dddfe3e0 # v7.0.0
+
+      - name: Setup Python
+        uses: actions/setup-python@ece7cb06caefa5fff74198d8649806c4678c61a1 # v6
+        with:
+          python-version: '3.12'
+
+      - name: Install sci-core stack
+        run: |
+          set -euo pipefail
+          python -m pip install --upgrade pip
+          python -m pip install numpy scipy pandas networkx pyyaml jsonschema pytest
+          # prove_repo_integrity.sh runs `pytest tests/research_lines`, whose
+          # ricci_microstructure_v1 lane imports the POT-backed Ollivier-Ricci
+          # kernel (`import ot`) and materialises a parquet during ingest (needs
+          # pyarrow), and the research CLI imports typer. POT lives in the
+          # pyproject neuro_advanced optional group and typer is missing from the
+          # current locks, so install the lane's runtime deps explicitly here.
+          python -m pip install "POT>=0.9.5" "pyarrow>=15.0.0" "typer>=0.20.0,<1.0.0"
+
+      - name: Prove repository integrity
+        run: bash scripts/ci/prove_repo_integrity.sh

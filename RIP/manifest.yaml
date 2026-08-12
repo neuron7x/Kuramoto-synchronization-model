@@ -1,0 +1,182 @@
+# RIP/manifest.yaml — machine-readable mirror of TOMBSTONES.md
+#
+# PASSIVE DATA ONLY. Loaded by NO code path in this repository. Not
+# under tests/, not collected by pytest, not imported anywhere. This
+# file exists solely as a structured mirror of the human-readable
+# tombstone register. `success_score` is an explicit integer: 0 where
+# success was literally zero.
+#
+# Field contract:
+#   id               canonical lineage id
+#   pr               merged PR number
+#   sha              full merge commit sha (verified ancestor of main)
+#   born             the hypothesis / claim as registered
+#   cause_of_death   the falsifier, with metric + procedure
+#   success_score    integer; 0 == zero success (успіх: 0)
+#   superseded_by    optional; sha of the lineage that falsified this
+#                     entry's causal attribution (forward-only)
+
+schema_version: 1
+register: RIP/TOMBSTONES.md
+inert: true   # zero python, zero imports, not pytest-collected
+
+tombstones:
+  - id: CALIB-GRID-001
+    pr: 749
+    sha: 64ce6f55ca5fd39b2ae895be2c2ece2824b9eb4c  # pragma: allowlist secret
+    artifact: research/calibration/grid_kuramoto/RESULTS.md
+    born: >-
+      The core.kuramoto.coupling_estimator recovers the signed coupling
+      matrix and natural frequencies of a known external ground truth
+      (WSCC-9 swing model).
+    cause_of_death: >-
+      Falsified at MEASURED tier vs exact external truth. noiseless.frobenius
+      1.0459 (gate <=0.10 FAIL); noiseless.critical_coupling 1.0000 (gate
+      <=0.15 FAIL). First-order identifier on second-order swing data;
+      antisymmetric residual 15.9 on a symmetric truth.
+    success_score: 0          # signed weights / omega / s_crit: rel err 1.0
+    note: >-
+      Topology support recovered exactly (noiseless.topology_f1 = 1.0);
+      signed weights / natural frequency / critical coupling: zero.
+
+  - id: CALIB-GRID-001-R1
+    pr: 751
+    sha: a5527708833df308e67536aaa690b4f16e88dccd  # pragma: allowlist secret
+    artifact: research/calibration/grid_kuramoto/r1/RESULTS.md
+    born: >-
+      The swing-aware symmetric estimator closes the first-order /
+      antisymmetric defect, and the residual noisy failure is caused by
+      a double-differentiation second-derivative SNR / persistent-
+      excitation boundary ("no consistent estimator exists for the noisy
+      regime").
+    cause_of_death: >-
+      (1) Own gates still NEGATIVE (noiseless.critical_coupling 0.4942
+      gate <=0.15 FAIL; noisy.frobenius 16.6071 gate <=0.25 FAIL).
+      (2) Its causal attribution FALSIFIED forward by CALIB-GRID-002:
+      an estimator that never double-differentiates still fails the same
+      regime at ~0.95; true cause is a class-independent regressor-level
+      SNR floor. Recorded append-only in SUPERSESSIONS.yaml/.md
+      (SUPERSEDE-001). The artifact is NOT edited.
+    success_score: 0          # the causal CLAIM: zero (falsified forward)
+    superseded_by: e71d1915233283452f3fb219aafabd2f19035371  # pragma: allowlist secret
+    note: >-
+      The engineering sub-result (first-order/antisymmetric defect
+      closed, residual 15.9 -> 0.0) is real and survives; the
+      success_score=0 scores the FALSIFIED causal claim, not the
+      sub-result.
+
+  - id: CALIB-GRID-002
+    pr: 757
+    sha: e71d1915233283452f3fb219aafabd2f19035371  # pragma: allowlist secret
+    artifact: research/calibration/grid_kuramoto/cg002/RESULTS.md
+    born: >-
+      An integral / weak-form swing identifier that never double-
+      differentiates recovers signed coupling at the same frozen
+      sigma=0.02 / record length where the R1 differential estimator
+      cannot, and the front-gate ACCEPTs sigma=0.02 under the integral
+      form.
+    cause_of_death: >-
+      FALSIFIED for the noisy regime. Same frozen SimConfig (theta0=0.6,
+      seed 42). noisy Frobenius 0.947 >> 0.25 gate FAIL; front-gate
+      still REFUSEs. Direct regressor SNR < 0.6 on every edge
+      (0.085 on edge (0,2)) before any estimator runs.
+    success_score: 0          # on the falsifiable claim's own target
+    note: >-
+      Closed nothing the differential class could not; relocated the
+      boundary to a class-independent regressor floor (the conserved
+      asset, not a pass).
+
+  - id: CALIB-GRID-noisy-INFEASIBLE
+    pr: 764
+    sha: 65666072003ec51b14a1322944d2ec9508615b6e  # pragma: allowlist secret
+    artifact: research/calibration/grid_kuramoto/PREREGISTRATION_AMENDMENT_001.md
+    born: >-
+      The two frozen sigma=0.02 gates (noisy.frobenius <=0.25,
+      noisy.topology_f1 >=0.90) were pre-registered as pass/fail
+      acceptance gates carrying information about estimator quality.
+    cause_of_death: >-
+      CG002 proved regressor SNR < 0.6 every edge => P(FAIL)=1 for all
+      estimators => the gate carries H=0 bits. Amendment 001 (append-
+      only, forward-only, zero threshold change) reclassifies both to
+      INFEASIBLE_BY_CONSTRUCTION (a 0-bit state, not PASS, not FAIL).
+    success_score: 0          # canonical "uspih = 0" headstone
+    note: >-
+      Highest-information output in the register. Proven information-
+      theoretically unreachable at the frozen theta0/record length. The
+      zero IS the result. Explicitly NOT promoted to HONORS.md.
+
+  - id: CTC-FALSIFY-001
+    pr: 750
+    sha: eb521856dcacd5349c9aaa7251df25f8bed3544d  # pragma: allowlist secret
+    artifact: research/ctc_falsify/RESULTS.md
+    consolidation_pr: 756
+    consolidation_sha: f8c70ba1cbcff860cbe01790a2793647a9a24c6d  # pragma: allowlist secret
+    born: >-
+      Standard Communication-through-Coherence estimands recover a
+      known toggleable directed A->B gamma-phase channel on a physics-
+      grounded generative ground truth; (C3) a privileged phase-offset
+      estimator makes it recoverable in principle.
+    cause_of_death: >-
+      Two orthogonal standard estimands (PLV-residual, time-reversed
+      PSI) blind by their own gates. C4 recursive self-audit FAILED the
+      C3 escape-hatch (Cohen d ~0.48 < 1.0; confound FP ~0.47; 20/32
+      false channels at channel_strength=0). C3 inference RETRACTED to
+      scope.
+    success_score: 0          # admissible channel separation: zero
+    note: >-
+      Scoped hypothesis-level negative; NOT a verdict on CTC theory,
+      NOT a real-data result. Self-retracting (C4 killed its own C3).
+
+  - id: SYSTEMIC-RISK-interbank-phaselock
+    pr: 557
+    sha: 7716a25bb64fc2418779d1eae692939d56fe76d3  # pragma: allowlist secret
+    artifact: research/systemic_risk/VALIDATION.md
+    born: >-
+      Interbank phase-locking (Kuramoto order parameter on the interbank
+      exposure network) precedes banking-crisis events on real data.
+    cause_of_death: >-
+      NOT dead - explicitly UNTESTED. VALIDATION.md tiers the row
+      HYPOTHESIS/Pending, blocked on user-supplied e-MID/BIS LBS/ECB
+      MMSR data. The machine is dual-rail verified (lower rail HARD_FAIL
+      at AUC ~0.45; upper rail HARD_PASS auc_ci_low >= 0.70) but the
+      scientific claim has no verdict.
+    success_score: 0          # scientific claim: no verdict (untested)
+    note: >-
+      Recorded to prevent promotion of a verified MACHINE into a
+      verified FINDING. The instrument tiering lives in HONORS.md; the
+      claim's zero lives here.
+
+  - id: CALIB-F3
+    pr: 770
+    sha: 9c8f53960000000000000000000000000000000000000000000000000000000  # pragma: allowlist secret  (diagnosis-bearing tree anchor, not a credential)
+    artifact: research/calibration/grid_kuramoto/_deterministic.py
+    audit_pr: 762
+    consolidation_pr: 759
+    born: >-
+      The calibration-ledger reproduction nondeterminism is
+      thread/BLAS-reduction-order noise, therefore removable by pinning
+      native pools to one thread + a fixed reduction order, after which
+      the ledger is bit-identical across CI runners and the reproduction
+      epsilon can be tightened to bit-exact.
+    cause_of_death: >-
+      Falsified by direct measurement. numpy/scipy each bundle a private
+      static libscipy_openblas64 built DYNAMIC_ARCH; OpenBLAS dispatches
+      a CPU-micro-architecture micro-kernel at load (host-CPU property,
+      not thread-pool). Single-thread (OMP=1, OPENBLAS=1), only
+      OPENBLAS_CORETYPE varied over six kernels: worst-case pinned-metric
+      relative divergence 2.20e-9 (cg002 front_gate_score); pure-numpy
+      reductions bit-identical. In-process bit-exact cross-runner
+      reproduction is infeasible without re-linking BLAS.
+    success_score: 0          # forced cross-runner bit-exactness: zero (proven infeasible)
+    regime_split: >-
+      Historical sha-pinned ledgers born under the OLD nondeterministic
+      regime are NOT recomputed / overwritten / retro-claimed bit-exact;
+      reproduced at LEGACY_REL_TOL=1e-6. Forward computations run under
+      the harness at the derived FORWARD_REL_TOL=1e-8
+      (=ceil_decade(2.20e-9 x 4.5)), 100x tighter. Mirrors the F2
+      amendment / SUPERSEDE-001 discipline.
+    note: >-
+      Proven impossibility, not hidden failure. The zero IS the result.
+      Honest second-best shipped: single-thread deterministic harness
+      (same-CPU bit-identical, verified N=5x) + derived forward bound +
+      forcing test. Explicitly NOT promoted to HONORS.md.

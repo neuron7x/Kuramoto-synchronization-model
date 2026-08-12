@@ -1,7 +1,9 @@
+# Copyright (c) 2023-2026 Yaroslav Vasylenko (neuron7xLab)
+# SPDX-License-Identifier: MIT
 """Main Architecture Integrator implementation.
 
 This module provides the primary ArchitectureIntegrator class that coordinates
-all architectural integration concerns across the TradePulse system.
+all architectural integration concerns across the GeoSync system.
 """
 
 from __future__ import annotations
@@ -26,7 +28,7 @@ logger = logging.getLogger(__name__)
 
 
 class ArchitectureIntegrator:
-    """Central coordinator for architectural integration across TradePulse.
+    """Central coordinator for architectural integration across GeoSync.
 
     The ArchitectureIntegrator serves as the primary interface for managing
     system components, their lifecycles, dependencies, and architectural
@@ -322,9 +324,7 @@ class ArchitectureIntegrator:
             try:
                 health_map[component.metadata.name] = component.check_health()
             except Exception as exc:
-                logger.error(
-                    f"Failed to check health of {component.metadata.name}: {exc}"
-                )
+                logger.error(f"Failed to check health of {component.metadata.name}: {exc}")
 
         return health_map
 
@@ -368,9 +368,7 @@ class ArchitectureIntegrator:
         """
         return self._validator.validate_component(name)
 
-    def add_validation_rule(
-        self, rule: Callable[[ComponentRegistry], list[Any]]
-    ) -> None:
+    def add_validation_rule(self, rule: Callable[[ComponentRegistry], list[Any]]) -> None:
         """Add a custom validation rule.
 
         Args:

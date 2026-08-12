@@ -1,15 +1,90 @@
-# CODEOWNERS
+# CODEOWNERS — single source of truth for required reviewers.
+#
+# GitHub interprets this file per branch-protection ruleset. Any path match
+# below triggers a code-owner review request on pull requests that touch
+# matching files. Order matters: later rules win.
+#
+# Docs: https://docs.github.com/en/repositories/managing-your-repositorys-settings-and-features/customizing-your-repository/about-code-owners
 
-# This is a CODEOWNERS file that requires at least one code owner to approve changes.
+# -----------------------------------------------------------------------------
+# Default ownership
+# -----------------------------------------------------------------------------
+* @neuron7xLab
 
-# Default ownership ensures at least one reviewer is requested for every change.
-* @neuron7x
+# -----------------------------------------------------------------------------
+# Core research & signal layer
+# -----------------------------------------------------------------------------
+/core/indicators/            @neuron7xLab
+/core/kuramoto/              @neuron7xLab
+/core/physics/               @neuron7xLab
+/core/phase/                 @neuron7xLab
+/core/neuro/                 @neuron7xLab
+/analytics/                  @neuron7xLab
 
-# Critical subsystems with explicit owners for faster routing.
-/core/ @neuron7x
-/execution/ @neuron7x
-/analytics/ @neuron7x
-/apps/ @neuron7x
-/ui/ @neuron7x
-/tests/ @neuron7x
-/docs/ @neuron7x
+# -----------------------------------------------------------------------------
+# Execution, risk, and live trading — elevated scrutiny
+# -----------------------------------------------------------------------------
+/execution/                  @neuron7xLab
+/core/risk_monitoring/       @neuron7xLab
+/core/compliance/            @neuron7xLab
+/core/security/              @neuron7xLab
+/runtime/                    @neuron7xLab
+/tacl/                       @neuron7xLab
+
+# -----------------------------------------------------------------------------
+# Data pipelines & feature store
+# -----------------------------------------------------------------------------
+/core/data/                  @neuron7xLab
+/core/events/                @neuron7xLab
+
+# -----------------------------------------------------------------------------
+# Backtesting & simulation
+# -----------------------------------------------------------------------------
+/backtest/                   @neuron7xLab
+
+# -----------------------------------------------------------------------------
+# Observability & infrastructure
+# -----------------------------------------------------------------------------
+/observability/              @neuron7xLab
+/deploy/                     @neuron7xLab
+/infra/                      @neuron7xLab
+/helm/                       @neuron7xLab
+/ci/                         @neuron7xLab
+
+# -----------------------------------------------------------------------------
+# Native acceleration layer
+# -----------------------------------------------------------------------------
+/rust/                       @neuron7xLab
+
+# -----------------------------------------------------------------------------
+# Frontend & UI
+# -----------------------------------------------------------------------------
+/apps/web/                   @neuron7xLab
+/ui/                         @neuron7xLab
+
+# -----------------------------------------------------------------------------
+# Tests
+# -----------------------------------------------------------------------------
+/tests/                      @neuron7xLab
+
+# -----------------------------------------------------------------------------
+# Documentation & governance
+# -----------------------------------------------------------------------------
+/docs/                       @neuron7xLab
+/CHANGELOG.md                @neuron7xLab
+/CITATION.cff                @neuron7xLab
+/CODE_OF_CONDUCT.md          @neuron7xLab
+/CONTRIBUTING.md             @neuron7xLab
+/SECURITY.md                 @neuron7xLab
+/README.md                   @neuron7xLab
+
+# -----------------------------------------------------------------------------
+# CI / release infrastructure — most sensitive path
+# -----------------------------------------------------------------------------
+/.github/                    @neuron7xLab
+/.github/workflows/          @neuron7xLab
+/.github/BRANCH_PROTECTION_MAIN.md @neuron7xLab
+/.github/REQUIRED_CHECKS_MAIN.md   @neuron7xLab
+/pyproject.toml              @neuron7xLab
+/requirements*.lock          @neuron7xLab
+/Makefile                    @neuron7xLab

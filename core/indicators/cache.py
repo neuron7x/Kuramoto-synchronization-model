@@ -1,4 +1,5 @@
-# SPDX-License-Identifier: LicenseRef-TradePulse-Proprietary
+# Copyright (c) 2023-2026 Yaroslav Vasylenko (neuron7xLab)
+# SPDX-License-Identifier: MIT
 """Indicator caching primitives with fingerprinting and incremental backfill.
 
 This module provides a production-grade caching layer tailored for quantitative
@@ -26,8 +27,9 @@ import json
 import os
 import pickle  # nosec B403 - guarded by restricted unpickler
 import shutil
+import types
 from dataclasses import dataclass, fields, is_dataclass
-from datetime import UTC, datetime
+from datetime import datetime
 from decimal import Decimal
 from pathlib import Path, PurePath
 from typing import TYPE_CHECKING, Any, Callable, Mapping, MutableMapping, Sequence
@@ -35,11 +37,12 @@ from typing import TYPE_CHECKING, Any, Callable, Mapping, MutableMapping, Sequen
 import numpy as np
 import pandas as pd
 
+from core.compat import utc_now
 from core.utils.dataframe_io import read_dataframe, write_dataframe
 from core.utils.logging import get_logger
 
 if TYPE_CHECKING:  # pragma: no cover - used only for type checking
-    from .multiscale_kuramoto import TimeFrame
+    from .timeframe import TimeFrame
 
 _logger = get_logger(__name__)
 
@@ -72,8 +75,7 @@ def _encode_structure(value: Any) -> Any:
             "__type__": "dataclass",
             "cls": _qualified_name(type(value)),
             "fields": {
-                field.name: _encode_structure(getattr(value, field.name))
-                for field in fields(value)
+                field.name: _encode_structure(getattr(value, field.name)) for field in fields(value)
             },
         }
     if isinstance(value, enum.Enum):
@@ -84,8 +86,7 @@ def _encode_structure(value: Any) -> Any:
         }
     if isinstance(value, Mapping):
         encoded_items = [
-            (_encode_structure(key), _encode_structure(val))
-            for key, val in value.items()
+            (_encode_structure(key), _encode_structure(val)) for key, val in value.items()
         ]
         encoded_items.sort(key=lambda item: _sorted_json(item[0]))
         return {
@@ -105,12 +106,98 @@ def _encode_structure(value: Any) -> Any:
     return {"__type__": "repr", "value": repr(value)}
 
 
+# Allowlist shared by the JSON structure decoder (``_locate``) and the restricted
+# unpickler (``_restricted_unpickle``): only these modules may be imported when
+# materialising a cached object. A tampered cache file therefore cannot name an
+# arbitrary ``module:Class`` to import (triggering import-time side effects) or
+# instantiate. Single source of truth for both deserialisation paths.
+_CACHE_SAFE_BUILTINS: frozenset[str] = frozenset(
+    {
+        "complex",
+        "dict",
+        "frozenset",
+        "list",
+        "set",
+        "tuple",
+        "int",
+        "float",
+        "bool",
+        "str",
+        "bytes",
+        "bytearray",
+        "memoryview",
+        "range",
+        "slice",
+        "NoneType",
+    }
+)
+_CACHE_SAFE_MODULE_PREFIXES: tuple[str, ...] = (
+    "collections",
+    "datetime",
+    "decimal",
+    "fractions",
+    "numpy",
+    "pandas",
+    "core.indicators",
+)
+_CACHE_SAFE_MODULES: frozenset[str] = frozenset(
+    {
+        "uuid",
+        "math",
+        "statistics",
+        "pathlib",
+        "types",
+    }
+)
+
+
+def _module_is_safe(module: str) -> bool:
+    """Return ``True`` when *module* is on the cache deserialisation allowlist."""
+
+    if module in _CACHE_SAFE_MODULES:
+        return True
+    return any(
+        module == prefix or module.startswith(f"{prefix}.")
+        for prefix in _CACHE_SAFE_MODULE_PREFIXES
+    )
+
+
+def _object_home_module(obj: Any) -> str | None:
+    """Return the module an object is defined in (``__name__`` for a module)."""
+
+    if isinstance(obj, types.ModuleType):
+        return obj.__name__
+    return getattr(obj, "__module__", None)
+
+
 def _locate(symbol: str) -> type[Any]:
     module_name, _, qualname = symbol.partition(":")
+    # Fail closed: only import allowlisted modules / safe builtins so a tampered
+    # cache payload cannot import an arbitrary module via a `dataclass`/`enum`
+    # marker (mirrors the restricted unpickler's find_class guard).
+    if module_name == "builtins":
+        root = qualname.split(".", 1)[0]
+        if root not in _CACHE_SAFE_BUILTINS:
+            raise ValueError(f"Refusing to load unsafe builtin '{qualname}' from cache")
+    elif not _module_is_safe(module_name):
+        raise ValueError(f"Refusing to import unsafe module '{module_name}' from cache")
     module = importlib.import_module(module_name)
     attr: Any = module
     for part in qualname.split("."):
         attr = getattr(attr, part)
+    # A dotted qualname can traverse OUT of the allowlisted module into an
+    # arbitrary one (e.g. ``core.indicators.cache:os.system`` resolves
+    # ``os.system`` because cache imports ``os``). Re-validate the *resolved*
+    # object's defining module so the allowlist cannot be pivoted through.
+    home = _object_home_module(attr)
+    if home == "builtins":
+        name = getattr(attr, "__name__", "")
+        if name not in _CACHE_SAFE_BUILTINS:
+            raise ValueError(f"Refusing to resolve unsafe builtin via cache symbol '{symbol}'")
+    elif home is not None and not _module_is_safe(home):
+        raise ValueError(
+            f"Refusing to resolve object from unsafe module '{home}' via cache symbol '{symbol}'"
+        )
     return attr
 
 
@@ -135,17 +222,14 @@ def _decode_structure(payload: Any) -> Any:
         return Path(payload["value"])
     if marker == "dataclass":
         cls = _locate(payload["cls"])
-        field_values = {
-            key: _decode_structure(val) for key, val in payload["fields"].items()
-        }
+        field_values = {key: _decode_structure(val) for key, val in payload["fields"].items()}
         return cls(**field_values)
     if marker == "enum":
         cls = _locate(payload["cls"])
         return getattr(cls, payload["name"])
     if marker == "mapping":
         return {
-            _decode_structure(key): _decode_structure(val)
-            for key, val in payload.get("items", [])
+            _decode_structure(key): _decode_structure(val) for key, val in payload.get("items", [])
         }
     if marker == "sequence":
         kind = payload.get("kind")
@@ -220,7 +304,7 @@ def _resolve_code_version() -> str:
         if head:
             return head
     except Exception as exc:  # pragma: no cover - gitless environments
-        _logger.debug("Unable to read git HEAD, falling back to VERSION file: %s", exc)
+        _logger.debug("Unable to read git HEAD, falling back to VERSION file", error=str(exc))
 
     version_file = git_dir / "VERSION"
     if version_file.exists():
@@ -307,9 +391,7 @@ class FileSystemIndicatorCache:
 
         # pandas structures
         if isinstance(value, pd.DataFrame):
-            stored_path = write_dataframe(
-                value, data_path, index=True, allow_json_fallback=True
-            )
+            stored_path = write_dataframe(value, data_path, index=True, allow_json_fallback=True)
             if stored_path.suffix == ".json":
                 _write_dtypes(
                     stored_path.with_suffix(".dtypes.json"),
@@ -319,9 +401,7 @@ class FileSystemIndicatorCache:
             return stored_path.name, fmt, self._file_digest(stored_path)
         if isinstance(value, pd.Series):
             frame = value.to_frame(name=value.name)
-            stored_path = write_dataframe(
-                frame, data_path, index=True, allow_json_fallback=True
-            )
+            stored_path = write_dataframe(frame, data_path, index=True, allow_json_fallback=True)
             if stored_path.suffix == ".json":
                 _write_dtypes(
                     stored_path.with_suffix(".dtypes.json"),
@@ -343,53 +423,14 @@ class FileSystemIndicatorCache:
     @staticmethod
     def _restricted_unpickle(handle: Any) -> Any:
         class _SafeUnpickler(pickle.Unpickler):
-            _SAFE_BUILTINS = {
-                "complex",
-                "dict",
-                "frozenset",
-                "list",
-                "set",
-                "tuple",
-                "int",
-                "float",
-                "bool",
-                "str",
-                "bytes",
-                "bytearray",
-                "memoryview",
-                "range",
-                "slice",
-                "NoneType",
-            }
-
-            _SAFE_MODULE_PREFIXES = (
-                "collections",
-                "datetime",
-                "decimal",
-                "fractions",
-                "numpy",
-                "pandas",
-                "core.indicators",
-            )
-
-            _SAFE_MODULES = {
-                "uuid",
-                "math",
-                "statistics",
-                "pathlib",
-                "types",
-            }
-
             def find_class(self, module: str, name: str) -> Any:
-                if module == "builtins" and name in self._SAFE_BUILTINS:
+                # Shares the module-level allowlist with ``_locate`` so both
+                # deserialisation paths fail closed on the same rule set.
+                if module == "builtins" and name in _CACHE_SAFE_BUILTINS:
                     return getattr(builtins, name)
-                if module in self._SAFE_MODULES:
+                if _module_is_safe(module):
                     mod = importlib.import_module(module)
                     return getattr(mod, name)
-                for prefix in self._SAFE_MODULE_PREFIXES:
-                    if module == prefix or module.startswith(f"{prefix}."):
-                        mod = importlib.import_module(module)
-                        return getattr(mod, name)
                 raise pickle.UnpicklingError(
                     f"Attempted to load unsafe module '{module}.{name}' from cache"
                 )
@@ -479,16 +520,14 @@ class FileSystemIndicatorCache:
             "data_file": data_file,
             "data_format": data_format,
             "data_integrity": data_integrity,
-            "stored_at": datetime.now(UTC).isoformat(),
+            "stored_at": utc_now().isoformat(),
             "coverage_start": (
                 coverage_start.isoformat()
                 if isinstance(coverage_start, datetime)
                 else coverage_start
             ),
             "coverage_end": (
-                coverage_end.isoformat()
-                if isinstance(coverage_end, datetime)
-                else coverage_end
+                coverage_end.isoformat() if isinstance(coverage_end, datetime) else coverage_end
             ),
             "metadata": _encode_structure(metadata or {}),
         }
@@ -537,9 +576,7 @@ class FileSystemIndicatorCache:
 
         expected_integrity = meta.get("data_integrity")
         actual_integrity = self._file_digest(data_path)
-        if expected_integrity and not hmac.compare_digest(
-            expected_integrity, actual_integrity
-        ):
+        if expected_integrity and not hmac.compare_digest(expected_integrity, actual_integrity):
             _logger.warning(
                 "indicator_cache_integrity_mismatch",
                 path=str(data_path),
@@ -551,14 +588,10 @@ class FileSystemIndicatorCache:
         value = self._deserialize(data_path, meta["data_format"])
 
         coverage_start = (
-            datetime.fromisoformat(meta["coverage_start"])
-            if meta.get("coverage_start")
-            else None
+            datetime.fromisoformat(meta["coverage_start"]) if meta.get("coverage_start") else None
         )
         coverage_end = (
-            datetime.fromisoformat(meta["coverage_end"])
-            if meta.get("coverage_end")
-            else None
+            datetime.fromisoformat(meta["coverage_end"]) if meta.get("coverage_end") else None
         )
         stored_at = datetime.fromisoformat(meta["stored_at"])
 
@@ -612,7 +645,7 @@ class FileSystemIndicatorCache:
             "timeframe": self._timeframe_key(timeframe),
             "last_timestamp": timestamp,
             "fingerprint": fingerprint,
-            "updated_at": datetime.now(UTC).isoformat(),
+            "updated_at": utc_now().isoformat(),
             "extras": _encode_structure(extras or {}),
         }
         path = self._backfill_path(timeframe)
@@ -643,14 +676,10 @@ def cache_indicator(
         def wrapper(*args: Any, **kwargs: Any) -> Any:
             params = params_fn(*args, **kwargs) if params_fn else kwargs
             data = (
-                data_fn(*args, **kwargs)
-                if data_fn
-                else (args[0] if args else kwargs.get("data"))
+                data_fn(*args, **kwargs) if data_fn else (args[0] if args else kwargs.get("data"))
             )
             if data is None:
-                raise ValueError(
-                    "cache_indicator requires data argument to compute fingerprint"
-                )
+                raise ValueError("cache_indicator requires data argument to compute fingerprint")
 
             data_hash = hash_input_data(data)
             record = cache.load(

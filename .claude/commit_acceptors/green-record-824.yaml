@@ -1,0 +1,33 @@
+id: green-record-824
+status: ACTIVE
+claim_type: governance
+promise: >-
+  Add a compact audit record for PR 824 green checks after merge.
+diff_scope:
+  changed_files:
+    - path: ".claude/commit_acceptors/green-record-824.yaml"
+    - path: "artifacts/audit/GREEN_RECORD_824.json"
+  forbidden_paths:
+    - "core/"
+    - "tests/"
+    - ".github/workflows/"
+required_python_symbols: []
+expected_signal: >-
+  Commit Acceptor Gate accepts this governance-only audit record.
+measurement_command: >-
+  python tools/commit_acceptor/validate_commit_acceptor.py --base origin/main --head HEAD
+signal_artifact: "artifacts/audit/GREEN_RECORD_824.json"
+falsifier:
+  command: >-
+    python -c "from pathlib import Path; raise SystemExit(0 if not Path('artifacts/audit/GREEN_RECORD_824.json').exists() else 1)"
+  description: >-
+    Returns success only when the required compact record is absent.
+rollback_command: >-
+  python -c "from pathlib import Path; [Path(p).unlink(missing_ok=True) for p in ['artifacts/audit/GREEN_RECORD_824.json', '.claude/commit_acceptors/green-record-824.yaml']]"
+rollback_verification_command: >-
+  python -c "from pathlib import Path; raise SystemExit(0 if not Path('artifacts/audit/GREEN_RECORD_824.json').exists() else 1)"
+memory_update_type: append
+ledger_path: ".claude/commit_acceptors/green-record-824.yaml"
+report_path: "artifacts/audit/GREEN_RECORD_824.json"
+evidence:
+  - path: "artifacts/audit/GREEN_RECORD_824.json"

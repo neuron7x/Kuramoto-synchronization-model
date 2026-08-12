@@ -2,7 +2,7 @@
 
 ## Overview
 
-This guide covers TradePulse's adaptive neuromodulator calibration and cross-neuromodulator optimization systems. These components enable the neuroscience-grounded AI system to self-tune for optimal trading performance while maintaining homeostatic balance.
+This guide covers GeoSync's adaptive neuromodulator calibration and cross-neuromodulator optimization systems. These components enable the neuroscience-grounded AI system to self-tune for optimal trading performance while maintaining homeostatic balance.
 
 ## Table of Contents
 
@@ -20,7 +20,7 @@ This guide covers TradePulse's adaptive neuromodulator calibration and cross-neu
 
 ### Motivation
 
-Traditional trading systems use fixed parameters that may not adapt to changing market conditions. TradePulse's neuroscience-inspired architecture includes multiple neuromodulators (dopamine, serotonin, GABA, NA/ACh) that must be coordinated and optimized for each trading scenario.
+Traditional trading systems use fixed parameters that may not adapt to changing market conditions. GeoSync's neuroscience-inspired architecture includes multiple neuromodulators (dopamine, serotonin, GABA, NA/ACh) that must be coordinated and optimized for each trading scenario.
 
 The optimization system provides:
 
@@ -33,7 +33,7 @@ The optimization system provides:
 
 #### Neuromodulators
 
-TradePulse models four key neuromodulator systems:
+GeoSync models four key neuromodulator systems:
 
 1. **Dopamine**: Reward prediction, action selection, exploration
 2. **Serotonin**: Stress response, hold decisions, conservative bias
@@ -51,7 +51,7 @@ The system maintains homeostatic balance by monitoring:
 #### Invariant Validation
 
 All neuro-optimization runs enforce bounds on the core invariants via
-`validate_neuro_invariants` in `src/tradepulse/core/neuro/_validation.py`:
+`validate_neuro_invariants` in `src/geosync/core/neuro/_validation.py`:
 
 - **DA/5-HT ratio** must stay within the configured bounds (default **[1.0, 3.0]**).
 - **E/I balance** must stay within the configured bounds (default **[1.0, 2.5]**).
@@ -147,7 +147,7 @@ Changing weights shifts the optimizer's focus:
 
 All numerically sensitive denominators share the same
 `OptimizationConfig.numeric.stability_epsilon` (re-exported as
-`tradepulse.core.neuro.numeric_config.STABILITY_EPSILON`) to ensure consistent behavior
+`geosync.core.neuro.numeric_config.STABILITY_EPSILON`) to ensure consistent behavior
 across balance, stability, and gradient calculations. The current uses are:
 
 - **Dopamine/serotonin ratio**: `dopamine_level / (serotonin_level + ε)`.
@@ -176,7 +176,7 @@ The optimizer logs the core metrics below (via `_log_metrics`) using the
 ## Math Spec
 
 Strict definitions for core neuro-optimization metrics, aligned with
-`src/tradepulse/core/neuro/neuro_optimizer.py`. All inputs must be finite real
+`src/geosync/core/neuro/neuro_optimizer.py`. All inputs must be finite real
 values. Unless otherwise noted, parameters are expected to be non-negative.
 
 ### `da_5ht_ratio`
@@ -478,7 +478,7 @@ class AdaptiveCalibrator:
 ### Usage Example
 
 ```python
-from tradepulse.core.neuro.adaptive_calibrator import (
+from geosync.core.neuro.adaptive_calibrator import (
     AdaptiveCalibrator,
     CalibrationMetrics,
 )
@@ -802,7 +802,7 @@ class NeuroOptimizer:
 ### Usage Example
 
 ```python
-from tradepulse.core.neuro.neuro_optimizer import (
+from geosync.core.neuro.neuro_optimizer import (
     NeuroOptimizer,
     OptimizationConfig,
 )
@@ -854,7 +854,7 @@ report = optimizer.get_optimization_report()
 See `examples/neuro_optimization_cycle.py` for a comprehensive demonstration:
 
 ```bash
-cd /home/runner/work/TradePulse/TradePulse
+cd /home/runner/work/GeoSync/GeoSync
 PYTHONPATH=. python examples/neuro_optimization_cycle.py
 ```
 
@@ -869,12 +869,12 @@ The example demonstrates:
 ### Integration with NeuroOrchestrator
 
 ```python
-from tradepulse.core.neuro.neuro_orchestrator import (
+from geosync.core.neuro.neuro_orchestrator import (
     NeuroOrchestrator,
     TradingScenario,
 )
-from tradepulse.core.neuro.adaptive_calibrator import AdaptiveCalibrator
-from tradepulse.core.neuro.neuro_optimizer import NeuroOptimizer
+from geosync.core.neuro.adaptive_calibrator import AdaptiveCalibrator
+from geosync.core.neuro.neuro_optimizer import NeuroOptimizer
 
 # Create scenario
 scenario = TradingScenario(
@@ -1224,11 +1224,11 @@ for asset, optimizer in optimizers.items():
 - [Neurodecision Stack Documentation](neurodecision_stack.md)
 - [Neuromodulator Documentation](neuromodulators/)
 - [TACL Thermodynamic Control](../README.md#tacl-thermodynamic-autonomic-control-layer)
-- [NeuroOrchestrator Guide](../src/tradepulse/core/neuro/README_ORCHESTRATOR.md)
+- [NeuroOrchestrator Guide](../src/geosync/core/neuro/README_ORCHESTRATOR.md)
 
 ## Support
 
 For issues or questions:
-- GitHub Issues: https://github.com/neuron7x/TradePulse/issues
+- GitHub Issues: https://github.com/neuron7xLab/GeoSync/issues
 - Documentation: See `docs/` directory
 - Examples: See `examples/` directory

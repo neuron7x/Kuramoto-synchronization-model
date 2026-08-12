@@ -1,4 +1,6 @@
-"""Module orchestration utilities for coordinating TradePulse components."""
+# Copyright (c) 2023-2026 Yaroslav Vasylenko (neuron7xLab)
+# SPDX-License-Identifier: MIT
+"""Module orchestration utilities for coordinating GeoSync components."""
 
 from __future__ import annotations
 
@@ -237,9 +239,7 @@ class ModuleRunSummary:
         for moment, delta in events:
             if previous_time is not None and moment > previous_time:
                 duration = moment - previous_time
-                concurrency_durations[active] = (
-                    concurrency_durations.get(active, 0.0) + duration
-                )
+                concurrency_durations[active] = concurrency_durations.get(active, 0.0) + duration
             active += delta
             peak_concurrency = max(peak_concurrency, active)
             previous_time = moment
@@ -252,9 +252,7 @@ class ModuleRunSummary:
             average_concurrency = 0.0
             utilisation = 0.0
         else:
-            busy_time = sum(
-                level * duration for level, duration in concurrency_durations.items()
-            )
+            busy_time = sum(level * duration for level, duration in concurrency_durations.items())
 
             effective_runtime = total_runtime
             if peak_concurrency > 1 and module_runtime_sum > 0.0:
@@ -283,13 +281,9 @@ class ModuleRunSummary:
                 else 0.0
             )
 
-        concurrency_profile = MappingProxyType(
-            dict(sorted(concurrency_durations.items()))
-        )
+        concurrency_profile = MappingProxyType(dict(sorted(concurrency_durations.items())))
         total_queue_delay = sum(queue_delays)
-        average_queue_delay = (
-            total_queue_delay / len(queue_delays) if queue_delays else 0.0
-        )
+        average_queue_delay = total_queue_delay / len(queue_delays) if queue_delays else 0.0
         max_queue_delay = max(queue_delays) if queue_delays else 0.0
         total_idle_time = concurrency_profile.get(0, 0.0)
 
@@ -365,8 +359,7 @@ class ModuleOrchestrator:
             return ()
 
         dependencies: dict[str, set[str]] = {
-            name: set(definition.after)
-            for name, definition in self._definitions.items()
+            name: set(definition.after) for name, definition in self._definitions.items()
         }
         missing_dependencies = {
             name: deps - self._definitions.keys()
@@ -378,9 +371,7 @@ class ModuleOrchestrator:
                 f"{name}: {', '.join(sorted(missing))}"
                 for name, missing in sorted(missing_dependencies.items())
             ]
-            raise ValueError(
-                "Unknown module dependencies declared: " + "; ".join(messages)
-            )
+            raise ValueError("Unknown module dependencies declared: " + "; ".join(messages))
 
         dependents: dict[str, set[str]] = {name: set() for name in self._definitions}
         indegree: dict[str, int] = {}
@@ -405,8 +396,7 @@ class ModuleOrchestrator:
         if len(order) != len(self._definitions):
             unresolved = set(self._definitions) - set(order)
             raise ValueError(
-                "Circular module dependencies detected: "
-                + ", ".join(sorted(unresolved))
+                "Circular module dependencies detected: " + ", ".join(sorted(unresolved))
             )
 
         return tuple(order)
@@ -472,9 +462,7 @@ class ModuleOrchestrator:
         for name, deps in dependencies.items():
             for dep in deps:
                 dependents[dep].add(name)
-        remaining_dependencies: dict[str, int] = {
-            name: len(dependencies[name]) for name in order
-        }
+        remaining_dependencies: dict[str, int] = {name: len(dependencies[name]) for name in order}
 
         order_index = {name: index for index, name in enumerate(order)}
         ready_heap: list[tuple[int, str]] = []
@@ -504,11 +492,7 @@ class ModuleOrchestrator:
         executor = ThreadPoolExecutor(max_workers=worker_cap)
         try:
             while (ready_heap or in_flight) and failure_details is None:
-                while (
-                    ready_heap
-                    and len(in_flight) < worker_cap
-                    and failure_details is None
-                ):
+                while ready_heap and len(in_flight) < worker_cap and failure_details is None:
                     _, name = heappop(ready_heap)
                     scheduled_time = perf_counter() - run_origin
                     scheduled_timestamps[name] = scheduled_time
@@ -571,10 +555,7 @@ class ModuleOrchestrator:
                         context.update(updates)
 
                     definition = definitions[module_name]
-                    if (
-                        definition.provides
-                        and not definition.provides <= context.keys()
-                    ):
+                    if definition.provides and not definition.provides <= context.keys():
                         missing_keys = definition.provides - context.keys()
                         error = KeyError(
                             f"Module '{module_name}' failed to provide context keys: "
@@ -590,9 +571,7 @@ class ModuleOrchestrator:
                     for follower in dependents[module_name]:
                         remaining_dependencies[follower] -= 1
                         if remaining_dependencies[follower] == 0:
-                            ready_timestamps.setdefault(
-                                follower, perf_counter() - run_origin
-                            )
+                            ready_timestamps.setdefault(follower, perf_counter() - run_origin)
                             heappush(ready_heap, (order_index[follower], follower))
 
                     next_to_finalize += 1
@@ -602,9 +581,7 @@ class ModuleOrchestrator:
 
         if failure_details is not None:
             module, cause = failure_details
-            raise ModuleExecutionError(
-                module=module, cause=cause, results=dict(results)
-            )
+            raise ModuleExecutionError(module=module, cause=cause, results=dict(results))
 
         while next_to_finalize < len(order_list):
             module_name = order_list[next_to_finalize]
@@ -677,9 +654,7 @@ def _coerce_allocation(value: object, *, default: float, field: str) -> float:
     try:
         return float(value)
     except (TypeError, ValueError) as exc:  # pragma: no cover - defensive
-        raise TypeError(
-            f"Allocation field '{field}' must be numeric, received {value!r}"
-        ) from exc
+        raise TypeError(f"Allocation field '{field}' must be numeric, received {value!r}") from exc
 
 
 def apply_neural_decision(
@@ -688,23 +663,13 @@ def apply_neural_decision(
     """Normalise and forward neural-controller output to the risk facade."""
 
     action = str(decision.get("action", "hold"))
-    alloc_main = _coerce_allocation(
-        decision.get("alloc_main"), default=0.0, field="alloc_main"
-    )
-    alloc_alt = _coerce_allocation(
-        decision.get("alloc_alt"), default=0.0, field="alloc_alt"
-    )
+    alloc_main = _coerce_allocation(decision.get("alloc_main"), default=0.0, field="alloc_main")
+    alloc_alt = _coerce_allocation(decision.get("alloc_alt"), default=0.0, field="alloc_alt")
     allocs = decision.get("allocs")
     if isinstance(allocs, Mapping):
-        alloc_main = _coerce_allocation(
-            allocs.get("main"), default=alloc_main, field="allocs.main"
-        )
-        alloc_alt = _coerce_allocation(
-            allocs.get("alt"), default=alloc_alt, field="allocs.alt"
-        )
-    alloc_scale = _coerce_allocation(
-        decision.get("alloc_scale"), default=1.0, field="alloc_scale"
-    )
+        alloc_main = _coerce_allocation(allocs.get("main"), default=alloc_main, field="allocs.main")
+        alloc_alt = _coerce_allocation(allocs.get("alt"), default=alloc_alt, field="allocs.alt")
+    alloc_scale = _coerce_allocation(decision.get("alloc_scale"), default=1.0, field="alloc_scale")
     risk_manager.apply_neural_directive(
         action=action,
         alloc_main=alloc_main,

@@ -1,3 +1,5 @@
+# Copyright (c) 2023-2026 Yaroslav Vasylenko (neuron7xLab)
+# SPDX-License-Identifier: MIT
 import pandas as pd
 
 from analytics.signals.irreversibility import IGSConfig, igs_directional_signal

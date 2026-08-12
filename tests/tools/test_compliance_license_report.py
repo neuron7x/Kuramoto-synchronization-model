@@ -1,3 +1,5 @@
+# Copyright (c) 2023-2026 Yaroslav Vasylenko (neuron7xLab)
+# SPDX-License-Identifier: MIT
 import io
 import json
 from urllib.error import URLError
@@ -22,7 +24,7 @@ def test_fetch_license_from_pypi_filters_and_caches(monkeypatch):
             "license": "MIT",
             "classifiers": [
                 "License :: OSI Approved :: Apache Software License",
-                "License :: Proprietary :: Example",
+                "License :: OSI Approved :: MIT License",
             ],
         }
     }
@@ -36,7 +38,7 @@ def test_fetch_license_from_pypi_filters_and_caches(monkeypatch):
     monkeypatch.setattr(report, "urlopen", fake_urlopen)
 
     licenses = report._fetch_license_from_pypi("package", "1.0.0")
-    assert licenses == ["Apache Software License", "Example", "MIT"]
+    assert licenses == ["Apache Software License", "MIT", "MIT License"]
     # Cached value should avoid new HTTP calls
     again = report._fetch_license_from_pypi("package", "1.0.0")
     assert again == licenses
@@ -69,9 +71,7 @@ def test_extract_license_names_falls_back_to_pypi(monkeypatch):
     unknown = report.extract_license_names(fallback_entry)
     assert unknown == ["UNKNOWN"]
 
-    monkeypatch.setattr(
-        report, "_fetch_license_from_pypi", lambda name, version: ["Apache-2.0"]
-    )
+    monkeypatch.setattr(report, "_fetch_license_from_pypi", lambda name, version: ["Apache-2.0"])
     resolved = report.extract_license_names({"name": "pkg", "version": "1.1"})
     assert resolved == ["Apache-2.0"]
 
@@ -116,8 +116,6 @@ def test_main_writes_report(monkeypatch, tmp_path):
 
     report.main()
 
-    output = (tmp_path / "docs" / "legal" / "THIRD_PARTY_NOTICES.md").read_text(
-        encoding="utf-8"
-    )
+    output = (tmp_path / "docs" / "legal" / "THIRD_PARTY_NOTICES.md").read_text(encoding="utf-8")
     assert report.HEADER.strip() in output
     assert "| demo | 1.0 | MIT | pkg:pypi/demo@1.0 |" in output

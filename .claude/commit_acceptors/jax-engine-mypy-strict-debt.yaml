@@ -1,0 +1,162 @@
+# Diff-bound commit acceptor for the jax_engine mypy --strict debt closure.
+#
+# Behavior-preserving typing-only fix of a genuine, bounded, pre-existing
+# F2/F5 defect on main: core/kuramoto/jax_engine.py carried 5 mypy --strict
+# errors that survived ONLY because adversarial-ladder.yaml's expected_signal
+# formally declared them a tolerated, out-of-scope precedent (a guard
+# absorbing a defect instead of surfacing it). NOT a feature, NOT a science
+# change, NOT a gate/threshold/seed/sigma/theta0 edit, NOT an acceptor-mask
+# extension.
+#
+# Diagnosis (canonical env = jax installed [pyproject dep jax>=0.4.30] +
+# mypy.ini + `mypy --strict --follow-imports=silent`, exactly the
+# geosync-quality-gate.sh / CI-quality semantics, reproduced with a fresh
+# .mypy_cache):
+#   jax_engine.py:45 [misc]            stale  -> jax 0.4.30+ ships py.typed;
+#   jax_engine.py:56 [misc]            stale     @jit is a typed decorator,
+#   jax_engine.py:70 [misc]            stale     no untyped-decorator error.
+#   jax_engine.py:115 [no-any-return]  stale  -> vmap is typed (fun:F)->F;
+#                                                the call returns
+#                                                tuple[Array,Array], not Any.
+#   jax_engine.py:68 [no-any-return]   REAL   -> _jax_dtheta_dt is @jit-
+#                                                wrapped; JitWrapped.__call__
+#                                                returns Any, so the RK4
+#                                                combination loses its static
+#                                                type and leaks past the
+#                                                declared -> jnp.ndarray.
+#
+# Root-cause fix:
+#   * 4 stale ignores: NOT deleted outright, because the local/CI .venv may
+#     lack jax (optional accel dep) where @jit/vmap ARE untyped and the
+#     ignores ARE needed. Narrowed to the established core/kuramoto/ dual-
+#     code idiom `# type: ignore[<code>, unused-ignore]` (same pattern as
+#     phase_extractor.py / causal_validation.py): valid when jax is untyped,
+#     self-suppressing when jax is typed. NOT a blanket ignore — codes stay
+#     explicit; no Any-widening; no config weakening.
+#   * jax_engine.py:68 real gap: typing.cast("jnp.ndarray", ...) to restore
+#     the already-declared runtime-correct contract, with a justification
+#     comment. cast() is a runtime identity no-op -> zero numeric change.
+#
+# HARD behavior-preserving invariants verified:
+#   * Diff is import + 3 ignore-code refinements + 1 ignore-code refinement
+#     + 1 typing.cast (runtime identity). Zero control-flow / numeric edit.
+#   * mypy --strict --follow-imports=silent clean in BOTH canonical envs
+#     (jax-absent .venv AND jax-typed full-deps), fresh cache; zero residual
+#     unused-ignore in either env; CI-exact `.venv/bin/mypy` clean.
+#   * ruff + black clean on the touched file.
+#   * jax-independent kuramoto suites green UNMODIFIED (explosive-sync 49,
+#     ott-antonsen, frozen calibration grid). T1/T2/T3 collection
+#     ModuleNotFoundError: jax is a pre-existing local .venv-incompleteness
+#     artifact, byte-identical on the clean baseline (stash) and with the
+#     change -> NOT introduced; CI installs jax.
+#   * Every sha-pinned calibration artifact + RIP/* byte-identical;
+#     tests/research/calibration/test_grid_kuramoto.py git diff EMPTY.
+#
+# F5 negative-feedback restoration (the masking before -> after):
+#   adversarial-ladder.yaml expected_signal — narrowed exactly the masking
+#   parenthetical, leaving its live systemic_risk-ladder purpose untouched:
+#     BEFORE: "(the 5 pre-existing core/kuramoto/jax_engine errors persist
+#              on origin/main and are out of scope)"
+#     AFTER:  "(the 5 formerly-tolerated core/kuramoto/jax_engine
+#              unused-ignore / no-any-return errors were root-cause-fixed in
+#              fix/jax-engine-mypy-strict-debt — they are no longer expected;
+#              any recurrence is a genuine regression to surface, not absorb)"
+#   The guard now surfaces future jax_engine strict regressions instead of
+#   declaring them expected.
+
+id: jax-engine-mypy-strict-debt
+status: ACTIVE
+claim_type: chore
+promise: >-
+  After this PR lands, core/kuramoto/jax_engine.py is mypy --strict clean in
+  both canonical environments (jax-absent and jax-typed) with zero residual
+  unused-ignore comments, the genuine [no-any-return] gap at the RK4 return
+  is fixed by a runtime-inert typing.cast to the already-declared
+  jnp.ndarray contract, and the four optional-dependency ignores use the
+  established core/kuramoto/ dual-code idiom. The change is byte-preserving:
+  no numeric or control-flow edit, every sha-pinned calibration artifact and
+  RIP/* file byte-identical, every jax-independent kuramoto test green
+  without modification. The adversarial-ladder.yaml masking precedent that
+  formerly declared these 5 errors a tolerated out-of-scope state is
+  narrowed (F5 negative-feedback restored) so the guard surfaces future
+  regressions instead of absorbing them; the acceptor's live systemic_risk
+  purpose is untouched. No gate, threshold, seed, sigma, theta0 or decision
+  rule was touched; no science claim is promoted; no acceptor mask extended.
+diff_scope:
+  changed_files:
+    - path: ".claude/commit_acceptors/jax-engine-mypy-strict-debt.yaml"
+    - path: ".claude/commit_acceptors/adversarial-ladder.yaml"
+    - path: "core/kuramoto/jax_engine.py"
+  forbidden_paths:
+    - "trading/"
+    - "execution/"
+    - "forecast/"
+    - "policy/"
+    - "core/physics/"
+    - "core/kuramoto/engine.py"
+    - "core/kuramoto/config.py"
+    - "core/kuramoto/contracts.py"
+    - "core/kuramoto/__init__.py"
+    - "application/governance/claim_ledger.py"
+    - "application/governance/commit_acceptor.py"
+    - "research/systemic_risk/adversarial_ladder.py"
+    - "research/calibration/grid_kuramoto/PREREGISTRATION.md"
+    - "research/calibration/grid_kuramoto/PREREGISTRATION_AMENDMENT_001.md"
+    - "research/calibration/grid_kuramoto/PREREGISTRATION_AMENDMENT_001.yaml"
+    - "research/calibration/grid_kuramoto/RESULTS.json"
+    - "research/calibration/grid_kuramoto/RESULTS.md"
+    - "research/calibration/grid_kuramoto/SUPERSESSIONS.md"
+    - "research/calibration/grid_kuramoto/SUPERSESSIONS.yaml"
+    - "research/calibration/grid_kuramoto/r1/"
+    - "research/calibration/grid_kuramoto/cg002/RESULTS.json"
+    - "research/calibration/grid_kuramoto/cg002/RESULTS.md"
+    - "research/calibration/grid_kuramoto/identifiability/RESULTS.json"
+    - "research/calibration/grid_kuramoto/identifiability/RESULTS.md"
+    - "RIP/"
+    - "tests/research/calibration/test_grid_kuramoto.py"
+required_python_symbols:
+  - "core/kuramoto/jax_engine.py::JaxKuramotoEngine"
+expected_signal: >-
+  `mypy --strict --follow-imports=silent core/kuramoto/jax_engine.py`
+  reports "Success: no issues found" with a fresh .mypy_cache in BOTH the
+  jax-absent and the jax-typed environment (zero residual unused-ignore);
+  `ruff check` and `black --check` are clean on the file;
+  `pytest tests/unit/physics/test_T2_explosive_sync.py
+  tests/unit/physics/test_T23_ott_antonsen_chimera.py
+  tests/research/calibration/test_grid_kuramoto.py` is green unmodified;
+  `git diff --exit-code tests/research/calibration/test_grid_kuramoto.py`
+  is EMPTY; the production diff is exactly one import, four ignore-code
+  refinements and one typing.cast.
+measurement_command: >-
+  bash -c '
+    rm -rf .mypy_cache &&
+    mypy --strict --follow-imports=silent core/kuramoto/jax_engine.py && ruff check core/kuramoto/jax_engine.py && black --check core/kuramoto/jax_engine.py && git diff --exit-code tests/research/calibration/test_grid_kuramoto.py && python -m pytest
+       tests/unit/physics/test_T2_explosive_sync.py
+       tests/unit/physics/test_T23_ott_antonsen_chimera.py
+       tests/research/calibration/test_grid_kuramoto.py
+       -q -m "not slow"
+  '
+signal_artifact: "tmp/jax_engine_mypy_strict_debt.log"
+falsifier:
+  command: >-
+    bash -c '
+      rm -rf /tmp/_jaxdebt_cache &&
+      grep -q "type: ignore\[misc\]$" core/kuramoto/jax_engine.py || grep -q "type: ignore\[no-any-return\]$" core/kuramoto/jax_engine.py || grep -q "5 pre-existing core/kuramoto/jax_engine errors persist"
+         .claude/commit_acceptors/adversarial-ladder.yaml
+    '
+  description: >-
+    Succeeds (exit 0) only if a bare (non-dual-code) [misc] or
+    [no-any-return] ignore reappears in jax_engine.py, OR the
+    adversarial-ladder masking sentence is restored — i.e. the defect
+    regressed or the F5 negative-feedback was undone. The acceptor is
+    falsified by any reversion to the masked state.
+rollback_command: >-
+  bash -c 'git checkout origin/main --
+    core/kuramoto/jax_engine.py
+    .claude/commit_acceptors/adversarial-ladder.yaml && rm -f .claude/commit_acceptors/jax-engine-mypy-strict-debt.yaml'
+rollback_verification_command: >-
+  bash -c 'grep -q "type: ignore\[misc\]$" core/kuramoto/jax_engine.py && ! test -f .claude/commit_acceptors/jax-engine-mypy-strict-debt.yaml'
+memory_update_type: append
+ledger_path: ".claude/commit_acceptors/jax-engine-mypy-strict-debt.yaml"
+report_path: "tmp/jax_engine_mypy_strict_debt.log"
+evidence: []

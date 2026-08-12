@@ -1,0 +1,63 @@
+{
+  "schema_version": "D002J-NULL-HIERARCHY-SUMMARY-v1",
+  "study_id": "D-002J",
+  "phase": "P6",
+  "parent_phase": "D002J-P5",
+  "generated_at": "2026-05-15T00:00:00Z",
+  "total_null_families": 10,
+  "counts_by_class": {
+    "outcome_alignment": 1,
+    "temporal_alignment": 2,
+    "temporal_dependence": 1,
+    "spectral": 1,
+    "graph_degree": 1,
+    "graph_weight": 1,
+    "graph_topology_conditioned": 2,
+    "leakage_trap": 1
+  },
+  "h_i2_conditional_count": 2,
+  "h_i2_conditional_nulls": [
+    "N7_configuration_model",
+    "N8_sparse_maximum_entropy_reconstruction"
+  ],
+  "inverted_pass_semantics_nulls": ["N10_vintage_leakage_trap_null"],
+  "substrate_null_applicability_matrix": {
+    "funding_liquidity_rollover": [
+      "N1_label_permutation",
+      "N2_time_window_shift_placebo",
+      "N3_temporal_block_bootstrap",
+      "N4_iaaft_surrogate",
+      "N9_shock_time_placebo",
+      "N10_vintage_leakage_trap_null"
+    ],
+    "cross_exposure_contagion_proxy": [
+      "N1_label_permutation",
+      "N5_degree_preserving_graph_null",
+      "N6_weight_preserving_shuffle",
+      "N7_configuration_model",
+      "N8_sparse_maximum_entropy_reconstruction",
+      "N9_shock_time_placebo",
+      "N10_vintage_leakage_trap_null"
+    ],
+    "volatility_credit_spread_regime": [
+      "N1_label_permutation",
+      "N2_time_window_shift_placebo",
+      "N3_temporal_block_bootstrap",
+      "N4_iaaft_surrogate",
+      "N9_shock_time_placebo",
+      "N10_vintage_leakage_trap_null"
+    ]
+  },
+  "applicable_null_count_by_substrate": {
+    "funding_liquidity_rollover": 6,
+    "cross_exposure_contagion_proxy": 7,
+    "volatility_credit_spread_regime": 6
+  },
+  "min_applicable_nulls_per_substrate": 6,
+  "every_p5_substrate_has_min_two_admissible_nulls": true,
+  "no_null_references_nonexistent_substrate": true,
+  "no_null_without_target_false_explanation": true,
+  "no_canonical_run": true,
+  "no_real_data_null_execution": true,
+  "decision": "NULL_HIERARCHY_READY"
+}

@@ -1,0 +1,74 @@
+{
+  "schema": "cross_asset_kuramoto_parameter_lock_v1",
+  "_source": [
+    "~/spikes/cross_asset_sync_regime/sync_regime.py",
+    "~/spikes/cross_asset_sync_regime/backtest_v2.py",
+    "~/spikes/cross_asset_sync_regime/walk_forward.py"
+  ],
+  "_spike_commit": "9e76e3b511d31245239961e386901214ea3a4ccc549c87009e29b814f6576fe3",
+  "_note": "Spike is not under git; _spike_commit is the SHA-256 of the concatenated source of sync_regime.py + backtest_v2.py + walk_forward.py + fetch_data.py. Any parameter below is frozen at spike value (FROZEN_AT_SPIKE_VALUE). Any integration-time change requires an entry in INTEGRATION_NOTES.md with before/after numeric comparison.",
+
+  "seed": 42,
+
+  "regime_universe_ordered": ["BTC", "ETH", "SPY", "QQQ", "GLD", "TLT", "DXY", "VIX"],
+  "strategy_universe_ordered": ["BTC", "ETH", "SPY", "TLT", "GLD"],
+
+  "panel_calendar_freq": "B",
+  "panel_timezone": "UTC",
+  "panel_ffill_limit_bdays": 3,
+
+  "detrend_window_bdays": 60,
+  "r_window_bdays": 30,
+
+  "phase_extractor": "scipy.signal.hilbert on rolling-mean-detrended log returns",
+  "oscillator_mapping": "angle(hilbert(x - rolling_mean(x, DETREND_WINDOW)))",
+
+  "regime_threshold_train_frac": 0.70,
+  "regime_quantile_low": 0.33,
+  "regime_quantile_high": 0.66,
+  "regime_buckets": {
+    "low_sync":  ["BTC", "ETH"],
+    "mid_sync":  ["BTC", "ETH", "TLT", "GLD"],
+    "high_sync": ["TLT", "GLD"]
+  },
+
+  "execution_lag_bars": 1,
+  "rebalance_frequency": "daily",
+  "return_clip_abs": 0.5,
+
+  "vol_window_bdays": 60,
+  "vol_target_annualised": 0.15,
+  "vol_cap_leverage": 1.5,
+
+  "cost_bps": 10,
+  "cost_unit": "bps_on_notional_per_turnover_unit",
+  "turnover_definition": "sum(abs(w_t - w_{t-1}))",
+
+  "n_bootstrap": 1000,
+  "bars_per_year": 252,
+  "backtest_train_test_split_frac": 0.70,
+
+  "walk_forward_splits_expanding_window": [
+    {"split": 1, "train_start": "2017-08-17", "train_end": "2020-01-01", "test_start": "2020-01-01", "test_end": "2021-01-01"},
+    {"split": 2, "train_start": "2017-08-17", "train_end": "2021-01-01", "test_start": "2021-01-01", "test_end": "2022-01-01"},
+    {"split": 3, "train_start": "2017-08-17", "train_end": "2022-01-01", "test_start": "2022-01-01", "test_end": "2023-01-01"},
+    {"split": 4, "train_start": "2017-08-17", "train_end": "2023-01-01", "test_start": "2023-01-01", "test_end": "2024-01-01"},
+    {"split": 5, "train_start": "2017-08-17", "train_end": "2024-01-01", "test_start": "2024-01-01", "test_end": "2026-05-01"}
+  ],
+
+  "robust_gate": {
+    "n_beats_btc_sharpe_floor": 4,
+    "median_sharpe_floor": 0.5
+  },
+
+  "retail_gates": {
+    "sharpe_positive_floor": 0.5,
+    "sharpe_beats_btc": true,
+    "sharpe_beats_6040": true,
+    "maxdd_floor": -0.35,
+    "maxdd_better_than_btc": true,
+    "calmar_floor": 0.8,
+    "calmar_beats_btc": true,
+    "vol_lt_btc": true
+  }
+}

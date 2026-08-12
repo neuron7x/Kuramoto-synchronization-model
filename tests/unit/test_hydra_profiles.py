@@ -1,5 +1,7 @@
-# SPDX-License-Identifier: LicenseRef-TradePulse-Proprietary
+# Copyright (c) 2023-2026 Yaroslav Vasylenko (neuron7xLab)
+# SPDX-License-Identifier: MIT
 """Tests for Hydra experiment configuration and reproducibility helpers."""
+
 from __future__ import annotations
 
 import os
@@ -21,6 +23,7 @@ from analytics.runner import (
 )
 from core.config.hydra_profiles import (
     ExperimentProfileError,
+    ExperimentProfileRegistry,
     available_experiment_profiles,
     validate_experiment_profile,
 )
@@ -130,3 +133,25 @@ def test_hydra_profiles_inherit_base_defaults() -> None:
 
     assert stage_cfg.analytics.window == 256
     assert stage_cfg.analytics.delta == pytest.approx(0.005)
+
+
+def test_unknown_profile_error_lists_the_real_alternatives() -> None:
+    """`", ".join(names()) or "<none>"` is a fallback, and a fallback must never be a LEGAL
+    value: with `Or -> And` the message reads "<none>" whenever profiles DO exist and "" when
+    they do not — the exact inversion of what the operator needs. A mutation probe left that
+    survivor alive because every existing test asserts only the exception TYPE.
+    """
+    populated = ExperimentProfileRegistry(profiles={"dev": Path("dev.yaml"), "ci": Path("ci.yaml")})
+    with pytest.raises(ExperimentProfileError) as excinfo:
+        populated.ensure("nope")
+    message = str(excinfo.value)
+    # The list is derived independently here rather than read back from the object.
+    assert "ci, dev" in message, f"the error hid the available profiles: {message!r}"
+    assert "<none>" not in message, f"a populated registry claimed it had no profiles: {message!r}"
+
+    empty = ExperimentProfileRegistry(profiles={})
+    with pytest.raises(ExperimentProfileError) as excinfo:
+        empty.ensure("nope")
+    assert "<none>" in str(excinfo.value), (
+        "an empty registry produced an empty list instead of the explicit <none> sentinel"
+    )

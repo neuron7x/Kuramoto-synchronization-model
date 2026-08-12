@@ -1,5 +1,5 @@
-# SPDX-License-Identifier: LicenseRef-TradePulse-Proprietary
-# Risk controls configuration for TradePulse
+# SPDX-License-Identifier: MIT
+# Risk controls configuration for GeoSync
 #
 # These settings define the risk limits, circuit breaker behavior,
 # and kill-switch controls for pre-trade order validation.

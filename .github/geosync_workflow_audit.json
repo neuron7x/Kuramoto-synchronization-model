@@ -1,0 +1,2060 @@
+{
+  "task": "SEC-001 supply-chain hardening: pin GitHub Actions to full commit SHAs",
+  "generated_by": "remediation/wave2-p0",
+  "scan_root": ".github/workflows/*.yml",
+  "total_external_uses": 215,
+  "total_external_uses_sha_pinned": 215,
+  "mutable_actions": [],
+  "unresolved": [],
+  "changed_this_task": {
+    "service-manifest-audit.yml": [
+      {
+        "line": 29,
+        "original_ref": "actions/checkout@v7",
+        "pinned": "actions/checkout@9c091bb21b7c1c1d1991bb908d89e4e9dddfe3e0",
+        "version": "v7.0.0"
+      },
+      {
+        "line": 30,
+        "original_ref": "actions/setup-python@v6",
+        "pinned": "actions/setup-python@ece7cb06caefa5fff74198d8649806c4678c61a1",
+        "version": "v6.3.0"
+      }
+    ]
+  },
+  "local_uses_not_pinned_by_design": [
+    {
+      "file": "component-test-router.yml",
+      "line": 105,
+      "ref": "./.github/actions/setup-geosync"
+    },
+    {
+      "file": "main-validation.yml",
+      "line": 41,
+      "ref": "./.github/actions/setup-geosync"
+    },
+    {
+      "file": "main-validation.yml",
+      "line": 91,
+      "ref": "./.github/actions/setup-geosync"
+    },
+    {
+      "file": "pr-fast-diagnostics.yml",
+      "line": 42,
+      "ref": "./.github/actions/setup-geosync"
+    },
+    {
+      "file": "pr-gate.yml",
+      "line": 160,
+      "ref": "./.github/actions/setup-geosync"
+    },
+    {
+      "file": "pr-gate.yml",
+      "line": 226,
+      "ref": "./.github/actions/setup-geosync"
+    },
+    {
+      "file": "pr-gate.yml",
+      "line": 417,
+      "ref": "./.github/actions/setup-geosync"
+    },
+    {
+      "file": "pr-gate.yml",
+      "line": 717,
+      "ref": "./.github/actions/setup-geosync"
+    },
+    {
+      "file": "security-deep.yml",
+      "line": 41,
+      "ref": "./.github/actions/setup-geosync"
+    }
+  ],
+  "docker_uses_not_pinned_by_design": [],
+  "unique_external_action_refs": [
+    {
+      "action_at_sha": "actions/attest-build-provenance@0f67c3f4856b2e3261c31976d6725780e5e4c373",
+      "sha": "0f67c3f4856b2e3261c31976d6725780e5e4c373"
+    },
+    {
+      "action_at_sha": "actions/cache@55cc8345863c7cc4c66a329aec7e433d2d1c52a9",
+      "sha": "55cc8345863c7cc4c66a329aec7e433d2d1c52a9"
+    },
+    {
+      "action_at_sha": "actions/checkout@9c091bb21b7c1c1d1991bb908d89e4e9dddfe3e0",
+      "sha": "9c091bb21b7c1c1d1991bb908d89e4e9dddfe3e0"
+    },
+    {
+      "action_at_sha": "actions/dependency-review-action@a1d282b36b6f3519aa1f3fc636f609c47dddb294",
+      "sha": "a1d282b36b6f3519aa1f3fc636f609c47dddb294"
+    },
+    {
+      "action_at_sha": "actions/setup-go@924ae3a1cded613372ab5595356fb5720e22ba16",
+      "sha": "924ae3a1cded613372ab5595356fb5720e22ba16"
+    },
+    {
+      "action_at_sha": "actions/setup-node@48b55a011bda9f5d6aeb4c2d9c7362e8dae4041e",
+      "sha": "48b55a011bda9f5d6aeb4c2d9c7362e8dae4041e"
+    },
+    {
+      "action_at_sha": "actions/setup-python@a309ff8b426b58ec0e2a45f0f869d46889d02405",
+      "sha": "a309ff8b426b58ec0e2a45f0f869d46889d02405"
+    },
+    {
+      "action_at_sha": "actions/setup-python@ece7cb06caefa5fff74198d8649806c4678c61a1",
+      "sha": "ece7cb06caefa5fff74198d8649806c4678c61a1"
+    },
+    {
+      "action_at_sha": "actions/upload-artifact@043fb46d1a93c77aae656e7c1c64a875d1fc6a0a",
+      "sha": "043fb46d1a93c77aae656e7c1c64a875d1fc6a0a"
+    },
+    {
+      "action_at_sha": "anchore/sbom-action@e22c389904149dbc22b58101806040fa8d37a610",
+      "sha": "e22c389904149dbc22b58101806040fa8d37a610"
+    },
+    {
+      "action_at_sha": "anchore/scan-action@e1165082ffb1fe366ebaf02d8526e7c4989ea9d2",
+      "sha": "e1165082ffb1fe366ebaf02d8526e7c4989ea9d2"
+    },
+    {
+      "action_at_sha": "github/codeql-action/analyze@54f647b7e1bb85c95cddabcd46b0c578ec92bc1a",
+      "sha": "54f647b7e1bb85c95cddabcd46b0c578ec92bc1a"
+    },
+    {
+      "action_at_sha": "github/codeql-action/autobuild@54f647b7e1bb85c95cddabcd46b0c578ec92bc1a",
+      "sha": "54f647b7e1bb85c95cddabcd46b0c578ec92bc1a"
+    },
+    {
+      "action_at_sha": "github/codeql-action/init@54f647b7e1bb85c95cddabcd46b0c578ec92bc1a",
+      "sha": "54f647b7e1bb85c95cddabcd46b0c578ec92bc1a"
+    }
+  ],
+  "resolution_notes": {
+    "actions/checkout@v7": "tag v7 == v7.0.0 -> 9c091bb21b7c1c1d1991bb908d89e4e9dddfe3e0 (lightweight tag, commit type)",
+    "actions/setup-python@v6": "moving tag v6 == v6.3.0 -> ece7cb06caefa5fff74198d8649806c4678c61a1 (v6.0.0 is a distinct SHA e797f83; v6 points to latest v6.x)"
+  },
+  "per_workflow": {
+    "architecture-debt-ratchet.yml": [
+      {
+        "line": 19,
+        "action": "actions/checkout",
+        "pinned_sha": "9c091bb21b7c1c1d1991bb908d89e4e9dddfe3e0",
+        "mutable": false,
+        "version_comment": "v7.0.0",
+        "kind": "external"
+      },
+      {
+        "line": 22,
+        "action": "actions/setup-python",
+        "pinned_sha": "ece7cb06caefa5fff74198d8649806c4678c61a1",
+        "mutable": false,
+        "version_comment": "v6",
+        "kind": "external"
+      }
+    ],
+    "bibliography-claim-gate.yml": [
+      {
+        "line": 40,
+        "action": "actions/checkout",
+        "pinned_sha": "9c091bb21b7c1c1d1991bb908d89e4e9dddfe3e0",
+        "mutable": false,
+        "version_comment": "v7.0.0",
+        "kind": "external"
+      },
+      {
+        "line": 43,
+        "action": "actions/setup-python",
+        "pinned_sha": "ece7cb06caefa5fff74198d8649806c4678c61a1",
+        "mutable": false,
+        "version_comment": "v6",
+        "kind": "external"
+      }
+    ],
+    "calib-grid-witness-map.yml": [
+      {
+        "line": 30,
+        "action": "actions/checkout",
+        "pinned_sha": "9c091bb21b7c1c1d1991bb908d89e4e9dddfe3e0",
+        "mutable": false,
+        "version_comment": "v7.0.0",
+        "kind": "external"
+      },
+      {
+        "line": 31,
+        "action": "actions/setup-python",
+        "pinned_sha": "ece7cb06caefa5fff74198d8649806c4678c61a1",
+        "mutable": false,
+        "version_comment": "v6",
+        "kind": "external"
+      }
+    ],
+    "check_epistemic_drift.yml": [
+      {
+        "line": 20,
+        "action": "actions/checkout",
+        "pinned_sha": "9c091bb21b7c1c1d1991bb908d89e4e9dddfe3e0",
+        "mutable": false,
+        "version_comment": "pragma: allowlist secret",
+        "kind": "external"
+      },
+      {
+        "line": 21,
+        "action": "actions/setup-python",
+        "pinned_sha": "ece7cb06caefa5fff74198d8649806c4678c61a1",
+        "mutable": false,
+        "version_comment": "pragma: allowlist secret",
+        "kind": "external"
+      }
+    ],
+    "claim-boundary-gate.yml": [
+      {
+        "line": 53,
+        "action": "actions/checkout",
+        "pinned_sha": "9c091bb21b7c1c1d1991bb908d89e4e9dddfe3e0",
+        "mutable": false,
+        "version_comment": "v7.0.0",
+        "kind": "external"
+      },
+      {
+        "line": 56,
+        "action": "actions/setup-python",
+        "pinned_sha": "ece7cb06caefa5fff74198d8649806c4678c61a1",
+        "mutable": false,
+        "version_comment": "v6",
+        "kind": "external"
+      }
+    ],
+    "claim-governance-foundation.yml": [
+      {
+        "line": 19,
+        "action": "actions/checkout",
+        "pinned_sha": "9c091bb21b7c1c1d1991bb908d89e4e9dddfe3e0",
+        "mutable": false,
+        "version_comment": "v7.0.0",
+        "kind": "external"
+      },
+      {
+        "line": 20,
+        "action": "actions/setup-python",
+        "pinned_sha": "ece7cb06caefa5fff74198d8649806c4678c61a1",
+        "mutable": false,
+        "version_comment": "v6.0.0",
+        "kind": "external"
+      }
+    ],
+    "claims-evidence-gate.yml": [
+      {
+        "line": 43,
+        "action": "actions/checkout",
+        "pinned_sha": "9c091bb21b7c1c1d1991bb908d89e4e9dddfe3e0",
+        "mutable": false,
+        "version_comment": "v7.0.0",
+        "kind": "external"
+      },
+      {
+        "line": 46,
+        "action": "actions/setup-python",
+        "pinned_sha": "ece7cb06caefa5fff74198d8649806c4678c61a1",
+        "mutable": false,
+        "version_comment": "v6",
+        "kind": "external"
+      }
+    ],
+    "cns-release-gate.yml": [
+      {
+        "line": 46,
+        "action": "actions/checkout",
+        "pinned_sha": "9c091bb21b7c1c1d1991bb908d89e4e9dddfe3e0",
+        "mutable": false,
+        "version_comment": "v7.0.0",
+        "kind": "external"
+      },
+      {
+        "line": 49,
+        "action": "actions/setup-python",
+        "pinned_sha": "ece7cb06caefa5fff74198d8649806c4678c61a1",
+        "mutable": false,
+        "version_comment": "v6",
+        "kind": "external"
+      }
+    ],
+    "code-hygiene-gate.yml": [
+      {
+        "line": 34,
+        "action": "actions/checkout",
+        "pinned_sha": "9c091bb21b7c1c1d1991bb908d89e4e9dddfe3e0",
+        "mutable": false,
+        "version_comment": "v7.0.0",
+        "kind": "external"
+      },
+      {
+        "line": 39,
+        "action": "actions/setup-python",
+        "pinned_sha": "ece7cb06caefa5fff74198d8649806c4678c61a1",
+        "mutable": false,
+        "version_comment": "v6",
+        "kind": "external"
+      }
+    ],
+    "codeql.yml": [
+      {
+        "line": 41,
+        "action": "actions/checkout",
+        "pinned_sha": "9c091bb21b7c1c1d1991bb908d89e4e9dddfe3e0",
+        "mutable": false,
+        "version_comment": "v7.0.0",
+        "kind": "external"
+      },
+      {
+        "line": 44,
+        "action": "github/codeql-action/init",
+        "pinned_sha": "54f647b7e1bb85c95cddabcd46b0c578ec92bc1a",
+        "mutable": false,
+        "version_comment": "v3",
+        "kind": "external"
+      },
+      {
+        "line": 52,
+        "action": "actions/setup-go",
+        "pinned_sha": "924ae3a1cded613372ab5595356fb5720e22ba16",
+        "mutable": false,
+        "version_comment": "v5",
+        "kind": "external"
+      },
+      {
+        "line": 58,
+        "action": "github/codeql-action/autobuild",
+        "pinned_sha": "54f647b7e1bb85c95cddabcd46b0c578ec92bc1a",
+        "mutable": false,
+        "version_comment": "v3",
+        "kind": "external"
+      },
+      {
+        "line": 61,
+        "action": "github/codeql-action/analyze",
+        "pinned_sha": "54f647b7e1bb85c95cddabcd46b0c578ec92bc1a",
+        "mutable": false,
+        "version_comment": "v3",
+        "kind": "external"
+      }
+    ],
+    "cognitive-dynamics-lab.yml": [
+      {
+        "line": 35,
+        "action": "actions/checkout",
+        "pinned_sha": "9c091bb21b7c1c1d1991bb908d89e4e9dddfe3e0",
+        "mutable": false,
+        "version_comment": null,
+        "kind": "external"
+      },
+      {
+        "line": 38,
+        "action": "actions/setup-python",
+        "pinned_sha": "ece7cb06caefa5fff74198d8649806c4678c61a1",
+        "mutable": false,
+        "version_comment": null,
+        "kind": "external"
+      },
+      {
+        "line": 64,
+        "action": "actions/upload-artifact",
+        "pinned_sha": "043fb46d1a93c77aae656e7c1c64a875d1fc6a0a",
+        "mutable": false,
+        "version_comment": null,
+        "kind": "external"
+      }
+    ],
+    "commit-acceptor-gate.yml": [
+      {
+        "line": 19,
+        "action": "actions/checkout",
+        "pinned_sha": "9c091bb21b7c1c1d1991bb908d89e4e9dddfe3e0",
+        "mutable": false,
+        "version_comment": "v7.0.0",
+        "kind": "external"
+      },
+      {
+        "line": 22,
+        "action": "actions/setup-python",
+        "pinned_sha": "ece7cb06caefa5fff74198d8649806c4678c61a1",
+        "mutable": false,
+        "version_comment": "v6",
+        "kind": "external"
+      }
+    ],
+    "company-value-functions.yml": [
+      {
+        "line": 33,
+        "action": "actions/checkout",
+        "pinned_sha": "9c091bb21b7c1c1d1991bb908d89e4e9dddfe3e0",
+        "mutable": false,
+        "version_comment": "v7.0.0",
+        "kind": "external"
+      },
+      {
+        "line": 36,
+        "action": "actions/setup-python",
+        "pinned_sha": "a309ff8b426b58ec0e2a45f0f869d46889d02405",
+        "mutable": false,
+        "version_comment": "v6",
+        "kind": "external"
+      }
+    ],
+    "component-test-router.yml": [
+      {
+        "line": 59,
+        "action": "actions/checkout",
+        "pinned_sha": "9c091bb21b7c1c1d1991bb908d89e4e9dddfe3e0",
+        "mutable": false,
+        "version_comment": "v7.0.0",
+        "kind": "external"
+      },
+      {
+        "line": 105,
+        "ref": "./.github/actions/setup-geosync",
+        "kind": "local",
+        "pinned_sha": null,
+        "version": null
+      }
+    ],
+    "connectome-gate.yml": [
+      {
+        "line": 35,
+        "action": "actions/checkout",
+        "pinned_sha": "9c091bb21b7c1c1d1991bb908d89e4e9dddfe3e0",
+        "mutable": false,
+        "version_comment": "v7.0.0",
+        "kind": "external"
+      },
+      {
+        "line": 38,
+        "action": "actions/setup-python",
+        "pinned_sha": "ece7cb06caefa5fff74198d8649806c4678c61a1",
+        "mutable": false,
+        "version_comment": "v6",
+        "kind": "external"
+      }
+    ],
+    "coverage-calibration-isolated.yml": [
+      {
+        "line": 38,
+        "action": "actions/checkout",
+        "pinned_sha": "9c091bb21b7c1c1d1991bb908d89e4e9dddfe3e0",
+        "mutable": false,
+        "version_comment": "v7.0.0",
+        "kind": "external"
+      },
+      {
+        "line": 43,
+        "action": "actions/setup-python",
+        "pinned_sha": "ece7cb06caefa5fff74198d8649806c4678c61a1",
+        "mutable": false,
+        "version_comment": "v6",
+        "kind": "external"
+      },
+      {
+        "line": 115,
+        "action": "actions/upload-artifact",
+        "pinned_sha": "043fb46d1a93c77aae656e7c1c64a875d1fc6a0a",
+        "mutable": false,
+        "version_comment": "v7.0.1",
+        "kind": "external"
+      }
+    ],
+    "coverage-calibration-loop.yml": [
+      {
+        "line": 32,
+        "action": "actions/checkout",
+        "pinned_sha": "9c091bb21b7c1c1d1991bb908d89e4e9dddfe3e0",
+        "mutable": false,
+        "version_comment": "v7.0.0",
+        "kind": "external"
+      },
+      {
+        "line": 35,
+        "action": "actions/setup-python",
+        "pinned_sha": "ece7cb06caefa5fff74198d8649806c4678c61a1",
+        "mutable": false,
+        "version_comment": "v6",
+        "kind": "external"
+      }
+    ],
+    "coverage-control-plane.yml": [
+      {
+        "line": 54,
+        "action": "actions/checkout",
+        "pinned_sha": "9c091bb21b7c1c1d1991bb908d89e4e9dddfe3e0",
+        "mutable": false,
+        "version_comment": "v7.0.0",
+        "kind": "external"
+      },
+      {
+        "line": 57,
+        "action": "actions/setup-python",
+        "pinned_sha": "ece7cb06caefa5fff74198d8649806c4678c61a1",
+        "mutable": false,
+        "version_comment": "v6",
+        "kind": "external"
+      }
+    ],
+    "coverage-intelligence.yml": [
+      {
+        "line": 72,
+        "action": "actions/checkout",
+        "pinned_sha": "9c091bb21b7c1c1d1991bb908d89e4e9dddfe3e0",
+        "mutable": false,
+        "version_comment": "v7.0.0",
+        "kind": "external"
+      },
+      {
+        "line": 73,
+        "action": "actions/setup-python",
+        "pinned_sha": "ece7cb06caefa5fff74198d8649806c4678c61a1",
+        "mutable": false,
+        "version_comment": "v6",
+        "kind": "external"
+      },
+      {
+        "line": 113,
+        "action": "actions/checkout",
+        "pinned_sha": "9c091bb21b7c1c1d1991bb908d89e4e9dddfe3e0",
+        "mutable": false,
+        "version_comment": "v7.0.0",
+        "kind": "external"
+      },
+      {
+        "line": 116,
+        "action": "actions/setup-python",
+        "pinned_sha": "ece7cb06caefa5fff74198d8649806c4678c61a1",
+        "mutable": false,
+        "version_comment": "v6",
+        "kind": "external"
+      },
+      {
+        "line": 217,
+        "action": "actions/upload-artifact",
+        "pinned_sha": "043fb46d1a93c77aae656e7c1c64a875d1fc6a0a",
+        "mutable": false,
+        "version_comment": "v4",
+        "kind": "external"
+      }
+    ],
+    "coverage-ratchet-edges.yml": [
+      {
+        "line": 33,
+        "action": "actions/checkout",
+        "pinned_sha": "9c091bb21b7c1c1d1991bb908d89e4e9dddfe3e0",
+        "mutable": false,
+        "version_comment": "v7.0.0",
+        "kind": "external"
+      },
+      {
+        "line": 34,
+        "action": "actions/setup-python",
+        "pinned_sha": "ece7cb06caefa5fff74198d8649806c4678c61a1",
+        "mutable": false,
+        "version_comment": "v6",
+        "kind": "external"
+      }
+    ],
+    "dependency-operational-determinism.yml": [
+      {
+        "line": 36,
+        "action": "actions/checkout",
+        "pinned_sha": "9c091bb21b7c1c1d1991bb908d89e4e9dddfe3e0",
+        "mutable": false,
+        "version_comment": "v7.0.0",
+        "kind": "external"
+      },
+      {
+        "line": 39,
+        "action": "actions/setup-python",
+        "pinned_sha": "a309ff8b426b58ec0e2a45f0f869d46889d02405",
+        "mutable": false,
+        "version_comment": "v6",
+        "kind": "external"
+      }
+    ],
+    "descriptor-promotion-gate.yml": [
+      {
+        "line": 56,
+        "action": "actions/checkout",
+        "pinned_sha": "9c091bb21b7c1c1d1991bb908d89e4e9dddfe3e0",
+        "mutable": false,
+        "version_comment": "v7.0.0",
+        "kind": "external"
+      },
+      {
+        "line": 59,
+        "action": "actions/setup-python",
+        "pinned_sha": "ece7cb06caefa5fff74198d8649806c4678c61a1",
+        "mutable": false,
+        "version_comment": "v6",
+        "kind": "external"
+      }
+    ],
+    "docs-consistency-gate.yml": [
+      {
+        "line": 42,
+        "action": "actions/checkout",
+        "pinned_sha": "9c091bb21b7c1c1d1991bb908d89e4e9dddfe3e0",
+        "mutable": false,
+        "version_comment": "v7.0.0",
+        "kind": "external"
+      },
+      {
+        "line": 45,
+        "action": "actions/setup-python",
+        "pinned_sha": "ece7cb06caefa5fff74198d8649806c4678c61a1",
+        "mutable": false,
+        "version_comment": "v6",
+        "kind": "external"
+      }
+    ],
+    "edge-case-matrix.yml": [
+      {
+        "line": 62,
+        "action": "actions/checkout",
+        "pinned_sha": "9c091bb21b7c1c1d1991bb908d89e4e9dddfe3e0",
+        "mutable": false,
+        "version_comment": "v7.0.0",
+        "kind": "external"
+      },
+      {
+        "line": 65,
+        "action": "actions/setup-python",
+        "pinned_sha": "ece7cb06caefa5fff74198d8649806c4678c61a1",
+        "mutable": false,
+        "version_comment": "v6",
+        "kind": "external"
+      },
+      {
+        "line": 93,
+        "action": "actions/upload-artifact",
+        "pinned_sha": "043fb46d1a93c77aae656e7c1c64a875d1fc6a0a",
+        "mutable": false,
+        "version_comment": "v7.0.1",
+        "kind": "external"
+      }
+    ],
+    "epistemic-rhombus-gate.yml": [
+      {
+        "line": 53,
+        "action": "actions/checkout",
+        "pinned_sha": "9c091bb21b7c1c1d1991bb908d89e4e9dddfe3e0",
+        "mutable": false,
+        "version_comment": "v7.0.0",
+        "kind": "external"
+      },
+      {
+        "line": 56,
+        "action": "actions/setup-python",
+        "pinned_sha": "ece7cb06caefa5fff74198d8649806c4678c61a1",
+        "mutable": false,
+        "version_comment": "v6",
+        "kind": "external"
+      },
+      {
+        "line": 75,
+        "action": "actions/upload-artifact",
+        "pinned_sha": "043fb46d1a93c77aae656e7c1c64a875d1fc6a0a",
+        "mutable": false,
+        "version_comment": "v7.0.1",
+        "kind": "external"
+      },
+      {
+        "line": 91,
+        "action": "actions/upload-artifact",
+        "pinned_sha": "043fb46d1a93c77aae656e7c1c64a875d1fc6a0a",
+        "mutable": false,
+        "version_comment": "v7.0.1",
+        "kind": "external"
+      }
+    ],
+    "evidence-grounding.yml": [
+      {
+        "line": 25,
+        "action": "actions/checkout",
+        "pinned_sha": "9c091bb21b7c1c1d1991bb908d89e4e9dddfe3e0",
+        "mutable": false,
+        "version_comment": null,
+        "kind": "external"
+      },
+      {
+        "line": 26,
+        "action": "actions/setup-python",
+        "pinned_sha": "ece7cb06caefa5fff74198d8649806c4678c61a1",
+        "mutable": false,
+        "version_comment": null,
+        "kind": "external"
+      },
+      {
+        "line": 36,
+        "action": "actions/upload-artifact",
+        "pinned_sha": "043fb46d1a93c77aae656e7c1c64a875d1fc6a0a",
+        "mutable": false,
+        "version_comment": null,
+        "kind": "external"
+      }
+    ],
+    "fail_closed_guardians.yml": [
+      {
+        "line": 20,
+        "action": "actions/checkout",
+        "pinned_sha": "9c091bb21b7c1c1d1991bb908d89e4e9dddfe3e0",
+        "mutable": false,
+        "version_comment": "pragma: allowlist secret",
+        "kind": "external"
+      },
+      {
+        "line": 21,
+        "action": "actions/setup-python",
+        "pinned_sha": "ece7cb06caefa5fff74198d8649806c4678c61a1",
+        "mutable": false,
+        "version_comment": "pragma: allowlist secret",
+        "kind": "external"
+      }
+    ],
+    "feature-debt-lock.yml": [
+      {
+        "line": 24,
+        "action": "actions/checkout",
+        "pinned_sha": "9c091bb21b7c1c1d1991bb908d89e4e9dddfe3e0",
+        "mutable": false,
+        "version_comment": "v7.0.0",
+        "kind": "external"
+      },
+      {
+        "line": 27,
+        "action": "actions/setup-python",
+        "pinned_sha": "ece7cb06caefa5fff74198d8649806c4678c61a1",
+        "mutable": false,
+        "version_comment": "v6",
+        "kind": "external"
+      }
+    ],
+    "final-inference-verdict.yml": [
+      {
+        "line": 26,
+        "action": "actions/checkout",
+        "pinned_sha": "9c091bb21b7c1c1d1991bb908d89e4e9dddfe3e0",
+        "mutable": false,
+        "version_comment": "v7.0.0",
+        "kind": "external"
+      },
+      {
+        "line": 29,
+        "action": "actions/setup-python",
+        "pinned_sha": "ece7cb06caefa5fff74198d8649806c4678c61a1",
+        "mutable": false,
+        "version_comment": "v6",
+        "kind": "external"
+      },
+      {
+        "line": 46,
+        "action": "actions/upload-artifact",
+        "pinned_sha": "043fb46d1a93c77aae656e7c1c64a875d1fc6a0a",
+        "mutable": false,
+        "version_comment": "v7.0.1",
+        "kind": "external"
+      }
+    ],
+    "forbidden-torch-jit-gate.yml": [
+      {
+        "line": 50,
+        "action": "actions/checkout",
+        "pinned_sha": "9c091bb21b7c1c1d1991bb908d89e4e9dddfe3e0",
+        "mutable": false,
+        "version_comment": "v7.0.0",
+        "kind": "external"
+      },
+      {
+        "line": 53,
+        "action": "actions/setup-python",
+        "pinned_sha": "ece7cb06caefa5fff74198d8649806c4678c61a1",
+        "mutable": false,
+        "version_comment": "v6",
+        "kind": "external"
+      }
+    ],
+    "formal-verification.yml": [
+      {
+        "line": 37,
+        "action": "actions/checkout",
+        "pinned_sha": "9c091bb21b7c1c1d1991bb908d89e4e9dddfe3e0",
+        "mutable": false,
+        "version_comment": "v7.0.0",
+        "kind": "external"
+      },
+      {
+        "line": 73,
+        "action": "actions/checkout",
+        "pinned_sha": "9c091bb21b7c1c1d1991bb908d89e4e9dddfe3e0",
+        "mutable": false,
+        "version_comment": "v7.0.0",
+        "kind": "external"
+      }
+    ],
+    "governance-schema-export-sync.yml": [
+      {
+        "line": 41,
+        "action": "actions/checkout",
+        "pinned_sha": "9c091bb21b7c1c1d1991bb908d89e4e9dddfe3e0",
+        "mutable": false,
+        "version_comment": "v7.0.0",
+        "kind": "external"
+      },
+      {
+        "line": 44,
+        "action": "actions/setup-python",
+        "pinned_sha": "ece7cb06caefa5fff74198d8649806c4678c61a1",
+        "mutable": false,
+        "version_comment": "v6",
+        "kind": "external"
+      }
+    ],
+    "i18n.yml": [
+      {
+        "line": 32,
+        "action": "actions/checkout",
+        "pinned_sha": "9c091bb21b7c1c1d1991bb908d89e4e9dddfe3e0",
+        "mutable": false,
+        "version_comment": "v7.0.0",
+        "kind": "external"
+      },
+      {
+        "line": 33,
+        "action": "actions/setup-node",
+        "pinned_sha": "48b55a011bda9f5d6aeb4c2d9c7362e8dae4041e",
+        "mutable": false,
+        "version_comment": "v6.4.0",
+        "kind": "external"
+      }
+    ],
+    "import-architecture-gate.yml": [
+      {
+        "line": 42,
+        "action": "actions/checkout",
+        "pinned_sha": "9c091bb21b7c1c1d1991bb908d89e4e9dddfe3e0",
+        "mutable": false,
+        "version_comment": "v7.0.0",
+        "kind": "external"
+      },
+      {
+        "line": 45,
+        "action": "actions/setup-python",
+        "pinned_sha": "ece7cb06caefa5fff74198d8649806c4678c61a1",
+        "mutable": false,
+        "version_comment": "v6",
+        "kind": "external"
+      }
+    ],
+    "inference-transformer-contract.yml": [
+      {
+        "line": 34,
+        "action": "actions/checkout",
+        "pinned_sha": "9c091bb21b7c1c1d1991bb908d89e4e9dddfe3e0",
+        "mutable": false,
+        "version_comment": null,
+        "kind": "external"
+      },
+      {
+        "line": 37,
+        "action": "actions/setup-python",
+        "pinned_sha": "ece7cb06caefa5fff74198d8649806c4678c61a1",
+        "mutable": false,
+        "version_comment": null,
+        "kind": "external"
+      }
+    ],
+    "invariant-count-sync.yml": [
+      {
+        "line": 44,
+        "action": "actions/checkout",
+        "pinned_sha": "9c091bb21b7c1c1d1991bb908d89e4e9dddfe3e0",
+        "mutable": false,
+        "version_comment": "v7.0.0",
+        "kind": "external"
+      },
+      {
+        "line": 47,
+        "action": "actions/setup-python",
+        "pinned_sha": "ece7cb06caefa5fff74198d8649806c4678c61a1",
+        "mutable": false,
+        "version_comment": "v6",
+        "kind": "external"
+      }
+    ],
+    "l2-demo-gate.yml": [
+      {
+        "line": 43,
+        "action": "actions/checkout",
+        "pinned_sha": "9c091bb21b7c1c1d1991bb908d89e4e9dddfe3e0",
+        "mutable": false,
+        "version_comment": "v7.0.0",
+        "kind": "external"
+      },
+      {
+        "line": 48,
+        "action": "actions/setup-python",
+        "pinned_sha": "ece7cb06caefa5fff74198d8649806c4678c61a1",
+        "mutable": false,
+        "version_comment": "v6",
+        "kind": "external"
+      },
+      {
+        "line": 74,
+        "action": "actions/checkout",
+        "pinned_sha": "9c091bb21b7c1c1d1991bb908d89e4e9dddfe3e0",
+        "mutable": false,
+        "version_comment": "v7.0.0",
+        "kind": "external"
+      },
+      {
+        "line": 79,
+        "action": "actions/setup-python",
+        "pinned_sha": "ece7cb06caefa5fff74198d8649806c4678c61a1",
+        "mutable": false,
+        "version_comment": "v6",
+        "kind": "external"
+      },
+      {
+        "line": 105,
+        "action": "actions/checkout",
+        "pinned_sha": "9c091bb21b7c1c1d1991bb908d89e4e9dddfe3e0",
+        "mutable": false,
+        "version_comment": "v7.0.0",
+        "kind": "external"
+      },
+      {
+        "line": 110,
+        "action": "actions/setup-python",
+        "pinned_sha": "ece7cb06caefa5fff74198d8649806c4678c61a1",
+        "mutable": false,
+        "version_comment": "v6",
+        "kind": "external"
+      }
+    ],
+    "latency-budget.yml": [
+      {
+        "line": 71,
+        "action": "actions/checkout",
+        "pinned_sha": "9c091bb21b7c1c1d1991bb908d89e4e9dddfe3e0",
+        "mutable": false,
+        "version_comment": "v7.0.0",
+        "kind": "external"
+      },
+      {
+        "line": 74,
+        "action": "actions/setup-python",
+        "pinned_sha": "ece7cb06caefa5fff74198d8649806c4678c61a1",
+        "mutable": false,
+        "version_comment": "v6",
+        "kind": "external"
+      },
+      {
+        "line": 104,
+        "action": "actions/upload-artifact",
+        "pinned_sha": "043fb46d1a93c77aae656e7c1c64a875d1fc6a0a",
+        "mutable": false,
+        "version_comment": "v7.0.1",
+        "kind": "external"
+      }
+    ],
+    "latency-layer-coverage.yml": [
+      {
+        "line": 74,
+        "action": "actions/checkout",
+        "pinned_sha": "9c091bb21b7c1c1d1991bb908d89e4e9dddfe3e0",
+        "mutable": false,
+        "version_comment": "v7.0.0",
+        "kind": "external"
+      },
+      {
+        "line": 77,
+        "action": "actions/setup-python",
+        "pinned_sha": "ece7cb06caefa5fff74198d8649806c4678c61a1",
+        "mutable": false,
+        "version_comment": "v6",
+        "kind": "external"
+      },
+      {
+        "line": 107,
+        "action": "actions/upload-artifact",
+        "pinned_sha": "043fb46d1a93c77aae656e7c1c64a875d1fc6a0a",
+        "mutable": false,
+        "version_comment": "v7.0.1",
+        "kind": "external"
+      }
+    ],
+    "lighthouse-ci.yml": [
+      {
+        "line": 58,
+        "action": "actions/checkout",
+        "pinned_sha": "9c091bb21b7c1c1d1991bb908d89e4e9dddfe3e0",
+        "mutable": false,
+        "version_comment": "v7.0.0",
+        "kind": "external"
+      },
+      {
+        "line": 61,
+        "action": "actions/setup-node",
+        "pinned_sha": "48b55a011bda9f5d6aeb4c2d9c7362e8dae4041e",
+        "mutable": false,
+        "version_comment": "v6.4.0",
+        "kind": "external"
+      },
+      {
+        "line": 110,
+        "action": "actions/upload-artifact",
+        "pinned_sha": "043fb46d1a93c77aae656e7c1c64a875d1fc6a0a",
+        "mutable": false,
+        "version_comment": "v7.0.1",
+        "kind": "external"
+      }
+    ],
+    "main-validation.yml": [
+      {
+        "line": 30,
+        "action": "actions/checkout",
+        "pinned_sha": "9c091bb21b7c1c1d1991bb908d89e4e9dddfe3e0",
+        "mutable": false,
+        "version_comment": "v7.0.0",
+        "kind": "external"
+      },
+      {
+        "line": 41,
+        "ref": "./.github/actions/setup-geosync",
+        "kind": "local",
+        "pinned_sha": null,
+        "version": null
+      },
+      {
+        "line": 88,
+        "action": "actions/checkout",
+        "pinned_sha": "9c091bb21b7c1c1d1991bb908d89e4e9dddfe3e0",
+        "mutable": false,
+        "version_comment": "v7.0.0",
+        "kind": "external"
+      },
+      {
+        "line": 91,
+        "ref": "./.github/actions/setup-geosync",
+        "kind": "local",
+        "pinned_sha": null,
+        "version": null
+      },
+      {
+        "line": 107,
+        "action": "actions/checkout",
+        "pinned_sha": "9c091bb21b7c1c1d1991bb908d89e4e9dddfe3e0",
+        "mutable": false,
+        "version_comment": "v7.0.0",
+        "kind": "external"
+      },
+      {
+        "line": 110,
+        "action": "actions/setup-node",
+        "pinned_sha": "48b55a011bda9f5d6aeb4c2d9c7362e8dae4041e",
+        "mutable": false,
+        "version_comment": "v6.4.0",
+        "kind": "external"
+      },
+      {
+        "line": 128,
+        "action": "actions/checkout",
+        "pinned_sha": "9c091bb21b7c1c1d1991bb908d89e4e9dddfe3e0",
+        "mutable": false,
+        "version_comment": "v7.0.0",
+        "kind": "external"
+      },
+      {
+        "line": 131,
+        "action": "actions/setup-python",
+        "pinned_sha": "ece7cb06caefa5fff74198d8649806c4678c61a1",
+        "mutable": false,
+        "version_comment": "v6",
+        "kind": "external"
+      }
+    ],
+    "mfn-release-gate.yml": [
+      {
+        "line": 51,
+        "action": "actions/checkout",
+        "pinned_sha": "9c091bb21b7c1c1d1991bb908d89e4e9dddfe3e0",
+        "mutable": false,
+        "version_comment": null,
+        "kind": "external"
+      },
+      {
+        "line": 55,
+        "action": "actions/setup-python",
+        "pinned_sha": "ece7cb06caefa5fff74198d8649806c4678c61a1",
+        "mutable": false,
+        "version_comment": null,
+        "kind": "external"
+      }
+    ],
+    "mutation-kill-gate.yml": [
+      {
+        "line": 32,
+        "action": "actions/checkout",
+        "pinned_sha": "9c091bb21b7c1c1d1991bb908d89e4e9dddfe3e0",
+        "mutable": false,
+        "version_comment": "v7.0.0",
+        "kind": "external"
+      },
+      {
+        "line": 37,
+        "action": "actions/setup-python",
+        "pinned_sha": "ece7cb06caefa5fff74198d8649806c4678c61a1",
+        "mutable": false,
+        "version_comment": "v6",
+        "kind": "external"
+      }
+    ],
+    "package-boundary-gate.yml": [
+      {
+        "line": 42,
+        "action": "actions/checkout",
+        "pinned_sha": "9c091bb21b7c1c1d1991bb908d89e4e9dddfe3e0",
+        "mutable": false,
+        "version_comment": "v7.0.0",
+        "kind": "external"
+      },
+      {
+        "line": 45,
+        "action": "actions/setup-python",
+        "pinned_sha": "ece7cb06caefa5fff74198d8649806c4678c61a1",
+        "mutable": false,
+        "version_comment": "v6",
+        "kind": "external"
+      }
+    ],
+    "physics-2026-gate.yml": [
+      {
+        "line": 66,
+        "action": "actions/checkout",
+        "pinned_sha": "9c091bb21b7c1c1d1991bb908d89e4e9dddfe3e0",
+        "mutable": false,
+        "version_comment": "v7.0.0",
+        "kind": "external"
+      },
+      {
+        "line": 69,
+        "action": "actions/setup-python",
+        "pinned_sha": "ece7cb06caefa5fff74198d8649806c4678c61a1",
+        "mutable": false,
+        "version_comment": "v6",
+        "kind": "external"
+      },
+      {
+        "line": 100,
+        "action": "actions/checkout",
+        "pinned_sha": "9c091bb21b7c1c1d1991bb908d89e4e9dddfe3e0",
+        "mutable": false,
+        "version_comment": "v7.0.0",
+        "kind": "external"
+      },
+      {
+        "line": 103,
+        "action": "actions/setup-python",
+        "pinned_sha": "ece7cb06caefa5fff74198d8649806c4678c61a1",
+        "mutable": false,
+        "version_comment": "v6",
+        "kind": "external"
+      },
+      {
+        "line": 146,
+        "action": "actions/checkout",
+        "pinned_sha": "9c091bb21b7c1c1d1991bb908d89e4e9dddfe3e0",
+        "mutable": false,
+        "version_comment": "v7.0.0",
+        "kind": "external"
+      },
+      {
+        "line": 149,
+        "action": "actions/setup-python",
+        "pinned_sha": "ece7cb06caefa5fff74198d8649806c4678c61a1",
+        "mutable": false,
+        "version_comment": "v6",
+        "kind": "external"
+      },
+      {
+        "line": 193,
+        "action": "actions/checkout",
+        "pinned_sha": "9c091bb21b7c1c1d1991bb908d89e4e9dddfe3e0",
+        "mutable": false,
+        "version_comment": "v7.0.0",
+        "kind": "external"
+      },
+      {
+        "line": 196,
+        "action": "actions/setup-python",
+        "pinned_sha": "ece7cb06caefa5fff74198d8649806c4678c61a1",
+        "mutable": false,
+        "version_comment": "v6",
+        "kind": "external"
+      }
+    ],
+    "physics-ci-evidence-emitter.yml": [
+      {
+        "line": 50,
+        "action": "actions/checkout",
+        "pinned_sha": "9c091bb21b7c1c1d1991bb908d89e4e9dddfe3e0",
+        "mutable": false,
+        "version_comment": "v7.0.0",
+        "kind": "external"
+      },
+      {
+        "line": 53,
+        "action": "actions/setup-python",
+        "pinned_sha": "ece7cb06caefa5fff74198d8649806c4678c61a1",
+        "mutable": false,
+        "version_comment": "v6",
+        "kind": "external"
+      },
+      {
+        "line": 82,
+        "action": "actions/upload-artifact",
+        "pinned_sha": "043fb46d1a93c77aae656e7c1c64a875d1fc6a0a",
+        "mutable": false,
+        "version_comment": "v4",
+        "kind": "external"
+      }
+    ],
+    "physics-contracts.yml": [
+      {
+        "line": 50,
+        "action": "actions/checkout",
+        "pinned_sha": "9c091bb21b7c1c1d1991bb908d89e4e9dddfe3e0",
+        "mutable": false,
+        "version_comment": "v7.0.0",
+        "kind": "external"
+      },
+      {
+        "line": 53,
+        "action": "actions/setup-python",
+        "pinned_sha": "ece7cb06caefa5fff74198d8649806c4678c61a1",
+        "mutable": false,
+        "version_comment": "v6",
+        "kind": "external"
+      },
+      {
+        "line": 106,
+        "action": "actions/upload-artifact",
+        "pinned_sha": "043fb46d1a93c77aae656e7c1c64a875d1fc6a0a",
+        "mutable": false,
+        "version_comment": "v4",
+        "kind": "external"
+      }
+    ],
+    "physics-invariants.yml": [
+      {
+        "line": 24,
+        "action": "actions/checkout",
+        "pinned_sha": "9c091bb21b7c1c1d1991bb908d89e4e9dddfe3e0",
+        "mutable": false,
+        "version_comment": "v7.0.0",
+        "kind": "external"
+      },
+      {
+        "line": 27,
+        "action": "actions/setup-python",
+        "pinned_sha": "ece7cb06caefa5fff74198d8649806c4678c61a1",
+        "mutable": false,
+        "version_comment": "v6",
+        "kind": "external"
+      }
+    ],
+    "physics-kernel-gate.yml": [
+      {
+        "line": 51,
+        "action": "actions/checkout",
+        "pinned_sha": "9c091bb21b7c1c1d1991bb908d89e4e9dddfe3e0",
+        "mutable": false,
+        "version_comment": "v7.0.0",
+        "kind": "external"
+      },
+      {
+        "line": 54,
+        "action": "actions/setup-python",
+        "pinned_sha": "ece7cb06caefa5fff74198d8649806c4678c61a1",
+        "mutable": false,
+        "version_comment": "v6",
+        "kind": "external"
+      },
+      {
+        "line": 70,
+        "action": "actions/checkout",
+        "pinned_sha": "9c091bb21b7c1c1d1991bb908d89e4e9dddfe3e0",
+        "mutable": false,
+        "version_comment": "v7.0.0",
+        "kind": "external"
+      },
+      {
+        "line": 73,
+        "action": "actions/setup-python",
+        "pinned_sha": "ece7cb06caefa5fff74198d8649806c4678c61a1",
+        "mutable": false,
+        "version_comment": "v6",
+        "kind": "external"
+      },
+      {
+        "line": 151,
+        "action": "actions/checkout",
+        "pinned_sha": "9c091bb21b7c1c1d1991bb908d89e4e9dddfe3e0",
+        "mutable": false,
+        "version_comment": "v7.0.0",
+        "kind": "external"
+      },
+      {
+        "line": 156,
+        "action": "actions/setup-python",
+        "pinned_sha": "ece7cb06caefa5fff74198d8649806c4678c61a1",
+        "mutable": false,
+        "version_comment": "v6",
+        "kind": "external"
+      }
+    ],
+    "physics-release-scorecard-gate.yml": [
+      {
+        "line": 38,
+        "action": "actions/checkout",
+        "pinned_sha": "9c091bb21b7c1c1d1991bb908d89e4e9dddfe3e0",
+        "mutable": false,
+        "version_comment": "v7.0.0",
+        "kind": "external"
+      },
+      {
+        "line": 41,
+        "action": "actions/setup-python",
+        "pinned_sha": "ece7cb06caefa5fff74198d8649806c4678c61a1",
+        "mutable": false,
+        "version_comment": "v6",
+        "kind": "external"
+      }
+    ],
+    "physics-reliability-gate.yml": [
+      {
+        "line": 44,
+        "action": "actions/checkout",
+        "pinned_sha": "9c091bb21b7c1c1d1991bb908d89e4e9dddfe3e0",
+        "mutable": false,
+        "version_comment": "v7.0.0",
+        "kind": "external"
+      },
+      {
+        "line": 47,
+        "action": "actions/setup-python",
+        "pinned_sha": "ece7cb06caefa5fff74198d8649806c4678c61a1",
+        "mutable": false,
+        "version_comment": "v6",
+        "kind": "external"
+      }
+    ],
+    "pr-fast-diagnostics.yml": [
+      {
+        "line": 37,
+        "action": "actions/checkout",
+        "pinned_sha": "9c091bb21b7c1c1d1991bb908d89e4e9dddfe3e0",
+        "mutable": false,
+        "version_comment": "v7.0.0",
+        "kind": "external"
+      },
+      {
+        "line": 42,
+        "ref": "./.github/actions/setup-geosync",
+        "kind": "local",
+        "pinned_sha": null,
+        "version": null
+      },
+      {
+        "line": 152,
+        "action": "actions/upload-artifact",
+        "pinned_sha": "043fb46d1a93c77aae656e7c1c64a875d1fc6a0a",
+        "mutable": false,
+        "version_comment": "v7.0.1",
+        "kind": "external"
+      }
+    ],
+    "pr-gate.yml": [
+      {
+        "line": 31,
+        "action": "actions/checkout",
+        "pinned_sha": "9c091bb21b7c1c1d1991bb908d89e4e9dddfe3e0",
+        "mutable": false,
+        "version_comment": "v7.0.0",
+        "kind": "external"
+      },
+      {
+        "line": 95,
+        "action": "actions/checkout",
+        "pinned_sha": "9c091bb21b7c1c1d1991bb908d89e4e9dddfe3e0",
+        "mutable": false,
+        "version_comment": "v7.0.0",
+        "kind": "external"
+      },
+      {
+        "line": 100,
+        "action": "actions/setup-python",
+        "pinned_sha": "ece7cb06caefa5fff74198d8649806c4678c61a1",
+        "mutable": false,
+        "version_comment": "v6",
+        "kind": "external"
+      },
+      {
+        "line": 155,
+        "action": "actions/checkout",
+        "pinned_sha": "9c091bb21b7c1c1d1991bb908d89e4e9dddfe3e0",
+        "mutable": false,
+        "version_comment": "v7.0.0",
+        "kind": "external"
+      },
+      {
+        "line": 160,
+        "ref": "./.github/actions/setup-geosync",
+        "kind": "local",
+        "pinned_sha": null,
+        "version": null
+      },
+      {
+        "line": 221,
+        "action": "actions/checkout",
+        "pinned_sha": "9c091bb21b7c1c1d1991bb908d89e4e9dddfe3e0",
+        "mutable": false,
+        "version_comment": "v7.0.0",
+        "kind": "external"
+      },
+      {
+        "line": 226,
+        "ref": "./.github/actions/setup-geosync",
+        "kind": "local",
+        "pinned_sha": null,
+        "version": null
+      },
+      {
+        "line": 412,
+        "action": "actions/checkout",
+        "pinned_sha": "9c091bb21b7c1c1d1991bb908d89e4e9dddfe3e0",
+        "mutable": false,
+        "version_comment": "v7.0.0",
+        "kind": "external"
+      },
+      {
+        "line": 417,
+        "ref": "./.github/actions/setup-geosync",
+        "kind": "local",
+        "pinned_sha": null,
+        "version": null
+      },
+      {
+        "line": 525,
+        "action": "actions/checkout",
+        "pinned_sha": "9c091bb21b7c1c1d1991bb908d89e4e9dddfe3e0",
+        "mutable": false,
+        "version_comment": "v7.0.0",
+        "kind": "external"
+      },
+      {
+        "line": 556,
+        "action": "actions/setup-node",
+        "pinned_sha": "48b55a011bda9f5d6aeb4c2d9c7362e8dae4041e",
+        "mutable": false,
+        "version_comment": "v6.4.0",
+        "kind": "external"
+      },
+      {
+        "line": 583,
+        "action": "actions/checkout",
+        "pinned_sha": "9c091bb21b7c1c1d1991bb908d89e4e9dddfe3e0",
+        "mutable": false,
+        "version_comment": "v7.0.0",
+        "kind": "external"
+      },
+      {
+        "line": 614,
+        "action": "actions/setup-python",
+        "pinned_sha": "ece7cb06caefa5fff74198d8649806c4678c61a1",
+        "mutable": false,
+        "version_comment": "v6",
+        "kind": "external"
+      },
+      {
+        "line": 631,
+        "action": "actions/cache",
+        "pinned_sha": "55cc8345863c7cc4c66a329aec7e433d2d1c52a9",
+        "mutable": false,
+        "version_comment": "v4.2.4",
+        "kind": "external"
+      },
+      {
+        "line": 691,
+        "action": "actions/checkout",
+        "pinned_sha": "9c091bb21b7c1c1d1991bb908d89e4e9dddfe3e0",
+        "mutable": false,
+        "version_comment": "v7.0.0",
+        "kind": "external"
+      },
+      {
+        "line": 695,
+        "action": "actions/dependency-review-action",
+        "pinned_sha": "a1d282b36b6f3519aa1f3fc636f609c47dddb294",
+        "mutable": false,
+        "version_comment": "v5.0.0",
+        "kind": "external"
+      },
+      {
+        "line": 712,
+        "action": "actions/checkout",
+        "pinned_sha": "9c091bb21b7c1c1d1991bb908d89e4e9dddfe3e0",
+        "mutable": false,
+        "version_comment": "v7.0.0",
+        "kind": "external"
+      },
+      {
+        "line": 717,
+        "ref": "./.github/actions/setup-geosync",
+        "kind": "local",
+        "pinned_sha": null,
+        "version": null
+      },
+      {
+        "line": 782,
+        "action": "actions/checkout",
+        "pinned_sha": "9c091bb21b7c1c1d1991bb908d89e4e9dddfe3e0",
+        "mutable": false,
+        "version_comment": "v7.0.0",
+        "kind": "external"
+      },
+      {
+        "line": 802,
+        "action": "actions/setup-go",
+        "pinned_sha": "924ae3a1cded613372ab5595356fb5720e22ba16",
+        "mutable": false,
+        "version_comment": "v5",
+        "kind": "external"
+      }
+    ],
+    "pr-lane-collision-gate.yml": [
+      {
+        "line": 38,
+        "action": "actions/checkout",
+        "pinned_sha": "9c091bb21b7c1c1d1991bb908d89e4e9dddfe3e0",
+        "mutable": false,
+        "version_comment": "v7.0.0",
+        "kind": "external"
+      },
+      {
+        "line": 41,
+        "action": "actions/setup-python",
+        "pinned_sha": "ece7cb06caefa5fff74198d8649806c4678c61a1",
+        "mutable": false,
+        "version_comment": "v6",
+        "kind": "external"
+      }
+    ],
+    "promptops-validator.yml": [
+      {
+        "line": 23,
+        "action": "actions/checkout",
+        "pinned_sha": "9c091bb21b7c1c1d1991bb908d89e4e9dddfe3e0",
+        "mutable": false,
+        "version_comment": "v7.0.0",
+        "kind": "external"
+      },
+      {
+        "line": 26,
+        "action": "actions/setup-python",
+        "pinned_sha": "ece7cb06caefa5fff74198d8649806c4678c61a1",
+        "mutable": false,
+        "version_comment": "v6.0.0",
+        "kind": "external"
+      },
+      {
+        "line": 53,
+        "action": "actions/upload-artifact",
+        "pinned_sha": "043fb46d1a93c77aae656e7c1c64a875d1fc6a0a",
+        "mutable": false,
+        "version_comment": "v4",
+        "kind": "external"
+      }
+    ],
+    "readiness-gate.yml": [
+      {
+        "line": 24,
+        "action": "actions/checkout",
+        "pinned_sha": "9c091bb21b7c1c1d1991bb908d89e4e9dddfe3e0",
+        "mutable": false,
+        "version_comment": "v7.0.0",
+        "kind": "external"
+      },
+      {
+        "line": 55,
+        "action": "actions/upload-artifact",
+        "pinned_sha": "043fb46d1a93c77aae656e7c1c64a875d1fc6a0a",
+        "mutable": false,
+        "version_comment": "v4",
+        "kind": "external"
+      }
+    ],
+    "reality-validators-gate.yml": [
+      {
+        "line": 68,
+        "action": "actions/checkout",
+        "pinned_sha": "9c091bb21b7c1c1d1991bb908d89e4e9dddfe3e0",
+        "mutable": false,
+        "version_comment": "v7.0.0",
+        "kind": "external"
+      },
+      {
+        "line": 71,
+        "action": "actions/setup-python",
+        "pinned_sha": "ece7cb06caefa5fff74198d8649806c4678c61a1",
+        "mutable": false,
+        "version_comment": "v6",
+        "kind": "external"
+      },
+      {
+        "line": 94,
+        "action": "actions/checkout",
+        "pinned_sha": "9c091bb21b7c1c1d1991bb908d89e4e9dddfe3e0",
+        "mutable": false,
+        "version_comment": "v7.0.0",
+        "kind": "external"
+      },
+      {
+        "line": 97,
+        "action": "actions/setup-python",
+        "pinned_sha": "ece7cb06caefa5fff74198d8649806c4678c61a1",
+        "mutable": false,
+        "version_comment": "v6",
+        "kind": "external"
+      },
+      {
+        "line": 120,
+        "action": "actions/checkout",
+        "pinned_sha": "9c091bb21b7c1c1d1991bb908d89e4e9dddfe3e0",
+        "mutable": false,
+        "version_comment": "v7.0.0",
+        "kind": "external"
+      },
+      {
+        "line": 123,
+        "action": "actions/setup-python",
+        "pinned_sha": "ece7cb06caefa5fff74198d8649806c4678c61a1",
+        "mutable": false,
+        "version_comment": "v6",
+        "kind": "external"
+      },
+      {
+        "line": 151,
+        "action": "actions/checkout",
+        "pinned_sha": "9c091bb21b7c1c1d1991bb908d89e4e9dddfe3e0",
+        "mutable": false,
+        "version_comment": "v7.0.0",
+        "kind": "external"
+      },
+      {
+        "line": 154,
+        "action": "actions/setup-python",
+        "pinned_sha": "ece7cb06caefa5fff74198d8649806c4678c61a1",
+        "mutable": false,
+        "version_comment": "v6",
+        "kind": "external"
+      },
+      {
+        "line": 200,
+        "action": "actions/checkout",
+        "pinned_sha": "9c091bb21b7c1c1d1991bb908d89e4e9dddfe3e0",
+        "mutable": false,
+        "version_comment": "v7.0.0",
+        "kind": "external"
+      },
+      {
+        "line": 203,
+        "action": "actions/setup-python",
+        "pinned_sha": "ece7cb06caefa5fff74198d8649806c4678c61a1",
+        "mutable": false,
+        "version_comment": "v6",
+        "kind": "external"
+      }
+    ],
+    "release-gate.yml": [
+      {
+        "line": 38,
+        "action": "actions/checkout",
+        "pinned_sha": "9c091bb21b7c1c1d1991bb908d89e4e9dddfe3e0",
+        "mutable": false,
+        "version_comment": "v7.0.0",
+        "kind": "external"
+      },
+      {
+        "line": 43,
+        "action": "actions/setup-python",
+        "pinned_sha": "ece7cb06caefa5fff74198d8649806c4678c61a1",
+        "mutable": false,
+        "version_comment": "v6",
+        "kind": "external"
+      },
+      {
+        "line": 56,
+        "action": "actions/upload-artifact",
+        "pinned_sha": "043fb46d1a93c77aae656e7c1c64a875d1fc6a0a",
+        "mutable": false,
+        "version_comment": "v7.0.1",
+        "kind": "external"
+      }
+    ],
+    "repo-integrity-gate.yml": [
+      {
+        "line": 73,
+        "action": "actions/checkout",
+        "pinned_sha": "9c091bb21b7c1c1d1991bb908d89e4e9dddfe3e0",
+        "mutable": false,
+        "version_comment": "v7.0.0",
+        "kind": "external"
+      },
+      {
+        "line": 76,
+        "action": "actions/setup-python",
+        "pinned_sha": "ece7cb06caefa5fff74198d8649806c4678c61a1",
+        "mutable": false,
+        "version_comment": "v6",
+        "kind": "external"
+      }
+    ],
+    "reproducible-capsule.yml": [
+      {
+        "line": 58,
+        "action": "actions/checkout",
+        "pinned_sha": "9c091bb21b7c1c1d1991bb908d89e4e9dddfe3e0",
+        "mutable": false,
+        "version_comment": "v7.0.0",
+        "kind": "external"
+      },
+      {
+        "line": 61,
+        "action": "actions/setup-python",
+        "pinned_sha": "ece7cb06caefa5fff74198d8649806c4678c61a1",
+        "mutable": false,
+        "version_comment": "v6",
+        "kind": "external"
+      },
+      {
+        "line": 79,
+        "action": "actions/upload-artifact",
+        "pinned_sha": "043fb46d1a93c77aae656e7c1c64a875d1fc6a0a",
+        "mutable": false,
+        "version_comment": "v7.0.1",
+        "kind": "external"
+      }
+    ],
+    "research-integrity-gate.yml": [
+      {
+        "line": 102,
+        "action": "actions/checkout",
+        "pinned_sha": "9c091bb21b7c1c1d1991bb908d89e4e9dddfe3e0",
+        "mutable": false,
+        "version_comment": null,
+        "kind": "external"
+      },
+      {
+        "line": 109,
+        "action": "actions/setup-python",
+        "pinned_sha": "ece7cb06caefa5fff74198d8649806c4678c61a1",
+        "mutable": false,
+        "version_comment": null,
+        "kind": "external"
+      },
+      {
+        "line": 150,
+        "action": "actions/upload-artifact",
+        "pinned_sha": "043fb46d1a93c77aae656e7c1c64a875d1fc6a0a",
+        "mutable": false,
+        "version_comment": null,
+        "kind": "external"
+      },
+      {
+        "line": 192,
+        "action": "actions/upload-artifact",
+        "pinned_sha": "043fb46d1a93c77aae656e7c1c64a875d1fc6a0a",
+        "mutable": false,
+        "version_comment": null,
+        "kind": "external"
+      },
+      {
+        "line": 254,
+        "action": "actions/upload-artifact",
+        "pinned_sha": "043fb46d1a93c77aae656e7c1c64a875d1fc6a0a",
+        "mutable": false,
+        "version_comment": null,
+        "kind": "external"
+      }
+    ],
+    "research-standard-contract.yml": [
+      {
+        "line": 23,
+        "action": "actions/checkout",
+        "pinned_sha": "9c091bb21b7c1c1d1991bb908d89e4e9dddfe3e0",
+        "mutable": false,
+        "version_comment": "v7.0.0",
+        "kind": "external"
+      },
+      {
+        "line": 26,
+        "action": "actions/setup-python",
+        "pinned_sha": "ece7cb06caefa5fff74198d8649806c4678c61a1",
+        "mutable": false,
+        "version_comment": "v6.0.0",
+        "kind": "external"
+      }
+    ],
+    "ricci-microstructure-gate.yml": [
+      {
+        "line": 36,
+        "action": "actions/checkout",
+        "pinned_sha": "9c091bb21b7c1c1d1991bb908d89e4e9dddfe3e0",
+        "mutable": false,
+        "version_comment": "v7.0.0",
+        "kind": "external"
+      },
+      {
+        "line": 38,
+        "action": "actions/setup-python",
+        "pinned_sha": "ece7cb06caefa5fff74198d8649806c4678c61a1",
+        "mutable": false,
+        "version_comment": "v6",
+        "kind": "external"
+      },
+      {
+        "line": 100,
+        "action": "actions/upload-artifact",
+        "pinned_sha": "043fb46d1a93c77aae656e7c1c64a875d1fc6a0a",
+        "mutable": false,
+        "version_comment": "v7.0.1",
+        "kind": "external"
+      },
+      {
+        "line": 117,
+        "action": "actions/checkout",
+        "pinned_sha": "9c091bb21b7c1c1d1991bb908d89e4e9dddfe3e0",
+        "mutable": false,
+        "version_comment": "v7.0.0",
+        "kind": "external"
+      },
+      {
+        "line": 119,
+        "action": "anchore/sbom-action",
+        "pinned_sha": "e22c389904149dbc22b58101806040fa8d37a610",
+        "mutable": false,
+        "version_comment": "v0.24.0",
+        "kind": "external"
+      },
+      {
+        "line": 125,
+        "action": "anchore/scan-action",
+        "pinned_sha": "e1165082ffb1fe366ebaf02d8526e7c4989ea9d2",
+        "mutable": false,
+        "version_comment": "v6.0.0",
+        "kind": "external"
+      },
+      {
+        "line": 131,
+        "action": "actions/attest-build-provenance",
+        "pinned_sha": "0f67c3f4856b2e3261c31976d6725780e5e4c373",
+        "mutable": false,
+        "version_comment": "v4.1.1",
+        "kind": "external"
+      }
+    ],
+    "rvg.yml": [
+      {
+        "line": 31,
+        "action": "actions/checkout",
+        "pinned_sha": "9c091bb21b7c1c1d1991bb908d89e4e9dddfe3e0",
+        "mutable": false,
+        "version_comment": "v4",
+        "kind": "external"
+      },
+      {
+        "line": 33,
+        "action": "actions/setup-python",
+        "pinned_sha": "a309ff8b426b58ec0e2a45f0f869d46889d02405",
+        "mutable": false,
+        "version_comment": "v5",
+        "kind": "external"
+      },
+      {
+        "line": 97,
+        "action": "actions/upload-artifact",
+        "pinned_sha": "043fb46d1a93c77aae656e7c1c64a875d1fc6a0a",
+        "mutable": false,
+        "version_comment": "v4",
+        "kind": "external"
+      }
+    ],
+    "schemathesis-contract.yml": [
+      {
+        "line": 67,
+        "action": "actions/checkout",
+        "pinned_sha": "9c091bb21b7c1c1d1991bb908d89e4e9dddfe3e0",
+        "mutable": false,
+        "version_comment": "v7.0.0",
+        "kind": "external"
+      },
+      {
+        "line": 70,
+        "action": "actions/setup-python",
+        "pinned_sha": "ece7cb06caefa5fff74198d8649806c4678c61a1",
+        "mutable": false,
+        "version_comment": "v6",
+        "kind": "external"
+      },
+      {
+        "line": 101,
+        "action": "actions/upload-artifact",
+        "pinned_sha": "043fb46d1a93c77aae656e7c1c64a875d1fc6a0a",
+        "mutable": false,
+        "version_comment": "v7.0.1",
+        "kind": "external"
+      }
+    ],
+    "security-deep.yml": [
+      {
+        "line": 38,
+        "action": "actions/checkout",
+        "pinned_sha": "9c091bb21b7c1c1d1991bb908d89e4e9dddfe3e0",
+        "mutable": false,
+        "version_comment": "v7.0.0",
+        "kind": "external"
+      },
+      {
+        "line": 41,
+        "ref": "./.github/actions/setup-geosync",
+        "kind": "local",
+        "pinned_sha": null,
+        "version": null
+      },
+      {
+        "line": 86,
+        "action": "actions/checkout",
+        "pinned_sha": "9c091bb21b7c1c1d1991bb908d89e4e9dddfe3e0",
+        "mutable": false,
+        "version_comment": "v7.0.0",
+        "kind": "external"
+      },
+      {
+        "line": 106,
+        "action": "actions/checkout",
+        "pinned_sha": "9c091bb21b7c1c1d1991bb908d89e4e9dddfe3e0",
+        "mutable": false,
+        "version_comment": "v7.0.0",
+        "kind": "external"
+      },
+      {
+        "line": 132,
+        "action": "actions/checkout",
+        "pinned_sha": "9c091bb21b7c1c1d1991bb908d89e4e9dddfe3e0",
+        "mutable": false,
+        "version_comment": "v7.0.0",
+        "kind": "external"
+      },
+      {
+        "line": 135,
+        "action": "actions/setup-python",
+        "pinned_sha": "ece7cb06caefa5fff74198d8649806c4678c61a1",
+        "mutable": false,
+        "version_comment": "v6",
+        "kind": "external"
+      }
+    ],
+    "service-manifest-audit.yml": [
+      {
+        "line": 29,
+        "action": "actions/checkout",
+        "pinned_sha": "9c091bb21b7c1c1d1991bb908d89e4e9dddfe3e0",
+        "mutable": false,
+        "version_comment": "v7.0.0",
+        "kind": "external"
+      },
+      {
+        "line": 30,
+        "action": "actions/setup-python",
+        "pinned_sha": "ece7cb06caefa5fff74198d8649806c4678c61a1",
+        "mutable": false,
+        "version_comment": "v6.3.0",
+        "kind": "external"
+      }
+    ],
+    "truth-gate-mutation.yml": [
+      {
+        "line": 40,
+        "action": "actions/checkout",
+        "pinned_sha": "9c091bb21b7c1c1d1991bb908d89e4e9dddfe3e0",
+        "mutable": false,
+        "version_comment": "v7.0.0",
+        "kind": "external"
+      },
+      {
+        "line": 43,
+        "action": "actions/setup-python",
+        "pinned_sha": "ece7cb06caefa5fff74198d8649806c4678c61a1",
+        "mutable": false,
+        "version_comment": "v6",
+        "kind": "external"
+      }
+    ],
+    "ux-state-coverage.yml": [
+      {
+        "line": 58,
+        "action": "actions/checkout",
+        "pinned_sha": "9c091bb21b7c1c1d1991bb908d89e4e9dddfe3e0",
+        "mutable": false,
+        "version_comment": "v7.0.0",
+        "kind": "external"
+      },
+      {
+        "line": 61,
+        "action": "actions/setup-python",
+        "pinned_sha": "ece7cb06caefa5fff74198d8649806c4678c61a1",
+        "mutable": false,
+        "version_comment": "v6",
+        "kind": "external"
+      },
+      {
+        "line": 92,
+        "action": "actions/upload-artifact",
+        "pinned_sha": "043fb46d1a93c77aae656e7c1c64a875d1fc6a0a",
+        "mutable": false,
+        "version_comment": "v7.0.1",
+        "kind": "external"
+      }
+    ],
+    "wheel-contract-gate.yml": [
+      {
+        "line": 48,
+        "action": "actions/checkout",
+        "pinned_sha": "9c091bb21b7c1c1d1991bb908d89e4e9dddfe3e0",
+        "mutable": false,
+        "version_comment": "v7.0.0",
+        "kind": "external"
+      },
+      {
+        "line": 53,
+        "action": "actions/setup-python",
+        "pinned_sha": "ece7cb06caefa5fff74198d8649806c4678c61a1",
+        "mutable": false,
+        "version_comment": "v6",
+        "kind": "external"
+      },
+      {
+        "line": 65,
+        "action": "actions/upload-artifact",
+        "pinned_sha": "043fb46d1a93c77aae656e7c1c64a875d1fc6a0a",
+        "mutable": false,
+        "version_comment": "v7.0.1",
+        "kind": "external"
+      }
+    ]
+  }
+}

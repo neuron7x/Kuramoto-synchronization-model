@@ -1,5 +1,5 @@
 ---
-owner: platform@tradepulse.example
+owner: platform@geosync.example
 review_cadence: quarterly
 last_reviewed: 2025-02-14
 links:
@@ -38,7 +38,7 @@ Describe the primary pagination strategy and when it applies.
 ## Examples
 
 ```bash
-curl "https://api.tradepulse.example/v1/resource?cursor=...&limit=50"
+curl "https://api.geosync.example/v1/resource?cursor=...&limit=50"
 ```
 
 ```json

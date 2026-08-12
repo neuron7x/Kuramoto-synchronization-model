@@ -1,19 +1,19 @@
 # Zero Trust Service Mesh Runbook
 
-This runbook defines the operational guide for enforcing zero trust networking across TradePulse services using an Istio-based service mesh. It covers workload identities, certificate authority integration, intent-based authorization, observability hooks, and incident response.
+This runbook defines the operational guide for enforcing zero trust networking across GeoSync services using an Istio-based service mesh. It covers workload identities, certificate authority integration, intent-based authorization, observability hooks, and incident response.
 
 ## Architecture Overview
 
 - **Service mesh** – Istio provides multi-cluster capability, SPIFFE-compliant workload identities, and sidecarless ambient mode for latency-sensitive execution services. The mesh controls east-west traffic for ingestion, strategy, execution, and UI workloads alongside shared infrastructure such as the metrics exporters described in `observability/exporters.py`.
 - **Control plane** – The Istio control plane (istiod) runs in a hardened `mesh-system` namespace with restricted RBAC. Configuration is managed via GitOps, mirroring the broader configuration approach documented in [`docs/deployment.md`](../deployment.md).
-- **Data plane** – Sidecars (or ambient ztunnel/waypoint proxies) are injected into Kubernetes namespaces matching TradePulse components. Injection is toggled through namespace labels so batch jobs (e.g., backtests) can opt-in when they expose HTTP/gRPC APIs.
+- **Data plane** – Sidecars (or ambient ztunnel/waypoint proxies) are injected into Kubernetes namespaces matching GeoSync components. Injection is toggled through namespace labels so batch jobs (e.g., backtests) can opt-in when they expose HTTP/gRPC APIs.
 
 ## SPIFFE Identity Schema
 
 All workloads obtain SPIFFE identities from the mesh using the following schema:
 
 ```
-spiffe://tradepulse/<environment>/<service>[/<workload>]
+spiffe://geosync/<environment>/<service>[/<workload>]
 ```
 
 - `<environment>` – `dev`, `staging`, or `prod` to match the deployment environments referenced in [`observability/tracing.py`](../../observability/tracing.py) resource attributes.
@@ -42,7 +42,7 @@ spiffe://tradepulse/<environment>/<service>[/<workload>]
   3. Reload istiod pods so the new certificate takes effect.
   4. Validate that workloads receive new certificates via `istioctl proxy-config secret`.
 
-## Policy Mapping to TradePulse Services
+## Policy Mapping to GeoSync Services
 
 | Service family | Repository scope | Allowed mesh intents | Denied intents |
 | -------------- | ---------------- | -------------------- | -------------- |
@@ -105,5 +105,5 @@ Mesh-related outages follow the broader incident process described in [`docs/inc
 
 - [`docs/governance.md`](../governance.md) – Access policy governance and review cadence.
 - [`docs/deployment.md`](../deployment.md) – Deployment expectations, including secret rotation practices.
-- [`docs/incident_playbooks.md`](../incident_playbooks.md) – Primary incident response playbooks for TradePulse.
+- [`docs/incident_playbooks.md`](../incident_playbooks.md) – Primary incident response playbooks for GeoSync.
 - [`observability/`](../../observability/README.md) – Telemetry catalogue, alerting rules, and tracing helpers leveraged by the mesh.

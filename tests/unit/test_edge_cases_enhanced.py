@@ -1,4 +1,5 @@
-# SPDX-License-Identifier: LicenseRef-TradePulse-Proprietary
+# Copyright (c) 2023-2026 Yaroslav Vasylenko (neuron7xLab)
+# SPDX-License-Identifier: MIT
 """Edge case tests for numerical stability in indicators and calculations.
 
 This module validates that indicators and numerical computations handle
@@ -16,6 +17,7 @@ These tests complement the main unit tests by focusing specifically on
 boundary conditions and numerical edge cases that could cause instability
 in production.
 """
+
 from __future__ import annotations
 
 import numpy as np
@@ -88,9 +90,7 @@ class TestNumericalEdgeCases:
         assert size >= 0.0, "Size should be non-negative"
         assert not np.isinf(size), "Size should not be infinite"
         # With low price, size could be large but cost should be bounded
-        assert (
-            size * 0.001 <= 1000.0 * 0.1 * 1.01
-        ), "Cost should not exceed risk capital"
+        assert size * 0.001 <= 1000.0 * 0.1 * 1.01, "Cost should not exceed risk capital"
 
     def test_portfolio_heat_with_empty_positions(self) -> None:
         """Test portfolio heat calculation with no positions.

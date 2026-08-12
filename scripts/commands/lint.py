@@ -1,3 +1,5 @@
+# Copyright (c) 2023-2026 Yaroslav Vasylenko (neuron7xLab)
+# SPDX-License-Identifier: MIT
 """Linting subcommand implementation."""
 
 from __future__ import annotations
@@ -11,7 +13,7 @@ from typing import Callable, Sequence
 
 from scripts.commands.base import ensure_tools_exist, register, run_subprocess
 
-# SPDX-License-Identifier: LicenseRef-TradePulse-Proprietary
+# SPDX-License-Identifier: MIT
 
 
 LOGGER = logging.getLogger(__name__)
@@ -101,9 +103,7 @@ def _discover_python_targets() -> list[str]:
     targets = sorted(candidates)
 
     if not targets:
-        LOGGER.info(
-            "No Python file changes detected – skipping formatter and linter checks."
-        )
+        LOGGER.info("No Python file changes detected – skipping formatter and linter checks.")
     else:
         LOGGER.debug("Python lint targets: %s", ", ".join(targets))
 

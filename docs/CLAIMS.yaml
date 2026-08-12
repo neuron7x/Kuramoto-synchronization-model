@@ -1,0 +1,964 @@
+# Claim/evidence registry — fail-closed gate for canonical claims.
+#
+# Each claim is a public assertion the repository makes about itself
+# ("the cross-asset Kuramoto strategy survives 5 walk-forward folds",
+# "the BacktesterCAL session is bit-identical across repeated runs",
+# "the executable ledger is overflow-safe").
+#
+# A claim is admitted to canonical state only when every path listed
+# under `evidence_paths` exists and is tracked. CI enforces this via
+# `scripts/ci/check_claims.py`; missing evidence on a P0 / P1 claim
+# fails the build.
+#
+# ---------------------------------------------------------------------
+# Schema v2 (2026-05-03, IERD-PAI-FPS-UX-001 adoption)
+# ---------------------------------------------------------------------
+#
+# Per-claim fields:
+#
+#   id              : str   — unique identifier (kebab-case).
+#   priority        : str   — one of {P0, P1, P2}. P0/P1 are gated.
+#   tier            : str   — IERD tier: ANCHORED | EXTRAPOLATED |
+#                              SPECULATIVE | UNKNOWN. Required at v2.
+#   description     : str   — one-sentence statement of the claim.
+#   evidence_paths  : list  — repo-relative paths required to exist.
+#                              Source files, tests, frozen artefacts.
+#   added_utc       : str   — ISO 8601 UTC date claim was registered.
+#
+# Tier semantics:
+#
+#   ANCHORED
+#     Evidence is complete: every artefact in evidence_paths exists,
+#     a falsifying test exists and is referenced, and the surface
+#     statement matches what the test verifies.
+#
+#   EXTRAPOLATED
+#     Evidence is partial: at least one of (test, artefact, citation)
+#     is named but has known limitation. The claim's description must
+#     explicitly enumerate the missing evidence and the confidence
+#     ceiling. May appear in product docs only with the limitation cited.
+#
+#   SPECULATIVE
+#     Hypothesis only — no falsifying test exists yet. Forbidden in
+#     README, product docs, API docs, and reports. Allowed only in
+#     research notes (paper/, research/, docs/research/).
+#
+#   UNKNOWN
+#     Tier not yet assessed. Must have a tracking issue and a deadline
+#     for re-classification. Treat as SPECULATIVE for surface text.
+#
+# Adding a claim: append an entry, ensure every evidence_path is
+# present, run `python scripts/ci/check_claims.py` locally before push.
+# Promoting a P2 → P1 / P0 is a *contract change* and should be
+# reviewed as carefully as a public API rename.
+# Promoting EXTRAPOLATED → ANCHORED is a *contract change*: either
+# the missing evidence has been added, or the description was tightened.
+
+schema_version: 3
+
+claims:
+
+  - id: hpc-runtime-state-seal-bit-identical
+    priority: P0
+    tier: ANCHORED
+    description: >
+      BacktesterCAL.run produces bit-identical output on repeated calls
+      against the same calibrated instance — every streaming component
+      (FeatureStore, RegimeModel, Guardrails, Execution, ConformalCQR)
+      rewinds to its post-calibration baseline.
+    evidence_paths:
+      - geosync_hpc/backtest.py
+      - geosync_hpc/features.py
+      - geosync_hpc/regime.py
+      - geosync_hpc/risk.py
+      - geosync_hpc/conformal.py
+      - geosync_hpc/execution.py
+      - tests/geosync_hpc/test_backtest_runtime_reset.py
+    falsifier:
+      test_id: tests/geosync_hpc/test_backtest_runtime_reset.py::test_backtester_run_is_bit_identical_across_repeated_calls
+      invariants_cited:
+        - INV-HPC1
+      failure_signature: >
+        Two repeated invocations of BacktesterCAL.run on the same
+        calibrated instance and identical input produce a result tuple
+        whose hash differs by any byte (or any element of the result
+        whose binary representation differs by any ULP on identical
+        hardware). The test asserts deep equality on the canonical
+        result envelope; any divergence prints the offending field
+        path and triggers AssertionError naming INV-HPC1.
+    added_utc: "2026-04-25"
+    last_updated_utc: "2026-05-08"
+
+  - id: hpc-fixed-point-ledger-conservation
+    priority: P0
+    tier: ANCHORED
+    description: >
+      The fixed-point execution ledger preserves the conservation
+      identity (cash + position*mark = const, modulo trade cost) to
+      the cent on every (fill, qty, fee, mark) tuple in the int64
+      safety envelope — verified across 300 Hypothesis-random fills.
+    evidence_paths:
+      - geosync_hpc/ledger.py
+      - tests/geosync_hpc/test_ledger.py
+    falsifier:
+      test_id: tests/geosync_hpc/test_ledger.py::test_conservation_holds_under_random_fills
+      invariants_cited:
+        - INV-HPC3
+      failure_signature: >
+        Hypothesis-generated (fill, qty, fee, mark) sequence within the
+        int64 envelope where geosync_hpc.ledger.conservation_holds()
+        returns False, OR where two permutations of the same independent
+        fill set produce different terminal LedgerState values
+        (test_sequential_fills_sum_commutes_over_permutations). Either
+        violation surfaces as an AssertionError citing INV-HPC3.
+    added_utc: "2026-04-25"
+    last_updated_utc: "2026-05-08"
+
+  - id: hpc-indexed-rng-control-flow-free
+    priority: P0
+    tier: ANCHORED
+    description: >
+      Event-addressed RNG (BLAKE2b → PCG64 keyed by
+      seed/stream/event_id/event_index) returns the same value for
+      the same 4-tuple regardless of how many other draws occurred
+      between addressed draws — control-flow refactors no longer
+      perturb addressed values.
+    evidence_paths:
+      - geosync_hpc/indexed_rng.py
+      - tests/geosync_hpc/test_indexed_rng.py
+    falsifier:
+      test_id: tests/geosync_hpc/test_indexed_rng.py::test_same_tuple_yields_same_value
+      invariants_cited:
+        - INV-HPC1
+      failure_signature: >
+        Two evaluations of the indexed RNG with identical
+        (seed, stream, event_id, event_index) tuple produce different
+        floating-point values, OR the same tuple produces a different
+        value across two fresh IndexedRng instances
+        (test_same_tuple_across_fresh_instances_yields_same_value).
+        Both failures surface as AssertionError citing INV-HPC1.
+    added_utc: "2026-04-25"
+    last_updated_utc: "2026-05-08"
+
+  - id: hpc-runtime-state-envelope-integrity
+    priority: P0
+    tier: ANCHORED
+    description: >
+      Snapshot/restore envelope is typed (envelope_version),
+      versioned (schema_version), and SHA-256-checksummed; tampered
+      payloads, mismatched schema versions, unknown envelope versions,
+      and non-finite payload values all fail-closed at load.
+    evidence_paths:
+      - geosync_hpc/runtime_state.py
+      - tests/geosync_hpc/test_runtime_state.py
+    falsifier:
+      test_id: tests/geosync_hpc/test_runtime_state.py::test_load_detects_tampered_payload
+      invariants_cited:
+        - INV-HPC4
+      failure_signature: >
+        A payload byte mutated post-checksum loads without raising
+        EnvelopeIntegrityError; OR a non-finite (NaN/Inf) value passes
+        load validation; OR two semantically identical payloads with
+        differently ordered dict keys produce different SHA-256
+        checksums (canonical-serialisation contract). Each surfaces
+        as an AssertionError citing INV-HPC4.
+    added_utc: "2026-04-25"
+    last_updated_utc: "2026-05-08"
+
+  - id: hpc-session-lifecycle-explicit-fsm
+    priority: P1
+    tier: ANCHORED
+    description: >
+      BacktesterCAL session lifecycle is an explicit FSM with
+      8 states, 13 declared transitions, terminal absorption, and
+      envelope-serialisable round-trip; invalid transitions raise
+      InvalidTransitionError rather than producing undeclared state.
+    evidence_paths:
+      - geosync_hpc/session_fsm.py
+      - tests/geosync_hpc/test_session_fsm.py
+    falsifier:
+      test_id: tests/geosync_hpc/test_session_fsm.py::test_canonical_happy_path_reaches_completed
+      invariants_cited:
+        - INV-HPC5
+      failure_signature: >
+        The canonical happy-path action sequence fails to reach the
+        COMPLETED terminal state; OR a terminal state has at least one
+        outgoing transition declared in the table; OR an
+        InvalidTransitionError fires AFTER a side effect on the FSM
+        (transition not pre-validated). Each surfaces as an
+        AssertionError citing INV-HPC5.
+    added_utc: "2026-04-25"
+    last_updated_utc: "2026-05-08"
+
+  - id: robustness-hac-psr-newey-west
+    priority: P1
+    tier: ANCHORED
+    description: >
+      Probabilistic Sharpe Ratio carries a HAC-adjusted variant via
+      Newey–West Bartlett kernel with the NW(1994) automatic
+      bandwidth, with effective-sample-size shrinkage under positive
+      autocorrelation verified analytically and on AR(1) fixtures.
+    evidence_paths:
+      - research/robustness/cpcv.py
+      - tests/research/robustness/test_hac_psr.py
+      - results/cross_asset_kuramoto/robustness_v1/ROBUSTNESS_LIMITATIONS.md
+    falsifier:
+      test_id: tests/research/robustness/test_hac_psr.py::test_auto_bandwidth_matches_newey_west_1994_rule
+      invariants_cited:
+        - INV-PSR-HAC
+      failure_signature: >
+        AR(1) fixture with ρ > 0 yielding n_eff ≥ n; OR ρ = 0 yielding
+        n_eff ≠ n; OR ρ < 0 yielding n_eff ≤ n; OR auto-bandwidth
+        output that is negative or non-integer; OR a deviation from
+        the NW(1994) automatic-bandwidth rule beyond the documented
+        small-sample tolerance. Each surfaces as an AssertionError
+        citing INV-PSR-HAC.
+    added_utc: "2026-04-25"
+    last_updated_utc: "2026-05-08"
+
+  - id: cross-asset-walkforward-artifact-integrity
+    priority: P1
+    tier: EXTRAPOLATED
+    description: >
+      The frozen cross-asset Kuramoto walk-forward bundle satisfies
+      the protocol thresholds (robust=True, ≥4/5 folds beat BTC,
+      median Sharpe > 0.5, |Δ| < 0.05 vs spike) and preserves the
+      2022 fold-3 loss (honesty gate against retro-tampering).
+      EXTRAPOLATED scope: artefact integrity is ANCHORED; the live
+      out-of-sample edge is conditioned on regime persistence — see
+      docs/audit/ierd_phase0_findings.md and the honest-null discussion
+      in docs/cross_asset_kuramoto/ for the p≈0.09 caveat.
+    evidence_paths:
+      - tests/core/cross_asset_kuramoto/test_walkforward_artifact.py
+      - results/cross_asset_kuramoto/walkforward_integrated.json
+      - results/cross_asset_kuramoto/PARAMETER_LOCK.json
+    added_utc: "2026-04-25"
+
+  - id: ricci-microstructure-ten-axis-falsification
+    priority: P1
+    tier: EXTRAPOLATED
+    description: >
+      The Ricci cross-sectional edge on L2 microstructure passes ten
+      orthogonal validation axes (kill test, block-bootstrap CI,
+      deflated Sharpe, purged CV, mutual info, lag attribution,
+      power spectrum, DFA Hurst, pairwise/conditional TE, rolling
+      walk-forward) on the frozen Session 1 substrate. Status
+      (Phase-1 falsifier audit, 2026-05-08): re-classified ANCHORED
+      → EXTRAPOLATED. The paper-tier evidence (FINDINGS.md, paper.tex)
+      is intact and the 10-axis result is reproducible from the frozen
+      substrate, but no programmatic falsifier-block currently exists
+      that re-runs the full 10-axis battery from a single pytest node
+      under the ADR 0021 v3 falsifier shape. Re-classify ANCHORED on
+      addition of `tests/research/microstructure/test_ten_axis.py`
+      with one parametrised test per axis, citing a new INV-RICCI-MS
+      invariant in the registry. Tracked as research-debt follow-up.
+    evidence_paths:
+      - research/microstructure/FINDINGS.md
+      - paper/ricci_microstructure/paper.tex
+      - paper/ricci_microstructure/references.bib
+    added_utc: "2026-04-25"
+    last_updated_utc: "2026-05-08"
+
+  # ---------------------------------------------------------------
+  # IERD Phase-0 (2026-05-03) — invariant-anchored physics claims.
+  # Each entry maps a CLAUDE.md INV-* registry block to the source
+  # module and falsifying test set. PAI computation cites these.
+  # ---------------------------------------------------------------
+
+  - id: kuramoto-order-parameter-bounded
+    priority: P0
+    tier: ANCHORED
+    description: >
+      Kuramoto order parameter R(t) is universally bounded
+      0 ≤ R(t) ≤ 1 for all t (INV-K1), and on the Ott–Antonsen
+      reduction |z(t)| ≤ 1 always (INV-OA1). Subcritical decay
+      R(t→∞) → 0 for K < K_c (INV-K2 / INV-OA3) and supercritical
+      growth R_∞ ∝ √(K − K_c) (INV-K3) are verified by sweep tests.
+    evidence_paths:
+      - core/kuramoto
+      - core/kuramoto/ott_antonsen.py
+      - tests/unit/physics/test_T23_ott_antonsen_chimera.py
+    falsifier:
+      test_id: tests/unit/physics/test_T23_ott_antonsen_chimera.py::test_ott_antonsen_order_parameter_bounded
+      invariants_cited:
+        - INV-K1
+        - INV-OA1
+        - INV-OA2
+      failure_signature: >
+        any |z(t)| > 1 in any sweep step OR R_∞ deviation from
+        √(1 − 2Δ/K) above 1e-3 on the Lorentzian fixture must
+        produce a 5-field assertion message naming INV-OA1 / INV-OA2.
+    added_utc: "2026-05-03"
+
+  - id: lyapunov-mle-finite-bounded
+    priority: P0
+    tier: ANCHORED
+    description: >
+      Maximum Lyapunov exponent (MLE) is finite for any bounded
+      finite input series (INV-LE1) and qualitatively classifies
+      regime: noise ≈ 0, stable < 0, chaos > 0 (INV-LE2). Spectral
+      graph Laplacian λ₂ ≥ 0 (INV-SG1) and λ₂ > 0 ⟺ connectivity
+      (INV-SG2) gate the coupling-graph viability.
+    evidence_paths:
+      - core/physics/lyapunov_exponent.py
+      - tests/unit/physics/test_T22_lyapunov_spectral.py
+    falsifier:
+      test_id: tests/unit/physics/test_T22_lyapunov_spectral.py::test_mle_finite_on_diverse_inputs
+      invariants_cited:
+        - INV-LE1
+        - INV-LE2
+        - INV-SG1
+        - INV-SG2
+      failure_signature: >
+        non-finite MLE on a bounded series or λ₂ < 0 on a Laplacian
+        must raise an INV-LE1 / INV-SG1 assertion message; sign-class
+        mismatch (chaos vs stable vs noise) must reference INV-LE2.
+    added_utc: "2026-05-03"
+
+  - id: serotonin-controller-bounded-veto
+    priority: P0
+    tier: ANCHORED
+    description: >
+      Serotonin ODE: Lyapunov V(s) non-increasing under zero stress
+      (INV-5HT1); s(t) ∈ [0, 1] always (INV-5HT2); sensitivity ∈
+      [0.1, 1.0] (INV-5HT4); tonic_level finite ≥ 0 (INV-5HT6);
+      veto fires on stress ≥ 1.0 OR |dd| ≥ 0.5 (INV-5HT7, SAFETY).
+      The "production-ready" verdict in surface docs is downgraded
+      to "tested under controlled fixtures" pending live-venue
+      evidence (KNOWN_LIMITATIONS L-1).
+    evidence_paths:
+      - core/neuro/serotonin_ode.py
+      - core/neuro/serotonin
+      - tests/core/neuro/serotonin/test_serotonin_controller.py
+      - tests/core/neuro/serotonin/test_serotonin_properties.py
+      - tests/unit/physics/test_T12_serotonin_stability.py
+    falsifier:
+      test_id: tests/unit/physics/test_T12_serotonin_stability.py::test_serotonin_lyapunov_is_non_increasing_under_zero_stress
+      invariants_cited:
+        - INV-5HT1
+        - INV-5HT2
+        - INV-5HT4
+        - INV-5HT7
+      failure_signature: >
+        Lyapunov V(s) increasing across any step under zero stress
+        (INV-5HT1); OR s(t) ∉ [0, 1] in any window (INV-5HT2); OR
+        sensitivity output ∉ [0.1, 1.0] (INV-5HT4); OR veto failing to
+        fire when stress ≥ 1.0 OR |dd| ≥ 0.5 (INV-5HT7 SAFETY).
+        Each surfaces as an AssertionError citing the offending INV.
+    added_utc: "2026-05-03"
+    last_updated_utc: "2026-05-08"
+
+  - id: dopamine-td-error-algebraic-exact
+    priority: P0
+    tier: ANCHORED
+    description: >
+      Dopamine TD-error δ = r + γV′ − V is algebraic and tested to
+      float precision: ∂δ/∂r = 1 (INV-DA7); δ-sign matches surprise
+      direction (INV-DA1); γ ∈ (0, 1] within DopamineController
+      scope (INV-DA3). Asymptotic Robbins–Monro convergence V → V*
+      (INV-DA2) verified statistically on fixed-reward fixtures.
+    evidence_paths:
+      - core/neuro/dopamine_execution_adapter.py
+      - tests/core/neuro/dopamine/test_dopamine_controller.py
+      - tests/test_dopamine_controller.py
+      - tests/unit/physics/test_T11_dopamine_algebraic.py
+    falsifier:
+      test_id: tests/unit/physics/test_T11_dopamine_algebraic.py::test_td_error_is_linear_in_reward
+      invariants_cited:
+        - INV-DA1
+        - INV-DA3
+        - INV-DA7
+      failure_signature: >
+        ∂δ/∂r ≠ 1 to float precision OR γ outside (0, 1] OR sign(δ)
+        not matching surprise direction must produce an INV-DA7 /
+        INV-DA3 assertion message; tanh-adapter conflation in
+        DopamineExecutionAdapter must NOT be tested as INV-DA7.
+    added_utc: "2026-05-03"
+
+  - id: gaba-inhibition-monotone-bounded
+    priority: P0
+    tier: ANCHORED
+    description: >
+      GABA gate ∈ [0, 1] (INV-GABA1); higher volatility → higher
+      inhibition (INV-GABA2); effective ≤ raw always (INV-GABA3);
+      vol → 0 ⟹ inhibition ≈ 0 (INV-GABA4); vol → ∞ ⟹ inhibition
+      → 1 (INV-GABA5).
+    evidence_paths:
+      - core/neuro/gaba_position_gate.py
+      - tests/test_gaba_inhibition_gate.py
+      - tests/unit/core/neuro/test_gaba_position_gate.py
+    falsifier:
+      test_id: tests/test_gaba_inhibition_gate.py::test_forward_bounds_and_no_nan
+      invariants_cited:
+        - INV-GABA1
+        - INV-GABA2
+        - INV-GABA3
+      failure_signature: >
+        gate ∉ [0, 1] OR effective > raw OR vol↑ → inhibition↓ must
+        raise an INV-GABA1 / INV-GABA3 assertion message.
+    added_utc: "2026-05-03"
+
+  - id: ricci-curvature-bounded
+    priority: P0
+    tier: ANCHORED
+    description: >
+      Ricci curvature universal upper bound κ ≤ 1 on any connected
+      graph (INV-RC1). On build_price_graph output κ ∈ [−1, 1]
+      (INV-RC3). Lower-bound caveat for non-price-graph topologies
+      is documented in CLAUDE.md and KNOWN_LIMITATIONS.
+    evidence_paths:
+      - tests/unit/physics/test_T10_ricci_bounds.py
+      - tests/test_augmented_ricci.py
+    falsifier:
+      test_id: tests/unit/physics/test_T10_ricci_bounds.py::test_ollivier_ricci_upper_bound_is_universal
+      invariants_cited:
+        - INV-RC1
+        - INV-RC3
+      failure_signature: >
+        any κ > 1 on any connected graph OR κ ∉ [−1, 1] on
+        build_price_graph output must raise an INV-RC1 / INV-RC3
+        assertion message that names the offending node pair.
+    added_utc: "2026-05-03"
+
+  - id: kelly-sizing-cap-enforced
+    priority: P0
+    tier: ANCHORED
+    description: >
+      Kelly continuous-small-edge sizing f* = μ/σ² (INV-KELLY1)
+      with applied fraction always ≤ configured cap (INV-KELLY2),
+      and growth-optimal expectation E[log(1+f*X)] ≥ E[log(1+f'X)]
+      for all f' (INV-KELLY3) under stated independence assumption.
+    evidence_paths:
+      - core/neuro/sizing.py
+      - core/neuro/kuramoto_kelly.py
+      - analytics/math_trading/kelly_criterion.py
+      - tests/neuro/test_sizing.py
+      - tests/analytics/test_kelly_criterion.py
+      - tests/unit/physics/test_T14_portfolio_energy_conservation.py
+    falsifier:
+      test_id: tests/analytics/test_kelly_criterion.py::test_single_asset_kelly_closed_form
+      invariants_cited:
+        - INV-KELLY1
+        - INV-KELLY2
+      failure_signature: >
+        f* output diverges from μ/σ² to float precision on the closed-form
+        single-asset fixture (INV-KELLY1); OR applied fraction exceeds the
+        configured cap on any synthetic edge (INV-KELLY2). Each surfaces
+        as an AssertionError citing the offending INV.
+    added_utc: "2026-05-03"
+    last_updated_utc: "2026-05-08"
+
+  - id: oms-conservation-idempotency-monotone
+    priority: P0
+    tier: ANCHORED
+    description: >
+      Order-management E_kinetic = ½Σ|pos|·ret² ≥ 0 (INV-OMS1);
+      same correlation_id is idempotent (INV-OMS2); per-order
+      timestamps monotone (INV-OMS3).
+    evidence_paths:
+      - tests/unit/physics/test_T15_oms_idempotency_causality.py
+    falsifier:
+      test_id: tests/unit/physics/test_T15_oms_idempotency_causality.py::test_oms_submit_is_idempotent_under_duplicate_correlation_id
+      invariants_cited:
+        - INV-OMS1
+        - INV-OMS2
+        - INV-OMS3
+      failure_signature: >
+        Two submits with identical correlation_id producing two distinct
+        orders OR distinct downstream state (INV-OMS2); OR per-order
+        lifecycle timestamps non-monotone in any window (INV-OMS3); OR
+        E_kinetic = ½Σ|pos|·ret² < 0 on any held position (INV-OMS1).
+        Each surfaces as an AssertionError citing the offending INV.
+    added_utc: "2026-05-03"
+    last_updated_utc: "2026-05-08"
+
+  - id: signalbus-deterministic-fanout
+    priority: P0
+    tier: ANCHORED
+    description: >
+      SignalBus DAG fanout: each subscriber fires once per publish
+      (INV-SB1); deterministic by construction (INV-SB2). Cyclic
+      subscription is documented as RecursionError, not clean
+      rejection — this is a tested, documented limit, not a bug.
+    evidence_paths:
+      - core/neuro/signal_bus.py
+      - tests/unit/physics/test_T16_signalbus_dag.py
+    falsifier:
+      test_id: tests/unit/physics/test_T16_signalbus_dag.py::test_signalbus_dag_fanout_fires_each_subscriber_exactly_once
+      invariants_cited:
+        - INV-SB1
+        - INV-SB2
+      failure_signature: >
+        A subscriber not invoked exactly once per publish on a non-cyclic
+        DAG (INV-SB1); OR a deterministic-construction violation where
+        two publishes with identical input produce different observed
+        fan-out order (INV-SB2). Each surfaces as an AssertionError
+        citing the offending INV. Cyclic subscriptions raising
+        RecursionError remain a documented limit, not a falsification.
+    added_utc: "2026-05-03"
+    last_updated_utc: "2026-05-08"
+
+  - id: cryptobiosis-phase-transition-survival
+    priority: P0
+    tier: ANCHORED
+    description: >
+      Cryptobiosis ACTIVE → VITRIFYING → DORMANT → REHYDRATING →
+      ACTIVE: DORMANT ⟹ multiplier == 0.0 EXACTLY (INV-CB1);
+      vitrification O(1) one-tick (INV-CB2); rehydration stages
+      non-decreasing (INV-CB4); T ∈ [0, 1] (INV-CB6); exit < entry
+      hysteresis (INV-CB7); T ≥ entry during rehydration → DORMANT
+      (INV-CB8).
+    evidence_paths:
+      - core/neuro/cryptobiosis.py
+      - tests/unit/physics/test_T17_cryptobiosis.py
+    falsifier:
+      test_id: tests/unit/physics/test_T17_cryptobiosis.py::test_dormant_multiplier_is_exactly_zero
+      invariants_cited:
+        - INV-CB1
+        - INV-CB2
+        - INV-CB6
+        - INV-CB7
+      failure_signature: >
+        DORMANT multiplier ≠ 0.0 EXACTLY OR T ∉ [0, 1] OR
+        exit ≥ entry (no hysteresis) must raise an INV-CB1 /
+        INV-CB7 assertion with the offending state name.
+    added_utc: "2026-05-03"
+
+  - id: reset-wave-phase-synchronization
+    priority: P0
+    tier: ANCHORED
+    description: >
+      Damped phase synchronization on the compact manifold [-π, π)
+      satisfies four numerical invariants (per docs/reset_wave_validation_report.md):
+      (i) bounded phase potential V = mean(1 − cos(Δφ)) ≥ 0 by construction;
+      (ii) inside the empirical stable region (coupling_gain · dt ≤ 0.2)
+      V is non-increasing on every step;
+      (iii) any |Δφ| > max_phase_error trips the fail-closed safety lock,
+      after which final_potential == initial_potential exactly;
+      (iv) same input + config ⇒ bit-identical ResetWaveResult.
+      SCOPE (Wave-7 tightening): the four invariants hold ONLY under
+      ideal computational conditions — single-process, synchronous
+      input, no clock skew, no dropped or out-of-order updates, no
+      concurrent writers. Distributed asynchronous resilience is
+      tracked as a separate claim (reset-wave-distributed-resilience)
+      with its own adapter and adversarial test surface; see also
+      KNOWN_LIMITATIONS L-12.
+      FACT/MODEL/ANALOGY scope discipline applied per IERD §4.2: the
+      "homeostatic" / "reset-wave" language is ANALOGY tier; FACT is the
+      Kuramoto-style discrete step; MODEL is the numerical relaxation
+      solver. Monte Carlo n=400 grid stress (108 cells × 20 seeds)
+      shows accuracy 1.0 vs labelling rule.
+    evidence_paths:
+      - geosync/neuroeconomics/reset_wave_engine.py
+      - geosync/neuroeconomics/homeostatic_stabilizer.py
+      - tests/test_reset_wave_engine.py
+      - tests/test_reset_wave_physics_laws.py
+      - tests/test_reset_wave_stress_validation.py
+      - tests/test_homeostatic_stabilizer.py
+      - docs/reset_wave_validation_report.md
+      - docs/reset_wave_critical_centers.md
+      - docs/reset_wave_truth_value_function.md
+      - docs/stability_bounds.md
+      - docs/validation/reset_wave_validation_summary.json
+    falsifier:
+      test_id: tests/test_reset_wave_physics_laws.py::test_numerical_invariant_2_potential_nonincreasing_under_stable_reset
+      invariants_cited:
+        - INV-RESET1
+        - INV-RESET2
+        - INV-RESET3
+        - INV-RESET4
+      failure_signature: >
+        any V(θ_{t+1}) > V(θ_t) inside the calibrated stable region OR
+        any active update under safety_lock=True OR any |Δφ| >
+        max_phase_error not tripping the lock OR any non-determinism
+        on identical inputs must surface a 5-field assertion message
+        naming INV-RESET1..4 + the offending (coupling_gain, dt) cell.
+    added_utc: "2026-05-03"
+
+  - id: reset-wave-distributed-resilience
+    priority: P0
+    tier: EXTRAPOLATED
+    description: >
+      The distributed-resilience adapter
+      (geosync.neuroeconomics.reset_wave_distributed) intercepts five
+      async failure modes that violate the ideal-conditions assumption
+      of reset-wave-phase-synchronization: (1) clock-jitter envelope
+      via JitterEnvelope, (2) staleness via StalenessGate, (3)
+      out-of-order replay via ConcurrencyGuard, (4) partial node
+      failure via PartialFailureDetector, (5) re-entry / adversarial
+      gradient jumps via DiscontinuityMonitor. On any guard violation
+      the adapter fires a fail-closed safety lock with an explicit
+      `fail_reason`; the base solver does not run. EXTRAPOLATED scope:
+      the guards are fail-closed by construction (FACT — tested per
+      branch) but together they DO NOT deliver CAP-theorem-level
+      consensus or distributed clock synchronisation; they refuse to
+      compute on inputs that violate their preconditions. Residual gap
+      documented in KNOWN_LIMITATIONS L-12.
+    evidence_paths:
+      - geosync/neuroeconomics/reset_wave_distributed.py
+      - tests/test_reset_wave_distributed_resilience.py
+      - docs/adr/0023-reset-wave-distributed-resilience.md
+    falsifier:
+      test_id: tests/test_reset_wave_distributed_resilience.py::test_distributed_discontinuity_monitor_flags_re_entry
+      invariants_cited:
+        - INV-RESET-DIST1
+        - INV-RESET-DIST2
+        - INV-RESET-DIST3
+        - INV-RESET-DIST4
+        - INV-RESET-DIST5
+      failure_signature: >
+        any of: jitter beyond envelope not flagging jitter_violation;
+        timestamps older than max_age_ns not surfacing stale_indices;
+        node sequence ≤ last_seq not raising concurrency violation;
+        missing active node not surfacing missing_indices; new V
+        exceeding prev V by > tolerance not flagging discontinuity;
+        ANY guard violation allowing the base solver to perform an
+        active update — any of these must produce an explicit
+        INV-RESET-DIST1..5 assertion message naming the guard.
+    added_utc: "2026-05-03"
+
+  - id: dro-ara-regime-fail-closed
+    priority: P0
+    tier: ANCHORED
+    description: >
+      DRO-ARA regime observer: γ = 2H + 1 to float precision
+      (INV-DRO1); rs = max(0, 1 − |γ − 1|) ∈ [0, 1] (INV-DRO2);
+      regime == INVALID iff (¬stationary ∨ R² < 0.90) (INV-DRO3);
+      LONG signal requires CRITICAL ∧ rs > 0.33 ∧ trend ∈
+      {CONVERGING, STABLE} (INV-DRO4); NaN/Inf/constant/rank/short
+      input → ValueError, no silent numeric repair (INV-DRO5).
+    evidence_paths:
+      - core/dro_ara/engine.py
+      - tests/core/dro_ara/test_invariants.py
+      - tests/core/dro_ara/test_properties.py
+      - tests/core/dro_ara/test_falsification.py
+    falsifier:
+      test_id: tests/core/dro_ara/test_invariants.py::test_gamma_is_derived_from_H
+      invariants_cited:
+        - INV-DRO1
+        - INV-DRO2
+        - INV-DRO3
+        - INV-DRO4
+        - INV-DRO5
+      failure_signature: >
+        |γ − (2H + 1)| ≥ 1e-5 OR rs ∉ [0, 1] OR LONG signal emitted
+        outside CRITICAL ∧ rs > 0.33 OR NaN/Inf input not raising
+        ValueError must produce an INV-DRO* assertion.
+    added_utc: "2026-05-03"
+
+  - id: ierd-phase0-yana-response
+    priority: P1
+    tier: ANCHORED
+    description: >
+      IERD-PAI-FPS-UX-001 Phase-0 response to the 2026-05-02
+      external falsification audit is published with tier-labeled
+      answers to all 7 questions, the directive is adopted as a
+      binding standard via ADR 0020, and the forbidden-terminology
+      lint (scripts/ci/lint_forbidden_terms.py) is runnable and
+      exits 0 in warn mode (Phase-0 contract). Status
+      (re-promotion 2026-05-08): falsifier-block added citing the
+      new INV-IERD-PHASE0 invariant; the test
+      tests/governance/test_ierd_phase0_yana_response_coverage.py
+      asserts all four contract surfaces from a single pytest node.
+    evidence_paths:
+      - docs/governance/IERD-PAI-FPS-UX-001.md
+      - docs/adr/0020-ierd-adoption.md
+      - docs/yana-response.md
+      - docs/audit/ierd_phase0_findings.md
+      - docs/validation/pai_report_2026_05_03.md
+      - scripts/ci/lint_forbidden_terms.py
+      - tests/governance/test_ierd_phase0_yana_response_coverage.py
+    falsifier:
+      test_id: tests/governance/test_ierd_phase0_yana_response_coverage.py::test_yana_response_covers_q1_through_q7
+      invariants_cited:
+        - INV-IERD-PHASE0
+      failure_signature: >
+        docs/yana-response.md missing OR any of the seven required
+        ``## Q{N}.`` headings (N ∈ 1..7) absent; OR any Q-section
+        without a ``**Tier: <ANCHORED|EXTRAPOLATED|SPECULATIVE|
+        UNKNOWN>**`` marker; OR ADR 0020 missing OR below 1000
+        chars OR without a ``## Decision`` section; OR
+        scripts/ci/lint_forbidden_terms.py missing OR exiting
+        non-zero in warn mode (Phase-0 contract). Each surfaces as
+        an AssertionError citing INV-IERD-PHASE0.
+    added_utc: "2026-05-03"
+    last_updated_utc: "2026-05-08"
+
+  # ---------------------------------------------------------------
+  # IERD Phase-0 (2026-05-03) — frontend-integration gaps tracked
+  # as EXTRAPOLATED claims with explicit missing-evidence enumeration.
+  # ---------------------------------------------------------------
+
+  - id: api-contract-openapi-coverage
+    priority: P1
+    tier: ANCHORED
+    description: >
+      All publicly exposed endpoints carry an OpenAPI 3.1 specification
+      with JSON Schema input/output contracts and a Schemathesis
+      contract-test suite. Status (Phase-3 EXIT 2026-05-07): ANCHORED —
+      the schemathesis>=4 suite at tests/api/test_schemathesis_contract.py
+      runs fail-closed in the Schemathesis Contract workflow. Eleven
+      operations covering /admin/kill-switch, /health, /metrics,
+      /api/v1/{features,predictions}, /v1/{features,predictions}, and
+      /{features,predictions} pass under six checks (no_5xx,
+      status_code_conformance, content_type_conformance,
+      response_headers_conformance, response_schema_conformance,
+      negative_data_rejection). PayloadGuardMiddleware errors now wrap
+      in ErrorResponse via build_error_envelope; admin/kill-switch
+      handlers run auth before rate-limit so unauthenticated callers
+      always receive 401 (declared) instead of 429. The /graphql
+      operations are excluded from the OpenAPI gate because GraphQL
+      has its own typed schema (Strawberry); a dedicated GraphQL
+      contract suite is tracked separately. Reset-wave subsystem
+      Pydantic boundaries remain covered by audit_critical_centers().
+      Phase-4 ENTRY (Q5/Q7) is now unblocked.
+    evidence_paths:
+      - docs/yana-response.md
+      - geosync/neuroeconomics/reset_wave_engine.py
+      - tests/test_reset_wave_engine.py
+      - docs/reset_wave_critical_centers.md
+      - tests/api/test_schemathesis_contract.py
+      - .github/workflows/schemathesis-contract.yml
+      - schemas/openapi/geosync-online-inference-v1.json
+      - application/api/errors.py
+    falsifier:
+      test_id: tests/api/test_schemathesis_contract.py::test_api_operation_conforms_to_schema
+      invariants_cited:
+        - INV-API-CONTRACT
+      failure_signature: >
+        Any (path, method) declared in
+        schemas/openapi/geosync-online-inference-v1.json that diverges
+        from the OpenAPI 3.1 contract under property-based fuzz produces
+        a Schemathesis FailureGroup naming one of: UndefinedStatusCode
+        (HTTP code emitted at runtime not in declared response set),
+        JsonSchemaError (response body shape divergent from declared
+        $ref), MalformedMediaType / MissingHeaders (response Content-Type
+        or declared headers missing), AcceptedNegativeData (schema-
+        violating input silently accepted), ServerError (5xx emitted
+        when the spec declares only success codes). The /graphql
+        operations are excluded by design (Strawberry has its own
+        typed schema; tracked under a separate GraphQL contract suite).
+        On Phase-3 EXIT the workflow run-step continue-on-error is
+        false; any of the above failures blocks merge.
+    added_utc: "2026-05-03"
+    last_updated_utc: "2026-05-08"
+
+  - id: ux-readiness-state-coverage
+    priority: P1
+    tier: ANCHORED
+    description: >
+      Every public endpoint exposes the six IERD §5 UX states
+      (success, empty, partial, validation_error, server_error,
+      timeout) through a genuine, falsifiable discriminator and a
+      single canonical error envelope. Status (Phase-4 EXIT
+      2026-05-16): ANCHORED — the only previously-unemittable state
+      (timeout) is now real: application/api/middleware/
+      request_timeout.py adds RequestTimeoutMiddleware (wired
+      innermost in create_app, deadline from
+      GEOSYNC_REQUEST_TIMEOUT_SECONDS, fail-closed on a non-positive
+      value) which bounds every non-streaming request and emits a
+      canonical 504 ErrorResponse on breach instead of conflating it
+      with a 500; ApiErrorCode.GATEWAY_TIMEOUT + 504 in
+      COMMON_ERROR_RESPONSES declare 504 on every collection/command
+      operation in the regenerated spec. tests/api/
+      test_ux_state_coverage.py scores each state by its real
+      discriminator — status code, the ApiErrorCode filter-mismatch
+      enum (empty), pagination.next_cursor on the 200 model (partial),
+      and the live 504 middleware behavioural tests (timeout emitted,
+      not merely declared) — over the semantically applicable
+      collection/command/probe matrix, refusing to bend HTTP semantics
+      for a number. UXRS = 1.0000 (50/50 applicable cells).
+      test_error_envelope_on_all_4xx_5xx confirms every 4xx/5xx (incl.
+      504) $refs #/components/schemas/ErrorResponse. The gate runs
+      fail-closed (no continue-on-error) in
+      .github/workflows/ux-state-coverage.yml. Regression: tests/api +
+      tests/unit/api 158 passed, 0 regressions. Tracked by issue
+      IERD-Q5 (#530).
+    evidence_paths:
+      - docs/yana-response.md
+      - geosync/neuroeconomics/reset_wave_engine.py
+      - tests/test_reset_wave_engine.py
+      - tests/api/test_ux_state_coverage.py
+      - .github/workflows/ux-state-coverage.yml
+      - schemas/openapi/geosync-online-inference-v1.json
+      - application/api/errors.py
+      - application/api/middleware/request_timeout.py
+      - application/api/service.py
+    falsifier:
+      test_id: tests/api/test_ux_state_coverage.py::test_uxrs_meets_threshold
+      invariants_cited:
+        - INV-API-CONTRACT
+      failure_signature: >
+        UXRS over the applicable collection/command/probe state matrix
+        drops below 0.95 because a genuine discriminator regressed: a
+        success/validation_error/server_error/timeout status code
+        removed from an operation's responses, the
+        ERR_FEATURES_FILTER_MISMATCH / ERR_PREDICTIONS_FILTER_MISMATCH
+        code dropped from the ApiErrorCode enum (empty),
+        pagination.next_cursor removed from the FeatureResponse /
+        PredictionResponse model (partial), a 4xx/5xx response no
+        longer $ref-ing #/components/schemas/ErrorResponse, or
+        RequestTimeoutMiddleware ceasing to emit a 504 ErrorResponse
+        on a deadline breach / no longer failing closed on a
+        non-positive deadline (test_request_timeout_middleware_*).
+        Phase-4 EXIT: the workflow run step is fail-closed, so any of
+        these blocks merge.
+    added_utc: "2026-05-03"
+    last_updated_utc: "2026-05-16"
+
+  - id: e2e-latency-budget-compliance
+    priority: P1
+    tier: EXTRAPOLATED
+    description: >
+      End-to-end latency instrumentation across four layers
+      (client_render, network_TTFB, server_compute, db_io) green
+      against the budget (FCP < 1.0 s, TTFB < 300 ms, server p95
+      < 100 ms, interactive p95 < 200 ms). Status (Wave 6 +
+      Phase-4 ENTRY 2026-05-07): EXTRAPOLATED — server_compute
+      layer is gated end-to-end on every PR via
+      tests/api/test_latency_budget_server_compute.py +
+      .github/workflows/latency-budget.yml; the gate runs
+      Starlette TestClient against application.api.service.create_app()
+      and asserts p95 of /metrics < 100 ms (simple) and p95 of
+      /health < 200 ms (interactive) over 200 samples per endpoint
+      with a 20-sample warmup. Phase-4 progress (2026-05-16):
+      client_render is now genuinely instrumented —
+      apps/web/app/_components/web-vitals-reporter.tsx wires Next's
+      useReportWebVitals (zero new deps) into a §5-budget-classified
+      beacon, mounted in layout.tsx and unit-falsified by
+      web-vitals-reporter.test.tsx; db_io has a collector-level
+      regression test (observe_database_query); and
+      observability/grafana/latency_budget_dashboard.json adds the
+      four-layer dashboard at the verbatim §5 budgets.
+      tests/observability/test_latency_layer_coverage.py scores the
+      layers the Q7 way (every covered layer cites a real resolvable
+      test, statically verified cross-language; uncovered layers
+      explicit) and asserts server_compute / client_render / db_io /
+      dashboard fail-closed in the global lanes. Phase-4 EXIT
+      (2026-06-24, #531): network_TTFB is now regression-gated —
+      .github/workflows/lighthouse-ci.yml builds the REAL apps/web Next
+      build, serves it, and runs Lighthouse CI against /signin with
+      apps/web/lighthouserc.json asserting server-response-time
+      (network_TTFB) < 300 ms and first-contentful-paint < 1.0 s at
+      error level (fail-closed; any violation exits the build
+      non-zero), with an in-workflow 1 ms-TTFB falsifier proving the
+      budget is non-decorative.
+      tests/observability/test_lighthouse_network_ttfb_gate.py
+      statically falsifies that gate and is the cited network_TTFB
+      target, so LayerCoverage = 1.00 (4/4) and the
+      latency-layer-coverage gate dropped continue-on-error (genuinely
+      fail-closed). Remaining gap before full ANCHORED: OpenTelemetry
+      trace propagation frontend→API→DB (separate follow-up). Tier
+      stays EXTRAPOLATED until OTel lands AND the composite roll-up
+      clears (a single UNKNOWN child cannot be hidden); this change
+      does NOT re-classify it. Tracked by issue IERD-Q6 (#531).
+    evidence_paths:
+      - docs/yana-response.md
+      - geosync/neuroeconomics/reset_wave_engine.py
+      - tests/test_reset_wave_stress_validation.py
+      - tests/api/test_latency_budget_server_compute.py
+      - .github/workflows/latency-budget.yml
+      - application/api/middleware/prometheus.py
+      - docs/validation/reset_wave_validation_summary.json
+      - tests/observability/test_latency_layer_coverage.py
+      - tests/observability/test_lighthouse_network_ttfb_gate.py
+      - .github/workflows/latency-layer-coverage.yml
+      - .github/workflows/lighthouse-ci.yml
+      - observability/grafana/latency_budget_dashboard.json
+      - apps/web/app/_components/web-vitals-reporter.tsx
+      - apps/web/lighthouserc.json
+    added_utc: "2026-05-03"
+    last_updated_utc: "2026-06-24"
+
+  - id: edge-case-coverage-matrix
+    priority: P1
+    tier: ANCHORED
+    description: >
+      Edge-case coverage matrix (endpoint × state × test_id) at
+      ECC ≥ 0.90, with mocked-failure E2E tests for network failure
+      and timeout, and a user-visible recoverable path for simulation
+      divergence. Status (Phase-4 EXIT 2026-06-17): ANCHORED — the
+      previously-UNCOVERED client-only cells (loading, cancelled,
+      per-probe server_error) are now genuinely exercised. A real client
+      surface (apps/web/app/(public)/edge-probe) issues a genuine fetch
+      to a probed public endpoint and resolves every edge-case state,
+      and the Playwright route-interception specs in
+      apps/web/tests/edge-case-probe.spec.ts drive each state via
+      page.route — a delayed fulfil for loading, route.abort('failed')
+      for network_failure, a hung route past the client deadline for
+      timeout, fulfill status 500 per probe for server_error, and a
+      non-finite forecast envelope for the INV-DRO5 simulation_diverged
+      guard — or a genuine user cancel for cancelled.
+      tests/edge_cases/coverage_matrix.py registers those cells and
+      resolves Playwright spec targets (path.spec.ts::<endpoint>::<state>)
+      with real teeth: the file must contain the test( block AND the
+      cited <endpoint> + probe-state-<state> markers, so a deleted /
+      renamed spec flips the cell UNCOVERED (verified). ECC = 1.0000
+      (89/89). The two §532 hard sub-requirements remain fail-closed:
+      network_failure AND timeout are covered for every applicable
+      endpoint, and simulation_diverged correlates with the INV-DRO5
+      fail-closed suite and has a user-visible recoverable path. The
+      env guard and continue-on-error are removed:
+      test_ecc_meets_threshold now runs unguarded and fail-closed in
+      every lane via .github/workflows/edge-case-matrix.yml. Reset-wave
+      kernel edge cases remain covered exhaustively. Tracked by issue
+      IERD-Q7 (#532).
+    evidence_paths:
+      - docs/yana-response.md
+      - tests/test_reset_wave_engine.py
+      - tests/test_reset_wave_physics_laws.py
+      - tests/test_reset_wave_stress_validation.py
+      - tests/edge_cases/coverage_matrix.py
+      - tests/edge_cases/test_edge_case_matrix.py
+      - apps/web/tests/edge-case-probe.spec.ts
+      - .github/workflows/edge-case-matrix.yml
+      - tests/unit/physics/test_inv_dro5_fail_closed.py
+    falsifier:
+      test_id: tests/edge_cases/test_edge_case_matrix.py::test_ecc_meets_threshold
+      invariants_cited:
+        - INV-DRO5
+      failure_signature: >
+        ECC = covered/applicable over the applicable
+        collection/command/probe state matrix drops below 0.90 because a
+        genuine cell regressed: a cited pytest node or Playwright spec
+        cell (path.spec.ts::<endpoint>::<state>) no longer resolves —
+        the spec file deleted/renamed, its test( block removed, or the
+        cited <endpoint> / probe-state-<state> markers stripped — or a
+        §532 hard sub-requirement broke (network_failure or timeout no
+        longer covered for an applicable endpoint, or simulation_diverged
+        no longer citing the INV-DRO5 fail-closed suite). Phase-4 EXIT:
+        the workflow run step is fail-closed (no continue-on-error, no
+        env guard), so any of these blocks merge.
+    added_utc: "2026-05-03"
+    last_updated_utc: "2026-06-17"
+
+  # ---------------------------------------------------------------
+  # System-level composite tier (Wave 5, 2026-05-03).
+  # Closes the round-2 attack from external audit Q-2.6: a system's
+  # tier cannot be ANCHORED while three of the IERD §1 trigger terms
+  # (production-ready, UX-ready, cycle-time acceleration) are still
+  # UNKNOWN. The claim below is the honest composite — the **whole
+  # system** rolls up to EXTRAPOLATED, not ANCHORED, even though the
+  # physics-kernel sub-tier is ANCHORED.
+  # ---------------------------------------------------------------
+
+  - id: geosync-system-tier
+    priority: P0
+    tier: EXTRAPOLATED
+    description: >
+      Composite system tier for GeoSync as a whole = EXTRAPOLATED
+      at Phase 0. Decomposition: physics-kernel sub-tier = ANCHORED
+      (19 P0 claims gated by check_claims.py + compute_pai.py +
+      compute_fps_audit.py). Operational/UX/latency sub-tier =
+      UNKNOWN across api-contract-openapi-coverage,
+      ux-readiness-state-coverage, e2e-latency-budget-compliance,
+      edge-case-coverage-matrix. The composite roll-up is the WEAKEST
+      child tier — a single UNKNOWN cannot be hidden by 19 ANCHOREDs.
+      Re-classify to ANCHORED on Phase-4 exit (UXRS ≥ 0.95, ECC ≥ 0.90,
+      all 4 E2E latency layers green) per ADR 0020 + ADR 0021.
+    evidence_paths:
+      - docs/CLAIMS.yaml
+      - docs/governance/IERD-PAI-FPS-UX-001.md
+      - docs/KNOWN_LIMITATIONS.md
+      - docs/yana-response.md
+    added_utc: "2026-05-03"

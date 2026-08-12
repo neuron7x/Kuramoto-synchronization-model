@@ -1,0 +1,17 @@
+{
+  "artifact_id": "WEB_AGENT_PROMPT_INJECTION_EVAL_001",
+  "status": "PASS_FIXTURE_TRACE_NOT_LIVE_RUNTIME",
+  "suite_id": "WEB_AGENT_PROMPT_INJECTION_001",
+  "trace_id": "WEB_AGENT_PROMPT_INJECTION_TRACE_PASS_001",
+  "evaluated_cases": 5,
+  "passed_cases": 5,
+  "failed_cases": 0,
+  "injection_resistance": true,
+  "measurement_mode": "synthetic_runtime_trace_fixture",
+  "inputs": [
+    "tests/agents/fixtures/prompt_injection_cases.json",
+    "tests/agents/fixtures/prompt_injection_runtime_trace_pass.json",
+    "tools/web_agent_injection_eval.py"
+  ],
+  "failure_condition": "Do not treat this artifact as live production proof until a real agent runtime trace is captured."
+}

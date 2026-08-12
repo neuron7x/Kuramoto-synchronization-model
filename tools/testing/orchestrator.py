@@ -1,3 +1,5 @@
+# Copyright (c) 2023-2026 Yaroslav Vasylenko (neuron7xLab)
+# SPDX-License-Identifier: MIT
 """Enhanced test orchestration and reporting for PR testing workflows.
 
 This module provides comprehensive test orchestration, including:
@@ -219,13 +221,9 @@ class TestOrchestrator:
                         tests = data.get("tests", [])
                         for test in tests:
                             if test.get("outcome") == "failed":
-                                error_msg = test.get("call", {}).get(
-                                    "longrepr", "Unknown error"
-                                )
+                                error_msg = test.get("call", {}).get("longrepr", "Unknown error")
                                 if isinstance(error_msg, str):
-                                    category.errors.append(
-                                        error_msg.split("\n")[0][:100]
-                                    )
+                                    category.errors.append(error_msg.split("\n")[0][:100])
                 except (json.JSONDecodeError, KeyError, IOError) as e:
                     print(f"Warning: Could not parse test results: {e}")
 
@@ -274,9 +272,7 @@ class TestOrchestrator:
         # Filter categories if specified
         categories_to_run = self.TEST_CATEGORIES
         if categories:
-            categories_to_run = [
-                cat for cat in self.TEST_CATEGORIES if cat.marker in categories
-            ]
+            categories_to_run = [cat for cat in self.TEST_CATEGORIES if cat.marker in categories]
 
         # Execute each category
         executed_categories = []
@@ -353,9 +349,7 @@ def main(argv: list[str] | None = None) -> int:
         return 0
 
     orchestrator = TestOrchestrator(report_dir=args.report_dir)
-    report = orchestrator.orchestrate(
-        test_dir=args.test_dir, categories=args.categories
-    )
+    report = orchestrator.orchestrate(test_dir=args.test_dir, categories=args.categories)
 
     # Return non-zero if any tests failed
     return 1 if report.overall_failed > 0 else 0

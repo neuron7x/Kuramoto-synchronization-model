@@ -1,3 +1,5 @@
+# Copyright (c) 2023-2026 Yaroslav Vasylenko (neuron7xLab)
+# SPDX-License-Identifier: MIT
 """
 Irreversibility-Gated Signal (IGS) — Hybrid Core
 ================================================
@@ -122,25 +124,17 @@ class IGSConfig:
         if not (self.k_min <= self.n_states <= self.k_max):
             raise ValueError("n_states must satisfy k_min <= n_states <= k_max")
         if self.adapt_method not in self._ALLOWED_ADAPT_METHODS:
-            raise ValueError(
-                f"adapt_method must be one of {sorted(self._ALLOWED_ADAPT_METHODS)}"
-            )
+            raise ValueError(f"adapt_method must be one of {sorted(self._ALLOWED_ADAPT_METHODS)}")
         quantize_mode_normalized = self.quantize_mode.lower()
         if quantize_mode_normalized not in self._ALLOWED_QUANTIZE_MODES:
-            raise ValueError(
-                f"quantize_mode must be one of {sorted(self._ALLOWED_QUANTIZE_MODES)}"
-            )
+            raise ValueError(f"quantize_mode must be one of {sorted(self._ALLOWED_QUANTIZE_MODES)}")
         # Internally canonicalise sliding_rank to rank to simplify downstream checks.
         self.quantize_mode = (
-            "rank"
-            if quantize_mode_normalized == "sliding_rank"
-            else quantize_mode_normalized
+            "rank" if quantize_mode_normalized == "sliding_rank" else quantize_mode_normalized
         )
         pi_method_normalized = self.pi_method.lower()
         if pi_method_normalized not in self._ALLOWED_PI_METHODS:
-            raise ValueError(
-                f"pi_method must be one of {sorted(self._ALLOWED_PI_METHODS)}"
-            )
+            raise ValueError(f"pi_method must be one of {sorted(self._ALLOWED_PI_METHODS)}")
         self.pi_method = pi_method_normalized
 
         weights = tuple(self.regime_weights)
@@ -176,9 +170,7 @@ def _safe_log(x: np.ndarray, eps: float) -> np.ndarray:
     return np.log(np.maximum(x, eps))
 
 
-def _weighted_regime_score(
-    components: Sequence[float], weights: Sequence[float]
-) -> float:
+def _weighted_regime_score(components: Sequence[float], weights: Sequence[float]) -> float:
     """Compute a weighted mean of regime components while ignoring NaNs and zero weights."""
 
     values = np.asarray(list(components), dtype=float)
@@ -234,9 +226,9 @@ def _ndtri(p: float) -> float:
         )
     if p > phigh:
         q = math.sqrt(-2 * math.log(1 - p))
-        return -(
-            ((((c[0] * q + c[1]) * q + c[2]) * q + c[3]) * q + c[4]) * q + c[5]
-        ) / ((((d[0] * q + d[1]) * q + d[2]) * q + d[3]) * q + 1)
+        return -(((((c[0] * q + c[1]) * q + c[2]) * q + c[3]) * q + c[4]) * q + c[5]) / (
+            (((d[0] * q + d[1]) * q + d[2]) * q + d[3]) * q + 1
+        )
     q = p - 0.5
     r = q * q
     return (
@@ -287,9 +279,7 @@ class ZScoreQuantizer:
         self.W = window
         self.K = n_states
         self.roll = RollingMeanStd(window)
-        self.boundaries = np.array(
-            [_ndtri(i / n_states) for i in range(1, n_states)], dtype=float
-        )
+        self.boundaries = np.array([_ndtri(i / n_states) for i in range(1, n_states)], dtype=float)
 
     def update_and_state(self, x: float) -> int:
         self.roll.add(x)
@@ -514,9 +504,7 @@ def _stationary_distribution(P: np.ndarray, eps: float) -> np.ndarray:
     return pi / s
 
 
-def _transition_matrix(
-    states: np.ndarray, n_states: int, eps: float, pi_method: str = "empirical"
-):
+def _transition_matrix(states: np.ndarray, n_states: int, eps: float, pi_method: str = "empirical"):
     T = np.zeros((n_states, n_states), dtype=float)
     for a, b in zip(states[:-1], states[1:]):
         T[a, b] += 1.0
@@ -577,18 +565,13 @@ def _permutation_entropy_arr(x: np.ndarray, dim: int, tau: int, eps: float) -> f
     return float(H / Hmax)
 
 
-def compute_igs_features(
-    price: pd.Series, cfg: Optional[IGSConfig] = None
-) -> pd.DataFrame:
+def compute_igs_features(price: pd.Series, cfg: Optional[IGSConfig] = None) -> pd.DataFrame:
     cfg = cfg or IGSConfig()
     r = _returns_from_prices(price)
     if cfg.detrend:
         r = r - r.rolling(max(5, cfg.window // 10), min_periods=1).mean()
     n = len(r)
-    out = {
-        k: np.full(n, np.nan)
-        for k in ["epr", "flux_index", "tra", "pe", "regime_score"]
-    }
+    out = {k: np.full(n, np.nan) for k in ["epr", "flux_index", "tra", "pe", "regime_score"]}
     if n == 0:
         return pd.DataFrame(out, index=r.index)
 
@@ -621,9 +604,7 @@ def compute_igs_features(
         if not np.isfinite(value):
             if price_curr_pos and not price_prev_pos:
                 seed_state_current = quantizer.update_and_state(0.0)
-                seed_states[idx] = (
-                    seed_state_current if seed_state_current is not None else -1
-                )
+                seed_states[idx] = seed_state_current if seed_state_current is not None else -1
                 last_invalid_positions[idx] = last_invalid_idx
                 need_seed = False
                 continue
@@ -663,12 +644,7 @@ def compute_igs_features(
         rw = window_returns[valid]
         states = window_states[valid].astype(int)
         seed_state = seed_states[t]
-        if (
-            seed_state >= 0
-            and last_invalid >= 0
-            and start == last_invalid + 1
-            and states.size >= 1
-        ):
+        if seed_state >= 0 and last_invalid >= 0 and start == last_invalid + 1 and states.size >= 1:
             states = np.concatenate(([seed_state], states))
         if states.size < 2:
             continue
@@ -684,9 +660,7 @@ def compute_igs_features(
         flux_mag = abs(flux_idx)
         pe_inv = 1.0 - pe
         regime = _weighted_regime_score((epr_c, flux_mag, pe_inv), cfg.regime_weights)
-        regime = (
-            float(np.clip(regime, 0.0, 1.0)) if np.isfinite(regime) else float("nan")
-        )
+        regime = float(np.clip(regime, 0.0, 1.0)) if np.isfinite(regime) else float("nan")
         out["epr"][t] = epr
         out["flux_index"][t] = flux_idx
         out["tra"][t] = tra
@@ -811,9 +785,7 @@ class _KAdaptController:
 class _MetricsEmitter:
     def __init__(self, prometheus_enabled: bool, prometheus_async: bool, label: str):
         gauge_factory = (
-            getattr(prometheus_client, "Gauge", None)
-            if prometheus_client is not None
-            else None
+            getattr(prometheus_client, "Gauge", None) if prometheus_client is not None else None
         )
         self.enabled = bool(prometheus_enabled and gauge_factory is not None)
         self.async_enabled = bool(prometheus_async and self.enabled)
@@ -825,12 +797,8 @@ class _MetricsEmitter:
 
         self.g_epr = gauge_factory("igs_epr", "IGS EPR", ["instrument"])
         self.g_flux = gauge_factory("igs_flux_index", "IGS Flux Index", ["instrument"])
-        self.g_regime = gauge_factory(
-            "igs_regime_score", "IGS Regime Score", ["instrument"]
-        )
-        self.g_k = gauge_factory(
-            "igs_states_k", "IGS number of states K", ["instrument"]
-        )
+        self.g_regime = gauge_factory("igs_regime_score", "IGS Regime Score", ["instrument"])
+        self.g_k = gauge_factory("igs_states_k", "IGS number of states K", ["instrument"])
         self.q: Optional["queue.Queue[Tuple[str, float]]"] = None
 
         if self.async_enabled:
@@ -911,9 +879,7 @@ class StreamingIGS:
             self.cfg.window, self.cfg.perm_emb_dim, self.cfg.perm_tau
         )
         self.quant = self._build_quantizer(self.K)
-        self.k_adapt = _KAdaptController(
-            self.cfg, external_measure=external_adaptation_measure
-        )
+        self.k_adapt = _KAdaptController(self.cfg, external_measure=external_adaptation_measure)
         label = self.cfg.instrument_label or "unknown"
         self.metrics = _MetricsEmitter(
             self.cfg.prometheus_enabled, self.cfg.prometheus_async, label
@@ -943,9 +909,7 @@ class StreamingIGS:
                 self.T[prev_state, state] += 1.0
                 self.row_sums[prev_state] += 1.0
             prev_state = state
-        self.prev_state = (
-            prev_state if (prev_state is not None and prev_state >= 0) else None
-        )
+        self.prev_state = prev_state if (prev_state is not None and prev_state >= 0) else None
 
     def _handle_price_gap(self) -> None:
         self.last_price = None
@@ -999,9 +963,7 @@ class StreamingIGS:
             old_prev = self.states[0]
             old_state = self.states[1]
             if old_prev >= 0 and old_state >= 0:
-                self.T[old_prev, old_state] = max(
-                    0.0, self.T[old_prev, old_state] - 1.0
-                )
+                self.T[old_prev, old_state] = max(0.0, self.T[old_prev, old_state] - 1.0)
                 self.row_sums[old_prev] = max(0.0, self.row_sums[old_prev] - 1.0)
         tra = self.tra_roll.update(ret)
         self.returns.append(ret)
@@ -1017,36 +979,24 @@ class StreamingIGS:
         P = np.zeros_like(self.T)
         for i in range(self.K):
             denom = self.row_sums[i] + self.K * self.cfg.eps
-            P[i, :] = (
-                (self.T[i, :] + self.cfg.eps) / denom if denom > 0 else (1.0 / self.K)
-            )
+            P[i, :] = (self.T[i, :] + self.cfg.eps) / denom if denom > 0 else (1.0 / self.K)
         if self.cfg.pi_method == "stationary":
             pi = _stationary_distribution(P, self.cfg.eps)
         else:
             pi = self.row_sums.copy()
             s = float(pi.sum())
-            pi = (
-                pi / (s + self.cfg.eps)
-                if s >= self.cfg.eps
-                else np.full(self.K, 1.0 / self.K)
-            )
+            pi = pi / (s + self.cfg.eps) if s >= self.cfg.eps else np.full(self.K, 1.0 / self.K)
         epr, J = _entropy_production(P, pi, self.cfg.eps)
         flux_index = _net_flux_index(J, self.cfg.normalize_flux)
         elapsed_ms = (time.perf_counter() - t0) * 1000.0
-        degrade = (self.cfg.max_update_ms > 0.0) and (
-            elapsed_ms > self.cfg.max_update_ms
-        )
+        degrade = (self.cfg.max_update_ms > 0.0) and (elapsed_ms > self.cfg.max_update_ms)
         pe = float("nan") if degrade else pe_val
         epr_c = math.log1p(epr)
         flux_mag = abs(flux_index)
         pe_inv = 1.0 - pe
-        regime_score = _weighted_regime_score(
-            (epr_c, flux_mag, pe_inv), self.cfg.regime_weights
-        )
+        regime_score = _weighted_regime_score((epr_c, flux_mag, pe_inv), self.cfg.regime_weights)
         regime_score = (
-            float(np.clip(regime_score, 0.0, 1.0))
-            if np.isfinite(regime_score)
-            else float("nan")
+            float(np.clip(regime_score, 0.0, 1.0)) if np.isfinite(regime_score) else float("nan")
         )
         regime_name = _classify_regime_simple(epr, flux_index, pe)
         self.metrics.emit(epr, flux_index, regime_score, self.K)

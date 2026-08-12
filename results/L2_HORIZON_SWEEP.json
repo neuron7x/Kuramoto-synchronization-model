@@ -1,0 +1,94 @@
+{
+  "horizons_sec": [
+    30,
+    60,
+    90,
+    120,
+    180,
+    240,
+    300,
+    450,
+    600,
+    900,
+    1200
+  ],
+  "rows": [
+    {
+      "horizon_sec": 30,
+      "ic_unconditional": 0.06138412095219182,
+      "n_unconditional": 187510,
+      "ic_q75": 0.12977481372184596,
+      "n_q75": 46660
+    },
+    {
+      "horizon_sec": 60,
+      "ic_unconditional": 0.10387428026009198,
+      "n_unconditional": 187210,
+      "ic_q75": 0.20456969002393488,
+      "n_q75": 46360
+    },
+    {
+      "horizon_sec": 90,
+      "ic_unconditional": 0.1091612800554111,
+      "n_unconditional": 186910,
+      "ic_q75": 0.21356641449625027,
+      "n_q75": 46060
+    },
+    {
+      "horizon_sec": 120,
+      "ic_unconditional": 0.1139687060447858,
+      "n_unconditional": 186610,
+      "ic_q75": 0.21756635172988578,
+      "n_q75": 45760
+    },
+    {
+      "horizon_sec": 180,
+      "ic_unconditional": 0.12229471858695447,
+      "n_unconditional": 186010,
+      "ic_q75": 0.22616986479401247,
+      "n_q75": 45160
+    },
+    {
+      "horizon_sec": 240,
+      "ic_unconditional": 0.10157799598094913,
+      "n_unconditional": 185410,
+      "ic_q75": 0.1860329269719786,
+      "n_q75": 44560
+    },
+    {
+      "horizon_sec": 300,
+      "ic_unconditional": 0.10260055741899882,
+      "n_unconditional": 184810,
+      "ic_q75": 0.22053542388757139,
+      "n_q75": 43960
+    },
+    {
+      "horizon_sec": 450,
+      "ic_unconditional": 0.1045458325903732,
+      "n_unconditional": 183310,
+      "ic_q75": 0.204838466708456,
+      "n_q75": 42460
+    },
+    {
+      "horizon_sec": 600,
+      "ic_unconditional": 0.09966371607880381,
+      "n_unconditional": 181810,
+      "ic_q75": 0.18668729734924208,
+      "n_q75": 40960
+    },
+    {
+      "horizon_sec": 900,
+      "ic_unconditional": 0.06643539154893562,
+      "n_unconditional": 178810,
+      "ic_q75": 0.08491863633661706,
+      "n_q75": 37960
+    },
+    {
+      "horizon_sec": 1200,
+      "ic_unconditional": 0.0039042749447972262,
+      "n_unconditional": 175810,
+      "ic_q75": -0.054446582350870174,
+      "n_q75": 34960
+    }
+  ]
+}

@@ -1,5 +1,5 @@
 /**
- * Canonical data interfaces exposed by the TradePulse dashboard API layer.
+ * Canonical data interfaces exposed by the GeoSync dashboard API layer.
  * These definitions are consumed from JSDoc in the runtime `.js` modules so the
  * TypeScript compiler can type-check the integration points between the
  * rendered views and the backend payloads.

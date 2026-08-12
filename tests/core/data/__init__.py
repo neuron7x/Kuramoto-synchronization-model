@@ -1,3 +1,5 @@
+# Copyright (c) 2023-2026 Yaroslav Vasylenko (neuron7xLab)
+# SPDX-License-Identifier: MIT
 """Package marker for core data tests.
 
 Pytest relies on package-qualified module names to avoid collisions during

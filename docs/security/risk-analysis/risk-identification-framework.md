@@ -2,7 +2,7 @@
 
 ## Overview
 
-This document outlines the comprehensive risk identification and analysis framework for TradePulse, utilizing FMEA, PESTLE, and SWOT methodologies to identify, assess, and mitigate risks at every project stage.
+This document outlines the comprehensive risk identification and analysis framework for GeoSync, utilizing FMEA, PESTLE, and SWOT methodologies to identify, assess, and mitigate risks at every project stage.
 
 ## 1. Risk Analysis Methodologies
 
@@ -33,7 +33,7 @@ FMEA is used to identify potential failure modes in the system and their effects
 
 ### 1.2 PESTLE Analysis
 
-Political, Economic, Social, Technological, Legal, and Environmental factors affecting TradePulse.
+Political, Economic, Social, Technological, Legal, and Environmental factors affecting GeoSync.
 
 #### Political Factors
 - **Regulatory Changes**: SEC, FINRA, EU AI Act compliance requirements

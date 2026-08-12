@@ -1,3 +1,5 @@
+# Copyright (c) 2023-2026 Yaroslav Vasylenko (neuron7xLab)
+# SPDX-License-Identifier: MIT
 """Post-training and dynamic quantization utilities.
 
 The module provides light-weight utilities to quantize numpy arrays or
@@ -127,9 +129,7 @@ class UniformAffineQuantizer:
         self._calibration_range: tuple[float, float] | None = None
         self._calibrated = False
         self._int_bounds = _dtype_bounds(np.int8)
-        self._target_dtype = np.dtype(
-            np.int8 if self.config.target_dtype == "int8" else np.float16
-        )
+        self._target_dtype = np.dtype(np.int8 if self.config.target_dtype == "int8" else np.float16)
 
     def calibrate(self, samples: Iterable[np.ndarray] | np.ndarray) -> None:
         """Register calibration samples to estimate the dynamic range."""
@@ -142,10 +142,11 @@ class UniformAffineQuantizer:
             raise ValueError("calibration samples cannot be empty")
         min_val = float(np.min(arr))
         max_val = float(np.max(arr))
+        raw_range = max_val - min_val
         if self.config.symmetric:
             bound = max(abs(min_val), abs(max_val))
             min_val, max_val = -bound, bound
-        scale, zero_point = self._scale_from_range(min_val, max_val)
+        scale, zero_point = self._scale_from_range(min_val, max_val, raw_range=raw_range)
         self._scale = scale
         self._zero_point = zero_point
         self._calibration_range = (min_val, max_val)
@@ -185,9 +186,7 @@ class UniformAffineQuantizer:
                     calib_range = None
                     fallback_used = True
                 else:
-                    raise RuntimeError(
-                        "Degenerate scale encountered during quantization"
-                    )
+                    raise RuntimeError("Degenerate scale encountered during quantization")
             else:
                 qmin, qmax = self._int_bounds
                 transformed = np.round(arr / scale + zero_point)
@@ -220,16 +219,25 @@ class UniformAffineQuantizer:
             return self._scale, self._zero_point, self._calibration_range
         min_val = float(np.min(arr))
         max_val = float(np.max(arr))
+        raw_range = max_val - min_val
         if self.config.symmetric:
             bound = max(abs(min_val), abs(max_val))
             min_val, max_val = -bound, bound
-        scale, zero_point = self._scale_from_range(min_val, max_val)
+        scale, zero_point = self._scale_from_range(min_val, max_val, raw_range=raw_range)
         return scale, zero_point, (min_val, max_val)
 
     def _scale_from_range(
-        self, min_val: float, max_val: float
+        self,
+        min_val: float,
+        max_val: float,
+        *,
+        raw_range: float | None = None,
     ) -> tuple[float | None, float | None]:
-        if max_val - min_val <= self.config.eps:
+        # Use the pre-symmetric raw range when available so that a constant
+        # input (zero dynamic range) is correctly detected as degenerate even
+        # after symmetric expansion inflates the bounds.
+        effective_range = raw_range if raw_range is not None else max_val - min_val
+        if effective_range <= self.config.eps:
             return None, None
         qmin, qmax = self._int_bounds
         scale = (max_val - min_val) / float(qmax - qmin)

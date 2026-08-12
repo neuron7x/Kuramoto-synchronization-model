@@ -1,3 +1,5 @@
+# Copyright (c) 2023-2026 Yaroslav Vasylenko (neuron7xLab)
+# SPDX-License-Identifier: MIT
 """FastAPI application exposing the sandbox signal core."""
 
 from __future__ import annotations
@@ -27,11 +29,9 @@ def create_app(settings: SignalSettings | None = None) -> FastAPI:
     config = settings or signal_settings()
     market_client = MarketClient(str(config.market_url))
     provider = HttpMarketProvider(market_client)
-    engine = SignalEngine(
-        provider, sensitivity=config.sensitivity, window=config.analysis_window
-    )
+    engine = SignalEngine(provider, sensitivity=config.sensitivity, window=config.analysis_window)
 
-    app = FastAPI(title="TradePulse Sandbox Signal Core", version="1.0.0")
+    app = FastAPI(title="GeoSync Sandbox Signal Core", version="1.0.0")
 
     @app.get("/health")
     async def health() -> dict[str, Any]:

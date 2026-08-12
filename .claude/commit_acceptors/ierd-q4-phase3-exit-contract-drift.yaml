@@ -1,0 +1,100 @@
+# Diff-bound commit acceptor for IERD-Q4 Phase-3 EXIT.
+#
+# Scope of this PR (separate from the Phase-3 ENTRY acceptor that
+# governs only the gate scaffolding): four atomic commits closing
+# the schemathesis contract drift on the OpenAPI surface and flipping
+# the gate fail-closed.
+#
+# Atomic commits in this PR:
+#   1. wrap PayloadGuardMiddleware errors in ErrorResponse envelope
+#      (helper `build_error_envelope` in application/api/errors.py)
+#   2. admin/kill-switch handlers: auth dep before rate-limit dep,
+#      APIRouter inherits COMMON_ERROR_RESPONSES
+#   3. exclude /graphql from the OpenAPI suite (Strawberry schema)
+#   4. flip workflow run-step continue-on-error to fail-closed,
+#      reclassify api-contract-openapi-coverage ANCHORED, invert
+#      the original acceptor falsifier so it now guards regression
+#      to informational mode
+
+id: ierd-q4-phase3-exit-contract-drift
+status: ACTIVE
+claim_type: correctness
+promise: >-
+  After this PR lands, `pytest tests/api/test_schemathesis_contract.py`
+  passes 11/11 OpenAPI operations under six checks (no_5xx,
+  status_code_conformance, content_type_conformance,
+  response_headers_conformance, response_schema_conformance,
+  negative_data_rejection); the Schemathesis Contract workflow runs
+  fail-closed (run step has no continue-on-error); and
+  docs/CLAIMS.yaml lists `api-contract-openapi-coverage` as
+  ANCHORED with the new evidence_paths intact. The api-contract
+  Phase-3 EXIT criterion in ADR 0020 is satisfied.
+diff_scope:
+  changed_files:
+    - path: ".claude/commit_acceptors/ierd-q4-phase3-exit-contract-drift.yaml"
+    - path: ".claude/commit_acceptors/ierd-q4-schemathesis-contract-gate.yaml"
+    - path: ".github/detect-secrets.baseline"
+    - path: ".github/workflows/schemathesis-contract.yml"
+    - path: "application/api/errors.py"
+    - path: "application/api/risk_factory.py"
+    - path: "application/api/service.py"
+    - path: "docs/CLAIMS.yaml"
+    - path: "schemas/openapi/geosync-online-inference-v1.json"
+    - path: "src/admin/remote_control.py"
+    - path: "tests/api/test_schemathesis_contract.py"
+    - path: "tests/api/test_service.py"
+    - path: "tests/unit/api/test_service_helpers.py"
+  forbidden_paths:
+    - "trading/"
+    - "forecast/"
+    - "policy/"
+    - "core/physics/"
+    - "core/kuramoto/"
+    - "core/utils/metrics.py"
+    - "application/api/middleware/prometheus.py"
+required_python_symbols:
+  - "application/api/errors.py::build_error_envelope"
+  - "application/api/errors.py::ErrorPayload"
+  - "application/api/errors.py::ErrorResponse"
+  - "tests/api/test_schemathesis_contract.py::test_api_operation_conforms_to_schema"
+expected_signal: >-
+  Local: `pytest tests/api/test_schemathesis_contract.py -q`
+  reports "11 passed"; `bash -c "python -c \"import yaml,sys;
+  spec=yaml.safe_load(open('.github/workflows/schemathesis-contract.yml'));
+  steps=spec['jobs']['schemathesis-contract']['steps'];
+  run=next(s for s in steps if s.get('id')=='run');
+  sys.exit(0 if run.get('continue-on-error') is not True else 1)\""`
+  exits 0; `python scripts/ci/check_claims.py` reports schema v3
+  with `api-contract-openapi-coverage` tier=ANCHORED.
+measurement_command: >-
+  bash -c 'mypy --strict --follow-imports=silent
+  application/api/errors.py
+  application/api/service.py
+  src/admin/remote_control.py
+  tests/api/test_schemathesis_contract.py
+  && ruff check
+  application/api/errors.py
+  application/api/service.py
+  src/admin/remote_control.py
+  tests/api/test_schemathesis_contract.py
+  && python scripts/ci/check_claims.py'
+signal_artifact: "tmp/ierd_q4_phase3_exit_contract_drift.log"
+falsifier:
+  command: >-
+    bash -c 'python scripts/ci/check_claims.py >/tmp/cc.log 2>&1; grep -q "tier distribution: ANCHORED=21" /tmp/cc.log'
+  description: >-
+    Asserts that the claim ledger contains 21 ANCHORED claims
+    (the count includes `api-contract-openapi-coverage` after
+    its Phase-3 EXIT promotion). If this number drops, the EXIT
+    promotion has been silently reverted and Phase-3 EXIT
+    invariant is broken.
+rollback_command: >-
+  git revert HEAD~3..HEAD --no-edit
+rollback_verification_command: >-
+  git diff --exit-code application/api/errors.py
+  application/api/service.py
+  src/admin/remote_control.py
+memory_update_type: append
+ledger_path: ".claude/commit_acceptors/ierd-q4-phase3-exit-contract-drift.yaml"
+report_path: "tmp/ierd_q4_phase3_exit_contract_drift.log"
+evidence: []

@@ -1,0 +1,57 @@
+{
+  "best_IC_ricci": 0.0058726780306543385,
+  "best_IC_spread": 0.0011048705289009545,
+  "optimal_horizon_ricci": 12,
+  "optimal_horizon_spread": 1,
+  "table": [
+    {
+      "IC_ricci": 0.002292,
+      "IC_spread": 0.001105,
+      "horizon": 1,
+      "p_ricci": 0.636816,
+      "p_spread": 0.840796
+    },
+    {
+      "IC_ricci": 0.0004,
+      "IC_spread": -0.004506,
+      "horizon": 2,
+      "p_ricci": 0.910448,
+      "p_spread": 0.363184
+    },
+    {
+      "IC_ricci": 0.005021,
+      "IC_spread": -0.004693,
+      "horizon": 4,
+      "p_ricci": 0.303483,
+      "p_spread": 0.358209
+    },
+    {
+      "IC_ricci": 0.005682,
+      "IC_spread": -0.001706,
+      "horizon": 8,
+      "p_ricci": 0.233831,
+      "p_spread": 0.736318
+    },
+    {
+      "IC_ricci": 0.005873,
+      "IC_spread": -0.003777,
+      "horizon": 12,
+      "p_ricci": 0.189055,
+      "p_spread": 0.472637
+    },
+    {
+      "IC_ricci": -0.002544,
+      "IC_spread": -0.007441,
+      "horizon": 24,
+      "p_ricci": 0.537313,
+      "p_spread": 0.119403
+    },
+    {
+      "IC_ricci": 0.002545,
+      "IC_spread": -0.004863,
+      "horizon": 48,
+      "p_ricci": 0.597015,
+      "p_spread": 0.268657
+    }
+  ]
+}

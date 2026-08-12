@@ -1,4 +1,5 @@
-# SPDX-License-Identifier: LicenseRef-TradePulse-Proprietary
+# Copyright (c) 2023-2026 Yaroslav Vasylenko (neuron7xLab)
+# SPDX-License-Identifier: MIT
 """Execution risk controls with kill-switch governance and telemetry hooks.
 
 This module houses the reference :class:`RiskManager` used by the live trading
@@ -8,7 +9,7 @@ position/notional limits, order-rate throttles, and a kill-switch escalation
 mechanism aligned with the governance expectations formalised in
 ``docs/documentation_governance.md`` and ``docs/monitoring.md``.
 
-TradePulse routes all order flow through this module to ensure regulatory and
+GeoSync routes all order flow through this module to ensure regulatory and
 internal guardrails are enforced before interacting with external venues. The
 implementation codifies the governance controls described in
 ``docs/execution.md`` and the observability guarantees tracked in
@@ -35,6 +36,7 @@ without modifying risk logic.
 
 from __future__ import annotations
 
+import functools
 import json
 import math
 import sqlite3
@@ -48,10 +50,12 @@ from datetime import datetime, timedelta, timezone
 from pathlib import Path
 from typing import (
     Callable,
+    Concatenate,
     Dict,
     Iterable,
     Mapping,
     MutableMapping,
+    ParamSpec,
     Protocol,
     TypeVar,
 )
@@ -74,6 +78,31 @@ from libs.db import (
 )
 
 from ..audit import ExecutionAuditLogger, get_execution_audit_logger
+
+_P = ParamSpec("_P")
+_RT = TypeVar("_RT")
+
+
+def _synchronized(
+    method: Callable[Concatenate["RiskManager", _P], _RT],
+) -> Callable[Concatenate["RiskManager", _P], _RT]:
+    """Serialise a :class:`RiskManager` method on the instance state lock.
+
+    The live runner drives ``RiskManager`` from three concurrent watchdog threads
+    (order-submission, fill-poller, heartbeat — see ``execution/live_loop.py``).
+    Without serialisation, ``validate_order``'s cap check and ``register_fill``'s
+    position update interleave, corrupting ``_positions``/``_last_notional`` and
+    the violation/throttle counters, and letting an unsynchronised read observe a
+    torn snapshot. The guard is a reentrant lock (``threading.RLock``) so a guarded
+    method may call another without self-deadlock.
+    """
+
+    @functools.wraps(method)
+    def _wrapper(self: "RiskManager", *args: _P.args, **kwargs: _P.kwargs) -> _RT:
+        with self._state_lock:
+            return method(self, *args, **kwargs)
+
+    return _wrapper
 
 
 class RiskError(RuntimeError):
@@ -257,7 +286,7 @@ class RiskStateRecord(BaseModel):
 
     @model_validator(mode="after")
     def _normalise(self) -> "RiskStateRecord":
-        def _sanitise(source: Mapping[str, float]) -> dict[str, float]:
+        def _sanitise(section: str, source: Mapping[str, float]) -> dict[str, float]:
             normalised: dict[str, float] = {}
             for raw_symbol, raw_value in source.items():
                 if raw_symbol is None:
@@ -265,15 +294,25 @@ class RiskStateRecord(BaseModel):
                 symbol = str(raw_symbol).strip()
                 if not symbol:
                     continue
+                # Fail CLOSED, consistent with the sibling corruption paths in
+                # this class (control chars, wrong type, bad length all raise
+                # rather than silently dropping). A persisted position we cannot
+                # parse — or a NaN/Inf that would poison every downstream cap /
+                # drawdown computation — must quarantine the whole snapshot, not
+                # vanish a symbol from the exposure book.
                 try:
                     numeric = float(raw_value)
-                except (TypeError, ValueError):
-                    continue
+                except (TypeError, ValueError) as exc:
+                    raise DataQualityError(
+                        f"{section}[{symbol!r}] is not a parseable number: {raw_value!r}"
+                    ) from exc
+                if not math.isfinite(numeric):
+                    raise DataQualityError(f"{section}[{symbol!r}] is not finite: {numeric!r}")
                 normalised[symbol] = numeric
             return normalised
 
-        object.__setattr__(self, "positions", _sanitise(self.positions))
-        object.__setattr__(self, "last_notional", _sanitise(self.last_notional))
+        object.__setattr__(self, "positions", _sanitise("positions", self.positions))
+        object.__setattr__(self, "last_notional", _sanitise("last_notional", self.last_notional))
         return self
 
 
@@ -343,8 +382,7 @@ class BaseKillSwitchStateStore(KillSwitchStateStore, ABC):
     def _check_not_quarantined(self) -> None:
         if self._quarantined:
             raise DataQualityError(
-                self._quarantine_reason
-                or "kill-switch store quarantined due to invalid state"
+                self._quarantine_reason or "kill-switch store quarantined due to invalid state"
             )
 
     def _quarantine(self, reason: str, *, exc: Exception | None = None) -> None:
@@ -400,9 +438,7 @@ class BaseKillSwitchStateStore(KillSwitchStateStore, ABC):
 
     def _enforce_outgoing_contracts(self, engaged: bool, reason: str) -> None:
         if engaged and not reason:
-            raise DataQualityError(
-                "reason must be supplied when engaging the kill-switch"
-            )
+            raise DataQualityError("reason must be supplied when engaging the kill-switch")
         if len(reason) > self._max_reason_length:
             raise DataQualityError(
                 f"reason exceeds allowed length {len(reason)} > {self._max_reason_length}"
@@ -463,16 +499,14 @@ class SQLiteKillSwitchStateStore(BaseKillSwitchStateStore):
         self._path.parent.mkdir(parents=True, exist_ok=True)
         with sqlite3.connect(self._path, timeout=self._timeout) as connection:
             connection.execute("PRAGMA journal_mode=WAL")
-            connection.execute(
-                """
+            connection.execute("""
                 CREATE TABLE IF NOT EXISTS kill_switch_state (
                     id INTEGER PRIMARY KEY CHECK (id = 1),
                     engaged INTEGER NOT NULL CHECK (engaged IN (0, 1)),
                     reason TEXT NOT NULL DEFAULT '',
                     updated_at TIMESTAMP NOT NULL DEFAULT CURRENT_TIMESTAMP
                 )
-                """
-            )
+                """)
 
     def _with_retry(
         self, operation: Callable[[sqlite3.Connection], T], *, write: bool = False
@@ -498,7 +532,6 @@ class SQLiteKillSwitchStateStore(BaseKillSwitchStateStore):
         return "locked" in message or "busy" in message
 
     def _load_row(self) -> tuple[object, ...] | None:
-
         def _load(connection: sqlite3.Connection) -> tuple[object, ...] | None:
             cursor = connection.execute(
                 "SELECT engaged, reason, updated_at FROM kill_switch_state WHERE id = 1"
@@ -508,7 +541,6 @@ class SQLiteKillSwitchStateStore(BaseKillSwitchStateStore):
         return self._with_retry(_load)
 
     def _save_payload(self, engaged: bool, reason: str) -> None:
-
         def _save(connection: sqlite3.Connection) -> None:
             connection.execute(
                 self._UPSERT_STATEMENT,
@@ -555,7 +587,7 @@ class PostgresKillSwitchStateStore(BaseKillSwitchStateStore):
         session_manager: SessionManager | None = None,
         repository: KillSwitchRepository | None = None,
         ensure_schema: bool = True,
-        application_name: str = "tradepulse-kill-switch",
+        application_name: str = "geosync-kill-switch",
         echo_statements: bool = False,
     ) -> None:
         if pool_min_size < 0:
@@ -653,9 +685,7 @@ class PostgresKillSwitchStateStore(BaseKillSwitchStateStore):
                 self._session_manager = session_manager
                 self._owns_session_manager = True
             if self._session_manager is None:
-                raise RuntimeError(
-                    "session_manager must be provided when repository is None"
-                )
+                raise RuntimeError("session_manager must be provided when repository is None")
             repository = KillSwitchStateRepository(
                 self._session_manager,
                 retry_policy=effective_retry,
@@ -730,9 +760,7 @@ class JsonRiskStateStore(RiskStateStore):
         positions: Mapping[str, float],
         notionals: Mapping[str, float],
     ) -> None:
-        record = RiskStateRecord(
-            positions=dict(positions), last_notional=dict(notionals)
-        )
+        record = RiskStateRecord(positions=dict(positions), last_notional=dict(notionals))
         tmp_path = self._path.with_suffix(".tmp")
         tmp_path.write_text(
             json.dumps(
@@ -759,6 +787,21 @@ class KillSwitch:
 
     def __init__(self, store: KillSwitchStateStore | None = None) -> None:
         self._store = store
+        # Dedicated lock making every mutation and read of the (_triggered,
+        # _reason) PAIR atomic. Callers such as RiskManagerFacade previously
+        # went straight through trigger()/reset()/reason/is_triggered without
+        # holding RiskManager._state_lock, so a reader could observe _triggered
+        # already flipped True while _reason was still the stale value (torn
+        # read). This is a reentrant lock so reason/is_triggered/guard may call
+        # _refresh_from_store while already holding it.
+        #
+        # Lock ordering: this lock is only ever held while calling OUT to the
+        # persistence store (which owns an independent lock and never calls back
+        # into KillSwitch), so no ordering cycle exists. RiskManager acquires it
+        # transitively (_state_lock -> kill_switch -> this lock -> store lock);
+        # the facade acquires it directly (this lock -> store lock). Both orders
+        # are prefixes of the same chain — no lock-ordering hazard is introduced.
+        self._lock = threading.RLock()
         self._triggered = False
         self._reason = ""
         if self._store is not None:
@@ -768,61 +811,97 @@ class KillSwitch:
         if self._store is None:
             return
 
-        try:
-            persisted = self._store.load()
-        except DataQualityError as exc:
-            self._triggered = True
-            self._reason = str(exc)
-            raise
-        if persisted is None:
-            self._triggered = False
-            self._reason = ""
-            return
+        with self._lock:
+            try:
+                persisted = self._store.load()
+            except DataQualityError as exc:
+                self._triggered = True
+                self._reason = str(exc)
+                raise
+            if persisted is None:
+                self._triggered = False
+                self._reason = ""
+                return
 
-        engaged, reason = persisted
-        self._triggered = bool(engaged)
-        self._reason = reason or ""
+            engaged, reason = persisted
+            self._triggered = bool(engaged)
+            self._reason = reason or ""
 
     def trigger(self, reason: str) -> None:
         """Engage the kill-switch with an explanatory ``reason``."""
 
-        self._triggered = True
-        self._reason = reason
-        if self._store is not None:
-            self._store.save(True, reason)
+        with self._lock:
+            self._triggered = True
+            self._reason = reason
+            if self._store is not None:
+                self._store.save(True, reason)
 
     def reset(self) -> None:
         """Clear the kill-switch state."""
 
-        self._triggered = False
-        self._reason = ""
-        if self._store is not None:
-            self._store.save(False, "")
+        with self._lock:
+            self._triggered = False
+            self._reason = ""
+            if self._store is not None:
+                self._store.save(False, "")
+
+    def snapshot(self) -> tuple[bool, str]:
+        """Return the ``(triggered, reason)`` pair read atomically.
+
+        Guarantees a caller never observes ``_triggered`` from one state change
+        paired with ``_reason`` from another. Prefer this over separate
+        :meth:`is_triggered` + :attr:`reason` calls when both fields are needed.
+        """
+
+        with self._lock:
+            if self._store is not None:
+                self._refresh_from_store()
+            return self._triggered, self._reason
 
     @property
     def reason(self) -> str:
         """Return the human-readable explanation for the last trigger."""
 
-        if self._store is not None:
-            self._refresh_from_store()
-        return self._reason
+        with self._lock:
+            if self._store is not None:
+                self._refresh_from_store()
+            return self._reason
 
     def is_triggered(self) -> bool:
         """Indicate whether the kill-switch is currently engaged."""
 
-        if self._store is not None:
-            self._refresh_from_store()
-        return self._triggered
+        with self._lock:
+            if self._store is not None:
+                self._refresh_from_store()
+            return self._triggered
 
     def guard(self) -> None:
         """Raise :class:`RiskError` if the kill-switch is active."""
 
-        if self._store is not None:
-            self._refresh_from_store()
-        if self._triggered:
-            raise RiskError(
-                f"Kill-switch engaged: {self._reason or 'unspecified reason'}"
-            )
+        with self._lock:
+            if self._store is not None:
+                self._refresh_from_store()
+            if self._triggered:
+                raise RiskError(f"Kill-switch engaged: {self._reason or 'unspecified reason'}")
+
+
+@dataclass
+class _Reservation:
+    """A pending-exposure hold created when an order is admitted with ``reserve``.
+
+    Reservations bridge the *validation → fill* gap: exposure is counted against
+    the cap the instant an order passes ``validate_order``, not only once the fill
+    lands, so two orders that are each individually below the cap but jointly above
+    it cannot both be admitted (the reservation-lag bypass). Each hold is converted
+    to actual exposure by ``register_fill`` (partial fills reduce ``remaining_qty``)
+    or discharged by ``release_reservation`` on any terminal-without-fill path.
+    """
+
+    reservation_id: str
+    symbol: str  # canonical
+    side_sign: float
+    remaining_qty: float
+    price: float
 
 
 class RiskManager(RiskController):
@@ -846,8 +925,18 @@ class RiskManager(RiskController):
         self.limits = limits
         self._kill_switch = KillSwitch(store=kill_switch_store)
         self._time = time_source or time.time
+        # Reentrant so a guarded method (e.g. validate_order) may call another
+        # guarded method without self-deadlock; see _synchronized.
+        self._state_lock = threading.RLock()
         self._positions: MutableMapping[str, float] = {}
         self._last_notional: MutableMapping[str, float] = {}
+        # Pending (reserved-but-unfilled) exposure, aggregated per canonical
+        # symbol, plus the per-reservation ledger that owns it. Guarded by
+        # _state_lock like every other exposure surface.
+        self._pending_positions: MutableMapping[str, float] = {}
+        self._pending_notional: MutableMapping[str, float] = {}
+        self._reservations: Dict[str, _Reservation] = {}
+        self._reservation_seq = 0
         self._risk_state_store = risk_state_store
         self._submissions: deque[float] = deque()
         self._logger = get_logger(__name__)
@@ -864,6 +953,7 @@ class RiskManager(RiskController):
         self._latest_neural_directive: dict[str, float | str] | None = None
         self._restore_risk_state()
 
+    @_synchronized
     def update_limits(self, **updates: object) -> RiskLimits:
         """Apply supported updates to :class:`RiskLimits` and return the result."""
 
@@ -883,7 +973,7 @@ class RiskManager(RiskController):
         if not sanitized:
             return self.limits
         new_limits = replace(self.limits, **sanitized)
-        self._logger.info(  # noqa: TRY400 - structured logging
+        self._logger.info(
             "Risk limits updated",
             extra={
                 "event": "risk.limits_updated",
@@ -893,6 +983,7 @@ class RiskManager(RiskController):
         self.limits = new_limits
         return self.limits
 
+    @_synchronized
     def apply_neural_directive(
         self,
         *,
@@ -910,7 +1001,7 @@ class RiskManager(RiskController):
             "alloc_scale": float(max(0.0, min(1.0, alloc_scale))),
         }
         self._latest_neural_directive = directive
-        self._logger.info(  # noqa: TRY400 - structured logging
+        self._logger.info(
             "Neural directive applied",
             extra={"event": "risk.neural_directive", "payload": directive},
         )
@@ -942,7 +1033,7 @@ class RiskManager(RiskController):
                 self._positions[canonical] = float(position)
             except Exception:  # pragma: no cover - defensive normalisation path
                 self._logger.warning(
-                    "Failed to restore position entry",  # noqa: TRY400 - structured logging
+                    "Failed to restore position entry",
                     extra={
                         "event": "risk.restore_position_failed",
                         "symbol": symbol,
@@ -954,7 +1045,7 @@ class RiskManager(RiskController):
                 self._last_notional[canonical] = abs(float(notional))
             except Exception:  # pragma: no cover - defensive normalisation path
                 self._logger.warning(
-                    "Failed to restore notional entry",  # noqa: TRY400
+                    "Failed to restore notional entry",
                     extra={
                         "event": "risk.restore_notional_failed",
                         "symbol": symbol,
@@ -968,7 +1059,7 @@ class RiskManager(RiskController):
             self._risk_state_store.save(self._positions, self._last_notional)
         except Exception as exc:  # pragma: no cover - persistence failures rare
             self._logger.warning(
-                "Failed to persist risk exposure snapshot",  # noqa: TRY400
+                "Failed to persist risk exposure snapshot",
                 extra={"event": "risk.persist_failed", "error": str(exc)},
             )
 
@@ -1008,6 +1099,7 @@ class RiskManager(RiskController):
 
         return self._kill_switch.is_triggered()
 
+    @_synchronized
     def update_portfolio_equity(
         self,
         equity: float,
@@ -1077,6 +1169,7 @@ class RiskManager(RiskController):
         else:
             self._drawdown_halt_notified = False
 
+    @_synchronized
     def hydrate_positions(
         self,
         mapping: Mapping[str, tuple[float, float]],
@@ -1093,9 +1186,7 @@ class RiskManager(RiskController):
             try:
                 position, notional = payload
             except (TypeError, ValueError) as exc:
-                raise ValueError(
-                    "hydrate_positions expects mapping values to be 2-tuples"
-                ) from exc
+                raise ValueError("hydrate_positions expects mapping values to be 2-tuples") from exc
 
             canonical = self._canonical_symbol(symbol)
             try:
@@ -1128,10 +1219,7 @@ class RiskManager(RiskController):
         if len(self._submissions) >= self.limits.max_orders_per_interval:
             self._throttle_violation_streak += 1
             reason = f"Order throttle exceeded: {len(self._submissions)} submissions in {window}s"
-            if (
-                self._throttle_violation_streak
-                >= self.limits.kill_switch_rate_limit_threshold
-            ):
+            if self._throttle_violation_streak >= self.limits.kill_switch_rate_limit_threshold:
                 self._trigger_kill_switch(
                     reason,
                     symbol=symbol,
@@ -1202,8 +1290,63 @@ class RiskManager(RiskController):
             }
         )
 
-    def validate_order(self, symbol: str, side: str, qty: float, price: float) -> None:
+    def _reject_on_cap(
+        self,
+        *,
+        measured: float,
+        cap: float,
+        reason: str,
+        violation_type: str,
+        canonical_symbol: str,
+        side: str,
+        qty: float,
+        price: float,
+    ) -> None:
+        """Escalate a cap breach (streak, kill-switch, audit) and raise.
+
+        Shared by the position and notional checks in :meth:`validate_order`;
+        the caller holds ``_state_lock``.
+        """
+
+        self._limit_violation_streak += 1
+        severe = measured >= (cap * self.limits.kill_switch_limit_multiplier)
+        if severe or (self._limit_violation_streak >= self.limits.kill_switch_violation_threshold):
+            self._trigger_kill_switch(
+                reason, symbol=canonical_symbol, violation_type=violation_type
+            )
+        self._metrics.record_risk_validation(canonical_symbol, violation_type)
+        self._record_risk_audit(
+            symbol=canonical_symbol,
+            side=side.lower(),
+            quantity=float(qty),
+            price=float(price),
+            status="rejected",
+            reason=reason,
+            violation_type=violation_type,
+        )
+        raise LimitViolation(reason)
+
+    @_synchronized
+    def validate_order(
+        self,
+        symbol: str,
+        side: str,
+        qty: float,
+        price: float,
+        *,
+        reserve: bool = False,
+        reservation_id: str | None = None,
+    ) -> None:
         """Apply risk checks before admitting an order to the execution stack.
+
+        Caps are evaluated against ``actual + pending`` exposure, where *pending*
+        is the sum of outstanding reservations (see :class:`_Reservation`). When
+        ``reserve`` is ``True`` and the order is admitted, the order's exposure is
+        held atomically (same locked section) under the caller-supplied
+        ``reservation_id``; the caller must later convert it via
+        :meth:`register_fill` or discharge it via :meth:`release_reservation`.
+        With ``reserve=False`` (the default) no hold is created and behaviour is
+        unchanged for legacy callers.
 
         Args:
             symbol: External instrument identifier; normalised via
@@ -1212,9 +1355,14 @@ class RiskManager(RiskController):
             qty: Order quantity expressed in base units. Must be non-negative.
             price: Reference price used for notional calculations. Must be
                 strictly positive.
+            reserve: When ``True``, atomically reserve the order's exposure on
+                admission under ``reservation_id``.
+            reservation_id: Caller-owned, traceable hold id; required when
+                ``reserve`` is ``True`` and must not already be outstanding.
 
         Raises:
-            ValueError: If ``qty`` or ``price`` fall outside allowable ranges.
+            ValueError: If ``qty``/``price`` fall outside allowable ranges, or if
+                ``reserve`` is set without a fresh ``reservation_id``.
             RiskError: When the kill-switch is already engaged.
             OrderRateExceeded: If the rate limiter blocks the submission.
             LimitViolation: When position or notional caps would be breached.
@@ -1236,13 +1384,13 @@ class RiskManager(RiskController):
         """
 
         self._validate_inputs(qty, price)
+        if reserve and (reservation_id is None or reservation_id in self._reservations):
+            raise ValueError("reserve=True requires a fresh reservation_id")
         canonical_symbol = self._canonical_symbol(symbol)
         try:
             self._kill_switch.guard()
         except RiskError as exc:
-            self._metrics.record_risk_validation(
-                canonical_symbol, "kill_switch_blocked"
-            )
+            self._metrics.record_risk_validation(canonical_symbol, "kill_switch_blocked")
             self._record_risk_audit(
                 symbol=canonical_symbol,
                 side=side.lower(),
@@ -1271,69 +1419,41 @@ class RiskManager(RiskController):
             raise
 
         side_sign = 1.0 if side.lower() == "buy" else -1.0
-        current_position = float(self._positions.get(canonical_symbol, 0.0))
+        actual_position = float(self._positions.get(canonical_symbol, 0.0))
+        pending_position = float(self._pending_positions.get(canonical_symbol, 0.0))
+        current_position = actual_position + pending_position
         new_position = current_position + side_sign * qty
 
         if abs(new_position) > self.limits.max_position:
-            reason = (
-                f"Position cap exceeded for {canonical_symbol}: "
-                f"{new_position} > {self.limits.max_position}"
-            )
-            self._limit_violation_streak += 1
-            severe = abs(new_position) > (
-                self.limits.max_position * self.limits.kill_switch_limit_multiplier
-            )
-            if severe or (
-                self._limit_violation_streak
-                >= self.limits.kill_switch_violation_threshold
-            ):
-                self._trigger_kill_switch(
-                    reason,
-                    symbol=canonical_symbol,
-                    violation_type="position_limit",
-                )
-            self._metrics.record_risk_validation(canonical_symbol, "position_limit")
-            self._record_risk_audit(
-                symbol=canonical_symbol,
-                side=side.lower(),
-                quantity=float(qty),
-                price=float(price),
-                status="rejected",
-                reason=reason,
+            self._reject_on_cap(
+                measured=abs(new_position),
+                cap=self.limits.max_position,
+                reason=(
+                    f"Position cap exceeded for {canonical_symbol}: "
+                    f"{new_position} > {self.limits.max_position}"
+                ),
                 violation_type="position_limit",
+                canonical_symbol=canonical_symbol,
+                side=side,
+                qty=qty,
+                price=price,
             )
-            raise LimitViolation(reason)
 
         projected_notional = abs(new_position * price)
         if projected_notional > self.limits.max_notional:
-            reason = (
-                f"Notional cap exceeded for {canonical_symbol}: "
-                f"{projected_notional} > {self.limits.max_notional}"
-            )
-            self._limit_violation_streak += 1
-            severe = projected_notional > (
-                self.limits.max_notional * self.limits.kill_switch_limit_multiplier
-            )
-            if severe or (
-                self._limit_violation_streak
-                >= self.limits.kill_switch_violation_threshold
-            ):
-                self._trigger_kill_switch(
-                    reason,
-                    symbol=canonical_symbol,
-                    violation_type="notional_limit",
-                )
-            self._metrics.record_risk_validation(canonical_symbol, "notional_limit")
-            self._record_risk_audit(
-                symbol=canonical_symbol,
-                side=side.lower(),
-                quantity=float(qty),
-                price=float(price),
-                status="rejected",
-                reason=reason,
+            self._reject_on_cap(
+                measured=projected_notional,
+                cap=self.limits.max_notional,
+                reason=(
+                    f"Notional cap exceeded for {canonical_symbol}: "
+                    f"{projected_notional} > {self.limits.max_notional}"
+                ),
                 violation_type="notional_limit",
+                canonical_symbol=canonical_symbol,
+                side=side,
+                qty=qty,
+                price=price,
             )
-            raise LimitViolation(reason)
 
         if self.limits.max_orders_per_interval > 0:
             self._submissions.append(now)
@@ -1350,6 +1470,69 @@ class RiskManager(RiskController):
             reason=None,
             violation_type=None,
         )
+        if reserve and reservation_id is not None:
+            self._reserve_exposure(
+                reservation_id, canonical_symbol, side_sign, float(qty), float(price)
+            )
+
+    def _reserve_exposure(
+        self,
+        reservation_id: str,
+        canonical_symbol: str,
+        side_sign: float,
+        qty: float,
+        price: float,
+    ) -> None:
+        """Create a pending-exposure hold. Caller must hold ``_state_lock``."""
+
+        self._reservation_seq += 1
+        self._reservations[reservation_id] = _Reservation(
+            reservation_id=reservation_id,
+            symbol=canonical_symbol,
+            side_sign=side_sign,
+            remaining_qty=qty,
+            price=price,
+        )
+        self._pending_positions[canonical_symbol] = (
+            self._pending_positions.get(canonical_symbol, 0.0) + side_sign * qty
+        )
+        self._pending_notional[canonical_symbol] = self._pending_notional.get(
+            canonical_symbol, 0.0
+        ) + abs(qty * price)
+        return reservation_id
+
+    @_synchronized
+    def release_reservation(self, reservation_id: str) -> None:
+        """Discharge a pending hold in full (reject/cancel/timeout paths).
+
+        Idempotent: an unknown or already-cleared id is a no-op, so a terminal
+        handler may release without first checking whether a fill already
+        converted the reservation.
+        """
+
+        reservation = self._reservations.pop(reservation_id, None)
+        if reservation is None:
+            return
+        self._discharge_pending(reservation, reservation.remaining_qty)
+
+    def _discharge_pending(self, reservation: _Reservation, qty: float) -> None:
+        """Reduce aggregate pending by ``qty`` of ``reservation``. Lock held."""
+
+        if qty <= 0.0:
+            return
+        symbol = reservation.symbol
+        remaining_pending = self._pending_positions.get(symbol, 0.0) - reservation.side_sign * qty
+        remaining_notional = self._pending_notional.get(symbol, 0.0) - abs(qty * reservation.price)
+        # Floor near-zero residue to exactly zero and drop empty keys so the
+        # pending maps never accumulate float dust or stale symbols.
+        if abs(remaining_pending) <= 1e-12:
+            self._pending_positions.pop(symbol, None)
+        else:
+            self._pending_positions[symbol] = remaining_pending
+        if remaining_notional <= 1e-12:
+            self._pending_notional.pop(symbol, None)
+        else:
+            self._pending_notional[symbol] = remaining_notional
 
     @property
     def kill_switch(self) -> KillSwitch:
@@ -1357,8 +1540,24 @@ class RiskManager(RiskController):
 
         return self._kill_switch
 
-    def register_fill(self, symbol: str, side: str, qty: float, price: float) -> None:
+    @_synchronized
+    def register_fill(
+        self,
+        symbol: str,
+        side: str,
+        qty: float,
+        price: float,
+        *,
+        reservation_id: str | None = None,
+    ) -> None:
         """Update exposure after a confirmed fill.
+
+        When ``reservation_id`` is supplied, the filled quantity is converted from
+        pending to actual exposure: the reservation's ``remaining_qty`` and the
+        aggregate pending are reduced by ``qty`` (a partial fill leaves the
+        remainder reserved; a full fill drops the reservation). Total exposure is
+        therefore unchanged across the convert — no double counting. With
+        ``reservation_id=None`` only actual exposure is updated (legacy path).
 
         Args:
             symbol: External instrument identifier; normalised via
@@ -1366,6 +1565,7 @@ class RiskManager(RiskController):
             side: Executed direction (``"buy"`` or ``"sell"``).
             qty: Fill quantity in base units.
             price: Fill price used for notional tracking.
+            reservation_id: Optional hold to convert; see :meth:`validate_order`.
 
         Notes:
             Exposure updates feed portfolio analytics described in
@@ -1375,25 +1575,63 @@ class RiskManager(RiskController):
         self._validate_inputs(qty, price)
         canonical_symbol = self._canonical_symbol(symbol)
         side_sign = 1.0 if side.lower() == "buy" else -1.0
+        if reservation_id is not None:
+            reservation = self._reservations.get(reservation_id)
+            if reservation is not None:
+                converted = min(qty, reservation.remaining_qty)
+                reservation.remaining_qty -= converted
+                self._discharge_pending(reservation, converted)
+                if reservation.remaining_qty <= 1e-12:
+                    self._reservations.pop(reservation_id, None)
         position = float(self._positions.get(canonical_symbol, 0.0)) + side_sign * qty
         self._positions[canonical_symbol] = position
         self._last_notional[canonical_symbol] = abs(position * price)
         self._persist_risk_state()
 
+    @_synchronized
+    def pending_position(self, symbol: str) -> float:
+        """Return the signed reserved-but-unfilled position for ``symbol``."""
+
+        canonical_symbol = self._canonical_symbol(symbol)
+        return float(self._pending_positions.get(canonical_symbol, 0.0))
+
+    @_synchronized
+    def pending_notional(self, symbol: str) -> float:
+        """Return the reserved-but-unfilled notional for ``symbol``."""
+
+        canonical_symbol = self._canonical_symbol(symbol)
+        return float(self._pending_notional.get(canonical_symbol, 0.0))
+
+    @_synchronized
+    def open_reservation_count(self) -> int:
+        """Return the number of outstanding reservations (leak detector)."""
+
+        return len(self._reservations)
+
+    @_synchronized
     def current_position(self, symbol: str) -> float:
         """Return the signed position for ``symbol``."""
 
         canonical_symbol = self._canonical_symbol(symbol)
         return float(self._positions.get(canonical_symbol, 0.0))
 
+    @_synchronized
     def current_notional(self, symbol: str) -> float:
         """Return the absolute notional exposure for ``symbol``."""
 
         canonical_symbol = self._canonical_symbol(symbol)
         return float(self._last_notional.get(canonical_symbol, 0.0))
 
-    def exposure_snapshot(self) -> dict[str, dict[str, float]]:
-        """Return a serialisable snapshot of tracked positions and notionals."""
+    @_synchronized
+    def exposure_snapshot(self, *, include_pending: bool = False) -> dict[str, dict[str, float]]:
+        """Return a serialisable snapshot of tracked positions and notionals.
+
+        With ``include_pending=True`` each entry additionally carries
+        ``pending_position``/``pending_notional`` and the ``total_position``/
+        ``total_notional`` (actual + pending), and symbols that currently have
+        only a pending hold are included. The default shape (``position`` +
+        ``notional`` only) is preserved for legacy callers.
+        """
 
         snapshot: dict[str, dict[str, float]] = {}
         for symbol, position in self._positions.items():
@@ -1406,6 +1644,17 @@ class RiskManager(RiskController):
                 snapshot[symbol]["notional"] = float(notional)
                 continue
             snapshot[symbol] = {"position": 0.0, "notional": float(notional)}
+        if not include_pending:
+            return dict(sorted(snapshot.items()))
+        for symbol in set(self._pending_positions) | set(self._pending_notional):
+            snapshot.setdefault(symbol, {"position": 0.0, "notional": 0.0})
+        for symbol, entry in snapshot.items():
+            pending_pos = float(self._pending_positions.get(symbol, 0.0))
+            pending_not = float(self._pending_notional.get(symbol, 0.0))
+            entry["pending_position"] = pending_pos
+            entry["pending_notional"] = pending_not
+            entry["total_position"] = entry["position"] + pending_pos
+            entry["total_notional"] = entry["notional"] + pending_not
         return dict(sorted(snapshot.items()))
 
 
@@ -1469,17 +1718,20 @@ class IdempotentRetryExecutor:
                         time.sleep(delay)
         if last_error is not None:
             raise last_error
-        raise RuntimeError(
-            "IdempotentRetryExecutor terminated without executing the callable"
-        )
+        raise RuntimeError("IdempotentRetryExecutor terminated without executing the callable")
 
 
 class DefaultPortfolioRiskAnalyzer(PortfolioRiskAnalyzer):
     """Portfolio risk analyzer compatible with :func:`portfolio_heat`.
 
-    The analyzer mirrors the directional heat aggregation described in
-    ``docs/risk_ml_observability.md`` and provides a lightweight default for
-    CLI tooling and notebooks.
+    The analyzer mirrors the gross (absolute) exposure aggregation described
+    in ``docs/risk_ml_observability.md`` and provides a lightweight default
+    for CLI tooling and notebooks.
+
+    Heat is intentionally *gross*: long and short legs both consume risk
+    budget, so they add as positive exposure rather than netting. Netting
+    would under-state capital-at-risk, which is the opposite of a fail-closed
+    risk monitor. ``side`` is therefore not a sign on the heat contribution.
     """
 
     def heat(self, positions: Iterable[Mapping[str, float]]) -> float:
@@ -1488,9 +1740,8 @@ class DefaultPortfolioRiskAnalyzer(PortfolioRiskAnalyzer):
             qty = float(pos.get("qty", 0.0))
             price = float(pos.get("price", 0.0))
             risk_weight = float(pos.get("risk_weight", 1.0))
-            side = pos.get("side", "long")
-            direction = 1.0 if side == "long" else -1.0
-            total += abs(qty * price * risk_weight * direction)
+            # Gross exposure: |notional| regardless of side (see class docstring).
+            total += abs(qty * price * risk_weight)
         return float(total)
 
 

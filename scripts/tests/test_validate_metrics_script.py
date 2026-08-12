@@ -1,6 +1,7 @@
+# Copyright (c) 2023-2026 Yaroslav Vasylenko (neuron7xLab)
+# SPDX-License-Identifier: MIT
 from __future__ import annotations
 
-import math
 import types
 from pathlib import Path
 
@@ -9,15 +10,15 @@ import scripts.validate_metrics as vm
 
 def test_parse_metrics_payload_histogram_and_counter() -> None:
     payload = (
-        "# HELP tradepulse_api_request_latency_seconds Histogram\n"
-        "tradepulse_api_request_latency_seconds_bucket{route=\"/health\",method=\"GET\",le=\"0.5\"} 1\n"
-        "tradepulse_api_request_latency_seconds_sum{route=\"/health\",method=\"GET\"} 0.1\n"
-        "tradepulse_api_request_latency_seconds_count{route=\"/health\",method=\"GET\"} 2\n"
-        "tradepulse_api_requests_total{route=\"/health\",method=\"GET\",status=\"200\"} 3\n"
+        "# HELP geosync_api_request_latency_seconds Histogram\n"
+        'geosync_api_request_latency_seconds_bucket{route="/health",method="GET",le="0.5"} 1\n'
+        'geosync_api_request_latency_seconds_sum{route="/health",method="GET"} 0.1\n'
+        'geosync_api_request_latency_seconds_count{route="/health",method="GET"} 2\n'
+        'geosync_api_requests_total{route="/health",method="GET",status="200"} 3\n'
     )
     parsed = vm._parse_metrics_payload(payload)
-    assert parsed["tradepulse_api_requests_total"][0]["value"] == 3.0
-    assert parsed["tradepulse_api_request_latency_seconds_count"][0]["labels"]["route"] == "/health"
+    assert parsed["geosync_api_requests_total"][0]["value"] == 3.0
+    assert parsed["geosync_api_request_latency_seconds_count"][0]["labels"]["route"] == "/health"
 
 
 def test_run_runtime_rejects_non_finite(monkeypatch, tmp_path: Path) -> None:
@@ -38,8 +39,8 @@ def test_run_runtime_rejects_non_finite(monkeypatch, tmp_path: Path) -> None:
 
         def get(self, path):
             metric_text = (
-                "tradepulse_api_requests_total{route=\"/health\",method=\"GET\",status=\"200\"} 1\n"
-                "tradepulse_api_request_latency_seconds_sum{route=\"/health\",method=\"GET\"} nan\n"
+                'geosync_api_requests_total{route="/health",method="GET",status="200"} 1\n'
+                'geosync_api_request_latency_seconds_sum{route="/health",method="GET"} nan\n'
             )
             return FakeResponse(metric_text)
 
@@ -69,9 +70,9 @@ def test_run_runtime_succeeds_with_finite(monkeypatch, tmp_path: Path) -> None:
 
         def get(self, path):
             metric_text = (
-                "tradepulse_api_requests_total{route=\"/health\",method=\"GET\",status=\"200\"} 1\n"
-                "tradepulse_api_request_latency_seconds_count{route=\"/health\",method=\"GET\"} 1\n"
-                "tradepulse_api_request_latency_seconds_sum{route=\"/health\",method=\"GET\"} 0.1\n"
+                'geosync_api_requests_total{route="/health",method="GET",status="200"} 1\n'
+                'geosync_api_request_latency_seconds_count{route="/health",method="GET"} 1\n'
+                'geosync_api_request_latency_seconds_sum{route="/health",method="GET"} 0.1\n'
             )
             return FakeResponse(metric_text)
 

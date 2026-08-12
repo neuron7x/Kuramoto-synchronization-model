@@ -1,0 +1,96 @@
+# Diff-bound commit acceptor for the Ricci microstructure preregistration
+# contract (TASK 935).
+#
+# Formally constrains the empirical research line BEFORE execution: a
+# preregistration document (13 sections), config + dataset JSON Schemas, and an
+# executable promotion guard. No evidence is fabricated — the line stays
+# claim_tier: HYPOTHESIS / falsification_status: NOT_RUN / decision: OBSERVE.
+# Placeholder and synthetic data are structurally barred from promotion.
+
+id: ricci-microstructure-preregistration
+status: ACTIVE
+claim_type: governance
+promise: >-
+  After this PR lands, ricci_microstructure_v1 cannot be promoted past
+  HYPOTHESIS without real, hash-pinned data: the promotion guard
+  (tools/research/ricci_preregistration_guard.py) blocks placeholder/zero-hash
+  data, synthetic data, missing nulls, missing replay command, missing cost
+  model, and negative net-of-cost results, each with a named reason. The
+  preregistration doc carries all 13 required sections and the config/dataset
+  schemas reject malformed runs.
+
+diff_scope:
+  changed_files:
+    - path: ".claude/commit_acceptors/ricci-microstructure-preregistration.yaml"
+    - path: "docs/research/ricci_microstructure_v1_PREREGISTRATION.md"
+    - path: "schemas/research/ricci_microstructure_v1_config.schema.json"
+    - path: "schemas/research/ricci_microstructure_v1_dataset.schema.json"
+    - path: "tools/research/ricci_preregistration_guard.py"
+    - path: "research_lines/ricci_microstructure_v1/preregistration/config.example.json"
+    - path: "research_lines/ricci_microstructure_v1/preregistration/dataset.example.json"
+    - path: "tests/research_lines/test_ricci_microstructure_preregistration.py"
+    # Latent import-order fix in the coverage tool, surfaced by the research-
+    # integrity-gate's floating ruff over tools/. Unblocks the gate for this PR.
+    - path: "tools/coverage/evidence_xml.py"
+  forbidden_paths:
+    - "trading/"
+    - "execution/"
+    - "forecast/"
+    - "policy/"
+    - "core/"
+    - "runtime/"
+    - "application/"
+
+required_python_symbols:
+  - "tools/research/ricci_preregistration_guard.py::evaluate_promotion"
+  - "tools/research/ricci_preregistration_guard.py::PromotionDecision"
+
+expected_signal: >-
+  pytest tests/research_lines/test_ricci_microstructure_preregistration.py
+  reports 15 passed; the placeholder dataset evaluates to allowed=False,
+  claim_tier=HYPOTHESIS, falsification_status=NOT_RUN, decision=OBSERVE.
+
+measurement_command: >-
+  bash -c '
+    python -m pytest
+      tests/research_lines/test_ricci_microstructure_preregistration.py
+      -q -p no:cacheprovider
+  '
+
+signal_artifact: "tmp/ricci_preregistration.log"
+
+falsifier:
+  command: >-
+    bash -c 'python -c "import json, sys;
+    from tools.research.ricci_preregistration_guard import evaluate_promotion as e;
+    base = \"research_lines/ricci_microstructure_v1/preregistration\";
+    ds = json.load(open(base + \"/dataset.example.json\"));
+    cfg = json.load(open(base + \"/config.example.json\"));
+    sys.exit(0 if e(ds, cfg).allowed else 1)"'
+  description: >-
+    Inverts the core invariant: it exits 0 (succeeds) only when the guard would
+    promote the committed placeholder dataset — i.e. the preregistration was
+    weakened to admit synthetic/placeholder data as evidence. With the guard
+    intact the placeholder is blocked, so this exits 1.
+
+rollback_command: >-
+  bash -c '
+    git rm -rf
+      docs/research/ricci_microstructure_v1_PREREGISTRATION.md
+      schemas/research/ricci_microstructure_v1_config.schema.json
+      schemas/research/ricci_microstructure_v1_dataset.schema.json
+      tools/research/ricci_preregistration_guard.py
+      research_lines/ricci_microstructure_v1/preregistration
+      tests/research_lines/test_ricci_microstructure_preregistration.py
+      .claude/commit_acceptors/ricci-microstructure-preregistration.yaml
+  '
+
+rollback_verification_command: >-
+  bash -c '
+    test ! -e tools/research/ricci_preregistration_guard.py
+  '
+
+memory_update_type: append
+ledger_path: ".claude/commit_acceptors/ricci-microstructure-preregistration.yaml"
+report_path: "tmp/ricci_preregistration.log"
+evidence: []

@@ -1,0 +1,70 @@
+interactions:
+- request:
+    body: null
+    headers:
+      Accept:
+      - '*/*'
+      Accept-Encoding:
+      - gzip, deflate, br
+      Connection:
+      - keep-alive
+      User-Agent:
+      - python-requests/2.33.0
+    method: GET
+    uri: https://api.binance.com/api/v3/time
+  response:
+    body:
+      string: '{"serverTime": 1775640438811}'
+    headers:
+      Access-Control-Allow-Methods:
+      - GET, HEAD, OPTIONS
+      Access-Control-Allow-Origin:
+      - '*'
+      Cache-Control:
+      - no-cache, no-store, must-revalidate
+      Connection:
+      - keep-alive
+      Content-Length:
+      - '28'
+      Content-Security-Policy:
+      - default-src 'self'
+      Content-Type:
+      - application/json;charset=UTF-8
+      Date:
+      - Wed, 08 Apr 2026 09:27:18 GMT
+      Expires:
+      - '0'
+      Pragma:
+      - no-cache
+      Server:
+      - nginx
+      Strict-Transport-Security:
+      - max-age=31536000; includeSubdomains
+      Via:
+      - 1.1 a510ce56c300e2d885e99cf42a868640.cloudfront.net (CloudFront)
+      X-Amz-Cf-Id:
+      - cLk-4TS0ap6BeM2RxkE8cQDFkAPCTu5nigeocpnSKrRINYjZPa9zjg==
+      X-Amz-Cf-Pop:
+      - WAW51-P3
+      X-Cache:
+      - Miss from cloudfront
+      X-Content-Security-Policy:
+      - default-src 'self'
+      X-Content-Type-Options:
+      - nosniff
+      X-Frame-Options:
+      - SAMEORIGIN
+      X-WebKit-CSP:
+      - default-src 'self'
+      X-Xss-Protection:
+      - 1; mode=block
+      x-mbx-used-weight:
+      - '1'
+      x-mbx-used-weight-1m:
+      - '1'
+      x-mbx-uuid:
+      - 30ab988f-c525-4130-8c8f-344aa9356f55
+    status:
+      code: 200
+      message: OK
+version: 1

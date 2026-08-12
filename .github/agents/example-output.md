@@ -125,7 +125,7 @@ DOC_PATCHES:
   AFTER: |
     # Configuration File Format
     
-    TradePulse uses YAML for configuration (changed from JSON in v2.0).
+    GeoSync uses YAML for configuration (changed from JSON in v2.0).
     
     ## File Location
     
@@ -184,7 +184,7 @@ DOC_PATCHES:
     
     Validate new configuration:
     ```bash
-    tradepulse config validate
+    geosync config validate
     ```
 
 - FILE: CHANGELOG.md
@@ -217,7 +217,7 @@ REVIEW_NOTES:
 ## Example 4: New CLI Command
 
 **PR Changes:**
-- Added `tradepulse validate` command
+- Added `geosync validate` command
 - Validates configuration and dependencies
 - Exits with status code 0 on success
 
@@ -236,14 +236,14 @@ DOC_PATCHES:
   SECTION: "Command Line Interface"
   BEFORE: |
     ```bash
-    tradepulse run      # Start trading
-    tradepulse backtest # Run backtest
+    geosync run      # Start trading
+    geosync backtest # Run backtest
     ```
   AFTER: |
     ```bash
-    tradepulse run      # Start trading
-    tradepulse backtest # Run backtest
-    tradepulse validate # Validate configuration
+    geosync run      # Start trading
+    geosync backtest # Run backtest
+    geosync validate # Validate configuration
     ```
 
 - FILE: docs/cli.md
@@ -256,7 +256,7 @@ DOC_PATCHES:
     
     **Usage:**
     ```bash
-    tradepulse validate [OPTIONS]
+    geosync validate [OPTIONS]
     ```
     
     **Options:**
@@ -269,7 +269,7 @@ DOC_PATCHES:
     
     **Example:**
     ```bash
-    tradepulse validate --config prod-config.yaml --strict
+    geosync validate --config prod-config.yaml --strict
     ```
 
 - FILE: CHANGELOG.md

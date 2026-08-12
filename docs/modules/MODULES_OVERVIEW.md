@@ -1,6 +1,6 @@
-# TradePulse System Modules Overview
+# GeoSync System Modules Overview
 
-Формалізований огляд основних модулів TradePulse і пов'язаних артефактів. Документ допомагає дослідникам, інженерам і SRE швидко зрозуміти призначення системи, складові частини та те, як ними користуватися.
+Формалізований огляд основних модулів GeoSync і пов'язаних артефактів. Документ допомагає дослідникам, інженерам і SRE швидко зрозуміти призначення системи, складові частини та те, як ними користуватися.
 
 ## Призначення системи
 - **Мета:** забезпечити безпечну та масштабовану платформу для досліджень, бектестів і живої торгівлі з геометричними індикаторами.
@@ -72,11 +72,11 @@
 Для спрощення еволюції монорепозиторію частина моделей тепер формалізована як
 окремі installable-пакети з локальними `pyproject.toml`:
 
-- `analytics/fpma` → `tradepulse-fpma`
-- `analytics/regime` → `tradepulse-regime`
-- `markets/orderbook` → `tradepulse-orderbook`
-- `nak_controller` → `tradepulse-nak`
-- `neurotrade_pro` → `neurotrade-pro`
+- `analytics/fpma` → `geosync-fpma`
+- `analytics/regime` → `geosync-regime`
+- `markets/orderbook` → `geosync-orderbook`
+- `nak_controller` → `geosync-nak`
+- `geosync_pro` → `geosync-pro`
 
 Детальний план розділення та межі між моделями наведені в
 `docs/architecture/independent_models.md`.

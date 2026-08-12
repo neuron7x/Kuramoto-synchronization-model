@@ -1,0 +1,98 @@
+# Diff-bound commit acceptor for the reproducible MFN integration capsule
+# that closes MANIFEST_PROOF.
+#
+# Before this PR, scripts/ci/prove_repo_integrity.sh honestly reported
+# MANIFEST_PROOF: NOT_PROVEN because no real hash-pinned artifact graph
+# existed. This PR commits the first one — the byte-deterministic output
+# of the dependency-light MFN gateway under a pinned seed and
+# SOURCE_DATE_EPOCH — plus a self-verifying reproduce script and a
+# fail-closed CI lane. It is an integrity + reproducibility artifact, not
+# empirical evidence: the bundle self-labels INSTRUMENTED / OBSERVE /
+# BLOCKED and the manifest carries is_empirical_evidence: false.
+
+id: mfn-reproducible-capsule
+status: ACTIVE
+claim_type: governance
+promise: >-
+  After this PR lands, the repository contains a real hash-pinned
+  artifact graph at artifacts/reproducible_capsules/, so
+  scripts/ci/check_manifest_hashes.py --require-artifacts passes over
+  >=1 verified artifact and scripts/ci/prove_repo_integrity.sh prints
+  MANIFEST_PROOF: PROVEN. scripts/reproduce/mfn_capsule.py --verify
+  regenerates the bundle bit-for-bit and fails closed on any digest
+  drift; CI enforces it. No empirical or market claim is made.
+
+diff_scope:
+  changed_files:
+    - path: ".claude/commit_acceptors/mfn-reproducible-capsule.yaml"
+    - path: "scripts/reproduce/mfn_capsule.py"
+    - path: ".github/workflows/mfn-capsule-reproducibility.yml"
+    - path: ".github/workflows/repo-integrity-gate.yml"
+    - path: "artifacts/reproducible_capsules/mfn_integration_seed7_p256/manifest.json"
+    - path: "artifacts/reproducible_capsules/mfn_integration_seed7_p256/README.md"
+    - path: "artifacts/reproducible_capsules/mfn_integration_seed7_p256/bundle/compare.json"
+    - path: "artifacts/reproducible_capsules/mfn_integration_seed7_p256/bundle/detect.json"
+    - path: "artifacts/reproducible_capsules/mfn_integration_seed7_p256/bundle/extract.json"
+    - path: "artifacts/reproducible_capsules/mfn_integration_seed7_p256/bundle/forecast.json"
+    - path: "artifacts/reproducible_capsules/mfn_integration_seed7_p256/bundle/manifest.json"
+    - path: "artifacts/reproducible_capsules/mfn_integration_seed7_p256/bundle/report.json"
+    - path: "artifacts/reproducible_capsules/mfn_integration_seed7_p256/bundle/runbook.md"
+    - path: "artifacts/reproducible_capsules/mfn_integration_seed7_p256/bundle/simulate.json"
+  forbidden_paths:
+    - "trading/"
+    - "execution/"
+    - "forecast/"
+    - "policy/"
+    - "core/"
+    - "runtime/"
+    - "application/"
+
+required_python_symbols:
+  - "scripts/reproduce/mfn_capsule.py::build"
+  - "scripts/reproduce/mfn_capsule.py::verify"
+  - "scripts/reproduce/mfn_capsule.py::main"
+
+expected_signal: >-
+  scripts/reproduce/mfn_capsule.py --verify reports "MFN capsule
+  verification PASSED: 9 artifacts reproduced and digests match.";
+  scripts/ci/check_manifest_hashes.py --require-artifacts reports
+  "Manifest hash verification passed (9 artifacts)."; and
+  scripts/ci/prove_repo_integrity.sh prints MANIFEST_PROOF: PROVEN
+  followed by REPO_INTEGRITY: PROVEN.
+
+measurement_command: >-
+  bash -c '
+    python scripts/reproduce/mfn_capsule.py --verify && python scripts/ci/check_manifest_hashes.py --require-artifacts
+  '
+
+signal_artifact: "tmp/mfn_capsule_proof.log"
+
+falsifier:
+  command: >-
+    bash -c '
+      python scripts/reproduce/mfn_capsule.py --verify >/dev/null 2>&1 && exit 1 || exit 0
+    '
+  description: >-
+    Inverts the reproducibility proof: it succeeds (exit 0) only when
+    --verify fails, which would mean the committed capsule no longer
+    regenerates bit-for-bit or its manifest digests are stale — i.e.
+    the artifact graph rolled back or rotted.
+
+rollback_command: >-
+  bash -c '
+    git rm -rf
+      artifacts/reproducible_capsules/mfn_integration_seed7_p256
+      scripts/reproduce/mfn_capsule.py
+      .github/workflows/mfn-capsule-reproducibility.yml
+      .claude/commit_acceptors/mfn-reproducible-capsule.yaml
+  '
+
+rollback_verification_command: >-
+  bash -c '
+    test ! -e artifacts/reproducible_capsules/mfn_integration_seed7_p256/manifest.json
+  '
+
+memory_update_type: append
+ledger_path: ".claude/commit_acceptors/mfn-reproducible-capsule.yaml"
+report_path: "tmp/mfn_capsule_proof.log"
+evidence: []

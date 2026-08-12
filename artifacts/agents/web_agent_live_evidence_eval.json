@@ -1,0 +1,23 @@
+{
+  "artifact_id": "WEB_AGENT_LIVE_EVIDENCE_EVAL_001",
+  "status": "PASS_CRITICAL_RISK_MITIGATED_NOT_FULL_PRODUCTION_READY",
+  "measurement_mode": "live_github_connector_trace_plus_adapter_disable_policy",
+  "live_runtime_trace": true,
+  "live_tool_adapter_verification": false,
+  "unverified_adapters_disabled": true,
+  "github_adapter_subset_verified": true,
+  "critical_unmitigated_adapters": 0,
+  "unverified_enabled_adapters": 0,
+  "events_checked": 4,
+  "adapters_checked": 8,
+  "bad_events": [],
+  "enabled_without_trace": [],
+  "unverified_enabled": [],
+  "production_interpretation": "Live runtime trace exists for the GitHub connector subset. Full tool adapter verification remains false when any adapter is disabled until verified.",
+  "failure_conditions": [
+    "Do not mark live_tool_adapter_verification true from this artifact unless every adapter is live verified.",
+    "Do not enable disabled adapters without live trace evidence.",
+    "Do not treat branch-scoped GitHub writes as deployment approval.",
+    "Do not merge as production release without CI evidence."
+  ]
+}

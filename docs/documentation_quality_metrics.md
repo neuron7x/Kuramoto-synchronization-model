@@ -1,5 +1,5 @@
 ---
-owner: docs@tradepulse
+owner: docs@geosync
 review_cadence: quarterly
 last_reviewed: 2025-12-28
 links:
@@ -10,11 +10,11 @@ links:
 
 # Documentation Quality Metrics Handbook
 
-This handbook formalises how TradePulse measures and reports documentation quality.
+This handbook formalises how GeoSync measures and reports documentation quality.
 It defines the source of truth for every documentation KPI, the automation that
 produces the signals, and the operational thresholds that trigger remediation.
 All metrics cover the Markdown, notebook, and asset artefacts served through the
-TradePulse documentation portal and referenced by release governance materials.
+GeoSync documentation portal and referenced by release governance materials.
 
 ## Measurement Principles
 

@@ -1,0 +1,112 @@
+# Diff-bound commit acceptor: measure and test the libs/db production root.
+#
+# libs/ ships in the wheel and is imported at runtime by execution/risk/core.py
+# and execution/order_lifecycle.py, yet it was allowlisted as
+# deferred_production with ~61.7% partial coverage and seven 0% modules
+# (config, engine, exceptions, models, repository, retry, session). Phase-3
+# PR-1: move libs into the release_90 coverage source (measured, not deferred),
+# drop it from the coverage-surface allowlist, and bind its runtime surface to
+# defect-sensitive, fail-closed contracts.
+
+id: libs-runtime-coverage-slice
+status: ACTIVE
+claim_type: correctness
+promise: >-
+  After this PR, libs is in the release_90 coverage source (measured, not
+  deferred), removed from the coverage-surface allowlist, and its db/runtime
+  surface is bound by six contract slices under tests/unit/libs/: RetryPolicy
+  stops after max attempts and re-raises the original error, never retries a
+  non-retryable error or KeyboardInterrupt, and keeps exponential backoff
+  bounded; DatabaseSettings fails closed on a malformed/plaintext PostgreSQL
+  DSN, requires TLS for PostgreSQL, and redacts the DSN password from repr/str
+  while preserving it in model_dump; engines are pool-hardened and NOT
+  eager-connecting; SessionManager commits only on a clean exit, rolls back and
+  re-raises on error, and routes reads to replicas; the repository round-trips
+  CRUD, binds parameters, and rolls back partial writes; and the timeseries
+  adapters reject non-identifier names, pin UTC/TIMESTAMPTZ, keep the query
+  window inclusive-start/exclusive-end, and never commit a partial batch. libs
+  coverage rises from ~61.7% to ~93% so the release 90 gate stays green.
+
+diff_scope:
+  changed_files:
+    - path: ".claude/commit_acceptors/libs-runtime-coverage-slice.yaml"
+    - path: "libs/db/config.py"
+    - path: "tests/unit/libs/test_db_config_contracts.py"
+    - path: "tests/unit/libs/test_db_engine_session_contracts.py"
+    - path: "tests/unit/libs/test_db_retry_contracts.py"
+    - path: "tests/unit/libs/test_db_repository_contracts.py"
+    - path: "tests/unit/libs/test_timeseries_backend_contracts.py"
+    - path: "tests/unit/libs/test_db_monitoring_contracts.py"
+    - path: "configs/quality/release_90.coveragerc"
+    - path: "tests/fixtures/coverage_surface_allowlist.json"
+    - path: "artifacts/coverage_surface/coverage_surface_report.json"
+    - path: "data/testing/component_test_matrix.json"
+  forbidden_paths:
+    - "core/physics/"
+    - "core/kuramoto/"
+    - "execution/"
+
+required_python_symbols:
+  - "libs/db/retry.py::RetryPolicy"
+  - "libs/db/retry.py::run_with_retry"
+  - "libs/db/config.py::DatabaseSettings"
+  - "libs/db/config.py::_redact_dsn"
+  - "libs/db/engine.py::create_engine_from_config"
+  - "libs/db/session.py::SessionManager"
+  - "libs/db/repository.py::KillSwitchStateRepository"
+  - "libs/db/timeseries/config.py::TimeSeriesSchema"
+
+expected_signal: >-
+  `python -m pytest --import-mode=importlib -p no:cacheprovider
+  tests/unit/libs/ -q` reports all libs contract slices passing, and the
+  coverage-surface audit reports libs in `measured` with verdict PASS and no
+  forbidden gaps.
+
+measurement_command: >-
+  bash -c '
+    python -m pytest --import-mode=importlib -p no:cacheprovider -o addopts=
+      tests/unit/libs/test_db_config_contracts.py
+      tests/unit/libs/test_db_engine_session_contracts.py
+      tests/unit/libs/test_db_retry_contracts.py
+      tests/unit/libs/test_db_repository_contracts.py
+      tests/unit/libs/test_timeseries_backend_contracts.py
+      tests/unit/libs/test_db_monitoring_contracts.py
+      tests/ci/test_coverage_source_matches_packaged_surface.py -q
+  '
+
+signal_artifact: "tmp/libs_runtime_coverage_slice.log"
+
+falsifier:
+  command: |-  # pragma: allowlist secret  (synthetic DSN below, not a real credential)
+    bash -c '
+      python -c "
+    from libs.db.retry import RetryPolicy
+    from libs.db.config import _redact_dsn
+    # RetryPolicy classifies transient vs programming errors correctly.
+    assert RetryPolicy._is_retryable(TimeoutError()) is True
+    assert RetryPolicy._is_retryable(ValueError()) is False
+    assert RetryPolicy._is_retryable(KeyboardInterrupt()) is False
+    # DSN password is redacted for repr/log but the structure is preserved.
+    assert _redact_dsn(\"postgresql://u:pw@h:5432/db\") == \"postgresql://u:***@h:5432/db\"  # pragma: allowlist secret
+    assert _redact_dsn(\"sqlite:///local.db\") == \"sqlite:///local.db\"
+    "
+    '
+  description: >-
+    Asserts the retry retryability classifier and the DSN redaction contract.
+    Per the run_evidence green-state contract it exits 0 on the correct tree and
+    non-zero if the classifier or redaction regresses.
+
+rollback_command: >-
+  bash -c '
+    git rm -f .claude/commit_acceptors/libs-runtime-coverage-slice.yaml
+  '
+
+rollback_verification_command: >-
+  bash -c '
+    test ! -f .claude/commit_acceptors/libs-runtime-coverage-slice.yaml
+  '
+
+memory_update_type: append
+ledger_path: ".claude/commit_acceptors/libs-runtime-coverage-slice.yaml"
+report_path: "tmp/libs_runtime_coverage_slice.log"
+evidence: []

@@ -1,4 +1,5 @@
-# SPDX-License-Identifier: LicenseRef-TradePulse-Proprietary
+# Copyright (c) 2023-2026 Yaroslav Vasylenko (neuron7xLab)
+# SPDX-License-Identifier: MIT
 """Tests for core/architecture_integrator/validator.py module."""
 
 from __future__ import annotations
@@ -441,9 +442,7 @@ class TestArchitectureValidator:
         result = validator.validate_component("test")
 
         assert result.passed is False
-        assert any(
-            issue.severity == ValidationSeverity.CRITICAL for issue in result.issues
-        )
+        assert any(issue.severity == ValidationSeverity.CRITICAL for issue in result.issues)
 
     def test_validate_component_health_check_failure(self) -> None:
         """Test validate_component handles health check failure."""
@@ -461,9 +460,7 @@ class TestArchitectureValidator:
         result = validator.validate_component("test")
 
         assert result.passed is False
-        assert any(
-            "health check failed" in issue.message.lower() for issue in result.issues
-        )
+        assert any("health check failed" in issue.message.lower() for issue in result.issues)
 
     def test_validate_component_not_found(self) -> None:
         """Test validate_component with nonexistent component."""
@@ -472,3 +469,66 @@ class TestArchitectureValidator:
 
         with pytest.raises(KeyError):
             validator.validate_component("nonexistent")
+
+
+class TestValidatorGuardBranches:
+    """Pin the three surviving validation guards: severity dispatch, empty-config, dep resolution."""
+
+    def _registered(self, registry: "ComponentRegistry", **meta: object) -> "Component":
+        component = Component(metadata=ComponentMetadata(**meta), instance=object())
+        registry.register(component)
+        return component
+
+    def test_failed_health_is_critical_other_unhealthy_is_warning(self) -> None:
+        """`... if health.status == ComponentStatus.FAILED else WARNING` -- FAILED is CRITICAL.
+
+        Under `Eq -> NotEq` a FAILED component is downgraded to WARNING and a merely DEGRADED
+        one is escalated to CRITICAL -- the severity map inverts on the safety-relevant edge.
+        """
+        registry = ComponentRegistry()
+        failed = self._registered(registry, name="failed")
+        failed.status = ComponentStatus.RUNNING
+        failed.health_hook = lambda: ComponentHealth(status=ComponentStatus.FAILED, healthy=False)
+        degraded = self._registered(registry, name="degraded")
+        degraded.status = ComponentStatus.RUNNING
+        degraded.health_hook = lambda: ComponentHealth(status=ComponentStatus.DEGRADED, healthy=False)
+
+        result = ArchitectureValidator(registry).validate_all()
+        by_component = {i.component: i.severity for i in result.issues if i.category == "health"}
+        assert by_component["failed"] == ValidationSeverity.CRITICAL
+        assert by_component["degraded"] == ValidationSeverity.WARNING
+
+    def test_dependency_satisfied_by_capability_is_not_flagged(self) -> None:
+        """`not has_component(dep) and not has_capability(dep)` -- a dep is missing only if
+        NEITHER a component nor a capability provides it.
+
+        Under `And -> Or` a dependency resolved purely through a provided capability is wrongly
+        reported missing.
+        """
+        registry = ComponentRegistry()
+        self._registered(registry, name="provider", provides=["telemetry"])
+        self._registered(registry, name="consumer", dependencies=["telemetry"])
+
+        # validate_component() is the per-component path that resolves deps via component OR
+        # capability; validate_all uses a separate dependency pass.
+        result = ArchitectureValidator(registry).validate_component("consumer")
+        dep_issues = [i for i in result.issues if i.category == "dependencies"]
+        assert not any("telemetry" in i.message.lower() for i in dep_issues), (
+            "a capability-resolved dependency was reported as missing"
+        )
+
+    def test_empty_config_note_only_for_configless_components(self) -> None:
+        """`if not config and component.get_dependencies()` -- the empty-config note is for
+        dependency-carrying components that have NO configuration.
+
+        Under `And -> Or` a fully-configured component with dependencies also gets the note.
+        """
+        registry = ComponentRegistry()
+        self._registered(
+            registry, name="configured", dependencies=["dep"], configuration={"k": "v"}
+        )
+        self._registered(registry, name="dep")
+
+        result = ArchitectureValidator(registry).validate_all()
+        info = [i for i in result.issues if i.component == "configured" and "config" in i.message.lower()]
+        assert not info, "a configured component was flagged for empty configuration"

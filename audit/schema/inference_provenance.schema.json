@@ -1,0 +1,29 @@
+{
+  "$schema": "http://json-schema.org/draft-07/schema#",
+  "$id": "geosync.inference_provenance.v1",
+  "title": "GeoSync Inference-Integrity Provenance",
+  "description": "Signed (content-addressed) and reproducible provenance for the inference-integrity artifacts. Every tool-generated artifact is byte-reproducible from its generator; every artifact is sha256-pinned and chained into a provenance_root so tampering is detectable. Not a PKI signature; a KMS signature over provenance_root is a deploy-time step.",
+  "type": "object",
+  "additionalProperties": false,
+  "required": ["schema", "artifacts", "provenance_root", "verdict"],
+  "properties": {
+    "schema": { "const": "geosync.inference_provenance.v1" },
+    "boundary": { "type": "string" },
+    "provenance_root": { "type": "string", "pattern": "^[0-9a-f]{64}$" },
+    "report_only": { "type": "boolean" },
+    "verdict": { "enum": ["PASS", "FAIL"] },
+    "artifacts": {
+      "type": "array", "minItems": 1,
+      "items": {
+        "type": "object", "additionalProperties": false,
+        "required": ["path", "sha256", "reproducible", "generator"],
+        "properties": {
+          "path": { "type": "string", "minLength": 1 },
+          "sha256": { "type": "string" },
+          "reproducible": { "type": ["boolean", "null"] },
+          "generator": { "type": ["string", "null"] }
+        }
+      }
+    }
+  }
+}

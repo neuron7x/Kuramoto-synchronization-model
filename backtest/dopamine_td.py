@@ -1,4 +1,5 @@
-# SPDX-License-Identifier: LicenseRef-TradePulse-Proprietary
+# Copyright (c) 2023-2026 Yaroslav Vasylenko (neuron7xLab)
+# SPDX-License-Identifier: MIT
 """Dopamine-based temporal difference learning for backtesting.
 
 This module implements a fast, Numba-accelerated dopamine TD learning algorithm
@@ -16,7 +17,7 @@ inspired computations.
 * :func:`run_dopamine_backtest`: High-level wrapper integrating with the existing
   backtest engine.
 
-**Integration with TradePulse**
+**Integration with GeoSync**
 
 This module integrates with the existing backtesting infrastructure in
 :mod:`backtest.engine` by providing signal generation functions compatible with
@@ -43,6 +44,7 @@ except ImportError:
 
     def njit(*args, **kwargs):
         """Fallback decorator when Numba is not available."""
+
         def decorator(func):
             return func
 
@@ -83,9 +85,7 @@ def _fast_dopamine_loop(
     c_novelty: float,
     k: float,
     theta: float,
-) -> Tuple[
-    NDArray[np.float64], NDArray[np.float64], NDArray[np.float64], NDArray[np.float64]
-]:
+) -> Tuple[NDArray[np.float64], NDArray[np.float64], NDArray[np.float64], NDArray[np.float64]]:
     """Numba-accelerated core loop for dopamine TD computation.
 
     This function implements the temporal difference learning algorithm with

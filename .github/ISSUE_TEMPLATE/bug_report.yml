@@ -1,0 +1,98 @@
+name: "🐞 Bug report"
+description: Report a reproducible defect in GeoSync (runtime, indicator, CLI, API, etc.)
+title: "[Bug] "
+labels: ["type: bug", "status: needs-triage"]
+body:
+  - type: markdown
+    attributes:
+      value: |
+        Thanks for taking the time to file a bug report. Before submitting, please search
+        existing issues and discussions so we can keep the tracker focused and actionable.
+  - type: textarea
+    id: summary
+    attributes:
+      label: Summary
+      description: What went wrong? One paragraph is plenty.
+      placeholder: "When calling `GeoSyncCompositeEngine.analyze_market(...)` with a 1-minute series, the phase detector..."
+    validations:
+      required: true
+  - type: textarea
+    id: reproduction
+    attributes:
+      label: Minimal reproduction
+      description: |
+        The smallest snippet, command, or dataset that reproduces the defect.
+        Please format code blocks with triple backticks.
+      render: python
+      placeholder: |
+        import numpy as np
+        from core.indicators.kuramoto import kuramoto_order
+        ...
+    validations:
+      required: true
+  - type: textarea
+    id: expected
+    attributes:
+      label: Expected behaviour
+      description: What should have happened instead?
+    validations:
+      required: true
+  - type: textarea
+    id: actual
+    attributes:
+      label: Actual behaviour
+      description: Stack trace, metrics, screenshots, or observed output.
+      render: shell
+    validations:
+      required: true
+  - type: input
+    id: geosync-version
+    attributes:
+      label: GeoSync version / commit
+      placeholder: "v1.0.0 or 7a8b9c1"
+    validations:
+      required: true
+  - type: dropdown
+    id: python-version
+    attributes:
+      label: Python version
+      options:
+        - "3.11"
+        - "3.12"
+        - "other (please specify in Environment)"
+    validations:
+      required: true
+  - type: textarea
+    id: environment
+    attributes:
+      label: Environment
+      description: "OS, CPU/GPU, relevant dependencies (numpy, scipy, torch, jax versions)."
+      render: text
+  - type: dropdown
+    id: severity
+    attributes:
+      label: Severity
+      description: How does this affect your work?
+      options:
+        - "P0 — blocks all work / data loss / production incident"
+        - "P1 — major feature unusable, workaround exists"
+        - "P2 — minor feature broken, low blast radius"
+        - "P3 — cosmetic / nice-to-have"
+    validations:
+      required: true
+  - type: textarea
+    id: additional
+    attributes:
+      label: Additional context
+      description: Related issues, links, or anything else we should know.
+  - type: checkboxes
+    id: checks
+    attributes:
+      label: Pre-submission checklist
+      options:
+        - label: I searched existing issues and discussions before filing this report.
+          required: true
+        - label: I can reproduce this on the latest `main` or the stated version.
+          required: true
+        - label: I have **not** included secrets, API keys, or live trading credentials.
+          required: true

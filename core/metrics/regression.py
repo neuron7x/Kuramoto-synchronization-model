@@ -1,3 +1,5 @@
+# Copyright (c) 2023-2026 Yaroslav Vasylenko (neuron7xLab)
+# SPDX-License-Identifier: MIT
 """Utility functions for evaluating regression forecasts.
 
 These helpers intentionally avoid scikit-learn dependencies so that

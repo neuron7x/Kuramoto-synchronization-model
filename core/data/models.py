@@ -1,5 +1,6 @@
-# SPDX-License-Identifier: LicenseRef-TradePulse-Proprietary
-"""Canonical market data models used across TradePulse.
+# Copyright (c) 2023-2026 Yaroslav Vasylenko (neuron7xLab)
+# SPDX-License-Identifier: MIT
+"""Canonical market data models used across GeoSync.
 
 The platform expects a single, strongly typed representation for all market
 data payloads (ticks, OHLCV bars, aggregates) so downstream components can rely

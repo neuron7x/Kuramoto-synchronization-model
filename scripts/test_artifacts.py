@@ -1,4 +1,6 @@
 #!/usr/bin/env python3
+# Copyright (c) 2023-2026 Yaroslav Vasylenko (neuron7xLab)
+# SPDX-License-Identifier: MIT
 """Simple test script to validate artifact integrity and usability."""
 
 import hashlib
@@ -52,7 +54,7 @@ def test_csv_artifact(filepath: Path) -> bool:
         header = lines[0].strip()
         if not header:
             raise ValueError("CSV header is empty")
-        print(f"  ✓ {filepath.name}: Valid CSV with {len(lines)-1} data rows")
+        print(f"  ✓ {filepath.name}: Valid CSV with {len(lines) - 1} data rows")
         return True
     except Exception as e:
         print(f"  ✗ {filepath.name}: Failed - {e}")
@@ -64,7 +66,7 @@ def main():
     repo_root = Path(__file__).parent.parent
 
     print("=" * 60)
-    print("TradePulse Artifact Validation Test")
+    print("GeoSync Artifact Validation Test")
     print("=" * 60)
 
     artifacts = [
@@ -107,9 +109,7 @@ def main():
     print("\nVerifying checksum computation...")
     print("-" * 60)
     test_file = repo_root / "data/sample.csv"
-    expected_checksum = (
-        "5eb16d5e9b45f4a21772ef1500cbe7a9923c897ae38483c71cd4e917600861b8"
-    )
+    expected_checksum = "5eb16d5e9b45f4a21772ef1500cbe7a9923c897ae38483c71cd4e917600861b8"
     actual_checksum = compute_sha256(test_file)
 
     if actual_checksum == expected_checksum:
@@ -132,7 +132,7 @@ def main():
             lines = f.readlines()
         header = lines[0].strip().split(",")
         lines[1].strip().split(",")
-        print(f"  ✓ CSV Loading: {len(lines)-1} rows, columns: {', '.join(header)}")
+        print(f"  ✓ CSV Loading: {len(lines) - 1} rows, columns: {', '.join(header)}")
         passed += 1
     except Exception as e:
         print(f"  ✗ CSV Loading failed: {e}")

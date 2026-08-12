@@ -1,4 +1,6 @@
-"""Machine learning orchestration utilities for TradePulse."""
+# Copyright (c) 2023-2026 Yaroslav Vasylenko (neuron7xLab)
+# SPDX-License-Identifier: MIT
+"""Machine learning orchestration utilities for GeoSync."""
 
 from .pipeline import (
     ABTestManager,

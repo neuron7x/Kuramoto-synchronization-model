@@ -1,0 +1,115 @@
+# Diff-bound commit acceptor for the higher-order Kuramoto sign-honesty fix.
+#
+# core/physics/higher_order_kuramoto.py builds the 2-simplex skeleton from
+# |ρ_ij| > threshold, so correlation SIGN is discarded (an anti-correlated
+# triple collapses onto the same simplex as a co-correlated one) and the
+# triadic term is unit-weighted per triangle. The module presented this as
+# "simplicial / triadic dynamics" without declaring the sign erasure. This
+# change makes the representation honest WITHOUT changing any ODE-numeric
+# output:
+#   * the module docstring gains a "Representation & information loss" section
+#     stating the 2-skeleton is unsigned (|ρ| discards sign) and the triadic
+#     term is unit-weighted, i.e. an unsigned-coherence higher-order projection;
+#   * HigherOrderKuramotoResult gains machine-readable provenance fields
+#     representation="simplicial_2skeleton", signed=False, higher_order=True,
+#     information_loss=("correlation_sign","triadic_edge_weight").
+# The genuinely non-pairwise-reducible triadic coupling sin(2θ_j−θ_k−θ_i) is
+# unchanged and its non-reducibility is retained as a tested claim.
+#
+# Bit-for-bit dynamics (phases, order_parameter, triadic_contribution,
+# n_triangles) are unchanged; the new dataclass fields have defaults, so the
+# single result constructor and all consumers are unaffected. Adds metamorphic
+# tests: a full correlation sign flip yields identical dynamics (sign erasure,
+# now declared not hidden), the provenance fields are asserted present, and the
+# triadic term remains non-pairwise-reducible (σ₂ changes the trajectory).
+#
+# Promotes NO claim tier, adds NO invariant, changes NO numeric runtime
+# behaviour, adds NO dependency. Representation-conservation honesty fix on a
+# Layer-B structural descriptor; asserts no predictive or financial claim.
+#
+# Locally verified on origin/main fork base (53f21b3b):
+#   * python -m compileall: clean
+#   * pytest tests/unit/physics/test_T4_higher_order_kuramoto.py: 18 passed
+#   * black --check: clean (signature line kept identical to origin/main)
+#   * ruff check: clean; mypy --strict core/physics/higher_order_kuramoto.py: ok
+#   * .claude/physics/validate_tests.py --audit-code: no clamp/bounds issues
+#   * zero noqa / type: ignore across both changed files
+id: higher-order-sign-honesty
+status: ACTIVE
+claim_type: governance
+promise: >-
+  core.physics.higher_order_kuramoto builds its 2-simplex skeleton from
+  |ρ_ij| > threshold and now declares the resulting information loss honestly:
+  the module docstring states the structure is unsigned (sign discarded by |ρ|)
+  and the triadic term is unit-weighted per triangle, and
+  HigherOrderKuramotoResult carries provenance fields
+  representation="simplicial_2skeleton", signed=False, higher_order=True, and
+  information_loss=("correlation_sign","triadic_edge_weight"). ODE-numeric
+  output (phases, order_parameter, triadic_contribution, n_triangles) is
+  byte-unchanged; the new dataclass fields are defaulted so the result
+  constructor and all consumers are unaffected. Metamorphic tests lock the
+  semantics: a full correlation sign flip yields identical dynamics with
+  signed=False and the loss recorded, the provenance fields are present, and
+  the triadic coupling remains non-pairwise-reducible (σ₂ changes the
+  trajectory). No claim tier is promoted; no invariant is added; the descriptor
+  asserts no predictive or financial meaning.
+diff_scope:
+  changed_files:
+    - path: ".claude/commit_acceptors/higher-order-sign-honesty.yaml"
+    - path: "core/physics/higher_order_kuramoto.py"
+    - path: "tests/unit/physics/test_T4_higher_order_kuramoto.py"
+  forbidden_paths:
+    - "trading/"
+    - "execution/"
+    - "forecast/"
+    - "src/"
+required_python_symbols:
+  - "core/physics/higher_order_kuramoto.py::HigherOrderKuramotoResult"
+  - "core/physics/higher_order_kuramoto.py::HigherOrderKuramotoEngine"
+expected_signal: >-
+  `python -m pytest tests/unit/physics/test_T4_higher_order_kuramoto.py`
+  reports 18 passed; the result declares signed=False / higher_order=True with
+  the information_loss tokens, a sign flip yields identical dynamics, and the
+  triadic term stays non-pairwise-reducible.
+measurement_command: >-
+  bash -c 'mkdir -p tmp && python -m pytest
+  tests/unit/physics/test_T4_higher_order_kuramoto.py -v
+  > tmp/higher_order_kuramoto_pytest.log 2>&1
+  && grep -qE "18 passed" tmp/higher_order_kuramoto_pytest.log'
+signal_artifact: "tmp/higher_order_kuramoto_pytest.log"
+falsifier:
+  command: >-
+    python -c 'import sys, numpy as np;
+    from core.physics.higher_order_kuramoto import HigherOrderKuramotoEngine;
+    eng = HigherOrderKuramotoEngine(sigma1=1.0, sigma2=0.5, dt=0.01, steps=40,
+    correlation_threshold=0.3);
+    n = 4;
+    pos = np.full((n, n), 0.8); np.fill_diagonal(pos, 1.0);
+    neg = -pos.copy(); np.fill_diagonal(neg, 1.0);
+    rp = eng.run(pos, seed=7); rn = eng.run(neg, seed=7);
+    sign_invariant = np.array_equal(rp.order_parameter, rn.order_parameter);
+    declares_unsigned = (rp.signed is False
+    and "correlation_sign" in rp.information_loss
+    and rp.representation == "simplicial_2skeleton");
+    sys.exit(0 if (not sign_invariant or not declares_unsigned) else 1)'
+  description: >-
+    Inverse probe of the sign-honesty contract. It exits 0 (fires) iff the
+    dynamics stop being invariant to a full correlation sign flip (i.e. the
+    structure silently became sign-sensitive while still built from |ρ|), OR
+    the result stops declaring signed=False / the information_loss token /
+    the simplicial representation. While the contract holds the probe exits 1.
+    An exit 0 means the module has drifted into an undeclared signed-simplicial
+    claim and must be repaired (carry signed weights or re-declare the loss),
+    not patched green.
+rollback_command: >-
+  bash -c 'git checkout origin/main -- core/physics/higher_order_kuramoto.py
+  tests/unit/physics/test_T4_higher_order_kuramoto.py
+  && git rm -f .claude/commit_acceptors/higher-order-sign-honesty.yaml'
+rollback_verification_command: >-
+  bash -c 'test ! -f .claude/commit_acceptors/higher-order-sign-honesty.yaml'
+memory_update_type: none
+ledger_path: ".claude/commit_acceptors/higher-order-sign-honesty.yaml"
+report_path: "tmp/higher_order_kuramoto_pytest.log"
+evidence:
+  - path: "tmp/higher_order_kuramoto_pytest.log"
+    sha256: "50131db3010d0e4768eb255c5361368c0c6265c2f11df41d2cb5e60df1eb302b"  # pragma: allowlist secret

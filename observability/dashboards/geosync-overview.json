@@ -1,0 +1,440 @@
+{
+  "annotations": {
+    "list": [
+      {
+        "builtIn": 1,
+        "datasource": "-- Grafana --",
+        "enable": true,
+        "hide": true,
+        "iconColor": "rgba(0, 211, 255, 1)",
+        "name": "Annotations & Alerts",
+        "type": "dashboard"
+      }
+    ]
+  },
+  "editable": true,
+  "fiscalYearStartMonth": 0,
+  "graphTooltip": 0,
+  "id": null,
+  "links": [],
+  "liveNow": false,
+  "panels": [
+    {
+      "datasource": {
+        "type": "prometheus",
+        "uid": "prometheus"
+      },
+      "fieldConfig": {
+        "defaults": {
+          "color": {
+            "mode": "palette-classic"
+          },
+          "mappings": [],
+          "thresholds": {
+            "mode": "absolute",
+            "steps": [
+              {
+                "color": "green",
+                "value": null
+              },
+              {
+                "color": "red",
+                "value": 5
+              }
+            ]
+          },
+          "unit": "ops"
+        },
+        "overrides": []
+      },
+      "gridPos": {
+        "h": 8,
+        "w": 12,
+        "x": 0,
+        "y": 0
+      },
+      "id": 1,
+      "options": {
+        "legend": {
+          "calcs": [],
+          "displayMode": "table",
+          "placement": "right",
+          "showLegend": true
+        },
+        "tooltip": {
+          "mode": "single",
+          "sort": "none"
+        }
+      },
+      "targets": [
+        {
+          "expr": "sum(rate(geosync_orders_placed_total[5m]))",
+          "legendFormat": "orders/sec",
+          "refId": "A"
+        }
+      ],
+      "title": "Order Throughput",
+      "type": "timeseries"
+    },
+    {
+      "datasource": {
+        "type": "prometheus",
+        "uid": "prometheus"
+      },
+      "fieldConfig": {
+        "defaults": {
+          "color": {
+            "mode": "palette-classic"
+          },
+          "mappings": [],
+          "thresholds": {
+            "mode": "absolute",
+            "steps": [
+              {
+                "color": "green",
+                "value": null
+              },
+              {
+                "color": "red",
+                "value": 0.05
+              }
+            ]
+          },
+          "unit": "percentunit"
+        },
+        "overrides": []
+      },
+      "gridPos": {
+        "h": 8,
+        "w": 12,
+        "x": 12,
+        "y": 0
+      },
+      "id": 2,
+      "options": {
+        "legend": {
+          "calcs": [],
+          "displayMode": "table",
+          "placement": "right",
+          "showLegend": true
+        },
+        "tooltip": {
+          "mode": "single",
+          "sort": "none"
+        }
+      },
+      "targets": [
+        {
+          "expr": "sum(rate(geosync_orders_placed_total{status=\"error\"}[5m])) / sum(rate(geosync_orders_placed_total[5m]))",
+          "legendFormat": "error rate",
+          "refId": "A"
+        }
+      ],
+      "title": "Order Error Rate",
+      "type": "timeseries"
+    },
+    {
+      "datasource": {
+        "type": "prometheus",
+        "uid": "prometheus"
+      },
+      "fieldConfig": {
+        "defaults": {
+          "color": {
+            "mode": "palette-classic"
+          },
+          "mappings": [],
+          "thresholds": {
+            "mode": "absolute",
+            "steps": [
+              {
+                "color": "green",
+                "value": null
+              },
+              {
+                "color": "orange",
+                "value": 120
+              }
+            ]
+          },
+          "unit": "s"
+        },
+        "overrides": []
+      },
+      "gridPos": {
+        "h": 8,
+        "w": 12,
+        "x": 0,
+        "y": 8
+      },
+      "id": 3,
+      "options": {
+        "legend": {
+          "calcs": [],
+          "displayMode": "table",
+          "placement": "right",
+          "showLegend": true
+        },
+        "tooltip": {
+          "mode": "single",
+          "sort": "none"
+        }
+      },
+      "targets": [
+        {
+          "expr": "sum(rate(geosync_optimization_duration_seconds_sum[5m])) / sum(rate(geosync_optimization_duration_seconds_count[5m]))",
+          "legendFormat": "avg duration",
+          "refId": "A"
+        }
+      ],
+      "title": "Optimisation Duration",
+      "type": "timeseries"
+    },
+    {
+      "datasource": {
+        "type": "prometheus",
+        "uid": "prometheus"
+      },
+      "fieldConfig": {
+        "defaults": {
+          "color": {
+            "mode": "palette-classic"
+          },
+          "mappings": [],
+          "thresholds": {
+            "mode": "absolute",
+            "steps": [
+              {
+                "color": "green",
+                "value": null
+              },
+              {
+                "color": "red",
+                "value": 0
+              }
+            ]
+          },
+          "unit": "short"
+        },
+        "overrides": []
+      },
+      "gridPos": {
+        "h": 8,
+        "w": 12,
+        "x": 12,
+        "y": 8
+      },
+      "id": 4,
+      "options": {
+        "legend": {
+          "calcs": [],
+          "displayMode": "table",
+          "placement": "right",
+          "showLegend": true
+        },
+        "tooltip": {
+          "mode": "single",
+          "sort": "none"
+        }
+      },
+      "targets": [
+        {
+          "expr": "sum(geosync_open_positions)",
+          "legendFormat": "positions",
+          "refId": "A"
+        }
+      ],
+      "title": "Open Positions",
+      "type": "timeseries"
+    },
+    {
+      "datasource": {
+        "type": "prometheus",
+        "uid": "prometheus"
+      },
+      "fieldConfig": {
+        "defaults": {
+          "color": {
+            "mode": "palette-classic"
+          },
+          "mappings": [],
+          "thresholds": {
+            "mode": "absolute",
+            "steps": [
+              {
+                "color": "green",
+                "value": null
+              },
+              {
+                "color": "red",
+                "value": 1
+              }
+            ]
+          },
+          "unit": "s"
+        },
+        "overrides": []
+      },
+      "gridPos": {
+        "h": 8,
+        "w": 12,
+        "x": 0,
+        "y": 16
+      },
+      "id": 5,
+      "options": {
+        "legend": {
+          "calcs": [],
+          "displayMode": "table",
+          "placement": "right",
+          "showLegend": true
+        },
+        "tooltip": {
+          "mode": "multi",
+          "sort": "none"
+        }
+      },
+      "targets": [
+        {
+          "expr": "avg(geosync_data_ingestion_latency_quantiles_seconds{quantile=\"0.5\"})",
+          "legendFormat": "Ingestion p50",
+          "refId": "A"
+        },
+        {
+          "expr": "avg(geosync_data_ingestion_latency_quantiles_seconds{quantile=\"0.95\"})",
+          "legendFormat": "Ingestion p95",
+          "refId": "B"
+        },
+        {
+          "expr": "avg(geosync_data_ingestion_latency_quantiles_seconds{quantile=\"0.99\"})",
+          "legendFormat": "Ingestion p99",
+          "refId": "C"
+        },
+        {
+          "expr": "avg(geosync_signal_generation_latency_quantiles_seconds{quantile=\"0.5\"})",
+          "legendFormat": "Signals p50",
+          "refId": "D"
+        },
+        {
+          "expr": "avg(geosync_signal_generation_latency_quantiles_seconds{quantile=\"0.95\"})",
+          "legendFormat": "Signals p95",
+          "refId": "E"
+        },
+        {
+          "expr": "avg(geosync_signal_generation_latency_quantiles_seconds{quantile=\"0.99\"})",
+          "legendFormat": "Signals p99",
+          "refId": "F"
+        },
+        {
+          "expr": "avg(geosync_order_submission_latency_quantiles_seconds{quantile=\"0.5\"})",
+          "legendFormat": "Submission p50",
+          "refId": "G"
+        },
+        {
+          "expr": "avg(geosync_order_submission_latency_quantiles_seconds{quantile=\"0.95\"})",
+          "legendFormat": "Submission p95",
+          "refId": "H"
+        },
+        {
+          "expr": "avg(geosync_order_submission_latency_quantiles_seconds{quantile=\"0.99\"})",
+          "legendFormat": "Submission p99",
+          "refId": "I"
+        },
+        {
+          "expr": "avg(geosync_order_fill_latency_quantiles_seconds{quantile=\"0.5\"})",
+          "legendFormat": "Fills p50",
+          "refId": "J"
+        },
+        {
+          "expr": "avg(geosync_order_fill_latency_quantiles_seconds{quantile=\"0.95\"})",
+          "legendFormat": "Fills p95",
+          "refId": "K"
+        },
+        {
+          "expr": "avg(geosync_order_fill_latency_quantiles_seconds{quantile=\"0.99\"})",
+          "legendFormat": "Fills p99",
+          "refId": "L"
+        }
+      ],
+      "title": "Latency Quantiles",
+      "type": "timeseries"
+    },
+    {
+      "datasource": {
+        "type": "prometheus",
+        "uid": "prometheus"
+      },
+      "fieldConfig": {
+        "defaults": {
+          "color": {
+            "mode": "palette-classic"
+          },
+          "mappings": [],
+          "thresholds": {
+            "mode": "absolute",
+            "steps": [
+              {
+                "color": "green",
+                "value": null
+              },
+              {
+                "color": "red",
+                "value": 0
+              }
+            ]
+          },
+          "unit": "currency"
+        },
+        "overrides": []
+      },
+      "gridPos": {
+        "h": 8,
+        "w": 12,
+        "x": 12,
+        "y": 16
+      },
+      "id": 6,
+      "options": {
+        "legend": {
+          "calcs": [],
+          "displayMode": "list",
+          "placement": "bottom",
+          "showLegend": true
+        },
+        "tooltip": {
+          "mode": "single",
+          "sort": "none"
+        }
+      },
+      "targets": [
+        {
+          "expr": "sum(geosync_backtest_equity_curve)",
+          "legendFormat": "Equity",
+          "refId": "A"
+        }
+      ],
+      "title": "Backtest Equity Curve",
+      "type": "timeseries"
+    }
+  ],
+  "refresh": "30s",
+  "schemaVersion": 38,
+  "style": "dark",
+  "tags": [
+    "geosync",
+    "observability"
+  ],
+  "templating": {
+    "list": []
+  },
+  "time": {
+    "from": "now-6h",
+    "to": "now"
+  },
+  "timepicker": {},
+  "timezone": "",
+  "title": "GeoSync Overview",
+  "uid": "geosync-overview",
+  "version": 1,
+  "weekStart": ""
+}

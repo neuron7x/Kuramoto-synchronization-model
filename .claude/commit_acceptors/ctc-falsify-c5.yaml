@@ -1,0 +1,37 @@
+id: ctc-falsify-c5
+status: ACTIVE
+claim_type: governance
+promise: "C5 is a leakage-free near-oracle upper bound (full gamma cross-spectrum, train/test seed-disjoint) deciding the C4 OPEN; OOS AUC bands map to a pure-function verdict. Reference run: ESTIMATOR_QUALITY_GAP (AUC ~ 0.96) — the channel is information-recoverable in-silico; standard scalar estimands are inadequate, NOT an identifiability limit. RESULTS.md consolidated. No CTC-theory or real-data claim."
+diff_scope:
+  changed_files:
+    - path: "research/ctc_falsify/c5/__init__.py"
+    - path: "research/ctc_falsify/c5/config_c5.py"
+    - path: "research/ctc_falsify/c5/oracle.py"
+    - path: "research/ctc_falsify/c5/run.py"
+    - path: "research/ctc_falsify/c5/schema/ctc_falsify_c5_result.schema.json"
+    - path: "research/ctc_falsify/c5/evidence/ctc_falsify_c5_result.json"
+    - path: "tests/research/ctc_falsify/test_ctc_falsify_c5.py"
+    - path: "research/ctc_falsify/RESULTS.md"
+    - path: ".github/detect-secrets.baseline"
+    - path: ".claude/commit_acceptors/ctc-falsify-c5.yaml"
+  forbidden_paths:
+    - "trading/"
+    - "execution/"
+    - "forecast/"
+    - "policy/"
+    - "research/ctc_falsify/config.py"
+required_python_symbols:
+  - "run_oracle"
+  - "decide"
+expected_signal: "C5 verdict is a pure function of OOS AUC + train/test disjointness; reference run is leakage-free"
+measurement_command: "python -m pytest tests/research/ctc_falsify/test_ctc_falsify_c5.py -q"
+signal_artifact: "tmp/ctc_falsify_c5_pytest.log"
+falsifier:
+  command: "grep -qF 'C4 OPEN is **closed**' research/ctc_falsify/RESULTS.md && grep -qF 'C5_ESTIMATOR_QUALITY_GAP' research/ctc_falsify/c5/config_c5.py && grep -qF 'stays **OPEN**' research/ctc_falsify/RESULTS.md"
+  description: "Asserts the closure is recorded (C4 OPEN closed, the verdict label exists, real-data line still OPEN). Fails if the in-silico closure is silently promoted into a theory/real-data claim."
+rollback_command: "git rm -rf research/ctc_falsify/c5 tests/research/ctc_falsify/test_ctc_falsify_c5.py && git checkout -- research/ctc_falsify/RESULTS.md .github/detect-secrets.baseline"
+rollback_verification_command: "test ! -d research/ctc_falsify/c5"
+memory_update_type: append
+ledger_path: ".claude/commit_acceptors/ctc-falsify-c5.yaml"
+report_path: "research/ctc_falsify/RESULTS.md"
+evidence: []

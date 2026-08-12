@@ -1,6 +1,6 @@
 {
   "$schema": "http://json-schema.org/draft-07/schema#",
-  "$id": "https://tradepulse.io/schemas/dopamine.schema.json",
+  "$id": "https://geosync.io/schemas/dopamine.schema.json",
   "title": "Dopamine Controller Configuration Schema",
   "description": "Schema for validating dopamine neuromodulator configuration",
   "type": "object",

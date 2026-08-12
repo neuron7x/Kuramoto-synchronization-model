@@ -1,0 +1,37 @@
+id: phd-distinguished-evidence
+status: ACTIVE
+claim_type: governance
+promise: >-
+  Distinguished-Professor-style evidence maturity: contribution map + negative-
+  evidence chapter, machine-readable international-standard evidence table, an
+  extended no-overclaim wall, and a one-command reproducibility package
+  (make phd-evidence). No new physics/neuroscience; no claim-tier promotion.
+diff_scope:
+  changed_files:
+    - path: "scripts/ci/gen_distinguished_evidence_table.py"
+    - path: "scripts/ci/phd_evidence.sh"
+    - path: "scripts/ci/check_neuro_claim_boundary.py"
+    - path: "artifacts/academy_fellow/distinguished_evidence_table.json"
+    - path: "artifacts/academy_fellow/ACADEMY_FELLOW_REPORT.md"
+    - path: "docs/phd/11_distinguished_contribution_map.md"
+    - path: "docs/phd/12_negative_evidence.md"
+    - path: "INVENTORY.json"
+    - path: ".claude/commit_acceptors/phd-distinguished-evidence.yaml"
+  forbidden_paths:
+    - "core/execution/"
+    - "core/strategies/"
+    - "interfaces/live_runner.py"
+    - "forecast/"
+required_python_symbols: []
+expected_signal: "make phd-evidence is all-green and the evidence table reports 0 open missing_tests."
+measurement_command: "bash scripts/ci/phd_evidence.sh"
+signal_artifact: "artifacts/academy_fellow/distinguished_evidence_table.json"
+falsifier:
+  command: "python -c \"import json,sys; d=json.load(open('artifacts/academy_fellow/distinguished_evidence_table.json')); sys.exit(1 if d['summary']['total']>0 else 0)\""
+  description: "Exits non-zero in the asserted healthy state (the evidence table has rows); flips to pass only if the table is empty (generator regressed)."
+rollback_command: "git checkout -- scripts/ci/gen_distinguished_evidence_table.py scripts/ci/phd_evidence.sh scripts/ci/check_neuro_claim_boundary.py docs/phd/11_distinguished_contribution_map.md docs/phd/12_negative_evidence.md artifacts/academy_fellow"
+rollback_verification_command: "git diff --exit-code scripts/ci/gen_distinguished_evidence_table.py scripts/ci/phd_evidence.sh docs/phd/11_distinguished_contribution_map.md docs/phd/12_negative_evidence.md"
+memory_update_type: append
+ledger_path: ".claude/commit_acceptors/phd-distinguished-evidence.yaml"
+report_path: "artifacts/academy_fellow/ACADEMY_FELLOW_REPORT.md"
+evidence: []

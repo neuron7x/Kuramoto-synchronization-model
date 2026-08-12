@@ -1,0 +1,19 @@
+{
+  "contract": {
+    "claim_tier": "INSTRUMENTED",
+    "input_window_sec": 30,
+    "schema_version": "mfn.integration.v1",
+    "seed": 7
+  },
+  "features": {
+    "count": 256,
+    "last_price": 98.636891,
+    "mean_return": -0.00513827,
+    "positive_return_ratio": 0.47058824,
+    "volatility": 0.0920843
+  },
+  "schema_version": "mfn.integration.v1",
+  "source": "simulate.json",
+  "stage": "extract",
+  "timestamp_utc": "2023-11-14T22:13:20Z"
+}

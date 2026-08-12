@@ -1,3 +1,5 @@
+# Copyright (c) 2023-2026 Yaroslav Vasylenko (neuron7xLab)
+# SPDX-License-Identifier: MIT
 from __future__ import annotations
 
 import json
@@ -12,9 +14,9 @@ from fastapi import Request
 from fastapi.testclient import TestClient
 from jsonschema import Draft202012Validator
 
-os.environ.setdefault("TRADEPULSE_ADMIN_TOKEN", "contract-import-token")
-os.environ.setdefault("TRADEPULSE_AUDIT_SECRET", "contract-import-secret")
-os.environ.setdefault("TRADEPULSE_RBAC_AUDIT_SECRET", "contract-rbac-secret")
+os.environ.setdefault("GEOSYNC_ADMIN_TOKEN", "contract-import-token")
+os.environ.setdefault("GEOSYNC_AUDIT_SECRET", "contract-import-secret")
+os.environ.setdefault("GEOSYNC_RBAC_AUDIT_SECRET", "contract-rbac-secret")
 
 from application.api.service import FeatureResponse, PredictionResponse, create_app
 from application.settings import AdminApiSettings
@@ -168,14 +170,10 @@ def test_prediction_provider_matches_contract(provider_client: TestClient) -> No
 
 def test_idempotent_replay_respects_contract(provider_client: TestClient) -> None:
     headers = {"Idempotency-Key": "contract-idempotency"}
-    first = provider_client.post(
-        _api_v1("/features"), json=_feature_payload(), headers=headers
-    )
+    first = provider_client.post(_api_v1("/features"), json=_feature_payload(), headers=headers)
     assert first.status_code == 200
     assert first.headers.get("Idempotency-Key") == "contract-idempotency"
-    second = provider_client.post(
-        _api_v1("/features"), json=_feature_payload(), headers=headers
-    )
+    second = provider_client.post(_api_v1("/features"), json=_feature_payload(), headers=headers)
     assert second.status_code == 200
     assert second.headers.get("Idempotency-Key") == "contract-idempotency"
     assert second.headers.get("X-Idempotent-Replay") == "true"

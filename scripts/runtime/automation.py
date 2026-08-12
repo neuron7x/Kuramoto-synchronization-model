@@ -1,10 +1,12 @@
+# Copyright (c) 2023-2026 Yaroslav Vasylenko (neuron7xLab)
+# SPDX-License-Identifier: MIT
 """Composable automation helpers for multi-step maintenance workflows."""
 
 from __future__ import annotations
 
 import threading
 
-# SPDX-License-Identifier: LicenseRef-TradePulse-Proprietary
+# SPDX-License-Identifier: MIT
 from collections import OrderedDict, deque
 from dataclasses import dataclass
 from datetime import datetime, timezone
@@ -144,9 +146,7 @@ class AutomationRunner:
         for step in self._steps:
             for dependency in step.dependencies:
                 if dependency not in self._step_map:
-                    raise ValueError(
-                        f"Step '{step.name}' depends on unknown step '{dependency}'"
-                    )
+                    raise ValueError(f"Step '{step.name}' depends on unknown step '{dependency}'")
 
     def _topological_order(self) -> list[str]:
         adjacency: dict[str, set[str]] = {step.name: set() for step in self._steps}
@@ -166,9 +166,7 @@ class AutomationRunner:
         while queue:
             current = queue.popleft()
             order.append(current)
-            for successor in sorted(
-                adjacency[current], key=lambda item: self._index_of(item)
-            ):
+            for successor in sorted(adjacency[current], key=lambda item: self._index_of(item)):
                 indegree[successor] -= 1
                 if indegree[successor] == 0:
                     queue.append(successor)

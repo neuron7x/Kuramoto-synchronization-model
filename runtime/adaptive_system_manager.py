@@ -1,3 +1,5 @@
+# Copyright (c) 2023-2026 Yaroslav Vasylenko (neuron7xLab)
+# SPDX-License-Identifier: MIT
 """Adaptive system manager for self-diagnosis and automatic optimization.
 
 This module implements autonomous adaptation capabilities including self-diagnosis,
@@ -7,12 +9,19 @@ auto-tuning, self-healing, and adaptive load management.
 from __future__ import annotations
 
 import logging
-import time
 from dataclasses import dataclass, field
 from enum import Enum
 from typing import Callable, Dict, List
 
+from geosync.core.compat import default_clock
+
 logger = logging.getLogger(__name__)
+
+
+def _now_seconds() -> float:
+    """Wall-clock seconds via the injected :class:`Clock` (Class A migration)."""
+
+    return default_clock().epoch_ns() / 1_000_000_000
 
 
 class HealthStatus(Enum):
@@ -47,7 +56,7 @@ class SystemHealth:
     error_rate: float
     latency_p99: float
     throughput: float
-    timestamp: float = field(default_factory=time.time)
+    timestamp: float = field(default_factory=_now_seconds)
     issues: List[str] = field(default_factory=list)
 
     def health_score(self) -> float:
@@ -91,7 +100,7 @@ class AdaptationAction:
     old_value: any
     new_value: any
     reason: str
-    timestamp: float = field(default_factory=time.time)
+    timestamp: float = field(default_factory=_now_seconds)
     applied: bool = False
     rollback_available: bool = True
 
@@ -99,9 +108,7 @@ class AdaptationAction:
 class AdaptiveSystemManager:
     """Manager for autonomous system adaptation and optimization."""
 
-    def __init__(
-        self, health_check_interval: float = 60.0, adaptation_cooldown: float = 300.0
-    ):
+    def __init__(self, health_check_interval: float = 60.0, adaptation_cooldown: float = 300.0):
         """Initialize adaptive system manager.
 
         Args:
@@ -313,7 +320,7 @@ class AdaptiveSystemManager:
             True if successfully applied
         """
         # Check cooldown
-        if time.time() - self.last_adaptation_time < self.adaptation_cooldown:
+        if _now_seconds() - self.last_adaptation_time < self.adaptation_cooldown:
             logger.info("Adaptation in cooldown period, skipping")
             return False
 
@@ -324,7 +331,7 @@ class AdaptiveSystemManager:
             self.configuration[action.parameter] = action.new_value
             action.applied = True
             self.adaptations.append(action)
-            self.last_adaptation_time = time.time()
+            self.last_adaptation_time = _now_seconds()
             return True
 
         # Call handler
@@ -335,7 +342,7 @@ class AdaptiveSystemManager:
             self.configuration[action.parameter] = action.new_value
             action.applied = True
             self.adaptations.append(action)
-            self.last_adaptation_time = time.time()
+            self.last_adaptation_time = _now_seconds()
             logger.info(
                 f"Applied adaptation: {action.strategy.value} "
                 f"({action.parameter}: {action.old_value} -> {action.new_value})"
@@ -414,7 +421,7 @@ class AdaptiveSystemManager:
         Returns:
             Dictionary with trend statistics
         """
-        cutoff = time.time() - (window_minutes * 60)
+        cutoff = _now_seconds() - (window_minutes * 60)
         recent = [h for h in self.health_history if h.timestamp >= cutoff]
 
         if not recent:
@@ -429,10 +436,6 @@ class AdaptiveSystemManager:
             "avg_score": float(np.mean(scores)),
             "min_score": float(np.min(scores)),
             "max_score": float(np.max(scores)),
-            "trend": (
-                "improving"
-                if len(scores) > 1 and scores[-1] > scores[0]
-                else "declining"
-            ),
+            "trend": ("improving" if len(scores) > 1 and scores[-1] > scores[0] else "declining"),
             "samples": len(scores),
         }

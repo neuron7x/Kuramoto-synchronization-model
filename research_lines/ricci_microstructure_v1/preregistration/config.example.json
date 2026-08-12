@@ -1,0 +1,22 @@
+{
+  "schema_version": "ricci_microstructure_v1.config.v1",
+  "line_id": "ricci_microstructure_v1",
+  "deterministic": true,
+  "seed": 1337,
+  "input_window_sec": 30,
+  "observation_window_sec": 3600,
+  "primary_metric": "information_coefficient",
+  "null_baselines": [
+    "permutation_null",
+    "lag_sweep_no_future_data",
+    "cost_model",
+    "multi_session_replay"
+  ],
+  "failure_threshold": {"oos_ic_min": 0.0},
+  "cost_model": {"taker_fee_bps": 5.0, "maker_fee_bps": 1.0, "slippage_model": "half_spread_per_fill"},
+  "replay_command": "python tools/research/research_cli.py replay --line ricci_microstructure_v1 --config <config_sha> --data <data_sha>",
+  "data_source": "synthetic",
+  "artifact_schema": "schemas/research/research_inference_artifact.schema.json",
+  "promotion_criteria": {"min_data_depth_sec": 3600, "require_all_nulls_beaten": true, "require_positive_net_pnl": true},
+  "rejection_criteria": {"null_matches_signal": true, "ic_below_threshold": true, "negative_net_pnl": true}
+}

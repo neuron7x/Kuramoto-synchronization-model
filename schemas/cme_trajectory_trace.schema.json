@@ -1,0 +1,153 @@
+{
+  "$schema": "https://json-schema.org/draft/2020-12/schema",
+  "$id": "https://neuron7xlab.github.io/geosync/schemas/cme_trajectory_trace.schema.json",
+  "title": "CME Trajectory Trace Contract",
+  "description": "Machine-readable contract for one persisted CME state transformation trace.",
+  "type": "object",
+  "required": [
+    "trace_version",
+    "trace_id",
+    "created_at",
+    "status",
+    "state_t",
+    "operation_t",
+    "candidate_t",
+    "score_t",
+    "decision_t",
+    "artifact_delta_t",
+    "rollback_condition_t",
+    "state_t_plus_1",
+    "verifiers",
+    "claim_status"
+  ],
+  "additionalProperties": false,
+  "properties": {
+    "trace_version": {"type": "string", "const": "1.0"},
+    "trace_id": {"type": "string", "minLength": 8},
+    "created_at": {"type": "string", "minLength": 10},
+    "status": {"type": "string", "enum": ["S0_REPO_FACT", "S1_TESTED", "S5_PROXY", "S6_SPECULATIVE"]},
+    "state_t": {"$ref": "#/$defs/state_snapshot"},
+    "operation_t": {
+      "type": "object",
+      "required": ["operator_name", "operation", "repo_location", "input_state_ref", "status"],
+      "additionalProperties": false,
+      "properties": {
+        "operator_name": {"type": "string", "minLength": 1},
+        "operation": {"type": "string", "minLength": 1},
+        "repo_location": {"type": "string", "minLength": 1},
+        "input_state_ref": {"type": "string", "minLength": 1},
+        "status": {"type": "string", "enum": ["S0_REPO_FACT", "S1_TESTED", "S5_PROXY"]}
+      }
+    },
+    "candidate_t": {
+      "type": "array",
+      "minItems": 1,
+      "items": {
+        "type": "object",
+        "required": ["candidate_id", "description", "source", "status"],
+        "additionalProperties": false,
+        "properties": {
+          "candidate_id": {"type": "string", "minLength": 1},
+          "description": {"type": "string", "minLength": 1},
+          "source": {"type": "string", "minLength": 1},
+          "status": {"type": "string", "enum": ["S0_REPO_FACT", "S5_PROXY", "S6_SPECULATIVE"]}
+        }
+      }
+    },
+    "score_t": {
+      "type": "object",
+      "required": [
+        "intent_coherence_score",
+        "constraint_satisfaction_score",
+        "operator_coverage_score",
+        "verification_readiness_score",
+        "claim_safety_score",
+        "total"
+      ],
+      "additionalProperties": false,
+      "properties": {
+        "intent_coherence_score": {"type": "integer", "minimum": 0, "maximum": 10},
+        "constraint_satisfaction_score": {"type": "integer", "minimum": 0, "maximum": 10},
+        "operator_coverage_score": {"type": "integer", "minimum": 0, "maximum": 10},
+        "verification_readiness_score": {"type": "integer", "minimum": 0, "maximum": 10},
+        "claim_safety_score": {"type": "integer", "minimum": 0, "maximum": 10},
+        "total": {"type": "integer", "minimum": 0, "maximum": 50}
+      }
+    },
+    "decision_t": {
+      "type": "object",
+      "required": ["decision", "reason", "made_by", "status"],
+      "additionalProperties": false,
+      "properties": {
+        "decision": {"type": "string", "enum": ["ACCEPT", "REJECT", "REROUTE", "HUMAN_REVIEW"]},
+        "reason": {"type": "string", "minLength": 1},
+        "made_by": {"type": "string", "minLength": 1},
+        "status": {"type": "string", "enum": ["S0_REPO_FACT", "S1_TESTED", "S5_PROXY"]}
+      }
+    },
+    "artifact_delta_t": {
+      "type": "array",
+      "minItems": 1,
+      "items": {
+        "type": "object",
+        "required": ["path", "change_type", "expected_validator", "status"],
+        "additionalProperties": false,
+        "properties": {
+          "path": {"type": "string", "minLength": 1},
+          "change_type": {"type": "string", "enum": ["CREATE", "MODIFY", "DELETE", "NONE"]},
+          "expected_validator": {"type": "string", "minLength": 1},
+          "status": {"type": "string", "enum": ["S0_REPO_FACT", "S1_TESTED", "S5_PROXY"]}
+        }
+      }
+    },
+    "rollback_condition_t": {
+      "type": "object",
+      "required": ["condition", "trigger", "rollback_action", "status"],
+      "additionalProperties": false,
+      "properties": {
+        "condition": {"type": "string", "minLength": 1},
+        "trigger": {"type": "string", "minLength": 1},
+        "rollback_action": {"type": "string", "minLength": 1},
+        "status": {"type": "string", "enum": ["S0_REPO_FACT", "S5_PROXY"]}
+      }
+    },
+    "state_t_plus_1": {"$ref": "#/$defs/state_snapshot"},
+    "verifiers": {
+      "type": "array",
+      "minItems": 1,
+      "items": {
+        "type": "object",
+        "required": ["name", "command", "current_status"],
+        "additionalProperties": false,
+        "properties": {
+          "name": {"type": "string", "minLength": 1},
+          "command": {"type": "string", "minLength": 1},
+          "current_status": {"type": "string", "enum": ["PASS", "FAIL", "MISSING", "UNKNOWN"]}
+        }
+      }
+    },
+    "claim_status": {
+      "type": "object",
+      "required": ["blocked_claims", "allowed_statuses", "promotion_rule"],
+      "additionalProperties": false,
+      "properties": {
+        "blocked_claims": {"type": "array", "items": {"type": "string"}},
+        "allowed_statuses": {"type": "array", "minItems": 1, "items": {"type": "string"}},
+        "promotion_rule": {"type": "string", "minLength": 1}
+      }
+    }
+  },
+  "$defs": {
+    "state_snapshot": {
+      "type": "object",
+      "required": ["snapshot_id", "summary", "known_constraints", "open_uncertainties"],
+      "additionalProperties": false,
+      "properties": {
+        "snapshot_id": {"type": "string", "minLength": 1},
+        "summary": {"type": "string", "minLength": 1},
+        "known_constraints": {"type": "array", "items": {"type": "string"}},
+        "open_uncertainties": {"type": "array", "items": {"type": "string"}}
+      }
+    }
+  }
+}

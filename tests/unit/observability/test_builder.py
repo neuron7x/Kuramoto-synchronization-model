@@ -1,3 +1,5 @@
+# Copyright (c) 2023-2026 Yaroslav Vasylenko (neuron7xLab)
+# SPDX-License-Identifier: MIT
 from __future__ import annotations
 
 import json
@@ -24,14 +26,14 @@ def test_validate_metrics_requires_unique_names(tmp_path: Path) -> None:
         {
             "metrics": [
                 {
-                    "name": "tradepulse_metric_one",
+                    "name": "geosync_metric_one",
                     "type": "counter",
                     "description": "A metric",
                     "labels": ["label"],
                     "subsystem": "demo",
                 },
                 {
-                    "name": "tradepulse_metric_one",
+                    "name": "geosync_metric_one",
                     "type": "gauge",
                     "description": "Duplicate",
                     "labels": [],
@@ -56,7 +58,7 @@ def test_validate_alerts_rejects_unknown_metric(tmp_path: Path) -> None:
                     "rules": [
                         {
                             "alert": "DemoAlert",
-                            "expr": "sum(tradepulse_unknown_total)",
+                            "expr": "sum(geosync_unknown_total)",
                             "labels": {},
                             "annotations": {},
                         }
@@ -67,7 +69,7 @@ def test_validate_alerts_rejects_unknown_metric(tmp_path: Path) -> None:
     )
 
     with pytest.raises(ObservabilityConfigError, match="unknown metrics"):
-        validate_alerts(alerts_path, ["tradepulse_known_total"])
+        validate_alerts(alerts_path, ["geosync_known_total"])
 
 
 def test_build_bundle_generates_artifacts(tmp_path: Path) -> None:
@@ -80,14 +82,14 @@ def test_build_bundle_generates_artifacts(tmp_path: Path) -> None:
         {
             "metrics": [
                 {
-                    "name": "tradepulse_metric_one",
+                    "name": "geosync_metric_one",
                     "type": "counter",
                     "description": "A metric",
                     "labels": [],
                     "subsystem": "demo",
                 },
                 {
-                    "name": "tradepulse_metric_two",
+                    "name": "geosync_metric_two",
                     "type": "histogram",
                     "description": "Another metric",
                     "labels": ["label"],
@@ -106,7 +108,7 @@ def test_build_bundle_generates_artifacts(tmp_path: Path) -> None:
                     "rules": [
                         {
                             "alert": "DemoAlert",
-                            "expr": "sum(rate(tradepulse_metric_one[5m])) > 10",
+                            "expr": "sum(rate(geosync_metric_one[5m])) > 10",
                             "labels": {"severity": "warning"},
                             "annotations": {"summary": "Demo"},
                         }
@@ -126,7 +128,7 @@ def test_build_bundle_generates_artifacts(tmp_path: Path) -> None:
                     "type": "timeseries",
                     "targets": [
                         {
-                            "expr": "sum(tradepulse_metric_one)",
+                            "expr": "sum(geosync_metric_one)",
                             "refId": "A",
                         }
                     ],
@@ -166,7 +168,7 @@ def test_build_bundle_quotes_special_yaml_strings(tmp_path: Path) -> None:
         {
             "metrics": [
                 {
-                    "name": "tradepulse_latency_seconds",
+                    "name": "geosync_latency_seconds",
                     "type": "histogram",
                     "description": "Latency histogram",
                     "labels": [],
@@ -185,7 +187,7 @@ def test_build_bundle_quotes_special_yaml_strings(tmp_path: Path) -> None:
                     "rules": [
                         {
                             "alert": "LatencySLOViolation",
-                            "expr": "histogram_quantile(0.99, tradepulse_latency_seconds_bucket) > 1.5",
+                            "expr": "histogram_quantile(0.99, geosync_latency_seconds_bucket) > 1.5",
                             "annotations": {
                                 "summary": "Latency: 99th percentile breached",
                                 "description": "Investigate upstream: dependency #1",
@@ -207,7 +209,7 @@ def test_build_bundle_quotes_special_yaml_strings(tmp_path: Path) -> None:
                     "type": "timeseries",
                     "targets": [
                         {
-                            "expr": "histogram_quantile(0.99, tradepulse_latency_seconds_bucket)",
+                            "expr": "histogram_quantile(0.99, geosync_latency_seconds_bucket)",
                             "refId": "A",
                         }
                     ],

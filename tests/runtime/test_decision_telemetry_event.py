@@ -1,3 +1,5 @@
+# Copyright (c) 2023-2026 Yaroslav Vasylenko (neuron7xLab)
+# SPDX-License-Identifier: MIT
 import json
 import logging
 
@@ -76,7 +78,7 @@ def test_metrics_reason_counters_increment() -> None:
         trace_id=None,
     )
 
-    emit_decision_event(event, logger=logging.getLogger("tradepulse.test.telemetry"))
+    emit_decision_event(event, logger=logging.getLogger("geosync.test.telemetry"))
 
     after_decision = _sample_value(CONTROL_GATE_DECISIONS_TOTAL, decision="DENY")
     after_reason = _sample_value(CONTROL_GATE_REASON_TOTAL, reason="TEST_REASON")

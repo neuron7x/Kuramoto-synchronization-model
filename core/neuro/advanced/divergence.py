@@ -1,3 +1,5 @@
+# Copyright (c) 2023-2026 Yaroslav Vasylenko (neuron7xLab)
+# SPDX-License-Identifier: MIT
 r"""Hybrid divergence computation for neuroeconomic trading agents."""
 
 from __future__ import annotations
@@ -122,9 +124,7 @@ def _compute_divergence(
         rho_f = to_density_matrix(feature_delta)
         divergence = max(0.0, quantum_relative_entropy(rho_p, rho_f))
         if divergence < config.divergence_threshold:
-            convergence = max(
-                0.0, 1.0 - divergence / (config.divergence_threshold + 1.0)
-            )
+            convergence = max(0.0, 1.0 - divergence / (config.divergence_threshold + 1.0))
         else:
             convergence = max(0.0, 1.0 - divergence / (divergence + 1.0))
         return divergence, convergence
@@ -190,9 +190,7 @@ def compute_divergence_convergence_phi(
         price_delta = float(row["price"])
         feature_delta = row.drop(labels="price").to_numpy(dtype=float)
 
-        divergence, convergence = _compute_divergence(
-            price_delta, feature_delta, config
-        )
+        divergence, convergence = _compute_divergence(price_delta, feature_delta, config)
 
         causal_result: GrangerResult | None = None
         if config.causal_p_threshold is not None:

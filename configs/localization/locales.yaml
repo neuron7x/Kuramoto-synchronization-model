@@ -1,5 +1,5 @@
-# SPDX-License-Identifier: LicenseRef-TradePulse-Proprietary
-# Locale metadata powering the TradePulse dashboard internationalization runtime.
+# SPDX-License-Identifier: MIT
+# Locale metadata powering the GeoSync dashboard internationalization runtime.
 # This file is processed by scripts/localization/sync_translations.py to generate
 # JSON artifacts consumed by the UI build.
 

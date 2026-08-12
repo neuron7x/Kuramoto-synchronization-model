@@ -2,7 +2,7 @@
 
 ## Overview
 
-This program establishes the performance-validation lifecycle for TradePulse services. It covers the test portfolio, success metrics, observability, and continuous-improvement workflows required to keep production latency, throughput, and cost within guardrails as demand patterns evolve.
+This program establishes the performance-validation lifecycle for GeoSync services. It covers the test portfolio, success metrics, observability, and continuous-improvement workflows required to keep production latency, throughput, and cost within guardrails as demand patterns evolve.
 
 ## Workload Profiles
 

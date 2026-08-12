@@ -1,3 +1,5 @@
+# Copyright (c) 2023-2026 Yaroslav Vasylenko (neuron7xLab)
+# SPDX-License-Identifier: MIT
 """Unit tests for :class:`OnlineSignalForecaster`."""
 
 from __future__ import annotations
@@ -11,8 +13,8 @@ import pytest
 from fastapi import HTTPException
 
 # Ensure module import does not attempt to build the FastAPI app during tests.
-os.environ.setdefault("TRADEPULSE_ADMIN_TOKEN", "test-admin-token")
-os.environ.setdefault("TRADEPULSE_AUDIT_SECRET", "test-audit-secret")
+os.environ.setdefault("GEOSYNC_ADMIN_TOKEN", "test-admin-token")
+os.environ.setdefault("GEOSYNC_AUDIT_SECRET", "test-audit-secret")
 
 from application.api.service import OnlineSignalForecaster, PredictionResponse
 from application.trading import signal_to_dto
@@ -26,14 +28,10 @@ pytestmark = pytest.mark.filterwarnings(
 class _StubPipeline:
     """Lightweight pipeline stub used to bypass the heavy feature pipeline."""
 
-    def __init__(
-        self, transform_fn: Callable[[pd.DataFrame], pd.DataFrame] | None = None
-    ) -> None:
+    def __init__(self, transform_fn: Callable[[pd.DataFrame], pd.DataFrame] | None = None) -> None:
         self._transform_fn = transform_fn or (lambda frame: frame)
 
-    def transform(
-        self, frame: pd.DataFrame
-    ) -> pd.DataFrame:  # pragma: no cover - trivial
+    def transform(self, frame: pd.DataFrame) -> pd.DataFrame:  # pragma: no cover - trivial
         return self._transform_fn(frame)
 
 
@@ -326,12 +324,10 @@ class TestDeriveSignal:
         self, make_forecaster: Callable[[pd.DataFrame], OnlineSignalForecaster]
     ) -> None:
         forecaster = make_forecaster(pd.DataFrame())
-        components = (
-            forecaster._compute_macd_components(  # pylint: disable=protected-access
-                macd=0.0,
-                macd_signal_line=0.0,
-                macd_histogram=0.0,
-            )
+        components = forecaster._compute_macd_components(  # pylint: disable=protected-access
+            macd=0.0,
+            macd_signal_line=0.0,
+            macd_histogram=0.0,
         )
 
         assert components["macd_trend"] == pytest.approx(0.0)
@@ -343,12 +339,10 @@ class TestDeriveSignal:
         self, make_forecaster: Callable[[pd.DataFrame], OnlineSignalForecaster]
     ) -> None:
         forecaster = make_forecaster(pd.DataFrame())
-        components = (
-            forecaster._compute_macd_components(  # pylint: disable=protected-access
-                macd=0.9,
-                macd_signal_line=0.4,
-                macd_histogram=0.5,
-            )
+        components = forecaster._compute_macd_components(  # pylint: disable=protected-access
+            macd=0.9,
+            macd_signal_line=0.4,
+            macd_histogram=0.5,
         )
 
         assert components["macd_trend"] > 0

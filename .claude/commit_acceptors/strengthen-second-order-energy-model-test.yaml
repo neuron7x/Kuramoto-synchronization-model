@@ -1,0 +1,60 @@
+# Diff-bound commit acceptor: close the second_order L493 energy-model-validity
+# mutation-survivor (INV-K8). Test-only — no physics-source change.
+
+id: strengthen-second-order-energy-model-test
+status: ACTIVE
+claim_type: correctness
+promise: >-
+  After this PR lands, test_second_order_stability_audit.py has a
+  symmetric-but-signed adjacency fixture and test pinning that
+  energy_model_valid = adjacency_symmetric AND adjacency_unsigned distinguishes
+  the AND from an OR: a symmetric yet signed matrix (one operand True, one
+  False) must yield energy_model_valid False and a fail-closed audit. This kills
+  the second_order.py L493 `and`->`or` mutation_probe survivor (under which
+  symmetric alone would wrongly validate the swing-energy diagnostic). Verified
+  to fail under the mutation and pass on correct code. No physics-source change.
+
+diff_scope:
+  changed_files:
+    - path: ".claude/commit_acceptors/strengthen-second-order-energy-model-test.yaml"
+    - path: "tests/unit/physics/test_second_order_stability_audit.py"
+  forbidden_paths:
+    - "trading/"
+    - "execution/"
+    - "forecast/"
+    - "policy/"
+    - "runtime/"
+    - "application/"
+    - "core/"
+
+required_python_symbols:
+  - "tests/unit/physics/test_second_order_stability_audit.py::test_symmetric_signed_adjacency_invalidates_energy_model"
+  - "tests/unit/physics/test_second_order_stability_audit.py::_symmetric_signed_engine"
+
+expected_signal: >-
+  python -m pytest tests/unit/physics/test_second_order_stability_audit.py
+  -k symmetric_signed reports the new test passing.
+
+measurement_command: >-
+  bash -c 'mkdir -p tmp && python -m pytest -q -k symmetric_signed tests/unit/physics/test_second_order_stability_audit.py | tee tmp/so_energy_model.log'
+
+signal_artifact: "tmp/so_energy_model.log"
+
+falsifier:
+  command: >-
+    bash -c 'python -m pytest -q tests/unit/physics/test_second_order_stability_audit.py::test_symmetric_signed_adjacency_invalidates_energy_model'
+  description: >-
+    Runs the test, which asserts a symmetric-but-signed adjacency yields
+    energy_model_valid False and a fail-closed audit. Succeeds (exit 0) only when
+    that holds — it would fail if energy_model_valid used OR instead of AND, the
+    exact L493 mutant it was built to kill.
+
+rollback_command: >-
+  bash -c 'git checkout origin/main -- tests/unit/physics/test_second_order_stability_audit.py && git rm -f .claude/commit_acceptors/strengthen-second-order-energy-model-test.yaml'
+
+rollback_verification_command: >-
+  bash -c '! grep -q _symmetric_signed_engine tests/unit/physics/test_second_order_stability_audit.py'
+
+memory_update_type: append
+ledger_path: ".claude/commit_acceptors/strengthen-second-order-energy-model-test.yaml"
+report_path: "tmp/so_energy_model.log"

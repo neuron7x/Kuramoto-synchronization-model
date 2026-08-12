@@ -1,5 +1,6 @@
-# SPDX-License-Identifier: LicenseRef-TradePulse-Proprietary
-"""Unit tests for tradepulse.data.api module.
+# Copyright (c) 2023-2026 Yaroslav Vasylenko (neuron7xLab)
+# SPDX-License-Identifier: MIT
+"""Unit tests for geosync.data.api module.
 
 Tests for data access API functions:
 - load_historical_bars
@@ -23,7 +24,7 @@ if str(_src_path) not in sys.path:
     sys.path.insert(0, str(_src_path))
 
 # Now we can import properly
-from tradepulse.data.api import (  # noqa: E402
+from geosync.data.api import (  # noqa: E402
     DataSourceConfig,
     get_feature_window,
     get_historical_window,
@@ -31,7 +32,7 @@ from tradepulse.data.api import (  # noqa: E402
     load_historical_bars,
     normalize_bars,
 )
-from tradepulse.data.schema import Bar, FeatureVector, Timeframe  # noqa: E402
+from geosync.data.schema import Bar, FeatureVector, Timeframe  # noqa: E402
 
 
 def make_bar(

@@ -1,6 +1,6 @@
 # Release Validation Runbook
 
-This runbook defines the release validation discipline for TradePulse. It
+This runbook defines the release validation discipline for GeoSync. It
 covers the readiness checks, automation, and governance required before a
 release can move from staging to production. The procedures assume the release
 is orchestrated through the standard CI/CD pipeline and that rollback assets are
@@ -70,11 +70,11 @@ Automation executes in three phases. All runs must succeed before promotion.
    order throughput, and reconciliation checks. Metrics must remain within SLO ±5%
    for 30 minutes before promotion.
 3. **Post-release guard** – During the first 60 minutes in production, stream
-   telemetry with `kubectl logs -f deployment/tradepulse --since=10m` and watch
+   telemetry with `kubectl logs -f deployment/geosync --since=10m` and watch
    the dashboards listed below. Any PagerDuty incident automatically pauses the
    pipeline and blocks further promotion until metrics stabilise.
 
-All automation logs are archived under `s3://tradepulse-release-validation/<release-id>/`.
+All automation logs are archived under `s3://geosync-release-validation/<release-id>/`.
 
 ## 5. Exit Criteria
 
@@ -107,7 +107,7 @@ Initiate rollback when any of the following trigger:
 
 1. Engage the rollback bridge (`#release-rollback` channel) and page SRE Lead.
 2. Freeze further changes by disabling continuous deployment workflows.
-3. Redeploy the previous tag with `kubectl rollout undo deployment/tradepulse
+3. Redeploy the previous tag with `kubectl rollout undo deployment/geosync
    --to-revision=<revision>` (or rerun the deployment pipeline with the prior
    artifact). This reverts the application to the last known good configuration
    and refreshes the supporting infrastructure state.
@@ -155,11 +155,11 @@ window:
 
 | Dashboard | Link | Purpose |
 | --------- | ---- | ------- |
-| Release Control Center | Grafana: `https://grafana.tradepulse.internal/d/release-control` | Aggregate smoke results, canary metrics, deployment timeline. |
-| Trading Health | Grafana: `https://grafana.tradepulse.internal/d/trading-health` | Execution latency, order success rates, venue error budgets. |
-| Market Data Integrity | Grafana: `https://grafana.tradepulse.internal/d/market-data` | Feed staleness, schema drift, ingest lag. |
-| Risk & Limits | Grafana: `https://grafana.tradepulse.internal/d/risk-limits` | Kill-switch state, exposure per venue, compliance alerts. |
-| Customer Impact | Looker: `https://looker.tradepulse.internal/dashboards/customer-impact` | Session errors, support ticket volume, major customer KPIs. |
+| Release Control Center | Grafana: `https://grafana.geosync.internal/d/release-control` | Aggregate smoke results, canary metrics, deployment timeline. |
+| Trading Health | Grafana: `https://grafana.geosync.internal/d/trading-health` | Execution latency, order success rates, venue error budgets. |
+| Market Data Integrity | Grafana: `https://grafana.geosync.internal/d/market-data` | Feed staleness, schema drift, ingest lag. |
+| Risk & Limits | Grafana: `https://grafana.geosync.internal/d/risk-limits` | Kill-switch state, exposure per venue, compliance alerts. |
+| Customer Impact | Looker: `https://looker.geosync.internal/dashboards/customer-impact` | Session errors, support ticket volume, major customer KPIs. |
 
 Ensure access is granted ahead of the release window and that dashboard alerts
 are synchronized with PagerDuty routes.

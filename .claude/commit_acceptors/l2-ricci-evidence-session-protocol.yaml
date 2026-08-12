@@ -1,0 +1,96 @@
+# Diff-bound commit acceptor for the L2 Ricci evidence-bearing session protocol.
+#
+# Builds the promotion PATH (not another label) for L2 order-book (depth-5)
+# Ricci microstructure. The README pins this line at HYPOTHESIS and forbids
+# promotion until a real depth-5 session with a real data hash, replay,
+# baseline, null model, falsifier, and negative evidence is recorded. This PR
+# adds the schema, recorder/gate, protocol doc, and contract tests that make
+# that path machine-checkable and fail-closed. No evidence is fabricated: the
+# --dry-run skeleton is always a PLACEHOLDER and is never promotable.
+
+id: l2-ricci-evidence-session-protocol
+status: ACTIVE
+claim_type: governance
+promise: >-
+  After this PR lands, no L2 (depth-5) Ricci claim can move beyond HYPOTHESIS
+  without a real (non-zero) data hash, a replay command, a declared baseline, a
+  registered null model, an executable falsifier, and recorded negative
+  evidence. tools/research/run_l2_ricci_session.py validates a session for
+  SHAPE (schemas/research/l2_ricci_session.schema.json) and then for
+  PROMOTION-READINESS: a PASS status on zero hashes, a missing falsification
+  axis, an all-BLOCKED negative-evidence set, or session_end before
+  session_start is rejected. --dry-run emits a schema-valid PLACEHOLDER
+  skeleton that can never claim evidence.
+
+diff_scope:
+  changed_files:
+    - path: "docs/research/l2_ricci_evidence_protocol.md"
+    - path: "schemas/research/l2_ricci_session.schema.json"
+    - path: "tools/research/run_l2_ricci_session.py"
+    - path: "tests/research/test_l2_ricci_session_schema.py"
+    - path: ".claude/commit_acceptors/l2-ricci-evidence-session-protocol.yaml"
+  forbidden_paths:
+    - "application/"
+    - "backtest/"
+    - "execution/"
+    - "markets/"
+    - "runtime/"
+    - "core/"
+    - "policy/"
+
+required_python_symbols:
+  - "tools/research/run_l2_ricci_session.py::skeleton"
+  - "tools/research/run_l2_ricci_session.py::validate_artifact"
+  - "tools/research/run_l2_ricci_session.py::validate_session_semantics"
+
+expected_signal: >-
+  python tools/research/run_l2_ricci_session.py --dry-run exits 0 and emits a
+  schema-valid PLACEHOLDER skeleton; pytest tests/research/test_l2_ricci_session_schema.py
+  reports all tests passed, including the parametrized assertion that the schema
+  rejects an artifact missing any one required field and that the semantic gate
+  rejects an evidence claim on zero hashes.
+
+measurement_command: >-
+  bash -c '
+    python tools/research/run_l2_ricci_session.py --dry-run > /dev/null &&
+    python -m pytest -q tests/research/test_l2_ricci_session_schema.py -p no:cacheprovider
+  '
+
+signal_artifact: "tmp/l2_ricci_session_protocol.log"
+
+falsifier:
+  command: |-
+    bash -c 'python -c "
+    import importlib.util, json, sys, tempfile, pathlib;
+    spec = importlib.util.spec_from_file_location(\"m\", \"tools/research/run_l2_ricci_session.py\");
+    m = importlib.util.module_from_spec(spec); spec.loader.exec_module(m);
+    p = pathlib.Path(tempfile.mkdtemp()) / \"s.json\";
+    sk = m.skeleton(); sk[\"semantic_validation_status\"] = \"PASS\";
+    p.write_text(json.dumps(sk));
+    sys.exit(0 if m.validate_artifact(p) == [] else 1)"'
+  description: >-
+    Inverts the core invariant: it exits 0 (succeeds) only when the gate would
+    accept a PASS-claiming session that still carries the skeleton's zero
+    hashes — i.e. the promotion path was weakened to admit a placeholder as
+    evidence. With the gate intact the zero-hash PASS is rejected, so this
+    exits 1.
+
+rollback_command: >-
+  bash -c '
+    git rm -f
+      docs/research/l2_ricci_evidence_protocol.md
+      schemas/research/l2_ricci_session.schema.json
+      tools/research/run_l2_ricci_session.py
+      tests/research/test_l2_ricci_session_schema.py
+      .claude/commit_acceptors/l2-ricci-evidence-session-protocol.yaml
+  '
+
+rollback_verification_command: >-
+  bash -c '
+    test ! -e tools/research/run_l2_ricci_session.py
+  '
+
+memory_update_type: append
+ledger_path: ".claude/commit_acceptors/l2-ricci-evidence-session-protocol.yaml"
+report_path: "tmp/l2_ricci_session_protocol.log"
+evidence: []

@@ -1,0 +1,147 @@
+{
+  "$defs": {
+    "ClaimEntry": {
+      "additionalProperties": false,
+      "description": "Single registry entry under ``claims:`` in the ledger.\n\nThe strict-mode ``extra='forbid'`` policy guards against silent\nschema drift: any unknown field at the entry level is a hard error\n(the historical gate would have ignored unknowns and produced\nfalse-green runs).",
+      "properties": {
+        "added_utc": {
+          "pattern": "^\\d{4}-\\d{2}-\\d{2}$",
+          "title": "Added Utc",
+          "type": "string"
+        },
+        "description": {
+          "minLength": 1,
+          "title": "Description",
+          "type": "string"
+        },
+        "evidence_paths": {
+          "items": {
+            "type": "string"
+          },
+          "title": "Evidence Paths",
+          "type": "array"
+        },
+        "falsifier": {
+          "anyOf": [
+            {
+              "$ref": "#/$defs/Falsifier"
+            },
+            {
+              "type": "null"
+            }
+          ],
+          "default": null
+        },
+        "id": {
+          "minLength": 1,
+          "pattern": "^[a-z0-9]+(?:-[a-z0-9]+)*$",
+          "title": "Id",
+          "type": "string"
+        },
+        "last_updated_utc": {
+          "anyOf": [
+            {
+              "pattern": "^\\d{4}-\\d{2}-\\d{2}$",
+              "type": "string"
+            },
+            {
+              "type": "null"
+            }
+          ],
+          "default": null,
+          "title": "Last Updated Utc"
+        },
+        "priority": {
+          "$ref": "#/$defs/Priority"
+        },
+        "tier": {
+          "$ref": "#/$defs/Tier"
+        }
+      },
+      "required": [
+        "id",
+        "priority",
+        "tier",
+        "description",
+        "added_utc"
+      ],
+      "title": "ClaimEntry",
+      "type": "object"
+    },
+    "Falsifier": {
+      "additionalProperties": false,
+      "description": "v3 falsifier block \u2014 pytest node + invariants + failure signature.\n\nRequired on every v3 ANCHORED claim per ADR 0021. The ``test_id``\nmust be a resolvable pytest node id; ``invariants_cited`` must be a\nnon-empty list of ``INV-<NAME>`` identifiers; ``failure_signature``\nis a free-form description of the assertion shape that must fire on\ninvariant violation.",
+      "properties": {
+        "failure_signature": {
+          "minLength": 1,
+          "title": "Failure Signature",
+          "type": "string"
+        },
+        "invariants_cited": {
+          "items": {
+            "type": "string"
+          },
+          "minItems": 1,
+          "title": "Invariants Cited",
+          "type": "array"
+        },
+        "test_id": {
+          "pattern": "^[\\w./\\-]+\\.py(::[A-Za-z_][\\w]*)+$",
+          "title": "Test Id",
+          "type": "string"
+        }
+      },
+      "required": [
+        "test_id",
+        "invariants_cited",
+        "failure_signature"
+      ],
+      "title": "Falsifier",
+      "type": "object"
+    },
+    "Priority": {
+      "description": "Claim priority \u2014 gate scope.\n\nP0 / P1 are gated (CI fails on missing evidence). P2 is warn-only.",
+      "enum": [
+        "P0",
+        "P1",
+        "P2"
+      ],
+      "title": "Priority",
+      "type": "string"
+    },
+    "Tier": {
+      "description": "IERD claim tier ladder.\n\nStrict ordering: an ANCHORED claim has a falsifier and CI evidence;\nEXTRAPOLATED has partial evidence with a documented missing-evidence\nlist; SPECULATIVE / UNKNOWN are aspirational. The ``check_claims``\ngate enforces ``tier \u2208 {ANCHORED, EXTRAPOLATED} \u21d2 all evidence\npaths exist``.",
+      "enum": [
+        "ANCHORED",
+        "EXTRAPOLATED",
+        "SPECULATIVE",
+        "UNKNOWN"
+      ],
+      "title": "Tier",
+      "type": "string"
+    }
+  },
+  "additionalProperties": false,
+  "description": "Top-level shape of ``docs/CLAIMS.yaml``.",
+  "properties": {
+    "claims": {
+      "items": {
+        "$ref": "#/$defs/ClaimEntry"
+      },
+      "title": "Claims",
+      "type": "array"
+    },
+    "schema_version": {
+      "maximum": 3,
+      "minimum": 1,
+      "title": "Schema Version",
+      "type": "integer"
+    }
+  },
+  "required": [
+    "schema_version",
+    "claims"
+  ],
+  "title": "ClaimLedger",
+  "type": "object"
+}

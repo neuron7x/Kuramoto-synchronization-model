@@ -1,3 +1,5 @@
+# Copyright (c) 2023-2026 Yaroslav Vasylenko (neuron7xLab)
+# SPDX-License-Identifier: MIT
 """Repository secret scanner for continuous compliance workflows."""
 
 from __future__ import annotations
@@ -93,9 +95,7 @@ class SecretScanner:
         for dirpath, dirnames, filenames in os.walk(root):
             # Mutate dirnames in-place to control traversal.
             dirnames[:] = [
-                name
-                for name in dirnames
-                if not name.startswith(".") or name == ".well-known"
+                name for name in dirnames if not name.startswith(".") or name == ".well-known"
             ]
             relative_dir = str(Path(dirpath).relative_to(root))
             if any(relative_dir.startswith(ignored) for ignored in self._ignored_paths):
@@ -181,9 +181,7 @@ class SecretScanner:
 def _parse_args(argv: Sequence[str]) -> argparse.Namespace:
     parser = argparse.ArgumentParser(description="Scan for potential secrets")
     parser.add_argument("path", nargs="?", default=".", help="Root path to scan")
-    parser.add_argument(
-        "--json", action="store_true", help="Emit machine-readable JSON output"
-    )
+    parser.add_argument("--json", action="store_true", help="Emit machine-readable JSON output")
     parser.add_argument(
         "--min-entropy",
         type=float,
@@ -208,9 +206,7 @@ def _print_findings(findings: Iterable[SecretFinding], *, emit_json: bool) -> No
         print("No secrets detected.")
         return
     for finding in findings_list:
-        entropy_display = (
-            f" entropy={finding.entropy:.2f}" if finding.entropy is not None else ""
-        )
+        entropy_display = f" entropy={finding.entropy:.2f}" if finding.entropy is not None else ""
         print(
             f"{finding.path}:{finding.line} [{finding.detector}]{entropy_display} -> {finding.context}"
         )

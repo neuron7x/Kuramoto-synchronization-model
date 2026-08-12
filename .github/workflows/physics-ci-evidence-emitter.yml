@@ -1,0 +1,89 @@
+# SPDX-License-Identifier: MIT
+#
+# Physics CI-Evidence Emitter (issue #1228 G7).
+#
+# tools/physics_score.py flips physics_runtime_green only when the five required
+# physics workflows recorded a completed/success run whose head_sha equals the
+# scored commit. A validator already existed; this gate adds the *emitter* and
+# makes its commit-binding a required, CI-exercised contract:
+#
+#   * The deterministic acceptance + falsifier suite (tests/test_emit_ci_evidence.py)
+#     is fail-closed: copying another PR's evidence (stale head_sha) must NOT
+#     raise the score. This is the BLOCK-CI-001 attack the binding guards.
+#   * The emitter is then run against the real scored SHA and its same-SHA-bound
+#     summary + computed score are uploaded as evidence artifacts (report-only:
+#     on a still-in-flight PR the five gates may not have completed yet, so the
+#     emitter honestly records "missing" rather than fabricating a success).
+#
+# No scoring logic is changed here; the score moves only on real same-SHA green.
+name: Physics CI Evidence Emitter
+
+concurrency:
+  group: ${{ github.workflow }}-${{ github.ref }}
+  cancel-in-progress: true
+
+on:
+  pull_request:
+    branches: [main]
+    paths:
+      - 'tools/physics/emit_ci_evidence.py'
+      - 'tools/physics_ci_evidence.py'
+      - 'tools/physics_score.py'
+      - 'tests/test_emit_ci_evidence.py'
+      - 'artifacts/physics_validation/ci_evidence_summary.json'
+      - '.github/workflows/physics-ci-evidence-emitter.yml'
+  merge_group:
+  push:
+    branches: [main]
+
+permissions:
+  contents: read
+
+jobs:
+  physics-ci-evidence-emitter:
+    name: physics-ci-evidence-emitter
+    runs-on: ubuntu-latest
+    continue-on-error: false
+    timeout-minutes: 5
+    steps:
+      - name: Checkout
+        uses: actions/checkout@9c091bb21b7c1c1d1991bb908d89e4e9dddfe3e0 # v7.0.0
+
+      - name: Set up Python
+        uses: actions/setup-python@ece7cb06caefa5fff74198d8649806c4678c61a1 # v6
+        with:
+          python-version: '3.11'
+
+      - name: Install test runner
+        run: python -m pip install --upgrade pytest
+
+      - name: Acceptance + falsifier suite (same-SHA flips green, stale-SHA fails closed)
+        run: |
+          set -euo pipefail
+          PYTHONPATH=. python -m pytest tests/test_emit_ci_evidence.py -q \
+            --noconftest -p no:cacheprovider
+
+      - name: Emit same-SHA-bound CI evidence from the real run ledger (report-only)
+        id: emit
+        continue-on-error: true
+        env:
+          GH_TOKEN: ${{ github.token }}
+        run: |
+          set -uo pipefail
+          python tools/physics/emit_ci_evidence.py --write | tee emitted_ci_evidence.json
+
+      - name: Recompute physics score against emitted evidence (report-only)
+        continue-on-error: true
+        run: |
+          set -uo pipefail
+          python tools/physics_score.py | tee computed_physics_score.json
+
+      - name: Retain emitted CI evidence + computed score
+        uses: actions/upload-artifact@043fb46d1a93c77aae656e7c1c64a875d1fc6a0a # v4
+        with:
+          name: physics-ci-evidence-g7
+          path: |
+            artifacts/physics_validation/ci_evidence_summary.json
+            computed_physics_score.json
+          retention-days: 90
+          if-no-files-found: warn

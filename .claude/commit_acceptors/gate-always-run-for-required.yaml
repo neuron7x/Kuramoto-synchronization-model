@@ -1,0 +1,58 @@
+# Diff-bound commit acceptor: de-path-filter the code-hygiene-gate so it can
+# safely become a branch-protection required check (a path-filtered required
+# check that never runs dead-locks the merge as "Expected"). No logic change;
+# the gate now reports on every PR. Infra/governance only.
+
+id: gate-always-run-for-required
+status: ACTIVE
+claim_type: governance
+promise: >-
+  After this PR lands, .github/workflows/code-hygiene-gate.yml has no path
+  filter on its pull_request/push triggers, so the gate (which runs the
+  hygiene/skip ratchets and the anti-laundering meta-gate) reports on every PR
+  to main and can be made a required status check without a skip dead-lock. No
+  change to the checkers or their verdicts.
+
+diff_scope:
+  changed_files:
+    - path: ".claude/commit_acceptors/gate-always-run-for-required.yaml"
+    - path: ".github/workflows/code-hygiene-gate.yml"
+  forbidden_paths:
+    - "trading/"
+    - "execution/"
+    - "forecast/"
+    - "policy/"
+    - "core/"
+    - "runtime/"
+    - "application/"
+
+required_python_symbols:
+  - "scripts/ci/check_debt_baseline_monotonic.py::main"
+
+expected_signal: >-
+  grep -c 'paths:' .github/workflows/code-hygiene-gate.yml prints 0; the
+  workflow still runs check_code_hygiene, check_skip_ratchet and
+  check_debt_baseline_monotonic.
+
+measurement_command: >-
+  bash -c 'mkdir -p tmp && python scripts/ci/run_actionlint.py | tee tmp/gate_always_run.log; grep -c "paths:" .github/workflows/code-hygiene-gate.yml | tee -a tmp/gate_always_run.log'
+
+signal_artifact: "tmp/gate_always_run.log"
+
+falsifier:
+  command: >-
+    bash -c '! grep -q "paths:" .github/workflows/code-hygiene-gate.yml'
+  description: >-
+    Succeeds (exit 0) only when the workflow contains no `paths:` filter —
+    i.e. the gate is unconditional and safe to require. If a path filter were
+    reintroduced this would fail.
+
+rollback_command: >-
+  bash -c 'git checkout origin/main -- .github/workflows/code-hygiene-gate.yml && git rm -f .claude/commit_acceptors/gate-always-run-for-required.yaml'
+
+rollback_verification_command: >-
+  bash -c 'grep -q "paths:" .github/workflows/code-hygiene-gate.yml'
+
+memory_update_type: append
+ledger_path: ".claude/commit_acceptors/gate-always-run-for-required.yaml"
+report_path: "tmp/gate_always_run.log"

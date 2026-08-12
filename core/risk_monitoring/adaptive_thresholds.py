@@ -1,4 +1,5 @@
-# SPDX-License-Identifier: LicenseRef-TradePulse-Proprietary
+# Copyright (c) 2023-2026 Yaroslav Vasylenko (neuron7xLab)
+# SPDX-License-Identifier: MIT
 """Adaptive Risk Threshold Calibration.
 
 This module implements adaptive risk thresholds that adjust based on:
@@ -70,9 +71,7 @@ class ThresholdConfig:
         if self.min_threshold_multiplier <= 0:
             raise ValueError("min_threshold_multiplier must be positive")
         if self.max_threshold_multiplier < self.min_threshold_multiplier:
-            raise ValueError(
-                "max_threshold_multiplier must be >= min_threshold_multiplier"
-            )
+            raise ValueError("max_threshold_multiplier must be >= min_threshold_multiplier")
         if not 0 < self.adaptation_rate <= 1:
             raise ValueError("adaptation_rate must be in (0, 1]")
 

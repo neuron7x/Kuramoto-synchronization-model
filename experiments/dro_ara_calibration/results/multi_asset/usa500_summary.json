@@ -1,0 +1,71 @@
+{
+  "top5": [
+    {
+      "H": 0.35,
+      "rs": 0.35,
+      "mean_sharpe": -0.008051063306974412,
+      "std_sharpe": 0.20419341959715684,
+      "worst_fold_sharpe": -2.306675225785891,
+      "worst_drawdown": 0.1409906295609984,
+      "mean_trades": 0.36666666666666664,
+      "gate_on_folds": 3,
+      "passes_filters": false
+    },
+    {
+      "H": 0.4,
+      "rs": 0.35,
+      "mean_sharpe": -0.008051063306974412,
+      "std_sharpe": 0.20419341959715684,
+      "worst_fold_sharpe": -2.306675225785891,
+      "worst_drawdown": 0.1409906295609984,
+      "mean_trades": 0.36666666666666664,
+      "gate_on_folds": 3,
+      "passes_filters": false
+    },
+    {
+      "H": 0.45,
+      "rs": 0.35,
+      "mean_sharpe": -0.008051063306974412,
+      "std_sharpe": 0.20419341959715684,
+      "worst_fold_sharpe": -2.306675225785891,
+      "worst_drawdown": 0.1409906295609984,
+      "mean_trades": 0.36666666666666664,
+      "gate_on_folds": 3,
+      "passes_filters": false
+    },
+    {
+      "H": 0.5,
+      "rs": 0.35,
+      "mean_sharpe": -0.008051063306974412,
+      "std_sharpe": 0.20419341959715684,
+      "worst_fold_sharpe": -2.306675225785891,
+      "worst_drawdown": 0.1409906295609984,
+      "mean_trades": 0.36666666666666664,
+      "gate_on_folds": 3,
+      "passes_filters": false
+    },
+    {
+      "H": 0.55,
+      "rs": 0.35,
+      "mean_sharpe": -0.008051063306974412,
+      "std_sharpe": 0.20419341959715684,
+      "worst_fold_sharpe": -2.306675225785891,
+      "worst_drawdown": 0.1409906295609984,
+      "mean_trades": 0.36666666666666664,
+      "gate_on_folds": 3,
+      "passes_filters": false
+    }
+  ],
+  "current": {
+    "H": 0.45,
+    "rs": 0.33
+  },
+  "optimal": {
+    "H": 0.35,
+    "rs": 0.35,
+    "mean_sharpe": -0.008051063306974412,
+    "std_sharpe": 0.20419341959715684,
+    "worst_fold_sharpe": -2.306675225785891,
+    "passes_filters": false
+  }
+}

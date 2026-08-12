@@ -1,0 +1,84 @@
+{
+  "cycle_duration_sec": 78.108,
+  "data_dir": "data/binance_l2_perp",
+  "figures": {
+    "coupling": "45d08a40a02374736c0135db5299846ac109d536a81f7789ec77f38a3885e5a5",
+    "cover": "f77ffaa6d08142742f3de9702657cc0fb1c667becf8efb51e5f2faaa811ff168",
+    "dynamics": "4cbaed1ae37c7d9a7d5f9c3af70ee37d141679bc1aed672ccf82f2bcd6856cb6",
+    "signal_validation": "12c71e3ba2655bb5d7fbc8ab92ac970fa93dedcbc855546a655a8b6f3b07a6ad",
+    "stability": "a16d149e11a6f8ad22fd1296b330168e8ecbe6952b42085df36b55fe361781f6"
+  },
+  "required_inputs": {
+    "results/L2_DIURNAL_PROFILE.json": "cb6acb442c8ad0218aaf0d92b9a9e3e19e4fdc2603f78d78519d3ae8de3d2c90",
+    "results/L2_EXEC_COST_SWEEP.json": "efb458657cbbc27f9f9d8c3759580b3af58b50b501ddd287e3e4e0d7dc9110eb",
+    "results/gate_fixtures/breakeven_q75.json": "06f7d2e0338344c68ed989730172bb3d0c7e8190197109db3b5d13870b5b579c",
+    "results/gate_fixtures/breakeven_q75_diurnal.json": "e86f18bcfdae8795df8124d0bcce3de2c0fd2415e648a3db47c1fbe8f8b5d90d",
+    "results/gate_fixtures/ic_test_q75.json": "67e496f3abf434ed01e949c7b90e58bb52a5e440a321d1e9315a4fe2f6a594c2"
+  },
+  "schema_version": 1,
+  "stages": [
+    {
+      "artifact": "results/L2_KILLTEST_VERDICT.json",
+      "duration_sec": 33.684,
+      "name": "killtest",
+      "sha256": "d6774252bd04631571e67603fd92c25fcacf3cd52719af2d80d50f3f18fe8cbc",
+      "size_bytes": 864
+    },
+    {
+      "artifact": "results/L2_IC_ATTRIBUTION.json",
+      "duration_sec": 2.325,
+      "name": "attribution",
+      "sha256": "b1686e6936859a6717383a7946ac7b225f12a541c6f4daba3f6dacc498561fc2",
+      "size_bytes": 5941
+    },
+    {
+      "artifact": "results/L2_PURGED_CV.json",
+      "duration_sec": 1.858,
+      "name": "purged_cv",
+      "sha256": "971bcb8893142461863b05ad58b7c35ccb809cf3c571ca121f4c23d8cdbfd8af",
+      "size_bytes": 592
+    },
+    {
+      "artifact": "results/L2_SPECTRAL.json",
+      "duration_sec": 1.914,
+      "name": "spectral",
+      "sha256": "2fd49049cf24cbbf97fa1f413bd38f70c3fef78f348b56b2ceb22d2e5f60eb30",
+      "size_bytes": 3907
+    },
+    {
+      "artifact": "results/L2_HURST.json",
+      "duration_sec": 1.926,
+      "name": "hurst",
+      "sha256": "1f09c6d0ff1683ff48d32ee2c3063e52e2b885e3f16884e45ec023af3509739d",
+      "size_bytes": 866
+    },
+    {
+      "artifact": "results/L2_REGIME_MARKOV.json",
+      "duration_sec": 2.169,
+      "name": "regime_markov",
+      "sha256": "0d082cf7b94129a06665e65a540b9593d6f32da793f7adc018305e784ee60162",
+      "size_bytes": 1432
+    },
+    {
+      "artifact": "results/L2_ROBUSTNESS.json",
+      "duration_sec": 18.457,
+      "name": "robustness",
+      "sha256": "4ae97165c204fa0042db46fcc2e90fa978606e3aea033a541d59faa40159d567",
+      "size_bytes": 1004
+    },
+    {
+      "artifact": "results/L2_TRANSFER_ENTROPY.json",
+      "duration_sec": 6.428,
+      "name": "transfer_entropy",
+      "sha256": "e11ebb1fff0a09079022acccd68e57c94b7052299cdb48376117cd2682970807",
+      "size_bytes": 21537
+    },
+    {
+      "artifact": "results/L2_CONDITIONAL_TE.json",
+      "duration_sec": 7.756,
+      "name": "conditional_te",
+      "sha256": "5b9b13d3853b42de6c95b6cdfdd6de283588796f74afa31b60f8cb8f8b0471a4",
+      "size_bytes": 18430
+    }
+  ]
+}

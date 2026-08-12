@@ -1,0 +1,13 @@
+{
+  "FINAL": "REJECT",
+  "IC_combined": 0.007,
+  "IC_ricci": 0.007,
+  "IC_spread": 0.0051,
+  "corr_momentum": 0.0125,
+  "corr_vol": -0.0079,
+  "lead_capture": 0.0,
+  "weights": {
+    "w1_spread": 0.0,
+    "w2_ricci": 1.0
+  }
+}

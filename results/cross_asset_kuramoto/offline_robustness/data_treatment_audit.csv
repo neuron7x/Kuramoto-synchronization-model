@@ -1,0 +1,5 @@
+treatment,oos_sharpe,max_dd,ann_return,aligned_bar_count,dropped_bar_count,strategy_usable_bar_count,delta_sharpe_vs_frozen,operationally_admissible,reason
+strict_drop_missing,1.04261,-0.15878,0.197652,2173,84,2083,-0.21924,no,"Native rows only; no calendar regrid, no ffill; only days where every asset has a native bar. Loses TradFi-holiday days where crypto has bars but equities do not. (regime panel aligned=2173, dropped=84)"
+forward_fill_limit_1,1.26185,-0.167614,0.235849,2257,0,2167,-0.0,yes,"Bday grid, forward-fill up to 1 day; approximate 1-day-stale tolerance. (regime panel aligned=2257, dropped=0)"
+forward_fill_limit_3,1.26185,-0.167614,0.235849,2257,0,2167,-0.0,yes,"Bday grid, forward-fill up to 3 days; FROZEN spike convention. (regime panel aligned=2257, dropped=0)"
+no_forward_fill_aligned_subset_only,1.04261,-0.15878,0.197652,2173,84,2083,-0.21924,no,"Bday grid, no forward-fill; drops any bday row where any asset missing. Measures sample geometry without fill. (regime panel aligned=2173, dropped=84)"

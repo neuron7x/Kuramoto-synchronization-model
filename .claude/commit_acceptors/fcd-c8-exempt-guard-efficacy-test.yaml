@@ -1,0 +1,31 @@
+id: fcd-c8-exempt-guard-efficacy-test
+status: ACTIVE
+claim_type: governance
+promise: "Corrects a C8 false-confidence detector FALSE-POSITIVE, does not mask one. tools/audit/false_confidence_detector.py counts the substring `type: ignore`; tests/meta/test_feedback_guards_are_live.py (added with #772) carries 10 such occurrences that are ALL string literals / docstring text — synthetic source the G7 guard-efficacy test injects into temp files to prove the anti-bare-`# type: ignore[misc]` acceptor falsifier fires. None is a real directive silencing this module: `mypy --strict tests/meta/test_feedback_guards_are_live.py` => Success, 0 issues, so the detector's own apparent_claim ('module passes mypy --strict') is TRUE. A documented waiver is added to false_confidence_exemptions.yaml, the same audited pattern as the pre-existing C8-TYPE-IGNORE test exemptions. No production/physics/test logic changed; Reality Validators Gate returns to green."
+diff_scope:
+  changed_files:
+    - path: ".claude/audit/false_confidence_exemptions.yaml"
+    - path: ".claude/commit_acceptors/fcd-c8-exempt-guard-efficacy-test.yaml"
+    - path: ".github/detect-secrets.baseline"
+  forbidden_paths:
+    - "trading/"
+    - "execution/"
+    - "forecast/"
+    - "policy/"
+    - "tests/meta/test_feedback_guards_are_live.py"
+    - "tools/audit/false_confidence_detector.py"
+required_python_symbols: []
+expected_signal: "false_confidence_detector returns 0 unexempted findings (exit 0) AND mypy --strict on the cited test file passes — the waiver rests on a verified true-FP, not a silenced real ignore"
+measurement_command: "python tools/audit/false_confidence_detector.py --output /tmp/fcd_acc.json --exit-on-finding && python -m mypy --strict tests/meta/test_feedback_guards_are_live.py"
+signal_artifact: "/tmp/fcd_acc.json"
+falsifier:
+  command: "python -c \"import json,subprocess,sys; subprocess.run([sys.executable,'tools/audit/false_confidence_detector.py','--output','/tmp/fcd_fal.json'],check=True); n=len(json.load(open('/tmp/fcd_fal.json')).get('findings',[])); m=subprocess.run([sys.executable,'-m','mypy','--strict','tests/meta/test_feedback_guards_are_live.py']).returncode; raise SystemExit(0 if n==0 and m==0 else 1)\""
+  description: "Exits 0 iff the detector has zero unexempted findings AND the cited file still passes mypy --strict. Exits 1 if a real type-ignore is ever introduced into that file (apparent_claim becomes false → the waiver would be masking) or any other file trips C8 — the exemption cannot launder a genuine regression."
+rollback_command: "git checkout origin/main -- .claude/audit/false_confidence_exemptions.yaml && git rm -f .claude/commit_acceptors/fcd-c8-exempt-guard-efficacy-test.yaml"
+rollback_verification_command: "git diff --quiet origin/main -- .claude/audit/false_confidence_exemptions.yaml"
+memory_update_type: none
+ledger_path: ".claude/commit_acceptors/fcd-c8-exempt-guard-efficacy-test.yaml"
+report_path: ".claude/audit/false_confidence_exemptions.yaml"
+evidence:
+  - path: ".claude/audit/false_confidence_exemptions.yaml"
+    sha256: "35c1a03f48e07a1fe2be1888415737236f2a734341c9e482d6b825ed4610389b"  # pragma: allowlist secret -- content hash of the exemption manifest, not a credential

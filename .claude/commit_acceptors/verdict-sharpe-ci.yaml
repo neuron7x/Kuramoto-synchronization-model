@@ -1,0 +1,78 @@
+# Diff-bound acceptor for FIX-4: CI-aware verdict on the live Sharpe.
+#
+# Background: the user's nominal verdict thresholds {RECOVERING (>0),
+# STAGNANT [-5,0], DECOMPOSING (<-5)} are well defined as point labels
+# but unsafe at low live-bar counts. At n=15, the 95 % CI on annualised
+# Sharpe is roughly ±2.0 — wider than the gap between adjacent
+# thresholds. A point-only labeller emits false-confident labels.
+#
+# This module computes a block-bootstrap CI on the live Sharpe and
+# emits AMBIGUOUS when the CI overlaps any nominal threshold, instead
+# of fake-classifying into one bin.
+
+id: verdict-sharpe-ci
+status: ACTIVE
+claim_type: correctness
+promise: >-
+  `python -m geosync.verdict --bar N` reads paper-state equity.csv,
+  derives log-returns from the equity column (robust to schema
+  variants), computes annualised Sharpe at bar N, runs a 999-path
+  block-bootstrap CI at the configured confidence level, and emits a
+  verdict label that respects threshold overlap: AMBIGUOUS whenever
+  the CI envelope crosses any nominal threshold {0, -3, -5}, otherwise
+  the point-derived label. Tested invariants: (i) CI brackets the
+  point estimate; (ii) CI width contracts with sample size; (iii) at
+  small n with mid-range Sharpe, AMBIGUOUS fires; (iv) at large n with
+  clear positive drift, RECOVERING fires unambiguously; (v) missing
+  paper-state raises FileNotFoundError, no silent default.
+diff_scope:
+  changed_files:
+    - path: ".claude/commit_acceptors/verdict-sharpe-ci.yaml"
+    - path: "INVENTORY.json"
+    - path: "geosync/verdict.py"
+    - path: "tests/scripts/test_verdict.py"
+  forbidden_paths:
+    - "trading/"
+    - "execution/"
+    - "forecast/"
+    - "policy/"
+    - "core/physics/"
+    - "scripts/evaluate_cross_asset_kuramoto_shadow.py"
+required_python_symbols:
+  - "geosync/verdict.py::evaluate"
+  - "geosync/verdict.py::Verdict"
+  - "geosync/verdict.py::THRESHOLDS"
+expected_signal: >-
+  Locally on bar 15 of the live shadow trajectory:
+  `python -m geosync.verdict --bar 15` →
+  "BAR 15 | SHARPE -3.9154 | CI95 [-13.76, +0.43] | VERDICT AMBIGUOUS
+  | crosses_threshold=True | n_returns=14". This confirms the
+  small-n pathology the spec calls out: a point Sharpe of -3.9 is
+  STATISTICALLY INDISTINGUISHABLE from RECOVERING (CI top = +0.43)
+  AND from DECOMPOSING (CI bottom = -13.76) at this sample size.
+  AMBIGUOUS is the truthful label.
+measurement_command: >-
+  bash -c 'python -m geosync.verdict --bar 15 --json | python -c "import json,sys; d=json.loads(sys.stdin.read()); print(d[\"label\"]); sys.exit(0 if d[\"label\"] in {\"AMBIGUOUS\",\"RECOVERING\",\"STAGNANT\",\"DECOMPOSING\",\"INSUFFICIENT_DATA\"} else 1)"'
+signal_artifact: "tmp/verdict_sharpe_ci.log"
+falsifier:
+  command: >-
+    bash -c 'python -m geosync.verdict --bar 1; rc=$?; test $rc -ne 0'
+  description: >-
+    Probe runs verdict at bar 1 (1 return → 0 differences). evaluate()
+    must NOT classify a verdict from a single observation; the bootstrap
+    CI is undefined and the script must surface this rather than emit a
+    fake label. Acceptable outcomes: ValueError, INSUFFICIENT_DATA
+    label, or AMBIGUOUS. Inacceptable: confident RECOVERING /
+    STAGNANT / DECOMPOSING with no CI brackets.
+rollback_command: >-
+  git checkout HEAD~1 --
+  geosync/verdict.py
+  tests/scripts/test_verdict.py
+  .claude/commit_acceptors/verdict-sharpe-ci.yaml
+  INVENTORY.json
+rollback_verification_command: >-
+  git diff --exit-code geosync/verdict.py
+memory_update_type: append
+ledger_path: ".claude/commit_acceptors/verdict-sharpe-ci.yaml"
+report_path: "geosync/verdict.py"
+evidence: []

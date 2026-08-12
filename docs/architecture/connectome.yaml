@@ -1,0 +1,142 @@
+version: "2026.1"
+system_name: "GeoSync-NPQ-OS"
+scan_roots:
+  - "geosync"
+  - "src/geosync"
+
+# Architectural Connectome Gate
+#
+# This is a machine-enforced neuro-physical topology contract.  Domains own
+# source paths and import roots.  The validator treats `forbidden_imports` as
+# hard vetoes and `allowed_imports` as the only admitted cross-domain imports.
+# Imports outside registered domains remain outside this gate's jurisdiction.
+
+domains:
+  sensory:
+    state: "active"
+    owner: "data@geosync"
+    paths:
+      - "geosync/cortex/sensory"
+      - "geosync/neural_controller/core/sensory.py"
+      - "geosync/neural_controller/integration/sensory_pipeline.py"
+      - "src/geosync/data"
+    import_roots:
+      - "geosync/cortex/sensory"
+      - "geosync/neural_controller/core/sensory"
+      - "geosync/neural_controller/integration/sensory_pipeline"
+      - "src/geosync/data"
+    role: "data ingestion, sensory normalization, and substrate contracts"
+    allowed_imports: []
+    forbidden_imports:
+      - "geosync/cortex/motor"
+      - "geosync/cortex/basal_ganglia"
+      - "src/geosync/policy/basal_ganglia"
+
+  hippocampus:
+    state: "active"
+    owner: "memory@geosync"
+    paths:
+      - "geosync/cortex/hippocampus"
+      - "geosync/neuroeconomics/context_memory.py"
+      - "geosync/neuroeconomics/regime_memory.py"
+    import_roots:
+      - "geosync/cortex/hippocampus"
+      - "geosync/neuroeconomics/context_memory"
+      - "geosync/neuroeconomics/regime_memory"
+    role: "immutable dataset lineage, contextual memory, and regime memory"
+    allowed_imports:
+      - "geosync/cortex/sensory"
+      - "geosync/neural_controller/core/sensory"
+      - "geosync/neural_controller/integration/sensory_pipeline"
+      - "src/geosync/data"
+    forbidden_imports:
+      - "geosync/cortex/motor"
+
+  prefrontal:
+    state: "active"
+    owner: "governance@geosync"
+    paths:
+      - "geosync/cortex/prefrontal"
+      - "src/geosync/policy/policy_engine.py"
+    import_roots:
+      - "geosync/cortex/prefrontal"
+      - "src/geosync/policy/policy_engine"
+    role: "governance, policy enforcement, and claim admissibility"
+    allowed_imports:
+      - "geosync/cortex/sensory"
+      - "geosync/neural_controller/core/sensory"
+      - "geosync/neural_controller/integration/sensory_pipeline"
+      - "src/geosync/data"
+      - "geosync/cortex/hippocampus"
+      - "geosync/neuroeconomics/context_memory"
+      - "geosync/neuroeconomics/regime_memory"
+    forbidden_imports:
+      - "geosync/cortex/motor"
+
+  amygdala:
+    state: "active"
+    owner: "risk@geosync"
+    paths:
+      - "geosync/cortex/amygdala"
+      - "geosync/risk"
+      - "src/geosync/risk"
+    import_roots:
+      - "geosync/cortex/amygdala"
+      - "geosync/risk"
+      - "src/geosync/risk"
+    role: "threat response, pre-trade risk validation, and kill-switch"
+    allowed_imports:
+      - "geosync/cortex/sensory"
+      - "geosync/neural_controller/core/sensory"
+      - "geosync/neural_controller/integration/sensory_pipeline"
+      - "src/geosync/data"
+    forbidden_imports:
+      - "geosync/physics"
+      - "src/geosync/features"
+
+  basal_ganglia:
+    state: "active"
+    owner: "admission@geosync"
+    paths:
+      - "geosync/cortex/basal_ganglia"
+      - "geosync/neural_controller/policy"
+      - "src/geosync/policy/basal_ganglia.py"
+    import_roots:
+      - "geosync/cortex/basal_ganglia"
+      - "geosync/neural_controller/policy"
+      - "src/geosync/policy/basal_ganglia"
+    role: "action admission and gate clearance"
+    allowed_imports:
+      - "geosync/cortex/sensory"
+      - "geosync/neural_controller/core/sensory"
+      - "geosync/neural_controller/integration/sensory_pipeline"
+      - "src/geosync/data"
+      - "geosync/cortex/amygdala"
+      - "geosync/risk"
+      - "src/geosync/risk"
+      - "geosync/cortex/prefrontal"
+      - "src/geosync/policy/policy_engine"
+    forbidden_imports:
+      - "geosync/physics"
+      - "src/geosync/features"
+
+  motor:
+    state: "reserved"
+    owner: "execution@geosync"
+    paths:
+      - "geosync/cortex/motor"
+    import_roots:
+      - "geosync/cortex/motor"
+    role: "execution intent and venue interaction"
+    allowed_imports:
+      - "geosync/cortex/sensory"
+      - "geosync/neural_controller/core/sensory"
+      - "geosync/neural_controller/integration/sensory_pipeline"
+      - "src/geosync/data"
+      - "geosync/cortex/basal_ganglia"
+      - "geosync/neural_controller/policy"
+      - "src/geosync/policy/basal_ganglia"
+    forbidden_imports:
+      - "geosync/research"
+      - "geosync/physics"
+      - "src/geosync/features"

@@ -1,25 +1,25 @@
-"""Reusable health check probes for TradePulse subsystems."""
+# Copyright (c) 2023-2026 Yaroslav Vasylenko (neuron7xLab)
+# SPDX-License-Identifier: MIT
+"""Reusable health check probes for GeoSync subsystems."""
 
 from __future__ import annotations
 
-from datetime import datetime, timezone
 from typing import List
 
-from application.system import TradePulseSystem
+from application.system import GeoSyncSystem
+from core.compat import utc_now
 
 from .health_monitor import HealthCheck, HealthCheckResult
 
-UTC = timezone.utc
-
 
 def evaluate_data_pipeline_health(
-    system: TradePulseSystem,
+    system: GeoSyncSystem,
     *,
     stale_after_seconds: float = 300.0,
 ) -> HealthCheckResult:
     """Return health status for the ingestion pipeline."""
 
-    now = datetime.now(UTC)
+    now = utc_now()
     metrics: dict[str, object] = {}
     last_completed = system.last_ingestion_completed_at
     if last_completed is not None:
@@ -47,13 +47,13 @@ def evaluate_data_pipeline_health(
 
 
 def evaluate_signal_pipeline_health(
-    system: TradePulseSystem,
+    system: GeoSyncSystem,
     *,
     stale_after_seconds: float = 180.0,
 ) -> HealthCheckResult:
     """Return health status for signal generation."""
 
-    now = datetime.now(UTC)
+    now = utc_now()
     metrics: dict[str, object] = {}
     last_generated = system.last_signal_generated_at
     if last_generated is not None:
@@ -79,7 +79,7 @@ def evaluate_signal_pipeline_health(
 
 
 def evaluate_execution_health(
-    system: TradePulseSystem,
+    system: GeoSyncSystem,
     *,
     stale_after_seconds: float = 90.0,
 ) -> HealthCheckResult:
@@ -105,12 +105,8 @@ def evaluate_execution_health(
             metrics["watchdog_live_probe_ok"] = probe_ok
             return HealthCheckResult(False, "Watchdog live probe failed", metrics)
         workers = snapshot.get("workers", {})
-        worker_states = {
-            name: bool(state.get("alive")) for name, state in workers.items()
-        }
-        worker_restarts = {
-            name: int(state.get("restarts", 0)) for name, state in workers.items()
-        }
+        worker_states = {name: bool(state.get("alive")) for name, state in workers.items()}
+        worker_restarts = {name: int(state.get("restarts", 0)) for name, state in workers.items()}
         metrics["worker_alive"] = worker_states
         metrics["worker_restarts"] = worker_restarts
         unhealthy = [name for name, alive in worker_states.items() if not alive]
@@ -119,21 +115,19 @@ def evaluate_execution_health(
                 False, f"Workers not running: {', '.join(sorted(unhealthy))}", metrics
             )
 
-    now = datetime.now(UTC)
+    now = utc_now()
     last_submission = system.last_execution_submission_at
     if last_submission is not None:
         age = (now - last_submission).total_seconds()
         metrics["seconds_since_last_submission"] = round(age, 2)
         if age > stale_after_seconds:
-            return HealthCheckResult(
-                False, f"No order submissions in {int(age)}s", metrics
-            )
+            return HealthCheckResult(False, f"No order submissions in {int(age)}s", metrics)
 
     return HealthCheckResult(True, metrics=metrics)
 
 
 def build_default_health_checks(
-    system: TradePulseSystem,
+    system: GeoSyncSystem,
     *,
     data_stale_after: float = 300.0,
     signal_stale_after: float = 180.0,

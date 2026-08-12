@@ -1,3 +1,5 @@
+# Copyright (c) 2023-2026 Yaroslav Vasylenko (neuron7xLab)
+# SPDX-License-Identifier: MIT
 """CLI command orchestrating pg_dump backups and archival cleanup."""
 
 from __future__ import annotations
@@ -92,9 +94,7 @@ def _parse_env_overrides(pairs: Sequence[str]) -> dict[str, str]:
     overrides: dict[str, str] = {}
     for item in pairs:
         if "=" not in item:
-            raise CommandError(
-                f"Invalid environment override '{item}'. Expected KEY=VALUE"
-            )
+            raise CommandError(f"Invalid environment override '{item}'. Expected KEY=VALUE")
         key, value = item.split("=", 1)
         key = key.strip()
         if not key:
@@ -107,9 +107,7 @@ def _parse_env_overrides(pairs: Sequence[str]) -> dict[str, str]:
 def handle(args: argparse.Namespace) -> int:
     database_url = args.database_url or os.getenv("DATABASE_URL")
     if not database_url:
-        raise CommandError(
-            "--database-url must be provided or DATABASE_URL must be set"
-        )
+        raise CommandError("--database-url must be provided or DATABASE_URL must be set")
 
     env = _parse_env_overrides(getattr(args, "env", []))
     config = BackupConfig(

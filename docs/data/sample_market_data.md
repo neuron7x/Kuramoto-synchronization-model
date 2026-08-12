@@ -1,5 +1,5 @@
 ---
-owner: data@tradepulse
+owner: data@geosync
 review_cadence: quarterly
 artifacts:
   - path: data/sample.csv
@@ -14,7 +14,7 @@ artifacts:
 
 ## Overview
 
-This dataset contract defines the standard sample market data artifacts used throughout TradePulse for testing, demonstrations, and documentation examples. These datasets provide realistic synthetic market data suitable for development and testing scenarios.
+This dataset contract defines the standard sample market data artifacts used throughout GeoSync for testing, demonstrations, and documentation examples. These datasets provide realistic synthetic market data suitable for development and testing scenarios.
 
 ## Artifacts
 
@@ -99,8 +99,8 @@ These sample datasets should be:
 ## References
 
 - [Data Generation Documentation](../templates/sample_data.md)
-- [Market Feed Implementation](../../MARKET_FEED_IMPLEMENTATION_SUMMARY.md)
-- [Testing Guide](../../TESTING.md)
+- [Market Feed Implementation](../market_feed_recordings.md)
+- [Testing Guide](../operations/TESTING.md)
 
 ## Changelog
 

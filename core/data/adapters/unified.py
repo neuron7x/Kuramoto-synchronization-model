@@ -1,3 +1,5 @@
+# Copyright (c) 2023-2026 Yaroslav Vasylenko (neuron7xLab)
+# SPDX-License-Identifier: MIT
 """Unified ingestion adapters with rate limiting, retries and deduplication.
 
 The production ingestion layer needs to work with heterogeneous market APIs:

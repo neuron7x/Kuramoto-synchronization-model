@@ -1,3 +1,5 @@
+# Copyright (c) 2023-2026 Yaroslav Vasylenko (neuron7xLab)
+# SPDX-License-Identifier: MIT
 from __future__ import annotations
 
 import json
@@ -57,9 +59,7 @@ def http_endpoint() -> str:
 
 def test_logging_setup_applies_tags(monkeypatch) -> None:
     payloads: list[dict[str, object]] = []
-    setup = LoggingSetup(
-        tags={"service": "test", "environment": "qa"}, sink=payloads.append
-    )
+    setup = LoggingSetup(tags={"service": "test", "environment": "qa"}, sink=payloads.append)
     setup.apply()
 
     logger = logging.getLogger("observability.test")
@@ -78,7 +78,7 @@ def test_metrics_setup_reports_missing_tags(tmp_path: Path) -> None:
             {
                 "metrics": [
                     {
-                        "name": "tradepulse_test_metric",
+                        "name": "geosync_test_metric",
                         "type": "gauge",
                         "description": "test metric",
                         "labels": ["service", "cluster"],
@@ -99,10 +99,7 @@ def test_metrics_setup_reports_missing_tags(tmp_path: Path) -> None:
     report = setup.validate()
     assert report.has_issues
     assert any("missing required tags" in issue.message for issue in report.issues)
-    assert any(
-        "lacks a configured cardinality limit" in issue.message
-        for issue in report.issues
-    )
+    assert any("lacks a configured cardinality limit" in issue.message for issue in report.issues)
 
 
 def test_alert_noise_guard_flags_short_hold(tmp_path: Path) -> None:
@@ -112,7 +109,7 @@ def test_alert_noise_guard_flags_short_hold(tmp_path: Path) -> None:
             {
                 "metrics": [
                     {
-                        "name": "tradepulse_test_metric",
+                        "name": "geosync_test_metric",
                         "type": "counter",
                         "description": "test",
                         "labels": ["service", "environment"],
@@ -132,7 +129,7 @@ def test_alert_noise_guard_flags_short_hold(tmp_path: Path) -> None:
                         "rules": [
                             {
                                 "alert": "TestAlert",
-                                "expr": "tradepulse_test_metric > 0",
+                                "expr": "geosync_test_metric > 0",
                                 "for": "10s",
                             }
                         ],
@@ -143,7 +140,7 @@ def test_alert_noise_guard_flags_short_hold(tmp_path: Path) -> None:
     )
 
     guard = AlertNoiseGuard(alerts_path=alerts_path, minimum_for_seconds=60)
-    findings = guard.evaluate(["tradepulse_test_metric"])
+    findings = guard.evaluate(["geosync_test_metric"])
     assert "tests" in findings
     assert any("below minimum" in issue for issue in findings["tests"])
 

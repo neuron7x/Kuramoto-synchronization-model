@@ -1,3 +1,5 @@
+# Copyright (c) 2023-2026 Yaroslav Vasylenko (neuron7xLab)
+# SPDX-License-Identifier: MIT
 """Tests for the `fete-backtest` CLI command."""
 
 from __future__ import annotations
@@ -7,7 +9,7 @@ from pathlib import Path
 import pandas as pd
 from click.testing import CliRunner
 
-from cli.tradepulse_cli import cli
+from geosync.cli.geosync_cli import cli
 
 
 def _write_sample_csv(path: Path) -> None:

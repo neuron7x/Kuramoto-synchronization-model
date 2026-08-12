@@ -1,0 +1,51 @@
+id: causal-prefix-invariance-matrix
+status: ACTIVE
+claim_type: governance
+promise: >-
+  artifacts/time/causal_prefix_matrix.json binds every time-indexed runtime signal
+  (regime statistics, cumulative performance metrics, backtest walk-forward, Hurst
+  exponent, cumulative Sharpe, realtime feature event-time monotonicity) to a
+  prefix-invariance test proving future input cannot change past output. The gate
+  fails closed on a missing node or non-PASS surface.
+diff_scope:
+  changed_files:
+    - path: ".claude/commit_acceptors/causal-prefix-invariance-matrix.yaml"
+    - path: "artifacts/time/causal_prefix_matrix.json"
+    - path: "audit/schema/causal_prefix_matrix.schema.json"
+    - path: "tests/property/time/test_causal_prefix_invariance.py"
+    - path: "tests/ci/test_causal_prefix_matrix.py"
+  forbidden_paths:
+    - "execution/"
+required_python_symbols: []
+expected_signal: >-
+  `python -m pytest --import-mode=importlib
+  tests/property/time/test_causal_prefix_invariance.py tests/ci/test_causal_prefix_matrix.py
+  -q` passes; every surface binds an existing prefix-invariance test.
+measurement_command: >-
+  bash -c '
+    python -m pytest --import-mode=importlib -p no:cacheprovider
+      tests/property/time/test_causal_prefix_invariance.py
+      tests/ci/test_causal_prefix_matrix.py -q
+  '
+signal_artifact: "tmp/causal_prefix_matrix.log"
+falsifier:
+  command: |-
+    bash -c '
+      python -c "
+    import json
+    m = json.load(open(\"artifacts/time/causal_prefix_matrix.json\"))
+    ok = len(m[\"surfaces\"]) >= 6 and all(s[\"verdict\"]==\"PASS\" for s in m[\"surfaces\"]) and m[\"verdict\"]==\"PASS\"
+    raise SystemExit(0 if ok else \"causal prefix matrix incomplete or non-PASS\")
+    "
+    '
+  description: >-
+    Asserts >=6 time-indexed surfaces, all PASS. Exits 0 on the bound matrix;
+    non-zero if a surface is dropped or regresses.
+rollback_command: >-
+  bash -c 'git rm -f .claude/commit_acceptors/causal-prefix-invariance-matrix.yaml'
+rollback_verification_command: >-
+  bash -c 'test ! -f .claude/commit_acceptors/causal-prefix-invariance-matrix.yaml'
+memory_update_type: append
+ledger_path: ".claude/commit_acceptors/causal-prefix-invariance-matrix.yaml"
+report_path: "tmp/causal_prefix_matrix.log"
+evidence: []

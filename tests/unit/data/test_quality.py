@@ -1,5 +1,6 @@
-# SPDX-License-Identifier: LicenseRef-TradePulse-Proprietary
-"""Unit tests for tradepulse.data.quality module.
+# Copyright (c) 2023-2026 Yaroslav Vasylenko (neuron7xLab)
+# SPDX-License-Identifier: MIT
+"""Unit tests for geosync.data.quality module.
 
 Tests for data quality validation functions:
 - validate_series
@@ -22,7 +23,7 @@ _src_path = Path(__file__).parent.parent.parent.parent / "src"
 if str(_src_path) not in sys.path:
     sys.path.insert(0, str(_src_path))
 
-from tradepulse.data.quality import (  # noqa: E402
+from geosync.data.quality import (  # noqa: E402
     DataQualityError,
     DataQualityIssue,
     DataQualityReport,
@@ -34,7 +35,7 @@ from tradepulse.data.quality import (  # noqa: E402
     require_valid_data,
     validate_series,
 )
-from tradepulse.data.schema import Bar, DataQualityStatus, Timeframe  # noqa: E402
+from geosync.data.schema import Bar, DataQualityStatus, Timeframe  # noqa: E402
 
 
 def make_bar(

@@ -1,6 +1,8 @@
+# Copyright (c) 2023-2026 Yaroslav Vasylenko (neuron7xLab)
+# SPDX-License-Identifier: MIT
 """Adapters for integrating modules with the unified system.
 
-This module provides adapter classes that bridge various TradePulse subsystems
+This module provides adapter classes that bridge various GeoSync subsystems
 with the unified SystemIntegrator. Each adapter implements the component
 protocol to enable lifecycle management and health monitoring.
 """

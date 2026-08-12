@@ -1,0 +1,6 @@
+benchmark_id,cost_model,oos_sharpe,max_dd,ann_return,ann_vol,turnover_mean_daily,kuramoto_sharpe_excess
+kuramoto_strategy,"cost=10bps, lag=1 (frozen)",1.2619,-0.1676,0.2358,0.1869,0.0844,0.0
+equal_weight_buy_hold,cost=10bps (daily rebalance turnover),0.8723,-0.2513,0.2136,0.2449,0.0,0.3895
+btc_benchmark,"pure buy-and-hold, cost=0 by construction",0.8015,-0.4953,0.3883,0.4844,0.0,0.4603
+momentum_baseline,"20-bar TS momentum, cost=10bps, lag=1",0.7522,-0.425,0.3454,0.4591,0.5407,0.5096
+vol_targeted_equal_weight,"BF1 × target=15 % ann vol, cap=1.5×, cost=10bps",0.8427,-0.131,0.0976,0.1158,0.0001,0.4191

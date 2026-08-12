@@ -1,0 +1,117 @@
+# Diff-bound commit acceptor for closing 5 hpc-* ANCHORED claims in
+# one cluster. Continues the floating-falsifier closure that started
+# with PR #556 (api-contract-openapi-coverage).
+#
+# Before: docs/CLAIMS.yaml had 12 ANCHORED claims without a v3
+# falsifier-block (down from 13 yesterday after #556). All five
+# `hpc-*` claims (geosync_hpc/ subsystem) sat on the warn-only list:
+#
+#   hpc-runtime-state-seal-bit-identical    (INV-HPC1, existing)
+#   hpc-fixed-point-ledger-conservation     (INV-HPC3, NEW)
+#   hpc-indexed-rng-control-flow-free       (INV-HPC1, existing)
+#   hpc-runtime-state-envelope-integrity    (INV-HPC4, NEW)
+#   hpc-session-lifecycle-explicit-fsm      (INV-HPC5, NEW)
+#
+# After: registry grows 91 → 94 (three new INV-HPC* invariants,
+# fully cited and integration-tested), four documentation surfaces
+# resync, and every hpc-* claim now declares a v3 falsifier-block
+# pointing at a real pytest node id with a precise failure_signature.
+# Falsifier coverage: 9/21 → 14/21 ANCHORED. Floating list: 12 → 7.
+#
+# Locally verified:
+#   * python scripts/count_invariants.py: 94
+#   * python scripts/check_invariant_count_sync.py: OK at 94
+#   * python .claude/physics/validate_tests.py --self-check: PASSED
+#   * python scripts/ci/check_claims.py: falsifier coverage 14/21
+#   * python scripts/export_governance_schemas.py --check: PASS
+#   * pytest tests/governance/ tests/scripts/test_export_governance_schemas.py: 80/80
+
+id: falsifier-hpc-cluster
+status: ACTIVE
+claim_type: governance
+promise: >-
+  After this PR lands, all five hpc-* ANCHORED claims in
+  docs/CLAIMS.yaml carry a v3 falsifier-block (test_id pytest node,
+  invariants_cited list, failure_signature). Three new invariants
+  (INV-HPC3 ledger conservation, INV-HPC4 state envelope integrity,
+  INV-HPC5 session FSM totality) are added to
+  .claude/physics/INVARIANTS.yaml — each with a peer-reviewed
+  reference list, a resolving source/tests/integration_test triplet,
+  and runtime_evaluable: yes. Registry count goes 91 → 94 with the
+  invariant-count-sync gate green across README.md, BASELINE.md, and
+  CLAUDE.md. The check_claims.py falsifier-coverage line reads
+  "14/21 ANCHORED" (was 9/21).
+diff_scope:
+  changed_files:
+    - path: ".claude/commit_acceptors/falsifier-hpc-cluster.yaml"
+    - path: ".claude/physics/INVARIANTS.yaml"
+    - path: "BASELINE.md"
+    - path: "CLAUDE.md"
+    - path: "README.md"
+    - path: "docs/CLAIMS.yaml"
+  forbidden_paths:
+    - "trading/"
+    - "execution/"
+    - "forecast/"
+    - "policy/"
+    - "core/physics/"
+    - "core/kuramoto/"
+    - "application/"
+    - "src/"
+    - "geosync_hpc/"
+    - "tools/commit_acceptor/"
+    - "scripts/ci/"
+    - "scripts/check_invariant_count_sync.py"
+    - "scripts/count_invariants.py"
+required_python_symbols: []
+expected_signal: >-
+  `python scripts/count_invariants.py` returns 94;
+  `python scripts/check_invariant_count_sync.py` reports
+  "OK: 94 invariants, all documentation surfaces in sync.";
+  `python .claude/physics/validate_tests.py --self-check` reports
+  "Self-check PASSED" with cross-ref integrity OK and evidence
+  matrix OK; `python scripts/ci/check_claims.py` includes
+  "falsifier coverage: 14/21 ANCHORED" and the missing-falsifier
+  list contains exactly seven ids
+  (`robustness-hac-psr-newey-west`,
+  `ricci-microstructure-ten-axis-falsification`,
+  `serotonin-controller-bounded-veto`,
+  `kelly-sizing-cap-enforced`,
+  `oms-conservation-idempotency-monotone`,
+  `signalbus-deterministic-fanout`,
+  `ierd-phase0-yana-response`); none of the five hpc-* ids appear
+  on that list.
+measurement_command: >-
+  bash -c 'python scripts/count_invariants.py | grep -q "^94$"
+  && PYTHONPATH=scripts python scripts/check_invariant_count_sync.py
+  && python .claude/physics/validate_tests.py --self-check
+  && python scripts/ci/check_claims.py 2>&1 | grep -q "14/21 ANCHORED"
+  && ! python scripts/ci/check_claims.py 2>&1 | grep -E "hpc-(runtime-state-seal-bit-identical|fixed-point-ledger-conservation|indexed-rng-control-flow-free|runtime-state-envelope-integrity|session-lifecycle-explicit-fsm)"
+  && python scripts/export_governance_schemas.py --check'
+signal_artifact: "tmp/falsifier_hpc_cluster.log"
+falsifier:
+  command: >-
+    bash -c 'python scripts/ci/check_claims.py 2>&1
+    | grep -E "hpc-(runtime-state-seal-bit-identical|fixed-point-ledger-conservation|indexed-rng-control-flow-free|runtime-state-envelope-integrity|session-lifecycle-explicit-fsm)"'
+  description: >-
+    Probes the missing-falsifier WARN list for any of the five
+    hpc-* ids. After this PR, none of them MUST appear (each
+    carries a v3 falsifier-block). If a future change strips a
+    falsifier-block from any of the five, check_claims.py
+    re-emits the offender on the WARN list, the falsifier exits 0,
+    and the regression is flagged. Inverse-probe pattern: exits
+    successful only when the invariant has broken.
+rollback_command: >-
+  git checkout HEAD~1 --
+  .claude/physics/INVARIANTS.yaml
+  README.md
+  BASELINE.md
+  CLAUDE.md
+  docs/CLAIMS.yaml
+  .claude/commit_acceptors/falsifier-hpc-cluster.yaml
+rollback_verification_command: >-
+  bash -c 'python scripts/count_invariants.py | grep -q "^91$"'
+memory_update_type: append
+ledger_path: ".claude/commit_acceptors/falsifier-hpc-cluster.yaml"
+report_path: "tmp/falsifier_hpc_cluster.log"
+evidence: []

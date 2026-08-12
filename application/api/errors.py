@@ -1,4 +1,6 @@
-"""Shared error-handling primitives for TradePulse APIs."""
+# Copyright (c) 2023-2026 Yaroslav Vasylenko (neuron7xLab)
+# SPDX-License-Identifier: MIT
+"""Shared error-handling primitives for GeoSync APIs."""
 
 from __future__ import annotations
 
@@ -13,7 +15,7 @@ from fastapi.exceptions import RequestValidationError
 from fastapi.responses import JSONResponse
 from pydantic import BaseModel, ConfigDict, Field
 
-LOGGER = logging.getLogger("tradepulse.api.errors")
+LOGGER = logging.getLogger("geosync.api.errors")
 
 # Prefer the modern Starlette/FastAPI constant while avoiding deprecated access.
 HTTP_422_UNPROCESSABLE = int(
@@ -32,6 +34,7 @@ class ApiErrorCode(str, Enum):
     VALIDATION_FAILED = "ERR_VALIDATION_FAILED"
     UNPROCESSABLE = "ERR_UNPROCESSABLE"
     INTERNAL = "ERR_INTERNAL"
+    GATEWAY_TIMEOUT = "ERR_GATEWAY_TIMEOUT"
     FEATURES_EMPTY = "ERR_FEATURES_EMPTY"
     FEATURES_MISSING = "ERR_FEATURES_MISSING"
     FEATURES_INVALID = "ERR_FEATURES_INVALID"
@@ -53,6 +56,7 @@ DEFAULT_ERROR_CODES: dict[int, ApiErrorCode] = {
     status.HTTP_429_TOO_MANY_REQUESTS: ApiErrorCode.RATE_LIMIT,
     status.HTTP_500_INTERNAL_SERVER_ERROR: ApiErrorCode.INTERNAL,
     status.HTTP_503_SERVICE_UNAVAILABLE: ApiErrorCode.INTERNAL,
+    status.HTTP_504_GATEWAY_TIMEOUT: ApiErrorCode.GATEWAY_TIMEOUT,
 }
 
 
@@ -109,6 +113,30 @@ class ErrorResponse(BaseModel):
     model_config = ConfigDict(populate_by_name=True)
 
 
+def build_error_envelope(
+    *,
+    status_code: int,
+    code: ApiErrorCode,
+    message: str,
+    path: str,
+    meta: dict[str, Any] | None = None,
+) -> JSONResponse:
+    """Construct an ``ErrorResponse``-wrapped ``JSONResponse``.
+
+    Middleware that short-circuits the request before reaching the route
+    cannot rely on the registered ``HTTPException`` handler to wrap their
+    error responses with ``{"error": ErrorPayload}``. Use this helper
+    instead of raw ``JSONResponse(content={"detail": ...})`` to keep the
+    response shape contract intact end-to-end. Phase-3 EXIT contract
+    (IERD-Q4): every 4xx/5xx body matches ``ErrorResponse``.
+    """
+    payload = ErrorPayload(code=code, message=message, path=path, meta=meta)
+    return JSONResponse(
+        status_code=status_code,
+        content=ErrorResponse(error=payload).model_dump(mode="json"),
+    )
+
+
 COMMON_ERROR_RESPONSES: dict[int, dict[str, Any]] = {
     status.HTTP_400_BAD_REQUEST: {
         "model": ErrorResponse,
@@ -142,6 +170,14 @@ COMMON_ERROR_RESPONSES: dict[int, dict[str, Any]] = {
         "model": ErrorResponse,
         "description": "Unexpected server-side failure.",
     },
+    status.HTTP_504_GATEWAY_TIMEOUT: {
+        "model": ErrorResponse,
+        "description": (
+            "Request exceeded the server processing deadline; emitted by "
+            "RequestTimeoutMiddleware as the canonical timeout UX state "
+            "(IERD-Q5 §5) instead of conflating it with a 500."
+        ),
+    },
 }
 
 
@@ -161,9 +197,7 @@ def register_exception_handlers(
             return value
         if isinstance(value, Mapping):
             return {key: _make_json_safe(item) for key, item in value.items()}
-        if isinstance(value, Sequence) and not isinstance(
-            value, (str, bytes, bytearray)
-        ):
+        if isinstance(value, Sequence) and not isinstance(value, (str, bytes, bytearray)):
             return [_make_json_safe(item) for item in value]
         return str(value)
 
@@ -187,9 +221,7 @@ def register_exception_handlers(
         )
 
     @app.exception_handler(HTTPException)
-    async def http_exception_handler(
-        request: Request, exc: HTTPException
-    ) -> JSONResponse:
+    async def http_exception_handler(request: Request, exc: HTTPException) -> JSONResponse:
         default_code = error_codes.get(exc.status_code, ApiErrorCode.INTERNAL)
         detail = exc.detail
         serializable_detail = _make_json_safe(detail) if detail is not None else None
@@ -221,9 +253,7 @@ def register_exception_handlers(
         return JSONResponse(status_code=exc.status_code, content=content)
 
     @app.exception_handler(Exception)
-    async def unhandled_exception_handler(
-        request: Request, exc: Exception
-    ) -> JSONResponse:
+    async def unhandled_exception_handler(request: Request, exc: Exception) -> JSONResponse:
         LOGGER.exception(
             "Unhandled error while processing request",
             extra={"path": request.url.path},
@@ -245,5 +275,6 @@ __all__ = [
     "DEFAULT_ERROR_CODES",
     "ErrorPayload",
     "ErrorResponse",
+    "build_error_envelope",
     "register_exception_handlers",
 ]

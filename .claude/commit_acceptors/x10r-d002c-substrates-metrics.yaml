@@ -1,0 +1,224 @@
+# Diff-bound commit acceptor for D-002C C2.2 (issue #654) —
+# Substrate generators + metric estimators for the Signal
+# Amplification Sweep.
+#
+# What lands:
+#   * research/systemic_risk/d002c_substrates.py
+#       Three substrate generators producing Kuramoto coupling
+#       matrices K of shape (T_HORIZON, N, N) parameterised by
+#       (N, lambda, seed):
+#         - RicciFlowSubstrate: Erdős-Rényi base, Forman-Ricci
+#           weights, top-10% κ precursor injection
+#         - BlockStructuredSubstrate: core/mid/periphery tiered
+#           block matrix with locked multipliers (1.5/1.0/0.5/0.2)
+#         - TemporalKtSubstrate: block base with sinusoidal K(t)
+#           modulation + additive precursor envelope
+#       Each realisation passes gates G6 (density ∈ [0.05, 0.15]
+#       for the sparse family) + G7 (symmetric every slice) +
+#       G8 (no NaN/Inf) + G9 (spectral radius / N ∈ [0.95, 1.05])
+#       + G10 (positive Frobenius delta iff λ > 0). Calibration
+#       is enforced — a realisation that violates any gate raises
+#       SubstrateInvalid (fail-closed).
+#   * research/systemic_risk/d002c_metrics.py
+#       Three metric estimators on a KuramotoTrajectory:
+#         - TauOnsetMetric: first crossing of R(t) > threshold_R
+#           in pre-event window; right-censored if no crossing
+#         - AucPreEventMetric: trapezoidal AUC of R(t) over the
+#           pre-event window; always observed
+#         - DeltaPhiSyncMetric (phase_lag): first crossing of
+#           pointwise phase coherence Φ(t) = |Σ w_j exp(i θ_j)|
+#           with weights defaulting to uniform (= R(t)) and the
+#           sweep runner passing the substrate principal
+#           eigenvector for the structural variant
+#       Cohort aggregator signal_mean() handles right-censoring
+#       via Kaplan-Meier restricted mean survival time (RMST);
+#       censoring fractions are reported per cohort so non-
+#       comparable cells are visibly flagged. Thresholds default
+#       to the locked YAML values (tau_onset=0.50, phase_lag=0.50);
+#       sweep configs that disagree are caught upstream by the
+#       C2.1 preregistration validator.
+#   * tests/research/systemic_risk/test_d002c_substrates.py
+#       58 tests pinning gates G6-G10 + G12-G14 over the
+#       full N × λ × substrate grid + precursor-window
+#       confinement + frozen-dataclass + degenerate-param
+#       refusal + block tier-multiplier ratio + temporal
+#       envelope modulation.
+#   * tests/research/systemic_risk/test_d002c_metrics.py
+#       64 tests pinning right-censoring discipline (G11 KM
+#       RMST contract + non-comparable cohort flagging),
+#       reproducibility (G12 bit-exact), monotone sanity (G13
+#       on signal_mean), trajectory validation + threshold
+#       defaults matching the YAML + custom reference weights +
+#       cohort-size + signal-method reporting.
+#
+# Strict scope:
+#   Substrate + metric layer ONLY. NO Kuramoto integrator (that
+#   lives in C2.4 sweep runner). NO CRN variance reduction (that
+#   lives in C2.3). NO sweep execution. NO claim layer. NO
+#   threshold tuning — the thresholds match the locked YAML.
+
+id: x10r-d002c-substrates-metrics
+status: ACTIVE
+claim_type: correctness
+promise: >-
+  After this PR lands, research/systemic_risk/d002c_substrates
+  exposes RicciFlowSubstrate, BlockStructuredSubstrate, and
+  TemporalKtSubstrate — three Kuramoto coupling-matrix
+  generators each satisfying the calibration gates (spectral
+  radius / N ∈ [0.95, 1.05], symmetric, finite, density ∈
+  [0.05, 0.15] for the sparse Ricci family, precursor delta
+  strictly zero at λ=0 and strictly positive at λ>0).
+  research/systemic_risk/d002c_metrics exposes TauOnsetMetric,
+  AucPreEventMetric, and DeltaPhiSyncMetric — three observables
+  on a KuramotoTrajectory plus the cohort-level signal_mean
+  aggregator that handles right-censoring via Kaplan-Meier
+  restricted mean survival time. Default thresholds match the
+  locked D-002C pre-registration YAML (tau_onset=0.50,
+  phase_lag=0.50). 122 fast tests pass.
+
+  Strict scope: substrate + metric layer only. No Kuramoto
+  integrator (deferred to C2.4). No sweep execution. No CRN
+  variance reduction (C2.3). No claim layer. No threshold
+  tuning. The modules are callable by C2.4 sweep runner; they
+  emit no claim of their own.
+diff_scope:
+  changed_files:
+    - path: ".claude/commit_acceptors/x10r-d002c-substrates-metrics.yaml"
+    - path: "research/systemic_risk/d002c_substrates.py"
+    - path: "research/systemic_risk/d002c_metrics.py"
+    - path: "tests/research/systemic_risk/test_d002c_substrates.py"
+    - path: "tests/research/systemic_risk/test_d002c_metrics.py"
+  forbidden_paths:
+    - "trading/"
+    - "execution/"
+    - "forecast/"
+    - "policy/"
+    - "core/physics/"
+    - "core/kuramoto/"
+    - "research/reconstruction/"
+    - "research/systemic_risk/sweep_checkpoint.py"
+    - "research/systemic_risk/d002c_preregistration.py"
+    - "scripts/run_x10r_"
+    - "application/governance/claim_ledger.py"
+    - "application/governance/commit_acceptor.py"
+required_python_symbols:
+  - "research/systemic_risk/d002c_substrates.py::SubstrateRealization"
+  - "research/systemic_risk/d002c_substrates.py::SubstrateInvalid"
+  - "research/systemic_risk/d002c_substrates.py::RicciFlowSubstrate"
+  - "research/systemic_risk/d002c_substrates.py::BlockStructuredSubstrate"
+  - "research/systemic_risk/d002c_substrates.py::TemporalKtSubstrate"
+  - "research/systemic_risk/d002c_substrates.py::ALL_SUBSTRATES"
+  - "research/systemic_risk/d002c_metrics.py::KuramotoTrajectory"
+  - "research/systemic_risk/d002c_metrics.py::MetricEvaluation"
+  - "research/systemic_risk/d002c_metrics.py::TauOnsetMetric"
+  - "research/systemic_risk/d002c_metrics.py::AucPreEventMetric"
+  - "research/systemic_risk/d002c_metrics.py::DeltaPhiSyncMetric"
+  - "research/systemic_risk/d002c_metrics.py::SignalEstimate"
+  - "research/systemic_risk/d002c_metrics.py::kaplan_meier_restricted_mean"
+  - "research/systemic_risk/d002c_metrics.py::signal_mean"
+  - "research/systemic_risk/d002c_metrics.py::ALL_METRICS"
+  - "tests/research/systemic_risk/test_d002c_substrates.py::test_g7_g8_K_symmetric_finite_correct_shape"
+  - "tests/research/systemic_risk/test_d002c_substrates.py::test_g9_spectral_radius_calibrated"
+  - "tests/research/systemic_risk/test_d002c_substrates.py::test_g6_ricci_density_in_range"
+  - "tests/research/systemic_risk/test_d002c_substrates.py::test_g10_lambda_zero_is_pure_baseline"
+  - "tests/research/systemic_risk/test_d002c_substrates.py::test_g10_positive_lambda_yields_positive_delta"
+  - "tests/research/systemic_risk/test_d002c_substrates.py::test_g12_same_seed_reproducible_bit_exact"
+  - "tests/research/systemic_risk/test_d002c_substrates.py::test_g13_delta_monotone_in_lambda"
+  - "tests/research/systemic_risk/test_d002c_substrates.py::test_g14_three_substrates_pairable_with_three_metrics"
+  - "tests/research/systemic_risk/test_d002c_metrics.py::test_km_rmst_no_censoring_equals_simple_mean"
+  - "tests/research/systemic_risk/test_d002c_metrics.py::test_km_rmst_monotone_in_censoring_fraction"
+  - "tests/research/systemic_risk/test_d002c_metrics.py::test_signal_mean_uses_km_when_either_cohort_censored"
+  - "tests/research/systemic_risk/test_d002c_metrics.py::test_g13_signal_mean_monotone_in_precursor_strength"
+expected_signal: >-
+  Local: `pytest tests/research/systemic_risk/test_d002c_substrates.py
+  tests/research/systemic_risk/test_d002c_metrics.py -q` reports
+  "122 passed"; `mypy --strict --follow-imports=silent` clean on
+  the four new files; `ruff check` and `black --check` both pass.
+measurement_command: >-
+  bash -c 'mypy --strict --follow-imports=silent
+  research/systemic_risk/d002c_substrates.py
+  research/systemic_risk/d002c_metrics.py
+  tests/research/systemic_risk/test_d002c_substrates.py
+  tests/research/systemic_risk/test_d002c_metrics.py
+  && ruff check
+  research/systemic_risk/d002c_substrates.py
+  research/systemic_risk/d002c_metrics.py
+  tests/research/systemic_risk/test_d002c_substrates.py
+  tests/research/systemic_risk/test_d002c_metrics.py
+  && black --check
+  research/systemic_risk/d002c_substrates.py
+  research/systemic_risk/d002c_metrics.py
+  tests/research/systemic_risk/test_d002c_substrates.py
+  tests/research/systemic_risk/test_d002c_metrics.py
+  && pytest
+  tests/research/systemic_risk/test_d002c_substrates.py
+  tests/research/systemic_risk/test_d002c_metrics.py -q'
+signal_artifact: "tests/research/systemic_risk/test_d002c_substrates.py"
+falsifier:
+  command: |-
+    bash -c 'PYTHONPATH=. python -c "
+    import numpy as np
+    from research.systemic_risk.d002c_substrates import (
+        ALL_SUBSTRATES, SPECTRAL_RANGE, DENSITY_RANGE, RicciFlowSubstrate,
+    )
+    from research.systemic_risk.d002c_metrics import (
+        ALL_METRICS, TauOnsetMetric, AucPreEventMetric, DeltaPhiSyncMetric,
+        kaplan_meier_restricted_mean, signal_mean, MetricEvaluation,
+    )
+    # 9 substrate × metric pairs callable
+    assert len(ALL_SUBSTRATES) == 3
+    assert len(ALL_METRICS) == 3
+    # All substrates calibrate cleanly at canonical (N, lambda=0, seed=42)
+    for s in ALL_SUBSTRATES:
+        r = s.realize(N=100, lambda_=0.0, seed=42)
+        lo, hi = SPECTRAL_RANGE
+        assert lo <= r.spectral_radius_over_N <= hi, (s.id, r.spectral_radius_over_N)
+        assert r.precursor_frobenius_delta == 0.0
+    # Ricci density in range
+    r = RicciFlowSubstrate().realize(N=100, lambda_=0.0, seed=42)
+    dlo, dhi = DENSITY_RANGE
+    assert dlo <= r.density <= dhi
+    # Positive lambda yields positive delta
+    for s in ALL_SUBSTRATES:
+        r = s.realize(N=100, lambda_=0.40, seed=42)
+        assert r.precursor_frobenius_delta > 0.0
+    # Reproducibility bit-exact
+    a = RicciFlowSubstrate().realize(N=100, lambda_=0.40, seed=7)
+    b = RicciFlowSubstrate().realize(N=100, lambda_=0.40, seed=7)
+    assert np.array_equal(a.K_baseline, b.K_baseline)
+    # KM RMST: no censoring → cohort mean
+    rmst = kaplan_meier_restricted_mean(np.array([1., 2., 3., 4.]), np.zeros(4, dtype=bool), 10.0)
+    assert abs(rmst - 2.5) < 1e-12
+    # signal_mean fires KM when censored
+    pre = [MetricEvaluation(metric_id='"'"'tau_onset'"'"', value=3.0, is_censored=False)]*10 + [MetricEvaluation(metric_id='"'"'tau_onset'"'"', value=8.0, is_censored=True)]*10
+    null = [MetricEvaluation(metric_id='"'"'tau_onset'"'"', value=7.0, is_censored=False)]*20
+    est = signal_mean(TauOnsetMetric(), pre, null, horizon=8.0)
+    assert est.method == '"'"'km_restricted_mean'"'"'
+    "'
+  description: >-
+    Probes the D-002C C2.2 contract: 3 substrates × 3 metrics
+    available; all substrates calibrate clean at (N=100, λ=0, seed=42);
+    Ricci density in gate range; positive λ yields positive Frobenius
+    delta; substrate seed reproducibility is bit-exact; KM RMST
+    with zero censoring equals the cohort mean; signal_mean uses
+    KM aggregator when either cohort is censored. If any of these
+    regress, the substrate calibration or right-censoring discipline
+    is broken — the sweep would launch on uncalibrated K or report
+    biased signal means.
+rollback_command: >-
+  bash -c 'git checkout HEAD~1 --
+  && rm -f research/systemic_risk/d002c_substrates.py
+  research/systemic_risk/d002c_metrics.py
+  tests/research/systemic_risk/test_d002c_substrates.py
+  tests/research/systemic_risk/test_d002c_metrics.py
+  .claude/commit_acceptors/x10r-d002c-substrates-metrics.yaml'
+rollback_verification_command: >-
+  bash -c 'test ! -f research/systemic_risk/d002c_substrates.py
+  && test ! -f research/systemic_risk/d002c_metrics.py
+  && test ! -f tests/research/systemic_risk/test_d002c_substrates.py
+  && test ! -f tests/research/systemic_risk/test_d002c_metrics.py
+  && test ! -f .claude/commit_acceptors/x10r-d002c-substrates-metrics.yaml'
+memory_update_type: append
+ledger_path: ".claude/commit_acceptors/x10r-d002c-substrates-metrics.yaml"
+report_path: "tests/research/systemic_risk/test_d002c_substrates.py"
+evidence: []

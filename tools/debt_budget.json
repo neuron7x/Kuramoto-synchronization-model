@@ -1,0 +1,10 @@
+{
+  "_doc": "Fail-closed debt ratchet ceiling per architecture_debt_inference class. CI runs: python tools/architecture_debt_inference.py --check tools/debt_budget.json \u2014 debt may shrink, never grow. When you reduce a class, lower its number here in the same PR so the ratchet tightens. by_design classes are exempt. empty_evidence_ledger is tracked-only (ratchet=False): it grows with every new acceptor, so it is not hard-gated.",
+  "budget": {
+    "type_ignore_suppressions": 703,
+    "noqa_suppressions": 338,
+    "actionable_test_skips": 50,
+    "test_slow_files": 37,
+    "todo_markers": 26
+  }
+}

@@ -1,4 +1,5 @@
-# SPDX-License-Identifier: LicenseRef-TradePulse-Proprietary
+# Copyright (c) 2023-2026 Yaroslav Vasylenko (neuron7xLab)
+# SPDX-License-Identifier: MIT
 """Unit tests for agent components including bandits, memory, and strategies.
 
 This module validates the multi-armed bandit algorithms, strategy memory system,
@@ -11,6 +12,7 @@ Test Coverage:
 - Strategy: mutation and performance simulation
 - PiAgent: market regime adaptation and repair
 """
+
 from __future__ import annotations
 
 import math
@@ -120,9 +122,7 @@ def test_strategy_simulate_performance_within_expected_range() -> None:
 
 
 def test_pi_agent_detects_instability_and_repair() -> None:
-    agent = PiAgent(
-        strategy=Strategy(name="s", params={"alpha": 1.0, "beta": math.nan})
-    )
+    agent = PiAgent(strategy=Strategy(name="s", params={"alpha": 1.0, "beta": math.nan}))
     state = {"R": 0.8, "delta_H": -0.1, "kappa_mean": -0.05}
     assert agent.evaluate_and_adapt(state) == "enter"
     agent.repair()

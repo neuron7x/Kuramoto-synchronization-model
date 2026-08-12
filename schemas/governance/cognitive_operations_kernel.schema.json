@@ -1,0 +1,76 @@
+{
+  "$schema": "https://json-schema.org/draft/2020-12/schema",
+  "title": "Cognitive Operations Kernel",
+  "type": "object",
+  "additionalProperties": false,
+  "required": [
+    "artifact_id",
+    "version",
+    "artifact_type",
+    "role",
+    "mission",
+    "scope",
+    "input_classes",
+    "functions",
+    "output_contract",
+    "final_gate",
+    "linked_issue"
+  ],
+  "properties": {
+    "artifact_id": {"type": "string"},
+    "version": {"type": "string"},
+    "artifact_type": {"type": "string"},
+    "role": {"type": "string"},
+    "mission": {"type": "string"},
+    "scope": {
+      "type": "object",
+      "additionalProperties": false,
+      "required": ["allowed_claims", "blocked_claims"],
+      "properties": {
+        "allowed_claims": {"type": "array", "items": {"type": "string"}},
+        "blocked_claims": {"type": "array", "items": {"type": "string"}}
+      }
+    },
+    "input_classes": {"type": "array", "items": {"type": "string"}},
+    "functions": {
+      "type": "array",
+      "minItems": 18,
+      "maxItems": 18,
+      "items": {
+        "type": "object",
+        "additionalProperties": false,
+        "required": ["id", "operation", "output"],
+        "properties": {
+          "id": {"type": "string"},
+          "operation": {"type": "string"},
+          "output": {"type": "string"}
+        }
+      }
+    },
+    "output_contract": {
+      "type": "object",
+      "additionalProperties": false,
+      "required": ["final_verdict", "required_fields"],
+      "properties": {
+        "final_verdict": {
+          "type": "array",
+          "items": {"type": "string", "enum": ["PASS", "FAIL", "PARTIAL", "UNKNOWN"]},
+          "minItems": 4,
+          "maxItems": 4,
+          "uniqueItems": true
+        },
+        "required_fields": {"type": "array", "items": {"type": "string"}}
+      }
+    },
+    "final_gate": {
+      "type": "object",
+      "additionalProperties": false,
+      "required": ["pass_requires", "weakest_link_rule"],
+      "properties": {
+        "pass_requires": {"type": "array", "items": {"type": "string"}},
+        "weakest_link_rule": {"type": "string"}
+      }
+    },
+    "linked_issue": {"type": "integer"}
+  }
+}

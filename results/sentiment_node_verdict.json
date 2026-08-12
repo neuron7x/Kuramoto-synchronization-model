@@ -1,0 +1,7 @@
+{
+  "DELIVER": "FAIL",
+  "DETECT": "FAIL",
+  "DISCRIMINATE": "FAIL",
+  "FINAL": "REJECT",
+  "error": "Parquet file not found: data/askar_full/panel_hourly_extended.parquet"
+}

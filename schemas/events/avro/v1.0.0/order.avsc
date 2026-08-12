@@ -1,7 +1,7 @@
 {
   "type": "record",
   "name": "OrderEvent",
-  "namespace": "tradepulse.events.execution.v1_0_0",
+  "namespace": "geosync.events.execution.v1_0_0",
   "doc": "Order instruction emitted by the execution service.",
   "fields": [
     {"name": "event_id", "type": "string", "doc": "Globally unique identifier for idempotency."},

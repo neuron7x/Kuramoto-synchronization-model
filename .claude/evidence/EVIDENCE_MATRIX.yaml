@@ -1,0 +1,536 @@
+# GeoSync Evidence Weight Calibration Matrix
+#
+# Defines the strength bands and tier-eligibility rules for each evidence
+# category referenced by the claim ledger (.claude/claims/CLAIMS.yaml).
+#
+# A claim's tier (FACT / EXTRAPOLATION / SPECULATION) is valid only if the
+# evidence categories supporting it are individually allowed for that tier
+# and collectively avoid the prohibited overclaims encoded here.
+#
+# Validator: .claude/evidence/validate_evidence.py
+#
+# Ordering principle: stronger evidence types unlock stronger tiers. The
+# matrix encodes the F01 and F03 lessons as first-class rules:
+#   - FILE_DECLARATION (lower-bound text) cannot, by itself, support a
+#     claim of "active vulnerable installation"
+#   - LOCKFILE_PIN (a vulnerable pinned version) cannot, by itself, support
+#     a claim of "exploitable auth bypass" or "reachable code path"
+#   - SCANNER_OUTPUT cannot, by itself, support a claim of "runtime
+#     reachable exploitation" — scanners report advisories against
+#     versions, not deployments
+#   - PASSING TESTS cannot, by themselves, support a claim of "secure"
+
+schema_version: 1
+
+# Evidence strength bands (ordinal):
+#   NONE     — no real evidence beyond rhetoric
+#   WEAK     — single declarative artefact; can be wrong about runtime
+#   PARTIAL  — multiple declarative artefacts or one runtime artefact
+#   STRONG   — multiple runtime / executed artefacts that confirm one
+#              another at the same observation level
+#   EXECUTED — the claim was directly produced by running the code or
+#              measurement that the claim is about (no inference gap)
+
+# Allowed claim tiers per category use the ledger vocabulary:
+#   FACT, EXTRAPOLATION, SPECULATION
+
+categories:
+
+  # -------------------------------------------------------------------------
+  FILE_DECLARATION:
+    description: |
+      A line in pyproject.toml, requirements*.txt, package.json, go.mod,
+      Cargo.toml, .tf file, Dockerfile, or any other manifest. States
+      what the project intends, not what is installed or executed.
+    evidence_strength: WEAK
+    allowed_claim_tiers: [SPECULATION, EXTRAPOLATION, FACT]
+    fact_requires_companion: true
+    fact_companion_categories:
+      - LOCKFILE_PIN
+      - RESOLVER_OUTPUT
+      - SCANNER_OUTPUT
+    prohibited_overclaims:
+      - "ACTIVE_VULNERABLE_INSTALL"   # F01: lower bound text != installed version
+      - "EXPLOIT_PATH_CONFIRMED"
+      - "RUNTIME_REACHABILITY"
+    required_falsifier: |
+      Manifest line presence, absence, or numeric value relative to the
+      claimed bound.
+    example_valid_use: |
+      "requirements.txt declares torch>=2.11.0" — claim:
+      manifest admits versions >= 2.11.0.
+    example_invalid_use: |
+      "requirements.txt declares torch>=2.1.0" — claim: torch 2.1.0 is
+      currently installed and exploitable. (Refused: F01 trap.)
+
+  # -------------------------------------------------------------------------
+  LOCKFILE_PIN:
+    description: |
+      An exact version pin in requirements*.lock, package-lock.json,
+      go.sum, Cargo.lock, etc. Captures what `pip install -r <lock>`
+      installs, modulo wheel availability.
+    evidence_strength: PARTIAL
+    allowed_claim_tiers: [SPECULATION, EXTRAPOLATION, FACT]
+    fact_requires_companion: false
+    prohibited_overclaims:
+      - "EXPLOIT_PATH_CONFIRMED"      # F03: pinned-vulnerable != reachable
+      - "RUNTIME_REACHABILITY"
+    required_falsifier: |
+      The locked version differs from the claimed pin, or pip-audit reports
+      the lockfile clean of the cited advisory.
+    example_valid_use: |
+      "requirements.lock pins strawberry-graphql==0.315.2" — claim: deploy
+      path that installs requirements.lock receives version 0.315.2.
+    example_invalid_use: |
+      "requirements.lock pins strawberry-graphql==0.287.2" — claim: the
+      auth bypass GHSA-vpwc-v33q-mq89 is exploitable on production.
+      (Refused: F03 trap. Reachability requires runtime evidence.)
+
+  # -------------------------------------------------------------------------
+  RESOLVER_OUTPUT:
+    description: |
+      JSON or text output from `pip install --dry-run --report`,
+      `npm install --dry-run`, `go list -m all`, etc. Captures the
+      transitive closure that the resolver picks against current upstream.
+    evidence_strength: STRONG
+    allowed_claim_tiers: [SPECULATION, EXTRAPOLATION, FACT]
+    fact_requires_companion: false
+    prohibited_overclaims:
+      - "EXPLOIT_PATH_CONFIRMED"
+      - "LONG_TERM_RESOLUTION_STABILITY"  # resolver picks shift over time
+    required_falsifier: |
+      Re-running the resolver produces a different version for the named
+      package, or the recorded resolver output disagrees with a fresh
+      capture.
+    example_valid_use: |
+      "pip --dry-run on requirements.txt resolves torch==2.11.0" —
+      claim: today's resolver picks 2.11.0.
+    example_invalid_use: |
+      "pip --dry-run resolves torch==2.11.0" — claim: torch 2.11.0 will be
+      installed forever. (Refused: resolver output is a snapshot.)
+
+  # -------------------------------------------------------------------------
+  SCANNER_OUTPUT:
+    description: |
+      Output from osv-scanner, pip-audit, trivy, gitleaks, bandit, zizmor,
+      checkov, etc. Reports advisories against the manifest or filesystem.
+    evidence_strength: STRONG
+    allowed_claim_tiers: [SPECULATION, EXTRAPOLATION, FACT]
+    fact_requires_companion: false
+    prohibited_overclaims:
+      - "EXPLOIT_PATH_CONFIRMED"      # advisory != exploit
+      - "RUNTIME_REACHABILITY"
+      - "SCANNER_COMPLETENESS"        # scanners miss what they don't index
+    required_falsifier: |
+      Scanner re-run produces a different finding set, or the cited finding
+      cannot be reproduced.
+    example_valid_use: |
+      "pip-audit -r requirements.lock reports 0 vulns" — claim: pip-audit
+      finds no advisory in the locked dep set.
+    example_invalid_use: |
+      "pip-audit reports advisory X" — claim: advisory X is exploitable
+      against this deployment. (Refused: scanner != reachability.)
+
+  # -------------------------------------------------------------------------
+  RUNTIME_IMPORT_SMOKE:
+    description: |
+      Python `import some.module` succeeds in a configured environment,
+      or analogous load-time check in another runtime. Confirms wiring,
+      not behaviour.
+    evidence_strength: PARTIAL
+    allowed_claim_tiers: [SPECULATION, EXTRAPOLATION, FACT]
+    fact_requires_companion: true
+    fact_companion_categories:
+      - UNIT_TEST
+      - INTEGRATION_TEST
+    prohibited_overclaims:
+      - "BEHAVIORAL_CORRECTNESS"
+    required_falsifier: |
+      The import or load fails on a clean environment matching the claimed
+      manifests.
+    example_valid_use: |
+      "import application.api.graphql_api → OK under strawberry==0.315.2" —
+      claim: the upgrade does not break the import surface.
+    example_invalid_use: |
+      "import succeeds" — claim: the API is correct. (Refused.)
+
+  # -------------------------------------------------------------------------
+  UNIT_TEST:
+    description: |
+      A pytest, unittest, jest, go test, or equivalent function that
+      exercises a single contract on a single module.
+    evidence_strength: PARTIAL
+    allowed_claim_tiers: [SPECULATION, EXTRAPOLATION, FACT]
+    fact_requires_companion: false
+    prohibited_overclaims:
+      - "EXPLOIT_PATH_CONFIRMED"
+      - "INTEGRATION_CORRECTNESS"
+    required_falsifier: |
+      A mutation in the function under test makes the unit test fail (the
+      test catches the mutation). Verified via mutation testing or hand
+      injection.
+    example_valid_use: |
+      "test_torch_floor_is_strict asserts pyproject torch >= 2.11.0" —
+      claim: regressing the torch floor in pyproject is caught by CI.
+    example_invalid_use: |
+      "all unit tests pass" — claim: the system is secure. (Refused.)
+
+  # -------------------------------------------------------------------------
+  INTEGRATION_TEST:
+    description: |
+      A test that composes multiple modules, runs against a real-ish
+      environment (test client, in-process server, fixture database, etc.).
+    evidence_strength: STRONG
+    allowed_claim_tiers: [SPECULATION, EXTRAPOLATION, FACT]
+    fact_requires_companion: false
+    prohibited_overclaims:
+      - "PRODUCTION_CORRECTNESS"
+    required_falsifier: |
+      Component swap or contract violation produces a test failure.
+    example_valid_use: |
+      "tests/integration/test_graphql_ws_authn.py asserts a no-auth WS
+      handshake to /graphql is rejected with HTTP 401" — claim: WS
+      handshake authn is in place at /graphql.
+    example_invalid_use: |
+      "integration tests pass" — claim: the production deployment is
+      identical to the test environment. (Refused.)
+
+  # -------------------------------------------------------------------------
+  MUTATION_TEST:
+    description: |
+      Output from mutmut, cosmic-ray, mutpy, etc. Reports whether the test
+      suite kills planted code mutations.
+    evidence_strength: STRONG
+    allowed_claim_tiers: [SPECULATION, EXTRAPOLATION, FACT]
+    fact_requires_companion: false
+    prohibited_overclaims:
+      - "BUG_FREE_CODE"
+    required_falsifier: |
+      Mutation score below the agreed threshold for the module under test.
+    example_valid_use: |
+      "mutmut run on core/risk reports 87% killed" — claim: tests detect
+      most behavioural regressions in core/risk.
+    example_invalid_use: |
+      "mutation score 100%" — claim: no bug can ever exist. (Refused.)
+
+  # -------------------------------------------------------------------------
+  CI_STATUS:
+    description: |
+      A GitHub Actions, Buildkite, or equivalent pipeline result.
+      Captures whether a workflow succeeded or failed at a commit.
+    evidence_strength: WEAK
+    allowed_claim_tiers: [SPECULATION, EXTRAPOLATION]
+    fact_requires_companion: true
+    fact_companion_categories:
+      - INTEGRATION_TEST
+      - MUTATION_TEST
+      - SCANNER_OUTPUT
+    prohibited_overclaims:
+      - "RUNTIME_VERIFICATION"        # green CI != runtime correctness
+      - "SECURITY_VERIFICATION"
+    required_falsifier: |
+      The cited workflow run did not occur, or its status was different
+      from the claim.
+    example_valid_use: |
+      "physics-invariants workflow ran on PR #445 and passed" — claim:
+      the physics invariants did not flag PR #445.
+    example_invalid_use: |
+      "CI is green" — claim: the build is bug-free. (Refused.)
+
+  # -------------------------------------------------------------------------
+  MANUAL_INSPECTION:
+    description: |
+      A human reading the code or docs and recording an observation.
+      Used for surface mapping when no executable artefact applies.
+    evidence_strength: WEAK
+    allowed_claim_tiers: [SPECULATION, EXTRAPOLATION]
+    fact_requires_companion: true
+    fact_companion_categories:
+      - INTEGRATION_TEST
+      - UNIT_TEST
+      - SCANNER_OUTPUT
+    prohibited_overclaims:
+      - "RUNTIME_REACHABILITY"        # F03: reading WS code != reachability
+      - "ACTIVE_VULNERABLE_INSTALL"
+      - "EXPLOIT_PATH_CONFIRMED"
+    required_falsifier: |
+      A second reader disagrees with the cited observation, or the source
+      file content has changed since inspection.
+    example_valid_use: |
+      "graphql_api.py defines no Subscription type" — claim:
+      schema does not declare subscription operations.
+    example_invalid_use: |
+      "I read the code and the WS endpoint is unreachable" — claim:
+      the GHSA-vpwc auth bypass is not exploitable. (Refused.)
+
+  # -------------------------------------------------------------------------
+  EXTERNAL_ADVISORY:
+    description: |
+      A CVE, GHSA, or vendor advisory that quantifies vulnerability,
+      affected version range, and fixed version.
+    evidence_strength: STRONG
+    allowed_claim_tiers: [SPECULATION, EXTRAPOLATION, FACT]
+    fact_requires_companion: false
+    prohibited_overclaims:
+      - "EXPLOIT_PATH_CONFIRMED"      # advisory != reachable exploit
+      - "RUNTIME_REACHABILITY"
+    required_falsifier: |
+      The cited advisory text differs from the captured value, or the
+      advisory has been withdrawn.
+    example_valid_use: |
+      "GHSA-vpwc-v33q-mq89 fixed in strawberry-graphql 0.312.3" — claim:
+      versions below 0.312.3 fall in the advisory's affected range.
+    example_invalid_use: |
+      "GHSA-vpwc exists" — claim: this codebase is exploitable.
+      (Refused: F03 trap.)
+
+  # -------------------------------------------------------------------------
+  BENCHMARK:
+    description: |
+      A pytest-benchmark, scalene, py-spy, perf, or equivalent measurement.
+      Captures runtime, memory, throughput, latency.
+    evidence_strength: STRONG
+    allowed_claim_tiers: [SPECULATION, EXTRAPOLATION, FACT]
+    fact_requires_companion: false
+    prohibited_overclaims:
+      - "PRODUCTION_PERFORMANCE"      # bench env != production env
+    required_falsifier: |
+      A re-run on the cited hardware produces a measurement outside the
+      claimed bound, or the bound regresses by more than the agreed ratio.
+    example_valid_use: |
+      "tests/perf/test_kuramoto_step.py reports mean 1.2 ms ± 0.1 ms" —
+      claim: kuramoto step under this bench fixture stays under 2 ms.
+    example_invalid_use: |
+      "bench shows 1 ms" — claim: production latency is 1 ms. (Refused.)
+
+  # -------------------------------------------------------------------------
+  DATASET_RESULT:
+    description: |
+      Outcome of running the system against a frozen dataset (e.g.
+      walk-forward backtest, cross-validation report, DSP fixture).
+      Captures behaviour on a defined data boundary.
+    evidence_strength: STRONG
+    allowed_claim_tiers: [SPECULATION, EXTRAPOLATION, FACT]
+    fact_requires_companion: false
+    prohibited_overclaims:
+      - "UNIVERSAL_CLAIM"             # in-sample != out-of-sample
+      - "PRODUCTION_PERFORMANCE"
+    required_falsifier: |
+      Re-running the cited evaluation on the same frozen dataset produces
+      a different metric, or the metric falls outside the claimed
+      uncertainty band.
+    example_valid_use: |
+      "Walk-forward OOS Sharpe = 1.262 on cross_asset_sync_regime fixture"
+      — claim: under the named fixture, OOS Sharpe lands at 1.262 ± noise.
+    example_invalid_use: |
+      "OOS Sharpe 1.26" — claim: this strategy will produce 1.26 in
+      production. (Refused: dataset != future.)
+
+# ---------------------------------------------------------------------------
+# Cross-category overclaim prohibitions
+# ---------------------------------------------------------------------------
+#
+# Every prohibited overclaim referenced by the categories above is defined
+# here, with the evidence shapes that DO support it. A claim ledger entry
+# that asserts an overclaim must rest on at least one of the listed
+# supporting evidence shapes; otherwise the validator refuses the claim.
+
+prohibited_overclaims:
+
+  ACTIVE_VULNERABLE_INSTALL:
+    description: |
+      The deployed environment currently runs a version that contains the
+      vulnerability described.
+    requires_any_of:
+      - RESOLVER_OUTPUT     # captured against the deploy manifest
+      - SCANNER_OUTPUT      # against installed packages, not just manifest
+      - INTEGRATION_TEST    # smoke that exercises the version
+    refusal_message: |
+      Asserting "active vulnerable install" requires resolver, scanner, or
+      runtime evidence. Manifest text and lockfile pins are not enough on
+      their own — the F01 lesson.
+
+  EXPLOIT_PATH_CONFIRMED:
+    description: |
+      A specific exploit was reproduced against the running system.
+    requires_any_of:
+      - INTEGRATION_TEST
+      - DATASET_RESULT      # red-team / fuzz harness with concrete result
+    refusal_message: |
+      Asserting "exploit confirmed" requires an integration test or a
+      reproducible adversarial harness — the F03 lesson. Scanner output and
+      external advisories are necessary but not sufficient.
+
+  RUNTIME_REACHABILITY:
+    description: |
+      The vulnerable code path is reachable from a network boundary or
+      external trust boundary in the deployed configuration.
+    requires_any_of:
+      - INTEGRATION_TEST
+      - RUNTIME_IMPORT_SMOKE  # only if the smoke covers the affected route
+    refusal_message: |
+      Asserting "reachable" requires evidence at the same observation
+      level as the claim — an integration test that hits the route, or a
+      runtime smoke that exercises the code path.
+
+  BEHAVIORAL_CORRECTNESS:
+    description: |
+      The system produces the right answer, not just the right shape.
+    requires_any_of:
+      - INTEGRATION_TEST
+      - MUTATION_TEST
+      - DATASET_RESULT
+    refusal_message: |
+      Asserting "correct" requires test evidence that the right answer is
+      actually checked, not merely that imports succeed.
+
+  RUNTIME_VERIFICATION:
+    description: |
+      Green CI proves runtime correctness.
+    requires_any_of:
+      - INTEGRATION_TEST
+      - MUTATION_TEST
+    refusal_message: |
+      Green CI is necessary but not sufficient. CI status is WEAK evidence
+      until paired with integration or mutation tests that exercise the
+      claim.
+
+  SECURITY_VERIFICATION:
+    description: |
+      The system is secure.
+    requires_any_of:
+      - SCANNER_OUTPUT
+      - INTEGRATION_TEST    # security-focused
+      - EXTERNAL_ADVISORY   # paired with refutation of reachability
+    refusal_message: |
+      "Secure" is forbidden as a bare claim. Use a specific class — e.g.
+      "this lockfile pins above advisory X's fix floor" — and back it
+      with the matching evidence.
+
+  PRODUCTION_PERFORMANCE:
+    description: |
+      Bench numbers measured in CI also hold in production.
+    requires_any_of:
+      - DATASET_RESULT      # measured on production-like data
+    refusal_message: |
+      Bench != production. Translate to a claim about the bench fixture or
+      back the production claim with a dataset result captured under
+      production conditions.
+
+  UNIVERSAL_CLAIM:
+    description: |
+      A scientific or financial claim that holds across all domains/regimes.
+    requires_any_of:
+      - DATASET_RESULT      # multiple cross-domain datasets
+    refusal_message: |
+      Universal claims require cross-domain dataset evidence. Without that,
+      keep the claim at SPECULATION tier.
+
+  LONG_TERM_RESOLUTION_STABILITY:
+    description: |
+      Today's resolver pick will hold indefinitely.
+    requires_any_of:
+      - LOCKFILE_PIN        # the resolver decision is captured in a lock
+    refusal_message: |
+      Resolver decisions drift with upstream. To assert stability, capture
+      the decision in a lockfile.
+
+  INTEGRATION_CORRECTNESS:
+    description: |
+      Composition of two modules works as expected.
+    requires_any_of:
+      - INTEGRATION_TEST
+    refusal_message: |
+      Unit tests do not prove integration. Add an integration test or
+      downgrade the claim.
+
+  PRODUCTION_CORRECTNESS:
+    description: |
+      The integration as tested matches production exactly.
+    requires_any_of:
+      - DATASET_RESULT
+    refusal_message: |
+      Integration tests run against fixtures, not production. Either
+      scope the claim to the fixture, or back it with a production
+      dataset result.
+
+  BUG_FREE_CODE:
+    description: |
+      No defects exist.
+    requires_any_of: []     # no evidence type can support this
+    refusal_message: |
+      "Bug-free" is forbidden as a claim. Use a specific contract bound
+      ("X holds for inputs of shape Y") and back it with mutation evidence.
+
+  SCANNER_COMPLETENESS:
+    description: |
+      The scanner finds all vulnerabilities of a given class.
+    requires_any_of: []
+    refusal_message: |
+      Scanners are bounded by their advisory database. Claim only what the
+      scanner reports, never what it cannot report.
+
+# ---------------------------------------------------------------------------
+# F01 / F03 regression-case fixtures
+# ---------------------------------------------------------------------------
+#
+# These are reference cases that the validator's tests use to make sure
+# the matrix continues to refuse the conflations the audit identified.
+# Each entry pairs a claim shape with the expected refusal rule.
+
+regression_cases:
+
+  - name: F01_RANGE_CLAIMS_ACTIVE_INSTALL
+    description: |
+      A claim that uses only FILE_DECLARATION evidence and asserts
+      ACTIVE_VULNERABLE_INSTALL must be refused.
+    claim_shape:
+      class: SECURITY
+      tier: FACT
+      evidence_types: [FILE_DECLARATION]
+      asserts: ACTIVE_VULNERABLE_INSTALL
+    expected_refusal: ACTIVE_VULNERABLE_INSTALL
+
+  - name: F03_LOCK_CLAIMS_EXPLOIT_PATH
+    description: |
+      A claim that uses only LOCKFILE_PIN evidence and asserts
+      EXPLOIT_PATH_CONFIRMED must be refused.
+    claim_shape:
+      class: SECURITY
+      tier: FACT
+      evidence_types: [LOCKFILE_PIN, EXTERNAL_ADVISORY]
+      asserts: EXPLOIT_PATH_CONFIRMED
+    expected_refusal: EXPLOIT_PATH_CONFIRMED
+
+  - name: SCANNER_CLAIMS_REACHABILITY
+    description: |
+      Scanner output cannot, by itself, justify a runtime-reachability
+      claim. The validator refuses such claims unless an integration test
+      is also cited.
+    claim_shape:
+      class: SECURITY
+      tier: FACT
+      evidence_types: [SCANNER_OUTPUT]
+      asserts: RUNTIME_REACHABILITY
+    expected_refusal: RUNTIME_REACHABILITY
+
+  - name: GREEN_CI_CLAIMS_SECURITY
+    description: |
+      Green CI cannot, by itself, support a "system is secure" claim.
+    claim_shape:
+      class: SECURITY
+      tier: FACT
+      evidence_types: [CI_STATUS]
+      asserts: SECURITY_VERIFICATION
+    expected_refusal: SECURITY_VERIFICATION
+
+  - name: MANUAL_INSPECTION_CLAIMS_REACHABILITY
+    description: |
+      A human reading WebSocket-handler code is not the same as proving
+      its handshake authenticates. The classic F03 reachability trap.
+    claim_shape:
+      class: SECURITY
+      tier: FACT
+      evidence_types: [MANUAL_INSPECTION]
+      asserts: RUNTIME_REACHABILITY
+    expected_refusal: RUNTIME_REACHABILITY

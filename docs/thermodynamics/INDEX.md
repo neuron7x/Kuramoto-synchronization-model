@@ -253,9 +253,8 @@ deriv(system_free_energy[5m])
 
 ### Related Documents
 
-- **[PATENTS.md](../../PATENTS.md)**: Patent filing for TACL
-- **[HPC_AI_FINAL_REPORT.md](../../HPC_AI_FINAL_REPORT.md)**: HPC-AI integration
-- **[SYSTEM_OPTIMIZATION_SUMMARY.md](../../SYSTEM_OPTIMIZATION_SUMMARY.md)**: System optimizations
+- **[HPC_AI_FINAL_REPORT.md](README.md)**: HPC-AI integration
+- **[SYSTEM_OPTIMIZATION_SUMMARY.md](../operations/SYSTEM_OPTIMIZATION_SUMMARY.md)**: System optimizations
 
 ## Operational Procedures
 
@@ -317,7 +316,7 @@ python scripts/compare_states.py baseline.json post_maintenance.json
 
 - **Retention**: 7 years minimum
 - **Format**: JSONL with full decision context
-- **Location**: `/var/log/tradepulse/thermo_audit.jsonl`
+- **Location**: `/var/log/geosync/thermo_audit.jsonl`
 - **Rotation**: Monthly with archival to S3
 
 ### Dual Approval
@@ -411,8 +410,8 @@ python scripts/generate_thermo_compliance_report.py \
 
 ### External Links
 
-- [GitHub Repository](https://github.com/neuron7x/TradePulse)
-- [CI/CD Pipeline](../.github/workflows/thermo-evolution.yml)
+- [GitHub Repository](https://github.com/neuron7xLab/GeoSync)
+- [CI/CD Pipeline](../../.github/workflows/physics-2026-gate.yml)
 - [Prometheus Metrics](http://localhost:9090)
 - [API Documentation](http://localhost:8080/docs)
 

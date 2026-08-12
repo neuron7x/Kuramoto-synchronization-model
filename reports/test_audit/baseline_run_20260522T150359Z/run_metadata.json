@@ -1,0 +1,10 @@
+{
+  "schema_version": "1.0",
+  "generated_at_utc": "2026-05-22T15:04:09.231627Z",
+  "run_dir": "reports/test_audit/baseline_run_20260522T150359Z",
+  "command": "pytest tests/ -m \"not nightly and not flaky\" --cov=core --cov=backtest --cov=execution --cov-config=configs/quality/critical_surface.coveragerc --cov-report=xml:reports/test_audit/baseline_run_20260522T150359Z/coverage.xml --cov-report=term-missing --junitxml=reports/test_audit/baseline_run_20260522T150359Z/junit.xml",
+  "pytest_exit_code": 4,
+  "git_sha": "commit-redacted",
+  "branch": "work",
+  "python": "3.14.4"
+}

@@ -1,0 +1,102 @@
+# Diff-bound commit acceptor for the Forman-Ricci margin escalation-onset
+# honesty fix (no numeric change).
+#
+# DualTrackRicciMonitor.margin_multiplier shifted κ_min by a magic "+2.0" with
+# the inline comment "shift κ_min into non-negative range for margin scaling
+# (κ_F ≥ -2 typical)". That parenthetical asserted a FALSE mathematical bound:
+# the combinatorial Forman-Ricci κ_F = 4 − d_i − d_j + 3·T_ij is UNBOUNDED below
+# (a hub edge of degree d with no triangles gives κ_F = 4 − 2d, e.g. −96 at
+# d=50). The "+2" is not a bound — it is the policy *escalation onset*, below
+# which the documented behaviour is "fragmented → base margin".
+#
+# This change makes that honest WITHOUT changing any numeric output:
+#   * names the magic number as the module constant _MARGIN_ESCALATION_ONSET
+#     (= -2.0) with a docstring stating it is a policy onset, not a κ_F bound;
+#   * rewrites the margin_multiplier docstring + inline comment to describe the
+#     max(0, κ_min − onset) as the intentional "fragmented → base margin" floor;
+#   * adds tests pinning the floor as deliberate (κ_min = -2 and -96 both return
+#     exactly base) and the linear escalation just above the onset.
+#
+# κ_min − _MARGIN_ESCALATION_ONSET == κ_min − (−2.0) == κ_min + 2.0, so the
+# returned multiplier is byte-identical to the prior code for every input. No
+# claim tier is promoted, no invariant added, no dependency, no
+# trading/execution/forecast surface touched. Layer-B descriptor honesty only.
+#
+# Locally verified on origin/main fork base (d0469e9c):
+#   * pytest tests/unit/physics/test_T3_forman_ricci.py: all passed (incl. the
+#     two new escalation-onset tests)
+#   * ruff check / ruff format --check / black --check: clean
+#   * mypy --strict core/physics/forman_ricci.py: no issues
+#   * zero noqa / type: ignore across both changed files
+id: forman-ricci-margin-onset-honesty
+status: ACTIVE
+claim_type: governance
+promise: >-
+  core.physics.forman_ricci names the margin escalation onset as the module
+  constant _MARGIN_ESCALATION_ONSET (= -2.0) and documents it as a policy
+  threshold, NOT a lower bound on the combinatorial Forman-Ricci curvature
+  (which is unbounded below). DualTrackRicciMonitor.margin_multiplier computes
+  base · max(1, 1 + sensitivity · max(0, κ_min − onset)); for κ_min ≤ onset the
+  inner max saturates to 0 so the multiplier floors at base — the documented
+  "fragmented → base margin" regime, not a silently discarded value. The
+  returned multiplier is byte-identical to the prior κ_min + 2.0 code for every
+  input. No claim tier promoted, no invariant added; this is Layer-B descriptor
+  honesty only.
+diff_scope:
+  changed_files:
+    - path: ".claude/commit_acceptors/forman-ricci-margin-onset-honesty.yaml"
+    - path: "core/physics/forman_ricci.py"
+    - path: "tests/unit/physics/test_T3_forman_ricci.py"
+  forbidden_paths:
+    - "trading/"
+    - "execution/"
+    - "forecast/"
+    - "policy/"
+    - "src/"
+required_python_symbols:
+  - "core/physics/forman_ricci.py::DualTrackRicciMonitor"
+expected_signal: >-
+  `python -m pytest tests/unit/physics/test_T3_forman_ricci.py -k
+  "escalation_floor or escalates_smoothly"` reports 2 passed; the escalation
+  onset is the named constant _MARGIN_ESCALATION_ONSET == -2.0; margin floors at
+  base for κ_min far below the onset; ruff + black + mypy --strict clean.
+measurement_command: >-
+  bash -c 'mkdir -p tmp && python -m pytest
+  tests/unit/physics/test_T3_forman_ricci.py
+  -k "escalation_floor or escalates_smoothly"
+  > tmp/forman_ricci_margin_onset.log 2>&1
+  && grep -qE "2 passed" tmp/forman_ricci_margin_onset.log'
+signal_artifact: "tmp/forman_ricci_margin_onset.log"
+falsifier:
+  command: >-
+    python -c 'import sys, inspect;
+    import core.physics.forman_ricci as m;
+    from core.physics.forman_ricci import _MARGIN_ESCALATION_ONSET, DualTrackRicciMonitor, FormanRicciResult;
+    src = inspect.getsource(m);
+    regressed = False;
+    regressed = regressed or (_MARGIN_ESCALATION_ONSET != -2.0);
+    regressed = regressed or ("κ_F ≥ -2 typical" in src);
+    mon = DualTrackRicciMonitor(margin_multiplier_base=1.3, margin_sensitivity=2.0);
+    at = lambda k: FormanRicciResult(edge_curvatures={(0, 1): k}, kappa_min=k, kappa_mean=k, kappa_max=k, herding_index=0.0);
+    regressed = regressed or (mon.margin_multiplier(at(-96.0)) != 1.3);
+    regressed = regressed or (mon.margin_multiplier(at(-2.0)) != mon.margin_multiplier(at(-50.0)));
+    sys.exit(0 if regressed else 1)'
+  description: >-
+    Inverse probe of the escalation-onset honesty contract. Exits 0 (fires) iff
+    the onset stops being the named constant -2.0, OR the false-bound comment
+    "κ_F ≥ -2 typical" reappears in the source, OR the margin stops flooring at
+    base for κ_min far below the onset (i.e. the "fragmented → base margin"
+    policy floor regressed). While the contract holds the probe exits 1. An
+    exit 0 means the module has drifted back to a false-bound claim or a broken
+    floor and must be repaired, not patched green.
+rollback_command: >-
+  bash -c 'git checkout origin/main -- core/physics/forman_ricci.py
+  tests/unit/physics/test_T3_forman_ricci.py
+  && git rm -f .claude/commit_acceptors/forman-ricci-margin-onset-honesty.yaml'
+rollback_verification_command: >-
+  bash -c 'test ! -f .claude/commit_acceptors/forman-ricci-margin-onset-honesty.yaml
+  && ! grep -q "_MARGIN_ESCALATION_ONSET" core/physics/forman_ricci.py'
+memory_update_type: none
+ledger_path: ".claude/commit_acceptors/forman-ricci-margin-onset-honesty.yaml"
+report_path: "tmp/forman_ricci_margin_onset.log"
+evidence: []

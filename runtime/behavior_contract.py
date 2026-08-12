@@ -1,3 +1,5 @@
+# Copyright (c) 2023-2026 Yaroslav Vasylenko (neuron7xLab)
+# SPDX-License-Identifier: MIT
 """Thermodynamic Autonomic Control Layer (TACL) behaviour contract."""
 
 from __future__ import annotations
@@ -68,16 +70,11 @@ def register_mandate(module_name: str, mandate: ModuleMandate) -> None:
 
 def classify_action(description: str) -> ActionClass:
     lowered = description.lower()
-    if any(
-        keyword in lowered for keyword in ("read", "inspect", "observe", "simulate")
-    ):
+    if any(keyword in lowered for keyword in ("read", "inspect", "observe", "simulate")):
         return ActionClass.A0_OBSERVATION
     if any(keyword in lowered for keyword in ("update", "adjust", "tune", "local")):
         return ActionClass.A1_LOCAL_CORRECTION
-    if any(
-        keyword in lowered
-        for keyword in ("change", "deploy", "topology", "order", "system")
-    ):
+    if any(keyword in lowered for keyword in ("change", "deploy", "topology", "order", "system")):
         return ActionClass.A2_SYSTEMIC
     raise ValueError(f"Unable to classify action '{description}' into A0/A1/A2")
 

@@ -1,3 +1,5 @@
+# Copyright (c) 2023-2026 Yaroslav Vasylenko (neuron7xLab)
+# SPDX-License-Identifier: MIT
 from __future__ import annotations
 
 import time
@@ -17,4 +19,4 @@ t0 = time.perf_counter()
 for i in range(n):
     amm.update(float(xs[i]), float(R[i]), float(kappa[i]), None)
 dt = time.perf_counter() - t0
-print(f"{n} steps in {dt:.4f}s, {n/dt:.0f} steps/s")
+print(f"{n} steps in {dt:.4f}s, {n / dt:.0f} steps/s")

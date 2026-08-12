@@ -1,0 +1,59 @@
+# Diff-bound commit acceptor: decompose validate_ohlcv (cyclomatic ~29) into
+# per-check helpers, behaviour-preserving, locked by a 12-case branch-covering
+# golden battery. Pays down the enforced code-hygiene complexity baseline.
+# Data-integrity layer, no physics.
+
+id: decompose-validate-ohlcv
+status: ACTIVE
+claim_type: refactor
+promise: >-
+  After this PR lands, core/data/validation.py's validate_ohlcv (was 132 LOC,
+  cyclomatic ~29) is decomposed: the early-return guards stay in a ~65-LOC
+  orchestrator (cyclomatic 8) and the price-quality, OHLC-relationship, OHLC-
+  band and volume checks become four module-level _check_* helpers, each <=15
+  cyclomatic. No new over-complex function. Behaviour is byte-identical across a
+  12-case golden battery exercising every branch; the code-hygiene complexity
+  baseline shrinks 126->125 and the meta-gate confirms the decrease. No
+  behaviour or physics change.
+diff_scope:
+  changed_files:
+    - path: ".claude/commit_acceptors/decompose-validate-ohlcv.yaml"
+    - path: "core/data/validation.py"
+    - path: "docs/CODE_DEBT_BASELINE.json"
+    - path: "tests/unit/data/validate_ohlcv_golden.json"
+    - path: "tests/unit/data/test_validate_ohlcv_golden.py"
+  forbidden_paths:
+    - "trading/"
+    - "execution/"
+    - "forecast/"
+    - "policy/"
+    - "runtime/"
+    - "application/"
+    - "core/kuramoto/"
+    - "core/physics/"
+    - "core/neuro/"
+required_python_symbols:
+  - "core/data/validation.py::validate_ohlcv"
+  - "core/data/validation.py::_check_ohlc_relationships"
+  - "core/data/validation.py::_check_ohlc_bands"
+expected_signal: >-
+  python -m pytest tests/unit/data/test_validate_ohlcv_golden.py reports 13
+  passed; python scripts/ci/check_code_hygiene.py no longer flags validate_ohlcv
+  and exits 0.
+measurement_command: >-
+  bash -c 'mkdir -p tmp && python -m pytest -q tests/unit/data/test_validate_ohlcv_golden.py | tee tmp/validate_ohlcv.log && python scripts/ci/check_code_hygiene.py | tee -a tmp/validate_ohlcv.log'
+signal_artifact: "tmp/validate_ohlcv.log"
+falsifier:
+  command: >-
+    bash -c 'python -m pytest -q tests/unit/data/test_validate_ohlcv_golden.py'
+  description: >-
+    Runs the 12-case golden battery. Succeeds (exit 0) only when the decomposed
+    validate_ohlcv still returns the frozen (valid, issues, warnings, counts)
+    tuple for every branch-exercising frame; a behaviour change diverges a case.
+rollback_command: >-
+  bash -c 'git checkout origin/main -- core/data/validation.py docs/CODE_DEBT_BASELINE.json && git rm -f tests/unit/data/test_validate_ohlcv_golden.py tests/unit/data/validate_ohlcv_golden.json .claude/commit_acceptors/decompose-validate-ohlcv.yaml'
+rollback_verification_command: >-
+  bash -c '! grep -q "_check_ohlc_bands" core/data/validation.py'
+memory_update_type: append
+ledger_path: ".claude/commit_acceptors/decompose-validate-ohlcv.yaml"
+report_path: "tmp/validate_ohlcv.log"

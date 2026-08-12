@@ -1,3 +1,5 @@
+# Copyright (c) 2023-2026 Yaroslav Vasylenko (neuron7xLab)
+# SPDX-License-Identifier: MIT
 from __future__ import annotations
 
 import pytest
@@ -22,13 +24,9 @@ class DummyTimer:
 @pytest.mark.asyncio
 async def test_on_tick_publishes_metrics(monkeypatch: pytest.MonkeyPatch) -> None:
     ports: list[int] = []
-    monkeypatch.setattr(
-        "execution.amm_runner.start_http_server", lambda port: ports.append(port)
-    )
+    monkeypatch.setattr("execution.amm_runner.start_http_server", lambda port: ports.append(port))
     timer = DummyTimer()
-    monkeypatch.setattr(
-        "execution.amm_runner.timed_update", lambda *args, **kwargs: timer
-    )
+    monkeypatch.setattr("execution.amm_runner.timed_update", lambda *args, **kwargs: timer)
     calls: list[tuple] = []
 
     def fake_publish(
@@ -52,12 +50,8 @@ async def test_on_tick_publishes_metrics(monkeypatch: pytest.MonkeyPatch) -> Non
 @pytest.mark.asyncio
 async def test_run_stream_yields_each_tick(monkeypatch: pytest.MonkeyPatch) -> None:
     monkeypatch.setattr("execution.amm_runner.start_http_server", lambda port: None)
-    monkeypatch.setattr(
-        "execution.amm_runner.timed_update", lambda *args, **kwargs: DummyTimer()
-    )
-    monkeypatch.setattr(
-        "execution.amm_runner.publish_metrics", lambda *args, **kwargs: None
-    )
+    monkeypatch.setattr("execution.amm_runner.timed_update", lambda *args, **kwargs: DummyTimer())
+    monkeypatch.setattr("execution.amm_runner.publish_metrics", lambda *args, **kwargs: None)
 
     runner = AMMRunner("ETH-USD", "5m")
 

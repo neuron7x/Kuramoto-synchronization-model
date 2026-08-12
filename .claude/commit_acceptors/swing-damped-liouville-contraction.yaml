@@ -1,0 +1,61 @@
+# Diff-bound acceptor: complete INV-K10 with the damped Liouville-contraction
+# clause — det(M) = exp(-(Σ d_i/m_i)·dt) for the swing-equation Verlet map.
+#
+# INV-K10's statement has two clauses: undamped the map is symplectic (det=1,
+# already tested) and with damping d>0 phase-space volume contracts at the
+# dissipation rate. Only the undamped clause was machine-checked. This adds the
+# damped clause: the one-step Jacobian determinant equals exp(-(Σ d_i/m_i)·dt)
+# (Liouville's theorem with damping) to O(dt²). It is the geometric root of
+# INV-K8's monotone-energy (damped) clause.
+
+id: swing-damped-liouville-contraction
+status: ACTIVE
+claim_type: correctness
+promise: >-
+  Adds test_swing_integrator_damped_volume_contraction to
+  tests/unit/physics/test_T18_kuramoto_p1.py: for damping d>0 the one-step
+  Jacobian determinant of the swing-equation velocity-Verlet map equals
+  exp(-(Σ d_i/m_i)·dt) (Liouville phase-space-volume contraction at the
+  dissipation rate), verified by complex-step differentiation for d in {0.2,
+  0.5} with relative error below 1e-3 (observed ≤ 2e-5). Completes the
+  previously half-tested INV-K10 statement (undamped symplectic + damped
+  contraction). No invariant added or changed; zero production-code change.
+diff_scope:
+  changed_files:
+    - path: ".claude/commit_acceptors/swing-damped-liouville-contraction.yaml"
+    - path: "tests/unit/physics/test_T18_kuramoto_p1.py"
+  forbidden_paths:
+    - "trading/"
+    - "execution/"
+    - "forecast/"
+    - "policy/"
+required_python_symbols:
+  - "test_swing_integrator_damped_volume_contraction"
+expected_signal: >-
+  All tests in tests/unit/physics/test_T18_kuramoto_p1.py pass including the new
+  damped-contraction test; physics validator 0 issues; mypy --strict clean.
+  Calibration: det(M) = 1.0 (d=0, exact), 0.994015 (d=0.2, rel_err 3.0e-6),
+  0.985093 (d=0.5, rel_err 1.9e-5) vs exp(-(N·d/m)·dt).
+measurement_command: >-
+  PYTHONPATH=. python -m pytest tests/unit/physics/test_T18_kuramoto_p1.py
+  -k damped_volume -v
+signal_artifact: "tmp/swing_damped_liouville_pytest.log"
+falsifier:
+  command: >-
+    PYTHONPATH=. python -m pytest tests/unit/physics/test_T18_kuramoto_p1.py
+    -v -k "damped_volume_contraction"
+  description: >-
+    Builds the one-step Jacobian by complex-step differentiation for d>0 and
+    asserts det(M) matches exp(-(Σd/m)·dt) — the dissipative analogue of
+    symplecticity. A wrong damping coupling (sign or scale) changes the
+    contraction rate and fails; at d=0 the determinant is exactly 1 (symplectic).
+rollback_command: >-
+  git checkout HEAD~1 --
+  tests/unit/physics/test_T18_kuramoto_p1.py
+  .claude/commit_acceptors/swing-damped-liouville-contraction.yaml
+rollback_verification_command: >-
+  git diff --exit-code tests/unit/physics/test_T18_kuramoto_p1.py
+memory_update_type: none
+ledger_path: ".claude/commit_acceptors/swing-damped-liouville-contraction.yaml"
+report_path: "docs/reports/diff_bound_commit_acceptor_layer.md"
+evidence: []

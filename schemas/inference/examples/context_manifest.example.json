@@ -1,0 +1,23 @@
+{
+  "schema_version": 1,
+  "problem_statement": "Detect liquidity-fragility regime transitions in an order-book-derived market-state manifold via fused Ricci curvature and Kuramoto phase coherence.",
+  "asset_universe": ["BTCUSDT", "ETHUSDT"],
+  "time_window": {
+    "start": "2026-01-01T00:00:00+00:00",
+    "end": "2026-03-31T23:59:59+00:00"
+  },
+  "data_source": {
+    "name": "synthetic_l2_seeded_v1",
+    "contract_ref": "research/microstructure/BASELINE.L2.md",
+    "sha256": "0000000000000000000000000000000000000000000000000000000000000000"
+  },
+  "target_variable": "regime_break_within_horizon",
+  "claim_tier": "MEASURED_SYNTHETIC",
+  "null_models": ["gaussian_iid", "shuffled_edges", "block_bootstrap"],
+  "stop_rules": [
+    "null matches or beats kernel",
+    "out-of-sample performance collapses",
+    "transaction costs destroy signal utility"
+  ],
+  "evidence_path": "results/inference/bundles/"
+}

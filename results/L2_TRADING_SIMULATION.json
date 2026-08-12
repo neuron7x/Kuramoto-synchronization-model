@@ -1,0 +1,36 @@
+{
+  "cost_bp_per_round_trip": 9.8,
+  "decision_sec": 180,
+  "hold_sec": 180,
+  "median_window_sec": 3600,
+  "results": [
+    {
+      "cost_per_trade_bp": 9.8,
+      "gross_pnl_bp": 282.6511285462743,
+      "mean_return_gross_bp": 3.286641029607841,
+      "mean_return_net_bp": -6.5133589703921615,
+      "median_return_net_bp": -7.525429030108552,
+      "n_gated_out": 0,
+      "n_trades": 86,
+      "name": "BASKET_SIGN_UNCONDITIONAL",
+      "net_pnl_bp": -560.1488714537259,
+      "sharpe_annualized_24_7": -187.1123815555041,
+      "sharpe_per_trade": -0.4468757576756151,
+      "win_rate": 0.2441860465116279
+    },
+    {
+      "cost_per_trade_bp": 9.8,
+      "gross_pnl_bp": 103.17387318757011,
+      "mean_return_gross_bp": 4.913041580360481,
+      "mean_return_net_bp": -4.88695841963952,
+      "median_return_net_bp": -6.816041898570072,
+      "n_gated_out": 65,
+      "n_trades": 21,
+      "name": "BASKET_SIGN_REGIME_Q75",
+      "net_pnl_bp": -102.62612681242993,
+      "sharpe_annualized_24_7": -95.51042510010576,
+      "sharpe_per_trade": -0.2281051271311465,
+      "win_rate": 0.38095238095238093
+    }
+  ]
+}

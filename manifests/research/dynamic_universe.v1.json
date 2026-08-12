@@ -1,0 +1,29 @@
+{
+  "schema_version": "1.0.0",
+  "manifest_id": "geosync.dynamic_universe.v1",
+  "status": "DRAFT",
+  "purpose": "Declare point-in-time universe membership requirements before geometry experiments consume observations.",
+  "required_fields": [
+    "universe_id",
+    "as_of_utc",
+    "membership_source",
+    "instrument_id",
+    "venue",
+    "listed_at_utc",
+    "delisted_at_utc",
+    "corporate_action_policy",
+    "membership_sha256"
+  ],
+  "rules": [
+    "include entities while observable at time t",
+    "record delisting state instead of silently dropping entities",
+    "separate bar proxy geometry from direct order-book evidence",
+    "hash the universe membership used by every run"
+  ],
+  "blocking_conditions": [
+    "missing as_of_utc",
+    "missing membership source",
+    "survivor-only universe",
+    "unhashed membership snapshot"
+  ]
+}

@@ -1,4 +1,5 @@
-# SPDX-License-Identifier: LicenseRef-TradePulse-Proprietary
+# Copyright (c) 2023-2026 Yaroslav Vasylenko (neuron7xLab)
+# SPDX-License-Identifier: MIT
 """Unit tests for Hurst exponent estimation.
 
 This module tests the HurstFeature class and hurst_exponent function,
@@ -13,6 +14,7 @@ Tests verify:
 - Edge cases like insufficient data are handled properly
 - Performance optimizations preserve accuracy
 """
+
 from __future__ import annotations
 
 import numpy as np

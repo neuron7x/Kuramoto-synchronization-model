@@ -1,3 +1,5 @@
+# Copyright (c) 2023-2026 Yaroslav Vasylenko (neuron7xLab)
+# SPDX-License-Identifier: MIT
 """Idempotency primitives for ensuring at-least-once delivery semantics."""
 
 from __future__ import annotations
@@ -91,9 +93,7 @@ class InMemoryEventIdempotencyStore(EventIdempotencyStore):
                 break
             self._order.popleft()
             current = self._records.get(record.event_id)
-            if current is record or (
-                current is not None and current.timestamp == record.timestamp
-            ):
+            if current is record or (current is not None and current.timestamp == record.timestamp):
                 self._records.pop(record.event_id, None)
 
     def _delete_locked(self, event_id: str) -> None:

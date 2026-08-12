@@ -1,0 +1,152 @@
+{
+  "artifact": "CALIB-GRID-001",
+  "branch_sha": "d170d48afa5066c13edeb40b2c1904b3fd708516",
+  "citation": "Anderson&Fouad-2003-Ex2.6 / Dorfler-Bullo-PNAS-2013-Fig1",
+  "config": {
+    "coupling_scale": 8.0,
+    "dt": 0.01,
+    "keep_frac": 0.6,
+    "lambda_reg": 0.02,
+    "noise_sigma": 0.02,
+    "penalty": "mcp",
+    "seed": 42,
+    "steps": 8000,
+    "theta0_perturb": 0.6,
+    "topology_rel_threshold": 0.1
+  },
+  "failed_gates": [
+    {
+      "localises_to": "coupling_estimator row-regression bias / \u03bb_reg",
+      "metric_key": "frobenius_rel_error",
+      "name": "noiseless.frobenius",
+      "observed": 1.045877415470457,
+      "operator": "<=",
+      "passed": false,
+      "threshold": 0.1
+    },
+    {
+      "localises_to": "end-to-end (K_hat propagated through D\u00f6rfler\u2013Bullo)",
+      "metric_key": "critical_coupling_rel_error",
+      "name": "noiseless.critical_coupling",
+      "observed": 1.0,
+      "operator": "<=",
+      "passed": false,
+      "threshold": 0.15
+    },
+    {
+      "localises_to": "coupling_estimator noise robustness / standardisation",
+      "metric_key": "frobenius_rel_error",
+      "name": "noisy.frobenius",
+      "observed": 0.9901165361952786,
+      "operator": "<=",
+      "passed": false,
+      "threshold": 0.25
+    },
+    {
+      "localises_to": "coupling_estimator support stability under \u03c3",
+      "metric_key": "topology_f1",
+      "name": "noisy.topology_f1",
+      "observed": 0.8,
+      "operator": ">=",
+      "passed": false,
+      "threshold": 0.9
+    }
+  ],
+  "gates": [
+    {
+      "localises_to": "coupling_estimator row-regression bias / \u03bb_reg",
+      "metric_key": "frobenius_rel_error",
+      "name": "noiseless.frobenius",
+      "observed": 1.045877415470457,
+      "operator": "<=",
+      "passed": false,
+      "threshold": 0.1
+    },
+    {
+      "localises_to": "coupling_estimator sparse-support thresholding",
+      "metric_key": "topology_f1",
+      "name": "noiseless.topology_f1",
+      "observed": 1.0,
+      "operator": ">=",
+      "passed": true,
+      "threshold": 0.95
+    },
+    {
+      "localises_to": "end-to-end (K_hat propagated through D\u00f6rfler\u2013Bullo)",
+      "metric_key": "critical_coupling_rel_error",
+      "name": "noiseless.critical_coupling",
+      "observed": 1.0,
+      "operator": "<=",
+      "passed": false,
+      "threshold": 0.15
+    },
+    {
+      "localises_to": "coupling_estimator noise robustness / standardisation",
+      "metric_key": "frobenius_rel_error",
+      "name": "noisy.frobenius",
+      "observed": 0.9901165361952786,
+      "operator": "<=",
+      "passed": false,
+      "threshold": 0.25
+    },
+    {
+      "localises_to": "coupling_estimator support stability under \u03c3",
+      "metric_key": "topology_f1",
+      "name": "noisy.topology_f1",
+      "observed": 0.8,
+      "operator": ">=",
+      "passed": false,
+      "threshold": 0.9
+    }
+  ],
+  "is_hypothesis": false,
+  "kind": "external-ground-truth-calibration",
+  "ledger_sha256": "ed8d409b7b222eb053572d6bf9ab6e98c5f4918be1cae384864733a2b4d72aaf",
+  "localized_refinement_targets": [
+    "coupling_estimator noise robustness / standardisation",
+    "coupling_estimator row-regression bias / \u03bb_reg",
+    "coupling_estimator support stability under \u03c3",
+    "end-to-end (K_hat propagated through D\u00f6rfler\u2013Bullo)"
+  ],
+  "metrics": {
+    "noiseless": {
+      "coupling_condition_number": 3.8153703466068563,
+      "critical_coupling_rel_error": 1.0,
+      "extra": {
+        "antisymmetric_residual_fro": 15.905186650493327,
+        "fro_abs_error": 19.022859935396344,
+        "fro_true": 18.18842213629737
+      },
+      "frobenius_rel_error": 1.045877415470457,
+      "n_nodes": 3,
+      "n_recovered_edges": 6,
+      "n_true_edges": 6,
+      "omega_rel_error": 1.0,
+      "regime": "noiseless",
+      "s_crit_hat": 0.0,
+      "s_crit_true": 0.01957099618634378,
+      "topology_f1": 1.0
+    },
+    "noisy": {
+      "coupling_condition_number": 3.8153703466068563,
+      "critical_coupling_rel_error": 16.69931609145149,
+      "extra": {
+        "antisymmetric_residual_fro": 0.2636817403442253,
+        "fro_abs_error": 18.00865752444828,
+        "fro_true": 18.18842213629737
+      },
+      "frobenius_rel_error": 0.9901165361952786,
+      "n_nodes": 3,
+      "n_recovered_edges": 4,
+      "n_true_edges": 6,
+      "omega_rel_error": 0.9912878664428583,
+      "regime": "noisy",
+      "s_crit_hat": 0.3463932477266902,
+      "s_crit_true": 0.01957099618634378,
+      "topology_f1": 0.8
+    }
+  },
+  "python": "3.12.3",
+  "system": "WSCC-9",
+  "verdict": "NEGATIVE"
+}

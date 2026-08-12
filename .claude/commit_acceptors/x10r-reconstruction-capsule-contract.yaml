@@ -1,0 +1,67 @@
+# Diff-bound commit acceptor for the X10R reconstruction execution capsule.
+#
+# research/ markdown is NOT a governance-markdown root, so the capsule doc is
+# treated as a bound artifact and must carry an acceptor. This acceptor pins the
+# capsule's CONTRACT STRUCTURE and its fail-closed honesty: the doc must keep all
+# mandatory contract sections AND must keep declaring that the pipeline is not
+# implemented / not CI-verified. It blocks the failure mode where a future edit
+# quietly upgrades the capsule's verdict to "done" without executable code,
+# falsifiers, hashes, and CI evidence.
+
+id: x10r-reconstruction-capsule-contract
+status: ACTIVE
+claim_type: governance
+promise: >-
+  research/reconstruction/X10R_CURVATURE_SYNCHRONIZATION_FREE_ENERGY_CAPSULE.md
+  carries every mandatory contract section (claim boundary, source map,
+  reconstruction objective, execution lanes, acceptance gates, command contract,
+  stop rules, execution verdict) and keeps its fail-closed honest state
+  (HONEST_STATE=EXECUTION_CONTRACT_READY, DECISION_STATE=BLOCKED_BY_MISSING_EVIDENCE,
+  CODE_EXECUTION_NOT_PERFORMED_IN_THIS_COMMIT). It also keeps schema validation
+  of every emitted artifact as a BLOCKING acceptance condition: the capsule must
+  state that each artifacts/x10r_reconstruction/*.json validates against
+  schemas/research/research_inference_artifact.schema.json with canonical
+  provenance fields, so a hash-pinned but schema-invalid artifact cannot promote
+  evidence (closes codex P2 on #1165). The capsule is an execution contract only;
+  it makes no implementation, product-readiness, alpha, or universal-law claim.
+  No executable pipeline, fixture, or artifact is bound here.
+
+diff_scope:
+  changed_files:
+    - path: ".claude/commit_acceptors/x10r-reconstruction-capsule-contract.yaml"
+    - path: "research/reconstruction/X10R_CURVATURE_SYNCHRONIZATION_FREE_ENERGY_CAPSULE.md"
+  forbidden_paths:
+    - "core/"
+    - "src/"
+    - "runtime/"
+    - "execution/"
+    - "research/reconstruction/x10r_reconstruct.py"
+    - "artifacts/x10r_reconstruction/"
+
+required_python_symbols: []
+
+expected_signal: >-
+  All eight mandatory capsule sections are present, the three fail-closed
+  state lines are present, AND the blocking schema-validation acceptance
+  condition is declared; the doc still refuses ceremonial completion.
+
+measurement_command: "bash -c 'set -e; f=research/reconstruction/X10R_CURVATURE_SYNCHRONIZATION_FREE_ENERGY_CAPSULE.md; mkdir -p tmp; for s in \"## 1. Claim Boundary\" \"## 2. First-Principles Source Map\" \"## 3. Reconstruction Objective\" \"## 4. Execution Lanes\" \"## 5. Acceptance Gates\" \"## 6. Minimal Command Contract\" \"## 7. Stop Rules\" \"## 9. Current Execution Verdict\" \"HONEST_STATE=EXECUTION_CONTRACT_READY\" \"DECISION_STATE=BLOCKED_BY_MISSING_EVIDENCE\" \"CODE_EXECUTION_NOT_PERFORMED_IN_THIS_COMMIT\" \"Schema validation is a BLOCKING acceptance condition\" \"research_inference_artifact.schema.json\"; do grep -qF \"$s\" \"$f\" || { echo \"MISSING: $s\"; exit 1; }; done; echo x10r-capsule-contract-ok | tee tmp/x10r_capsule_contract.log'"
+
+signal_artifact: "tmp/x10r_capsule_contract.log"
+
+falsifier:
+  command: "bash -c 'f=research/reconstruction/X10R_CURVATURE_SYNCHRONIZATION_FREE_ENERGY_CAPSULE.md; if grep -qF \"DECISION_STATE=BLOCKED_BY_MISSING_EVIDENCE\" \"$f\"; then exit 1; else exit 0; fi'"
+  description: >-
+    Succeeds (exit 0, falsification) only if the capsule has dropped its
+    fail-closed BLOCKED-by-missing-evidence verdict — i.e. an edit upgraded it to
+    a completion claim. While the capsule stays honest this exits 1, proving the
+    no-ceremonial-completion promise holds.
+
+rollback_command: "bash -c 'git rm -f research/reconstruction/X10R_CURVATURE_SYNCHRONIZATION_FREE_ENERGY_CAPSULE.md .claude/commit_acceptors/x10r-reconstruction-capsule-contract.yaml'"
+
+rollback_verification_command: "bash -c 'test ! -e .claude/commit_acceptors/x10r-reconstruction-capsule-contract.yaml && test ! -e research/reconstruction/X10R_CURVATURE_SYNCHRONIZATION_FREE_ENERGY_CAPSULE.md'"
+
+memory_update_type: append
+ledger_path: "research/reconstruction/X10R_CURVATURE_SYNCHRONIZATION_FREE_ENERGY_CAPSULE.md"
+report_path: "tmp/x10r_capsule_contract.log"
+evidence: []

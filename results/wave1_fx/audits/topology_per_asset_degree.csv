@@ -1,0 +1,9 @@
+asset,mean_degree,median_degree,p5_degree,p95_degree,max_possible,frac_time_at_max_deg,frac_time_isolated
+EURUSD,5.9,6.0,5,7,7,0.2443,0.0
+GBPUSD,5.4169,6.0,4,6,7,0.042,0.0
+USDJPY,3.9925,4.0,1,6,7,0.0143,0.0
+AUDUSD,4.7409,5.0,2,6,7,0.0084,0.0
+USDCAD,4.4136,5.0,2,6,7,0.0132,0.0
+USDCHF,4.9873,5.0,3,7,7,0.1118,0.0035
+EURGBP,2.5425,3.0,1,5,7,0.0,0.0031
+EURJPY,3.9115,4.0,1,7,7,0.0568,0.0

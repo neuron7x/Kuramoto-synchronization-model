@@ -1,10 +1,10 @@
 # Installation Guide
 
-This guide covers environment prerequisites, supported platforms, and the recommended workflows for installing TradePulse.
+This guide covers environment prerequisites, supported platforms, and the recommended workflows for installing GeoSync.
 
 ## Prerequisites
 
-Before installing TradePulse, make sure you have the following tools available:
+Before installing GeoSync, make sure you have the following tools available:
 
 - **Python 3.11–3.13** with `pip` and `venv` modules.
 - **Git** for cloning the repository and tracking updates.
@@ -36,7 +36,7 @@ virtualenv paths, optional extras, and frontend controls.
 
 ## Supported Platforms
 
-TradePulse is continuously tested on Linux (Ubuntu 22.04) and macOS (13+). Windows users should run inside WSL2 with Ubuntu 22.04 or newer to match the supported dependency toolchain. Native Windows execution is possible but not part of the automated CI matrix.
+GeoSync is continuously tested on Linux (Ubuntu 22.04) and macOS (13+). Windows users should run inside WSL2 with Ubuntu 22.04 or newer to match the supported dependency toolchain. Native Windows execution is possible but not part of the automated CI matrix.
 
 > ℹ️ Keep your Python minor version aligned with the published lock files (`requirements.lock`, `requirements-dev.lock`).
 
@@ -46,8 +46,8 @@ We recommend using `venv` to avoid dependency conflicts.
 
 ```bash
 # Clone the repository
-git clone https://github.com/neuron7x/TradePulse.git
-cd TradePulse
+git clone https://github.com/neuron7xLab/GeoSync.git
+cd GeoSync
 
 # Create a virtual environment
 python -m venv .venv
@@ -67,7 +67,7 @@ When you finish working, deactivate the environment with `deactivate`.
 
 ## Optional Extras
 
-TradePulse exposes optional extras to keep the base installation lean. Install only what you need:
+GeoSync exposes optional extras to keep the base installation lean. Install only what you need:
 
 ```bash
 # Broker and market data connectors
@@ -81,7 +81,7 @@ You can combine extras: `pip install ".[connectors,gpu]"`.
 
 ## Local TLS Development Certificates
 
-TradePulse expects development TLS material in `configs/tls/dev/`. Private keys (`*.key.pem`) are **never** committed and must be generated locally.
+GeoSync expects development TLS material in `configs/tls/dev/`. Private keys (`*.key.pem`) are **never** committed and must be generated locally.
 
 Recommended workflow (from the repository root):
 

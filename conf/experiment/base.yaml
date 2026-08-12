@@ -1,9 +1,9 @@
-# SPDX-License-Identifier: LicenseRef-TradePulse-Proprietary
+# SPDX-License-Identifier: MIT
 # Base defaults shared by all Hydra experiment profiles.
 
 name: default
 # Use a local sqlite database by default; production profiles must override this.
-db_uri: "sqlite:///tradepulse.db"
+db_uri: "sqlite:///geosync.db"
 db_tls: null
 debug: false
 log_level: INFO

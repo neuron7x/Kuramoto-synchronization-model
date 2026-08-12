@@ -1,3 +1,5 @@
+# Copyright (c) 2023-2026 Yaroslav Vasylenko (neuron7xLab)
+# SPDX-License-Identifier: MIT
 """Configuration model for the NaK controller."""
 
 from __future__ import annotations
@@ -162,9 +164,7 @@ class NakConfig(BaseModel):
             raise ValueError("sum of load weights must not exceed 1.0")
         recovery_reserve = self.u_e + self.u_l + self.u_p
         if recovery_reserve <= 0.0:
-            raise ValueError(
-                "u_e + u_l + u_p must be positive to retain recovery reserve"
-            )
+            raise ValueError("u_e + u_l + u_p must be positive to retain recovery reserve")
         if self.r_min >= self.r_max:
             raise ValueError("r_min must be less than r_max")
         if self.f_min >= self.f_max:

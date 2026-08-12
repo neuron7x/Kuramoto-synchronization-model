@@ -1,0 +1,73 @@
+{
+  "task": "TST-001",
+  "suite": "canonical_python_3.12",
+  "verdict": "ENV_LIMITED",
+  "counts": {
+    "collected": 8395,
+    "passed": 8383,
+    "failed": 2,
+    "errored": 0,
+    "skipped": 10
+  },
+  "collection_errors": 0,
+  "run_meta": {
+    "returncode": 1,
+    "timed_out": false,
+    "wall_seconds": 297.5
+  },
+  "targets": [
+    "tests/unit"
+  ],
+  "excluded_lanes": {
+    "ignored_dirs": [
+      "tests/mutation"
+    ],
+    "ignored_files": [
+      "tests/ci/test_mutation_kill_ratchet.py",
+      "tests/ci/test_ratchets_enforced.py",
+      "tests/governance/test_truth_gate_mutation.py",
+      "tests/physics/test_cognitive_core_mutation_tribunal.py",
+      "tests/tools/test_verifier_mutation_kill.py",
+      "tests/tools/test_coverage_intelligence_ratchet_edges.py"
+    ],
+    "deselect_keywords": "not mutation and not ratchet and not nightly and not gpu",
+    "deselect_markers": "not nightly and not flaky and not slow and not canary and not live_balance and not heavy_math and not UNSTABLE",
+    "rationale": "Source-rewriting mutation/ratchet lanes edit source in place (CLAUDE.md, .gitlab-ci.yml) and MUST NOT run. nightly/flaky/slow/canary/live/heavy lanes need infra/time this sandbox lacks."
+  },
+  "missing_dependencies": [],
+  "environment": {
+    "captured_at_utc": "2026-07-19T17:34:04.053524+00:00",
+    "python_version": "3.12.3",
+    "python_implementation": "CPython",
+    "python_executable": "/usr/bin/python",
+    "platform": "Linux-6.8.0-134-lowlatency-x86_64-with-glibc2.39",
+    "commit": "b012d3da99772b549d6b8a870596bd35b4d7601c",
+    "tree_sha": "35b344a9327c798693623463b4dcc27db3331e52",
+    "branch": "remediation/wave7",
+    "worktree_dirty": true,
+    "dependency_versions": {
+      "numpy": "2.4.6",
+      "scipy": "1.18.0",
+      "pandas": "2.3.3",
+      "torch": "2.12.1",
+      "networkx": "2.6.3",
+      "numba": "0.64.0",
+      "hypothesis": "6.140.3",
+      "cryptography": "46.0.6",
+      "pytest": "8.4.2",
+      "pytest-timeout": "2.4.0",
+      "pytest-asyncio": "1.2.0"
+    }
+  },
+  "honesty_note": "This is the SANDBOX receipt. The signed 0-failure canonical receipt is a task for the ENV-005 hermetic container run: this sandbox is below security floors for several deps (ENV-001) and may lack GPU/network/market-data fixtures. Counts above are the REAL observed numbers, not an asserted clean pass.",
+  "receipt_binding": {
+    "commit": "b012d3da99772b549d6b8a870596bd35b4d7601c",
+    "tree_sha": "35b344a9327c798693623463b4dcc27db3331e52",
+    "junit_xml": "artifacts/tests/full_py312/junit.xml"
+  },
+  "post_receipt_fixes": {
+    "note": "The 2 pre-fix failures were STALE post-migration import paths (geosync.core.physics -> core.physics) in tests/unit/physics/test_T6_wave_propagation.py:190 and test_mle_finite_guard.py:267. Fixed in this same commit; both re-verified PASS. junit.xml is the pre-fix snapshot.",
+    "sandbox_subset_status_after_fix": "CLEAN (0 failures on the safe collected subset)",
+    "canonical_full_receipt": "still requires ENV-005 hermetic container (GPU/network/market-data lanes + at-or-above-floor deps); NOT fabricated here."
+  }
+}

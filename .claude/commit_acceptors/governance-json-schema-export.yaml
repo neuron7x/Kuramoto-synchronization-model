@@ -1,0 +1,107 @@
+# Diff-bound commit acceptor for the governance JSON Schema export.
+#
+# Builds on the typed Pydantic models from PR #552 by exporting their
+# canonical JSON Schema 2020-12 representation under
+# docs/schemas/governance/. External consumers (IDE plugins, OpenAPI
+# tooling, third-party auditors) can pin against the on-disk artefact
+# without re-parsing the YAML or importing Pydantic.
+#
+# The new CI workflow `governance-schema-export-sync` re-runs the
+# generator with `--check` on every PR that touches the typed model
+# or the schema artefacts and fails fail-closed on drift. Mirrors the
+# invariant-count-sync gate pattern.
+#
+# Locally verified:
+#   * mypy --strict + ruff: clean on the script + the test
+#   * pytest tests/scripts/test_export_governance_schemas.py: 7/7 pass
+#   * python scripts/export_governance_schemas.py --check: PASS
+#   * Generated schemas:
+#       docs/schemas/governance/claim_ledger.schema.json (2 props)
+#       docs/schemas/governance/commit_acceptor.schema.json (16 props)
+
+id: governance-json-schema-export
+status: ACTIVE
+claim_type: governance
+promise: >-
+  After this PR lands, the canonical Pydantic governance models
+  (`application.governance.ClaimLedger`, `CommitAcceptor`) ship a
+  matching JSON Schema 2020-12 export under
+  `docs/schemas/governance/`. The CI workflow
+  `governance-schema-export-sync` re-runs the generator with `--check`
+  on every PR matching the path filter (governance models, schemas,
+  exporter, tests, workflow itself) and fails closed on drift.
+  Re-running the exporter with no arguments produces bit-identical
+  bytes (deterministic via `sort_keys=True` + trailing newline). The
+  test `test_check_mode_passes_against_committed_artefact` enforces
+  the same invariant under pytest.
+diff_scope:
+  changed_files:
+    - path: ".claude/commit_acceptors/governance-json-schema-export.yaml"
+    - path: ".github/workflows/governance-schema-export-sync.yml"
+    - path: "docs/schemas/governance/claim_ledger.schema.json"
+    - path: "docs/schemas/governance/commit_acceptor.schema.json"
+    - path: "scripts/export_governance_schemas.py"
+    - path: "tests/scripts/test_export_governance_schemas.py"
+  forbidden_paths:
+    - "trading/"
+    - "execution/"
+    - "forecast/"
+    - "policy/"
+    - "core/physics/"
+    - "core/kuramoto/"
+    - "application/governance/claim_ledger.py"
+    - "application/governance/commit_acceptor.py"
+    - "scripts/ci/check_claims.py"
+    - "tools/commit_acceptor/validate_commit_acceptor.py"
+required_python_symbols:
+  - "scripts/export_governance_schemas.py::export"
+  - "scripts/export_governance_schemas.py::CLAIM_LEDGER_PATH"
+  - "scripts/export_governance_schemas.py::COMMIT_ACCEPTOR_PATH"
+  - "tests/scripts/test_export_governance_schemas.py::test_check_mode_passes_against_committed_artefact"
+  - "tests/scripts/test_export_governance_schemas.py::test_serialise_is_deterministic"
+expected_signal: >-
+  Local: `python scripts/export_governance_schemas.py --check` exits 0
+  with "PASS: 2 governance schema(s) match the typed model.";
+  `mypy --strict --follow-imports=silent
+  scripts/export_governance_schemas.py
+  tests/scripts/test_export_governance_schemas.py` reports "Success: no
+  issues found in 2 source files"; `pytest
+  tests/scripts/test_export_governance_schemas.py -q` reports "7
+  passed"; `python -c "import json;
+  s=json.load(open('docs/schemas/governance/claim_ledger.schema.json'));
+  print(s['title'])"` prints "ClaimLedger".
+measurement_command: >-
+  bash -c 'mypy --strict --follow-imports=silent
+  scripts/export_governance_schemas.py
+  tests/scripts/test_export_governance_schemas.py
+  && ruff check scripts/export_governance_schemas.py
+  tests/scripts/test_export_governance_schemas.py
+  && python scripts/export_governance_schemas.py --check
+  && python -m pytest tests/scripts/test_export_governance_schemas.py -q'
+signal_artifact: "tmp/governance_json_schema_export.log"
+falsifier:
+  command: >-
+    bash -c 'python scripts/export_governance_schemas.py --check
+    >/tmp/_export_check.log 2>&1
+    && ! grep -q "PASS:" /tmp/_export_check.log'
+  description: >-
+    Probes the round-trip between the live Pydantic model and the
+    on-disk JSON Schema. The exporter's `--check` mode prints
+    "PASS:" on match and exits 0; on drift it prints
+    "governance schemas drift detected" and exits 1. The falsifier
+    inverts: it succeeds (exit 0) only when `--check` did NOT print
+    "PASS:", which would mean the published artefact has drifted
+    from the model.
+rollback_command: >-
+  git checkout HEAD~1 --
+  scripts/export_governance_schemas.py
+  tests/scripts/test_export_governance_schemas.py
+  .github/workflows/governance-schema-export-sync.yml
+  .claude/commit_acceptors/governance-json-schema-export.yaml
+  && rm -rf docs/schemas/governance/
+rollback_verification_command: >-
+  bash -c 'test ! -d docs/schemas/governance'
+memory_update_type: append
+ledger_path: ".claude/commit_acceptors/governance-json-schema-export.yaml"
+report_path: "tmp/governance_json_schema_export.log"
+evidence: []

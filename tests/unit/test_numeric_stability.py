@@ -1,5 +1,7 @@
-# SPDX-License-Identifier: LicenseRef-TradePulse-Proprietary
+# Copyright (c) 2023-2026 Yaroslav Vasylenko (neuron7xLab)
+# SPDX-License-Identifier: MIT
 """Numerical stability tests shared across CPU architectures."""
+
 from __future__ import annotations
 
 import warnings
@@ -71,6 +73,4 @@ def test_kuramoto_order_accepts_complex_inputs_without_warning() -> None:
 
     assert not caught
     real_value = kuramoto_order(phases)
-    assert complex_value == pytest.approx(
-        real_value, rel=FLOAT_REL_TOL, abs=FLOAT_ABS_TOL
-    )
+    assert complex_value == pytest.approx(real_value, rel=FLOAT_REL_TOL, abs=FLOAT_ABS_TOL)

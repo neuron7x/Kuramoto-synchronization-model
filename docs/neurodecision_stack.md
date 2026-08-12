@@ -45,7 +45,7 @@ Configuration files live under `configs/` and are validated on load. Missing or 
 ## Example Usage
 
 ```python
-from tradepulse.policy.basal_ganglia import select_action
+from geosync.policy.basal_ganglia import select_action
 
 q_values = {"long": 0.8, "flat": 0.4, "short": 0.2}
 constraints = {

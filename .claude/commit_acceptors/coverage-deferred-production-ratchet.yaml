@@ -1,0 +1,80 @@
+# Diff-bound commit acceptor: fail-closed ratchet on deferred-production debt.
+#
+# `deferred_production` is honest but can become a permanent hiding place for
+# packaged-but-unmeasured production code. This binds every deferred entry to an
+# owner, tracking issue, target coverage profile, creation date, age bound, and a
+# concrete next test slice — and fails once the bound elapses.
+
+id: coverage-deferred-production-ratchet
+status: ACTIVE
+claim_type: governance
+promise: >-
+  After this PR, tests/ci/test_deferred_production_coverage_debt.py fails closed
+  when any coverage-surface allowlist entry with reason 'deferred_production'
+  lacks owner / tracking_issue / target_profile / created_at / max_age_days /
+  next_test_slice, carries an invalid value (bad issue ref, missing target
+  profile, non-ISO date, non-positive age), or has outlived its max_age_days
+  bound. Untracked, ownerless, timeless or permanently-deferred production debt
+  can no longer pass silently.
+
+diff_scope:
+  changed_files:
+    - path: ".claude/commit_acceptors/coverage-deferred-production-ratchet.yaml"
+    - path: "tests/ci/test_deferred_production_coverage_debt.py"
+    - path: "tests/fixtures/coverage_surface_allowlist.json"
+    - path: "artifacts/coverage_surface/coverage_surface_report.json"
+    - path: "data/testing/component_test_matrix.json"
+  forbidden_paths:
+    - "trading/"
+    - "execution/"
+    - "forecast/"
+    - "policy/"
+
+required_python_symbols: []
+
+expected_signal: >-
+  `python -m pytest --import-mode=importlib
+  tests/ci/test_deferred_production_coverage_debt.py -q` reports 2 passed: every
+  deferred_production allowlist entry carries all six tracking fields with valid
+  values and none is past its age bound.
+
+measurement_command: >-
+  bash -c '
+    python -m pytest --import-mode=importlib -p no:cacheprovider
+      tests/ci/test_deferred_production_coverage_debt.py
+      tests/ci/test_coverage_source_matches_packaged_surface.py -q
+  '
+
+signal_artifact: "tmp/coverage_deferred_production_ratchet.log"
+
+falsifier:
+  command: |-
+    bash -c '
+      python -c "
+    import json
+    a = json.load(open(\"tests/fixtures/coverage_surface_allowlist.json\"))
+    req = (\"owner\",\"tracking_issue\",\"target_profile\",\"created_at\",\"max_age_days\",\"next_test_slice\")
+    for root, e in a.items():
+        if e.get(\"reason\") == \"deferred_production\":
+            assert all(f in e for f in req), root
+    "
+    '
+  description: >-
+    Asserts every deferred_production allowlist entry carries all six tracking
+    fields. Per the run_evidence green-state contract it exits 0 on the correct
+    tree and non-zero if a deferred entry is left untracked (fix regressed).
+
+rollback_command: >-
+  bash -c '
+    git rm -f .claude/commit_acceptors/coverage-deferred-production-ratchet.yaml
+  '
+
+rollback_verification_command: >-
+  bash -c '
+    test ! -f .claude/commit_acceptors/coverage-deferred-production-ratchet.yaml
+  '
+
+memory_update_type: append
+ledger_path: ".claude/commit_acceptors/coverage-deferred-production-ratchet.yaml"
+report_path: "tmp/coverage_deferred_production_ratchet.log"
+evidence: []

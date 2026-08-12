@@ -1,15 +1,30 @@
-# TradePulse v0.1.0 — Release Readiness Report
+# GeoSync v0.1.0 — Release Readiness Report (historical snapshot)
 
-**Date:** 2025-12-07  
-**Version Target:** v0.1.0 (Beta)  
-**Assessment Status:** ✅ READY FOR BETA RELEASE  
-**Overall Health Score:** 94/100 ⭐⭐⭐⭐
+**Date:** 2025-12-07
+**Version Target:** v0.1.0 (Beta)
+**Assessment Status:** historical 2025-12-07 readiness snapshot
+**Overall Health Score (2025-12-07 assessor):** 94/100
+
+---
+
+> ⚠️ **PROVENANCE.** This file is the **2025-12-07 release-readiness
+> snapshot for the v0.1.0 Beta** designation. The "production-grade",
+> "enterprise-grade", "ready for beta release" verdicts below are the
+> 2025-12-07 assessor's wording at that release point. They are not
+> current 2026-05-05 statements. Specifically: "production-grade for
+> beta users" means "the build was scoped for closed-beta install" at
+> the time of writing — it does not mean live-venue capital is
+> approved. The current evidence boundary lives in `CLAIMS.md`,
+> `docs/PERFORMANCE_LEDGER.md`, and `docs/KNOWN_LIMITATIONS.md` (L-1
+> paper-trading only is still binding).
 
 ---
 
 ## Executive Summary
 
-TradePulse v0.1.0 is **ready for beta release**. The platform provides a solid foundation for algorithmic trading with:
+GeoSync v0.1.0 was recorded by the 2025-12-07 assessor as **ready for
+beta release** within the closed-beta scope. The platform at that time
+was reported with:
 - ✅ **351 passing tests** covering core modules (backtest, execution, indicators, metrics, integration, e2e)
 - ✅ **Zero type errors** across 683 source files (100% mypy pass rate)
 - ✅ **Performance validated** with benchmarks 48-74% faster than baseline
@@ -31,7 +46,7 @@ The repository is clean, well-documented, and production-grade for beta users. A
 ### Version Information
 - Current VERSION file: `0.1.0`
 - Python version support: 3.11 - 3.12 (3.13 not supported due to dependency compatibility issues)
-- License: TPLA (TradePulse Proprietary License Agreement)
+- License: MIT License (MIT License)
 
 ---
 
@@ -218,7 +233,7 @@ The repository's `.gitignore` is comprehensive and properly configured:
 **Reason:** Repository is already clean. All temporary artifacts are properly gitignored and not tracked by git.
 
 **Archive Candidates:** 0  
-**Reason:** No obvious legacy code requiring archival at this time. Experimental features (hydrobrain_v2/, rl/) are clearly marked as such in documentation and serve research purposes, so they are kept active rather than archived.
+**Reason:** No obvious legacy code requiring archival at this time. Experimental features (geosync_hydro/, rl/) are clearly marked as such in documentation and serve research purposes, so they are kept active rather than archived.
 
 ---
 
@@ -311,7 +326,7 @@ The repository's `.gitignore` is comprehensive and properly configured:
 ```
 Generating synthetic data with 1500 points...
 
-=== TradePulse Market Analysis ===
+=== GeoSync Market Analysis ===
 ----------------------------------------
 Market Phase:     transition
 Confidence:       0.893
@@ -348,7 +363,7 @@ Entry Signal:     0.000
 ### 7.2 Experimental Features 🧪
 
 The following features are marked as experimental:
-- Advanced neural trading components (`hydrobrain_v2/`, `rl/`)
+- Advanced neural trading components (`geosync_hydro/`, `rl/`)
 - Some geometric indicators require optional dependencies
 - Multi-phase regime detection (proven but under refinement)
 
@@ -405,9 +420,9 @@ The following features are marked as experimental:
 ### 8.3 Release Notes Template
 
 ```markdown
-## TradePulse v0.1.0 — Initial Public Beta
+## GeoSync v0.1.0 — Initial Public Beta
 
-We're excited to announce the initial public beta of TradePulse, an enterprise-grade algorithmic trading platform with geometric market intelligence.
+We're excited to announce the initial public beta of GeoSync, an enterprise-grade algorithmic trading platform with geometric market intelligence.
 
 ### ✨ Key Features
 
@@ -449,7 +464,7 @@ See [CONTRIBUTING.md](CONTRIBUTING.md) for contribution guidelines.
 
 ---
 
-**License:** TPLA (TradePulse Proprietary License Agreement)  
+**License:** MIT License (MIT License)  
 **Requires:** Python 3.11-3.12  
 **Not supported:** Python 3.13+
 ```
@@ -479,7 +494,7 @@ Monitor these metrics post-release:
 
 ## 10. Conclusion
 
-**TradePulse v0.1.0 is READY FOR BETA RELEASE.**
+**GeoSync v0.1.0 is READY FOR BETA RELEASE.**
 
 The platform provides a solid, well-tested foundation for algorithmic trading with enterprise-grade quality, security, and observability. The repository is clean, documentation is comprehensive, and CI/CD infrastructure is robust.
 

@@ -1,0 +1,68 @@
+name: Architecture Debt Ratchet
+
+concurrency:
+  group: ${{ github.workflow }}-${{ github.ref }}
+  cancel-in-progress: true
+
+on:
+  pull_request:
+  push:
+    branches: [main]
+
+permissions:
+  contents: read
+
+jobs:
+  debt-ratchet:
+    runs-on: ubuntu-latest
+    steps:
+      - uses: actions/checkout@9c091bb21b7c1c1d1991bb908d89e4e9dddfe3e0 # v7.0.0
+        with:
+          fetch-depth: 0
+      - uses: actions/setup-python@ece7cb06caefa5fff74198d8649806c4678c61a1 # v6
+        with:
+          python-version: "3.12"
+      - name: Debt may shrink, never grow
+        env:
+          EVENT_NAME: ${{ github.event_name }}
+          BASE_REF: ${{ github.base_ref }}
+        run: |
+          set -euo pipefail
+          if [[ "$EVENT_NAME" != "pull_request" ]]; then
+            python tools/architecture_debt_inference.py --check tools/debt_budget.json
+            exit 0
+          fi
+
+          git fetch --no-tags origin "$BASE_REF"
+          python tools/architecture_debt_inference.py --json > /tmp/current-debt.json
+          git checkout --quiet "origin/$BASE_REF"
+          python tools/architecture_debt_inference.py --json > /tmp/base-debt.json
+          python - <<'PY'
+          import json
+          from pathlib import Path
+
+          base = json.loads(Path('/tmp/base-debt.json').read_text(encoding='utf-8'))
+          current = json.loads(Path('/tmp/current-debt.json').read_text(encoding='utf-8'))
+
+          def ratcheted(result):
+              return {
+                  item['id']: item
+                  for item in result['debt_classes']
+                  if not item.get('by_design') and item.get('ratchet', True)
+              }
+
+          base_by_id = ratcheted(base)
+          current_by_id = ratcheted(current)
+          regressions = []
+          for debt_id, current_item in sorted(current_by_id.items()):
+              current_count = int(current_item['count'])
+              base_count = int(base_by_id.get(debt_id, {'count': 0})['count'])
+              if current_count > base_count:
+                  regressions.append((debt_id, base_count, current_count, current_count - base_count))
+
+          if regressions:
+              for debt_id, base_count, current_count, delta in regressions:
+                  print(f'REGRESSION {debt_id}: {current_count} > base {base_count} (+{delta})')
+              raise SystemExit(1)
+          print('debt ratchet: OK (PR introduced no ratcheted debt growth)')
+          PY

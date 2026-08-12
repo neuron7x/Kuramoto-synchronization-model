@@ -1,0 +1,69 @@
+version: 1
+code_file_extensions:
+  - ".py"
+  - ".yaml"
+  - ".yml"
+  - ".toml"
+  - ".json"
+  - ".sh"
+# Dependency-manifest filenames exempt from acceptor binding.
+# Bumps to these files are mechanical (Dependabot-style) and would
+# otherwise force a per-PR acceptor for every dep version bump.
+# Workflow YAML and Python dependency declarations are intentionally
+# NOT here — they remain bound to acceptors.
+dep_manifest_paths:
+  - "package.json"
+  - "package-lock.json"
+  - "yarn.lock"
+  - "pnpm-lock.yaml"
+  - "commit_acceptor_policy.yaml"
+  - "BRANCH_PROTECTION_MAIN.md"
+  - "README.md"
+  - "pr-gate.yml"
+  - "commit-acceptor-gate.yml"
+  - "INVENTORY.json"
+  - "pyproject.toml"
+  - "rust-toolchain.toml"
+  - "Cargo.toml"
+  - "validation_contract.json"
+  - "check_inventory_sync.py"
+  - "check_pr_gate_contract.py"
+  - "emit_pyo3_env.py"
+  - "run_rust_accel_contract.py"
+  - "pytest.ini"
+  - "test_emit_pyo3_env.py"
+  - "test_pr_gate_contract_validator.py"
+  - "test_run_rust_accel_contract.py"
+  - "rust-accel-ci-contract.yaml"
+  - "epistemic-rhombus-governance.yaml"
+  - "epistemic-rhombus-supplemental.yaml"
+governance_markdown_paths:
+  - ".claude/"
+  - "docs/governance/"
+  - "docs/architecture/"
+  - "docs/operations/"
+  # Prompt contracts are prose governance specs (value-function, calibration,
+  # filter, verification rules) — documentation, not executable code. Like the
+  # other governance-markdown roots, their .md files are exempt from per-PR
+  # acceptor binding; the deterministic code they describe (tools/, tests/,
+  # schemas/, data/) is NOT exempt and remains bound.
+  - "docs/prompts/"
+max_changed_files_by_claim_type:
+  correctness: 12
+  determinism: 12
+  fail_closed: 12
+  security: 10
+  performance: 10
+  governance: 16
+  refactor: 24
+  documentation: 24
+  # chore: brand renames, file moves, identifier rewrites with no
+  # behavior or architecture change. Matches conventional-commits
+  # `chore(...)` subject prefix. Wider cap than refactor because
+  # rebrands legitimately touch many files at once.
+  chore: 24
+forbidden_import_patterns:
+  - "trading"
+  - "execution"
+  - "forecast"
+  - "policy"

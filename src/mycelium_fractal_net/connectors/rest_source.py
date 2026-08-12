@@ -1,4 +1,5 @@
-# SPDX-License-Identifier: LicenseRef-TradePulse-Proprietary
+# Copyright (c) 2023-2026 Yaroslav Vasylenko (neuron7xLab)
+# SPDX-License-Identifier: MIT
 """REST HTTP polling connector for MFN data ingestion.
 
 This module provides a connector that polls HTTP REST endpoints at configured
@@ -172,8 +173,7 @@ class RestIngestor(BaseIngestor):
                 events = self._parse_response(data)
 
                 logger.info(
-                    f"Fetched {len(events)} events from {self.url} "
-                    f"(status: {response.status_code})"
+                    f"Fetched {len(events)} events from {self.url} (status: {response.status_code})"
                 )
                 return events
 
@@ -191,9 +191,7 @@ class RestIngestor(BaseIngestor):
 
             except httpx.RequestError as e:
                 last_error = e
-                logger.warning(
-                    f"Request failed, retrying ({attempt + 1}/{self.max_retries}): {e}"
-                )
+                logger.warning(f"Request failed, retrying ({attempt + 1}/{self.max_retries}): {e}")
                 await asyncio.sleep(2**attempt)
                 continue
 

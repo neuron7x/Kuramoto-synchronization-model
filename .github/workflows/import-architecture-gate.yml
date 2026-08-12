@@ -1,0 +1,50 @@
+# SPDX-License-Identifier: MIT
+#
+# Import-architecture ratchet — fail-closed, monotone-down. Freezes the
+# first-party `src.*`-import and `sys.path`-mutation debt (see ADR 0024)
+# and fails on any NEW violator or any stale ledger entry, so the
+# canonical-geosync migration can only progress. Stdlib-only; fast.
+#
+# Path-filtered: a PR touching no Python, the checker, or the baseline
+# skips entirely.
+name: Import Architecture Gate
+
+concurrency:
+  group: ${{ github.workflow }}-${{ github.ref }}
+  cancel-in-progress: true
+
+on:
+  pull_request:
+    branches: [main]
+    paths:
+      - "**/*.py"
+      - ".github/import_architecture_baseline.json"
+      - "scripts/ci/check_import_architecture.py"
+      - ".github/workflows/import-architecture-gate.yml"
+  push:
+    branches: [main]
+    paths:
+      - "**/*.py"
+      - ".github/import_architecture_baseline.json"
+      - "scripts/ci/check_import_architecture.py"
+      - ".github/workflows/import-architecture-gate.yml"
+
+permissions:
+  contents: read
+
+jobs:
+  validate:
+    name: import-architecture-gate
+    runs-on: ubuntu-latest
+    timeout-minutes: 5
+    steps:
+      - name: Checkout
+        uses: actions/checkout@9c091bb21b7c1c1d1991bb908d89e4e9dddfe3e0 # v7.0.0
+
+      - name: Setup Python
+        uses: actions/setup-python@ece7cb06caefa5fff74198d8649806c4678c61a1 # v6
+        with:
+          python-version: "3.12"
+
+      - name: Enforce import-architecture ratchet
+        run: python scripts/ci/check_import_architecture.py

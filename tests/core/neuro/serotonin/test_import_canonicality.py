@@ -1,3 +1,5 @@
+# Copyright (c) 2023-2026 Yaroslav Vasylenko (neuron7xLab)
+# SPDX-License-Identifier: MIT
 """Ensure serotonin canonical modules are single-source with legacy mirrors."""
 
 
@@ -20,22 +22,22 @@ def test_serotonin_controller_mirror_aliases_canonical():
     from core.neuro.serotonin.serotonin_controller import (
         _generate_config_table as ShimConfigTable,
     )
-    from tradepulse.core.neuro.serotonin.serotonin_controller import (
+    from geosync.core.neuro.serotonin.serotonin_controller import (
         ControllerOutput as CanonControllerOutput,
     )
-    from tradepulse.core.neuro.serotonin.serotonin_controller import (
+    from geosync.core.neuro.serotonin.serotonin_controller import (
         SerotoninConfig as CanonConfig,
     )
-    from tradepulse.core.neuro.serotonin.serotonin_controller import (
+    from geosync.core.neuro.serotonin.serotonin_controller import (
         SerotoninConfigEnvelope as CanonEnvelope,
     )
-    from tradepulse.core.neuro.serotonin.serotonin_controller import (
+    from geosync.core.neuro.serotonin.serotonin_controller import (
         SerotoninController as CanonController,
     )
-    from tradepulse.core.neuro.serotonin.serotonin_controller import (
+    from geosync.core.neuro.serotonin.serotonin_controller import (
         SerotoninLegacyConfig as CanonLegacy,
     )
-    from tradepulse.core.neuro.serotonin.serotonin_controller import (
+    from geosync.core.neuro.serotonin.serotonin_controller import (
         _generate_config_table as CanonConfigTable,
     )
 
@@ -47,7 +49,7 @@ def test_serotonin_controller_mirror_aliases_canonical():
     assert ShimConfigTable is CanonConfigTable
 
     import core.neuro.serotonin.serotonin_controller as shim_module
-    import tradepulse.core.neuro.serotonin.serotonin_controller as canonical_module
+    import geosync.core.neuro.serotonin.serotonin_controller as canonical_module
 
     assert getattr(canonical_module, "__CANONICAL__")
     assert getattr(shim_module, "__CANONICAL__") is False
@@ -84,34 +86,34 @@ def test_serotonin_observability_mirror_aliases_canonical():
     from core.neuro.serotonin.observability import (
         create_prometheus_metrics as CanonProm,
     )
-    from src.tradepulse.core.neuro.serotonin.observability import (
+    from src.geosync.core.neuro.serotonin.observability import (
         SEROTONIN_ALERTS as MirrorAlerts,
     )
-    from src.tradepulse.core.neuro.serotonin.observability import (
+    from src.geosync.core.neuro.serotonin.observability import (
         SEROTONIN_SLIS as MirrorSLIS,
     )
-    from src.tradepulse.core.neuro.serotonin.observability import (
+    from src.geosync.core.neuro.serotonin.observability import (
         SEROTONIN_SLOS as MirrorSLOS,
     )
-    from src.tradepulse.core.neuro.serotonin.observability import (
+    from src.geosync.core.neuro.serotonin.observability import (
         SLI as MirrorSLI,
     )
-    from src.tradepulse.core.neuro.serotonin.observability import (
+    from src.geosync.core.neuro.serotonin.observability import (
         SLO as MirrorSLO,
     )
-    from src.tradepulse.core.neuro.serotonin.observability import (
+    from src.geosync.core.neuro.serotonin.observability import (
         Alert as MirrorAlert,
     )
-    from src.tradepulse.core.neuro.serotonin.observability import (
+    from src.geosync.core.neuro.serotonin.observability import (
         AlertSeverity as MirrorSeverity,
     )
-    from src.tradepulse.core.neuro.serotonin.observability import (
+    from src.geosync.core.neuro.serotonin.observability import (
         SerotoninMonitor as MirrorMonitor,
     )
-    from src.tradepulse.core.neuro.serotonin.observability import (
+    from src.geosync.core.neuro.serotonin.observability import (
         create_grafana_dashboard_json as MirrorGrafana,
     )
-    from src.tradepulse.core.neuro.serotonin.observability import (
+    from src.geosync.core.neuro.serotonin.observability import (
         create_prometheus_metrics as MirrorProm,
     )
 

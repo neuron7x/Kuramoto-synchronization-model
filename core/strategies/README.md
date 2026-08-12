@@ -1,5 +1,5 @@
 ---
-owner: quant-systems@tradepulse
+owner: quant-systems@geosync
 review_cadence: quarterly
 last_reviewed: 2025-11-04
 links:
@@ -11,9 +11,21 @@ links:
 
 ## Purpose
 
-The `core/strategies` module implements the **executive function layer** of TradePulse, providing contract-driven strategy orchestration and risk-aware signal routing. Analogous to the prefrontal cortex's role in goal-directed behavior and decision-making, this module coordinates analytical outputs from lower-level modules into executable trading decisions with safety constraints.
+The `core/strategies` module is GeoSync's **strategy orchestration layer**: a
+contract-driven router that composes analytical signals from lower-level modules
+into executable trading decisions with mode control (live/paper/paused),
+hot-swap, and per-strategy risk budgets.
 
-**Neuroeconomic Mapping:**
+> ⚠️ **SCOPE OF BIO-NAMING.** The "PFC / OFC / striatum / basal ganglia /
+> working memory" labels below are **analogical shorthand** for the
+> orchestration role each component plays — they are **not** a claim that
+> the implementation reproduces the cellular mechanisms of those brain
+> regions. The contracts a buyer or auditor relies on are the engineering
+> ones: type-safe composition (IO contracts), <100 ms hot-swap, 100+
+> concurrent strategies, audit-logged mode transitions. The complete
+> neuroanatomy map for GeoSync is `~/CANONICAL_NEURO_MAPPING_2026_05_05.md`.
+
+**Orchestration analogy (informal mapping):**
 - **Prefrontal Cortex (Executive Control)**: `engine.py` orchestrates strategy execution with mode control (live/paper/paused)
 - **Orbitofrontal Cortex (Value Assignment)**: `objectives.py` defines reward functions and optimization targets
 - **Dorsal Striatum (Action Selection)**: `dsl.py` and `fete.py` provide declarative strategy composition
@@ -58,11 +70,11 @@ The `core/strategies` module implements the **executive function layer** of Trad
 ## Configuration
 
 ### Environment Variables:
-- `TRADEPULSE_STRATEGY_ROOT`: Directory for strategy definitions (default: `~/.tradepulse/strategies`)
-- `TRADEPULSE_DEFAULT_MODE`: Default execution mode on startup: `paper`, `live` (default: `paper`)
-- `TRADEPULSE_ENABLE_HOT_RELOAD`: Enable dynamic strategy reloading (default: `true`)
-- `TRADEPULSE_STRATEGY_TIMEOUT_SECONDS`: Maximum strategy execution time per decision cycle (default: `5`)
-- `TRADEPULSE_MAX_CONCURRENT_STRATEGIES`: Maximum active strategies (default: `100`)
+- `GEOSYNC_STRATEGY_ROOT`: Directory for strategy definitions (default: `~/.geosync/strategies`)
+- `GEOSYNC_DEFAULT_MODE`: Default execution mode on startup: `paper`, `live` (default: `paper`)
+- `GEOSYNC_ENABLE_HOT_RELOAD`: Enable dynamic strategy reloading (default: `true`)
+- `GEOSYNC_STRATEGY_TIMEOUT_SECONDS`: Maximum strategy execution time per decision cycle (default: `5`)
+- `GEOSYNC_MAX_CONCURRENT_STRATEGIES`: Maximum active strategies (default: `100`)
 
 ### Configuration Files:
 Strategy orchestration is configured via `configs/strategies/`:
@@ -436,7 +448,7 @@ print(f"Action: {result['action']}, Reason: {result.get('reason', 'N/A')}")
 
 | Date | Author | Change |
 | ---- | ------ | ------ |
-| 2025-11-04 | quant-systems@tradepulse | Created comprehensive README with neuroeconomic executive function mapping |
+| 2025-11-04 | quant-systems@geosync | Created comprehensive README with neuroeconomic executive function mapping |
 
 ## See Also
 

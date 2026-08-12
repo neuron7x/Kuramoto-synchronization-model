@@ -1,3 +1,5 @@
+# Copyright (c) 2023-2026 Yaroslav Vasylenko (neuron7xLab)
+# SPDX-License-Identifier: MIT
 """Weight sensitivity analysis for the neuro optimizer objective.
 
 This script performs a grid sweep across balance/performance/stability weights,
@@ -7,11 +9,11 @@ and writes results to CSV plus an SVG heatmap in reports/.
 
 from __future__ import annotations
 
+import sys
 from dataclasses import dataclass
+from importlib import util
 from pathlib import Path
 from typing import Dict, Iterable, List, Tuple
-import sys
-from importlib import util
 
 import numpy as np
 import pandas as pd
@@ -21,7 +23,7 @@ SRC_PATH = REPO_ROOT / "src"
 if str(SRC_PATH) not in sys.path:
     sys.path.insert(0, str(SRC_PATH))
 
-_neuro_path = REPO_ROOT / "src" / "tradepulse" / "core" / "neuro" / "neuro_optimizer.py"
+_neuro_path = REPO_ROOT / "src" / "geosync" / "core" / "neuro" / "neuro_optimizer.py"
 spec = util.spec_from_file_location("neuro_optimizer", _neuro_path)
 if spec is None or spec.loader is None:
     raise ImportError(f"Unable to load neuro optimizer module from {_neuro_path}")
@@ -117,7 +119,7 @@ def _render_heatmap_svg(
     height = margin_top + len(balance_values) * cell_size + margin_bottom
     svg_parts = [
         f'<svg xmlns="http://www.w3.org/2000/svg" width="{width}" height="{height}">',
-        f'<rect width="100%" height="100%" fill="#ffffff"/>',
+        '<rect width="100%" height="100%" fill="#ffffff"/>',
         f'<text x="{width / 2:.1f}" y="24" text-anchor="middle" font-size="16" font-family="Arial">{title}</text>',
     ]
 
@@ -143,7 +145,7 @@ def _render_heatmap_svg(
     svg_parts.append(
         f'<text x="18" y="{margin_top + (len(balance_values) * cell_size) / 2:.1f}" '
         f'text-anchor="middle" font-size="12" font-family="Arial" transform="rotate(-90 18,{margin_top + (len(balance_values) * cell_size) / 2:.1f})">'
-        f'{y_label}</text>'
+        f"{y_label}</text>"
     )
 
     # Ticks
@@ -151,13 +153,13 @@ def _render_heatmap_svg(
         x = margin_left + col_index * cell_size + cell_size / 2
         svg_parts.append(
             f'<text x="{x}" y="{height - 36}" text-anchor="middle" font-size="10" font-family="Arial">'
-            f'{performance_weight:.2f}</text>'
+            f"{performance_weight:.2f}</text>"
         )
     for row_index, balance_weight in enumerate(reversed(balance_values)):
         y = margin_top + row_index * cell_size + cell_size / 2 + 4
         svg_parts.append(
             f'<text x="{margin_left - 8}" y="{y}" text-anchor="end" font-size="10" font-family="Arial">'
-            f'{balance_weight:.2f}</text>'
+            f"{balance_weight:.2f}</text>"
         )
 
     # Legend

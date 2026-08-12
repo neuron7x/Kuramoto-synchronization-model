@@ -1,7 +1,9 @@
+# Copyright (c) 2023-2026 Yaroslav Vasylenko (neuron7xLab)
+# SPDX-License-Identifier: MIT
 """Fractal motivation controllers and monitoring utilities.
 
 The module integrates biologically inspired reward modulation into
-TradePulse's neuroeconomic stack.  It blends fractal stochasticity,
+GeoSync's neuroeconomic stack.  It blends fractal stochasticity,
 reward-prediction errors, and adaptive exploration policies for
 real-time strategy routing.
 """
@@ -75,9 +77,7 @@ class FractalMotivationEngine:
         self.state_dim = state_dim
         self.temporal_scales = (1, 4, 16, 64)
         self._latest_summary: FractalSummary | None = None
-        self.strategy_bandit = FractalBandit(
-            ("exploit", "explore", "deepen", "broaden")
-        )
+        self.strategy_bandit = FractalBandit(("exploit", "explore", "deepen", "broaden"))
 
     @property
     def latest_fractal_metrics(self) -> Mapping[str, float]:
@@ -92,9 +92,7 @@ class FractalMotivationEngine:
             }
         return dict(self._latest_summary.as_mapping())
 
-    def _compute_information_gain(
-        self, current: np.ndarray, previous: np.ndarray | None
-    ) -> float:
+    def _compute_information_gain(self, current: np.ndarray, previous: np.ndarray | None) -> float:
         current_arr = np.asarray(current, dtype=float)
         current_probs = _softmax(current_arr)
         if previous is None:
@@ -103,10 +101,7 @@ class FractalMotivationEngine:
             prev_probs = _softmax(np.asarray(previous, dtype=float))
 
         eps = 1e-12
-        kl = np.sum(
-            prev_probs
-            * (np.log(prev_probs + eps) - np.log(current_probs + eps))
-        )
+        kl = np.sum(prev_probs * (np.log(prev_probs + eps) - np.log(current_probs + eps)))
         return float(max(kl, 0.0))
 
     def _compute_context_coherence(self, hidden_states: np.ndarray) -> float:
@@ -178,26 +173,18 @@ class AllostaticRegulator:
         self.dopamine_level = 0.5
         self.stress_level = 0.1
 
-    def _ode(
-        self, y: Sequence[float], _: float, rpe: float, stress_input: float
-    ) -> list[float]:
+    def _ode(self, y: Sequence[float], _: float, rpe: float, stress_input: float) -> list[float]:
         allostatic, dopamine, stress = y
         d_allostatic = -0.1 * allostatic + 0.2 * stress
         d_dopamine = rpe - 0.2 * dopamine
         d_stress = stress_input - 0.1 * stress
         return [d_allostatic, d_dopamine, d_stress]
 
-    def update(
-        self, rpe: float, stress_input: float, *, time_step: float = 0.1
-    ) -> float:
+    def update(self, rpe: float, stress_input: float, *, time_step: float = 0.1) -> float:
         y0 = (self.allostatic_load, self.dopamine_level, self.stress_level)
         t = (0.0, time_step)
-        result = odeint(
-            self._ode, y0, t, args=(rpe, stress_input), atol=1e-6, rtol=1e-6
-        )
-        self.allostatic_load, self.dopamine_level, self.stress_level = map(
-            float, result[-1]
-        )
+        result = odeint(self._ode, y0, t, args=(rpe, stress_input), atol=1e-6, rtol=1e-6)
+        self.allostatic_load, self.dopamine_level, self.stress_level = map(float, result[-1])
         self.allostatic_load = float(np.clip(self.allostatic_load, -1.0, 1.0))
         return self.allostatic_load
 
@@ -296,9 +283,7 @@ class MotivationDecision:
 class FractalMotivationController:
     """Guard-rail aware controller that routes actions via fractal motivation."""
 
-    def __init__(
-        self, actions: Sequence[str], *, exploration_coef: float = 1.0
-    ) -> None:
+    def __init__(self, actions: Sequence[str], *, exploration_coef: float = 1.0) -> None:
         if not actions:
             raise ValueError("actions must be a non-empty sequence")
         if "pause_and_audit" not in actions:
@@ -368,9 +353,7 @@ class FractalMotivationController:
             state_vec, projected_next, motivation_signal
         )
         expected_rewards = {
-            action: self._estimate_reward(
-                action, signals, intrinsic_reward, motivation_signal
-            )
+            action: self._estimate_reward(action, signals, intrinsic_reward, motivation_signal)
             for action in self.actions
         }
         ucb_scores = self._compute_ucb_scores(expected_rewards, motivation_signal)
@@ -384,9 +367,7 @@ class FractalMotivationController:
 
         if self._strategy_actions and recommended in self._strategy_actions:
             idx = self._strategy_actions.index(recommended)
-            reward_norm = float(
-                np.clip((expected_rewards[recommended] + 1.0) / 2.0, 0.0, 1.0)
-            )
+            reward_norm = float(np.clip((expected_rewards[recommended] + 1.0) / 2.0, 0.0, 1.0))
             self._bandit.update(idx, reward_norm)
 
         metrics = self.monitor.observe(
