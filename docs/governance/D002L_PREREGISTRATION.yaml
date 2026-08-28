@@ -1,0 +1,267 @@
+# D-002L Pre-Registration — repeated ex-ante Treasury settlement pressure benchmark
+# -----------------------------------------------------------------------------
+# Class: fresh falsification lineage after D-002K-P4 TERMINAL_REFUSED.
+# Date: 2026-08-28.
+#
+# D-002L does NOT reopen, amend, rescue, or reinterpret D-002K or D-002J.
+# D-002K-P4 remains the truthful terminal result:
+# POWER_GATE_REFUSED_UNDERPOWERED on effect_too_small_event_conditioned.
+#
+# Structural repair: change the unit of replication from one unique historical
+# crisis realization to repeated, ex-ante scheduled U.S. Treasury coupon
+# settlement-pressure observations. Statistics are not loosened.
+#
+schema_version: D002L-PREREG-v1
+study_id: D-002L
+title: Repeated Ex-Ante Treasury Settlement Pressure Benchmark
+date: "2026-08-28"
+study_class: retrospective_preregistered_falsification_benchmark
+prospective_claim: false
+
+parent_lineage: D-002K
+parent_node: D002K-P4
+parent_status: TERMINAL_REFUSED
+parent_decision: POWER_GATE_REFUSED_UNDERPOWERED
+inherited_failure_axis: effect_too_small_event_conditioned
+is_rescue: false
+no_rescue_boundary: >-
+  D-002L is a fresh lineage created because D-002K-P4 correctly refused an
+  irreproducible single-realisation event design. D-002L does not alter any
+  D-002J or D-002K artifact, does not reinterpret those refusals as errors,
+  and may not use a D-002L result to rewrite their terminal status.
+
+central_claim: >-
+  Under a public, point-in-time, repeated-observation design, larger ex-ante
+  U.S. Treasury coupon net-new-cash settlement pressure is associated with a
+  larger same-day increase in the TGCR-IORB repo spread. The claim is bounded
+  to the declared U.S. Treasury-repo sample and does not imply crisis
+  prediction, systemic-risk prediction, interbank contagion, trading alpha,
+  or bank-level validation.
+
+structural_repair:
+  old_unit: unique_historical_crisis_window
+  old_feasible_crisis_replicates_per_window: 1
+  new_unit: unique_coupon_settlement_date
+  rationale: >-
+    Coupon settlement dates recur through history and are scheduled/observable
+    independently of the subsequent repo-rate response. This creates repeated
+    exposure units without synthetic re-seeding or pseudo-replication of one
+    crisis.
+  no_pseudoreplication: true
+
+jurisdiction: US
+market_scope: treasury_repo
+primary_mechanism: dealer_financing_pressure_from_treasury_settlement
+
+source_policy:
+  official_primary_sources_only_for_confirmatory_fields: true
+  exposure_source:
+    publisher: U.S. Department of the Treasury / TreasuryDirect
+    dataset: Calculated New Cash/Pay Down Amounts
+    url: https://www.treasurydirect.gov/auctions/announcements-data-results/announcement-results-press-releases/cash-pay-down/
+    required_fields:
+      - date
+      - security_type
+      - total_offering
+      - total_publicly_held_maturing
+      - net_new_cash_or_pay_down
+  outcome_source:
+    publisher: Federal Reserve Bank of New York
+    series: TGCR
+    url: https://www.newyorkfed.org/markets/reference-rates/tgcr
+  policy_rate_source:
+    publisher: Board of Governors / Federal Reserve
+    series: IORB
+    requirement: point_in_time_daily_rate
+  secondary_validation_source:
+    publisher: Office of Financial Research
+    dataset: U.S. Repo Markets Data Release
+    url: https://www.financialresearch.gov/short-term-funding-monitor/datasets/repo/
+    role: secondary_only
+  literature_design_anchor:
+    title: "Repo Markets and the Fed’s Balance Sheet: Implications for Monetary Policy Implementation"
+    publisher: Board of Governors of the Federal Reserve System
+    date: "2026-08-26"
+    url: https://www.federalreserve.gov/econres/notes/feds-notes/repo-markets-and-the-feds-balance-sheet-implications-for-monetary-policy-implementation-20260826.html
+    role: design_and_power_prior_only
+    independence_note: >-
+      This literature uses overlapping historical data. Therefore D-002L is
+      NOT an independent replication of that note and must never claim so.
+
+point_in_time_invariants:
+  - exposure_publication_time <= event_settlement_time
+  - outcome_publication_time <= ingestion_decision_time
+  - no_posthoc_revision_substitution_without_vintage_flag
+  - source_retrieval_timestamp_recorded
+  - source_url_and_content_digest_recorded
+  - missing_values_never_silently_imputed
+
+event_definition:
+  security_type: Coupons
+  coupons_include:
+    - Notes
+    - Bonds
+    - FRNs
+    - TIPS
+  grouping: aggregate_all_coupon_cash_flows_on_same_settlement_date
+  exposure_variable: coupon_net_new_cash_or_pay_down_usd
+  exposure_scale_usd: 100000000000
+  exposure_symbol: x_t
+  zero_exposure_event_allowed: false
+  event_date_source: TreasuryDirect
+  no_hand_selected_events: true
+
+primary_outcome:
+  id: delta_tgcr_iorb_same_day_bps
+  spread_definition: "s_t = 100 * (TGCR_t - IORB_t) in basis points"
+  outcome_definition: "y_t = s_t - s_{t-1}"
+  event_alignment: settlement_date_t
+  missing_previous_business_day: event_invalid
+  nonfinite: event_invalid
+  no_forward_fill: true
+
+primary_estimand:
+  id: beta_coupon_settlement
+  model: >-
+    y_t = beta_0 + beta_coupon*x_t + beta_bill*b_t
+          + beta_lag*s_{t-1} + calendar_controls + epsilon_t
+  primary_parameter: beta_coupon
+  expected_direction: positive
+  test_sidedness: two_sided
+  familywise_alpha: 0.05
+  success_rule: "p_beta_coupon < 0.05 AND beta_coupon > 0"
+  exactly_one_confirmatory_parameter: true
+  standard_errors: week_clustered
+  fallback_if_cluster_count_insufficient: REFUSE
+  model_changes_after_outcome_ingestion: forbidden
+
+confirmatory_controls:
+  - same_day_bill_net_new_cash_or_pay_down
+  - lagged_tgcr_iorb_spread
+  - day_of_week
+  - month_end_indicator
+  - quarter_end_indicator
+controls_note: >-
+  Controls are locked before confirmatory outcome ingestion. No control may be
+  added or removed after seeing the confirmatory coefficient except in a fresh
+  successor preregistration.
+
+temporal_partition:
+  calibration_power_only:
+    start: "2014-09-02"
+    end: "2018-12-31"
+    allowed_uses:
+      - estimate_outcome_noise_scale_for_power_only
+      - validate_ingestion_mechanics
+      - detect_missingness
+    forbidden_uses:
+      - choose_confirmatory_model_by_performance
+      - choose_primary_parameter
+      - tune_event_definition
+  confirmatory_retrospective:
+    start: "2019-01-01"
+    end: "2026-08-20"
+    outcome_locked_until_power_pass: true
+  future_prospective_holdout:
+    start: "2026-08-28"
+    status: accumulation_only
+    note: >-
+      Not part of the initial D-002L confirmatory verdict. Any prospective
+      claim requires a fresh successor contract with a predeclared minimum
+      event count.
+
+power_gate_policy:
+  must_pass_before_confirmatory_outcome_ingestion: true
+  target_power: 0.80
+  alpha: 0.05
+  primary_hypotheses: 1
+  multiplicity_correction: none_required_single_primary
+  event_count_source: Treasury-only exposure registry
+  noise_scale_source: calibration_power_only_partition
+  design_effect_prior_rule: >-
+    Use the smaller of (a) 50% of the externally published coupon-issuance
+    point estimate and (b) the published 95% confidence-bound magnitude when
+    machine-recoverable; document the arithmetic. If the required external
+    uncertainty cannot be recovered, use the 50%-shrunken point estimate and
+    mark prior_quality=PARTIAL. Never use confirmatory outcomes to enlarge the
+    prior.
+  refuse_if:
+    - power < 0.80
+    - eligible_confirmatory_event_count < computed_n_min
+    - effective_cluster_count < 20
+    - design_matrix_rank_deficient
+    - exposure_variance <= 0
+  canonical_run_authorized_at_p0: false
+
+geosync_features:
+  status: exploratory_only
+  allowed_examples:
+    - phase_coherence
+    - kuramoto_order_parameter
+    - cross_market_synchronization
+  forbidden_in_primary_model: true
+  promotion_rule: >-
+    No GeoSync-derived feature may become confirmatory in D-002L. A future
+    D-002M or successor may preregister incremental predictive value only after
+    D-002L closes, with a non-overlapping or explicitly declared holdout.
+
+secondary_analyses:
+  - liquidity_interaction
+  - OFR_repo_volume_response
+  - OFR_repo_rate_response
+  - month_block_bootstrap
+  - HAC_sensitivity
+  - placebo_nonsettlement_days
+secondary_status: exploratory_only
+
+forbidden_claims:
+  - "D-002L rescues D-002K"
+  - "D-002L rescues D-002J"
+  - "D-002K-P4 was wrong"
+  - "GeoSync predicts systemic crises"
+  - "GeoSync predicts markets"
+  - "GeoSync has trading alpha"
+  - "cross-asset coherence proves interbank contagion"
+  - "bank-level validated"
+  - "this is an independent replication of the 2026 FEDS Note"
+  - "exploratory GeoSync features are confirmatory"
+  - "statistical significance proves causality"
+
+allowed_claims:
+  - "D-002L is a fresh repeated-observation funding-pressure falsification lineage"
+  - "D-002L is designed against D-002K-P4 single-realisation underpower"
+  - "D-002J and D-002K terminal refusals remain truthful and unchanged"
+  - "D-002L uses one locked confirmatory coefficient and public point-in-time sources"
+
+phase_order:
+  - D002L-P0
+  - D002L-P1
+  - D002L-P2
+  - D002L-P3
+  - D002L-P4
+  - D002L-P5
+
+phase_contract:
+  D002L-P0: preregistration_lock_only
+  D002L-P1: source_and_exposure_event_registry_no_confirmatory_outcomes
+  D002L-P2: power_gate_before_confirmatory_outcome_ingestion
+  D002L-P3: point_in_time_outcome_ingestion_if_and_only_if_p2_passes
+  D002L-P4: single_primary_estimand_confirmatory_fit
+  D002L-P5: null_placebo_robustness_and_terminal_verdict
+
+next_legal_node: D002L-P1
+canonical_run_authorized: false
+zero_confirmatory_scoring_at_p0: true
+
+stop_conditions:
+  - "P1 cannot produce a source-complete exposure registry => STOP"
+  - "P2 power gate REFUSES => D-002L TERMINAL_REFUSED; no confirmatory outcome ingestion"
+  - "Confirmatory outcomes observed before P2 PASS => INVALIDATE D-002L"
+  - "Primary model or primary parameter changes after outcome ingestion => INVALIDATE D-002L"
+  - "GeoSync exploratory feature promoted to confirmatory => INVALIDATE D-002L"
+  - "Point-in-time provenance cannot be reconstructed => STOP"
+
+prereg_lock:
+  locked_at_merge: true
+  edit_policy: fresh_successor_preregistration_only
+  edit_constitutes: D-002M_or_successor
