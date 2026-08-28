@@ -1,0 +1,32 @@
+# D-002L-P0 — pure preregistration acceptor
+id: x10r-d002l-p0-prereg-repeated-settlement-pressure
+status: ACTIVE
+claim_type: governance
+promise: >-
+  Open a fresh D-002L lineage after D-002K-P4 TERMINAL_REFUSED. Lock a
+  repeated ex-ante Treasury coupon settlement observation design, one primary
+  beta_coupon estimand, a temporal calibration/confirmatory firewall, official
+  point-in-time source plan, power-before-confirmatory-outcomes gate, and
+  exploratory-only GeoSync-native features. D-002J and D-002K remain frozen
+  truthful terminal negatives. Zero confirmatory outcome scoring in P0.
+diff_scope:
+  changed_files:
+    - path: docs/governance/D002L_PREREGISTRATION.yaml
+    - path: docs/research/D002L_DESIGN_RATIONALE.md
+    - path: artifacts/d002l/prereg/d002l_failure_axis_inheritance_v1.json
+    - path: artifacts/d002l/prereg/d002l_primary_estimand_contract_v1.json
+    - path: artifacts/d002l/prereg/d002l_source_plan_v1.json
+    - path: artifacts/governance/verdicts/d002l_p0_verdict_v1.json
+    - path: tests/systemic_risk/test_d002l_preregistration.py
+    - path: .claude/commit_acceptors/x10r-d002l-p0-prereg-repeated-settlement-pressure.yaml
+  forbidden_paths:
+    - docs/governance/D002J_PREREGISTRATION.yaml
+    - docs/governance/D002K_PREREGISTRATION.yaml
+    - artifacts/d002j/
+    - artifacts/d002k/
+    - research/systemic_risk/
+expected_signal: >-
+  D-002L P0 guard tests pass; no confirmatory outcome is ingested or scored;
+  the only legal next node is D002L-P1.
+measurement_command: >-
+  PYTHONPATH=. python -m pytest tests/systemic_risk/test_d002l_preregistration.py -q
