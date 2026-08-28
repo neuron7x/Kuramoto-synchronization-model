@@ -31,34 +31,47 @@ list.
 This changes the physical information content of the experiment. It does not
 manufacture repeated observations from a single historical crisis.
 
-## 2. Why TGCR-IORB
+## 2. Why TGCR minus the reserve-remuneration anchor
 
 The primary outcome is the daily change in the Tri-Party General Collateral
-Rate relative to Interest on Reserve Balances:
+Rate relative to the Federal Reserve remuneration rate actually in force on
+that date. Define:
 
-`spread_t = 100 * (TGCR_t - IORB_t)` basis points
+`RRA_t = IOER_t` for observations through `2021-07-28`;
+
+`RRA_t = IORB_t` for observations from `2021-07-29`.
+
+Then:
+
+`spread_t = 100 * (TGCR_t - RRA_t)` basis points
 
 `y_t = spread_t - spread_{t-1}`
 
+This splice is explicit because raw IORB does not exist for the 2014–2021
+portion of the study. IOER and IORR were replaced by the single IORB rate on
+July 29, 2021. D-002L therefore forbids silently backfilling IORB into the
+IOER era or relabeling historical IOER observations as raw IORB.
+
 TGCR is a direct overnight Treasury-repo reference rate administered by the
-New York Fed. IORB is the policy-rate anchor. Their spread isolates repo
-funding pressure more directly than broad equity/volatility proxies.
+New York Fed. The reserve-remuneration anchor removes the contemporaneous
+policy-rate level more directly than broad equity/volatility proxies.
 
 The August 26, 2026 Federal Reserve FEDS Note “Repo Markets and the Fed’s
 Balance Sheet: Implications for Monetary Policy Implementation” is used as a
 **design and conservative power-prior anchor only**. It reports a positive
-association between net Treasury coupon issuance and TGCR-IORB over
-September 2014–March 2026 and stronger coupon sensitivity when aggregate
-liquidity is low. Because that literature overlaps the historical sample,
-D-002L explicitly forbids an “independent replication” claim.
+association between net Treasury coupon issuance and a TGCR-relative-to-policy
+rate spread over September 2014–March 2026 and stronger coupon sensitivity
+when aggregate liquidity is low. Because that literature overlaps the
+historical sample, D-002L explicitly forbids an “independent replication”
+claim.
 
 ## 3. Exactly one primary estimand
 
 The confirmatory parameter is only `beta_coupon` in the locked public-data
 model:
 
-`Δ(TGCR-IORB)_t = beta_0 + beta_coupon*x_t + beta_bill*b_t`
-`                 + beta_lag*spread_{t-1} + calendar_controls + epsilon_t`
+`Δspread_t = beta_0 + beta_coupon*x_t + beta_bill*b_t`
+`            + beta_lag*spread_{t-1} + calendar_controls + epsilon_t`
 
 where `x_t` is coupon net-new-cash settlement pressure per $100bn.
 
@@ -108,7 +121,7 @@ imputed.
 Primary sources:
 - U.S. Treasury / TreasuryDirect — calculated new cash/pay-down amounts.
 - Federal Reserve Bank of New York — TGCR.
-- Federal Reserve / Board — IORB.
+- Board of Governors — IOER through 2021-07-28 and IORB from 2021-07-29.
 - OFR U.S. Repo Markets Data Release — secondary validation only.
 
 ## 7. GeoSync-specific features are deliberately not primary
