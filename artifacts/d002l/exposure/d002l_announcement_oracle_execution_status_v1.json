@@ -1,0 +1,13 @@
+{
+  "schema_version": "D002L-P1-ANNOUNCEMENT-ORACLE-EXECUTION-STATUS-v1",
+  "study_id": "D-002L",
+  "node_id": "D002L-P1",
+  "status": "NOT_EXECUTED",
+  "decision": "NO_RETAINED_OFFICIAL_ANNOUNCEMENT_BUNDLE",
+  "official_announcement_raw_bundle_available": false,
+  "primary_source_replaced": false,
+  "p1_terminal_pass_authorized_by_oracle": false,
+  "lineage_advance_allowed": false,
+  "confirmatory_outcomes_ingested": false,
+  "canonical_run_authorized": false
+}
