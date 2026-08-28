@@ -158,6 +158,8 @@ def conservative_effect_prior(artifact: Mapping[str, Any]) -> dict[str, Any]:
             raise D002LPowerError("EFFECT_PRIOR_CI_INVALID") from exc
         if not (math.isfinite(lo) and math.isfinite(hi) and lo <= hi):
             raise D002LPowerError("EFFECT_PRIOR_CI_INVALID")
+        # Expected direction is positive. A CI crossing/including zero provides
+        # no positive 95% bound for a confirmatory power prior, so the bound is 0.
         ci_bound = max(0.0, lo)
         chosen = min(half_point, ci_bound)
         quality = "FULL"
@@ -223,6 +225,8 @@ def exogenous_design(events: Sequence[Mapping[str, Any]]) -> tuple[np.ndarray, n
             raise D002LPowerError("P1_EXPOSURE_VALUE_INVALID") from exc
         if not (math.isfinite(coupon) and math.isfinite(bill)):
             raise D002LPowerError("P1_EXPOSURE_VALUE_NONFINITE")
+        # Monday is reference. Treasury settlements are business-day events,
+        # so weekend dummies would be structural zero columns and are forbidden.
         dow = d.weekday()
         if dow >= 5:
             raise D002LPowerError("SETTLEMENT_DATE_ON_WEEKEND")
@@ -243,6 +247,7 @@ def _power_for_events(
         raise D002LPowerError(f"DESIGN_MATRIX_RANK_DEFICIENT:rank={rank}:columns={X.shape[1]}")
     if n <= rank:
         raise D002LPowerError(f"NONPOSITIVE_RESIDUAL_DF:n={n}:rank={rank}")
+    # Residualize coupon exposure against all nuisance columns except itself.
     Z = np.delete(X, 1, axis=1)
     coef, *_ = np.linalg.lstsq(Z, x, rcond=None)
     x_resid = x - Z @ coef
@@ -336,6 +341,8 @@ def execute_power_gate(
 
 
 def execute_from_paths(status_path: Path, registry_path: Path, noise_path: Path, prior_path: Path) -> dict[str, Any]:
+    # Fail before touching downstream artifacts when the scientific predecessor
+    # has not passed. This makes the P1 -> P2 lifecycle boundary executable.
     status = _load_json(status_path)
     validate_p1_status_authority(status)
     registry = _load_json(registry_path)
