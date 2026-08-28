@@ -1,0 +1,55 @@
+{
+  "canonical_run_authorized": false,
+  "confirmatory_outcomes_forbidden_before": "D002L-P2 TERMINAL_PASS",
+  "confirmatory_sources": [
+    {
+      "id": "TREASURY_CASH_PAYDOWN",
+      "pti_required": true,
+      "publisher": "U.S. Treasury / TreasuryDirect",
+      "role": "exposure",
+      "url": "https://www.treasurydirect.gov/auctions/announcements-data-results/announcement-results-press-releases/cash-pay-down/"
+    },
+    {
+      "id": "NYFED_TGCR",
+      "pti_required": true,
+      "publisher": "Federal Reserve Bank of New York",
+      "role": "primary_outcome",
+      "url": "https://www.newyorkfed.org/markets/reference-rates/tgcr"
+    },
+    {
+      "id": "FED_IORB",
+      "pti_required": true,
+      "publisher": "Federal Reserve / Board of Governors",
+      "role": "policy_anchor"
+    }
+  ],
+  "literature_anchors": [
+    {
+      "date": "2026-08-26",
+      "id": "FED_FEDS_NOTE_20260826",
+      "independent_replication_claim_allowed": false,
+      "overlapping_sample": true,
+      "publisher": "Board of Governors of the Federal Reserve System",
+      "role": "design_and_power_prior_only",
+      "url": "https://www.federalreserve.gov/econres/notes/feds-notes/repo-markets-and-the-feds-balance-sheet-implications-for-monetary-policy-implementation-20260826.html"
+    }
+  ],
+  "required_provenance_fields": [
+    "retrieved_at_utc",
+    "source_url",
+    "content_sha256",
+    "observation_date",
+    "publication_date_or_rule",
+    "revision_or_vintage_status"
+  ],
+  "schema_version": "D002L-SOURCE-PLAN-v1",
+  "secondary_sources": [
+    {
+      "id": "OFR_REPO",
+      "publisher": "Office of Financial Research",
+      "role": "secondary_validation",
+      "url": "https://www.financialresearch.gov/short-term-funding-monitor/datasets/repo/"
+    }
+  ],
+  "study_id": "D-002L"
+}
