@@ -1,0 +1,89 @@
+{
+  "authenticity_contract": {
+    "locked_https_url_only": true,
+    "manual_provenance_assertion_alone_is_not_authenticity_evidence": true,
+    "manual_raw_replay_exit_code": 20,
+    "manual_raw_replay_lineage_advance_allowed": false,
+    "manual_raw_replay_status": "OFFLINE_REPLAY_ONLY",
+    "terminal_pass_requires_cli_mode": "fetch_official"
+  },
+  "claim_boundary": "P1 exposure registry only; no TGCR/IOER/IORB ingestion, no fitting, no confirmatory scoring, no GeoSync feature promotion.",
+  "completeness_contract": {
+    "actual_raw_date_range_must_equal_declared_coverage": true,
+    "cash_identity_required_each_row": "net_new_cash_or_pay_down = total_offering - total_publicly_held_maturing",
+    "confirmatory_exposure_variance_required": true,
+    "coverage_end_no_earlier_than": "2026-08-20",
+    "coverage_start_no_later_than": "2014-09-02",
+    "each_calendar_year_represented_2014_through_2026": true,
+    "monthly_coupon_recurrence_required_2014_09_through_2026_08": true,
+    "raw_sha256_required": true,
+    "retrieval_scope": "full_historical_table_snapshot",
+    "sparse_annual_presence_is_not_source_complete": true
+  },
+  "event_contract": {
+    "coupons_include": [
+      "Notes",
+      "Bonds",
+      "FRNs",
+      "TIPS"
+    ],
+    "exposure_scale_usd": 100000000000,
+    "no_hand_selected_events": true,
+    "same_date_aggregation": true,
+    "same_day_bill_control": {
+      "duplicate_direct_bill_rows": "REFUSE",
+      "field": "same_day_bill_net_new_cash_or_pay_down",
+      "missing_same_day_bill_row": "ZERO_CONTROL",
+      "purpose": "locked nuisance regressor required by D002L primary estimand",
+      "scale_usd": 100000000000,
+      "symbol": "b_t"
+    },
+    "unit": "unique_coupon_settlement_date",
+    "zero_exposure_event_allowed": false
+  },
+  "lineage_policy": {
+    "advance_on_source_complete_registry_only": true,
+    "blocked_source_access_is_pass": false,
+    "canonical_run_authorized": false,
+    "current_next_legal_node_while_blocked": null,
+    "next_if_terminal_pass": "D002L-P2",
+    "offline_replay_can_advance": false
+  },
+  "locked_source": {
+    "dataset": "Calculated New Cash/Pay Down Amounts",
+    "publisher": "U.S. Department of the Treasury / TreasuryDirect",
+    "required_fields": [
+      "date",
+      "security_type",
+      "total_offering",
+      "total_publicly_held_maturing",
+      "net_new_cash_or_pay_down"
+    ],
+    "source_id": "TREASURY_CASH_PAYDOWN",
+    "units": "millions_usd",
+    "url": "https://www.treasurydirect.gov/auctions/announcements-data-results/announcement-results-press-releases/cash-pay-down/"
+  },
+  "node_id": "D002L-P1",
+  "outcome_firewall": {
+    "confirmatory_outcomes_ingested": false,
+    "forbidden_before": "D002L-P2 TERMINAL_PASS",
+    "forbidden_headers": [
+      "TGCR",
+      "IOER",
+      "IORB",
+      "reserve_remuneration",
+      "outcome",
+      "y_t",
+      "beta_coupon",
+      "p_value",
+      "standard_error",
+      "confidence_interval"
+    ]
+  },
+  "parent_estimand_contract_sha256": "7e92843c7d36b1b873261db990fbeea2b2cf9d324e3c55c8bb50ce22c4acfdfe",
+  "parent_prereg_sha256": "6a081f50088a4c461e60d73887566e2b25d1dd549c760dd56b153fbe94b8b927",
+  "parent_source_plan_sha256": "a95933555b20e2ce2ae412ee363fa58e989ef10bac6645a33dcefb589a72a2b7",
+  "schema_version": "D002L-P1-SOURCE-CONTRACT-v1",
+  "status": "HARDENED_AWAITING_DIRECT_SOURCE_COMPLETE_EXECUTION",
+  "study_id": "D-002L"
+}
