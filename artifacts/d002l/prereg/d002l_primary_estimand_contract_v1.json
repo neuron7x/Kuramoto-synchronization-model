@@ -1,0 +1,57 @@
+{
+  "canonical_run_authorized": false,
+  "event_unit": "unique_coupon_settlement_date",
+  "exactly_one_confirmatory_parameter": true,
+  "exposure": {
+    "same_date_aggregation": "sum",
+    "scale_usd": 100000000000,
+    "security_type": "Coupons",
+    "source": "TreasuryDirect Calculated New Cash/Pay Down Amounts",
+    "symbol": "x_t",
+    "variable": "net_new_cash_or_pay_down_usd"
+  },
+  "geosync_native_features": "exploratory_only",
+  "locked_controls": [
+    "same_day_bill_net_new_cash_or_pay_down",
+    "lagged_tgcr_reserve_anchor_spread",
+    "day_of_week",
+    "month_end_indicator",
+    "quarter_end_indicator"
+  ],
+  "model": "y_t = beta_0 + beta_coupon*x_t + beta_bill*b_t + beta_lag*s_{t-1} + calendar_controls + epsilon_t",
+  "model_mutation_after_confirmatory_outcome_ingestion": "forbidden",
+  "outcome": {
+    "forward_fill": false,
+    "reserve_anchor": {
+      "definition": "RRA_t = IOER_t through 2021-07-28; IORB_t from 2021-07-29",
+      "post_transition_series": "IORB",
+      "post_transition_start": "2021-07-29",
+      "pre_transition_end": "2021-07-28",
+      "pre_transition_series": "IOER",
+      "publisher": "Board of Governors of the Federal Reserve System",
+      "symbol": "RRA_t"
+    },
+    "response": "y_t = s_t - s_{t-1}",
+    "spread": "s_t = 100 * (TGCR_t - RRA_t) basis points",
+    "tgcr_source": "Federal Reserve Bank of New York"
+  },
+  "primary_estimand_id": "beta_coupon_settlement",
+  "primary_parameter": "beta_coupon",
+  "schema_version": "D002L-PRIMARY-ESTIMAND-CONTRACT-v1",
+  "secondary_only": [
+    "liquidity_interaction",
+    "OFR_repo_volume_response",
+    "OFR_repo_rate_response",
+    "month_block_bootstrap",
+    "HAC_sensitivity",
+    "placebo_nonsettlement_days"
+  ],
+  "study_id": "D-002L",
+  "test": {
+    "alpha": 0.05,
+    "expected_direction": "positive",
+    "sidedness": "two_sided",
+    "standard_errors": "week_clustered",
+    "success_rule": "p_beta_coupon < 0.05 AND beta_coupon > 0"
+  }
+}

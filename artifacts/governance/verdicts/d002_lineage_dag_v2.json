@@ -1,0 +1,49 @@
+{
+  "acyclic": true,
+  "canonical_run_authorized_anywhere": false,
+  "claim_boundary": "Governance lineage only. A terminal PASS node does not prove scientific validity, predictive value, causal validity, trading alpha, or production readiness.",
+  "generated_at": "2026-08-28T00:00:00Z",
+  "lineage_transitions": {
+    "D002J-P7": {
+      "is_rescue": false,
+      "status": "TERMINAL_REFUSED",
+      "successor_lineage": "D-002K",
+      "successor_root": "D002K-P0"
+    },
+    "D002K-P4": {
+      "is_rescue": false,
+      "status": "TERMINAL_REFUSED",
+      "successor_lineage": "D-002L",
+      "successor_root": "D002L-P0"
+    }
+  },
+  "next_legal_nodes_from_head": [
+    "D002L-P1"
+  ],
+  "nodes_count": 16,
+  "orphans": [],
+  "rejected_nodes_retained": [
+    "D002J-P1A",
+    "D002J-P7",
+    "D002K-P4"
+  ],
+  "schema_version": "D002-VERDICT-DAG-v2",
+  "topological_order": [
+    "D002J-P0",
+    "D002J-P1",
+    "D002J-P1A",
+    "D002J-P1B",
+    "D002J-P2",
+    "D002J-P3",
+    "D002J-P4",
+    "D002J-P5",
+    "D002J-P6",
+    "D002J-P7",
+    "D002K-P0",
+    "D002K-P1",
+    "D002K-P2",
+    "D002K-P3",
+    "D002K-P4",
+    "D002L-P0"
+  ]
+}

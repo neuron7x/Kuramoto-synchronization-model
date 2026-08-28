@@ -1,0 +1,35 @@
+{
+  "schema_version": "D002J-VERDICT-CAPSULE-v1",
+  "node_id": "D002L-P0",
+  "phase": "P0",
+  "pr_number": 0,
+  "merge_sha": "0000000000000000000000000000000000000000",
+  "parent_nodes": [
+    "D002K-P4"
+  ],
+  "decision": "D002L_PREREG_LOCKED",
+  "status": "TERMINAL_PASS",
+  "artifact_paths": [
+    "docs/governance/D002L_PREREGISTRATION.yaml",
+    "docs/research/D002L_DESIGN_RATIONALE.md",
+    "artifacts/d002l/prereg/d002l_failure_axis_inheritance_v1.json",
+    "artifacts/d002l/prereg/d002l_primary_estimand_contract_v1.json",
+    "artifacts/d002l/prereg/d002l_source_plan_v1.json"
+  ],
+  "test_paths": [
+    "tests/systemic_risk/test_d002l_preregistration.py"
+  ],
+  "allowed_next_nodes": [
+    "D002L-P1"
+  ],
+  "forbidden_next_nodes": [
+    "D002K-P5",
+    "D002L-P2",
+    "D002L-P3",
+    "D002L-P4",
+    "D002L-P5"
+  ],
+  "claim_boundary": "Fresh preregistration only; repeated ex-ante coupon-settlement observations; exactly one confirmatory beta_coupon estimand; no confirmatory outcome scoring; D-002J/K terminal refusals retained; GeoSync-native features exploratory-only; canonical_run_authorized=false.",
+  "failure_retention": null,
+  "source_summary_path": "docs/research/D002L_DESIGN_RATIONALE.md"
+}
