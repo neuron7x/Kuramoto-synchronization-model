@@ -1,0 +1,61 @@
+{
+  "schema_version": "D002L-P1-ANNOUNCEMENT-ORACLE-CONTRACT-v1",
+  "study_id": "D-002L",
+  "node_id": "D002L-P1",
+  "role": "SECONDARY_OFFICIAL_RECONSTRUCTION_ORACLE_ONLY",
+  "authority": {
+    "primary_source_replacement_allowed": false,
+    "p1_terminal_pass_authorized_by_oracle": false,
+    "lineage_advance_allowed_by_oracle": false,
+    "canonical_run_authorized": false,
+    "confirmatory_outcomes_ingested": false
+  },
+  "official_source_family": {
+    "publisher": "U.S. Department of the Treasury / Bureau of the Fiscal Service / TreasuryDirect",
+    "announcement_index": "https://www.treasurydirect.gov/auctions/announcements-data-results/announcement-results-press-releases/",
+    "announcement_path_pattern": "https://www.treasurydirect.gov/instit/annceresult/press/preanre/YYYY/*.pdf",
+    "required_announcement_fields": [
+      "Issue Date",
+      "CUSIP Number",
+      "Term and Type of Security",
+      "Offering Amount",
+      "Estimated Amount of Maturing Coupon Securities Held by the Public"
+    ],
+    "coupon_scope": ["Notes", "Bonds", "FRNs", "TIPS"]
+  },
+  "normalization_contract": {
+    "one_record_per_offering_announcement": true,
+    "raw_pdf_sha256_per_record_required": true,
+    "official_https_url_per_record_required": true,
+    "offering_units": "USD",
+    "same_issue_date_offerings": "SUM_ONCE_EACH",
+    "same_issue_date_public_maturing": "MUST_BE_IDENTICAL_ACROSS_ANNOUNCEMENTS_AND_SUBTRACT_ONCE",
+    "reopening_same_cusip_on_different_issue_date": "ALLOWED",
+    "duplicate_issue_date_cusip": "REFUSE",
+    "duplicate_raw_pdf_digest": "REFUSE",
+    "bill_security_in_coupon_oracle": "REFUSE",
+    "primary_table_million_unit_reconciliation": "MUST_BE_EXACT"
+  },
+  "crosscheck_contract": {
+    "fields": [
+      "total_offering_million_usd",
+      "total_publicly_held_maturing_million_usd",
+      "coupon_net_new_cash_or_pay_down_million_usd"
+    ],
+    "mismatch": "REFUSE_CORROBORATION",
+    "zero_overlap": "REFUSE_CORROBORATION",
+    "full_window_bundle_requires_exact_event_set_identity": true,
+    "partial_bundle_may_only_claim_overlapping_event_match": true,
+    "oracle_absence_does_not_authorize_or_block_primary_source_compilation": true,
+    "oracle_presence_with_mismatch_blocks_promotion_until_resolved": true
+  },
+  "source_independence_boundary": {
+    "primary_locked_dataset": "Calculated New Cash/Pay Down Amounts",
+    "secondary_observation_surface": "individual Treasury offering announcement PDFs",
+    "shared_publisher_declared": true,
+    "independent_institution_claim": false,
+    "independent_data_generation_claim": false,
+    "purpose": "detect transcription, aggregation, coverage, or schema errors in the primary snapshot"
+  },
+  "claim_boundary": "Corroboration only. A PASS means the retained official announcement bundle reconstructs the overlapping primary coupon cash arithmetic exactly; it does not establish P1 source authenticity by itself, does not advance lineage, and contains no confirmatory outcome evidence."
+}
