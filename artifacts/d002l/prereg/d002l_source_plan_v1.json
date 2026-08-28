@@ -17,10 +17,20 @@
       "url": "https://www.newyorkfed.org/markets/reference-rates/tgcr"
     },
     {
+      "effective_through": "2021-07-28",
+      "id": "FED_IOER",
+      "pti_required": true,
+      "publisher": "Board of Governors of the Federal Reserve System",
+      "role": "reserve_remuneration_anchor_pre_transition",
+      "series": "IOER"
+    },
+    {
+      "effective_from": "2021-07-29",
       "id": "FED_IORB",
       "pti_required": true,
-      "publisher": "Federal Reserve / Board of Governors",
-      "role": "policy_anchor"
+      "publisher": "Board of Governors of the Federal Reserve System",
+      "role": "reserve_remuneration_anchor_post_transition",
+      "series": "IORB"
     }
   ],
   "literature_anchors": [
@@ -42,6 +52,14 @@
     "publication_date_or_rule",
     "revision_or_vintage_status"
   ],
+  "reserve_anchor_transition": {
+    "post_transition_series": "IORB",
+    "post_transition_start": "2021-07-29",
+    "pre_transition_end": "2021-07-28",
+    "pre_transition_series": "IOER",
+    "rule": "RRA_t = IOER_t through 2021-07-28; IORB_t from 2021-07-29",
+    "silent_backfill_or_relabel": "forbidden"
+  },
   "schema_version": "D002L-SOURCE-PLAN-v1",
   "secondary_sources": [
     {
