@@ -1,0 +1,73 @@
+{
+  "authority": {
+    "canonical_run_authorized": false,
+    "current_lineage_advance": false,
+    "next_node_only_if_scientific_P2_pass": "D002L-P3"
+  },
+  "implementation_status": "IMPLEMENTED_AWAITING_P1_TERMINAL_PASS",
+  "inputs": {
+    "calibration_noise": {
+      "cluster_adjustment_rule": "effective_sigma = sigma_residual_bps * sqrt(max_declared_week_cluster_design_effect); value must be finite and >=1",
+      "confirmatory_observations_used": 0,
+      "period_end_no_later_than": "2018-12-31",
+      "required_fields": [
+        "sigma_residual_bps",
+        "week_cluster_design_effect"
+      ],
+      "use": "POWER_ONLY"
+    },
+    "external_effect_prior": {
+      "confirmatory_outcomes_used_directly": 0,
+      "if_ci_crosses_or_includes_zero": "REFUSE",
+      "overlapping_external_literature_warning": true,
+      "role": "EXTERNAL_DESIGN_AND_POWER_PRIOR_ONLY",
+      "rule": "min(0.5*published_point_estimate, positive_95pct_lower_bound_if_available)"
+    },
+    "p1_exposure_registry": "source-complete direct-official Treasury exposure registry"
+  },
+  "node_id": "D002L-P2",
+  "outcome_firewall": {
+    "beta_fit_at_P2": false,
+    "confirmatory_TGCR_IOER_IORB_ingestion_at_P2": false,
+    "empirical_association_claim_at_P2": false
+  },
+  "power_test": {
+    "alpha_two_sided": 0.05,
+    "coefficient": "beta_coupon",
+    "expected_direction": "positive",
+    "minimum_effective_week_clusters": 20,
+    "nonpositive_residualized_coupon_variance": "REFUSE",
+    "numeric_nonfinite": "REFUSE",
+    "rank_deficient": "REFUSE",
+    "target_power": 0.8
+  },
+  "predecessor_required": {
+    "confirmatory_outcomes_ingested": false,
+    "decision": "D002L_EXPOSURE_REGISTRY_SOURCE_COMPLETE",
+    "lineage_advance_allowed": true,
+    "node_id": "D002L-P1",
+    "source_authenticity_for_lineage_advance": true,
+    "status": "TERMINAL_PASS"
+  },
+  "preoutcome_design": {
+    "column_count": 9,
+    "columns": [
+      "intercept",
+      "coupon_x",
+      "bill_b",
+      "dow_tue",
+      "dow_wed",
+      "dow_thu",
+      "dow_fri",
+      "month_end",
+      "quarter_end"
+    ],
+    "full_design_recheck_required_at": "D002L-P4",
+    "lagged_spread_available_at_p2": false,
+    "monday_reference": true,
+    "weekend_settlement": "REFUSE"
+  },
+  "schema_version": "D002L-P2-IMPLEMENTATION-CONTRACT-v1",
+  "scientific_execution_status": "NOT_EXECUTED",
+  "study_id": "D-002L"
+}
