@@ -33,10 +33,10 @@ no_rescue_boundary: >-
 central_claim: >-
   Under a public, point-in-time, repeated-observation design, larger ex-ante
   U.S. Treasury coupon net-new-cash settlement pressure is associated with a
-  larger same-day increase in the TGCR-IORB repo spread. The claim is bounded
-  to the declared U.S. Treasury-repo sample and does not imply crisis
-  prediction, systemic-risk prediction, interbank contagion, trading alpha,
-  or bank-level validation.
+  larger same-day increase in the TGCR-to-reserve-remuneration repo spread.
+  The claim is bounded to the declared U.S. Treasury-repo sample and does not
+  imply crisis prediction, systemic-risk prediction, interbank contagion,
+  trading alpha, or bank-level validation.
 
 structural_repair:
   old_unit: unique_historical_crisis_window
@@ -69,9 +69,19 @@ source_policy:
     publisher: Federal Reserve Bank of New York
     series: TGCR
     url: https://www.newyorkfed.org/markets/reference-rates/tgcr
-  policy_rate_source:
-    publisher: Board of Governors / Federal Reserve
-    series: IORB
+  reserve_remuneration_anchor:
+    publisher: Board of Governors of the Federal Reserve System
+    symbol: RRA_t
+    pre_transition:
+      series: IOER
+      through: "2021-07-28"
+    post_transition:
+      series: IORB
+      from: "2021-07-29"
+    transition_rule: >-
+      Use IOER for observations on or before 2021-07-28 and IORB for
+      observations on or after 2021-07-29. Never backfill IORB into the IOER
+      era and never relabel IOER observations as raw IORB observations.
     requirement: point_in_time_daily_rate
   secondary_validation_source:
     publisher: Office of Financial Research
@@ -91,6 +101,7 @@ source_policy:
 point_in_time_invariants:
   - exposure_publication_time <= event_settlement_time
   - outcome_publication_time <= ingestion_decision_time
+  - reserve_anchor_series_selected_by_observation_date
   - no_posthoc_revision_substitution_without_vintage_flag
   - source_retrieval_timestamp_recorded
   - source_url_and_content_digest_recorded
@@ -112,8 +123,10 @@ event_definition:
   no_hand_selected_events: true
 
 primary_outcome:
-  id: delta_tgcr_iorb_same_day_bps
-  spread_definition: "s_t = 100 * (TGCR_t - IORB_t) in basis points"
+  id: delta_tgcr_reserve_anchor_same_day_bps
+  reserve_anchor_symbol: RRA_t
+  spread_definition: "s_t = 100 * (TGCR_t - RRA_t) in basis points"
+  reserve_anchor_definition: "RRA_t = IOER_t through 2021-07-28; IORB_t from 2021-07-29"
   outcome_definition: "y_t = s_t - s_{t-1}"
   event_alignment: settlement_date_t
   missing_previous_business_day: event_invalid
@@ -137,7 +150,7 @@ primary_estimand:
 
 confirmatory_controls:
   - same_day_bill_net_new_cash_or_pay_down
-  - lagged_tgcr_iorb_spread
+  - lagged_tgcr_reserve_anchor_spread
   - day_of_week
   - month_end_indicator
   - quarter_end_indicator
