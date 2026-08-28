@@ -13,7 +13,7 @@
   "geosync_native_features": "exploratory_only",
   "locked_controls": [
     "same_day_bill_net_new_cash_or_pay_down",
-    "lagged_tgcr_iorb_spread",
+    "lagged_tgcr_reserve_anchor_spread",
     "day_of_week",
     "month_end_indicator",
     "quarter_end_indicator"
@@ -22,9 +22,17 @@
   "model_mutation_after_confirmatory_outcome_ingestion": "forbidden",
   "outcome": {
     "forward_fill": false,
-    "iorb_source": "Federal Reserve / Board of Governors",
+    "reserve_anchor": {
+      "definition": "RRA_t = IOER_t through 2021-07-28; IORB_t from 2021-07-29",
+      "post_transition_series": "IORB",
+      "post_transition_start": "2021-07-29",
+      "pre_transition_end": "2021-07-28",
+      "pre_transition_series": "IOER",
+      "publisher": "Board of Governors of the Federal Reserve System",
+      "symbol": "RRA_t"
+    },
     "response": "y_t = s_t - s_{t-1}",
-    "spread": "s_t = 100 * (TGCR_t - IORB_t) basis points",
+    "spread": "s_t = 100 * (TGCR_t - RRA_t) basis points",
     "tgcr_source": "Federal Reserve Bank of New York"
   },
   "primary_estimand_id": "beta_coupon_settlement",
