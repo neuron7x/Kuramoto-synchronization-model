@@ -277,6 +277,7 @@ def test_sample_refuses_wrong_schema_missing_events_and_nonobject_event() -> Non
 
 def test_sample_skips_ineligible_and_out_of_range_and_supports_single_date_year() -> None:
     r = full_registry()
+    # 2014 only one eligible in-range date: exercise the no-second-date branch.
     r["events"] = [e for e in r["events"] if e["settlement_date"] != "2014-12-15"]
     r["events"].append({"settlement_date": "2013-12-15", "eligible": True})
     r["events"].append({"settlement_date": "2027-01-15", "eligible": True})
