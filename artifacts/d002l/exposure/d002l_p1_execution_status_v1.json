@@ -1,0 +1,18 @@
+{
+  "attempt": {
+    "executed_at_utc": "2026-08-28T16:36:50.843508Z",
+    "mode": "fetch_official"
+  },
+  "canonical_run_authorized": false,
+  "confirmatory_outcomes_ingested": false,
+  "decision": "BLOCKED_SOURCE_ACCESS",
+  "lineage_advance_allowed": false,
+  "next_legal_node": null,
+  "node_id": "D002L-P1",
+  "reason": "OFFICIAL_SOURCE_FETCH_FAILED:URLError:<urlopen error [Errno -3] Temporary failure in name resolution>",
+  "schema_version": "D002L-P1-EXECUTION-STATUS-v1",
+  "source_complete_registry": false,
+  "status": "NOT_EXECUTED",
+  "stop_condition": "P1 cannot produce a source-complete exposure registry => STOP",
+  "study_id": "D-002L"
+}

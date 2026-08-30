@@ -1,0 +1,58 @@
+{
+  "authority": {
+    "can_authorize_p1_terminal_pass": false,
+    "can_change_estimand": false,
+    "can_ingest_confirmatory_outcomes": false,
+    "can_refuse_p1": true,
+    "lineage_advance_authority": false
+  },
+  "divergence_policy": "ANY_PRIMARY_ORACLE_MISMATCH_REFUSES_P1",
+  "hardening_class": "MONOTONE_REFUSAL_ONLY",
+  "match_policy": "MATCH_IS_NOT_P1_PASS",
+  "minimum_year_coverage": "every year 2014 through 2026",
+  "missing_required_oracle_date_policy": "REFUSE_ORACLE_COMPLETENESS",
+  "node_id": "D002L-P1",
+  "outcome_firewall": [
+    "TGCR",
+    "IOER",
+    "IORB",
+    "beta_coupon",
+    "p_value",
+    "GeoSync features"
+  ],
+  "primary_source_remains_authoritative": "TreasuryDirect Calculated New Cash/Pay Down Amounts",
+  "reconstruction_identity": "date_coupon_net = sum(unique settlement-date CUSIP coupon offering amounts) - one consistent date-level publicly held maturing coupon amount",
+  "retained_source_digest_required": true,
+  "sample_rule": "first_and_last_eligible_coupon_settlement_per_year_2014_2026",
+  "schema_version": "D002L-P1-ORACLE-CONTRACT-v1",
+  "secondary_official_sources": [
+    {
+      "host": "www.treasurydirect.gov",
+      "path_family": "/instit/annceresult/press/preanre/",
+      "publisher": "U.S. Department of the Treasury / Bureau of the Fiscal Service",
+      "role": "offering announcement reconstruction"
+    },
+    {
+      "host": "fiscaldata.treasury.gov",
+      "path_family": "/static-data/published-reports/auctions-query/announcements/",
+      "publisher": "U.S. Department of the Treasury / Fiscal Data",
+      "role": "official announcement archive reconstruction"
+    }
+  ],
+  "structured_extraction": {
+    "duplicate_same_settlement_date_cusip": "REFUSE_AMENDMENT_OR_DUPLICATE_DOUBLE_COUNT_RISK",
+    "extractor": "pdftotext -layout",
+    "extractor_executable_sha256_required": true,
+    "extractor_version_required": true,
+    "required_fields": [
+      "Term and Type of Security",
+      "Offering Amount",
+      "CUSIP Number",
+      "Issue Date",
+      "Estimated Amount of Maturing Coupon Securities Held by the Public"
+    ],
+    "source_pdf_bytes_must_be_retained": true,
+    "source_pdf_sha256_required": true
+  },
+  "study_id": "D-002L"
+}

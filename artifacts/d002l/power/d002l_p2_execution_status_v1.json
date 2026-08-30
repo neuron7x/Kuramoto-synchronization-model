@@ -1,0 +1,18 @@
+{
+  "canonical_run_authorized": false,
+  "confirmatory_outcomes_ingested": false,
+  "decision": "BLOCKED_PREDECESSOR_P1_NOT_TERMINAL_PASS",
+  "generated_at_utc": "2026-08-28T16:38:10.664682Z",
+  "implementation_status": "PASS_SYNTHETIC_AND_CONTRACT_TESTS",
+  "lineage_advance_allowed": false,
+  "next_legal_node": null,
+  "node_id": "D002L-P2",
+  "power_computed_from_real_data": false,
+  "predecessor_observed_decision": "BLOCKED_SOURCE_ACCESS",
+  "predecessor_observed_status": "NOT_EXECUTED",
+  "predecessor_status_path": "artifacts/d002l/exposure/d002l_p1_execution_status_v1.json",
+  "schema_version": "D002L-P2-EXECUTION-STATUS-v1",
+  "scientific_execution_status": "NOT_EXECUTED",
+  "stop_reason": "P2 is illegal until direct-source D002L-P1 TERMINAL_PASS; current P1 source access is blocked.",
+  "study_id": "D-002L"
+}

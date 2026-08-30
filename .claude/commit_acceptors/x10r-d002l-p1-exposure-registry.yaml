@@ -1,0 +1,48 @@
+id: x10r-d002l-p1-exposure-registry
+status: ACTIVE
+claim_type: governance
+promise: >-
+  D-002L-P1 implements an outcome-blind, content-addressed compiler for the
+  P0-locked TreasuryDirect Calculated New Cash/Pay Down Amounts exposure source.
+  Implementation tests may pass without advancing the scientific lineage.
+  D002L-P1 becomes TERMINAL_PASS only when an official, source-complete raw
+  snapshot is retained and compiled. Source-access failure is NOT_EXECUTED /
+  BLOCKED_SOURCE_ACCESS, never PASS. TGCR/IOER/IORB and confirmatory scoring are
+  forbidden until D002L-P2 TERMINAL_PASS. The secondary Treasury announcement
+  oracle is refusal-only: a mismatch or incomplete required corroboration set may
+  refuse corroboration/promotion, while an exact oracle match can never authorize
+  P1 PASS or advance lineage.
+frozen_anchors:
+  d002l_prereg_sha256: 6a081f50088a4c461e60d73887566e2b25d1dd549c760dd56b153fbe94b8b927
+  d002l_source_plan_sha256: a95933555b20e2ce2ae412ee363fa58e989ef10bac6645a33dcefb589a72a2b7
+  d002j_prereg_sha256: f3dc65b7e64b96eafe6f23ca8bdd0e05dc9bf95b12c2658b227bd0340f7975a0
+  d002k_prereg_sha256: 2cd923810bf64547cd86ecb403bfd3f12a799cb16c3d10ebc07bc05865fee43f
+allowed_paths:
+  - research/systemic_risk/d002l_exposure_registry.py
+  - research/systemic_risk/d002l_treasury_oracle.py
+  - scripts/x10r_d002l_p1_exposure_registry.py
+  - scripts/x10r_d002l_p1_oracle.py
+  - scripts/x10r_d002l_p1_oracle_extract.py
+  - artifacts/d002l/exposure/
+  - docs/research/D002L_P1_ANNOUNCEMENT_ORACLE.md
+  - docs/research/D002L_P1_SOURCE_EXPOSURE_REGISTRY.md
+  - tests/systemic_risk/test_d002l_p1_exposure_registry.py
+  - tests/systemic_risk/test_d002l_p1_oracle_extract.py
+  - tests/systemic_risk/test_d002l_p1_treasury_oracle.py
+  - tests/fixtures/d002l/
+  - release/d002l_p1/
+forbidden_paths:
+  - docs/governance/D002L_PREREGISTRATION.yaml
+  - artifacts/d002l/prereg/
+  - artifacts/d002j/
+  - artifacts/d002k/
+  - artifacts/governance/verdicts/d002l_p0_verdict_v1.json
+phase_invariants:
+  confirmatory_outcomes_ingested: false
+  canonical_run_authorized: false
+  advance_lineage_while_source_blocked: false
+  announcement_oracle_authorizes_p1_pass: false
+  announcement_oracle_match_is_not_p1_pass: true
+  announcement_oracle_missing_required_dates: REFUSE_ORACLE_COMPLETENESS
+  announcement_oracle_mismatch_blocks_promotion: true
+  announcement_oracle_requires_retained_source_digest: true

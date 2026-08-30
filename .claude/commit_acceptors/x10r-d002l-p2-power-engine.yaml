@@ -1,0 +1,37 @@
+id: x10r-d002l-p2-power-engine
+status: ACTIVE
+claim_type: governance
+promise: >-
+  D-002L-P2 implements an outcome-blind pre-confirmatory power engine only.
+  Engineering tests and synthetic power calculations may pass without advancing
+  the scientific lineage. Real-data P2 execution is illegal until D002L-P1 is
+  direct-source TERMINAL_PASS. P2 must reject non-finite power, underpower,
+  rank deficiency, insufficient effective week clusters, nonpositive residualized
+  coupon variance, and any predecessor authority mismatch. TGCR/IOER/IORB
+  confirmatory observations, beta_coupon fitting, empirical association claims,
+  and lineage advance are forbidden while P1 is blocked.
+frozen_anchors:
+  d002l_prereg_sha256: 6a081f50088a4c461e60d73887566e2b25d1dd549c760dd56b153fbe94b8b927
+  d002l_p1_source_contract_sha256: f8184e753d3fcebb57f0554468c03fda1da7f7828321448984c6393afce9fa4b
+allowed_paths:
+  - research/systemic_risk/d002l_power_gate.py
+  - scripts/x10r_d002l_p2_power_gate.py
+  - artifacts/d002l/power/
+  - docs/research/D002L_P2_POWER_GATE.md
+  - tests/systemic_risk/test_d002l_p2_power_gate.py
+  - tests/systemic_risk/test_d002l_p2_cli.py
+  - release/d002l_p2/
+forbidden_paths:
+  - docs/governance/D002L_PREREGISTRATION.yaml
+  - artifacts/d002l/prereg/
+  - artifacts/d002j/
+  - artifacts/d002k/
+  - artifacts/governance/verdicts/d002l_p0_verdict_v1.json
+  - research/systemic_risk/d002l_exposure_registry.py
+phase_invariants:
+  predecessor_direct_source_terminal_pass_required: true
+  confirmatory_outcomes_ingested: false
+  beta_coupon_fit_at_p2: false
+  canonical_run_authorized: false
+  lineage_advance_while_p1_blocked: false
+  week_cluster_design_effect_minimum: 1.0
