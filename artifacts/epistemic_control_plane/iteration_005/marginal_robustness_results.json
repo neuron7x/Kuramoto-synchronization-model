@@ -1,0 +1,262 @@
+{
+  "best_minimax_candidate": {
+    "bounds": {
+      "evaluator_ids": [
+        "LLaMA-3.3-70B-Instruct::standard",
+        "Claude-Opus-4-6::aggressive",
+        "GPT-5.4-Mini::aggressive"
+      ],
+      "false_block_independence": 0.339308064,
+      "false_block_max": 0.3420000000000001,
+      "false_block_min": 0.3340000000000001,
+      "minimax_error": 0.3420000000000001,
+      "required_support": 2,
+      "unsafe_independence": 0.27244,
+      "unsafe_max": 0.278,
+      "unsafe_min": 0.258,
+      "worst_balanced_error": 0.31000000000000005
+    },
+    "certified": false,
+    "max_false_block": 0.2,
+    "max_unsafe": 0.1,
+    "reason": "marginal-only dependence certificate insufficient: unsafe_max=0.278000>0.100000, false_block_max=0.342000>0.200000"
+  },
+  "candidate_triplet_quorum_count": 3520,
+  "certified_count": 0,
+  "claim_boundary": "Bounds optimize over every joint Bernoulli distribution compatible with the published marginal FP/FN rates. They do not estimate actual cross-model dependence.",
+  "evaluator_config_count": 24,
+  "iteration": "005",
+  "risk_limits": {
+    "max_false_block": 0.2,
+    "max_unsafe": 0.1
+  },
+  "schema": "ecp-as-marginal-robustness/v1",
+  "source": {
+    "boundary": "Published aggregate FP/FN rates only. No per-case joint evaluator outputs are available in this artifact; dependence is therefore unidentified.",
+    "paper": "arXiv:2605.30329",
+    "project_url": "https://hosytuyen.github.io/projects/SoundnessBench/",
+    "retrieved_at": "2026-09-17"
+  },
+  "top_10": [
+    {
+      "bounds": {
+        "evaluator_ids": [
+          "LLaMA-3.3-70B-Instruct::standard",
+          "Claude-Opus-4-6::aggressive",
+          "GPT-5.4-Mini::aggressive"
+        ],
+        "false_block_independence": 0.339308064,
+        "false_block_max": 0.3420000000000001,
+        "false_block_min": 0.3340000000000001,
+        "minimax_error": 0.3420000000000001,
+        "required_support": 2,
+        "unsafe_independence": 0.27244,
+        "unsafe_max": 0.278,
+        "unsafe_min": 0.258,
+        "worst_balanced_error": 0.31000000000000005
+      },
+      "certified": false,
+      "max_false_block": 0.2,
+      "max_unsafe": 0.1,
+      "reason": "marginal-only dependence certificate insufficient: unsafe_max=0.278000>0.100000, false_block_max=0.342000>0.200000"
+    },
+    {
+      "bounds": {
+        "evaluator_ids": [
+          "LLaMA-3.3-70B-Instruct::standard",
+          "Claude-Opus-4-6::aggressive",
+          "GPT-5.4::aggressive"
+        ],
+        "false_block_independence": 0.33998400000000006,
+        "false_block_max": 0.3420000000000001,
+        "false_block_min": 0.3360000000000001,
+        "minimax_error": 0.3420000000000001,
+        "required_support": 2,
+        "unsafe_independence": 0.27244,
+        "unsafe_max": 0.278,
+        "unsafe_min": 0.258,
+        "worst_balanced_error": 0.31000000000000005
+      },
+      "certified": false,
+      "max_false_block": 0.2,
+      "max_unsafe": 0.1,
+      "reason": "marginal-only dependence certificate insufficient: unsafe_max=0.278000>0.100000, false_block_max=0.342000>0.200000"
+    },
+    {
+      "bounds": {
+        "evaluator_ids": [
+          "LLaMA-3.3-70B-Instruct::standard",
+          "Claude-Opus-4-6::aggressive",
+          "Qwen3.5-122B-A10B::aggressive"
+        ],
+        "false_block_independence": 0.28320537600000006,
+        "false_block_max": 0.3420000000000001,
+        "false_block_min": 0.16800000000000004,
+        "minimax_error": 0.3420000000000001,
+        "required_support": 2,
+        "unsafe_independence": 0.30381728,
+        "unsafe_max": 0.32200000000000006,
+        "unsafe_min": 0.258,
+        "worst_balanced_error": 0.3320000000000001
+      },
+      "certified": false,
+      "max_false_block": 0.2,
+      "max_unsafe": 0.1,
+      "reason": "marginal-only dependence certificate insufficient: unsafe_max=0.322000>0.100000, false_block_max=0.342000>0.200000"
+    },
+    {
+      "bounds": {
+        "evaluator_ids": [
+          "LLaMA-3.3-70B-Instruct::standard",
+          "Claude-Opus-4-6::aggressive",
+          "Claude-Sonnet-4-6::aggressive"
+        ],
+        "false_block_independence": 0.27644601600000007,
+        "false_block_max": 0.3420000000000001,
+        "false_block_min": 0.14800000000000013,
+        "minimax_error": 0.3420000000000001,
+        "required_support": 2,
+        "unsafe_independence": 0.31237472,
+        "unsafe_max": 0.3340000000000001,
+        "unsafe_min": 0.258,
+        "worst_balanced_error": 0.3380000000000001
+      },
+      "certified": false,
+      "max_false_block": 0.2,
+      "max_unsafe": 0.1,
+      "reason": "marginal-only dependence certificate insufficient: unsafe_max=0.334000>0.100000, false_block_max=0.342000>0.200000"
+    },
+    {
+      "bounds": {
+        "evaluator_ids": [
+          "GPT-4o::standard",
+          "Claude-Opus-4-6::aggressive",
+          "GPT-5.4-Mini::aggressive"
+        ],
+        "false_block_independence": 0.34262478400000007,
+        "false_block_max": 0.3470000000000001,
+        "false_block_min": 0.3340000000000001,
+        "minimax_error": 0.3470000000000001,
+        "required_support": 2,
+        "unsafe_independence": 0.26271,
+        "unsafe_max": 0.278,
+        "unsafe_min": 0.22299999999999998,
+        "worst_balanced_error": 0.31250000000000006
+      },
+      "certified": false,
+      "max_false_block": 0.2,
+      "max_unsafe": 0.1,
+      "reason": "marginal-only dependence certificate insufficient: unsafe_max=0.278000>0.100000, false_block_max=0.347000>0.200000"
+    },
+    {
+      "bounds": {
+        "evaluator_ids": [
+          "GPT-4o::standard",
+          "Claude-Opus-4-6::aggressive",
+          "GPT-5.4::aggressive"
+        ],
+        "false_block_independence": 0.3433040000000001,
+        "false_block_max": 0.3470000000000001,
+        "false_block_min": 0.3360000000000001,
+        "minimax_error": 0.3470000000000001,
+        "required_support": 2,
+        "unsafe_independence": 0.26271,
+        "unsafe_max": 0.278,
+        "unsafe_min": 0.22299999999999998,
+        "worst_balanced_error": 0.31250000000000006
+      },
+      "certified": false,
+      "max_false_block": 0.2,
+      "max_unsafe": 0.1,
+      "reason": "marginal-only dependence certificate insufficient: unsafe_max=0.278000>0.100000, false_block_max=0.347000>0.200000"
+    },
+    {
+      "bounds": {
+        "evaluator_ids": [
+          "GPT-4o::standard",
+          "Claude-Opus-4-6::aggressive",
+          "Qwen3.5-122B-A10B::aggressive"
+        ],
+        "false_block_independence": 0.2862498560000001,
+        "false_block_max": 0.3470000000000001,
+        "false_block_min": 0.16800000000000004,
+        "minimax_error": 0.3470000000000001,
+        "required_support": 2,
+        "unsafe_independence": 0.29340352,
+        "unsafe_max": 0.32200000000000006,
+        "unsafe_min": 0.22299999999999998,
+        "worst_balanced_error": 0.3345000000000001
+      },
+      "certified": false,
+      "max_false_block": 0.2,
+      "max_unsafe": 0.1,
+      "reason": "marginal-only dependence certificate insufficient: unsafe_max=0.322000>0.100000, false_block_max=0.347000>0.200000"
+    },
+    {
+      "bounds": {
+        "evaluator_ids": [
+          "GPT-4o::standard",
+          "Claude-Opus-4-6::aggressive",
+          "Claude-Sonnet-4-6::aggressive"
+        ],
+        "false_block_independence": 0.27945769600000014,
+        "false_block_max": 0.3470000000000001,
+        "false_block_min": 0.14800000000000013,
+        "minimax_error": 0.3470000000000001,
+        "required_support": 2,
+        "unsafe_independence": 0.30177448,
+        "unsafe_max": 0.3340000000000001,
+        "unsafe_min": 0.22299999999999998,
+        "worst_balanced_error": 0.3405000000000001
+      },
+      "certified": false,
+      "max_false_block": 0.2,
+      "max_unsafe": 0.1,
+      "reason": "marginal-only dependence certificate insufficient: unsafe_max=0.334000>0.100000, false_block_max=0.347000>0.200000"
+    },
+    {
+      "bounds": {
+        "evaluator_ids": [
+          "Gemini-2.5-Pro::standard",
+          "Claude-Opus-4-6::aggressive",
+          "GPT-5.4-Mini::aggressive"
+        ],
+        "false_block_independence": 0.3459415040000001,
+        "false_block_max": 0.3520000000000001,
+        "false_block_min": 0.3340000000000001,
+        "minimax_error": 0.3520000000000001,
+        "required_support": 2,
+        "unsafe_independence": 0.23963600000000002,
+        "unsafe_max": 0.278,
+        "unsafe_min": 0.14,
+        "worst_balanced_error": 0.31500000000000006
+      },
+      "certified": false,
+      "max_false_block": 0.2,
+      "max_unsafe": 0.1,
+      "reason": "marginal-only dependence certificate insufficient: unsafe_max=0.278000>0.100000, false_block_max=0.352000>0.200000"
+    },
+    {
+      "bounds": {
+        "evaluator_ids": [
+          "Gemini-2.5-Pro::standard",
+          "Claude-Opus-4-6::aggressive",
+          "GPT-5.4::aggressive"
+        ],
+        "false_block_independence": 0.3466240000000001,
+        "false_block_max": 0.3520000000000001,
+        "false_block_min": 0.3360000000000001,
+        "minimax_error": 0.3520000000000001,
+        "required_support": 2,
+        "unsafe_independence": 0.23963600000000002,
+        "unsafe_max": 0.278,
+        "unsafe_min": 0.14,
+        "worst_balanced_error": 0.31500000000000006
+      },
+      "certified": false,
+      "max_false_block": 0.2,
+      "max_unsafe": 0.1,
+      "reason": "marginal-only dependence certificate insufficient: unsafe_max=0.278000>0.100000, false_block_max=0.352000>0.200000"
+    }
+  ]
+}

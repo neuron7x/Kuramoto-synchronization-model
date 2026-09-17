@@ -1,0 +1,16 @@
+{
+  "acceptor_falsifiers": "3/3 UNTRIGGERED",
+  "acceptor_measurements": "3/3 PASS",
+  "candidate_triplet_quorums": 3520,
+  "claim_boundary_preserved": true,
+  "compileall": "PASS",
+  "diff_whitespace_check": "PASS",
+  "external_dependence_observed": false,
+  "iteration": "005",
+  "marginal_robustness_runner": "PASS",
+  "robustly_certified": 0,
+  "schema": "ecp-as-iteration-005-verification/v1",
+  "status": "PASS_MARGINAL_ROBUSTNESS__JOINT_ERROR_DATA_PENDING",
+  "targeted_tests_status": "PASS",
+  "targeted_unittest_methods": 67
+}

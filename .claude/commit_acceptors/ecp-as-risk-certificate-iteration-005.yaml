@@ -1,0 +1,30 @@
+id: ecp-as-risk-certificate-iteration-005
+status: ACTIVE
+claim_type: correctness
+promise: >-
+  A successful live lineage quorum cannot promote when its configured
+  distributionally robust risk certificate is not certified.
+diff_scope:
+  changed_files:
+    - path: "geosync/epistemic/dependence_bounds.py"
+    - path: "geosync/epistemic/__init__.py"
+    - path: "tests/epistemic_kernel/test_dependence_bounds.py"
+expected_signal: >-
+  RiskCertifiedLineageQuorumPolicy preserves live dissent and additionally
+  converts otherwise successful quorum decisions to HOLD when the robust certificate fails.
+measurement_command: >-
+  python -m unittest tests.epistemic_kernel.test_dependence_bounds -q
+signal_artifact: "artifacts/epistemic_control_plane/iteration_005/verification_report.json"
+falsifier:
+  command: >-
+    python -c "from geosync.epistemic.dependence_bounds import EvaluatorMarginal,certify_quorum,RiskCertifiedLineageQuorumPolicy; from geosync.epistemic.evaluator_control import EvaluatorObservation; from geosync.epistemic.models import Claim,Oracle,OracleIndependence; r=tuple(EvaluatorMarginal(str(i),str(i),'s',.1,.1) for i in range(3)); c=certify_quorum(r,required_support=2,max_unsafe=.05,max_false_block=.2); q=Claim('c','p','d','s',generator_ancestors=frozenset({'g'})); ind=OracleIndependence(True,True,True,True); o=tuple(EvaluatorObservation(Oracle(str(i),'c',str(i),ind,frozenset({f'e:{i}'})),True) for i in range(3)); raise SystemExit(0 if RiskCertifiedLineageQuorumPolicy(c).decide(q,o).promoted else 1)"
+  description: >-
+    Triggers if an uncertified marginal-risk certificate permits a live unanimous lineage quorum to promote.
+rollback_command: >-
+  rm -f geosync/epistemic/dependence_bounds.py tests/epistemic_kernel/test_dependence_bounds.py
+rollback_verification_command: >-
+  test ! -e geosync/epistemic/dependence_bounds.py
+memory_update_type: none
+ledger_path: ".claude/commit_acceptors/ecp-as-risk-certificate-iteration-005.yaml"
+report_path: "artifacts/epistemic_control_plane/iteration_005/ITERATION_005_REPORT.md"
+evidence: []

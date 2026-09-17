@@ -1,0 +1,30 @@
+id: ecp-as-boundary-iteration-005
+status: ACTIVE
+claim_type: governance
+promise: >-
+  Iteration 005 distinguishes exact worst-case bounds from empirical dependence
+  estimates and never claims that the worst-case coupling is actually realized.
+diff_scope:
+  changed_files:
+    - path: "docs/epistemic_control_plane/DISTRIBUTIONALLY_ROBUST_QUORUM_PROTOCOL.md"
+    - path: "governance/ECP_AS_ITERATION_005.json"
+    - path: "artifacts/epistemic_control_plane/iteration_005/ITERATION_005_REPORT.md"
+    - path: "artifacts/epistemic_control_plane/iteration_005/source_verification.json"
+expected_signal: >-
+  Documentation states that published marginals leave actual evaluator dependence unidentified and that robust bounds are guarantees over compatible distributions, not covariance estimates.
+measurement_command: >-
+  grep -q "does not estimate their real pairwise or higher-order error covariance" docs/epistemic_control_plane/DISTRIBUTIONALLY_ROBUST_QUORUM_PROTOCOL.md && grep -q "actual cross-model dependence remains unmeasured" artifacts/epistemic_control_plane/iteration_005/primary_summary.json
+signal_artifact: "governance/ECP_AS_ITERATION_005.json"
+falsifier:
+  command: >-
+    python -c "import pathlib; s=pathlib.Path('governance/ECP_AS_ITERATION_005.json').read_text().lower(); raise SystemExit(0 if 'does not estimate actual evaluator dependence' not in s else 1)"
+  description: >-
+    Negation probe for loss of the worst-case-bound versus empirical-dependence distinction.
+rollback_command: >-
+  rm -f docs/epistemic_control_plane/DISTRIBUTIONALLY_ROBUST_QUORUM_PROTOCOL.md governance/ECP_AS_ITERATION_005.json
+rollback_verification_command: >-
+  test ! -e governance/ECP_AS_ITERATION_005.json
+memory_update_type: none
+ledger_path: ".claude/commit_acceptors/ecp-as-boundary-iteration-005.yaml"
+report_path: "artifacts/epistemic_control_plane/iteration_005/ITERATION_005_REPORT.md"
+evidence: []

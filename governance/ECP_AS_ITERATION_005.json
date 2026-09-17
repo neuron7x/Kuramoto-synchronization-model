@@ -1,0 +1,25 @@
+{
+  "iteration": "ECP-AS-005",
+  "objective": "Bound evaluator-quorum risk under unknown cross-model dependence using externally published SoundnessBench error marginals.",
+  "status": "PASS_MARGINAL_ROBUSTNESS__JOINT_ERROR_DATA_PENDING",
+  "external_grounding": {
+    "source": "SoundnessBench public leaderboard",
+    "paper": "arXiv:2605.30329",
+    "evaluator_configurations": 24,
+    "evidence_type": "aggregate FP/FN marginals"
+  },
+  "configured_risk_limits": {
+    "max_unsafe_promotion": 0.10,
+    "max_false_block": 0.20
+  },
+  "results": {
+    "candidate_triplet_quorums": 3520,
+    "robustly_certified": 0,
+    "best_minimax_error": 0.3420000000000001,
+    "best_unsafe_max": 0.278,
+    "best_false_block_max": 0.3420000000000001,
+    "best_required_support": 2
+  },
+  "claim_boundary": "The LP gives exact worst-case bounds over joint Bernoulli distributions compatible with published marginals. It does not estimate actual evaluator dependence or assert that the worst case occurs in practice.",
+  "next_proof_obligation": "Collect or execute per-case heterogeneous evaluator predictions, estimate dependence with uncertainty bounds on calibration data, then evaluate a frozen certificate on locked holdout data."
+}

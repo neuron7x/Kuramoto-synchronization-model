@@ -1,0 +1,24 @@
+{
+  "iteration": "ECP-AS-005",
+  "status": "PASS_MARGINAL_ROBUSTNESS__JOINT_ERROR_DATA_PENDING",
+  "external_source": "SoundnessBench public leaderboard / arXiv:2605.30329",
+  "evaluator_configurations": 24,
+  "candidate_triplet_quorums": 3520,
+  "risk_limits": {"max_unsafe": 0.10, "max_false_block": 0.20},
+  "certified_count": 0,
+  "best_minimax_candidate": {
+    "evaluator_ids": [
+      "LLaMA-3.3-70B-Instruct::standard",
+      "Claude-Opus-4-6::aggressive",
+      "GPT-5.4-Mini::aggressive"
+    ],
+    "required_support": 2,
+    "unsafe_min": 0.258,
+    "unsafe_max": 0.278,
+    "false_block_min": 0.3340000000000001,
+    "false_block_max": 0.3420000000000001,
+    "minimax_error": 0.3420000000000001
+  },
+  "claim_boundary": "Exact worst-case risk over all joint distributions matching published marginals; actual cross-model dependence remains unmeasured.",
+  "next_proof_obligation": "Per-case evaluator outputs, calibrated dependence certificate, locked holdout."
+}
