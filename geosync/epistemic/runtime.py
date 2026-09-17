@@ -113,3 +113,63 @@ class EpistemicRuntime:
             self.degrade(claim_id,ClaimState.STALE,reason,evidence_ref)
             changed.append(claim_id)
         return tuple(changed)
+    def apply_external_adjudication(self, event, *, policy=None):
+        """Apply one externally grounded adjudication event exactly once.
+
+        Editorial authority may invalidate an evidence artifact without being treated as
+        an omniscient truth oracle.  Stronger states such as FALSIFIED remain policy-gated.
+        """
+        from .adjudication import (
+            AdjudicationAction, ExternalAdjudicationPolicy,
+        )
+
+        self._events(event.claim_id)
+        for row in self.ledger.for_claim(event.claim_id):
+            if row.event_type == "EXTERNAL_ADJUDICATION_RECEIVED" and row.payload.get("event_id") == event.event_id:
+                raise ValueError("external adjudication event already applied")
+
+        policy = policy or ExternalAdjudicationPolicy()
+        decision = policy.evaluate(event)
+        self.ledger.append(
+            "EXTERNAL_ADJUDICATION_RECEIVED",
+            event.claim_id,
+            {
+                "event_id": event.event_id,
+                "kind": event.kind.value,
+                "authority": event.authority.value,
+                "source_url": event.source_url,
+                "source_digest": event.source_digest,
+                "decision_action": decision.action.value,
+                "decision_target": decision.target_state.value if decision.target_state else None,
+            },
+        )
+        if decision.action is AdjudicationAction.DEGRADE:
+            evidence = NegativeEvidence(
+                evidence_id=f"external:{event.event_id}",
+                kind=decision.negative_kind,
+                digest=event.source_digest,
+                claim_id=event.claim_id,
+                blocking=True,
+                resolved=False,
+                note=decision.reason,
+            )
+            self.add_negative_evidence(evidence)
+            self.degrade(
+                event.claim_id,
+                decision.target_state,
+                reason=decision.reason,
+                evidence_ref=event.source_url,
+            )
+        elif decision.action is AdjudicationAction.REVIEW_REQUIRED:
+            self.ledger.append(
+                "EXTERNAL_ADJUDICATION_REVIEW_REQUIRED",
+                event.claim_id,
+                {"event_id": event.event_id, "reason": decision.reason},
+            )
+        else:
+            self.ledger.append(
+                "EXTERNAL_ADJUDICATION_PRESERVED",
+                event.claim_id,
+                {"event_id": event.event_id, "reason": decision.reason},
+            )
+        return decision

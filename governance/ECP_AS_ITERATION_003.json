@@ -1,0 +1,30 @@
+{
+  "iteration": "ECP-AS-003",
+  "objective": "Replay externally grounded scientific adjudication events and validate conservative claim-state degradation semantics.",
+  "status": "PASS_EXTERNAL_ADJUDICATION_REPLAY__INDEPENDENT_STATE_LABELING_PENDING",
+  "case_set": {
+    "total": 14,
+    "material_external_challenges": 9,
+    "benign_controls": 5,
+    "source_class": "official publisher editorial actions plus one independent scholarly replication analysis"
+  },
+  "results": {
+    "ecp_as_external_action_agreement": "14/14",
+    "ecp_as_false_degradations": 0,
+    "ecp_as_missed_degradations": 0,
+    "ecp_as_false_falsifications": 0,
+    "ecp_as_transition_conformance": "14/14",
+    "retraction_equals_falsification_false_falsifications": 7,
+    "all_editorial_actions_degrade_false_degradations": 5
+  },
+  "claim_boundary": "DEGRADE/PRESERVE is externally grounded; exact ECP-AS typed states are internal policy conformance, not independent ground truth.",
+  "verification": {
+    "targeted_unittest_methods": 49,
+    "targeted_tests_status": "PASS",
+    "historical_replay": "PASS",
+    "compileall": "PASS",
+    "git_diff_check": "PASS",
+    "source_manifest_digest_validation": "PASS"
+  },
+  "next_proof_obligation": "Externally labeled or blinded soundness/discovery benchmark with labels independent of the ECP-AS implementation team."
+}

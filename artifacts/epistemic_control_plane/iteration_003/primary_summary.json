@@ -1,0 +1,25 @@
+{
+  "benign_controls": 5,
+  "case_count": 14,
+  "claim_boundary": "External action labels are grounded in public adjudication events. Typed claim states are internal policy conformance targets, not independent ground truth.",
+  "comparison": {
+    "all_editorial_actions_degrade_false_degradations": 5,
+    "retraction_equals_falsification_false_falsifications": 7
+  },
+  "ecp_as": {
+    "action_accuracy": 1.0,
+    "correct_actions": 14,
+    "false_degradations": 0,
+    "false_falsifications": 0,
+    "missed_degradations": 0,
+    "policy": "ecp_as_external_adjudication",
+    "total": 14,
+    "transition_conformance": 14,
+    "transition_conformance_rate": 1.0
+  },
+  "iteration": "ECP-AS-003",
+  "material_external_challenges": 9,
+  "next_proof_obligation": "Externally labeled or blinded soundness/discovery benchmark with labels not authored by the ECP-AS implementation team.",
+  "schema": "ecp-as-iteration-003-summary/v1",
+  "status": "PASS_EXTERNAL_ADJUDICATION_REPLAY__INDEPENDENT_STATE_LABELING_PENDING"
+}

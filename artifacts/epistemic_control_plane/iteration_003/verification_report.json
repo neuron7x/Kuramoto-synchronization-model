@@ -1,0 +1,13 @@
+{
+  "claim_boundary_preserved": true,
+  "compileall": "PASS",
+  "external_action_agreement": "14/14",
+  "git_diff_check": "PASS",
+  "historical_replay": "PASS",
+  "iteration": "003",
+  "schema": "ecp-as-iteration-003-verification/v1",
+  "source_digest_validation": "PASS",
+  "targeted_tests_status": "PASS",
+  "targeted_unittest_methods": 49,
+  "typed_transition_conformance": "14/14 (internal policy conformance; not external accuracy)"
+}
