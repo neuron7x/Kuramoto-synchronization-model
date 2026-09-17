@@ -1,0 +1,61 @@
+{
+  "iteration": "ECP-AS-001",
+  "verification_status": "PASS",
+  "targeted_tests": {
+    "count": 32,
+    "returncode": 0,
+    "stdout": "",
+    "stderr": "................................\n----------------------------------------------------------------------\nRan 32 tests in 0.015s\n\nOK\n"
+  },
+  "compileall_returncode": 0,
+  "pyproject": {
+    "cli_registered": true,
+    "package_included": true
+  },
+  "flagship_witness": {
+    "claim_id": "flagship-001",
+    "shared_oracle_attempt": {
+      "allowed": false,
+      "blockers": [
+        "no admissible independent oracle"
+      ]
+    },
+    "independent_oracle_attempt": {
+      "allowed": true,
+      "blockers": []
+    },
+    "final_state": "REPLICATED",
+    "ledger_events": 16,
+    "ledger_sha256": "0790f5593bfb5023307450f9da28a3b3f0d1879fc6c58ca28215bb58eba4bd07",
+    "interpretation": "The runtime blocked a seemingly independent verifier because its lineage overlapped the generator, then allowed replication only after a lineage-independent oracle was added."
+  },
+  "implemented_files": [
+    "docs/epistemic_control_plane/ARCHITECTURE.md",
+    "docs/epistemic_control_plane/README.md",
+    "epistemic_kernel/__init__.py",
+    "epistemic_kernel/admission.py",
+    "epistemic_kernel/certificates.py",
+    "epistemic_kernel/cli.py",
+    "epistemic_kernel/compiler.py",
+    "epistemic_kernel/contracts.py",
+    "epistemic_kernel/dependencies.py",
+    "epistemic_kernel/geosync_adapter.py",
+    "epistemic_kernel/ledger.py",
+    "epistemic_kernel/lineage.py",
+    "epistemic_kernel/models.py",
+    "epistemic_kernel/runtime.py",
+    "epistemic_kernel/scheduler.py",
+    "tests/epistemic_kernel/test_adapter.py",
+    "tests/epistemic_kernel/test_admission.py",
+    "tests/epistemic_kernel/test_dependencies_compiler.py",
+    "tests/epistemic_kernel/test_lineage_scheduler.py",
+    "tests/epistemic_kernel/test_runtime_ledger.py"
+  ],
+  "known_boundaries": [
+    "No empirical cross-domain benchmark of UnsafePromotionRate yet.",
+    "Structured claim compiler validates explicit contracts; natural-language semantic compilation is not independently verified.",
+    "Oracle independence is lineage- and axis-based, not a proof of statistical independence.",
+    "Ledger is tamper-evident via hash chaining, not externally notarized or Byzantine fault tolerant.",
+    "Legacy GeoSync science claims are not promoted by this iteration."
+  ]
+}

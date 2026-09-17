@@ -1,0 +1,17 @@
+{
+  "claim_id": "flagship-001",
+  "shared_oracle_attempt": {
+    "allowed": false,
+    "blockers": [
+      "no admissible independent oracle"
+    ]
+  },
+  "independent_oracle_attempt": {
+    "allowed": true,
+    "blockers": []
+  },
+  "final_state": "REPLICATED",
+  "ledger_events": 16,
+  "ledger_sha256": "0790f5593bfb5023307450f9da28a3b3f0d1879fc6c58ca28215bb58eba4bd07",
+  "interpretation": "The runtime blocked a seemingly independent verifier because its lineage overlapped the generator, then allowed replication only after a lineage-independent oracle was added."
+}

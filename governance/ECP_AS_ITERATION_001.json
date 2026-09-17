@@ -1,0 +1,34 @@
+{
+  "iteration": "ECP-AS-001",
+  "status": "PASS_INTERNAL_VERIFICATION_PENDING_EXTERNAL_AUDIT",
+  "objective": "Extract and harden a domain-independent epistemic control plane from the GeoSync verification substrate.",
+  "implemented": [
+    "domain-independent evidence-carrying claim model",
+    "adjacent fail-closed claim maturity state machine",
+    "promotion contracts and admission controller",
+    "P/C/A/I oracle independence with lineage-overlap rejection",
+    "hash-chained authoritative event ledger with tamper detection",
+    "append-only negative-evidence resolution semantics",
+    "deterministic promotion certificates",
+    "typed acyclic dependency graph and scoped invalidation sets",
+    "structured claim-contract compiler",
+    "falsifier-first experiment scheduler",
+    "GeoSync legacy maturity adapter",
+    "flagship correlated-verifier adversarial witness"
+  ],
+  "verification": {
+    "targeted_tests_passed": 32,
+    "targeted_tests_failed": 0,
+    "compileall": "PASS",
+    "flagship_shared_oracle": "BLOCKED",
+    "flagship_independent_oracle": "PROMOTED_TO_REPLICATED"
+  },
+  "not_claimed": [
+    "empirical reduction of unsafe claim promotion across real domains",
+    "formal verification of the complete runtime",
+    "statistical independence of oracles",
+    "natural-language semantic compiler correctness",
+    "validation of legacy GeoSync scientific claims"
+  ],
+  "source_archive_sha256": "6cbdd2e490c69ab3c8669181b71ec9757925919a2e30374db196ebff80551ce9"
+}
