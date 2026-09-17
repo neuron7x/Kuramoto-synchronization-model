@@ -140,6 +140,7 @@ geosync-research = "tools.research.research_cli:main"
 mfn = "geosync.mfn.cli:main"
 mfn-api = "geosync.mfn.cli:api_main"
 mfn-validate = "geosync.mfn.cli:validate_main"
+ecp-as = "geosync.epistemic.cli:main"
 
 [tool.setuptools.dynamic]
 readme = { file = "README.md", content-type = "text/markdown" }

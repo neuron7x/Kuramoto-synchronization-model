@@ -1,0 +1,19 @@
+{
+  "_note": "The full-repository SHA-256 manifest is retained in the chat-delivered ZIP; GitHub uses the branch/commit tree as the repository state anchor.",
+  "ITERATION_001_REPORT.md": {
+    "sha256": "3b605b9e8a5b435839b2ff53240965cd15bfd1159e4ad80cf44585ac628779df",
+    "bytes": 1400
+  },
+  "flagship_demo_ledger.jsonl": {
+    "sha256": "0790f5593bfb5023307450f9da28a3b3f0d1879fc6c58ca28215bb58eba4bd07",
+    "bytes": 8445
+  },
+  "flagship_demo_result.json": {
+    "sha256": "747eab34b89fc7963cdbbce1ea5da8bc8644834130c64c351e08b56854c7b014",
+    "bytes": 571
+  },
+  "verification_report.json": {
+    "sha256": "9d260015a72a1f2cb911ba3b4a2274d10d445434ca717c225821ece5b0f29696",
+    "bytes": 2406
+  }
+}
