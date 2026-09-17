@@ -1,0 +1,94 @@
+{
+  "benchmark": "ECP-AS Iteration 002 adversarial promotion benchmark",
+  "core_synthetic_scenarios": 31,
+  "metrics": [
+    {
+      "accuracy": 0.5428571428571428,
+      "correct": 19,
+      "false_block_rate": 0.0,
+      "false_blocks": 0,
+      "policy": "required_evidence_only",
+      "safe_cases": 12,
+      "total": 35,
+      "unsafe_cases": 23,
+      "unsafe_promotion_rate": 0.6956521739130435,
+      "unsafe_promotions": 16
+    },
+    {
+      "accuracy": 0.5714285714285714,
+      "correct": 20,
+      "false_block_rate": 0.0,
+      "false_blocks": 0,
+      "policy": "self_review",
+      "safe_cases": 12,
+      "total": 35,
+      "unsafe_cases": 23,
+      "unsafe_promotion_rate": 0.6521739130434783,
+      "unsafe_promotions": 15
+    },
+    {
+      "accuracy": 0.5428571428571428,
+      "correct": 19,
+      "false_block_rate": 0.25,
+      "false_blocks": 3,
+      "policy": "multi_agent_vote",
+      "safe_cases": 12,
+      "total": 35,
+      "unsafe_cases": 23,
+      "unsafe_promotion_rate": 0.5652173913043478,
+      "unsafe_promotions": 13
+    },
+    {
+      "accuracy": 0.7714285714285715,
+      "correct": 27,
+      "false_block_rate": 0.0,
+      "false_blocks": 0,
+      "policy": "artifact_chain_no_lineage",
+      "safe_cases": 12,
+      "total": 35,
+      "unsafe_cases": 23,
+      "unsafe_promotion_rate": 0.34782608695652173,
+      "unsafe_promotions": 8
+    },
+    {
+      "accuracy": 0.8285714285714286,
+      "correct": 29,
+      "false_block_rate": 0.0,
+      "false_blocks": 0,
+      "policy": "ecp_as_no_negative_gate",
+      "safe_cases": 12,
+      "total": 35,
+      "unsafe_cases": 23,
+      "unsafe_promotion_rate": 0.2608695652173913,
+      "unsafe_promotions": 6
+    },
+    {
+      "accuracy": 0.7714285714285715,
+      "correct": 27,
+      "false_block_rate": 0.0,
+      "false_blocks": 0,
+      "policy": "ecp_as_no_lineage_gate",
+      "safe_cases": 12,
+      "total": 35,
+      "unsafe_cases": 23,
+      "unsafe_promotion_rate": 0.34782608695652173,
+      "unsafe_promotions": 8
+    },
+    {
+      "accuracy": 1.0,
+      "correct": 35,
+      "false_block_rate": 0.0,
+      "false_blocks": 0,
+      "policy": "ecp_as",
+      "safe_cases": 12,
+      "total": 35,
+      "unsafe_cases": 23,
+      "unsafe_promotion_rate": 0.0,
+      "unsafe_promotions": 0
+    }
+  ],
+  "primary_claim_boundary": "The benchmark measures policy behavior under declared adversarial cases. It does not establish real-world scientific truth or external workload generalization.",
+  "repository_negative_probes": 4,
+  "scenario_count": 35,
+  "scope": "synthetic adversarial policy benchmark plus repository-grounded negative-evidence probes"
+}

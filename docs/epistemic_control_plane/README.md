@@ -27,12 +27,21 @@ Implemented:
 - GeoSync legacy maturity adapter;
 - executable tests.
 
+## Iteration 2 controlled benchmark
+
+Iteration 002 adds a controlled adversarial promotion benchmark, behavior-class baselines,
+mechanism ablations, repository-grounded negative-evidence probes, and a 128-state replication
+gate truth table. On the declared 35-case suite, full ECP-AS produced 0/23 unsafe promotions and
+0/12 false blocks. This is **not** yet external real-workload validation. See
+`docs/epistemic_control_plane/BENCHMARK_PROTOCOL.md` and
+`artifacts/epistemic_control_plane/iteration_002/ITERATION_002_REPORT.md`.
+
 Not yet claimed:
 - complete semantic claim compiler;
 - graph-scale invalidation propagation;
 - cryptographic append-only ledger;
 - LLM-independent semantic equivalence proofs;
 - cross-domain empirical validation;
-- demonstrated reduction in unsafe-promotion rate.
+- demonstrated reduction in unsafe-promotion rate on external natural workloads.
 
 Those are future proof obligations, not completed features.

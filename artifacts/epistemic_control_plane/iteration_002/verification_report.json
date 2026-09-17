@@ -1,0 +1,33 @@
+{
+  "benchmark": {
+    "artifact_chain_no_lineage_unsafe_promotions": 8,
+    "ecp_as_false_blocks": 0,
+    "ecp_as_unsafe_promotions": 0,
+    "safe_cases": 12,
+    "total_cases": 35,
+    "unsafe_cases": 23
+  },
+  "checks": {
+    "benchmark_runner": "PASS",
+    "commit_acceptor_inline_command_syntax": "PASS",
+    "commit_acceptor_schema": "PASS",
+    "compileall": "PASS",
+    "git_diff_check": "PASS",
+    "replication_truth_table_states": 128,
+    "replication_truth_table_status": "PASS",
+    "selected_diff_bound_acceptors": "PASS",
+    "targeted_unittest_methods": 39,
+    "targeted_unittest_status": "PASS"
+  },
+  "claim_boundary": "The benchmark measures policy behavior under declared adversarial cases. It does not establish real-world scientific truth or external workload generalization.",
+  "iteration": "ECP-AS-002",
+  "next_proof_obligation": "Externally sourced or historical workload replay with independent labels/adjudication.",
+  "repository_gate_context": {
+    "global_commit_acceptor_validation": "BLOCKED_BY_PREEXISTING_UNRELATED_DEBT",
+    "iteration_002_selected_acceptors": "PASS",
+    "observed_preexisting_errors": [
+      "legacy acceptor evidence sha256 mismatches in unrelated indicator tests"
+    ]
+  },
+  "status": "PASS_CONTROLLED_ADVERSARIAL_BENCHMARK__EXTERNAL_VALIDATION_PENDING"
+}

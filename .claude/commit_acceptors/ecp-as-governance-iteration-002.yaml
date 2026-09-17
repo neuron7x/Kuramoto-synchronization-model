@@ -1,0 +1,39 @@
+id: ecp-as-governance-iteration-002
+status: ACTIVE
+claim_type: governance
+promise: >-
+  Iteration 002 reports exact benchmark counts while explicitly refusing external-generalization,
+  named-product superiority, or real-world scientific-error claims not supported by the benchmark.
+diff_scope:
+  changed_files:
+    - path: "docs/epistemic_control_plane/BENCHMARK_PROTOCOL.md"
+    - path: "docs/epistemic_control_plane/README.md"
+    - path: "governance/ECP_AS_ITERATION_002.json"
+    - path: "artifacts/epistemic_control_plane/iteration_002/ITERATION_002_REPORT.md"
+    - path: "artifacts/epistemic_control_plane/iteration_002/verification_report.json"
+    - path: "artifacts/epistemic_control_plane/iteration_002/artifact_index.json"
+    - path: ".claude/commit_acceptors/ecp-as-governance-iteration-002.yaml"
+  forbidden_paths:
+    - "execution/"
+    - "trading/"
+required_python_symbols: []
+expected_signal: >-
+  Benchmark report and governance manifest state the controlled benchmark boundary and preserve
+  external validation as the next proof obligation.
+measurement_command: >-
+  python -c "import json; d=json.load(open('governance/ECP_AS_ITERATION_002.json'));
+  assert 'EXTERNAL_VALIDATION_PENDING' in d['status']; assert d['results']['ecp_as_unsafe_promotions']==0"
+signal_artifact: "governance/ECP_AS_ITERATION_002.json"
+falsifier:
+  command: >-
+    python -c "from pathlib import Path; s=Path('artifacts/epistemic_control_plane/iteration_002/ITERATION_002_REPORT.md').read_text(); raise SystemExit(0 if 'proves reduction of scientific error on natural' in s.lower() else 1)"
+  description: >-
+    The negation probe succeeds only if the report contains an unbounded real-world proof claim.
+rollback_command: >-
+  rm -f docs/epistemic_control_plane/BENCHMARK_PROTOCOL.md governance/ECP_AS_ITERATION_002.json
+rollback_verification_command: >-
+  test ! -e docs/epistemic_control_plane/BENCHMARK_PROTOCOL.md && test ! -e governance/ECP_AS_ITERATION_002.json
+memory_update_type: none
+ledger_path: ".claude/commit_acceptors/ecp-as-governance-iteration-002.yaml"
+report_path: "artifacts/epistemic_control_plane/iteration_002/ITERATION_002_REPORT.md"
+evidence: []

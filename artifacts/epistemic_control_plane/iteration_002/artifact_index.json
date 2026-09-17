@@ -1,0 +1,12 @@
+{
+  "artifacts": [
+    {"bytes": 3022, "path": "artifacts/epistemic_control_plane/iteration_002/ITERATION_002_REPORT.md", "sha256": "8e99de8db335098e5ae704ac4f681f2802a77d5c70f6fd02bd7a8022a9c04e0b"},
+    {"bytes": 2660, "path": "artifacts/epistemic_control_plane/iteration_002/benchmark_results.json", "sha256": "e0149016c06a7fbac4e394d4a7923777ac889e0090dea9785ad1e69af4fde24a"},
+    {"bytes": 1443, "path": "artifacts/epistemic_control_plane/iteration_002/decision_matrix.json.gz", "sha256": "27a478d2681a953d50ad554527d3c881587af084b3b02492b8275a8320cb8f2c"},
+    {"bytes": 504, "path": "artifacts/epistemic_control_plane/iteration_002/failure_class_breakdown.json.gz", "sha256": "fb1b0deddc5d2c9bb19b4c3d3243f373a015c4c34cd84a259ec0bb2b5d37df96"},
+    {"bytes": 258, "path": "artifacts/epistemic_control_plane/iteration_002/primary_summary.json", "sha256": "8b5d93d0ea71bec0021fe7ceca650528ee4c2801194e4867e499560a1708266e"},
+    {"bytes": 1667, "path": "artifacts/epistemic_control_plane/iteration_002/scenario_manifest.json.gz", "sha256": "90dab46efd88edf93a6a4128e121561ac9fdc61a97b7c7f3dec59502fa1ee365"},
+    {"bytes": 1320, "path": "artifacts/epistemic_control_plane/iteration_002/verification_report.json", "sha256": "e72ed3dc8e9e153a677569634b07f36605d726abfb4e8d1ce5db054bfd2f0abe"}
+  ],
+  "iteration": "ECP-AS-002"
+}
