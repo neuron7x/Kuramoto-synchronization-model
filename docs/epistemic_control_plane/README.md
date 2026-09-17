@@ -52,3 +52,7 @@ See `HISTORICAL_ADJUDICATION_PROTOCOL.md` and `artifacts/epistemic_control_plane
 ## Iteration 004 — lineage-aware evaluator stress
 
 See `SOUNDNESS_CONTROL_STRESS_PROTOCOL.md` and `artifacts/epistemic_control_plane/iteration_004/`. External SoundnessBench labels are used only for scoring; evaluator errors are synthetic stress models. The iteration adds pairwise-lineage quorum authorization and explicitly records hidden common cause as a residual failure mode.
+
+## Iteration 005 — distributionally robust quorum certification
+
+See `DISTRIBUTIONALLY_ROBUST_QUORUM_PROTOCOL.md` and `artifacts/epistemic_control_plane/iteration_005/`. Published SoundnessBench FP/FN marginals are used to compute exact worst-case quorum risk over every compatible joint error distribution. Marginal benchmark quality alone is not treated as evidence of evaluator independence.

@@ -35,6 +35,12 @@ from .evaluator_control import (
     EvaluatorObservation, LineageQuorumPolicy, QuorumAction, QuorumDecision,
     synthesize_quorum_oracle,
 )
+
+from .dependence_bounds import (
+    EvaluatorMarginal, QuorumRiskBounds, RobustQuorumCertificate,
+    RiskCertifiedLineageQuorumPolicy, certify_quorum, quorum_risk_bounds,
+    search_triplet_quorums,
+)
 from .soundness_stress import (
     JudgeProfile, SoundnessCase, StressMetrics, default_profiles, evaluate_profile,
     load_soundness_slice, run_stress_suite,
@@ -54,4 +60,7 @@ __all__ = [
     "EvaluatorObservation", "LineageQuorumPolicy", "QuorumAction", "QuorumDecision",
     "synthesize_quorum_oracle", "JudgeProfile", "SoundnessCase", "StressMetrics",
     "default_profiles", "evaluate_profile", "load_soundness_slice", "run_stress_suite",
+    "EvaluatorMarginal", "QuorumRiskBounds", "RobustQuorumCertificate",
+    "RiskCertifiedLineageQuorumPolicy", "certify_quorum", "quorum_risk_bounds",
+    "search_triplet_quorums",
 ]

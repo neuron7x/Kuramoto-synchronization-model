@@ -1,0 +1,35 @@
+id: ecp-as-marginal-robustness-iteration-005
+status: ACTIVE
+claim_type: validation
+promise: >-
+  Iteration 005 computes exact worst-case quorum risk over every joint Bernoulli
+  distribution compatible with the frozen public SoundnessBench FP/FN marginals.
+diff_scope:
+  changed_files:
+    - path: "geosync/epistemic/dependence_bounds.py"
+    - path: "benchmarks/epistemic_control_plane/iteration_005/soundnessbench_leaderboard_marginals.json"
+    - path: "benchmarks/epistemic_control_plane/iteration_005/run_marginal_robustness.py"
+    - path: "tests/epistemic_kernel/test_dependence_bounds.py"
+    - path: "artifacts/epistemic_control_plane/iteration_005/marginal_robustness_results.json"
+  forbidden_paths:
+    - "execution/"
+    - "trading/"
+expected_signal: >-
+  All 3-evaluator distinct-model 2-of-3 and 3-of-3 candidate quorums fail the
+  configured 10 percent unsafe / 20 percent false-block robust certificate.
+measurement_command: >-
+  PYTHONPATH=. python benchmarks/epistemic_control_plane/iteration_005/run_marginal_robustness.py
+signal_artifact: "artifacts/epistemic_control_plane/iteration_005/marginal_robustness_results.json"
+falsifier:
+  command: >-
+    python -c "import json; d=json.load(open('artifacts/epistemic_control_plane/iteration_005/marginal_robustness_results.json')); raise SystemExit(0 if d['certified_count'] != 0 or d['best_minimax_candidate']['bounds']['minimax_error'] < .30 else 1)"
+  description: >-
+    Triggers if a searched marginal-only quorum unexpectedly satisfies the robust target or the best worst-case error collapses below the declared falsification threshold.
+rollback_command: >-
+  rm -rf benchmarks/epistemic_control_plane/iteration_005 artifacts/epistemic_control_plane/iteration_005 && rm -f geosync/epistemic/dependence_bounds.py tests/epistemic_kernel/test_dependence_bounds.py
+rollback_verification_command: >-
+  test ! -e geosync/epistemic/dependence_bounds.py
+memory_update_type: none
+ledger_path: ".claude/commit_acceptors/ecp-as-marginal-robustness-iteration-005.yaml"
+report_path: "artifacts/epistemic_control_plane/iteration_005/ITERATION_005_REPORT.md"
+evidence: []

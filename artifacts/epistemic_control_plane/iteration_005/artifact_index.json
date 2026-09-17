@@ -1,0 +1,31 @@
+{
+  "files": [
+    {
+      "bytes": 1470,
+      "path": "artifacts/epistemic_control_plane/iteration_005/ITERATION_005_REPORT.md",
+      "sha256": "de2ed70516e4307a66d910e7250598192da6ddacdbec530ecf16aeb3dad2f7e0"
+    },
+    {
+      "bytes": 9520,
+      "path": "artifacts/epistemic_control_plane/iteration_005/marginal_robustness_results.json",
+      "sha256": "c6af47abb7a8f55298fd2d5f17721492e1d12c24f23fa2a21d31d0111b08dfbc"
+    },
+    {
+      "bytes": 977,
+      "path": "artifacts/epistemic_control_plane/iteration_005/primary_summary.json",
+      "sha256": "89aafa2cdd8cfc27e4a0d83da5e9aa4aeb549f6add65dc03d0cf3d88d893593f"
+    },
+    {
+      "bytes": 563,
+      "path": "artifacts/epistemic_control_plane/iteration_005/source_verification.json",
+      "sha256": "feecd676657ba29d857cd7252255b90f34563839355a2397310c1150240f211f"
+    },
+    {
+      "bytes": 536,
+      "path": "artifacts/epistemic_control_plane/iteration_005/verification_report.json",
+      "sha256": "e506ef0b649b94f8c922eba56fa37cc77928e3a6d69def1be9a39c0e749dfb04"
+    }
+  ],
+  "iteration": "005",
+  "schema": "ecp-as-artifact-index/v1"
+}

@@ -1,0 +1,35 @@
+{
+  "schema": "ecp-as-soundnessbench-marginals/v1",
+  "source": {
+    "project_url": "https://hosytuyen.github.io/projects/SoundnessBench/",
+    "paper": "arXiv:2605.30329",
+    "retrieved_at": "2026-09-17",
+    "boundary": "Published aggregate FP/FN rates only. No per-case joint evaluator outputs are available in this artifact; dependence is therefore unidentified."
+  },
+  "evaluators": [
+    {"model":"Claude-Sonnet-4-6","mode":"standard","fp_rate":0.628,"fn_rate":0.052},
+    {"model":"Claude-Opus-4-6","mode":"standard","fp_rate":0.718,"fn_rate":0.028},
+    {"model":"Gemini-3.1-Pro","mode":"standard","fp_rate":0.740,"fn_rate":0.039},
+    {"model":"Gemini-3-Flash","mode":"standard","fp_rate":0.803,"fn_rate":0.019},
+    {"model":"Gemini-2.5-Pro","mode":"standard","fp_rate":0.862,"fn_rate":0.016},
+    {"model":"Qwen3.5-27B","mode":"standard","fp_rate":0.764,"fn_rate":0.075},
+    {"model":"GPT-5.4","mode":"standard","fp_rate":0.354,"fn_rate":0.254},
+    {"model":"Qwen3.5-122B-A10B","mode":"standard","fp_rate":0.734,"fn_rate":0.094},
+    {"model":"GPT-4o","mode":"standard","fp_rate":0.945,"fn_rate":0.011},
+    {"model":"LLaMA-3.3-70B-Instruct","mode":"standard","fp_rate":0.980,"fn_rate":0.006},
+    {"model":"GPT-5.4-Mini","mode":"standard","fp_rate":0.493,"fn_rate":0.234},
+    {"model":"Claude-Opus-4-6","mode":"aggressive","fp_rate":0.278,"fn_rate":0.336},
+    {"model":"LLaMA-3.3-70B-Instruct","mode":"aggressive","fp_rate":0.607,"fn_rate":0.239},
+    {"model":"Kimi-Linear-48B-A3B","mode":"standard","fp_rate":0.862,"fn_rate":0.154},
+    {"model":"Gemini-3-Flash","mode":"aggressive","fp_rate":0.236,"fn_rate":0.396},
+    {"model":"Gemini-2.5-Pro","mode":"aggressive","fp_rate":0.266,"fn_rate":0.449},
+    {"model":"Kimi-Linear-48B-A3B","mode":"aggressive","fp_rate":0.497,"fn_rate":0.530},
+    {"model":"Gemini-3.1-Pro","mode":"aggressive","fp_rate":0.109,"fn_rate":0.641},
+    {"model":"Qwen3.5-27B","mode":"aggressive","fp_rate":0.162,"fn_rate":0.676},
+    {"model":"GPT-4o","mode":"aggressive","fp_rate":0.129,"fn_rate":0.750},
+    {"model":"Claude-Sonnet-4-6","mode":"aggressive","fp_rate":0.056,"fn_rate":0.812},
+    {"model":"Qwen3.5-122B-A10B","mode":"aggressive","fp_rate":0.044,"fn_rate":0.832},
+    {"model":"GPT-5.4-Mini","mode":"aggressive","fp_rate":0.000,"fn_rate":0.998},
+    {"model":"GPT-5.4","mode":"aggressive","fp_rate":0.000,"fn_rate":1.000}
+  ]
+}

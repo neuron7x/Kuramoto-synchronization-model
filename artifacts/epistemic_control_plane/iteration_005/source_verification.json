@@ -1,0 +1,13 @@
+{
+  "schema": "ecp-as-iteration-005-source-verification/v1",
+  "verified_at": "2026-09-17",
+  "source": "https://hosytuyen.github.io/projects/SoundnessBench/",
+  "paper": "https://arxiv.org/abs/2605.30329",
+  "source_facts": {
+    "benchmark_rows": 1099,
+    "frontier_llms": 12,
+    "published_leaderboard_contains_fp_fn_rates": true,
+    "standard_and_aggressive_prompt_results_published": true
+  },
+  "boundary": "The local frozen manifest records aggregate public leaderboard rates only. No per-case evaluator outputs are represented as observed evidence."
+}
