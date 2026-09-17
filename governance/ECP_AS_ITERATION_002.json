@@ -1,0 +1,34 @@
+{
+  "benchmark": {
+    "replication_truth_table_states": 128,
+    "repository_grounded_negative_probes": 4,
+    "safe_controls": 12,
+    "synthetic_cases": 31,
+    "total_cases": 35,
+    "unsafe_cases": 23
+  },
+  "claim_boundary": "Results apply to the declared controlled benchmark only. External real-workload validation remains pending.",
+  "iteration": "ECP-AS-002",
+  "next_proof_obligation": "Externally sourced or historical autonomous-research workload replay with independent labels and adjudication.",
+  "objective": "Measure unsafe claim promotion and false blocking under controlled adversarial promotion scenarios and mechanism ablations.",
+  "results": {
+    "artifact_chain_no_lineage_unsafe_promotion_rate": 0.34782608695652173,
+    "artifact_chain_no_lineage_unsafe_promotions": 8,
+    "ecp_as_false_block_rate": 0.0,
+    "ecp_as_false_blocks": 0,
+    "ecp_as_no_lineage_gate_unsafe_promotions": 8,
+    "ecp_as_no_negative_gate_unsafe_promotions": 6,
+    "ecp_as_unsafe_promotion_rate": 0.0,
+    "ecp_as_unsafe_promotions": 0
+  },
+  "status": "PASS_CONTROLLED_ADVERSARIAL_BENCHMARK__EXTERNAL_VALIDATION_PENDING",
+  "verification": {
+    "benchmark_runner": "PASS",
+    "compileall": "PASS",
+    "global_acceptor_corpus": "PREEXISTING_UNRELATED_DEBT_BLOCKS_GLOBAL_PASS",
+    "replication_truth_table": "128/128 PASS",
+    "selected_diff_bound_acceptors": "PASS",
+    "targeted_tests_status": "PASS",
+    "targeted_unittest_methods": 39
+  }
+}

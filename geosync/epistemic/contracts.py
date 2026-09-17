@@ -25,7 +25,8 @@ def default_contracts() -> Mapping[ClaimState, PromotionContract]:
             requires_falsifier_execution=True),
         ClaimState.REPLICATED: PromotionContract(
             ClaimState.REPLICATED, frozenset({E.REPLICATION, E.REPLAY, E.PROVENANCE}),
-            requires_falsifier_execution=True, requires_independent_oracle=True),
+            requires_falsifier_execution=True, requires_independent_oracle=True,
+            requires_clean_negative_evidence=True),
         ClaimState.BOUNDED: PromotionContract(
             ClaimState.BOUNDED, frozenset({E.NULL_COMPARISON, E.BASELINE_COMPARISON, E.BOUNDARY, E.REPLAY, E.PROVENANCE}),
             requires_falsifier_execution=True, requires_independent_oracle=True,

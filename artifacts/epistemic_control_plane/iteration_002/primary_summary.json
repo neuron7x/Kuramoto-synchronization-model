@@ -1,0 +1,8 @@
+{
+  "absolute_unsafe_promotion_reduction_vs_artifact_chain": 0.34782608695652173,
+  "artifact_chain_unsafe_promotion_rate": 0.34782608695652173,
+  "ecp_as_correct": 35,
+  "ecp_as_false_block_rate": 0.0,
+  "ecp_as_unsafe_promotion_rate": 0.0,
+  "total": 35
+}

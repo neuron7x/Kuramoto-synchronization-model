@@ -1,0 +1,35 @@
+id: ecp-as-negative-gate-iteration-002
+status: ACTIVE
+claim_type: fail_closed
+promise: >-
+  Promotion to REPLICATED or stronger maturity is fail-closed when unresolved blocking negative
+  evidence exists; resolved and explicitly non-blocking negatives remain representable without
+  forcing permanent rejection.
+diff_scope:
+  changed_files:
+    - path: "geosync/epistemic/contracts.py"
+    - path: "geosync/epistemic/benchmark.py"
+    - path: "tests/epistemic_kernel/test_benchmark.py"
+    - path: "tests/epistemic_kernel/test_replication_truth_table.py"
+    - path: ".claude/commit_acceptors/ecp-as-negative-gate-iteration-002.yaml"
+  forbidden_paths:
+    - "execution/"
+    - "trading/"
+required_python_symbols: []
+expected_signal: >-
+  Active blocking negative evidence prevents OBSERVED -> REPLICATED while resolved negative
+  evidence does not create an irreversible dead state.
+measurement_command: >-
+  python -m unittest tests.epistemic_kernel.test_benchmark tests.epistemic_kernel.test_replication_truth_table -q
+signal_artifact: "artifacts/epistemic_control_plane/iteration_002/failure_class_breakdown.json.gz"
+falsifier:
+  command: >-
+    python -c "from geosync.epistemic.benchmark import *; s=next(x for x in build_core_scenarios() if x.scenario_id=='unsafe-active-negative-0'); raise SystemExit(0 if ECPASPolicy().decide(s).allowed else 1)"
+  description: >-
+    Deliberately exits zero only if unresolved blocking negative evidence is incorrectly promoted.
+rollback_command: "git checkout origin/main -- geosync/epistemic/contracts.py"
+rollback_verification_command: "git diff --exit-code origin/main -- geosync/epistemic/contracts.py"
+memory_update_type: none
+ledger_path: ".claude/commit_acceptors/ecp-as-negative-gate-iteration-002.yaml"
+report_path: "artifacts/epistemic_control_plane/iteration_002/ITERATION_002_REPORT.md"
+evidence: []
