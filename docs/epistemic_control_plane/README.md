@@ -48,3 +48,7 @@ Those are future proof obligations, not completed features.
 ## Iteration 003 — external adjudication replay
 
 See `HISTORICAL_ADJUDICATION_PROTOCOL.md` and `artifacts/epistemic_control_plane/iteration_003/`. This iteration separates external action agreement from internal typed-transition conformance and tests publisher/replication events without treating every retraction as proposition falsification.
+
+## Iteration 004 — lineage-aware evaluator stress
+
+See `SOUNDNESS_CONTROL_STRESS_PROTOCOL.md` and `artifacts/epistemic_control_plane/iteration_004/`. External SoundnessBench labels are used only for scoring; evaluator errors are synthetic stress models. The iteration adds pairwise-lineage quorum authorization and explicitly records hidden common cause as a residual failure mode.

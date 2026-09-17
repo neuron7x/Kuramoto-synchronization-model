@@ -1,0 +1,31 @@
+{
+  "commit_acceptors": [
+    {
+      "falsifier_rc": 1,
+      "id": "ecp-as-boundary-iteration-004",
+      "measurement_rc": 0
+    },
+    {
+      "falsifier_rc": 1,
+      "id": "ecp-as-lineage-quorum-iteration-004",
+      "measurement_rc": 0
+    },
+    {
+      "falsifier_rc": 1,
+      "id": "ecp-as-soundness-stress-iteration-004",
+      "measurement_rc": 0
+    }
+  ],
+  "compileall": "PASS",
+  "control_stress_runner": "PASS",
+  "deterministic_probability_engine": true,
+  "external_benchmark_boundary": "39-row public viewer convenience slice; evaluator noise is synthetic, not observed model performance",
+  "hidden_common_cause_boundary_preserved": true,
+  "iteration": "004",
+  "label_leakage_prohibited_by_interface": true,
+  "repository_wide_ci": "NOT_CLAIMED",
+  "schema": "ecp-as-iteration-004-verification/v1",
+  "status": "PASS",
+  "targeted_tests": "PASS",
+  "targeted_unittest_methods": 59
+}

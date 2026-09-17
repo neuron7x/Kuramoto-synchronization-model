@@ -31,6 +31,15 @@ from .benchmark import (
     run_benchmark, run_policy,
 )
 
+from .evaluator_control import (
+    EvaluatorObservation, LineageQuorumPolicy, QuorumAction, QuorumDecision,
+    synthesize_quorum_oracle,
+)
+from .soundness_stress import (
+    JudgeProfile, SoundnessCase, StressMetrics, default_profiles, evaluate_profile,
+    load_soundness_slice, run_stress_suite,
+)
+
 __all__ = [
     "AdmissionController", "AdmissionDecision", "PromotionContract", "default_contracts",
     "IndependenceReport", "evaluate_oracle_independence", "Claim", "ClaimState",
@@ -42,4 +51,7 @@ __all__ = [
     "build_core_scenarios", "build_repository_negative_probes", "default_policies", "run_benchmark", "run_policy", "HashChainLedger", "LedgerEvent", "EpistemicRuntime", "DependencyEdge", "DependencyGraph", "DependencyKind", "ClaimContractSpec", "compile_structured_claim",
     "AdjudicationAction", "AdjudicationDecision", "AdjudicationKind", "AuthorityClass", "DefectClass", "ExternalAdjudicationEvent", "ExternalAdjudicationPolicy", "IndependenceLevel",
     "HistoricalCase", "HistoricalDecision", "HistoricalMetrics", "RetractionEqualsFalsificationBaseline", "AllEditorialActionsDegradeBaseline", "ECPASHistoricalPolicy", "default_historical_policies", "load_historical_cases", "run_historical_policy",
+    "EvaluatorObservation", "LineageQuorumPolicy", "QuorumAction", "QuorumDecision",
+    "synthesize_quorum_oracle", "JudgeProfile", "SoundnessCase", "StressMetrics",
+    "default_profiles", "evaluate_profile", "load_soundness_slice", "run_stress_suite",
 ]

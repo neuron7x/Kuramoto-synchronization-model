@@ -1,0 +1,210 @@
+{
+  "cases": [
+    {
+      "pair_id": "yqe0BZeN_xH_0",
+      "rigor_bucket": "low",
+      "soundness_score": 1.75
+    },
+    {
+      "pair_id": "TCFtGBTxkq_0",
+      "rigor_bucket": "low",
+      "soundness_score": 1.75
+    },
+    {
+      "pair_id": "FUaDMRVrbS_0",
+      "rigor_bucket": "high",
+      "soundness_score": 3.25
+    },
+    {
+      "pair_id": "lHZm9vNm5H_0",
+      "rigor_bucket": "high",
+      "soundness_score": 3.25
+    },
+    {
+      "pair_id": "dGVZwyq5tV_0",
+      "rigor_bucket": "high",
+      "soundness_score": 3.25
+    },
+    {
+      "pair_id": "70BaDC5ceIO_0",
+      "rigor_bucket": "high",
+      "soundness_score": 3.25
+    },
+    {
+      "pair_id": "hMjUnF3aQ8_0",
+      "rigor_bucket": "low",
+      "soundness_score": 1.75
+    },
+    {
+      "pair_id": "cJs4oE4m9Q_0",
+      "rigor_bucket": "high",
+      "soundness_score": 3.25
+    },
+    {
+      "pair_id": "dSYoPjM5J_W_0",
+      "rigor_bucket": "high",
+      "soundness_score": 3.0
+    },
+    {
+      "pair_id": "eM8Db7ukSB_0",
+      "rigor_bucket": "low",
+      "soundness_score": 1.75
+    },
+    {
+      "pair_id": "Gsjk6RX4SK_0",
+      "rigor_bucket": "low",
+      "soundness_score": 1.8
+    },
+    {
+      "pair_id": "UYXq4q1GpW_0",
+      "rigor_bucket": "low",
+      "soundness_score": 1.75
+    },
+    {
+      "pair_id": "3OnJAvuxd3_0",
+      "rigor_bucket": "low",
+      "soundness_score": 1.75
+    },
+    {
+      "pair_id": "iXmrXcv4Ms_0",
+      "rigor_bucket": "high",
+      "soundness_score": 3.0
+    },
+    {
+      "pair_id": "f9M9LgE5kt_0",
+      "rigor_bucket": "high",
+      "soundness_score": 3.25
+    },
+    {
+      "pair_id": "Z_tmYu060Kr_0",
+      "rigor_bucket": "high",
+      "soundness_score": 3.25
+    },
+    {
+      "pair_id": "liqUhMECuY_0",
+      "rigor_bucket": "low",
+      "soundness_score": 2.0
+    },
+    {
+      "pair_id": "yZCpZrUqzK0_0",
+      "rigor_bucket": "high",
+      "soundness_score": 3.25
+    },
+    {
+      "pair_id": "I0To0G5J7g_0",
+      "rigor_bucket": "high",
+      "soundness_score": 3.25
+    },
+    {
+      "pair_id": "zDh96pfydF_0",
+      "rigor_bucket": "low",
+      "soundness_score": 2.0
+    },
+    {
+      "pair_id": "4cZvjp8Iwk_0",
+      "rigor_bucket": "high",
+      "soundness_score": 3.2
+    },
+    {
+      "pair_id": "Mlxov4A7AE_0",
+      "rigor_bucket": "low",
+      "soundness_score": 1.8
+    },
+    {
+      "pair_id": "ICwdNpmu2d_0",
+      "rigor_bucket": "low",
+      "soundness_score": 1.0
+    },
+    {
+      "pair_id": "ff5srKUefm_0",
+      "rigor_bucket": "low",
+      "soundness_score": 2.0
+    },
+    {
+      "pair_id": "z8uo4lTxkq_0",
+      "rigor_bucket": "high",
+      "soundness_score": 3.0
+    },
+    {
+      "pair_id": "oNpSd5NS2H_0",
+      "rigor_bucket": "low",
+      "soundness_score": 2.0
+    },
+    {
+      "pair_id": "YuwxDSqNXw_0",
+      "rigor_bucket": "high",
+      "soundness_score": 3.0
+    },
+    {
+      "pair_id": "gc8QAQfXv6_0",
+      "rigor_bucket": "high",
+      "soundness_score": 3.25
+    },
+    {
+      "pair_id": "NB69ih1tiA1_0",
+      "rigor_bucket": "low",
+      "soundness_score": 2.0
+    },
+    {
+      "pair_id": "d3CISVVO6v_0",
+      "rigor_bucket": "high",
+      "soundness_score": 3.0
+    },
+    {
+      "pair_id": "sNJ2zrlT13_0",
+      "rigor_bucket": "low",
+      "soundness_score": 2.0
+    },
+    {
+      "pair_id": "7MV6uLzOChW_0",
+      "rigor_bucket": "high",
+      "soundness_score": 3.25
+    },
+    {
+      "pair_id": "IloMJ5rqfnt_0",
+      "rigor_bucket": "high",
+      "soundness_score": 3.25
+    },
+    {
+      "pair_id": "QIIrjgUnL1_0",
+      "rigor_bucket": "low",
+      "soundness_score": 1.75
+    },
+    {
+      "pair_id": "xQBRrtQM8u_0",
+      "rigor_bucket": "high",
+      "soundness_score": 3.75
+    },
+    {
+      "pair_id": "xtzqU9FgSi_0",
+      "rigor_bucket": "low",
+      "soundness_score": 2.0
+    },
+    {
+      "pair_id": "nHpzE7DqAnG_0",
+      "rigor_bucket": "high",
+      "soundness_score": 3.0
+    },
+    {
+      "pair_id": "51cjeYcXjs_0",
+      "rigor_bucket": "low",
+      "soundness_score": 1.75
+    },
+    {
+      "pair_id": "9pGOTEQdsD_0",
+      "rigor_bucket": "low",
+      "soundness_score": 1.75
+    }
+  ],
+  "schema": "ecp-as-soundnessbench-label-slice/v1",
+  "source": {
+    "boundary": "Only pair_id, reviewer-derived soundness_score and rigor_bucket are frozen. Proposal text is intentionally excluded from the control-plane stress benchmark.",
+    "dataset": "hosytuyen/SoundnessBench",
+    "dataset_commit": "aab542f4db705a120e9130d0a0e3c720822a304d",
+    "license": "apache-2.0",
+    "paper": "arXiv:2605.30329",
+    "retrieval_mode": "public Hugging Face dataset viewer preview",
+    "retrieved_at": "2026-09-17",
+    "source_url": "https://huggingface.co/datasets/hosytuyen/SoundnessBench"
+  }
+}

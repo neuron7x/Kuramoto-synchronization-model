@@ -1,0 +1,23 @@
+{
+  "boundary": "Source verification freezes public identifiers and labels only; no proposal text is copied into the stress benchmark.",
+  "dataset": "hosytuyen/SoundnessBench",
+  "dataset_commit": "aab542f4db705a120e9130d0a0e3c720822a304d",
+  "license": "apache-2.0",
+  "manifest_sha256": "7742c6a83b98c2617048d4b1158ac638fb50fc65a930e3065915a428c723b61a",
+  "paper": "arXiv:2605.30329",
+  "schema": "ecp-as-iteration-004-source-verification/v1",
+  "source_urls": [
+    "https://huggingface.co/datasets/hosytuyen/SoundnessBench",
+    "https://arxiv.org/abs/2605.30329"
+  ],
+  "verified_at": "2026-09-17",
+  "verified_public_facts": {
+    "fields_used": [
+      "pair_id",
+      "soundness_score",
+      "rigor_bucket"
+    ],
+    "preview_slice_rows": 39,
+    "rows": 1099
+  }
+}

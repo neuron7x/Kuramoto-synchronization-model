@@ -1,0 +1,95 @@
+{
+  "case_count": 39,
+  "high_count": 20,
+  "low_count": 19,
+  "profiles": {
+    "balanced_independent": {
+      "ecp_as_lineage_quorum": {
+        "balanced_error": 0.023087999999999956,
+        "false_block_rate": 0.027999999999999914,
+        "high_count": 20,
+        "low_count": 19,
+        "policy": "ecp_as_lineage_quorum",
+        "profile": "balanced_independent",
+        "unsafe_promotion_rate": 0.018175999999999998
+      },
+      "raw_majority": {
+        "balanced_error": 0.08049599999999997,
+        "false_block_rate": 0.027999999999999914,
+        "high_count": 20,
+        "low_count": 19,
+        "policy": "raw_majority",
+        "profile": "balanced_independent",
+        "unsafe_promotion_rate": 0.13299200000000003
+      },
+      "strict_external_unanimity": {
+        "balanced_error": 0.13575599999999996,
+        "false_block_rate": 0.2709999999999999,
+        "high_count": 20,
+        "low_count": 19,
+        "policy": "strict_external_unanimity",
+        "profile": "balanced_independent",
+        "unsafe_promotion_rate": 0.0005120000000000001
+      }
+    },
+    "hidden_common_cause": {
+      "ecp_as_lineage_quorum": {
+        "balanced_error": 0.12838319999999992,
+        "false_block_rate": 0.10575999999999985,
+        "high_count": 20,
+        "low_count": 19,
+        "policy": "ecp_as_lineage_quorum",
+        "profile": "hidden_common_cause",
+        "unsafe_promotion_rate": 0.1510064
+      },
+      "raw_majority": {
+        "balanced_error": 0.14416439999999991,
+        "false_block_rate": 0.09333999999999987,
+        "high_count": 20,
+        "low_count": 19,
+        "policy": "raw_majority",
+        "profile": "hidden_common_cause",
+        "unsafe_promotion_rate": 0.1949888
+      },
+      "strict_external_unanimity": {
+        "balanced_error": 0.23966339999999992,
+        "false_block_rate": 0.32931999999999984,
+        "high_count": 20,
+        "low_count": 19,
+        "policy": "strict_external_unanimity",
+        "profile": "hidden_common_cause",
+        "unsafe_promotion_rate": 0.1500068
+      }
+    },
+    "optimistic_correlated": {
+      "ecp_as_lineage_quorum": {
+        "balanced_error": 0.04680550000000003,
+        "false_block_rate": 0.05697775000000005,
+        "high_count": 20,
+        "low_count": 19,
+        "policy": "ecp_as_lineage_quorum",
+        "profile": "optimistic_correlated",
+        "unsafe_promotion_rate": 0.03663325
+      },
+      "raw_majority": {
+        "balanced_error": 0.15045040000000007,
+        "false_block_rate": 0.014206375000000104,
+        "high_count": 20,
+        "low_count": 19,
+        "policy": "raw_majority",
+        "profile": "optimistic_correlated",
+        "unsafe_promotion_rate": 0.28669442500000003
+      },
+      "strict_external_unanimity": {
+        "balanced_error": 0.18824725000000003,
+        "false_block_rate": 0.3749736250000001,
+        "high_count": 20,
+        "low_count": 19,
+        "policy": "strict_external_unanimity",
+        "profile": "optimistic_correlated",
+        "unsafe_promotion_rate": 0.001520875
+      }
+    }
+  },
+  "schema": "ecp-as-soundness-control-stress/v1"
+}

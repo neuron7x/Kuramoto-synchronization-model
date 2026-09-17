@@ -1,0 +1,38 @@
+id: ecp-as-soundness-stress-iteration-004
+status: ACTIVE
+claim_type: validation
+promise: >-
+  Iteration 004 uses a frozen external SoundnessBench label slice only for scoring and exact
+  synthetic evaluator-error enumeration to quantify safety/availability trade-offs without
+  leaking labels into the ECP-AS gate.
+diff_scope:
+  changed_files:
+    - path: "geosync/epistemic/soundness_stress.py"
+    - path: "benchmarks/epistemic_control_plane/iteration_004/soundnessbench_label_slice.json"
+    - path: "benchmarks/epistemic_control_plane/iteration_004/run_control_stress.py"
+    - path: "artifacts/epistemic_control_plane/iteration_004/control_stress_results.json"
+    - path: "artifacts/epistemic_control_plane/iteration_004/primary_summary.json"
+    - path: "artifacts/epistemic_control_plane/iteration_004/source_verification.json"
+  forbidden_paths:
+    - "execution/"
+    - "trading/"
+expected_signal: >-
+  Under optimistic_correlated stress, ECP-AS materially lowers unsafe promotion versus raw
+  majority with false-block rate below 10 percent, while hidden_common_cause remains >10
+  percent unsafe promotion and is explicitly reported as a failure boundary.
+measurement_command: >-
+  PYTHONPATH=. python benchmarks/epistemic_control_plane/iteration_004/run_control_stress.py
+signal_artifact: "artifacts/epistemic_control_plane/iteration_004/control_stress_results.json"
+falsifier:
+  command: >-
+    python -c "import json; d=json.load(open('artifacts/epistemic_control_plane/iteration_004/control_stress_results.json')); e=d['profiles']['optimistic_correlated']['ecp_as_lineage_quorum']; r=d['profiles']['optimistic_correlated']['raw_majority']; h=d['profiles']['hidden_common_cause']['ecp_as_lineage_quorum']; raise SystemExit(0 if not (e['unsafe_promotion_rate'] < r['unsafe_promotion_rate'] and e['false_block_rate'] < .10 and h['unsafe_promotion_rate'] > .10) else 1)"
+  description: >-
+    Exits zero only when the declared safety result or hidden-common-cause boundary is violated.
+rollback_command: >-
+  rm -rf benchmarks/epistemic_control_plane/iteration_004 artifacts/epistemic_control_plane/iteration_004
+rollback_verification_command: >-
+  test ! -e benchmarks/epistemic_control_plane/iteration_004
+memory_update_type: none
+ledger_path: ".claude/commit_acceptors/ecp-as-soundness-stress-iteration-004.yaml"
+report_path: "artifacts/epistemic_control_plane/iteration_004/ITERATION_004_REPORT.md"
+evidence: []

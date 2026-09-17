@@ -1,0 +1,26 @@
+{
+  "claim_boundary": "External rigor labels are real; evaluator-error probabilities are synthetic exact stress models, not observed LLM performance.",
+  "external_grounding": {
+    "dataset": "hosytuyen/SoundnessBench",
+    "frozen_preview_rows": 39,
+    "full_dataset_rows": 1099,
+    "paper": "arXiv:2605.30329",
+    "selection": "public viewer convenience slice; not IID"
+  },
+  "iteration": "ECP-AS-004",
+  "mandatory_failure_boundary": {
+    "ecp_as_unsafe_promotion_rate": 0.1510064,
+    "interpretation": "Undeclared common causes cannot be rejected from lineage metadata that falsely appears independent.",
+    "profile": "hidden_common_cause"
+  },
+  "next_proof_obligation": "Obtain real heterogeneous evaluator outputs on the full externally labeled benchmark and estimate/calibrate dependence on a locked train-validation-test protocol.",
+  "objective": "Stress-test lineage-aware evaluator authorization against externally grounded SoundnessBench labels under declared correlated/noisy evaluator models.",
+  "primary_result": {
+    "ecp_as_false_block_rate": 0.05697775,
+    "ecp_as_unsafe_promotion_rate": 0.03663325,
+    "profile": "optimistic_correlated",
+    "raw_majority_unsafe_promotion_rate": 0.286694425,
+    "relative_unsafe_reduction_vs_raw": 0.8722219659485879
+  },
+  "status": "PASS_CONTROL_STRESS__REAL_EVALUATOR_RUN_PENDING"
+}
