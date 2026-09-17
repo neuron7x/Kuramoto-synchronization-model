@@ -1,0 +1,300 @@
+{
+  "case_count": 14,
+  "case_decisions": {
+    "all_editorial_actions_degrade": [
+      {
+        "action": "DEGRADE",
+        "case_id": "hist-earthquake-la-validation",
+        "predicted_state": "INCONCLUSIVE",
+        "reason": "all publisher actions are treated as scientific invalidation"
+      },
+      {
+        "action": "DEGRADE",
+        "case_id": "hist-stroke-risk-dataset-provenance",
+        "predicted_state": "INCONCLUSIVE",
+        "reason": "all publisher actions are treated as scientific invalidation"
+      },
+      {
+        "action": "DEGRADE",
+        "case_id": "hist-stroke-onset-dataset-provenance",
+        "predicted_state": "INCONCLUSIVE",
+        "reason": "all publisher actions are treated as scientific invalidation"
+      },
+      {
+        "action": "DEGRADE",
+        "case_id": "hist-iot-reporting-inconsistency",
+        "predicted_state": "INCONCLUSIVE",
+        "reason": "all publisher actions are treated as scientific invalidation"
+      },
+      {
+        "action": "DEGRADE",
+        "case_id": "hist-cephalometric-method-validity",
+        "predicted_state": "INCONCLUSIVE",
+        "reason": "all publisher actions are treated as scientific invalidation"
+      },
+      {
+        "action": "DEGRADE",
+        "case_id": "hist-geopolymer-data-unavailable",
+        "predicted_state": "INCONCLUSIVE",
+        "reason": "all publisher actions are treated as scientific invalidation"
+      },
+      {
+        "action": "DEGRADE",
+        "case_id": "hist-nanofluid-reference-integrity",
+        "predicted_state": "INCONCLUSIVE",
+        "reason": "all publisher actions are treated as scientific invalidation"
+      },
+      {
+        "action": "DEGRADE",
+        "case_id": "hist-robot-authorship-provenance",
+        "predicted_state": "INCONCLUSIVE",
+        "reason": "all publisher actions are treated as scientific invalidation"
+      },
+      {
+        "action": "DEGRADE",
+        "case_id": "hist-ppg-independent-replication",
+        "predicted_state": "CONFLICTED",
+        "reason": "external replication disagreement"
+      },
+      {
+        "action": "DEGRADE",
+        "case_id": "control-breast-cancer-author-name",
+        "predicted_state": "INCONCLUSIVE",
+        "reason": "all publisher actions are treated as scientific invalidation"
+      },
+      {
+        "action": "DEGRADE",
+        "case_id": "control-gene-model-author-name",
+        "predicted_state": "INCONCLUSIVE",
+        "reason": "all publisher actions are treated as scientific invalidation"
+      },
+      {
+        "action": "DEGRADE",
+        "case_id": "control-orthodontic-contribution",
+        "predicted_state": "INCONCLUSIVE",
+        "reason": "all publisher actions are treated as scientific invalidation"
+      },
+      {
+        "action": "DEGRADE",
+        "case_id": "control-ai-news-author-name",
+        "predicted_state": "INCONCLUSIVE",
+        "reason": "all publisher actions are treated as scientific invalidation"
+      },
+      {
+        "action": "DEGRADE",
+        "case_id": "control-datasail-addendum",
+        "predicted_state": "INCONCLUSIVE",
+        "reason": "all publisher actions are treated as scientific invalidation"
+      }
+    ],
+    "ecp_as_external_adjudication": [
+      {
+        "action": "DEGRADE",
+        "case_id": "hist-earthquake-la-validation",
+        "predicted_state": "FALSIFIED",
+        "reason": "independent validation found the reported conclusion unsupported"
+      },
+      {
+        "action": "DEGRADE",
+        "case_id": "hist-stroke-risk-dataset-provenance",
+        "predicted_state": "STALE",
+        "reason": "supporting evidence is no longer admissible or independently auditable"
+      },
+      {
+        "action": "DEGRADE",
+        "case_id": "hist-stroke-onset-dataset-provenance",
+        "predicted_state": "STALE",
+        "reason": "supporting evidence is no longer admissible or independently auditable"
+      },
+      {
+        "action": "DEGRADE",
+        "case_id": "hist-iot-reporting-inconsistency",
+        "predicted_state": "INCONCLUSIVE",
+        "reason": "external adjudication undermines reproducible interpretation of the evidence"
+      },
+      {
+        "action": "DEGRADE",
+        "case_id": "hist-cephalometric-method-validity",
+        "predicted_state": "INCONCLUSIVE",
+        "reason": "external adjudication undermines reproducible interpretation of the evidence"
+      },
+      {
+        "action": "DEGRADE",
+        "case_id": "hist-geopolymer-data-unavailable",
+        "predicted_state": "STALE",
+        "reason": "supporting evidence is no longer admissible or independently auditable"
+      },
+      {
+        "action": "DEGRADE",
+        "case_id": "hist-nanofluid-reference-integrity",
+        "predicted_state": "INCONCLUSIVE",
+        "reason": "external adjudication undermines reproducible interpretation of the evidence"
+      },
+      {
+        "action": "DEGRADE",
+        "case_id": "hist-robot-authorship-provenance",
+        "predicted_state": "STALE",
+        "reason": "supporting evidence is no longer admissible or independently auditable"
+      },
+      {
+        "action": "DEGRADE",
+        "case_id": "hist-ppg-independent-replication",
+        "predicted_state": "CONFLICTED",
+        "reason": "independent evidence conflicts with the promoted claim"
+      },
+      {
+        "action": "PRESERVE",
+        "case_id": "control-breast-cancer-author-name",
+        "predicted_state": "REPLICATED",
+        "reason": "external action does not invalidate scientific evidence"
+      },
+      {
+        "action": "PRESERVE",
+        "case_id": "control-gene-model-author-name",
+        "predicted_state": "REPLICATED",
+        "reason": "external action does not invalidate scientific evidence"
+      },
+      {
+        "action": "PRESERVE",
+        "case_id": "control-orthodontic-contribution",
+        "predicted_state": "REPLICATED",
+        "reason": "external action does not invalidate scientific evidence"
+      },
+      {
+        "action": "PRESERVE",
+        "case_id": "control-ai-news-author-name",
+        "predicted_state": "REPLICATED",
+        "reason": "external action does not invalidate scientific evidence"
+      },
+      {
+        "action": "PRESERVE",
+        "case_id": "control-datasail-addendum",
+        "predicted_state": "REPLICATED",
+        "reason": "external action does not invalidate scientific evidence"
+      }
+    ],
+    "retraction_equals_falsification": [
+      {
+        "action": "DEGRADE",
+        "case_id": "hist-earthquake-la-validation",
+        "predicted_state": "FALSIFIED",
+        "reason": "all retractions are treated as proposition falsification"
+      },
+      {
+        "action": "DEGRADE",
+        "case_id": "hist-stroke-risk-dataset-provenance",
+        "predicted_state": "FALSIFIED",
+        "reason": "all retractions are treated as proposition falsification"
+      },
+      {
+        "action": "DEGRADE",
+        "case_id": "hist-stroke-onset-dataset-provenance",
+        "predicted_state": "FALSIFIED",
+        "reason": "all retractions are treated as proposition falsification"
+      },
+      {
+        "action": "DEGRADE",
+        "case_id": "hist-iot-reporting-inconsistency",
+        "predicted_state": "FALSIFIED",
+        "reason": "all retractions are treated as proposition falsification"
+      },
+      {
+        "action": "DEGRADE",
+        "case_id": "hist-cephalometric-method-validity",
+        "predicted_state": "FALSIFIED",
+        "reason": "all retractions are treated as proposition falsification"
+      },
+      {
+        "action": "DEGRADE",
+        "case_id": "hist-geopolymer-data-unavailable",
+        "predicted_state": "FALSIFIED",
+        "reason": "all retractions are treated as proposition falsification"
+      },
+      {
+        "action": "DEGRADE",
+        "case_id": "hist-nanofluid-reference-integrity",
+        "predicted_state": "FALSIFIED",
+        "reason": "all retractions are treated as proposition falsification"
+      },
+      {
+        "action": "DEGRADE",
+        "case_id": "hist-robot-authorship-provenance",
+        "predicted_state": "FALSIFIED",
+        "reason": "all retractions are treated as proposition falsification"
+      },
+      {
+        "action": "DEGRADE",
+        "case_id": "hist-ppg-independent-replication",
+        "predicted_state": "CONFLICTED",
+        "reason": "independent replication disagreement"
+      },
+      {
+        "action": "PRESERVE",
+        "case_id": "control-breast-cancer-author-name",
+        "predicted_state": "REPLICATED",
+        "reason": "non-retraction editorial action"
+      },
+      {
+        "action": "PRESERVE",
+        "case_id": "control-gene-model-author-name",
+        "predicted_state": "REPLICATED",
+        "reason": "non-retraction editorial action"
+      },
+      {
+        "action": "PRESERVE",
+        "case_id": "control-orthodontic-contribution",
+        "predicted_state": "REPLICATED",
+        "reason": "non-retraction editorial action"
+      },
+      {
+        "action": "PRESERVE",
+        "case_id": "control-ai-news-author-name",
+        "predicted_state": "REPLICATED",
+        "reason": "non-retraction editorial action"
+      },
+      {
+        "action": "PRESERVE",
+        "case_id": "control-datasail-addendum",
+        "predicted_state": "REPLICATED",
+        "reason": "non-retraction editorial action"
+      }
+    ]
+  },
+  "iteration": "003",
+  "policies": {
+    "all_editorial_actions_degrade": {
+      "action_accuracy": 0.6428571428571429,
+      "correct_actions": 9,
+      "false_degradations": 5,
+      "false_falsifications": 0,
+      "missed_degradations": 0,
+      "policy": "all_editorial_actions_degrade",
+      "total": 14,
+      "transition_conformance": 4,
+      "transition_conformance_rate": 0.2857142857142857
+    },
+    "ecp_as_external_adjudication": {
+      "action_accuracy": 1.0,
+      "correct_actions": 14,
+      "false_degradations": 0,
+      "false_falsifications": 0,
+      "missed_degradations": 0,
+      "policy": "ecp_as_external_adjudication",
+      "total": 14,
+      "transition_conformance": 14,
+      "transition_conformance_rate": 1.0
+    },
+    "retraction_equals_falsification": {
+      "action_accuracy": 1.0,
+      "correct_actions": 14,
+      "false_degradations": 0,
+      "false_falsifications": 7,
+      "missed_degradations": 0,
+      "policy": "retraction_equals_falsification",
+      "total": 14,
+      "transition_conformance": 7,
+      "transition_conformance_rate": 0.5
+    }
+  },
+  "schema": "ecp-as-historical-replay-results/v1"
+}

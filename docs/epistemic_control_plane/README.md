@@ -45,3 +45,6 @@ Not yet claimed:
 - demonstrated reduction in unsafe-promotion rate on external natural workloads.
 
 Those are future proof obligations, not completed features.
+## Iteration 003 — external adjudication replay
+
+See `HISTORICAL_ADJUDICATION_PROTOCOL.md` and `artifacts/epistemic_control_plane/iteration_003/`. This iteration separates external action agreement from internal typed-transition conformance and tests publisher/replication events without treating every retraction as proposition falsification.

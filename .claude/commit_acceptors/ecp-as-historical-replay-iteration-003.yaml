@@ -1,0 +1,48 @@
+id: ecp-as-historical-replay-iteration-003
+status: ACTIVE
+claim_type: correctness
+promise: >-
+  Iteration 003 replays a frozen set of externally grounded 2026 adjudication events and
+  distinguishes material evidence invalidation from benign corrections/addenda without
+  treating every retraction as proposition falsification.
+diff_scope:
+  changed_files:
+    - path: ".claude/commit_acceptors/ecp-as-historical-replay-iteration-003.yaml"
+    - path: "geosync/epistemic/adjudication.py"
+    - path: "geosync/epistemic/historical_replay.py"
+    - path: "geosync/epistemic/runtime.py"
+    - path: "geosync/epistemic/models.py"
+    - path: "geosync/epistemic/__init__.py"
+    - path: "benchmarks/epistemic_control_plane/iteration_003/historical_cases.json"
+    - path: "benchmarks/epistemic_control_plane/iteration_003/run_historical_replay.py"
+    - path: "tests/epistemic_kernel/test_historical_adjudication.py"
+    - path: "artifacts/epistemic_control_plane/iteration_003/historical_replay_results.json"
+    - path: "artifacts/epistemic_control_plane/iteration_003/primary_summary.json"
+  forbidden_paths:
+    - "execution/"
+    - "trading/"
+    - "forecast/"
+required_python_symbols: []
+expected_signal: >-
+  ECP-AS matches all 14 externally grounded DEGRADE/PRESERVE action labels, produces zero
+  false degradations, zero missed degradations and zero false falsifications; typed states
+  are reported only as frozen-policy conformance.
+measurement_command: >-
+  python -m unittest discover -s tests/epistemic_kernel -p 'test_*.py' -q &&
+  PYTHONPATH=. python benchmarks/epistemic_control_plane/iteration_003/run_historical_replay.py
+signal_artifact: "artifacts/epistemic_control_plane/iteration_003/historical_replay_results.json"
+falsifier:
+  command: >-
+    python -c "import json; d=json.load(open('artifacts/epistemic_control_plane/iteration_003/historical_replay_results.json'));
+    m=d['policies']['ecp_as_external_adjudication']; raise SystemExit(0 if (m['false_degradations'] or m['missed_degradations'] or m['false_falsifications']) else 1)"
+  description: >-
+    Exits zero only when the ECP-AS historical replay violates the declared safety result.
+rollback_command: >-
+  rm -rf benchmarks/epistemic_control_plane/iteration_003 artifacts/epistemic_control_plane/iteration_003 &&
+  rm -f geosync/epistemic/adjudication.py geosync/epistemic/historical_replay.py tests/epistemic_kernel/test_historical_adjudication.py
+rollback_verification_command: >-
+  test ! -e geosync/epistemic/historical_replay.py && test ! -e benchmarks/epistemic_control_plane/iteration_003
+memory_update_type: none
+ledger_path: ".claude/commit_acceptors/ecp-as-historical-replay-iteration-003.yaml"
+report_path: "artifacts/epistemic_control_plane/iteration_003/ITERATION_003_REPORT.md"
+evidence: []

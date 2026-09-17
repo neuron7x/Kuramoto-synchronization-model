@@ -1,0 +1,291 @@
+{
+  "schema": "ecp-as-historical-adjudication/v1",
+  "iteration": "003",
+  "retrieved_at": "2026-09-17",
+  "evidence_boundary": "Stores source identifiers and short paraphrases, not full publisher content. Labels encode the published external action; no claim of IID sampling or population generalization. `policy_expected_state` is an internal conformance target, not external ground truth.",
+  "cases": [
+    {
+      "case_id": "hist-earthquake-la-validation",
+      "claim_id": "claim-earthquake-la-ml",
+      "kind": "EDITORIAL_RETRACTION",
+      "authority": "PUBLISHER_EDITORIAL",
+      "source_url": "https://www.nature.com/articles/s41598-026-49689-4",
+      "source_title": "Retraction Note: Improving earthquake prediction accuracy in Los Angeles with machine learning",
+      "source_date": "2026-04-20",
+      "defects": [
+        "VALIDATION_METHODOLOGY_INVALID"
+      ],
+      "independence_level": "VERIFIED",
+      "explicit_conclusions_unsupported": true,
+      "expected_action": "DEGRADE",
+      "reason_summary": "Independent assessment found an inappropriate time-series split; chronological validation did not support the reported conclusions.",
+      "source_digest": "4ee91643ef0cec416baff6411c01b5ecb1ec92b9d1c6db82032bc28d524f27b8",
+      "source_authenticity_verified": true,
+      "source_verified_at": "2026-09-17",
+      "policy_expected_state": "FALSIFIED"
+    },
+    {
+      "case_id": "hist-stroke-risk-dataset-provenance",
+      "claim_id": "claim-stroke-risk-ml",
+      "kind": "EDITORIAL_RETRACTION",
+      "authority": "PUBLISHER_EDITORIAL",
+      "source_url": "https://www.nature.com/articles/s41598-026-47902-y",
+      "source_title": "Retraction Note: Predictive modelling and identification of key risk factors for stroke using machine learning",
+      "source_date": "2026-04-13",
+      "defects": [
+        "DATA_PROVENANCE_INVALID"
+      ],
+      "independence_level": "PARTIAL",
+      "explicit_conclusions_unsupported": false,
+      "expected_action": "DEGRADE",
+      "reason_summary": "The dataset provenance and validity could not be confirmed, so the results were no longer considered reliable.",
+      "source_digest": "2822715808715d50eaeca3f0710932feac328da14fb179668729d1dad991139d",
+      "source_authenticity_verified": true,
+      "source_verified_at": "2026-09-17",
+      "policy_expected_state": "STALE"
+    },
+    {
+      "case_id": "hist-stroke-onset-dataset-provenance",
+      "claim_id": "claim-stroke-onset-ml",
+      "kind": "EDITORIAL_RETRACTION",
+      "authority": "PUBLISHER_EDITORIAL",
+      "source_url": "https://www.nature.com/articles/s41598-026-54512-1",
+      "source_title": "Retraction Note: Unveiling the potential of machine learning approaches in predicting the emergence of stroke at its onset: a predicting framework",
+      "source_date": "2026-05-26",
+      "defects": [
+        "DATA_PROVENANCE_INVALID"
+      ],
+      "independence_level": "PARTIAL",
+      "explicit_conclusions_unsupported": false,
+      "expected_action": "DEGRADE",
+      "reason_summary": "The public dataset's provenance and validity could not be confirmed, undermining the training and assessment evidence.",
+      "source_digest": "eb7474fd286767c3db3cd344c04d1ccbddc2733697730002036d78d09de6df68",
+      "source_authenticity_verified": true,
+      "source_verified_at": "2026-09-17",
+      "policy_expected_state": "STALE"
+    },
+    {
+      "case_id": "hist-iot-reporting-inconsistency",
+      "claim_id": "claim-iot-cross-layer-dae",
+      "kind": "EDITORIAL_RETRACTION",
+      "authority": "PUBLISHER_EDITORIAL",
+      "source_url": "https://www.nature.com/articles/s41598-026-65492-7",
+      "source_title": "Retraction Note: A multilayer deep autoencoder approach for cross layer IoT attack detection using deep learning algorithms",
+      "source_date": "2026-08-10",
+      "defects": [
+        "REPORTING_INCONSISTENCY"
+      ],
+      "independence_level": "PARTIAL",
+      "explicit_conclusions_unsupported": false,
+      "expected_action": "DEGRADE",
+      "reason_summary": "Internal inconsistencies in data, methods and results prevented independent verification of the reported findings.",
+      "source_digest": "c85bf82a00259ce88ec6140e2cfadc9be785ba97af846eaff90fc2391411a5e5",
+      "source_authenticity_verified": true,
+      "source_verified_at": "2026-09-17",
+      "policy_expected_state": "INCONCLUSIVE"
+    },
+    {
+      "case_id": "hist-cephalometric-method-validity",
+      "claim_id": "claim-cephalometric-multimodal-dl",
+      "kind": "EDITORIAL_RETRACTION",
+      "authority": "PUBLISHER_EDITORIAL",
+      "source_url": "https://www.nature.com/articles/s41598-026-42846-9",
+      "source_title": "Retraction Note: Multimodal deep learning for cephalometric landmark detection and treatment prediction",
+      "source_date": "2026-03-09",
+      "defects": [
+        "REPORTING_INCONSISTENCY",
+        "METHOD_VALIDITY",
+        "REFERENCE_INTEGRITY"
+      ],
+      "independence_level": "PARTIAL",
+      "explicit_conclusions_unsupported": false,
+      "expected_action": "DEGRADE",
+      "reason_summary": "Editors reported dataset inconsistencies, method irregularities, result-reporting issues and methodological validity concerns.",
+      "source_digest": "35fc0eae044cb83ef2c892ddd529302375e9a58f9adddb2dafa817f40f25c975",
+      "source_authenticity_verified": true,
+      "source_verified_at": "2026-09-17",
+      "policy_expected_state": "INCONCLUSIVE"
+    },
+    {
+      "case_id": "hist-geopolymer-data-unavailable",
+      "claim_id": "claim-geopolymer-ml",
+      "kind": "EDITORIAL_RETRACTION",
+      "authority": "PUBLISHER_EDITORIAL",
+      "source_url": "https://www.nature.com/articles/s41598-026-71215-9",
+      "source_title": "Retraction Note: Machine learning-driven evaluation of mechanical and microstructural properties of agro-waste-derived geopolymer concrete",
+      "source_date": "2026-09-14",
+      "defects": [
+        "DATA_UNAVAILABLE",
+        "AUTHORSHIP_PROVENANCE"
+      ],
+      "independence_level": "PARTIAL",
+      "explicit_conclusions_unsupported": false,
+      "expected_action": "DEGRADE",
+      "reason_summary": "Requested underlying data were not provided and the authorship explanation was not satisfactory to the editors.",
+      "source_digest": "99b12a72170ff2dce42d9d4bad543a17ef5442a20a28624c92248f0fdc88a049",
+      "source_authenticity_verified": true,
+      "source_verified_at": "2026-09-17",
+      "policy_expected_state": "STALE"
+    },
+    {
+      "case_id": "hist-nanofluid-reference-integrity",
+      "claim_id": "claim-nanofluid-ann-viscosity",
+      "kind": "EDITORIAL_RETRACTION",
+      "authority": "PUBLISHER_EDITORIAL",
+      "source_url": "https://www.nature.com/articles/s41598-026-62698-7",
+      "source_title": "Retraction Note: An optimal feed-forward artificial neural network model and a new empirical correlation for prediction of the relative viscosity of Al2O3-engine oil nanofluid",
+      "source_date": "2026-07-15",
+      "defects": [
+        "REFERENCE_INTEGRITY"
+      ],
+      "independence_level": "PARTIAL",
+      "explicit_conclusions_unsupported": false,
+      "expected_action": "DEGRADE",
+      "reason_summary": "After other concerns were addressed, editors identified multiple irrelevant references and lost confidence in the article's reliability.",
+      "source_digest": "b64cdef347ab2d295d49dd9fe18f372df809ee55bd7c6a50b5dff40e1cd4b971",
+      "source_authenticity_verified": true,
+      "source_verified_at": "2026-09-17",
+      "policy_expected_state": "INCONCLUSIVE"
+    },
+    {
+      "case_id": "hist-robot-authorship-provenance",
+      "claim_id": "claim-robot-trajectory-rl",
+      "kind": "EDITORIAL_RETRACTION",
+      "authority": "PUBLISHER_EDITORIAL",
+      "source_url": "https://www.nature.com/articles/s41598-026-57775-w",
+      "source_title": "Retraction Note: Reinforcement learning-driven deep learning approaches for optimized robot trajectory planning",
+      "source_date": "2026-06-16",
+      "defects": [
+        "AUTHORSHIP_PROVENANCE"
+      ],
+      "independence_level": "PARTIAL",
+      "explicit_conclusions_unsupported": false,
+      "expected_action": "DEGRADE",
+      "reason_summary": "Editors corroborated substantial conceptual and data overlap with an unpublished thesis by a different author.",
+      "source_digest": "341d363657cf348f64472ec09173013ea87fff531f6a92ad4c67ed8c5b39f4f7",
+      "source_authenticity_verified": true,
+      "source_verified_at": "2026-09-17",
+      "policy_expected_state": "STALE"
+    },
+    {
+      "case_id": "hist-ppg-independent-replication",
+      "claim_id": "claim-ppg-age-estimation",
+      "kind": "INDEPENDENT_REPLICATION",
+      "authority": "INDEPENDENT_SCHOLARLY",
+      "source_url": "https://www.nature.com/articles/s44387-026-00094-2",
+      "source_title": "Data-hugging shields proprietary AI models from research that could disprove them",
+      "source_date": "2026-04-17",
+      "defects": [
+        "INDEPENDENT_REPLICATION_FAILURE"
+      ],
+      "independence_level": "PARTIAL",
+      "explicit_conclusions_unsupported": false,
+      "expected_action": "DEGRADE",
+      "reason_summary": "An independent public-data analysis reported that the claimed age-estimation accuracy could not be reproduced.",
+      "source_digest": "edd04361fdc0ae563579e35bdadd6cf5c7b6376afd9c798ae4aeeb46a9c7df78",
+      "source_authenticity_verified": true,
+      "source_verified_at": "2026-09-17",
+      "policy_expected_state": "CONFLICTED"
+    },
+    {
+      "case_id": "control-breast-cancer-author-name",
+      "claim_id": "claim-breast-cancer-genetic-dl",
+      "kind": "EDITORIAL_CORRECTION",
+      "authority": "PUBLISHER_EDITORIAL",
+      "source_url": "https://www.nature.com/articles/s41598-026-70814-w",
+      "source_title": "Correction: Hybrid tuned deep learning model for breast cancer diagnosis using genetic data",
+      "source_date": "2026-09-10",
+      "defects": [
+        "ADMINISTRATIVE_METADATA"
+      ],
+      "independence_level": "PARTIAL",
+      "explicit_conclusions_unsupported": false,
+      "expected_action": "PRESERVE",
+      "reason_summary": "The correction fixes an author-name error and does not report a scientific evidence defect.",
+      "source_digest": "ff0b32d0536a7024e530d8fdadd34cdebe06b66e4e430eba0c88a66aef60392e",
+      "source_authenticity_verified": true,
+      "source_verified_at": "2026-09-17",
+      "policy_expected_state": "REPLICATED"
+    },
+    {
+      "case_id": "control-gene-model-author-name",
+      "claim_id": "claim-gene-breast-cancer",
+      "kind": "EDITORIAL_CORRECTION",
+      "authority": "PUBLISHER_EDITORIAL",
+      "source_url": "https://www.nature.com/articles/s41598-026-71098-w",
+      "source_title": "Correction: Gene driven analytical learning model for acurate breast cancer diagnosis",
+      "source_date": "2026-09-10",
+      "defects": [
+        "ADMINISTRATIVE_METADATA"
+      ],
+      "independence_level": "PARTIAL",
+      "explicit_conclusions_unsupported": false,
+      "expected_action": "PRESERVE",
+      "reason_summary": "The correction fixes an author-name error without identifying a scientific defect.",
+      "source_digest": "8deaaebdb63d60898f852ed7308fa9a706e8dd868d0d09e72e187b897e7da1cf",
+      "source_authenticity_verified": true,
+      "source_verified_at": "2026-09-17",
+      "policy_expected_state": "REPLICATED"
+    },
+    {
+      "case_id": "control-orthodontic-contribution",
+      "claim_id": "claim-orthodontic-camouflage-ml",
+      "kind": "EDITORIAL_CORRECTION",
+      "authority": "PUBLISHER_EDITORIAL",
+      "source_url": "https://www.nature.com/articles/s41598-026-47457-y",
+      "source_title": "Correction: Predicting camouflage treatment outcomes in skeletal class III malocclusion using machine learning",
+      "source_date": "2026-04-09",
+      "defects": [
+        "ADMINISTRATIVE_METADATA"
+      ],
+      "independence_level": "PARTIAL",
+      "explicit_conclusions_unsupported": false,
+      "expected_action": "PRESERVE",
+      "reason_summary": "The correction concerns equal-contribution attribution, not the scientific evidence or result.",
+      "source_digest": "94154046ed9fca03abaf7453c7f22f94a001ea8751a32b32117dc77ee8c0f2ef",
+      "source_authenticity_verified": true,
+      "source_verified_at": "2026-09-17",
+      "policy_expected_state": "REPLICATED"
+    },
+    {
+      "case_id": "control-ai-news-author-name",
+      "claim_id": "claim-ai-news-misinformation",
+      "kind": "EDITORIAL_CORRECTION",
+      "authority": "PUBLISHER_EDITORIAL",
+      "source_url": "https://www.nature.com/articles/s41598-026-43330-0",
+      "source_title": "Correction: AI-supported real-time news evaluation reveals effects of time constraint on misinformation discernment",
+      "source_date": "2026-03-23",
+      "defects": [
+        "ADMINISTRATIVE_METADATA"
+      ],
+      "independence_level": "PARTIAL",
+      "explicit_conclusions_unsupported": false,
+      "expected_action": "PRESERVE",
+      "reason_summary": "The correction fixes an author-name ordering error without changing scientific content.",
+      "source_digest": "7e7aac018c1bd5ad7a6279012cdbeffd8199f8d0427474b037e6dacd3918672e",
+      "source_authenticity_verified": true,
+      "source_verified_at": "2026-09-17",
+      "policy_expected_state": "REPLICATED"
+    },
+    {
+      "case_id": "control-datasail-addendum",
+      "claim_id": "claim-datasail-leakage-splitting",
+      "kind": "EDITORIAL_ADDENDUM",
+      "authority": "PUBLISHER_EDITORIAL",
+      "source_url": "https://www.nature.com/articles/s41467-025-67495-w",
+      "source_title": "Addendum: Data splitting against information leakage with DataSAIL",
+      "source_date": "2026-02-13",
+      "defects": [
+        "METHODOLOGICAL_EXTENSION"
+      ],
+      "independence_level": "PARTIAL",
+      "explicit_conclusions_unsupported": false,
+      "expected_action": "PRESERVE",
+      "reason_summary": "The addendum extends benchmark comparisons and does not invalidate the original scientific claim.",
+      "source_digest": "89a469271e7bdcace4fdc19030c3e8f5eef88ca480f734e4e20020375df1574b",
+      "source_authenticity_verified": true,
+      "source_verified_at": "2026-09-17",
+      "policy_expected_state": "REPLICATED"
+    }
+  ]
+}

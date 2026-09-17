@@ -1,0 +1,31 @@
+{
+  "files": [
+    {
+      "bytes": 1185,
+      "path": "artifacts/epistemic_control_plane/iteration_003/ITERATION_003_REPORT.md",
+      "sha256": "217da49d737421ef792a97b7405f98098442024ad3a5f102bf7969125b40af95"
+    },
+    {
+      "bytes": 10542,
+      "path": "artifacts/epistemic_control_plane/iteration_003/historical_replay_results.json",
+      "sha256": "abe76a70a750723ebd01288b9dd9102744c9baa943d7699ee4144a8eb36990fa"
+    },
+    {
+      "bytes": 1019,
+      "path": "artifacts/epistemic_control_plane/iteration_003/primary_summary.json",
+      "sha256": "b2c63f258615758fcaa723bef1245525b86dace8e91980d98a599b4b06bd77f2"
+    },
+    {
+      "bytes": 6277,
+      "path": "artifacts/epistemic_control_plane/iteration_003/source_verification.json",
+      "sha256": "44a109db982d97119f8c54cb5e7f1b6bb1234e83a56bc26837d9841ef4706622"
+    },
+    {
+      "bytes": 440,
+      "path": "artifacts/epistemic_control_plane/iteration_003/verification_report.json",
+      "sha256": "0ab653dbb11487da59e177432ab1dfe1fb14d91da940d500d3275ec12c887a34"
+    }
+  ],
+  "iteration": "003",
+  "schema": "ecp-as-artifact-index/v1"
+}

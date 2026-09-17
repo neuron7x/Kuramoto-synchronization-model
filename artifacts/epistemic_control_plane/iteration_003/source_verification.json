@@ -1,0 +1,121 @@
+{
+  "boundary": "This artifact verifies the frozen source identifiers used by the replay; it is not a permanent archive of publisher content.",
+  "schema": "ecp-as-source-verification/v1",
+  "source_count": 14,
+  "sources": [
+    {
+      "case_id": "hist-earthquake-la-validation",
+      "date": "2026-04-20",
+      "source_authenticity_verified": true,
+      "source_digest": "4ee91643ef0cec416baff6411c01b5ecb1ec92b9d1c6db82032bc28d524f27b8",
+      "title": "Retraction Note: Improving earthquake prediction accuracy in Los Angeles with machine learning",
+      "url": "https://www.nature.com/articles/s41598-026-49689-4"
+    },
+    {
+      "case_id": "hist-stroke-risk-dataset-provenance",
+      "date": "2026-04-13",
+      "source_authenticity_verified": true,
+      "source_digest": "2822715808715d50eaeca3f0710932feac328da14fb179668729d1dad991139d",
+      "title": "Retraction Note: Predictive modelling and identification of key risk factors for stroke using machine learning",
+      "url": "https://www.nature.com/articles/s41598-026-47902-y"
+    },
+    {
+      "case_id": "hist-stroke-onset-dataset-provenance",
+      "date": "2026-05-26",
+      "source_authenticity_verified": true,
+      "source_digest": "eb7474fd286767c3db3cd344c04d1ccbddc2733697730002036d78d09de6df68",
+      "title": "Retraction Note: Unveiling the potential of machine learning approaches in predicting the emergence of stroke at its onset: a predicting framework",
+      "url": "https://www.nature.com/articles/s41598-026-54512-1"
+    },
+    {
+      "case_id": "hist-iot-reporting-inconsistency",
+      "date": "2026-08-10",
+      "source_authenticity_verified": true,
+      "source_digest": "c85bf82a00259ce88ec6140e2cfadc9be785ba97af846eaff90fc2391411a5e5",
+      "title": "Retraction Note: A multilayer deep autoencoder approach for cross layer IoT attack detection using deep learning algorithms",
+      "url": "https://www.nature.com/articles/s41598-026-65492-7"
+    },
+    {
+      "case_id": "hist-cephalometric-method-validity",
+      "date": "2026-03-09",
+      "source_authenticity_verified": true,
+      "source_digest": "35fc0eae044cb83ef2c892ddd529302375e9a58f9adddb2dafa817f40f25c975",
+      "title": "Retraction Note: Multimodal deep learning for cephalometric landmark detection and treatment prediction",
+      "url": "https://www.nature.com/articles/s41598-026-42846-9"
+    },
+    {
+      "case_id": "hist-geopolymer-data-unavailable",
+      "date": "2026-09-14",
+      "source_authenticity_verified": true,
+      "source_digest": "99b12a72170ff2dce42d9d4bad543a17ef5442a20a28624c92248f0fdc88a049",
+      "title": "Retraction Note: Machine learning-driven evaluation of mechanical and microstructural properties of agro-waste-derived geopolymer concrete",
+      "url": "https://www.nature.com/articles/s41598-026-71215-9"
+    },
+    {
+      "case_id": "hist-nanofluid-reference-integrity",
+      "date": "2026-07-15",
+      "source_authenticity_verified": true,
+      "source_digest": "b64cdef347ab2d295d49dd9fe18f372df809ee55bd7c6a50b5dff40e1cd4b971",
+      "title": "Retraction Note: An optimal feed-forward artificial neural network model and a new empirical correlation for prediction of the relative viscosity of Al2O3-engine oil nanofluid",
+      "url": "https://www.nature.com/articles/s41598-026-62698-7"
+    },
+    {
+      "case_id": "hist-robot-authorship-provenance",
+      "date": "2026-06-16",
+      "source_authenticity_verified": true,
+      "source_digest": "341d363657cf348f64472ec09173013ea87fff531f6a92ad4c67ed8c5b39f4f7",
+      "title": "Retraction Note: Reinforcement learning-driven deep learning approaches for optimized robot trajectory planning",
+      "url": "https://www.nature.com/articles/s41598-026-57775-w"
+    },
+    {
+      "case_id": "hist-ppg-independent-replication",
+      "date": "2026-04-17",
+      "source_authenticity_verified": true,
+      "source_digest": "edd04361fdc0ae563579e35bdadd6cf5c7b6376afd9c798ae4aeeb46a9c7df78",
+      "title": "Data-hugging shields proprietary AI models from research that could disprove them",
+      "url": "https://www.nature.com/articles/s44387-026-00094-2"
+    },
+    {
+      "case_id": "control-breast-cancer-author-name",
+      "date": "2026-09-10",
+      "source_authenticity_verified": true,
+      "source_digest": "ff0b32d0536a7024e530d8fdadd34cdebe06b66e4e430eba0c88a66aef60392e",
+      "title": "Correction: Hybrid tuned deep learning model for breast cancer diagnosis using genetic data",
+      "url": "https://www.nature.com/articles/s41598-026-70814-w"
+    },
+    {
+      "case_id": "control-gene-model-author-name",
+      "date": "2026-09-10",
+      "source_authenticity_verified": true,
+      "source_digest": "8deaaebdb63d60898f852ed7308fa9a706e8dd868d0d09e72e187b897e7da1cf",
+      "title": "Correction: Gene driven analytical learning model for accurate breast cancer diagnosis",
+      "url": "https://www.nature.com/articles/s41598-026-71098-w"
+    },
+    {
+      "case_id": "control-orthodontic-contribution",
+      "date": "2026-04-09",
+      "source_authenticity_verified": true,
+      "source_digest": "94154046ed9fca03abaf7453c7f22f94a001ea8751a32b32117dc77ee8c0f2ef",
+      "title": "Correction: Predicting camouflage treatment outcomes in skeletal class III malocclusion using machine learning",
+      "url": "https://www.nature.com/articles/s41598-026-47457-y"
+    },
+    {
+      "case_id": "control-ai-news-author-name",
+      "date": "2026-03-23",
+      "source_authenticity_verified": true,
+      "source_digest": "7e7aac018c1bd5ad7a6279012cdbeffd8199f8d0427474b037e6dacd3918672e",
+      "title": "Correction: AI-supported real-time news evaluation reveals effects of time constraint on misinformation discernment",
+      "url": "https://www.nature.com/articles/s41598-026-43330-0"
+    },
+    {
+      "case_id": "control-datasail-addendum",
+      "date": "2026-02-13",
+      "source_authenticity_verified": true,
+      "source_digest": "89a469271e7bdcace4fdc19030c3e8f5eef88ca480f734e4e20020375df1574b",
+      "title": "Addendum: Data splitting against information leakage with DataSAIL",
+      "url": "https://www.nature.com/articles/s41467-025-67495-w"
+    }
+  ],
+  "verification_mode": "manual_web_source_resolution_and_manifest_freeze",
+  "verified_at": "2026-09-17"
+}
