@@ -1,0 +1,49 @@
+id: ecp-as-governance-iteration-001
+status: ACTIVE
+claim_type: governance
+promise: >-
+  Iteration 001 exposes its scope, verification result, adversarial witness, and unproven empirical boundary
+  without promoting ECP-AS beyond internally verified control-plane semantics.
+diff_scope:
+  changed_files:
+    - path: "ECP_AS.md"
+    - path: "artifacts/epistemic_control_plane/iteration_001/ITERATION_001_REPORT.md"
+    - path: "artifacts/epistemic_control_plane/iteration_001/artifact_index.json"
+    - path: "artifacts/epistemic_control_plane/iteration_001/flagship_demo_result.json"
+    - path: "artifacts/epistemic_control_plane/iteration_001/verification_report.json"
+    - path: "docs/epistemic_control_plane/ARCHITECTURE.md"
+    - path: "governance/ECP_AS_ITERATION_001.json"
+    - path: ".claude/commit_acceptors/ecp-as-governance-iteration-001.yaml"
+  forbidden_paths:
+    - "trading/"
+    - "execution/"
+    - "forecast/"
+    - "policy/"
+required_python_symbols: []
+expected_signal: >-
+  Claim-boundary, docs-consistency, and descriptor-promotion gates pass while the governance record
+  explicitly preserves the pending UnsafePromotionRate proof obligation.
+measurement_command: >-
+  python scripts/ci/check_claim_boundary.py &&
+  python scripts/ci/check_docs_consistency.py &&
+  python tools/claims/check_descriptor_promotion.py
+signal_artifact: "tmp/ecp_as_governance_iteration_001.log"
+falsifier:
+  command: >-
+    python -c "import json,pathlib;
+    d=json.loads(pathlib.Path('governance/ECP_AS_ITERATION_001.json').read_text());
+    raise SystemExit(1 if any('UnsafePromotionRate' in x or 'unsafe claim promotion' in x for x in d['not_claimed']) else 0)"
+  description: >-
+    The governance record must retain an explicit unproven empirical boundary; this probe exits non-zero
+    when that boundary is present, ensuring the acceptor has an executable falsification path.
+rollback_command: >-
+  git checkout origin/main -- pyproject.toml &&
+  rm -rf ECP_AS.md docs/epistemic_control_plane artifacts/epistemic_control_plane/iteration_001
+  governance/ECP_AS_ITERATION_001.json
+rollback_verification_command: >-
+  test ! -e ECP_AS.md && test ! -e docs/epistemic_control_plane &&
+  test ! -e artifacts/epistemic_control_plane/iteration_001 && test ! -e governance/ECP_AS_ITERATION_001.json
+memory_update_type: none
+ledger_path: ".claude/commit_acceptors/ecp-as-governance-iteration-001.yaml"
+report_path: "artifacts/epistemic_control_plane/iteration_001/ITERATION_001_REPORT.md"
+evidence: []

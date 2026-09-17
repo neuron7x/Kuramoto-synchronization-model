@@ -1,5 +1,5 @@
 import unittest
-from epistemic_kernel import *
+from geosync.epistemic import *
 
 class DependencyCompilerTests(unittest.TestCase):
     def test_scoped_transitive_invalidation(self):

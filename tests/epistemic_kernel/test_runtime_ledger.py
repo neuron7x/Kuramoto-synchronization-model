@@ -1,6 +1,6 @@
 import json, tempfile, unittest
 from pathlib import Path
-from epistemic_kernel import *
+from geosync.epistemic import *
 
 def ev(cid,kind,n): return Evidence(n,kind,"digest-"+n,"unit","1",cid)
 def indep_oracle(cid): return Oracle("o",cid,"od",OracleIndependence(True,True,True,True),frozenset({"external:B"}))

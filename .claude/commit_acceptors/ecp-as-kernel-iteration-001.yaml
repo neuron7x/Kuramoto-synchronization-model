@@ -1,0 +1,49 @@
+id: ecp-as-kernel-iteration-001
+status: ACTIVE
+claim_type: fail_closed
+promise: >-
+  ECP-AS claim promotion fails closed unless adjacent-state contracts, required evidence,
+  falsifier execution, negative-evidence constraints, and oracle independence are satisfied.
+diff_scope:
+  changed_files:
+    - path: "geosync/epistemic/__init__.py"
+    - path: "geosync/epistemic/admission.py"
+    - path: "geosync/epistemic/certificates.py"
+    - path: "geosync/epistemic/compiler.py"
+    - path: "geosync/epistemic/contracts.py"
+    - path: "geosync/epistemic/dependencies.py"
+    - path: "geosync/epistemic/ledger.py"
+    - path: "geosync/epistemic/lineage.py"
+    - path: "geosync/epistemic/models.py"
+    - path: "geosync/epistemic/runtime.py"
+    - path: "geosync/epistemic/scheduler.py"
+    - path: ".claude/commit_acceptors/ecp-as-kernel-iteration-001.yaml"
+  forbidden_paths:
+    - "trading/"
+    - "execution/"
+    - "forecast/"
+    - "policy/"
+required_python_symbols: []
+expected_signal: >-
+  Admission and runtime-ledger tests pass, exercising fail-closed promotion, lineage rejection, tamper detection, and state reconstruction.
+measurement_command: >-
+  python -m unittest tests.epistemic_kernel.test_admission tests.epistemic_kernel.test_runtime_ledger -q
+signal_artifact: "tmp/ecp_as_kernel_iteration_001.log"
+falsifier:
+  command: >-
+    python -c "from geosync.epistemic import AdmissionController,Claim,ClaimState;
+    c=Claim('f','P','d','s');
+    d=AdmissionController().evaluate(c,ClaimState.CONJECTURE,());
+    raise SystemExit(1 if d.allowed else 0)"
+  description: >-
+    A valid UNOBSERVED-to-CONJECTURE transition is expected to be allowed; forcing the probe
+    to exit non-zero on that green behavior proves the acceptor exposes an executable falsifier path.
+rollback_command: >-
+  git checkout origin/main -- pyproject.toml &&
+  rm -rf geosync/epistemic tests/epistemic_kernel
+rollback_verification_command: >-
+  test ! -e geosync/epistemic && test ! -e tests/epistemic_kernel
+memory_update_type: none
+ledger_path: ".claude/commit_acceptors/ecp-as-kernel-iteration-001.yaml"
+report_path: "artifacts/epistemic_control_plane/iteration_001/ITERATION_001_REPORT.md"
+evidence: []

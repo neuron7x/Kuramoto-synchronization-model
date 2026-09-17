@@ -1,6 +1,6 @@
 import unittest
-from epistemic_kernel.geosync_adapter import map_legacy_state
-from epistemic_kernel.models import ClaimState
+from geosync.epistemic.geosync_adapter import map_legacy_state
+from geosync.epistemic.models import ClaimState
 
 class AdapterTests(unittest.TestCase):
     def test_bounded_legacy_maps_bounded(self): self.assertEqual(map_legacy_state("BOUNDED_CLAIM_ALLOWED"),ClaimState.BOUNDED)

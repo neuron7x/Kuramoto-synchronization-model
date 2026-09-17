@@ -1,5 +1,5 @@
 import unittest
-from epistemic_kernel import *
+from geosync.epistemic import *
 
 def ev(cid,kind,n="x"):
     return Evidence(n,kind,"d"+n,"unit","1",cid)

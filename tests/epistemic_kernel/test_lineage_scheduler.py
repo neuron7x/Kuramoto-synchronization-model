@@ -1,6 +1,6 @@
 import unittest
-from epistemic_kernel import *
-from epistemic_kernel.scheduler import epistemic_score
+from geosync.epistemic import *
+from geosync.epistemic.scheduler import epistemic_score
 
 class LineageSchedulerTests(unittest.TestCase):
     def test_incomplete_axis_rejected(self):

@@ -1,0 +1,46 @@
+id: ecp-as-correctness-iteration-001
+status: ACTIVE
+claim_type: correctness
+promise: >-
+  ECP-AS exposes a deterministic CLI and GeoSync adapter, and its adversarial tests verify
+  state reconstruction, tamper detection, lineage rejection, scoped dependencies, and append-only negative evidence.
+diff_scope:
+  changed_files:
+    - path: "geosync/epistemic/cli.py"
+    - path: "geosync/epistemic/geosync_adapter.py"
+    - path: "tests/epistemic_kernel/test_adapter.py"
+    - path: "tests/epistemic_kernel/test_admission.py"
+    - path: "tests/epistemic_kernel/test_dependencies_compiler.py"
+    - path: "tests/epistemic_kernel/test_lineage_scheduler.py"
+    - path: "tests/epistemic_kernel/test_runtime_ledger.py"
+    - path: ".claude/commit_acceptors/ecp-as-correctness-iteration-001.yaml"
+  forbidden_paths:
+    - "trading/"
+    - "execution/"
+    - "forecast/"
+    - "policy/"
+required_python_symbols: []
+expected_signal: "32 targeted ECP-AS unit tests pass and geosync.epistemic compiles without syntax errors."
+measurement_command: >-
+  python -m unittest discover -s tests/epistemic_kernel -p 'test_*.py' -q &&
+  python -m compileall -q geosync/epistemic
+signal_artifact: "tmp/ecp_as_correctness_iteration_001.log"
+falsifier:
+  command: >-
+    python -c "from geosync.epistemic import Claim,ClaimState,EpistemicRuntime;
+    import tempfile,pathlib;
+    p=pathlib.Path(tempfile.mkdtemp())/'l.jsonl'; r=EpistemicRuntime(p);
+    r.register_claim(Claim('f','P','d','s'));
+    raise SystemExit(1 if r.claim('f').state is ClaimState.UNOBSERVED else 0)"
+  description: >-
+    A freshly registered claim must reconstruct as UNOBSERVED; the probe deliberately exits non-zero
+    when the invariant holds so CI can detect falsifier execution.
+rollback_command: >-
+  git checkout origin/main -- pyproject.toml &&
+  rm -rf geosync/epistemic tests/epistemic_kernel
+rollback_verification_command: >-
+  test ! -e geosync/epistemic && test ! -e tests/epistemic_kernel
+memory_update_type: none
+ledger_path: ".claude/commit_acceptors/ecp-as-correctness-iteration-001.yaml"
+report_path: "artifacts/epistemic_control_plane/iteration_001/ITERATION_001_REPORT.md"
+evidence: []
