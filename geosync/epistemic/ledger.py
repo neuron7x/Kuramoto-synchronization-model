@@ -3,7 +3,7 @@ from __future__ import annotations
 import hashlib, json
 from dataclasses import dataclass
 from pathlib import Path
-from typing import Any, Tuple
+from typing import Any, Iterable, Tuple
 
 GENESIS = "0" * 64
 
