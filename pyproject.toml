@@ -147,11 +147,48 @@ readme = { file = "README.md", content-type = "text/markdown" }
 
 [tool.setuptools_scm]
 version_file = "src/_version.py"
+# SSOT-bound (REL-008): must equal the VERSION file / CITATION.cff version and
+# the release git tag `v<version>`. setuptools_scm derives the wheel version
+# dynamically from git tags; when no version tag is reachable from HEAD this
+# fallback governs the wheel version. See docs/VERSION_POLICY.md.
 fallback_version = "1.1.0"
 
 [tool.setuptools.packages.find]
 where = ["."]
-include = ["analytics","analytics.*","application","application.*","backtest","backtest.*","core","core.*","domain","domain.*","execution","execution.*","interfaces","interfaces.*","libs","libs.*","geosync","geosync.*","geosync_research","geosync_research.*","modules","modules.*","geosync_pro","geosync_pro.*","observability","observability.*","tools","tools.*","scripts","scripts.*","src","src.*"]
+include = [
+    "analytics",
+    "analytics.*",
+    "application",
+    "application.*",
+    "backtest",
+    "backtest.*",
+    "core",
+    "core.*",
+    "domain",
+    "domain.*",
+    "execution",
+    "execution.*",
+    "interfaces",
+    "interfaces.*",
+    "libs",
+    "libs.*",
+    "geosync",
+    "geosync.*",
+    "geosync_research",
+    "geosync_research.*",
+    "modules",
+    "modules.*",
+    "geosync_pro",
+    "geosync_pro.*",
+    "observability",
+    "observability.*",
+    "tools",
+    "tools.*",
+    "scripts",
+    "scripts.*",
+    "src",
+    "src.*",
+]
 exclude = ["tests", "tests.*", "docs", "docs.*"]
 
 [tool.setuptools.package-data]
@@ -185,12 +222,32 @@ force-exclude = '''
 
 [tool.ruff]
 line-length = 100
-extend-exclude = ["docs/notebooks","tests","**/tests","scripts/validate_epistemic_rhombus_manifest.py"]
+extend-exclude = [
+    "docs/notebooks",
+    "tests",
+    "**/tests",
+    "scripts/validate_epistemic_rhombus_manifest.py",
+]
 force-exclude = true
 
 [tool.ruff.lint]
 select = ["E", "F", "W", "I"]
 ignore = ["E203", "E501"]
+
+[tool.ruff.lint.per-file-ignores]
+"examples/*.py" = ["E402"]
+"benchmarks/*.py" = ["E402"]
+"docs/archive/*.py" = ["E402"]
+"scripts/eval/*.py" = ["E402"]
+"scripts/aar_pro_*.py" = ["E402"]
+"scripts/serotonin_certify.py" = ["E402"]
+"scripts/performance/generate_replay_report.py" = ["E402"]
+"interfaces/dashboard_streamlit.py" = ["E402"]
+"tests/core/agent/test_pqf_pscs.py" = ["E402"]
+"tests/scripts/test_calibrate_controllers.py" = ["E402"]
+"tests/sdk/mlsdm/test_replay_harness.py" = ["E402"]
+"coherence_bridge/generated/*.py" = ["ALL"]
+"coherence_bridge/*.py" = ["N802", "N806", "N818", "TC001", "TC002", "TC003", "PLC0415"]
 
 [tool.isort]
 profile = "black"
