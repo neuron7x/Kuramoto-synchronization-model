@@ -1,0 +1,55 @@
+{
+  "claim_boundary": "External rigor labels are real. Evaluator error profiles are synthetic exact stress models, not actual LLM outputs.",
+  "external_label_source": {
+    "dataset": "hosytuyen/SoundnessBench",
+    "frozen_preview_rows": 39,
+    "full_dataset_rows": 1099,
+    "high_rows": 20,
+    "low_rows": 19,
+    "paper": "arXiv:2605.30329",
+    "selection_boundary": "public viewer convenience slice; not IID or representative"
+  },
+  "hidden_common_cause_boundary": {
+    "balanced_error": 0.12838319999999992,
+    "false_block_rate": 0.10575999999999985,
+    "high_count": 20,
+    "low_count": 19,
+    "policy": "ecp_as_lineage_quorum",
+    "profile": "hidden_common_cause",
+    "unsafe_promotion_rate": 0.1510064
+  },
+  "iteration": "ECP-AS-004",
+  "next_proof_obligation": "Run real heterogeneous evaluator outputs on a full externally labeled benchmark, estimate empirical error covariance, calibrate on train/validation, and evaluate on a locked test split.",
+  "optimistic_correlated": {
+    "ecp_as_lineage_quorum": {
+      "balanced_error": 0.04680550000000003,
+      "false_block_rate": 0.05697775000000005,
+      "high_count": 20,
+      "low_count": 19,
+      "policy": "ecp_as_lineage_quorum",
+      "profile": "optimistic_correlated",
+      "unsafe_promotion_rate": 0.03663325
+    },
+    "raw_majority": {
+      "balanced_error": 0.15045040000000007,
+      "false_block_rate": 0.014206375000000104,
+      "high_count": 20,
+      "low_count": 19,
+      "policy": "raw_majority",
+      "profile": "optimistic_correlated",
+      "unsafe_promotion_rate": 0.28669442500000003
+    },
+    "relative_unsafe_reduction_vs_raw": 0.8722219659485879,
+    "strict_external_unanimity": {
+      "balanced_error": 0.18824725000000003,
+      "false_block_rate": 0.3749736250000001,
+      "high_count": 20,
+      "low_count": 19,
+      "policy": "strict_external_unanimity",
+      "profile": "optimistic_correlated",
+      "unsafe_promotion_rate": 0.001520875
+    }
+  },
+  "schema": "ecp-as-iteration-004-summary/v1",
+  "status": "PASS_CONTROL_STRESS__REAL_EVALUATOR_RUN_PENDING"
+}

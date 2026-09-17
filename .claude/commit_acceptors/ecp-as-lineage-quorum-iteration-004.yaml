@@ -1,0 +1,34 @@
+id: ecp-as-lineage-quorum-iteration-004
+status: ACTIVE
+claim_type: correctness
+promise: >-
+  Iteration 004 prevents research-plane self/sibling evaluators and declared correlated
+  external evaluators from multiplying authorization weight, requiring a 2-of-3 quorum
+  across three pairwise-independent declared external lineages.
+diff_scope:
+  changed_files:
+    - path: "geosync/epistemic/evaluator_control.py"
+    - path: "geosync/epistemic/__init__.py"
+    - path: "tests/epistemic_kernel/test_evaluator_control.py"
+  forbidden_paths:
+    - "execution/"
+    - "trading/"
+expected_signal: >-
+  Research-plane clones are excluded, pairwise shared lineage is collapsed, missing lineage
+  fails closed, and successful quorum can emit an aggregate admission-compatible oracle.
+measurement_command: >-
+  python -m unittest tests.epistemic_kernel.test_evaluator_control -q
+signal_artifact: "artifacts/epistemic_control_plane/iteration_004/verification_report.json"
+falsifier:
+  command: >-
+    python -c "from geosync.epistemic.evaluator_control import EvaluatorObservation,LineageQuorumPolicy; from geosync.epistemic.models import Claim,Oracle,OracleIndependence; full=OracleIndependence(True,True,True,True); c=Claim('c','p','d','s',generator_ancestors=frozenset({'research:family'})); mk=lambda i,a: Oracle(i,'c',i,full,frozenset(a)); o=[EvaluatorObservation(mk('self',{'research:family'}),True),EvaluatorObservation(mk('sib',{'research:family'}),True),EvaluatorObservation(mk('a',{'ext:a'}),True),EvaluatorObservation(mk('b',{'ext:b'}),False),EvaluatorObservation(mk('c',{'ext:c'}),False)]; raise SystemExit(0 if LineageQuorumPolicy().decide(c,o).promoted else 1)"
+  description: >-
+    Fails the acceptor if research-plane correlated evaluators can create authorization.
+rollback_command: >-
+  rm -f geosync/epistemic/evaluator_control.py geosync/epistemic/soundness_stress.py tests/epistemic_kernel/test_evaluator_control.py
+rollback_verification_command: >-
+  test ! -e geosync/epistemic/evaluator_control.py
+memory_update_type: none
+ledger_path: ".claude/commit_acceptors/ecp-as-lineage-quorum-iteration-004.yaml"
+report_path: "artifacts/epistemic_control_plane/iteration_004/ITERATION_004_REPORT.md"
+evidence: []

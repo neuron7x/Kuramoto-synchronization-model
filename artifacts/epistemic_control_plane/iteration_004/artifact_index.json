@@ -1,0 +1,31 @@
+{
+  "files": [
+    {
+      "bytes": 1901,
+      "path": "artifacts/epistemic_control_plane/iteration_004/ITERATION_004_REPORT.md",
+      "sha256": "4c278eba77a727a182b0189f9f563232e89ec5b4eac777c0b6c633573c730fd2"
+    },
+    {
+      "bytes": 3120,
+      "path": "artifacts/epistemic_control_plane/iteration_004/control_stress_results.json",
+      "sha256": "b49220154451ffbc3c047e063e49d59dd12db8b165afa1d37626bf94a646fbc7"
+    },
+    {
+      "bytes": 2084,
+      "path": "artifacts/epistemic_control_plane/iteration_004/primary_summary.json",
+      "sha256": "52a7d65715a9077e064e01d00495f05e088c5630a6d727c442405ee09918fb10"
+    },
+    {
+      "bytes": 779,
+      "path": "artifacts/epistemic_control_plane/iteration_004/source_verification.json",
+      "sha256": "80627880cf6e5b543f33d921afcd2f44b835d59051999cb5c203bfced9d4529f"
+    },
+    {
+      "bytes": 907,
+      "path": "artifacts/epistemic_control_plane/iteration_004/verification_report.json",
+      "sha256": "de2ef68f5942f3ea3d8fb24594ed8f4d0a0ae19868d0dbaa710c242cd97e256e"
+    }
+  ],
+  "iteration": "004",
+  "schema": "ecp-as-artifact-index/v1"
+}
