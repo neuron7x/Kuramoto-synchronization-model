@@ -1,0 +1,21 @@
+{
+  "boundary": "Iteration 006 adds no new empirical evaluator observations; it constructs exact proof objects from the frozen Iteration 005 published marginals.",
+  "fp_marginals": [
+    "49/50",
+    "139/500",
+    "0"
+  ],
+  "frozen_triplet": [
+    "LLaMA-3.3-70B-Instruct::standard",
+    "Claude-Opus-4-6::aggressive",
+    "GPT-5.4-Mini::aggressive"
+  ],
+  "schema": "ecp-as-iteration-006-source-verification/v1",
+  "source_manifest": "benchmarks/epistemic_control_plane/iteration_005/soundnessbench_leaderboard_marginals.json",
+  "source_manifest_sha256": "bc24ee5db9b3b953a82e3161d162c16d31207e53ec5194a1a226194127703c07",
+  "tp_marginals": [
+    "497/500",
+    "83/125",
+    "1/500"
+  ]
+}

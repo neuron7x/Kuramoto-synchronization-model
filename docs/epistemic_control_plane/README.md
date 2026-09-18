@@ -56,3 +56,7 @@ See `SOUNDNESS_CONTROL_STRESS_PROTOCOL.md` and `artifacts/epistemic_control_plan
 ## Iteration 005 — distributionally robust quorum certification
 
 See `DISTRIBUTIONALLY_ROBUST_QUORUM_PROTOCOL.md` and `artifacts/epistemic_control_plane/iteration_005/`. Published SoundnessBench FP/FN marginals are used to compute exact worst-case quorum risk over every compatible joint error distribution. Marginal benchmark quality alone is not treated as evidence of evaluator independence.
+
+## Iteration 006 — exact proof-carrying quorum bounds
+
+See `EXACT_QUORUM_CERTIFICATE_PROTOCOL.md` and `artifacts/epistemic_control_plane/iteration_006/`. Constructive primal distributions plus exact rational dual inequalities independently certify the decisive Iteration 005 worst-case bounds without trusting an LP solver.

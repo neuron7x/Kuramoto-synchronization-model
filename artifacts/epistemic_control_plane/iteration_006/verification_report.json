@@ -1,0 +1,14 @@
+{
+  "acceptor_falsifiers": "2/2 UNTRIGGERED",
+  "acceptor_measurements": "2/2 PASS",
+  "changed_python_py_compile": "PASS",
+  "diff_whitespace_check": "PASS",
+  "exact_certificate_runner": "PASS",
+  "exact_certificates": "2/2 VALID",
+  "iteration": "006",
+  "schema": "ecp-as-iteration-006-verification/v1",
+  "solver_independent_verifier": true,
+  "status": "PASS_EXACT_PRIMAL_DUAL_CERTIFICATES",
+  "targeted_tests_status": "PASS",
+  "targeted_unittest_methods": 73
+}

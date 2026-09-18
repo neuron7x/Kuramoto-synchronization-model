@@ -1,0 +1,17 @@
+{
+  "claim_boundary": "This is a partial-identification/non-certifiability result. It does not identify the deployment joint distribution.",
+  "false_block_max": {
+    "decimal": 0.342,
+    "fraction": "171/500"
+  },
+  "inference": "The frozen 2-of-3 quorum is provably non-certifiable under the configured 10% unsafe / 20% false-block budget from the published marginals alone.",
+  "iteration": "ECP-AS-006",
+  "next_proof_obligation": "Acquire per-case heterogeneous evaluator outputs and test a frozen dependence-aware controller on locked holdout data.",
+  "primal_dual_certificates_valid": 2,
+  "schema": "ecp-as-iteration-006-summary/v1",
+  "status": "PASS_EXACT_PRIMAL_DUAL_CERTIFICATES",
+  "unsafe_promotion_max": {
+    "decimal": 0.278,
+    "fraction": "139/500"
+  }
+}
