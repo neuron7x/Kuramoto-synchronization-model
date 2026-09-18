@@ -64,3 +64,12 @@ __all__ = [
     "RiskCertifiedLineageQuorumPolicy", "certify_quorum", "quorum_risk_bounds",
     "search_triplet_quorums",
 ]
+
+from .rational_certificates import (
+    RationalQuorumCertificate, CertificateVerification,
+    event_indicator, verify_rational_certificate, iteration_006_certificates,
+)
+__all__ += [
+    "RationalQuorumCertificate", "CertificateVerification", "event_indicator",
+    "verify_rational_certificate", "iteration_006_certificates",
+]

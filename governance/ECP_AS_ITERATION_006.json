@@ -1,0 +1,28 @@
+{
+  "iteration": "ECP-AS-006",
+  "objective": "Convert decisive Iteration 005 worst-case quorum bounds into independently checkable exact rational proof objects.",
+  "status": "PASS_EXACT_PRIMAL_DUAL_CERTIFICATES",
+  "frozen_quorum": {
+    "evaluators": [
+      "LLaMA-3.3-70B-Instruct::standard",
+      "Claude-Opus-4-6::aggressive",
+      "GPT-5.4-Mini::aggressive"
+    ],
+    "required_support": 2
+  },
+  "exact_results": {
+    "unsafe_promotion_max": "139/500",
+    "unsafe_promotion_decimal": 0.278,
+    "false_block_max": "171/500",
+    "false_block_decimal": 0.342
+  },
+  "verification": {
+    "targeted_unittest_methods": 73,
+    "targeted_tests_status": "PASS",
+    "exact_certificate_runner": "PASS",
+    "compileall": "PASS",
+    "solver_independent_verifier": true
+  },
+  "claim_boundary": "Certificates prove exact extrema for one frozen triplet/quorum under the published marginals. The certificate does not assert that either extremal distribution occurs in deployment; it proves non-certifiability from those marginals alone.",
+  "next_proof_obligation": "Obtain per-case heterogeneous evaluator outputs or independently execute evaluators; estimate dependence with uncertainty and test a frozen controller on locked holdout data."
+}

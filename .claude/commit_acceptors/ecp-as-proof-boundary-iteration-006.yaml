@@ -1,0 +1,28 @@
+id: ecp-as-proof-boundary-iteration-006
+status: ACTIVE
+claim_type: governance
+promise: >-
+  Exact extrema are reported as non-certifiability results under compatible joint
+  distributions, not as estimates of the deployment dependence structure.
+diff_scope:
+  changed_files:
+    - path: "docs/epistemic_control_plane/EXACT_QUORUM_CERTIFICATE_PROTOCOL.md"
+    - path: "governance/ECP_AS_ITERATION_006.json"
+    - path: "artifacts/epistemic_control_plane/iteration_006/ITERATION_006_REPORT.md"
+expected_signal: >-
+  Documentation explicitly states that extremal witnesses need not occur in deployment.
+measurement_command: >-
+  grep -q "does not assert that either extremal distribution occurs in deployment" governance/ECP_AS_ITERATION_006.json && grep -q "do not assert that either extremal distribution occurs in deployment" docs/epistemic_control_plane/EXACT_QUORUM_CERTIFICATE_PROTOCOL.md
+signal_artifact: "governance/ECP_AS_ITERATION_006.json"
+falsifier:
+  command: >-
+    python -c "import pathlib; s=pathlib.Path('artifacts/epistemic_control_plane/iteration_006/ITERATION_006_REPORT.md').read_text().lower(); raise SystemExit(0 if 'do not assert that either extremal distribution occurs in deployment' not in s else 1)"
+  description: Triggers if the deployment-distribution boundary disappears.
+rollback_command: >-
+  rm -f docs/epistemic_control_plane/EXACT_QUORUM_CERTIFICATE_PROTOCOL.md governance/ECP_AS_ITERATION_006.json
+rollback_verification_command: >-
+  test ! -e governance/ECP_AS_ITERATION_006.json
+memory_update_type: none
+ledger_path: ".claude/commit_acceptors/ecp-as-proof-boundary-iteration-006.yaml"
+report_path: "artifacts/epistemic_control_plane/iteration_006/ITERATION_006_REPORT.md"
+evidence: []

@@ -1,0 +1,84 @@
+{
+  "certificates": [
+    {
+      "certificate": {
+        "certificate_id": "iter006-best-triplet-unsafe-max",
+        "dual_coefficients": [
+          "0",
+          "1",
+          "1"
+        ],
+        "dual_intercept": "0",
+        "evaluator_ids": [
+          "LLaMA-3.3-70B-Instruct::standard",
+          "Claude-Opus-4-6::aggressive",
+          "GPT-5.4-Mini::aggressive"
+        ],
+        "event": "UNSAFE_PROMOTION",
+        "joint_mass": {
+          "000": "1/50",
+          "100": "351/500",
+          "110": "139/500"
+        },
+        "marginals": [
+          "49/50",
+          "139/500",
+          "0"
+        ],
+        "optimum": "139/500",
+        "required_support": 2
+      },
+      "verification": {
+        "dual_objective": "139/500",
+        "dual_valid": true,
+        "primal_objective": "139/500",
+        "primal_valid": true,
+        "reason": "exact primal witness and dual majorant coincide",
+        "strong_duality": true,
+        "valid": true
+      }
+    },
+    {
+      "certificate": {
+        "certificate_id": "iter006-best-triplet-false-block-max",
+        "dual_coefficients": [
+          "-1",
+          "-1",
+          "0"
+        ],
+        "dual_intercept": "2",
+        "evaluator_ids": [
+          "LLaMA-3.3-70B-Instruct::standard",
+          "Claude-Opus-4-6::aggressive",
+          "GPT-5.4-Mini::aggressive"
+        ],
+        "event": "FALSE_BLOCK",
+        "joint_mass": {
+          "010": "3/500",
+          "100": "42/125",
+          "110": "82/125",
+          "111": "1/500"
+        },
+        "marginals": [
+          "497/500",
+          "83/125",
+          "1/500"
+        ],
+        "optimum": "171/500",
+        "required_support": 2
+      },
+      "verification": {
+        "dual_objective": "171/500",
+        "dual_valid": true,
+        "primal_objective": "171/500",
+        "primal_valid": true,
+        "reason": "exact primal witness and dual majorant coincide",
+        "strong_duality": true,
+        "valid": true
+      }
+    }
+  ],
+  "claim_boundary": "These certificates prove exact extrema for the frozen best Iteration 005 triplet and 2-of-3 quorum. They do not estimate which compatible joint distribution occurs in deployment.",
+  "iteration": "006",
+  "schema": "ecp-as-exact-quorum-certificates/v1"
+}

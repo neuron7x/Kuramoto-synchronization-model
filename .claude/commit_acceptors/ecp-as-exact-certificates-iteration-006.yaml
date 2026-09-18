@@ -1,0 +1,29 @@
+id: ecp-as-exact-certificates-iteration-006
+status: ACTIVE
+claim_type: correctness
+promise: >-
+  Iteration 006 carries exact primal and dual proof objects for the decisive
+  Iteration 005 unsafe-promotion and false-block extrema.
+diff_scope:
+  changed_files:
+    - path: "geosync/epistemic/rational_certificates.py"
+    - path: "tests/epistemic_kernel/test_rational_certificates.py"
+    - path: "benchmarks/epistemic_control_plane/iteration_006/run_exact_certificates.py"
+    - path: "artifacts/epistemic_control_plane/iteration_006/exact_certificates.json"
+expected_signal: >-
+  Both certificates verify exactly with rational arithmetic and strong duality.
+measurement_command: >-
+  PYTHONPATH=. python benchmarks/epistemic_control_plane/iteration_006/run_exact_certificates.py
+signal_artifact: "artifacts/epistemic_control_plane/iteration_006/exact_certificates.json"
+falsifier:
+  command: >-
+    python -c "import json; d=json.load(open('artifacts/epistemic_control_plane/iteration_006/exact_certificates.json')); raise SystemExit(0 if any(not x['verification']['valid'] for x in d['certificates']) else 1)"
+  description: Exits zero if any exact certificate fails verification.
+rollback_command: >-
+  rm -rf benchmarks/epistemic_control_plane/iteration_006 artifacts/epistemic_control_plane/iteration_006 && rm -f geosync/epistemic/rational_certificates.py tests/epistemic_kernel/test_rational_certificates.py
+rollback_verification_command: >-
+  test ! -e geosync/epistemic/rational_certificates.py
+memory_update_type: none
+ledger_path: ".claude/commit_acceptors/ecp-as-exact-certificates-iteration-006.yaml"
+report_path: "artifacts/epistemic_control_plane/iteration_006/ITERATION_006_REPORT.md"
+evidence: []
