@@ -1,0 +1,31 @@
+id: ecp-as-exact-viability-iteration-007
+status: ACTIVE
+claim_type: correctness
+promise: >-
+  Iteration 007 computes solver-independent exact Fréchet intervals for three-evaluator
+  quorum risk and classifies all distinct-model triplet policies as CERTIFIED, UNRESOLVED,
+  or IMPOSSIBLE under the configured risk budgets.
+diff_scope:
+  changed_files:
+    - path: "geosync/epistemic/quorum_viability.py"
+    - path: "tests/epistemic_kernel/test_quorum_viability.py"
+    - path: "benchmarks/epistemic_control_plane/iteration_007/run_exact_viability.py"
+    - path: "artifacts/epistemic_control_plane/iteration_007/exact_viability_results.json"
+expected_signal: >-
+  Frozen quorum is IMPOSSIBLE with exact intervals [129/500,139/500] unsafe and
+  [167/500,171/500] false-block; global counts are 3398 IMPOSSIBLE, 122 UNRESOLVED, 0 CERTIFIED.
+measurement_command: >-
+  PYTHONPATH=. python benchmarks/epistemic_control_plane/iteration_007/run_exact_viability.py
+signal_artifact: "artifacts/epistemic_control_plane/iteration_007/exact_viability_results.json"
+falsifier:
+  command: >-
+    python -c "import json; d=json.load(open('artifacts/epistemic_control_plane/iteration_007/exact_viability_results.json')); c=d['global_scan']['counts']; f=d['frozen_triplet']; raise SystemExit(0 if (c.get('CERTIFIED',0)!=0 or c.get('IMPOSSIBLE')!=3398 or f['status']!='IMPOSSIBLE') else 1)"
+  description: Triggers if exact viability classification changes from the declared result.
+rollback_command: >-
+  rm -rf benchmarks/epistemic_control_plane/iteration_007 artifacts/epistemic_control_plane/iteration_007 && rm -f geosync/epistemic/quorum_viability.py tests/epistemic_kernel/test_quorum_viability.py
+rollback_verification_command: >-
+  test ! -e geosync/epistemic/quorum_viability.py
+memory_update_type: none
+ledger_path: ".claude/commit_acceptors/ecp-as-exact-viability-iteration-007.yaml"
+report_path: "artifacts/epistemic_control_plane/iteration_007/ITERATION_007_REPORT.md"
+evidence: []

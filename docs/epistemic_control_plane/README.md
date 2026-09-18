@@ -60,3 +60,8 @@ See `DISTRIBUTIONALLY_ROBUST_QUORUM_PROTOCOL.md` and `artifacts/epistemic_contro
 ## Iteration 006 — exact proof-carrying quorum bounds
 
 See `EXACT_QUORUM_CERTIFICATE_PROTOCOL.md` and `artifacts/epistemic_control_plane/iteration_006/`. Constructive primal distributions plus exact rational dual inequalities independently certify the decisive Iteration 005 worst-case bounds without trusting an LP solver.
+
+
+## Iteration 007 — exact quorum viability classification
+
+See `EXACT_QUORUM_VIABILITY_PROTOCOL.md` and `artifacts/epistemic_control_plane/iteration_007/`. Closed-form Fréchet bounds classify each distinct-model triplet/quorum as `CERTIFIED`, `UNRESOLVED`, or `IMPOSSIBLE` without a numeric solver. For the frozen Iteration 006 triplet, both risk minima already exceed the configured budgets, so no dependence structure can rescue that quorum.

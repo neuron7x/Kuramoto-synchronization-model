@@ -1,0 +1,31 @@
+{
+  "files": [
+    {
+      "bytes": 1779,
+      "path": "artifacts/epistemic_control_plane/iteration_007/ITERATION_007_REPORT.md",
+      "sha256": "0b9cd100e6b1f24f24f199ad5c1b8a92589e8fcd4698ce3724721d6643d29f2a"
+    },
+    {
+      "bytes": 1829,
+      "path": "artifacts/epistemic_control_plane/iteration_007/exact_viability_results.json",
+      "sha256": "cc8dc42f0069b6cb9a47d6fc4ee44dd9c775d020c933f6a9655f4054f04ed38c"
+    },
+    {
+      "bytes": 961,
+      "path": "artifacts/epistemic_control_plane/iteration_007/primary_summary.json",
+      "sha256": "e520cf4ee8d12b97c31d03cdb3e4c437d143b1919ca0102028f112dae24e752b"
+    },
+    {
+      "bytes": 782,
+      "path": "artifacts/epistemic_control_plane/iteration_007/source_verification.json",
+      "sha256": "cd7c88fb84988901ed28f30f595cde345aee3eebe404757e1f754a534cbc05fd"
+    },
+    {
+      "bytes": 509,
+      "path": "artifacts/epistemic_control_plane/iteration_007/verification_report.json",
+      "sha256": "d0ba41050e33c143cbca84b4e1747439ac4c0bbd36e1a6856f4aac2e266697de"
+    }
+  ],
+  "iteration": "007",
+  "schema": "ecp-as-artifact-index/v1"
+}

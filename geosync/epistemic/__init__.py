@@ -73,3 +73,15 @@ __all__ += [
     "RationalQuorumCertificate", "CertificateVerification", "event_indicator",
     "verify_rational_certificate", "iteration_006_certificates",
 ]
+
+from .quorum_viability import (
+    ExactEvaluatorMarginal, ExactQuorumInterval, ViabilityStatus, ViabilityVerdict,
+    classify_viability, exact_kof3_event_bounds, exact_quorum_interval,
+    load_exact_marginals, scan_distinct_model_triplets,
+)
+
+__all__ += [
+    "ExactEvaluatorMarginal", "ExactQuorumInterval", "ViabilityStatus", "ViabilityVerdict",
+    "classify_viability", "exact_kof3_event_bounds", "exact_quorum_interval",
+    "load_exact_marginals", "scan_distinct_model_triplets",
+]

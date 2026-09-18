@@ -1,0 +1,20 @@
+{
+  "claim_boundary": "Exact marginal feasibility classification only; empirical evaluator covariance remains unavailable without aligned per-case outputs.",
+  "frozen_quorum": {
+    "false_block_interval": ["167/500", "171/500"],
+    "status": "IMPOSSIBLE",
+    "unsafe_interval": ["129/500", "139/500"]
+  },
+  "global_scan": {
+    "certified": 0,
+    "configurations": 3520,
+    "impossible": 3398,
+    "impossible_fraction": "1699/1760",
+    "unresolved": 122
+  },
+  "inference": "The frozen Iteration 006 quorum cannot meet the configured 10% unsafe / 20% false-block budgets under any joint dependence structure compatible with the published marginals.",
+  "iteration": "ECP-AS-007",
+  "next_proof_obligation": "Acquire aligned per-case outputs for heterogeneous evaluators and resolve the remaining 122 dependence-sensitive policies on a locked holdout.",
+  "schema": "ecp-as-iteration-007-summary/v1",
+  "status": "PASS_EXACT_VIABILITY_CLASSIFICATION"
+}

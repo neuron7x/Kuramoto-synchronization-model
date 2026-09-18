@@ -1,0 +1,27 @@
+id: ecp-as-joint-evidence-boundary-iteration-007
+status: ACTIVE
+claim_type: governance
+promise: >-
+  Iteration 007 does not misreport marginal feasibility bounds as empirical evaluator
+  covariance or deployment dependence evidence.
+diff_scope:
+  changed_files:
+    - path: "docs/epistemic_control_plane/EXACT_QUORUM_VIABILITY_PROTOCOL.md"
+    - path: "governance/ECP_AS_ITERATION_007.json"
+expected_signal: >-
+  Documentation states that unresolved policies require aligned per-case joint outputs.
+measurement_command: >-
+  grep -q "aligned per-case joint observations are required" docs/epistemic_control_plane/EXACT_QUORUM_VIABILITY_PROTOCOL.md && grep -q "UNRESOLVED policies still require aligned per-case evaluator outputs" governance/ECP_AS_ITERATION_007.json
+signal_artifact: "governance/ECP_AS_ITERATION_007.json"
+falsifier:
+  command: >-
+    python -c "import pathlib; s=pathlib.Path('docs/epistemic_control_plane/EXACT_QUORUM_VIABILITY_PROTOCOL.md').read_text().lower(); raise SystemExit(0 if 'does not estimate real deployment dependence' not in s else 1)"
+  description: Triggers if the dependence-evidence boundary disappears.
+rollback_command: >-
+  rm -f docs/epistemic_control_plane/EXACT_QUORUM_VIABILITY_PROTOCOL.md governance/ECP_AS_ITERATION_007.json
+rollback_verification_command: >-
+  test ! -e governance/ECP_AS_ITERATION_007.json
+memory_update_type: none
+ledger_path: ".claude/commit_acceptors/ecp-as-joint-evidence-boundary-iteration-007.yaml"
+report_path: "artifacts/epistemic_control_plane/iteration_007/ITERATION_007_REPORT.md"
+evidence: []

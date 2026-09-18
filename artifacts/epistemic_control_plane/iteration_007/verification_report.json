@@ -1,0 +1,15 @@
+{
+  "acceptor_falsifiers": "2/2 UNTRIGGERED",
+  "acceptor_measurements": "2/2 PASS",
+  "compileall": "PASS",
+  "diff_whitespace_check": "PASS",
+  "exact_viability_runner": "PASS",
+  "exact_vs_lp": "3520/3520 MATCH",
+  "exact_vs_lp_max_abs_error": 2.220446049250313e-16,
+  "iteration": "007",
+  "schema": "ecp-as-iteration-007-verification/v1",
+  "solver_independent_exact_module": true,
+  "status": "PASS_EXACT_VIABILITY_CLASSIFICATION",
+  "targeted_tests_status": "PASS",
+  "targeted_unittest_methods": 80
+}

@@ -1,0 +1,22 @@
+{
+  "iteration": "ECP-AS-007",
+  "objective": "Upgrade marginal-only quorum analysis from worst-case non-certifiability to exact solver-independent viability classification.",
+  "status": "PASS_EXACT_VIABILITY_CLASSIFICATION",
+  "risk_budget": {
+    "unsafe_promotion": "1/10",
+    "false_block": "1/5"
+  },
+  "frozen_quorum": {
+    "unsafe_interval": ["129/500", "139/500"],
+    "false_block_interval": ["167/500", "171/500"],
+    "verdict": "IMPOSSIBLE"
+  },
+  "global_scan": {
+    "configurations": 3520,
+    "certified": 0,
+    "unresolved": 122,
+    "impossible": 3398
+  },
+  "claim_boundary": "IMPOSSIBLE is an exact marginal-feasibility statement, not an estimate of deployment dependence. UNRESOLVED policies still require aligned per-case evaluator outputs.",
+  "next_proof_obligation": "Acquire aligned per-case heterogeneous evaluator outputs for the 122 unresolved policies and evaluate a frozen controller on a locked holdout."
+}

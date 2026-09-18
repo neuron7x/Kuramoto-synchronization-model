@@ -1,0 +1,16 @@
+{
+  "boundary": "SoundnessBench public artifacts provide labels, evaluation code/prompts, and aggregate leaderboard rates; aligned per-case leaderboard model outputs are not committed in the public code repository.",
+  "dataset": {
+    "hf_dataset": "hosytuyen/SoundnessBench",
+    "file": "soundnessbench.jsonl",
+    "file_commit": "aab542f4db705a120e9130d0a0e3c720822a304d",
+    "rows": 1099
+  },
+  "official_code": {
+    "repository": "hosytuyen/SoundnessBench",
+    "main_commit": "d4d4a80a304aa452c6b4c97753b2757f8e36adbd"
+  },
+  "source_manifest": "benchmarks/epistemic_control_plane/iteration_005/soundnessbench_leaderboard_marginals.json",
+  "source_manifest_sha256": "bc24ee5db9b3b953a82e3161d162c16d31207e53ec5194a1a226194127703c07",
+  "verification_date": "2026-09-18"
+}
