@@ -1,0 +1,29 @@
+{
+  "canonical_run_authorized": false,
+  "d002j_status_preserved": "TERMINAL_REFUSED",
+  "d002k_status_preserved": "TERMINAL_REFUSED",
+  "inherited_failure_axis": "effect_too_small_event_conditioned",
+  "is_rescue": false,
+  "parent_capsule_git_blob_sha": "18e52aaa5e1f83895cae0b6a3c845ed63c019902",
+  "parent_decision": "POWER_GATE_REFUSED_UNDERPOWERED",
+  "parent_lineage": "D-002K",
+  "parent_node": "D002K-P4",
+  "parent_power": {
+    "alpha_per": 0.016667,
+    "effect_prior_cohen_d": 0.8,
+    "feasible_n_crisis": 1,
+    "n_min_crisis_replicates": 20,
+    "n_placebo_ref": 5,
+    "power": 0.0481
+  },
+  "parent_status": "TERMINAL_REFUSED",
+  "schema_version": "D002L-FAILURE-AXIS-INHERITANCE-v1",
+  "structural_repair": {
+    "new_unit": "unique_coupon_settlement_date",
+    "old_unit": "unique_historical_crisis_window",
+    "pseudoreplication": false,
+    "statistics_relaxed": false,
+    "synthetic_reseeding": false
+  },
+  "study_id": "D-002L"
+}
