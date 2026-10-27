@@ -60,6 +60,6 @@ jobs:
         run: |
           set -euo pipefail
           python -m pip install --disable-pip-version-check 'pytest==9.0.3'
-          python -m pytest -q \
+          python -m pytest --noconftest -c /dev/null -q \
             tests/unit/test_execution_forensics.py \
             tests/tools/test_execution_forensics_gate.py
