@@ -4,6 +4,7 @@ External actions are not treated as omniscient truth oracles.  The policy
 separates (a) authority to invalidate an evidence artifact from (b) technical
 independence sufficient to falsify a scientific proposition.
 """
+
 from __future__ import annotations
 
 from dataclasses import dataclass
@@ -80,8 +81,67 @@ class AdjudicationDecision:
         return self.action is AdjudicationAction.DEGRADE
 
 
+_PRESERVING_DEFECTS = frozenset(
+    {DefectClass.ADMINISTRATIVE_METADATA, DefectClass.METHODOLOGICAL_EXTENSION}
+)
+_PROVENANCE_DEFECTS = frozenset(
+    {
+        DefectClass.DATA_PROVENANCE_INVALID,
+        DefectClass.DATA_UNAVAILABLE,
+        DefectClass.AUTHORSHIP_PROVENANCE,
+    }
+)
+_REPORTING_DEFECTS = frozenset(
+    {
+        DefectClass.REPORTING_INCONSISTENCY,
+        DefectClass.METHOD_VALIDITY,
+        DefectClass.REFERENCE_INTEGRITY,
+    }
+)
+
+
+def _validation_invalid_decision(event: ExternalAdjudicationEvent) -> AdjudicationDecision:
+    # Falsification is stronger than evidence retirement. Require both an
+    # explicit unsupported-conclusion finding and verified technical independence.
+    if (
+        event.explicit_conclusions_unsupported
+        and event.independence_level is IndependenceLevel.VERIFIED
+    ):
+        return AdjudicationDecision(
+            AdjudicationAction.DEGRADE,
+            ClaimState.FALSIFIED,
+            NegativeEvidenceKind.VALIDATION_INVALID,
+            "independent validation found the reported conclusion unsupported",
+        )
+    return AdjudicationDecision(
+        AdjudicationAction.DEGRADE,
+        ClaimState.INCONCLUSIVE,
+        NegativeEvidenceKind.VALIDATION_INVALID,
+        "validation methodology is materially invalid but falsification threshold is unmet",
+    )
+
+
+def _provenance_decision(defects: FrozenSet[DefectClass]) -> AdjudicationDecision:
+    kind = (
+        NegativeEvidenceKind.AUTHORSHIP_PROVENANCE_FAILURE
+        if DefectClass.AUTHORSHIP_PROVENANCE in defects
+        else NegativeEvidenceKind.DATA_PROVENANCE_FAILURE
+    )
+    return AdjudicationDecision(
+        AdjudicationAction.DEGRADE,
+        ClaimState.STALE,
+        kind,
+        "supporting evidence is no longer admissible or independently auditable",
+    )
+
+
 class ExternalAdjudicationPolicy:
-    """Map externally grounded events to conservative claim-state changes."""
+    """Map externally grounded events to conservative claim-state changes.
+
+    The transition table is evaluated strictly in this order: unverified source,
+    non-scientific defects, validation invalidity, replication failure, provenance,
+    reporting; anything else is routed to human review.
+    """
 
     def evaluate(self, event: ExternalAdjudicationEvent) -> AdjudicationDecision:
         if not event.source_authenticity_verified:
@@ -91,39 +151,16 @@ class ExternalAdjudicationPolicy:
                 None,
                 "source authenticity is not verified",
             )
-
         defects = event.defects
-        if not defects or defects <= {
-            DefectClass.ADMINISTRATIVE_METADATA,
-            DefectClass.METHODOLOGICAL_EXTENSION,
-        }:
+        if not defects or defects <= _PRESERVING_DEFECTS:
             return AdjudicationDecision(
                 AdjudicationAction.PRESERVE,
                 None,
                 None,
                 "external action does not invalidate scientific evidence",
             )
-
         if DefectClass.VALIDATION_METHODOLOGY_INVALID in defects:
-            # Falsification is stronger than evidence retirement. Require both an
-            # explicit unsupported-conclusion finding and verified technical independence.
-            if (
-                event.explicit_conclusions_unsupported
-                and event.independence_level is IndependenceLevel.VERIFIED
-            ):
-                return AdjudicationDecision(
-                    AdjudicationAction.DEGRADE,
-                    ClaimState.FALSIFIED,
-                    NegativeEvidenceKind.VALIDATION_INVALID,
-                    "independent validation found the reported conclusion unsupported",
-                )
-            return AdjudicationDecision(
-                AdjudicationAction.DEGRADE,
-                ClaimState.INCONCLUSIVE,
-                NegativeEvidenceKind.VALIDATION_INVALID,
-                "validation methodology is materially invalid but falsification threshold is unmet",
-            )
-
+            return _validation_invalid_decision(event)
         if DefectClass.INDEPENDENT_REPLICATION_FAILURE in defects:
             return AdjudicationDecision(
                 AdjudicationAction.DEGRADE,
@@ -131,36 +168,15 @@ class ExternalAdjudicationPolicy:
                 NegativeEvidenceKind.INDEPENDENT_REPLICATION_FAILURE,
                 "independent evidence conflicts with the promoted claim",
             )
-
-        if defects & {
-            DefectClass.DATA_PROVENANCE_INVALID,
-            DefectClass.DATA_UNAVAILABLE,
-            DefectClass.AUTHORSHIP_PROVENANCE,
-        }:
-            kind = (
-                NegativeEvidenceKind.AUTHORSHIP_PROVENANCE_FAILURE
-                if DefectClass.AUTHORSHIP_PROVENANCE in defects
-                else NegativeEvidenceKind.DATA_PROVENANCE_FAILURE
-            )
-            return AdjudicationDecision(
-                AdjudicationAction.DEGRADE,
-                ClaimState.STALE,
-                kind,
-                "supporting evidence is no longer admissible or independently auditable",
-            )
-
-        if defects & {
-            DefectClass.REPORTING_INCONSISTENCY,
-            DefectClass.METHOD_VALIDITY,
-            DefectClass.REFERENCE_INTEGRITY,
-        }:
+        if defects & _PROVENANCE_DEFECTS:
+            return _provenance_decision(defects)
+        if defects & _REPORTING_DEFECTS:
             return AdjudicationDecision(
                 AdjudicationAction.DEGRADE,
                 ClaimState.INCONCLUSIVE,
                 NegativeEvidenceKind.REPORTING_INCONSISTENCY,
                 "external adjudication undermines reproducible interpretation of the evidence",
             )
-
         return AdjudicationDecision(
             AdjudicationAction.REVIEW_REQUIRED,
             None,
