@@ -38,15 +38,15 @@ jobs:
       - name: Reproduce offline execution-forensics contract (standard library)
         run: |
           set -euo pipefail
-          python -m analytics.execution_forensics \
+          python -m tools.execution_forensics \
             --fills examples/execution_forensics/fills_sample.csv \
             --out "$RUNNER_TEMP/geosync-forensics-smoke.json"
-          python -m analytics.execution_forensics \
+          python -m tools.execution_forensics \
             --fills examples/execution_forensics/fills_sample.csv \
             --verify "$RUNNER_TEMP/geosync-forensics-smoke.json"
           python - <<'PY'
           from pathlib import Path
-          from analytics.execution_forensics import analyze
+          from tools.execution_forensics import analyze
           report = analyze(Path("examples/execution_forensics/fills_sample.csv"))
           row = report["groups"][0]
           assert row["fee_quote_total"] == "0.9"
