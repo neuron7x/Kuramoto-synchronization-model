@@ -73,17 +73,35 @@ ALLOWLIST_PREFIXES: tuple[str, ...] = (
 
 # --- placeholder tokens: a value containing any of these is NOT a real secret ---
 _PLACEHOLDER_TOKENS = (
-    "change", "replace", "your_", "your-", "_here", "example", "placeholder", "not-real",
-    "dummy", "todo", "provide_", "optional_", "xxx", "redact", "changeme",
-    "<", ">", "${", "sample", "fixme", "insert_", "notreal", "fake",
+    "change",
+    "replace",
+    "your_",
+    "your-",
+    "_here",
+    "example",
+    "placeholder",
+    "not-real",
+    "dummy",
+    "todo",
+    "provide_",
+    "optional_",
+    "xxx",
+    "redact",
+    "changeme",
+    "<",
+    ">",
+    "${",
+    "sample",
+    "fixme",
+    "insert_",
+    "notreal",
+    "fake",
 )
 
 # --- high-signal regex fallback (used only when gitleaks is unavailable) --------
 # AWS access key id, excluding the documented AKIAIOSFODNN7EXAMPLE-style examples.
 _RE_AWS = re.compile(r"\b((?:AKIA|ASIA|AGPA|AIDA|AROA|AIPA|ANPA|ANVA)[0-9A-Z]{16})\b")
-_RE_PEM = re.compile(
-    r"-----BEGIN (?:RSA |EC |DSA |OPENSSH |PGP |ENCRYPTED )?PRIVATE KEY-----"
-)
+_RE_PEM = re.compile(r"-----BEGIN (?:RSA |EC |DSA |OPENSSH |PGP |ENCRYPTED )?PRIVATE KEY-----")
 _RE_BEARER = re.compile(r"(?i)bearer\s+[A-Za-z0-9\-._~+/]{20,}={0,2}")
 _RE_STRIPE_LIVE = re.compile(r"\b(?:sk|rk)_live_[0-9A-Za-z]{16,}\b")
 _RE_ASSIGN = re.compile(
@@ -92,8 +110,23 @@ _RE_ASSIGN = re.compile(
 )
 
 _BINARY_EXT = {
-    ".png", ".jpg", ".jpeg", ".gif", ".pdf", ".zip", ".gz", ".whl", ".so",
-    ".pyc", ".npy", ".npz", ".parquet", ".bin", ".ico", ".woff", ".woff2",
+    ".png",
+    ".jpg",
+    ".jpeg",
+    ".gif",
+    ".pdf",
+    ".zip",
+    ".gz",
+    ".whl",
+    ".so",
+    ".pyc",
+    ".npy",
+    ".npz",
+    ".parquet",
+    ".bin",
+    ".ico",
+    ".woff",
+    ".woff2",
 }
 
 
@@ -120,16 +153,19 @@ def _is_allowlisted(rel_path: str) -> bool:
 
 # --- scanner backends -----------------------------------------------------------
 
+
 def gitleaks_available() -> bool:
     return shutil.which("gitleaks") is not None
 
 
 def _gitleaks_version() -> str:
     try:
-        out = subprocess.run(
-            ["gitleaks", "version"], capture_output=True, text=True, timeout=30
+        out = subprocess.run(["gitleaks", "version"], capture_output=True, text=True, timeout=30)
+        return (
+            (out.stdout or out.stderr).strip().splitlines()[0]
+            if out.stdout or out.stderr
+            else "unknown"
         )
-        return (out.stdout or out.stderr).strip().splitlines()[0] if out.stdout or out.stderr else "unknown"
     except Exception:  # pragma: no cover - defensive
         return "unknown"
 
@@ -143,10 +179,16 @@ def scan_with_gitleaks(source: Path, config: Path | None) -> list[dict[str, Any]
     with tempfile.TemporaryDirectory() as td:
         report = Path(td) / "report.json"
         cmd = [
-            "gitleaks", "detect", "--no-git", "--redact",
-            "--source", str(source),
-            "--report-format", "json",
-            "--report-path", str(report),
+            "gitleaks",
+            "detect",
+            "--no-git",
+            "--redact",
+            "--source",
+            str(source),
+            "--report-format",
+            "json",
+            "--report-path",
+            str(report),
         ]
         if config is not None and config.exists():
             cmd += ["--config", str(config)]
@@ -180,9 +222,19 @@ def _iter_files(source: Path) -> list[Path]:
     files: list[Path] = []
     for root, dirs, names in os.walk(source):
         dirs[:] = [
-            d for d in dirs
-            if d not in {".git", "__pycache__", ".venv", "venv", "node_modules",
-                         ".mypy_cache", ".ruff_cache", ".pytest_cache"}
+            d
+            for d in dirs
+            if d
+            not in {
+                ".git",
+                "__pycache__",
+                ".venv",
+                "venv",
+                "node_modules",
+                ".mypy_cache",
+                ".ruff_cache",
+                ".pytest_cache",
+            }
         ]
         for name in names:
             p = Path(root) / name
@@ -201,19 +253,25 @@ def scan_with_regex(source: Path) -> list[dict[str, Any]]:
         except (OSError, ValueError):
             continue
         for lineno, line in enumerate(text.splitlines(), start=1):
-            for rule, rx in (("aws-access-token", _RE_AWS),
-                             ("private-key", _RE_PEM),
-                             ("bearer-token", _RE_BEARER),
-                             ("stripe-live", _RE_STRIPE_LIVE)):
+            for rule, rx in (
+                ("aws-access-token", _RE_AWS),
+                ("private-key", _RE_PEM),
+                ("bearer-token", _RE_BEARER),
+                ("stripe-live", _RE_STRIPE_LIVE),
+            ):
                 m = rx.search(line)
                 if m:
                     secret = m.group(0)
                     if rule == "aws-access-token" and "EXAMPLE" in secret:
                         continue
-                    findings.append({
-                        "file": str(path), "line": lineno, "rule": rule,
-                        "match": _fingerprint(secret),
-                    })
+                    findings.append(
+                        {
+                            "file": str(path),
+                            "line": lineno,
+                            "rule": rule,
+                            "match": _fingerprint(secret),
+                        }
+                    )
             m = _RE_ASSIGN.search(line)
             if m and not _is_placeholder(m.group(1)):
                 # A function call is not a hardcoded credential. E.g.
@@ -221,10 +279,14 @@ def scan_with_regex(source: Path) -> list[dict[str, Any]]:
                 # not a secret literal. Keep scanning actual assignments.
                 if line[m.end(1) :].lstrip().startswith("("):
                     continue
-                findings.append({
-                    "file": str(path), "line": lineno, "rule": "generic-api-key",
-                    "match": _fingerprint(m.group(1)),
-                })
+                findings.append(
+                    {
+                        "file": str(path),
+                        "line": lineno,
+                        "rule": "generic-api-key",
+                        "match": _fingerprint(m.group(1)),
+                    }
+                )
     return findings
 
 
@@ -266,18 +328,25 @@ def audit_env_example(path: Path) -> dict[str, Any]:
         # one-way hash shipped as a demo default: not a live credential, but ideally
         # a placeholder — surface as advisory, not a hard failure.
         if any(h in value for h in _ENV_ADVISORY_HINTS):
-            result["advisories"].append({
-                "key": key,
-                "note": "concrete one-way hash shipped as demo default; prefer a placeholder",
-                "fingerprint": _fingerprint(value),
-            })
+            result["advisories"].append(
+                {
+                    "key": key,
+                    "note": "concrete one-way hash shipped as demo default; prefer a placeholder",
+                    "fingerprint": _fingerprint(value),
+                }
+            )
             continue
         # High-signal only: a value that trips the secret scanner is a real leak.
-        for rule, rx in (("aws-access-token", _RE_AWS), ("private-key", _RE_PEM),
-                         ("bearer-token", _RE_BEARER), ("stripe-live", _RE_STRIPE_LIVE)):
+        for rule, rx in (
+            ("aws-access-token", _RE_AWS),
+            ("private-key", _RE_PEM),
+            ("bearer-token", _RE_BEARER),
+            ("stripe-live", _RE_STRIPE_LIVE),
+        ):
             if rx.search(value) and not (rule == "aws-access-token" and "EXAMPLE" in value):
-                result["real_values"].append({"key": key, "rule": rule,
-                                              "fingerprint": _fingerprint(value)})
+                result["real_values"].append(
+                    {"key": key, "rule": rule, "fingerprint": _fingerprint(value)}
+                )
     result["status"] = "OK" if not result["real_values"] else "LEAK"
     return result
 
@@ -289,7 +358,7 @@ def audit_env_example(path: Path) -> dict[str, Any]:
 # `secret = "..."` keyword pairing, no intact PEM header) rests in this source file
 # — otherwise the gate would flag its own negative fixture. The fragments only ever
 # form a complete token at runtime, inside negative_fixture_text().
-_NEG_AWS_ID = "AKIA" + "4ZKJQX7NRTVWLMPD"        # non-example AWS access key id
+_NEG_AWS_ID = "AKIA" + "4ZKJQX7NRTVWLMPD"  # non-example AWS access key id
 _NEG_AWS_SK = "7Hk9Lp2QwErTy8UiOp3a" + "SdFgHjKlZxCvBnM4qWeR"  # 40 chars, synthetic
 _PEM_BEGIN = "-----" + "BEGIN RSA PRIVATE KEY" + "-----"
 _PEM_END = "-----" + "END RSA PRIVATE KEY" + "-----"
@@ -300,9 +369,7 @@ def negative_fixture_text() -> str:
     """Materialize the planted fake credential (AWS key + PEM) — runtime only."""
     pem = f"{_PEM_BEGIN}\n{_PEM_BODY}\n{_PEM_END}\n"
     return (
-        f"AWS_ACCESS_KEY_ID = {_NEG_AWS_ID}\n"
-        f"AWS_SECRET_ACCESS_KEY = {_NEG_AWS_SK}\n"
-        f"{pem}"
+        f"AWS_ACCESS_KEY_ID = {_NEG_AWS_ID}\n" f"AWS_SECRET_ACCESS_KEY = {_NEG_AWS_SK}\n" f"{pem}"
     )
 
 
@@ -316,6 +383,7 @@ def run_negative_selftest(config: Path | None) -> bool:
 
 
 # --- report + gate --------------------------------------------------------------
+
 
 def _rel_to_repo(file_path: str) -> str:
     """Return ``file_path`` relative to the repo root (gitleaks emits absolute)."""
@@ -339,16 +407,23 @@ def _git_ignored(rel_paths: list[str]) -> set[str]:
     try:
         proc = subprocess.run(
             ["git", "-C", str(REPO_ROOT), "check-ignore", "--stdin"],
-            input="\n".join(rel_paths), capture_output=True, text=True, timeout=60,
+            input="\n".join(rel_paths),
+            capture_output=True,
+            text=True,
+            timeout=60,
         )
         return {_norm_rel(p) for p in proc.stdout.splitlines() if p.strip()}
     except Exception:  # pragma: no cover - defensive: fall back to heuristic
         return {p for p in rel_paths if "__pycache__/" in p or p.endswith(".pyc")}
 
 
-def build_audit(findings: list[dict[str, Any]], scanner: str,
-                env_audit: dict[str, Any], neg_detected: bool,
-                head_rev: str | None) -> dict[str, Any]:
+def build_audit(
+    findings: list[dict[str, Any]],
+    scanner: str,
+    env_audit: dict[str, Any],
+    neg_detected: bool,
+    head_rev: str | None,
+) -> dict[str, Any]:
     # Normalize to repo-relative paths so the allowlist matches regardless of how
     # the scanner reported them (gitleaks --source <abs> yields absolute paths).
     findings = [{**f, "file": _rel_to_repo(f["file"])} for f in findings]
@@ -408,7 +483,9 @@ def _head_rev() -> str | None:
     try:
         out = subprocess.run(
             ["git", "-C", str(REPO_ROOT), "rev-parse", "HEAD"],
-            capture_output=True, text=True, timeout=30,
+            capture_output=True,
+            text=True,
+            timeout=30,
         )
         return out.stdout.strip() or None
     except Exception:  # pragma: no cover - defensive
@@ -433,10 +510,14 @@ def run_gate(write: bool = True, out_path: Path | None = None) -> tuple[int, dic
 def _print_summary(audit: dict[str, Any]) -> None:
     t = audit["totals"]
     print(f"[SEC-006] scanner={audit['scanner']} verdict={audit['verdict']}")
-    print(f"  raw={t['raw_findings']} allowlisted={t['allowlisted']} "
-          f"high_confidence={t['high_confidence']}")
-    print(f"  .env.example: {audit['env_example'].get('status')}, "
-          f"advisories={len(audit['env_example'].get('advisories', []))}")
+    print(
+        f"  raw={t['raw_findings']} allowlisted={t['allowlisted']} "
+        f"high_confidence={t['high_confidence']}"
+    )
+    print(
+        f"  .env.example: {audit['env_example'].get('status')}, "
+        f"advisories={len(audit['env_example'].get('advisories', []))}"
+    )
     print(f"  negative_fixture_detected: {audit['negative_fixture_detected']}")
     for f in audit["findings"]:
         print(f"  HIGH-CONFIDENCE SECRET: {f['file']}:{f['line']} [{f['rule']}] {f['match']}")
@@ -447,13 +528,21 @@ def _print_summary(audit: dict[str, Any]) -> None:
 
 def main(argv: list[str] | None = None) -> int:
     ap = argparse.ArgumentParser(description="SEC-006 secret & sensitive-data boundary gate")
-    ap.add_argument("--target", type=Path, default=None,
-                    help="Scan an arbitrary file/dir with NO allowlist; exit non-zero on "
-                         "any finding. Used by the negative-fixture test to prove teeth.")
-    ap.add_argument("--self-test", action="store_true",
-                    help="Only run the negative-fixture self-check; exit 0 iff detected.")
-    ap.add_argument("--no-write", action="store_true",
-                    help="Do not write the audit artifact (used by tests).")
+    ap.add_argument(
+        "--target",
+        type=Path,
+        default=None,
+        help="Scan an arbitrary file/dir with NO allowlist; exit non-zero on "
+        "any finding. Used by the negative-fixture test to prove teeth.",
+    )
+    ap.add_argument(
+        "--self-test",
+        action="store_true",
+        help="Only run the negative-fixture self-check; exit 0 iff detected.",
+    )
+    ap.add_argument(
+        "--no-write", action="store_true", help="Do not write the audit artifact (used by tests)."
+    )
     ap.add_argument("--out", type=Path, default=None, help="Override audit artifact path.")
     args = ap.parse_args(argv)
 
