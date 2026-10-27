@@ -52,7 +52,7 @@ rollback_command: >-
   docs/MUTATION_KILL_BASELINE.json data/testing/component_test_matrix.json
   docs/ci/pr2833_exact_source_recovery.md &&
   rm -f -- data/governance/neuron7x_verification_protocol_v2026_8.json .claude/commit_acceptors/pr2833-governance-routing-mutation-receipt-20261028.yaml &&
-  python scripts/ci/generate_manifest.py'
+  python scripts/ci/generate_manifest.py --allow-dirty'
 rollback_verification_command: >-
   bash -c 'git diff --exit-code 14f7c577a7bd880c394016dbb315085eeee4622d --
   docs/MUTATION_KILL_BASELINE.json data/testing/component_test_matrix.json

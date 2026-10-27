@@ -1879,6 +1879,7 @@
 3e1d073102748ce746c883c60b685c8f0c8d8c04ae613fa532d74457401ef431  ./docs/architecture/map.md
 3e2ed4fcad6c3e39bf40f4fcfffa3afccf8f8eed1a87d860ca5bcf4d212ad511  ./.claude/commit_acceptors/ricci-async-loop-agnostic.yaml
 3e2f5bac15c4e42da883779b34819004139d35be0f8741c6a8279afb683f3a62  ./tests/unit/dynamics/test_motional_correlation_witness.py
+3e3e42735cf634ccb59af7848952533fb1dcfad3d58dc9afb27222fac0a3b0be  ./.claude/commit_acceptors/pr2833-governance-routing-mutation-receipt-20261028.yaml
 3e417c3c007e86780d3b663a74981a55a513d9e116860edae00a90c0f8f9c3ff  ./tests/property/time/test_causal_prefix_invariance.py
 3e488ad8f69d1e7989cf3ce01d98a0abd756aa0682d96eba31c3987f68741b14  ./deploy/helm/geosync/charts/admin/templates/serviceaccount.yaml
 3e4e958d9d918c7bcc1dd9553c935305f2d63da70a832536dea34d12d53b8551  ./scripts/ci/check_rtm_traceability.py
@@ -5322,7 +5323,6 @@ b2125b8d1eba73db187d12a52105b352afd957eb35b6feb3050ee9b369726c69  ./tests/observ
 b21e37819dee10141d6e742118cacfadaec9537b767533667240384b7f8362c5  ./core/utils/secure_errors.py
 b2403016c070ae39e18b1295708eb46f94dfce83f3c0ee5dd2f19a54ac9ce7eb  ./docs/INFERENCE_LEGEND_EXIT_WORK_ACT.md
 b243e69a6476cb1f66e36c7477b44acb22bab0b512424861163cf0c212a664a7  ./markets/orderbook/src/ingest/models.py
-b247dc21aabced0cee6d42af80494ce40b868a1560a04484e62f7dae49adeefc  ./.claude/commit_acceptors/pr2833-governance-routing-mutation-receipt-20261028.yaml
 b251fa8e570b17a2cc495f54c8eeb9a17df8086f164f2e0fc7de565bb1aaabc2  ./docs/research/D002J_FINANCIAL_SUBSTRATE_DESIGN_SPACE.md
 b2604a0827bda994d827d3021f361f74a615512eb0d0fb7b2d0dbd68005da0f5  ./tests/test_l2_visualize.py
 b26be845d960cae37defe8fd387ddc8140fb67358ed1d49437efcd7c4fcbd511  ./scripts/commands/live.py
