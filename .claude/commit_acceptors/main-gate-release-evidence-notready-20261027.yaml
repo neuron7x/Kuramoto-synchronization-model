@@ -1,0 +1,46 @@
+# Bind deterministic release receipt regeneration without claiming release READY.
+id: main-gate-release-evidence-notready-20261027
+status: ACTIVE
+claim_type: governance
+promise: >-
+  The 1.1.0 release evidence and SHA256SUMS are byte-for-byte reproducible
+  from existing artifact bytes. The readiness state remains NOT_READY while
+  mandatory coverage, mutation, SBOM, canonical full-suite, and wheel
+  receipts are absent; this acceptor must never equate a PR merge with
+  production release readiness.
+diff_scope:
+  changed_files:
+    - path: ".claude/commit_acceptors/main-gate-release-evidence-notready-20261027.yaml"
+    - path: "artifacts/releases/1.1.0/release_evidence.json"
+    - path: "artifacts/releases/1.1.0/SHA256SUMS"
+  forbidden_paths:
+    - "core/"
+    - "execution/"
+    - "trading/"
+    - "forecast/"
+required_python_symbols: []
+expected_signal: >-
+  Release evidence schema, digest, deterministic regeneration, and negative
+  controls pass. Release readiness is NOT_READY until all required receipts
+  independently exist, and unavailable receipts retain MISSING/null hashes.
+measurement_command: >-
+  python -m pytest tests/ci/test_release_evidence.py -q
+signal_artifact: "tmp/main_gate_release_evidence_notready_20261027.log"
+falsifier:
+  command: >-
+    python -c "import json; from pathlib import Path;
+    d=json.loads(Path('artifacts/releases/1.1.0/release_evidence.json').read_text());
+    assert d['release_readiness']['verdict']=='NOT_READY';
+    assert all(d['categories'][k]['status']=='MISSING'
+    for k in ('coverage','mutation','sbom','tests','wheel'))"
+  description: >-
+    Any unsupported change of readiness to READY, or unsupported mandatory
+    receipt promotion, makes this release evidence acceptor fail closed.
+rollback_command: >-
+  git revert --no-edit HEAD
+rollback_verification_command: >-
+  git diff --exit-code HEAD~1 HEAD -- artifacts/releases/1.1.0
+memory_update_type: append
+ledger_path: ".claude/commit_acceptors/main-gate-release-evidence-notready-20261027.yaml"
+report_path: "docs/RELEASE_EVIDENCE_BUNDLE.md"
+evidence: []
