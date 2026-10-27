@@ -10,6 +10,7 @@ than fails open.
 from __future__ import annotations
 
 import copy
+import sys
 
 import pytest
 
@@ -22,6 +23,16 @@ from scripts.ci import check_env_preflight as cep
 def test_positive_current_env_passes() -> None:
     descriptor = cep.build_descriptor()
     ok, report = cep.evaluate_env(descriptor, cep.parse_required())
+    if sys.version_info[:2] != cep.REQUIRED_PYTHON:
+        # ENV-001 certifies canonical Python 3.12 only. In the separately
+        # supported 3.11 leg it MUST refuse to issue a false-green certificate.
+        assert not ok
+        assert report["python_ok"] is False
+        assert any(
+            failure.startswith("python: expected ")
+            for failure in report["hard_failures"]
+        )
+        return
     assert ok, f"ENV-001 preflight unexpectedly FAILED on this env: {report['hard_failures']}"
     assert report["python_ok"], "interpreter is not Python 3.12"
     assert report["pandas_ok"], f"pandas {report['pandas_version']} below floor {cep.PANDAS_MIN}"
@@ -29,12 +40,18 @@ def test_positive_current_env_passes() -> None:
 
 
 def test_positive_main_exit_zero() -> None:
-    assert cep.main([]) == 0
+    expected = 0 if sys.version_info[:2] == cep.REQUIRED_PYTHON else 1
+    assert cep.main([]) == expected
 
 
 def test_descriptor_is_python_312() -> None:
     py = cep.build_descriptor()["python"]
-    assert (py["major"], py["minor"]) == cep.REQUIRED_PYTHON
+    assert cep.REQUIRED_PYTHON == (3, 12)
+    assert (py["major"], py["minor"]) == sys.version_info[:2]
+    if sys.version_info[:2] == cep.REQUIRED_PYTHON:
+        assert (py["major"], py["minor"]) == cep.REQUIRED_PYTHON
+    else:
+        assert (py["major"], py["minor"]) != cep.REQUIRED_PYTHON
 
 
 # --------------------------------------------------------------------------- #
