@@ -767,10 +767,68 @@ jobs:
             exit 0
           fi
 
+          cp .github/detect-secrets.baseline /tmp/detect-secrets-before.json
+          set +e
           .venv/bin/detect-secrets-hook \
             --baseline .github/detect-secrets.baseline \
             --exclude-files '^(INVENTORY\.json|MANIFEST\.sha256|\.github/detect-secrets\.baseline|artifacts/wheel_contract\.json|artifacts/\.manifest\.json|artifacts/manifest\.json|artifacts/provenance/inference_provenance\.json|figures/disha_ba_correlation/repro_capsule/.*|artifacts/runs/synthetic_plumbing_v1/.*|artifacts/runs/ricci_microstructure_v1/.*|geosync_research/lines/ricci_microstructure_v1/canonical/.*|artifacts/reproducible_capsules/.*|artifacts/release_gate/.*|artifacts/falsification/.*|artifacts/execution/.*|artifacts/benchmarks/.*|artifacts/evidence/.*|artifacts/replication/.*)$' \
             "${existing_changed_files[@]}"
+          scan_rc=$?
+          set -e
+          if [[ "$scan_rc" == "0" ]]; then
+            echo "SEC-006: detect-secrets clean."
+          elif [[ "$scan_rc" == "3" ]]; then
+            # Hook metadata edits are not authorization to add a new secret
+            # to the baseline, remove one, or weaken its detector policy.
+            .venv/bin/python - <<'PY'
+          import json
+          import re
+          from pathlib import Path
+
+          previous = json.loads(Path("/tmp/detect-secrets-before.json").read_text())
+          current = json.loads(Path(".github/detect-secrets.baseline").read_text())
+          assert previous["version"] == current["version"], "scanner version drift"
+          assert previous["plugins_used"] == current["plugins_used"], "detector policy drift"
+
+          def normalized_hits(obj):
+              return {
+                  path: sorted(
+                      json.dumps({k: v for k, v in hit.items() if k != "line_number"}, sort_keys=True)
+                      for hit in hits
+                  )
+                  for path, hits in obj["results"].items()
+              }
+
+          assert normalized_hits(previous) == normalized_hits(current), (
+              "UNKNOWN / REMOVED secret fingerprint; manual review required"
+          )
+          workflow = Path(".github/workflows/pr-gate.yml").read_text()
+          match = re.search(r"--exclude-files '([^']+)'", workflow)
+          assert match is not None
+          declared_regex = match.group(1)
+          def normalize_filters(doc):
+              unchanged = []
+              regexes = set()
+              for item in doc["filters_used"]:
+                  if item.get("path") == "detect_secrets.filters.regex.should_exclude_file":
+                      assert set(item) == {"path", "pattern"}, "unexpected filter metadata"
+                      regexes.update(item["pattern"])
+                  else:
+                      unchanged.append(json.dumps(item, sort_keys=True))
+              return sorted(unchanged), regexes
+
+          old_other, old_patterns = normalize_filters(previous)
+          new_other, new_patterns = normalize_filters(current)
+          assert old_other == new_other, "non-file filter policy changed"
+          assert old_patterns <= new_patterns <= (old_patterns | {declared_regex}), (
+              "security scanner filter widened or narrowed unexpectedly"
+          )
+          print("SEC-006: only expected metadata changed; no new secrets.")
+          PY
+          else
+            echo "SEC-006: unreviewed secret or scanner error (exit $scan_rc)." >&2
+            exit "$scan_rc"
+          fi
 
   go-workspace-integrity:
     name: go-workspace-integrity
