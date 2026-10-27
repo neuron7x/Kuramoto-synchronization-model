@@ -11,6 +11,7 @@ diff_scope:
     - path: ".claude/commit_acceptors/validation-type-model-alignment-20261027.yaml"
     - path: "application/governance/commit_acceptor.py"
     - path: "tests/governance/test_typed_models.py"
+    - path: "docs/schemas/governance/commit_acceptor.schema.json"
   forbidden_paths:
     - "execution/"
     - "trading/"
@@ -20,7 +21,7 @@ expected_signal: >-
   The full acceptor corpus parses via strict typing and both existing
   ECP-AS validation acceptors remain valid under the 12-file policy cap.
 measurement_command: >-
-  python -m pytest -q tests/governance/test_typed_models.py
+  bash -c 'python -m pytest -q tests/governance/test_typed_models.py && python scripts/export_governance_schemas.py --check'
 signal_artifact: "tmp/validation_type_model_alignment_20261027.log"
 falsifier:
   command: >-
