@@ -32,18 +32,20 @@ UNKNOWN = "UNKNOWN"
 
 
 #: Directory names that are never repository content for debt accounting.
-#: ``.venv`` is the local virtualenv; ``.git`` holds VCS internals; nested
+#: ``.venv`` is the local virtualenv; ``.git`` holds VCS internals; frozen
+#: ``archive_snapshots`` contain superseded upstream trees, never active source;
+#: nested
 #: git worktrees / agent checkouts live under ``.claude/worktrees`` and are
 #: *other branches'* working copies, not this tree's source. Counting them
 #: double-counts the repository and makes the metric depend on which local
 #: worktrees happen to exist — so the same commit reports different debt on
 #: CI (no worktrees) than on a developer box mid-fan-out. Excluding them makes
 #: the inference deterministic and location-independent.
-_EXCLUDED_DIR_PARTS: frozenset[str] = frozenset({".venv", ".git"})
+_EXCLUDED_DIR_PARTS: frozenset[str] = frozenset({".venv", ".git", "archive_snapshots"})
 
 
 def _is_excluded(path: Path) -> bool:
-    """True if ``path`` lies in a non-source tree (venv, git, nested worktree)."""
+    """True for frozen archives, virtualenvs, VCS internals, or worktree copies."""
     parts = path.parts
     if any(part in _EXCLUDED_DIR_PARTS for part in parts):
         return True
