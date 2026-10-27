@@ -20,6 +20,7 @@ diff_scope:
     - path: ".github/workflows/geosync-manifest-repair-once.yml"
     - path: "data/frames/flagship_population.json"
     - path: "docs/POPULATION_FRAME_POLICY.md"
+    - path: ".github/workflows/pr-gate.yml"
   forbidden_paths:
     - "core/"
     - "execution/"
