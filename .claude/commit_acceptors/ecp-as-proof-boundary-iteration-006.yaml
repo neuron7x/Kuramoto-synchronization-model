@@ -9,6 +9,10 @@ diff_scope:
     - path: "docs/epistemic_control_plane/EXACT_QUORUM_CERTIFICATE_PROTOCOL.md"
     - path: "governance/ECP_AS_ITERATION_006.json"
     - path: "artifacts/epistemic_control_plane/iteration_006/ITERATION_006_REPORT.md"
+  forbidden_paths:
+    - "execution/"
+    - "trading/"
+required_python_symbols: []
 expected_signal: >-
   Documentation explicitly states that extremal witnesses need not occur in deployment.
 measurement_command: >-

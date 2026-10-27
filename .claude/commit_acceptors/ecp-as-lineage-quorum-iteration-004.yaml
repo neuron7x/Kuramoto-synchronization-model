@@ -13,6 +13,11 @@ diff_scope:
   forbidden_paths:
     - "execution/"
     - "trading/"
+required_python_symbols:
+  - "geosync/epistemic/evaluator_control.py::QuorumAction"
+  - "geosync/epistemic/evaluator_control.py::EvaluatorObservation"
+  - "geosync/epistemic/evaluator_control.py::QuorumDecision"
+  - "geosync/epistemic/evaluator_control.py::synthesize_quorum_oracle"
 expected_signal: >-
   Research-plane clones are excluded, pairwise shared lineage is collapsed, missing lineage
   fails closed, and successful quorum can emit an aggregate admission-compatible oracle.

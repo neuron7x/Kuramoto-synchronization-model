@@ -62,6 +62,9 @@ max_changed_files_by_claim_type:
   # `chore(...)` subject prefix. Wider cap than refactor because
   # rebrands legitimately touch many files at once.
   chore: 24
+  # validation: a measured benchmark / stress / robustness run whose promise is
+  # the reported result boundary, not a code-correctness or governance claim.
+  validation: 12
 forbidden_import_patterns:
   - "trading"
   - "execution"

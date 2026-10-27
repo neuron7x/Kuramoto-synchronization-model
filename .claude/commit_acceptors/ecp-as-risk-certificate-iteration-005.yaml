@@ -9,6 +9,12 @@ diff_scope:
     - path: "geosync/epistemic/dependence_bounds.py"
     - path: "geosync/epistemic/__init__.py"
     - path: "tests/epistemic_kernel/test_dependence_bounds.py"
+  forbidden_paths:
+    - "execution/"
+    - "trading/"
+required_python_symbols:
+  - "geosync/epistemic/dependence_bounds.py::certify_quorum"
+  - "geosync/epistemic/dependence_bounds.py::RiskCertifiedLineageQuorumPolicy"
 expected_signal: >-
   RiskCertifiedLineageQuorumPolicy preserves live dissent and additionally
   converts otherwise successful quorum decisions to HOLD when the robust certificate fails.

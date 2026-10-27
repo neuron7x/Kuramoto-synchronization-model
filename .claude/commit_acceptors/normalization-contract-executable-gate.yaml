@@ -64,4 +64,4 @@ ledger_path: ".claude/commit_acceptors/normalization-contract-executable-gate.ya
 report_path: ".claude/commit_acceptors/normalization-contract-executable-gate.yaml"
 evidence:
   - path: "tests/unit/indicators/test_normalization_contract.py"
-    sha256: "42d1a73b6902fb1f2b8068857c5d55c1916e5d78a439bf0ee34ae15016f2ef13"  # pragma: allowlist secret
+    sha256: "324a0960c1039dfbb2413612c7dee40d093071d1b8df3f3f363ef3ea60d1f6bb"  # pragma: allowlist secret

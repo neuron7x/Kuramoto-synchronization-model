@@ -16,6 +16,7 @@ diff_scope:
   forbidden_paths:
     - "execution/"
     - "trading/"
+required_python_symbols: []
 expected_signal: >-
   Under optimistic_correlated stress, ECP-AS materially lowers unsafe promotion versus raw
   majority with false-block rate below 10 percent, while hidden_common_cause remains >10

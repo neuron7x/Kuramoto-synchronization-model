@@ -71,4 +71,4 @@ ledger_path: ".claude/commit_acceptors/abstraction-contract-executable-gate.yaml
 report_path: ".claude/commit_acceptors/abstraction-contract-executable-gate.yaml"
 evidence:
   - path: "tests/unit/indicators/test_abstraction_contract.py"
-    sha256: "8928c3b095cfd464926904a79ffde370111fd643f514da52627de85821db72d5"  # pragma: allowlist secret
+    sha256: "a69e115833cc598e15375b658547057b3f469e6374f2f8017119bf1114ce0665"  # pragma: allowlist secret
