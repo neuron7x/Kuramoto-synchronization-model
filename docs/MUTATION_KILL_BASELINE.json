@@ -697,6 +697,12 @@
       "killed": 15,
       "total": 15,
       "tests": "tests/ci/test_emit_metric_signals.py"
+    },
+    "tools/execution_forensics.py": {
+      "floor": 1.0,
+      "killed": 27,
+      "total": 27,
+      "tests": "tests/unit/test_execution_forensics.py tests/tools/test_execution_forensics_gate.py"
     }
   }
 }
