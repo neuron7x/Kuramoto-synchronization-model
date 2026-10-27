@@ -100,7 +100,9 @@ runs:
             expected_pytest = None
             for line in Path("requirements-dev.lock").read_text(encoding="utf-8").splitlines():
                 if line.startswith("pytest=="):
-                    expected_pytest = line.split("==", 1)[1].strip()
+                    # Hash-locked requirement lines continue with " \" before their
+                    # --hash entries; keep only the version token.
+                    expected_pytest = line.split("==", 1)[1].split()[0].strip()
                     break
             if expected_pytest is None:
                 raise SystemExit("pytest pin not found in requirements-dev.lock")
