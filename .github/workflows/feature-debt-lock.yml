@@ -35,3 +35,24 @@ jobs:
           git fetch --no-tags origin "$BASE_REF"
           PYTHONPATH=. python scripts/ci/check_feature_debt_lock.py \
             --base-ref "origin/$BASE_REF"
+      - name: Reproduce offline execution-forensics contract (standard library)
+        run: |
+          set -euo pipefail
+          python -m analytics.execution_forensics \
+            --fills examples/execution_forensics/fills_sample.csv \
+            --out "$RUNNER_TEMP/geosync-forensics-smoke.json"
+          python -m analytics.execution_forensics \
+            --fills examples/execution_forensics/fills_sample.csv \
+            --verify "$RUNNER_TEMP/geosync-forensics-smoke.json"
+          python - <<'PY'
+          from pathlib import Path
+          from analytics.execution_forensics import analyze
+          report = analyze(Path("examples/execution_forensics/fills_sample.csv"))
+          row = report["groups"][0]
+          assert row["fee_quote_total"] == "0.9"
+          assert row["arrival_slippage_quote"] == "5"
+          assert row["execution_shortfall_plus_fees_quote"] == "5.9"
+          assert report["portfolio_pnl_quote"] is None
+          assert report["funding_quote"] is None
+          print("Forensics sample financial invariants: PASS")
+          PY
