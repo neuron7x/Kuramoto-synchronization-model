@@ -67,7 +67,7 @@ jobs:
   repo-integrity-gate:
     name: repo-integrity-gate
     runs-on: ubuntu-latest
-    timeout-minutes: 15
+    timeout-minutes: 90
     steps:
       - name: Checkout
         uses: actions/checkout@9c091bb21b7c1c1d1991bb908d89e4e9dddfe3e0 # v7.0.0
@@ -75,23 +75,14 @@ jobs:
           # Reproduce SHA-bound population-frame census from an immutable ancestor.
           fetch-depth: 0
 
-      - name: Setup Python
-        uses: actions/setup-python@ece7cb06caefa5fff74198d8649806c4678c61a1 # v6
+      - name: Install the same hash-locked Python 3.12 test closure as the live matrix
+        uses: ./.github/actions/setup-geosync
         with:
           python-version: '3.12'
-
-      - name: Install sci-core stack
-        run: |
-          set -euo pipefail
-          python -m pip install --upgrade pip
-          python -m pip install numpy scipy pandas networkx pyyaml jsonschema pytest
-          # prove_repo_integrity.sh runs `pytest tests/research_lines`, whose
-          # ricci_microstructure_v1 lane imports the POT-backed Ollivier-Ricci
-          # kernel (`import ot`) and materialises a parquet during ingest (needs
-          # pyarrow), and the research CLI imports typer. POT lives in the
-          # pyproject neuro_advanced optional group and typer is missing from the
-          # current locks, so install the lane's runtime deps explicitly here.
-          python -m pip install "POT>=0.9.5" "pyarrow>=15.0.0" "typer>=0.20.0,<1.0.0"
+          cache-prefix: repo-integrity-locked
+          install-dev: 'true'
 
       - name: Prove repository integrity
+        env:
+          PYTHON: .venv/bin/python
         run: bash scripts/ci/prove_repo_integrity.sh
