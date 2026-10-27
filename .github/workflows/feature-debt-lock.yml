@@ -56,3 +56,10 @@ jobs:
           assert report["funding_quote"] is None
           print("Forensics sample financial invariants: PASS")
           PY
+      - name: Run isolated forensics adversarial tests (no GeoSync runtime deps)
+        run: |
+          set -euo pipefail
+          python -m pip install --disable-pip-version-check 'pytest==9.0.3'
+          python -m pytest -q \
+            tests/unit/test_execution_forensics.py \
+            tests/tools/test_execution_forensics_gate.py
