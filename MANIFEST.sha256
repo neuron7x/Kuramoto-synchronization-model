@@ -1,3 +1,4 @@
+0006bf8a764737ec301b8e2e15b33785a25fa8f2323a2ba54fd39b0f01c1f900  ./data/governance/cognitive_operations_kernel_v1_0.json
 001ba983eec9c73abb767dd4655d023fcda0a70799f5d79b9e3dd3cf791aaaf6  ./.claude/commit_acceptors/evidence-grade-lineage.yaml
 001be71d0eb265cc8c46a1e39cb1758961f3fd36792ce58e7170f950ac00620d  ./.claude/commit_acceptors/namespace-shim-canonical-exemption.yaml
 001d05be17747b7f3fc435f336f2d811db7d1609ea370e118c9b17f789e68f68  ./execution/arbitrage/models.py
@@ -460,6 +461,7 @@
 0f2ef1f79b79780f24ea30d6497aca75ed090dbc9ac719db115d9093cc138458  ./examples/semantic_sieve_demo.py
 0f41cc14b31f24e3cbfbbc92aefe5cb53e1c8a8058e8f2d81b62a197bc6eaa6b  ./tests/unit/backtest/test_event_driven_engine.py
 0f4cea7435c93413febf301403db9106cba6e45d915eca033f05357bc9e54d1b  ./tacl/behavioral_contract.py
+0f4fcf9dd2e2efba1a602a78cf1cd85595862a00238900e10ad9deddb6d35be4  ./.claude/commit_acceptors/research-standard-layer-map-20261027.yaml
 0f52138cc13baa1633641e149728035a97716690bee679a2ce20fb58d86bf35a  ./cortex_service/app/decorators.py
 0f6417467c22aa49f21ab5b90852a3d5e048159b41abf09e647491c4b96920db  ./archive_snapshots/github_9e6e4792_unique/backlog/requirements.json
 0f6c2687bb234e5c554ecb04bfdd6de38193ab9991f3a785f25de74fc5ad8cce  ./docs/neuromodulators/dopamine_v1_enhancements.md
@@ -1226,6 +1228,7 @@
 29297e66dcdd60d14f302373994ac62f73a17ae596dc1afe67c4179e64ef1d27  ./deploy/kustomize/namespaces/staging/kustomization.yaml
 2940925492b80c5510b8f7ebb74f6c1cbc5db3c149931bc45b48a8f1d7b1c877  ./infra/terraform/modules/terraform-aws-eks/modules/fargate-profile/variables.tf
 29448643c1aaafc881cf8b010cacdab17e2c6b92edf35fd89f36f9881763de16  ./.claude/commit_acceptors/capsule-secret-boundary-slash-token.yaml
+295ea3d54e6e47e69e1ba59b6b7904be0b903b4299654fddadd473669327a0fe  ./application/governance/commit_acceptor.py
 296148f9d05cfab64e9216c78d15975ec1558b4ecefbf33165c946d205acd81f  ./.claude/commit_acceptors/x10r-hygiene-d002g-blockers-orphan-marker-cleanup.yaml
 2981b47b04f887d898c6b83c220055074136e5f6621ae0d111fda41e268f4022  ./core/config/template_manager.py
 29894695d19b6caee79fae2392bd17923596a26c5e91bad135f54375a135666e  ./tests/reconstruction/allocator/test_mfi_loader.py
@@ -1453,6 +1456,7 @@
 31865eadf265210805805b8083a23fe1c1a35b0534a76b1503b7338712a2c8c2  ./tests/unit/physics/test_ricci_flow_engine_invariants.py
 3190689a48227603b5c954684f5a5ece150a555073ce010e0af2447810061f76  ./docs/operations/architecture_impossibility_principle_20260617.md
 31950b6766e2fa6aff864c2ccd7d45b2d3d27ff439c89e342a9ca64e6189f73b  ./scripts/check_invariant_registry_schema.py
+31964fa9c2248b561d9e4db71c2c6e2aa0ed9b923d0ac1c3b180122ef5683f67  ./data/governance/integration_systems_architect_kernel_v1_0.json
 3197441de1b2b2f997336eeaf36828670b186f3f4900098f09dff6e97acb6ac8  ./.claude/commit_acceptors/second-order-stability-guard.yaml
 319dcb7c8dbb0fb41aa152a21d70ce2b2ae10587be6ac93aae42ccf23d849b35  ./tests/ops/test_shadow_continuity_gap.py
 31b07ddf78592f9d19ccfe92763651f31715bb43c39cea69a74738f1a99fe7d4  ./tests/core/test_system_principles.py
@@ -1661,7 +1665,6 @@
 3842f21650a698ea6773550f2559adf82c2b3b3dd7a3dc6e30dce1e14ed0f50e  ./tests/sandbox/test_execution_engine.py
 3843395eb1c25e48932ae361f6c72a9f5aafcefb3dcaacf3ed7e68e21f9fa416  ./.claude/commit_acceptors/lyapunov-qr-conditioning.yaml
 384d6fd8caa2db32cc15c8b467c2c9d8816317942bcfb5db749c15deef3e6726  ./configs/live/default.toml
-385ba75bb387b9c7b97b17b781707a461ee384799df3a0b6bbf5ee23aa8e4788  ./docs/research/RESEARCH_STANDARD_CONTRACT.md
 386443e028b93f6689a539cb950f2ff01fffff73b496885a4e8090334729cd41  ./.claude/commit_acceptors/x10r-d002h-gate-b-eligibility.yaml
 3864fb0b65d720d3ba5b636311cf3373345d8b96299d67d236f7105059289bf6  ./tests/unit/__init__.py
 387750c8e0c427436795754db804402fa1b713fb9a2a3a483c93354c2c21ed0b  ./geosync/epistemic/cli.py
@@ -2174,6 +2177,7 @@
 48497d9ebc4bb59ac40e7091bbc5dc7d5308a4e2a48a3a544844296e09704202  ./reports/P0_LOCAL_EXECUTION_REPORT_2026-05-29.md
 48538630b3e4d955d06b62bb4f824d9d5b871a4d4e1702e7d55b093a59223ad1  ./research/reconstruction/allocator/data/__init__.py
 48555c6efd7647e2c17ee907c5a4f4085b6353b81b6d39f32d57c82039f22493  ./tests/core/risk_monitoring/test_advanced_risk_manager.py
+4857aa45c926cb345d026b77c774c0679b56831b60148d5cccbddf51bc7f0271  ./.claude/commit_acceptors/main-gate-release-evidence-notready-20261027.yaml
 486b15d273b40c69b07a1788264462e08f16ac12e6ec2a882d9342662fbcb981  ./geosync_oracle.py
 4870ff835461f1b697849753ec9a1e8782ce0fa8c852bce59590664ad983521c  ./.github/workflows/edge-case-matrix.yml
 4879f114d4e34e13f2806504307d4a66bb88a60fc973f5914ec62ecd4e71fca9  ./schemas/governance/claim_state_quantum_input.schema.json
@@ -2921,6 +2925,7 @@
 61ed4cbb58c147afa131c3ba0fa1ac7f420fabc5214d6e352d3b3429029fe57f  ./configs/na_ach.yaml
 61f58a04ba9a9be63ed08baa1c81b95a9451a4ae2f1840c4d3d8b262c4096f28  ./ui/dashboard/screenshots/geosync-dashboard-neuron7xLab-palette.png
 620657fe72ae6c1a939085c36b5292010183de98c6b8b9d8f9dbe7f11524df8c  ./execution/paper_trading.py
+6209144625f4d2b9ea6b59024b8dc3005753efa2d1c135c8facf3e683e505ddf  ./data/research/research_standard_layers.v1.json
 623057b0b47bebb19899bdea4bf204c5968eda849780e8bd4ad0b4255864d770  ./tests/tools/test_descriptor_promotion_firewall.py
 62375d339c34f9b79ecfd5633c8e6409fc8a985489ec9132a7f0022dda6b85f2  ./tests/unit/test_agents.py
 623c5fac1062a836d09d6f05661548d2c4125bed99125c9c1da9682498d0ad43  ./tests/test_nlca_core.py
@@ -3416,7 +3421,6 @@
 73199bd3634a25fdf207eb9dfc697c8a628d1e0758a2a318b6954bb9f0c37121  ./tests/test_l2_full_cycle_manifest.py
 732ddd3fe7b24c816a6b3513e838c8409574f97e396667c15d1caec9c45af0df  ./ui/dashboard/scripts/html_strip.js
 73321eb6a1da117ac7cb744d52ed9a90221d309a6c91abb1462687749fba1ffa  ./.claude/commit_acceptors/main-gate-ci-falsifiers-20261027.yaml
-7333d8163f04ae67e0edc5d59d8ef73a1f5b6e16eebf089811fc407e05077429  ./tests/governance/test_typed_models.py
 73340ddfef58b501fdf10abd6bb82e88b3c43fdf376792b0829ffc21c31b4c0c  ./tests/unit/libs/test_db_retry_contracts.py
 7334a2367cfd917b1ab06a859fde8844a3ed835f47db05672cfd6f18bbbbc07d  ./tests/data/test_versioning.py
 734be677c0fd675efd756624ba64a1e594a5e86a923797821c09e398a88720fe  ./archive_snapshots/geosync_fork_audit_20260812/DECOMMISSION.md
@@ -3478,7 +3482,6 @@
 751bcf10a7f9949d58fc820e1ab6fe461d61a2f7ce1657cdafec9d35e97fb159  ./tests/systemic_risk/test_d002j_source_provenance_audit.py
 751c05494900adf4816bdd18e561f68a1f6f3556e9f151cfbc83724a93fbfbd9  ./.claude/commit_acceptors/false-confidence-waiver-907-cache-locate.yaml
 751cb2703c98932011fb4f1ec0b6c1487857603c801b9310e2187975d9329f46  ./.claude/commit_acceptors/riee-validator-core.yaml
-751de45be062e6bc7f011ef40022d5ea683bc32ae809103dc2d1533a44e0b757  ./application/governance/commit_acceptor.py
 7541b7545f614dd2c140f60cca8c8b978f6dc4ae72ff07d7a987df24b302cf1f  ./tests/research/calibration/test_calib_amendment_001.py
 7541f60c4fb17286dbe301599e564ddbfd9ab8d87de0f04cdfb39978b83efa47  ./geosync/neural_controller/registry.py
 7545ad2e562df41cc40ccee4434c5ef4ee6291d9e6dd39620a0006ddd0ec5e99  ./nak_controller/CHANGELOG.md
@@ -4137,6 +4140,7 @@
 8c7671557a6cfa94b76a32f1dc68b1c64afe0e4f067ecaa912869b8d9162f784  ./analytics/fpma/api/openapi.yaml
 8c776ee04b4cb4b17a8675c76412d8be8bb57a9b5cf55d0d7faa0638e67bedd3  ./data/README.md
 8c9af35336e480d9f31bddf7d20be0aace2d38910a656e48def045b23d8e0aa9  ./archive_snapshots/github_9e6e4792_unique/MANIFEST.tsv
+8cae1ba94bb1fea338552bfd415077cd88c04119ee7d33dd6db9df46ef05501d  ./.claude/commit_acceptors/validation-type-model-alignment-20261027.yaml
 8cb6c3d5e09e504137bb4d7d8e9c562eb117c3399e1b246abd8a382c4f3d2ab9  ./geosync/neural_controller/core/params.py
 8cbe93d72201bfd054b0590088fc958a67926830bb896b7f930cf91a4bc6b006  ./.claude/commit_acceptors/ecp-as-exact-certificates-iteration-006.yaml
 8cc3ff4a5cf82a33753b57433e887ae808d9dc90d3a4e25b123fdbdecdcaa24f  ./tests/systemic_risk/test_d002g_r2b_requires_m6_payload.py
@@ -4200,7 +4204,6 @@
 8eec90f08c8c3a1889fda862592ae62a2965e07c79dfbf3def8afac7c11efab1  ./domain/positions/entity.py
 8ef84f6d6fb50dac9235f1cac32e1a88be2162f5dfd224f8805ffe4b9ca0b49c  ./src/geosync/sdk/mlsdm/facade.py
 8f09eda0b4e59d4d4a601daf6abda4f367a5d6194430fc87c6ca72e92013771a  ./core/indicators/hurst.py
-8f0a9121def4aa25512be04fa76920c0cdc12c1842c03bd215f1586e38d909bf  ./.gitignore
 8f0c419c39573973f86d7c0060e0c0a2c124de0bcd1daedd526bfacec3ba9ea8  ./execution/liquidation.py
 8f1360550a1389d73486fe57a51ad81e035931e7bbfd893b0223f35f943066ef  ./examples/cognitive_bridge_demo.py
 8f2be07c0a1967ef7c4dbf457c5add7eb89ba5815b502e822f77711c79290ade  ./scripts/commands/dev.py
@@ -4966,6 +4969,7 @@ a62b41fa6473e2baec1796dcc0e657b3478bf746dbce7bc4d83c265c7220d86a  ./tests/runtim
 a62f1a81f4b9390774b0908bdfcd6c8df9f695f1261c1164cdf5fd8da3111c04  ./tests/unit/core/test_ricci_validation.py
 a632506868e9edf736f33a81749bdde3f9895eebdae60e07ca090de820232fda  ./tests/unit/analytics/test_descriptor_information_quality.py
 a639ba41cc8d32ddbb1480e50eba47b4007b030c274136d48722df3e00de56ba  ./scripts/audit/classify_test_skips.py
+a6463271528704d383c99594fd23d31b21cd6d6538d5e1e0fbbc579d3e902e34  ./tests/governance/test_typed_models.py
 a64eae28c64fcf85512fd855817b7e0bc1e76af6da727a8ebd6014b7ccc48d5e  ./geosync/neuroeconomics/uncertainty.py
 a656fb423dd935270203a492bbbe27c56e110fdd9eac48379bf20829b5e29e44  ./analytics/liquidity_impact.py
 a65cc53bc974dfa47d84c8eb32e3451d6e51ae8347762ef0ce4967d3dd34752d  ./.claude/commit_acceptors/uncertainty-gabor-limit.yaml
@@ -5430,6 +5434,7 @@ b6ce082c8515b795c0cdabcfc3de0cac1bebcec016b67fa939991d33ff6e770e  ./tests/proper
 b6d07536660b7071f4e60dd97549cd4a34ef8ee2264b0d4ea59c652760eca178  ./.claude/commit_acceptors/claims-falsifier-gate-fail-closed.yaml
 b6d4ffd84c31b92b3c26b48c55ea77dc4795957c677e239c4e30446e17a48ccb  ./execution/router.py
 b6dca88881ff173d53a601272dbe22e64b8686bbf6a2f27011634f6a707ceed0  ./src/geosync/core/neuro/serotonin/profiler/behavioral_profiler.py
+b6f240467c8f20d3aea7f61d214f2778ae422ba82d59c13e1665a308122add48  ./data/governance/company_value_functions.json
 b6f3631d6b23209857a5585097911d0c357d0e45bf3ea1f747c16b627cc7bd20  ./docs/phd/05_next_empirical_chapter.md
 b6f9253f21ada03f8ae158b4bed612e37263ca50138390a65010538d1612f805  ./tests/tacl/test_self_diagnosis_adaptation.py
 b6fa2cc25261e7e51ff700e8d78e5ba696bef25188bcc2f4aac0d23779d07f50  ./src/geosync/core/neuro/serotonin/receptors/ht1a.py
@@ -5821,6 +5826,7 @@ c51cc7cc2aad10f0c1d5cb7ca93255b5cac488cdf660f4ce685b1d5baff8afe6  ./.claude/comm
 c51f0798f2e94d82791d123b434ba945ca594fe213c419730f477dfb24e8f1b6  ./.claude/commit_acceptors/diffusion-rank-propagation-relabel.yaml
 c523cb89b8d4b9e3206e953daf51ee91dca74f78be6d80d9cdfa68fcf83f413c  ./tests/unit/test_indicator_base.py
 c527e22451b8ef1b1bfabda6b82af6759bafe21b65cdb034ac606a4feed9d4fe  ./archive_snapshots/github_9e6e4792_unique/.secrets.baseline
+c52b7a52a5ad9a00d8ca017fd6e6743c12cd6592487b2804d10307e43475ab37  ./docs/research/RESEARCH_STANDARD_CONTRACT.md
 c53561509437be8d80bd256c3c99ea51050d5b080b2bff37cbb56d9fbd3f3899  ./tests/unit/tools/test_inference_provenance.py
 c5396faee2022940e85cce5d3336b3fad056698ec86146c5c450f4e3eaca9a78  ./tests/scripts/test_check_claims.py
 c539ef06ea1bc25f2502dfbfe46d51678b2553d07ed7edb44d3b69e0e724aab5  ./archive_snapshots/github_9e6e4792_unique/tests/unit/data/adapters/test_polygon.py
@@ -6249,6 +6255,7 @@ d2d011cd27359032ccd7b94e8f9f384ef7e86073e112fbd1880364caf3b9ea4c  ./research/ask
 d2dbfefe9bad51e73e8c221d517210f673ee04c7f2ce352b32f6c8f67a3cd075  ./tests/core/dro_ara/test_falsification.py
 d2f4edad140cf99436a98f5becd0f5fae3644ff2de117c4f9b698ca28c638526  ./tests/systemic_risk/test_d002g_substrate_eligibility_blocker.py
 d2fa5e59622b762219a48004cee6ed7004a3eeabedc026422bd7d5f8c55fc169  ./tests/unit/scripts/test_check_serotonin_namespace.py
+d2fabc56f71da7fc861d8574f7fd250fd7b7b9cc84ee7ecc24f5071f4b2702b1  ./.claude/commit_acceptors/governance-contract-recovery-20261027.yaml
 d2ff436687f88d50c8b8d94b2a4468ac95f0233aca03aac762d0adf1320e7c33  ./tests/ci/test_synthetic_plumbing_artifact.py
 d306acb3fae258439c1b0e89db4b5de481fea1ba69a35af4a4981e47dd6ac93e  ./manifests/research/release_provenance.v1.json
 d30e80522817fcad5347f296085a6052a61b6237093a90914c8620173763fcb4  ./cognitive_mirror_methods/contracts/request.json
@@ -6628,7 +6635,6 @@ e031df1daa323edca9f2903e0e35b59cfbc7dd999f30544f48c8515be9ae7aea  ./.claude/pr_p
 e03c534ca2e86fc6e2cc6bd222136e738c40a40460e291acea22333559abe313  ./tests/test_metrics.py
 e04b0a51baf7314866b86b7dd543df2f427bd2768501948fe39c7663594618a9  ./docs/governance/D002G_M2_REANCHOR_2026-06-18.md
 e050e4cb0d1baf30a33f00d0211725eb97706482c3cdd8cd67976964bc754a34  ./docs/templates/README.md
-e06198fca38ad90b73226fc7d056e81d6760e7f11cff9739777f48283a60c385  ./.github/workflows/geosync-manifest-repair-once.yml
 e061a48d6f7dbf70577477c5319efa59483347ab93784966d528ced4b49a8f62  ./core/indicators/novelty.py
 e061d770c04b9c44403b4745583ab5bd2a969865a831fb82f876f4b24b9f5258  ./apps/web/jest.setup.ts
 e06c4174565108bacd28dbcb5cd7d8e6b1fe810456ec4096542eeb8e55cba6eb  ./core/cross_asset_kuramoto/signal.py
@@ -7163,6 +7169,7 @@ f01e7a1faa32eb0f6bcc0e231591597bf66380e8c7e88406f6f87eacdd28c3e3  ./tests/script
 f01f6397fa5d9709e5f963ec2ce1109668dab93a46e67f03475e64ea04fd3f7e  ./tests/adapters/test_public_contract.py
 f0217a70d9b213f98593ae456482d562341721f1e7efb1aea82906c762fe1732  ./.claude/commit_acceptors/falsification-rigor-layers.yaml
 f02192684914190aafc84de3ca4ff39f8f3cc5a0d4ab32a4c76a958f685e8a5f  ./.claude/commit_acceptors/horynych-falsification-cycle.yaml
+f03d67df5cb823e80b9faccca3b32ae05fa2598149cdebd1698a76e509665940  ./.github/workflows/geosync-manifest-repair-once.yml
 f03e2e7cdbd69b7284bf278f65ccd800ad9961d8779d791cdb9e896a49cfb893  ./.github/agents/doc-pr-copilot-v2.md
 f03ed1c6e96f62dc7ff061b48fc44a6dce0679a13ca6bf449e3785f0a4833ed0  ./docs/governance/D002C_CANONICAL_RUN_REPORT.md
 f040bbdb35e45ea47eb41629952212387f708f362962f2061b133613a845caa3  ./tests/unit/geosync/core/neuro/nak/test_controller.py
@@ -7510,6 +7517,7 @@ fd0a0183eb42b8f5ea6e2a70ae3c76f9a4ff354b5197d24742a92ec93b881024  ./results/cros
 fd12b3094c3e97484fb299c7098f38d277792d6e7b5d4fdcaa779d43cd129c34  ./.claude/commit_acceptors/close-partial-td-002-003-005-009-017.yaml
 fd253dc76dd31fbb44dd9bdee15a38fcfefdf634aecd5cc082e27ed43a5019a3  ./docs/MA_v2_Roadmap.md
 fd26c985d40eb5311b48e3aaa61c8886cf197ec908d7f4f005bbe37819df5106  ./tests/ci/test_power_uq.py
+fd272d9934a03f7562585a8730cefdfac866fefd4af3b34686bc6ae4dcfd69e0  ./.gitignore
 fd356d0e1036d169ba12a1d444f342c5ef1e0ab10177518f1e396530ae065a73  ./data/frames/flagship_population.json
 fd3a1cc3c8d987cc92c359ea3dd4c1577131a2a76acc802f88be4dfc2b1f5a69  ./archive_snapshots/github_9e6e4792_unique/tests/neuropro/test_hpc_ablation_studies.py
 fd3ed057537d6672d18e203d42b62b63da0d12d4a2553d63073eb2c91ddcb699  ./deploy/kustomize/base/service.yaml
