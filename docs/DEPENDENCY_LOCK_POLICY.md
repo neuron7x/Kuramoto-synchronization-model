@@ -78,6 +78,11 @@ therefore hashed like everything else:
   `tests/research_lines/test_ricci_microstructure_v1.py`.
 - **`pytest-timeout`** — consumed by the Makefile `l2-test` target
   (`--timeout=60`).
+- **`backports.tarfile`** — required by `jaraco.context` (via `keyring`) only under
+  `python_version < "3.12"`. The lock is compiled with Python 3.12, where the marker is
+  false and pip-compile omits the pin, but the PR-gate lanes install under 3.11 with
+  `--require-hashes` and failed on the unpinned transitive. Pinned explicitly (pure
+  Python, no dependencies) so the same lock installs on both interpreters.
 
 Both are declared in `requirements-dev.txt`; pin them to the versions already in
 the dev lock and pass them as an additional input file when regenerating so they
