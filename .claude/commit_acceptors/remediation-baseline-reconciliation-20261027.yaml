@@ -1,0 +1,42 @@
+# Preserve historical decisions while refusing stale evidence after a flattened sync.
+id: remediation-baseline-reconciliation-20261027
+status: ACTIVE
+claim_type: governance
+promise: >-
+  The remediation ledger binds to a reachable immutable Git tree; any closed
+  item must have locally resolvable evidence and a PASS signoff. Three legacy
+  items with unavailable source directories are reopened, preserving their
+  historical signoffs as unverified antecedent claims, not current proofs.
+diff_scope:
+  changed_files:
+    - path: ".claude/commit_acceptors/remediation-baseline-reconciliation-20261027.yaml"
+    - path: "governance/remediation_ledger.v1.json"
+  forbidden_paths:
+    - "trading/"
+    - "execution/"
+    - "forecast/"
+    - "core/"
+required_python_symbols: []
+expected_signal: >-
+  142-entry ledger validates, new sync snapshot SHA resolves, and 50
+  closed entries retain explicit signoff and source paths. Reopened
+  GOV-004, ARC-017, RES-008 cannot be promoted until evidence is restored.
+measurement_command: >-
+  bash -c 'python scripts/ci/check_remediation_ledger.py &&
+  python -m pytest tests/ci/test_remediation_ledger.py -q'
+signal_artifact: "tmp/remediation_baseline_reconciliation_20261027.log"
+falsifier:
+  command: >-
+    python -m pytest -q
+    tests/ci/test_remediation_ledger.py::test_negative_dangling_closed_source_evidence_is_red
+    tests/ci/test_remediation_ledger.py::test_negative_bad_baseline_tree_is_red
+  description: >-
+    A missing evidence path or unresolvable Git object must block a closed item.
+rollback_command: >-
+  git revert --no-edit HEAD
+rollback_verification_command: >-
+  git diff --exit-code HEAD~1 HEAD -- governance/remediation_ledger.v1.json
+memory_update_type: append
+ledger_path: ".claude/commit_acceptors/remediation-baseline-reconciliation-20261027.yaml"
+report_path: "docs/RELEASE_EVIDENCE_BUNDLE.md"
+evidence: []
