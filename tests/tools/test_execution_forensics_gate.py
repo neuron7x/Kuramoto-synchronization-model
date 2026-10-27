@@ -82,5 +82,5 @@ def test_cross_asset_fee_without_conversion_does_not_invent_zero(tmp_path: Path)
 
 def test_non_numeric_financial_input_fails_closed(tmp_path: Path) -> None:
     p = _source(tmp_path, fee_amount="Infinity")
-    with pytest.raises(EvidenceInputError, match="invalid sign"):
+    with pytest.raises(EvidenceInputError, match="non-canonical decimal"):
         analyze(p)
