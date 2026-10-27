@@ -155,3 +155,23 @@ def test_full_gate_passes_on_clean_tree() -> None:
     # The committed artifact must never carry a raw secret: high-confidence findings
     # are empty, and any entry would be redacted (sha256 fingerprint) by construction.
     assert audit["findings"] == []
+
+
+def test_regex_recognizes_contextvar_method_call_as_code(tmp_path: Path) -> None:
+    sample = tmp_path / "context.py"
+    sample.write_text(
+        "token = _SECRET_CALLER_CONTEXT.set(current)\\n", encoding="utf-8"
+    )
+    assert sec.scan_with_regex(tmp_path) == []
+
+
+def test_regex_still_rejects_literal_long_secret(tmp_path: Path) -> None:
+    sample = tmp_path / "credentials.py"
+    sample.write_text(
+        'token = "UltraLongCredentialValue123456789"\\n', encoding="utf-8"
+    )
+    findings = sec.scan_with_regex(tmp_path)
+    assert len(findings) == 1
+    assert findings[0]["rule"] == "generic-api-key"
+    assert findings[0]["match"].startswith("sha256:")
+    assert "UltraLongCredentialValue" not in str(findings)
