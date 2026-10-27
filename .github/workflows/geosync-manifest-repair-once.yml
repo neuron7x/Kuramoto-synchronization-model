@@ -1,4 +1,5 @@
 # One-shot, branch-scoped maintenance of independently verified manifests.
+# Refresh after hard-fail real-data witnesses; no evidence or CI gate relaxed.
 # This workflow runs only when THIS file is added/edited on the repair branch.
 # It cannot run on main or be triggered by its own bot push.
 name: GeoSync Controlled Manifest Repair
