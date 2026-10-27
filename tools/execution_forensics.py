@@ -25,10 +25,22 @@ from typing import Sequence
 METHOD_VERSION = "GEOSYNC_EXECUTION_FORENSICS_V0_1"
 MAX_SOURCE_BYTES = 50_000_000
 HEADERS = (
-    "venue", "symbol", "quote_asset", "trade_id", "order_id",
-    "executed_at_utc", "side", "quantity", "price",
-    "fee_amount", "fee_asset", "fee_quote_value", "fee_conversion_source",
-    "arrival_price", "arrival_at_utc", "arrival_source",
+    "venue",
+    "symbol",
+    "quote_asset",
+    "trade_id",
+    "order_id",
+    "executed_at_utc",
+    "side",
+    "quantity",
+    "price",
+    "fee_amount",
+    "fee_asset",
+    "fee_quote_value",
+    "fee_conversion_source",
+    "arrival_price",
+    "arrival_at_utc",
+    "arrival_source",
 )
 
 
@@ -67,7 +79,9 @@ def _amount(number: Decimal | None) -> str | None:
 
 
 def _digest(obj: object) -> str:
-    body = json.dumps(obj, sort_keys=True, separators=(",", ":"), ensure_ascii=False, allow_nan=False)
+    body = json.dumps(
+        obj, sort_keys=True, separators=(",", ":"), ensure_ascii=False, allow_nan=False
+    )
     return hashlib.sha256(body.encode("utf-8")).hexdigest()
 
 
@@ -97,7 +111,10 @@ def _parse_row(row: dict[str, str], line: int) -> Fill:
             raise EvidenceInputError(f"row {line}: {name} required")
     if fields["side"] not in {"BUY", "SELL"}:
         raise EvidenceInputError(f"row {line}: side must be BUY or SELL")
-    if fields["symbol"] != fields["symbol"].upper() or fields["quote_asset"] != fields["quote_asset"].upper():
+    if (
+        fields["symbol"] != fields["symbol"].upper()
+        or fields["quote_asset"] != fields["quote_asset"].upper()
+    ):
         raise EvidenceInputError(f"row {line}: symbol and quote_asset must be uppercase")
 
     executed_at = _utc(fields["executed_at_utc"], f"row {line} executed_at_utc")
@@ -110,20 +127,26 @@ def _parse_row(row: dict[str, str], line: int) -> Fill:
     fee_conversion_source = fields["fee_conversion_source"]
     if fee_amount is None:
         if fee_asset or fee_quote_raw is not None or fee_conversion_source:
-            raise EvidenceInputError(f"row {line}: fee amount is missing but fee metadata is present")
+            raise EvidenceInputError(
+                f"row {line}: fee amount is missing but fee metadata is present"
+            )
         fee_quote = None
     else:
         if not fee_asset or fee_asset != fee_asset.upper():
             raise EvidenceInputError(f"row {line}: valid fee_asset required for a known fee")
         if fee_asset == fields["quote_asset"]:
             if fee_quote_raw is not None and fee_quote_raw != fee_amount:
-                raise EvidenceInputError(f"row {line}: quote-asset fee conversion disagrees with fee")
+                raise EvidenceInputError(
+                    f"row {line}: quote-asset fee conversion disagrees with fee"
+                )
             if fee_conversion_source:
                 raise EvidenceInputError(f"row {line}: quote-asset fee needs no conversion source")
             fee_quote = fee_amount
         else:
             if (fee_quote_raw is None) != (not fee_conversion_source):
-                raise EvidenceInputError(f"row {line}: cross-asset fee valuation and source must coexist")
+                raise EvidenceInputError(
+                    f"row {line}: cross-asset fee valuation and source must coexist"
+                )
             fee_quote = fee_quote_raw  # Unknown without a sourced conversion.
 
     arrival_price = _optional_decimal(fields["arrival_price"], f"row {line} arrival_price")
@@ -141,12 +164,21 @@ def _parse_row(row: dict[str, str], line: int) -> Fill:
             raise EvidenceInputError(f"row {line}: arrival benchmark is from the future")
 
     return Fill(
-        venue=fields["venue"].lower(), symbol=fields["symbol"],
-        quote_asset=fields["quote_asset"], trade_id=fields["trade_id"],
-        order_id=fields["order_id"], executed_at=executed_at, side=fields["side"],
-        quantity=quantity, price=price, fee_amount=fee_amount, fee_asset=fee_asset,
-        fee_quote_value=fee_quote, arrival_price=arrival_price,
-        arrival_at=arrival_at, arrival_source=arrival_source,
+        venue=fields["venue"].lower(),
+        symbol=fields["symbol"],
+        quote_asset=fields["quote_asset"],
+        trade_id=fields["trade_id"],
+        order_id=fields["order_id"],
+        executed_at=executed_at,
+        side=fields["side"],
+        quantity=quantity,
+        price=price,
+        fee_amount=fee_amount,
+        fee_asset=fee_asset,
+        fee_quote_value=fee_quote,
+        arrival_price=arrival_price,
+        arrival_at=arrival_at,
+        arrival_source=arrival_source,
     )
 
 
@@ -185,7 +217,9 @@ def load_fills(source: Path) -> tuple[list[Fill], str]:
             order_key = (fill.venue, fill.symbol, fill.order_id)
             arrival = (fill.arrival_price, fill.arrival_at, fill.arrival_source)
             if order_key in order_arrivals and order_arrivals[order_key] != arrival:
-                raise EvidenceInputError(f"row {number}: conflicting arrival benchmark for one order")
+                raise EvidenceInputError(
+                    f"row {number}: conflicting arrival benchmark for one order"
+                )
             order_arrivals[order_key] = arrival
         fills.append(fill)
     if not fills:
@@ -204,15 +238,20 @@ def _group(fills: Sequence[Fill]) -> dict[str, object]:
     missing_arrival = sum(f.arrival_price is None for f in fills)
     fee_quote = (
         sum((f.fee_quote_value for f in fills if f.fee_quote_value is not None), Decimal(0))
-        if not missing_fee else None
+        if not missing_fee
+        else None
     )
     slippage = (
         sum(
-            ((f.price - f.arrival_price) * f.quantity * (1 if f.side == "BUY" else -1)
-             for f in fills if f.arrival_price is not None),
+            (
+                (f.price - f.arrival_price) * f.quantity * (1 if f.side == "BUY" else -1)
+                for f in fills
+                if f.arrival_price is not None
+            ),
             Decimal(0),
         )
-        if not missing_arrival else None
+        if not missing_arrival
+        else None
     )
     cost = fee_quote + slippage if fee_quote is not None and slippage is not None else None
     return {
@@ -220,13 +259,17 @@ def _group(fills: Sequence[Fill]) -> dict[str, object]:
         "notional_quote": _amount(total_notional),
         "buy_notional_quote": _amount(buy_notional),
         "sell_notional_quote": _amount(total_notional - buy_notional),
-        "fee_totals_native_by_asset": {asset: _amount(fee_amounts[asset]) for asset in sorted(fee_amounts)},
+        "fee_totals_native_by_asset": {
+            asset: _amount(fee_amounts[asset]) for asset in sorted(fee_amounts)
+        },
         "fee_quote_total": _amount(fee_quote),
         "arrival_slippage_quote": _amount(slippage),
         "execution_shortfall_plus_fees_quote": _amount(cost),
         "missing_fee_valuation_fills": missing_fee,
         "missing_arrival_benchmark_fills": missing_arrival,
-        "evidence_state": "COMPLETE_EXECUTION_COMPONENTS" if cost is not None else "PARTIAL_UNKNOWN_COST",
+        "evidence_state": (
+            "COMPLETE_EXECUTION_COMPONENTS" if cost is not None else "PARTIAL_UNKNOWN_COST"
+        ),
     }
 
 
@@ -236,7 +279,12 @@ def analyze(source: Path) -> dict[str, object]:
     for f in fills:
         partitions[(f.venue, f.symbol, f.quote_asset)].append(f)
     groups = [
-        {"venue": venue, "symbol": symbol, "quote_asset": quote, **_group(partitions[(venue, symbol, quote)])}
+        {
+            "venue": venue,
+            "symbol": symbol,
+            "quote_asset": quote,
+            **_group(partitions[(venue, symbol, quote)]),
+        }
         for venue, symbol, quote in sorted(partitions)
     ]
     report: dict[str, object] = {
@@ -257,10 +305,14 @@ def analyze(source: Path) -> dict[str, object]:
 
 def main(argv: Sequence[str] | None = None) -> int:
     parser = argparse.ArgumentParser(description="Offline, read-only, strict execution cost audit")
-    parser.add_argument("--fills", type=Path, required=True, help="Canonical fill CSV, no API credentials")
+    parser.add_argument(
+        "--fills", type=Path, required=True, help="Canonical fill CSV, no API credentials"
+    )
     action = parser.add_mutually_exclusive_group()
     action.add_argument("--out", type=Path, help="Create JSON report (refuses to overwrite)")
-    action.add_argument("--verify", type=Path, help="Verify prior report against current data and code")
+    action.add_argument(
+        "--verify", type=Path, help="Verify prior report against current data and code"
+    )
     args = parser.parse_args(argv)
     try:
         report = analyze(args.fills)
