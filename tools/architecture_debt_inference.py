@@ -21,9 +21,9 @@ from __future__ import annotations
 import argparse
 import ast
 import io
-import tokenize
 import json
 import re
+import tokenize
 from dataclasses import dataclass
 from pathlib import Path
 from typing import Callable, Iterator, cast
@@ -177,6 +177,12 @@ def m_todo_markers() -> int:
     """Count deferrals in comments, not documentation or test strings."""
     pattern = re.compile(r"\b(?:TODO|FIXME|HACK|XXX)\b")
     return sum(len(pattern.findall(text)) for text in _comment_tokens())
+
+
+def m_dual_physics_layers() -> int:
+    a = ROOT / ".claude" / "physics"
+    b = ROOT / "physics_contracts"
+    return int(a.exists() and b.exists())
 
 
 @dataclass(frozen=True)
