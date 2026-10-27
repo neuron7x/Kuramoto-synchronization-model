@@ -71,6 +71,18 @@ def test_planted_aws_key_is_not_the_allowlisted_example() -> None:
 
 # --- POSITIVE: clean surfaces pass ---------------------------------------------
 
+def test_gitleaks_process_failure_cannot_appear_clean(
+    tmp_path: Path, monkeypatch: pytest.MonkeyPatch
+) -> None:
+    """Scanner execution failure is UNKNOWN/RED, never zero findings."""
+    def failed_process(*_args: object, **_kwargs: object) -> subprocess.CompletedProcess[str]:
+        return subprocess.CompletedProcess(args=["gitleaks"], returncode=2, stdout="", stderr="config error")
+
+    monkeypatch.setattr(sec.subprocess, "run", failed_process)
+    with pytest.raises(RuntimeError, match="scanner failed"):
+        sec.scan_with_gitleaks(tmp_path, None)
+
+
 def test_regex_not_confused_by_computed_token_cost(tmp_path: Path) -> None:
     sample = tmp_path / "cost.py"
     sample.write_text(
