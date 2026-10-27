@@ -21,6 +21,8 @@ diff_scope:
     - path: "data/frames/flagship_population.json"
     - path: "docs/POPULATION_FRAME_POLICY.md"
     - path: ".github/workflows/pr-gate.yml"
+    - path: "tools/architecture_debt_inference.py"
+    - path: "tests/ci/test_architecture_debt_inference.py"
   forbidden_paths:
     - "core/"
     - "execution/"
