@@ -17,6 +17,7 @@ diff_scope:
     - path: "scripts/ci/check_links.py"
     - path: "data/research/inference_transformer_blocks.v1.json"
     - path: ".gitignore"
+    - path: ".github/workflows/geosync-manifest-repair-once.yml"
   forbidden_paths:
     - "core/"
     - "execution/"
