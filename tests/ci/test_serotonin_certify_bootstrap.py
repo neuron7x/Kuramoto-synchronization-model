@@ -36,7 +36,8 @@ def _preload_code():
         )
     ]
     assert len(guards) == 2, "both startup preloads must remain explicit"
-    return compile(ast.fix_missing_locations(ast.Module(body=guards, type_ignores=[])), str(SCRIPT), "exec")
+    module = ast.fix_missing_locations(ast.Module(body=guards, type_ignores=[]))
+    return compile(module, str(SCRIPT), "exec")
 
 
 def test_optional_preloads_are_executed_in_order() -> None:
