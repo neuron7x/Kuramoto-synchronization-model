@@ -51,7 +51,9 @@ jobs:
             scripts/ci/check_secret_boundary.py \
             tests/ci/test_secret_boundary.py \
             tests/conftest.py \
-            tests/ci/test_audit_log_isolation.py
+            tests/ci/test_audit_log_isolation.py \
+            tests/ci/test_archived_gitleaks_redaction.py \
+            scripts/ci/check_ci_permissions.py
       - name: Regenerate only declared deterministic manifests
         shell: bash
         run: |
@@ -124,7 +126,7 @@ jobs:
           python -m json.tool artifacts/manifest.json >/dev/null
           python - <<'PY'
           import subprocess
-          allowed = {"scripts/ci/check_links.py", "tools/architecture_debt_inference.py", "tests/ci/test_architecture_debt_inference.py", "tests/scripts/test_check_instrument_evidence_chain.py", "scripts/ci/check_population_frame.py", "tests/ci/test_population_frame.py", "tests/ci/test_env_preflight.py", "tools/generate_golden_lineage.py", "tests/ci/test_data_lineage.py", "MANIFEST.sha256", "artifacts/manifest.json", "data/lineage/raw.golden-macd-baseline-v1.json", "data/lineage/validated.golden-macd-baseline-v1.json", "data/lineage/derived.golden-macd.canonical-line-digest.v1.json", "data/lineage/graph.json", "scripts/ci/check_secret_boundary.py", "tests/ci/test_secret_boundary.py", "tests/conftest.py", "tests/ci/test_audit_log_isolation.py", "artifacts/releases/1.1.0/release_evidence.json", "artifacts/releases/1.1.0/SHA256SUMS", "application/governance/commit_acceptor.py", "tests/governance/test_typed_models.py"}
+          allowed = {"scripts/ci/check_links.py", "tools/architecture_debt_inference.py", "tests/ci/test_architecture_debt_inference.py", "tests/scripts/test_check_instrument_evidence_chain.py", "scripts/ci/check_population_frame.py", "tests/ci/test_population_frame.py", "tests/ci/test_env_preflight.py", "tools/generate_golden_lineage.py", "tests/ci/test_data_lineage.py", "MANIFEST.sha256", "artifacts/manifest.json", "data/lineage/raw.golden-macd-baseline-v1.json", "data/lineage/validated.golden-macd-baseline-v1.json", "data/lineage/derived.golden-macd.canonical-line-digest.v1.json", "data/lineage/graph.json", "scripts/ci/check_secret_boundary.py", "tests/ci/test_secret_boundary.py", "tests/conftest.py", "tests/ci/test_audit_log_isolation.py", "tests/ci/test_archived_gitleaks_redaction.py", "scripts/ci/check_ci_permissions.py", "artifacts/releases/1.1.0/release_evidence.json", "artifacts/releases/1.1.0/SHA256SUMS", "application/governance/commit_acceptor.py", "tests/governance/test_typed_models.py"}
           changed = set(subprocess.check_output(["git", "diff", "--name-only", "HEAD"], text=True).splitlines())
           assert changed <= allowed, f"Unexpected generator output: {changed - allowed}"
           print("Controlled regeneration diff:", sorted(changed))
@@ -133,7 +135,7 @@ jobs:
         shell: bash
         run: |
           set -euo pipefail
-          git add -- MANIFEST.sha256 artifacts/manifest.json artifacts/releases/1.1.0/release_evidence.json artifacts/releases/1.1.0/SHA256SUMS application/governance/commit_acceptor.py tests/governance/test_typed_models.py scripts/ci/check_links.py tools/architecture_debt_inference.py tests/ci/test_architecture_debt_inference.py tests/scripts/test_check_instrument_evidence_chain.py scripts/ci/check_population_frame.py tests/ci/test_population_frame.py tests/ci/test_env_preflight.py tools/generate_golden_lineage.py tests/ci/test_data_lineage.py data/lineage/ scripts/ci/check_secret_boundary.py tests/ci/test_secret_boundary.py tests/conftest.py tests/ci/test_audit_log_isolation.py artifacts/releases/1.1.0/release_evidence.json artifacts/releases/1.1.0/SHA256SUMS
+          git add -- MANIFEST.sha256 artifacts/manifest.json artifacts/releases/1.1.0/release_evidence.json artifacts/releases/1.1.0/SHA256SUMS application/governance/commit_acceptor.py tests/governance/test_typed_models.py scripts/ci/check_links.py tools/architecture_debt_inference.py tests/ci/test_architecture_debt_inference.py tests/scripts/test_check_instrument_evidence_chain.py scripts/ci/check_population_frame.py tests/ci/test_population_frame.py tests/ci/test_env_preflight.py tools/generate_golden_lineage.py tests/ci/test_data_lineage.py data/lineage/ scripts/ci/check_secret_boundary.py tests/ci/test_secret_boundary.py tests/conftest.py tests/ci/test_audit_log_isolation.py tests/ci/test_archived_gitleaks_redaction.py scripts/ci/check_ci_permissions.py artifacts/releases/1.1.0/release_evidence.json artifacts/releases/1.1.0/SHA256SUMS
           if git diff --cached --quiet; then
             echo "Both manifests already current; no commit needed."
             exit 0
