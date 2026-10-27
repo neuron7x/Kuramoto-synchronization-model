@@ -45,6 +45,7 @@ BASELINE_PATH = ROOT / ".github" / "import_architecture_baseline.json"
 _SRC_IMPORT_RE = re.compile(r"^\s*(from|import)\s+src(\.|\s|$)")
 _PATH_HACK_RE = re.compile(r"sys\.path\.(insert|append)\s*\(")
 _NON_SOURCE_PREFIXES: tuple[str, ...] = (
+    "archive_snapshots/",  # frozen fork backups (2026-08-12): history, not first-party source
     "tests/",
     "test/",
     "devtools/",

@@ -18,6 +18,7 @@ SHA256_RE = re.compile(r"^[0-9a-f]{64}$")
 # artifact manifest.json digests — it never opens the root MANIFEST.sha256. See
 # docs/RELEASE_GATES.md. A PASS here is not root-manifest integrity.
 GATE_ID = "G-ARTIFACT-MANIFESTS"
+ARCHIVED_SNAPSHOT_PREFIXES: tuple[str, ...] = ("archive_snapshots/",)
 
 
 def _is_tracked(path: Path) -> bool:
@@ -35,7 +36,14 @@ def _is_tracked(path: Path) -> bool:
 def _discover_manifest_paths() -> list[Path]:
     manifests: list[Path] = []
     for path in ROOT.rglob("manifest.json"):
-        if ".git/" in path.as_posix():
+        rel = path.relative_to(ROOT).as_posix()
+        if rel.startswith(".git/"):
+            continue
+        # Frozen fork backups (archive_snapshots/, recorded 2026-08-12) carry manifests
+        # whose artifact paths resolve against the ORIGINAL repo root, not this tree;
+        # they are history, not a live artifact contract. Same classification as the
+        # code-hygiene excluded_roots and the import-architecture non-source prefixes.
+        if rel.startswith(ARCHIVED_SNAPSHOT_PREFIXES):
             continue
         if _is_tracked(path):
             manifests.append(path)
