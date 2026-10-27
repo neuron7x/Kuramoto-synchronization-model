@@ -8,7 +8,7 @@ from pathlib import Path
 
 import pytest
 
-from analytics.execution_forensics import (
+from tools.execution_forensics import (
     HEADERS,
     EvidenceInputError,
     analyze,
