@@ -13,9 +13,12 @@ from __future__ import annotations
 
 from pathlib import Path
 
+import pytest
+
 from scripts.ci.check_hermetic_image import (
     DOCKERFILE,
     check_dockerfile,
+    extract_hermetic_requirements,
     main,
 )
 
@@ -106,3 +109,30 @@ def test_negative_pip_in_entrypoint() -> None:
     )
     violations = check_dockerfile(bad)
     assert any("run time" in v for v in violations), violations
+
+
+def test_audit_extracts_exact_installed_dependency_bytes() -> None:
+    source = DOCKERFILE.read_text(encoding="utf-8")
+    requirements = extract_hermetic_requirements(source)
+    header = "COPY <<'HERMETIC_REQS' /opt/hermetic-requirements.txt\n"
+    assert header + requirements + "HERMETIC_REQS\n" in source
+    assert "--hash=sha256:" in requirements
+    assert "pytest==" in requirements
+    assert "RUN " not in requirements
+
+
+@pytest.mark.parametrize(
+    "mutation", ["missing", "empty", "comment_only", "unterminated", "duplicate"]
+)
+def test_hermetic_audit_rejects_invalid_dependency_blocks(mutation: str) -> None:
+    header = "COPY <<'HERMETIC_REQS' /opt/hermetic-requirements.txt\n"
+    block = header + "package==1.0\nHERMETIC_REQS\n"
+    invalid = {
+        "missing": "FROM python:3.12\n",
+        "empty": header + "\nHERMETIC_REQS\n",
+        "comment_only": header + "# no dependencies\nHERMETIC_REQS\n",
+        "unterminated": header + "package==1.0\n",
+        "duplicate": block + block,
+    }
+    with pytest.raises(ValueError, match="hermetic requirements heredoc"):
+        extract_hermetic_requirements(invalid[mutation])

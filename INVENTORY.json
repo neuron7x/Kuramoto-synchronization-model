@@ -11,7 +11,7 @@
   "files": [
     {
       "path": ".github/workflows/pr-gate.yml",
-      "sha256": "32a161dca58a6a57c6f0b028dba637afbfc2150908de2ff0bbe88200beeae5d0"
+      "sha256": "97634e0c6262fbbc3a281e4fd5b80939ef0082d22a17de77dbee60de5827c68a"
     },
     {
       "path": "scripts/ci/__init__.py",
@@ -195,7 +195,7 @@
     },
     {
       "path": "scripts/ci/check_hermetic_image.py",
-      "sha256": "8df541b963ec8b2891afa920fe415a3ba4426937c035f6c5a4453d8f91cce3f7"
+      "sha256": "db15fb1fc55d3ff27e2eba076670b19d1d75d279394125272850eb51350b1e58"
     },
     {
       "path": "scripts/ci/check_import_architecture.py",
@@ -343,7 +343,7 @@
     },
     {
       "path": "scripts/ci/check_secret_boundary.py",
-      "sha256": "81657273770401212aafcab043983ab050b632954019218ac95cdca1f68d914d"
+      "sha256": "31203032f9a27ebc0c9b32b35de4d28bba1b90f4f571f76421e147c2b4b2208c"
     },
     {
       "path": "scripts/ci/check_security_regression.py",
@@ -407,7 +407,7 @@
     },
     {
       "path": "scripts/ci/ebsvap_wp3_run.py",
-      "sha256": "f5a17f7a1e7cc5229811fab68c5415cd79cb66969e13e5f3bbd1c3dea8c61bd1"
+      "sha256": "9503fcef78a8e36e40833a8589508fc8d8c0c7eee1b13f5def85f21ee63650d3"
     },
     {
       "path": "scripts/ci/emit_metric_signals.py",

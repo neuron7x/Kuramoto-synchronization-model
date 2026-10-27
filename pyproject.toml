@@ -101,6 +101,7 @@ dev = [
     "cyclonedx-bom>=4.0",
     "jsonschema>=4.20",
     "hypothesis>=6.151.12",
+    "statsmodels>=0.14.0",
     "scalene>=1.5.55",
     "py-spy>=0.4.1",
     "bandit>=1.9.4",

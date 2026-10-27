@@ -180,6 +180,9 @@ tests/unit/execution/test_order_lifecycle_deep.py
 # L2 killtest substrate (NARROW — prevent-regen only; selected research
 # datasets and the canonical Python data API are tracked explicitly).
 data/*
+# Schema examples contain governance metadata only, never licensed market inputs.
+!data/cme_trajectory_trace_example.json
+!data/physics_boundary_report.json
 # The component-test routing matrix is normative repository data, not a local dataset.
 !data/testing/
 # Research design contract is canonical code-adjacent metadata, not empirical data.

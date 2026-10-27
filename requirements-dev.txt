@@ -58,3 +58,7 @@ pytest-timeout>=2.3.0
 # declare it in the dev fallback so a lock-less dev install can still collect+run
 # that test instead of ImportError-ing on `import ot`.
 POT>=0.9.5
+
+# The estimator's stationarity gate must execute real ADF tests in CI.
+# Absence of statsmodels is a tested invalid-estimate path, never evidence of stationarity.
+statsmodels==0.14.6

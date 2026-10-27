@@ -817,11 +817,11 @@ jobs:
                       unchanged.append(json.dumps(item, sort_keys=True))
               return sorted(unchanged), regexes
 
-          old_other, old_patterns = normalize_filters(previous)
+          old_other, _old_patterns = normalize_filters(previous)
           new_other, new_patterns = normalize_filters(current)
           assert old_other == new_other, "non-file filter policy changed"
-          assert old_patterns <= new_patterns <= (old_patterns | {declared_regex}), (
-              "security scanner filter widened or narrowed unexpectedly"
+          assert new_patterns == {declared_regex}, (
+              "security scanner file filters differ from the declared workflow policy"
           )
           print("SEC-006: only expected metadata changed; no new secrets.")
           PY

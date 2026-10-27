@@ -16,9 +16,9 @@ sys.modules["gw"] = gw
 s.loader.exec_module(gw)
 
 
-# Issuer secret held by the trusted proposer; NOT the public authority string.
-# Forging a cert now requires this secret, not merely knowledge of "AUTH_PUBLISH".
-ISSUER_SECRET = "wp3-issuer-secret-AUTH_PUBLISH"
+# Public synthetic fixture key for this in-memory falsification script only.
+# The attacker case lacks a signature; no deployment credential is provisioned.
+ISSUER_SECRET = "ebsvap-wp3-issuer-fixture-not-real"  # pragma: allowlist secret
 
 
 def fresh():

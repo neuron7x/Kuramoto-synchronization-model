@@ -41,6 +41,21 @@ _DIGEST_RE = re.compile(r"@sha256:[0-9a-f]{64}\b")
 _ROOT_USERS = {"root", "0", "root:root", "0:0"}
 
 
+def extract_hermetic_requirements(text: str) -> str:
+    """Extract the exact dependency heredoc installed by the hermetic image.
+
+    Missing, empty, unterminated or repeated blocks fail closed; CI must never
+    audit an empty or arbitrarily selected dependency set.
+    """
+    header = "COPY <<'HERMETIC_REQS' /opt/hermetic-requirements.txt\n"
+    if text.count(header) != 1:
+        raise ValueError("expected exactly one hermetic requirements heredoc")
+    body, delimiter, _ = text.partition(header)[2].partition("\nHERMETIC_REQS\n")
+    if not delimiter or not re.search(r"(?m)^[A-Za-z0-9][A-Za-z0-9_.-]*==\S+", body):
+        raise ValueError("empty or unterminated hermetic requirements heredoc")
+    return body + "\n"
+
+
 def _logical_instructions(text: str) -> list[str]:
     """Strip comments/blank lines and join backslash-continued Dockerfile lines."""
     instrs: list[str] = []
@@ -139,8 +154,10 @@ def main() -> int:
             print(f"  - {v}", file=sys.stderr)
         return 1
 
-    print(f"[{GATE_ID}] PASS -- Dockerfile.repro is digest-pinned, non-root, "
-          "hash-locked, deterministic; image_digest.json present.")
+    print(
+        f"[{GATE_ID}] PASS -- Dockerfile.repro is digest-pinned, non-root, "
+        "hash-locked, deterministic; image_digest.json present."
+    )
     return 0
 
 

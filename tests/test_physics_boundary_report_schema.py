@@ -4,6 +4,8 @@ import json
 from pathlib import Path
 from typing import Any
 
+import pytest
+
 ROOT = Path(__file__).resolve().parents[1]
 SCHEMA_PATH = ROOT / "schemas" / "physics_boundary_report.schema.json"
 REPORT_PATH = ROOT / "data" / "physics_boundary_report.json"
@@ -84,6 +86,7 @@ def test_physics_boundary_report_matches_schema() -> None:
     schema = json.loads(SCHEMA_PATH.read_text(encoding="utf-8"))
     report = json.loads(REPORT_PATH.read_text(encoding="utf-8"))
 
+    _validate(schema, report)
     try:
         import jsonschema
     except Exception:
@@ -96,6 +99,54 @@ def test_physics_boundary_report_matches_schema() -> None:
     assert report["first_missing_condition"].strip()
     assert report["role_2_handoff"]["files_to_create"]
     assert report["role_2_handoff"]["validation_commands"]
-    assert not report["claim_audit"]["forbidden_claims_detected"], (
-        "forbidden claims must be blocked before Role 1 can pass"
+    assert not report["claim_audit"][
+        "forbidden_claims_detected"
+    ], "forbidden claims must be blocked before Role 1 can pass"
+
+
+def test_historical_proxy_report_does_not_claim_new_verification() -> None:
+    report = json.loads(REPORT_PATH.read_text(encoding="utf-8"))
+    audit = (ROOT / "docs" / "PHYSICS_BOUNDARY_AUDIT.md").read_text(encoding="utf-8")
+    assert report["verdict"] == "FAIL"
+    assert all("did not execute" in claim for claim in report["claim_audit"]["tested_claims"])
+    assert all(
+        metric["status"] in {"PROXY", "MISSING"}
+        for metric in report["measurement_model"]["metrics"]
     )
+    assert all(
+        item["current_status"] in {"UNKNOWN", "MISSING"}
+        for item in report["verification_model"]["verifiers"]
+    )
+    scores = report["quality_score"]
+    assert scores["total"] == sum(value for name, value in scores.items() if name != "total")
+    for name, value in scores.items():
+        if name == "total":
+            assert f"**{value}/90**" in audit
+        else:
+            assert f"| {name} | {value} |" in audit
+
+
+@pytest.mark.parametrize("field", ["verdict", "quality_score", "role_2_handoff"])
+def test_missing_report_evidence_is_rejected(field: str) -> None:
+    schema = json.loads(SCHEMA_PATH.read_text(encoding="utf-8"))
+    report = json.loads(REPORT_PATH.read_text(encoding="utf-8"))
+    del report[field]
+    with pytest.raises(SchemaError, match="missing required keys"):
+        _validate(schema, report)
+
+
+@pytest.mark.parametrize("score", [-1, 11, True])
+def test_invalid_quality_score_is_rejected(score: int | bool) -> None:
+    schema = json.loads(SCHEMA_PATH.read_text(encoding="utf-8"))
+    report = json.loads(REPORT_PATH.read_text(encoding="utf-8"))
+    report["quality_score"]["claim_governance"] = score
+    with pytest.raises(SchemaError, match="minimum|maximum|expected integer"):
+        _validate(schema, report)
+
+
+def test_extra_report_fields_are_rejected() -> None:
+    schema = json.loads(SCHEMA_PATH.read_text(encoding="utf-8"))
+    report = json.loads(REPORT_PATH.read_text(encoding="utf-8"))
+    report["claim_audit"]["unverified_promotion"] = True
+    with pytest.raises(SchemaError, match="unexpected keys"):
+        _validate(schema, report)

@@ -321,7 +321,7 @@ def _run_once(args: argparse.Namespace) -> int:
             _ = _invariant_runbook(params, strat)
             print("verify-only: OK")
             return 0
-        except Exception as exc:
+        except Exception as exc:  # noqa: BLE001
             sys.stderr.write(f"verify-only FAILED: {exc}\n")
             return 5
 

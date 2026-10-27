@@ -88,6 +88,20 @@ Both are declared in `requirements-dev.txt`; pin them to the versions already in
 the dev lock and pass them as an additional input file when regenerating so they
 resolve and receive `--hash` entries. Verify no other version drifts afterward.
 
+### ADF stationarity test dependency
+
+`statsmodels` is declared in the `dev` extra as well as `neuro_advanced`, because
+the standard Python matrix executes the PSD gamma estimator's ADF stationarity
+controls. Installing only the runtime and dev locks must therefore provide it.
+The dev lock pins `statsmodels==0.14.6` and its additional dependency
+`patsy==1.0.2`; their release hashes come from the corresponding PyPI release
+metadata. The existing NumPy, SciPy, pandas and packaging pins satisfy this
+release's other requirements and remain unchanged.
+
+The estimator rejects an estimate when ADF is unavailable or fails. The test
+suite exercises this negative path explicitly; an absent optional dependency
+must never be interpreted as evidence of stationarity.
+
 ## Build backends now pinned + hashed (FUP-009)
 
 The locks are regenerated with **`--allow-unsafe`**, so pip-compile's "unsafe"

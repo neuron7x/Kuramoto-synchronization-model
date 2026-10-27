@@ -98,6 +98,11 @@ def _is_excluded(path: Path, repo_root: Path) -> bool:
         parts = path.relative_to(repo_root).parts
     except ValueError:
         parts = path.parts
+    # Canonical archive root (CODE_QUALITY_MANIFEST.json): preserved fork
+    # history, not first-party runtime source. Do not exempt a nested package
+    # merely because it happens to use the same directory name.
+    if parts and parts[0] == "archive_snapshots":
+        return True
     if any(part in _EXCLUDED_DIR_PARTS or part.endswith(".egg-info") for part in parts):
         return True
     # ``.claude`` holds agent worktrees, caches, and ledgers — none are the

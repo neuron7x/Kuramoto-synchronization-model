@@ -963,7 +963,7 @@ def verify_m2_eligibility(
             lambda_value=float(lambda_value),
             N=int(N),
         )
-    except Exception as exc:
+    except Exception as exc:  # noqa: BLE001
         # Substrate construction failed → eligibility is INDETERMINATE
         # (we cannot decide without the precursor). Wrap rather than
         # propagate so the verifier's contract is "always returns a
@@ -1372,7 +1372,7 @@ def verify_m2_node_payload_eligibility(
             lambda_value=float(lambda_value),
             N=int(N),
         )
-    except Exception as exc:
+    except Exception as exc:  # noqa: BLE001
         return M2EligibilityVerdict(
             status="INDETERMINATE_M2_NODE_PAYLOAD_PROVENANCE_MISSING",
             substrate_id=sub_id,
@@ -1677,7 +1677,7 @@ def verify_m2_injection_sequence_eligibility(
             lambda_value=float(lambda_value),
             N=int(N),
         )
-    except Exception as exc:
+    except Exception as exc:  # noqa: BLE001
         return M2EligibilityVerdict(
             status="INDETERMINATE_M2_INJECTION_SEQUENCE_PROVENANCE_MISSING",
             substrate_id=sub_id,
@@ -2532,7 +2532,7 @@ def verify_m3_eligibility(
     # ---- Criterion 1: precursor extraction + shape + numerical checks
     try:
         real = substrate.realize(N=int(N), lambda_=float(lambda_value), seed=int(base_seed))
-    except Exception as exc:
+    except Exception as exc:  # noqa: BLE001
         return M3EligibilityVerdict(
             status="INDETERMINATE_M3_PROVENANCE_MISSING",
             substrate_id=sub_id,
@@ -2887,8 +2887,8 @@ def realize_m3_null(
     )
     if verdict.status != _M3_ELIGIBLE:
         raise M3NotEligibleError(verdict)
-    assert verdict.summary is not None  # verifier post-condition
-    assert verdict.match_report is not None  # verifier post-condition
+    assert verdict.summary is not None  # noqa: S101  # verifier post-condition
+    assert verdict.match_report is not None  # noqa: S101  # verifier post-condition
 
     block_labels = _substrate_block_labels(substrate, int(N))
     sub_id = str(substrate.id)

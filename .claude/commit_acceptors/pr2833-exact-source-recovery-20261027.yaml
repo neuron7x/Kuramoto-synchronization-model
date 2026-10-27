@@ -1,0 +1,128 @@
+# Bounded restoration from an identified upstream snapshot; no hash repinning,
+# research-tier promotion, or replacement of the current ancestry contract.
+id: pr2833-exact-source-recovery-20261027
+status: ACTIVE
+claim_type: correctness
+promise: >-
+  Restore two frozen Python sources and two missing governance examples to
+  their exact bytes in upstream commit
+  174aef0c46dc25a6b59bc8fb1457d20e13a38c11. Preserve the frozen SHA256 pins,
+  Python ASTs, historical proxy decisions, failed boundary verdict, and
+  unknown verifier statuses. Reject malformed example evidence through the
+  existing schemas and validators. Current-fork ancestry remains blocked;
+  this repair does not claim full CI, release readiness, or new empiricism.
+diff_scope:
+  changed_files:
+    - path: ".claude/commit_acceptors/pr2833-exact-source-recovery-20261027.yaml"
+    - path: "docs/ci/pr2833_exact_source_recovery.md"
+    - path: ".gitignore"
+    - path: "data/cme_trajectory_trace_example.json"
+    - path: "data/physics_boundary_report.json"
+    - path: "tests/test_cme_trajectory_trace_schema.py"
+    - path: "tests/test_physics_boundary_report_schema.py"
+    - path: "scripts/run_cross_asset_kuramoto_shadow.py"
+    - path: "research/systemic_risk/d002g_null_mechanisms.py"
+  forbidden_paths:
+    - "results/"
+    - "research/calibration/grid_kuramoto/SUPERSESSIONS.yaml"
+    - "tests/research/calibration/test_calib_lineage_forcing_functions.py"
+    - "tests/systemic_risk/test_d002h_gate_f_authorization.py"
+    - "tests/systemic_risk/test_d002h_gate_g_ci_lock.py"
+    - "schemas/"
+required_python_symbols:
+  - "scripts/run_cross_asset_kuramoto_shadow.py::main"
+  - "research/systemic_risk/d002g_null_mechanisms.py::verify_m2_eligibility"
+  - "tests/test_cme_trajectory_trace_schema.py::test_example_remains_proxy_without_execution_evidence"
+  - "tests/test_cme_trajectory_trace_schema.py::test_inconsistent_score_total_is_rejected"
+  - "tests/test_physics_boundary_report_schema.py::test_historical_proxy_report_does_not_claim_new_verification"
+  - "tests/test_physics_boundary_report_schema.py::test_invalid_quality_score_is_rejected"
+expected_signal: >-
+  All four restored files match the listed upstream SHA256 digests. Frozen
+  Kuramoto contract, gate-runner, and D002H Gate E tests pass. Governance
+  examples satisfy the original schemas; missing fields, invalid scores,
+  inconsistent totals, and extra fields are rejected. Historical S5_PROXY,
+  UNKNOWN/MISSING verification, FAIL, and the documented proxy score 54/90
+  remain intact. Eight original-history anchors do not acquire current-fork
+  ancestry through this restoration; that separate gate remains blocked.
+measurement_command: >-
+  bash -c 'python -m pytest -q --override-ini addopts=""
+  tests/research/robustness/test_kuramoto_contract.py
+  tests/research/robustness/test_kuramoto_gate_runner.py
+  tests/systemic_risk/test_d002h_gate_e_locked_files.py
+  tests/test_cme_trajectory_trace_schema.py
+  tests/test_physics_boundary_report_schema.py
+  && python tools/research/record_cme_trajectory_trace.py
+  data/cme_trajectory_trace_example.json
+  && ruff check --no-force-exclude
+  tests/test_cme_trajectory_trace_schema.py
+  tests/test_physics_boundary_report_schema.py
+  && python tools/commit_acceptor/validate_commit_acceptor.py
+  --acceptor-id pr2833-exact-source-recovery-20261027
+  --summary-out tmp/pr2833_exact_source_acceptor.json'
+signal_artifact: "tmp/pr2833_targeted_replay.log"
+falsifier:
+  command: >-
+    bash -c 'python -m pytest -q --override-ini addopts=""
+    tests/test_cme_trajectory_trace_schema.py
+    tests/test_physics_boundary_report_schema.py
+    tests/research/robustness/test_kuramoto_contract.py::TestFrozenArtifactManifest::test_hash_mismatch_raises_fail_closed
+    tests/systemic_risk/test_d002h_gate_e_locked_files.py::test_gate_e_all_pinned_shas_byte_exact;
+    probe_status=$?;
+    case "$probe_status" in
+    0) ;;
+    1) exit 0 ;;
+    *) exit "$probe_status" ;;
+    esac;
+    python tools/commit_acceptor/validate_commit_acceptor.py
+    --acceptor-id pr2833-exact-source-recovery-20261027
+    --summary-out tmp/pr2833_exact_source_acceptor.json;
+    probe_status=$?;
+    case "$probe_status" in
+    0) exit 1 ;;
+    1) exit 0 ;;
+    *) exit "$probe_status" ;;
+    esac'
+  description: >-
+    Exit 0 falsifies the promise when a test assertion or acceptor validation
+    detects byte drift, accepted malformed evidence, or promoted historical
+    proxy status. Exit 1 means both probes passed and found no falsification.
+    Infrastructure and collection errors retain their original exit codes
+    above 1. Upstream ancestry is not a substitute for the existing
+    current-fork ancestry checks.
+rollback_command: >-
+  bash -c 'git restore --source=77f4771ddb515f41de5e580a219cf5f2eec7f851
+  --worktree -- .gitignore
+  tests/test_cme_trajectory_trace_schema.py
+  tests/test_physics_boundary_report_schema.py
+  scripts/run_cross_asset_kuramoto_shadow.py
+  research/systemic_risk/d002g_null_mechanisms.py
+  && rm -f --
+  .claude/commit_acceptors/pr2833-exact-source-recovery-20261027.yaml
+  docs/ci/pr2833_exact_source_recovery.md
+  data/cme_trajectory_trace_example.json data/physics_boundary_report.json'
+rollback_verification_command: >-
+  bash -c 'git diff --exit-code 77f4771ddb515f41de5e580a219cf5f2eec7f851 --
+  .gitignore
+  tests/test_cme_trajectory_trace_schema.py
+  tests/test_physics_boundary_report_schema.py
+  scripts/run_cross_asset_kuramoto_shadow.py
+  research/systemic_risk/d002g_null_mechanisms.py
+  && for rollback_path in
+  .claude/commit_acceptors/pr2833-exact-source-recovery-20261027.yaml
+  docs/ci/pr2833_exact_source_recovery.md
+  data/cme_trajectory_trace_example.json data/physics_boundary_report.json;
+  do
+  if [ -e "$rollback_path" ] || [ -L "$rollback_path" ]; then exit 1; fi;
+  done'
+memory_update_type: append
+ledger_path: ".claude/commit_acceptors/pr2833-exact-source-recovery-20261027.yaml"
+report_path: "docs/ci/pr2833_exact_source_recovery.md"
+evidence:
+  - path: "scripts/run_cross_asset_kuramoto_shadow.py"
+    sha256: "6cdf0027a71aef08be09fca236abf385eef9d174417c0347762acca345240b7c"
+  - path: "research/systemic_risk/d002g_null_mechanisms.py"
+    sha256: "c7e275191454e1e961d5a079a21b6e1dbfcbc1661d48ddf14d0d0c39a426f257"
+  - path: "data/cme_trajectory_trace_example.json"
+    sha256: "d9f0afcc0567b81a60de585835000f5f1e287306140eb5b1bca4ded45c50168f"
+  - path: "data/physics_boundary_report.json"
+    sha256: "1f9509861714e8e90a8253761bae2c1ac1fbc9ef0ceeaebdc1b3ab37cffd9dfa"

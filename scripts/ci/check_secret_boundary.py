@@ -50,6 +50,7 @@ Exit codes:
 from __future__ import annotations
 
 import argparse
+import ast
 import hashlib
 import json
 import os
@@ -108,6 +109,10 @@ _RE_ASSIGN = re.compile(
     r"(?i)(?:api[_-]?key|secret[_-]?key|secret|token|password|passwd|pwd|"
     r"access[_-]?key)\s*[:=]\s*['\"]?([A-Za-z0-9/+=_\-]{16,})['\"]?"
 )
+_RE_SYMBOLIC_LABEL = re.compile(
+    r"\b(?P<name>[A-Z][A-Z0-9_]+)\s*=\s*"
+    r"(?P<quote>['\"])(?P<value>[a-z][a-z0-9_]+)(?P=quote)(?=\s*(?:$|[#;`]))"
+)
 
 _BINARY_EXT = {
     ".png",
@@ -138,6 +143,36 @@ def _fingerprint(secret: str) -> str:
 def _is_placeholder(value: str) -> bool:
     low = value.lower()
     return any(tok in low for tok in _PLACEHOLDER_TOKENS)
+
+
+def _is_symbolic_label(line: str, assignment: re.Match[str]) -> bool:
+    """Recognize public enum-style labels, not arbitrary credential values.
+
+    The entire uppercase name must spell its own quoted lowercase value.
+    A generic ``token =`` or a different value still goes through the scanner.
+    Span containment also prevents an adjacent label from hiding a secret.
+    """
+    return any(
+        label.group("name").lower() == label.group("value")
+        and label.start() <= assignment.start()
+        and assignment.end() <= label.end()
+        for label in _RE_SYMBOLIC_LABEL.finditer(line)
+    )
+
+
+def _python_reference_spans(text: str) -> set[tuple[int, int, int]]:
+    """Locate name-valued assignments/keywords; strings remain scannable."""
+    try:
+        tree = ast.parse(text)
+    except (SyntaxError, ValueError):
+        return set()
+    spans = set()
+    for node in ast.walk(tree):
+        if isinstance(node, (ast.Assign, ast.AnnAssign, ast.keyword)):
+            value = node.value
+            if isinstance(value, ast.Name) and value.end_col_offset is not None:
+                spans.add((value.lineno, value.col_offset, value.end_col_offset))
+    return spans
 
 
 def _norm_rel(rel_path: str) -> str:
@@ -252,6 +287,7 @@ def scan_with_regex(source: Path) -> list[dict[str, Any]]:
             text = path.read_text(encoding="utf-8", errors="replace")
         except (OSError, ValueError):
             continue
+        references = _python_reference_spans(text) if path.suffix == ".py" else set()
         for lineno, line in enumerate(text.splitlines(), start=1):
             for rule, rx in (
                 ("aws-access-token", _RE_AWS),
@@ -272,8 +308,18 @@ def scan_with_regex(source: Path) -> list[dict[str, Any]]:
                             "match": _fingerprint(secret),
                         }
                     )
-            m = _RE_ASSIGN.search(line)
-            if m and not _is_placeholder(m.group(1)):
+            for m in _RE_ASSIGN.finditer(line):
+                if _is_placeholder(m.group(1)):
+                    continue
+                if _is_symbolic_label(line, m):
+                    continue
+                span = (
+                    lineno,
+                    len(line[: m.start(1)].encode("utf-8")),
+                    len(line[: m.end(1)].encode("utf-8")),
+                )
+                if span in references:
+                    continue
                 # A function call is not a hardcoded credential. E.g.
                 # token = compute_token_cost(...) is numeric accounting,
                 # not a secret literal. Keep scanning actual assignments.
