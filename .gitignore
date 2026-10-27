@@ -184,6 +184,8 @@ data/*
 !data/testing/
 # Research design contract is canonical code-adjacent metadata, not empirical data.
 !data/research/
+# Research population frame is SHA-bound to a real historical Git tree.
+!data/frames/
 # Neuro-physics contradiction-ledger assurance case is a tracked audit artifact.
 !data/audit/
 !data/audit/**
