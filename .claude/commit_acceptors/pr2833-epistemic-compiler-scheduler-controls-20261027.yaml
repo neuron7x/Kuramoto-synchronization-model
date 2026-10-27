@@ -1,0 +1,64 @@
+# Bounded debt reduction: no evidence or claim-tier promotion.
+id: pr2833-epistemic-compiler-scheduler-controls-20261027
+status: ACTIVE
+claim_type: correctness
+promise: >-
+  The structured claim compiler uses explicit TypedDict/Unpack inputs instead
+  of a type-ignore while retaining the same runtime validation. The experiment
+  scheduler is covered by exact weighted-score, independent weighting,
+  deterministic tie-break, and negative-input rejection controls. Existing
+  thresholds, research status, and frozen evidence remain unchanged.
+diff_scope:
+  changed_files:
+    - path: ".claude/commit_acceptors/pr2833-epistemic-compiler-scheduler-controls-20261027.yaml"
+    - path: "geosync/epistemic/compiler.py"
+    - path: "tests/epistemic_kernel/test_lineage_scheduler.py"
+  forbidden_paths:
+    - "research/"
+    - "data/"
+    - "results/"
+    - "artifacts/"
+    - "CLAIMS.md"
+    - "FORBIDDEN_CLAIMS.md"
+    - "geosync/epistemic/scheduler.py"
+required_python_symbols:
+  - "geosync/epistemic/compiler.py::ClaimContractInputs"
+  - "geosync/epistemic/compiler.py::compile_structured_claim"
+  - "tests/epistemic_kernel/test_lineage_scheduler.py::LineageSchedulerTests"
+expected_signal: >-
+  Nine lineage/scheduler tests pass, each weighted-score and invalid-input
+  control is exercised, compiler runtime validation remains unchanged, and
+  Python 3.11/3.12 type checking accepts the required keyword contract.
+  The root manifest is regenerated from changed source bytes, not repinned
+  to conceal a frozen artifact mismatch.
+measurement_command: >-
+  python -m pytest -q --override-ini addopts=''
+  tests/epistemic_kernel/test_lineage_scheduler.py &&
+  python -m mypy geosync/epistemic/compiler.py &&
+  python -m black --check geosync/epistemic/compiler.py
+  tests/epistemic_kernel/test_lineage_scheduler.py
+signal_artifact: "tmp/pr2833_epistemic_scheduler_controls.log"
+falsifier:
+  command: >-
+    python -c 'from geosync.epistemic.models import ExperimentCandidate;
+    from geosync.epistemic.scheduler import epistemic_score;
+    c=ExperimentCandidate("falsifier",-0.1,1,1,1);
+    exec("try:\n epistemic_score(c)\nexcept ValueError:\n raise SystemExit(1)\nraise SystemExit(0)")'
+  description: >-
+    Exit 0 falsifies the promise if a negative information-gain input is
+    silently accepted; the intact scheduler raises ValueError (exit 1).
+    Collection/environment failures are not proof of acceptance.
+rollback_command: >-
+  bash -c 'git restore --source=96a8f48b4cb6290db7aac9446cbc5bd86a27b821
+  --worktree -- geosync/epistemic/compiler.py
+  tests/epistemic_kernel/test_lineage_scheduler.py MANIFEST.sha256 &&
+  rm -f .claude/commit_acceptors/pr2833-epistemic-compiler-scheduler-controls-20261027.yaml'
+rollback_verification_command: >-
+  bash -c 'git diff --exit-code 96a8f48b4cb6290db7aac9446cbc5bd86a27b821 --
+  geosync/epistemic/compiler.py
+  tests/epistemic_kernel/test_lineage_scheduler.py MANIFEST.sha256 &&
+  test ! -e .claude/commit_acceptors/pr2833-epistemic-compiler-scheduler-controls-20261027.yaml'
+memory_update_type: append
+ledger_path: ".claude/commit_acceptors/pr2833-epistemic-compiler-scheduler-controls-20261027.yaml"
+report_path: ".claude/commit_acceptors/pr2833-epistemic-compiler-scheduler-controls-20261027.yaml"
+evidence: []
