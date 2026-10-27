@@ -18,6 +18,8 @@ diff_scope:
     - path: "data/research/inference_transformer_blocks.v1.json"
     - path: ".gitignore"
     - path: ".github/workflows/geosync-manifest-repair-once.yml"
+    - path: "data/frames/flagship_population.json"
+    - path: "docs/POPULATION_FRAME_POLICY.md"
   forbidden_paths:
     - "core/"
     - "execution/"
