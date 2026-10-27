@@ -1,0 +1,84 @@
+# Diff-bound commit acceptor — pay down the red PR gates on main (governance side).
+#
+#   * commit-acceptor-validation
+#       - ecp-as-marginal-robustness-iteration-005 and ecp-as-soundness-stress-
+#         iteration-004 declared claim_type "validation", which the policy did not
+#         enumerate. The category is real (a measured benchmark / stress run whose
+#         promise is the reported result boundary), so it is declared in
+#         .claude/commit_acceptor_policy.yaml with cap 12 rather than relabelled.
+#       - seven ecp-as acceptors lacked required_python_symbols and/or
+#         diff_scope.forbidden_paths: symbols derived from the public defs of the
+#         geosync files they bind, forbidden_paths = execution/, trading/.
+#       - four *-contract-executable-gate acceptors pinned evidence digests of
+#         tests/unit/indicators/test_*_contract.py from before 8fee3d18
+#         (2026-08-12); the tests pass (107 passed) and the pins are refreshed to
+#         the committed bytes.
+#   * python-quality, secrets-supply-chain, fast-diagnostic-shard (3)/(4)
+#       - requirements-dev.lock is compiled under Python 3.12; jaraco-context
+#         requires backports.tarfile only under python_version < "3.12", so the
+#         3.11 lanes failed `pip --require-hashes` on an unpinned transitive.
+#         backports-tarfile==1.2.0 is pinned with both PyPI digests as a curated
+#         addendum, documented in docs/DEPENDENCY_LOCK_POLICY.md. G-LOCK-HASHES
+#         passes; a 3.11 dry-run install in hash mode resolves.
+#   * dependency-review
+#       - "Dependency graph is not enabled": repository setting, enabled on
+#         2026-10-27 (Dependabot alerts turned on, which enables the graph). Not a
+#         file change; recorded here so the cause stays auditable.
+
+id: main-gate-debt-governance-paydown-20261027
+status: ACTIVE
+claim_type: governance
+promise: >-
+  After this PR lands, every commit acceptor under .claude/commit_acceptors/
+  validates statically with zero errors, the policy enumerates every claim_type
+  in use, the dev lock installs under Python 3.11 and 3.12 in hash-checking
+  mode, and the lock policy documents the backports.tarfile addendum.
+diff_scope:
+  changed_files:
+    - path: ".claude/commit_acceptors/main-gate-debt-governance-paydown-20261027.yaml"
+    - path: ".claude/commit_acceptors/abstraction-contract-executable-gate.yaml"
+    - path: ".claude/commit_acceptors/aggregation-contract-executable-gate.yaml"
+    - path: ".claude/commit_acceptors/normalization-contract-executable-gate.yaml"
+    - path: ".claude/commit_acceptors/value-target-contract-executable-gate.yaml"
+    - path: ".claude/commit_acceptors/ecp-as-boundary-iteration-004.yaml"
+    - path: ".claude/commit_acceptors/ecp-as-boundary-iteration-005.yaml"
+    - path: ".claude/commit_acceptors/ecp-as-exact-certificates-iteration-006.yaml"
+    - path: ".claude/commit_acceptors/ecp-as-lineage-quorum-iteration-004.yaml"
+    - path: ".claude/commit_acceptors/ecp-as-marginal-robustness-iteration-005.yaml"
+    - path: ".claude/commit_acceptors/ecp-as-proof-boundary-iteration-006.yaml"
+    - path: ".claude/commit_acceptors/ecp-as-risk-certificate-iteration-005.yaml"
+    - path: ".claude/commit_acceptors/ecp-as-soundness-stress-iteration-004.yaml"
+    - path: "docs/DEPENDENCY_LOCK_POLICY.md"
+  forbidden_paths:
+    - "trading/"
+    - "execution/"
+    - "forecast/"
+    - "policy/"
+    - "core/"
+    - "geosync/"
+required_python_symbols: []
+expected_signal: >-
+  `python tools/commit_acceptor/validate_commit_acceptor.py` prints no ERROR line;
+  `python scripts/ci/check_acceptor_command_syntax.py` reports OK;
+  `python scripts/ci/check_lock_hashes.py` reports PASS over every lock.
+measurement_command: >-
+  bash -c 'python tools/commit_acceptor/validate_commit_acceptor.py 2>&1 | ( ! grep -q "^ERROR" )
+  && python scripts/ci/check_acceptor_command_syntax.py && python scripts/ci/check_lock_hashes.py'
+signal_artifact: "tmp/main_gate_debt_governance_paydown.log"
+falsifier:
+  command: >-
+    bash -c 'grep -q "^  validation: " .claude/commit_acceptor_policy.yaml
+    && grep -q "^backports-tarfile==1.2.0" requirements-dev.lock
+    && python -c "import yaml,glob,sys; bad=[p for p in glob.glob(\".claude/commit_acceptors/ecp-as-*.yaml\") if \"required_python_symbols\" not in yaml.safe_load(open(p)) or \"forbidden_paths\" not in (yaml.safe_load(open(p)).get(\"diff_scope\") or {})]; sys.exit(1 if bad else 0)"'
+  description: >-
+    Exits non-zero if the validation claim type disappears from the policy, if
+    the backports-tarfile pin leaves the dev lock, or if any ecp-as acceptor
+    loses its required_python_symbols or forbidden_paths again.
+rollback_command: >-
+  bash -c 'git checkout HEAD~1 -- .claude/commit_acceptors .claude/commit_acceptor_policy.yaml requirements-dev.lock docs/DEPENDENCY_LOCK_POLICY.md && rm -f .claude/commit_acceptors/main-gate-debt-governance-paydown-20261027.yaml'
+rollback_verification_command: >-
+  bash -c 'test ! -f .claude/commit_acceptors/main-gate-debt-governance-paydown-20261027.yaml'
+memory_update_type: append
+ledger_path: ".claude/commit_acceptors/main-gate-debt-governance-paydown-20261027.yaml"
+report_path: "docs/DEPENDENCY_LOCK_POLICY.md"
+evidence: []

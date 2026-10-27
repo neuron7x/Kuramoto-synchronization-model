@@ -1,0 +1,132 @@
+# Diff-bound commit acceptor — pay down the red PR gates on main (code side).
+#
+# Every PR against main (#2829–#2832) carried the same eleven red checks. Each
+# one traced to debt on main, not to the PR diff. This acceptor binds the code
+# changes that close them, each with its measured differential:
+#
+#   * code-hygiene-gate
+#       - archive_snapshots/ (fork backup recorded 2026-08-12) was an unclassified
+#         top-level package → declared in docs/CODE_QUALITY_MANIFEST.json
+#         excluded_roots (deliberately ungated: it is history, not runtime).
+#       - geosync/epistemic/adjudication.py::ExternalAdjudicationPolicy.evaluate
+#         (84 LOC), benchmark.py::build_core_scenarios (84 LOC) and
+#         rational_certificates.py::verify_rational_certificate (CC 19) were over
+#         the gated budget (80 LOC / CC 15). Refactored behaviour-preserving:
+#         evaluate 40 LOC / CC 8 via table constants + two helpers; the 31
+#         scenarios split into seven family builders (asdict rows identical to
+#         main, order identical); the certificate split into primal witness and
+#         dual majorant helpers (27 LOC / CC 8). tests/epistemic_kernel green.
+#   * import-architecture-gate
+#       - archive_snapshots/ added to _NON_SOURCE_PREFIXES (same classification).
+#       - five benchmarks/epistemic_control_plane/iteration_00N/run_*.py mutated
+#         sys.path although their acceptors invoke them with PYTHONPATH=. ;
+#         scripts/ci/emit_metric_signals.py inserted its own directory, which the
+#         interpreter already places first. Hacks removed; every script still
+#         imports under the documented invocation.
+#   * physics-test-validation (strict files)
+#       - test_T11 / test_T12 / test_T16 carried 18 tests without INV-* grounding
+#         plus one L3/L4/L5 cluster. Each is now bound to the invariant it
+#         witnesses (INV-DA1/DA8, INV-5HT1, INV-5HT7, INV-YV1 L2, INV-KELLY2,
+#         INV-SB2), extended from a single probe to a sweep where the invariant
+#         type demands many inputs, with five-field assertion messages.
+#         Validator: 0 issues on all eleven strict files.
+#   * repo-policy
+#       - scripts/ci/check_manifest_hashes.py rglob'd into archive_snapshots/ and
+#         verified a frozen fork manifest against this tree (missing
+#         stakeholders/*.csv, stale responsible_ai_program.md digest). Archived
+#         snapshot prefixes are now skipped; tests/ci/test_manifest_hashes green.
+#       - scripts/ci/emit_metric_signals.py declared in INVENTORY.json.
+#   * full suite (not a PR gate, surfaced by tests/ci/test_ratchets_enforced.py)
+#       - tests/test_geosync_proof_weighting.py skipped two controls forever
+#         (no committed audit.json): replaced by controls over an executed audit
+#         built in tmp_path. Skip ratchet held.
+#       - benchmarks/.../iteration_003/historical_cases.json: the declared
+#         source_digest of case control-gene-model-author-name did not verify;
+#         Crossref (10.1038/s41598-026-71098-w) confirms the title reads
+#         "accurate" — the manifest carried "acurate". One-character fix; the
+#         declared digest verifies without recomputation.
+#
+# Strict scope: no physics source changed; no model code changed; no claim tier
+# moved. Forbidden tiers: none asserted.
+
+id: main-gate-debt-code-paydown-20261027
+status: ACTIVE
+claim_type: refactor
+promise: >-
+  After this PR lands, code-hygiene-gate, import-architecture-gate,
+  physics-test-validation and repo-policy pass on main with no ratchet loosened:
+  archive_snapshots/ is classified as ungated history in every gate that scans
+  the tree, the three over-budget geosync/epistemic functions are within the
+  gated budget with identical behaviour, no first-party script mutates
+  sys.path, the eleven strict physics files validate with zero issues, every
+  tracked scripts/ci file is declared in INVENTORY.json, the proof-weighting
+  controls run instead of skipping, and the historical-case source digest
+  verifies.
+diff_scope:
+  changed_files:
+    - path: ".claude/commit_acceptors/main-gate-debt-code-paydown-20261027.yaml"
+    - path: "geosync/epistemic/adjudication.py"
+    - path: "geosync/epistemic/benchmark.py"
+    - path: "geosync/epistemic/rational_certificates.py"
+    - path: "benchmarks/epistemic_control_plane/iteration_002/run_benchmark.py"
+    - path: "benchmarks/epistemic_control_plane/iteration_003/run_historical_replay.py"
+    - path: "benchmarks/epistemic_control_plane/iteration_003/historical_cases.json"
+    - path: "benchmarks/epistemic_control_plane/iteration_004/run_control_stress.py"
+    - path: "benchmarks/epistemic_control_plane/iteration_005/run_marginal_robustness.py"
+    - path: "benchmarks/epistemic_control_plane/iteration_006/run_exact_certificates.py"
+    - path: "scripts/ci/emit_metric_signals.py"
+    - path: "scripts/ci/check_import_architecture.py"
+    - path: "scripts/ci/check_manifest_hashes.py"
+    - path: "tests/unit/physics/test_T11_dopamine_algebraic.py"
+    - path: "tests/unit/physics/test_T12_serotonin_stability.py"
+    - path: "tests/unit/physics/test_T16_signalbus_dag.py"
+    - path: "tests/test_geosync_proof_weighting.py"
+    - path: "docs/CODE_QUALITY_MANIFEST.json"
+  forbidden_paths:
+    - "trading/"
+    - "execution/"
+    - "forecast/"
+    - "policy/"
+    - "core/"
+    - "geosync/kuramoto/"
+    - "geosync/proof/"
+    - ".claude/physics/"
+required_python_symbols:
+  - "geosync/epistemic/adjudication.py::ExternalAdjudicationPolicy"
+  - "geosync/epistemic/benchmark.py::build_core_scenarios"
+  - "geosync/epistemic/rational_certificates.py::verify_rational_certificate"
+expected_signal: >-
+  `python scripts/ci/check_code_hygiene.py`, `python scripts/ci/check_import_architecture.py`,
+  `python scripts/ci/check_manifest_hashes.py`, `python scripts/ci/check_inventory_sync.py`
+  and `python scripts/ci/check_skip_ratchet.py` all exit 0; the strict physics
+  validator reports 0 issues for the eleven strict files; `pytest tests/epistemic_kernel
+  tests/test_geosync_proof_weighting.py tests/ci/test_ratchets_enforced.py
+  tests/ci/test_manifest_hashes.py tests/scripts/test_check_import_architecture.py` passes.
+measurement_command: >-
+  bash -c 'python scripts/ci/check_code_hygiene.py && python scripts/ci/check_import_architecture.py
+  && python scripts/ci/check_manifest_hashes.py && python scripts/ci/check_inventory_sync.py
+  && python scripts/ci/check_skip_ratchet.py
+  && python .claude/physics/validate_tests.py tests/unit/physics/test_T11_dopamine_algebraic.py
+  && python .claude/physics/validate_tests.py tests/unit/physics/test_T12_serotonin_stability.py
+  && python .claude/physics/validate_tests.py tests/unit/physics/test_T16_signalbus_dag.py
+  && python -m pytest -q tests/epistemic_kernel tests/test_geosync_proof_weighting.py tests/ci/test_ratchets_enforced.py tests/ci/test_manifest_hashes.py tests/scripts/test_check_import_architecture.py'
+signal_artifact: "tmp/main_gate_debt_code_paydown.log"
+falsifier:
+  command: >-
+    bash -c 'PYTHONPATH=. python -c "import json,dataclasses,sys; from geosync.epistemic.benchmark import build_core_scenarios; rows=build_core_scenarios(); ids=[r.scenario_id for r in rows]; sys.exit(0 if len(rows)==31 and len(set(ids))==31 and ids[0]==\"safe-replicated-a\" and ids[-1]==\"unsafe-cross-claim-evidence\" else 1)"
+    && grep -q "archive_snapshots" docs/CODE_QUALITY_MANIFEST.json
+    && ! grep -lE "sys\.path\.(insert|append)" benchmarks/epistemic_control_plane/iteration_00*/run_*.py scripts/ci/emit_metric_signals.py
+    && ! grep -q "pytest.skip(" tests/test_geosync_proof_weighting.py'
+  description: >-
+    Exits non-zero if the canonical benchmark loses its 31 unique scenarios or
+    their boundary order, if the archive root is dropped from the hygiene
+    classification, if any sys.path mutation returns to the benchmark runners or
+    the metric emitter, or if a skip returns to the proof-weighting controls.
+rollback_command: >-
+  bash -c 'git checkout HEAD~1 -- geosync/epistemic benchmarks/epistemic_control_plane scripts/ci/emit_metric_signals.py scripts/ci/check_import_architecture.py scripts/ci/check_manifest_hashes.py tests/unit/physics tests/test_geosync_proof_weighting.py docs/CODE_QUALITY_MANIFEST.json && rm -f .claude/commit_acceptors/main-gate-debt-code-paydown-20261027.yaml'
+rollback_verification_command: >-
+  bash -c 'test ! -f .claude/commit_acceptors/main-gate-debt-code-paydown-20261027.yaml && git diff --quiet HEAD~1 -- geosync/epistemic'
+memory_update_type: append
+ledger_path: ".claude/commit_acceptors/main-gate-debt-code-paydown-20261027.yaml"
+report_path: ".claude/commit_acceptors/main-gate-debt-code-paydown-20261027.yaml"
+evidence: []
