@@ -163,11 +163,33 @@ def test_unknown_merge_commit_fails(gate: Any, live_registry: dict[str, Any], tm
 def test_commit_not_touching_module_fails(
     gate: Any, live_registry: dict[str, Any], tmp_path: Path
 ) -> None:
-    # A real, existing commit that did NOT touch null_baseline.py:
-    # borrow another instrument's merge commit.
+    # The flattened repository maps every upstream instrument to the same
+    # import commit. Select a *real* independent negative witness instead of
+    # borrowing another instrument's now-identical merge_commit.
     inst = _valid_instrument(live_registry, "null-baseline")
-    other = _valid_instrument(live_registry, "descriptor-metadata")
-    inst["merge_commit"] = other["merge_commit"]
+    history = subprocess.run(
+        ["git", "log", "--format=%H", "-n", "128"],
+        cwd=ROOT,
+        check=True,
+        capture_output=True,
+        text=True,
+    ).stdout.splitlines()
+    witness = next(
+        (
+            sha
+            for sha in history
+            if inst["module"] not in subprocess.run(
+                ["git", "show", "--no-color", "--name-only", "--format=", sha],
+                cwd=ROOT,
+                check=True,
+                capture_output=True,
+                text=True,
+            ).stdout.splitlines()
+        ),
+        None,
+    )
+    assert witness is not None, "negative proof requires a real unrelated commit"
+    inst["merge_commit"] = witness
     assert _run(gate, _write_registry(tmp_path, [inst])) == 1
 
 
