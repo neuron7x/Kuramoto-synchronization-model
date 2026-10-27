@@ -230,3 +230,17 @@ Replay: `python -m pytest -q --override-ini addopts='' tests/unit/governance/tes
 not a claim of execution at patch creation; newly triggered exact-SHA CI must
 verify. Askar licensing, flattened-history ancestry, debt budgets and the
 release evidence digest cycle remain separate blockers.
+
+## 2026-10-28 — certification bootstrap suppressions
+
+The research-integrity exact-parent run `40593099402` measured **340**
+real `# noqa` suppressions against the immutable budget **338**. The two
+side-effect-only optional imports in `scripts/serotonin_certify.py` were
+changed to equivalent `importlib.import_module` calls under their existing
+`ImportError` guards; this removes two otherwise unused-import suppressions
+and two type-ignore directives without reducing coverage or changing the
+certification pipeline. Execution controls run the original AST import guards
+with successful, missing-module and unexpected-error witnesses. No frozen
+research source or numerical threshold was changed. The unchanged budget and
+runtime evidence must be revalidated by the new exact-SHA CI; no pass is
+preclaimed by this note.
