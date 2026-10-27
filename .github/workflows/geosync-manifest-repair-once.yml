@@ -1,0 +1,63 @@
+# One-shot, branch-scoped maintenance of independently verified manifests.
+# This workflow runs only when THIS file is added/edited on the repair branch.
+# It cannot run on main or be triggered by its own bot push.
+name: GeoSync Controlled Manifest Repair
+on:
+  push:
+    branches:
+      - chore/main-gate-debt-paydown-20261027
+    paths:
+      - .github/workflows/geosync-manifest-repair-once.yml
+permissions:
+  contents: write
+concurrency:
+  group: geosync-manifest-repair
+  cancel-in-progress: false
+jobs:
+  regenerate:
+    if: github.repository == 'neuron7x/Kuramoto-synchronization-model'
+    runs-on: ubuntu-latest
+    timeout-minutes: 15
+    steps:
+      - name: Checkout exact triggering SHA with full history
+        uses: actions/checkout@9c091bb21b7c1c1d1991bb908d89e4e9dddfe3e0
+        with:
+          fetch-depth: 0
+          persist-credentials: true
+      - name: Setup Python 3.12
+        uses: actions/setup-python@ece7cb06caefa5fff74198d8649806c4678c61a1
+        with:
+          python-version: '3.12'
+      - name: Regenerate only declared deterministic manifests
+        shell: bash
+        run: |
+          set -euo pipefail
+          test "$(git branch --show-current)" = "" || test "$(git branch --show-current)" = "chore/main-gate-debt-paydown-20261027"
+          test "$(git rev-parse HEAD)" = "$GITHUB_SHA"
+          python scripts/ci/check_artifact_freshness.py --write
+          python scripts/ci/generate_manifest.py
+          python scripts/ci/check_root_manifest.py
+          python -m json.tool artifacts/manifest.json >/dev/null
+          python - <<'PY'
+          import subprocess
+          allowed = {"MANIFEST.sha256", "artifacts/manifest.json"}
+          changed = set(subprocess.check_output(["git", "diff", "--name-only"], text=True).splitlines())
+          assert changed <= allowed, f"Unexpected generator output: {changed - allowed}"
+          print("Controlled regeneration diff:", sorted(changed))
+          PY
+      - name: Commit exact manifest outputs to this PR branch
+        shell: bash
+        env:
+          GH_TOKEN: ${{ secrets.GITHUB_TOKEN }}
+        run: |
+          set -euo pipefail
+          git add -- MANIFEST.sha256 artifacts/manifest.json
+          if git diff --cached --quiet; then
+            echo "Both manifests already current; no commit needed."
+            exit 0
+          fi
+          git diff --cached --check
+          git config user.name "github-actions[bot]"
+          git config user.email "41898282+github-actions[bot]@users.noreply.github.com"
+          git commit -m "chore(manifests): synchronize root and evidence fingerprints"
+          git push origin HEAD:refs/heads/chore/main-gate-debt-paydown-20261027
