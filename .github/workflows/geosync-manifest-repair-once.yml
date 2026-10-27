@@ -77,7 +77,7 @@ jobs:
               doc = (Path("docs/prompts") / f"{stem}_v1_0.md").read_text()
               errors = list(Draft202012Validator(schema).iter_errors(artifact))
               assert errors == [], [e.message for e in errors]
-              ids = re.findall(r"^### (FUNCTION_\\d\\d_[A-Z_]+)$", doc, re.M)
+              ids = re.findall(r"^### (FUNCTION_\d\d_[A-Z_]+)$", doc, re.M)
               assert [x["id"] for x in artifact["functions"]] == ids, stem
               assert len(ids) in (10, 18), stem
               assert "PARTIAL" in artifact["final_gate"]["weakest_link_rule"], stem
