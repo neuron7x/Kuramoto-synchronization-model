@@ -184,6 +184,8 @@ data/*
 !data/testing/
 # Research design contract is canonical code-adjacent metadata, not empirical data.
 !data/research/
+# Machine governance kernels are versioned contract data, not local datasets.
+!data/governance/
 # Research population frame is SHA-bound to a real historical Git tree.
 !data/frames/
 # Content-addressed public synthetic lineage from the tracked MIT MACD fixture.
