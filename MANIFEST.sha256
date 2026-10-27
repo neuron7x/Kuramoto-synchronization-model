@@ -494,7 +494,6 @@
 102f140ef1c93f7add810bbdc500a793dbd7fa71fd63aba09b0d435f5c90de4c  ./docs/CANONICAL_SUITE_POLICY.md
 10321ec600153dbbd1300acac4254fdae355cdb7d0af758adb08bff6a50d88df  ./tests/reliability/test_process_interruption.py
 10422986a9de1f400697c938cc4b9cadbcc1e93b7d16f8437a7f39e4a7e0c452  ./docs/performance_testing_program.md
-1045c6e32db99bc8207680d02500b75cc2a10ad42622cb9b6e64f87e9db8a83b  ./.github/detect-secrets.baseline
 1046cdfca9c6f80969a7d397f95259b3a3bc842bdc0fd1e40a764d11ba3363cc  ./tests/test_fractal_gcl.py
 104c2a217b8d254153ef77efa9b7394fe211193a58de6f7dcf146b760c2f9240  ./src/geosync/regime/ews.py
 105faca6520012acd302dc5e5987d542db3a4dddce76dd976c1dff542a065ef9  ./src/geosync/utils/__init__.py
@@ -2495,7 +2494,6 @@
 52f96a67b3f962127e7ef35a5f83e5400f386df89d530eab045a0d14bdc06090  ./domain/orders/entity.py
 52f9ff8410b1c78b77f04bd948965d73a379f23574e65b344e338d407ffe3c5c  ./cognitive_mirror_methods/system/orchestration/pipeline.py
 52ff2857296d5fcee8fc74dba99a293d32173c326001ed3c953d02d69b50cff0  ./core/neuro/quantile.py
-53016525a1ce15c34e61eb87f76e3c6a1beae06243addc3a6d5ca76d53abf2a6  ./tests/ci/test_secret_boundary.py
 530a3345a72253b7b21113825d4b2065e649ea3975b2550a0c11dfba82c09551  ./tools/release_evidence_harness.py
 530d66ae7876085c07c09a8462f70c33488730a1c2e0e9b944811dce884d6ce4  ./.claude/commit_acceptors/stuart-landau-mu-growthrate.yaml
 53175a520bb41d7951c9b3e1386585e55f50f26849a4f3360b15336dfdcf9f8e  ./docs/reports/codeql_real_bugs_wave4.md
@@ -3448,6 +3446,7 @@
 73cbf08ee089052cc9bf3451d747c73a7d2626990b166f38cb2f9afe110e9f3a  ./archive_snapshots/github_9e6e4792_unique/tradepulse/risk/__init__.py
 73d9a835a3895d4d85d34b6130e6e961daccaf354316a57d2c8a71ba9fa59ae7  ./core/neuro/advanced/neuroecon.py
 73dbdc3b29088007e6170cbd948bea3159847e134ea4358218213e020f6faa86  ./research/systemic_risk/d002k_event_metrics.py
+73fbd1bee2af8bda38eeb1bb834c5d67e2f3549876846a4e4cc10fc50d377632  ./.github/workflows/geosync-manifest-repair-once.yml
 7405ce82d69c1ffa7e57ba607b6e3731d577f1a65504bd2c2731e8f3c41980f6  ./core/physics/lyapunov_spectrum.py
 7406f5f1d87600b52140ff87815e78d944306028c5ca8cb28905512d6e2b305e  ./tests/research/calibration/test_calib_substrate_consolidation.py
 740f3300c7e96785bd8fc86ad76c66ef8a985de13ad4b60f9d35abdf81937aa9  ./tests/helm/test_chart_structure.py
@@ -3773,7 +3772,6 @@
 7eb85ef6f7bfb7e88419c7a1017aa67d8d53085ce5129d74a98c5745003b7fe6  ./loadtests/proto/trading_pb2_grpc.py
 7ec7b5b5d2850582607b84d158b5f712cabcb77447a6d021ba2479cfd12d2a98  ./results/plv_spread_market_verdict.json
 7ed0a7facf607ab5b6db74bd390125c2fd8a969b61d4de7b7ceb686ef59d82ff  ./scripts/generate_thermo_token.py
-7ed4760297be1ff9bf5d3f7935653fdee5c9d5f494d5aaf496096f2f38b38d99  ./scripts/ci/check_secret_boundary.py
 7ed686c685819812c266d3d386275e0ab132185c7447c9235c37abe3937e914a  ./scripts/verify_security_constraints.py
 7ef6cc4eea008f531c40ece065ca3613d241f4f9239bdb172d7c6cea8947b61d  ./tools/security/__init__.py
 7f277c1f8417f1c76d74ee12104a5a73eca89d3ddb21473ddd3e773ef5078ef8  ./tests/unit/physics/test_dro_ara_invariants.py
@@ -4061,6 +4059,7 @@
 895372a5a41b31e02a4acd72183e7eef37ac146ac8720134cca0864edfae5ff5  ./.claude/commit_acceptors/x10r-d002j-p1-data-source-registry.yaml
 895846b7021098fc610a574d0a8f45bd59ea949dce3de624cdd25a206b415deb  ./docs/DEPENDENCY_LOCK_POLICY.md
 8963873d85e323a9bab51ac8236032d92256c50b420d780c9d25e057cb3a2caa  ./tests/execution/risk/test_regime_adaptive_guard.py
+8969fae69a347adf0b9745e0cedc3785bebd17b890cb9cf4f336495b8c28cba1  ./scripts/ci/check_ci_permissions.py
 8971aeb8b1b4f58be53aab51d15f0a523e0526b77351d5770b338e82c5e3bfc2  ./tests/ci/test_invariant_source_binding.py
 8979126fb33dcfd6e04462c1eba94cb0e409546effabd4728cca924fb5eee689  ./tests/data/test_dataset_metadata_validation.py
 8987afa57120766d0031989044400400293cdc0316d09ef4cc076922e9e15463  ./tools/run_autonomy_cycle.py
@@ -4322,6 +4321,7 @@
 92441738a048415fc65bae845ce3205e4ad20263e7eaee9044b4680cdbb2c7c5  ./docs/templates/argumentation.md
 92444407d1fcb19263b1c10127ecf388004e47eb5a54a872202ef677d0d71acb  ./tests/test_e2e_coherence.py
 924b44457b46478132c7746bdedca082e59e83b1c5a5e564e6e01e84ed0dd3fc  ./tests/unit/risk/test_killswitch_failclosed_teeth.py
+925899ff4230ed34745d2cf627d12b73c48caf890677732fec7b9337b5a306b2  ./tests/ci/test_secret_boundary.py
 925a5a26cfead8804f47998665969e3e690d9d4381fad8e4aa86acba288ed6ab  ./.github/workflows/ux-state-coverage.yml
 925ea75d0f2a738500f9524706dbb2bbfc1fbdd17bcdb2c76afddf0bf9ed89f9  ./tools/research/validate_physics_2026_translation.py
 926c871c4fe5174b1689ac754884f3ce28f43c92dba8a4bd3ed5c742ec90aa78  ./tests/scripts/test_pipeline_status_check.py
@@ -4827,6 +4827,7 @@ a0a3ede95661a0748ed589aaf4a60c83dcd62372f7c43099ead77082a9a59a03  ./research/sys
 a0a58e971917463c9d27bea3c641f59b3a0d2ba802ecdf35f8c2cc5bffd25028  ./.claude/commit_acceptors/clamp-void-predictor.yaml
 a0a89162748ba8e53d86fae5b31a919d6e222e7a0d2252ed55b1e397e07da47f  ./ui/dashboard/src/styles/tokens.css.js
 a0bcc37c1570fd7c80e99a7dd753e9f0806ba0c0d8d7c796bc7d61ac72719ea0  ./ui/dashboard/src/i18n/locales/uk-UA.json
+a0c9b4743bcf8510033bf0920c2c72a53683b6f0cb6f126659cdcf88d927eb1a  ./scripts/ci/check_secret_boundary.py
 a0ca391891f92cc123601e5633c28ab7952740182d878f827daceca1e794a60c  ./pin-terraform-version.yml
 a0ccb95975d7a16cdb6d22b5a4dc22c390eee8f587a51df52fae789abb5ec1e2  ./scripts/riee/chaos_engine.py
 a0ce66a29905ffb4ab96f546b8cf0204d772bfe0a85b38768d58e16389a3cf52  ./audit/schema/runtime_failure_matrix.schema.json
@@ -5824,7 +5825,6 @@ c4edbd037162d8a137442ed147073dac98c2f59dfa3a194a422511526d7aefa9  ./tests/audit/
 c4f20283b4e002e58e1a1b7a3b54614c6a2aee3a119b0da11723a3fbc985e0b9  ./tests/physics/test_cognitive_core_admissibility.py
 c4f268c0860e07418f8e7042cd5540a4785d63acdd1573cddbfdfbd291586ea5  ./scripts/README_integrate_kuramoto_ricci.md
 c5046e7d3da262daf2e9a21ac18e5810b9671a2152a212e439a3b12848e30e33  ./.claude/commit_acceptors/ci-claim-boundary-path-filter.yaml
-c51c99c8065530d981e61b1c28839f9fef86104e219c300e41b9d1cd810747f1  ./.github/workflows/geosync-manifest-repair-once.yml
 c51cc7cc2aad10f0c1d5cb7ca93255b5cac488cdf660f4ce685b1d5baff8afe6  ./.claude/commit_acceptors/ctc-falsify-results.yaml
 c51f0798f2e94d82791d123b434ba945ca594fe213c419730f477dfb24e8f1b6  ./.claude/commit_acceptors/diffusion-rank-propagation-relabel.yaml
 c523cb89b8d4b9e3206e953daf51ee91dca74f78be6d80d9cdfa68fcf83f413c  ./tests/unit/test_indicator_base.py
@@ -6139,6 +6139,7 @@ cf24c7b339e6216f3ce277a73bc647ba045a38d902c313593afb8ae793ba261f  ./research/mic
 cf43cfb48ebbe5c37c414d153fdd069b406415e1ce4fa461507ecaa37504e4cc  ./.claude/commit_acceptors/x10r-d002i-null-audit-failure-investigation-prereg.yaml
 cf55eacaa336eb9772d6b8441eadfd79cef78e2b9e1f905d9d564642c0c4a6fc  ./tools/inference/assemble_evidence_bundle.py
 cf5ab6523c6d5fa46ae539ca0593a47fd788d0eb1ae3067ba21bfeb9b38616eb  ./analytics/regime/src/core/ews.py
+cf5ce7f5529e639c842179e428979a867d235cc8e6b213ba469e6c0961e49de5  ./.github/detect-secrets.baseline
 cf65857bbbcfd13b91e1271ab864d2df0dd2974ca606e0316419b5b53f0c6d14  ./go/services/vpin/calculator.go
 cf693929db2b5929f18f88f3c86ffeb3d86ef4afa61c708fced9320cc1c962f3  ./.claude/commit_acceptors/physics-verbatim-descriptor-contract-tests.yaml
 cf6dded15cd416fdc812f97d6b1938049daad0b243a51a77a1cdede32d671c21  ./application/secrets/manager.py
@@ -6608,7 +6609,6 @@ df4da907ee420d3dca435b0846bd21a4969b6da373d24383795ee3ab43cb714d  ./docs/thermod
 df50d250daa633ef97c4c7a02ac43524296e0b9a3e8095fc8f3f0a802e429993  ./.claude/commit_acceptors/coverage-deferred-production-ratchet.yaml
 df59c8be8b9dbfe4189b1f7c8b9a930dfb5d8d5aea075d0b250e58356a48c056  ./docs/security/devsecops/devsecops-integration-guide.md
 df611da60ee5c8335c680bc12ad49f5781988c08a506c9a5dccc079f612906d9  ./core/physics/relativity.py
-df63e2d0f622bad5598824d67d6cbd1d44bad05a6c5e1d6c922e4a297e957652  ./scripts/ci/check_ci_permissions.py
 df6497d601f3afa97ff14a5607dd377b820a2a6d6a5d508cd93f30c218c07224  ./.claude/commit_acceptors/instrument-validation-pr592.yaml
 df6722f37ea8dec8f5599f8baa07c3d5668f4683b7c75ba16cb6edd68ef4287b  ./cortex_service/app/memory/repository.py
 df6db4b34e0d68bd08245543f2cf386c11f300507137389631ff9b18bf7be3d4  ./application/settings.py

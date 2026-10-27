@@ -77,7 +77,7 @@
       "artifacts": [
         {
           "path": "MANIFEST.sha256",
-          "sha256": "496ae07926023ec90bd12a7623fbbbf5af422219b1fdd900505bf456207a573d",
+          "sha256": "5c1d7ea80509d72784d48403debebe7bb5788a0c9b1dbc23c6910515bb51e9e0",
           "status": "PRESENT"
         },
         {
