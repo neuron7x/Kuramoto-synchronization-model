@@ -20,6 +20,17 @@
 #         backports-tarfile==1.2.0 is pinned with both PyPI digests as a curated
 #         addendum, documented in docs/DEPENDENCY_LOCK_POLICY.md. G-LOCK-HASHES
 #         passes; a 3.11 dry-run install in hash mode resolves.
+#   * live-suite (py3.11/py3.12), python-quality, secrets-supply-chain (second cause)
+#       - once pip install succeeded, .github/actions/setup-geosync/action.yml
+#         compared the installed pytest against the lock line "pytest==9.0.3 \"
+#         (hash-locked continuation) and reported "9.0.3 != 9.0.3 \". The pin
+#         parser keeps only the version token.
+#   * research-integrity-gate
+#       - governance/INSTRUMENTS.yaml recorded merge commits of the upstream
+#         GeoSync history that does not exist in this flattened sync; all 12
+#         instruments' source_sha256 still match the committed bytes, so
+#         merge_commit now points at the sync commit where each module landed
+#         here (8fee3d18) and the original is kept as upstream_merge_commit.
 #   * dependency-review
 #       - "Dependency graph is not enabled": repository setting, enabled on
 #         2026-10-27 (Dependabot alerts turned on, which enables the graph). Not a
@@ -32,7 +43,9 @@ promise: >-
   After this PR lands, every commit acceptor under .claude/commit_acceptors/
   validates statically with zero errors, the policy enumerates every claim_type
   in use, the dev lock installs under Python 3.11 and 3.12 in hash-checking
-  mode, and the lock policy documents the backports.tarfile addendum.
+  mode, the setup action verifies the pytest pin from a hash-locked line, every
+  governed instrument resolves its evidence chain in this history, and the lock
+  policy documents the backports.tarfile addendum.
 diff_scope:
   changed_files:
     - path: ".claude/commit_acceptors/main-gate-debt-governance-paydown-20261027.yaml"
@@ -49,6 +62,8 @@ diff_scope:
     - path: ".claude/commit_acceptors/ecp-as-risk-certificate-iteration-005.yaml"
     - path: ".claude/commit_acceptors/ecp-as-soundness-stress-iteration-004.yaml"
     - path: "docs/DEPENDENCY_LOCK_POLICY.md"
+    - path: ".github/actions/setup-geosync/action.yml"
+    - path: "governance/INSTRUMENTS.yaml"
   forbidden_paths:
     - "trading/"
     - "execution/"
@@ -69,7 +84,8 @@ falsifier:
   command: >-
     bash -c 'grep -q "^  validation: " .claude/commit_acceptor_policy.yaml
     && grep -q "^backports-tarfile==1.2.0" requirements-dev.lock
-    && python -c "import yaml,glob,sys; bad=[p for p in glob.glob(\".claude/commit_acceptors/ecp-as-*.yaml\") if \"required_python_symbols\" not in yaml.safe_load(open(p)) or \"forbidden_paths\" not in (yaml.safe_load(open(p)).get(\"diff_scope\") or {})]; sys.exit(1 if bad else 0)"'
+    && python -c "import yaml,glob,sys; bad=[p for p in glob.glob(\".claude/commit_acceptors/ecp-as-*.yaml\") if \"required_python_symbols\" not in yaml.safe_load(open(p)) or \"forbidden_paths\" not in (yaml.safe_load(open(p)).get(\"diff_scope\") or {})]; sys.exit(1 if bad else 0)"
+    && python scripts/ci/check_instrument_evidence_chain.py'
   description: >-
     Exits non-zero if the validation claim type disappears from the policy, if
     the backports-tarfile pin leaves the dev lock, or if any ecp-as acceptor
