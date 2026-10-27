@@ -206,3 +206,27 @@ service replay was performed. These follow-up results are local evidence;
 check the next published commit's terminal CI results before claiming that
 either remote job is fixed. Research tiers and frozen artifact pins are
 unchanged.
+
+## 2026-10-28 — governance kernel source recovery and mutation receipt
+
+The canonical governance verification kernel `data/governance/neuron7x_verification_protocol_v2026_8.json` was recovered
+byte-for-byte from `neuron7xLab/GeoSync` commit
+`174aef0c46dc25a6b59bc8fb1457d20e13a38c11` (Git blob
+`c7e4162b615e87e11699a679781a73a3d2442c3f`), SHA256
+`01bec86cda97f1256bf6ba3c25041dfc115e09422264c9ae8be6e485bd717326`. The existing JSON schema, 5% ADF boundary and negative kernel
+validation tests were not relaxed. This is a governance contract, not measured
+market data or evidence for scientific promotion.
+
+Exact-parent `Mutation Kill Gate` run `40593099169`, job `122502072824`,
+measured **14/16** killed gamma logic sites (87.5%), while the stored ledger
+said 13/15. Only the two recorded counts are reconciled; floor **0.85** and
+the two surviving mutants remain unchanged. The governance tooling coverage
+profile is now explicitly routed in the component-test matrix without
+altering the release coverage denominator.
+
+Replay: `python -m pytest -q --override-ini addopts='' tests/unit/governance/test_verification_protocol.py tests/tools/test_governance_tooling_coverage_profile.py`,
+`python scripts/ci/check_mutation_kill_ratchet.py --base-ref origin/main`,
+`python scripts/ci/check_manifest_hashes.py`. These are post-change checks,
+not a claim of execution at patch creation; newly triggered exact-SHA CI must
+verify. Askar licensing, flattened-history ancestry, debt budgets and the
+release evidence digest cycle remain separate blockers.

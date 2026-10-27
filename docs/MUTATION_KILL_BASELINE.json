@@ -514,8 +514,8 @@
     },
     "geosync/estimators/gamma_estimator.py": {
       "floor": 0.85,
-      "killed": 13,
-      "total": 15,
+      "killed": 14,
+      "total": 16,
       "tests": "tests/test_gamma_estimator.py"
     },
     "geosync/neuroeconomics/context_memory.py": {

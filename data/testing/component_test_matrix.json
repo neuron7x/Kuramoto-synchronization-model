@@ -518,6 +518,20 @@
         "tests/ci/test_ratchets_enforced.py",
         "tests/ci/test_emit_metric_signals.py"
       ]
+    },
+    {
+      "expected_outcome": "pass",
+      "id": "governance_tooling_coverage",
+      "isolation_level": "component",
+      "max_runtime_seconds": 120,
+      "note": "Run the governance tooling coverage contract when this profile or its test changes; keep product release coverage separate.",
+      "patterns": [
+        "configs/quality/governance_tools.coveragerc",
+        "tests/tools/test_governance_tooling_coverage_profile.py"
+      ],
+      "selectors": [
+        "tests/tools/test_governance_tooling_coverage_profile.py"
+      ]
     }
   ],
   "decision_rule": {

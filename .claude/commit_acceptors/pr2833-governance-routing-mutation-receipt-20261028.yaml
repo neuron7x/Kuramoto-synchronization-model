@@ -1,0 +1,68 @@
+id: pr2833-governance-routing-mutation-receipt-20261028
+status: ACTIVE
+claim_type: correctness
+promise: >-
+  Restore the original schema-bound Neuron7X governance verification kernel
+  byte-exactly, route the tooling coverage profile, and match recorded gamma
+  mutation counts to the actual exact-SHA CI probe, without changing its
+  0.85 kill-rate floor or promoting empirical claims.
+diff_scope:
+  changed_files:
+    - path: ".claude/commit_acceptors/pr2833-governance-routing-mutation-receipt-20261028.yaml"
+    - path: "docs/ci/pr2833_exact_source_recovery.md"
+    - path: "data/governance/neuron7x_verification_protocol_v2026_8.json"
+    - path: "data/testing/component_test_matrix.json"
+    - path: "docs/MUTATION_KILL_BASELINE.json"
+  forbidden_paths:
+    - "research/"
+    - "results/"
+    - "tests/askar/"
+    - "schemas/"
+    - ".claude/physics/"
+required_python_symbols:
+  - "governance/verification_protocol.py::VerificationProtocol"
+  - "tests/unit/governance/test_verification_protocol.py::test_real_kernel_is_schema_valid"
+  - "tests/unit/governance/test_verification_protocol.py::test_weights_not_summing_to_one_rejected"
+  - "tests/tools/test_governance_tooling_coverage_profile.py::test_matrix_routes_the_governance_tooling_profile"
+expected_signal: >-
+  Original governance kernel loads and passes its existing schema and
+  malformed-weights/thresholds negative tests. Its coverage profile is routed,
+  the gamma mutation gate reproduces 14 killed / 16 sites without lowering
+  the 0.85 floor, and manifest checks pass.
+measurement_command: >-
+  python -m pytest -q --override-ini addopts=''
+  tests/unit/governance/test_verification_protocol.py
+  tests/tools/test_governance_tooling_coverage_profile.py &&
+  python scripts/ci/check_mutation_kill_ratchet.py --base-ref origin/main &&
+  python scripts/ci/check_manifest_hashes.py
+signal_artifact: "tmp/pr2833_governance_mutation_replay_20261028.log"
+falsifier:
+  command: >-
+    bash -c 'python -m pytest -q --override-ini addopts=""
+    tests/unit/governance/test_verification_protocol.py::test_weights_not_summing_to_one_rejected
+    tests/unit/governance/test_verification_protocol.py::test_threshold_gap_rejected
+    tests/tools/test_governance_tooling_coverage_profile.py::test_matrix_routes_the_governance_tooling_profile;
+    rc=$?; case "$rc" in 0) exit 1;; 1) exit 0;; *) exit "$rc";; esac'
+  description: >-
+    Exit zero signals a failing negative-control or missing route and falsifies
+    the promise; passing controls exit one. Pytest infrastructure exits above
+    one remain visible.
+rollback_command: >-
+  bash -c 'git restore --source=14f7c577a7bd880c394016dbb315085eeee4622d --worktree --
+  docs/MUTATION_KILL_BASELINE.json data/testing/component_test_matrix.json
+  docs/ci/pr2833_exact_source_recovery.md &&
+  rm -f -- data/governance/neuron7x_verification_protocol_v2026_8.json .claude/commit_acceptors/pr2833-governance-routing-mutation-receipt-20261028.yaml &&
+  python scripts/ci/generate_manifest.py'
+rollback_verification_command: >-
+  bash -c 'git diff --exit-code 14f7c577a7bd880c394016dbb315085eeee4622d --
+  docs/MUTATION_KILL_BASELINE.json data/testing/component_test_matrix.json
+  docs/ci/pr2833_exact_source_recovery.md &&
+  test ! -e data/governance/neuron7x_verification_protocol_v2026_8.json &&
+  test ! -e .claude/commit_acceptors/pr2833-governance-routing-mutation-receipt-20261028.yaml &&
+  python scripts/ci/check_manifest_hashes.py'
+memory_update_type: append
+ledger_path: ".claude/commit_acceptors/pr2833-governance-routing-mutation-receipt-20261028.yaml"
+report_path: "docs/ci/pr2833_exact_source_recovery.md"
+evidence:
+  - path: "data/governance/neuron7x_verification_protocol_v2026_8.json"
+    sha256: "01bec86cda97f1256bf6ba3c25041dfc115e09422264c9ae8be6e485bd717326"
