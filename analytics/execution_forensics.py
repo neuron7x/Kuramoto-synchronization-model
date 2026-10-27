@@ -180,11 +180,13 @@ def load_fills(source: Path) -> tuple[list[Fill], str]:
             raise EvidenceInputError(f"row {number}: duplicate trade id within venue/symbol")
         seen.add(identity)
         if fill.arrival_price is not None:
+            if fill.arrival_at is None or fill.arrival_source is None:
+                raise EvidenceInputError(f"row {number}: arrival provenance missing")
             order_key = (fill.venue, fill.symbol, fill.order_id)
             arrival = (fill.arrival_price, fill.arrival_at, fill.arrival_source)
             if order_key in order_arrivals and order_arrivals[order_key] != arrival:
                 raise EvidenceInputError(f"row {number}: conflicting arrival benchmark for one order")
-            order_arrivals[order_key] = arrival  # type: ignore[assignment]
+            order_arrivals[order_key] = arrival
         fills.append(fill)
     if not fills:
         raise EvidenceInputError("CSV contains no fills")
