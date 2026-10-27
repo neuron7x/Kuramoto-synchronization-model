@@ -277,7 +277,11 @@ def scan_with_regex(source: Path) -> list[dict[str, Any]]:
                 # A function call is not a hardcoded credential. E.g.
                 # token = compute_token_cost(...) is numeric accounting,
                 # not a secret literal. Keep scanning actual assignments.
-                if line[m.end(1) :].lstrip().startswith("("):
+                suffix = line[m.end(1) :].lstrip()
+                # A method call on a named object is also executable code,
+                # not a hard-coded secret (e.g. ContextVar.set(current)).
+                # Never exempt quoted literals or bare token assignments.
+                if suffix.startswith("(") or re.match(r"\.[A-Za-z_]\w*\s*\(", suffix):
                     continue
                 findings.append(
                     {
