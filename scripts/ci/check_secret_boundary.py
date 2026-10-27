@@ -150,8 +150,12 @@ def scan_with_gitleaks(source: Path, config: Path | None) -> list[dict[str, Any]
         ]
         if config is not None and config.exists():
             cmd += ["--config", str(config)]
-        subprocess.run(cmd, capture_output=True, text=True, timeout=600)
+        proc = subprocess.run(cmd, capture_output=True, text=True, timeout=600)
+        if proc.returncode not in (0, 1):
+            raise RuntimeError(f"gitleaks scanner failed (exit {proc.returncode})")
         if not report.exists():
+            if proc.returncode != 0:
+                raise RuntimeError("gitleaks reported findings but emitted no report")
             return []
         raw = report.read_text(encoding="utf-8").strip()
         if not raw:
