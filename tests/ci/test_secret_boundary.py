@@ -65,7 +65,7 @@ def test_cli_target_scan_of_planted_exits_nonzero(tmp_path: Path) -> None:
 
 def test_planted_aws_key_is_not_the_allowlisted_example() -> None:
     # Guard the fixture itself: gitleaks (and our regex) intentionally ignore the
-    # documented AKIAIOSFODNN7EXAMPLE key, so the fixture must use a distinct one.
+    # documented AKIAIOSFODNN7EXAMPLE key, so the fixture must use a distinct one.  # pragma: allowlist secret
     assert "EXAMPLE" not in sec._NEG_AWS_ID
 
 
@@ -120,8 +120,8 @@ def test_cli_target_scan_of_clean_file_exits_zero(tmp_path: Path) -> None:
 def test_regex_fallback_ignores_placeholder_values(tmp_path: Path) -> None:
     f = tmp_path / "config.py"
     f.write_text(
-        'api_key = "your_binance_api_key_here"\n'
-        'password = "change_me_in_production"\n'
+        'api_key = "your_binance_api_key_here"\n'  # pragma: allowlist secret
+        'password = "change_me_in_production"\n'  # pragma: allowlist secret
         'secret = "${VAULT_SECRET}"\n',
         encoding="utf-8",
     )
