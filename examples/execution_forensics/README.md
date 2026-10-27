@@ -7,10 +7,10 @@
 From the repository root (Python 3.11+, standard library only for this module):
 
 ```bash
-python -m analytics.execution_forensics \
+python -m tools.execution_forensics \
   --fills examples/execution_forensics/fills_sample.csv \
   --out /tmp/geosync-forensics-example.json
-python -m analytics.execution_forensics \
+python -m tools.execution_forensics \
   --fills examples/execution_forensics/fills_sample.csv \
   --verify /tmp/geosync-forensics-example.json
 python -m pytest -q tests/unit/test_execution_forensics.py
