@@ -71,6 +71,25 @@ def test_planted_aws_key_is_not_the_allowlisted_example() -> None:
 
 # --- POSITIVE: clean surfaces pass ---------------------------------------------
 
+def test_regex_not_confused_by_computed_token_cost(tmp_path: Path) -> None:
+    sample = tmp_path / "cost.py"
+    sample.write_text(
+        "token = compute_token_cost(candidate.n_input_tokens, candidate.n_output_tokens)\n",
+        encoding="utf-8",
+    )
+    assert sec.scan_with_regex(tmp_path) == []
+
+
+def test_regex_explicit_not_real_ci_secret_fixture(tmp_path: Path) -> None:
+    sample = tmp_path / "fixture.yml"
+    sample.write_text(
+        "GEOSYNC_AUDIT_SECRET: latency-budget-ci-audit-secret-not-real"
+        "  # pragma: allowlist secret\n",
+        encoding="utf-8",
+    )
+    assert sec.scan_with_regex(tmp_path) == []
+
+
 def test_cli_target_scan_of_clean_file_exits_zero(tmp_path: Path) -> None:
     clean = tmp_path / "clean.env"
     clean.write_text(
