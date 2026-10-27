@@ -32,7 +32,7 @@ jobs:
         shell: bash
         run: |
           set -euo pipefail
-          python -m pip install --disable-pip-version-check black==26.3.1 jsonschema==4.26.0
+          python -m pip install --disable-pip-version-check black==26.3.1 jsonschema==4.26.0 pyyaml==6.0.3
           python -m black \
             application/governance/commit_acceptor.py \
             tests/governance/test_typed_models.py \
@@ -61,6 +61,28 @@ jobs:
           python tools/generate_golden_lineage.py
           python scripts/ci/check_data_lineage.py
           python scripts/ci/check_population_frame.py
+          # Strict contract-only evidence: no result or release promotion.
+          python scripts/ci/check_research_standard_contract.py
+          python scripts/ci/check_inference_transformer_contract.py
+          python tools/governance/check_company_value_functions.py --self-test
+          python - <<'PY'
+          import json
+          import re
+          from pathlib import Path
+          from jsonschema import Draft202012Validator
+
+          for stem in ("cognitive_operations_kernel", "integration_systems_architect_kernel"):
+              artifact = json.loads((Path("data/governance") / f"{stem}_v1_0.json").read_text())
+              schema = json.loads((Path("schemas/governance") / f"{stem}.schema.json").read_text())
+              doc = (Path("docs/prompts") / f"{stem}_v1_0.md").read_text()
+              errors = list(Draft202012Validator(schema).iter_errors(artifact))
+              assert errors == [], [e.message for e in errors]
+              ids = re.findall(r"^### (FUNCTION_\\d\\d_[A-Z_]+)$", doc, re.M)
+              assert [x["id"] for x in artifact["functions"]] == ids, stem
+              assert len(ids) in (10, 18), stem
+              assert "PARTIAL" in artifact["final_gate"]["weakest_link_rule"], stem
+              print("Governance policy/schema/source-trace PASS:", stem)
+          PY
           python scripts/ci/check_artifact_freshness.py --write
           python scripts/ci/generate_manifest.py --allow-dirty
           python scripts/ci/check_root_manifest.py
