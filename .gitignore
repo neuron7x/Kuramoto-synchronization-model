@@ -186,6 +186,8 @@ data/*
 !data/research/
 # Research population frame is SHA-bound to a real historical Git tree.
 !data/frames/
+# Content-addressed public synthetic lineage from the tracked MIT MACD fixture.
+!data/lineage/
 # Neuro-physics contradiction-ledger assurance case is a tracked audit artifact.
 !data/audit/
 !data/audit/**
