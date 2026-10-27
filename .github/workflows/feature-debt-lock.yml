@@ -72,9 +72,15 @@ jobs:
             tools/execution_forensics.py \
             tests/unit/test_execution_forensics.py \
             tests/tools/test_execution_forensics_gate.py
-          python -m black --check \
+          set +e
+          python -m black --diff --check \
             tools/execution_forensics.py \
             tests/unit/test_execution_forensics.py \
             tests/tools/test_execution_forensics_gate.py
+          black_rc=$?
           python -m mypy --strict --config-file=/dev/null \
             tools/execution_forensics.py
+          mypy_rc=$?
+          set -e
+          echo "BLACK_RC=$black_rc MYPY_RC=$mypy_rc"
+          test "$black_rc" -eq 0 && test "$mypy_rc" -eq 0
