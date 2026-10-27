@@ -93,7 +93,7 @@ jobs:
         env:
           PYTHONUTF8: '1'
           PYTHONIOENCODING: 'utf-8'
-        run: .venv/bin/pytest tests/ci/test_py_matrix.py -q
+        run: .venv/bin/python -m pytest tests/ci/test_py_matrix.py -q
 
   # ------------------------------------------------------------------ #
   # LIVE matrix: build / import / full suite on BOTH declared legs.
