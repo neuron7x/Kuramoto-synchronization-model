@@ -1,0 +1,39 @@
+# This is a DRAFT research standard, not an empirical study or ready release.
+id: research-standard-layer-map-20261027
+status: ACTIVE
+claim_type: governance
+promise: >-
+  Reconstruct the research-standard layer map only from its authoritative
+  YAML contract. The map must explicitly block promotions and mark evidence
+  and external review stages unfinished.
+diff_scope:
+  changed_files:
+    - path: ".claude/commit_acceptors/research-standard-layer-map-20261027.yaml"
+    - path: "data/research/research_standard_layers.v1.json"
+    - path: "docs/research/RESEARCH_STANDARD_CONTRACT.md"
+  forbidden_paths:
+    - "trading/"
+    - "execution/"
+    - "forecast/"
+    - "core/"
+required_python_symbols: []
+expected_signal: >-
+  The standard contract validates, layer count is five, four waves exist,
+  all six reviewer roles are named, and claim level remains HYPOTHESIS.
+measurement_command: >-
+  bash -c 'python scripts/ci/check_research_standard_contract.py &&
+  python -m pytest tests/ci/test_research_standard_contract.py -q'
+signal_artifact: "tmp/research_standard_layer_map_20261027.log"
+falsifier:
+  command: >-
+    python scripts/ci/check_research_standard_contract.py
+  description: >-
+    Missing layers, roles, manifests or unauthorized maturity promotion is RED.
+rollback_command: >-
+  git revert --no-edit HEAD
+rollback_verification_command: >-
+  git diff --exit-code HEAD~1 HEAD -- data/research/research_standard_layers.v1.json
+memory_update_type: append
+ledger_path: ".claude/commit_acceptors/research-standard-layer-map-20261027.yaml"
+report_path: "docs/research/RESEARCH_STANDARD_CONTRACT.md"
+evidence: []
