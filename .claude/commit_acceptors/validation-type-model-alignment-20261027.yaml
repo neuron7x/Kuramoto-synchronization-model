@@ -1,0 +1,38 @@
+# Typed model must admit exactly the validation category already governed by policy.
+id: validation-type-model-alignment-20261027
+status: ACTIVE
+claim_type: governance
+promise: >-
+  Strict Pydantic commit-acceptor typing recognizes policy-governed
+  validation evidence without dropping, coercing, or ignoring any
+  unrecognized acceptor fields.
+diff_scope:
+  changed_files:
+    - path: ".claude/commit_acceptors/validation-type-model-alignment-20261027.yaml"
+    - path: "application/governance/commit_acceptor.py"
+    - path: "tests/governance/test_typed_models.py"
+  forbidden_paths:
+    - "execution/"
+    - "trading/"
+    - "forecast/"
+required_python_symbols: []
+expected_signal: >-
+  The full acceptor corpus parses via strict typing and both existing
+  ECP-AS validation acceptors remain valid under the 12-file policy cap.
+measurement_command: >-
+  python -m pytest -q tests/governance/test_typed_models.py
+signal_artifact: "tmp/validation_type_model_alignment_20261027.log"
+falsifier:
+  command: >-
+    python -m pytest -q tests/governance/test_typed_models.py::test_validation_claim_type_is_accepted_without_relaxing_other_fields
+  description: >-
+    Unknown fields remain forbidden. A recognized policy category is
+    structurally valid, and its legacy acceptors cannot be silently omitted.
+rollback_command: >-
+  git revert --no-edit HEAD
+rollback_verification_command: >-
+  git diff --exit-code HEAD~1 HEAD -- application/governance/commit_acceptor.py
+memory_update_type: append
+ledger_path: ".claude/commit_acceptors/validation-type-model-alignment-20261027.yaml"
+report_path: "docs/governance/company_value_functions.md"
+evidence: []
