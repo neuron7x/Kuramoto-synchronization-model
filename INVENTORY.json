@@ -426,6 +426,10 @@
       "sha256": "4a830cedb569429bdd585c4250894037026bb06299bb67c4c8a6bbc98431151d"
     },
     {
+      "path": "scripts/ci/execution_forensics_falsifier.py",
+      "sha256": "b0d1d276ef4a074672aa4951d5b9683539792c942f8c9e6ed32b2ed7bfc61644"
+    },
+    {
       "path": "scripts/ci/external_run_intake.py",
       "sha256": "2f384ef49ee8051cb157a24387985a54361d8402db5ff01880bfdac64f7dbb22"
     },
