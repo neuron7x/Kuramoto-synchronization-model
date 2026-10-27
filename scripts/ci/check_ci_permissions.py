@@ -97,6 +97,13 @@ _PR_HEAD_TOKENS = (
 # location is "top" for the top-level block or the job id for a job-level block.
 JUSTIFIED_WRITE_SCOPES: dict[tuple[str, str, str], str] = {
     (
+        "geosync-manifest-repair-once.yml",
+        "regenerate",
+        "contents",
+    ): "One-shot branch-scoped, workflow-path-triggered regeneration commits only audited "
+    "deterministic manifest outputs to the PR head (never main); job-only grant, "
+    "full-diff allowlist, and non-fast-forward push rejection.",
+    (
         "codeql.yml",
         "top",
         "security-events",
