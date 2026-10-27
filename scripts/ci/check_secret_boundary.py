@@ -99,7 +99,7 @@ _PLACEHOLDER_TOKENS = (
 )
 
 # --- high-signal regex fallback (used only when gitleaks is unavailable) --------
-# AWS access key id, excluding the documented AKIAIOSFODNN7EXAMPLE-style examples.
+# AWS access key id, excluding the documented AKIAIOSFODNN7EXAMPLE-style examples.  # pragma: allowlist secret
 _RE_AWS = re.compile(r"\b((?:AKIA|ASIA|AGPA|AIDA|AROA|AIPA|ANPA|ANVA)[0-9A-Z]{16})\b")
 _RE_PEM = re.compile(r"-----BEGIN (?:RSA |EC |DSA |OPENSSH |PGP |ENCRYPTED )?PRIVATE KEY-----")
 _RE_BEARER = re.compile(r"(?i)bearer\s+[A-Za-z0-9\-._~+/]{20,}={0,2}")
@@ -360,9 +360,9 @@ def audit_env_example(path: Path) -> dict[str, Any]:
 # form a complete token at runtime, inside negative_fixture_text().
 _NEG_AWS_ID = "AKIA" + "4ZKJQX7NRTVWLMPD"  # non-example AWS access key id
 _NEG_AWS_SK = "7Hk9Lp2QwErTy8UiOp3a" + "SdFgHjKlZxCvBnM4qWeR"  # 40 chars, synthetic
-_PEM_BEGIN = "-----" + "BEGIN RSA PRIVATE KEY" + "-----"
+_PEM_BEGIN = "-----" + "BEGIN RSA PRIVATE KEY" + "-----"  # pragma: allowlist secret
 _PEM_END = "-----" + "END RSA PRIVATE KEY" + "-----"
-_PEM_BODY = "MIIEpAIBAAKCAQEA" + ("Zm9vYmFyMTIzNDU2Nzg5MGFiY2RlZmdoaWprbG1u" * 3)
+_PEM_BODY = "MIIEpAIBAAKCAQEA" + ("Zm9vYmFyMTIzNDU2Nzg5MGFiY2RlZmdoaWprbG1u" * 3)  # pragma: allowlist secret
 
 
 def negative_fixture_text() -> str:
