@@ -182,6 +182,8 @@ tests/unit/execution/test_order_lifecycle_deep.py
 data/*
 # The component-test routing matrix is normative repository data, not a local dataset.
 !data/testing/
+# Research design contract is canonical code-adjacent metadata, not empirical data.
+!data/research/
 # Neuro-physics contradiction-ledger assurance case is a tracked audit artifact.
 !data/audit/
 !data/audit/**
