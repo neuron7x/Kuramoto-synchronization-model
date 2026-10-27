@@ -193,9 +193,10 @@ def test_repo_real_data_manifests_are_flagged_and_red() -> None:
         # is established. This is NOT evidence of real-data compliance: the
         # independent negative controls above still prove unlicensed and
         # synthetic->MEASURED claims are rejected.
-        pytest.skip(
+        pytest.fail(
             "NO_REAL_DATA_MANIFEST_STAGED: proprietary dataset coverage has "
-            "not been demonstrated; only licensed synthetic manifests ship."
+            "not been demonstrated; only licensed synthetic manifests ship. "
+            "Do not declare an unverified real-data evidence tier."
         )
 
 
