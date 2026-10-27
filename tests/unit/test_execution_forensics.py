@@ -4,15 +4,30 @@
 from __future__ import annotations
 
 import csv
+import hashlib
+import io
+import json
+import os
+from collections.abc import Callable
+from fractions import Fraction
 from pathlib import Path
+from typing import Any
 
 import pytest
 
 from tools.execution_forensics import (
+    EXACT_DIGITS,
     HEADERS,
+    MAX_SOURCE_BYTES,
+    SCHEMA_PATH,
     EvidenceInputError,
     analyze,
+    analyze_bytes,
+    canonical_json,
     main,
+    parse_fills,
+    report_digest,
+    verify_report,
 )
 
 
@@ -203,28 +218,10 @@ def test_utf8_and_source_size_gate(tmp_path: Path) -> None:
 # One byte string, one meaning: every spelling outside the canonical grammar is refused so
 # that source_sha256 binds a unique interpretation of the data.
 
-import hashlib  # noqa: E402
-import json  # noqa: E402
-import os  # noqa: E402
-from fractions import Fraction  # noqa: E402
-
-from tools.execution_forensics import (  # noqa: E402
-    EXACT_DIGITS,
-    MAX_SOURCE_BYTES,
-    SCHEMA_PATH,
-    analyze_bytes,
-    canonical_json,
-    parse_fills,
-    report_digest,
-    verify_report,
-)
-
 _SAMPLE = Path(__file__).resolve().parents[2] / "examples" / "execution_forensics" / "fills_sample.csv"
 
 
 def _csv_bytes(*rows: dict[str, str]) -> bytes:
-    import io
-
     buffer = io.StringIO(newline="")
     writer = csv.DictWriter(buffer, fieldnames=HEADERS, lineterminator="\n")
     writer.writeheader()
@@ -565,9 +562,9 @@ def test_reports_conform_to_the_published_schema() -> None:
         lambda r: r.__setitem__("report_sha256", "not-a-digest"),
     ],
 )
-def test_schema_rejects_fabricated_shapes(corrupt: object) -> None:
+def test_schema_rejects_fabricated_shapes(corrupt: Callable[[dict[str, Any]], None]) -> None:
     jsonschema = pytest.importorskip("jsonschema")
     report = json.loads(json.dumps(analyze_bytes(_SAMPLE.read_bytes())))
-    corrupt(report)  # type: ignore[operator]
+    corrupt(report)
     with pytest.raises(jsonschema.ValidationError):
         jsonschema.validate(instance=report, schema=_schema())
