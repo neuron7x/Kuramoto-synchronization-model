@@ -5697,7 +5697,6 @@ c05c881824937f31b3c2e95242c4fc2383da37a7232d1c7137f13c252974cd7b  ./.claude/comm
 c0618fbe1af7572fb5f79f44db5f1b91d4f9386a2a43b86d3bfd31aebb107fb0  ./tools/promptops_validate.py
 c06e8650b81fa48ac1f906b153a27f40d8994a3c799626232405362ca60811aa  ./docs/quality-dor-dod.md
 c0746a74aa1574e75c284c3bc74b8b00b0f90b89cf124c2a319b0d75e9cb738b  ./core/data/warehouses/base.py
-c07bf440b99dea571ae5b15fb59de0f14fe5882e402c6e3ed71c76b7ab5cedda  ./.github/workflows/geosync-manifest-repair-once.yml
 c097cb62081773fe433892fedd518241d80ee62c0b6cc7ee868888ef52f3d91c  ./tests/ci/test_package_boundary.py
 c0b5e8fcc9049f820573f95b3f99d92c3052063d97fae77c74d4da13558d5cb6  ./docs/releases/replay_manifest_2026_04_27.yaml
 c0bb82ba24e00bdb26fc10e51626563ea60a5f85932213fe438926295f9d6aa9  ./.trufflehog-exclude
@@ -6629,6 +6628,7 @@ e031df1daa323edca9f2903e0e35b59cfbc7dd999f30544f48c8515be9ae7aea  ./.claude/pr_p
 e03c534ca2e86fc6e2cc6bd222136e738c40a40460e291acea22333559abe313  ./tests/test_metrics.py
 e04b0a51baf7314866b86b7dd543df2f427bd2768501948fe39c7663594618a9  ./docs/governance/D002G_M2_REANCHOR_2026-06-18.md
 e050e4cb0d1baf30a33f00d0211725eb97706482c3cdd8cd67976964bc754a34  ./docs/templates/README.md
+e06198fca38ad90b73226fc7d056e81d6760e7f11cff9739777f48283a60c385  ./.github/workflows/geosync-manifest-repair-once.yml
 e061a48d6f7dbf70577477c5319efa59483347ab93784966d528ced4b49a8f62  ./core/indicators/novelty.py
 e061d770c04b9c44403b4745583ab5bd2a969865a831fb82f876f4b24b9f5258  ./apps/web/jest.setup.ts
 e06c4174565108bacd28dbcb5cd7d8e6b1fe810456ec4096542eeb8e55cba6eb  ./core/cross_asset_kuramoto/signal.py
