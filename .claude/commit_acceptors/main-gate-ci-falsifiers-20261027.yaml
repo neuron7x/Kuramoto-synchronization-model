@@ -14,6 +14,7 @@ diff_scope:
     - path: ".github/detect-secrets.baseline"
     - path: "tests/scripts/test_check_instrument_evidence_chain.py"
     - path: ".gitleaks.toml"
+    - path: "scripts/ci/check_links.py"
   forbidden_paths:
     - "core/"
     - "execution/"
