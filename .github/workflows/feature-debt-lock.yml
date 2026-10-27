@@ -63,3 +63,18 @@ jobs:
           python -m pytest --noconftest -c /dev/null -p no:cacheprovider -q \
             tests/unit/test_execution_forensics.py \
             tests/tools/test_execution_forensics_gate.py
+      - name: Check isolated forensics style and strict types
+        run: |
+          set -euo pipefail
+          python -m pip install --disable-pip-version-check \
+            'ruff==0.17.2' 'black==26.3.1' 'mypy==1.20.0'
+          python -m ruff check \
+            tools/execution_forensics.py \
+            tests/unit/test_execution_forensics.py \
+            tests/tools/test_execution_forensics_gate.py
+          python -m black --check \
+            tools/execution_forensics.py \
+            tests/unit/test_execution_forensics.py \
+            tests/tools/test_execution_forensics_gate.py
+          python -m mypy --strict --config-file=/dev/null \
+            tools/execution_forensics.py
