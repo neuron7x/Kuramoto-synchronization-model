@@ -172,3 +172,37 @@ describe conflicting falsifier exit conventions; the runner also writes an
 acceptors remain `ACTIVE`, follow the schema's inverse-falsifier convention,
 and were checked using their declared commands directly. Reconcile the runner
 and contract before using it to promote them to `VERIFIED`.
+
+## CI follow-up after the first repair
+
+The repair was published as
+[`96a8f48`](https://github.com/neuron7x/Kuramoto-synchronization-model/commit/96a8f48b4cb6290db7aac9446cbc5bd86a27b821).
+Two newly exercised checks exposed further environment and dependency debt:
+
+- [Mutation job 122491793532](https://github.com/neuron7x/Kuramoto-synchronization-model/actions/runs/40590097659/job/122491793532)
+  could not establish the gamma baseline. Replaying the exact workflow in a
+  fresh, isolated Python 3.12 environment failed collection because Hypothesis
+  was absent. Adding the dev-lock Hypothesis, statsmodels and patsy releases
+  then exposed a pandas 3.1 deprecation error during statsmodels 0.14.6 import.
+  The workflow now also uses the compatible dev-lock pandas 2.3.3 release.
+  Its 25 gamma tests pass. The real logic mutation probe killed 14 of 16
+  mutants (87.5%), above the unchanged 85% floor; both surviving comparison
+  mutations remain recorded. The probe restored the isolated source bytes.
+  Local receipt: `tmp/pr2833_mutation_environment_receipt.json`.
+- [Service audit job 122491794717](https://github.com/neuron7x/Kuramoto-synchronization-model/actions/runs/40590098103/job/122491794717)
+  passed the new exact-heredoc extraction and hermetic audit, then found
+  `PYSEC-2026-2190` and `PYSEC-2026-2191` in the existing CoherenceBridge
+  Kafka client. Both service pins now use the fixed `kafka-python==2.3.2`.
+  Local audits pass for CoherenceBridge (21 resolved dependencies), sandbox
+  (24), and the root service requirements (142). Five existing producer tests
+  pass with the service-resolved Protobuf version; a hash-verified official
+  Kafka wheel also accepts the existing producer configuration and serializers.
+  Local receipts: `tmp/pr2833_service_dependency_audit/`.
+
+The old CoherenceBridge lock retains its explicit offline-placeholder header,
+missing hashes and nine other pre-existing version drifts. Updating its Kafka
+pin does not certify that lock. No live Kafka broker or Docker/Python 3.11
+service replay was performed. These follow-up results are local evidence;
+check the next published commit's terminal CI results before claiming that
+either remote job is fixed. Research tiers and frozen artifact pins are
+unchanged.

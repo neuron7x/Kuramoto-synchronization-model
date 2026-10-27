@@ -55,14 +55,22 @@ jobs:
           # Pydantic-backed and core/kuramoto/ricci_flow.py imports networkx
           # for bridge detection, so pydantic and networkx are likewise part
           # of the baseline import/runtime contract here, not optional extras.
+          # The gamma selector imports Hypothesis and exercises real ADF
+          # stationarity. Match these dependencies to requirements-dev.lock;
+          # missing ADF evidence must remain invalid, including in this gate.
+          # Keep pandas on the lock's compatible release: pandas 3.1 emits
+          # a deprecation error while statsmodels 0.14.6 imports its ADF code.
           python -m pip install --upgrade pip
           python -m pip install \
             'pytest>=8.4' \
             'numpy>=2.3.3' \
-            'pandas>=2.3.3' \
+            'pandas==2.3.3' \
             'PyYAML>=6.0.3' \
             'scipy>=1.16.2' \
             'networkx>=3.5' \
+            'hypothesis==6.151.13' \
+            'statsmodels==0.14.6' \
+            'patsy==1.0.2' \
             'pydantic>=2.12.4,<3.0.0'
 
       - name: Mutation-kill ratchet

@@ -98,6 +98,14 @@ The dev lock pins `statsmodels==0.14.6` and its additional dependency
 metadata. The existing NumPy, SciPy, pandas and packaging pins satisfy this
 release's other requirements and remain unchanged.
 
+The slim mutation-kill workflow also installs these two pinned releases and
+the dev lock's `hypothesis==6.151.13` and compatible `pandas==2.3.3`. Its gamma
+selector imports Hypothesis at collection time and needs real ADF evidence
+for the unmutated baseline. Pandas 3.1 emits a deprecation error during
+statsmodels 0.14.6 import under the repository's warnings-as-errors policy.
+Missing either dependency prevents a valid mutation measurement; it is not a
+surviving mutation or permission to lower the frozen kill-rate floor.
+
 The estimator rejects an estimate when ADF is unavailable or fails. The test
 suite exercises this negative path explicitly; an absent optional dependency
 must never be interpreted as evidence of stationarity.

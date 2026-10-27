@@ -4,11 +4,12 @@ claim_type: fail_closed
 promise: >-
   PSD gamma estimates require successful ADF evidence with an admissible
   p-value below 0.05 as well as adequate fit quality; unavailable or failed
-  ADF evidence cannot validate an estimate, and the development environment
-  contains the hash-pinned dependencies needed to exercise the real test.
+  ADF evidence cannot validate an estimate, and the development and mutation
+  environments contain the dependencies needed to exercise the real test.
 diff_scope:
   changed_files:
     - path: ".claude/commit_acceptors/gamma-adf-fail-closed-20261027.yaml"
+    - path: ".github/workflows/mutation-kill-gate.yml"
     - path: "geosync/estimators/gamma_estimator.py"
     - path: "tests/test_gamma_estimator.py"
     - path: "pyproject.toml"
@@ -28,11 +29,14 @@ required_python_symbols:
 expected_signal: >-
   Gamma tests retain the seeded white-noise and random-walk witnesses and
   pass all quality/stationarity conjunction cases, unavailable/failed ADF
-  controls, and the unchanged 0.05 boundary; all dependency locks remain
-  exactly pinned and hash-covered.
+  controls, and the unchanged 0.05 boundary; the governed root dependency
+  locks remain exactly pinned and hash-covered. The gamma mutation baseline passes with
+  its declared CI dependencies and retains the frozen 0.85 logic kill floor.
 measurement_command: >-
   python -m pytest tests/test_gamma_estimator.py tests/ci/test_lock_hashes.py
-  -q --override-ini addopts='' && python scripts/ci/check_lock_hashes.py
+  -q --override-ini addopts='' && python scripts/ci/check_lock_hashes.py &&
+  python tools/mutation_probe.py geosync/estimators/gamma_estimator.py
+  --tests tests/test_gamma_estimator.py --only-logic --fail-under 0.85
 signal_artifact: "tmp/gamma_adf_fail_closed_20261027.log"
 falsifier:
   command: |-
@@ -53,12 +57,14 @@ falsifier:
     remains invalid.
 rollback_command: >-
   git restore --source=77f4771ddb515f41de5e580a219cf5f2eec7f851 --
+  .github/workflows/mutation-kill-gate.yml
   geosync/estimators/gamma_estimator.py tests/test_gamma_estimator.py
   pyproject.toml requirements-dev.txt requirements-dev.lock
   docs/DEPENDENCY_LOCK_POLICY.md &&
   rm -f .claude/commit_acceptors/gamma-adf-fail-closed-20261027.yaml
 rollback_verification_command: >-
   git diff --exit-code 77f4771ddb515f41de5e580a219cf5f2eec7f851 --
+  .github/workflows/mutation-kill-gate.yml
   geosync/estimators/gamma_estimator.py tests/test_gamma_estimator.py
   pyproject.toml requirements-dev.txt requirements-dev.lock
   docs/DEPENDENCY_LOCK_POLICY.md &&
