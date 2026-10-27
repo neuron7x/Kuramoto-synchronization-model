@@ -1,0 +1,37 @@
+# Python matrix dual-leg verification: 3.11 support never impersonates ENV-001.
+id: main-gate-matrix-runtime-20261027
+status: ACTIVE
+claim_type: governance
+promise: >-
+  Canonical ENV-001 preflight passes on a complete Python 3.12 environment
+  but must report a Python version failure on the separately supported
+  Python 3.11 matrix leg. Negative-controls remain executable on both.
+diff_scope:
+  changed_files:
+    - path: ".claude/commit_acceptors/main-gate-matrix-runtime-20261027.yaml"
+    - path: "tests/ci/test_env_preflight.py"
+  forbidden_paths:
+    - "trading/"
+    - "execution/"
+    - "forecast/"
+    - "core/"
+required_python_symbols: []
+expected_signal: >-
+  Python 3.11 leg tests expect a nonzero canonical ENV-001 verdict, while
+  Python 3.12 leg requires a genuine positive live result.
+measurement_command: >-
+  python -m pytest -q tests/ci/test_env_preflight.py
+signal_artifact: "tmp/main_gate_matrix_runtime_20261027.log"
+falsifier:
+  command: >-
+    python -m pytest tests/ci/test_env_preflight.py::test_negative_wrong_python_fails_closed -q
+  description: >-
+    A noncanonical interpreter cannot generate a successful 3.12 ENV-001 receipt.
+rollback_command: >-
+  git revert --no-edit HEAD
+rollback_verification_command: >-
+  git diff --exit-code HEAD~1 HEAD -- tests/ci/test_env_preflight.py
+memory_update_type: append
+ledger_path: ".claude/commit_acceptors/main-gate-matrix-runtime-20261027.yaml"
+report_path: "tests/ci/test_env_preflight.py"
+evidence: []
