@@ -65,4 +65,4 @@ ledger_path: ".claude/commit_acceptors/pr2833-governance-routing-mutation-receip
 report_path: "docs/ci/pr2833_exact_source_recovery.md"
 evidence:
   - path: "data/governance/neuron7x_verification_protocol_v2026_8.json"
-    sha256: "01bec86cda97f1256bf6ba3c25041dfc115e09422264c9ae8be6e485bd717326"
+    sha256: "01bec86cda97f1256bf6ba3c25041dfc115e09422264c9ae8be6e485bd717326"  # pragma: allowlist secret -- independently verified public SHA256, not a credential

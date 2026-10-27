@@ -1880,7 +1880,6 @@
 3e1d073102748ce746c883c60b685c8f0c8d8c04ae613fa532d74457401ef431  ./docs/architecture/map.md
 3e2ed4fcad6c3e39bf40f4fcfffa3afccf8f8eed1a87d860ca5bcf4d212ad511  ./.claude/commit_acceptors/ricci-async-loop-agnostic.yaml
 3e2f5bac15c4e42da883779b34819004139d35be0f8741c6a8279afb683f3a62  ./tests/unit/dynamics/test_motional_correlation_witness.py
-3e3e42735cf634ccb59af7848952533fb1dcfad3d58dc9afb27222fac0a3b0be  ./.claude/commit_acceptors/pr2833-governance-routing-mutation-receipt-20261028.yaml
 3e417c3c007e86780d3b663a74981a55a513d9e116860edae00a90c0f8f9c3ff  ./tests/property/time/test_causal_prefix_invariance.py
 3e488ad8f69d1e7989cf3ce01d98a0abd756aa0682d96eba31c3987f68741b14  ./deploy/helm/geosync/charts/admin/templates/serviceaccount.yaml
 3e4e958d9d918c7bcc1dd9553c935305f2d63da70a832536dea34d12d53b8551  ./scripts/ci/check_rtm_traceability.py
@@ -3558,6 +3557,7 @@
 7751579a80c185093fbace11c3b81d205cef4a72bdb7039ba2758173f66b7cfe  ./tests/unit/core/test_telemetry.py
 776b58aa9b3ec1629e331ea085d4ee619dd37b7231ca9b2d22c27f6fee2ef1a2  ./tests/test_l2_hurst.py
 776d7ffcb8a514b697e50f0b95f9bb0e3098402ccc11c80d3713d57994397190  ./governance/project_state.yaml
+777bdf555efb0a20d2716738344945f46ad755459a162b8236fb3a95491b0ced  ./.claude/commit_acceptors/pr2833-governance-routing-mutation-receipt-20261028.yaml
 77911bc79ce663e04a784975bef419d4f42221a9462caa3cf198dff7f74e97d6  ./geosync/estimators/lyapunov_estimator.py
 7796c8828102228fc9c63ad31fc710ae88d1404cf0158f054a7bf80e2b77c212  ./tests/archive/__init__.py
 7799913372b88a64a251f417613218b3fcb0c6650a1ca0e7ee810cf18f346bd3  ./geosync_hpc/execution.py
