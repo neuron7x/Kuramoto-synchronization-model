@@ -1,16 +1,14 @@
 #!/usr/bin/env python3
 """Run ECP-AS Iteration 002 adversarial claim-promotion benchmark."""
+
 from __future__ import annotations
 
 import argparse
 import gzip
 import json
-import sys
 from pathlib import Path
 
 _REPO_ROOT = Path(__file__).resolve().parents[3]
-if str(_REPO_ROOT) not in sys.path:
-    sys.path.insert(0, str(_REPO_ROOT))
 
 from geosync.epistemic.benchmark import (
     build_core_scenarios,
@@ -121,7 +119,8 @@ def main() -> int:
         "ecp_as_unsafe_promotion_rate": ecp.unsafe_promotion_rate,
         "ecp_as_false_block_rate": ecp.false_block_rate,
         "artifact_chain_unsafe_promotion_rate": strongest_baseline.unsafe_promotion_rate,
-        "absolute_unsafe_promotion_reduction_vs_artifact_chain": strongest_baseline.unsafe_promotion_rate - ecp.unsafe_promotion_rate,
+        "absolute_unsafe_promotion_reduction_vs_artifact_chain": strongest_baseline.unsafe_promotion_rate
+        - ecp.unsafe_promotion_rate,
         "ecp_as_correct": ecp.correct,
         "total": ecp.total,
     }

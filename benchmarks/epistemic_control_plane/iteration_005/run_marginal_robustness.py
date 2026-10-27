@@ -3,18 +3,18 @@ from __future__ import annotations
 
 import json
 from pathlib import Path
-import sys
 
 ROOT = Path(__file__).resolve().parents[3]
-if str(ROOT) not in sys.path:
-    sys.path.insert(0, str(ROOT))
 
 from geosync.epistemic.dependence_bounds import (  # noqa: E402
     EvaluatorMarginal,
     search_triplet_quorums,
 )
 
-MANIFEST = ROOT / "benchmarks/epistemic_control_plane/iteration_005/soundnessbench_leaderboard_marginals.json"
+MANIFEST = (
+    ROOT
+    / "benchmarks/epistemic_control_plane/iteration_005/soundnessbench_leaderboard_marginals.json"
+)
 OUT = ROOT / "artifacts/epistemic_control_plane/iteration_005/marginal_robustness_results.json"
 
 MAX_UNSAFE = 0.10

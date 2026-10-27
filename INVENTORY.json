@@ -199,7 +199,7 @@
     },
     {
       "path": "scripts/ci/check_import_architecture.py",
-      "sha256": "d025c4ef24b437274284db4e3e0b6bff599a7e81cd66c22252186591a8f0ddf2"
+      "sha256": "31352207722974d7f5a4c5a748a29d66bb08facce87a415a32fd8b4e301c2db6"
     },
     {
       "path": "scripts/ci/check_inference_transformer_contract.py",
@@ -227,7 +227,7 @@
     },
     {
       "path": "scripts/ci/check_manifest_hashes.py",
-      "sha256": "15d1bb06e9ae60aea9fa40b93a28a96431bacd06e19afd7524cdd4f3aacbf6f4"
+      "sha256": "80046929a258d200b2b2ed9fca0f37c512298a647dc491a8a565b5261d64cd4c"
     },
     {
       "path": "scripts/ci/check_math_boundaries.py",
@@ -408,6 +408,10 @@
     {
       "path": "scripts/ci/ebsvap_wp3_run.py",
       "sha256": "f5a17f7a1e7cc5229811fab68c5415cd79cb66969e13e5f3bbd1c3dea8c61bd1"
+    },
+    {
+      "path": "scripts/ci/emit_metric_signals.py",
+      "sha256": "a48dae52bc8d8a530de06175e9f056e0568de83faa855783bf4f2cdfce8a5077"
     },
     {
       "path": "scripts/ci/emit_pyo3_env.py",
