@@ -1,0 +1,206 @@
+{
+  "schema": "geosync.company_value_functions.v1",
+  "status": "normative",
+  "version": "1.0.0",
+  "evidence_boundary": "Normative policy only. No claim that current CI, release readiness, or individual scores meet thresholds until verified against the exact SHA.",
+  "decision_rule": {
+    "hard_constraints_first": true,
+    "forbid_green_by_vacuum": true,
+    "forbid_unmeasured_success_claims": true,
+    "fail_closed_on_missing_evidence": true,
+    "minimum_total_score": 0.92,
+    "minimum_individual_score": 0.8
+  },
+  "score_status": "UNMEASURED_PENDING_SHA_BOUND_EXECUTION",
+  "value_functions": [
+    {
+      "id": "VF-01",
+      "name": "Safety before capability",
+      "principle": "Security, dependency and fail-closed gates precede feature promotion.",
+      "weight": 0.2,
+      "hard_constraint": true,
+      "measurable_invariants": [
+        "secret detector must reject unknown credentials",
+        "dependency integrity failure blocks PR",
+        "missing security evidence never resolves to PASS"
+      ],
+      "evidence_surfaces": [
+        ".github/workflows/pr-gate.yml",
+        "scripts/ci/check_secret_boundary.py",
+        "tests/ci/test_secret_boundary.py"
+      ],
+      "score_inputs": [
+        "secrets_supply_chain_verdict",
+        "dependency_review_verdict",
+        "negative_fixture_detection"
+      ],
+      "failure_modes": [
+        "undetected new credential",
+        "unverified dependency admitted",
+        "security gate disabled or not executed"
+      ]
+    },
+    {
+      "id": "VF-02",
+      "name": "Truthfulness over presentation",
+      "principle": "Schema-valid evidence does not imply a measured or falsified result.",
+      "weight": 0.18,
+      "hard_constraint": true,
+      "measurable_invariants": [
+        "research artifact truth rejects zero-data PASS",
+        "claims compiler rejects unanchored claims",
+        "unsupported empirical promotion remains blocked"
+      ],
+      "evidence_surfaces": [
+        ".github/workflows/research-integrity-gate.yml",
+        "scripts/ci/check_research_artifact_truth.py",
+        "tests/ci/test_research_artifact_truth.py"
+      ],
+      "score_inputs": [
+        "artifact_truth_gate_verdict",
+        "claims_compiler_verdict",
+        "negative_artifact_mutation_result"
+      ],
+      "failure_modes": [
+        "placeholder promoted as measured",
+        "missing real-data provenance concealed",
+        "claims gate reports success without evidence"
+      ]
+    },
+    {
+      "id": "VF-03",
+      "name": "User and operator value",
+      "principle": "Engineering work must expose actionable uncertainty, recovery paths, and decision constraints.",
+      "weight": 0.12,
+      "hard_constraint": false,
+      "measurable_invariants": [
+        "declared project-governance requirements testable",
+        "missing decision evidence produces an actionable failure",
+        "value policy has an executable negative self-test"
+      ],
+      "evidence_surfaces": [
+        "tools/governance/check_company_value_functions.py",
+        "tests/governance/test_company_value_functions.py",
+        "docs/governance/company_value_functions.md"
+      ],
+      "score_inputs": [
+        "governance_test_result",
+        "operator_failure_class_count",
+        "negative_selftest_outcome"
+      ],
+      "failure_modes": [
+        "subjective value claims without measurable surface",
+        "ambiguous recovery condition",
+        "self-test passes vacuously"
+      ]
+    },
+    {
+      "id": "VF-04",
+      "name": "Reproducibility and provenance",
+      "principle": "Evidence must be deterministically bound to immutable input bytes and exact version.",
+      "weight": 0.16,
+      "hard_constraint": true,
+      "measurable_invariants": [
+        "root SHA256 manifest cold-verifies tracked files",
+        "changing one committed source byte fails root manifest",
+        "source graph references a valid ancestor digest"
+      ],
+      "evidence_surfaces": [
+        ".github/workflows/repo-integrity-gate.yml",
+        "scripts/ci/check_root_manifest.py",
+        "tests/ci/test_manifest_scope.py"
+      ],
+      "score_inputs": [
+        "root_manifest_verdict",
+        "single_byte_negative_result",
+        "immutable_source_sha"
+      ],
+      "failure_modes": [
+        "stale root manifest",
+        "untracked source accepted as covered",
+        "incorrect commit-to-evidence attribution"
+      ]
+    },
+    {
+      "id": "VF-05",
+      "name": "Technical leadership through falsification",
+      "principle": "Improve explicit disconfirming tests before expanding scientific or product claims.",
+      "weight": 0.13,
+      "hard_constraint": false,
+      "measurable_invariants": [
+        "negative Ricci replay holds claim at HYPOTHESIS",
+        "falsifiers reject altered provenance pins",
+        "mutation gate detects ineffective assertions"
+      ],
+      "evidence_surfaces": [
+        ".github/workflows/mutation-kill-gate.yml",
+        "tests/research_lines/test_ricci_microstructure_replay_capsule.py",
+        "scripts/ci/check_research_artifact_truth.py"
+      ],
+      "score_inputs": [
+        "mutation_kill_result",
+        "ricci_negative_replay_result",
+        "counterfactual_oracle_detection"
+      ],
+      "failure_modes": [
+        "unfalsifiable success criterion",
+        "synthetic test misrepresented as market evidence",
+        "nonvacuous mutation test weakened"
+      ]
+    },
+    {
+      "id": "VF-06",
+      "name": "Cooperative auditability",
+      "principle": "Another reviewer can reproduce file-bound checks and audit rollback conditions.",
+      "weight": 0.11,
+      "hard_constraint": false,
+      "measurable_invariants": [
+        "relative documentation links resolve",
+        "release receipts distinguish NOT_READY from READY",
+        "repository integrity commands are independently executable"
+      ],
+      "evidence_surfaces": [
+        ".github/workflows/repo-integrity-gate.yml",
+        "tests/ci/test_links.py",
+        "docs/RELEASE_EVIDENCE_BUNDLE.md"
+      ],
+      "score_inputs": [
+        "link_integrity_verdict",
+        "release_readiness_evidence_status",
+        "independent_replay_result"
+      ],
+      "failure_modes": [
+        "broken internal evidence references",
+        "undisclosed missing receipt",
+        "non-executable acceptance command"
+      ]
+    },
+    {
+      "id": "VF-07",
+      "name": "Minimal power concentration in automation",
+      "principle": "Automation reports evidence, while irreversible actions require explicit authorized policy.",
+      "weight": 0.1,
+      "hard_constraint": true,
+      "measurable_invariants": [
+        "reviewable branch policy guards mainline merges",
+        "hard constraints cannot be softened through a config edit",
+        "validator self-test must detect its own bypass"
+      ],
+      "evidence_surfaces": [
+        ".github/workflows/pr-gate.yml",
+        "tools/governance/check_company_value_functions.py",
+        "tests/governance/test_company_value_functions.py"
+      ],
+      "score_inputs": [
+        "pr_policy_gate_verdict",
+        "hard_constraint_negative_test",
+        "self_audit_results"
+      ],
+      "failure_modes": [
+        "unguarded automatic promotion",
+        "human review boundary elided",
+        "confidence language substituted for an executable gate"
+      ]
+    }
+  ]
+}
