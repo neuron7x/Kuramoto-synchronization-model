@@ -1,0 +1,68 @@
+# Fail-closed PR #2833 remediation: controlled CI write, precise suppression
+# measurement, historical secret redaction, and security-scanner negative teeth.
+# Evidence is pending exact-HEAD CI. No release or empirical readiness asserted.
+id: pr2833-ci-security-redaction-20261027
+status: ACTIVE
+claim_type: governance
+promise: >-
+  Validate reviewed release-evidence digest fingerprints without altering
+  scanner plugin rules, constrain manifest regeneration to one branch-scoped
+  job, measure only syntactic Python suppressions, preserve the architecture
+  debt ratchet, and redact historic gitleaks Match/Secret values while
+  preserving 143 forensic metadata entries. Historical credential revocation
+  and Git-history purging remain UNVERIFIED; READY or merge is forbidden.
+diff_scope:
+  changed_files:
+    - path: ".claude/commit_acceptors/pr2833-ci-security-redaction-20261027.yaml"
+    - path: "scripts/ci/check_ci_permissions.py"
+    - path: ".github/workflows/geosync-manifest-repair-once.yml"
+    - path: "tools/architecture_debt_inference.py"
+    - path: "tests/ci/test_architecture_debt_inference.py"
+    - path: ".github/detect-secrets.baseline"
+    - path: "scripts/ci/check_secret_boundary.py"
+    - path: "tests/ci/test_secret_boundary.py"
+    - path: "tests/ci/test_archived_gitleaks_redaction.py"
+    - path: "archive_snapshots/github_9e6e4792_unique/audit/artifacts/gitleaks.json"
+  forbidden_paths:
+    - "core/"
+    - "execution/"
+    - "trading/"
+    - "forecast/"
+required_python_symbols:
+  - "tools/architecture_debt_inference.py::m_type_ignore"
+  - "tools/architecture_debt_inference.py::m_noqa"
+  - "tools/architecture_debt_inference.py::m_todo_markers"
+expected_signal: >-
+  SEC-006 detects planted credentials, rejects literal hardcoded tokens, and
+  does not conflate a ContextVar method call with a secret. Historical report
+  contains no credential payload; all 143 report metadata fingerprints
+  retained. Workflow write permission is job-scoped and explicitly justified.
+  Architecture ratchet is unchanged and uses syntax-based counts; tests and
+  required workflows must still finish PASS against the exact PR head.
+measurement_command: >-
+  bash -c 'python -m pytest -q
+  tests/ci/test_secret_boundary.py
+  tests/ci/test_archived_gitleaks_redaction.py
+  tests/ci/test_architecture_debt_inference.py
+  tests/ci/test_ci_permissions.py
+  && python tools/architecture_debt_inference.py --check tools/debt_budget.json'
+signal_artifact: "tmp/pr2833_ci_security_redaction_20261027.log"
+falsifier:
+  command: >-
+    bash -c 'python -m pytest -q
+    tests/ci/test_archived_gitleaks_redaction.py
+    tests/ci/test_secret_boundary.py::test_regex_still_rejects_literal_long_secret
+    tests/ci/test_architecture_debt_inference.py::test_metrics_count_directives_only
+    tests/ci/test_ci_permissions.py::test_positive_real_tree_passes'
+  description: >-
+    FAIL if historical raw secret values reappear, a hardcoded key is missed,
+    inert quoted markers inflate architectural debt, or CI tokens exceed
+    their documented least-privilege scope.
+rollback_command: "git revert --no-edit HEAD"
+rollback_verification_command: >-
+  git diff --exit-code HEAD~1 HEAD --
+  scripts/ci/check_ci_permissions.py tools/architecture_debt_inference.py
+memory_update_type: append
+ledger_path: ".claude/commit_acceptors/pr2833-ci-security-redaction-20261027.yaml"
+report_path: "docs/SECRET_BOUNDARY_POLICY.md"
+evidence: []
