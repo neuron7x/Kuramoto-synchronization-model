@@ -100,8 +100,7 @@ def list_markdown_files(root: Path) -> list[Path]:
     return [
         p
         for p in sorted(root.rglob("*.md"))
-        if ".git" not in p.parts
-        and "archive_snapshots" not in p.relative_to(root).parts
+        if ".git" not in p.parts and "archive_snapshots" not in p.relative_to(root).parts
     ]
 
 
@@ -130,9 +129,7 @@ def extract_links(text: str) -> list[str]:
     return targets
 
 
-def classify(
-    target: str, md_file: Path, root: Path
-) -> tuple[str, str | None]:
+def classify(target: str, md_file: Path, root: Path) -> tuple[str, str | None]:
     """Classify a single link *target*.
 
     Returns ``(status, resolved_relpath_or_None)`` where status is one of
