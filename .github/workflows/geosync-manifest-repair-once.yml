@@ -28,42 +28,16 @@ jobs:
         uses: actions/setup-python@ece7cb06caefa5fff74198d8649806c4678c61a1
         with:
           python-version: '3.12'
-      - name: Canonical formatting and non-expanding secrets baseline normalization
+      - name: Format affected Python audit/test modules
         shell: bash
-        run: | # pragma: allowlist secret; this block executes the scanner, no plaintext token
+        run: |
           set -euo pipefail
-          python -m pip install --disable-pip-version-check black==26.3.1 detect-secrets==1.5.0
-          python -m black scripts/ci/check_links.py
-          cp .github/detect-secrets.baseline /tmp/detect-secrets.before
-          mapfile -t scanned < <(git diff --name-only --diff-filter=ACMR origin/main...HEAD | while IFS= read -r f; do [[ -f "$f" ]] && printf '%s\n' "$f"; done)
-          exclude=$(python - <<'PY'
-          from pathlib import Path
-          import re
-          body = Path('.github/workflows/pr-gate.yml').read_text(encoding='utf-8')
-          m = re.search(r"--exclude-files '([^']+)'", body)
-          if not m:
-              raise SystemExit('Could not find secret scanning exclusion contract')
-          print(m.group(1))
-          PY
-          )
-          set +e
-          detect-secrets-hook --baseline .github/detect-secrets.baseline --exclude-files "$exclude" "${scanned[@]}"
-          rc=$?
-          set -e
-          if [[ "$rc" != 0 && "$rc" != 3 ]]; then echo "Secret scan found unreviewed evidence"; exit "$rc"; fi
-          python - <<'PY'
-          import json
-          from pathlib import Path
-          before = json.loads(Path('/tmp/detect-secrets.before').read_text())
-          after = json.loads(Path('.github/detect-secrets.baseline').read_text())
-          for key in ('version', 'plugins_used', 'filters_used'):
-              assert before[key] == after[key], f'baseline policy changed: {key}'
-          def detections(b):
-              return {path: sorted(json.dumps({key: val for key, val in row.items() if key != 'line_number'}, sort_keys=True) for row in records) for path, records in b['results'].items()}
-          assert detections(before) == detections(after), 'Unknown secret or changed baseline entry; manual review required'
-          print('No baseline entries added, removed, or reclassified; line normalization only')
-          PY
-          detect-secrets-hook --baseline .github/detect-secrets.baseline --exclude-files "$exclude" "${scanned[@]}"
+          python -m pip install --disable-pip-version-check black==26.3.1
+          python -m black \
+            scripts/ci/check_links.py \
+            tools/architecture_debt_inference.py \
+            tests/ci/test_architecture_debt_inference.py \
+            tests/scripts/test_check_instrument_evidence_chain.py
       - name: Regenerate only declared deterministic manifests
         shell: bash
         run: |
@@ -76,7 +50,7 @@ jobs:
           python -m json.tool artifacts/manifest.json >/dev/null
           python - <<'PY'
           import subprocess
-          allowed = {"MANIFEST.sha256", "artifacts/manifest.json", ".github/detect-secrets.baseline", "scripts/ci/check_links.py"}
+          allowed = {"MANIFEST.sha256", "artifacts/manifest.json", "scripts/ci/check_links.py", "tools/architecture_debt_inference.py", "tests/ci/test_architecture_debt_inference.py", "tests/scripts/test_check_instrument_evidence_chain.py"}
           changed = set(subprocess.check_output(["git", "diff", "--name-only"], text=True).splitlines())
           assert changed <= allowed, f"Unexpected generator output: {changed - allowed}"
           print("Controlled regeneration diff:", sorted(changed))
@@ -85,7 +59,7 @@ jobs:
         shell: bash
         run: |
           set -euo pipefail
-          git add -- MANIFEST.sha256 artifacts/manifest.json .github/detect-secrets.baseline scripts/ci/check_links.py
+          git add -- MANIFEST.sha256 artifacts/manifest.json scripts/ci/check_links.py tools/architecture_debt_inference.py tests/ci/test_architecture_debt_inference.py tests/scripts/test_check_instrument_evidence_chain.py
           if git diff --cached --quiet; then
             echo "Both manifests already current; no commit needed."
             exit 0
@@ -93,5 +67,5 @@ jobs:
           git diff --cached --check
           git config user.name "github-actions[bot]"
           git config user.email "41898282+github-actions[bot]@users.noreply.github.com"
-          git commit -m "chore(ci): canonically format, normalize secrets baseline, refresh manifests"
+          git commit -m "chore(ci): canonical Python formatting and source-bound manifest refresh"
           git push origin HEAD:refs/heads/chore/main-gate-debt-paydown-20261027
