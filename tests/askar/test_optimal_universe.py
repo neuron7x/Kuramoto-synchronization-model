@@ -90,7 +90,7 @@ def test_exactly_14_assets_loaded() -> None:
         if not (DATA_DIR / TARGET_FILENAME).is_file():
             with pytest.raises(FileNotFoundError):
                 load_universe()
-        pytest.skip(
+        pytest.fail(
             "EMPIRICAL_EVIDENCE_UNAVAILABLE: real 14-asset Askar parquet panel "
             "is not staged/licensed; no universe-load or predictive claim certified. "
             f"Missing {len(missing)} of {N_UNIVERSE} raw files."
