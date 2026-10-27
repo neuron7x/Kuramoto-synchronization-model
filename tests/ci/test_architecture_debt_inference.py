@@ -197,6 +197,7 @@ def test_is_excluded_predicate() -> None:
     assert m._is_excluded(base / ".claude" / "worktrees" / "agent-x" / "core" / "a.py")
     assert m._is_excluded(base / ".venv" / "lib" / "x.py")
     assert m._is_excluded(base / ".git" / "hooks" / "x.py")
+    assert m._is_excluded(base / "archive_snapshots" / "github_backup" / "src" / "x.py")
     assert not m._is_excluded(base / "core" / "physics" / "forman_ricci.py")
     # a legitimate source file that merely mentions the word elsewhere in path
     assert not m._is_excluded(base / "core" / "claude_adapter.py")
