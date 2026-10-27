@@ -177,6 +177,7 @@
 0592ae98d1e4ad09765d9028ae83a26aef52eee6fe35d014ab9ecaa27f00123e  ./RIP/TOMBSTONES.md
 0593d2ccb244b72b58639db0411cb04d1c10d436a526decb8d60275d32c9ed0e  ./archive_snapshots/github_9e6e4792_unique/deploy/helm/tradepulse/charts/admin/Chart.yaml
 0595b27715391879ce64f0bd2b7867b087c68ecf4b692a1ec4ac6bcb4d620684  ./.claude/commit_acceptors/research-standard-governance-contracts.yaml
+059a0b51d963addbc625af2fd2689036cee8e678d43f18f360f80fd1242719fa  ./tools/architecture_debt_inference.py
 05a0e5b97e3d4cccf820d17ef1e9b08e226c297d3c5b23401012fa5c436c4588  ./.claude/commit_acceptors/ctc-falsify-001.yaml
 05c57671c8ebed1b84767eb1082e8f7642b4041ab602d7a6d7cebd1e1dcc1c1b  ./tests/l2_artifacts.py
 05c9f7d3ca0509291b1d908756d0bdb728786120727a0aab6543cc4f7380a124  ./tests/physics/test_exhaustive_gauss_bonnet_atlas.py
@@ -559,6 +560,7 @@
 1265465f7646e5a0428d26e697f0d626f746818a02582d0fdd34a8769dfac8bc  ./tests/ci/test_canonical_counts.py
 1265ffcaadc1d485cc15f9ae44c8345e2702fa586ab6a8768cf6b8e0e49033a6  ./docs/CNS_ALIGNMENT_DEEP_TASKS.md
 126a9aad204a57769c47fe1e2b77cca85e94ec5f5aba1a6f79ffdcd17288d962  ./core/utils/clock.py
+126b6c2ad25ac514e9efb46a48f91f81908cbd4b1ae890069cdcde54c106d2f1  ./.github/detect-secrets.baseline
 126d6814ccf195f7c9a81adf4bf2375a3c1a31152053f2806a33f9d4280c8e0d  ./schemas/http/json/1.0.0/feature_request.schema.json
 12779819e18f519537e86848bc336f0d6c0f9603e635b850f297611f1dcf4415  ./src/data/versioning.py
 1281202e8ba3a9b4bfda93eecb0578b6c4f3fae03e518392e4ea97fafc028de0  ./tests/test_l2_dashboard.py
@@ -871,6 +873,7 @@
 1c4d83ff57b52d899616c73880fcfe20e11016aec5ae2915321da5f6560d2bed  ./tests/unit/integration/test_system_integrator.py
 1c65519868bcff628e417a5b13e41c99c81a90efcf0a1e39a9c36718dd92c121  ./research/ctc_falsify/c_real/open_data/OPEN_DATA_REPORT.md
 1c70fad6fa97b865a1ea0a5654616520959d37af3950be86d7dac39fbba21aa3  ./.claude/commit_acceptors/signalbus-fanout-law-witnesses.yaml
+1c7314fb744e3846002734b805c7f5df072acd6b8dca15fc2de1b7d0006fa3a5  ./tests/ci/test_archived_gitleaks_redaction.py
 1c74d7fef1eab25d418b21ab9c4b17242434992c247e3caf6ab4bfc8aacf7584  ./docs/production-readiness-checklist.md
 1c7cd741e06372d30e01ba4ae7220de1103e9bfa2f9a1f475c012a4012a80026  ./geosync_research/lines/ricci_microstructure_v1/collect_binance_l2.py
 1c7dc9ad951ac44b1e5c671f8b69cc93e1e383d085623036463960b6ba6f2922  ./core/agent/prompting/__init__.py
@@ -1884,6 +1887,7 @@
 3e97f3181060ff7c07d4942c274e82d9272c9990dd95b71dd3febb9b75d7e211  ./docs/deps/dependency_truth_model.md
 3e9b61147b344f33ba9af385dbbc0838940dcf5fcb595a77c89416c33776bc78  ./tests/scripts/test_export_governance_schemas.py
 3ea9ce59e986c2d49d4bab28a52418f4dedaa494e1956e1cb71791535de9aab3  ./modules/data_quality_monitor.py
+3eb4a010bffc0e65a9bfbcd533292c2d82e1c2243a16e6293da8840f6414d23a  ./.github/workflows/geosync-manifest-repair-once.yml
 3ec1a86d045a521cccaf00982827ea19e08609d865d909d735af70b38f2d6dac  ./apps/web/app/(protected)/_components/scenario-studio-loader.tsx
 3ec58d1fb390031d9b1d12ddbccf1421d11d396d02eaa13447ab5fc776b2dc9f  ./archive_snapshots/github_9e6e4792_unique/hydrobrain_v2/data.py
 3ec8fdf534ead2f1278e60adb6ebba9277ef7063b66e83c5a4e467cab8288ea1  ./core/physics/falsification.py
@@ -2309,6 +2313,7 @@
 4cb2bac4283766d1bdd45af28932a44fba7ba6618a9c9542dbf6819af892b8a4  ./governance/remediation_ledger.v1.json
 4cb78d2e9440618952dc44c14b41f704c54846c9c87d5d9e528447f430466faa  ./analytics/staging/__init__.py
 4cbaed1ae37c7d9a7d5f9c3af70ee37d141679bc1aed672ccf82f2bcd6856cb6  ./results/figures/fig2_dynamics.png
+4cbaefab6a2b705f6770c65910f61b4d5ec928e5bddc844ea57e47ba4bf742ff  ./tests/ci/test_architecture_debt_inference.py
 4cbf2e115ad9506e98431c29314d311b06765049cae542e0837388095e4e4f53  ./tests/e2e/__init__.py
 4cc3a37517406ed72497a40c8b2c33cc91503b1f6377b90b513f23a4268283a4  ./.claude/commit_acceptors/descriptor-capsule.yaml
 4cf105d79dbbabbcae2a35254945ab1f0a28399e9743802d9ac90f8c46d864fb  ./geosync/cli/amm_cli.py
@@ -2329,7 +2334,6 @@
 4d6063c1125ab640df17c54278ea6049c241fdf2a08d538237540338ca3595d0  ./tests/ci/test_opponency_lyapunov_certificate.py
 4d64a5d6f799454efbc8ad04ecf839e7957deb08206124b6f01414c2acaa9c19  ./.claude/commit_acceptors/ground-p0-backlog-batch-serotonin-kuramoto.yaml
 4d702eb2ca0a91f4551f2e3841d8f233c717506702f12d79d5b4ac69110f58d9  ./tests/security/test_dependency_manifest_consistency.py
-4d79a90be18ae638d7b61d20c737565ff1e0a3b606ebb190d50e4243a12b91ab  ./tools/architecture_debt_inference.py
 4d7e0c408a3ddc04557d3a6d1b9d06f18b79199370b5faae54d0085b11cc54a3  ./.claude/commit_acceptors/physics-calibration-harness.yaml
 4d80d7ee69ef04da8f65ec2c52d1f675d6ed94a92cb3ee103690d4a5f9e2131b  ./tests/ci/test_repo_health_sensor.py
 4d85f2543e4240ae40fd22e92bc66b838a5b980cd33659f92aa20aef365bacc2  ./.claude/commit_acceptors/kuramoto-feature-proxy-honesty.yaml
@@ -3024,6 +3028,7 @@
 65270fb4740ef0e45f4fd991f8af70980b8469c8f9750d5a772704d16fb28aa8  ./data/lineage/graph.json
 652c66da35cfa19caa3515bef4d25bccd7d468caf9ebca048ffce6c70915573f  ./migrations/alembic/script.py.mako
 652d5422e46d1eb60356c909e1d437fb9cd92d1ec689ba43fe3ba98ee7cae4fb  ./archive_snapshots/github_9e6e4792_unique/src/tradepulse/core/neuro/dopamine/action_gate.py
+652f35e82ade6290605ac41ee089cbeb35f21d11c9edb1b5706f5a7be7e30afc  ./.claude/commit_acceptors/pr2833-ci-security-redaction-20261027.yaml
 6533b57979ee1366c8647edf35fdbcf02c12b9b3fcaaed9bd63555866c12c042  ./sandbox/audit.py
 653ab366b2ff272ca0a09fe4dd4ecbd59d0dbc320a0603989371844f5568d791  ./tests/scripts/test_check_tombstone_preservation.py
 653cec48feab772195a1c3c602aa36e979a723bd6c4adea0a77d9ec8bb4029bf  ./reports/neuro_optimizer_profiling.md
@@ -3446,7 +3451,6 @@
 73cbf08ee089052cc9bf3451d747c73a7d2626990b166f38cb2f9afe110e9f3a  ./archive_snapshots/github_9e6e4792_unique/tradepulse/risk/__init__.py
 73d9a835a3895d4d85d34b6130e6e961daccaf354316a57d2c8a71ba9fa59ae7  ./core/neuro/advanced/neuroecon.py
 73dbdc3b29088007e6170cbd948bea3159847e134ea4358218213e020f6faa86  ./research/systemic_risk/d002k_event_metrics.py
-73fbd1bee2af8bda38eeb1bb834c5d67e2f3549876846a4e4cc10fc50d377632  ./.github/workflows/geosync-manifest-repair-once.yml
 7405ce82d69c1ffa7e57ba607b6e3731d577f1a65504bd2c2731e8f3c41980f6  ./core/physics/lyapunov_spectrum.py
 7406f5f1d87600b52140ff87815e78d944306028c5ca8cb28905512d6e2b305e  ./tests/research/calibration/test_calib_substrate_consolidation.py
 740f3300c7e96785bd8fc86ad76c66ef8a985de13ad4b60f9d35abdf81937aa9  ./tests/helm/test_chart_structure.py
@@ -4321,7 +4325,6 @@
 92441738a048415fc65bae845ce3205e4ad20263e7eaee9044b4680cdbb2c7c5  ./docs/templates/argumentation.md
 92444407d1fcb19263b1c10127ecf388004e47eb5a54a872202ef677d0d71acb  ./tests/test_e2e_coherence.py
 924b44457b46478132c7746bdedca082e59e83b1c5a5e564e6e01e84ed0dd3fc  ./tests/unit/risk/test_killswitch_failclosed_teeth.py
-925899ff4230ed34745d2cf627d12b73c48caf890677732fec7b9337b5a306b2  ./tests/ci/test_secret_boundary.py
 925a5a26cfead8804f47998665969e3e690d9d4381fad8e4aa86acba288ed6ab  ./.github/workflows/ux-state-coverage.yml
 925ea75d0f2a738500f9524706dbb2bbfc1fbdd17bcdb2c76afddf0bf9ed89f9  ./tools/research/validate_physics_2026_translation.py
 926c871c4fe5174b1689ac754884f3ce28f43c92dba8a4bd3ed5c742ec90aa78  ./tests/scripts/test_pipeline_status_check.py
@@ -4793,6 +4796,7 @@
 9f0d52195a6aca2d224fa17b6dc8f6bf8dd5ef553001f7de337dbfe340d91020  ./tests/unit/data/test_backlog_watermark.py
 9f14cb2a7b3b846bda63bd07c7a248b844a33574d03dc4ca19811e80361c519b  ./docs/architecture/CONNECTOME_PR_AUDIT_PACKET.md
 9f2a3cf28eac11eebba8359d26c80a1c5b82ad5f2cdaa67aadf0b04e510b3684  ./research/systemic_risk/replication.py
+9f2fdccd2dd05ef72d3f619bc6461c1792e65ae3e82157b89221adae7f9054ec  ./archive_snapshots/github_9e6e4792_unique/audit/artifacts/gitleaks.json
 9f4188814f1006b6de9e5bb8fcc79dfaca14cadd7699ef3d82fb2cd016b40c81  ./tools/governance/check_fake_closure_claims.py
 9f4f73dc60446f6294882b1d92f46db8b880d67bfd3a52511b942236423836ce  ./.claude/commit_acceptors/cognitive-core-mutation-robustness.yaml
 9f50e535d9a780798c36ad67b6b782350ba2afc4ce06893f5d4e550b806291c7  ./docs/CALIBRATION_PARAMETER_REFERENCE.md
@@ -4827,7 +4831,6 @@ a0a3ede95661a0748ed589aaf4a60c83dcd62372f7c43099ead77082a9a59a03  ./research/sys
 a0a58e971917463c9d27bea3c641f59b3a0d2ba802ecdf35f8c2cc5bffd25028  ./.claude/commit_acceptors/clamp-void-predictor.yaml
 a0a89162748ba8e53d86fae5b31a919d6e222e7a0d2252ed55b1e397e07da47f  ./ui/dashboard/src/styles/tokens.css.js
 a0bcc37c1570fd7c80e99a7dd753e9f0806ba0c0d8d7c796bc7d61ac72719ea0  ./ui/dashboard/src/i18n/locales/uk-UA.json
-a0c9b4743bcf8510033bf0920c2c72a53683b6f0cb6f126659cdcf88d927eb1a  ./scripts/ci/check_secret_boundary.py
 a0ca391891f92cc123601e5633c28ab7952740182d878f827daceca1e794a60c  ./pin-terraform-version.yml
 a0ccb95975d7a16cdb6d22b5a4dc22c390eee8f587a51df52fae789abb5ec1e2  ./scripts/riee/chaos_engine.py
 a0ce66a29905ffb4ab96f546b8cf0204d772bfe0a85b38768d58e16389a3cf52  ./audit/schema/runtime_failure_matrix.schema.json
@@ -4881,6 +4884,7 @@ a29c69c308107f5d722c13ba7a698267fffc9352aa0a32d67389cdd9ac7bdd5c  ./docs/governa
 a29d76f8b43fe86963e5e7fe8152d48aa0872984459fe7198a12ae38e9b162a0  ./X10R_GATE6_CERTIFICATION_REPORT.md
 a2aeae9263f188f28879eeea4069fb75696fb4474cf8f3b9fa64e0b5a74223b0  ./examples/hpc_ai_v4_demo.py
 a2b031f716e943d28fce5bbbe18554594fe3415a8a839d2f754c1327fde90731  ./backtest/__init__.py
+a2b7d5bbbaca3f64f7194227612582fcc471015d57a121589f891c5139ac8d9b  ./tests/ci/test_secret_boundary.py
 a2cc5b30601196f0241119b97e2cc89ec90cd8363fb4989620d30673391008d8  ./docs/prompts/integration_systems_architect_kernel_v1_0.md
 a2ceaf6b509169a71180268e33ee1534027265bf02a777ca7bb39018a835207b  ./archive_snapshots/github_9e6e4792_unique/src/tradepulse/sdk/mlsdm/contracts.py
 a2e0b0323eb71ab33aee65ec2b968b4aa3c2200382227d7ccec1c1106bd61bb7  ./docs/templates/component_readme.md
@@ -6139,7 +6143,6 @@ cf24c7b339e6216f3ce277a73bc647ba045a38d902c313593afb8ae793ba261f  ./research/mic
 cf43cfb48ebbe5c37c414d153fdd069b406415e1ce4fa461507ecaa37504e4cc  ./.claude/commit_acceptors/x10r-d002i-null-audit-failure-investigation-prereg.yaml
 cf55eacaa336eb9772d6b8441eadfd79cef78e2b9e1f905d9d564642c0c4a6fc  ./tools/inference/assemble_evidence_bundle.py
 cf5ab6523c6d5fa46ae539ca0593a47fd788d0eb1ae3067ba21bfeb9b38616eb  ./analytics/regime/src/core/ews.py
-cf5ce7f5529e639c842179e428979a867d235cc8e6b213ba469e6c0961e49de5  ./.github/detect-secrets.baseline
 cf65857bbbcfd13b91e1271ab864d2df0dd2974ca606e0316419b5b53f0c6d14  ./go/services/vpin/calculator.go
 cf693929db2b5929f18f88f3c86ffeb3d86ef4afa61c708fced9320cc1c962f3  ./.claude/commit_acceptors/physics-verbatim-descriptor-contract-tests.yaml
 cf6dded15cd416fdc812f97d6b1938049daad0b243a51a77a1cdede32d671c21  ./application/secrets/manager.py
@@ -6387,6 +6390,7 @@ d7b990c1f6c5e88fcb00733fd211d557fee6dac6464b3dda6242b14398707b8c  ./tests/unit/t
 d7cbd429ff753fafdc57a4d632d3a16c4aec9c8c6bf996edd98c01b816bcef92  ./core/indicators/market_state_contract.py
 d7de2913ef626382a8bd0c2349c94267504ecaaa756dd8c37ffa3c39b6f1b6a1  ./docs/epistemic_control_plane/DISTRIBUTIONALLY_ROBUST_QUORUM_PROTOCOL.md
 d7eb5c1b6154b4d798718cb26b83793c283b54578202e904e67be548984276c6  ./core/indicators/kuramoto.py
+d7fa2dfebaa7cd6b5c87829fd76a076b4816f6c2241a7f25ac3742657d424a11  ./scripts/ci/check_secret_boundary.py
 d809ba551b75c05d6ae18012713501485882314c694dd0c11d50cf9653cd292d  ./tests/agents/fixtures/task_completion_eval_cases.json
 d844eb8e09dacac5c43a50a9ff98772af54e581fc2be32da2ba495636daf9b81  ./results/cross_asset_kuramoto/demo/drawdown_analysis.csv
 d8529c85a0285ebdcb1f97a4bd132c0d9a0e5b9582a64470b25401ed2bad12ce  ./.github/workflows/i18n.yml
@@ -6914,7 +6918,6 @@ e6c6c4acc94b3ab9c0fe4e999bca7aec8ee4384940fd11bd4c59fbb2a8affa6e  ./.github/agen
 e6cc41e42d8e9e004b5be6bd5f111ccda15c683ca3f7ba7b99bb9e3aec7597c5  ./analytics/code_health/aggregator.py
 e6cf7c1afd8bf3d7fc0b82f9889b4873a20b3ed8fe9d69d2d50011ac94e92113  ./CLAUDE.md
 e6d870b69ba614f435908954f3620dbe38ad3de2cbd1f4c307135d3b7829ec73  ./scripts/ci/check_claim_promotion.py
-e6f3fe3b06e68c578f66dbc07dab9af6506ce097fabc003358ae6595ac9cc904  ./archive_snapshots/github_9e6e4792_unique/audit/artifacts/gitleaks.json
 e6f70231d869ee3f9086a0ea26fd0941ac1d92af7bf220d98106dae61c393e6e  ./tools/testing/data_validator.py
 e6fd786a5d1980f9eb239ebafb72bdae41f8ab4f25cf23c9c4965b443ade912a  ./examples/go-client/go.mod
 e6fe6d5ca8d8942d62cec58785f11f275e0acb8a6bb6b38d998068ec54ece06e  ./results/askar_prime_architect_vx/audit_log_vX.md
@@ -7264,7 +7267,6 @@ f446dd6403d1c2d43e07e3a7e2b961b3a60a8939858c260c9ff8372f5522a0b8  ./core/data/no
 f452741026cc32d7d5ee5dfa31dcc87d315c3cdad5cd2584b14d89079173f79b  ./geosync_pro/__init__.py
 f45db0e80136ada6cbb8db33d4e068ea80284479108464e89fd63f805742502c  ./scripts/ci/check_wheel_contract.py
 f4673d2510d3ad96670569d29b6a65d8576335325ba3ebb71d8e3ab15b809118  ./scripts/physics/falsify_sl_mu_growthrate.py
-f46ab2523abecd704f25d03049578a985a30776dc982fed53a2413b9ec7a7d9f  ./tests/ci/test_architecture_debt_inference.py
 f46c9a9d124c5ea78fcdc4ec2398deb65334ee0b58724568db64efeaeb16ef7a  ./tests/data/test_monitoring_drift_detector.py
 f46dc02531b4feb7a3cf4d65ee69a4df5839730cf2ff4a0d88aa4e45fe21a53a  ./tests/core/agent/test_registry_runtime.py
 f485874922b45fed0f7dfe41007b52cd15e81d3c956fa487f5c3a7be2d78c8da  ./docs/neuro_optimization_guide.md
