@@ -10,12 +10,14 @@ on:
     paths:
       - .github/workflows/geosync-manifest-repair-once.yml
 permissions:
-  contents: write
+  contents: read
 concurrency:
   group: geosync-manifest-repair
   cancel-in-progress: false
 jobs:
   regenerate:
+    permissions:
+      contents: write
     if: github.repository == 'neuron7x/Kuramoto-synchronization-model'
     runs-on: ubuntu-latest
     timeout-minutes: 15
