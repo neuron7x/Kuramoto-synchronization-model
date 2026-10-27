@@ -1,0 +1,50 @@
+# DAT-002 restored from the only immutable MIT synthetic root currently present.
+id: golden-dat002-lineage-recovery-20261027
+status: ACTIVE
+claim_type: governance
+promise: >-
+  Every shipped lineage result traces to a real tracked DAT-001 synthetic
+  root, exact source bytes pass SHA-256 validation, and the deterministic
+  registered transform reproduces. Never create a market-data result.
+diff_scope:
+  changed_files:
+    - path: ".claude/commit_acceptors/golden-dat002-lineage-recovery-20261027.yaml"
+    - path: "tools/generate_golden_lineage.py"
+    - path: "tests/ci/test_data_lineage.py"
+    - path: "docs/DATA_LINEAGE_POLICY.md"
+    - path: ".gitignore"
+    - path: "data/lineage/raw.golden-macd-baseline-v1.json"
+    - path: "data/lineage/validated.golden-macd-baseline-v1.json"
+    - path: "data/lineage/derived.golden-macd.canonical-line-digest.v1.json"
+    - path: "data/lineage/graph.json"
+    - path: ".github/workflows/geosync-manifest-repair-once.yml"
+  forbidden_paths:
+    - "trading/"
+    - "execution/"
+    - "forecast/"
+    - "core/"
+required_python_symbols: []
+expected_signal: >-
+  DAT-002 checks green on the public synthetic fixture, with a real
+  byte-for-byte generator that refuses an absent/tampered raw CSV.
+measurement_command: >-
+  bash -c 'python tools/generate_golden_lineage.py &&
+  python scripts/ci/check_data_lineage.py &&
+  python -m pytest tests/ci/test_data_lineage.py -q'
+signal_artifact: "tmp/golden_dat002_recovery_20261027.log"
+falsifier:
+  command: >-
+    bash -c 'python -m pytest
+    tests/ci/test_data_lineage.py::test_negative_dangling_parent_is_red
+    tests/ci/test_data_lineage.py::test_negative_tampered_content_address_is_red
+    tests/ci/test_data_lineage.py::test_canonical_repo_lineage_is_byte_reproducible -q'
+  description: >-
+    Mutated links/hashes and an altered generated graph must be rejected.
+rollback_command: >-
+  git revert --no-edit HEAD
+rollback_verification_command: >-
+  git diff --exit-code HEAD~1 HEAD -- data/lineage tools/generate_golden_lineage.py
+memory_update_type: append
+ledger_path: ".claude/commit_acceptors/golden-dat002-lineage-recovery-20261027.yaml"
+report_path: "docs/DATA_LINEAGE_POLICY.md"
+evidence: []
