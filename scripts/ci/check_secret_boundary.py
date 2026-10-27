@@ -73,7 +73,7 @@ ALLOWLIST_PREFIXES: tuple[str, ...] = (
 
 # --- placeholder tokens: a value containing any of these is NOT a real secret ---
 _PLACEHOLDER_TOKENS = (
-    "change", "replace", "your_", "your-", "_here", "example", "placeholder",
+    "change", "replace", "your_", "your-", "_here", "example", "placeholder", "not-real",
     "dummy", "todo", "provide_", "optional_", "xxx", "redact", "changeme",
     "<", ">", "${", "sample", "fixme", "insert_", "notreal", "fake",
 )
@@ -212,6 +212,11 @@ def scan_with_regex(source: Path) -> list[dict[str, Any]]:
                     })
             m = _RE_ASSIGN.search(line)
             if m and not _is_placeholder(m.group(1)):
+                # A function call is not a hardcoded credential. E.g.
+                # token = compute_token_cost(...) is numeric accounting,
+                # not a secret literal. Keep scanning actual assignments.
+                if line[m.end(1) :].lstrip().startswith("("):
+                    continue
                 findings.append({
                     "file": str(path), "line": lineno, "rule": "generic-api-key",
                     "match": _fingerprint(m.group(1)),
