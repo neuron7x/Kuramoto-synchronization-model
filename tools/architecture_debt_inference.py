@@ -19,11 +19,14 @@ standing architectural choices, reported for visibility, never as debt.
 from __future__ import annotations
 
 import argparse
+import ast
+import io
+import tokenize
 import json
 import re
 from dataclasses import dataclass
 from pathlib import Path
-from typing import Callable, cast
+from typing import Callable, Iterator, cast
 
 ROOT = Path(__file__).resolve().parents[1]
 
@@ -88,14 +91,26 @@ def m_empty_evidence_ledger() -> tuple[int, int]:
     return empty, len(files)
 
 
+def _comment_tokens() -> Iterator[str]:
+    """Yield actual Python COMMENT tokens, never quoted examples or docstrings."""
+    for path in _py_files():
+        try:
+            source = path.read_text(encoding="utf-8")
+        except OSError:
+            continue
+        for token in tokenize.generate_tokens(io.StringIO(source).readline):
+            if token.type == tokenize.COMMENT:
+                yield token.string
+
+
 def m_type_ignore() -> int:
-    # Comment-form only — an inline `type: ignore` suppression, not the phrase in
-    # a docstring or string literal (this module must not match its own example).
-    return _grep_count(r"#\s*type:\s*ignore")
+    """Count real type-checker suppression directives only."""
+    return sum(bool(re.match(r"#\s*type:\s*ignore\b", text)) for text in _comment_tokens())
 
 
 def m_noqa() -> int:
-    return _grep_count(r"\bnoqa\b")
+    """Count actual lint suppression comments, not prose mentioning noqa."""
+    return sum(bool(re.match(r"#\s*noqa\b", text, re.I)) for text in _comment_tokens())
 
 
 # A skip whose reason matches one of these is an environment/availability
@@ -136,24 +151,32 @@ def m_test_skips() -> int:
 
 
 def m_test_slow() -> int:
-    rx = re.compile(r"pytest\.mark\.slow\b")
-    return sum(
-        1
-        for f in (ROOT / "tests").rglob("*.py")
-        if (ROOT / "tests").exists()
-        and not _is_excluded(f)
-        and rx.search(f.read_text(encoding="utf-8"))
-    )
+    """Count test files containing an actual pytest.mark.slow AST reference."""
+    test_root = ROOT / "tests"
+    if not test_root.exists():
+        return 0
+    count = 0
+    for path in test_root.rglob("*.py"):
+        if _is_excluded(path):
+            continue
+        tree = ast.parse(path.read_text(encoding="utf-8"), filename=str(path))
+        if any(
+            isinstance(node, ast.Attribute)
+            and node.attr == "slow"
+            and isinstance(node.value, ast.Attribute)
+            and node.value.attr == "mark"
+            and isinstance(node.value.value, ast.Name)
+            and node.value.value.id == "pytest"
+            for node in ast.walk(tree)
+        ):
+            count += 1
+    return count
 
 
 def m_todo_markers() -> int:
-    return _grep_count(r"\b(TODO|FIXME|HACK|XXX)\b")
-
-
-def m_dual_physics_layers() -> int:
-    a = ROOT / ".claude" / "physics"
-    b = ROOT / "physics_contracts"
-    return int(a.exists() and b.exists())
+    """Count deferrals in comments, not documentation or test strings."""
+    pattern = re.compile(r"\b(?:TODO|FIXME|HACK|XXX)\b")
+    return sum(len(pattern.findall(text)) for text in _comment_tokens())
 
 
 @dataclass(frozen=True)
