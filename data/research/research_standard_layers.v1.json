@@ -1,0 +1,81 @@
+{
+  "schema_version": "1.0.0",
+  "standard_id": "geosync.research_standard.v1",
+  "status": "DRAFT",
+  "evidence_level": "HYPOTHESIS",
+  "research_line": "ricci_microstructure_v1",
+  "reconstruction_provenance": {
+    "date": "2026-10-27",
+    "method": "Declarative layer map reconstructed from configs/research/geosync_research_standard.v1.yaml",
+    "evidence_boundary": "CONTRACT_ONLY_NOT_EXECUTION_PROOF",
+    "recovered_original_bytes": false,
+    "source": "configs/research/geosync_research_standard.v1.yaml"
+  },
+  "layer_ids": [
+    "claim_governance",
+    "data_lineage",
+    "method_certification",
+    "experiment_epistemics",
+    "release_provenance"
+  ],
+  "required_roles": [
+    "research_lead",
+    "methods_lead",
+    "data_lead",
+    "platform_lead",
+    "security_lead",
+    "external_reviewer"
+  ],
+  "waves": [
+    {
+      "id": "W1",
+      "name": "claim_and_lineage_contracts",
+      "status": "DRAFT",
+      "layer_ids": [
+        "claim_governance",
+        "data_lineage"
+      ],
+      "completion_evidence": [],
+      "promotion_allowed": false
+    },
+    {
+      "id": "W2",
+      "name": "method_certification_and_null_design",
+      "status": "DRAFT",
+      "layer_ids": [
+        "method_certification",
+        "experiment_epistemics"
+      ],
+      "completion_evidence": [],
+      "promotion_allowed": false
+    },
+    {
+      "id": "W3",
+      "name": "reproducibility_and_external_review",
+      "status": "BLOCKED_EVIDENCE",
+      "layer_ids": [
+        "experiment_epistemics",
+        "release_provenance"
+      ],
+      "completion_evidence": [],
+      "promotion_allowed": false
+    },
+    {
+      "id": "W4",
+      "name": "release_readiness_and_governance_decision",
+      "status": "BLOCKED_EVIDENCE",
+      "layer_ids": [
+        "release_provenance"
+      ],
+      "completion_evidence": [],
+      "promotion_allowed": false
+    }
+  ],
+  "release_boundary": {
+    "claim_tier_ceiling": "HYPOTHESIS",
+    "standard_release_ready": false,
+    "external_reproduction_verified": false,
+    "experimental_result_present": false,
+    "notes": "No executable empirical study, market edge, or reproducibility claim is created by this design map."
+  }
+}
