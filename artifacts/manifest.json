@@ -50,7 +50,7 @@
         ".claude/physics/INVARIANTS.yaml"
       ],
       "exclusion_reason": "Produced by a VERDICT GATE (check_physics_law_witness_index.py), not a pure generator: --write is coupled to mutable on-disk state and can exit non-zero mid-pipeline. Byte-freshness is enforced by its own dedicated gate step in phd_evidence.sh, not by re-running the gate as a generator here.",
-      "artifact_sha256": "8b0c4c929989696b462137fb67baa1f4736036cce60f7d85f2b47909f050fe1d"
+      "artifact_sha256": "fd08ccb3a6a872ae141169104f99cdb77697efe50f784c25280295fcdcdd5ed2"
     },
     {
       "artifact": "artifacts/physics_v2/inference_readiness.json",
