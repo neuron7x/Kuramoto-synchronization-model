@@ -79,7 +79,7 @@ _INLINE_CODE_RE = re.compile(r"`[^`]*`")
 
 
 def list_markdown_files(root: Path) -> list[Path]:
-    """Return tracked ``*.md`` files under *root* (falls back to a filesystem walk)."""
+    """Return live tracked Markdown; frozen archive snapshots are not live docs."""
     try:
         out = subprocess.run(
             ["git", "-C", str(root), "ls-files", "*.md"],
@@ -87,13 +87,22 @@ def list_markdown_files(root: Path) -> list[Path]:
             text=True,
             check=True,
         )
-        rels = [line for line in out.stdout.splitlines() if line.strip()]
+        rels = [
+            line
+            for line in out.stdout.splitlines()
+            if line.strip() and not line.startswith("archive_snapshots/")
+        ]
         if rels:
             return [root / r for r in rels]
     except (subprocess.CalledProcessError, FileNotFoundError):
         pass
     # Fallback: filesystem walk (used by test fixtures / non-git trees).
-    return [p for p in sorted(root.rglob("*.md")) if ".git" not in p.parts]
+    return [
+        p
+        for p in sorted(root.rglob("*.md"))
+        if ".git" not in p.parts
+        and "archive_snapshots" not in p.relative_to(root).parts
+    ]
 
 
 def is_external(target: str) -> bool:
