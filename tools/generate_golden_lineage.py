@@ -29,9 +29,9 @@ def _hash(data: bytes) -> str:
 
 
 def _canonical(value: object) -> bytes:
-    return json.dumps(
-        value, sort_keys=True, separators=(",", ":"), ensure_ascii=False
-    ).encode("utf-8")
+    return json.dumps(value, sort_keys=True, separators=(",", ":"), ensure_ascii=False).encode(
+        "utf-8"
+    )
 
 
 def _node_address(node: dict[str, Any]) -> str:
@@ -111,11 +111,13 @@ def build() -> dict[str, dict[str, Any]]:
         "lineage_version": VERSION,
         "evidence_class": "SIMULATION",
         "claim_boundary": "synthetic_regression_fixture_only_not_market_measurement",
-        "results": [{
-            "node_id": derived_node["node_id"],
-            "content_address": derived_node["content_address"],
-            "raw_root_digest": root_digest,
-        }],
+        "results": [
+            {
+                "node_id": derived_node["node_id"],
+                "content_address": derived_node["content_address"],
+                "raw_root_digest": root_digest,
+            }
+        ],
     }
     return {
         "raw.golden-macd-baseline-v1.json": raw_node,
@@ -147,7 +149,9 @@ def main() -> int:
 
     actual_files = {p.name for p in OUTPUT_DIR.glob("*.json")}
     if actual_files != set(expected):
-        print(f"DAT-002: file set mismatch, absent={set(expected)-actual_files}, extra={actual_files-set(expected)}")
+        print(
+            f"DAT-002: file set mismatch, absent={set(expected)-actual_files}, extra={actual_files-set(expected)}"
+        )
         return 1
     for filename, text in expected.items():
         if (OUTPUT_DIR / filename).read_text(encoding="utf-8") != text:

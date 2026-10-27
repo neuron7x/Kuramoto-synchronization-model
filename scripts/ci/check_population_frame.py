@@ -152,7 +152,9 @@ def check_frame(doc: dict[str, Any], root: Path, verify_digest: bool) -> list[st
     if not _is_nonempty_rulelist(doc.get("inclusion_rules")):
         _fail(problems, "inclusion_rules missing or empty — an unspecified frame is not a frame")
     if not _is_nonempty_rulelist(doc.get("exclusion_rules")):
-        _fail(problems, "exclusion_rules missing or empty — inclusion without exclusion is undefined")
+        _fail(
+            problems, "exclusion_rules missing or empty — inclusion without exclusion is undefined"
+        )
 
     # 2. immutable, well-formed digest.
     pd = doc.get("population_digest")

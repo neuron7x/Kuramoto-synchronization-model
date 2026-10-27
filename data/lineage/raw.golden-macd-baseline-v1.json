@@ -1,0 +1,10 @@
+{
+  "content_address": "e05854b33965f4d8b745f112e8f6ad481eab863036bebd3594f299131c4b9b89",
+  "evidence_class": "SIMULATION",
+  "inputs": [],
+  "lineage_version": "data_lineage.v1",
+  "manifest_ref": "golden-macd-baseline-v1",
+  "node_id": "raw.golden-macd-baseline-v1",
+  "tier": "raw",
+  "transform": null
+}
