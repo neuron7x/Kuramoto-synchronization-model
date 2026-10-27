@@ -63,10 +63,6 @@ diff_scope:
     - path: ".claude/commit_acceptors/ecp-as-soundness-stress-iteration-004.yaml"
     - path: "docs/DEPENDENCY_LOCK_POLICY.md"
     - path: ".github/actions/setup-geosync/action.yml"
-    - path: ".github/workflows/python-matrix.yml"
-    - path: ".github/detect-secrets.baseline"
-    - path: ".gitleaks.toml"
-    - path: "tests/scripts/test_check_instrument_evidence_chain.py"
     - path: "governance/INSTRUMENTS.yaml"
   forbidden_paths:
     - "trading/"
