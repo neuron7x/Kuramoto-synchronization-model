@@ -1,0 +1,44 @@
+# Private data absence is not a proof of scientific or release readiness.
+id: optional-private-data-evidence-20261027
+status: ACTIVE
+claim_type: governance
+promise: >-
+  Clean CI retains executable synthetic/adversarial tests and explicitly
+  records a skipped empirical-only test when private licensed inputs are
+  unavailable. A missing dataset cannot be represented as a measured result;
+  real-data release and claim promotion remain blocked.
+diff_scope:
+  changed_files:
+    - path: ".claude/commit_acceptors/optional-private-data-evidence-20261027.yaml"
+    - path: "tests/askar/test_optimal_universe.py"
+    - path: "tests/ci/test_dataset_manifests.py"
+  forbidden_paths:
+    - "trading/"
+    - "execution/"
+    - "forecast/"
+    - "core/"
+required_python_symbols: []
+expected_signal: >-
+  The Askar loader refuses absent raw files. Synthetic tests still execute,
+  while empirical-only tests show an explicit EVIDENCE_UNAVAILABLE skip;
+  all unlicensed, tampered, and provenance-inverted data manifests remain RED.
+measurement_command: >-
+  bash -c 'python -m pytest -q
+  tests/askar/test_optimal_universe.py
+  tests/ci/test_dataset_manifests.py -rs'
+signal_artifact: "tmp/optional_private_data_evidence_20261027.log"
+falsifier:
+  command: >-
+    bash -c 'python -m pytest -q
+    tests/ci/test_dataset_manifests.py::test_negative_missing_license_is_red
+    tests/ci/test_dataset_manifests.py::test_ds10_simulation_relabeled_measured_is_red'
+  description: >-
+    Removing license and origin boundary checks must fail these negative controls.
+rollback_command: >-
+  git revert --no-edit HEAD
+rollback_verification_command: >-
+  git diff --exit-code HEAD~1 HEAD -- tests/askar/test_optimal_universe.py tests/ci/test_dataset_manifests.py
+memory_update_type: append
+ledger_path: ".claude/commit_acceptors/optional-private-data-evidence-20261027.yaml"
+report_path: "docs/DATASET_MANIFEST_POLICY.md"
+evidence: []
