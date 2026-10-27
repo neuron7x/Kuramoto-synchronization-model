@@ -1,0 +1,122 @@
+{
+  "$schema": "https://json-schema.org/draft/2020-12/schema",
+  "$id": "https://geosync.neuron7x.dev/schemas/execution_forensics_report.schema.json",
+  "title": "Offline Execution Forensics Report",
+  "description": "Deterministic, content-addressed execution-cost evidence produced by tools/execution_forensics.py from a canonical normalized fill CSV. Every monetary quantity is a canonical decimal string (never a JSON float); an unknown quantity is null, never zero. report_sha256 is SHA-256 of the canonical JSON (sorted keys, no whitespace, UTF-8) of every field except report_sha256 itself. Claim tier is Instrumented: the report asserts nothing about trading performance, PnL, funding or market edge.",
+  "type": "object",
+  "additionalProperties": false,
+  "required": [
+    "schema_version",
+    "method_version",
+    "claim_tier",
+    "artifact_role",
+    "source_sha256",
+    "method_source_sha256",
+    "fill_count",
+    "groups",
+    "portfolio_pnl_quote",
+    "funding_quote",
+    "portfolio_aggregation",
+    "claim_boundary",
+    "report_sha256"
+  ],
+  "properties": {
+    "schema_version": { "const": "execution-forensics/0.1" },
+    "method_version": { "const": "GEOSYNC_EXECUTION_FORENSICS_V0_1" },
+    "claim_tier": { "const": "Instrumented" },
+    "artifact_role": { "const": "offline_execution_cost_evidence" },
+    "source_sha256": { "$ref": "#/$defs/sha256" },
+    "method_source_sha256": { "$ref": "#/$defs/sha256" },
+    "fill_count": { "type": "integer", "minimum": 1 },
+    "groups": {
+      "type": "array",
+      "minItems": 1,
+      "items": { "$ref": "#/$defs/group" }
+    },
+    "portfolio_pnl_quote": { "type": "null" },
+    "funding_quote": { "type": "null" },
+    "portfolio_aggregation": { "const": "NOT_ALLOWED_ACROSS_DISTINCT_QUOTE_ASSETS" },
+    "claim_boundary": { "const": "OFFLINE_EXECUTION_COMPONENTS_ONLY_NOT_TRADING_ALPHA_OR_PNL" },
+    "report_sha256": { "$ref": "#/$defs/sha256" }
+  },
+  "$defs": {
+    "sha256": {
+      "type": "string",
+      "pattern": "^[0-9a-f]{64}$"
+    },
+    "decimal_nonnegative": {
+      "description": "Canonical normalized decimal: no sign, no exponent, no leading or trailing zeros.",
+      "type": "string",
+      "pattern": "^(0|[1-9][0-9]*)(\\.[0-9]*[1-9])?$"
+    },
+    "decimal_signed": {
+      "description": "Canonical normalized decimal that may be negative; -0 is not canonical.",
+      "type": "string",
+      "pattern": "^(0|-?[1-9][0-9]*(\\.[0-9]*[1-9])?|-?0\\.[0-9]*[1-9])$"
+    },
+    "decimal_nonnegative_or_unknown": {
+      "oneOf": [{ "$ref": "#/$defs/decimal_nonnegative" }, { "type": "null" }]
+    },
+    "decimal_signed_or_unknown": {
+      "oneOf": [{ "$ref": "#/$defs/decimal_signed" }, { "type": "null" }]
+    },
+    "group": {
+      "type": "object",
+      "additionalProperties": false,
+      "required": [
+        "venue",
+        "symbol",
+        "quote_asset",
+        "fill_count",
+        "notional_quote",
+        "buy_notional_quote",
+        "sell_notional_quote",
+        "fee_totals_native_by_asset",
+        "fee_conversion_sources",
+        "arrival_sources",
+        "fee_quote_total",
+        "arrival_slippage_quote",
+        "execution_shortfall_plus_fees_quote",
+        "missing_fee_valuation_fills",
+        "missing_arrival_benchmark_fills",
+        "evidence_state"
+      ],
+      "properties": {
+        "venue": { "type": "string", "pattern": "^[a-z0-9][a-z0-9_.-]*$" },
+        "symbol": { "type": "string", "pattern": "^[A-Z0-9][A-Z0-9_./-]*$" },
+        "quote_asset": { "type": "string", "pattern": "^[A-Z0-9]+$" },
+        "fill_count": { "type": "integer", "minimum": 1 },
+        "notional_quote": { "$ref": "#/$defs/decimal_nonnegative" },
+        "buy_notional_quote": { "$ref": "#/$defs/decimal_nonnegative" },
+        "sell_notional_quote": { "$ref": "#/$defs/decimal_nonnegative" },
+        "fee_totals_native_by_asset": {
+          "type": "object",
+          "additionalProperties": false,
+          "patternProperties": {
+            "^[A-Z0-9]+$": { "$ref": "#/$defs/decimal_nonnegative" }
+          }
+        },
+        "fee_conversion_sources": {
+          "description": "Distinct declared fee_conversion_source values, sorted; empty when no cross-asset fee carries a valuation.",
+          "type": "array",
+          "uniqueItems": true,
+          "items": { "type": "string", "minLength": 1 }
+        },
+        "arrival_sources": {
+          "description": "Distinct declared arrival_source values, sorted; empty when no fill carries an arrival benchmark.",
+          "type": "array",
+          "uniqueItems": true,
+          "items": { "type": "string", "minLength": 1 }
+        },
+        "fee_quote_total": { "$ref": "#/$defs/decimal_nonnegative_or_unknown" },
+        "arrival_slippage_quote": { "$ref": "#/$defs/decimal_signed_or_unknown" },
+        "execution_shortfall_plus_fees_quote": { "$ref": "#/$defs/decimal_signed_or_unknown" },
+        "missing_fee_valuation_fills": { "type": "integer", "minimum": 0 },
+        "missing_arrival_benchmark_fills": { "type": "integer", "minimum": 0 },
+        "evidence_state": {
+          "enum": ["COMPLETE_EXECUTION_COMPONENTS", "PARTIAL_UNKNOWN_COST"]
+        }
+      }
+    }
+  }
+}

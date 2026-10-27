@@ -1,0 +1,121 @@
+# Diff-bound commit acceptor for the offline execution-forensics evidence
+# boundary (PR #2832): a read-only, standard-library importer that turns a
+# canonical normalized fill CSV into a deterministic, content-addressed
+# execution-cost report.
+#
+# What lands:
+#   * tools/execution_forensics.py
+#       Lexical canon (one byte string, one meaning), exact decimal
+#       arithmetic (Inexact/Rounded trapped — refuse, never round),
+#       provenance-carrying Fee/Arrival records, per-(venue,symbol,quote)
+#       grouping with no cross-quote sums, canonical-JSON report digest,
+#       --out / --verify replay CLI with exit codes 0/2/3.
+#   * schemas/execution_forensics_report.schema.json
+#       The report contract (draft 2020-12, additionalProperties false,
+#       amounts as canonical decimal strings, unknown == null).
+#   * tests/unit/test_execution_forensics.py
+#       Positive controls, refusal controls for every grammar escape,
+#       exactness vs a Fraction oracle, replay/verify reasons, schema
+#       conformance and schema rejection of fabricated shapes.
+#   * tests/tools/test_execution_forensics_gate.py
+#       Financial-evidence invariants run in the dependency-free lane.
+#   * tests/property/test_execution_forensics_properties.py
+#       Hypothesis: row-order invariance, Fraction-oracle totals,
+#       BUY/SELL antisymmetry, CSV round trip, digest binding, sign
+#       parity with analytics.execution_quality.implementation_shortfall.
+#   * scripts/ci/execution_forensics_falsifier.py
+#       Black-box probes; exits 1 naming the first fabrication accepted.
+#   * docs/MUTATION_KILL_BASELINE.json
+#       Registers the module under the mutation-kill ratchet.
+#   * .github/workflows/feature-debt-lock.yml
+#       Dependency-free replay + isolated adversarial test lane.
+#
+# Strict scope:
+#   Synthetic fixture only. NO live venue access, NO credentials, NO
+#   strategy or signal output, NO portfolio PnL, NO funding inference,
+#   NO client-facing financial conclusion. Claim tier: Instrumented.
+#   Forbidden tiers: Measured-Single, Measured-Multi.
+
+id: execution-forensics-evidence-boundary
+status: ACTIVE
+claim_type: fail_closed
+promise: >-
+  After this PR lands, tools/execution_forensics.py converts a canonical
+  normalized fill CSV into a deterministic execution-cost report in which
+  every amount is an exact decimal string, every unknown component is
+  null (never zero), no total crosses a quote asset, every cross-asset fee
+  valuation and every arrival benchmark carries its provenance, and any
+  input outside the canonical grammar, any rounding, any duplicate or
+  conflicting record and any tampered source or report is refused with a
+  named reason. The report validates against
+  schemas/execution_forensics_report.schema.json and replays byte-for-byte
+  through --verify. The module asserts nothing about trading performance.
+diff_scope:
+  changed_files:
+    - path: ".claude/commit_acceptors/execution-forensics-evidence-boundary.yaml"
+    - path: "tools/execution_forensics.py"
+    - path: "schemas/execution_forensics_report.schema.json"
+    - path: "tests/unit/test_execution_forensics.py"
+    - path: "tests/tools/test_execution_forensics_gate.py"
+    - path: "tests/property/test_execution_forensics_properties.py"
+    - path: "scripts/ci/execution_forensics_falsifier.py"
+    - path: "docs/MUTATION_KILL_BASELINE.json"
+    - path: ".github/workflows/feature-debt-lock.yml"
+  forbidden_paths:
+    - "trading/"
+    - "execution/"
+    - "forecast/"
+    - "policy/"
+    - "core/"
+    - "geosync/"
+    - "analytics/"
+    - "application/governance/"
+required_python_symbols:
+  - "tools/execution_forensics.py::EvidenceInputError"
+  - "tools/execution_forensics.py::parse_fills"
+  - "tools/execution_forensics.py::analyze_bytes"
+  - "tools/execution_forensics.py::analyze"
+  - "tools/execution_forensics.py::report_digest"
+  - "tools/execution_forensics.py::verify_report"
+  - "tools/execution_forensics.py::main"
+expected_signal: >-
+  `pytest -q --noconftest -c /dev/null tests/unit/test_execution_forensics.py
+  tests/tools/test_execution_forensics_gate.py` passes with no dependency
+  beyond the standard library and pytest (jsonschema-backed cases skip
+  cleanly without jsonschema); `pytest -q
+  tests/property/test_execution_forensics_properties.py` passes under the
+  dev lock; `mypy --strict`, `ruff check` and `black --check` are clean on
+  tools/execution_forensics.py and scripts/ci/execution_forensics_falsifier.py;
+  the falsifier prints PASS.
+measurement_command: >-
+  bash -c 'python -m pytest -q --noconftest -c /dev/null
+  tests/unit/test_execution_forensics.py tests/tools/test_execution_forensics_gate.py
+  && python -m mypy --strict tools/execution_forensics.py scripts/ci/execution_forensics_falsifier.py
+  && python -m ruff check tools/execution_forensics.py scripts/ci/execution_forensics_falsifier.py
+  && python -m black --check tools/execution_forensics.py scripts/ci/execution_forensics_falsifier.py'
+signal_artifact: "tmp/execution_forensics_acceptor.log"
+falsifier:
+  command: "python scripts/ci/execution_forensics_falsifier.py"
+  description: >-
+    Drives the CLI and API with fabrications the boundary must refuse:
+    a tampered source, a forged or edited report, an unsourced cross-asset
+    fee (must stay null, never 0), a missing arrival (slippage must stay
+    null), a future benchmark, scientific/offset/date-only spellings, a
+    negative fee, duplicate and conflicting records, a product that would
+    need rounding, a reordered header, an overwrite of the input. Liveness
+    was checked by hand: valuing an unsourced fee as 0 and short-circuiting
+    verify_report each make the falsifier exit 1 naming the probe.
+rollback_command: >-
+  bash -c 'git checkout HEAD~1 -- .github/workflows/feature-debt-lock.yml docs/MUTATION_KILL_BASELINE.json
+  && rm -f tools/execution_forensics.py schemas/execution_forensics_report.schema.json
+  tests/unit/test_execution_forensics.py tests/tools/test_execution_forensics_gate.py
+  tests/property/test_execution_forensics_properties.py scripts/ci/execution_forensics_falsifier.py
+  .claude/commit_acceptors/execution-forensics-evidence-boundary.yaml'
+rollback_verification_command: >-
+  bash -c 'test ! -f tools/execution_forensics.py && test ! -f schemas/execution_forensics_report.schema.json
+  && test ! -f scripts/ci/execution_forensics_falsifier.py
+  && test ! -f .claude/commit_acceptors/execution-forensics-evidence-boundary.yaml'
+memory_update_type: append
+ledger_path: ".claude/commit_acceptors/execution-forensics-evidence-boundary.yaml"
+report_path: "examples/execution_forensics/README.md"
+evidence: []
