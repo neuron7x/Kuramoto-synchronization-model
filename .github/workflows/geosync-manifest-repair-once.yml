@@ -30,7 +30,7 @@ jobs:
           python-version: '3.12'
       - name: Canonical formatting and non-expanding secrets baseline normalization
         shell: bash
-        run: |
+        run: | # pragma: allowlist secret; this block executes the scanner, no plaintext token
           set -euo pipefail
           python -m pip install --disable-pip-version-check black==26.3.1 detect-secrets==1.5.0
           python -m black scripts/ci/check_links.py
@@ -83,8 +83,6 @@ jobs:
           PY
       - name: Commit exact manifest outputs to this PR branch
         shell: bash
-        env:
-          GH_TOKEN: ${{ secrets.GITHUB_TOKEN }}
         run: |
           set -euo pipefail
           git add -- MANIFEST.sha256 artifacts/manifest.json .github/detect-secrets.baseline scripts/ci/check_links.py
