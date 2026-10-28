@@ -126,6 +126,10 @@ LEDGERS: tuple[str, ...] = (
 # quietly reclassifying a loaded ledger out of the denominator is itself a regression.
 NOT_LEDGERS: dict[str, str] = {
     ".github/invariant_teeth_baseline.json": "a frozen floor (a number to beat), not a waiver set",
+    "archive_snapshots/github_9e6e4792_unique/.secrets.baseline": (
+        "preserved historical fork snapshot metadata, not a standing waiver "
+        "ledger for the live repository"
+    ),
     "benchmarks/flagship_baselines/comparison_report.json": "generated benchmark report",
     "benchmarks/flagship_baselines/hierarchy.yaml": "benchmark reference hierarchy, not permissions",
     "configs/nightly/baselines.json": "performance reference values, not permissions",

@@ -369,6 +369,35 @@ def test_ledger_survey_is_complete_on_the_live_tree() -> None:
     assert set(axes.LEDGERS) | set(axes.NOT_LEDGERS) == axes._ledger_candidates()
 
 
+def test_archived_secret_baseline_is_classified_without_waiving_live_ledgers() -> None:
+    """The preserved Git snapshot baseline is not a live repository waiver."""
+    historic = "archive_snapshots/github_9e6e4792_unique/.secrets.baseline"
+    assert historic in axes._ledger_candidates()
+    assert historic in axes.NOT_LEDGERS
+    assert historic not in axes.LEDGERS
+    assert "historical" in axes.NOT_LEDGERS[historic]
+
+
+@pytest.mark.parametrize(
+    "live_path",
+    [
+        "runtime/archive_snapshots/.secrets.baseline",
+        "archive_snapshots_live/.secrets.baseline",
+    ],
+)
+def test_live_archive_named_baselines_are_still_unclassified(
+    monkeypatch: pytest.MonkeyPatch, live_path: str
+) -> None:
+    """An archive-looking live ledger must remain a fail-closed candidate."""
+    monkeypatch.setattr(
+        axes,
+        "_ledger_candidates",
+        lambda: set(axes.LEDGERS) | set(axes.NOT_LEDGERS) | {live_path},
+    )
+    with pytest.raises(axes.ProbeError, match="unclassified waiver-ledger candidates"):
+        axes._survey_ledgers()
+
+
 def test_ledger_discovery_reaches_outside_the_github_directory() -> None:
     """A directory-scoped glob missed real waiver ledgers; discovery is repo-wide by name."""
     candidates = axes._ledger_candidates()
