@@ -37,7 +37,7 @@ clamps:
   sites:
   - core/indicators/trading.py:393
   - core/physics/gravitational_coupling.py:135
-  - core/physics/lyapunov_spectrum.py:292
+  - core/physics/lyapunov_spectrum.py:300
   - core/physics/relativity.py:44
 - name: epsilon_add
   reason: A small positive epsilon is added to a denominator, log argument, or comparison tolerance to
@@ -92,7 +92,7 @@ clamps:
   - core/physics/forman_ricci.py:375
   - core/physics/free_energy_trading_gate.py:248
   - core/physics/liquidity_coupling.py:235
-  - core/physics/lyapunov_exponent.py:481
+  - core/physics/lyapunov_exponent.py:540
   - core/physics/newtonian_dynamics.py:65
   - core/physics/newtonian_dynamics.py:81
   - core/physics/stuart_landau_es.py:354
@@ -109,8 +109,8 @@ clamps:
   metadata_field: elementwise floor (0.0 / eps); negative-mass logged where adjacency
   sites:
   - core/indicators/fractal_gcl.py:56
-  - core/indicators/kuramoto.py:531
-  - core/indicators/kuramoto.py:547
+  - core/indicators/kuramoto.py:536
+  - core/indicators/kuramoto.py:552
   - core/indicators/trading.py:169
   - core/indicators/trading.py:192
   - core/kuramoto/coupling_estimator.py:166
@@ -136,14 +136,14 @@ clamps:
   - core/physics/higher_order_kuramoto.py:305
   - core/physics/liquidity_coupling.py:101
   - core/physics/liquidity_coupling.py:94
-  - core/physics/lyapunov_exponent.py:464
-  - core/physics/lyapunov_spectrum.py:283
-  - core/physics/lyapunov_spectrum.py:290
+  - core/physics/lyapunov_exponent.py:523
   - core/physics/lyapunov_spectrum.py:291
+  - core/physics/lyapunov_spectrum.py:298
+  - core/physics/lyapunov_spectrum.py:299
   - core/physics/stuart_landau_es.py:193
   - core/physics/tsallis_gate.py:553
   - core/physics/tsallis_gate.py:557
-  - core/physics/wave_propagation.py:148
+  - core/physics/wave_propagation.py:213
 - name: nan_repair
   reason: np.nan_to_num replaces NaN/+-inf with finite values (typically 0.0).
   physical_meaning: Sanitises a correlation/weight/volume array that can contain NaN from empty windows
@@ -155,8 +155,8 @@ clamps:
   test_ref: tests/tools/test_numerical_policy.py::test_nan_repair_clamps_are_registered
   metadata_field: nan/posinf/neginf -> 0.0 on correlation/weight/volume arrays
   sites:
-  - core/indicators/kuramoto.py:235
-  - core/indicators/kuramoto.py:341
+  - core/indicators/kuramoto.py:240
+  - core/indicators/kuramoto.py:346
   - core/indicators/ricci.py:1072
   - core/indicators/ricci.py:1073
   - core/indicators/ricci.py:392
@@ -190,9 +190,9 @@ clamps:
   - core/indicators/hierarchical_features.py:189
   - core/indicators/hierarchical_features.py:76
   - core/indicators/hierarchical_features.py:85
-  - core/indicators/hurst.py:545
-  - core/indicators/kuramoto.py:237
-  - core/indicators/kuramoto.py:557
+  - core/indicators/hurst.py:548
+  - core/indicators/kuramoto.py:242
+  - core/indicators/kuramoto.py:562
   - core/indicators/kuramoto_ricci_composite.py:127
   - core/indicators/kuramoto_ricci_composite.py:135
   - core/indicators/kuramoto_ricci_composite.py:144
@@ -265,5 +265,5 @@ clamps:
   - core/kuramoto/synthetic.py:174
   - core/physics/diffusion_predictor.py:163
   - core/physics/gravitational_coupling.py:145
-  - core/physics/lyapunov_exponent.py:450
-  - core/physics/wave_propagation.py:100
+  - core/physics/lyapunov_exponent.py:509
+  - core/physics/wave_propagation.py:156

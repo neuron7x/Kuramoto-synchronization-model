@@ -5,7 +5,7 @@
       "artifacts": [
         {
           "path": "governance/remediation_ledger.v1.json",
-          "sha256": "d064a4ad015e3ea558713759d480f2a488ce9df82a424b60b30922074e5ebd76",
+          "sha256": "4cb2bac4283766d1bdd45af28932a44fba7ba6618a9c9542dbf6819af892b8a4",
           "status": "PRESENT"
         }
       ],
@@ -77,7 +77,7 @@
       "artifacts": [
         {
           "path": "MANIFEST.sha256",
-          "sha256": "dc873bc3a257d1bdd39b4f0e85906f8b4aa5ff9ca761d63a94bbf70624bd8c34",
+          "sha256": "d0de7a99d8d2d38c5a5240af357fc9265aa2398806e3b63e89a4881fff848a57",
           "status": "PRESENT"
         },
         {
@@ -184,7 +184,7 @@
         },
         {
           "path": "CITATION.cff",
-          "sha256": "87e758dc15b0535d1922720154a4f54b1604bdd31831b29c6143ed33314ebe73",
+          "sha256": "ec4facc8dffae098248f1582a2849f1088798f4cf1edaae48bc50a6d71061290",
           "status": "PRESENT"
         }
       ],

@@ -1,0 +1,66 @@
+id: pr2833-archived-ledger-classification-20261028
+status: ACTIVE
+claim_type: correctness
+promise: >-
+  Record exactly one preserved imported .secrets.baseline as historical,
+  not as a standing live permission ledger, while preserving global tracked
+  discovery, immutable numerical debts and live candidate negative controls.
+diff_scope:
+  changed_files:
+    - path: "scripts/ci/check_ten_axes.py"
+    - path: "tests/test_ten_axes_gate.py"
+    - path: "docs/TEN_AXES_BASELINE.json"
+    - path: "docs/ci/pr2833_exact_source_recovery.md"
+    - path: ".claude/commit_acceptors/pr2833-archived-ledger-classification-20261028.yaml"
+    - path: "artifacts/releases/1.1.0/release_evidence.json"
+    - path: "artifacts/releases/1.1.0/SHA256SUMS"
+  forbidden_paths:
+    - "core/"
+    - "research/"
+    - "data/askar/"
+    - "docs/CODE_DEBT_BASELINE.json"
+    - "scripts/ci/generate_manifest.py"
+required_python_symbols:
+  - "scripts/ci/check_ten_axes.py::_ledger_candidates"
+  - "scripts/ci/check_ten_axes.py::_survey_ledgers"
+  - "tests/test_ten_axes_gate.py::test_archived_secret_baseline_is_classified_without_waiving_live_ledgers"
+  - "tests/test_ten_axes_gate.py::test_live_archive_named_baselines_are_still_unclassified"
+expected_signal: >-
+  Explicit frozen classification of the one historical snapshot file;
+  nested and lookalike live ledger candidates still fail closed.
+  No waiver numerator, denominator, debt budget or release status changes.
+measurement_command: >-
+  bash -c 'python -m pytest -q --override-ini addopts=""
+  tests/test_ten_axes_gate.py tests/ci/test_release_evidence.py
+  && python scripts/ci/check_root_manifest.py'
+signal_artifact: "tmp/pr2833_archived_ledger_classification.log"
+falsifier:
+  command: >-
+    bash -c 'python -m pytest -q --override-ini addopts=""
+    tests/test_ten_axes_gate.py::test_ledger_survey_refuses_an_unclassified_candidate
+    tests/test_ten_axes_gate.py::test_live_archive_named_baselines_are_still_unclassified;
+    rc=$?; case "$rc" in 0) exit 1;; 1) exit 0;; *) exit "$rc";; esac'
+  description: >-
+    Exit zero falsifies the promise if a live ledger escapes the unclassified
+    candidate negative controls; passing tests make this probe exit one.
+rollback_command: >-
+  bash -c 'git restore --source=f7dc6ff646395eb503a55cf3042a5bcd9c911349 --worktree --
+  scripts/ci/check_ten_axes.py tests/test_ten_axes_gate.py
+  docs/TEN_AXES_BASELINE.json docs/ci/pr2833_exact_source_recovery.md
+  artifacts/releases/1.1.0/release_evidence.json
+  artifacts/releases/1.1.0/SHA256SUMS
+  && git rm -f -- .claude/commit_acceptors/pr2833-archived-ledger-classification-20261028.yaml
+  && python scripts/ci/generate_manifest.py --allow-dirty
+  && python scripts/ci/check_root_manifest.py'
+rollback_verification_command: >-
+  bash -c 'git diff --exit-code f7dc6ff646395eb503a55cf3042a5bcd9c911349 --
+  scripts/ci/check_ten_axes.py tests/test_ten_axes_gate.py
+  docs/TEN_AXES_BASELINE.json docs/ci/pr2833_exact_source_recovery.md
+  artifacts/releases/1.1.0/release_evidence.json
+  artifacts/releases/1.1.0/SHA256SUMS
+  && test ! -e .claude/commit_acceptors/pr2833-archived-ledger-classification-20261028.yaml
+  && python scripts/ci/check_root_manifest.py'
+memory_update_type: append
+ledger_path: ".claude/commit_acceptors/pr2833-archived-ledger-classification-20261028.yaml"
+report_path: "docs/ci/pr2833_exact_source_recovery.md"
+evidence: []

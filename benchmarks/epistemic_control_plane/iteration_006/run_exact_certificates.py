@@ -3,11 +3,8 @@ from __future__ import annotations
 
 import json
 from pathlib import Path
-import sys
 
 ROOT = Path(__file__).resolve().parents[3]
-if str(ROOT) not in sys.path:
-    sys.path.insert(0, str(ROOT))
 
 from geosync.epistemic.rational_certificates import (  # noqa: E402
     iteration_006_certificates,
@@ -35,7 +32,12 @@ def main() -> int:
     }
     OUT.parent.mkdir(parents=True, exist_ok=True)
     OUT.write_text(json.dumps(payload, indent=2, sort_keys=True) + "\n", encoding="utf-8")
-    print(json.dumps({r["certificate"]["certificate_id"]: r["verification"]["valid"] for r in rows}, sort_keys=True))
+    print(
+        json.dumps(
+            {r["certificate"]["certificate_id"]: r["verification"]["valid"] for r in rows},
+            sort_keys=True,
+        )
+    )
     return 0
 
 

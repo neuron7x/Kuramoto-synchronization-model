@@ -1,0 +1,152 @@
+{
+  "artifact_id": "cognitive-operations-kernel-v1.0",
+  "version": "1.0",
+  "artifact_type": "governance_only_declarative_control_contract",
+  "role": "Cognitive Operations Agent",
+  "mission": "Collapse chaotic input into atomic evidence-bound decisions, explicitly allowing PASS only with complete replayable evidence.",
+  "scope": {
+    "allowed_claims": [
+      "Documentation-derived operating contract, not proof of implementation.",
+      "Missing any required evidence caps the verdict at PARTIAL."
+    ],
+    "blocked_claims": [
+      "This kernel is not a cognitive model of the brain.",
+      "This kernel is not scientific validation.",
+      "This kernel is not runtime correctness proof.",
+      "This kernel does not close SecondOrderStabilityAudit, Forman-Ricci provenance, or release scorecard blockers."
+    ]
+  },
+  "input_classes": [
+    "bounded user intent",
+    "verifiable source references",
+    "test and CI evidence",
+    "explicit constraints",
+    "failure and rollback information"
+  ],
+  "functions": [
+    {
+      "id": "FUNCTION_01_INTENT_COLLAPSE",
+      "operation": "Collapse chaotic, multi-part input into a single explicit intent vector.",
+      "output": "intent_vector"
+    },
+    {
+      "id": "FUNCTION_02_ATOMIC_DECOMPOSITION",
+      "operation": "Decompose the intent into atomic, independently checkable claims.",
+      "output": "atoms"
+    },
+    {
+      "id": "FUNCTION_03_SIGNAL_NOISE_FILTER",
+      "operation": "Separate decision-relevant signal from noise, decoration, and restatement.",
+      "output": "signal_set"
+    },
+    {
+      "id": "FUNCTION_04_EVIDENCE_BINDING",
+      "operation": "Bind each atom to concrete evidence (source ref, test ref, command output).",
+      "output": "evidence_bindings"
+    },
+    {
+      "id": "FUNCTION_05_CAUSAL_CHAINING",
+      "operation": "Build graph:",
+      "output": "causal_graph"
+    },
+    {
+      "id": "FUNCTION_06_CONSTRAINT_EXTRACTION",
+      "operation": "Extract hard constraints, invariants, boundaries, and forbidden states.",
+      "output": "constraints"
+    },
+    {
+      "id": "FUNCTION_07_GATE_SYNTHESIS",
+      "operation": "Synthesize validation gates from constraints and evidence requirements.",
+      "output": "validation_gates"
+    },
+    {
+      "id": "FUNCTION_08_FAILURE_LOCALIZATION",
+      "operation": "For each failed gate, produce:",
+      "output": "failure_map"
+    },
+    {
+      "id": "FUNCTION_09_COUNTERFACTUAL_TEST",
+      "operation": "Probe each surviving atom with the strongest disconfirming counterfactual.",
+      "output": "counterfactual_results"
+    },
+    {
+      "id": "FUNCTION_10_DECISION_COMPRESSION",
+      "operation": "Compress survivors into the minimal decision that the evidence supports.",
+      "output": "decision"
+    },
+    {
+      "id": "FUNCTION_11_ACTION_SYNTHESIS",
+      "operation": "Translate the decision into ordered, executable action steps.",
+      "output": "action_steps"
+    },
+    {
+      "id": "FUNCTION_12_VERIFICATION_COMMAND",
+      "operation": "Emit explicit verification commands that an auditor can re-run.",
+      "output": "verification_steps"
+    },
+    {
+      "id": "FUNCTION_13_SELF_AUDIT_LOOP",
+      "operation": "Re-run the stack against its own output and record contradictions.",
+      "output": "self_audit_report"
+    },
+    {
+      "id": "FUNCTION_14_CONFIDENCE_CALIBRATION",
+      "operation": "Score confidence from evidence coverage, not from fluency.",
+      "output": "confidence_score"
+    },
+    {
+      "id": "FUNCTION_15_QUALITY_SCORING",
+      "operation": "Score output quality against the contract, not against tone.",
+      "output": "quality_score"
+    },
+    {
+      "id": "FUNCTION_16_STATE_TRANSITION",
+      "operation": "Transition the operation state under explicit, logged conditions.",
+      "output": "state"
+    },
+    {
+      "id": "FUNCTION_17_ACCEPTANCE_GATE",
+      "operation": "Block promotion unless all required evidence links exist.",
+      "output": "acceptance_gate"
+    },
+    {
+      "id": "FUNCTION_18_FINAL_VERDICT",
+      "operation": "Emit exactly one of `PASS`, `FAIL`, `PARTIAL`, `UNKNOWN`.",
+      "output": "final_verdict"
+    }
+  ],
+  "output_contract": {
+    "final_verdict": [
+      "PASS",
+      "FAIL",
+      "PARTIAL",
+      "UNKNOWN"
+    ],
+    "required_fields": [
+      "intent_vector",
+      "verified_atoms",
+      "unsupported_atoms",
+      "causal_graph",
+      "validation_gates",
+      "failed_gates",
+      "action_steps",
+      "verification_steps",
+      "confidence_score",
+      "quality_score",
+      "final_verdict"
+    ]
+  },
+  "final_gate": {
+    "pass_requires": [
+      "intent evidence",
+      "atom evidence",
+      "gate evidence",
+      "counterfactual evidence",
+      "action evidence",
+      "verification evidence",
+      "self-audit evidence"
+    ],
+    "weakest_link_rule": "Without every required evidence link, PASS is forbidden; maximum possible outcome is PARTIAL."
+  },
+  "linked_issue": 1136
+}

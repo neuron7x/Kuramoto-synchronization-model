@@ -138,6 +138,13 @@ def test_wrong_digest_does_not_reproduce_is_red(base_doc, tmp_path):
 # NEGATIVE — snapshot boundary must be stated / manifest must exist            #
 # --------------------------------------------------------------------------- #
 
+def test_unavailable_pinned_commit_is_red(base_doc, tmp_path, monkeypatch):
+    """Missing git history is UNKNOWN, never a verified green digest."""
+    p = _write(tmp_path, base_doc)
+    monkeypatch.setattr(gate, "compute_frame_digest", lambda *_args: None)
+    assert gate.run(p, REPO_ROOT, verify_digest=True) == 1
+
+
 def test_limitations_without_snapshot_boundary_is_red(base_doc, tmp_path):
     doc = copy.deepcopy(base_doc)
     doc["limitations"] = ["synthetic-only boundary; NO_DEPLOY; census is complete"]

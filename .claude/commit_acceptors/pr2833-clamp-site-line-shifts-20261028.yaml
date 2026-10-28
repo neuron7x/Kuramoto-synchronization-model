@@ -1,0 +1,60 @@
+id: pr2833-clamp-site-line-shifts-20261028
+status: ACTIVE
+claim_type: correctness
+promise: >-
+  Re-pin exactly eleven existing numerical clamp shape/path groups (sixteen
+  sites) to verified source line numbers without accepting a new or removed
+  clamp or modifying any numerical behavior, bounds, or scanner controls.
+diff_scope:
+  changed_files:
+    - path: ".claude/commit_acceptors/pr2833-clamp-site-line-shifts-20261028.yaml"
+    - path: "docs/ci/pr2833_exact_source_recovery.md"
+    - path: "tools/physics/clamp_registry.yaml"
+  forbidden_paths:
+    - "core/"
+    - "research/"
+    - "results/"
+    - "tools/physics/check_silent_clamps.py"
+    - "tools/physics/predict_clamp_voids.py"
+required_python_symbols:
+  - "tools/physics/check_silent_clamps.py::scan_file"
+  - "tools/physics/predict_clamp_voids.py::classify"
+  - "tests/tools/test_predict_clamp_voids.py::test_real_tree_is_in_sync"
+  - "tests/tools/test_predict_clamp_voids.py::test_new_clamp_is_a_hard_void"
+expected_signal: >-
+  Numerical clamp scanner and predictor return zero, the existing
+  live-tree tests pass, and negative controls reject unregistered, stale,
+  added, and count-changing clamp entries. No new physical clamp is granted.
+measurement_command: >-
+  bash -c 'python tools/physics/check_silent_clamps.py --json
+  && python tools/physics/predict_clamp_voids.py
+  && python -m pytest -q --override-ini addopts=""
+  tests/tools/test_predict_clamp_voids.py tests/tools/test_numerical_policy.py
+  && python scripts/ci/check_root_manifest.py'
+signal_artifact: "tmp/pr2833_clamp_line_shift_verification.log"
+falsifier:
+  command: >-
+    bash -c 'python -m pytest -q --override-ini addopts=""
+    tests/tools/test_predict_clamp_voids.py::test_new_clamp_is_a_hard_void
+    tests/tools/test_predict_clamp_voids.py::test_count_change_is_not_safe
+    tests/tools/test_numerical_policy.py::test_undeclared_clamp_is_flagged
+    tests/tools/test_numerical_policy.py::test_stale_registration_is_flagged;
+    rc=$?; case "$rc" in 0) exit 1;; 1) exit 0;; *) exit "$rc";; esac'
+  description: >-
+    If a negative control fails with a pytest assertion error, exit zero
+    falsifies the promise. Passing controls exit one; infrastructure
+    failures retain their original exit code.
+rollback_command: >-
+  bash -c 'git restore --source=ec77a95a34a3f925e7cc7831e4b4744494a98a63
+  --worktree -- tools/physics/clamp_registry.yaml docs/ci/pr2833_exact_source_recovery.md
+  && git rm -f -- .claude/commit_acceptors/pr2833-clamp-site-line-shifts-20261028.yaml
+  && python scripts/ci/generate_manifest.py --allow-dirty
+  && python scripts/ci/check_root_manifest.py'
+rollback_verification_command: >-
+  bash -c 'git diff --exit-code ec77a95a34a3f925e7cc7831e4b4744494a98a63 -- tools/physics/clamp_registry.yaml docs/ci/pr2833_exact_source_recovery.md
+  && test ! -e .claude/commit_acceptors/pr2833-clamp-site-line-shifts-20261028.yaml
+  && python scripts/ci/check_root_manifest.py'
+memory_update_type: append
+ledger_path: ".claude/commit_acceptors/pr2833-clamp-site-line-shifts-20261028.yaml"
+report_path: "docs/ci/pr2833_exact_source_recovery.md"
+evidence: []

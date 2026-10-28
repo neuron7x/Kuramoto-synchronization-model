@@ -61,7 +61,8 @@
         "governance",
         "refactor",
         "documentation",
-        "chore"
+        "chore",
+        "validation"
       ],
       "title": "ClaimType",
       "type": "string"

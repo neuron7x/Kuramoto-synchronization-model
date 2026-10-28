@@ -1,0 +1,139 @@
+{
+  "trace_version": "1.0",
+  "trace_id": "cme-trace-0001",
+  "created_at": "2026-06-14T00:00:00Z",
+  "status": "S5_PROXY",
+  "state_t": {
+    "snapshot_id": "role-1-boundary-audit",
+    "summary": "Role 1 found that the repository has claim boundaries and audit artifacts, but lacks a persisted state transformation trace.",
+    "known_constraints": [
+      "Do not promote claims without verifier evidence.",
+      "Persist the full transformation path, not only final artifacts.",
+      "Keep proxy metrics marked as proxy until measured by commands."
+    ],
+    "open_uncertainties": [
+      "Full repository test status is unknown in this connector session.",
+      "CME CLI command surface is requested by prompts but not exposed by pyproject entrypoints."
+    ]
+  },
+  "operation_t": {
+    "operator_name": "TrajectoryTraceOperator",
+    "operation": "Convert the first missing condition into a persisted schema-bound trace contract.",
+    "repo_location": "schemas/cme_trajectory_trace.schema.json",
+    "input_state_ref": "data/physics_boundary_report.json:first_missing_condition",
+    "status": "S0_REPO_FACT"
+  },
+  "candidate_t": [
+    {
+      "candidate_id": "trace-contract-v1",
+      "description": "Schema-bound trace containing state_t, operation_t, candidate_t, score_t, decision_t, artifact_delta_t, rollback_condition_t, and state_t_plus_1.",
+      "source": "Role 1 handoff in VERDICT.md",
+      "status": "S0_REPO_FACT"
+    }
+  ],
+  "score_t": {
+    "intent_coherence_score": 9,
+    "constraint_satisfaction_score": 8,
+    "operator_coverage_score": 7,
+    "verification_readiness_score": 6,
+    "claim_safety_score": 9,
+    "total": 39
+  },
+  "decision_t": {
+    "decision": "ACCEPT",
+    "reason": "The candidate directly satisfies the Role 1 missing condition and adds a minimal validation surface without promoting research claims.",
+    "made_by": "TRAJECTORY_TRACE_IMPLEMENTER",
+    "status": "S5_PROXY"
+  },
+  "artifact_delta_t": [
+    {
+      "path": "schemas/cme_trajectory_trace.schema.json",
+      "change_type": "CREATE",
+      "expected_validator": "python tools/research/record_cme_trajectory_trace.py data/cme_trajectory_trace_example.json",
+      "status": "S0_REPO_FACT"
+    },
+    {
+      "path": "data/cme_trajectory_trace_example.json",
+      "change_type": "CREATE",
+      "expected_validator": "python tools/research/record_cme_trajectory_trace.py data/cme_trajectory_trace_example.json",
+      "status": "S0_REPO_FACT"
+    },
+    {
+      "path": "tools/research/record_cme_trajectory_trace.py",
+      "change_type": "CREATE",
+      "expected_validator": "python -m pytest tests/test_cme_trajectory_trace_schema.py -q",
+      "status": "S0_REPO_FACT"
+    },
+    {
+      "path": "tests/test_cme_trajectory_trace_schema.py",
+      "change_type": "CREATE",
+      "expected_validator": "python -m pytest tests/test_cme_trajectory_trace_schema.py -q",
+      "status": "S0_REPO_FACT"
+    },
+    {
+      "path": "docs/CME_PHYSICS_RND_LOOP.md",
+      "change_type": "MODIFY",
+      "expected_validator": "manual documentation review plus schema test",
+      "status": "S0_REPO_FACT"
+    },
+    {
+      "path": "VERDICT.md",
+      "change_type": "MODIFY",
+      "expected_validator": "manual verdict review plus listed commands",
+      "status": "S0_REPO_FACT"
+    }
+  ],
+  "rollback_condition_t": {
+    "condition": "Trace schema, trace example, or pytest gate fails validation.",
+    "trigger": "Non-zero exit from trajectory trace validator or pytest schema test.",
+    "rollback_action": "Revert Role 2 files or mark Role 2 as FAIL in VERDICT.md until the contract validates.",
+    "status": "S5_PROXY"
+  },
+  "state_t_plus_1": {
+    "snapshot_id": "role-2-trajectory-trace-contract",
+    "summary": "The repository now contains a persisted CME trajectory trace contract with schema, example, validator command surface, and pytest gate.",
+    "known_constraints": [
+      "Trace records must include all required trajectory fields.",
+      "Trace records do not upgrade claims to tested status unless validation commands are actually run.",
+      "Residual agent output cannot become mechanism without verifier approval."
+    ],
+    "open_uncertainties": [
+      "Full repository validation has not been run in this connector session.",
+      "Future Role 3 must connect real command logs to the trace records."
+    ]
+  },
+  "verifiers": [
+    {
+      "name": "trajectory-schema-validator",
+      "command": "python tools/research/record_cme_trajectory_trace.py data/cme_trajectory_trace_example.json",
+      "current_status": "UNKNOWN"
+    },
+    {
+      "name": "trajectory-pytest-gate",
+      "command": "python -m pytest tests/test_cme_trajectory_trace_schema.py -q",
+      "current_status": "UNKNOWN"
+    },
+    {
+      "name": "full-pytest-suite",
+      "command": "python -m pytest -q",
+      "current_status": "UNKNOWN"
+    },
+    {
+      "name": "ruff",
+      "command": "ruff check .",
+      "current_status": "UNKNOWN"
+    }
+  ],
+  "claim_status": {
+    "blocked_claims": [],
+    "allowed_statuses": [
+      "S0_REPO_FACT",
+      "S1_TESTED",
+      "S2_LITERATURE",
+      "S5_PROXY",
+      "S6_SPECULATIVE",
+      "X_FORBIDDEN"
+    ],
+    "promotion_rule": "A trace record may promote a claim to S1_TESTED only when the command output is persisted and the verifier status is PASS."
+  }
+}

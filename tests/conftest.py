@@ -363,9 +363,22 @@ def configure_audit_trails(tmp_path_factory: pytest.TempPathFactory) -> Iterator
     """Isolate audit log files during the test run."""
 
     tmp_dir = tmp_path_factory.mktemp("audit_trails")
+    # The path-loaded bootstrap module above is not the same singleton as
+    # the canonical observability.audit.trail imported by API middleware.
+    # Redirect BOTH surfaces, otherwise HTTP tests silently append to a
+    # git-tracked access.jsonl and corrupt the root source-hash manifest.
+    from observability.audit.trail import (
+        get_access_audit_trail as canonical_access_trail,
+        get_system_audit_trail as canonical_system_trail,
+    )
+
     get_access_audit_trail(tmp_dir / "access.jsonl")
     get_system_audit_trail(tmp_dir / "system.jsonl")
+    canonical_access_trail(tmp_dir / "canonical_access.jsonl")
+    canonical_system_trail(tmp_dir / "canonical_system.jsonl")
     yield
+    canonical_access_trail("observability/audit/access.jsonl")
+    canonical_system_trail("observability/audit/system.jsonl")
     get_access_audit_trail("observability/audit/access.jsonl")
     get_system_audit_trail("observability/audit/system.jsonl")
 

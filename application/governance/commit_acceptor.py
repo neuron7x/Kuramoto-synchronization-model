@@ -76,6 +76,7 @@ class ClaimType(str, Enum):
     REFACTOR = "refactor"
     DOCUMENTATION = "documentation"
     CHORE = "chore"
+    VALIDATION = "validation"
 
 
 class MemoryUpdateType(str, Enum):

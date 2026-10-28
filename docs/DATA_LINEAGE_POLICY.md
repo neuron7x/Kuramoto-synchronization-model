@@ -4,6 +4,26 @@ SPDX-License-Identifier: MIT
 -->
 # Data Lineage Policy (DAT-002)
 
+## Verified recovery on flattened GeoSync checkout (2026-10-27)
+
+The old nine-root lineage graph under `data/lineage/` was absent after the
+flattened repository import. The current checked-in recovery is deliberately
+**not a reconstruction of unavailable market roots**.
+
+The canonical generator `tools/generate_golden_lineage.py --write` rebuilds
+one actual `raw -> validated -> derived` chain from:
+- `data/manifests/golden-macd-baseline-v1.json` (license MIT, SIMULATION);
+- `data/golden/indicator_macd_baseline.csv` (tracked bytes checked against
+  the manifest's file digest and length);
+- the executable `transform.canonical_line_digest.v1` oracle.
+
+`python tools/generate_golden_lineage.py` verifies that the committed graph
+is byte-identical to freshly regenerated artifacts. The only resulting claim
+is a synthetic data-lineage plumbing proof. It neither restores absent private
+data nor promotes any empirical claim. The former nine-node/root description
+below is historical context, **not the active shipped graph**.
+
+
 Content-addressed lineage over three evidence tiers, so that **any result traces
 back to an immutable raw digest** and **every transformation is deterministic
 and content-addressed — never mutated in place**.

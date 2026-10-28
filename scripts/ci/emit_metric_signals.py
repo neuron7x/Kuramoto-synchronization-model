@@ -54,7 +54,6 @@ from dataclasses import asdict, dataclass
 from pathlib import Path
 
 ROOT = Path(__file__).resolve().parents[2]
-sys.path.insert(0, str(ROOT / "scripts" / "ci"))
 
 TEN_AXES_BASELINE = ROOT / "docs" / "TEN_AXES_BASELINE.json"
 MUTATION_BASELINE = ROOT / "docs" / "MUTATION_KILL_BASELINE.json"

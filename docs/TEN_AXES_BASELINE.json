@@ -152,6 +152,7 @@
     ],
     "not_ledgers": [
       ".github/invariant_teeth_baseline.json",
+      "archive_snapshots/github_9e6e4792_unique/.secrets.baseline",
       "benchmarks/flagship_baselines/comparison_report.json",
       "benchmarks/flagship_baselines/hierarchy.yaml",
       "configs/nightly/baselines.json",

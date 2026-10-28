@@ -1,0 +1,122 @@
+{
+  "schema": "geosync.inference_transformer_block_map.v1",
+  "contract_id": "geosync.inference_transformer.v1",
+  "research_line": "ricci_microstructure_v1",
+  "claim_tier": "HYPOTHESIS",
+  "promotion_locked": true,
+  "maturity": "CONFIGURATION_ONLY",
+  "note": "Reconstructed exclusively from the canonical inference-transformer configuration. Architecture declarations only: no dataset, model evaluation, external reproducibility, or predictive efficacy is asserted.",
+  "architecture_primitives": [
+    {
+      "id": "immutable_substrate_adapter",
+      "kind": "substrate_adapter",
+      "claim_tier": "HYPOTHESIS",
+      "status": "CONTRACT_ONLY",
+      "invariants": [
+        "INV-NFD1",
+        "INV-DET1"
+      ],
+      "purpose": "Normalize immutable input slices without asserting empirical findings",
+      "implemented": false,
+      "source_of_truth": "configs/research/geosync_inference_transformer.v1.yaml"
+    },
+    {
+      "id": "market_graph_constructor",
+      "kind": "graph_constructor",
+      "claim_tier": "HYPOTHESIS",
+      "status": "CONTRACT_ONLY",
+      "invariants": [
+        "INV-NFD1",
+        "INV-DET1",
+        "INV-RC1"
+      ],
+      "purpose": "Build a declared time-indexed graph without future-data leakage",
+      "implemented": false,
+      "source_of_truth": "configs/research/geosync_inference_transformer.v1.yaml"
+    },
+    {
+      "id": "ricci_geometry_encoder",
+      "kind": "geometry_encoder",
+      "claim_tier": "HYPOTHESIS",
+      "status": "CONTRACT_ONLY",
+      "invariants": [
+        "INV-RC1",
+        "INV-RC3"
+      ],
+      "purpose": "Record Ricci geometry only under a metric-domain validity certificate",
+      "implemented": false,
+      "source_of_truth": "configs/research/geosync_inference_transformer.v1.yaml"
+    },
+    {
+      "id": "kuramoto_sync_encoder",
+      "kind": "synchronization_encoder",
+      "claim_tier": "HYPOTHESIS",
+      "status": "CONTRACT_ONLY",
+      "invariants": [
+        "INV-K1"
+      ],
+      "purpose": "Expose synchronization as a regime feature, not a trading decision",
+      "implemented": false,
+      "source_of_truth": "configs/research/geosync_inference_transformer.v1.yaml"
+    },
+    {
+      "id": "topology_uncertainty_encoder",
+      "kind": "topology_encoder",
+      "claim_tier": "HYPOTHESIS",
+      "status": "CONTRACT_ONLY",
+      "invariants": [],
+      "purpose": "Preserve a topology extension seam without claiming implemented measurements",
+      "implemented": false,
+      "source_of_truth": "configs/research/geosync_inference_transformer.v1.yaml"
+    },
+    {
+      "id": "causality_firewall",
+      "kind": "causality_firewall",
+      "claim_tier": "HYPOTHESIS",
+      "status": "CONTRACT_ONLY",
+      "invariants": [
+        "CLAIM-BOUNDARY"
+      ],
+      "purpose": "Block untested causal or predictive promotion",
+      "implemented": false,
+      "source_of_truth": "configs/research/geosync_inference_transformer.v1.yaml"
+    },
+    {
+      "id": "falsification_matrix",
+      "kind": "falsification_matrix",
+      "claim_tier": "HYPOTHESIS",
+      "status": "CONTRACT_ONLY",
+      "invariants": [
+        "INV-DET1"
+      ],
+      "purpose": "Require null baselines, transaction cost and replay tests before promotion",
+      "implemented": false,
+      "source_of_truth": "configs/research/geosync_inference_transformer.v1.yaml"
+    },
+    {
+      "id": "evidence_emitter",
+      "kind": "evidence_emitter",
+      "claim_tier": "HYPOTHESIS",
+      "status": "CONTRACT_ONLY",
+      "invariants": [
+        "SCHEMA-VALID"
+      ],
+      "purpose": "Serialize evidence-bound outputs with fail-closed claim-tier metadata",
+      "implemented": false,
+      "source_of_truth": "configs/research/geosync_inference_transformer.v1.yaml"
+    }
+  ],
+  "promotion_requirements": [
+    "real immutable data hash",
+    "specified null and cost model",
+    "deterministic multi-session replay",
+    "claim-boundary and human review"
+  ],
+  "blocked_claims": [
+    "alpha",
+    "predictor",
+    "product_grade",
+    "deployment_ready",
+    "measured_microstructure_edge"
+  ]
+}

@@ -1,0 +1,70 @@
+# Local validation only; exact-HEAD workflow acceptance remains separate.
+id: pr2833-hermetic-audit-scope-20261027
+status: ACTIVE
+claim_type: correctness
+promise: >-
+  Audit the exact hashed dependencies installed by Dockerfile.repro and keep
+  preserved top-level archive snapshots outside live-source concentration
+  analysis without excluding similarly named live packages.
+diff_scope:
+  changed_files:
+    - path: ".claude/commit_acceptors/pr2833-hermetic-audit-scope-20261027.yaml"
+    - path: ".github/workflows/service-manifest-audit.yml"
+    - path: "scripts/ci/check_hermetic_image.py"
+    - path: "tests/ci/test_hermetic_image.py"
+    - path: "tools/audit/false_confidence_detector.py"
+    - path: "tests/audit/test_false_confidence_detector.py"
+  forbidden_paths:
+    - "core/"
+    - "execution/"
+    - "trading/"
+    - "archive_snapshots/"
+    - "results/"
+    - "artifacts/"
+    - "Dockerfile.repro"
+    - "MANIFEST.sha256"
+required_python_symbols:
+  - "scripts/ci/check_hermetic_image.py::extract_hermetic_requirements"
+  - "tools/audit/false_confidence_detector.py::_is_excluded"
+expected_signal: >-
+  Hermetic extraction preserves the installed heredoc bytes and rejects
+  missing, empty, comment-only, unterminated and duplicate blocks. CI invokes
+  pip-audit with require-hashes on those bytes. Live C2/C10 controls pass, and
+  nested or similarly named archive directories still trigger concentration
+  findings. Frozen source/evidence bytes and dependency pins remain unchanged.
+measurement_command: >-
+  bash -o pipefail -c 'mkdir -p tmp &&
+  { python -m pytest -q -o addopts= tests/audit/test_false_confidence_detector.py
+  tests/ci/test_hermetic_image.py &&
+  python -c "from pathlib import Path; from scripts.ci.check_hermetic_image import extract_hermetic_requirements;
+  Path(\"tmp/hermetic-requirements.txt\").write_text(extract_hermetic_requirements(Path(\"Dockerfile.repro\").read_text(encoding=\"utf-8\")), encoding=\"utf-8\")" &&
+  pip-audit --cache-dir tmp/pr2833-pip-audit-cache --require-hashes -r tmp/hermetic-requirements.txt;
+  } 2>&1 | tee tmp/pr2833_hermetic_audit_scope_20261027.log'
+signal_artifact: "tmp/pr2833_hermetic_audit_scope_20261027.log"
+falsifier:
+  command: >-
+    bash -c 'python -m pytest -q -o addopts=
+    tests/ci/test_hermetic_image.py::test_hermetic_audit_rejects_invalid_dependency_blocks
+    tests/audit/test_false_confidence_detector.py::test_archive_scope_does_not_hide_live_source
+    tests/audit/test_false_confidence_detector.py::test_c2_synthetic_dockerfile_unscanned;
+    rc=$?; case "$rc" in 0) exit 1;; 1) exit 0;; *) exit "$rc";; esac'
+  description: >-
+    Exit zero falsifies the promise if the audit accepts an absent or ambiguous dependency set, if
+    archive naming hides live runtime findings, or if unscanned installed
+    dependencies stop producing the C2 finding. Passing controls exit one;
+    pytest infrastructure exit codes propagate.
+rollback_command: >-
+  bash -c 'git restore --source=77f4771ddb515f41de5e580a219cf5f2eec7f851 --worktree --
+  .github/workflows/service-manifest-audit.yml scripts/ci/check_hermetic_image.py
+  tests/ci/test_hermetic_image.py tools/audit/false_confidence_detector.py
+  tests/audit/test_false_confidence_detector.py &&
+  rm -- .claude/commit_acceptors/pr2833-hermetic-audit-scope-20261027.yaml'
+rollback_verification_command: >-
+  bash -c 'git diff --exit-code 77f4771ddb515f41de5e580a219cf5f2eec7f851 -- .github/workflows/service-manifest-audit.yml
+  scripts/ci/check_hermetic_image.py tests/ci/test_hermetic_image.py
+  tools/audit/false_confidence_detector.py tests/audit/test_false_confidence_detector.py &&
+  test ! -e .claude/commit_acceptors/pr2833-hermetic-audit-scope-20261027.yaml'
+memory_update_type: append
+ledger_path: ".claude/commit_acceptors/pr2833-hermetic-audit-scope-20261027.yaml"
+report_path: "docs/DEPENDENCY_LOCK_POLICY.md"
+evidence: []

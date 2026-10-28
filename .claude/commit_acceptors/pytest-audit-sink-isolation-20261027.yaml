@@ -1,0 +1,39 @@
+# Prevent pytest's API middleware from mutating a source-tracked JSONL receipt.
+id: pytest-audit-sink-isolation-20261027
+status: ACTIVE
+claim_type: governance
+promise: >-
+  Both bootstrap-loaded and canonical API audit trail singletons are redirected
+  to independent pytest temp files, so application tests never append to
+  observability/audit/access.jsonl or system.jsonl in the source tree.
+diff_scope:
+  changed_files:
+    - path: ".claude/commit_acceptors/pytest-audit-sink-isolation-20261027.yaml"
+    - path: "tests/conftest.py"
+    - path: "tests/ci/test_audit_log_isolation.py"
+  forbidden_paths:
+    - "trading/"
+    - "execution/"
+    - "forecast/"
+    - "core/"
+required_python_symbols: []
+expected_signal: >-
+  API test runs leave the tracked source hash manifest unchanged while
+  all HTTP audit events remain persisted to isolated temp files.
+measurement_command: >-
+  bash -c 'python -m pytest tests/ci/test_audit_log_isolation.py
+  tests/ci/test_manifest_scope.py -q'
+signal_artifact: "tmp/pytest_audit_sink_isolation_20261027.log"
+falsifier:
+  command: >-
+    python -m pytest tests/ci/test_audit_log_isolation.py -q
+  description: >-
+    A canonical singleton attached to the tracked audit JSONL causes RED.
+rollback_command: >-
+  git revert --no-edit HEAD
+rollback_verification_command: >-
+  git diff --exit-code HEAD~1 HEAD -- tests/conftest.py
+memory_update_type: append
+ledger_path: ".claude/commit_acceptors/pytest-audit-sink-isolation-20261027.yaml"
+report_path: "tests/ci/test_audit_log_isolation.py"
+evidence: []

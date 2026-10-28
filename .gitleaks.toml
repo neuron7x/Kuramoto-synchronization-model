@@ -12,3 +12,9 @@ regexes = [
   '''"source_sha256"\s*:\s*"[0-9a-f]{64}"''',
   '''"git_rev"\s*:\s*"[0-9a-f]{40}"''',
 ]
+
+[[allowlists]]
+description = "Archived 2026-08-12 redacted gitleaks report, not live credentials"
+paths = [
+  '''^archive_snapshots/github_9e6e4792_unique/audit/artifacts/gitleaks\.json$''',
+]

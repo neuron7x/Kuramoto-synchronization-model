@@ -1,0 +1,42 @@
+# Missing licensed datasets must never be converted into a new pytest skip.
+id: real-data-evidence-blocker-20261027
+status: ACTIVE
+claim_type: governance
+promise: >-
+  The full-suite ASKAR 14-asset loading requirement and the real-data
+  manifest coverage witness remain mandatory fail-closed controls. Missing
+  raw licensed inputs emit explicit failures, not additional skip debt or a
+  fabricated MEASURED manifest.
+diff_scope:
+  changed_files:
+    - path: ".claude/commit_acceptors/real-data-evidence-blocker-20261027.yaml"
+    - path: "tests/askar/test_optimal_universe.py"
+    - path: "tests/ci/test_dataset_manifests.py"
+  forbidden_paths:
+    - "trading/"
+    - "execution/"
+    - "forecast/"
+    - "core/"
+required_python_symbols: []
+expected_signal: >-
+  When licensed inputs are absent, the precise tests fail with
+  EMPIRICAL_EVIDENCE_UNAVAILABLE or NO_REAL_DATA_MANIFEST_STAGED. No new
+  skip markers beyond the protected baseline are introduced.
+measurement_command: >-
+  python scripts/ci/check_skip_ratchet.py
+signal_artifact: "tmp/real_data_evidence_blocker_20261027.log"
+falsifier:
+  command: >-
+    bash -c 'python scripts/ci/check_skip_ratchet.py &&
+    ! grep -q "pytest.skip(" tests/ci/test_dataset_manifests.py'
+  description: >-
+    Added skip debt, fake real datasets, or relaxed skip baselines falsify
+    the preservation of an honest empirical-evidence boundary.
+rollback_command: >-
+  git revert --no-edit HEAD
+rollback_verification_command: >-
+  git diff --exit-code HEAD~1 HEAD -- tests/askar/test_optimal_universe.py tests/ci/test_dataset_manifests.py
+memory_update_type: append
+ledger_path: ".claude/commit_acceptors/real-data-evidence-blocker-20261027.yaml"
+report_path: "docs/DATASET_MANIFEST_POLICY.md"
+evidence: []

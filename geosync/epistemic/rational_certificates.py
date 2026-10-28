@@ -7,6 +7,7 @@ A certificate contains both:
 Verification uses only fractions and exhaustive binary states. It does not trust
 SciPy, floating-point solver tolerances, or an independence assumption.
 """
+
 from __future__ import annotations
 
 from dataclasses import dataclass
@@ -82,6 +83,49 @@ def event_indicator(event: str, bits: tuple[int, ...], required_support: int) ->
     raise ValueError(f"unsupported event: {event}")
 
 
+def _primal_witness(
+    cert: RationalQuorumCertificate,
+    marginals: tuple[Fraction, ...],
+    optimum: Fraction,
+) -> tuple[bool, Fraction]:
+    """Exact check of the joint-mass witness: a distribution with the declared marginals
+    whose event probability equals the declared optimum."""
+    n = len(cert.evaluator_ids)
+    masses = {key: _f(value) for key, value in cert.joint_mass.items()}
+    valid = all(value >= 0 for value in masses.values())
+    valid &= sum(masses.values(), Fraction(0)) == 1
+    calculated = tuple(
+        sum(mass for key, mass in masses.items() if _bits(key, n)[index] == 1) for index in range(n)
+    )
+    valid &= calculated == marginals
+    objective = Fraction(0)
+    for key, mass in masses.items():
+        objective += mass * event_indicator(cert.event, _bits(key, n), cert.required_support)
+    valid &= objective == optimum
+    return valid, objective
+
+
+def _dual_majorant(
+    cert: RationalQuorumCertificate,
+    marginals: tuple[Fraction, ...],
+    optimum: Fraction,
+) -> tuple[bool, Fraction]:
+    """Exact check of the affine majorant: it dominates the event indicator on every joint
+    state and its value at the marginals equals the declared optimum."""
+    n = len(cert.evaluator_ids)
+    intercept = _f(cert.dual_intercept)
+    coefficients = tuple(_f(x) for x in cert.dual_coefficients)
+    valid = True
+    for bits in product((0, 1), repeat=n):
+        affine = intercept + sum(c * bit for c, bit in zip(coefficients, bits, strict=True))
+        if affine < event_indicator(cert.event, bits, cert.required_support):
+            valid = False
+            break
+    objective = intercept + sum(c * p for c, p in zip(coefficients, marginals, strict=True))
+    valid &= objective == optimum
+    return valid, objective
+
+
 def verify_rational_certificate(cert: RationalQuorumCertificate) -> CertificateVerification:
     n = len(cert.evaluator_ids)
     if len(cert.marginals) != n or len(cert.dual_coefficients) != n:
@@ -91,39 +135,8 @@ def verify_rational_certificate(cert: RationalQuorumCertificate) -> CertificateV
 
     marginals = tuple(_f(x) for x in cert.marginals)
     optimum = _f(cert.optimum)
-    masses = {key: _f(value) for key, value in cert.joint_mass.items()}
-    all_states = tuple(product((0, 1), repeat=n))
-
-    primal_valid = all(value >= 0 for value in masses.values())
-    primal_valid &= sum(masses.values(), Fraction(0)) == 1
-    calculated_marginals = []
-    primal_objective = Fraction(0)
-    for index in range(n):
-        calculated_marginals.append(
-            sum(
-                mass
-                for key, mass in masses.items()
-                if _bits(key, n)[index] == 1
-            )
-        )
-    primal_valid &= tuple(calculated_marginals) == marginals
-    for key, mass in masses.items():
-        bits = _bits(key, n)
-        primal_objective += mass * event_indicator(cert.event, bits, cert.required_support)
-    primal_valid &= primal_objective == optimum
-
-    intercept = _f(cert.dual_intercept)
-    coefficients = tuple(_f(x) for x in cert.dual_coefficients)
-    dual_valid = True
-    for bits in all_states:
-        affine = intercept + sum(c * bit for c, bit in zip(coefficients, bits, strict=True))
-        indicator = event_indicator(cert.event, bits, cert.required_support)
-        if affine < indicator:
-            dual_valid = False
-            break
-    dual_objective = intercept + sum(c * p for c, p in zip(coefficients, marginals, strict=True))
-    dual_valid &= dual_objective == optimum
-
+    primal_valid, primal_objective = _primal_witness(cert, marginals, optimum)
+    dual_valid, dual_objective = _dual_majorant(cert, marginals, optimum)
     strong_duality = primal_objective == dual_objective == optimum
     valid = primal_valid and dual_valid and strong_duality
     reason = (

@@ -10,6 +10,10 @@ diff_scope:
     - path: "governance/ECP_AS_ITERATION_005.json"
     - path: "artifacts/epistemic_control_plane/iteration_005/ITERATION_005_REPORT.md"
     - path: "artifacts/epistemic_control_plane/iteration_005/source_verification.json"
+  forbidden_paths:
+    - "execution/"
+    - "trading/"
+required_python_symbols: []
 expected_signal: >-
   Documentation states that published marginals leave actual evaluator dependence unidentified and that robust bounds are guarantees over compatible distributions, not covariance estimates.
 measurement_command: >-

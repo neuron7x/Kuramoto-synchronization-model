@@ -11,7 +11,7 @@
   "files": [
     {
       "path": ".github/workflows/pr-gate.yml",
-      "sha256": "32a161dca58a6a57c6f0b028dba637afbfc2150908de2ff0bbe88200beeae5d0"
+      "sha256": "64940765e9152594088afa3c37faae7076bc57fdc492d2360c7e7d9671d54a58"
     },
     {
       "path": "scripts/ci/__init__.py",
@@ -195,11 +195,11 @@
     },
     {
       "path": "scripts/ci/check_hermetic_image.py",
-      "sha256": "8df541b963ec8b2891afa920fe415a3ba4426937c035f6c5a4453d8f91cce3f7"
+      "sha256": "db15fb1fc55d3ff27e2eba076670b19d1d75d279394125272850eb51350b1e58"
     },
     {
       "path": "scripts/ci/check_import_architecture.py",
-      "sha256": "d025c4ef24b437274284db4e3e0b6bff599a7e81cd66c22252186591a8f0ddf2"
+      "sha256": "31352207722974d7f5a4c5a748a29d66bb08facce87a415a32fd8b4e301c2db6"
     },
     {
       "path": "scripts/ci/check_inference_transformer_contract.py",
@@ -227,7 +227,7 @@
     },
     {
       "path": "scripts/ci/check_manifest_hashes.py",
-      "sha256": "15d1bb06e9ae60aea9fa40b93a28a96431bacd06e19afd7524cdd4f3aacbf6f4"
+      "sha256": "80046929a258d200b2b2ed9fca0f37c512298a647dc491a8a565b5261d64cd4c"
     },
     {
       "path": "scripts/ci/check_math_boundaries.py",
@@ -343,7 +343,7 @@
     },
     {
       "path": "scripts/ci/check_secret_boundary.py",
-      "sha256": "81657273770401212aafcab043983ab050b632954019218ac95cdca1f68d914d"
+      "sha256": "31203032f9a27ebc0c9b32b35de4d28bba1b90f4f571f76421e147c2b4b2208c"
     },
     {
       "path": "scripts/ci/check_security_regression.py",
@@ -407,7 +407,11 @@
     },
     {
       "path": "scripts/ci/ebsvap_wp3_run.py",
-      "sha256": "f5a17f7a1e7cc5229811fab68c5415cd79cb66969e13e5f3bbd1c3dea8c61bd1"
+      "sha256": "9503fcef78a8e36e40833a8589508fc8d8c0c7eee1b13f5def85f21ee63650d3"
+    },
+    {
+      "path": "scripts/ci/emit_metric_signals.py",
+      "sha256": "a48dae52bc8d8a530de06175e9f056e0568de83faa855783bf4f2cdfce8a5077"
     },
     {
       "path": "scripts/ci/emit_pyo3_env.py",

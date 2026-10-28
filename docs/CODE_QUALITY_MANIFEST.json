@@ -16,6 +16,7 @@
     "agent",
     "analytics",
     "apps",
+    "archive_snapshots",
     "backtest",
     "bench",
     "benchmarks",

@@ -37,6 +37,10 @@ LEGACY_ALLOWLIST = {
     Path("src/admin/remote_control.py"),
     Path("src/data/__init__.py"),
     Path("src/risk/risk_manager.py"),
+    # application/ twin of src/risk/risk_manager.py, created by the 2026-08-12 sync
+    # (8fee3d18) with the same `src.security` shim import; the shim re-exports
+    # application.security.access_control (identity verified 2026-10-27).
+    Path("application/risk/risk_manager.py"),
     Path("src/system/action_control.py"),
     Path("src/system/integration.py"),
     Path("src/system/module_orchestrator.py"),
@@ -45,6 +49,7 @@ LEGACY_ALLOWLIST = {
 }
 
 EXCLUDED_DIR_NAMES = {
+    "archive_snapshots",  # frozen fork backups (2026-08-12): history, not the live namespace
     # Tests are intentionally excluded; the policy currently targets production modules only.
     "tests",
     ".git",

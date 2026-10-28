@@ -25,6 +25,8 @@ from __future__ import annotations
 import hashlib
 import importlib.util
 import json
+import subprocess
+import sys
 from pathlib import Path
 
 import pytest
@@ -222,6 +224,18 @@ def test_negative_tampered_content_address_is_red(tmp_path: Path) -> None:
 # --------------------------------------------------------------------------- #
 # Shipped repo lineage: GREEN and traces to a raw DAT-001 digest.
 # --------------------------------------------------------------------------- #
+def test_canonical_repo_lineage_is_byte_reproducible() -> None:
+    """The sole public graph must regenerate from the MIT synthetic CSV."""
+    proc = subprocess.run(
+        [sys.executable, "tools/generate_golden_lineage.py"],
+        cwd=_ROOT,
+        capture_output=True,
+        text=True,
+        check=False,
+    )
+    assert proc.returncode == 0, proc.stdout + proc.stderr
+
+
 def test_repo_lineage_is_green_and_traces_to_raw() -> None:
     rc = GATE.main([])  # defaults resolve to the shipped data/lineage + data/manifests
     assert rc == 0

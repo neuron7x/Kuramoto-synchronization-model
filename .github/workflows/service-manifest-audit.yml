@@ -15,6 +15,8 @@ on:
       - 'coherence_bridge/requirements.txt'
       - 'sandbox/requirements.txt'
       - 'requirements.txt'
+      - 'Dockerfile.repro'
+      - 'scripts/ci/check_hermetic_image.py'
       - '.github/workflows/service-manifest-audit.yml'
   push:
     branches: [main]
@@ -32,6 +34,18 @@ jobs:
           python-version: '3.12'
       - name: Install pip-audit
         run: python -m pip install --upgrade pip pip-audit
+      - name: Extract the exact hermetic image dependency manifest
+        run: |
+          python - <<'PY'
+          from pathlib import Path
+          from scripts.ci.check_hermetic_image import extract_hermetic_requirements
+          source = Path("Dockerfile.repro").read_text(encoding="utf-8")
+          Path("/tmp/hermetic-requirements.txt").write_text(
+              extract_hermetic_requirements(source), encoding="utf-8"
+          )
+          PY
+      - name: Audit the hermetic image dependency manifest
+        run: pip-audit --require-hashes -r /tmp/hermetic-requirements.txt
       - name: Audit coherence_bridge service manifest
         run: pip-audit -r coherence_bridge/requirements.txt
       - name: Audit sandbox service manifest

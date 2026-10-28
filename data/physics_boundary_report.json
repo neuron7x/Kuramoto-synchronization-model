@@ -1,0 +1,551 @@
+{
+  "report_version": "1.0",
+  "agent_role": "FIRST_PRINCIPLES_PHYSICS_AUDITOR",
+  "repo_snapshot": {
+    "files_scanned": [
+      "README.md",
+      "pyproject.toml",
+      "Makefile",
+      "AGENTS.md",
+      "CLAIMS.md",
+      "FORBIDDEN_CLAIMS.md",
+      "docs/REPOSITORY_SYSTEM.md",
+      "docs/CME_ITERATION_0001.json",
+      "tools/research/research_cli.py",
+      "tools/research/validate_cme_iteration_contract.py"
+    ],
+    "missing_expected_files": [
+      "cme/** package or module path",
+      "python -m cme.cli entrypoint",
+      "examples/problems/ai_system_design.txt",
+      "benchmarks/CME benchmark harness",
+      "prompts/** canonical prompt surface",
+      "artifacts/cme/** evidence bundle for CME iterations",
+      "persisted trajectory trace contract with state_t/state_t_plus_1 fields"
+    ],
+    "detected_entrypoints": [
+      "geosync-research = tools.research.research_cli:main",
+      "mfn = geosync.mfn.cli:main",
+      "mfn-api = geosync.mfn.cli:api_main",
+      "mfn-validate = geosync.mfn.cli:validate_main",
+      "geosync-release-gate = scripts.ci.release_gate:main"
+    ],
+    "detected_tests": [
+      "tests/research/test_cme_iteration_contract.py",
+      "tests/tools/test_research_cli.py",
+      "tests/research_lines/test_ricci_artifact_schema.py",
+      "tests/unit/geosync/features/test_features.py"
+    ],
+    "detected_schemas": [
+      "schemas/research/research_inference_artifact.schema.json",
+      "schemas/physics_boundary_report.schema.json"
+    ],
+    "detected_docs": [
+      "README.md",
+      "AGENTS.md",
+      "CLAIMS.md",
+      "FORBIDDEN_CLAIMS.md",
+      "docs/REPOSITORY_SYSTEM.md",
+      "docs/CME_PHYSICS_RND_LOOP.md",
+      "docs/CME_ITERATION_0001.json"
+    ]
+  },
+  "system_identity": {
+    "system_type": "Verification-first quantitative research platform with CME governance layer and MFN dependency-light gateway.",
+    "core_transformation": "research intent and data/config inputs -> schema-bound artifacts, claim tiers, falsifiers, validation reports, and release evidence.",
+    "input_state": "raw research line, repository context, candidate agent plan, data/config paths, and claim text.",
+    "output_state": "validated or rejected artifact/report with explicit status tier, replay path, and handoff.",
+    "validation_boundary": "README, CLAIMS, FORBIDDEN_CLAIMS, AGENTS, schemas, tests, CLI gates, and release evidence harness."
+  },
+  "state_model": {
+    "state_variables": [
+      {
+        "name": "intent_state",
+        "definition": "Compressed goal for one iteration or research line.",
+        "repo_evidence": [
+          "docs/CME_ITERATION_0001.json:first_missing_condition",
+          "AGENTS.md:Required Behavior"
+        ],
+        "status": "S0_REPO_FACT"
+      },
+      {
+        "name": "context_state",
+        "definition": "Repository files and canonical surfaces used as the boundary for the operation.",
+        "repo_evidence": [
+          "docs/REPOSITORY_SYSTEM.md:Canonical Surfaces",
+          "README.md:Repository Map"
+        ],
+        "status": "S0_REPO_FACT"
+      },
+      {
+        "name": "candidate_state",
+        "definition": "Agent-generated plan, patch, or hypothesis before verifier approval.",
+        "repo_evidence": [
+          "docs/CME_ITERATION_0001.json:agent_plan"
+        ],
+        "status": "S5_PROXY"
+      },
+      {
+        "name": "claim_state",
+        "definition": "Claim text plus status tier, evidence pointer, and falsifier boundary.",
+        "repo_evidence": [
+          "CLAIMS.md:Active claims",
+          "FORBIDDEN_CLAIMS.md:Promotion Invariants"
+        ],
+        "status": "S0_REPO_FACT"
+      },
+      {
+        "name": "evidence_state",
+        "definition": "Artifact, raw logs, exit codes, schema result, hashes, replay command, and manifest.",
+        "repo_evidence": [
+          "AGENTS.md:Release Rule",
+          "README.md:Release Evidence Harness"
+        ],
+        "status": "S0_REPO_FACT"
+      },
+      {
+        "name": "gate_state",
+        "definition": "Verifier decision surface: pass, fail, reroute, or block promotion.",
+        "repo_evidence": [
+          "Makefile:test",
+          "Makefile:lint",
+          "scripts/ci/check_claim_boundary.py"
+        ],
+        "status": "S0_REPO_FACT"
+      },
+      {
+        "name": "artifact_state",
+        "definition": "Committed or generated JSON/markdown output with schema and replay contract.",
+        "repo_evidence": [
+          "schemas/research/research_inference_artifact.schema.json",
+          "artifacts/runs/ricci_microstructure_v1/example_artifact.json"
+        ],
+        "status": "S0_REPO_FACT"
+      },
+      {
+        "name": "verification_state",
+        "definition": "Observed command result and gate evidence. Present as intended command surface; not observed for this Role 1 patch inside this connector session.",
+        "repo_evidence": [
+          "docs/CME_ITERATION_0001.json:validation_commands",
+          "Makefile:test"
+        ],
+        "status": "S5_PROXY"
+      },
+      {
+        "name": "release_state",
+        "definition": "Release verdict plus evidence bundle; documented but not complete for CME boundary audit.",
+        "repo_evidence": [
+          "AGENTS.md:Release Rule",
+          "README.md:Release Evidence Harness"
+        ],
+        "status": "S5_PROXY"
+      }
+    ]
+  },
+  "constraints": {
+    "boundary_conditions": [
+      "No claim without tier, evidence pointer, falsifier, and replay path.",
+      "Synthetic or placeholder artifacts cannot promote research status.",
+      "Schema validity proves shape only, not empirical truth.",
+      "CME agent output remains residual until a deterministic verifier accepts it.",
+      "Release status requires persisted evidence, not terminal success text."
+    ],
+    "forbidden_claims": [
+      "Any wording blocked by FORBIDDEN_CLAIMS.md.",
+      "Any product claim that rewrites GeoSync into a live trading, advice, or alpha product.",
+      "Any CME claim that describes autonomous intelligence, consciousness, brain measurement, diagnosis, or therapy.",
+      "Any prestige-quality claim not translated into explicit gates and evidence."
+    ],
+    "non_scope": [
+      "No feature design by Role 1.",
+      "No empirical market performance claim.",
+      "No brain or cognitive measurement claim.",
+      "No replacement of human responsibility with LLM judgement.",
+      "No release promotion without executed commands and artifact bundle."
+    ]
+  },
+  "invariants": [
+    {
+      "name": "intent coherence",
+      "must_conserve": "Each iteration must preserve one primary goal and one first missing condition.",
+      "how_verified": "docs/CME_ITERATION_0001.json plus validator checks non-empty singular first_missing_condition.",
+      "failure_if_broken": "Agent loop splits into parallel priorities and loses measurable progress."
+    },
+    {
+      "name": "claim status traceability",
+      "must_conserve": "Every claim must keep its tier and evidence boundary.",
+      "how_verified": "CLAIMS.md, FORBIDDEN_CLAIMS.md, and claim boundary scripts.",
+      "failure_if_broken": "Hypothesis wording becomes unsupported promotion."
+    },
+    {
+      "name": "source traceability",
+      "must_conserve": "Evidence-bearing outputs must point to source files, artifacts, schemas, and commands.",
+      "how_verified": "AGENTS.md evidence-bearing artifact minimum and release rule.",
+      "failure_if_broken": "A result cannot be replayed or independently audited."
+    },
+    {
+      "name": "artifact reproducibility",
+      "must_conserve": "Artifacts must include deterministic hashes, seed, timestamp, schema, and replay command where evidence-bearing.",
+      "how_verified": "research_inference_artifact schema and geosync-research verify path.",
+      "failure_if_broken": "Output becomes a screenshot-grade claim rather than a reproducible artifact."
+    },
+    {
+      "name": "human responsibility",
+      "must_conserve": "LLM and agents propose candidates; humans remain accountable for high-stakes interpretation and release.",
+      "how_verified": "AGENTS.md root contract and claim boundary language.",
+      "failure_if_broken": "LLM judgement is incorrectly treated as final truth."
+    },
+    {
+      "name": "proxy honesty",
+      "must_conserve": "Proxy metrics and synthetic plumbing must be labeled as proxy/instrumented, not measured truth.",
+      "how_verified": "README synthetic-data promotion rule and FORBIDDEN_CLAIMS promotion invariants.",
+      "failure_if_broken": "Operational heuristics are misreported as physical measurement."
+    },
+    {
+      "name": "validation evidence",
+      "must_conserve": "PASS requires commands, raw logs, exit codes, schema validation, and evidence bundle when release status is claimed.",
+      "how_verified": "README release evidence harness and AGENTS.md release rule.",
+      "failure_if_broken": "Green console output masquerades as release proof."
+    }
+  ],
+  "operator_map": [
+    {
+      "operator_name": "ClaimBoundaryOperator",
+      "repo_location": "FORBIDDEN_CLAIMS.md; scripts/ci/check_claim_boundary.py",
+      "input_state": "claim_state",
+      "operation": "reject unreviewed product/status wording and enforce promotion invariants",
+      "output_state": "accepted_or_blocked_claim_state",
+      "validator": "scripts/ci/check_claim_boundary.py",
+      "failure_mode": "unsupported claim enters public docs",
+      "decision": "KEEP"
+    },
+    {
+      "operator_name": "ResearchGatewayOperator",
+      "repo_location": "tools/research/research_cli.py",
+      "input_state": "data_path + config_path + research_line",
+      "operation": "stamp provenance and validate schema-bound artifact",
+      "output_state": "hypothesis-tier research artifact",
+      "validator": "geosync-research verify",
+      "failure_mode": "placeholder score is misread as measured result",
+      "decision": "KEEP"
+    },
+    {
+      "operator_name": "MFNGatewayOperator",
+      "repo_location": "src/geosync/mfn/**; pyproject.toml:mfn entrypoints",
+      "input_state": "simulation/configuration state",
+      "operation": "simulate -> extract -> detect -> forecast -> compare -> report",
+      "output_state": "dependency-light artifact bundle",
+      "validator": "mfn validate --bundle <path>",
+      "failure_mode": "instrumented bundle is promoted beyond its evidence tier",
+      "decision": "KEEP"
+    },
+    {
+      "operator_name": "CMEIterationContractOperator",
+      "repo_location": "docs/CME_ITERATION_0001.json; tools/research/validate_cme_iteration_contract.py",
+      "input_state": "agent loop prompt and repo context",
+      "operation": "collapse intent into one iteration contract with files, commands, gates, and next cycle",
+      "output_state": "machine-readable CME iteration contract",
+      "validator": "python tools/research/validate_cme_iteration_contract.py docs/CME_ITERATION_0001.json",
+      "failure_mode": "CME remains decorative planning rather than executable boundary",
+      "decision": "KEEP"
+    },
+    {
+      "operator_name": "ReleaseEvidenceOperator",
+      "repo_location": "tools/release_evidence_harness.py; README.md release evidence section",
+      "input_state": "candidate release state",
+      "operation": "emit or verify manifest, logs, command results, hashes, and evidence bundle",
+      "output_state": "release evidence state",
+      "validator": "python tools/release_evidence_harness.py --verify-manifest artifacts/evidence_bundle/manifest.json",
+      "failure_mode": "release is claimed without persisted evidence",
+      "decision": "MODIFY"
+    },
+    {
+      "operator_name": "PhysicsBoundaryAuditOperator",
+      "repo_location": "docs/PHYSICS_BOUNDARY_AUDIT.md; data/physics_boundary_report.json; schemas/physics_boundary_report.schema.json",
+      "input_state": "repo snapshot and Role 1 audit prompt",
+      "operation": "map repository as state-space system and score boundary readiness",
+      "output_state": "schema-valid boundary audit plus Role 2 handoff",
+      "validator": "python -m pytest tests/test_physics_boundary_report_schema.py -q",
+      "failure_mode": "audit becomes prose-only and cannot be verified",
+      "decision": "CREATE"
+    },
+    {
+      "operator_name": "TrajectoryTraceOperator",
+      "repo_location": "MISSING: data/cme_trajectory_trace.schema.json and tools/research/record_cme_trajectory_trace.py",
+      "input_state": "state_t + operation_t + candidate_t",
+      "operation": "persist trace_id, score_t, decision_t, artifact_delta_t, rollback_condition_t, state_t_plus_1",
+      "output_state": "replayable trajectory record",
+      "validator": "python -m pytest tests/test_cme_trajectory_trace_schema.py -q",
+      "failure_mode": "only final artifacts exist; build trajectory is invisible",
+      "decision": "CREATE"
+    }
+  ],
+  "mechanism_residual_split": {
+    "deterministic_mechanisms": [
+      "JSON schemas",
+      "pytest gates",
+      "pyproject console scripts",
+      "Makefile test/lint targets",
+      "claim boundary scripts",
+      "research artifact validator",
+      "release evidence harness",
+      "CME iteration contract validator"
+    ],
+    "llm_residual_spaces": [
+      "candidate patches",
+      "risk discovery",
+      "architecture alternatives",
+      "compression variants",
+      "critique drafts",
+      "hypothesis expansion",
+      "handoff wording"
+    ],
+    "promotion_rule": "Residual output cannot become mechanism, evidence, or release truth until a deterministic verifier validates the artifact and the claim tier remains consistent with CLAIMS.md and FORBIDDEN_CLAIMS.md."
+  },
+  "trajectory_model": {
+    "required_trace_fields": [
+      "trace_id",
+      "state_t",
+      "operation_t",
+      "candidate_t",
+      "score_t",
+      "decision_t",
+      "artifact_delta_t",
+      "rollback_condition_t",
+      "state_t_plus_1"
+    ],
+    "current_trace_support": "PARTIAL",
+    "missing_trace_fields": [
+      "trace_id",
+      "state_t",
+      "operation_t",
+      "candidate_t",
+      "score_t",
+      "decision_t",
+      "artifact_delta_t",
+      "rollback_condition_t",
+      "state_t_plus_1"
+    ]
+  },
+  "measurement_model": {
+    "metrics": [
+      {
+        "metric_name": "intent_coherence_score",
+        "definition": "How singular and executable the iteration intent is.",
+        "measurement_method": "contract field inspection and validator rule for first_missing_condition",
+        "repo_location": "docs/CME_ITERATION_0001.json",
+        "threshold": ">= 0.80 after deterministic scoring is implemented",
+        "status": "PROXY"
+      },
+      {
+        "metric_name": "constraint_satisfaction_rate",
+        "definition": "Fraction of boundary conditions satisfied by docs, schema, and gates.",
+        "measurement_method": "future boundary audit scorer over required constraints",
+        "repo_location": "data/physics_boundary_report.json",
+        "threshold": ">= 0.95 for release readiness",
+        "status": "PROXY"
+      },
+      {
+        "metric_name": "operator_coverage_rate",
+        "definition": "Fraction of real operators mapped to input, operation, output, validator, and failure mode.",
+        "measurement_method": "operator_map completeness check in physics boundary schema/test",
+        "repo_location": "data/physics_boundary_report.json",
+        "threshold": ">= 0.90",
+        "status": "PROXY"
+      },
+      {
+        "metric_name": "verification_pass_rate",
+        "definition": "Share of validation commands exiting zero.",
+        "measurement_method": "future evidence bundle raw exit code parser",
+        "repo_location": "artifacts/cme/** MISSING",
+        "threshold": "1.00 for PASS",
+        "status": "MISSING"
+      },
+      {
+        "metric_name": "claim_safety_rate",
+        "definition": "Share of claims with valid tier/evidence/falsifier and no blocked wording.",
+        "measurement_method": "claim boundary gate plus claim ledger scan",
+        "repo_location": "CLAIMS.md; FORBIDDEN_CLAIMS.md; scripts/ci/check_claim_boundary.py",
+        "threshold": "1.00 for public docs",
+        "status": "PROXY"
+      },
+      {
+        "metric_name": "artifact_stability_score",
+        "definition": "Whether artifacts survive schema validation, rerun, hashes, and contradiction checks.",
+        "measurement_method": "future evidence-bundle manifest verification",
+        "repo_location": "tools/release_evidence_harness.py",
+        "threshold": ">= 0.90",
+        "status": "MISSING"
+      },
+      {
+        "metric_name": "rollback_rate",
+        "definition": "How often verifier or red-team stages force rollback or reroute.",
+        "measurement_method": "future trajectory trace aggregation",
+        "repo_location": "MISSING trajectory trace storage",
+        "threshold": "tracked, not optimized to zero",
+        "status": "MISSING"
+      },
+      {
+        "metric_name": "human_gate_load",
+        "definition": "Number of unresolved high-stakes or ambiguous decisions requiring human review.",
+        "measurement_method": "future verifier classification over handoff records",
+        "repo_location": "MISSING verifier report",
+        "threshold": "explicit count per iteration",
+        "status": "MISSING"
+      },
+      {
+        "metric_name": "latency_drag",
+        "definition": "Time and tool-call cost added by gates relative to baseline path.",
+        "measurement_method": "future benchmark harness timing",
+        "repo_location": "benchmarks/CME MISSING",
+        "threshold": "reported, not hidden",
+        "status": "MISSING"
+      },
+      {
+        "metric_name": "source_coverage_rate",
+        "definition": "Fraction of claims mapped to repo evidence or literature/source ledger.",
+        "measurement_method": "future claim-source ledger validator",
+        "repo_location": "CLAIMS.md; future source ledger",
+        "threshold": "1.00 for promoted claims",
+        "status": "PROXY"
+      },
+      {
+        "metric_name": "release_readiness_score",
+        "definition": "Weighted readiness from tests, schemas, CLI, benchmarks, claim gates, and evidence bundle.",
+        "measurement_method": "future release verdict scorer",
+        "repo_location": "VERDICT.md; artifacts/evidence_bundle/**",
+        "threshold": ">= 0.90 and no required RED gates",
+        "status": "PROXY"
+      }
+    ]
+  },
+  "verification_model": {
+    "verifiers": [
+      {
+        "verifier_name": "physics boundary report schema test",
+        "command_or_file": "python -m pytest tests/test_physics_boundary_report_schema.py -q",
+        "checks": "loads schema, loads report, validates required fields, checks verdict, handoff, and unblocked forbidden claims",
+        "current_status": "UNKNOWN"
+      },
+      {
+        "verifier_name": "full pytest verifier",
+        "command_or_file": "python -m pytest -q",
+        "checks": "repository test suite",
+        "current_status": "UNKNOWN"
+      },
+      {
+        "verifier_name": "ruff verifier",
+        "command_or_file": "ruff check .",
+        "checks": "static lint boundary",
+        "current_status": "UNKNOWN"
+      },
+      {
+        "verifier_name": "CME bibliography verifier",
+        "command_or_file": "python -m cme.cli bibliography validate || true",
+        "checks": "requested command surface, but cme.cli entrypoint not detected in pyproject",
+        "current_status": "MISSING"
+      },
+      {
+        "verifier_name": "CME verdict verifier",
+        "command_or_file": "python -m cme.cli verdict . || true",
+        "checks": "requested command surface, but cme.cli entrypoint not detected in pyproject",
+        "current_status": "MISSING"
+      },
+      {
+        "verifier_name": "research CLI verifier",
+        "command_or_file": "geosync-research verify <artifact>",
+        "checks": "research artifact schema validity",
+        "current_status": "UNKNOWN"
+      },
+      {
+        "verifier_name": "MFN bundle verifier",
+        "command_or_file": "mfn validate --bundle <path>",
+        "checks": "dependency-light MFN bundle shape and manifest",
+        "current_status": "UNKNOWN"
+      },
+      {
+        "verifier_name": "claim status verifier",
+        "command_or_file": "scripts/ci/check_claim_boundary.py",
+        "checks": "claim boundary and status-language discipline",
+        "current_status": "UNKNOWN"
+      },
+      {
+        "verifier_name": "release evidence verifier",
+        "command_or_file": "python tools/release_evidence_harness.py --verify-manifest artifacts/evidence_bundle/manifest.json",
+        "checks": "manifest and evidence bundle integrity",
+        "current_status": "UNKNOWN"
+      }
+    ]
+  },
+  "claim_audit": {
+    "repo_facts": [
+      "README identifies GeoSync as verification-first quantitative research infrastructure.",
+      "README states GeoSync is not a trading bot, not an alpha product, and not proof of asserted market laws.",
+      "pyproject declares geosync-research and mfn console entrypoints.",
+      "AGENTS.md requires no claim without tier, evidence, artifact, schema, replay, and release evidence.",
+      "FORBIDDEN_CLAIMS.md defines product/status claim firewall and promotion invariants.",
+      "CLAIMS.md contains active and retired claims with evidence tiers."
+    ],
+    "tested_claims": [
+      "CME iteration contract has a validator and pytest wrapper in repo, but this Role 1 connector session did not execute it."
+    ],
+    "literature_claims": [],
+    "proxy_claims": [
+      "Physics-grade engineering is used as methodological import, not physical proof.",
+      "CME quality metrics are operational proxies until computed by benchmark/evidence harness.",
+      "Agent roles are orchestration roles, not independent authorities."
+    ],
+    "speculative_claims": [
+      "CME may improve artifact stability if gates pass.",
+      "Trajectory verification may reduce claim drift after Role 2 implements trace persistence."
+    ],
+    "unsupported_claims": [
+      "python -m cme.cli commands are requested but no cme package or pyproject entrypoint was detected.",
+      "Full trajectory trace exists as requirement, but no persisted trace schema/artifact was detected.",
+      "CME benchmark/ablation metrics are defined only as future proxy measurement.",
+      "No Role 1 validation commands were executed inside this connector session."
+    ],
+    "forbidden_claims_detected": []
+  },
+  "quality_score": {
+    "state_model": 6,
+    "constraint_model": 8,
+    "operator_model": 6,
+    "mechanism_residual_split": 6,
+    "trajectory_trace": 3,
+    "measurement_model": 4,
+    "verification_model": 6,
+    "claim_governance": 8,
+    "github_agent_readiness": 7,
+    "total": 54
+  },
+  "first_missing_condition": "A persisted CME trajectory trace contract is missing, so the system can audit final artifacts but cannot yet verify the full state transformation path.",
+  "role_2_handoff": {
+    "role_name": "TRAJECTORY_TRACE_IMPLEMENTER",
+    "task": "Create a schema, recorder, example artifact, and pytest gate for trace_id, state_t, operation_t, candidate_t, score_t, decision_t, artifact_delta_t, rollback_condition_t, and state_t_plus_1.",
+    "files_to_create": [
+      "schemas/cme_trajectory_trace.schema.json",
+      "data/cme_trajectory_trace_example.json",
+      "tools/research/record_cme_trajectory_trace.py",
+      "tests/test_cme_trajectory_trace_schema.py"
+    ],
+    "files_to_modify": [
+      "docs/CME_PHYSICS_RND_LOOP.md",
+      "VERDICT.md"
+    ],
+    "validation_commands": [
+      "python -m pytest tests/test_cme_trajectory_trace_schema.py -q",
+      "python tools/research/record_cme_trajectory_trace.py --example data/cme_trajectory_trace_example.json",
+      "python -m pytest -q",
+      "ruff check ."
+    ],
+    "pass_fail_criteria": [
+      "PASS only if the trace example validates against schema.",
+      "PASS only if every required trace field is persisted.",
+      "PASS only if rollback_condition_t is non-empty.",
+      "PASS only if no S1_TESTED status is claimed without command evidence.",
+      "FAIL if trace storage records final output only."
+    ]
+  },
+  "verdict": "FAIL"
+}

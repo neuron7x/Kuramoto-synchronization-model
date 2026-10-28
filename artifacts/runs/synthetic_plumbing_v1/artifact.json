@@ -1,0 +1,23 @@
+{
+  "conforms_to": "https://schemas.neuron7xlab.org/research/research_inference_artifact.schema.json",
+  "schema_version": "1.0.0",
+  "research_line": "synthetic_plumbing",
+  "run_id": "SYNTHETIC-PLUMBING-V1",
+  "git_sha": "707b0965dfe97c30a2f13e5c2d0c33e8d81edfe6",
+  "git_dirty": false,
+  "data_sha256": "3584a75682ce2a39f5ca4246139a6aea084a97a3f299617020f06ab4851bb269",
+  "config_sha256": "86fefc5b1fd1c37cce174fbd07ead0d14f35b149b686e1e27ffce00cfd90f62a",
+  "seed": 42,
+  "timestamp_utc": "1970-01-01T00:00:00Z",
+  "input_window_sec": 1,
+  "score": 0.5705986719,
+  "uncertainty": 0.0,
+  "decision": "OBSERVE",
+  "claim_tier": "INSTRUMENTED",
+  "falsification_status": "NOT_APPLICABLE",
+  "artifact_role": "evidence",
+  "score_source": "computed",
+  "method_version": "synthetic-mean-abs-corr-v1",
+  "baseline": "cyclic_shift_null_mean_abs_corr=0.519114",
+  "replay_command": "python scripts/research/generate_synthetic_plumbing_artifact.py"
+}

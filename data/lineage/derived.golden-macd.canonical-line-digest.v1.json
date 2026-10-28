@@ -1,0 +1,17 @@
+{
+  "content_address": "61081d63cc307be1a766719b792042eedd2a5ac269c7a609004afbee9c0835fc",
+  "inputs": [
+    "082b13991387294079519ec4bbe34ad7d952300637a4b480a8194f35a95f9e21"
+  ],
+  "lineage_version": "data_lineage.v1",
+  "node_id": "derived.golden-macd.canonical-line-digest.v1",
+  "tier": "derived",
+  "transform": {
+    "id": "transform.canonical_line_digest.v1",
+    "output_sha256": "fe9f2dc040d73b2c35e913b1a4dc24973e4a5071da93000994edcd402cc34fe6",
+    "params": {
+      "encoding": "utf-8",
+      "input_file": "data/golden/indicator_macd_baseline.csv"
+    }
+  }
+}

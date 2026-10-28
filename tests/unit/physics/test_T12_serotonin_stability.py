@@ -171,7 +171,9 @@ def test_serotonin_controller_sensitivity_and_tonic_bounds() -> None:
 # each branch's semantics, so a flipped operator can no longer agree with them.
 # ---------------------------------------------------------------------------
 def test_lyapunov_certificate_holds_for_default_parameters() -> None:
-    """Defaults satisfy a*(2*lambda*mu) > (delta/2)^2 — the certificate must say True.
+    """INV-5HT1 sufficient condition: defaults satisfy a*(2*lambda*mu) > (delta/2)^2, the
+    parameter certificate that guarantees V non-increasing — it must say True, and it
+    must stay True under a sweep of strictly-inside-the-criterion decay sums.
 
     Kills the guard inversions: under NotEq->Eq the equal target/baseline defaults would
     bail False; under LtE->Gt the positive a would bail False; under Gt->LtE the satisfied
@@ -180,51 +182,115 @@ def test_lyapunov_certificate_holds_for_default_parameters() -> None:
     ode = SerotoninODE()
     p = ode.p
     a = p.alpha + p.gamma
-    assert a > 0.0 and p.target == p.baseline, "default parameter precondition changed"
-    assert a * (2.0 * p.lambda_ * p.mu) > (p.delta / 2.0) ** 2, "default criterion changed"
-    assert ode.lyapunov_parameter_certificate() is True
+    # tolerance: the certificate is a strict inequality, so the fixture must sit strictly inside
+    assert a > 0.0 and p.target == p.baseline, (
+        f"INV-5HT1 fixture: got alpha+gamma={a}, target={p.target}, baseline={p.baseline}; "
+        f"expected a > 0 and target == baseline. At alpha={p.alpha}, gamma={p.gamma}"
+    )
+    assert a * (2.0 * p.lambda_ * p.mu) > (p.delta / 2.0) ** 2, (
+        f"INV-5HT1 fixture: got a*(2*lambda*mu)={a * (2.0 * p.lambda_ * p.mu)}, "
+        f"(delta/2)^2={(p.delta / 2.0) ** 2}; expected the criterion to hold. "
+        f"At lambda={p.lambda_}, mu={p.mu}, delta={p.delta}"
+    )
+    certificate = ode.lyapunov_parameter_certificate()
+    assert certificate is True, (
+        f"INV-5HT1 VIOLATED: got certificate={certificate} although a*(2*lambda*mu) > "
+        f"(delta/2)^2 holds; expected True. At alpha={p.alpha}, gamma={p.gamma}, "
+        f"lambda={p.lambda_}, mu={p.mu}, delta={p.delta}"
+    )
+    for extra_decay in (0.05, 0.5, 5.0):
+        stronger = SerotoninODE(params=SerotoninODEParams(gamma=p.gamma + extra_decay))
+        stronger_cert = stronger.lyapunov_parameter_certificate()
+        assert stronger_cert is True, (
+            f"INV-5HT1 VIOLATED: got certificate={stronger_cert}; a strictly larger decay sum "
+            f"must keep the certificate, expected True. At gamma={p.gamma + extra_decay}"
+        )
 
 
 def test_lyapunov_certificate_refuses_when_target_differs_from_baseline() -> None:
-    """V is not centred on the equilibrium when target != baseline -> no certificate."""
-    ode = SerotoninODE(params=SerotoninODEParams(target=0.4, baseline=0.3))
-    assert ode.lyapunov_parameter_certificate() is False
+    """INV-5HT1 precondition: V is centred on the equilibrium only when target == baseline;
+    any offset, in either direction, must void the certificate (no silent best-effort)."""
+    for target, baseline in ((0.4, 0.3), (0.3, 0.4), (0.9, 0.1)):
+        ode = SerotoninODE(params=SerotoninODEParams(target=target, baseline=baseline))
+        certificate = ode.lyapunov_parameter_certificate()
+        assert certificate is False, (
+            f"INV-5HT1 VIOLATED: got certificate={certificate} while V is not centred on the "
+            f"equilibrium; expected False. At target={target}, baseline={baseline}"
+        )
 
 
 def test_lyapunov_certificate_refuses_non_positive_decay_sum() -> None:
-    """alpha + gamma <= 0 leaves no contraction -> no certificate."""
-    ode = SerotoninODE(params=SerotoninODEParams(alpha=-0.05, gamma=0.05))
-    assert ode.lyapunov_parameter_certificate() is False
+    """INV-5HT1 precondition: alpha + gamma <= 0 leaves no contraction, so the certificate
+    must be refused at the boundary (sum == 0) and beyond it (sum < 0)."""
+    for alpha, gamma in ((-0.05, 0.05), (-0.1, 0.05), (0.0, 0.0)):
+        ode = SerotoninODE(params=SerotoninODEParams(alpha=alpha, gamma=gamma))
+        certificate = ode.lyapunov_parameter_certificate()
+        assert certificate is False, (
+            f"INV-5HT1 VIOLATED: got certificate={certificate} with non-positive decay sum; "
+            f"expected False. At alpha={alpha}, gamma={gamma}, alpha+gamma={alpha + gamma}"
+        )
 
 
 def test_lyapunov_certificate_refuses_when_criterion_is_violated() -> None:
-    """Raising delta past the criterion boundary must flip the certificate to False."""
-    ode = SerotoninODE(params=SerotoninODEParams(delta=1.0))
-    p = ode.p
-    a = p.alpha + p.gamma
-    assert a * (2.0 * p.lambda_ * p.mu) <= (p.delta / 2.0) ** 2, "fixture no longer violates"
-    assert ode.lyapunov_parameter_certificate() is False
+    """INV-5HT1 sufficient condition, violated side: raising delta past the criterion
+    boundary must flip the certificate to False for every delta beyond it."""
+    for delta in (1.0, 2.0, 10.0):
+        ode = SerotoninODE(params=SerotoninODEParams(delta=delta))
+        p = ode.p
+        a = p.alpha + p.gamma
+        assert a * (2.0 * p.lambda_ * p.mu) <= (p.delta / 2.0) ** 2, (
+            f"INV-5HT1 fixture: got a*(2*lambda*mu)={a * (2.0 * p.lambda_ * p.mu)}, "
+            f"(delta/2)^2={(p.delta / 2.0) ** 2}; expected the criterion to be violated. "
+            f"At delta={delta}"
+        )
+        certificate = ode.lyapunov_parameter_certificate()
+        assert certificate is False, (
+            f"INV-5HT1 VIOLATED: got certificate={certificate} although a*(2*lambda*mu) <= "
+            f"(delta/2)^2; expected False. At alpha={p.alpha}, gamma={p.gamma}, "
+            f"lambda={p.lambda_}, mu={p.mu}, delta={delta}"
+        )
 
 
 def test_verify_lyapunov_rejects_an_increasing_trajectory() -> None:
-    """V must be non-increasing; a trajectory that climbs away from target is rejected.
+    """INV-5HT1 falsifier channel: V must be non-increasing; every trajectory that climbs
+    away from target is rejected, however far it climbs.
 
     Kills Lt->GtE (which would short-circuit every multi-point trajectory to True) and
     Gt->LtE (which would invert the non-increase test).
     """
     ode = SerotoninODE()
     at_target = (ode.p.target, 0.0)
-    far_away = (ode.p.target + 0.6, 0.5)
-    assert ode._lyapunov(*far_away) > ode._lyapunov(*at_target), "fixture is not increasing"
-    assert ode.verify_lyapunov([at_target, far_away]) is False
+    for climb in (0.05, 0.3, 0.6):
+        far_away = (ode.p.target + climb, 0.5)
+        v_start, v_end = ode._lyapunov(*at_target), ode._lyapunov(*far_away)
+        assert v_end > v_start, (
+            f"INV-5HT1 fixture: got V_start={v_start:.4e}, V_end={v_end:.4e}; expected a "
+            f"strictly increasing pair. At climb={climb}"
+        )
+        verdict = ode.verify_lyapunov([at_target, far_away])
+        assert verdict is False, (
+            f"INV-5HT1 VIOLATED: got verify_lyapunov={verdict} on a trajectory where V rose; "
+            f"expected rejection. At climb={climb}, V_start={v_start:.4e}, V_end={v_end:.4e}"
+        )
 
 
 def test_serotonin_ode_uses_the_parameters_it_is_given() -> None:
-    """Explicit params must be honoured, not silently replaced by defaults.
+    """INV-5HT1 precondition: the certificate is only meaningful for the parameters the
+    ODE actually integrates, so explicit params must be honoured, never silently replaced
+    by defaults.
 
     Kills :64 Or->And, under which a truthy params argument yields a fresh default set.
     """
-    custom = SerotoninODEParams(baseline=0.42, threshold=0.77)
-    ode = SerotoninODE(params=custom)
-    assert ode.p is custom
-    assert ode.p.baseline == 0.42 and ode.p.threshold == 0.77
+    for baseline, threshold in ((0.42, 0.77), (0.1, 0.9), (0.5, 0.5)):
+        custom = SerotoninODEParams(baseline=baseline, threshold=threshold)
+        ode = SerotoninODE(params=custom)
+        assert ode.p is custom, (
+            f"INV-5HT1 precondition VIOLATED: got params object={ode.p!r}, expected the given "
+            f"object (explicit params replaced by defaults). At baseline={baseline}, "
+            f"threshold={threshold}"
+        )
+        assert ode.p.baseline == baseline and ode.p.threshold == threshold, (
+            f"INV-5HT1 precondition VIOLATED: got baseline={ode.p.baseline}, "
+            f"threshold={ode.p.threshold}; expected the values given at construction. "
+            f"At baseline={baseline}, threshold={threshold}"
+        )

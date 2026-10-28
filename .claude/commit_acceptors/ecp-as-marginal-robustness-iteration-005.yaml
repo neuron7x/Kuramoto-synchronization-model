@@ -14,6 +14,10 @@ diff_scope:
   forbidden_paths:
     - "execution/"
     - "trading/"
+required_python_symbols:
+  - "geosync/epistemic/dependence_bounds.py::quorum_risk_bounds"
+  - "geosync/epistemic/dependence_bounds.py::certify_quorum"
+  - "geosync/epistemic/dependence_bounds.py::search_triplet_quorums"
 expected_signal: >-
   All 3-evaluator distinct-model 2-of-3 and 3-of-3 candidate quorums fail the
   configured 10 percent unsafe / 20 percent false-block robust certificate.

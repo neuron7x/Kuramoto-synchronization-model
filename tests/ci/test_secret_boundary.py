@@ -30,6 +30,7 @@ SCRIPT = Path(sec.__file__)
 
 # --- NEGATIVE: the scanner has teeth -------------------------------------------
 
+
 def test_negative_fixture_self_test_detects() -> None:
     # The gate's own negative self-check must fire on the planted fake.
     assert sec.run_negative_selftest(sec.REPO_ROOT / ".gitleaks.toml") is True
@@ -56,7 +57,9 @@ def test_cli_target_scan_of_planted_exits_nonzero(tmp_path: Path) -> None:
     planted.write_text(sec.negative_fixture_text(), encoding="utf-8")
     proc = subprocess.run(
         [sys.executable, str(SCRIPT), "--target", str(planted)],
-        capture_output=True, text=True, timeout=600,
+        capture_output=True,
+        text=True,
+        timeout=600,
     )
     assert proc.returncode == 1, proc.stdout + proc.stderr
     # The planted raw secret must never appear in the gate's stdout.
@@ -65,23 +68,58 @@ def test_cli_target_scan_of_planted_exits_nonzero(tmp_path: Path) -> None:
 
 def test_planted_aws_key_is_not_the_allowlisted_example() -> None:
     # Guard the fixture itself: gitleaks (and our regex) intentionally ignore the
-    # documented AKIAIOSFODNN7EXAMPLE key, so the fixture must use a distinct one.
+    # documented AKIAIOSFODNN7EXAMPLE key, so the fixture must use a distinct one.  # pragma: allowlist secret
     assert "EXAMPLE" not in sec._NEG_AWS_ID
 
 
 # --- POSITIVE: clean surfaces pass ---------------------------------------------
 
+
+def test_gitleaks_process_failure_cannot_appear_clean(
+    tmp_path: Path, monkeypatch: pytest.MonkeyPatch
+) -> None:
+    """Scanner execution failure is UNKNOWN/RED, never zero findings."""
+
+    def failed_process(*_args: object, **_kwargs: object) -> subprocess.CompletedProcess[str]:
+        return subprocess.CompletedProcess(
+            args=["gitleaks"], returncode=2, stdout="", stderr="config error"
+        )
+
+    monkeypatch.setattr(sec.subprocess, "run", failed_process)
+    with pytest.raises(RuntimeError, match="scanner failed"):
+        sec.scan_with_gitleaks(tmp_path, None)
+
+
+def test_regex_not_confused_by_computed_token_cost(tmp_path: Path) -> None:
+    sample = tmp_path / "cost.py"
+    sample.write_text(
+        "token = compute_token_cost(candidate.n_input_tokens, candidate.n_output_tokens)\n",
+        encoding="utf-8",
+    )
+    assert sec.scan_with_regex(tmp_path) == []
+
+
+def test_regex_explicit_not_real_ci_secret_fixture(tmp_path: Path) -> None:
+    sample = tmp_path / "fixture.yml"
+    sample.write_text(
+        "GEOSYNC_AUDIT_SECRET: latency-budget-ci-audit-secret-not-real"
+        "  # pragma: allowlist secret\n",
+        encoding="utf-8",
+    )
+    assert sec.scan_with_regex(tmp_path) == []
+
+
 def test_cli_target_scan_of_clean_file_exits_zero(tmp_path: Path) -> None:
     clean = tmp_path / "clean.env"
     clean.write_text(
-        "API_KEY=your_api_key_here\n"
-        "PASSWORD=change_me_in_production\n"
-        "TOKEN=<insert-token>\n",
+        "API_KEY=your_api_key_here\n" "PASSWORD=change_me_in_production\n" "TOKEN=<insert-token>\n",
         encoding="utf-8",
     )
     proc = subprocess.run(
         [sys.executable, str(SCRIPT), "--target", str(clean)],
-        capture_output=True, text=True, timeout=600,
+        capture_output=True,
+        text=True,
+        timeout=600,
     )
     assert proc.returncode == 0, proc.stdout + proc.stderr
 
@@ -89,8 +127,8 @@ def test_cli_target_scan_of_clean_file_exits_zero(tmp_path: Path) -> None:
 def test_regex_fallback_ignores_placeholder_values(tmp_path: Path) -> None:
     f = tmp_path / "config.py"
     f.write_text(
-        'api_key = "your_binance_api_key_here"\n'
-        'password = "change_me_in_production"\n'
+        'api_key = "your_binance_api_key_here"\n'  # pragma: allowlist secret
+        'password = "change_me_in_production"\n'  # pragma: allowlist secret
         'secret = "${VAULT_SECRET}"\n',
         encoding="utf-8",
     )
@@ -124,3 +162,96 @@ def test_full_gate_passes_on_clean_tree() -> None:
     # The committed artifact must never carry a raw secret: high-confidence findings
     # are empty, and any entry would be redacted (sha256 fingerprint) by construction.
     assert audit["findings"] == []
+
+
+def test_regex_recognizes_contextvar_method_call_as_code(tmp_path: Path) -> None:
+    sample = tmp_path / "context.py"
+    sample.write_text("token = _SECRET_CALLER_CONTEXT.set(current)\\n", encoding="utf-8")
+    assert sec.scan_with_regex(tmp_path) == []
+
+
+def test_regex_still_rejects_literal_long_secret(tmp_path: Path) -> None:
+    sample = tmp_path / "credentials.py"
+    sample.write_text('token = "UltraLongCredentialValue123456789"\\n', encoding="utf-8")
+    findings = sec.scan_with_regex(tmp_path)
+    assert len(findings) == 1
+    assert findings[0]["rule"] == "generic-api-key"
+    assert findings[0]["match"].startswith("sha256:")
+    assert "UltraLongCredentialValue" not in str(findings)
+
+
+@pytest.mark.parametrize(
+    "line",
+    [
+        '    REJECTED_INVALID_TOKEN = "rejected_invalid_token"',
+        '**Only Match:** `REJECTED_INVALID_TOKEN = "rejected_invalid_token"` (enum label)',
+    ],
+)
+def test_regex_recognizes_exact_symbolic_label(tmp_path: Path, line: str) -> None:
+    sample = tmp_path / "status.txt"
+    sample.write_text(line + "\n", encoding="utf-8")
+    assert sec.scan_with_regex(sample) == []
+
+
+@pytest.mark.parametrize(
+    "line",
+    [
+        'token = "rejected_invalid_token"',
+        'ACCESS_TOKEN = "rejected_invalid_token"',
+        'REJECTED_INVALID_TOKEN = "UltraLongCredentialValue123456789"',
+        'REJECTED_INVALID_TOKEN = "rejected_invalid_token_123"',
+        'token = "UltraLongCredentialValue123456789"; STATUS_LABEL = "status_label"',
+        'REJECTED_INVALID_TOKEN = "rejected_invalid_token"; token = "OpaqueCredentialValue123456789"',
+        'REJECTED_INVALID_TOKEN = "rejected_invalid_token" + "CredentialSuffix123"',
+    ],
+)
+def test_symbolic_label_rule_keeps_credential_near_misses_red(tmp_path: Path, line: str) -> None:
+    sample = tmp_path / "credentials.txt"
+    sample.write_text(line + "\n", encoding="utf-8")
+    findings = sec.scan_with_regex(sample)
+    assert len(findings) == 1
+    assert findings[0]["rule"] == "generic-api-key"
+    assert findings[0]["match"].startswith("sha256:")
+
+
+def test_python_keyword_and_assignment_references_are_not_credentials(tmp_path: Path) -> None:
+    sample = tmp_path / "settings.py"
+    sample.write_text(
+        "token = credential_from_vault\n"
+        'settings = configure("é", two_factor_secret=two_factor_secret)\n',
+        encoding="utf-8",
+    )
+    assert sec.scan_with_regex(sample) == []
+
+
+@pytest.mark.parametrize(
+    ("filename", "source"),
+    [
+        ("credentials.env", "TOKEN=credential_from_vault\n"),
+        ("credentials.yml", "token: credential_from_vault\n"),
+        ("credentials.py", 'token = "credential_from_vault"\n'),
+        ("docstring.py", '"""token=credential_from_vault"""\n'),
+        ("invalid.py", "token = credential_from_vault\ninvalid python ?\n"),
+    ],
+)
+def test_python_reference_rule_keeps_literals_and_non_python_secrets_red(
+    tmp_path: Path, filename: str, source: str
+) -> None:
+    sample = tmp_path / filename
+    sample.write_text(source, encoding="utf-8")
+    findings = sec.scan_with_regex(sample)
+    assert len(findings) == 1
+    assert findings[0]["rule"] == "generic-api-key"
+
+def test_diagnostic_artifact_isolation_keeps_clean_tree_scannable() -> None:
+    """Temporary fast-shard evidence must never contaminate SEC-006 scans."""
+
+    workflow = (
+        sec.REPO_ROOT / ".github" / "workflows" / "pr-fast-diagnostics.yml"
+    ).read_text(encoding="utf-8")
+    shell_path = 'out_dir="$RUNNER_TEMP/pr-fast-diagnostics/group-${{ matrix.group }}"'
+    context_path = "${{ runner.temp }}/pr-fast-diagnostics/group-${{ matrix.group }}"
+    assert workflow.count(shell_path) == 2
+    assert f"DIAGNOSTIC_OUT_DIR: {context_path}" in workflow
+    assert f"path: {context_path}/" in workflow
+    assert "artifacts/pr-fast-diagnostics/group-${{ matrix.group }}" not in workflow

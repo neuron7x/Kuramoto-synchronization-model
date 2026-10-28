@@ -1,0 +1,88 @@
+{
+  "id": "neuron7x-verification-protocol-v2026-8",
+  "version": "2026.8",
+  "artifact_type": "governance_verification_contract",
+  "purpose": "Verify Neuron7X/FVPS artifacts against declared specifications without promoting unsupported runtime, physics, market, or trading claims.",
+  "pipeline": [
+    "RAW_ARTIFACT",
+    "SPEC_LOAD",
+    "REQUIREMENT_EXTRACTION",
+    "EVIDENCE_BINDING",
+    "CHECK_EXECUTION",
+    "GAP_DETECTION",
+    "CONFORMANCE_QUANTIZATION",
+    "ACTION_DECISION"
+  ],
+  "required_fields": [
+    "object_id",
+    "specification_ref",
+    "requirement_set",
+    "evidence_set",
+    "verification_checks",
+    "observed_result",
+    "conformance_state",
+    "failure_boundary",
+    "rollback_path"
+  ],
+  "requirement_classes": [
+    "FORMAT_REQUIREMENT",
+    "MECHANISM_REQUIREMENT",
+    "EVIDENCE_REQUIREMENT",
+    "BOUNDARY_REQUIREMENT",
+    "FAILURE_REQUIREMENT",
+    "ROLLBACK_REQUIREMENT"
+  ],
+  "conformance_states": [
+    "NON_CONFORMANT",
+    "UNVERIFIED",
+    "PARTIAL_CONFORMANCE",
+    "LOCALLY_CONFORMANT",
+    "CI_CONFORMANT",
+    "EVIDENCE_CONFORMANT"
+  ],
+  "state_rules": {
+    "NON_CONFORMANT": "Contradiction against a requirement or forbidden boundary.",
+    "UNVERIFIED": "Specification exists without executable evidence.",
+    "PARTIAL_CONFORMANCE": "Some requirements have evidence, but proof chain is incomplete.",
+    "LOCALLY_CONFORMANT": "All required checks pass locally.",
+    "CI_CONFORMANT": "Local proof plus same-SHA CI proof.",
+    "EVIDENCE_CONFORMANT": "CI proof plus real evidence, replay, baseline, falsifier, and semantic validation."
+  },
+  "score_function": {
+    "formula": "K = 0.18R + 0.16E + 0.16C + 0.14B + 0.14F + 0.12A + 0.10L",
+    "variables": {
+      "R": "requirement_coverage",
+      "E": "evidence_binding",
+      "C": "check_execution",
+      "B": "boundary_compliance",
+      "F": "failure_mode_coverage",
+      "A": "action_correctness",
+      "L": "rollback_completeness"
+    }
+  },
+  "thresholds": [
+    {"min": 0.0, "max": 0.35, "state": "NON_CONFORMANT"},
+    {"min": 0.35, "max": 0.55, "state": "UNVERIFIED"},
+    {"min": 0.55, "max": 0.72, "state": "PARTIAL_CONFORMANCE"},
+    {"min": 0.72, "max": 0.86, "state": "LOCALLY_CONFORMANT"},
+    {"min": 0.86, "max": 0.95, "state": "CI_CONFORMANT"},
+    {"min": 0.95, "max": 1.0, "state": "EVIDENCE_CONFORMANT"}
+  ],
+  "weakest_link_rule": "The score cannot promote a state above the weakest required proof link.",
+  "blocked_promotions": [
+    "runtime_behavior_change",
+    "physics_validation",
+    "predictive_performance",
+    "trading_readiness",
+    "model_weight_update_during_inference",
+    "scientific_truth_without_independent_evidence"
+  ],
+  "allowed_actions": [
+    "accept",
+    "patch",
+    "reject",
+    "quarantine",
+    "rollback"
+  ],
+  "boundary": "Governance conformance only. No runtime, physics, market, trading, or model-training claim is verified by this artifact."
+}

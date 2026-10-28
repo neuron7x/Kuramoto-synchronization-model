@@ -197,6 +197,7 @@ def test_is_excluded_predicate() -> None:
     assert m._is_excluded(base / ".claude" / "worktrees" / "agent-x" / "core" / "a.py")
     assert m._is_excluded(base / ".venv" / "lib" / "x.py")
     assert m._is_excluded(base / ".git" / "hooks" / "x.py")
+    assert m._is_excluded(base / "archive_snapshots" / "github_backup" / "src" / "x.py")
     assert not m._is_excluded(base / "core" / "physics" / "forman_ricci.py")
     # a legitimate source file that merely mentions the word elsewhere in path
     assert not m._is_excluded(base / "core" / "claude_adapter.py")
@@ -212,3 +213,38 @@ def test_evidence_ledger_is_tracked_not_ratcheted() -> None:
     # even with a budget of 0, it is not a regression
     assert not any(r["id"] == "empty_evidence_ledger"
                    for r in m.ratchet(result, {"empty_evidence_ledger": 0}))
+
+
+def test_metrics_count_directives_only(tmp_path, monkeypatch) -> None:
+    """Quoted marker vocabulary must never manufacture suppressions or debt."""
+    m = _load()
+    sample = tmp_path / "sample.py"
+    sample.write_text(
+        "example = '# type: ignore, # noqa, TODO'\n"
+        "x: int = 1  # type: ignore[assignment]\n"
+        "y = 2  # noqa: F841\n"
+        "# TODO: remove a real documented deferral\n",
+        encoding="utf-8",
+    )
+    monkeypatch.setattr(m, "_py_files", lambda: [sample])
+    assert m.m_type_ignore() == 1
+    assert m.m_noqa() == 1
+    assert m.m_todo_markers() == 1
+
+
+def test_slow_counter_ignores_quoted_marker(tmp_path, monkeypatch) -> None:
+    """A docstring quoting the slow decorator is not an executed slow mark."""
+    m = _load()
+    test_dir = tmp_path / "tests"
+    test_dir.mkdir()
+    (test_dir / "test_examples.py").write_text(
+        'doc = "pytest.mark.slow"\n', encoding="utf-8"
+    )
+    (test_dir / "test_real.py").write_text(
+        "@pytest.mark.slow\n"
+        "def test_slow():\n"
+        "    assert True\n",
+        encoding="utf-8",
+    )
+    monkeypatch.setattr(m, "ROOT", tmp_path)
+    assert m.m_test_slow() == 1

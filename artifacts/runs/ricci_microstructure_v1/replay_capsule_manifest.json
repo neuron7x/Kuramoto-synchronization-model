@@ -1,0 +1,22 @@
+{
+  "schema": "ricci_microstructure_public_negative_replay.v1",
+  "data_sha256": "b1da972d910a7ed5897e2a28461f6cf238652d6150c9e8c771b4b7dcfc4f0d5e",
+  "config_sha256": "ca499750aa18d54f2bf152eed40333b2198ee1aa7abde6d4c2bc97a93a3cfc6e",
+  "decision_sha256": "2686e7687c75e7bbe991a987353f7f5abfca6a19eb369413bc9637c1eceb8427",
+  "expected_blockers": [
+    "no real data hash (placeholder/zero data_sha256)",
+    "synthetic data caps state at INSTRUMENTED; cannot promote claim tier",
+    "insufficient data depth (< 3600s)"
+  ],
+  "expected_decision": {
+    "allowed": false,
+    "claim_tier": "HYPOTHESIS",
+    "decision": "OBSERVE",
+    "falsification_status": "NOT_RUN"
+  },
+  "claim_ceiling": "INSTRUMENTED",
+  "synthetic_only": true,
+  "credential_free": true,
+  "replay_command": "python -m pytest tests/research_lines/test_ricci_microstructure_replay_capsule.py -q",
+  "note": "Synthetic-only negative evidence. This does not prove any market edge, external empirical reproducibility, or deployable market signal."
+}

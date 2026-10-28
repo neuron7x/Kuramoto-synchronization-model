@@ -1,0 +1,107 @@
+# Source: https://pypi.org/pypi/kafka-python/2.2.15/json
+# Fixed release: https://pypi.org/pypi/kafka-python/2.3.2/json
+# Replay requires the service dependencies, pytest and pip-audit installed.
+# The legacy service lock remains an unhashed offline placeholder; matching
+# its Kafka pin does not certify its other pins or promote it to a valid lock.
+id: pr2833-coherence-kafka-security-20261027
+status: ACTIVE
+claim_type: security
+promise: >-
+  The installed CoherenceBridge manifest and its legacy fallback pin use
+  kafka-python 2.3.2, the first fixed release for PYSEC-2026-2190 and
+  PYSEC-2026-2191. Preserve other dependency pins and the existing producer
+  serialization contract without suppressing either advisory or the audit.
+diff_scope:
+  changed_files:
+    - path: ".claude/commit_acceptors/pr2833-coherence-kafka-security-20261027.yaml"
+    - path: "coherence_bridge/requirements.txt"
+    - path: "coherence_bridge/requirements.lock"
+  forbidden_paths:
+    - "coherence_bridge/kafka_producer.py"
+    - "coherence_bridge/generated/"
+    - "coherence_bridge/Dockerfile"
+    - "constraints/"
+    - "research/"
+    - "data/"
+    - "results/"
+required_python_symbols: []
+expected_signal: >-
+  The exact service manifest resolves kafka-python 2.3.2 and pip-audit
+  reports no known vulnerabilities. Existing Kafka producer tests preserve
+  Protobuf serialization and round-trip behavior. The remaining sandbox and
+  root service audits also pass. A local probe of the official hash-verified
+  wheel accepts the existing producer settings and serializers, flushes and
+  closes without a broker. The unused legacy lock retains its explicit
+  offline-placeholder header and other pre-existing stale/unhashed entries;
+  this repair does not establish its installability or release readiness.
+measurement_command: >-
+  bash -c 'mkdir -p tmp/pr2833_service_dependency_audit &&
+  python -m pip_audit --format json
+  --output tmp/pr2833_service_dependency_audit/coherence_bridge_requirements_txt.json
+  -r coherence_bridge/requirements.txt &&
+  python -m pip_audit -r sandbox/requirements.txt &&
+  python -m pip_audit -r requirements.txt &&
+  python -m pytest -q -o addopts= tests/test_kafka_producer.py'
+signal_artifact: "tmp/pr2833_service_dependency_audit/coherence_bridge_requirements_txt.json"
+falsifier:
+  command: |-
+    python - <<'PY'
+    import json
+    import subprocess
+    import sys
+    import tempfile
+    from pathlib import Path
+
+    for manifest in ("coherence_bridge/requirements.txt", "coherence_bridge/requirements.lock"):
+        try:
+            source = Path(manifest).read_text()
+        except FileNotFoundError:
+            raise SystemExit(0)
+        except OSError:
+            raise SystemExit(2)
+        pins = [line.strip() for line in source.splitlines()
+                if line.strip().startswith("kafka-python==")]
+        if pins != ["kafka-python==2.3.2"]:
+            raise SystemExit(0)
+    with tempfile.TemporaryDirectory(prefix="coherence-kafka-audit-") as directory:
+        report = Path(directory) / "audit.json"
+        result = subprocess.run([
+            sys.executable, "-m", "pip_audit", "--format", "json",
+            "--output", str(report), "-r", "coherence_bridge/requirements.txt",
+        ], check=False)
+        if not report.exists():
+            raise SystemExit(2)
+        try:
+            document = json.loads(report.read_text())
+        except (OSError, json.JSONDecodeError):
+            raise SystemExit(2)
+        if not isinstance(document, dict):
+            raise SystemExit(2)
+        dependencies = document.get("dependencies")
+        if not isinstance(dependencies, list) or not dependencies:
+            raise SystemExit(2)
+        if any(not isinstance(item, dict) or not isinstance(item.get("vulns"), list)
+               or item.get("skip_reason") for item in dependencies):
+            raise SystemExit(2)
+        if any(item.get("vulns") for item in dependencies):
+            raise SystemExit(0)
+        raise SystemExit(1 if result.returncode == 0 else 2)
+    PY
+  description: >-
+    Exit zero falsifies the promise if either Kafka pin regresses or the
+    resolved service has a known vulnerability. A clean audit exits one;
+    missing, skipped or failed audit evidence is an infrastructure error,
+    never a successful falsification result. Existing producer tests are
+    separately required by the measurement command.
+rollback_command: >-
+  git restore --source=96a8f48b4cb6290db7aac9446cbc5bd86a27b821 --worktree --
+  coherence_bridge/requirements.txt coherence_bridge/requirements.lock &&
+  rm -f .claude/commit_acceptors/pr2833-coherence-kafka-security-20261027.yaml
+rollback_verification_command: >-
+  git diff --exit-code 96a8f48b4cb6290db7aac9446cbc5bd86a27b821 --
+  coherence_bridge/requirements.txt coherence_bridge/requirements.lock &&
+  test ! -e .claude/commit_acceptors/pr2833-coherence-kafka-security-20261027.yaml
+memory_update_type: append
+ledger_path: ".claude/commit_acceptors/pr2833-coherence-kafka-security-20261027.yaml"
+report_path: ".claude/commit_acceptors/pr2833-coherence-kafka-security-20261027.yaml"
+evidence: []

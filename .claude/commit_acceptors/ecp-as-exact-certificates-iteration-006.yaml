@@ -10,6 +10,14 @@ diff_scope:
     - path: "tests/epistemic_kernel/test_rational_certificates.py"
     - path: "benchmarks/epistemic_control_plane/iteration_006/run_exact_certificates.py"
     - path: "artifacts/epistemic_control_plane/iteration_006/exact_certificates.json"
+  forbidden_paths:
+    - "execution/"
+    - "trading/"
+required_python_symbols:
+  - "geosync/epistemic/rational_certificates.py::RationalQuorumCertificate"
+  - "geosync/epistemic/rational_certificates.py::CertificateVerification"
+  - "geosync/epistemic/rational_certificates.py::event_indicator"
+  - "geosync/epistemic/rational_certificates.py::verify_rational_certificate"
 expected_signal: >-
   Both certificates verify exactly with rational arithmetic and strong duality.
 measurement_command: >-

@@ -1,0 +1,20 @@
+{
+  "content_address": "082b13991387294079519ec4bbe34ad7d952300637a4b480a8194f35a95f9e21",
+  "inputs": [
+    "e05854b33965f4d8b745f112e8f6ad481eab863036bebd3594f299131c4b9b89"
+  ],
+  "lineage_version": "data_lineage.v1",
+  "node_id": "validated.golden-macd-baseline-v1",
+  "tier": "validated",
+  "transform": {
+    "id": "validate.schema_and_checksum.v1",
+    "params": {
+      "manifest_ref": "golden-macd-baseline-v1",
+      "raw_file": "data/golden/indicator_macd_baseline.csv"
+    }
+  },
+  "validation": {
+    "reason": "MIT CSV bytes match DAT-001",
+    "verdict": "accepted"
+  }
+}

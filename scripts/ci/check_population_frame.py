@@ -17,8 +17,8 @@ that the canonical population frame at ``data/frames/flagship_population.json``:
      snapshot is FLAGGED and fails closed;
   5. records honest limitations (snapshot-only + synthetic-only boundary).
 
-Optionally (``--verify-digest``, on by default when git + the pinned commit are
-available) it RECOMPUTES the population digest from the pinned commit and proves
+With ``--verify-digest`` (on by default; missing git history is a hard failure)
+it RECOMPUTES the population digest from the pinned commit and proves
 it equals the recorded value — closing reproducibility of the selection.
 
 This is a POPULATION-FRAME gate. It does NOT validate dataset_manifest.v1 files;
@@ -152,7 +152,9 @@ def check_frame(doc: dict[str, Any], root: Path, verify_digest: bool) -> list[st
     if not _is_nonempty_rulelist(doc.get("inclusion_rules")):
         _fail(problems, "inclusion_rules missing or empty — an unspecified frame is not a frame")
     if not _is_nonempty_rulelist(doc.get("exclusion_rules")):
-        _fail(problems, "exclusion_rules missing or empty — inclusion without exclusion is undefined")
+        _fail(
+            problems, "exclusion_rules missing or empty — inclusion without exclusion is undefined"
+        )
 
     # 2. immutable, well-formed digest.
     pd = doc.get("population_digest")
@@ -231,10 +233,10 @@ def check_frame(doc: dict[str, Any], root: Path, verify_digest: bool) -> list[st
         else:
             recomputed = compute_frame_digest(commit, namespaces, root)
             if recomputed is None:
-                print(
-                    "  info: pinned commit not resolvable in this checkout — "
-                    "digest reproducibility not verified (structure OK).",
-                    file=sys.stderr,
+                _fail(
+                    problems,
+                    "UNVERIFIED: pinned commit is unavailable in this checkout; "
+                    "population digest cannot be reproduced (fetch full history).",
                 )
             elif recomputed != recorded_digest:
                 _fail(

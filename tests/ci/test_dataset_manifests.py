@@ -188,7 +188,16 @@ def test_repo_real_data_manifests_are_flagged_and_red() -> None:
             assert str(doc["license"]).strip().lower() in GATE.UNLICENSED_TOKENS, (
                 f"{mpath.name}: real data is not yet licensed-cleared (SEC-015)"
             )
-    assert measured, "expected at least one MEASURED real-data manifest to exist"
+    if not measured:
+        # Real/vendor manifests remain intentionally untracked until licensing
+        # is established. This is NOT evidence of real-data compliance: the
+        # independent negative controls above still prove unlicensed and
+        # synthetic->MEASURED claims are rejected.
+        pytest.fail(
+            "NO_REAL_DATA_MANIFEST_STAGED: proprietary dataset coverage has "
+            "not been demonstrated; only licensed synthetic manifests ship. "
+            "Do not declare an unverified real-data evidence tier."
+        )
 
 
 @pytest.mark.parametrize("token", ["", "unknown", "unlicensed", "none", "tbd", "public_no_license"])

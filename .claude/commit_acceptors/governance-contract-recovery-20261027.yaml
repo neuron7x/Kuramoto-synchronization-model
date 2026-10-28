@@ -1,0 +1,49 @@
+# Reconcile ignored governance data with canonical docs and strict negative tests.
+id: governance-contract-recovery-20261027
+status: ACTIVE
+claim_type: governance
+promise: >-
+  Restore governance-only declarative contracts from their existing source
+  specifications and independently verify negative controls. The presence of
+  these files is never evidence of runtime integration, scientific validity,
+  release readiness, or a measured company-value score.
+diff_scope:
+  changed_files:
+    - path: ".claude/commit_acceptors/governance-contract-recovery-20261027.yaml"
+    - path: "data/governance/cognitive_operations_kernel_v1_0.json"
+    - path: "data/governance/integration_systems_architect_kernel_v1_0.json"
+    - path: "data/governance/company_value_functions.json"
+  forbidden_paths:
+    - "core/"
+    - "execution/"
+    - "trading/"
+    - "forecast/"
+required_python_symbols: []
+expected_signal: >-
+  Cognitive and integration kernels match their preexisting documentation
+  and schemas; final verdict remains a closed enum; company value functions
+  have valid policy weights, executable evidence links and negative self-tests.
+measurement_command: >-
+  bash -c 'python -m pytest -q
+  tests/governance/test_cognitive_operations_kernel.py
+  tests/governance/test_integration_systems_architect_kernel.py
+  tests/governance/test_company_value_functions.py
+  && python tools/governance/check_company_value_functions.py --self-test'
+signal_artifact: "tmp/governance_contract_recovery_20261027.log"
+falsifier:
+  command: >-
+    bash -c 'python -m pytest -q
+    tests/governance/test_cognitive_operations_kernel.py::test_forbidden_verdict_token_is_rejected
+    tests/governance/test_company_value_functions.py::test_gate_rejects_softening_hard_constraint_policy
+    tests/governance/test_company_value_functions.py::test_gate_rejects_value_without_executable_evidence'
+  description: >-
+    Tampered verdict vocabulary, softened missing-evidence policy, or
+    a value without executable evidence must be rejected.
+rollback_command: >-
+  git revert --no-edit HEAD
+rollback_verification_command: >-
+  git diff --exit-code HEAD~1 HEAD -- data/governance
+memory_update_type: append
+ledger_path: ".claude/commit_acceptors/governance-contract-recovery-20261027.yaml"
+report_path: "docs/governance/company_value_functions.md"
+evidence: []

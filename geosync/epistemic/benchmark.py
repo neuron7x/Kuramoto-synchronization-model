@@ -3,6 +3,7 @@
 This module measures policy behavior under declared cases. It does not establish
 external scientific truth or natural-workload generalization.
 """
+
 from __future__ import annotations
 
 from dataclasses import dataclass, replace
@@ -296,9 +297,9 @@ def _negative(
     )
 
 
-def build_core_scenarios() -> tuple[PromotionScenario, ...]:
+def _safe_control_rows() -> list[PromotionScenario]:
+    """Clean promotions and a resolved negative that must not block (control arm)."""
     rows: list[PromotionScenario] = []
-
     safe_specs = (
         ("safe-replicated-a", ClaimState.OBSERVED, ClaimState.REPLICATED),
         ("safe-replicated-b", ClaimState.OBSERVED, ClaimState.REPLICATED),
@@ -306,60 +307,269 @@ def build_core_scenarios() -> tuple[PromotionScenario, ...]:
         ("safe-transfer", ClaimState.BOUNDED, ClaimState.TRANSFER_TESTED),
     )
     for sid, current, target in safe_specs:
-        rows.append(_scenario(sid, current, target, safe=True, failure_class="clean", rationale="Clean promotion control."))
+        rows.append(
+            _scenario(
+                sid,
+                current,
+                target,
+                safe=True,
+                failure_class="clean",
+                rationale="Clean promotion control.",
+            )
+        )
 
     sid = "safe-bounded-resolved-negative"
-    rows.append(_scenario(sid, ClaimState.REPLICATED, ClaimState.BOUNDED, safe=True, failure_class="resolved_negative", rationale="Resolved negative must not create a permanent dead state.", negative=(_negative(sid, NegativeEvidenceKind.REPLAY_MISMATCH, resolved=True),)))
+    rows.append(
+        _scenario(
+            sid,
+            ClaimState.REPLICATED,
+            ClaimState.BOUNDED,
+            safe=True,
+            failure_class="resolved_negative",
+            rationale="Resolved negative must not create a permanent dead state.",
+            negative=(_negative(sid, NegativeEvidenceKind.REPLAY_MISMATCH, resolved=True),),
+        )
+    )
+    return rows
 
+
+def _safe_oracle_rows() -> list[PromotionScenario]:
+    """Promotions with a sufficient admissible independent oracle."""
+    rows: list[PromotionScenario] = []
     for sid, current, target in (
         ("safe-replicated-single-independent", ClaimState.OBSERVED, ClaimState.REPLICATED),
         ("safe-bounded-single-independent", ClaimState.REPLICATED, ClaimState.BOUNDED),
         ("safe-transfer-single-independent", ClaimState.BOUNDED, ClaimState.TRANSFER_TESTED),
     ):
-        rows.append(_scenario(sid, current, target, safe=True, failure_class="single_independent_oracle", rationale="One genuinely independent oracle is sufficient for the ECP contract.", oracles=(_oracle(sid, "single"),)))
+        rows.append(
+            _scenario(
+                sid,
+                current,
+                target,
+                safe=True,
+                failure_class="single_independent_oracle",
+                rationale="One genuinely independent oracle is sufficient for the ECP contract.",
+                oracles=(_oracle(sid, "single"),),
+            )
+        )
 
     sid = "safe-replicated-mixed-oracles"
-    rows.append(_scenario(sid, ClaimState.OBSERVED, ClaimState.REPLICATED, safe=True, failure_class="mixed_oracles", rationale="At least one admissible independent oracle exists.", oracles=(_oracle(sid, "shared", ancestor="model:generator"), _oracle(sid, "independent", ancestor="model:external-b"))))
+    rows.append(
+        _scenario(
+            sid,
+            ClaimState.OBSERVED,
+            ClaimState.REPLICATED,
+            safe=True,
+            failure_class="mixed_oracles",
+            rationale="At least one admissible independent oracle exists.",
+            oracles=(
+                _oracle(sid, "shared", ancestor="model:generator"),
+                _oracle(sid, "independent", ancestor="model:external-b"),
+            ),
+        )
+    )
 
     sid = "safe-replicated-one-bad-one-good"
-    rows.append(_scenario(sid, ClaimState.OBSERVED, ClaimState.REPLICATED, safe=True, failure_class="mixed_independence_quality", rationale="A weak oracle does not invalidate a separate admissible independent oracle.", oracles=(_oracle(sid, "bad", axes=(True, True, True, False)), _oracle(sid, "good", ancestor="model:external-b"))))
+    rows.append(
+        _scenario(
+            sid,
+            ClaimState.OBSERVED,
+            ClaimState.REPLICATED,
+            safe=True,
+            failure_class="mixed_independence_quality",
+            rationale="A weak oracle does not invalidate a separate admissible independent oracle.",
+            oracles=(
+                _oracle(sid, "bad", axes=(True, True, True, False)),
+                _oracle(sid, "good", ancestor="model:external-b"),
+            ),
+        )
+    )
+    return rows
 
+
+def _safe_negative_rows() -> list[PromotionScenario]:
+    """Negative context that is visible but non-blocking or resolved."""
+    rows: list[PromotionScenario] = []
     sid = "safe-replicated-nonblocking-negative"
-    rows.append(_scenario(sid, ClaimState.OBSERVED, ClaimState.REPLICATED, safe=True, failure_class="nonblocking_negative", rationale="Non-blocking negative context remains visible without prohibiting promotion.", negative=(_negative(sid, NegativeEvidenceKind.CALIBRATION_MISS, blocking=False),)))
+    rows.append(
+        _scenario(
+            sid,
+            ClaimState.OBSERVED,
+            ClaimState.REPLICATED,
+            safe=True,
+            failure_class="nonblocking_negative",
+            rationale="Non-blocking negative context remains visible without prohibiting promotion.",
+            negative=(_negative(sid, NegativeEvidenceKind.CALIBRATION_MISS, blocking=False),),
+        )
+    )
 
     sid = "safe-replicated-resolved-negative"
-    rows.append(_scenario(sid, ClaimState.OBSERVED, ClaimState.REPLICATED, safe=True, failure_class="resolved_negative", rationale="Resolved blocking evidence remains recorded but no longer blocks.", negative=(_negative(sid, NegativeEvidenceKind.REPLAY_MISMATCH, resolved=True),)))
+    rows.append(
+        _scenario(
+            sid,
+            ClaimState.OBSERVED,
+            ClaimState.REPLICATED,
+            safe=True,
+            failure_class="resolved_negative",
+            rationale="Resolved blocking evidence remains recorded but no longer blocks.",
+            negative=(_negative(sid, NegativeEvidenceKind.REPLAY_MISMATCH, resolved=True),),
+        )
+    )
+    return rows
 
+
+def _unsafe_lineage_rows() -> list[PromotionScenario]:
+    """Refusals: verifier lineage shared with the generator or an independence axis failed."""
+    rows: list[PromotionScenario] = []
     sid = "unsafe-shared-lineage-single"
-    rows.append(_scenario(sid, ClaimState.OBSERVED, ClaimState.REPLICATED, safe=False, failure_class="hidden_lineage", rationale="Verifier shares the generator model ancestor.", oracles=(_oracle(sid, "shared-a", ancestor="model:generator"),)))
+    rows.append(
+        _scenario(
+            sid,
+            ClaimState.OBSERVED,
+            ClaimState.REPLICATED,
+            safe=False,
+            failure_class="hidden_lineage",
+            rationale="Verifier shares the generator model ancestor.",
+            oracles=(_oracle(sid, "shared-a", ancestor="model:generator"),),
+        )
+    )
 
     sid = "unsafe-two-correlated-verifiers"
-    rows.append(_scenario(sid, ClaimState.OBSERVED, ClaimState.REPLICATED, safe=False, failure_class="correlated_verifiers", rationale="Two verifier votes share the generator ancestor.", oracles=(_oracle(sid, "vote-1", ancestor="model:generator"), _oracle(sid, "vote-2", ancestor="model:generator"))))
+    rows.append(
+        _scenario(
+            sid,
+            ClaimState.OBSERVED,
+            ClaimState.REPLICATED,
+            safe=False,
+            failure_class="correlated_verifiers",
+            rationale="Two verifier votes share the generator ancestor.",
+            oracles=(
+                _oracle(sid, "vote-1", ancestor="model:generator"),
+                _oracle(sid, "vote-2", ancestor="model:generator"),
+            ),
+        )
+    )
 
     for index, name in enumerate(("provenance", "control", "acquisition", "interpretation")):
         axes = [True, True, True, True]
         axes[index] = False
         sid = f"unsafe-axis-{name}"
-        rows.append(_scenario(sid, ClaimState.OBSERVED, ClaimState.REPLICATED, safe=False, failure_class=f"independence_{name}", rationale=f"Oracle fails {name} independence.", oracles=(_oracle(sid, "axis-a", axes=tuple(axes)), _oracle(sid, "axis-b", ancestor="model:external-b", axes=tuple(axes)))))
+        rows.append(
+            _scenario(
+                sid,
+                ClaimState.OBSERVED,
+                ClaimState.REPLICATED,
+                safe=False,
+                failure_class=f"independence_{name}",
+                rationale=f"Oracle fails {name} independence.",
+                oracles=(
+                    _oracle(sid, "axis-a", axes=tuple(axes)),
+                    _oracle(sid, "axis-b", ancestor="model:external-b", axes=tuple(axes)),
+                ),
+            )
+        )
+    return rows
 
-    rows.append(_scenario("unsafe-no-oracle", ClaimState.OBSERVED, ClaimState.REPLICATED, safe=False, failure_class="missing_oracle", rationale="Replication is not independently adjudicated.", oracles=()))
+
+def _unsafe_oracle_rows() -> list[PromotionScenario]:
+    """Refusals: oracle missing, inadmissible or bound to another claim."""
+    rows: list[PromotionScenario] = []
+    rows.append(
+        _scenario(
+            "unsafe-no-oracle",
+            ClaimState.OBSERVED,
+            ClaimState.REPLICATED,
+            safe=False,
+            failure_class="missing_oracle",
+            rationale="Replication is not independently adjudicated.",
+            oracles=(),
+        )
+    )
 
     sid = "unsafe-inadmissible-oracle"
-    rows.append(_scenario(sid, ClaimState.OBSERVED, ClaimState.REPLICATED, safe=False, failure_class="oracle_admissibility", rationale="Oracles are explicitly inadmissible.", oracles=(_oracle(sid, "bad-a", admissible=False), _oracle(sid, "bad-b", ancestor="model:external-b", admissible=False))))
+    rows.append(
+        _scenario(
+            sid,
+            ClaimState.OBSERVED,
+            ClaimState.REPLICATED,
+            safe=False,
+            failure_class="oracle_admissibility",
+            rationale="Oracles are explicitly inadmissible.",
+            oracles=(
+                _oracle(sid, "bad-a", admissible=False),
+                _oracle(sid, "bad-b", ancestor="model:external-b", admissible=False),
+            ),
+        )
+    )
 
     sid = "unsafe-wrong-claim-oracle"
-    rows.append(_scenario(sid, ClaimState.OBSERVED, ClaimState.REPLICATED, safe=False, failure_class="oracle_binding", rationale="Verifier evidence is bound to another claim.", oracles=(_oracle(sid, "wrong-a", bound_claim_id="other-claim"), _oracle(sid, "wrong-b", ancestor="model:external-b", bound_claim_id="other-claim"))))
+    rows.append(
+        _scenario(
+            sid,
+            ClaimState.OBSERVED,
+            ClaimState.REPLICATED,
+            safe=False,
+            failure_class="oracle_binding",
+            rationale="Verifier evidence is bound to another claim.",
+            oracles=(
+                _oracle(sid, "wrong-a", bound_claim_id="other-claim"),
+                _oracle(sid, "wrong-b", ancestor="model:external-b", bound_claim_id="other-claim"),
+            ),
+        )
+    )
+    return rows
 
+
+def _unsafe_evidence_rows() -> list[PromotionScenario]:
+    """Refusals: a required artifact is missing or the falsifier never ran."""
+    rows: list[PromotionScenario] = []
     for kind in (EvidenceKind.REPLICATION, EvidenceKind.REPLAY, EvidenceKind.PROVENANCE):
         sid = f"unsafe-missing-{kind.value.lower()}"
         evidence = tuple(e for e in _evidence(sid, ClaimState.REPLICATED) if e.kind is not kind)
-        rows.append(_scenario(sid, ClaimState.OBSERVED, ClaimState.REPLICATED, safe=False, failure_class="missing_evidence", rationale=f"Required {kind.value} artifact is missing.", evidence=evidence))
+        rows.append(
+            _scenario(
+                sid,
+                ClaimState.OBSERVED,
+                ClaimState.REPLICATED,
+                safe=False,
+                failure_class="missing_evidence",
+                rationale=f"Required {kind.value} artifact is missing.",
+                evidence=evidence,
+            )
+        )
 
-    rows.append(_scenario("unsafe-falsifier-not-executed", ClaimState.OBSERVED, ClaimState.REPLICATED, safe=False, failure_class="falsifier_not_executed", rationale="A falsifier was defined but never executed.", falsifier=False))
+    rows.append(
+        _scenario(
+            "unsafe-falsifier-not-executed",
+            ClaimState.OBSERVED,
+            ClaimState.REPLICATED,
+            safe=False,
+            failure_class="falsifier_not_executed",
+            rationale="A falsifier was defined but never executed.",
+            falsifier=False,
+        )
+    )
+    return rows
 
-    for index, kind in enumerate((NegativeEvidenceKind.REPLAY_MISMATCH, NegativeEvidenceKind.EXTERNAL_ORACLE_DISAGREEMENT)):
+
+def _unsafe_negative_and_stage_rows() -> list[PromotionScenario]:
+    """Refusals: unresolved blocking negatives, stage-specific missing evidence, cross-claim artifacts."""
+    rows: list[PromotionScenario] = []
+    for index, kind in enumerate(
+        (NegativeEvidenceKind.REPLAY_MISMATCH, NegativeEvidenceKind.EXTERNAL_ORACLE_DISAGREEMENT)
+    ):
         sid = f"unsafe-active-negative-{index}"
-        rows.append(_scenario(sid, ClaimState.OBSERVED, ClaimState.REPLICATED, safe=False, failure_class="active_negative_evidence", rationale=f"Unresolved blocking negative evidence exists: {kind.value}.", negative=(_negative(sid, kind),)))
+        rows.append(
+            _scenario(
+                sid,
+                ClaimState.OBSERVED,
+                ClaimState.REPLICATED,
+                safe=False,
+                failure_class="active_negative_evidence",
+                rationale=f"Unresolved blocking negative evidence exists: {kind.value}.",
+                negative=(_negative(sid, kind),),
+            )
+        )
 
     for target, missing in (
         (ClaimState.BOUNDED, EvidenceKind.NULL_COMPARISON),
@@ -369,13 +579,47 @@ def build_core_scenarios() -> tuple[PromotionScenario, ...]:
         sid = f"unsafe-{target.value.lower()}-missing-{missing.value.lower()}"
         current = ClaimState.REPLICATED if target is ClaimState.BOUNDED else ClaimState.BOUNDED
         evidence = tuple(e for e in _evidence(sid, target) if e.kind is not missing)
-        rows.append(_scenario(sid, current, target, safe=False, failure_class="missing_evidence", rationale=f"{target.value} attempted without {missing.value}.", evidence=evidence))
+        rows.append(
+            _scenario(
+                sid,
+                current,
+                target,
+                safe=False,
+                failure_class="missing_evidence",
+                rationale=f"{target.value} attempted without {missing.value}.",
+                evidence=evidence,
+            )
+        )
 
     sid = "unsafe-cross-claim-evidence"
     evidence = list(_evidence(sid, ClaimState.REPLICATED))
     evidence[0] = replace(evidence[0], claim_id="other-claim")
-    rows.append(_scenario(sid, ClaimState.OBSERVED, ClaimState.REPLICATED, safe=False, failure_class="cross_claim_evidence", rationale="One required artifact belongs to another claim.", evidence=tuple(evidence)))
+    rows.append(
+        _scenario(
+            sid,
+            ClaimState.OBSERVED,
+            ClaimState.REPLICATED,
+            safe=False,
+            failure_class="cross_claim_evidence",
+            rationale="One required artifact belongs to another claim.",
+            evidence=tuple(evidence),
+        )
+    )
+    return rows
 
+
+def build_core_scenarios() -> tuple[PromotionScenario, ...]:
+    rows: list[PromotionScenario] = []
+    for family in (
+        _safe_control_rows,
+        _safe_oracle_rows,
+        _safe_negative_rows,
+        _unsafe_lineage_rows,
+        _unsafe_oracle_rows,
+        _unsafe_evidence_rows,
+        _unsafe_negative_and_stage_rows,
+    ):
+        rows.extend(family())
     ids = [row.scenario_id for row in rows]
     if len(rows) != 31 or len(ids) != len(set(ids)):
         raise AssertionError("canonical core benchmark must contain 31 unique scenarios")
@@ -387,7 +631,9 @@ def build_repository_negative_probes(repo_root: str | Path) -> tuple[PromotionSc
     import yaml
 
     root = Path(repo_root)
-    raw = yaml.safe_load((root / "governance" / "NEGATIVE_EVIDENCE.yaml").read_text(encoding="utf-8"))
+    raw = yaml.safe_load(
+        (root / "governance" / "NEGATIVE_EVIDENCE.yaml").read_text(encoding="utf-8")
+    )
     kind_map = {
         "failed_null_comparison": NegativeEvidenceKind.FAILED_NULL_COMPARISON,
         "invalid_input": NegativeEvidenceKind.INVALID_INPUT,
@@ -409,7 +655,18 @@ def build_repository_negative_probes(repo_root: str | Path) -> tuple[PromotionSc
             resolved=False,
             note=str(entry.get("description", "")),
         )
-        rows.append(_scenario(sid, ClaimState.REPLICATED, ClaimState.BOUNDED, safe=False, failure_class=f"repository_negative:{category}", rationale="A preserved repository negative blocks stronger bounded promotion until resolved.", negative=(neg,), source_ref=str(entry["artifact"])))
+        rows.append(
+            _scenario(
+                sid,
+                ClaimState.REPLICATED,
+                ClaimState.BOUNDED,
+                safe=False,
+                failure_class=f"repository_negative:{category}",
+                rationale="A preserved repository negative blocks stronger bounded promotion until resolved.",
+                negative=(neg,),
+                source_ref=str(entry["artifact"]),
+            )
+        )
     return tuple(rows)
 
 
@@ -422,7 +679,15 @@ def run_policy(policy: PromotionPolicy, scenarios: Sequence[PromotionScenario]) 
         unsafe_promotions += int(allowed and not scenario.safe_to_promote)
         false_blocks += int(not allowed and scenario.safe_to_promote)
         correct += int(allowed == scenario.safe_to_promote)
-    return PolicyMetrics(policy.name, len(scenarios), safe_cases, unsafe_cases, unsafe_promotions, false_blocks, correct)
+    return PolicyMetrics(
+        policy.name,
+        len(scenarios),
+        safe_cases,
+        unsafe_cases,
+        unsafe_promotions,
+        false_blocks,
+        correct,
+    )
 
 
 def default_policies() -> tuple[PromotionPolicy, ...]:

@@ -207,39 +207,57 @@ def test_records_from_manifests_normalises_both_shapes():
 
 
 # ===========================================================================
-# 7. End-to-end on the REAL committed artifacts: the honest negative, and
-#    tamper-evidence.
+# 7. End-to-end over an EXECUTED audit artifact: the honest negative, and
+#    tamper-evidence. The committed tree carries no executed audit.json (it is
+#    produced by `python -m geosync.proof.audit`), so these controls build a
+#    minimal, provenance-bound audit of the same shape in tmp_path. A skip here
+#    would be an unknown reported as a pass; the builder's invariants must be
+#    witnessed on every run.
 # ===========================================================================
-def test_real_artifacts_report_is_self_consistent():
-    """The file-bound report over the committed artifacts must build, expose a
-    reject gate, calibration coverage, and a recomputable content digest."""
-    import pytest
-    from geosync.proof.weighting import AUDIT_JSON
-    if not AUDIT_JSON.exists():
-        pytest.skip("no executed audit.json present; run `python -m geosync.proof.audit` first")
+def _executed_audit(tmp_path, rows):
+    """Write an audit.json of the shape `python -m geosync.proof.audit` emits:
+    audit rows plus a content digest over everything but the digest itself."""
+    import json
     from geosync.proof.run import DIGEST_KEY, _content_digest
 
-    report = build_report()
+    body = {"claims": rows, "scope": "synthetic-executed-audit"}
+    body[DIGEST_KEY] = _content_digest(body)
+    path = tmp_path / "audit.json"
+    path.write_text(json.dumps(body, indent=2, sort_keys=True), encoding="utf-8")
+    return path
+
+
+def test_executed_audit_report_is_self_consistent(tmp_path):
+    """The file-bound report over an executed audit must build, expose a reject
+    gate, calibration coverage, and a recomputable content digest; with zero
+    calibrated SUPPORTEDs the integrity tier must not be ANCHORED."""
+    from geosync.proof.run import DIGEST_KEY, _content_digest
+
+    audit = _executed_audit(
+        tmp_path,
+        [
+            _view("c-supported", "SUPPORTED", priority="P0", tier="ANCHORED"),
+            _view("c-refuted", "REFUTED", priority="P1", tier="EXTRAPOLATED"),
+        ],
+    )
+    report = build_report(audit_path=audit)
     e = report["epistemic_integrity"]
     assert set(e).issuperset({"value", "reject_gate", "calibration_coverage", "tier", "scope"})
+    assert report["audit_source"].endswith("audit.json") and report["audit_sha256"]
     # tamper-evidence: the digest recomputes over the report minus itself.
     body = {k: v for k, v in report.items() if k != DIGEST_KEY}
     assert report[DIGEST_KEY] == _content_digest(body)
-    # honest coverage: if there are zero calibrated SUPPORTEDs, E must not be ANCHORED.
-    if e["supported_calibrated"] == 0:
-        assert e["tier"] == "EXTRAPOLATED"
+    # honest coverage: a synthetic SUPPORTED carries no calibrated mutation evidence,
+    # so E must not be ANCHORED.
+    assert e["supported_calibrated"] == 0
+    assert e["tier"] == "EXTRAPOLATED"
 
 
-def test_determinism_same_inputs_same_report():
+def test_determinism_same_inputs_same_report(tmp_path, monkeypatch):
     """Pure/deterministic: two builds over identical inputs are byte-identical
-    (aside from the timestamp, pinned by SOURCE_DATE_EPOCH in the harness)."""
-    import pytest
-    from geosync.proof.weighting import AUDIT_JSON
-    if not AUDIT_JSON.exists():
-        pytest.skip("no executed audit.json present; run `python -m geosync.proof.audit` first")
-    import os
-
-    os.environ["SOURCE_DATE_EPOCH"] = "1700000000"
-    a = build_report()
-    b = build_report()
+    (the timestamp is pinned by SOURCE_DATE_EPOCH, as in the harness)."""
+    audit = _executed_audit(tmp_path, [_view("c-supported", "SUPPORTED", priority="P0")])
+    monkeypatch.setenv("SOURCE_DATE_EPOCH", "1700000000")
+    a = build_report(audit_path=audit)
+    b = build_report(audit_path=audit)
     assert a == b

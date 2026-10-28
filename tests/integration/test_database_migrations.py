@@ -5,9 +5,11 @@
 from __future__ import annotations
 
 import importlib
+import logging
 import time
 from dataclasses import dataclass
 from datetime import datetime, timezone
+from io import StringIO
 from pathlib import Path
 
 import pytest
@@ -76,6 +78,36 @@ def test_migration_upgrade_and_downgrade_cycle(
 
     migration_context.downgrade("base")
     assert _table_exists(migration_context.engine, "kill_switch_state") is False
+
+
+def test_migrations_preserve_application_error_logging(
+    migration_context: MigrationTestContext,
+) -> None:
+    """Application failures remain observable after in-process migrations."""
+
+    logger = logging.getLogger("geosync.api.metrics")
+    previous_level = logger.level
+    previous_disabled = logger.disabled
+    previous_propagate = logger.propagate
+    logger.setLevel(logging.ERROR)
+    logger.disabled = False
+    logger.propagate = False
+    try:
+        for migrate in (migration_context.upgrade, migration_context.downgrade):
+            migrate()
+            with StringIO() as output:
+                handler = logging.StreamHandler(output)
+                logger.addHandler(handler)
+                try:
+                    logger.error("application failure after migration")
+                finally:
+                    logger.removeHandler(handler)
+                    handler.close()
+                assert output.getvalue() == "application failure after migration\n"
+    finally:
+        logger.setLevel(previous_level)
+        logger.disabled = previous_disabled
+        logger.propagate = previous_propagate
 
 
 def test_migration_upgrade_is_idempotent(

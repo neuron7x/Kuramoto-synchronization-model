@@ -11,6 +11,10 @@ diff_scope:
     - path: "docs/epistemic_control_plane/README.md"
     - path: "governance/ECP_AS_ITERATION_004.json"
     - path: "artifacts/epistemic_control_plane/iteration_004/ITERATION_004_REPORT.md"
+  forbidden_paths:
+    - "execution/"
+    - "trading/"
+required_python_symbols: []
 expected_signal: >-
   All user-facing and machine-readable artifacts distinguish external labels from synthetic
   judge-error profiles and state that real evaluator covariance remains unmeasured.

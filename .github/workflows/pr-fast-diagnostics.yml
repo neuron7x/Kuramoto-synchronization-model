@@ -47,7 +47,7 @@ jobs:
       - name: Run diagnostic fast shard
         run: |
           set -euo pipefail
-          out_dir="artifacts/pr-fast-diagnostics/group-${{ matrix.group }}"
+          out_dir="$RUNNER_TEMP/pr-fast-diagnostics/group-${{ matrix.group }}"
           mkdir -p "$out_dir"
 
           if [[ "${GITHUB_EVENT_NAME}" == "pull_request" ]]; then
@@ -116,12 +116,12 @@ jobs:
           PY
         env:
           DIAGNOSTIC_GROUP: ${{ matrix.group }}
-          DIAGNOSTIC_OUT_DIR: artifacts/pr-fast-diagnostics/group-${{ matrix.group }}
+          DIAGNOSTIC_OUT_DIR: ${{ runner.temp }}/pr-fast-diagnostics/group-${{ matrix.group }}
 
       - name: Execute diagnostic fast shard
         run: |
           set -euo pipefail
-          out_dir="artifacts/pr-fast-diagnostics/group-${{ matrix.group }}"
+          out_dir="$RUNNER_TEMP/pr-fast-diagnostics/group-${{ matrix.group }}"
           if [[ ! -s "$out_dir/shard_nodeids.txt" ]]; then
             echo "empty shard" | tee -a "$out_dir/shard_summary.txt"
             exit 0
@@ -152,6 +152,6 @@ jobs:
         uses: actions/upload-artifact@043fb46d1a93c77aae656e7c1c64a875d1fc6a0a # v7.0.1
         with:
           name: pr-fast-diagnostics-shard-${{ matrix.group }}
-          path: artifacts/pr-fast-diagnostics/group-${{ matrix.group }}/
+          path: ${{ runner.temp }}/pr-fast-diagnostics/group-${{ matrix.group }}/
           if-no-files-found: warn
           retention-days: 14

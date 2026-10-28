@@ -7,6 +7,7 @@ from __future__ import annotations
 # SPDX-License-Identifier: MIT
 import argparse
 import datetime as dt
+import importlib
 import logging
 import os
 import shutil
@@ -239,7 +240,7 @@ def _build_distributions(pipeline: BuildPipeline) -> None:
     pipeline.register_cleanup(lambda: shutil.rmtree(temp_dir, ignore_errors=True))
 
     try:
-        import build  # noqa: F401  # pylint: disable=unused-import
+        importlib.import_module("build")
     except ModuleNotFoundError as exc:  # pragma: no cover - dependency guard
         raise CommandError(
             "Python build backend is missing. Install the 'build' package to continue."

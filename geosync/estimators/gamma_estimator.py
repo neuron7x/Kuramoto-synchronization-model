@@ -147,10 +147,12 @@ class PSDGammaEstimator:
 
 
 def _adf_stationary(x: np.ndarray) -> bool:
+    """Accept stationarity only when ADF returns an admissible p-value below 0.05."""
     try:
         from statsmodels.tsa.stattools import adfuller
 
         result = adfuller(x, maxlag=int(np.sqrt(len(x))), autolag=None)
-        return float(result[1]) < 0.05
+        return 0.0 <= float(result[1]) < 0.05
     except (ImportError, ValueError, np.linalg.LinAlgError):
-        return True
+        # Missing or failed evidence must not satisfy the validity conjunction.
+        return False

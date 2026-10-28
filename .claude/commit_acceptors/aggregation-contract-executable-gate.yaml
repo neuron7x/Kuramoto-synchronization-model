@@ -68,4 +68,4 @@ ledger_path: ".claude/commit_acceptors/aggregation-contract-executable-gate.yaml
 report_path: ".claude/commit_acceptors/aggregation-contract-executable-gate.yaml"
 evidence:
   - path: "tests/unit/indicators/test_aggregation_contract.py"
-    sha256: "2b3e4172f4d36f7a9a81b6948b4f0821d4bfc8599fe60fa5b273cb6c01789ade"  # pragma: allowlist secret
+    sha256: "42dc66b456499d3766ba706194d12b14372cf12a9630f9b3ac49a8e3f45faeff"  # pragma: allowlist secret

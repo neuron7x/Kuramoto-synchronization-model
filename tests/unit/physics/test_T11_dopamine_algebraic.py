@@ -182,15 +182,33 @@ def test_td_error_is_linear_in_reward(controller: DopamineController) -> None:
 # so every guard could be inverted undetected.
 # ---------------------------------------------------------------------------
 def test_sharpe_delta_is_exactly_zero_when_data_is_insufficient() -> None:
-    """Fewer than 2*window returns yields no delta (the insufficient-data guard)."""
+    """INV-DA8 (adapter input guard): fewer than 2*window returns yields no delta.
+
+    The Sharpe delta is the raw argument of the adapter's tanh squash (INV-DA8:
+    finite, bounded output for every finite input). With no complete pair of
+    windows there is no surprise to report, so the guard must return exactly 0.0
+    — a fail-closed "no evidence" value, never a partial-window estimate — for
+    EVERY insufficient length, not just one.
+    """
     from core.neuro.dopamine_execution_adapter import DopamineExecutionAdapter
 
-    assert DopamineExecutionAdapter.compute_sharpe_delta([0.01, 0.02, 0.03], window=2) == 0.0
+    window = 2
+    for n_returns in range(2 * window):
+        returns = [0.01 * (i + 1) for i in range(n_returns)]
+        delta = DopamineExecutionAdapter.compute_sharpe_delta(returns, window=window)
+        # tolerance = 0: the guard returns the literal 0.0 (fail-closed), not an estimate
+        assert delta == 0.0, (
+            f"INV-DA8 VIOLATED: got compute_sharpe_delta={delta!r} for n={n_returns} returns, "
+            f"expected exactly 0.0 (insufficient-data guard: n < 2*window). "
+            f"A partial-window estimate is fabricated evidence. "
+            f"At window={window}, n={n_returns}"
+        )
 
 
 def test_sharpe_delta_equals_independently_computed_window_difference() -> None:
-    """With sufficient data the delta is Sharpe(recent) - Sharpe(previous), computed here
-    independently.
+    """INV-DA1 (sign = surprise direction) on the adapter's reward input: with sufficient
+    data the delta is Sharpe(recent) - Sharpe(previous), computed here independently, so
+    its sign is the direction of the realised change and its magnitude is finite.
 
     Kills all three guards: under Lt->GtE sufficient data would return 0.0; under
     Eq->NotEq every non-empty segment would score 0.0; under Gt->LtE a positive-variance
@@ -214,9 +232,16 @@ def test_sharpe_delta_equals_independently_computed_window_difference() -> None:
     expected = sharpe(recent) - sharpe(previous)
     actual = DopamineExecutionAdapter.compute_sharpe_delta(returns, window=window)
     assert actual == pytest.approx(expected, rel=1e-12), (
-        f"sharpe delta must equal Sharpe(recent) - Sharpe(previous) = {expected}; got {actual}"
+        f"INV-DA1 VIOLATED: got sharpe delta={actual}, expected Sharpe(recent) - "
+        f"Sharpe(previous) = {expected} (sign = surprise direction). At window={window}, "
+        f"n={len(returns)}"
     )
-    assert actual != 0.0, "a genuine window difference must not read as zero"
+    # tolerance: a genuine window difference is non-zero by construction of the fixture
+    assert actual != 0.0, (
+        f"INV-DA1 VIOLATED: got sharpe delta=0.0 for a genuine window difference, expected "
+        f"{expected} (non-zero). At window={window}, n={len(returns)}"
+    )
     assert math.isfinite(actual) and abs(actual) < 1e3, (
-        "a positive-variance segment must be divided by its std, not by the 1e-12 floor"
+        f"INV-DA8 VIOLATED: got sharpe delta={actual}, expected a finite value divided by the "
+        f"segment std, not by the 1e-12 floor. At window={window}, n={len(returns)}"
     )

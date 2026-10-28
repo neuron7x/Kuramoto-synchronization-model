@@ -3,6 +3,29 @@
 
 # Population / Sampling Frame Policy (FLAGSHIP-RQ-001)
 
+## Evidence re-baseline (2026-10-27; normative for the current checkout)
+
+The original population record referenced upstream commit
+`b012d3da99772b549d6b8a870596bd35b4d7601c`, which is **not reachable**
+in this flattened repository history. Its old **1,539-module** count and
+digest are historical assertions, **not verified by this clone**.
+
+A separate, reproducible population census is now recorded at
+`data/frames/flagship_population.json`, with identity
+`flagship-rq-001-synced-tree-census-v2`:
+- **Pinned commit**: `8fee3d185c93eb4b430e5d38e21f895da2c06676`
+- **Pinned Git tree**: `709590ca2bb30caac9e7aba64ed89c34991e6700`
+- **Frame**: 1,572 first-party Python modules across 16 wheel namespaces
+- **SHA-256 population digest**:
+  `66c5450db597e37d8c3dba10f85680c3a34231501299293e1fdd6332adbd305f`
+- **Verification**: `python scripts/ci/check_population_frame.py`
+
+This is a **new snapshot-specific census**, not recovery or promotion of the
+unavailable upstream empirical result. The historical counts in the
+original policy sections below describe the inaccessible upstream study and
+must not be treated as the active manifest's measurements.
+
+
 **Task:** RES-006 · **Boundary:** `RESEARCH_ALPHA_SYNTHETIC_ONLY_NO_DEPLOY`
 **Artifact:** `data/frames/flagship_population.json`
 **Gate:** `scripts/ci/check_population_frame.py`

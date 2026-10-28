@@ -26,6 +26,8 @@ would surface as a test failure.
 
 from __future__ import annotations
 
+import math
+
 import pytest
 
 from core.neuro.signal_bus import NeuroSignalBus, NeuroSignals
@@ -148,35 +150,78 @@ def test_signalbus_dag_fanout_fires_each_subscriber_exactly_once() -> None:
 # below pins all three: each veto must fire ALONE, and neither firing must not veto.
 # ---------------------------------------------------------------------------
 def test_should_hold_serotonin_veto_fires_alone() -> None:
-    """Serotonin strictly above threshold vetoes even with no crisis (kills Gt->LtE, Or->And)."""
-    bus = NeuroSignalBus()
-    threshold = bus._config.serotonin_hold_threshold
-    bus.publish_serotonin(level=threshold + 0.1)
-    assert bus.should_hold() is True
+    """INV-5HT7 (serotonin veto is a SAFETY gate): serotonin strictly above the hold
+    threshold vetoes on its own, with no crisis regime, for every level above it
+    (kills Gt->LtE, Or->And)."""
+    for excess in (0.01, 0.1, 0.29):
+        bus = NeuroSignalBus()
+        threshold = bus._config.serotonin_hold_threshold
+        bus.publish_serotonin(level=threshold + excess)
+        assert bus.should_hold() is True, (
+            "INV-5HT7 VIOLATED: serotonin veto did not fire above threshold; expected hold. "
+            f"At level={threshold + excess:.3f}, threshold={threshold}, crisis=False"
+        )
 
 
 def test_should_hold_is_false_below_threshold_without_crisis() -> None:
-    """Neither Protector firing means no veto — the baseline the inversions would break."""
-    bus = NeuroSignalBus()
-    threshold = bus._config.serotonin_hold_threshold
-    bus.publish_serotonin(level=threshold - 0.1)
-    assert bus.should_hold() is False
+    """INV-5HT7 converse: neither Protector firing means no veto for every level below the
+    threshold — the baseline the inversions would break."""
+    for deficit in (0.01, 0.1, 0.5):
+        bus = NeuroSignalBus()
+        threshold = bus._config.serotonin_hold_threshold
+        bus.publish_serotonin(level=threshold - deficit)
+        assert bus.should_hold() is False, (
+            "INV-5HT7 VIOLATED: veto fired below threshold with no crisis; expected no hold. "
+            f"At level={threshold - deficit:.3f}, threshold={threshold}, crisis=False"
+        )
 
 
 def test_should_hold_threshold_is_strict() -> None:
-    """Exactly AT the threshold is not above it — the veto is strictly greater-than."""
+    """INV-5HT7 boundary: exactly AT the threshold is not above it — the veto is strictly
+    greater-than, so the boundary and its immediate neighbours are pinned."""
     bus = NeuroSignalBus()
     threshold = bus._config.serotonin_hold_threshold
     bus.publish_serotonin(level=threshold)
-    assert bus.should_hold() is False
+    at_hold = bus.should_hold()
+    assert at_hold is False, (
+        f"INV-5HT7 VIOLATED: got should_hold={at_hold} exactly at the threshold; expected "
+        f"strict '>' (no hold). At level={threshold}, threshold={threshold}"
+    )
+    # tolerance: one float ulp above the threshold must already veto, one below must not
+    above = NeuroSignalBus()
+    above.publish_serotonin(level=math.nextafter(threshold, 1.0))
+    above_hold = above.should_hold()
+    assert above_hold is True, (
+        f"INV-5HT7 VIOLATED: got should_hold={above_hold} one ulp above threshold; expected "
+        f"hold. At threshold={threshold}"
+    )
+    below = NeuroSignalBus()
+    below.publish_serotonin(level=math.nextafter(threshold, 0.0))
+    below_hold = below.should_hold()
+    assert below_hold is False, (
+        f"INV-5HT7 VIOLATED: got should_hold={below_hold} one ulp below threshold; expected "
+        f"no hold. At threshold={threshold}"
+    )
 
 
 def test_should_hold_protector_veto_zeroes_the_position() -> None:
-    """A firing Protector zeroes position size, it does not merely dampen it (INV-YV1 L2)."""
-    bus = NeuroSignalBus()
-    bus.publish_serotonin(level=bus._config.serotonin_hold_threshold + 0.1)
-    assert bus.should_hold() is True
-    assert bus.compute_position_multiplier(kelly_base=1.0) == 0.0
+    """INV-YV1 Layer 2: a firing Protector zeroes position size for every Kelly base, it
+    does not merely dampen it. Exact zero by design (hard gate, cf. INV-CB1), so no
+    tolerance is admissible."""
+    for kelly_base in (0.1, 1.0, 2.5):
+        bus = NeuroSignalBus()
+        bus.publish_serotonin(level=bus._config.serotonin_hold_threshold + 0.1)
+        hold = bus.should_hold()
+        assert hold is True, (
+            f"INV-YV1 L2 VIOLATED: got should_hold={hold} above threshold; expected hold. "
+            f"At kelly_base={kelly_base}"
+        )
+        # exact zero: Protector veto is a hard gate, tolerance = 0 by contract (INV-YV1 L2)
+        multiplier = bus.compute_position_multiplier(kelly_base=kelly_base)
+        assert multiplier == 0.0, (
+            f"INV-YV1 L2 VIOLATED: multiplier={multiplier!r} under a firing Protector; "
+            f"expected exactly 0.0 (veto zeroes, never dampens). At kelly_base={kelly_base}"
+        )
 
 
 # ---------------------------------------------------------------------------
@@ -194,56 +239,98 @@ def _bus_with(rpe: float, serotonin: float) -> NeuroSignalBus:
 
 
 def test_regime_normal_when_nothing_is_elevated() -> None:
-    """Positive RPE and low serotonin -> NORMAL (the else branch)."""
+    """INV-SB2 (deterministic latch) on the stress-regime classifier: positive RPE and low
+    serotonin -> NORMAL (the else branch), for several such inputs."""
     from core.neuro.signal_bus import StressRegime
 
-    bus = _bus_with(rpe=0.1, serotonin=0.1)
-    assert bus.snapshot().stress_regime is StressRegime.NORMAL
+    for rpe, serotonin in ((0.1, 0.1), (0.5, 0.3), (0.0, 0.0)):
+        bus = _bus_with(rpe=rpe, serotonin=serotonin)
+        regime = bus.snapshot().stress_regime
+        assert regime is StressRegime.NORMAL, (
+            f"INV-SB2 VIOLATED: got regime={regime} with nothing elevated; expected NORMAL. "
+            f"At rpe={rpe}, serotonin={serotonin}"
+        )
 
 
 def test_regime_elevated_on_negative_rpe_alone() -> None:
-    """The ELEVATED branch is an OR: negative RPE alone suffices (kills Or->And)."""
+    """INV-SB2 classifier, ELEVATED is an OR: negative RPE alone suffices for several
+    magnitudes (kills Or->And)."""
     from core.neuro.signal_bus import StressRegime
 
-    bus = _bus_with(rpe=-0.1, serotonin=0.1)
-    assert bus.snapshot().stress_regime is StressRegime.ELEVATED
+    for rpe in (-0.01, -0.1, -0.29):
+        bus = _bus_with(rpe=rpe, serotonin=0.1)
+        regime = bus.snapshot().stress_regime
+        assert regime is StressRegime.ELEVATED, (
+            f"INV-SB2 VIOLATED: regime={regime} on negative RPE alone; expected ELEVATED. "
+            f"At rpe={rpe}, serotonin=0.1"
+        )
 
 
 def test_regime_elevated_on_moderate_serotonin_alone() -> None:
-    """The other OR arm: serotonin above the elevated threshold alone suffices."""
+    """INV-SB2 classifier, the other OR arm: serotonin above the elevated threshold alone
+    suffices for several levels."""
     from core.neuro.signal_bus import StressRegime
 
-    bus = _bus_with(rpe=0.1, serotonin=0.6)
-    assert bus.snapshot().stress_regime is StressRegime.ELEVATED
+    for serotonin in (0.55, 0.6, 0.7):
+        bus = _bus_with(rpe=0.1, serotonin=serotonin)
+        regime = bus.snapshot().stress_regime
+        assert regime is StressRegime.ELEVATED, (
+            f"INV-SB2 VIOLATED: regime={regime} on moderate serotonin alone; expected "
+            f"ELEVATED. At rpe=0.1, serotonin={serotonin}"
+        )
 
 
 def test_regime_crisis_requires_both_conjuncts() -> None:
-    """CRISIS is an AND: deeply negative RPE *and* high serotonin (kills And->Or)."""
+    """INV-SB2 classifier, CRISIS is an AND: deeply negative RPE *and* high serotonin
+    (kills And->Or); each conjunct alone must not reach CRISIS."""
     from core.neuro.signal_bus import StressRegime
 
     both = _bus_with(rpe=-0.5, serotonin=0.9)
-    assert both.snapshot().stress_regime is StressRegime.CRISIS
+    assert both.snapshot().stress_regime is StressRegime.CRISIS, (
+        "INV-SB2 VIOLATED: both conjuncts true but regime is not CRISIS; expected CRISIS. "
+        "At rpe=-0.5, serotonin=0.9"
+    )
     # each conjunct alone must NOT reach CRISIS
     rpe_only = _bus_with(rpe=-0.5, serotonin=0.1)
-    assert rpe_only.snapshot().stress_regime is not StressRegime.CRISIS
+    assert rpe_only.snapshot().stress_regime is not StressRegime.CRISIS, (
+        "INV-SB2 VIOLATED: CRISIS from negative RPE alone; expected a non-CRISIS regime. "
+        "At rpe=-0.5, serotonin=0.1"
+    )
     sero_only = _bus_with(rpe=0.1, serotonin=0.9)
-    assert sero_only.snapshot().stress_regime is not StressRegime.CRISIS
+    assert sero_only.snapshot().stress_regime is not StressRegime.CRISIS, (
+        "INV-SB2 VIOLATED: CRISIS from high serotonin alone; expected a non-CRISIS regime. "
+        "At rpe=0.1, serotonin=0.9"
+    )
 
 
 def test_regime_recovery_only_from_crisis_with_falling_free_energy() -> None:
-    """RECOVERY requires the previous regime to BE crisis and free energy below threshold."""
+    """INV-SB2 classifier path dependence: RECOVERY requires the previous regime to BE
+    crisis and free energy below threshold; the same inputs from NORMAL do not recover."""
     from core.neuro.signal_bus import StressRegime
 
     bus = _bus_with(rpe=-0.5, serotonin=0.9)
-    assert bus.snapshot().stress_regime is StressRegime.CRISIS
+    assert bus.snapshot().stress_regime is StressRegime.CRISIS, (
+        "INV-SB2 VIOLATED: fixture did not enter CRISIS; expected CRISIS at rpe=-0.5, "
+        "serotonin=0.9"
+    )
     # leave the crisis trigger, publish low free energy -> RECOVERY
     bus.publish_dopamine(rpe=0.1)
     bus.publish_ecs(free_energy=0.1)
-    assert bus.snapshot().stress_regime is StressRegime.RECOVERY
+    assert bus.snapshot().stress_regime is StressRegime.RECOVERY, (
+        "INV-SB2 VIOLATED: no RECOVERY after CRISIS with falling free energy; expected "
+        "RECOVERY. At rpe=0.1, free_energy=0.1, previous=CRISIS"
+    )
+    never_crisis = _bus_with(rpe=0.1, serotonin=0.9)
+    never_crisis.publish_ecs(free_energy=0.1)
+    assert never_crisis.snapshot().stress_regime is not StressRegime.RECOVERY, (
+        "INV-SB2 VIOLATED: RECOVERY without a preceding CRISIS; expected any other regime. "
+        "At rpe=0.1, serotonin=0.9, free_energy=0.1, previous=non-CRISIS"
+    )
 
 
 def test_coherence_scaling_pins_the_piecewise_bounds() -> None:
-    """The Kelly coherence map is piecewise: R<=floor -> min fraction, R>=ceil -> max.
+    """INV-KELLY2: the Kelly coherence map is piecewise and capped: R<=floor -> min
+    fraction, R>=ceil -> max fraction, and every R in between stays within [min, max].
 
     Pins :281/:283. With NORMAL regime (scale 1.0) and zero GABA the multiplier is exactly
     kelly_base * coherence_scale, so an inverted bound cannot reproduce both endpoints.
@@ -254,25 +341,44 @@ def test_coherence_scaling_pins_the_piecewise_bounds() -> None:
     low = NeuroSignalBus()
     low.publish_gaba(inhibition=0.0)
     low.publish_kuramoto(R=cfg.kelly_coherence_floor - 0.1)
-    assert low.compute_position_multiplier(kelly_base=1.0) == pytest.approx(
-        cfg.kelly_min_fraction, abs=1e-12
-    ), "R below the floor must clamp to the MINIMUM Kelly fraction"
+    low_multiplier = low.compute_position_multiplier(kelly_base=1.0)
+    assert low_multiplier == pytest.approx(cfg.kelly_min_fraction, abs=1e-12), (
+        f"INV-KELLY2 VIOLATED: got multiplier={low_multiplier:.6f}; R below the floor must "
+        f"clamp to the MINIMUM Kelly fraction {cfg.kelly_min_fraction}. "
+        f"At R={cfg.kelly_coherence_floor - 0.1:.4f}, kelly_base=1.0"
+    )
 
     high = NeuroSignalBus()
     high.publish_gaba(inhibition=0.0)
     high.publish_kuramoto(R=cfg.kelly_coherence_ceil + 0.1)
-    assert high.compute_position_multiplier(kelly_base=1.0) == pytest.approx(
-        cfg.kelly_max_fraction, abs=1e-12
-    ), "R above the ceiling must reach the MAXIMUM Kelly fraction"
+    high_multiplier = high.compute_position_multiplier(kelly_base=1.0)
+    assert high_multiplier == pytest.approx(cfg.kelly_max_fraction, abs=1e-12), (
+        f"INV-KELLY2 VIOLATED: got multiplier={high_multiplier:.6f}; R above the ceiling must "
+        f"reach the MAXIMUM Kelly fraction {cfg.kelly_max_fraction}. "
+        f"At R={cfg.kelly_coherence_ceil + 0.1:.4f}, kelly_base=1.0"
+    )
+
+    for r_mid in (cfg.kelly_coherence_floor, 0.5 * (cfg.kelly_coherence_floor + cfg.kelly_coherence_ceil), cfg.kelly_coherence_ceil):
+        mid = NeuroSignalBus()
+        mid.publish_gaba(inhibition=0.0)
+        mid.publish_kuramoto(R=r_mid)
+        multiplier = mid.compute_position_multiplier(kelly_base=1.0)
+        assert cfg.kelly_min_fraction <= multiplier <= cfg.kelly_max_fraction, (
+            f"INV-KELLY2 VIOLATED: multiplier={multiplier:.6f} outside the configured cap "
+            f"[{cfg.kelly_min_fraction}, {cfg.kelly_max_fraction}]; expected the applied "
+            f"fraction never to exceed the cap. At R={r_mid:.4f}, kelly_base=1.0"
+        )
 
 
 def test_history_is_capped_at_max_history() -> None:
-    """Pins :382: the ring buffer trims only when it exceeds the cap, and it does trim."""
+    """INV-SB2 (pure latch, bounded state): the ring buffer trims only when it exceeds the
+    cap, and it does trim — pins :382."""
     bus = NeuroSignalBus()
     bus._max_history = 3
     for i in range(6):
         bus.publish_dopamine(rpe=0.01 * i)
     assert len(bus._history) == 3, (
-        f"history must be capped at 3, got {len(bus._history)} — an inverted bound either "
-        f"never trims or trims while under the cap"
+        f"INV-SB2 VIOLATED: got history length={len(bus._history)}, expected the cap 3 — an "
+        f"inverted bound either never trims or trims while under the cap. At max_history=3, "
+        f"publishes=6"
     )

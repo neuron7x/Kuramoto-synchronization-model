@@ -83,6 +83,19 @@ def test_unique_claim_ids() -> None:
     assert len(ids) == len(set(ids)), "duplicate claim id"
 
 
+def test_validation_claim_type_is_accepted_without_relaxing_other_fields() -> None:
+    """Both ECP-AS validation cases have an already approved 12-file policy cap."""
+    from application.governance.commit_acceptor import ClaimType
+
+    assert ClaimType.VALIDATION.value == "validation"
+    for filename in (
+        "ecp-as-marginal-robustness-iteration-005.yaml",
+        "ecp-as-soundness-stress-iteration-004.yaml",
+    ):
+        acceptor = load_commit_acceptor(ACCEPTORS_DIR / filename)
+        assert acceptor.claim_type is ClaimType.VALIDATION
+
+
 def test_unique_acceptor_ids() -> None:
     acceptors = load_all_commit_acceptors(ACCEPTORS_DIR)
     ids = [a.id for a in acceptors]

@@ -1,0 +1,23 @@
+{
+  "conforms_to": "https://schemas.neuron7xlab.org/research/research_inference_artifact.schema.json",
+  "schema_version": "1.0.0",
+  "research_line": "ricci_microstructure",
+  "run_id": "RFC-2026-MARKET-RICCI-V1",
+  "git_sha": "0000000000000000000000000000000000000000",
+  "git_dirty": false,
+  "data_sha256": "0000000000000000000000000000000000000000000000000000000000000000",
+  "config_sha256": "0000000000000000000000000000000000000000000000000000000000000000",
+  "seed": 0,
+  "timestamp_utc": "1970-01-01T00:00:00Z",
+  "input_window_sec": 30,
+  "score": 0,
+  "uncertainty": 0,
+  "decision": "OBSERVE",
+  "claim_tier": "HYPOTHESIS",
+  "falsification_status": "NOT_RUN",
+  "artifact_role": "placeholder",
+  "score_source": "placeholder",
+  "method_version": "ricci-public-zero-evidence-fallback.v1",
+  "replay_command": "python tools/research/validate_ricci_artifact_schema.py --semantic --artifact artifacts/runs/ricci_microstructure_v1/example_artifact.json",
+  "baseline": "none:not-measured"
+}

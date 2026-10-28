@@ -1,0 +1,557 @@
+{
+  "components": [
+    {
+      "expected_outcome": "pass",
+      "id": "controlled_component_test_router",
+      "isolation_level": "component",
+      "max_runtime_seconds": 120,
+      "note": "The router verifies itself first on any change to its own planner, CLI, workflow or matrix.",
+      "patterns": [
+        "tools/testing/component_test_planner.py",
+        "tools/testing/select_component_tests.py",
+        ".github/workflows/component-test-router.yml",
+        "data/testing/component_test_matrix.json"
+      ],
+      "selectors": [
+        "tests/testing/test_select_component_tests.py"
+      ]
+    },
+    {
+      "expected_outcome": "pass",
+      "id": "stuart_landau_runtime",
+      "isolation_level": "component",
+      "max_runtime_seconds": 300,
+      "note": "Stuart-Landau explosive-synchronization runtime and its rolling out-of-sample proximity contract.",
+      "patterns": [
+        "core/physics/stuart_landau_es.py"
+      ],
+      "selectors": [
+        "tests/unit/physics/test_T2b_stuart_landau_es.py",
+        "tests/benchmarks/test_rolling_es_proximity_oos_contract.py"
+      ]
+    },
+    {
+      "expected_outcome": "pass",
+      "id": "dependency_operational_determinism",
+      "isolation_level": "component",
+      "max_runtime_seconds": 120,
+      "note": "Toolchain setup and hash-locked dependency determinism.",
+      "patterns": [
+        ".github/actions/setup-geosync/action.yml",
+        "requirements.lock",
+        "requirements-dev.lock",
+        "requirements-scan.lock",
+        "constraints/security.txt"
+      ],
+      "selectors": [
+        "tests/deps/test_operational_dependency_determinism.py",
+        "tests/ci/test_setup_geosync_toolchain.py"
+      ]
+    },
+    {
+      "expected_outcome": "pass",
+      "id": "physics_laws_core",
+      "isolation_level": "component",
+      "max_runtime_seconds": 600,
+      "note": "Every core/physics module except stuart_landau_es.py (which has its own component) routes to the physics witness suites; new physics modules must be added here explicitly (fail-closed required surface).",
+      "patterns": [
+        "core/physics/anchored_substrate_gate.py",
+        "core/physics/arrow_of_time.py",
+        "core/physics/calibration.py",
+        "core/physics/causality.py",
+        "core/physics/cognitive_core.py",
+        "core/physics/conservation.py",
+        "core/physics/constants.py",
+        "core/physics/cosmological_compute_bound.py",
+        "core/physics/coulomb.py",
+        "core/physics/determinism_kit.py",
+        "core/physics/diffusion_predictor.py",
+        "core/physics/engine.py",
+        "core/physics/explosive_sync.py",
+        "core/physics/falsification.py",
+        "core/physics/forman_ricci.py",
+        "core/physics/free_energy_trading_gate.py",
+        "core/physics/free_energy_variational.py",
+        "core/physics/governance.py",
+        "core/physics/gravitational_coupling.py",
+        "core/physics/gravity.py",
+        "core/physics/higher_order_kuramoto.py",
+        "core/physics/jacobson_observer_coherence.py",
+        "core/physics/landauer.py",
+        "core/physics/liquidity_coupling.py",
+        "core/physics/lyapunov_exponent.py",
+        "core/physics/lyapunov_spectrum.py",
+        "core/physics/maxwell.py",
+        "core/physics/metric_consistency.py",
+        "core/physics/newton.py",
+        "core/physics/newtonian_dynamics.py",
+        "core/physics/observer_bandwidth.py",
+        "core/physics/portfolio_conservation.py",
+        "core/physics/precision.py",
+        "core/physics/predictability_horizon.py",
+        "core/physics/relativity.py",
+        "core/physics/reversible_gate.py",
+        "core/physics/ricci_kuramoto.py",
+        "core/physics/simulation_falsification.py",
+        "core/physics/stochastic_thermodynamics.py",
+        "core/physics/thermodynamic_budget.py",
+        "core/physics/thermodynamic_risk.py",
+        "core/physics/thermodynamics.py",
+        "core/physics/tsallis_gate.py",
+        "core/physics/uncertainty.py",
+        "core/physics/wave_propagation.py",
+        "core/physics/witness_protocol.py"
+      ],
+      "selectors": [
+        "tests/unit/physics",
+        "tests/physics"
+      ]
+    },
+    {
+      "expected_outcome": "pass",
+      "id": "kuramoto_core",
+      "isolation_level": "component",
+      "max_runtime_seconds": 600,
+      "note": "Kuramoto engines, calibration and sync-onset boundary (INV-K*, INV-KR*, INV-CAL*).",
+      "patterns": [
+        "core/kuramoto/*"
+      ],
+      "selectors": [
+        "tests/unit/kuramoto",
+        "tests/unit/physics/test_T1_kuramoto_ricci_boundary.py",
+        "tests/unit/physics/test_T3_lyapunov_calibration.py",
+        "tests/unit/physics/test_T9_kuramoto_transitions.py"
+      ]
+    },
+    {
+      "expected_outcome": "pass",
+      "id": "cross_asset_kuramoto_core",
+      "isolation_level": "component",
+      "max_runtime_seconds": 300,
+      "note": "Cross-asset Kuramoto coupling.",
+      "patterns": [
+        "core/cross_asset_kuramoto/*"
+      ],
+      "selectors": [
+        "tests/core/cross_asset_kuramoto"
+      ]
+    },
+    {
+      "expected_outcome": "pass",
+      "id": "neuro_core",
+      "isolation_level": "component",
+      "max_runtime_seconds": 600,
+      "note": "Neuromodulation stack: serotonin, dopamine, GABA, signal bus, cryptobiosis (INV-5HT*, INV-DA*, INV-GABA*, INV-SB*, INV-CB*).",
+      "patterns": [
+        "core/neuro/*"
+      ],
+      "selectors": [
+        "tests/core/neuro",
+        "tests/unit/neuro",
+        "tests/unit/physics/test_T11_dopamine_algebraic.py",
+        "tests/unit/physics/test_T12_serotonin_stability.py",
+        "tests/unit/physics/test_T16_signalbus_dag.py"
+      ]
+    },
+    {
+      "expected_outcome": "pass",
+      "id": "dro_ara_core",
+      "isolation_level": "component",
+      "max_runtime_seconds": 300,
+      "note": "DRO-ARA regime observer (INV-DRO*).",
+      "patterns": [
+        "core/dro_ara/*"
+      ],
+      "selectors": [
+        "tests/core/dro_ara"
+      ]
+    },
+    {
+      "expected_outcome": "pass",
+      "id": "indicators_core",
+      "isolation_level": "component",
+      "max_runtime_seconds": 600,
+      "note": "Indicator contracts (abstraction, aggregation, normalization, value-target executable gates).",
+      "patterns": [
+        "core/indicators/*"
+      ],
+      "selectors": [
+        "tests/core/indicators",
+        "tests/unit/indicators"
+      ]
+    },
+    {
+      "expected_outcome": "pass",
+      "id": "data_core",
+      "isolation_level": "component",
+      "max_runtime_seconds": 600,
+      "note": "Data ingestion, quality and versioning.",
+      "patterns": [
+        "core/data/*"
+      ],
+      "selectors": [
+        "tests/core/data",
+        "tests/unit/data"
+      ]
+    },
+    {
+      "expected_outcome": "pass",
+      "id": "agent_core",
+      "isolation_level": "component",
+      "max_runtime_seconds": 600,
+      "note": "Agent runtime.",
+      "patterns": [
+        "core/agent/*"
+      ],
+      "selectors": [
+        "tests/core/agent",
+        "tests/unit/agent"
+      ]
+    },
+    {
+      "expected_outcome": "pass",
+      "id": "altdata_core",
+      "isolation_level": "component",
+      "max_runtime_seconds": 300,
+      "note": "Alternative data adapters.",
+      "patterns": [
+        "core/altdata/*"
+      ],
+      "selectors": [
+        "tests/unit/altdata"
+      ]
+    },
+    {
+      "expected_outcome": "pass",
+      "id": "architecture_integrator_core",
+      "isolation_level": "component",
+      "max_runtime_seconds": 300,
+      "note": "Architecture integrator.",
+      "patterns": [
+        "core/architecture_integrator/*"
+      ],
+      "selectors": [
+        "tests/core/architecture_integrator",
+        "tests/unit/architecture_integrator"
+      ]
+    },
+    {
+      "expected_outcome": "pass",
+      "id": "compliance_core",
+      "isolation_level": "component",
+      "max_runtime_seconds": 300,
+      "note": "Compliance checks.",
+      "patterns": [
+        "core/compliance/*"
+      ],
+      "selectors": [
+        "tests/unit/compliance"
+      ]
+    },
+    {
+      "expected_outcome": "pass",
+      "id": "config_core",
+      "isolation_level": "component",
+      "max_runtime_seconds": 300,
+      "note": "Configuration loading and validation.",
+      "patterns": [
+        "core/config/*"
+      ],
+      "selectors": [
+        "tests/unit/config"
+      ]
+    },
+    {
+      "expected_outcome": "pass",
+      "id": "events_core",
+      "isolation_level": "component",
+      "max_runtime_seconds": 300,
+      "note": "Event primitives.",
+      "patterns": [
+        "core/events/*"
+      ],
+      "selectors": [
+        "tests/unit/events"
+      ]
+    },
+    {
+      "expected_outcome": "pass",
+      "id": "experiments_core",
+      "isolation_level": "component",
+      "max_runtime_seconds": 300,
+      "note": "Experiment harness.",
+      "patterns": [
+        "core/experiments/*"
+      ],
+      "selectors": [
+        "tests/unit/experiments"
+      ]
+    },
+    {
+      "expected_outcome": "pass",
+      "id": "features_core",
+      "isolation_level": "component",
+      "max_runtime_seconds": 300,
+      "note": "Feature transformers (BaseFeature/BaseBlock).",
+      "patterns": [
+        "core/features/*"
+      ],
+      "selectors": [
+        "tests/features"
+      ]
+    },
+    {
+      "expected_outcome": "pass",
+      "id": "idempotency_core",
+      "isolation_level": "component",
+      "max_runtime_seconds": 300,
+      "note": "Idempotency keys (INV-OMS2).",
+      "patterns": [
+        "core/idempotency/*"
+      ],
+      "selectors": [
+        "tests/unit/idempotency"
+      ]
+    },
+    {
+      "expected_outcome": "pass",
+      "id": "integration_core",
+      "isolation_level": "component",
+      "max_runtime_seconds": 600,
+      "note": "Integration surfaces.",
+      "patterns": [
+        "core/integration/*"
+      ],
+      "selectors": [
+        "tests/unit/integration"
+      ]
+    },
+    {
+      "expected_outcome": "pass",
+      "id": "messaging_core",
+      "isolation_level": "component",
+      "max_runtime_seconds": 300,
+      "note": "Messaging.",
+      "patterns": [
+        "core/messaging/*"
+      ],
+      "selectors": [
+        "tests/core/messaging",
+        "tests/unit/messaging"
+      ]
+    },
+    {
+      "expected_outcome": "pass",
+      "id": "metrics_core",
+      "isolation_level": "component",
+      "max_runtime_seconds": 300,
+      "note": "Metrics.",
+      "patterns": [
+        "core/metrics/*"
+      ],
+      "selectors": [
+        "tests/unit/metrics"
+      ]
+    },
+    {
+      "expected_outcome": "pass",
+      "id": "ml_core",
+      "isolation_level": "component",
+      "max_runtime_seconds": 300,
+      "note": "ML utilities.",
+      "patterns": [
+        "core/ml/*"
+      ],
+      "selectors": [
+        "tests/unit/ml"
+      ]
+    },
+    {
+      "expected_outcome": "pass",
+      "id": "orchestrator_core",
+      "isolation_level": "component",
+      "max_runtime_seconds": 300,
+      "note": "Orchestrator.",
+      "patterns": [
+        "core/orchestrator/*"
+      ],
+      "selectors": [
+        "tests/core/orchestrator"
+      ]
+    },
+    {
+      "expected_outcome": "pass",
+      "id": "pipelines_core",
+      "isolation_level": "component",
+      "max_runtime_seconds": 300,
+      "note": "Pipelines.",
+      "patterns": [
+        "core/pipelines/*"
+      ],
+      "selectors": [
+        "tests/unit/pipelines"
+      ]
+    },
+    {
+      "expected_outcome": "pass",
+      "id": "risk_monitoring_core",
+      "isolation_level": "component",
+      "max_runtime_seconds": 300,
+      "note": "Risk monitoring.",
+      "patterns": [
+        "core/risk_monitoring/*"
+      ],
+      "selectors": [
+        "tests/core/risk_monitoring"
+      ]
+    },
+    {
+      "expected_outcome": "pass",
+      "id": "security_core",
+      "isolation_level": "component",
+      "max_runtime_seconds": 300,
+      "note": "Security primitives.",
+      "patterns": [
+        "core/security/*"
+      ],
+      "selectors": [
+        "tests/unit/security"
+      ]
+    },
+    {
+      "expected_outcome": "pass",
+      "id": "strategies_core",
+      "isolation_level": "component",
+      "max_runtime_seconds": 600,
+      "note": "Strategies.",
+      "patterns": [
+        "core/strategies/*"
+      ],
+      "selectors": [
+        "tests/core/strategies",
+        "tests/unit/strategies"
+      ]
+    },
+    {
+      "expected_outcome": "pass",
+      "id": "tracing_core",
+      "isolation_level": "component",
+      "max_runtime_seconds": 300,
+      "note": "Tracing.",
+      "patterns": [
+        "core/tracing/*"
+      ],
+      "selectors": [
+        "tests/unit/tracing"
+      ]
+    },
+    {
+      "expected_outcome": "pass",
+      "id": "utils_core",
+      "isolation_level": "component",
+      "max_runtime_seconds": 300,
+      "note": "Utilities.",
+      "patterns": [
+        "core/utils/*"
+      ],
+      "selectors": [
+        "tests/unit/utils"
+      ]
+    },
+    {
+      "expected_outcome": "pass",
+      "id": "validation_core",
+      "isolation_level": "component",
+      "max_runtime_seconds": 300,
+      "note": "Validation.",
+      "patterns": [
+        "core/validation/*"
+      ],
+      "selectors": [
+        "tests/core/validation",
+        "tests/unit/validation"
+      ]
+    },
+    {
+      "expected_outcome": "pass",
+      "id": "epistemic_kernel",
+      "isolation_level": "component",
+      "max_runtime_seconds": 600,
+      "note": "Epistemic control plane (ECP-AS).",
+      "patterns": [
+        "geosync/epistemic/*"
+      ],
+      "selectors": [
+        "tests/epistemic_kernel"
+      ]
+    },
+    {
+      "expected_outcome": "pass",
+      "id": "commit_acceptor_tooling",
+      "isolation_level": "component",
+      "max_runtime_seconds": 300,
+      "note": "Diff-bound commit acceptor validator and evidence runner.",
+      "patterns": [
+        "tools/commit_acceptor/*",
+        ".claude/commit_acceptor_policy.yaml"
+      ],
+      "selectors": [
+        "tests/unit/commit_acceptor"
+      ]
+    },
+    {
+      "expected_outcome": "pass",
+      "id": "ci_gate_scripts",
+      "isolation_level": "component",
+      "max_runtime_seconds": 300,
+      "note": "Ratchet and manifest gates verify their own liveness.",
+      "patterns": [
+        "scripts/ci/check_import_architecture.py",
+        "scripts/ci/check_manifest_hashes.py",
+        "scripts/ci/check_code_hygiene.py",
+        "scripts/ci/check_skip_ratchet.py",
+        "scripts/ci/emit_metric_signals.py"
+      ],
+      "selectors": [
+        "tests/scripts/test_check_import_architecture.py",
+        "tests/ci/test_manifest_hashes.py",
+        "tests/ci/test_ratchets_enforced.py",
+        "tests/ci/test_emit_metric_signals.py"
+      ]
+    },
+    {
+      "expected_outcome": "pass",
+      "id": "governance_tooling_coverage",
+      "isolation_level": "component",
+      "max_runtime_seconds": 120,
+      "note": "Run the governance tooling coverage contract when this profile or its test changes; keep product release coverage separate.",
+      "patterns": [
+        "configs/quality/governance_tools.coveragerc",
+        "tests/tools/test_governance_tooling_coverage_profile.py"
+      ],
+      "selectors": [
+        "tests/tools/test_governance_tooling_coverage_profile.py"
+      ]
+    }
+  ],
+  "decision_rule": {
+    "controlled_input": "changed repository path",
+    "expected_output": "deterministic pytest selector plan",
+    "fail_closed_on_invalid_matrix": true,
+    "fail_closed_on_unmapped_required_surface": true
+  },
+  "description": "Maps changed repository paths to the deterministic pytest selectors that must pass for that component. core/* is a required surface: a core change with no route is blocked (unmapped_required_surface), never silently skipped. Subpackages of core/ without a test directory (accelerators, architecture, engine, io, maintenance, phase, reporting, top-level modules) are deliberately unmapped and therefore blocked until a route exists. Patterns use fnmatch semantics ('*' crosses '/').",
+  "required_mapping_patterns": [
+    "core/*"
+  ],
+  "router_policy": {
+    "default_max_run_selectors": 8,
+    "priority_component_ids": [
+      "controlled_component_test_router"
+    ],
+    "python_executable_env": "COMPONENT_ROUTER_PYTHON"
+  },
+  "schema": "geosync.component_test_matrix.v1",
+  "status": "normative",
+  "title": "Controlled component-test routing matrix"
+}

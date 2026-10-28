@@ -1,0 +1,61 @@
+id: alembic-application-logging-20261027
+status: ACTIVE
+claim_type: correctness
+promise: >-
+  In-process Alembic upgrade and downgrade commands do not disable existing
+  application loggers, so subsequent server errors remain observable with
+  their existing logging behavior.
+diff_scope:
+  changed_files:
+    - path: ".claude/commit_acceptors/alembic-application-logging-20261027.yaml"
+    - path: "migrations/alembic/env.py"
+    - path: "tests/integration/test_database_migrations.py"
+  forbidden_paths:
+    - ".claude/physics/"
+    - "research/"
+    - "data/"
+    - "reports/"
+    - "migrations/alembic/versions/"
+    - "application/api/middleware/prometheus.py"
+required_python_symbols:
+  - "migrations/alembic/env.py::run_migrations_online"
+  - "tests/integration/test_database_migrations.py::test_migrations_preserve_application_error_logging"
+expected_signal: >-
+  Real SQLite upgrade and downgrade operations preserve emitted application
+  ERROR records; migration integrity tests and the unchanged Prometheus
+  middleware tests pass in the same pytest session, including 5xx traceback
+  and 4xx informational logging behavior.
+measurement_command: >-
+  python -m pytest tests/integration/test_database_migrations.py
+  tests/unit/application/api/middleware/test_prometheus_middleware.py
+  -q --override-ini addopts=''
+signal_artifact: "tmp/alembic_application_logging_20261027.log"
+falsifier:
+  command: |-
+    python - <<'PY'
+    import subprocess
+    import sys
+    result = subprocess.run([
+        sys.executable, "-m", "pytest",
+        "tests/integration/test_database_migrations.py::test_migrations_preserve_application_error_logging",
+        "-q", "--override-ini", "addopts=",
+    ], check=False)
+    raise SystemExit(1 if result.returncode == 0 else 0 if result.returncode == 1 else result.returncode)
+    PY
+  description: >-
+    Runs real migrations and attempts to emit an application ERROR after
+    each command. A failed behavioral assertion returns 0 and falsifies
+    the promise; successful delivery returns nonzero. The default
+    fileConfig behavior was observed to fail this test with empty output.
+rollback_command: >-
+  git restore --source=77f4771ddb515f41de5e580a219cf5f2eec7f851 --
+  migrations/alembic/env.py tests/integration/test_database_migrations.py &&
+  rm -f .claude/commit_acceptors/alembic-application-logging-20261027.yaml
+rollback_verification_command: >-
+  git diff --exit-code 77f4771ddb515f41de5e580a219cf5f2eec7f851 --
+  migrations/alembic/env.py tests/integration/test_database_migrations.py &&
+  test ! -e .claude/commit_acceptors/alembic-application-logging-20261027.yaml
+memory_update_type: append
+ledger_path: ".claude/commit_acceptors/alembic-application-logging-20261027.yaml"
+report_path: ".claude/commit_acceptors/alembic-application-logging-20261027.yaml"
+evidence: []

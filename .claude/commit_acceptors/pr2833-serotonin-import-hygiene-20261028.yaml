@@ -1,0 +1,59 @@
+id: pr2833-serotonin-import-hygiene-20261028
+status: ACTIVE
+claim_type: correctness
+promise: >-
+  Optional certification import preloads still execute in order, tolerate
+  absent optional modules and propagate unexpected runtime defects, while
+  removing two stale lint suppression directives without moving the frozen
+  architecture-debt budget from 338.
+diff_scope:
+  changed_files:
+    - path: ".claude/commit_acceptors/pr2833-serotonin-import-hygiene-20261028.yaml"
+    - path: "docs/ci/pr2833_exact_source_recovery.md"
+    - path: "scripts/serotonin_certify.py"
+    - path: "tests/ci/test_serotonin_certify_bootstrap.py"
+  forbidden_paths:
+    - "research/"
+    - "results/"
+    - "tools/debt_budget.json"
+    - "tools/architecture_debt_inference.py"
+    - ".claude/physics/"
+required_python_symbols:
+  - "scripts/serotonin_certify.py::main"
+  - "tests/ci/test_serotonin_certify_bootstrap.py::test_optional_preloads_are_executed_in_order"
+  - "tests/ci/test_serotonin_certify_bootstrap.py::test_missing_optional_imports_do_not_block_following_preloads"
+  - "tests/ci/test_serotonin_certify_bootstrap.py::test_unexpected_import_failure_is_not_swallowed"
+expected_signal: >-
+  Three bootstrap controls pass, the real certification CLI remains
+  importable, architecture-debt inference stays at or below the unchanged
+  budget, and root manifest verifies against all tracked source bytes.
+measurement_command: >-
+  python -m pytest -q --override-ini addopts=''
+  tests/ci/test_serotonin_certify_bootstrap.py
+  tests/ci/test_architecture_debt_inference.py &&
+  python tools/architecture_debt_inference.py --check tools/debt_budget.json &&
+  python scripts/ci/check_manifest_hashes.py
+signal_artifact: "tmp/pr2833_serotonin_bootstrap_20261028.log"
+falsifier:
+  command: >-
+    bash -c 'python -m pytest -q --override-ini addopts=""
+    tests/ci/test_serotonin_certify_bootstrap.py;
+    rc=$?; case "$rc" in 0) exit 1;; 1) exit 0;; *) exit "$rc";; esac'
+  description: >-
+    Exit zero means import order, absent-dependency handling, or unexpected
+    error propagation was falsified. Passing controls return one; pytest
+    infrastructure errors propagate unchanged.
+rollback_command: >-
+  bash -c 'git restore --source=ab31b1346535f15cb0007af95a6032cc946540dd --worktree --
+  scripts/serotonin_certify.py docs/ci/pr2833_exact_source_recovery.md &&
+  rm -f -- tests/ci/test_serotonin_certify_bootstrap.py .claude/commit_acceptors/pr2833-serotonin-import-hygiene-20261028.yaml &&
+  python scripts/ci/generate_manifest.py --allow-dirty'
+rollback_verification_command: >-
+  bash -c 'git diff --exit-code ab31b1346535f15cb0007af95a6032cc946540dd -- scripts/serotonin_certify.py docs/ci/pr2833_exact_source_recovery.md &&
+  test ! -e tests/ci/test_serotonin_certify_bootstrap.py &&
+  test ! -e .claude/commit_acceptors/pr2833-serotonin-import-hygiene-20261028.yaml &&
+  python scripts/ci/check_manifest_hashes.py'
+memory_update_type: append
+ledger_path: ".claude/commit_acceptors/pr2833-serotonin-import-hygiene-20261028.yaml"
+report_path: "docs/ci/pr2833_exact_source_recovery.md"
+evidence: []

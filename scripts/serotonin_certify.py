@@ -4,6 +4,7 @@
 from __future__ import annotations
 
 import argparse
+import importlib
 import os
 import subprocess
 import sys
@@ -16,12 +17,12 @@ import pandas as pd
 REPO_ROOT = Path(__file__).resolve().parents[1]
 sys.path.insert(0, str(REPO_ROOT))
 try:
-    import sitecustomize  # type: ignore  # noqa: F401
+    importlib.import_module("sitecustomize")
 except ImportError:
     pass
 # Preload legacy observability shim to avoid circular imports during certification entrypoint
 try:
-    import core.neuro.serotonin.observability  # type: ignore  # noqa: F401
+    importlib.import_module("core.neuro.serotonin.observability")
 except ImportError:
     pass
 

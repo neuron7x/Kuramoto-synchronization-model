@@ -93,7 +93,7 @@ jobs:
         env:
           PYTHONUTF8: '1'
           PYTHONIOENCODING: 'utf-8'
-        run: .venv/bin/pytest tests/ci/test_py_matrix.py -q
+        run: .venv/bin/python -m pytest tests/ci/test_py_matrix.py -q
 
   # ------------------------------------------------------------------ #
   # LIVE matrix: build / import / full suite on BOTH declared legs.
@@ -156,7 +156,7 @@ jobs:
           set -euo pipefail
           # Serial full suite — an enforcement gate must COMPLETE. See
           # main-validation.yml for the parallelism / timeout rationale.
-          .venv/bin/pytest tests/ -m "not nightly and not flaky" -q
+          .venv/bin/python -m pytest tests/ -m "not nightly and not flaky" -q
 
       - name: Upload live env descriptor
         if: always()

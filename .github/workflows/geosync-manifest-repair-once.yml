@@ -1,0 +1,147 @@
+# One-shot, branch-scoped maintenance of independently verified manifests.
+# Refresh after hard-fail real-data witnesses; no evidence or CI gate relaxed.
+# This workflow runs only when THIS file is added/edited on the repair branch.
+# It cannot run on main or be triggered by its own bot push.
+name: GeoSync Controlled Manifest Repair
+on:
+  push:
+    branches:
+      - chore/main-gate-debt-paydown-20261027
+    paths:
+      - .github/workflows/geosync-manifest-repair-once.yml
+permissions:
+  contents: read
+concurrency:
+  group: geosync-manifest-repair
+  cancel-in-progress: false
+jobs:
+  regenerate:
+    permissions:
+      contents: write
+    if: github.repository == 'neuron7x/Kuramoto-synchronization-model'
+    runs-on: ubuntu-latest
+    timeout-minutes: 15
+    steps:
+      - name: Checkout exact triggering SHA with full history
+        uses: actions/checkout@9c091bb21b7c1c1d1991bb908d89e4e9dddfe3e0
+        with:
+          fetch-depth: 0
+          persist-credentials: true
+      - name: Setup Python 3.12
+        uses: actions/setup-python@ece7cb06caefa5fff74198d8649806c4678c61a1
+        with:
+          python-version: '3.12'
+      - name: Format affected Python audit/test modules
+        shell: bash
+        run: |
+          set -euo pipefail
+          python -m pip install --disable-pip-version-check black==26.3.1 jsonschema==4.26.0 pyyaml==6.0.3
+          python -m black \
+            application/governance/commit_acceptor.py \
+            tests/governance/test_typed_models.py \
+            scripts/ci/check_links.py \
+            tools/architecture_debt_inference.py \
+            tests/ci/test_architecture_debt_inference.py \
+            tests/scripts/test_check_instrument_evidence_chain.py \
+            scripts/ci/check_population_frame.py \
+            tests/ci/test_population_frame.py \
+            tests/ci/test_env_preflight.py \
+            tools/generate_golden_lineage.py \
+            tests/ci/test_data_lineage.py \
+            scripts/ci/check_secret_boundary.py \
+            tests/ci/test_secret_boundary.py \
+            tests/conftest.py \
+            tests/ci/test_audit_log_isolation.py \
+            tests/ci/test_archived_gitleaks_redaction.py \
+            scripts/ci/check_ci_permissions.py
+      - name: Regenerate only declared deterministic manifests
+        shell: bash
+        run: |
+          set -euo pipefail
+          test "$(git branch --show-current)" = "" || test "$(git branch --show-current)" = "chore/main-gate-debt-paydown-20261027"
+          test "$(git rev-parse HEAD)" = "$GITHUB_SHA"
+          # These files are regenerated solely from a real, hash-pinned MIT CSV.
+          python tools/generate_golden_lineage.py --write
+          git add -- data/lineage/
+          python tools/generate_golden_lineage.py
+          python scripts/ci/check_data_lineage.py
+          python scripts/ci/check_population_frame.py
+          # Strict contract-only evidence: no result or release promotion.
+          python scripts/ci/check_research_standard_contract.py
+          python scripts/ci/check_inference_transformer_contract.py
+          python tools/governance/check_company_value_functions.py --self-test
+          python - <<'PY'
+          import json
+          import re
+          from pathlib import Path
+          from jsonschema import Draft202012Validator
+
+          for stem in ("cognitive_operations_kernel", "integration_systems_architect_kernel"):
+              artifact = json.loads((Path("data/governance") / f"{stem}_v1_0.json").read_text())
+              schema = json.loads((Path("schemas/governance") / f"{stem}.schema.json").read_text())
+              doc = (Path("docs/prompts") / f"{stem}_v1_0.md").read_text()
+              errors = list(Draft202012Validator(schema).iter_errors(artifact))
+              assert errors == [], [e.message for e in errors]
+              ids = re.findall(r"^### (FUNCTION_\d\d_[A-Z_]+)$", doc, re.M)
+              assert [x["id"] for x in artifact["functions"]] == ids, stem
+              assert len(ids) in (10, 18), stem
+              assert "PARTIAL" in artifact["final_gate"]["weakest_link_rule"], stem
+              print("Governance policy/schema/source-trace PASS:", stem)
+          PY
+          python scripts/ci/check_artifact_freshness.py --write
+          python scripts/ci/generate_manifest.py --allow-dirty
+          python scripts/ci/check_root_manifest.py
+          # Release receipt integrity and release readiness are distinct:
+          # regeneration may pass, while missing mandatory receipts remain NOT_READY.
+          python -m pip install --disable-pip-version-check jsonschema==4.26.0
+          python scripts/ci/check_release_evidence.py --emit
+          python - <<'PY'
+          from scripts.ci import check_release_evidence as gate
+          from pathlib import Path
+          import json
+          bundle = json.loads(Path("artifacts/releases/1.1.0/release_evidence.json").read_text())
+          assert gate.validate_schema(bundle) == []
+          assert gate.check_digests(bundle) == []
+          assert gate.check_deterministic() == []
+          assert gate.check_sha256sums(bundle) == []
+          verdict, missing = gate.release_readiness(bundle)
+          assert verdict == "NOT_READY"
+          assert set(missing) >= {"coverage", "mutation", "sbom", "tests", "wheel"}
+          print("Release evidence bytes proven, readiness truthfully NOT_READY")
+          PY
+          python scripts/ci/check_release_evidence.py --emit
+          python - <<'PY'
+          import json
+          import sys
+          sys.path.insert(0, "scripts/ci")
+          import check_release_evidence as gate
+          bundle = json.loads(gate.BUNDLE_PATH.read_text(encoding="utf-8"))
+          assert gate.validate_schema(bundle) == []
+          assert gate.check_digests(bundle, gate.ROOT) == []
+          assert gate.check_deterministic(gate.ROOT) == []
+          assert gate.check_sha256sums(bundle, gate.ROOT) == []
+          status, missing = gate.release_readiness(bundle)
+          print("REL-011 canonical release evidence:", status, "missing:", missing)
+          PY
+          python -m json.tool artifacts/manifest.json >/dev/null
+          python - <<'PY'
+          import subprocess
+          allowed = {"scripts/ci/check_links.py", "tools/architecture_debt_inference.py", "tests/ci/test_architecture_debt_inference.py", "tests/scripts/test_check_instrument_evidence_chain.py", "scripts/ci/check_population_frame.py", "tests/ci/test_population_frame.py", "tests/ci/test_env_preflight.py", "tools/generate_golden_lineage.py", "tests/ci/test_data_lineage.py", "MANIFEST.sha256", "artifacts/manifest.json", "data/lineage/raw.golden-macd-baseline-v1.json", "data/lineage/validated.golden-macd-baseline-v1.json", "data/lineage/derived.golden-macd.canonical-line-digest.v1.json", "data/lineage/graph.json", "scripts/ci/check_secret_boundary.py", "tests/ci/test_secret_boundary.py", "tests/conftest.py", "tests/ci/test_audit_log_isolation.py", "tests/ci/test_archived_gitleaks_redaction.py", "scripts/ci/check_ci_permissions.py", "artifacts/releases/1.1.0/release_evidence.json", "artifacts/releases/1.1.0/SHA256SUMS", "application/governance/commit_acceptor.py", "tests/governance/test_typed_models.py"}
+          changed = set(subprocess.check_output(["git", "diff", "--name-only", "HEAD"], text=True).splitlines())
+          assert changed <= allowed, f"Unexpected generator output: {changed - allowed}"
+          print("Controlled regeneration diff:", sorted(changed))
+          PY
+      - name: Commit exact manifest outputs to this PR branch
+        shell: bash
+        run: |
+          set -euo pipefail
+          git add -- MANIFEST.sha256 artifacts/manifest.json artifacts/releases/1.1.0/release_evidence.json artifacts/releases/1.1.0/SHA256SUMS application/governance/commit_acceptor.py tests/governance/test_typed_models.py scripts/ci/check_links.py tools/architecture_debt_inference.py tests/ci/test_architecture_debt_inference.py tests/scripts/test_check_instrument_evidence_chain.py scripts/ci/check_population_frame.py tests/ci/test_population_frame.py tests/ci/test_env_preflight.py tools/generate_golden_lineage.py tests/ci/test_data_lineage.py data/lineage/ scripts/ci/check_secret_boundary.py tests/ci/test_secret_boundary.py tests/conftest.py tests/ci/test_audit_log_isolation.py tests/ci/test_archived_gitleaks_redaction.py scripts/ci/check_ci_permissions.py artifacts/releases/1.1.0/release_evidence.json artifacts/releases/1.1.0/SHA256SUMS
+          if git diff --cached --quiet; then
+            echo "Both manifests already current; no commit needed."
+            exit 0
+          fi
+          git diff --cached --check
+          git config user.name "github-actions[bot]"
+          git config user.email "41898282+github-actions[bot]@users.noreply.github.com"
+          git commit -m "chore(ci): canonical Python formatting and source-bound manifest refresh"
+          git push origin HEAD:refs/heads/chore/main-gate-debt-paydown-20261027

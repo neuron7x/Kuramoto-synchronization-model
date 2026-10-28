@@ -64,4 +64,4 @@ ledger_path: ".claude/commit_acceptors/value-target-contract-executable-gate.yam
 report_path: ".claude/commit_acceptors/value-target-contract-executable-gate.yaml"
 evidence:
   - path: "tests/unit/indicators/test_value_target_contract.py"
-    sha256: "04454758888e0ab1c1300a44f05162dddd1ef2cb0ad2fe7792d42dc66858d619"  # pragma: allowlist secret
+    sha256: "35961b2e9dd6866ed896ee8e37e837e94963f4d6fba2f37435dc71a9b488a8f4"  # pragma: allowlist secret

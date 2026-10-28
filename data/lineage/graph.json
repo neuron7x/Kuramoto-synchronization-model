@@ -1,0 +1,12 @@
+{
+  "claim_boundary": "synthetic_regression_fixture_only_not_market_measurement",
+  "evidence_class": "SIMULATION",
+  "lineage_version": "data_lineage.v1",
+  "results": [
+    {
+      "content_address": "61081d63cc307be1a766719b792042eedd2a5ac269c7a609004afbee9c0835fc",
+      "node_id": "derived.golden-macd.canonical-line-digest.v1",
+      "raw_root_digest": "e05854b33965f4d8b745f112e8f6ad481eab863036bebd3594f299131c4b9b89"
+    }
+  ]
+}

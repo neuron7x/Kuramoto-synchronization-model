@@ -1,12 +1,10 @@
 #!/usr/bin/env python3
 from __future__ import annotations
+
 import json
 from pathlib import Path
-import sys
 
 ROOT = Path(__file__).resolve().parents[3]
-if str(ROOT) not in sys.path:
-    sys.path.insert(0, str(ROOT))
 
 from geosync.epistemic.soundness_stress import load_soundness_slice, run_stress_suite  # noqa: E402
 
@@ -30,7 +28,9 @@ def main() -> int:
         raise SystemExit("lineage quorum false-block rate exceeds declared bound")
     if hidden["unsafe_promotion_rate"] <= 0.10:
         raise SystemExit("hidden-common-cause boundary probe failed to expose residual risk")
-    print(json.dumps({"optimistic": {"raw": raw, "ecp": ecp}, "hidden_ecp": hidden}, sort_keys=True))
+    print(
+        json.dumps({"optimistic": {"raw": raw, "ecp": ecp}, "hidden_ecp": hidden}, sort_keys=True)
+    )
     return 0
 
 

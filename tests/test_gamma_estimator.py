@@ -3,10 +3,14 @@
 
 from __future__ import annotations
 
+import sys
+
 import numpy as np
+import pytest
 from hypothesis import given, settings
 from hypothesis import strategies as st
 
+from geosync.estimators import gamma_estimator
 from geosync.estimators.gamma_estimator import PSDGammaEstimator
 
 
@@ -98,6 +102,78 @@ def test_validity_gate_requires_quality_and_stationarity() -> None:
     assert walk.is_valid is False, "a non-stationary estimate must never be marked valid"
 
 
+@pytest.mark.parametrize("stationary", [False, True])
+@pytest.mark.parametrize("fit_quality,quality_passes", [(0.51, False), (1.0, True)])
+def test_validity_gate_truth_table(
+    monkeypatch: pytest.MonkeyPatch,
+    stationary: bool,
+    fit_quality: float,
+    quality_passes: bool,
+) -> None:
+    """Exercise all gate inputs while retaining the real quality penalty and final gate."""
+    est = PSDGammaEstimator(min_quality=0.5)
+    monkeypatch.setattr(gamma_estimator, "_adf_stationary", lambda _x: stationary)
+    monkeypatch.setattr(est, "_fit_segment", lambda _x, _n, _f: (1.0, fit_quality))
+
+    result = est.compute(np.random.default_rng(0).standard_normal(512))
+    assert result.n_segments_used > 0, "the test must reach the final validity gate"
+    assert (result.quality >= est.min_quality) is quality_passes
+    assert result.is_stationary is stationary
+    assert result.is_valid is (
+        quality_passes and stationary
+    ), "validity requires both adequate fit quality and affirmative stationarity evidence"
+
+
+@pytest.mark.parametrize("failure", [ValueError, np.linalg.LinAlgError])
+def test_adf_failure_cannot_validate_an_estimate(
+    monkeypatch: pytest.MonkeyPatch, failure: type[Exception]
+) -> None:
+    """A failed stationarity measurement cannot approve an otherwise usable PSD fit."""
+    from statsmodels.tsa import stattools
+
+    def fail_adf(*_args: object, **_kwargs: object) -> None:
+        raise failure("stationarity unavailable")
+
+    monkeypatch.setattr(stattools, "adfuller", fail_adf)
+    result = PSDGammaEstimator().compute(np.random.default_rng(0).standard_normal(512))
+    assert result.quality >= 0.15
+    assert result.is_stationary is False
+    assert result.is_valid is False
+
+
+def test_missing_adf_dependency_cannot_validate_an_estimate(
+    monkeypatch: pytest.MonkeyPatch,
+) -> None:
+    """An unavailable optional ADF dependency must leave the estimate invalid."""
+    monkeypatch.setitem(sys.modules, "statsmodels.tsa.stattools", None)
+    result = PSDGammaEstimator().compute(np.random.default_rng(0).standard_normal(512))
+    assert result.quality >= 0.15
+    assert result.is_stationary is False
+    assert result.is_valid is False
+
+
+@pytest.mark.parametrize(
+    "p_value,expected",
+    [
+        (0.0, True),
+        (0.049, True),
+        (0.05, False),
+        (0.051, False),
+        (-0.01, False),
+        (float("nan"), False),
+        (float("inf"), False),
+    ],
+)
+def test_adf_stationarity_requires_an_admissible_p_value(
+    monkeypatch: pytest.MonkeyPatch, p_value: float, expected: bool
+) -> None:
+    """The fixed 5% ADF criterion rejects its boundary and malformed probabilities."""
+    from statsmodels.tsa import stattools
+
+    monkeypatch.setattr(stattools, "adfuller", lambda *_args, **_kwargs: (0.0, p_value))
+    assert gamma_estimator._adf_stationary(np.arange(512.0)) is expected
+
+
 def test_confidence_interval_is_not_the_degenerate_fallback_on_a_good_signal() -> None:
     """`if len(boot) < 10: return -5.0, 5.0` — the wide fallback is for TOO FEW bootstrap fits.
 
@@ -108,9 +184,9 @@ def test_confidence_interval_is_not_the_degenerate_fallback_on_a_good_signal() -
     est = PSDGammaEstimator()
     result = est.compute(np.random.default_rng(3).standard_normal(512))
 
-    assert result.ci_low > -5.0 and result.ci_high < 5.0, (
-        "a well-resolved estimate collapsed to the degenerate wide-CI fallback"
-    )
+    assert (
+        result.ci_low > -5.0 and result.ci_high < 5.0
+    ), "a well-resolved estimate collapsed to the degenerate wide-CI fallback"
     assert result.ci_low <= result.value <= result.ci_high
 
 
@@ -124,6 +200,6 @@ def test_brownian_fit_band_stays_in_the_low_frequency_scaling_region() -> None:
     """
     brownian = np.cumsum(np.random.default_rng(5).standard_normal(150))
     gamma = PSDGammaEstimator().compute(brownian).value
-    assert gamma > 1.5, (
-        f"Brownian gamma collapsed to {gamma:.3f}; the fit band left the low-frequency region"
-    )
+    assert (
+        gamma > 1.5
+    ), f"Brownian gamma collapsed to {gamma:.3f}; the fit band left the low-frequency region"

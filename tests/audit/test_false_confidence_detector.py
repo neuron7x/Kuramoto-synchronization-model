@@ -55,9 +55,10 @@ def test_live_repo_no_longer_surfaces_c1_coverage_omission(fcd: ModuleType) -> N
     """F02 closed: .coveragerc no longer hides declared source via omit."""
     report = fcd.collect(REPO_ROOT, exemption_manifest=_MISSING_MANIFEST)
     c1 = [f for f in report.findings if f.false_confidence_type == "C1"]
-    assert not c1, (
-        "C1 (.coveragerc omit-erases-declared-source) fired on live tree:\n  "
-        + "\n  ".join(f"{x.actual_evidence}" for x in c1)
+    assert (
+        not c1
+    ), "C1 (.coveragerc omit-erases-declared-source) fired on live tree:\n  " + "\n  ".join(
+        f"{x.actual_evidence}" for x in c1
     )
 
 
@@ -483,3 +484,19 @@ def test_clutter_does_not_produce_findings(fcd: ModuleType, tmp_path: Path) -> N
         f for f in report.findings if "build/" in f.evidence_path or ".claude/" in f.evidence_path
     ]
     assert offenders == [], offenders
+
+
+def test_archive_scope_does_not_hide_live_source(fcd: ModuleType, tmp_path: Path) -> None:
+    """Only the classified top-level archive is outside live-source analysis."""
+    broad = "\n".join(["try:", "    pass", "except Exception:", "    pass"] * 6)
+    paths = (
+        "archive_snapshots/frozen/legacy.py",
+        "runtime/archive_snapshots/live.py",
+        "archive_snapshots_live/live.py",
+    )
+    for relative in paths:
+        path = tmp_path / relative
+        path.parent.mkdir(parents=True, exist_ok=True)
+        path.write_text(broad, encoding="utf-8")
+    findings = fcd._detect_c10_broad_exception(tmp_path)
+    assert {f.evidence_path for f in findings} == set(paths[1:])

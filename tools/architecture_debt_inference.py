@@ -19,11 +19,14 @@ standing architectural choices, reported for visibility, never as debt.
 from __future__ import annotations
 
 import argparse
+import ast
+import io
 import json
 import re
+import tokenize
 from dataclasses import dataclass
 from pathlib import Path
-from typing import Callable, cast
+from typing import Callable, Iterator, cast
 
 ROOT = Path(__file__).resolve().parents[1]
 
@@ -32,18 +35,20 @@ UNKNOWN = "UNKNOWN"
 
 
 #: Directory names that are never repository content for debt accounting.
-#: ``.venv`` is the local virtualenv; ``.git`` holds VCS internals; nested
+#: ``.venv`` is the local virtualenv; ``.git`` holds VCS internals; frozen
+#: ``archive_snapshots`` contain superseded upstream trees, never active source;
+#: nested
 #: git worktrees / agent checkouts live under ``.claude/worktrees`` and are
 #: *other branches'* working copies, not this tree's source. Counting them
 #: double-counts the repository and makes the metric depend on which local
 #: worktrees happen to exist — so the same commit reports different debt on
 #: CI (no worktrees) than on a developer box mid-fan-out. Excluding them makes
 #: the inference deterministic and location-independent.
-_EXCLUDED_DIR_PARTS: frozenset[str] = frozenset({".venv", ".git"})
+_EXCLUDED_DIR_PARTS: frozenset[str] = frozenset({".venv", ".git", "archive_snapshots"})
 
 
 def _is_excluded(path: Path) -> bool:
-    """True if ``path`` lies in a non-source tree (venv, git, nested worktree)."""
+    """True for frozen archives, virtualenvs, VCS internals, or worktree copies."""
     parts = path.parts
     if any(part in _EXCLUDED_DIR_PARTS for part in parts):
         return True
@@ -86,14 +91,26 @@ def m_empty_evidence_ledger() -> tuple[int, int]:
     return empty, len(files)
 
 
+def _comment_tokens() -> Iterator[str]:
+    """Yield actual Python COMMENT tokens, never quoted examples or docstrings."""
+    for path in _py_files():
+        try:
+            source = path.read_text(encoding="utf-8")
+        except OSError:
+            continue
+        for token in tokenize.generate_tokens(io.StringIO(source).readline):
+            if token.type == tokenize.COMMENT:
+                yield token.string
+
+
 def m_type_ignore() -> int:
-    # Comment-form only — an inline `type: ignore` suppression, not the phrase in
-    # a docstring or string literal (this module must not match its own example).
-    return _grep_count(r"#\s*type:\s*ignore")
+    """Count real type-checker suppression directives only."""
+    return sum(bool(re.match(r"#\s*type:\s*ignore\b", text)) for text in _comment_tokens())
 
 
 def m_noqa() -> int:
-    return _grep_count(r"\bnoqa\b")
+    """Count actual lint suppression comments, not prose mentioning noqa."""
+    return sum(bool(re.match(r"#\s*noqa\b", text, re.I)) for text in _comment_tokens())
 
 
 # A skip whose reason matches one of these is an environment/availability
@@ -134,18 +151,32 @@ def m_test_skips() -> int:
 
 
 def m_test_slow() -> int:
-    rx = re.compile(r"pytest\.mark\.slow\b")
-    return sum(
-        1
-        for f in (ROOT / "tests").rglob("*.py")
-        if (ROOT / "tests").exists()
-        and not _is_excluded(f)
-        and rx.search(f.read_text(encoding="utf-8"))
-    )
+    """Count test files containing an actual pytest.mark.slow AST reference."""
+    test_root = ROOT / "tests"
+    if not test_root.exists():
+        return 0
+    count = 0
+    for path in test_root.rglob("*.py"):
+        if _is_excluded(path):
+            continue
+        tree = ast.parse(path.read_text(encoding="utf-8"), filename=str(path))
+        if any(
+            isinstance(node, ast.Attribute)
+            and node.attr == "slow"
+            and isinstance(node.value, ast.Attribute)
+            and node.value.attr == "mark"
+            and isinstance(node.value.value, ast.Name)
+            and node.value.value.id == "pytest"
+            for node in ast.walk(tree)
+        ):
+            count += 1
+    return count
 
 
 def m_todo_markers() -> int:
-    return _grep_count(r"\b(TODO|FIXME|HACK|XXX)\b")
+    """Count deferrals in comments, not documentation or test strings."""
+    pattern = re.compile(r"\b(?:TODO|FIXME|HACK|XXX)\b")
+    return sum(len(pattern.findall(text)) for text in _comment_tokens())
 
 
 def m_dual_physics_layers() -> int:

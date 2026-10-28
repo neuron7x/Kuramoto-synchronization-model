@@ -1,0 +1,44 @@
+# SHA-bound negative proof: missing history is never a green population digest.
+id: sha-bound-population-frame-20261027
+status: ACTIVE
+claim_type: governance
+promise: >-
+  The pinned GeoSync population-frame digest is reproduced against its
+  immutable sync commit on a full-history checkout. Missing git objects
+  yield FAIL rather than an unaudited positive verdict.
+diff_scope:
+  changed_files:
+    - path: ".claude/commit_acceptors/sha-bound-population-frame-20261027.yaml"
+    - path: "scripts/ci/check_population_frame.py"
+    - path: "tests/ci/test_population_frame.py"
+    - path: ".github/workflows/repo-integrity-gate.yml"
+  forbidden_paths:
+    - "trading/"
+    - "execution/"
+    - "forecast/"
+    - "core/"
+required_python_symbols: []
+expected_signal: >-
+  Digest validation passes for the pinned reachable sync commit and rejects
+  a wrong digest or an unreachable commit. All failure paths remain fail-closed.
+measurement_command: >-
+  bash -c 'python scripts/ci/check_population_frame.py &&
+  python -m pytest tests/ci/test_population_frame.py -q'
+signal_artifact: "tmp/sha_bound_population_frame_20261027.log"
+falsifier:
+  command: >-
+    bash -c 'python -m pytest
+    tests/ci/test_population_frame.py::test_wrong_digest_does_not_reproduce_is_red
+    tests/ci/test_population_frame.py::test_unavailable_pinned_commit_is_red -q'
+  description: >-
+    Either test must go red if an altered digest or missing commit is
+    inappropriately accepted as verified.
+rollback_command: >-
+  bash -c 'git revert --no-edit HEAD'
+rollback_verification_command: >-
+  bash -c 'git diff --exit-code HEAD~1 HEAD --
+  scripts/ci/check_population_frame.py tests/ci/test_population_frame.py'
+memory_update_type: append
+ledger_path: ".claude/commit_acceptors/sha-bound-population-frame-20261027.yaml"
+report_path: "docs/POPULATION_FRAME_POLICY.md"
+evidence: []
