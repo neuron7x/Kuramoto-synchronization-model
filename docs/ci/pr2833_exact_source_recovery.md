@@ -269,3 +269,30 @@ threshold changed. This patch removes the specific verified source of
 self-contamination; it is **not** evidence that the inherited Askar licensing,
 upstream Git ancestry, root debt budgets or historical release bundle gates
 are green. Validate only against terminal checks for the newly published SHA.
+
+## 2026-10-28 — historical entrypoint scope, with negative control
+
+The exact-parent [PR Gate job 122548559408](https://github.com/neuron7x/Kuramoto-synchronization-model/actions/runs/40606555621/job/122548559408)
+failed `test_single_entrypoint_guard_has_no_violations` because the live
+entrypoint scanner traversed
+`archive_snapshots/github_9e6e4792_unique/src/tradepulse/sdk/mlsdm/__main__.py`.
+That path is an imported, preserved upstream snapshot rather than an active
+executable entrypoint. Other repository gates already classify the **top-level**
+`archive_snapshots/` as historical, not live code.
+
+The scanner now excludes only entrypoints whose first repository-relative
+path segment is exactly `archive_snapshots`. It **still fails** for a
+noncanonical `__main__.py` under a nested `runtime/archive_snapshots/`
+or a similarly named `archive_snapshots_live/`, as asserted by a new
+negative control. The three canonical entrypoints, the named live legacy
+allowlist and every other discoverable entrypoint remain governed. No
+frozen source, claim tier, ancestry assertion, numerical tolerance, secret
+scanner or debt budget is changed.
+
+A synthetic isolated replay of this exact scanner branch and negative
+fixture passed (1 test). Canonical commands after commit:
+`python -m pytest -q --override-ini addopts='' tests/test_architecture_guards.py`
+and `python scripts/ci/check_root_manifest.py`.
+The synthetic result is **not** full-repository CI proof. Askar permissions,
+eight flattened-history anchor predicates, release-evidence self-consistency,
+and other actual exact-head failures remain unresolved.

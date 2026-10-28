@@ -68,5 +68,33 @@ def test_single_entrypoint_guard_has_no_violations() -> None:
     assert check_single_entrypoint(REPO_ROOT) == []
 
 
+def test_single_entrypoint_guard_archive_scope_does_not_hide_live_entrypoints(
+    tmp_path: Path,
+) -> None:
+    """Preserved top-level Git history is inert; similarly named live code is not."""
+    for rel in (
+        "geosync/cli/geosync_cli.py",
+        "cortex_service/app/__main__.py",
+        "scripts/calibrate_controllers.py",
+        "archive_snapshots/github_backup/src/tradepulse/sdk/mlsdm/__main__.py",
+    ):
+        path = tmp_path / rel
+        path.parent.mkdir(parents=True, exist_ok=True)
+        path.write_text("# fixture\n", encoding="utf-8")
+
+    assert check_single_entrypoint(tmp_path) == []
+
+    live = {
+        Path("runtime/archive_snapshots/src/__main__.py"),
+        Path("archive_snapshots_live/src/__main__.py"),
+    }
+    for rel in live:
+        path = tmp_path / rel
+        path.parent.mkdir(parents=True, exist_ok=True)
+        path.write_text("# live fixture\n", encoding="utf-8")
+
+    assert {violation.path for violation in check_single_entrypoint(tmp_path)} == live
+
+
 def test_config_single_source_guard_has_no_violations() -> None:
     assert check_config_single_source(REPO_ROOT) == []
