@@ -1,0 +1,62 @@
+id: pr2833-release-bundle-digest-binding-20261028
+status: ACTIVE
+claim_type: correctness
+promise: >-
+  Restore deterministic release-bundle integrity by recomputing the digest of
+  the exact tracked MANIFEST.sha256 and path-sorted SHA256SUMS. Preserve the
+  five missing mandatory receipts and NOT_READY verdict. Maintain all schema,
+  stale-bundle and tampered-digest negative controls and frozen research pins.
+diff_scope:
+  changed_files:
+    - path: ".claude/commit_acceptors/pr2833-release-bundle-digest-binding-20261028.yaml"
+    - path: "docs/ci/pr2833_exact_source_recovery.md"
+    - path: "artifacts/releases/1.1.0/release_evidence.json"
+    - path: "artifacts/releases/1.1.0/SHA256SUMS"
+  forbidden_paths:
+    - "research/"
+    - "manifests/research/release_provenance.v2.json"
+    - "scripts/ci/check_release_evidence.py"
+    - "schemas/release_evidence.schema.json"
+    - "tests/ci/test_release_evidence.py"
+    - "docs/TEN_AXES_BASELINE.json"
+required_python_symbols:
+  - "scripts/ci/check_release_evidence.py::build_bundle"
+  - "scripts/ci/check_release_evidence.py::build_sha256sums"
+  - "scripts/ci/check_release_evidence.py::check_digests"
+  - "tests/ci/test_release_evidence.py::test_tampered_digest_is_red"
+  - "tests/ci/test_release_evidence.py::test_mandatory_missing_forces_not_ready"
+expected_signal: >-
+  Existing release evidence schema, present-digest, deterministic regeneration
+  and SHA256SUMS tests pass, while missing mandatory receipts still fail release
+  readiness and all mutation/negative controls remain effective.
+measurement_command: >-
+  bash -c 'python -m pytest -q --override-ini addopts=""
+  tests/ci/test_release_evidence.py
+  && python scripts/ci/check_root_manifest.py'
+signal_artifact: "tmp/pr2833_release_bundle_digest_binding.log"
+falsifier:
+  command: >-
+    bash -c 'python -m pytest -q --override-ini addopts=""
+    tests/ci/test_release_evidence.py::test_tampered_digest_is_red
+    tests/ci/test_release_evidence.py::test_mandatory_missing_forces_not_ready
+    tests/ci/test_release_evidence.py::test_stale_committed_bundle_is_red
+    tests/ci/test_release_evidence.py::test_L2_extra_category_is_schema_rejected;
+    rc=$?; case "$rc" in 0) exit 1;; 1) exit 0;; *) exit "$rc";; esac'
+  description: >-
+    Exit zero falsifies this claim if negative tamper, missing-category or
+    schema controls fail; passing controls exit one; infrastructure errors
+    keep their original nonzero codes.
+rollback_command: >-
+  bash -c 'git restore --source=bfe551a782e3d0fff4b05eeedb4dc90a6322b125
+  --worktree -- artifacts/releases/1.1.0/release_evidence.json artifacts/releases/1.1.0/SHA256SUMS docs/ci/pr2833_exact_source_recovery.md
+  && git rm -f -- .claude/commit_acceptors/pr2833-release-bundle-digest-binding-20261028.yaml
+  && python scripts/ci/generate_manifest.py --allow-dirty
+  && python scripts/ci/check_root_manifest.py'
+rollback_verification_command: >-
+  bash -c 'git diff --exit-code bfe551a782e3d0fff4b05eeedb4dc90a6322b125 -- artifacts/releases/1.1.0/release_evidence.json artifacts/releases/1.1.0/SHA256SUMS docs/ci/pr2833_exact_source_recovery.md
+  && test ! -e .claude/commit_acceptors/pr2833-release-bundle-digest-binding-20261028.yaml
+  && python scripts/ci/check_root_manifest.py'
+memory_update_type: append
+ledger_path: ".claude/commit_acceptors/pr2833-release-bundle-digest-binding-20261028.yaml"
+report_path: "docs/ci/pr2833_exact_source_recovery.md"
+evidence: []
