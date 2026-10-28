@@ -323,3 +323,11 @@ hash has been repinned. Replay:
 `python -m pytest -q --override-ini addopts='' tests/ci/test_optional_import_probes.py`,
 `python -m pytest -q --override-ini addopts='' tests/ci/test_architecture_debt_inference.py`,
 `python scripts/ci/check_root_manifest.py`.
+
+## 2026-10-28 — P0-5 numerical clamp registry: source-preserving line-shift repair
+
+At PR parent `ec77a95a34a3f925e7cc7831e4b4744494a98a63`, [fast-shard job 122572158664](https://github.com/neuron7x/Kuramoto-synchronization-model/actions/runs/40613663861/job/122572158664) reported **11 SAFE_LINE_SHIFT groups, 16 existing sites, 0 NEW_CLAMP, 0 REMOVED_CLAMP** in `test_real_tree_is_in_sync`. Each newly reported line was checked against the current exact-head source text and matching clamp operation. Only registry `path:line` addresses changed; the original count of registrations per path and shape, eight clamp classes, declared reasons, physics implementation, numerical thresholds, source and scanner scope remain intact.
+
+Affected sources: `core/indicators/hurst.py` (1), `core/indicators/kuramoto.py` (6), `core/physics/lyapunov_exponent.py` (3), `core/physics/lyapunov_spectrum.py` (4) and `core/physics/wave_propagation.py` (2). The existing hard-void tests for NEW_CLAMP, count change, unregistered clamps and stale registrations remain in force; no newly introduced clamp is authorized by a line shift.
+
+Replay on the new commit: `python tools/physics/check_silent_clamps.py --json && python tools/physics/predict_clamp_voids.py && python -m pytest -q --override-ini addopts='' tests/tools/test_predict_clamp_voids.py tests/tools/test_numerical_policy.py`. The scoped acceptor `.claude/commit_acceptors/pr2833-clamp-site-line-shifts-20261028.yaml` remains `ACTIVE` until actual exact-new-HEAD tests pass; this update does not claim the whole PR green or satisfy outstanding Askar, ancestry or release-evidence blockers.
