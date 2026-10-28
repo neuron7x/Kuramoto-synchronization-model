@@ -36,7 +36,6 @@ def test_namespace_integrity_ignores_hidden_dirs(tmp_path: Path) -> None:
     assert check_namespace_integrity(tmp_path) == []
 
 
-
 def test_namespace_integrity_archive_scope_does_not_hide_live_canonical_markers(
     tmp_path: Path,
 ) -> None:
