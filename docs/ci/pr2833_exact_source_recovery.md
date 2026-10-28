@@ -385,3 +385,45 @@ negative controls (manifest, bundle, sums, revoked review, duplicate review).
 This is not exact-HEAD GitHub Actions acceptance. The new acceptor remains
 ACTIVE. Mandatory release categories remain NOT_READY; Askar rights and
 real Git ancestry evidence remain unresolved.
+## 2026-10-28 — isolate SHA-bound secret baseline from Git index
+
+At exact PR head `a78ef0aec19fc26e126478c16eef954c465d14a4`, [PR Gate job 122626220681](https://github.com/neuron7x/Kuramoto-synchronization-model/actions/runs/40630730281/job/122626220681)
+failed with `Your baseline file (.github/detect-secrets.baseline) is unstaged`.
+The previous proof-bound scan derived exactly one public MANIFEST SHA256 fingerprint,
+but copied the derived baseline into the tracked repository path. The
+`detect-secrets-hook` pre-commit guard correctly treats that unstaged mutation
+as an error even when the fingerprint is not a secret. This was a workflow
+isolation defect, not evidence of an additional credential.
+
+The PR Gate now keeps the committed baseline byte-for-byte untouched and
+provides an external temporary copy (`/tmp/detect-secrets-active.json`) to
+the same hook and to the same metadata-integrity validator. The immutable
+original is still read by the SHA-bound preprocessor; that preprocessor still
+requires the MANIFEST digest, the release receipt, SHA256SUMS, and the one
+previously reviewed `is_secret=false` entry to agree. On scanner exit 3,
+only line-number changes and the declared workflow file-filter substitution
+remain authorized; new, removed, or changed fingerprints still fail closed.
+The workflow does not add new file exclusions or stage a modified baseline.
+
+An additional regression test executes the actual workflow's inline metadata
+validator using the external active-baseline path and asserts that no tracked
+baseline copy or `git add` operation is introduced. The existing 14 positive
+and negative metadata tests continue to define the policy. The baseline
+preparation module also replaces one unnecessarily multiline list comparison
+with two explicit values; its result and all negative evidence requirements
+are unchanged. The earlier [python-quality failure](https://github.com/neuron7x/Kuramoto-synchronization-model/actions/runs/40630730281/job/122626220695)
+reported that the module required Black formatting. The next exact-head CI
+run remains the acceptance authority for both fixes.
+
+Other observed failures at the same prior head remain RED and are not
+reclassified by this repair: Repo Integrity and Research Integrity require
+actual licensed real-data manifests; diagnostic shards 3 and 4 require
+upstream Git ancestry anchors and, for shard 3, the licensed Askar panel.
+Those blockers are documented above. No release-readiness or empirical claim
+is promoted; all prior `ACTIVE` acceptors retain their states.
+
+Replays: `python -m pytest -q -o addopts= tests/ci/test_detect_secrets_metadata_contract.py tests/ci/test_release_manifest_secret_baseline.py`;
+`black --check tools/security/prepare_release_manifest_secret_baseline.py`;
+`python scripts/ci/check_manifest_hashes.py`. CI runs the real
+`detect-secrets-hook` against the external baseline and the existing negative
+security controls; check the new SHA for observed outcomes.

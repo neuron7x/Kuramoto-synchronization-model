@@ -37,9 +37,9 @@ def make_scan_baseline(root: Path) -> dict[str, Any]:
         raise ValueError("release receipt does not bind current MANIFEST.sha256 bytes")
 
     sums = (root / SUMS).read_text(encoding="utf-8").splitlines()
-    if [line for line in sums if line.endswith(f"  {MANIFEST}")] != [
-        f"{manifest_sha}  {MANIFEST}"
-    ]:
+    matching_sums = [line for line in sums if line.endswith(f"  {MANIFEST}")]
+    expected_sums = [f"{manifest_sha}  {MANIFEST}"]
+    if matching_sums != expected_sums:
         raise ValueError("SHA256SUMS does not bind current MANIFEST.sha256 bytes")
     if bundle_bytes.count(f'"sha256": "{manifest_sha}"') != 1:
         raise ValueError("manifest checksum absent or ambiguous in release evidence JSON")

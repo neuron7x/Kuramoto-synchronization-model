@@ -68,7 +68,7 @@ def _validate(
     source, workflow, _ = validator
     documents = {
         "/tmp/detect-secrets-before.json": json.dumps(previous),
-        ".github/detect-secrets.baseline": json.dumps(current),
+        "/tmp/detect-secrets-active.json": json.dumps(current),
         ".github/workflows/pr-gate.yml": workflow,
     }
 
@@ -151,3 +151,18 @@ def test_unreviewed_changes_are_rejected(
 
     with pytest.raises(AssertionError):
         _validate(monkeypatch, workflow_validator, previous, current)
+
+
+def test_workflow_never_mutates_tracked_baseline(
+    workflow_validator: tuple[str, str, str],
+) -> None:
+    """The hook must receive a temporary baseline; its tracked source stays unchanged."""
+    _source, workflow, _regex = workflow_validator
+    steps = yaml.safe_load(workflow)["jobs"]["secrets-supply-chain"]["steps"]
+    run = next(item["run"] for item in steps if item["name"] == "Detect-secrets using baseline")
+    assert "--output /tmp/detect-secrets-before.json" in run
+    assert "cp /tmp/detect-secrets-before.json /tmp/detect-secrets-active.json" in run
+    assert "--baseline /tmp/detect-secrets-active.json" in run
+    assert 'Path("/tmp/detect-secrets-active.json").read_text()' in run
+    assert "cp /tmp/detect-secrets-before.json .github/detect-secrets.baseline" not in run
+    assert "git add .github/detect-secrets.baseline" not in run

@@ -769,14 +769,14 @@ jobs:
 
           # The public manifest digest is source-verified, not a credential.
           # Derive its single reviewed fingerprint only for this scan.
-          cp .github/detect-secrets.baseline /tmp/detect-secrets-pristine.json
-          trap 'cp /tmp/detect-secrets-pristine.json .github/detect-secrets.baseline' EXIT
+          # Run against an external copy: the hook rejects an unstaged tracked
+          # baseline even when the only derived fingerprint is proof-bound.
           .venv/bin/python tools/security/prepare_release_manifest_secret_baseline.py \
             --output /tmp/detect-secrets-before.json
-          cp /tmp/detect-secrets-before.json .github/detect-secrets.baseline
+          cp /tmp/detect-secrets-before.json /tmp/detect-secrets-active.json
           set +e
           .venv/bin/detect-secrets-hook \
-            --baseline .github/detect-secrets.baseline \
+            --baseline /tmp/detect-secrets-active.json \
             --exclude-files '^(INVENTORY\.json|MANIFEST\.sha256|\.github/detect-secrets\.baseline|artifacts/wheel_contract\.json|artifacts/\.manifest\.json|artifacts/manifest\.json|artifacts/provenance/inference_provenance\.json|figures/disha_ba_correlation/repro_capsule/.*|artifacts/runs/synthetic_plumbing_v1/.*|artifacts/runs/ricci_microstructure_v1/.*|geosync_research/lines/ricci_microstructure_v1/canonical/.*|artifacts/reproducible_capsules/.*|artifacts/release_gate/.*|artifacts/falsification/.*|artifacts/execution/.*|artifacts/benchmarks/.*|artifacts/evidence/.*|artifacts/replication/.*)$' \
             "${existing_changed_files[@]}"
           scan_rc=$?
@@ -792,7 +792,7 @@ jobs:
           from pathlib import Path
 
           previous = json.loads(Path("/tmp/detect-secrets-before.json").read_text())
-          current = json.loads(Path(".github/detect-secrets.baseline").read_text())
+          current = json.loads(Path("/tmp/detect-secrets-active.json").read_text())
           assert previous["version"] == current["version"], "scanner version drift"
           assert previous["plugins_used"] == current["plugins_used"], "detector policy drift"
 
