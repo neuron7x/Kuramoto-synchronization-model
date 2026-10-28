@@ -296,3 +296,30 @@ and `python scripts/ci/check_root_manifest.py`.
 The synthetic result is **not** full-repository CI proof. Askar permissions,
 eight flattened-history anchor predicates, release-evidence self-consistency,
 and other actual exact-head failures remain unresolved.
+
+## 2026-10-28 — preserve optional import semantics while retiring two suppressions
+
+The [Research Integrity Gate](https://github.com/neuron7x/Kuramoto-synchronization-model/actions/runs/40606555947/job/122547385996)
+still measured 340 actual Python lint suppressions against the immutable 338
+budget on parent `96fafcc`, despite a previous reduction in the certification
+bootstrap. This is unresolved real debt, not grounds to raise the budget.
+
+Two unrelated *unused-import* suppressions were therefore removed without
+sacrificing their runtime checks. In `tools/validate_dopamine_config.py`,
+the duplicate `import jsonschema` is removed: the retained
+`from jsonschema import Draft7Validator` still imports the module and
+preserves the explicit fail-closed error. In `scripts/commands/build_core.py`,
+an unused `import build` is replaced by
+`importlib.import_module("build")` under the same `ModuleNotFoundError`
+guard, retaining both the missing-dependency message and import-time side
+effects. The new regression suite executes extracted production AST
+guards for success, absence and unexpected errors; it does not fake a build
+artifact or a complete runtime install.
+
+Expected debt delta: two fewer real suppressions, with budget 338 unchanged.
+Exact-head CI must measure the entire tree before a ratchet PASS can be
+reported. No frozen source, research claim, empirical data or release evidence
+hash has been repinned. Replay:
+`python -m pytest -q --override-ini addopts='' tests/ci/test_optional_import_probes.py`,
+`python -m pytest -q --override-ini addopts='' tests/ci/test_architecture_debt_inference.py`,
+`python scripts/ci/check_root_manifest.py`.

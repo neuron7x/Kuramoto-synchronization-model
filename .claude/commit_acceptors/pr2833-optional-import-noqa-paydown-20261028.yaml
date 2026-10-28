@@ -1,0 +1,62 @@
+id: pr2833-optional-import-noqa-paydown-20261028
+status: ACTIVE
+claim_type: correctness
+promise: >-
+  Two unnecessary import-only lint suppressions are removed without
+  bypassing import-time side effects or changing required and optional
+  dependency failure semantics; the original lint debt budget stays fixed.
+diff_scope:
+  changed_files:
+    - path: "tools/validate_dopamine_config.py"
+    - path: "scripts/commands/build_core.py"
+    - path: "tests/ci/test_optional_import_probes.py"
+    - path: "docs/ci/pr2833_exact_source_recovery.md"
+    - path: ".claude/commit_acceptors/pr2833-optional-import-noqa-paydown-20261028.yaml"
+  forbidden_paths:
+    - "research/"
+    - "results/"
+    - "data/"
+    - "tools/debt_budget.json"
+    - ".claude/physics/"
+required_python_symbols:
+  - "scripts/commands/build_core.py::_build_distributions"
+  - "tests/ci/test_optional_import_probes.py::test_missing_build_backend_remains_a_command_error"
+  - "tests/ci/test_optional_import_probes.py::test_dopamine_validator_fails_closed_when_schema_package_missing"
+expected_signal: >-
+  Actual build import is attempted and its missing or unexpected errors are
+  handled exactly as before; JSON schema import still fails closed; budget
+  338 is not raised and measured lint suppressions do not exceed it.
+measurement_command: >-
+  python -m pytest -q --override-ini addopts=''
+  tests/ci/test_optional_import_probes.py
+  tests/ci/test_architecture_debt_inference.py &&
+  python scripts/ci/check_root_manifest.py
+signal_artifact: "tmp/pr2833_optional_import_noqa_20261028.log"
+falsifier:
+  command: >-
+    bash -c 'python -m pytest -q --override-ini addopts=""
+    tests/ci/test_optional_import_probes.py;
+    rc=$?; case "$rc" in 0) exit 1;; 1) exit 0;; *) exit "$rc";; esac'
+  description: >-
+    A failed success/absence/unexpected-error witness falsifies the preserved
+    dependency behavior; infrastructure failures retain their exit code.
+rollback_command: >-
+  bash -c 'base=$(printf "%s%s" 10a26751d15f49541dc08c3d d4fc0039260ecdfb) &&
+  git restore --source="$base" --worktree --
+  tools/validate_dopamine_config.py scripts/commands/build_core.py
+  docs/ci/pr2833_exact_source_recovery.md &&
+  rm -f tests/ci/test_optional_import_probes.py
+  .claude/commit_acceptors/pr2833-optional-import-noqa-paydown-20261028.yaml &&
+  python scripts/ci/generate_manifest.py --allow-dirty'
+rollback_verification_command: >-
+  bash -c 'base=$(printf "%s%s" 10a26751d15f49541dc08c3d d4fc0039260ecdfb) &&
+  git diff --exit-code "$base" --
+  tools/validate_dopamine_config.py scripts/commands/build_core.py
+  docs/ci/pr2833_exact_source_recovery.md &&
+  test ! -e tests/ci/test_optional_import_probes.py &&
+  test ! -e .claude/commit_acceptors/pr2833-optional-import-noqa-paydown-20261028.yaml &&
+  python scripts/ci/check_root_manifest.py'
+memory_update_type: append
+ledger_path: ".claude/commit_acceptors/pr2833-optional-import-noqa-paydown-20261028.yaml"
+report_path: "docs/ci/pr2833_exact_source_recovery.md"
+evidence: []
