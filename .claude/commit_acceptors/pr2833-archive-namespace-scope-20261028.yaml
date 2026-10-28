@@ -1,0 +1,60 @@
+id: pr2833-archive-namespace-scope-20261028
+status: ACTIVE
+claim_type: correctness
+promise: >-
+  Classify only canonical top-level archive_snapshots as preserved historical
+  content for the namespace checker, while preserving all active canonical
+  marker violations and a negative control for lookalike or nested live paths.
+diff_scope:
+  changed_files:
+    - path: "scripts/check_namespace_integrity.py"
+    - path: "tests/test_architecture_guards.py"
+    - path: "docs/ci/pr2833_exact_source_recovery.md"
+    - path: ".claude/commit_acceptors/pr2833-archive-namespace-scope-20261028.yaml"
+    - path: "artifacts/releases/1.1.0/release_evidence.json"
+    - path: "artifacts/releases/1.1.0/SHA256SUMS"
+  forbidden_paths:
+    - "src/geosync/"
+    - "core/"
+    - "runtime/"
+    - "research/"
+    - "docs/TEN_AXES_BASELINE.json"
+required_python_symbols:
+  - "scripts/check_namespace_integrity.py::_is_scannable"
+  - "scripts/check_namespace_integrity.py::check_namespace_integrity"
+  - "tests/test_architecture_guards.py::test_namespace_integrity_archive_scope_does_not_hide_live_canonical_markers"
+  - "tests/test_architecture_guards.py::test_namespace_integrity_still_flags_visible_rogue_canonical"
+expected_signal: >-
+  Active canonical namespace guard passes on repository and rejects both
+  nested and similarly named live paths; historical snapshot markers alone
+  do not claim current runtime authority. Release-bundle digests remain
+  deterministic with unchanged NOT_READY verdict and all negative controls.
+measurement_command: >-
+  bash -c 'python -m pytest -q --override-ini addopts=""
+  tests/test_architecture_guards.py tests/ci/test_release_evidence.py
+  && python scripts/check_namespace_integrity.py
+  && python scripts/ci/check_root_manifest.py'
+signal_artifact: "tmp/pr2833_archive_namespace_scope.log"
+falsifier:
+  command: >-
+    bash -c 'python -m pytest -q --override-ini addopts=""
+    tests/test_architecture_guards.py::test_namespace_integrity_still_flags_visible_rogue_canonical
+    tests/test_architecture_guards.py::test_namespace_integrity_archive_scope_does_not_hide_live_canonical_markers;
+    rc=$?; case "$rc" in 0) exit 1;; 1) exit 0;; *) exit "$rc";; esac'
+  description: >-
+    Exit zero falsifies if live-source negative controls fail. The passing
+    controls exit one. Infrastructure errors retain their original code.
+rollback_command: >-
+  bash -c 'git restore --source=54b9f3c5277080fc622ab06e8a2ac90a82057ecd
+  --worktree -- scripts/check_namespace_integrity.py tests/test_architecture_guards.py docs/ci/pr2833_exact_source_recovery.md artifacts/releases/1.1.0/release_evidence.json artifacts/releases/1.1.0/SHA256SUMS
+  && git rm -f -- .claude/commit_acceptors/pr2833-archive-namespace-scope-20261028.yaml
+  && python scripts/ci/generate_manifest.py --allow-dirty
+  && python scripts/ci/check_root_manifest.py'
+rollback_verification_command: >-
+  bash -c 'git diff --exit-code 54b9f3c5277080fc622ab06e8a2ac90a82057ecd -- scripts/check_namespace_integrity.py tests/test_architecture_guards.py docs/ci/pr2833_exact_source_recovery.md artifacts/releases/1.1.0/release_evidence.json artifacts/releases/1.1.0/SHA256SUMS
+  && test ! -e .claude/commit_acceptors/pr2833-archive-namespace-scope-20261028.yaml
+  && python scripts/ci/check_root_manifest.py'
+memory_update_type: append
+ledger_path: ".claude/commit_acceptors/pr2833-archive-namespace-scope-20261028.yaml"
+report_path: "docs/ci/pr2833_exact_source_recovery.md"
+evidence: []

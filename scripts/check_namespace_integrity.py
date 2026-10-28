@@ -40,6 +40,7 @@ SHIM_PATHS = {REPO_ROOT / "geosync" / "__init__.py"}
 # Directories to skip during the broad ``__CANONICAL__`` flag scan so that
 # non-source trees are not inadvertently flagged. Two classes are excluded:
 #   * named build/vendor dirs (``venv``, ``node_modules``, ``__pycache__``);
+#   * ONLY the canonical, top-level ``archive_snapshots/`` preserved Git history;
 #   * ANY hidden directory (a path part starting with ``.``) — this covers
 #     ``.venv``, ``.tox``, ``.git``, ``.mypy_cache`` and, critically,
 #     ``.claude/worktrees/agent-*`` where ephemeral agent worktrees carry their
@@ -54,6 +55,11 @@ def _is_scannable(path: Path, repo_root: Path) -> bool:
     """True iff ``path`` is inside a real source tree (not hidden/vendor)."""
     rel_parts = path.relative_to(repo_root).parts
     if any(part.startswith(".") for part in rel_parts):
+        return False
+    # Preserved, immutable Git snapshots are not the live runtime namespace.
+    # Restrict the exemption to this exact top-level root: similarly named
+    # packages in runtime/ or archive_snapshots_live/ remain enforceable.
+    if rel_parts and rel_parts[0] == "archive_snapshots":
         return False
     return not any(part in _EXCLUDED_DIRS for part in rel_parts)
 

@@ -36,6 +36,41 @@ def test_namespace_integrity_ignores_hidden_dirs(tmp_path: Path) -> None:
     assert check_namespace_integrity(tmp_path) == []
 
 
+
+def test_namespace_integrity_archive_scope_does_not_hide_live_canonical_markers(
+    tmp_path: Path,
+) -> None:
+    """Only preserved top-level Git snapshots are outside active namespace governance."""
+    canonical_root = tmp_path / "src" / "geosync"
+    canonical_root.mkdir(parents=True)
+    (canonical_root / "__init__.py").write_text(
+        "__CANONICAL__ = True\n", encoding="utf-8"
+    )
+
+    archived = (
+        tmp_path
+        / "archive_snapshots"
+        / "github_9e6e4792_unique"
+        / "src"
+        / "tradepulse"
+        / "__init__.py"
+    )
+    archived.parent.mkdir(parents=True)
+    archived.write_text("__CANONICAL__ = True\n", encoding="utf-8")
+
+    live = {
+        Path("runtime/archive_snapshots/src/tradepulse/__init__.py"),
+        Path("archive_snapshots_live/src/tradepulse/__init__.py"),
+    }
+    for path in live:
+        module = tmp_path / path
+        module.parent.mkdir(parents=True, exist_ok=True)
+        module.write_text("__CANONICAL__ = True\n", encoding="utf-8")
+
+    violations = check_namespace_integrity(tmp_path)
+    assert {violation.path for violation in violations} == live
+
+
 def test_namespace_integrity_still_flags_visible_rogue_canonical(tmp_path: Path) -> None:
     """The hidden-dir exemption must not weaken the real guard: a canonical
     marker in a NON-hidden, non-``src/geosync`` package is still a violation."""
