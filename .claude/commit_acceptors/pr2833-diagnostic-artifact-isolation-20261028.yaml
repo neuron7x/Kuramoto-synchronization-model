@@ -1,0 +1,64 @@
+id: pr2833-diagnostic-artifact-isolation-20261028
+status: ACTIVE
+claim_type: security
+promise: >-
+  PR Fast Diagnostics writes collection, selected node IDs, pytest output and
+  failure receipts outside the checked-out repository, preserving the SEC-006
+  clean-tree scanner's ability to detect real committable credentials while
+  retaining the original uploaded diagnostic evidence and fail-closed tests.
+diff_scope:
+  changed_files:
+    - path: ".claude/commit_acceptors/pr2833-diagnostic-artifact-isolation-20261028.yaml"
+    - path: ".github/workflows/pr-fast-diagnostics.yml"
+    - path: "tests/ci/test_secret_boundary.py"
+    - path: "docs/ci/pr2833_exact_source_recovery.md"
+  forbidden_paths:
+    - "research/"
+    - "results/"
+    - "data/"
+    - "scripts/ci/check_secret_boundary.py"
+    - ".github/detect-secrets.baseline"
+    - ".claude/physics/"
+required_python_symbols:
+  - "tests/ci/test_secret_boundary.py::test_diagnostic_artifact_isolation_keeps_clean_tree_scannable"
+  - "tests/ci/test_secret_boundary.py::test_full_gate_passes_on_clean_tree"
+  - "tests/ci/test_secret_boundary.py::test_regex_fallback_detects_planted_aws_and_pem"
+expected_signal: >-
+  Workflow collection/output directories and upload paths all use the job's
+  runner temporary directory. The regression assertion, live clean-tree
+  scanner, planted AWS/PEM negative control and PR Gate contract pass without
+  changing scanner allowlists or suppressing any failing test. Existing
+  inherited empirical and Git-ancestry blockers remain RED.
+measurement_command: >-
+  python -m pytest -q --override-ini addopts=''
+  tests/ci/test_secret_boundary.py -k
+  'diagnostic_artifact_isolation or full_gate_passes_on_clean_tree or regex_fallback_detects_planted_aws_and_pem'
+  && python scripts/ci/check_pr_gate_contract.py
+  && python scripts/ci/check_root_manifest.py
+signal_artifact: "tmp/pr2833_diagnostic_artifact_isolation_20261028.log"
+falsifier:
+  command: >-
+    bash -c 'python -m pytest -q --override-ini addopts=""
+    tests/ci/test_secret_boundary.py::test_diagnostic_artifact_isolation_keeps_clean_tree_scannable;
+    rc=$?; case "$rc" in 0) exit 1;; 1) exit 0;; *) exit "$rc";; esac'
+  description: >-
+    Nonzero behavior-test exit 1 indicates in-repository diagnostic output,
+    mismatched runner temp paths or missing uploaded artifact and falsifies the
+    promise (inverted probe exit zero); success returns one, with infrastructure
+    failures preserved.
+rollback_command: >-
+  bash -c 'git restore --source=b618702174d36c5aacccbd5452fa6024cd0e0112 --worktree --
+  .github/workflows/pr-fast-diagnostics.yml tests/ci/test_secret_boundary.py
+  docs/ci/pr2833_exact_source_recovery.md &&
+  rm -f -- .claude/commit_acceptors/pr2833-diagnostic-artifact-isolation-20261028.yaml &&
+  python scripts/ci/generate_manifest.py --allow-dirty'
+rollback_verification_command: >-
+  bash -c 'git diff --exit-code b618702174d36c5aacccbd5452fa6024cd0e0112 --
+  .github/workflows/pr-fast-diagnostics.yml tests/ci/test_secret_boundary.py
+  docs/ci/pr2833_exact_source_recovery.md &&
+  test ! -e .claude/commit_acceptors/pr2833-diagnostic-artifact-isolation-20261028.yaml &&
+  python scripts/ci/check_root_manifest.py'
+memory_update_type: append
+ledger_path: ".claude/commit_acceptors/pr2833-diagnostic-artifact-isolation-20261028.yaml"
+report_path: "docs/ci/pr2833_exact_source_recovery.md"
+evidence: []

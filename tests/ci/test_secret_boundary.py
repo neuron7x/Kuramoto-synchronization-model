@@ -242,3 +242,16 @@ def test_python_reference_rule_keeps_literals_and_non_python_secrets_red(
     findings = sec.scan_with_regex(sample)
     assert len(findings) == 1
     assert findings[0]["rule"] == "generic-api-key"
+
+def test_diagnostic_artifact_isolation_keeps_clean_tree_scannable() -> None:
+    """Temporary fast-shard evidence must never contaminate SEC-006 scans."""
+
+    workflow = (
+        sec.REPO_ROOT / ".github" / "workflows" / "pr-fast-diagnostics.yml"
+    ).read_text(encoding="utf-8")
+    shell_path = 'out_dir="$RUNNER_TEMP/pr-fast-diagnostics/group-${{ matrix.group }}"'
+    context_path = "${{ runner.temp }}/pr-fast-diagnostics/group-${{ matrix.group }}"
+    assert workflow.count(shell_path) == 2
+    assert f"DIAGNOSTIC_OUT_DIR: {context_path}" in workflow
+    assert f"path: {context_path}/" in workflow
+    assert "artifacts/pr-fast-diagnostics/group-${{ matrix.group }}" not in workflow

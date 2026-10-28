@@ -244,3 +244,28 @@ with successful, missing-module and unexpected-error witnesses. No frozen
 research source or numerical threshold was changed. The unchanged budget and
 runtime evidence must be revalidated by the new exact-SHA CI; no pass is
 preclaimed by this note.
+
+
+## 2026-10-28 — isolate diagnostic receipts from the secret-scan root
+
+Exact-parent PR Fast Diagnostics run [40601989404](https://github.com/neuron7x/Kuramoto-synchronization-model/actions/runs/40601989404),
+job [122532432668](https://github.com/neuron7x/Kuramoto-synchronization-model/actions/runs/40601989404/job/122532432668),
+failed `test_full_gate_passes_on_clean_tree` when its own generated
+`artifacts/pr-fast-diagnostics/group-4/shard_nodeids.txt` was scanned by
+SEC-006. Some collected test IDs contain token-like assignment strings: the
+scanner classified these transient diagnostic lines as credentials. They were
+not tracked repository sources and were produced by the same diagnostic job
+before the clean-tree test ran. This is a self-contamination failure, **not**
+a reason to disable the scanner or dismiss its negative controls.
+
+The diagnostics workflow now writes all test collection, shard selection,
+execution logs and status receipts under `$RUNNER_TEMP/pr-fast-diagnostics/`,
+and uploads the same evidence artifact from `${{ runner.temp }}`. The
+contract regression checks both shell paths, the Python shard-selection
+variable and the artifact upload path; existing SEC-006 planted AWS/PEM
+negative controls and the unmodified repository scanner remain authoritative.
+No exclusion pattern, baseline fingerprint, test selection, timeout or numeric
+threshold changed. This patch removes the specific verified source of
+self-contamination; it is **not** evidence that the inherited Askar licensing,
+upstream Git ancestry, root debt budgets or historical release bundle gates
+are green. Validate only against terminal checks for the newly published SHA.
