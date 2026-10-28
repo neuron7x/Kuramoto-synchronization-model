@@ -767,7 +767,13 @@ jobs:
             exit 0
           fi
 
-          cp .github/detect-secrets.baseline /tmp/detect-secrets-before.json
+          # The public manifest digest is source-verified, not a credential.
+          # Derive its single reviewed fingerprint only for this scan.
+          cp .github/detect-secrets.baseline /tmp/detect-secrets-pristine.json
+          trap 'cp /tmp/detect-secrets-pristine.json .github/detect-secrets.baseline' EXIT
+          .venv/bin/python tools/security/prepare_release_manifest_secret_baseline.py \
+            --output /tmp/detect-secrets-before.json
+          cp /tmp/detect-secrets-before.json .github/detect-secrets.baseline
           set +e
           .venv/bin/detect-secrets-hook \
             --baseline .github/detect-secrets.baseline \

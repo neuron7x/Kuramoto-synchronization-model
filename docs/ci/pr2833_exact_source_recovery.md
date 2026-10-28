@@ -357,3 +357,31 @@ At exact parent `f0cd50065b4d55fa8467d162b6f95546a94a2038`, [Docs Consistency jo
 [Repo Integrity job 122596918221](https://github.com/neuron7x/Kuramoto-synchronization-model/actions/runs/40621581917/job/122596918221) also found the report's broken link to absent `CODE_QUALITY_MANIFEST.json`. This citation is replaced with the actual tracked exclusion implementation in `tools/audit/false_confidence_detector.py`, whose top-level archive exemption is test-backed. No code, gate, scanner exclusion, numerical threshold, claim tier, dataset provenance or historical ancestry rule was altered.
 
 Replay after the coherent source-manifest and release-bundle update: `python scripts/ci/check_docs_consistency.py && python scripts/ci/check_links.py && python -m pytest -q --override-ini addopts='' tests/ci/test_docs_consistency.py tests/ci/test_links.py tests/ci/test_release_evidence.py && python scripts/ci/check_root_manifest.py`. The already-known hard `NO_REAL_DATA_MANIFEST_STAGED` failure and historical ancestry blockers are not represented as fixed. Release evidence is refreshed only to bind the actual new manifest digest; its five mandatory missing categories and `NOT_READY` verdict remain unchanged. SEC-006's previously observed high-entropy false positive on the changing *public* release manifest digest is likewise not silently allowlisted or marked green.
+
+
+## Public SHA checksum / secret-scanner cycle (2026-10-28)
+
+Exact parent: 9da634c52ab619cae4dc68edf34b867a844e3626.
+The [PR Gate secrets job](https://github.com/neuron7x/Kuramoto-synchronization-model/actions/runs/40624971856/job/122607593929)
+returned exit 1 because detect-secrets flagged the 64-character value on
+artifacts/releases/1.1.0/release_evidence.json:80. This value is not a
+credential: the hex characters matched an independently computed SHA256 of
+the exact-parent MANIFEST.sha256 and its SHA256SUMS entry. The committed
+scanner baseline already classified this one historical public digest
+is_secret: false, but its fingerprint described an older manifest.
+
+Static baseline repinning would be unsound: the committed baseline itself
+is included in the root manifest, so changing it to match the new manifest
+digest would change that digest again (circular cryptographic dependency).
+The repair leaves the committed baseline unchanged and derives a one-use
+scan baseline from that existing reviewed record. Preparation demands
+agreement among live MANIFEST bytes, release_evidence.json, and SHA256SUMS,
+and requires exactly one approved is_secret: false record. Every other
+fingerprint, scanner rule and exclusion regex is retained. The CI step
+restores the unchanged tracked baseline with an EXIT trap.
+
+Six independent synthetic tests passed locally: one positive and five
+negative controls (manifest, bundle, sums, revoked review, duplicate review).
+This is not exact-HEAD GitHub Actions acceptance. The new acceptor remains
+ACTIVE. Mandatory release categories remain NOT_READY; Askar rights and
+real Git ancestry evidence remain unresolved.

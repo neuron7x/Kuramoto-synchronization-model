@@ -1,0 +1,71 @@
+# Explicitly bounded repair of a public checksum scanner false positive.
+id: pr2833-release-checksum-scan-cycle-20261028
+status: ACTIVE
+claim_type: security
+promise: >-
+  The PR secret scanner uses only an ephemeral baseline with one reviewed
+  public SHA256 digest fingerprint, calculated from real MANIFEST.sha256 bytes
+  independently corroborated by release_evidence.json and SHA256SUMS.
+  Other findings remain blocking, the committed baseline remains untouched,
+  and mismatches or missing historical review fail closed.
+diff_scope:
+  changed_files:
+    - path: ".claude/commit_acceptors/pr2833-release-checksum-scan-cycle-20261028.yaml"
+    - path: ".github/workflows/pr-gate.yml"
+    - path: "tools/security/prepare_release_manifest_secret_baseline.py"
+    - path: "tests/ci/test_release_manifest_secret_baseline.py"
+    - path: "docs/ci/pr2833_exact_source_recovery.md"
+    - path: "INVENTORY.json"
+    - path: "MANIFEST.sha256"
+    - path: "artifacts/releases/1.1.0/release_evidence.json"
+    - path: "artifacts/releases/1.1.0/SHA256SUMS"
+  forbidden_paths:
+    - "core/"
+    - "execution/"
+    - "trading/"
+    - "research/"
+    - "data/askar/"
+    - ".github/detect-secrets.baseline"
+    - "results/cross_asset_kuramoto/offline_robustness/SOURCE_HASHES.json"
+required_python_symbols:
+  - "tools/security/prepare_release_manifest_secret_baseline.py::make_scan_baseline"
+  - "tests/ci/test_release_manifest_secret_baseline.py::test_exact_public_digest_only_is_reclassified"
+  - "tests/ci/test_release_manifest_secret_baseline.py::test_any_missing_evidence_blocks_exception"
+expected_signal: >-
+  Six focused tests pass, including five negative controls. The job dynamically
+  stages one proven public-hash fingerprint, runs the original detect-secrets
+  hook with all other rules unchanged, and restores the original baseline on
+  exit. The full hook must still reject any unrelated secret finding.
+measurement_command: >-
+  python -m pytest tests/ci/test_release_manifest_secret_baseline.py
+  tests/ci/test_detect_secrets_metadata_contract.py -q
+  --override-ini addopts='' &&
+  python scripts/ci/generate_manifest.py --check
+signal_artifact: "tmp/pr2833_release_digest_scan_20261028.log"
+falsifier:
+  command: >-
+    bash -c 'python -m pytest -q --override-ini addopts=""
+    tests/ci/test_release_manifest_secret_baseline.py;
+    rc=$?; case "$rc" in 0) exit 1;; 1) exit 0;; *) exit "$rc";; esac'
+  description: >-
+    Inverse falsifier: exit zero means a checksum, audit, duplication or
+    credential-boundary negative test found a violation. Passing probes
+    return nonzero, infrastructure/collection errors propagate.
+rollback_command: >-
+  bash -c 'git restore --source=9da634c52ab619cae4dc68edf34b867a844e3626
+  --worktree -- .github/workflows/pr-gate.yml INVENTORY.json
+  docs/ci/pr2833_exact_source_recovery.md
+  artifacts/releases/1.1.0/release_evidence.json
+  artifacts/releases/1.1.0/SHA256SUMS &&
+  rm -f tools/security/prepare_release_manifest_secret_baseline.py
+  tests/ci/test_release_manifest_secret_baseline.py
+  .claude/commit_acceptors/pr2833-release-checksum-scan-cycle-20261028.yaml &&
+  python scripts/ci/generate_manifest.py --allow-dirty'
+rollback_verification_command: >-
+  bash -c 'python scripts/ci/generate_manifest.py --check &&
+  test ! -e tools/security/prepare_release_manifest_secret_baseline.py &&
+  test ! -e tests/ci/test_release_manifest_secret_baseline.py'
+memory_update_type: append
+ledger_path: ".claude/commit_acceptors/pr2833-release-checksum-scan-cycle-20261028.yaml"
+report_path: "docs/ci/pr2833_exact_source_recovery.md"
+evidence: []

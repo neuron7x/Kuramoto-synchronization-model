@@ -3009,6 +3009,8 @@
 648e9410468450a131ca37571a829fec3db606eb4211dd25ae3c055ff02304cc  ./analytics/regime/config/README.md
 648e9410468450a131ca37571a829fec3db606eb4211dd25ae3c055ff02304cc  ./markets/orderbook/config/README.md
 648ef48d579aaebe52d3b9adea2fc01f42cf3d45f868ea9d422817b75f2e851a  ./docs/ARCHITECTURE.md
+64940765e9152594088afa3c37faae7076bc57fdc492d2360c7e7d9671d54a58  ./.github/workflows/pr-gate.yml
+649642f4612b4105992803bb2a31db2759c31655a02dcd962b334cd112f08026  ./tests/ci/test_release_manifest_secret_baseline.py
 64a44fd3dc3f424e1e915a8878b38cbb86123395c6c7580b74764a78c78aaf0e  ./tests/test_l2_coherence_cli_discoverability.py
 64aa59336b1d53807cdf0948301ef7cea931cb5af8c18b51a503591463fbafa0  ./docs/indicators.md
 64b274bd78f204203de003e3afdca549c8b841266a66fd8df120fc6671030718  ./tests/geosync_hpc/test_hpc_mathematical_verification.py
@@ -4491,7 +4493,6 @@
 9756015b1250accd08ff64ec4a7ffc9dffaafbf06b477202c8dcd2bceebf6b4b  ./docs/templates/api_pagination.md
 9759a8b0fd2a0ec48f2db1bed1132ffbadbddcfb9dcc9e35e48b8b88692e2bca  ./tests/test_fhmc_minimal.py
 975fa6514604bd445ecc62ad977002e58c52429283da8c1277294876dbc3cfec  ./tests/systemic_risk/test_d002h_gate_c_grid.py
-97634e0c6262fbbc3a281e4fd5b80939ef0082d22a17de77dbee60de5827c68a  ./.github/workflows/pr-gate.yml
 9764b0bbe91741ce18af9fc14fb1342f6838b445a0452f1360223e599d88ac5e  ./tests/test_replay.py
 9765375ed1b90d9bdd0195a6f49eb5ebbb969f8c8547bfdaa83f60ed23f389d1  ./apps/web/tests/smoke.spec.ts
 978990ffad005cfafab235fec18139d073135696a4de6e026e21b03aca574eb9  ./geosync/proof/run.py
@@ -4521,6 +4522,7 @@
 985a784a0b1e0f4fa858afc930f64c91cc79f6afa9237a861d520215405304d6  ./docs/operations/AUDIT_REPORT.md
 985ab5d22cb8ee9cfbaad7394c6f51d3feae5588177250860c72b4cada86dacb  ./go.work.sum
 988fa8d3bfdcce2d0e1fde7da299589da89c9a571f9086e46db9da04e5eeb672  ./.claude/commit_acceptors/market-limits-falsifier.yaml
+989964d420aef4b25a5f194f6ee66b9962d7b4b1f487afd5c0e5b01e011f489b  ./tools/security/prepare_release_manifest_secret_baseline.py
 98998954a923ff2e73ec110c7c9c8b6610e4e42dcfdbc4396c13668aab9e30d0  ./markets/regime/detector.py
 98a4a0fe55b6b47cd7abb0c759f1bdcb8deb5a4723cec5e4a528542ccf451edd  ./tests/unit/architecture_integrator/test_component.py
 98a840cbafba7a97f3d6313fb036d9058018c0082ccbcdc7741bc49e7d424b48  ./scripts/check_single_entrypoint.py
@@ -4799,7 +4801,6 @@
 9ecfb9f4aa4159bade495ed0dfa60dd7d0e1999dccd050e6625bd27defe686d4  ./schemas/events/json/1.0.0/bars.schema.json
 9ed50f39bbb832720a3efe589a791badb9f2c28cc2911ee8d929b9bf00ce61a8  ./research/ctc_falsify/l2/run.py
 9ed794317c38ca06136b1b805b84f0e4191ce4279ca2d8e3bca7b5bd143337ff  ./nak_controller/core/config.py
-9ed82031bc94ab03fdf0a571f72afe109cd556cf72466a0aac1a7ceac88765fa  ./INVENTORY.json
 9edd29798cef620b320b8ed238a8db91b2419a1499bad31626f4a449150ad7da  ./core/physics/simulation_falsification.py
 9ee254c4db9783337aecd5099bc762dd904ba236f6c2a85c43283ff3946cc6c0  ./core/idempotency/__init__.py
 9ee4d4a300088c1cef0332311793006a46d0511fb661e092c665057ce04b718c  ./infra/terraform/modules/terraform-aws-kms/README.md
@@ -5240,7 +5241,6 @@ aeed5e94d01ee658ffdfc878d7da195dd70bf86acd3e379aa1da1ad2ebbb7ed4  ./archive_snap
 aefe853f7ffecdb28c69cf84252f455db4e39e4267839e834cff0fb6069c66fc  ./research/reconstruction/kuramoto_on_reconstruction.py
 af018f2d54517a77f71290fc805ff87e92362a0458e610ab47ad82e714b41587  ./research/systemic_risk/substrates/d002j/volatility_credit_spread_regime.py
 af01fd73c8db9f2bc5f613817828d217d2a8c8343cf5dc4b8747fb92ca454e09  ./tests/test_l2_slippage_stress.py
-af27bc6127af060962512a12b1a087eff6a3e0823cab51aa913922a4708d154f  ./docs/ci/pr2833_exact_source_recovery.md
 af37f954e23b7db39d181ccefbc6ddd08eb3c7ef640dc68676dc4b3320b11456  ./.claude/commit_acceptors/data-leakage-guard.yaml
 af3ee3792bc1800e68e023a5854a447eb20295b6fa6748de7da8c2eea1b16825  ./migrations/alembic/versions/202501150001_create_kill_switch_state.py
 af4191cf83ea09f08eb5b305a3746164adeba62c070368ba0ac6a7959e76d04f  ./infra/terraform/modules/terraform-aws-vpc/README.md
@@ -5445,6 +5445,7 @@ b640858a5f06e20038ed623e3873330a0ddb5cf07f06002e6e5b622658c20db2  ./tests/agents
 b6453d69a83c4ccbca4d8b64f35677a4341664788973d59f954cb3faf142a306  ./tests/unit/governance/test_verification_protocol.py
 b646989c032dc0e29f9b791e0b68209ff22b40f4757737712badc8656cf2db5f  ./docs/governance/D002I_PREREGISTRATION.yaml
 b65eb00b2f1c0d6e5bfd49e676d7f2c0b2f79d27e766f66290e62077032d5107  ./archive_snapshots/github_9e6e4792_unique/.github/workflows/security-guards.yml
+b6729c5d71c1895e22b5fcaa7a18d5aa3b6f0663ec8460dcc2974b5d6b50975c  ./.claude/commit_acceptors/pr2833-release-checksum-scan-cycle-20261028.yaml
 b675c9ded4075cc5274c02382c12702d59f9e843fe43262a155313d8c31301e0  ./tests/research/ctc_falsify/test_open_data_manifest.py
 b6773799b24cbdc8b385fbdf032af5f8fa3cbf9d31ce5893806090d7aa52b716  ./.claude/commit_acceptors/geosync-claim-maturity-market-limits.yaml
 b6876bfe0e235b583cc4090daeffc4efb36e8ed8df370b0dac4830a58f7a8556  ./tools/audit/neuro_symbolic_audit.py
@@ -6169,6 +6170,7 @@ cf778fcb3fe8cfd58766122f6bd955db536483b0827f4f73e81e914b2828fd56  ./tests/ci/tes
 cf7942dbff21eee9fa54a825f943ea79d1bfc464e57cbc5abf0cea24a3530ee9  ./.claude/commit_acceptors/dead-elapsed-var.yaml
 cf8787e7e696885f093e54a610f8de70888a0d6025b9b250df281cef992ce98c  ./geosync/neuroeconomics/dislocation_detector.py
 cf8a89c1a447e8bafb00662ec2a534cd2e1a0f420f7f2ff5c4edd874d6105b2b  ./docs/physics/theory/SIGNALBUS_THEORY.md
+cf972224d489af96d1eb195a18e03595f8cd345a70f759258d30db3b41cdd14a  ./docs/ci/pr2833_exact_source_recovery.md
 cf99306b26435e91eb7b581712ee9ab619fec62babfe2090e8f3ed247477f13b  ./schemas/release_evidence.schema.json
 cfb334a25760111c8b70b4fca510dd0a44e9bc22d20289caad1a899c1322e5c4  ./rl/core/safe_update.py
 cfb85f8c7f93c1acc5b3e114fd4568dc4c02ad1cf0a5700fbef4f6dda7de8a31  ./tests/unit/runtime/test_inference_promotion_brake.py
@@ -6630,6 +6632,7 @@ df49176db6e2dee4ee1623b84d09daeea92fac6329a7762374cc9b291295a55f  ./tests/tools/
 df4da907ee420d3dca435b0846bd21a4969b6da373d24383795ee3ab43cb714d  ./docs/thermodynamics/README.md
 df50d250daa633ef97c4c7a02ac43524296e0b9a3e8095fc8f3f0a802e429993  ./.claude/commit_acceptors/coverage-deferred-production-ratchet.yaml
 df59c8be8b9dbfe4189b1f7c8b9a930dfb5d8d5aea075d0b250e58356a48c056  ./docs/security/devsecops/devsecops-integration-guide.md
+df5c0fa53febb713b6b49967e5373d7f9ad92f7d3a5d196d3f2aa66e11a2f1f6  ./INVENTORY.json
 df611da60ee5c8335c680bc12ad49f5781988c08a506c9a5dccc079f612906d9  ./core/physics/relativity.py
 df6497d601f3afa97ff14a5607dd377b820a2a6d6a5d508cd93f30c218c07224  ./.claude/commit_acceptors/instrument-validation-pr592.yaml
 df6722f37ea8dec8f5599f8baa07c3d5668f4683b7c75ba16cb6edd68ef4287b  ./cortex_service/app/memory/repository.py
